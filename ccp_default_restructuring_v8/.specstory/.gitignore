@@ -2,26 +2,3 @@
 /.project.json
 # SpecStory explanation file
 /.what-is-this.md
-
-
-# C++ Build folders
-build/
-Build/
-BUILD/
-
-# VS Code CMake build directories
-out/
-cmake-build-*/
-
-# Common C++ build artifacts
-*.o
-*.obj
-*.exe
-*.dll
-*.so
-*.dylib
-*.a
-*.lib
-
-# imgui
-vendor/imgui/**
