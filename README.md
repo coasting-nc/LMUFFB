@@ -31,11 +31,14 @@ The application consists of three main components:
 
 *   **Telemetry Source**: iRFFB reads from the iRacing API, which provides telemetry at 360Hz (via memory mapping similar to what we do). LMU's shared memory typically updates at physics rate (400Hz) or a divisor of it.
 *   **FFB Philosophy**:
-    *   **iRFFB** typically offers a "Reconstruction" mode (smoothing the 60Hz signal) or "360Hz" mode (using physics telemetry directly). It often calculates aligning torque using a rack force model or blends it with SoP effects.
-    *   **LMUFFB** (this app) takes a similar approach to the "360Hz" mode but relies on the `SteeringArmForce` already calculated by the rF2 engine, enhancing it with specific grip-loss modulation. The rF2 physics engine is generally considered more detailed in FFB than iRacing's native output (historically), but this app allows for customization (e.g., exaggerating understeer feel).
+    *   **iRFFB**: Typically offers "Reconstruction" (smoothing 60Hz) or "360Hz" mode. It often calculates aligning torque using a rack force model or blends it with SoP effects.
+    *   **Marvin's AIRA**: Focuses on "Detail Augmentation". It splits effects (Road, Curb, Slip) and allows boosting specific frequencies to enhance tactile feedback. It uses advanced filtering to find hidden details in the telemetry.
+    *   **LMUFFB** (this app): Takes a macro-level approach similar to iRFFB's "360Hz" mode but relies on the rFactor 2 engine's `SteeringArmForce`. Its unique feature is modulating this force using the explicit `GripFract` (Grip Fraction) telemetry to signal understeer, and adding "Seat of Pants" (Lateral G) forces.
 *   **Understeer/Oversteer**:
-    *   iRFFB often uses `Slip Angle` and `Self Aligning Torque` relationship.
-    *   LMUFFB currently uses the direct `GripFract` variable provided by the rFactor 2 engine, which simplifies the detection of sliding.
+    *   iRFFB often estimates understeer via Slip Angle vs. Torque curves.
+    *   LMUFFB uses the direct `GripFract` variable provided by the rFactor 2 engine.
+
+**See [docs/comparisons.md](docs/comparisons.md) for a detailed breakdown, including missing features.**
 
 ### vs TinyPedal (rFactor 2 / LMU)
 
@@ -98,3 +101,12 @@ Unit tests mock the shared memory file to verify logic without the game running.
 export PYTHONPATH=$PYTHONPATH:.
 python3 LMUFFB/tests.py
 ```
+
+## Documentation
+
+For more detailed information, please refer to the `docs/` folder:
+*   [Introduction](docs/introduction.md)
+*   [Architecture](docs/architecture.md)
+*   [Comparisons & Missing Features](docs/comparisons.md)
+*   [Performance Analysis (Python vs C++)](docs/performance_analysis.md)
+*   [Roadmap & Future Development](docs/roadmap.md)
