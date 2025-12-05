@@ -23,4 +23,5 @@ cmake-build-*/
 *.lib
 
 # imgui
-vendor/imgui/**
+vendor/imgui/
+
