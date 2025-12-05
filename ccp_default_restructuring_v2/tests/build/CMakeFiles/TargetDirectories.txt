@@ -1,0 +1,4 @@
+/app/tests/build/CMakeFiles/run_tests.dir
+/app/tests/build/CMakeFiles/test.dir
+/app/tests/build/CMakeFiles/edit_cache.dir
+/app/tests/build/CMakeFiles/rebuild_cache.dir
