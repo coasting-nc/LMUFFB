@@ -21,3 +21,6 @@ cmake-build-*/
 *.dylib
 *.a
 *.lib
+
+# imgui
+vendor/imgui/**
