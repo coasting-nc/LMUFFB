@@ -80,6 +80,40 @@ The application consists of three main components:
     ```
 4.  The app will wait for the simulator to start (it looks for the shared memory buffer).
 
+### Troubleshooting
+
+If the app is not working as expected, check the following:
+
+*   **"Shared memory file ... not found. Waiting for game..."**:
+    *   Ensure the **rFactor 2 Shared Memory Map Plugin** is installed in the correct `Plugins` folder.
+    *   Verify `CustomPluginVariables.JSON` has the plugin enabled (`" Enabled": 1`).
+    *   Start the game and drive a car onto the track. The memory buffer is only created when the physics engine initializes.
+*   **vJoy Errors / Mock Mode**:
+    *   If you see "Falling back to Mock", ensure **vJoy** drivers are installed and a device is configured in `vJoyConf`.
+    *   Ensure `pyvjoy` is installed (`pip install pyvjoy`).
+*   **Permissions**:
+    *   In rare cases, you may need to run the script as **Administrator** to access the shared memory created by the game.
+
+## Building for Distribution
+
+To distribute LMUFFB to end-users without requiring them to install Python, you can compile it into a standalone executable.
+
+1.  **Install PyInstaller**:
+    ```bash
+    pip install pyinstaller
+    ```
+
+2.  **Build the Executable**:
+    Run the following command from the repository root:
+    ```bash
+    pyinstaller --onefile --name LMUFFB LMUFFB/main.py
+    ```
+
+3.  **Locate the Output**:
+    The compiled `LMUFFB.exe` will be located in the `dist/` folder. You can distribute this single file.
+
+*Note: Ensure you install `pyvjoy` in your Python environment before building, so PyInstaller can bundle it.*
+
 ## Developer Guide
 
 ### Project Structure
