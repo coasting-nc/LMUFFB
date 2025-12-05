@@ -1,4 +1,6 @@
-# Porting Guide: Python to Rust
+# Porting Guide: Python to Rust (Alternative)
+
+> **Note**: The project has currently standardized on C++ for the native implementation. This guide is preserved as a reference for any future experimental Rust port or fork.
 
 This guide outlines the steps required to port LMUFFB from Python to Rust, prioritizing memory safety and modern tooling.
 

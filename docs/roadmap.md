@@ -2,20 +2,22 @@
 
 To evolve LMUFFB from a prototype to a daily-driver application, the following steps are recommended:
 
+## Completed Features (C++ Port)
+*   [x] **Native C++ Port**: Migrated from Python to C++ for performance.
+*   [x] **FFB Engine**: Implemented Grip Modulation, SoP, Min Force.
+*   [x] **Texture Effects**: Implemented Slide Texture (noise) and Road Texture (suspension delta).
+*   [x] **Architecture**: Threaded design (FFB 400Hz / Main 60Hz).
+*   [x] **Testing**: Comprehensive C++ Unit Test suite.
+
 ## Short Term
-*   **GUI Implementation**: Add a Graphical User Interface (using Tkinter, PyQt, or DearPyGui) to allow users to adjust:
-    *   Overall Gain.
-    *   Grip Modulation Factor (how much grip loss lightens the wheel).
-    *   SoP Factor (how much lateral G is added).
-    *   Smoothing/Filtering.
-*   **Config Persistence**: Save/Load user settings to a JSON/INI file.
+*   [x] **GUI Implementation**: Added support for **Dear ImGui**.
+    *   Logic for Sliders and Toggles implemented in `src/GuiLayer.cpp`.
+    *   Developer instructions in `vendor/imgui/README.txt`.
+*   [x] **Installer Support**: Added Inno Setup script (`installer/lmuffb.iss`) handling vJoy checks and Plugin installation.
+*   [ ] **Config Persistence**: Save/Load user settings to an `.ini` or `.json` file.
 
 ## Medium Term
-*   **DirectInput FFB Support**: Move beyond vJoy "Axis" mapping. Implement proper DirectInput "Constant Force" packet sending. This allows the app to coexist better with the game (game handles buttons/shifters, app handles FFB).
-*   **Advanced Filters**: Implement High-Pass filters to isolate road texture from the telemetry (if available via suspension velocity/accel) and boost it (Marvin's AIRA style).
+*   **DirectInput FFB Support**: Documentation guide created (`docs/directinput_implementation.md`). Implementation pending.
 
 ## Long Term (Performance)
-*   **C++ Rewrite**: Port the core `main.py` loop and `FFBEngine` to C++.
-    *   Use raw Windows APIs for Shared Memory and DirectInput.
-    *   Minimize latency to sub-millisecond levels.
 *   **Wheel-Specific Modes**: Add specific protocols for popular bases (Fanatec, Simucube, Logitech) to display data on wheel screens (RPM LEDs) using the telemetry data.

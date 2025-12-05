@@ -1,4 +1,6 @@
-# Porting Guide: Python to C++
+# Porting Guide: Python to C++ (Legacy)
+
+> **Note**: This guide served as the blueprint for the C++ port. The port is now complete and located in the root of the repository. This document is preserved for reference regarding the transition logic.
 
 This guide outlines the steps required to port LMUFFB from Python to C++ for improved performance and lower latency.
 
