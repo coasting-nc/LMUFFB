@@ -1,6 +1,10 @@
 import math
 
 class FFBEngine:
+    """
+    Core Logic for calculating Force Feedback signals.
+    Takes raw telemetry input and produces a normalized force value (-1.0 to 1.0).
+    """
     def __init__(self):
         self.smoothing = 0.5
         self.gain = 1.0
@@ -9,7 +13,13 @@ class FFBEngine:
     def calculate_force(self, telemetry):
         """
         Calculates the FFB force based on telemetry data.
-        Returns a float between -1.0 and 1.0
+        Returns a float between -1.0 and 1.0.
+        
+        Logic:
+        1. Base Force: Takes the native SteeringArmForce from the game.
+        2. Grip Modulation: Scales the base force by the tire Grip Fraction.
+           - If tires are slipping (Grip < 1.0), the force is reduced (wheel feels lighter).
+        3. SoP (Seat of Pants): Adds a lateral G-force component to simulate body load.
         """
         if not telemetry:
             return 0.0

@@ -93,12 +93,20 @@ class rF2Telemetry(ctypes.Structure):
     ]
 
 class TelemetryReader:
+    """
+    Handles connection to the rFactor 2 / LMU Shared Memory Map.
+    Uses 'mmap' to read the memory buffer exposed by the shared memory plugin.
+    """
     def __init__(self, map_name=RF2_SHARED_MEMORY_NAME):
         self.map_name = map_name
         self.mm = None
         self.connected = False
 
     def connect(self):
+        """
+        Attempts to connect to the shared memory buffer.
+        Returns True if successful, False otherwise.
+        """
         try:
             # In a real windows environment:
             # self.mm = mmap.mmap(-1, ctypes.sizeof(rF2Telemetry), self.map_name)
@@ -117,6 +125,10 @@ class TelemetryReader:
         return True
 
     def read(self):
+        """
+        Reads the current state from the shared memory buffer.
+        Returns an instance of rF2Telemetry, or None if not connected.
+        """
         if not self.connected:
             if not self.connect():
                 return None
@@ -127,6 +139,7 @@ class TelemetryReader:
         return data
 
     def close(self):
+        """Closes the mmap connection."""
         if self.mm:
             self.mm.close()
 
