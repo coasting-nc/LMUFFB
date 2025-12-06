@@ -68,6 +68,43 @@ STEP 3: RUN LMUFFB
    - Slide Rumble: Enable/disable vibration during tire slips
    - Road Details: Enable/disable synthetic road texture effects
 
+STEP 4: CONFIGURE YOUR SETUP
+================================================================================
+
+Now that everything is installed, you need to configure the game, vJoy, and LMUFFB
+to work together properly.
+
+IN-GAME CONFIGURATION (Le Mans Ultimate):
+------------------------------------------
+1. Controls Setup:
+   - Go to Settings \u003e Controls
+   - Bind **Steering** to the **vJoy Device Axis** (usually X-Axis)
+   - This allows the game to read steering input from vJoy
+
+2. Force Feedback Settings:
+   - You can technically turn off in-game FFB since it's going to the vJoy 
+     device (which has no motors), but leaving it on is fine as it drives 
+     the calculation LMUFFB reads
+   - RECOMMENDED: Set "FFB Smoothing" in-game to 0 (raw) so LMUFFB gets 
+     the cleanest data possible
+
+vJoy CONFIGURATION:
+-------------------
+1. Open vJoy Control Panel
+2. Configure one device with at least **one axis (X)**
+3. Ensure "Enable Force Feedback" is checked in vJoy configuration if 
+   available (though LMUFFB talks to your physical wheel via the bridge 
+   or directly)
+
+LMUFFB CONFIGURATION:
+---------------------
+1. Select your **Physical Wheel** if a device selector is implemented
+2. NOTE: The current C++ version outputs to vJoy, which requires a "feeder" 
+   or mapping software like vJoyFeeder or SimHub to bridge back to your 
+   physical wheel if not using DirectInput mode
+3. You need a bridge (like vJoy's own feeder or binding vJoy as the game 
+   input) to close the loop between the virtual device and your physical wheel
+
 TROUBLESHOOTING
 ================================================================================
 

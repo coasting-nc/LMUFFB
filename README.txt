@@ -39,6 +39,17 @@ If you experience issues:
 
 For more help, see the full README.md or visit the GitHub repository.
 
+CONFIGURATION:
+
+*   **In-Game (LMU)**:
+    *   **Controls**: Bind **Steering** to the **vJoy Device Axis** (usually X-Axis).
+    *   **FFB**: You can technically turn off in-game FFB since it's going to the vJoy device (which has no motors), but leaving it on is fine as it drives the calculation LMUFFB reads. Ideally, set "FFB Smoothing" in-game to 0 (raw) so LMUFFB gets the cleanest data.
+*   **vJoy**:
+    *   Configure one device with at least **one axis (X)**.
+    *   Ensure "Enable Force Feedback" is checked in vJoy configuration if available (though LMUFFB talks to your physical wheel via the bridge or directly).
+*   **LMUFFB**:
+    *   Select your **Physical Wheel** if a device selector is implemented (currently it drives vJoy, which requires a "feeder" or mapping software like vJoyFeeder or SimHub to bridge back to your physical wheel if not using DirectInput mode). *Note: The current C++ version outputs to vJoy. You need a bridge (like vJoy's own feeder or binding vJoy as the game input) to close the loop.*
+
 ================================================================================
 Version: 1.0.0
 License: See LICENSE file
