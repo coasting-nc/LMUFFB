@@ -10,10 +10,7 @@
 #include "src/GuiLayer.h"
 #include "src/Config.h"
 #include "src/DirectInputFFB.h"
-
-// vJoy Interface Headers (Assume user has these in include path)
-#include "public.h"
-#include "vjoyinterface.h"
+#include "src/DynamicVJoy.h"
 
 // Constants
 const char* SHARED_MEMORY_NAME = "$rFactor2SMMP_Telemetry$";
@@ -34,17 +31,20 @@ void FFBThread() {
     long axis_min = 1;
     long axis_max = 32768;
     
-    // Acquire vJoy
-    if (!vJoyEnabled()) {
-        std::cerr << "vJoy driver not enabled." << std::endl;
-        g_running = false;
-        return;
-    }
-    VjdStat status = GetVJDStatus(VJOY_DEVICE_ID);
-    if ((status == VJD_STAT_OWN) || ((status == VJD_STAT_FREE) && (!AcquireVJD(VJOY_DEVICE_ID)))) {
-        std::cerr << "Failed to acquire vJoy device " << VJOY_DEVICE_ID << std::endl;
-        g_running = false;
-        return;
+    // Attempt to load vJoy
+    bool vJoyActive = false;
+    if (DynamicVJoy::Get().Load()) {
+        if (DynamicVJoy::Get().Enabled()) {
+            VjdStat status = DynamicVJoy::Get().GetStatus(VJOY_DEVICE_ID);
+            if ((status == VJD_STAT_OWN) || ((status == VJD_STAT_FREE) && DynamicVJoy::Get().Acquire(VJOY_DEVICE_ID))) {
+                vJoyActive = true;
+                std::cout << "[vJoy] Device " << VJOY_DEVICE_ID << " acquired." << std::endl;
+            } else {
+                std::cerr << "[vJoy] Failed to acquire device " << VJOY_DEVICE_ID << std::endl;
+            }
+        } else {
+            std::cout << "[vJoy] Driver not enabled." << std::endl;
+        }
     }
 
     std::cout << "[FFB] Loop Started." << std::endl;
@@ -54,14 +54,14 @@ void FFBThread() {
             double force = 0.0;
             {
                 // Lock only if we are changing settings often, otherwise std::atomic for settings is better.
-                // For this prototype, we assume minimal contention.
-                // std::lock_guard<std::mutex> lock(g_engine_mutex);
                 force = g_engine.calculate_force(g_pTelemetry);
             }
 
-            // Update vJoy Axis (for monitoring)
-            long axis_val = (long)((force + 1.0) * 0.5 * (axis_max - axis_min) + axis_min);
-            SetAxis(axis_val, VJOY_DEVICE_ID, HID_USAGE_X);
+            // Update vJoy Axis (for monitoring) if active
+            if (vJoyActive) {
+                long axis_val = (long)((force + 1.0) * 0.5 * (axis_max - axis_min) + axis_min);
+                DynamicVJoy::Get().SetAxis(axis_val, VJOY_DEVICE_ID, 0x30); // 0x30 = HID_USAGE_X (hardcoded to avoid public.h dependency issues)
+            }
             
             // Update DirectInput (for FFB)
             DirectInputFFB::Get().UpdateForce(force);
@@ -71,7 +71,9 @@ void FFBThread() {
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 
-    RelinquishVJD(VJOY_DEVICE_ID);
+    if (vJoyActive) {
+        DynamicVJoy::Get().Relinquish(VJOY_DEVICE_ID);
+    }
     std::cout << "[FFB] Loop Stopped." << std::endl;
 }
 

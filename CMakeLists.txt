@@ -5,8 +5,6 @@ set(CMAKE_CXX_STANDARD 17)
 
 # vJoy SDK Location - Users should set this
 # We link against the installed vJoy SDK (headers/libs), we do NOT compile vJoy itself.
-set(VJOY_SDK_DIR "C:/Program Files/vJoy/SDK" CACHE PATH "Path to vJoy SDK")
-
 # ImGui Detection
 set(IMGUI_DIR "vendor/imgui")
 option(BUILD_HEADLESS "Build without GUI support" OFF)
@@ -37,20 +35,20 @@ else()
     set(IMGUI_SOURCES "")
 endif()
 
-include_directories(${VJOY_SDK_DIR}/inc)
+# include_directories(${VJOY_SDK_DIR}/inc)
 
 # Detect platform and use appropriate vJoy library
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+# if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     # 64-bit
-    link_directories(${VJOY_SDK_DIR}/lib/amd64)
-else()
+#    link_directories(${VJOY_SDK_DIR}/lib/amd64)
+# else()
     # 32-bit
-    link_directories(${VJOY_SDK_DIR}/lib/i386)
-endif()
+#    link_directories(${VJOY_SDK_DIR}/lib/i386)
+# endif()
 
-add_executable(LMUFFB main.cpp rF2Data.h src/GuiLayer.cpp src/GuiLayer.h src/Config.cpp src/Config.h src/DirectInputFFB.cpp src/DirectInputFFB.h ${IMGUI_SOURCES})
+add_executable(LMUFFB main.cpp rF2Data.h src/GuiLayer.cpp src/GuiLayer.h src/Config.cpp src/Config.h src/DirectInputFFB.cpp src/DirectInputFFB.h src/DynamicVJoy.h ${IMGUI_SOURCES})
 
-target_link_libraries(LMUFFB vJoyInterface.lib dinput8.lib dxguid.lib)
+target_link_libraries(LMUFFB dinput8.lib dxguid.lib)
 
 # Read Version
 file(STRINGS "VERSION" LMUFFB_VERSION)
@@ -67,16 +65,16 @@ add_custom_command(TARGET LMUFFB POST_BUILD
             "$<TARGET_FILE_DIR:LMUFFB>/README.txt")
 
 # Copy vJoy DLL to output directory
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+# if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     # 64-bit
-    add_custom_command(TARGET LMUFFB POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-                "${VJOY_SDK_DIR}/lib/amd64/vJoyInterface.dll"
-                "$<TARGET_FILE_DIR:LMUFFB>/vJoyInterface.dll")
-else()
+#    add_custom_command(TARGET LMUFFB POST_BUILD
+#        COMMAND ${CMAKE_COMMAND} -E copy
+#                "${VJOY_SDK_DIR}/lib/amd64/vJoyInterface.dll"
+#                "$<TARGET_FILE_DIR:LMUFFB>/vJoyInterface.dll")
+# else()
     # 32-bit
-    add_custom_command(TARGET LMUFFB POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-                "${VJOY_SDK_DIR}/lib/vJoyInterface.dll"
-                "$<TARGET_FILE_DIR:LMUFFB>/vJoyInterface.dll")
-endif()
+#    add_custom_command(TARGET LMUFFB POST_BUILD
+#        COMMAND ${CMAKE_COMMAND} -E copy
+#                "${VJOY_SDK_DIR}/lib/vJoyInterface.dll"
+#                "$<TARGET_FILE_DIR:LMUFFB>/vJoyInterface.dll")
+# endif()
