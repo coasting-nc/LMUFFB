@@ -88,3 +88,28 @@ The goal for future versions is to replace these with **Dynamic Telemetry-Based 
     *   **Implementation**:
         1.  **Vibration**: Scale vibration intensity linearly with `SlipRatio`. `Intensity = (SlipRatio - Threshold) * Gain`. This allows feeling the "spin up".
         2.  **Steering Lightness**: When rear wheels spin, the car often yaws. We can *reduce* the SoP effect slightly or modulate it with high-frequency noise to simulate the rear end "floating" on the power.
+
+---
+
+## Signal Interference & Clarity
+
+A critical challenge in FFB design is managing the "Noise Floor". When multiple effects are active simultaneously, they can interfere with each other or mask the underlying physics.
+
+### 1. Signal Masking
+*   **The Issue**: High-frequency vibrations (like **Lockup Rumble** or **Road Texture**) can physically overpower subtle torque changes (like **Understeer Lightness** or **SoP**). If the wheel is vibrating violently due to a lockup, the driver might miss the feeling of the rear end stepping out (SoP).
+*   **Mitigation**:
+    *   **Priority System**: Future versions should implement "Side-chaining" or "Ducking". For example, if a severe Lockup event occurs, reduce Road Texture gain to ensure the Lockup signal is clear.
+    *   **Frequency Separation**: Ideally, "Information" (Grip/SoP) should be low-frequency (< 20Hz), while "Texture" (Lockup/Spin/Road) should be high-frequency (> 50Hz). This helps the human hand distinguish them.
+
+### 2. Clipping
+*   **The Issue**: Summing multiple effects (Game Torque + SoP + Rumble) can easily exceed the 100% force capability of the motor.
+*   **Result**: The signal "clips" (flattens at max force). Information is lost. E.g., if you are cornering at 90% torque and a 20% SoP effect is added, you hit 100% and lose the detail of the SoP ramp-up.
+*   **Mitigation**:
+    *   **Master Limiter**: A soft-clip algorithm that compresses dynamic range rather than hard-clipping.
+    *   **Tuning**: Users are advised to set "Master Gain" such that peak cornering forces hover around 70-80%, leaving headroom for dynamic effects.
+
+### 3. Ambiguity (Texture Confusion)
+*   **The Issue**: **Lockup** and **Wheel Spin** often use similar "Synthetic Rumble" effects. In the heat of battle, a driver might confuse one for the other if relying solely on the tactile cue without context (pedal position).
+*   **Mitigation**:
+    *   **Distinct Frequencies**: Future updates will tune Lockup to be "Sharper/Higher Pitch" (square wave) and Wheel Spin to be "Rougher/Lower Pitch" (sawtooth or randomized).
+    *   **Context**: Since the driver knows if they are braking or accelerating, this ambiguity is usually resolved by context, but distinct tactile signatures help subconscious reaction times.
