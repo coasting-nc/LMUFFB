@@ -366,3 +366,127 @@ You'll need to regenerate your Visual Studio project from CMake for this to take
 
 ---
 
+_**User (2025-12-06 00:25Z)**_
+
+It now builds. But when I run the exe I get this:
+(see image)
+
+---
+
+_**Agent (model copilot/claude-haiku-4.5)**_
+
+<tool-use data-tool-type="read" data-tool-name="copilot_readFile">
+<details>
+<summary>Tool use: **copilot_readFile** • Reading [](file:///c%3A/dev/personal/LMUFFB/CMakeLists.txt)</summary>
+
+
+Read [](file:///c%3A/dev/personal/LMUFFB/CMakeLists.txt)
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="copilot_replaceString">
+<details>
+<summary>Tool use: **copilot_replaceString**</summary>
+
+Additional data:
+
+```json
+{
+  "vscodeToolId": "copilot_replaceString",
+  "isHidden": true
+}
+```
+Result:
+
+```json
+{
+  "invocationMessage": "Using \"Replace String in File\"",
+  "isConfirmed": {
+    "type": 1
+  },
+  "content": "&#96;&#96;&#96;plaintext\nadd_executable(LMUFFB main.cpp rF2Data.h src/GuiLayer.cpp src/GuiLayer.h ${IMGUI_SOURCES})\r\n\r\ntarget_link_libraries(LMUFFB vJoyInterface.lib)\r\n\r\n# Copy vJoy DLL to output directory\r\nif(CMAKE_SIZEOF_VOID_P EQUAL 8)\r\n    # 64-bit\r\n    add_custom_command(TARGET LMUFFB POST_BUILD\r\n        COMMAND ${CMAKE_COMMAND} -E copy\r\n                \"${VJOY_SDK_DIR}/bin/amd64/vJoyInterface.dll\"\r\n                \"$&lt;TARGET_FILE_DIR:LMUFFB&gt;/vJoyInterface.dll\")\r\nelse()\r\n    # 32-bit\r\n    add_custom_command(TARGET LMUFFB POST_BUILD\r\n        COMMAND ${CMAKE_COMMAND} -E copy\r\n                \"${VJOY_SDK_DIR}/bin/i386/vJoyInterface.dll\"\r\n                \"$&lt;TARGET_FILE_DIR:LMUFFB&gt;/vJoyInterface.dll\")\r\nendif()\n&#96;&#96;&#96;\n\n",
+  "textEditContent": "add_executable(LMUFFB main.cpp rF2Data.h src/GuiLayer.cpp src/GuiLayer.h ${IMGUI_SOURCES})\r\n\r\ntarget_link_libraries(LMUFFB vJoyInterface.lib)\r\n\r\n# Copy vJoy DLL to output directory\r\nif(CMAKE_SIZEOF_VOID_P EQUAL 8)\r\n    # 64-bit\r\n    add_custom_command(TARGET LMUFFB POST_BUILD\r\n        COMMAND ${CMAKE_COMMAND} -E copy\r\n                \"${VJOY_SDK_DIR}/bin/amd64/vJoyInterface.dll\"\r\n                \"$&lt;TARGET_FILE_DIR:LMUFFB&gt;/vJoyInterface.dll\")\r\nelse()\r\n    # 32-bit\r\n    add_custom_command(TARGET LMUFFB POST_BUILD\r\n        COMMAND ${CMAKE_COMMAND} -E copy\r\n                \"${VJOY_SDK_DIR}/bin/i386/vJoyInterface.dll\"\r\n                \"$&lt;TARGET_FILE_DIR:LMUFFB&gt;/vJoyInterface.dll\")\r\nendif()",
+  "toolCallResult": null
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+---
+
+The error shows that `vJoyInterface.dll` is missing. This DLL needs to be either:
+
+1. In the same directory as the executable, or
+2. In a directory on the system PATH
+
+Let me add a CMake command to copy the vJoy DLL to the build output directory: Done! I've updated the `CMakeLists.txt` to automatically copy the `vJoyInterface.dll` to the build output directory after compilation. This will place the DLL in the same directory as your executable so it can be found at runtime.
+
+Regenerate your Visual Studio project from CMake and rebuild to apply this change.
+
+---
+
+_**User (2025-12-06 00:26Z)**_
+
+The dll is in this location: C:\Program Files\vJoy\SDK\lib
+
+---
+
+_**Agent (model copilot/claude-haiku-4.5)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="run_in_terminal">
+<details>
+<summary>Tool use: **run_in_terminal**</summary>
+
+
+Parameters:
+
+```json
+{
+  "kind": "terminal",
+  "terminalToolSessionId": "e775a30a-8800-48ff-bfb9-87247c52ecb1",
+  "terminalCommandId": "tool-c5a0115d-5a22-48e4-a72f-bdefd8f89e16",
+  "commandLine": {
+    "original": "Get-ChildItem \"C:\\Program Files\\vJoy\\SDK\" -Recurse -Include \"*.dll\" | Select-Object FullName"
+  },
+  "language": "pwsh"
+}
+```
+Additional data:
+
+```json
+{
+  "vscodeToolId": "run_in_terminal",
+  "isHidden": false
+}
+```
+Result:
+
+```json
+{
+  "invocationMessage": "Using \"Run in Terminal\"",
+  "isConfirmed": {
+    "type": 4
+  },
+  "content": "",
+  "textEditContent": "",
+  "toolCallResult": null
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+---
+
+Let me check the actual structure of the vJoy SDK directory: 
+
+---
+

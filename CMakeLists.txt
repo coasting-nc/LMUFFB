@@ -45,4 +45,17 @@ add_executable(LMUFFB main.cpp rF2Data.h src/GuiLayer.cpp src/GuiLayer.h ${IMGUI
 
 target_link_libraries(LMUFFB vJoyInterface.lib)
 
-# Copy dll to output if possible, or instruct user
+# Copy vJoy DLL to output directory
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    # 64-bit
+    add_custom_command(TARGET LMUFFB POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                "${VJOY_SDK_DIR}/lib/amd64/vJoyInterface.dll"
+                "$<TARGET_FILE_DIR:LMUFFB>/vJoyInterface.dll")
+else()
+    # 32-bit
+    add_custom_command(TARGET LMUFFB POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                "${VJOY_SDK_DIR}/lib/vJoyInterface.dll"
+                "$<TARGET_FILE_DIR:LMUFFB>/vJoyInterface.dll")
+endif()
