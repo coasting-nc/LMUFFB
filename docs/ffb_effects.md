@@ -54,3 +54,37 @@ This document details the Force Feedback effects implemented in LMUFFB, how they
 | **Oversteer** | **SoP (Lateral G)** + Yaw logic | **Layered Effect**: Separate "Slip" channel. | **SoP + Rear Grip Logic**: Uses direct rear tire grip telemetry to boost SoP. |
 | **Lockup** | Not explicit (part of "Understeer" feel in iRacing logic) | **Pedal Haptics** (often sent to pedals, but can be on wheel) | **Wheel Rumble**: Direct rumble effect on the steering wheel when `SlipRatio` indicates locking. |
 | **Wheel Spin** | Not explicit | **Pedal Haptics** / Wheel Rumble | **Wheel Rumble**: Direct rumble effect when `SlipRatio` indicates positive spin. |
+
+---
+
+## Future: Dynamic vs Synthetic Effects
+
+Currently, LMUFFB (and many sim apps) use "Canned" or "Synthetic" effects for certain events—generating a predefined vibration wave when a threshold is crossed.
+The goal for future versions is to replace these with **Dynamic Telemetry-Based Signals** that evolve organically with the physics.
+
+### 1. Oversteer (Rear Grip Loss)
+*   **Current State**: **Dynamic**. We use the delta between Front and Rear grip (`GripFract`) to mathematically boost the SoP effect. This is already a physics-derived method, not a canned rumble.
+*   **Future Improvement**:
+    *   **Aligning Torque Integration**: Instead of just boosting SoP, we could calculate the *Self Aligning Torque (SAT)* of the rear tires explicitly and mix it into the steering signal. This would provide a "counter-steer" force that pulls the wheel into the slide naturally, rather than just adding "weight".
+
+### 2. Braking Lockup (Pre-Lockup Feel)
+*   **Current State**: **Synthetic (Rumble)**. When `SlipRatio < -0.2`, a square wave vibration is triggered.
+*   **The Problem**: It acts as a binary alarm ("You are locking up!"). It doesn't help you find the limit *before* locking.
+*   **Future Solution**: **Progressive Scrub**.
+    *   **Logic**: Tires generate maximum braking force at a specific slip ratio (usually around -0.10 to -0.15). Beyond this peak, grip falls off.
+    *   **Implementation**: Create a vibration signal where **Frequency** and **Amplitude** are functions of `SlipRatio`.
+        *   `SlipRatio 0.0 to -0.1`: No effect (Pure grip).
+        *   `SlipRatio -0.1 to -0.2`: **High Frequency / Low Amplitude** "Micro-scrub". This tells the driver they are at the limit (Peak braking).
+        *   `SlipRatio < -0.2`: **Low Frequency / High Amplitude** "Judder". This indicates the wheel is beginning to lock/hop.
+    *   **Comparison**:
+        *   **Marvin's AIRA**: Uses "Tactile" channels (often sent to bass shakers) that allow defining frequency curves mapped to telemetry. This is effectively the "Dynamic" approach but implemented via sound card output.
+        *   **iRFFB**: Does not explicitly add lockup vibrations. It relies on the game physics engine to reduce the steering torque naturally as the front load changes during braking.
+
+### 3. Wheel Spin (Traction Loss)
+*   **Current State**: **Synthetic (Rumble)**. Triggered when `SlipRatio > 0.2`.
+*   **The Problem**: Similar to lockup, it's a late warning.
+*   **Future Solution**: **Torque Drop-off Simulation**.
+    *   **Logic**: When rear tires spin, the car's yaw acceleration often spikes, and the steering torque should change.
+    *   **Implementation**:
+        1.  **Vibration**: Scale vibration intensity linearly with `SlipRatio`. `Intensity = (SlipRatio - Threshold) * Gain`. This allows feeling the "spin up".
+        2.  **Steering Lightness**: When rear wheels spin, the car often yaws. We can *reduce* the SoP effect slightly or modulate it with high-frequency noise to simulate the rear end "floating" on the power.
