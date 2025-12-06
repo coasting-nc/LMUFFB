@@ -1,6 +1,8 @@
-# LMU Force Feedback App (C++ Version)
+# LMUFFB
 
-This is the main C++ implementation of the LMU Force Feedback App, designed for high performance and low latency.
+A FFB app for LMU, similar to irFFB and Marvin’s iRacing App
+
+Experimental pre-alpha version 0.1.
 
 ## Features
 
