@@ -13,33 +13,30 @@ This document details the Force Feedback effects implemented in LMUFFB, how they
 
 ## 2. Oversteer (Rear Grip Loss)
 *   **Goal**: To communicate when the rear tires are losing grip (loose/sliding), allowing the driver to catch a slide early.
-*   **Telemetry**: Derived from `mGripFract` of the **Rear Left (RL)** and **Rear Right (RR)** tires, and `mLocalAccel.x` (Lateral G).
-*   **Mechanism**:
-    1.  **Seat of Pants (SoP)**: Injects Lateral G-force into the wheel torque. This provides a "weight" cue that correlates with the car's yaw/cornering force.
-    2.  **Rear Traction Loss**: Monitors the rear tires. If rear grip drops significantly while the front has grip, it boosts the SoP effect or adds a specific vibration/cue to signal rotation.
-*   **Customization**:
-    *   **SoP Effect (Slider)**: Controls the strength of the Lateral G injection.
-    *   **Oversteer Boost (Slider)**: Controls how much the SoP effect is amplified when rear grip is lost.
+*   **Current Dynamic Implementation (v0.2.2+)**:
+    *   **Aligning Torque Integration**: Calculates a synthetic "Aligning Torque" for the rear axle using `Rear Lateral Force`.
+    *   **Mechanism**: This force is injected into the steering signal. If the rear tires generate large lateral forces (resisting a slide), the steering wheel will naturally counter-steer, providing a physical cue to catch the slide. This is modulated by the `Oversteer Boost` slider.
+    *   **SoP (Seat of Pants)**: Also injects Lateral G-force into the wheel torque to provide "weight" cues.
 
-## 3. Braking Lockup
-*   **Goal**: To signal when tires have stopped rotating during braking (flat-spotting risk).
-*   **Telemetry**:
-    *   `mUnfilteredBrake` > 0.
-    *   `mSlipRatio` or `mGripFract`: If the tire rotation speed deviates massively from the road speed (Slip Ratio -> -1.0 means locked).
-*   **Mechanism**: Injects a high-frequency, harsh vibration ("Rumble") when locking is detected.
+## 3. Braking Lockup (Progressive Scrub)
+*   **Goal**: To signal when tires have stopped rotating during braking (flat-spotting risk), allowing the driver to find the threshold.
+*   **Current Dynamic Implementation (v0.2.2+)**:
+    *   **Progressive Vibration**: Signal is derived from `SlipRatio` deviation.
+    *   **Range**: -0.1 (Peak Grip) to -0.5 (Locking).
+    *   **Frequency**: Transitions from High Pitch (60Hz) at the limit to Low Pitch (10Hz) at full lock.
+    *   **Amplitude**: Scales linearly with severity.
 *   **Customization**:
     *   **Lockup Rumble (Toggle)**: Enable/Disable.
     *   **Lockup Gain (Slider)**: Intensity of the vibration.
 
-## 4. Wheel Spin (Acceleration Slip)
+## 4. Wheel Spin (Traction Loss)
 *   **Goal**: To signal when the driven wheels are spinning under power.
-*   **Telemetry**:
-    *   `mUnfilteredThrottle` > 0.
-    *   `mSlipRatio`: If positive and high (wheel spinning faster than road speed).
-*   **Mechanism**: Injects a medium-frequency vibration ("Scrub") to indicate power-slide or burnout.
+*   **Current Dynamic Implementation (v0.2.2+)**:
+    *   **Torque Reduction**: As rear wheel slip increases, the total FFB force is reduced (simulating "floating" rear end).
+    *   **Vibration**: Frequency scales with wheel speed difference (Slip Ratio), giving a "revving up" sensation through the rim.
 *   **Customization**:
-    *   **Wheel Spin Rumble (Toggle)**: Enable/Disable.
-    *   **Wheel Spin Gain (Slider)**: Intensity.
+    *   **Spin Traction Loss (Toggle)**: Enable/Disable.
+    *   **Spin Gain (Slider)**: Intensity.
 
 ## 5. Road & Slide Texture
 *   **Slide Texture**: Adds "scrubbing" vibration when any tire is sliding laterally (high Slip Angle).
@@ -47,37 +44,21 @@ This document details the Force Feedback effects implemented in LMUFFB, how they
 
 ---
 
+## Legacy Implementation Notes (Pre-v0.2.2)
+
+*   **Old Oversteer**: Relied solely on Grip Delta between Front/Rear to boost SoP.
+*   **Old Lockup**: Binary rumble triggered when `SlipRatio < -0.2`.
+*   **Old Wheel Spin**: Binary rumble triggered when `SlipRatio > 0.2`.
+
+---
+
 ## Comparison of Implementation
 
 | Effect | iRFFB (iRacing) | Marvin's AIRA (iRacing) | LMUFFB (LMU/rF2) |
 | :--- | :--- | :--- | :--- |
-| **Oversteer** | **SoP (Lateral G)** + Yaw logic | **Layered Effect**: Separate "Slip" channel. | **SoP + Rear Grip Logic**: Uses direct rear tire grip telemetry to boost SoP. |
-| **Lockup** | Not explicit (part of "Understeer" feel in iRacing logic) | **Pedal Haptics** (often sent to pedals, but can be on wheel) | **Wheel Rumble**: Direct rumble effect on the steering wheel when `SlipRatio` indicates locking. |
-| **Wheel Spin** | Not explicit | **Pedal Haptics** / Wheel Rumble | **Wheel Rumble**: Direct rumble effect when `SlipRatio` indicates positive spin. |
-
----
-
-## Implemented Dynamic Effects (v0.2.2)
-
-In version 0.2.2, LMUFFB moved from synthetic "Canned" effects to **Dynamic Telemetry-Based Signals**.
-
-### 1. Oversteer (Aligning Torque Integration)
-*   **Logic**: Calculates a synthetic "Aligning Torque" for the rear axle using `Rear Lateral Force`.
-*   **Mechanism**: This force is injected into the steering signal. If the rear tires generate large lateral forces (resisting a slide), the steering wheel will naturally counter-steer, providing a physical cue to catch the slide. This is modulated by the `Oversteer Boost` slider.
-
-### 2. Braking Lockup (Progressive Scrub)
-*   **Old Logic**: Binary rumble when slip < -0.2.
-*   **New Logic**: Progressive Vibration based on `SlipRatio`.
-    *   **Range**: -0.1 (Peak Grip) to -0.5 (Locking).
-    *   **Frequency**: Transitions from High Pitch (60Hz) at the limit to Low Pitch (10Hz) at full lock.
-    *   **Amplitude**: Scales linearly with severity.
-    *   **Benefit**: Allows the driver to feel the "edge" of the tire before it fully locks.
-
-### 3. Wheel Spin (Torque Drop-off)
-*   **Old Logic**: Binary rumble when slip > 0.2.
-*   **New Logic**:
-    *   **Torque Reduction**: As rear wheel slip increases, the total FFB force is reduced (simulating "floating" rear end).
-    *   **Vibration**: Frequency scales with wheel speed difference (Slip Ratio), giving a "revving up" sensation through the rim.
+| **Oversteer** | **SoP (Lateral G)** + Yaw logic | **Layered Effect**: Separate "Slip" channel. | **Rear Aligning Torque + SoP**: Synthetic rear-axle torque integration. |
+| **Lockup** | Not explicit (part of "Understeer" feel in iRacing logic) | **Pedal Haptics** (often sent to pedals, but can be on wheel) | **Progressive Wheel Scrub**: Dynamic frequency/amplitude based on slip ratio. |
+| **Wheel Spin** | Not explicit | **Pedal Haptics** / Wheel Rumble | **Torque Drop + Vibration**: Simulates traction loss + progressive rumble. |
 
 ---
 

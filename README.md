@@ -116,6 +116,17 @@ The application reads telemetry from the rFactor 2 engine (Le Mans Ultimate) via
     ```
     *Alternatively, use `cmake --build .` instead of `nmake`.*
 
+
+## Building the Installer
+
+To create the `LMUFFB_Setup.exe`:
+
+1.  **Install Inno Setup**: Download from [jrsoftware.org](https://jrsoftware.org/isdl.php).
+2.  **Build the Project**: Ensure you have built the `Release` version of `LMUFFB.exe` using Visual Studio.
+3.  **Run Compiler**: Open `installer/lmuffb.iss` in Inno Setup Compiler and click **Compile**.
+4.  **Output**: The installer will be generated in `installer/Output/`.
+
+
 ## Documentation
 
 *   [FFB Effects & Customization Guide](docs/ffb_effects.md)
