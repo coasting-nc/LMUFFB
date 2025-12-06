@@ -32,7 +32,7 @@ bool GuiLayer::Init() {
     // Create Application Window
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"LMUFFB", NULL };
     ::RegisterClassExW(&wc);
-    g_hwnd = ::CreateWindowW(wc.lpszClassName, L"LMUFFB Config", WS_OVERLAPPEDWINDOW, 100, 100, 800, 600, NULL, NULL, wc.hInstance, NULL);
+    g_hwnd = ::CreateWindowW(wc.lpszClassName, L"LMUFFB v0.1", WS_OVERLAPPEDWINDOW, 100, 100, 800, 600, NULL, NULL, wc.hInstance, NULL);
 
     // Initialize Direct3D
     if (!CreateDeviceD3D(g_hwnd)) {
@@ -110,7 +110,8 @@ bool GuiLayer::Render(FFBEngine& engine) {
 }
 
 void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
-    ImGui::Begin("FFB Configuration");
+    // Show Version in title bar or top text
+    ImGui::Begin("LMUFFB v0.1 - FFB Configuration");
 
     ImGui::Text("Core Settings");
     ImGui::SliderFloat("Master Gain", &engine.m_gain, 0.0f, 2.0f, "%.2f");
