@@ -1,6 +1,8 @@
 #ifndef FFBENGINE_H
 #define FFBENGINE_H
 
+#define NOMINMAX
+
 #include <cmath>
 #include <algorithm>
 #include "rF2Data.h"
@@ -9,18 +11,18 @@
 class FFBEngine {
 public:
     // Settings (GUI Sliders)
-    double m_gain = 1.0;          // Master Gain (0.0 - 2.0)
-    double m_smoothing = 0.5;     // Smoothing factor (placeholder)
-    double m_understeer_effect = 1.0; // 0.0 - 1.0 (How much grip loss affects force)
-    double m_sop_effect = 0.5;    // 0.0 - 1.0 (Lateral G injection strength)
-    double m_min_force = 0.0;     // 0.0 - 0.20 (Deadzone removal)
+    float m_gain = 1.0f;          // Master Gain (0.0 - 2.0)
+    float m_smoothing = 0.5f;     // Smoothing factor (placeholder)
+    float m_understeer_effect = 1.0f; // 0.0 - 1.0 (How much grip loss affects force)
+    float m_sop_effect = 0.5f;    // 0.0 - 1.0 (Lateral G injection strength)
+    float m_min_force = 0.0f;     // 0.0 - 0.20 (Deadzone removal)
     
     // Texture toggles
     bool m_slide_texture_enabled = true;
-    double m_slide_texture_gain = 0.5; // 0.0 - 1.0
+    float m_slide_texture_gain = 0.5f; // 0.0 - 1.0
     
     bool m_road_texture_enabled = false;
-    double m_road_texture_gain = 0.5; // 0.0 - 1.0
+    float m_road_texture_gain = 0.5f; // 0.0 - 1.0
 
     // Internal state
     double m_prev_vert_deflection[2] = {0.0, 0.0}; // FL, FR
@@ -41,7 +43,7 @@ public:
         double avg_grip = (grip_l + grip_r) / 2.0;
         
         // Clamp grip 0-1 for safety
-        avg_grip = std::max(0.0, std::min(1.0, avg_grip));
+        avg_grip = (std::max)(0.0, (std::min)(1.0, avg_grip));
         
         double grip_factor = 1.0 - ((1.0 - avg_grip) * m_understeer_effect);
         double output_force = game_force * grip_factor;
@@ -104,7 +106,7 @@ public:
         }
 
         // Clip
-        return std::max(-1.0, std::min(1.0, norm_force));
+        return (std::max)(-1.0, (std::min)(1.0, norm_force));
     }
 };
 

@@ -31,7 +31,15 @@ else()
 endif()
 
 include_directories(${VJOY_SDK_DIR}/inc)
-link_directories(${VJOY_SDK_DIR}/lib/amd64)
+
+# Detect platform and use appropriate vJoy library
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    # 64-bit
+    link_directories(${VJOY_SDK_DIR}/lib/amd64)
+else()
+    # 32-bit
+    link_directories(${VJOY_SDK_DIR}/lib/i386)
+endif()
 
 add_executable(LMUFFB main.cpp rF2Data.h src/GuiLayer.cpp src/GuiLayer.h ${IMGUI_SOURCES})
 
