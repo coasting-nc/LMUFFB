@@ -39,3 +39,67 @@ total_force += crunch;
 Increase the damping coefficient momentarily, making the wheel feel "heavy/stuck". (Harder to implement in the current "Force-only" architecture without Damping support).
 
 **Recommendation:** Implement Option A (Pulse/Crunch) in the next release.
+
+
+## Corrected Code Implementation
+
+You need to modify `FFBEngine.h` to add the phase state variable and update the calculation logic.
+
+**Step 1: Add the state variable**
+Add `m_bottoming_phase` to the class member variables (alongside `m_lockup_phase`, etc.).
+
+**Step 2: Update the logic**
+Replace the DC offset logic with the oscillator logic.
+
+Here is the corrected file segment for `FFBEngine.h`:
+
+```cpp
+class FFBEngine {
+public:
+    // ... [Existing Variables] ...
+
+    // Phase Accumulators
+    double m_lockup_phase = 0.0;
+    double m_spin_phase = 0.0;
+    double m_slide_phase = 0.0;
+    double m_bottoming_phase = 0.0; // <--- ADD THIS
+
+    double calculate_force(const rF2Telemetry* data) {
+        // ... [Existing Code] ...
+
+        // --- 5. Suspension Bottoming (High Load Impulse) ---
+        if (m_bottoming_enabled) {
+            // Detect sudden high load spikes which indicate bottoming out
+            double max_load = (std::max)(fl.mTireLoad, fr.mTireLoad);
+            
+            // Threshold: 8000N is a heavy hit
+            const double BOTTOM_THRESHOLD = 8000.0;
+            
+            if (max_load > BOTTOM_THRESHOLD) {
+                double excess = max_load - BOTTOM_THRESHOLD;
+                
+                // Non-linear response (Square root softens the initial onset)
+                double bump_magnitude = std::sqrt(excess) * m_bottoming_gain * 0.5;
+                
+                // FIX: Use a 50Hz "Crunch" oscillation instead of directional DC offset
+                double freq = 50.0; 
+                
+                // Phase Integration
+                m_bottoming_phase += freq * dt * TWO_PI;
+                if (m_bottoming_phase > TWO_PI) m_bottoming_phase -= TWO_PI;
+
+                // Generate vibration (Sine wave)
+                // This creates a heavy shudder regardless of steering direction
+                double crunch = std::sin(m_bottoming_phase) * bump_magnitude;
+                
+                total_force += crunch;
+            }
+        }
+
+        // ... [Rest of Code] ...
+    }
+};
+```
+
+## Recommendation
+Apply this fix immediately. The current implementation causes erratic behavior that could be misinterpreted by users as a hardware fault or "clipping" issue. The fix aligns with the "Phase Integration" architecture introduced in v0.3.0.
