@@ -10,10 +10,11 @@
   - Store configurations in `%APPDATA%/LMUFFB/` directory
 
 - [ ] **User Feedback & Error Handling**
-  - Display game connection errors as GUI notifications instead of console output
+  - Display game connection errors as GUI notifications (when GUI available/installed) in addition to console output 
   - Show modal dialog when game is not running (if GUI enabled)
   - Display connection status indicator in the GUI window
   - Implement error retry mechanism with visual feedback
+  - At startup, still show the main GUI window with the configuration sliders even if the game (LMU or rF2) is not running. Just Display the error popup (game not running) on top.
 
 - [ ] **Change Log**
   - Create `CHANGELOG.md` file tracking all releases and major commits
