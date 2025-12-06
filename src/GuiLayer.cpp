@@ -1,6 +1,8 @@
 #include "GuiLayer.h"
 #include "Config.h"
+#include "DirectInputFFB.h"
 #include <iostream>
+#include <vector>
 
 #ifdef ENABLE_IMGUI
 #include "imgui.h"
@@ -71,6 +73,10 @@ void GuiLayer::Shutdown() {
     ::UnregisterClassW(L"LMUFFB", GetModuleHandle(NULL));
 }
 
+void* GuiLayer::GetWindowHandle() {
+    return (void*)g_hwnd;
+}
+
 bool GuiLayer::Render(FFBEngine& engine) {
     // Handle Windows messages
     MSG msg;
@@ -114,6 +120,34 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     ImGui::Begin("LMUFFB v0.1 - FFB Configuration");
 
     ImGui::Text("Core Settings");
+    
+    // Device Selection
+    static std::vector<DeviceInfo> devices;
+    static int selected_device_idx = -1;
+    
+    // Scan button (or auto scan once)
+    if (devices.empty()) {
+        devices = DirectInputFFB::Get().EnumerateDevices();
+    }
+
+    if (ImGui::BeginCombo("FFB Device", selected_device_idx >= 0 ? devices[selected_device_idx].name.c_str() : "Select Device...")) {
+        for (int i = 0; i < devices.size(); i++) {
+            bool is_selected = (selected_device_idx == i);
+            if (ImGui::Selectable(devices[i].name.c_str(), is_selected)) {
+                selected_device_idx = i;
+                DirectInputFFB::Get().SelectDevice(devices[i].guid);
+            }
+            if (is_selected) ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+    if (ImGui::Button("Rescan Devices")) {
+        devices = DirectInputFFB::Get().EnumerateDevices();
+        selected_device_idx = -1;
+    }
+
+    ImGui::Separator();
+    
     ImGui::SliderFloat("Master Gain", &engine.m_gain, 0.0f, 2.0f, "%.2f");
     ImGui::SliderFloat("Smoothing", &engine.m_smoothing, 0.0f, 1.0f, "%.2f");
     ImGui::SliderFloat("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f");

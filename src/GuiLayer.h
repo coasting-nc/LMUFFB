@@ -11,6 +11,8 @@ public:
     static bool Init();
     static void Shutdown();
     
+    static void* GetWindowHandle(); // Returns HWND
+
     // Returns true if the GUI is active/focused (affects lazy rendering)
     static bool Render(FFBEngine& engine);
 

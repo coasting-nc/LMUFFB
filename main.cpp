@@ -9,6 +9,7 @@
 #include "FFBEngine.h"
 #include "src/GuiLayer.h"
 #include "src/Config.h"
+#include "src/DirectInputFFB.h"
 
 // vJoy Interface Headers (Assume user has these in include path)
 #include "public.h"
@@ -58,8 +59,12 @@ void FFBThread() {
                 force = g_engine.calculate_force(g_pTelemetry);
             }
 
+            // Update vJoy Axis (for monitoring)
             long axis_val = (long)((force + 1.0) * 0.5 * (axis_max - axis_min) + axis_min);
             SetAxis(axis_val, VJOY_DEVICE_ID, HID_USAGE_X);
+            
+            // Update DirectInput (for FFB)
+            DirectInputFFB::Get().UpdateForce(force);
         }
 
         // Sleep 2ms ~ 500Hz. Ideally use high_resolution_clock wait for precise 400Hz.
@@ -93,8 +98,14 @@ int main(int argc, char* argv[]) {
             // For now, continue but set g_running false if critical.
             // Actually, GuiLayer::Init() handles window creation.
         }
+        
+        // Initialize DirectInput (Requires HWND)
+        DirectInputFFB::Get().Initialize((HWND)GuiLayer::GetWindowHandle());
+        
     } else {
         std::cout << "Running in HEADLESS mode." << std::endl;
+        // Headless DI init (might fail if HWND is NULL but some drivers allow it, or windowless mode)
+        DirectInputFFB::Get().Initialize(NULL);
     }
 
     // 1. Setup Shared Memory
@@ -143,6 +154,8 @@ int main(int argc, char* argv[]) {
     // Cleanup
     if (!headless) GuiLayer::Shutdown();
     if (ffb_thread.joinable()) ffb_thread.join();
+    
+    DirectInputFFB::Get().Shutdown();
     
     if (g_pTelemetry) UnmapViewOfFile(g_pTelemetry);
     if (hMapFile) CloseHandle(hMapFile);

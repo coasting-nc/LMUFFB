@@ -48,9 +48,9 @@ else()
     link_directories(${VJOY_SDK_DIR}/lib/i386)
 endif()
 
-add_executable(LMUFFB main.cpp rF2Data.h src/GuiLayer.cpp src/GuiLayer.h src/Config.cpp src/Config.h ${IMGUI_SOURCES})
+add_executable(LMUFFB main.cpp rF2Data.h src/GuiLayer.cpp src/GuiLayer.h src/Config.cpp src/Config.h src/DirectInputFFB.cpp src/DirectInputFFB.h ${IMGUI_SOURCES})
 
-target_link_libraries(LMUFFB vJoyInterface.lib)
+target_link_libraries(LMUFFB vJoyInterface.lib dinput8.lib dxguid.lib)
 
 # Copy vJoy DLL to output directory
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
