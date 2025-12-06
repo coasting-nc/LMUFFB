@@ -4,6 +4,10 @@ A FFB app for LMU, similar to irFFB and Marvin’s iRacing App
 
 Experimental pre-alpha version 0.1.
 
+## Architecture
+
+The application reads telemetry from the rFactor 2 engine (Le Mans Ultimate) via Shared Memory and calculates a synthetic Force Feedback signal to send to a vJoy device.
+
 ## Features
 
 *   **High Performance Core**: Native C++ Multi-threaded architecture.
@@ -22,9 +26,32 @@ Experimental pre-alpha version 0.1.
 
 ![LMUFFB GUI](docs/screenshots/app.png)
 
-## Architecture
+## Installation (End Users)
 
-The application reads telemetry from the rFactor 2 engine (Le Mans Ultimate) via Shared Memory and calculates a synthetic Force Feedback signal to send to a vJoy device.
+### Prerequisites
+*   **vJoy Driver**: Install version **2.1.9.1** (by jshafer817) or compatible. Download from [vJoy releases](https://github.com/jshafer817/vJoy/releases) or the [vJoy Compatibility Guide](docs/vjoy_compatibility.md).
+*   **rFactor 2 / Le Mans Ultimate**: The game must be installed.
+*   **rF2 Shared Memory Plugin**: Download and install from [the plugin repository](https://github.com/dallasformula/rF2SharedMemoryMapPlugin) into your `Le Mans Ultimate/Plugins` folder.
+
+### Running LMUFFB
+
+1.  **Download** the latest release of `LMUFFB.exe` from the [Releases](../../releases) page.
+2.  **Extract** the archive to your desired location.
+3.  **Important**: Ensure `vJoyInterface.dll` is in the same folder as `LMUFFB.exe`. 
+    - If the build process copied it automatically, it should already be there.
+    - If not, manually copy `vJoyInterface.dll` from `C:\Program Files\vJoy\SDK\lib\amd64\` (for 64-bit) or `C:\Program Files\vJoy\SDK\lib\` (for 32-bit) to the folder containing `LMUFFB.exe`.
+    - Alternatively, ensure `vJoyInterface.dll` is in a system PATH directory (e.g., `System32`).
+4.  **Start rFactor 2 / Le Mans Ultimate** and load a race.
+5.  **Run `LMUFFB.exe`**. A GUI window should appear with tuning sliders.
+6.  **Configure your wheel** in the GUI and enjoy force feedback!
+
+### Troubleshooting
+
+- **"vJoyInterface.dll not found"**: Ensure the DLL is in the same folder as the executable or in your system PATH.
+- **"Could not open file mapping object"**: This is normal if the game isn't running. Start rFactor 2 / Le Mans Ultimate first.
+- **No force feedback**: Check that vJoy is installed and the rF2 Shared Memory Plugin is enabled in the game.
+
+
 
 ### Prerequisites
 
@@ -83,29 +110,4 @@ The application reads telemetry from the rFactor 2 engine (Le Mans Ultimate) via
 *   [vJoy Compatibility Guide](docs/vjoy_compatibility.md)
 *   [Licensing & Redistribution](docs/licensing.md)
 *   [Python Prototype & Porting Guides](docs/python_version/)
-
-## Installation (End Users)
-
-### Prerequisites
-*   **vJoy Driver**: Install version **2.1.9.1** (by jshafer817) or compatible. Download from [vJoy releases](https://github.com/jshafer817/vJoy/releases) or the [vJoy Compatibility Guide](docs/vjoy_compatibility.md).
-*   **rFactor 2 / Le Mans Ultimate**: The game must be installed.
-*   **rF2 Shared Memory Plugin**: Download and install from [the plugin repository](https://github.com/dallasformula/rF2SharedMemoryMapPlugin) into your `Le Mans Ultimate/Plugins` folder.
-
-### Running LMUFFB
-
-1.  **Download** the latest release of `LMUFFB.exe` from the [Releases](../../releases) page.
-2.  **Extract** the archive to your desired location.
-3.  **Important**: Ensure `vJoyInterface.dll` is in the same folder as `LMUFFB.exe`. 
-    - If the build process copied it automatically, it should already be there.
-    - If not, manually copy `vJoyInterface.dll` from `C:\Program Files\vJoy\SDK\lib\amd64\` (for 64-bit) or `C:\Program Files\vJoy\SDK\lib\` (for 32-bit) to the folder containing `LMUFFB.exe`.
-    - Alternatively, ensure `vJoyInterface.dll` is in a system PATH directory (e.g., `System32`).
-4.  **Start rFactor 2 / Le Mans Ultimate** and load a race.
-5.  **Run `LMUFFB.exe`**. A GUI window should appear with tuning sliders.
-6.  **Configure your wheel** in the GUI and enjoy force feedback!
-
-### Troubleshooting
-
-- **"vJoyInterface.dll not found"**: Ensure the DLL is in the same folder as the executable or in your system PATH.
-- **"Could not open file mapping object"**: This is normal if the game isn't running. Start rFactor 2 / Le Mans Ultimate first.
-- **No force feedback**: Check that vJoy is installed and the rF2 Shared Memory Plugin is enabled in the game.
 
