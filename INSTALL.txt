@@ -1,0 +1,114 @@
+================================================================================
+                         LMUFFB Installation Guide
+================================================================================
+
+This guide will walk you through setting up LMUFFB for Le Mans Ultimate.
+
+STEP 1: INSTALL vJoy DRIVER
+================================================================================
+
+vJoy is a virtual joystick driver that LMUFFB uses to send force feedback
+to your wheel. You must install it before running LMUFFB.
+
+1. Download vJoy 2.1.9.1:
+   - Visit: https://github.com/jshafer817/vJoy/releases
+   - Download: vJoySetup-2.1.9.1.exe (or the latest stable version)
+   
+2. Run the installer:
+   - Execute vJoySetup-2.1.9.1.exe
+   - Follow the installation wizard
+   - Select "Install" when prompted
+   - Restart your computer if prompted
+
+3. Verify installation:
+   - Open the vJoy Control Panel (search in Start menu for "vJoy")
+   - You should see one or more virtual joystick devices listed
+   - If you see your device, vJoy is installed correctly
+
+STEP 2: INSTALL rF2 SHARED MEMORY PLUGIN
+================================================================================
+
+LMUFFB reads telemetry from Le Mans Ultimate via the rF2 Shared Memory Plugin.
+You must install this plugin in your game.
+
+1. Download the plugin:
+   - Visit: https://github.com/dallasformula/rF2SharedMemoryMapPlugin
+   - Download the latest release (plugin DLL)
+
+2. Install to your game:
+   - Locate your Le Mans Ultimate installation folder
+     (Usually: C:\Program Files (x86)\Steam\steamapps\common\Le Mans Ultimate)
+   - Navigate to: Le Mans Ultimate\Plugins
+   - Copy the rF2SharedMemoryMap.dll file into this folder
+
+3. Enable in game:
+   - Launch Le Mans Ultimate
+   - Go to Settings > Plugins
+   - Find and enable "rF2 Shared Memory Map"
+   - Restart the game
+
+STEP 3: RUN LMUFFB
+================================================================================
+
+1. Extract LMUFFB.exe to your desired location
+   (Ensure vJoyInterface.dll is in the same folder as LMUFFB.exe)
+
+2. Start Le Mans Ultimate and load a race
+
+3. Run LMUFFB.exe
+   - A window should appear with force feedback tuning sliders
+   - If you see "Could not open file mapping object", ensure Le Mans Ultimate
+     is running with the rF2 Shared Memory Plugin enabled
+
+4. Adjust settings:
+   - Master Gain: Control overall force feedback strength
+   - Understeer (Grip): Feel tire grip loss as the value drops
+   - SoP (Lateral G): Inject seat-of-pants effects from lateral acceleration
+   - Min Force: Minimal force threshold to overcome wheel friction
+   - Slide Rumble: Enable/disable vibration during tire slips
+   - Road Details: Enable/disable synthetic road texture effects
+
+TROUBLESHOOTING
+================================================================================
+
+Problem: "vJoyInterface.dll not found" error
+Solution:
+  - Ensure vJoyInterface.dll is in the same folder as LMUFFB.exe
+  - If missing, copy from: C:\Program Files\vJoy\SDK\lib\amd64\ (64-bit)
+                        or C:\Program Files\vJoy\SDK\lib\ (32-bit)
+
+Problem: "Could not open file mapping object" message
+Solution:
+  - Start Le Mans Ultimate BEFORE running LMUFFB
+  - Verify the rF2 Shared Memory Plugin is installed and enabled
+  - Check Settings > Plugins in Le Mans Ultimate
+
+Problem: No force feedback in the wheel
+Solution:
+  - Verify vJoy Control Panel shows your joystick device
+  - Check that your wheel is configured to use vJoy device in game settings
+  - Try adjusting the Master Gain slider in LMUFFB
+  - Ensure your wheel is on and connected
+
+Problem: The app crashes or behaves unexpectedly
+Solution:
+  - Try reinstalling vJoy
+  - Verify Le Mans Ultimate is fully updated
+  - Check that the rF2 Shared Memory Plugin is the latest version
+  - Report the issue on GitHub with error details
+
+ADVANCED: CUSTOM INSTALLATION PATHS
+================================================================================
+
+If vJoy is installed in a non-standard location, you may need to:
+1. Manually copy vJoyInterface.dll to the LMUFFB folder
+2. Or add the vJoy SDK\lib folder to your system PATH
+
+For technical details, see: docs/vjoy_compatibility.md
+
+================================================================================
+Need more help?
+- See README.md for full documentation
+- Visit: https://github.com/coasting-nc/LMUFFB
+- Check: docs/vjoy_compatibility.md for vJoy-specific issues
+================================================================================
