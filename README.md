@@ -129,6 +129,7 @@ To create the `LMUFFB_Setup.exe`:
 
 ## Documentation
 
+*   [The Physics of Feel - Driver's Guide](docs/the_physics_of__feel_-_driver_guide.md) - **Comprehensive guide** explaining how LMUFFB translates telemetry into tactile sensations, with telemetry visualizations
 *   [FFB Effects & Customization Guide](docs/ffb_effects.md)
 *   [FFB Customization Guide (Legacy)](docs/ffb_customization.md)
 *   [GUI Framework Options](docs/gui_framework_options.md)
