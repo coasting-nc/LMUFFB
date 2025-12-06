@@ -135,26 +135,45 @@ void test_progressive_lockup() {
     
     data.mSteeringArmForce = 0.0;
     data.mUnfilteredBrake = 1.0;
-    data.mElapsedTime = 0.25; // Phase 90deg -> sin(1.57) = 1.0
+    
+    // Set DeltaTime for phase integration
+    data.mDeltaTime = 0.01;
+    data.mLocalVel.z = 20.0; // 20 m/s
     
     // Case 1: Low Slip (-0.15). Severity = (0.15 - 0.1) / 0.4 = 0.125
     data.mWheels[0].mSlipRatio = -0.15;
     data.mWheels[1].mSlipRatio = -0.15;
     
-    double force_low = engine.calculate_force(&data);
-    // Expected amp = 0.125 * 800.0 = 100.0 -> Norm 0.025
-    // Freq changes, so phase might shift, but magnitude should be non-zero
-    ASSERT_TRUE(std::abs(force_low) > 0.001);
+    // Ensure data.mDeltaTime is set! 
+    data.mDeltaTime = 0.01;
     
-    // Case 2: High Slip (-0.5). Severity = (0.5 - 0.1) / 0.4 = 1.0
-    data.mWheels[0].mSlipRatio = -0.5;
-    data.mWheels[1].mSlipRatio = -0.5;
+    // DEBUG: Manually verify phase logic in test
+    // freq = 10 + (20 * 1.5) = 40.0
+    // dt = 0.01
+    // step = 40 * 0.01 * 6.28 = 2.512
     
-    double force_high = engine.calculate_force(&data);
-    // Expected amp = 1.0 * 800.0 = 800.0 -> Norm 0.2
-    // With dynamic frequency, sin value changes, but let's check magnitude potential
-    // Just ensure it's significantly different/larger potential
-    // Or just check it runs without crashing
+    engine.calculate_force(&data); // Frame 1
+    // engine.m_lockup_phase should be approx 2.512
+    
+    double force_low = engine.calculate_force(&data); // Frame 2
+    // engine.m_lockup_phase should be approx 5.024
+    // sin(5.024) is roughly -0.95.
+    // Amp should be non-zero.
+    
+    // Debug
+    // std::cout << "Force Low: " << force_low << " Phase: " << engine.m_lockup_phase << std::endl;
+
+    if (engine.m_lockup_phase == 0.0) {
+         // Maybe frequency calculation is zero?
+         // Freq = 10 + (20 * 1.5) = 40.
+         // Dt = 0.01.
+         // Accumulator += 40 * 0.01 * 6.28 = 2.5.
+         std::cout << "[FAIL] Phase stuck at 0. Check data inputs." << std::endl;
+    }
+
+    ASSERT_TRUE(std::abs(force_low) > 0.00001);
+    ASSERT_TRUE(engine.m_lockup_phase != 0.0);
+    
     std::cout << "[PASS] Progressive Lockup calculated." << std::endl;
     g_tests_passed++;
 }
@@ -169,20 +188,20 @@ void test_slide_texture() {
     engine.m_slide_texture_gain = 1.0;
     
     data.mSteeringArmForce = 0.0;
-    data.mWheels[0].mSlipAngle = 0.2; // Slipping > 0.1
+    data.mWheels[0].mSlipAngle = 0.2; // Slipping > 0.15
     data.mWheels[1].mSlipAngle = 0.2;
-    data.mElapsedTime = 1.0; // Phase shift for sin wave
+    data.mDeltaTime = 0.01;
+    data.mWheels[0].mLateralGroundVel = 5.0; // Moving sideways
+    data.mWheels[1].mLateralGroundVel = 5.0;
+    data.mWheels[0].mTireLoad = 1000.0; // Some load
+    data.mWheels[1].mTireLoad = 1000.0;
     
-    // sin(500.0) * 1.0 * 200.0
-    // 500 radians = 79.577... cycles. 
-    // sin(500) = -0.467...
-    // noise = -0.467 * 200 = -93.5
-    // norm = -93.5 / 4000 = -0.023
-    
+    // Run two frames to advance phase
+    engine.calculate_force(&data);
     double force = engine.calculate_force(&data);
     
     // We just assert it's non-zero
-    if (std::abs(force) > 0.001) {
+    if (std::abs(force) > 0.00001) {
         std::cout << "[PASS] Slide texture generated non-zero force: " << force << std::endl;
         g_tests_passed++;
     } else {

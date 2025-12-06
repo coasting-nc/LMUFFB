@@ -346,6 +346,245 @@ public:
 3.  **Smooth Transitions:** The Phase Accumulation ensures that as you accelerate and the slip speed increases, the vibration pitch ramps up smoothly (like a "sheuuu" sound) rather than clicking or popping.
 
 
+# Code review of current implementation
+
+This is a very solid implementation. You have successfully integrated the Phase Accumulation logic and the Physics-based frequency mapping.
+
+Regarding your specific question about the **Simplified Load Factor**:
+
+### Is the simplified Load Factor a good idea?
+**Yes, but with one safety warning.**
+Using a simple linear division (`load / 4000.0`) is computationally efficient and cleaner to read. However, in FFB, **unclamped physics values are dangerous**.
+
+If the car hits a massive compression (e.g., the bottom of Eau Rouge) or a high curb, `mTireLoad` can spike to 10,000N+.
+*   `10000 / 4000 = 2.5x` gain.
+*   If your user already has the gain set high, this 2.5x spike will cause immediate **hard clipping** (signal flatlining at 100%) or a violent jolt that could rattle a gear-driven wheel damagingly.
+
+**Recommendation:** Keep the simple calculation, but add a `std::min` cap (e.g., 1.5 or 2.0) just to protect the hardware and signal integrity.
+
+---
+
+### Code Review & Refinements
+
+I have reviewed your `FFBEngine.h`. It is 95% perfect. I have made three small adjustments below to finalize it:
+
+1.  **Global Load Calculation:** You calculated `load_factor` inside the *Slide* effect, but you forgot to apply it to the *Lockup* and *Road* effects (which benefit greatly from it). I moved the calculation to the top so all effects can use it.
+2.  **Safety Clamp:** Added the `std::min` cap discussed above.
+3.  **Road Texture Fix:** Applied the load factor to the Road Texture (bumps feel harder when suspension is compressed).
+
+Here is the polished file:
+
+```cpp
+#ifndef FFBENGINE_H
+#define FFBENGINE_H
+
+#define NOMINMAX
+
+#include <cmath>
+#include <algorithm>
+#include "rF2Data.h"
+
+// FFB Engine Class
+class FFBEngine {
+public:
+    // Settings (GUI Sliders)
+    float m_gain = 1.0f;          
+    float m_smoothing = 0.5f;     
+    float m_understeer_effect = 1.0f; 
+    float m_sop_effect = 0.5f;    
+    float m_min_force = 0.0f;     
+    
+    // New Effects (v0.2)
+    float m_oversteer_boost = 0.0f; 
+    
+    bool m_lockup_enabled = false;
+    float m_lockup_gain = 0.5f;
+    
+    bool m_spin_enabled = false;
+    float m_spin_gain = 0.5f;
+
+    // Texture toggles
+    bool m_slide_texture_enabled = true;
+    float m_slide_texture_gain = 0.5f; 
+    
+    bool m_road_texture_enabled = false;
+    float m_road_texture_gain = 0.5f; 
+
+    // Internal state
+    double m_prev_vert_deflection[2] = {0.0, 0.0}; // FL, FR
+    
+    // Phase Accumulators for Dynamic Oscillators
+    double m_lockup_phase = 0.0;
+    double m_spin_phase = 0.0;
+    double m_slide_phase = 0.0;
+
+    double calculate_force(const rF2Telemetry* data) {
+        if (!data) return 0.0;
+        
+        double dt = data->mDeltaTime;
+        const double TWO_PI = 6.28318530718;
+
+        // Front Left and Front Right
+        const rF2Wheel& fl = data->mWheels[0];
+        const rF2Wheel& fr = data->mWheels[1];
+
+        double game_force = data->mSteeringArmForce;
+
+        // --- PRE-CALCULATION: TIRE LOAD FACTOR ---
+        // Calculate this once to use across multiple effects.
+        // Heavier load = stronger vibration transfer.
+        double avg_load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
+        
+        // Normalize: 4000N is a reference "loaded" GT tire.
+        double load_factor = avg_load / 4000.0;
+        
+        // SAFETY CLAMP: Cap at 1.5x to prevent violent jolts during high-compression
+        // or hard clipping when the user already has high gain.
+        load_factor = (std::min)(1.5, (std::max)(0.0, load_factor));
+
+        // --- 1. Understeer Effect (Grip Modulation) ---
+        double grip_l = fl.mGripFract;
+        double grip_r = fr.mGripFract;
+        double avg_grip = (grip_l + grip_r) / 2.0;
+        avg_grip = (std::max)(0.0, (std::min)(1.0, avg_grip));
+        
+        double grip_factor = 1.0 - ((1.0 - avg_grip) * m_understeer_effect);
+        double output_force = game_force * grip_factor;
+
+        // --- 2. Seat of Pants (SoP) / Oversteer ---
+        double lat_g = data->mLocalAccel.x / 9.81;
+        double sop_force = lat_g * m_sop_effect * 1000.0; 
+        
+        double grip_rl = data->mWheels[2].mGripFract;
+        double grip_rr = data->mWheels[3].mGripFract;
+        double avg_rear_grip = (grip_rl + grip_rr) / 2.0;
+        
+        double grip_delta = avg_grip - avg_rear_grip;
+        if (grip_delta > 0.0) {
+            sop_force *= (1.0 + (grip_delta * m_oversteer_boost * 2.0));
+        }
+        
+        // Rear Aligning Torque Integration
+        double rear_lat_force = (data->mWheels[2].mLateralForce + data->mWheels[3].mLateralForce) / 2.0;
+        double rear_torque = rear_lat_force * 0.05 * m_oversteer_boost; 
+        sop_force += rear_torque;
+
+        double total_force = output_force + sop_force;
+        
+        // --- 2b. Progressive Lockup (Dynamic) ---
+        if (m_lockup_enabled && data->mUnfilteredBrake > 0.05) {
+            double slip_fl = data->mWheels[0].mSlipRatio;
+            double slip_fr = data->mWheels[1].mSlipRatio;
+            double max_slip = (std::min)(slip_fl, slip_fr); 
+            
+            if (max_slip < -0.1) {
+                double severity = (std::abs(max_slip) - 0.1) / 0.4; 
+                severity = (std::min)(1.0, severity);
+                
+                // Frequency: Car Speed
+                double car_speed_ms = std::abs(data->mLocalVel.z); 
+                double freq = 10.0 + (car_speed_ms * 1.5); 
+
+                m_lockup_phase += freq * dt * TWO_PI;
+                if (m_lockup_phase > TWO_PI) m_lockup_phase -= TWO_PI;
+
+                // Amplitude: Severity * Gain * LOAD FACTOR
+                // A locked tire with no weight on it (skipping) vibrates less than a loaded one.
+                double amp = severity * m_lockup_gain * 800.0 * load_factor;
+                
+                double rumble = std::sin(m_lockup_phase) * amp;
+                total_force += rumble;
+            }
+        }
+
+        // --- 2c. Wheel Spin (Tire Physics Based) ---
+        if (m_spin_enabled && data->mUnfilteredThrottle > 0.05) {
+            double slip_rl = data->mWheels[2].mSlipRatio;
+            double slip_rr = data->mWheels[3].mSlipRatio;
+            double max_slip = (std::max)(slip_rl, slip_rr);
+            
+            if (max_slip > 0.2) {
+                double severity = (max_slip - 0.2) / 0.5;
+                severity = (std::min)(1.0, severity);
+                
+                // Torque Drop
+                total_force *= (1.0 - (severity * m_spin_gain * 0.6)); 
+
+                // Frequency: Slip Speed
+                double car_speed_ms = std::abs(data->mLocalVel.z);
+                double slip_speed_ms = car_speed_ms * max_slip;
+
+                double freq = 10.0 + (slip_speed_ms * 2.5);
+                if (freq > 80.0) freq = 80.0;
+
+                m_spin_phase += freq * dt * TWO_PI;
+                if (m_spin_phase > TWO_PI) m_spin_phase -= TWO_PI;
+
+                double amp = severity * m_spin_gain * 500.0;
+                double rumble = std::sin(m_spin_phase) * amp;
+                
+                total_force += rumble;
+            }
+        }
+
+        // --- 3. Slide Texture (Dynamic Sawtooth) ---
+        if (m_slide_texture_enabled) {
+            double avg_slip = (std::abs(fl.mSlipAngle) + std::abs(fr.mSlipAngle)) / 2.0;
+            
+            if (avg_slip > 0.15) { 
+                // Frequency: Lateral Velocity
+                double lat_vel = (std::abs(fl.mLateralGroundVel) + std::abs(fr.mLateralGroundVel)) / 2.0;
+                double freq = 30.0 + (lat_vel * 20.0);
+
+                m_slide_phase += freq * dt * TWO_PI;
+                if (m_slide_phase > TWO_PI) m_slide_phase -= TWO_PI;
+
+                double sawtooth = (m_slide_phase / TWO_PI) * 2.0 - 1.0;
+
+                // Amplitude: Gain * LOAD FACTOR
+                double noise = sawtooth * m_slide_texture_gain * 300.0 * load_factor;
+                total_force += noise;
+            }
+        }
+        
+        // --- 4. Road Texture (High Pass Filter) ---
+        if (m_road_texture_enabled) {
+            double vert_l = fl.mVerticalTireDeflection;
+            double vert_r = fr.mVerticalTireDeflection;
+            
+            double delta_l = vert_l - m_prev_vert_deflection[0];
+            double delta_r = vert_r - m_prev_vert_deflection[1];
+            
+            m_prev_vert_deflection[0] = vert_l;
+            m_prev_vert_deflection[1] = vert_r;
+            
+            // Amplify sudden changes
+            double road_noise = (delta_l + delta_r) * 5000.0 * m_road_texture_gain; 
+            
+            // Apply LOAD FACTOR: Bumps feel harder under compression
+            road_noise *= load_factor;
+
+            total_force += road_noise;
+        }
+
+        // --- 5. Min Force & Output ---
+        double max_force_ref = 4000.0; 
+        double norm_force = total_force / max_force_ref;
+        
+        norm_force *= m_gain;
+        
+        if (std::abs(norm_force) > 0.0001 && std::abs(norm_force) < m_min_force) {
+            double sign = (norm_force > 0.0) ? 1.0 : -1.0;
+            norm_force = sign * m_min_force;
+        }
+
+        return (std::max)(-1.0, (std::min)(1.0, norm_force));
+    }
+};
+
+#endif // FFBENGINE_H
+```
+
 # Additional improvements
 
 Based on the telemetry documentation you provided ( docs\telemetry_data_reference.md ) , there are **three specific data points** that are currently underutilized but would significantly improve the "physics" feel of your FFB.
@@ -493,462 +732,3 @@ public:
 1.  **Engine RPM:** I agree with you. Do not use it for traction loss. However, you *could* add a separate checkbox "Engine Idle Vibration" that simply adds a tiny sine wave at `RPM/60` Hz when the car is stationary, just for immersion. But keep it separate from physics.
 2.  **Telemetry Usage:** Switching from `SlipAngle` to `LateralPatchVel` for the *frequency* of the slide effect is the single biggest physics upgrade you can make to that specific effect. It aligns the audio/tactile feedback with the actual velocity of the rubber.
 
-
-# Code review on initial implementation of the improvements:
-
-Yes, simplifying the load factor is a good idea for performance and readability, **BUT** you must include a "safety cap" (clamp).
-
-Without a cap (e.g., `std::min`), if you hit a high curb or land a jump, `mTireLoad` can momentarily spike to 15,000N+. This would result in a multiplier of `3.75x`, potentially causing a violent clip in the FFB signal or damaging the user's wrist/wheel.
-
-**Critical Issue Found:**
-In your code, you updated the **Wheel Spin** and **Slide** effects correctly, but you **forgot to update the Lockup effect**. It is still using `data->mElapsedTime`, which will cause the clicking/popping audio glitches we discussed.
-
-Here is the corrected code with:
-1.  **Fixed Lockup Math** (switched to Phase Integration).
-2.  **Safe Load Factor** (Simple division + Safety Cap).
-3.  **Consistent Load Factor** (Applied to Lockup and Road texture as well, not just Slide).
-
-```cpp
-#ifndef FFBENGINE_H
-#define FFBENGINE_H
-
-#define NOMINMAX
-
-#include <cmath>
-#include <algorithm>
-#include "rF2Data.h"
-
-// FFB Engine Class
-class FFBEngine {
-public:
-    // Settings (GUI Sliders)
-    float m_gain = 1.0f;
-    float m_smoothing = 0.5f;
-    float m_understeer_effect = 1.0f;
-    float m_sop_effect = 0.5f;
-    float m_min_force = 0.0f;
-    
-    float m_oversteer_boost = 0.0f;
-    
-    bool m_lockup_enabled = false;
-    float m_lockup_gain = 0.5f;
-    
-    bool m_spin_enabled = false;
-    float m_spin_gain = 0.5f;
-
-    bool m_slide_texture_enabled = true;
-    float m_slide_texture_gain = 0.5f;
-    
-    bool m_road_texture_enabled = false;
-    float m_road_texture_gain = 0.5f;
-
-    // Internal state
-    double m_prev_vert_deflection[2] = {0.0, 0.0}; // FL, FR
-    
-    // Phase Accumulators
-    double m_lockup_phase = 0.0;
-    double m_spin_phase = 0.0;
-    double m_slide_phase = 0.0;
-
-    double calculate_force(const rF2Telemetry* data) {
-        if (!data) return 0.0;
-        
-        double dt = data->mDeltaTime;
-        const double TWO_PI = 6.28318530718;
-
-        const rF2Wheel& fl = data->mWheels[0];
-        const rF2Wheel& fr = data->mWheels[1];
-
-        // --- CALCULATE SHARED LOAD FACTOR ---
-        // We calculate this once and use it for all texture effects.
-        // 4000N is roughly the load of a GT car cornering.
-        double avg_load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
-        double load_factor = avg_load / 4000.0;
-        
-        // SAFETY CAP: Limit multiplier to 2.0x to prevent violent spikes on curbs
-        load_factor = (std::min)(2.0, load_factor); 
-
-        double game_force = data->mSteeringArmForce;
-
-        // --- 1. Understeer Effect ---
-        double grip_l = fl.mGripFract;
-        double grip_r = fr.mGripFract;
-        double avg_grip = (grip_l + grip_r) / 2.0;
-        avg_grip = (std::max)(0.0, (std::min)(1.0, avg_grip));
-        
-        double grip_factor = 1.0 - ((1.0 - avg_grip) * m_understeer_effect);
-        double output_force = game_force * grip_factor;
-
-        // --- 2. SoP / Oversteer ---
-        double lat_g = data->mLocalAccel.x / 9.81;
-        double sop_force = lat_g * m_sop_effect * 1000.0;
-        
-        double grip_rl = data->mWheels[2].mGripFract;
-        double grip_rr = data->mWheels[3].mGripFract;
-        double avg_rear_grip = (grip_rl + grip_rr) / 2.0;
-        
-        double grip_delta = avg_grip - avg_rear_grip;
-        if (grip_delta > 0.0) {
-            sop_force *= (1.0 + (grip_delta * m_oversteer_boost * 2.0));
-        }
-        
-        // Rear Aligning Torque Integration
-        double rear_lat_force = (data->mWheels[2].mLateralForce + data->mWheels[3].mLateralForce) / 2.0;
-        double rear_torque = rear_lat_force * 0.05 * m_oversteer_boost;
-        sop_force += rear_torque;
-
-        double total_force = output_force + sop_force;
-        
-        // --- 2b. Progressive Lockup (FIXED) ---
-        if (m_lockup_enabled && data->mUnfilteredBrake > 0.05) {
-            double slip_fl = data->mWheels[0].mSlipRatio;
-            double slip_fr = data->mWheels[1].mSlipRatio;
-            double max_slip = (std::min)(slip_fl, slip_fr);
-            
-            if (max_slip < -0.1) {
-                double severity = (std::abs(max_slip) - 0.1) / 0.4;
-                severity = (std::min)(1.0, severity);
-                
-                // Dynamic Frequency based on Car Speed (not slip)
-                // Slower car = lower pitch grinding
-                double car_speed = std::abs(data->mLocalVel.z);
-                double freq = 10.0 + (car_speed * 1.5); 
-
-                // PHASE INTEGRATION (Fixes Clicks)
-                m_lockup_phase += freq * dt * TWO_PI;
-                if (m_lockup_phase > TWO_PI) m_lockup_phase -= TWO_PI;
-                
-                // Apply Load Factor: Locking a loaded tire shakes more
-                double amp = severity * m_lockup_gain * 800.0 * load_factor;
-                
-                double rumble = std::sin(m_lockup_phase) * amp;
-                total_force += rumble;
-            }
-        }
-
-        // --- 2c. Wheel Spin (Tire Physics Based) ---
-        if (m_spin_enabled && data->mUnfilteredThrottle > 0.05) {
-            double slip_rl = data->mWheels[2].mSlipRatio;
-            double slip_rr = data->mWheels[3].mSlipRatio;
-            double max_slip = (std::max)(slip_rl, slip_rr);
-            
-            if (max_slip > 0.2) {
-                double severity = (max_slip - 0.2) / 0.5;
-                severity = (std::min)(1.0, severity);
-                
-                total_force *= (1.0 - (severity * m_spin_gain * 0.6)); 
-
-                double car_speed_ms = std::abs(data->mLocalVel.z);
-                double slip_speed_ms = car_speed_ms * max_slip;
-
-                double freq = 10.0 + (slip_speed_ms * 2.5);
-                if (freq > 80.0) freq = 80.0;
-
-                m_spin_phase += freq * dt * TWO_PI;
-                if (m_spin_phase > TWO_PI) m_spin_phase -= TWO_PI;
-
-                // Note: We don't usually apply Front Load Factor to Rear Wheel Spin
-                // So we keep this standard.
-                double amp = severity * m_spin_gain * 500.0;
-                double rumble = std::sin(m_spin_phase) * amp;
-                
-                total_force += rumble;
-            }
-        }
-
-        // --- 3. Slide Texture (Dynamic Sawtooth) ---
-        if (m_slide_texture_enabled) {
-            double avg_slip = (std::abs(fl.mSlipAngle) + std::abs(fr.mSlipAngle)) / 2.0;
-            
-            if (avg_slip > 0.15) {
-                double lat_vel = (std::abs(fl.mLateralGroundVel) + std::abs(fr.mLateralGroundVel)) / 2.0;
-                
-                double freq = 30.0 + (lat_vel * 20.0);
-
-                m_slide_phase += freq * dt * TWO_PI;
-                if (m_slide_phase > TWO_PI) m_slide_phase -= TWO_PI;
-
-                double sawtooth = (m_slide_phase / TWO_PI) * 2.0 - 1.0;
-
-                // Apply Load Factor
-                double noise = sawtooth * m_slide_texture_gain * 300.0 * load_factor;
-                total_force += noise;
-            }
-        }
-        
-        // --- 4. Road Texture (High Pass Filter) ---
-        if (m_road_texture_enabled) {
-            double vert_l = fl.mVerticalTireDeflection;
-            double vert_r = fr.mVerticalTireDeflection;
-            
-            double delta_l = vert_l - m_prev_vert_deflection[0];
-            double delta_r = vert_r - m_prev_vert_deflection[1];
-            
-            m_prev_vert_deflection[0] = vert_l;
-            m_prev_vert_deflection[1] = vert_r;
-            
-            double road_noise = (delta_l + delta_r) * 5000.0 * m_road_texture_gain; 
-            
-            // Apply Load Factor: Bumps feel harder under compression
-            road_noise *= load_factor;
-
-            total_force += road_noise;
-        }
-
-        // --- 5. Min Force ---
-        double max_force_ref = 4000.0; 
-        double norm_force = total_force / max_force_ref;
-        
-        norm_force *= m_gain;
-        
-        if (std::abs(norm_force) > 0.0001 && std::abs(norm_force) < m_min_force) {
-            double sign = (norm_force > 0.0) ? 1.0 : -1.0;
-            norm_force = sign * m_min_force;
-        }
-
-        return (std::max)(-1.0, (std::min)(1.0, norm_force));
-    }
-};
-
-#endif // FFBENGINE_H
-```
-
-
-# Code review 2
-
-Regarding your specific question about the **Simplified Load Factor**:
-
-### Is it a good idea to remove the clamping?
-**No, it is risky.**
-
-Here is why: **Le Mans Ultimate features High-Downforce cars (Hypercars/LMP2).**
-*   **Static Load:** A static corner weight might be ~3000N.
-*   **Aero Load:** At 300 km/h, downforce adds massive weight. The tire load can easily spike to **8000N - 10,000N** in a compression (like Eau Rouge) or under heavy braking.
-*   **The Result:** If you use `load / 4000.0` without a limit, your factor becomes **2.5x** or **3.0x**. This will cause the vibration effects to become violently loud at high speeds, likely **clipping** the signal (hitting the 100% force limit) and drowning out the actual steering detail.
-
-**Recommendation:** Keep the calculation simple, but **add a hard cap (clamp)**. I recommend capping it at `1.5` or `2.0`. This ensures that a loaded tire vibrates *more*, but not *infinitely more*.
-
----
-
-### One other correction: `mLateralPatchVel`
-In your code, you used `mLateralGroundVel`.
-*   **GroundVel**: The speed of the ground passing under the wheel center.
-*   **PatchVel**: The speed of the rubber **sliding** across the ground.
-
-You want **`mLateralPatchVel`**. If the car is cornering on rails (no sliding), `PatchVel` is near zero (silent), but `GroundVel` is not. Using `PatchVel` ensures the texture only appears when you are actually scrubbing the tires.
-
----
-
-### Corrected FFBEngine.h
-
-Here is the code with the **Safety Clamp** restored and the **Velocity Variable** corrected.
-
-```cpp
-#ifndef FFBENGINE_H
-#define FFBENGINE_H
-
-#define NOMINMAX
-
-#include <cmath>
-#include <algorithm>
-#include "rF2Data.h"
-
-// FFB Engine Class
-class FFBEngine {
-public:
-    // Settings (GUI Sliders)
-    float m_gain = 1.0f;          
-    float m_smoothing = 0.5f;     
-    float m_understeer_effect = 1.0f; 
-    float m_sop_effect = 0.5f;    
-    float m_min_force = 0.0f;     
-    
-    // New Effects (v0.2)
-    float m_oversteer_boost = 0.0f; 
-    
-    bool m_lockup_enabled = false;
-    float m_lockup_gain = 0.5f;
-    
-    bool m_spin_enabled = false;
-    float m_spin_gain = 0.5f;
-
-    // Texture toggles
-    bool m_slide_texture_enabled = true;
-    float m_slide_texture_gain = 0.5f; 
-    
-    bool m_road_texture_enabled = false;
-    float m_road_texture_gain = 0.5f; 
-
-    // Internal state
-    double m_prev_vert_deflection[2] = {0.0, 0.0}; // FL, FR
-    
-    // Phase Accumulators for Dynamic Oscillators
-    double m_lockup_phase = 0.0;
-    double m_spin_phase = 0.0;
-    double m_slide_phase = 0.0;
-
-    double calculate_force(const rF2Telemetry* data) {
-        if (!data) return 0.0;
-        
-        double dt = data->mDeltaTime;
-        const double TWO_PI = 6.28318530718;
-
-        // Front Left and Front Right
-        const rF2Wheel& fl = data->mWheels[0];
-        const rF2Wheel& fr = data->mWheels[1];
-
-        double game_force = data->mSteeringArmForce;
-
-        // --- 1. Understeer Effect (Grip Modulation) ---
-        double grip_l = fl.mGripFract;
-        double grip_r = fr.mGripFract;
-        double avg_grip = (grip_l + grip_r) / 2.0;
-        avg_grip = (std::max)(0.0, (std::min)(1.0, avg_grip));
-        
-        double grip_factor = 1.0 - ((1.0 - avg_grip) * m_understeer_effect);
-        double output_force = game_force * grip_factor;
-
-        // --- 2. Seat of Pants (SoP) / Oversteer ---
-        double lat_g = data->mLocalAccel.x / 9.81;
-        double sop_force = lat_g * m_sop_effect * 1000.0; 
-        
-        double grip_rl = data->mWheels[2].mGripFract;
-        double grip_rr = data->mWheels[3].mGripFract;
-        double avg_rear_grip = (grip_rl + grip_rr) / 2.0;
-        
-        double grip_delta = avg_grip - avg_rear_grip;
-        if (grip_delta > 0.0) {
-            sop_force *= (1.0 + (grip_delta * m_oversteer_boost * 2.0));
-        }
-        
-        // Rear Aligning Torque Integration
-        double rear_lat_force = (data->mWheels[2].mLateralForce + data->mWheels[3].mLateralForce) / 2.0;
-        double rear_torque = rear_lat_force * 0.05 * m_oversteer_boost; 
-        sop_force += rear_torque;
-
-        double total_force = output_force + sop_force;
-        
-        // --- 2b. Progressive Lockup (Dynamic) ---
-        if (m_lockup_enabled && data->mUnfilteredBrake > 0.05) {
-            double slip_fl = data->mWheels[0].mSlipRatio;
-            double slip_fr = data->mWheels[1].mSlipRatio;
-            double max_slip = (std::min)(slip_fl, slip_fr); 
-            
-            if (max_slip < -0.1) {
-                double severity = (std::abs(max_slip) - 0.1) / 0.4; 
-                severity = (std::min)(1.0, severity);
-                
-                // Frequency: Car Speed
-                double car_speed_ms = std::abs(data->mLocalVel.z); 
-                double freq = 10.0 + (car_speed_ms * 1.5); 
-
-                m_lockup_phase += freq * dt * TWO_PI;
-                if (m_lockup_phase > TWO_PI) m_lockup_phase -= TWO_PI;
-
-                // Amplitude: Modulated by Load (Clamped)
-                double load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
-                double load_factor = load / 4000.0;
-                load_factor = (std::min)(1.5, load_factor); // SAFETY CAP: Max 1.5x boost
-
-                double amp = severity * m_lockup_gain * 800.0 * load_factor;
-                
-                double rumble = std::sin(m_lockup_phase) * amp;
-                total_force += rumble;
-            }
-        }
-
-        // --- 2c. Wheel Spin (Tire Physics Based) ---
-        if (m_spin_enabled && data->mUnfilteredThrottle > 0.05) {
-            double slip_rl = data->mWheels[2].mSlipRatio;
-            double slip_rr = data->mWheels[3].mSlipRatio;
-            double max_slip = (std::max)(slip_rl, slip_rr);
-            
-            if (max_slip > 0.2) {
-                double severity = (max_slip - 0.2) / 0.5;
-                severity = (std::min)(1.0, severity);
-                
-                total_force *= (1.0 - (severity * m_spin_gain * 0.6)); 
-
-                // Frequency: Slip Speed
-                double car_speed_ms = std::abs(data->mLocalVel.z);
-                double slip_speed_ms = car_speed_ms * max_slip;
-
-                double freq = 10.0 + (slip_speed_ms * 2.5);
-                if (freq > 80.0) freq = 80.0;
-
-                m_spin_phase += freq * dt * TWO_PI;
-                if (m_spin_phase > TWO_PI) m_spin_phase -= TWO_PI;
-
-                double amp = severity * m_spin_gain * 500.0;
-                double rumble = std::sin(m_spin_phase) * amp;
-                
-                total_force += rumble;
-            }
-        }
-
-        // --- 3. Slide Texture (Dynamic Sawtooth) ---
-        if (m_slide_texture_enabled) {
-            double avg_slip = (std::abs(fl.mSlipAngle) + std::abs(fr.mSlipAngle)) / 2.0;
-            
-            if (avg_slip > 0.15) { 
-                // Frequency: Lateral PATCH Velocity (Sliding Speed)
-                // Changed from GroundVel to PatchVel for correct physics
-                double lat_vel = (std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0;
-                
-                double freq = 30.0 + (lat_vel * 20.0);
-                if (freq > 250.0) freq = 250.0; // Cap frequency
-
-                m_slide_phase += freq * dt * TWO_PI;
-                if (m_slide_phase > TWO_PI) m_slide_phase -= TWO_PI;
-
-                double sawtooth = (m_slide_phase / TWO_PI) * 2.0 - 1.0;
-
-                // Amplitude: Tire Load (Clamped)
-                double load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
-                double load_factor = load / 4000.0; 
-                load_factor = (std::min)(1.5, load_factor); // SAFETY CAP
-
-                double noise = sawtooth * m_slide_texture_gain * 300.0 * load_factor;
-                total_force += noise;
-            }
-        }
-        
-        // --- 4. Road Texture (High Pass Filter) ---
-        if (m_road_texture_enabled) {
-            double vert_l = fl.mVerticalTireDeflection;
-            double vert_r = fr.mVerticalTireDeflection;
-            
-            double delta_l = vert_l - m_prev_vert_deflection[0];
-            double delta_r = vert_r - m_prev_vert_deflection[1];
-            
-            m_prev_vert_deflection[0] = vert_l;
-            m_prev_vert_deflection[1] = vert_r;
-            
-            double road_noise = (delta_l + delta_r) * 5000.0 * m_road_texture_gain; 
-            
-            // Optional: Apply Load Factor to road noise too?
-            // It makes bumps feel heavier under compression.
-            // double load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
-            // double load_factor = (std::min)(1.5, load / 4000.0);
-            // road_noise *= load_factor;
-
-            total_force += road_noise;
-        }
-
-        // --- 5. Min Force & Output ---
-        double max_force_ref = 4000.0; 
-        double norm_force = total_force / max_force_ref;
-        
-        norm_force *= m_gain;
-        
-        if (std::abs(norm_force) > 0.0001 && std::abs(norm_force) < m_min_force) {
-            double sign = (norm_force > 0.0) ? 1.0 : -1.0;
-            norm_force = sign * m_min_force;
-        }
-
-        return (std::max)(-1.0, (std::min)(1.0, norm_force));
-    }
-};
-
-#endif // FFBENGINE_H
-```

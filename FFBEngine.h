@@ -35,9 +35,17 @@ public:
 
     // Internal state
     double m_prev_vert_deflection[2] = {0.0, 0.0}; // FL, FR
+    
+    // Phase Accumulators for Dynamic Oscillators
+    double m_lockup_phase = 0.0;
+    double m_spin_phase = 0.0;
+    double m_slide_phase = 0.0;
 
     double calculate_force(const rF2Telemetry* data) {
         if (!data) return 0.0;
+        
+        double dt = data->mDeltaTime;
+        const double TWO_PI = 6.28318530718;
 
         // Front Left and Front Right
         const rF2Wheel& fl = data->mWheels[0];
@@ -91,6 +99,7 @@ public:
         double total_force = output_force + sop_force;
         
         // --- 2b. Progressive Lockup (Dynamic) ---
+        // Ensure phase updates even if force is small, but gated by enabled
         if (m_lockup_enabled && data->mUnfilteredBrake > 0.05) {
             double slip_fl = data->mWheels[0].mSlipRatio;
             double slip_fr = data->mWheels[1].mSlipRatio;
@@ -103,56 +112,90 @@ public:
                 double severity = (std::abs(max_slip) - 0.1) / 0.4; // 0.0 to 1.0 scale
                 severity = (std::min)(1.0, severity);
                 
-                // Frequency Modulation: 
-                // Light slip -> High Freq (Scrub) ~60Hz
-                // Heavy lock -> Low Freq (Judder) ~10Hz
-                double freq = 60.0 - (severity * 50.0);
-                
-                // Amplitude Modulation
+                // DYNAMIC FREQUENCY: Linked to Car Speed (Slower car = Lower pitch grinding)
+                // As the car slows down, the "scrubbing" pitch drops.
+                // Speed is in m/s. 
+                // Example: 300kmh (83m/s) -> ~80Hz. 50kmh (13m/s) -> ~20Hz.
+                double car_speed_ms = std::abs(data->mLocalVel.z); 
+                double freq = 10.0 + (car_speed_ms * 1.5); 
+
+                // PHASE ACCUMULATION
+                m_lockup_phase += freq * dt * TWO_PI;
+                if (m_lockup_phase > TWO_PI) m_lockup_phase -= TWO_PI;
+
                 double amp = severity * m_lockup_gain * 800.0;
                 
-                double time = data->mElapsedTime;
-                double rumble = std::sin(time * freq * 6.28) * amp;
+                // Use the integrated phase
+                double rumble = std::sin(m_lockup_phase) * amp;
                 total_force += rumble;
             }
         }
 
-        // --- 2c. Wheel Spin Torque Drop (Dynamic) ---
+        // --- 2c. Wheel Spin (Tire Physics Based) ---
         if (m_spin_enabled && data->mUnfilteredThrottle > 0.05) {
             double slip_rl = data->mWheels[2].mSlipRatio;
             double slip_rr = data->mWheels[3].mSlipRatio;
             double max_slip = (std::max)(slip_rl, slip_rr);
             
-            // Threshold: 0.2 (Spin start)
             if (max_slip > 0.2) {
-                double severity = (max_slip - 0.2) / 0.5; // Scale 0.2->0.7
+                double severity = (max_slip - 0.2) / 0.5;
                 severity = (std::min)(1.0, severity);
                 
-                // 1. Torque Drop-off (Lightness)
-                // Reduce total force to simulate floating rear
-                total_force *= (1.0 - (severity * m_spin_gain * 0.5)); // Max 50% reduction
+                // 1. Torque Drop (Floating feel)
+                total_force *= (1.0 - (severity * m_spin_gain * 0.6)); 
+
+                // 2. Vibration Frequency: Based on SLIP SPEED (Not RPM)
+                // Calculate how fast the tire surface is moving relative to the road.
+                // Slip Speed (m/s) approx = Car Speed (m/s) * Slip Ratio
+                double car_speed_ms = std::abs(data->mLocalVel.z);
+                double slip_speed_ms = car_speed_ms * max_slip;
+
+                // Mapping:
+                // 2 m/s (~7kph) slip -> 15Hz (Judder/Grip fighting)
+                // 20 m/s (~72kph) slip -> 60Hz (Smooth spin)
+                double freq = 10.0 + (slip_speed_ms * 2.5);
                 
-                // 2. Vibration
-                double freq = 40.0 + (severity * 20.0); // Spin faster -> higher pitch? Or lower? Usually higher.
-                double amp = severity * m_spin_gain * 600.0;
-                double rumble = std::sin(data->mElapsedTime * freq * 6.28) * amp;
+                // Cap frequency to prevent ultrasonic feeling on high speed burnouts
+                if (freq > 80.0) freq = 80.0;
+
+                // PHASE ACCUMULATION
+                m_spin_phase += freq * dt * TWO_PI;
+                if (m_spin_phase > TWO_PI) m_spin_phase -= TWO_PI;
+
+                // Amplitude
+                double amp = severity * m_spin_gain * 500.0;
+                double rumble = std::sin(m_spin_phase) * amp;
                 
                 total_force += rumble;
             }
         }
 
-        // --- 3. Slide Texture (Detail Booster) ---
-
-        // --- 3. Slide Texture (Detail Booster) ---
+        // --- 3. Slide Texture (Dynamic Sawtooth) ---
         if (m_slide_texture_enabled) {
-            // Simple noise generator triggered by slip angle or grip loss
-            // If slipping, inject high freq noise
             double avg_slip = (std::abs(fl.mSlipAngle) + std::abs(fr.mSlipAngle)) / 2.0;
-            // Threshold for sliding (radians? degrees? rF2 uses radians usually)
-            // Let's assume > 0.1 rad (~5 deg) is sliding
-            if (avg_slip > 0.1 || avg_grip < 0.8) {
-                // Pseudo-random noise based on time or just a sine wave
-                double noise = std::sin(data->mElapsedTime * 500.0) * m_slide_texture_gain * 200.0;
+            
+            if (avg_slip > 0.15) { // ~8 degrees
+                // Frequency: Scrubbing speed
+                // How fast is the tire moving sideways?
+                // Lateral Ground Velocity is perfect for this.
+                double lat_vel = (std::abs(fl.mLateralGroundVel) + std::abs(fr.mLateralGroundVel)) / 2.0;
+                
+                // Scrubbing noise is usually high freq. 
+                // Map 1 m/s -> 50Hz, 10 m/s -> 200Hz
+                double freq = 30.0 + (lat_vel * 20.0);
+
+                m_slide_phase += freq * dt * TWO_PI;
+                if (m_slide_phase > TWO_PI) m_slide_phase -= TWO_PI;
+
+                // Use a Sawtooth wave for "stick-slip" texture (more aggressive than sine)
+                // Sawtooth: (phase / 2PI) * 2 - 1
+                double sawtooth = (m_slide_phase / TWO_PI) * 2.0 - 1.0;
+
+                // Amplitude: Tire Load
+                double load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
+                double load_factor = load / 4000.0; // Normalize
+
+                double noise = sawtooth * m_slide_texture_gain * 300.0 * load_factor;
                 total_force += noise;
             }
         }

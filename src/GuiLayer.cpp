@@ -222,6 +222,11 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         engine.m_understeer_effect = 1.0f;
         engine.m_sop_effect = 0.5f;
         engine.m_min_force = 0.0f;
+        engine.m_oversteer_boost = 0.0f;
+        engine.m_lockup_enabled = false;
+        engine.m_lockup_gain = 0.5f;
+        engine.m_spin_enabled = false;
+        engine.m_spin_gain = 0.5f;
         engine.m_slide_texture_enabled = true;
         engine.m_slide_texture_gain = 0.5f;
         engine.m_road_texture_enabled = false;
