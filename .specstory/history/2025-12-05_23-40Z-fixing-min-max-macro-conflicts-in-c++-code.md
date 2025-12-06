@@ -431,7 +431,7 @@ Regenerate your Visual Studio project from CMake and rebuild to apply this chang
 
 ---
 
-_**User (2025-12-06 00:26Z)**_
+_**User (2025-12-06 00:27Z)**_
 
 The dll is in this location: C:\Program Files\vJoy\SDK\lib
 
@@ -486,7 +486,64 @@ Status: **completed**
 
 ---
 
-Let me check the actual structure of the vJoy SDK directory: 
+<tool-use data-tool-type="unknown" data-tool-name="copilot_replaceString">
+<details>
+<summary>Tool use: **copilot_replaceString**</summary>
+
+Additional data:
+
+```json
+{
+  "vscodeToolId": "copilot_replaceString",
+  "isHidden": true
+}
+```
+Result:
+
+```json
+{
+  "invocationMessage": "Using \"Replace String in File\"",
+  "isConfirmed": {
+    "type": 1
+  },
+  "content": "&#96;&#96;&#96;plaintext\n# Copy vJoy DLL to output directory\r\nif(CMAKE_SIZEOF_VOID_P EQUAL 8)\r\n    # 64-bit\r\n    add_custom_command(TARGET LMUFFB POST_BUILD\r\n        COMMAND ${CMAKE_COMMAND} -E copy\r\n                \"${VJOY_SDK_DIR}/lib/amd64/vJoyInterface.dll\"\r\n                \"$&lt;TARGET_FILE_DIR:LMUFFB&gt;/vJoyInterface.dll\")\r\nelse()\r\n    # 32-bit\r\n    add_custom_command(TARGET LMUFFB POST_BUILD\r\n        COMMAND ${CMAKE_COMMAND} -E copy\r\n                \"${VJOY_SDK_DIR}/lib/vJoyInterface.dll\"\r\n                \"$&lt;TARGET_FILE_DIR:LMUFFB&gt;/vJoyInterface.dll\")\r\nendif()\n&#96;&#96;&#96;\n\n",
+  "textEditContent": "# Copy vJoy DLL to output directory\r\nif(CMAKE_SIZEOF_VOID_P EQUAL 8)\r\n    # 64-bit\r\n    add_custom_command(TARGET LMUFFB POST_BUILD\r\n        COMMAND ${CMAKE_COMMAND} -E copy\r\n                \"${VJOY_SDK_DIR}/lib/amd64/vJoyInterface.dll\"\r\n                \"$&lt;TARGET_FILE_DIR:LMUFFB&gt;/vJoyInterface.dll\")\r\nelse()\r\n    # 32-bit\r\n    add_custom_command(TARGET LMUFFB POST_BUILD\r\n        COMMAND ${CMAKE_COMMAND} -E copy\r\n                \"${VJOY_SDK_DIR}/lib/vJoyInterface.dll\"\r\n                \"$&lt;TARGET_FILE_DIR:LMUFFB&gt;/vJoyInterface.dll\")\r\nendif()",
+  "toolCallResult": null
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+---
+
+Let me check the actual structure of the vJoy SDK directory: Perfect! The DLLs are actually in the `lib` directory directly and in `lib/amd64`. Let me update the `CMakeLists.txt` to use the correct paths: Updated! The paths now correctly point to where the DLLs actually are. For 64-bit builds it uses `lib/amd64/vJoyInterface.dll`, and for 32-bit it uses `lib/vJoyInterface.dll`. Regenerate your project and rebuild.
+
+---
+
+_**User (2025-12-06 00:28Z)**_
+
+Ok, that issue is fixed. But when I run the exe from the terminal I get this:
+PS C:\dev\personal\LMUFFB\build\Debug> .\LMUFFB.exe
+Starting LMUFFB (C++ Port)...
+Could not open file mapping object. Ensure game is running.
+
+---
+
+_**Agent (model copilot/claude-haiku-4.5)**_
+
+This is actually expected behavior - the program is looking for the rF2 shared memory that the racing game creates. The error message indicates the code is working correctly; it just can't find rF2 running.
+
+The program needs rFactor 2 to be running to connect to its shared memory. This is normal operation, not a build error.
+
+If you want to test the program without rF2 running, you could:
+1. Start rFactor 2 first, then run LMUFFB.exe
+2. Modify the code to have a fallback/test mode when rF2 isn't running
+3. Create mock telemetry data for testing purposes
+
+Would you like me to help with any of these options, or is the build now complete and working as expected?
 
 ---
 
