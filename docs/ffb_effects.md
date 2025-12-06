@@ -68,6 +68,13 @@ A critical challenge in FFB design is managing the "Noise Floor". When multiple 
     *   **Context**: Since the driver knows if they are braking or accelerating, this ambiguity is usually resolved by context, but distinct tactile signatures help subconscious reaction times.
 
 
+### 4. Interaction of Spin vs SoP Effects
+
+*   The **Spin** effect reduces `total_force` (Torque Drop).
+*   The **SoP** effect boosts force during oversteer.
+*   **Result**: These two will fight slightly during a power slide. This is actually a good "natural" balance—the wheel tries to self-align (SoP), but the loss of traction makes it feel lighter/vaguer (Spin Drop). This should feel intuitive to the driver.
+
+
 ---
 
 ## Comparison of Implementation with iRFFB and Marvin's AIRA
