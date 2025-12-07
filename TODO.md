@@ -104,7 +104,9 @@ This app is primarily for LMU. All information in readme, instructions and other
 Eg. there seems to be no "None" FFB option in LMU, verify this and update the readme and any other relevant docs.
 Add a screenshot of the LMU in-game settings, so we can reference it during development  to confirm what LMU allows.
 
+TODO: update all references to  In-Game FFB to 'None' or 'Smoothing 0' to reflect what LMU actually allows.
 
+TODO: replace "Game" with "LMU" in all references.
 
 ### Test Required for removing vJoy dependency
 Note: The dependency on vJoy exists primarily to **prevent the game from locking the physical wheel**.
