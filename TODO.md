@@ -88,10 +88,44 @@ Should we add an instruction in the readme that says we should bind the real whe
 ### Guided configurator in the app
 In addition to the guided installer, from the main GUI of the app, should we have a button to run a guided configurator? This is both for initial configuration, and if things mess up and need to be reconfigured.
 
-### Checks for FFB outputs from the game (not the app)
+### Checks for FFB outputs from the game (not the app): "Race condition Double FFB"
 
 See if it is possible to check if the game is sending FFB to the wheel instead of vJoy: eg. from the shared memory, maybe there is info about it. If we detect it, we should print a warning to the console.
 
 # Update README.txt and or README.md
 
 Update README.txt and README.md. The two had conflicting information about the installation process. Make sure they are consistent.
+
+# Throubleshooting 3
+
+### Verify readme, instructions and other docs apply to LMU
+
+This app is primarily for LMU. All information in readme, instructions and other docs must be verified to be valid for LMU. We can mention rF2 only secondarily.
+Eg. there seems to be no "None" FFB option in LMU, verify this and update the readme and any other relevant docs.
+Add a screenshot of the LMU in-game settings, so we can reference it during development  to confirm what LMU allows.
+
+
+
+### Test Required for removing vJoy dependency
+Note: The dependency on vJoy exists primarily to **prevent the game from locking the physical wheel**.
+If LMU allows binding an axis *without* acquiring the device for FFB:
+1.  Bind Physical Wheel Axis X to Steering in-game.
+2.  Set "FFB Type" to **"None"** in game settings.
+3.  LMUFFB acquires the wheel via DirectInput.
+    *   **Risk:** If the game opens the device in "Exclusive" mode just to read the Axis, LMUFFB might be blocked from writing FFB (or vice versa). DirectInput usually allows "Background" "Non-Exclusive" reads, but FFB writing often requires "Exclusive".
+Can LMUFFB send FFB to a device that LMU is actively reading steering from?
+    - If yes: vJoy is NOT needed.
+    - If no (Access Denied): We need vJoy.
+
+**Experiment for v0.4.0:**
+Try "Method 1":
+1.  User binds real wheel in game.
+2.  User disables FFB in game (Type: None).
+3.  LMUFFB attempts to acquire wheel in `DISCL_BACKGROUND | DISCL_EXCLUSIVE` mode.
+4.  If it works, vJoy is obsolete.
+5.  If it fails (Device Busy), we need vJoy.
+
+### Check and command line log for FFB acquired exclusiverly by LMU
+
+During the loop (or early startup) add a check if the FFB is acquired exclusiverly by LMU. If it is, print a warning to the console.
+We could also add a button in the GUI to perform this check: the user would first start LMU and start driving, ensuring that the FFB is working from LMU. Then the user would start LMUFFB and click the button to perform the check. If the FFB is acquired exclusiverly by LMU, print a warning to the console.
