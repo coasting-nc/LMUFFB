@@ -259,3 +259,7 @@ This leaves **vJoy Axis X** free for LMUFFB to use for its display without inter
 
 Implement the changes described in this doc:
 docs\dev_docs\proposed_changes_to_disable_vJoy.md
+
+## Throubleshooting 11
+
+In our FFB formula, we have an hardocoded scaling factor of 1000 for the SoP. Instead, expose the scaling factor in the GUI so that it can be adjusted by the user within a range of values.
