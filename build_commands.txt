@@ -1,14 +1,16 @@
-
+Write build files
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -B build
 
+
+Do a clean build
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake --build build --config Release
 
 
 To run the tests:
 
 First compile the test directly:
-cd .\tests\
-& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cl /EHsc /std:c++17 /I.. test_ffb_engine.cpp /Fe:test_ffb_engine.exe
+
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cl /EHsc /std:c++17 /I.. tests\test_ffb_engine.cpp /Fe:test_ffb_engine.exe
 
 The run it:
-.\test_ffb_engine.exe
+tests\test_ffb_engine.exe
