@@ -117,6 +117,11 @@ bool DirectInputFFB::SelectDevice(const GUID& guid) {
     // Create Effect
     if (CreateEffect()) {
         m_active = true;
+
+        // Find the name again for the log (optional, or store it earlier)
+        std::cout << "[DI] SUCCESS: Physical Device acquired and FFB Effect created." << std::endl; 
+        // ------------------------------
+
         // Need to store name? We had it in enumeration.
         return true;
     }

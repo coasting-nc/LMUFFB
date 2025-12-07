@@ -48,10 +48,39 @@ A. Configure Le Mans Ultimate (LMU)
    4. Steering Axis - Choose ONE method:
       
       METHOD A (Direct - Recommended):
-      - Bind to your Physical Wheel directly
-      - Set In-Game FFB Strength to 0% (Crucial!)
-      - Pros: No vJoy required (if LMU allows shared access)
-      - Cons: If wheel has no FFB, try Method B
+      Step-by-Step Setup:
+      1. Clean Slate: Close Joystick Gremlin and vJoy Feeder if running
+      2. Game Setup:
+         - Start Le Mans Ultimate
+         - Bind Steering directly to your Physical Wheel 
+           (e.g., Simucube, Fanatec, Moza, Logitech)
+         - IMPORTANT: Set In-Game FFB Strength to 0% (or "Off")
+      3. App Setup:
+         - Start LMUFFB
+         - CRITICAL STEP: In the LMUFFB window, find the "FFB Device" dropdown
+         - Click it and select your Physical Wheel from the list
+         - Note: You MUST do this manually. If it says "Select Device...", 
+           the app is calculating forces but sending them nowhere
+      4. Verify:
+         - Check the console for errors. If you select your wheel and do NOT 
+           see a red error like "[DI] Failed to acquire", then it is connected!
+         - Drive the car. You should feel the physics-based FFB
+      
+      Troubleshooting - No FFB:
+      - Check Console Messages: While driving, look for "[DI Warning] Device 
+        unavailable" repeating in the console
+        * YES, I see the warning: The game has 'Locked' your wheel in Exclusive 
+          Mode. You cannot use the Direct Method. You must use Method B (vJoy Bridge)
+        * NO, console is clean: The game might be overwriting the signal. Try 
+          Alt-Tabbing out of the game. If FFB suddenly kicks in when the game 
+          is in the background, it confirms the game is interfering. Use Method B
+      - Try Adjusting Settings: If you feel no FFB, try tweaking these values:
+        * Master Gain: Increase from 0.5 to 1.0 or higher
+        * SOP (Seat of Pants): Increase from 0.0 to 0.3 (feel lateral forces)
+        * Understeer Effect: Ensure it's at 1.0 (default)
+      
+      Pros: Simplest setup. No vJoy required
+      Cons: If wheel has no FFB, try Method B
       
       METHOD B (vJoy Bridge - Compatibility):
       - Bind to "vJoy Device (Axis Y)"
