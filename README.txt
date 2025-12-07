@@ -114,5 +114,14 @@ KNOWN ISSUES (v0.3.7)
   is broken, the Understeer effect may be static.
 
 
+FEEDBACK & SUPPORT
+------------------
+For feedback, questions, or support:
+- LMU Forum Thread: 
+  https://community.lemansultimate.com/index.php?threads/irffb-for-lmu-lmuffb.10440/
+- GitHub Issues: 
+  https://github.com/coasting-nc/LMUFFB/issues
+
+
 For full documentation, advanced settings, and developer information, 
 see README.md or visit: https://github.com/coasting-nc/LMUFFB
