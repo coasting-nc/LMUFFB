@@ -53,7 +53,7 @@ In the pop up that appears if vJoy is not found, put a more descriptive message 
 
 Do an investigation on this, and save a report to a markdown file: Apparently Marvin's app managed an implementation that does not need vJoy. We currently need vJoy as a "dummy" device so that the game sends its FFB there. Investigate if we can do something similar to Marvin's app, getting rid of vJoy need.
 
-# Throubleshooting 2
+## Throubleshooting 2
 
 ### FFB Visualizations
 
@@ -96,7 +96,7 @@ See if it is possible to check if the game is sending FFB to the wheel instead o
 
 Update README.txt and README.md. The two had conflicting information about the installation process. Make sure they are consistent.
 
-# Throubleshooting 3
+## Throubleshooting 3
 
 ### Verify readme, instructions and other docs apply to LMU
 
@@ -139,3 +139,13 @@ Review docs\plan_troubleshooting_FFB_visualizations.md and make sure that in "##
 Do a similar review for section "### B. Telemetry Inspector", making sure that we have an invidual visualization for each value we read from game shared memory / telemetry.
 
 Update docs\plan_troubleshooting_FFB_visualizations.md stating clearly that we want the visualization of each value (FFB or telemetry) to be a "trailing" or "trace" live plot visualization that shows the last 5-10 seconds of data, with a sliding window. The plot should be similar to the "telemetry" trace often shown in driving sims with the driver inputs (accelerator pedal, breaking, steering wheel position, etc.).
+
+## Throubleshooting 4
+
+### More about vJoy
+
+Investigate: can we bundle a copy of the vJoy sdk dll (vJoyInterface.dll) with the app exe? What I mean is, can it be a predefined copy (eg. the 64 bit version, amd 64, since we build the app for 64 bit), or does it need to be coming from a user "installation"? 
+
+Todo: do a check at startup that the vJoy installed version is the expected one, otherwise show a popup with a warning (with a "don't show again" checkbox) and a warning message to the console (this one always active since it is less intrusive).
+
+Investigate: considering licensing and copyright aspects, can we legally bundle the vJoy sdk dll with our exe in the installer or redistributable zip? Should we include a license txt specific to vJoy? 
