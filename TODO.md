@@ -17,3 +17,6 @@
 - [ ] **Wheel Profiles**: Save/Load settings per car or wheel base.
 - [ ] **Auto-Launch**: Option to start automatically with LMU.
 - [ ] **Minimize to Tray**: Keep app running in background without taskbar clutter.
+
+
+## Bug fixes
