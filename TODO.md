@@ -140,6 +140,16 @@ Do a similar review for section "### B. Telemetry Inspector", making sure that w
 
 Update docs\plan_troubleshooting_FFB_visualizations.md stating clearly that we want the visualization of each value (FFB or telemetry) to be a "trailing" or "trace" live plot visualization that shows the last 5-10 seconds of data, with a sliding window. The plot should be similar to the "telemetry" trace often shown in driving sims with the driver inputs (accelerator pedal, breaking, steering wheel position, etc.).
 
+### DONE:Update README.txt again and remove INSTALL.txt
+
+README.txt install instructions must be as detailed as the ones in README.md. Note for example that in README.txt we don't indicate a path to download the vJoy SDK dll.
+
+Review INSTALL.txt: does it contain any additional information that is not in README.txt? It seems it is a redundant file, that should be deleted once we include all the information in README.txt.
+
+### DONE: Telemetry trail visualization example
+
+See image docs\bug_reports\telemetry_trail_example.png , which display a typical plot visualization with a telemetry trail of user inputs (accelerator pedal and breaking pedal), with a trailing window of a few seconds. On the right side, there are also histograms of the current (istant) values of the same telemetry values. In any case, this current note from docs\plan_troubleshooting_FFB_visualizations.md is already sufficient to precisely identify the style of these plots: "*Visual Style:* All graphs should be **Rolling Trace Plots** (Oscilloscope style), showing the last 5-10 seconds of data. This helps spot patterns like oscillation or spikes."
+
 ## Throubleshooting 4
 
 ### More about vJoy
@@ -150,12 +160,3 @@ Todo: do a check at startup that the vJoy installed version is the expected one,
 
 Investigate: considering licensing and copyright aspects, can we legally bundle the vJoy sdk dll with our exe in the installer or redistributable zip? Should we include a license txt specific to vJoy? 
 
-### Update README.txt again
-
-README.txt install instructions must be as detailed as the ones in README.md. Note for example that in README.txt we don't indicate a path to download the vJoy SDK dll.
-
-Review INSTALL.txt: does it contain any additional information that is not in README.txt? It seems it is a redundant file, that should be deleted once we include all the information in README.txt.
-
-### Telemetry trail visualization example
-
-See image docs\bug_reports\telemetry_trail_example.png , which display a typical plot visualization with a telemetry trail of user inputs (accelerator pedal and breaking pedal), with a trailing window of a few seconds. On the right side, there are also histograms of the current (istant) values of the same telemetry values.
