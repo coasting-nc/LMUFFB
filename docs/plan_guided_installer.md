@@ -13,6 +13,7 @@ Replace the raw executable distribution with a "Wizard" that handles prerequisit
     *   *If missing:* Prompt to download/install (button to launch vJoy installer).
     *   *If present:* Check version (2.1.9.1 recommended).
 2.  **Detect Shared Memory Plugin:** Check `[GamePath]/Plugins/rFactor2SharedMemoryMapPlugin64.dll`.
+    *   Try to autodetect LMU game path (eg. from registry or common game paths). If it fails, offer to browse for Game Path. In any case, display the detected path in the installer, so that the user can confirm it.
     *   *If missing:* Offer to copy the DLL (bundled with installer) to the game folder. (User must browse for Game Path).
 3.  **Visual C++ Redistributable:** Check and install if missing.
 
@@ -29,7 +30,7 @@ When `LMUFFB.exe` is run for the first time (no config.ini):
     *   User clicks "Wiggle vJoy" button in Wizard.
     *   Wizard oscillates vJoy Axis X. Game detects it.
     *   User binds it.
-    *   Instruction: "Now set In-Game FFB to 'None' or 'Smoothing 0'."
+    *   Instruction: "Now set In-Game FFB to 'None' or 'Smoothing 0'." [TODO: update all references to  In-Game FFB to 'None' or 'Smoothing 0' to reflect what LMU actually allows; replace "Game" with "LMU" in all references]
 
 **Step 3: Wheel Selection**
 *   Dropdown list of devices.
