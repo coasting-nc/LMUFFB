@@ -341,3 +341,10 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
 1.  **Timespan:** Controlled by `PLOT_HISTORY_SEC = 10.0f`.
 2.  **Resolution:** The graph now contains **every single physics tick** (400Hz), not just one snapshot per frame. This will reveal the true shape of the "spikes" (likely high-frequency noise) instead of the "binary" aliasing artifacts.
 3.  **Performance:** The `GetDebugBatch` swap method is extremely efficient and won't stall the physics thread.
+
+# Previous context
+
+User: Looking at all of the 20+ images (screenshots of the app in use), it seems in all rolling plots all the values are always like "binary" either maxed out, zero, or negative maxed out. This seems to happen also with low values in the adjustments, like 0.01. Isn't this strange. Can you find any plot that has smoother lines? Even if the G lateral forces are "spiky" they gradually increase and decrease, so they should show some intermediate values.
+
+User: Look at this image again. If "Local Accel X" is the lateral G force, as the raw value we read from the game shared memory, and "SoP (Lat G)" is the Seat of Pants feel we calculate based on those lateral G forces (and other factors) I don't see why the two plots look so different. The one from the game is more noisy, with many values, while the SoP has the "min max" look, like discrete values. How can I adjust the parameters of the SoP formula to have a plot as dynamic as the one in the Local Accel X plot?
+Remember the full math formulas: docs\dev_docs\FFB_formulas.md .
