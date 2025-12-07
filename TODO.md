@@ -203,3 +203,11 @@ Address this user reported bug: docs\bug_reports\User bug report 002 VJoy Setup 
 Implement "### Recommendation for Developers (Code Fix)". Also add an option in the Gui to enable / disable m_output_ffb_to_vjoy (disabled by default).
 
 Update accordingly this section of the README.md : "4. Steering Axis - Choose ONE method:", and any other relevant section.
+
+
+### Readme updates (txt and md)
+
+In the install and configuration instructions, consider (if relevant according to latest code changes and findings) adding instruction to the user to disable the LMU in-game FFB forces (so no forces are transmitted from the game to the wheel), using these setting:  "Force Feedback Strenght", that we should set to 0% , so that LMU does not send FFB to the wheel. Update README.md and README.txt to reflect this (instructing on setting this value to 0% in the in-game settings).
+We should also probably instruct the user to disable the first toggle, "Force Feedback Effects". Also minimum steering torque should be set to 0%. Pheraphs also "Force Feedback Smoothing" should be set to 0. Also the values in "Advanced Force Feedback" should be set to 0: "Collision Strenght" and "Steering Torque Sensitivity". And also disable the toggle in the final section "Tweaks": "Use Constant Steering Force Effect".
+
+If these suggestions make sense, consider if making them the main instructions, or as secondary suggestions of things to try or for troubleshooting.
