@@ -47,20 +47,16 @@ A. Configure Le Mans Ultimate (LMU)
    3. Go to Controls / Bindings
    4. Steering Axis - Choose ONE method:
       
-      METHOD A (Recommended - Requires Feeder):
-      - Bind to "vJoy Device (Axis X)"
-      - IMPORTANT: You MUST use a feeder tool to map your physical wheel to vJoy:
-        * vJoy Feeder (bundled with vJoy installation)
-        * Joystick Gremlin
-        * Mojo
-      - Tip: Move the vJoy slider in vJoy Feeder to help LMU detect it
-      - Why? This guarantees LMU sends FFB to vJoy (Dummy) and not your 
-        real wheel, preventing "Double FFB" conflicts.
-      
-      METHOD B (Experimental - No Feeder):
+      METHOD A (Direct - Recommended):
       - Bind to your Physical Wheel directly
-      - Risk: LMU might take exclusive control of the wheel's FFB, causing 
-        "Double FFB" or blocking lmuFFB.
+      - Set In-Game FFB Strength to 0% (Crucial!)
+      - Pros: No vJoy required (if LMU allows shared access)
+      - Cons: If wheel has no FFB, try Method B
+      
+      METHOD B (vJoy Bridge - Compatibility):
+      - Bind to "vJoy Device (Axis Y)"
+      - IMPORTANT: You MUST use "Joystick Gremlin" to map your wheel to vJoy Axis Y.
+      - Why? Guarantees separation of FFB and Input.
    
    5. Force Feedback Settings:
       - Type: Set to "None" (if available) or reduce FFB Strength to 0% / Off
@@ -92,9 +88,9 @@ Wheel Jerking / Fighting:
   - If the wheel oscillates on straights, reduce SOP Effect to 0.0
 
 No Steering (Car won't turn):
-  - If you bound LMU Steering to vJoy, you need a Feeder app
-  - Open "vJoy Feeder" (installed with vJoy)
-  - Select your physical wheel and ensure it moves the vJoy axis
+  - If using Method B (vJoy), you need Joystick Gremlin running
+  - Ensure it maps your wheel to vJoy Axis Y
+  - The "vJoy Demo Feeder" is for testing only, not driving
 
 No FFB:
   - Ensure "FFB Device" in lmuFFB is your real wheel

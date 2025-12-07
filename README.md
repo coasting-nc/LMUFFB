@@ -31,12 +31,13 @@ Experimental alpha version.
 3.  Go to **Controls / Bindings**.
     *   *Screenshot:* ![LMU Controls](docs/screenshots/lmu_controls.png) *(To be added)*
 4.  **Steering Axis**: 
-    *   **Method A (Recommended - Requires Feeder):** Bind to **vJoy Device (Axis X)**.
-        *   *Requirement:* You MUST use a tool like **vJoy Feeder** (bundled with vJoy), **Joystick Gremlin**, or **Mojo** to map your physical wheel axis to the vJoy axis. lmuFFB does not yet bridge steering input.
-        *   *Why?* This guarantees LMU sends FFB to vJoy (Dummy) and not your real wheel.
-        *   *Note:* Ensure lmuFFB "Monitor FFB on vJoy" is **DISABLED** (default) if using this method, to avoid feedback loops.
-    *   **Method B (Experimental - No Feeder):** Bind to your **Physical Wheel**.
-        *   *Risk:* LMU might try to take exclusive control of the wheel's FFB, causing "Double FFB" or blocking lmuFFB.
+    *   **Method A (Direct - Recommended):** Bind to your **Physical Wheel**.
+        *   *How:* Bind Steering in-game to your wheel. Set **In-Game FFB Strength to 0%**.
+        *   *Pros:* Simplest setup. No vJoy required.
+        *   *Cons:* If LMU "locks" the device (Exclusive Mode), LMUFFB might fail to send forces. If this happens, try Method B.
+    *   **Method B (vJoy Bridge - Compatibility):** Bind to **vJoy Device (Axis Y)**.
+        *   *Requirement:* You MUST use **Joystick Gremlin** (or similar) to map your Physical Wheel to vJoy Axis Y. The "vJoy Demo Feeder" is NOT sufficient for driving.
+        *   *Why Axis Y?* LMUFFB uses Axis X for FFB monitoring (if enabled). Using Y prevents conflicts.
 5.  **Force Feedback**:
     *   **Type**: Set to "None" (if available) or reduce **FFB Strength** to **0%** / **Off**.
         *   *Note:* LMU may not have a "None" option; reducing strength to 0 is the workaround.
@@ -60,7 +61,7 @@ Experimental alpha version.
     - Ensure in-game FFB is sending to vJoy.
     - If the wheel oscillates on straights, reduce **SOP Effect** to 0.0 and increase smoothing.
 - **No Steering (Car won't turn)**:
-    - If you bound Game Steering to vJoy, you need a "Feeder" app to map your real wheel to vJoy. Open "vJoy Feeder" (installed with vJoy), select your wheel, and ensure it moves the vJoy axis.
+    - If you used **Method B (vJoy)**, you need **Joystick Gremlin** running to bridge your wheel to vJoy. The "vJoy Demo Feeder" is for testing only.
 - **No FFB**: 
     - Ensure the "FFB Device" in lmuFFB is your real wheel.
     - Check if the Shared Memory Plugin is working (Does "Connected to Shared Memory" appear in the console?).

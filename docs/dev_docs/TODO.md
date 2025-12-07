@@ -220,6 +220,6 @@ See docs\bug_reports\User bug report 002 VJoy Setup Troubleshooting and Bug.md ,
 
 1. Review the FFB code again, to check for all the smoothing we apply. I remember there are supposed to be at least 2 different smoothings applied in different parts of the formula / different effects. For each one of such smoothings, there must be a configuration option (also in the GUI) to adjust it (including a neutral value that would effectively disable the smoothing). Currently, the GUI (in Advanced Tuning) allows to to adjust "SoP Smoothing". 
 
-2. Implement this:
+2. Implement this major new feature:
 - [] Troubleshooting visualization of FFB and telemetry values as in (future doc) docs\plan_troubleshooting_FFB_visualizations.md
 
