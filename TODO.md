@@ -149,3 +149,7 @@ Investigate: can we bundle a copy of the vJoy sdk dll (vJoyInterface.dll) with t
 Todo: do a check at startup that the vJoy installed version is the expected one, otherwise show a popup with a warning (with a "don't show again" checkbox) and a warning message to the console (this one always active since it is less intrusive).
 
 Investigate: considering licensing and copyright aspects, can we legally bundle the vJoy sdk dll with our exe in the installer or redistributable zip? Should we include a license txt specific to vJoy? 
+
+### Update README.txt again
+
+README.txt install instructions must be as detailed as the ones in README.md. Note for example that in README.txt we don't indicate a path to download the vJoy SDK dll.
