@@ -8,7 +8,7 @@ Experimental alpha version.
 
 
 
-## Installation & Configuration (End Users)
+## Installation & Configuration
 
 ### 1. Prerequisites
 *   **vJoy Driver**: Install version **2.1.9.1** (by jshafer817) or compatible. Download from [vJoy releases](https://github.com/jshafer817/vJoy/releases).
