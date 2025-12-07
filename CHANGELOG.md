@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.8] - 2025-05-23
+### Added
+- **vJoy Version Check**: Startup check ensures vJoy driver version is compatible (>= 2.1.8). Warnings can be suppressed via checkbox logic (persisted in config).
+- **Licensing**: Added `licenses/vJoy_LICENSE.txt` to comply with MIT attribution.
+- **Documentation**: Added investigation regarding bundling vJoy DLLs.
+
 ## [0.3.7] - 2025-05-23
 ### Added
 - **Priority Check**: Implemented logic to detect if Le Mans Ultimate (LMU) has locked the FFB device in Exclusive Mode ("Double FFB"). If detected, a warning is logged to the console.

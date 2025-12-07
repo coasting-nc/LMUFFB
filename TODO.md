@@ -154,16 +154,14 @@ See image docs\bug_reports\telemetry_trail_example.png , which display a typical
 
 ### More about vJoy
 
-Investigate: can we bundle a copy of the vJoy sdk dll (vJoyInterface.dll) with the app exe? What I mean is, can it be a predefined copy (eg. the 64 bit version, amd 64, since we build the app for 64 bit), or does it need to be coming from a user "installation"? 
-
-Todo: do a check at startup that the vJoy installed version is the expected one, otherwise show a popup with a warning (with a "don't show again" checkbox) and a warning message to the console (this one always active since it is less intrusive).
-
-Investigate: considering licensing and copyright aspects, can we legally bundle the vJoy sdk dll with our exe in the installer or redistributable zip? Should we include a license txt specific to vJoy? 
+- [x] **Bundling Investigation**: Yes, we can bundle `vJoyInterface.dll` (x64). See `docs/investigation_vjoy_bundling.md`.
+- [x] **Version Check**: Implemented startup check for vJoy driver version (warns if < 2.1.8).
+- [x] **Licensing**: vJoy is MIT licensed. Added `licenses/vJoy_LICENSE.txt`.
 
 
 ## Throubleshooting 5
 
-### LMU control and FFB in-game settings
+### LMU  in-game settings: controls and FFB
 
 See these screenshots to see the available options in LMU:
 * docs\bug_reports\LMU_settings_controls.png
@@ -179,4 +177,4 @@ For each case in which apply smoothing or other corrections to the FFB formula (
 
 ### vJoy bundling
 
-Note that we can consider separately the vJoy installer and the vJoy sdk dll. We could only bundle the sdk dll, and let the user install vJoy through the installer. But we must also check that the installed vJoy version is the expected one, otherwise show a popup with a warning (with a "don't show again" checkbox) and a warning message to the console (this one always active since it is less intrusive).
+Note that we can consider separately the vJoy installer and the vJoy sdk dll. We could only bundle the sdk dll, and let the user install vJoy through the installer. But we must also check that the installed vJoy version is the expected one, otherwise show a popup with a warning (with a "don't show again" checkbox) and a warning message to the console (this one always active since it is less intrusive). Confirm this is already fully implemented or not.

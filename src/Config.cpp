@@ -3,9 +3,12 @@
 #include <sstream>
 #include <iostream>
 
+bool Config::m_ignore_vjoy_version_warning = false;
+
 void Config::Save(const FFBEngine& engine, const std::string& filename) {
     std::ofstream file(filename);
     if (file.is_open()) {
+        file << "ignore_vjoy_version_warning=" << m_ignore_vjoy_version_warning << "\n";
         file << "gain=" << engine.m_gain << "\n";
         file << "smoothing=" << engine.m_smoothing << "\n";
         file << "understeer=" << engine.m_understeer_effect << "\n";
@@ -42,7 +45,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
             std::string value;
             if (std::getline(is_line, value)) {
                 try {
-                    if (key == "gain") engine.m_gain = std::stof(value);
+                    if (key == "ignore_vjoy_version_warning") m_ignore_vjoy_version_warning = std::stoi(value);
+                    else if (key == "gain") engine.m_gain = std::stof(value);
                     else if (key == "smoothing") engine.m_smoothing = std::stof(value);
                     else if (key == "understeer") engine.m_understeer_effect = std::stof(value);
                     else if (key == "sop") engine.m_sop_effect = std::stof(value);

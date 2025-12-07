@@ -19,6 +19,10 @@ typedef BOOL (WINAPI *AcquireVJD_t)(UINT);
 typedef VOID (WINAPI *RelinquishVJD_t)(UINT);
 typedef BOOL (WINAPI *SetAxis_t)(LONG, UINT, UINT);
 typedef enum VjdStat (WINAPI *GetVJDStatus_t)(UINT);
+typedef SHORT (WINAPI *GetvJoyVersion_t)();
+typedef PVOID (WINAPI *GetvJoyProductString_t)();
+typedef PVOID (WINAPI *GetvJoyManufacturerString_t)();
+typedef PVOID (WINAPI *GetvJoySerialNumberString_t)();
 
 class DynamicVJoy {
 public:
@@ -41,6 +45,10 @@ public:
         m_RelinquishVJD = (RelinquishVJD_t)GetProcAddress(m_hModule, "RelinquishVJD");
         m_SetAxis = (SetAxis_t)GetProcAddress(m_hModule, "SetAxis");
         m_GetVJDStatus = (GetVJDStatus_t)GetProcAddress(m_hModule, "GetVJDStatus");
+        m_GetvJoyVersion = (GetvJoyVersion_t)GetProcAddress(m_hModule, "GetvJoyVersion");
+        m_GetvJoyProductString = (GetvJoyProductString_t)GetProcAddress(m_hModule, "GetvJoyProductString");
+        m_GetvJoyManufacturerString = (GetvJoyManufacturerString_t)GetProcAddress(m_hModule, "GetvJoyManufacturerString");
+        m_GetvJoySerialNumberString = (GetvJoySerialNumberString_t)GetProcAddress(m_hModule, "GetvJoySerialNumberString");
 
         if (!m_vJoyEnabled || !m_AcquireVJD || !m_RelinquishVJD || !m_SetAxis || !m_GetVJDStatus) {
             std::cerr << "[vJoy] Library loaded but functions missing." << std::endl;
@@ -58,6 +66,11 @@ public:
     VOID Relinquish(UINT id) { if (m_hModule && m_RelinquishVJD) m_RelinquishVJD(id); }
     BOOL SetAxis(LONG value, UINT id, UINT axis) { return (m_hModule && m_SetAxis) ? m_SetAxis(value, id, axis) : FALSE; }
     VjdStat GetStatus(UINT id) { return (m_hModule && m_GetVJDStatus) ? m_GetVJDStatus(id) : VJD_STAT_MISS; }
+    
+    SHORT GetVersion() { return (m_hModule && m_GetvJoyVersion) ? m_GetvJoyVersion() : 0; }
+    const char* GetManufacturerString() { return (m_hModule && m_GetvJoyManufacturerString) ? (const char*)m_GetvJoyManufacturerString() : ""; }
+    const char* GetProductString() { return (m_hModule && m_GetvJoyProductString) ? (const char*)m_GetvJoyProductString() : ""; }
+    const char* GetSerialNumberString() { return (m_hModule && m_GetvJoySerialNumberString) ? (const char*)m_GetvJoySerialNumberString() : ""; }
 
     bool IsLoaded() const { return m_hModule != NULL; }
 
@@ -73,6 +86,10 @@ private:
     RelinquishVJD_t m_RelinquishVJD = NULL;
     SetAxis_t m_SetAxis = NULL;
     GetVJDStatus_t m_GetVJDStatus = NULL;
+    GetvJoyVersion_t m_GetvJoyVersion = NULL;
+    GetvJoyProductString_t m_GetvJoyProductString = NULL;
+    GetvJoyManufacturerString_t m_GetvJoyManufacturerString = NULL;
+    GetvJoySerialNumberString_t m_GetvJoySerialNumberString = NULL;
 };
 
 #endif // DYNAMICVJOY_H

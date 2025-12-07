@@ -34,6 +34,20 @@ void FFBThread() {
     // Attempt to load vJoy
     bool vJoyActive = false;
     if (DynamicVJoy::Get().Load()) {
+        // Version Check
+        SHORT ver = DynamicVJoy::Get().GetVersion();
+        std::cout << "[vJoy] DLL Version: " << std::hex << ver << std::dec << std::endl;
+        // Expected 2.1.9 (0x219)
+        if (ver < 0x218 && !Config::m_ignore_vjoy_version_warning) {
+             std::string msg = "vJoy Driver Version Mismatch.\n\nDetected: " + std::to_string(ver) + "\nExpected: 2.1.8 or higher.\n\n"
+                               "Some features may not work. Please update vJoy.";
+             int result = MessageBoxA(NULL, msg.c_str(), "LMUFFB Warning", MB_ICONWARNING | MB_OKCANCEL);
+             if (result == IDCANCEL) {
+                 Config::m_ignore_vjoy_version_warning = true;
+                 Config::Save(g_engine); // Save immediately
+             }
+        }
+
         if (DynamicVJoy::Get().Enabled()) {
             VjdStat status = DynamicVJoy::Get().GetStatus(VJOY_DEVICE_ID);
             if ((status == VJD_STAT_OWN) || ((status == VJD_STAT_FREE) && DynamicVJoy::Get().Acquire(VJOY_DEVICE_ID))) {
