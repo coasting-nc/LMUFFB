@@ -13,6 +13,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "output_ffb_to_vjoy=" << m_output_ffb_to_vjoy << "\n";
         file << "gain=" << engine.m_gain << "\n";
         file << "sop_smoothing_factor=" << engine.m_sop_smoothing_factor << "\n";
+        file << "sop_scale=" << engine.m_sop_scale << "\n";
         file << "max_load_factor=" << engine.m_max_load_factor << "\n";
         file << "understeer=" << engine.m_understeer_effect << "\n";
         file << "sop=" << engine.m_sop_effect << "\n";
@@ -52,6 +53,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "output_ffb_to_vjoy") m_output_ffb_to_vjoy = std::stoi(value);
                     else if (key == "gain") engine.m_gain = std::stof(value);
                     else if (key == "sop_smoothing_factor") engine.m_sop_smoothing_factor = std::stof(value);
+                    else if (key == "sop_scale") engine.m_sop_scale = std::stof(value);
                     else if (key == "max_load_factor") engine.m_max_load_factor = std::stof(value);
                     else if (key == "smoothing") engine.m_sop_smoothing_factor = std::stof(value); // Legacy support
                     else if (key == "understeer") engine.m_understeer_effect = std::stof(value);
