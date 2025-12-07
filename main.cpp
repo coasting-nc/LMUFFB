@@ -68,24 +68,24 @@ void FFBThread() {
             }
 
             // --- DYNAMIC vJoy LOGIC (State Machine) ---
-            if (vJoyDllLoaded && DynamicVJoy::Get().Enabled()) {
-                // STATE 1: User wants vJoy, but we don't have it -> TRY ACQUIRE
-                if (Config::m_output_ffb_to_vjoy && !vJoyAcquired) {
+            if (vJoyDllLoaded && DynamicVJoy::Get().Enabled()) { // TODO: I have re-added  " && DynamicVJoy::Get().Enabled()" make sure this is correct
+                // STATE 1: User enabled vJoy -> ACQUIRE
+                if (Config::m_enable_vjoy && !vJoyAcquired) {
                     VjdStat status = DynamicVJoy::Get().GetStatus(VJOY_DEVICE_ID);
                     if ((status == VJD_STAT_OWN) || ((status == VJD_STAT_FREE) && DynamicVJoy::Get().Acquire(VJOY_DEVICE_ID))) {
                         vJoyAcquired = true;
-                        std::cout << "[vJoy] Device " << VJOY_DEVICE_ID << " acquired for debug output." << std::endl;
+                        std::cout << "[vJoy] Device " << VJOY_DEVICE_ID << " acquired." << std::endl;
                     }
                 }
-                // STATE 2: User disabled vJoy, but we hold it -> RELEASE
-                else if (!Config::m_output_ffb_to_vjoy && vJoyAcquired) {
+                // STATE 2: User disabled vJoy -> RELEASE
+                else if (!Config::m_enable_vjoy && vJoyAcquired) {
                     DynamicVJoy::Get().Relinquish(VJOY_DEVICE_ID);
                     vJoyAcquired = false;
                     std::cout << "[vJoy] Device " << VJOY_DEVICE_ID << " relinquished." << std::endl;
                 }
 
-                // STATE 3: If owned, update axis
-                if (vJoyAcquired) {
+                // STATE 3: Update Axis (Only if Acquired AND Monitoring enabled)
+                if (vJoyAcquired && Config::m_output_ffb_to_vjoy) {
                     long axis_val = (long)((force + 1.0) * 0.5 * (axis_max - axis_min) + axis_min);
                     DynamicVJoy::Get().SetAxis(axis_val, VJOY_DEVICE_ID, 0x30); 
                 }

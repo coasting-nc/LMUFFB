@@ -291,5 +291,9 @@ Verify the issues described here and in case fix it: docs\dev_docs\Missing Mutex
 
 ## Troubleshooting 13
 
-Implement the changes described in this doc:
+Do a pull.
+
+Then implement the changes described in this doc:
 docs\dev_docs\decouple_plots_from_gui_refresh.md
+
+Please also add a changelog entry for version 0.3.17 and for this upcoming change (version 0.3.18).

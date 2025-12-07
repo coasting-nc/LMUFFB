@@ -4,12 +4,14 @@
 #include <iostream>
 
 bool Config::m_ignore_vjoy_version_warning = false;
+bool Config::m_enable_vjoy = false;        // Disabled by default (Replaces vJoyActive logic)
 bool Config::m_output_ffb_to_vjoy = false; // Disabled by default (Safety)
 
 void Config::Save(const FFBEngine& engine, const std::string& filename) {
     std::ofstream file(filename);
     if (file.is_open()) {
         file << "ignore_vjoy_version_warning=" << m_ignore_vjoy_version_warning << "\n";
+        file << "enable_vjoy=" << m_enable_vjoy << "\n";
         file << "output_ffb_to_vjoy=" << m_output_ffb_to_vjoy << "\n";
         file << "gain=" << engine.m_gain << "\n";
         file << "sop_smoothing_factor=" << engine.m_sop_smoothing_factor << "\n";
@@ -50,6 +52,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
             if (std::getline(is_line, value)) {
                 try {
                     if (key == "ignore_vjoy_version_warning") m_ignore_vjoy_version_warning = std::stoi(value);
+                    else if (key == "enable_vjoy") m_enable_vjoy = std::stoi(value);
                     else if (key == "output_ffb_to_vjoy") m_output_ffb_to_vjoy = std::stoi(value);
                     else if (key == "gain") engine.m_gain = std::stof(value);
                     else if (key == "sop_smoothing_factor") engine.m_sop_smoothing_factor = std::stof(value);

@@ -223,7 +223,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     ImGui::Text("Output");
     
     // vJoy Monitoring (Safety critical)
-    if (ImGui::Checkbox("Enable vJoy Output (Monitor)", &Config::m_output_ffb_to_vjoy)) {
+    if (ImGui::Checkbox("Monitor FFB on vJoy (Axis X)", &Config::m_output_ffb_to_vjoy)) {
         // Warn user if enabling
         if (Config::m_output_ffb_to_vjoy) {
             MessageBoxA(NULL, "WARNING: Enabling this will output the FFB signal to vJoy Axis X.\n\n"
@@ -232,7 +232,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                               "Safety Warning", MB_ICONWARNING | MB_OK);
         }
     }
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Acquires the vJoy device and outputs FFB force to Axis X.\nREQUIRED if you want to see forces in vJoy Monitor.\nDISABLE if you use Joystick Gremlin (Gremlin needs exclusive access).");
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Outputs calculated force to vJoy Axis X for visual monitoring in vJoy Monitor.\nDISABLE if binding steering to vJoy Axis X!");
 
     // Visualize Clipping (this requires the calculated force from the engine passed back, 
     // or we just show the static gain for now. A real app needs a shared state for 'last_output_force')
@@ -435,7 +435,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
     plot_input_slip_angle.Add((float)((std::abs(fl.mSlipAngle) + std::abs(fr.mSlipAngle)) / 2.0));
     plot_input_patch_vel.Add((float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0));
     plot_input_vert_deflection.Add((float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0));
-    
+
     // --- Draw UI ---
     if (ImGui::CollapsingHeader("FFB Components (Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Text("Total Output");
