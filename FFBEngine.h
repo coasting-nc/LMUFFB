@@ -9,10 +9,10 @@
 class FFBEngine {
 public:
     // Settings (GUI Sliders)
-    float m_gain = 1.0f;          // Master Gain (0.0 - 2.0)
+    float m_gain = 0.5f;          // Master Gain (Default 0.5 for safety)
     float m_smoothing = 0.5f;     // Smoothing factor (placeholder)
     float m_understeer_effect = 1.0f; // 0.0 - 1.0 (How much grip loss affects force)
-    float m_sop_effect = 0.5f;    // 0.0 - 1.0 (Lateral G injection strength)
+    float m_sop_effect = 0.0f;    // 0.0 - 1.0 (Lateral G injection strength - Default 0 to prevent jerking)
     float m_min_force = 0.0f;     // 0.0 - 0.20 (Deadzone removal)
     
     // New Effects (v0.2)
@@ -43,6 +43,9 @@ public:
     double m_spin_phase = 0.0;
     double m_slide_phase = 0.0;
     double m_bottoming_phase = 0.0;
+    
+    // Smoothing State
+    double m_sop_lat_g_smoothed = 0.0;
 
     double calculate_force(const rF2Telemetry* data) {
         if (!data) return 0.0;
@@ -83,7 +86,14 @@ public:
         // --- 2. Seat of Pants (SoP) / Oversteer ---
         // Lateral G-force
         double lat_g = data->mLocalAccel.x / 9.81;
-        double sop_force = lat_g * m_sop_effect * 1000.0; // Base scaling needs tuning
+        
+        // SoP Smoothing (Simple Low Pass Filter)
+        // Alpha = dt / (RC + dt). RC = 1.0 / (2 * PI * freq).
+        // For ~5Hz cutoff (smooth but responsive):
+        double alpha = 0.1; // Placeholder for now, can be dynamic
+        m_sop_lat_g_smoothed = m_sop_lat_g_smoothed + alpha * (lat_g - m_sop_lat_g_smoothed);
+        
+        double sop_force = m_sop_lat_g_smoothed * m_sop_effect * 1000.0; // Base scaling needs tuning
         
         // Oversteer Boost: If Rear Grip < Front Grip (car is rotating), boost SoP
         double grip_rl = data->mWheels[2].mGripFract;

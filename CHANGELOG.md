@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.5] - 2025-05-23
+### Added
+- **Safety Defaults**: Changed default settings to Gain 0.5 and SOP 0.0 to prevent violent wheel jerking on first run (especially for Direct Drive wheels).
+- **SoP Smoothing**: Implemented a Low Pass Filter (exponential moving average) for lateral G-force data to reduce signal noise and vibration on straights.
+- **Improved Error Handling**: Added a clear popup message when `vJoyInterface.dll` is missing.
+- **Documentation**: 
+    - Added "Guided Install Plan" and "vJoy-less Investigation" documents.
+    - Updated README with critical "Double FFB" troubleshooting tips and Borderless Window warnings.
+
 ## [0.3.4] - 2025-05-23
 ### Added
 - **Test Suite**: Significantly expanded test coverage (approx 85%) covering Oversteer Boost, Phase Wraparound, Multi-effect interactions, and Safety Clamps.

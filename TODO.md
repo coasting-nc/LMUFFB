@@ -87,3 +87,7 @@ In addition to the guided installer, from the main GUI of the app, should we hav
 ### Checks for FFB outputs from the game (not the app)
 
 See if it is possible to check if the game is sending FFB to the wheel instead of vJoy: eg. from the shared memory, maybe there is info about it. If we detect it, we should print a warning to the console.
+
+# Update README.txt and or README.md
+
+Update README.txt and README.md. The two had conflicting information about the installation process. Make sure they are consistent.

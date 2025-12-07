@@ -49,6 +49,9 @@ void test_grip_modulation() {
     FFBEngine engine;
     rF2Telemetry data;
     std::memset(&data, 0, sizeof(data));
+    
+    // Set Gain to 1.0 for testing logic (default is now 0.5)
+    engine.m_gain = 1.0; 
 
     data.mSteeringArmForce = 2000.0; // Half of max ~4000
     // Disable SoP and Texture to isolate
@@ -77,7 +80,8 @@ void test_sop_effect() {
 
     // Disable Game Force
     data.mSteeringArmForce = 0.0;
-    engine.m_sop_effect = 0.5; // default
+    engine.m_sop_effect = 0.5; 
+    engine.m_gain = 1.0; // Ensure gain is 1.0
     
     // 0.5 G lateral (4.905 m/s2)
     data.mLocalAccel.x = 4.905;
@@ -87,7 +91,12 @@ void test_sop_effect() {
     // SoP Force = 0.5 * 0.5 * 1000 = 250
     // Norm Force = 250 / 4000 = 0.0625
     
-    double force = engine.calculate_force(&data);
+    // Run for multiple frames to let smoothing settle (alpha=0.1)
+    double force = 0.0;
+    for (int i=0; i<60; i++) {
+        force = engine.calculate_force(&data);
+    }
+
     ASSERT_NEAR(force, 0.0625, 0.001);
 }
 
@@ -225,6 +234,9 @@ void test_dynamic_tuning() {
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = false;
     
+    // Explicitly set gain 1.0 for this baseline
+    engine.m_gain = 1.0;
+
     double force_initial = engine.calculate_force(&data);
     // Should pass through 2000.0 (normalized: 0.5)
     ASSERT_NEAR(force_initial, 0.5, 0.001);
@@ -316,6 +328,7 @@ void test_oversteer_boost() {
     
     engine.m_sop_effect = 1.0;
     engine.m_oversteer_boost = 1.0;
+    engine.m_gain = 1.0;
     
     // Scenario: Front has grip, rear is sliding
     data.mWheels[0].mGripFract = 1.0; // FL
@@ -330,7 +343,11 @@ void test_oversteer_boost() {
     data.mWheels[2].mLateralForce = 2000.0;
     data.mWheels[3].mLateralForce = 2000.0;
     
-    double force = engine.calculate_force(&data);
+    // Run for multiple frames to let smoothing settle
+    double force = 0.0;
+    for (int i=0; i<60; i++) {
+        force = engine.calculate_force(&data);
+    }
     
     // Expected: SoP boosted by grip delta (0.5) + rear torque
     // Base SoP = 1.0 * 1.0 * 1000 = 1000
@@ -529,14 +546,26 @@ void test_spin_torque_drop_interaction() {
     engine.m_spin_enabled = true;
     engine.m_spin_gain = 1.0;
     engine.m_sop_effect = 1.0;
+    engine.m_gain = 1.0;
     
     // High SoP force
     data.mLocalAccel.x = 9.81; // 1G lateral
     data.mSteeringArmForce = 2000.0;
     
+    // Set Grip to 1.0 so Game Force isn't killed by Understeer Effect
+    data.mWheels[0].mGripFract = 1.0;
+    data.mWheels[1].mGripFract = 1.0;
+    data.mWheels[2].mGripFract = 1.0;
+    data.mWheels[3].mGripFract = 1.0;
+    
     // No spin initially
     data.mUnfilteredThrottle = 0.0;
-    double force_no_spin = engine.calculate_force(&data);
+    
+    // Run multiple frames to settle SoP
+    double force_no_spin = 0.0;
+    for (int i=0; i<60; i++) {
+        force_no_spin = engine.calculate_force(&data);
+    }
     
     // Now trigger spin
     data.mUnfilteredThrottle = 1.0;

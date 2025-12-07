@@ -45,6 +45,9 @@ void FFBThread() {
         } else {
             std::cout << "[vJoy] Driver not enabled." << std::endl;
         }
+    } else {
+        std::cerr << "[vJoy] Failed to load vJoyInterface.dll. Please ensure it is in the same folder as the executable." << std::endl;
+        MessageBoxA(NULL, "Failed to load vJoyInterface.dll.\n\nPlease ensure vJoy is installed and the DLL is in the app folder.", "LMUFFB Error", MB_ICONERROR | MB_OK);
     }
 
     std::cout << "[FFB] Loop Started." << std::endl;
