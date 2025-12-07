@@ -131,3 +131,11 @@ Try "Method 1":
 
 During the loop (or early startup) add a check if the FFB is acquired exclusiverly by LMU. If it is, print a warning to the console.
 We could also add a button in the GUI to perform this check: the user would first start LMU and start driving, ensuring that the FFB is working from LMU. Then the user would start LMUFFB and click the button to perform the check. If the FFB is acquired exclusiverly by LMU, print a warning to the console.
+
+### Review docs\plan_troubleshooting_FFB_visualizations.md
+
+Review docs\plan_troubleshooting_FFB_visualizations.md and make sure that in "### A. FFB Component Graph ("The Stack")" we have listed one graph for each component of the FFB, that is, each individual formula or effect that can independently not work as expected and cause FFB issues.
+
+Do a similar review for section "### B. Telemetry Inspector", making sure that we have an invidual visualization for each value we read from game shared memory / telemetry.
+
+Update docs\plan_troubleshooting_FFB_visualizations.md stating clearly that we want the visualization of each value (FFB or telemetry) to be a "trailing" or "trace" live plot visualization that shows the last 5-10 seconds of data, with a sliding window. The plot should be similar to the "telemetry" trace often shown in driving sims with the driver inputs (accelerator pedal, breaking, steering wheel position, etc.).

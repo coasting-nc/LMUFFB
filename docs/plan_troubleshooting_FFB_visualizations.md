@@ -22,7 +22,7 @@ A real-time stacked area chart or multi-line graph showing the contribution of e
 
 **UI Controls:**
 *   Checkbox: "Show Debug Graphs" (to save CPU when not needed).
-*   Toggles: Enable/Disable individual lines to isolate noise.
+*   Toggles: Enable/Disable individual lines to isolate visual noise.
 
 ### B. Telemetry Inspector
 A table or bar chart showing raw inputs from Shared Memory.
