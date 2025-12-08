@@ -1,6 +1,44 @@
 # LMUFFB - AI Developer Guide
 
-This document provides context, constraints, and tool instructions for AI assistants (Jules) working on the LMUFFB C++ Force Feedback Driver.
+This document provides the Standard Operating Procedures (SOP), context, and constraints for AI assistants (Jules) working on the LMUFFB C++ Force Feedback Driver.
+
+---
+
+## ✅ Standard Task Workflow (SOP)
+
+**Perform these steps for EVERY task to ensure quality and consistency.**
+
+### 1. 🔄 Sync & Context
+*   **Start**: Ensure you are working on the latest codebase. If applicable in your environment, run `git pull`.
+*   **Context**: If you need to refresh your understanding of the full codebase, run `python scripts/create_context.py`.
+
+### 2. 🧪 Test-Driven Development
+*   **Requirement**: You **must** add or update C++ unit tests for every logic change or new feature.
+*   **Location**: Add test cases to `tests/test_ffb_engine.cpp`.
+*   **Verification**: You **must** compile and run the tests to prove your code works.
+    *   *Command*:
+        ```bash
+        mkdir -p build_tests && cd build_tests
+        cmake ../tests
+        cmake --build .
+        ./run_tests
+        ```
+    *   *Constraint*: Do not submit code if `run_tests` fails.
+
+### 3. 📚 Documentation Updates
+*   **Requirement**: Update relevant Markdown files to reflect your changes.
+    *   If you changed math/physics -> Update `docs/dev_docs/FFB_formulas.md`.
+    *   If you added telemetry usage -> Update `docs/dev_docs/telemetry_data_reference.md`.
+    *   If you changed the GUI -> Update `README.md` (text descriptions).
+
+### 4. 📦 Versioning & Changelog
+*   **Update Version**: Increment the number in the `VERSION` file (root directory).
+    *   *Patch (0.0.X)*: Bug fixes, tweaks, refactoring.
+    *   *Minor (0.X.0)*: New features, new effects.
+*   **Update Changelog**: Add a concise entry to `CHANGELOG.md` under the new version number.
+    *   Format: `- **Feature Name**: Description of change.`
+
+---
 
 ## 🌍 Environment & Constraints
 
@@ -13,31 +51,6 @@ This document provides context, constraints, and tool instructions for AI assist
 *   **Strategy**: You **can** build and run the **Unit Tests** (`tests/`).
     *   ✅ The Physics Engine (`FFBEngine.h`) is pure C++17 and platform-agnostic.
     *   ✅ The Test Suite mocks the Windows telemetry inputs.
-
----
-
-## 🛠️ Developer Tools (Jules Compatible)
-
-### 1. Run Logic Tests (Cross-Platform)
-**ALWAYS** use this to verify your code changes. It is the only way to check if your code compiles and runs correctly in the Linux VM.
-
-*   **Command**:
-    ```bash
-    mkdir -p build_tests
-    cd build_tests
-    cmake ../tests
-    cmake --build .
-    ./run_tests
-    ```
-*   **What this tests**: 
-    *   Physics math (Sine waves, Phase accumulation).
-    *   Logic flow (If slip > X, then force = Y).
-    *   Safety clamps (Load factor limits).
-
-### 2. Context Generator
-*   **Script**: `python scripts/create_context.py`
-*   **Usage**: Aggregates the codebase into `docs/dev_docs/FULL_PROJECT_CONTEXT.md`. Run this if you need to consolidate the codebase into a single file for analysis, though usually, you should read specific files directly.
-
 
 ---
 

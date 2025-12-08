@@ -17,7 +17,7 @@ EXCLUDE_DIRS = {
 
 # Files to exclude
 EXCLUDE_FILES = {
-    OUTPUT_FILE, 'LICENSE', 'VERSION', 'compile_commands.json'
+    OUTPUT_FILE, 'LICENSE', 'compile_commands.json'
 }
 
 def is_text_file(filename):
