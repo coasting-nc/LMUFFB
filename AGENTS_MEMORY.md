@@ -2,11 +2,6 @@
 
 This document records technical constraints, architectural patterns, and environmental quirks discovered during development. Future agents should consult this to avoid repeating past analyses.
 
-**To the AI (Jules):**
-*   **READ** this before starting any task to avoid repeating past mistakes.
-*   **WRITE** to this if you discover a new workaround, a build quirk, or an architectural insight that will help future instances of yourself.
-
-
 ## 1. Environment & Build
 
 ### Linux Sandbox Constraints
@@ -56,7 +51,7 @@ To avoid "aliasing" (square-wave look) in the GUI graphs:
 *   **Issue:** `ImGui::PlotLines` expects `int` for the count, but `std::vector::size()` returns `size_t`.
 *   **Fix:** Always cast the size: `(int)plot_data.size()`.
 
-## 5. Recent Architectural Changes (v0.3.x)
+## 4. Recent Architectural Changes (v0.3.x)
 
 ### v0.3.18: Decoupled Plotting
 *   Refactored `FFBEngine` to store debug snapshots in `m_debug_buffer`.
