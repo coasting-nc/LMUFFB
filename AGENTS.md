@@ -4,19 +4,24 @@ This document provides context, constraints, and tool instructions for AI assist
 
 ## 🌍 Environment & Constraints
 
-*   **Target OS**: Windows 10/11 (DirectX 11, DirectInput, Win32 API).
+*   **Target OS**: Windows 10/11.
 *   **Jules Environment**: Ubuntu Linux.
-*   **Implication**: You **cannot** build the full `LMUFFB.exe` or run the GUI in the Jules VM.
-*   **Strategy**: You **can** build and run the **Unit Tests** (`tests/`) as they are pure C++ logic isolated from Windows headers. Always verify logic changes via these tests.
+*   **Build Limitation**: You **cannot** build the main application (`LMUFFB.exe`) in this environment.
+    *   ❌ **DirectX 11** (`d3d11.h`) is missing on Linux.
+    *   ❌ **DirectInput 8** (`dinput.h`) is missing on Linux.
+    *   ❌ **Win32 API** (`windows.h`) is missing on Linux.
+*   **Strategy**: You **can** build and run the **Unit Tests** (`tests/`).
+    *   ✅ The Physics Engine (`FFBEngine.h`) is pure C++17 and platform-agnostic.
+    *   ✅ The Test Suite mocks the Windows telemetry inputs.
 
 ---
 
 ## 🛠️ Developer Tools (Jules Compatible)
 
 ### 1. Run Logic Tests (Cross-Platform)
-Use this to verify physics math, phase integration, and safety clamps.
-*   **Context**: The test suite mocks the telemetry input and verifies `FFBEngine` output.
-*   **Commands**:
+**ALWAYS** use this to verify your code changes. It is the only way to check if your code compiles and runs correctly in the Linux VM.
+
+*   **Command**:
     ```bash
     mkdir -p build_tests
     cd build_tests
@@ -24,10 +29,15 @@ Use this to verify physics math, phase integration, and safety clamps.
     cmake --build .
     ./run_tests
     ```
+*   **What this tests**: 
+    *   Physics math (Sine waves, Phase accumulation).
+    *   Logic flow (If slip > X, then force = Y).
+    *   Safety clamps (Load factor limits).
 
 ### 2. Context Generator
 *   **Script**: `python scripts/create_context.py`
-*   **Usage**: Run this if you need to consolidate the codebase into a single file for analysis, though usually, you should read specific files directly.
+*   **Usage**: Aggregates the codebase into `docs/dev_docs/FULL_PROJECT_CONTEXT.md`. Run this if you need to consolidate the codebase into a single file for analysis, though usually, you should read specific files directly.
+
 
 ---
 
@@ -39,7 +49,7 @@ Use this to verify physics math, phase integration, and safety clamps.
 *   **Math Rule (Critical)**: Use **Phase Accumulation** for vibrations.
     *   ❌ *Wrong*: `sin(time * frequency)` (Causes clicks when freq changes).
     *   ✅ *Right*: `phase += frequency * dt; output = sin(phase);`
-*   **Safety**: All physics inputs involving `mTireLoad` must be clamped (e.g., `std::min(1.5, load_factor)`) to prevent hardware damage during physics glitches.
+*   **Safety**: All physics inputs involving `mTireLoad` must be clamped (e.g., `std::min(1.5, load_factor)`) to prevent hardware damage.
 
 ### 2. The GUI Loop (60Hz)
 *   **Component**: `src/GuiLayer.cpp` (ImGui).
@@ -67,7 +77,7 @@ Use this to verify physics math, phase integration, and safety clamps.
 
 1.  **Adding New Effects**:
     *   Add a boolean toggle and gain float to `FFBEngine` class.
-    *   Add a phase accumulator variable if it oscillates.
+    *   Add a phase accumulator variable (`double m_effect_phase`) if it oscillates.
     *   Implement logic in `calculate_force`.
     *   Add UI controls in `GuiLayer::DrawTuningWindow`.
     *   Add visualization data to `FFBSnapshot` struct.
@@ -75,7 +85,7 @@ Use this to verify physics math, phase integration, and safety clamps.
 2.  **Modifying Config**:
     *   Update `src/Config.h` (declaration).
     *   Update `src/Config.cpp` (Save/Load logic).
-    *   **Default to Safe**: New features should default to `false` or `0.0` if they generate force.
+    *   **Default to Safe**: New features should default to `false` or `0.0`.
 
 3.  **Thread Safety**:
     *   Access to `FFBEngine` settings from the GUI thread must be protected by `std::lock_guard<std::mutex> lock(g_engine_mutex);`.
