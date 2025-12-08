@@ -26,6 +26,12 @@ This is an **experimental early alpha version** of a force feedback application.
 
 **Do not skip this step.** No software-level safety can replace proper hardware configuration.
 
+## 📥 Download
+
+**[Download the latest release from GitHub](https://github.com/coasting-nc/LMUFFB/releases)**
+
+Get the latest stable version with the installer and all necessary files.
+
 ![lmuFFB GUI](docs/screenshots/main_app.png)
 ![lmuFFB GUI2](docs/screenshots/ffb_analysis.png)
 

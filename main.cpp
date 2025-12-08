@@ -68,7 +68,7 @@ void FFBThread() {
             }
 
             // --- DYNAMIC vJoy LOGIC (State Machine) ---
-            if (vJoyDllLoaded && DynamicVJoy::Get().Enabled()) { // TODO: I have re-added  " && DynamicVJoy::Get().Enabled()" make sure this is correct
+            if (vJoyDllLoaded && DynamicVJoy::Get().Enabled()) { 
                 // STATE 1: User enabled vJoy -> ACQUIRE
                 if (Config::m_enable_vjoy && !vJoyAcquired) {
                     VjdStat status = DynamicVJoy::Get().GetStatus(VJOY_DEVICE_ID);
