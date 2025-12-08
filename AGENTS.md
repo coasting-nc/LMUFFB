@@ -1,71 +1,86 @@
+# LMUFFB - AI Developer Guide
 
-This project is a C++ Force Feedback driver. 
+This document provides context, constraints, and tool instructions for AI assistants (Jules) working on the LMUFFB C++ Force Feedback Driver.
 
-## 🛠️ Developer Tools
+## 🌍 Environment & Constraints
 
-These are the executable tools and scripts within the repository that Jules (or a developer) can use to build, test, and maintain the project.
+*   **Target OS**: Windows 10/11 (DirectX 11, DirectInput, Win32 API).
+*   **Jules Environment**: Ubuntu Linux.
+*   **Implication**: You **cannot** build the full `LMUFFB.exe` or run the GUI in the Jules VM.
+*   **Strategy**: You **can** build and run the **Unit Tests** (`tests/`) as they are pure C++ logic isolated from Windows headers. Always verify logic changes via these tests.
 
-### 1. Context Generator (`scripts/create_context.py`)
-*   **Description**: A Python script that aggregates all source code (`.cpp`, `.h`), documentation (`.md`), and build files into a single Markdown file.
-*   **Purpose**: Use this to refresh the AI's context window with the latest codebase state.
-*   **Input**: The repository root directory.
-*   **Output**: `docs/dev_docs/FULL_PROJECT_CONTEXT.md`.
-*   **Command**: `python scripts/create_context.py`
+---
 
-### 2. Test Suite (`tests/test_ffb_engine.cpp`)
-*   **Description**: A standalone C++ unit test suite for the `FFBEngine`.
-*   **Purpose**: Verifies physics calculations (Phase integration, Oversteer logic, Safety clamps) without running the full GUI or game.
-*   **Build & Run**:
-    ```powershell
-    # Compile
-    cl /EHsc /std:c++17 /I.. tests\test_ffb_engine.cpp /Fe:test_ffb_engine.exe
-    # Run
-    tests\test_ffb_engine.exe
+## 🛠️ Developer Tools (Jules Compatible)
+
+### 1. Run Logic Tests (Cross-Platform)
+Use this to verify physics math, phase integration, and safety clamps.
+*   **Context**: The test suite mocks the telemetry input and verifies `FFBEngine` output.
+*   **Commands**:
+    ```bash
+    mkdir -p build_tests
+    cd build_tests
+    cmake ../tests
+    cmake --build .
+    ./run_tests
     ```
-*   **Convention**: When modifying `FFBEngine.h`, always run this tool to ensure no regressions in physics logic.
 
-### 3. Build System (CMake / MSVC)
-*   **Description**: The project uses CMake to generate MSVC solution files.
-*   **Purpose**: Compiles the main application `LMUFFB.exe`.
-*   **Key Commands**:
-    *   *Configure*: `cmake -B build`
-    *   *Build*: `cmake --build build --config Release`
-*   **Dependencies**: Requires `vJoyInterface.lib` (linked) and `DirectX` headers.
+### 2. Context Generator
+*   **Script**: `python scripts/create_context.py`
+*   **Usage**: Run this if you need to consolidate the codebase into a single file for analysis, though usually, you should read specific files directly.
 
 ---
 
-## 🏗️ Architectural Components (Context for Code Generation)
+## 🏗️ Architecture & Patterns
 
-These are the primary C++ modules. Jules should treat these as the **Subject** of code generation, adhering to their specific constraints.
+### 1. The Core Loop (400Hz)
+*   **Component**: `FFBEngine` (Header-only: `FFBEngine.h`).
+*   **Constraint**: Runs on a high-priority thread. **No memory allocation** (heap) allowed inside `calculate_force`.
+*   **Math Rule (Critical)**: Use **Phase Accumulation** for vibrations.
+    *   ❌ *Wrong*: `sin(time * frequency)` (Causes clicks when freq changes).
+    *   ✅ *Right*: `phase += frequency * dt; output = sin(phase);`
+*   **Safety**: All physics inputs involving `mTireLoad` must be clamped (e.g., `std::min(1.5, load_factor)`) to prevent hardware damage during physics glitches.
 
-### 1. Physics Core (`FFBEngine`)
-*   **Type**: Header-only Class (`FFBEngine.h`).
-*   **Constraint**: Must run inside a 400Hz loop. **Zero memory allocation** allowed in `calculate_force`.
-*   **Pattern**: Uses **Phase Accumulation** (`phase += freq * dt`) for all vibration effects. Do not use absolute time.
-*   **Data Flow**: Reads `rF2Telemetry` -> Calculates `double` Force -> Pushes `FFBSnapshot` to GUI.
+### 2. The GUI Loop (60Hz)
+*   **Component**: `src/GuiLayer.cpp` (ImGui).
+*   **Pattern**: **Producer-Consumer**.
+    *   *Producer (FFB Thread)*: Pushes `FFBSnapshot` structs into `m_debug_buffer` every tick.
+    *   *Consumer (GUI Thread)*: Calls `GetDebugBatch()` to swap the buffer and render *all* ticks since the last frame.
+    *   *Constraint*: Never read `FFBEngine` state directly for plots; always use the snapshot batch to avoid aliasing.
 
-### 2. Hardware Interface (`DirectInputFFB`)
-*   **Type**: Singleton Class (`src/DirectInputFFB.cpp`).
-*   **Constraint**: Manages `IDirectInputDevice8`.
-*   **Pattern**: Sends "Constant Force" updates. Includes logic to skip updates if the force value hasn't changed (optimization).
-
-### 3. Telemetry Interface (`rF2Data.h`)
-*   **Type**: Data Structure Definition.
-*   **Constraint**: Must strictly match the memory layout of the *rFactor 2 Shared Memory Map Plugin*.
-*   **Key Fields**:
-    *   `mSteeringArmForce`: Primary FFB input.
-    *   `mGripFract`: Used for Understeer effect.
-    *   `mLateralPatchVel`: Used for Slide Texture frequency.
+### 3. Hardware Interface
+*   **Component**: `src/DirectInputFFB.cpp`.
+*   **Pattern**: Sends "Constant Force" updates.
+*   **Optimization**: Includes a check `if (magnitude == m_last_force) return;` to minimize driver overhead.
 
 ---
 
-## 📝 Conventions & Guidelines
+## 📂 Key Documentation References
 
-### Threading Model
-*   **FFB Thread**: High priority, 400Hz. Handles Physics (`FFBEngine`) and Hardware Output (`DirectInput`). **No GUI calls allowed.**
-*   **Main Thread**: Low priority, 60Hz. Handles GUI (`ImGui`) and Input processing.
-*   **Synchronization**: Access to shared data (like `m_gain` or `m_debug_buffer`) must be protected by `g_engine_mutex`.
+*   **Formulas**: `docs/dev_docs/FFB_formulas.md` (The math behind the code).
+*   **Telemetry**: `docs/dev_docs/telemetry_data_reference.md` (Available inputs).
+*   **Structs**: `rF2Data.h` (Memory layout - **Must match rFactor 2 plugin exactly**).
 
-### Safety Mechanisms
-*   **vJoy Guard**: The app includes a "Safety Switch" (`Config::m_output_ffb_to_vjoy`). By default, writing to vJoy is **disabled** to prevent feedback loops if the user misconfigures the game.
-*   **Load Clamping**: Physics calculations involving `mTireLoad` must be clamped (e.g., `std::min(1.5, load_factor)`) to prevent hardware damage during physics glitches.
+---
+
+## 📝 Code Generation Guidelines
+
+1.  **Adding New Effects**:
+    *   Add a boolean toggle and gain float to `FFBEngine` class.
+    *   Add a phase accumulator variable if it oscillates.
+    *   Implement logic in `calculate_force`.
+    *   Add UI controls in `GuiLayer::DrawTuningWindow`.
+    *   Add visualization data to `FFBSnapshot` struct.
+
+2.  **Modifying Config**:
+    *   Update `src/Config.h` (declaration).
+    *   Update `src/Config.cpp` (Save/Load logic).
+    *   **Default to Safe**: New features should default to `false` or `0.0` if they generate force.
+
+3.  **Thread Safety**:
+    *   Access to `FFBEngine` settings from the GUI thread must be protected by `std::lock_guard<std::mutex> lock(g_engine_mutex);`.
+
+## 🚫 Common Pitfalls
+*   **Do not** use `mElapsedTime` for sine waves (see Math Rule).
+*   **Do not** remove the `vJoyInterface.dll` dynamic loading logic (the app must run even if vJoy is missing).
+*   **Do not** change the struct packing in `rF2Data.h` (it breaks shared memory reading).
