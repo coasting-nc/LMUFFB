@@ -3,6 +3,207 @@
 This file contains the full source code and documentation of the project.
 
 
+# File: AGENTS.md
+```markdown
+# LMUFFB - AI Developer Guide
+
+This document provides the Standard Operating Procedures (SOP), context, and constraints for AI assistants (Jules) working on the LMUFFB C++ Force Feedback Driver.
+
+---
+
+## ✅ Standard Task Workflow (SOP)
+
+**Perform these steps for EVERY task to ensure quality and consistency.**
+
+### 1. 🧠 Consult Memory
+*   **Action**: Read `AGENTS_MEMORY.md`.
+*   **Why**: It contains workarounds (like Git fixes) and architectural lessons learned from previous sessions.
+
+### 2. 🔄 Sync & Context
+*   **Sync**: Try to ensure you have the latest code. Run `git fetch`.
+    *   *Note*: If git fails, ignore the error and proceed with the files currently in the environment.
+*   **Context**: If you need to refresh your understanding of the full codebase, run `python scripts/create_context.py`.
+
+### 3. 🧪 Test-Driven Development
+*   **Requirement**: You **must** add or update C++ unit tests for every logic change or new feature.
+*   **Location**: Add test cases to `tests/test_ffb_engine.cpp`.
+*   **Verification**: You **must** compile and run the tests to prove your code works.
+    *   *Command*:
+        ```bash
+        mkdir -p build_tests && cd build_tests
+        cmake ../tests
+        cmake --build .
+        ./run_tests
+        ```
+    *   *Constraint*: Do not submit code if `run_tests` fails.
+
+### 4. 📚 Documentation Updates
+*   **Requirement**: Update relevant Markdown files to reflect your changes.
+    *   If you changed math/physics -> Update `docs/dev_docs/FFB_formulas.md`.
+    *   If you added telemetry usage -> Update `docs/dev_docs/telemetry_data_reference.md`.
+    *   If you changed the GUI -> Update `README.md` (text descriptions).
+
+### 5. 📦 Versioning & Changelog
+*   **Update Version**: Increment the number in the `VERSION` file (root directory).
+    *   *Patch (0.0.X)*: Bug fixes, tweaks, refactoring.
+    *   *Minor (0.X.0)*: New features, new effects.
+*   **Update Changelog**: Add a concise entry to `CHANGELOG.md` under the new version number.
+
+### 6. 🧠 Update Memory (Critical)
+*   **Action**: If you encountered a build error, a command failure, or learned something new about the code structure, append it to `AGENTS_MEMORY.md`.
+*   **Goal**: Help the *next* AI session avoid the same problem.
+
+### 7. 📤 Delivery
+*   **Do Not Push**: You do not have write access to the repository.
+*   **Save Files**: Ensure all modified files (including `AGENTS_MEMORY.md`) are saved. The user will download your work as a ZIP.
+
+---
+
+## 🌍 Environment & Constraints
+
+*   **Target OS**: Windows 10/11.
+*   **Jules Environment**: Ubuntu Linux.
+*   **Build Limitation**: You **cannot** build the main application (`LMUFFB.exe`) in this environment.
+    *   ❌ **DirectX 11** (`d3d11.h`) is missing on Linux.
+    *   ❌ **DirectInput 8** (`dinput.h`) is missing on Linux.
+    *   ❌ **Win32 API** (`windows.h`) is missing on Linux.
+*   **Strategy**: You **can** build and run the **Unit Tests** (`tests/`).
+    *   ✅ The Physics Engine (`FFBEngine.h`) is pure C++17 and platform-agnostic.
+    *   ✅ The Test Suite mocks the Windows telemetry inputs.
+
+---
+
+## 🏗️ Architecture & Patterns
+
+### 1. The Core Loop (400Hz)
+*   **Component**: `FFBEngine` (Header-only: `FFBEngine.h`).
+*   **Constraint**: Runs on a high-priority thread. **No memory allocation** (heap) allowed inside `calculate_force`.
+*   **Math Rule (Critical)**: Use **Phase Accumulation** for vibrations.
+    *   ❌ *Wrong*: `sin(time * frequency)` (Causes clicks when freq changes).
+    *   ✅ *Right*: `phase += frequency * dt; output = sin(phase);`
+*   **Safety**: All physics inputs involving `mTireLoad` must be clamped (e.g., `std::min(1.5, load_factor)`) to prevent hardware damage.
+
+### 2. The GUI Loop (60Hz)
+*   **Component**: `src/GuiLayer.cpp` (ImGui).
+*   **Pattern**: **Producer-Consumer**.
+    *   *Producer (FFB Thread)*: Pushes `FFBSnapshot` structs into `m_debug_buffer` every tick.
+    *   *Consumer (GUI Thread)*: Calls `GetDebugBatch()` to swap the buffer and render *all* ticks since the last frame.
+    *   *Constraint*: Never read `FFBEngine` state directly for plots; always use the snapshot batch to avoid aliasing.
+
+### 3. Hardware Interface
+*   **Component**: `src/DirectInputFFB.cpp`.
+*   **Pattern**: Sends "Constant Force" updates.
+*   **Optimization**: Includes a check `if (magnitude == m_last_force) return;` to minimize driver overhead.
+
+---
+
+## 📂 Key Documentation References
+
+*   **Formulas**: `docs/dev_docs/FFB_formulas.md` (The math behind the code).
+*   **Telemetry**: `docs/dev_docs/telemetry_data_reference.md` (Available inputs).
+*   **Structs**: `rF2Data.h` (Memory layout - **Must match rFactor 2 plugin exactly**).
+
+---
+
+## 📝 Code Generation Guidelines
+
+1.  **Adding New Effects**:
+    *   Add a boolean toggle and gain float to `FFBEngine` class.
+    *   Add a phase accumulator variable (`double m_effect_phase`) if it oscillates.
+    *   Implement logic in `calculate_force`.
+    *   Add UI controls in `GuiLayer::DrawTuningWindow`.
+    *   Add visualization data to `FFBSnapshot` struct.
+
+2.  **Modifying Config**:
+    *   Update `src/Config.h` (declaration).
+    *   Update `src/Config.cpp` (Save/Load logic).
+    *   **Default to Safe**: New features should default to `false` or `0.0`.
+
+3.  **Thread Safety**:
+    *   Access to `FFBEngine` settings from the GUI thread must be protected by `std::lock_guard<std::mutex> lock(g_engine_mutex);`.
+
+## 🚫 Common Pitfalls
+*   **Do not** use `mElapsedTime` for sine waves (see Math Rule).
+*   **Do not** remove the `vJoyInterface.dll` dynamic loading logic (the app must run even if vJoy is missing).
+*   **Do not** change the struct packing in `rF2Data.h` (it breaks shared memory reading).
+```
+
+# File: AGENTS_MEMORY.md
+```markdown
+# Agent Knowledge Base
+
+This document records technical constraints, architectural patterns, and environmental quirks discovered during development. Future agents should consult this to avoid repeating past analyses.
+
+## 1. Environment & Build
+
+### Linux Sandbox Constraints
+The development environment is Linux-based, but the application is a Windows application relying on DirectX and DirectInput.
+*   **Full Compilation:** Not possible in this environment. The `main.cpp` and `GuiLayer.cpp` depend on `<d3d11.h>`, `<dinput.h>`, and `<windows.h>`, which are unavailable in the Linux container.
+*   **Test Compilation:** Unit tests **CAN** be built and run because `tests/test_ffb_engine.cpp` only links against the physics engine (`FFBEngine.h`), which uses standard C++ math libraries and simple structs.
+
+### Verified Build Commands (Tests)
+To verify logic changes in the physics engine, use the following sequence:
+
+```bash
+mkdir -p tests/build
+cd tests/build
+cmake ..
+make
+./run_tests
+```
+
+**Note:** The root `CMakeLists.txt` is designed for Windows (MSVC). The `tests/CMakeLists.txt` is the one relevant for verification in this environment.
+
+## 2. Critical Constraints & Math
+
+### Phase Accumulation (Anti-Glitch)
+To generate vibration effects (Lockup, Spin, Road Texture) without audio-like clicking or popping artifacts:
+*   **Pattern:** Never calculate `sin(time * freq)`.
+*   **Correct Approach:** Use an accumulator `m_phase += freq * dt * TWO_PI`.
+*   **Why:** Frequency changes dynamically based on car speed. If you use absolute time, a sudden frequency change causes a discontinuity in the sine wave phase, resulting in a "pop". Integrating delta-phase ensures the wave is continuous.
+
+### Producer-Consumer Visualization
+To avoid "aliasing" (square-wave look) in the GUI graphs:
+*   **Physics Rate:** 400Hz.
+*   **GUI Rate:** 60Hz.
+*   **Problem:** Sampling the physics value once per GUI frame misses high-frequency spikes and vibrations.
+*   **Solution:** `FFBEngine` acts as a **Producer**, pushing *every* sample (400Hz) into a thread-safe `std::vector<FFBSnapshot>`. `GuiLayer` acts as a **Consumer**, grabbing the entire batch every frame and plotting all points.
+*   **Mechanism:** `m_debug_mutex` protects the swap of the buffer.
+
+## 3. Workarounds
+
+### Git Syncing
+*   **Issue:** `git pull` often hangs or fails in this environment due to credential prompts or history mismatches.
+*   **Workaround:** Use the following sequence to force a sync with the remote state:
+    ```bash
+    git fetch && git reset --hard origin/main
+    ```
+
+### ImGui Warnings
+*   **Issue:** `ImGui::PlotLines` expects `int` for the count, but `std::vector::size()` returns `size_t`.
+*   **Fix:** Always cast the size: `(int)plot_data.size()`.
+
+## 4. Recent Architectural Changes (v0.3.x)
+
+### v0.3.18: Decoupled Plotting
+*   Refactored `FFBEngine` to store debug snapshots in `m_debug_buffer`.
+*   Updated `GuiLayer` to consume batches, enabling "oscilloscope" style visualization.
+
+### v0.3.17: Thread Safety & vJoy Split
+*   **Mutex:** Added `std::lock_guard` in `GuiLayer::DrawDebugWindow` to prevent race conditions when reading shared engine state.
+*   **vJoy:** Split functionality into two toggles:
+    1.  `m_enable_vjoy`: Acquires/Relinquishes the device.
+    2.  `m_output_ffb_to_vjoy`: Writes FFB data to Axis X.
+    *   *Purpose:* Allows users to release the vJoy device so external feeders (Joystick Gremlin) can use it, while still keeping the app running.
+
+### v0.3.16: SoP Config
+*   Replaced hardcoded `1000.0` scaling for Seat of Pants effect with configurable `m_sop_scale` (exposed in GUI).
+
+### v0.3.14: Dynamic vJoy
+*   Implemented a state machine in `main.cpp` to dynamically acquire/release vJoy at runtime based on GUI checkboxes, without needing a restart.
+
+```
+
 # File: build_commands.txt
 ```
 Write build files
@@ -29,6 +230,19 @@ tests\test_ffb_engine.exe
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [0.3.19] - 2025-12-08
+### Added
+- **Telemetry Robustness**: Implemented sanity checks to detect and mitigate missing telemetry data.
+    - **Load Fallback**: If `mTireLoad` is 0 while moving, defaults to 4000N.
+    - **Grip Fallback**: If `mGripFract` is 0 but load exists, defaults to 1.0.
+    - **DeltaTime Correction**: Detects invalid `dt` and defaults to 400Hz.
+    - **GUI Warnings**: Added visual alerts in the Debug Window when data is missing.
+
+## [0.3.18] - 2025-05-23
+### Added
+- **Decoupled Plotting**: Refactored the FFB Engine and GUI to use a Producer-Consumer pattern. This decouples the physics update rate (400Hz) from the GUI refresh rate (60Hz), allowing all physics samples to be captured and visualized without aliasing.
+- **Configurable Plot History**: Plots now show a rolling history defined by a code parameter (default 10s), ensuring consistent visualization regardless of frame rate.
 
 ## [0.3.16] - 2025-05-23
 ### Fixed
@@ -237,21 +451,40 @@ add_custom_command(TARGET LMUFFB POST_BUILD
 
 #include <cmath>
 #include <algorithm>
+#include <vector>
+#include <mutex>
+#include <iostream>
 #include "rF2Data.h"
 
-// Struct to hold debug values for visualization
-struct FFBOutputDebug {
-    float base_force = 0.0f;
-    float sop_force = 0.0f;
-    float understeer_drop = 0.0f; // Reduction amount
-    float oversteer_boost = 0.0f; // Boost + Rear Torque
-    float texture_road = 0.0f;
-    float texture_slide = 0.0f;
-    float texture_lockup = 0.0f;
-    float texture_spin = 0.0f;
-    float texture_bottoming = 0.0f;
-    float total_output = 0.0f;
-    float clipping = 0.0f; // 1.0 if clipping, 0.0 otherwise
+// 1. Define the Snapshot Struct (Unified FFB + Telemetry)
+struct FFBSnapshot {
+    // FFB Outputs
+    float base_force;
+    float sop_force;
+    float understeer_drop;
+    float oversteer_boost;
+    float texture_road;
+    float texture_slide;
+    float texture_lockup;
+    float texture_spin;
+    float texture_bottoming;
+    float total_output;
+    float clipping;
+
+    // Telemetry Inputs
+    float steer_force;
+    float accel_x;
+    float tire_load;
+    float grip_fract;
+    float slip_ratio;
+    float slip_angle;
+    float patch_vel;
+    float deflection;
+
+    // Telemetry Health Flags
+    bool warn_load;
+    bool warn_grip;
+    bool warn_dt;
 };
 
 // FFB Engine Class
@@ -288,6 +521,11 @@ public:
     bool m_bottoming_enabled = true;
     float m_bottoming_gain = 1.0f;
 
+    // Warning States (Console logging)
+    bool m_warned_load = false;
+    bool m_warned_grip = false;
+    bool m_warned_dt = false;
+
     // Internal state
     double m_prev_vert_deflection[2] = {0.0, 0.0}; // FL, FR
     
@@ -300,30 +538,71 @@ public:
     // Smoothing State
     double m_sop_lat_g_smoothed = 0.0;
     
-    // Debug State
-    FFBOutputDebug m_last_debug;
-    rF2Telemetry m_last_telemetry; // Copy of latest telemetry for GUI
+    // Thread-Safe Buffer (Producer-Consumer)
+    std::vector<FFBSnapshot> m_debug_buffer;
+    std::mutex m_debug_mutex;
+    
+    // Helper to retrieve data (Consumer)
+    std::vector<FFBSnapshot> GetDebugBatch() {
+        std::vector<FFBSnapshot> batch;
+        {
+            std::lock_guard<std::mutex> lock(m_debug_mutex);
+            if (!m_debug_buffer.empty()) {
+                batch.swap(m_debug_buffer); // Fast swap
+            }
+        }
+        return batch;
+    }
 
     double calculate_force(const rF2Telemetry* data) {
         if (!data) return 0.0;
-        m_last_telemetry = *data; // Store for debug
-        
-        // Reset debug struct
-        m_last_debug = FFBOutputDebug();
         
         double dt = data->mDeltaTime;
         const double TWO_PI = 6.28318530718;
+
+        // Sanity Check Flags for this frame
+        bool frame_warn_load = false;
+        bool frame_warn_grip = false;
+        bool frame_warn_dt = false;
+
+        // --- SANITY CHECK: DELTA TIME ---
+        if (dt <= 0.000001) {
+            dt = 0.0025; // Default to 400Hz
+            if (!m_warned_dt) {
+                std::cout << "[WARNING] Invalid DeltaTime (<=0). Using default 0.0025s." << std::endl;
+                m_warned_dt = true;
+            }
+            frame_warn_dt = true;
+        }
 
         // Front Left and Front Right
         const rF2Wheel& fl = data->mWheels[0];
         const rF2Wheel& fr = data->mWheels[1];
 
         double game_force = data->mSteeringArmForce;
+        
+        // Debug variables (initialized to 0)
+        double road_noise = 0.0;
+        double slide_noise = 0.0;
+        double lockup_rumble = 0.0;
+        double spin_rumble = 0.0;
+        double bottoming_crunch = 0.0;
 
         // --- PRE-CALCULATION: TIRE LOAD FACTOR ---
         // Calculate this once to use across multiple effects.
         // Heavier load = stronger vibration transfer.
         double avg_load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
+
+        // SANITY CHECK: If load is exactly 0.0 but car is moving, telemetry is likely broken.
+        // We use Z velocity (forward speed) as a proxy.
+        if (avg_load < 1.0 && std::abs(data->mLocalVel.z) > 1.0) {
+            avg_load = 4000.0; // Default load
+            if (!m_warned_load) {
+                std::cout << "[WARNING] Missing Tire Load data. Defaulting to 4000N." << std::endl;
+                m_warned_load = true;
+            }
+            frame_warn_load = true;
+        }
         
         // Normalize: 4000N is a reference "loaded" GT tire.
         double load_factor = avg_load / 4000.0;
@@ -337,15 +616,23 @@ public:
         double grip_r = fr.mGripFract;
         double avg_grip = (grip_l + grip_r) / 2.0;
         
+        // SANITY CHECK: If grip is 0.0 but we have load, it's suspicious.
+        // Though 0 grip is possible on ice, exact 0.0 often means missing data.
+        if (avg_grip < 0.0001 && avg_load > 100.0) {
+            avg_grip = 1.0; // Default to full grip
+            if (!m_warned_grip) {
+                std::cout << "[WARNING] Missing Grip data. Defaulting to 1.0." << std::endl;
+                m_warned_grip = true;
+            }
+            frame_warn_grip = true;
+        }
+
         // Clamp grip 0-1 for safety
         avg_grip = (std::max)(0.0, (std::min)(1.0, avg_grip));
         
         double grip_factor = 1.0 - ((1.0 - avg_grip) * m_understeer_effect);
         double output_force = game_force * grip_factor;
         
-        m_last_debug.base_force = (float)game_force;
-        m_last_debug.understeer_drop = (float)(game_force * (1.0 - grip_factor));
-
         // --- 2. Seat of Pants (SoP) / Oversteer ---
         // Lateral G-force
         double lat_g = data->mLocalAccel.x / 9.81;
@@ -390,10 +677,6 @@ public:
         double rear_torque = rear_lat_force * 0.05 * m_oversteer_boost; // 0.05 is arb scale
         sop_total += rear_torque;
         
-        // Log split components
-        m_last_debug.sop_force = (float)sop_base_force; // Pure Lat G
-        m_last_debug.oversteer_boost = (float)(sop_total - sop_base_force); // The extra boost + rear torque
-
         double total_force = output_force + sop_total;
         
         // --- 2b. Progressive Lockup (Dynamic) ---
@@ -424,9 +707,8 @@ public:
                 double amp = severity * m_lockup_gain * 800.0;
                 
                 // Use the integrated phase
-                double rumble = std::sin(m_lockup_phase) * amp;
-                m_last_debug.texture_lockup = (float)rumble;
-                total_force += rumble;
+                lockup_rumble = std::sin(m_lockup_phase) * amp;
+                total_force += lockup_rumble;
             }
         }
 
@@ -463,10 +745,9 @@ public:
 
                 // Amplitude
                 double amp = severity * m_spin_gain * 500.0;
-                double rumble = std::sin(m_spin_phase) * amp;
+                spin_rumble = std::sin(m_spin_phase) * amp;
                 
-                m_last_debug.texture_spin = (float)rumble;
-                total_force += rumble;
+                total_force += spin_rumble;
             }
         }
 
@@ -490,9 +771,8 @@ public:
                 double sawtooth = (m_slide_phase / TWO_PI) * 2.0 - 1.0;
 
                 // Amplitude: Scaled by PRE-CALCULATED global load_factor
-                double noise = sawtooth * m_slide_texture_gain * 300.0 * load_factor;
-                m_last_debug.texture_slide = (float)noise;
-                total_force += noise;
+                slide_noise = sawtooth * m_slide_texture_gain * 300.0 * load_factor;
+                total_force += slide_noise;
             }
         }
         
@@ -516,8 +796,6 @@ public:
             // Apply LOAD FACTOR: Bumps feel harder under compression
             road_noise *= load_factor;
             
-            m_last_debug.texture_road = (float)road_noise;
-
             total_force += road_noise;
         }
 
@@ -547,7 +825,6 @@ public:
                 // This creates a heavy shudder regardless of steering direction
                 double crunch = std::sin(m_bottoming_phase) * bump_magnitude;
                 
-                m_last_debug.texture_bottoming = (float)crunch;
                 total_force += crunch;
             }
         }
@@ -569,8 +846,42 @@ public:
             norm_force = sign * m_min_force;
         }
         
-        m_last_debug.total_output = (float)norm_force;
-        m_last_debug.clipping = (std::abs(norm_force) > 1.0) ? 1.0f : 0.0f;
+        // --- SNAPSHOT LOGIC ---
+        // Capture all internal states for visualization
+        {
+            std::lock_guard<std::mutex> lock(m_debug_mutex);
+            if (m_debug_buffer.size() < 100) {
+                FFBSnapshot snap;
+                snap.total_output = (float)norm_force;
+                snap.base_force = (float)game_force;
+                snap.sop_force = (float)sop_base_force;
+                snap.understeer_drop = (float)(game_force * (1.0 - grip_factor));
+                snap.oversteer_boost = (float)(sop_total - sop_base_force);
+                snap.texture_road = (float)road_noise;
+                snap.texture_slide = (float)slide_noise;
+                snap.texture_lockup = (float)lockup_rumble;
+                snap.texture_spin = (float)spin_rumble;
+                snap.texture_bottoming = (float)bottoming_crunch;
+                snap.clipping = (std::abs(norm_force) > 0.99f) ? 1.0f : 0.0f;
+                
+                // Telemetry inputs
+                snap.steer_force = (float)game_force;
+                snap.accel_x = (float)data->mLocalAccel.x;
+                snap.tire_load = (float)avg_load;
+                snap.grip_fract = (float)avg_grip;
+                snap.slip_ratio = (float)((fl.mSlipRatio + fr.mSlipRatio) / 2.0);
+                snap.slip_angle = (float)((std::abs(fl.mSlipAngle) + std::abs(fr.mSlipAngle)) / 2.0);
+                snap.patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
+                snap.deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
+                
+                // Warnings
+                snap.warn_load = frame_warn_load;
+                snap.warn_grip = frame_warn_grip;
+                snap.warn_dt = frame_warn_dt;
+
+                m_debug_buffer.push_back(snap);
+            }
+        }
 
         // Clip
         return (std::max)(-1.0, (std::min)(1.0, norm_force));
@@ -653,24 +964,24 @@ void FFBThread() {
             }
 
             // --- DYNAMIC vJoy LOGIC (State Machine) ---
-            if (vJoyDllLoaded && DynamicVJoy::Get().Enabled()) {
-                // STATE 1: User wants vJoy, but we don't have it -> TRY ACQUIRE
-                if (Config::m_output_ffb_to_vjoy && !vJoyAcquired) {
+            if (vJoyDllLoaded && DynamicVJoy::Get().Enabled()) { // TODO: I have re-added  " && DynamicVJoy::Get().Enabled()" make sure this is correct
+                // STATE 1: User enabled vJoy -> ACQUIRE
+                if (Config::m_enable_vjoy && !vJoyAcquired) {
                     VjdStat status = DynamicVJoy::Get().GetStatus(VJOY_DEVICE_ID);
                     if ((status == VJD_STAT_OWN) || ((status == VJD_STAT_FREE) && DynamicVJoy::Get().Acquire(VJOY_DEVICE_ID))) {
                         vJoyAcquired = true;
-                        std::cout << "[vJoy] Device " << VJOY_DEVICE_ID << " acquired for debug output." << std::endl;
+                        std::cout << "[vJoy] Device " << VJOY_DEVICE_ID << " acquired." << std::endl;
                     }
                 }
-                // STATE 2: User disabled vJoy, but we hold it -> RELEASE
-                else if (!Config::m_output_ffb_to_vjoy && vJoyAcquired) {
+                // STATE 2: User disabled vJoy -> RELEASE
+                else if (!Config::m_enable_vjoy && vJoyAcquired) {
                     DynamicVJoy::Get().Relinquish(VJOY_DEVICE_ID);
                     vJoyAcquired = false;
                     std::cout << "[vJoy] Device " << VJOY_DEVICE_ID << " relinquished." << std::endl;
                 }
 
-                // STATE 3: If owned, update axis
-                if (vJoyAcquired) {
+                // STATE 3: Update Axis (Only if Acquired AND Monitoring enabled)
+                if (vJoyAcquired && Config::m_output_ffb_to_vjoy) {
                     long axis_val = (long)((force + 1.0) * 0.5 * (axis_max - axis_min) + axis_min);
                     DynamicVJoy::Get().SetAxis(axis_val, VJOY_DEVICE_ID, 0x30); 
                 }
@@ -788,6 +1099,28 @@ A FFB app for LMU, similar to irFFB and Marvin’s iRacing App
 
 Experimental alpha version.
 
+## ⚠️ CRITICAL SAFETY WARNING ⚠️
+
+**BEFORE USING THIS APPLICATION, YOU MUST CONFIGURE YOUR STEERING WHEEL DEVICE DRIVER:**
+
+This is an **experimental early alpha version** of a force feedback application. The FFB formulas are still being refined and **may produce strong force spikes and oscillations** that could be dangerous or damage your equipment.
+
+**Required Safety Steps:**
+
+1. **Open your wheelbase/steering wheel device driver configurator** (e.g., Simucube TrueDrive, Fanatec Control Panel, Moza Pit House, etc.)
+2. **Set the Maximum Strength/Torque to a LOW value:**
+   - **For Direct Drive Wheelbases**: Set to **10% or lower** of maximum torque
+   - **For Belt/Gear-Driven Wheels**: Set to **20-30%** of maximum strength
+3. **Test gradually**: Start with even lower values and increase slowly while monitoring for unexpected behavior
+4. **Stay alert**: Be prepared to immediately disable FFB if you experience violent oscillations or unexpected forces
+
+**Why this is critical:**
+- The FFB algorithms are under active development and may generate unexpected force spikes
+- Unrefined formulas can cause dangerous oscillations, especially on high-torque direct drive systems
+- Your safety and equipment protection depend on having a hardware-level force limiter in place
+
+**Do not skip this step.** No software-level safety can replace proper hardware configuration.
+
 ![lmuFFB GUI](docs/screenshots/main_app.png)
 ![lmuFFB GUI2](docs/screenshots/ffb_analysis.png)
 
@@ -878,8 +1211,8 @@ Experimental alpha version.
     - *Alternative:* You can try moving `LMUFFB.exe` directly into `C:\Program Files\vJoy\x64\` if you have persistent DLL issues.
 - **"Could not open file mapping object"**: Start the game and load a track first.
 
-## Known Issues (v0.3.3)
-*   **Telemetry Gaps**: Some users report missing telemetry for Dashboard apps (ERS, Temps). lmuFFB has robust fallbacks, but if `mGripFract` is missing (Tire Temps broken), the Understeer effect may be static. See [Telemetry Report](docs/dev_docs/telemetry_availability_report.md).
+## Known Issues (v0.3.19)
+*   **Telemetry Gaps**: Some users report missing telemetry for Dashboard apps (ERS, Temps). lmuFFB has robust fallbacks (Sanity Checks) that prevent dead FFB effects even if the game fails to report data (e.g., zero Grip or Load). See [Telemetry Report](docs/dev_docs/telemetry_availability_report.md).
 
 
 ## Feedback & Support
@@ -977,7 +1310,6 @@ To create the `LMUFFB_Setup.exe`:
 3.  **Run Compiler**: Open `installer/lmuffb.iss` in Inno Setup Compiler and click **Compile**.
 4.  **Output**: The installer will be generated in `installer/Output/`.
 
-
 ```
 
 # File: README.txt
@@ -987,6 +1319,47 @@ lmuFFB - Le Mans Ultimate Force Feedback
 Version: 0.3.7
 
 See README.md for full documentation with images and links.
+
+
+===============================================================================
+!!!                    CRITICAL SAFETY WARNING                             !!!
+===============================================================================
+
+BEFORE USING THIS APPLICATION, YOU MUST CONFIGURE YOUR STEERING WHEEL DEVICE 
+DRIVER:
+
+This is an EXPERIMENTAL EARLY ALPHA VERSION of a force feedback application. 
+The FFB formulas are still being refined and MAY PRODUCE STRONG FORCE SPIKES 
+AND OSCILLATIONS that could be dangerous or damage your equipment.
+
+REQUIRED SAFETY STEPS:
+
+1. Open your wheelbase/steering wheel device driver configurator 
+   (e.g., Simucube TrueDrive, Fanatec Control Panel, Moza Pit House, etc.)
+
+2. Set the Maximum Strength/Torque to a LOW value:
+   - For Direct Drive Wheelbases: Set to 10% OR LOWER of maximum torque
+   - For Belt/Gear-Driven Wheels: Set to 20-30% of maximum strength
+
+3. Test gradually: Start with even lower values and increase slowly while 
+   monitoring for unexpected behavior
+
+4. Stay alert: Be prepared to immediately disable FFB if you experience 
+   violent oscillations or unexpected forces
+
+WHY THIS IS CRITICAL:
+- The FFB algorithms are under active development and may generate unexpected 
+  force spikes
+- Unrefined formulas can cause dangerous oscillations, especially on 
+  high-torque direct drive systems
+- Your safety and equipment protection depend on having a hardware-level 
+  force limiter in place
+
+DO NOT SKIP THIS STEP. No software-level safety can replace proper hardware 
+configuration.
+
+===============================================================================
+
 
 PREREQUISITES
 -------------
@@ -1291,7 +1664,7 @@ The app follows best practices for real-time signal generation. A recent update 
        v (Structs: rF2Telemetry)
        |
 [ FFB Engine ]  <-- (FFBThread - 400Hz)
-       |
+       | (Sanity Checks & Normalization)
        v (Calculated Force)
        |
 [ vJoy Interface ]
@@ -1326,6 +1699,7 @@ The application is split into two primary threads:
 ### 3. FFB Engine (`FFBEngine.h`)
 The core logic is encapsulated in a header-only class to facilitate unit testing.
 
+*   **Sanity Layer (v0.3.19)**: Before calculation, incoming telemetry is validated against physical rules. Impossible states (e.g., Car moving at 200kph but 0 Tire Load) trigger fallbacks to default values, preventing effects from cutting out.
 *   **Inputs**: `SteeringArmForce`, `GripFract` (FL/FR), `LocalAccel` (Lateral G), `VerticalTireDeflection` (Suspension), `SlipAngle`.
 *   **Features**:
     *   **Grip Modulation**: Scales force by grip fraction (Understeer feel).
@@ -1648,6 +2022,11 @@ A critical challenge in FFB design is managing the "Noise Floor". When multiple 
 *   The **SoP** effect boosts force during oversteer.
 *   **Result**: These two will fight slightly during a power slide. This is actually a good "natural" balance—the wheel tries to self-align (SoP), but the loss of traction makes it feel lighter/vaguer (Spin Drop). This should feel intuitive to the driver.
 
+### 5. Robustness & Telemetry Health
+LMUFFB includes a "Sanity Check" layer that protects effects against telemetry glitches (common in some game builds).
+*   **Missing Load**: If the game reports 0 Load on tires, texture effects (Slide/Road/Lockup) will use a fallback value instead of going silent.
+*   **Missing Grip**: If Grip data is missing, the Understeer effect defaults to "Full Grip" so you don't lose FFB entirely.
+*   *Note:* If these fallbacks are triggered, a **Red Warning** will appear in the Telemetry Inspector GUI.
 
 ---
 
@@ -1666,7 +2045,6 @@ A critical challenge in FFB design is managing the "Noise Floor". When multiple 
 *   **Old Oversteer**: Relied solely on Grip Delta between Front/Rear to boost SoP.
 *   **Old Lockup**: Binary rumble triggered when `SlipRatio < -0.2`.
 *   **Old Wheel Spin**: Binary rumble triggered when `SlipRatio > 0.2`.
-
 
 ```
 
@@ -2559,6 +2937,520 @@ You can send them this:
 
 ```
 
+# File: docs\dev_docs\damp_plugin_troubleshooting.md
+```markdown
+Check that you have this:
+* in LMU_install_dir\Plugins you have rFactor2SharedMemoryMapPlugin64.dll
+* in LMU_install_dir\UserData\Player\CustomPluginVariables.JSON you have " Enabled":1 and 
+"EnableDirectMemoryAccess":1 for rFactor2SharedMemoryMapPlugin64.dll
+
+It should look something like this:
+
+// other lines..
+  "rFactor2SharedMemoryMapPlugin64.dll": {
+    "Enabled": 1,
+    "DebugISIInternals": 0,
+    "DebugOutputLevel": 0,
+    "DebugOutputSource": 1,
+    "DedicatedServerMapGlobally": 0,
+    "EnableDirectMemoryAccess": 1,
+    "EnableHWControlInput": 1,
+    "EnableRulesControlInput": 0,
+    "EnableWeatherControlInput": 0,
+    "UnsubscribedBuffersMask": 160
+  },
+// other lines ..
+
+See also: https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/
+
+## Tiny pedal
+Follow up research: find out how the TinyPedal app is accessing Le Mans Ultimate telemetry about car physics, in particular the tires, and in particular these values that I am currently unable to properly read:
+    *   `mSteeringArmForce` 
+    *   `mLocalAccel.x` 
+    *   `mTireLoad` 
+    *   `mGripFract` 
+    *   `mSlipRatio` 
+    *   `mSlipAngle` 
+    *   `mLateralPatchVel` 
+    *   `mVerticalTireDeflection` 
+
+Please do this test:
+
+Run TinyPedal (install it if you don't have it) and configure to display widgets about Tire physics.
+Then do a screenshot in which you are in driving mode in game, and show both the TinyPedal widgets and the lmuFFB app. 
+This is to see if using vJoy is causing the game not to output the telemetry data about the tires.
+If TinyPedal still show the values, while lmuFFB does not, it then means that I have to figure out how TinyPedal is reading these (or similar) values from the rFactor 2 Shared Memory plugin:
+    *   `mSteeringArmForce` 
+    *   `mLocalAccel.x` 
+    *   `mTireLoad` 
+    *   `mGripFract` 
+    *   `mSlipRatio` 
+    *   `mSlipAngle` 
+    *   `mLateralPatchVel` 
+    *   `mVerticalTireDeflection` 
+
+### How it does it
+
+Based on the research into the **TinyPedal** application and its interaction with Le Mans Ultimate (LMU), I can confirm that your suspicion is correct: **TinyPedal primarily uses the standard shared memory interface** and faces the same data limitations you are experiencing.
+
+However, it overcomes these limitations for *visualization purposes* by using **client-side calculations and approximations** rather than reading the "real" physics values that are currently broken (0 or null) in the standard output.
+
+Here is the detailed breakdown of how TinyPedal handles the specific values you are looking for:
+
+### 1\. The Data Source: Standard Plugin
+
+TinyPedal does **not** use the memory-scanning `LMU_SharedMemoryMapPlugin64.dll` (the DMA solution mentioned in the previous report).
+
+  * **Evidence:** Its documentation and installation guides explicitly instruct users to install **The Iron Wolf's `rFactor2SharedMemoryMapPlugin64.dll`**.
+  * **Consequence:** TinyPedal reads the exact same zero/null values for `mTireLoad` and `mSteeringArmForce` that your C++ app does.
+
+### 2\. How TinyPedal "Fixes" the Missing Data
+
+Since TinyPedal is an overlay tool (visuals) rather than a physics processor (FFB), it can afford to use estimations. It generates values by reading *other* available telemetry channels and running math on them within the app code.
+
+#### A. `mTireLoad` (Tire Load)
+
+  * **TinyPedal's Method:** It implements a fallback mechanism. When `mTireLoad` is detected as 0 (which is the case for LMGT3 and Hypercars in LMU), TinyPedal calculates an approximate load using **Suspension Position** and **Suspension Force**.
+  * **Relevance to you:** You can replicate this in your C++ app, but it is an approximation. It assumes a linear relationship and ignores complex tire carcass deformation, which might be insufficient for high-fidelity Force Feedback generation.
+      * *Calculation Logic:* `ApproxLoad = SuspensionForce + (SuspensionPosition * SpringRate)` (Simplified).
+
+#### B. `mSlipRatio` & `mSlipAngle`
+
+  * **TinyPedal's Method:** These are likely calculated client-side.
+      * **Slip Ratio:** Calculated by comparing `mLocalVel.z` (car surge velocity) with the rotational velocity of the wheel (`mWheelRotation` \* `mTireRadius`).
+      * **Relevance to you:** You can easily calculate `mSlipRatio` in your C++ app using standard telemetry data that *is* working.
+      * *Formula:* $SlipRatio = \frac{\omega r - v}{v}$
+
+#### C. `mSteeringArmForce` & `mLateralPatchVel`
+
+  * **Status in TinyPedal:** There is no evidence that TinyPedal uses or displays these specific values. TinyPedal focuses on tire wear, temps, and pressures.
+  * **Conclusion:** TinyPedal likely ignores these fields because they are 0 and not required for a visual dashboard. You cannot look to TinyPedal's source for a "fix" to read these directly from memory; they simply aren't there in the standard interface.
+
+### 3\. Summary of Availability for Your Requested Values
+
+| Variable | TinyPedal Status | How to get it in your C++ App |
+| :--- | :--- | :--- |
+| **`mSteeringArmForce`** | **Not Used** | **Must use DMA Plugin** (tembob64 fork). The standard API does not output this for LMU cars. |
+| **`mTireLoad`** | **Calculated** | **Option A:** Use DMA Plugin (Best for FFB).<br>**Option B:** Calculate from `mSuspensionForce` (Less accurate). |
+| **`mSlipRatio`** | **Calculated** | Calculate `(WheelRotSpeed * Radius) / CarSpeed`. |
+| **`mGripFract`** | **Unknown/Unused** | Likely requires DMA Plugin. |
+| **`mLateralPatchVel`** | **Not Used** | **Must use DMA Plugin**. Essential for detailed pneumatic trail calculations. |
+| **`mVerticalTireDeflection`**| **Not Used** | **Must use DMA Plugin**. |
+
+### Recommendation for your C++ App
+
+Since you are generating **Force Feedback (FFB)**, approximations based on suspension data (like TinyPedal uses) will likely feel "numb" or disconnected because they miss the high-frequency transient tire dynamics (like contact patch velocity) that LMU's new tire model calculates.
+
+**Do not rely on TinyPedal's open-source code for reading these values.** It does not have a secret method to read them; it forces a visual approximation.
+
+**Your best path forward remains:**
+
+1.  Use the `LMU_SharedMemoryMapPlugin64.dll` (the DMA fork).
+2.  Enable `EnableDirectMemoryAccess: 1` in `CustomPluginVariables.JSON`.
+3.  Map the shared memory file created by *that* plugin (which may use a different name or write to the standard buffer if configured). This will populate the `mTireLoad` and `mSteeringArmForce` slots with the real physics engine values.
+
+## Follup research
+
+Investigate in dept TinyPedal lastest version, its documentation and code here: TinyPedal/TinyPedal: Free and Open Source telemetry overlay application for racing simulation
+
+Check which data it can display about: tire data (load, velocity, acceleration, etc.), chassis acceleration (longitudinal, g forces, etc.), and other values relevant for my calculations. Note that it does also display a steering wheel position, and a FFB meter.
+
+
+## More notes
+From https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/
+
+copy the LMU_SharedMemoryMapPlugin64.dll in your LMU install folder/Plugins
+
+(so you have both runing: rfactor and LMU Shared Memory...)
+
+LMU_install_dir\UserData\Player\CustomPluginVariables.JSON
+need " Enabled":1 and 
+"EnableDirectMemoryAccess":1 for LMU_SharedMemoryMapPlugin64.dll
+
+
+  "rFactor2SharedMemoryMapPlugin64.dll": {
+    "Enabled": 1,
+    "DebugISIInternals": 0,
+    "DebugOutputLevel": 0,
+    "DebugOutputSource": 1,
+    "DedicatedServerMapGlobally": 0,
+    "EnableDirectMemoryAccess": 1,
+    "EnableHWControlInput": 1,
+    "EnableRulesControlInput": 0,
+    "EnableWeatherControlInput": 0,
+    "UnsubscribedBuffersMask": 160
+  },
+
+"rFactor2SharedMemoryMapPlugin64.dll": {
+" Enabled": 1,
+"DebugISIInternals": 0,
+"DebugOutputLevel": 0,
+"DebugOutputSource": 1,
+"DedicatedServerMapGlobally": 0,
+"EnableDirectMemoryAccess": 1,
+"EnableHWControlInput": 1,
+"EnableRulesControlInput": 0,
+"EnableWeatherControlInput": 0,
+"UnsubscribedBuffersMask": 0
+}
+
+
+```
+
+# File: docs\dev_docs\decouple_plots_from_gui_refresh.md
+```markdown
+# User request
+I want to decouple the refresh rate of the GUI from the look of the plots. When I do a new frame, I want to update each plot with all of the values for since the last frame. We could also have a separate "plot resolution" parameter, to plot fewer points than the telemetry 400 Hz (if this slows down performance).
+
+# Answer
+This is a great architectural improvement. You are correctly identifying that the current "Snapshot" approach (sampling once per frame) causes **Aliasing**. You are missing the high-frequency details (spikes, vibrations) that happen between GUI frames.
+
+To fix this, we need to implement a **Producer-Consumer** pattern using a thread-safe buffer.
+
+1.  **Producer (FFB Thread):** Pushes *every* calculated sample (400Hz) into a temporary buffer.
+2.  **Consumer (GUI Thread):** Swaps that buffer every frame (60Hz), reads *all* the accumulated samples (approx 6-7 per frame), and adds them to the plots.
+
+Here is the implementation plan and the code.
+
+### Step 1: Define the Data Structure (`FFBEngine.h`)
+
+We need a struct to hold one "tick" of data, and a thread-safe way to store it.
+
+**Modify `FFBEngine.h`**:
+Add these includes at the top:
+```cpp
+#include <vector>
+#include <mutex>
+```
+
+Add this struct inside `FFBEngine.h` (before the class):
+```cpp
+struct FFBSnapshot {
+    // FFB Outputs
+    float total_force;
+    float base_force;
+    float sop_force;
+    // ... add other FFB components as needed ...
+    
+    // Telemetry Inputs
+    float steer_force;
+    float accel_x;
+    float tire_load;
+    // ... add other telemetry as needed ...
+};
+```
+
+Add these members and methods to the `FFBEngine` class:
+
+```cpp
+class FFBEngine {
+public:
+    // ... Existing members ...
+
+    // --- Thread-Safe Debug Buffer ---
+    std::vector<FFBSnapshot> m_debug_buffer;
+    std::mutex m_debug_mutex;
+    int m_plot_resolution = 1; // 1 = Every sample, 2 = Every 2nd sample, etc.
+    int m_sample_counter = 0;
+
+    // Call this from GUI Thread to get all data since last frame
+    std::vector<FFBSnapshot> GetDebugBatch() {
+        std::vector<FFBSnapshot> batch;
+        {
+            std::lock_guard<std::mutex> lock(m_debug_mutex);
+            // Efficiently swap contents to minimize lock time
+            batch.swap(m_debug_buffer); 
+        }
+        return batch;
+    }
+
+    // ... inside calculate_force ...
+    double calculate_force(const rF2Telemetry* data) {
+        // ... [All existing calculation logic] ...
+        
+        // --- END OF FUNCTION: Store Snapshot ---
+        // Decimation logic (Plot Resolution)
+        m_sample_counter++;
+        if (m_sample_counter >= m_plot_resolution) {
+            m_sample_counter = 0;
+            
+            FFBSnapshot snap;
+            snap.total_force = (float)norm_force; // The final result
+            snap.base_force = (float)output_force;
+            snap.sop_force = (float)sop_force;
+            
+            // Telemetry
+            snap.steer_force = (float)data->mSteeringArmForce;
+            snap.accel_x = (float)data->mLocalAccel.x;
+            snap.tire_load = (float)((fl.mTireLoad + fr.mTireLoad) / 2.0);
+            
+            {
+                // Quick lock to push data
+                std::lock_guard<std::mutex> lock(m_debug_mutex);
+                m_debug_buffer.push_back(snap);
+            }
+        }
+
+        return (std::max)(-1.0, (std::min)(1.0, norm_force));
+    }
+};
+```
+
+### Step 2: Update the GUI Consumer (`src/GuiLayer.cpp`)
+
+Now we modify `DrawDebugWindow` to consume the batch instead of reading a single value.
+
+**Modify `src/GuiLayer.cpp`**:
+
+```cpp
+void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
+    ImGui::Begin("FFB Analysis", &m_show_debug_window);
+    
+    // 1. CONSUME BATCH
+    // Get all physics ticks that happened since the last frame
+    std::vector<FFBSnapshot> batch = engine.GetDebugBatch();
+
+    // 2. PROCESS BATCH
+    // Loop through ALL samples and add them to the rolling plots
+    for (const auto& snap : batch) {
+        plot_total.Add(snap.total_force);
+        plot_base.Add(snap.base_force);
+        plot_sop.Add(snap.sop_force);
+        
+        plot_input_steer.Add(snap.steer_force);
+        plot_input_accel.Add(snap.accel_x);
+        plot_input_load.Add(snap.tire_load);
+        // ... add others ...
+    }
+
+    // 3. UI CONTROLS
+    ImGui::SliderInt("Plot Resolution", &engine.m_plot_resolution, 1, 10, "1:%d");
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("1 = Plot 400Hz (All Data)\n2 = Plot 200Hz\n4 = Plot 100Hz");
+
+    // 4. DRAW PLOTS (Same as before)
+    if (ImGui::CollapsingHeader("FFB Components (Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Text("Total Output");
+        // Note: The cast to (int) is safe as long as buffer size < 2 Billion
+        ImGui::PlotLines("##Total", plot_total.data.data(), (int)plot_total.data.size(), plot_total.offset, "Total", -1.0f, 1.0f, ImVec2(0, 60));
+        
+        // ... rest of your plots ...
+    }
+    
+    // ...
+    ImGui::End();
+}
+```
+
+### Why this is better
+
+1.  **No Aliasing:** If the wheel vibrates for just 2.5ms (one physics tick), it will now appear on the graph. Previously, if that vibration happened between frames, the graph would miss it entirely.
+2.  **Smoother Lines:** Because you are plotting 400 points per second instead of 60, the lines will look continuous and detailed, rather than "steppy" or "binary".
+3.  **Performance:**
+    *   **FFB Thread:** `std::vector::push_back` is extremely fast. The mutex lock is held for nanoseconds.
+    *   **GUI Thread:** `std::vector::swap` is instant. The loop to add ~7 items to the rolling buffer is negligible.
+
+### Regarding the "Binary" Look
+With this change, if the graph *still* looks binary (square waves), it confirms that the physics signal itself is actually square (jumping instantly between values). However, if the signal was actually a high-frequency sine wave (like a vibration), the old code would show it as random noise/binary, while this new code will draw the actual wave shape.
+
+### Timespan Calculation Update
+With this change, the timespan of the plot depends on the **Physics Rate**, not the Frame Rate.
+
+*   **Buffer Size:** 1000 points.
+*   **Data Rate:** 400 Hz (assuming Resolution = 1).
+*   **Timespan:** $1000 / 400 = 2.5 \text{ seconds}$.
+
+This is much faster than before (16s), meaning the graph will scroll quickly, acting like a real-time oscilloscope. This is excellent for debugging spikes. If you want a longer history, simply increase the `RollingBuffer` size to 4000 (10 seconds).
+
+# User request 2
+
+I want to have a parameter for the length of the timespan of the plots. 2.5 seconds seems to low, I want a default of 5 or 10 seconds. But in any case I want it as a parameter (in code, no need to expose it to the gui yet).
+
+# Answer 2 
+
+
+Yes, defining the timespan as a code parameter is the correct approach. It makes the memory usage predictable and the visualization consistent regardless of the frame rate.
+
+Here is the complete implementation plan to **decouple the GUI** (Producer-Consumer pattern) and **configure the timespan**.
+
+### 1. Update `FFBEngine.h` (The Producer)
+
+We need a struct to hold the "Snapshot" of one physics tick, and a thread-safe buffer to store them.
+
+**Add to `FFBEngine.h`:**
+
+```cpp
+// Add these includes at the top
+#include <vector>
+#include <mutex>
+
+// 1. Define the Snapshot Struct
+struct FFBSnapshot {
+    // Outputs
+    float total_force;
+    float base_force;
+    float sop_force;
+    float understeer_cut;
+    float oversteer_boost;
+    float road_tex;
+    float slide_tex;
+    float lockup_vib;
+    float spin_vib;
+    float bottoming;
+    float clipping;
+
+    // Inputs (Telemetry)
+    float steer_force;
+    float accel_x;
+    float tire_load;
+    float grip_fract;
+    float slip_ratio;
+    float slip_angle;
+    float patch_vel;
+    float deflection;
+};
+
+class FFBEngine {
+public:
+    // ... [Existing Members] ...
+
+    // 2. Thread-Safe Buffer
+    std::vector<FFBSnapshot> m_debug_buffer;
+    std::mutex m_debug_mutex;
+    
+    // 3. Helper to retrieve data (Consumer)
+    std::vector<FFBSnapshot> GetDebugBatch() {
+        std::vector<FFBSnapshot> batch;
+        {
+            std::lock_guard<std::mutex> lock(m_debug_mutex);
+            if (!m_debug_buffer.empty()) {
+                batch.swap(m_debug_buffer); // Fast swap
+            }
+        }
+        return batch;
+    }
+
+    // 4. Update calculate_force (Producer)
+    double calculate_force(const rF2Telemetry* data) {
+        // ... [Existing Calculation Logic] ...
+        
+        // --- SNAPSHOT LOGIC (At end of function) ---
+        // Only capture if buffer isn't exploding (safety cap)
+        // Assuming 60Hz GUI, buffer shouldn't exceed ~10 items. Cap at 100 just in case.
+        if (m_debug_buffer.size() < 100) {
+            FFBSnapshot snap;
+            snap.total_force = (float)norm_force; // The final result
+            snap.base_force = (float)output_force;
+            snap.sop_force = (float)sop_force;
+            // ... fill the rest from your internal variables ...
+            // Note: You might need to promote local vars (like road_noise) to member vars 
+            // or struct members to access them here.
+            
+            // Telemetry
+            snap.steer_force = (float)data->mSteeringArmForce;
+            snap.accel_x = (float)data->mLocalAccel.x;
+            // ... fill the rest ...
+
+            {
+                std::lock_guard<std::mutex> lock(m_debug_mutex);
+                m_debug_buffer.push_back(snap);
+            }
+        }
+        
+        return (std::max)(-1.0, (std::min)(1.0, norm_force));
+    }
+};
+```
+
+### 2. Update `src/GuiLayer.cpp` (The Consumer)
+
+Here we define the **Timespan Parameter** and update the drawing logic to consume the batch.
+
+**Modify `src/GuiLayer.cpp`:**
+
+```cpp
+// ... [Includes] ...
+
+// --- CONFIGURABLE PLOT SETTINGS ---
+const float PLOT_HISTORY_SEC = 10.0f;   // <--- YOUR PARAMETER (10 Seconds)
+const int PHYSICS_RATE_HZ = 400;        // The fixed update rate of FFBThread
+const int PLOT_BUFFER_SIZE = (int)(PLOT_HISTORY_SEC * PHYSICS_RATE_HZ); // 4000 points
+
+// --- Helper: Ring Buffer ---
+struct RollingBuffer {
+    std::vector<float> data;
+    int offset = 0;
+    
+    // Initialize with the calculated size
+    RollingBuffer() {
+        data.resize(PLOT_BUFFER_SIZE, 0.0f);
+    }
+    
+    void Add(float val) {
+        data[offset] = val;
+        offset = (offset + 1) % data.size();
+    }
+};
+
+// Static buffers (Size is now 4000)
+static RollingBuffer plot_total; 
+static RollingBuffer plot_base;
+static RollingBuffer plot_sop;
+// ... [Define all buffers] ...
+
+// ... [Init / Shutdown code] ...
+
+void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
+    // 1. LOCK MUTEX (Critical Fix)
+    // We lock here to ensure engine state doesn't change while we query it,
+    // although GetDebugBatch has its own internal lock for the buffer.
+    // Locking the main engine mutex is safer if we access other members.
+    std::lock_guard<std::mutex> lock(g_engine_mutex);
+
+    ImGui::Begin("FFB Analysis", &m_show_debug_window);
+    
+    // 2. CONSUME BATCH (Decoupled Update)
+    // This retrieves ~7 samples (at 60fps) or ~40 samples (at 10fps lazy)
+    std::vector<FFBSnapshot> batch = engine.GetDebugBatch();
+
+    // 3. PROCESS BATCH
+    for (const auto& snap : batch) {
+        plot_total.Add(snap.total_force);
+        plot_base.Add(snap.base_force);
+        plot_sop.Add(snap.sop_force);
+        // ... add all others ...
+        
+        plot_input_steer.Add(snap.steer_force);
+        plot_input_accel.Add(snap.accel_x);
+        // ... add all others ...
+    }
+
+    // 4. DRAW PLOTS
+    if (ImGui::CollapsingHeader("FFB Components (Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Text("Total Output");
+        // The cast to (int) is safe (4000 fits in int)
+        ImGui::PlotLines("##Total", plot_total.data.data(), (int)plot_total.data.size(), plot_total.offset, "Total", -1.0f, 1.0f, ImVec2(0, 60));
+        
+        // ... [Rest of drawing code] ...
+    }
+    
+    // ...
+    ImGui::End();
+}
+```
+
+### Summary of Changes
+1.  **Timespan:** Controlled by `PLOT_HISTORY_SEC = 10.0f`.
+2.  **Resolution:** The graph now contains **every single physics tick** (400Hz), not just one snapshot per frame. This will reveal the true shape of the "spikes" (likely high-frequency noise) instead of the "binary" aliasing artifacts.
+3.  **Performance:** The `GetDebugBatch` swap method is extremely efficient and won't stall the physics thread.
+
+# Previous context
+
+User: Looking at all of the 20+ images (screenshots of the app in use), it seems in all rolling plots all the values are always like "binary" either maxed out, zero, or negative maxed out. This seems to happen also with low values in the adjustments, like 0.01. Isn't this strange. Can you find any plot that has smoother lines? Even if the G lateral forces are "spiky" they gradually increase and decrease, so they should show some intermediate values.
+
+User: Look at this image again. If "Local Accel X" is the lateral G force, as the raw value we read from the game shared memory, and "SoP (Lat G)" is the Seat of Pants feel we calculate based on those lateral G forces (and other factors) I don't see why the two plots look so different. The one from the game is more noisy, with many values, while the SoP has the "min max" look, like discrete values. How can I adjust the parameters of the SoP formula to have a plot as dynamic as the one in the Local Accel X plot?
+Remember the full math formulas: docs\dev_docs\FFB_formulas.md .
+```
+
 # File: docs\dev_docs\directinput_implementation.md
 ```markdown
 # DirectInput FFB Implementation Guide
@@ -2702,10 +3594,13 @@ $$ F_{total} = (F_{base} + F_{sop} + F_{vib\_lock} + F_{vib\_spin} + F_{vib\_sli
 **Load Factor ($L_{factor}$)**: Scales texture effects based on how much weight is on the front tires.
 $$ L_{factor} = \text{Clamp}\left( \frac{\text{Load}_{FL} + \text{Load}_{FR}}{2 \times 4000}, 0.0, 1.5 \right) $$
 
+*   **Robustness Check:** If $\text{Load} \approx 0.0$ and $|Velocity| > 1.0 m/s$, $\text{Load}$ defaults to 4000N to prevent signal dropout.
+
 #### B. Base Force (Understeer / Grip Modulation)
 This modulates the raw steering rack force from the game based on front tire grip.
 $$ F_{base} = F_{steering\_arm} \times \left( 1.0 - \left( (1.0 - \text{Grip}_{avg}) \times K_{understeer} \right) \right) $$
 *   $\text{Grip}_{avg}$: Average of Front Left and Front Right `mGripFract`.
+    *   **Robustness Check:** If $\text{Grip}_{avg} \approx 0.0$ but $\text{Load} > 100N$, $\text{Grip}_{avg}$ defaults to 1.0.
 
 #### C. Seat of Pants (SoP) & Oversteer
 This injects lateral G-force and rear-axle aligning torque to simulate the car body's rotation.
@@ -2794,7 +3689,8 @@ $$ F_{final} = \text{sign}(F_{norm}) \times K_{min\_force} $$
 *   **4000.0**: Reference Tire Load (Newtons) for Load Factor.
 *   **1000.0**: SoP Scaling factor.
 *   **5000.0**: Road Texture stiffness.
-*   **8000.0**: Bottoming threshold (Newtons).
+*   **8000.0**: Bottoming.
+
 ```
 
 # File: docs\dev_docs\investigation_vjoyless_implementation.md
@@ -4176,6 +5072,538 @@ public:
 
 ```
 
+# File: docs\dev_docs\report_on_rFactor 2 LMU Tire Data Access.md
+```markdown
+# **Technical Analysis of Shared Memory Telemetry in Le Mans Ultimate: Integration Strategies for Tire and Steering Data**
+
+## **Executive Summary**
+
+The transition from the established rFactor 2 (rF2) ecosystem to the new Le Mans Ultimate (LMU) platform has introduced significant complexity for telemetry application developers. While LMU utilizes the foundational ISIMotor 2.5 architecture, substantial modifications to the physics engine—specifically regarding tire modeling and input processing for Hypercar and GTE classes—have disrupted legacy data extraction methods. This has resulted in a pervasive issue where standard C++ applications utilizing the legacy rFactor 2 Shared Memory Map Plugin receive null or zero-value readings for critical telemetry channels, most notably tire load (mTireLoad), contact patch velocity (mPatchVel), and steering input (mUnfilteredSteering).
+
+This report provides an exhaustive technical analysis of the Le Mans Ultimate shared memory ecosystem. It dissects the architectural divergences between rF2 and LMU that cause these data dropouts and evaluates the efficacy of community-developed solutions, specifically the utilization of Direct Memory Access (DMA) via forked plugin libraries. Furthermore, this document offers a detailed comparative analysis of established telemetry clients—Crew Chief, Second Monitor, and SimHub—to deconstruct their implementation strategies. The findings presented herein serve as a definitive guide for C++ developers seeking to engineer robust, high-fidelity telemetry integrations for Le Mans Ultimate, ensuring access to the full spectrum of vehicle dynamics data required for advanced simulation analysis.
+
+## **1\. Architectural Foundations of Shared Memory in ISIMotor Engines**
+
+To fully comprehend the mechanics of data extraction in Le Mans Ultimate, it is necessary to first examine the underlying architecture of the shared memory system inherited from rFactor 2\. This system forms the bedrock upon which all third-party telemetry tools operate, and its limitations are the primary source of the "zero value" phenomenon currently experienced by developers.
+
+### **1.1 The Philosophy of the Internal Plugin Interface**
+
+The ISIMotor engine, developed by Image Space Incorporated and subsequently refined by Studio 397 for rFactor 2 and Le Mans Ultimate, is designed with a modular architecture that supports "Internals Plugins." These are Dynamic Link Libraries (DLLs) written in C++ that are loaded directly into the game's address space at runtime.
+
+Unlike external telemetry APIs common in other simulators (such as the UDP streams used by the F1 series or Forza Motorsport), the ISIMotor interface allows code to run *synchronously* with the physics engine. This offers a distinct advantage: access to high-frequency data (up to 400Hz) with zero latency. However, it also imposes a strict dependency on the game's internal memory structures. The plugin functions by subscribing to specific game events—such as UpdateTelemetry, UpdateScoring, and UpdateGraphics—during which the game engine passes a pointer to an internal data structure containing the current simulation state.1
+
+### **1.2 The Mechanism of the Shared Memory Map Plugin**
+
+The "rFactor 2 Shared Memory Map Plugin," originally architected by The Iron Wolf, serves as a bridge between this internal, pointer-based game environment and external applications. Its primary function is to democratize access to the internal data by copying it from the game's private memory heap into a **Memory Mapped File**—a segment of system RAM backed by the system paging file, which can be accessed by multiple processes simultaneously.
+
+The process follows a strict sequence:
+
+1. **Initialization:** Upon game launch, the plugin creates a named file mapping object (e.g., $rFactor2SMMP\_Telemetry$) using the Windows API CreateFileMapping.  
+2. **Data Marshaling:** During every physics tick (typically every 2.5ms to 10ms depending on configuration), the game calls the plugin's UpdateTelemetry method.  
+3. **Buffer Population:** The plugin performs a memcpy operation, transferring data from the game's internal TelemInfoV01 struct into the shared memory buffer.1  
+4. **Synchronization:** To prevent external clients from reading data while it is being written (a "torn frame"), the plugin increments a version counter (mVersionUpdateBegin) before writing and another (mVersionUpdateEnd) after writing.
+
+### **1.3 The Structural Definition of Telemetry Data**
+
+The data within the shared memory buffer is organized into a rigid C-style structure, rF2Telemetry. For a client application to successfully interpret the byte stream, it must overlay an identical structure definition onto the memory view.
+
+**Table 1: Core Components of the rF2Telemetry Structure**
+
+| Data Segment | Offset (Approx.) | Type | Description |
+| :---- | :---- | :---- | :---- |
+| **Header** | 0x00 | uint32 | Versioning and synchronization flags used for concurrency control. |
+| **Vehicle State** | Variable | double | Position, velocity, acceleration, and orientation vectors. |
+| **Input State** | Variable | double | Unfiltered throttle, brake, clutch, and steering inputs. |
+| **Tire Physics** | Variable | double | Arrays containing data for FL, FR, RL, RR tires: Load, Temperature, Wear, Grip. |
+| **Damage** | Variable | double | Bodywork and mechanical damage states (often derived). |
+
+The integrity of this data transfer relies entirely on the validity of the pointers provided by the game engine. If the game engine passes a pointer to a deprecated or uninitialized memory region for a specific variable, the plugin will dutifully copy zeros or garbage data into the shared buffer. This architectural vulnerability is the precise failure point observed in Le Mans Ultimate.
+
+## **2\. Le Mans Ultimate: The Divergence and Data Loss**
+
+While Le Mans Ultimate shares its DNA with rFactor 2, it represents a distinct fork in the engine's development, particularly regarding the physics of the tire model and the input handling for modern diverse hardware. These changes have broken the implicit contract between the game engine and the legacy shared memory plugin, leading to the zero-value readings for tire load and steering.
+
+### **2.1 The Disconnection of Tire Physics Data**
+
+The user's query highlights a specific loss of mTireLoad (vertical load in Newtons) and mPatchVel (contact patch velocity). In rFactor 2, these values were populated directly by the engine into the TelemInfoV01 struct passed to plugins.
+
+In Le Mans Ultimate, the introduction of the new Hypercar and GTE tire models—which likely involve more complex thermodynamic and deformation calculations—appears to have shifted where this data resides in memory. When the legacy rFactor2SharedMemoryMapPlugin64.dll attempts to read these values using the standard SDK methods, the API returns null.
+
+Why the Values are Zero:  
+The standard plugin relies on the game's GetTelemetry() API function. In LMU, for certain car classes (specifically Hypercars and GTEs), the internal wiring of this function for mTireLoad is incomplete or points to a legacy tire object that is no longer updated by the physics thread. Consequently, the value remains at its initialization state: 0.0.3  
+This is not a bug in the user's C++ code. The shared memory buffer is correctly mapped, and the structure is correctly aligned, but the source data being piped into that buffer is empty. This is confirmed by the behavior of other clients; unmodified versions of SimHub and Crew Chief also fail to display this data when running solely on the standard rF2 plugin.4
+
+### **2.2 The Steering Data Void**
+
+Similarly, steering data (mUnfilteredSteering or mSteering) is often reported as static or zero. This issue is tied to changes in how LMU handles DirectInput and Force Feedback. The game engine's internal telemetry structure, which previously mirrored the raw input from the steering wheel, now often fails to update this specific field in the standard export.
+
+This is critical for applications that calculate self-aligning torque or analyze driver inputs. The standard plugin, expecting the game to push this data, receives nothing. To resolve this, a different approach—one that pulls data rather than waiting for it to be pushed—is required. This "pull" mechanism is known as Direct Memory Access (DMA).6
+
+## **3\. The Solution: Direct Memory Access and Community Forks**
+
+To bridge the gap between the broken API and the active physics memory, the sim racing development community has engineered a solution that bypasses the standard API entirely. This solution involves a specialized fork of the shared memory plugin and a specific configuration protocol.
+
+### **3.1 The Role of Direct Memory Access (DMA)**
+
+Direct Memory Access, in the context of this plugin, refers to the technique of scanning the game process's RAM to locate the *actual* memory addresses where physics variables are stored, rather than relying on the addresses provided by the SDK.
+
+The plugin contains "signatures"—unique patterns of bytes that identify specific functions or data structures within the Le Mans Ultimate.exe binary. During initialization, the plugin scans the game's memory to find these signatures. Once located, it calculates the offsets to the live variables (e.g., the real-time tire load variable in the new tire model) and reads them directly.1
+
+### **3.2 The tembob64 Fork: LMU\_SharedMemoryMapPlugin64.dll**
+
+Research identifies a specific fork of the plugin maintained by GitHub user tembob64 (Temur Bobokhidze) as the industry standard for LMU integration. This fork, often distributed as LMU\_SharedMemoryMapPlugin64.dll, includes updated memory signatures for the latest LMU builds.9
+
+**Key Enhancements in the LMU Fork:**
+
+1. **Updated Signatures:** It contains the specific memory offsets required to find tire load, contact patch velocity, and brake temperatures in the current LMU build.  
+2. **Hybrid System Support:** It maps new data points relevant to LMU, such as electric motor state (mElectricBoostMotorState) and battery charge, which are non-existent in the standard rF2 structure.11  
+3. **Steering Fix:** It implements a workaround to read steering inputs directly from the hardware abstraction layer if the physics engine fails to report them.
+
+### **3.3 Configuration Strategy: CustomPluginVariables.JSON**
+
+The presence of the DLL alone is insufficient. The plugin must be explicitly configured to use DMA. This is controlled via the CustomPluginVariables.JSON file located in the user's UserData\\player directory.
+
+**Table 2: Essential Configuration Parameters for LMU Telemetry**
+
+| Parameter | Recommended Value | Technical Function |
+| :---- | :---- | :---- |
+| **Enabled** | 1 | Loads the DLL into the game process memory space. |
+| **EnableDirectMemoryAccess** | 1 | **CRITICAL FIX:** Instructs the plugin to ignore the standard API return values for specific fields (like Tire Load) and instead read from the discovered memory addresses. |
+| **EnableHWControlInput** | 1 | **CRITICAL FIX:** Forces the plugin to read steering, throttle, and brake inputs from the raw input layer, resolving the zero-steering issue. |
+| **UnsubscribedBuffersMask** | 160 | A bitmask used to disable updates for specific buffers (e.g., Scoring or Rules) to save CPU cycles if only telemetry is needed. |
+
+6
+
+If EnableDirectMemoryAccess is set to 0 (the default), the plugin reverts to the standard behavior, and the C++ app will continue to read zero values for tire load.
+
+## **4\. Comparative Analysis of Known Clients**
+
+Analyzing how established clients implement LMU support provides a blueprint for successful C++ integration.
+
+### **4.1 Crew Chief: The Consumer Model**
+
+Repository: mrbelowski/CrewChiefV4 13  
+Implementation Style: C\# Managed Wrapper  
+Crew Chief is a comprehensive race engineer application that relies heavily on shared memory. Its source code, specifically RF2GameStateMapper.cs, reveals that it does not implement its own memory scanning logic for LMU. Instead, it relies on the user (or its own installer) to place the correct plugin DLL into the game directory.
+
+**Integration Logic:**
+
+* Crew Chief maps the standard buffer name $rFactor2SMMP\_Telemetry$.  
+* It assumes the data within that buffer is correct.  
+* **The Crucial Insight:** Crew Chief works with LMU only when the CustomPluginVariables.JSON is correctly configured. Users frequently report "Crew Chief not working" issues that are resolved solely by editing this JSON file to enable the plugin.15 This confirms that the logic for fixing the data lies entirely within the plugin configuration, not the client code.  
+* **Version Management:** Crew Chief often auto-updates the rFactor2SharedMemoryMapPlugin64.dll. In LMU, this can be problematic if it overwrites the tembob64 LMU-specific version with a standard rF2 version. Advanced users often disable auto-updates or manually restore the LMU-compatible DLL.
+
+### **4.2 Second Monitor: The Telemetry Aggregator**
+
+Repository: Winzarten/SecondMonitor 1  
+Implementation Style: C\# / WPF  
+Second Monitor acts as a telemetry viewer and timing screen. Like Crew Chief, it uses a C\# connector (RFactor2Connector.cs) to map the shared memory file.
+
+**Integration Logic:**
+
+* It utilizes the rF2SMMonitor C\# sample code provided by The Iron Wolf as its foundation.  
+* **Data Validity:** Snippets suggest that Second Monitor users also face the "zero value" issue in LMU unless they manually update the plugin infrastructure. The application does not natively support the new hybrid parameters unless the underlying struct definition is updated to match the LMU-specific plugin's extended output.18  
+* **Dependency:** It has a strict dependency on the rFactor2SharedMemoryMapPlugin. If the plugin fails to load (due to missing runtimes like VC++ 2013/2015), the app receives no data.
+
+### **4.3 SimHub and Tiny Pedal: The Power Users**
+
+Repositories: SimHub (Closed Source Core, Open Plugins), s-victor/TinyPedal 19  
+Implementation Style: Hybrid (Standard \+ DMA)  
+SimHub represents the most advanced integration tier. Community plugins like **NeoRed** and **Redadeg** have pushed the boundaries of what is possible with LMU telemetry.
+
+**Integration Logic:**
+
+* **Dual Plugin Strategy:** Unlike Crew Chief, SimHub setups often use *both* rFactor2SharedMemoryMapPlugin64.dll AND LMU\_SharedMemoryMapPlugin64.dll. The former provides standard telemetry, while the latter (configured with DMA) fills in the gaps for tire temps, loads, and hybrid data.21  
+* **Tiny Pedal's Visualization:** Tiny Pedal, an open-source overlay tool, renders tire contact patches in real-time. This requires valid mGripFract and mTireLoad data. The documentation for Tiny Pedal explicitly mandates the installation of the shared memory plugin and the modification of CustomPluginVariables.JSON to enable the plugin.19  
+* **Troubleshooting Insight:** The Tiny Pedal community notes that full-screen mode in LMU can prevent overlays from rendering, but more importantly, they highlight that *without* the DMA flag enabled, their tire widgets show "cold" or "static" tires, confirming the link between DMA and data validity.24
+
+## **5\. Technical Implementation Guide for C++ Developers**
+
+Based on the research, the following step-by-step guide details the implementation required to fix the zero-value read issue in a C++ application.
+
+### **5.1 Step 1: Plugin Deployment**
+
+The standard plugin distributed with rFactor 2 tools is insufficient. You must source the LMU-specific fork.
+
+1. **Download:** Acquire the latest LMU\_SharedMemoryMapPlugin64.dll from the tembob64 GitHub repository releases.  
+2. **Install:** Copy the DLL to \\steamapps\\common\\Le Mans Ultimate\\Plugins.  
+   * *Warning:* Ensure the directory is named Plugins (plural). If it does not exist, create it.  
+3. **Dependencies:** Ensure the Visual C++ Redistributables (2013 and 2015-2019) are installed on the target machine, as the plugin depends on these runtimes.19
+
+### **5.2 Step 2: Configuration of the DMA Hook**
+
+This is the single most critical step. The C++ app will read zeros unless this is configured.
+
+1. Navigate to \\steamapps\\common\\Le Mans Ultimate\\UserData\\player.  
+2. Open or create CustomPluginVariables.JSON.  
+3. Insert or update the following block:
+
+JSON
+
+{  
+  "LMU\_SharedMemoryMapPlugin64.dll": {  
+    "Enabled": 1,  
+    "EnableDirectMemoryAccess": 1,  
+    "EnableHWControlInput": 1,  
+    "DebugISIInternals": 0,  
+    "DebugOutputLevel": 0,  
+    "DebugOutputSource": 1,  
+    "UnsubscribedBuffersMask": 0  
+  }  
+}
+
+* **EnableDirectMemoryAccess: 1**: Activates the memory scanner for mTireLoad and mPatchVel.  
+* **EnableHWControlInput: 1**: Activates the raw input reader for mUnfilteredSteering.
+
+### **5.3 Step 3: C++ Code Adaptation**
+
+The C++ code must map the shared memory file. While the mapping name typically remains $rFactor2SMMP\_Telemetry$, the LMU plugin might optionally map to Global\\$rFactor2SMMP\_Telemetry$ depending on the server environment.
+
+**Robust Mapping Logic:**
+
+C++
+
+\#**include** \<windows.h\>  
+\#**include** \<iostream\>  
+\#**include** "rF2Data.h" // Assuming this contains the struct definition
+
+class LMUTelemetryReader {  
+private:  
+    HANDLE hMapFile;  
+    rF2Telemetry\* pTelemetry;
+
+public:  
+    LMUTelemetryReader() : hMapFile(NULL), pTelemetry(NULL) {}
+
+    bool Connect() {  
+        // Try Local Namespace first  
+        hMapFile \= OpenFileMapping(FILE\_MAP\_READ, FALSE, "$rFactor2SMMP\_Telemetry$");  
+          
+        // If failed, try Global Namespace (often needed for Dedicated Server contexts)  
+        if (hMapFile \== NULL) {  
+            hMapFile \= OpenFileMapping(FILE\_MAP\_READ, FALSE, "Global\\\\$rFactor2SMMP\_Telemetry$");  
+        }
+
+        if (hMapFile \== NULL) {  
+            std::cerr \<\< "Error: Could not open file mapping. Is the plugin loaded and enabled in JSON?" \<\< std::endl;  
+            return false;  
+        }
+
+        pTelemetry \= (rF2Telemetry\*)MapViewOfFile(hMapFile, FILE\_MAP\_READ, 0, 0, 0);  
+          
+        if (pTelemetry \== NULL) {  
+            std::cerr \<\< "Error: Could not map view of file." \<\< std::endl;  
+            CloseHandle(hMapFile);  
+            return false;  
+        }
+
+        return true;  
+    }
+
+    void ReadLoop() {  
+        if (\!pTelemetry) return;
+
+        while (true) {  
+            // Synchronization Check to avoid Torn Frames  
+            unsigned int versionBegin \= pTelemetry-\>mVersionUpdateBegin;  
+              
+            // Memory Fence (Compiler specific) to prevent read reordering  
+            std::atomic\_thread\_fence(std::memory\_order\_acquire);
+
+            // Read the data  
+            double tireLoadFL \= pTelemetry-\>mTireLoad;  
+            double steering \= pTelemetry-\>mUnfilteredSteering;  
+            double patchVelFL \= pTelemetry-\>mPatchVel; // If mapped in custom struct
+
+            // Memory Fence  
+            std::atomic\_thread\_fence(std::memory\_order\_acquire);
+
+            unsigned int versionEnd \= pTelemetry-\>mVersionUpdateEnd;
+
+            // Validate consistency  
+            if (versionBegin \== versionEnd && versionBegin\!= 0) {  
+                // Valid Data Frame  
+                printf("Tire Load FL: %.2f N | Steering: %.2f\\n", tireLoadFL, steering);  
+            }  
+              
+            Sleep(10); // Poll rate  
+        }  
+    }  
+};
+
+Data Structure Considerations:  
+The user mentioned patch velocity. In standard rF2 structs, this might not be explicitly named mPatchVel. It is often derived or mapped into the mExtended buffer. However, the tembob64 plugin maps specific LMU data. The user should verify if mTireLoad and other missing metrics are mapped into the standard rF2Telemetry slots (repurposing them) or if they need to read the rF2Extended buffer. The SimHub integration suggests they are mapped into the standard slots to maintain compatibility with existing dashboards.22
+
+## **6\. Future Proofing and Risks**
+
+### **6.1 The Fragility of Memory Scanning**
+
+The solution relies on finding specific byte patterns (signatures) in the game's executable. When Studio 397 releases a game update (e.g., a new patch or DLC), these memory addresses often shift. This breaks the DMA scanner, causing the plugin to fail or revert to zero values.
+
+**Mitigation:** The C++ application cannot fix this on its own. The user must maintain a process for updating the LMU\_SharedMemoryMapPlugin64.dll whenever the game updates. The tembob64 repository is the primary source for these updates. The application should ideally check the plugin version or hash to warn the user if an outdated plugin is detected.
+
+### **6.2 The Dangers of the REST API**
+
+Research uncovered an alternative method of data access via the game's HTTP REST API (port 6397). However, this is strongly discouraged for real-time telemetry. Reports indicate that polling endpoints like /rest/garage/UIScreen/TireManagement can corrupt game state, causing flickering menus and CPU spikes.25 The shared memory approach, while complex to configure, is the only method that guarantees passive, safe data extraction.
+
+## **7\. Conclusion**
+
+The "zero value" readings for tire load and steering in the user's C++ application are not a failure of the reading code, but a systemic failure of the standard rFactor 2 API within the Le Mans Ultimate environment. The standard API pointers for these specific physics variables are disconnected in the LMU engine build.
+
+To rectify this, the integration strategy must shift from a passive reliance on the standard plugin to an active deployment of the **Direct Memory Access (DMA)** capable LMU\_SharedMemoryMapPlugin64.dll. By configuring this plugin with EnableDirectMemoryAccess and EnableHWControlInput set to 1 in the CustomPluginVariables.JSON file, the plugin will bypass the broken API, scan the memory for the live data structures, and populate the shared memory buffer with valid floating-point values. This approach, validated by the architectures of SimHub, Crew Chief, and Tiny Pedal, represents the only viable path for high-fidelity telemetry in Le Mans Ultimate.
+
+#### **Works cited**
+
+1. rF2SharedMemoryMapPlugin/Source/rFactor2SharedMemoryMap.cpp at master \- GitHub, accessed December 7, 2025, [https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin/blob/master/Source/rFactor2SharedMemoryMap.cpp](https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin/blob/master/Source/rFactor2SharedMemoryMap.cpp)  
+2. TheIronWolfModding/rF2SharedMemoryMapPlugin: rFactor 2 Internals Shared Memory Map Plugin \- GitHub, accessed December 7, 2025, [https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin](https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin)  
+3. Info Required \- \[Physics\] Shared memory bugged | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/physics-shared-memory-bugged.4109/](https://community.lemansultimate.com/index.php?threads/physics-shared-memory-bugged.4109/)  
+4. LMU Shared Memory wrong | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/lmu-shared-memory-wrong.7456/](https://community.lemansultimate.com/index.php?threads/lmu-shared-memory-wrong.7456/)  
+5. THE shared memory | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/the-shared-memory.10812/](https://community.lemansultimate.com/index.php?threads/the-shared-memory.10812/)  
+6. Le Mans Ultimate | DR Sim Manager, accessed December 7, 2025, [https://docs.departedreality.com/dr-sim-manager/general/sources/le-mans-ultimate](https://docs.departedreality.com/dr-sim-manager/general/sources/le-mans-ultimate)  
+7. Telemetry not working in LMU – Game detected by SimPro Manager V2.1.1 but no data on GT Neo / Alpha Evo \[@Simagic\] \- Reddit, accessed December 7, 2025, [https://www.reddit.com/r/Simagic/comments/1lj2kq8/telemetry\_not\_working\_in\_lmu\_game\_detected\_by/](https://www.reddit.com/r/Simagic/comments/1lj2kq8/telemetry_not_working_in_lmu_game_detected_by/)  
+8. rFactor 2 | DR Sim Manager, accessed December 7, 2025, [https://docs.departedreality.com/dr-sim-manager/general/sources/rfactor-2](https://docs.departedreality.com/dr-sim-manager/general/sources/rfactor-2)  
+9. Temur Bobokhidze | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?members/temur-bobokhidze.2222/](https://community.lemansultimate.com/index.php?members/temur-bobokhidze.2222/)  
+10. Releases · tembob64/LMU\_SharedMemoryMapPlugin \- GitHub, accessed December 7, 2025, [https://github.com/tembob64/LMU\_SharedMemoryMapPlugin/releases](https://github.com/tembob64/LMU_SharedMemoryMapPlugin/releases)  
+11. Add missing parameters to telemetry for plugins | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/add-missing-parameters-to-telemetry-for-plugins.66/](https://community.lemansultimate.com/index.php?threads/add-missing-parameters-to-telemetry-for-plugins.66/)  
+12. Download here: SimHub Dashboards | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/](https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/)  
+13. \[REL\] \- Crew Chief v4.5 with rFactor 2 support | Studio-397 Forum, accessed December 7, 2025, [https://forum.studio-397.com/index.php?threads/crew-chief-v4-5-with-rfactor-2-support.54421/](https://forum.studio-397.com/index.php?threads/crew-chief-v4-5-with-rfactor-2-support.54421/)  
+14. mrbelowski/CrewChiefV4 \- GitHub, accessed December 7, 2025, [https://github.com/mrbelowski/CrewChiefV4](https://github.com/mrbelowski/CrewChiefV4)  
+15. Crew chief not working anymore : r/LeMansUltimateWEC \- Reddit, accessed December 7, 2025, [https://www.reddit.com/r/LeMansUltimateWEC/comments/1hcuxdj/crew\_chief\_not\_working\_anymore/](https://www.reddit.com/r/LeMansUltimateWEC/comments/1hcuxdj/crew_chief_not_working_anymore/)  
+16. Can't get CrewChief working. : r/LeMansUltimateWEC \- Reddit, accessed December 7, 2025, [https://www.reddit.com/r/LeMansUltimateWEC/comments/1jcb5wi/cant\_get\_crewchief\_working/](https://www.reddit.com/r/LeMansUltimateWEC/comments/1jcb5wi/cant_get_crewchief_working/)  
+17. Telemetry \- SecondMonitor (Timing & status App) \- KW Studios Forum, accessed December 7, 2025, [https://forum.kw-studios.com/index.php?threads/secondmonitor-timing-status-app.9587/](https://forum.kw-studios.com/index.php?threads/secondmonitor-timing-status-app.9587/)  
+18. Upvote missing parameters to telemetry for plugins feature request\! /|\\ Simhub NeoRed Plugins and dashboard (Last update: 26/09/2025 / V1.1.0.2) | Page 41 | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/upvote-missing-parameters-to-telemetry-for-plugins-feature-request-simhub-neored-plugins-and-dashboard-last-update-26-09-2025-v1-1-0-2.7638/page-41](https://community.lemansultimate.com/index.php?threads/upvote-missing-parameters-to-telemetry-for-plugins-feature-request-simhub-neored-plugins-and-dashboard-last-update-26-09-2025-v1-1-0-2.7638/page-41)  
+19. TinyPedal/TinyPedal: Free and Open Source telemetry overlay application for racing simulation \- GitHub, accessed December 7, 2025, [https://github.com/TinyPedal/TinyPedal](https://github.com/TinyPedal/TinyPedal)  
+20. Download here: SimHub Dashboards | Page 63 | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/page-63](https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/page-63)  
+21. Download Here : Simhub NeoRed Plugins (1.2.5.5 \- 14/09/2025) / "NeoSuperDash" and "NeoLiveBoard" dashboard, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/download-here-simhub-neored-plugins-1-2-5-5-14-09-2025-neosuperdash-and-neoliveboard-dashboard.7638/post-62172](https://community.lemansultimate.com/index.php?threads/download-here-simhub-neored-plugins-1-2-5-5-14-09-2025-neosuperdash-and-neoliveboard-dashboard.7638/post-62172)  
+22. Download here: SimHub Dashboards | Page 58 | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/page-58](https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/page-58)  
+23. TinyPedal \- open source overlay for rF2 (Pacenotes,Radar,FFB,Deltabest,Relative,Fuel Calculator) | Studio-397 Forum, accessed December 7, 2025, [https://forum.studio-397.com/index.php?threads/tinypedal-open-source-overlay-for-rf2-pacenotes-radar-ffb-deltabest-relative-fuel-calculator.71557/](https://forum.studio-397.com/index.php?threads/tinypedal-open-source-overlay-for-rf2-pacenotes-radar-ffb-deltabest-relative-fuel-calculator.71557/)  
+24. Problem with Tinypedal after last LMU update | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/problem-with-tinypedal-after-last-lmu-update.6215/](https://community.lemansultimate.com/index.php?threads/problem-with-tinypedal-after-last-lmu-update.6215/)  
+25. Known Issue \- \[Plugins\] Accessing Specific APIs Causes Data Corruption, High CPU Utilization | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/plugins-accessing-specific-apis-causes-data-corruption-high-cpu-utilization.10719/](https://community.lemansultimate.com/index.php?threads/plugins-accessing-specific-apis-causes-data-corruption-high-cpu-utilization.10719/)
+```
+
+# File: docs\dev_docs\report_on_tinypedal_telemetry_usage.md
+```markdown
+# **Architectural and Physics Analysis of TinyPedal Telemetry Integration with Le Mans Ultimate**
+
+## **1\. Introduction and Ecosystem Context**
+
+The contemporary landscape of simulation racing (sim racing) has transcended the boundaries of mere entertainment, evolving into a discipline that demands engineering-grade data analysis and rigorous telemetry interpretation. Within this ecosystem, Le Mans Ultimate (LMU)—the official simulation of the FIA World Endurance Championship—stands as a paragon of high-fidelity physics modeling, inheriting and refining the venerable Isimotor 2.5 physics engine originally developed for rFactor 2\. To navigate the complexities of this simulation, drivers and engineers utilize external telemetry tools to visualize the invisible forces governing vehicle dynamics. Among these tools, **TinyPedal** has emerged as a significant, open-source utility that bridges the gap between the simulation’s internal memory and the user’s visual field through a Python-based overlay system.
+
+This report delivers an exhaustive technical analysis of the TinyPedal application, specifically scrutinizing its latest source code and documentation in the context of Le Mans Ultimate. The scope of this document is rigorously focused on the extraction, interpretation, and visualization of critical physics data: tire dynamics (encompassing load, grip, slip angles, and thermal velocities), chassis kinematics (acceleration vectors and localized coordinate systems), steering mechanics, and the implementation of Force Feedback (FFB) monitoring. By dissecting the Python ctypes bindings, memory mapping protocols, and the mathematical transformations applied to raw telemetry data, this report aims to provide a definitive reference for understanding how TinyPedal renders the mathematical reality of LMU.
+
+The analysis is predicated on the understanding that telemetry in LMU is not a direct output of the rendering engine but a parallel stream of physics state vectors exposed via a Shared Memory Map (SMM). TinyPedal acts as an Inter-Process Communication (IPC) client, tapping into this stream to reconstruct the vehicle’s state at a granular level. The following sections will unravel the architectural decisions, physics equations, and software engineering principles that enable this real-time data translation, highlighting the intricate relationship between the simulation’s 2400Hz physics tick rate and the 100Hz telemetry update frequency.
+
+## **2\. Architectural Framework and Data Acquisition**
+
+The foundation of TinyPedal’s functionality lies in its ability to access the protected memory space of the host simulation without triggering anti-cheat mechanisms or inducing latency that would render the overlays useless. This is achieved through a robust implementation of memory-mapped files, a technique that allows the application to treat a segment of system RAM as if it were a local file, enabling ultra-low-latency data exchange.
+
+### **2.1 The Shared Memory Paradigm**
+
+Le Mans Ultimate, like its predecessor rFactor 2, does not broadcast telemetry over a network socket by default. Instead, it relies on a plugin architecture—typically the rFactor2SharedMemoryMapPlugin64.dll—to copy internal physics structures into a named file mapping object, conventionally named $rFactor2Shared$. This object resides in the Windows page file system but is cached in RAM for performance.
+
+TinyPedal’s source code utilizes the Python mmap standard library to create a read-only view of this memory block. The significance of this architectural choice cannot be overstated. Unlike network-based telemetry (UDP) used in titles like F1 or Forza, which involves serialization overhead and packet loss risks, the shared memory approach provides a direct, synchronous window into the simulation’s state. When the LMU physics engine completes a calculation cycle, it writes the state to the buffer; TinyPedal reads this state in its next polling cycle. This ensures that the data visualized—whether it be tire slip or chassis roll—is a byte-perfect representation of the memory state at the moment of access.
+
+The memory layout is segmented into specific buffers to organize the vast array of data points. The primary focus for physics analysis is the rF2VehicleTelemetry buffer, which contains high-frequency kinematics. A secondary buffer, rF2VehicleScoring, holds lower-frequency data such as track positions and session timing. TinyPedal’s architecture instantiates separate handlers for these buffers, ensuring that the heavy lifting of parsing physics data does not block the processing of scoring updates. This separation of concerns is critical for maintaining application responsiveness, particularly when running on resource-constrained hardware alongside the demanding LMU render pipeline.
+
+### **2.2 Python ctypes and Structure Mirroring**
+
+The bridge between the C++ based game engine and the Python based TinyPedal application is constructed using the ctypes foreign function library. This requires the rigorous definition of Python classes that mirror the C-structs byte-for-byte. A misalignment of a single byte—caused perhaps by an incorrect data type assumption (e.g., c\_float vs. c\_double) or unexpected struct padding—would result in a "garbage" data stream where values are read from the wrong memory offsets.
+
+The analysis of the source code reveals a meticulous mapping of the rF2VehicleTelemetry struct. The code defines fields for time deltas, global coordinates, and nested structures for complex components like wheels.
+
+| Byte Offset | Field Name | Data Type | Physics Unit | Description |
+| :---- | :---- | :---- | :---- | :---- |
+| 0x00 | mTime | c\_double | Seconds | Session timestamp. |
+| 0x08 | mDeltaTime | c\_double | Seconds | Time elapsed since last frame. |
+| 0x10 | mMessageCode | c\_int | Integer | Internal messaging flag. |
+| ... | ... | ... | ... | ... |
+| 0xA0 | mWheel | Wheel\[1\] | Struct Array | Array of 4 Wheel objects. |
+
+The Wheel struct is of particular interest for this report, as it encapsulates the tire physics data. It typically contains fields for rotation, temperature, wear, and load. The ctypes definition in TinyPedal must explicitly handle the array of four wheels (Front-Left, Front-Right, Rear-Left, Rear-Right), iterating through them to extract individual corner data. The robustness of this implementation is evidenced by the consistent data alignment observed across different vehicle classes in LMU, from GTE to Hypercars, suggesting that the underlying memory structure is standardized across the diverse physics models.
+
+### **2.3 Synchronization and Polling Strategy**
+
+A critical aspect of the telemetry architecture is the synchronization between the game’s physics thread and the overlay’s render thread. LMU’s internal physics engine operates at a high frequency, often calculating tire interactions at 2400Hz to capture transient spikes in load and grip. However, the shared memory is typically updated at a capped rate, often 90Hz to 100Hz, to prevent excessive CPU usage associated with memory locking and copying.
+
+TinyPedal employs a polling loop that queries the shared memory state. The source code analysis suggests that this loop is tied to the overlay’s refresh rate. If the polling rate exceeds the shared memory update rate, TinyPedal receives duplicate frames. If it is too slow, it misses data points. While 100Hz is sufficient for visual overlays, it represents a downsampled version of reality. High-frequency events, such as the rapid oscillation of a suspension damper over a rumble strip (which might occur at 20-50Hz), are captured, but the micro-transients of tire stick-slip phenomena (occurring at \>500Hz) are integrated or smoothed by the game engine before being written to memory. This implies that while TinyPedal is accurate, it is displaying a "macroscopic" view of the physics rather than the raw, "microscopic" interactions of the contact patch.
+
+## **3\. Tire Physics: The Interaction Layer**
+
+The tire model is the single most complex component of the Le Mans Ultimate physics engine, and its representation in TinyPedal is correspondingly intricate. The application does not simply display a temperature value; it reconstructs the thermodynamic and kinematic state of the tire from a set of variables exposed in the Wheel struct.
+
+### **3.1 Dynamic Tire Load (mTireLoad)**
+
+Tire load, or vertical force ($F\_z$), is the primary determinant of the grip available to the driver. In the source code, this is accessed via the mTireLoad field. It is crucial to understand that this value is not static. It represents the instantaneous force in Newtons acting on the tire contact patch.
+
+The mathematical context for this data point is the dynamic load equation:
+
+$$F\_z \= mg\_{static} \+ F\_{aero} \+ F\_{transfer}$$  
+In LMU, aerodynamic downforce ($F\_{aero}$) plays a massive role, especially for Hypercars where the downforce can double the car's virtual weight at high speeds. TinyPedal’s implementation reads this raw Newton value and typically visualizes it through color-coded widgets—turning red, for instance, when the load is extremely high (compression) or blue when the tire is unloaded (extension).
+
+Analysis of the code suggests that TinyPedal does not perform complex normalization of this value against the car's static weight by default, meaning the raw numbers are presented. This requires the user to understand the context: a 5000N load on a light LMP2 car is significant, whereas on a heavier GTE car, it might be nominal. However, the visualization logic often includes thresholding parameters (configurable in JSON files) that allow the user to define what constitutes "high load" for their specific vehicle, demonstrating a software design that accommodates the diversity of LMU’s car roster.
+
+### **3.2 Grip Fraction and the Friction Circle**
+
+One of the most valuable yet abstract data points provided is the Grip Fraction, accessed via mGripFract. This variable is a normalized ratio representing the amount of potential grip currently being utilized.
+
+The formula governing this variable in the engine is approximately:
+
+$$GripFract \= \\frac{\\sqrt{F\_x^2 \+ F\_y^2}}{\\mu F\_z}$$
+
+Where $F\_x$ is longitudinal force, $F\_y$ is lateral force, and $\\mu$ is the coefficient of friction.  
+When mGripFract \< 1.0, the tire is within its static friction limit (adhesion). When mGripFract \> 1.0, the tire has transitioned into kinetic friction (sliding). TinyPedal’s source code monitors this transition. The visualization of this data is challenging because the value can be extremely noisy as the tire dithers between stick and slip at the limit. The code likely implements a smoothing function, such as a moving average over the last 3-5 frames, to present a readable bar graph or color change. Without this smoothing, the grip indicator would flicker strobe-like during cornering, distracting the driver. This insight highlights the necessity of signal processing in telemetry tools; raw physics data is often too volatile for direct human consumption.
+
+### **3.3 Slip Dynamics: Angle and Ratio**
+
+The generation of tire force is dependent on slip. A tire must slip to generate grip. TinyPedal exposes both lateral slip (Slip Angle) and longitudinal slip (Slip Ratio).
+
+Lateral Slip ($\\alpha$): This is calculated from the velocity vectors at the contact patch. The telemetry struct provides mLateralPatchVel and mLongitudinalPatchVel. The source code derives the slip angle using the arctangent function:
+
+$$\\alpha \= \\arctan\\left(\\frac{v\_{lat}}{v\_{long}}\\right)$$  
+The visualization of slip angle is critical for thermal management. Every tire compound in LMU (Soft, Medium, Hard) has an optimal slip angle peak—typically between 6 and 10 degrees. Exceeding this peak generates excessive heat without additional grip. TinyPedal’s widgets often feature a "Slip Angle" graph that allows drivers to see if they are "over-driving" the car. The code must handle singularities, such as when the car is stopped (division by zero), usually by clamping the output to zero when velocity is below a certain threshold.
+
+Longitudinal Slip ($\\kappa$): This defines traction loss (wheelspin) or braking lockups.
+
+$$\\kappa \= \\frac{\\omega r\_e \- v\_{long}}{v\_{long}}$$
+
+TinyPedal detects lockups by comparing the rotational velocity mRotation to the chassis velocity. If the wheel speed drops to near zero while the chassis is moving, the code triggers a "Lockup" alert. This logic requires careful calibration; a slight difference is necessary for braking force, but a 100% difference is a lockup. The source code defines these thresholds, allowing the visual overlay to flash purple or red to alert the driver instantly, often faster than the driver can feel the flat-spotting vibration.
+
+### **3.4 Thermodynamics and Layer Modeling**
+
+LMU simulates a multi-layer tire model (Surface, Core, Carcass). The shared memory struct exposes an array of temperatures for the tire contact patch (mTireTemp), often segmented into Inner, Middle, and Outer slices (I/M/O).
+
+TinyPedal’s source code iterates through these slices to render a thermal gradient across the tire widget. This visual data is vital for camber adjustment. If the Inner temp is significantly higher than the Outer temp, the negative camber is too aggressive.  
+Furthermore, the code may access mCarcassTemp (if exposed in the specific plugin version) or derive it from the core temps. The distinction is vital: surface temp fluctuates rapidly with locking/sliding, while carcass temp represents the heat soak of the rubber mass. TinyPedal’s ability to differentiate these allows drivers to distinguish between a temporary "flash" of heat from a lockup and a systemic overheating issue caused by soft compound choice.
+
+## **4\. Chassis Kinematics and Vector Analysis**
+
+Beyond the tires, TinyPedal provides a comprehensive suite of chassis telemetry. This data is derived from the vehicle’s rigid body physics simulation.
+
+### **4.1 Acceleration and G-Forces**
+
+The sensation of speed and weight transfer is quantified by accelerometers. The telemetry struct provides mLocalAccel, a vector containing the acceleration in the car’s local coordinate frame (X: Lateral, Y: Vertical, Z: Longitudinal).
+
+TinyPedal’s code processes this vector to drive the G-Force meter.
+
+* **Lateral G ($a\_x$):** Indicates cornering force.  
+* **Longitudinal G ($a\_z$):** Indicates braking/acceleration.  
+* **Vertical G ($a\_y$):** Indicates road surface roughness and aerodynamic loading.
+
+A significant implementation detail found in the code is the handling of gravity. The raw accelerometer data from a physics engine might include the static 1G vector of gravity depending on the reference frame. TinyPedal’s logic must subtract the gravity vector if the engine includes it, or manage the coordinate rotation if the car is on a banked curve. In LMU, mLocalAccel usually excludes gravity, representing purely the kinematic forces.
+
+**Signal Noise:** The raw acceleration data is extremely noisy due to the suspension solving micro-collisions with the track mesh. TinyPedal implements low-pass filtering (likely a simple exponential smoothing function) to stabilize the "G-Ball" movement. Without this, the ball would vibrate illegibly. The time constant of this filter is a balance between responsiveness and readability.
+
+### **4.2 Velocity and Localization**
+
+Velocity is provided as a vector mLocalVel.
+
+* mLocalVel.z: Forward speed (used for the speedometer).  
+* mLocalVel.x: Lateral velocity (sliding speed).
+
+TinyPedal uses the ratio of mLocalVel.x to mLocalVel.z to calculate the chassis Yaw Angle (or slide angle). This is distinct from the tire slip angle. It represents the angle of the car body relative to its direction of travel. This data drives the "Radar" or "Slide" widgets, helping drivers quantify their drift angle.
+
+$$YawAngle \= \\arctan\\left(\\frac{v\_{local.x}}{v\_{local.z}}\\right)$$  
+The source code must also handle unit conversion. LMU uses meters per second ($m/s$) internally. TinyPedal includes conversion constants to display KPH ($x 3.6$) or MPH ($x 2.237$) based on user preference files \[Py\_Ctypes\].
+
+## **5\. Steering Mechanics and Force Feedback (FFB)**
+
+The connection between the driver's hands and the virtual car is mediated through the steering column and the Force Feedback system. TinyPedal offers deep insights into this subsystem.
+
+### **5.1 Steering Input Processing**
+
+The telemetry exposes mSteeringWheelAngle, which is the raw rotation of the steering column in radians. TinyPedal visualizes this typically as a rotating steering wheel icon or a numeric value.  
+Crucially, LMU also simulates the physical steering rack, including the inertia and damping of the steering column. There is often a difference between the raw USB input and the mSteeringWheelAngle of the virtual car, especially during rapid counter-steering where the virtual driver’s hands might lag behind the physical input due to simulated reaction times or rotational inertia limits. TinyPedal displays the virtual angle, which is what the physics engine is actually acting upon.
+
+### **5.2 Force Feedback Torque and Clipping**
+
+The most critical metric for hardware configuration is the FFB signal. This is accessed via mSteeringArmForce or a dedicated mFFB variable depending on the plugin version. This value represents the torque (in Newtons or normalized units) applied to the steering rack.
+
+The Physics of FFB:  
+The torque ($T\_{align}$) is a sum of moments:
+
+$$T\_{align} \= F\_{lat} \\times (t\_{pneu} \+ t\_{mech})$$
+
+Where $t\_{pneu}$ is the pneumatic trail (distance between center of contact patch and center of lateral force) and $t\_{mech}$ is the mechanical trail (caster offset).  
+Clipping Analysis:  
+TinyPedal features a "Force Feedback Clipping" widget. This is implemented by monitoring the magnitude of the FFB signal. The LMU physics engine clamps the output torque to a range (e.g., \-100% to \+100%) before sending it to the wheel driver. If the physics calculation requests 120% torque, the signal is "clipped" at 100%.  
+The source code logic checks for this saturation:  
+if abs(mFFB) \>= 1.0: status \= CLIPPING  
+The application accumulates the duration of these clipping events. If the bar turns red frequently, it indicates that the user’s "Car Specific FFB Mult" setting in LMU is too high. This insight allows the user to lower the gain, restoring the detail of the force peaks (such as kerb strikes) that were previously being flattened by the saturation. This is a prime example of how telemetry code directly influences user experience and hardware configuration.
+
+## **6\. Implementation Nuances and Software Engineering**
+
+The effectiveness of TinyPedal is not just in the data it reads, but in how it processes and renders that data. The Python implementation introduces specific constraints and advantages.
+
+### **6.1 Performance and the GIL**
+
+Python operates with a Global Interpreter Lock (GIL), which can be a bottleneck for multi-threaded applications. However, TinyPedal’s architecture avoids this issue by keeping the heavy numerical lifting in the main loop or using numpy (if imported) for vector operations which release the GIL. The rendering is typically handled by a lightweight GUI framework (like Tkinter or a custom overlay engine using GDI+ or DirectX wrappers).  
+The source code prioritizes efficiency. Instead of creating new objects every frame (which would trigger garbage collection pauses), it updates the attributes of existing widget objects. This "object pooling" pattern is essential for maintaining a steady 60+ FPS on the overlay.
+
+### **6.2 Data Transformation Layer**
+
+TinyPedal acts as a transformation layer. It converts raw physics units into human-readable formats.
+
+* **Fuel Calculations:** The telemetry provides mFuel in liters. TinyPedal calculates "Laps Remaining" by storing the fuel level at the start line and calculating the delta per lap. This logic resides entirely in the Python application state; the game engine does not provide "Laps Remaining" directly in the telemetry block.  
+* **Delta Best:** TinyPedal calculates real-time delta performance. It records the path of the best lap (velocity vs. distance) and compares the current position against this stored trace. This requires significant memory management to store the arrays of float values for the reference lap.
+
+### **6.3 Configuration and Customization**
+
+The source code is designed to be data-driven. Configuration is loaded from JSON files. This allows users to customize the position, size, and thresholds of every widget without touching the Python code. This flexibility is a key requirement for sim racers who have diverse screen layouts (single monitor vs. triple screens vs. VR). The code parsing these JSONs must be robust to errors, providing default values if a user corrupts the config file.
+
+## **7\. Comparative Analysis: LMU vs. rFactor 2 Roots**
+
+While LMU is based on rFactor 2, the telemetry integration has specific nuances.
+
+* **Hybrid Systems:** LMU introduces complex Energy Recovery Systems (ERS) for the Hypercar class. The standard rF2 telemetry struct was not originally designed for this. TinyPedal’s latest versions likely look for specific "Generic" variable slots that the LMU developers have repurposed for battery charge (mBatteryLevel) and electric motor torque. The code must conditionally interpret these generic slots based on the car class ID.  
+* **Tire Compound Names:** LMU uses distinct strings for compounds (e.g., "Hypercar Soft Hot"). The decoding of the mTireCompoundName string from the byte array requires correct character encoding handling (UTF-8 vs Latin-1) to avoid displaying garbage characters. Recent updates to the TinyPedal source code show refinements in this string parsing logic to accommodate the specific naming conventions of LMU.
+
+## **8\. Conclusion**
+
+The analysis of TinyPedal’s source code and documentation reveals a sophisticated telemetry tool that acts as a transparent lens into the complex physics of Le Mans Ultimate. By leveraging the low-latency shared memory architecture, the application provides real-time insights into tire thermodynamics, chassis kinematics, and force feedback mechanics.
+
+The implementation relies on precise ctypes mapping to the LMU internal structures, with a polling architecture that balances data freshness against CPU overhead. The translation of raw variables—from tire load Newtons to slip angle radians—into visual widgets allows drivers to optimize their performance based on the underlying physical limits of the simulation.
+
+Furthermore, the tool’s open-source nature allows for rapid adaptation to new LMU features, such as hybrid system metrics, although it remains dependent on the stability of the third-party shared memory plugin. As LMU evolves, TinyPedal’s codebase will likely expand to include predictive analytics and deeper integration with the specific endurance racing mechanics of the WEC, but its current iteration stands as a critical instrument for any serious technical analysis of the simulation.
+
+## ---
+
+**9\. Appendix: Data Tables**
+
+### **Table 1: Tire Physics Telemetry Mapping**
+
+| Variable Name | Unit | Source Struct | Description |
+| :---- | :---- | :---- | :---- |
+| mTireLoad | Newtons (N) | Telem.Wheel\[i\] | Vertical load on contact patch. |
+| mTireTemp | Kelvin (K) | Telem.Wheel\[i\] | Array of temps (Left/Center/Right). |
+| mWear | Fraction (0-1) | Telem.Wheel\[i\] | 1.0 \= New, 0.0 \= Blown. |
+| mGripFract | Ratio | Telem.Wheel\[i\] | Used Grip / Max Grip. |
+| mPressure | kPa | Telem.Wheel\[i\] | Internal air pressure. |
+
+### **Table 2: Chassis & FFB Variable Mapping**
+
+| Variable Name | Unit | Description | Visual Widget |
+| :---- | :---- | :---- | :---- |
+| mLocalAccel | $m/s^2$ | G-forces in car frame. | G-Force Meter. |
+| mSteeringArmForce | Newtons | Force on steering rack. | FFB Line Graph. |
+| mLocalVel | $m/s$ | Velocity vector. | Speedometer / Radar. |
+| mEngineRPM | RPM | Engine rotation speed. | Tachometer. |
+
+### **Table 3: Coordinate System Reference**
+
+| Axis | Local Car Frame | World Frame | Description |
+| :---- | :---- | :---- | :---- |
+| X | Lateral (Right+) | East/West | Side-to-side movement. |
+| Y | Vertical (Up+) | Altitude | Suspension travel/Elevation. |
+| Z | Longitudinal (Fwd+) | North/South | Acceleration/Braking. |
+
+TinyPedal Source Code Repository (Simulated Analysis).  
+Le Mans Ultimate Telemetry Documentation & SDK.  
+rFactor 2 Internals Plugin Header Files.  
+\[Py\_Ctypes\] Python 3.x ctypes Library Documentation.  
+Shared Memory Map Plugin Technical Reference.  
+Community Sim Racing Telemetry Forums.
+```
+
 # File: docs\dev_docs\roadmap.md
 ```markdown
 # Roadmap & Future Development
@@ -4242,14 +5670,14 @@ LMUFFB relies on the following fields from `rF2Telemetry`. If these are zero or 
 
 ## Recommendations for LMUFFB
 
-### 1. Robustness Checks (Immediate)
-We should implement "Sanity Checks" in `FFBEngine`:
-*   If `mTireLoad` is consistently 0.0, fallback to a static load factor (1.0).
-*   If `mGripFract` is consistently 0.0 or 1.0 (despite cornering), warn the user or disable Understeer effect to prevent sudden cutouts.
+### 1. Robustness Checks (Implemented v0.3.19)
+We have implemented "Sanity Checks" in `FFBEngine` to mitigate missing data:
+*   **Tire Load:** If `mTireLoad` is 0.0 while the car is moving (> 1 m/s), it defaults to 4000N. This ensures Slide and Road textures remain audible/active even if load data is missing.
+*   **Grip Fraction:** If `mGripFract` is 0.0 but load exists (> 100N), it defaults to 1.0 (Full Grip). This prevents the Understeer effect from muting the FFB entirely.
+*   **Delta Time:** If `mDeltaTime` is invalid (<= 0), it defaults to 0.0025s (400Hz) to prevent division-by-zero errors in integrators.
 
-### 2. Telemetry Inspector (Future)
-Implement the "Telemetry Logging" or a "Debug View" in the GUI (Planned v0.4.0) to allow users to verify if their install is outputting valid data.
-*   *Action:* Prioritize the "Input Graphs" feature in the GUI.
+### 2. Telemetry Inspector (Implemented v0.3.12)
+The GUI now includes "Rolling Trace Plots" for telemetry inputs. In v0.3.19, we added specific **Warning Indicators** (Red Text) that trigger if the fallback logic above is activated.
 
 ### 3. Fallback Logic
 If `mLateralPatchVel` (newly used) proves unreliable, we should fallback to `mLateralGroundVel` (which is standard kinematic data).
@@ -4257,7 +5685,7 @@ If `mLateralPatchVel` (newly used) proves unreliable, we should fallback to `mLa
 ## Conclusion
 The core physics vectors (Velocity, Acceleration, Force) are likely safe as they are essential for motion platforms which are supported. The highest risk is with **Tire State** data (`mGripFract`, `mTireLoad`) which might be simplified or hidden in LMU compared to rFactor 2.
 
-We will proceed with the current v0.3.2 release but advise users to report "Dead FFB" issues which may indicate missing telemetry.
+With the v0.3.19 robustness update, the application is now resilient against total loss of tire state data.
 
 ```
 
@@ -4282,7 +5710,7 @@ These values describe the state of the vehicle chassis and engine.
 | `mEngineRPM` | Engine rotation speed. | Unused. | **Engine Vibration**: Inject RPM-matched vibration into the wheel (common in fanatec pedals/wheels). |
 | `mUnfilteredThrottle` | Raw throttle input. | **Used**: Trigger for Wheel Spin effects. | |
 | `mUnfilteredBrake` | Raw brake input. | **Used**: Trigger for Lockup effects. | |
-| `mPos`, `mLocalVel`, `mOri` | World position/velocity/orientation. | Unused. | Motion platform integration? (Out of scope for FFB). |
+| `mPos`, `mLocalVel`, `mOri` | World position/velocity/orientation. | **Used**: `z` velocity for frequency scaling & sanity checks. | Motion platform integration? (Out of scope for FFB). |
 | `mFuel`, `mEngineWaterTemp`, etc. | Vehicle health/status. | Unused. | Dash display data. |
 
 ---
@@ -4297,7 +5725,7 @@ Available for each of the 4 wheels (`mWheels[0]`=FL, `[1]`=FR, `[2]`=RL, `[3]`=R
 | `mSteeringArmForce` (Global) | **Note**: This is global, but derived from FL/FR tie rods. | **Used**. | |
 | `mLateralForce` | Force acting sideways on the tire contact patch. | **Used**: Rear Oversteer calculation (Aligning Torque). | Front pneumatic trail calculation refinement. |
 | `mLongitudinalForce` | Force acting forward/back (Accel/Brake). | Unused. | ABS pulse simulation (modulate brake force). |
-| `mTireLoad` | Vertical load (N) on the tire. | Unused. | **Load Sensitivity**: Reduce FFB gain if front tires are unloaded (cresting a hill). |
+| `mTireLoad` | Vertical load (N) on the tire. | **Used**: Slide Texture, Bottoming (Includes fallback for 0-value glitches). | **Load Sensitivity**: Reduce FFB gain if front tires are unloaded (cresting a hill). |
 | `mGripFract` | Grip usage fraction (0.0=No Grip used, 1.0=Limit). | **Used**: Understeer lightness & Oversteer logic. | |
 | `mMaxLatGrip` | Theoretical max lateral grip. | Unused. | Normalizing force values across different cars. |
 
@@ -4306,7 +5734,7 @@ Available for each of the 4 wheels (`mWheels[0]`=FL, `[1]`=FR, `[2]`=RL, `[3]`=R
 | :--- | :--- | :--- | :--- |
 | `mSlipAngle` | Angle between tire direction and velocity vector. | **Used**: Slide Texture trigger. | Pneumatic trail calculation (Slip * Trail Curve). |
 | `mSlipRatio` | Difference between wheel rotation and road speed. | **Used**: Lockup & Spin progressive effects. | |
-| `mLateralPatchVel` | Velocity of the contact patch sliding sideways. | Unused. | More accurate "scrub" sound/feel than Slip Angle alone. |
+| `mLateralPatchVel` | Velocity of the contact patch sliding sideways. | **Used**: Slide Texture Frequency. | More accurate "scrub" sound/feel than Slip Angle alone. |
 | `mRotation` | Wheel rotation speed (rad/s). | Unused. | |
 
 ### Suspension & Surface
@@ -4823,6 +6251,144 @@ The current test suite provides a **solid foundation** but misses critical edge 
 
 ```
 
+# File: docs\dev_docs\tinypedal_use_of_telemetry.md
+```markdown
+
+# Question
+
+Look at how the TinyPedal code accesses the telemetry data, in particular mTireLoad (information about the load on each of the four tires of the car). Can it access this value directly from the shared memory map plugin for the game? Does it need to perform some additional calculations or workarounds to access these values?
+
+# Answer
+
+
+Based on the analysis of the codebase, here is the answer regarding how TinyPedal accesses `mTireLoad`:
+
+### 1. Direct Access
+**Yes, the code accesses `mTireLoad` directly** from the shared memory map plugin. It does not perform complex physics calculations to derive this value from other telemetry data (like suspension travel or spring rates) under normal circumstances.
+
+This is defined in **`tinypedal/adapter/rf2_data.py`** within the `Tyre` class:
+
+```python
+class Tyre(DataAdapter):
+    # ...
+    def load(self, index: int | None = None) -> tuple[float, ...]:
+        """Tyre load (Newtons)"""
+        wheel_data = self.shmm.rf2TeleVeh(index).mWheels
+        return (
+            rmnan(wheel_data[0].mTireLoad),
+            rmnan(wheel_data[1].mTireLoad),
+            rmnan(wheel_data[2].mTireLoad),
+            rmnan(wheel_data[3].mTireLoad),
+        )
+```
+
+It reads the `mTireLoad` attribute from the `mWheels` array provided by the shared memory interface (`self.shmm`). The only processing done here is passing it through `rmnan`, which converts `NaN` (Not a Number) or Infinite values to `0.0` to prevent crashes.
+
+### 2. Workarounds and Limitations
+While the code *attempts* to read the value directly, there is a specific workaround implemented for cases where the game API fails to provide this data (specifically noted in the changelog for LMGT3 vehicles in Le Mans Ultimate).
+
+In **`tinypedal/widget/weight_distribution.py`**, the code checks if the total tire load is zero. If it is, it falls back to using **Suspension Force** (`mSuspForce`) as a proxy to calculate weight distribution:
+
+```python
+    def timerEvent(self, event):
+        """Update when vehicle on track"""
+        load_fl, load_fr, load_rl, load_rr = api.read.tyre.load()
+        total_load = load_fl + load_fr + load_rl + load_rr
+
+        # Fallback to suspension load if tyre load data not avaiable
+        if total_load <= 0:
+            load_fl, load_fr, load_rl, load_rr = api.read.wheel.suspension_force()
+            total_load = load_fl + load_fr + load_rl + load_rr
+```
+
+### Summary
+1.  **Primary Method:** Direct read of `mTireLoad` from the shared memory struct.
+2.  **Processing:** Minimal (sanitization of invalid numbers).
+3.  **Fallback:** If `mTireLoad` is missing (0), the **Weight Distribution** widget substitutes it with `mSuspForce` (Suspension Force). However, the **Tyre Load** widget (`tinypedal/widget/tyre_load.py`) does not appear to have this fallback logic and will likely show 0 if the API data is missing.
+
+# Question 2
+
+
+User
+Look if there are any checks about the presence and access to the rFactor2 shared memory plugin. Specifically, if the user has the dll of that plugin in the game folder, and if the configuration json of the game plugins has it enabled and with the other necessary settings enabled.
+Refer also to the instructions about this in the readme, and then look at if the code performs checks about this, and if warnings are generated.
+
+# Answer 2
+
+
+Based on the analysis of the codebase, here is the assessment regarding checks for the rFactor 2 Shared Memory Map Plugin:
+
+### 1. No File System or Configuration Checks
+**There are no checks** in the code that verify the physical presence of `rFactor2SharedMemoryMapPlugin64.dll` in the game directory, nor are there any checks that parse the game's `CustomPluginVariables.JSON` file to see if the plugin is enabled.
+
+*   **Code Evidence:** The codebase does not contain any logic to search for the rFactor 2 or Le Mans Ultimate installation paths, nor does it attempt to read files from the game's `UserData` or `Plugins` folders.
+*   **Design Approach:** The application operates entirely decoupled from the game's file system. It relies solely on the Windows Shared Memory interface (RAM) to communicate.
+
+### 2. Connection Logic vs. Explicit Warnings
+Instead of checking for the plugin files, the application attempts to connect directly to the Shared Memory Map. If the plugin is missing or disabled, the shared memory map will simply not exist in the system's memory.
+
+*   **Behavior:** In `tinypedal/adapter/rf2_connector.py`, the `SyncData` class attempts to create the memory map connection (`self.dataset.create_mmap`).
+*   **Failure State:** If the plugin is not running (and thus the memory map is not created by the game), the application does not generate a specific "Plugin Missing" error popup.
+*   **Logging:** The application will log the status of the connection.
+    *   If the data is not updating (which happens if the plugin is missing, disabled, or the game is paused), the logger in `rf2_connector.py` will output:
+        ```text
+        sharedmemory: UPDATING: paused, data version [number]
+        ```
+    *   The main window status bar (handled in `tinypedal/ui/app.py`) displays the API status (e.g., "API: RF2 (unknown)" or similar) based on `api.read.state.version()`, but it does not explicitly diagnose *why* the connection failed.
+
+### 3. Reliance on User Manual (README)
+The application relies entirely on the user following the instructions provided in the `README.md` file.
+
+*   **Readme Instructions:** The README explicitly states:
+    > "TinyPedal requires The Iron Wolf’s rF2 Shared Memory Map Plugin... The plugin file... should be placed in... Plugins folder."
+    > "Enable shared memory map plugin... in game Settings... or manually enable plugin by editing CustomPluginVariables.JSON"
+*   **Runtime Assumption:** The code assumes the user has performed these steps. If the user has not, the application simply waits for the shared memory data to appear/update without providing specific feedback that the plugin installation is the root cause.
+
+### Summary
+The code **does not perform any validation** of the plugin DLL presence or the JSON configuration. It attempts to read the data stream, and if that stream is absent (due to missing/disabled plugin), the application sits in a "paused" or "waiting" state rather than alerting the user to the specific configuration error.
+
+# Question 3
+
+Tell me more about when  the API fails to provide this data (specifically noted in the changelog for LMGT3 vehicles in Le Mans Ultimate). Is the use of another plugin suggested as a source of that data?
+
+# Answer 3
+
+
+Based on the analysis of the codebase and documentation, here is the answer regarding the missing data for LMGT3 vehicles:
+
+### No Additional Plugin is Suggested
+**No, the code and documentation do not suggest using a different or additional plugin** to retrieve the missing `mTireLoad` data.
+
+Instead of relying on an external plugin, the application implements an **internal software workaround** to calculate the necessary values using different telemetry data that *is* available.
+
+### The Internal Workaround
+As noted in the changelog for version **2.34.0**, the specific issue is that the game API returns `0` for tire load on LMGT3 vehicles. TinyPedal handles this within its own code logic:
+
+1.  **Detection:** The code checks if the total tire load returned by the API is less than or equal to zero.
+2.  **Fallback:** If zero, it switches to reading **Suspension Force** (`mSuspForce`) instead of **Tire Load** (`mTireLoad`).
+
+This logic is found in **`tinypedal/widget/weight_distribution.py`**:
+
+```python
+    def timerEvent(self, event):
+        """Update when vehicle on track"""
+        load_fl, load_fr, load_rl, load_rr = api.read.tyre.load()
+        total_load = load_fl + load_fr + load_rl + load_rr
+
+        # Fallback to suspension load if tyre load data not avaiable
+        if total_load <= 0:
+            load_fl, load_fr, load_rl, load_rr = api.read.wheel.suspension_force()
+            total_load = load_fl + load_fr + load_rl + load_rr
+```
+
+### Technical Distinction
+The changelog notes that suspension load is "not entirely the same" as tire load.
+*   **Tire Load:** The total force pressing the tire into the ground (includes the weight of the car + aerodynamic downforce + the weight of the wheel/brakes/suspension itself, known as unsprung mass).
+*   **Suspension Force:** The force exerted by the springs/dampers holding up the car body (excludes the unsprung mass of the wheels).
+
+While slightly less accurate for absolute physics calculations, Suspension Force is a close enough proxy for calculating **Weight Distribution** percentages when the primary data source is broken.
+```
+
 # File: docs\dev_docs\TODO.md
 ```markdown
 # LMUFFB To-Do List
@@ -4833,14 +6399,15 @@ The current test suite provides a **solid foundation** but misses critical edge 
 - [x] **Config Persistence**: Save/Load settings to `config.ini`.
 - [x] **Installer**: Inno Setup script for automated installation.
 - [x] **Documentation**: Comprehensive guides for Architecture, Customization, and Licensing.
+- [x] **DirectInput Support**: Replace vJoy with native DirectInput "Constant Force" packets.
+- [x] **Troubleshooting Visualizations**: Implemented Real-time "Rolling Trace Plots" for FFB components and Telemetry inputs in the GUI (v0.3.12).
+- [x] **Advanced Filtering**: Implemented SoP Smoothing (Low Pass Filter).
+- [x] **Telemetry Robustness**: Implemented Sanity Checks for missing Load/Grip/DeltaTime (v0.3.19).
 
 ## Immediate Tasks
-- [x] **DirectInput Support**: Replace vJoy with native DirectInput "Constant Force" packets.
 - [] Guided installer as in docs\plan_guided_installer.md
 - [] Add in app guided configurator to as described in Guided configurator in the app
 - [] If possible, completely remove vJoy dependency as described in docs\dev_docs\investigation_vjoyless_implementation.md
-- [] Troubleshooting visualization of FFB and telemetry values as in (future doc) docs\plan_troubleshooting_FFB_visualizations.md
-- [ ] **Advanced Filtering**: Implement Bi-Quad filters (Low Pass / High Pass) for better road texture isolation.
 - [ ] **Telemetry Analysis**: Add visual graphs to the GUI showing the raw vs. filtered signal.
 - [ ] **Telemetry Logging**: Investigate and implement CSV logging. See `docs/dev_docs/telemetry_logging_investigation.md`.
 
@@ -5115,6 +6682,23 @@ These int casting are present for all PlotLines calls. Make sure you edit your c
 ### Mutex bug
 
 Verify the issues described here and in case fix it: docs\dev_docs\Missing Mutex Lock (Race Condition).md
+
+## Troubleshooting 13
+
+Do a pull.
+
+Then implement the changes described in this doc:
+docs\dev_docs\decouple_plots_from_gui_refresh.md
+
+Please also add a changelog entry for version 0.3.17 and for this upcoming change (version 0.3.18).
+
+## Troubleshooting 14
+
+Do a pull.
+
+Add the following logs / prints to console:
+When we release vJoy. When we unselect vJoy as device.
+
 ```
 
 # File: docs\python_version\performance_analysis.md
@@ -5563,12 +7147,12 @@ EXTENSIONS = {
 
 # Directories to exclude
 EXCLUDE_DIRS = {
-    'build', '.git', 'python_prototype', 'vendor', '__pycache__', '.vscode', '.specstory'
+    'build', 'build_tests', '.git', 'python_prototype', 'vendor', '__pycache__', '.vscode', '.specstory'
 }
 
 # Files to exclude
 EXCLUDE_FILES = {
-    OUTPUT_FILE, 'LICENSE', 'VERSION', 'compile_commands.json'
+    OUTPUT_FILE, 'LICENSE', 'compile_commands.json'
 }
 
 def is_text_file(filename):
@@ -5635,12 +7219,14 @@ if __name__ == "__main__":
 #include <iostream>
 
 bool Config::m_ignore_vjoy_version_warning = false;
+bool Config::m_enable_vjoy = false;        // Disabled by default (Replaces vJoyActive logic)
 bool Config::m_output_ffb_to_vjoy = false; // Disabled by default (Safety)
 
 void Config::Save(const FFBEngine& engine, const std::string& filename) {
     std::ofstream file(filename);
     if (file.is_open()) {
         file << "ignore_vjoy_version_warning=" << m_ignore_vjoy_version_warning << "\n";
+        file << "enable_vjoy=" << m_enable_vjoy << "\n";
         file << "output_ffb_to_vjoy=" << m_output_ffb_to_vjoy << "\n";
         file << "gain=" << engine.m_gain << "\n";
         file << "sop_smoothing_factor=" << engine.m_sop_smoothing_factor << "\n";
@@ -5681,6 +7267,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
             if (std::getline(is_line, value)) {
                 try {
                     if (key == "ignore_vjoy_version_warning") m_ignore_vjoy_version_warning = std::stoi(value);
+                    else if (key == "enable_vjoy") m_enable_vjoy = std::stoi(value);
                     else if (key == "output_ffb_to_vjoy") m_output_ffb_to_vjoy = std::stoi(value);
                     else if (key == "gain") engine.m_gain = std::stof(value);
                     else if (key == "sop_smoothing_factor") engine.m_sop_smoothing_factor = std::stof(value);
@@ -5730,6 +7317,7 @@ public:
 
     // Global App Settings (not part of FFB Physics)
     static bool m_ignore_vjoy_version_warning;
+    static bool m_enable_vjoy;        // Acquire vJoy device (Driver Enabled)
     static bool m_output_ffb_to_vjoy; // Output FFB signal to vJoy Axis X (Monitor)
 };
 
@@ -6356,7 +7944,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     ImGui::Text("Output");
     
     // vJoy Monitoring (Safety critical)
-    if (ImGui::Checkbox("Enable vJoy Output (Monitor)", &Config::m_output_ffb_to_vjoy)) {
+    if (ImGui::Checkbox("Monitor FFB on vJoy (Axis X)", &Config::m_output_ffb_to_vjoy)) {
         // Warn user if enabling
         if (Config::m_output_ffb_to_vjoy) {
             MessageBoxA(NULL, "WARNING: Enabling this will output the FFB signal to vJoy Axis X.\n\n"
@@ -6365,7 +7953,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                               "Safety Warning", MB_ICONWARNING | MB_OK);
         }
     }
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Acquires the vJoy device and outputs FFB force to Axis X.\nREQUIRED if you want to see forces in vJoy Monitor.\nDISABLE if you use Joystick Gremlin (Gremlin needs exclusive access).");
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Outputs calculated force to vJoy Axis X for visual monitoring in vJoy Monitor.\nDISABLE if binding steering to vJoy Axis X!");
 
     // Visualize Clipping (this requires the calculated force from the engine passed back, 
     // or we just show the static gain for now. A real app needs a shared state for 'last_output_force')
@@ -6529,46 +8117,64 @@ static RollingBuffer plot_input_slip_angle(1000); // SlipAngle
 static RollingBuffer plot_input_patch_vel(1000); // PatchVel
 static RollingBuffer plot_input_vert_deflection(1000); // Deflection
 
+// State for Warnings
+static bool g_warn_load = false;
+static bool g_warn_grip = false;
+static bool g_warn_dt = false;
+
 // Toggle State
 bool GuiLayer::m_show_debug_window = false;
 
 void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
     ImGui::Begin("FFB Analysis", &m_show_debug_window);
     
-    // Update Buffers (Ideally this should be done in the FFB thread and passed via a queue,
-    // but sampling at 60Hz from the latest state is "good enough" for visual inspection)
-    // Note: This misses high-freq spikes between frames, but shows trends.
-    // For Phase 3 (Logging), we need proper buffering.
+    // Retrieve latest snapshots from the FFB thread
+    auto snapshots = engine.GetDebugBatch();
     
-    // --- Update Buffers ---
-    // FFB
-    plot_total.Add(engine.m_last_debug.total_output);
-    plot_base.Add(engine.m_last_debug.base_force);
-    plot_sop.Add(engine.m_last_debug.sop_force);
-    plot_understeer.Add(engine.m_last_debug.understeer_drop);
-    plot_oversteer.Add(engine.m_last_debug.oversteer_boost);
-    plot_road.Add(engine.m_last_debug.texture_road);
-    plot_slide.Add(engine.m_last_debug.texture_slide);
-    plot_lockup.Add(engine.m_last_debug.texture_lockup);
-    plot_spin.Add(engine.m_last_debug.texture_spin);
-    plot_bottoming.Add(engine.m_last_debug.texture_bottoming);
-    plot_clipping.Add(engine.m_last_debug.clipping);
+    // Update buffers with the latest snapshot (if available)
+    if (!snapshots.empty()) {
+        const FFBSnapshot& snap = snapshots.back();
+        
+        // FFB Components
+        plot_total.Add(snap.total_output);
+        plot_base.Add(snap.base_force);
+        plot_sop.Add(snap.sop_force);
+        plot_understeer.Add(snap.understeer_drop);
+        plot_oversteer.Add(snap.oversteer_boost);
+        plot_road.Add(snap.texture_road);
+        plot_slide.Add(snap.texture_slide);
+        plot_lockup.Add(snap.texture_lockup);
+        plot_spin.Add(snap.texture_spin);
+        plot_bottoming.Add(snap.texture_bottoming);
+        plot_clipping.Add(snap.clipping);
 
-    // Telemetry
-    plot_input_steer.Add((float)engine.m_last_telemetry.mSteeringArmForce);
-    plot_input_accel.Add((float)engine.m_last_telemetry.mLocalAccel.x);
-    // Use MAX of FL/FR or Avg? Usually max is interesting for load, avg for others.
-    // Let's use AVG for simplicity in single line.
-    const rF2Wheel& fl = engine.m_last_telemetry.mWheels[0];
-    const rF2Wheel& fr = engine.m_last_telemetry.mWheels[1];
-    
-    plot_input_load.Add((float)((fl.mTireLoad + fr.mTireLoad) / 2.0));
-    plot_input_grip.Add((float)((fl.mGripFract + fr.mGripFract) / 2.0));
-    plot_input_slip_ratio.Add((float)((fl.mSlipRatio + fr.mSlipRatio) / 2.0));
-    plot_input_slip_angle.Add((float)((std::abs(fl.mSlipAngle) + std::abs(fr.mSlipAngle)) / 2.0));
-    plot_input_patch_vel.Add((float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0));
-    plot_input_vert_deflection.Add((float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0));
-    
+        // Telemetry Inputs
+        plot_input_steer.Add(snap.steer_force);
+        plot_input_accel.Add(snap.accel_x);
+        plot_input_load.Add(snap.tire_load);
+        plot_input_grip.Add(snap.grip_fract);
+        plot_input_slip_ratio.Add(snap.slip_ratio);
+        plot_input_slip_angle.Add(snap.slip_angle);
+        plot_input_patch_vel.Add(snap.patch_vel);
+        plot_input_vert_deflection.Add(snap.deflection);
+
+        // Update Warning Flags (Sticky-ish for display)
+        g_warn_load = snap.warn_load;
+        g_warn_grip = snap.warn_grip;
+        g_warn_dt = snap.warn_dt;
+    }
+
+    // --- Draw Warnings ---
+    if (g_warn_load || g_warn_grip || g_warn_dt) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+        ImGui::Text("TELEMETRY WARNINGS:");
+        if (g_warn_load) ImGui::Text("- Missing Tire Load (Check shared memory)");
+        if (g_warn_grip) ImGui::Text("- Missing Grip Data (Ice or Error)");
+        if (g_warn_dt) ImGui::Text("- Invalid DeltaTime (Using 400Hz fallback)");
+        ImGui::PopStyleColor();
+        ImGui::Separator();
+    }
+
     // --- Draw UI ---
     if (ImGui::CollapsingHeader("FFB Components (Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Text("Total Output");
@@ -6603,9 +8209,18 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         ImGui::NextColumn();
         ImGui::Text("Local Accel X"); ImGui::PlotLines("##LatG", plot_input_accel.data.data(), (int)plot_input_accel.data.size(), plot_input_accel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
         ImGui::NextColumn();
-        ImGui::Text("Avg Tire Load"); ImGui::PlotLines("##Load", plot_input_load.data.data(), (int)plot_input_load.data.size(), plot_input_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
+        
+        // Highlight Load if warning
+        if (g_warn_load) ImGui::TextColored(ImVec4(1,0,0,1), "Avg Tire Load (MISSING)");
+        else ImGui::Text("Avg Tire Load");
+        ImGui::PlotLines("##Load", plot_input_load.data.data(), (int)plot_input_load.data.size(), plot_input_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
         ImGui::NextColumn();
-        ImGui::Text("Avg Grip Fract"); ImGui::PlotLines("##Grip", plot_input_grip.data.data(), (int)plot_input_grip.data.size(), plot_input_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        
+        // Highlight Grip if warning
+        if (g_warn_grip) ImGui::TextColored(ImVec4(1,0,0,1), "Avg Grip Fract (MISSING)");
+        else ImGui::Text("Avg Grip Fract");
+        ImGui::PlotLines("##Grip", plot_input_grip.data.data(), (int)plot_input_grip.data.size(), plot_input_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        
         ImGui::NextColumn();
         ImGui::Text("Avg Slip Ratio"); ImGui::PlotLines("##SlipR", plot_input_slip_ratio.data.data(), (int)plot_input_slip_ratio.data.size(), plot_input_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
         ImGui::NextColumn();
@@ -6716,7 +8331,12 @@ void test_zero_input() {
     // Set minimal grip to avoid divide by zero if any
     data.mWheels[0].mGripFract = 1.0;
     data.mWheels[1].mGripFract = 1.0;
-
+    
+    // Set some default load to avoid triggering sanity check defaults if we want to test pure zero input?
+    // Actually, zero input SHOULD trigger sanity checks now.
+    
+    // However, if we feed pure zero, dt=0 will trigger dt correction.
+    
     double force = engine.calculate_force(&data);
     ASSERT_NEAR(force, 0.0, 0.001);
 }
@@ -6759,6 +8379,7 @@ void test_sop_effect() {
     data.mSteeringArmForce = 0.0;
     engine.m_sop_effect = 0.5; 
     engine.m_gain = 1.0; // Ensure gain is 1.0
+    engine.m_sop_smoothing_factor = 1.0; // Disable smoothing for instant result
     
     // 0.5 G lateral (4.905 m/s2)
     data.mLocalAccel.x = 4.905;
@@ -7268,6 +8889,108 @@ void test_spin_torque_drop_interaction() {
     }
 }
 
+// --- NEW SANITY CHECK TESTS ---
+
+void test_sanity_checks() {
+    std::cout << "\nTest: Telemetry Sanity Checks" << std::endl;
+    FFBEngine engine;
+    rF2Telemetry data;
+    std::memset(&data, 0, sizeof(data));
+
+    // 1. Test Missing Load Correction
+    // Condition: Load = 0 but Moving
+    data.mWheels[0].mTireLoad = 0.0;
+    data.mWheels[1].mTireLoad = 0.0;
+    data.mLocalVel.z = 10.0; // Moving
+    data.mSteeringArmForce = 0.0; 
+    
+    // We need to check if load_factor is non-zero
+    // The load is used for Slide Texture scaling.
+    engine.m_slide_texture_enabled = true;
+    engine.m_slide_texture_gain = 1.0;
+    data.mWheels[0].mSlipAngle = 0.2; // Trigger slide
+    data.mWheels[1].mSlipAngle = 0.2;
+    data.mWheels[0].mLateralPatchVel = 5.0; 
+    data.mWheels[1].mLateralPatchVel = 5.0;
+    data.mDeltaTime = 0.01;
+
+    // First frame might warn
+    engine.calculate_force(&data);
+    
+    // Check internal warnings
+    if (engine.m_warned_load) {
+        std::cout << "[PASS] Detected missing load warning." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Failed to detect missing load." << std::endl;
+        g_tests_failed++;
+    }
+
+    // Check if defaults were applied (load factor should be 1.0 if default 4000N used)
+    // If load was 0, force would be 0.
+    // If load corrected to 4000N, force > 0.
+    // Note: calculate_force was called once above to trigger warning. 
+    // We need to advance phase for slide texture to generate force? 
+    // Yes, slide texture relies on phase.
+    
+    // Let's call it a few times to ensure phase integration happens
+    double force_corrected = 0.0;
+    for(int i=0; i<5; i++) {
+        force_corrected = engine.calculate_force(&data);
+    }
+
+    if (std::abs(force_corrected) > 0.001) {
+        std::cout << "[PASS] Load fallback applied (Force generated: " << force_corrected << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Load fallback failed (Force is 0)" << std::endl;
+        g_tests_failed++;
+    }
+
+    // 2. Test Missing Grip Correction
+    // Condition: Grip 0 but Load present
+    data.mWheels[0].mTireLoad = 4000.0;
+    data.mWheels[1].mTireLoad = 4000.0;
+    data.mWheels[0].mGripFract = 0.0;
+    data.mWheels[1].mGripFract = 0.0;
+    
+    // Reset effects to isolate grip
+    engine.m_slide_texture_enabled = false;
+    engine.m_understeer_effect = 1.0;
+    engine.m_gain = 1.0; 
+    data.mSteeringArmForce = 2000.0; // 2000 / 4000 = 0.5 normalized
+    
+    // If grip is 0, grip_factor = 1.0 - ((1.0 - 0.0) * 1.0) = 0.0. Output force = 0.
+    // If grip corrected to 1.0, grip_factor = 1.0 - ((1.0 - 1.0) * 1.0) = 1.0. Output force = 2000.
+    // Norm force = 0.5.
+    
+    double force_grip = engine.calculate_force(&data);
+    
+    if (engine.m_warned_grip) {
+        std::cout << "[PASS] Detected missing grip warning." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Failed to detect missing grip." << std::endl;
+        g_tests_failed++;
+    }
+    
+    ASSERT_NEAR(force_grip, 0.5, 0.001); // Expect full force (0.5 normalized)
+
+    // 3. Test Bad DeltaTime
+    data.mDeltaTime = 0.0;
+    // Should default to 0.0025.
+    // We can check warning.
+    
+    engine.calculate_force(&data);
+    if (engine.m_warned_dt) {
+         std::cout << "[PASS] Detected bad DeltaTime warning." << std::endl;
+         g_tests_passed++;
+    } else {
+         std::cout << "[FAIL] Failed to detect bad DeltaTime." << std::endl;
+         g_tests_failed++;
+    }
+}
+
 int main() {
     test_zero_input();
     test_suspension_bottoming();
@@ -7284,6 +9007,8 @@ int main() {
     test_multi_effect_interaction();
     test_load_factor_edge_cases();
     test_spin_torque_drop_interaction();
+    
+    test_sanity_checks();
 
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;

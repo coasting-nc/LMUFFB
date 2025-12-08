@@ -396,6 +396,11 @@ static RollingBuffer plot_input_slip_angle(1000); // SlipAngle
 static RollingBuffer plot_input_patch_vel(1000); // PatchVel
 static RollingBuffer plot_input_vert_deflection(1000); // Deflection
 
+// State for Warnings
+static bool g_warn_load = false;
+static bool g_warn_grip = false;
+static bool g_warn_dt = false;
+
 // Toggle State
 bool GuiLayer::m_show_debug_window = false;
 
@@ -431,6 +436,22 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         plot_input_slip_angle.Add(snap.slip_angle);
         plot_input_patch_vel.Add(snap.patch_vel);
         plot_input_vert_deflection.Add(snap.deflection);
+
+        // Update Warning Flags (Sticky-ish for display)
+        g_warn_load = snap.warn_load;
+        g_warn_grip = snap.warn_grip;
+        g_warn_dt = snap.warn_dt;
+    }
+
+    // --- Draw Warnings ---
+    if (g_warn_load || g_warn_grip || g_warn_dt) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+        ImGui::Text("TELEMETRY WARNINGS:");
+        if (g_warn_load) ImGui::Text("- Missing Tire Load (Check shared memory)");
+        if (g_warn_grip) ImGui::Text("- Missing Grip Data (Ice or Error)");
+        if (g_warn_dt) ImGui::Text("- Invalid DeltaTime (Using 400Hz fallback)");
+        ImGui::PopStyleColor();
+        ImGui::Separator();
     }
 
     // --- Draw UI ---
@@ -467,9 +488,18 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         ImGui::NextColumn();
         ImGui::Text("Local Accel X"); ImGui::PlotLines("##LatG", plot_input_accel.data.data(), (int)plot_input_accel.data.size(), plot_input_accel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
         ImGui::NextColumn();
-        ImGui::Text("Avg Tire Load"); ImGui::PlotLines("##Load", plot_input_load.data.data(), (int)plot_input_load.data.size(), plot_input_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
+        
+        // Highlight Load if warning
+        if (g_warn_load) ImGui::TextColored(ImVec4(1,0,0,1), "Avg Tire Load (MISSING)");
+        else ImGui::Text("Avg Tire Load");
+        ImGui::PlotLines("##Load", plot_input_load.data.data(), (int)plot_input_load.data.size(), plot_input_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
         ImGui::NextColumn();
-        ImGui::Text("Avg Grip Fract"); ImGui::PlotLines("##Grip", plot_input_grip.data.data(), (int)plot_input_grip.data.size(), plot_input_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        
+        // Highlight Grip if warning
+        if (g_warn_grip) ImGui::TextColored(ImVec4(1,0,0,1), "Avg Grip Fract (MISSING)");
+        else ImGui::Text("Avg Grip Fract");
+        ImGui::PlotLines("##Grip", plot_input_grip.data.data(), (int)plot_input_grip.data.size(), plot_input_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        
         ImGui::NextColumn();
         ImGui::Text("Avg Slip Ratio"); ImGui::PlotLines("##SlipR", plot_input_slip_ratio.data.data(), (int)plot_input_slip_ratio.data.size(), plot_input_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
         ImGui::NextColumn();

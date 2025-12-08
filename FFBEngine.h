@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <vector>
 #include <mutex>
+#include <iostream>
 #include "rF2Data.h"
 
 // 1. Define the Snapshot Struct (Unified FFB + Telemetry)
@@ -31,6 +32,11 @@ struct FFBSnapshot {
     float slip_angle;
     float patch_vel;
     float deflection;
+
+    // Telemetry Health Flags
+    bool warn_load;
+    bool warn_grip;
+    bool warn_dt;
 };
 
 // FFB Engine Class
@@ -67,6 +73,11 @@ public:
     bool m_bottoming_enabled = true;
     float m_bottoming_gain = 1.0f;
 
+    // Warning States (Console logging)
+    bool m_warned_load = false;
+    bool m_warned_grip = false;
+    bool m_warned_dt = false;
+
     // Internal state
     double m_prev_vert_deflection[2] = {0.0, 0.0}; // FL, FR
     
@@ -101,6 +112,21 @@ public:
         double dt = data->mDeltaTime;
         const double TWO_PI = 6.28318530718;
 
+        // Sanity Check Flags for this frame
+        bool frame_warn_load = false;
+        bool frame_warn_grip = false;
+        bool frame_warn_dt = false;
+
+        // --- SANITY CHECK: DELTA TIME ---
+        if (dt <= 0.000001) {
+            dt = 0.0025; // Default to 400Hz
+            if (!m_warned_dt) {
+                std::cout << "[WARNING] Invalid DeltaTime (<=0). Using default 0.0025s." << std::endl;
+                m_warned_dt = true;
+            }
+            frame_warn_dt = true;
+        }
+
         // Front Left and Front Right
         const rF2Wheel& fl = data->mWheels[0];
         const rF2Wheel& fr = data->mWheels[1];
@@ -118,6 +144,17 @@ public:
         // Calculate this once to use across multiple effects.
         // Heavier load = stronger vibration transfer.
         double avg_load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
+
+        // SANITY CHECK: If load is exactly 0.0 but car is moving, telemetry is likely broken.
+        // We use Z velocity (forward speed) as a proxy.
+        if (avg_load < 1.0 && std::abs(data->mLocalVel.z) > 1.0) {
+            avg_load = 4000.0; // Default load
+            if (!m_warned_load) {
+                std::cout << "[WARNING] Missing Tire Load data. Defaulting to 4000N." << std::endl;
+                m_warned_load = true;
+            }
+            frame_warn_load = true;
+        }
         
         // Normalize: 4000N is a reference "loaded" GT tire.
         double load_factor = avg_load / 4000.0;
@@ -131,6 +168,17 @@ public:
         double grip_r = fr.mGripFract;
         double avg_grip = (grip_l + grip_r) / 2.0;
         
+        // SANITY CHECK: If grip is 0.0 but we have load, it's suspicious.
+        // Though 0 grip is possible on ice, exact 0.0 often means missing data.
+        if (avg_grip < 0.0001 && avg_load > 100.0) {
+            avg_grip = 1.0; // Default to full grip
+            if (!m_warned_grip) {
+                std::cout << "[WARNING] Missing Grip data. Defaulting to 1.0." << std::endl;
+                m_warned_grip = true;
+            }
+            frame_warn_grip = true;
+        }
+
         // Clamp grip 0-1 for safety
         avg_grip = (std::max)(0.0, (std::min)(1.0, avg_grip));
         
@@ -378,6 +426,11 @@ public:
                 snap.patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
                 snap.deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
                 
+                // Warnings
+                snap.warn_load = frame_warn_load;
+                snap.warn_grip = frame_warn_grip;
+                snap.warn_dt = frame_warn_dt;
+
                 m_debug_buffer.push_back(snap);
             }
         }

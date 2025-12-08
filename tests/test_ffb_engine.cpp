@@ -39,7 +39,12 @@ void test_zero_input() {
     // Set minimal grip to avoid divide by zero if any
     data.mWheels[0].mGripFract = 1.0;
     data.mWheels[1].mGripFract = 1.0;
-
+    
+    // Set some default load to avoid triggering sanity check defaults if we want to test pure zero input?
+    // Actually, zero input SHOULD trigger sanity checks now.
+    
+    // However, if we feed pure zero, dt=0 will trigger dt correction.
+    
     double force = engine.calculate_force(&data);
     ASSERT_NEAR(force, 0.0, 0.001);
 }
@@ -592,6 +597,108 @@ void test_spin_torque_drop_interaction() {
     }
 }
 
+// --- NEW SANITY CHECK TESTS ---
+
+void test_sanity_checks() {
+    std::cout << "\nTest: Telemetry Sanity Checks" << std::endl;
+    FFBEngine engine;
+    rF2Telemetry data;
+    std::memset(&data, 0, sizeof(data));
+
+    // 1. Test Missing Load Correction
+    // Condition: Load = 0 but Moving
+    data.mWheels[0].mTireLoad = 0.0;
+    data.mWheels[1].mTireLoad = 0.0;
+    data.mLocalVel.z = 10.0; // Moving
+    data.mSteeringArmForce = 0.0; 
+    
+    // We need to check if load_factor is non-zero
+    // The load is used for Slide Texture scaling.
+    engine.m_slide_texture_enabled = true;
+    engine.m_slide_texture_gain = 1.0;
+    data.mWheels[0].mSlipAngle = 0.2; // Trigger slide
+    data.mWheels[1].mSlipAngle = 0.2;
+    data.mWheels[0].mLateralPatchVel = 5.0; 
+    data.mWheels[1].mLateralPatchVel = 5.0;
+    data.mDeltaTime = 0.01;
+
+    // First frame might warn
+    engine.calculate_force(&data);
+    
+    // Check internal warnings
+    if (engine.m_warned_load) {
+        std::cout << "[PASS] Detected missing load warning." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Failed to detect missing load." << std::endl;
+        g_tests_failed++;
+    }
+
+    // Check if defaults were applied (load factor should be 1.0 if default 4000N used)
+    // If load was 0, force would be 0.
+    // If load corrected to 4000N, force > 0.
+    // Note: calculate_force was called once above to trigger warning. 
+    // We need to advance phase for slide texture to generate force? 
+    // Yes, slide texture relies on phase.
+    
+    // Let's call it a few times to ensure phase integration happens
+    double force_corrected = 0.0;
+    for(int i=0; i<5; i++) {
+        force_corrected = engine.calculate_force(&data);
+    }
+
+    if (std::abs(force_corrected) > 0.001) {
+        std::cout << "[PASS] Load fallback applied (Force generated: " << force_corrected << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Load fallback failed (Force is 0)" << std::endl;
+        g_tests_failed++;
+    }
+
+    // 2. Test Missing Grip Correction
+    // Condition: Grip 0 but Load present
+    data.mWheels[0].mTireLoad = 4000.0;
+    data.mWheels[1].mTireLoad = 4000.0;
+    data.mWheels[0].mGripFract = 0.0;
+    data.mWheels[1].mGripFract = 0.0;
+    
+    // Reset effects to isolate grip
+    engine.m_slide_texture_enabled = false;
+    engine.m_understeer_effect = 1.0;
+    engine.m_gain = 1.0; 
+    data.mSteeringArmForce = 2000.0; // 2000 / 4000 = 0.5 normalized
+    
+    // If grip is 0, grip_factor = 1.0 - ((1.0 - 0.0) * 1.0) = 0.0. Output force = 0.
+    // If grip corrected to 1.0, grip_factor = 1.0 - ((1.0 - 1.0) * 1.0) = 1.0. Output force = 2000.
+    // Norm force = 0.5.
+    
+    double force_grip = engine.calculate_force(&data);
+    
+    if (engine.m_warned_grip) {
+        std::cout << "[PASS] Detected missing grip warning." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Failed to detect missing grip." << std::endl;
+        g_tests_failed++;
+    }
+    
+    ASSERT_NEAR(force_grip, 0.5, 0.001); // Expect full force (0.5 normalized)
+
+    // 3. Test Bad DeltaTime
+    data.mDeltaTime = 0.0;
+    // Should default to 0.0025.
+    // We can check warning.
+    
+    engine.calculate_force(&data);
+    if (engine.m_warned_dt) {
+         std::cout << "[PASS] Detected bad DeltaTime warning." << std::endl;
+         g_tests_passed++;
+    } else {
+         std::cout << "[FAIL] Failed to detect bad DeltaTime." << std::endl;
+         g_tests_failed++;
+    }
+}
+
 int main() {
     test_zero_input();
     test_suspension_bottoming();
@@ -608,6 +715,8 @@ int main() {
     test_multi_effect_interaction();
     test_load_factor_edge_cases();
     test_spin_torque_drop_interaction();
+    
+    test_sanity_checks();
 
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;

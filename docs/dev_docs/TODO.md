@@ -6,14 +6,15 @@
 - [x] **Config Persistence**: Save/Load settings to `config.ini`.
 - [x] **Installer**: Inno Setup script for automated installation.
 - [x] **Documentation**: Comprehensive guides for Architecture, Customization, and Licensing.
+- [x] **DirectInput Support**: Replace vJoy with native DirectInput "Constant Force" packets.
+- [x] **Troubleshooting Visualizations**: Implemented Real-time "Rolling Trace Plots" for FFB components and Telemetry inputs in the GUI (v0.3.12).
+- [x] **Advanced Filtering**: Implemented SoP Smoothing (Low Pass Filter).
+- [x] **Telemetry Robustness**: Implemented Sanity Checks for missing Load/Grip/DeltaTime (v0.3.19).
 
 ## Immediate Tasks
-- [x] **DirectInput Support**: Replace vJoy with native DirectInput "Constant Force" packets.
 - [] Guided installer as in docs\plan_guided_installer.md
 - [] Add in app guided configurator to as described in Guided configurator in the app
 - [] If possible, completely remove vJoy dependency as described in docs\dev_docs\investigation_vjoyless_implementation.md
-- [] Troubleshooting visualization of FFB and telemetry values as in (future doc) docs\plan_troubleshooting_FFB_visualizations.md
-- [ ] **Advanced Filtering**: Implement Bi-Quad filters (Low Pass / High Pass) for better road texture isolation.
 - [ ] **Telemetry Analysis**: Add visual graphs to the GUI showing the raw vs. filtered signal.
 - [ ] **Telemetry Logging**: Investigate and implement CSV logging. See `docs/dev_docs/telemetry_logging_investigation.md`.
 
@@ -291,8 +292,6 @@ Verify the issues described here and in case fix it: docs\dev_docs\Missing Mutex
 
 ## Troubleshooting 13
 
-Do a pull.
-
 Then implement the changes described in this doc:
 docs\dev_docs\decouple_plots_from_gui_refresh.md
 
@@ -300,7 +299,5 @@ Please also add a changelog entry for version 0.3.17 and for this upcoming chang
 
 ## Troubleshooting 14
 
-Do a pull.
-
 Add the following logs / prints to console:
-When we release vJoy. When we unselect vJoy as a device.
+When we release vJoy. When we unselect vJoy as device.

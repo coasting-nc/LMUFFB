@@ -18,7 +18,7 @@ The app follows best practices for real-time signal generation. A recent update 
        v (Structs: rF2Telemetry)
        |
 [ FFB Engine ]  <-- (FFBThread - 400Hz)
-       |
+       | (Sanity Checks & Normalization)
        v (Calculated Force)
        |
 [ vJoy Interface ]
@@ -53,6 +53,7 @@ The application is split into two primary threads:
 ### 3. FFB Engine (`FFBEngine.h`)
 The core logic is encapsulated in a header-only class to facilitate unit testing.
 
+*   **Sanity Layer (v0.3.19)**: Before calculation, incoming telemetry is validated against physical rules. Impossible states (e.g., Car moving at 200kph but 0 Tire Load) trigger fallbacks to default values, preventing effects from cutting out.
 *   **Inputs**: `SteeringArmForce`, `GripFract` (FL/FR), `LocalAccel` (Lateral G), `VerticalTireDeflection` (Suspension), `SlipAngle`.
 *   **Features**:
     *   **Grip Modulation**: Scales force by grip fraction (Understeer feel).

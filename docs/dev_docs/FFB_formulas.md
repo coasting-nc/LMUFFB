@@ -20,10 +20,13 @@ $$ F_{total} = (F_{base} + F_{sop} + F_{vib\_lock} + F_{vib\_spin} + F_{vib\_sli
 **Load Factor ($L_{factor}$)**: Scales texture effects based on how much weight is on the front tires.
 $$ L_{factor} = \text{Clamp}\left( \frac{\text{Load}_{FL} + \text{Load}_{FR}}{2 \times 4000}, 0.0, 1.5 \right) $$
 
+*   **Robustness Check:** If $\text{Load} \approx 0.0$ and $|Velocity| > 1.0 m/s$, $\text{Load}$ defaults to 4000N to prevent signal dropout.
+
 #### B. Base Force (Understeer / Grip Modulation)
 This modulates the raw steering rack force from the game based on front tire grip.
 $$ F_{base} = F_{steering\_arm} \times \left( 1.0 - \left( (1.0 - \text{Grip}_{avg}) \times K_{understeer} \right) \right) $$
 *   $\text{Grip}_{avg}$: Average of Front Left and Front Right `mGripFract`.
+    *   **Robustness Check:** If $\text{Grip}_{avg} \approx 0.0$ but $\text{Load} > 100N$, $\text{Grip}_{avg}$ defaults to 1.0.
 
 #### C. Seat of Pants (SoP) & Oversteer
 This injects lateral G-force and rear-axle aligning torque to simulate the car body's rotation.
@@ -112,4 +115,4 @@ $$ F_{final} = \text{sign}(F_{norm}) \times K_{min\_force} $$
 *   **4000.0**: Reference Tire Load (Newtons) for Load Factor.
 *   **1000.0**: SoP Scaling factor.
 *   **5000.0**: Road Texture stiffness.
-*   **8000.0**: Bottoming threshold (Newtons).
+*   **8000.0**: Bottoming.

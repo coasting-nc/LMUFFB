@@ -17,7 +17,7 @@ These values describe the state of the vehicle chassis and engine.
 | `mEngineRPM` | Engine rotation speed. | Unused. | **Engine Vibration**: Inject RPM-matched vibration into the wheel (common in fanatec pedals/wheels). |
 | `mUnfilteredThrottle` | Raw throttle input. | **Used**: Trigger for Wheel Spin effects. | |
 | `mUnfilteredBrake` | Raw brake input. | **Used**: Trigger for Lockup effects. | |
-| `mPos`, `mLocalVel`, `mOri` | World position/velocity/orientation. | Unused. | Motion platform integration? (Out of scope for FFB). |
+| `mPos`, `mLocalVel`, `mOri` | World position/velocity/orientation. | **Used**: `z` velocity for frequency scaling & sanity checks. | Motion platform integration? (Out of scope for FFB). |
 | `mFuel`, `mEngineWaterTemp`, etc. | Vehicle health/status. | Unused. | Dash display data. |
 
 ---
@@ -32,7 +32,7 @@ Available for each of the 4 wheels (`mWheels[0]`=FL, `[1]`=FR, `[2]`=RL, `[3]`=R
 | `mSteeringArmForce` (Global) | **Note**: This is global, but derived from FL/FR tie rods. | **Used**. | |
 | `mLateralForce` | Force acting sideways on the tire contact patch. | **Used**: Rear Oversteer calculation (Aligning Torque). | Front pneumatic trail calculation refinement. |
 | `mLongitudinalForce` | Force acting forward/back (Accel/Brake). | Unused. | ABS pulse simulation (modulate brake force). |
-| `mTireLoad` | Vertical load (N) on the tire. | Unused. | **Load Sensitivity**: Reduce FFB gain if front tires are unloaded (cresting a hill). |
+| `mTireLoad` | Vertical load (N) on the tire. | **Used**: Slide Texture, Bottoming (Includes fallback for 0-value glitches). | **Load Sensitivity**: Reduce FFB gain if front tires are unloaded (cresting a hill). |
 | `mGripFract` | Grip usage fraction (0.0=No Grip used, 1.0=Limit). | **Used**: Understeer lightness & Oversteer logic. | |
 | `mMaxLatGrip` | Theoretical max lateral grip. | Unused. | Normalizing force values across different cars. |
 
@@ -41,7 +41,7 @@ Available for each of the 4 wheels (`mWheels[0]`=FL, `[1]`=FR, `[2]`=RL, `[3]`=R
 | :--- | :--- | :--- | :--- |
 | `mSlipAngle` | Angle between tire direction and velocity vector. | **Used**: Slide Texture trigger. | Pneumatic trail calculation (Slip * Trail Curve). |
 | `mSlipRatio` | Difference between wheel rotation and road speed. | **Used**: Lockup & Spin progressive effects. | |
-| `mLateralPatchVel` | Velocity of the contact patch sliding sideways. | Unused. | More accurate "scrub" sound/feel than Slip Angle alone. |
+| `mLateralPatchVel` | Velocity of the contact patch sliding sideways. | **Used**: Slide Texture Frequency. | More accurate "scrub" sound/feel than Slip Angle alone. |
 | `mRotation` | Wheel rotation speed (rad/s). | Unused. | |
 
 ### Suspension & Surface

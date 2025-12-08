@@ -2,6 +2,7 @@
 build/
 Build/
 BUILD/
+build_tests/
 
 # VS Code CMake build directories
 out/

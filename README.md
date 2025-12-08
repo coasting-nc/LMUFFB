@@ -116,8 +116,8 @@ This is an **experimental early alpha version** of a force feedback application.
     - *Alternative:* You can try moving `LMUFFB.exe` directly into `C:\Program Files\vJoy\x64\` if you have persistent DLL issues.
 - **"Could not open file mapping object"**: Start the game and load a track first.
 
-## Known Issues (v0.3.3)
-*   **Telemetry Gaps**: Some users report missing telemetry for Dashboard apps (ERS, Temps). lmuFFB has robust fallbacks, but if `mGripFract` is missing (Tire Temps broken), the Understeer effect may be static. See [Telemetry Report](docs/dev_docs/telemetry_availability_report.md).
+## Known Issues (v0.3.19)
+*   **Telemetry Gaps**: Some users report missing telemetry for Dashboard apps (ERS, Temps). lmuFFB has robust fallbacks (Sanity Checks) that prevent dead FFB effects even if the game fails to report data (e.g., zero Grip or Load). See [Telemetry Report](docs/dev_docs/telemetry_availability_report.md).
 
 
 ## Feedback & Support
@@ -214,4 +214,3 @@ To create the `LMUFFB_Setup.exe`:
 2.  **Build the Project**: Ensure you have built the `Release` version of `LMUFFB.exe` using Visual Studio.
 3.  **Run Compiler**: Open `installer/lmuffb.iss` in Inno Setup Compiler and click **Compile**.
 4.  **Output**: The installer will be generated in `installer/Output/`.
-

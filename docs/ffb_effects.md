@@ -74,6 +74,11 @@ A critical challenge in FFB design is managing the "Noise Floor". When multiple 
 *   The **SoP** effect boosts force during oversteer.
 *   **Result**: These two will fight slightly during a power slide. This is actually a good "natural" balance—the wheel tries to self-align (SoP), but the loss of traction makes it feel lighter/vaguer (Spin Drop). This should feel intuitive to the driver.
 
+### 5. Robustness & Telemetry Health
+LMUFFB includes a "Sanity Check" layer that protects effects against telemetry glitches (common in some game builds).
+*   **Missing Load**: If the game reports 0 Load on tires, texture effects (Slide/Road/Lockup) will use a fallback value instead of going silent.
+*   **Missing Grip**: If Grip data is missing, the Understeer effect defaults to "Full Grip" so you don't lose FFB entirely.
+*   *Note:* If these fallbacks are triggered, a **Red Warning** will appear in the Telemetry Inspector GUI.
 
 ---
 
@@ -92,4 +97,3 @@ A critical challenge in FFB design is managing the "Noise Floor". When multiple 
 *   **Old Oversteer**: Relied solely on Grip Delta between Front/Rear to boost SoP.
 *   **Old Lockup**: Binary rumble triggered when `SlipRatio < -0.2`.
 *   **Old Wheel Spin**: Binary rumble triggered when `SlipRatio > 0.2`.
-

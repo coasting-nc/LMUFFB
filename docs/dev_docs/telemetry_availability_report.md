@@ -34,14 +34,14 @@ LMUFFB relies on the following fields from `rF2Telemetry`. If these are zero or 
 
 ## Recommendations for LMUFFB
 
-### 1. Robustness Checks (Immediate)
-We should implement "Sanity Checks" in `FFBEngine`:
-*   If `mTireLoad` is consistently 0.0, fallback to a static load factor (1.0).
-*   If `mGripFract` is consistently 0.0 or 1.0 (despite cornering), warn the user or disable Understeer effect to prevent sudden cutouts.
+### 1. Robustness Checks (Implemented v0.3.19)
+We have implemented "Sanity Checks" in `FFBEngine` to mitigate missing data:
+*   **Tire Load:** If `mTireLoad` is 0.0 while the car is moving (> 1 m/s), it defaults to 4000N. This ensures Slide and Road textures remain audible/active even if load data is missing.
+*   **Grip Fraction:** If `mGripFract` is 0.0 but load exists (> 100N), it defaults to 1.0 (Full Grip). This prevents the Understeer effect from muting the FFB entirely.
+*   **Delta Time:** If `mDeltaTime` is invalid (<= 0), it defaults to 0.0025s (400Hz) to prevent division-by-zero errors in integrators.
 
-### 2. Telemetry Inspector (Future)
-Implement the "Telemetry Logging" or a "Debug View" in the GUI (Planned v0.4.0) to allow users to verify if their install is outputting valid data.
-*   *Action:* Prioritize the "Input Graphs" feature in the GUI.
+### 2. Telemetry Inspector (Implemented v0.3.12)
+The GUI now includes "Rolling Trace Plots" for telemetry inputs. In v0.3.19, we added specific **Warning Indicators** (Red Text) that trigger if the fallback logic above is activated.
 
 ### 3. Fallback Logic
 If `mLateralPatchVel` (newly used) proves unreliable, we should fallback to `mLateralGroundVel` (which is standard kinematic data).
@@ -49,4 +49,4 @@ If `mLateralPatchVel` (newly used) proves unreliable, we should fallback to `mLa
 ## Conclusion
 The core physics vectors (Velocity, Acceleration, Force) are likely safe as they are essential for motion platforms which are supported. The highest risk is with **Tire State** data (`mGripFract`, `mTireLoad`) which might be simplified or hidden in LMU compared to rFactor 2.
 
-We will proceed with the current v0.3.2 release but advise users to report "Dead FFB" issues which may indicate missing telemetry.
+With the v0.3.19 robustness update, the application is now resilient against total loss of tire state data.

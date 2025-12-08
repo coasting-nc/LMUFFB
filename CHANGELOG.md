@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.19] - 2025-12-08
+### Added
+- **Telemetry Robustness**: Implemented sanity checks to detect and mitigate missing telemetry data.
+    - **Load Fallback**: If `mTireLoad` is 0 while moving, defaults to 4000N.
+    - **Grip Fallback**: If `mGripFract` is 0 but load exists, defaults to 1.0.
+    - **DeltaTime Correction**: Detects invalid `dt` and defaults to 400Hz.
+    - **GUI Warnings**: Added visual alerts in the Debug Window when data is missing.
+
 ## [0.3.18] - 2025-05-23
 ### Added
 - **Decoupled Plotting**: Refactored the FFB Engine and GUI to use a Producer-Consumer pattern. This decouples the physics update rate (400Hz) from the GUI refresh rate (60Hz), allowing all physics samples to be captured and visualized without aliasing.
