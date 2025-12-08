@@ -36,6 +36,18 @@ This is an **experimental early alpha version** of a force feedback application.
 
 **[Download the latest release from GitHub](https://github.com/coasting-nc/LMUFFB/releases)**
 
+## ⚠️ Important Notes
+
+### Current LMU Limitations (v0.3.20)
+
+**Limited Telemetry Access**: Due to limitations in Le Mans Ultimate versions up to 1.1, lmuFFB can currently only read **lateral G acceleration** from the game (used for the Seat of Pants effect). Other FFB effects that rely on tire data (such as Tire Load, Grip Fraction, etc.) are **not available** because LMU does not yet output this telemetry.
+
+**LMU 1.2 Update Coming**: With the upcoming release of **LMU 1.2** (on December 9th, 2025), the game will officially support a new shared memory format that is expected to include tire telemetry data. This will unlock the full range of FFB effects. However, **lmuFFB will require an update** to support this new format - the current version (0.3.20) does not yet support LMU 1.2's shared memory.
+
+### rFactor 2 Compatibility
+
+lmuFFB may work with **rFactor 2** out of the box using the same installation instructions, as both games share the same underlying engine and telemetry system. However, rFactor 2 support is not officially tested or guaranteed.
+
 ## Installation & Configuration  
 
 ### 1. Prerequisites
