@@ -301,3 +301,26 @@ Please also add a changelog entry for version 0.3.17 and for this upcoming chang
 
 Add the following logs / prints to console:
 When we release vJoy. When we unselect vJoy as device.
+
+
+## Troubleshooting 15
+
+Add option "always on top". Possibly also for the console window.
+
+Two missing data found: tire load (avg tyre load) and grip fraction (avg grip fraction).
+
+Add a way to debug this missing data, see what the game is actually putting out..
+
+Build a log system that logs all the data logged from the game (and also each component that we calculate).
+..autosave these data to csv or other file easy to visualize.
+could be also enough to inspect it as a txt file
+also, we could print stats for each channel: min, max, avg, std dev, mean, 1st and 3rd quartile, etc
+Test was done while driving on keyboard.
+
+Check where the new steereing arm torque channel is displayed in our graph.
+
+Good thing is that out final output ffb it not "binary" anymore, but show some actual waveform. There is some clipping occasionally, but that can be tweaked adjusting the gain of the final output or smt like that.
+
+Investigate what happens to our formula when grip fract and tyre load are missing. What are the default values?
+
+Also other channels might need refinement in how we use them, since values where very low. Either that, or we should change the scale of the graph visualization.
