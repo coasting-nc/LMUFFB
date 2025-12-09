@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cstring>
 #include "../FFBEngine.h"
-#include "../rF2Data.h"
+#include "../src/lmu_sm_interface/InternalsPlugin.hpp"
 
 // --- Simple Test Framework ---
 int g_tests_passed = 0;
@@ -33,12 +33,12 @@ int g_tests_failed = 0;
 void test_zero_input() {
     std::cout << "\nTest: Zero Input" << std::endl;
     FFBEngine engine;
-    rF2Telemetry data;
+    TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
     // Set minimal grip to avoid divide by zero if any
-    data.mWheels[0].mGripFract = 1.0;
-    data.mWheels[1].mGripFract = 1.0;
+    data.mWheel[0].mGripFract = 1.0;
+    data.mWheel[1].mGripFract = 1.0;
     
     // Set some default load to avoid triggering sanity check defaults if we want to test pure zero input?
     // Actually, zero input SHOULD trigger sanity checks now.
@@ -52,27 +52,27 @@ void test_zero_input() {
 void test_grip_modulation() {
     std::cout << "\nTest: Grip Modulation (Understeer)" << std::endl;
     FFBEngine engine;
-    rF2Telemetry data;
+    TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
     // Set Gain to 1.0 for testing logic (default is now 0.5)
     engine.m_gain = 1.0; 
 
-    data.mSteeringArmForce = 2000.0; // Half of max ~4000
+    data.mSteeringShaftTorque = 2000.0; // Half of max ~4000
     // Disable SoP and Texture to isolate
     engine.m_sop_effect = 0.0;
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = false;
 
     // Case 1: Full Grip (1.0) -> Output should be 2000 / 4000 = 0.5
-    data.mWheels[0].mGripFract = 1.0;
-    data.mWheels[1].mGripFract = 1.0;
+    data.mWheel[0].mGripFract = 1.0;
+    data.mWheel[1].mGripFract = 1.0;
     double force_full = engine.calculate_force(&data);
     ASSERT_NEAR(force_full, 0.5, 0.001);
 
     // Case 2: Half Grip (0.5) -> Output should be 2000 * 0.5 = 1000 / 4000 = 0.25
-    data.mWheels[0].mGripFract = 0.5;
-    data.mWheels[1].mGripFract = 0.5;
+    data.mWheel[0].mGripFract = 0.5;
+    data.mWheel[1].mGripFract = 0.5;
     double force_half = engine.calculate_force(&data);
     ASSERT_NEAR(force_half, 0.25, 0.001);
 }
@@ -80,11 +80,11 @@ void test_grip_modulation() {
 void test_sop_effect() {
     std::cout << "\nTest: SoP Effect" << std::endl;
     FFBEngine engine;
-    rF2Telemetry data;
+    TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
 
     // Disable Game Force
-    data.mSteeringArmForce = 0.0;
+    data.mSteeringShaftTorque = 0.0;
     engine.m_sop_effect = 0.5; 
     engine.m_gain = 1.0; // Ensure gain is 1.0
     engine.m_sop_smoothing_factor = 1.0; // Disable smoothing for instant result
@@ -109,19 +109,19 @@ void test_sop_effect() {
 void test_min_force() {
     std::cout << "\nTest: Min Force" << std::endl;
     FFBEngine engine;
-    rF2Telemetry data;
+    TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
 
     // Ensure we have minimal grip so calculation doesn't zero out somewhere else
-    data.mWheels[0].mGripFract = 1.0;
-    data.mWheels[1].mGripFract = 1.0;
+    data.mWheel[0].mGripFract = 1.0;
+    data.mWheel[1].mGripFract = 1.0;
 
     // Disable Noise/Textures to ensure they don't add random values
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = false;
     engine.m_sop_effect = 0.0;
 
-    data.mSteeringArmForce = 10.0; // Very small force
+    data.mSteeringShaftTorque = 10.0; // Very small force
     engine.m_min_force = 0.10; // 10% min force
 
     double force = engine.calculate_force(&data);
@@ -140,7 +140,7 @@ void test_min_force() {
 void test_progressive_lockup() {
     std::cout << "\nTest: Progressive Lockup" << std::endl;
     FFBEngine engine;
-    rF2Telemetry data;
+    TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
     engine.m_lockup_enabled = true;
@@ -148,7 +148,7 @@ void test_progressive_lockup() {
     engine.m_sop_effect = 0.0;
     engine.m_slide_texture_enabled = false;
     
-    data.mSteeringArmForce = 0.0;
+    data.mSteeringShaftTorque = 0.0;
     data.mUnfilteredBrake = 1.0;
     
     // Set DeltaTime for phase integration
@@ -156,8 +156,12 @@ void test_progressive_lockup() {
     data.mLocalVel.z = 20.0; // 20 m/s
     
     // Case 1: Low Slip (-0.15). Severity = (0.15 - 0.1) / 0.4 = 0.125
-    data.mWheels[0].mSlipRatio = -0.15;
-    data.mWheels[1].mSlipRatio = -0.15;
+    // Emulate slip ratio by setting longitudinal velocity difference
+    // Ratio = PatchVel / GroundVel. So PatchVel = Ratio * GroundVel.
+    data.mWheel[0].mLongitudinalGroundVel = 20.0;
+    data.mWheel[1].mLongitudinalGroundVel = 20.0;
+    data.mWheel[0].mLongitudinalPatchVel = -0.15 * 20.0; // -3.0 m/s
+    data.mWheel[1].mLongitudinalPatchVel = -0.15 * 20.0;
     
     // Ensure data.mDeltaTime is set! 
     data.mDeltaTime = 0.01;
@@ -196,20 +200,21 @@ void test_progressive_lockup() {
 void test_slide_texture() {
     std::cout << "\nTest: Slide Texture" << std::endl;
     FFBEngine engine;
-    rF2Telemetry data;
+    TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
     engine.m_slide_texture_enabled = true;
     engine.m_slide_texture_gain = 1.0;
     
-    data.mSteeringArmForce = 0.0;
-    data.mWheels[0].mSlipAngle = 0.2; // Slipping > 0.15
-    data.mWheels[1].mSlipAngle = 0.2;
+    data.mSteeringShaftTorque = 0.0;
+    // Emulate high lateral velocity (was SlipAngle > 0.15)
+    // New threshold is > 0.5 m/s.
+    data.mWheel[0].mLateralPatchVel = 5.0; 
+    data.mWheel[1].mLateralPatchVel = 5.0;
+    
     data.mDeltaTime = 0.013; // Avoid 0.01 which lands exactly on zero-crossing for 125Hz
-    data.mWheels[0].mLateralPatchVel = 5.0; // Use PatchVel as updated in engine
-    data.mWheels[1].mLateralPatchVel = 5.0;
-    data.mWheels[0].mTireLoad = 1000.0; // Some load
-    data.mWheels[1].mTireLoad = 1000.0;
+    data.mWheel[0].mTireLoad = 1000.0; // Some load
+    data.mWheel[1].mTireLoad = 1000.0;
     
     // Run two frames to advance phase
     engine.calculate_force(&data);
@@ -228,13 +233,13 @@ void test_slide_texture() {
 void test_dynamic_tuning() {
     std::cout << "\nTest: Dynamic Tuning (GUI Simulation)" << std::endl;
     FFBEngine engine;
-    rF2Telemetry data;
+    TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
     // Default State: Full Game Force
-    data.mSteeringArmForce = 2000.0;
-    data.mWheels[0].mGripFract = 1.0;
-    data.mWheels[1].mGripFract = 1.0;
+    data.mSteeringShaftTorque = 2000.0;
+    data.mWheel[0].mGripFract = 1.0;
+    data.mWheel[1].mGripFract = 1.0;
     engine.m_understeer_effect = 0.0; // Disabled effect initially
     engine.m_sop_effect = 0.0;
     engine.m_slide_texture_enabled = false;
@@ -257,8 +262,8 @@ void test_dynamic_tuning() {
     // And grip drops
     engine.m_gain = 1.0; // Reset gain
     engine.m_understeer_effect = 1.0;
-    data.mWheels[0].mGripFract = 0.5;
-    data.mWheels[1].mGripFract = 0.5;
+    data.mWheel[0].mGripFract = 0.5;
+    data.mWheel[1].mGripFract = 0.5;
     
     double force_grip_loss = engine.calculate_force(&data);
     // 2000 * 0.5 = 1000 -> 0.25 normalized
@@ -271,7 +276,7 @@ void test_dynamic_tuning() {
 void test_suspension_bottoming() {
     std::cout << "\nTest: Suspension Bottoming (Fix Verification)" << std::endl;
     FFBEngine engine;
-    rF2Telemetry data;
+    TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
 
     // Enable Bottoming
@@ -283,11 +288,11 @@ void test_suspension_bottoming() {
     engine.m_slide_texture_enabled = false;
     
     // Straight line condition: Zero steering force
-    data.mSteeringArmForce = 0.0;
+    data.mSteeringShaftTorque = 0.0;
     
     // Massive Load Spike (10000N > 8000N threshold)
-    data.mWheels[0].mTireLoad = 10000.0;
-    data.mWheels[1].mTireLoad = 10000.0;
+    data.mWheel[0].mTireLoad = 10000.0;
+    data.mWheel[1].mTireLoad = 10000.0;
     data.mDeltaTime = 0.01;
     
     // Run multiple frames to check oscillation
@@ -329,7 +334,7 @@ void test_suspension_bottoming() {
 void test_oversteer_boost() {
     std::cout << "\nTest: Oversteer Boost (Rear Grip Loss)" << std::endl;
     FFBEngine engine;
-    rF2Telemetry data;
+    TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
     engine.m_sop_effect = 1.0;
@@ -337,17 +342,17 @@ void test_oversteer_boost() {
     engine.m_gain = 1.0;
     
     // Scenario: Front has grip, rear is sliding
-    data.mWheels[0].mGripFract = 1.0; // FL
-    data.mWheels[1].mGripFract = 1.0; // FR
-    data.mWheels[2].mGripFract = 0.5; // RL (sliding)
-    data.mWheels[3].mGripFract = 0.5; // RR (sliding)
+    data.mWheel[0].mGripFract = 1.0; // FL
+    data.mWheel[1].mGripFract = 1.0; // FR
+    data.mWheel[2].mGripFract = 0.5; // RL (sliding)
+    data.mWheel[3].mGripFract = 0.5; // RR (sliding)
     
     // Lateral G (cornering)
     data.mLocalAccel.x = 9.81; // 1G lateral
     
     // Rear lateral force (resisting slide)
-    data.mWheels[2].mLateralForce = 2000.0;
-    data.mWheels[3].mLateralForce = 2000.0;
+    data.mWheel[2].mLateralForce = 2000.0;
+    data.mWheel[3].mLateralForce = 2000.0;
     
     // Run for multiple frames to let smoothing settle
     double force = 0.0;
@@ -368,15 +373,19 @@ void test_oversteer_boost() {
 void test_phase_wraparound() {
     std::cout << "\nTest: Phase Wraparound (Anti-Click)" << std::endl;
     FFBEngine engine;
-    rF2Telemetry data;
+    TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
     engine.m_lockup_enabled = true;
     engine.m_lockup_gain = 1.0;
     
     data.mUnfilteredBrake = 1.0;
-    data.mWheels[0].mSlipRatio = -0.3;
-    data.mWheels[1].mSlipRatio = -0.3;
+    // Slip ratio -0.3
+    data.mWheel[0].mLongitudinalGroundVel = 20.0;
+    data.mWheel[1].mLongitudinalGroundVel = 20.0;
+    data.mWheel[0].mLongitudinalPatchVel = -0.3 * 20.0;
+    data.mWheel[1].mLongitudinalPatchVel = -0.3 * 20.0;
+    
     data.mLocalVel.z = 20.0; // 20 m/s
     data.mDeltaTime = 0.01;
     
@@ -415,17 +424,17 @@ void test_phase_wraparound() {
 void test_road_texture_state_persistence() {
     std::cout << "\nTest: Road Texture State Persistence" << std::endl;
     FFBEngine engine;
-    rF2Telemetry data;
+    TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
     engine.m_road_texture_enabled = true;
     engine.m_road_texture_gain = 1.0;
     
     // Frame 1: Initial deflection
-    data.mWheels[0].mVerticalTireDeflection = 0.01;
-    data.mWheels[1].mVerticalTireDeflection = 0.01;
-    data.mWheels[0].mTireLoad = 4000.0;
-    data.mWheels[1].mTireLoad = 4000.0;
+    data.mWheel[0].mVerticalTireDeflection = 0.01;
+    data.mWheel[1].mVerticalTireDeflection = 0.01;
+    data.mWheel[0].mTireLoad = 4000.0;
+    data.mWheel[1].mTireLoad = 4000.0;
     
     double force1 = engine.calculate_force(&data);
     // First frame: delta = 0.01 - 0.0 = 0.01
@@ -433,8 +442,8 @@ void test_road_texture_state_persistence() {
     // Normalized = 100 / 4000 = 0.025
     
     // Frame 2: Bump (sudden increase)
-    data.mWheels[0].mVerticalTireDeflection = 0.02;
-    data.mWheels[1].mVerticalTireDeflection = 0.02;
+    data.mWheel[0].mVerticalTireDeflection = 0.02;
+    data.mWheel[1].mVerticalTireDeflection = 0.02;
     
     double force2 = engine.calculate_force(&data);
     // Delta = 0.02 - 0.01 = 0.01
@@ -457,7 +466,7 @@ void test_road_texture_state_persistence() {
 void test_multi_effect_interaction() {
     std::cout << "\nTest: Multi-Effect Interaction (Lockup + Spin)" << std::endl;
     FFBEngine engine;
-    rF2Telemetry data;
+    TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
     // Enable both lockup and spin
@@ -469,11 +478,22 @@ void test_multi_effect_interaction() {
     // Scenario: Braking AND spinning (e.g., locked front, spinning rear)
     data.mUnfilteredBrake = 1.0;
     data.mUnfilteredThrottle = 0.5; // Partial throttle
-    data.mWheels[0].mSlipRatio = -0.3; // Front locked
-    data.mWheels[1].mSlipRatio = -0.3;
-    data.mWheels[2].mSlipRatio = 0.5;  // Rear spinning
-    data.mWheels[3].mSlipRatio = 0.5;
+    
     data.mLocalVel.z = 20.0;
+    double ground_vel = 20.0;
+    data.mWheel[0].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[1].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[2].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[3].mLongitudinalGroundVel = ground_vel;
+
+    // Front Locked (-0.3 slip)
+    data.mWheel[0].mLongitudinalPatchVel = -0.3 * ground_vel;
+    data.mWheel[1].mLongitudinalPatchVel = -0.3 * ground_vel;
+    
+    // Rear Spinning (+0.5 slip)
+    data.mWheel[2].mLongitudinalPatchVel = 0.5 * ground_vel;
+    data.mWheel[3].mLongitudinalPatchVel = 0.5 * ground_vel;
+
     data.mDeltaTime = 0.01;
     
     // Run multiple frames
@@ -503,30 +523,28 @@ void test_multi_effect_interaction() {
 void test_load_factor_edge_cases() {
     std::cout << "\nTest: Load Factor Edge Cases" << std::endl;
     FFBEngine engine;
-    rF2Telemetry data;
+    TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
     engine.m_slide_texture_enabled = true;
     engine.m_slide_texture_gain = 1.0;
     
-    // Setup slide condition
-    data.mWheels[0].mSlipAngle = 0.2;
-    data.mWheels[1].mSlipAngle = 0.2;
-    data.mWheels[0].mLateralPatchVel = 5.0;
-    data.mWheels[1].mLateralPatchVel = 5.0;
+    // Setup slide condition (>0.5 m/s)
+    data.mWheel[0].mLateralPatchVel = 5.0;
+    data.mWheel[1].mLateralPatchVel = 5.0;
     data.mDeltaTime = 0.01;
     
     // Case 1: Zero load (airborne)
-    data.mWheels[0].mTireLoad = 0.0;
-    data.mWheels[1].mTireLoad = 0.0;
+    data.mWheel[0].mTireLoad = 0.0;
+    data.mWheel[1].mTireLoad = 0.0;
     
     double force_airborne = engine.calculate_force(&data);
     // Load factor = 0, slide texture should be silent
     ASSERT_NEAR(force_airborne, 0.0, 0.001);
     
     // Case 2: Extreme load (20000N)
-    data.mWheels[0].mTireLoad = 20000.0;
-    data.mWheels[1].mTireLoad = 20000.0;
+    data.mWheel[0].mTireLoad = 20000.0;
+    data.mWheel[1].mTireLoad = 20000.0;
     
     engine.calculate_force(&data); // Advance phase
     double force_extreme = engine.calculate_force(&data);
@@ -546,7 +564,7 @@ void test_load_factor_edge_cases() {
 void test_spin_torque_drop_interaction() {
     std::cout << "\nTest: Spin Torque Drop with SoP" << std::endl;
     FFBEngine engine;
-    rF2Telemetry data;
+    TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
     engine.m_spin_enabled = true;
@@ -556,13 +574,13 @@ void test_spin_torque_drop_interaction() {
     
     // High SoP force
     data.mLocalAccel.x = 9.81; // 1G lateral
-    data.mSteeringArmForce = 2000.0;
+    data.mSteeringShaftTorque = 2000.0;
     
     // Set Grip to 1.0 so Game Force isn't killed by Understeer Effect
-    data.mWheels[0].mGripFract = 1.0;
-    data.mWheels[1].mGripFract = 1.0;
-    data.mWheels[2].mGripFract = 1.0;
-    data.mWheels[3].mGripFract = 1.0;
+    data.mWheel[0].mGripFract = 1.0;
+    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[2].mGripFract = 1.0;
+    data.mWheel[3].mGripFract = 1.0;
     
     // No spin initially
     data.mUnfilteredThrottle = 0.0;
@@ -575,9 +593,15 @@ void test_spin_torque_drop_interaction() {
     
     // Now trigger spin
     data.mUnfilteredThrottle = 1.0;
-    data.mWheels[2].mSlipRatio = 0.7; // 70% slip (severe = 1.0)
-    data.mWheels[3].mSlipRatio = 0.7;
     data.mLocalVel.z = 20.0;
+    
+    // 70% slip (severe = 1.0)
+    double ground_vel = 20.0;
+    data.mWheel[2].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[3].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[2].mLongitudinalPatchVel = 0.7 * ground_vel;
+    data.mWheel[3].mLongitudinalPatchVel = 0.7 * ground_vel;
+
     data.mDeltaTime = 0.01;
     
     double force_with_spin = engine.calculate_force(&data);
@@ -602,24 +626,24 @@ void test_spin_torque_drop_interaction() {
 void test_sanity_checks() {
     std::cout << "\nTest: Telemetry Sanity Checks" << std::endl;
     FFBEngine engine;
-    rF2Telemetry data;
+    TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
 
     // 1. Test Missing Load Correction
     // Condition: Load = 0 but Moving
-    data.mWheels[0].mTireLoad = 0.0;
-    data.mWheels[1].mTireLoad = 0.0;
+    data.mWheel[0].mTireLoad = 0.0;
+    data.mWheel[1].mTireLoad = 0.0;
     data.mLocalVel.z = 10.0; // Moving
-    data.mSteeringArmForce = 0.0; 
+    data.mSteeringShaftTorque = 0.0; 
     
     // We need to check if load_factor is non-zero
     // The load is used for Slide Texture scaling.
     engine.m_slide_texture_enabled = true;
     engine.m_slide_texture_gain = 1.0;
-    data.mWheels[0].mSlipAngle = 0.2; // Trigger slide
-    data.mWheels[1].mSlipAngle = 0.2;
-    data.mWheels[0].mLateralPatchVel = 5.0; 
-    data.mWheels[1].mLateralPatchVel = 5.0;
+    
+    // Trigger slide (>0.5 m/s)
+    data.mWheel[0].mLateralPatchVel = 5.0; 
+    data.mWheel[1].mLateralPatchVel = 5.0;
     data.mDeltaTime = 0.01;
 
     // First frame might warn
@@ -657,16 +681,16 @@ void test_sanity_checks() {
 
     // 2. Test Missing Grip Correction
     // Condition: Grip 0 but Load present
-    data.mWheels[0].mTireLoad = 4000.0;
-    data.mWheels[1].mTireLoad = 4000.0;
-    data.mWheels[0].mGripFract = 0.0;
-    data.mWheels[1].mGripFract = 0.0;
+    data.mWheel[0].mTireLoad = 4000.0;
+    data.mWheel[1].mTireLoad = 4000.0;
+    data.mWheel[0].mGripFract = 0.0;
+    data.mWheel[1].mGripFract = 0.0;
     
     // Reset effects to isolate grip
     engine.m_slide_texture_enabled = false;
     engine.m_understeer_effect = 1.0;
     engine.m_gain = 1.0; 
-    data.mSteeringArmForce = 2000.0; // 2000 / 4000 = 0.5 normalized
+    data.mSteeringShaftTorque = 2000.0; // 2000 / 4000 = 0.5 normalized
     
     // If grip is 0, grip_factor = 1.0 - ((1.0 - 0.0) * 1.0) = 0.0. Output force = 0.
     // If grip corrected to 1.0, grip_factor = 1.0 - ((1.0 - 1.0) * 1.0) = 1.0. Output force = 2000.

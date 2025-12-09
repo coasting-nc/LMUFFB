@@ -5,15 +5,15 @@
 #include <thread>
 #include <chrono>
 
-#include "rF2Data.h"
 #include "FFBEngine.h"
 #include "src/GuiLayer.h"
 #include "src/Config.h"
 #include "src/DirectInputFFB.h"
 #include "src/DynamicVJoy.h"
+#include "src/lmu_sm_interface/SharedMemoryInterface.hpp"
+#include <optional>
 
 // Constants
-const char* SHARED_MEMORY_NAME = "$rFactor2SMMP_Telemetry$";
 const int VJOY_DEVICE_ID = 1;
 
 #include <atomic>
@@ -22,7 +22,12 @@ const int VJOY_DEVICE_ID = 1;
 // Threading Globals
 std::atomic<bool> g_running(true);
 std::atomic<bool> g_ffb_active(true);
-rF2Telemetry* g_pTelemetry = nullptr;
+
+// New Shared Memory Globals
+SharedMemoryLayout* g_pSharedMemLayout = nullptr;
+SharedMemoryObjectOut g_localData; // Local copy to avoid locking for too long
+std::optional<SharedMemoryLock> g_smLock;
+
 FFBEngine g_engine;
 std::mutex g_engine_mutex; // Protects settings access if GUI changes them
 
@@ -59,12 +64,34 @@ void FFBThread() {
     std::cout << "[FFB] Loop Started." << std::endl;
 
     while (g_running) {
-        if (g_ffb_active && g_pTelemetry) {
+        if (g_ffb_active && g_pSharedMemLayout && g_smLock.has_value()) {
+            
+            // --- CRITICAL SECTION: READ DATA ---
+            
+            // 1. Lock
+            g_smLock->Lock();
+            
+            // 2. Copy to local storage (Fast copy)
+            CopySharedMemoryObj(g_localData, g_pSharedMemLayout->data);
+            
+            // 3. Unlock
+            g_smLock->Unlock();
+            
             double force = 0.0;
-            {
-                // PROTECT SETTINGS: Use mutex because GUI modifies engine parameters
-                std::lock_guard<std::mutex> lock(g_engine_mutex);
-                force = g_engine.calculate_force(g_pTelemetry);
+            
+            // 4. Find Player and Calculate Force
+            if (g_localData.telemetry.playerHasVehicle) {
+                uint8_t idx = g_localData.telemetry.playerVehicleIdx;
+                if (idx < 104) {
+                    // Get pointer to specific car data
+                    TelemInfoV01* pPlayerTelemetry = &g_localData.telemetry.telemInfo[idx];
+                    
+                    {
+                        // PROTECT SETTINGS: Use mutex because GUI modifies engine parameters
+                        std::lock_guard<std::mutex> lock(g_engine_mutex);
+                        force = g_engine.calculate_force(pPlayerTelemetry);
+                    }
+                }
             }
 
             // --- DYNAMIC vJoy LOGIC (State Machine) ---
@@ -138,32 +165,42 @@ int main(int argc, char* argv[]) {
         DirectInputFFB::Get().Initialize(NULL);
     }
 
-    // 1. Setup Shared Memory
-    // We try to connect. If fails, we still keep the app running (if GUI is active) 
-    // so user can see config and try again later or restart game.
-    HANDLE hMapFile = OpenFileMappingA(FILE_MAP_READ, FALSE, SHARED_MEMORY_NAME);
+    // 1. Setup Shared Memory (New LMU Name)
+    HANDLE hMapFile = OpenFileMappingA(FILE_MAP_READ, FALSE, LMU_SHARED_MEMORY_FILE);
+    
     if (hMapFile == NULL) {
         std::cerr << "Could not open file mapping object. Ensure game is running." << std::endl;
         if (!headless) {
              // Show non-blocking error or just a popup but DON'T exit
-             MessageBoxA(NULL, "Could not open file mapping object.\n\nApp will remain open. Start Le Mans Ultimate and restart this app or wait for connection logic (future feature).", "LMUFFB Warning", MB_ICONWARNING | MB_OK);
+             MessageBoxA(NULL, "Could not open file mapping object (" LMU_SHARED_MEMORY_FILE ").\n\nApp will remain open. Start Le Mans Ultimate and restart this app.", "LMUFFB Warning", MB_ICONWARNING | MB_OK);
         } else {
              return 1; // Headless has no UI to wait, so exit
         }
     } else {
-        g_pTelemetry = (rF2Telemetry*)MapViewOfFile(hMapFile, FILE_MAP_READ, 0, 0, sizeof(rF2Telemetry));
-        if (g_pTelemetry == NULL) {
+        g_pSharedMemLayout = (SharedMemoryLayout*)MapViewOfFile(hMapFile, FILE_MAP_READ, 0, 0, sizeof(SharedMemoryLayout));
+        if (g_pSharedMemLayout == NULL) {
             std::cerr << "Could not map view of file." << std::endl;
             CloseHandle(hMapFile);
+            hMapFile = NULL;
         } else {
             std::cout << "Connected to Shared Memory." << std::endl;
         }
     }
 
-    // 2. Start FFB Thread
+    // 2. Initialize Lock
+    if (hMapFile) {
+        g_smLock = SharedMemoryLock::MakeSharedMemoryLock();
+        if (!g_smLock.has_value()) {
+            std::cerr << "Failed to init LMU Shared Memory Lock" << std::endl;
+        } else {
+            std::cout << "Shared Memory Lock Initialized." << std::endl;
+        }
+    }
+
+    // 3. Start FFB Thread
     std::thread ffb_thread(FFBThread);
 
-    // 3. Main GUI Loop
+    // 4. Main GUI Loop
     std::cout << "[GUI] Main Loop Started." << std::endl;
 
     while (g_running) {
@@ -187,7 +224,7 @@ int main(int argc, char* argv[]) {
     
     DirectInputFFB::Get().Shutdown();
     
-    if (g_pTelemetry) UnmapViewOfFile(g_pTelemetry);
+    if (g_pSharedMemLayout) UnmapViewOfFile(g_pSharedMemLayout);
     if (hMapFile) CloseHandle(hMapFile);
     
     return 0;

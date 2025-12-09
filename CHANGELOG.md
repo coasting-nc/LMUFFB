@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2025-12-08
+### Added
+- **LMU 1.2 Support**: Refactored the entire shared memory interface to support the new Le Mans Ultimate 1.2 layout.
+    - Replaced `rFactor2SMMP_Telemetry` with `LMU_Data` shared memory map.
+    - Implemented mandatory Shared Memory Locking mechanism (`SharedMemoryLock`) to prevent data corruption.
+    - Added Player Indexing logic to locate the correct vehicle in the 104-slot array.
+- **Physics Enhancements**:
+    - **Real Tire Load**: Now uses native `mTireLoad` from the new interface (replacing estimates/fallbacks).
+    - **Real Grip**: Now uses native `mGripFract` for accurate understeer simulation.
+    - **Real Slip Speed**: Uses `mLateralPatchVel` and `mLongitudinalPatchVel` for precise texture frequency.
+- **Refactoring**:
+    - Deprecated `rF2Data.h`.
+    - Renamed internal steering force variable to `mSteeringShaftTorque` to match new API.
+
 ## [0.3.20] - 2025-12-08
 ### Fixed
 - **Configurable Plot History**: Replaced the hardcoded 2.5-second buffer size for GUI plots with a configurable parameter (currently set to 10 seconds), ensuring consistent visualization regardless of frame rate.

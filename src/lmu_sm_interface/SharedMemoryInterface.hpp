@@ -1,5 +1,6 @@
 #pragma once
 #include "InternalsPlugin.hpp"
+#include <optional>
 
 /*
 * Usage example:

@@ -6,7 +6,7 @@
 #include <vector>
 #include <mutex>
 #include <iostream>
-#include "rF2Data.h"
+#include "src/lmu_sm_interface/InternalsPlugin.hpp"
 
 // 1. Define the Snapshot Struct (Unified FFB + Telemetry)
 struct FFBSnapshot {
@@ -106,7 +106,7 @@ public:
         return batch;
     }
 
-    double calculate_force(const rF2Telemetry* data) {
+    double calculate_force(const TelemInfoV01* data) {
         if (!data) return 0.0;
         
         double dt = data->mDeltaTime;
@@ -127,11 +127,12 @@ public:
             frame_warn_dt = true;
         }
 
-        // Front Left and Front Right
-        const rF2Wheel& fl = data->mWheels[0];
-        const rF2Wheel& fr = data->mWheels[1];
+        // Front Left and Front Right (Note: mWheel, not mWheels)
+        const TelemWheelV01& fl = data->mWheel[0];
+        const TelemWheelV01& fr = data->mWheel[1];
 
-        double game_force = data->mSteeringArmForce;
+        // Critical: Use mSteeringShaftTorque instead of mSteeringArmForce
+        double game_force = data->mSteeringShaftTorque;
         
         // Debug variables (initialized to 0)
         double road_noise = 0.0;
@@ -145,8 +146,8 @@ public:
         // Heavier load = stronger vibration transfer.
         double avg_load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
 
-        // SANITY CHECK: If load is exactly 0.0 but car is moving, telemetry is likely broken.
-        // We use Z velocity (forward speed) as a proxy.
+        // SANITY CHECK: Retaining basic check, but trust new data more.
+        // If load is exactly 0.0 but car is moving, telemetry is likely broken.
         if (avg_load < 1.0 && std::abs(data->mLocalVel.z) > 1.0) {
             avg_load = 4000.0; // Default load
             if (!m_warned_load) {
@@ -169,7 +170,6 @@ public:
         double avg_grip = (grip_l + grip_r) / 2.0;
         
         // SANITY CHECK: If grip is 0.0 but we have load, it's suspicious.
-        // Though 0 grip is possible on ice, exact 0.0 often means missing data.
         if (avg_grip < 0.0001 && avg_load > 100.0) {
             avg_grip = 1.0; // Default to full grip
             if (!m_warned_grip) {
@@ -204,8 +204,8 @@ public:
         double sop_total = sop_base_force;
         
         // Oversteer Boost: If Rear Grip < Front Grip (car is rotating), boost SoP
-        double grip_rl = data->mWheels[2].mGripFract;
-        double grip_rr = data->mWheels[3].mGripFract;
+        double grip_rl = data->mWheel[2].mGripFract; // mWheel
+        double grip_rr = data->mWheel[3].mGripFract; // mWheel
         double avg_rear_grip = (grip_rl + grip_rr) / 2.0;
         
         // Delta between front and rear grip
@@ -219,7 +219,7 @@ public:
         // Add a "Counter-Steer" suggestion based on rear axle force.
         // Approx: RearLateralForce * Trail. 
         // We modulate this by oversteer_boost as well.
-        double rear_lat_force = (data->mWheels[2].mLateralForce + data->mWheels[3].mLateralForce) / 2.0;
+        double rear_lat_force = (data->mWheel[2].mLateralForce + data->mWheel[3].mLateralForce) / 2.0; // mWheel
         // Trail approx: 0.03m (3cm). Scaling factor required.
         // Sign correction: If rear force pushes left, wheel should turn right (align).
         // rF2 signs: LatForce +Y is Left? We need to tune this.
@@ -231,11 +231,36 @@ public:
         
         double total_force = output_force + sop_total;
         
+        // --- Helper: Calculate Slip Data (Approximation) ---
+        // The new LMU interface does not expose mSlipRatio/mSlipAngle directly.
+        // We approximate them from mLongitudinalPatchVel and mLateralPatchVel.
+        
+        // Slip Ratio = PatchVelLong / GroundVelLong
+        // Slip Angle = atan(PatchVelLat / GroundVelLong)
+        
+        double car_speed_ms = std::abs(data->mLocalVel.z); // Or mLongitudinalGroundVel per wheel
+        double min_speed = 0.5; // Avoid div-by-zero
+        
+        auto get_slip_ratio = [&](const TelemWheelV01& w) {
+            double v_long = std::abs(w.mLongitudinalGroundVel);
+            if (v_long < min_speed) v_long = min_speed;
+            // PatchVel is (WheelVel - GroundVel). Ratio is Patch/Ground.
+            // Note: mLongitudinalPatchVel signs might differ from rF2 legacy.
+            // Assuming negative is slip (braking)
+            return w.mLongitudinalPatchVel / v_long;
+        };
+        
+        auto get_slip_angle = [&](const TelemWheelV01& w) {
+            double v_long = std::abs(w.mLongitudinalGroundVel);
+            if (v_long < min_speed) v_long = min_speed;
+            return std::atan2(std::abs(w.mLateralPatchVel), v_long);
+        };
+
         // --- 2b. Progressive Lockup (Dynamic) ---
         // Ensure phase updates even if force is small, but gated by enabled
         if (m_lockup_enabled && data->mUnfilteredBrake > 0.05) {
-            double slip_fl = data->mWheels[0].mSlipRatio;
-            double slip_fr = data->mWheels[1].mSlipRatio;
+            double slip_fl = get_slip_ratio(data->mWheel[0]);
+            double slip_fr = get_slip_ratio(data->mWheel[1]);
             // Use worst slip
             double max_slip = (std::min)(slip_fl, slip_fr); // Slip is negative for braking
             
@@ -249,7 +274,6 @@ public:
                 // As the car slows down, the "scrubbing" pitch drops.
                 // Speed is in m/s. 
                 // Example: 300kmh (83m/s) -> ~80Hz. 50kmh (13m/s) -> ~20Hz.
-                double car_speed_ms = std::abs(data->mLocalVel.z); 
                 double freq = 10.0 + (car_speed_ms * 1.5); 
 
                 // PHASE ACCUMULATION
@@ -266,8 +290,8 @@ public:
 
         // --- 2c. Wheel Spin (Tire Physics Based) ---
         if (m_spin_enabled && data->mUnfilteredThrottle > 0.05) {
-            double slip_rl = data->mWheels[2].mSlipRatio;
-            double slip_rr = data->mWheels[3].mSlipRatio;
+            double slip_rl = get_slip_ratio(data->mWheel[2]); // mWheel
+            double slip_rr = get_slip_ratio(data->mWheel[3]); // mWheel
             double max_slip = (std::max)(slip_rl, slip_rr);
             
             if (max_slip > 0.2) {
@@ -280,7 +304,6 @@ public:
                 // 2. Vibration Frequency: Based on SLIP SPEED (Not RPM)
                 // Calculate how fast the tire surface is moving relative to the road.
                 // Slip Speed (m/s) approx = Car Speed (m/s) * Slip Ratio
-                double car_speed_ms = std::abs(data->mLocalVel.z);
                 double slip_speed_ms = car_speed_ms * max_slip;
 
                 // Mapping:
@@ -305,15 +328,17 @@ public:
 
         // --- 3. Slide Texture (Dynamic Sawtooth) ---
         if (m_slide_texture_enabled) {
-            double avg_slip = (std::abs(fl.mSlipAngle) + std::abs(fr.mSlipAngle)) / 2.0;
+            // New logic: Use mLateralPatchVel directly instead of Angle
+            // This is cleaner as it represents actual scrubbing speed.
+            double lat_vel_l = std::abs(fl.mLateralPatchVel);
+            double lat_vel_r = std::abs(fr.mLateralPatchVel);
+            double avg_lat_vel = (lat_vel_l + lat_vel_r) / 2.0;
             
-            if (avg_slip > 0.15) { // ~8 degrees
-                // Frequency: Scrubbing speed
-                // Using mLateralPatchVel is more accurate than GroundVel for rubber sliding
-                double lat_vel = (std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0;
+            // Threshold: 0.5 m/s (~2 kph) slip
+            if (avg_lat_vel > 0.5) {
                 
                 // Map 1 m/s -> 40Hz, 10 m/s -> 200Hz
-                double freq = 40.0 + (lat_vel * 17.0);
+                double freq = 40.0 + (avg_lat_vel * 17.0);
                 if (freq > 250.0) freq = 250.0;
 
                 m_slide_phase += freq * dt * TWO_PI;
@@ -421,8 +446,11 @@ public:
                 snap.accel_x = (float)data->mLocalAccel.x;
                 snap.tire_load = (float)avg_load;
                 snap.grip_fract = (float)avg_grip;
-                snap.slip_ratio = (float)((fl.mSlipRatio + fr.mSlipRatio) / 2.0);
-                snap.slip_angle = (float)((std::abs(fl.mSlipAngle) + std::abs(fr.mSlipAngle)) / 2.0);
+                
+                // Snapshot Approximations
+                snap.slip_ratio = (float)((get_slip_ratio(fl) + get_slip_ratio(fr)) / 2.0);
+                snap.slip_angle = (float)((get_slip_angle(fl) + get_slip_angle(fr)) / 2.0);
+                
                 snap.patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
                 snap.deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
                 
