@@ -48,50 +48,31 @@ configuration.
 IMPORTANT NOTES
 ---------------
 
-CURRENT LMU LIMITATIONS (v0.3.20):
+LMU 1.2+ SUPPORT:
 
-Limited Telemetry Access:
-Due to limitations in Le Mans Ultimate versions up to 1.1, lmuFFB can currently 
-only read LATERAL G ACCELERATION from the game (used for the Seat of Pants effect). 
-Other FFB effects that rely on tire data (such as Tire Load, Grip Fraction, etc.) 
-are NOT AVAILABLE because LMU does not yet output this telemetry.
+Full Telemetry Access:
+With Le Mans Ultimate 1.2 (released December 9th, 2024), the game now includes 
+native shared memory support with complete tire telemetry data. This version of 
+lmuFFB fully supports LMU 1.2's new interface, providing access to:
+- Tire Load - Essential for load-sensitive effects
+- Grip Fraction - Enables dynamic understeer/oversteer detection
+- Patch Velocities - Allows physics-based texture generation
+- Steering Shaft Torque - Direct torque measurement for accurate FFB
 
-LMU 1.2 Update Coming:
-With the upcoming release of LMU 1.2 (on December 9th, 2025), the game will officially support a new 
-shared memory format that is expected to include tire telemetry data. This will 
-unlock the full range of FFB effects. However, lmuFFB will require an update to 
-support this new format - the current version (0.3.20) does not yet support 
-LMU 1.2's shared memory.
+No Plugin Required:
+Unlike previous versions, LMU 1.2 has built-in shared memory - no external plugins 
+needed!
 
 rFactor 2 Compatibility:
-lmuFFB may work with rFactor 2 out of the box using the same installation 
-instructions, as both games share the same underlying engine and telemetry system. 
-However, rFactor 2 support is not officially tested or guaranteed.
+lmuFFB may work with rFactor 2 using the rF2 Shared Memory Plugin, as both games 
+share similar telemetry systems. However, rFactor 2 support is not officially 
+tested or guaranteed.
 
 
 PREREQUISITES
 -------------
 
-1. rF2 Shared Memory Plugin (rFactor2SharedMemoryMapPlugin64.dll)
-   Download from:
-   - https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin#download
-   - Or bundled with CrewChief: https://thecrewchief.org/
-   
-   Installation Steps:
-   - Place the rFactor2SharedMemoryMapPlugin64.dll file into "Le Mans Ultimate/Plugins/" 
-     directory
-   - NOTE: The "Plugins" folder may not exist by default - create it manually if needed
-   - TIP: If you've installed apps like CrewChief, this plugin might already be present. 
-     Check before downloading.
-   
-   Activation:
-   - LMU requires manual activation: Open "Le Mans Ultimate\UserData\player\
-     CustomPluginVariables.JSON" and set the " Enabled" field to 1 for the plugin entry
-   - IMPORTANT: Restart LMU completely after making this change
-   - If the plugin entry is missing: Install the Visual C++ 2013 (VC12) runtime from 
-     your game's "Support\Runtimes" folder, then restart LMU to auto-generate the entry
-
-2. vJoy Driver (Version 2.1.9.1 recommended)
+1. vJoy Driver (Version 2.1.9.1 recommended)
    Download: https://github.com/jshafer817/vJoy/releases
    
    Why vJoy? LMU needs a "dummy" device to bind steering to, so it doesn't 
@@ -103,12 +84,20 @@ PREREQUISITES
    - Disable all vJoy FFB Effects EXCEPT "Constant Force"
    - Click Apply
 
-3. vJoyInterface.dll (Required for lmuFFB to run)
+2. vJoyInterface.dll (Required for lmuFFB to run)
    This DLL MUST be in the same folder as LMUFFB.exe
    
    Download from:
    - C:\Program Files\vJoy\SDK\lib\amd64\ (if you installed vJoy SDK)
    - https://github.com/shauleiz/vJoy/tree/master/SDK/lib/amd64/vJoyInterface.dll
+
+NOTE FOR LMU 1.2+:
+  No additional plugins are required! LMU 1.2 includes native shared memory support.
+
+NOTE FOR RFACTOR 2 USERS:
+  If using rFactor 2, you will need the rFactor2SharedMemoryMapPlugin64.dll from:
+  https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin#download
+  Place it in the rFactor 2/Plugins/ directory and enable it in game settings.
 
 
 STEP-BY-STEP SETUP
@@ -198,8 +187,9 @@ No Steering (Car won't turn):
 
 No FFB:
   - Ensure "FFB Device" in lmuFFB is your real wheel
-  - Check if Shared Memory Plugin is working (console should show "Connected")
-  - Verify the plugin DLL is in Le Mans Ultimate/Plugins/ folder
+  - Check if Shared Memory is working (console should show "Connected")
+  - For LMU 1.2+: Shared memory is built-in, no plugin needed
+  - For rFactor 2: Verify the plugin DLL is in rFactor 2/Plugins/ folder
 
 "vJoyInterface.dll not found":
   - Copy vJoyInterface.dll to the same folder as LMUFFB.exe
@@ -208,7 +198,7 @@ No FFB:
 
 "Could not open file mapping object":
   - Start LMU and load a track first
-  - The Shared Memory Plugin only activates when driving
+  - The shared memory only activates when driving
 
 
 KNOWN ISSUES (v0.3.7)

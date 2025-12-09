@@ -38,33 +38,33 @@ This is an **experimental early alpha version** of a force feedback application.
 
 ## ⚠️ Important Notes
 
-### Current LMU Limitations (v0.3.20)
 
-**Limited Telemetry Access**: Due to limitations in Le Mans Ultimate versions up to 1.1, lmuFFB can currently only read **lateral G acceleration** from the game (used for the Seat of Pants effect). Other FFB effects that rely on tire data (such as Tire Load, Grip Fraction, etc.) are **not available** because LMU does not yet output this telemetry.
+### LMU 1.2+ Support
 
-**LMU 1.2 Update Coming**: With the upcoming release of **LMU 1.2** (on December 9th, 2025), the game will officially support a new shared memory format that is expected to include tire telemetry data. This will unlock the full range of FFB effects. However, **lmuFFB will require an update** to support this new format - the current version (0.3.20) does not yet support LMU 1.2's shared memory.
+**Full Telemetry Access**: With **Le Mans Ultimate 1.2** (released December 9th, 2024), the game now includes native shared memory support with complete tire telemetry data. This version of lmuFFB fully supports LMU 1.2's new interface, providing access to:
+- **Tire Load** - Essential for load-sensitive effects
+- **Grip Fraction** - Enables dynamic understeer/oversteer detection
+- **Patch Velocities** - Allows physics-based texture generation
+- **Steering Shaft Torque** - Direct torque measurement for accurate FFB
+
+**No Plugin Required**: Unlike previous versions, LMU 1.2 has built-in shared memory - no external plugins needed!
 
 ### rFactor 2 Compatibility
 
-lmuFFB may work with **rFactor 2** out of the box using the same installation instructions, as both games share the same underlying engine and telemetry system. However, rFactor 2 support is not officially tested or guaranteed.
+lmuFFB may work with **rFactor 2** using the rF2 Shared Memory Plugin, as both games share similar telemetry systems. However, rFactor 2 support is not officially tested or guaranteed.
 
 ## Installation & Configuration  
 
 ### 1. Prerequisites
 
-*   **rF2 Shared Memory Plugin**: Download `rFactor2SharedMemoryMapPlugin64.dll` from [TheIronWolfModding's GitHub](https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin#download).
-    *   **Installation Steps**: 
-        *   Place the `rFactor2SharedMemoryMapPlugin64.dll` file into `Le Mans Ultimate/Plugins/` directory.
-        *   **Note**: The `Plugins` folder may not exist by default - create it manually if needed.
-        *   **Tip**: If you've installed apps like [CrewChief](https://thecrewchief.org/), this plugin might already be present. Check before downloading.
-    *   **Activation**:
-        *   LMU requires manual activation: Open `Le Mans Ultimate\UserData\player\CustomPluginVariables.JSON` and set the `" Enabled"` field to `1` for the plugin entry.
-        *   **Important**: Restart LMU completely after making this change.
-        *   **If the plugin entry is missing**: Install the **Visual C++ 2013 (VC12) runtime** from your game's `Support\Runtimes` folder, then restart LMU to auto-generate the entry.
-
 *   **vJoy Driver**: Install version **2.1.9.1** (by jshafer817) or compatible. Download from [vJoy releases](https://github.com/jshafer817/vJoy/releases).
     *   *Why vJoy?* The game needs a "dummy" device to bind steering to, so it doesn't try to send its own FFB to your real wheel while lmuFFB is controlling it.
     *   *Tip:* **Disable all vJoy FFB Effects** in the "Configure vJoy" tool, except "Constant Force" (though lmuFFB drives your wheel directly, this prevents vJoy from trying to interfere if you use legacy mode).
+
+**Note for LMU 1.2+**: No additional plugins are required! LMU 1.2 includes native shared memory support.
+
+**Note for rFactor 2 Users**: If using rFactor 2, you will need the `rFactor2SharedMemoryMapPlugin64.dll` from [TheIronWolfModding's GitHub](https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin#download). Place it in the `rFactor 2/Plugins/` directory and enable it in the game settings.
+
 ### 2. Step-by-Step Setup
 
 **A. Configure vJoy**
@@ -130,16 +130,20 @@ lmuFFB may work with **rFactor 2** out of the box using the same installation in
 
 - **Wheel Jerking / Fighting**: You likely have a "Double FFB" conflict.
     - Ensure in-game Steering is bound to **vJoy**, NOT your real wheel.
-    - Ensure in-game FFB is sending to vJoy.
-    - If the wheel oscillates on straights, reduce **SOP Effect** to 0.0 and increase smoothing.
-- **No Steering (Car won't turn)**:
-    - If you used **Method B (vJoy)**, you need **Joystick Gremlin** running to bridge your wheel to vJoy. The "vJoy Demo Feeder" is for testing only.
-- **No FFB**: 
-    - Ensure the "FFB Device" in lmuFFB is your real wheel.
-    - Check if the Shared Memory Plugin is working (Does "Connected to Shared Memory" appear in the console?).
-- **"vJoyInterface.dll not found"**: Ensure the DLL is in the same folder as the executable. You can grab it from `C:\Program Files\vJoy\SDK\lib\amd64\` or download from the [vJoy GitHub](https://github.com/shauleiz/vJoy/tree/master/SDK/lib/amd64/vJoyInterface.dll).
-    - *Alternative:* You can try moving `LMUFFB.exe` directly into `C:\Program Files\vJoy\x64\` if you have persistent DLL issues.
-- **"Could not open file mapping object"**: Start the game and load a track first.
+-   **Wheel Jerking / Fighting**: You likely have a "Double FFB" conflict.
+    -   Ensure in-game Steering is bound to **vJoy**, NOT your real wheel.
+    -   Ensure in-game FFB is sending to vJoy.
+    -   If the wheel oscillates on straights, reduce **SOP Effect** to 0.0 and increase smoothing.
+-   **No Steering (Car won't turn)**:
+    -   If you used **Method B (vJoy)**, you need **Joystick Gremlin** running to bridge your wheel to vJoy. The "vJoy Demo Feeder" is for testing only.
+-   **No FFB**: 
+    -   Ensure the "FFB Device" in lmuFFB is your real wheel.
+    -   Check if the Shared Memory is working (Does "Connected to Shared Memory" appear in the console?).
+    -   **For LMU 1.2+**: Shared memory is built-in, no plugin needed.
+    -   **For rFactor 2**: Verify the plugin DLL is in the `Plugins/` folder and enabled in game settings.
+-   **"vJoyInterface.dll not found"**: Ensure the DLL is in the same folder as the executable. You can grab it from `C:\Program Files\vJoy\SDK\lib\amd64\` or download from the [vJoy GitHub](https://github.com/shauleiz/vJoy/tree/master/SDK/lib/amd64/vJoyInterface.dll).
+    -   *Alternative:* You can try moving `LMUFFB.exe` directly into `C:\Program Files\vJoy\x64\` if you have persistent DLL issues.
+-   **"Could not open file mapping object"**: Start the game and load a track first. The shared memory only activates when driving.
 
 ## Known Issues (v0.3.19)
 *   **Telemetry Gaps**: Some users report missing telemetry for Dashboard apps (ERS, Temps). lmuFFB has robust fallbacks (Sanity Checks) that prevent dead FFB effects even if the game fails to report data (e.g., zero Grip or Load). See [Telemetry Report](docs/dev_docs/telemetry_availability_report.md).
