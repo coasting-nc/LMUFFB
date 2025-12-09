@@ -150,6 +150,7 @@ A. Configure Le Mans Ultimate (LMU)
         * SOP (Seat of Pants): Increase from 0.0 to 0.3 (feel lateral forces)
         * Understeer Effect: Ensure it's at 1.0 (default)
       
+      Method A vs Method B:
       Pros: Simplest setup. No vJoy required
       Cons: If wheel has no FFB, try Method B
       
