@@ -166,7 +166,7 @@ A. Configure Le Mans Ultimate (LMU)
       - Advanced: Set Collision Strength and Torque Sensitivity to 0%
       - Tweaks: Disable "Use Constant Steering Force Effect"
 
-B. Configure lmuFFB (The App)
+B. Configure lmuFFB
    1. Run LMUFFB.exe
    2. FFB Device: Select your Physical Wheel (e.g., "Simucube 2 Pro", "Fanatec DD1")
       - Do NOT select the vJoy device here
