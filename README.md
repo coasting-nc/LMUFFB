@@ -118,9 +118,8 @@ Your testing and feedback is greatly appreciated! 🙏
     *   **Method B (vJoy Bridge - Compatibility):** Bind to **vJoy Device (Axis Y)**.
         *   *Requirement:* You MUST use **Joystick Gremlin** (or similar) to map your Physical Wheel to vJoy Axis Y. The "vJoy Demo Feeder" is NOT sufficient for driving.
         *   *Why Axis Y?* LMUFFB uses Axis X for FFB monitoring (if enabled). Using Y prevents conflicts.
-5.  **Force Feedback**:
-    *   **Type**: Set to "None" (if available) or reduce **FFB Strength** to **0%** / **Off**.
-        *   *Note:* LMU may not have a "None" option; reducing strength to 0 is the workaround.
+5.  **In-Game Force Feedback settings in LMU**:
+    *   **FFB Strength**: reduce to **0%** (Off).
     *   **Effects**: Set "Force Feedback Effects" to **Off**.
     *   **Smoothing**: Set to **0** (Raw).
     *   **Advanced**: Set "Collision Strength" and "Steering Torque Sensitivity" to **0%**.
