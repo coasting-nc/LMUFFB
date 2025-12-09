@@ -167,8 +167,6 @@ For feedback, questions, or support:
 *   [The Physics of Feel - Driver's Guide](docs/the_physics_of__feel_-_driver_guide.md) - **Comprehensive guide** explaining how lmuFFB translates telemetry into tactile sensations, with telemetry visualizations
 *   [FFB Effects & Customization Guide](docs/ffb_effects.md)
 *   [FFB Customization Guide (Legacy)](docs/ffb_customization.md)
-*   [GUI Framework Options](docs/gui_framework_options.md)
-*   [DirectInput Implementation Guide](docs/dev_docs/directinput_implementation.md)
 *   [Telemetry Data Reference](docs/dev_docs/telemetry_data_reference.md)
 *   [vJoy Compatibility Guide](docs/vjoy_compatibility.md)
 *   [Comparisons with Other Apps](docs/comparisons.md)
