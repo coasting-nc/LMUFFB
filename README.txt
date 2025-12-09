@@ -158,11 +158,9 @@ A. Configure Le Mans Ultimate (LMU)
       - Bind to "vJoy Device (Axis Y)"
       - IMPORTANT: You MUST use "Joystick Gremlin" to map your wheel to vJoy Axis Y.
       - Why? Guarantees separation of FFB and Input.
-   
-   5. Force Feedback Settings:
-      - Type: Set to "None" (if available) or reduce FFB Strength to 0% / Off
-      - Note: LMU may not have a "None" option; reducing strength to 0 is 
-        the workaround.
+
+   5. In-Game Force Feedback settings in LMU:
+      - FFB Strength: reduce to **0%** (Off).
       - Effects: Set "Force Feedback Effects" to Off
       - Smoothing: Set to 0 (Raw) for fastest telemetry updates
       - Advanced: Set Collision Strength and Torque Sensitivity to 0%
