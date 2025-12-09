@@ -227,19 +227,14 @@ The application reads telemetry from the rFactor 2 engine (Le Mans Ultimate) via
 6.  Click **Build** in the bottom status bar.
 
 ### Option C: Command Line (Windows)
-1.  Open the **Developer Command Prompt for VS 2022**.
+1.  Open the Powershell.
 2.  Navigate to the repository root.
 3.  Run the following commands:
     ```cmd
-    mkdir build
-    cd build
-    cmake -G "NMake Makefiles" -DVJOY_SDK_DIR="C:/Path/To/vJoy/SDK" ..
-    nmake
+    'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake --build build --config Release --clean-first
     ```
-    *Alternatively, use `cmake --build .` instead of `nmake`.*
 
-
-## Building the Installer
+## Building the Installer (WIP, not yet supported)
 
 To create the `LMUFFB_Setup.exe`:
 
