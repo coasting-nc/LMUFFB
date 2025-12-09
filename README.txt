@@ -72,7 +72,7 @@ Please help us improve lmuFFB:
    Warning above)
 2. Experiment with settings - Try different effect combinations and gains
 3. Share your results - Post screenshots of the "Troubleshooting Graphs" 
-   window to the LMU Forum Thread:
+   window and the main app window to the LMU Forum Thread:
    https://community.lemansultimate.com/index.php?threads/irffb-for-lmu-lmuffb.10440/
 4. Report issues - Let us know what works and what doesn't!
 
