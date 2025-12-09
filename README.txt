@@ -1,6 +1,5 @@
 lmuFFB - Le Mans Ultimate Force Feedback
 ========================================
-Version: 0.3.7
 
 See README.md for full documentation with images and links.
 
@@ -48,29 +47,45 @@ configuration.
 IMPORTANT NOTES
 ---------------
 
-LMU 1.2+ SUPPORT:
+LMU 1.2+ SUPPORT (v0.4.0+):
 
 Full Telemetry Access:
 With Le Mans Ultimate 1.2 (released December 9th, 2024), the game now includes 
-native shared memory support with complete tire telemetry data. This version of 
-lmuFFB fully supports LMU 1.2's new interface, providing access to:
+native shared memory support with complete tire telemetry data. lmuFFB v0.4.0+ 
+fully supports LMU 1.2's new interface, providing access to:
 - Tire Load - Essential for load-sensitive effects
 - Grip Fraction - Enables dynamic understeer/oversteer detection
 - Patch Velocities - Allows physics-based texture generation
 - Steering Shaft Torque - Direct torque measurement for accurate FFB
 
 No Plugin Required:
-Unlike previous versions, LMU 1.2 has built-in shared memory - no external plugins 
-needed!
+Unlike previous versions, LMU 1.2 has built-in shared memory - no external 
+plugins needed!
+
+EXPERIMENTAL VERSION - TESTING NEEDED:
+
+This is an experimental release with the new LMU 1.2 interface. The FFB 
+formulas may require refinement based on real-world testing.
+
+Please help us improve lmuFFB:
+1. Test with caution - Start with low wheel strength settings (see Safety 
+   Warning above)
+2. Experiment with settings - Try different effect combinations and gains
+3. Share your results - Post screenshots of the "Troubleshooting Graphs" 
+   window to the LMU Forum Thread:
+   https://community.lemansultimate.com/index.php?threads/irffb-for-lmu-lmuffb.10440/
+4. Report issues - Let us know what works and what doesn't!
+
+Your testing and feedback is greatly appreciated!
 
 rFactor 2 Compatibility:
-lmuFFB may work with rFactor 2 using the rF2 Shared Memory Plugin, as both games 
-share similar telemetry systems. However, rFactor 2 support is not officially 
-tested or guaranteed.
+rFactor 2 is NOT SUPPORTED in v0.4.0+. For rFactor 2, please use earlier 
+versions of lmuFFB (v0.3.x). See the rFactor 2 Setup Guide at the end of 
+this document.
 
 
-PREREQUISITES
--------------
+PREREQUISITES (LMU 1.2+)
+------------------------
 
 1. vJoy Driver (Version 2.1.9.1 recommended)
    Download: https://github.com/jshafer817/vJoy/releases
@@ -90,14 +105,6 @@ PREREQUISITES
    Download from:
    - C:\Program Files\vJoy\SDK\lib\amd64\ (if you installed vJoy SDK)
    - https://github.com/shauleiz/vJoy/tree/master/SDK/lib/amd64/vJoyInterface.dll
-
-NOTE FOR LMU 1.2+:
-  No additional plugins are required! LMU 1.2 includes native shared memory support.
-
-NOTE FOR RFACTOR 2 USERS:
-  If using rFactor 2, you will need the rFactor2SharedMemoryMapPlugin64.dll from:
-  https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin#download
-  Place it in the rFactor 2/Plugins/ directory and enable it in game settings.
 
 
 STEP-BY-STEP SETUP
@@ -188,8 +195,8 @@ No Steering (Car won't turn):
 No FFB:
   - Ensure "FFB Device" in lmuFFB is your real wheel
   - Check if Shared Memory is working (console should show "Connected")
-  - For LMU 1.2+: Shared memory is built-in, no plugin needed
-  - For rFactor 2: Verify the plugin DLL is in rFactor 2/Plugins/ folder
+  - Verify you're running LMU 1.2 or later (earlier versions don't have 
+    native shared memory)
 
 "vJoyInterface.dll not found":
   - Copy vJoyInterface.dll to the same folder as LMUFFB.exe
@@ -219,3 +226,27 @@ For feedback, questions, or support:
 
 For full documentation, advanced settings, and developer information, 
 see README.md or visit: https://github.com/coasting-nc/LMUFFB
+
+
+===============================================================================
+RFACTOR 2 SETUP (LEGACY)
+===============================================================================
+
+NOTE: rFactor 2 support was removed in v0.4.0. To use lmuFFB with rFactor 2, 
+you must download and use version 0.3.x from the releases page:
+https://github.com/coasting-nc/LMUFFB/releases
+
+PREREQUISITES FOR RFACTOR 2 (v0.3.x only):
+
+1. rF2 Shared Memory Plugin
+   Download rFactor2SharedMemoryMapPlugin64.dll from:
+   https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin#download
+
+2. Installation
+   - Place the DLL in rFactor 2/Plugins/ directory
+   - Enable the plugin in rFactor 2's game settings
+
+3. Follow the same vJoy and wheel configuration steps as described above for LMU
+
+For detailed rFactor 2 setup instructions, refer to the README included with 
+v0.3.x releases.
