@@ -1,3 +1,9 @@
+# New FFB Features Enabled by LMU 1.2
+
+> **⚠️ API Source of Truth**  
+> All field names, types, and units referenced in this document are defined in **`src/lmu_sm_interface/InternalsPlugin.hpp`**.  
+> This is the official Studio 397 API specification for LMU 1.2 shared memory.
+
 Based on a detailed review of `src/lmu_sm_interface/InternalsPlugin.hpp`, there are several **new or previously inaccessible data points** that open the door for significant new FFB features.
 
 Here is a breakdown of the new possibilities, ranked by value to the driving experience.

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] - 2025-12-08
+### Added
+- **Unbind Device**: Added a button in the GUI to release the DirectInput device without closing the app.
+- **Diagnostic Logging**: Implemented non-blocking telemetry stats logging (Torque, Load, Grip, LatG) to the console every second.
+- **Hysteresis Logic**: Added a stability filter for telemetry dropouts. Fallback values (e.g., for missing tire load) now only trigger after 20 frames (~50ms) of consistent missing data, preventing rapid FFB oscillation.
+- **Safety**: Added rate-limited console warnings when FFB output saturates (>99%).
+
+### Fixed
+- **FFB Scaling**: Corrected all effect amplitudes to properly account for the LMU 1.2 API change from Force (Newtons) to Torque (Newton-meters) introduced in v0.4.0. This fixes the excessively strong FFB that some users may have experienced. **Users upgrading from v0.4.0 may need to increase their gain settings** (try 2-3x previous values) as the forces are now physically accurate.
+
 ## [0.4.0] - 2025-12-08
 ### Added
 - **LMU 1.2 Support**: Refactored the entire shared memory interface to support the new Le Mans Ultimate 1.2 layout.

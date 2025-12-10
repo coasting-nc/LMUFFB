@@ -60,9 +60,6 @@ This is an **experimental release** with the new LMU 1.2 interface. The FFB form
 
 Your testing and feedback is greatly appreciated! 🙏
 
-### rFactor 2 Compatibility
-
-**Note**: rFactor 2 is **not supported** in v0.4.0+. For rFactor 2, please use earlier versions of lmuFFB (v0.3.x). See the [rFactor 2 Setup Guide](#rfactor-2-setup-legacy) at the end of this document.
 
 ## Installation & Configuration (LMU 1.2+)
 
@@ -245,6 +242,30 @@ To create the `LMUFFB_Setup.exe`:
 4.  **Output**: The installer will be generated in `installer/Output/`.
 
 ---
+
+
+### Upgrading from v0.4.0 to v0.4.1+
+
+If you're upgrading from **v0.4.0**, please note that **v0.4.1 fixes FFB scaling** to properly use Newton-meter (Nm) torque units as required by the LMU 1.2 API change.
+
+**What this means for you:**
+- The FFB forces in v0.4.0 were using incorrect scaling (Force units mixed with Torque data)
+- v0.4.1 corrects this to be physically accurate
+- **You will likely need to increase your gain settings** by approximately 2-3x compared to v0.4.0
+
+**Recommended steps:**
+1. Start with your **Master Gain at 1.0** (instead of 0.5)
+2. Gradually increase if needed while monitoring the saturation warnings
+3. Re-tune individual effect gains (SoP, Lockup, Spin, etc.) to your preference
+4. The forces should now feel more realistic and proportional to actual car behavior
+
+This change ensures consistent FFB strength across different hardware and makes the physics calculations match real-world steering torque values (typically 15-25 Nm for racing cars).
+
+
+### rFactor 2 Compatibility
+
+**Note**: rFactor 2 is **not supported** in v0.4.0+. For rFactor 2, please use earlier versions of lmuFFB (v0.3.x). See the [rFactor 2 Setup Guide](#rfactor-2-setup-legacy) at the end of this document.
+
 
 ## rFactor 2 Setup (Legacy)
 

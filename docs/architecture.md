@@ -1,27 +1,27 @@
-# Architecture
+#Architecture (v0.4.1+)
 
-LMUFFB uses a multi-threaded architecture implemented in C++ to ensure minimal latency for the Force Feedback signal while allowing for future GUI expansion.
+LMUFFB uses a multi-threaded architecture implemented in C++ to ensure minimal latency for the Force Feedback signal while allowing for responsive GUI interaction.
 
-## Deign choices
+## Design Choices
 
-The app follows best practices for real-time signal generation. A recent update transitioned some remaining "canned" effects to physics-based audio/haptics (Phase Integration).
+The app follows best practices for real-time signal generation. Recent updates (v0.3.0+) transitioned from "canned" effects to physics-based haptics using Phase Integration for smooth, dynamic oscillators.
 
 ## High-Level Pipeline
 
 ```
-[ Simulator (LMU) ]
+[ Simulator (LMU 1.2) ]
        |
-       v (Shared Memory)
+       v (Native Shared Memory)
        |
-[ Telemetry Reader ]  <-- (Memory Mapped File)
+[ Telemetry Reader ]  <-- (Memory Mapped File: $LMU_Data$)
        |
-       v (Structs: rF2Telemetry)
+       v (Structs: TelemInfoV01, TelemWheelV01)
        |
 [ FFB Engine ]  <-- (FFBThread - 400Hz)
-       | (Sanity Checks & Normalization)
-       v (Calculated Force)
+       | (Sanity Checks, Hysteresis, Normalization)
+       v (Calculated Torque: -1.0 to 1.0)
        |
-[ vJoy Interface ]
+[ DirectInput FFB ]  <-- (or vJoy for compatibility)
        |
        v
 [ Physical Wheel ]
@@ -29,11 +29,15 @@ The app follows best practices for real-time signal generation. A recent update 
 
 ## Components
 
-### 1. Telemetry Interface (Shared Memory)
-The application connects to the **rFactor 2 Shared Memory Map Plugin** (by The Iron Wolf).
+### 1. Telemetry Interface (LMU 1.2 Native Shared Memory)
+
+**No Plugin Required**: LMU 1.2+ includes built-in shared memory support.
 
 *   **Implementation**: Windows API `OpenFileMappingA` and `MapViewOfFile`.
-*   **Structs**: Defined in `rF2Data.h`, these mirror the C++ structs used by the plugin, allowing direct access to physics data without parsing overhead.
+*   **Memory Map Name**: `$LMU_Data$` (player-specific telemetry)
+*   **Structs**: Defined in `src/lmu_sm_interface/InternalsPlugin.hpp`, provided by Studio 397.
+*   **Locking**: Uses `SharedMemoryLock` class to prevent data corruption during reads.
+*   **Player Indexing**: Scans the 104-slot vehicle array to find the player's car via `VehicleScoringInfoV01::mIsPlayer`.
 
 ### 2. Threading Model
 The application is split into two primary threads:
@@ -51,17 +55,36 @@ The application is split into two primary threads:
     *   Implements "Lazy Rendering": If `GuiLayer::Render()` reports no activity and the window is not focused, the update rate drops to ~10Hz to save CPU cycles.
 
 ### 3. FFB Engine (`FFBEngine.h`)
+
 The core logic is encapsulated in a header-only class to facilitate unit testing.
 
-*   **Sanity Layer (v0.3.19)**: Before calculation, incoming telemetry is validated against physical rules. Impossible states (e.g., Car moving at 200kph but 0 Tire Load) trigger fallbacks to default values, preventing effects from cutting out.
-*   **Inputs**: `SteeringArmForce`, `GripFract` (FL/FR), `LocalAccel` (Lateral G), `VerticalTireDeflection` (Suspension), `SlipAngle`.
+*   **Sanity Layer (v0.3.19+)**: Incoming telemetry is validated against physical rules with hysteresis filtering (v0.4.1+). Invalid states trigger fallbacks to prevent effects from cutting out.
+*   **Inputs (LMU 1.2 API)**:
+    *   `mSteeringShaftTorque` (Nm) - Primary FFB source
+    *   `mTireLoad` (N) - Vertical tire load
+    *   `mGripFract` (0-1) - Front/Rear grip usage
+    *   `mLocalAccel.x` (m/s²) - Lateral G-force
+    *   `mLateralPatchVel` (m/s) - Contact patch lateral velocity
+    *   `mLongitudinalPatchVel` (m/s) - For slip ratio calculation
+    *   `mVerticalTireDeflection` (m) - Suspension travel
 *   **Features**:
-    *   **Grip Modulation**: Scales force by grip fraction (Understeer feel).
-    *   **SoP**: Adds lateral G-force (Oversteer feel).
-    *   **Slide Texture**: Injects high-frequency noise when slip angle > threshold.
-    *   **Road Texture**: Injects force based on high-frequency suspension velocity changes.
+    *   **Grip Modulation**: Scales torque by grip fraction (Understeer feel).
+    *   **SoP (Seat of Pants)**: Adds lateral G-force (Oversteer feel).
+    *   **Dynamic Textures**: Lockup, Spin, Slide, Road, Bottoming - all frequency-modulated.
+    *   **Hysteresis (v0.4.1)**: 20-frame stability filter for missing telemetry data.
+    *   **Diagnostic Logging (v0.4.1)**: Non-blocking 1Hz stats output.
     *   **Min Force**: Boosts small signals to overcome wheel friction.
 
 ### 4. Output Driver
-*   **vJoy**: The C++ application links against `vJoyInterface.lib` to communicate with the vJoy driver.
-*   **Mechanism**: The calculated force (float -1.0 to 1.0) is scaled to the vJoy axis range (1 to 32768) and sent via `SetAxis`.
+
+**Primary: DirectInput (v0.2.0+)**
+*   **Implementation**: `DirectInputFFB` class using Windows DirectInput 8 API.
+*   **Device Selection**: User selects physical wheel from GUI dropdown.
+*   **Effect Type**: Constant Force effect with continuous parameter updates.
+*   **Unbinding (v0.4.1)**: GUI button to release device without closing app.
+*   **Saturation Warnings (v0.4.1)**: Rate-limited console alerts when output exceeds 99%.
+
+**Fallback: vJoy (Legacy/Compatibility Mode)**
+*   **Use Case**: When DirectInput device is locked by the game (Exclusive Mode conflict).
+*   **Mechanism**: Links against `vJoyInterface.lib` to communicate with vJoy driver.
+*   **Scaling**: Calculated torque (-1.0 to 1.0) scaled to vJoy axis range (1 to 32768).

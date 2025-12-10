@@ -173,6 +173,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         devices = DirectInputFFB::Get().EnumerateDevices();
         selected_device_idx = -1;
     }
+    
+    // NEW: Unbind Device Button
+    ImGui::SameLine();
+    if (ImGui::Button("Unbind Device")) {
+        DirectInputFFB::Get().ReleaseDevice();
+        selected_device_idx = -1;
+    }
 
     ImGui::Separator();
     

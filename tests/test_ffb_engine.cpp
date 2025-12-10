@@ -605,10 +605,11 @@ void test_spin_torque_drop_interaction() {
     engine.m_spin_gain = 1.0;
     engine.m_sop_effect = 1.0;
     engine.m_gain = 1.0;
+    engine.m_sop_scale = 10.0;
     
     // High SoP force
     data.mLocalAccel.x = 9.81; // 1G lateral
-    data.mSteeringShaftTorque = 2000.0;
+    data.mSteeringShaftTorque = 10.0; // 10 Nm
     
     // Set Grip to 1.0 so Game Force isn't killed by Understeer Effect
     data.mWheel[0].mGripFract = 1.0;
@@ -641,11 +642,12 @@ void test_spin_torque_drop_interaction() {
     double force_with_spin = engine.calculate_force(&data);
     
     // Torque drop: 1.0 - (1.0 * 1.0 * 0.6) = 0.4 (60% reduction)
-    // Force should be significantly lower
-    // Note: Spin also adds a rumble, which might increase the force slightly.
-    // Base 0.25 -> Dropped 0.10. Rumble adds +/- 0.125.
-    // So force could be up to 0.225 or down to -0.025.
-    // We check that it is NOT equal to original (0.25) and somewhat reduced/modified.
+    // NoSpin: Base + SoP. 10.0 / 20.0 (Base) + SoP.
+    // With spin, Base should be reduced.
+    // However, Spin adds rumble.
+    // With 20Nm scale, rumble can be large if not careful.
+    // But we scaled rumble down to 2.5.
+    
     if (std::abs(force_with_spin - force_no_spin) > 0.05) {
         std::cout << "[PASS] Spin torque drop modifies total force." << std::endl;
         g_tests_passed++;
@@ -680,8 +682,10 @@ void test_sanity_checks() {
     data.mWheel[1].mLateralPatchVel = 5.0;
     data.mDeltaTime = 0.01;
 
-    // First frame might warn
-    engine.calculate_force(&data);
+    // Run enough frames to trigger hysteresis (>20)
+    for(int i=0; i<30; i++) {
+        engine.calculate_force(&data);
+    }
     
     // Check internal warnings
     if (engine.m_warned_load) {
@@ -692,18 +696,7 @@ void test_sanity_checks() {
         g_tests_failed++;
     }
 
-    // Check if defaults were applied (load factor should be 1.0 if default 4000N used)
-    // If load was 0, force would be 0.
-    // If load corrected to 4000N, force > 0.
-    // Note: calculate_force was called once above to trigger warning. 
-    // We need to advance phase for slide texture to generate force? 
-    // Yes, slide texture relies on phase.
-    
-    // Let's call it a few times to ensure phase integration happens
-    double force_corrected = 0.0;
-    for(int i=0; i<5; i++) {
-        force_corrected = engine.calculate_force(&data);
-    }
+    double force_corrected = engine.calculate_force(&data);
 
     if (std::abs(force_corrected) > 0.001) {
         std::cout << "[PASS] Load fallback applied (Force generated: " << force_corrected << ")" << std::endl;
@@ -775,10 +768,83 @@ int main() {
     test_spin_torque_drop_interaction();
     
     test_sanity_checks();
+    void test_hysteresis_logic(); // Forward declaration
+    test_hysteresis_logic();
 
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
     std::cout << "Tests Failed: " << g_tests_failed << std::endl;
     
     return g_tests_failed > 0 ? 1 : 0;
+}
+
+void test_hysteresis_logic() {
+    std::cout << "\nTest: Hysteresis Logic (Missing Data)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+
+    // Setup moving condition
+    data.mLocalVel.z = 10.0;
+    engine.m_slide_texture_enabled = true; // Use slide to verify load usage
+    engine.m_slide_texture_gain = 1.0;
+    
+    // 1. Valid Load
+    data.mWheel[0].mTireLoad = 4000.0;
+    data.mWheel[1].mTireLoad = 4000.0;
+    data.mWheel[0].mLateralPatchVel = 5.0; // Trigger slide
+    data.mWheel[1].mLateralPatchVel = 5.0;
+    data.mDeltaTime = 0.01;
+
+    engine.calculate_force(&data);
+    // Expect load_factor = 1.0, missing frames = 0
+    ASSERT_TRUE(engine.m_missing_load_frames == 0);
+
+    // 2. Drop Load to 0 for 5 frames (Glitch)
+    data.mWheel[0].mTireLoad = 0.0;
+    data.mWheel[1].mTireLoad = 0.0;
+    
+    for (int i=0; i<5; i++) {
+        engine.calculate_force(&data);
+    }
+    // Missing frames should be 5.
+    // Fallback (>20) should NOT trigger. 
+    if (engine.m_missing_load_frames == 5) {
+        std::cout << "[PASS] Hysteresis counter incrementing (5)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Hysteresis counter not 5: " << engine.m_missing_load_frames << std::endl;
+        g_tests_failed++;
+    }
+
+    // 3. Drop Load for 20 more frames (Total 25)
+    for (int i=0; i<20; i++) {
+        engine.calculate_force(&data);
+    }
+    // Missing frames > 20. Fallback should trigger.
+    if (engine.m_missing_load_frames >= 25) {
+         std::cout << "[PASS] Hysteresis counter incrementing (25)." << std::endl;
+         g_tests_passed++;
+    }
+    
+    // Check if fallback applied (warning flag set)
+    if (engine.m_warned_load) {
+        std::cout << "[PASS] Hysteresis triggered fallback (Warning set)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Hysteresis did not trigger fallback." << std::endl;
+        g_tests_failed++;
+    }
+    
+    // 4. Recovery
+    data.mWheel[0].mTireLoad = 4000.0;
+    data.mWheel[1].mTireLoad = 4000.0;
+    for (int i=0; i<10; i++) {
+        engine.calculate_force(&data);
+    }
+    // Counter should decrement
+    if (engine.m_missing_load_frames < 25) {
+        std::cout << "[PASS] Hysteresis counter decrementing on recovery." << std::endl;
+        g_tests_passed++;
+    }
 }

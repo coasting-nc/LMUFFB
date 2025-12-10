@@ -6,6 +6,7 @@
 #include <dinput.h>
 #endif
 
+// Keep existing implementations
 DirectInputFFB& DirectInputFFB::Get() {
     static DirectInputFFB instance;
     return instance;
@@ -33,32 +34,20 @@ bool DirectInputFFB::Initialize(HWND hwnd) {
 }
 
 void DirectInputFFB::Shutdown() {
-#ifdef _WIN32
-    if (m_pEffect) {
-        m_pEffect->Unload();
-        m_pEffect->Release();
-        m_pEffect = nullptr;
-    }
-    if (m_pDevice) {
-        m_pDevice->Unacquire();
-        m_pDevice->Release();
-        m_pDevice = nullptr;
-    }
+    ReleaseDevice(); // Reuse logic
     if (m_pDI) {
+        #ifdef _WIN32
         m_pDI->Release();
         m_pDI = nullptr;
+        #endif
     }
-#endif
-    m_active = false;
 }
 
-// Callback for enumeration
 #ifdef _WIN32
 BOOL CALLBACK EnumJoysticksCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext) {
     auto* devices = (std::vector<DeviceInfo>*)pContext;
     DeviceInfo info;
     info.guid = pdidInstance->guidInstance;
-    // Convert WCHAR name to string (simplified)
     char name[260];
     WideCharToMultiByte(CP_ACP, 0, pdidInstance->tszProductName, -1, name, 260, NULL, NULL);
     info.name = std::string(name);
@@ -73,7 +62,6 @@ std::vector<DeviceInfo> DirectInputFFB::EnumerateDevices() {
     if (!m_pDI) return devices;
     m_pDI->EnumDevices(DI8DEVCLASS_GAMECTRL, EnumJoysticksCallback, &devices, DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK);
 #else
-    // Mock devices
     DeviceInfo d1; d1.name = "Simucube 2 Pro (Mock)";
     DeviceInfo d2; d2.name = "Logitech G29 (Mock)";
     devices.push_back(d1);
@@ -82,16 +70,34 @@ std::vector<DeviceInfo> DirectInputFFB::EnumerateDevices() {
     return devices;
 }
 
-bool DirectInputFFB::SelectDevice(const GUID& guid) {
+void DirectInputFFB::ReleaseDevice() {
 #ifdef _WIN32
-    if (!m_pDI) return false;
-
-    // Cleanup old
+    if (m_pEffect) {
+        m_pEffect->Stop();
+        m_pEffect->Unload();
+        m_pEffect->Release();
+        m_pEffect = nullptr;
+    }
     if (m_pDevice) {
         m_pDevice->Unacquire();
         m_pDevice->Release();
         m_pDevice = nullptr;
     }
+    m_active = false;
+    m_deviceName = "None";
+    std::cout << "[DI] Device released by user." << std::endl;
+#else
+    m_active = false;
+    m_deviceName = "None";
+#endif
+}
+
+bool DirectInputFFB::SelectDevice(const GUID& guid) {
+#ifdef _WIN32
+    if (!m_pDI) return false;
+
+    // Cleanup old using new method
+    ReleaseDevice();
 
     if (FAILED(m_pDI->CreateDevice(guid, &m_pDevice, NULL))) {
         std::cerr << "[DI] Failed to create device." << std::endl;
@@ -116,13 +122,9 @@ bool DirectInputFFB::SelectDevice(const GUID& guid) {
 
     // Create Effect
     if (CreateEffect()) {
-        m_active = true;
-
-        // Find the name again for the log (optional, or store it earlier)
-        std::cout << "[DI] SUCCESS: Physical Device acquired and FFB Effect created." << std::endl; 
-        // ------------------------------
-
-        // Need to store name? We had it in enumeration.
+       m_active = true;
+        std::cout << "[DI] SUCCESS: Physical Device acquired and FFB Effect created." << std::endl;
+ 
         return true;
     }
     return false;
@@ -174,6 +176,14 @@ bool DirectInputFFB::CreateEffect() {
 void DirectInputFFB::UpdateForce(double normalizedForce) {
     if (!m_active) return;
 
+    // Safety Check: Saturation
+    if (std::abs(normalizedForce) > 0.99) {
+        static int clip_log = 0;
+        if (clip_log++ % 400 == 0) { // Log approx once per second at 400Hz
+            std::cout << "[DI] WARNING: Output saturated at " << normalizedForce << ". Possible feedback loop or scaling issue." << std::endl;
+        }
+    }
+
     // Clamp
     normalizedForce = (std::max)(-1.0, (std::min)(1.0, normalizedForce));
 
@@ -212,7 +222,5 @@ void DirectInputFFB::UpdateForce(double normalizedForce) {
             }
         }
     }
-#else
-    // std::cout << "[DI Mock] Force: " << magnitude << std::endl;
 #endif
 }

@@ -37,6 +37,9 @@ public:
     // Select and Acquire a device
     bool SelectDevice(const GUID& guid);
     
+    // Release the currently acquired device (User unbind)
+    void ReleaseDevice();
+
     // Update the Constant Force effect (-1.0 to 1.0)
     void UpdateForce(double normalizedForce);
 

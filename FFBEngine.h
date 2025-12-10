@@ -6,7 +6,29 @@
 #include <vector>
 #include <mutex>
 #include <iostream>
+#include <chrono>
 #include "src/lmu_sm_interface/InternalsPlugin.hpp"
+
+// Stats helper
+struct ChannelStats {
+    double min = 1e9;
+    double max = -1e9;
+    double sum = 0.0;
+    long count = 0;
+    
+    void Update(double val) {
+        if (val < min) min = val;
+        if (val > max) max = val;
+        sum += val;
+        count++;
+    }
+    
+    void Reset() {
+        min = 1e9; max = -1e9; sum = 0.0; count = 0;
+    }
+    
+    double Avg() { return count > 0 ? sum / count : 0.0; }
+};
 
 // 1. Define the Snapshot Struct (Unified FFB + Telemetry)
 struct FFBSnapshot {
@@ -51,7 +73,7 @@ public:
     // Configurable Smoothing & Caps (v0.3.9)
     float m_sop_smoothing_factor = 0.05f; // 0.0 (Max Smoothing) - 1.0 (Raw). Default Default 0.05 for responsive feel. (0.1 ~5Hz.)
     float m_max_load_factor = 1.5f;      // Cap for load scaling (Default 1.5x)
-    float m_sop_scale = 1000.0f;         // SoP base scaling factor (Default 1000.0)
+    float m_sop_scale = 5.0f;            // SoP base scaling factor (Default 5.0 for Nm)
 
     // New Effects (v0.2)
     float m_oversteer_boost = 0.0f; // 0.0 - 1.0 (Rear grip loss boost)
@@ -77,6 +99,9 @@ public:
     bool m_warned_load = false;
     bool m_warned_grip = false;
     bool m_warned_dt = false;
+    
+    // Hysteresis for missing load
+    int m_missing_load_frames = 0;
 
     // Internal state
     double m_prev_vert_deflection[2] = {0.0, 0.0}; // FL, FR
@@ -90,9 +115,20 @@ public:
     // Smoothing State
     double m_sop_lat_g_smoothed = 0.0;
     
+    // Telemetry Stats
+    ChannelStats s_torque;
+    ChannelStats s_load;
+    ChannelStats s_grip;
+    ChannelStats s_lat_g;
+    std::chrono::steady_clock::time_point last_log_time;
+
     // Thread-Safe Buffer (Producer-Consumer)
     std::vector<FFBSnapshot> m_debug_buffer;
     std::mutex m_debug_mutex;
+    
+    FFBEngine() {
+        last_log_time = std::chrono::steady_clock::now();
+    }
     
     // Helper to retrieve data (Consumer)
     std::vector<FFBSnapshot> GetDebugBatch() {
@@ -134,6 +170,29 @@ public:
         // Critical: Use mSteeringShaftTorque instead of mSteeringArmForce
         double game_force = data->mSteeringShaftTorque;
         
+        // --- 0. UPDATE STATS ---
+        double raw_torque = game_force;
+        double raw_load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
+        double raw_grip = (fl.mGripFract + fr.mGripFract) / 2.0;
+        double raw_lat_g = data->mLocalAccel.x;
+
+        s_torque.Update(raw_torque);
+        s_load.Update(raw_load);
+        s_grip.Update(raw_grip);
+        s_lat_g.Update(raw_lat_g);
+
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1) {
+            std::cout << "--- TELEMETRY STATS (1s) ---" << std::endl;
+            std::cout << "Torque (Nm): Avg=" << s_torque.Avg() << " Min=" << s_torque.min << " Max=" << s_torque.max << std::endl;
+            std::cout << "Load (N):    Avg=" << s_load.Avg()   << " Min=" << s_load.min   << " Max=" << s_load.max << std::endl;
+            std::cout << "Grip (0-1):  Avg=" << s_grip.Avg()   << " Min=" << s_grip.min   << " Max=" << s_grip.max << std::endl;
+            std::cout << "Lat G:       Avg=" << s_lat_g.Avg()  << " Min=" << s_lat_g.min  << " Max=" << s_lat_g.max << std::endl;
+            
+            s_torque.Reset(); s_load.Reset(); s_grip.Reset(); s_lat_g.Reset();
+            last_log_time = now;
+        }
+
         // Debug variables (initialized to 0)
         double road_noise = 0.0;
         double slide_noise = 0.0;
@@ -142,16 +201,23 @@ public:
         double bottoming_crunch = 0.0;
 
         // --- PRE-CALCULATION: TIRE LOAD FACTOR ---
-        // Calculate this once to use across multiple effects.
-        // Heavier load = stronger vibration transfer.
-        double avg_load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
+        double avg_load = raw_load;
 
-        // SANITY CHECK: Retaining basic check, but trust new data more.
+        // SANITY CHECK: Hysteresis Logic
         // If load is exactly 0.0 but car is moving, telemetry is likely broken.
+        // Use a counter to prevent flickering if data is noisy.
         if (avg_load < 1.0 && std::abs(data->mLocalVel.z) > 1.0) {
+            m_missing_load_frames++;
+        } else {
+            // Decay count if data is good
+            m_missing_load_frames = (std::max)(0, m_missing_load_frames - 1);
+        }
+
+        // Only trigger fallback if missing for > 20 frames (approx 50ms at 400Hz)
+        if (m_missing_load_frames > 20) {
             avg_load = 4000.0; // Default load
             if (!m_warned_load) {
-                std::cout << "[WARNING] Missing Tire Load data. Defaulting to 4000N." << std::endl;
+                std::cout << "[WARNING] Missing Tire Load data (persistent). Defaulting to 4000N." << std::endl;
                 m_warned_load = true;
             }
             frame_warn_load = true;
@@ -209,24 +275,16 @@ public:
         double avg_rear_grip = (grip_rl + grip_rr) / 2.0;
         
         // Delta between front and rear grip
-        // If front has 1.0 grip and rear has 0.5, delta is 0.5. Boost SoP.
         double grip_delta = avg_grip - avg_rear_grip;
         if (grip_delta > 0.0) {
             sop_total *= (1.0 + (grip_delta * m_oversteer_boost * 2.0));
         }
         
-        // --- 2a. Rear Aligning Torque Integration (Experimental) ---
-        // Add a "Counter-Steer" suggestion based on rear axle force.
-        // Approx: RearLateralForce * Trail. 
-        // We modulate this by oversteer_boost as well.
+        // --- 2a. Rear Aligning Torque Integration ---
         double rear_lat_force = (data->mWheel[2].mLateralForce + data->mWheel[3].mLateralForce) / 2.0; // mWheel
-        // Trail approx: 0.03m (3cm). Scaling factor required.
-        // Sign correction: If rear force pushes left, wheel should turn right (align).
-        // rF2 signs: LatForce +Y is Left? We need to tune this.
-        // For now, simpler approximation: if LocalRotAccel.y (Yaw Accel) is high, add counter torque.
-        // Let's stick to the grip delta for now but add a yaw-rate damper if needed.
-        // Actually, let's inject a fraction of rear lateral force directly.
-        double rear_torque = rear_lat_force * 0.05 * m_oversteer_boost; // 0.05 is arb scale
+        // Scaled down for Nm. Old was 0.05. 2000N * 0.05 = 100.
+        // New target ~0.5 Nm contribution? 2000 * K = 0.5 => K = 0.00025
+        double rear_torque = rear_lat_force * 0.00025 * m_oversteer_boost; 
         sop_total += rear_torque;
         
         double total_force = output_force + sop_total;
@@ -280,9 +338,7 @@ public:
                 m_lockup_phase += freq * dt * TWO_PI;
                 if (m_lockup_phase > TWO_PI) m_lockup_phase -= TWO_PI;
 
-                double amp = severity * m_lockup_gain * 800.0;
-                
-                // Use the integrated phase
+                double amp = severity * m_lockup_gain * 4.0; // Scaled for Nm (was 800)
                 lockup_rumble = std::sin(m_lockup_phase) * amp;
                 total_force += lockup_rumble;
             }
@@ -319,7 +375,7 @@ public:
                 if (m_spin_phase > TWO_PI) m_spin_phase -= TWO_PI;
 
                 // Amplitude
-                double amp = severity * m_spin_gain * 500.0;
+                double amp = severity * m_spin_gain * 2.5; // Scaled for Nm (was 500)
                 spin_rumble = std::sin(m_spin_phase) * amp;
                 
                 total_force += spin_rumble;
@@ -348,7 +404,7 @@ public:
                 double sawtooth = (m_slide_phase / TWO_PI) * 2.0 - 1.0;
 
                 // Amplitude: Scaled by PRE-CALCULATED global load_factor
-                slide_noise = sawtooth * m_slide_texture_gain * 300.0 * load_factor;
+                slide_noise = sawtooth * m_slide_texture_gain * 1.5 * load_factor; // Scaled for Nm (was 300)
                 total_force += slide_noise;
             }
         }
@@ -368,7 +424,7 @@ public:
             m_prev_vert_deflection[1] = vert_r;
             
             // Amplify sudden changes
-            double road_noise = (delta_l + delta_r) * 5000.0 * m_road_texture_gain; 
+            double road_noise = (delta_l + delta_r) * 25.0 * m_road_texture_gain; // Scaled for Nm (was 5000)
             
             // Apply LOAD FACTOR: Bumps feel harder under compression
             road_noise *= load_factor;
@@ -389,7 +445,7 @@ public:
                 double excess = max_load - BOTTOM_THRESHOLD;
                 
                 // Non-linear response (Square root softens the initial onset)
-                double bump_magnitude = std::sqrt(excess) * m_bottoming_gain * 0.5;
+                double bump_magnitude = std::sqrt(excess) * m_bottoming_gain * 0.0025; // Scaled (was 0.5)
                 
                 // FIX: Use a 50Hz "Crunch" oscillation instead of directional DC offset
                 double freq = 50.0; 
