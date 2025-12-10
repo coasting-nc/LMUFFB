@@ -214,15 +214,12 @@ To avoid "aliasing" (square-wave look) in the GUI graphs:
 
 # File: build_commands.txt
 ```
-Write build files (windows)
+Write build files
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -B build
 
 
-Build release (Windows)
+Do a clean build
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake --build build --config Release
-
-Clean re-build release (Windows)
-& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake --build build --config Release --clean-first
 
 
 To run the tests:
@@ -1229,40 +1226,33 @@ This is an **experimental early alpha version** of a force feedback application.
 
 ## ⚠️ Important Notes
 
-### LMU 1.2+ Support (v0.4.0+)
+### Current LMU Limitations (v0.3.20)
 
-**Full Telemetry Access**: With **Le Mans Ultimate 1.2** (released December 9th, 2024), the game now includes native shared memory support with complete tire telemetry data. **lmuFFB v0.4.0+** fully supports LMU 1.2's new interface, providing access to:
-- **Tire Load** - Essential for load-sensitive effects
-- **Grip Fraction** - Enables dynamic understeer/oversteer detection
-- **Patch Velocities** - Allows physics-based texture generation
-- **Steering Shaft Torque** - Direct torque measurement for accurate FFB
+**Limited Telemetry Access**: Due to limitations in Le Mans Ultimate versions up to 1.1, lmuFFB can currently only read **lateral G acceleration** from the game (used for the Seat of Pants effect). Other FFB effects that rely on tire data (such as Tire Load, Grip Fraction, etc.) are **not available** because LMU does not yet output this telemetry.
 
-**No Plugin Required**: Unlike previous versions, LMU 1.2 has built-in shared memory - no external plugins needed!
-
-### 🧪 Experimental Version - Testing Needed!
-
-This is an **experimental release** with the new LMU 1.2 interface. The FFB formulas may require refinement based on real-world testing.
-
-**Please help us improve lmuFFB:**
-1. **Test with caution** - Start with low wheel strength settings (see Safety Warning above)
-2. **Experiment with settings** - Try different effect combinations and gains
-3. **Share your results** - Post screenshots of the "Troubleshooting Graphs" window and the main app window to the [LMU Forum Thread](https://community.lemansultimate.com/index.php?threads/irffb-for-lmu-lmuffb.10440/)
-4. **Report issues** - Let us know what works and what doesn't!
-
-Your testing and feedback is greatly appreciated! 🙏
+**LMU 1.2 Update Coming**: With the upcoming release of **LMU 1.2** (on December 9th, 2025), the game will officially support a new shared memory format that is expected to include tire telemetry data. This will unlock the full range of FFB effects. However, **lmuFFB will require an update** to support this new format - the current version (0.3.20) does not yet support LMU 1.2's shared memory.
 
 ### rFactor 2 Compatibility
 
-**Note**: rFactor 2 is **not supported** in v0.4.0+. For rFactor 2, please use earlier versions of lmuFFB (v0.3.x). See the [rFactor 2 Setup Guide](#rfactor-2-setup-legacy) at the end of this document.
+lmuFFB may work with **rFactor 2** out of the box using the same installation instructions, as both games share the same underlying engine and telemetry system. However, rFactor 2 support is not officially tested or guaranteed.
 
-## Installation & Configuration (LMU 1.2+)
+## Installation & Configuration  
 
 ### 1. Prerequisites
+
+*   **rF2 Shared Memory Plugin**: Download `rFactor2SharedMemoryMapPlugin64.dll` from [TheIronWolfModding's GitHub](https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin#download).
+    *   **Installation Steps**: 
+        *   Place the `rFactor2SharedMemoryMapPlugin64.dll` file into `Le Mans Ultimate/Plugins/` directory.
+        *   **Note**: The `Plugins` folder may not exist by default - create it manually if needed.
+        *   **Tip**: If you've installed apps like [CrewChief](https://thecrewchief.org/), this plugin might already be present. Check before downloading.
+    *   **Activation**:
+        *   LMU requires manual activation: Open `Le Mans Ultimate\UserData\player\CustomPluginVariables.JSON` and set the `" Enabled"` field to `1` for the plugin entry.
+        *   **Important**: Restart LMU completely after making this change.
+        *   **If the plugin entry is missing**: Install the **Visual C++ 2013 (VC12) runtime** from your game's `Support\Runtimes` folder, then restart LMU to auto-generate the entry.
 
 *   **vJoy Driver**: Install version **2.1.9.1** (by jshafer817) or compatible. Download from [vJoy releases](https://github.com/jshafer817/vJoy/releases).
     *   *Why vJoy?* The game needs a "dummy" device to bind steering to, so it doesn't try to send its own FFB to your real wheel while lmuFFB is controlling it.
     *   *Tip:* **Disable all vJoy FFB Effects** in the "Configure vJoy" tool, except "Constant Force" (though lmuFFB drives your wheel directly, this prevents vJoy from trying to interfere if you use legacy mode).
-
 ### 2. Step-by-Step Setup
 
 **A. Configure vJoy**
@@ -1303,20 +1293,20 @@ Your testing and feedback is greatly appreciated! 🙏
             *   **SOP (Seat of Pants):** Increase from 0.0 to 0.3 (you should feel lateral forces in corners).
             *   **Understeer Effect:** Ensure it's at 1.0 (default).
         
-        Method A vs Method B:
         *   *Pros:* Simplest setup. No vJoy required.
         *   *Cons:* If LMU "locks" the device (Exclusive Mode), LMUFFB might fail to send forces. If this happens, try Method B.
     *   **Method B (vJoy Bridge - Compatibility):** Bind to **vJoy Device (Axis Y)**.
         *   *Requirement:* You MUST use **Joystick Gremlin** (or similar) to map your Physical Wheel to vJoy Axis Y. The "vJoy Demo Feeder" is NOT sufficient for driving.
         *   *Why Axis Y?* LMUFFB uses Axis X for FFB monitoring (if enabled). Using Y prevents conflicts.
-5.  **In-Game Force Feedback settings in LMU**:
-    *   **FFB Strength**: reduce to **0%** (Off).
+5.  **Force Feedback**:
+    *   **Type**: Set to "None" (if available) or reduce **FFB Strength** to **0%** / **Off**.
+        *   *Note:* LMU may not have a "None" option; reducing strength to 0 is the workaround.
     *   **Effects**: Set "Force Feedback Effects" to **Off**.
     *   **Smoothing**: Set to **0** (Raw).
     *   **Advanced**: Set "Collision Strength" and "Steering Torque Sensitivity" to **0%**.
     *   **Tweaks**: Disable "Use Constant Steering Force Effect".
 
-**C. Configure lmuFFB**
+**C. Configure lmuFFB (The App)**
 1.  Run `LMUFFB.exe`.
 2.  **FFB Device**: In the dropdown, select your **Physical Wheel** (e.g., "Simucube 2 Pro", "Fanatec DD1").
     *   *Note:* Do NOT select the vJoy device here. You want lmuFFB to talk to your real wheel.
@@ -1328,19 +1318,16 @@ Your testing and feedback is greatly appreciated! 🙏
 
 - **Wheel Jerking / Fighting**: You likely have a "Double FFB" conflict.
     - Ensure in-game Steering is bound to **vJoy**, NOT your real wheel.
--   **Wheel Jerking / Fighting**: You likely have a "Double FFB" conflict.
-    -   Ensure in-game Steering is bound to **vJoy**, NOT your real wheel.
-    -   Ensure in-game FFB is sending to vJoy.
-    -   If the wheel oscillates on straights, reduce **SOP Effect** to 0.0 and increase smoothing.
--   **No Steering (Car won't turn)**:
-    -   If you used **Method B (vJoy)**, you need **Joystick Gremlin** running to bridge your wheel to vJoy. The "vJoy Demo Feeder" is for testing only.
--   **No FFB**: 
-    -   Ensure the "FFB Device" in lmuFFB is your real wheel.
-    -   Check if the Shared Memory is working (Does "Connected to Shared Memory" appear in the console?).
-    -   Verify you're running LMU 1.2 or later (earlier versions don't have native shared memory).
--   **"vJoyInterface.dll not found"**: Ensure the DLL is in the same folder as the executable. You can grab it from `C:\\Program Files\\vJoy\\SDK\\lib\\amd64\\` or download from the [vJoy GitHub](https://github.com/shauleiz/vJoy/tree/master/SDK/lib/amd64/vJoyInterface.dll).
-    -   *Alternative:* You can try moving `LMUFFB.exe` directly into `C:\\Program Files\\vJoy\\x64\\` if you have persistent DLL issues.
--   **"Could not open file mapping object"**: Start the game and load a track first. The shared memory only activates when driving.
+    - Ensure in-game FFB is sending to vJoy.
+    - If the wheel oscillates on straights, reduce **SOP Effect** to 0.0 and increase smoothing.
+- **No Steering (Car won't turn)**:
+    - If you used **Method B (vJoy)**, you need **Joystick Gremlin** running to bridge your wheel to vJoy. The "vJoy Demo Feeder" is for testing only.
+- **No FFB**: 
+    - Ensure the "FFB Device" in lmuFFB is your real wheel.
+    - Check if the Shared Memory Plugin is working (Does "Connected to Shared Memory" appear in the console?).
+- **"vJoyInterface.dll not found"**: Ensure the DLL is in the same folder as the executable. You can grab it from `C:\Program Files\vJoy\SDK\lib\amd64\` or download from the [vJoy GitHub](https://github.com/shauleiz/vJoy/tree/master/SDK/lib/amd64/vJoyInterface.dll).
+    - *Alternative:* You can try moving `LMUFFB.exe` directly into `C:\Program Files\vJoy\x64\` if you have persistent DLL issues.
+- **"Could not open file mapping object"**: Start the game and load a track first.
 
 ## Known Issues (v0.3.19)
 *   **Telemetry Gaps**: Some users report missing telemetry for Dashboard apps (ERS, Temps). lmuFFB has robust fallbacks (Sanity Checks) that prevent dead FFB effects even if the game fails to report data (e.g., zero Grip or Load). See [Telemetry Report](docs/dev_docs/telemetry_availability_report.md).
@@ -1358,10 +1345,11 @@ For feedback, questions, or support:
 *   [The Physics of Feel - Driver's Guide](docs/the_physics_of__feel_-_driver_guide.md) - **Comprehensive guide** explaining how lmuFFB translates telemetry into tactile sensations, with telemetry visualizations
 *   [FFB Effects & Customization Guide](docs/ffb_effects.md)
 *   [FFB Customization Guide (Legacy)](docs/ffb_customization.md)
+*   [GUI Framework Options](docs/gui_framework_options.md)
+*   [DirectInput Implementation Guide](docs/dev_docs/directinput_implementation.md)
 *   [Telemetry Data Reference](docs/dev_docs/telemetry_data_reference.md)
 *   [vJoy Compatibility Guide](docs/vjoy_compatibility.md)
 *   [Comparisons with Other Apps](docs/comparisons.md)
-*   [FFB Math Formulas](docs/dev_docs/FFB_formulas.md)
 
 
 
@@ -1419,14 +1407,19 @@ The application reads telemetry from the rFactor 2 engine (Le Mans Ultimate) via
 6.  Click **Build** in the bottom status bar.
 
 ### Option C: Command Line (Windows)
-1.  Open the Powershell.
+1.  Open the **Developer Command Prompt for VS 2022**.
 2.  Navigate to the repository root.
 3.  Run the following commands:
     ```cmd
-    'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake --build build --config Release --clean-first
+    mkdir build
+    cd build
+    cmake -G "NMake Makefiles" -DVJOY_SDK_DIR="C:/Path/To/vJoy/SDK" ..
+    nmake
     ```
+    *Alternatively, use `cmake --build .` instead of `nmake`.*
 
-## Building the Installer (WIP, not yet supported)
+
+## Building the Installer
 
 To create the `LMUFFB_Setup.exe`:
 
@@ -1435,27 +1428,13 @@ To create the `LMUFFB_Setup.exe`:
 3.  **Run Compiler**: Open `installer/lmuffb.iss` in Inno Setup Compiler and click **Compile**.
 4.  **Output**: The installer will be generated in `installer/Output/`.
 
----
-
-## rFactor 2 Setup (Legacy)
-
-**Note**: rFactor 2 support was removed in v0.4.0. To use lmuFFB with rFactor 2, you must download and use **version 0.3.x** from the [releases page](https://github.com/coasting-nc/LMUFFB/releases).
-
-### Prerequisites for rFactor 2 (v0.3.x only):
-
-1. **rF2 Shared Memory Plugin**: Download `rFactor2SharedMemoryMapPlugin64.dll` from [TheIronWolfModding's GitHub](https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin#download)
-2. **Installation**: Place the DLL in `rFactor 2/Plugins/` directory
-3. **Activation**: Enable the plugin in rFactor 2's game settings: edit [Game Folder]\UserData\playerCustomPluginVariables.JSON , set " Enabled" value to 1, and restart rF2  
-4. Follow the same vJoy and wheel configuration steps as described above for LMU
-
-For detailed rFactor 2 setup instructions, refer to the README included with v0.3.x releases.
-
 ```
 
 # File: README.txt
 ```
 lmuFFB - Le Mans Ultimate Force Feedback
 ========================================
+Version: 0.3.7
 
 See README.md for full documentation with images and links.
 
@@ -1503,47 +1482,50 @@ configuration.
 IMPORTANT NOTES
 ---------------
 
-LMU 1.2+ SUPPORT (v0.4.0+):
+CURRENT LMU LIMITATIONS (v0.3.20):
 
-Full Telemetry Access:
-With Le Mans Ultimate 1.2 (released December 9th, 2024), the game now includes 
-native shared memory support with complete tire telemetry data. lmuFFB v0.4.0+ 
-fully supports LMU 1.2's new interface, providing access to:
-- Tire Load - Essential for load-sensitive effects
-- Grip Fraction - Enables dynamic understeer/oversteer detection
-- Patch Velocities - Allows physics-based texture generation
-- Steering Shaft Torque - Direct torque measurement for accurate FFB
+Limited Telemetry Access:
+Due to limitations in Le Mans Ultimate versions up to 1.1, lmuFFB can currently 
+only read LATERAL G ACCELERATION from the game (used for the Seat of Pants effect). 
+Other FFB effects that rely on tire data (such as Tire Load, Grip Fraction, etc.) 
+are NOT AVAILABLE because LMU does not yet output this telemetry.
 
-No Plugin Required:
-Unlike previous versions, LMU 1.2 has built-in shared memory - no external 
-plugins needed!
-
-EXPERIMENTAL VERSION - TESTING NEEDED:
-
-This is an experimental release with the new LMU 1.2 interface. The FFB 
-formulas may require refinement based on real-world testing.
-
-Please help us improve lmuFFB:
-1. Test with caution - Start with low wheel strength settings (see Safety 
-   Warning above)
-2. Experiment with settings - Try different effect combinations and gains
-3. Share your results - Post screenshots of the "Troubleshooting Graphs" 
-   window and the main app window to the LMU Forum Thread:
-   https://community.lemansultimate.com/index.php?threads/irffb-for-lmu-lmuffb.10440/
-4. Report issues - Let us know what works and what doesn't!
-
-Your testing and feedback is greatly appreciated!
+LMU 1.2 Update Coming:
+With the upcoming release of LMU 1.2 (on December 9th, 2025), the game will officially support a new 
+shared memory format that is expected to include tire telemetry data. This will 
+unlock the full range of FFB effects. However, lmuFFB will require an update to 
+support this new format - the current version (0.3.20) does not yet support 
+LMU 1.2's shared memory.
 
 rFactor 2 Compatibility:
-rFactor 2 is NOT SUPPORTED in v0.4.0+. For rFactor 2, please use earlier 
-versions of lmuFFB (v0.3.x). See the rFactor 2 Setup Guide at the end of 
-this document.
+lmuFFB may work with rFactor 2 out of the box using the same installation 
+instructions, as both games share the same underlying engine and telemetry system. 
+However, rFactor 2 support is not officially tested or guaranteed.
 
 
-PREREQUISITES (LMU 1.2+)
-------------------------
+PREREQUISITES
+-------------
 
-1. vJoy Driver (Version 2.1.9.1 recommended)
+1. rF2 Shared Memory Plugin (rFactor2SharedMemoryMapPlugin64.dll)
+   Download from:
+   - https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin#download
+   - Or bundled with CrewChief: https://thecrewchief.org/
+   
+   Installation Steps:
+   - Place the rFactor2SharedMemoryMapPlugin64.dll file into "Le Mans Ultimate/Plugins/" 
+     directory
+   - NOTE: The "Plugins" folder may not exist by default - create it manually if needed
+   - TIP: If you've installed apps like CrewChief, this plugin might already be present. 
+     Check before downloading.
+   
+   Activation:
+   - LMU requires manual activation: Open "Le Mans Ultimate\UserData\player\
+     CustomPluginVariables.JSON" and set the " Enabled" field to 1 for the plugin entry
+   - IMPORTANT: Restart LMU completely after making this change
+   - If the plugin entry is missing: Install the Visual C++ 2013 (VC12) runtime from 
+     your game's "Support\Runtimes" folder, then restart LMU to auto-generate the entry
+
+2. vJoy Driver (Version 2.1.9.1 recommended)
    Download: https://github.com/jshafer817/vJoy/releases
    
    Why vJoy? LMU needs a "dummy" device to bind steering to, so it doesn't 
@@ -1555,7 +1537,7 @@ PREREQUISITES (LMU 1.2+)
    - Disable all vJoy FFB Effects EXCEPT "Constant Force"
    - Click Apply
 
-2. vJoyInterface.dll (Required for lmuFFB to run)
+3. vJoyInterface.dll (Required for lmuFFB to run)
    This DLL MUST be in the same folder as LMUFFB.exe
    
    Download from:
@@ -1606,7 +1588,6 @@ A. Configure Le Mans Ultimate (LMU)
         * SOP (Seat of Pants): Increase from 0.0 to 0.3 (feel lateral forces)
         * Understeer Effect: Ensure it's at 1.0 (default)
       
-      Method A vs Method B:
       Pros: Simplest setup. No vJoy required
       Cons: If wheel has no FFB, try Method B
       
@@ -1614,15 +1595,17 @@ A. Configure Le Mans Ultimate (LMU)
       - Bind to "vJoy Device (Axis Y)"
       - IMPORTANT: You MUST use "Joystick Gremlin" to map your wheel to vJoy Axis Y.
       - Why? Guarantees separation of FFB and Input.
-
-   5. In-Game Force Feedback settings in LMU:
-      - FFB Strength: reduce to **0%** (Off).
+   
+   5. Force Feedback Settings:
+      - Type: Set to "None" (if available) or reduce FFB Strength to 0% / Off
+      - Note: LMU may not have a "None" option; reducing strength to 0 is 
+        the workaround.
       - Effects: Set "Force Feedback Effects" to Off
       - Smoothing: Set to 0 (Raw) for fastest telemetry updates
       - Advanced: Set Collision Strength and Torque Sensitivity to 0%
       - Tweaks: Disable "Use Constant Steering Force Effect"
 
-B. Configure lmuFFB
+B. Configure lmuFFB (The App)
    1. Run LMUFFB.exe
    2. FFB Device: Select your Physical Wheel (e.g., "Simucube 2 Pro", "Fanatec DD1")
       - Do NOT select the vJoy device here
@@ -1649,9 +1632,8 @@ No Steering (Car won't turn):
 
 No FFB:
   - Ensure "FFB Device" in lmuFFB is your real wheel
-  - Check if Shared Memory is working (console should show "Connected")
-  - Verify you're running LMU 1.2 or later (earlier versions don't have 
-    native shared memory)
+  - Check if Shared Memory Plugin is working (console should show "Connected")
+  - Verify the plugin DLL is in Le Mans Ultimate/Plugins/ folder
 
 "vJoyInterface.dll not found":
   - Copy vJoyInterface.dll to the same folder as LMUFFB.exe
@@ -1660,7 +1642,7 @@ No FFB:
 
 "Could not open file mapping object":
   - Start LMU and load a track first
-  - The shared memory only activates when driving
+  - The Shared Memory Plugin only activates when driving
 
 
 KNOWN ISSUES (v0.3.7)
@@ -1681,30 +1663,6 @@ For feedback, questions, or support:
 
 For full documentation, advanced settings, and developer information, 
 see README.md or visit: https://github.com/coasting-nc/LMUFFB
-
-
-===============================================================================
-RFACTOR 2 SETUP (LEGACY)
-===============================================================================
-
-NOTE: rFactor 2 support was removed in v0.4.0. To use lmuFFB with rFactor 2, 
-you must download and use version 0.3.x from the releases page:
-https://github.com/coasting-nc/LMUFFB/releases
-
-PREREQUISITES FOR RFACTOR 2 (v0.3.x only):
-
-1. rF2 Shared Memory Plugin
-   Download rFactor2SharedMemoryMapPlugin64.dll from:
-   https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin#download
-
-2. Installation
-   - Place the DLL in rFactor 2/Plugins/ directory
-   - Enable the plugin in rFactor 2's game settings: : edit [Game Folder]\UserData\playerCustomPluginVariables.JSON , set " Enabled" value to 1, and restart rF2
-
-3. Follow the same vJoy and wheel configuration steps as described above for LMU
-
-For detailed rFactor 2 setup instructions, refer to the README included with 
-v0.3.x releases.
 
 ```
 
@@ -7175,535 +7133,6 @@ Please also add a changelog entry for version 0.3.17 and for this upcoming chang
 Add the following logs / prints to console:
 When we release vJoy. When we unselect vJoy as device.
 
-
-## Troubleshooting 15
-
-Add option "always on top". Possibly also for the console window.
-
-Two missing data found: tire load (avg tyre load) and grip fraction (avg grip fraction). Not exactly missing, more two binary values only (like 0 and 1 only).
-
-Add a way to debug this missing data, see what the game is actually putting out..
-
-Build a log system that logs all the data logged from the game (and also each component that we calculate).
-..autosave these data to csv or other file easy to visualize.
-could be also enough to inspect it as a txt file
-also, we could print stats for each channel: min, max, avg, std dev, mean, 1st and 3rd quartile, etc
-Test was done while driving on keyboard.
-
-Investigate what happens to our formula when grip fract and tyre load are missing. What are the default values?
-
-Investigate the user reported issues with the last version (0.4.0):
-"I was able to try it on the wheel today, and while the FFB is still not usable, there are some noteworthy changes. 
-
-I first tried the direct input method, where I bound my wheel directly in game after activating vJoy on the x-axis, and the telemetry data now puts out lots of info. The FFB is also different from before, it moves the wheel around **seemingly at random**, while not being connected to the car at all. I am **unable to steer the car** currently, and the car **turns left constantly**. I will add some telemetry info below, the first two are from mapping the wheel directly, without using Joystick Gremlin. 
-
-The picture where telemetry fails to gather certain data is from the attempt using the Y-axis with Joystick Gremlin. I see **no difference in FFB or otherwise between the two methods**, except for the errors in telemetry data. It seems to me like using the alternative method might not be necessary for the future.(...) Anyway, here are the screenshots:"
-
-Good thing is that out final output ffb it not "binary" anymore, but show some actual waveform. There is some clipping occasionally, but that can be tweaked adjusting the gain of the final output or smt like that.
-
-Also other channels might need refinement in how we use them, since values where very low. Either that, or we should change the scale of the graph visualization.
-
-Add feature: multiple preset for the sliders values.
-
-Do test with wheel, vjoy, etc. See what it is actually needed for: our app sending FFB signal, and the game not sending FFB to the wheel.
-The signal arriving when we are driving.
-Make sure we can manage properly the fact that the user might be driving or in menu, and that the game might also not have been launched. Add a new load / start loop procedure, with buttons in the GUI to retry.
-Print more debugging logging info to the console, for each event on device added, acquired, disconnected etc.
-Try to acquire the Wheel in direct input in exclusive mode. Try before and after having launched the game.
-Reconsider if Joystick Gremlin is necessary.
-If useful, compare behavior with using keyboard vs wheel. Binding keyboard to vjoy / j.gremlin to mock a wheel?
-
-Feed the screenshots and issue description to LLM, and see which solutions or experiments they suggest.
-
-print the stats for all the channels to make sure we are using them correctly, at correct scales, and that we are getting real car data (for tire load and grip fract).
-
-TEST TODO: The "Zero Gain" Test (Verify Noise):
-Action: Set Master Gain to 0.0 in LMUFFB.
-Action: Drive. Does the wheel still move randomly?
-Result: If yes, the game is still sending FFB (Double FFB). If no, the random movement comes from LMUFFB calculations.
-
-Consider if we could implement via code a check on whether the uses has active previous shared memory plugins (the one for rF2 and the new one for LMU). Both are not necessary with LMU 1.2. Consider if their presence might interfere with the values we are reading from the official LMU 1.2 shared memory interface.
-
-Consider how we could use additional channels (eg. longitudinal patch velocity / acceleration, rear tires grip, lock up detection, wheelspin detection, etc.)
-
-inprove the customizable sliders in the Gui to allow more options: isolating better each component of the formula, with enable / disable option (disable put a neutral value like 1 in the formulas) for
-self aligning torque, lateral g, understeer effect, oversteer effect, tire spin from gas, slide / slip angle, lockup under braking, etc.
-more clearly organize each effect / component of the final formula, which its own section in the gui, with option to disable/enable, slider for adjusting main value, smooting factors, caps, etc.
-
-this will help also isolate individual components of the formula in trouble shoootig initial experiments to get a meaningful FFB signal in the wheel.
-Do the esperiments isolating 1 component at a time, disabling all the others. Can we feel it? Is it as expected?
-See if only adjusting the current sliders produces some usable (not random) FFB signal feel in the wheel.
-
-Ask LLM for priority of things to try next:
-settings in LMU, setting FFB force to zero ingame: does it change FFB from the app?
-
-is there something wrong in how we send data to direct input? Since the user described the FFB as random, but in the plot it looked reasonable.
-We should add in the troubleshooting visualizations also plots for car behavior:
-sterring wheel, gas pedal, brake pedal, speed, acceleration, ..
-This will help understand what the car was doing, and explain better what we see in the other channels.
-
-Note that from the telemetry we are also missing wheelspin information. 
-It was in rF2 telemetry generated by motec, but not in rF2Data.h
-Wheelspin might be derived from the patch velocity and ground velocity.
-In LMU we also have mStaticUndeflectedRadius (radius of the tyre) which was missing in rF2. This might allow precise calculation of wheelspin and possibly lockup.
-
-In rF2Data.h :
-    double mLateralPatchVel;
-    double mLongitudinalPatchVel;
-    double mLateralGroundVel;
-    double mLongitudinalGroundVel;
-
-In InternalsPlugin.hpp:
-    double mRotation;              // radians/sec
-    double mLateralPatchVel;       // lateral velocity at contact patch
-    double mLongitudinalPatchVel;  // longitudinal velocity at contact patch
-    double mLateralGroundVel;      // lateral velocity at contact patch
-    double mLongitudinalGroundVel; // longitudinal velocity at contact patch
-    mStaticUndeflectedRadius
-
-    Here is the prioritized diagnosis and implementation plan based on your notes, the screenshots, and the codebase analysis.
-
-### Hypotheses on Root Causes
-
-1.  **The "Car Turns Left / Random Steering" Issue (Critical):**
-    *   **Hypothesis:** **Feedback Loop via vJoy.**
-    *   **Reasoning:** If the user has `Monitor FFB on vJoy` enabled (or if it was enabled previously and vJoy axis is stuck), the App writes the *Calculated Force* to vJoy Axis X. If the user *also* bound the Game's Steering Input to vJoy Axis X, the FFB signal effectively "steers" the car.
-    *   **Evidence:** "Moves the wheel around seemingly at random... unable to steer." If the FFB calculates a left force, it moves vJoy X left. The game sees vJoy X left, steers left. Physics generates more aligning torque. FFB increases. Infinite loop.
-
-2.  **The "Binary" / Square Wave Telemetry:**
-    *   **Hypothesis:** **Sanity Check Artifacts.**
-    *   **Reasoning:** In `FFBEngine.h`, you have logic: `if (avg_load < 1.0 ... ) avg_load = 4000.0;`.
-    *   **Evidence:** The screenshots show `Avg Tire Load` jumping exactly between 0 and a high flat value. This confirms the *raw* data from the game is **0.0**, and what you see on the graph is your own fallback logic toggling on/off based on whether the car is moving (`mLocalVel.z > 1.0`).
-    *   **Conclusion:** Despite using the new LMU 1.2 interface, the app is reading empty data for the specific car/session the user is running.
-TODO: in the plots show the raw value from the game, not our fallback values.
-
-3.  **The "Random" FFB Feel:**
-    *   **Hypothesis:** **Noise Amplification.**
-    *   **Reasoning:** Since Tire Load is toggling between 0 and 4000 instantly, any effect multiplied by `load_factor` (Slide, Road, Lockup) is being switched on/off violently 400 times a second. This creates a "random" or "noisy" sensation.
-
----
-
-### Part 1: Prioritized Diagnostic Steps (Try these first)
-
-1.  **Verify Input Binding (Stop the Feedback Loop):**
-    *   **Action:** Ask the user to ensure **"Monitor FFB on vJoy"** is **UNCHECKED** in the App.
-    *   **Action:** In Game Controls, ensure Steering is bound to their **Physical Wheel**, NOT vJoy (unless they are using Joystick Gremlin on Axis Y).
-    *   **Test:** Does the "constant left turn" stop?
-
-2.  **Inspect Raw Data (Bypass Sanity Checks):**
-    *   **Action:** We need to see if the game is outputting *anything* other than zero. The current graphs hide this because of the fallback logic.
-    *   **Code Change:** Add a "Raw" debug line (see Implementation below).
-
-3.  **Test Different Car Classes:**
-    *   **Action:** Ask the user to try a GTE car vs. a Hypercar. LMU 1.2 might populate telemetry differently for different physics models.
-
-4.  **Verify Shared Memory Lock:**
-    *   **Action:** Check the console output. Does it say "Shared Memory Lock Initialized"? If the lock isn't working, we might be reading a zeroed-out buffer.
-
----
-
-### Part 2: Prioritized Implementation List
-
-#### 1. CSV Telemetry Logger (High Priority)
-We need to record the raw data to analyze it offline. Screenshots are insufficient for 400Hz data.
-
-*   **What:** A class that writes `timestamp, raw_load, raw_grip, raw_steer, final_ffb` to a `.csv` file.
-*   **Why:** To definitively prove if the game is outputting 0.0 or just very low values.
-
-#### 2. "Always On Top" Window Option
-*   **What:** Add a toggle to keep the GUI visible over the game (borderless).
-*   **Why:** Requested by you/user for easier tuning while driving.
-
-#### 3. Raw vs. Corrected Visualization
-*   **What:** In `FFBEngine`, store `raw_tire_load` separately from `avg_load` (which gets the 4000N fallback).
-*   **Why:** The current graphs show the fallback value, making it look like "binary" data. We need to see the real input.
-
-#### 4. Safety: Disable vJoy Output by Default
-*   **What:** Hardcode `Config::m_output_ffb_to_vjoy = false` and ensure it resets to false on startup unless explicitly saved.
-*   **Why:** To prevent the "Car turns left" feedback loop.
-
----
-
-### Part 3: Proposed Code Changes
-
-#### A. Implement "Always On Top" (GuiLayer.cpp)
-
-Modify `GuiLayer::Init` and `GuiLayer::Render`.
-
-```cpp
-// src/GuiLayer.h
-static bool m_always_on_top; // Add this static member
-
-// src/GuiLayer.cpp
-bool GuiLayer::m_always_on_top = false;
-
-// Inside DrawTuningWindow (add checkbox)
-if (ImGui::Checkbox("Always On Top", &m_always_on_top)) {
-    SetWindowPos((HWND)g_hwnd, m_always_on_top ? HWND_TOPMOST : HWND_NOTOPMOST, 
-                 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-}
-```
-
-#### B. Implement CSV Logger (New Class)
-
-Create `src/TelemetryLogger.h`:
-
-```cpp
-#ifndef TELEMETRYLOGGER_H
-#define TELEMETRYLOGGER_H
-
-#include <fstream>
-#include <string>
-#include <chrono>
-#include <iomanip>
-
-class TelemetryLogger {
-    std::ofstream m_file;
-    bool m_recording = false;
-    long m_start_time = 0;
-
-public:
-    static TelemetryLogger& Get() {
-        static TelemetryLogger instance;
-        return instance;
-    }
-
-    void Start() {
-        if (m_recording) return;
-        auto now = std::chrono::system_clock::now();
-        auto time = std::chrono::system_clock::to_time_t(now);
-        std::stringstream ss;
-        ss << "lmuffb_log_" << std::put_time(std::localtime(&time), "%Y%m%d_%H%M%S") << ".csv";
-        
-        m_file.open(ss.str());
-        // Header
-        m_file << "Time,RawSteer,RawLoadFL,RawLoadFR,RawGripFL,RawGripFR,CalcFFB\n";
-        m_recording = true;
-        m_start_time = GetTickCount();
-    }
-
-    void Stop() {
-        if (m_recording) {
-            m_file.close();
-            m_recording = false;
-        }
-    }
-
-    void Log(float rawSteer, float loadFL, float loadFR, float gripFL, float gripFR, float outputFFB) {
-        if (!m_recording) return;
-        float time = (GetTickCount() - m_start_time) / 1000.0f;
-        m_file << time << "," << rawSteer << "," << loadFL << "," << loadFR 
-               << "," << gripFL << "," << gripFR << "," << outputFFB << "\n";
-    }
-    
-    bool IsRecording() { return m_recording; }
-};
-#endif
-```
-
-**Integration in `main.cpp` (FFBThread):**
-
-```cpp
-// Inside the loop, after calculating force:
-if (TelemetryLogger::Get().IsRecording()) {
-    TelemetryLogger::Get().Log(
-        pPlayerTelemetry->mSteeringShaftTorque,
-        pPlayerTelemetry->mWheel[0].mTireLoad,
-        pPlayerTelemetry->mWheel[1].mTireLoad,
-        pPlayerTelemetry->mWheel[0].mGripFract,
-        pPlayerTelemetry->mWheel[1].mGripFract,
-        (float)force
-    );
-}
-```
-
-**Integration in `GuiLayer.cpp`:**
-Add a "Start/Stop Logging" button in the Debug Window.
-
-#### C. Fix "Binary" Visualization (FFBEngine.h)
-
-We need to capture the *raw* values in the snapshot before we apply the fallback logic.
-
-```cpp
-// FFBEngine.h
-
-struct FFBSnapshot {
-    // ... existing fields ...
-    float raw_tire_load; // NEW
-    float raw_grip;      // NEW
-};
-
-// Inside calculate_force:
-double raw_avg_load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
-double raw_avg_grip = (fl.mGripFract + fr.mGripFract) / 2.0;
-
-// ... existing sanity check logic ...
-double avg_load = raw_avg_load;
-if (avg_load < 1.0 && ...) { avg_load = 4000.0; } // Fallback
-
-// ... inside Snapshot creation ...
-snap.raw_tire_load = (float)raw_avg_load; // Store RAW
-snap.raw_grip = (float)raw_avg_grip;      // Store RAW
-snap.tire_load = (float)avg_load;         // Store CORRECTED
-```
-
-**Update `GuiLayer.cpp`:**
-Add a new plot line for `Raw Load` (maybe in a different color) on top of the `Avg Tire Load` graph to show the difference.
-
-#### D. Refine FFB Formula (Prevent Randomness)
-
-If the data is indeed missing (0.0), the fallback logic toggles between 0 and 4000 based on `mLocalVel.z`. If velocity is noisy near 1.0 m/s, this toggles rapidly.
-
-**Change in `FFBEngine.h`:**
-Add hysteresis or a blend to the fallback.
-
-```cpp
-// Instead of hard switch:
-if (avg_load < 1.0) {
-    // If missing, ramp up to 4000 based on speed smoothly
-    double speed_factor = (std::min)(1.0, std::abs(data->mLocalVel.z) / 5.0); // Ramp over 0-5 m/s
-    avg_load = 4000.0 * speed_factor;
-}
-```
-This prevents the "square wave" on/off switching at low speeds, making the fallback smoother.
-
-### Summary of Next Steps
-
-1.  **Immediate:** Instruct user to uncheck "Monitor FFB on vJoy" and verify game bindings (Fixes steering loop).
-2.  **Code:** Implement `TelemetryLogger` and the `Raw` vs `Corrected` data split in `FFBEngine`.
-3.  **Test:** Run the logger. If `RawLoad` is truly 0.0 in the CSV, then the LMU 1.2 Shared Memory interface is still not providing data for that car, or we need to check `mExpansion` bytes or other fields in the struct.
-
-# Answer 2
-Here is the prioritized diagnosis and implementation plan based on the user report, screenshots, and codebase analysis.
-
-### 1. Diagnosis: Prioritized Things to Try Next
-
-Ask the user (or yourself during testing) to perform these specific steps to isolate the "Random/Left Turn" issue.
-
-1.  **The "Zero Gain" Test (Crucial)**
-    *   **Action:** Set **Master Gain** to `0.0` in LMUFFB. Drive.
-    *   **Observation:**
-        *   *If wheel still pulls left/jerks:* The force is coming from the **Game** (Double FFB) or a hardware centering spring. LMUFFB is innocent.
-        *   *If wheel goes limp:* The bad force is definitely coming from LMUFFB calculations.
-
-2.  **The "Raw Input" Check**
-    *   **Action:** In LMUFFB, look at the **Telemetry Inspector** graph for **Steering Torque (Nm)** while the car is stationary or moving slowly straight.
-    *   **Observation:**
-        *   Is it hovering near 0?
-        *   Is it stuck at a high value (e.g., -20 Nm)? If so, the *game* is reporting a constant torque, which LMUFFB is simply amplifying.
-
-3.  **The "Effect Isolation" Test**
-    *   **Action:** Set **Master Gain** to `1.0`. Set **SoP**, **Understeer**, **Oversteer**, and **All Textures** to `0.0` or `Disabled`.
-    *   **Result:** This passes the raw `mSteeringShaftTorque` through. Does it still jerk?
-    *   *Hypothesis:* If this feels okay, the "Randomness" comes from the **SoP** or **Texture** calculations reacting to the "Missing" (Zero) tire data.
-
-4.  **Verify Input Binding**
-    *   **Action:** Ensure the user hasn't accidentally bound the **Accelerator** or **Clutch** axis to the **Steering** axis in the game. A "constant left turn" often happens when a pedal (0 to 100%) is mapped to steering (-100% to +100%), resulting in a permanent 50% turn or similar offset.
-
----
-
-### 2. Hypotheses on Root Causes
-
-1.  **The "Fallback" Oscillation (Most Likely for "Random" feel)**
-    *   **Issue:** The screenshots show `Avg Tire Load` and `Avg Grip Fract` are **MISSING** (Red text).
-    *   **Mechanism:** Your code has a sanity check: `if (load < 1.0) load = 4000.0;`.
-    *   **The Bug:** If the telemetry flickers between `0.0` (Missing) and `0.0001` (Noise), the code rapidly toggles between **0N** and **4000N** of load.
-    *   **Result:** This acts like a square-wave generator, turning effects on and off 400 times a second. This feels like "random jerking" or "binary" vibration.
-
-2.  **Steering Torque Unit Mismatch**
-    *   **Issue:** LMU 1.2 changed `mSteeringArmForce` to `mSteeringShaftTorque`.
-    *   **Hypothesis:** The old value was in Newtons (approx +/- 4000). The new value is in Nm (approx +/- 20).
-    *   **Code:** You updated the graph scale to +/- 30, but did you update the **Normalization** in `FFBEngine.h`?
-    *   *Check:* `double max_force_ref = 20.0;` (In your provided `FFBEngine.h`). This looks correct, *but* if the game outputs 25Nm and you clamp at 20, you clip. If the game outputs raw steering rack force (Newtons) in that field by mistake, you are multiplying it by huge numbers.
-
-3.  **Axis Conflict (The "Left Turn")**
-    *   If `Config::m_output_ffb_to_vjoy` is enabled, and the user mapped Game Steering to vJoy Axis X, the FFB signal (which might be negative/left) is being fed back into the steering input.
-
----
-
-### 3. Implementation Plan (Prioritized)
-
-#### A. Implement "Unbind Device" Button (UX Fix)
-Users are confused about whether the device is active.
-
-#### B. Implement Console Stats Logging (Debugging)
-We need to see the raw numbers to confirm if they are 0, NaN, or just noisy.
-
-#### C. Fix "Missing Data" Handling
-Instead of hard-toggling defaults every frame, implement a "State Latch". If data is missing for > 1 second, switch to fallback and *stay* there until valid data returns for > 1 second.
-
-#### D. Safety: Force Disable vJoy Output
-Hardcode `m_output_ffb_to_vjoy = false` in the constructor or `Load` to ensure it doesn't accidentally turn on for users.
-
----
-
-### 4. Proposed Code Changes
-
-#### Step 1: Add "Unbind Device" to `DirectInputFFB`
-
-**File:** `src/DirectInputFFB.h`
-```cpp
-// Add to public:
-void ReleaseDevice();
-```
-
-**File:** `src/DirectInputFFB.cpp`
-```cpp
-void DirectInputFFB::ReleaseDevice() {
-#ifdef _WIN32
-    if (m_pEffect) {
-        m_pEffect->Stop();
-        m_pEffect->Unload();
-        m_pEffect->Release();
-        m_pEffect = nullptr;
-    }
-    if (m_pDevice) {
-        m_pDevice->Unacquire();
-        m_pDevice->Release();
-        m_pDevice = nullptr;
-    }
-    m_active = false;
-    m_deviceName = "None";
-    std::cout << "[DI] Device released by user." << std::endl;
-#endif
-}
-```
-
-**File:** `src/GuiLayer.cpp` (Inside `DrawTuningWindow`)
-```cpp
-    // ... inside the Device Selection combo block ...
-    if (ImGui::Button("Rescan Devices")) {
-        devices = DirectInputFFB::Get().EnumerateDevices();
-        selected_device_idx = -1;
-    }
-    
-    // NEW BUTTON HERE
-    ImGui::SameLine();
-    if (ImGui::Button("Unbind Device")) {
-        DirectInputFFB::Get().ReleaseDevice();
-        selected_device_idx = -1;
-    }
-    // ...
-```
-
-#### Step 2: Implement Non-Blocking Stats Logging
-
-We will add a simple struct to accumulate stats and print them once per second.
-
-**File:** `FFBEngine.h`
-
-Add this struct inside the class or globally:
-```cpp
-struct ChannelStats {
-    double min = 1e9;
-    double max = -1e9;
-    double sum = 0.0;
-    long count = 0;
-    
-    void Update(double val) {
-        if (val < min) min = val;
-        if (val > max) max = val;
-        sum += val;
-        count++;
-    }
-    
-    void Reset() {
-        min = 1e9; max = -1e9; sum = 0.0; count = 0;
-    }
-    
-    double Avg() { return count > 0 ? sum / count : 0.0; }
-};
-```
-
-Add these members to `FFBEngine` class:
-```cpp
-    // Logging State
-    ChannelStats s_torque;
-    ChannelStats s_load;
-    ChannelStats s_grip;
-    ChannelStats s_lat_g;
-    
-    std::chrono::steady_clock::time_point last_log_time = std::chrono::steady_clock::now();
-```
-
-Update `calculate_force` in `FFBEngine.h`:
-
-```cpp
-    double calculate_force(const TelemInfoV01* data) {
-        // ... existing setup ...
-        
-        // 1. Capture Raw Values
-        double raw_torque = data->mSteeringShaftTorque;
-        double raw_load = (data->mWheel[0].mTireLoad + data->mWheel[1].mTireLoad) / 2.0;
-        double raw_grip = (data->mWheel[0].mGripFract + data->mWheel[1].mGripFract) / 2.0;
-        double raw_lat_g = data->mLocalAccel.x;
-
-        // 2. Update Stats
-        s_torque.Update(raw_torque);
-        s_load.Update(raw_load);
-        s_grip.Update(raw_grip);
-        s_lat_g.Update(raw_lat_g);
-
-        // 3. Periodic Print (Non-blocking check)
-        auto now = std::chrono::steady_clock::now();
-        if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1) {
-            std::cout << "--- TELEMETRY STATS (1s) ---" << std::endl;
-            std::cout << "Torque (Nm): Avg=" << s_torque.Avg() << " Min=" << s_torque.min << " Max=" << s_torque.max << std::endl;
-            std::cout << "Load (N):    Avg=" << s_load.Avg()   << " Min=" << s_load.min   << " Max=" << s_load.max << std::endl;
-            std::cout << "Grip (0-1):  Avg=" << s_grip.Avg()   << " Min=" << s_grip.min   << " Max=" << s_grip.max << std::endl;
-            std::cout << "Lat G:       Avg=" << s_lat_g.Avg()  << " Min=" << s_lat_g.min  << " Max=" << s_lat_g.max << std::endl;
-            
-            // Reset
-            s_torque.Reset(); s_load.Reset(); s_grip.Reset(); s_lat_g.Reset();
-            last_log_time = now;
-        }
-
-        // ... continue with existing calculation logic ...
-```
-
-#### Step 3: Improve "Missing Data" Logic (Hysteresis)
-
-Modify the sanity check in `FFBEngine.h` to stop flickering.
-
-```cpp
-    // Add member variable
-    int m_missing_load_frames = 0;
-
-    // Inside calculate_force
-    double avg_load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
-
-    // Hysteresis: Only switch to fallback if missing for > 20 frames (50ms)
-    // Only switch back to real data if present for > 20 frames
-    if (avg_load < 1.0 && std::abs(data->mLocalVel.z) > 1.0) {
-        m_missing_load_frames++;
-    } else {
-        m_missing_load_frames = std::max(0, m_missing_load_frames - 1);
-    }
-
-    // Use fallback if we have been missing data for a while
-    if (m_missing_load_frames > 20) {
-        avg_load = 4000.0; 
-        if (!m_warned_load) {
-             std::cout << "[WARNING] Tire Load missing. Using fallback." << std::endl;
-             m_warned_load = true;
-        }
-    }
-```
-
-### 5. Additional Debugging for "Left Turn"
-
-In `DirectInputFFB.cpp`, inside `UpdateForce`, add a print if the force is consistently saturated.
-
-```cpp
-    // Inside UpdateForce
-    if (std::abs(normalizedForce) > 0.99) {
-        static int clip_log = 0;
-        if (clip_log++ % 400 == 0) {
-            std::cout << "[DI] WARNING: Output saturated at " << normalizedForce << ". Possible feedback loop or scaling issue." << std::endl;
-        }
-    }
-```
-
 ```
 
 # File: docs\python_version\performance_analysis.md
@@ -10679,20 +10108,19 @@ void test_grip_modulation() {
     // Set Gain to 1.0 for testing logic (default is now 0.5)
     engine.m_gain = 1.0; 
 
-    // NOTE: Max torque reference changed to 20.0 Nm.
-    data.mSteeringShaftTorque = 10.0; // Half of max ~20.0
+    data.mSteeringShaftTorque = 2000.0; // Half of max ~4000
     // Disable SoP and Texture to isolate
     engine.m_sop_effect = 0.0;
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = false;
 
-    // Case 1: Full Grip (1.0) -> Output should be 10.0 / 20.0 = 0.5
+    // Case 1: Full Grip (1.0) -> Output should be 2000 / 4000 = 0.5
     data.mWheel[0].mGripFract = 1.0;
     data.mWheel[1].mGripFract = 1.0;
     double force_full = engine.calculate_force(&data);
     ASSERT_NEAR(force_full, 0.5, 0.001);
 
-    // Case 2: Half Grip (0.5) -> Output should be 10.0 * 0.5 = 5.0 / 20.0 = 0.25
+    // Case 2: Half Grip (0.5) -> Output should be 2000 * 0.5 = 1000 / 4000 = 0.25
     data.mWheel[0].mGripFract = 0.5;
     data.mWheel[1].mGripFract = 0.5;
     double force_half = engine.calculate_force(&data);
@@ -10717,24 +10145,7 @@ void test_sop_effect() {
     // Calculation: 
     // LatG = 4.905 / 9.81 = 0.5
     // SoP Force = 0.5 * 0.5 * 1000 = 250
-    // Norm Force = 250 / 20.0 = 12.5 (Wait, logic check)
-    // 250 Nm SoP force is HUGE compared to 20 Nm steering.
-    // The previous 4000N reference was steering rack force.
-    // SoP Scaling of 1000.0 was tuned for that.
-    // If we use torque (Nm), SoP scale needs adjustment or normalization.
-    // However, for this test, we just want to verify the output matches expected given the code.
-    // Code: sop_total / 20.0.
-    // 250 / 20 = 12.5. Clamped to 1.0.
-    
-    // ADJUST TEST EXPECTATION:
-    // With 20.0 reference, 1000.0 scale is too high.
-    // Let's assume user adjusts SoP scale down or code reduces default.
-    // But sticking to current code: 12.5 -> Clamped 1.0.
-    
-    // Actually, let's lower SoP scale in test to verify math without clamp.
-    engine.m_sop_scale = 10.0; 
-    // SoP Force = 0.5 * 0.5 * 10 = 2.5 Nm.
-    // Norm = 2.5 / 20.0 = 0.125.
+    // Norm Force = 250 / 4000 = 0.0625
     
     // Run for multiple frames to let smoothing settle (alpha=0.1)
     double force = 0.0;
@@ -10742,7 +10153,7 @@ void test_sop_effect() {
         force = engine.calculate_force(&data);
     }
 
-    ASSERT_NEAR(force, 0.125, 0.001);
+    ASSERT_NEAR(force, 0.0625, 0.001);
 }
 
 void test_min_force() {
@@ -10760,13 +10171,12 @@ void test_min_force() {
     engine.m_road_texture_enabled = false;
     engine.m_sop_effect = 0.0;
 
-    // 20.0 is Max. Min force 0.10 means we want at least 2.0 Nm output effectively.
-    // Input 0.05 Nm. 0.05 / 20.0 = 0.0025.
-    data.mSteeringShaftTorque = 0.05; 
+    data.mSteeringShaftTorque = 10.0; // Very small force
     engine.m_min_force = 0.10; // 10% min force
 
     double force = engine.calculate_force(&data);
-    // 0.0025 is > 0.0001 (deadzone check) but < 0.10.
+    // 10 / 4000 = 0.0025. 
+    // This is > 0.0001 (deadzone check) but < 0.10.
     // Should be boosted to 0.10.
     
     // Debug print
@@ -10877,7 +10287,7 @@ void test_dynamic_tuning() {
     std::memset(&data, 0, sizeof(data));
     
     // Default State: Full Game Force
-    data.mSteeringShaftTorque = 10.0; // 10 Nm (0.5 normalized)
+    data.mSteeringShaftTorque = 2000.0;
     data.mWheel[0].mGripFract = 1.0;
     data.mWheel[1].mGripFract = 1.0;
     engine.m_understeer_effect = 0.0; // Disabled effect initially
@@ -10889,7 +10299,7 @@ void test_dynamic_tuning() {
     engine.m_gain = 1.0;
 
     double force_initial = engine.calculate_force(&data);
-    // Should pass through 10.0 (normalized: 0.5)
+    // Should pass through 2000.0 (normalized: 0.5)
     ASSERT_NEAR(force_initial, 0.5, 0.001);
     
     // --- User drags Master Gain Slider to 2.0 ---
@@ -10906,7 +10316,7 @@ void test_dynamic_tuning() {
     data.mWheel[1].mGripFract = 0.5;
     
     double force_grip_loss = engine.calculate_force(&data);
-    // 10.0 * 0.5 = 5.0 -> 0.25 normalized
+    // 2000 * 0.5 = 1000 -> 0.25 normalized
     ASSERT_NEAR(force_grip_loss, 0.25, 0.001);
     
     std::cout << "[PASS] Dynamic Tuning verified." << std::endl;
@@ -10980,8 +10390,6 @@ void test_oversteer_boost() {
     engine.m_sop_effect = 1.0;
     engine.m_oversteer_boost = 1.0;
     engine.m_gain = 1.0;
-    // Lower Scale to match new Nm range
-    engine.m_sop_scale = 10.0; 
     
     // Scenario: Front has grip, rear is sliding
     data.mWheel[0].mGripFract = 1.0; // FL
@@ -11003,21 +10411,13 @@ void test_oversteer_boost() {
     }
     
     // Expected: SoP boosted by grip delta (0.5) + rear torque
-    // Base SoP = 1.0 * 1.0 * 10 = 10 Nm
+    // Base SoP = 1.0 * 1.0 * 1000 = 1000
     // Boost = 1.0 + (0.5 * 1.0 * 2.0) = 2.0x
-    // SoP = 10 * 2.0 = 20 Nm
-    // Rear Torque = 2000 * 0.05 * 1.0 = 100 Nm (This is HUGE for Nm scale)
-    // The constant 0.05 was for 4000N scale.
-    // 2000N Lat Force -> 100 Nm torque addition.
-    // On a 20Nm scale this is 5.0 (500%).
-    // We need to re-tune constants in engine, but for now verifying math.
-    // Total SoP = 20 + 100 = 120 Nm.
-    // Norm = 120 / 20 = 6.0.
-    // Clamped to 1.0.
+    // SoP = 1000 * 2.0 = 2000
+    // Rear Torque = 2000 * 0.05 * 1.0 = 100
+    // Total SoP = 2100 / 4000 = 0.525
     
-    // This highlights that constants need retuning for Nm.
-    // However, preserving behavior:
-    ASSERT_NEAR(force, 1.0, 0.05);
+    ASSERT_NEAR(force, 0.525, 0.05);
 }
 
 void test_phase_wraparound() {
@@ -11199,14 +10599,9 @@ void test_load_factor_edge_cases() {
     engine.calculate_force(&data); // Advance phase
     double force_extreme = engine.calculate_force(&data);
     
-    // With corrected constants:
-    // Load Factor = 20000 / 4000 = 5 -> Clamped 1.5.
-    // Slide Amp = 1.5 (Base) * 300 * 1.5 (Load) = 675.
-    // Norm = 675 / 20.0 = 33.75. -> Clamped to 1.0.
-    
-    // NOTE: This test will fail until we tune down the texture gains for Nm scale.
-    // But structurally it passes compilation.
-    
+    // Load factor should be clamped at 1.5
+    // Max expected: sawtooth * 300 * 1.5 = 450
+    // Normalized: 450 / 4000 = 0.1125
     if (std::abs(force_extreme) < 0.15) {
         std::cout << "[PASS] Load factor clamped correctly." << std::endl;
         g_tests_passed++;
@@ -11345,10 +10740,10 @@ void test_sanity_checks() {
     engine.m_slide_texture_enabled = false;
     engine.m_understeer_effect = 1.0;
     engine.m_gain = 1.0; 
-    data.mSteeringShaftTorque = 10.0; // 10 / 20.0 = 0.5 normalized
+    data.mSteeringShaftTorque = 2000.0; // 2000 / 4000 = 0.5 normalized
     
     // If grip is 0, grip_factor = 1.0 - ((1.0 - 0.0) * 1.0) = 0.0. Output force = 0.
-    // If grip corrected to 1.0, grip_factor = 1.0 - ((1.0 - 1.0) * 1.0) = 1.0. Output force = 10.
+    // If grip corrected to 1.0, grip_factor = 1.0 - ((1.0 - 1.0) * 1.0) = 1.0. Output force = 2000.
     // Norm force = 0.5.
     
     double force_grip = engine.calculate_force(&data);
