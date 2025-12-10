@@ -100,3 +100,33 @@ When making changes to the codebase, you **must** follow this documentation upda
 *   ❌ **Don't** forget to update user-facing docs when adding features
 *   ❌ **Don't** leave outdated information in documentation after making changes
 
+### Keeping Documentation Knowledge Current (CRITICAL)
+**Pattern: Review Docs After Git Sync**
+
+After performing `git fetch` or `git pull`, you **must** review what documentation has changed to stay current with the project:
+
+*   **Why This Matters**: 
+    *   Documentation changes reflect evolving architecture, new features, API updates, and critical fixes
+    *   Outdated knowledge leads to incorrect implementations and breaking changes
+    *   The project evolves between sessions - you must catch up before making changes
+
+*   **How to Check for Changes**:
+    ```bash
+    # See which markdown files changed since last session
+    git diff --name-only HEAD@{1} HEAD -- '*.md'
+    ```
+
+*   **What to Read**:
+    *   **Always read** any files shown by the diff command
+    *   **Priority files** if they changed:
+        *   `docs/dev_docs/telemetry_data_reference.md` - API units and field names (source of truth)
+        *   `docs/dev_docs/FFB_formulas.md` - Scaling constants and physics equations
+        *   `docs/architecture.md` - System components and design patterns
+        *   `README.md` - User features and setup instructions
+        *   `CHANGELOG.md` - What changed and when
+        *   `AGENTS_MEMORY.md` - Lessons from previous sessions
+
+*   **Example**: If `telemetry_data_reference.md` was updated to document the Force→Torque unit change in LMU 1.2, you must read it to understand that `mSteeringShaftTorque` is in Newton-meters, not Newtons. Without this knowledge, you might use incorrect scaling factors.
+
+**Action Item**: Make reviewing changed documentation the **second step** of every session (right after reading AGENTS_MEMORY.md).
+

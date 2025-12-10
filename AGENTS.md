@@ -15,6 +15,17 @@ This document provides the Standard Operating Procedures (SOP), context, and con
 ### 2. 🔄 Sync & Context
 *   **Sync**: Try to ensure you have the latest code. Run `git fetch`.
     *   *Note*: If git fails, ignore the error and proceed with the files currently in the environment.
+*   **Review Changes (CRITICAL)**: After a successful `git fetch` or `git pull`, you **MUST** check what documentation has changed:
+    *   **Action**: Run `git diff --name-only HEAD@{1} HEAD -- '*.md'` to see which markdown files changed.
+    *   **Read Updated Docs**: For each changed documentation file, read its current content to understand the updates.
+    *   **Why**: Documentation changes often reflect new features, API changes, architecture updates, or critical fixes. You must stay current with the project's evolving knowledge base.
+    *   **Priority Files**: Pay special attention to changes in:
+        *   `README.md` - User-facing features and setup
+        *   `CHANGELOG.md` - Recent changes and version history
+        *   `docs/dev_docs/telemetry_data_reference.md` - API source of truth
+        *   `docs/dev_docs/FFB_formulas.md` - Physics and scaling constants
+        *   `docs/architecture.md` - System design and components
+        *   `AGENTS_MEMORY.md` - Previous session learnings
 *   **Context**: If you need to refresh your understanding of the full codebase, run `python scripts/create_context.py`.
 
 ### 3. 🧪 Test-Driven Development
