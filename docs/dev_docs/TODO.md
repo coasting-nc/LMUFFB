@@ -834,21 +834,46 @@ In `DirectInputFFB.cpp`, inside `UpdateForce`, add a print if the force is consi
 
 ## Troubleshooting 16
 
-TODO: before starting LMU, disable rf2 plugin if present, from json file.
-TODO: when device acquired, console does not say if Exclusive or background
+It seems our app sends an "inverted FFB" signal. At least this happens with my T300 wheel. Add a check box option in the GUI to invert the FFB signal.
+
+When a device is acquired, console does not say if Exclusive or background. Please specify it in the console message.
+Here is what it says currently:
 [DI] Attempting to set Cooperative Level (Exclusive | Background)...
 [DI] Acquiring device...
 [DI] Device Acquired.
 [DI] SUCCESS: Physical Device fully initialized and FFB Effect created.
 
-TODO: always on top option not there in the Gui
-TODO: it seems the ffb is inverted from our app. Add checkbox to invert ffb
-app not respond to driver setting max force 20 %
-if alt tab goes to opp lock of wheel limiter
-direct method seems ok
+In the stats printed in the console about the telemetry values: it is not clear if the stats (eg. average) refer to only the last second or to the entire duration of the session. Clarify this. In any case, for min and max value, I want to see the values for the entire duration of the session.
+
+===
+
+Please also investigate this issue and give me an additional section with a plan to fix it:
+It seems that master gain should be at 0.5 (instead of 1) to reproduce the same FFB intensity as with original signal . That is, in order for Base torque to be the same as "Total output" when all other influencing factors are neutralized. This might indicate that some coefficient or scale is incorrect (eg. it is double what it should be).
+===
 
 
 TODO: there is no logging to files of the telemetry stats
+
+The "always on top" feature of the window (if present) is not customizable as on/off in the GUI. Please add this option. And implement the feature if not already present.
+
+
+TODO: before starting LMU, disable rf2 plugin if present, from json file.
+This might be an issue.
+
+
+TODO: always on top option not there in the Gui
+
+
+TODO: it seems the ffb is inverted from our app. Add checkbox to invert ffb
+
+app not respond to driver setting max force 20 %
+
+if alt tab goes to opp lock of wheel limiter
+
+direct method seems ok
+
+
+
 
 --- TELEMETRY STATS (1s) ---
 Torque (Nm): Avg=0.609297 Min=0.609297 Max=0.609297
