@@ -886,6 +886,7 @@ we also have values for slip..
 
 ## Troubleshooting 18
 
+add a toggle in the gui to select which grip formula to use. If the new approximated one is too inaccurate or ununstable, we want to be able to stick with the other and the fallback mechanisms / values that disable some of the effects (but at least the overall FFB is stable).
 
 add preset: all effects disabled
 makes it easier to then go and enable one single effect
