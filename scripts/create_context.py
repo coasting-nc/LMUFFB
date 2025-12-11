@@ -35,12 +35,12 @@ EXTENSIONS = {
 
 # Directories to exclude
 EXCLUDE_DIRS = {
-    'build', 'build_tests', '.git', 'python_prototype', 'vendor', '__pycache__', '.vscode', '.specstory'
+    'build', 'build_tests', 'build-tests', '.git', 'python_prototype', 'vendor', '__pycache__', '.vscode', '.specstory'
 }
 
 # Files to exclude
 EXCLUDE_FILES = {
-    OUTPUT_FILE, 'LICENSE', 'compile_commands.json', 'TODO.md'
+    OUTPUT_FILE, 'LICENSE', 'compile_commands.json', 'TODO.md', 'prompts_for_coding_agents.md', 'create_context.py'
 }
 
 def is_text_file(filename):
@@ -93,6 +93,12 @@ def main():
 
                 filepath = os.path.join(dirpath, filename)
                 relpath = os.path.relpath(filepath, root_dir)
+                
+                # Exclude files under docs/dev_docs/code_reviews or docs/dev_docs/code reviews
+                relpath_normalized = relpath.replace('\\', '/')
+                if 'docs/dev_docs/code_reviews' in relpath_normalized or 'docs/dev_docs/code reviews' in relpath_normalized:
+                    print(f"Skipping (code review): {relpath}")
+                    continue
 
                 print(f"Adding {relpath}...")
 
