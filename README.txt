@@ -147,8 +147,11 @@ A. Configure Le Mans Ultimate (LMU)
            the app is calculating forces but sending them nowhere
       4. Verify:
          - Check the console for errors. If you select your wheel and do NOT 
-           see a red error like "[DI] Failed to acquire", then it is connected!
+            see a red error like "[DI] Failed to acquire", then it is connected!
          - Drive the car. You should feel the physics-based FFB
+         - If FFB feels "backwards" or "inverted" (wheel pushes away from 
+            center instead of pulling toward it), check the "Invert FFB" 
+            checkbox in the lmuFFB GUI to reverse the force direction
       
       Troubleshooting - No FFB:
       - Check Console Messages: While driving, look for "[DI Warning] Device 
