@@ -248,6 +248,10 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (engine.m_spin_enabled) {
         ImGui::SameLine(); ImGui::SliderFloat("##Spin", &engine.m_spin_gain, 0.0f, 1.0f, "Gain: %.2f");
     }
+    
+    // v0.4.5: Manual Slip Calculation Toggle
+    ImGui::Checkbox("Use Manual Slip Calc", &engine.m_use_manual_slip);
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Calculates Slip Ratio from Wheel Speed vs Car Speed instead of game telemetry.\nUseful if game slip data is broken or zero.");
 
     ImGui::Separator();
     ImGui::Text("Textures");
@@ -263,6 +267,14 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::SliderFloat("Road Gain", &engine.m_road_texture_gain, 0.0f, 5.0f);
         ImGui::Unindent();
     }
+    
+    // v0.4.5: Scrub Drag Effect
+    ImGui::SliderFloat("Scrub Drag Gain", &engine.m_scrub_drag_gain, 0.0f, 1.0f, "%.2f");
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Adds resistance when sliding sideways (tire dragging).");
+    
+    // v0.4.5: Bottoming Method
+    const char* bottoming_modes[] = { "Method A: Scraping", "Method B: Susp. Spike" };
+    ImGui::Combo("Bottoming Logic", &engine.m_bottoming_method, bottoming_modes, IM_ARRAYSIZE(bottoming_modes));
 
     ImGui::Separator();
     ImGui::Text("Output");
@@ -315,6 +327,9 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         engine.m_slide_texture_gain = 0.5f;
         engine.m_road_texture_enabled = false;
         engine.m_road_texture_gain = 0.5f;
+        engine.m_scrub_drag_gain = 0.0f;
+        engine.m_bottoming_method = 0;
+        engine.m_use_manual_slip = false;
     }
 
     ImGui::End();

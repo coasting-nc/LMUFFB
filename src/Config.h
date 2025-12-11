@@ -25,6 +25,10 @@ struct Preset {
     // New Params (v0.4.4)
     bool invert_force;
     float max_torque_ref;
+    // New Params (v0.4.5)
+    bool use_manual_slip;
+    int bottoming_method;
+    float scrub_drag_gain;
     
     // Apply this preset to an engine instance
     void Apply(FFBEngine& engine) const {
@@ -45,6 +49,9 @@ struct Preset {
         engine.m_road_texture_gain = road_gain;
         engine.m_invert_force = invert_force;
         engine.m_max_torque_ref = max_torque_ref;
+        engine.m_use_manual_slip = use_manual_slip;
+        engine.m_bottoming_method = bottoming_method;
+        engine.m_scrub_drag_gain = scrub_drag_gain;
     }
 };
 

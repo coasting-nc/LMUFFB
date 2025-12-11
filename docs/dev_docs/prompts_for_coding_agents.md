@@ -7,7 +7,9 @@ Please initialize this session by following the **Standard Task Workflow** defin
 
 Perform the following task:
 
-**Task: (...)**
+**Task: verify issues and implement fixes**
+
+Carefully read the document "docs\dev_docs\grip_calculation_analysis_v0.4.5.md", verify all issues described and, if confirmed, implement the recommended fixes.
 
 **Context:**
 (...)
