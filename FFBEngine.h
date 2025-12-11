@@ -128,7 +128,18 @@ public:
     // Warning States (Console logging)
     bool m_warned_load = false;
     bool m_warned_grip = false;
+    bool m_warned_rear_grip = false; // v0.4.5 Fix
     bool m_warned_dt = false;
+    
+    // Diagnostics (v0.4.5 Fix)
+    struct GripDiagnostics {
+        bool front_approximated = false;
+        bool rear_approximated = false;
+        double front_original = 0.0;
+        double rear_original = 0.0;
+        double front_slip_angle = 0.0;
+        double rear_slip_angle = 0.0;
+    } m_grip_diag;
     
     // Hysteresis for missing load
     int m_missing_load_frames = 0;
@@ -178,6 +189,54 @@ public:
             }
         }
         return batch;
+    }
+
+    // Helper Result Struct for calculate_grip
+    struct GripResult {
+        double value;           // Final grip value
+        bool approximated;      // Was approximation used?
+        double original;        // Original telemetry value
+        double slip_angle;      // Calculated slip angle (if approximated)
+    };
+
+    // Helper: Calculate Slip Angle (v0.4.5 Fix)
+    double calculate_slip_angle(const TelemWheelV01& w) {
+        double v_long = std::abs(w.mLongitudinalGroundVel);
+        double min_speed = 0.5;
+        if (v_long < min_speed) v_long = min_speed;
+        return std::atan2(std::abs(w.mLateralPatchVel), v_long);
+    }
+
+    // Helper: Calculate Grip with Fallback (v0.4.5 Fix)
+    GripResult calculate_grip(const TelemWheelV01& w1, 
+                              const TelemWheelV01& w2,
+                              double avg_load,
+                              bool& warned_flag) {
+        GripResult result;
+        result.original = (w1.mGripFract + w2.mGripFract) / 2.0;
+        result.value = result.original;
+        result.approximated = false;
+        result.slip_angle = 0.0;
+        
+        // Fallback condition: Grip is essentially zero BUT car has significant load
+        if (result.value < 0.0001 && avg_load > 100.0) {
+            result.approximated = true;
+            double slip1 = calculate_slip_angle(w1);
+            double slip2 = calculate_slip_angle(w2);
+            result.slip_angle = (slip1 + slip2) / 2.0;
+            
+            double excess = (std::max)(0.0, result.slip_angle - 0.15);
+            result.value = 1.0 - (excess * 2.0);
+            result.value = (std::max)(0.2, result.value);
+            
+            if (!warned_flag) {
+                std::cout << "[WARNING] Missing Grip. Using Approx based on Slip Angle." << std::endl;
+                warned_flag = true;
+            }
+        }
+        
+        result.value = (std::max)(0.0, (std::min)(1.0, result.value));
+        return result;
     }
 
     // Helper: Approximate Load (v0.4.5)
@@ -299,69 +358,21 @@ public:
         load_factor = (std::min)((double)m_max_load_factor, (std::max)(0.0, load_factor));
 
         // --- 1. Understeer Effect (Grip Modulation) ---
-        // FRONT WHEEL GRIP CALCULATION (v0.4.5)
-        // 
-        // This section calculates grip for the front wheels and applies it to modulate
-        // the steering force. It has TWO possible calculation paths:
-        //
-        // PATH A: Use telemetry data directly (normal operation)
-        // PATH B: Approximate grip from slip angle (fallback when telemetry is missing)
-        //
-        // KNOWN ISSUES (see docs/dev_docs/grip_calculation_analysis_v0.4.5.md):
-        // - No variable tracks which path was taken
-        // - Original telemetry value is lost after approximation (line 325)
-        // - Cannot distinguish if avg_grip=0.2 is from telemetry or floor value
-        // - Rear wheels (lines 368-370) have NO fallback mechanism (inconsistent)
+        // FRONT WHEEL GRIP CALCULATION (Refactored v0.4.5)
         
-        // PATH A: Read grip from telemetry (normal operation)
-        double grip_l = fl.mGripFract;  // Front left grip fraction [0.0-1.0]
-        double grip_r = fr.mGripFract;  // Front right grip fraction [0.0-1.0]
-        double avg_grip = (grip_l + grip_r) / 2.0;
+        // Calculate Front Grip using helper (handles fallback and diagnostics)
+        GripResult front_grip_res = calculate_grip(fl, fr, avg_load, m_warned_grip);
+        double avg_grip = front_grip_res.value;
         
-        // v0.4.5: Helper to calculate slip angle for grip approximation
-        // Slip angle = arctan(lateral_velocity / longitudinal_velocity)
-        // Used in PATH B when telemetry is missing
-        auto get_slip_angle = [&](const TelemWheelV01& w) {
-            double v_long = std::abs(w.mLongitudinalGroundVel);
-            double min_speed = 0.5;  // Prevent division by zero at standstill
-            if (v_long < min_speed) v_long = min_speed;
-            return std::atan2(std::abs(w.mLateralPatchVel), v_long);
-        };
-
-        // PATH B: SANITY CHECK - Detect missing telemetry and use approximation
-        // Condition: Grip is essentially zero BUT car has significant load
-        // This indicates telemetry failure, not actual zero grip
-        if (avg_grip < 0.0001 && avg_load > 100.0) {
-            // Calculate slip angles for both front wheels
-            double slip_fl = get_slip_angle(fl);
-            double slip_fr = get_slip_angle(fr);
-            double avg_slip = (slip_fl + slip_fr) / 2.0;
-            
-            // APPROXIMATION FORMULA:
-            // Physics basis: Tires have peak grip at ~0.15 rad (8.5°) slip angle
-            // Beyond peak, grip degrades linearly with slip angle
-            // Formula: grip = 1.0 - (excess_slip * falloff_factor)
-            // Floor: Minimum 0.2 (20% grip) to prevent unrealistic zero grip
-            double excess = (std::max)(0.0, avg_slip - 0.15);  // Slip beyond peak
-            avg_grip = 1.0 - (excess * 2.0);  // Falloff factor 2.0
-            avg_grip = (std::max)(0.2, avg_grip);  // Floor at 0.2 (20% minimum grip)
-            
-            // WARNING: Original telemetry value is LOST here (data loss issue)
-            // Cannot later determine if avg_grip=0.2 is from:
-            // - Actual telemetry reporting 0.2
-            // - Approximation formula result
-            // - Floor value being applied
-            
-            // Set warning flags
-            if (!m_warned_grip) {
-                std::cout << "[WARNING] Missing Grip. Using Approx based on Slip Angle." << std::endl;
-                m_warned_grip = true;  // One-time console warning
-            }
-            frame_warn_grip = true;  // Per-frame flag for snapshot
+        // Update Diagnostics
+        m_grip_diag.front_original = front_grip_res.original;
+        m_grip_diag.front_approximated = front_grip_res.approximated;
+        m_grip_diag.front_slip_angle = front_grip_res.slip_angle;
+        
+        // Update Frame Warning Flag
+        if (front_grip_res.approximated) {
+            frame_warn_grip = true;
         }
-
-        // Final safety clamp (applies to both paths)
-        avg_grip = (std::max)(0.0, (std::min)(1.0, avg_grip));
         
         // Apply grip to steering force
         // grip_factor: 1.0 = full force, 0.0 = no force (full understeer)
@@ -395,26 +406,21 @@ public:
         double sop_base_force = m_sop_lat_g_smoothed * m_sop_effect * (double)m_sop_scale;
         double sop_total = sop_base_force;
         
-        // REAR WHEEL GRIP CALCULATION (v0.4.5)
-        // 
-        // CRITICAL ISSUE: This section reads rear grip directly from telemetry
-        // with NO fallback mechanism (unlike front wheels above).
-        //
-        // PROBLEM SCENARIOS (see docs/dev_docs/grip_calculation_analysis_v0.4.5.md):
-        // 1. If rear telemetry fails (mGripFract = 0.0), value is used directly
-        // 2. grip_delta comparison becomes invalid (front approximated, rear raw)
-        // 3. Can trigger FALSE oversteer boost when rear telemetry is missing
-        //
-        // RECOMMENDATION: Apply same approximation logic as front wheels
+        // REAR WHEEL GRIP CALCULATION (Refactored v0.4.5)
         
-        // Oversteer Boost: If Rear Grip < Front Grip (car is rotating), boost SoP
-        double grip_rl = data->mWheel[2].mGripFract; // Rear left - RAW telemetry, NO FALLBACK
-        double grip_rr = data->mWheel[3].mGripFract; // Rear right - RAW telemetry, NO FALLBACK
-        double avg_rear_grip = (grip_rl + grip_rr) / 2.0;
+        // Calculate Rear Grip using helper (now includes fallback)
+        GripResult rear_grip_res = calculate_grip(data->mWheel[2], data->mWheel[3], avg_load, m_warned_rear_grip);
+        double avg_rear_grip = rear_grip_res.value;
         
+        // Update Diagnostics
+        m_grip_diag.rear_original = rear_grip_res.original;
+        m_grip_diag.rear_approximated = rear_grip_res.approximated;
+        m_grip_diag.rear_slip_angle = rear_grip_res.slip_angle;
+        
+        // Update local frame warning for rear grip
+        bool frame_warn_rear_grip = rear_grip_res.approximated;
+
         // Delta between front and rear grip
-        // NOTE: If rear telemetry is missing (0.0) but front is approximated (0.2),
-        // this will incorrectly show grip_delta = 0.2, triggering oversteer boost
         double grip_delta = avg_grip - avg_rear_grip;
         if (grip_delta > 0.0) {
             sop_total *= (1.0 + (grip_delta * m_oversteer_boost * 2.0));
@@ -693,14 +699,15 @@ public:
                 
                 // Snapshot Approximations
                 snap.slip_ratio = (float)((get_slip_ratio(fl) + get_slip_ratio(fr)) / 2.0);
-                snap.slip_angle = (float)((get_slip_angle(fl) + get_slip_angle(fr)) / 2.0);
+                // v0.4.5: Use helper
+                snap.slip_angle = (float)((calculate_slip_angle(fl) + calculate_slip_angle(fr)) / 2.0);
                 
                 snap.patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
                 snap.deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
                 
                 // Warnings
                 snap.warn_load = frame_warn_load;
-                snap.warn_grip = frame_warn_grip;
+                snap.warn_grip = frame_warn_grip || frame_warn_rear_grip; // Combined warning
                 snap.warn_dt = frame_warn_dt;
 
                 m_debug_buffer.push_back(snap);

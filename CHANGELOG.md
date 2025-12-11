@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.6] - 2025-12-11
+### Fixed
+- **Grip Calculation**: Implemented consistent fallback logic for rear wheels when telemetry is missing (previously only front wheels had fallback).
+- **Diagnostics**: Added `GripDiagnostics` struct to track grip calculation source (telemetry vs approximation) and original values.
+- **Data Integrity**: Preserved original telemetry values in diagnostics even when approximation is used.
+- **Refactoring**: Extracted grip calculation logic into a reusable helper function `calculate_grip` for better maintainability and consistency.
+
 ## [0.4.5] - 2025-12-11
 ### Added
 - **Manual Slip Calculation**: Added option to calculate slip ratio from wheel rotation speed vs. car speed instead of relying on game telemetry. Useful when game slip data is broken or unavailable. Accessible via "Use Manual Slip Calc" checkbox in GUI.

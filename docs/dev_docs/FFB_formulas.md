@@ -35,7 +35,10 @@ $$ L_{factor} = \text{Clamp}\left( \frac{\text{Load}_{FL} + \text{Load}_{FR}}{2 
 This modulates the raw steering rack force from the game based on front tire grip.
 $$ F_{base} = F_{steering\_arm} \times \left( 1.0 - \left( (1.0 - \text{Grip}_{avg}) \times K_{understeer} \right) \right) $$
 *   $\text{Grip}_{avg}$: Average of Front Left and Front Right `mGripFract`.
-    *   **Robustness Check:** If $\text{Grip}_{avg} \approx 0.0$ but $\text{Load} > 100N$, $\text{Grip}_{avg}$ defaults to 1.0.
+    *   **Fallback (v0.4.5+):** If telemetry grip is missing ($\approx 0.0$) but Load $> 100N$, grip is approximated from **Slip Angle**.
+        * $\text{Slip} = \text{atan2}(V_{lat}, V_{long})$
+        * $\text{Excess} = \max(0, \text{Slip} - 0.15)$
+        * $\text{Grip} = \max(0.2, 1.0 - (\text{Excess} \times 2.0))$
 
 #### C. Seat of Pants (SoP) & Oversteer
 This injects lateral G-force and rear-axle aligning torque to simulate the car body's rotation.
@@ -52,6 +55,7 @@ This injects lateral G-force and rear-axle aligning torque to simulate the car b
 3.  **Oversteer Boost**:
     If Front Grip > Rear Grip:
     $$ F_{sop\_boosted} = F_{sop\_base} \times \left( 1.0 + (\text{Grip}_{delta} \times K_{oversteer} \times 2.0) \right) $$
+    *   **Fallback (v0.4.6+):** Rear grip now uses the same **Slip Angle approximation** fallback as Front grip if telemetry is missing, preventing false oversteer detection.
 
 4.  **Rear Aligning Torque**:
     $$ T_{rear} = \frac{\text{LatForce}_{RL} + \text{LatForce}_{RR}}{2} \times 0.00025 \times K_{oversteer} $$

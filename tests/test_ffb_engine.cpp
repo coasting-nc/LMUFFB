@@ -713,6 +713,85 @@ void test_spin_torque_drop_interaction() {
     }
 }
 
+void test_rear_grip_fallback() {
+    std::cout << "\nTest: Rear Grip Fallback (v0.4.5)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    // Setup
+    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    engine.m_sop_effect = 1.0;
+    engine.m_oversteer_boost = 1.0;
+    engine.m_gain = 1.0;
+    engine.m_sop_scale = 10.0;
+    engine.m_max_torque_ref = 20.0f;
+    
+    // Set Lat G to generate SoP force
+    data.mLocalAccel.x = 9.81; // 1G
+
+    // Front Grip OK (1.0)
+    data.mWheel[0].mGripFract = 1.0;
+    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[0].mTireLoad = 4000.0; // Ensure Front Load > 100 for fallback trigger
+    data.mWheel[1].mTireLoad = 4000.0;
+    
+    // Rear Grip MISSING (0.0)
+    data.mWheel[2].mGripFract = 0.0;
+    data.mWheel[3].mGripFract = 0.0;
+    
+    // Load present (to trigger fallback)
+    data.mWheel[2].mTireLoad = 4000.0;
+    data.mWheel[3].mTireLoad = 4000.0;
+    
+    // Slip Angle Calculation Inputs
+    // We want to simulate that rear is NOT sliding (grip should be high)
+    // but telemetry says 0.
+    // If fallback works, it should calculate slip angle ~0, grip ~1.0.
+    // If fallback fails, it uses 0.0 -> Grip Delta = 1.0 - 0.0 = 1.0 -> Massive Oversteer Boost.
+    
+    // Set minimal slip
+    data.mWheel[2].mLongitudinalGroundVel = 20.0;
+    data.mWheel[3].mLongitudinalGroundVel = 20.0;
+    data.mWheel[2].mLateralPatchVel = 0.0;
+    data.mWheel[3].mLateralPatchVel = 0.0;
+    
+    // Calculate
+    engine.calculate_force(&data);
+    
+    // Verify Diagnostics
+    if (engine.m_grip_diag.rear_approximated) {
+        std::cout << "[PASS] Rear grip approximation triggered." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Rear grip approximation NOT triggered." << std::endl;
+        g_tests_failed++;
+    }
+    
+    // Verify calculated rear grip was high (restored)
+    // With 0 slip, grip should be 1.0.
+    // engine doesn't expose avg_rear_grip publically, but we can infer from oversteer boost.
+    // If grip restored to 1.0, delta = 1.0 - 1.0 = 0.0. No boost.
+    // If grip is 0.0, delta = 1.0. Boost applied.
+    
+    // Check Snapshot
+    auto batch = engine.GetDebugBatch();
+    if (!batch.empty()) {
+        float boost = batch.back().oversteer_boost;
+        if (std::abs(boost) < 0.001) {
+             std::cout << "[PASS] Oversteer boost correctly suppressed (Rear Grip restored)." << std::endl;
+             g_tests_passed++;
+        } else {
+             std::cout << "[FAIL] False oversteer boost detected: " << boost << std::endl;
+             g_tests_failed++;
+        }
+    } else {
+        // Fallback if snapshot not captured (requires lock)
+        // Usually works in single thread.
+        std::cout << "[WARN] Snapshot buffer empty?" << std::endl;
+    }
+}
+
 // --- NEW SANITY CHECK TESTS ---
 
 void test_sanity_checks() {
@@ -851,9 +930,18 @@ void test_sanity_checks() {
     
     // Verify output force matches expected value
     // Expected: 0.1 (indicates grip was corrected to 0.2 minimum)
-    // This is an empirical result - we cannot verify WHY it's 0.1 without
-    // additional diagnostic variables (see recommendations in analysis doc)
     ASSERT_NEAR(force_grip, 0.1, 0.001); // Expect minimum grip correction (0.2 grip -> 0.1 normalized force)
+
+    // Verify Diagnostics (v0.4.5)
+    if (engine.m_grip_diag.front_approximated) {
+        std::cout << "[PASS] Diagnostics confirm front approximation." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Diagnostics missing front approximation." << std::endl;
+        g_tests_failed++;
+    }
+    
+    ASSERT_NEAR(engine.m_grip_diag.front_original, 0.0, 0.0001);
 
 
     // 3. Test Bad DeltaTime
@@ -888,6 +976,7 @@ int main() {
     test_load_factor_edge_cases();
     test_spin_torque_drop_interaction();
     
+    test_rear_grip_fallback(); // v0.4.5
     test_sanity_checks();
     void test_hysteresis_logic(); // Forward declaration
     test_hysteresis_logic();
