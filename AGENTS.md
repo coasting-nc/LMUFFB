@@ -13,9 +13,9 @@ This document provides the Standard Operating Procedures (SOP), context, and con
 *   **Why**: It contains workarounds (like Git fixes) and architectural lessons learned from previous sessions.
 
 ### 2. 🔄 Sync & Context
-*   **Sync**: Try to ensure you have the latest code. Run `git fetch`.
+*   **Sync**: Try to ensure you have the latest code. Run `git fetch && git reset --hard origin/main`. 
     *   *Note*: If git fails, ignore the error and proceed with the files currently in the environment.
-*   **Review Changes (CRITICAL)**: After a successful `git fetch` or `git pull`, you **MUST** check what documentation has changed:
+*   **Review Changes (CRITICAL)**: After a successful `git fetch` (and `&& git reset --hard origin/main`) or `git pull`, you **MUST** check what documentation has changed:
     *   **Action**: Run `git diff --name-only HEAD@{1} HEAD -- '*.md'` to see which markdown files changed.
     *   **Read Updated Docs**: For each changed documentation file, read its current content to understand the updates.
     *   **Why**: Documentation changes often reflect new features, API changes, architecture updates, or critical fixes. You must stay current with the project's evolving knowledge base.
