@@ -910,3 +910,12 @@ Consider which effects are not possible without grip and load (currently missing
 reintroduce support for rF2, so we can test full effects with grip and load there.
 keep support for both apps, reuse code. Add conversion of scales etc. when using rF2, because default support should be LMU, and we don't want to mess the code for LMU.
 Do a plan of what needs to be changed to support rF2.
+
+add preset: all effects disabled
+makes it easier to then go and enable one single effect
+
+for rF2, could have a separate executable, to avoid cluttering the GUi for LMU
+
+can we introduce an equalizer?
+like in the moza software?
+eg. in order to increase intensity of lower frequency effects, that are related to grip.
