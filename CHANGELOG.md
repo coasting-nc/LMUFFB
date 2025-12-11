@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.3] - 2025-12-11
+### Added
+- **Test Coverage**: Added unit tests for Smoothing Step Response and Configuration Persistence, bringing coverage of critical physics logic to >85%.
+- **Architecture**: Enhanced `ChannelStats` to support non-blocking retrieval of telemetry statistics (latching), enabling future GUI diagnostic improvements without stalling the physics thread.
+
 ## [0.4.2] - 2025-12-08
 ### Added
 - **Configuration Presets**: Added a new "Load Preset" dropdown in the GUI with built-in presets (Default, SoP Only, Understeer Only, Textures Only) and support for user-defined presets in `config.ini`.

@@ -5,7 +5,10 @@
 #include <cstring>
 #include "../FFBEngine.h"
 #include "../src/lmu_sm_interface/InternalsPlugin.hpp"
+#include "../src/lmu_sm_interface/SharedMemoryInterface.hpp" // Added for GameState testing
 #include "../src/Config.h" // Added for Preset testing
+#include <fstream>
+#include <cstdio> // for remove()
 
 // --- Simple Test Framework ---
 int g_tests_passed = 0;
@@ -362,6 +365,8 @@ void test_oversteer_boost() {
     engine.m_gain = 1.0;
     // Lower Scale to match new Nm range
     engine.m_sop_scale = 10.0; 
+    // Disable smoothing to verify math instantly (v0.4.2 fix)
+    engine.m_sop_smoothing_factor = 1.0; 
     
     // Scenario: Front has grip, rear is sliding
     data.mWheel[0].mGripFract = 1.0; // FL
@@ -774,6 +779,18 @@ int main() {
     void test_presets(); // Forward declaration
     test_presets();
 
+    void test_config_persistence();
+    test_config_persistence();
+    
+    void test_channel_stats();
+    test_channel_stats();
+
+    void test_game_state_logic();
+    test_game_state_logic();
+
+    void test_smoothing_step_response();
+    test_smoothing_step_response();
+
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
     std::cout << "Tests Failed: " << g_tests_failed << std::endl;
@@ -892,6 +909,179 @@ void test_presets() {
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Preset mismatch. Gain: " << engine.m_gain << " SoP: " << engine.m_sop_effect << std::endl;
+        g_tests_failed++;
+    }
+}
+
+// --- NEW TESTS FROM REPORT v0.4.2 ---
+
+void test_config_persistence() {
+    std::cout << "\nTest: Config Save/Load Persistence" << std::endl;
+    
+    std::string test_file = "test_config.ini";
+    FFBEngine engine_save;
+    FFBEngine engine_load;
+    
+    // 1. Setup unique values
+    engine_save.m_gain = 1.23f;
+    engine_save.m_sop_effect = 0.45f;
+    engine_save.m_lockup_enabled = true;
+    engine_save.m_road_texture_gain = 2.5f;
+    
+    // 2. Save
+    Config::Save(engine_save, test_file);
+    
+    // 3. Load into fresh engine
+    Config::Load(engine_load, test_file);
+    
+    // 4. Verify
+    ASSERT_NEAR(engine_load.m_gain, 1.23f, 0.001);
+    ASSERT_NEAR(engine_load.m_sop_effect, 0.45f, 0.001);
+    ASSERT_NEAR(engine_load.m_road_texture_gain, 2.5f, 0.001);
+    
+    if (engine_load.m_lockup_enabled == true) {
+        std::cout << "[PASS] Boolean persistence." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Boolean persistence failed." << std::endl;
+        g_tests_failed++;
+    }
+    
+    // Cleanup
+    std::remove(test_file.c_str());
+}
+
+void test_channel_stats() {
+    std::cout << "\nTest: Channel Stats Logic" << std::endl;
+    
+    ChannelStats stats;
+    
+    // Sequence: 10, 20, 30
+    stats.Update(10.0);
+    stats.Update(20.0);
+    stats.Update(30.0);
+    
+    ASSERT_NEAR(stats.min, 10.0, 0.001);
+    ASSERT_NEAR(stats.max, 30.0, 0.001);
+    ASSERT_NEAR(stats.Avg(), 20.0, 0.001);
+    
+    // Test Reset
+    stats.Reset();
+    if (stats.count == 0) {
+        std::cout << "[PASS] Stats Reset count." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Stats Reset failed." << std::endl;
+        g_tests_failed++;
+    }
+    ASSERT_NEAR(stats.Avg(), 0.0, 0.001); // Handle divide by zero check
+}
+
+void test_game_state_logic() {
+    std::cout << "\nTest: Game State Logic (Mock)" << std::endl;
+    
+    // Mock Layout
+    SharedMemoryLayout mock_layout;
+    std::memset(&mock_layout, 0, sizeof(mock_layout));
+    
+    // Case 1: Player not found
+    // (Default state is 0/false)
+    bool inRealtime1 = false;
+    for (int i = 0; i < 104; i++) {
+        if (mock_layout.data.scoring.vehScoringInfo[i].mIsPlayer) {
+            inRealtime1 = (mock_layout.data.scoring.scoringInfo.mInRealtime != 0);
+            break;
+        }
+    }
+    if (!inRealtime1) {
+         std::cout << "[PASS] Player missing -> False." << std::endl;
+         g_tests_passed++;
+    } else {
+         std::cout << "[FAIL] Player missing -> True?" << std::endl;
+         g_tests_failed++;
+    }
+    
+    // Case 2: Player found, InRealtime = 0 (Menu)
+    mock_layout.data.scoring.vehScoringInfo[5].mIsPlayer = true;
+    mock_layout.data.scoring.scoringInfo.mInRealtime = false;
+    
+    bool result_menu = false;
+    for(int i=0; i<104; i++) {
+        if(mock_layout.data.scoring.vehScoringInfo[i].mIsPlayer) {
+            result_menu = mock_layout.data.scoring.scoringInfo.mInRealtime;
+            break;
+        }
+    }
+    if (!result_menu) {
+        std::cout << "[PASS] InRealtime=False -> False." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] InRealtime=False -> True?" << std::endl;
+        g_tests_failed++;
+    }
+    
+    // Case 3: Player found, InRealtime = 1 (Driving)
+    mock_layout.data.scoring.scoringInfo.mInRealtime = true;
+    bool result_driving = false;
+    for(int i=0; i<104; i++) {
+        if(mock_layout.data.scoring.vehScoringInfo[i].mIsPlayer) {
+            result_driving = mock_layout.data.scoring.scoringInfo.mInRealtime;
+            break;
+        }
+    }
+    if (result_driving) {
+        std::cout << "[PASS] InRealtime=True -> True." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] InRealtime=True -> False?" << std::endl;
+        g_tests_failed++;
+    }
+}
+
+void test_smoothing_step_response() {
+    std::cout << "\nTest: SoP Smoothing Step Response" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+
+    // Setup: 0.5 smoothing factor
+    // smoothness = 1.0 - 0.5 = 0.5
+    // tau = 0.5 * 0.1 = 0.05
+    // dt = 0.0025 (400Hz)
+    // alpha = 0.0025 / (0.05 + 0.0025) ~= 0.0476
+    engine.m_sop_smoothing_factor = 0.5;
+    engine.m_sop_scale = 1.0; 
+    engine.m_sop_effect = 1.0;
+    
+    // Input: Step change from 0 to 1G
+    data.mLocalAccel.x = 9.81; 
+    data.mDeltaTime = 0.0025;
+    
+    // First step
+    engine.calculate_force(&data);
+    
+    // Verify internal state matches alpha application
+    // Expected: 0.0 + alpha * (1.0 - 0.0) ~= 0.0476
+    if (std::abs(engine.m_sop_lat_g_smoothed - 0.0476) < 0.001) {
+        std::cout << "[PASS] Smoothing Step 1 matched alpha." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Smoothing Step 1 mismatch. Got " << engine.m_sop_lat_g_smoothed << std::endl;
+        g_tests_failed++;
+    }
+    
+    // Run for 0.25 seconds (100 ticks)
+    // 5 * tau = 0.25s. Should be ~99.3% settled.
+    for(int i=0; i<100; i++) {
+        engine.calculate_force(&data);
+    }
+    
+    // Verify it settled near 1.0
+    if (engine.m_sop_lat_g_smoothed > 0.99) {
+        std::cout << "[PASS] Smoothing settled correctly (>0.99 after 5 tau)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Smoothing did not settle. Value: " << engine.m_sop_lat_g_smoothed << std::endl;
         g_tests_failed++;
     }
 }

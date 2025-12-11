@@ -181,14 +181,12 @@ public:
         s_grip.Update(raw_grip);
         s_lat_g.Update(raw_lat_g);
 
+        // Blocking I/O removed for performance (Report v0.4.2)
+        // Stats logic preserved in s_* objects for potential GUI display or async logging.
+        // If console logging is desired for debugging, it should be done in a separate thread.
+        
         auto now = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1) {
-            std::cout << "--- TELEMETRY STATS (1s) ---" << std::endl;
-            std::cout << "Torque (Nm): Avg=" << s_torque.Avg() << " Min=" << s_torque.min << " Max=" << s_torque.max << std::endl;
-            std::cout << "Load (N):    Avg=" << s_load.Avg()   << " Min=" << s_load.min   << " Max=" << s_load.max << std::endl;
-            std::cout << "Grip (0-1):  Avg=" << s_grip.Avg()   << " Min=" << s_grip.min   << " Max=" << s_grip.max << std::endl;
-            std::cout << "Lat G:       Avg=" << s_lat_g.Avg()  << " Min=" << s_lat_g.min  << " Max=" << s_lat_g.max << std::endl;
-            
             s_torque.Reset(); s_load.Reset(); s_grip.Reset(); s_lat_g.Reset();
             last_log_time = now;
         }
@@ -255,13 +253,21 @@ public:
         // Lateral G-force
         double lat_g = data->mLocalAccel.x / 9.81;
         
-        // SoP Smoothing (Simple Low Pass Filter)
-        // Alpha determines the "weight" of the new value.
-        // If m_sop_smoothing_factor is 1.0, alpha is 1.0 (No Smoothing).
-        // If m_sop_smoothing_factor is 0.1, alpha is 0.1 (Heavy Smoothing).
-        double alpha = (double)m_sop_smoothing_factor; 
+        // SoP Smoothing (Time-Corrected Low Pass Filter) (Report v0.4.2)
+        // m_sop_smoothing_factor (0.0 to 1.0) is treated as a "Smoothness" knob.
+        // 0.0 = Very slow (High smoothness), 1.0 = Instant (Raw).
+        // We map 0-1 to a Time Constant (tau) from ~0.2s to 0.0s.
+        // Formula: alpha = dt / (tau + dt)
         
-        // Safety clamp alpha
+        double smoothness = 1.0 - (double)m_sop_smoothing_factor; // Invert: 1.0 input -> 0.0 smoothness
+        smoothness = (std::max)(0.0, (std::min)(0.999, smoothness));
+        
+        // Map smoothness to tau: 0.0 -> 0s, 1.0 -> 0.1s (approx 1.5Hz cutoff)
+        double tau = smoothness * 0.1; 
+        
+        double alpha = dt / (tau + dt);
+        
+        // Safety clamp
         alpha = (std::max)(0.001, (std::min)(1.0, alpha));
 
         m_sop_lat_g_smoothed = m_sop_lat_g_smoothed + alpha * (lat_g - m_sop_lat_g_smoothed);

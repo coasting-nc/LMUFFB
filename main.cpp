@@ -135,6 +135,11 @@ void FFBThread() {
 
 // --- GUI / Main Loop (Low Priority 60Hz or Lazy) ---
 int main(int argc, char* argv[]) {
+#ifdef _WIN32
+    // Improve timer resolution for sleep accuracy (Report v0.4.2)
+    timeBeginPeriod(1);
+#endif
+
     bool headless = false;
     for (int i = 1; i < argc; ++i) {
         if (std::string(argv[i]) == "--headless") {
