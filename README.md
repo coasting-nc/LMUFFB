@@ -275,7 +275,7 @@ This change ensures consistent FFB strength across different hardware and makes 
 
 1. **rF2 Shared Memory Plugin**: Download `rFactor2SharedMemoryMapPlugin64.dll` from [TheIronWolfModding's GitHub](https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin#download)
 2. **Installation**: Place the DLL in `rFactor 2/Plugins/` directory
-3. **Activation**: Enable the plugin in rFactor 2's game settings: edit [Game Folder]\UserData\playerCustomPluginVariables.JSON , set " Enabled" value to 1, and restart rF2  
+3. **Activation**: Enable the plugin in rFactor 2's game settings: edit [Game Folder]\UserData\player\CustomPluginVariables.JSON , set " Enabled" value to 1, and restart rF2  
 4. Follow the same vJoy and wheel configuration steps as described above for LMU
 
 For detailed rFactor 2 setup instructions, refer to the README included with v0.3.x releases.

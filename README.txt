@@ -243,7 +243,7 @@ PREREQUISITES FOR RFACTOR 2 (v0.3.x only):
 
 2. Installation
    - Place the DLL in rFactor 2/Plugins/ directory
-   - Enable the plugin in rFactor 2's game settings: : edit [Game Folder]\UserData\playerCustomPluginVariables.JSON , set " Enabled" value to 1, and restart rF2
+   - Enable the plugin in rFactor 2's game settings: : edit [Game Folder]\UserData\player\CustomPluginVariables.JSON , set " Enabled" value to 1, and restart rF2
 
 3. Follow the same vJoy and wheel configuration steps as described above for LMU
 

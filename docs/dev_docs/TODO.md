@@ -830,3 +830,28 @@ In `DirectInputFFB.cpp`, inside `UpdateForce`, add a print if the force is consi
         }
     }
 ```
+
+
+## Troubleshooting 16
+
+TODO: before starting LMU, disable rf2 plugin if present, from json file.
+TODO: when device acquired, console does not say if Exclusive or background
+[DI] Attempting to set Cooperative Level (Exclusive | Background)...
+[DI] Acquiring device...
+[DI] Device Acquired.
+[DI] SUCCESS: Physical Device fully initialized and FFB Effect created.
+
+TODO: always on top option not there in the Gui
+TODO: it seems the ffb is inverted from our app. Add checkbox to invert ffb
+app not respond to driver setting max force 20 %
+if alt tab goes to opp lock of wheel limiter
+direct method seems ok
+
+
+TODO: there is no logging to files of the telemetry stats
+
+--- TELEMETRY STATS (1s) ---
+Torque (Nm): Avg=0.609297 Min=0.609297 Max=0.609297
+Load (N):    Avg=0 Min=0 Max=0
+Grip (0-1):  Avg=0 Min=0 Max=0
+Lat G:       Avg=-1.17966e-06 Min=-1.17966e-06 Max=-1.17966e-06
