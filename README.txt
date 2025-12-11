@@ -233,8 +233,39 @@ No FFB:
   - The shared memory only activates when driving
 
 
-KNOWN ISSUES (v0.3.7)
+KNOWN ISSUES (v0.4.2+)
 ---------------------
+
+LMU 1.2 MISSING TELEMETRY DATA (CRITICAL):
+
+!!! Expected Warnings on Startup !!!
+
+When you start lmuFFB with LMU 1.2, you will see console warnings like:
+- [WARNING] Missing Tire Load data detected
+- [WARNING] Missing Grip Fraction data detected
+
+This is EXPECTED and NOT a bug in lmuFFB. This is a BUG IN LMU 1.2 - the game 
+is currently returning ZERO (0) for all tire load and grip fraction values, 
+even though the shared memory interface includes these fields.
+
+Impact:
+- lmuFFB has AUTOMATIC FALLBACK LOGIC that detects this and uses estimated 
+  values instead
+- FFB will still work, but some effects (like load-sensitive textures and 
+  grip-based understeer) will use approximations instead of real data
+- You can safely ignore these warnings - they confirm the fallback system 
+  is working
+
+What we need from the community:
+- PLEASE HELP US REPORT THIS TO THE LMU DEVELOPERS!
+- We need to file a bug report / feature request asking them to populate 
+  these telemetry fields with actual values
+- Forum thread: 
+  https://community.lemansultimate.com/index.php?threads/irffb-for-lmu-lmuffb.10440/
+- Once LMU fixes this, lmuFFB will automatically use the real data 
+  (no code changes needed)
+
+Other Known Issues:
 - Telemetry Gaps: Some users report missing telemetry for Dashboard apps 
   (ERS, Temps). lmuFFB has robust fallbacks, but if Tire Temperature data 
   is broken, the Understeer effect may be static.

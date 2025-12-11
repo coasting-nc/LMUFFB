@@ -164,8 +164,31 @@ Your testing and feedback is greatly appreciated! 🙏
     -   *Alternative:* You can try moving `LMUFFB.exe` directly into `C:\\Program Files\\vJoy\\x64\\` if you have persistent DLL issues.
 -   **"Could not open file mapping object"**: Start the game and load a track first. The shared memory only activates when driving.
 
-## Known Issues (v0.3.19)
-*   **Telemetry Gaps**: Some users report missing telemetry for Dashboard apps (ERS, Temps). lmuFFB has robust fallbacks (Sanity Checks) that prevent dead FFB effects even if the game fails to report data (e.g., zero Grip or Load). See [Telemetry Report](docs/dev_docs/telemetry_availability_report.md).
+## Known Issues (v0.4.2+)
+
+### LMU 1.2 Missing Telemetry Data (CRITICAL)
+
+**⚠️ Expected Warnings on Startup:**
+
+When you start lmuFFB with LMU 1.2, you will see console warnings like:
+- `[WARNING] Missing Tire Load data detected`
+- `[WARNING] Missing Grip Fraction data detected`
+
+**This is expected and NOT a bug in lmuFFB.** This is a **bug in LMU 1.2** - the game is currently returning **zero (0) for all tire load and grip fraction values**, even though the shared memory interface includes these fields.
+
+**Impact:**
+- lmuFFB has **automatic fallback logic** that detects this and uses estimated values instead
+- FFB will still work, but some effects (like load-sensitive textures and grip-based understeer) will use approximations instead of real data
+- You can safely ignore these warnings - they confirm the fallback system is working
+
+**What we need from the community:**
+- **Please help us report this to the LMU developers!** 
+- We need to file a bug report / feature request asking them to populate these telemetry fields with actual values
+- Forum thread: [LMU Forum - lmuFFB](https://community.lemansultimate.com/index.php?threads/irffb-for-lmu-lmuffb.10440/)
+- Once LMU fixes this, lmuFFB will automatically use the real data (no code changes needed)
+
+### Other Known Issues
+*   **Telemetry Gaps**: Some users report missing telemetry for Dashboard apps (ERS, Temps). lmuFFB has robust fallbacks (Sanity Checks) that prevent dead FFB effects even if the game fails to report data. See [Telemetry Report](docs/dev_docs/telemetry_availability_report.md).
 
 
 ## Feedback & Support
