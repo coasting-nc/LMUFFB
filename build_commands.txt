@@ -13,8 +13,20 @@ To run the tests:
 
 First compile the test directly:
 
-& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cl /EHsc /std:c++17 /I.. tests\test_ffb_engine.cpp src\Config.cpp /Fe:test_ffb_engine.exe
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cl /EHsc /std:c++17 /I.. tests\test_ffb_engine.cpp src\Config.cpp /Fe:tests\test_ffb_engine.exe
 
 
-The run it:
+Then run it (choose one option):
+
+# Option 1: Display on console AND save to file (RECOMMENDED)
+tests\test_ffb_engine.exe 2>&1 | Tee-Object -FilePath test_results.txt
+
+# Option 2: Only display on console (may truncate if output is long)
 tests\test_ffb_engine.exe
+
+# Option 3: Only save to file (no console output)
+tests\test_ffb_engine.exe > test_results.txt 2>&1
+Get-Content test_results.txt
+
+# Option 4: Just show the summary
+tests\test_ffb_engine.exe 2>&1 | Select-String -Pattern "Tests (Passed|Failed):"
