@@ -899,26 +899,35 @@ notes on FFB math formulas and plot visualization
 
 in formulas, also update the name of variables specifying when they refer to front types only (eg  Grip_avg is only for fronts)
 
-slip angle LPF, smoothed with exp.moving avg: visualize this in a plot
+**slip angle LPF**, smoothed with exp.moving avg: visualize this in a plot
 also, is it the slip angle on fronts only? specify in variable names
 in plots we indeed have "smoothed slip angle"
 but we don't show the actual slip, which is arctan2(Vlat,Vlong)
-we have "calc slip ratio" is this it
+we have "**calc slip ratio**" is this it (also this must specify if it is front only)
 
 Grip is then used for understeer
 
-math formula: AccellXlocal: rename to clearify: is it lateral accel? Is it of whole car, or average of some tires? Which tires? specify in name
+math formula: **AccellXlocal**: rename to clearify: is it lateral accel? Is it of whole car, or average of some tires? Which tires? specify in name
 
-SoP_base (without oversteer component): do we show it in a separate plot?
+**SoP_base** (without oversteer component): do we show it in a separate plot?
 
-We don't have Calc Rear Grip in the plots
-We don't have Raw Rea Grip
+We don't have _Calc Rear Grip_ in the plots
+We don't have _Raw Rear Grip_
 
-In Raw plots, we dont have LatForceRl and RR
+In Raw plots, we dont have _LatForceRl and RR_
+
+plot for _slide for rear_?
+slip angle for rear? (or does it make sense only for turning wheels?)
+
+plot for _avg longitudinal patch vel _? Use for brake lockup and slip?
+
+_long and lat patch vel_ for rear?
+
+add tootlips on the names / titles of plots, with a description (we alredy have tooltips on the plot themselves)
 
 We could also have additional plots in which we show the plot for the base value (using default coeafficients) and one with the custom coefficients as set in the main GUi
 
-
+avg deflection: is it for all 4 tires?
 
 
 ### Other 
