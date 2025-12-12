@@ -117,6 +117,10 @@ void Config::LoadPresets() {
                         else if (key == "road_gain") current_preset.road_gain = std::stof(value);
                         else if (key == "invert_force") current_preset.invert_force = std::stoi(value);
                         else if (key == "max_torque_ref") current_preset.max_torque_ref = std::stof(value);
+                        // New Params (v0.4.5)
+                        else if (key == "use_manual_slip") current_preset.use_manual_slip = std::stoi(value);
+                        else if (key == "bottoming_method") current_preset.bottoming_method = std::stoi(value);
+                        else if (key == "scrub_drag_gain") current_preset.scrub_drag_gain = std::stof(value);
                     } catch (...) {}
                 }
             }

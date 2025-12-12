@@ -146,6 +146,7 @@ public:
 
     // Internal state
     double m_prev_vert_deflection[2] = {0.0, 0.0}; // FL, FR
+    double m_prev_slip_angle[4] = {0.0, 0.0, 0.0, 0.0}; // FL, FR, RL, RR (LPF State)
     
     // Phase Accumulators for Dynamic Oscillators
     double m_lockup_phase = 0.0;
@@ -199,19 +200,28 @@ public:
         double slip_angle;      // Calculated slip angle (if approximated)
     };
 
-    // Helper: Calculate Slip Angle (v0.4.5 Fix)
-    double calculate_slip_angle(const TelemWheelV01& w) {
+    // Helper: Calculate Slip Angle (v0.4.6 LPF + Logic)
+    double calculate_slip_angle(const TelemWheelV01& w, double& prev_state) {
         double v_long = std::abs(w.mLongitudinalGroundVel);
         double min_speed = 0.5;
         if (v_long < min_speed) v_long = min_speed;
-        return std::atan2(std::abs(w.mLateralPatchVel), v_long);
+        
+        double raw_angle = std::atan2(std::abs(w.mLateralPatchVel), v_long);
+        
+        // LPF: Alpha ~0.1 (Strong smoothing for stability)
+        double alpha = 0.1;
+        prev_state = prev_state + alpha * (raw_angle - prev_state);
+        return prev_state;
     }
 
-    // Helper: Calculate Grip with Fallback (v0.4.5 Fix)
+    // Helper: Calculate Grip with Fallback (v0.4.6 Hardening)
     GripResult calculate_grip(const TelemWheelV01& w1, 
                               const TelemWheelV01& w2,
                               double avg_load,
-                              bool& warned_flag) {
+                              bool& warned_flag,
+                              double& prev_slip1,
+                              double& prev_slip2,
+                              double car_speed) {
         GripResult result;
         result.original = (w1.mGripFract + w2.mGripFract) / 2.0;
         result.value = result.original;
@@ -221,12 +231,21 @@ public:
         // Fallback condition: Grip is essentially zero BUT car has significant load
         if (result.value < 0.0001 && avg_load > 100.0) {
             result.approximated = true;
-            double slip1 = calculate_slip_angle(w1);
-            double slip2 = calculate_slip_angle(w2);
-            result.slip_angle = (slip1 + slip2) / 2.0;
             
-            double excess = (std::max)(0.0, result.slip_angle - 0.15);
-            result.value = 1.0 - (excess * 2.0);
+            // Low Speed Cutoff (v0.4.6)
+            if (car_speed < 5.0) {
+                result.slip_angle = 0.0;
+                result.value = 1.0; // Force full grip at low speeds
+            } else {
+                double slip1 = calculate_slip_angle(w1, prev_slip1);
+                double slip2 = calculate_slip_angle(w2, prev_slip2);
+                result.slip_angle = (slip1 + slip2) / 2.0;
+                
+                double excess = (std::max)(0.0, result.slip_angle - 0.15);
+                result.value = 1.0 - (excess * 2.0);
+            }
+            
+            // Safety Clamp (v0.4.6): Never drop below 0.2 in approximation
             result.value = (std::max)(0.2, result.value);
             
             if (!warned_flag) {
@@ -246,9 +265,13 @@ public:
         return w.mSuspForce + 300.0;
     }
 
-    // Helper: Calculate Manual Slip Ratio (v0.4.5)
+    // Helper: Calculate Manual Slip Ratio (v0.4.6)
     double calculate_manual_slip_ratio(const TelemWheelV01& w, double car_speed_ms) {
+        // Safety Trap: Force 0 slip at very low speeds (v0.4.6)
+        if (std::abs(car_speed_ms) < 2.0) return 0.0;
+
         // Radius in meters (stored as cm unsigned char)
+        // Explicit cast to double before division (v0.4.6)
         double radius_m = (double)w.mStaticUndeflectedRadius / 100.0;
         if (radius_m < 0.1) radius_m = 0.33; // Fallback if 0 or invalid
         
@@ -354,14 +377,20 @@ public:
         // Normalize: 4000N is a reference "loaded" GT tire.
         double load_factor = avg_load / 4000.0;
         
-        // SAFETY CLAMP: Cap at 1.5x (or configured max) to prevent violent jolts.
-        load_factor = (std::min)((double)m_max_load_factor, (std::max)(0.0, load_factor));
+        // SAFETY CLAMP (v0.4.6): Hard clamp at 2.0 (regardless of config) to prevent explosion
+        // Also respect configured max if lower.
+        double safe_max = (std::min)(2.0, (double)m_max_load_factor);
+        load_factor = (std::min)(safe_max, (std::max)(0.0, load_factor));
 
         // --- 1. Understeer Effect (Grip Modulation) ---
         // FRONT WHEEL GRIP CALCULATION (Refactored v0.4.5)
         
+        double car_speed = std::abs(data->mLocalVel.z);
+
         // Calculate Front Grip using helper (handles fallback and diagnostics)
-        GripResult front_grip_res = calculate_grip(fl, fr, avg_load, m_warned_grip);
+        // Pass persistent state for LPF (v0.4.6) - Indices 0 and 1
+        GripResult front_grip_res = calculate_grip(fl, fr, avg_load, m_warned_grip, 
+                                                   m_prev_slip_angle[0], m_prev_slip_angle[1], car_speed);
         double avg_grip = front_grip_res.value;
         
         // Update Diagnostics
@@ -382,7 +411,9 @@ public:
         
         // --- 2. Seat of Pants (SoP) / Oversteer ---
         // Lateral G-force
-        double lat_g = data->mLocalAccel.x / 9.81;
+        // v0.4.6: Clamp Input to reasonable Gs (+/- 5G)
+        double raw_g = (std::max)(-49.05, (std::min)(49.05, data->mLocalAccel.x));
+        double lat_g = raw_g / 9.81;
         
         // SoP Smoothing (Time-Corrected Low Pass Filter) (Report v0.4.2)
         // m_sop_smoothing_factor (0.0 to 1.0) is treated as a "Smoothness" knob.
@@ -409,7 +440,9 @@ public:
         // REAR WHEEL GRIP CALCULATION (Refactored v0.4.5)
         
         // Calculate Rear Grip using helper (now includes fallback)
-        GripResult rear_grip_res = calculate_grip(data->mWheel[2], data->mWheel[3], avg_load, m_warned_rear_grip);
+        // Pass persistent state for LPF (v0.4.6) - Indices 2 and 3
+        GripResult rear_grip_res = calculate_grip(data->mWheel[2], data->mWheel[3], avg_load, m_warned_rear_grip,
+                                                  m_prev_slip_angle[2], m_prev_slip_angle[3], car_speed);
         double avg_rear_grip = rear_grip_res.value;
         
         // Update Diagnostics
@@ -559,9 +592,12 @@ public:
             // Add resistance when sliding laterally (Dragging rubber)
             if (m_scrub_drag_gain > 0.0) {
                 double avg_lat_vel = (fl.mLateralPatchVel + fr.mLateralPatchVel) / 2.0;
-                if (std::abs(avg_lat_vel) > 0.5) {
+                // v0.4.6: Linear Fade-In Window (0.0 - 0.5 m/s)
+                double abs_lat_vel = std::abs(avg_lat_vel);
+                if (abs_lat_vel > 0.001) { // Avoid noise
+                    double fade = (std::min)(1.0, abs_lat_vel / 0.5);
                     double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
-                    double drag_force = drag_dir * m_scrub_drag_gain * 2.0; // Scaled
+                    double drag_force = drag_dir * m_scrub_drag_gain * 2.0 * fade; // Scaled & Faded
                     total_force += drag_force;
                 }
             }
@@ -574,6 +610,10 @@ public:
             double delta_l = vert_l - m_prev_vert_deflection[0];
             double delta_r = vert_r - m_prev_vert_deflection[1];
             
+            // v0.4.6: Delta Clamping (+/- 0.01m)
+            delta_l = (std::max)(-0.01, (std::min)(0.01, delta_l));
+            delta_r = (std::max)(-0.01, (std::min)(0.01, delta_r));
+
             // Store for next frame
             m_prev_vert_deflection[0] = vert_l;
             m_prev_vert_deflection[1] = vert_r;
@@ -699,8 +739,10 @@ public:
                 
                 // Snapshot Approximations
                 snap.slip_ratio = (float)((get_slip_ratio(fl) + get_slip_ratio(fr)) / 2.0);
-                // v0.4.5: Use helper
-                snap.slip_angle = (float)((calculate_slip_angle(fl) + calculate_slip_angle(fr)) / 2.0);
+                
+                // FIX (v0.4.6): Use the actual smoothed slip angle from diagnostics instead of recalculating with dummy state
+                // This ensures the graph matches the physics logic.
+                snap.slip_angle = (float)m_grip_diag.front_slip_angle;
                 
                 snap.patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
                 snap.deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);

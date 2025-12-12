@@ -34,6 +34,177 @@ int g_tests_failed = 0;
 
 // --- Tests ---
 
+void test_manual_slip_singularity() {
+    std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    engine.m_use_manual_slip = true;
+    engine.m_lockup_enabled = true;
+    engine.m_lockup_gain = 1.0;
+    
+    // Case: Car moving slowly (1.0 m/s), Wheels locked (0.0 rad/s)
+    // Normally this is -1.0 slip ratio (Lockup).
+    // Requirement: Force to 0.0 if speed < 2.0 m/s.
+    
+    data.mLocalVel.z = 1.0; // 1 m/s (< 2.0)
+    data.mWheel[0].mStaticUndeflectedRadius = 30; // 30cm
+    data.mWheel[0].mRotation = 0.0; // Locked
+    
+    data.mUnfilteredBrake = 1.0;
+    data.mDeltaTime = 0.01;
+    
+    engine.calculate_force(&data);
+    
+    // If slip ratio forced to 0.0, lockup logic shouldn't trigger.
+    // If logic triggers, phase will advance.
+    if (engine.m_lockup_phase == 0.0) {
+        std::cout << "[PASS] Low speed lockup suppressed (Phase 0)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Low speed lockup triggered (Phase " << engine.m_lockup_phase << ")." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+void test_scrub_drag_fade() {
+    std::cout << "\nTest: Scrub Drag Fade-In" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    // Disable Bottoming to avoid noise
+    engine.m_bottoming_enabled = false;
+    // Disable Slide Texture (enabled by default)
+    engine.m_slide_texture_enabled = false;
+
+    engine.m_road_texture_enabled = true;
+    engine.m_scrub_drag_gain = 1.0;
+    
+    // Case 1: 0.25 m/s lateral velocity (Midpoint of 0.0 - 0.5 window)
+    // Expected: 50% of force.
+    // Full force calculation: drag_gain * 2.0 = 2.0.
+    // Fade = 0.25 / 0.5 = 0.5.
+    // Expected Force = 2.0 * 0.5 = 1.0.
+    // Normalized by Ref (40.0). Output = 1.0 / 40.0 = 0.025.
+    // Direction: Positive Vel -> Negative Force.
+    // Norm Force = -0.025.
+    
+    data.mWheel[0].mLateralPatchVel = 0.25;
+    data.mWheel[1].mLateralPatchVel = 0.25;
+    engine.m_max_torque_ref = 40.0f;
+    engine.m_gain = 1.0;
+    
+    double force = engine.calculate_force(&data);
+    
+    // Check absolute magnitude
+    if (std::abs(std::abs(force) - 0.025) < 0.001) {
+        std::cout << "[PASS] Scrub drag faded correctly (50%)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Scrub drag fade incorrect. Got " << force << " Expected 0.025." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+void test_road_texture_teleport() {
+    std::cout << "\nTest: Road Texture Teleport (Delta Clamp)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    // Disable Bottoming
+    engine.m_bottoming_enabled = false;
+
+    engine.m_road_texture_enabled = true;
+    engine.m_road_texture_gain = 1.0;
+    engine.m_max_torque_ref = 40.0f;
+    engine.m_gain = 1.0; // Ensure gain is 1.0
+    
+    // Frame 1: 0.0
+    data.mWheel[0].mVerticalTireDeflection = 0.0;
+    data.mWheel[1].mVerticalTireDeflection = 0.0;
+    data.mWheel[0].mTireLoad = 4000.0; // Load Factor 1.0
+    data.mWheel[1].mTireLoad = 4000.0;
+    engine.calculate_force(&data);
+    
+    // Frame 2: Teleport (+0.1m)
+    data.mWheel[0].mVerticalTireDeflection = 0.1;
+    data.mWheel[1].mVerticalTireDeflection = 0.1;
+    
+    // Without Clamp:
+    // Delta = 0.1. Sum = 0.2.
+    // Force = 0.2 * 25.0 = 5.0.
+    // Norm = 5.0 / 40.0 = 0.125.
+    
+    // With Clamp (+/- 0.01):
+    // Delta clamped to 0.01. Sum = 0.02.
+    // Force = 0.02 * 25.0 = 0.5.
+    // Norm = 0.5 / 40.0 = 0.0125.
+    
+    double force = engine.calculate_force(&data);
+    
+    // Check if clamped
+    if (std::abs(force - 0.0125) < 0.001) {
+        std::cout << "[PASS] Teleport spike clamped." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Teleport spike unclamped? Got " << force << " Expected 0.0125." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+void test_grip_low_speed() {
+    std::cout << "\nTest: Grip Approximation Low Speed Cutoff" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    // Disable Bottoming & Textures
+    engine.m_bottoming_enabled = false;
+    engine.m_slide_texture_enabled = false;
+    engine.m_road_texture_enabled = false;
+
+    // Setup for Approximation
+    data.mWheel[0].mGripFract = 0.0; // Missing
+    data.mWheel[1].mGripFract = 0.0;
+    data.mWheel[0].mTireLoad = 4000.0; // Valid Load
+    data.mWheel[1].mTireLoad = 4000.0;
+    engine.m_gain = 1.0;
+    engine.m_understeer_effect = 1.0;
+    data.mSteeringShaftTorque = 40.0; // Full force
+    engine.m_max_torque_ref = 40.0f;
+    
+    // Case: Low Speed (1.0 m/s) but massive computed slip
+    data.mLocalVel.z = 1.0; // 1 m/s (< 5.0 cutoff)
+    
+    // Slip calculation inputs
+    // Lateral = 2.0 m/s. Long = 1.0 m/s.
+    // Slip Angle = atan(2/1) = ~1.1 rad.
+    // Excess = 1.1 - 0.15 = 0.95.
+    // Grip = 1.0 - (0.95 * 2) = -0.9 -> clamped to 0.2.
+    
+    // Without Cutoff: Grip = 0.2. Force = 40 * 0.2 = 8. Norm = 8/40 = 0.2.
+    // With Cutoff: Grip forced to 1.0. Force = 40 * 1.0 = 40. Norm = 1.0.
+    
+    data.mWheel[0].mLateralPatchVel = 2.0;
+    data.mWheel[1].mLateralPatchVel = 2.0;
+    data.mWheel[0].mLongitudinalGroundVel = 1.0;
+    data.mWheel[1].mLongitudinalGroundVel = 1.0;
+    
+    double force = engine.calculate_force(&data);
+    
+    if (std::abs(force - 1.0) < 0.001) {
+        std::cout << "[PASS] Low speed grip forced to 1.0." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Low speed grip not forced. Got " << force << " Expected 1.0." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+
 void test_zero_input() {
     std::cout << "\nTest: Zero Input" << std::endl;
     FFBEngine engine;
@@ -959,58 +1130,6 @@ void test_sanity_checks() {
     }
 }
 
-int main() {
-    test_zero_input();
-    test_suspension_bottoming();
-    test_grip_modulation();
-    test_sop_effect();
-    test_min_force();
-    test_progressive_lockup();
-    test_slide_texture();
-    test_dynamic_tuning();
-    
-    test_oversteer_boost();
-    test_phase_wraparound();
-    test_road_texture_state_persistence();
-    test_multi_effect_interaction();
-    test_load_factor_edge_cases();
-    test_spin_torque_drop_interaction();
-    
-    test_rear_grip_fallback(); // v0.4.5
-    test_sanity_checks();
-    void test_hysteresis_logic(); // Forward declaration
-    test_hysteresis_logic();
-    void test_presets(); // Forward declaration
-    test_presets();
-
-    void test_config_persistence();
-    test_config_persistence();
-    
-    void test_channel_stats();
-    test_channel_stats();
-
-    void test_game_state_logic();
-    test_game_state_logic();
-
-    void test_smoothing_step_response();
-    test_smoothing_step_response();
-
-    void test_manual_slip_calculation();
-    test_manual_slip_calculation();
-
-    void test_universal_bottoming();
-    test_universal_bottoming();
-
-    void test_preset_initialization();
-    test_preset_initialization();
-
-    std::cout << "\n----------------" << std::endl;
-    std::cout << "Tests Passed: " << g_tests_passed << std::endl;
-    std::cout << "Tests Failed: " << g_tests_failed << std::endl;
-    
-    return g_tests_failed > 0 ? 1 : 0;
-}
-
 void test_hysteresis_logic() {
     std::cout << "\nTest: Hysteresis Logic (Missing Data)" << std::endl;
     FFBEngine engine;
@@ -1517,4 +1636,45 @@ void test_preset_initialization() {
         std::cout << "[FAIL] Some presets have incorrect v0.4.5 field initialization" << std::endl;
         g_tests_failed++;
     }
+}
+
+int main() {
+    // Run New Tests
+    test_manual_slip_singularity();
+    test_scrub_drag_fade();
+    test_road_texture_teleport();
+    test_grip_low_speed();
+
+    // Run Regression Tests
+    test_zero_input();
+    test_suspension_bottoming();
+    test_grip_modulation();
+    test_sop_effect();
+    test_min_force();
+    test_progressive_lockup();
+    test_slide_texture();
+    test_dynamic_tuning();
+    test_oversteer_boost();
+    test_phase_wraparound();
+    test_road_texture_state_persistence();
+    test_multi_effect_interaction();
+    test_load_factor_edge_cases();
+    test_spin_torque_drop_interaction();
+    test_rear_grip_fallback();
+    test_sanity_checks();
+    test_hysteresis_logic();
+    test_presets();
+    test_config_persistence();
+    test_channel_stats();
+    test_game_state_logic();
+    test_smoothing_step_response();
+    test_manual_slip_calculation();
+    test_universal_bottoming();
+    test_preset_initialization();
+
+    std::cout << "\n----------------" << std::endl;
+    std::cout << "Tests Passed: " << g_tests_passed << std::endl;
+    std::cout << "Tests Failed: " << g_tests_failed << std::endl;
+    
+    return g_tests_failed > 0 ? 1 : 0;
 }

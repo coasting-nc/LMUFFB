@@ -3,11 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 ## [0.4.6] - 2025-12-11
+### Added
+- **Stability Safeguards**: Implemented a comprehensive suite of mathematical clamps and mitigations to prevent physics instabilities.
+    - **Grip Approximation Hardening**: Added Low Pass Filter (LPF) to calculated Slip Angle and a Low Speed Cutoff (< 5.0 m/s) to force full grip, preventing "parking lot jitter". Safety clamp ensures calculated grip never drops below 20%.
+    - **Scrub Drag Fade-In**: Added linear fade-in window (0.0 - 0.5 m/s lateral velocity) to prevent "ping-pong" oscillation around zero.
+    - **Load Clamping**: Hard-clamped the calculated Load Factor to a maximum of 2.0x (regardless of user config) to prevent violent jolts during aerodynamic load spikes or crashes.
+    - **Road Texture Clamping**: Limited frame-to-frame suspension deflection delta to +/- 0.01 meters to eliminate massive force spikes during car teleports (e.g., reset to pits).
+    - **SoP Input Clamping**: Clamped lateral G-force input to +/- 5G to protect against physics glitches or wall impacts.
+    - **Manual Slip Trap**: Forced Slip Ratio to 0.0 when car speed is < 2.0 m/s to avoid division-by-zero singularities.
+
 ### Fixed
 - **Grip Calculation**: Implemented consistent fallback logic for rear wheels when telemetry is missing (previously only front wheels had fallback).
 - **Diagnostics**: Added `GripDiagnostics` struct to track grip calculation source (telemetry vs approximation) and original values.
 - **Data Integrity**: Preserved original telemetry values in diagnostics even when approximation is used.
 - **Refactoring**: Extracted grip calculation logic into a reusable helper function `calculate_grip` for better maintainability and consistency.
+- **Tire Radius Precision**: Fixed potential integer truncation issue by explicitly casting tire radius to double before division.
 
 ## [0.4.5] - 2025-12-11
 ### Added

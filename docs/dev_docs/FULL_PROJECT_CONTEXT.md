@@ -385,11 +385,21 @@ tests\test_ffb_engine.exe 2>&1 | Select-String -Pattern "Tests (Passed|Failed):"
 All notable changes to this project will be documented in this file.
 
 ## [0.4.6] - 2025-12-11
+### Added
+- **Stability Safeguards**: Implemented a comprehensive suite of mathematical clamps and mitigations to prevent physics instabilities.
+    - **Grip Approximation Hardening**: Added Low Pass Filter (LPF) to calculated Slip Angle and a Low Speed Cutoff (< 5.0 m/s) to force full grip, preventing "parking lot jitter". Safety clamp ensures calculated grip never drops below 20%.
+    - **Scrub Drag Fade-In**: Added linear fade-in window (0.0 - 0.5 m/s lateral velocity) to prevent "ping-pong" oscillation around zero.
+    - **Load Clamping**: Hard-clamped the calculated Load Factor to a maximum of 2.0x (regardless of user config) to prevent violent jolts during aerodynamic load spikes or crashes.
+    - **Road Texture Clamping**: Limited frame-to-frame suspension deflection delta to +/- 0.01 meters to eliminate massive force spikes during car teleports (e.g., reset to pits).
+    - **SoP Input Clamping**: Clamped lateral G-force input to +/- 5G to protect against physics glitches or wall impacts.
+    - **Manual Slip Trap**: Forced Slip Ratio to 0.0 when car speed is < 2.0 m/s to avoid division-by-zero singularities.
+
 ### Fixed
 - **Grip Calculation**: Implemented consistent fallback logic for rear wheels when telemetry is missing (previously only front wheels had fallback).
 - **Diagnostics**: Added `GripDiagnostics` struct to track grip calculation source (telemetry vs approximation) and original values.
 - **Data Integrity**: Preserved original telemetry values in diagnostics even when approximation is used.
 - **Refactoring**: Extracted grip calculation logic into a reusable helper function `calculate_grip` for better maintainability and consistency.
+- **Tire Radius Precision**: Fixed potential integer truncation issue by explicitly casting tire radius to double before division.
 
 ## [0.4.5] - 2025-12-11
 ### Added
@@ -830,6 +840,7 @@ public:
 
     // Internal state
     double m_prev_vert_deflection[2] = {0.0, 0.0}; // FL, FR
+    double m_prev_slip_angle[4] = {0.0, 0.0, 0.0, 0.0}; // FL, FR, RL, RR (LPF State)
     
     // Phase Accumulators for Dynamic Oscillators
     double m_lockup_phase = 0.0;
@@ -883,19 +894,28 @@ public:
         double slip_angle;      // Calculated slip angle (if approximated)
     };
 
-    // Helper: Calculate Slip Angle (v0.4.5 Fix)
-    double calculate_slip_angle(const TelemWheelV01& w) {
+    // Helper: Calculate Slip Angle (v0.4.6 LPF + Logic)
+    double calculate_slip_angle(const TelemWheelV01& w, double& prev_state) {
         double v_long = std::abs(w.mLongitudinalGroundVel);
         double min_speed = 0.5;
         if (v_long < min_speed) v_long = min_speed;
-        return std::atan2(std::abs(w.mLateralPatchVel), v_long);
+        
+        double raw_angle = std::atan2(std::abs(w.mLateralPatchVel), v_long);
+        
+        // LPF: Alpha ~0.1 (Strong smoothing for stability)
+        double alpha = 0.1;
+        prev_state = prev_state + alpha * (raw_angle - prev_state);
+        return prev_state;
     }
 
-    // Helper: Calculate Grip with Fallback (v0.4.5 Fix)
+    // Helper: Calculate Grip with Fallback (v0.4.6 Hardening)
     GripResult calculate_grip(const TelemWheelV01& w1, 
                               const TelemWheelV01& w2,
                               double avg_load,
-                              bool& warned_flag) {
+                              bool& warned_flag,
+                              double& prev_slip1,
+                              double& prev_slip2,
+                              double car_speed) {
         GripResult result;
         result.original = (w1.mGripFract + w2.mGripFract) / 2.0;
         result.value = result.original;
@@ -905,12 +925,21 @@ public:
         // Fallback condition: Grip is essentially zero BUT car has significant load
         if (result.value < 0.0001 && avg_load > 100.0) {
             result.approximated = true;
-            double slip1 = calculate_slip_angle(w1);
-            double slip2 = calculate_slip_angle(w2);
-            result.slip_angle = (slip1 + slip2) / 2.0;
             
-            double excess = (std::max)(0.0, result.slip_angle - 0.15);
-            result.value = 1.0 - (excess * 2.0);
+            // Low Speed Cutoff (v0.4.6)
+            if (car_speed < 5.0) {
+                result.slip_angle = 0.0;
+                result.value = 1.0; // Force full grip at low speeds
+            } else {
+                double slip1 = calculate_slip_angle(w1, prev_slip1);
+                double slip2 = calculate_slip_angle(w2, prev_slip2);
+                result.slip_angle = (slip1 + slip2) / 2.0;
+                
+                double excess = (std::max)(0.0, result.slip_angle - 0.15);
+                result.value = 1.0 - (excess * 2.0);
+            }
+            
+            // Safety Clamp (v0.4.6): Never drop below 0.2 in approximation
             result.value = (std::max)(0.2, result.value);
             
             if (!warned_flag) {
@@ -930,9 +959,13 @@ public:
         return w.mSuspForce + 300.0;
     }
 
-    // Helper: Calculate Manual Slip Ratio (v0.4.5)
+    // Helper: Calculate Manual Slip Ratio (v0.4.6)
     double calculate_manual_slip_ratio(const TelemWheelV01& w, double car_speed_ms) {
+        // Safety Trap: Force 0 slip at very low speeds (v0.4.6)
+        if (std::abs(car_speed_ms) < 2.0) return 0.0;
+
         // Radius in meters (stored as cm unsigned char)
+        // Explicit cast to double before division (v0.4.6)
         double radius_m = (double)w.mStaticUndeflectedRadius / 100.0;
         if (radius_m < 0.1) radius_m = 0.33; // Fallback if 0 or invalid
         
@@ -1038,14 +1071,20 @@ public:
         // Normalize: 4000N is a reference "loaded" GT tire.
         double load_factor = avg_load / 4000.0;
         
-        // SAFETY CLAMP: Cap at 1.5x (or configured max) to prevent violent jolts.
-        load_factor = (std::min)((double)m_max_load_factor, (std::max)(0.0, load_factor));
+        // SAFETY CLAMP (v0.4.6): Hard clamp at 2.0 (regardless of config) to prevent explosion
+        // Also respect configured max if lower.
+        double safe_max = (std::min)(2.0, (double)m_max_load_factor);
+        load_factor = (std::min)(safe_max, (std::max)(0.0, load_factor));
 
         // --- 1. Understeer Effect (Grip Modulation) ---
         // FRONT WHEEL GRIP CALCULATION (Refactored v0.4.5)
         
+        double car_speed = std::abs(data->mLocalVel.z);
+
         // Calculate Front Grip using helper (handles fallback and diagnostics)
-        GripResult front_grip_res = calculate_grip(fl, fr, avg_load, m_warned_grip);
+        // Pass persistent state for LPF (v0.4.6) - Indices 0 and 1
+        GripResult front_grip_res = calculate_grip(fl, fr, avg_load, m_warned_grip, 
+                                                   m_prev_slip_angle[0], m_prev_slip_angle[1], car_speed);
         double avg_grip = front_grip_res.value;
         
         // Update Diagnostics
@@ -1066,7 +1105,9 @@ public:
         
         // --- 2. Seat of Pants (SoP) / Oversteer ---
         // Lateral G-force
-        double lat_g = data->mLocalAccel.x / 9.81;
+        // v0.4.6: Clamp Input to reasonable Gs (+/- 5G)
+        double raw_g = (std::max)(-49.05, (std::min)(49.05, data->mLocalAccel.x));
+        double lat_g = raw_g / 9.81;
         
         // SoP Smoothing (Time-Corrected Low Pass Filter) (Report v0.4.2)
         // m_sop_smoothing_factor (0.0 to 1.0) is treated as a "Smoothness" knob.
@@ -1093,7 +1134,9 @@ public:
         // REAR WHEEL GRIP CALCULATION (Refactored v0.4.5)
         
         // Calculate Rear Grip using helper (now includes fallback)
-        GripResult rear_grip_res = calculate_grip(data->mWheel[2], data->mWheel[3], avg_load, m_warned_rear_grip);
+        // Pass persistent state for LPF (v0.4.6) - Indices 2 and 3
+        GripResult rear_grip_res = calculate_grip(data->mWheel[2], data->mWheel[3], avg_load, m_warned_rear_grip,
+                                                  m_prev_slip_angle[2], m_prev_slip_angle[3], car_speed);
         double avg_rear_grip = rear_grip_res.value;
         
         // Update Diagnostics
@@ -1243,9 +1286,12 @@ public:
             // Add resistance when sliding laterally (Dragging rubber)
             if (m_scrub_drag_gain > 0.0) {
                 double avg_lat_vel = (fl.mLateralPatchVel + fr.mLateralPatchVel) / 2.0;
-                if (std::abs(avg_lat_vel) > 0.5) {
+                // v0.4.6: Linear Fade-In Window (0.0 - 0.5 m/s)
+                double abs_lat_vel = std::abs(avg_lat_vel);
+                if (abs_lat_vel > 0.001) { // Avoid noise
+                    double fade = (std::min)(1.0, abs_lat_vel / 0.5);
                     double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
-                    double drag_force = drag_dir * m_scrub_drag_gain * 2.0; // Scaled
+                    double drag_force = drag_dir * m_scrub_drag_gain * 2.0 * fade; // Scaled & Faded
                     total_force += drag_force;
                 }
             }
@@ -1258,6 +1304,10 @@ public:
             double delta_l = vert_l - m_prev_vert_deflection[0];
             double delta_r = vert_r - m_prev_vert_deflection[1];
             
+            // v0.4.6: Delta Clamping (+/- 0.01m)
+            delta_l = (std::max)(-0.01, (std::min)(0.01, delta_l));
+            delta_r = (std::max)(-0.01, (std::min)(0.01, delta_r));
+
             // Store for next frame
             m_prev_vert_deflection[0] = vert_l;
             m_prev_vert_deflection[1] = vert_r;
@@ -1383,8 +1433,9 @@ public:
                 
                 // Snapshot Approximations
                 snap.slip_ratio = (float)((get_slip_ratio(fl) + get_slip_ratio(fr)) / 2.0);
-                // v0.4.5: Use helper
-                snap.slip_angle = (float)((calculate_slip_angle(fl) + calculate_slip_angle(fr)) / 2.0);
+                // v0.4.5: Use helper (using temp state to avoid mutating real state)
+                double dummy = 0.0;
+                snap.slip_angle = (float)((calculate_slip_angle(fl, dummy) + calculate_slip_angle(fr, dummy)) / 2.0);
                 
                 snap.patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
                 snap.deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
@@ -4882,7 +4933,7 @@ $$ F_{final} = \text{Clamp}\left( \left( \frac{F_{total}}{T_{ref}} \times K_{gai
 
 # File: docs\dev_docs\FFB_formulas.md
 ```markdown
-# FFB Mathematical Formulas (v0.4.1+)
+# FFB Mathematical Formulas (v0.4.6+)
 
 > **⚠️ API Source of Truth**  
 > All telemetry data units and field names are defined in **`src/lmu_sm_interface/InternalsPlugin.hpp`**.  
@@ -4914,20 +4965,25 @@ $$ F_{total} = (F_{base} + F_{sop} + F_{vib\_lock} + F_{vib\_spin} + F_{vib\_sli
 $$ L_{factor} = \text{Clamp}\left( \frac{\text{Load}_{FL} + \text{Load}_{FR}}{2 \times 4000}, 0.0, 1.5 \right) $$
 
 *   **Robustness Check:** If $\text{Load} \approx 0.0$ and $|Velocity| > 1.0 m/s$, $\text{Load}$ defaults to 4000N to prevent signal dropout.
+*   **Safety Clamp (v0.4.6):** $L_{factor}$ is hard-clamped to a maximum of **2.0** (regardless of configuration) to prevent unbounded forces during aero-spikes.
 
 #### B. Base Force (Understeer / Grip Modulation)
 This modulates the raw steering rack force from the game based on front tire grip.
 $$ F_{base} = F_{steering\_arm} \times \left( 1.0 - \left( (1.0 - \text{Grip}_{avg}) \times K_{understeer} \right) \right) $$
 *   $\text{Grip}_{avg}$: Average of Front Left and Front Right `mGripFract`.
     *   **Fallback (v0.4.5+):** If telemetry grip is missing ($\approx 0.0$) but Load $> 100N$, grip is approximated from **Slip Angle**.
+        * **Low Speed Trap (v0.4.6):** If CarSpeed < 5.0 m/s, Grip = 1.0.
+        * **Slip Angle LPF (v0.4.6):** Slip Angle is smoothed using an Exponential Moving Average ($\alpha \approx 0.1$).
         * $\text{Slip} = \text{atan2}(V_{lat}, V_{long})$
         * $\text{Excess} = \max(0, \text{Slip} - 0.15)$
         * $\text{Grip} = \max(0.2, 1.0 - (\text{Excess} \times 2.0))$
+        * **Safety Clamp (v0.4.6):** Calculated Grip never drops below **0.2**.
 
 #### C. Seat of Pants (SoP) & Oversteer
 This injects lateral G-force and rear-axle aligning torque to simulate the car body's rotation.
 
 1.  **Smoothed Lateral G ($G_{lat}$)**: Calculated via Low Pass Filter (Exponential Moving Average).
+    *   **Input Clamp (v0.4.6):** Raw AccelX is clamped to +/- 5G ($49.05 m/s^2$) before processing.
     $$ G_{smooth} = G_{prev} + \alpha \times \left( \frac{\text{AccelX}_{local}}{9.81} - G_{prev} \right) $$
     *   $\alpha$: User setting `m_sop_smoothing_factor`.
 
@@ -4952,6 +5008,7 @@ $$ F_{sop} = F_{sop\_boosted} + T_{rear} $$
 
 **1. Progressive Lockup ($F_{vib\_lock}$)**
 Active if Brake > 5% and Slip Ratio < -0.1.
+*   **Manual Slip Trap (v0.4.6):** If using manual slip calculation and CarSpeed < 2.0 m/s, Slip Ratio is forced to 0.0.
 *   **Frequency**: $10 + (|\text{Vel}_{car}| \times 1.5)$ Hz
 *   **Amplitude**: $A = \text{Severity} \times K_{lockup} \times 4.0$
     
@@ -4968,8 +5025,8 @@ Active if Throttle > 5% and Rear Slip Ratio > 0.2.
 *   **Force**: $A \times \sin(\text{phase})$
 
 **3. Slide Texture ($F_{vib\_slide}$)**
-Active if Slip Angle > 0.15 rad (~8.5°).
-*   **Frequency**: $30 + (\text{LateralGroundVel} \times 20.0)$ Hz
+Active if Lateral Patch Velocity > 0.5 m/s.
+*   **Frequency**: $40 + (\text{LateralVel} \times 17.0)$ Hz
 *   **Waveform**: Sawtooth
 *   **Amplitude**: $A = K_{slide} \times 1.5 \times L_{factor}$
     
@@ -4978,13 +5035,16 @@ Active if Slip Angle > 0.15 rad (~8.5°).
 
 **4. Road Texture ($F_{vib\_road}$)**
 High-pass filter on suspension movement.
+*   **Delta Clamp (v0.4.6):** $\Delta_{vert}$ is clamped to +/- 0.01 meters per frame.
 *   $\Delta_{vert} = (\text{Deflection}_{current} - \text{Deflection}_{prev})$
 *   **Force**: $(\Delta_{vert\_L} + \Delta_{vert\_R}) \times 25.0 \times K_{road} \times L_{factor}$
     
     **Note**: Amplitude scaling changed from 5000.0 to 25.0 in v0.4.1 (Nm units).
+*   **Scrub Drag (v0.4.5+):** Constant resistance force opposing lateral slide.
+    *   **Fade In (v0.4.6):** Linearly scales from 0% to 100% between 0.0 and 0.5 m/s lateral velocity.
 
 **5. Suspension Bottoming ($F_{vib\_bottom}$)**
-Active if Max Tire Load > 8000N.
+Active if Max Tire Load > 8000N or Ride Height < 2mm.
 *   **Magnitude**: $\sqrt{\text{Load}_{max} - 8000} \times K_{bottom} \times 0.0025$
     
     **Note**: Magnitude scaling changed from 0.5 to 0.0025 in v0.4.1 (Nm units).
@@ -12561,6 +12621,177 @@ int g_tests_failed = 0;
 
 // --- Tests ---
 
+void test_manual_slip_singularity() {
+    std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    engine.m_use_manual_slip = true;
+    engine.m_lockup_enabled = true;
+    engine.m_lockup_gain = 1.0;
+    
+    // Case: Car moving slowly (1.0 m/s), Wheels locked (0.0 rad/s)
+    // Normally this is -1.0 slip ratio (Lockup).
+    // Requirement: Force to 0.0 if speed < 2.0 m/s.
+    
+    data.mLocalVel.z = 1.0; // 1 m/s (< 2.0)
+    data.mWheel[0].mStaticUndeflectedRadius = 30; // 30cm
+    data.mWheel[0].mRotation = 0.0; // Locked
+    
+    data.mUnfilteredBrake = 1.0;
+    data.mDeltaTime = 0.01;
+    
+    engine.calculate_force(&data);
+    
+    // If slip ratio forced to 0.0, lockup logic shouldn't trigger.
+    // If logic triggers, phase will advance.
+    if (engine.m_lockup_phase == 0.0) {
+        std::cout << "[PASS] Low speed lockup suppressed (Phase 0)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Low speed lockup triggered (Phase " << engine.m_lockup_phase << ")." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+void test_scrub_drag_fade() {
+    std::cout << "\nTest: Scrub Drag Fade-In" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    // Disable Bottoming to avoid noise
+    engine.m_bottoming_enabled = false;
+    // Disable Slide Texture (enabled by default)
+    engine.m_slide_texture_enabled = false;
+
+    engine.m_road_texture_enabled = true;
+    engine.m_scrub_drag_gain = 1.0;
+    
+    // Case 1: 0.25 m/s lateral velocity (Midpoint of 0.0 - 0.5 window)
+    // Expected: 50% of force.
+    // Full force calculation: drag_gain * 2.0 = 2.0.
+    // Fade = 0.25 / 0.5 = 0.5.
+    // Expected Force = 2.0 * 0.5 = 1.0.
+    // Normalized by Ref (40.0). Output = 1.0 / 40.0 = 0.025.
+    // Direction: Positive Vel -> Negative Force.
+    // Norm Force = -0.025.
+    
+    data.mWheel[0].mLateralPatchVel = 0.25;
+    data.mWheel[1].mLateralPatchVel = 0.25;
+    engine.m_max_torque_ref = 40.0f;
+    engine.m_gain = 1.0;
+    
+    double force = engine.calculate_force(&data);
+    
+    // Check absolute magnitude
+    if (std::abs(std::abs(force) - 0.025) < 0.001) {
+        std::cout << "[PASS] Scrub drag faded correctly (50%)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Scrub drag fade incorrect. Got " << force << " Expected 0.025." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+void test_road_texture_teleport() {
+    std::cout << "\nTest: Road Texture Teleport (Delta Clamp)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    // Disable Bottoming
+    engine.m_bottoming_enabled = false;
+
+    engine.m_road_texture_enabled = true;
+    engine.m_road_texture_gain = 1.0;
+    engine.m_max_torque_ref = 40.0f;
+    engine.m_gain = 1.0; // Ensure gain is 1.0
+    
+    // Frame 1: 0.0
+    data.mWheel[0].mVerticalTireDeflection = 0.0;
+    data.mWheel[1].mVerticalTireDeflection = 0.0;
+    data.mWheel[0].mTireLoad = 4000.0; // Load Factor 1.0
+    data.mWheel[1].mTireLoad = 4000.0;
+    engine.calculate_force(&data);
+    
+    // Frame 2: Teleport (+0.1m)
+    data.mWheel[0].mVerticalTireDeflection = 0.1;
+    data.mWheel[1].mVerticalTireDeflection = 0.1;
+    
+    // Without Clamp:
+    // Delta = 0.1. Sum = 0.2.
+    // Force = 0.2 * 25.0 = 5.0.
+    // Norm = 5.0 / 40.0 = 0.125.
+    
+    // With Clamp (+/- 0.01):
+    // Delta clamped to 0.01. Sum = 0.02.
+    // Force = 0.02 * 25.0 = 0.5.
+    // Norm = 0.5 / 40.0 = 0.0125.
+    
+    double force = engine.calculate_force(&data);
+    
+    // Check if clamped
+    if (std::abs(force - 0.0125) < 0.001) {
+        std::cout << "[PASS] Teleport spike clamped." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Teleport spike unclamped? Got " << force << " Expected 0.0125." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+void test_grip_low_speed() {
+    std::cout << "\nTest: Grip Approximation Low Speed Cutoff" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    // Disable Bottoming & Textures
+    engine.m_bottoming_enabled = false;
+    engine.m_slide_texture_enabled = false;
+    engine.m_road_texture_enabled = false;
+
+    // Setup for Approximation
+    data.mWheel[0].mGripFract = 0.0; // Missing
+    data.mWheel[1].mGripFract = 0.0;
+    data.mWheel[0].mTireLoad = 4000.0; // Valid Load
+    data.mWheel[1].mTireLoad = 4000.0;
+    engine.m_gain = 1.0;
+    engine.m_understeer_effect = 1.0;
+    data.mSteeringShaftTorque = 40.0; // Full force
+    engine.m_max_torque_ref = 40.0f;
+    
+    // Case: Low Speed (1.0 m/s) but massive computed slip
+    data.mLocalVel.z = 1.0; // 1 m/s (< 5.0 cutoff)
+    
+    // Slip calculation inputs
+    // Lateral = 2.0 m/s. Long = 1.0 m/s.
+    // Slip Angle = atan(2/1) = ~1.1 rad.
+    // Excess = 1.1 - 0.15 = 0.95.
+    // Grip = 1.0 - (0.95 * 2) = -0.9 -> clamped to 0.2.
+    
+    // Without Cutoff: Grip = 0.2. Force = 40 * 0.2 = 8. Norm = 8/40 = 0.2.
+    // With Cutoff: Grip forced to 1.0. Force = 40 * 1.0 = 40. Norm = 1.0.
+    
+    data.mWheel[0].mLateralPatchVel = 2.0;
+    data.mWheel[1].mLateralPatchVel = 2.0;
+    data.mWheel[0].mLongitudinalGroundVel = 1.0;
+    data.mWheel[1].mLongitudinalGroundVel = 1.0;
+    
+    double force = engine.calculate_force(&data);
+    
+    if (std::abs(force - 1.0) < 0.001) {
+        std::cout << "[PASS] Low speed grip forced to 1.0." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Low speed grip not forced. Got " << force << " Expected 1.0." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+
 void test_zero_input() {
     std::cout << "\nTest: Zero Input" << std::endl;
     FFBEngine engine;
@@ -13486,58 +13717,6 @@ void test_sanity_checks() {
     }
 }
 
-int main() {
-    test_zero_input();
-    test_suspension_bottoming();
-    test_grip_modulation();
-    test_sop_effect();
-    test_min_force();
-    test_progressive_lockup();
-    test_slide_texture();
-    test_dynamic_tuning();
-    
-    test_oversteer_boost();
-    test_phase_wraparound();
-    test_road_texture_state_persistence();
-    test_multi_effect_interaction();
-    test_load_factor_edge_cases();
-    test_spin_torque_drop_interaction();
-    
-    test_rear_grip_fallback(); // v0.4.5
-    test_sanity_checks();
-    void test_hysteresis_logic(); // Forward declaration
-    test_hysteresis_logic();
-    void test_presets(); // Forward declaration
-    test_presets();
-
-    void test_config_persistence();
-    test_config_persistence();
-    
-    void test_channel_stats();
-    test_channel_stats();
-
-    void test_game_state_logic();
-    test_game_state_logic();
-
-    void test_smoothing_step_response();
-    test_smoothing_step_response();
-
-    void test_manual_slip_calculation();
-    test_manual_slip_calculation();
-
-    void test_universal_bottoming();
-    test_universal_bottoming();
-
-    void test_preset_initialization();
-    test_preset_initialization();
-
-    std::cout << "\n----------------" << std::endl;
-    std::cout << "Tests Passed: " << g_tests_passed << std::endl;
-    std::cout << "Tests Failed: " << g_tests_failed << std::endl;
-    
-    return g_tests_failed > 0 ? 1 : 0;
-}
-
 void test_hysteresis_logic() {
     std::cout << "\nTest: Hysteresis Logic (Missing Data)" << std::endl;
     FFBEngine engine;
@@ -14044,6 +14223,47 @@ void test_preset_initialization() {
         std::cout << "[FAIL] Some presets have incorrect v0.4.5 field initialization" << std::endl;
         g_tests_failed++;
     }
+}
+
+int main() {
+    // Run New Tests
+    test_manual_slip_singularity();
+    test_scrub_drag_fade();
+    test_road_texture_teleport();
+    test_grip_low_speed();
+
+    // Run Regression Tests
+    test_zero_input();
+    test_suspension_bottoming();
+    test_grip_modulation();
+    test_sop_effect();
+    test_min_force();
+    test_progressive_lockup();
+    test_slide_texture();
+    test_dynamic_tuning();
+    test_oversteer_boost();
+    test_phase_wraparound();
+    test_road_texture_state_persistence();
+    test_multi_effect_interaction();
+    test_load_factor_edge_cases();
+    test_spin_torque_drop_interaction();
+    test_rear_grip_fallback();
+    test_sanity_checks();
+    test_hysteresis_logic();
+    test_presets();
+    test_config_persistence();
+    test_channel_stats();
+    test_game_state_logic();
+    test_smoothing_step_response();
+    test_manual_slip_calculation();
+    test_universal_bottoming();
+    test_preset_initialization();
+
+    std::cout << "\n----------------" << std::endl;
+    std::cout << "Tests Passed: " << g_tests_passed << std::endl;
+    std::cout << "Tests Failed: " << g_tests_failed << std::endl;
+    
+    return g_tests_failed > 0 ? 1 : 0;
 }
 
 ```

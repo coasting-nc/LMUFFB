@@ -1,4 +1,4 @@
-# FFB Mathematical Formulas (v0.4.1+)
+# FFB Mathematical Formulas (v0.4.6+)
 
 > **⚠️ API Source of Truth**  
 > All telemetry data units and field names are defined in **`src/lmu_sm_interface/InternalsPlugin.hpp`**.  
@@ -30,20 +30,25 @@ $$ F_{total} = (F_{base} + F_{sop} + F_{vib\_lock} + F_{vib\_spin} + F_{vib\_sli
 $$ L_{factor} = \text{Clamp}\left( \frac{\text{Load}_{FL} + \text{Load}_{FR}}{2 \times 4000}, 0.0, 1.5 \right) $$
 
 *   **Robustness Check:** If $\text{Load} \approx 0.0$ and $|Velocity| > 1.0 m/s$, $\text{Load}$ defaults to 4000N to prevent signal dropout.
+*   **Safety Clamp (v0.4.6):** $L_{factor}$ is hard-clamped to a maximum of **2.0** (regardless of configuration) to prevent unbounded forces during aero-spikes.
 
 #### B. Base Force (Understeer / Grip Modulation)
 This modulates the raw steering rack force from the game based on front tire grip.
 $$ F_{base} = F_{steering\_arm} \times \left( 1.0 - \left( (1.0 - \text{Grip}_{avg}) \times K_{understeer} \right) \right) $$
 *   $\text{Grip}_{avg}$: Average of Front Left and Front Right `mGripFract`.
     *   **Fallback (v0.4.5+):** If telemetry grip is missing ($\approx 0.0$) but Load $> 100N$, grip is approximated from **Slip Angle**.
+        * **Low Speed Trap (v0.4.6):** If CarSpeed < 5.0 m/s, Grip = 1.0.
+        * **Slip Angle LPF (v0.4.6):** Slip Angle is smoothed using an Exponential Moving Average ($\alpha \approx 0.1$).
         * $\text{Slip} = \text{atan2}(V_{lat}, V_{long})$
         * $\text{Excess} = \max(0, \text{Slip} - 0.15)$
         * $\text{Grip} = \max(0.2, 1.0 - (\text{Excess} \times 2.0))$
+        * **Safety Clamp (v0.4.6):** Calculated Grip never drops below **0.2**.
 
 #### C. Seat of Pants (SoP) & Oversteer
 This injects lateral G-force and rear-axle aligning torque to simulate the car body's rotation.
 
 1.  **Smoothed Lateral G ($G_{lat}$)**: Calculated via Low Pass Filter (Exponential Moving Average).
+    *   **Input Clamp (v0.4.6):** Raw AccelX is clamped to +/- 5G ($49.05 m/s^2$) before processing.
     $$ G_{smooth} = G_{prev} + \alpha \times \left( \frac{\text{AccelX}_{local}}{9.81} - G_{prev} \right) $$
     *   $\alpha$: User setting `m_sop_smoothing_factor`.
 
@@ -68,6 +73,7 @@ $$ F_{sop} = F_{sop\_boosted} + T_{rear} $$
 
 **1. Progressive Lockup ($F_{vib\_lock}$)**
 Active if Brake > 5% and Slip Ratio < -0.1.
+*   **Manual Slip Trap (v0.4.6):** If using manual slip calculation and CarSpeed < 2.0 m/s, Slip Ratio is forced to 0.0.
 *   **Frequency**: $10 + (|\text{Vel}_{car}| \times 1.5)$ Hz
 *   **Amplitude**: $A = \text{Severity} \times K_{lockup} \times 4.0$
     
@@ -84,8 +90,8 @@ Active if Throttle > 5% and Rear Slip Ratio > 0.2.
 *   **Force**: $A \times \sin(\text{phase})$
 
 **3. Slide Texture ($F_{vib\_slide}$)**
-Active if Slip Angle > 0.15 rad (~8.5°).
-*   **Frequency**: $30 + (\text{LateralGroundVel} \times 20.0)$ Hz
+Active if Lateral Patch Velocity > 0.5 m/s.
+*   **Frequency**: $40 + (\text{LateralVel} \times 17.0)$ Hz
 *   **Waveform**: Sawtooth
 *   **Amplitude**: $A = K_{slide} \times 1.5 \times L_{factor}$
     
@@ -94,13 +100,16 @@ Active if Slip Angle > 0.15 rad (~8.5°).
 
 **4. Road Texture ($F_{vib\_road}$)**
 High-pass filter on suspension movement.
+*   **Delta Clamp (v0.4.6):** $\Delta_{vert}$ is clamped to +/- 0.01 meters per frame.
 *   $\Delta_{vert} = (\text{Deflection}_{current} - \text{Deflection}_{prev})$
 *   **Force**: $(\Delta_{vert\_L} + \Delta_{vert\_R}) \times 25.0 \times K_{road} \times L_{factor}$
     
     **Note**: Amplitude scaling changed from 5000.0 to 25.0 in v0.4.1 (Nm units).
+*   **Scrub Drag (v0.4.5+):** Constant resistance force opposing lateral slide.
+    *   **Fade In (v0.4.6):** Linearly scales from 0% to 100% between 0.0 and 0.5 m/s lateral velocity.
 
 **5. Suspension Bottoming ($F_{vib\_bottom}$)**
-Active if Max Tire Load > 8000N.
+Active if Max Tire Load > 8000N or Ride Height < 2mm.
 *   **Magnitude**: $\sqrt{\text{Load}_{max} - 8000} \times K_{bottom} \times 0.0025$
     
     **Note**: Magnitude scaling changed from 0.5 to 0.0025 in v0.4.1 (Nm units).
