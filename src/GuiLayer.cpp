@@ -443,12 +443,14 @@ struct RollingBuffer {
     }
 };
 
-// Static buffers for debug plots (FFB)
+// --- Header A: FFB Components ---
 static RollingBuffer plot_total;
 static RollingBuffer plot_base;
 static RollingBuffer plot_sop;
 static RollingBuffer plot_understeer;
 static RollingBuffer plot_oversteer;
+static RollingBuffer plot_rear_torque; // New v0.4.7
+static RollingBuffer plot_scrub_drag;  // New v0.4.7
 static RollingBuffer plot_road;
 static RollingBuffer plot_slide;
 static RollingBuffer plot_lockup;
@@ -456,13 +458,22 @@ static RollingBuffer plot_spin;
 static RollingBuffer plot_bottoming;
 static RollingBuffer plot_clipping;
 
-// Static buffers for debug plots (Telemetry)
-static RollingBuffer plot_input_steer;
+// --- Header B: Internal Physics ---
+static RollingBuffer plot_calc_front_load; // New v0.4.7
+static RollingBuffer plot_calc_front_grip; // New v0.4.7
+static RollingBuffer plot_calc_slip_ratio; // New v0.4.7
+static RollingBuffer plot_calc_slip_angle; 
+
+// --- Header C: Raw Game Telemetry ---
+static RollingBuffer plot_raw_steer;
+static RollingBuffer plot_raw_load;        // New v0.4.7
+static RollingBuffer plot_raw_grip;        // New v0.4.7
+static RollingBuffer plot_raw_susp_force;  // New v0.4.7
+static RollingBuffer plot_raw_ride_height; // New v0.4.7
+static RollingBuffer plot_raw_car_speed;   // New v0.4.7
+static RollingBuffer plot_raw_throttle;    // New v0.4.7
+static RollingBuffer plot_raw_brake;       // New v0.4.7
 static RollingBuffer plot_input_accel;
-static RollingBuffer plot_input_load;
-static RollingBuffer plot_input_grip;
-static RollingBuffer plot_input_slip_ratio;
-static RollingBuffer plot_input_slip_angle;
 static RollingBuffer plot_input_patch_vel;
 static RollingBuffer plot_input_vert_deflection;
 
@@ -483,12 +494,14 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
     // Update buffers with the latest snapshot (if available)
     // Loop through ALL snapshots to avoid aliasing
     for (const auto& snap : snapshots) {
-        // FFB Components
+        // --- Header A: FFB Components ---
         plot_total.Add(snap.total_output);
         plot_base.Add(snap.base_force);
         plot_sop.Add(snap.sop_force);
         plot_understeer.Add(snap.understeer_drop);
         plot_oversteer.Add(snap.oversteer_boost);
+        plot_rear_torque.Add(snap.ffb_rear_torque);
+        plot_scrub_drag.Add(snap.ffb_scrub_drag);
         plot_road.Add(snap.texture_road);
         plot_slide.Add(snap.texture_slide);
         plot_lockup.Add(snap.texture_lockup);
@@ -496,13 +509,22 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         plot_bottoming.Add(snap.texture_bottoming);
         plot_clipping.Add(snap.clipping);
 
-        // Telemetry Inputs
-        plot_input_steer.Add(snap.steer_force);
+        // --- Header B: Internal Physics ---
+        plot_calc_front_load.Add(snap.calc_front_load);
+        plot_calc_front_grip.Add(snap.calc_front_grip);
+        plot_calc_slip_ratio.Add(snap.calc_front_slip_ratio);
+        plot_calc_slip_angle.Add(snap.slip_angle);
+
+        // --- Header C: Raw Telemetry ---
+        plot_raw_steer.Add(snap.steer_force);
+        plot_raw_load.Add(snap.raw_front_tire_load);
+        plot_raw_grip.Add(snap.raw_front_grip_fract);
+        plot_raw_susp_force.Add(snap.raw_front_susp_force);
+        plot_raw_ride_height.Add(snap.raw_front_ride_height);
+        plot_raw_car_speed.Add(snap.raw_car_speed);
+        plot_raw_throttle.Add(snap.raw_input_throttle);
+        plot_raw_brake.Add(snap.raw_input_brake);
         plot_input_accel.Add(snap.accel_x);
-        plot_input_load.Add(snap.tire_load);
-        plot_input_grip.Add(snap.grip_fract);
-        plot_input_slip_ratio.Add(snap.slip_ratio);
-        plot_input_slip_angle.Add(snap.slip_angle);
         plot_input_patch_vel.Add(snap.patch_vel);
         plot_input_vert_deflection.Add(snap.deflection);
 
@@ -523,13 +545,12 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         ImGui::Separator();
     }
 
-    // --- Draw UI ---
-    if (ImGui::CollapsingHeader("FFB Components (Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
+    // --- Header A: FFB Components (The Output) ---
+    if (ImGui::CollapsingHeader("A. FFB Components (Output Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Text("Total Output");
         ImGui::PlotLines("##Total", plot_total.data.data(), (int)plot_total.data.size(), plot_total.offset, "Total", -1.0f, 1.0f, ImVec2(0, 60));
         
         ImGui::Columns(2, "FFBCols", false);
-        // NOTE: Changed from ±4000 (Newtons) to ±30 (Nm) for new mSteeringShaftTorque
         ImGui::Text("Base Torque (Nm)"); ImGui::PlotLines("##Base", plot_base.data.data(), (int)plot_base.data.size(), plot_base.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
         ImGui::NextColumn();
         ImGui::Text("SoP (Lat G)"); ImGui::PlotLines("##SoP", plot_sop.data.data(), (int)plot_sop.data.size(), plot_sop.offset, NULL, -1000.0f, 1000.0f, ImVec2(0, 40));
@@ -537,6 +558,10 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         ImGui::Text("Understeer Cut"); ImGui::PlotLines("##Under", plot_understeer.data.data(), (int)plot_understeer.data.size(), plot_understeer.offset, NULL, -2000.0f, 2000.0f, ImVec2(0, 40));
         ImGui::NextColumn();
         ImGui::Text("Oversteer Boost"); ImGui::PlotLines("##Over", plot_oversteer.data.data(), (int)plot_oversteer.data.size(), plot_oversteer.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
+        ImGui::NextColumn();
+        ImGui::Text("Rear Align Torque"); ImGui::PlotLines("##RearT", plot_rear_torque.data.data(), (int)plot_rear_torque.data.size(), plot_rear_torque.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
+        ImGui::NextColumn();
+        ImGui::Text("Scrub Drag Force"); ImGui::PlotLines("##Drag", plot_scrub_drag.data.data(), (int)plot_scrub_drag.data.size(), plot_scrub_drag.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
         ImGui::NextColumn();
         ImGui::Text("Road Texture"); ImGui::PlotLines("##Road", plot_road.data.data(), (int)plot_road.data.size(), plot_road.offset, NULL, -1000.0f, 1000.0f, ImVec2(0, 40));
         ImGui::NextColumn();
@@ -552,33 +577,77 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         ImGui::Columns(1);
     }
 
-    if (ImGui::CollapsingHeader("Telemetry Inspector (Raw)", ImGuiTreeNodeFlags_None)) {
-        ImGui::Columns(2, "TelCols", false);
-        // NOTE: Changed from ±5000 (Newtons for old mSteeringArmForce) to ±30 (Nm for new mSteeringShaftTorque)
-        ImGui::Text("Steering Torque (Nm)"); ImGui::PlotLines("##StForce", plot_input_steer.data.data(), (int)plot_input_steer.data.size(), plot_input_steer.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
+    // --- Header B: Internal Physics Engine (The Brain) ---
+    if (ImGui::CollapsingHeader("B. Internal Physics (Brain)", ImGuiTreeNodeFlags_None)) {
+        ImGui::Columns(2, "PhysCols", false);
+        
+        ImGui::Text("Calc Front Load (N)");
+        ImGui::PlotLines("##CalcLoad", plot_calc_front_load.data.data(), (int)plot_calc_front_load.data.size(), plot_calc_front_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
         ImGui::NextColumn();
-        ImGui::Text("Local Accel X"); ImGui::PlotLines("##LatG", plot_input_accel.data.data(), (int)plot_input_accel.data.size(), plot_input_accel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        
+        ImGui::Text("Calc Front Grip");
+        ImGui::PlotLines("##CalcGrip", plot_calc_front_grip.data.data(), (int)plot_calc_front_grip.data.size(), plot_calc_front_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        ImGui::NextColumn();
+        
+        ImGui::Text("Calc Slip Ratio");
+        ImGui::PlotLines("##CalcSlip", plot_calc_slip_ratio.data.data(), (int)plot_calc_slip_ratio.data.size(), plot_calc_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
+        ImGui::NextColumn();
+        
+        ImGui::Text("Smoothed Slip Angle");
+        ImGui::PlotLines("##SlipA", plot_calc_slip_angle.data.data(), (int)plot_calc_slip_angle.data.size(), plot_calc_slip_angle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        ImGui::Columns(1);
+    }
+
+    // --- Header C: Raw Game Telemetry Inspector (The Input) ---
+    if (ImGui::CollapsingHeader("C. Raw Game Telemetry (Input)", ImGuiTreeNodeFlags_None)) {
+        ImGui::Columns(2, "TelCols", false);
+        
+        ImGui::Text("Steering Torque (Nm)"); 
+        ImGui::PlotLines("##StForce", plot_raw_steer.data.data(), (int)plot_raw_steer.data.size(), plot_raw_steer.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
         ImGui::NextColumn();
         
         // Highlight Load if warning
-        if (g_warn_load) ImGui::TextColored(ImVec4(1,0,0,1), "Avg Tire Load (MISSING)");
-        else ImGui::Text("Avg Tire Load");
-        ImGui::PlotLines("##Load", plot_input_load.data.data(), (int)plot_input_load.data.size(), plot_input_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
+        if (g_warn_load) ImGui::TextColored(ImVec4(1,0,0,1), "Raw Front Load (MISSING)");
+        else ImGui::Text("Raw Front Load (N)");
+        ImGui::PlotLines("##RawLoad", plot_raw_load.data.data(), (int)plot_raw_load.data.size(), plot_raw_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
         ImGui::NextColumn();
         
         // Highlight Grip if warning
-        if (g_warn_grip) ImGui::TextColored(ImVec4(1,0,0,1), "Avg Grip Fract (MISSING)");
-        else ImGui::Text("Avg Grip Fract");
-        ImGui::PlotLines("##Grip", plot_input_grip.data.data(), (int)plot_input_grip.data.size(), plot_input_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        if (g_warn_grip) ImGui::TextColored(ImVec4(1,0,0,1), "Raw Front Grip (MISSING)");
+        else ImGui::Text("Raw Front Grip");
+        ImGui::PlotLines("##RawGrip", plot_raw_grip.data.data(), (int)plot_raw_grip.data.size(), plot_raw_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        ImGui::NextColumn();
         
+        ImGui::Text("Raw Front Susp. Force"); 
+        ImGui::PlotLines("##Susp", plot_raw_susp_force.data.data(), (int)plot_raw_susp_force.data.size(), plot_raw_susp_force.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
         ImGui::NextColumn();
-        ImGui::Text("Avg Slip Ratio"); ImGui::PlotLines("##SlipR", plot_input_slip_ratio.data.data(), (int)plot_input_slip_ratio.data.size(), plot_input_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
+        
+        ImGui::Text("Raw Front Ride Height"); 
+        ImGui::PlotLines("##RH", plot_raw_ride_height.data.data(), (int)plot_raw_ride_height.data.size(), plot_raw_ride_height.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
         ImGui::NextColumn();
-        ImGui::Text("Avg Slip Angle"); ImGui::PlotLines("##SlipA", plot_input_slip_angle.data.data(), (int)plot_input_slip_angle.data.size(), plot_input_slip_angle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        
+        ImGui::Text("Car Speed (m/s)"); 
+        ImGui::PlotLines("##Speed", plot_raw_car_speed.data.data(), (int)plot_raw_car_speed.data.size(), plot_raw_car_speed.offset, NULL, 0.0f, 100.0f, ImVec2(0, 40));
         ImGui::NextColumn();
-        ImGui::Text("Avg Lat PatchVel"); ImGui::PlotLines("##PatchV", plot_input_patch_vel.data.data(), (int)plot_input_patch_vel.data.size(), plot_input_patch_vel.offset, NULL, 0.0f, 20.0f, ImVec2(0, 40));
+        
+        ImGui::Text("Throttle Input"); 
+        ImGui::PlotLines("##Thr", plot_raw_throttle.data.data(), (int)plot_raw_throttle.data.size(), plot_raw_throttle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
         ImGui::NextColumn();
-        ImGui::Text("Avg Deflection"); ImGui::PlotLines("##Defl", plot_input_vert_deflection.data.data(), (int)plot_input_vert_deflection.data.size(), plot_input_vert_deflection.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
+        
+        ImGui::Text("Brake Input"); 
+        ImGui::PlotLines("##Brk", plot_raw_brake.data.data(), (int)plot_raw_brake.data.size(), plot_raw_brake.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        ImGui::NextColumn();
+        
+        ImGui::Text("Local Accel X"); 
+        ImGui::PlotLines("##LatG", plot_input_accel.data.data(), (int)plot_input_accel.data.size(), plot_input_accel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        ImGui::NextColumn();
+        
+        ImGui::Text("Avg Lat PatchVel"); 
+        ImGui::PlotLines("##PatchV", plot_input_patch_vel.data.data(), (int)plot_input_patch_vel.data.size(), plot_input_patch_vel.offset, NULL, 0.0f, 20.0f, ImVec2(0, 40));
+        ImGui::NextColumn();
+        
+        ImGui::Text("Avg Deflection"); 
+        ImGui::PlotLines("##Defl", plot_input_vert_deflection.data.data(), (int)plot_input_vert_deflection.data.size(), plot_input_vert_deflection.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
         ImGui::Columns(1);
     }
 

@@ -59,7 +59,7 @@ Available for each of the 4 wheels (`mWheel[0]`=FL, `[1]`=FR, `[2]`=RL, `[3]`=RR
 | **`mGripFract`** | **0.0-1.0** | **Grip usage fraction** (0=full grip available, 1=at limit) | **Used**: Understeer/Oversteer detection (v0.4.0+) | |
 | `mLateralForce` | N | Force acting sideways on tire contact patch | **Used**: Rear Oversteer calculation (Aligning Torque) | Front pneumatic trail calculation refinement |
 | `mLongitudinalForce` | N | Force acting forward/back (Accel/Brake) | Unused | ABS pulse simulation |
-| `mSuspForce` | N | Pushrod load | Unused | Suspension stress feedback |
+| `mSuspForce` | N | Pushrod load | **Used**: Front Load approximation fallback (v0.4.7) | Suspension stress feedback |
 
 ### Motion & Slip
 
@@ -77,7 +77,7 @@ Available for each of the 4 wheels (`mWheel[0]`=FL, `[1]`=FR, `[2]`=RL, `[3]`=RR
 | :--- | :--- | :--- | :--- | :--- |
 | `mVerticalTireDeflection` | m | Compression of tire rubber | **Used**: Road Texture (High-pass filter) | |
 | `mSuspensionDeflection` | m | Compression of spring/damper | Unused | **Bottoming Out**: Harsh "thud" if deflection hits max travel |
-| `mRideHeight` | m | Chassis height | Unused | Scraping effects |
+| `mRideHeight` | m | Chassis height | **Used**: Visualized in Telemetry Inspector (v0.4.7) | Scraping effects |
 | `mTerrainName` | char[16] | Name of surface (e.g., "ROAD", "GRASS") | Unused | **Surface FX**: Different rumble for Kerbs/Grass/Gravel |
 | `mSurfaceType` | unsigned char | 0=dry, 1=wet, 2=grass, 3=dirt, 4=gravel, 5=rumblestrip, 6=special | Unused | Faster lookup for Surface FX |
 | `mCamber`, `mToe` | radians | Wheel alignment | Unused | Setup analysis |

@@ -34,6 +34,8 @@ int g_tests_failed = 0;
 
 // --- Tests ---
 
+void test_snapshot_population(); // Forward declaration
+
 void test_manual_slip_singularity() {
     std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
     FFBEngine engine;
@@ -1671,10 +1673,89 @@ int main() {
     test_manual_slip_calculation();
     test_universal_bottoming();
     test_preset_initialization();
-
+    test_snapshot_population();
+    
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
     std::cout << "Tests Failed: " << g_tests_failed << std::endl;
     
     return g_tests_failed > 0 ? 1 : 0;
+}
+
+void test_snapshot_population() {
+    std::cout << "\nTest: Snapshot Population (v0.4.7)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+
+    // Setup input values
+    // Case: Missing Tire Load (0) but Valid Susp Force (1000)
+    data.mWheel[0].mTireLoad = 0.0;
+    data.mWheel[1].mTireLoad = 0.0;
+    data.mWheel[0].mSuspForce = 1000.0;
+    data.mWheel[1].mSuspForce = 1000.0;
+    
+    // Other inputs
+    data.mLocalVel.z = 20.0; // Moving
+    data.mUnfilteredThrottle = 0.8;
+    data.mUnfilteredBrake = 0.2;
+    // data.mRideHeight = 0.05; // Removed invalid field
+    // Wait, TelemInfoV01 has mWheel[].mRideHeight.
+    data.mWheel[0].mRideHeight = 0.03;
+    data.mWheel[1].mRideHeight = 0.04; // Min is 0.03
+
+    // Trigger missing load logic
+    // Need > 20 frames of missing load
+    data.mDeltaTime = 0.01;
+    for (int i=0; i<30; i++) {
+        engine.calculate_force(&data);
+    }
+
+    // Get Snapshot
+    auto batch = engine.GetDebugBatch();
+    if (batch.empty()) {
+        std::cout << "[FAIL] No snapshot generated." << std::endl;
+        g_tests_failed++;
+        return;
+    }
+    
+    FFBSnapshot snap = batch.back();
+    
+    // Assertions
+    
+    // 1. Raw Load should be 0.0 (What the game sent)
+    if (std::abs(snap.raw_front_tire_load) < 0.001) {
+        std::cout << "[PASS] Raw Front Tire Load captured as 0.0." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Raw Front Tire Load incorrect: " << snap.raw_front_tire_load << std::endl;
+        g_tests_failed++;
+    }
+    
+    // 2. Calculated Load should be approx 1300 (SuspForce 1000 + 300 offset)
+    if (std::abs(snap.calc_front_load - 1300.0) < 0.001) {
+        std::cout << "[PASS] Calculated Front Load is 1300.0." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Calculated Front Load incorrect: " << snap.calc_front_load << std::endl;
+        g_tests_failed++;
+    }
+    
+    // 3. Raw Inputs
+    if (std::abs(snap.raw_input_throttle - 0.8) < 0.001) {
+        std::cout << "[PASS] Raw Throttle captured." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Raw Throttle incorrect." << std::endl;
+        g_tests_failed++;
+    }
+    
+    // 4. Raw Ride Height (Min of 0.03 and 0.04 -> 0.03)
+    if (std::abs(snap.raw_front_ride_height - 0.03) < 0.001) {
+        std::cout << "[PASS] Raw Ride Height captured (Min)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Raw Ride Height incorrect: " << snap.raw_front_ride_height << std::endl;
+        g_tests_failed++;
+    }
 }

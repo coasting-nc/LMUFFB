@@ -58,26 +58,37 @@ struct ChannelStats {
 
 // 1. Define the Snapshot Struct (Unified FFB + Telemetry)
 struct FFBSnapshot {
-    // FFB Outputs
+    // --- Header A: FFB Components (Outputs) ---
+    float total_output;
     float base_force;
     float sop_force;
     float understeer_drop;
     float oversteer_boost;
+    float ffb_rear_torque;  // New v0.4.7
+    float ffb_scrub_drag;   // New v0.4.7
     float texture_road;
     float texture_slide;
     float texture_lockup;
     float texture_spin;
     float texture_bottoming;
-    float total_output;
     float clipping;
 
-    // Telemetry Inputs
+    // --- Header B: Internal Physics (Calculated) ---
+    float calc_front_load;       // New v0.4.7
+    float calc_front_grip;       // New v0.4.7
+    float calc_front_slip_ratio; // New v0.4.7
+    float slip_angle;            // Existing (Smoothed)
+
+    // --- Header C: Raw Game Telemetry (Inputs) ---
     float steer_force;
+    float raw_front_tire_load;   // New v0.4.7
+    float raw_front_grip_fract;  // New v0.4.7
+    float raw_front_susp_force;  // New v0.4.7
+    float raw_front_ride_height; // New v0.4.7
+    float raw_car_speed;         // New v0.4.7
+    float raw_input_throttle;    // New v0.4.7
+    float raw_input_brake;       // New v0.4.7
     float accel_x;
-    float tire_load;
-    float grip_fract;
-    float slip_ratio;
-    float slip_angle;
     float patch_vel;
     float deflection;
 
@@ -346,6 +357,7 @@ public:
         double lockup_rumble = 0.0;
         double spin_rumble = 0.0;
         double bottoming_crunch = 0.0;
+        double scrub_drag_force = 0.0; // v0.4.7
 
         // --- PRE-CALCULATION: TIRE LOAD FACTOR ---
         double avg_load = raw_load;
@@ -597,8 +609,8 @@ public:
                 if (abs_lat_vel > 0.001) { // Avoid noise
                     double fade = (std::min)(1.0, abs_lat_vel / 0.5);
                     double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
-                    double drag_force = drag_dir * m_scrub_drag_gain * 2.0 * fade; // Scaled & Faded
-                    total_force += drag_force;
+                    scrub_drag_force = drag_dir * m_scrub_drag_gain * 2.0 * fade; // Scaled & Faded
+                    total_force += scrub_drag_force;
                 }
             }
 
@@ -719,11 +731,15 @@ public:
             std::lock_guard<std::mutex> lock(m_debug_mutex);
             if (m_debug_buffer.size() < 100) {
                 FFBSnapshot snap;
+                
+                // --- Header A: Outputs ---
                 snap.total_output = (float)norm_force;
                 snap.base_force = (float)game_force;
                 snap.sop_force = (float)sop_base_force;
                 snap.understeer_drop = (float)(game_force * (1.0 - grip_factor));
-                snap.oversteer_boost = (float)(sop_total - sop_base_force);
+                snap.oversteer_boost = (float)(sop_total - sop_base_force - rear_torque); // Split boost from rear torque
+                snap.ffb_rear_torque = (float)rear_torque;
+                snap.ffb_scrub_drag = (float)scrub_drag_force;
                 snap.texture_road = (float)road_noise;
                 snap.texture_slide = (float)slide_noise;
                 snap.texture_lockup = (float)lockup_rumble;
@@ -731,19 +747,22 @@ public:
                 snap.texture_bottoming = (float)bottoming_crunch;
                 snap.clipping = (std::abs(norm_force) > 0.99f) ? 1.0f : 0.0f;
                 
-                // Telemetry inputs
-                snap.steer_force = (float)game_force;
+                // --- Header B: Internal Physics (Calculated) ---
+                snap.calc_front_load = (float)avg_load; // This is the final load used (maybe approximated)
+                snap.calc_front_grip = (float)avg_grip; // This is the final grip used (maybe approximated)
+                snap.calc_front_slip_ratio = (float)((get_slip_ratio(fl) + get_slip_ratio(fr)) / 2.0);
+                snap.slip_angle = (float)m_grip_diag.front_slip_angle; // Smoothed Slip Angle
+                
+                // --- Header C: Raw Game Telemetry (Inputs) ---
+                snap.steer_force = (float)raw_torque;
+                snap.raw_front_tire_load = (float)raw_load; // Raw from game
+                snap.raw_front_grip_fract = (float)raw_grip; // Raw from game
+                snap.raw_front_susp_force = (float)((fl.mSuspForce + fr.mSuspForce) / 2.0);
+                snap.raw_front_ride_height = (float)((std::min)(fl.mRideHeight, fr.mRideHeight));
+                snap.raw_car_speed = (float)data->mLocalVel.z;
+                snap.raw_input_throttle = (float)data->mUnfilteredThrottle;
+                snap.raw_input_brake = (float)data->mUnfilteredBrake;
                 snap.accel_x = (float)data->mLocalAccel.x;
-                snap.tire_load = (float)avg_load;
-                snap.grip_fract = (float)avg_grip;
-                
-                // Snapshot Approximations
-                snap.slip_ratio = (float)((get_slip_ratio(fl) + get_slip_ratio(fr)) / 2.0);
-                
-                // FIX (v0.4.6): Use the actual smoothed slip angle from diagnostics instead of recalculating with dummy state
-                // This ensures the graph matches the physics logic.
-                snap.slip_angle = (float)m_grip_diag.front_slip_angle;
-                
                 snap.patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
                 snap.deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
                 

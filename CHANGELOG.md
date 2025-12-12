@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.7] - 2025-12-11
+### Added
+- **Expanded Troubleshooting Graphs**: Major reorganization of the "Troubleshooting" window to facilitate physics debugging.
+    - **New Layout**: Organized plots into three collapsible headers: "FFB Components (Output)", "Internal Physics (Calculated)", and "Raw Game Telemetry (Input)".
+    - **Raw Data Inspector**: Added explicit visualization of raw telemetry inputs (e.g., `raw_front_susp_force`, `raw_front_ride_height`) completely separated from internal calculations. This allows users to confirm if game data is missing/broken vs. engine calculation errors.
+    - **New Channels**: Added visualizations for Rear Aligning Torque, Scrub Drag, Calculated Front Load/Grip, and Calculated Slip Ratio.
+- **Diagnostics**: Expanded `FFBSnapshot` to capture raw input values before any fallback logic is applied.
+
 ## [0.4.6] - 2025-12-11
 ### Added
 - **Stability Safeguards**: Implemented a comprehensive suite of mathematical clamps and mitigations to prevent physics instabilities.
