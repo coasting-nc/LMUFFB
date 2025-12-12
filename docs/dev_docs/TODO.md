@@ -937,6 +937,8 @@ we should combine throttle and brake input plots into a single plot, like in com
 consider if other plots might benefit merging, showing multiple values on a single plot
 use different colors in the title test to show which color is assigned to
 
+organize the plots in 3 columns instead of 2, to fit more plots vertically
+
 ### Other 
 look at the updated math formulas
 see which cmponents are affected by new grip and load calc
