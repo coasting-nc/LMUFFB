@@ -895,55 +895,66 @@ The troubleshooting graphs are not updated. They do not show the new values used
 ## Troubleshooting 20
 
 ### More on plots and math formulas
-notes on FFB math formulas and plot visualization
+Notes on FFB math formulas and plot visualization
+
+"formulas md doc" refers to this document: docs\dev_docs\FFB_formulas.md
+
+In formulas md doc, also update the name of variables specifying when they refer to front types only (eg  Grip_avg is only for fronts)
+
+Visualiza this component that is in the formula md doc but has no individual plot: **slip angle LPF**, smoothed with exp.moving avg
+also, is "slip angle LPF" the slip angle on fronts only? specify in variable names
+
+In plots we indeed have "smoothed slip angle"
+but we don't show the actual slip, which is arctan2(Vlat,Vlong). Show also the slip before smoothing.
+I notice we have in the plots "**calc slip ratio**": is this it? In any case, we also this must specify for this plot if it is front wheels only.
+
+I note int he formulas that Grip is used for understeer.
+
+About this Math formula: **AccellXlocal**: rename to clearify: is it lateral accel? Is it of whole car, or average of some tires? Which tires? specify in name.
+
+Consider **SoP_base**  (without oversteer component) from the formulas doc: do we show it in a separate plot? If not, we should.
+
+In the plots, we have Calc Front Grip  but we don't have _Calc Rear Grip_
+In general, if we have a plot for a formula component (or a raw value) that is based on the front wheels only, we should also have a plot for the rear wheels only version of that component.
+We don't have _Raw Rear Grip_ (we have it only for the front).
+
+In Raw plots, we dont have _LatForceRl and LatForceRR_
+
+Why don't we have a plot for slide of rear tires?
+
+Should we have a slip angle plot for rear tires? (or does it make sense only for turning/steering wheels, that is front wheels?)
+
+Shoudl we have a plot for _avg longitudinal patch vel _? Should we use that value for brake lockup and slip calculation (or do we do already)?
+
+Shoudl we have a plot for _long and lat patch vel_ for rear?
+
+We should also add tootlips on the names / titles of plots, with a description of what the componet is / does / or is used for.
+
+avg deflection: is it for all 4 tires? Specify in the variable name and / or plot title.
+
+Add a plot for our _manual slip calc_ 
+
+Add a plots both for raw game value for slip, and for _manual slip calc_ , so we can compare them and see if they are identical or at least similar in shape.
+
+We don't have a plot for driver steering input (steering wheel angle). We should add it.
+
+we should combine throttle and brake input plots into a single plot. We should distinguis them with different colors (eg. use red and green colors as it is common for these values).
+
+Consider if other plots might benefit merging, showing multiple values (formula components) on a single plot.
+When we have multiple variables in a plot, use different colors in the title text to show which color is assigned to.
+
+Organize the plots in 3 columns instead of 2, to fit more plots vertically in the window, which is already a tower taking all vertical space.
+
+### Other 
+
+
+We could also have additional plots in which we show the plot for the base value (using default coeafficients) of some components and one with the custom coefficients as set in the main GUi
+
 
 docs/dev_docs/prompt - Implement Numerical Readouts for Troubleshooting Graphs (Diagnostics).md
 
 docs/dev_docs/Plots with Modular Independent Windows .md
 
-in formulas, also update the name of variables specifying when they refer to front types only (eg  Grip_avg is only for fronts)
-
-**slip angle LPF**, smoothed with exp.moving avg: visualize this in a plot
-also, is it the slip angle on fronts only? specify in variable names
-in plots we indeed have "smoothed slip angle"
-but we don't show the actual slip, which is arctan2(Vlat,Vlong)
-we have "**calc slip ratio**" is this it (also this must specify if it is front only)
-
-Grip is then used for understeer
-
-math formula: **AccellXlocal**: rename to clearify: is it lateral accel? Is it of whole car, or average of some tires? Which tires? specify in name
-
-**SoP_base** (without oversteer component): do we show it in a separate plot?
-
-We don't have _Calc Rear Grip_ in the plots
-We don't have _Raw Rear Grip_
-
-In Raw plots, we dont have _LatForceRl and RR_
-
-plot for _slide for rear_?
-slip angle for rear? (or does it make sense only for turning wheels?)
-
-plot for _avg longitudinal patch vel _? Use for brake lockup and slip?
-
-_long and lat patch vel_ for rear?
-
-add tootlips on the names / titles of plots, with a description (we alredy have tooltips on the plot themselves)
-
-We could also have additional plots in which we show the plot for the base value (using default coeafficients) and one with the custom coefficients as set in the main GUi
-
-avg deflection: is it for all 4 tires?
-
-show plot for our _manual slip calc_ 
-show plot for raw game value for slip, and compare if they are identical or at least same shape
-
-we don't have a plot for driver stering input (steering wheel angle)
-we should combine throttle and brake input plots into a single plot, like in common plot, use red and green colors.
-consider if other plots might benefit merging, showing multiple values on a single plot
-use different colors in the title test to show which color is assigned to
-
-organize the plots in 3 columns instead of 2, to fit more plots vertically
-
-### Other 
 look at the updated math formulas
 see which cmponents are affected by new grip and load calc
 add present for no effects

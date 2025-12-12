@@ -384,6 +384,14 @@ tests\test_ffb_engine.exe 2>&1 | Select-String -Pattern "Tests (Passed|Failed):"
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.7] - 2025-12-11
+### Added
+- **Expanded Troubleshooting Graphs**: Major reorganization of the "Troubleshooting" window to facilitate physics debugging.
+    - **New Layout**: Organized plots into three collapsible headers: "FFB Components (Output)", "Internal Physics (Calculated)", and "Raw Game Telemetry (Input)".
+    - **Raw Data Inspector**: Added explicit visualization of raw telemetry inputs (e.g., `raw_front_susp_force`, `raw_front_ride_height`) completely separated from internal calculations. This allows users to confirm if game data is missing/broken vs. engine calculation errors.
+    - **New Channels**: Added visualizations for Rear Aligning Torque, Scrub Drag, Calculated Front Load/Grip, and Calculated Slip Ratio.
+- **Diagnostics**: Expanded `FFBSnapshot` to capture raw input values before any fallback logic is applied.
+
 ## [0.4.6] - 2025-12-11
 ### Added
 - **Stability Safeguards**: Implemented a comprehensive suite of mathematical clamps and mitigations to prevent physics instabilities.
@@ -752,26 +760,37 @@ struct ChannelStats {
 
 // 1. Define the Snapshot Struct (Unified FFB + Telemetry)
 struct FFBSnapshot {
-    // FFB Outputs
+    // --- Header A: FFB Components (Outputs) ---
+    float total_output;
     float base_force;
     float sop_force;
     float understeer_drop;
     float oversteer_boost;
+    float ffb_rear_torque;  // New v0.4.7
+    float ffb_scrub_drag;   // New v0.4.7
     float texture_road;
     float texture_slide;
     float texture_lockup;
     float texture_spin;
     float texture_bottoming;
-    float total_output;
     float clipping;
 
-    // Telemetry Inputs
+    // --- Header B: Internal Physics (Calculated) ---
+    float calc_front_load;       // New v0.4.7
+    float calc_front_grip;       // New v0.4.7
+    float calc_front_slip_ratio; // New v0.4.7
+    float slip_angle;            // Existing (Smoothed)
+
+    // --- Header C: Raw Game Telemetry (Inputs) ---
     float steer_force;
+    float raw_front_tire_load;   // New v0.4.7
+    float raw_front_grip_fract;  // New v0.4.7
+    float raw_front_susp_force;  // New v0.4.7
+    float raw_front_ride_height; // New v0.4.7
+    float raw_car_speed;         // New v0.4.7
+    float raw_input_throttle;    // New v0.4.7
+    float raw_input_brake;       // New v0.4.7
     float accel_x;
-    float tire_load;
-    float grip_fract;
-    float slip_ratio;
-    float slip_angle;
     float patch_vel;
     float deflection;
 
@@ -1040,6 +1059,7 @@ public:
         double lockup_rumble = 0.0;
         double spin_rumble = 0.0;
         double bottoming_crunch = 0.0;
+        double scrub_drag_force = 0.0; // v0.4.7
 
         // --- PRE-CALCULATION: TIRE LOAD FACTOR ---
         double avg_load = raw_load;
@@ -1291,8 +1311,8 @@ public:
                 if (abs_lat_vel > 0.001) { // Avoid noise
                     double fade = (std::min)(1.0, abs_lat_vel / 0.5);
                     double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
-                    double drag_force = drag_dir * m_scrub_drag_gain * 2.0 * fade; // Scaled & Faded
-                    total_force += drag_force;
+                    scrub_drag_force = drag_dir * m_scrub_drag_gain * 2.0 * fade; // Scaled & Faded
+                    total_force += scrub_drag_force;
                 }
             }
 
@@ -1413,11 +1433,15 @@ public:
             std::lock_guard<std::mutex> lock(m_debug_mutex);
             if (m_debug_buffer.size() < 100) {
                 FFBSnapshot snap;
+                
+                // --- Header A: Outputs ---
                 snap.total_output = (float)norm_force;
                 snap.base_force = (float)game_force;
                 snap.sop_force = (float)sop_base_force;
                 snap.understeer_drop = (float)(game_force * (1.0 - grip_factor));
-                snap.oversteer_boost = (float)(sop_total - sop_base_force);
+                snap.oversteer_boost = (float)(sop_total - sop_base_force - rear_torque); // Split boost from rear torque
+                snap.ffb_rear_torque = (float)rear_torque;
+                snap.ffb_scrub_drag = (float)scrub_drag_force;
                 snap.texture_road = (float)road_noise;
                 snap.texture_slide = (float)slide_noise;
                 snap.texture_lockup = (float)lockup_rumble;
@@ -1425,19 +1449,22 @@ public:
                 snap.texture_bottoming = (float)bottoming_crunch;
                 snap.clipping = (std::abs(norm_force) > 0.99f) ? 1.0f : 0.0f;
                 
-                // Telemetry inputs
-                snap.steer_force = (float)game_force;
+                // --- Header B: Internal Physics (Calculated) ---
+                snap.calc_front_load = (float)avg_load; // This is the final load used (maybe approximated)
+                snap.calc_front_grip = (float)avg_grip; // This is the final grip used (maybe approximated)
+                snap.calc_front_slip_ratio = (float)((get_slip_ratio(fl) + get_slip_ratio(fr)) / 2.0);
+                snap.slip_angle = (float)m_grip_diag.front_slip_angle; // Smoothed Slip Angle
+                
+                // --- Header C: Raw Game Telemetry (Inputs) ---
+                snap.steer_force = (float)raw_torque;
+                snap.raw_front_tire_load = (float)raw_load; // Raw from game
+                snap.raw_front_grip_fract = (float)raw_grip; // Raw from game
+                snap.raw_front_susp_force = (float)((fl.mSuspForce + fr.mSuspForce) / 2.0);
+                snap.raw_front_ride_height = (float)((std::min)(fl.mRideHeight, fr.mRideHeight));
+                snap.raw_car_speed = (float)data->mLocalVel.z;
+                snap.raw_input_throttle = (float)data->mUnfilteredThrottle;
+                snap.raw_input_brake = (float)data->mUnfilteredBrake;
                 snap.accel_x = (float)data->mLocalAccel.x;
-                snap.tire_load = (float)avg_load;
-                snap.grip_fract = (float)avg_grip;
-                
-                // Snapshot Approximations
-                snap.slip_ratio = (float)((get_slip_ratio(fl) + get_slip_ratio(fr)) / 2.0);
-                
-                // FIX (v0.4.6): Use the actual smoothed slip angle from diagnostics instead of recalculating with dummy state
-                // This ensures the graph matches the physics logic.
-                snap.slip_angle = (float)m_grip_diag.front_slip_angle;
-                
                 snap.patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
                 snap.deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
                 
@@ -2434,6 +2461,859 @@ struct rF2Telemetry {
 
 #endif // RF2DATA_H
 
+```
+
+# File: staged_changes_review.txt
+```
+﻿diff --git a/CHANGELOG.md b/CHANGELOG.md
+index c168fbb..055b082 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -2,6 +2,14 @@
+ 
+ All notable changes to this project will be documented in this file.
+ 
++## [0.4.7] - 2025-12-11
++### Added
++- **Expanded Troubleshooting Graphs**: Major reorganization of the "Troubleshooting" window to facilitate physics debugging.
++    - **New Layout**: Organized plots into three collapsible headers: "FFB Components (Output)", "Internal Physics (Calculated)", and "Raw Game Telemetry (Input)".
++    - **Raw Data Inspector**: Added explicit visualization of raw telemetry inputs (e.g., `raw_front_susp_force`, `raw_front_ride_height`) completely separated from internal calculations. This allows users to confirm if game data is missing/broken vs. engine calculation errors.
++    - **New Channels**: Added visualizations for Rear Aligning Torque, Scrub Drag, Calculated Front Load/Grip, and Calculated Slip Ratio.
++- **Diagnostics**: Expanded `FFBSnapshot` to capture raw input values before any fallback logic is applied.
++
+ ## [0.4.6] - 2025-12-11
+ ### Added
+ - **Stability Safeguards**: Implemented a comprehensive suite of mathematical clamps and mitigations to prevent physics instabilities.
+diff --git a/FFBEngine.h b/FFBEngine.h
+index 04b081b..03e61f4 100644
+--- a/FFBEngine.h
++++ b/FFBEngine.h
+@@ -58,26 +58,37 @@ struct ChannelStats {
+ 
+ // 1. Define the Snapshot Struct (Unified FFB + Telemetry)
+ struct FFBSnapshot {
+-    // FFB Outputs
++    // --- Header A: FFB Components (Outputs) ---
++    float total_output;
+     float base_force;
+     float sop_force;
+     float understeer_drop;
+     float oversteer_boost;
++    float ffb_rear_torque;  // New v0.4.7
++    float ffb_scrub_drag;   // New v0.4.7
+     float texture_road;
+     float texture_slide;
+     float texture_lockup;
+     float texture_spin;
+     float texture_bottoming;
+-    float total_output;
+     float clipping;
+ 
+-    // Telemetry Inputs
++    // --- Header B: Internal Physics (Calculated) ---
++    float calc_front_load;       // New v0.4.7
++    float calc_front_grip;       // New v0.4.7
++    float calc_front_slip_ratio; // New v0.4.7
++    float slip_angle;            // Existing (Smoothed)
++
++    // --- Header C: Raw Game Telemetry (Inputs) ---
+     float steer_force;
++    float raw_front_tire_load;   // New v0.4.7
++    float raw_front_grip_fract;  // New v0.4.7
++    float raw_front_susp_force;  // New v0.4.7
++    float raw_front_ride_height; // New v0.4.7
++    float raw_car_speed;         // New v0.4.7
++    float raw_input_throttle;    // New v0.4.7
++    float raw_input_brake;       // New v0.4.7
+     float accel_x;
+-    float tire_load;
+-    float grip_fract;
+-    float slip_ratio;
+-    float slip_angle;
+     float patch_vel;
+     float deflection;
+ 
+@@ -346,6 +357,7 @@ public:
+         double lockup_rumble = 0.0;
+         double spin_rumble = 0.0;
+         double bottoming_crunch = 0.0;
++        double scrub_drag_force = 0.0; // v0.4.7
+ 
+         // --- PRE-CALCULATION: TIRE LOAD FACTOR ---
+         double avg_load = raw_load;
+@@ -597,8 +609,8 @@ public:
+                 if (abs_lat_vel > 0.001) { // Avoid noise
+                     double fade = (std::min)(1.0, abs_lat_vel / 0.5);
+                     double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
+-                    double drag_force = drag_dir * m_scrub_drag_gain * 2.0 * fade; // Scaled & Faded
+-                    total_force += drag_force;
++                    scrub_drag_force = drag_dir * m_scrub_drag_gain * 2.0 * fade; // Scaled & Faded
++                    total_force += scrub_drag_force;
+                 }
+             }
+ 
+@@ -719,11 +731,15 @@ public:
+             std::lock_guard<std::mutex> lock(m_debug_mutex);
+             if (m_debug_buffer.size() < 100) {
+                 FFBSnapshot snap;
++                
++                // --- Header A: Outputs ---
+                 snap.total_output = (float)norm_force;
+                 snap.base_force = (float)game_force;
+                 snap.sop_force = (float)sop_base_force;
+                 snap.understeer_drop = (float)(game_force * (1.0 - grip_factor));
+-                snap.oversteer_boost = (float)(sop_total - sop_base_force);
++                snap.oversteer_boost = (float)(sop_total - sop_base_force - rear_torque); // Split boost from rear torque
++                snap.ffb_rear_torque = (float)rear_torque;
++                snap.ffb_scrub_drag = (float)scrub_drag_force;
+                 snap.texture_road = (float)road_noise;
+                 snap.texture_slide = (float)slide_noise;
+                 snap.texture_lockup = (float)lockup_rumble;
+@@ -731,19 +747,22 @@ public:
+                 snap.texture_bottoming = (float)bottoming_crunch;
+                 snap.clipping = (std::abs(norm_force) > 0.99f) ? 1.0f : 0.0f;
+                 
+-                // Telemetry inputs
+-                snap.steer_force = (float)game_force;
+-                snap.accel_x = (float)data->mLocalAccel.x;
+-                snap.tire_load = (float)avg_load;
+-                snap.grip_fract = (float)avg_grip;
+-                
+-                // Snapshot Approximations
+-                snap.slip_ratio = (float)((get_slip_ratio(fl) + get_slip_ratio(fr)) / 2.0);
+-                
+-                // FIX (v0.4.6): Use the actual smoothed slip angle from diagnostics instead of recalculating with dummy state
+-                // This ensures the graph matches the physics logic.
+-                snap.slip_angle = (float)m_grip_diag.front_slip_angle;
++                // --- Header B: Internal Physics (Calculated) ---
++                snap.calc_front_load = (float)avg_load; // This is the final load used (maybe approximated)
++                snap.calc_front_grip = (float)avg_grip; // This is the final grip used (maybe approximated)
++                snap.calc_front_slip_ratio = (float)((get_slip_ratio(fl) + get_slip_ratio(fr)) / 2.0);
++                snap.slip_angle = (float)m_grip_diag.front_slip_angle; // Smoothed Slip Angle
+                 
++                // --- Header C: Raw Game Telemetry (Inputs) ---
++                snap.steer_force = (float)raw_torque;
++                snap.raw_front_tire_load = (float)raw_load; // Raw from game
++                snap.raw_front_grip_fract = (float)raw_grip; // Raw from game
++                snap.raw_front_susp_force = (float)((fl.mSuspForce + fr.mSuspForce) / 2.0);
++                snap.raw_front_ride_height = (float)(std::min(fl.mRideHeight, fr.mRideHeight));
++                snap.raw_car_speed = (float)data->mLocalVel.z;
++                snap.raw_input_throttle = (float)data->mUnfilteredThrottle;
++                snap.raw_input_brake = (float)data->mUnfilteredBrake;
++                snap.accel_x = (float)data->mLocalAccel.x;
+                 snap.patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
+                 snap.deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
+                 
+diff --git a/VERSION b/VERSION
+index ef52a64..5546bd2 100644
+--- a/VERSION
++++ b/VERSION
+@@ -1 +1 @@
+-0.4.6
++0.4.7
+\ No newline at end of file
+diff --git a/docs/dev_docs/telemetry_data_reference.md b/docs/dev_docs/telemetry_data_reference.md
+index a163fdf..afbf6b0 100644
+--- a/docs/dev_docs/telemetry_data_reference.md
++++ b/docs/dev_docs/telemetry_data_reference.md
+@@ -59,7 +59,7 @@ Available for each of the 4 wheels (`mWheel[0]`=FL, `[1]`=FR, `[2]`=RL, `[3]`=RR
+ | **`mGripFract`** | **0.0-1.0** | **Grip usage fraction** (0=full grip available, 1=at limit) | **Used**: Understeer/Oversteer detection (v0.4.0+) | |
+ | `mLateralForce` | N | Force acting sideways on tire contact patch | **Used**: Rear Oversteer calculation (Aligning Torque) | Front pneumatic trail calculation refinement |
+ | `mLongitudinalForce` | N | Force acting forward/back (Accel/Brake) | Unused | ABS pulse simulation |
+-| `mSuspForce` | N | Pushrod load | Unused | Suspension stress feedback |
++| `mSuspForce` | N | Pushrod load | **Used**: Front Load approximation fallback (v0.4.7) | Suspension stress feedback |
+ 
+ ### Motion & Slip
+ 
+@@ -77,7 +77,7 @@ Available for each of the 4 wheels (`mWheel[0]`=FL, `[1]`=FR, `[2]`=RL, `[3]`=RR
+ | :--- | :--- | :--- | :--- | :--- |
+ | `mVerticalTireDeflection` | m | Compression of tire rubber | **Used**: Road Texture (High-pass filter) | |
+ | `mSuspensionDeflection` | m | Compression of spring/damper | Unused | **Bottoming Out**: Harsh "thud" if deflection hits max travel |
+-| `mRideHeight` | m | Chassis height | Unused | Scraping effects |
++| `mRideHeight` | m | Chassis height | **Used**: Visualized in Telemetry Inspector (v0.4.7) | Scraping effects |
+ | `mTerrainName` | char[16] | Name of surface (e.g., "ROAD", "GRASS") | Unused | **Surface FX**: Different rumble for Kerbs/Grass/Gravel |
+ | `mSurfaceType` | unsigned char | 0=dry, 1=wet, 2=grass, 3=dirt, 4=gravel, 5=rumblestrip, 6=special | Unused | Faster lookup for Surface FX |
+ | `mCamber`, `mToe` | radians | Wheel alignment | Unused | Setup analysis |
+diff --git a/src/GuiLayer.cpp b/src/GuiLayer.cpp
+index 5898b56..8aec20d 100644
+--- a/src/GuiLayer.cpp
++++ b/src/GuiLayer.cpp
+@@ -443,12 +443,14 @@ struct RollingBuffer {
+     }
+ };
+ 
+-// Static buffers for debug plots (FFB)
++// --- Header A: FFB Components ---
+ static RollingBuffer plot_total;
+ static RollingBuffer plot_base;
+ static RollingBuffer plot_sop;
+ static RollingBuffer plot_understeer;
+ static RollingBuffer plot_oversteer;
++static RollingBuffer plot_rear_torque; // New v0.4.7
++static RollingBuffer plot_scrub_drag;  // New v0.4.7
+ static RollingBuffer plot_road;
+ static RollingBuffer plot_slide;
+ static RollingBuffer plot_lockup;
+@@ -456,13 +458,22 @@ static RollingBuffer plot_spin;
+ static RollingBuffer plot_bottoming;
+ static RollingBuffer plot_clipping;
+ 
+-// Static buffers for debug plots (Telemetry)
+-static RollingBuffer plot_input_steer;
++// --- Header B: Internal Physics ---
++static RollingBuffer plot_calc_front_load; // New v0.4.7
++static RollingBuffer plot_calc_front_grip; // New v0.4.7
++static RollingBuffer plot_calc_slip_ratio; // New v0.4.7
++static RollingBuffer plot_calc_slip_angle; 
++
++// --- Header C: Raw Game Telemetry ---
++static RollingBuffer plot_raw_steer;
++static RollingBuffer plot_raw_load;        // New v0.4.7
++static RollingBuffer plot_raw_grip;        // New v0.4.7
++static RollingBuffer plot_raw_susp_force;  // New v0.4.7
++static RollingBuffer plot_raw_ride_height; // New v0.4.7
++static RollingBuffer plot_raw_car_speed;   // New v0.4.7
++static RollingBuffer plot_raw_throttle;    // New v0.4.7
++static RollingBuffer plot_raw_brake;       // New v0.4.7
+ static RollingBuffer plot_input_accel;
+-static RollingBuffer plot_input_load;
+-static RollingBuffer plot_input_grip;
+-static RollingBuffer plot_input_slip_ratio;
+-static RollingBuffer plot_input_slip_angle;
+ static RollingBuffer plot_input_patch_vel;
+ static RollingBuffer plot_input_vert_deflection;
+ 
+@@ -483,12 +494,14 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
+     // Update buffers with the latest snapshot (if available)
+     // Loop through ALL snapshots to avoid aliasing
+     for (const auto& snap : snapshots) {
+-        // FFB Components
++        // --- Header A: FFB Components ---
+         plot_total.Add(snap.total_output);
+         plot_base.Add(snap.base_force);
+         plot_sop.Add(snap.sop_force);
+         plot_understeer.Add(snap.understeer_drop);
+         plot_oversteer.Add(snap.oversteer_boost);
++        plot_rear_torque.Add(snap.ffb_rear_torque);
++        plot_scrub_drag.Add(snap.ffb_scrub_drag);
+         plot_road.Add(snap.texture_road);
+         plot_slide.Add(snap.texture_slide);
+         plot_lockup.Add(snap.texture_lockup);
+@@ -496,13 +509,22 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
+         plot_bottoming.Add(snap.texture_bottoming);
+         plot_clipping.Add(snap.clipping);
+ 
+-        // Telemetry Inputs
+-        plot_input_steer.Add(snap.steer_force);
++        // --- Header B: Internal Physics ---
++        plot_calc_front_load.Add(snap.calc_front_load);
++        plot_calc_front_grip.Add(snap.calc_front_grip);
++        plot_calc_slip_ratio.Add(snap.calc_front_slip_ratio);
++        plot_calc_slip_angle.Add(snap.slip_angle);
++
++        // --- Header C: Raw Telemetry ---
++        plot_raw_steer.Add(snap.steer_force);
++        plot_raw_load.Add(snap.raw_front_tire_load);
++        plot_raw_grip.Add(snap.raw_front_grip_fract);
++        plot_raw_susp_force.Add(snap.raw_front_susp_force);
++        plot_raw_ride_height.Add(snap.raw_front_ride_height);
++        plot_raw_car_speed.Add(snap.raw_car_speed);
++        plot_raw_throttle.Add(snap.raw_input_throttle);
++        plot_raw_brake.Add(snap.raw_input_brake);
+         plot_input_accel.Add(snap.accel_x);
+-        plot_input_load.Add(snap.tire_load);
+-        plot_input_grip.Add(snap.grip_fract);
+-        plot_input_slip_ratio.Add(snap.slip_ratio);
+-        plot_input_slip_angle.Add(snap.slip_angle);
+         plot_input_patch_vel.Add(snap.patch_vel);
+         plot_input_vert_deflection.Add(snap.deflection);
+ 
+@@ -523,13 +545,12 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
+         ImGui::Separator();
+     }
+ 
+-    // --- Draw UI ---
+-    if (ImGui::CollapsingHeader("FFB Components (Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
++    // --- Header A: FFB Components (The Output) ---
++    if (ImGui::CollapsingHeader("A. FFB Components (Output Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
+         ImGui::Text("Total Output");
+         ImGui::PlotLines("##Total", plot_total.data.data(), (int)plot_total.data.size(), plot_total.offset, "Total", -1.0f, 1.0f, ImVec2(0, 60));
+         
+         ImGui::Columns(2, "FFBCols", false);
+-        // NOTE: Changed from ┬▒4000 (Newtons) to ┬▒30 (Nm) for new mSteeringShaftTorque
+         ImGui::Text("Base Torque (Nm)"); ImGui::PlotLines("##Base", plot_base.data.data(), (int)plot_base.data.size(), plot_base.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
+         ImGui::NextColumn();
+         ImGui::Text("SoP (Lat G)"); ImGui::PlotLines("##SoP", plot_sop.data.data(), (int)plot_sop.data.size(), plot_sop.offset, NULL, -1000.0f, 1000.0f, ImVec2(0, 40));
+@@ -538,6 +559,10 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
+         ImGui::NextColumn();
+         ImGui::Text("Oversteer Boost"); ImGui::PlotLines("##Over", plot_oversteer.data.data(), (int)plot_oversteer.data.size(), plot_oversteer.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
+         ImGui::NextColumn();
++        ImGui::Text("Rear Align Torque"); ImGui::PlotLines("##RearT", plot_rear_torque.data.data(), (int)plot_rear_torque.data.size(), plot_rear_torque.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
++        ImGui::NextColumn();
++        ImGui::Text("Scrub Drag Force"); ImGui::PlotLines("##Drag", plot_scrub_drag.data.data(), (int)plot_scrub_drag.data.size(), plot_scrub_drag.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
++        ImGui::NextColumn();
+         ImGui::Text("Road Texture"); ImGui::PlotLines("##Road", plot_road.data.data(), (int)plot_road.data.size(), plot_road.offset, NULL, -1000.0f, 1000.0f, ImVec2(0, 40));
+         ImGui::NextColumn();
+         ImGui::Text("Slide Texture"); ImGui::PlotLines("##Slide", plot_slide.data.data(), (int)plot_slide.data.size(), plot_slide.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
+@@ -552,33 +577,77 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
+         ImGui::Columns(1);
+     }
+ 
+-    if (ImGui::CollapsingHeader("Telemetry Inspector (Raw)", ImGuiTreeNodeFlags_None)) {
+-        ImGui::Columns(2, "TelCols", false);
+-        // NOTE: Changed from ┬▒5000 (Newtons for old mSteeringArmForce) to ┬▒30 (Nm for new mSteeringShaftTorque)
+-        ImGui::Text("Steering Torque (Nm)"); ImGui::PlotLines("##StForce", plot_input_steer.data.data(), (int)plot_input_steer.data.size(), plot_input_steer.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
++    // --- Header B: Internal Physics Engine (The Brain) ---
++    if (ImGui::CollapsingHeader("B. Internal Physics (Brain)", ImGuiTreeNodeFlags_None)) {
++        ImGui::Columns(2, "PhysCols", false);
++        
++        ImGui::Text("Calc Front Load (N)");
++        ImGui::PlotLines("##CalcLoad", plot_calc_front_load.data.data(), (int)plot_calc_front_load.data.size(), plot_calc_front_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
+         ImGui::NextColumn();
+-        ImGui::Text("Local Accel X"); ImGui::PlotLines("##LatG", plot_input_accel.data.data(), (int)plot_input_accel.data.size(), plot_input_accel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
++        
++        ImGui::Text("Calc Front Grip");
++        ImGui::PlotLines("##CalcGrip", plot_calc_front_grip.data.data(), (int)plot_calc_front_grip.data.size(), plot_calc_front_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
++        ImGui::NextColumn();
++        
++        ImGui::Text("Calc Slip Ratio");
++        ImGui::PlotLines("##CalcSlip", plot_calc_slip_ratio.data.data(), (int)plot_calc_slip_ratio.data.size(), plot_calc_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
++        ImGui::NextColumn();
++        
++        ImGui::Text("Smoothed Slip Angle");
++        ImGui::PlotLines("##SlipA", plot_calc_slip_angle.data.data(), (int)plot_calc_slip_angle.data.size(), plot_calc_slip_angle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
++        ImGui::Columns(1);
++    }
++
++    // --- Header C: Raw Game Telemetry Inspector (The Input) ---
++    if (ImGui::CollapsingHeader("C. Raw Game Telemetry (Input)", ImGuiTreeNodeFlags_None)) {
++        ImGui::Columns(2, "TelCols", false);
++        
++        ImGui::Text("Steering Torque (Nm)"); 
++        ImGui::PlotLines("##StForce", plot_raw_steer.data.data(), (int)plot_raw_steer.data.size(), plot_raw_steer.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
+         ImGui::NextColumn();
+         
+         // Highlight Load if warning
+-        if (g_warn_load) ImGui::TextColored(ImVec4(1,0,0,1), "Avg Tire Load (MISSING)");
+-        else ImGui::Text("Avg Tire Load");
+-        ImGui::PlotLines("##Load", plot_input_load.data.data(), (int)plot_input_load.data.size(), plot_input_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
++        if (g_warn_load) ImGui::TextColored(ImVec4(1,0,0,1), "Raw Front Load (MISSING)");
++        else ImGui::Text("Raw Front Load (N)");
++        ImGui::PlotLines("##RawLoad", plot_raw_load.data.data(), (int)plot_raw_load.data.size(), plot_raw_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
+         ImGui::NextColumn();
+         
+         // Highlight Grip if warning
+-        if (g_warn_grip) ImGui::TextColored(ImVec4(1,0,0,1), "Avg Grip Fract (MISSING)");
+-        else ImGui::Text("Avg Grip Fract");
+-        ImGui::PlotLines("##Grip", plot_input_grip.data.data(), (int)plot_input_grip.data.size(), plot_input_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
++        if (g_warn_grip) ImGui::TextColored(ImVec4(1,0,0,1), "Raw Front Grip (MISSING)");
++        else ImGui::Text("Raw Front Grip");
++        ImGui::PlotLines("##RawGrip", plot_raw_grip.data.data(), (int)plot_raw_grip.data.size(), plot_raw_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
++        ImGui::NextColumn();
++        
++        ImGui::Text("Raw Front Susp. Force"); 
++        ImGui::PlotLines("##Susp", plot_raw_susp_force.data.data(), (int)plot_raw_susp_force.data.size(), plot_raw_susp_force.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
++        ImGui::NextColumn();
++        
++        ImGui::Text("Raw Front Ride Height"); 
++        ImGui::PlotLines("##RH", plot_raw_ride_height.data.data(), (int)plot_raw_ride_height.data.size(), plot_raw_ride_height.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
++        ImGui::NextColumn();
+         
++        ImGui::Text("Car Speed (m/s)"); 
++        ImGui::PlotLines("##Speed", plot_raw_car_speed.data.data(), (int)plot_raw_car_speed.data.size(), plot_raw_car_speed.offset, NULL, 0.0f, 100.0f, ImVec2(0, 40));
+         ImGui::NextColumn();
+-        ImGui::Text("Avg Slip Ratio"); ImGui::PlotLines("##SlipR", plot_input_slip_ratio.data.data(), (int)plot_input_slip_ratio.data.size(), plot_input_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
++        
++        ImGui::Text("Throttle Input"); 
++        ImGui::PlotLines("##Thr", plot_raw_throttle.data.data(), (int)plot_raw_throttle.data.size(), plot_raw_throttle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
++        ImGui::NextColumn();
++        
++        ImGui::Text("Brake Input"); 
++        ImGui::PlotLines("##Brk", plot_raw_brake.data.data(), (int)plot_raw_brake.data.size(), plot_raw_brake.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+         ImGui::NextColumn();
+-        ImGui::Text("Avg Slip Angle"); ImGui::PlotLines("##SlipA", plot_input_slip_angle.data.data(), (int)plot_input_slip_angle.data.size(), plot_input_slip_angle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
++        
++        ImGui::Text("Local Accel X"); 
++        ImGui::PlotLines("##LatG", plot_input_accel.data.data(), (int)plot_input_accel.data.size(), plot_input_accel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+         ImGui::NextColumn();
+-        ImGui::Text("Avg Lat PatchVel"); ImGui::PlotLines("##PatchV", plot_input_patch_vel.data.data(), (int)plot_input_patch_vel.data.size(), plot_input_patch_vel.offset, NULL, 0.0f, 20.0f, ImVec2(0, 40));
++        
++        ImGui::Text("Avg Lat PatchVel"); 
++        ImGui::PlotLines("##PatchV", plot_input_patch_vel.data.data(), (int)plot_input_patch_vel.data.size(), plot_input_patch_vel.offset, NULL, 0.0f, 20.0f, ImVec2(0, 40));
+         ImGui::NextColumn();
+-        ImGui::Text("Avg Deflection"); ImGui::PlotLines("##Defl", plot_input_vert_deflection.data.data(), (int)plot_input_vert_deflection.data.size(), plot_input_vert_deflection.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
++        
++        ImGui::Text("Avg Deflection"); 
++        ImGui::PlotLines("##Defl", plot_input_vert_deflection.data.data(), (int)plot_input_vert_deflection.data.size(), plot_input_vert_deflection.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
+         ImGui::Columns(1);
+     }
+ 
+diff --git a/tests/test_ffb_engine.cpp b/tests/test_ffb_engine.cpp
+index 484528a..1974221 100644
+--- a/tests/test_ffb_engine.cpp
++++ b/tests/test_ffb_engine.cpp
+@@ -34,6 +34,8 @@ int g_tests_failed = 0;
+ 
+ // --- Tests ---
+ 
++void test_snapshot_population(); // Forward declaration
++
+ void test_manual_slip_singularity() {
+     std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
+     FFBEngine engine;
+@@ -1671,10 +1673,89 @@ int main() {
+     test_manual_slip_calculation();
+     test_universal_bottoming();
+     test_preset_initialization();
+-
++    test_snapshot_population();
++    
+     std::cout << "\n----------------" << std::endl;
+     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
+     std::cout << "Tests Failed: " << g_tests_failed << std::endl;
+     
+     return g_tests_failed > 0 ? 1 : 0;
+ }
++
++void test_snapshot_population() {
++    std::cout << "\nTest: Snapshot Population (v0.4.7)" << std::endl;
++    FFBEngine engine;
++    TelemInfoV01 data;
++    std::memset(&data, 0, sizeof(data));
++
++    // Setup input values
++    // Case: Missing Tire Load (0) but Valid Susp Force (1000)
++    data.mWheel[0].mTireLoad = 0.0;
++    data.mWheel[1].mTireLoad = 0.0;
++    data.mWheel[0].mSuspForce = 1000.0;
++    data.mWheel[1].mSuspForce = 1000.0;
++    
++    // Other inputs
++    data.mLocalVel.z = 20.0; // Moving
++    data.mUnfilteredThrottle = 0.8;
++    data.mUnfilteredBrake = 0.2;
++    // data.mRideHeight = 0.05; // Removed invalid field
++    // Wait, TelemInfoV01 has mWheel[].mRideHeight.
++    data.mWheel[0].mRideHeight = 0.03;
++    data.mWheel[1].mRideHeight = 0.04; // Min is 0.03
++
++    // Trigger missing load logic
++    // Need > 20 frames of missing load
++    data.mDeltaTime = 0.01;
++    for (int i=0; i<30; i++) {
++        engine.calculate_force(&data);
++    }
++
++    // Get Snapshot
++    auto batch = engine.GetDebugBatch();
++    if (batch.empty()) {
++        std::cout << "[FAIL] No snapshot generated." << std::endl;
++        g_tests_failed++;
++        return;
++    }
++    
++    FFBSnapshot snap = batch.back();
++    
++    // Assertions
++    
++    // 1. Raw Load should be 0.0 (What the game sent)
++    if (std::abs(snap.raw_front_tire_load) < 0.001) {
++        std::cout << "[PASS] Raw Front Tire Load captured as 0.0." << std::endl;
++        g_tests_passed++;
++    } else {
++        std::cout << "[FAIL] Raw Front Tire Load incorrect: " << snap.raw_front_tire_load << std::endl;
++        g_tests_failed++;
++    }
++    
++    // 2. Calculated Load should be approx 1300 (SuspForce 1000 + 300 offset)
++    if (std::abs(snap.calc_front_load - 1300.0) < 0.001) {
++        std::cout << "[PASS] Calculated Front Load is 1300.0." << std::endl;
++        g_tests_passed++;
++    } else {
++        std::cout << "[FAIL] Calculated Front Load incorrect: " << snap.calc_front_load << std::endl;
++        g_tests_failed++;
++    }
++    
++    // 3. Raw Inputs
++    if (std::abs(snap.raw_input_throttle - 0.8) < 0.001) {
++        std::cout << "[PASS] Raw Throttle captured." << std::endl;
++        g_tests_passed++;
++    } else {
++        std::cout << "[FAIL] Raw Throttle incorrect." << std::endl;
++        g_tests_failed++;
++    }
++    
++    // 4. Raw Ride Height (Min of 0.03 and 0.04 -> 0.03)
++    if (std::abs(snap.raw_front_ride_height - 0.03) < 0.001) {
++        std::cout << "[PASS] Raw Ride Height captured (Min)." << std::endl;
++        g_tests_passed++;
++    } else {
++        std::cout << "[FAIL] Raw Ride Height incorrect: " << snap.raw_front_ride_height << std::endl;
++        g_tests_failed++;
++    }
++}
+
+```
+
+# File: test_results.txt
+```
+
+ 
+ T e s t :   M a n u a l   S l i p   S i n g u l a r i t y   ( L o w   S p e e d   T r a p ) 
+ 
+ [ P A S S ]   L o w   s p e e d   l o c k u p   s u p p r e s s e d   ( P h a s e   0 ) . 
+ 
+ 
+ 
+ T e s t :   S c r u b   D r a g   F a d e - I n 
+ 
+ [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
+ 
+ [ P A S S ]   S c r u b   d r a g   f a d e d   c o r r e c t l y   ( 5 0 % ) . 
+ 
+ 
+ 
+ T e s t :   R o a d   T e x t u r e   T e l e p o r t   ( D e l t a   C l a m p ) 
+ 
+ [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ P A S S ]   T e l e p o r t   s p i k e   c l a m p e d . 
+ 
+ 
+ 
+ T e s t :   G r i p   A p p r o x i m a t i o n   L o w   S p e e d   C u t o f f 
+ 
+ [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ P A S S ]   L o w   s p e e d   g r i p   f o r c e d   t o   1 . 0 . 
+ 
+ 
+ 
+ T e s t :   Z e r o   I n p u t 
+ 
+ [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
+ 
+ [ P A S S ]   f o r c e   a p p r o x   0 . 0 
+ 
+ 
+ 
+ T e s t :   S u s p e n s i o n   B o t t o m i n g   ( F i x   V e r i f i c a t i o n ) 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ P A S S ]   B o t t o m i n g   e f f e c t   a c t i v e .   F o r c e :   0 . 0 1 2 5 
+ 
+ 
+ 
+ T e s t :   G r i p   M o d u l a t i o n   ( U n d e r s t e e r ) 
+ 
+ [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
+ 
+ [ P A S S ]   f o r c e _ f u l l   a p p r o x   0 . 5 
+ 
+ [ P A S S ]   f o r c e _ h a l f   a p p r o x   0 . 2 5 
+ 
+ 
+ 
+ T e s t :   S o P   E f f e c t 
+ 
+ [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
+ 
+ [ P A S S ]   f o r c e   a p p r o x   0 . 1 2 5 
+ 
+ 
+ 
+ T e s t :   M i n   F o r c e 
+ 
+ [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
+ 
+ [ P A S S ]   f o r c e   a p p r o x   0 . 1 0 
+ 
+ 
+ 
+ T e s t :   P r o g r e s s i v e   L o c k u p 
+ 
+ [ P A S S ]   s t d : : a b s ( f o r c e _ l o w )   >   0 . 0 0 0 0 1 
+ 
+ [ P A S S ]   e n g i n e . m _ l o c k u p _ p h a s e   ! =   0 . 0 
+ 
+ [ P A S S ]   P r o g r e s s i v e   L o c k u p   c a l c u l a t e d . 
+ 
+ 
+ 
+ T e s t :   S l i d e   T e x t u r e 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ P A S S ]   S l i d e   t e x t u r e   g e n e r a t e d   n o n - z e r o   f o r c e :   0 . 0 0 7 0 3 1 2 5 
+ 
+ 
+ 
+ T e s t :   D y n a m i c   T u n i n g   ( G U I   S i m u l a t i o n ) 
+ 
+ [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
+ 
+ [ P A S S ]   f o r c e _ i n i t i a l   a p p r o x   0 . 5 
+ 
+ [ P A S S ]   f o r c e _ b o o s t e d   a p p r o x   1 . 0 
+ 
+ [ P A S S ]   f o r c e _ g r i p _ l o s s   a p p r o x   0 . 2 5 
+ 
+ [ P A S S ]   D y n a m i c   T u n i n g   v e r i f i e d . 
+ 
+ 
+ 
+ T e s t :   O v e r s t e e r   B o o s t   ( R e a r   G r i p   L o s s ) 
+ 
+ [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
+ 
+ [ P A S S ]   f o r c e   a p p r o x   1 . 0 
+ 
+ 
+ 
+ T e s t :   P h a s e   W r a p a r o u n d   ( A n t i - C l i c k ) 
+ 
+ [ W A R N I N G ]   M i s s i n g   T i r e   L o a d .   U s i n g   A p p r o x   ( S u s p F o r c e   +   3 0 0 N ) . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ P A S S ]   P h a s e   w r a p p e d   4 0   t i m e s   w i t h o u t   d i s c o n t i n u i t y . 
+ 
+ 
+ 
+ T e s t :   R o a d   T e x t u r e   S t a t e   P e r s i s t e n c e 
+ 
+ [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ P A S S ]   f o r c e 2   a p p r o x   f o r c e 1 
+ 
+ [ P A S S ]   R o a d   t e x t u r e   s t a t e   p r e s e r v e d   c o r r e c t l y . 
+ 
+ 
+ 
+ T e s t :   M u l t i - E f f e c t   I n t e r a c t i o n   ( L o c k u p   +   S p i n ) 
+ 
+ [ P A S S ]   M u l t i p l e   e f f e c t s   c o e x i s t   w i t h o u t   i n t e r f e r e n c e . 
+ 
+ 
+ 
+ T e s t :   L o a d   F a c t o r   E d g e   C a s e s 
+ 
+ [ P A S S ]   f o r c e _ a i r b o r n e   a p p r o x   0 . 0 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ P A S S ]   L o a d   f a c t o r   c l a m p e d   c o r r e c t l y . 
+ 
+ 
+ 
+ T e s t :   S p i n   T o r q u e   D r o p   w i t h   S o P 
+ 
+ [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
+ 
+ [ P A S S ]   S p i n   t o r q u e   d r o p   m o d i f i e s   t o t a l   f o r c e . 
+ 
+ 
+ 
+ T e s t :   R e a r   G r i p   F a l l b a c k   ( v 0 . 4 . 5 ) 
+ 
+ [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ P A S S ]   R e a r   g r i p   a p p r o x i m a t i o n   t r i g g e r e d . 
+ 
+ [ P A S S ]   O v e r s t e e r   b o o s t   c o r r e c t l y   s u p p r e s s e d   ( R e a r   G r i p   r e s t o r e d ) . 
+ 
+ 
+ 
+ T e s t :   T e l e m e t r y   S a n i t y   C h e c k s 
+ 
+ [ W A R N I N G ]   M i s s i n g   T i r e   L o a d .   U s i n g   A p p r o x   ( S u s p F o r c e   +   3 0 0 N ) . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ P A S S ]   D e t e c t e d   m i s s i n g   l o a d   w a r n i n g . 
+ 
+ [ P A S S ]   L o a d   f a l l b a c k   a p p l i e d   ( F o r c e   g e n e r a t e d :   0 . 0 4 0 7 8 1 3 ) 
+ 
+ [ P A S S ]   D e t e c t e d   m i s s i n g   g r i p   w a r n i n g . 
+ 
+ [ P A S S ]   f o r c e _ g r i p   a p p r o x   0 . 1 
+ 
+ [ P A S S ]   D i a g n o s t i c s   c o n f i r m   f r o n t   a p p r o x i m a t i o n . 
+ 
+ [ P A S S ]   e n g i n e . m _ g r i p _ d i a g . f r o n t _ o r i g i n a l   a p p r o x   0 . 0 
+ 
+ [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
+ 
+ [ P A S S ]   D e t e c t e d   b a d   D e l t a T i m e   w a r n i n g . 
+ 
+ 
+ 
+ T e s t :   H y s t e r e s i s   L o g i c   ( M i s s i n g   D a t a ) 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ P A S S ]   e n g i n e . m _ m i s s i n g _ l o a d _ f r a m e s   = =   0 
+ 
+ [ P A S S ]   H y s t e r e s i s   c o u n t e r   i n c r e m e n t i n g   ( 5 ) . 
+ 
+ [ W A R N I N G ]   M i s s i n g   T i r e   L o a d .   U s i n g   A p p r o x   ( S u s p F o r c e   +   3 0 0 N ) . 
+ 
+ [ P A S S ]   H y s t e r e s i s   c o u n t e r   i n c r e m e n t i n g   ( 2 5 ) . 
+ 
+ [ P A S S ]   H y s t e r e s i s   t r i g g e r e d   f a l l b a c k   ( W a r n i n g   s e t ) . 
+ 
+ [ P A S S ]   H y s t e r e s i s   c o u n t e r   d e c r e m e n t i n g   o n   r e c o v e r y . 
+ 
+ 
+ 
+ T e s t :   C o n f i g u r a t i o n   P r e s e t s 
+ 
+ [ C o n f i g ]   A p p l i e d   p r e s e t :   T e s t :   S o P   O n l y 
+ 
+ [ P A S S ]   P r e s e t   a p p l i e d   c o r r e c t l y   ( G a i n = 0 . 5 ,   S o P = 1 ) 
+ 
+ 
+ 
+ T e s t :   C o n f i g   S a v e / L o a d   P e r s i s t e n c e 
+ 
+ [ C o n f i g ]   S a v e d   t o   t e s t _ c o n f i g . i n i 
+ 
+ [ C o n f i g ]   L o a d e d   f r o m   t e s t _ c o n f i g . i n i 
+ 
+ [ P A S S ]   e n g i n e _ l o a d . m _ g a i n   a p p r o x   1 . 2 3 f 
+ 
+ [ P A S S ]   e n g i n e _ l o a d . m _ s o p _ e f f e c t   a p p r o x   0 . 4 5 f 
+ 
+ [ P A S S ]   e n g i n e _ l o a d . m _ r o a d _ t e x t u r e _ g a i n   a p p r o x   2 . 5 f 
+ 
+ [ P A S S ]   B o o l e a n   p e r s i s t e n c e . 
+ 
+ 
+ 
+ T e s t :   C h a n n e l   S t a t s   L o g i c 
+ 
+ [ P A S S ]   s t a t s . s e s s i o n _ m i n   a p p r o x   1 0 . 0 
+ 
+ [ P A S S ]   s t a t s . s e s s i o n _ m a x   a p p r o x   3 0 . 0 
+ 
+ [ P A S S ]   s t a t s . A v g ( )   a p p r o x   2 0 . 0 
+ 
+ [ P A S S ]   I n t e r v a l   S t a t s   R e s e t . 
+ 
+ [ P A S S ]   s t a t s . s e s s i o n _ m i n   a p p r o x   1 0 . 0 
+ 
+ [ P A S S ]   s t a t s . s e s s i o n _ m a x   a p p r o x   3 0 . 0 
+ 
+ [ P A S S ]   s t a t s . A v g ( )   a p p r o x   0 . 0 
+ 
+ 
+ 
+ T e s t :   G a m e   S t a t e   L o g i c   ( M o c k ) 
+ 
+ [ P A S S ]   P l a y e r   m i s s i n g   - >   F a l s e . 
+ 
+ [ P A S S ]   I n R e a l t i m e = F a l s e   - >   F a l s e . 
+ 
+ [ P A S S ]   I n R e a l t i m e = T r u e   - >   T r u e . 
+ 
+ 
+ 
+ T e s t :   S o P   S m o o t h i n g   S t e p   R e s p o n s e 
+ 
+ [ P A S S ]   S m o o t h i n g   S t e p   1   m a t c h e d   a l p h a . 
+ 
+ [ P A S S ]   S m o o t h i n g   s e t t l e d   c o r r e c t l y   ( > 0 . 9 9   a f t e r   5   t a u ) . 
+ 
+ 
+ 
+ T e s t :   M a n u a l   S l i p   C a l c u l a t i o n 
+ 
+ [ P A S S ]   M a n u a l   S l i p   0   - >   N o   L o c k u p . 
+ 
+ [ P A S S ]   M a n u a l   S l i p   - 1 . 0   - >   L o c k u p   T r i g g e r e d . 
+ 
+ 
+ 
+ T e s t :   U n i v e r s a l   B o t t o m i n g 
+ 
+ [ P A S S ]   B o t t o m i n g   M e t h o d   A   ( S c r a p e )   T r i g g e r e d .   F o r c e :   0 . 0 0 6 2 5 
+ 
+ [ P A S S ]   B o t t o m i n g   M e t h o d   B   ( S p i k e )   T r i g g e r e d .   F o r c e :   - 0 . 0 5 6 2 5 
+ 
+ 
+ 
+ T e s t :   P r e s e t   I n i t i a l i z a t i o n   ( v 0 . 4 . 5   R e g r e s s i o n ) 
+ 
+ [ P A S S ]   D e f a u l t :   v 0 . 4 . 5   f i e l d s   i n i t i a l i z e d   c o r r e c t l y 
+ 
+ [ P A S S ]   T e s t :   G a m e   B a s e   F F B   O n l y :   v 0 . 4 . 5   f i e l d s   i n i t i a l i z e d   c o r r e c t l y 
+ 
+ [ P A S S ]   T e s t :   S o P   O n l y :   v 0 . 4 . 5   f i e l d s   i n i t i a l i z e d   c o r r e c t l y 
+ 
+ [ P A S S ]   T e s t :   U n d e r s t e e r   O n l y :   v 0 . 4 . 5   f i e l d s   i n i t i a l i z e d   c o r r e c t l y 
+ 
+ [ P A S S ]   T e s t :   T e x t u r e s   O n l y :   v 0 . 4 . 5   f i e l d s   i n i t i a l i z e d   c o r r e c t l y 
+ 
+ [ P A S S ]   A l l   5   b u i l t - i n   p r e s e t s   h a v e   c o r r e c t   v 0 . 4 . 5   f i e l d   i n i t i a l i z a t i o n 
+ 
+ 
+ 
+ T e s t :   S n a p s h o t   P o p u l a t i o n   ( v 0 . 4 . 7 ) 
+ 
+ [ W A R N I N G ]   M i s s i n g   T i r e   L o a d .   U s i n g   A p p r o x   ( S u s p F o r c e   +   3 0 0 N ) . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
+ 
+ [ P A S S ]   R a w   F r o n t   T i r e   L o a d   c a p t u r e d   a s   0 . 0 . 
+ 
+ [ P A S S ]   C a l c u l a t e d   F r o n t   L o a d   i s   1 3 0 0 . 0 . 
+ 
+ [ P A S S ]   R a w   T h r o t t l e   c a p t u r e d . 
+ 
+ [ P A S S ]   R a w   R i d e   H e i g h t   c a p t u r e d   ( M i n ) . 
+ 
+ 
+ 
+ - - - - - - - - - - - - - - - - 
+ 
+ T e s t s   P a s s e d :   7 1 
+ 
+ T e s t s   F a i l e d :   0 
+ 
+ 
 ```
 
 # File: .pytest_cache\README.md
@@ -4507,6 +5387,424 @@ User: Look at this image again. If "Local Accel X" is the lateral G force, as th
 Remember the full math formulas: docs\dev_docs\FFB_formulas.md .
 ```
 
+# File: docs\dev_docs\design proposal for a High-Performance Asynchronous Telemetry Logger.md
+```markdown
+This is a critical feature for stabilizing the new physics workarounds. Since we are now *calculating* physics rather than just reading them, we need to see the math in action over time to tune it.
+
+Here is the design proposal for a **High-Performance Asynchronous Telemetry Logger**.
+
+### 1. Architectural Constraints
+*   **The Golden Rule:** You **cannot** write to disk inside the `FFBThread` (400Hz). Disk I/O is blocking and unpredictable (can take 1ms or 100ms). Doing so will cause the FFB to stutter.
+*   **The Solution:** **Double-Buffered Asynchronous Logging**.
+    1.  **Producer (FFB Thread):** Writes data to a fast in-memory buffer (RAM).
+    2.  **Consumer (Worker Thread):** Wakes up periodically, swaps the buffer, and writes the data to disk (CSV).
+
+### 2. Data Format: CSV (Comma Separated Values)
+While binary is faster, **CSV** is the right choice here because:
+1.  **Universal:** Opens in Excel, Google Sheets.
+2.  **MegaLogViewer:** Can be imported directly into tools like MegaLogViewer (used by tuners) or Motec i2 (via converters).
+3.  **Human Readable:** You can open it in Notepad to check if a value is exactly `0.000`.
+
+### 3. Implementation Design
+
+#### A. The Data Structure (`LogFrame`)
+We need a struct that captures the exact state of a physics tick.
+
+```cpp
+struct LogFrame {
+    double timestamp;      // Time since session start
+    
+    // Inputs
+    float steering_torque;
+    float throttle;
+    float brake;
+    
+    // Raw Telemetry (The "Truth")
+    float raw_load_fl;
+    float raw_grip_fl;
+    float raw_susp_force_fl;
+    float raw_ride_height_fl;
+    float raw_lat_vel;
+    
+    // Calculated Physics (The "Workaround")
+    float calc_load_fl;
+    float calc_grip_fl;
+    float calc_slip_ratio_fl;
+    float calc_slip_angle_fl;
+    
+    // FFB Outputs (The Result)
+    float ffb_total;
+    float ffb_sop;
+    float ffb_road;
+    float ffb_scrub;
+    bool  clipping;
+    
+    // Markers
+    bool  user_marker; // Did user press "Mark" button?
+};
+```
+
+#### B. The Logger Class (`AsyncLogger`)
+
+```cpp
+class AsyncLogger {
+public:
+    void Start(std::string filename);
+    void Stop();
+    
+    // Called from FFBThread (400Hz) - Must be lock-free or extremely fast
+    void Log(const LogFrame& frame);
+
+private:
+    void WorkerThread(); // The background writer
+
+    std::vector<LogFrame> m_buffer_active;
+    std::vector<LogFrame> m_buffer_writing;
+    std::mutex m_mutex;
+    std::condition_variable m_cv;
+    std::atomic<bool> m_running;
+    std::thread m_thread;
+};
+```
+
+#### C. The Logic (Double Buffering)
+
+1.  **FFB Loop:** Calls `Log(frame)`.
+    *   Acquires lock (very brief).
+    *   `m_buffer_active.push_back(frame)`.
+    *   If `m_buffer_active.size() > 1000` (approx 2.5 seconds of data), notify the worker thread.
+2.  **Worker Thread:**
+    *   Wakes up.
+    *   Acquires lock.
+    *   **Swaps** `m_buffer_active` with `m_buffer_writing`. (This is instant).
+    *   Releases lock. (FFB thread can keep writing to the new empty active buffer).
+    *   Writes `m_buffer_writing` to disk.
+    *   Clears `m_buffer_writing`.
+
+### 4. Making it "Informative" (Analysis Features)
+
+To make these logs actually useful for diagnosing the "Zero Load" or "Instability" issues, we should add:
+
+1.  **Session Header:**
+    At the top of the CSV, write the **Config Settings** used for that session.
+    ```csv
+    # LMUFFB Log v1.0
+    # Date: 2025-12-12
+    # Settings: Gain=0.8, SoP=0.15, LoadMethod=SuspForce, ManualSlip=True
+    Time,Steer,Throttle,...
+    ```
+    *Why:* When you analyze a log 3 days later, you need to know *which* settings caused that oscillation.
+
+2.  **The "Marker" Button:**
+    Add a button in the GUI (or a keyboard shortcut like `Spacebar`) that sets a flag in the log.
+    *   *Scenario:* You are driving and feel a weird "clunk". You hit Space.
+    *   *Analysis:* Open Excel, filter for `Marker == 1`. You instantly find the exact timestamp of the issue.
+
+3.  **Derived Deltas (Optional but helpful):**
+    Log `DeltaTime` (dt).
+    *   *Why:* To detect if the FFB loop is stuttering or missing frames. If `dt` spikes from 0.0025 to 0.020, you have a performance problem.
+
+### 5. Analysis Workflow (How to use it)
+
+1.  **MegaLogViewer (Recommended):**
+    *   It handles large CSVs easily.
+    *   You can plot `Calc Grip` vs `Steering Torque` to see if the understeer effect is triggering correctly.
+2.  **Excel / Google Sheets:**
+    *   Good for short captures (< 30 seconds).
+    *   Use Conditional Formatting on the `Raw Load` column to highlight exactly when it drops to 0.
+
+### 6. Implementation Plan
+
+1.  **Phase 1 (Core):** Implement `AsyncLogger` class with double buffering.
+2.  **Phase 2 (Integration):** Add `m_logger` to `FFBEngine`. Call `Log()` at the end of `calculate_force`.
+3.  **Phase 3 (GUI):** Add "Start/Stop Logging" toggle in the Troubleshooting window.
+
+**Would you like me to generate the full C++ code for this `AsyncLogger` class?**
+
+## Code for the AsyncLogger class
+
+Here is the complete, header-only implementation of the `AsyncLogger` class, designed to be dropped into your `src/` folder.
+
+It implements the **Double-Buffering** pattern to ensure the 400Hz FFB loop is never blocked by disk I/O.
+
+### 1. Create `src/AsyncLogger.h`
+
+```cpp
+#ifndef ASYNCLOGGER_H
+#define ASYNCLOGGER_H
+
+#include <vector>
+#include <string>
+#include <fstream>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+
+// The data structure representing one physics tick (400Hz)
+struct LogFrame {
+    double timestamp;      // Session time
+    
+    // Inputs
+    float steering_torque;
+    float throttle;
+    float brake;
+    
+    // Raw Telemetry (The "Truth")
+    float raw_load_fl;
+    float raw_grip_fl;
+    float raw_susp_force_fl;
+    float raw_ride_height_fl;
+    float raw_lat_vel;
+    
+    // Calculated Physics (The "Workaround")
+    float calc_load_fl;
+    float calc_grip_fl;
+    float calc_slip_ratio_fl;
+    float calc_slip_angle_fl;
+    
+    // FFB Outputs (The Result)
+    float ffb_total;
+    float ffb_sop;
+    float ffb_road;
+    float ffb_scrub;
+    bool  clipping;
+    
+    // Diagnostics
+    bool  marker; // User pressed "Mark"
+};
+
+class AsyncLogger {
+public:
+    static AsyncLogger& Get() {
+        static AsyncLogger instance;
+        return instance;
+    }
+
+    // Start logging to a new file
+    void Start(const std::string& filename_prefix = "lmuffb_log") {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_running) return;
+
+        // Generate filename with timestamp: lmuffb_log_2025-12-12_14-30-00.csv
+        auto now = std::chrono::system_clock::now();
+        auto time_t = std::chrono::system_clock::to_time_t(now);
+        std::stringstream ss;
+        ss << filename_prefix << "_" << std::put_time(std::localtime(&time_t), "%Y-%m-%d_%H-%M-%S") << ".csv";
+        m_filename = ss.str();
+
+        // Open file and write header
+        m_file.open(m_filename);
+        if (m_file.is_open()) {
+            WriteHeader();
+            m_running = true;
+            m_worker = std::thread(&AsyncLogger::WorkerThread, this);
+            std::cout << "[Logger] Started logging to " << m_filename << std::endl;
+        } else {
+            std::cerr << "[Logger] Failed to open file: " << m_filename << std::endl;
+        }
+    }
+
+    // Stop logging and flush remaining data
+    void Stop() {
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            if (!m_running) return;
+            m_running = false;
+        }
+        m_cv.notify_one(); // Wake worker to finish
+        if (m_worker.joinable()) {
+            m_worker.join();
+        }
+        if (m_file.is_open()) {
+            m_file.close();
+        }
+        std::cout << "[Logger] Stopped." << std::endl;
+    }
+
+    // FAST: Called from FFB Thread (400Hz)
+    // Pushes data to memory buffer. Minimal locking.
+    void Log(const LogFrame& frame) {
+        if (!m_running) return;
+
+        bool notify = false;
+        {
+            // Quick lock just to push to vector
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_active_buffer.push_back(frame);
+            
+            // If buffer gets big enough (e.g. 0.5 seconds of data), wake the writer
+            if (m_active_buffer.size() >= 200) {
+                notify = true;
+            }
+        }
+
+        if (notify) {
+            m_cv.notify_one();
+        }
+    }
+
+    bool IsLogging() const { return m_running; }
+
+private:
+    AsyncLogger() : m_running(false) {
+        // Reserve memory to prevent allocations during runtime
+        m_active_buffer.reserve(2000);
+        m_write_buffer.reserve(2000);
+    }
+    
+    ~AsyncLogger() { Stop(); }
+
+    // No copy
+    AsyncLogger(const AsyncLogger&) = delete;
+    AsyncLogger& operator=(const AsyncLogger&) = delete;
+
+    void WriteHeader() {
+        m_file << "Time,SteerTorque,Throttle,Brake,"
+               << "RawLoadFL,RawGripFL,RawSuspForceFL,RawRideHeightFL,RawLatVel,"
+               << "CalcLoadFL,CalcGripFL,CalcSlipRatioFL,CalcSlipAngleFL,"
+               << "FFB_Total,FFB_SoP,FFB_Road,FFB_Scrub,Clipping,Marker\n";
+    }
+
+    // The Background Worker
+    void WorkerThread() {
+        while (true) {
+            {
+                std::unique_lock<std::mutex> lock(m_mutex);
+                
+                // Wait until buffer has data OR we are stopping
+                m_cv.wait(lock, [this] { 
+                    return !m_active_buffer.empty() || !m_running; 
+                });
+
+                // Swap buffers (Fast!)
+                // m_active_buffer becomes empty (ready for FFB thread)
+                // m_write_buffer gets the data
+                m_active_buffer.swap(m_write_buffer);
+                
+                // If stopped and nothing left to write, exit
+                if (!m_running && m_write_buffer.empty()) {
+                    break;
+                }
+            } // Lock released here. FFB thread can continue writing to m_active_buffer.
+
+            // Write to disk (Slow operation, done without holding lock)
+            if (!m_write_buffer.empty()) {
+                for (const auto& frame : m_write_buffer) {
+                    m_file << std::fixed << std::setprecision(4)
+                           << frame.timestamp << ","
+                           << frame.steering_torque << ","
+                           << frame.throttle << ","
+                           << frame.brake << ","
+                           
+                           << frame.raw_load_fl << ","
+                           << frame.raw_grip_fl << ","
+                           << frame.raw_susp_force_fl << ","
+                           << frame.raw_ride_height_fl << ","
+                           << frame.raw_lat_vel << ","
+                           
+                           << frame.calc_load_fl << ","
+                           << frame.calc_grip_fl << ","
+                           << frame.calc_slip_ratio_fl << ","
+                           << frame.calc_slip_angle_fl << ","
+                           
+                           << frame.ffb_total << ","
+                           << frame.ffb_sop << ","
+                           << frame.ffb_road << ","
+                           << frame.ffb_scrub << ","
+                           << (frame.clipping ? "1" : "0") << ","
+                           << (frame.marker ? "1" : "0") << "\n";
+                }
+                m_write_buffer.clear();
+            }
+        }
+    }
+
+    std::ofstream m_file;
+    std::string m_filename;
+    std::thread m_worker;
+    
+    std::vector<LogFrame> m_active_buffer; // FFB writes here
+    std::vector<LogFrame> m_write_buffer;  // Worker reads here
+    
+    std::mutex m_mutex;
+    std::condition_variable m_cv;
+    std::atomic<bool> m_running;
+};
+
+#endif // ASYNCLOGGER_H
+```
+
+### 2. Integration Steps
+
+**A. Update `FFBEngine.h`**
+Include the logger and populate the frame at the end of `calculate_force`.
+
+```cpp
+#include "src/AsyncLogger.h"
+
+// ... inside calculate_force ...
+
+// [After all calculations are done]
+if (AsyncLogger::Get().IsLogging()) {
+    LogFrame frame;
+    frame.timestamp = data->mElapsedTime;
+    frame.steering_torque = (float)game_force;
+    frame.throttle = (float)data->mUnfilteredThrottle;
+    frame.brake = (float)data->mUnfilteredBrake;
+    
+    // Raw
+    frame.raw_load_fl = (float)fl.mTireLoad; // Before fallback!
+    frame.raw_grip_fl = (float)fl.mGripFract;
+    frame.raw_susp_force_fl = (float)fl.mSuspForce;
+    frame.raw_ride_height_fl = (float)fl.mRideHeight;
+    frame.raw_lat_vel = (float)fl.mLateralPatchVel;
+    
+    // Calculated
+    frame.calc_load_fl = (float)approximate_load(fl);
+    frame.calc_grip_fl = (float)front_grip_res.value;
+    frame.calc_slip_ratio_fl = (float)get_slip_ratio(fl);
+    frame.calc_slip_angle_fl = (float)m_grip_diag.front_slip_angle;
+    
+    // Outputs
+    frame.ffb_total = (float)norm_force;
+    frame.ffb_sop = (float)sop_total;
+    frame.ffb_road = (float)road_noise;
+    frame.ffb_scrub = (float)drag_force; // If you have this variable
+    frame.clipping = (std::abs(norm_force) > 0.99);
+    
+    // Marker (You need to pass this in or read a global atomic)
+    frame.marker = false; 
+
+    AsyncLogger::Get().Log(frame);
+}
+```
+
+**B. Update `GuiLayer.cpp`**
+Add the button to the Troubleshooting window.
+
+```cpp
+// Inside DrawDebugWindow or TuningWindow
+if (AsyncLogger::Get().IsLogging()) {
+    if (ImGui::Button("STOP LOGGING", ImVec2(150, 30))) {
+        AsyncLogger::Get().Stop();
+    }
+    ImGui::SameLine();
+    ImGui::TextColored(ImVec4(1,0,0,1), "RECORDING...");
+} else {
+    if (ImGui::Button("Start Logging", ImVec2(150, 30))) {
+        AsyncLogger::Get().Start();
+    }
+}
+```
+
+
+
+```
+
 # File: docs\dev_docs\directinput_implementation.md
 ```markdown
 # DirectInput FFB Implementation Guide
@@ -5849,6 +7147,139 @@ Since the DLL talks to the Driver, version mismatches can cause bugs.
 
 ```
 
+# File: docs\dev_docs\log analysis tool design.md
+```markdown
+## Question 
+I am also considering implementing a tool (a separate executable) that reads one log, and perform some diagnostics / "tests" / checks to see if there are any issue, and then writes a report. As a preliminary design discussion, how would you implement such analysis tool? Which diagnostic checks would you make it do?
+
+## Answer 
+This is an excellent idea. An automated analysis tool moves debugging from "staring at lines on a screen" to "data-driven engineering."
+
+Since this is an offline tool (not real-time), we have more flexibility in technology choice.
+
+### 1. Technology Choice: Python vs. C++
+
+While your main app is C++, **Python** is vastly superior for this specific task.
+*   **Libraries:** `pandas` (data manipulation) and `numpy` (math) allow you to write complex statistical checks in one line of code that would take 50 lines in C++.
+*   **Plotting:** `matplotlib` can generate static PNG graphs for the report automatically.
+*   **Distribution:** You can compile it to a standalone `.exe` using **PyInstaller** so users don't need to install Python.
+
+**Recommendation:** Build this tool in **Python**.
+
+---
+
+### 2. Diagnostic Checks (The "Test Suite")
+
+Here are the specific heuristics the tool should run on the CSV data.
+
+#### A. Telemetry Health (The "Game Integration" Check)
+*   **The "Zero Load" Bug:**
+    *   *Check:* Calculate the percentage of frames where `RawLoad == 0.0` while `CarSpeed > 1.0 m/s`.
+    *   *Threshold:* If > 90%, report: **"CRITICAL: Game is not sending Tire Load data. Fallback logic is active."**
+*   **The "Frozen" Sensor:**
+    *   *Check:* Calculate the standard deviation of `RawGrip`.
+    *   *Threshold:* If `std_dev < 0.0001` (perfectly flat) while moving, report: **"WARNING: Grip data appears frozen/static."**
+*   **Performance Jitter:**
+    *   *Check:* Analyze the `Time` column delta.
+    *   *Threshold:* If `max(delta_time) > 0.020` (20ms, i.e., < 50Hz), report: **"WARNING: FFB Loop Stutter detected. CPU bottleneck?"**
+
+#### B. FFB Quality (The "Feeling" Check)
+*   **Clipping Analysis:**
+    *   *Check:* Percentage of frames where `abs(FFB_Total) >= 1.0`.
+    *   *Report:*
+        *   `> 5%`: "Severe Clipping. Reduce Master Gain."
+        *   `1% - 5%`: "Moderate Clipping. Acceptable for peaks."
+        *   `0%`: "No Clipping. Consider increasing Gain for more detail."
+*   **Oscillation Detection (Ping-Pong):**
+    *   *Check:* Count how many times `FFB_Total` flips sign (positive to negative) within a 100ms window while `SteeringTorque` is relatively constant.
+    *   *Report:* **"WARNING: High-frequency oscillation detected. Increase Smoothing or reduce Scrub Drag."**
+*   **Deadzone Check:**
+    *   *Check:* Histogram of forces. If there is a massive spike exactly at `0.0` while inputs are non-zero.
+    *   *Report:* "Potential Deadzone issue."
+
+#### C. Physics Logic Verification (The "Workaround" Check)
+*   **Load Approximation Accuracy:**
+    *   *Check:* If `RawLoad` is valid (non-zero), calculate the correlation coefficient (R²) between `RawLoad` and `CalcLoad`.
+    *   *Report:* "Approximation Accuracy: 85% match with real physics." (Helps you tune the 300N constant).
+*   **Understeer Trigger:**
+    *   *Check:* Find moments where `CalcSlipAngle > 0.15` (Limit). Check if `FFB_Total` decreases relative to `SteeringTorque` in those moments.
+    *   *Report:* "Understeer Effect Active: Yes/No."
+
+---
+
+### 3. Implementation Design (Python)
+
+#### Structure
+```python
+import pandas as pd
+import numpy as np
+
+class LogAnalyzer:
+    def __init__(self, csv_path):
+        self.df = pd.read_csv(csv_path)
+        
+    def run_diagnostics(self):
+        report = []
+        report.append(self.check_telemetry_health())
+        report.append(self.check_clipping())
+        report.append(self.check_oscillation())
+        return "\n".join(report)
+
+    def check_telemetry_health(self):
+        # Filter for moving car
+        moving = self.df[self.df['RawLatVel'].abs() > 1.0]
+        
+        # Check Zero Load
+        zero_load_count = (moving['RawLoadFL'] == 0).sum()
+        if zero_load_count / len(moving) > 0.9:
+            return "[FAIL] Raw Tire Load is missing (LMU Bug confirmed)."
+        return "[PASS] Raw Tire Load is present."
+
+    def check_clipping(self):
+        clip_count = (self.df['FFB_Total'].abs() >= 0.99).sum()
+        pct = (clip_count / len(self.df)) * 100
+        return f"[INFO] Clipping: {pct:.2f}% of session."
+```
+
+### 4. The Output Report (Example)
+
+The tool should generate a `report.txt` (or print to console):
+
+```text
+==================================================
+LMUFFB DIAGNOSTIC REPORT
+Log: lmuffb_log_2025-12-12.csv
+Duration: 4m 32s
+==================================================
+
+1. TELEMETRY HEALTH
+   [FAIL] Raw Tire Load: MISSING (100% of frames are 0.0)
+          -> The app is correctly using the Calculated Fallback.
+   [PASS] Raw Grip: Present.
+   [WARN] Loop Rate: Min 380Hz, Max 410Hz. (Stable).
+
+2. FFB SIGNAL QUALITY
+   [WARN] Clipping: 12.5% (High). 
+          -> Recommendation: Reduce Master Gain or Max Torque Ref.
+   [PASS] Oscillation: None detected.
+   [INFO] Average Force: 8.4 Nm.
+
+3. PHYSICS LOGIC
+   [INFO] Scrub Drag: Active (Max force 2.5 Nm).
+   [INFO] Bottoming: Triggered 3 times.
+          -> Timestamps: 12.5s, 45.2s, 1m20s.
+
+==================================================
+```
+
+### 5. How to Integrate
+1.  **Development:** Write the script in `tools/log_analyzer.py`.
+2.  **Build:** Use `pyinstaller --onefile tools/log_analyzer.py` to create `LogAnalyzer.exe`.
+3.  **Distribution:** Include `LogAnalyzer.exe` in the LMUFFB release zip.
+4.  **Usage:** User drags and drops a CSV file onto `LogAnalyzer.exe`, and it opens a window with the text report.
+
+```
+
 # File: docs\dev_docs\Missing Mutex Lock (Race Condition).md
 ```markdown
 Please address these 3 issues:
@@ -6194,6 +7625,175 @@ The GUI now includes a "Show Troubleshooting Graphs" toggle which opens an "FFB 
 
 ```
 
+# File: docs\dev_docs\Plots with Modular Independent Windows .md
+```markdown
+Yes, the current "Tower" layout is definitely problematic for troubleshooting. When tuning FFB, you often want to see **Cause (Input)** and **Effect (Output)** side-by-side, not by scrolling up and down.
+
+Since you are using **Dear ImGui**, you have two excellent options to solve this. I recommend **Option 1 (Modular Windows)** as it directly fulfills your request and offers the most flexibility for multi-monitor or ultrawide setups.
+
+### Option 1: Modular Independent Windows (Recommended)
+
+Instead of one giant "FFB Analysis" window with collapsible headers, we break it into **three separate floating windows**.
+
+*   **Behavior:** The user can drag "Telemetry" to the left and "FFB Output" to the right to compare them instantly.
+*   **Management:** In the main window, you add a "View" menu or simple checkboxes to toggle them on/off individually.
+
+**Visual Concept:**
+
+```text
++-----------------------+   +-----------------------+   +-----------------------+
+| FFB Outputs           |   | Internal Physics      |   | Raw Telemetry         |
+| [X] Close             |   | [X] Close             |   | [X] Close             |
+|                       |   |                       |   |                       |
+| Total:  ~~~~^~~~~     |   | Calc Load: ~~~~~~     |   | Raw Load: ________    |
+| Base:   ~~~~~         |   | Calc Grip: ~~~v~~     |   | Raw Grip: ________    |
+| SoP:    _____         |   |                       |   |                       |
++-----------------------+   +-----------------------+   +-----------------------+
+       (Window A)                  (Window B)                  (Window C)
+```
+
+**Implementation Logic:**
+In `GuiLayer.cpp`, instead of one `DrawDebugWindow` function, you split the logic.
+
+```cpp
+// GuiLayer.h
+static bool m_show_window_outputs;
+static bool m_show_window_physics;
+static bool m_show_window_telemetry;
+
+// GuiLayer.cpp
+void GuiLayer::DrawTuningWindow(...) {
+    // ... inside the main window ...
+    ImGui::Separator();
+    ImGui::Text("Troubleshooting Views");
+    ImGui::Checkbox("FFB Outputs", &m_show_window_outputs);
+    ImGui::SameLine();
+    ImGui::Checkbox("Physics Brain", &m_show_window_physics);
+    ImGui::SameLine();
+    ImGui::Checkbox("Raw Telemetry", &m_show_window_telemetry);
+}
+
+void GuiLayer::Render(...) {
+    // ...
+    if (m_show_window_outputs)   DrawOutputsWindow(engine);
+    if (m_show_window_physics)   DrawPhysicsWindow(engine);
+    if (m_show_window_telemetry) DrawTelemetryWindow(engine);
+    // ...
+}
+```
+
+---
+
+### Option 2: Tabbed Layout (Compact)
+
+If you prefer to keep everything in one window but save vertical space, use a **TabBar**.
+
+*   **Behavior:** The window stays small. You click tabs to switch views.
+*   **Pros:** Very tidy.
+*   **Cons:** You cannot see Input and Output simultaneously (bad for debugging lag or correlation).
+
+**Visual Concept:**
+
+```text
++--------------------------------------------------+
+| FFB Analysis                                     |
++--------------------------------------------------+
+| [ Outputs ]  [ Physics ]  [ Raw Telemetry ]      | <--- Tabs
++--------------------------------------------------+
+|                                                  |
+|  Total Output: ~~~~~^~~~~~                       |
+|  Base Torque:  ~~~~~                             |
+|                                                  |
++--------------------------------------------------+
+```
+
+---
+
+### Option 3: The "Dashboard" Hybrid (Best of Both)
+
+This is the most professional approach.
+1.  **Pinned Total:** Keep "Total Output" (the most important graph) always visible at the top.
+2.  **Tabs below:** Use tabs for the detailed breakdowns.
+3.  **Pop-out Button:** Add a small button "Pop Out" that detaches a tab into a floating window (Option 1).
+
+---
+
+### Design Recommendation
+
+I suggest implementing **Option 1 (Modular Windows)** immediately. It requires the least code refactoring (you just unwrap the `CollapsingHeader` blocks into `ImGui::Begin()` blocks) and solves the vertical space issue instantly.
+
+**Proposed Layout for the Main Window Controls:**
+
+Replace the single "Show Troubleshooting Graphs" checkbox with a group:
+
+```text
+[v] Show Graphs:
+    [x] FFB Components (Output)
+    [ ] Internal Physics (Brain)
+    [ ] Raw Telemetry (Input)
+```
+
+This allows the user to open *only* what they need, saving screen space and CPU cycles (plotting 40 graphs at 60Hz is expensive; plotting 10 is cheap).
+
+### Prompt for the Agent
+
+Here is the prompt to instruct the agent to perform this reorganization.
+
+***
+
+**Prompt:**
+
+Please initialize this session by following the **Standard Task Workflow** defined in `AGENTS.md`.
+
+1.  **Sync**: Run `git fetch && git reset --hard origin/main` (or pull).
+2.  **Load Memory**: Read `AGENTS_MEMORY.md`.
+3.  **Load Rules**: Read `AGENTS.md`.
+
+Perform the following task:
+
+**Task: Reorganize GUI into Modular Windows (v0.4.7)**
+
+**Context:**
+The "FFB Analysis" window has become too tall to fit on standard screens. The user needs to be able to view specific sections (e.g., Input vs Output) side-by-side without scrolling.
+We will move from a single window with Collapsible Headers to **three independent floating windows**.
+
+**Implementation Requirements:**
+
+**1. Update `GuiLayer.h`**
+*   Replace the single `m_show_debug_window` boolean with three separate flags:
+    *   `static bool m_show_plot_outputs;` (Default: false)
+    *   `static bool m_show_plot_physics;` (Default: false)
+    *   `static bool m_show_plot_telemetry;` (Default: false)
+
+**2. Update `GuiLayer.cpp`**
+*   **Refactor `DrawTuningWindow`:**
+    *   Remove the old "Show Troubleshooting Graphs" checkbox.
+    *   Add a new section "Analysis Views" with 3 checkboxes corresponding to the new flags.
+    *   *Tip:* Use `ImGui::SameLine()` to put them on one row if they fit, or two rows.
+*   **Refactor `DrawDebugWindow`:**
+    *   Split this huge function into three smaller functions:
+        *   `void DrawWindow_Outputs(FFBEngine& engine)`
+        *   `void DrawWindow_Physics(FFBEngine& engine)`
+        *   `void DrawWindow_Telemetry(FFBEngine& engine)`
+    *   Each function must call `ImGui::Begin("Window Name", &flag)` and `ImGui::End()`.
+    *   Move the relevant plotting logic from the old headers into these new windows.
+    *   **Crucial:** Ensure the `GetDebugBatch()` logic is handled efficiently. You might need to fetch the batch *once* in `Render()` and pass the data to these functions, OR (simpler for now) let each window fetch the batch (it's thread-safe). *Better approach:* Fetch batch in `Render`, update the static `RollingBuffers`, and then just draw.
+
+**3. Window Naming & Sizing:**
+*   **Outputs Window:** Title "FFB Components (Output)". Default size: 600x800.
+*   **Physics Window:** Title "Internal Physics (Brain)". Default size: 400x400.
+*   **Telemetry Window:** Title "Raw Game Telemetry (Input)". Default size: 400x800.
+*   *Note:* Use `ImGui::SetNextWindowSize(..., ImGuiCond_FirstUseEver)` so users can resize them later.
+
+**Deliverables:**
+1.  Updated `GuiLayer.h` and `GuiLayer.cpp`.
+2.  Verify that closing a window via the "X" button updates the checkbox in the Main Window (this happens automatically if you pass the bool pointer to `Begin`).
+
+**Constraints:**
+*   Keep the numerical diagnostics (Min/Max/Cur) you just implemented.
+*   Ensure the "Total Output" graph remains in the "Outputs" window.
+```
+
 # File: docs\dev_docs\PROJECT_CONTEXT.md
 ```markdown
 # Project Context: LMUFFB (Le Mans Ultimate Force Feedback)
@@ -6238,6 +7838,53 @@ The immediate focus for future sessions is improving the **Output Stage**.
 1.  **DirectInput Support**: Move away from vJoy. Implement `IDirectInputDevice8` to send "Constant Force" packets directly to the user's physical wheel. This drastically simplifies setup (no virtual driver needed).
 2.  **Telemetry Analysis**: Implement more advanced filtering (High-Pass / Low-Pass) to isolate specific suspension frequencies for better "Road Texture".
 3.  **Wheel Profiles**: Save/Load settings per car or per wheel base.
+
+```
+
+# File: docs\dev_docs\prompt - Implement Numerical Readouts for Troubleshooting Graphs (Diagnostics).md
+```markdown
+Here is the prompt to instruct the AI coding agent to focus specifically on adding numerical diagnostics to the graphs.
+
+***
+
+Please initialize this session by following the **Standard Task Workflow** defined in `AGENTS.md`.
+
+1.  **Sync**: Run `git fetch && git reset --hard origin/main` (or pull).
+2.  **Load Memory**: Read `AGENTS_MEMORY.md`.
+3.  **Load Rules**: Read `AGENTS.md`.
+
+Perform the following task:
+
+**Task: Implement Numerical Readouts for Troubleshooting Graphs (Diagnostics)**
+
+**Context:**
+We are investigating why certain FFB channels (SoP, Understeer, Road Texture) appear "dead" (flatlined) in the GUI graphs. It is unclear if the values are truly zero (logic bug) or just very small (scaling issue).
+To diagnose this, we need **precise numerical readouts** displayed alongside the visual plots.
+
+**Implementation Requirements:**
+
+**1. Update `GuiLayer.cpp` (DrawDebugWindow)**
+Modify the plotting logic to calculate and display the **Current Value**, **Minimum**, and **Maximum** for every channel in the "FFB Components" and "Telemetry Inspector" sections.
+
+*   **Helper Function:** Create a helper (e.g., `GetMinMaxAvg`) that iterates through a `RollingBuffer` to find the min/max/current values.
+*   **Display Format:** Change the UI layout for each plot to:
+    ```text
+    [Graph Title] | Val: X.XXX | Min: Y.YY | Max: Z.ZZ
+    [PlotLines Drawing]
+    ```
+*   **Target Channels:** Apply this to **ALL** plots (Total, Base, SoP, Understeer, Road, Slide, Load, Grip, etc.).
+
+**2. Precision:**
+*   Use `%.3f` or `%.4f` formatting. We need to see tiny values (e.g., `0.0015`) that might look like zero on a graph.
+
+**Deliverables:**
+1.  **Source Code:** Updated `GuiLayer.cpp`.
+2.  **Documentation:** Update `CHANGELOG.md` (Added numerical diagnostics to debug window).
+
+**Constraints:**
+*   **Performance:** Calculating Min/Max for 4000 points every frame (60Hz) for 20+ graphs might be heavy.
+    *   *Optimization:* Only calculate Min/Max every 10th frame, OR just display the **Current Value** (index `offset - 1`) which is instant.
+    *   *Decision:* **Display "Current Value" is mandatory and instant.** Min/Max is optional/nice-to-have; if you implement Min/Max, ensure it doesn't stall the GUI thread (maybe scan only a subset or use a cached value).
 
 ```
 
@@ -8077,7 +9724,7 @@ Available for each of the 4 wheels (`mWheel[0]`=FL, `[1]`=FR, `[2]`=RL, `[3]`=RR
 | **`mGripFract`** | **0.0-1.0** | **Grip usage fraction** (0=full grip available, 1=at limit) | **Used**: Understeer/Oversteer detection (v0.4.0+) | |
 | `mLateralForce` | N | Force acting sideways on tire contact patch | **Used**: Rear Oversteer calculation (Aligning Torque) | Front pneumatic trail calculation refinement |
 | `mLongitudinalForce` | N | Force acting forward/back (Accel/Brake) | Unused | ABS pulse simulation |
-| `mSuspForce` | N | Pushrod load | Unused | Suspension stress feedback |
+| `mSuspForce` | N | Pushrod load | **Used**: Front Load approximation fallback (v0.4.7) | Suspension stress feedback |
 
 ### Motion & Slip
 
@@ -8095,7 +9742,7 @@ Available for each of the 4 wheels (`mWheel[0]`=FL, `[1]`=FR, `[2]`=RL, `[3]`=RR
 | :--- | :--- | :--- | :--- | :--- |
 | `mVerticalTireDeflection` | m | Compression of tire rubber | **Used**: Road Texture (High-pass filter) | |
 | `mSuspensionDeflection` | m | Compression of spring/damper | Unused | **Bottoming Out**: Harsh "thud" if deflection hits max travel |
-| `mRideHeight` | m | Chassis height | Unused | Scraping effects |
+| `mRideHeight` | m | Chassis height | **Used**: Visualized in Telemetry Inspector (v0.4.7) | Scraping effects |
 | `mTerrainName` | char[16] | Name of surface (e.g., "ROAD", "GRASS") | Unused | **Surface FX**: Different rumble for Kerbs/Grass/Gravel |
 | `mSurfaceType` | unsigned char | 0=dry, 1=wet, 2=grass, 3=dirt, 4=gravel, 5=rumblestrip, 6=special | Unused | Faster lookup for Surface FX |
 | `mCamber`, `mToe` | radians | Wheel alignment | Unused | Setup analysis |
@@ -11056,12 +12703,14 @@ struct RollingBuffer {
     }
 };
 
-// Static buffers for debug plots (FFB)
+// --- Header A: FFB Components ---
 static RollingBuffer plot_total;
 static RollingBuffer plot_base;
 static RollingBuffer plot_sop;
 static RollingBuffer plot_understeer;
 static RollingBuffer plot_oversteer;
+static RollingBuffer plot_rear_torque; // New v0.4.7
+static RollingBuffer plot_scrub_drag;  // New v0.4.7
 static RollingBuffer plot_road;
 static RollingBuffer plot_slide;
 static RollingBuffer plot_lockup;
@@ -11069,13 +12718,22 @@ static RollingBuffer plot_spin;
 static RollingBuffer plot_bottoming;
 static RollingBuffer plot_clipping;
 
-// Static buffers for debug plots (Telemetry)
-static RollingBuffer plot_input_steer;
+// --- Header B: Internal Physics ---
+static RollingBuffer plot_calc_front_load; // New v0.4.7
+static RollingBuffer plot_calc_front_grip; // New v0.4.7
+static RollingBuffer plot_calc_slip_ratio; // New v0.4.7
+static RollingBuffer plot_calc_slip_angle; 
+
+// --- Header C: Raw Game Telemetry ---
+static RollingBuffer plot_raw_steer;
+static RollingBuffer plot_raw_load;        // New v0.4.7
+static RollingBuffer plot_raw_grip;        // New v0.4.7
+static RollingBuffer plot_raw_susp_force;  // New v0.4.7
+static RollingBuffer plot_raw_ride_height; // New v0.4.7
+static RollingBuffer plot_raw_car_speed;   // New v0.4.7
+static RollingBuffer plot_raw_throttle;    // New v0.4.7
+static RollingBuffer plot_raw_brake;       // New v0.4.7
 static RollingBuffer plot_input_accel;
-static RollingBuffer plot_input_load;
-static RollingBuffer plot_input_grip;
-static RollingBuffer plot_input_slip_ratio;
-static RollingBuffer plot_input_slip_angle;
 static RollingBuffer plot_input_patch_vel;
 static RollingBuffer plot_input_vert_deflection;
 
@@ -11096,12 +12754,14 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
     // Update buffers with the latest snapshot (if available)
     // Loop through ALL snapshots to avoid aliasing
     for (const auto& snap : snapshots) {
-        // FFB Components
+        // --- Header A: FFB Components ---
         plot_total.Add(snap.total_output);
         plot_base.Add(snap.base_force);
         plot_sop.Add(snap.sop_force);
         plot_understeer.Add(snap.understeer_drop);
         plot_oversteer.Add(snap.oversteer_boost);
+        plot_rear_torque.Add(snap.ffb_rear_torque);
+        plot_scrub_drag.Add(snap.ffb_scrub_drag);
         plot_road.Add(snap.texture_road);
         plot_slide.Add(snap.texture_slide);
         plot_lockup.Add(snap.texture_lockup);
@@ -11109,13 +12769,22 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         plot_bottoming.Add(snap.texture_bottoming);
         plot_clipping.Add(snap.clipping);
 
-        // Telemetry Inputs
-        plot_input_steer.Add(snap.steer_force);
+        // --- Header B: Internal Physics ---
+        plot_calc_front_load.Add(snap.calc_front_load);
+        plot_calc_front_grip.Add(snap.calc_front_grip);
+        plot_calc_slip_ratio.Add(snap.calc_front_slip_ratio);
+        plot_calc_slip_angle.Add(snap.slip_angle);
+
+        // --- Header C: Raw Telemetry ---
+        plot_raw_steer.Add(snap.steer_force);
+        plot_raw_load.Add(snap.raw_front_tire_load);
+        plot_raw_grip.Add(snap.raw_front_grip_fract);
+        plot_raw_susp_force.Add(snap.raw_front_susp_force);
+        plot_raw_ride_height.Add(snap.raw_front_ride_height);
+        plot_raw_car_speed.Add(snap.raw_car_speed);
+        plot_raw_throttle.Add(snap.raw_input_throttle);
+        plot_raw_brake.Add(snap.raw_input_brake);
         plot_input_accel.Add(snap.accel_x);
-        plot_input_load.Add(snap.tire_load);
-        plot_input_grip.Add(snap.grip_fract);
-        plot_input_slip_ratio.Add(snap.slip_ratio);
-        plot_input_slip_angle.Add(snap.slip_angle);
         plot_input_patch_vel.Add(snap.patch_vel);
         plot_input_vert_deflection.Add(snap.deflection);
 
@@ -11136,13 +12805,12 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         ImGui::Separator();
     }
 
-    // --- Draw UI ---
-    if (ImGui::CollapsingHeader("FFB Components (Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
+    // --- Header A: FFB Components (The Output) ---
+    if (ImGui::CollapsingHeader("A. FFB Components (Output Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Text("Total Output");
         ImGui::PlotLines("##Total", plot_total.data.data(), (int)plot_total.data.size(), plot_total.offset, "Total", -1.0f, 1.0f, ImVec2(0, 60));
         
         ImGui::Columns(2, "FFBCols", false);
-        // NOTE: Changed from ±4000 (Newtons) to ±30 (Nm) for new mSteeringShaftTorque
         ImGui::Text("Base Torque (Nm)"); ImGui::PlotLines("##Base", plot_base.data.data(), (int)plot_base.data.size(), plot_base.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
         ImGui::NextColumn();
         ImGui::Text("SoP (Lat G)"); ImGui::PlotLines("##SoP", plot_sop.data.data(), (int)plot_sop.data.size(), plot_sop.offset, NULL, -1000.0f, 1000.0f, ImVec2(0, 40));
@@ -11150,6 +12818,10 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         ImGui::Text("Understeer Cut"); ImGui::PlotLines("##Under", plot_understeer.data.data(), (int)plot_understeer.data.size(), plot_understeer.offset, NULL, -2000.0f, 2000.0f, ImVec2(0, 40));
         ImGui::NextColumn();
         ImGui::Text("Oversteer Boost"); ImGui::PlotLines("##Over", plot_oversteer.data.data(), (int)plot_oversteer.data.size(), plot_oversteer.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
+        ImGui::NextColumn();
+        ImGui::Text("Rear Align Torque"); ImGui::PlotLines("##RearT", plot_rear_torque.data.data(), (int)plot_rear_torque.data.size(), plot_rear_torque.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
+        ImGui::NextColumn();
+        ImGui::Text("Scrub Drag Force"); ImGui::PlotLines("##Drag", plot_scrub_drag.data.data(), (int)plot_scrub_drag.data.size(), plot_scrub_drag.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
         ImGui::NextColumn();
         ImGui::Text("Road Texture"); ImGui::PlotLines("##Road", plot_road.data.data(), (int)plot_road.data.size(), plot_road.offset, NULL, -1000.0f, 1000.0f, ImVec2(0, 40));
         ImGui::NextColumn();
@@ -11165,33 +12837,77 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         ImGui::Columns(1);
     }
 
-    if (ImGui::CollapsingHeader("Telemetry Inspector (Raw)", ImGuiTreeNodeFlags_None)) {
-        ImGui::Columns(2, "TelCols", false);
-        // NOTE: Changed from ±5000 (Newtons for old mSteeringArmForce) to ±30 (Nm for new mSteeringShaftTorque)
-        ImGui::Text("Steering Torque (Nm)"); ImGui::PlotLines("##StForce", plot_input_steer.data.data(), (int)plot_input_steer.data.size(), plot_input_steer.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
+    // --- Header B: Internal Physics Engine (The Brain) ---
+    if (ImGui::CollapsingHeader("B. Internal Physics (Brain)", ImGuiTreeNodeFlags_None)) {
+        ImGui::Columns(2, "PhysCols", false);
+        
+        ImGui::Text("Calc Front Load (N)");
+        ImGui::PlotLines("##CalcLoad", plot_calc_front_load.data.data(), (int)plot_calc_front_load.data.size(), plot_calc_front_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
         ImGui::NextColumn();
-        ImGui::Text("Local Accel X"); ImGui::PlotLines("##LatG", plot_input_accel.data.data(), (int)plot_input_accel.data.size(), plot_input_accel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        
+        ImGui::Text("Calc Front Grip");
+        ImGui::PlotLines("##CalcGrip", plot_calc_front_grip.data.data(), (int)plot_calc_front_grip.data.size(), plot_calc_front_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        ImGui::NextColumn();
+        
+        ImGui::Text("Calc Slip Ratio");
+        ImGui::PlotLines("##CalcSlip", plot_calc_slip_ratio.data.data(), (int)plot_calc_slip_ratio.data.size(), plot_calc_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
+        ImGui::NextColumn();
+        
+        ImGui::Text("Smoothed Slip Angle");
+        ImGui::PlotLines("##SlipA", plot_calc_slip_angle.data.data(), (int)plot_calc_slip_angle.data.size(), plot_calc_slip_angle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        ImGui::Columns(1);
+    }
+
+    // --- Header C: Raw Game Telemetry Inspector (The Input) ---
+    if (ImGui::CollapsingHeader("C. Raw Game Telemetry (Input)", ImGuiTreeNodeFlags_None)) {
+        ImGui::Columns(2, "TelCols", false);
+        
+        ImGui::Text("Steering Torque (Nm)"); 
+        ImGui::PlotLines("##StForce", plot_raw_steer.data.data(), (int)plot_raw_steer.data.size(), plot_raw_steer.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
         ImGui::NextColumn();
         
         // Highlight Load if warning
-        if (g_warn_load) ImGui::TextColored(ImVec4(1,0,0,1), "Avg Tire Load (MISSING)");
-        else ImGui::Text("Avg Tire Load");
-        ImGui::PlotLines("##Load", plot_input_load.data.data(), (int)plot_input_load.data.size(), plot_input_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
+        if (g_warn_load) ImGui::TextColored(ImVec4(1,0,0,1), "Raw Front Load (MISSING)");
+        else ImGui::Text("Raw Front Load (N)");
+        ImGui::PlotLines("##RawLoad", plot_raw_load.data.data(), (int)plot_raw_load.data.size(), plot_raw_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
         ImGui::NextColumn();
         
         // Highlight Grip if warning
-        if (g_warn_grip) ImGui::TextColored(ImVec4(1,0,0,1), "Avg Grip Fract (MISSING)");
-        else ImGui::Text("Avg Grip Fract");
-        ImGui::PlotLines("##Grip", plot_input_grip.data.data(), (int)plot_input_grip.data.size(), plot_input_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        if (g_warn_grip) ImGui::TextColored(ImVec4(1,0,0,1), "Raw Front Grip (MISSING)");
+        else ImGui::Text("Raw Front Grip");
+        ImGui::PlotLines("##RawGrip", plot_raw_grip.data.data(), (int)plot_raw_grip.data.size(), plot_raw_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        ImGui::NextColumn();
         
+        ImGui::Text("Raw Front Susp. Force"); 
+        ImGui::PlotLines("##Susp", plot_raw_susp_force.data.data(), (int)plot_raw_susp_force.data.size(), plot_raw_susp_force.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
         ImGui::NextColumn();
-        ImGui::Text("Avg Slip Ratio"); ImGui::PlotLines("##SlipR", plot_input_slip_ratio.data.data(), (int)plot_input_slip_ratio.data.size(), plot_input_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
+        
+        ImGui::Text("Raw Front Ride Height"); 
+        ImGui::PlotLines("##RH", plot_raw_ride_height.data.data(), (int)plot_raw_ride_height.data.size(), plot_raw_ride_height.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
         ImGui::NextColumn();
-        ImGui::Text("Avg Slip Angle"); ImGui::PlotLines("##SlipA", plot_input_slip_angle.data.data(), (int)plot_input_slip_angle.data.size(), plot_input_slip_angle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        
+        ImGui::Text("Car Speed (m/s)"); 
+        ImGui::PlotLines("##Speed", plot_raw_car_speed.data.data(), (int)plot_raw_car_speed.data.size(), plot_raw_car_speed.offset, NULL, 0.0f, 100.0f, ImVec2(0, 40));
         ImGui::NextColumn();
-        ImGui::Text("Avg Lat PatchVel"); ImGui::PlotLines("##PatchV", plot_input_patch_vel.data.data(), (int)plot_input_patch_vel.data.size(), plot_input_patch_vel.offset, NULL, 0.0f, 20.0f, ImVec2(0, 40));
+        
+        ImGui::Text("Throttle Input"); 
+        ImGui::PlotLines("##Thr", plot_raw_throttle.data.data(), (int)plot_raw_throttle.data.size(), plot_raw_throttle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
         ImGui::NextColumn();
-        ImGui::Text("Avg Deflection"); ImGui::PlotLines("##Defl", plot_input_vert_deflection.data.data(), (int)plot_input_vert_deflection.data.size(), plot_input_vert_deflection.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
+        
+        ImGui::Text("Brake Input"); 
+        ImGui::PlotLines("##Brk", plot_raw_brake.data.data(), (int)plot_raw_brake.data.size(), plot_raw_brake.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        ImGui::NextColumn();
+        
+        ImGui::Text("Local Accel X"); 
+        ImGui::PlotLines("##LatG", plot_input_accel.data.data(), (int)plot_input_accel.data.size(), plot_input_accel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        ImGui::NextColumn();
+        
+        ImGui::Text("Avg Lat PatchVel"); 
+        ImGui::PlotLines("##PatchV", plot_input_patch_vel.data.data(), (int)plot_input_patch_vel.data.size(), plot_input_patch_vel.offset, NULL, 0.0f, 20.0f, ImVec2(0, 40));
+        ImGui::NextColumn();
+        
+        ImGui::Text("Avg Deflection"); 
+        ImGui::PlotLines("##Defl", plot_input_vert_deflection.data.data(), (int)plot_input_vert_deflection.data.size(), plot_input_vert_deflection.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
         ImGui::Columns(1);
     }
 
@@ -12625,6 +14341,8 @@ int g_tests_failed = 0;
     }
 
 // --- Tests ---
+
+void test_snapshot_population(); // Forward declaration
 
 void test_manual_slip_singularity() {
     std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
@@ -14263,12 +15981,91 @@ int main() {
     test_manual_slip_calculation();
     test_universal_bottoming();
     test_preset_initialization();
-
+    test_snapshot_population();
+    
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
     std::cout << "Tests Failed: " << g_tests_failed << std::endl;
     
     return g_tests_failed > 0 ? 1 : 0;
+}
+
+void test_snapshot_population() {
+    std::cout << "\nTest: Snapshot Population (v0.4.7)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+
+    // Setup input values
+    // Case: Missing Tire Load (0) but Valid Susp Force (1000)
+    data.mWheel[0].mTireLoad = 0.0;
+    data.mWheel[1].mTireLoad = 0.0;
+    data.mWheel[0].mSuspForce = 1000.0;
+    data.mWheel[1].mSuspForce = 1000.0;
+    
+    // Other inputs
+    data.mLocalVel.z = 20.0; // Moving
+    data.mUnfilteredThrottle = 0.8;
+    data.mUnfilteredBrake = 0.2;
+    // data.mRideHeight = 0.05; // Removed invalid field
+    // Wait, TelemInfoV01 has mWheel[].mRideHeight.
+    data.mWheel[0].mRideHeight = 0.03;
+    data.mWheel[1].mRideHeight = 0.04; // Min is 0.03
+
+    // Trigger missing load logic
+    // Need > 20 frames of missing load
+    data.mDeltaTime = 0.01;
+    for (int i=0; i<30; i++) {
+        engine.calculate_force(&data);
+    }
+
+    // Get Snapshot
+    auto batch = engine.GetDebugBatch();
+    if (batch.empty()) {
+        std::cout << "[FAIL] No snapshot generated." << std::endl;
+        g_tests_failed++;
+        return;
+    }
+    
+    FFBSnapshot snap = batch.back();
+    
+    // Assertions
+    
+    // 1. Raw Load should be 0.0 (What the game sent)
+    if (std::abs(snap.raw_front_tire_load) < 0.001) {
+        std::cout << "[PASS] Raw Front Tire Load captured as 0.0." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Raw Front Tire Load incorrect: " << snap.raw_front_tire_load << std::endl;
+        g_tests_failed++;
+    }
+    
+    // 2. Calculated Load should be approx 1300 (SuspForce 1000 + 300 offset)
+    if (std::abs(snap.calc_front_load - 1300.0) < 0.001) {
+        std::cout << "[PASS] Calculated Front Load is 1300.0." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Calculated Front Load incorrect: " << snap.calc_front_load << std::endl;
+        g_tests_failed++;
+    }
+    
+    // 3. Raw Inputs
+    if (std::abs(snap.raw_input_throttle - 0.8) < 0.001) {
+        std::cout << "[PASS] Raw Throttle captured." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Raw Throttle incorrect." << std::endl;
+        g_tests_failed++;
+    }
+    
+    // 4. Raw Ride Height (Min of 0.03 and 0.04 -> 0.03)
+    if (std::abs(snap.raw_front_ride_height - 0.03) < 0.001) {
+        std::cout << "[PASS] Raw Ride Height captured (Min)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Raw Ride Height incorrect: " << snap.raw_front_ride_height << std::endl;
+        g_tests_failed++;
+    }
 }
 
 ```
