@@ -99,6 +99,13 @@ def main():
                 if 'docs/dev_docs/code_reviews' in relpath_normalized or 'docs/dev_docs/code reviews' in relpath_normalized:
                     print(f"Skipping (code review): {relpath}")
                     continue
+                
+                # Exclude .txt files in root directory except for allowed ones
+                if dirpath == root_dir and filename.endswith('.txt'):
+                    allowed_root_txt = {'README.txt', 'build_commands.txt'}
+                    if filename not in allowed_root_txt:
+                        print(f"Skipping (root .txt): {relpath}")
+                        continue
 
                 print(f"Adding {relpath}...")
 

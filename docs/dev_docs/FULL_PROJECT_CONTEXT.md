@@ -617,87 +617,6 @@ All notable changes to this project will be documented in this file.
 
 ```
 
-# File: CMakeLists.txt
-```cmake
-cmake_minimum_required(VERSION 3.10)
-project(LMUFFB_CPP)
-
-set(CMAKE_CXX_STANDARD 17)
-
-# vJoy SDK Location - Users should set this
-# We link against the installed vJoy SDK (headers/libs), we do NOT compile vJoy itself.
-# ImGui Detection
-set(IMGUI_DIR "vendor/imgui")
-option(BUILD_HEADLESS "Build without GUI support" OFF)
-
-if(NOT BUILD_HEADLESS)
-    if(EXISTS "${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui.cpp")
-        message(STATUS "ImGui found. Enabling GUI support.")
-        add_definitions(-DENABLE_IMGUI)
-        set(IMGUI_SOURCES
-            ${IMGUI_DIR}/imgui.cpp
-            ${IMGUI_DIR}/imgui_demo.cpp
-            ${IMGUI_DIR}/imgui_draw.cpp
-            ${IMGUI_DIR}/imgui_tables.cpp
-            ${IMGUI_DIR}/imgui_widgets.cpp
-            ${IMGUI_DIR}/backends/imgui_impl_win32.cpp
-            ${IMGUI_DIR}/backends/imgui_impl_dx11.cpp
-        )
-        include_directories(${IMGUI_DIR})
-        include_directories(${IMGUI_DIR}/backends)
-        # Link DirectX libraries
-        link_libraries(d3d11 d3dcompiler dxguid)
-        add_definitions(-DUNICODE -D_UNICODE -DNOMINMAX)
-    else()
-        message(FATAL_ERROR "ImGui not found in vendor/imgui. To build headless, use -DBUILD_HEADLESS=ON.")
-    endif()
-else()
-    message(STATUS "Building in Headless mode (User Request).")
-    set(IMGUI_SOURCES "")
-endif()
-
-# include_directories(${VJOY_SDK_DIR}/inc)
-
-# Detect platform and use appropriate vJoy library
-# if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    # 64-bit
-#    link_directories(${VJOY_SDK_DIR}/lib/amd64)
-# else()
-    # 32-bit
-#    link_directories(${VJOY_SDK_DIR}/lib/i386)
-# endif()
-
-add_executable(LMUFFB main.cpp src/GuiLayer.cpp src/GuiLayer.h src/Config.cpp src/Config.h src/DirectInputFFB.cpp src/DirectInputFFB.h src/GameConnector.cpp src/GameConnector.h src/DynamicVJoy.h ${IMGUI_SOURCES})
-
-target_link_libraries(LMUFFB dinput8.lib dxguid.lib winmm.lib)
-
-# Read Version
-file(STRINGS "VERSION" LMUFFB_VERSION)
-add_definitions(-DLMUFFB_VERSION="${LMUFFB_VERSION}")
-
-# Copy Distribution Files
-add_custom_command(TARGET LMUFFB POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-            "${CMAKE_SOURCE_DIR}/README.txt"
-            "$<TARGET_FILE_DIR:LMUFFB>/README.txt")
-
-# Copy vJoy DLL to output directory
-# if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    # 64-bit
-#    add_custom_command(TARGET LMUFFB POST_BUILD
-#        COMMAND ${CMAKE_COMMAND} -E copy
-#                "${VJOY_SDK_DIR}/lib/amd64/vJoyInterface.dll"
-#                "$<TARGET_FILE_DIR:LMUFFB>/vJoyInterface.dll")
-# else()
-    # 32-bit
-#    add_custom_command(TARGET LMUFFB POST_BUILD
-#        COMMAND ${CMAKE_COMMAND} -E copy
-#                "${VJOY_SDK_DIR}/lib/vJoyInterface.dll"
-#                "$<TARGET_FILE_DIR:LMUFFB>/vJoyInterface.dll")
-# endif()
-
-```
-
 # File: FFBEngine.h
 ```cpp
 #ifndef FFBENGINE_H
@@ -778,21 +697,27 @@ struct FFBSnapshot {
     // --- Header B: Internal Physics (Calculated) ---
     float calc_front_load;       // New v0.4.7
     float calc_front_grip;       // New v0.4.7
-    float calc_front_slip_ratio; // New v0.4.7
-    float slip_angle;            // Existing (Smoothed)
+    float calc_rear_grip;        // New v0.4.7 (Refined)
+    float calc_front_slip_ratio; // New v0.4.7 (Manual Calc)
+    float calc_front_slip_angle_smoothed; // Renamed from slip_angle
+    float raw_front_slip_angle;  // New v0.4.7 (Raw atan2)
 
     // --- Header C: Raw Game Telemetry (Inputs) ---
     float steer_force;
+    float raw_input_steering;    // New v0.4.7 (Unfiltered -1 to 1)
     float raw_front_tire_load;   // New v0.4.7
     float raw_front_grip_fract;  // New v0.4.7
+    float raw_rear_grip;         // New v0.4.7
     float raw_front_susp_force;  // New v0.4.7
     float raw_front_ride_height; // New v0.4.7
+    float raw_rear_lat_force;    // New v0.4.7
     float raw_car_speed;         // New v0.4.7
+    float raw_front_slip_ratio;  // New v0.4.7 (Game API)
     float raw_input_throttle;    // New v0.4.7
     float raw_input_brake;       // New v0.4.7
     float accel_x;
-    float patch_vel;
-    float deflection;
+    float raw_front_lat_patch_vel; // Renamed from patch_vel
+    float raw_front_deflection;    // Renamed from deflection
 
     // Telemetry Health Flags
     bool warn_load;
@@ -1452,21 +1377,44 @@ public:
                 // --- Header B: Internal Physics (Calculated) ---
                 snap.calc_front_load = (float)avg_load; // This is the final load used (maybe approximated)
                 snap.calc_front_grip = (float)avg_grip; // This is the final grip used (maybe approximated)
-                snap.calc_front_slip_ratio = (float)((get_slip_ratio(fl) + get_slip_ratio(fr)) / 2.0);
-                snap.slip_angle = (float)m_grip_diag.front_slip_angle; // Smoothed Slip Angle
+                snap.calc_rear_grip = (float)avg_rear_grip;
+                snap.calc_front_slip_ratio = (float)((calculate_manual_slip_ratio(fl, data->mLocalVel.z) + calculate_manual_slip_ratio(fr, data->mLocalVel.z)) / 2.0);
+                snap.calc_front_slip_angle_smoothed = (float)m_grip_diag.front_slip_angle; // Smoothed Slip Angle
                 
+                // Recalculate Raw Slip Angle (Avg FL/FR) for visualization
+                {
+                    double v_long_fl = std::abs(fl.mLongitudinalGroundVel);
+                    double v_long_fr = std::abs(fr.mLongitudinalGroundVel);
+                    if (v_long_fl < 0.5) v_long_fl = 0.5;
+                    if (v_long_fr < 0.5) v_long_fr = 0.5;
+                    double raw_angle_fl = std::atan2(std::abs(fl.mLateralPatchVel), v_long_fl);
+                    double raw_angle_fr = std::atan2(std::abs(fr.mLateralPatchVel), v_long_fr);
+                    snap.raw_front_slip_angle = (float)((raw_angle_fl + raw_angle_fr) / 2.0);
+                }
+
+                // Helper for Raw Game Slip Ratio
+                auto get_raw_game_slip = [&](const TelemWheelV01& w) {
+                    double v_long = std::abs(w.mLongitudinalGroundVel);
+                    if (v_long < 0.5) v_long = 0.5;
+                    return w.mLongitudinalPatchVel / v_long;
+                };
+
                 // --- Header C: Raw Game Telemetry (Inputs) ---
                 snap.steer_force = (float)raw_torque;
+                snap.raw_input_steering = (float)data->mUnfilteredSteering;
                 snap.raw_front_tire_load = (float)raw_load; // Raw from game
                 snap.raw_front_grip_fract = (float)raw_grip; // Raw from game
+                snap.raw_rear_grip = (float)((data->mWheel[2].mGripFract + data->mWheel[3].mGripFract) / 2.0);
                 snap.raw_front_susp_force = (float)((fl.mSuspForce + fr.mSuspForce) / 2.0);
                 snap.raw_front_ride_height = (float)((std::min)(fl.mRideHeight, fr.mRideHeight));
+                snap.raw_rear_lat_force = (float)((data->mWheel[2].mLateralForce + data->mWheel[3].mLateralForce) / 2.0);
                 snap.raw_car_speed = (float)data->mLocalVel.z;
+                snap.raw_front_slip_ratio = (float)((get_raw_game_slip(fl) + get_raw_game_slip(fr)) / 2.0);
                 snap.raw_input_throttle = (float)data->mUnfilteredThrottle;
                 snap.raw_input_brake = (float)data->mUnfilteredBrake;
                 snap.accel_x = (float)data->mLocalAccel.x;
-                snap.patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
-                snap.deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
+                snap.raw_front_lat_patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
+                snap.raw_front_deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
                 
                 // Warnings
                 snap.warn_load = frame_warn_load;
@@ -2461,859 +2409,6 @@ struct rF2Telemetry {
 
 #endif // RF2DATA_H
 
-```
-
-# File: staged_changes_review.txt
-```
-﻿diff --git a/CHANGELOG.md b/CHANGELOG.md
-index c168fbb..055b082 100644
---- a/CHANGELOG.md
-+++ b/CHANGELOG.md
-@@ -2,6 +2,14 @@
- 
- All notable changes to this project will be documented in this file.
- 
-+## [0.4.7] - 2025-12-11
-+### Added
-+- **Expanded Troubleshooting Graphs**: Major reorganization of the "Troubleshooting" window to facilitate physics debugging.
-+    - **New Layout**: Organized plots into three collapsible headers: "FFB Components (Output)", "Internal Physics (Calculated)", and "Raw Game Telemetry (Input)".
-+    - **Raw Data Inspector**: Added explicit visualization of raw telemetry inputs (e.g., `raw_front_susp_force`, `raw_front_ride_height`) completely separated from internal calculations. This allows users to confirm if game data is missing/broken vs. engine calculation errors.
-+    - **New Channels**: Added visualizations for Rear Aligning Torque, Scrub Drag, Calculated Front Load/Grip, and Calculated Slip Ratio.
-+- **Diagnostics**: Expanded `FFBSnapshot` to capture raw input values before any fallback logic is applied.
-+
- ## [0.4.6] - 2025-12-11
- ### Added
- - **Stability Safeguards**: Implemented a comprehensive suite of mathematical clamps and mitigations to prevent physics instabilities.
-diff --git a/FFBEngine.h b/FFBEngine.h
-index 04b081b..03e61f4 100644
---- a/FFBEngine.h
-+++ b/FFBEngine.h
-@@ -58,26 +58,37 @@ struct ChannelStats {
- 
- // 1. Define the Snapshot Struct (Unified FFB + Telemetry)
- struct FFBSnapshot {
--    // FFB Outputs
-+    // --- Header A: FFB Components (Outputs) ---
-+    float total_output;
-     float base_force;
-     float sop_force;
-     float understeer_drop;
-     float oversteer_boost;
-+    float ffb_rear_torque;  // New v0.4.7
-+    float ffb_scrub_drag;   // New v0.4.7
-     float texture_road;
-     float texture_slide;
-     float texture_lockup;
-     float texture_spin;
-     float texture_bottoming;
--    float total_output;
-     float clipping;
- 
--    // Telemetry Inputs
-+    // --- Header B: Internal Physics (Calculated) ---
-+    float calc_front_load;       // New v0.4.7
-+    float calc_front_grip;       // New v0.4.7
-+    float calc_front_slip_ratio; // New v0.4.7
-+    float slip_angle;            // Existing (Smoothed)
-+
-+    // --- Header C: Raw Game Telemetry (Inputs) ---
-     float steer_force;
-+    float raw_front_tire_load;   // New v0.4.7
-+    float raw_front_grip_fract;  // New v0.4.7
-+    float raw_front_susp_force;  // New v0.4.7
-+    float raw_front_ride_height; // New v0.4.7
-+    float raw_car_speed;         // New v0.4.7
-+    float raw_input_throttle;    // New v0.4.7
-+    float raw_input_brake;       // New v0.4.7
-     float accel_x;
--    float tire_load;
--    float grip_fract;
--    float slip_ratio;
--    float slip_angle;
-     float patch_vel;
-     float deflection;
- 
-@@ -346,6 +357,7 @@ public:
-         double lockup_rumble = 0.0;
-         double spin_rumble = 0.0;
-         double bottoming_crunch = 0.0;
-+        double scrub_drag_force = 0.0; // v0.4.7
- 
-         // --- PRE-CALCULATION: TIRE LOAD FACTOR ---
-         double avg_load = raw_load;
-@@ -597,8 +609,8 @@ public:
-                 if (abs_lat_vel > 0.001) { // Avoid noise
-                     double fade = (std::min)(1.0, abs_lat_vel / 0.5);
-                     double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
--                    double drag_force = drag_dir * m_scrub_drag_gain * 2.0 * fade; // Scaled & Faded
--                    total_force += drag_force;
-+                    scrub_drag_force = drag_dir * m_scrub_drag_gain * 2.0 * fade; // Scaled & Faded
-+                    total_force += scrub_drag_force;
-                 }
-             }
- 
-@@ -719,11 +731,15 @@ public:
-             std::lock_guard<std::mutex> lock(m_debug_mutex);
-             if (m_debug_buffer.size() < 100) {
-                 FFBSnapshot snap;
-+                
-+                // --- Header A: Outputs ---
-                 snap.total_output = (float)norm_force;
-                 snap.base_force = (float)game_force;
-                 snap.sop_force = (float)sop_base_force;
-                 snap.understeer_drop = (float)(game_force * (1.0 - grip_factor));
--                snap.oversteer_boost = (float)(sop_total - sop_base_force);
-+                snap.oversteer_boost = (float)(sop_total - sop_base_force - rear_torque); // Split boost from rear torque
-+                snap.ffb_rear_torque = (float)rear_torque;
-+                snap.ffb_scrub_drag = (float)scrub_drag_force;
-                 snap.texture_road = (float)road_noise;
-                 snap.texture_slide = (float)slide_noise;
-                 snap.texture_lockup = (float)lockup_rumble;
-@@ -731,19 +747,22 @@ public:
-                 snap.texture_bottoming = (float)bottoming_crunch;
-                 snap.clipping = (std::abs(norm_force) > 0.99f) ? 1.0f : 0.0f;
-                 
--                // Telemetry inputs
--                snap.steer_force = (float)game_force;
--                snap.accel_x = (float)data->mLocalAccel.x;
--                snap.tire_load = (float)avg_load;
--                snap.grip_fract = (float)avg_grip;
--                
--                // Snapshot Approximations
--                snap.slip_ratio = (float)((get_slip_ratio(fl) + get_slip_ratio(fr)) / 2.0);
--                
--                // FIX (v0.4.6): Use the actual smoothed slip angle from diagnostics instead of recalculating with dummy state
--                // This ensures the graph matches the physics logic.
--                snap.slip_angle = (float)m_grip_diag.front_slip_angle;
-+                // --- Header B: Internal Physics (Calculated) ---
-+                snap.calc_front_load = (float)avg_load; // This is the final load used (maybe approximated)
-+                snap.calc_front_grip = (float)avg_grip; // This is the final grip used (maybe approximated)
-+                snap.calc_front_slip_ratio = (float)((get_slip_ratio(fl) + get_slip_ratio(fr)) / 2.0);
-+                snap.slip_angle = (float)m_grip_diag.front_slip_angle; // Smoothed Slip Angle
-                 
-+                // --- Header C: Raw Game Telemetry (Inputs) ---
-+                snap.steer_force = (float)raw_torque;
-+                snap.raw_front_tire_load = (float)raw_load; // Raw from game
-+                snap.raw_front_grip_fract = (float)raw_grip; // Raw from game
-+                snap.raw_front_susp_force = (float)((fl.mSuspForce + fr.mSuspForce) / 2.0);
-+                snap.raw_front_ride_height = (float)(std::min(fl.mRideHeight, fr.mRideHeight));
-+                snap.raw_car_speed = (float)data->mLocalVel.z;
-+                snap.raw_input_throttle = (float)data->mUnfilteredThrottle;
-+                snap.raw_input_brake = (float)data->mUnfilteredBrake;
-+                snap.accel_x = (float)data->mLocalAccel.x;
-                 snap.patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
-                 snap.deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
-                 
-diff --git a/VERSION b/VERSION
-index ef52a64..5546bd2 100644
---- a/VERSION
-+++ b/VERSION
-@@ -1 +1 @@
--0.4.6
-+0.4.7
-\ No newline at end of file
-diff --git a/docs/dev_docs/telemetry_data_reference.md b/docs/dev_docs/telemetry_data_reference.md
-index a163fdf..afbf6b0 100644
---- a/docs/dev_docs/telemetry_data_reference.md
-+++ b/docs/dev_docs/telemetry_data_reference.md
-@@ -59,7 +59,7 @@ Available for each of the 4 wheels (`mWheel[0]`=FL, `[1]`=FR, `[2]`=RL, `[3]`=RR
- | **`mGripFract`** | **0.0-1.0** | **Grip usage fraction** (0=full grip available, 1=at limit) | **Used**: Understeer/Oversteer detection (v0.4.0+) | |
- | `mLateralForce` | N | Force acting sideways on tire contact patch | **Used**: Rear Oversteer calculation (Aligning Torque) | Front pneumatic trail calculation refinement |
- | `mLongitudinalForce` | N | Force acting forward/back (Accel/Brake) | Unused | ABS pulse simulation |
--| `mSuspForce` | N | Pushrod load | Unused | Suspension stress feedback |
-+| `mSuspForce` | N | Pushrod load | **Used**: Front Load approximation fallback (v0.4.7) | Suspension stress feedback |
- 
- ### Motion & Slip
- 
-@@ -77,7 +77,7 @@ Available for each of the 4 wheels (`mWheel[0]`=FL, `[1]`=FR, `[2]`=RL, `[3]`=RR
- | :--- | :--- | :--- | :--- | :--- |
- | `mVerticalTireDeflection` | m | Compression of tire rubber | **Used**: Road Texture (High-pass filter) | |
- | `mSuspensionDeflection` | m | Compression of spring/damper | Unused | **Bottoming Out**: Harsh "thud" if deflection hits max travel |
--| `mRideHeight` | m | Chassis height | Unused | Scraping effects |
-+| `mRideHeight` | m | Chassis height | **Used**: Visualized in Telemetry Inspector (v0.4.7) | Scraping effects |
- | `mTerrainName` | char[16] | Name of surface (e.g., "ROAD", "GRASS") | Unused | **Surface FX**: Different rumble for Kerbs/Grass/Gravel |
- | `mSurfaceType` | unsigned char | 0=dry, 1=wet, 2=grass, 3=dirt, 4=gravel, 5=rumblestrip, 6=special | Unused | Faster lookup for Surface FX |
- | `mCamber`, `mToe` | radians | Wheel alignment | Unused | Setup analysis |
-diff --git a/src/GuiLayer.cpp b/src/GuiLayer.cpp
-index 5898b56..8aec20d 100644
---- a/src/GuiLayer.cpp
-+++ b/src/GuiLayer.cpp
-@@ -443,12 +443,14 @@ struct RollingBuffer {
-     }
- };
- 
--// Static buffers for debug plots (FFB)
-+// --- Header A: FFB Components ---
- static RollingBuffer plot_total;
- static RollingBuffer plot_base;
- static RollingBuffer plot_sop;
- static RollingBuffer plot_understeer;
- static RollingBuffer plot_oversteer;
-+static RollingBuffer plot_rear_torque; // New v0.4.7
-+static RollingBuffer plot_scrub_drag;  // New v0.4.7
- static RollingBuffer plot_road;
- static RollingBuffer plot_slide;
- static RollingBuffer plot_lockup;
-@@ -456,13 +458,22 @@ static RollingBuffer plot_spin;
- static RollingBuffer plot_bottoming;
- static RollingBuffer plot_clipping;
- 
--// Static buffers for debug plots (Telemetry)
--static RollingBuffer plot_input_steer;
-+// --- Header B: Internal Physics ---
-+static RollingBuffer plot_calc_front_load; // New v0.4.7
-+static RollingBuffer plot_calc_front_grip; // New v0.4.7
-+static RollingBuffer plot_calc_slip_ratio; // New v0.4.7
-+static RollingBuffer plot_calc_slip_angle; 
-+
-+// --- Header C: Raw Game Telemetry ---
-+static RollingBuffer plot_raw_steer;
-+static RollingBuffer plot_raw_load;        // New v0.4.7
-+static RollingBuffer plot_raw_grip;        // New v0.4.7
-+static RollingBuffer plot_raw_susp_force;  // New v0.4.7
-+static RollingBuffer plot_raw_ride_height; // New v0.4.7
-+static RollingBuffer plot_raw_car_speed;   // New v0.4.7
-+static RollingBuffer plot_raw_throttle;    // New v0.4.7
-+static RollingBuffer plot_raw_brake;       // New v0.4.7
- static RollingBuffer plot_input_accel;
--static RollingBuffer plot_input_load;
--static RollingBuffer plot_input_grip;
--static RollingBuffer plot_input_slip_ratio;
--static RollingBuffer plot_input_slip_angle;
- static RollingBuffer plot_input_patch_vel;
- static RollingBuffer plot_input_vert_deflection;
- 
-@@ -483,12 +494,14 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
-     // Update buffers with the latest snapshot (if available)
-     // Loop through ALL snapshots to avoid aliasing
-     for (const auto& snap : snapshots) {
--        // FFB Components
-+        // --- Header A: FFB Components ---
-         plot_total.Add(snap.total_output);
-         plot_base.Add(snap.base_force);
-         plot_sop.Add(snap.sop_force);
-         plot_understeer.Add(snap.understeer_drop);
-         plot_oversteer.Add(snap.oversteer_boost);
-+        plot_rear_torque.Add(snap.ffb_rear_torque);
-+        plot_scrub_drag.Add(snap.ffb_scrub_drag);
-         plot_road.Add(snap.texture_road);
-         plot_slide.Add(snap.texture_slide);
-         plot_lockup.Add(snap.texture_lockup);
-@@ -496,13 +509,22 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
-         plot_bottoming.Add(snap.texture_bottoming);
-         plot_clipping.Add(snap.clipping);
- 
--        // Telemetry Inputs
--        plot_input_steer.Add(snap.steer_force);
-+        // --- Header B: Internal Physics ---
-+        plot_calc_front_load.Add(snap.calc_front_load);
-+        plot_calc_front_grip.Add(snap.calc_front_grip);
-+        plot_calc_slip_ratio.Add(snap.calc_front_slip_ratio);
-+        plot_calc_slip_angle.Add(snap.slip_angle);
-+
-+        // --- Header C: Raw Telemetry ---
-+        plot_raw_steer.Add(snap.steer_force);
-+        plot_raw_load.Add(snap.raw_front_tire_load);
-+        plot_raw_grip.Add(snap.raw_front_grip_fract);
-+        plot_raw_susp_force.Add(snap.raw_front_susp_force);
-+        plot_raw_ride_height.Add(snap.raw_front_ride_height);
-+        plot_raw_car_speed.Add(snap.raw_car_speed);
-+        plot_raw_throttle.Add(snap.raw_input_throttle);
-+        plot_raw_brake.Add(snap.raw_input_brake);
-         plot_input_accel.Add(snap.accel_x);
--        plot_input_load.Add(snap.tire_load);
--        plot_input_grip.Add(snap.grip_fract);
--        plot_input_slip_ratio.Add(snap.slip_ratio);
--        plot_input_slip_angle.Add(snap.slip_angle);
-         plot_input_patch_vel.Add(snap.patch_vel);
-         plot_input_vert_deflection.Add(snap.deflection);
- 
-@@ -523,13 +545,12 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
-         ImGui::Separator();
-     }
- 
--    // --- Draw UI ---
--    if (ImGui::CollapsingHeader("FFB Components (Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
-+    // --- Header A: FFB Components (The Output) ---
-+    if (ImGui::CollapsingHeader("A. FFB Components (Output Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
-         ImGui::Text("Total Output");
-         ImGui::PlotLines("##Total", plot_total.data.data(), (int)plot_total.data.size(), plot_total.offset, "Total", -1.0f, 1.0f, ImVec2(0, 60));
-         
-         ImGui::Columns(2, "FFBCols", false);
--        // NOTE: Changed from ┬▒4000 (Newtons) to ┬▒30 (Nm) for new mSteeringShaftTorque
-         ImGui::Text("Base Torque (Nm)"); ImGui::PlotLines("##Base", plot_base.data.data(), (int)plot_base.data.size(), plot_base.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
-         ImGui::NextColumn();
-         ImGui::Text("SoP (Lat G)"); ImGui::PlotLines("##SoP", plot_sop.data.data(), (int)plot_sop.data.size(), plot_sop.offset, NULL, -1000.0f, 1000.0f, ImVec2(0, 40));
-@@ -538,6 +559,10 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
-         ImGui::NextColumn();
-         ImGui::Text("Oversteer Boost"); ImGui::PlotLines("##Over", plot_oversteer.data.data(), (int)plot_oversteer.data.size(), plot_oversteer.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
-         ImGui::NextColumn();
-+        ImGui::Text("Rear Align Torque"); ImGui::PlotLines("##RearT", plot_rear_torque.data.data(), (int)plot_rear_torque.data.size(), plot_rear_torque.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
-+        ImGui::NextColumn();
-+        ImGui::Text("Scrub Drag Force"); ImGui::PlotLines("##Drag", plot_scrub_drag.data.data(), (int)plot_scrub_drag.data.size(), plot_scrub_drag.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
-+        ImGui::NextColumn();
-         ImGui::Text("Road Texture"); ImGui::PlotLines("##Road", plot_road.data.data(), (int)plot_road.data.size(), plot_road.offset, NULL, -1000.0f, 1000.0f, ImVec2(0, 40));
-         ImGui::NextColumn();
-         ImGui::Text("Slide Texture"); ImGui::PlotLines("##Slide", plot_slide.data.data(), (int)plot_slide.data.size(), plot_slide.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
-@@ -552,33 +577,77 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
-         ImGui::Columns(1);
-     }
- 
--    if (ImGui::CollapsingHeader("Telemetry Inspector (Raw)", ImGuiTreeNodeFlags_None)) {
--        ImGui::Columns(2, "TelCols", false);
--        // NOTE: Changed from ┬▒5000 (Newtons for old mSteeringArmForce) to ┬▒30 (Nm for new mSteeringShaftTorque)
--        ImGui::Text("Steering Torque (Nm)"); ImGui::PlotLines("##StForce", plot_input_steer.data.data(), (int)plot_input_steer.data.size(), plot_input_steer.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
-+    // --- Header B: Internal Physics Engine (The Brain) ---
-+    if (ImGui::CollapsingHeader("B. Internal Physics (Brain)", ImGuiTreeNodeFlags_None)) {
-+        ImGui::Columns(2, "PhysCols", false);
-+        
-+        ImGui::Text("Calc Front Load (N)");
-+        ImGui::PlotLines("##CalcLoad", plot_calc_front_load.data.data(), (int)plot_calc_front_load.data.size(), plot_calc_front_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
-         ImGui::NextColumn();
--        ImGui::Text("Local Accel X"); ImGui::PlotLines("##LatG", plot_input_accel.data.data(), (int)plot_input_accel.data.size(), plot_input_accel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
-+        
-+        ImGui::Text("Calc Front Grip");
-+        ImGui::PlotLines("##CalcGrip", plot_calc_front_grip.data.data(), (int)plot_calc_front_grip.data.size(), plot_calc_front_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
-+        ImGui::NextColumn();
-+        
-+        ImGui::Text("Calc Slip Ratio");
-+        ImGui::PlotLines("##CalcSlip", plot_calc_slip_ratio.data.data(), (int)plot_calc_slip_ratio.data.size(), plot_calc_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
-+        ImGui::NextColumn();
-+        
-+        ImGui::Text("Smoothed Slip Angle");
-+        ImGui::PlotLines("##SlipA", plot_calc_slip_angle.data.data(), (int)plot_calc_slip_angle.data.size(), plot_calc_slip_angle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
-+        ImGui::Columns(1);
-+    }
-+
-+    // --- Header C: Raw Game Telemetry Inspector (The Input) ---
-+    if (ImGui::CollapsingHeader("C. Raw Game Telemetry (Input)", ImGuiTreeNodeFlags_None)) {
-+        ImGui::Columns(2, "TelCols", false);
-+        
-+        ImGui::Text("Steering Torque (Nm)"); 
-+        ImGui::PlotLines("##StForce", plot_raw_steer.data.data(), (int)plot_raw_steer.data.size(), plot_raw_steer.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
-         ImGui::NextColumn();
-         
-         // Highlight Load if warning
--        if (g_warn_load) ImGui::TextColored(ImVec4(1,0,0,1), "Avg Tire Load (MISSING)");
--        else ImGui::Text("Avg Tire Load");
--        ImGui::PlotLines("##Load", plot_input_load.data.data(), (int)plot_input_load.data.size(), plot_input_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
-+        if (g_warn_load) ImGui::TextColored(ImVec4(1,0,0,1), "Raw Front Load (MISSING)");
-+        else ImGui::Text("Raw Front Load (N)");
-+        ImGui::PlotLines("##RawLoad", plot_raw_load.data.data(), (int)plot_raw_load.data.size(), plot_raw_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
-         ImGui::NextColumn();
-         
-         // Highlight Grip if warning
--        if (g_warn_grip) ImGui::TextColored(ImVec4(1,0,0,1), "Avg Grip Fract (MISSING)");
--        else ImGui::Text("Avg Grip Fract");
--        ImGui::PlotLines("##Grip", plot_input_grip.data.data(), (int)plot_input_grip.data.size(), plot_input_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
-+        if (g_warn_grip) ImGui::TextColored(ImVec4(1,0,0,1), "Raw Front Grip (MISSING)");
-+        else ImGui::Text("Raw Front Grip");
-+        ImGui::PlotLines("##RawGrip", plot_raw_grip.data.data(), (int)plot_raw_grip.data.size(), plot_raw_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
-+        ImGui::NextColumn();
-+        
-+        ImGui::Text("Raw Front Susp. Force"); 
-+        ImGui::PlotLines("##Susp", plot_raw_susp_force.data.data(), (int)plot_raw_susp_force.data.size(), plot_raw_susp_force.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
-+        ImGui::NextColumn();
-+        
-+        ImGui::Text("Raw Front Ride Height"); 
-+        ImGui::PlotLines("##RH", plot_raw_ride_height.data.data(), (int)plot_raw_ride_height.data.size(), plot_raw_ride_height.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
-+        ImGui::NextColumn();
-         
-+        ImGui::Text("Car Speed (m/s)"); 
-+        ImGui::PlotLines("##Speed", plot_raw_car_speed.data.data(), (int)plot_raw_car_speed.data.size(), plot_raw_car_speed.offset, NULL, 0.0f, 100.0f, ImVec2(0, 40));
-         ImGui::NextColumn();
--        ImGui::Text("Avg Slip Ratio"); ImGui::PlotLines("##SlipR", plot_input_slip_ratio.data.data(), (int)plot_input_slip_ratio.data.size(), plot_input_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
-+        
-+        ImGui::Text("Throttle Input"); 
-+        ImGui::PlotLines("##Thr", plot_raw_throttle.data.data(), (int)plot_raw_throttle.data.size(), plot_raw_throttle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
-+        ImGui::NextColumn();
-+        
-+        ImGui::Text("Brake Input"); 
-+        ImGui::PlotLines("##Brk", plot_raw_brake.data.data(), (int)plot_raw_brake.data.size(), plot_raw_brake.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
-         ImGui::NextColumn();
--        ImGui::Text("Avg Slip Angle"); ImGui::PlotLines("##SlipA", plot_input_slip_angle.data.data(), (int)plot_input_slip_angle.data.size(), plot_input_slip_angle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
-+        
-+        ImGui::Text("Local Accel X"); 
-+        ImGui::PlotLines("##LatG", plot_input_accel.data.data(), (int)plot_input_accel.data.size(), plot_input_accel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
-         ImGui::NextColumn();
--        ImGui::Text("Avg Lat PatchVel"); ImGui::PlotLines("##PatchV", plot_input_patch_vel.data.data(), (int)plot_input_patch_vel.data.size(), plot_input_patch_vel.offset, NULL, 0.0f, 20.0f, ImVec2(0, 40));
-+        
-+        ImGui::Text("Avg Lat PatchVel"); 
-+        ImGui::PlotLines("##PatchV", plot_input_patch_vel.data.data(), (int)plot_input_patch_vel.data.size(), plot_input_patch_vel.offset, NULL, 0.0f, 20.0f, ImVec2(0, 40));
-         ImGui::NextColumn();
--        ImGui::Text("Avg Deflection"); ImGui::PlotLines("##Defl", plot_input_vert_deflection.data.data(), (int)plot_input_vert_deflection.data.size(), plot_input_vert_deflection.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
-+        
-+        ImGui::Text("Avg Deflection"); 
-+        ImGui::PlotLines("##Defl", plot_input_vert_deflection.data.data(), (int)plot_input_vert_deflection.data.size(), plot_input_vert_deflection.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
-         ImGui::Columns(1);
-     }
- 
-diff --git a/tests/test_ffb_engine.cpp b/tests/test_ffb_engine.cpp
-index 484528a..1974221 100644
---- a/tests/test_ffb_engine.cpp
-+++ b/tests/test_ffb_engine.cpp
-@@ -34,6 +34,8 @@ int g_tests_failed = 0;
- 
- // --- Tests ---
- 
-+void test_snapshot_population(); // Forward declaration
-+
- void test_manual_slip_singularity() {
-     std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
-     FFBEngine engine;
-@@ -1671,10 +1673,89 @@ int main() {
-     test_manual_slip_calculation();
-     test_universal_bottoming();
-     test_preset_initialization();
--
-+    test_snapshot_population();
-+    
-     std::cout << "\n----------------" << std::endl;
-     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
-     std::cout << "Tests Failed: " << g_tests_failed << std::endl;
-     
-     return g_tests_failed > 0 ? 1 : 0;
- }
-+
-+void test_snapshot_population() {
-+    std::cout << "\nTest: Snapshot Population (v0.4.7)" << std::endl;
-+    FFBEngine engine;
-+    TelemInfoV01 data;
-+    std::memset(&data, 0, sizeof(data));
-+
-+    // Setup input values
-+    // Case: Missing Tire Load (0) but Valid Susp Force (1000)
-+    data.mWheel[0].mTireLoad = 0.0;
-+    data.mWheel[1].mTireLoad = 0.0;
-+    data.mWheel[0].mSuspForce = 1000.0;
-+    data.mWheel[1].mSuspForce = 1000.0;
-+    
-+    // Other inputs
-+    data.mLocalVel.z = 20.0; // Moving
-+    data.mUnfilteredThrottle = 0.8;
-+    data.mUnfilteredBrake = 0.2;
-+    // data.mRideHeight = 0.05; // Removed invalid field
-+    // Wait, TelemInfoV01 has mWheel[].mRideHeight.
-+    data.mWheel[0].mRideHeight = 0.03;
-+    data.mWheel[1].mRideHeight = 0.04; // Min is 0.03
-+
-+    // Trigger missing load logic
-+    // Need > 20 frames of missing load
-+    data.mDeltaTime = 0.01;
-+    for (int i=0; i<30; i++) {
-+        engine.calculate_force(&data);
-+    }
-+
-+    // Get Snapshot
-+    auto batch = engine.GetDebugBatch();
-+    if (batch.empty()) {
-+        std::cout << "[FAIL] No snapshot generated." << std::endl;
-+        g_tests_failed++;
-+        return;
-+    }
-+    
-+    FFBSnapshot snap = batch.back();
-+    
-+    // Assertions
-+    
-+    // 1. Raw Load should be 0.0 (What the game sent)
-+    if (std::abs(snap.raw_front_tire_load) < 0.001) {
-+        std::cout << "[PASS] Raw Front Tire Load captured as 0.0." << std::endl;
-+        g_tests_passed++;
-+    } else {
-+        std::cout << "[FAIL] Raw Front Tire Load incorrect: " << snap.raw_front_tire_load << std::endl;
-+        g_tests_failed++;
-+    }
-+    
-+    // 2. Calculated Load should be approx 1300 (SuspForce 1000 + 300 offset)
-+    if (std::abs(snap.calc_front_load - 1300.0) < 0.001) {
-+        std::cout << "[PASS] Calculated Front Load is 1300.0." << std::endl;
-+        g_tests_passed++;
-+    } else {
-+        std::cout << "[FAIL] Calculated Front Load incorrect: " << snap.calc_front_load << std::endl;
-+        g_tests_failed++;
-+    }
-+    
-+    // 3. Raw Inputs
-+    if (std::abs(snap.raw_input_throttle - 0.8) < 0.001) {
-+        std::cout << "[PASS] Raw Throttle captured." << std::endl;
-+        g_tests_passed++;
-+    } else {
-+        std::cout << "[FAIL] Raw Throttle incorrect." << std::endl;
-+        g_tests_failed++;
-+    }
-+    
-+    // 4. Raw Ride Height (Min of 0.03 and 0.04 -> 0.03)
-+    if (std::abs(snap.raw_front_ride_height - 0.03) < 0.001) {
-+        std::cout << "[PASS] Raw Ride Height captured (Min)." << std::endl;
-+        g_tests_passed++;
-+    } else {
-+        std::cout << "[FAIL] Raw Ride Height incorrect: " << snap.raw_front_ride_height << std::endl;
-+        g_tests_failed++;
-+    }
-+}
-
-```
-
-# File: test_results.txt
-```
-
- 
- T e s t :   M a n u a l   S l i p   S i n g u l a r i t y   ( L o w   S p e e d   T r a p ) 
- 
- [ P A S S ]   L o w   s p e e d   l o c k u p   s u p p r e s s e d   ( P h a s e   0 ) . 
- 
- 
- 
- T e s t :   S c r u b   D r a g   F a d e - I n 
- 
- [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
- 
- [ P A S S ]   S c r u b   d r a g   f a d e d   c o r r e c t l y   ( 5 0 % ) . 
- 
- 
- 
- T e s t :   R o a d   T e x t u r e   T e l e p o r t   ( D e l t a   C l a m p ) 
- 
- [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ P A S S ]   T e l e p o r t   s p i k e   c l a m p e d . 
- 
- 
- 
- T e s t :   G r i p   A p p r o x i m a t i o n   L o w   S p e e d   C u t o f f 
- 
- [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ P A S S ]   L o w   s p e e d   g r i p   f o r c e d   t o   1 . 0 . 
- 
- 
- 
- T e s t :   Z e r o   I n p u t 
- 
- [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
- 
- [ P A S S ]   f o r c e   a p p r o x   0 . 0 
- 
- 
- 
- T e s t :   S u s p e n s i o n   B o t t o m i n g   ( F i x   V e r i f i c a t i o n ) 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ P A S S ]   B o t t o m i n g   e f f e c t   a c t i v e .   F o r c e :   0 . 0 1 2 5 
- 
- 
- 
- T e s t :   G r i p   M o d u l a t i o n   ( U n d e r s t e e r ) 
- 
- [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
- 
- [ P A S S ]   f o r c e _ f u l l   a p p r o x   0 . 5 
- 
- [ P A S S ]   f o r c e _ h a l f   a p p r o x   0 . 2 5 
- 
- 
- 
- T e s t :   S o P   E f f e c t 
- 
- [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
- 
- [ P A S S ]   f o r c e   a p p r o x   0 . 1 2 5 
- 
- 
- 
- T e s t :   M i n   F o r c e 
- 
- [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
- 
- [ P A S S ]   f o r c e   a p p r o x   0 . 1 0 
- 
- 
- 
- T e s t :   P r o g r e s s i v e   L o c k u p 
- 
- [ P A S S ]   s t d : : a b s ( f o r c e _ l o w )   >   0 . 0 0 0 0 1 
- 
- [ P A S S ]   e n g i n e . m _ l o c k u p _ p h a s e   ! =   0 . 0 
- 
- [ P A S S ]   P r o g r e s s i v e   L o c k u p   c a l c u l a t e d . 
- 
- 
- 
- T e s t :   S l i d e   T e x t u r e 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ P A S S ]   S l i d e   t e x t u r e   g e n e r a t e d   n o n - z e r o   f o r c e :   0 . 0 0 7 0 3 1 2 5 
- 
- 
- 
- T e s t :   D y n a m i c   T u n i n g   ( G U I   S i m u l a t i o n ) 
- 
- [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
- 
- [ P A S S ]   f o r c e _ i n i t i a l   a p p r o x   0 . 5 
- 
- [ P A S S ]   f o r c e _ b o o s t e d   a p p r o x   1 . 0 
- 
- [ P A S S ]   f o r c e _ g r i p _ l o s s   a p p r o x   0 . 2 5 
- 
- [ P A S S ]   D y n a m i c   T u n i n g   v e r i f i e d . 
- 
- 
- 
- T e s t :   O v e r s t e e r   B o o s t   ( R e a r   G r i p   L o s s ) 
- 
- [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
- 
- [ P A S S ]   f o r c e   a p p r o x   1 . 0 
- 
- 
- 
- T e s t :   P h a s e   W r a p a r o u n d   ( A n t i - C l i c k ) 
- 
- [ W A R N I N G ]   M i s s i n g   T i r e   L o a d .   U s i n g   A p p r o x   ( S u s p F o r c e   +   3 0 0 N ) . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ P A S S ]   P h a s e   w r a p p e d   4 0   t i m e s   w i t h o u t   d i s c o n t i n u i t y . 
- 
- 
- 
- T e s t :   R o a d   T e x t u r e   S t a t e   P e r s i s t e n c e 
- 
- [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ P A S S ]   f o r c e 2   a p p r o x   f o r c e 1 
- 
- [ P A S S ]   R o a d   t e x t u r e   s t a t e   p r e s e r v e d   c o r r e c t l y . 
- 
- 
- 
- T e s t :   M u l t i - E f f e c t   I n t e r a c t i o n   ( L o c k u p   +   S p i n ) 
- 
- [ P A S S ]   M u l t i p l e   e f f e c t s   c o e x i s t   w i t h o u t   i n t e r f e r e n c e . 
- 
- 
- 
- T e s t :   L o a d   F a c t o r   E d g e   C a s e s 
- 
- [ P A S S ]   f o r c e _ a i r b o r n e   a p p r o x   0 . 0 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ P A S S ]   L o a d   f a c t o r   c l a m p e d   c o r r e c t l y . 
- 
- 
- 
- T e s t :   S p i n   T o r q u e   D r o p   w i t h   S o P 
- 
- [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
- 
- [ P A S S ]   S p i n   t o r q u e   d r o p   m o d i f i e s   t o t a l   f o r c e . 
- 
- 
- 
- T e s t :   R e a r   G r i p   F a l l b a c k   ( v 0 . 4 . 5 ) 
- 
- [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ P A S S ]   R e a r   g r i p   a p p r o x i m a t i o n   t r i g g e r e d . 
- 
- [ P A S S ]   O v e r s t e e r   b o o s t   c o r r e c t l y   s u p p r e s s e d   ( R e a r   G r i p   r e s t o r e d ) . 
- 
- 
- 
- T e s t :   T e l e m e t r y   S a n i t y   C h e c k s 
- 
- [ W A R N I N G ]   M i s s i n g   T i r e   L o a d .   U s i n g   A p p r o x   ( S u s p F o r c e   +   3 0 0 N ) . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ P A S S ]   D e t e c t e d   m i s s i n g   l o a d   w a r n i n g . 
- 
- [ P A S S ]   L o a d   f a l l b a c k   a p p l i e d   ( F o r c e   g e n e r a t e d :   0 . 0 4 0 7 8 1 3 ) 
- 
- [ P A S S ]   D e t e c t e d   m i s s i n g   g r i p   w a r n i n g . 
- 
- [ P A S S ]   f o r c e _ g r i p   a p p r o x   0 . 1 
- 
- [ P A S S ]   D i a g n o s t i c s   c o n f i r m   f r o n t   a p p r o x i m a t i o n . 
- 
- [ P A S S ]   e n g i n e . m _ g r i p _ d i a g . f r o n t _ o r i g i n a l   a p p r o x   0 . 0 
- 
- [ W A R N I N G ]   I n v a l i d   D e l t a T i m e   ( < = 0 ) .   U s i n g   d e f a u l t   0 . 0 0 2 5 s . 
- 
- [ P A S S ]   D e t e c t e d   b a d   D e l t a T i m e   w a r n i n g . 
- 
- 
- 
- T e s t :   H y s t e r e s i s   L o g i c   ( M i s s i n g   D a t a ) 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ P A S S ]   e n g i n e . m _ m i s s i n g _ l o a d _ f r a m e s   = =   0 
- 
- [ P A S S ]   H y s t e r e s i s   c o u n t e r   i n c r e m e n t i n g   ( 5 ) . 
- 
- [ W A R N I N G ]   M i s s i n g   T i r e   L o a d .   U s i n g   A p p r o x   ( S u s p F o r c e   +   3 0 0 N ) . 
- 
- [ P A S S ]   H y s t e r e s i s   c o u n t e r   i n c r e m e n t i n g   ( 2 5 ) . 
- 
- [ P A S S ]   H y s t e r e s i s   t r i g g e r e d   f a l l b a c k   ( W a r n i n g   s e t ) . 
- 
- [ P A S S ]   H y s t e r e s i s   c o u n t e r   d e c r e m e n t i n g   o n   r e c o v e r y . 
- 
- 
- 
- T e s t :   C o n f i g u r a t i o n   P r e s e t s 
- 
- [ C o n f i g ]   A p p l i e d   p r e s e t :   T e s t :   S o P   O n l y 
- 
- [ P A S S ]   P r e s e t   a p p l i e d   c o r r e c t l y   ( G a i n = 0 . 5 ,   S o P = 1 ) 
- 
- 
- 
- T e s t :   C o n f i g   S a v e / L o a d   P e r s i s t e n c e 
- 
- [ C o n f i g ]   S a v e d   t o   t e s t _ c o n f i g . i n i 
- 
- [ C o n f i g ]   L o a d e d   f r o m   t e s t _ c o n f i g . i n i 
- 
- [ P A S S ]   e n g i n e _ l o a d . m _ g a i n   a p p r o x   1 . 2 3 f 
- 
- [ P A S S ]   e n g i n e _ l o a d . m _ s o p _ e f f e c t   a p p r o x   0 . 4 5 f 
- 
- [ P A S S ]   e n g i n e _ l o a d . m _ r o a d _ t e x t u r e _ g a i n   a p p r o x   2 . 5 f 
- 
- [ P A S S ]   B o o l e a n   p e r s i s t e n c e . 
- 
- 
- 
- T e s t :   C h a n n e l   S t a t s   L o g i c 
- 
- [ P A S S ]   s t a t s . s e s s i o n _ m i n   a p p r o x   1 0 . 0 
- 
- [ P A S S ]   s t a t s . s e s s i o n _ m a x   a p p r o x   3 0 . 0 
- 
- [ P A S S ]   s t a t s . A v g ( )   a p p r o x   2 0 . 0 
- 
- [ P A S S ]   I n t e r v a l   S t a t s   R e s e t . 
- 
- [ P A S S ]   s t a t s . s e s s i o n _ m i n   a p p r o x   1 0 . 0 
- 
- [ P A S S ]   s t a t s . s e s s i o n _ m a x   a p p r o x   3 0 . 0 
- 
- [ P A S S ]   s t a t s . A v g ( )   a p p r o x   0 . 0 
- 
- 
- 
- T e s t :   G a m e   S t a t e   L o g i c   ( M o c k ) 
- 
- [ P A S S ]   P l a y e r   m i s s i n g   - >   F a l s e . 
- 
- [ P A S S ]   I n R e a l t i m e = F a l s e   - >   F a l s e . 
- 
- [ P A S S ]   I n R e a l t i m e = T r u e   - >   T r u e . 
- 
- 
- 
- T e s t :   S o P   S m o o t h i n g   S t e p   R e s p o n s e 
- 
- [ P A S S ]   S m o o t h i n g   S t e p   1   m a t c h e d   a l p h a . 
- 
- [ P A S S ]   S m o o t h i n g   s e t t l e d   c o r r e c t l y   ( > 0 . 9 9   a f t e r   5   t a u ) . 
- 
- 
- 
- T e s t :   M a n u a l   S l i p   C a l c u l a t i o n 
- 
- [ P A S S ]   M a n u a l   S l i p   0   - >   N o   L o c k u p . 
- 
- [ P A S S ]   M a n u a l   S l i p   - 1 . 0   - >   L o c k u p   T r i g g e r e d . 
- 
- 
- 
- T e s t :   U n i v e r s a l   B o t t o m i n g 
- 
- [ P A S S ]   B o t t o m i n g   M e t h o d   A   ( S c r a p e )   T r i g g e r e d .   F o r c e :   0 . 0 0 6 2 5 
- 
- [ P A S S ]   B o t t o m i n g   M e t h o d   B   ( S p i k e )   T r i g g e r e d .   F o r c e :   - 0 . 0 5 6 2 5 
- 
- 
- 
- T e s t :   P r e s e t   I n i t i a l i z a t i o n   ( v 0 . 4 . 5   R e g r e s s i o n ) 
- 
- [ P A S S ]   D e f a u l t :   v 0 . 4 . 5   f i e l d s   i n i t i a l i z e d   c o r r e c t l y 
- 
- [ P A S S ]   T e s t :   G a m e   B a s e   F F B   O n l y :   v 0 . 4 . 5   f i e l d s   i n i t i a l i z e d   c o r r e c t l y 
- 
- [ P A S S ]   T e s t :   S o P   O n l y :   v 0 . 4 . 5   f i e l d s   i n i t i a l i z e d   c o r r e c t l y 
- 
- [ P A S S ]   T e s t :   U n d e r s t e e r   O n l y :   v 0 . 4 . 5   f i e l d s   i n i t i a l i z e d   c o r r e c t l y 
- 
- [ P A S S ]   T e s t :   T e x t u r e s   O n l y :   v 0 . 4 . 5   f i e l d s   i n i t i a l i z e d   c o r r e c t l y 
- 
- [ P A S S ]   A l l   5   b u i l t - i n   p r e s e t s   h a v e   c o r r e c t   v 0 . 4 . 5   f i e l d   i n i t i a l i z a t i o n 
- 
- 
- 
- T e s t :   S n a p s h o t   P o p u l a t i o n   ( v 0 . 4 . 7 ) 
- 
- [ W A R N I N G ]   M i s s i n g   T i r e   L o a d .   U s i n g   A p p r o x   ( S u s p F o r c e   +   3 0 0 N ) . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ W A R N I N G ]   M i s s i n g   G r i p .   U s i n g   A p p r o x   b a s e d   o n   S l i p   A n g l e . 
- 
- [ P A S S ]   R a w   F r o n t   T i r e   L o a d   c a p t u r e d   a s   0 . 0 . 
- 
- [ P A S S ]   C a l c u l a t e d   F r o n t   L o a d   i s   1 3 0 0 . 0 . 
- 
- [ P A S S ]   R a w   T h r o t t l e   c a p t u r e d . 
- 
- [ P A S S ]   R a w   R i d e   H e i g h t   c a p t u r e d   ( M i n ) . 
- 
- 
- 
- - - - - - - - - - - - - - - - - 
- 
- T e s t s   P a s s e d :   7 1 
- 
- T e s t s   F a i l e d :   0 
- 
- 
 ```
 
 # File: .pytest_cache\README.md
@@ -6260,16 +5355,16 @@ $$ F_{total} = (F_{base} + F_{sop} + F_{vib\_lock} + F_{vib\_spin} + F_{vib\_sli
 ### 2. Component Breakdown
 
 #### A. Global Factors (Pre-calculated)
-**Load Factor ($L_{factor}$)**: Scales texture effects based on how much weight is on the front tires.
-$$ L_{factor} = \text{Clamp}\left( \frac{\text{Load}_{FL} + \text{Load}_{FR}}{2 \times 4000}, 0.0, 1.5 \right) $$
+**Load Factor ($Front\_Load\_Factor$)**: Scales texture effects based on how much weight is on the front tires.
+$$ Front\_Load\_Factor = \text{Clamp}\left( \frac{\text{Front\_Load}_{FL} + \text{Front\_Load}_{FR}}{2 \times 4000}, 0.0, 1.5 \right) $$
 
-*   **Robustness Check:** If $\text{Load} \approx 0.0$ and $|Velocity| > 1.0 m/s$, $\text{Load}$ defaults to 4000N to prevent signal dropout.
-*   **Safety Clamp (v0.4.6):** $L_{factor}$ is hard-clamped to a maximum of **2.0** (regardless of configuration) to prevent unbounded forces during aero-spikes.
+*   **Robustness Check:** If $\text{Front\_Load} \approx 0.0$ and $|Velocity| > 1.0 m/s$, $\text{Front\_Load}$ defaults to 4000N to prevent signal dropout.
+*   **Safety Clamp (v0.4.6):** $Front\_Load\_Factor$ is hard-clamped to a maximum of **2.0** (regardless of configuration) to prevent unbounded forces during aero-spikes.
 
 #### B. Base Force (Understeer / Grip Modulation)
 This modulates the raw steering rack force from the game based on front tire grip.
-$$ F_{base} = F_{steering\_arm} \times \left( 1.0 - \left( (1.0 - \text{Grip}_{avg}) \times K_{understeer} \right) \right) $$
-*   $\text{Grip}_{avg}$: Average of Front Left and Front Right `mGripFract`.
+$$ F_{base} = F_{steering\_arm} \times \left( 1.0 - \left( (1.0 - \text{Front\_Grip}_{avg}) \times K_{understeer} \right) \right) $$
+*   $\text{Front\_Grip}_{avg}$: Average of Front Left and Front Right `mGripFract`.
     *   **Fallback (v0.4.5+):** If telemetry grip is missing ($\approx 0.0$) but Load $> 100N$, grip is approximated from **Slip Angle**.
         * **Low Speed Trap (v0.4.6):** If CarSpeed < 5.0 m/s, Grip = 1.0.
         * **Slip Angle LPF (v0.4.6):** Slip Angle is smoothed using an Exponential Moving Average ($\alpha \approx 0.1$).
@@ -6294,6 +5389,7 @@ This injects lateral G-force and rear-axle aligning torque to simulate the car b
 3.  **Oversteer Boost**:
     If Front Grip > Rear Grip:
     $$ F_{sop\_boosted} = F_{sop\_base} \times \left( 1.0 + (\text{Grip}_{delta} \times K_{oversteer} \times 2.0) \right) $$
+    where $\text{Grip}_{delta} = \text{Front\_Grip}_{avg} - \text{Rear\_Grip}_{avg}$
     *   **Fallback (v0.4.6+):** Rear grip now uses the same **Slip Angle approximation** fallback as Front grip if telemetry is missing, preventing false oversteer detection.
 
 4.  **Rear Aligning Torque**:
@@ -6327,7 +5423,7 @@ Active if Throttle > 5% and Rear Slip Ratio > 0.2.
 Active if Lateral Patch Velocity > 0.5 m/s.
 *   **Frequency**: $40 + (\text{LateralVel} \times 17.0)$ Hz
 *   **Waveform**: Sawtooth
-*   **Amplitude**: $A = K_{slide} \times 1.5 \times L_{factor}$
+*   **Amplitude**: $A = K_{slide} \times 1.5 \times Front\_Load\_Factor$
     
     **Note**: Amplitude scaling changed from 300.0 to 1.5 in v0.4.1 (Nm units).
 *   **Force**: $A \times \text{Sawtooth}(\text{phase})$
@@ -6336,7 +5432,7 @@ Active if Lateral Patch Velocity > 0.5 m/s.
 High-pass filter on suspension movement.
 *   **Delta Clamp (v0.4.6):** $\Delta_{vert}$ is clamped to +/- 0.01 meters per frame.
 *   $\Delta_{vert} = (\text{Deflection}_{current} - \text{Deflection}_{prev})$
-*   **Force**: $(\Delta_{vert\_L} + \Delta_{vert\_R}) \times 25.0 \times K_{road} \times L_{factor}$
+*   **Force**: $(\Delta_{vert\_L} + \Delta_{vert\_R}) \times 25.0 \times K_{road} \times Front\_Load\_Factor$
     
     **Note**: Amplitude scaling changed from 5000.0 to 25.0 in v0.4.1 (Nm units).
 *   **Scrub Drag (v0.4.5+):** Constant resistance force opposing lateral slide.
@@ -12709,8 +11805,8 @@ static RollingBuffer plot_base;
 static RollingBuffer plot_sop;
 static RollingBuffer plot_understeer;
 static RollingBuffer plot_oversteer;
-static RollingBuffer plot_rear_torque; // New v0.4.7
-static RollingBuffer plot_scrub_drag;  // New v0.4.7
+static RollingBuffer plot_rear_torque; 
+static RollingBuffer plot_scrub_drag;  
 static RollingBuffer plot_road;
 static RollingBuffer plot_slide;
 static RollingBuffer plot_lockup;
@@ -12719,23 +11815,29 @@ static RollingBuffer plot_bottoming;
 static RollingBuffer plot_clipping;
 
 // --- Header B: Internal Physics ---
-static RollingBuffer plot_calc_front_load; // New v0.4.7
-static RollingBuffer plot_calc_front_grip; // New v0.4.7
-static RollingBuffer plot_calc_slip_ratio; // New v0.4.7
-static RollingBuffer plot_calc_slip_angle; 
+static RollingBuffer plot_calc_front_load;
+static RollingBuffer plot_calc_front_grip;
+static RollingBuffer plot_calc_rear_grip; // New v0.4.7
+static RollingBuffer plot_calc_slip_ratio;
+static RollingBuffer plot_calc_slip_angle_smoothed; // Renamed
+static RollingBuffer plot_raw_slip_angle; // New v0.4.7
 
 // --- Header C: Raw Game Telemetry ---
 static RollingBuffer plot_raw_steer;
-static RollingBuffer plot_raw_load;        // New v0.4.7
-static RollingBuffer plot_raw_grip;        // New v0.4.7
-static RollingBuffer plot_raw_susp_force;  // New v0.4.7
-static RollingBuffer plot_raw_ride_height; // New v0.4.7
-static RollingBuffer plot_raw_car_speed;   // New v0.4.7
-static RollingBuffer plot_raw_throttle;    // New v0.4.7
-static RollingBuffer plot_raw_brake;       // New v0.4.7
+static RollingBuffer plot_raw_input_steering; // New v0.4.7
+static RollingBuffer plot_raw_load;        
+static RollingBuffer plot_raw_grip;        
+static RollingBuffer plot_raw_rear_grip; // New v0.4.7
+static RollingBuffer plot_raw_front_slip_ratio; // New v0.4.7
+static RollingBuffer plot_raw_susp_force;  
+static RollingBuffer plot_raw_ride_height; 
+static RollingBuffer plot_raw_rear_lat_force; // New v0.4.7
+static RollingBuffer plot_raw_car_speed;   
+static RollingBuffer plot_raw_throttle;    
+static RollingBuffer plot_raw_brake;       
 static RollingBuffer plot_input_accel;
-static RollingBuffer plot_input_patch_vel;
-static RollingBuffer plot_input_vert_deflection;
+static RollingBuffer plot_raw_front_lat_patch_vel; // Renamed
+static RollingBuffer plot_raw_front_deflection; // Renamed
 
 // State for Warnings
 static bool g_warn_load = false;
@@ -12772,21 +11874,27 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         // --- Header B: Internal Physics ---
         plot_calc_front_load.Add(snap.calc_front_load);
         plot_calc_front_grip.Add(snap.calc_front_grip);
+        plot_calc_rear_grip.Add(snap.calc_rear_grip);
         plot_calc_slip_ratio.Add(snap.calc_front_slip_ratio);
-        plot_calc_slip_angle.Add(snap.slip_angle);
+        plot_calc_slip_angle_smoothed.Add(snap.calc_front_slip_angle_smoothed);
+        plot_raw_slip_angle.Add(snap.raw_front_slip_angle);
 
         // --- Header C: Raw Telemetry ---
         plot_raw_steer.Add(snap.steer_force);
+        plot_raw_input_steering.Add(snap.raw_input_steering);
         plot_raw_load.Add(snap.raw_front_tire_load);
         plot_raw_grip.Add(snap.raw_front_grip_fract);
+        plot_raw_rear_grip.Add(snap.raw_rear_grip);
+        plot_raw_front_slip_ratio.Add(snap.raw_front_slip_ratio);
         plot_raw_susp_force.Add(snap.raw_front_susp_force);
         plot_raw_ride_height.Add(snap.raw_front_ride_height);
+        plot_raw_rear_lat_force.Add(snap.raw_rear_lat_force);
         plot_raw_car_speed.Add(snap.raw_car_speed);
         plot_raw_throttle.Add(snap.raw_input_throttle);
         plot_raw_brake.Add(snap.raw_input_brake);
         plot_input_accel.Add(snap.accel_x);
-        plot_input_patch_vel.Add(snap.patch_vel);
-        plot_input_vert_deflection.Add(snap.deflection);
+        plot_raw_front_lat_patch_vel.Add(snap.raw_front_lat_patch_vel);
+        plot_raw_front_deflection.Add(snap.raw_front_deflection);
 
         // Update Warning Flags (Sticky-ish for display)
         g_warn_load = snap.warn_load;
@@ -12809,105 +11917,181 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
     if (ImGui::CollapsingHeader("A. FFB Components (Output Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Text("Total Output");
         ImGui::PlotLines("##Total", plot_total.data.data(), (int)plot_total.data.size(), plot_total.offset, "Total", -1.0f, 1.0f, ImVec2(0, 60));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Final FFB Output (-1.0 to 1.0)");
         
-        ImGui::Columns(2, "FFBCols", false);
+        ImGui::Columns(3, "FFBCols", false);
+        
         ImGui::Text("Base Torque (Nm)"); ImGui::PlotLines("##Base", plot_base.data.data(), (int)plot_base.data.size(), plot_base.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Steering Rack Force derived from Game Physics");
         ImGui::NextColumn();
-        ImGui::Text("SoP (Lat G)"); ImGui::PlotLines("##SoP", plot_sop.data.data(), (int)plot_sop.data.size(), plot_sop.offset, NULL, -1000.0f, 1000.0f, ImVec2(0, 40));
+        
+        ImGui::Text("SoP (Base Chassis G)"); ImGui::PlotLines("##SoP", plot_sop.data.data(), (int)plot_sop.data.size(), plot_sop.offset, NULL, -1000.0f, 1000.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force from Lateral G-Force (Seat of Pants)");
         ImGui::NextColumn();
-        ImGui::Text("Understeer Cut"); ImGui::PlotLines("##Under", plot_understeer.data.data(), (int)plot_understeer.data.size(), plot_understeer.offset, NULL, -2000.0f, 2000.0f, ImVec2(0, 40));
-        ImGui::NextColumn();
+        
         ImGui::Text("Oversteer Boost"); ImGui::PlotLines("##Over", plot_oversteer.data.data(), (int)plot_oversteer.data.size(), plot_oversteer.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Added force from Rear Grip loss");
         ImGui::NextColumn();
+        
         ImGui::Text("Rear Align Torque"); ImGui::PlotLines("##RearT", plot_rear_torque.data.data(), (int)plot_rear_torque.data.size(), plot_rear_torque.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force from Rear Lateral Force");
         ImGui::NextColumn();
+        
         ImGui::Text("Scrub Drag Force"); ImGui::PlotLines("##Drag", plot_scrub_drag.data.data(), (int)plot_scrub_drag.data.size(), plot_scrub_drag.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Resistance force from sideways tire dragging");
         ImGui::NextColumn();
+        
+        ImGui::Text("Understeer Cut"); ImGui::PlotLines("##Under", plot_understeer.data.data(), (int)plot_understeer.data.size(), plot_understeer.offset, NULL, -2000.0f, 2000.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Reduction in force due to front grip loss");
+        ImGui::NextColumn();
+        
         ImGui::Text("Road Texture"); ImGui::PlotLines("##Road", plot_road.data.data(), (int)plot_road.data.size(), plot_road.offset, NULL, -1000.0f, 1000.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Suspension Velocity");
         ImGui::NextColumn();
+        
         ImGui::Text("Slide Texture"); ImGui::PlotLines("##Slide", plot_slide.data.data(), (int)plot_slide.data.size(), plot_slide.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Lateral Scrubbing");
         ImGui::NextColumn();
+        
         ImGui::Text("Lockup Vib"); ImGui::PlotLines("##Lock", plot_lockup.data.data(), (int)plot_lockup.data.size(), plot_lockup.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Wheel Lockup");
         ImGui::NextColumn();
+        
         ImGui::Text("Spin Vib"); ImGui::PlotLines("##Spin", plot_spin.data.data(), (int)plot_spin.data.size(), plot_spin.offset, NULL, -500.0f, 500.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Wheel Spin");
         ImGui::NextColumn();
+        
         ImGui::Text("Bottoming"); ImGui::PlotLines("##Bot", plot_bottoming.data.data(), (int)plot_bottoming.data.size(), plot_bottoming.offset, NULL, -1000.0f, 1000.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Suspension Bottoming");
         ImGui::NextColumn();
+        
         ImGui::Text("Clipping"); ImGui::PlotLines("##Clip", plot_clipping.data.data(), (int)plot_clipping.data.size(), plot_clipping.offset, NULL, 0.0f, 1.1f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Indicates when Output hits max limit");
         ImGui::Columns(1);
     }
 
     // --- Header B: Internal Physics Engine (The Brain) ---
     if (ImGui::CollapsingHeader("B. Internal Physics (Brain)", ImGuiTreeNodeFlags_None)) {
-        ImGui::Columns(2, "PhysCols", false);
+        ImGui::Columns(3, "PhysCols", false);
         
         ImGui::Text("Calc Front Load (N)");
         ImGui::PlotLines("##CalcLoad", plot_calc_front_load.data.data(), (int)plot_calc_front_load.data.size(), plot_calc_front_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Load used for physics math (approximated if missing)");
         ImGui::NextColumn();
         
         ImGui::Text("Calc Front Grip");
         ImGui::PlotLines("##CalcGrip", plot_calc_front_grip.data.data(), (int)plot_calc_front_grip.data.size(), plot_calc_front_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Grip used for physics math (approximated if missing)");
         ImGui::NextColumn();
         
-        ImGui::Text("Calc Slip Ratio");
+        ImGui::Text("Calc Rear Grip");
+        ImGui::PlotLines("##CalcRearGrip", plot_calc_rear_grip.data.data(), (int)plot_calc_rear_grip.data.size(), plot_calc_rear_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Rear Grip used for SoP/Oversteer math");
+        ImGui::NextColumn();
+        
+        ImGui::Text("Calc Front Slip Ratio");
         ImGui::PlotLines("##CalcSlip", plot_calc_slip_ratio.data.data(), (int)plot_calc_slip_ratio.data.size(), plot_calc_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Manual calculation from wheel speed");
         ImGui::NextColumn();
         
-        ImGui::Text("Smoothed Slip Angle");
-        ImGui::PlotLines("##SlipA", plot_calc_slip_angle.data.data(), (int)plot_calc_slip_angle.data.size(), plot_calc_slip_angle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        ImGui::Text("Front Slip Angle (Smoothed)");
+        ImGui::PlotLines("##SlipAS", plot_calc_slip_angle_smoothed.data.data(), (int)plot_calc_slip_angle_smoothed.data.size(), plot_calc_slip_angle_smoothed.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Smoothed Slip Angle (LPF) used for approximation");
+        ImGui::NextColumn();
+        
+        ImGui::Text("Front Slip Angle (Raw)");
+        ImGui::PlotLines("##SlipAR", plot_raw_slip_angle.data.data(), (int)plot_raw_slip_angle.data.size(), plot_raw_slip_angle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Slip Angle (atan2) before smoothing");
         ImGui::Columns(1);
     }
 
     // --- Header C: Raw Game Telemetry Inspector (The Input) ---
     if (ImGui::CollapsingHeader("C. Raw Game Telemetry (Input)", ImGuiTreeNodeFlags_None)) {
-        ImGui::Columns(2, "TelCols", false);
+        ImGui::Columns(3, "TelCols", false);
         
         ImGui::Text("Steering Torque (Nm)"); 
         ImGui::PlotLines("##StForce", plot_raw_steer.data.data(), (int)plot_raw_steer.data.size(), plot_raw_steer.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Steering Torque from Game API");
+        ImGui::NextColumn();
+        
+        ImGui::Text("Steering Input (Angle)");
+        ImGui::PlotLines("##StInput", plot_raw_input_steering.data.data(), (int)plot_raw_input_steering.data.size(), plot_raw_input_steering.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Driver wheel position -1 to 1");
+        ImGui::NextColumn();
+        
+        ImGui::Text("Chassis Lat Accel (G)"); 
+        ImGui::PlotLines("##LatG", plot_input_accel.data.data(), (int)plot_input_accel.data.size(), plot_input_accel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Local Lateral Acceleration (G)");
         ImGui::NextColumn();
         
         // Highlight Load if warning
         if (g_warn_load) ImGui::TextColored(ImVec4(1,0,0,1), "Raw Front Load (MISSING)");
         else ImGui::Text("Raw Front Load (N)");
         ImGui::PlotLines("##RawLoad", plot_raw_load.data.data(), (int)plot_raw_load.data.size(), plot_raw_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Tire Load from Game API");
         ImGui::NextColumn();
         
         // Highlight Grip if warning
         if (g_warn_grip) ImGui::TextColored(ImVec4(1,0,0,1), "Raw Front Grip (MISSING)");
         else ImGui::Text("Raw Front Grip");
         ImGui::PlotLines("##RawGrip", plot_raw_grip.data.data(), (int)plot_raw_grip.data.size(), plot_raw_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Grip Fraction from Game API");
+        ImGui::NextColumn();
+
+        ImGui::Text("Raw Rear Grip");
+        ImGui::PlotLines("##RawRearGrip", plot_raw_rear_grip.data.data(), (int)plot_raw_rear_grip.data.size(), plot_raw_rear_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Rear Grip Fraction from Game API");
+        ImGui::NextColumn();
+        
+        ImGui::Text("Raw Front Slip Ratio");
+        ImGui::PlotLines("##RawSlip", plot_raw_front_slip_ratio.data.data(), (int)plot_raw_front_slip_ratio.data.size(), plot_raw_front_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Value provided by game API");
         ImGui::NextColumn();
         
         ImGui::Text("Raw Front Susp. Force"); 
         ImGui::PlotLines("##Susp", plot_raw_susp_force.data.data(), (int)plot_raw_susp_force.data.size(), plot_raw_susp_force.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Suspension Force");
         ImGui::NextColumn();
         
         ImGui::Text("Raw Front Ride Height"); 
         ImGui::PlotLines("##RH", plot_raw_ride_height.data.data(), (int)plot_raw_ride_height.data.size(), plot_raw_ride_height.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Ride Height");
+        ImGui::NextColumn();
+        
+        ImGui::Text("Raw Rear Lat Force"); 
+        ImGui::PlotLines("##RLF", plot_raw_rear_lat_force.data.data(), (int)plot_raw_rear_lat_force.data.size(), plot_raw_rear_lat_force.offset, NULL, -5000.0f, 5000.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Rear Lateral Force");
         ImGui::NextColumn();
         
         ImGui::Text("Car Speed (m/s)"); 
         ImGui::PlotLines("##Speed", plot_raw_car_speed.data.data(), (int)plot_raw_car_speed.data.size(), plot_raw_car_speed.offset, NULL, 0.0f, 100.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vehicle Speed");
         ImGui::NextColumn();
         
-        ImGui::Text("Throttle Input"); 
-        ImGui::PlotLines("##Thr", plot_raw_throttle.data.data(), (int)plot_raw_throttle.data.size(), plot_raw_throttle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        ImGui::Text("Avg Front Lat PatchVel"); 
+        ImGui::PlotLines("##PatchV", plot_raw_front_lat_patch_vel.data.data(), (int)plot_raw_front_lat_patch_vel.data.size(), plot_raw_front_lat_patch_vel.offset, NULL, 0.0f, 20.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Lateral Velocity at Contact Patch");
         ImGui::NextColumn();
         
-        ImGui::Text("Brake Input"); 
-        ImGui::PlotLines("##Brk", plot_raw_brake.data.data(), (int)plot_raw_brake.data.size(), plot_raw_brake.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        ImGui::Text("Avg Front Deflection"); 
+        ImGui::PlotLines("##Defl", plot_raw_front_deflection.data.data(), (int)plot_raw_front_deflection.data.size(), plot_raw_front_deflection.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vertical Tire Deflection");
         ImGui::NextColumn();
         
-        ImGui::Text("Local Accel X"); 
-        ImGui::PlotLines("##LatG", plot_input_accel.data.data(), (int)plot_input_accel.data.size(), plot_input_accel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
-        ImGui::NextColumn();
+        ImGui::Text("Combined Input");
+        ImVec2 pos = ImGui::GetCursorScreenPos();
+        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(1.0f, 0.0f, 0.0f, 1.0f)); // Red for Brake
+        ImGui::PlotLines("##BrkComb", plot_raw_brake.data.data(), (int)plot_raw_brake.data.size(), plot_raw_brake.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        ImGui::PopStyleColor();
         
-        ImGui::Text("Avg Lat PatchVel"); 
-        ImGui::PlotLines("##PatchV", plot_input_patch_vel.data.data(), (int)plot_input_patch_vel.data.size(), plot_input_patch_vel.offset, NULL, 0.0f, 20.0f, ImVec2(0, 40));
-        ImGui::NextColumn();
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Green: Throttle, Red: Brake");
+
+        ImGui::SetCursorScreenPos(pos); // Reset
+        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 0.0f, 1.0f)); // Green for Throttle
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // Transparent Bg
+        ImGui::PlotLines("##ThrComb", plot_raw_throttle.data.data(), (int)plot_raw_throttle.data.size(), plot_raw_throttle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        ImGui::PopStyleColor(2);
         
-        ImGui::Text("Avg Deflection"); 
-        ImGui::PlotLines("##Defl", plot_input_vert_deflection.data.data(), (int)plot_input_vert_deflection.data.size(), plot_input_vert_deflection.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
         ImGui::Columns(1);
     }
 
@@ -14342,7 +13526,7 @@ int g_tests_failed = 0;
 
 // --- Tests ---
 
-void test_snapshot_population(); // Forward declaration
+void test_snapshot_data_integrity(); // Forward declaration
 
 void test_manual_slip_singularity() {
     std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
@@ -15981,7 +15165,7 @@ int main() {
     test_manual_slip_calculation();
     test_universal_bottoming();
     test_preset_initialization();
-    test_snapshot_population();
+    test_snapshot_data_integrity();
     
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
@@ -15990,8 +15174,8 @@ int main() {
     return g_tests_failed > 0 ? 1 : 0;
 }
 
-void test_snapshot_population() {
-    std::cout << "\nTest: Snapshot Population (v0.4.7)" << std::endl;
+void test_snapshot_data_integrity() {
+    std::cout << "\nTest: Snapshot Data Integrity (v0.4.7)" << std::endl;
     FFBEngine engine;
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -16019,6 +15203,71 @@ void test_snapshot_population() {
         engine.calculate_force(&data);
     }
 
+    // Get Snapshot from Missing Load Scenario
+    auto batch_load = engine.GetDebugBatch();
+    if (!batch_load.empty()) {
+        FFBSnapshot snap_load = batch_load.back();
+        
+        // Test 1: Raw Load should be 0.0 (What the game sent)
+        if (std::abs(snap_load.raw_front_tire_load) < 0.001) {
+            std::cout << "[PASS] Raw Front Tire Load captured as 0.0." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] Raw Front Tire Load incorrect: " << snap_load.raw_front_tire_load << std::endl;
+            g_tests_failed++;
+        }
+        
+        // Test 2: Calculated Load should be approx 1300 (SuspForce 1000 + 300 offset)
+        if (std::abs(snap_load.calc_front_load - 1300.0) < 0.001) {
+            std::cout << "[PASS] Calculated Front Load is 1300.0." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] Calculated Front Load incorrect: " << snap_load.calc_front_load << std::endl;
+            g_tests_failed++;
+        }
+        
+        // Test 3: Raw Throttle Input (from initial setup: data.mUnfilteredThrottle = 0.8)
+        if (std::abs(snap_load.raw_input_throttle - 0.8) < 0.001) {
+            std::cout << "[PASS] Raw Throttle captured." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] Raw Throttle incorrect: " << snap_load.raw_input_throttle << std::endl;
+            g_tests_failed++;
+        }
+        
+        // Test 4: Raw Ride Height (Min of 0.03 and 0.04 -> 0.03)
+        if (std::abs(snap_load.raw_front_ride_height - 0.03) < 0.001) {
+            std::cout << "[PASS] Raw Ride Height captured (Min)." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] Raw Ride Height incorrect: " << snap_load.raw_front_ride_height << std::endl;
+            g_tests_failed++;
+        }
+    }
+
+    // New Test Requirement: Distinct Front/Rear Grip
+    // Reset data for a clean frame
+    std::memset(&data, 0, sizeof(data));
+    data.mWheel[0].mGripFract = 1.0; // FL
+    data.mWheel[1].mGripFract = 1.0; // FR
+    data.mWheel[2].mGripFract = 0.5; // RL
+    data.mWheel[3].mGripFract = 0.5; // RR
+    
+    // Set some valid load so we don't trigger missing load logic
+    data.mWheel[0].mTireLoad = 4000.0;
+    data.mWheel[1].mTireLoad = 4000.0;
+    data.mWheel[2].mTireLoad = 4000.0;
+    data.mWheel[3].mTireLoad = 4000.0;
+    
+    data.mLocalVel.z = 20.0;
+    data.mDeltaTime = 0.01;
+    
+    // Set Deflection for Renaming Test
+    data.mWheel[0].mVerticalTireDeflection = 0.05;
+    data.mWheel[1].mVerticalTireDeflection = 0.05;
+
+    engine.calculate_force(&data);
+
     // Get Snapshot
     auto batch = engine.GetDebugBatch();
     if (batch.empty()) {
@@ -16031,39 +15280,30 @@ void test_snapshot_population() {
     
     // Assertions
     
-    // 1. Raw Load should be 0.0 (What the game sent)
-    if (std::abs(snap.raw_front_tire_load) < 0.001) {
-        std::cout << "[PASS] Raw Front Tire Load captured as 0.0." << std::endl;
+    // 1. Check Front Grip (1.0)
+    if (std::abs(snap.calc_front_grip - 1.0) < 0.001) {
+        std::cout << "[PASS] Calc Front Grip is 1.0." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Raw Front Tire Load incorrect: " << snap.raw_front_tire_load << std::endl;
+        std::cout << "[FAIL] Calc Front Grip incorrect: " << snap.calc_front_grip << std::endl;
         g_tests_failed++;
     }
     
-    // 2. Calculated Load should be approx 1300 (SuspForce 1000 + 300 offset)
-    if (std::abs(snap.calc_front_load - 1300.0) < 0.001) {
-        std::cout << "[PASS] Calculated Front Load is 1300.0." << std::endl;
+    // 2. Check Rear Grip (0.5)
+    if (std::abs(snap.calc_rear_grip - 0.5) < 0.001) {
+        std::cout << "[PASS] Calc Rear Grip is 0.5." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Calculated Front Load incorrect: " << snap.calc_front_load << std::endl;
+        std::cout << "[FAIL] Calc Rear Grip incorrect: " << snap.calc_rear_grip << std::endl;
         g_tests_failed++;
     }
     
-    // 3. Raw Inputs
-    if (std::abs(snap.raw_input_throttle - 0.8) < 0.001) {
-        std::cout << "[PASS] Raw Throttle captured." << std::endl;
+    // 3. Check Renamed Field (raw_front_deflection)
+    if (std::abs(snap.raw_front_deflection - 0.05) < 0.001) {
+        std::cout << "[PASS] raw_front_deflection captured (Renamed field)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Raw Throttle incorrect." << std::endl;
-        g_tests_failed++;
-    }
-    
-    // 4. Raw Ride Height (Min of 0.03 and 0.04 -> 0.03)
-    if (std::abs(snap.raw_front_ride_height - 0.03) < 0.001) {
-        std::cout << "[PASS] Raw Ride Height captured (Min)." << std::endl;
-        g_tests_passed++;
-    } else {
-        std::cout << "[FAIL] Raw Ride Height incorrect: " << snap.raw_front_ride_height << std::endl;
+        std::cout << "[FAIL] raw_front_deflection incorrect: " << snap.raw_front_deflection << std::endl;
         g_tests_failed++;
     }
 }

@@ -34,7 +34,7 @@ int g_tests_failed = 0;
 
 // --- Tests ---
 
-void test_snapshot_population(); // Forward declaration
+void test_snapshot_data_integrity(); // Forward declaration
 
 void test_manual_slip_singularity() {
     std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
@@ -1673,7 +1673,7 @@ int main() {
     test_manual_slip_calculation();
     test_universal_bottoming();
     test_preset_initialization();
-    test_snapshot_population();
+    test_snapshot_data_integrity();
     
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
@@ -1682,8 +1682,8 @@ int main() {
     return g_tests_failed > 0 ? 1 : 0;
 }
 
-void test_snapshot_population() {
-    std::cout << "\nTest: Snapshot Population (v0.4.7)" << std::endl;
+void test_snapshot_data_integrity() {
+    std::cout << "\nTest: Snapshot Data Integrity (v0.4.7)" << std::endl;
     FFBEngine engine;
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -1711,6 +1711,71 @@ void test_snapshot_population() {
         engine.calculate_force(&data);
     }
 
+    // Get Snapshot from Missing Load Scenario
+    auto batch_load = engine.GetDebugBatch();
+    if (!batch_load.empty()) {
+        FFBSnapshot snap_load = batch_load.back();
+        
+        // Test 1: Raw Load should be 0.0 (What the game sent)
+        if (std::abs(snap_load.raw_front_tire_load) < 0.001) {
+            std::cout << "[PASS] Raw Front Tire Load captured as 0.0." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] Raw Front Tire Load incorrect: " << snap_load.raw_front_tire_load << std::endl;
+            g_tests_failed++;
+        }
+        
+        // Test 2: Calculated Load should be approx 1300 (SuspForce 1000 + 300 offset)
+        if (std::abs(snap_load.calc_front_load - 1300.0) < 0.001) {
+            std::cout << "[PASS] Calculated Front Load is 1300.0." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] Calculated Front Load incorrect: " << snap_load.calc_front_load << std::endl;
+            g_tests_failed++;
+        }
+        
+        // Test 3: Raw Throttle Input (from initial setup: data.mUnfilteredThrottle = 0.8)
+        if (std::abs(snap_load.raw_input_throttle - 0.8) < 0.001) {
+            std::cout << "[PASS] Raw Throttle captured." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] Raw Throttle incorrect: " << snap_load.raw_input_throttle << std::endl;
+            g_tests_failed++;
+        }
+        
+        // Test 4: Raw Ride Height (Min of 0.03 and 0.04 -> 0.03)
+        if (std::abs(snap_load.raw_front_ride_height - 0.03) < 0.001) {
+            std::cout << "[PASS] Raw Ride Height captured (Min)." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] Raw Ride Height incorrect: " << snap_load.raw_front_ride_height << std::endl;
+            g_tests_failed++;
+        }
+    }
+
+    // New Test Requirement: Distinct Front/Rear Grip
+    // Reset data for a clean frame
+    std::memset(&data, 0, sizeof(data));
+    data.mWheel[0].mGripFract = 1.0; // FL
+    data.mWheel[1].mGripFract = 1.0; // FR
+    data.mWheel[2].mGripFract = 0.5; // RL
+    data.mWheel[3].mGripFract = 0.5; // RR
+    
+    // Set some valid load so we don't trigger missing load logic
+    data.mWheel[0].mTireLoad = 4000.0;
+    data.mWheel[1].mTireLoad = 4000.0;
+    data.mWheel[2].mTireLoad = 4000.0;
+    data.mWheel[3].mTireLoad = 4000.0;
+    
+    data.mLocalVel.z = 20.0;
+    data.mDeltaTime = 0.01;
+    
+    // Set Deflection for Renaming Test
+    data.mWheel[0].mVerticalTireDeflection = 0.05;
+    data.mWheel[1].mVerticalTireDeflection = 0.05;
+
+    engine.calculate_force(&data);
+
     // Get Snapshot
     auto batch = engine.GetDebugBatch();
     if (batch.empty()) {
@@ -1723,39 +1788,30 @@ void test_snapshot_population() {
     
     // Assertions
     
-    // 1. Raw Load should be 0.0 (What the game sent)
-    if (std::abs(snap.raw_front_tire_load) < 0.001) {
-        std::cout << "[PASS] Raw Front Tire Load captured as 0.0." << std::endl;
+    // 1. Check Front Grip (1.0)
+    if (std::abs(snap.calc_front_grip - 1.0) < 0.001) {
+        std::cout << "[PASS] Calc Front Grip is 1.0." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Raw Front Tire Load incorrect: " << snap.raw_front_tire_load << std::endl;
+        std::cout << "[FAIL] Calc Front Grip incorrect: " << snap.calc_front_grip << std::endl;
         g_tests_failed++;
     }
     
-    // 2. Calculated Load should be approx 1300 (SuspForce 1000 + 300 offset)
-    if (std::abs(snap.calc_front_load - 1300.0) < 0.001) {
-        std::cout << "[PASS] Calculated Front Load is 1300.0." << std::endl;
+    // 2. Check Rear Grip (0.5)
+    if (std::abs(snap.calc_rear_grip - 0.5) < 0.001) {
+        std::cout << "[PASS] Calc Rear Grip is 0.5." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Calculated Front Load incorrect: " << snap.calc_front_load << std::endl;
+        std::cout << "[FAIL] Calc Rear Grip incorrect: " << snap.calc_rear_grip << std::endl;
         g_tests_failed++;
     }
     
-    // 3. Raw Inputs
-    if (std::abs(snap.raw_input_throttle - 0.8) < 0.001) {
-        std::cout << "[PASS] Raw Throttle captured." << std::endl;
+    // 3. Check Renamed Field (raw_front_deflection)
+    if (std::abs(snap.raw_front_deflection - 0.05) < 0.001) {
+        std::cout << "[PASS] raw_front_deflection captured (Renamed field)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Raw Throttle incorrect." << std::endl;
-        g_tests_failed++;
-    }
-    
-    // 4. Raw Ride Height (Min of 0.03 and 0.04 -> 0.03)
-    if (std::abs(snap.raw_front_ride_height - 0.03) < 0.001) {
-        std::cout << "[PASS] Raw Ride Height captured (Min)." << std::endl;
-        g_tests_passed++;
-    } else {
-        std::cout << "[FAIL] Raw Ride Height incorrect: " << snap.raw_front_ride_height << std::endl;
+        std::cout << "[FAIL] raw_front_deflection incorrect: " << snap.raw_front_deflection << std::endl;
         g_tests_failed++;
     }
 }

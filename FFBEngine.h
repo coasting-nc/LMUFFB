@@ -76,21 +76,27 @@ struct FFBSnapshot {
     // --- Header B: Internal Physics (Calculated) ---
     float calc_front_load;       // New v0.4.7
     float calc_front_grip;       // New v0.4.7
-    float calc_front_slip_ratio; // New v0.4.7
-    float slip_angle;            // Existing (Smoothed)
+    float calc_rear_grip;        // New v0.4.7 (Refined)
+    float calc_front_slip_ratio; // New v0.4.7 (Manual Calc)
+    float calc_front_slip_angle_smoothed; // Renamed from slip_angle
+    float raw_front_slip_angle;  // New v0.4.7 (Raw atan2)
 
     // --- Header C: Raw Game Telemetry (Inputs) ---
     float steer_force;
+    float raw_input_steering;    // New v0.4.7 (Unfiltered -1 to 1)
     float raw_front_tire_load;   // New v0.4.7
     float raw_front_grip_fract;  // New v0.4.7
+    float raw_rear_grip;         // New v0.4.7
     float raw_front_susp_force;  // New v0.4.7
     float raw_front_ride_height; // New v0.4.7
+    float raw_rear_lat_force;    // New v0.4.7
     float raw_car_speed;         // New v0.4.7
+    float raw_front_slip_ratio;  // New v0.4.7 (Game API)
     float raw_input_throttle;    // New v0.4.7
     float raw_input_brake;       // New v0.4.7
     float accel_x;
-    float patch_vel;
-    float deflection;
+    float raw_front_lat_patch_vel; // Renamed from patch_vel
+    float raw_front_deflection;    // Renamed from deflection
 
     // Telemetry Health Flags
     bool warn_load;
@@ -750,21 +756,44 @@ public:
                 // --- Header B: Internal Physics (Calculated) ---
                 snap.calc_front_load = (float)avg_load; // This is the final load used (maybe approximated)
                 snap.calc_front_grip = (float)avg_grip; // This is the final grip used (maybe approximated)
-                snap.calc_front_slip_ratio = (float)((get_slip_ratio(fl) + get_slip_ratio(fr)) / 2.0);
-                snap.slip_angle = (float)m_grip_diag.front_slip_angle; // Smoothed Slip Angle
+                snap.calc_rear_grip = (float)avg_rear_grip;
+                snap.calc_front_slip_ratio = (float)((calculate_manual_slip_ratio(fl, data->mLocalVel.z) + calculate_manual_slip_ratio(fr, data->mLocalVel.z)) / 2.0);
+                snap.calc_front_slip_angle_smoothed = (float)m_grip_diag.front_slip_angle; // Smoothed Slip Angle
                 
+                // Recalculate Raw Slip Angle (Avg FL/FR) for visualization
+                {
+                    double v_long_fl = std::abs(fl.mLongitudinalGroundVel);
+                    double v_long_fr = std::abs(fr.mLongitudinalGroundVel);
+                    if (v_long_fl < 0.5) v_long_fl = 0.5;
+                    if (v_long_fr < 0.5) v_long_fr = 0.5;
+                    double raw_angle_fl = std::atan2(std::abs(fl.mLateralPatchVel), v_long_fl);
+                    double raw_angle_fr = std::atan2(std::abs(fr.mLateralPatchVel), v_long_fr);
+                    snap.raw_front_slip_angle = (float)((raw_angle_fl + raw_angle_fr) / 2.0);
+                }
+
+                // Helper for Raw Game Slip Ratio
+                auto get_raw_game_slip = [&](const TelemWheelV01& w) {
+                    double v_long = std::abs(w.mLongitudinalGroundVel);
+                    if (v_long < 0.5) v_long = 0.5;
+                    return w.mLongitudinalPatchVel / v_long;
+                };
+
                 // --- Header C: Raw Game Telemetry (Inputs) ---
                 snap.steer_force = (float)raw_torque;
+                snap.raw_input_steering = (float)data->mUnfilteredSteering;
                 snap.raw_front_tire_load = (float)raw_load; // Raw from game
                 snap.raw_front_grip_fract = (float)raw_grip; // Raw from game
+                snap.raw_rear_grip = (float)((data->mWheel[2].mGripFract + data->mWheel[3].mGripFract) / 2.0);
                 snap.raw_front_susp_force = (float)((fl.mSuspForce + fr.mSuspForce) / 2.0);
                 snap.raw_front_ride_height = (float)((std::min)(fl.mRideHeight, fr.mRideHeight));
+                snap.raw_rear_lat_force = (float)((data->mWheel[2].mLateralForce + data->mWheel[3].mLateralForce) / 2.0);
                 snap.raw_car_speed = (float)data->mLocalVel.z;
+                snap.raw_front_slip_ratio = (float)((get_raw_game_slip(fl) + get_raw_game_slip(fr)) / 2.0);
                 snap.raw_input_throttle = (float)data->mUnfilteredThrottle;
                 snap.raw_input_brake = (float)data->mUnfilteredBrake;
                 snap.accel_x = (float)data->mLocalAccel.x;
-                snap.patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
-                snap.deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
+                snap.raw_front_lat_patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
+                snap.raw_front_deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
                 
                 // Warnings
                 snap.warn_load = frame_warn_load;

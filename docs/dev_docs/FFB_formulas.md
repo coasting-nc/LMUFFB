@@ -26,16 +26,16 @@ $$ F_{total} = (F_{base} + F_{sop} + F_{vib\_lock} + F_{vib\_spin} + F_{vib\_sli
 ### 2. Component Breakdown
 
 #### A. Global Factors (Pre-calculated)
-**Load Factor ($L_{factor}$)**: Scales texture effects based on how much weight is on the front tires.
-$$ L_{factor} = \text{Clamp}\left( \frac{\text{Load}_{FL} + \text{Load}_{FR}}{2 \times 4000}, 0.0, 1.5 \right) $$
+**Load Factor ($Front\_Load\_Factor$)**: Scales texture effects based on how much weight is on the front tires.
+$$ Front\_Load\_Factor = \text{Clamp}\left( \frac{\text{Front\_Load}_{FL} + \text{Front\_Load}_{FR}}{2 \times 4000}, 0.0, 1.5 \right) $$
 
-*   **Robustness Check:** If $\text{Load} \approx 0.0$ and $|Velocity| > 1.0 m/s$, $\text{Load}$ defaults to 4000N to prevent signal dropout.
-*   **Safety Clamp (v0.4.6):** $L_{factor}$ is hard-clamped to a maximum of **2.0** (regardless of configuration) to prevent unbounded forces during aero-spikes.
+*   **Robustness Check:** If $\text{Front\_Load} \approx 0.0$ and $|Velocity| > 1.0 m/s$, $\text{Front\_Load}$ defaults to 4000N to prevent signal dropout.
+*   **Safety Clamp (v0.4.6):** $Front\_Load\_Factor$ is hard-clamped to a maximum of **2.0** (regardless of configuration) to prevent unbounded forces during aero-spikes.
 
 #### B. Base Force (Understeer / Grip Modulation)
 This modulates the raw steering rack force from the game based on front tire grip.
-$$ F_{base} = F_{steering\_arm} \times \left( 1.0 - \left( (1.0 - \text{Grip}_{avg}) \times K_{understeer} \right) \right) $$
-*   $\text{Grip}_{avg}$: Average of Front Left and Front Right `mGripFract`.
+$$ F_{base} = F_{steering\_arm} \times \left( 1.0 - \left( (1.0 - \text{Front\_Grip}_{avg}) \times K_{understeer} \right) \right) $$
+*   $\text{Front\_Grip}_{avg}$: Average of Front Left and Front Right `mGripFract`.
     *   **Fallback (v0.4.5+):** If telemetry grip is missing ($\approx 0.0$) but Load $> 100N$, grip is approximated from **Slip Angle**.
         * **Low Speed Trap (v0.4.6):** If CarSpeed < 5.0 m/s, Grip = 1.0.
         * **Slip Angle LPF (v0.4.6):** Slip Angle is smoothed using an Exponential Moving Average ($\alpha \approx 0.1$).
@@ -60,6 +60,7 @@ This injects lateral G-force and rear-axle aligning torque to simulate the car b
 3.  **Oversteer Boost**:
     If Front Grip > Rear Grip:
     $$ F_{sop\_boosted} = F_{sop\_base} \times \left( 1.0 + (\text{Grip}_{delta} \times K_{oversteer} \times 2.0) \right) $$
+    where $\text{Grip}_{delta} = \text{Front\_Grip}_{avg} - \text{Rear\_Grip}_{avg}$
     *   **Fallback (v0.4.6+):** Rear grip now uses the same **Slip Angle approximation** fallback as Front grip if telemetry is missing, preventing false oversteer detection.
 
 4.  **Rear Aligning Torque**:
@@ -93,7 +94,7 @@ Active if Throttle > 5% and Rear Slip Ratio > 0.2.
 Active if Lateral Patch Velocity > 0.5 m/s.
 *   **Frequency**: $40 + (\text{LateralVel} \times 17.0)$ Hz
 *   **Waveform**: Sawtooth
-*   **Amplitude**: $A = K_{slide} \times 1.5 \times L_{factor}$
+*   **Amplitude**: $A = K_{slide} \times 1.5 \times Front\_Load\_Factor$
     
     **Note**: Amplitude scaling changed from 300.0 to 1.5 in v0.4.1 (Nm units).
 *   **Force**: $A \times \text{Sawtooth}(\text{phase})$
@@ -102,7 +103,7 @@ Active if Lateral Patch Velocity > 0.5 m/s.
 High-pass filter on suspension movement.
 *   **Delta Clamp (v0.4.6):** $\Delta_{vert}$ is clamped to +/- 0.01 meters per frame.
 *   $\Delta_{vert} = (\text{Deflection}_{current} - \text{Deflection}_{prev})$
-*   **Force**: $(\Delta_{vert\_L} + \Delta_{vert\_R}) \times 25.0 \times K_{road} \times L_{factor}$
+*   **Force**: $(\Delta_{vert\_L} + \Delta_{vert\_R}) \times 25.0 \times K_{road} \times Front\_Load\_Factor$
     
     **Note**: Amplitude scaling changed from 5000.0 to 25.0 in v0.4.1 (Nm units).
 *   **Scrub Drag (v0.4.5+):** Constant resistance force opposing lateral slide.
