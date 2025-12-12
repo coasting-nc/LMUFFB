@@ -893,6 +893,35 @@ Implement all mitigations to stability risks as discussed and recommended in  do
 The troubleshooting graphs are not updated. They do not show the new values used from shared memory, and the new components we calculate.
 
 ## Troubleshooting 20
+
+### More on plots and math formulas
+notes on FFB math formulas and plot visualization
+
+in formulas, also update the name of variables specifying when they refer to front types only (eg  Grip_avg is only for fronts)
+
+slip angle LPF, smoothed with exp.moving avg: visualize this in a plot
+also, is it the slip angle on fronts only? specify in variable names
+in plots we indeed have "smoothed slip angle"
+but we don't show the actual slip, which is arctan2(Vlat,Vlong)
+we have "calc slip ratio" is this it
+
+Grip is then used for understeer
+
+math formula: AccellXlocal: rename to clearify: is it lateral accel? Is it of whole car, or average of some tires? Which tires? specify in name
+
+SoP_base (without oversteer component): do we show it in a separate plot?
+
+We don't have Calc Rear Grip in the plots
+We don't have Raw Rea Grip
+
+In Raw plots, we dont have LatForceRl and RR
+
+We could also have additional plots in which we show the plot for the base value (using default coeafficients) and one with the custom coefficients as set in the main GUi
+
+
+
+
+### Other 
 look at the updated math formulas
 see which cmponents are affected by new grip and load calc
 add present for no effects
