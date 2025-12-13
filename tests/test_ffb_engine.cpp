@@ -37,6 +37,7 @@ int g_tests_failed = 0;
 void test_snapshot_data_integrity(); // Forward declaration
 void test_snapshot_data_v049(); // Forward declaration
 void test_rear_force_workaround(); // Forward declaration
+void test_rear_align_effect(); // Forward declaration
 
 void test_manual_slip_singularity() {
     std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
@@ -90,10 +91,10 @@ void test_scrub_drag_fade() {
     // Expected: 50% of force.
     // Full force calculation: drag_gain * 2.0 = 2.0.
     // Fade = 0.25 / 0.5 = 0.5.
-    // Expected Force = 2.0 * 0.5 = 1.0.
-    // Normalized by Ref (40.0). Output = 1.0 / 40.0 = 0.025.
+    // Expected Force = 5.0 * 0.5 = 2.5.
+    // Normalized by Ref (40.0). Output = 2.5 / 40.0 = 0.0625.
     // Direction: Positive Vel -> Negative Force.
-    // Norm Force = -0.025.
+    // Norm Force = -0.0625.
     
     data.mWheel[0].mLateralPatchVel = 0.25;
     data.mWheel[1].mLateralPatchVel = 0.25;
@@ -103,11 +104,11 @@ void test_scrub_drag_fade() {
     double force = engine.calculate_force(&data);
     
     // Check absolute magnitude
-    if (std::abs(std::abs(force) - 0.025) < 0.001) {
+    if (std::abs(std::abs(force) - 0.0625) < 0.001) {
         std::cout << "[PASS] Scrub drag faded correctly (50%)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Scrub drag fade incorrect. Got " << force << " Expected 0.025." << std::endl;
+        std::cout << "[FAIL] Scrub drag fade incorrect. Got " << force << " Expected 0.0625." << std::endl;
         g_tests_failed++;
     }
 }
@@ -139,22 +140,22 @@ void test_road_texture_teleport() {
     
     // Without Clamp:
     // Delta = 0.1. Sum = 0.2.
-    // Force = 0.2 * 25.0 = 5.0.
-    // Norm = 5.0 / 40.0 = 0.125.
+    // Force = 0.2 * 50.0 = 10.0.
+    // Norm = 10.0 / 40.0 = 0.25.
     
     // With Clamp (+/- 0.01):
     // Delta clamped to 0.01. Sum = 0.02.
-    // Force = 0.02 * 25.0 = 0.5.
-    // Norm = 0.5 / 40.0 = 0.0125.
+    // Force = 0.02 * 50.0 = 1.0.
+    // Norm = 1.0 / 40.0 = 0.025.
     
     double force = engine.calculate_force(&data);
     
     // Check if clamped
-    if (std::abs(force - 0.0125) < 0.001) {
+    if (std::abs(force - 0.025) < 0.001) {
         std::cout << "[PASS] Teleport spike clamped." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Teleport spike unclamped? Got " << force << " Expected 0.0125." << std::endl;
+        std::cout << "[FAIL] Teleport spike unclamped? Got " << force << " Expected 0.025." << std::endl;
         g_tests_failed++;
     }
 }
@@ -1574,18 +1575,21 @@ void test_preset_initialization() {
     const int expected_bottoming_method = 0;
     const float expected_scrub_drag_gain = 0.0f;
     
-    // Test all 5 built-in presets
+    // Test all 8 built-in presets
     const char* preset_names[] = {
         "Default",
         "Test: Game Base FFB Only",
         "Test: SoP Only",
         "Test: Understeer Only",
-        "Test: Textures Only"
+        "Test: Textures Only",
+        "Test: Rear Align Torque Only",
+        "Test: SoP Base Only",
+        "Test: Slide Texture Only"
     };
     
     bool all_passed = true;
     
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 8; i++) {
         if (i >= Config::presets.size()) {
             std::cout << "[FAIL] Preset " << i << " (" << preset_names[i] << ") not found!" << std::endl;
             all_passed = false;
@@ -1678,6 +1682,7 @@ int main() {
     test_snapshot_data_integrity();
     test_snapshot_data_v049();
     test_rear_force_workaround();
+    test_rear_align_effect();
     
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
@@ -2003,6 +2008,9 @@ void test_rear_force_workaround() {
     auto batch = engine.GetDebugBatch();
     if (batch.empty()) {
         std::cout << "[FAIL] No snapshot." << std::endl;
+        g_tests_failed++;
+        return;
+    }
     FFBSnapshot snap = batch.back();
     
     // ========================================
@@ -2018,8 +2026,8 @@ void test_rear_force_workaround() {
     //   TireStiffness (K) = 15.0 N/(rad·N)
     // 
     // Lateral Force: F_lat = 0.2449 × 3300 × 15.0 ≈ 12,127 N
-    // Torque: T = F_lat × 0.00025 × oversteer_boost
-    //         T = 12,127 × 0.00025 × 1.0 ≈ 3.03 Nm
+    // Torque: T = F_lat × 0.001 × rear_align_effect (v0.4.11)
+    //         T = 12,127 × 0.001 × 1.0 ≈ 12.127 Nm
     // 
     // ACTUAL BEHAVIOR (With LPF on First Frame):
     // The grip calculator applies low-pass filtering to slip angle for stability.
@@ -2029,22 +2037,17 @@ void test_rear_force_workaround() {
     // 
     // This reduces the first-frame output by ~10x:
     //   F_lat = 0.0245 × 3300 × 15.0 ≈ 1,213 N
-    //   T = 1,213 × 0.00025 × 1.0 ≈ 0.303 Nm
+    //   T = 1,213 × 0.001 × 1.0 ≈ 1.213 Nm
     // 
     // RATIONALE FOR EXPECTED VALUE:
-    // We test the first-frame behavior (0.30 Nm) rather than steady-state (3.03 Nm)
+    // We test the first-frame behavior (1.21 Nm) rather than steady-state
     // because:
     // 1. It verifies the workaround activates immediately (non-zero output)
     // 2. It tests the LPF integration (realistic behavior)
     // 3. Single-frame tests are faster and more deterministic
-    // 
-    // The 50% tolerance (±0.15 Nm) accounts for:
-    // - Floating-point precision variations
-    // - Potential differences in LPF alpha calculation
-    // - Other engine effects that may contribute small amounts
     
-    double expected_torque = 0.30;   // First-frame value with LPF smoothing
-    double tolerance = 0.15;         // ±50% tolerance
+    double expected_torque = 1.21;   // First-frame value with LPF smoothing
+    double tolerance = 0.60;         // ±50% tolerance
     
     // ========================================
     // Assertion
@@ -2057,6 +2060,64 @@ void test_rear_force_workaround() {
     } else {
         std::cout << "[FAIL] Rear torque outside expected range. Value: " << snap.ffb_rear_torque 
                   << " Nm (expected ~" << expected_torque << " Nm +/-" << tolerance << ")" << std::endl;
+        g_tests_failed++;
+    }
+}
+
+void test_rear_align_effect() {
+    std::cout << "\nTest: Rear Align Effect Decoupling (v0.4.11)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    // Config: Boost 2.0x
+    engine.m_rear_align_effect = 2.0f;
+    // Decoupled: Boost should be 0.0, but we get torque anyway
+    engine.m_oversteer_boost = 0.0f; 
+    engine.m_sop_effect = 0.0f; // Disable Base SoP to isolate torque
+    
+    // Setup Rear Workaround conditions (Slip Angle generation)
+    data.mWheel[0].mTireLoad = 4000.0; data.mWheel[1].mTireLoad = 4000.0; // Fronts valid
+    data.mWheel[0].mGripFract = 1.0; data.mWheel[1].mGripFract = 1.0;
+    
+    // Rear Force = 0 (Bug)
+    data.mWheel[2].mLateralForce = 0.0; data.mWheel[3].mLateralForce = 0.0;
+    // Rear Load approx 3300
+    data.mWheel[2].mSuspForce = 3000.0; data.mWheel[3].mSuspForce = 3000.0;
+    data.mWheel[2].mTireLoad = 0.0; data.mWheel[3].mTireLoad = 0.0;
+    // Grip 0 (Trigger approx)
+    data.mWheel[2].mGripFract = 0.0; data.mWheel[3].mGripFract = 0.0;
+    
+    // Slip Angle Inputs (Lateral Vel 5.0)
+    data.mWheel[2].mLateralPatchVel = 5.0; data.mWheel[3].mLateralPatchVel = 5.0;
+    data.mWheel[2].mLongitudinalGroundVel = 20.0; data.mWheel[3].mLongitudinalGroundVel = 20.0;
+    
+    data.mLocalVel.z = 20.0;
+    data.mDeltaTime = 0.01;
+
+    engine.calculate_force(&data);
+    
+    auto batch = engine.GetDebugBatch();
+    if (batch.empty()) {
+        std::cout << "[FAIL] No snapshot." << std::endl;
+        g_tests_failed++;
+        return;
+    }
+    FFBSnapshot snap = batch.back();
+    
+    // From previous test logic:
+    // 1.0 Effect -> ~1.21 Nm (First Frame)
+    // 2.0 Effect -> ~2.42 Nm
+    
+    double expected = 2.42;
+    double tolerance = 1.2;
+    
+    if (snap.ffb_rear_torque > (expected - tolerance) && 
+        snap.ffb_rear_torque < (expected + tolerance)) {
+        std::cout << "[PASS] Rear Align Effect active and decoupled (Boost 0.0). Value: " << snap.ffb_rear_torque << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Rear Align Effect failed. Value: " << snap.ffb_rear_torque << " (Expected ~" << expected << ")" << std::endl;
         g_tests_failed++;
     }
 }

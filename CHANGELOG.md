@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.11] - 2025-12-13
+### Added
+- **Rear Align Torque Slider**: Added a dedicated slider for `Rear Align Torque` (0.0-2.0) to the GUI. This decouples the rear-end force from the generic `Oversteer Boost`, allowing independent tuning.
+- **New Presets**: Added "Test: Rear Align Torque Only", "Test: SoP Base Only", and "Test: Slide Texture Only" to the configuration dropdown for easier troubleshooting.
+
+### Changed
+- **Physics Tuning**: Adjusted coefficients to produce meaningful forces in the Newton-meter domain.
+    - **Rear Align Torque**: Increased coefficient 4x (0.00025 -> 0.001) to boost max torque from ~1.5 Nm to ~6.0 Nm.
+    - **Scrub Drag**: Increased base multiplier from 2.0 to 5.0.
+    - **Road Texture**: Increased base multiplier from 25.0 to 50.0.
+- **GUI Visualization**: "Zoomed in" the Y-axis scale for micro-texture plots (Road, Slide, Vibrations) from ±20.0 to **±10.0** for better visibility of subtle effects.
+- **Documentation**: Updated `FFB_formulas.md` with the new coefficients.
+
 ## [0.4.10] - 2025-12-13
 ### Added
 - **Rear Physics Workaround**: Implemented a calculation fallback for Rear Aligning Torque to address the LMU 1.2 API issue where `mLateralForce` reports 0.0 for rear tires.

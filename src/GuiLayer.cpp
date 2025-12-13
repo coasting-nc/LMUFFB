@@ -236,6 +236,9 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     ImGui::SliderFloat("Understeer (Grip)", &engine.m_understeer_effect, 0.0f, 1.0f, "%.2f");
     ImGui::SliderFloat("SoP (Lateral G)", &engine.m_sop_effect, 0.0f, 2.0f, "%.2f");
     ImGui::SliderFloat("Oversteer Boost", &engine.m_oversteer_boost, 0.0f, 1.0f, "%.2f");
+    ImGui::SliderFloat("Rear Align Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, "%.2f");
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Controls rear-end counter-steering feedback.\nProvides a distinct cue during oversteer without affecting base SoP.\nIncrease for stronger rear-end feel (0.0 = Off, 1.0 = Default, 2.0 = Max).");
+
 
     ImGui::Separator();
     ImGui::Text("Haptics (Dynamic)");
@@ -606,23 +609,23 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Reduction in force due to front grip loss");
         ImGui::NextColumn();
         
-        ImGui::Text("Road Texture"); ImGui::PlotLines("##Road", plot_road.data.data(), (int)plot_road.data.size(), plot_road.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        ImGui::Text("Road Texture"); ImGui::PlotLines("##Road", plot_road.data.data(), (int)plot_road.data.size(), plot_road.offset, NULL, -10.0f, 10.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Suspension Velocity");
         ImGui::NextColumn();
         
-        ImGui::Text("Slide Texture"); ImGui::PlotLines("##Slide", plot_slide.data.data(), (int)plot_slide.data.size(), plot_slide.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        ImGui::Text("Slide Texture"); ImGui::PlotLines("##Slide", plot_slide.data.data(), (int)plot_slide.data.size(), plot_slide.offset, NULL, -10.0f, 10.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Lateral Scrubbing");
         ImGui::NextColumn();
         
-        ImGui::Text("Lockup Vib"); ImGui::PlotLines("##Lock", plot_lockup.data.data(), (int)plot_lockup.data.size(), plot_lockup.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        ImGui::Text("Lockup Vib"); ImGui::PlotLines("##Lock", plot_lockup.data.data(), (int)plot_lockup.data.size(), plot_lockup.offset, NULL, -10.0f, 10.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Wheel Lockup");
         ImGui::NextColumn();
         
-        ImGui::Text("Spin Vib"); ImGui::PlotLines("##Spin", plot_spin.data.data(), (int)plot_spin.data.size(), plot_spin.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        ImGui::Text("Spin Vib"); ImGui::PlotLines("##Spin", plot_spin.data.data(), (int)plot_spin.data.size(), plot_spin.offset, NULL, -10.0f, 10.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Wheel Spin");
         ImGui::NextColumn();
         
-        ImGui::Text("Bottoming"); ImGui::PlotLines("##Bot", plot_bottoming.data.data(), (int)plot_bottoming.data.size(), plot_bottoming.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        ImGui::Text("Bottoming"); ImGui::PlotLines("##Bot", plot_bottoming.data.data(), (int)plot_bottoming.data.size(), plot_bottoming.offset, NULL, -10.0f, 10.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Suspension Bottoming");
         ImGui::NextColumn();
         

@@ -75,7 +75,9 @@ This injects lateral G-force and rear-axle aligning torque to simulate the car b
     *   **Safety Clamp:** Clamped to +/- 6000.0 N.
     
     **Step 3: Calculate Torque**
-    $$ T_{rear} = F_{lat\_calc} \times 0.00025 \times K_{oversteer} $$
+    $$ T_{rear} = F_{lat\_calc} \times 0.001 \times K_{rear\_align} $$
+    
+    **Note**: Coefficient changed from 0.00025 to 0.001 in v0.4.11.
 
 $$ F_{sop} = F_{sop\_boosted} + T_{rear} $$
 
@@ -112,10 +114,12 @@ Active if Lateral Patch Velocity > 0.5 m/s.
 High-pass filter on suspension movement.
 *   **Delta Clamp (v0.4.6):** $\Delta_{vert}$ is clamped to +/- 0.01 meters per frame.
 *   $\Delta_{vert} = (\text{Deflection}_{current} - \text{Deflection}_{prev})$
-*   **Force**: $(\Delta_{vert\_L} + \Delta_{vert\_R}) \times 25.0 \times K_{road} \times Front\_Load\_Factor$
+*   **Force**: $(\Delta_{vert\_L} + \Delta_{vert\_R}) \times 50.0 \times K_{road} \times Front\_Load\_Factor$
     
-    **Note**: Amplitude scaling changed from 5000.0 to 25.0 in v0.4.1 (Nm units).
+    **Note**: Amplitude scaling changed from 25.0 to 50.0 in v0.4.11.
 *   **Scrub Drag (v0.4.5+):** Constant resistance force opposing lateral slide.
+    *   **Force**: $F_{drag} = \text{DragDir} \times K_{drag} \times 5.0 \times \text{Fade}$
+    *   **Note**: Multiplier changed from 2.0 to 5.0 in v0.4.11.
     *   **Fade In (v0.4.6):** Linearly scales from 0% to 100% between 0.0 and 0.5 m/s lateral velocity.
 
 **5. Suspension Bottoming ($F_{vib\_bottom}$)**
@@ -153,7 +157,8 @@ $$ F_{final} = \text{sign}(F_{norm}) \times K_{min\_force} $$
 *   $K_{understeer}$: Understeer Effect (0.0 - 1.0)
 *   $K_{sop}$: SoP Effect (0.0 - 2.0)
 *   $K_{oversteer}$: Oversteer Boost (0.0 - 1.0)
-*   $K_{lockup}, K_{spin}, K_{slide}, K_{road}$: Texture Gains
+*   $K_{rear\_align}$: Rear Align Torque (0.0 - 2.0)
+*   $K_{lockup}, K_{spin}, K_{slide}, K_{road}, K_{drag}$: Texture/Effect Gains
 *   $K_{min\_force}$: Min Force (0.0 - 0.20)
 
 **Hardcoded Constants (v0.4.1+):**

@@ -131,6 +131,7 @@ public:
 
     // New Effects (v0.2)
     float m_oversteer_boost = 0.0f; // 0.0 - 1.0 (Rear grip loss boost)
+    float m_rear_align_effect = 1.0f; // New v0.4.11
     
     bool m_lockup_enabled = false;
     float m_lockup_gain = 0.5f;
@@ -254,6 +255,16 @@ private:
     // Without this clamp, extreme slip angles (e.g., during spins) could generate
     // unrealistic forces that would saturate the FFB output or cause oscillations.
     static constexpr double MAX_REAR_LATERAL_FORCE = 6000.0; // N
+    
+    // Rear Align Torque Coefficient (v0.4.11)
+    // Converts rear lateral force (Newtons) to steering torque (Newton-meters).
+    // Formula: T_rear = F_lat * COEFFICIENT * m_rear_align_effect
+    // Value: 0.001 Nm/N - Tuned to produce ~3.0 Nm at 3000N lateral force with effect=1.0.
+    // This provides a distinct counter-steering cue during oversteer without overwhelming
+    // the base steering feel. Increased from 0.00025 in v0.4.10 (4x) to boost rear-end feedback.
+    // See: docs/dev_docs/FFB_formulas.md "Rear Aligning Torque"
+    static constexpr double REAR_ALIGN_TORQUE_COEFFICIENT = 0.001; // Nm per N
+
 
 
 public:
@@ -581,10 +592,10 @@ public:
 
         // Step 4: Convert to Torque and Apply to SoP
         // Scale from Newtons to Newton-meters for torque output.
-        // Coefficient 0.00025 was tuned to produce ~0.5 Nm contribution at 2000N lateral force.
-        // This matches the feel of the original implementation when API data was valid.
-        // Multiplied by m_oversteer_boost to allow user tuning of rear-end sensitivity.
-        double rear_torque = calc_rear_lat_force * 0.00025 * m_oversteer_boost; 
+        // Coefficient was tuned to produce ~3.0 Nm contribution at 3000N lateral force (v0.4.11).
+        // This provides a distinct counter-steering cue.
+        // Multiplied by m_rear_align_effect to allow user tuning of rear-end sensitivity.
+        double rear_torque = calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect; 
         sop_total += rear_torque;
         
         double total_force = output_force + sop_total;
@@ -717,7 +728,7 @@ public:
                 if (abs_lat_vel > 0.001) { // Avoid noise
                     double fade = (std::min)(1.0, abs_lat_vel / 0.5);
                     double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
-                    scrub_drag_force = drag_dir * m_scrub_drag_gain * 2.0 * fade; // Scaled & Faded
+                    scrub_drag_force = drag_dir * m_scrub_drag_gain * 5.0 * fade; // Scaled & Faded
                     total_force += scrub_drag_force;
                 }
             }
@@ -739,7 +750,7 @@ public:
             m_prev_vert_deflection[1] = vert_r;
             
             // Amplify sudden changes
-            double road_noise = (delta_l + delta_r) * 25.0 * m_road_texture_gain; // Scaled for Nm (was 5000)
+            double road_noise = (delta_l + delta_r) * 50.0 * m_road_texture_gain; // Scaled for Nm (was 5000)
             
             // Apply LOAD FACTOR: Bumps feel harder under compression
             road_noise *= load_factor;

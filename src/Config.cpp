@@ -17,35 +17,64 @@ void Config::LoadPresets() {
         0.5f, 1.0f, 0.15f, 20.0f, 0.05f, 0.0f, 0.0f, // gain, under, sop, scale, smooth, min, over
         false, 0.5f, false, 0.5f, true, 0.5f, false, 0.5f, // lockup, spin, slide, road
         false, 40.0f, // invert, max_torque_ref (Default 40Nm for 1.0 Gain)
-        false, 0, 0.0f // use_manual_slip, bottoming_method, scrub_drag_gain (v0.4.5)
+        false, 0, 0.0f, // use_manual_slip, bottoming_method, scrub_drag_gain (v0.4.5)
+        1.0f // rear_align_effect (v0.4.11)
     });
     
     presets.push_back({ "Test: Game Base FFB Only", 
         0.5f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 0.0f,
         false, 0.0f, false, 0.0f, false, 0.0f, false, 0.0f,
         false, 40.0f,
-        false, 0, 0.0f // v0.4.5
+        false, 0, 0.0f, // v0.4.5
+        0.0f // rear_align_effect
     });
 
     presets.push_back({ "Test: SoP Only", 
         0.5f, 0.0f, 1.0f, 5.0f, 0.0f, 0.0f, 0.0f,
         false, 0.0f, false, 0.0f, false, 0.0f, false, 0.0f,
         false, 40.0f,
-        false, 0, 0.0f // v0.4.5
+        false, 0, 0.0f, // v0.4.5
+        0.0f // rear_align_effect (Matched old behavior where boost=0 -> rear=0)
     });
 
     presets.push_back({ "Test: Understeer Only", 
         0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
         false, 0.0f, false, 0.0f, false, 0.0f, false, 0.0f,
         false, 40.0f,
-        false, 0, 0.0f // v0.4.5
+        false, 0, 0.0f, // v0.4.5
+        0.0f // rear_align_effect
     });
 
     presets.push_back({ "Test: Textures Only", 
         0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
         true, 1.0f, false, 1.0f, true, 1.0f, true, 1.0f,
         false, 40.0f,
-        false, 0, 0.0f // v0.4.5
+        false, 0, 0.0f, // v0.4.5
+        0.0f // rear_align_effect
+    });
+
+    presets.push_back({ "Test: Rear Align Torque Only", 
+        1.0f, 0.0f, 0.0f, 20.0f, 0.0f, 0.0f, 0.0f, // gain, under, sop(0), scale, smooth, min, over(0)
+        false, 0.0f, false, 0.0f, false, 0.0f, false, 0.0f, // No textures
+        false, 40.0f,
+        false, 0, 0.0f, // v0.4.5
+        1.0f // rear_align_effect=1.0
+    });
+
+    presets.push_back({ "Test: SoP Base Only", 
+        1.0f, 0.0f, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, // sop=1.0, over=0
+        false, 0.0f, false, 0.0f, false, 0.0f, false, 0.0f,
+        false, 40.0f,
+        false, 0, 0.0f,
+        0.0f // rear_align_effect=0
+    });
+
+    presets.push_back({ "Test: Slide Texture Only", 
+        1.0f, 0.0f, 0.0f, 20.0f, 0.0f, 0.0f, 0.0f,
+        false, 0.0f, false, 0.0f, true, 1.0f, false, 0.0f, // Slide enabled, gain 1.0
+        false, 40.0f,
+        false, 0, 0.0f,
+        0.0f
     });
 
     // Parse User Presets from config.ini [Presets] section
@@ -121,6 +150,7 @@ void Config::LoadPresets() {
                         else if (key == "use_manual_slip") current_preset.use_manual_slip = std::stoi(value);
                         else if (key == "bottoming_method") current_preset.bottoming_method = std::stoi(value);
                         else if (key == "scrub_drag_gain") current_preset.scrub_drag_gain = std::stof(value);
+                        else if (key == "rear_align_effect") current_preset.rear_align_effect = std::stof(value);
                     } catch (...) {}
                 }
             }
@@ -168,6 +198,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "use_manual_slip=" << engine.m_use_manual_slip << "\n";
         file << "bottoming_method=" << engine.m_bottoming_method << "\n";
         file << "scrub_drag_gain=" << engine.m_scrub_drag_gain << "\n";
+        file << "rear_align_effect=" << engine.m_rear_align_effect << "\n";
         file.close();
         std::cout << "[Config] Saved to " << filename << std::endl;
     } else {
@@ -220,6 +251,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "use_manual_slip") engine.m_use_manual_slip = std::stoi(value);
                     else if (key == "bottoming_method") engine.m_bottoming_method = std::stoi(value);
                     else if (key == "scrub_drag_gain") engine.m_scrub_drag_gain = std::stof(value);
+                    else if (key == "rear_align_effect") engine.m_rear_align_effect = std::stof(value);
                 } catch (...) {
                     std::cerr << "[Config] Error parsing line: " << line << std::endl;
                 }
