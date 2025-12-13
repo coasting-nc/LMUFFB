@@ -320,8 +320,8 @@ public:
                 double slip2 = calculate_slip_angle(w2, prev_slip2);
                 result.slip_angle = (slip1 + slip2) / 2.0;
                 
-                double excess = (std::max)(0.0, result.slip_angle - 0.15);
-                result.value = 1.0 - (excess * 2.0);
+                double excess = (std::max)(0.0, result.slip_angle - 0.10);
+                result.value = 1.0 - (excess * 4.0);
             }
             
             // Safety Clamp (v0.4.6): Never drop below 0.2 in approximation

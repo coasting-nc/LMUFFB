@@ -38,6 +38,7 @@ void test_snapshot_data_integrity(); // Forward declaration
 void test_snapshot_data_v049(); // Forward declaration
 void test_rear_force_workaround(); // Forward declaration
 void test_rear_align_effect(); // Forward declaration
+void test_zero_effects_leakage(); // Forward declaration
 
 void test_manual_slip_singularity() {
     std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
@@ -1683,6 +1684,7 @@ int main() {
     test_snapshot_data_v049();
     test_rear_force_workaround();
     test_rear_align_effect();
+    test_zero_effects_leakage();
     
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
@@ -1821,6 +1823,80 @@ void test_snapshot_data_integrity() {
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] raw_front_deflection incorrect: " << snap.raw_front_deflection << std::endl;
+        g_tests_failed++;
+    }
+}
+
+void test_zero_effects_leakage() {
+    std::cout << "\nTest: Zero Effects Leakage (No Ghost Forces)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+
+    // 1. Load "Test: No Effects" Preset configuration
+    // (Gain 1.0, everything else 0.0)
+    engine.m_gain = 1.0f;
+    engine.m_min_force = 0.0f;
+    engine.m_understeer_effect = 0.0f;
+    engine.m_sop_effect = 0.0f;
+    engine.m_oversteer_boost = 0.0f;
+    engine.m_rear_align_effect = 0.0f;
+    engine.m_lockup_enabled = false;
+    engine.m_spin_enabled = false;
+    engine.m_slide_texture_enabled = false;
+    engine.m_road_texture_enabled = false;
+    engine.m_bottoming_enabled = false;
+    engine.m_scrub_drag_gain = 0.0f;
+    
+    // 2. Set Inputs that WOULD trigger forces if effects were on
+    
+    // Base Force: 0.0 (We want to verify generated effects, not pass-through)
+    data.mSteeringShaftTorque = 0.0;
+    
+    // SoP Trigger: 1G Lateral
+    data.mLocalAccel.x = 9.81; 
+    
+    // Rear Align Trigger: Lat Force + Slip
+    data.mWheel[2].mLateralForce = 0.0; // Simulate missing force (workaround trigger)
+    data.mWheel[3].mLateralForce = 0.0;
+    data.mWheel[2].mTireLoad = 3000.0; // Load
+    data.mWheel[3].mTireLoad = 3000.0;
+    data.mWheel[2].mGripFract = 0.0; // Trigger approx
+    data.mWheel[3].mGripFract = 0.0;
+    data.mWheel[2].mLateralPatchVel = 5.0; // Slip
+    data.mWheel[3].mLateralPatchVel = 5.0;
+    data.mWheel[2].mLongitudinalGroundVel = 20.0;
+    data.mWheel[3].mLongitudinalGroundVel = 20.0;
+    
+    // Bottoming Trigger: Ride Height
+    data.mWheel[0].mRideHeight = 0.001; // Scraping
+    data.mWheel[1].mRideHeight = 0.001;
+    
+    // Textures Trigger:
+    data.mWheel[0].mLateralPatchVel = 5.0; // Slide
+    data.mWheel[1].mLateralPatchVel = 5.0;
+    
+    data.mDeltaTime = 0.01;
+    data.mLocalVel.z = 20.0;
+    
+    // Run Calculation
+    double force = engine.calculate_force(&data);
+    
+    // Assert: Total Output must be exactly 0.0
+    if (std::abs(force) < 0.000001) {
+        std::cout << "[PASS] Zero leakage verified (Force = 0.0)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Ghost Force detected! Output: " << force << std::endl;
+        // Debug components
+        auto batch = engine.GetDebugBatch();
+        if (!batch.empty()) {
+            FFBSnapshot s = batch.back();
+            std::cout << "Debug: SoP=" << s.sop_force 
+                      << " RearT=" << s.ffb_rear_torque 
+                      << " Slide=" << s.texture_slide 
+                      << " Bot=" << s.texture_bottoming << std::endl;
+        }
         g_tests_failed++;
     }
 }

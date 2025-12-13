@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.12] - 2025-12-14
+### Added
+- **Screenshot Feature**: Added "Save Screenshot" button to the Tuning Window. Saves PNG files with timestamps to the application directory using `stb_image_write.h` and DirectX 11 buffer mapping.
+- **New Test Preset**: Added "Test: No Effects" preset (Gain 1.0, all effects 0.0) to verify zero signal leakage.
+- **Verification Tests**: Added `test_zero_effects_leakage` to the test suite to ensure no ghost forces persist when effects are disabled.
+
+### Changed
+- **Physics Tuning**: 
+    - **Grip Calculation**: Tightened optimal slip angle threshold from `0.15` (8.5 deg) to **`0.10` (5.7 deg)** and increased falloff multiplier from `2.0` to **`4.0`**. This makes grip loss start earlier and drop off faster, reducing the "on/off" feeling.
+- **GUI Organization**: Completely reorganized the Troubleshooting Graphs (Debug Window) into three logical groups for better usability:
+    - **Header A (Output)**: Main Forces, Modifiers, Textures.
+    - **Header B (Brain)**: Internal Physics (Loads, Grip/Slip, Forces).
+    - **Header C (Input)**: Raw Game Telemetry (Driver Input, Vehicle State, Tire Data, Velocities).
+- **Code Structure**: Moved `vendor/stb_image_write.h` to `src/stb_image_write.h` for simpler inclusion.
+
 ## [0.4.11] - 2025-12-13
 ### Added
 - **Rear Align Torque Slider**: Added a dedicated slider for `Rear Align Torque` (0.0-2.0) to the GUI. This decouples the rear-end force from the generic `Oversteer Boost`, allowing independent tuning.

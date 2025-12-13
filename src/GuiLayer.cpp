@@ -6,6 +6,11 @@
 #include <vector>
 #include <mutex>
 
+// Define STB_IMAGE_WRITE_IMPLEMENTATION only once in the project (here is fine)
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+#include <ctime>
+
 #ifdef ENABLE_IMGUI
 #include "imgui.h"
 #include "imgui_impl_win32.h"
@@ -138,6 +143,73 @@ bool GuiLayer::Render(FFBEngine& engine) {
     // Return focus state for lazy rendering optimization
     // Typically, if ImGui::IsAnyItemActive() is true, we want fast updates
     return ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow) || ImGui::IsAnyItemActive();
+}
+
+// Screenshot Helper (DirectX 11)
+void SaveScreenshot(const char* filename) {
+    if (!g_pSwapChain || !g_pd3dDevice || !g_pd3dDeviceContext) return;
+
+    // 1. Get the Back Buffer
+    ID3D11Texture2D* pBackBuffer = nullptr;
+    HRESULT hr = g_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
+    if (FAILED(hr)) return;
+
+    // 2. Create a Staging Texture (CPU Readable)
+    D3D11_TEXTURE2D_DESC desc;
+    pBackBuffer->GetDesc(&desc);
+    desc.BindFlags = 0;
+    desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+    desc.Usage = D3D11_USAGE_STAGING;
+
+    ID3D11Texture2D* pStagingTexture = nullptr;
+    hr = g_pd3dDevice->CreateTexture2D(&desc, NULL, &pStagingTexture);
+    if (FAILED(hr)) {
+        pBackBuffer->Release();
+        return;
+    }
+
+    // 3. Copy GPU -> CPU
+    g_pd3dDeviceContext->CopyResource(pStagingTexture, pBackBuffer);
+
+    // 4. Map the data to read it
+    D3D11_MAPPED_SUBRESOURCE mapped;
+    hr = g_pd3dDeviceContext->Map(pStagingTexture, 0, D3D11_MAP_READ, 0, &mapped);
+    if (SUCCEEDED(hr)) {
+        // 5. Handle Format (DX11 is usually BGRA, PNG needs RGBA)
+        int width = desc.Width;
+        int height = desc.Height;
+        int channels = 4;
+        
+        // Allocate buffer for the image
+        std::vector<unsigned char> image_data(width * height * channels);
+        unsigned char* src = (unsigned char*)mapped.pData;
+        unsigned char* dst = image_data.data();
+
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                // Calculate positions
+                int src_index = (y * mapped.RowPitch) + (x * 4);
+                int dst_index = (y * width * 4) + (x * 4);
+
+                // Copy directly - DirectX buffer appears to already be in RGBA format
+                dst[dst_index + 0] = src[src_index + 0]; // R
+                dst[dst_index + 1] = src[src_index + 1]; // G
+                dst[dst_index + 2] = src[src_index + 2]; // B
+                dst[dst_index + 3] = 255;                // Alpha (Force Opaque)
+            }
+        }
+
+        // 6. Save to PNG using STB
+        stbi_write_png(filename, width, height, channels, image_data.data(), width * channels);
+
+        g_pd3dDeviceContext->Unmap(pStagingTexture, 0);
+    }
+
+    // Cleanup
+    pStagingTexture->Release();
+    pBackBuffer->Release();
+    
+    std::cout << "[GUI] Screenshot saved to " << filename << std::endl;
 }
 
 void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
@@ -308,11 +380,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         Config::Save(engine);
     }
     ImGui::SameLine();
-    if (ImGui::Checkbox("Show Troubleshooting Graphs", &m_show_debug_window)) {
-        // Just toggles window
-    }
-    
-    ImGui::SameLine();
     if (ImGui::Button("Reset Defaults")) {
         // Reset Logic (Updated v0.3.13)
         engine.m_gain = 0.5f;
@@ -334,6 +401,24 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         engine.m_bottoming_method = 0;
         engine.m_use_manual_slip = false;
     }
+    
+    ImGui::Separator();
+    if (ImGui::Checkbox("Show Troubleshooting Graphs", &m_show_debug_window)) {
+        // Just toggles window
+    }
+    // Screenshot Button
+    ImGui::SameLine();
+    if (ImGui::Button("Save Screenshot")) {
+        // Generate a timestamped filename
+        time_t now = time(0);
+        struct tm tstruct;
+        char buf[80];
+        localtime_s(&tstruct, &now);
+        strftime(buf, sizeof(buf), "screenshot_%Y-%m-%d_%H-%M-%S.png", &tstruct);
+        
+        SaveScreenshot(buf);
+    }
+
 
     ImGui::End();
 }
@@ -446,56 +531,54 @@ struct RollingBuffer {
     }
 };
 
-// --- Header A: FFB Components ---
+// --- Header A: FFB Components (Output) ---
 static RollingBuffer plot_total;
 static RollingBuffer plot_base;
 static RollingBuffer plot_sop;
-static RollingBuffer plot_understeer;
-static RollingBuffer plot_oversteer;
 static RollingBuffer plot_rear_torque; 
-static RollingBuffer plot_scrub_drag;  
+static RollingBuffer plot_scrub_drag;
+static RollingBuffer plot_oversteer;
+static RollingBuffer plot_understeer;
+static RollingBuffer plot_clipping;
 static RollingBuffer plot_road;
 static RollingBuffer plot_slide;
 static RollingBuffer plot_lockup;
 static RollingBuffer plot_spin;
 static RollingBuffer plot_bottoming;
-static RollingBuffer plot_clipping;
 
-// --- Header B: Internal Physics ---
+// --- Header B: Internal Physics (Brain) ---
 static RollingBuffer plot_calc_front_load;
-static RollingBuffer plot_calc_rear_load; // New v0.4.10
+static RollingBuffer plot_calc_rear_load; 
 static RollingBuffer plot_calc_front_grip;
-static RollingBuffer plot_calc_rear_grip; // New v0.4.7
+static RollingBuffer plot_calc_rear_grip;
 static RollingBuffer plot_calc_slip_ratio;
-static RollingBuffer plot_calc_slip_angle_smoothed; // Renamed
-static RollingBuffer plot_raw_slip_angle; // New v0.4.7
-static RollingBuffer plot_calc_rear_slip_angle_smoothed; // New v0.4.9
-static RollingBuffer plot_raw_rear_slip_angle; // New v0.4.9
+static RollingBuffer plot_calc_slip_angle_smoothed; 
+static RollingBuffer plot_calc_rear_slip_angle_smoothed; 
+// Moved here from Header C
+static RollingBuffer plot_calc_rear_lat_force; 
 
-// --- Header C: Raw Game Telemetry ---
+// --- Header C: Raw Game Telemetry (Input) ---
 static RollingBuffer plot_raw_steer;
-static RollingBuffer plot_raw_input_steering; // New v0.4.7
-static RollingBuffer plot_raw_load;        
-static RollingBuffer plot_raw_grip;        
-static RollingBuffer plot_raw_rear_grip; // New v0.4.7
-static RollingBuffer plot_raw_front_slip_ratio; // New v0.4.7
-static RollingBuffer plot_raw_susp_force;  
-static RollingBuffer plot_raw_ride_height; 
-// NOTE: This buffer was renamed from plot_raw_rear_lat_force to plot_calc_rear_lat_force
-// in v0.4.10 to accurately reflect that it contains CALCULATED data (from the workaround),
-// not RAW telemetry from the game API. The LMU 1.2 API reports 0.0 for rear mLateralForce,
-// so we calculate it manually using: SlipAngle × Load × TireStiffness.
-// See FFBEngine.h "Rear Aligning Torque Integration" for calculation details.
-static RollingBuffer plot_calc_rear_lat_force; // New v0.4.10 - Calculated workaround value
-static RollingBuffer plot_raw_car_speed;   
+static RollingBuffer plot_raw_input_steering;
 static RollingBuffer plot_raw_throttle;    
 static RollingBuffer plot_raw_brake;       
 static RollingBuffer plot_input_accel;
-static RollingBuffer plot_raw_front_lat_patch_vel; // Renamed
-static RollingBuffer plot_raw_front_deflection; // Renamed
-static RollingBuffer plot_raw_front_long_patch_vel; // New v0.4.9
-static RollingBuffer plot_raw_rear_lat_patch_vel; // New v0.4.9
-static RollingBuffer plot_raw_rear_long_patch_vel; // New v0.4.9
+static RollingBuffer plot_raw_car_speed;   
+static RollingBuffer plot_raw_load;        
+static RollingBuffer plot_raw_grip;        
+static RollingBuffer plot_raw_rear_grip;
+static RollingBuffer plot_raw_front_slip_ratio;
+static RollingBuffer plot_raw_susp_force;  
+static RollingBuffer plot_raw_ride_height; 
+static RollingBuffer plot_raw_front_lat_patch_vel; 
+static RollingBuffer plot_raw_front_long_patch_vel;
+static RollingBuffer plot_raw_rear_lat_patch_vel;
+static RollingBuffer plot_raw_rear_long_patch_vel;
+
+// Extras
+static RollingBuffer plot_raw_slip_angle; // Kept but grouped appropriately
+static RollingBuffer plot_raw_rear_slip_angle;
+static RollingBuffer plot_raw_front_deflection; 
 
 // State for Warnings
 static bool g_warn_load = false;
@@ -518,47 +601,54 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         plot_total.Add(snap.total_output);
         plot_base.Add(snap.base_force);
         plot_sop.Add(snap.sop_force);
-        plot_understeer.Add(snap.understeer_drop);
-        plot_oversteer.Add(snap.oversteer_boost);
         plot_rear_torque.Add(snap.ffb_rear_torque);
         plot_scrub_drag.Add(snap.ffb_scrub_drag);
+        
+        plot_oversteer.Add(snap.oversteer_boost);
+        plot_understeer.Add(snap.understeer_drop);
+        plot_clipping.Add(snap.clipping);
+        
         plot_road.Add(snap.texture_road);
         plot_slide.Add(snap.texture_slide);
         plot_lockup.Add(snap.texture_lockup);
         plot_spin.Add(snap.texture_spin);
         plot_bottoming.Add(snap.texture_bottoming);
-        plot_clipping.Add(snap.clipping);
 
         // --- Header B: Internal Physics ---
         plot_calc_front_load.Add(snap.calc_front_load);
-        plot_calc_rear_load.Add(snap.calc_rear_load); // New v0.4.10
+        plot_calc_rear_load.Add(snap.calc_rear_load); 
         plot_calc_front_grip.Add(snap.calc_front_grip);
         plot_calc_rear_grip.Add(snap.calc_rear_grip);
         plot_calc_slip_ratio.Add(snap.calc_front_slip_ratio);
         plot_calc_slip_angle_smoothed.Add(snap.calc_front_slip_angle_smoothed);
-        plot_raw_slip_angle.Add(snap.raw_front_slip_angle);
         plot_calc_rear_slip_angle_smoothed.Add(snap.calc_rear_slip_angle_smoothed);
-        plot_raw_rear_slip_angle.Add(snap.raw_rear_slip_angle);
+        plot_calc_rear_lat_force.Add(snap.calc_rear_lat_force);
 
         // --- Header C: Raw Telemetry ---
         plot_raw_steer.Add(snap.steer_force);
         plot_raw_input_steering.Add(snap.raw_input_steering);
-        plot_raw_load.Add(snap.raw_front_tire_load);
-        plot_raw_grip.Add(snap.raw_front_grip_fract);
-        plot_raw_rear_grip.Add(snap.raw_rear_grip);
-        plot_raw_front_slip_ratio.Add(snap.raw_front_slip_ratio);
-        plot_raw_susp_force.Add(snap.raw_front_susp_force);
-        plot_raw_ride_height.Add(snap.raw_front_ride_height);
-        plot_calc_rear_lat_force.Add(snap.calc_rear_lat_force);
-        plot_raw_car_speed.Add(snap.raw_car_speed);
         plot_raw_throttle.Add(snap.raw_input_throttle);
         plot_raw_brake.Add(snap.raw_input_brake);
         plot_input_accel.Add(snap.accel_x);
+        plot_raw_car_speed.Add(snap.raw_car_speed);
+        
+        plot_raw_load.Add(snap.raw_front_tire_load);
+        plot_raw_grip.Add(snap.raw_front_grip_fract);
+        plot_raw_rear_grip.Add(snap.raw_rear_grip);
+        
+        plot_raw_front_slip_ratio.Add(snap.raw_front_slip_ratio);
+        plot_raw_susp_force.Add(snap.raw_front_susp_force);
+        plot_raw_ride_height.Add(snap.raw_front_ride_height);
+        
         plot_raw_front_lat_patch_vel.Add(snap.raw_front_lat_patch_vel);
-        plot_raw_front_deflection.Add(snap.raw_front_deflection);
         plot_raw_front_long_patch_vel.Add(snap.raw_front_long_patch_vel);
         plot_raw_rear_lat_patch_vel.Add(snap.raw_rear_lat_patch_vel);
         plot_raw_rear_long_patch_vel.Add(snap.raw_rear_long_patch_vel);
+
+        // Updates for extra buffers
+        plot_raw_slip_angle.Add(snap.raw_front_slip_angle);
+        plot_raw_rear_slip_angle.Add(snap.raw_rear_slip_angle);
+        plot_raw_front_deflection.Add(snap.raw_front_deflection);
 
         // Update Warning Flags (Sticky-ish for display)
         g_warn_load = snap.warn_load;
@@ -577,236 +667,204 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         ImGui::Separator();
     }
 
-    // --- Header A: FFB Components (The Output) ---
-    if (ImGui::CollapsingHeader("A. FFB Components (Output Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
+    // --- Header A: FFB Components (Output) ---
+    // [Main Forces], [Modifiers], [Textures]
+    if (ImGui::CollapsingHeader("A. FFB Components (Output)", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Text("Total Output");
         ImGui::PlotLines("##Total", plot_total.data.data(), (int)plot_total.data.size(), plot_total.offset, "Total", -1.0f, 1.0f, ImVec2(0, 60));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Final FFB Output (-1.0 to 1.0)");
         
-        ImGui::Columns(3, "FFBCols", false);
+        ImGui::Separator();
+        ImGui::Columns(3, "FFBMain", false);
+        
+        // Group: Main Forces
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 1.0f, 1.0f), "[Main Forces]");
         
         ImGui::Text("Base Torque (Nm)"); ImGui::PlotLines("##Base", plot_base.data.data(), (int)plot_base.data.size(), plot_base.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Steering Rack Force derived from Game Physics");
-        ImGui::NextColumn();
         
         ImGui::Text("SoP (Base Chassis G)"); ImGui::PlotLines("##SoP", plot_sop.data.data(), (int)plot_sop.data.size(), plot_sop.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force from Lateral G-Force (Seat of Pants)");
-        ImGui::NextColumn();
-        
-        ImGui::Text("Oversteer Boost"); ImGui::PlotLines("##Over", plot_oversteer.data.data(), (int)plot_oversteer.data.size(), plot_oversteer.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Added force from Rear Grip loss");
-        ImGui::NextColumn();
         
         ImGui::Text("Rear Align Torque"); ImGui::PlotLines("##RearT", plot_rear_torque.data.data(), (int)plot_rear_torque.data.size(), plot_rear_torque.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force from Rear Lateral Force");
-        ImGui::NextColumn();
         
         ImGui::Text("Scrub Drag Force"); ImGui::PlotLines("##Drag", plot_scrub_drag.data.data(), (int)plot_scrub_drag.data.size(), plot_scrub_drag.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Resistance force from sideways tire dragging");
+        
         ImGui::NextColumn();
+        
+        // Group: Modifiers
+        ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.7f, 1.0f), "[Modifiers]");
+        
+        ImGui::Text("Oversteer Boost"); ImGui::PlotLines("##Over", plot_oversteer.data.data(), (int)plot_oversteer.data.size(), plot_oversteer.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Added force from Rear Grip loss");
         
         ImGui::Text("Understeer Cut"); ImGui::PlotLines("##Under", plot_understeer.data.data(), (int)plot_understeer.data.size(), plot_understeer.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Reduction in force due to front grip loss");
-        ImGui::NextColumn();
-        
-        ImGui::Text("Road Texture"); ImGui::PlotLines("##Road", plot_road.data.data(), (int)plot_road.data.size(), plot_road.offset, NULL, -10.0f, 10.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Suspension Velocity");
-        ImGui::NextColumn();
-        
-        ImGui::Text("Slide Texture"); ImGui::PlotLines("##Slide", plot_slide.data.data(), (int)plot_slide.data.size(), plot_slide.offset, NULL, -10.0f, 10.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Lateral Scrubbing");
-        ImGui::NextColumn();
-        
-        ImGui::Text("Lockup Vib"); ImGui::PlotLines("##Lock", plot_lockup.data.data(), (int)plot_lockup.data.size(), plot_lockup.offset, NULL, -10.0f, 10.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Wheel Lockup");
-        ImGui::NextColumn();
-        
-        ImGui::Text("Spin Vib"); ImGui::PlotLines("##Spin", plot_spin.data.data(), (int)plot_spin.data.size(), plot_spin.offset, NULL, -10.0f, 10.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Wheel Spin");
-        ImGui::NextColumn();
-        
-        ImGui::Text("Bottoming"); ImGui::PlotLines("##Bot", plot_bottoming.data.data(), (int)plot_bottoming.data.size(), plot_bottoming.offset, NULL, -10.0f, 10.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Suspension Bottoming");
-        ImGui::NextColumn();
         
         ImGui::Text("Clipping"); ImGui::PlotLines("##Clip", plot_clipping.data.data(), (int)plot_clipping.data.size(), plot_clipping.offset, NULL, 0.0f, 1.1f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Indicates when Output hits max limit");
+        
+        ImGui::NextColumn();
+        
+        // Group: Textures
+        ImGui::TextColored(ImVec4(0.7f, 1.0f, 0.7f, 1.0f), "[Textures]");
+        
+        ImGui::Text("Road Texture"); ImGui::PlotLines("##Road", plot_road.data.data(), (int)plot_road.data.size(), plot_road.offset, NULL, -10.0f, 10.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Suspension Velocity");
+        ImGui::Text("Slide Texture"); ImGui::PlotLines("##Slide", plot_slide.data.data(), (int)plot_slide.data.size(), plot_slide.offset, NULL, -10.0f, 10.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Lateral Scrubbing");
+        ImGui::Text("Lockup Vib"); ImGui::PlotLines("##Lock", plot_lockup.data.data(), (int)plot_lockup.data.size(), plot_lockup.offset, NULL, -10.0f, 10.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Wheel Lockup");
+        ImGui::Text("Spin Vib"); ImGui::PlotLines("##Spin", plot_spin.data.data(), (int)plot_spin.data.size(), plot_spin.offset, NULL, -10.0f, 10.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Wheel Spin");
+        ImGui::Text("Bottoming"); ImGui::PlotLines("##Bot", plot_bottoming.data.data(), (int)plot_bottoming.data.size(), plot_bottoming.offset, NULL, -10.0f, 10.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vibration from Suspension Bottoming");
+
         ImGui::Columns(1);
     }
 
-    // --- Header B: Internal Physics Engine (The Brain) ---
+    // --- Header B: Internal Physics (Brain) ---
+    // [Loads], [Grip/Slip], [Forces]
     if (ImGui::CollapsingHeader("B. Internal Physics (Brain)", ImGuiTreeNodeFlags_None)) {
         ImGui::Columns(3, "PhysCols", false);
+        
+        // Group: Loads
+        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Loads]");
         
         ImGui::Text("Calc Load (Front/Rear)");
         ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 1.0f, 1.0f));
         ImGui::PlotLines("##CLoadF", plot_calc_front_load.data.data(), (int)plot_calc_front_load.data.size(), plot_calc_front_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
         ImGui::PopStyleColor();
-
         // Reset Cursor to draw on top
         ImVec2 pos_load = ImGui::GetItemRectMin();
         ImGui::SetCursorScreenPos(pos_load);
-
         // Draw Rear (Magenta) - Transparent Background
         ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0,0,0,0)); 
         ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(1.0f, 0.0f, 1.0f, 1.0f));
         ImGui::PlotLines("##CLoadR", plot_calc_rear_load.data.data(), (int)plot_calc_rear_load.data.size(), plot_calc_rear_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
         ImGui::PopStyleColor(2);
-
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Cyan: Front, Magenta: Rear");
+        
         ImGui::NextColumn();
+        
+        // Group: Grip/Slip
+        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Grip/Slip]");
         
         ImGui::Text("Calc Front Grip");
         ImGui::PlotLines("##CalcGrip", plot_calc_front_grip.data.data(), (int)plot_calc_front_grip.data.size(), plot_calc_front_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Grip used for physics math (approximated if missing)");
-        ImGui::NextColumn();
         
         ImGui::Text("Calc Rear Grip");
         ImGui::PlotLines("##CalcRearGrip", plot_calc_rear_grip.data.data(), (int)plot_calc_rear_grip.data.size(), plot_calc_rear_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Rear Grip used for SoP/Oversteer math");
-        ImGui::NextColumn();
         
-        ImGui::Text("Front Slip Ratio (Comb)");
-        ImVec2 pos_sr = ImGui::GetCursorScreenPos();
-        // Draw Raw (Cyan) first as background
-        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 1.0f, 1.0f)); 
-        ImGui::PlotLines("##RawSlipB", plot_raw_front_slip_ratio.data.data(), (int)plot_raw_front_slip_ratio.data.size(), plot_raw_front_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
-        ImGui::PopStyleColor();
-        
-        // Draw Calc (Magenta) on top
-        ImGui::SetCursorScreenPos(pos_sr); 
-        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(1.0f, 0.0f, 1.0f, 1.0f)); 
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); 
+        ImGui::Text("Front Slip Ratio");
         ImGui::PlotLines("##CalcSlipB", plot_calc_slip_ratio.data.data(), (int)plot_calc_slip_ratio.data.size(), plot_calc_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
-        ImGui::PopStyleColor(2);
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Calculated or Game-provided Slip Ratio");
         
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Cyan: Game Raw, Magenta: Manual Calc");
-        ImGui::NextColumn();
-        
-        ImGui::Text("Front Slip Angle (Smoothed)");
+        ImGui::Text("Front Slip Angle (Sm)");
         ImGui::PlotLines("##SlipAS", plot_calc_slip_angle_smoothed.data.data(), (int)plot_calc_slip_angle_smoothed.data.size(), plot_calc_slip_angle_smoothed.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Smoothed Slip Angle (LPF) used for approximation");
-        ImGui::NextColumn();
         
-        ImGui::Text("Front Slip Angle (Raw)");
-        ImGui::PlotLines("##SlipAR", plot_raw_slip_angle.data.data(), (int)plot_raw_slip_angle.data.size(), plot_raw_slip_angle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Slip Angle (atan2) before smoothing");
-        ImGui::NextColumn();
-
-        ImGui::Text("Rear Slip Angle (Smoothed)");
+        ImGui::Text("Rear Slip Angle (Sm)");
         ImGui::PlotLines("##SlipARS", plot_calc_rear_slip_angle_smoothed.data.data(), (int)plot_calc_rear_slip_angle_smoothed.data.size(), plot_calc_rear_slip_angle_smoothed.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Smoothed Rear Slip Angle (LPF)");
+        
         ImGui::NextColumn();
         
-        ImGui::Text("Rear Slip Angle (Raw)");
-        ImGui::PlotLines("##SlipARR", plot_raw_rear_slip_angle.data.data(), (int)plot_raw_rear_slip_angle.data.size(), plot_raw_rear_slip_angle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Rear Slip Angle (atan2)");
-
-        ImGui::Columns(1);
-    }
-
-    // --- Header C: Raw Game Telemetry Inspector (The Input) ---
-    if (ImGui::CollapsingHeader("C. Raw Game Telemetry (Input)", ImGuiTreeNodeFlags_None)) {
-        ImGui::Columns(3, "TelCols", false);
-        
-        ImGui::Text("Steering Torque (Nm)"); 
-        ImGui::PlotLines("##StForce", plot_raw_steer.data.data(), (int)plot_raw_steer.data.size(), plot_raw_steer.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Steering Torque from Game API");
-        ImGui::NextColumn();
-        
-        ImGui::Text("Steering Input (Angle)");
-        ImGui::PlotLines("##StInput", plot_raw_input_steering.data.data(), (int)plot_raw_input_steering.data.size(), plot_raw_input_steering.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Driver wheel position -1 to 1");
-        ImGui::NextColumn();
-        
-        ImGui::Text("Chassis Lat Accel (G)"); 
-        ImGui::PlotLines("##LatG", plot_input_accel.data.data(), (int)plot_input_accel.data.size(), plot_input_accel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Local Lateral Acceleration (G)");
-        ImGui::NextColumn();
-        
-        // Highlight Load if warning
-        if (g_warn_load) ImGui::TextColored(ImVec4(1,0,0,1), "Raw Front Load (MISSING)");
-        else ImGui::Text("Raw Front Load (N)");
-        ImGui::PlotLines("##RawLoad", plot_raw_load.data.data(), (int)plot_raw_load.data.size(), plot_raw_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Tire Load from Game API");
-        ImGui::NextColumn();
-        
-        // Highlight Grip if warning
-        if (g_warn_grip) ImGui::TextColored(ImVec4(1,0,0,1), "Raw Front Grip (MISSING)");
-        else ImGui::Text("Raw Front Grip");
-        ImGui::PlotLines("##RawGrip", plot_raw_grip.data.data(), (int)plot_raw_grip.data.size(), plot_raw_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Grip Fraction from Game API");
-        ImGui::NextColumn();
-
-        ImGui::Text("Raw Rear Grip");
-        ImGui::PlotLines("##RawRearGrip", plot_raw_rear_grip.data.data(), (int)plot_raw_rear_grip.data.size(), plot_raw_rear_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Rear Grip Fraction from Game API");
-        ImGui::NextColumn();
-        
-        ImGui::Text("Raw Front Slip Ratio");
-        ImGui::PlotLines("##RawSlip", plot_raw_front_slip_ratio.data.data(), (int)plot_raw_front_slip_ratio.data.size(), plot_raw_front_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Value provided by game API");
-        ImGui::NextColumn();
-        
-        ImGui::Text("Raw Front Susp. Force"); 
-        ImGui::PlotLines("##Susp", plot_raw_susp_force.data.data(), (int)plot_raw_susp_force.data.size(), plot_raw_susp_force.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Suspension Force");
-        ImGui::NextColumn();
-        
-        ImGui::Text("Raw Front Ride Height"); 
-        ImGui::PlotLines("##RH", plot_raw_ride_height.data.data(), (int)plot_raw_ride_height.data.size(), plot_raw_ride_height.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Ride Height");
-        ImGui::NextColumn();
+        // Group: Forces
+        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Forces]");
         
         ImGui::Text("Calc Rear Lat Force"); 
         ImGui::PlotLines("##RLF", plot_calc_rear_lat_force.data.data(), (int)plot_calc_rear_lat_force.data.size(), plot_calc_rear_lat_force.offset, NULL, -5000.0f, 5000.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Calculated Rear Lateral Force (Workaround)");
-        ImGui::NextColumn();
-        
-        ImGui::Text("Car Speed (m/s)"); 
-        ImGui::PlotLines("##Speed", plot_raw_car_speed.data.data(), (int)plot_raw_car_speed.data.size(), plot_raw_car_speed.offset, NULL, 0.0f, 100.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vehicle Speed");
-        ImGui::NextColumn();
-        
-        ImGui::Text("Avg Front Lat PatchVel"); 
-        ImGui::PlotLines("##PatchV", plot_raw_front_lat_patch_vel.data.data(), (int)plot_raw_front_lat_patch_vel.data.size(), plot_raw_front_lat_patch_vel.offset, NULL, 0.0f, 20.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Lateral Velocity at Contact Patch");
-        ImGui::NextColumn();
-        
-        ImGui::Text("Avg Front Deflection"); 
-        ImGui::PlotLines("##Defl", plot_raw_front_deflection.data.data(), (int)plot_raw_front_deflection.data.size(), plot_raw_front_deflection.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vertical Tire Deflection");
-        ImGui::NextColumn();
 
-        ImGui::Text("Avg Front Long PatchVel");
-        ImGui::PlotLines("##PatchFL", plot_raw_front_long_patch_vel.data.data(), (int)plot_raw_front_long_patch_vel.data.size(), plot_raw_front_long_patch_vel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Longitudinal Velocity at Contact Patch (Front)");
-        ImGui::NextColumn();
+        ImGui::Columns(1);
+    }
 
-        ImGui::Text("Avg Rear Lat PatchVel");
-        ImGui::PlotLines("##PatchRL", plot_raw_rear_lat_patch_vel.data.data(), (int)plot_raw_rear_lat_patch_vel.data.size(), plot_raw_rear_lat_patch_vel.offset, NULL, 0.0f, 20.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Lateral Velocity at Contact Patch (Rear)");
-        ImGui::NextColumn();
-
-        ImGui::Text("Avg Rear Long PatchVel");
-        ImGui::PlotLines("##PatchRLong", plot_raw_rear_long_patch_vel.data.data(), (int)plot_raw_rear_long_patch_vel.data.size(), plot_raw_rear_long_patch_vel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Longitudinal Velocity at Contact Patch (Rear)");
-        ImGui::NextColumn();
+    // --- Header C: Raw Game Telemetry (Input) ---
+    // [Driver Input], [Vehicle State], [Raw Tire Data], [Patch Velocities]
+    if (ImGui::CollapsingHeader("C. Raw Game Telemetry (Input)", ImGuiTreeNodeFlags_None)) {
+        ImGui::Columns(4, "TelCols", false);
+        
+        // Group: Driver Input
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Driver Input]");
+        
+        ImGui::Text("Steering Torque"); 
+        ImGui::PlotLines("##StForce", plot_raw_steer.data.data(), (int)plot_raw_steer.data.size(), plot_raw_steer.offset, NULL, -30.0f, 30.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Steering Torque from Game API");
+        
+        ImGui::Text("Steering Input");
+        ImGui::PlotLines("##StInput", plot_raw_input_steering.data.data(), (int)plot_raw_input_steering.data.size(), plot_raw_input_steering.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Driver wheel position -1 to 1");
         
         ImGui::Text("Combined Input");
         ImVec2 pos = ImGui::GetCursorScreenPos();
         ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(1.0f, 0.0f, 0.0f, 1.0f)); // Red for Brake
         ImGui::PlotLines("##BrkComb", plot_raw_brake.data.data(), (int)plot_raw_brake.data.size(), plot_raw_brake.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
         ImGui::PopStyleColor();
-        
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Green: Throttle, Red: Brake");
-
         ImGui::SetCursorScreenPos(pos); // Reset
         ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 0.0f, 1.0f)); // Green for Throttle
         ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // Transparent Bg
         ImGui::PlotLines("##ThrComb", plot_raw_throttle.data.data(), (int)plot_raw_throttle.data.size(), plot_raw_throttle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
         ImGui::PopStyleColor(2);
         
+        ImGui::NextColumn();
+        
+        // Group: Vehicle State
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Vehicle State]");
+        
+        ImGui::Text("Chassis Lat Accel"); 
+        ImGui::PlotLines("##LatG", plot_input_accel.data.data(), (int)plot_input_accel.data.size(), plot_input_accel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Local Lateral Acceleration (G)");
+        
+        ImGui::Text("Car Speed (m/s)"); 
+        ImGui::PlotLines("##Speed", plot_raw_car_speed.data.data(), (int)plot_raw_car_speed.data.size(), plot_raw_car_speed.offset, NULL, 0.0f, 100.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vehicle Speed");
+        
+        ImGui::NextColumn();
+        
+        // Group: Raw Tire Data
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Raw Tire Data]");
+        
+        if (g_warn_load) ImGui::TextColored(ImVec4(1,0,0,1), "Raw Front Load (MISSING)");
+        else ImGui::Text("Raw Front Load");
+        ImGui::PlotLines("##RawLoad", plot_raw_load.data.data(), (int)plot_raw_load.data.size(), plot_raw_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Tire Load from Game API");
+        
+        if (g_warn_grip) ImGui::TextColored(ImVec4(1,0,0,1), "Raw Front Grip (MISSING)");
+        else ImGui::Text("Raw Front Grip");
+        ImGui::PlotLines("##RawGrip", plot_raw_grip.data.data(), (int)plot_raw_grip.data.size(), plot_raw_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Grip Fraction from Game API");
+        
+        ImGui::Text("Raw Rear Grip");
+        ImGui::PlotLines("##RawRearGrip", plot_raw_rear_grip.data.data(), (int)plot_raw_rear_grip.data.size(), plot_raw_rear_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Rear Grip Fraction from Game API");
+
+        ImGui::NextColumn();
+        
+        // Group: Patch Velocities
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Patch Velocities]");
+        
+        ImGui::Text("Avg Front Lat PatchVel"); 
+        ImGui::PlotLines("##PatchV", plot_raw_front_lat_patch_vel.data.data(), (int)plot_raw_front_lat_patch_vel.data.size(), plot_raw_front_lat_patch_vel.offset, NULL, 0.0f, 20.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Lateral Velocity at Contact Patch");
+        
+        ImGui::Text("Avg Rear Lat PatchVel");
+        ImGui::PlotLines("##PatchRL", plot_raw_rear_lat_patch_vel.data.data(), (int)plot_raw_rear_lat_patch_vel.data.size(), plot_raw_rear_lat_patch_vel.offset, NULL, 0.0f, 20.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Lateral Velocity at Contact Patch (Rear)");
+
+        ImGui::Text("Avg Front Long PatchVel");
+        ImGui::PlotLines("##PatchFL", plot_raw_front_long_patch_vel.data.data(), (int)plot_raw_front_long_patch_vel.data.size(), plot_raw_front_long_patch_vel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Longitudinal Velocity at Contact Patch (Front)");
+
+        ImGui::Text("Avg Rear Long PatchVel");
+        ImGui::PlotLines("##PatchRLong", plot_raw_rear_long_patch_vel.data.data(), (int)plot_raw_rear_long_patch_vel.data.size(), plot_raw_rear_long_patch_vel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Longitudinal Velocity at Contact Patch (Rear)");
+
         ImGui::Columns(1);
     }
 

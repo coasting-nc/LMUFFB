@@ -1,4 +1,4 @@
-# FFB Mathematical Formulas (v0.4.10+)
+# FFB Mathematical Formulas (v0.4.12+)
 
 > **⚠️ API Source of Truth**  
 > All telemetry data units and field names are defined in **`src/lmu_sm_interface/InternalsPlugin.hpp`**.  
@@ -40,8 +40,9 @@ $$ F_{base} = T_{steering\_shaft} \times \left( 1.0 - \left( (1.0 - \text{Front\
         * **Low Speed Trap (v0.4.6):** If CarSpeed < 5.0 m/s, Grip = 1.0.
         * **Slip Angle LPF (v0.4.6):** Slip Angle is smoothed using an Exponential Moving Average ($\alpha \approx 0.1$).
         * $\text{Slip} = \text{atan2}(V_{lat}, V_{long})$
-        * $\text{Excess} = \max(0, \text{Slip} - 0.15)$
-        * $\text{Grip} = \max(0.2, 1.0 - (\text{Excess} \times 2.0))$
+        * **Refined Formula (v0.4.12):**
+            * $\text{Excess} = \max(0, \text{Slip} - 0.10)$ (Threshold tightened from 0.15)
+            * $\text{Grip} = \max(0.2, 1.0 - (\text{Excess} \times 4.0))$ (Multiplier increased from 2.0)
         * **Safety Clamp (v0.4.6):** Calculated Grip never drops below **0.2**.
 
 #### C. Seat of Pants (SoP) & Oversteer

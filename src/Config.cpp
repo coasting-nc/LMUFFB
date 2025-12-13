@@ -77,6 +77,14 @@ void Config::LoadPresets() {
         0.0f
     });
 
+    presets.push_back({ "Test: No Effects", 
+        1.0f, 0.0f, 0.0f, 20.0f, 0.0f, 0.0f, 0.0f, // gain, under, sop, scale, smooth, min, over
+        false, 0.0f, false, 0.0f, false, 0.0f, false, 0.0f, // lockup, spin, slide, road
+        false, 40.0f, // invert, max_torque_ref
+        false, 0, 0.0f, // use_manual_slip, bottoming_method, scrub_drag_gain
+        0.0f // rear_align_effect
+    });
+
     // Parse User Presets from config.ini [Presets] section
     std::ifstream file("config.ini");
     if (!file.is_open()) return;
