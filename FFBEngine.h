@@ -80,6 +80,8 @@ struct FFBSnapshot {
     float calc_front_slip_ratio; // New v0.4.7 (Manual Calc)
     float calc_front_slip_angle_smoothed; // Renamed from slip_angle
     float raw_front_slip_angle;  // New v0.4.7 (Raw atan2)
+    float calc_rear_slip_angle_smoothed; // New v0.4.9
+    float raw_rear_slip_angle;   // New v0.4.9 (Raw atan2)
 
     // --- Header C: Raw Game Telemetry (Inputs) ---
     float steer_force;
@@ -97,6 +99,9 @@ struct FFBSnapshot {
     float accel_x;
     float raw_front_lat_patch_vel; // Renamed from patch_vel
     float raw_front_deflection;    // Renamed from deflection
+    float raw_front_long_patch_vel; // New v0.4.9
+    float raw_rear_lat_patch_vel;   // New v0.4.9
+    float raw_rear_long_patch_vel;  // New v0.4.9
 
     // Telemetry Health Flags
     bool warn_load;
@@ -759,6 +764,7 @@ public:
                 snap.calc_rear_grip = (float)avg_rear_grip;
                 snap.calc_front_slip_ratio = (float)((calculate_manual_slip_ratio(fl, data->mLocalVel.z) + calculate_manual_slip_ratio(fr, data->mLocalVel.z)) / 2.0);
                 snap.calc_front_slip_angle_smoothed = (float)m_grip_diag.front_slip_angle; // Smoothed Slip Angle
+                snap.calc_rear_slip_angle_smoothed = (float)m_grip_diag.rear_slip_angle; // Smoothed Rear Slip Angle
                 
                 // Recalculate Raw Slip Angle (Avg FL/FR) for visualization
                 {
@@ -769,6 +775,19 @@ public:
                     double raw_angle_fl = std::atan2(std::abs(fl.mLateralPatchVel), v_long_fl);
                     double raw_angle_fr = std::atan2(std::abs(fr.mLateralPatchVel), v_long_fr);
                     snap.raw_front_slip_angle = (float)((raw_angle_fl + raw_angle_fr) / 2.0);
+                }
+                
+                // Recalculate Raw Rear Slip Angle (Avg RL/RR) for visualization
+                {
+                    const TelemWheelV01& rl = data->mWheel[2];
+                    const TelemWheelV01& rr = data->mWheel[3];
+                    double v_long_rl = std::abs(rl.mLongitudinalGroundVel);
+                    double v_long_rr = std::abs(rr.mLongitudinalGroundVel);
+                    if (v_long_rl < 0.5) v_long_rl = 0.5;
+                    if (v_long_rr < 0.5) v_long_rr = 0.5;
+                    double raw_angle_rl = std::atan2(std::abs(rl.mLateralPatchVel), v_long_rl);
+                    double raw_angle_rr = std::atan2(std::abs(rr.mLateralPatchVel), v_long_rr);
+                    snap.raw_rear_slip_angle = (float)((raw_angle_rl + raw_angle_rr) / 2.0);
                 }
 
                 // Helper for Raw Game Slip Ratio
@@ -795,6 +814,11 @@ public:
                 snap.raw_front_lat_patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
                 snap.raw_front_deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
                 
+                // New Patch Velocities (v0.4.9)
+                snap.raw_front_long_patch_vel = (float)((fl.mLongitudinalPatchVel + fr.mLongitudinalPatchVel) / 2.0);
+                snap.raw_rear_lat_patch_vel = (float)((std::abs(data->mWheel[2].mLateralPatchVel) + std::abs(data->mWheel[3].mLateralPatchVel)) / 2.0);
+                snap.raw_rear_long_patch_vel = (float)((data->mWheel[2].mLongitudinalPatchVel + data->mWheel[3].mLongitudinalPatchVel) / 2.0);
+
                 // Warnings
                 snap.warn_load = frame_warn_load;
                 snap.warn_grip = frame_warn_grip || frame_warn_rear_grip; // Combined warning

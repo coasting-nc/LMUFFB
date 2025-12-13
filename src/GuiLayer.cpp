@@ -465,6 +465,8 @@ static RollingBuffer plot_calc_rear_grip; // New v0.4.7
 static RollingBuffer plot_calc_slip_ratio;
 static RollingBuffer plot_calc_slip_angle_smoothed; // Renamed
 static RollingBuffer plot_raw_slip_angle; // New v0.4.7
+static RollingBuffer plot_calc_rear_slip_angle_smoothed; // New v0.4.9
+static RollingBuffer plot_raw_rear_slip_angle; // New v0.4.9
 
 // --- Header C: Raw Game Telemetry ---
 static RollingBuffer plot_raw_steer;
@@ -482,6 +484,9 @@ static RollingBuffer plot_raw_brake;
 static RollingBuffer plot_input_accel;
 static RollingBuffer plot_raw_front_lat_patch_vel; // Renamed
 static RollingBuffer plot_raw_front_deflection; // Renamed
+static RollingBuffer plot_raw_front_long_patch_vel; // New v0.4.9
+static RollingBuffer plot_raw_rear_lat_patch_vel; // New v0.4.9
+static RollingBuffer plot_raw_rear_long_patch_vel; // New v0.4.9
 
 // State for Warnings
 static bool g_warn_load = false;
@@ -522,6 +527,8 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         plot_calc_slip_ratio.Add(snap.calc_front_slip_ratio);
         plot_calc_slip_angle_smoothed.Add(snap.calc_front_slip_angle_smoothed);
         plot_raw_slip_angle.Add(snap.raw_front_slip_angle);
+        plot_calc_rear_slip_angle_smoothed.Add(snap.calc_rear_slip_angle_smoothed);
+        plot_raw_rear_slip_angle.Add(snap.raw_rear_slip_angle);
 
         // --- Header C: Raw Telemetry ---
         plot_raw_steer.Add(snap.steer_force);
@@ -539,6 +546,9 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         plot_input_accel.Add(snap.accel_x);
         plot_raw_front_lat_patch_vel.Add(snap.raw_front_lat_patch_vel);
         plot_raw_front_deflection.Add(snap.raw_front_deflection);
+        plot_raw_front_long_patch_vel.Add(snap.raw_front_long_patch_vel);
+        plot_raw_rear_lat_patch_vel.Add(snap.raw_rear_lat_patch_vel);
+        plot_raw_rear_long_patch_vel.Add(snap.raw_rear_long_patch_vel);
 
         // Update Warning Flags (Sticky-ish for display)
         g_warn_load = snap.warn_load;
@@ -633,9 +643,21 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Rear Grip used for SoP/Oversteer math");
         ImGui::NextColumn();
         
-        ImGui::Text("Calc Front Slip Ratio");
-        ImGui::PlotLines("##CalcSlip", plot_calc_slip_ratio.data.data(), (int)plot_calc_slip_ratio.data.size(), plot_calc_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Manual calculation from wheel speed");
+        ImGui::Text("Front Slip Ratio (Comb)");
+        ImVec2 pos_sr = ImGui::GetCursorScreenPos();
+        // Draw Raw (Cyan) first as background
+        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 1.0f, 1.0f)); 
+        ImGui::PlotLines("##RawSlipB", plot_raw_front_slip_ratio.data.data(), (int)plot_raw_front_slip_ratio.data.size(), plot_raw_front_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
+        ImGui::PopStyleColor();
+        
+        // Draw Calc (Magenta) on top
+        ImGui::SetCursorScreenPos(pos_sr); 
+        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(1.0f, 0.0f, 1.0f, 1.0f)); 
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); 
+        ImGui::PlotLines("##CalcSlipB", plot_calc_slip_ratio.data.data(), (int)plot_calc_slip_ratio.data.size(), plot_calc_slip_ratio.offset, NULL, -1.0f, 1.0f, ImVec2(0, 40));
+        ImGui::PopStyleColor(2);
+        
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Cyan: Game Raw, Magenta: Manual Calc");
         ImGui::NextColumn();
         
         ImGui::Text("Front Slip Angle (Smoothed)");
@@ -646,6 +668,17 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         ImGui::Text("Front Slip Angle (Raw)");
         ImGui::PlotLines("##SlipAR", plot_raw_slip_angle.data.data(), (int)plot_raw_slip_angle.data.size(), plot_raw_slip_angle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Slip Angle (atan2) before smoothing");
+        ImGui::NextColumn();
+
+        ImGui::Text("Rear Slip Angle (Smoothed)");
+        ImGui::PlotLines("##SlipARS", plot_calc_rear_slip_angle_smoothed.data.data(), (int)plot_calc_rear_slip_angle_smoothed.data.size(), plot_calc_rear_slip_angle_smoothed.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Smoothed Rear Slip Angle (LPF)");
+        ImGui::NextColumn();
+        
+        ImGui::Text("Rear Slip Angle (Raw)");
+        ImGui::PlotLines("##SlipARR", plot_raw_rear_slip_angle.data.data(), (int)plot_raw_rear_slip_angle.data.size(), plot_raw_rear_slip_angle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Rear Slip Angle (atan2)");
+
         ImGui::Columns(1);
     }
 
@@ -702,7 +735,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Ride Height");
         ImGui::NextColumn();
         
-        ImGui::Text("Raw Rear Lat Force"); 
+        ImGui::Text("Avg Rear Lat Force"); 
         ImGui::PlotLines("##RLF", plot_raw_rear_lat_force.data.data(), (int)plot_raw_rear_lat_force.data.size(), plot_raw_rear_lat_force.offset, NULL, -5000.0f, 5000.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Raw Rear Lateral Force");
         ImGui::NextColumn();
@@ -720,6 +753,21 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         ImGui::Text("Avg Front Deflection"); 
         ImGui::PlotLines("##Defl", plot_raw_front_deflection.data.data(), (int)plot_raw_front_deflection.data.size(), plot_raw_front_deflection.offset, NULL, 0.0f, 0.1f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vertical Tire Deflection");
+        ImGui::NextColumn();
+
+        ImGui::Text("Avg Front Long PatchVel");
+        ImGui::PlotLines("##PatchFL", plot_raw_front_long_patch_vel.data.data(), (int)plot_raw_front_long_patch_vel.data.size(), plot_raw_front_long_patch_vel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Longitudinal Velocity at Contact Patch (Front)");
+        ImGui::NextColumn();
+
+        ImGui::Text("Avg Rear Lat PatchVel");
+        ImGui::PlotLines("##PatchRL", plot_raw_rear_lat_patch_vel.data.data(), (int)plot_raw_rear_lat_patch_vel.data.size(), plot_raw_rear_lat_patch_vel.offset, NULL, 0.0f, 20.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Lateral Velocity at Contact Patch (Rear)");
+        ImGui::NextColumn();
+
+        ImGui::Text("Avg Rear Long PatchVel");
+        ImGui::PlotLines("##PatchRLong", plot_raw_rear_long_patch_vel.data.data(), (int)plot_raw_rear_long_patch_vel.data.size(), plot_raw_rear_long_patch_vel.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Longitudinal Velocity at Contact Patch (Rear)");
         ImGui::NextColumn();
         
         ImGui::Text("Combined Input");

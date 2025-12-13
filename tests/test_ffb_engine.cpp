@@ -35,6 +35,7 @@ int g_tests_failed = 0;
 // --- Tests ---
 
 void test_snapshot_data_integrity(); // Forward declaration
+void test_snapshot_data_v049(); // Forward declaration
 
 void test_manual_slip_singularity() {
     std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
@@ -1674,6 +1675,7 @@ int main() {
     test_universal_bottoming();
     test_preset_initialization();
     test_snapshot_data_integrity();
+    test_snapshot_data_v049();
     
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
@@ -1812,6 +1814,83 @@ void test_snapshot_data_integrity() {
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] raw_front_deflection incorrect: " << snap.raw_front_deflection << std::endl;
+        g_tests_failed++;
+    }
+}
+
+void test_snapshot_data_v049() {
+    std::cout << "\nTest: Snapshot Data v0.4.9 (Rear Physics)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+
+    // Setup input values
+    data.mLocalVel.z = 20.0;
+    data.mDeltaTime = 0.01;
+    
+    // Front Wheels
+    data.mWheel[0].mLongitudinalPatchVel = 1.0;
+    data.mWheel[1].mLongitudinalPatchVel = 1.0;
+    
+    // Rear Wheels (Sliding Lat + Long)
+    data.mWheel[2].mLateralPatchVel = 2.0;
+    data.mWheel[3].mLateralPatchVel = 2.0;
+    data.mWheel[2].mLongitudinalPatchVel = 3.0;
+    data.mWheel[3].mLongitudinalPatchVel = 3.0;
+    data.mWheel[2].mLongitudinalGroundVel = 20.0;
+    data.mWheel[3].mLongitudinalGroundVel = 20.0;
+
+    // Run Engine
+    engine.calculate_force(&data);
+
+    // Verify Snapshot
+    auto batch = engine.GetDebugBatch();
+    if (batch.empty()) {
+        std::cout << "[FAIL] No snapshot." << std::endl;
+        g_tests_failed++;
+        return;
+    }
+    
+    FFBSnapshot snap = batch.back();
+    
+    // Check Front Long Patch Vel
+    // Avg(1.0, 1.0) = 1.0
+    if (std::abs(snap.raw_front_long_patch_vel - 1.0) < 0.001) {
+        std::cout << "[PASS] raw_front_long_patch_vel correct." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] raw_front_long_patch_vel: " << snap.raw_front_long_patch_vel << std::endl;
+        g_tests_failed++;
+    }
+    
+    // Check Rear Lat Patch Vel
+    // Avg(abs(2.0), abs(2.0)) = 2.0
+    if (std::abs(snap.raw_rear_lat_patch_vel - 2.0) < 0.001) {
+        std::cout << "[PASS] raw_rear_lat_patch_vel correct." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] raw_rear_lat_patch_vel: " << snap.raw_rear_lat_patch_vel << std::endl;
+        g_tests_failed++;
+    }
+    
+    // Check Rear Long Patch Vel
+    // Avg(3.0, 3.0) = 3.0
+    if (std::abs(snap.raw_rear_long_patch_vel - 3.0) < 0.001) {
+        std::cout << "[PASS] raw_rear_long_patch_vel correct." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] raw_rear_long_patch_vel: " << snap.raw_rear_long_patch_vel << std::endl;
+        g_tests_failed++;
+    }
+    
+    // Check Rear Slip Angle Raw
+    // atan2(2, 20) = ~0.0996 rad
+    // snap.raw_rear_slip_angle
+    if (std::abs(snap.raw_rear_slip_angle - 0.0996) < 0.01) {
+        std::cout << "[PASS] raw_rear_slip_angle correct." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] raw_rear_slip_angle: " << snap.raw_rear_slip_angle << std::endl;
         g_tests_failed++;
     }
 }

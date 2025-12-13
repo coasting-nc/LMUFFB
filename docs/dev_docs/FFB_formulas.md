@@ -34,7 +34,7 @@ $$ Front\_Load\_Factor = \text{Clamp}\left( \frac{\text{Front\_Load}_{FL} + \tex
 
 #### B. Base Force (Understeer / Grip Modulation)
 This modulates the raw steering rack force from the game based on front tire grip.
-$$ F_{base} = F_{steering\_arm} \times \left( 1.0 - \left( (1.0 - \text{Front\_Grip}_{avg}) \times K_{understeer} \right) \right) $$
+$$ F_{base} = T_{steering\_shaft} \times \left( 1.0 - \left( (1.0 - \text{Front\_Grip}_{avg}) \times K_{understeer} \right) \right) $$
 *   $\text{Front\_Grip}_{avg}$: Average of Front Left and Front Right `mGripFract`.
     *   **Fallback (v0.4.5+):** If telemetry grip is missing ($\approx 0.0$) but Load $> 100N$, grip is approximated from **Slip Angle**.
         * **Low Speed Trap (v0.4.6):** If CarSpeed < 5.0 m/s, Grip = 1.0.
@@ -49,7 +49,7 @@ This injects lateral G-force and rear-axle aligning torque to simulate the car b
 
 1.  **Smoothed Lateral G ($G_{lat}$)**: Calculated via Low Pass Filter (Exponential Moving Average).
     *   **Input Clamp (v0.4.6):** Raw AccelX is clamped to +/- 5G ($49.05 m/s^2$) before processing.
-    $$ G_{smooth} = G_{prev} + \alpha \times \left( \frac{\text{AccelX}_{local}}{9.81} - G_{prev} \right) $$
+    $$ G_{smooth} = G_{prev} + \alpha \times \left( \frac{\text{Chassis\_Lat\_Accel}}{9.81} - G_{prev} \right) $$
     *   $\alpha$: User setting `m_sop_smoothing_factor`.
 
 2.  **Base SoP**:
@@ -133,7 +133,7 @@ $$ F_{final} = \text{sign}(F_{norm}) \times K_{min\_force} $$
 *   $T_{steering\_shaft}$: `mSteeringShaftTorque` (Nm) - **Changed in v0.4.0 from** `mSteeringArmForce` (N)
 *   $\text{Load}$: `mTireLoad` (N)
 *   $\text{GripFract}$: `mGripFract` (0.0 to 1.0)
-*   $\text{AccelX}_{local}$: `mLocalAccel.x` ($m/s^2$)
+*   $\text{Chassis\_Lat\_Accel}$: `mLocalAccel.x` ($m/s^2$) - **Renamed from** `AccellXlocal`
 *   $\text{LatForce}$: `mLateralForce` (N)
 *   $\text{Vel}_{car}$: `mLocalVel.z` (m/s)
 *   $\text{LateralGroundVel}$: `mLateralGroundVel` (m/s)
