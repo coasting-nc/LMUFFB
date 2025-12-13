@@ -170,3 +170,69 @@ Once you have reviewed these documents, please proceed with the following task:
 
 **Deliverables:**
 (...)
+
+
+=====
+
+Clone this repo https://github.com/coasting-nc/LMUFFB and start working on the tasks described below.
+
+Please initialize this session by following the **Standard Task Workflow** defined in `AGENTS.md`.
+
+1.  **Sync**: Run `git fetch && git reset --hard origin/main` (or pull) to ensure you see the latest files.
+2.  **Load Memory**: Read `AGENTS_MEMORY.md` to review build workarounds and architectural insights.
+3.  **Load Rules**: Read `AGENTS.md` to confirm constraints.
+
+Perform the following task:
+
+**Task: Implement Rear Physics Workarounds, Fix GUI Scaling, and Tune Defaults (v0.4.10)**
+
+**Reference Documents:**
+*   `docs\dev_docs\Rear Physics Workarounds & GUI Scaling (v0.4.10).md` (Contains detailed formulas and logic).
+
+**Context:**
+Analysis of the current version reveals three critical issues:
+1.  **Dead Rear Effects:** The "Rear Align Torque" effect is flat because LMU 1.2 reports 0.0 for `mLateralForce` (just like it does for Tire Load). We must approximate this force using our calculated slip angles and loads.
+2.  **Invisible Data (Scaling Bug):** The Physics Engine now outputs Torque (Nm, range ~0-20), but the GUI plots are still scaled for Force (Newtons, range ±1000). This makes effects like SoP, Understeer Cut, and Road Texture appear as flat lines even when active.
+3.  **Usability:** The default SoP Scale (5.0) is too weak for the new Nm math, and the GUI slider for it has an incorrect minimum value (100.0), preventing proper tuning.
+
+**Implementation Requirements:**
+
+**1. Physics Engine Updates (`FFBEngine.h`)**
+*   **New Helper:** `approximate_rear_load()` (Implement same logic as front: `mSuspForce` + 300N).
+*   **New Calculation:** `calc_rear_lat_force`.
+    *   **Formula:** `RearSlipAngle (Raw) * CalcRearLoad * 15.0` (Stiffness constant).
+    *   *Note:* Use `m_grip_diag.rear_slip_angle` (calculated in v0.4.7) and the new `calc_rear_load`.
+    *   **Safety:** Clamp the result to **±6000.0 N** to prevent explosions if slip angle spikes.
+*   **Fix Rear Align Torque:**
+    *   Replace the dead `data->mWheel[i].mLateralForce` input with `calc_rear_lat_force` in the `rear_torque` calculation.
+*   **Update Snapshot:**
+    *   Populate `ffb_rear_torque` with the new calculated value.
+    *   Add `calc_rear_load` to the snapshot struct (we only had front before) and populate it.
+
+**2. Tuning & Defaults (`Config.cpp` / `FFBEngine.h`)**
+*   **Boost SoP Scale:** Change default `m_sop_scale` from **5.0** to **20.0**.
+    *   *Reason:* 1G * 0.15 Gain * 20 Scale = 3.0 Nm. This provides a feelable baseline.
+*   **Update Presets:** Update the "Default" preset in `Config.cpp` to use `sop_scale = 20.0`.
+
+**3. GUI Updates (`GuiLayer.cpp`)**
+*   **Fix Slider Bug:** Change `SoP Scale` slider range from `100.0f, 5000.0f` to **`0.0f, 200.0f`**.
+*   **Fix Plot Scales (CRITICAL):**
+    *   Change `min_scale`/`max_scale` for **ALL** FFB Component plots to **-20.0f, 20.0f**.
+    *   *Affected Plots:* Base Torque, SoP, Oversteer Boost, Rear Align Torque, Scrub Drag, Understeer Cut, Road Texture, Slide Texture, Lockup/Spin/Bottoming.
+    *   *Exception:* `Total Output` should remain -1.0 to 1.0.
+*   **Update Plots:**
+    *   **Header B (Internal Physics):** Change `Calc Front Load` to `Calc Load (Front/Rear)`.
+        *   Plot Front Load in **Cyan**.
+        *   Plot Rear Load in **Magenta** (on top, transparent background).
+        *   *Tooltip:* "Cyan: Front, Magenta: Rear".
+    *   **Header C (Raw Telemetry):** Change `Raw Rear Lat Force` to `Calc Rear Lat Force` (since Raw is dead, show our workaround).
+
+**Deliverables:**
+1.  **Code:** Updated `FFBEngine.h`, `Config.cpp`, `GuiLayer.cpp`.
+2.  **Docs:** Update `CHANGELOG.md` (v0.4.10).
+3.  **Tests:** Update `tests/test_ffb_engine.cpp`.
+    *   Add a test case verifying `rear_torque` is non-zero when `mLateralForce` input is 0 but `RearSlipAngle` is non-zero.
+
+**Constraints:**
+*   **Safety:** Ensure the calculated rear lateral force is clamped.
+*   **Visuals:** Ensure the multi-line plot for Load uses distinct colors and resets cursor position correctly.
