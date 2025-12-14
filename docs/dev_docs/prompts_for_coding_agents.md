@@ -269,3 +269,29 @@ Once you have reviewed these documents and performed the setup, please proceed w
 **Deliverables:**
 (...)
 
+# Prompt
+
+
+Please clone this repo https://github.com/coasting-nc/LMUFFB and start working on the tasks described below.
+
+**⚠️ CRITICAL ENVIRONMENT SETUP (Perform these steps first):**
+
+1.  **Clone to Temp:** Clone the repository into a temporary folder (e.g., `git clone https://github.com/coasting-nc/LMUFFB temp_repo`).
+2.  **Flatten:** Copy the contents from `temp_repo` to the current directory. Use `cp -r temp_repo/* .` (This is safer than moving).
+3.  **Detach:** Delete the `.git` folder (`rm -rf .git`) and the temp folder (`rm -rf temp_repo`).
+    *   *Reason:* I do not have write access to the remote. You must treat these as local files only.
+4.  **Error Handling (Crucial):**
+    *   If **ANY** of the above steps fail (e.g., git failure, permission denied, file not found), you **MUST** immediately append the specific error message to `AGENTS_MEMORY.md` under a header `## Initialization Error`.
+    *   If you cannot write to the file, print the error clearly in the chat.
+
+**Standard Task Workflow:**
+*   Load Memory: Read `AGENTS_MEMORY.md`.
+*   Load Rules: Read `AGENTS.md`.
+
+Once you have reviewed these documents and performed the setup, please proceed with the following task:
+
+**Task: (...)**
+
+*(Rest of your prompt...)*
+
+**[END PROMPT]**
