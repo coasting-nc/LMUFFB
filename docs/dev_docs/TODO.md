@@ -1078,5 +1078,5 @@ Should we have a slip angle plot for rear tires? (or does it make sense only for
 
 _avg longitudinal patch vel _: Should we use that value for brake lockup and slip calculation (or do we do already)?
 
-
+Investigate bug: "would have **sudden pulls/loss of FFB off centre at random times. Almost like the “reverse FFB” setting was working intermittently**. Obviously had my wheel base settings turned well down. Had a complete lock up on my wheel base fully pulled to the left too (bit like the old days of LMU in game FFB!). Has to restart the wheel base."
 
