@@ -311,3 +311,259 @@ We must move the state update logic **outside** of the conditional effect blocks
 
 ### Recommendation
 Applying this fix along with the previous "Rear Torque" fix will eliminate the remaining sources of "random" instability caused by toggling settings or telemetry glitches.
+
+# Tests to add
+
+Here are the specific regression tests to lock in your fixes, plus a comprehensive "Stress Test" to catch future instability.
+
+You should add these functions to `tests/test_ffb_engine.cpp` and call them from `main()`.
+
+### 1. Regression Tests (The "Anti-Spike" Suite)
+
+These tests specifically simulate the "Toggle" scenarios that caused the bugs. If anyone moves the state update logic back inside the `if` blocks in the future, these tests will fail.
+
+```cpp
+void test_regression_road_texture_toggle() {
+    std::cout << "\nTest: Regression - Road Texture Toggle Spike" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    // Setup
+    engine.m_road_texture_enabled = false; // Start DISABLED
+    engine.m_road_texture_gain = 1.0;
+    engine.m_max_torque_ref = 20.0f;
+    engine.m_gain = 1.0f;
+    
+    // Frame 1: Car is at Ride Height A
+    data.mWheel[0].mVerticalTireDeflection = 0.05; // 5cm
+    data.mWheel[1].mVerticalTireDeflection = 0.05;
+    data.mWheel[0].mTireLoad = 4000.0; // Valid load
+    data.mWheel[1].mTireLoad = 4000.0;
+    engine.calculate_force(&data); // State should update here even if disabled
+    
+    // Frame 2: Car compresses significantly (Teleport or heavy braking)
+    data.mWheel[0].mVerticalTireDeflection = 0.10; // Jump to 10cm
+    data.mWheel[1].mVerticalTireDeflection = 0.10;
+    engine.calculate_force(&data); // State should update here to 0.10
+    
+    // Frame 3: User ENABLES effect while at 0.10
+    engine.m_road_texture_enabled = true;
+    
+    // Small movement in this frame
+    data.mWheel[0].mVerticalTireDeflection = 0.101; // +1mm change
+    data.mWheel[1].mVerticalTireDeflection = 0.101;
+    
+    double force = engine.calculate_force(&data);
+    
+    // EXPECTATION:
+    // If fixed: Delta = 0.101 - 0.100 = 0.001. Force is tiny.
+    // If broken: Delta = 0.101 - 0.050 (from Frame 1) = 0.051. Force is huge.
+    
+    // 0.001 * 50.0 (mult) * 1.0 (gain) = 0.05 Nm.
+    // Normalized: 0.05 / 20.0 = 0.0025.
+    
+    if (std::abs(force) < 0.01) {
+        std::cout << "[PASS] No spike on enable. Force: " << force << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Spike detected! State was stale. Force: " << force << std::endl;
+        g_tests_failed++;
+    }
+}
+
+void test_regression_bottoming_switch() {
+    std::cout << "\nTest: Regression - Bottoming Method Switch Spike" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    engine.m_bottoming_enabled = true;
+    engine.m_bottoming_gain = 1.0;
+    engine.m_bottoming_method = 0; // Start with Method A (Scraping)
+    data.mDeltaTime = 0.01;
+    
+    // Frame 1: Low Force
+    data.mWheel[0].mSuspForce = 1000.0;
+    data.mWheel[1].mSuspForce = 1000.0;
+    engine.calculate_force(&data); // Should update m_prev_susp_force even if Method A is active
+    
+    // Frame 2: High Force (Ramp up)
+    data.mWheel[0].mSuspForce = 5000.0;
+    data.mWheel[1].mSuspForce = 5000.0;
+    engine.calculate_force(&data); // Should update m_prev_susp_force to 5000
+    
+    // Frame 3: Switch to Method B (Spike)
+    engine.m_bottoming_method = 1;
+    
+    // Steady state force (no spike)
+    data.mWheel[0].mSuspForce = 5000.0; 
+    data.mWheel[1].mSuspForce = 5000.0;
+    
+    double force = engine.calculate_force(&data);
+    
+    // EXPECTATION:
+    // If fixed: dForce = (5000 - 5000) / dt = 0. No effect.
+    // If broken: dForce = (5000 - 0) / dt = 500,000. Massive spike triggers effect.
+    
+    if (std::abs(force) < 0.001) {
+        std::cout << "[PASS] No spike on method switch." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Spike detected on switch! Force: " << force << std::endl;
+        g_tests_failed++;
+    }
+}
+
+void test_regression_rear_torque_lpf() {
+    std::cout << "\nTest: Regression - Rear Torque LPF Continuity" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    engine.m_rear_align_effect = 1.0;
+    engine.m_sop_effect = 0.0; // Isolate rear torque
+    engine.m_oversteer_boost = 0.0;
+    engine.m_max_torque_ref = 20.0f;
+    
+    // Setup: Car is sliding sideways (5 m/s) but has Grip (1.0)
+    // This means Rear Torque is 0.0 (because grip is good), BUT LPF should be tracking the slide.
+    data.mWheel[2].mLateralPatchVel = 5.0;
+    data.mWheel[3].mLateralPatchVel = 5.0;
+    data.mWheel[2].mLongitudinalGroundVel = 20.0;
+    data.mWheel[3].mLongitudinalGroundVel = 20.0;
+    data.mWheel[2].mGripFract = 1.0; // Good grip
+    data.mWheel[3].mGripFract = 1.0;
+    data.mWheel[2].mTireLoad = 4000.0;
+    data.mWheel[3].mTireLoad = 4000.0;
+    data.mWheel[2].mSuspForce = 3700.0; // For load calc
+    data.mWheel[3].mSuspForce = 3700.0;
+    data.mDeltaTime = 0.01;
+    
+    // Run 50 frames. The LPF should settle on the slip angle (~0.24 rad).
+    for(int i=0; i<50; i++) {
+        engine.calculate_force(&data);
+    }
+    
+    // Frame 51: Telemetry Glitch! Grip drops to 0.
+    // This triggers the Rear Torque calculation using the LPF value.
+    data.mWheel[2].mGripFract = 0.0;
+    data.mWheel[3].mGripFract = 0.0;
+    
+    double force = engine.calculate_force(&data);
+    
+    // EXPECTATION:
+    // If fixed: LPF is settled at ~0.24. Force is calculated based on 0.24.
+    // If broken: LPF was not running. It starts at 0. It smooths 0 -> 0.24.
+    //            First frame value would be ~0.024 (10% of target).
+    
+    // Target Torque (approx):
+    // Slip = 0.245. Load = 4000. K = 15.
+    // F_lat = 0.245 * 4000 * 15 = 14,700 -> Clamped 6000.
+    // Torque = 6000 * 0.001 = 6.0 Nm.
+    // Norm = 6.0 / 20.0 = 0.3.
+    
+    // If broken (LPF reset):
+    // Slip = 0.0245. F_lat = 1470. Torque = 1.47. Norm = 0.07.
+    
+    if (force > 0.25) {
+        std::cout << "[PASS] LPF was running in background. Force: " << force << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] LPF was stale/reset. Force too low: " << force << std::endl;
+        g_tests_failed++;
+    }
+}
+```
+
+### 2. Stress Test (The "Fuzzing" Suite)
+
+This test throws random, extreme, and invalid values at the engine to ensure it never crashes or outputs `NaN`.
+
+**Note:** You need to add `#include <random>` at the top of the file.
+
+```cpp
+void test_stress_stability() {
+    std::cout << "\nTest: Stress Stability (Fuzzing)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    // Enable EVERYTHING
+    engine.m_lockup_enabled = true;
+    engine.m_spin_enabled = true;
+    engine.m_slide_texture_enabled = true;
+    engine.m_road_texture_enabled = true;
+    engine.m_bottoming_enabled = true;
+    engine.m_use_manual_slip = true;
+    engine.m_scrub_drag_gain = 1.0;
+    
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> distribution(-100000.0, 100000.0);
+    std::uniform_real_distribution<double> dist_small(-1.0, 1.0);
+    
+    bool failed = false;
+    
+    // Run 1000 iterations of chaos
+    for(int i=0; i<1000; i++) {
+        // Randomize Inputs
+        data.mSteeringShaftTorque = distribution(generator);
+        data.mLocalAccel.x = distribution(generator);
+        data.mLocalVel.z = distribution(generator);
+        data.mDeltaTime = std::abs(dist_small(generator) * 0.1); // Random dt
+        
+        for(int w=0; w<4; w++) {
+            data.mWheel[w].mTireLoad = distribution(generator);
+            data.mWheel[w].mGripFract = dist_small(generator); // -1 to 1
+            data.mWheel[w].mSuspForce = distribution(generator);
+            data.mWheel[w].mVerticalTireDeflection = distribution(generator);
+            data.mWheel[w].mLateralPatchVel = distribution(generator);
+            data.mWheel[w].mLongitudinalGroundVel = distribution(generator);
+        }
+        
+        // Calculate
+        double force = engine.calculate_force(&data);
+        
+        // Check 1: NaN / Infinity
+        if (std::isnan(force) || std::isinf(force)) {
+            std::cout << "[FAIL] Iteration " << i << " produced NaN/Inf!" << std::endl;
+            failed = true;
+            break;
+        }
+        
+        // Check 2: Bounds (Should be clamped -1 to 1)
+        if (force > 1.00001 || force < -1.00001) {
+            std::cout << "[FAIL] Iteration " << i << " exceeded bounds: " << force << std::endl;
+            failed = true;
+            break;
+        }
+    }
+    
+    if (!failed) {
+        std::cout << "[PASS] Survived 1000 iterations of random input." << std::endl;
+        g_tests_passed++;
+    } else {
+        g_tests_failed++;
+    }
+}
+```
+
+### 3. Update `main()`
+
+Add these calls to your `main` function in `tests/test_ffb_engine.cpp`:
+
+```cpp
+int main() {
+    // ... existing tests ...
+    
+    // Regression Tests (v0.4.14)
+    test_regression_road_texture_toggle();
+    test_regression_bottoming_switch();
+    test_regression_rear_torque_lpf();
+    
+    // Stress Test
+    test_stress_stability();
+    
+    // ...
+}
+```
