@@ -895,61 +895,36 @@ The troubleshooting graphs are not updated. They do not show the new values used
 ## Troubleshooting 20
 
 ### More on plots and math formulas
-Notes on FFB math formulas and plot visualization
-
-"formulas md doc" refers to this document: docs\dev_docs\FFB_formulas.md
+#### Done
 
 In formulas md doc, also update the name of variables specifying when they refer to front types only (eg  Grip_avg is only for fronts)
 
-Visualiza this component that is in the formula md doc but has no individual plot: **slip angle LPF**, smoothed with exp.moving avg
-also, is "slip angle LPF" the slip angle on fronts only? specify in variable names
-
-In plots we indeed have "smoothed slip angle"
-but we don't show the actual slip, which is arctan2(Vlat,Vlong). Show also the slip before smoothing.
-I notice we have in the plots "**calc slip ratio**": is this it? In any case, we also this must specify for this plot if it is front wheels only.
-
-I note int he formulas that Grip is used for understeer.
-
-About this Math formula: **AccellXlocal**: rename to clearify: is it lateral accel? Is it of whole car, or average of some tires? Which tires? specify in name.
-
-Consider **SoP_base**  (without oversteer component) from the formulas doc: do we show it in a separate plot? If not, we should.
-
 In the plots, we have Calc Front Grip  but we don't have _Calc Rear Grip_
-In general, if we have a plot for a formula component (or a raw value) that is based on the front wheels only, we should also have a plot for the rear wheels only version of that component.
 We don't have _Raw Rear Grip_ (we have it only for the front).
 
-In Raw plots, we dont have _LatForceRl and LatForceRR_
-
-Why don't we have a plot for slide of rear tires?
-
-Should we have a slip angle plot for rear tires? (or does it make sense only for turning/steering wheels, that is front wheels?)
-
-Shoudl we have a plot for _avg longitudinal patch vel _? Should we use that value for brake lockup and slip calculation (or do we do already)?
+Shoudl we have a plot for _avg longitudinal patch vel _? 
 
 Shoudl we have a plot for _long and lat patch vel_ for rear?
 
 We should also add tootlips on the names / titles of plots, with a description of what the componet is / does / or is used for.
 
-avg deflection: is it for all 4 tires? Specify in the variable name and / or plot title.
-
-Add a plot for our _manual slip calc_ 
-
-Add a plots both for raw game value for slip, and for _manual slip calc_ , so we can compare them and see if they are identical or at least similar in shape.
-
 We don't have a plot for driver steering input (steering wheel angle). We should add it.
 
+
 we should combine throttle and brake input plots into a single plot. We should distinguis them with different colors (eg. use red and green colors as it is common for these values).
+
+
 
 Consider if other plots might benefit merging, showing multiple values (formula components) on a single plot.
 When we have multiple variables in a plot, use different colors in the title text to show which color is assigned to.
 
 Organize the plots in 3 columns instead of 2, to fit more plots vertically in the window, which is already a tower taking all vertical space.
 
+add preset: all effects disabled
+makes it easier to then go and enable one single effect
 ### Other 
 
-
 We could also have additional plots in which we show the plot for the base value (using default coeafficients) of some components and one with the custom coefficients as set in the main GUi
-
 
 docs/dev_docs/prompt - Implement Numerical Readouts for Troubleshooting Graphs (Diagnostics).md
 
@@ -990,8 +965,7 @@ other update: the console still does not say if the wheel was acquired exclusive
 it say "exclusive | .." as if the request to acquire specifies both. We need to edit this.
 
 
-add preset: all effects disabled
-makes it easier to then go and enable one single effect
+
 
 Reorganize the GUI customizations. Have one section per effect and comonent of the FFB formuls. For instance, add one section for Self Aligning Torque.
 Each section for that component / effect should have a main setting / slider, and additional things like smoothing, caps, coefficients, etc.
@@ -1033,4 +1007,70 @@ TEST: ? if alt tab goes to opp lock of wheel limiter
 
 direct method seems ok
 consider removing vjoy and gremlin. Disable warnings. Confirm they are not needed, then remove, from instructions and code.
+
+## Troubleshooting 20
+
+remove vJoy warning popup at startup if dll not present
+update readme: remove vJoy, we don't need it
+remove vJoy from code
+also remove all mentions (in readme) and use (in code) of gremlin.
+
+in main window gui: rename "Use Manual Slip Calc" to "Use Manual Front Slip Ratio Calc"
+
+in FFB Analysis window:
+Have both blots
+"Calc Front Slip Ratio" and "Game Front Slip Ratio"
+"Game Front Slip Ratio" should go into subsection "C. Raw Game Telemetry (Inputs)"
+Add a plot for our _manual slip calc_ 
+Add a plots both for raw game value for slip, and for _manual slip calc_ , so we can compare them and see if they are identical or at least similar in shape.
+
+Deep research: AC FFB that make it informative.
+
+Coaching: how to feel each specific effect. Find car, setup, and track combinations (particular corners), that are ideal to feel a particular effect.
+Get instructions in what to do while driving to induce a specific car physics dynamic that produces a certain effect on the FFB.
+At the same time, use the settings that most highligh a particular effect (isolating it from other effect whenever possible).
+Make this guide suitable for Belt driven wheels (eg. T300) and gear driven wheels (eg. G29).
+
+Reorganize the sliders in the main window gui. They should be grouped by component of the FFB formula, and each component should have its own section, with a main slider, and additional settings like smoothing, caps, coefficients, etc.
+
+This would make it more intuitive, and easier to find the right slider to adjust.
+
+Review again the options in the main window, and verify that we have a settings to adjust and isolate each component of the FFB formulas.
+
+Test strange "delayed" spikes in the wheel, after a spin or slide. Which effect is causing them?
+
+
+we don't have anymore the plot for _avg deflection_ (I think it was removed when we reorganized the plots to group them in more intuitive way)
+avg deflection: is it for all 4 tires? Specify in the variable name and / or plot title.
+
+
+#### Other
+Notes on FFB math formulas and plot visualization
+
+"formulas md doc" refers to this document: docs\dev_docs\FFB_formulas.md
+
+Visualiza this component that is in the formula md doc but has no individual plot: **slip angle LPF**, smoothed with exp.moving avg
+also, is "slip angle LPF" the slip angle on fronts only? specify in variable names
+
+In plots we indeed have "smoothed slip angle"
+but we don't show the actual slip, which is arctan2(Vlat,Vlong). Show also the slip before smoothing.
+I notice we have in the plots "**calc slip ratio**": is this it? In any case, we also this must specify for this plot if it is front wheels only.
+
+I note int he formulas that Grip is used for understeer.
+
+About this Math formula: **AccellXlocal**: rename to clearify: is it lateral accel? Is it of whole car, or average of some tires? Which tires? specify in name.
+
+Consider **SoP_base**  (without oversteer component) from the formulas doc: do we show it in a separate plot? If not, we should.
+
+In general, if we have a plot for a formula component (or a raw value) that is based on the front wheels only, we should also have a plot for the rear wheels only version of that component.
+
+In Raw plots, we dont have _LatForceRl and LatForceRR_
+
+Why don't we have a plot for slide of rear tires?
+
+Should we have a slip angle plot for rear tires? (or does it make sense only for turning/steering wheels, that is front wheels?)
+
+_avg longitudinal patch vel _: Should we use that value for brake lockup and slip calculation (or do we do already)?
+
+
 
