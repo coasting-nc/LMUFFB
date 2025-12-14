@@ -1023,6 +1023,10 @@ Have both blots
 "Game Front Slip Ratio" should go into subsection "C. Raw Game Telemetry (Inputs)"
 Add a plot for our _manual slip calc_ 
 Add a plots both for raw game value for slip, and for _manual slip calc_ , so we can compare them and see if they are identical or at least similar in shape.
+compare "Calc Front Slip Ratio" and "Game Front Slip Ratio" to see how accurate the manual calc is.
+
+test lmuFFB with rF2, with the cars that support giving out grip information and other channels that are blocked for DLC cars.
+See, for this "open" ffb cars, if our fomulas that approximate grip, load, and other values are accurate enough.
 
 Deep research: AC FFB that make it informative.
 
