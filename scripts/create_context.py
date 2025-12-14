@@ -99,6 +99,14 @@ def main():
                 if 'docs/dev_docs/code_reviews' in relpath_normalized or 'docs/dev_docs/code reviews' in relpath_normalized:
                     print(f"Skipping (code review): {relpath}")
                     continue
+
+                if 'docs/dev_docs/done_features' in relpath_normalized:
+                    print(f"Skipping (done features): {relpath}")
+                    continue
+
+                if relpath_normalized == 'src/stb_image_write.h':
+                    print(f"Skipping (excluded explicitly): {relpath}")
+                    continue
                 
                 # Exclude .txt files in root directory except for allowed ones
                 if dirpath == root_dir and filename.endswith('.txt'):
