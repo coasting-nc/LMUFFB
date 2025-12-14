@@ -1,12 +1,5 @@
-Here is the filename and the full content of the report, ready to be saved.
-
-**Filename:**
-`report_yaw_gyroscopic_damping_dynamic_weight_hydro_grain_adaptive_slip_angle.md`
-
----
-
 # Report: Advanced FFB Mechanics
-## Yaw, Gyroscopic Damping, Dynamic Weight, Hydro-Grain, and Adaptive Slip
+## Yaw, Gyroscopic Damping, Dynamic Weight, Hydro-Grain, and Adaptive Optimal Slip Angle
 
 **Date:** December 14, 2025
 **Context:** Investigation into "Visceral" and "Informative" Force Feedback mechanics for Le Mans Ultimate (LMU), inspired by feedback from GamerMuscle, Jardier, and physics analysis.
