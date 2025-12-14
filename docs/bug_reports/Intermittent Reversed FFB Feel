@@ -226,3 +226,87 @@ Append this to the **"Critical Constraints & Math"** section of `AGENTS_MEMORY.m
     2.  **Downstream Dependencies:** A variable calculated in a "Fallback" block (like `slip_angle` in `calculate_grip`) might be used by a completely different effect later (like `Rear Aligning Torque`).
 *   **Incident:** See `docs/dev_docs/bug_analysis_rear_torque_instability.md`. We caused violent wheel kicks by only calculating Slip Angle when Grip was missing.
 ```
+
+# Other sources of instability to fix
+
+Based on a thorough inspection of the code, I have identified **two additional sources of instability** related to "Conditional State Updates". These are similar in nature to the bug we just fixed, where internal history variables become "stale" when an effect is disabled, causing violent spikes when re-enabled or when switching modes.
+
+### 1. The "Road Texture" Spike
+**Location:** `FFBEngine.h` inside `calculate_force` (Lines ~600-620)
+**The Issue:**
+The variable `m_prev_vert_deflection` (used to calculate the suspension velocity for road bumps) is only updated **inside** the `if (m_road_texture_enabled)` block.
+
+```cpp
+if (m_road_texture_enabled) {
+    // ... calculation ...
+    double delta_l = vert_l - m_prev_vert_deflection[0]; // Uses OLD state
+    // ...
+    m_prev_vert_deflection[0] = vert_l; // Updates state
+}
+```
+
+**The Scenario:**
+1.  User disables "Road Details". `m_prev_vert_deflection` stops updating (e.g., stays at 0.05m).
+2.  User drives a lap. Suspension moves to 0.08m.
+3.  User enables "Road Details".
+4.  **The Spike:** The code calculates `delta = 0.08 - 0.05 = 0.03m`. This is a massive instantaneous jump (equivalent to hitting a 3cm curb in 0.002 seconds).
+5.  **Result:** A violent "BANG" in the wheel upon enabling the effect. (Note: The v0.4.6 clamp limits this to 0.01m, reducing the damage, but it's still a max-force kick).
+
+### 2. The "Bottoming" Method Switch Spike
+**Location:** `FFBEngine.h` inside `calculate_force` (Lines ~630-650)
+**The Issue:**
+The variable `m_prev_susp_force` (used for Method B: Suspension Spike) is only updated when `m_bottoming_enabled` is true **AND** `m_bottoming_method == 1`.
+
+**The Scenario:**
+1.  User runs with "Method A" (Scraping). `m_prev_susp_force` is stale (e.g., 0 or old value).
+2.  User switches to "Method B" (Spike) while driving.
+3.  **The Spike:** The derivative calculation `(current_force - prev_force) / dt` sees a jump from 0 to 3000N instantly.
+    *   `dForce = 3000 / 0.0025 = 1,200,000 N/s`.
+4.  **Result:** This exceeds the threshold (100,000), triggering a false "Bottoming" crunch immediately upon switching methods.
+
+---
+
+### The Fix: Unconditional State Updates
+
+We must move the state update logic **outside** of the conditional effect blocks. The "Previous State" must always track the "Current State" of the physics, regardless of whether the FFB effect is currently active.
+
+**Apply this change to `FFBEngine.h`:**
+
+1.  **Remove** the lines `m_prev_vert_deflection[...] = ...` and `m_prev_susp_force[...] = ...` from their respective `if` blocks.
+2.  **Add** a new section at the very end of `calculate_force` (before the return) to update these states unconditionally.
+
+```cpp
+    double calculate_force(const TelemInfoV01* data) {
+        // ... [All existing logic] ...
+
+        // --- 5. Suspension Bottoming ---
+        if (m_bottoming_enabled) {
+             // ... [Existing logic, BUT REMOVE m_prev_susp_force updates from here] ...
+        }
+
+        // ... [Min Force Logic] ...
+
+        // ==================================================================================
+        // CRITICAL: UNCONDITIONAL STATE UPDATES (Fix for Toggle Spikes)
+        // ==================================================================================
+        // We must update history variables every frame, even if effects are disabled.
+        // This prevents "stale state" spikes when effects are toggled on.
+        
+        // Road Texture State
+        m_prev_vert_deflection[0] = fl.mVerticalTireDeflection;
+        m_prev_vert_deflection[1] = fr.mVerticalTireDeflection;
+
+        // Bottoming Method B State
+        m_prev_susp_force[0] = fl.mSuspForce;
+        m_prev_susp_force[1] = fr.mSuspForce;
+        // ==================================================================================
+
+        // --- SNAPSHOT LOGIC ---
+        // ...
+        
+        return (std::max)(-1.0, (std::min)(1.0, norm_force));
+    }
+```
+
+### Recommendation
+Applying this fix along with the previous "Rear Torque" fix will eliminate the remaining sources of "random" instability caused by toggling settings or telemetry glitches.
