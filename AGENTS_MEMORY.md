@@ -155,3 +155,7 @@ See: docs\dev_docs\avg_load_issue.md
 *   **Lesson:** When moving files from a nested repo to root, ensure hidden files (like `.git`) are handled correctly or that the root `.git` is properly synced.
 *   **Tooling:** `replace_with_git_merge_diff` requires exact context matching. If files are modified or desynchronized, `overwrite_file_with_block` is safer.
 
+## 8. Repository Handling (Read-Only Mode)
+*   **No Git Push:** You do not have write access to the remote repository. Never attempt `git push`.
+*   **No Submodules:** When cloning a repo to work on it, immediately delete the `.git` folder inside the cloned directory. We only want the source files, not the version control history.
+*   **Delivery:** Your final output is the modified files (which the user will download as a ZIP), not a git commit.
