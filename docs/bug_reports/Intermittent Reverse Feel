@@ -1,0 +1,103 @@
+# Core issue
+
+The core issue is this: "sudden pulls/loss of FFB off centre at random times. Almost like the “reverse FFB” setting was working intermittently".
+
+
+# Proposed fix
+
+Based on the user's report and the code analysis, I have identified the bug. It is a **logic error in `FFBEngine.h`** related to how the **Rear Aligning Torque** and **Slip Angle** are calculated.
+
+### The Root Cause: Conditional Execution of Physics
+
+The user reports "random" pulls and "intermittent" behavior. This is caused by the fact that the **Rear Aligning Torque** effect is currently **turning ON and OFF randomly** based on the quality of the game's connection, and when it turns on, it uses stale data that causes violent spikes.
+
+**The Bug in `calculate_grip` (FFBEngine.h):**
+Currently, the code *only* calculates the Slip Angle (and updates its smoothing filter) **IF** the game fails to provide Grip data.
+
+```cpp
+// Current Logic (Simplified)
+if (grip < 0.0001) { 
+    // 1. Telemetry is missing (Bugged frame)
+    // 2. Calculate Slip Angle (and update LPF state)
+    // 3. Use Slip Angle for Rear Torque
+} else {
+    // 1. Telemetry is good (Normal frame)
+    // 2. Slip Angle is set to 0.0
+    // 3. Rear Torque becomes 0.0
+}
+```
+
+**The Consequence:**
+1.  **Intermittent "Reverse" Feel:** As long as the game sends valid grip data, the **Rear Aligning Torque** (which provides the counter-steer force) is **0.0**.
+2.  **The Spike (Lock Up):** LMU telemetry is known to be "glitchy" (dropping frames). When a frame drops (Grip becomes 0), the `if` block executes.
+    *   The Rear Torque suddenly jumps from **0 Nm** to **~6 Nm** (due to the new v0.4.11 scaling).
+    *   Worse, the **Smoothing Filter (LPF)** for the slip angle hasn't been updated for seconds/minutes. It tries to smooth the *current* slide against *ancient* history, potentially resulting in a mathematical spike or erratic value.
+3.  **Result:** The wheel kicks violently ("sudden pull") or locks up because the force toggles instantly between "Game Only" and "Game + Calculated Rear Torque".
+
+### The Fix
+
+We must calculate the Slip Angle **every single frame**, regardless of whether we need it for the Grip Fallback. This ensures:
+1.  The **Rear Aligning Torque** is always active and consistent (no on/off toggling).
+2.  The **Smoothing Filter** is always up-to-date (no spikes from stale state).
+
+### Corrected Code for `FFBEngine.h`
+
+You need to modify the `calculate_grip` function.
+
+**File:** `FFBEngine.h`
+**Function:** `calculate_grip` (Lines ~260-295)
+
+```cpp
+    // Helper: Calculate Grip with Fallback (v0.4.6 Hardening)
+    GripResult calculate_grip(const TelemWheelV01& w1, 
+                              const TelemWheelV01& w2,
+                              double avg_load,
+                              bool& warned_flag,
+                              double& prev_slip1,
+                              double& prev_slip2,
+                              double car_speed) {
+        GripResult result;
+        result.original = (w1.mGripFract + w2.mGripFract) / 2.0;
+        result.value = result.original;
+        result.approximated = false;
+        
+        // --- FIX START: ALWAYS CALCULATE SLIP ANGLE ---
+        // We must calculate this every frame to keep the Low Pass Filter (LPF) 
+        // state (prev_slip) updated and to provide valid data for Rear Aligning Torque.
+        double slip1 = calculate_slip_angle(w1, prev_slip1);
+        double slip2 = calculate_slip_angle(w2, prev_slip2);
+        result.slip_angle = (slip1 + slip2) / 2.0;
+        // --- FIX END ---
+
+        // Fallback condition: Grip is essentially zero BUT car has significant load
+        if (result.value < 0.0001 && avg_load > 100.0) {
+            result.approximated = true;
+            
+            // Low Speed Cutoff (v0.4.6)
+            if (car_speed < 5.0) {
+                // Note: We still keep the calculated slip_angle in result.slip_angle
+                // for visualization/rear torque, even if we force grip to 1.0 here.
+                result.value = 1.0; 
+            } else {
+                // Use the pre-calculated slip angle
+                double excess = (std::max)(0.0, result.slip_angle - 0.10);
+                result.value = 1.0 - (excess * 4.0);
+            }
+            
+            // Safety Clamp (v0.4.6): Never drop below 0.2 in approximation
+            result.value = (std::max)(0.2, result.value);
+            
+            if (!warned_flag) {
+                std::cout << "[WARNING] Missing Grip. Using Approx based on Slip Angle." << std::endl;
+                warned_flag = true;
+            }
+        }
+        
+        result.value = (std::max)(0.0, (std::min)(1.0, result.value));
+        return result;
+    }
+```
+
+### Summary of Changes for the User
+You can explain to the user:
+"I found the issue. The 'Rear Aligning Torque' effect was accidentally turning itself ON and OFF depending on whether the game telemetry skipped a frame. This caused the random 'kicks' and the feeling of the FFB reversing, because the force would suddenly jump from 0% to 100% in a split second. I have fixed it so the physics calculation runs continuously."
