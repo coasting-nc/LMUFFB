@@ -104,6 +104,10 @@ def main():
                     print(f"Skipping (done features): {relpath}")
                     continue
 
+                if 'docs/dev_docs/drafts' in relpath_normalized:
+                    print(f"Skipping (drafts): {relpath}")
+                    continue
+
                 if relpath_normalized == 'src/stb_image_write.h':
                     print(f"Skipping (excluded explicitly): {relpath}")
                     continue
