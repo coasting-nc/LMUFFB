@@ -1,7 +1,3 @@
-Here is the prompt you can use for the coding agent.
-
-***
-
 Please initialize this session by following the **Standard Task Workflow** defined in `AGENTS.md`.
 
 1.  **Sync**: Run `git fetch && git reset --hard origin/main` (or pull) to ensure you see the latest files.
@@ -14,6 +10,8 @@ Once you have reviewed these documents, please proceed with the following task:
 
 **Reference Documents:**
 *   `docs/bug_reports/Intermittent Reversed FFB Feel.md` (Contains the full analysis and the specific code snippets to implement).
+*   `docs/bug_reports/refactor presets declaration with Fluent Builder Pattern .md` (contains the details about the `Config.cpp` preset loading)
+
 
 **Context:**
 We have identified a critical logic error in `FFBEngine.h` where physics state variables (Slip Angle, LPF history) were only being updated conditionally. This caused the "Rear Aligning Torque" effect to toggle on/off randomly based on telemetry health, resulting in violent "reverse FFB" kicks. Additionally, the `Config.cpp` preset loading is currently verbose and hard to read.
