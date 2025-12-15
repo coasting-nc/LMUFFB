@@ -288,7 +288,11 @@ private:
     // when the steering shaft torque oscillates near zero.
     static constexpr double SYNTHETIC_MODE_DEADZONE_NM = 0.5; // Nm
 
-
+    // Gyroscopic Damping Constants (v0.4.17)
+    // Default steering range (540 degrees) if physics range is missing
+    static constexpr double DEFAULT_STEERING_RANGE_RAD = 9.4247; 
+    // Normalizes car speed (m/s) to 0-1 range for typical speeds (10m/s baseline)
+    static constexpr double GYRO_SPEED_SCALE = 10.0; 
 
 public:
     // Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
@@ -688,7 +692,7 @@ public:
         // --- 2c. Synthetic Gyroscopic Damping (v0.4.17) ---
         // Calculate Steering Angle (Radians)
         float range = data->mPhysicalSteeringWheelRange;
-        if (range <= 0.0f) range = 9.4247f; // Fallback 540 deg
+        if (range <= 0.0f) range = (float)DEFAULT_STEERING_RANGE_RAD; // Fallback 540 deg
         
         double steer_angle = data->mUnfilteredSteering * (range / 2.0);
         
@@ -701,7 +705,7 @@ public:
         m_steering_velocity_smoothed += alpha_gyro * (steer_vel - m_steering_velocity_smoothed);
         
         // Damping Force: Opposes velocity, scales with car speed
-        double gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (car_speed / 10.0);
+        double gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (car_speed / GYRO_SPEED_SCALE);
         
         // Add to total
         total_force += gyro_force;

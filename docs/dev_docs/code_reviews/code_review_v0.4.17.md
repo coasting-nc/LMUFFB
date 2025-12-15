@@ -2,6 +2,7 @@
 
 **Date:** 2025-12-15  
 **Reviewer:** AI Code Review Agent  
+**Diff File:** `staged_changes_v0.4.17_review.txt`  
 **Prompt Document:** `docs/dev_docs/prompts/v_0.4.17.md`
 
 ---

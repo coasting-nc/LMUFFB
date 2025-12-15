@@ -10,6 +10,23 @@ All notable changes to this project will be documented in this file.
     - **Impact**: Users can now safely use Slide Rumble and Yaw Kick effects simultaneously without experiencing unstable or violent FFB behavior.
     - **Technical Details**: Added `m_yaw_accel_smoothed` state variable to `FFBEngine` class. The filter uses 10% new data and 90% history, effectively removing noise above ~1.6 Hz while keeping the intended rotation cues intact.
 
+## [0.4.17] - 2025-12-15
+### Added
+- **Synthetic Gyroscopic Damping**: Implemented stabilization effect to prevent "tank slappers" during drifts.
+    - Added `Gyroscopic Damping` slider (0.0 - 1.0) to Tuning Window.
+    - Added "Gyro Damping" trace to Debug Window FFB Components graph.
+    - Force opposes rapid steering movements and scales with car speed.
+    - Uses Low Pass Filter (LPF) to smooth noisy steering velocity derivative.
+    - Added `m_gyro_gain` and `m_gyro_smoothing` settings to configuration system.
+
+### Changed
+- **Physics Engine**: Updated total force calculation to include gyroscopic damping component.
+- **Documentation**: Updated `FFB_formulas.md` with gyroscopic damping formula and tuning parameter.
+
+### Testing
+- Added `test_gyro_damping()` unit test to verify force direction and magnitude.
+
+
 ## [0.4.16] - 2025-12-15
 ### Added
 - **SoP Yaw Kick**: Implemented "Yaw Acceleration Injection" to provide a predictive kick when rotation starts.

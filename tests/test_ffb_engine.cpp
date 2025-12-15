@@ -42,6 +42,8 @@ void test_rear_align_effect(); // Forward declaration
 void test_zero_effects_leakage(); // Forward declaration
 void test_base_force_modes(); // Forward declaration
 void test_sop_yaw_kick(); // Forward declaration
+void test_gyro_damping(); // Forward declaration (v0.4.17)
+
 
 void test_manual_slip_singularity() {
     std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
@@ -2041,6 +2043,7 @@ int main() {
     test_rear_align_effect();
     test_zero_effects_leakage();
     test_base_force_modes();
+    test_gyro_damping(); // v0.4.17
     
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
@@ -2553,3 +2556,124 @@ void test_rear_align_effect() {
         g_tests_failed++;
     }
 }
+
+void test_gyro_damping() {
+    std::cout << "\nTest: Gyroscopic Damping (v0.4.17)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    // Setup
+    engine.m_gyro_gain = 1.0f;
+    engine.m_gyro_smoothing = 0.1f;
+    engine.m_max_torque_ref = 20.0f; // Reference torque for normalization
+    engine.m_gain = 1.0f;
+    
+    // Disable other effects to isolate gyro damping
+    engine.m_understeer_effect = 0.0f;
+    engine.m_sop_effect = 0.0f;
+    engine.m_lockup_enabled = false;
+    engine.m_spin_enabled = false;
+    engine.m_slide_texture_enabled = false;
+    engine.m_bottoming_enabled = false;
+    engine.m_scrub_drag_gain = 0.0f;
+    engine.m_rear_align_effect = 0.0f;
+    engine.m_sop_yaw_gain = 0.0f;
+    
+    // Setup test data
+    data.mLocalVel.z = 50.0; // Car speed (50 m/s)
+    data.mPhysicalSteeringWheelRange = 9.4247f; // 540 degrees
+    data.mDeltaTime = 0.0025; // 400Hz (2.5ms)
+    
+    // Ensure no other inputs
+    data.mSteeringShaftTorque = 0.0;
+    data.mWheel[0].mRideHeight = 0.1;
+    data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[0].mGripFract = 1.0;
+    data.mWheel[1].mGripFract = 1.0;
+    
+    // Frame 1: Steering at 0.0
+    data.mUnfilteredSteering = 0.0f;
+    engine.calculate_force(&data);
+    
+    // Frame 2: Steering moves to 0.1 (rapid movement to the right)
+    data.mUnfilteredSteering = 0.1f;
+    double force = engine.calculate_force(&data);
+    
+    // Get the snapshot to check gyro force
+    auto batch = engine.GetDebugBatch();
+    if (batch.empty()) {
+        std::cout << "[FAIL] No snapshot." << std::endl;
+        g_tests_failed++;
+        return;
+    }
+    FFBSnapshot snap = batch.back();
+    double gyro_force = snap.ffb_gyro_damping;
+    
+    // Assert 1: Force opposes movement (should be negative for positive steering velocity)
+    // Steering moved from 0.0 to 0.1 (positive direction)
+    // Gyro damping should oppose this (negative force)
+    if (gyro_force < 0.0) {
+        std::cout << "[PASS] Gyro force opposes steering movement (negative: " << gyro_force << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Gyro force should be negative. Got: " << gyro_force << std::endl;
+        g_tests_failed++;
+    }
+    
+    // Assert 2: Force is non-zero (significant)
+    if (std::abs(gyro_force) > 0.001) {
+        std::cout << "[PASS] Gyro force is non-zero (magnitude: " << std::abs(gyro_force) << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Gyro force is too small. Got: " << gyro_force << std::endl;
+        g_tests_failed++;
+    }
+    
+    // Test opposite direction
+    // Frame 3: Steering moves back from 0.1 to 0.0 (negative velocity)
+    data.mUnfilteredSteering = 0.0f;
+    engine.calculate_force(&data);
+    
+    batch = engine.GetDebugBatch();
+    if (!batch.empty()) {
+        snap = batch.back();
+        double gyro_force_reverse = snap.ffb_gyro_damping;
+        
+        // Should now be positive (opposing negative steering velocity)
+        if (gyro_force_reverse > 0.0) {
+            std::cout << "[PASS] Gyro force reverses with steering direction (positive: " << gyro_force_reverse << ")" << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] Gyro force should be positive for reverse movement. Got: " << gyro_force_reverse << std::endl;
+            g_tests_failed++;
+        }
+    }
+    
+    // Test speed scaling
+    // At low speed, gyro force should be weaker
+    data.mLocalVel.z = 5.0; // Slow (5 m/s)
+    data.mUnfilteredSteering = 0.0f;
+    engine.calculate_force(&data);
+    
+    data.mUnfilteredSteering = 0.1f;
+    engine.calculate_force(&data);
+    
+    batch = engine.GetDebugBatch();
+    if (!batch.empty()) {
+        snap = batch.back();
+        double gyro_force_slow = snap.ffb_gyro_damping;
+        
+        // Should be weaker than at high speed (scales with car_speed / 10.0)
+        // At 50 m/s: scale = 5.0, At 5 m/s: scale = 0.5
+        // So force should be ~10x weaker
+        if (std::abs(gyro_force_slow) < std::abs(gyro_force) * 0.6) {
+            std::cout << "[PASS] Gyro force scales with speed (slow: " << gyro_force_slow << " vs fast: " << gyro_force << ")" << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] Gyro force should be weaker at low speed. Slow: " << gyro_force_slow << " Fast: " << gyro_force << std::endl;
+            g_tests_failed++;
+        }
+    }
+}
+
