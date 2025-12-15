@@ -67,6 +67,7 @@ struct FFBSnapshot {
     float ffb_rear_torque;  // New v0.4.7
     float ffb_scrub_drag;   // New v0.4.7
     float ffb_yaw_kick;     // New v0.4.16
+    float ffb_gyro_damping; // New v0.4.17
     float texture_road;
     float texture_slide;
     float texture_lockup;
@@ -138,6 +139,8 @@ public:
     float m_oversteer_boost = 0.0f; // 0.0 - 1.0 (Rear grip loss boost)
     float m_rear_align_effect = 1.0f; // New v0.4.11
     float m_sop_yaw_gain = 0.0f;      // New v0.4.16 (Yaw Acceleration Injection)
+    float m_gyro_gain = 0.0f;         // New v0.4.17 (Gyroscopic Damping)
+    float m_gyro_smoothing = 0.1f;    // New v0.4.17
     
     bool m_lockup_enabled = false;
     float m_lockup_gain = 0.5f;
@@ -179,6 +182,10 @@ public:
     double m_prev_vert_deflection[2] = {0.0, 0.0}; // FL, FR
     double m_prev_slip_angle[4] = {0.0, 0.0, 0.0, 0.0}; // FL, FR, RL, RR (LPF State)
     
+    // Gyro State (v0.4.17)
+    double m_prev_steering_angle = 0.0;
+    double m_steering_velocity_smoothed = 0.0;
+
     // Phase Accumulators for Dynamic Oscillators
     double m_lockup_phase = 0.0;
     double m_spin_phase = 0.0;
@@ -660,6 +667,27 @@ public:
         sop_total += yaw_force;
         
         double total_force = output_force + sop_total;
+
+        // --- 2c. Synthetic Gyroscopic Damping (v0.4.17) ---
+        // Calculate Steering Angle (Radians)
+        float range = data->mPhysicalSteeringWheelRange;
+        if (range <= 0.0f) range = 9.4247f; // Fallback 540 deg
+        
+        double steer_angle = data->mUnfilteredSteering * (range / 2.0);
+        
+        // Calculate Velocity (rad/s)
+        double steer_vel = (steer_angle - m_prev_steering_angle) / dt;
+        m_prev_steering_angle = steer_angle; // Update history
+        
+        // Smoothing (LPF)
+        double alpha_gyro = (std::min)(1.0f, m_gyro_smoothing);
+        m_steering_velocity_smoothed += alpha_gyro * (steer_vel - m_steering_velocity_smoothed);
+        
+        // Damping Force: Opposes velocity, scales with car speed
+        double gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (car_speed / 10.0);
+        
+        // Add to total
+        total_force += gyro_force;
         
         // --- Helper: Calculate Slip Data (Approximation) ---
         // The new LMU interface does not expose mSlipRatio/mSlipAngle directly.
@@ -930,6 +958,7 @@ public:
                 snap.ffb_rear_torque = (float)rear_torque;
                 snap.ffb_scrub_drag = (float)scrub_drag_force;
                 snap.ffb_yaw_kick = (float)yaw_force;
+                snap.ffb_gyro_damping = (float)gyro_force; // New v0.4.17
                 snap.texture_road = (float)road_noise;
                 snap.texture_slide = (float)slide_noise;
                 snap.texture_lockup = (float)lockup_rumble;

@@ -4,6 +4,8 @@ Do a code review of the staged changes from git. Save the diff to a txt file for
 
 You can read the prompt with the instructions that were given to the coding agent at `docs\dev_docs\prompts\v_0.4.17.md` . Read this document to understand what was supposed to be implemented and verify that the staged changes fullfilled all requirements.
 
+Save a detailed code review report in the `docs\dev_docs\code_reviews\` folder.
+
 # Git Diff Retrieval Strategy for Code Reviews
 
 **Purpose:** Best practices for retrieving git diffs on Windows PowerShell for AI-assisted code reviews  

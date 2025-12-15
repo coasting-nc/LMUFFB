@@ -17,7 +17,7 @@ $$ F_{final} = \text{Clamp}\left( \left( \frac{F_{total}}{20.0} \times K_{gain} 
 
 Where **$F_{total}$** is the sum of all physics components:
 
-$$ F_{total} = (F_{base} + F_{sop} + F_{vib\_lock} + F_{vib\_spin} + F_{vib\_slide} + F_{vib\_road} + F_{vib\_bottom}) \times M_{spin\_drop} $$
+$$ F_{total} = (F_{base} + F_{sop} + F_{vib\_lock} + F_{vib\_spin} + F_{vib\_slide} + F_{vib\_road} + F_{vib\_bottom} + F_{gyro}) \times M_{spin\_drop} $$
 
 *(Note: $M_{spin\_drop}$ is a reduction multiplier active only during traction loss).*
 
@@ -152,6 +152,14 @@ Active if Max Tire Load > 8000N or Ride Height < 2mm.
     **Note**: Magnitude scaling changed from 0.5 to 0.0025 in v0.4.1 (Nm units).
 *   **Frequency**: Fixed 50Hz sine wave pulse.
 
+**6. Synthetic Gyroscopic Damping ($F_{gyro}$) - New v0.4.17**
+Stabilizes the wheel by opposing rapid steering movements (prevents "tank slappers").
+*   $Angle$: Steering Input $\times$ (Range / 2.0).
+*   $Vel$: $(Angle - Angle_{prev}) / dt$.
+*   $Vel_{smooth}$: Smoothed derivative of steering angle (LPF).
+*   $F_{gyro} = -1.0 \times Vel_{smooth} \times K_{gyro} \times (\text{CarSpeed} / 10.0)$
+*   **Note**: Scales with car speed (faster = more stability needed).
+
 ---
 
 ### 3. Post-Processing (Min Force)
@@ -181,6 +189,7 @@ $$ F_{final} = \text{sign}(F_{norm}) \times K_{min\_force} $$
 *   $K_{understeer}$: Understeer Effect (0.0 - 1.0)
 *   $K_{sop}$: SoP Effect (0.0 - 2.0)
 *   $K_{yaw}$: SoP Yaw Gain (0.0 - 2.0) **(New v0.4.15)**
+*   $K_{gyro}$: Gyroscopic Damping Gain (0.0 - 1.0) **(New v0.4.17)**
 *   $K_{oversteer}$: Oversteer Boost (0.0 - 1.0)
 *   $K_{rear\_align}$: Rear Align Torque (0.0 - 2.0)
 *   $K_{lockup}, K_{spin}, K_{slide}, K_{road}, K_{drag}$: Texture/Effect Gains

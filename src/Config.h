@@ -38,6 +38,7 @@ struct Preset {
     
     float rear_align_effect = 1.0f;
     float sop_yaw_gain = 0.0f; // New v0.4.15
+    float gyro_gain = 0.0f; // New v0.4.17
     
     float steering_shaft_gain = 1.0f;
     int base_force_mode = 0; // 0=Native
@@ -68,6 +69,7 @@ struct Preset {
     Preset& SetScrub(float v) { scrub_drag_gain = v; return *this; }
     Preset& SetRearAlign(float v) { rear_align_effect = v; return *this; }
     Preset& SetSoPYaw(float v) { sop_yaw_gain = v; return *this; }
+    Preset& SetGyro(float v) { gyro_gain = v; return *this; }
     
     Preset& SetShaftGain(float v) { steering_shaft_gain = v; return *this; }
     Preset& SetBaseMode(int v) { base_force_mode = v; return *this; }
@@ -96,6 +98,7 @@ struct Preset {
         engine.m_scrub_drag_gain = scrub_drag_gain;
         engine.m_rear_align_effect = rear_align_effect;
         engine.m_sop_yaw_gain = sop_yaw_gain;
+        engine.m_gyro_gain = gyro_gain;
         engine.m_steering_shaft_gain = steering_shaft_gain;
         engine.m_base_force_mode = base_force_mode;
     }
