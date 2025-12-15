@@ -185,6 +185,9 @@ public:
     // Gyro State (v0.4.17)
     double m_prev_steering_angle = 0.0;
     double m_steering_velocity_smoothed = 0.0;
+    
+    // Yaw Acceleration Smoothing State (v0.4.18)
+    double m_yaw_accel_smoothed = 0.0;
 
     // Phase Accumulators for Dynamic Oscillators
     double m_lockup_phase = 0.0;
@@ -661,9 +664,23 @@ public:
 
         // --- 2b. Yaw Acceleration Injector (The "Kick") ---
         // Reads rotational acceleration (radians/sec^2)
+        // 
+        // v0.4.18 FIX: Apply Low Pass Filter to prevent noise feedback loop
+        // PROBLEM: Slide Rumble injects high-frequency vibrations -> Yaw Accel spikes (derivatives are noise-sensitive)
+        //          -> Yaw Kick amplifies the noise -> Wheel shakes harder -> Feedback loop
+        // SOLUTION: Smooth the yaw acceleration to filter out high-frequency noise while keeping low-frequency signal
+        double raw_yaw_accel = data->mLocalRotAccel.y;
+        
+        // Apply Smoothing (Low Pass Filter)
+        // Alpha 0.1 means we trust 10% new data, 90% history.
+        // This kills high-frequency vibration noise while preserving actual rotation kicks.
+        double alpha_yaw = 0.1;
+        m_yaw_accel_smoothed = m_yaw_accel_smoothed + alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
+        
+        // Use SMOOTHED value for the kick
         // Scaled by 5.0 (Base multiplier) and User Gain
         // Added AFTER Oversteer Boost to provide a clean, independent cue.
-        double yaw_force = data->mLocalRotAccel.y * m_sop_yaw_gain * 5.0;
+        double yaw_force = m_yaw_accel_smoothed * m_sop_yaw_gain * 5.0;
         sop_total += yaw_force;
         
         double total_force = output_force + sop_total;

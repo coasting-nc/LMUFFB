@@ -74,10 +74,14 @@ This injects lateral G-force and rear-axle aligning torque to simulate the car b
     
     **Note**: Scaling changed from 5.0 to 20.0 in v0.4.10 to provide stronger baseline Nm output.
 
-3.  **Yaw Acceleration (The Kick) - New v0.4.15**:
-    $$ F_{yaw} = \text{YawAccel}_y \times K_{yaw} \times 5.0 $$
+3.  **Yaw Acceleration (The Kick) - New v0.4.16, Smoothed v0.4.18**:
+    $$ F_{yaw} = \text{YawAccel}_{smoothed} \times K_{yaw} \times 5.0 $$
     
     *   Injects `mLocalRotAccel.y` (Radians/sec²) to provide a predictive kick when rotation starts.
+    *   **v0.4.18 Fix:** Applied Low Pass Filter (Exponential Moving Average, $\alpha = 0.1$) to prevent noise feedback loop with Slide Rumble.
+        *   **Problem:** Slide Rumble vibrations caused yaw acceleration (a derivative) to spike with high-frequency noise, which Yaw Kick amplified, creating a positive feedback loop.
+        *   **Solution:** $\text{YawAccel}_{smoothed} = \text{YawAccel}_{prev} + 0.1 \times (\text{YawAccel}_{raw} - \text{YawAccel}_{prev})$
+        *   This filters out high-frequency noise (> ~1.6 Hz) while preserving actual rotation kicks.
     *   $K_{yaw}$: User setting `m_sop_yaw_gain` (0.0 - 2.0).
 
 4.  **Oversteer Boost**:

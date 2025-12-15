@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.18] - 2025-12-16
+### Fixed
+- **Critical Stability Issue**: Fixed a noise feedback loop between Slide Rumble and Yaw Kick effects that caused violent wheel behavior.
+    - **Problem**: Slide Rumble vibrations caused the yaw acceleration telemetry (a derivative value) to spike with high-frequency noise. The Yaw Kick effect amplified these spikes, creating a positive feedback loop where the wheel would shake increasingly harder and feel like it was "fighting" the user.
+    - **Solution**: Implemented a Low Pass Filter (Exponential Moving Average with alpha=0.1) on the yaw acceleration data before calculating the Yaw Kick force. This filters out high-frequency vibration noise while preserving the low-frequency "actual rotation kick" signal.
+    - **Impact**: Users can now safely use Slide Rumble and Yaw Kick effects simultaneously without experiencing unstable or violent FFB behavior.
+    - **Technical Details**: Added `m_yaw_accel_smoothed` state variable to `FFBEngine` class. The filter uses 10% new data and 90% history, effectively removing noise above ~1.6 Hz while keeping the intended rotation cues intact.
+
 ## [0.4.16] - 2025-12-15
 ### Added
 - **SoP Yaw Kick**: Implemented "Yaw Acceleration Injection" to provide a predictive kick when rotation starts.
