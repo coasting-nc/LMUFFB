@@ -41,6 +41,7 @@ void test_rear_force_workaround(); // Forward declaration
 void test_rear_align_effect(); // Forward declaration
 void test_zero_effects_leakage(); // Forward declaration
 void test_base_force_modes(); // Forward declaration
+void test_sop_yaw_kick(); // Forward declaration
 
 void test_manual_slip_singularity() {
     std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
@@ -146,6 +147,48 @@ void test_base_force_modes() {
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Muted Mode: Got " << force_muted << " Expected 0.0." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+void test_sop_yaw_kick() {
+    std::cout << "\nTest: SoP Yaw Kick" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    // Setup
+    engine.m_sop_yaw_gain = 1.0f;
+    engine.m_sop_effect = 0.0f; // Disable Base SoP
+    engine.m_max_torque_ref = 20.0f; // Reference torque for normalization
+    engine.m_gain = 1.0f;
+    // Disable other effects
+    engine.m_understeer_effect = 0.0f;
+    engine.m_lockup_enabled = false;
+    engine.m_spin_enabled = false;
+    engine.m_slide_texture_enabled = false;
+    engine.m_bottoming_enabled = false;
+    engine.m_scrub_drag_gain = 0.0f;
+    engine.m_rear_align_effect = 0.0f;
+    
+    // Input: 1.0 rad/s^2 Yaw Accel
+    // Formula: force = yaw * gain * 5.0
+    // Expected: 1.0 * 1.0 * 5.0 = 5.0 Nm
+    // Norm: 5.0 / 20.0 = 0.25
+    data.mLocalRotAccel.y = 1.0;
+    
+    // Ensure no other inputs
+    data.mSteeringShaftTorque = 0.0;
+    data.mWheel[0].mRideHeight = 0.1;
+    data.mWheel[1].mRideHeight = 0.1;
+    
+    double force = engine.calculate_force(&data);
+    
+    if (std::abs(force - 0.25) < 0.001) {
+        std::cout << "[PASS] Yaw Kick calculated correctly (0.25)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Yaw Kick mismatch. Got " << force << " Expected 0.25." << std::endl;
         g_tests_failed++;
     }
 }
@@ -1964,6 +2007,7 @@ int main() {
     test_scrub_drag_fade();
     test_road_texture_teleport();
     test_grip_low_speed();
+    test_sop_yaw_kick();
 
     // Run Regression Tests
     test_zero_input();

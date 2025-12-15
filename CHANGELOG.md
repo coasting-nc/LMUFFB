@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.16] - 2025-12-15
+### Added
+- **SoP Yaw Kick**: Implemented "Yaw Acceleration Injection" to provide a predictive kick when rotation starts.
+    - Added `m_sop_yaw_gain` slider (0.0 - 2.0) to Tuning Window.
+    - Added "Yaw Kick" trace to Debug Window.
+    - Updated physics engine to mix Yaw Acceleration with Lateral G-Force in SoP calculation.
+
 ## [0.4.15] - 2025-12-15
 ### Changed
 - **User Experience Improvements**: Removed all vJoy and Joystick Gremlin-related annoyances for users.

@@ -66,6 +66,7 @@ struct FFBSnapshot {
     float oversteer_boost;
     float ffb_rear_torque;  // New v0.4.7
     float ffb_scrub_drag;   // New v0.4.7
+    float ffb_yaw_kick;     // New v0.4.16
     float texture_road;
     float texture_slide;
     float texture_lockup;
@@ -136,6 +137,7 @@ public:
     // New Effects (v0.2)
     float m_oversteer_boost = 0.0f; // 0.0 - 1.0 (Rear grip loss boost)
     float m_rear_align_effect = 1.0f; // New v0.4.11
+    float m_sop_yaw_gain = 0.0f;      // New v0.4.16 (Yaw Acceleration Injection)
     
     bool m_lockup_enabled = false;
     float m_lockup_gain = 0.5f;
@@ -649,6 +651,13 @@ public:
         // Multiplied by m_rear_align_effect to allow user tuning of rear-end sensitivity.
         double rear_torque = calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect; 
         sop_total += rear_torque;
+
+        // --- 2b. Yaw Acceleration Injector (The "Kick") ---
+        // Reads rotational acceleration (radians/sec^2)
+        // Scaled by 5.0 (Base multiplier) and User Gain
+        // Added AFTER Oversteer Boost to provide a clean, independent cue.
+        double yaw_force = data->mLocalRotAccel.y * m_sop_yaw_gain * 5.0;
+        sop_total += yaw_force;
         
         double total_force = output_force + sop_total;
         
@@ -917,9 +926,10 @@ public:
                 snap.base_force = (float)base_input; // Show the processed base input
                 snap.sop_force = (float)sop_base_force;
                 snap.understeer_drop = (float)((base_input * m_steering_shaft_gain) * (1.0 - grip_factor));
-                snap.oversteer_boost = (float)(sop_total - sop_base_force - rear_torque); // Split boost from rear torque
+                snap.oversteer_boost = (float)(sop_total - sop_base_force - rear_torque - yaw_force); // Split boost from other SoP components
                 snap.ffb_rear_torque = (float)rear_torque;
                 snap.ffb_scrub_drag = (float)scrub_drag_force;
+                snap.ffb_yaw_kick = (float)yaw_force;
                 snap.texture_road = (float)road_noise;
                 snap.texture_slide = (float)slide_noise;
                 snap.texture_lockup = (float)lockup_rumble;

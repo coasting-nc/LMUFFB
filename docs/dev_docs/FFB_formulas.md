@@ -74,7 +74,13 @@ This injects lateral G-force and rear-axle aligning torque to simulate the car b
     
     **Note**: Scaling changed from 5.0 to 20.0 in v0.4.10 to provide stronger baseline Nm output.
 
-3.  **Oversteer Boost**:
+3.  **Yaw Acceleration (The Kick) - New v0.4.15**:
+    $$ F_{yaw} = \text{YawAccel}_y \times K_{yaw} \times 5.0 $$
+    
+    *   Injects `mLocalRotAccel.y` (Radians/sec²) to provide a predictive kick when rotation starts.
+    *   $K_{yaw}$: User setting `m_sop_yaw_gain` (0.0 - 2.0).
+
+4.  **Oversteer Boost**:
     If Front Grip > Rear Grip:
     $$ F_{sop\_boosted} = F_{sop\_base} \times \left( 1.0 + (\text{Grip}_{delta} \times K_{oversteer} \times 2.0) \right) $$
     where $\text{Grip}_{delta} = \text{Front\_Grip}_{avg} - \text{Rear\_Grip}_{avg}$
@@ -96,7 +102,7 @@ This injects lateral G-force and rear-axle aligning torque to simulate the car b
     
     **Note**: Coefficient changed from 0.00025 to 0.001 in v0.4.11.
 
-$$ F_{sop} = F_{sop\_boosted} + T_{rear} $$
+$$ F_{sop} = F_{sop\_boosted} + T_{rear} + F_{yaw} $$
 
 #### D. Dynamic Textures (Vibrations)
 
@@ -174,6 +180,7 @@ $$ F_{final} = \text{sign}(F_{norm}) \times K_{min\_force} $$
 *   $K_{shaft\_gain}$: Steering Shaft Gain (0.0 - 1.0) **(New v0.4.13)**
 *   $K_{understeer}$: Understeer Effect (0.0 - 1.0)
 *   $K_{sop}$: SoP Effect (0.0 - 2.0)
+*   $K_{yaw}$: SoP Yaw Gain (0.0 - 2.0) **(New v0.4.15)**
 *   $K_{oversteer}$: Oversteer Boost (0.0 - 1.0)
 *   $K_{rear\_align}$: Rear Align Torque (0.0 - 2.0)
 *   $K_{lockup}, K_{spin}, K_{slide}, K_{road}, K_{drag}$: Texture/Effect Gains

@@ -318,6 +318,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     ImGui::Text("Effects");
     ImGui::SliderFloat("Understeer (Grip)", &engine.m_understeer_effect, 0.0f, 1.0f, "%.2f");
     ImGui::SliderFloat("SoP (Lateral G)", &engine.m_sop_effect, 0.0f, 2.0f, "%.2f");
+    ImGui::SliderFloat("SoP Yaw (Kick)", &engine.m_sop_yaw_gain, 0.0f, 2.0f, "%.2f");
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Injects Yaw Acceleration to provide a predictive kick when rotation starts.");
     ImGui::SliderFloat("Oversteer Boost", &engine.m_oversteer_boost, 0.0f, 1.0f, "%.2f");
     ImGui::SliderFloat("Rear Align Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, "%.2f");
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Controls rear-end counter-steering feedback.\nProvides a distinct cue during oversteer without affecting base SoP.\nIncrease for stronger rear-end feel (0.0 = Off, 1.0 = Default, 2.0 = Max).");
@@ -546,6 +548,7 @@ struct RollingBuffer {
 static RollingBuffer plot_total;
 static RollingBuffer plot_base;
 static RollingBuffer plot_sop;
+static RollingBuffer plot_yaw_kick; // New v0.4.15
 static RollingBuffer plot_rear_torque; 
 static RollingBuffer plot_scrub_drag;
 static RollingBuffer plot_oversteer;
@@ -612,6 +615,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         plot_total.Add(snap.total_output);
         plot_base.Add(snap.base_force);
         plot_sop.Add(snap.sop_force);
+        plot_yaw_kick.Add(snap.ffb_yaw_kick);
         plot_rear_torque.Add(snap.ffb_rear_torque);
         plot_scrub_drag.Add(snap.ffb_scrub_drag);
         
@@ -696,6 +700,9 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         
         ImGui::Text("SoP (Base Chassis G)"); ImGui::PlotLines("##SoP", plot_sop.data.data(), (int)plot_sop.data.size(), plot_sop.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force from Lateral G-Force (Seat of Pants)");
+
+        ImGui::Text("Yaw Kick"); ImGui::PlotLines("##YawKick", plot_yaw_kick.data.data(), (int)plot_yaw_kick.data.size(), plot_yaw_kick.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force from Yaw Acceleration (Rotation Kick)");
         
         ImGui::Text("Rear Align Torque"); ImGui::PlotLines("##RearT", plot_rear_torque.data.data(), (int)plot_rear_torque.data.size(), plot_rear_torque.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force from Rear Lateral Force");

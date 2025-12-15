@@ -33,6 +33,7 @@ void Config::LoadPresets() {
         .SetSmoothing(0.0f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
+        .SetSoPYaw(0.0f)
         .SetBaseMode(2) // Muted
     );
 
@@ -68,6 +69,7 @@ void Config::LoadPresets() {
         .SetSmoothing(0.0f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(1.0f)
+        .SetSoPYaw(0.0f)
     );
 
     // 7. Test: SoP Base Only
@@ -78,6 +80,7 @@ void Config::LoadPresets() {
         .SetSmoothing(0.0f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
+        .SetSoPYaw(0.0f)
         .SetBaseMode(2) // Muted
     );
 
@@ -174,6 +177,7 @@ void Config::LoadPresets() {
                         else if (key == "bottoming_method") current_preset.bottoming_method = std::stoi(value);
                         else if (key == "scrub_drag_gain") current_preset.scrub_drag_gain = std::stof(value);
                         else if (key == "rear_align_effect") current_preset.rear_align_effect = std::stof(value);
+                        else if (key == "sop_yaw_gain") current_preset.sop_yaw_gain = std::stof(value);
                         else if (key == "steering_shaft_gain") current_preset.steering_shaft_gain = std::stof(value);
                         else if (key == "base_force_mode") current_preset.base_force_mode = std::stoi(value);
                     } catch (...) {}
@@ -223,6 +227,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "bottoming_method=" << engine.m_bottoming_method << "\n";
         file << "scrub_drag_gain=" << engine.m_scrub_drag_gain << "\n";
         file << "rear_align_effect=" << engine.m_rear_align_effect << "\n";
+        file << "sop_yaw_gain=" << engine.m_sop_yaw_gain << "\n";
         file << "steering_shaft_gain=" << engine.m_steering_shaft_gain << "\n";
         file << "base_force_mode=" << engine.m_base_force_mode << "\n";
         file.close();
@@ -278,6 +283,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "bottoming_method") engine.m_bottoming_method = std::stoi(value);
                     else if (key == "scrub_drag_gain") engine.m_scrub_drag_gain = std::stof(value);
                     else if (key == "rear_align_effect") engine.m_rear_align_effect = std::stof(value);
+                    else if (key == "sop_yaw_gain") engine.m_sop_yaw_gain = std::stof(value);
                     else if (key == "steering_shaft_gain") engine.m_steering_shaft_gain = std::stof(value);
                     else if (key == "base_force_mode") engine.m_base_force_mode = std::stoi(value);
                 } catch (...) {
