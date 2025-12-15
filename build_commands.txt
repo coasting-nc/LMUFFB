@@ -21,6 +21,9 @@ Remove-Item -Path "vendor\imgui-master.zip", "vendor\imgui-master" -Recurse -For
 
 # Actual build
 
+Update version number
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build
+
 Build release (Windows)
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake --build build --config Release
 
