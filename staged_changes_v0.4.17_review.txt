@@ -1,0 +1,152 @@
+﻿diff --git a/FFBEngine.h b/FFBEngine.h
+index 4d19a54..182210b 100644
+--- a/FFBEngine.h
++++ b/FFBEngine.h
+@@ -67,6 +67,7 @@ struct FFBSnapshot {
+     float ffb_rear_torque;  // New v0.4.7
+     float ffb_scrub_drag;   // New v0.4.7
+     float ffb_yaw_kick;     // New v0.4.16
++    float ffb_gyro_damping; // New v0.4.17
+     float texture_road;
+     float texture_slide;
+     float texture_lockup;
+@@ -138,6 +139,8 @@ public:
+     float m_oversteer_boost = 0.0f; // 0.0 - 1.0 (Rear grip loss boost)
+     float m_rear_align_effect = 1.0f; // New v0.4.11
+     float m_sop_yaw_gain = 0.0f;      // New v0.4.16 (Yaw Acceleration Injection)
++    float m_gyro_gain = 0.0f;         // New v0.4.17 (Gyroscopic Damping)
++    float m_gyro_smoothing = 0.1f;    // New v0.4.17
+     
+     bool m_lockup_enabled = false;
+     float m_lockup_gain = 0.5f;
+@@ -179,6 +182,10 @@ public:
+     double m_prev_vert_deflection[2] = {0.0, 0.0}; // FL, FR
+     double m_prev_slip_angle[4] = {0.0, 0.0, 0.0, 0.0}; // FL, FR, RL, RR (LPF State)
+     
++    // Gyro State (v0.4.17)
++    double m_prev_steering_angle = 0.0;
++    double m_steering_velocity_smoothed = 0.0;
++
+     // Phase Accumulators for Dynamic Oscillators
+     double m_lockup_phase = 0.0;
+     double m_spin_phase = 0.0;
+@@ -660,6 +667,27 @@ public:
+         sop_total += yaw_force;
+         
+         double total_force = output_force + sop_total;
++
++        // --- 2c. Synthetic Gyroscopic Damping (v0.4.17) ---
++        // Calculate Steering Angle (Radians)
++        float range = data->mPhysicalSteeringWheelRange;
++        if (range <= 0.0f) range = 9.4247f; // Fallback 540 deg
++        
++        double steer_angle = data->mUnfilteredSteering * (range / 2.0);
++        
++        // Calculate Velocity (rad/s)
++        double steer_vel = (steer_angle - m_prev_steering_angle) / dt;
++        m_prev_steering_angle = steer_angle; // Update history
++        
++        // Smoothing (LPF)
++        double alpha_gyro = (std::min)(1.0f, m_gyro_smoothing);
++        m_steering_velocity_smoothed += alpha_gyro * (steer_vel - m_steering_velocity_smoothed);
++        
++        // Damping Force: Opposes velocity, scales with car speed
++        double gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (car_speed / 10.0);
++        
++        // Add to total
++        total_force += gyro_force;
+         
+         // --- Helper: Calculate Slip Data (Approximation) ---
+         // The new LMU interface does not expose mSlipRatio/mSlipAngle directly.
+@@ -930,6 +958,7 @@ public:
+                 snap.ffb_rear_torque = (float)rear_torque;
+                 snap.ffb_scrub_drag = (float)scrub_drag_force;
+                 snap.ffb_yaw_kick = (float)yaw_force;
++                snap.ffb_gyro_damping = (float)gyro_force; // New v0.4.17
+                 snap.texture_road = (float)road_noise;
+                 snap.texture_slide = (float)slide_noise;
+                 snap.texture_lockup = (float)lockup_rumble;
+diff --git a/docs/dev_docs/FFB_formulas.md b/docs/dev_docs/FFB_formulas.md
+index ac33efb..624151d 100644
+--- a/docs/dev_docs/FFB_formulas.md
++++ b/docs/dev_docs/FFB_formulas.md
+@@ -17,7 +17,7 @@ $$ F_{final} = \text{Clamp}\left( \left( \frac{F_{total}}{20.0} \times K_{gain}
+ 
+ Where **$F_{total}$** is the sum of all physics components:
+ 
+-$$ F_{total} = (F_{base} + F_{sop} + F_{vib\_lock} + F_{vib\_spin} + F_{vib\_slide} + F_{vib\_road} + F_{vib\_bottom}) \times M_{spin\_drop} $$
++$$ F_{total} = (F_{base} + F_{sop} + F_{vib\_lock} + F_{vib\_spin} + F_{vib\_slide} + F_{vib\_road} + F_{vib\_bottom} + F_{gyro}) \times M_{spin\_drop} $$
+ 
+ *(Note: $M_{spin\_drop}$ is a reduction multiplier active only during traction loss).*
+ 
+@@ -152,6 +152,14 @@ Active if Max Tire Load > 8000N or Ride Height < 2mm.
+     **Note**: Magnitude scaling changed from 0.5 to 0.0025 in v0.4.1 (Nm units).
+ *   **Frequency**: Fixed 50Hz sine wave pulse.
+ 
++**6. Synthetic Gyroscopic Damping ($F_{gyro}$) - New v0.4.17**
++Stabilizes the wheel by opposing rapid steering movements (prevents "tank slappers").
++*   $Angle$: Steering Input $\times$ (Range / 2.0).
++*   $Vel$: $(Angle - Angle_{prev}) / dt$.
++*   $Vel_{smooth}$: Smoothed derivative of steering angle (LPF).
++*   $F_{gyro} = -1.0 \times Vel_{smooth} \times K_{gyro} \times (\text{CarSpeed} / 10.0)$
++*   **Note**: Scales with car speed (faster = more stability needed).
++
+ ---
+ 
+ ### 3. Post-Processing (Min Force)
+@@ -181,6 +189,7 @@ $$ F_{final} = \text{sign}(F_{norm}) \times K_{min\_force} $$
+ *   $K_{understeer}$: Understeer Effect (0.0 - 1.0)
+ *   $K_{sop}$: SoP Effect (0.0 - 2.0)
+ *   $K_{yaw}$: SoP Yaw Gain (0.0 - 2.0) **(New v0.4.15)**
++*   $K_{gyro}$: Gyroscopic Damping Gain (0.0 - 1.0) **(New v0.4.17)**
+ *   $K_{oversteer}$: Oversteer Boost (0.0 - 1.0)
+ *   $K_{rear\_align}$: Rear Align Torque (0.0 - 2.0)
+ *   $K_{lockup}, K_{spin}, K_{slide}, K_{road}, K_{drag}$: Texture/Effect Gains
+diff --git a/src/Config.cpp b/src/Config.cpp
+index fe63c21..307d686 100644
+--- a/src/Config.cpp
++++ b/src/Config.cpp
+@@ -230,6 +230,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
+         file << "sop_yaw_gain=" << engine.m_sop_yaw_gain << "\n";
+         file << "steering_shaft_gain=" << engine.m_steering_shaft_gain << "\n";
+         file << "base_force_mode=" << engine.m_base_force_mode << "\n";
++        file << "gyro_gain=" << engine.m_gyro_gain << "\n";
+         file.close();
+         std::cout << "[Config] Saved to " << filename << std::endl;
+     } else {
+@@ -286,6 +287,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
+                     else if (key == "sop_yaw_gain") engine.m_sop_yaw_gain = std::stof(value);
+                     else if (key == "steering_shaft_gain") engine.m_steering_shaft_gain = std::stof(value);
+                     else if (key == "base_force_mode") engine.m_base_force_mode = std::stoi(value);
++                    else if (key == "gyro_gain") engine.m_gyro_gain = std::stof(value);
+                 } catch (...) {
+                     std::cerr << "[Config] Error parsing line: " << line << std::endl;
+                 }
+diff --git a/src/Config.h b/src/Config.h
+index 80e1c21..02ff1a1 100644
+--- a/src/Config.h
++++ b/src/Config.h
+@@ -38,6 +38,7 @@ struct Preset {
+     
+     float rear_align_effect = 1.0f;
+     float sop_yaw_gain = 0.0f; // New v0.4.15
++    float gyro_gain = 0.0f; // New v0.4.17
+     
+     float steering_shaft_gain = 1.0f;
+     int base_force_mode = 0; // 0=Native
+@@ -68,6 +69,7 @@ struct Preset {
+     Preset& SetScrub(float v) { scrub_drag_gain = v; return *this; }
+     Preset& SetRearAlign(float v) { rear_align_effect = v; return *this; }
+     Preset& SetSoPYaw(float v) { sop_yaw_gain = v; return *this; }
++    Preset& SetGyro(float v) { gyro_gain = v; return *this; }
+     
+     Preset& SetShaftGain(float v) { steering_shaft_gain = v; return *this; }
+     Preset& SetBaseMode(int v) { base_force_mode = v; return *this; }
+@@ -96,6 +98,7 @@ struct Preset {
+         engine.m_scrub_drag_gain = scrub_drag_gain;
+         engine.m_rear_align_effect = rear_align_effect;
+         engine.m_sop_yaw_gain = sop_yaw_gain;
++        engine.m_gyro_gain = gyro_gain;
+         engine.m_steering_shaft_gain = steering_shaft_gain;
+         engine.m_base_force_mode = base_force_mode;
+     }

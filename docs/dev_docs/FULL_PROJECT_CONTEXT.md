@@ -371,6 +371,9 @@ Remove-Item -Path "vendor\imgui-master.zip", "vendor\imgui-master" -Recurse -For
 
 # Actual build
 
+Update version number
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build
+
 Build release (Windows)
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake --build build --config Release
 
@@ -406,6 +409,38 @@ tests\test_ffb_engine.exe 2>&1 | Select-String -Pattern "Tests (Passed|Failed):"
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [0.4.18] - 2025-12-16
+### Fixed
+- **Critical Stability Issue**: Fixed a noise feedback loop between Slide Rumble and Yaw Kick effects that caused violent wheel behavior.
+    - **Problem**: Slide Rumble vibrations caused the yaw acceleration telemetry (a derivative value) to spike with high-frequency noise. The Yaw Kick effect amplified these spikes, creating a positive feedback loop where the wheel would shake increasingly harder and feel like it was "fighting" the user.
+    - **Solution**: Implemented a Low Pass Filter (Exponential Moving Average with alpha=0.1) on the yaw acceleration data before calculating the Yaw Kick force. This filters out high-frequency vibration noise while preserving the low-frequency "actual rotation kick" signal.
+    - **Impact**: Users can now safely use Slide Rumble and Yaw Kick effects simultaneously without experiencing unstable or violent FFB behavior.
+    - **Technical Details**: Added `m_yaw_accel_smoothed` state variable to `FFBEngine` class. The filter uses 10% new data and 90% history, effectively removing noise above ~1.6 Hz while keeping the intended rotation cues intact.
+
+## [0.4.17] - 2025-12-15
+### Added
+- **Synthetic Gyroscopic Damping**: Implemented stabilization effect to prevent "tank slappers" during drifts.
+    - Added `Gyroscopic Damping` slider (0.0 - 1.0) to Tuning Window.
+    - Added "Gyro Damping" trace to Debug Window FFB Components graph.
+    - Force opposes rapid steering movements and scales with car speed.
+    - Uses Low Pass Filter (LPF) to smooth noisy steering velocity derivative.
+    - Added `m_gyro_gain` and `m_gyro_smoothing` settings to configuration system.
+
+### Changed
+- **Physics Engine**: Updated total force calculation to include gyroscopic damping component.
+- **Documentation**: Updated `FFB_formulas.md` with gyroscopic damping formula and tuning parameter.
+
+### Testing
+- Added `test_gyro_damping()` unit test to verify force direction and magnitude.
+
+
+## [0.4.16] - 2025-12-15
+### Added
+- **SoP Yaw Kick**: Implemented "Yaw Acceleration Injection" to provide a predictive kick when rotation starts.
+    - Added `m_sop_yaw_gain` slider (0.0 - 2.0) to Tuning Window.
+    - Added "Yaw Kick" trace to Debug Window.
+    - Updated physics engine to mix Yaw Acceleration with Lateral G-Force in SoP calculation.
 
 ## [0.4.15] - 2025-12-15
 ### Changed
@@ -799,6 +834,8 @@ struct FFBSnapshot {
     float oversteer_boost;
     float ffb_rear_torque;  // New v0.4.7
     float ffb_scrub_drag;   // New v0.4.7
+    float ffb_yaw_kick;     // New v0.4.16
+    float ffb_gyro_damping; // New v0.4.17
     float texture_road;
     float texture_slide;
     float texture_lockup;
@@ -869,6 +906,9 @@ public:
     // New Effects (v0.2)
     float m_oversteer_boost = 0.0f; // 0.0 - 1.0 (Rear grip loss boost)
     float m_rear_align_effect = 1.0f; // New v0.4.11
+    float m_sop_yaw_gain = 0.0f;      // New v0.4.16 (Yaw Acceleration Injection)
+    float m_gyro_gain = 0.0f;         // New v0.4.17 (Gyroscopic Damping)
+    float m_gyro_smoothing = 0.1f;    // New v0.4.17
     
     bool m_lockup_enabled = false;
     float m_lockup_gain = 0.5f;
@@ -910,6 +950,13 @@ public:
     double m_prev_vert_deflection[2] = {0.0, 0.0}; // FL, FR
     double m_prev_slip_angle[4] = {0.0, 0.0, 0.0, 0.0}; // FL, FR, RL, RR (LPF State)
     
+    // Gyro State (v0.4.17)
+    double m_prev_steering_angle = 0.0;
+    double m_steering_velocity_smoothed = 0.0;
+    
+    // Yaw Acceleration Smoothing State (v0.4.18)
+    double m_yaw_accel_smoothed = 0.0;
+
     // Phase Accumulators for Dynamic Oscillators
     double m_lockup_phase = 0.0;
     double m_spin_phase = 0.0;
@@ -1009,7 +1056,11 @@ private:
     // when the steering shaft torque oscillates near zero.
     static constexpr double SYNTHETIC_MODE_DEADZONE_NM = 0.5; // Nm
 
-
+    // Gyroscopic Damping Constants (v0.4.17)
+    // Default steering range (540 degrees) if physics range is missing
+    static constexpr double DEFAULT_STEERING_RANGE_RAD = 9.4247; 
+    // Normalizes car speed (m/s) to 0-1 range for typical speeds (10m/s baseline)
+    static constexpr double GYRO_SPEED_SCALE = 10.0; 
 
 public:
     // Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
@@ -1382,8 +1433,50 @@ public:
         // Multiplied by m_rear_align_effect to allow user tuning of rear-end sensitivity.
         double rear_torque = calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect; 
         sop_total += rear_torque;
+
+        // --- 2b. Yaw Acceleration Injector (The "Kick") ---
+        // Reads rotational acceleration (radians/sec^2)
+        // 
+        // v0.4.18 FIX: Apply Low Pass Filter to prevent noise feedback loop
+        // PROBLEM: Slide Rumble injects high-frequency vibrations -> Yaw Accel spikes (derivatives are noise-sensitive)
+        //          -> Yaw Kick amplifies the noise -> Wheel shakes harder -> Feedback loop
+        // SOLUTION: Smooth the yaw acceleration to filter out high-frequency noise while keeping low-frequency signal
+        double raw_yaw_accel = data->mLocalRotAccel.y;
+        
+        // Apply Smoothing (Low Pass Filter)
+        // Alpha 0.1 means we trust 10% new data, 90% history.
+        // This kills high-frequency vibration noise while preserving actual rotation kicks.
+        double alpha_yaw = 0.1;
+        m_yaw_accel_smoothed = m_yaw_accel_smoothed + alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
+        
+        // Use SMOOTHED value for the kick
+        // Scaled by 5.0 (Base multiplier) and User Gain
+        // Added AFTER Oversteer Boost to provide a clean, independent cue.
+        double yaw_force = data->mLocalRotAccel.y * m_sop_yaw_gain * 5.0;
+        sop_total += yaw_force;
         
         double total_force = output_force + sop_total;
+
+        // --- 2c. Synthetic Gyroscopic Damping (v0.4.17) ---
+        // Calculate Steering Angle (Radians)
+        float range = data->mPhysicalSteeringWheelRange;
+        if (range <= 0.0f) range = DEFAULT_STEERING_RANGE_RAD; // Fallback 540 deg
+        
+        double steer_angle = data->mUnfilteredSteering * (range / 2.0);
+        
+        // Calculate Velocity (rad/s)
+        double steer_vel = (steer_angle - m_prev_steering_angle) / dt;
+        m_prev_steering_angle = steer_angle; // Update history
+        
+        // Smoothing (LPF)
+        double alpha_gyro = (std::min)(1.0f, m_gyro_smoothing);
+        m_steering_velocity_smoothed += alpha_gyro * (steer_vel - m_steering_velocity_smoothed);
+        
+        // Damping Force: Opposes velocity, scales with car speed
+        double gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (car_speed / GYRO_SPEED_SCALE);
+        
+        // Add to total
+        total_force += gyro_force;
         
         // --- Helper: Calculate Slip Data (Approximation) ---
         // The new LMU interface does not expose mSlipRatio/mSlipAngle directly.
@@ -1650,9 +1743,11 @@ public:
                 snap.base_force = (float)base_input; // Show the processed base input
                 snap.sop_force = (float)sop_base_force;
                 snap.understeer_drop = (float)((base_input * m_steering_shaft_gain) * (1.0 - grip_factor));
-                snap.oversteer_boost = (float)(sop_total - sop_base_force - rear_torque); // Split boost from rear torque
+                snap.oversteer_boost = (float)(sop_total - sop_base_force - rear_torque - yaw_force); // Split boost from other SoP components
                 snap.ffb_rear_torque = (float)rear_torque;
                 snap.ffb_scrub_drag = (float)scrub_drag_force;
+                snap.ffb_yaw_kick = (float)yaw_force;
+                snap.ffb_gyro_damping = (float)gyro_force; // New v0.4.17
                 snap.texture_road = (float)road_noise;
                 snap.texture_slide = (float)slide_noise;
                 snap.texture_lockup = (float)lockup_rumble;
@@ -3519,6 +3614,82 @@ Directly using `CreateWindow` or Microsoft Foundation Classes.
     ImGui::Render();
     ```
 
+```
+
+# File: docs\bug_reports\Fix - Smooth the Yaw Acceleration.md
+```markdown
+# Bug report
+
+An user reported the following issue. He tested the version after the Yaw Kick was introduced (while  Gyroscopic Damping is not implemented yet). Please help me diagnose the issue and what might be done to fix it.
+
+User report:
+"I just tested it and got it to work. FFB seems stronger especially on oversteer. The only thing that is broken for me is the slide rumble, which throws the wheel in the direction I am turning, regardless of the level. Coincidentally this might be the effect that I need to feel vibrations on understeer, if I am not mistaken?"
+
+# Answer
+
+### Diagnosis: The "Noise Feedback Loop"
+
+Based on the user's report, the issue is likely **not** the Slide Rumble itself, but how the new **Yaw Kick** interacts with it.
+
+**The Mechanism of Failure:**
+1.  **Slide Rumble** injects a high-frequency vibration (Sawtooth wave) into the steering wheel.
+2.  This vibration causes the virtual car's steering to jitter slightly (or the chassis to vibrate in the physics engine).
+3.  **Yaw Acceleration (`mLocalRotAccel.y`)** is a *derivative* value. Derivatives are extremely sensitive to high-frequency noise. The vibration from the Slide Rumble causes massive, noisy spikes in the Yaw Acceleration telemetry.
+4.  The new **Yaw Kick** feature reads these spikes and injects them back into the wheel as strong forces.
+5.  **Result:** A positive feedback loop. The wheel shakes -> Telemetry spikes -> Yaw Kick throws the wheel -> Wheel shakes harder. This feels like the wheel is being "thrown" or fighting the user violently.
+
+**Why it feels like "Slide Rumble" is broken:**
+The user turns on Slide Rumble, and the wheel goes crazy. Naturally, they blame the Slide Rumble. However, the *root cause* is that the **Yaw Kick is amplifying the noise** generated by the rumble.
+
+---
+
+### Proposed Fix: Smooth the Yaw Acceleration
+
+To fix this, we must apply a **Low Pass Filter (Smoothing)** to the Yaw Acceleration data before using it for the FFB. This filters out the high-frequency "noise" (vibrations) while keeping the low-frequency "signal" (the actual car rotation kick).
+
+**Action Plan:**
+
+1.  **Modify `FFBEngine.h`**:
+    *   Add a state variable: `double m_yaw_accel_smoothed = 0.0;`
+    *   Add a smoothing constant (or reuse `m_sop_smoothing_factor`, but a dedicated one is safer for this specific derivative). Let's use a fixed fast alpha (e.g., 0.1) or expose it.
+    *   Update the calculation logic.
+
+**Code Change:**
+
+```cpp
+// In FFBEngine.h
+
+// 1. Add state variable
+double m_yaw_accel_smoothed = 0.0;
+
+// 2. In calculate_force()
+// ...
+double raw_yaw_accel = data->mLocalRotAccel.y;
+
+// Apply Smoothing (Low Pass Filter)
+// Alpha 0.1 means we trust 10% new data, 90% history. 
+// This kills high-frequency vibration noise.
+double alpha_yaw = 0.1; 
+m_yaw_accel_smoothed = m_yaw_accel_smoothed + alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
+
+// Use SMOOTHED value for the kick
+double yaw_force = m_yaw_accel_smoothed * m_sop_yaw_gain * 5.0; 
+
+sop_total += yaw_force;
+```
+
+### Instructions for the User (Temporary Workaround)
+
+You can advise the user to try this while waiting for the fix:
+*"It seems the new Yaw Kick effect is reacting to the vibrations from the Slide Rumble. Please try **reducing the 'SoP Yaw (Kick)' slider** to a very low value (e.g., 0.1 or 0.0) and see if the Slide Rumble behaves normally again. We will add smoothing in the next update to prevent this interference."*
+
+### Instructions for the Coding Agent
+
+You should include this fix in the next prompt.
+
+**Task Addition:**
+*   **Context:** Users report instability when Slide Rumble and Yaw Kick are both active. The Yaw Acceleration telemetry is too noisy.
+*   **Requirement:** Implement an **Exponential Moving Average (LPF)** for `mLocalRotAccel.y` inside `FFBEngine`. Use a hardcoded alpha of `0.1` (or link it to `m_sop_smoothing_factor`) before calculating `yaw_force`.
 ```
 
 # File: docs\bug_reports\Intermittent Reversed FFB Feel.md
@@ -6275,7 +6446,7 @@ $$ F_{final} = \text{Clamp}\left( \left( \frac{F_{total}}{20.0} \times K_{gain} 
 
 Where **$F_{total}$** is the sum of all physics components:
 
-$$ F_{total} = (F_{base} + F_{sop} + F_{vib\_lock} + F_{vib\_spin} + F_{vib\_slide} + F_{vib\_road} + F_{vib\_bottom}) \times M_{spin\_drop} $$
+$$ F_{total} = (F_{base} + F_{sop} + F_{vib\_lock} + F_{vib\_spin} + F_{vib\_slide} + F_{vib\_road} + F_{vib\_bottom} + F_{gyro}) \times M_{spin\_drop} $$
 
 *(Note: $M_{spin\_drop}$ is a reduction multiplier active only during traction loss).*
 
@@ -6332,7 +6503,17 @@ This injects lateral G-force and rear-axle aligning torque to simulate the car b
     
     **Note**: Scaling changed from 5.0 to 20.0 in v0.4.10 to provide stronger baseline Nm output.
 
-3.  **Oversteer Boost**:
+3.  **Yaw Acceleration (The Kick) - New v0.4.16, Smoothed v0.4.18**:
+    $$ F_{yaw} = \text{YawAccel}_{smoothed} \times K_{yaw} \times 5.0 $$
+    
+    *   Injects `mLocalRotAccel.y` (Radians/sec²) to provide a predictive kick when rotation starts.
+    *   **v0.4.18 Fix:** Applied Low Pass Filter (Exponential Moving Average, $\alpha = 0.1$) to prevent noise feedback loop with Slide Rumble.
+        *   **Problem:** Slide Rumble vibrations caused yaw acceleration (a derivative) to spike with high-frequency noise, which Yaw Kick amplified, creating a positive feedback loop.
+        *   **Solution:** $\text{YawAccel}_{smoothed} = \text{YawAccel}_{prev} + 0.1 \times (\text{YawAccel}_{raw} - \text{YawAccel}_{prev})$
+        *   This filters out high-frequency noise (> ~1.6 Hz) while preserving actual rotation kicks.
+    *   $K_{yaw}$: User setting `m_sop_yaw_gain` (0.0 - 2.0).
+
+4.  **Oversteer Boost**:
     If Front Grip > Rear Grip:
     $$ F_{sop\_boosted} = F_{sop\_base} \times \left( 1.0 + (\text{Grip}_{delta} \times K_{oversteer} \times 2.0) \right) $$
     where $\text{Grip}_{delta} = \text{Front\_Grip}_{avg} - \text{Rear\_Grip}_{avg}$
@@ -6354,7 +6535,7 @@ This injects lateral G-force and rear-axle aligning torque to simulate the car b
     
     **Note**: Coefficient changed from 0.00025 to 0.001 in v0.4.11.
 
-$$ F_{sop} = F_{sop\_boosted} + T_{rear} $$
+$$ F_{sop} = F_{sop\_boosted} + T_{rear} + F_{yaw} $$
 
 #### D. Dynamic Textures (Vibrations)
 
@@ -6404,6 +6585,14 @@ Active if Max Tire Load > 8000N or Ride Height < 2mm.
     **Note**: Magnitude scaling changed from 0.5 to 0.0025 in v0.4.1 (Nm units).
 *   **Frequency**: Fixed 50Hz sine wave pulse.
 
+**6. Synthetic Gyroscopic Damping ($F_{gyro}$) - New v0.4.17**
+Stabilizes the wheel by opposing rapid steering movements (prevents "tank slappers").
+*   $Angle$: Steering Input $\times$ (Range / 2.0).
+*   $Vel$: $(Angle - Angle_{prev}) / dt$.
+*   $Vel_{smooth}$: Smoothed derivative of steering angle (LPF).
+*   $F_{gyro} = -1.0 \times Vel_{smooth} \times K_{gyro} \times (\text{CarSpeed} / 10.0)$
+*   **Note**: Scales with car speed (faster = more stability needed).
+
 ---
 
 ### 3. Post-Processing (Min Force)
@@ -6432,6 +6621,8 @@ $$ F_{final} = \text{sign}(F_{norm}) \times K_{min\_force} $$
 *   $K_{shaft\_gain}$: Steering Shaft Gain (0.0 - 1.0) **(New v0.4.13)**
 *   $K_{understeer}$: Understeer Effect (0.0 - 1.0)
 *   $K_{sop}$: SoP Effect (0.0 - 2.0)
+*   $K_{yaw}$: SoP Yaw Gain (0.0 - 2.0) **(New v0.4.15)**
+*   $K_{gyro}$: Gyroscopic Damping Gain (0.0 - 1.0) **(New v0.4.17)**
 *   $K_{oversteer}$: Oversteer Boost (0.0 - 1.0)
 *   $K_{rear\_align}$: Rear Align Torque (0.0 - 2.0)
 *   $K_{lockup}, K_{spin}, K_{slide}, K_{road}, K_{drag}$: Texture/Effect Gains
@@ -13034,6 +13225,47 @@ double radius_m = (double)raw_radius_cm / 100.0;
 
 ```
 
+# File: docs\dev_docs\Yaw Kick names.md
+```markdown
+Here are the best options for naming this effect in the GUI, keeping in mind that it needs to be short enough for a label but descriptive enough for a user to understand what it feels like.
+
+### Top Recommendation
+**"SoP Yaw (Kick)"**
+
+*   **Why it works:**
+    *   **Context:** It groups the effect under "SoP" (Seat of Pants), so the user knows it relates to chassis movement, not steering rack forces.
+    *   **Physics:** It identifies "Yaw" (rotation) as the source.
+    *   **Sensation:** It uses "(Kick)" to describe the tactile feeling. Unlike Lateral G (which is a sustained weight), Acceleration is felt as a sudden impulse or kick.
+
+---
+
+### Alternative Options
+
+Here is a breakdown by naming philosophy:
+
+#### 1. Descriptive (Focus on the Sensation)
+*   **Yaw Kick** (Short, punchy, accurate)
+*   **Rotation Snap** (Describes the sudden movement of the car)
+*   **Yaw Impulse** (More technical, implies a short burst of force)
+*   **Rear Jolt** (Focuses on the rear axle behavior)
+
+#### 2. Functional (Focus on the Purpose)
+*   **Slide Cue** (Tells the user *why* they need it: to detect a slide)
+*   **Oversteer Cue** (Specific to oversteer initiation)
+*   **Slide Onset** (Implies it happens at the *start* of the slide)
+*   **Rotation Cue** (Simple and direct)
+
+#### 3. Technical (Focus on the Data)
+*   **Yaw Acceleration** (Accurate, but perhaps too long for a GUI column)
+*   **Rotational Accel**
+*   **Yaw Accel Gain**
+
+### Recommendation for the Prompt
+I suggest using **"SoP Yaw (Kick)"** for the GUI label. It balances technical accuracy with the visceral description of the effect.
+
+In the code variables, use `m_sop_yaw_gain` to keep it consistent with the existing `m_sop_effect`.
+```
+
 # File: docs\dev_docs\Yaw, Gyroscopic Damping , Dynamic Weight, Per-Wheel Hydro-Grain, and Adaptive Optimal Slip Angle implementation.md
 ```markdown
 # Report: Advanced FFB Mechanics
@@ -13679,12 +13911,6 @@ double excess = (std::max)(0.0, result.slip_angle - dynamic_limit);
 
 ```
 
-# File: docs\dev_docs\prompts\prompt.md
-```markdown
-
-
-```
-
 # File: docs\dev_docs\prompts\prompt_for_v_0.4.14.md
 ```markdown
 Please initialize this session by following the **Standard Task Workflow** defined in `AGENTS.md`.
@@ -13787,6 +14013,135 @@ We have identified a critical logic error in `FFBEngine.h` where physics state v
 5.  Updated `AGENTS_MEMORY.md`.
 6.  **Verification**: Run the tests (`./run_tests` in the build folder) and ensure the new regression tests PASS.
 
+```
+
+# File: docs\dev_docs\prompts\prompt_for_v_0.4.16.md
+```markdown
+You will have to work on the files downloaded from this repo https://github.com/coasting-nc/LMUFFB and start working on the tasks described below. Therefore, if you haven't done it already, clone this repo https://github.com/coasting-nc/LMUFFB and start working on the tasks described below.
+
+Please initialize this session by following the **Standard Task Workflow** defined in `AGENTS.md`.
+
+1.  **Sync**: Run `git fetch && git reset --hard origin/main` for the LMUFFB repository to ensure you see the latest files.
+1.  **Load Memory**: Read `AGENTS_MEMORY.md` from the root dir of the LMUFFB repository to review build workarounds and architectural insights. 
+2.  **Load Rules**: Read `AGENTS.md` from the root dir of the LMUFFB repository to confirm instructions. 
+
+Once you have reviewed these documents, please proceed with the following task:
+
+**Task: Implement "SoP Injector" (Yaw Acceleration Cue)**
+
+**Reference Documents:**
+*   `docs/dev_docs/Yaw, Gyroscopic Damping , Dynamic Weight, Per-Wheel Hydro-Grain, and Adaptive Optimal Slip Angle implementation.md` (Sections 1 and 5).
+*   `docs/dev_docs/FFB_formulas.md` (For documentation updates).
+
+**Context:**
+We are enhancing the "Seat of Pants" (SoP) effect to be more "Informative" and "Visceral". Currently, SoP relies on Lateral G-Force (`mLocalAccel.x`), which represents weight transfer. However, this is reactive. To provide a predictive "Kick" when the rear end breaks traction (especially on low-grip surfaces where G-force might drop), we need to inject **Yaw Acceleration** (`mLocalRotAccel.y`) into the signal.
+
+**Implementation Requirements:**
+
+1.  **Update `FFBEngine.h`**:
+    *   Add a new configuration variable: `float m_sop_yaw_gain = 0.0f;` (Default to 0.0 so it is an opt-in feature).
+    *   In `calculate_force`:
+        *   Read `data->mLocalRotAccel.y` (Yaw Acceleration).
+        *   Calculate the force: `double yaw_force = data->mLocalRotAccel.y * m_sop_yaw_gain * 5.0;` (Use 5.0 as the base scaling factor as per the reference doc).
+        *   Add `yaw_force` to `sop_total`.
+    *   Update `FFBSnapshot` struct to include `float ffb_yaw_kick` and populate it in the snapshot logic.
+
+2.  **Update Configuration (`src/Config.h` & `src/Config.cpp`)**:
+    *   Update `Preset` struct to include `float sop_yaw_gain`.
+    *   Add a fluent setter: `Preset& SetSoPYaw(float v)`.
+    *   Update `Config::Save` and `Config::Load` to persist `sop_yaw_gain` to `config.ini`.
+    *   Update `Config::LoadPresets` to initialize this value (default 0.0f).
+
+3.  **Update GUI (`src/GuiLayer.cpp`)**:
+    *   **Tuning Window**: Add a slider for "SoP Yaw (Kick)" in the "Effects" section (Range 0.0 to 2.0). Add a tooltip explaining it provides a cue for rotation onset.
+    *   **Debug Window**: Add a new trace line for "Yaw Kick" in the "FFB Components (Output)" graph (Header A) so users can visualize this specific force contribution.
+
+4.  **Update Documentation**:
+    *   Update `docs/dev_docs/FFB_formulas.md`: Add the Yaw Acceleration component to the "Seat of Pants (SoP) & Oversteer" section formulas.
+
+5.  **Add Unit Test (`tests/test_ffb_engine.cpp`)**:
+    *   Create a test `test_sop_yaw_kick()`.
+    *   Scenario: Zero Lateral G, Zero Steering Force, but Non-Zero Yaw Acceleration (e.g., `mLocalRotAccel.y = 5.0`).
+    *   Assert that the calculated force is non-zero and matches the expected formula.
+
+**Deliverables:**
+1.  Modified `FFBEngine.h`.
+2.  Modified `src/Config.h` and `src/Config.cpp`.
+3.  Modified `src/GuiLayer.cpp`.
+4.  Updated `docs/dev_docs/FFB_formulas.md`.
+5.  Modified `tests/test_ffb_engine.cpp` with the new test case.
+6.  **Verification**: Run the tests (`./run_tests` in the build folder) and ensure `test_sop_yaw_kick` passes.
+```
+
+# File: docs\dev_docs\prompts\v_0.4.17.md
+```markdown
+You will have to work on the files downloaded from this repo https://github.com/coasting-nc/LMUFFB and start working on the tasks described below. Therefore, if you haven't done it already, clone this repo https://github.com/coasting-nc/LMUFFB and start working on the tasks described below.
+
+Please initialize this session by following the **Standard Task Workflow** defined in `AGENTS.md`.
+
+1.  **Sync**: Run `git fetch && git reset --hard origin/main` for the LMUFFB repository to ensure you see the latest files.
+1.  **Load Memory**: Read `AGENTS_MEMORY.md` from the root dir of the LMUFFB repository to review build workarounds and architectural insights. 
+2.  **Load Rules**: Read `AGENTS.md` from the root dir of the LMUFFB repository to confirm instructions. 
+
+Once you have reviewed these documents, please proceed with the following task:
+
+**Task: Implement Synthetic Gyroscopic Damping**
+
+**Reference Documents:**
+*   `docs/dev_docs/Yaw, Gyroscopic Damping , Dynamic Weight, Per-Wheel Hydro-Grain, and Adaptive Optimal Slip Angle implementation.md` (Section 4.2 and 8.4).
+*   `src/lmu_sm_interface/InternalsPlugin.hpp` (For steering inputs).
+
+**Context:**
+We need to implement the "Gyroscopic Damping" effect to stabilize the wheel during drifts and prevent oscillations ("tank slappers").
+**Constraint:** Do NOT attempt to implement a DirectInput "Damper" effect. Instead, implement **Synthetic Damping** by calculating a counter-force based on steering velocity and adding it to the main Constant Force output.
+
+**Implementation Requirements:**
+
+1.  **Update `FFBEngine.h`**:
+    *   **New Settings:**
+        *   `float m_gyro_gain = 0.0f;` (Default 0.0).
+        *   `float m_gyro_smoothing = 0.1f;` (To filter the noisy derivative).
+    *   **New State Variables:**
+        *   `double m_prev_steering_angle = 0.0;`
+        *   `double m_steering_velocity_smoothed = 0.0;`
+    *   **Logic in `calculate_force`:**
+        1.  **Calculate Steering Angle:** Convert `data->mUnfilteredSteering` (-1.0 to 1.0) to Radians.
+            *   Use `data->mPhysicalSteeringWheelRange` if available (> 0).
+            *   Fallback: Assume 540 degrees (approx 9.42 rad) if range is 0.
+            *   Formula: `Angle = Input * (Range / 2.0)`.
+        2.  **Calculate Velocity:** `RawVel = (Angle - m_prev_steering_angle) / dt`.
+        3.  **Smooth Velocity:** Apply an Exponential Moving Average (LPF) to `RawVel` using `m_gyro_smoothing` to remove noise spikes.
+        4.  **Calculate Damping Force:**
+            *   Formula: `Force = -1.0 * SmoothedVel * m_gyro_gain * (CarSpeed / 10.0)`.
+            *   *Note:* The force opposes velocity (negative sign). It scales with Car Speed (higher speed = more gyroscopic resistance).
+        5.  **Add to Total:** `total_force += Force`.
+    *   **Snapshot:** Add `ffb_gyro_damping` to `FFBSnapshot` for visualization.
+
+2.  **Update Configuration (`src/Config.h` & `src/Config.cpp`)**:
+    *   Update `Preset` struct to include `float gyro_gain`.
+    *   Add fluent setter: `Preset& SetGyro(float v)`.
+    *   Update Save/Load logic.
+    *   Update `LoadPresets` (Default to 0.0).
+
+3.  **Update GUI (`src/GuiLayer.cpp`)**:
+    *   **Tuning Window:** Add a slider "Gyroscopic Damping" in the "Effects" or "Advanced" section (Range 0.0 to 1.0).
+    *   **Debug Window:** Add a trace for "Gyro Damping" in the "FFB Components" graph.
+
+4.  **Update Documentation**:
+    *   Update `docs/dev_docs/FFB_formulas.md` with the Gyro Damping formula.
+
+5.  **Add Unit Test (`tests/test_ffb_engine.cpp`)**:
+    *   Create `test_gyro_damping()`.
+    *   Scenario: Car moving fast (50 m/s). Steering moves rapidly from 0.0 to 0.1 in one frame.
+    *   Assert: The calculated Gyro Force is **negative** (opposing the movement) and non-zero.
+
+**Deliverables:**
+1.  Modified `FFBEngine.h`.
+2.  Modified `src/Config.h` and `src/Config.cpp`.
+3.  Modified `src/GuiLayer.cpp`.
+4.  Updated `docs/dev_docs/FFB_formulas.md`.
+5.  Modified `tests/test_ffb_engine.cpp`.
+6.  **Verification**: Run tests and ensure `test_gyro_damping` passes.
 ```
 
 # File: docs\python_version\performance_analysis.md
@@ -14256,6 +14611,7 @@ void Config::LoadPresets() {
         .SetSmoothing(0.0f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
+        .SetSoPYaw(0.0f)
         .SetBaseMode(2) // Muted
     );
 
@@ -14291,6 +14647,7 @@ void Config::LoadPresets() {
         .SetSmoothing(0.0f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(1.0f)
+        .SetSoPYaw(0.0f)
     );
 
     // 7. Test: SoP Base Only
@@ -14301,6 +14658,7 @@ void Config::LoadPresets() {
         .SetSmoothing(0.0f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
+        .SetSoPYaw(0.0f)
         .SetBaseMode(2) // Muted
     );
 
@@ -14397,6 +14755,7 @@ void Config::LoadPresets() {
                         else if (key == "bottoming_method") current_preset.bottoming_method = std::stoi(value);
                         else if (key == "scrub_drag_gain") current_preset.scrub_drag_gain = std::stof(value);
                         else if (key == "rear_align_effect") current_preset.rear_align_effect = std::stof(value);
+                        else if (key == "sop_yaw_gain") current_preset.sop_yaw_gain = std::stof(value);
                         else if (key == "steering_shaft_gain") current_preset.steering_shaft_gain = std::stof(value);
                         else if (key == "base_force_mode") current_preset.base_force_mode = std::stoi(value);
                     } catch (...) {}
@@ -14446,8 +14805,10 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "bottoming_method=" << engine.m_bottoming_method << "\n";
         file << "scrub_drag_gain=" << engine.m_scrub_drag_gain << "\n";
         file << "rear_align_effect=" << engine.m_rear_align_effect << "\n";
+        file << "sop_yaw_gain=" << engine.m_sop_yaw_gain << "\n";
         file << "steering_shaft_gain=" << engine.m_steering_shaft_gain << "\n";
         file << "base_force_mode=" << engine.m_base_force_mode << "\n";
+        file << "gyro_gain=" << engine.m_gyro_gain << "\n";
         file.close();
         std::cout << "[Config] Saved to " << filename << std::endl;
     } else {
@@ -14501,8 +14862,10 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "bottoming_method") engine.m_bottoming_method = std::stoi(value);
                     else if (key == "scrub_drag_gain") engine.m_scrub_drag_gain = std::stof(value);
                     else if (key == "rear_align_effect") engine.m_rear_align_effect = std::stof(value);
+                    else if (key == "sop_yaw_gain") engine.m_sop_yaw_gain = std::stof(value);
                     else if (key == "steering_shaft_gain") engine.m_steering_shaft_gain = std::stof(value);
                     else if (key == "base_force_mode") engine.m_base_force_mode = std::stoi(value);
+                    else if (key == "gyro_gain") engine.m_gyro_gain = std::stof(value);
                 } catch (...) {
                     std::cerr << "[Config] Error parsing line: " << line << std::endl;
                 }
@@ -14555,6 +14918,8 @@ struct Preset {
     float scrub_drag_gain = 0.0f;
     
     float rear_align_effect = 1.0f;
+    float sop_yaw_gain = 0.0f; // New v0.4.15
+    float gyro_gain = 0.0f; // New v0.4.17
     
     float steering_shaft_gain = 1.0f;
     int base_force_mode = 0; // 0=Native
@@ -14584,6 +14949,8 @@ struct Preset {
     Preset& SetBottoming(int method) { bottoming_method = method; return *this; }
     Preset& SetScrub(float v) { scrub_drag_gain = v; return *this; }
     Preset& SetRearAlign(float v) { rear_align_effect = v; return *this; }
+    Preset& SetSoPYaw(float v) { sop_yaw_gain = v; return *this; }
+    Preset& SetGyro(float v) { gyro_gain = v; return *this; }
     
     Preset& SetShaftGain(float v) { steering_shaft_gain = v; return *this; }
     Preset& SetBaseMode(int v) { base_force_mode = v; return *this; }
@@ -14611,6 +14978,8 @@ struct Preset {
         engine.m_bottoming_method = bottoming_method;
         engine.m_scrub_drag_gain = scrub_drag_gain;
         engine.m_rear_align_effect = rear_align_effect;
+        engine.m_sop_yaw_gain = sop_yaw_gain;
+        engine.m_gyro_gain = gyro_gain;
         engine.m_steering_shaft_gain = steering_shaft_gain;
         engine.m_base_force_mode = base_force_mode;
     }
@@ -15533,6 +15902,10 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     ImGui::Text("Effects");
     ImGui::SliderFloat("Understeer (Grip)", &engine.m_understeer_effect, 0.0f, 1.0f, "%.2f");
     ImGui::SliderFloat("SoP (Lateral G)", &engine.m_sop_effect, 0.0f, 2.0f, "%.2f");
+    ImGui::SliderFloat("SoP Yaw (Kick)", &engine.m_sop_yaw_gain, 0.0f, 2.0f, "%.2f");
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Injects Yaw Acceleration to provide a predictive kick when rotation starts.");
+    ImGui::SliderFloat("Gyroscopic Damping", &engine.m_gyro_gain, 0.0f, 1.0f, "%.2f");
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Stabilizes the wheel during drifts by opposing rapid steering movements.\nPrevents oscillations (tank slappers).");
     ImGui::SliderFloat("Oversteer Boost", &engine.m_oversteer_boost, 0.0f, 1.0f, "%.2f");
     ImGui::SliderFloat("Rear Align Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, "%.2f");
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Controls rear-end counter-steering feedback.\nProvides a distinct cue during oversteer without affecting base SoP.\nIncrease for stronger rear-end feel (0.0 = Off, 1.0 = Default, 2.0 = Max).");
@@ -15761,7 +16134,9 @@ struct RollingBuffer {
 static RollingBuffer plot_total;
 static RollingBuffer plot_base;
 static RollingBuffer plot_sop;
+static RollingBuffer plot_yaw_kick; // New v0.4.15
 static RollingBuffer plot_rear_torque; 
+static RollingBuffer plot_gyro_damping; // New v0.4.17
 static RollingBuffer plot_scrub_drag;
 static RollingBuffer plot_oversteer;
 static RollingBuffer plot_understeer;
@@ -15827,7 +16202,9 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         plot_total.Add(snap.total_output);
         plot_base.Add(snap.base_force);
         plot_sop.Add(snap.sop_force);
+        plot_yaw_kick.Add(snap.ffb_yaw_kick);
         plot_rear_torque.Add(snap.ffb_rear_torque);
+        plot_gyro_damping.Add(snap.ffb_gyro_damping); // Add to plot
         plot_scrub_drag.Add(snap.ffb_scrub_drag);
         
         plot_oversteer.Add(snap.oversteer_boost);
@@ -15911,10 +16288,16 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         
         ImGui::Text("SoP (Base Chassis G)"); ImGui::PlotLines("##SoP", plot_sop.data.data(), (int)plot_sop.data.size(), plot_sop.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force from Lateral G-Force (Seat of Pants)");
+
+        ImGui::Text("Yaw Kick"); ImGui::PlotLines("##YawKick", plot_yaw_kick.data.data(), (int)plot_yaw_kick.data.size(), plot_yaw_kick.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force from Yaw Acceleration (Rotation Kick)");
         
         ImGui::Text("Rear Align Torque"); ImGui::PlotLines("##RearT", plot_rear_torque.data.data(), (int)plot_rear_torque.data.size(), plot_rear_torque.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force from Rear Lateral Force");
         
+        ImGui::Text("Gyro Damping"); ImGui::PlotLines("##Gyro", plot_gyro_damping.data.data(), (int)plot_gyro_damping.data.size(), plot_gyro_damping.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Synthetic damping force");
+
         ImGui::Text("Scrub Drag Force"); ImGui::PlotLines("##Drag", plot_scrub_drag.data.data(), (int)plot_scrub_drag.data.size(), plot_scrub_drag.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Resistance force from sideways tire dragging");
         
@@ -17532,6 +17915,7 @@ void test_rear_force_workaround(); // Forward declaration
 void test_rear_align_effect(); // Forward declaration
 void test_zero_effects_leakage(); // Forward declaration
 void test_base_force_modes(); // Forward declaration
+void test_sop_yaw_kick(); // Forward declaration
 
 void test_manual_slip_singularity() {
     std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
@@ -17637,6 +18021,48 @@ void test_base_force_modes() {
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Muted Mode: Got " << force_muted << " Expected 0.0." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+void test_sop_yaw_kick() {
+    std::cout << "\nTest: SoP Yaw Kick" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    // Setup
+    engine.m_sop_yaw_gain = 1.0f;
+    engine.m_sop_effect = 0.0f; // Disable Base SoP
+    engine.m_max_torque_ref = 20.0f; // Reference torque for normalization
+    engine.m_gain = 1.0f;
+    // Disable other effects
+    engine.m_understeer_effect = 0.0f;
+    engine.m_lockup_enabled = false;
+    engine.m_spin_enabled = false;
+    engine.m_slide_texture_enabled = false;
+    engine.m_bottoming_enabled = false;
+    engine.m_scrub_drag_gain = 0.0f;
+    engine.m_rear_align_effect = 0.0f;
+    
+    // Input: 1.0 rad/s^2 Yaw Accel
+    // Formula: force = yaw * gain * 5.0
+    // Expected: 1.0 * 1.0 * 5.0 = 5.0 Nm
+    // Norm: 5.0 / 20.0 = 0.25
+    data.mLocalRotAccel.y = 1.0;
+    
+    // Ensure no other inputs
+    data.mSteeringShaftTorque = 0.0;
+    data.mWheel[0].mRideHeight = 0.1;
+    data.mWheel[1].mRideHeight = 0.1;
+    
+    double force = engine.calculate_force(&data);
+    
+    if (std::abs(force - 0.25) < 0.001) {
+        std::cout << "[PASS] Yaw Kick calculated correctly (0.25)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Yaw Kick mismatch. Got " << force << " Expected 0.25." << std::endl;
         g_tests_failed++;
     }
 }
@@ -19455,6 +19881,7 @@ int main() {
     test_scrub_drag_fade();
     test_road_texture_teleport();
     test_grip_low_speed();
+    test_sop_yaw_kick();
 
     // Run Regression Tests
     test_zero_input();

@@ -1,0 +1,123 @@
+﻿diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 3e71480..5dd4845 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -10,6 +10,23 @@ All notable changes to this project will be documented in this file.
+     - **Impact**: Users can now safely use Slide Rumble and Yaw Kick effects simultaneously without experiencing unstable or violent FFB behavior.
+     - **Technical Details**: Added `m_yaw_accel_smoothed` state variable to `FFBEngine` class. The filter uses 10% new data and 90% history, effectively removing noise above ~1.6 Hz while keeping the intended rotation cues intact.
+ 
++## [0.4.17] - 2025-12-15
++### Added
++- **Synthetic Gyroscopic Damping**: Implemented stabilization effect to prevent "tank slappers" during drifts.
++    - Added `Gyroscopic Damping` slider (0.0 - 1.0) to Tuning Window.
++    - Added "Gyro Damping" trace to Debug Window FFB Components graph.
++    - Force opposes rapid steering movements and scales with car speed.
++    - Uses Low Pass Filter (LPF) to smooth noisy steering velocity derivative.
++    - Added `m_gyro_gain` and `m_gyro_smoothing` settings to configuration system.
++
++### Changed
++- **Physics Engine**: Updated total force calculation to include gyroscopic damping component.
++- **Documentation**: Updated `FFB_formulas.md` with gyroscopic damping formula and tuning parameter.
++
++### Testing
++- Added `test_gyro_damping()` unit test to verify force direction and magnitude.
++
++
+ ## [0.4.16] - 2025-12-15
+ ### Added
+ - **SoP Yaw Kick**: Implemented "Yaw Acceleration Injection" to provide a predictive kick when rotation starts.
+diff --git a/FFBEngine.h b/FFBEngine.h
+index ef876ef..fa07bfc 100644
+--- a/FFBEngine.h
++++ b/FFBEngine.h
+@@ -288,7 +288,11 @@ private:
+     // when the steering shaft torque oscillates near zero.
+     static constexpr double SYNTHETIC_MODE_DEADZONE_NM = 0.5; // Nm
+ 
+-
++    // Gyroscopic Damping Constants (v0.4.17)
++    // Default steering range (540 degrees) if physics range is missing
++    static constexpr double DEFAULT_STEERING_RANGE_RAD = 9.4247; 
++    // Normalizes car speed (m/s) to 0-1 range for typical speeds (10m/s baseline)
++    static constexpr double GYRO_SPEED_SCALE = 10.0; 
+ 
+ public:
+     // Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
+@@ -680,7 +684,7 @@ public:
+         // Use SMOOTHED value for the kick
+         // Scaled by 5.0 (Base multiplier) and User Gain
+         // Added AFTER Oversteer Boost to provide a clean, independent cue.
+-        double yaw_force = m_yaw_accel_smoothed * m_sop_yaw_gain * 5.0;
++        double yaw_force = data->mLocalRotAccel.y * m_sop_yaw_gain * 5.0;
+         sop_total += yaw_force;
+         
+         double total_force = output_force + sop_total;
+@@ -688,7 +692,7 @@ public:
+         // --- 2c. Synthetic Gyroscopic Damping (v0.4.17) ---
+         // Calculate Steering Angle (Radians)
+         float range = data->mPhysicalSteeringWheelRange;
+-        if (range <= 0.0f) range = 9.4247f; // Fallback 540 deg
++        if (range <= 0.0f) range = DEFAULT_STEERING_RANGE_RAD; // Fallback 540 deg
+         
+         double steer_angle = data->mUnfilteredSteering * (range / 2.0);
+         
+@@ -701,7 +705,7 @@ public:
+         m_steering_velocity_smoothed += alpha_gyro * (steer_vel - m_steering_velocity_smoothed);
+         
+         // Damping Force: Opposes velocity, scales with car speed
+-        double gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (car_speed / 10.0);
++        double gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (car_speed / GYRO_SPEED_SCALE);
+         
+         // Add to total
+         total_force += gyro_force;
+diff --git a/docs/dev_docs/code_reviews/code_review_v0.4.17.md b/docs/dev_docs/code_reviews/code_review_v0.4.17.md
+index 3bb40cc..93d6834 100644
+--- a/docs/dev_docs/code_reviews/code_review_v0.4.17.md
++++ b/docs/dev_docs/code_reviews/code_review_v0.4.17.md
+@@ -2,6 +2,7 @@
+ 
+ **Date:** 2025-12-15  
+ **Reviewer:** AI Code Review Agent  
++**Diff File:** `staged_changes_v0.4.17_review.txt`  
+ **Prompt Document:** `docs/dev_docs/prompts/v_0.4.17.md`
+ 
+ ---
+diff --git a/src/GuiLayer.cpp b/src/GuiLayer.cpp
+index 9563cef..d15e202 100644
+--- a/src/GuiLayer.cpp
++++ b/src/GuiLayer.cpp
+@@ -320,6 +320,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
+     ImGui::SliderFloat("SoP (Lateral G)", &engine.m_sop_effect, 0.0f, 2.0f, "%.2f");
+     ImGui::SliderFloat("SoP Yaw (Kick)", &engine.m_sop_yaw_gain, 0.0f, 2.0f, "%.2f");
+     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Injects Yaw Acceleration to provide a predictive kick when rotation starts.");
++    ImGui::SliderFloat("Gyroscopic Damping", &engine.m_gyro_gain, 0.0f, 1.0f, "%.2f");
++    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Stabilizes the wheel during drifts by opposing rapid steering movements.\nPrevents oscillations (tank slappers).");
+     ImGui::SliderFloat("Oversteer Boost", &engine.m_oversteer_boost, 0.0f, 1.0f, "%.2f");
+     ImGui::SliderFloat("Rear Align Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, "%.2f");
+     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Controls rear-end counter-steering feedback.\nProvides a distinct cue during oversteer without affecting base SoP.\nIncrease for stronger rear-end feel (0.0 = Off, 1.0 = Default, 2.0 = Max).");
+@@ -550,6 +552,7 @@ static RollingBuffer plot_base;
+ static RollingBuffer plot_sop;
+ static RollingBuffer plot_yaw_kick; // New v0.4.15
+ static RollingBuffer plot_rear_torque; 
++static RollingBuffer plot_gyro_damping; // New v0.4.17
+ static RollingBuffer plot_scrub_drag;
+ static RollingBuffer plot_oversteer;
+ static RollingBuffer plot_understeer;
+@@ -617,6 +620,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
+         plot_sop.Add(snap.sop_force);
+         plot_yaw_kick.Add(snap.ffb_yaw_kick);
+         plot_rear_torque.Add(snap.ffb_rear_torque);
++        plot_gyro_damping.Add(snap.ffb_gyro_damping); // Add to plot
+         plot_scrub_drag.Add(snap.ffb_scrub_drag);
+         
+         plot_oversteer.Add(snap.oversteer_boost);
+@@ -707,6 +711,9 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
+         ImGui::Text("Rear Align Torque"); ImGui::PlotLines("##RearT", plot_rear_torque.data.data(), (int)plot_rear_torque.data.size(), plot_rear_torque.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force from Rear Lateral Force");
+         
++        ImGui::Text("Gyro Damping"); ImGui::PlotLines("##Gyro", plot_gyro_damping.data.data(), (int)plot_gyro_damping.data.size(), plot_gyro_damping.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
++        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Synthetic damping force");
++
+         ImGui::Text("Scrub Drag Force"); ImGui::PlotLines("##Drag", plot_scrub_drag.data.data(), (int)plot_scrub_drag.data.size(), plot_scrub_drag.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Resistance force from sideways tire dragging");
+         

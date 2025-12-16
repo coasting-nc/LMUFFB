@@ -1,0 +1,61 @@
+﻿diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 40a9efc..d6ab1e4 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -2,7 +2,7 @@
+ 
+ All notable changes to this project will be documented in this file.
+ 
+-## [0.4.16] - 2025-12-14
++## [0.4.16] - 2025-12-15
+ ### Added
+ - **SoP Yaw Kick**: Implemented "Yaw Acceleration Injection" to provide a predictive kick when rotation starts.
+     - Added `m_sop_yaw_gain` slider (0.0 - 2.0) to Tuning Window.
+diff --git a/FFBEngine.h b/FFBEngine.h
+index a72ff43..4d19a54 100644
+--- a/FFBEngine.h
++++ b/FFBEngine.h
+@@ -66,7 +66,7 @@ struct FFBSnapshot {
+     float oversteer_boost;
+     float ffb_rear_torque;  // New v0.4.7
+     float ffb_scrub_drag;   // New v0.4.7
+-    float ffb_yaw_kick;     // New v0.4.15
++    float ffb_yaw_kick;     // New v0.4.16
+     float texture_road;
+     float texture_slide;
+     float texture_lockup;
+@@ -137,7 +137,7 @@ public:
+     // New Effects (v0.2)
+     float m_oversteer_boost = 0.0f; // 0.0 - 1.0 (Rear grip loss boost)
+     float m_rear_align_effect = 1.0f; // New v0.4.11
+-    float m_sop_yaw_gain = 0.0f;      // New v0.4.15 (Yaw Acceleration Injection)
++    float m_sop_yaw_gain = 0.0f;      // New v0.4.16 (Yaw Acceleration Injection)
+     
+     bool m_lockup_enabled = false;
+     float m_lockup_gain = 0.5f;
+diff --git a/docs/dev_docs/code_reviews/GIT_DIFF_RETRIEVAL_STRATEGY.md b/docs/dev_docs/code_reviews/GIT_DIFF_RETRIEVAL_STRATEGY.md
+index 828ee1d..9776b9c 100644
+--- a/docs/dev_docs/code_reviews/GIT_DIFF_RETRIEVAL_STRATEGY.md
++++ b/docs/dev_docs/code_reviews/GIT_DIFF_RETRIEVAL_STRATEGY.md
+@@ -2,7 +2,7 @@
+ 
+ Do a code review of the staged changes from git. Save the diff to a txt file for easier consultation. Find our any issues with the changes. Read and follow the instructions in this document on the "Git Diff Retrieval Strategy for Code Reviews": docs\dev_docs\code_reviews\GIT_DIFF_RETRIEVAL_STRATEGY.md
+ 
+-You can read the prompt with the instructions that were given to the coding agent at `docs\dev_docs\prompts\prompt_for_v_0.4.14_(2).md` . Read this document to understand what was supposed to be implemented and verify that the staged changes fullfilled all requirements.
++You can read the prompt with the instructions that were given to the coding agent at `docs\dev_docs\prompts\prompt_for_v_0.4.16.md` . Read this document to understand what was supposed to be implemented and verify that the staged changes fullfilled all requirements.
+ 
+ # Git Diff Retrieval Strategy for Code Reviews
+ 
+diff --git a/tests/test_ffb_engine.cpp b/tests/test_ffb_engine.cpp
+index 3c4ba22..11b242e 100644
+--- a/tests/test_ffb_engine.cpp
++++ b/tests/test_ffb_engine.cpp
+@@ -160,7 +160,7 @@ void test_sop_yaw_kick() {
+     // Setup
+     engine.m_sop_yaw_gain = 1.0f;
+     engine.m_sop_effect = 0.0f; // Disable Base SoP
+-    engine.m_max_torque_ref = 20.0f;
++    engine.m_max_torque_ref = 20.0f; // Reference torque for normalization
+     engine.m_gain = 1.0f;
+     // Disable other effects
+     engine.m_understeer_effect = 0.0f;

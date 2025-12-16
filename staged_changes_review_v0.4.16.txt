@@ -1,0 +1,297 @@
+﻿diff --git a/CHANGELOG.md b/CHANGELOG.md
+index e4fea65..40a9efc 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -2,6 +2,13 @@
+ 
+ All notable changes to this project will be documented in this file.
+ 
++## [0.4.16] - 2025-12-14
++### Added
++- **SoP Yaw Kick**: Implemented "Yaw Acceleration Injection" to provide a predictive kick when rotation starts.
++    - Added `m_sop_yaw_gain` slider (0.0 - 2.0) to Tuning Window.
++    - Added "Yaw Kick" trace to Debug Window.
++    - Updated physics engine to mix Yaw Acceleration with Lateral G-Force in SoP calculation.
++
+ ## [0.4.15] - 2025-12-15
+ ### Changed
+ - **User Experience Improvements**: Removed all vJoy and Joystick Gremlin-related annoyances for users.
+diff --git a/FFBEngine.h b/FFBEngine.h
+index 0c6776e..a72ff43 100644
+--- a/FFBEngine.h
++++ b/FFBEngine.h
+@@ -66,6 +66,7 @@ struct FFBSnapshot {
+     float oversteer_boost;
+     float ffb_rear_torque;  // New v0.4.7
+     float ffb_scrub_drag;   // New v0.4.7
++    float ffb_yaw_kick;     // New v0.4.15
+     float texture_road;
+     float texture_slide;
+     float texture_lockup;
+@@ -136,6 +137,7 @@ public:
+     // New Effects (v0.2)
+     float m_oversteer_boost = 0.0f; // 0.0 - 1.0 (Rear grip loss boost)
+     float m_rear_align_effect = 1.0f; // New v0.4.11
++    float m_sop_yaw_gain = 0.0f;      // New v0.4.15 (Yaw Acceleration Injection)
+     
+     bool m_lockup_enabled = false;
+     float m_lockup_gain = 0.5f;
+@@ -649,6 +651,13 @@ public:
+         // Multiplied by m_rear_align_effect to allow user tuning of rear-end sensitivity.
+         double rear_torque = calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect; 
+         sop_total += rear_torque;
++
++        // --- 2b. Yaw Acceleration Injector (The "Kick") ---
++        // Reads rotational acceleration (radians/sec^2)
++        // Scaled by 5.0 (Base multiplier) and User Gain
++        // Added AFTER Oversteer Boost to provide a clean, independent cue.
++        double yaw_force = data->mLocalRotAccel.y * m_sop_yaw_gain * 5.0;
++        sop_total += yaw_force;
+         
+         double total_force = output_force + sop_total;
+         
+@@ -917,9 +926,10 @@ public:
+                 snap.base_force = (float)base_input; // Show the processed base input
+                 snap.sop_force = (float)sop_base_force;
+                 snap.understeer_drop = (float)((base_input * m_steering_shaft_gain) * (1.0 - grip_factor));
+-                snap.oversteer_boost = (float)(sop_total - sop_base_force - rear_torque); // Split boost from rear torque
++                snap.oversteer_boost = (float)(sop_total - sop_base_force - rear_torque - yaw_force); // Split boost from other SoP components
+                 snap.ffb_rear_torque = (float)rear_torque;
+                 snap.ffb_scrub_drag = (float)scrub_drag_force;
++                snap.ffb_yaw_kick = (float)yaw_force;
+                 snap.texture_road = (float)road_noise;
+                 snap.texture_slide = (float)slide_noise;
+                 snap.texture_lockup = (float)lockup_rumble;
+diff --git a/VERSION b/VERSION
+index edcbbb3..5a81b9b 100644
+--- a/VERSION
++++ b/VERSION
+@@ -1 +1 @@
+-0.4.15
+\ No newline at end of file
++0.4.16
+\ No newline at end of file
+diff --git a/docs/dev_docs/FFB_formulas.md b/docs/dev_docs/FFB_formulas.md
+index dd99e51..ac33efb 100644
+--- a/docs/dev_docs/FFB_formulas.md
++++ b/docs/dev_docs/FFB_formulas.md
+@@ -74,7 +74,13 @@ This injects lateral G-force and rear-axle aligning torque to simulate the car b
+     
+     **Note**: Scaling changed from 5.0 to 20.0 in v0.4.10 to provide stronger baseline Nm output.
+ 
+-3.  **Oversteer Boost**:
++3.  **Yaw Acceleration (The Kick) - New v0.4.15**:
++    $$ F_{yaw} = \text{YawAccel}_y \times K_{yaw} \times 5.0 $$
++    
++    *   Injects `mLocalRotAccel.y` (Radians/sec┬▓) to provide a predictive kick when rotation starts.
++    *   $K_{yaw}$: User setting `m_sop_yaw_gain` (0.0 - 2.0).
++
++4.  **Oversteer Boost**:
+     If Front Grip > Rear Grip:
+     $$ F_{sop\_boosted} = F_{sop\_base} \times \left( 1.0 + (\text{Grip}_{delta} \times K_{oversteer} \times 2.0) \right) $$
+     where $\text{Grip}_{delta} = \text{Front\_Grip}_{avg} - \text{Rear\_Grip}_{avg}$
+@@ -96,7 +102,7 @@ This injects lateral G-force and rear-axle aligning torque to simulate the car b
+     
+     **Note**: Coefficient changed from 0.00025 to 0.001 in v0.4.11.
+ 
+-$$ F_{sop} = F_{sop\_boosted} + T_{rear} $$
++$$ F_{sop} = F_{sop\_boosted} + T_{rear} + F_{yaw} $$
+ 
+ #### D. Dynamic Textures (Vibrations)
+ 
+@@ -174,6 +180,7 @@ $$ F_{final} = \text{sign}(F_{norm}) \times K_{min\_force} $$
+ *   $K_{shaft\_gain}$: Steering Shaft Gain (0.0 - 1.0) **(New v0.4.13)**
+ *   $K_{understeer}$: Understeer Effect (0.0 - 1.0)
+ *   $K_{sop}$: SoP Effect (0.0 - 2.0)
++*   $K_{yaw}$: SoP Yaw Gain (0.0 - 2.0) **(New v0.4.15)**
+ *   $K_{oversteer}$: Oversteer Boost (0.0 - 1.0)
+ *   $K_{rear\_align}$: Rear Align Torque (0.0 - 2.0)
+ *   $K_{lockup}, K_{spin}, K_{slide}, K_{road}, K_{drag}$: Texture/Effect Gains
+diff --git a/src/Config.cpp b/src/Config.cpp
+index 7f124da..fe63c21 100644
+--- a/src/Config.cpp
++++ b/src/Config.cpp
+@@ -33,6 +33,7 @@ void Config::LoadPresets() {
+         .SetSmoothing(0.0f)
+         .SetSlide(false, 0.0f)
+         .SetRearAlign(0.0f)
++        .SetSoPYaw(0.0f)
+         .SetBaseMode(2) // Muted
+     );
+ 
+@@ -68,6 +69,7 @@ void Config::LoadPresets() {
+         .SetSmoothing(0.0f)
+         .SetSlide(false, 0.0f)
+         .SetRearAlign(1.0f)
++        .SetSoPYaw(0.0f)
+     );
+ 
+     // 7. Test: SoP Base Only
+@@ -78,6 +80,7 @@ void Config::LoadPresets() {
+         .SetSmoothing(0.0f)
+         .SetSlide(false, 0.0f)
+         .SetRearAlign(0.0f)
++        .SetSoPYaw(0.0f)
+         .SetBaseMode(2) // Muted
+     );
+ 
+@@ -174,6 +177,7 @@ void Config::LoadPresets() {
+                         else if (key == "bottoming_method") current_preset.bottoming_method = std::stoi(value);
+                         else if (key == "scrub_drag_gain") current_preset.scrub_drag_gain = std::stof(value);
+                         else if (key == "rear_align_effect") current_preset.rear_align_effect = std::stof(value);
++                        else if (key == "sop_yaw_gain") current_preset.sop_yaw_gain = std::stof(value);
+                         else if (key == "steering_shaft_gain") current_preset.steering_shaft_gain = std::stof(value);
+                         else if (key == "base_force_mode") current_preset.base_force_mode = std::stoi(value);
+                     } catch (...) {}
+@@ -223,6 +227,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
+         file << "bottoming_method=" << engine.m_bottoming_method << "\n";
+         file << "scrub_drag_gain=" << engine.m_scrub_drag_gain << "\n";
+         file << "rear_align_effect=" << engine.m_rear_align_effect << "\n";
++        file << "sop_yaw_gain=" << engine.m_sop_yaw_gain << "\n";
+         file << "steering_shaft_gain=" << engine.m_steering_shaft_gain << "\n";
+         file << "base_force_mode=" << engine.m_base_force_mode << "\n";
+         file.close();
+@@ -278,6 +283,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
+                     else if (key == "bottoming_method") engine.m_bottoming_method = std::stoi(value);
+                     else if (key == "scrub_drag_gain") engine.m_scrub_drag_gain = std::stof(value);
+                     else if (key == "rear_align_effect") engine.m_rear_align_effect = std::stof(value);
++                    else if (key == "sop_yaw_gain") engine.m_sop_yaw_gain = std::stof(value);
+                     else if (key == "steering_shaft_gain") engine.m_steering_shaft_gain = std::stof(value);
+                     else if (key == "base_force_mode") engine.m_base_force_mode = std::stoi(value);
+                 } catch (...) {
+diff --git a/src/Config.h b/src/Config.h
+index 0b799d1..80e1c21 100644
+--- a/src/Config.h
++++ b/src/Config.h
+@@ -37,6 +37,7 @@ struct Preset {
+     float scrub_drag_gain = 0.0f;
+     
+     float rear_align_effect = 1.0f;
++    float sop_yaw_gain = 0.0f; // New v0.4.15
+     
+     float steering_shaft_gain = 1.0f;
+     int base_force_mode = 0; // 0=Native
+@@ -66,6 +67,7 @@ struct Preset {
+     Preset& SetBottoming(int method) { bottoming_method = method; return *this; }
+     Preset& SetScrub(float v) { scrub_drag_gain = v; return *this; }
+     Preset& SetRearAlign(float v) { rear_align_effect = v; return *this; }
++    Preset& SetSoPYaw(float v) { sop_yaw_gain = v; return *this; }
+     
+     Preset& SetShaftGain(float v) { steering_shaft_gain = v; return *this; }
+     Preset& SetBaseMode(int v) { base_force_mode = v; return *this; }
+@@ -93,6 +95,7 @@ struct Preset {
+         engine.m_bottoming_method = bottoming_method;
+         engine.m_scrub_drag_gain = scrub_drag_gain;
+         engine.m_rear_align_effect = rear_align_effect;
++        engine.m_sop_yaw_gain = sop_yaw_gain;
+         engine.m_steering_shaft_gain = steering_shaft_gain;
+         engine.m_base_force_mode = base_force_mode;
+     }
+diff --git a/src/GuiLayer.cpp b/src/GuiLayer.cpp
+index 60e9d9f..9563cef 100644
+--- a/src/GuiLayer.cpp
++++ b/src/GuiLayer.cpp
+@@ -318,6 +318,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
+     ImGui::Text("Effects");
+     ImGui::SliderFloat("Understeer (Grip)", &engine.m_understeer_effect, 0.0f, 1.0f, "%.2f");
+     ImGui::SliderFloat("SoP (Lateral G)", &engine.m_sop_effect, 0.0f, 2.0f, "%.2f");
++    ImGui::SliderFloat("SoP Yaw (Kick)", &engine.m_sop_yaw_gain, 0.0f, 2.0f, "%.2f");
++    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Injects Yaw Acceleration to provide a predictive kick when rotation starts.");
+     ImGui::SliderFloat("Oversteer Boost", &engine.m_oversteer_boost, 0.0f, 1.0f, "%.2f");
+     ImGui::SliderFloat("Rear Align Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, "%.2f");
+     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Controls rear-end counter-steering feedback.\nProvides a distinct cue during oversteer without affecting base SoP.\nIncrease for stronger rear-end feel (0.0 = Off, 1.0 = Default, 2.0 = Max).");
+@@ -546,6 +548,7 @@ struct RollingBuffer {
+ static RollingBuffer plot_total;
+ static RollingBuffer plot_base;
+ static RollingBuffer plot_sop;
++static RollingBuffer plot_yaw_kick; // New v0.4.15
+ static RollingBuffer plot_rear_torque; 
+ static RollingBuffer plot_scrub_drag;
+ static RollingBuffer plot_oversteer;
+@@ -612,6 +615,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
+         plot_total.Add(snap.total_output);
+         plot_base.Add(snap.base_force);
+         plot_sop.Add(snap.sop_force);
++        plot_yaw_kick.Add(snap.ffb_yaw_kick);
+         plot_rear_torque.Add(snap.ffb_rear_torque);
+         plot_scrub_drag.Add(snap.ffb_scrub_drag);
+         
+@@ -696,6 +700,9 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
+         
+         ImGui::Text("SoP (Base Chassis G)"); ImGui::PlotLines("##SoP", plot_sop.data.data(), (int)plot_sop.data.size(), plot_sop.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force from Lateral G-Force (Seat of Pants)");
++
++        ImGui::Text("Yaw Kick"); ImGui::PlotLines("##YawKick", plot_yaw_kick.data.data(), (int)plot_yaw_kick.data.size(), plot_yaw_kick.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
++        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force from Yaw Acceleration (Rotation Kick)");
+         
+         ImGui::Text("Rear Align Torque"); ImGui::PlotLines("##RearT", plot_rear_torque.data.data(), (int)plot_rear_torque.data.size(), plot_rear_torque.offset, NULL, -20.0f, 20.0f, ImVec2(0, 40));
+         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force from Rear Lateral Force");
+diff --git a/tests/test_ffb_engine.cpp b/tests/test_ffb_engine.cpp
+index c92ae11..3c4ba22 100644
+--- a/tests/test_ffb_engine.cpp
++++ b/tests/test_ffb_engine.cpp
+@@ -41,6 +41,7 @@ void test_rear_force_workaround(); // Forward declaration
+ void test_rear_align_effect(); // Forward declaration
+ void test_zero_effects_leakage(); // Forward declaration
+ void test_base_force_modes(); // Forward declaration
++void test_sop_yaw_kick(); // Forward declaration
+ 
+ void test_manual_slip_singularity() {
+     std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
+@@ -150,6 +151,48 @@ void test_base_force_modes() {
+     }
+ }
+ 
++void test_sop_yaw_kick() {
++    std::cout << "\nTest: SoP Yaw Kick" << std::endl;
++    FFBEngine engine;
++    TelemInfoV01 data;
++    std::memset(&data, 0, sizeof(data));
++    
++    // Setup
++    engine.m_sop_yaw_gain = 1.0f;
++    engine.m_sop_effect = 0.0f; // Disable Base SoP
++    engine.m_max_torque_ref = 20.0f;
++    engine.m_gain = 1.0f;
++    // Disable other effects
++    engine.m_understeer_effect = 0.0f;
++    engine.m_lockup_enabled = false;
++    engine.m_spin_enabled = false;
++    engine.m_slide_texture_enabled = false;
++    engine.m_bottoming_enabled = false;
++    engine.m_scrub_drag_gain = 0.0f;
++    engine.m_rear_align_effect = 0.0f;
++    
++    // Input: 1.0 rad/s^2 Yaw Accel
++    // Formula: force = yaw * gain * 5.0
++    // Expected: 1.0 * 1.0 * 5.0 = 5.0 Nm
++    // Norm: 5.0 / 20.0 = 0.25
++    data.mLocalRotAccel.y = 1.0;
++    
++    // Ensure no other inputs
++    data.mSteeringShaftTorque = 0.0;
++    data.mWheel[0].mRideHeight = 0.1;
++    data.mWheel[1].mRideHeight = 0.1;
++    
++    double force = engine.calculate_force(&data);
++    
++    if (std::abs(force - 0.25) < 0.001) {
++        std::cout << "[PASS] Yaw Kick calculated correctly (0.25)." << std::endl;
++        g_tests_passed++;
++    } else {
++        std::cout << "[FAIL] Yaw Kick mismatch. Got " << force << " Expected 0.25." << std::endl;
++        g_tests_failed++;
++    }
++}
++
+ void test_scrub_drag_fade() {
+     std::cout << "\nTest: Scrub Drag Fade-In" << std::endl;
+     FFBEngine engine;
+@@ -1964,6 +2007,7 @@ int main() {
+     test_scrub_drag_fade();
+     test_road_texture_teleport();
+     test_grip_low_speed();
++    test_sop_yaw_kick();
+ 
+     // Run Regression Tests
+     test_zero_input();

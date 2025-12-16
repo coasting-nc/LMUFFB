@@ -1,0 +1,806 @@
+﻿diff --git a/AGENTS_MEMORY.md b/AGENTS_MEMORY.md
+index 4f18c1f..cf62ecf 100644
+--- a/AGENTS_MEMORY.md
++++ b/AGENTS_MEMORY.md
+@@ -144,8 +144,17 @@ See: docs\dev_docs\avg_load_issue.md
+ *   **Struct**: `GripDiagnostics m_grip_diag` tracks whether approximation was used and the original values.
+ *   **Why**: Original telemetry values are overwritten by the fallback logic. To debug or display "raw" data, use `m_grip_diag.original` instead of the modified variables.
+ 
++## 7. Continuous Physics State (Anti-Glitch)
+ 
+-## 7. Git & Repo Management
++### Continuous Physics State (Anti-Glitch)
++*   **Rule:** Never make the calculation of physics state variables (like Slip Angle, RPM smoothing, or LPFs) conditional on telemetry health or other flags.
++*   **Why:** 
++    1.  **Filters:** Low Pass Filters (LPF) rely on a continuous stream of `dt` updates. If you stop calling them, their internal state becomes stale. When you call them again, they produce a spike.
++    2.  **Downstream Dependencies:** A variable calculated in a "Fallback" block (like `slip_angle` in `calculate_grip`) might be used by a completely different effect later (like `Rear Aligning Torque`).
++*   **Incident:** See `docs/dev_docs/bug_analysis_rear_torque_instability.md`. We caused violent wheel kicks by only calculating Slip Angle when Grip was missing.
++
++
++## 8. Git & Repo Management
+ 
+ ### Submodule Trap
+ *   **Issue:** Cloning a repo inside an already initialized repo (even if empty) can lead to nested submodules or detached git states.
+@@ -155,6 +164,6 @@ See: docs\dev_docs\avg_load_issue.md
+ *   **Lesson:** When moving files from a nested repo to root, ensure hidden files (like `.git`) are handled correctly or that the root `.git` is properly synced.
+ *   **Tooling:** `replace_with_git_merge_diff` requires exact context matching. If files are modified or desynchronized, `overwrite_file_with_block` is safer.
+ 
+-## 8. Repository Handling (Read-Only Mode)
++## 9. Repository Handling (Read-Only Mode)
+ *   **No Git Push:** You do not have write access to the remote repository. Never attempt `git push`.
+ *   **Delivery:** Your final output is the modified files (which the user will download as a ZIP), not a git commit.
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index e187630..2c64eda 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -2,6 +2,17 @@
+ 
+ All notable changes to this project will be documented in this file.
+ 
++## [0.4.14] - 2025-12-14
++### Fixed
++- **Critical Physics Instability**: Fixed a major bug where physics state variables (Slip Angle, Road Texture history, Bottoming history) were only updated conditionally. This caused violent "reverse FFB" kicks and spikes when effects were toggled or when telemetry dropped frames.
++    - Moved `calculate_slip_angle` outside the conditional block in `calculate_grip` to ensure LPF state is always current.
++    - Moved `m_prev_vert_deflection` and `m_prev_susp_force` updates to the end of `calculate_force` to ensure unconditional updates.
++- **Refactoring**: Updated `Config` system to use the Fluent Builder Pattern for cleaner preset definitions.
++
++### Added
++- **Regression Tests**: Added a suite of regression tests (`test_regression_road_texture_toggle`, `test_regression_bottoming_switch`, `test_regression_rear_torque_lpf`) to prevent recurrence of state-related bugs.
++- **Stress Test**: Added a fuzzing test (`test_stress_stability`) to ensure stability under random inputs.
++
+ ## [0.4.13] - 2025-12-14
+ ### Added
+ - **Base Force Debugging Tools**: Added advanced controls for isolating and tuning the primary steering force.
+diff --git a/FFBEngine.h b/FFBEngine.h
+index cae4d4f..0c6776e 100644
+--- a/FFBEngine.h
++++ b/FFBEngine.h
+@@ -318,19 +318,38 @@ public:
+         result.approximated = false;
+         result.slip_angle = 0.0;
+         
++        // ==================================================================================
++        // CRITICAL LOGIC FIX (v0.4.14) - DO NOT MOVE INSIDE CONDITIONAL BLOCK
++        // ==================================================================================
++        // We MUST calculate slip angle every single frame, regardless of whether the 
++        // grip fallback is triggered or not.
++        //
++        // Reason 1 (Physics State): The Low Pass Filter (LPF) inside calculate_slip_angle 
++        //           relies on continuous execution. If we skip frames (because telemetry 
++        //           is good), the 'prev_slip' state becomes stale. When telemetry eventually 
++        //           fails, the LPF will smooth against ancient history, causing a math spike.
++        //
++        // Reason 2 (Dependency): The 'Rear Aligning Torque' effect (calculated later) 
++        //           reads 'result.slip_angle'. If we only calculate this when grip is 
++        //           missing, the Rear Torque effect will toggle ON/OFF randomly based on 
++        //           telemetry health, causing violent kicks and "reverse FFB" sensations.
++        // ==================================================================================
++        
++        double slip1 = calculate_slip_angle(w1, prev_slip1);
++        double slip2 = calculate_slip_angle(w2, prev_slip2);
++        result.slip_angle = (slip1 + slip2) / 2.0;
++
+         // Fallback condition: Grip is essentially zero BUT car has significant load
+         if (result.value < 0.0001 && avg_load > 100.0) {
+             result.approximated = true;
+             
+             // Low Speed Cutoff (v0.4.6)
+             if (car_speed < 5.0) {
+-                result.slip_angle = 0.0;
+-                result.value = 1.0; // Force full grip at low speeds
++                // Note: We still keep the calculated slip_angle in result.slip_angle
++                // for visualization/rear torque, even if we force grip to 1.0 here.
++                result.value = 1.0; 
+             } else {
+-                double slip1 = calculate_slip_angle(w1, prev_slip1);
+-                double slip2 = calculate_slip_angle(w2, prev_slip2);
+-                result.slip_angle = (slip1 + slip2) / 2.0;
+-                
++                // Use the pre-calculated slip angle
+                 double excess = (std::max)(0.0, result.slip_angle - 0.10);
+                 result.value = 1.0 - (excess * 4.0);
+             }
+@@ -778,10 +797,6 @@ public:
+             delta_l = (std::max)(-0.01, (std::min)(0.01, delta_l));
+             delta_r = (std::max)(-0.01, (std::min)(0.01, delta_r));
+ 
+-            // Store for next frame
+-            m_prev_vert_deflection[0] = vert_l;
+-            m_prev_vert_deflection[1] = vert_r;
+-            
+             // Amplify sudden changes
+             double road_noise = (delta_l + delta_r) * 50.0 * m_road_texture_gain; // Scaled for Nm (was 5000)
+             
+@@ -811,8 +826,6 @@ public:
+                 double susp_r = fr.mSuspForce;
+                 double dForceL = (susp_l - m_prev_susp_force[0]) / dt;
+                 double dForceR = (susp_r - m_prev_susp_force[1]) / dt;
+-                m_prev_susp_force[0] = susp_l;
+-                m_prev_susp_force[1] = susp_r;
+                 
+                 double max_dForce = (std::max)(dForceL, dForceR);
+                 // Threshold: 100,000 N/s
+@@ -877,6 +890,21 @@ public:
+             norm_force *= -1.0;
+         }
+         
++        // ==================================================================================
++        // CRITICAL: UNCONDITIONAL STATE UPDATES (Fix for Toggle Spikes)
++        // ==================================================================================
++        // We must update history variables every frame, even if effects are disabled.
++        // This prevents "stale state" spikes when effects are toggled on.
++        
++        // Road Texture State
++        m_prev_vert_deflection[0] = fl.mVerticalTireDeflection;
++        m_prev_vert_deflection[1] = fr.mVerticalTireDeflection;
++
++        // Bottoming Method B State
++        m_prev_susp_force[0] = fl.mSuspForce;
++        m_prev_susp_force[1] = fr.mSuspForce;
++        // ==================================================================================
++
+         // --- SNAPSHOT LOGIC ---
+         // Capture all internal states for visualization
+         {
+diff --git a/VERSION b/VERSION
+index bf357b6..0f24496 100644
+--- a/VERSION
++++ b/VERSION
+@@ -1 +1 @@
+-0.4.13
+\ No newline at end of file
++0.4.14
+\ No newline at end of file
+diff --git a/docs/dev_docs/bug_analysis_rear_torque_instability.md b/docs/dev_docs/bug_analysis_rear_torque_instability.md
+new file mode 100644
+index 0000000..60045de
+--- /dev/null
++++ b/docs/dev_docs/bug_analysis_rear_torque_instability.md
+@@ -0,0 +1,45 @@
++# Bug Analysis: Rear Torque Instability & "Reverse FFB" Kicks
++**Date:** 2025-12-14
++**Fixed In:** v0.4.14
++**Severity:** Critical
++**Component:** `FFBEngine.h` -> `calculate_grip`
++
++## The Symptom
++Users reported "sudden pulls," "loss of FFB off-center," and behavior that felt like the "Reverse FFB" setting was toggling intermittently. This often resulted in the wheel locking up fully to the left or right.
++
++## The Root Cause
++The issue stemmed from **Conditional Physics Execution**.
++
++In versions prior to v0.4.14, the **Slip Angle** calculation was nested *inside* the Grip Fallback logic:
++
++```cpp
++// BROKEN LOGIC (Do not use)
++if (grip_telemetry_missing) {
++    slip_angle = calculate_slip_angle(...); // Updates LPF state
++    // ... use slip angle for grip ...
++} 
++// else: slip_angle remains 0.0
++```
++
++### The Chain Reaction
++1.  **Dependency:** The **Rear Aligning Torque** effect (introduced in v0.4.11) relies on `m_grip_diag.rear_slip_angle`.
++2.  **The Toggle:** 
++    *   **Frame A (Good Telemetry):** Grip is valid. The `if` block is skipped. `slip_angle` is 0.0. **Rear Torque is 0.0.**
++    *   **Frame B (Bad Telemetry):** Grip drops to 0 (common LMU bug). The `if` block runs. `slip_angle` is calculated (e.g., 0.15 rad). **Rear Torque jumps to ~6.0 Nm.**
++3.  **The Spike:** Because the Low Pass Filter (LPF) inside `calculate_slip_angle` wasn't running during the "Good" frames, its internal state (`prev_slip`) was stale (potentially seconds old). When Frame B hit, the filter tried to smooth the current value against ancient history, often resulting in a mathematical spike.
++
++## The Fix
++The Slip Angle calculation was moved **outside** the conditional block. It now runs **every frame**.
++
++```cpp
++// CORRECT LOGIC
++slip_angle = calculate_slip_angle(...); // Always update LPF state
++
++if (grip_telemetry_missing) {
++    // ... use slip angle for grip ...
++}
++```
++
++## Regression Prevention
++**Do not optimize this code by moving the calculation back inside the `if` block.** 
++Even if `slip_angle` seems unused for the *Grip* calculation when telemetry is valid, it is **required** for the *Rear Aligning Torque* effect which runs downstream.
+diff --git a/src/Config.cpp b/src/Config.cpp
+index f5c0edb..7f124da 100644
+--- a/src/Config.cpp
++++ b/src/Config.cpp
+@@ -4,106 +4,115 @@
+ #include <iostream>
+ 
+ bool Config::m_ignore_vjoy_version_warning = false;
+-bool Config::m_enable_vjoy = false;        // Disabled by default (Replaces vJoyActive logic)
+-bool Config::m_output_ffb_to_vjoy = false; // Disabled by default (Safety)
++bool Config::m_enable_vjoy = false;
++bool Config::m_output_ffb_to_vjoy = false;
+ 
+ std::vector<Preset> Config::presets;
+ 
+ void Config::LoadPresets() {
+     presets.clear();
+     
+-    // Built-in Presets
+-    presets.push_back({ "Default", 
+-        0.5f, 1.0f, 0.15f, 20.0f, 0.05f, 0.0f, 0.0f, // gain, under, sop, scale, smooth, min, over
+-        false, 0.5f, false, 0.5f, true, 0.5f, false, 0.5f, // lockup, spin, slide, road
+-        false, 40.0f, // invert, max_torque_ref (Default 40Nm for 1.0 Gain)
+-        false, 0, 0.0f, // use_manual_slip, bottoming_method, scrub_drag_gain (v0.4.5)
+-        1.0f, // rear_align_effect (v0.4.11)
+-        1.0f, 0 // steering_shaft_gain, base_force_mode (v0.4.13)
+-    });
++    // 1. Default (Uses the defaults defined in Config.h)
++    presets.push_back(Preset("Default"));
+     
+-    presets.push_back({ "Test: Game Base FFB Only", 
+-        0.5f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 0.0f,
+-        false, 0.0f, false, 0.0f, false, 0.0f, false, 0.0f,
+-        false, 40.0f,
+-        false, 0, 0.0f, // v0.4.5
+-        0.0f, // rear_align_effect
+-        1.0f, 0 // steering_shaft_gain, base_force_mode
+-    });
++    // 2. Test: Game Base FFB Only
++    presets.push_back(Preset("Test: Game Base FFB Only")
++        .SetUndersteer(0.0f)
++        .SetSoP(0.0f)
++        .SetSoPScale(5.0f)
++        .SetSmoothing(0.0f)
++        .SetSlide(false, 0.0f)
++        .SetRearAlign(0.0f)
++    );
+ 
+-    presets.push_back({ "Test: SoP Only", 
+-        0.5f, 0.0f, 1.0f, 5.0f, 0.0f, 0.0f, 0.0f,
+-        false, 0.0f, false, 0.0f, false, 0.0f, false, 0.0f,
+-        false, 40.0f,
+-        false, 0, 0.0f, // v0.4.5
+-        0.0f, // rear_align_effect (Matched old behavior where boost=0 -> rear=0)
+-        1.0f, 2 // steering_shaft_gain, base_force_mode (Muted)
+-    });
++    // 3. Test: SoP Only
++    presets.push_back(Preset("Test: SoP Only")
++        .SetUndersteer(0.0f)
++        .SetSoP(1.0f)
++        .SetSoPScale(5.0f)
++        .SetSmoothing(0.0f)
++        .SetSlide(false, 0.0f)
++        .SetRearAlign(0.0f)
++        .SetBaseMode(2) // Muted
++    );
+ 
+-    presets.push_back({ "Test: Understeer Only", 
+-        0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+-        false, 0.0f, false, 0.0f, false, 0.0f, false, 0.0f,
+-        false, 40.0f,
+-        false, 0, 0.0f, // v0.4.5
+-        0.0f, // rear_align_effect
+-        1.0f, 0 // steering_shaft_gain, base_force_mode
+-    });
++    // 4. Test: Understeer Only
++    presets.push_back(Preset("Test: Understeer Only")
++        .SetUndersteer(1.0f)
++        .SetSoP(0.0f)
++        .SetSoPScale(0.0f)
++        .SetSmoothing(0.0f)
++        .SetSlide(false, 0.0f)
++        .SetRearAlign(0.0f)
++    );
+ 
+-    presets.push_back({ "Test: Textures Only", 
+-        0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+-        true, 1.0f, false, 1.0f, true, 1.0f, true, 1.0f,
+-        false, 40.0f,
+-        false, 0, 0.0f, // v0.4.5
+-        0.0f, // rear_align_effect
+-        1.0f, 2 // steering_shaft_gain, base_force_mode (Muted)
+-    });
++    // 5. Test: Textures Only
++    presets.push_back(Preset("Test: Textures Only")
++        .SetUndersteer(0.0f)
++        .SetSoP(0.0f)
++        .SetSoPScale(0.0f)
++        .SetSmoothing(0.0f)
++        .SetLockup(true, 1.0f)
++        .SetSpin(true, 1.0f)
++        .SetSlide(true, 1.0f)
++        .SetRoad(true, 1.0f)
++        .SetRearAlign(0.0f)
++        .SetBaseMode(2) // Muted
++    );
+ 
+-    presets.push_back({ "Test: Rear Align Torque Only", 
+-        1.0f, 0.0f, 0.0f, 20.0f, 0.0f, 0.0f, 0.0f, // gain, under, sop(0), scale, smooth, min, over(0)
+-        false, 0.0f, false, 0.0f, false, 0.0f, false, 0.0f, // No textures
+-        false, 40.0f,
+-        false, 0, 0.0f, // v0.4.5
+-        1.0f, // rear_align_effect=1.0
+-        1.0f, 0 // steering_shaft_gain, base_force_mode (Native)
+-    });
++    // 6. Test: Rear Align Torque Only
++    presets.push_back(Preset("Test: Rear Align Torque Only")
++        .SetGain(1.0f)
++        .SetUndersteer(0.0f)
++        .SetSoP(0.0f)
++        .SetSmoothing(0.0f)
++        .SetSlide(false, 0.0f)
++        .SetRearAlign(1.0f)
++    );
+ 
+-    presets.push_back({ "Test: SoP Base Only", 
+-        1.0f, 0.0f, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, // sop=1.0, over=0
+-        false, 0.0f, false, 0.0f, false, 0.0f, false, 0.0f,
+-        false, 40.0f,
+-        false, 0, 0.0f,
+-        0.0f, // rear_align_effect=0
+-        1.0f, 2 // steering_shaft_gain, base_force_mode (Muted)
+-    });
++    // 7. Test: SoP Base Only
++    presets.push_back(Preset("Test: SoP Base Only")
++        .SetGain(1.0f)
++        .SetUndersteer(0.0f)
++        .SetSoP(1.0f)
++        .SetSmoothing(0.0f)
++        .SetSlide(false, 0.0f)
++        .SetRearAlign(0.0f)
++        .SetBaseMode(2) // Muted
++    );
+ 
+-    presets.push_back({ "Test: Slide Texture Only", 
+-        1.0f, 0.0f, 0.0f, 20.0f, 0.0f, 0.0f, 0.0f,
+-        false, 0.0f, false, 0.0f, true, 1.0f, false, 0.0f, // Slide enabled, gain 1.0
+-        false, 40.0f,
+-        false, 0, 0.0f,
+-        0.0f,
+-        1.0f, 2 // Muted
+-    });
++    // 8. Test: Slide Texture Only
++    presets.push_back(Preset("Test: Slide Texture Only")
++        .SetGain(1.0f)
++        .SetUndersteer(0.0f)
++        .SetSoP(0.0f)
++        .SetSmoothing(0.0f)
++        .SetSlide(true, 1.0f)
++        .SetRearAlign(0.0f)
++        .SetBaseMode(2) // Muted
++    );
+ 
+-    presets.push_back({ "Test: No Effects", 
+-        1.0f, 0.0f, 0.0f, 20.0f, 0.0f, 0.0f, 0.0f, // gain, under, sop, scale, smooth, min, over
+-        false, 0.0f, false, 0.0f, false, 0.0f, false, 0.0f, // lockup, spin, slide, road
+-        false, 40.0f, // invert, max_torque_ref
+-        false, 0, 0.0f, // use_manual_slip, bottoming_method, scrub_drag_gain
+-        0.0f, // rear_align_effect
+-        1.0f, 2 // steering_shaft_gain, base_force_mode (Muted)
+-    });
++    // 9. Test: No Effects
++    presets.push_back(Preset("Test: No Effects")
++        .SetGain(1.0f)
++        .SetUndersteer(0.0f)
++        .SetSoP(0.0f)
++        .SetSmoothing(0.0f)
++        .SetSlide(false, 0.0f)
++        .SetRearAlign(0.0f)
++        .SetBaseMode(2) // Muted
++    );
+ 
+-    // Parse User Presets from config.ini [Presets] section
++    // --- Parse User Presets from config.ini ---
++    // (Keep the existing parsing logic below, it works fine for file I/O)
+     std::ifstream file("config.ini");
+     if (!file.is_open()) return;
+ 
+     std::string line;
+     bool in_presets = false;
+     
+-    // Preset parsing state
+     std::string current_preset_name = "";
+-    Preset current_preset;
++    Preset current_preset; // Uses default constructor with default values
+     bool preset_pending = false;
+ 
+     while (std::getline(file, line)) {
+@@ -122,15 +131,12 @@ void Config::LoadPresets() {
+             
+             if (line == "[Presets]") {
+                 in_presets = true;
+-            } else if (line.rfind("[Preset:", 0) == 0) { // e.g. [Preset:My Custom]
+-                // Start a new preset
+-                in_presets = false; // We are in a specific preset block now
++            } else if (line.rfind("[Preset:", 0) == 0) { 
++                in_presets = false; 
+                 size_t end_pos = line.find(']');
+                 if (end_pos != std::string::npos) {
+                     current_preset_name = line.substr(8, end_pos - 8);
+-                    // Initialize with default values to be safe
+-                    current_preset = presets[0]; 
+-                    current_preset.name = current_preset_name;
++                    current_preset = Preset(current_preset_name); // Reset to defaults
+                     preset_pending = true;
+                 }
+             } else {
+@@ -146,6 +152,7 @@ void Config::LoadPresets() {
+                 std::string value;
+                 if (std::getline(is_line, value)) {
+                     try {
++                        // Map keys to struct members
+                         if (key == "gain") current_preset.gain = std::stof(value);
+                         else if (key == "understeer") current_preset.understeer = std::stof(value);
+                         else if (key == "sop") current_preset.sop = std::stof(value);
+@@ -163,12 +170,10 @@ void Config::LoadPresets() {
+                         else if (key == "road_gain") current_preset.road_gain = std::stof(value);
+                         else if (key == "invert_force") current_preset.invert_force = std::stoi(value);
+                         else if (key == "max_torque_ref") current_preset.max_torque_ref = std::stof(value);
+-                        // New Params (v0.4.5)
+                         else if (key == "use_manual_slip") current_preset.use_manual_slip = std::stoi(value);
+                         else if (key == "bottoming_method") current_preset.bottoming_method = std::stoi(value);
+                         else if (key == "scrub_drag_gain") current_preset.scrub_drag_gain = std::stof(value);
+                         else if (key == "rear_align_effect") current_preset.rear_align_effect = std::stof(value);
+-                        // New Params (v0.4.13)
+                         else if (key == "steering_shaft_gain") current_preset.steering_shaft_gain = std::stof(value);
+                         else if (key == "base_force_mode") current_preset.base_force_mode = std::stoi(value);
+                     } catch (...) {}
+@@ -177,7 +182,6 @@ void Config::LoadPresets() {
+         }
+     }
+     
+-    // Push the last one
+     if (preset_pending && !current_preset_name.empty()) {
+         current_preset.name = current_preset_name;
+         presets.push_back(current_preset);
+diff --git a/src/Config.h b/src/Config.h
+index 7ce8bf7..0b799d1 100644
+--- a/src/Config.h
++++ b/src/Config.h
+@@ -7,34 +7,69 @@
+ 
+ struct Preset {
+     std::string name;
+-    float gain;
+-    float understeer;
+-    float sop;
+-    float sop_scale;
+-    float sop_smoothing;
+-    float min_force;
+-    float oversteer_boost;
+-    bool lockup_enabled;
+-    float lockup_gain;
+-    bool spin_enabled;
+-    float spin_gain;
+-    bool slide_enabled;
+-    float slide_gain;
+-    bool road_enabled;
+-    float road_gain;
+-    // New Params (v0.4.4)
+-    bool invert_force;
+-    float max_torque_ref;
+-    // New Params (v0.4.5)
+-    bool use_manual_slip;
+-    int bottoming_method;
+-    float scrub_drag_gain;
+-    // New Params (v0.4.11)
+-    float rear_align_effect;
+-    // New Params (v0.4.13)
+-    float steering_shaft_gain;
+-    int base_force_mode;
+     
++    // 1. Define Defaults inline (Matches "Default" preset logic)
++    float gain = 0.5f;
++    float understeer = 1.0f;
++    float sop = 0.15f;
++    float sop_scale = 20.0f;
++    float sop_smoothing = 0.05f;
++    float min_force = 0.0f;
++    float oversteer_boost = 0.0f;
++    
++    bool lockup_enabled = false;
++    float lockup_gain = 0.5f;
++    
++    bool spin_enabled = false;
++    float spin_gain = 0.5f;
++    
++    bool slide_enabled = true;
++    float slide_gain = 0.5f;
++    
++    bool road_enabled = false;
++    float road_gain = 0.5f;
++    
++    bool invert_force = false;
++    float max_torque_ref = 40.0f;
++    
++    bool use_manual_slip = false;
++    int bottoming_method = 0;
++    float scrub_drag_gain = 0.0f;
++    
++    float rear_align_effect = 1.0f;
++    
++    float steering_shaft_gain = 1.0f;
++    int base_force_mode = 0; // 0=Native
++
++    // 2. Constructor
++    Preset(std::string n) : name(n) {}
++    Preset() : name("Unnamed") {} // Default constructor for file loading
++
++    // 3. Fluent Setters (The "Python Dictionary" feel)
++    Preset& SetGain(float v) { gain = v; return *this; }
++    Preset& SetUndersteer(float v) { understeer = v; return *this; }
++    Preset& SetSoP(float v) { sop = v; return *this; }
++    Preset& SetSoPScale(float v) { sop_scale = v; return *this; }
++    Preset& SetSmoothing(float v) { sop_smoothing = v; return *this; }
++    Preset& SetMinForce(float v) { min_force = v; return *this; }
++    Preset& SetOversteer(float v) { oversteer_boost = v; return *this; }
++    
++    Preset& SetLockup(bool enabled, float g) { lockup_enabled = enabled; lockup_gain = g; return *this; }
++    Preset& SetSpin(bool enabled, float g) { spin_enabled = enabled; spin_gain = g; return *this; }
++    Preset& SetSlide(bool enabled, float g) { slide_enabled = enabled; slide_gain = g; return *this; }
++    Preset& SetRoad(bool enabled, float g) { road_enabled = enabled; road_gain = g; return *this; }
++    
++    Preset& SetInvert(bool v) { invert_force = v; return *this; }
++    Preset& SetMaxTorque(float v) { max_torque_ref = v; return *this; }
++    
++    Preset& SetManualSlip(bool v) { use_manual_slip = v; return *this; }
++    Preset& SetBottoming(int method) { bottoming_method = method; return *this; }
++    Preset& SetScrub(float v) { scrub_drag_gain = v; return *this; }
++    Preset& SetRearAlign(float v) { rear_align_effect = v; return *this; }
++    
++    Preset& SetShaftGain(float v) { steering_shaft_gain = v; return *this; }
++    Preset& SetBaseMode(int v) { base_force_mode = v; return *this; }
++
+     // Apply this preset to an engine instance
+     void Apply(FFBEngine& engine) const {
+         engine.m_gain = gain;
+diff --git a/tests/test_ffb_engine.cpp b/tests/test_ffb_engine.cpp
+index 48fadc7..1b61330 100644
+--- a/tests/test_ffb_engine.cpp
++++ b/tests/test_ffb_engine.cpp
+@@ -9,6 +9,7 @@
+ #include "../src/Config.h" // Added for Preset testing
+ #include <fstream>
+ #include <cstdio> // for remove()
++#include <random>
+ 
+ // --- Simple Test Framework ---
+ int g_tests_passed = 0;
+@@ -1722,7 +1723,242 @@ void test_preset_initialization() {
+     }
+ }
+ 
++void test_regression_road_texture_toggle() {
++    std::cout << "\nTest: Regression - Road Texture Toggle Spike" << std::endl;
++    FFBEngine engine;
++    TelemInfoV01 data;
++    std::memset(&data, 0, sizeof(data));
++    
++    // Setup
++    engine.m_road_texture_enabled = false; // Start DISABLED
++    engine.m_road_texture_gain = 1.0;
++    engine.m_max_torque_ref = 20.0f;
++    engine.m_gain = 1.0f;
++    
++    // Disable everything else
++    engine.m_sop_effect = 0.0f;
++    engine.m_understeer_effect = 0.0f;
++    engine.m_lockup_enabled = false;
++    engine.m_spin_enabled = false;
++    engine.m_slide_texture_enabled = false;
++    engine.m_bottoming_enabled = false;
++    engine.m_scrub_drag_gain = 0.0f;
++    engine.m_rear_align_effect = 0.0f;
++    
++    // Frame 1: Car is at Ride Height A
++    data.mWheel[0].mVerticalTireDeflection = 0.05; // 5cm
++    data.mWheel[1].mVerticalTireDeflection = 0.05;
++    data.mWheel[0].mTireLoad = 4000.0; // Valid load
++    data.mWheel[1].mTireLoad = 4000.0;
++    engine.calculate_force(&data); // State should update here even if disabled
++    
++    // Frame 2: Car compresses significantly (Teleport or heavy braking)
++    data.mWheel[0].mVerticalTireDeflection = 0.10; // Jump to 10cm
++    data.mWheel[1].mVerticalTireDeflection = 0.10;
++    engine.calculate_force(&data); // State should update here to 0.10
++    
++    // Frame 3: User ENABLES effect while at 0.10
++    engine.m_road_texture_enabled = true;
++    
++    // Small movement in this frame
++    data.mWheel[0].mVerticalTireDeflection = 0.101; // +1mm change
++    data.mWheel[1].mVerticalTireDeflection = 0.101;
++    
++    double force = engine.calculate_force(&data);
++    
++    // EXPECTATION:
++    // If fixed: Delta = 0.101 - 0.100 = 0.001. Force is tiny.
++    // If broken: Delta = 0.101 - 0.050 (from Frame 1) = 0.051. Force is huge.
++    
++    // 0.001 * 50.0 (mult) * 1.0 (gain) = 0.05 Nm.
++    // Normalized: 0.05 / 20.0 = 0.0025.
++    
++    if (std::abs(force) < 0.01) {
++        std::cout << "[PASS] No spike on enable. Force: " << force << std::endl;
++        g_tests_passed++;
++    } else {
++        std::cout << "[FAIL] Spike detected! State was stale. Force: " << force << std::endl;
++        g_tests_failed++;
++    }
++}
++
++void test_regression_bottoming_switch() {
++    std::cout << "\nTest: Regression - Bottoming Method Switch Spike" << std::endl;
++    FFBEngine engine;
++    TelemInfoV01 data;
++    std::memset(&data, 0, sizeof(data));
++    
++    engine.m_bottoming_enabled = true;
++    engine.m_bottoming_gain = 1.0;
++    engine.m_bottoming_method = 0; // Start with Method A (Scraping)
++    data.mDeltaTime = 0.01;
++    
++    // Frame 1: Low Force
++    data.mWheel[0].mSuspForce = 1000.0;
++    data.mWheel[1].mSuspForce = 1000.0;
++    engine.calculate_force(&data); // Should update m_prev_susp_force even if Method A is active
++    
++    // Frame 2: High Force (Ramp up)
++    data.mWheel[0].mSuspForce = 5000.0;
++    data.mWheel[1].mSuspForce = 5000.0;
++    engine.calculate_force(&data); // Should update m_prev_susp_force to 5000
++    
++    // Frame 3: Switch to Method B (Spike)
++    engine.m_bottoming_method = 1;
++    
++    // Steady state force (no spike)
++    data.mWheel[0].mSuspForce = 5000.0; 
++    data.mWheel[1].mSuspForce = 5000.0;
++    
++    double force = engine.calculate_force(&data);
++    
++    // EXPECTATION:
++    // If fixed: dForce = (5000 - 5000) / dt = 0. No effect.
++    // If broken: dForce = (5000 - 0) / dt = 500,000. Massive spike triggers effect.
++    
++    if (std::abs(force) < 0.001) {
++        std::cout << "[PASS] No spike on method switch." << std::endl;
++        g_tests_passed++;
++    } else {
++        std::cout << "[FAIL] Spike detected on switch! Force: " << force << std::endl;
++        g_tests_failed++;
++    }
++}
++
++void test_regression_rear_torque_lpf() {
++    std::cout << "\nTest: Regression - Rear Torque LPF Continuity" << std::endl;
++    FFBEngine engine;
++    TelemInfoV01 data;
++    std::memset(&data, 0, sizeof(data));
++    
++    engine.m_rear_align_effect = 1.0;
++    engine.m_sop_effect = 0.0; // Isolate rear torque
++    engine.m_oversteer_boost = 0.0;
++    engine.m_max_torque_ref = 20.0f;
++    engine.m_gain = 1.0f; // Explicit gain
++    
++    // Setup: Car is sliding sideways (5 m/s) but has Grip (1.0)
++    // This means Rear Torque is 0.0 (because grip is good), BUT LPF should be tracking the slide.
++    data.mWheel[2].mLateralPatchVel = 5.0;
++    data.mWheel[3].mLateralPatchVel = 5.0;
++    data.mWheel[2].mLongitudinalGroundVel = 20.0;
++    data.mWheel[3].mLongitudinalGroundVel = 20.0;
++    data.mWheel[2].mGripFract = 1.0; // Good grip
++    data.mWheel[3].mGripFract = 1.0;
++    data.mWheel[2].mTireLoad = 4000.0;
++    data.mWheel[3].mTireLoad = 4000.0;
++    data.mWheel[2].mSuspForce = 3700.0; // For load calc
++    data.mWheel[3].mSuspForce = 3700.0;
++    data.mDeltaTime = 0.01;
++    
++    // Run 50 frames. The LPF should settle on the slip angle (~0.24 rad).
++    for(int i=0; i<50; i++) {
++        engine.calculate_force(&data);
++    }
++    
++    // Frame 51: Telemetry Glitch! Grip drops to 0.
++    // This triggers the Rear Torque calculation using the LPF value.
++    data.mWheel[2].mGripFract = 0.0;
++    data.mWheel[3].mGripFract = 0.0;
++    
++    double force = engine.calculate_force(&data);
++    
++    // EXPECTATION:
++    // If fixed: LPF is settled at ~0.24. Force is calculated based on 0.24.
++    // If broken: LPF was not running. It starts at 0. It smooths 0 -> 0.24.
++    //            First frame value would be ~0.024 (10% of target).
++    
++    // Target Torque (approx):
++    // Slip = 0.245. Load = 4000. K = 15.
++    // F_lat = 0.245 * 4000 * 15 = 14,700 -> Clamped 6000.
++    // Torque = 6000 * 0.001 = 6.0 Nm.
++    // Norm = 6.0 / 20.0 = 0.3.
++    
++    // If broken (LPF reset):
++    // Slip = 0.0245. F_lat = 1470. Torque = 1.47. Norm = 0.07.
++    
++    if (force > 0.25) {
++        std::cout << "[PASS] LPF was running in background. Force: " << force << std::endl;
++        g_tests_passed++;
++    } else {
++        std::cout << "[FAIL] LPF was stale/reset. Force too low: " << force << std::endl;
++        g_tests_failed++;
++    }
++}
++
++void test_stress_stability() {
++    std::cout << "\nTest: Stress Stability (Fuzzing)" << std::endl;
++    FFBEngine engine;
++    TelemInfoV01 data;
++    std::memset(&data, 0, sizeof(data));
++    
++    // Enable EVERYTHING
++    engine.m_lockup_enabled = true;
++    engine.m_spin_enabled = true;
++    engine.m_slide_texture_enabled = true;
++    engine.m_road_texture_enabled = true;
++    engine.m_bottoming_enabled = true;
++    engine.m_use_manual_slip = true;
++    engine.m_scrub_drag_gain = 1.0;
++    
++    std::default_random_engine generator;
++    std::uniform_real_distribution<double> distribution(-100000.0, 100000.0);
++    std::uniform_real_distribution<double> dist_small(-1.0, 1.0);
++    
++    bool failed = false;
++    
++    // Run 1000 iterations of chaos
++    for(int i=0; i<1000; i++) {
++        // Randomize Inputs
++        data.mSteeringShaftTorque = distribution(generator);
++        data.mLocalAccel.x = distribution(generator);
++        data.mLocalVel.z = distribution(generator);
++        data.mDeltaTime = std::abs(dist_small(generator) * 0.1); // Random dt
++        
++        for(int w=0; w<4; w++) {
++            data.mWheel[w].mTireLoad = distribution(generator);
++            data.mWheel[w].mGripFract = dist_small(generator); // -1 to 1
++            data.mWheel[w].mSuspForce = distribution(generator);
++            data.mWheel[w].mVerticalTireDeflection = distribution(generator);
++            data.mWheel[w].mLateralPatchVel = distribution(generator);
++            data.mWheel[w].mLongitudinalGroundVel = distribution(generator);
++        }
++        
++        // Calculate
++        double force = engine.calculate_force(&data);
++        
++        // Check 1: NaN / Infinity
++        if (std::isnan(force) || std::isinf(force)) {
++            std::cout << "[FAIL] Iteration " << i << " produced NaN/Inf!" << std::endl;
++            failed = true;
++            break;
++        }
++        
++        // Check 2: Bounds (Should be clamped -1 to 1)
++        if (force > 1.00001 || force < -1.00001) {
++            std::cout << "[FAIL] Iteration " << i << " exceeded bounds: " << force << std::endl;
++            failed = true;
++            break;
++        }
++    }
++    
++    if (!failed) {
++        std::cout << "[PASS] Survived 1000 iterations of random input." << std::endl;
++        g_tests_passed++;
++    } else {
++        g_tests_failed++;
++    }
++}
++
+ int main() {
++    // Regression Tests (v0.4.14)
++    test_regression_road_texture_toggle();
++    test_regression_bottoming_switch();
++    test_regression_rear_torque_lpf();
++    
++    // Stress Test
++    test_stress_stability();
++
+     // Run New Tests
+     test_manual_slip_singularity();
+     test_scrub_drag_fade();
