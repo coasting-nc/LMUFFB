@@ -55,17 +55,14 @@ To satisfy a user looking for the "GamerMuscle feel," your app should offer the 
 | **Damping** | **Low** | Keep low to avoid "muddying" the slide correction signals. |
 
 **Relevant Video:**
-[Which Sim Has the Best Force Feedback?](https://www.youtube.com/watch?v=z59qCvIlSQo)
+[Which Sim Has the Best Force Feedback?] (youtube id z59qCvIlSQo)
 *This video is relevant because GamerMuscle explicitly compares AC, ACC, and iRacing, explaining why AC's communication of "load" and "slip" makes it the benchmark for catching slides.*
 
 
 
-http://googleusercontent.com/youtube_content/0
-
-
 reduce "detail" for road texture and bumps (higher frequency vibrations), by reducing steering rack force (and possibly tire deflection)
 this is the "Detail Scale" in Marvin's App
-https://youtu.be/AJQ9EqB_ids?t=307
+(youtube id AJQ9EqB_ids?t=307)
 
 setting to add that is in Marvin's app:
 "Output curve" 
@@ -78,11 +75,11 @@ the load of the vehicle
 
 range to the details
 
-https://www.youtube.com/watch?v=AJQ9EqB_ids&t=27s
+(youtube id  AJQ9EqB_ids&t=27s)
 
 seat of the pants: understeer and oversteer effects options
 
-https://youtu.be/AJQ9EqB_ids?t=536
+(youtube id  AJQ9EqB_ids?t=536)
 
 
 Marvin's app:
