@@ -100,6 +100,10 @@ def main():
                     print(f"Skipping (code review): {relpath}")
                     continue
 
+                if 'docs/dev_docs/code reviews' in relpath_normalized or 'docs/dev_docs/code reviews' in relpath_normalized:
+                    print(f"Skipping (code review): {relpath}")
+                    continue
+
                 if 'docs/dev_docs/done_features' in relpath_normalized:
                     print(f"Skipping (done features): {relpath}")
                     continue
