@@ -1015,6 +1015,10 @@ update readme: remove vJoy, we don't need it
 remove vJoy from code
 also remove all mentions (in readme) and use (in code) of gremlin.
 
+Deep research: AC FFB that make it informative.
+
+## Troubleshooting 21
+
 in main window gui: rename "Use Manual Slip Calc" to "Use Manual Front Slip Ratio Calc"
 
 in FFB Analysis window:
@@ -1025,10 +1029,11 @@ Add a plot for our _manual slip calc_
 Add a plots both for raw game value for slip, and for _manual slip calc_ , so we can compare them and see if they are identical or at least similar in shape.
 compare "Calc Front Slip Ratio" and "Game Front Slip Ratio" to see how accurate the manual calc is.
 
+we don't have anymore the plot for _avg deflection_ (I think it was removed when we reorganized the plots to group them in more intuitive way)
+avg deflection: is it for all 4 tires? Specify in the variable name and / or plot title.
+
 test lmuFFB with rF2, with the cars that support giving out grip information and other channels that are blocked for DLC cars.
 See, for this "open" ffb cars, if our fomulas that approximate grip, load, and other values are accurate enough.
-
-Deep research: AC FFB that make it informative.
 
 Coaching: how to feel each specific effect. Find car, setup, and track combinations (particular corners), that are ideal to feel a particular effect.
 Get instructions in what to do while driving to induce a specific car physics dynamic that produces a certain effect on the FFB.
@@ -1036,17 +1041,11 @@ At the same time, use the settings that most highligh a particular effect (isola
 Make this guide suitable for Belt driven wheels (eg. T300) and gear driven wheels (eg. G29).
 
 Reorganize the sliders in the main window gui. They should be grouped by component of the FFB formula, and each component should have its own section, with a main slider, and additional settings like smoothing, caps, coefficients, etc.
-
 This would make it more intuitive, and easier to find the right slider to adjust.
 
-Review again the options in the main window, and verify that we have a settings to adjust and isolate each component of the FFB formulas.
+Review again the options in the main window, and verify that we have a settings to adjust and isolate each component of the FFB formulas. Newly introduced effects might be more customizable.
 
-Test strange "delayed" spikes in the wheel, after a spin or slide. Which effect is causing them?
-
-
-we don't have anymore the plot for _avg deflection_ (I think it was removed when we reorganized the plots to group them in more intuitive way)
-avg deflection: is it for all 4 tires? Specify in the variable name and / or plot title.
-
+Test strange "delayed" spikes in the wheel, after a spin or slide. Which effect is causing them? Retest this after v0.4.19, since many fixes were done.
 
 add the settings for which slip angle is ideal for grip. Now it is 0.10, but it could be lower. There is a doc for this. docs\dev_docs\grip_calculation_and_slip_angle_v0.4.12.md
 
