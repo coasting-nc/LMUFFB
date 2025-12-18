@@ -4240,6 +4240,7 @@ void test_coordinate_sop_inversion() {
     engine.m_rear_align_effect = 0.0f;
     engine.m_scrub_drag_gain = 0.0f;
     engine.m_slide_texture_enabled =
+```
 
 # Troubleshooting and implementation to support better troubleshooting
 
