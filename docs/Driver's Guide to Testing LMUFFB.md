@@ -1,4 +1,4 @@
-# **Driver's Guide to Testing LMUFFB**.
+# **Driver's Guide to Testing LMUFFB**
 
 ### 🏁 Prerequisites
 
