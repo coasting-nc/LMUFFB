@@ -173,3 +173,6 @@
 | **No Road Texture over curbs** | Suspension frequency mismatch. | Increase `Road Gain`. Ensure `Load Cap` isn't too low. |
 | **Effects feel "Digital" (On/Off)** | Clipping. | Check the "Clipping" bar in Debug window. Reduce `Master Gain` or increase `Max Torque Ref`. |
 
+### References
+
+* `https://www.youtube.com/watch?v=XHSEAMQgN2c&t=655s`
