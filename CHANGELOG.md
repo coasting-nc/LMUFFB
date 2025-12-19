@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.23] - 2025-12-19
+### Changed
+- **Debug Window: Compact Plot Redesign**: Redesigned troubleshooting graphs to be more space-efficient.
+    - **Overlay Statistics**: Numerical readouts (Current, Min, Max) are now overlaid directly on the plots as a legend, instead of being appended to the title.
+    - **Vertical Layout**: Moved plot titles to their own lines above the graphs, significantly reducing the minimum window width required to see all data.
+    - **Enhanced Readability**: Added semi-transparent black backgrounds to the overlaid statistics to ensure they are readable against any graph color.
+    - **Optimized UI**: Plots now take up less horizontal space, allowing more detailed monitoring on standard monitors.
+
 ## [0.4.22] - 2025-12-19
 ### Added
 - **Exclusive Device Acquisition Visibility**: Implemented visual feedback to show whether LMUFFB successfully acquired the FFB device in exclusive mode or is sharing it with other applications.
