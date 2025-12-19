@@ -1024,6 +1024,8 @@ try exclusive asuisition of the ffb device, do not use the or condition exclusiv
 
 make plots more compacts after adding min, max and current in the title. Consider adding that info in the plot itself, as a legend or something.
 
+## Troubleshooting 23
+
 see if we can auto detect if game ffb is active, and show a warning
 
 in main window gui: rename "Use Manual Slip Calc" to "Use Manual Front Slip Ratio Calc"

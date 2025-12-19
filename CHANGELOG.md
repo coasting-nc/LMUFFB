@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.24] - 2025-12-19
+### Added
+- **Guide Presets**: Added 5 new built-in presets corresponding to the "Driver's Guide to Testing LMUFFB".
+    - **Guide: Understeer (Front Grip)**: Isolates the grip modulation effect.
+    - **Guide: Oversteer (Rear Grip)**: Isolates SoP and Rear Aligning Torque.
+    - **Guide: Slide Texture (Scrub)**: Isolates the scrubbing vibration (mutes base force).
+    - **Guide: Braking Lockup**: Isolates the lockup vibration (mutes base force).
+    - **Guide: Traction Loss (Spin)**: Isolates the wheel spin vibration (mutes base force).
+    - These presets allow users to quickly configure the app for the specific test scenarios described in the documentation.
+
 ## [0.4.23] - 2025-12-19
 ### Changed
 - **Debug Window: Compact Plot Redesign**: Redesigned troubleshooting graphs to be more space-efficient.

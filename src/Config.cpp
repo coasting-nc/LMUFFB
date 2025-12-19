@@ -106,6 +106,88 @@ void Config::LoadPresets() {
         .SetBaseMode(2) // Muted
     );
 
+    // --- NEW GUIDE PRESETS (v0.4.24) ---
+
+    // 10. Guide: Understeer (Front Grip Loss)
+    presets.push_back(Preset("Guide: Understeer (Front Grip)")
+        .SetGain(1.0f)
+        .SetUndersteer(1.0f)
+        .SetSoP(0.0f)
+        .SetOversteer(0.0f)
+        .SetRearAlign(0.0f)
+        .SetSoPYaw(0.0f)
+        .SetGyro(0.0f)
+        .SetLockup(false, 0.0f)
+        .SetSpin(false, 0.0f)
+        .SetSlide(false, 0.0f)
+        .SetRoad(false, 0.0f)
+        .SetScrub(0.0f)
+        .SetBaseMode(0) // Native Physics needed to feel the drop
+    );
+
+    // 11. Guide: Oversteer (Rear Grip Loss)
+    presets.push_back(Preset("Guide: Oversteer (Rear Grip)")
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(1.0f)
+        .SetSoPScale(20.0f)
+        .SetRearAlign(1.0f)
+        .SetOversteer(1.0f)
+        .SetSoPYaw(0.0f)
+        .SetGyro(0.0f)
+        .SetLockup(false, 0.0f)
+        .SetSpin(false, 0.0f)
+        .SetSlide(false, 0.0f)
+        .SetRoad(false, 0.0f)
+        .SetScrub(0.0f)
+        .SetBaseMode(0) // Native Physics + Boost
+    );
+
+    // 12. Guide: Slide Texture (Scrubbing)
+    presets.push_back(Preset("Guide: Slide Texture (Scrub)")
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetOversteer(0.0f)
+        .SetRearAlign(0.0f)
+        .SetSlide(true, 1.0f)
+        .SetScrub(1.0f)
+        .SetLockup(false, 0.0f)
+        .SetSpin(false, 0.0f)
+        .SetRoad(false, 0.0f)
+        .SetBaseMode(2) // Muted for clear texture feel
+    );
+
+    // 13. Guide: Braking Lockup
+    presets.push_back(Preset("Guide: Braking Lockup")
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetOversteer(0.0f)
+        .SetRearAlign(0.0f)
+        .SetLockup(true, 1.0f)
+        .SetSpin(false, 0.0f)
+        .SetSlide(false, 0.0f)
+        .SetRoad(false, 0.0f)
+        .SetScrub(0.0f)
+        .SetBaseMode(2) // Muted
+    );
+
+    // 14. Guide: Traction Loss (Wheel Spin)
+    presets.push_back(Preset("Guide: Traction Loss (Spin)")
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetOversteer(0.0f)
+        .SetRearAlign(0.0f)
+        .SetSpin(true, 1.0f)
+        .SetLockup(false, 0.0f)
+        .SetSlide(false, 0.0f)
+        .SetRoad(false, 0.0f)
+        .SetScrub(0.0f)
+        .SetBaseMode(2) // Muted
+    );
+
     // --- Parse User Presets from config.ini ---
     // (Keep the existing parsing logic below, it works fine for file I/O)
     std::ifstream file("config.ini");
