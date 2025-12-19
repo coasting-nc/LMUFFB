@@ -1019,6 +1019,9 @@ Deep research: AC FFB that make it informative.
 
 ## Troubleshooting 21
 
+see if we can auto detect if game ffb is active, and show a warning
+also try exclusive asuisition of the ffb device, do not use the or condition exclusive or non exclusive
+
 in main window gui: rename "Use Manual Slip Calc" to "Use Manual Front Slip Ratio Calc"
 
 in FFB Analysis window:
