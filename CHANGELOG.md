@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.21] - 2025-12-19
+### Added
+- **Debug Window: Numerical Readouts**: Added precise numerical diagnostics to all troubleshooting graphs. Each plot now displays:
+    - **Current Value**: The most recent value (4 decimal precision for detecting tiny values like 0.0015)
+    - **Min**: Minimum value in the 10-second history buffer
+    - **Max**: Maximum value in the 10-second history buffer
+    - **Purpose**: Diagnose "flatlined" channels to determine if values are truly zero (logic bug) or just very small (scaling issue). Essential for troubleshooting effects like SoP, Understeer, and Road Texture that may appear dead but are actually producing micro-forces.
+
 ## [0.4.20] - 2025-12-19
 ### Fixed
 - **CRITICAL: Positive Feedback Loop in Scrub Drag and Yaw Kick**: Fixed two force direction inversions that were causing the wheel to pull in the direction of the turn/slide instead of resisting it, creating unstable positive feedback loops.

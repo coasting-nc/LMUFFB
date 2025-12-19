@@ -103,6 +103,12 @@ This document provides the Standard Operating Procedures (SOP), context, and con
 *   **Strategy**: You **can** build and run the **Unit Tests** (`tests/`).
     *   ✅ The Physics Engine (`FFBEngine.h`) is pure C++17 and platform-agnostic.
     *   ✅ The Test Suite mocks the Windows telemetry inputs.
+*   **Windows Build Command** (Full Application):
+    *   If you need to verify the full application builds (GUI + FFB), use:
+        ```powershell
+        & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake --build build --config Release --clean-first
+        ```
+    *   This builds the complete `LMUFFB.exe` with all dependencies (ImGui, DirectInput, DirectX 11).
 
 ---
 
