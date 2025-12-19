@@ -311,7 +311,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Attenuates raw game force without affecting telemetry.\nUse this instead of Master Gain if other effects are too weak.");
     ImGui::SliderFloat("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f");
     // New Max Torque Ref Slider (v0.4.4)
-    ImGui::SliderFloat("Max Torque Ref (Nm)", &engine.m_max_torque_ref, 10.0f, 100.0f, "%.1f Nm");
+    ImGui::SliderFloat("Max Torque Ref (Nm)", &engine.m_max_torque_ref, 1.0f, 100.0f, "%.1f Nm");
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("The torque value that equals 100%% FFB output.\nIncrease this if FFB is too strong at Gain 1.0.\nTypical values: 20-40 Nm.");
 
     if (ImGui::TreeNode("Advanced Tuning")) {
@@ -621,7 +621,7 @@ inline void PlotWithStats(const char* label, const RollingBuffer& buffer,
     
     // Use current font but scaled down (Small Print)
     ImFont* font = ImGui::GetFont();
-    float font_size = ImGui::GetFontSize() * 0.70f; // 70% size
+    float font_size = ImGui::GetFontSize(); // Full resolution
     
     ImVec2 text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay);
     
@@ -858,18 +858,28 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         // Group: Loads
         ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Loads]");
         
-        ImGui::Text("Calc Load (Front/Rear)");
+        // --- Manually draw stats for the Multi-line Load Graph ---
+        float cur_f = plot_calc_front_load.GetCurrent();
+        float cur_r = plot_calc_rear_load.GetCurrent();
+        char load_label[128];
+        snprintf(load_label, sizeof(load_label), "Front: %.0f N | Rear: %.0f N", cur_f, cur_r);
+        ImGui::Text("%s", load_label);
+        // ---------------------------------------------------------
+
         ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 1.0f, 1.0f));
         ImGui::PlotLines("##CLoadF", plot_calc_front_load.data.data(), (int)plot_calc_front_load.data.size(), plot_calc_front_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
         ImGui::PopStyleColor();
+        
         // Reset Cursor to draw on top
         ImVec2 pos_load = ImGui::GetItemRectMin();
         ImGui::SetCursorScreenPos(pos_load);
+        
         // Draw Rear (Magenta) - Transparent Background
         ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0,0,0,0)); 
         ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(1.0f, 0.0f, 1.0f, 1.0f));
         ImGui::PlotLines("##CLoadR", plot_calc_rear_load.data.data(), (int)plot_calc_rear_load.data.size(), plot_calc_rear_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
         ImGui::PopStyleColor(2);
+        
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Cyan: Front, Magenta: Rear");
         
         ImGui::NextColumn();
@@ -918,6 +928,16 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
                       "Driver wheel position -1 to 1");
         
         ImGui::Text("Combined Input");
+        
+        // --- Manually draw stats for Input ---
+        float thr = plot_raw_throttle.GetCurrent();
+        float brk = plot_raw_brake.GetCurrent();
+        char input_label[128];
+        snprintf(input_label, sizeof(input_label), "Thr: %.2f | Brk: %.2f", thr, brk);
+        ImGui::SameLine(); 
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "(%s)", input_label);
+        // -------------------------------------
+
         ImVec2 pos = ImGui::GetCursorScreenPos();
         ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(1.0f, 0.0f, 0.0f, 1.0f)); // Red for Brake
         ImGui::PlotLines("##BrkComb", plot_raw_brake.data.data(), (int)plot_raw_brake.data.size(), plot_raw_brake.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));

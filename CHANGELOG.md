@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.26] - 2025-12-19
+### Fixed
+- **Debug Window: Crisp Text Rendering**: Fixed blurry text in plot overlays by removing font scaling (was 70% size, now full resolution). All numerical readouts are now sharp and readable.
+- **Debug Window: Missing Readouts**: Added numerical readouts to multi-line plots that were bypassing the `PlotWithStats` helper:
+    - **Calc Load (Front/Rear)**: Now displays `Front: XXX N | Rear: XXX N` above the overlaid cyan/magenta plot.
+    - **Combined Input (Throttle/Brake)**: Now displays `Thr: X.XX | Brk: X.XX` next to the title for the overlaid green/red plot.
+
+### Changed
+- **Tuning Window: Max Torque Ref Range**: Unlocked the lower bound of the `Max Torque Ref` slider from 10.0 Nm to **1.0 Nm** (range now 1.0-100.0 Nm). This provides users with very strong wheels or specific tuning preferences more flexibility for fine-tuning FFB scaling.
+
 ## [0.4.25] - 2025-12-19
 ### Added
 - **New Guide Presets**: Added isolation presets for advanced effects:
