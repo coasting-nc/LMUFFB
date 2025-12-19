@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.27] - 2025-12-19
+### Fixed
+- **CRITICAL SAFETY: FFB Mute During Pause/Menu**: Fixed a dangerous bug where the steering wheel would maintain the last force command indefinitely when the game was paused or in menu states.
+    - **Problem**: DirectInput drivers are stateful and hold the last command they receive. If you paused mid-corner while the force was 10Nm, the wheel would keep pulling at 10Nm indefinitely, potentially causing injury or equipment damage.
+    - **Solution**: Restructured the FFB loop logic to explicitly send a **zero force command** whenever the game is not in "Realtime" (driving) mode. Added a `should_output` flag to track whether FFB calculation should be active.
+    - **Impact**: The wheel now immediately releases all tension when you pause the game or enter menus, making the application safe to use in all scenarios.
+    - **Technical Details**: 
+        - Moved force calculation inside a conditional block that checks `in_realtime && playerHasVehicle`
+        - Added explicit zero force assignment when `should_output` is false (lines 86-89 in main.cpp)
+        - Enhanced console logging to show "(FFB Muted)" message when exiting to menu
+    - **User Experience**: Console now logs "[Game] User exited to menu (FFB Muted)" and "[Game] User entered driving session" for clear state visibility.
+
 ## [0.4.26] - 2025-12-19
 ### Fixed
 - **Debug Window: Crisp Text Rendering**: Fixed blurry text in plot overlays by removing font scaling (was 70% size, now full resolution). All numerical readouts are now sharp and readable.
