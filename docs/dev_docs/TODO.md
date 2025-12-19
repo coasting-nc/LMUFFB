@@ -1018,14 +1018,18 @@ also remove all mentions (in readme) and use (in code) of gremlin.
 Deep research: AC FFB that make it informative.
 
 ## Troubleshooting 21
+try exclusive asuisition of the ffb device, do not use the or condition exclusive or non exclusive
+
+## Troubleshooting 22
+
+make plots more compacts after adding min, max and current in the title. Consider adding that info in the plot itself, as a legend or something.
 
 see if we can auto detect if game ffb is active, and show a warning
-also try exclusive asuisition of the ffb device, do not use the or condition exclusive or non exclusive
 
 in main window gui: rename "Use Manual Slip Calc" to "Use Manual Front Slip Ratio Calc"
 
 in FFB Analysis window:
-Have both blots
+Have both plots
 "Calc Front Slip Ratio" and "Game Front Slip Ratio"
 "Game Front Slip Ratio" should go into subsection "C. Raw Game Telemetry (Inputs)"
 Add a plot for our _manual slip calc_ 
@@ -1042,13 +1046,14 @@ Coaching: how to feel each specific effect. Find car, setup, and track combinati
 Get instructions in what to do while driving to induce a specific car physics dynamic that produces a certain effect on the FFB.
 At the same time, use the settings that most highligh a particular effect (isolating it from other effect whenever possible).
 Make this guide suitable for Belt driven wheels (eg. T300) and gear driven wheels (eg. G29).
+Note: added guide about this as a markdown document.
 
 Reorganize the sliders in the main window gui. They should be grouped by component of the FFB formula, and each component should have its own section, with a main slider, and additional settings like smoothing, caps, coefficients, etc.
 This would make it more intuitive, and easier to find the right slider to adjust.
 
 Review again the options in the main window, and verify that we have a settings to adjust and isolate each component of the FFB formulas. Newly introduced effects might be more customizable.
 
-Test strange "delayed" spikes in the wheel, after a spin or slide. Which effect is causing them? Retest this after v0.4.19, since many fixes were done.
+Note: these seems gone in latest version of lmuFFB. Previous note: Test strange "delayed" spikes in the wheel, after a spin or slide. Which effect is causing them? Retest this after v0.4.19, since many fixes were done.
 
 add the settings for which slip angle is ideal for grip. Now it is 0.10, but it could be lower. There is a doc for this. docs\dev_docs\grip_calculation_and_slip_angle_v0.4.12.md
 

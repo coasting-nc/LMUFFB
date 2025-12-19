@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.22] - 2025-12-19
+### Added
+- **Exclusive Device Acquisition Visibility**: Implemented visual feedback to show whether LMUFFB successfully acquired the FFB device in exclusive mode or is sharing it with other applications.
+    - **Acquisition Strategy**: LMUFFB now attempts to acquire devices in Exclusive mode first (`DISCL_EXCLUSIVE | DISCL_BACKGROUND`), automatically falling back to Non-Exclusive mode (`DISCL_NONEXCLUSIVE | DISCL_BACKGROUND`) if exclusive access is denied.
+    - **GUI Status Display**: Added color-coded acquisition mode indicator in the Tuning Window:
+        - **Green "Mode: EXCLUSIVE (Game FFB Blocked)"**: LMUFFB has exclusive control. The game can read steering inputs but cannot send FFB commands, automatically preventing "Double FFB" conflicts.
+        - **Yellow "Mode: SHARED (Potential Conflict)"**: LMUFFB is sharing the device. Users must manually disable in-game FFB to avoid conflicting force signals.
+    - **Informative Tooltips**: Hover over the mode indicator for detailed explanations and recommended actions.
+    - **Technical Details**: Added `IsExclusive()` method and `m_isExclusive` member to `DirectInputFFB` class to track acquisition state. Updated `SelectDevice()` to implement exclusive-first strategy with proper state tracking.
+    - **Benefits**: 
+        - Automatic conflict prevention when exclusive mode succeeds
+        - Clear visibility of potential FFB conflicts
+        - Better troubleshooting for "Double FFB" issues
+        - No manual configuration needed when exclusive mode is acquired
+    - **Documentation**: Added comprehensive user guide (`docs/EXCLUSIVE_ACQUISITION_GUIDE.md`) and technical implementation summary (`docs/dev_docs/implementation_summary_exclusive_acquisition.md`).
+
 ## [0.4.21] - 2025-12-19
 ### Added
 - **Debug Window: Numerical Readouts**: Added precise numerical diagnostics to all troubleshooting graphs. Each plot now displays:

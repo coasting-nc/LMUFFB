@@ -45,6 +45,9 @@ public:
 
     bool IsActive() const { return m_active; }
     std::string GetCurrentDeviceName() const { return m_deviceName; }
+    
+    // Check if device was acquired in exclusive mode
+    bool IsExclusive() const { return m_isExclusive; }
 
 private:
     DirectInputFFB();
@@ -56,6 +59,7 @@ private:
     HWND m_hwnd = nullptr;
     
     bool m_active = false;
+    bool m_isExclusive = false; // Track acquisition mode
     std::string m_deviceName = "None";
     
     // Internal helper to create the Constant Force effect

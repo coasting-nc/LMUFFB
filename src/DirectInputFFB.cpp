@@ -84,10 +84,12 @@ void DirectInputFFB::ReleaseDevice() {
         m_pDevice = nullptr;
     }
     m_active = false;
+    m_isExclusive = false;
     m_deviceName = "None";
     std::cout << "[DI] Device released by user." << std::endl;
 #else
     m_active = false;
+    m_isExclusive = false;
     m_deviceName = "None";
 #endif
 }
@@ -111,17 +113,25 @@ bool DirectInputFFB::SelectDevice(const GUID& guid) {
         return false;
     }
 
+    // Reset state
+    m_isExclusive = false;
+
     // Attempt 1: Exclusive/Background (Best for FFB)
     std::cout << "[DI] Attempting to set Cooperative Level (Exclusive | Background)..." << std::endl;
     HRESULT hr = m_pDevice->SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);
     
-    std::string mode_str = "EXCLUSIVE | BACKGROUND"; // Default assumption
-
-    // Fallback: Non-Exclusive
-    if (FAILED(hr)) {
-         std::cerr << "[DI] Exclusive mode failed (Error: " << std::hex << hr << std::dec << "). Retrying in Non-Exclusive mode..." << std::endl;
-         hr = m_pDevice->SetCooperativeLevel(m_hwnd, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
-         mode_str = "NON-EXCLUSIVE | BACKGROUND";
+    if (SUCCEEDED(hr)) {
+        m_isExclusive = true;
+        std::cout << "[DI] Cooperative Level set to EXCLUSIVE." << std::endl;
+    } else {
+        // Fallback: Non-Exclusive
+        std::cerr << "[DI] Exclusive mode failed (Error: " << std::hex << hr << std::dec << "). Retrying in Non-Exclusive mode..." << std::endl;
+        hr = m_pDevice->SetCooperativeLevel(m_hwnd, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+        
+        if (SUCCEEDED(hr)) {
+            m_isExclusive = false;
+            std::cout << "[DI] Cooperative Level set to NON-EXCLUSIVE." << std::endl;
+        }
     }
     
     if (FAILED(hr)) {
@@ -134,7 +144,7 @@ bool DirectInputFFB::SelectDevice(const GUID& guid) {
         std::cerr << "[DI] Failed to acquire device." << std::endl;
         // Don't return false yet, might just need focus/retry
     } else {
-        std::cout << "[DI] Device Acquired in " << mode_str << " mode." << std::endl;
+        std::cout << "[DI] Device Acquired in " << (m_isExclusive ? "EXCLUSIVE" : "NON-EXCLUSIVE") << " mode." << std::endl;
     }
 
     // Create Effect

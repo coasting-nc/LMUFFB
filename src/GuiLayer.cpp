@@ -272,6 +272,17 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         selected_device_idx = -1;
     }
 
+    // Display Acquisition Mode
+    if (DirectInputFFB::Get().IsActive()) {
+        if (DirectInputFFB::Get().IsExclusive()) {
+            ImGui::TextColored(ImVec4(0, 1, 0, 1), "Mode: EXCLUSIVE (Game FFB Blocked)");
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB has exclusive control.\nThe game can read steering but cannot send FFB.\nThis prevents 'Double FFB' issues.");
+        } else {
+            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Mode: SHARED (Potential Conflict)");
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB is sharing the device.\nEnsure In-Game FFB is set to 'None' or 0%% strength\nto avoid two force signals fighting each other.");
+        }
+    }
+
     ImGui::Separator();
 
     // --- PRESETS ---
