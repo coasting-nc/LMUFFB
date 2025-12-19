@@ -285,13 +285,18 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
     ImGui::Separator();
 
-    // --- PRESETS ---
+    // --- PRESETS WITH DIRTY STATE TRACKING ---
     static int selected_preset = 0;
     if (Config::presets.empty()) {
         Config::LoadPresets();
     }
     
-    if (ImGui::BeginCombo("Load Preset", Config::presets[selected_preset].name.c_str())) {
+    // Determine display name: Preset Name or "Custom"
+    const char* preview_value = (selected_preset >= 0 && selected_preset < Config::presets.size()) 
+                                ? Config::presets[selected_preset].name.c_str() 
+                                : "Custom";
+    
+    if (ImGui::BeginCombo("Load Preset", preview_value)) {
         for (int i = 0; i < Config::presets.size(); i++) {
             bool is_selected = (selected_preset == i);
             if (ImGui::Selectable(Config::presets[i].name.c_str(), is_selected)) {
@@ -306,88 +311,108 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
     ImGui::Separator();
     
-    ImGui::SliderFloat("Master Gain", &engine.m_gain, 0.0f, 2.0f, "%.2f");
-    ImGui::SliderFloat("Steering Shaft Gain", &engine.m_steering_shaft_gain, 0.0f, 1.0f, "%.2f");
+    // Helper Lambdas to detect changes and mark as "Custom"
+    auto FloatSetting = [&](const char* label, float* v, float min, float max, const char* fmt = "%.2f") {
+        if (ImGui::SliderFloat(label, v, min, max, fmt)) {
+            selected_preset = -1; // Mark as Custom
+        }
+    };
+    
+    auto BoolSetting = [&](const char* label, bool* v) {
+        if (ImGui::Checkbox(label, v)) {
+            selected_preset = -1;
+        }
+    };
+    
+    auto IntSetting = [&](const char* label, int* v, const char* const items[], int items_count) {
+        if (ImGui::Combo(label, v, items, items_count)) {
+            selected_preset = -1;
+        }
+    };
+    
+    FloatSetting("Master Gain", &engine.m_gain, 0.0f, 2.0f);
+    FloatSetting("Steering Shaft Gain", &engine.m_steering_shaft_gain, 0.0f, 1.0f);
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Attenuates raw game force without affecting telemetry.\nUse this instead of Master Gain if other effects are too weak.");
-    ImGui::SliderFloat("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f");
+    FloatSetting("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f");
     // New Max Torque Ref Slider (v0.4.4)
-    ImGui::SliderFloat("Max Torque Ref (Nm)", &engine.m_max_torque_ref, 1.0f, 200.0f, "%.1f Nm");
+    FloatSetting("Max Torque Ref (Nm)", &engine.m_max_torque_ref, 1.0f, 200.0f, "%.1f Nm");
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("The torque value that equals 100%% FFB output.\nIncrease this to WEAKEN the FFB (make it lighter).\nFor T300/G29, try 40-100 Nm.");
 
     if (ImGui::TreeNode("Advanced Tuning")) {
         // Base Force Mode (v0.4.13)
         const char* base_modes[] = { "Native (Physics)", "Synthetic (Constant)", "Muted (Off)" };
-        ImGui::Combo("Base Force Mode", &engine.m_base_force_mode, base_modes, IM_ARRAYSIZE(base_modes));
+        IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, IM_ARRAYSIZE(base_modes));
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Debug tool to isolate effects.\nNative: Raw physics.\nSynthetic: Constant force to tune Grip drop-off.\nMuted: Zero base force.");
 
-        ImGui::SliderFloat("SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, "%.2f (1=Raw)");
-        ImGui::SliderFloat("SoP Scale", &engine.m_sop_scale, 0.0f, 200.0f, "%.1f");
-        ImGui::SliderFloat("Load Cap", &engine.m_max_load_factor, 1.0f, 3.0f, "%.1fx");
+        FloatSetting("SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, "%.2f (1=Raw)");
+        FloatSetting("SoP Scale", &engine.m_sop_scale, 0.0f, 200.0f, "%.1f");
+        FloatSetting("Load Cap", &engine.m_max_load_factor, 1.0f, 3.0f, "%.1fx");
         ImGui::TreePop();
     }
 
     ImGui::Separator();
     ImGui::Text("Effects");
-    ImGui::SliderFloat("Understeer (Grip)", &engine.m_understeer_effect, 0.0f, 50.0f, "%.2f");
+    FloatSetting("Understeer (Grip)", &engine.m_understeer_effect, 0.0f, 50.0f);
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Strength of the force drop when grip is lost.\nValues > 1.0 exaggerate the effect.\nHigh values (10-50) create a 'Binary' drop for belt-driven wheels.");
-    ImGui::SliderFloat("SoP (Lateral G)", &engine.m_sop_effect, 0.0f, 2.0f, "%.2f");
-    ImGui::SliderFloat("SoP Yaw (Kick)", &engine.m_sop_yaw_gain, 0.0f, 2.0f, "%.2f");
+    FloatSetting("SoP (Lateral G)", &engine.m_sop_effect, 0.0f, 20.0f);
+    FloatSetting("SoP Yaw (Kick)", &engine.m_sop_yaw_gain, 0.0f, 20.0f);
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Injects Yaw Acceleration to provide a predictive kick when rotation starts.");
-    ImGui::SliderFloat("Gyroscopic Damping", &engine.m_gyro_gain, 0.0f, 1.0f, "%.2f");
+    FloatSetting("Gyroscopic Damping", &engine.m_gyro_gain, 0.0f, 1.0f);
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Stabilizes the wheel during drifts by opposing rapid steering movements.\nPrevents oscillations (tank slappers).");
-    ImGui::SliderFloat("Oversteer Boost", &engine.m_oversteer_boost, 0.0f, 1.0f, "%.2f");
-    ImGui::SliderFloat("Rear Align Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, "%.2f");
+    FloatSetting("Oversteer Boost", &engine.m_oversteer_boost, 0.0f, 20.0f);
+    FloatSetting("Rear Align Torque", &engine.m_rear_align_effect, 0.0f, 20.0f);
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Controls rear-end counter-steering feedback.\nProvides a distinct cue during oversteer without affecting base SoP.\nIncrease for stronger rear-end feel (0.0 = Off, 1.0 = Default, 2.0 = Max).");
 
 
     ImGui::Separator();
     ImGui::Text("Haptics (Dynamic)");
-    ImGui::Checkbox("Progressive Lockup", &engine.m_lockup_enabled);
+    BoolSetting("Progressive Lockup", &engine.m_lockup_enabled);
     if (engine.m_lockup_enabled) {
-        ImGui::SameLine(); ImGui::SliderFloat("##Lockup", &engine.m_lockup_gain, 0.0f, 1.0f, "Gain: %.2f");
+        ImGui::SameLine(); FloatSetting("##Lockup", &engine.m_lockup_gain, 0.0f, 1.0f, "Gain: %.2f");
     }
     
-    ImGui::Checkbox("Spin Traction Loss", &engine.m_spin_enabled);
+    BoolSetting("Spin Traction Loss", &engine.m_spin_enabled);
     if (engine.m_spin_enabled) {
-        ImGui::SameLine(); ImGui::SliderFloat("##Spin", &engine.m_spin_gain, 0.0f, 1.0f, "Gain: %.2f");
+        ImGui::SameLine(); FloatSetting("##Spin", &engine.m_spin_gain, 0.0f, 1.0f, "Gain: %.2f");
     }
     
     // v0.4.5: Manual Slip Calculation Toggle
-    ImGui::Checkbox("Use Manual Slip Calc", &engine.m_use_manual_slip);
+    BoolSetting("Use Manual Slip Calc", &engine.m_use_manual_slip);
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Calculates Slip Ratio from Wheel Speed vs Car Speed instead of game telemetry.\nUseful if game slip data is broken or zero.");
 
     ImGui::Separator();
     ImGui::Text("Textures");
-    ImGui::Checkbox("Slide Rumble", &engine.m_slide_texture_enabled);
+    BoolSetting("Slide Rumble", &engine.m_slide_texture_enabled);
     if (engine.m_slide_texture_enabled) {
         ImGui::Indent();
-        ImGui::SliderFloat("Slide Gain", &engine.m_slide_texture_gain, 0.0f, 2.0f);
+        FloatSetting("Slide Gain", &engine.m_slide_texture_gain, 0.0f, 2.0f);
         ImGui::Unindent();
     }
-    ImGui::Checkbox("Road Details", &engine.m_road_texture_enabled);
+    BoolSetting("Road Details", &engine.m_road_texture_enabled);
     if (engine.m_road_texture_enabled) {
         ImGui::Indent();
-        ImGui::SliderFloat("Road Gain", &engine.m_road_texture_gain, 0.0f, 5.0f);
+        FloatSetting("Road Gain", &engine.m_road_texture_gain, 0.0f, 5.0f);
         ImGui::Unindent();
     }
     
     // v0.4.5: Scrub Drag Effect
-    ImGui::SliderFloat("Scrub Drag Gain", &engine.m_scrub_drag_gain, 0.0f, 1.0f, "%.2f");
+    FloatSetting("Scrub Drag Gain", &engine.m_scrub_drag_gain, 0.0f, 1.0f);
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Adds resistance when sliding sideways (tire dragging).");
     
     // v0.4.5: Bottoming Method
     const char* bottoming_modes[] = { "Method A: Scraping", "Method B: Susp. Spike" };
-    ImGui::Combo("Bottoming Logic", &engine.m_bottoming_method, bottoming_modes, IM_ARRAYSIZE(bottoming_modes));
+    IntSetting("Bottoming Logic", &engine.m_bottoming_method, bottoming_modes, IM_ARRAYSIZE(bottoming_modes));
 
     ImGui::Separator();
     ImGui::Text("Output");
     
     // Invert Force (v0.4.4)
-    ImGui::Checkbox("Invert FFB Signal", &engine.m_invert_force); 
+    BoolSetting("Invert FFB Signal", &engine.m_invert_force); 
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Check this if the wheel pulls away from center instead of aligning.");
 
     // vJoy Monitoring (Safety critical)
     if (ImGui::Checkbox("Monitor FFB on vJoy (Axis X)", &Config::m_output_ffb_to_vjoy)) {
+        selected_preset = -1; // Mark as custom
         // Warn user if enabling
         if (Config::m_output_ffb_to_vjoy) {
             MessageBoxA(NULL, "WARNING: Enabling this will output the FFB signal to vJoy Axis X.\n\n"
@@ -428,6 +453,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         engine.m_scrub_drag_gain = 0.0f;
         engine.m_bottoming_method = 0;
         engine.m_use_manual_slip = false;
+        selected_preset = -1; // Mark as custom/reset
     }
     
     ImGui::Separator();

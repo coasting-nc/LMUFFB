@@ -16,26 +16,26 @@ void Config::LoadPresets() {
     presets.push_back(Preset("Default"));
     
     // 2. T300 (User Tuned)
-    // Tuned for Thrustmaster T300RS. 
-    // High Max Torque Ref (100Nm) + High Understeer (38.0) to overcome belt friction.
+    // Tuned for Thrustmaster T300RS with 100Nm Reference.
+    // Boosts effects by ~10x to compensate for the high reference.
     presets.push_back(Preset("T300")
         .SetGain(1.0f)
         .SetShaftGain(1.0f)
-        .SetMinForce(0.0f)       // As per screenshot
+        .SetMinForce(0.0f)
         .SetMaxTorque(100.0f)    // High ref to prevent clipping
-        .SetInvert(true)         // T300 needs inversion in this app
-        .SetUndersteer(38.0f)    // Aggressive drop to feel grip loss
-        .SetSoP(0.0f)            // Isolated for now
-        .SetOversteer(0.0f)
-        .SetRearAlign(0.0f)
-        .SetSoPYaw(0.0f)
+        .SetInvert(true)
+        .SetUndersteer(38.0f)    // Grip Drop
+        .SetSoP(5.0f)            // Lateral G (Weight)
+        .SetRearAlign(15.0f)     // Counter-Steer Torque (The "Pull")
+        .SetOversteer(2.0f)      // Boost when rear slips
+        .SetSoPYaw(5.0f)         // Kick on rotation start
         .SetGyro(0.0f)
         .SetLockup(false, 0.0f)
         .SetSpin(false, 0.0f)
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
-        .SetBaseMode(0)          // Native Physics
+        .SetBaseMode(0)
     );
     
     // 3. Test: Game Base FFB Only
