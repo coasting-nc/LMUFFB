@@ -160,6 +160,73 @@
     *   *The Cue:* The wheel should feel **thick**, **heavy**, or **viscous**. It resists your rapid movements.
     *   *Physics Check:* Turn the wheel *slowly*. It should feel lighter. Turn it *fast*. It should fight you. This velocity-dependent damping is what stabilizes the car.
 
+---
+
+---
+
+### 8. Corner Entry (Weight Transfer & Loading)
+
+**What is it?** The sensation of the steering wheel getting heavier as you brake and turn in, transferring the car's weight onto the front tires.
+**The Goal:** To confirm that the steering rack force (Base Force) accurately communicates the increased load on the front axle before the limit is reached.
+
+**UI Settings (Isolation):**
+*   **Master Gain:** `1.0`
+*   **Steering Shaft Gain:** `1.0`
+*   **Base Force Mode:** `Native` (Crucial: We need the game's physics alignment torque).
+*   **Understeer Effect:** `0.0` (Disable to feel the raw build-up).
+*   **SoP / Textures:** `0.0`
+
+**The Test:**
+1.  Drive at high speed on a straight.
+2.  Brake hard and turn in smoothly (Trail Braking).
+3.  **What to feel:**
+    *   *The Cue:* The steering weight should **increase** significantly as the nose dives and the car rotates. It should feel "planted" and heavy.
+    *   *Diagnosis:* If the wheel feels light or static during turn-in, the game's base physics might be numb.
+    *   *Fix:* If the game is numb, we currently rely on `SoP (Lateral G)` to add this weight artificially. Try increasing `SoP Effect`.
+
+---
+
+### 9. Mid-Corner Limit (The "Throb")
+
+**What is it?** A specific vibration texture that appears *exactly* when the front tires reach their peak slip angle, just before they start to slide/understeer.
+**The Goal:** To provide a tactile warning that you are at the limit of grip, allowing you to balance the car on the edge.
+
+**UI Settings (Isolation):**
+*   **Master Gain:** `1.0`
+*   **Slide Rumble:** **Checked**
+*   **Slide Gain:** `1.0`
+*   **Understeer Effect:** `0.5` (To feel the weight drop *after* the throb).
+
+**The Test:**
+1.  Take a long, constant-radius corner (e.g., a carousel).
+2.  Gradually increase steering angle until you hear the tires just starting to scrub.
+3.  **What to feel:**
+    *   *The Cue:* A distinct, rhythmic vibration ("Throb" or "Grinding") should start.
+    *   *The Sequence:* Grip (Silent) -> Limit (Throb/Vibration) -> Understeer (Lightness/Silence).
+    *   *Tuning:* If the vibration starts too late (after you are already sliding), lower the `Optimal Slip Angle` threshold in the code (currently fixed at 0.10 rad) or increase `Slide Gain`.
+
+---
+
+### 10. ABS Threshold (The "Rattle")
+
+**What is it?** A pulsing vibration that mimics the ABS pump releasing brake pressure when the wheel is about to lock.
+**The Goal:** To allow the driver to mash the brake pedal and feel exactly where the threshold is without looking at a HUD.
+
+**UI Settings (Isolation):**
+*   **Master Gain:** `1.0`
+*   **Progressive Lockup:** **Checked**
+*   **Lockup Gain:** `1.0`
+*   **Base Force Mode:** `Muted` (To isolate the vibration).
+
+**Car Setup:**
+*   **ABS:** **ON** (Set to a high intervention level).
+
+**The Test:**
+1.  Drive fast.
+2.  Stomp the brake pedal 100%.
+3.  **What to feel:**
+    *   *The Cue:* A rapid, mechanical rattling or pulsing vibration.
+    *   *Physics Check:* Since ABS prevents full lockup, the `Slip Ratio` will oscillate rapidly. The FFB should reflect this with a "Rattle" rather than a continuous "Screech."
 
 ---
 
