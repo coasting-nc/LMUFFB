@@ -40,6 +40,7 @@ void test_snapshot_data_integrity(); // Forward declaration
 void test_snapshot_data_v049(); // Forward declaration
 void test_rear_force_workaround(); // Forward declaration
 void test_rear_align_effect(); // Forward declaration
+void test_sop_yaw_kick_direction(); // Forward declaration  (v0.4.20)
 void test_zero_effects_leakage(); // Forward declaration
 void test_base_force_modes(); // Forward declaration
 void test_sop_yaw_kick(); // Forward declaration
@@ -200,12 +201,13 @@ void test_sop_yaw_kick() {
     
     double force = engine.calculate_force(&data);
     
-    // First frame should be ~0.025 (10% of steady-state due to LPF)
-    if (std::abs(force - 0.025) < 0.005) {
-        std::cout << "[PASS] Yaw Kick first frame smoothed correctly (" << force << " ≈ 0.025)." << std::endl;
+    // v0.4.20 UPDATE: With force inversion, first frame should be ~-0.025 (10% of steady-state due to LPF)
+    // The negative sign is correct - provides counter-steering cue
+    if (std::abs(force - (-0.025)) < 0.005) {
+        std::cout << "[PASS] Yaw Kick first frame smoothed correctly (" << force << " ≈ -0.025)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Yaw Kick first frame mismatch. Got " << force << " Expected ~0.025." << std::endl;
+        std::cout << "[FAIL] Yaw Kick first frame mismatch. Got " << force << " Expected ~-0.025." << std::endl;
         g_tests_failed++;
     }
 }
@@ -2042,27 +2044,28 @@ void test_yaw_accel_smoothing() {
     
     double force_frame1 = engine.calculate_force(&data);
     
-    // Without smoothing, this would be 10.0 * 1.0 * 5.0 / 20.0 = 2.5 (clamped to 1.0)
-    // With smoothing (alpha=0.1), first frame = 0.25
-    if (std::abs(force_frame1 - 0.25) < 0.01) {
-        std::cout << "[PASS] First frame smoothed to 10% of raw input (" << force_frame1 << " ~= 0.25)." << std::endl;
+    // v0.4.20 UPDATE: With force inversion, values are negative
+    // Without smoothing, this would be -10.0 * 1.0 * 5.0 / 20.0 = -2.5 (clamped to -1.0)
+    // With smoothing (alpha=0.1), first frame = -0.25
+    if (std::abs(force_frame1 - (-0.25)) < 0.01) {
+        std::cout << "[PASS] First frame smoothed to 10% of raw input (" << force_frame1 << " ~= -0.25)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] First frame smoothing incorrect. Got " << force_frame1 << " Expected ~0.25." << std::endl;
+        std::cout << "[FAIL] First frame smoothing incorrect. Got " << force_frame1 << " Expected ~-0.25." << std::endl;
         g_tests_failed++;
     }
     
-    // Test 2: Verify state accumulation (second frame)
-    // Smoothed (frame 2): 1.0 + 0.1 * (10.0 - 1.0) = 1.0 + 0.9 = 1.9
-    // Force: 1.9 * 1.0 * 5.0 = 9.5 Nm
-    // Normalized: 9.5 / 20.0 = 0.475
+    // v0.4.20 UPDATE: With force inversion, values are negative
+    // Smoothed (frame 2): -1.0 + 0.1 * (-10.0 - (-1.0)) = -1.0 + 0.1 * (-9.0) = -1.9
+    // Force: -1.9 * 1.0 * 5.0 = -9.5 Nm
+    // Normalized: -9.5 / 20.0 = -0.475
     double force_frame2 = engine.calculate_force(&data);
     
-    if (std::abs(force_frame2 - 0.475) < 0.02) {
-        std::cout << "[PASS] Second frame accumulated correctly (" << force_frame2 << " ~= 0.475)." << std::endl;
+    if (std::abs(force_frame2 - (-0.475)) < 0.02) {
+        std::cout << "[PASS] Second frame accumulated correctly (" << force_frame2 << " ~= -0.475)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Second frame accumulation incorrect. Got " << force_frame2 << " Expected ~0.475." << std::endl;
+        std::cout << "[FAIL] Second frame accumulation incorrect. Got " << force_frame2 << " Expected ~-0.475." << std::endl;
         g_tests_failed++;
     }
     
@@ -2145,15 +2148,17 @@ void test_yaw_accel_convergence() {
         force = engine.calculate_force(&data);
     }
     
-    // After 50 frames with alpha=0.1, should be very close to steady-state (0.25)
+    // v0.4.20 UPDATE: With force inversion, steady-state is negative
+    // Expected steady-state: -1.0 * 1.0 * 5.0 / 20.0 = -0.25
+    // After 50 frames with alpha=0.1, should be very close to steady-state (-0.25)
     // Formula: smoothed = target * (1 - (1-alpha)^n)
-    // After 50 frames: smoothed ~= 1.0 * (1 - 0.9^50) ~= 0.9948
-    // Force: 0.9948 * 1.0 * 5.0 / 20.0 ~= 0.2487
-    if (std::abs(force - 0.25) < 0.01) {
-        std::cout << "[PASS] Converged to steady-state after 50 frames (" << force << " ~= 0.25)." << std::endl;
+    // After 50 frames: smoothed ~= -1.0 * (1 - 0.9^50) ~= -0.9948
+    // Force: -0.9948 * 1.0 * 5.0 / 20.0 ~= -0.2487
+    if (std::abs(force - (-0.25)) < 0.01) {
+        std::cout << "[PASS] Converged to steady-state after 50 frames (" << force << " ~= -0.25)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Did not converge. Got " << force << " Expected ~0.25." << std::endl;
+        std::cout << "[FAIL] Did not converge. Got " << force << " Expected ~-0.25." << std::endl;
         g_tests_failed++;
     }
     
@@ -2164,10 +2169,11 @@ void test_yaw_accel_convergence() {
     // First frame after change
     double force_after_change = engine.calculate_force(&data);
     
+    // v0.4.20 UPDATE: With force inversion, decay is toward zero from negative
     // Smoothed should decay: prev_smoothed + 0.1 * (0.0 - prev_smoothed)
-    // If prev_smoothed ~= 0.9948, new = 0.9948 + 0.1 * (0.0 - 0.9948) = 0.8953
-    // Force: 0.8953 * 1.0 * 5.0 / 20.0 ~= 0.224
-    if (force_after_change < force && force_after_change > 0.2) {
+    // If prev_smoothed ~= -0.9948, new = -0.9948 + 0.1 * (0.0 - (-0.9948)) = -0.8953
+    // Force: -0.8953 * 1.0 * 5.0 / 20.0 ~= -0.224
+    if (force_after_change > force && force_after_change < -0.2) {
         std::cout << "[PASS] Smoothly decaying after step change (" << force_after_change << ")." << std::endl;
         g_tests_passed++;
     } else {
@@ -2319,6 +2325,7 @@ int main() {
     test_snapshot_data_v049();
     test_rear_force_workaround();
     test_rear_align_effect();
+    test_sop_yaw_kick_direction();
     test_zero_effects_leakage();
     test_base_force_modes();
     test_gyro_damping(); // v0.4.17
@@ -2885,6 +2892,32 @@ void test_rear_align_effect() {
     }
 }
 
+void test_sop_yaw_kick_direction() {
+    std::cout << "\nTest: SoP Yaw Kick Direction (v0.4.20)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    engine.m_sop_yaw_gain = 1.0f;
+    engine.m_gain = 1.0f;
+    engine.m_max_torque_ref = 20.0f;
+    
+    // Case: Car rotates Right (+Yaw Accel)
+    // This implies rear is sliding Left.
+    // We want Counter-Steer Left (Negative Torque).
+    data.mLocalRotAccel.y = 5.0; 
+    
+    double force = engine.calculate_force(&data);
+    
+    if (force < -0.05) { // Expect Negative (adjusted threshold for smoothed first-frame value)
+        std::cout << "[PASS] Yaw Kick provides counter-steer (Negative Force: " << force << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Yaw Kick direction wrong. Got: " << force << " Expected Negative." << std::endl;
+        g_tests_failed++;
+    }
+}
+
 void test_gyro_damping() {
     std::cout << "\nTest: Gyroscopic Damping (v0.4.17)" << std::endl;
     FFBEngine engine;
@@ -3176,7 +3209,7 @@ void test_coordinate_rear_torque_inversion() {
 }
 
 void test_coordinate_scrub_drag_direction() {
-    std::cout << "\nTest: Coordinate System - Scrub Drag Direction (v0.4.19)" << std::endl;
+    std::cout << "\nTest: Coordinate System - Scrub Drag Direction (v0.4.19/v0.4.20)" << std::endl;
     FFBEngine engine;
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -3205,41 +3238,36 @@ void test_coordinate_scrub_drag_direction() {
     
     // Test Case 1: Sliding LEFT
     // Game: +X = Left, so lateral velocity = +1.0 (left)
-    // Physics: Friction opposes motion, pushes RIGHT
-    // Expected: Positive force (right)
+    // v0.4.20 Fix: We want Torque LEFT (Negative) to stabilize the wheel.
+    // Previous logic (Push Right/Positive) was causing positive feedback.
     data.mWheel[0].mLateralPatchVel = 1.0; // Sliding left
     data.mWheel[1].mLateralPatchVel = 1.0;
     
     double force = engine.calculate_force(&data);
     
-    // Expected: drag_dir = 1.0 (right)
-    // Force = 1.0 * 1.0 * 5.0 * 1.0 = 5.0 Nm
-    // Normalized = 5.0 / 20.0 = 0.25
-    if (force > 0.2) {
-        std::cout << "[PASS] Scrub drag opposes left slide (pushes right, force: " << force << ")" << std::endl;
+    // Expected: Negative Force (Left Torque)
+    if (force < -0.2) {
+        std::cout << "[PASS] Scrub drag opposes left slide (Torque Left: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Scrub drag should push RIGHT. Got: " << force << " Expected > 0.2" << std::endl;
+        std::cout << "[FAIL] Scrub drag direction wrong. Got: " << force << " Expected < -0.2" << std::endl;
         g_tests_failed++;
     }
     
     // Test Case 2: Sliding RIGHT
     // Game: -X = Right, so lateral velocity = -1.0 (right)
-    // Physics: Friction opposes motion, pushes LEFT
-    // Expected: Negative force (left)
+    // v0.4.20 Fix: We want Torque RIGHT (Positive) to stabilize.
     data.mWheel[0].mLateralPatchVel = -1.0; // Sliding right
     data.mWheel[1].mLateralPatchVel = -1.0;
     
     force = engine.calculate_force(&data);
     
-    // Expected: drag_dir = -1.0 (left)
-    // Force = -1.0 * 1.0 * 5.0 * 1.0 = -5.0 Nm
-    // Normalized = -5.0 / 20.0 = -0.25
-    if (force < -0.2) {
-        std::cout << "[PASS] Scrub drag opposes right slide (pushes left, force: " << force << ")" << std::endl;
+    // Expected: Positive Force (Right Torque)
+    if (force > 0.2) {
+        std::cout << "[PASS] Scrub drag opposes right slide (Torque Right: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Scrub drag should push LEFT. Got: " << force << " Expected < -0.2" << std::endl;
+        std::cout << "[FAIL] Scrub drag direction wrong. Got: " << force << " Expected > 0.2" << std::endl;
         g_tests_failed++;
     }
 }
@@ -3459,12 +3487,13 @@ void test_regression_no_positive_feedback() {
             g_tests_failed++;
         }
         
-        // Scrub drag should be positive (opposes left slide)
-        if (snap.ffb_scrub_drag > 0.0) {
-            std::cout << "[PASS] Scrub drag is positive/opposes slide (" << snap.ffb_scrub_drag << ")" << std::endl;
+        // v0.4.20 FIX: Scrub drag should be NEGATIVE (provides counter-steering torque)
+        // When sliding left (+vel), we want left torque (-force) to resist the slide
+        if (snap.ffb_scrub_drag < 0.0) {
+            std::cout << "[PASS] Scrub drag provides counter-steering (" << snap.ffb_scrub_drag << ")" << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Scrub drag should be positive. Got: " << snap.ffb_scrub_drag << std::endl;
+            std::cout << "[FAIL] Scrub drag should be negative (counter-steering). Got: " << snap.ffb_scrub_drag << std::endl;
             g_tests_failed++;
         }
     }

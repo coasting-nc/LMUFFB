@@ -697,7 +697,9 @@ public:
         // Use SMOOTHED value for the kick
         // Scaled by 5.0 (Base multiplier) and User Gain
         // Added AFTER Oversteer Boost to provide a clean, independent cue.
-        double yaw_force = m_yaw_accel_smoothed * m_sop_yaw_gain * 5.0;
+        // v0.4.20 FIX: Invert to provide counter-steering torque
+        // Positive yaw accel (right rotation) → Negative force (left pull)
+        double yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * 5.0;
         sop_total += yaw_force;
         
         double total_force = output_force + sop_total;
@@ -850,10 +852,10 @@ public:
                 double abs_lat_vel = std::abs(avg_lat_vel);
                 if (abs_lat_vel > 0.001) { // Avoid noise
                     double fade = (std::min)(1.0, abs_lat_vel / 0.5);
-                    // v0.4.19: FIXED - Friction opposes motion
+                    // v0.4.20 FIX: Provide counter-steering (stabilizing) torque
                     // Game: +X = Left, DirectInput: +Force = Right
-                    // If sliding left (+vel), friction pushes right (+force)
-                    double drag_dir = (avg_lat_vel > 0.0) ? 1.0 : -1.0;
+                    // If sliding left (+vel), we want left torque (-force) to resist the slide
+                    double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
                     scrub_drag_force = drag_dir * m_scrub_drag_gain * 5.0 * fade; // Scaled & Faded
                     total_force += scrub_drag_force;
                 }

@@ -75,9 +75,10 @@ This injects lateral G-force and rear-axle aligning torque to simulate the car b
     **Note**: Scaling changed from 5.0 to 20.0 in v0.4.10 to provide stronger baseline Nm output.
 
 3.  **Yaw Acceleration (The Kick) - New v0.4.16, Smoothed v0.4.18**:
-    $$ F_{yaw} = \text{YawAccel}_{smoothed} \times K_{yaw} \times 5.0 $$
+    $$ F_{yaw} = -1.0 \times \text{YawAccel}_{smoothed} \times K_{yaw} \times 5.0 $$
     
     *   Injects `mLocalRotAccel.y` (Radians/sec²) to provide a predictive kick when rotation starts.
+    *   **v0.4.20 Fix:** Inverted calculation ($ -1.0 $) to provide counter-steering cue. Positive Yaw (Right rotation) now produces Negative Force (Left torque).
     *   **v0.4.18 Fix:** Applied Low Pass Filter (Exponential Moving Average, $\alpha = 0.1$) to prevent noise feedback loop with Slide Rumble.
         *   **Problem:** Slide Rumble vibrations caused yaw acceleration (a derivative) to spike with high-frequency noise, which Yaw Kick amplified, creating a positive feedback loop.
         *   **Solution:** $\text{YawAccel}_{smoothed} = \text{YawAccel}_{prev} + 0.1 \times (\text{YawAccel}_{raw} - \text{YawAccel}_{prev})$
@@ -146,6 +147,7 @@ High-pass filter on suspension movement.
     **Note**: Amplitude scaling changed from 25.0 to 50.0 in v0.4.11.
 *   **Scrub Drag (v0.4.5+):** Constant resistance force opposing lateral slide.
     *   **Force**: $F_{drag} = \text{DragDir} \times K_{drag} \times 5.0 \times \text{Fade}$
+    *   **DragDir (v0.4.20 Fix):** If $Vel_{lat} > 0$ (Sliding Left), $DragDir = -1.0$ (Force Left/Negative). Opposes the slide to provide stabilizing torque.
     *   **Note**: Multiplier changed from 2.0 to 5.0 in v0.4.11.
     *   **Fade In (v0.4.6):** Linearly scales from 0% to 100% between 0.0 and 0.5 m/s lateral velocity.
 

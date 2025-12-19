@@ -22,7 +22,17 @@ make
 
 **Note:** The root `CMakeLists.txt` is designed for Windows (MSVC). The `tests/CMakeLists.txt` is the one relevant for verification in this environment.
 
+### Git / Large Diff Issue
+*   **Issue:** `git status`, `git fetch`, or other commands may fail with "The diff size is unusually large" if the repository state is significantly different or if build artifacts are not ignored.
+*   **Workaround:** Rely on `read_file`, `overwrite_file`, and `replace_with_git_merge_diff` directly. Do not depend on bash commands for verification if this error occurs. Ensure `.gitignore` covers all build directories (e.g., `tests/build/`).
+
 ## 2. Critical Constraints & Math
+
+### Coordinate Systems (rFactor 2 vs DirectInput)
+*   **rFactor 2 / LMU:** Left-handed. +X = Left.
+*   **DirectInput:** +Force = Right.
+*   **Rule:** Lateral forces from the game (+X) must be INVERTED (negated) to produce the correct DirectInput force (Left).
+*   **Common Pitfall:** Using `abs()` on lateral velocity destroys directional information needed for counter-steering logic. Always preserve the sign until the final force calculation.
 
 ### Phase Accumulation (Anti-Glitch)
 To generate vibration effects (Lockup, Spin, Road Texture) without audio-like clicking or popping artifacts:
@@ -51,27 +61,19 @@ To avoid "aliasing" (square-wave look) in the GUI graphs:
 *   **Issue:** `ImGui::PlotLines` expects `int` for the count, but `std::vector::size()` returns `size_t`.
 *   **Fix:** Always cast the size: `(int)plot_data.size()`.
 
-## 4. Recent Architectural Changes (v0.3.x)
+## 4. Recent Architectural Changes (v0.3.x - v0.4.x)
+
+### v0.4.20: Coordinate System Stability
+*   **Lesson:** Fixed positive feedback loops in Scrub Drag and Yaw Kick by inverting their logic. Stability tests must verify DIRECTION (Negative/Positive) not just magnitude.
+
+### v0.4.19: Coordinate System Overhaul
+*   **Lesson:** Verified that rFactor 2 uses +X=Left. All lateral inputs (SoP, Rear Torque, Scrub Drag) must be inverted to produce negative (Left) force for DirectInput.
+
+### v0.4.18: Smoothing
+*   **Lesson:** Yaw Acceleration is noisy (derivative of velocity). Must be smoothed (LPF) before use in FFB to avoid feedback loops with vibration effects.
 
 ### v0.3.20: Documentation Discipline
 *   **Lesson:** Every submission **MUST** include updates to `VERSION` and `CHANGELOG.md`. This is now enforced in `AGENTS.md`.
-
-### v0.3.18: Decoupled Plotting
-*   Refactored `FFBEngine` to store debug snapshots in `m_debug_buffer`.
-*   Updated `GuiLayer` to consume batches, enabling "oscilloscope" style visualization.
-
-### v0.3.17: Thread Safety & vJoy Split
-*   **Mutex:** Added `std::lock_guard` in `GuiLayer::DrawDebugWindow` to prevent race conditions when reading shared engine state.
-*   **vJoy:** Split functionality into two toggles:
-    1.  `m_enable_vjoy`: Acquires/Relinquishes the device.
-    2.  `m_output_ffb_to_vjoy`: Writes FFB data to Axis X.
-    *   *Purpose:* Allows users to release the vJoy device so external feeders (Joystick Gremlin) can use it, while still keeping the app running.
-
-### v0.3.16: SoP Config
-*   Replaced hardcoded `1000.0` scaling for Seat of Pants effect with configurable `m_sop_scale` (exposed in GUI).
-
-### v0.3.14: Dynamic vJoy
-*   Implemented a state machine in `main.cpp` to dynamically acquire/release vJoy at runtime based on GUI checkboxes, without needing a restart.
 
 ## 5. Documentation Maintenance
 

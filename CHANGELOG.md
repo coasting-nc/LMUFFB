@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.20] - 2025-12-19
+### Fixed
+- **CRITICAL: Positive Feedback Loop in Scrub Drag and Yaw Kick**: Fixed two force direction inversions that were causing the wheel to pull in the direction of the turn/slide instead of resisting it, creating unstable positive feedback loops.
+    - **Scrub Drag**: Inverted force direction to provide counter-steering (stabilizing) torque. Previously, when sliding left, the force would push left (amplifying the slide). Now it pulls left (resisting the slide).
+        - **Fix**: Changed `drag_dir = (avg_lat_vel > 0.0) ? 1.0 : -1.0` to `drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0` in FFBEngine.h line 858.
+        - **Impact**: Lateral slides now feel properly damped with stabilizing counter-steering torque.
+    - **Yaw Kick**: Inverted force direction to provide predictive counter-steering cue. Previously, when rotating right, the force would pull right (amplifying rotation). Now it pulls left (counter-steering).
+        - **Fix**: Changed `yaw_force = m_yaw_accel_smoothed * m_sop_yaw_gain * 5.0` to `yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * 5.0` in FFBEngine.h line 702.
+        - **Impact**: Yaw acceleration now provides natural counter-steering cues that help stabilize the car during rotation.
+    - **Root Cause**: Both effects were not accounting for the coordinate system mismatch between rFactor 2/LMU (left-handed, +X = left) and DirectInput (+Force = right). The fixes ensure forces provide negative feedback (stability) instead of positive feedback (instability).
+
+### Added
+- **New Test**: `test_sop_yaw_kick_direction()` to verify that positive yaw acceleration produces negative FFB output (counter-steering).
+
+### Changed
+- **Updated Test**: `test_coordinate_scrub_drag_direction()` now verifies that the Scrub Drag force provides counter-steering torque (left slide → left pull) instead of the previous incorrect behavior (left slide → right push).
+
 ## [0.4.19] - 2025-12-16
 ### Fixed
 - **CRITICAL: Coordinate System Inversions**: Fixed three fundamental bugs caused by mismatched coordinate systems between rFactor 2/LMU (left-handed, +X = left) and DirectInput (standard, +X = right). These inversions caused FFB effects to fight the physics instead of helping, creating positive feedback loops and unstable behavior.

@@ -94,3 +94,4 @@ tests/build-tests/x64/Debug/ZERO_CHECK/ZERO_CHECK.tlog/ZERO_CHECK.lastbuildstate
 .specstory/.project.json
 .specstory/history/2025-12-06_08-39Z-please-fix-this-\[build]-main-cpp.md
 tmp/**
+tests/build/
