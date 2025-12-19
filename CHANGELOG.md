@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.25] - 2025-12-19
+### Added
+- **New Guide Presets**: Added isolation presets for advanced effects:
+    - **Guide: SoP Yaw (Kick)**: Isolates the yaw acceleration impulse (mutes base force).
+    - **Guide: Gyroscopic Damping**: Isolates the speed-dependent damping force (mutes base force).
+- **Documentation**: Updated `Driver's Guide to Testing LMUFFB.md` with test procedures for Yaw Kick and Gyro Damping.
+
 ## [0.4.24] - 2025-12-19
 ### Added
 - **Guide Presets**: Added 5 new built-in presets corresponding to the "Driver's Guide to Testing LMUFFB".

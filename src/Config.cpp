@@ -188,6 +188,40 @@ void Config::LoadPresets() {
         .SetBaseMode(2) // Muted
     );
 
+     // 15. Guide: SoP Yaw (Kick)
+    presets.push_back(Preset("Guide: SoP Yaw (Kick)")
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetOversteer(0.0f)
+        .SetRearAlign(0.0f)
+        .SetSoPYaw(2.0f) // Max gain to make the impulse obvious
+        .SetGyro(0.0f)
+        .SetLockup(false, 0.0f)
+        .SetSpin(false, 0.0f)
+        .SetSlide(false, 0.0f)
+        .SetRoad(false, 0.0f)
+        .SetScrub(0.0f)
+        .SetBaseMode(2) // Muted: Feel only the rotation impulse
+    );
+
+    // 16. Guide: Gyroscopic Damping
+    presets.push_back(Preset("Guide: Gyroscopic Damping")
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetOversteer(0.0f)
+        .SetRearAlign(0.0f)
+        .SetSoPYaw(0.0f)
+        .SetGyro(1.0f) // Max damping
+        .SetLockup(false, 0.0f)
+        .SetSpin(false, 0.0f)
+        .SetSlide(false, 0.0f)
+        .SetRoad(false, 0.0f)
+        .SetScrub(0.0f)
+        .SetBaseMode(2) // Muted: Feel only the resistance to movement
+    );
+
     // --- Parse User Presets from config.ini ---
     // (Keep the existing parsing logic below, it works fine for file I/O)
     std::ifstream file("config.ini");

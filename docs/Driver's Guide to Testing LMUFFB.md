@@ -118,6 +118,49 @@
     *   *The Cue:* The steering weight suddenly disappears (Torque Drop). It feels like the car is floating on ice.
     *   *The Vibe:* A high-pitched hum/whine that rises as the RPM/Wheel Speed rises.
 
+
+---
+
+### 6. SoP Yaw (The Kick)
+
+**What is it?** A predictive impulse based on **Yaw Acceleration** (how fast the car *starts* to rotate). Unlike Lateral G (which is a sustained weight), this is a momentary "kick" or "jolt".
+**The Goal:** To signal the exact moment the rear tires break traction, often before the visual slide is apparent.
+
+**UI Settings (Isolation):**
+*   **Preset:** `Guide: SoP Yaw (Kick)`
+*   **Master Gain:** `1.0`
+*   **SoP Yaw (Kick):** `2.0` (Max)
+*   **Base Force Mode:** `Muted` (Crucial to feel the isolated kick)
+
+**The Test:**
+1.  Drive at moderate speed (3rd gear) on a straight.
+2.  Perform a **Scandinavian Flick**: Turn sharply Left, then immediately whip the wheel Right to destabilize the rear.
+3.  **What to feel:**
+    *   *The Cue:* At the exact moment the car starts to rotate (yaw), you should feel a sharp **jolt** or **tug** in the steering wheel towards the counter-steer direction.
+    *   *Physics Check:* Drive in a steady circle (constant yaw rate). You should feel **nothing**. Now stomp the gas to spin. You should feel the **kick**. (Acceleration vs Velocity).
+
+---
+
+### 7. Gyroscopic Damping (Stability)
+
+**What is it?** A resistance force that opposes rapid steering movements. It simulates the gyroscopic inertia of the spinning front wheels.
+**The Goal:** To prevent "Tank Slappers" (oscillation) and give the steering a sensation of weight/viscosity that scales with speed.
+
+**UI Settings (Isolation):**
+*   **Preset:** `Guide: Gyroscopic Damping`
+*   **Master Gain:** `1.0`
+*   **Gyroscopic Damping:** `1.0` (Max)
+*   **Base Force Mode:** `Muted` (Crucial: The wheel will have no self-aligning torque, only resistance).
+
+**The Test:**
+1.  **Stationary Test:** Sit in the pits (0 km/h). Wiggle the wheel left and right.
+    *   *Result:* It should feel light/easy (No gyro effect).
+2.  **Speed Test:** Drive down the straight at **250 km/h**.
+3.  **The Wiggle:** Wiggle the wheel left and right quickly (small inputs).
+    *   *The Cue:* The wheel should feel **thick**, **heavy**, or **viscous**. It resists your rapid movements.
+    *   *Physics Check:* Turn the wheel *slowly*. It should feel lighter. Turn it *fast*. It should fight you. This velocity-dependent damping is what stabilizes the car.
+
+
 ---
 
 ### 🛠️ Troubleshooting Cheat Sheet
