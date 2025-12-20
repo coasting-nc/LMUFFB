@@ -3,7 +3,7 @@
 ### 🏁 Prerequisites
 
 **Car/Track Choice:**
-*   **Car:** **Porsche 911 GTE** is the best reference. The rear-engine layout acts like a pendulum, making oversteer very clear, while the light front end makes understeer distinct.
+*   **Car:** **Porsche 911 GT3/GTE** is the best reference. The rear-engine layout acts like a pendulum, making oversteer very clear, while the light front end makes understeer distinct.
 *   **Track:** **Paul Ricard** is ideal. It is perfectly flat (no elevation changes to confuse the FFB) and has massive asphalt run-off areas for safe spinning.
     *   *Tip:* Use the **"Mistral Straight"** for high-speed tests.
     *   *Tip:* Use the **last corner (Virage du Pont)** for low-speed traction tests.
