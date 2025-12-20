@@ -13,7 +13,7 @@ struct Preset {
     float gain = 1.0f;
     float understeer = 38.0f;
     float sop = 1.0f;
-    float sop_scale = 20.0f;
+    float sop_scale = 5.0f;
     float sop_smoothing = 0.05f;
     float min_force = 0.0f;
     float oversteer_boost = 1.0f;

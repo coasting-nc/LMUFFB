@@ -9,6 +9,12 @@ All notable changes to this project will be documented in this file.
     - **Preset Template**: Updated the `Preset` structure so that newly created user presets inherit T300 values instead of legacy defaults.
     - **Test & Guide Presets**: Updated all 15 built-in Test and Guide presets to use T300-standard intensities. For example, "Guide: Understeer" now uses 38.0 intensity to ensure the effect is clearly perceptible on all hardware.
     - **Renaming**: Renamed the primary preset to **"Default (T300)"**.
+- **Newtonian Force Rebalancing (SoP Scale)**: Adjusted SoP (Lateral G) scaling to resolve the "100 Nm scaling issue" and improve texture visibility.
+    - **Balanced Default**: Changed default `sop_scale` from 20.0 to **5.0**. This produces ~10Nm of force at 2G, which is a strong but reasonable overlay relative to the car's base steering weight (~20Nm).
+    - **Texture Protection**: Lowering the SoP scale allows users to lower their `Max Torque Ref` (e.g., to 30-40 Nm). This "zooms in" on micro-forces like Slide Rumble, making them much more perceptible on belt-driven wheels.
+    - **Slider Range Refinement**: Reduced the **SoP Scale** GUI slider maximum from 200.0 to **20.0**. The previous range was disproportionately large for the new Newtonian math.
+    - **Calibration Tooltip**: Added a tooltip to the SoP Scale slider explaining the math: *"5.0 = Balanced (10Nm at 2G), 20.0 = Heavy (40Nm at 2G)."*
+    - **Preset Synchronization**: Updated all built-in Test and Guide presets that use SoP to use the new 5.0 scale baseline.
 - **Enhanced Testing Guide**: Significantly expanded `docs\Driver's Guide to Testing LMUFFB.md` to help users verify FFB effects more effectively.
     - Added **"Extreme Car Setup"** recommendations for every test (e.g., maximum stiffness, specific brake bias, extreme tire pressures) to isolate and amplify specific physics behaviors.
     - Standardized terminology on the new **"Default (T300)"** baseline.

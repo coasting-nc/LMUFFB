@@ -365,7 +365,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Debug tool to isolate effects.\nNative: Raw physics.\nSynthetic: Constant force to tune Grip drop-off.\nMuted: Zero base force.");
 
         FloatSetting("SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, "%.2f (1=Raw)");
-        FloatSetting("SoP Scale", &engine.m_sop_scale, 0.0f, 200.0f, "%.1f");
+        FloatSetting("SoP Scale", &engine.m_sop_scale, 0.0f, 20.0f, "%.1f");
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Scales Lateral G to Nm.\n5.0 = Balanced (10Nm at 2G).\n20.0 = Heavy (40Nm at 2G).");
         FloatSetting("Load Cap", &engine.m_max_load_factor, 1.0f, 3.0f, "%.1fx");
         ImGui::TreePop();
     }
