@@ -18,6 +18,7 @@ This is an **experimental early alpha version** of a force feedback application.
 **BEFORE running LMU and lmuFFB**, open your wheelbase/steering wheel device driver configurator (e.g., Simucube TrueDrive, Fanatec Control Panel, Moza Pit House, etc.) and **Reduce the Maximum FFB Strength/Torque to a LOW value:**
    - **For Direct Drive Wheelbases**: Set to **10% or lower** of maximum torque
    - **For Belt/Gear-Driven Wheels**: Set to **20-30%** of maximum strength
+
 Increase gradualy the values while monitoring for unexpected behavior.
 
 ## 📥 Download
