@@ -11,12 +11,12 @@ struct Preset {
     
     // 1. Define Defaults inline (Matches "Default" preset logic)
     float gain = 1.0f;
-    float understeer = 38.0f;
-    float sop = 1.0f;
-    float sop_scale = 5.0f;
+    float understeer = 0.61f; // Calibrated from Image
+    float sop = 0.08f;        // Calibrated from Image
+    float sop_scale = 1.0f;   // Calibrated from Image
     float sop_smoothing = 0.05f;
     float min_force = 0.0f;
-    float oversteer_boost = 1.0f;
+    float oversteer_boost = 0.65f; // Calibrated from Image
     
     bool lockup_enabled = false;
     float lockup_gain = 0.5f;
@@ -24,23 +24,23 @@ struct Preset {
     bool spin_enabled = false;
     float spin_gain = 0.5f;
     
-    bool slide_enabled = false; // Default off (T300 standard)
-    float slide_gain = 0.5f;
+    bool slide_enabled = true; // Enabled in Image
+    float slide_gain = 0.39f;  // Calibrated from Image
     float slide_freq = 1.0f;    // NEW: Frequency Multiplier (v0.4.36)
     
     bool road_enabled = false;
     float road_gain = 0.5f;
     
     bool invert_force = true;
-    float max_torque_ref = 100.0f;
+    float max_torque_ref = 98.3f; // Calibrated from Image
     
     bool use_manual_slip = false;
     int bottoming_method = 0;
     float scrub_drag_gain = 0.0f;
     
-    float rear_align_effect = 5.0f;
-    float sop_yaw_gain = 5.0f; // New v0.4.15
-    float gyro_gain = 0.0f; // New v0.4.17
+    float rear_align_effect = 0.90f; // Calibrated from Image
+    float sop_yaw_gain = 0.0f;       // Calibrated from Image
+    float gyro_gain = 0.0f;
     
     float steering_shaft_gain = 1.0f;
     int base_force_mode = 0; // 0=Native

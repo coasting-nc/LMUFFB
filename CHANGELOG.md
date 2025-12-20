@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.37] - 2025-12-20
+### Changed
+- **Calibrated Default Presets**: Updated the "Default (T300)" and internal defaults to match the latest calibrated values for belt-driven wheels.
+    - **SoP Scale**: Reduced from 5.0 to **1.0**.
+    - **Understeer Gain**: Adjusted to **0.61**.
+    - **SoP Gain**: Adjusted to **0.08**.
+    - **Oversteer Boost**: Adjusted to **0.65**.
+    - **Rear Align Torque**: Adjusted to **0.90**.
+    - **Slide Texture**: Now **Enabled by default** with Gain **0.39**.
+    - **Max Torque Ref**: Adjusted to **98.3 Nm**.
+
 ## [0.4.36] - 2025-12-20
 ### Added
 - **Slide Rumble Frequency Slider**: Added a "Slide Pitch (Freq)" slider to the GUI to allow manual customization of the vibration frequency.

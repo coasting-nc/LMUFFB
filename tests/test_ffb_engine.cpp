@@ -1417,7 +1417,7 @@ static void test_presets() {
     // Verify
     // Update expectation: Test: SoP Only uses default 1.0f Gain in Config.cpp (not 0.5f)
     bool gain_ok = (engine.m_gain == 1.0f);
-    bool sop_ok = (engine.m_sop_effect == 1.0f);
+    bool sop_ok = (std::abs(engine.m_sop_effect - 0.08f) < 0.001f);
     bool under_ok = (engine.m_understeer_effect == 0.0f);
     
     if (gain_ok && sop_ok && under_ok) {
