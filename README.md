@@ -122,7 +122,7 @@ Impact:
 ### Upcoming Features
 
 * Wet Weather Haptics (Hydro-Grain): vibration cues telling when the tires are on dry or wet surface, and if there is grip or not 
-* Simulate a drying racing line (e.g., left tires on dry, right tires on wet) with per wheel  Hydro-Grain
+* Per wheel Hydro-Grain to give information about a drying racing line (e.g., left tires on dry, right tires on wet)  
 * Adaptive Optimal Slip Angle
 * "ABS Rattle" (Pulsing)
 * Longitudinal Dynamic Weight Transfer:  feeling of the car getting heavy under braking and light under acceleration.
