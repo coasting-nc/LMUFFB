@@ -101,6 +101,7 @@ static void test_base_force_modes() {
     engine.m_max_torque_ref = 20.0f; // Reference for normalization
     engine.m_gain = 1.0f; // Master gain
     engine.m_steering_shaft_gain = 0.5f; // Test gain application
+    engine.m_invert_force = false;
     
     // Inputs
     data.mSteeringShaftTorque = 10.0; // Input Torque
@@ -184,6 +185,7 @@ static void test_sop_yaw_kick() {
     engine.m_bottoming_enabled = false;
     engine.m_scrub_drag_gain = 0.0f;
     engine.m_rear_align_effect = 0.0f;
+    engine.m_invert_force = false;
     
     // v0.4.18 UPDATE: With Low Pass Filter (alpha=0.1), the yaw acceleration
     // is smoothed over multiple frames. On the first frame with raw input = 1.0,
@@ -266,6 +268,7 @@ static void test_road_texture_teleport() {
     engine.m_road_texture_gain = 1.0;
     engine.m_max_torque_ref = 40.0f;
     engine.m_gain = 1.0; // Ensure gain is 1.0
+    engine.m_invert_force = false;
     
     // Frame 1: 0.0
     data.mWheel[0].mVerticalTireDeflection = 0.0;
@@ -310,6 +313,7 @@ static void test_grip_low_speed() {
     engine.m_bottoming_enabled = false;
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = false;
+    engine.m_invert_force = false;
 
     // Setup for Approximation
     data.mWheel[0].mGripFract = 0.0; // Missing
@@ -381,10 +385,12 @@ static void test_grip_modulation() {
     
     // Default RH to avoid scraping
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    data.mLocalVel.z = 20.0; // Ensure moving to avoid low-speed cutoffs
 
     // Set Gain to 1.0 for testing logic (default is now 0.5)
     engine.m_gain = 1.0; 
     engine.m_max_torque_ref = 20.0f; // Fix Reference for Test (v0.4.4)
+    engine.m_invert_force = false;
 
     // NOTE: Max torque reference changed to 20.0 Nm.
     data.mSteeringShaftTorque = 10.0; // Half of max ~20.0
@@ -398,6 +404,8 @@ static void test_grip_modulation() {
     data.mWheel[1].mGripFract = 1.0;
     // v0.4.5: Ensure RH > 0.002 to avoid scraping
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    // v0.4.30: Default is 38.0, but test expects 1.0 attenuation logic
+    engine.m_understeer_effect = 1.0;
     
     double force_full = engine.calculate_force(&data);
     ASSERT_NEAR(force_full, 0.5, 0.001);
@@ -436,6 +444,7 @@ static void test_sop_effect() {
     // Norm = 2.5 / 20.0 = 0.125
     
     engine.m_sop_scale = 10.0; 
+    engine.m_invert_force = false; // Ensure non-inverted for physics check 
     
     // Run for multiple frames to let smoothing settle (alpha=0.1)
     double force = 0.0;
@@ -470,6 +479,7 @@ static void test_min_force() {
     data.mSteeringShaftTorque = 0.05; 
     engine.m_min_force = 0.10; // 10% min force
     engine.m_max_torque_ref = 20.0f; // Fix Reference for Test (v0.4.4)
+    engine.m_invert_force = false;
 
     double force = engine.calculate_force(&data);
     // 0.0025 is > 0.0001 (deadzone check) but < 0.10.
@@ -603,6 +613,7 @@ static void test_dynamic_tuning() {
     // Explicitly set gain 1.0 for this baseline
     engine.m_gain = 1.0;
     engine.m_max_torque_ref = 20.0f; // Fix Reference for Test (v0.4.4)
+    engine.m_invert_force = false;
 
     double force_initial = engine.calculate_force(&data);
     // Should pass through 10.0 (normalized: 0.5)
@@ -704,6 +715,7 @@ static void test_oversteer_boost() {
     // Disable smoothing to verify math instantly (v0.4.2 fix)
     engine.m_sop_smoothing_factor = 1.0; 
     engine.m_max_torque_ref = 20.0f; // Fix Reference for Test (v0.4.4)
+    engine.m_invert_force = false;
     
     // Scenario: Front has grip, rear is sliding
     data.mWheel[0].mGripFract = 1.0; // FL
@@ -1098,6 +1110,7 @@ static void test_sanity_checks() {
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
     // Set Ref to 20.0 for legacy test expectations
     engine.m_max_torque_ref = 20.0f;
+    engine.m_invert_force = false;
 
     // 1. Test Missing Load Correction
     // Condition: Load = 0 but Moving
@@ -1523,6 +1536,7 @@ static void test_smoothing_step_response() {
     engine.m_sop_scale = 1.0;  // Using 1.0 for this test
     engine.m_sop_effect = 1.0;
     engine.m_max_torque_ref = 20.0f;
+    engine.m_invert_force = false;
     
     // v0.4.30 UPDATE: SoP Inversion Removed.
     // Game: +X = Left. +9.81 = Left Accel.
@@ -1701,7 +1715,7 @@ static void test_preset_initialization() {
     
     // Test all 9 built-in presets (Added T300)
     const char* preset_names[] = {
-        "Default",
+        "Default (T300)",
         "T300", // New v0.4.30
         "Test: Game Base FFB Only",
         "Test: SoP Only",
@@ -1883,6 +1897,7 @@ static void test_regression_rear_torque_lpf() {
     engine.m_sop_effect = 0.0; // Isolate rear torque
     engine.m_oversteer_boost = 0.0;
     engine.m_max_torque_ref = 20.0f;
+    engine.m_invert_force = false;
     engine.m_gain = 1.0f; // Explicit gain for clarity
     
     // Setup: Car is sliding sideways (5 m/s) but has Grip (1.0)
@@ -2021,6 +2036,7 @@ static void test_yaw_accel_smoothing() {
     engine.m_scrub_drag_gain = 0.0f;
     engine.m_rear_align_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
+    engine.m_invert_force = false;
     
     data.mWheel[0].mRideHeight = 0.1;
     data.mWheel[1].mRideHeight = 0.1;
@@ -2115,6 +2131,7 @@ static void test_yaw_accel_convergence() {
     engine.m_sop_effect = 0.0f;
     engine.m_max_torque_ref = 20.0f;
     engine.m_gain = 1.0f;
+    engine.m_invert_force = false;
     engine.m_understeer_effect = 0.0f;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
@@ -2661,6 +2678,8 @@ static void test_rear_force_workaround() {
     engine.m_oversteer_boost = 1.0;   // Enable oversteer boost (multiplies rear torque)
     engine.m_gain = 1.0;              // Full gain
     engine.m_sop_scale = 10.0;        // Moderate SoP scaling
+    engine.m_rear_align_effect = 1.0f; // Fix effect gain for test calculation (Default is now 5.0)
+    engine.m_invert_force = false;    // Ensure non-inverted for formula check
     
     // ========================================
     // Front Wheel Setup (Baseline)
@@ -2893,6 +2912,8 @@ static void test_sop_yaw_kick_direction() {
     engine.m_sop_yaw_gain = 1.0f;
     engine.m_gain = 1.0f;
     engine.m_max_torque_ref = 20.0f;
+    engine.m_invert_force = false;
+    engine.m_invert_force = false;
     
     // Case: Car rotates Right (+Yaw Accel)
     // This implies rear is sliding Left.
@@ -3060,6 +3081,7 @@ static void test_coordinate_sop_inversion() {
     engine.m_spin_enabled = false;
     engine.m_sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
+    engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
     data.mWheel[0].mRideHeight = 0.1;
@@ -3131,6 +3153,7 @@ static void test_coordinate_rear_torque_inversion() {
     engine.m_spin_enabled = false;
     engine.m_sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
+    engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
     data.mWheel[0].mRideHeight = 0.1;
@@ -3220,6 +3243,7 @@ static void test_coordinate_scrub_drag_direction() {
     engine.m_spin_enabled = false;
     engine.m_sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
+    engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
     data.mWheel[0].mRideHeight = 0.1;
@@ -3402,6 +3426,7 @@ static void test_regression_no_positive_feedback() {
     engine.m_spin_enabled = false;
     engine.m_sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
+    engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
     data.mWheel[0].mRideHeight = 0.1;
@@ -3499,6 +3524,7 @@ static void test_coordinate_all_effects_alignment() {
     engine.m_rear_align_effect = 1.0f;   // Rear Slip
     engine.m_sop_yaw_gain = 1.0f;        // Yaw Accel
     engine.m_scrub_drag_gain = 1.0f;     // Front Slip
+    engine.m_invert_force = false;
     
     // Disable others to isolate lateral logic
     engine.m_understeer_effect = 0.0f;

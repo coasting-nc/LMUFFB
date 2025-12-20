@@ -3,15 +3,15 @@
 ### 🏁 Prerequisites
 
 **Car/Track Choice:**
-*   **Car:** **Porsche 911 GTE/GT3** is excellent. Because the engine is in the back, the front is light (easy to understeer) and the rear acts like a pendulum (clear oversteer).
-*   **Track:** **Paul Ricard** is perfect because it is flat (no elevation changes to confuse you) and has massive run-off areas so you can spin safely.
-    *   *Tip:* Use the **"Mistral Straight"** (the long one) for high-speed tests.
+*   **Car:** **Porsche 911 GTE** is the best reference. The rear-engine layout acts like a pendulum, making oversteer very clear, while the light front end makes understeer distinct.
+*   **Track:** **Paul Ricard** is ideal. It is perfectly flat (no elevation changes to confuse the FFB) and has massive asphalt run-off areas for safe spinning.
+    *   *Tip:* Use the **"Mistral Straight"** for high-speed tests.
     *   *Tip:* Use the **last corner (Virage du Pont)** for low-speed traction tests.
 
 **Global Setup:**
 1.  **In-Game (LMU):** FFB Strength 0%, Smoothing 0.
 2.  **Wheel Driver:** Set your physical wheel strength to **20-30%** (Safety first!).
-3.  **LMUFFB:** Start with the **"Default"** preset, then modify as instructed below.
+3.  **LMUFFB:** Start with the **"Default (T300)"** preset, then modify as instructed below.
 
 ---
 
@@ -23,9 +23,12 @@
 **Quick Setup (Preset):**
 *   Load Preset: **"Guide: Understeer (Front Grip)"**
 
-**Car Setup:**
-*   **Brake Bias:** Move forward (e.g., 60%) to overload front tires.
-*   **Front ARB (Anti-Roll Bar):** Stiff (Max).
+**Extreme Car Setup:**
+*   **Brake Bias:** **Max Forward (e.g., 70-80%)**. This ensures the front tires lock or overload immediately when you touch the brakes.
+*   **Front Springs & ARB:** **Maximum Stiffness**. This reduces mechanical grip at the front.
+*   **Rear Springs & ARB:** **Minimum Stiffness (Soft)**. This glues the rear to the road, forcing the car to push (plow) straight.
+*   **Front Tire Pressure:** **Maximum**. Reduces the contact patch size.
+*   **Rear Wing:** **Maximum**. Keeps the rear planted.
 
 **The Test:**
 1.  Drive at moderate speed (100 km/h).
@@ -46,14 +49,18 @@
 **Quick Setup (Preset):**
 *   Load Preset: **"Guide: Oversteer (Rear Grip)"**
 
-**Car Setup:**
+**Extreme Car Setup:**
 *   **Traction Control (TC):** **OFF** (Crucial).
-*   **Rear ARB:** Stiff.
+*   **Rear Springs & ARB:** **Maximum Stiffness**. This drastically reduces rear grip.
+*   **Front Springs & ARB:** **Minimum Stiffness (Soft)**. This gives the front endless grip, ensuring the rear breaks first.
+*   **Rear Ride Height:** **Maximum**. Raises the Center of Gravity, making the car unstable.
+*   **Rear Wing:** **Minimum (P1)**. Removes aerodynamic grip.
+*   **Differential Preload:** **Maximum**. Makes the rear wheels lock together, causing them to break traction easily in tight turns.
 
 **The Test:**
 1.  Take a slow 2nd gear corner.
 2.  Mid-corner, **mash the throttle 100%**.
-3.  The rear will kick out.
+3.  The rear will kick out immediately.
 4.  **What to feel:**
     *   *The Cue:* The steering wheel violently snaps in the **opposite direction** of the turn. If you are turning Left, the wheel rips to the Right.
     *   *Correct Behavior:* If you let go of the wheel, it should spin to align with the road (self-correcting).
@@ -68,6 +75,12 @@
 
 **Quick Setup (Preset):**
 *   Load Preset: **"Guide: Slide Texture (Scrub)"**
+
+**Extreme Car Setup:**
+*   **Traction Control (TC):** **OFF**.
+*   **Tire Pressures:** **Maximum** (Highest allowed). Hard, inflated tires slide easier and transmit vibration more sharply than soft tires.
+*   **Differential Preload:** **Maximum**. A locked differential forces the tires to scrub and drag sideways during tight turns.
+*   **Suspension:** **Stiffest (Max)** on both Front and Rear to reduce mechanical grip and induce sliding immediately.
 
 **The Test:**
 1.  Go to a wide runoff area.
@@ -88,8 +101,10 @@
 **Quick Setup (Preset):**
 *   Load Preset: **"Guide: Braking Lockup"**
 
-**Car Setup:**
+**Extreme Car Setup:**
 *   **ABS:** **OFF** (Crucial).
+*   **Brake Bias:** **Extreme Forward (e.g., 75-80%)**. This guarantees the front wheels lock up long before the rears, making the test predictable.
+*   **Front Tire Pressure:** **Maximum**. Less grip means easier locking.
 
 **The Test:**
 1.  Drive fast (200 km/h) down the Mistral Straight.
@@ -108,8 +123,11 @@
 **Quick Setup (Preset):**
 *   Load Preset: **"Guide: Traction Loss (Spin)"**
 
-**Car Setup:**
+**Extreme Car Setup:**
 *   **TC:** **OFF**.
+*   **Rear Tire Pressure:** **Maximum**. Turns the tires into hard plastic, making wheelspin effortless.
+*   **Rear Springs:** **Maximum Stiffness**.
+*   **Differential Preload:** **Maximum**. Ensures both rear wheels spin up together instantly.
 
 **The Test:**
 1.  Stop the car. Put it in 1st gear.
@@ -118,19 +136,21 @@
     *   *The Cue:* The steering weight suddenly disappears (Torque Drop). It feels like the car is floating on ice.
     *   *The Vibe:* A high-pitched hum/whine that rises as the RPM/Wheel Speed rises.
 
-
 ---
 
 ### 6. SoP Yaw (The Kick)
 
 **What is it?** A predictive impulse based on **Yaw Acceleration** (how fast the car *starts* to rotate). Unlike Lateral G (which is a sustained weight), this is a momentary "kick" or "jolt".
-**The Goal:** To signal the exact moment the rear tires break traction, often before the visual slide is apparent.
+**The Goal:** To signal the exact moment the rear tires break traction.
 
-**UI Settings (Isolation):**
-*   **Preset:** `Guide: SoP Yaw (Kick)`
-*   **Master Gain:** `1.0`
-*   **SoP Yaw (Kick):** `2.0` (Max)
-*   **Base Force Mode:** `Muted` (Crucial to feel the isolated kick)
+**Quick Setup (Preset):**
+*   Load Preset: **"Guide: SoP Yaw (Kick)"**
+
+**Extreme Car Setup:**
+*   **TC:** **OFF**.
+*   **Brake Bias:** **Extreme Rearward (e.g., 40%)**. This makes the car incredibly unstable under braking.
+*   **Rear Ride Height:** **Maximum**. Makes the car "tippy" and prone to snapping.
+*   **Front Springs:** **Soft**. Allows the nose to dive, lightening the rear further.
 
 **The Test:**
 1.  Drive at moderate speed (3rd gear) on a straight.
@@ -146,11 +166,12 @@
 **What is it?** A resistance force that opposes rapid steering movements. It simulates the gyroscopic inertia of the spinning front wheels.
 **The Goal:** To prevent "Tank Slappers" (oscillation) and give the steering a sensation of weight/viscosity that scales with speed.
 
-**UI Settings (Isolation):**
-*   **Preset:** `Guide: Gyroscopic Damping`
-*   **Master Gain:** `1.0`
-*   **Gyroscopic Damping:** `1.0` (Max)
-*   **Base Force Mode:** `Muted` (Crucial: The wheel will have no self-aligning torque, only resistance).
+**Quick Setup (Preset):**
+*   Load Preset: **"Guide: Gyroscopic Damping"**
+
+**Extreme Car Setup:**
+*   **Aero:** **Minimum (Low Drag)**. To achieve the highest possible top speed on the straight.
+*   **Caster:** **Maximum**. High caster creates strong self-aligning torque, which makes the need for damping more obvious to prevent oscillation.
 
 **The Test:**
 1.  **Stationary Test:** Sit in the pits (0 km/h). Wiggle the wheel left and right.
@@ -165,14 +186,19 @@
 ### 8. Corner Entry (Weight Transfer & Loading)
 
 **What is it?** The sensation of the steering wheel getting heavier as you brake and turn in, transferring the car's weight onto the front tires.
-**The Goal:** To confirm that the steering rack force (Base Force) accurately communicates the increased load on the front axle before the limit is reached.
+**The Goal:** To confirm that the steering rack force (Base Force) accurately communicates the increased load on the front axle.
 
 **UI Settings (Isolation):**
 *   **Master Gain:** `1.0`
 *   **Steering Shaft Gain:** `1.0`
-*   **Base Force Mode:** `Native` (Crucial: We need the game's physics alignment torque).
-*   **Understeer Effect:** `0.0` (Disable to feel the raw build-up).
+*   **Base Force Mode:** `Native`
+*   **Understeer Effect:** `0.0`
 *   **SoP / Textures:** `0.0`
+
+**Extreme Car Setup:**
+*   **Front Springs:** **Minimum Stiffness (Soft)**. Allows the nose to dive significantly under braking.
+*   **Front Bump Dampers:** **Soft**. Allows fast weight transfer.
+*   **Brake Bias:** **Forward**.
 
 **The Test:**
 1.  Drive at high speed on a straight.
@@ -187,13 +213,17 @@
 ### 9. Mid-Corner Limit (The "Throb")
 
 **What is it?** A specific vibration texture that appears *exactly* when the front tires reach their peak slip angle, just before they start to slide/understeer.
-**The Goal:** To provide a tactile warning that you are at the limit of grip, allowing you to balance the car on the edge.
+**The Goal:** To provide a tactile warning that you are at the limit of grip, allowing you to balance the car on the edge..
 
 **UI Settings (Isolation):**
 *   **Master Gain:** `1.0`
 *   **Slide Rumble:** **Checked**
 *   **Slide Gain:** `1.0`
-*   **Understeer Effect:** `0.5` (To feel the weight drop *after* the throb).
+*   **Understeer Effect:** `0.5`
+
+**Extreme Car Setup:**
+*   **Tire Pressures:** **High**. Makes the tire limit sharper and less forgiving.
+*   **Aero:** **High**. Allows you to sustain high cornering speeds to hold the slip angle.
 
 **The Test:**
 1.  Take a long, constant-radius corner (e.g., a carousel).
@@ -210,14 +240,13 @@
 **What is it?** A pulsing vibration that mimics the ABS pump releasing brake pressure when the wheel is about to lock.
 **The Goal:** To allow the driver to mash the brake pedal and feel exactly where the threshold is without looking at a HUD.
 
-**UI Settings (Isolation):**
-*   **Master Gain:** `1.0`
-*   **Progressive Lockup:** **Checked**
-*   **Lockup Gain:** `1.0`
-*   **Base Force Mode:** `Muted` (To isolate the vibration).
+**Quick Setup (Preset):**
+*   Load Preset: **"Guide: Braking Lockup"** (Note: This preset usually isolates lockup, but for this test, we want to feel the ABS pulse).
 
-**Car Setup:**
-*   **ABS:** **ON** (Set to a high intervention level).
+**Extreme Car Setup:**
+*   **ABS:** **ON (Set to High / Max Intervention)**.
+*   **Brake Pressure:** **100%**.
+*   **Tire Pressures:** **Maximum**. Low grip ensures ABS triggers instantly.
 
 **The Test:**
 1.  Drive fast.
@@ -225,7 +254,7 @@
 3.  **What to feel:**
     *   *The Cue:* A rapid, mechanical rattling or pulsing vibration.
     *   *Physics Check:* Since ABS prevents full lockup, the `Slip Ratio` will oscillate rapidly. The FFB should reflect this with a "Rattle" rather than a continuous "Screech."
-
+    
 ---
 
 ### Effects currently missing in lmuFFB v0.4.25

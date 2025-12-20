@@ -1026,6 +1026,12 @@ make plots more compacts after adding min, max and current in the title. Conside
 
 ## Troubleshooting 23
 
+presets, set defaults and startup as T300
+also base the guide and test presets on T300 (for the non zero values)
+
+updates guides with car setup for oversteer
+
+
 reviee this video: https://www.youtube.com/watch?v=XHSEAMQgN2c
 do the same tests in LMUFFB
 see if we have all the effects discussed in the video

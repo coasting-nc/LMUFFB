@@ -2,14 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.4.31] - 2025-12-20
+## [0.4.32] - 2025-12-20
 ### Changed
-- **Default Preset Update**: The "Default" preset now uses the tuned "T300" settings by default.
-    - **Max Torque Ref**: 100 Nm (High dynamic range)
-    - **Invert FFB**: Enabled (Required for T300)
-    - **Understeer Effect**: 38.0
+- **System-Wide T300 Standardization**: The "T300" tuning is now the project-wide baseline for all force-related defaults.
+    - **Startup Defaults**: Updated the FFB engine to initialize with T300 values (Gain=1.0, Understeer=38.0, MaxTorque=100Nm) so the app is optimized for belt-driven wheels on the very first run.
+    - **Preset Template**: Updated the `Preset` structure so that newly created user presets inherit T300 values instead of legacy defaults.
+    - **Test & Guide Presets**: Updated all 15 built-in Test and Guide presets to use T300-standard intensities. For example, "Guide: Understeer" now uses 38.0 intensity to ensure the effect is clearly perceptible on all hardware.
+    - **Renaming**: Renamed the primary preset to **"Default (T300)"**.
+- **Enhanced Testing Guide**: Significantly expanded `docs\Driver's Guide to Testing LMUFFB.md` to help users verify FFB effects more effectively.
+    - Added **"Extreme Car Setup"** recommendations for every test (e.g., maximum stiffness, specific brake bias, extreme tire pressures) to isolate and amplify specific physics behaviors.
+    - Standardized terminology on the new **"Default (T300)"** baseline.
+    - Recommended the **Porsche 911 GTE** at **Paul Ricard** as the primary reference car/track combination for testing.
+    - Improved instructions for ABS, Traction Loss, and SoP Yaw tests with car-setup-specific advice.
+
 ### Fixed
-- **SoP (Lateral G) Direction Inversion**: Fixed SoP effect pulling in the wrong direction during turns, ensuring correct aligning torque behavior.
+- **Reset Defaults Synchronization**: Refactored the "Reset Defaults" button in the GUI. It now correctly applies the modern "Default (T300)" preset instead of using legacy hardcoded values from v0.3.13. This fixes the issue where clicking Reset would erroneously set Understeer to 1.0.
+- **Unit Test Suite Synchronization**: Updated `tests\test_ffb_engine.cpp` to align with the new T300 default configurations.
+    - Updated `test_preset_initialization` to expect the renamed "Default (T300)" preset.
+    - Added explicit `engine.m_invert_force = false` to all coordinate system regression tests to ensure physics validation is independent of application-level inversion defaults.
+    - Adjusted `test_grip_modulation` and `test_rear_force_workaround` logic to account for updated default intensities, ensuring no false-positive test failures.
+    - Verified all 123 tests pass with the new default state.
+
+## [0.4.31] - 2025-12-20
 
 ## [0.4.30] - 2025-12-20
 ### Fixed

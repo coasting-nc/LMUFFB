@@ -454,26 +454,9 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     }
     ImGui::SameLine();
     if (ImGui::Button("Reset Defaults")) {
-        // Reset Logic (Updated v0.3.13)
-        engine.m_gain = 0.5f;
-        engine.m_understeer_effect = 1.0f;
-        engine.m_sop_effect = 0.15f;
-        engine.m_min_force = 0.0f;
-        engine.m_sop_smoothing_factor = 0.05f;
-        engine.m_max_load_factor = 1.5f;
-        engine.m_oversteer_boost = 0.0f;
-        engine.m_lockup_enabled = false;
-        engine.m_lockup_gain = 0.5f;
-        engine.m_spin_enabled = false;
-        engine.m_spin_gain = 0.5f;
-        engine.m_slide_texture_enabled = true;
-        engine.m_slide_texture_gain = 0.5f;
-        engine.m_road_texture_enabled = false;
-        engine.m_road_texture_gain = 0.5f;
-        engine.m_scrub_drag_gain = 0.0f;
-        engine.m_bottoming_method = 0;
-        engine.m_use_manual_slip = false;
-        selected_preset = -1; // Mark as custom/reset
+        // Apply the 'Default' preset (index 0) which uses modern values from Config.h
+        Config::ApplyPreset(0, engine);
+        selected_preset = 0; // Select it in the dropdown
     }
     
     ImGui::Separator();

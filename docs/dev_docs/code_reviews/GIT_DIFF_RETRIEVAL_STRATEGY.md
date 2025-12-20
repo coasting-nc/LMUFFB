@@ -6,6 +6,8 @@ You can read the prompt with the instructions that were given to the coding agen
 
 Save a detailed code review report in the `docs\dev_docs\code_reviews\` folder.
 
+Note that you cannot read files that are in .gitignore, so save your temporary files with different names from those that are in .gitignore.
+
 For build commands (also for tests) see `build_commands.txt`.
 
 # Git Diff Retrieval Strategy for Code Reviews

@@ -117,9 +117,9 @@ struct FFBSnapshot {
 class FFBEngine {
 public:
     // Settings (GUI Sliders)
-    float m_gain = 0.5f;          // Master Gain (Default 0.5 for safety)
-    float m_understeer_effect = 1.0f; // 0.0 - 1.0 (How much grip loss affects force)
-    float m_sop_effect = 0.15f;    // 0.0 - 1.0 (Lateral G injection strength - Default 0.15 for balanced feel) (0 to prevent jerking)
+    float m_gain = 1.0f;          // Master Gain
+    float m_understeer_effect = 38.0f; // Grip Drop (T300 Default)
+    float m_sop_effect = 1.0f;    // Lateral G injection strength
     float m_min_force = 0.0f;     // 0.0 - 0.20 (Deadzone removal)
     
     // Configurable Smoothing & Caps (v0.3.9)
@@ -128,19 +128,19 @@ public:
     float m_sop_scale = 20.0f;            // SoP base scaling factor (Default 20.0 for Nm)
     
     // v0.4.4 Features
-    float m_max_torque_ref = 40.0f;      // Reference torque for 100% output (Default 40.0 Nm)
-    bool m_invert_force = false;         // Invert final output signal
+    float m_max_torque_ref = 100.0f;      // Reference torque for 100% output (Default 100.0 Nm)
+    bool m_invert_force = true;         // Invert final output signal
     
     // Base Force Debugging (v0.4.13)
     float m_steering_shaft_gain = 1.0f; // 0.0 - 1.0 (Base force attenuation)
     int m_base_force_mode = 0;          // 0=Native, 1=Synthetic, 2=Muted
 
     // New Effects (v0.2)
-    float m_oversteer_boost = 0.0f; // 0.0 - 1.0 (Rear grip loss boost)
-    float m_rear_align_effect = 1.0f; // New v0.4.11
-    float m_sop_yaw_gain = 0.0f;      // New v0.4.16 (Yaw Acceleration Injection)
-    float m_gyro_gain = 0.0f;         // New v0.4.17 (Gyroscopic Damping)
-    float m_gyro_smoothing = 0.1f;    // New v0.4.17
+    float m_oversteer_boost = 1.0f; // Rear grip loss boost
+    float m_rear_align_effect = 5.0f; 
+    float m_sop_yaw_gain = 5.0f;      
+    float m_gyro_gain = 0.0f;         
+    float m_gyro_smoothing = 0.1f;    
     
     bool m_lockup_enabled = false;
     float m_lockup_gain = 0.5f;
@@ -149,7 +149,7 @@ public:
     float m_spin_gain = 0.5f;
 
     // Texture toggles
-    bool m_slide_texture_enabled = true;
+    bool m_slide_texture_enabled = false; // Default off (T300 standard)
     float m_slide_texture_gain = 0.5f; // 0.0 - 1.0
     
     bool m_road_texture_enabled = false;

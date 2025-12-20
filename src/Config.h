@@ -24,7 +24,7 @@ struct Preset {
     bool spin_enabled = false;
     float spin_gain = 0.5f;
     
-    bool slide_enabled = true;
+    bool slide_enabled = false; // Default off (T300 standard)
     float slide_gain = 0.5f;
     
     bool road_enabled = false;

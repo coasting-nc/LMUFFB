@@ -428,14 +428,18 @@ tests\test_ffb_engine.exe 2>&1 | Select-String -Pattern "Tests (Passed|Failed):"
 
 All notable changes to this project will be documented in this file.
 
-## [0.4.31] - 2025-12-20
+## [0.4.32] - 2025-12-20
 ### Changed
-- **Default Preset Update**: The "Default" preset now uses the tuned "T300" settings by default.
-    - **Max Torque Ref**: 100 Nm (High dynamic range)
-    - **Invert FFB**: Enabled (Required for T300)
-    - **Understeer Effect**: 38.0
+- **System-Wide T300 Standardization**: The "T300" tuning is now the project-wide baseline for all force-related defaults.
+    - **Startup Defaults**: Updated the FFB engine to initialize with T300 values (Gain=1.0, Understeer=38.0, MaxTorque=100Nm) so the app is optimized for belt-driven wheels on the very first run.
+    - **Preset Template**: Updated the `Preset` structure so that newly created user presets inherit T300 values instead of legacy defaults.
+    - **Test & Guide Presets**: Updated all 15 built-in Test and Guide presets to use T300-standard intensities. For example, "Guide: Understeer" now uses 38.0 intensity to ensure the effect is clearly perceptible on all hardware.
+    - **Renaming**: Renamed the primary preset to **"Default (T300)"**.
+
 ### Fixed
-- **SoP (Lateral G) Direction Inversion**: Fixed SoP effect pulling in the wrong direction during turns, ensuring correct aligning torque behavior.
+- **Reset Defaults Synchronization**: Refactored the "Reset Defaults" button in the GUI. It now correctly applies the modern "Default (T300)" preset instead of using legacy hardcoded values from v0.3.13. This fixes the issue where clicking Reset would erroneously set Understeer to 1.0.
+
+## [0.4.31] - 2025-12-20
 
 ## [0.4.30] - 2025-12-20
 ### Fixed
@@ -1088,9 +1092,9 @@ struct FFBSnapshot {
 class FFBEngine {
 public:
     // Settings (GUI Sliders)
-    float m_gain = 0.5f;          // Master Gain (Default 0.5 for safety)
-    float m_understeer_effect = 1.0f; // 0.0 - 1.0 (How much grip loss affects force)
-    float m_sop_effect = 0.15f;    // 0.0 - 1.0 (Lateral G injection strength - Default 0.15 for balanced feel) (0 to prevent jerking)
+    float m_gain = 1.0f;          // Master Gain
+    float m_understeer_effect = 38.0f; // Grip Drop (T300 Default)
+    float m_sop_effect = 1.0f;    // Lateral G injection strength
     float m_min_force = 0.0f;     // 0.0 - 0.20 (Deadzone removal)
     
     // Configurable Smoothing & Caps (v0.3.9)
@@ -1099,19 +1103,19 @@ public:
     float m_sop_scale = 20.0f;            // SoP base scaling factor (Default 20.0 for Nm)
     
     // v0.4.4 Features
-    float m_max_torque_ref = 40.0f;      // Reference torque for 100% output (Default 40.0 Nm)
-    bool m_invert_force = false;         // Invert final output signal
+    float m_max_torque_ref = 100.0f;      // Reference torque for 100% output (Default 100.0 Nm)
+    bool m_invert_force = true;         // Invert final output signal
     
     // Base Force Debugging (v0.4.13)
     float m_steering_shaft_gain = 1.0f; // 0.0 - 1.0 (Base force attenuation)
     int m_base_force_mode = 0;          // 0=Native, 1=Synthetic, 2=Muted
 
     // New Effects (v0.2)
-    float m_oversteer_boost = 0.0f; // 0.0 - 1.0 (Rear grip loss boost)
-    float m_rear_align_effect = 1.0f; // New v0.4.11
-    float m_sop_yaw_gain = 0.0f;      // New v0.4.16 (Yaw Acceleration Injection)
-    float m_gyro_gain = 0.0f;         // New v0.4.17 (Gyroscopic Damping)
-    float m_gyro_smoothing = 0.1f;    // New v0.4.17
+    float m_oversteer_boost = 1.0f; // Rear grip loss boost
+    float m_rear_align_effect = 5.0f; 
+    float m_sop_yaw_gain = 5.0f;      
+    float m_gyro_gain = 0.0f;         
+    float m_gyro_smoothing = 0.1f;    
     
     bool m_lockup_enabled = false;
     float m_lockup_gain = 0.5f;
@@ -1120,7 +1124,7 @@ public:
     float m_spin_gain = 0.5f;
 
     // Texture toggles
-    bool m_slide_texture_enabled = true;
+    bool m_slide_texture_enabled = false; // Default off (T300 standard)
     float m_slide_texture_gain = 0.5f; // 0.0 - 1.0
     
     bool m_road_texture_enabled = false;
@@ -3190,7 +3194,11 @@ void UpdateDirectInputForce(double normalizedForce) {
 
 **Car Setup:**
 *   **Traction Control (TC):** **OFF** (Crucial).
-*   **Rear ARB:** Stiff.
+*   **Rear ARB:** Stiffest.
+*   **Rear Springs:** Stiffest.
+*   **Rear Ride Height:** Highest.
+*   **Rear Wing:** Minimal.
+*   **Front ARB:** Softest.
 
 **The Test:**
 1.  Take a slow 2nd gear corner.
@@ -16438,38 +16446,26 @@ std::vector<Preset> Config::presets;
 void Config::LoadPresets() {
     presets.clear();
     
-    // 1. Default (Uses the defaults defined in Config.h)
-    presets.push_back(Preset("Default", true));
+    // 1. Default (Uses the defaults defined in Config.h - Standardized on T300)
+    presets.push_back(Preset("Default (T300)", true));
     
-    // 2. T300 (User Tuned)
-    // Tuned for Thrustmaster T300RS with 100Nm Reference.
-    // Boosts effects by ~10x to compensate for the high reference.
+    // 2. T300 (Redundant but kept for explicit selection)
     presets.push_back(Preset("T300", true)
         .SetGain(1.0f)
-        .SetShaftGain(1.0f)
-        .SetMinForce(0.0f)
-        .SetMaxTorque(100.0f)    // High ref to prevent clipping
+        .SetUndersteer(38.0f)
+        .SetSoP(1.0f)
+        .SetRearAlign(5.0f)
+        .SetSoPYaw(5.0f)
+        .SetMaxTorque(100.0f)
         .SetInvert(true)
-        .SetUndersteer(38.0f)    // Grip Drop
-        .SetSoP(1.0f)            // Lateral G (Weight)
-        .SetRearAlign(5.0f)     // Counter-Steer Torque (The "Pull")
-        .SetOversteer(1.0f)      // Boost when rear slips
-        .SetSoPYaw(5.0f)         // Kick on rotation start
-        .SetGyro(0.0f)
-        .SetLockup(false, 0.0f)
-        .SetSpin(false, 0.0f)
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetScrub(0.0f)
-        .SetBaseMode(0)
     );
     
     // 3. Test: Game Base FFB Only
     presets.push_back(Preset("Test: Game Base FFB Only", true)
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
-        .SetSoPScale(5.0f)
-        .SetSmoothing(0.0f)
+        .SetSoPScale(20.0f)
+        .SetSmoothing(0.05f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
     );
@@ -16478,8 +16474,8 @@ void Config::LoadPresets() {
     presets.push_back(Preset("Test: SoP Only", true)
         .SetUndersteer(0.0f)
         .SetSoP(1.0f)
-        .SetSoPScale(5.0f)
-        .SetSmoothing(0.0f)
+        .SetSoPScale(20.0f)
+        .SetSmoothing(0.05f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
         .SetSoPYaw(0.0f)
@@ -16488,10 +16484,10 @@ void Config::LoadPresets() {
 
     // 5. Test: Understeer Only
     presets.push_back(Preset("Test: Understeer Only", true)
-        .SetUndersteer(1.0f)
+        .SetUndersteer(38.0f)
         .SetSoP(0.0f)
-        .SetSoPScale(0.0f)
-        .SetSmoothing(0.0f)
+        .SetSoPScale(20.0f)
+        .SetSmoothing(0.05f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
     );
@@ -16515,9 +16511,9 @@ void Config::LoadPresets() {
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
-        .SetSmoothing(0.0f)
+        .SetSmoothing(0.05f)
         .SetSlide(false, 0.0f)
-        .SetRearAlign(1.0f)
+        .SetRearAlign(5.0f)
         .SetSoPYaw(0.0f)
     );
 
@@ -16526,7 +16522,7 @@ void Config::LoadPresets() {
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
         .SetSoP(1.0f)
-        .SetSmoothing(0.0f)
+        .SetSmoothing(0.05f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
         .SetSoPYaw(0.0f)
@@ -16560,7 +16556,7 @@ void Config::LoadPresets() {
     // 11. Guide: Understeer (Front Grip Loss)
     presets.push_back(Preset("Guide: Understeer (Front Grip)", true)
         .SetGain(1.0f)
-        .SetUndersteer(1.0f)
+        .SetUndersteer(38.0f)
         .SetSoP(0.0f)
         .SetOversteer(0.0f)
         .SetRearAlign(0.0f)
@@ -16580,7 +16576,7 @@ void Config::LoadPresets() {
         .SetUndersteer(0.0f)
         .SetSoP(1.0f)
         .SetSoPScale(20.0f)
-        .SetRearAlign(1.0f)
+        .SetRearAlign(5.0f)
         .SetOversteer(1.0f)
         .SetSoPYaw(0.0f)
         .SetGyro(0.0f)
@@ -16644,7 +16640,7 @@ void Config::LoadPresets() {
         .SetSoP(0.0f)
         .SetOversteer(0.0f)
         .SetRearAlign(0.0f)
-        .SetSoPYaw(2.0f) // Max gain to make the impulse obvious
+        .SetSoPYaw(5.0f) // Standard T300 level
         .SetGyro(0.0f)
         .SetLockup(false, 0.0f)
         .SetSpin(false, 0.0f)
@@ -16951,7 +16947,7 @@ struct Preset {
     bool spin_enabled = false;
     float spin_gain = 0.5f;
     
-    bool slide_enabled = true;
+    bool slide_enabled = false; // Default off (T300 standard)
     float slide_gain = 0.5f;
     
     bool road_enabled = false;
@@ -18131,26 +18127,9 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     }
     ImGui::SameLine();
     if (ImGui::Button("Reset Defaults")) {
-        // Reset Logic (Updated v0.3.13)
-        engine.m_gain = 0.5f;
-        engine.m_understeer_effect = 1.0f;
-        engine.m_sop_effect = 0.15f;
-        engine.m_min_force = 0.0f;
-        engine.m_sop_smoothing_factor = 0.05f;
-        engine.m_max_load_factor = 1.5f;
-        engine.m_oversteer_boost = 0.0f;
-        engine.m_lockup_enabled = false;
-        engine.m_lockup_gain = 0.5f;
-        engine.m_spin_enabled = false;
-        engine.m_spin_gain = 0.5f;
-        engine.m_slide_texture_enabled = true;
-        engine.m_slide_texture_gain = 0.5f;
-        engine.m_road_texture_enabled = false;
-        engine.m_road_texture_gain = 0.5f;
-        engine.m_scrub_drag_gain = 0.0f;
-        engine.m_bottoming_method = 0;
-        engine.m_use_manual_slip = false;
-        selected_preset = -1; // Mark as custom/reset
+        // Apply the 'Default' preset (index 0) which uses modern values from Config.h
+        Config::ApplyPreset(0, engine);
+        selected_preset = 0; // Select it in the dropdown
     }
     
     ImGui::Separator();
@@ -20244,6 +20223,7 @@ static void test_base_force_modes() {
     engine.m_max_torque_ref = 20.0f; // Reference for normalization
     engine.m_gain = 1.0f; // Master gain
     engine.m_steering_shaft_gain = 0.5f; // Test gain application
+    engine.m_invert_force = false;
     
     // Inputs
     data.mSteeringShaftTorque = 10.0; // Input Torque
@@ -20327,6 +20307,7 @@ static void test_sop_yaw_kick() {
     engine.m_bottoming_enabled = false;
     engine.m_scrub_drag_gain = 0.0f;
     engine.m_rear_align_effect = 0.0f;
+    engine.m_invert_force = false;
     
     // v0.4.18 UPDATE: With Low Pass Filter (alpha=0.1), the yaw acceleration
     // is smoothed over multiple frames. On the first frame with raw input = 1.0,
@@ -20409,6 +20390,7 @@ static void test_road_texture_teleport() {
     engine.m_road_texture_gain = 1.0;
     engine.m_max_torque_ref = 40.0f;
     engine.m_gain = 1.0; // Ensure gain is 1.0
+    engine.m_invert_force = false;
     
     // Frame 1: 0.0
     data.mWheel[0].mVerticalTireDeflection = 0.0;
@@ -20453,6 +20435,7 @@ static void test_grip_low_speed() {
     engine.m_bottoming_enabled = false;
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = false;
+    engine.m_invert_force = false;
 
     // Setup for Approximation
     data.mWheel[0].mGripFract = 0.0; // Missing
@@ -20528,6 +20511,7 @@ static void test_grip_modulation() {
     // Set Gain to 1.0 for testing logic (default is now 0.5)
     engine.m_gain = 1.0; 
     engine.m_max_torque_ref = 20.0f; // Fix Reference for Test (v0.4.4)
+    engine.m_invert_force = false;
 
     // NOTE: Max torque reference changed to 20.0 Nm.
     data.mSteeringShaftTorque = 10.0; // Half of max ~20.0
@@ -20579,6 +20563,7 @@ static void test_sop_effect() {
     // Norm = 2.5 / 20.0 = 0.125
     
     engine.m_sop_scale = 10.0; 
+    engine.m_invert_force = false; // Ensure non-inverted for physics check 
     
     // Run for multiple frames to let smoothing settle (alpha=0.1)
     double force = 0.0;
@@ -20613,6 +20598,7 @@ static void test_min_force() {
     data.mSteeringShaftTorque = 0.05; 
     engine.m_min_force = 0.10; // 10% min force
     engine.m_max_torque_ref = 20.0f; // Fix Reference for Test (v0.4.4)
+    engine.m_invert_force = false;
 
     double force = engine.calculate_force(&data);
     // 0.0025 is > 0.0001 (deadzone check) but < 0.10.
@@ -20746,6 +20732,7 @@ static void test_dynamic_tuning() {
     // Explicitly set gain 1.0 for this baseline
     engine.m_gain = 1.0;
     engine.m_max_torque_ref = 20.0f; // Fix Reference for Test (v0.4.4)
+    engine.m_invert_force = false;
 
     double force_initial = engine.calculate_force(&data);
     // Should pass through 10.0 (normalized: 0.5)
@@ -20847,6 +20834,7 @@ static void test_oversteer_boost() {
     // Disable smoothing to verify math instantly (v0.4.2 fix)
     engine.m_sop_smoothing_factor = 1.0; 
     engine.m_max_torque_ref = 20.0f; // Fix Reference for Test (v0.4.4)
+    engine.m_invert_force = false;
     
     // Scenario: Front has grip, rear is sliding
     data.mWheel[0].mGripFract = 1.0; // FL
@@ -21666,6 +21654,7 @@ static void test_smoothing_step_response() {
     engine.m_sop_scale = 1.0;  // Using 1.0 for this test
     engine.m_sop_effect = 1.0;
     engine.m_max_torque_ref = 20.0f;
+    engine.m_invert_force = false;
     
     // v0.4.30 UPDATE: SoP Inversion Removed.
     // Game: +X = Left. +9.81 = Left Accel.
@@ -21844,7 +21833,7 @@ static void test_preset_initialization() {
     
     // Test all 9 built-in presets (Added T300)
     const char* preset_names[] = {
-        "Default",
+        "Default (T300)",
         "T300", // New v0.4.30
         "Test: Game Base FFB Only",
         "Test: SoP Only",
@@ -22164,6 +22153,7 @@ static void test_yaw_accel_smoothing() {
     engine.m_scrub_drag_gain = 0.0f;
     engine.m_rear_align_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
+    engine.m_invert_force = false;
     
     data.mWheel[0].mRideHeight = 0.1;
     data.mWheel[1].mRideHeight = 0.1;
@@ -22258,6 +22248,7 @@ static void test_yaw_accel_convergence() {
     engine.m_sop_effect = 0.0f;
     engine.m_max_torque_ref = 20.0f;
     engine.m_gain = 1.0f;
+    engine.m_invert_force = false;
     engine.m_understeer_effect = 0.0f;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
@@ -22804,6 +22795,8 @@ static void test_rear_force_workaround() {
     engine.m_oversteer_boost = 1.0;   // Enable oversteer boost (multiplies rear torque)
     engine.m_gain = 1.0;              // Full gain
     engine.m_sop_scale = 10.0;        // Moderate SoP scaling
+    engine.m_rear_align_effect = 1.0f; // Fix effect gain for test calculation (Default is now 5.0)
+    engine.m_invert_force = false;    // Ensure non-inverted for formula check
     
     // ========================================
     // Front Wheel Setup (Baseline)
@@ -23036,6 +23029,8 @@ static void test_sop_yaw_kick_direction() {
     engine.m_sop_yaw_gain = 1.0f;
     engine.m_gain = 1.0f;
     engine.m_max_torque_ref = 20.0f;
+    engine.m_invert_force = false;
+    engine.m_invert_force = false;
     
     // Case: Car rotates Right (+Yaw Accel)
     // This implies rear is sliding Left.
@@ -23203,6 +23198,7 @@ static void test_coordinate_sop_inversion() {
     engine.m_spin_enabled = false;
     engine.m_sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
+    engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
     data.mWheel[0].mRideHeight = 0.1;
@@ -23274,6 +23270,7 @@ static void test_coordinate_rear_torque_inversion() {
     engine.m_spin_enabled = false;
     engine.m_sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
+    engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
     data.mWheel[0].mRideHeight = 0.1;
@@ -23363,6 +23360,7 @@ static void test_coordinate_scrub_drag_direction() {
     engine.m_spin_enabled = false;
     engine.m_sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
+    engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
     data.mWheel[0].mRideHeight = 0.1;
@@ -23545,6 +23543,7 @@ static void test_regression_no_positive_feedback() {
     engine.m_spin_enabled = false;
     engine.m_sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
+    engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
     data.mWheel[0].mRideHeight = 0.1;
@@ -23642,6 +23641,7 @@ static void test_coordinate_all_effects_alignment() {
     engine.m_rear_align_effect = 1.0f;   // Rear Slip
     engine.m_sop_yaw_gain = 1.0f;        // Yaw Accel
     engine.m_scrub_drag_gain = 1.0f;     // Front Slip
+    engine.m_invert_force = false;
     
     // Disable others to isolate lateral logic
     engine.m_understeer_effect = 0.0f;

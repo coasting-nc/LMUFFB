@@ -12,38 +12,26 @@ std::vector<Preset> Config::presets;
 void Config::LoadPresets() {
     presets.clear();
     
-    // 1. Default (Uses the defaults defined in Config.h)
-    presets.push_back(Preset("Default", true));
+    // 1. Default (Uses the defaults defined in Config.h - Standardized on T300)
+    presets.push_back(Preset("Default (T300)", true));
     
-    // 2. T300 (User Tuned)
-    // Tuned for Thrustmaster T300RS with 100Nm Reference.
-    // Boosts effects by ~10x to compensate for the high reference.
+    // 2. T300 (Redundant but kept for explicit selection)
     presets.push_back(Preset("T300", true)
         .SetGain(1.0f)
-        .SetShaftGain(1.0f)
-        .SetMinForce(0.0f)
-        .SetMaxTorque(100.0f)    // High ref to prevent clipping
+        .SetUndersteer(38.0f)
+        .SetSoP(1.0f)
+        .SetRearAlign(5.0f)
+        .SetSoPYaw(5.0f)
+        .SetMaxTorque(100.0f)
         .SetInvert(true)
-        .SetUndersteer(38.0f)    // Grip Drop
-        .SetSoP(1.0f)            // Lateral G (Weight)
-        .SetRearAlign(5.0f)     // Counter-Steer Torque (The "Pull")
-        .SetOversteer(1.0f)      // Boost when rear slips
-        .SetSoPYaw(5.0f)         // Kick on rotation start
-        .SetGyro(0.0f)
-        .SetLockup(false, 0.0f)
-        .SetSpin(false, 0.0f)
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetScrub(0.0f)
-        .SetBaseMode(0)
     );
     
     // 3. Test: Game Base FFB Only
     presets.push_back(Preset("Test: Game Base FFB Only", true)
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
-        .SetSoPScale(5.0f)
-        .SetSmoothing(0.0f)
+        .SetSoPScale(20.0f)
+        .SetSmoothing(0.05f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
     );
@@ -52,8 +40,8 @@ void Config::LoadPresets() {
     presets.push_back(Preset("Test: SoP Only", true)
         .SetUndersteer(0.0f)
         .SetSoP(1.0f)
-        .SetSoPScale(5.0f)
-        .SetSmoothing(0.0f)
+        .SetSoPScale(20.0f)
+        .SetSmoothing(0.05f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
         .SetSoPYaw(0.0f)
@@ -62,10 +50,10 @@ void Config::LoadPresets() {
 
     // 5. Test: Understeer Only
     presets.push_back(Preset("Test: Understeer Only", true)
-        .SetUndersteer(1.0f)
+        .SetUndersteer(38.0f)
         .SetSoP(0.0f)
-        .SetSoPScale(0.0f)
-        .SetSmoothing(0.0f)
+        .SetSoPScale(20.0f)
+        .SetSmoothing(0.05f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
     );
@@ -89,9 +77,9 @@ void Config::LoadPresets() {
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
-        .SetSmoothing(0.0f)
+        .SetSmoothing(0.05f)
         .SetSlide(false, 0.0f)
-        .SetRearAlign(1.0f)
+        .SetRearAlign(5.0f)
         .SetSoPYaw(0.0f)
     );
 
@@ -100,7 +88,7 @@ void Config::LoadPresets() {
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
         .SetSoP(1.0f)
-        .SetSmoothing(0.0f)
+        .SetSmoothing(0.05f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
         .SetSoPYaw(0.0f)
@@ -134,7 +122,7 @@ void Config::LoadPresets() {
     // 11. Guide: Understeer (Front Grip Loss)
     presets.push_back(Preset("Guide: Understeer (Front Grip)", true)
         .SetGain(1.0f)
-        .SetUndersteer(1.0f)
+        .SetUndersteer(38.0f)
         .SetSoP(0.0f)
         .SetOversteer(0.0f)
         .SetRearAlign(0.0f)
@@ -154,7 +142,7 @@ void Config::LoadPresets() {
         .SetUndersteer(0.0f)
         .SetSoP(1.0f)
         .SetSoPScale(20.0f)
-        .SetRearAlign(1.0f)
+        .SetRearAlign(5.0f)
         .SetOversteer(1.0f)
         .SetSoPYaw(0.0f)
         .SetGyro(0.0f)
@@ -218,7 +206,7 @@ void Config::LoadPresets() {
         .SetSoP(0.0f)
         .SetOversteer(0.0f)
         .SetRearAlign(0.0f)
-        .SetSoPYaw(2.0f) // Max gain to make the impulse obvious
+        .SetSoPYaw(5.0f) // Standard T300 level
         .SetGyro(0.0f)
         .SetLockup(false, 0.0f)
         .SetSpin(false, 0.0f)
