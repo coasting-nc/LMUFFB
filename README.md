@@ -72,9 +72,6 @@ Your testing and feedback is greatly appreciated! 🙏
 
 ### Troubleshooting
 
-- **Wheel Jerking / Fighting**: You likely have a "Double FFB" conflict.
-    - Ensure in-game FFB Strength is set to **0%** (Off).
-    - If the wheel oscillates on straights, reduce **SOP Effect** to 0.0 and increase smoothing.
 -   **Inverted FFB (Force pushes away from center)**:
     -   If the FFB feels "backwards" or "inverted" while driving (wheel pushes away from center instead of pulling toward it), check the **"Invert FFB"** checkbox in the lmuFFB GUI.
     -   This reverses the force direction to match your wheel's expected behavior.
@@ -86,11 +83,7 @@ Your testing and feedback is greatly appreciated! 🙏
 -   **No FFB**: 
     -   Ensure the "FFB Device" in lmuFFB is your real wheel.
     -   Check if the Shared Memory is working (Does "Connected to Le Mans Ultimate" appear in the GUI?).
-    -   Verify you're running LMU 1.2 or later (earlier versions don't have native shared memory).
--   **Device Unavailable**: 
-    -   If you see `[DI Warning] Device unavailable` in the console, the game may have locked your wheel in Exclusive Mode.
-    -   Try **Alt-Tabbing** out of the game. If FFB suddenly works when the game is in the background, it confirms the game is interfering.
-    -   Some wheels work better than others with simultaneous access - this is a hardware/driver limitation.
+    -   Verify the FFB strenght in your device driver is not too low.
 
 
 ## LMU 1.2+ Support (v0.4.0+)
