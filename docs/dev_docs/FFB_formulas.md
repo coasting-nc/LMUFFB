@@ -11,13 +11,17 @@ The final output sent to the DirectInput driver is a normalized value between **
 
 ### 1. The Master Formula
 
-$$ F_{\text{final}} = \text{Clamp}\left( \left( \frac{F_{\text{total}}}{20.0} \times K_{\text{gain}} \right), -1.0, 1.0 \right) $$
+$$
+F_{\text{final}} = \text{Clamp}\left( \left( \frac{F_{\text{total}}}{20.0} \times K_{\text{gain}} \right), -1.0, 1.0 \right)
+$$
 
 **Note**: Reference changed from 4000 (N, old rF2 API) to 20.0 (Nm, LMU 1.2 API) in v0.4.0+.
 
 Where **$F_{\text{total}}$** is the sum of all physics components:
 
-$$ F_{\text{total}} = (F_{\text{base}} + F_{\text{sop}} + F_{\text{vib\\_lock}} + F_{\text{vib\\_spin}} + F_{\text{vib\\_slide}} + F_{\text{vib\\_road}} + F_{\text{vib\\_bottom}} + F_{\text{gyro}}) \times M_{\text{spin\\_drop}} $$
+$$
+F_{\text{total}} = (F_{\text{base}} + F_{\text{sop}} + F_{\text{vib\\_lock}} + F_{\text{vib\\_spin}} + F_{\text{vib\\_slide}} + F_{\text{vib\\_road}} + F_{\text{vib\\_bottom}} + F_{\text{gyro}}) \times M_{\text{spin\\_drop}}
+$$
 
 *(Note: $M_{\text{spin\\_drop}}$ is a reduction multiplier active only during traction loss).*
 
@@ -26,14 +30,20 @@ $$ F_{\text{total}} = (F_{\text{base}} + F_{\text{sop}} + F_{\text{vib\\_lock}} 
 ### 2. Component Breakdown
 
 #### A. Global Factors (Pre-calculated)
+
 **Load Factor ($\text{Front\\_Load\\_Factor}$)**: Scales texture effects based on how much weight is on the front tires.
-$$ \text{Front\\_Load\\_Factor} = \text{Clamp}\left( \frac{\text{Front\\_Load}_{\text{FL}} + \text{Front\\_Load}_{\text{FR}}}{2 \times 4000}, 0.0, 1.5 \right) $$
+
+$$
+\text{Front\\_Load\\_Factor} = \text{Clamp}\left( \frac{\text{Front\\_Load}_{\text{FL}} + \text{Front\\_Load}_{\text{FR}}}{2 \times 4000}, 0.0, 1.5 \right)
+$$
 
 *   **Robustness Check:** If $\text{Front\\_Load} \approx 0.0$ and $|Velocity| > 1.0 m/s$, $\text{Front\\_Load}$ defaults to 4000N to prevent signal dropout.
 *   **Safety Clamp (v0.4.6):** $\text{Front\\_Load\\_Factor}$ is hard-clamped to a maximum of **2.0** (regardless of configuration) to prevent unbounded forces during aero-spikes.
 
 #### B. Base Force (Understeer / Grip Modulation)
+
 This modulates the raw steering rack force from the game based on front tire grip.
+
 ### B. Base Force (Understeer / Grip Modulation) - Updated v0.4.13
 
 The base force logic has been expanded to support debugging modes and attenuation.
@@ -48,7 +58,10 @@ Depending on `m_base_force_mode` setting:
 *   **Mode 2 (Muted):** $\text{Base}_{\text{input}} = 0.0$
 
 **2. Modulation & Attenuation**
-$$ F_{\text{base}} = (\text{Base}_{\text{input}} \times K_{\text{shaft\\_gain}}) \times \left( 1.0 - \left( (1.0 - \text{Front\\_Grip}_{\text{avg}}) \times K_{\text{understeer}} \right) \right) $$
+
+$$
+F_{\text{base}} = (\text{Base}_{\text{input}} \times K_{\text{shaft\\_gain}}) \times \left( 1.0 - \left( (1.0 - \text{Front\\_Grip}_{\text{avg}}) \times K_{\text{understeer}} \right) \right)
+$$
 
 *   $K_{\text{shaft\\_gain}}$: New slider (0.0-1.0) to attenuate base force without affecting telemetry.
 *   $\text{Front\\_Grip}_{\text{avg}}$: Average of Front Left and Front Right `mGripFract`.
@@ -65,21 +78,32 @@ $$ F_{\text{base}} = (\text{Base}_{\text{input}} \times K_{\text{shaft\\_gain}})
         * **Safety Clamp (v0.4.6):** Calculated Grip never drops below **0.2**.
 
 #### C. Seat of Pants (SoP) & Oversteer
+
 This injects lateral G-force and rear-axle aligning torque to simulate the car body's rotation.
 
-1.    *   **Smoothed Lateral G (v0.4.6):** Calculated via Time-Corrected LPF.
+1.  **Smoothed Lateral G (v0.4.6):** Calculated via Time-Corrected LPF.
     *   **Input Clamp (v0.4.6):** Raw AccelX is clamped to +/- 5G ($49.05 m/s^2$) before processing.
-    $$ G_{\text{smooth}} = G_{\text{prev}} + \alpha_{\text{time\\_corrected}} \times \left( \frac{\text{Chassis\\_Lat\\_Accel}}{9.81} - G_{\text{prev}} \right) $$
+
+    $$
+    G_{\text{smooth}} = G_{\text{prev}} + \alpha_{\text{time\\_corrected}} \times \left( \frac{\text{Chassis\\_Lat\\_Accel}}{9.81} - G_{\text{prev}} \right)
+    $$
+
     *   $\alpha_{\text{time\\_corrected}} = dt / (\tau + dt)$ where $\tau$ is derived from user setting `m_sop_smoothing_factor`.
     *   $\alpha$: User setting `m_sop_smoothing_factor`.
 
 2.  **Base SoP**:
-    $$ F_{\text{sop\\_base}} = G_{\text{smooth}} \times K_{\text{sop}} \times 20.0 $$
+
+    $$
+    F_{\text{sop\\_base}} = G_{\text{smooth}} \times K_{\text{sop}} \times 20.0
+    $$
     
     **Note**: Scaling changed from 5.0 to 20.0 in v0.4.10 to provide stronger baseline Nm output.
 
 3.  **Yaw Acceleration (The Kick) - New v0.4.16, Smoothed v0.4.18**:
-    $$ F_{\text{yaw}} = -1.0 \times \text{YawAccel}_{\text{smoothed}} \times K_{\text{yaw}} \times 5.0 $$
+
+    $$
+    F_{\text{yaw}} = -1.0 \times \text{YawAccel}_{\text{smoothed}} \times K_{\text{yaw}} \times 5.0
+    $$
     
     *   Injects `mLocalRotAccel.y` (Radians/sec²) to provide a predictive kick when rotation starts.
     *   **v0.4.20 Fix:** Inverted calculation ($ -1.0 $) to provide counter-steering cue. Positive Yaw (Right rotation) now produces Negative Force (Left torque). verified by SDK note: **"negate any rotation or torque data"**.
@@ -92,27 +116,44 @@ This injects lateral G-force and rear-axle aligning torque to simulate the car b
 
 4.  **Oversteer Boost**:
     If Front Grip > Rear Grip:
-    $$ F_{\text{sop\\_boosted}} = F_{\text{sop\\_base}} \times \left( 1.0 + (\text{Grip}_{\text{delta}} \times K_{\text{oversteer}} \times 2.0) \right) $$
+
+    $$
+    F_{\text{sop\\_boosted}} = F_{\text{sop\\_base}} \times \left( 1.0 + (\text{Grip}_{\text{delta}} \times K_{\text{oversteer}} \times 2.0) \right)
+    $$
+
     where $\text{Grip}_{\text{delta}} = \text{Front\\_Grip}_{\text{avg}} - \text{Rear\\_Grip}_{\text{avg}}$
     *   **Fallback (v0.4.6+):** Rear grip now uses the same **Slip Angle approximation** fallback as Front grip if telemetry is missing, preventing false oversteer detection.
 
-4.  **Rear Aligning Torque (v0.4.10 Workaround)**:
+5.  **Rear Aligning Torque (v0.4.10 Workaround)**:
     Since LMU 1.2 reports 0.0 for rear `mLateralForce`, we calculate it manually.
     
     **Step 1: Approximate Rear Load**
-    $$ F_{z\text{\\_rear}} = \text{SuspForce} + 300.0 $$
+
+    $$
+    F_{z\text{\\_rear}} = \text{SuspForce} + 300.0
+    $$
+
     (300N represents approximate unsprung mass).
     
     **Step 2: Calculate Lateral Force**
-    $$ F_{\text{lat\\_calc}} = \text{SlipAngle}_{\text{rear}} \times F_{z\text{\\_rear}} \times 15.0 $$
+
+    $$
+    F_{\text{lat\\_calc}} = \text{SlipAngle}_{\text{rear}} \times F_{z\text{\\_rear}} \times 15.0
+    $$
+
     *   **Safety Clamp:** Clamped to +/- 6000.0 N.
     
     **Step 3: Calculate Torque**
-    $$ T_{\text{rear}} = F_{\text{lat\\_calc}} \times 0.001 \times K_{\text{rear\\_align}} $$
+
+    $$
+    T_{\text{rear}} = F_{\text{lat\\_calc}} \times 0.001 \times K_{\text{rear\\_align}}
+    $$
     
     **Note**: Coefficient changed from 0.00025 to 0.001 in v0.4.11.
 
-$$ F_{\text{sop}} = F_{\text{sop\\_boosted}} + T_{\text{rear}} + F_{\text{yaw}} $$
+$$
+F_{\text{sop}} = F_{\text{sop\\_boosted}} + T_{\text{rear}} + F_{\text{yaw}}
+$$
 
 #### D. Dynamic Textures (Vibrations)
 
@@ -183,7 +224,10 @@ Stabilizes the wheel by opposing rapid steering movements (prevents "tank slappe
 After calculating the normalized force ($F_{\text{norm}}$), the Min Force logic is applied to overcome wheel friction:
 
 If $|F_{\text{norm}}| > 0.0001$ AND $|F_{\text{norm}}| < K_{\text{min\\_force}}$:
-$$ F_{\text{final}} = \text{sign}(F_{\text{norm}}) \times K_{\text{min\\_force}} $$
+
+$$
+F_{\text{final}} = \text{sign}(F_{\text{norm}}) \times K_{\text{min\\_force}}
+$$
 
 ---
 
