@@ -142,7 +142,7 @@ This is the primary driver of grip loss in cornering.
 
 $$\\alpha \= \\arctan \\left( \\frac{v\_{lateral}}{v\_{longitudinal}} \\right) \- \\delta\_{steering}$$
 
-* **Data Source:** mLocalVel.x (Lateral), mLocalVel.z (Longitudinal). Note that for the front wheels, the velocity vector must be transformed by the steering angle to find the slip relative to the wheel rim.
+* **Data Source:** mLocalVel.x (Lateral), mLocalVel.z (Longitudinal). Note that for the front wheels, the velocity vector must be transformed by the steering angle to find the slip relative to the wheel rim. (Note: should we also account for toe-in and toe-out, and also for the rear wheels? Should we also take into account camber and caster?)
 
 #### **4.2.2 Longitudinal Slip Ratio ($\\kappa$)**
 
