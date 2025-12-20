@@ -580,10 +580,12 @@ public:
         // Lateral G-force
         // v0.4.6: Clamp Input to reasonable Gs (+/- 5G)
         double raw_g = (std::max)(-49.05, (std::min)(49.05, data->mLocalAccel.x));
-        // v0.4.19: Invert to match DirectInput coordinate system
-        // Game: +X = Left, DirectInput: +Force = Right
-        // In a right turn, body feels left force (+X), but we want left pull (-Force)
-        double lat_g = -(raw_g / 9.81);
+        
+        // v0.4.30 FIX: Removed inversion. 
+        // Analysis shows mLocalAccel.x sign matches desired FFB direction.
+        // Right Turn -> Accel +X (Centrifugal Left) -> Force + (Left Pull / Aligning).
+        // Left Turn -> Accel -X (Centrifugal Right) -> Force - (Right Pull / Aligning).
+        double lat_g = (raw_g / 9.81);
         
         // SoP Smoothing (Time-Corrected Low Pass Filter) (Report v0.4.2)
         // m_sop_smoothing_factor (0.0 to 1.0) is treated as a "Smoothness" knob.

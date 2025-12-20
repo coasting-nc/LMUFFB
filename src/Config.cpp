@@ -25,9 +25,9 @@ void Config::LoadPresets() {
         .SetMaxTorque(100.0f)    // High ref to prevent clipping
         .SetInvert(true)
         .SetUndersteer(38.0f)    // Grip Drop
-        .SetSoP(5.0f)            // Lateral G (Weight)
-        .SetRearAlign(15.0f)     // Counter-Steer Torque (The "Pull")
-        .SetOversteer(2.0f)      // Boost when rear slips
+        .SetSoP(1.0f)            // Lateral G (Weight)
+        .SetRearAlign(5.0f)     // Counter-Steer Torque (The "Pull")
+        .SetOversteer(1.0f)      // Boost when rear slips
         .SetSoPYaw(5.0f)         // Kick on rotation start
         .SetGyro(0.0f)
         .SetLockup(false, 0.0f)

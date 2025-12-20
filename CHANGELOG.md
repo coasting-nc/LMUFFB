@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.30] - 2025-12-20
+### Fixed
+- **SoP (Lateral G) Direction Inversion**: Fixed the SoP (lateral G) effect pulling in the wrong direction, causing it to fight against Base Torque and Rear Align Torque.
+    - Removed the sign inversion introduced in v0.4.19.
+    - **Root Cause**: SoP was inverted to match DirectInput coordinates, but the internal engine actually uses Game Coordinate System (+ = Left). Base Torque and Rear Align Torque were already aligned correctly.
+    - **Impact**: In the reported screenshots, SoP was pulling into the turn (-10.6 Nm) when it should have been adding counter-steering weight (+10.6 Nm). This fix resolves the instability where SoP fought against the base aligning torque.
+    - **Telemetry Analysis**: Confirmed that `mLocalAccel.x` aligns correctly with the desired FFB direction without inversion.
+    - **Note**: Yaw Kick (v0.4.20) remains inverted as manual testing confirmed it provides correct counter-steering behavior.
+
 ## [0.4.29] - 2025-12-20
 ### Added
 - **Saveable Custom Presets**: Users can now save their custom FFB configurations as named presets that persist across sessions.

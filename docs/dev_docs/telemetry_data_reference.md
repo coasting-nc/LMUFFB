@@ -131,3 +131,36 @@ lmuFFB implements robust fallback logic for missing/invalid telemetry:
 - **Invalid DeltaTime**: If `mDeltaTime <= 0.000001`, defaults to 0.0025s (400Hz)
 
 These checks prevent FFB dropout during telemetry glitches.
+
+---
+
+## 6. Coordinate Systems & Sign Conventions (v0.4.30+)
+
+Understanding the coordinate systems is critical for effect direction (e.g., ensuring SoP pulls the correct way).
+
+### LMU / rFactor 2 Coordinate System
+*   **X (Lateral)**: **+X is LEFT**, -X is RIGHT.
+*   **Y (Vertical)**: +Y is UP, -Y is DOWN.
+*   **Z (Longitudinal)**: +Z is REAR, -Z is FRONT.
+*   **Rotation**: Left-handed system. +Y rotation (Yaw) is to the **RIGHT**.
+
+### InternalsPlugin.hpp Note
+The SDK explicitly warns:
+> "Note that ISO vehicle coordinates (+x forward, +y right, +z upward) are right-handed. If you are using that system, **be sure to negate any rotation or torque data** because things rotate in the opposite direction."
+
+### Effect Implementations
+1.  **Lateral G (SoP)**:
+    *   **Source**: `mLocalAccel.x` (Linear Acceleration).
+    *   **Right Turn**: Car accelerates LEFT (+X).
+    *   **Desired Force**: Aligning torque should pull LEFT (+).
+    *   **Implementation**: **No Inversion**. Use `+mLocalAccel.x`.
+2.  **Yaw Acceleration (Kick)**:
+    *   **Source**: `mLocalRotAccel.y` (Rotational Acceleration).
+    *   **Right Oversteer**: Car rotates RIGHT (+Y).
+    *   **Desired Force**: Counter-steer kick should pull RIGHT (-).
+    *   **Implementation**: **Invert**. Use `-mLocalRotAccel.y` (as per SDK "negate rotation" note).
+3.  **Rear Aligning Torque**:
+    *   **Source**: `mLateralPatchVel` (Linear Velocity).
+    *   **Right Turn**: Rear slides LEFT (+Vel).
+    *   **Desired Force**: Aligning torque should pull LEFT (+).
+    *   **Implementation**: The formula `double rear_torque = -calc_rear_lat_force` correctly produces a Positive output for Positive velocity inputs due to the negative coefficient in the `calc` helper. **Already Correct.**

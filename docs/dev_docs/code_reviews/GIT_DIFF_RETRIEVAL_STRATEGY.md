@@ -6,6 +6,8 @@ You can read the prompt with the instructions that were given to the coding agen
 
 Save a detailed code review report in the `docs\dev_docs\code_reviews\` folder.
 
+For build commands (also for tests) see `build_commands.txt`.
+
 # Git Diff Retrieval Strategy for Code Reviews
 
 **Purpose:** Best practices for retrieving git diffs on Windows PowerShell for AI-assisted code reviews  
