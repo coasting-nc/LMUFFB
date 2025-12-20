@@ -361,6 +361,15 @@ See: docs\dev_docs\avg_load_issue.md
 
 # File: build_commands.txt
 ```
+# Quick guide
+
+## Update version and compile in one command:
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release --clean-first
+
+
+## Compile and run tests in one command
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cl /EHsc /std:c++17 /I.. tests\test_ffb_engine.cpp src\Config.cpp /Fe:tests\test_ffb_engine.exe; tests\test_ffb_engine.exe 2>&1 | Tee-Object -FilePath tmp\test_results.txt
+
 # Prerequisites
 
 Enable run scripts in powershell:
@@ -428,6 +437,52 @@ tests\test_ffb_engine.exe 2>&1 | Select-String -Pattern "Tests (Passed|Failed):"
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.37] - 2025-12-20
+### Changed
+- **Calibrated Default Presets**: Updated the "Default (T300)" and internal defaults to match the latest calibrated values for belt-driven wheels.
+    - **SoP Scale**: Reduced from 5.0 to **1.0**.
+    - **Understeer Gain**: Adjusted to **0.61**.
+    - **SoP Gain**: Adjusted to **0.08**.
+    - **Oversteer Boost**: Adjusted to **0.65**.
+    - **Rear Align Torque**: Adjusted to **0.90**.
+    - **Slide Texture**: Now **Enabled by default** with Gain **0.39**.
+    - **Max Torque Ref**: Adjusted to **98.3 Nm**.
+
+## [0.4.36] - 2025-12-20
+### Added
+- **Slide Rumble Frequency Slider**: Added a "Slide Pitch (Freq)" slider to the GUI to allow manual customization of the vibration frequency.
+    - **Optimization**: This allows both Belt/Gear-driven users (who need low-frequency rumble, 10-60Hz) and Direct Drive users (who prefer high-frequency fine texture, 100-250Hz) to tune the effect to their hardware's sweet spot.
+    - **Range**: 0.5x to 5.0x multiplier.
+    - **Default**: 1.0x (Rumble optimized).
+
+## [0.4.35] - 2025-12-20
+### Changed
+- **Slide Texture Frequency Optimization**: Re-mapped the vibration frequency for Slide Rumble to the "Tactile Sweet Spot" for belt-driven wheels (10Hz - 70Hz).
+    - **Previous Behavior**: Frequencies ranged from 40Hz to 250Hz. High frequencies (above 100Hz) are often dampened by rubber belts and interpreted as a subtle "fizz" rather than a gritty rumble.
+    - **New Behavior**: Frequency starts at 10Hz (chunky grind) and ramps to 70Hz (fast buzz) based on slip speed. This provides significantly better tactile feedback on hardware like the T300 and G29.
+    - **Aliasing Protection**: Lowering the frequency range also improves signal stability relative to the 400Hz physics loop (improving Nyquist headroom).
+- **Refined Effect Gain Ranges**: Increased the maximum slider limits for dynamic effects and textures in the GUI from 1.0 to **5.0**.
+    - This provides enough headroom to "punch through" belt friction on high-torque settings while maintaining high precision for fine-tuning. Previously tried 20.0, but found 5.0 to be the ideal balance.
+
+### Fixed
+- **Slide Texture Scope Expansion**: Updated "Slide Rumble" effect to trigger based on the **maximum** lateral slip of either axle (Front OR Rear).
+    - **Previous Behavior**: Only monitored front wheels (Understeer). Doing a donut or drift (Rear Slide) resulted in no vibration, making the car feel "floating."
+    - **New Behavior**: Calculates front and rear average slip velocities independently and uses the greater of the two to drive the vibration effect.
+    - **Impact**: You now feel the gritty tire scrub texture during donuts, power slides, and extensive oversteer, solving the "silent drift" issue.
+
+## [0.4.34] - 2025-12-20
+### Fixed
+- **Slide Texture Scope Expansion** (Superceded by v0.4.35 logic)
+
+
+## [0.4.33] - 2025-12-20
+### Fixed
+- **CRITICAL: Oscillator Phase Explosion Fix**: Fixed a major bug where dynamic effects (Slide Texture, Progressive Lockup, Wheel Spin, and Suspension Bottoming) would produce massive constant forces or "flatlined" signals during frame stutters or telemetry lag.
+    - **Root Cause**: The phase accumulation logic used a simple `if` check for wrapping (`if (phase > TWO_PI) phase -= TWO_PI`), which failed if the phase jumped by more than $2\pi$ in a single step (e.g., during a 50ms stutter at high frequencies). This caused the phase to grow indefinitely, leading the sawtooth/sine formulas to output impossible values.
+    - **Fix**: Replaced simple check with `std::fmod(phase, TWO_PI)` for all oscillators to ensure robust wrapping regardless of the time step size.
+    - **Impact**: Resolves the "Slide Texture strong pull" bug, ensuring a consistent vibration feel even during system hitches.
+    - **Regression Test**: Added `test_regression_phase_explosion` to the test suite to simulate high delta-time stutters and verify phase wrapping integrity.
+
 ## [0.4.32] - 2025-12-20
 ### Changed
 - **System-Wide T300 Standardization**: The "T300" tuning is now the project-wide baseline for all force-related defaults.
@@ -435,9 +490,25 @@ All notable changes to this project will be documented in this file.
     - **Preset Template**: Updated the `Preset` structure so that newly created user presets inherit T300 values instead of legacy defaults.
     - **Test & Guide Presets**: Updated all 15 built-in Test and Guide presets to use T300-standard intensities. For example, "Guide: Understeer" now uses 38.0 intensity to ensure the effect is clearly perceptible on all hardware.
     - **Renaming**: Renamed the primary preset to **"Default (T300)"**.
+- **Newtonian Force Rebalancing (SoP Scale)**: Adjusted SoP (Lateral G) scaling to resolve the "100 Nm scaling issue" and improve texture visibility.
+    - **Balanced Default**: Changed default `sop_scale` from 20.0 to **5.0**. This produces ~10Nm of force at 2G, which is a strong but reasonable overlay relative to the car's base steering weight (~20Nm).
+    - **Texture Protection**: Lowering the SoP scale allows users to lower their `Max Torque Ref` (e.g., to 30-40 Nm). This "zooms in" on micro-forces like Slide Rumble, making them much more perceptible on belt-driven wheels.
+    - **Slider Range Refinement**: Reduced the **SoP Scale** GUI slider maximum from 200.0 to **20.0**. The previous range was disproportionately large for the new Newtonian math.
+    - **Calibration Tooltip**: Added a tooltip to the SoP Scale slider explaining the math: *"5.0 = Balanced (10Nm at 2G), 20.0 = Heavy (40Nm at 2G)."*
+    - **Preset Synchronization**: Updated all built-in Test and Guide presets that use SoP to use the new 5.0 scale baseline.
+- **Enhanced Testing Guide**: Significantly expanded `docs\Driver's Guide to Testing LMUFFB.md` to help users verify FFB effects more effectively.
+    - Added **"Extreme Car Setup"** recommendations for every test (e.g., maximum stiffness, specific brake bias, extreme tire pressures) to isolate and amplify specific physics behaviors.
+    - Standardized terminology on the new **"Default (T300)"** baseline.
+    - Recommended the **Porsche 911 GTE** at **Paul Ricard** as the primary reference car/track combination for testing.
+    - Improved instructions for ABS, Traction Loss, and SoP Yaw tests with car-setup-specific advice.
 
 ### Fixed
 - **Reset Defaults Synchronization**: Refactored the "Reset Defaults" button in the GUI. It now correctly applies the modern "Default (T300)" preset instead of using legacy hardcoded values from v0.3.13. This fixes the issue where clicking Reset would erroneously set Understeer to 1.0.
+- **Unit Test Suite Synchronization**: Updated `tests\test_ffb_engine.cpp` to align with the new T300 default configurations.
+    - Updated `test_preset_initialization` to expect the renamed "Default (T300)" preset.
+    - Added explicit `engine.m_invert_force = false` to all coordinate system regression tests to ensure physics validation is independent of application-level inversion defaults.
+    - Adjusted `test_grip_modulation` and `test_rear_force_workaround` logic to account for updated default intensities, ensuring no false-positive test failures.
+    - Verified all 123 tests pass with the new default state.
 
 ## [0.4.31] - 2025-12-20
 
@@ -1125,7 +1196,8 @@ public:
 
     // Texture toggles
     bool m_slide_texture_enabled = false; // Default off (T300 standard)
-    float m_slide_texture_gain = 0.5f; // 0.0 - 1.0
+    float m_slide_texture_gain = 0.5f; // 0.0 - 5.0
+    float m_slide_freq_scale = 1.0f;   // NEW: Frequency Multiplier (v0.4.36)
     
     bool m_road_texture_enabled = false;
     float m_road_texture_gain = 0.5f; // 0.0 - 1.0
@@ -1748,9 +1820,9 @@ public:
                 // Example: 300kmh (83m/s) -> ~80Hz. 50kmh (13m/s) -> ~20Hz.
                 double freq = 10.0 + (car_speed_ms * 1.5); 
 
-                // PHASE ACCUMULATION
+                // PHASE ACCUMULATION (FIXED)
                 m_lockup_phase += freq * dt * TWO_PI;
-                if (m_lockup_phase > TWO_PI) m_lockup_phase -= TWO_PI;
+                m_lockup_phase = std::fmod(m_lockup_phase, TWO_PI); // Wrap correctly
 
                 double amp = severity * m_lockup_gain * 4.0; // Scaled for Nm (was 800)
                 lockup_rumble = std::sin(m_lockup_phase) * amp;
@@ -1784,9 +1856,9 @@ public:
                 // Cap frequency to prevent ultrasonic feeling on high speed burnouts
                 if (freq > 80.0) freq = 80.0;
 
-                // PHASE ACCUMULATION
+                // PHASE ACCUMULATION (FIXED)
                 m_spin_phase += freq * dt * TWO_PI;
-                if (m_spin_phase > TWO_PI) m_spin_phase -= TWO_PI;
+                m_spin_phase = std::fmod(m_spin_phase, TWO_PI); // Wrap correctly
 
                 // Amplitude
                 double amp = severity * m_spin_gain * 2.5; // Scaled for Nm (was 500)
@@ -1800,19 +1872,36 @@ public:
         if (m_slide_texture_enabled) {
             // New logic: Use mLateralPatchVel directly instead of Angle
             // This is cleaner as it represents actual scrubbing speed.
-            double lat_vel_l = std::abs(fl.mLateralPatchVel);
-            double lat_vel_r = std::abs(fr.mLateralPatchVel);
-            double avg_lat_vel = (lat_vel_l + lat_vel_r) / 2.0;
             
-            // Threshold: 0.5 m/s (~2 kph) slip
-            if (avg_lat_vel > 0.5) {
+            // Front Slip Speed
+            double lat_vel_fl = std::abs(fl.mLateralPatchVel);
+            double lat_vel_fr = std::abs(fr.mLateralPatchVel);
+            double front_slip_avg = (lat_vel_fl + lat_vel_fr) / 2.0;
+
+            // Rear Slip Speed (New v0.4.34)
+            double lat_vel_rl = std::abs(data->mWheel[2].mLateralPatchVel);
+            double lat_vel_rr = std::abs(data->mWheel[3].mLateralPatchVel);
+            double rear_slip_avg = (lat_vel_rl + lat_vel_rr) / 2.0;
+
+            // Use the WORST slip (Max)
+            // This ensures we feel understeer (Front) AND oversteer/drifting (Rear)
+            double effective_slip_vel = (std::max)(front_slip_avg, rear_slip_avg);
+            
+            if (effective_slip_vel > 0.5) {
                 
-                // Map 1 m/s -> 40Hz, 10 m/s -> 200Hz
-                double freq = 40.0 + (avg_lat_vel * 17.0);
+                // BASE FORMULA (v0.4.36): 10Hz start, +5Hz per m/s. (Rumble optimized for scale 1.0)
+                double base_freq = 10.0 + (effective_slip_vel * 5.0);
+                
+                // APPLY USER SCALE
+                double freq = base_freq * (double)m_slide_freq_scale;
+                
+                // CAP AT 250Hz (Nyquist safety for 400Hz loop)
                 if (freq > 250.0) freq = 250.0;
 
+                // PHASE ACCUMULATION (CRITICAL FIX)
+                // Use fmod to handle large dt spikes safely
                 m_slide_phase += freq * dt * TWO_PI;
-                if (m_slide_phase > TWO_PI) m_slide_phase -= TWO_PI;
+                m_slide_phase = std::fmod(m_slide_phase, TWO_PI);
 
                 // Sawtooth wave
                 double sawtooth = (m_slide_phase / TWO_PI) * 2.0 - 1.0;
@@ -1909,9 +1998,9 @@ public:
                 // FIX: Use a 50Hz "Crunch" oscillation instead of directional DC offset
                 double freq = 50.0; 
                 
-                // Phase Integration
+                // Phase Integration (FIXED)
                 m_bottoming_phase += freq * dt * TWO_PI;
-                if (m_bottoming_phase > TWO_PI) m_bottoming_phase -= TWO_PI;
+                m_bottoming_phase = std::fmod(m_bottoming_phase, TWO_PI); // Wrap correctly
 
                 // Generate vibration (Sine wave)
                 // This creates a heavy shudder regardless of steering direction
@@ -3149,15 +3238,15 @@ void UpdateDirectInputForce(double normalizedForce) {
 ### 🏁 Prerequisites
 
 **Car/Track Choice:**
-*   **Car:** **Porsche 911 GTE/GT3** is excellent. Because the engine is in the back, the front is light (easy to understeer) and the rear acts like a pendulum (clear oversteer).
-*   **Track:** **Paul Ricard** is perfect because it is flat (no elevation changes to confuse you) and has massive run-off areas so you can spin safely.
-    *   *Tip:* Use the **"Mistral Straight"** (the long one) for high-speed tests.
+*   **Car:** **Porsche 911 GT3/GTE** is the best reference. The rear-engine layout acts like a pendulum, making oversteer very clear, while the light front end makes understeer distinct.
+*   **Track:** **Paul Ricard** is ideal. It is perfectly flat (no elevation changes to confuse the FFB) and has massive asphalt run-off areas for safe spinning.
+    *   *Tip:* Use the **"Mistral Straight"** for high-speed tests.
     *   *Tip:* Use the **last corner (Virage du Pont)** for low-speed traction tests.
 
 **Global Setup:**
 1.  **In-Game (LMU):** FFB Strength 0%, Smoothing 0.
 2.  **Wheel Driver:** Set your physical wheel strength to **20-30%** (Safety first!).
-3.  **LMUFFB:** Start with the **"Default"** preset, then modify as instructed below.
+3.  **LMUFFB:** Start with the **"Default (T300)"** preset, then modify as instructed below.
 
 ---
 
@@ -3169,9 +3258,12 @@ void UpdateDirectInputForce(double normalizedForce) {
 **Quick Setup (Preset):**
 *   Load Preset: **"Guide: Understeer (Front Grip)"**
 
-**Car Setup:**
-*   **Brake Bias:** Move forward (e.g., 60%) to overload front tires.
-*   **Front ARB (Anti-Roll Bar):** Stiff (Max).
+**Extreme Car Setup:**
+*   **Brake Bias:** **Max Forward (e.g., 70-80%)**. This ensures the front tires lock or overload immediately when you touch the brakes.
+*   **Front Springs & ARB:** **Maximum Stiffness**. This reduces mechanical grip at the front.
+*   **Rear Springs & ARB:** **Minimum Stiffness (Soft)**. This glues the rear to the road, forcing the car to push (plow) straight.
+*   **Front Tire Pressure:** **Maximum**. Reduces the contact patch size.
+*   **Rear Wing:** **Maximum**. Keeps the rear planted.
 
 **The Test:**
 1.  Drive at moderate speed (100 km/h).
@@ -3192,18 +3284,18 @@ void UpdateDirectInputForce(double normalizedForce) {
 **Quick Setup (Preset):**
 *   Load Preset: **"Guide: Oversteer (Rear Grip)"**
 
-**Car Setup:**
+**Extreme Car Setup:**
 *   **Traction Control (TC):** **OFF** (Crucial).
-*   **Rear ARB:** Stiffest.
-*   **Rear Springs:** Stiffest.
-*   **Rear Ride Height:** Highest.
-*   **Rear Wing:** Minimal.
-*   **Front ARB:** Softest.
+*   **Rear Springs & ARB:** **Maximum Stiffness**. This drastically reduces rear grip.
+*   **Front Springs & ARB:** **Minimum Stiffness (Soft)**. This gives the front endless grip, ensuring the rear breaks first.
+*   **Rear Ride Height:** **Maximum**. Raises the Center of Gravity, making the car unstable.
+*   **Rear Wing:** **Minimum (P1)**. Removes aerodynamic grip.
+*   **Differential Preload:** **Maximum**. Makes the rear wheels lock together, causing them to break traction easily in tight turns.
 
 **The Test:**
 1.  Take a slow 2nd gear corner.
 2.  Mid-corner, **mash the throttle 100%**.
-3.  The rear will kick out.
+3.  The rear will kick out immediately.
 4.  **What to feel:**
     *   *The Cue:* The steering wheel violently snaps in the **opposite direction** of the turn. If you are turning Left, the wheel rips to the Right.
     *   *Correct Behavior:* If you let go of the wheel, it should spin to align with the road (self-correcting).
@@ -3213,20 +3305,34 @@ void UpdateDirectInputForce(double normalizedForce) {
 
 ### 3. Slide Texture (Scrubbing)
 
-**What is it?** The tires are dragging sideways across the asphalt.
+**What is it?** The tires (Front or Rear) are dragging sideways across the asphalt.
 **The Goal:** A "grinding" or "sandpaper" vibration.
 
 **Quick Setup (Preset):**
 *   Load Preset: **"Guide: Slide Texture (Scrub)"**
+*   *Note:* Start with **Slide Gain** at **1.0**. Increase if too subtle, decrease if the wheel rattles too violently.
+
+**Extreme Car Setup:**
+*   **Tire Pressures:** **Maximum (Front & Rear)**. Hard tires slide easier and transmit more vibration.
+*   **Suspension (Springs/ARB):** **Maximum Stiffness (Front & Rear)**. This turns the car into a go-kart with very little mechanical grip, ensuring it slides immediately upon turning.
+*   **Differential Preload:** **Maximum**. Locks the axle to force tire scrubbing in turns.
+*   **Downforce:** **Minimum**.
 
 **The Test:**
-1.  Go to a wide runoff area.
-2.  Turn the wheel fully to one side and accelerate to do a "donut" or a heavy understeer plow.
-3.  **What to feel:**
-    *   *The Cue:* A distinct, gritty vibration.
-    *   *Physics Check:* The vibration pitch (frequency) should get **higher** as you slide faster.
-        *   Slow slide = "Grrr-grrr" (Low rumble).
-        *   Fast slide = "Zzzzzzz" (High buzz).
+*Option A: The Plow (Recommended)*
+1.  Drive at **80 - 100 km/h** in a runoff area.
+2.  Turn the wheel **90 to 180 degrees** rapidly and hold.
+3.  The car should refuse to turn and "plow" straight.
+4.  **Feel:** A gritty vibration in the rim.
+    *   *Tuning:* If it feels like a "buzz" but has no power, increase Gain. If it feels like a "hammer," decrease Gain.
+
+*Option B: The Donut*
+1.  Stop. 1st Gear.
+2.  Turn fully to lock. Full Throttle.
+3.  **Feel:** Continuous rumble from the rear tires spinning and sliding.
+
+**Physics Check:**
+*   Look at the **"Patch Velocities"** graph. Either `Avg Front Lat` OR `Avg Rear Lat` must exceed **0.5 m/s** to trigger the effect.
 
 ---
 
@@ -3238,8 +3344,10 @@ void UpdateDirectInputForce(double normalizedForce) {
 **Quick Setup (Preset):**
 *   Load Preset: **"Guide: Braking Lockup"**
 
-**Car Setup:**
+**Extreme Car Setup:**
 *   **ABS:** **OFF** (Crucial).
+*   **Brake Bias:** **Extreme Forward (e.g., 75-80%)**. This guarantees the front wheels lock up long before the rears, making the test predictable.
+*   **Front Tire Pressure:** **Maximum**. Less grip means easier locking.
 
 **The Test:**
 1.  Drive fast (200 km/h) down the Mistral Straight.
@@ -3258,8 +3366,11 @@ void UpdateDirectInputForce(double normalizedForce) {
 **Quick Setup (Preset):**
 *   Load Preset: **"Guide: Traction Loss (Spin)"**
 
-**Car Setup:**
+**Extreme Car Setup:**
 *   **TC:** **OFF**.
+*   **Rear Tire Pressure:** **Maximum**. Turns the tires into hard plastic, making wheelspin effortless.
+*   **Rear Springs:** **Maximum Stiffness**.
+*   **Differential Preload:** **Maximum**. Ensures both rear wheels spin up together instantly.
 
 **The Test:**
 1.  Stop the car. Put it in 1st gear.
@@ -3268,19 +3379,21 @@ void UpdateDirectInputForce(double normalizedForce) {
     *   *The Cue:* The steering weight suddenly disappears (Torque Drop). It feels like the car is floating on ice.
     *   *The Vibe:* A high-pitched hum/whine that rises as the RPM/Wheel Speed rises.
 
-
 ---
 
 ### 6. SoP Yaw (The Kick)
 
 **What is it?** A predictive impulse based on **Yaw Acceleration** (how fast the car *starts* to rotate). Unlike Lateral G (which is a sustained weight), this is a momentary "kick" or "jolt".
-**The Goal:** To signal the exact moment the rear tires break traction, often before the visual slide is apparent.
+**The Goal:** To signal the exact moment the rear tires break traction.
 
-**UI Settings (Isolation):**
-*   **Preset:** `Guide: SoP Yaw (Kick)`
-*   **Master Gain:** `1.0`
-*   **SoP Yaw (Kick):** `2.0` (Max)
-*   **Base Force Mode:** `Muted` (Crucial to feel the isolated kick)
+**Quick Setup (Preset):**
+*   Load Preset: **"Guide: SoP Yaw (Kick)"**
+
+**Extreme Car Setup:**
+*   **TC:** **OFF**.
+*   **Brake Bias:** **Extreme Rearward (e.g., 40%)**. This makes the car incredibly unstable under braking.
+*   **Rear Ride Height:** **Maximum**. Makes the car "tippy" and prone to snapping.
+*   **Front Springs:** **Soft**. Allows the nose to dive, lightening the rear further.
 
 **The Test:**
 1.  Drive at moderate speed (3rd gear) on a straight.
@@ -3296,11 +3409,12 @@ void UpdateDirectInputForce(double normalizedForce) {
 **What is it?** A resistance force that opposes rapid steering movements. It simulates the gyroscopic inertia of the spinning front wheels.
 **The Goal:** To prevent "Tank Slappers" (oscillation) and give the steering a sensation of weight/viscosity that scales with speed.
 
-**UI Settings (Isolation):**
-*   **Preset:** `Guide: Gyroscopic Damping`
-*   **Master Gain:** `1.0`
-*   **Gyroscopic Damping:** `1.0` (Max)
-*   **Base Force Mode:** `Muted` (Crucial: The wheel will have no self-aligning torque, only resistance).
+**Quick Setup (Preset):**
+*   Load Preset: **"Guide: Gyroscopic Damping"**
+
+**Extreme Car Setup:**
+*   **Aero:** **Minimum (Low Drag)**. To achieve the highest possible top speed on the straight.
+*   **Caster:** **Maximum**. High caster creates strong self-aligning torque, which makes the need for damping more obvious to prevent oscillation.
 
 **The Test:**
 1.  **Stationary Test:** Sit in the pits (0 km/h). Wiggle the wheel left and right.
@@ -3315,14 +3429,19 @@ void UpdateDirectInputForce(double normalizedForce) {
 ### 8. Corner Entry (Weight Transfer & Loading)
 
 **What is it?** The sensation of the steering wheel getting heavier as you brake and turn in, transferring the car's weight onto the front tires.
-**The Goal:** To confirm that the steering rack force (Base Force) accurately communicates the increased load on the front axle before the limit is reached.
+**The Goal:** To confirm that the steering rack force (Base Force) accurately communicates the increased load on the front axle.
 
 **UI Settings (Isolation):**
 *   **Master Gain:** `1.0`
 *   **Steering Shaft Gain:** `1.0`
-*   **Base Force Mode:** `Native` (Crucial: We need the game's physics alignment torque).
-*   **Understeer Effect:** `0.0` (Disable to feel the raw build-up).
+*   **Base Force Mode:** `Native`
+*   **Understeer Effect:** `0.0`
 *   **SoP / Textures:** `0.0`
+
+**Extreme Car Setup:**
+*   **Front Springs:** **Minimum Stiffness (Soft)**. Allows the nose to dive significantly under braking.
+*   **Front Bump Dampers:** **Soft**. Allows fast weight transfer.
+*   **Brake Bias:** **Forward**.
 
 **The Test:**
 1.  Drive at high speed on a straight.
@@ -3337,13 +3456,17 @@ void UpdateDirectInputForce(double normalizedForce) {
 ### 9. Mid-Corner Limit (The "Throb")
 
 **What is it?** A specific vibration texture that appears *exactly* when the front tires reach their peak slip angle, just before they start to slide/understeer.
-**The Goal:** To provide a tactile warning that you are at the limit of grip, allowing you to balance the car on the edge.
+**The Goal:** To provide a tactile warning that you are at the limit of grip, allowing you to balance the car on the edge..
 
 **UI Settings (Isolation):**
 *   **Master Gain:** `1.0`
 *   **Slide Rumble:** **Checked**
 *   **Slide Gain:** `1.0`
-*   **Understeer Effect:** `0.5` (To feel the weight drop *after* the throb).
+*   **Understeer Effect:** `0.5`
+
+**Extreme Car Setup:**
+*   **Tire Pressures:** **High**. Makes the tire limit sharper and less forgiving.
+*   **Aero:** **High**. Allows you to sustain high cornering speeds to hold the slip angle.
 
 **The Test:**
 1.  Take a long, constant-radius corner (e.g., a carousel).
@@ -3360,14 +3483,13 @@ void UpdateDirectInputForce(double normalizedForce) {
 **What is it?** A pulsing vibration that mimics the ABS pump releasing brake pressure when the wheel is about to lock.
 **The Goal:** To allow the driver to mash the brake pedal and feel exactly where the threshold is without looking at a HUD.
 
-**UI Settings (Isolation):**
-*   **Master Gain:** `1.0`
-*   **Progressive Lockup:** **Checked**
-*   **Lockup Gain:** `1.0`
-*   **Base Force Mode:** `Muted` (To isolate the vibration).
+**Quick Setup (Preset):**
+*   Load Preset: **"Guide: Braking Lockup"** (Note: This preset usually isolates lockup, but for this test, we want to feel the ABS pulse).
 
-**Car Setup:**
-*   **ABS:** **ON** (Set to a high intervention level).
+**Extreme Car Setup:**
+*   **ABS:** **ON (Set to High / Max Intervention)**.
+*   **Brake Pressure:** **100%**.
+*   **Tire Pressures:** **Maximum**. Low grip ensures ABS triggers instantly.
 
 **The Test:**
 1.  Drive fast.
@@ -3375,7 +3497,7 @@ void UpdateDirectInputForce(double normalizedForce) {
 3.  **What to feel:**
     *   *The Cue:* A rapid, mechanical rattling or pulsing vibration.
     *   *Physics Check:* Since ABS prevents full lockup, the `Slip Ratio` will oscillate rapidly. The FFB should reflect this with a "Rattle" rather than a continuous "Screech."
-
+    
 ---
 
 ### Effects currently missing in lmuFFB v0.4.25
@@ -3409,7 +3531,6 @@ Does LMUFFB produce all the effects described in this video `youtube: XHSEAMQgN2
     *   *Missing Feature:* **Synthetic Longitudinal Weighting.** We calculate `Load Factor` for textures, but we do *not* use it to scale the `Base Force`.
     *   *Recommendation:* We should implement `Master_Gain_Dynamic = Master_Gain * (1.0 + (Longitudinal_G * Factor))` to artificially boost weight under braking if the game is too numb.
 
-
 ### 🛠️ Troubleshooting Cheat Sheet
 
 | Symptom | Diagnosis | Fix |
@@ -3423,6 +3544,9 @@ Does LMUFFB produce all the effects described in this video `youtube: XHSEAMQgN2
 ### References
 
 * `youtube: XHSEAMQgN2c`
+* `youtube: kj4AEsnX5Cs`
+
+
 
 ```
 
@@ -13297,6 +13421,126 @@ To evolve LMUFFB from a prototype to a daily-driver application, the following s
 
 ```
 
+# File: docs\dev_docs\SoP scale fixes.md
+```markdown
+## Question
+
+Is the  "100 Nm" Scaling Issue perhaps caused by the Sop Scale value at 20?
+
+## Answer
+
+**Yes, you have hit the nail on the head.**
+
+The `SoP Scale` value of **20.0** is the primary reason your calculated forces are reaching such high levels (40–60 Nm), which forces you to set `Max Torque Ref` to **100 Nm** to prevent clipping.
+
+Here is the math behind what is happening in your setup:
+
+1.  **The SoP Calculation:**
+    *   Formula: `Lateral G` × `SoP Effect` × `SoP Scale`.
+    *   Typical Corner: **2.0 G** × **1.0** (Gain) × **20.0** (Scale) = **40.0 Nm**.
+2.  **The Base Force:**
+    *   LMU Physics: **~20.0 Nm** (typical for GTE cars).
+3.  **The Total:**
+    *   40 Nm (SoP) + 20 Nm (Base) = **60.0 Nm**.
+4.  **The Scaling (Your Setting):**
+    *   To fit this 60 Nm signal into your wheel without hitting the limit (clipping), you correctly set `Max Torque Ref` to **100 Nm**.
+    *   Output: 60 / 100 = **0.60** (60% strength). This feels great on a T300.
+
+### The "Side Effect" on Textures
+This setup creates a problem for the **Slide Texture** (and other vibrations):
+*   The Slide Texture formula generates a fixed force of about **3.0 Nm**.
+*   When you divide that by your **100 Nm** reference: `3.0 / 100 = 0.03`.
+*   You are sending **3% force** to the wheel. The T300 belt friction eats that alive.
+
+### The Solution
+You have two options to fix this imbalance:
+
+**Option A: Rebalance the Macro Forces (Lower SoP)**
+If you lower `SoP Scale` to **5.0** (the old default):
+*   SoP becomes: 2.0 G × 5.0 = **10 Nm**.
+*   Total becomes: 20 (Base) + 10 (SoP) = **30 Nm**.
+*   You can now lower `Max Torque Ref` to **30-40 Nm**.
+*   **Result:** The Slide Texture (3 Nm) is now `3 / 30 = 0.10` (**10% force**). You will feel it clearly.
+*   *Trade-off:* The SoP effect will feel weaker relative to the car's natural steering weight.
+
+**Option B: Boost the Micro Forces (Keep SoP High)**
+If you like the heavy SoP feel, keep `Max Torque Ref` at 100 Nm, but we need to drastically boost the texture gain.
+*   Currently, the slider maxes at **2.0**.
+*   We need to allow it to go to **10.0** or **20.0** so the texture generates **30 Nm** (internal math) to result in a 30% output signal.
+
+**Recommendation:**
+For now, try **Option A** to verify the physics. Set `SoP Scale` to **5.0** and `Max Torque Ref` to **30.0**. This should make the Slide Texture immediately obvious.
+
+## Question 2
+
+So it seems the SoP scale should be lowered in order not to affect other FFB effects. If there is the trade off that the "SoP effect will feel weaker relative to the car's natural steering weight", we should adjust SoP specific sliders, instead of sliders that affect other effects. What should be a good default value, and a good range for the SoP scale slider? Right now, the slider goes up to 200.0, which seems disproportionate.
+
+
+## Answer 2
+
+You are absolutely correct. The current range (up to 200.0) is absurdly high for the new Newton-meter based math, and the default of 20.0 is aggressive enough that it forces the "100 Nm" scaling issue you discovered.
+
+Here is the corrected calibration strategy.
+
+### The Logic: Balancing the Mix
+To fix the "Texture Visibility" issue without breaking the "SoP Weight," we need to bring the SoP forces down to a level comparable to the Base Game Physics (~15-25 Nm). This allows us to lower `Max Torque Ref`, which automatically "zooms in" on the textures.
+
+**The Math:**
+*   **Lateral G:** ~2.0 G (Cornering).
+*   **Target SoP Force:** ~10.0 Nm (A strong but reasonable overlay).
+*   **Formula:** $2.0 \text{ G} \times \text{Scale} = 10.0 \text{ Nm}$.
+*   **Ideal Scale:** **5.0**.
+
+### Recommended Values
+
+*   **Default Value:** **5.0** (Was 20.0).
+    *   *Result:* 2G turn = 10 Nm SoP. Added to ~20 Nm Base force = 30 Nm Total.
+    *   *Benefit:* You can set `Max Torque Ref` to **30-40 Nm**. Textures (3 Nm) become **10%** of the signal (clearly felt).
+*   **Slider Range:** **0.0 to 20.0** (Was 0.0 to 200.0).
+    *   *Max (20.0):* 2G turn = 40 Nm SoP. This is massive (2x the car's actual steering force). Anything beyond this is just clipping.
+
+### Code Changes Required
+
+We need to update `src/Config.h` (Defaults) and `src/GuiLayer.cpp` (Slider Range).
+
+#### 1. Update `src/Config.h`
+Change the default `sop_scale` back to 5.0.
+
+```cpp
+// src/Config.h
+struct Preset {
+    // ...
+    float sop = 1.0f;
+    float sop_scale = 5.0f; // CHANGED: 20.0 -> 5.0 (Balanced for Nm)
+    // ...
+```
+
+#### 2. Update `src/GuiLayer.cpp`
+Clamp the slider range to a usable scale.
+
+```cpp
+// src/GuiLayer.cpp
+// Inside DrawTuningWindow...
+
+// Old
+// FloatSetting("SoP Scale", &engine.m_sop_scale, 0.0f, 200.0f, "%.1f");
+
+// New
+FloatSetting("SoP Scale", &engine.m_sop_scale, 0.0f, 20.0f, "%.1f");
+if (ImGui::IsItemHovered()) ImGui::SetTooltip("Scales Lateral G to Nm.\n5.0 = Balanced (10Nm at 2G).\n20.0 = Heavy (40Nm at 2G).");
+```
+
+### How to compensate for the "Weaker Feel"
+If you lower `SoP Scale` to 5.0 and the wheel feels too light in corners:
+1.  **Do NOT** increase `SoP Scale` back to 20.
+2.  **INSTEAD**, lower `Max Torque Ref` (e.g., from 100 down to 35 or 40).
+    *   This restores the *strength* of the SoP.
+    *   Crucially, it **also boosts the textures** by the same amount.
+
+This maintains the **Ratio** between SoP and Textures, which is what was broken in your previous setup.
+ 
+```
+
 # File: docs\dev_docs\spec_v0.4.11_tuning.md
 ```markdown
 # Technical Specification: FFB Tuning & Expansion (v0.4.11)
@@ -16452,19 +16696,21 @@ void Config::LoadPresets() {
     // 2. T300 (Redundant but kept for explicit selection)
     presets.push_back(Preset("T300", true)
         .SetGain(1.0f)
-        .SetUndersteer(38.0f)
-        .SetSoP(1.0f)
-        .SetRearAlign(5.0f)
-        .SetSoPYaw(5.0f)
-        .SetMaxTorque(100.0f)
+        .SetUndersteer(0.61f)
+        .SetSoP(0.08f)
+        .SetSoPScale(1.0f)
+        .SetRearAlign(0.90f)
+        .SetSoPYaw(0.0f)
+        .SetMaxTorque(98.3f)
         .SetInvert(true)
+        .SetSlide(true, 0.39f)
     );
     
     // 3. Test: Game Base FFB Only
     presets.push_back(Preset("Test: Game Base FFB Only", true)
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
-        .SetSoPScale(20.0f)
+        .SetSoPScale(1.0f)
         .SetSmoothing(0.05f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
@@ -16473,8 +16719,8 @@ void Config::LoadPresets() {
     // 4. Test: SoP Only
     presets.push_back(Preset("Test: SoP Only", true)
         .SetUndersteer(0.0f)
-        .SetSoP(1.0f)
-        .SetSoPScale(20.0f)
+        .SetSoP(0.08f)
+        .SetSoPScale(1.0f)
         .SetSmoothing(0.05f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
@@ -16484,9 +16730,9 @@ void Config::LoadPresets() {
 
     // 5. Test: Understeer Only
     presets.push_back(Preset("Test: Understeer Only", true)
-        .SetUndersteer(38.0f)
+        .SetUndersteer(0.61f)
         .SetSoP(0.0f)
-        .SetSoPScale(20.0f)
+        .SetSoPScale(1.0f)
         .SetSmoothing(0.05f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
@@ -16500,7 +16746,7 @@ void Config::LoadPresets() {
         .SetSmoothing(0.0f)
         .SetLockup(true, 1.0f)
         .SetSpin(true, 1.0f)
-        .SetSlide(true, 1.0f)
+        .SetSlide(true, 0.39f)
         .SetRoad(true, 1.0f)
         .SetRearAlign(0.0f)
         .SetBaseMode(2) // Muted
@@ -16513,7 +16759,7 @@ void Config::LoadPresets() {
         .SetSoP(0.0f)
         .SetSmoothing(0.05f)
         .SetSlide(false, 0.0f)
-        .SetRearAlign(5.0f)
+        .SetRearAlign(0.90f)
         .SetSoPYaw(0.0f)
     );
 
@@ -16521,7 +16767,7 @@ void Config::LoadPresets() {
     presets.push_back(Preset("Test: SoP Base Only", true)
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
-        .SetSoP(1.0f)
+        .SetSoP(0.08f)
         .SetSmoothing(0.05f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
@@ -16535,7 +16781,7 @@ void Config::LoadPresets() {
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
         .SetSmoothing(0.0f)
-        .SetSlide(true, 1.0f)
+        .SetSlide(true, 0.39f, 1.0f)
         .SetRearAlign(0.0f)
         .SetBaseMode(2) // Muted
     );
@@ -16556,7 +16802,7 @@ void Config::LoadPresets() {
     // 11. Guide: Understeer (Front Grip Loss)
     presets.push_back(Preset("Guide: Understeer (Front Grip)", true)
         .SetGain(1.0f)
-        .SetUndersteer(38.0f)
+        .SetUndersteer(0.61f)
         .SetSoP(0.0f)
         .SetOversteer(0.0f)
         .SetRearAlign(0.0f)
@@ -16574,10 +16820,10 @@ void Config::LoadPresets() {
     presets.push_back(Preset("Guide: Oversteer (Rear Grip)", true)
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
-        .SetSoP(1.0f)
-        .SetSoPScale(20.0f)
-        .SetRearAlign(5.0f)
-        .SetOversteer(1.0f)
+        .SetSoP(0.08f)
+        .SetSoPScale(1.0f)
+        .SetRearAlign(0.90f)
+        .SetOversteer(0.65f)
         .SetSoPYaw(0.0f)
         .SetGyro(0.0f)
         .SetLockup(false, 0.0f)
@@ -16595,7 +16841,7 @@ void Config::LoadPresets() {
         .SetSoP(0.0f)
         .SetOversteer(0.0f)
         .SetRearAlign(0.0f)
-        .SetSlide(true, 1.0f)
+        .SetSlide(true, 0.39f, 1.0f) // Gain 0.39, Freq 1.0 (Rumble)
         .SetScrub(1.0f)
         .SetLockup(false, 0.0f)
         .SetSpin(false, 0.0f)
@@ -16731,6 +16977,7 @@ void Config::LoadPresets() {
                         else if (key == "spin_gain") current_preset.spin_gain = std::stof(value);
                         else if (key == "slide_enabled") current_preset.slide_enabled = std::stoi(value);
                         else if (key == "slide_gain") current_preset.slide_gain = std::stof(value);
+                        else if (key == "slide_freq") current_preset.slide_freq = std::stof(value);
                         else if (key == "road_enabled") current_preset.road_enabled = std::stoi(value);
                         else if (key == "road_gain") current_preset.road_gain = std::stof(value);
                         else if (key == "invert_force") current_preset.invert_force = std::stoi(value);
@@ -16804,6 +17051,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "spin_gain=" << engine.m_spin_gain << "\n";
         file << "slide_enabled=" << engine.m_slide_texture_enabled << "\n";
         file << "slide_gain=" << engine.m_slide_texture_gain << "\n";
+        file << "slide_freq=" << engine.m_slide_freq_scale << "\n";
         file << "road_enabled=" << engine.m_road_texture_enabled << "\n";
         file << "road_gain=" << engine.m_road_texture_gain << "\n";
         file << "invert_force=" << engine.m_invert_force << "\n";
@@ -16835,6 +17083,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
                 file << "spin_gain=" << p.spin_gain << "\n";
                 file << "slide_enabled=" << p.slide_enabled << "\n";
                 file << "slide_gain=" << p.slide_gain << "\n";
+                file << "slide_freq=" << p.slide_freq << "\n";
                 file << "road_enabled=" << p.road_enabled << "\n";
                 file << "road_gain=" << p.road_gain << "\n";
                 file << "invert_force=" << p.invert_force << "\n";
@@ -16896,6 +17145,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "spin_gain") engine.m_spin_gain = std::stof(value);
                     else if (key == "slide_enabled") engine.m_slide_texture_enabled = std::stoi(value);
                     else if (key == "slide_gain") engine.m_slide_texture_gain = std::stof(value);
+                    else if (key == "slide_freq") engine.m_slide_freq_scale = std::stof(value);
                     else if (key == "road_enabled") engine.m_road_texture_enabled = std::stoi(value);
                     else if (key == "road_gain") engine.m_road_texture_gain = std::stof(value);
                     else if (key == "invert_force") engine.m_invert_force = std::stoi(value);
@@ -16934,12 +17184,12 @@ struct Preset {
     
     // 1. Define Defaults inline (Matches "Default" preset logic)
     float gain = 1.0f;
-    float understeer = 38.0f;
-    float sop = 1.0f;
-    float sop_scale = 20.0f;
+    float understeer = 0.61f; // Calibrated from Image
+    float sop = 0.08f;        // Calibrated from Image
+    float sop_scale = 1.0f;   // Calibrated from Image
     float sop_smoothing = 0.05f;
     float min_force = 0.0f;
-    float oversteer_boost = 1.0f;
+    float oversteer_boost = 0.65f; // Calibrated from Image
     
     bool lockup_enabled = false;
     float lockup_gain = 0.5f;
@@ -16947,22 +17197,23 @@ struct Preset {
     bool spin_enabled = false;
     float spin_gain = 0.5f;
     
-    bool slide_enabled = false; // Default off (T300 standard)
-    float slide_gain = 0.5f;
+    bool slide_enabled = true; // Enabled in Image
+    float slide_gain = 0.39f;  // Calibrated from Image
+    float slide_freq = 1.0f;    // NEW: Frequency Multiplier (v0.4.36)
     
     bool road_enabled = false;
     float road_gain = 0.5f;
     
     bool invert_force = true;
-    float max_torque_ref = 100.0f;
+    float max_torque_ref = 98.3f; // Calibrated from Image
     
     bool use_manual_slip = false;
     int bottoming_method = 0;
     float scrub_drag_gain = 0.0f;
     
-    float rear_align_effect = 5.0f;
-    float sop_yaw_gain = 5.0f; // New v0.4.15
-    float gyro_gain = 0.0f; // New v0.4.17
+    float rear_align_effect = 0.90f; // Calibrated from Image
+    float sop_yaw_gain = 0.0f;       // Calibrated from Image
+    float gyro_gain = 0.0f;
     
     float steering_shaft_gain = 1.0f;
     int base_force_mode = 0; // 0=Native
@@ -16982,7 +17233,12 @@ struct Preset {
     
     Preset& SetLockup(bool enabled, float g) { lockup_enabled = enabled; lockup_gain = g; return *this; }
     Preset& SetSpin(bool enabled, float g) { spin_enabled = enabled; spin_gain = g; return *this; }
-    Preset& SetSlide(bool enabled, float g) { slide_enabled = enabled; slide_gain = g; return *this; }
+    Preset& SetSlide(bool enabled, float g, float f = 1.0f) { 
+        slide_enabled = enabled; 
+        slide_gain = g; 
+        slide_freq = f; 
+        return *this; 
+    }
     Preset& SetRoad(bool enabled, float g) { road_enabled = enabled; road_gain = g; return *this; }
     
     Preset& SetInvert(bool v) { invert_force = v; return *this; }
@@ -17013,6 +17269,7 @@ struct Preset {
         engine.m_spin_gain = spin_gain;
         engine.m_slide_texture_enabled = slide_enabled;
         engine.m_slide_texture_gain = slide_gain;
+        engine.m_slide_freq_scale = slide_freq;
         engine.m_road_texture_enabled = road_enabled;
         engine.m_road_texture_gain = road_gain;
         engine.m_invert_force = invert_force;
@@ -17042,6 +17299,7 @@ struct Preset {
         spin_gain = engine.m_spin_gain;
         slide_enabled = engine.m_slide_texture_enabled;
         slide_gain = engine.m_slide_texture_gain;
+        slide_freq = engine.m_slide_freq_scale;
         road_enabled = engine.m_road_texture_enabled;
         road_gain = engine.m_road_texture_gain;
         invert_force = engine.m_invert_force;
@@ -18038,7 +18296,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Debug tool to isolate effects.\nNative: Raw physics.\nSynthetic: Constant force to tune Grip drop-off.\nMuted: Zero base force.");
 
         FloatSetting("SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, "%.2f (1=Raw)");
-        FloatSetting("SoP Scale", &engine.m_sop_scale, 0.0f, 200.0f, "%.1f");
+        FloatSetting("SoP Scale", &engine.m_sop_scale, 0.0f, 20.0f, "%.1f");
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Scales Lateral G to Nm.\n5.0 = Balanced (10Nm at 2G).\n20.0 = Heavy (40Nm at 2G).");
         FloatSetting("Load Cap", &engine.m_max_load_factor, 1.0f, 3.0f, "%.1fx");
         ImGui::TreePop();
     }
@@ -18061,12 +18320,12 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     ImGui::Text("Haptics (Dynamic)");
     BoolSetting("Progressive Lockup", &engine.m_lockup_enabled);
     if (engine.m_lockup_enabled) {
-        ImGui::SameLine(); FloatSetting("##Lockup", &engine.m_lockup_gain, 0.0f, 1.0f, "Gain: %.2f");
+        ImGui::SameLine(); FloatSetting("##Lockup", &engine.m_lockup_gain, 0.0f, 5.0f, "Gain: %.2f");
     }
     
     BoolSetting("Spin Traction Loss", &engine.m_spin_enabled);
     if (engine.m_spin_enabled) {
-        ImGui::SameLine(); FloatSetting("##Spin", &engine.m_spin_gain, 0.0f, 1.0f, "Gain: %.2f");
+        ImGui::SameLine(); FloatSetting("##Spin", &engine.m_spin_gain, 0.0f, 5.0f, "Gain: %.2f");
     }
     
     // v0.4.5: Manual Slip Calculation Toggle
@@ -18078,7 +18337,12 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     BoolSetting("Slide Rumble", &engine.m_slide_texture_enabled);
     if (engine.m_slide_texture_enabled) {
         ImGui::Indent();
-        FloatSetting("Slide Gain", &engine.m_slide_texture_gain, 0.0f, 2.0f);
+        FloatSetting("Slide Gain", &engine.m_slide_texture_gain, 0.0f, 5.0f);
+        
+        // NEW SLIDER (v0.4.36)
+        FloatSetting("Slide Pitch (Freq)", &engine.m_slide_freq_scale, 0.5f, 5.0f, "%.1fx");
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Adjusts the vibration pitch.\n1.0 = Low Rumble (Best for T300/G29)\n3.0+ = High Buzz (Best for Direct Drive)");
+        
         ImGui::Unindent();
     }
     BoolSetting("Road Details", &engine.m_road_texture_enabled);
@@ -20176,6 +20440,7 @@ void test_coordinate_scrub_drag_direction(); // Forward declaration (v0.4.19)
 void test_coordinate_debug_slip_angle_sign(); // Forward declaration (v0.4.19)
 void test_regression_no_positive_feedback(); // Forward declaration (v0.4.19)
 void test_coordinate_all_effects_alignment(); // Forward declaration (v0.4.21)
+void test_regression_phase_explosion(); // Forward declaration (Regression)
 
 
 
@@ -20507,6 +20772,7 @@ static void test_grip_modulation() {
     
     // Default RH to avoid scraping
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    data.mLocalVel.z = 20.0; // Ensure moving to avoid low-speed cutoffs
 
     // Set Gain to 1.0 for testing logic (default is now 0.5)
     engine.m_gain = 1.0; 
@@ -20525,6 +20791,8 @@ static void test_grip_modulation() {
     data.mWheel[1].mGripFract = 1.0;
     // v0.4.5: Ensure RH > 0.002 to avoid scraping
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    // v0.4.30: Default is 38.0, but test expects 1.0 attenuation logic
+    engine.m_understeer_effect = 1.0;
     
     double force_full = engine.calculate_force(&data);
     ASSERT_NEAR(force_full, 0.5, 0.001);
@@ -20676,38 +20944,81 @@ static void test_progressive_lockup() {
 }
 
 static void test_slide_texture() {
-    std::cout << "\nTest: Slide Texture" << std::endl;
-    FFBEngine engine;
-    TelemInfoV01 data;
-    std::memset(&data, 0, sizeof(data));
+    std::cout << "\nTest: Slide Texture (Front & Rear)" << std::endl;
     
-    // Default RH to avoid scraping
-    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
-    
-    engine.m_slide_texture_enabled = true;
-    engine.m_slide_texture_gain = 1.0;
-    
-    data.mSteeringShaftTorque = 0.0;
-    // Emulate high lateral velocity (was SlipAngle > 0.15)
-    // New threshold is > 0.5 m/s.
-    data.mWheel[0].mLateralPatchVel = 5.0; 
-    data.mWheel[1].mLateralPatchVel = 5.0;
-    
-    data.mDeltaTime = 0.013; // Avoid 0.01 which lands exactly on zero-crossing for 125Hz
-    data.mWheel[0].mTireLoad = 1000.0; // Some load
-    data.mWheel[1].mTireLoad = 1000.0;
-    
-    // Run two frames to advance phase
-    engine.calculate_force(&data);
-    double force = engine.calculate_force(&data);
-    
-    // We just assert it's non-zero
-    if (std::abs(force) > 0.00001) {
-        std::cout << "[PASS] Slide texture generated non-zero force: " << force << std::endl;
-        g_tests_passed++;
-    } else {
-        std::cout << "[FAIL] Slide texture force is zero" << std::endl;
-        g_tests_failed++;
+    // Case 1: Front Slip (Understeer)
+    {
+        FFBEngine engine;
+        TelemInfoV01 data;
+        std::memset(&data, 0, sizeof(data));
+        // Default RH to avoid scraping
+        data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+        
+        engine.m_max_torque_ref = 20.0f; // Standard scale for test
+        engine.m_slide_texture_enabled = true;
+        engine.m_slide_texture_gain = 1.0;
+        
+        data.mSteeringShaftTorque = 0.0;
+        
+        // Front Sliding
+        data.mWheel[0].mLateralPatchVel = 5.0; 
+        data.mWheel[1].mLateralPatchVel = 5.0;
+        data.mWheel[2].mLateralPatchVel = 0.0; // Rear Grip
+        data.mWheel[3].mLateralPatchVel = 0.0;
+        
+        engine.m_slide_freq_scale = 1.0f;
+        
+        data.mDeltaTime = 0.013; // 13ms. For 35Hz (5m/s input), period is 28ms. 
+                                 // 13ms is ~0.46 period, ensuring non-zero phase advance.
+        data.mWheel[0].mTireLoad = 4000.0; // Full load
+        data.mWheel[1].mTireLoad = 4000.0;
+        
+        engine.calculate_force(&data); // Cycle 1
+        double force = engine.calculate_force(&data); // Cycle 2
+        
+        if (std::abs(force) > 0.001) {
+             std::cout << "[PASS] Front slip triggers Slide Texture (Force: " << force << ")" << std::endl;
+             g_tests_passed++;
+        } else {
+             std::cout << "[FAIL] Front slip failed to trigger Slide Texture." << std::endl;
+             g_tests_failed++;
+        }
+    }
+
+    // Case 2: Rear Slip (Oversteer/Drift)
+    {
+        FFBEngine engine;
+        TelemInfoV01 data;
+        std::memset(&data, 0, sizeof(data));
+        data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+
+        engine.m_max_torque_ref = 20.0f; 
+        engine.m_slide_texture_enabled = true;
+        engine.m_slide_texture_gain = 1.0;
+        engine.m_slide_freq_scale = 1.0f;
+        
+        data.mSteeringShaftTorque = 0.0;
+        
+        // Front Grip, Rear Sliding
+        data.mWheel[0].mLateralPatchVel = 0.0; 
+        data.mWheel[1].mLateralPatchVel = 0.0;
+        data.mWheel[2].mLateralPatchVel = 10.0; // High Rear Slip
+        data.mWheel[3].mLateralPatchVel = 10.0;
+        
+        data.mDeltaTime = 0.013;
+        data.mWheel[0].mTireLoad = 4000.0; // Front Load required for effect amplitude scaling
+        data.mWheel[1].mTireLoad = 4000.0;
+
+        engine.calculate_force(&data);
+        double force = engine.calculate_force(&data);
+        
+        if (std::abs(force) > 0.001) {
+             std::cout << "[PASS] Rear slip triggers Slide Texture (Force: " << force << ")" << std::endl;
+             g_tests_passed++;
+        } else {
+             std::cout << "[FAIL] Rear slip failed to trigger Slide Texture." << std::endl;
+             g_tests_failed++;
+        }
     }
 }
 
@@ -21229,6 +21540,7 @@ static void test_sanity_checks() {
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
     // Set Ref to 20.0 for legacy test expectations
     engine.m_max_torque_ref = 20.0f;
+    engine.m_invert_force = false;
 
     // 1. Test Missing Load Correction
     // Condition: Load = 0 but Moving
@@ -21491,7 +21803,7 @@ static void test_presets() {
     // Verify
     // Update expectation: Test: SoP Only uses default 1.0f Gain in Config.cpp (not 0.5f)
     bool gain_ok = (engine.m_gain == 1.0f);
-    bool sop_ok = (engine.m_sop_effect == 1.0f);
+    bool sop_ok = (std::abs(engine.m_sop_effect - 0.08f) < 0.001f);
     bool under_ok = (engine.m_understeer_effect == 0.0f);
     
     if (gain_ok && sop_ok && under_ok) {
@@ -22015,6 +22327,7 @@ static void test_regression_rear_torque_lpf() {
     engine.m_sop_effect = 0.0; // Isolate rear torque
     engine.m_oversteer_boost = 0.0;
     engine.m_max_torque_ref = 20.0f;
+    engine.m_invert_force = false;
     engine.m_gain = 1.0f; // Explicit gain for clarity
     
     // Setup: Car is sliding sideways (5 m/s) but has Grip (1.0)
@@ -22465,6 +22778,7 @@ int main() {
     test_coordinate_debug_slip_angle_sign();
     test_regression_no_positive_feedback();
     test_coordinate_all_effects_alignment(); // v0.4.21
+    test_regression_phase_explosion(); // Regression
     
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
@@ -23720,6 +24034,53 @@ static void test_coordinate_all_effects_alignment() {
     
     if (all_aligned) {
         std::cout << "[PASS] Effects Component Check Passed." << std::endl;
+        g_tests_passed++;
+    } else {
+        g_tests_failed++;
+    }
+}
+
+static void test_regression_phase_explosion() {
+    std::cout << "\nTest: Regression - Phase Explosion (Slide Texture Fix)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+
+    // Enable Slide Texture
+    engine.m_slide_texture_enabled = true;
+    engine.m_slide_texture_gain = 1.0f;
+    engine.m_slide_freq_scale = 1.0f;
+    // Disable others
+    engine.m_sop_effect = 0.0f;
+    engine.m_road_texture_enabled = false;
+
+    // Setup inputs for Slide Texture
+    // Condition: avg_lat_vel > 0.5
+    data.mWheel[0].mLateralPatchVel = 5.0; // High slip speed -> High freq
+    data.mWheel[1].mLateralPatchVel = 5.0;
+    
+    // Need some load factor
+    data.mWheel[0].mTireLoad = 4000.0;
+    data.mWheel[1].mTireLoad = 4000.0;
+    
+    // SIMULATE A STUTTER (Large Delta Time)
+    // 50ms (0.05s) -> 30Hz effect (was 125Hz) -> 1.5 cycles -> Phase ~9.42 rad
+    data.mDeltaTime = 0.05; 
+    
+    // Run multiple frames
+    bool failed = false;
+    for (int i=0; i<10; i++) {
+        engine.calculate_force(&data);
+        // Check public phase member
+        // Should be [0, 2PI] i.e., [0, ~6.28]
+        if (engine.m_slide_phase < -0.001 || engine.m_slide_phase > 6.30) {
+             std::cout << "[FAIL] Frame " << i << ": Phase out of bounds: " << engine.m_slide_phase << std::endl;
+             failed = true;
+        }
+    }
+    
+    if (!failed) {
+        std::cout << "[PASS] Phase wrapped correctly during stutter." << std::endl;
         g_tests_passed++;
     } else {
         g_tests_failed++;
