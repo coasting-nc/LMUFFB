@@ -3372,7 +3372,7 @@ void UpdateDirectInputForce(double normalizedForce) {
 
 ### Effects currently missing in lmuFFB v0.4.25
 
-Does LMUFFB produce all the effects described in this video `https://www.youtube.com/watch?v=XHSEAMQgN2c`?
+Does LMUFFB produce all the effects described in this video `youtube: XHSEAMQgN2c`?
 
 **1. The "Brutal Counter-Steer" (SoP/Yaw): ✅ YES**
 *   **Video:** Describes a force that "whips the hand off the wheel" the moment the rear steps out.
@@ -3414,7 +3414,7 @@ Does LMUFFB produce all the effects described in this video `https://www.youtube
 
 ### References
 
-* `https://www.youtube.com/watch?v=XHSEAMQgN2c&t=655s`
+* `youtube: XHSEAMQgN2c`
 
 ```
 

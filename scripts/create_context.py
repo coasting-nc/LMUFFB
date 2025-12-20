@@ -22,6 +22,7 @@ Output:
 """
 
 import os
+import re
 
 OUTPUT_FILE = "FULL_PROJECT_CONTEXT.md"
 
@@ -167,7 +168,14 @@ def main():
                 
                 try:
                     with open(filepath, 'r', encoding='utf-8', errors='ignore') as infile:
-                        outfile.write(infile.read())
+                        content = infile.read()
+                        
+                        # Reformat youtube urls: https://www.youtube.com/watch?v=ID -> youtube: ID
+                        # Using a more precise regex to avoid consuming trailing characters like ` or )
+                        content = re.sub(r'https?://(?:www\.)?youtube\.com/watch\?v=([\w-]+)(?:&[\w%=+-]*)?', r'youtube: \1', content)
+                        content = re.sub(r'https?://youtu\.be/([\w-]+)(?:\?[\w%=+-]*)?', r'youtube: \1', content)
+                        
+                        outfile.write(content)
                 except Exception as e:
                     outfile.write(f"Error reading file: {e}")
                 
