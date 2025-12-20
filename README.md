@@ -130,18 +130,14 @@ For feedback, questions, or support:
 
 ## Documentation
 
-*   [The Physics of Feel - Driver's Guide](docs/the_physics_of__feel_-_driver_guide.md) - **Comprehensive guide** explaining how lmuFFB translates telemetry into tactile sensations, with telemetry visualizations
+*   [Driver's Guide to Testing LMUFFB](docs/Driver's Guide to Testing LMUFFB.md) Suggestions for specific driving scenarios to test each FFB effect 
+*   [The Physics of Feel - Driver's Guide](docs/the_physics_of__feel_-_driver_guide.md) - Explains how lmuFFB translates telemetry into tactile sensations, with telemetry visualizations
 *   [FFB Effects & Customization Guide](docs/ffb_effects.md)
 *   [FFB Customization Guide (Legacy)](docs/ffb_customization.md)
 *   [Telemetry Data Reference](docs/dev_docs/telemetry_data_reference.md)
 *   [Comparisons with Other Apps](docs/comparisons.md)
 *   [FFB Math Formulas](docs/dev_docs/FFB_formulas.md)
 
-
-
-## Architecture
-
-The application reads telemetry from the rFactor 2 engine (Le Mans Ultimate) via Shared Memory and calculates a synthetic Force Feedback signal to send to DirectInput.
 
 ## Features
 
