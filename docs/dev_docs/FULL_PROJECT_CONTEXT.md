@@ -374,7 +374,7 @@ Write build files (windows)
 ## Dear ImGui (Optional): Download from GitHub and place in vendor/imgui to enable the GUI.
 
 New-Item -ItemType Directory -Path "vendor\imgui" -Force
-Invoke-WebRequest -Uri "https://github.com/ocornut/imgui/archive/refs/heads/master.zip" -OutFile "vendor\imgui-master.zip"
+Invoke-WebRequest -Uri "unlinked: github_com/ocornut/imgui/archive/refs/heads/master_zip" -OutFile "vendor\imgui-master.zip"
 Expand-Archive -Path "vendor\imgui-master.zip" -DestinationPath "vendor" -Force
 Copy-Item -Path "vendor\imgui-master\*" -Destination "vendor\imgui\" -Recurse -Force
 Test-Path "vendor\imgui\imgui.cpp"
@@ -2296,7 +2296,7 @@ This is an **experimental early alpha version** of a force feedback application.
 
 ## 📥 Download
 
-**[Download the latest release from GitHub](https://github.com/coasting-nc/LMUFFB/releases)**
+**[Download the latest release from GitHub](unlinked: github_com/coasting-nc/LMUFFB/releases)**
 
 ## ⚠️ Important Notes
 
@@ -2317,7 +2317,7 @@ This is an **experimental release** with the new LMU 1.2 interface. The FFB form
 **Please help us improve lmuFFB:**
 1. **Test with caution** - Start with low wheel strength settings (see Safety Warning above)
 2. **Experiment with settings** - Try different effect combinations and gains
-3. **Share your results** - Post screenshots of the "Troubleshooting Graphs" window and the main app window to the [LMU Forum Thread](https://community.lemansultimate.com/index.php?threads/irffb-for-lmu-lmuffb.10440/)
+3. **Share your results** - Post screenshots of the "Troubleshooting Graphs" window and the main app window to the [LMU Forum Thread](unlinked: community_lemansultimate_com/index_php?threads/irffb-for-lmu-lmuffb_10440/)
 4. **Report issues** - Let us know what works and what doesn't!
 
 Your testing and feedback is greatly appreciated! 🙏
@@ -2405,8 +2405,8 @@ When you start lmuFFB with LMU 1.2, you will see console warnings like:
 ## Feedback & Support
 
 For feedback, questions, or support:
-*   **LMU Forum Thread**: [irFFB for LMU (lmuFFB)](https://community.lemansultimate.com/index.php?threads/irffb-for-lmu-lmuffb.10440/)
-*   **GitHub Issues**: [Report bugs or request features](https://github.com/coasting-nc/LMUFFB/issues)
+*   **LMU Forum Thread**: [irFFB for LMU (lmuFFB)](unlinked: community_lemansultimate_com/index_php?threads/irffb-for-lmu-lmuffb_10440/)
+*   **GitHub Issues**: [Report bugs or request features](unlinked: github_com/coasting-nc/LMUFFB/issues)
 
 
 ## Documentation
@@ -2445,7 +2445,7 @@ The application reads telemetry from the rFactor 2 engine (Le Mans Ultimate) via
 ### Prerequisites
 *   **Compiler**: MSVC (Visual Studio 2022 Build Tools) or generic C++ compiler.
 *   **Build System**: CMake (3.10+).
-*   **Dear ImGui (Optional)**: Download from [GitHub](https://github.com/ocornut/imgui) and place in `vendor/imgui` to enable the GUI.
+*   **Dear ImGui (Optional)**: Download from [GitHub](unlinked: github_com/ocornut/imgui) and place in `vendor/imgui` to enable the GUI.
 
 ### Option A: Visual Studio 2022 (IDE)
 1.  Open Visual Studio.
@@ -2491,7 +2491,7 @@ This change ensures consistent FFB strength across different hardware and makes 
 
 ### rFactor 2 Compatibility
 
-**Note**: rFactor 2 is **not supported** in v0.4.0+. For rFactor 2, please use earlier versions of lmuFFB (v0.3.x). See the [releases page](https://github.com/coasting-nc/LMUFFB/releases) for v0.3.x downloads.
+**Note**: rFactor 2 is **not supported** in v0.4.0+. For rFactor 2, please use earlier versions of lmuFFB (v0.3.x). See the [releases page](unlinked: github_com/coasting-nc/LMUFFB/releases) for v0.3.x downloads.
 
 ```
 
@@ -2576,7 +2576,7 @@ Please help us improve lmuFFB:
 2. Experiment with settings - Try different effect combinations and gains
 3. Share your results - Post screenshots of the "Troubleshooting Graphs" 
    window and the main app window to the LMU Forum Thread:
-   https://community.lemansultimate.com/index.php?threads/irffb-for-lmu-lmuffb.10440/
+   unlinked: community_lemansultimate_com/index_php?threads/irffb-for-lmu-lmuffb_10440/
 4. Report issues - Let us know what works and what doesn't!
 
 Your testing and feedback is greatly appreciated!
@@ -2705,13 +2705,13 @@ FEEDBACK & SUPPORT
 ------------------
 For feedback, questions, or support:
 - LMU Forum Thread: 
-  https://community.lemansultimate.com/index.php?threads/irffb-for-lmu-lmuffb.10440/
+  unlinked: community_lemansultimate_com/index_php?threads/irffb-for-lmu-lmuffb_10440/
 - GitHub Issues: 
-  https://github.com/coasting-nc/LMUFFB/issues
+  unlinked: github_com/coasting-nc/LMUFFB/issues
 
 
 For full documentation, advanced settings, and developer information, 
-see README.md or visit: https://github.com/coasting-nc/LMUFFB
+see README.md or visit: unlinked: github_com/coasting-nc/LMUFFB
 
 
 ===============================================================================
@@ -2720,7 +2720,7 @@ RFACTOR 2 SETUP (LEGACY)
 
 NOTE: rFactor 2 support was removed in v0.4.0. To use lmuFFB with rFactor 2, 
 you must download and use version 0.3.x from the releases page:
-https://github.com/coasting-nc/LMUFFB/releases
+unlinked: github_com/coasting-nc/LMUFFB/releases
 
 ```
 
@@ -2848,7 +2848,7 @@ which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
 
 **Do not** commit this to version control.
 
-See [the docs](https://docs.pytest.org/en/stable/how-to/cache.html) for more information.
+See [the docs](unlinked: docs_pytest_org/en/stable/how-to/cache_html) for more information.
 
 ```
 
@@ -3823,13 +3823,13 @@ This document analyzes the licensing requirements for distributing LMUFFB, speci
 *   **Implication**: You **can** distribute a compiled version of LMUFFB linked with Dear ImGui. You must include the Dear ImGui license text in your distribution (e.g., in an `About` box or a `LICENSE-IMGUI.txt` file).
 
 ### vJoy SDK
-*   **License**: MIT License (Source: [shauleiz/vJoy on GitHub](https://github.com/shauleiz/vJoy)).
+*   **License**: MIT License (Source: [shauleiz/vJoy on GitHub](unlinked: github_com/shauleiz/vJoy)).
 *   **Terms**: Standard MIT permissions.
 *   **Implication**: You can distribute the application linked against `vJoyInterface.lib` / `vJoyInterface.dll` provided you respect the MIT attribution.
 
 ### rFactor 2 Shared Memory Map Plugin
 *   **Component**: We rely on the header definitions (`struct` layout) and the concept of the plugin.
-*   **License**: MIT License (Source: [TheIronWolfModding/rF2SharedMemoryMapPlugin](https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin)).
+*   **License**: MIT License (Source: [TheIronWolfModding/rF2SharedMemoryMapPlugin](unlinked: github_com/TheIronWolfModding/rF2SharedMemoryMapPlugin)).
 *   **Implication**: Using the struct definitions to interoperate with the plugin is permitted.
 
 ## 2. Conclusion & Selection
@@ -4038,7 +4038,7 @@ This document outlines the vJoy version requirements for LMUFFB. Compatibility i
 
 **We recommend using vJoy 2.1.9.1 (by jshafer817) for Windows 10 and 11.**
 
-*   **Download**: [vJoy 2.1.9.1 Releases](https://github.com/jshafer817/vJoy/releases)
+*   **Download**: [vJoy 2.1.9.1 Releases](unlinked: github_com/jshafer817/vJoy/releases)
 *   **Reasoning**: This version is signed for Windows 10/11 and includes fixes for Force Feedback (FFB) that were broken in some 2.1.8 releases on newer OS updates.
 
 ## Historical Context (iRFFB)
@@ -4261,7 +4261,7 @@ It is a **single-header library**. You do not need to compile a `.lib` or link a
 Here is the implementation plan:
 
 ### 1. Get the Library
-Download `stb_image_write.h` from the [nothings/stb GitHub repository](https://github.com/nothings/stb/blob/master/stb_image_write.h).
+Download `stb_image_write.h` from the [nothings/stb GitHub repository](unlinked: github_com/nothings/stb/blob/master/stb_image_write_h).
 Place it in your `src/` or `vendor/` folder.
 
 ### 2. Implementation Code
@@ -4910,7 +4910,7 @@ It should look something like this:
   },
 // other lines ..
 
-See also: https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/
+See also: unlinked: community_lemansultimate_com/index_php?threads/download-here-simhub-dashboards_646/
 
 ## Tiny pedal
 Follow up research: find out how the TinyPedal app is accessing Le Mans Ultimate telemetry about car physics, in particular the tires, and in particular these values that I am currently unable to properly read:
@@ -5006,7 +5006,7 @@ Check which data it can display about: tire data (load, velocity, acceleration, 
 
 
 ## More notes
-From https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/
+From unlinked: community_lemansultimate_com/index_php?threads/download-here-simhub-dashboards_646/
 
 copy the LMU_SharedMemoryMapPlugin64.dll in your LMU install folder/Plugins
 
@@ -7652,9 +7652,9 @@ seat of the pants: understeer and oversteer effects options
 
 
 Marvin's app:
-https://github.com/mherbold/MarvinsAIRARefactored
+unlinked: github_com/mherbold/MarvinsAIRARefactored
 
-https://herboldracing.com/marvins-awesome-iracing-app-maira/
+unlinked: herboldracing_com/marvins-awesome-iracing-app-maira/
 
  "butt gyro" refers to the driver's ability to sense the yaw rate (rotation) of the car before the eyes detect a heading change.
  When the rear tires lose traction, the car rotates around its center of gravity. In a real car, the driver feels this lateral acceleration instantly through the seat. In a fixed-base simulator, this force is absent.
@@ -9101,7 +9101,7 @@ We **can and should** bundle `vJoyInterface.dll` with our release zip/installer.
 
 ### vJoy License
 vJoy (by Shaul Eizikovich) is open source.
-*   **Source:** [GitHub - shauleiz/vJoy](https://github.com/shauleiz/vJoy)
+*   **Source:** [GitHub - shauleiz/vJoy](unlinked: github_com/shauleiz/vJoy)
 *   **License:** **MIT License** (and some parts Public Domain / zlib in older versions, but generally permissive).
 *   **SDK License:** The SDK (which includes the DLL) is intended for developers to distribute with their apps.
 
@@ -10375,10 +10375,10 @@ The project has evolved from a Python prototype to a **native C++ application** 
 *   **Status**: Alpha. Functional loop, but vJoy dependency makes setup complex for users.
 
 ## 4. Key Resources
-*   **iRFFB**: [GitHub Repository](https://github.com/nlp80/irFFB) - The primary inspiration.
-*   **Marvin's AIRA**: [GitHub Repository](https://github.com/mherbold/MarvinsAIRA) - Inspiration for "Texture" and "Detail" effects.
-*   **rF2 Shared Memory Plugin**: [TheIronWolfModding](https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin) - The interface used to get data.
-*   **vJoy**: [jshafer817 Fork](https://github.com/jshafer817/vJoy) - The required driver for Windows 10/11.
+*   **iRFFB**: [GitHub Repository](unlinked: github_com/nlp80/irFFB) - The primary inspiration.
+*   **Marvin's AIRA**: [GitHub Repository](unlinked: github_com/mherbold/MarvinsAIRA) - Inspiration for "Texture" and "Detail" effects.
+*   **rF2 Shared Memory Plugin**: [TheIronWolfModding](unlinked: github_com/TheIronWolfModding/rF2SharedMemoryMapPlugin) - The interface used to get data.
+*   **vJoy**: [jshafer817 Fork](unlinked: github_com/jshafer817/vJoy) - The required driver for Windows 10/11.
 
 ## 5. Technology Stack
 *   **Language**: C++ (C++17 standard).
@@ -12914,31 +12914,31 @@ To rectify this, the integration strategy must shift from a passive reliance on 
 
 #### **Works cited**
 
-1. rF2SharedMemoryMapPlugin/Source/rFactor2SharedMemoryMap.cpp at master \- GitHub, accessed December 7, 2025, [https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin/blob/master/Source/rFactor2SharedMemoryMap.cpp](https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin/blob/master/Source/rFactor2SharedMemoryMap.cpp)  
-2. TheIronWolfModding/rF2SharedMemoryMapPlugin: rFactor 2 Internals Shared Memory Map Plugin \- GitHub, accessed December 7, 2025, [https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin](https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin)  
-3. Info Required \- \[Physics\] Shared memory bugged | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/physics-shared-memory-bugged.4109/](https://community.lemansultimate.com/index.php?threads/physics-shared-memory-bugged.4109/)  
-4. LMU Shared Memory wrong | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/lmu-shared-memory-wrong.7456/](https://community.lemansultimate.com/index.php?threads/lmu-shared-memory-wrong.7456/)  
-5. THE shared memory | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/the-shared-memory.10812/](https://community.lemansultimate.com/index.php?threads/the-shared-memory.10812/)  
-6. Le Mans Ultimate | DR Sim Manager, accessed December 7, 2025, [https://docs.departedreality.com/dr-sim-manager/general/sources/le-mans-ultimate](https://docs.departedreality.com/dr-sim-manager/general/sources/le-mans-ultimate)  
-7. Telemetry not working in LMU – Game detected by SimPro Manager V2.1.1 but no data on GT Neo / Alpha Evo \[@Simagic\] \- Reddit, accessed December 7, 2025, [https://www.reddit.com/r/Simagic/comments/1lj2kq8/telemetry\_not\_working\_in\_lmu\_game\_detected\_by/](https://www.reddit.com/r/Simagic/comments/1lj2kq8/telemetry_not_working_in_lmu_game_detected_by/)  
-8. rFactor 2 | DR Sim Manager, accessed December 7, 2025, [https://docs.departedreality.com/dr-sim-manager/general/sources/rfactor-2](https://docs.departedreality.com/dr-sim-manager/general/sources/rfactor-2)  
-9. Temur Bobokhidze | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?members/temur-bobokhidze.2222/](https://community.lemansultimate.com/index.php?members/temur-bobokhidze.2222/)  
-10. Releases · tembob64/LMU\_SharedMemoryMapPlugin \- GitHub, accessed December 7, 2025, [https://github.com/tembob64/LMU\_SharedMemoryMapPlugin/releases](https://github.com/tembob64/LMU_SharedMemoryMapPlugin/releases)  
-11. Add missing parameters to telemetry for plugins | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/add-missing-parameters-to-telemetry-for-plugins.66/](https://community.lemansultimate.com/index.php?threads/add-missing-parameters-to-telemetry-for-plugins.66/)  
-12. Download here: SimHub Dashboards | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/](https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/)  
-13. \[REL\] \- Crew Chief v4.5 with rFactor 2 support | Studio-397 Forum, accessed December 7, 2025, [https://forum.studio-397.com/index.php?threads/crew-chief-v4-5-with-rfactor-2-support.54421/](https://forum.studio-397.com/index.php?threads/crew-chief-v4-5-with-rfactor-2-support.54421/)  
-14. mrbelowski/CrewChiefV4 \- GitHub, accessed December 7, 2025, [https://github.com/mrbelowski/CrewChiefV4](https://github.com/mrbelowski/CrewChiefV4)  
-15. Crew chief not working anymore : r/LeMansUltimateWEC \- Reddit, accessed December 7, 2025, [https://www.reddit.com/r/LeMansUltimateWEC/comments/1hcuxdj/crew\_chief\_not\_working\_anymore/](https://www.reddit.com/r/LeMansUltimateWEC/comments/1hcuxdj/crew_chief_not_working_anymore/)  
-16. Can't get CrewChief working. : r/LeMansUltimateWEC \- Reddit, accessed December 7, 2025, [https://www.reddit.com/r/LeMansUltimateWEC/comments/1jcb5wi/cant\_get\_crewchief\_working/](https://www.reddit.com/r/LeMansUltimateWEC/comments/1jcb5wi/cant_get_crewchief_working/)  
-17. Telemetry \- SecondMonitor (Timing & status App) \- KW Studios Forum, accessed December 7, 2025, [https://forum.kw-studios.com/index.php?threads/secondmonitor-timing-status-app.9587/](https://forum.kw-studios.com/index.php?threads/secondmonitor-timing-status-app.9587/)  
-18. Upvote missing parameters to telemetry for plugins feature request\! /|\\ Simhub NeoRed Plugins and dashboard (Last update: 26/09/2025 / V1.1.0.2) | Page 41 | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/upvote-missing-parameters-to-telemetry-for-plugins-feature-request-simhub-neored-plugins-and-dashboard-last-update-26-09-2025-v1-1-0-2.7638/page-41](https://community.lemansultimate.com/index.php?threads/upvote-missing-parameters-to-telemetry-for-plugins-feature-request-simhub-neored-plugins-and-dashboard-last-update-26-09-2025-v1-1-0-2.7638/page-41)  
-19. TinyPedal/TinyPedal: Free and Open Source telemetry overlay application for racing simulation \- GitHub, accessed December 7, 2025, [https://github.com/TinyPedal/TinyPedal](https://github.com/TinyPedal/TinyPedal)  
-20. Download here: SimHub Dashboards | Page 63 | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/page-63](https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/page-63)  
-21. Download Here : Simhub NeoRed Plugins (1.2.5.5 \- 14/09/2025) / "NeoSuperDash" and "NeoLiveBoard" dashboard, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/download-here-simhub-neored-plugins-1-2-5-5-14-09-2025-neosuperdash-and-neoliveboard-dashboard.7638/post-62172](https://community.lemansultimate.com/index.php?threads/download-here-simhub-neored-plugins-1-2-5-5-14-09-2025-neosuperdash-and-neoliveboard-dashboard.7638/post-62172)  
-22. Download here: SimHub Dashboards | Page 58 | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/page-58](https://community.lemansultimate.com/index.php?threads/download-here-simhub-dashboards.646/page-58)  
-23. TinyPedal \- open source overlay for rF2 (Pacenotes,Radar,FFB,Deltabest,Relative,Fuel Calculator) | Studio-397 Forum, accessed December 7, 2025, [https://forum.studio-397.com/index.php?threads/tinypedal-open-source-overlay-for-rf2-pacenotes-radar-ffb-deltabest-relative-fuel-calculator.71557/](https://forum.studio-397.com/index.php?threads/tinypedal-open-source-overlay-for-rf2-pacenotes-radar-ffb-deltabest-relative-fuel-calculator.71557/)  
-24. Problem with Tinypedal after last LMU update | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/problem-with-tinypedal-after-last-lmu-update.6215/](https://community.lemansultimate.com/index.php?threads/problem-with-tinypedal-after-last-lmu-update.6215/)  
-25. Known Issue \- \[Plugins\] Accessing Specific APIs Causes Data Corruption, High CPU Utilization | Le Mans Ultimate Community, accessed December 7, 2025, [https://community.lemansultimate.com/index.php?threads/plugins-accessing-specific-apis-causes-data-corruption-high-cpu-utilization.10719/](https://community.lemansultimate.com/index.php?threads/plugins-accessing-specific-apis-causes-data-corruption-high-cpu-utilization.10719/)
+1. rF2SharedMemoryMapPlugin/Source/rFactor2SharedMemoryMap.cpp at master \- GitHub, accessed December 7, 2025, [unlinked: github_com/TheIronWolfModding/rF2SharedMemoryMapPlugin/blob/master/Source/rFactor2SharedMemoryMap_cpp](unlinked: github_com/TheIronWolfModding/rF2SharedMemoryMapPlugin/blob/master/Source/rFactor2SharedMemoryMap_cpp)  
+2. TheIronWolfModding/rF2SharedMemoryMapPlugin: rFactor 2 Internals Shared Memory Map Plugin \- GitHub, accessed December 7, 2025, [unlinked: github_com/TheIronWolfModding/rF2SharedMemoryMapPlugin](unlinked: github_com/TheIronWolfModding/rF2SharedMemoryMapPlugin)  
+3. Info Required \- \[Physics\] Shared memory bugged | Le Mans Ultimate Community, accessed December 7, 2025, [unlinked: community_lemansultimate_com/index_php?threads/physics-shared-memory-bugged_4109/](unlinked: community_lemansultimate_com/index_php?threads/physics-shared-memory-bugged_4109/)  
+4. LMU Shared Memory wrong | Le Mans Ultimate Community, accessed December 7, 2025, [unlinked: community_lemansultimate_com/index_php?threads/lmu-shared-memory-wrong_7456/](unlinked: community_lemansultimate_com/index_php?threads/lmu-shared-memory-wrong_7456/)  
+5. THE shared memory | Le Mans Ultimate Community, accessed December 7, 2025, [unlinked: community_lemansultimate_com/index_php?threads/the-shared-memory_10812/](unlinked: community_lemansultimate_com/index_php?threads/the-shared-memory_10812/)  
+6. Le Mans Ultimate | DR Sim Manager, accessed December 7, 2025, [unlinked: docs_departedreality_com/dr-sim-manager/general/sources/le-mans-ultimate](unlinked: docs_departedreality_com/dr-sim-manager/general/sources/le-mans-ultimate)  
+7. Telemetry not working in LMU – Game detected by SimPro Manager V2.1.1 but no data on GT Neo / Alpha Evo \[@Simagic\] \- Reddit, accessed December 7, 2025, [unlinked: www_reddit_com/r/Simagic/comments/1lj2kq8/telemetry\_not\_working\_in\_lmu\_game\_detected\_by/](unlinked: www_reddit_com/r/Simagic/comments/1lj2kq8/telemetry_not_working_in_lmu_game_detected_by/)  
+8. rFactor 2 | DR Sim Manager, accessed December 7, 2025, [unlinked: docs_departedreality_com/dr-sim-manager/general/sources/rfactor-2](unlinked: docs_departedreality_com/dr-sim-manager/general/sources/rfactor-2)  
+9. Temur Bobokhidze | Le Mans Ultimate Community, accessed December 7, 2025, [unlinked: community_lemansultimate_com/index_php?members/temur-bobokhidze_2222/](unlinked: community_lemansultimate_com/index_php?members/temur-bobokhidze_2222/)  
+10. Releases · tembob64/LMU\_SharedMemoryMapPlugin \- GitHub, accessed December 7, 2025, [unlinked: github_com/tembob64/LMU\_SharedMemoryMapPlugin/releases](unlinked: github_com/tembob64/LMU_SharedMemoryMapPlugin/releases)  
+11. Add missing parameters to telemetry for plugins | Le Mans Ultimate Community, accessed December 7, 2025, [unlinked: community_lemansultimate_com/index_php?threads/add-missing-parameters-to-telemetry-for-plugins_66/](unlinked: community_lemansultimate_com/index_php?threads/add-missing-parameters-to-telemetry-for-plugins_66/)  
+12. Download here: SimHub Dashboards | Le Mans Ultimate Community, accessed December 7, 2025, [unlinked: community_lemansultimate_com/index_php?threads/download-here-simhub-dashboards_646/](unlinked: community_lemansultimate_com/index_php?threads/download-here-simhub-dashboards_646/)  
+13. \[REL\] \- Crew Chief v4.5 with rFactor 2 support | Studio-397 Forum, accessed December 7, 2025, [unlinked: forum_studio-397_com/index_php?threads/crew-chief-v4-5-with-rfactor-2-support_54421/](unlinked: forum_studio-397_com/index_php?threads/crew-chief-v4-5-with-rfactor-2-support_54421/)  
+14. mrbelowski/CrewChiefV4 \- GitHub, accessed December 7, 2025, [unlinked: github_com/mrbelowski/CrewChiefV4](unlinked: github_com/mrbelowski/CrewChiefV4)  
+15. Crew chief not working anymore : r/LeMansUltimateWEC \- Reddit, accessed December 7, 2025, [unlinked: www_reddit_com/r/LeMansUltimateWEC/comments/1hcuxdj/crew\_chief\_not\_working\_anymore/](unlinked: www_reddit_com/r/LeMansUltimateWEC/comments/1hcuxdj/crew_chief_not_working_anymore/)  
+16. Can't get CrewChief working. : r/LeMansUltimateWEC \- Reddit, accessed December 7, 2025, [unlinked: www_reddit_com/r/LeMansUltimateWEC/comments/1jcb5wi/cant\_get\_crewchief\_working/](unlinked: www_reddit_com/r/LeMansUltimateWEC/comments/1jcb5wi/cant_get_crewchief_working/)  
+17. Telemetry \- SecondMonitor (Timing & status App) \- KW Studios Forum, accessed December 7, 2025, [unlinked: forum_kw-studios_com/index_php?threads/secondmonitor-timing-status-app_9587/](unlinked: forum_kw-studios_com/index_php?threads/secondmonitor-timing-status-app_9587/)  
+18. Upvote missing parameters to telemetry for plugins feature request\! /|\\ Simhub NeoRed Plugins and dashboard (Last update: 26/09/2025 / V1.1.0.2) | Page 41 | Le Mans Ultimate Community, accessed December 7, 2025, [unlinked: community_lemansultimate_com/index_php?threads/upvote-missing-parameters-to-telemetry-for-plugins-feature-request-simhub-neored-plugins-and-dashboard-last-update-26-09-2025-v1-1-0-2_7638/page-41](unlinked: community_lemansultimate_com/index_php?threads/upvote-missing-parameters-to-telemetry-for-plugins-feature-request-simhub-neored-plugins-and-dashboard-last-update-26-09-2025-v1-1-0-2_7638/page-41)  
+19. TinyPedal/TinyPedal: Free and Open Source telemetry overlay application for racing simulation \- GitHub, accessed December 7, 2025, [unlinked: github_com/TinyPedal/TinyPedal](unlinked: github_com/TinyPedal/TinyPedal)  
+20. Download here: SimHub Dashboards | Page 63 | Le Mans Ultimate Community, accessed December 7, 2025, [unlinked: community_lemansultimate_com/index_php?threads/download-here-simhub-dashboards_646/page-63](unlinked: community_lemansultimate_com/index_php?threads/download-here-simhub-dashboards_646/page-63)  
+21. Download Here : Simhub NeoRed Plugins (1.2.5.5 \- 14/09/2025) / "NeoSuperDash" and "NeoLiveBoard" dashboard, accessed December 7, 2025, [unlinked: community_lemansultimate_com/index_php?threads/download-here-simhub-neored-plugins-1-2-5-5-14-09-2025-neosuperdash-and-neoliveboard-dashboard_7638/post-62172](unlinked: community_lemansultimate_com/index_php?threads/download-here-simhub-neored-plugins-1-2-5-5-14-09-2025-neosuperdash-and-neoliveboard-dashboard_7638/post-62172)  
+22. Download here: SimHub Dashboards | Page 58 | Le Mans Ultimate Community, accessed December 7, 2025, [unlinked: community_lemansultimate_com/index_php?threads/download-here-simhub-dashboards_646/page-58](unlinked: community_lemansultimate_com/index_php?threads/download-here-simhub-dashboards_646/page-58)  
+23. TinyPedal \- open source overlay for rF2 (Pacenotes,Radar,FFB,Deltabest,Relative,Fuel Calculator) | Studio-397 Forum, accessed December 7, 2025, [unlinked: forum_studio-397_com/index_php?threads/tinypedal-open-source-overlay-for-rf2-pacenotes-radar-ffb-deltabest-relative-fuel-calculator_71557/](unlinked: forum_studio-397_com/index_php?threads/tinypedal-open-source-overlay-for-rf2-pacenotes-radar-ffb-deltabest-relative-fuel-calculator_71557/)  
+24. Problem with Tinypedal after last LMU update | Le Mans Ultimate Community, accessed December 7, 2025, [unlinked: community_lemansultimate_com/index_php?threads/problem-with-tinypedal-after-last-lmu-update_6215/](unlinked: community_lemansultimate_com/index_php?threads/problem-with-tinypedal-after-last-lmu-update_6215/)  
+25. Known Issue \- \[Plugins\] Accessing Specific APIs Causes Data Corruption, High CPU Utilization | Le Mans Ultimate Community, accessed December 7, 2025, [unlinked: community_lemansultimate_com/index_php?threads/plugins-accessing-specific-apis-causes-data-corruption-high-cpu-utilization_10719/](unlinked: community_lemansultimate_com/index_php?threads/plugins-accessing-specific-apis-causes-data-corruption-high-cpu-utilization_10719/)
 ```
 
 # File: docs\dev_docs\report_on_tinypedal_telemetry_usage.md
@@ -14923,7 +14923,7 @@ presets.push_back({ "Test: My Effect",
 
 # File: docs\dev_docs\which_cars_in_rF2_have_grip_data.md
 ```markdown
-As reported in this forum post: https://community.lemansultimate.com/index.php?threads/add-missing-parameters-to-telemetry-for-plugins.66/page-25#post-74367
+As reported in this forum post: unlinked: community_lemansultimate_com/index_php?threads/add-missing-parameters-to-telemetry-for-plugins_66/page-25#post-74367
 
 Tire grip, tire load, and some other data are blocked for DLC cars in rF2, due to license agreements.
 
@@ -15023,8 +15023,8 @@ The extra parentheses prevent the preprocessor from recognizing the macro patter
 
 ## References
 
-- Microsoft Docs: [Avoiding Name Collisions](https://docs.microsoft.com/en-us/windows/win32/winprog/using-the-windows-headers#faster-builds-with-smaller-header-files)
-- Stack Overflow: [Why does std::min/max not work?](https://stackoverflow.com/questions/5004356/why-does-stdmin-max-not-work-on-windows)
+- Microsoft Docs: [Avoiding Name Collisions](unlinked: docs_microsoft_com/en-us/windows/win32/winprog/using-the-windows-headers#faster-builds-with-smaller-header-files)
+- Stack Overflow: [Why does std::min/max not work?](unlinked: stackoverflow_com/questions/5004356/why-does-stdmin-max-not-work-on-windows)
 
 ## History
 
@@ -16094,7 +16094,7 @@ int main() {
 You must define the `rF2Telemetry`, `rF2Wheel`, etc., structs exactly as they are in the Python code (which mirrors the C++ original).
 
 *   **Alignment**: Ensure strict packing if the plugin uses it. Usually, standard alignment works, but `#pragma pack(push, 1)` might be needed if the plugin uses 1-byte packing. The standard rFactor 2 SDK usually relies on default alignment (4 or 8 bytes).
-*   **Headers**: Refer to [The Iron Wolf's Plugin Source](https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin) for the canonical header files (`rF2State.h`, etc.).
+*   **Headers**: Refer to [The Iron Wolf's Plugin Source](unlinked: github_com/TheIronWolfModding/rF2SharedMemoryMapPlugin) for the canonical header files (`rF2State.h`, etc.).
 
 ## 4. FFB Output (vJoy)
 
@@ -16281,7 +16281,7 @@ Porting the Python logic to Rust is ideal for safety.
 #define MyAppName "LMUFFB"
 #define MyAppVersion "1.0"
 #define MyAppPublisher "LMUFFB Community"
-#define MyAppURL "https://github.com/your-repo/LMUFFB"
+#define MyAppURL "unlinked: github_com/your-repo/LMUFFB"
 #define MyAppExeName "LMUFFB.exe"
 
 [Setup]
@@ -16361,7 +16361,7 @@ begin
     begin
       if MsgBox('vJoy does not appear to be installed. LMUFFB requires vJoy to function. Do you want to open the download page?', mbConfirmation, MB_YESNO) = IDYES then
       begin
-        ShellExec('open', 'https://github.com/shauleiz/vJoy/releases', '', '', SW_SHOWNORMAL, ewNoWait, ResultCode);
+        ShellExec('open', 'unlinked: github_com/shauleiz/vJoy/releases', '', '', SW_SHOWNORMAL, ewNoWait, ResultCode);
       end;
     end;
 

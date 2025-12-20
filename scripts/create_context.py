@@ -174,6 +174,21 @@ def main():
                         # Using a more precise regex to avoid consuming trailing characters like ` or )
                         content = re.sub(r'https?://(?:www\.)?youtube\.com/watch\?v=([\w-]+)(?:&[\w%=+-]*)?', r'youtube: \1', content)
                         content = re.sub(r'https?://youtu\.be/([\w-]+)(?:\?[\w%=+-]*)?', r'youtube: \1', content)
+
+                        # General URL unlinking: find strings starting with http://, https:// or www.
+                        # and replace dots with underscores and remove protocol.
+                        def general_unlink(match):
+                            url = match.group(0)
+                            # Remove protocol
+                            url = re.sub(r'^https?://', '', url, flags=re.IGNORECASE)
+                            # Replace dots with underscores
+                            url = url.replace('.', '_')
+                            return f"unlinked: {url}"
+
+                        # Regex for URLs: http(s)://... or www....
+                        # We stop at characters that are likely not part of the URL in a markdown context
+                        url_regex = r'(?:https?://|www\.)[\w\-\.\/\?\=\&\%\#\+\:]+(?<![\.\,\?\!\:\|\)\]\(`])'
+                        content = re.sub(url_regex, general_unlink, content, flags=re.IGNORECASE)
                         
                         outfile.write(content)
                 except Exception as e:
