@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.36] - 2025-12-20
+### Added
+- **Slide Rumble Frequency Slider**: Added a "Slide Pitch (Freq)" slider to the GUI to allow manual customization of the vibration frequency.
+    - **Optimization**: This allows both Belt/Gear-driven users (who need low-frequency rumble, 10-60Hz) and Direct Drive users (who prefer high-frequency fine texture, 100-250Hz) to tune the effect to their hardware's sweet spot.
+    - **Range**: 0.5x to 5.0x multiplier.
+    - **Default**: 1.0x (Rumble optimized).
+
 ## [0.4.35] - 2025-12-20
 ### Changed
 - **Slide Texture Frequency Optimization**: Re-mapped the vibration frequency for Slide Rumble to the "Tactile Sweet Spot" for belt-driven wheels (10Hz - 70Hz).

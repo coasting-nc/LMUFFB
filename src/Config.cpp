@@ -161,7 +161,7 @@ void Config::LoadPresets() {
         .SetSoP(0.0f)
         .SetOversteer(0.0f)
         .SetRearAlign(0.0f)
-        .SetSlide(true, 1.0f)
+        .SetSlide(true, 1.0f, 1.0f) // Gain 1.0, Freq 1.0 (Rumble)
         .SetScrub(1.0f)
         .SetLockup(false, 0.0f)
         .SetSpin(false, 0.0f)
@@ -297,6 +297,7 @@ void Config::LoadPresets() {
                         else if (key == "spin_gain") current_preset.spin_gain = std::stof(value);
                         else if (key == "slide_enabled") current_preset.slide_enabled = std::stoi(value);
                         else if (key == "slide_gain") current_preset.slide_gain = std::stof(value);
+                        else if (key == "slide_freq") current_preset.slide_freq = std::stof(value);
                         else if (key == "road_enabled") current_preset.road_enabled = std::stoi(value);
                         else if (key == "road_gain") current_preset.road_gain = std::stof(value);
                         else if (key == "invert_force") current_preset.invert_force = std::stoi(value);
@@ -370,6 +371,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "spin_gain=" << engine.m_spin_gain << "\n";
         file << "slide_enabled=" << engine.m_slide_texture_enabled << "\n";
         file << "slide_gain=" << engine.m_slide_texture_gain << "\n";
+        file << "slide_freq=" << engine.m_slide_freq_scale << "\n";
         file << "road_enabled=" << engine.m_road_texture_enabled << "\n";
         file << "road_gain=" << engine.m_road_texture_gain << "\n";
         file << "invert_force=" << engine.m_invert_force << "\n";
@@ -401,6 +403,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
                 file << "spin_gain=" << p.spin_gain << "\n";
                 file << "slide_enabled=" << p.slide_enabled << "\n";
                 file << "slide_gain=" << p.slide_gain << "\n";
+                file << "slide_freq=" << p.slide_freq << "\n";
                 file << "road_enabled=" << p.road_enabled << "\n";
                 file << "road_gain=" << p.road_gain << "\n";
                 file << "invert_force=" << p.invert_force << "\n";
@@ -462,6 +465,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "spin_gain") engine.m_spin_gain = std::stof(value);
                     else if (key == "slide_enabled") engine.m_slide_texture_enabled = std::stoi(value);
                     else if (key == "slide_gain") engine.m_slide_texture_gain = std::stof(value);
+                    else if (key == "slide_freq") engine.m_slide_freq_scale = std::stof(value);
                     else if (key == "road_enabled") engine.m_road_texture_enabled = std::stoi(value);
                     else if (key == "road_gain") engine.m_road_texture_gain = std::stof(value);
                     else if (key == "invert_force") engine.m_invert_force = std::stoi(value);

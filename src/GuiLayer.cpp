@@ -407,6 +407,11 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (engine.m_slide_texture_enabled) {
         ImGui::Indent();
         FloatSetting("Slide Gain", &engine.m_slide_texture_gain, 0.0f, 5.0f);
+        
+        // NEW SLIDER (v0.4.36)
+        FloatSetting("Slide Pitch (Freq)", &engine.m_slide_freq_scale, 0.5f, 5.0f, "%.1fx");
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Adjusts the vibration pitch.\n1.0 = Low Rumble (Best for T300/G29)\n3.0+ = High Buzz (Best for Direct Drive)");
+        
         ImGui::Unindent();
     }
     BoolSetting("Road Details", &engine.m_road_texture_enabled);

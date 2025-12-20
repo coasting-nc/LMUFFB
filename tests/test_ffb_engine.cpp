@@ -580,8 +580,11 @@ static void test_slide_texture() {
         data.mWheel[2].mLateralPatchVel = 0.0; // Rear Grip
         data.mWheel[3].mLateralPatchVel = 0.0;
         
-        data.mDeltaTime = 0.013; // 13ms. For 30Hz (5m/s input), period is 33ms. 
-                                 // 13ms is ~0.4 period, ensuring non-zero phase advance.eLoad = 4000.0; // Full load
+        engine.m_slide_freq_scale = 1.0f;
+        
+        data.mDeltaTime = 0.013; // 13ms. For 35Hz (5m/s input), period is 28ms. 
+                                 // 13ms is ~0.46 period, ensuring non-zero phase advance.
+        data.mWheel[0].mTireLoad = 4000.0; // Full load
         data.mWheel[1].mTireLoad = 4000.0;
         
         engine.calculate_force(&data); // Cycle 1
@@ -606,6 +609,7 @@ static void test_slide_texture() {
         engine.m_max_torque_ref = 20.0f; 
         engine.m_slide_texture_enabled = true;
         engine.m_slide_texture_gain = 1.0;
+        engine.m_slide_freq_scale = 1.0f;
         
         data.mSteeringShaftTorque = 0.0;
         
@@ -3659,6 +3663,7 @@ static void test_regression_phase_explosion() {
     // Enable Slide Texture
     engine.m_slide_texture_enabled = true;
     engine.m_slide_texture_gain = 1.0f;
+    engine.m_slide_freq_scale = 1.0f;
     // Disable others
     engine.m_sop_effect = 0.0f;
     engine.m_road_texture_enabled = false;

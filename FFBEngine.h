@@ -150,7 +150,8 @@ public:
 
     // Texture toggles
     bool m_slide_texture_enabled = false; // Default off (T300 standard)
-    float m_slide_texture_gain = 0.5f; // 0.0 - 1.0
+    float m_slide_texture_gain = 0.5f; // 0.0 - 5.0
+    float m_slide_freq_scale = 1.0f;   // NEW: Frequency Multiplier (v0.4.36)
     
     bool m_road_texture_enabled = false;
     float m_road_texture_gain = 0.5f; // 0.0 - 1.0
@@ -840,17 +841,16 @@ public:
             // This ensures we feel understeer (Front) AND oversteer/drifting (Rear)
             double effective_slip_vel = (std::max)(front_slip_avg, rear_slip_avg);
             
-            // Threshold: 0.5 m/s (~2 kph) slip
             if (effective_slip_vel > 0.5) {
                 
-                // OLD: 40Hz to 250Hz (Too high for belts)
-                // double freq = 40.0 + (effective_slip_vel * 17.0);
-                // if (freq > 250.0) freq = 250.0;
-
-                // NEW: 10Hz to 70Hz (Tactile Rumble range)
-                // Starts at 12Hz (Thump-Thump) -> Ramps to 70Hz (Buzz)
-                double freq = 10.0 + (effective_slip_vel * 4.0);
-                if (freq > 70.0) freq = 70.0;
+                // BASE FORMULA (v0.4.36): 10Hz start, +5Hz per m/s. (Rumble optimized for scale 1.0)
+                double base_freq = 10.0 + (effective_slip_vel * 5.0);
+                
+                // APPLY USER SCALE
+                double freq = base_freq * (double)m_slide_freq_scale;
+                
+                // CAP AT 250Hz (Nyquist safety for 400Hz loop)
+                if (freq > 250.0) freq = 250.0;
 
                 // PHASE ACCUMULATION (CRITICAL FIX)
                 // Use fmod to handle large dt spikes safely

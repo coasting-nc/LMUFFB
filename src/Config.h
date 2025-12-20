@@ -26,6 +26,7 @@ struct Preset {
     
     bool slide_enabled = false; // Default off (T300 standard)
     float slide_gain = 0.5f;
+    float slide_freq = 1.0f;    // NEW: Frequency Multiplier (v0.4.36)
     
     bool road_enabled = false;
     float road_gain = 0.5f;
@@ -59,7 +60,12 @@ struct Preset {
     
     Preset& SetLockup(bool enabled, float g) { lockup_enabled = enabled; lockup_gain = g; return *this; }
     Preset& SetSpin(bool enabled, float g) { spin_enabled = enabled; spin_gain = g; return *this; }
-    Preset& SetSlide(bool enabled, float g) { slide_enabled = enabled; slide_gain = g; return *this; }
+    Preset& SetSlide(bool enabled, float g, float f = 1.0f) { 
+        slide_enabled = enabled; 
+        slide_gain = g; 
+        slide_freq = f; 
+        return *this; 
+    }
     Preset& SetRoad(bool enabled, float g) { road_enabled = enabled; road_gain = g; return *this; }
     
     Preset& SetInvert(bool v) { invert_force = v; return *this; }
@@ -90,6 +96,7 @@ struct Preset {
         engine.m_spin_gain = spin_gain;
         engine.m_slide_texture_enabled = slide_enabled;
         engine.m_slide_texture_gain = slide_gain;
+        engine.m_slide_freq_scale = slide_freq;
         engine.m_road_texture_enabled = road_enabled;
         engine.m_road_texture_gain = road_gain;
         engine.m_invert_force = invert_force;
@@ -119,6 +126,7 @@ struct Preset {
         spin_gain = engine.m_spin_gain;
         slide_enabled = engine.m_slide_texture_enabled;
         slide_gain = engine.m_slide_texture_gain;
+        slide_freq = engine.m_slide_freq_scale;
         road_enabled = engine.m_road_texture_enabled;
         road_gain = engine.m_road_texture_gain;
         invert_force = engine.m_invert_force;
