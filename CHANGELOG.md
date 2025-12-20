@@ -8,7 +8,6 @@ All notable changes to this project will be documented in this file.
     - **Max Torque Ref**: 100 Nm (High dynamic range)
     - **Invert FFB**: Enabled (Required for T300)
     - **Understeer Effect**: 38.0
-    - **Backwards Compatibility**: Removed the standalone "T300" preset as it is now redundant.
 ### Fixed
 - **SoP (Lateral G) Direction Inversion**: Fixed SoP effect pulling in the wrong direction during turns, ensuring correct aligning torque behavior.
 
