@@ -141,13 +141,6 @@ For feedback, questions, or support:
 
 ## Features
 
-*   **High Performance Core**: Native C++ Multi-threaded architecture.
-    *   **FFB Loop**: Runs at ~400Hz to match game physics.
-    *   **GUI Loop**: Runs at ~60Hz with lazy rendering to save CPU.
-*   **Real-time Tuning GUI**:
-    *   Built with **Dear ImGui** for responsive adjustment of parameters.
-    *   Sliders for Master Gain, Understeer (Grip Loss), SoP (Seat of Pants), and Min Force.
-    *   Toggles for Texture effects (Slide Rumble, Road Details).
 *   **Custom Effects**:
     *   **Grip Modulation**: Feel the wheel lighten as front tires lose grip.
     *   **Dynamic Oversteer**: Counter-steering force suggestion based on rear axle alignment torque (v0.2.2).
