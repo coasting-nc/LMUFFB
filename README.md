@@ -119,7 +119,15 @@ Impact:
 - FFB will still work, but some effects (like load-sensitive textures and grip-based understeer) will use approximations instead of real data
 - You can safely ignore these warnings - they confirm the fallback system is working
 
+### Upcoming Features
 
+* Wet Weather Haptics (Hydro-Grain): vibration cues telling when the tires are on dry or wet surface, and if there is grip or not 
+* Simulate a drying racing line (e.g., left tires on dry, right tires on wet) with per wheel  Hydro-Grain
+* Adaptive Optimal Slip Angle
+* "ABS Rattle" (Pulsing)
+* Longitudinal Dynamic Weight Transfer:  feeling of the car getting heavy under braking and light under acceleration.
+
+  
 ## Feedback & Support
 
 For feedback, questions, or support:
