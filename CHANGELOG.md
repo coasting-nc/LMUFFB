@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.31] - 2025-12-20
+### Changed
+- **Default Preset Update**: The "Default" preset now uses the tuned "T300" settings by default.
+    - **Max Torque Ref**: 100 Nm (High dynamic range)
+    - **Invert FFB**: Enabled (Required for T300)
+    - **Understeer Effect**: 38.0
+    - **Backwards Compatibility**: Removed the standalone "T300" preset as it is now redundant.
+### Fixed
+- **SoP (Lateral G) Direction Inversion**: Fixed SoP effect pulling in the wrong direction during turns, ensuring correct aligning torque behavior.
+
 ## [0.4.30] - 2025-12-20
 ### Fixed
 - **SoP (Lateral G) Direction Inversion**: Fixed the SoP (lateral G) effect pulling in the wrong direction, causing it to fight against Base Torque and Rear Align Torque.

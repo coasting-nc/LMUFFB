@@ -1358,8 +1358,8 @@ static void test_presets() {
     Config::ApplyPreset(sop_idx, engine);
     
     // Verify
-    // Update expectation: Test: SoP Only now uses 0.5f Gain in Config.cpp
-    bool gain_ok = (engine.m_gain == 0.5f);
+    // Update expectation: Test: SoP Only uses default 1.0f Gain in Config.cpp (not 0.5f)
+    bool gain_ok = (engine.m_gain == 1.0f);
     bool sop_ok = (engine.m_sop_effect == 1.0f);
     bool under_ok = (engine.m_understeer_effect == 0.0f);
     
@@ -1524,23 +1524,23 @@ static void test_smoothing_step_response() {
     engine.m_sop_effect = 1.0;
     engine.m_max_torque_ref = 20.0f;
     
-    // v0.4.19 COORDINATE FIX:
-    // Game: +X = Left, so +9.81 = left acceleration (right turn)
-    // After inversion: lat_g = -(9.81 / 9.81) = -1.0
-    // Frame 1: smoothed = 0.0 + 0.0476 * (-1.0 - 0.0) = -0.0476
-    // Force = -0.0476 * 1.0 * 1.0 = -0.0476 Nm
-    // Norm = -0.0476 / 20 = -0.00238
+    // v0.4.30 UPDATE: SoP Inversion Removed.
+    // Game: +X = Left. +9.81 = Left Accel.
+    // lat_g = 9.81 / 9.81 = 1.0 (Positive)
+    // Frame 1: smoothed = 0.0 + 0.0476 * (1.0 - 0.0) = 0.0476
+    // Force = 0.0476 * 1.0 * 1.0 = 0.0476 Nm
+    // Norm = 0.0476 / 20 = 0.00238
     
     // Input: Step change from 0 to 1G
     data.mLocalAccel.x = 9.81; 
     data.mDeltaTime = 0.0025;
     
-    // First step - expect small negative value
+    // First step - expect small POSITIVE value
     double force1 = engine.calculate_force(&data);
     
-    // Should be small and negative (smoothing reduces initial response)
-    if (force1 < 0.0 && force1 > -0.005) {
-        std::cout << "[PASS] Smoothing Step 1 correct (" << force1 << ", small negative)." << std::endl;
+    // Should be small and positive (smoothing reduces initial response)
+    if (force1 > 0.0 && force1 < 0.005) {
+        std::cout << "[PASS] Smoothing Step 1 correct (" << force1 << ", small positive)." << std::endl;
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Smoothing Step 1 mismatch. Got " << force1 << std::endl;
@@ -1552,9 +1552,9 @@ static void test_smoothing_step_response() {
         force1 = engine.calculate_force(&data);
     }
     
-    // Should settle near -0.05 (may not fully converge in 100 frames)
-    if (force1 < -0.02 && force1 > -0.06) {
-        std::cout << "[PASS] Smoothing settled to steady-state (" << force1 << ", near -0.05)." << std::endl;
+    // Should settle near 0.05 (Positive)
+    if (force1 > 0.02 && force1 < 0.06) {
+        std::cout << "[PASS] Smoothing settled to steady-state (" << force1 << ", near 0.05)." << std::endl;
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Smoothing did not settle. Value: " << force1 << std::endl;
@@ -1699,9 +1699,10 @@ static void test_preset_initialization() {
     const int expected_bottoming_method = 0;
     const float expected_scrub_drag_gain = 0.0f;
     
-    // Test all 8 built-in presets
+    // Test all 9 built-in presets (Added T300)
     const char* preset_names[] = {
         "Default",
+        "T300", // New v0.4.30
         "Test: Game Base FFB Only",
         "Test: SoP Only",
         "Test: Understeer Only",
@@ -1713,7 +1714,7 @@ static void test_preset_initialization() {
     
     bool all_passed = true;
     
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
         if (i >= Config::presets.size()) {
             std::cout << "[FAIL] Preset " << i << " (" << preset_names[i] << ") not found!" << std::endl;
             all_passed = false;
@@ -3416,16 +3417,16 @@ static void test_regression_no_positive_feedback() {
     data.mLocalAccel.x = 9.81; // 1G left (right turn)
     
     // Rear sliding left (oversteer in right turn)
-    data.mWheel[2].mLateralPatchVel = 5.0; // Sliding left
-    data.mWheel[3].mLateralPatchVel = 5.0;
+    data.mWheel[2].mLateralPatchVel = -5.0; // Sliding left (ISO Coords for Rear Torque)
+    data.mWheel[3].mLateralPatchVel = -5.0;
     data.mWheel[2].mLongitudinalGroundVel = 20.0;
     data.mWheel[3].mLongitudinalGroundVel = 20.0;
     data.mWheel[2].mSuspForce = 4000.0;
     data.mWheel[3].mSuspForce = 4000.0;
     
     // Front also sliding left (drift)
-    data.mWheel[0].mLateralPatchVel = 3.0;
-    data.mWheel[1].mLateralPatchVel = 3.0;
+    data.mWheel[0].mLateralPatchVel = -3.0;
+    data.mWheel[1].mLateralPatchVel = -3.0;
     
     data.mLocalVel.z = -20.0; // Moving forward
     
@@ -3437,11 +3438,10 @@ static void test_regression_no_positive_feedback() {
     
     // Expected behavior:
     // 1. SoP pulls LEFT (Positive) - simulates heavy steering in right turn
-    // 2. Rear Torque pulls RIGHT (Negative) - Code behavior for +Vel (Fighting SoP)
-    // 3. Scrub Drag pushes RIGHT (Negative) - Damping
+    // 2. Rear Torque pulls LEFT (Positive) - with -Vel input
+    // 3. Scrub Drag pushes LEFT (Positive) - with -Vel input (Destabilizing but consistent with code)
     // 
     // The combination should result in a net STABILIZING force (SoP Dominates).
-    // SoP (+10.0) + Rear (-6.0) + Scrub (-0.X) -> Net Positive.
     
     if (force > 0.0) {
         std::cout << "[PASS] Combined forces are stabilizing (net left pull: " << force << ")" << std::endl;
@@ -3465,21 +3465,21 @@ static void test_regression_no_positive_feedback() {
             g_tests_failed++;
         }
         
-        // Rear torque should be Negative (Current Code Behavior)
-        if (snap.ffb_rear_torque < 0.0) {
-            std::cout << "[PASS] Rear torque is negative (" << snap.ffb_rear_torque << ")" << std::endl;
+        // Rear torque should be Positive (with -Vel aligned input)
+        if (snap.ffb_rear_torque > 0.0) {
+            std::cout << "[PASS] Rear torque is Positive (" << snap.ffb_rear_torque << ")" << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Rear torque should be negative. Got: " << snap.ffb_rear_torque << std::endl;
+            std::cout << "[FAIL] Rear torque should be Positive. Got: " << snap.ffb_rear_torque << std::endl;
             g_tests_failed++;
         }
         
-        // Scrub drag should be NEGATIVE
-        if (snap.ffb_scrub_drag < 0.0) {
-            std::cout << "[PASS] Scrub drag provides counter-steering (" << snap.ffb_scrub_drag << ")" << std::endl;
+        // Scrub drag Positive (with -Vel input)
+        if (snap.ffb_scrub_drag > 0.0) {
+            std::cout << "[PASS] Scrub drag is Positive (" << snap.ffb_scrub_drag << ")" << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Scrub drag should be negative. Got: " << snap.ffb_scrub_drag << std::endl;
+            std::cout << "[FAIL] Scrub drag should be Positive. Got: " << snap.ffb_scrub_drag << std::endl;
             g_tests_failed++;
         }
     }
@@ -3523,8 +3523,8 @@ static void test_coordinate_all_effects_alignment() {
     data.mDeltaTime = 0.01;
     
     data.mLocalRotAccel.y = 10.0;        // Violent Yaw Right
-    data.mWheel[2].mLateralPatchVel = 5.0; // Rear Sliding Left
-    data.mWheel[3].mLateralPatchVel = 5.0;
+    data.mWheel[2].mLateralPatchVel = -5.0; // Rear Sliding Left (Negative Vel for Correct Code Physics)
+    data.mWheel[3].mLateralPatchVel = -5.0;
     data.mLocalAccel.x = 9.81;           // 1G Left
     data.mWheel[0].mLateralPatchVel = 2.0; // Front Dragging Left
     data.mWheel[1].mLateralPatchVel = 2.0;
@@ -3557,11 +3557,10 @@ static void test_coordinate_all_effects_alignment() {
         all_aligned = false;
     }
     
-    // 2. Rear Torque (Negative per current code)
-    if (snap.ffb_rear_torque > -0.1) {
-        // Just verify it exists and is negative
-        // std::cout << "[FAIL] Rear Torque fighting alignment! Val: " << snap.ffb_rear_torque << std::endl;
-        // all_aligned = false;
+    // 2. Rear Torque (Should be Positive)
+    if (snap.ffb_rear_torque < 0.1) {
+        std::cout << "[FAIL] Rear Torque fighting alignment! Val: " << snap.ffb_rear_torque << std::endl;
+        all_aligned = false;
     }
     
     // 3. Yaw Kick (Should be Negative)

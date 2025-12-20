@@ -10,13 +10,13 @@ struct Preset {
     bool is_builtin = false; // NEW: Track if this is hardcoded or user-created
     
     // 1. Define Defaults inline (Matches "Default" preset logic)
-    float gain = 0.5f;
-    float understeer = 2.0f;
-    float sop = 0.15f;
+    float gain = 1.0f;
+    float understeer = 38.0f;
+    float sop = 1.0f;
     float sop_scale = 20.0f;
     float sop_smoothing = 0.05f;
     float min_force = 0.0f;
-    float oversteer_boost = 0.0f;
+    float oversteer_boost = 1.0f;
     
     bool lockup_enabled = false;
     float lockup_gain = 0.5f;
@@ -30,15 +30,15 @@ struct Preset {
     bool road_enabled = false;
     float road_gain = 0.5f;
     
-    bool invert_force = false;
-    float max_torque_ref = 60.0f;
+    bool invert_force = true;
+    float max_torque_ref = 100.0f;
     
     bool use_manual_slip = false;
     int bottoming_method = 0;
     float scrub_drag_gain = 0.0f;
     
-    float rear_align_effect = 1.0f;
-    float sop_yaw_gain = 0.0f; // New v0.4.15
+    float rear_align_effect = 5.0f;
+    float sop_yaw_gain = 5.0f; // New v0.4.15
     float gyro_gain = 0.0f; // New v0.4.17
     
     float steering_shaft_gain = 1.0f;
