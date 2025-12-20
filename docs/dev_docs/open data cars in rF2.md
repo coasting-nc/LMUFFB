@@ -9,3 +9,5 @@
 * Riley MkXX Daytona Prototype
 * AC Cars	427 SC (Cobra)
 * Howston	G4 / G6 (Fictional) 
+* Panoz	AIV Roadster
+* Renault	Clio Cup / Megane	
