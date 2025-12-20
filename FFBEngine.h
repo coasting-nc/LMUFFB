@@ -843,9 +843,14 @@ public:
             // Threshold: 0.5 m/s (~2 kph) slip
             if (effective_slip_vel > 0.5) {
                 
-                // Map 1 m/s -> 40Hz, 10 m/s -> 200Hz
-                double freq = 40.0 + (effective_slip_vel * 17.0);
-                if (freq > 250.0) freq = 250.0;
+                // OLD: 40Hz to 250Hz (Too high for belts)
+                // double freq = 40.0 + (effective_slip_vel * 17.0);
+                // if (freq > 250.0) freq = 250.0;
+
+                // NEW: 10Hz to 70Hz (Tactile Rumble range)
+                // Starts at 12Hz (Thump-Thump) -> Ramps to 70Hz (Buzz)
+                double freq = 10.0 + (effective_slip_vel * 4.0);
+                if (freq > 70.0) freq = 70.0;
 
                 // PHASE ACCUMULATION (CRITICAL FIX)
                 // Use fmod to handle large dt spikes safely

@@ -580,8 +580,8 @@ static void test_slide_texture() {
         data.mWheel[2].mLateralPatchVel = 0.0; // Rear Grip
         data.mWheel[3].mLateralPatchVel = 0.0;
         
-        data.mDeltaTime = 0.013; 
-        data.mWheel[0].mTireLoad = 4000.0; // Full load
+        data.mDeltaTime = 0.013; // 13ms. For 30Hz (5m/s input), period is 33ms. 
+                                 // 13ms is ~0.4 period, ensuring non-zero phase advance.eLoad = 4000.0; // Full load
         data.mWheel[1].mTireLoad = 4000.0;
         
         engine.calculate_force(&data); // Cycle 1
@@ -3673,7 +3673,7 @@ static void test_regression_phase_explosion() {
     data.mWheel[1].mTireLoad = 4000.0;
     
     // SIMULATE A STUTTER (Large Delta Time)
-    // 50ms (0.05s) -> 125Hz effect -> 6.25 cycles -> Phase ~39 rad
+    // 50ms (0.05s) -> 30Hz effect (was 125Hz) -> 1.5 cycles -> Phase ~9.42 rad
     data.mDeltaTime = 0.05; 
     
     // Run multiple frames

@@ -2,12 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.4.34] - 2025-12-20
+## [0.4.35] - 2025-12-20
+### Changed
+- **Slide Texture Frequency Optimization**: Re-mapped the vibration frequency for Slide Rumble to the "Tactile Sweet Spot" for belt-driven wheels (10Hz - 70Hz).
+    - **Previous Behavior**: Frequencies ranged from 40Hz to 250Hz. High frequencies (above 100Hz) are often dampened by rubber belts and interpreted as a subtle "fizz" rather than a gritty rumble.
+    - **New Behavior**: Frequency starts at 10Hz (chunky grind) and ramps to 70Hz (fast buzz) based on slip speed. This provides significantly better tactile feedback on hardware like the T300 and G29.
+    - **Aliasing Protection**: Lowering the frequency range also improves signal stability relative to the 400Hz physics loop (improving Nyquist headroom).
+- **Unlocked Effect Gain Ranges**: Increased the maximum slider limits for dynamic effects and textures in the GUI from 1.0-5.0 to **20.0**.
+    - This allows users to "punch through" the internal friction and damping of belt-driven gear by boosting the amplitude of micro-vibrations (Slide, Road, Lockup, Spin).
+
 ### Fixed
 - **Slide Texture Scope Expansion**: Updated "Slide Rumble" effect to trigger based on the **maximum** lateral slip of either axle (Front OR Rear).
     - **Previous Behavior**: Only monitored front wheels (Understeer). Doing a donut or drift (Rear Slide) resulted in no vibration, making the car feel "floating."
     - **New Behavior**: Calculates front and rear average slip velocities independently and uses the greater of the two to drive the vibration effect.
     - **Impact**: You now feel the gritty tire scrub texture during donuts, power slides, and extensive oversteer, solving the "silent drift" issue.
+
+## [0.4.34] - 2025-12-20
+### Fixed
+- **Slide Texture Scope Expansion** (Superceded by v0.4.35 logic)
+
 
 ## [0.4.33] - 2025-12-20
 ### Fixed
