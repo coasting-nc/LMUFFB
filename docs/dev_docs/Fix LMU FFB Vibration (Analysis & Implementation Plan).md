@@ -1,7 +1,7 @@
 
 # Technical Specification: Dynamic Notch Filter & Frequency Estimator
 
-**Target Version:** v0.4.40 (Proposed)
+**Target Version:** v0.4.41 (Proposed)
 **Context:** Addressing user reports of constant, speed-dependent vibrations (e.g., flat spots) in Le Mans Ultimate.
 **Objective:** Implement a surgical filter to remove specific frequencies linked to wheel rotation without adding global latency, and a diagnostic tool to visualize signal frequency.
 
