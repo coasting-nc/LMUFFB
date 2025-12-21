@@ -437,6 +437,28 @@ tests\test_ffb_engine.exe 2>&1 | Select-String -Pattern "Tests (Passed|Failed):"
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.43] - 2025-12-21
+### Added
+- **Static Notch Filter**: Implemented a surgical static notch filter to eliminate constant-frequency mechanical hum or vibration.
+    - **Customizable Frequency**: Users can now target specific noise frequencies between 10Hz and 100Hz.
+    - **Surgical Precision**: Uses a fixed Q-factor of 5.0 for minimal interference with surrounding road detail.
+    - **Safety Tooltips**: Added warnings regarding potential loss of road detail at high frequencies.
+- **Dynamic Suppression Strength**: Added a "Suppression Strength" slider to the Dynamic Flatspot Suppression effect.
+    - Enables linear blending between raw and filtered forces, allowing users to fine-tune the balance between comfort and flatspot feedback.
+- **Unit Tests**: Added `test_static_notch_integration` to verify the mathematical integrity and attenuation performance of the new filter.
+- **Technical Details**:
+    - **FFBEngine.h**: Added manual control and second `BiquadNotch` instance for static noise.
+    - **Config.cpp**: Added persistence for `static_notch_enabled`, `static_notch_freq`, and `flatspot_strength`.
+    - **GuiLayer.cpp**: Integrated new controls into the "Signal Filtering" section.
+
+## [0.4.42] - 2025-12-21
+### Added
+- **Yaw Kick Signal Conditioning**: Implemented filters to eliminate constant "physics noise" from the Yaw Kick effect.
+    - **Low Speed Cutoff**: Mutes the effect when moving slower than 5 m/s (18 kph) to prevent engine idle vibration and parking lot jitters.
+    - **Noise Gate (Deadzone)**: Filters out micro-rotations below 0.2 rad/s² to ensure the "Kick" only triggers during significant events (like slide initiation).
+    - **Technical Impact**: Resolves the "muddy" FFB feeling caused by constant background noise, making the counter-steering cue much clearer.
+- **Unit Tests**: Added `test_yaw_kick_signal_conditioning` to verify the new filtering logic handling.
+
 ## [0.4.41] - 2025-12-21
 ### Added
 - **Dynamic Notch Filter (Flatspot Suppression)**: Implemented a speed-tracking notch filter to surgically remove vibrations linked to wheel rotation frequency (e.g., flat spots, unbalanced tires).
@@ -447,6 +469,7 @@ All notable changes to this project will be documented in this file.
     - **Diagnostics**: Displays the "Estimated Vibration Freq" in the Debug Window, allowing users to verify if their FFB vibrations match the wheel's rotational frequency.
     - **Theoretical Comparison**: Displays the expected wheel frequency based on current speed for quick verification.
 - **Signal Filtering UI**: Added a new "Signal Filtering" section to the Tuning Window.
+- **User Guide**: `docs\Dynamic Flatspot Suppression - User Guide.md`.
 - **Enhanced Test Suite**: Added 2 new signal processing tests:
     - `test_notch_filter_attenuation`: Verifies that the notch filter correctly kills the target frequency while passing steering inputs (2Hz) untouched.
     - `test_frequency_estimator`: Verifies that the analyzer accurately detects a simulated 20Hz vibration.
@@ -1337,9 +1360,15 @@ public:
     // v0.4.41: Signal Filtering Settings
     bool m_flatspot_suppression = false;
     float m_notch_q = 2.0f; // Default Q-Factor
+    float m_flatspot_strength = 1.0f; // Default 1.0 (100% suppression)
+    
+    // Static Notch Filter (v0.4.43)
+    bool m_static_notch_enabled = false;
+    float m_static_notch_freq = 50.0f;
     
     // Signal Diagnostics
     double m_debug_freq = 0.0; // Estimated frequency for GUI
+    double m_theoretical_freq = 0.0; // Theoretical wheel frequency for GUI
 
     // Warning States (Console logging)
     bool m_warned_load = false;
@@ -1406,7 +1435,9 @@ public:
     double m_sop_lat_g_smoothed = 0.0;
     
     // Filter Instances (v0.4.41)
+    // Filter Instances (v0.4.41)
     BiquadNotch m_notch_filter;
+    BiquadNotch m_static_notch_filter;
 
     // Frequency Estimator State (v0.4.41)
     double m_last_crossing_time = 0.0;
@@ -1781,32 +1812,51 @@ public:
 
 
         // 2. Dynamic Notch Filter Logic
+        // Calculate Wheel Frequency (always, for GUI display)
+        double car_v_long = std::abs(data->mLocalVel.z);
+        
+        // Get radius (convert cm to m)
+        // Use Front Left as reference
+        const TelemWheelV01& fl_ref = data->mWheel[0];
+        double radius = (double)fl_ref.mStaticUndeflectedRadius / 100.0;
+        if (radius < 0.1) radius = 0.33; // Safety fallback
+        
+        double circumference = 2.0 * PI * radius;
+        
+        // Avoid divide by zero
+        double wheel_freq = (circumference > 0.0) ? (car_v_long / circumference) : 0.0;
+        
+        // Store for GUI display
+        m_theoretical_freq = wheel_freq;
+        
+        // Apply filter if enabled
         if (m_flatspot_suppression) {
-            // Calculate Wheel Frequency
-            double car_v_long = std::abs(data->mLocalVel.z);
-            
-            // Get radius (convert cm to m)
-            // Use Front Left as reference
-            const TelemWheelV01& fl_ref = data->mWheel[0];
-            double radius = (double)fl_ref.mStaticUndeflectedRadius / 100.0;
-            if (radius < 0.1) radius = 0.33; // Safety fallback
-            
-            double circumference = 2.0 * PI * radius;
-            
-            // Avoid divide by zero
-            double wheel_freq = (circumference > 0.0) ? (car_v_long / circumference) : 0.0;
-
             // Only filter if moving fast enough (> 1Hz)
             if (wheel_freq > 1.0) {
                 // Update filter coefficients
                 m_notch_filter.Update(wheel_freq, 1.0/dt, (double)m_notch_q);
                 
                 // Apply filter
-                game_force = m_notch_filter.Process(game_force);
+                double input_force = game_force;
+                double filtered_force = m_notch_filter.Process(input_force);
+                
+                // Blend Output (Linear Interpolation)
+                // Strength 1.0 = Fully Filtered. Strength 0.0 = Raw.
+                game_force = input_force * (1.0f - m_flatspot_strength) + filtered_force * m_flatspot_strength;
+
             } else {
                 // Reset filter state when stopped to prevent "ringing" on start
                 m_notch_filter.Reset();
             }
+        }
+        
+        // 3. Static Notch Filter (v0.4.43)
+        if (m_static_notch_enabled) {
+             // Fixed Q of 5.0 (Surgical)
+             m_static_notch_filter.Update((double)m_static_notch_freq, 1.0/dt, 5.0);
+             game_force = m_static_notch_filter.Process(game_force);
+        } else {
+             m_static_notch_filter.Reset();
         }
         
         // --- 0. UPDATE STATS ---
@@ -2069,6 +2119,17 @@ public:
         //          -> Yaw Kick amplifies the noise -> Wheel shakes harder -> Feedback loop
         // SOLUTION: Smooth the yaw acceleration to filter out high-frequency noise while keeping low-frequency signal
         double raw_yaw_accel = data->mLocalRotAccel.y;
+        
+        // v0.4.42: Signal Conditioning - Eliminate idle jitter and road noise
+        // Low Speed Cutoff: Mute below 5 m/s (18 kph) to prevent parking lot jitter
+        if (car_v_long < 5.0) {
+            raw_yaw_accel = 0.0;
+        }
+        // Noise Gate (Deadzone): Filter out micro-corrections and road bumps
+        // Real slides generate >> 2.0 rad/s², road noise is typically < 0.2 rad/s²
+        else if (std::abs(raw_yaw_accel) < 0.2) {
+            raw_yaw_accel = 0.0;
+        }
         
         // Apply Smoothing (Low Pass Filter)
         // v0.4.37: Time Corrected Alpha
@@ -3897,10 +3958,12 @@ Does LMUFFB produce all the effects described in this video `youtube: XHSEAMQgN2
 ```markdown
 # Dynamic Flatspot Suppression - User Guide
 
-**Feature Version:** v0.4.41+  
+**Feature Version:** v0.4.43+  
 **Last Updated:** 2025-12-21
 
 ---
+
+![lmuFFB GUI](screenshots/Signal%20Filtering.png)
 
 ## What Is It?
 
@@ -3989,6 +4052,48 @@ The Q factor controls how "narrow" the filter is:
 
 **For Belt-Driven Wheels (T300, G29):**
 - Use **Q = 1.5 - 2.5** for smoother feel
+
+### Suppression Strength
+
+New in **v0.4.43**, the **"Suppression Strength"** slider allows you to control how aggressively the filter is applied.
+
+**Range:** 0.0 to 1.0 (0% to 100%)  
+**Default:** 1.0 (Full Suppression)
+
+#### When to lower strength:
+- **Realism:** If you want to *feel* that you have a flat spot (for immersion) but want to reduce the violent shaking to a manageable level.
+- **Diagnostics:** To confirm how much vibration the filter is actually removing by toggling between 0.0 and 1.0.
+- **Preference:** If full suppression feels "too clinical" or you want to keep some tire texture.
+
+| Strength | Behavior |
+|----------|----------|
+| **1.0** | Full filter. Vibration at the wheel frequency is maximum attenuated. |
+| **0.5** | 50/50 Blend. You will feel exactly half of the original vibration intensity. |
+| **0.0** | No filtering. Same as disabling the checkbox. |
+
+---
+
+## Static Noise Filter (v0.4.43+)
+
+While the Dynamic Filter tracks your car speed, the **Static Noise Filter** targets a **fixed frequency**. This is specifically designed to eliminate mechanical hums, hardware resonances, or constant road-surface "buzz" that doesn't change with speed.
+
+### When to Use It?
+✅ **Constant Hum:** Your wheel makes a "buzzing" or "droning" sound/feel even when driving at a steady speed or on specific surfaces.
+✅ **Hardware Resonance:** Your rig or wheel base rattles at a specific frequency (e.g., 50Hz).
+✅ **Engine Vibration:** If the game produces a constant engine vibration that you find distracting.
+
+### Configuration
+
+1. Locate **"Static Noise Filter"** in the Signal Filtering section.
+2. Enable the checkbox.
+3. Use the **"Target Frequency"** slider to find the "hum."
+
+**Frequency Range:** 10 Hz to 100 Hz
+
+> ⚠️ **WARNING:** High values on this slider (e.g., 40Hz - 80Hz) will remove genuine road detail at that specific frequency. Use the narrowest possible setup to preserve feel.
+
+### Why Q is fixed at 5.0?
+To keep the filter as "surgical" as possible, the Static Notch uses a fixed **Q factor of 5.0**. This ensures that only a paper-thin slice of the frequency spectrum is removed, leaving your steering feel 99% intact.
 
 ---
 
@@ -4185,11 +4290,11 @@ If vibration persists:
 
 ## Summary
 
-**Dynamic Flatspot Suppression** is a powerful tool for eliminating speed-dependent vibrations without compromising your FFB quality. When used correctly, it provides a perfectly smooth wheel at high speeds while preserving all the important steering feedback you need for fast, precise driving.
+**Dynamic Flatspot Suppression** and the **Static Noise Filter** are powerful tools for eliminating speed-dependent and constant vibrations without compromising your FFB quality. When used correctly, they provide a perfectly smooth wheel at high speeds while preserving all the important steering feedback you need for fast, precise driving.
 
 **Quick Start:**
-1. Enable "Dynamic Flatspot Suppression"
-2. Set Q = 2.0
+1. **For Flatspots:** Enable "Dynamic Flatspot Suppression", set Q = 2.0.
+2. **For Mechanical Hum:** Enable "Static Noise Filter", adjust Target Frequency until the buzz disappears.
 3. Drive and enjoy smooth FFB!
 
 **For Advanced Users:**
@@ -12568,6 +12673,81 @@ Since the DLL talks to the Driver, version mismatches can cause bugs.
 
 ```
 
+# File: docs\dev_docs\Issues from GM stream 20.12.2025.md
+```markdown
+Based on the transcript provided, here is a detailed list of issues, bugs, and feedback points identified by GamerMuscle regarding the **lmuFFB** application.
+
+The list is categorized to help the developer prioritize fixes.
+
+### 1. Critical Technical & Stability Issues
+
+*   **App Losing Connection on Window Focus Change**
+    *   **Issue:** The application stops sending force feedback or loses connection to the wheel when the user clicks away from the app or when the game window is not in focus.
+    *   **Timestamp:** 5:54:00, 5:57:11, 6:28:17, 6:31:55, 6:45:22.
+    *   **Observation:** GamerMuscle noted, "Every time you select the game off the app, it loses... Window needs to be in focus for it to work." He had to repeatedly re-select his wheel in the dropdown menu to get it working again.
+*   **Wheel Device Selection Persistence**
+    *   **Issue:** The app does not seem to remember the selected wheel or maintain the hook to the device reliably.
+    *   **Timestamp:** 5:26:09 ("Device not connected"), 6:28:17.
+    *   **Observation:** He had to manually re-select the wheel multiple times during the session.
+
+### 2. Force Feedback Quality & Latency
+
+*   **Input/FFB Latency (Delay)**
+    *   **Issue:** There is a perceptible delay between the car's physics behavior and the force feedback response, particularly noticeable during fast corrections or when the rear steps out.
+    *   **Timestamp:** 5:30:19, 5:50:08, 6:49:49, 7:06:25, 7:47:03.
+    *   **Observation:** "Definitely a lack of tightness... delay in the physics." "When it snapped out there, it's out of sync with the sim." He notes that while the app adds dynamic range, the delay makes catching slides difficult ("fast corrections feel disconnected").
+*   **Excessive Vibration / Rumble (The "Flat Spot" Noise)**
+    *   **Issue:** The app picks up and amplifies a constant, high-frequency vibration from the game engine (attributed to tire wear or tire model noise) that drowns out useful FFB detail. This happens even on cold tires or with minimal wear.
+    *   **Timestamp:** 5:33:52, 5:58:35, 6:03:02, 6:06:02.
+    *   **Technical Detail:** GamerMuscle estimates this vibration is around **25Hz to 40Hz** (timestamps 6:03:02, 6:11:43).
+    *   **User Suggestion:** He suggests implementing a **Frequency Band Isolator** or a specific filter (notch filter) to remove frequencies between 25Hz–60Hz to eliminate this specific "LMU rumble" without dampening the rest of the FFB (Timestamp 6:06:36, 6:09:57).
+
+### 3. Specific Effect Tuning & Behavior
+
+*   **"Seat of the Pants" Implementation**
+    *   **Issue:** The user felt the "Seat of the Pants" effect was behaving unexpectedly. He noted it seemed to apply load based on G-load rather than the rotation/yaw of the rear stepping out.
+    *   **Timestamp:** 5:38:50, 5:45:39.
+    *   **Observation:** "Not operating how you generally expect... it's applying a load for the G load."
+*   **"Yaw Kick" Effect**
+    *   **Issue:** Described as feeling like a "random damper" rather than a useful informative force.
+    *   **Timestamp:** 5:51:20, 7:05:57.
+    *   **Observation:** "The Yaw kick just seems to add in a random like damper."
+*   **Understeer Effect**
+    *   **Issue:** The enhanced understeer effect can feel like it is "fighting" the user unrealistically.
+    *   **Timestamp:** 6:16:56.
+*   **Oversteer Boost**
+    *   **Issue:** User was unclear on its function, and suspected it might be contributing to the feeling of delay.
+    *   **Timestamp:** 5:47:31, 5:50:14.
+
+### 4. UI/UX & Onboarding
+
+*   **Lack of Tooltips/Documentation**
+    *   **Issue:** The user was confused by several setting names ("Steer Boost," "Yaw Kick," "Rear Align Torque" vs "Seat of the Pants").
+    *   **Timestamp:** 5:26:49 ("There's no instructions"), 5:47:31.
+    *   **Recommendation:** Add tooltips explaining what specific sliders do (e.g., "Steer Boost").
+*   **Visibility of "Advanced Tuning"**
+    *   **Issue:** The user struggled to find the "Advanced Tuning" section, suggesting the UI layout might need better visual hierarchy.
+    *   **Timestamp:** 5:32:33.
+    *   **Observation:** "I couldn't see it for some reason... looking at the text and it just wasn't registering."
+*   **Initial Configuration Confusion**
+    *   **Issue:** Confusion regarding "Missing tire load" and "Output saturated" warnings upon first launch.
+    *   **Timestamp:** 5:26:25.
+
+### 5. Game-Specific Issues (Contextualizing App Behavior)
+
+*Note: These are issues the YouTuber attributed to the game (Le Mans Ultimate), but they are relevant to the developer because the app **exposes or amplifies** them.*
+
+*   **Tire Model Noise:** The app exposes a "weird density" or constant rumble in the LMU tire model that the default game FFB smooths over/hides. The app makes the "shittiness" of the underlying physics more apparent (Timestamp 6:14:19, 7:49:02).
+*   **Cold Tire Physics:** The user complained heavily about "driving on snow" with cold tires. The app's detailed FFB made this lack of grip feel even more exaggerated and "sloppy" compared to the muted default FFB (Timestamp 7:21:55).
+*   **Default FFB Comparison:** The user concluded that the app is "a million times better" than default for dynamic range (especially for low-end wheels like T300), but the **delay** and the **unfiltered noise** (vibration) are the major trade-offs that need fixing (Timestamp 5:49:39, 7:44:02).
+
+### Summary of Feature Requests from User
+1.  **Frequency Isolator/Notch Filter:** To target and remove the specific ~25-40Hz rumble caused by the game's tire model.
+2.  **Tooltips:** Explanations for "Steer Boost," "Yaw Kick," etc.
+3.  **Fix Window Focus:** Allow the app to run in the background without losing connection to the wheel.
+
+```
+
 # File: docs\dev_docs\linux_testing_feasibility_report.md
 ```markdown
 # Linux Testing Feasibility Report for GuiLayer.cpp
@@ -17352,6 +17532,216 @@ We should instruct the AI to implement the formula, but **mandate the safeguards
 >         3.  **Min Value:** Clamp the final `calc_grip` result so it never drops below `0.2`. A completely dead wheel causes oscillation.
 ```
 
+# File: docs\dev_docs\Static Notch Filter & Dynamic Suppression Strength implementation plan.md
+```markdown
+# Technical Report: Implementation of Static Notch Filter & Dynamic Suppression Strength
+
+**Target Version:** v0.4.42
+**Context:** Enhancing the "Signal Filtering" capabilities to address both speed-dependent vibrations (flat spots) and constant frequency noise (engine/physics bugs), while giving users more control over the intensity of the filtering.
+
+---
+
+## 1. Analysis & Design
+
+### A. Dynamic Notch: Suppression Strength
+**Requirement:** Allow the user to blend between the filtered signal and the raw signal.
+**Logic:** Linear Interpolation (Lerp).
+$$ F_{final} = (F_{filtered} \times Strength) + (F_{raw} \times (1.0 - Strength)) $$
+*   **Range:** 0.0 to 1.0 (0% to 100%).
+*   **Default:** 1.0 (Full suppression).
+
+### B. Static Notch Filter
+**Requirement:** A filter that targets a fixed frequency regardless of car speed.
+**Use Case:** Removing constant engine vibration, mains hum (50/60Hz), or specific physics resonance.
+**Logic:** Identical Biquad implementation as the Dynamic filter, but `Center Frequency` is a user variable, not calculated from velocity.
+**Parameters:**
+*   **Frequency:** 10Hz to 100Hz slider.
+*   **Q-Factor:** To keep the UI simple as requested ("slider to determine frequency"), we will default this to a **High Q (5.0)** internally. This ensures the filter is "surgical" and minimizes the loss of road detail, satisfying the warning requirement.
+
+---
+
+## 2. Implementation Steps
+
+### Phase 1: Core Engine (`FFBEngine.h`)
+
+We need to add state variables for the new settings and a second filter instance.
+
+**1. Add Member Variables:**
+```cpp
+class FFBEngine {
+public:
+    // ... existing settings ...
+    
+    // Dynamic Filter Settings
+    float m_flatspot_strength = 1.0f; // 0.0 - 1.0
+
+    // Static Filter Settings
+    bool m_static_notch_enabled = false;
+    float m_static_notch_freq = 50.0f; // Default 50Hz
+    // We use a fixed Q of 5.0 for static to be surgical, or reuse m_notch_q if desired. 
+    // Let's hardcode 5.0 for now to keep UI simple as requested.
+
+private:
+    // Filter Instances
+    BiquadNotch m_notch_filter;       // Existing (Dynamic)
+    BiquadNotch m_static_notch_filter; // NEW (Static)
+```
+
+**2. Update `calculate_force` Logic:**
+
+```cpp
+// Inside calculate_force, replacing the existing filter block:
+
+// --- 1. Dynamic Notch Filter (Speed Dependent) ---
+if (m_flatspot_suppression) {
+    // ... [Existing Frequency Calculation] ...
+    
+    if (wheel_freq > 1.0) {
+        m_notch_filter.Update(wheel_freq, 400.0, m_notch_q);
+        
+        double raw_input = game_force;
+        double filtered = m_notch_filter.Process(raw_input);
+        
+        // Apply Strength Blending
+        game_force = (filtered * m_flatspot_strength) + (raw_input * (1.0f - m_flatspot_strength));
+    } else {
+        m_notch_filter.Reset();
+    }
+}
+
+// --- 2. Static Notch Filter (Fixed Frequency) ---
+if (m_static_notch_enabled) {
+    // Fixed Q of 5.0 for surgical removal
+    m_static_notch_filter.Update((double)m_static_notch_freq, 400.0, 5.0);
+    game_force = m_static_notch_filter.Process(game_force);
+}
+```
+
+---
+
+### Phase 2: Configuration (`src/Config.h` & `.cpp`)
+
+Persist the new settings.
+
+**1. Update `Preset` Struct (`Config.h`):**
+```cpp
+struct Preset {
+    // ... existing ...
+    float flatspot_strength = 1.0f;
+    bool static_notch_enabled = false;
+    float static_notch_freq = 50.0f;
+
+    // Update Setters
+    Preset& SetFlatspot(bool enabled, float q = 2.0f, float strength = 1.0f) { 
+        flatspot_suppression = enabled; 
+        notch_q = q; 
+        flatspot_strength = strength;
+        return *this; 
+    }
+    
+    Preset& SetStaticNotch(bool enabled, float freq) {
+        static_notch_enabled = enabled;
+        static_notch_freq = freq;
+        return *this;
+    }
+
+    // Update Apply() and UpdateFromEngine() to map these new variables
+};
+```
+
+**2. Update `Config::Save` and `Config::Load` (`Config.cpp`):**
+*   Add keys: `flatspot_strength`, `static_notch_enabled`, `static_notch_freq`.
+
+---
+
+### Phase 3: User Interface (`src/GuiLayer.cpp`)
+
+Update the "Signal Filtering" section in `DrawTuningWindow`.
+
+```cpp
+    if (ImGui::TreeNode("Signal Filtering")) {
+        // --- Dynamic Section ---
+        BoolSetting("Dynamic Flatspot Suppression", &engine.m_flatspot_suppression);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Removes vibrations linked to wheel speed (e.g. flat spots).");
+        }
+
+        if (engine.m_flatspot_suppression) {
+            ImGui::Indent();
+            FloatSetting("Notch Width (Q)", &engine.m_notch_q, 0.5f, 10.0f, "Q: %.1f");
+            
+            // NEW: Strength Slider
+            FloatSetting("Suppression Strength", &engine.m_flatspot_strength, 0.0f, 1.0f, "%.0f%%");
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Intensity of the filter.\n100% = Full removal.\n50% = Reduced vibration (Immersion).");
+            
+            // Frequency Readout (Existing)
+            ImGui::TextColored(ImVec4(0,1,1,1), "Est. Freq: %.1f Hz | Theory: %.1f Hz", 
+                (float)engine.m_debug_freq, (float)engine.m_theoretical_freq);
+                
+            ImGui::Unindent();
+        }
+
+        ImGui::Separator();
+
+        // --- NEW: Static Section ---
+        BoolSetting("Static Noise Filter", &engine.m_static_notch_enabled);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Removes a specific constant frequency (e.g. engine hum, physics bugs).\nWARNING: Removes road detail at this frequency!");
+        }
+
+        if (engine.m_static_notch_enabled) {
+            ImGui::Indent();
+            FloatSetting("Target Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.0f Hz");
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("The specific frequency to kill.");
+            ImGui::Unindent();
+        }
+        
+        ImGui::TreePop();
+    }
+```
+
+---
+
+## 3. Prompt for the Coding Agent
+ 
+**Task: Implement Static Notch Filter & Dynamic Suppression Strength**
+
+**Context:**
+We are refining the "Signal Filtering" tools. Users need to be able to blend the Dynamic Notch filter (to keep some flatspot feel) and need a separate Static Notch filter to remove constant-frequency noise (like engine hum).
+
+**Implementation Requirements:**
+
+1.  **Core Physics (`FFBEngine.h`):**
+    *   Add `m_flatspot_strength` (float, default 1.0) to `FFBEngine`.
+    *   Add `m_static_notch_enabled` (bool) and `m_static_notch_freq` (float, default 50.0) to `FFBEngine`.
+    *   Add a second `BiquadNotch` instance named `m_static_notch_filter`.
+    *   **Update `calculate_force`:**
+        *   Modify the Dynamic Notch logic to blend the output using `m_flatspot_strength` (Linear Interpolation).
+        *   Add the Static Notch logic *after* the Dynamic Notch. It should use a fixed Q of 5.0 (Surgical) and the user-defined frequency.
+
+2.  **Configuration (`src/Config.h` & `src/Config.cpp`):**
+    *   Update `Preset` struct to include the 3 new variables.
+    *   Update `Save` and `Load` to persist them to `config.ini`.
+    *   Update `LoadPresets` to initialize them (Static: Off, Strength: 1.0).
+
+3.  **User Interface (`src/GuiLayer.cpp`):**
+    *   **Dynamic Section:** Add a slider for "Suppression Strength" (0-100%) under the Notch Width slider.
+    *   **Static Section:** Add a new checkbox "Static Noise Filter" and a slider "Target Frequency" (10-100Hz).
+    *   **Tooltips:** Add the specific warning for the Static filter: "WARNING: Removes road detail at this frequency!".
+
+**Deliverables:**
+*   Updated `FFBEngine.h`
+*   Updated `src/Config.h` and `src/Config.cpp`
+*   Updated `src/GuiLayer.cpp`
+
+**Check-list for completion:**
+- [ ] `m_flatspot_strength` implemented with blending logic.
+- [ ] `m_static_notch_filter` implemented with fixed Q=5.0.
+- [ ] Config system saves/loads new parameters.
+- [ ] GUI displays "Suppression Strength" slider.
+- [ ] GUI displays "Static Noise Filter" checkbox and Frequency slider.
+```
+
 # File: docs\dev_docs\telemetry_availability_report.md
 ```markdown
 # Le Mans Ultimate Telemetry Availability Report
@@ -19900,15 +20290,6 @@ Here is the prompt to instruct the agent to add these filters.
 
 ## Prompt
 
-You will have to work on the files downloaded from this repo unlinked: github_com/coasting-nc/LMUFFB and start working on the tasks described below. Therefore, if you haven't done it already, clone this repo unlinked: github_com/coasting-nc/LMUFFB and start working on the tasks described below.
-
-Please initialize this session by following the **Standard Task Workflow** defined in `AGENTS.md`.
-
-1.  **Sync**: Run `git fetch && git reset --hard origin/main` for the LMUFFB repository to ensure you see the latest files.
-2.  **Load Memory**: Read `AGENTS_MEMORY.md` from the root dir of the LMUFFB repository to review build workarounds and architectural insights. 
-3.  **Load Rules**: Read `AGENTS.md` from the root dir of the LMUFFB repository to confirm instructions. 
-
-Once you have reviewed these documents, please proceed with the following task:
 
 **Task: Implement Signal Conditioning for Yaw Kick Effect**
 
@@ -19936,20 +20317,6 @@ The "Yaw Kick" effect (derived from `mLocalRotAccel.y`) is currently producing c
 2.  Updated `tests/test_ffb_engine.cpp`.
 3.  Updated `CHANGELOG.md` (v0.4.40).
 
-### Git / Large Diff Issue
-*   **Issue:** `git status`, `git fetch`, or other commands may fail with "The diff size is unusually large" if the repository state is significantly different or if build artifacts are not ignored.
-*   **Workaround:** Rely on `read_file`, `overwrite_file`, and `replace_with_git_merge_diff` directly. Do not depend on bash commands for verification if this error occurs. Ensure `.gitignore` covers all build directories (e.g., `tests/build/`).
-
-
-#### Git & Repo Management
-
-##### Submodule Trap
-*   **Issue:** Cloning a repo inside an already initialized repo (even if empty) can lead to nested submodules or detached git states.
-*   **Fix:** Ensure the root directory is correctly initialized or cloned into. If working in a provided sandbox with `.git`, configure the remote and fetch rather than cloning into a subdirectory.
-
-##### File Operations
-*   **Lesson:** When moving files from a nested repo to root, ensure hidden files (like `.git`) are handled correctly or that the root `.git` is properly synced.
-*   **Tooling:** `replace_with_git_merge_diff` requires exact context matching. If files are modified or desynchronized, `overwrite_file_with_block` is safer.
 ```
 
 # File: docs\python_version\performance_analysis.md
@@ -20728,6 +21095,9 @@ void Config::LoadPresets() {
                         else if (key == "gyro_gain") current_preset.gyro_gain = std::stof(value);
                         else if (key == "flatspot_suppression") current_preset.flatspot_suppression = std::stoi(value);
                         else if (key == "notch_q") current_preset.notch_q = std::stof(value);
+                        else if (key == "flatspot_strength") current_preset.flatspot_strength = std::stof(value);
+                        else if (key == "static_notch_enabled") current_preset.static_notch_enabled = std::stoi(value);
+                        else if (key == "static_notch_freq") current_preset.static_notch_freq = std::stof(value);
                     } catch (...) {}
                 }
             }
@@ -20805,6 +21175,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "gyro_gain=" << engine.m_gyro_gain << "\n";
         file << "flatspot_suppression=" << engine.m_flatspot_suppression << "\n";
         file << "notch_q=" << engine.m_notch_q << "\n";
+        file << "flatspot_strength=" << engine.m_flatspot_strength << "\n";
+        file << "static_notch_enabled=" << engine.m_static_notch_enabled << "\n";
+        file << "static_notch_freq=" << engine.m_static_notch_freq << "\n";
         
         // 3. User Presets
         file << "\n[Presets]\n";
@@ -20840,6 +21213,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
                 file << "gyro_gain=" << p.gyro_gain << "\n";
                 file << "flatspot_suppression=" << p.flatspot_suppression << "\n";
                 file << "notch_q=" << p.notch_q << "\n";
+                file << "flatspot_strength=" << p.flatspot_strength << "\n";
+                file << "static_notch_enabled=" << p.static_notch_enabled << "\n";
+                file << "static_notch_freq=" << p.static_notch_freq << "\n";
                 file << "\n";
             }
         }
@@ -20905,6 +21281,9 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "gyro_gain") engine.m_gyro_gain = std::stof(value);
                     else if (key == "flatspot_suppression") engine.m_flatspot_suppression = std::stoi(value);
                     else if (key == "notch_q") engine.m_notch_q = std::stof(value);
+                    else if (key == "flatspot_strength") engine.m_flatspot_strength = std::stof(value);
+                    else if (key == "static_notch_enabled") engine.m_static_notch_enabled = std::stoi(value);
+                    else if (key == "static_notch_freq") engine.m_static_notch_freq = std::stof(value);
                 } catch (...) {
                     std::cerr << "[Config] Error parsing line: " << line << std::endl;
                 }
@@ -20969,6 +21348,10 @@ struct Preset {
     // v0.4.41: Signal Filtering
     bool flatspot_suppression = false;
     float notch_q = 2.0f;
+    float flatspot_strength = 1.0f;
+    
+    bool static_notch_enabled = false;
+    float static_notch_freq = 50.0f;
 
     // 2. Constructors
     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin) {}
@@ -21006,10 +21389,17 @@ struct Preset {
     
     Preset& SetShaftGain(float v) { steering_shaft_gain = v; return *this; }
     Preset& SetBaseMode(int v) { base_force_mode = v; return *this; }
-    Preset& SetFlatspot(bool enabled, float q = 2.0f) { 
+    Preset& SetFlatspot(bool enabled, float strength = 1.0f, float q = 2.0f) { 
         flatspot_suppression = enabled; 
+        flatspot_strength = strength;
         notch_q = q; 
         return *this; 
+    }
+    
+    Preset& SetStaticNotch(bool enabled, float freq) {
+        static_notch_enabled = enabled;
+        static_notch_freq = freq;
+        return *this;
     }
 
     // Apply this preset to an engine instance
@@ -21043,6 +21433,9 @@ struct Preset {
         engine.m_base_force_mode = base_force_mode;
         engine.m_flatspot_suppression = flatspot_suppression;
         engine.m_notch_q = notch_q;
+        engine.m_flatspot_strength = flatspot_strength;
+        engine.m_static_notch_enabled = static_notch_enabled;
+        engine.m_static_notch_freq = static_notch_freq;
     }
 
     // NEW: Capture current engine state into this preset
@@ -21076,6 +21469,9 @@ struct Preset {
         base_force_mode = engine.m_base_force_mode;
         flatspot_suppression = engine.m_flatspot_suppression;
         notch_q = engine.m_notch_q;
+        flatspot_strength = engine.m_flatspot_strength;
+        static_notch_enabled = engine.m_static_notch_enabled;
+        static_notch_freq = engine.m_static_notch_freq;
     }
 };
 
@@ -22067,7 +22463,31 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("Controls filter precision.\n2.0 = Balanced.\n>2.0 = Narrower (Surgical).\n<2.0 = Wider (Softer).");
             }
+            FloatSetting("Suppression Strength", &engine.m_flatspot_strength, 0.0f, 1.0f);
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Blend factor: 0.0 (Off) to 1.0 (Full Suppression).");
             ImGui::Unindent();
+        }
+        
+        ImGui::Spacing();
+        
+        // Static Notch Controls
+        BoolSetting("Static Noise Filter", &engine.m_static_notch_enabled);
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Removes constant frequency noise (e.g. engine hum or coil whine).");
+        
+        if (engine.m_static_notch_enabled) {
+            ImGui::Indent();
+            FloatSetting("Target Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.0f Hz");
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("WARNING: Removes road detail at this frequency!");
+            }
+            ImGui::Unindent();
+        }
+
+        // Frequency Diagnostics
+        ImGui::Spacing();
+        ImGui::TextColored(ImVec4(0, 1, 1, 1), "Est. Freq: %.1f Hz | Theory: %.1f Hz", engine.m_debug_freq, engine.m_theoretical_freq);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Matching values indicate a speed-dependent vibration (flat spot).");
         }
         ImGui::TreePop();
     }
@@ -22800,21 +23220,6 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
                       "Longitudinal Velocity at Contact Patch (Rear)");
 
         ImGui::Separator();
-        ImGui::TextColored(ImVec4(1, 1, 0, 1), "Signal Analysis");
-        if (!snapshots.empty()) {
-            float freq = snapshots.back().debug_freq;
-            ImGui::Text("Est. Vibration Freq: %.1f Hz", freq);
-
-            float speed = std::abs(snapshots.back().raw_car_speed);
-            // Use actual tire radius from telemetry (with 0.33m fallback)
-            float radius = snapshots.back().tire_radius;
-            if (radius < 0.1f) radius = 0.33f; // Safety fallback
-            float theoretical = speed / (2.0f * 3.14159f * radius);
-            ImGui::Text("Theoretical Wheel Freq: %.1f Hz", theoretical);
-        } else {
-            ImGui::Text("Est. Vibration Freq: 0.0 Hz");
-            ImGui::Text("Theoretical Wheel Freq: 0.0 Hz");
-        }
 
         ImGui::Columns(1);
     }
@@ -24266,6 +24671,7 @@ void test_gyro_damping(); // Forward declaration (v0.4.17)
 void test_yaw_accel_smoothing(); // Forward declaration (v0.4.18)
 void test_yaw_accel_convergence(); // Forward declaration (v0.4.18)
 void test_regression_yaw_slide_feedback(); // Forward declaration (v0.4.18)
+void test_yaw_kick_signal_conditioning(); // Forward declaration (v0.4.42)
 void test_coordinate_sop_inversion(); // Forward declaration (v0.4.19)
 void test_coordinate_rear_torque_inversion(); // Forward declaration (v0.4.19)
 void test_coordinate_scrub_drag_direction(); // Forward declaration (v0.4.19)
@@ -24279,6 +24685,7 @@ void test_chassis_inertia_smoothing_convergence(); // Forward declaration (v0.4.
 void test_kinematic_load_cornering(); // Forward declaration (v0.4.39)
 void test_notch_filter_attenuation(); // Forward declaration (v0.4.41)
 void test_frequency_estimator(); // Forward declaration (v0.4.41)
+void test_static_notch_integration(); // Forward declaration (v0.4.43)
 
 
 
@@ -24426,6 +24833,7 @@ static void test_sop_yaw_kick() {
     data.mSteeringShaftTorque = 0.0;
     data.mWheel[0].mRideHeight = 0.1;
     data.mWheel[1].mRideHeight = 0.1;
+    data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick
     
     double force = engine.calculate_force(&data);
     
@@ -26332,6 +26740,7 @@ static void test_yaw_accel_smoothing() {
     data.mWheel[0].mRideHeight = 0.1;
     data.mWheel[1].mRideHeight = 0.1;
     data.mSteeringShaftTorque = 0.0;
+    data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick
     
     // Test 1: Verify smoothing reduces first-frame response
     // Raw input: 10.0 rad/s^2 (large spike)
@@ -26433,6 +26842,7 @@ static void test_yaw_accel_convergence() {
     engine.m_gyro_gain = 0.0f;
     
     data.mWheel[0].mRideHeight = 0.1;
+    data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick
     data.mWheel[1].mRideHeight = 0.1;
     data.mSteeringShaftTorque = 0.0;
     
@@ -26578,6 +26988,90 @@ static void test_regression_yaw_slide_feedback() {
     }
 }
 
+static void test_yaw_kick_signal_conditioning() {
+    std::cout << "\nTest: Yaw Kick Signal Conditioning (v0.4.42)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    // Setup: Isolate Yaw Kick effect
+    engine.m_sop_yaw_gain = 1.0f;
+    engine.m_sop_effect = 0.0f;
+    engine.m_max_torque_ref = 20.0f;
+    engine.m_gain = 1.0f;
+    engine.m_understeer_effect = 0.0f;
+    engine.m_lockup_enabled = false;
+    engine.m_spin_enabled = false;
+    engine.m_slide_texture_enabled = false;
+    engine.m_bottoming_enabled = false;
+    engine.m_scrub_drag_gain = 0.0f;
+    engine.m_rear_align_effect = 0.0f;
+    engine.m_gyro_gain = 0.0f;
+    engine.m_invert_force = false;
+    
+    data.mWheel[0].mRideHeight = 0.1;
+    data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[0].mStaticUndeflectedRadius = 33.0f; // 33cm
+    data.mWheel[1].mStaticUndeflectedRadius = 33.0f;
+    data.mSteeringShaftTorque = 0.0;
+    data.mDeltaTime = 0.0025f; // 400Hz
+    data.mElapsedTime = 0.0;
+    
+    // Test Case 1: Idle Noise - Below Deadzone Threshold (0.2 rad/s²)
+    std::cout << "  Case 1: Idle Noise (YawAccel = 0.1, below threshold)" << std::endl;
+    data.mLocalRotAccel.y = 0.1; // Below 0.2 threshold
+    data.mLocalVel.z = 20.0; // High speed (above 5 m/s cutoff)
+    
+    double force_idle = engine.calculate_force(&data);
+    
+    // Should be zero because raw_yaw_accel is zeroed by noise gate
+    if (std::abs(force_idle) < 0.01) {
+        std::cout << "[PASS] Idle noise filtered (force = " << force_idle << " ~= 0.0)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Idle noise not filtered. Got " << force_idle << " Expected ~0.0." << std::endl;
+        g_tests_failed++;
+    }
+    
+    // Test Case 2: Low Speed Cutoff
+    std::cout << "  Case 2: Low Speed (YawAccel = 5.0, Speed = 1.0 m/s)" << std::endl;
+    engine.m_yaw_accel_smoothed = 0.0; // Reset smoothed state
+    data.mLocalRotAccel.y = 5.0; // High yaw accel
+    data.mLocalVel.z = 1.0; // Below 5 m/s cutoff
+    
+    double force_low_speed = engine.calculate_force(&data);
+    
+    // Should be zero because speed < 5.0 m/s
+    if (std::abs(force_low_speed) < 0.01) {
+        std::cout << "[PASS] Low speed cutoff active (force = " << force_low_speed << " ~= 0.0)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Low speed cutoff failed. Got " << force_low_speed << " Expected ~0.0." << std::endl;
+        g_tests_failed++;
+    }
+    
+    // Test Case 3: Valid Kick - High Speed + High Yaw Accel
+    std::cout << "  Case 3: Valid Kick (YawAccel = 5.0, Speed = 20.0 m/s)" << std::endl;
+    engine.m_yaw_accel_smoothed = 0.0; // Reset smoothed state
+    data.mLocalRotAccel.y = 5.0; // High yaw accel (above 0.2 threshold)
+    data.mLocalVel.z = 20.0; // High speed (above 5 m/s cutoff)
+    
+    double force_valid = engine.calculate_force(&data);
+    
+    // Should be non-zero and negative (due to inversion)
+    // First frame smoothed: 0.0 + alpha * (5.0 - 0.0)
+    // With alpha ~= 0.1, smoothed ~= 0.5
+    // Force: -0.5 * 1.0 * 5.0 = -2.5 Nm
+    // Normalized: -2.5 / 20.0 = -0.125
+    if (force_valid < -0.05 && force_valid > -0.3) {
+        std::cout << "[PASS] Valid kick detected (force = " << force_valid << " in expected range)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Valid kick not detected correctly. Got " << force_valid << " Expected ~-0.125." << std::endl;
+        g_tests_failed++;
+    }
+}
+
 static void test_notch_filter_attenuation() {
     std::cout << "\nTest: Notch Filter Attenuation (v0.4.41)" << std::endl;
     BiquadNotch filter;
@@ -26710,6 +27204,7 @@ int main() {
     test_yaw_accel_smoothing(); // v0.4.18
     test_yaw_accel_convergence(); // v0.4.18
     test_regression_yaw_slide_feedback(); // v0.4.18
+    test_yaw_kick_signal_conditioning(); // v0.4.42
     
     // Coordinate System Regression Tests (v0.4.19)
     test_coordinate_sop_inversion();
@@ -26729,6 +27224,8 @@ int main() {
     // Signal Filtering Tests (v0.4.41)
     test_notch_filter_attenuation();
     test_frequency_estimator();
+    
+    test_static_notch_integration(); // v0.4.43
     
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
@@ -27307,6 +27804,7 @@ static void test_sop_yaw_kick_direction() {
     // This implies rear is sliding Left.
     // We want Counter-Steer Left (Negative Torque).
     data.mLocalRotAccel.y = 5.0; 
+    data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick 
     
     double force = engine.calculate_force(&data);
     
@@ -27935,6 +28433,7 @@ static void test_coordinate_all_effects_alignment() {
     data.mWheel[0].mGripFract = 1.0;
     data.mWheel[1].mGripFract = 1.0;
     data.mDeltaTime = 0.01;
+    data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick
     
     data.mLocalRotAccel.y = 10.0;        // Violent Yaw Right
     data.mWheel[2].mLateralPatchVel = -5.0; // Rear Sliding Left (Negative Vel for Correct Code Physics)
@@ -28334,6 +28833,79 @@ void test_kinematic_load_cornering() {
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Lateral transfer reversed incorrectly. FL: " << load_fl << " FR: " << load_fr << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_static_notch_integration() {
+    std::cout << "\nTest: Static Notch Integration (v0.4.43)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+
+    // Setup
+    engine.m_static_notch_enabled = true;
+    engine.m_static_notch_freq = 50.0;
+    engine.m_gain = 1.0;
+    engine.m_max_torque_ref = 1.0; 
+    engine.m_bottoming_enabled = false; // Disable to avoid interference
+    engine.m_invert_force = false;      // Disable inversion for clarity
+    engine.m_understeer_effect = 0.0;   // Disable grip logic clamping
+
+    data.mDeltaTime = 0.0025; // 400Hz
+    data.mWheel[0].mRideHeight = 0.1; // Valid RH
+    data.mWheel[1].mRideHeight = 0.1;
+    data.mLocalVel.z = 20.0; // Valid Speed
+    data.mWheel[0].mTireLoad = 4000.0; // Valid Load
+    data.mWheel[1].mTireLoad = 4000.0;
+    
+    double sample_rate = 1.0 / data.mDeltaTime; // 400Hz
+
+    // 1. Target Frequency (50Hz) - Should be attenuated
+    double max_amp_target = 0.0;
+    for (int i = 0; i < 400; i++) { // 1 second
+        double t = (double)i * data.mDeltaTime;
+        data.mSteeringShaftTorque = std::sin(2.0 * 3.14159265 * 50.0 * t);
+        
+        double force = engine.calculate_force(&data);
+        
+        // Skip transient (first 100 frames = 0.25s)
+        if (i > 100 && std::abs(force) > max_amp_target) {
+            max_amp_target = std::abs(force);
+        }
+    }
+    
+    // Q=5.0 notch at 50Hz should provide significant attenuation.
+    if (max_amp_target < 0.2) {
+        std::cout << "[PASS] Static Notch attenuated 50Hz signal (Max Amp: " << max_amp_target << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Static Notch failed to attenuate 50Hz. Max Amp: " << max_amp_target << std::endl;
+        g_tests_failed++;
+    }
+
+    // 2. Off-Target Frequency (10Hz) - Should pass
+    engine.m_static_notch_enabled = false;
+    engine.calculate_force(&data); // Reset by disabling
+    engine.m_static_notch_enabled = true;
+
+    double max_amp_pass = 0.0;
+    for (int i = 0; i < 400; i++) {
+        double t = (double)i * data.mDeltaTime;
+        data.mSteeringShaftTorque = std::sin(2.0 * 3.14159265 * 10.0 * t);
+        
+        double force = engine.calculate_force(&data);
+        
+        if (i > 100 && std::abs(force) > max_amp_pass) {
+            max_amp_pass = std::abs(force);
+        }
+    }
+
+    if (max_amp_pass > 0.8) {
+        std::cout << "[PASS] Static Notch passed 10Hz signal (Max Amp: " << max_amp_pass << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Static Notch attenuated 10Hz signal. Max Amp: " << max_amp_pass << std::endl;
         g_tests_failed++;
     }
 }
