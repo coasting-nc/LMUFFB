@@ -5,6 +5,8 @@
 
 ---
 
+![lmuFFB GUI](docs/screenshots/Signal Filtering.png)
+
 ## What Is It?
 
 Dynamic Flatspot Suppression is a **surgical filter** that removes speed-dependent vibrations from your force feedback wheel without dulling the rest of your steering feel. It's specifically designed to eliminate:
