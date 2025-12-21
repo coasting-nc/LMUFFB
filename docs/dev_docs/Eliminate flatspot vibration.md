@@ -22,3 +22,181 @@ Your task is to investigate the following:
 	* Are there other recommended solutions?
 
 ----
+
+## Answer 1
+
+Based on the codebase and the user's description, here is the investigation report and the recommended technical solutions.
+
+### 1. Verification: Is the App Causing the Vibration?
+
+**Analysis:**
+I have reviewed `FFBEngine.h` and `calculate_force`.
+If the user has disabled all effects (SoP, Textures, etc.), the app acts as a pass-through for `mSteeringShaftTorque`. However, there is **one setting** in our app that can artificially amplify noise into a constant vibration: **`m_min_force`**.
+
+*   **The Mechanism:**
+    ```cpp
+    // FFBEngine.h ~line 830
+    if (std::abs(norm_force) > 0.0001 && std::abs(norm_force) < m_min_force) {
+        double sign = (norm_force > 0.0) ? 1.0 : -1.0;
+        norm_force = sign * m_min_force;
+    }
+    ```
+*   **The Risk:** If the game signal is noisy around zero (e.g., oscillating between -0.001 and +0.001 Nm due to the flat spot), and `m_min_force` is set to e.g., 0.05 (5%), the app will amplify this tiny noise into a **Square Wave** of +/- 5% force. This feels like a harsh, constant rattle.
+
+**Verification Step:**
+Ask the user to ensure **Min Force is set to 0.0**. If the vibration persists with Min Force at 0, then the app is innocent, and we must filter the game signal.
+
+---
+
+### 2. Solution: The "Surgical" Fix (Dynamic Notch Filter)
+
+The user identified the frequency as **10-60 Hz**. This range perfectly matches the rotational frequency of a race car tire:
+*   **100 km/h** $\approx$ 14 Hz
+*   **300 km/h** $\approx$ 42 Hz
+
+This confirms the vibration is a **Flat Spot** or **Polygon/Mesh** issue linked to wheel speed.
+Standard smoothing (Low Pass Filter) fails because to kill 14 Hz, you need a heavy filter that destroys steering latency.
+
+**The Solution:** Implement a **Speed-Tracking Notch Filter**.
+A Notch Filter removes *only* a specific frequency band. By linking the center frequency to the car's speed, we can surgically remove the "flat spot" thumping frequency while leaving the rest of the FFB (road texture, curb strikes, weight transfer) completely untouched.
+
+#### Implementation Plan
+
+**A. Add Biquad Filter Class**
+Add this struct to `FFBEngine.h`. It implements a standard Biquad filter that can be updated in real-time.
+
+```cpp
+// Add to FFBEngine.h
+
+struct BiquadNotch {
+    double b0, b1, b2, a0, a1, a2;
+    double x1 = 0, x2 = 0, y1 = 0, y2 = 0; // State history
+
+    void Update(double center_freq, double sample_rate, double Q) {
+        // Prevent explosion at low freq
+        if (center_freq < 1.0) center_freq = 1.0;
+        
+        double omega = 2.0 * 3.14159265358979323846 * center_freq / sample_rate;
+        double sn = std::sin(omega);
+        double cs = std::cos(omega);
+        double alpha = sn / (2.0 * Q);
+
+        b0 = 1.0;
+        b1 = -2.0 * cs;
+        b2 = 1.0;
+        a0 = 1.0 + alpha;
+        a1 = -2.0 * cs;
+        a2 = 1.0 - alpha;
+
+        // Normalize
+        b0 /= a0; b1 /= a0; b2 /= a0;
+        a1 /= a0; a2 /= a0;
+    }
+
+    double Process(double in) {
+        double out = b0 * in + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
+        x2 = x1; x1 = in;
+        y2 = y1; y1 = out;
+        return out;
+    }
+};
+```
+
+**B. Update `FFBEngine` Class**
+Add the filter instance and a new setting.
+
+```cpp
+class FFBEngine {
+public:
+    // ... existing settings ...
+    bool m_flatspot_suppression = false; // New Toggle
+    BiquadNotch m_notch_filter;
+    
+    // ... inside calculate_force ...
+    
+    // 1. Calculate Wheel Frequency
+    // F = Velocity / Circumference
+    double car_speed = std::abs(data->mLocalVel.z);
+    
+    // Get radius (convert cm to m)
+    double radius = (double)fl.mStaticUndeflectedRadius / 100.0;
+    if (radius < 0.1) radius = 0.33; // Safety fallback
+    
+    double circumference = 2.0 * 3.14159 * radius;
+    double wheel_freq = car_speed / circumference;
+
+    // 2. Apply Filter to Base Force
+    double game_force = data->mSteeringShaftTorque;
+
+    if (m_flatspot_suppression && wheel_freq > 1.0) {
+        // Q factor determines width. 2.0 is a good balance.
+        // 400.0 is our physics loop rate
+        m_notch_filter.Update(wheel_freq, 400.0, 2.0);
+        game_force = m_notch_filter.Process(game_force);
+    }
+    
+    // ... continue with game_force ...
+```
+
+**Why this works:**
+*   **Zero Latency:** Outside the target frequency (e.g., steering inputs at 1-2Hz), the filter has near-zero phase shift.
+*   **Precision:** It tracks the car speed perfectly. As the user accelerates, the filter moves up the spectrum, constantly deleting the vibration.
+
+---
+
+### 3. Solution: Troubleshooting Tool (Spectrum Analyzer)
+
+To help the user confirm the frequency, we can add a simple **Frequency Estimator** to the Debug Window.
+
+**Implementation in `FFBEngine.h`:**
+We don't need a full FFT. We can just measure the time between "Zero Crossings" of the AC component of the torque.
+
+```cpp
+// Add to FFBEngine class
+double m_debug_freq = 0.0;
+double m_last_crossing_time = 0.0;
+double m_torque_ac_accum = 0.0; // High-pass filter state
+
+// Inside calculate_force
+// 1. Isolate AC component (Vibration) using simple High Pass
+double ac_torque = game_force - m_torque_smoothed; // Assuming you have a smoothed var
+// 2. Detect Zero Crossing
+if ((m_prev_ac_torque > 0 && ac_torque <= 0) || (m_prev_ac_torque < 0 && ac_torque >= 0)) {
+    double now = data->mElapsedTime;
+    double period = now - m_last_crossing_time;
+    m_last_crossing_time = now;
+    if (period > 0.001) {
+        m_debug_freq = 1.0 / period; // Hz
+    }
+}
+m_prev_ac_torque = ac_torque;
+```
+
+**GUI Update:**
+Display `m_debug_freq` in the "Raw Telemetry" window. If it matches the `Wheel Frequency` calculated above, the Notch Filter is guaranteed to work.
+
+---
+
+### 4. Alternative: Slew Rate Limiter (The "Damping" Approach)
+
+If the Notch Filter is too complex or the vibration is irregular, a **Slew Rate Limiter** is the best "Masking" technique that preserves latency better than smoothing.
+
+*   **Concept:** Limit the maximum change in torque per millisecond.
+*   **Effect:** It "chops off" the sharp spikes of the vibration without delaying the slower steering movements.
+
+```cpp
+// Inside calculate_force
+double delta = game_force - m_prev_game_force;
+double max_delta = 50.0 * dt; // Allow max 50 Nm/sec change (Tunable)
+
+if (delta > max_delta) game_force = m_prev_game_force + max_delta;
+if (delta < -max_delta) game_force = m_prev_game_force - max_delta;
+
+m_prev_game_force = game_force;
+```
+
+### Recommendation Summary
+
+1.  **Immediate Check:** Verify `Min Force` is 0.0.
+2.  **Best Solution:** Implement the **Speed-Tracking Notch Filter**. It is the only way to eliminate a variable-frequency vibration without compromising FFB detail or latency.
+3.  **Backup Solution:** Implement the **Slew Rate Limiter** as a "Softening" slider.
