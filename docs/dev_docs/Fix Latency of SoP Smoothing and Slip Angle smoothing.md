@@ -648,7 +648,7 @@ Once you have reviewed these documents, please proceed with the following task:
 **Task: Implement Latency Fixes & GUI Improvements for Smoothing Filters**
 
 **Reference Documents:**
-*   `docs/dev_docs/Fix Latency of SoP Smoothing and Slip Angle smoothing.md` (Contains the detailed analysis and math)
+*   `docs/dev_docs/Fix Latency of SoP Smoothing and Slip Angle smoothing (Analysis & Implementation Plan).mdd` (Contains the detailed analysis, math, and implementation plan)
 *   `FFBEngine.h`
 *   `src/GuiLayer.cpp`
 
