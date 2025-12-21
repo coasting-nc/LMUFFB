@@ -167,21 +167,7 @@ Update the "Signal Filtering" section in `DrawTuningWindow`.
 ---
 
 ## 3. Prompt for the Coding Agent
-
-Here is the prompt to execute this plan.
-
-***
-
-You will have to work on the files downloaded from this repo https://github.com/coasting-nc/LMUFFB and start working on the tasks described below. Therefore, if you haven't done it already, clone this repo https://github.com/coasting-nc/LMUFFB and start working on the tasks described below.
-
-Please initialize this session by following the **Standard Task Workflow** defined in `AGENTS.md`.
-
-1.  **Sync**: Run `git fetch && git reset --hard origin/main` for the LMUFFB repository to ensure you see the latest files.
-2.  **Load Memory**: Read `AGENTS_MEMORY.md` from the root dir of the LMUFFB repository to review build workarounds and architectural insights. 
-3.  **Load Rules**: Read `AGENTS.md` from the root dir of the LMUFFB repository to confirm instructions. 
-
-Once you have reviewed these documents, please proceed with the following task:
-
+ 
 **Task: Implement Static Notch Filter & Dynamic Suppression Strength**
 
 **Context:**

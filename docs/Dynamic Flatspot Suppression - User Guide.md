@@ -1,6 +1,6 @@
 # Dynamic Flatspot Suppression - User Guide
 
-**Feature Version:** v0.4.41+  
+**Feature Version:** v0.4.43+  
 **Last Updated:** 2025-12-21
 
 ---
@@ -92,6 +92,48 @@ The Q factor controls how "narrow" the filter is:
 
 **For Belt-Driven Wheels (T300, G29):**
 - Use **Q = 1.5 - 2.5** for smoother feel
+
+### Suppression Strength
+
+New in **v0.4.43**, the **"Suppression Strength"** slider allows you to control how aggressively the filter is applied.
+
+**Range:** 0.0 to 1.0 (0% to 100%)  
+**Default:** 1.0 (Full Suppression)
+
+#### When to lower strength:
+- **Realism:** If you want to *feel* that you have a flat spot (for immersion) but want to reduce the violent shaking to a manageable level.
+- **Diagnostics:** To confirm how much vibration the filter is actually removing by toggling between 0.0 and 1.0.
+- **Preference:** If full suppression feels "too clinical" or you want to keep some tire texture.
+
+| Strength | Behavior |
+|----------|----------|
+| **1.0** | Full filter. Vibration at the wheel frequency is maximum attenuated. |
+| **0.5** | 50/50 Blend. You will feel exactly half of the original vibration intensity. |
+| **0.0** | No filtering. Same as disabling the checkbox. |
+
+---
+
+## Static Noise Filter (v0.4.43+)
+
+While the Dynamic Filter tracks your car speed, the **Static Noise Filter** targets a **fixed frequency**. This is specifically designed to eliminate mechanical hums, hardware resonances, or constant road-surface "buzz" that doesn't change with speed.
+
+### When to Use It?
+✅ **Constant Hum:** Your wheel makes a "buzzing" or "droning" sound/feel even when driving at a steady speed or on specific surfaces.
+✅ **Hardware Resonance:** Your rig or wheel base rattles at a specific frequency (e.g., 50Hz).
+✅ **Engine Vibration:** If the game produces a constant engine vibration that you find distracting.
+
+### Configuration
+
+1. Locate **"Static Noise Filter"** in the Signal Filtering section.
+2. Enable the checkbox.
+3. Use the **"Target Frequency"** slider to find the "hum."
+
+**Frequency Range:** 10 Hz to 100 Hz
+
+> ⚠️ **WARNING:** High values on this slider (e.g., 40Hz - 80Hz) will remove genuine road detail at that specific frequency. Use the narrowest possible setup to preserve feel.
+
+### Why Q is fixed at 5.0?
+To keep the filter as "surgical" as possible, the Static Notch uses a fixed **Q factor of 5.0**. This ensures that only a paper-thin slice of the frequency spectrum is removed, leaving your steering feel 99% intact.
 
 ---
 
@@ -288,11 +330,11 @@ If vibration persists:
 
 ## Summary
 
-**Dynamic Flatspot Suppression** is a powerful tool for eliminating speed-dependent vibrations without compromising your FFB quality. When used correctly, it provides a perfectly smooth wheel at high speeds while preserving all the important steering feedback you need for fast, precise driving.
+**Dynamic Flatspot Suppression** and the **Static Noise Filter** are powerful tools for eliminating speed-dependent and constant vibrations without compromising your FFB quality. When used correctly, they provide a perfectly smooth wheel at high speeds while preserving all the important steering feedback you need for fast, precise driving.
 
 **Quick Start:**
-1. Enable "Dynamic Flatspot Suppression"
-2. Set Q = 2.0
+1. **For Flatspots:** Enable "Dynamic Flatspot Suppression", set Q = 2.0.
+2. **For Mechanical Hum:** Enable "Static Noise Filter", adjust Target Frequency until the buzz disappears.
 3. Drive and enjoy smooth FFB!
 
 **For Advanced Users:**

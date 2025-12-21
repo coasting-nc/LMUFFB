@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.43] - 2025-12-21
+### Added
+- **Static Notch Filter**: Implemented a surgical static notch filter to eliminate constant-frequency mechanical hum or vibration.
+    - **Customizable Frequency**: Users can now target specific noise frequencies between 10Hz and 100Hz.
+    - **Surgical Precision**: Uses a fixed Q-factor of 5.0 for minimal interference with surrounding road detail.
+    - **Safety Tooltips**: Added warnings regarding potential loss of road detail at high frequencies.
+- **Dynamic Suppression Strength**: Added a "Suppression Strength" slider to the Dynamic Flatspot Suppression effect.
+    - Enables linear blending between raw and filtered forces, allowing users to fine-tune the balance between comfort and flatspot feedback.
+- **Unit Tests**: Added `test_static_notch_integration` to verify the mathematical integrity and attenuation performance of the new filter.
+- **Technical Details**:
+    - **FFBEngine.h**: Added manual control and second `BiquadNotch` instance for static noise.
+    - **Config.cpp**: Added persistence for `static_notch_enabled`, `static_notch_freq`, and `flatspot_strength`.
+    - **GuiLayer.cpp**: Integrated new controls into the "Signal Filtering" section.
+
 ## [0.4.42] - 2025-12-21
 ### Added
 - **Yaw Kick Signal Conditioning**: Implemented filters to eliminate constant "physics noise" from the Yaw Kick effect.
@@ -20,6 +34,7 @@ All notable changes to this project will be documented in this file.
     - **Diagnostics**: Displays the "Estimated Vibration Freq" in the Debug Window, allowing users to verify if their FFB vibrations match the wheel's rotational frequency.
     - **Theoretical Comparison**: Displays the expected wheel frequency based on current speed for quick verification.
 - **Signal Filtering UI**: Added a new "Signal Filtering" section to the Tuning Window.
+- **User Guide**: `docs\Dynamic Flatspot Suppression - User Guide.md`.
 - **Enhanced Test Suite**: Added 2 new signal processing tests:
     - `test_notch_filter_attenuation`: Verifies that the notch filter correctly kills the target frequency while passing steering inputs (2Hz) untouched.
     - `test_frequency_estimator`: Verifies that the analyzer accurately detects a simulated 20Hz vibration.

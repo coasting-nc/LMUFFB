@@ -372,9 +372,26 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("Controls filter precision.\n2.0 = Balanced.\n>2.0 = Narrower (Surgical).\n<2.0 = Wider (Softer).");
             }
+            FloatSetting("Suppression Strength", &engine.m_flatspot_strength, 0.0f, 1.0f);
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Blend factor: 0.0 (Off) to 1.0 (Full Suppression).");
             ImGui::Unindent();
         }
         
+        ImGui::Spacing();
+        
+        // Static Notch Controls
+        BoolSetting("Static Noise Filter", &engine.m_static_notch_enabled);
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Removes constant frequency noise (e.g. engine hum or coil whine).");
+        
+        if (engine.m_static_notch_enabled) {
+            ImGui::Indent();
+            FloatSetting("Target Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.0f Hz");
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("WARNING: Removes road detail at this frequency!");
+            }
+            ImGui::Unindent();
+        }
+
         // Frequency Diagnostics
         ImGui::Spacing();
         ImGui::TextColored(ImVec4(0, 1, 1, 1), "Est. Freq: %.1f Hz | Theory: %.1f Hz", engine.m_debug_freq, engine.m_theoretical_freq);

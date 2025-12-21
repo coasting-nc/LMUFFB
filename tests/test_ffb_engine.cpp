@@ -64,6 +64,7 @@ void test_chassis_inertia_smoothing_convergence(); // Forward declaration (v0.4.
 void test_kinematic_load_cornering(); // Forward declaration (v0.4.39)
 void test_notch_filter_attenuation(); // Forward declaration (v0.4.41)
 void test_frequency_estimator(); // Forward declaration (v0.4.41)
+void test_static_notch_integration(); // Forward declaration (v0.4.43)
 
 
 
@@ -2603,6 +2604,8 @@ int main() {
     test_notch_filter_attenuation();
     test_frequency_estimator();
     
+    test_static_notch_integration(); // v0.4.43
+    
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
     std::cout << "Tests Failed: " << g_tests_failed << std::endl;
@@ -4209,6 +4212,79 @@ void test_kinematic_load_cornering() {
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Lateral transfer reversed incorrectly. FL: " << load_fl << " FR: " << load_fr << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_static_notch_integration() {
+    std::cout << "\nTest: Static Notch Integration (v0.4.43)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+
+    // Setup
+    engine.m_static_notch_enabled = true;
+    engine.m_static_notch_freq = 50.0;
+    engine.m_gain = 1.0;
+    engine.m_max_torque_ref = 1.0; 
+    engine.m_bottoming_enabled = false; // Disable to avoid interference
+    engine.m_invert_force = false;      // Disable inversion for clarity
+    engine.m_understeer_effect = 0.0;   // Disable grip logic clamping
+
+    data.mDeltaTime = 0.0025; // 400Hz
+    data.mWheel[0].mRideHeight = 0.1; // Valid RH
+    data.mWheel[1].mRideHeight = 0.1;
+    data.mLocalVel.z = 20.0; // Valid Speed
+    data.mWheel[0].mTireLoad = 4000.0; // Valid Load
+    data.mWheel[1].mTireLoad = 4000.0;
+    
+    double sample_rate = 1.0 / data.mDeltaTime; // 400Hz
+
+    // 1. Target Frequency (50Hz) - Should be attenuated
+    double max_amp_target = 0.0;
+    for (int i = 0; i < 400; i++) { // 1 second
+        double t = (double)i * data.mDeltaTime;
+        data.mSteeringShaftTorque = std::sin(2.0 * 3.14159265 * 50.0 * t);
+        
+        double force = engine.calculate_force(&data);
+        
+        // Skip transient (first 100 frames = 0.25s)
+        if (i > 100 && std::abs(force) > max_amp_target) {
+            max_amp_target = std::abs(force);
+        }
+    }
+    
+    // Q=5.0 notch at 50Hz should provide significant attenuation.
+    if (max_amp_target < 0.2) {
+        std::cout << "[PASS] Static Notch attenuated 50Hz signal (Max Amp: " << max_amp_target << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Static Notch failed to attenuate 50Hz. Max Amp: " << max_amp_target << std::endl;
+        g_tests_failed++;
+    }
+
+    // 2. Off-Target Frequency (10Hz) - Should pass
+    engine.m_static_notch_enabled = false;
+    engine.calculate_force(&data); // Reset by disabling
+    engine.m_static_notch_enabled = true;
+
+    double max_amp_pass = 0.0;
+    for (int i = 0; i < 400; i++) {
+        double t = (double)i * data.mDeltaTime;
+        data.mSteeringShaftTorque = std::sin(2.0 * 3.14159265 * 10.0 * t);
+        
+        double force = engine.calculate_force(&data);
+        
+        if (i > 100 && std::abs(force) > max_amp_pass) {
+            max_amp_pass = std::abs(force);
+        }
+    }
+
+    if (max_amp_pass > 0.8) {
+        std::cout << "[PASS] Static Notch passed 10Hz signal (Max Amp: " << max_amp_pass << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Static Notch attenuated 10Hz signal. Max Amp: " << max_amp_pass << std::endl;
         g_tests_failed++;
     }
 }

@@ -49,6 +49,10 @@ struct Preset {
     // v0.4.41: Signal Filtering
     bool flatspot_suppression = false;
     float notch_q = 2.0f;
+    float flatspot_strength = 1.0f;
+    
+    bool static_notch_enabled = false;
+    float static_notch_freq = 50.0f;
 
     // 2. Constructors
     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin) {}
@@ -86,10 +90,17 @@ struct Preset {
     
     Preset& SetShaftGain(float v) { steering_shaft_gain = v; return *this; }
     Preset& SetBaseMode(int v) { base_force_mode = v; return *this; }
-    Preset& SetFlatspot(bool enabled, float q = 2.0f) { 
+    Preset& SetFlatspot(bool enabled, float strength = 1.0f, float q = 2.0f) { 
         flatspot_suppression = enabled; 
+        flatspot_strength = strength;
         notch_q = q; 
         return *this; 
+    }
+    
+    Preset& SetStaticNotch(bool enabled, float freq) {
+        static_notch_enabled = enabled;
+        static_notch_freq = freq;
+        return *this;
     }
 
     // Apply this preset to an engine instance
@@ -123,6 +134,9 @@ struct Preset {
         engine.m_base_force_mode = base_force_mode;
         engine.m_flatspot_suppression = flatspot_suppression;
         engine.m_notch_q = notch_q;
+        engine.m_flatspot_strength = flatspot_strength;
+        engine.m_static_notch_enabled = static_notch_enabled;
+        engine.m_static_notch_freq = static_notch_freq;
     }
 
     // NEW: Capture current engine state into this preset
@@ -156,6 +170,9 @@ struct Preset {
         base_force_mode = engine.m_base_force_mode;
         flatspot_suppression = engine.m_flatspot_suppression;
         notch_q = engine.m_notch_q;
+        flatspot_strength = engine.m_flatspot_strength;
+        static_notch_enabled = engine.m_static_notch_enabled;
+        static_notch_freq = engine.m_static_notch_freq;
     }
 };
 

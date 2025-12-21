@@ -215,6 +215,11 @@ public:
     // v0.4.41: Signal Filtering Settings
     bool m_flatspot_suppression = false;
     float m_notch_q = 2.0f; // Default Q-Factor
+    float m_flatspot_strength = 1.0f; // Default 1.0 (100% suppression)
+    
+    // Static Notch Filter (v0.4.43)
+    bool m_static_notch_enabled = false;
+    float m_static_notch_freq = 50.0f;
     
     // Signal Diagnostics
     double m_debug_freq = 0.0; // Estimated frequency for GUI
@@ -285,7 +290,9 @@ public:
     double m_sop_lat_g_smoothed = 0.0;
     
     // Filter Instances (v0.4.41)
+    // Filter Instances (v0.4.41)
     BiquadNotch m_notch_filter;
+    BiquadNotch m_static_notch_filter;
 
     // Frequency Estimator State (v0.4.41)
     double m_last_crossing_time = 0.0;
@@ -685,11 +692,26 @@ public:
                 m_notch_filter.Update(wheel_freq, 1.0/dt, (double)m_notch_q);
                 
                 // Apply filter
-                game_force = m_notch_filter.Process(game_force);
+                double input_force = game_force;
+                double filtered_force = m_notch_filter.Process(input_force);
+                
+                // Blend Output (Linear Interpolation)
+                // Strength 1.0 = Fully Filtered. Strength 0.0 = Raw.
+                game_force = input_force * (1.0f - m_flatspot_strength) + filtered_force * m_flatspot_strength;
+
             } else {
                 // Reset filter state when stopped to prevent "ringing" on start
                 m_notch_filter.Reset();
             }
+        }
+        
+        // 3. Static Notch Filter (v0.4.43)
+        if (m_static_notch_enabled) {
+             // Fixed Q of 5.0 (Surgical)
+             m_static_notch_filter.Update((double)m_static_notch_freq, 1.0/dt, 5.0);
+             game_force = m_static_notch_filter.Process(game_force);
+        } else {
+             m_static_notch_filter.Reset();
         }
         
         // --- 0. UPDATE STATS ---
