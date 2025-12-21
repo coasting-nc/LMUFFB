@@ -1120,6 +1120,10 @@ DONE: delay from the app due to SoP and slip angle smoothing
 DONE: mask the flatspot vibration
 DONE:yaw kick cutoffs by speed and force.
 
+decouple the scale of sliders from main gain and ref torque.
+reorganize UI: understeer and oversterer groups of widgets , collapsible
+within oversteer, nester collapsible group called SoP. First widget Rear align torque (research to confirm proper name), then yaw kick, gyro damping, and others.
+
 loses wheel or connection to game when app not in focus
 (make the app always on top? auto reconnect game / rebind wheel when disconnected? other mechanisms to avoid these disconnections?)
 
