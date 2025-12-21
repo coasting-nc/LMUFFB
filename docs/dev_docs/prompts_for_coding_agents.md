@@ -355,6 +355,9 @@ Once you have reviewed these documents, please proceed with the following task:
 **Deliverables:**
 (...)
 
+**Check-list for completion:**
+(...)
+
 ### Git / Large Diff Issue
 *   **Issue:** `git status`, `git fetch`, or other commands may fail with "The diff size is unusually large" if the repository state is significantly different or if build artifacts are not ignored.
 *   **Workaround:** Rely on `read_file`, `overwrite_file`, and `replace_with_git_merge_diff` directly. Do not depend on bash commands for verification if this error occurs. Ensure `.gitignore` covers all build directories (e.g., `tests/build/`).
