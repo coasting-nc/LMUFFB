@@ -2,7 +2,7 @@
 
 > **⚠️ API Source of Truth**  
 > All telemetry data units and field names are defined in **`src/lmu_sm_interface/InternalsPlugin.hpp`**.  
-> This is the official Studio 397 interface specification for LMU 1.2.  
+> That is the official Studio 397 interface specification for LMU 1.2.  
 > Critical: `mSteeringShaftTorque` is in **Newton-meters (Nm)**, not Newtons.
 
 Based on the `FFBEngine.h` file, here is the complete mathematical breakdown of the Force Feedback calculation.
