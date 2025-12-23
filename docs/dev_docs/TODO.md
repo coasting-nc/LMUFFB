@@ -1,8 +1,6 @@
 # LMUFFB To-Do List
 
 
-
-
 ## Troubleshooting 24
 
 DONE: delay from the app due to SoP and slip angle smoothing

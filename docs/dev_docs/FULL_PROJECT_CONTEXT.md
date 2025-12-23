@@ -370,6 +370,15 @@ See: docs\dev_docs\avg_load_issue.md
 ## Compile and run tests in one command
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cl /EHsc /std:c++17 /I.. tests\test_ffb_engine.cpp src\Config.cpp /Fe:tests\test_ffb_engine.exe; tests\test_ffb_engine.exe 2>&1 | Tee-Object -FilePath tmp\test_results.txt
 
+# Include windows tests
+
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; `
+cl /EHsc /std:c++17 /I.. /D_CRT_SECURE_NO_WARNINGS tests\test_ffb_engine.cpp src\Config.cpp /Fe:tests\test_ffb_engine.exe; `
+tests\test_ffb_engine.exe; `
+cl /EHsc /std:c++17 /I.. /DUNICODE /D_UNICODE /D_CRT_SECURE_NO_WARNINGS tests\test_windows_platform.cpp src\DirectInputFFB.cpp src\Config.cpp dinput8.lib dxguid.lib winmm.lib version.lib imm32.lib user32.lib ole32.lib /Fe:tests\test_windows_platform.exe; `
+tests\test_windows_platform.exe
+
+
 # Prerequisites
 
 Enable run scripts in powershell:
@@ -436,6 +445,28 @@ tests\test_ffb_engine.exe 2>&1 | Select-String -Pattern "Tests (Passed|Failed):"
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [0.4.45] - 2025-12-23
+### Added
+- **"Always on Top" Mode**: New checkbox in the Tuning Window to keep the application visible over the game or other windows.
+    - Prevents losing sight of telemetry or settings when clicking back into the game.
+    - Setting is persisted in `config.ini` and reapplied on startup.
+- **Keyboard Fine-Tuning for Sliders**: Enhanced slider control for precise adjustments.
+    - **Hover + Arrow Keys**: Simply hover the mouse over any slider and use **Left/Right Arrow** keys to adjust the value by small increments.
+    - **Dynamic Stepping**: Automatically uses `0.01` for small-range effects (Gains) and `0.5` for larger-range effects (Max Torque).
+    - **Tooltip Integration**: Added a hint to all sliders explaining the arrow key and Ctrl+Click shortcuts.
+- **Persistence Logic**: Added unit tests to ensure window settings are correctly saved and loaded.
+
+## [0.4.44] - 2025-12-21
+### Added
+- **Device Selection Persistence**: The application now remembers your selected steering wheel across restarts.
+    - Automatically scans and matches the last used device GUID on startup.
+    - Saves selections immediately to `config.ini` when changed in the GUI.
+- **Connection Hardening (Smart Reconnect)**: Implemented robust error handling for DirectInput failures.
+    - **Physical Connection Recovery**: Explicitly restarts the FFB motor using `Start(1, 0)` upon re-acquisition, fixing the "silent wheel" issue after Alt-Tab or driver resets.
+    - **Automatic Re-Acquisition**: Detects `DIERR_INPUTLOST` and `DIERR_NOTACQUIRED` to trigger immediate recovery.
+    - **Diagnostics**: Added foreground window logging to the console (rate-limited to 1s) when FFB is lost, helping identify if other apps (like the game) are stealing exclusive priority.
+- **Console Optimization**: Removed the frequent "FFB Output Saturated" warning to declutter the console for critical connection diagnostics.
 
 ## [0.4.43] - 2025-12-21
 ### Added
@@ -2996,71 +3027,23 @@ REQUIRED SAFETY STEPS (DO THIS FIRST):
 2. Reduce the Maximum FFB Strength/Torque to a LOW value:
    - For Direct Drive Wheelbases: Set to 10% OR LOWER of maximum torque
    - For Belt/Gear-Driven Wheels: Set to 20-30% of maximum strength
-   - THIS IS YOUR PRIMARY SAFETY MECHANISM - do not skip this step!
 
-3. Test gradually: Start with even lower values and increase slowly while 
-   monitoring for unexpected behavior
-
-4. Stay alert: Be prepared to immediately disable FFB if you experience 
-   violent oscillations or unexpected forces
-
-WHY THIS IS CRITICAL:
-- The FFB algorithms are under active development and may generate unexpected 
-  force spikes
-- Unrefined formulas can cause dangerous oscillations, especially on 
-  high-torque direct drive systems
-- Your safety and equipment protection depend on having a hardware-level 
-  force limiter in place
-
-DO NOT SKIP THIS STEP. No software-level safety can replace proper hardware 
-configuration.
+3. Increase gradually the values while monitoring for unexpected behavior
 
 ===============================================================================
 
 
-IMPORTANT NOTES
----------------
+DOWNLOAD
+--------
 
-LMU 1.2+ SUPPORT (v0.4.0+):
-
-Enhanced Telemetry Access:
-With Le Mans Ultimate 1.2 (released December 9th, 2024), the game now includes 
-native shared memory support. lmuFFB v0.4.0+ fully supports LMU 1.2's new 
-interface, providing access to:
-- Patch Velocities - Allows physics-based texture generation
-- Steering Shaft Torque - Direct torque measurement for accurate FFB
-
-Note: Tire Load and Grip Fraction data are blocked from telemetry due to 
-licensing restrictions. lmuFFB automatically uses estimated values for these 
-parameters (see Known Issues section below).
-
-No Plugin Required:
-Unlike previous versions, LMU 1.2 has built-in shared memory - no external 
-plugins needed!
-
-EXPERIMENTAL VERSION - TESTING NEEDED:
-
-This is an experimental release with the new LMU 1.2 interface. The FFB 
-formulas may require refinement based on real-world testing.
-
-Please help us improve lmuFFB:
-1. Test with caution - Start with low wheel strength settings (see Safety 
-   Warning above)
-2. Experiment with settings - Try different effect combinations and gains
-3. Share your results - Post screenshots of the "Troubleshooting Graphs" 
-   window and the main app window to the LMU Forum Thread:
-   unlinked: community_lemansultimate_com/index_php?threads/irffb-for-lmu-lmuffb_10440/
-4. Report issues - Let us know what works and what doesn't!
-
-Your testing and feedback is greatly appreciated!
-
-rFactor 2 Compatibility:
-rFactor 2 is NOT SUPPORTED in v0.4.0+. For rFactor 2, please use earlier 
-versions of lmuFFB (v0.3.x). See the releases page for v0.3.x downloads.
+Download the latest release from GitHub:
+unlinked: github_com/coasting-nc/LMUFFB/releases
 
 
-STEP-BY-STEP SETUP
-------------------
+INSTALLATION & CONFIGURATION (LMU 1.2+)
+---------------------------------------
+
+Step-by-Step Setup:
 
 !!! STEP 0: Reduce Wheel Strength FIRST (CRITICAL) !!!
 
@@ -3085,27 +3068,39 @@ A. Configure Le Mans Ultimate (LMU)
    5. In-Game Force Feedback settings in LMU:
       - FFB Strength: reduce to 0% (Off)
       - Effects: Set "Force Feedback Effects" to Off
-      - Smoothing: Set to 0 (Raw) for fastest telemetry updates
-      - Advanced: Set Collision Strength and Torque Sensitivity to 0%
+      - Smoothing: Set to 0 (Raw)
+      - Advanced: Set "Collision Strength" and "Steering Torque Sensitivity" 
+        to 0%
       - Tweaks: Disable "Use Constant Steering Force Effect"
 
 B. Configure lmuFFB
    1. Run LMUFFB.exe
-   2. FFB Device: Select your Physical Wheel (e.g., "Simucube 2 Pro", "Fanatec DD1")
-   3. Master Gain: Start low (0.5) and increase gradually
-   4. SOP Effect: Start at 0.0
-      - This effect injects lateral G-force
-      - On High-Torque wheels (DD), this can cause violent oscillation if too high
-   5. Drive! You should feel force feedback generated by the app
+   2. FFB Device: In the dropdown, select your Physical Wheel 
+      (e.g., "Simucube 2 Pro", "Fanatec DD1")
+   3. Master Gain: Start low (0.5) and increase
+   4. Drive! You should feel force feedback generated by the app
+
+
+EXPERIMENTAL VERSION - TESTING NEEDED!
+--------------------------------------
+
+This is an experimental release, the FFB formulas may require refinement 
+based on real-world testing.
+
+Please help us improve lmuFFB:
+1. Test with caution - Start with low wheel strength settings (see Safety 
+   Warning above)
+2. Experiment with settings - Try different effect combinations and gains
+3. Share your results - Post screenshots of the "Troubleshooting Graphs" 
+   window and the main app window to the LMU Forum Thread:
+   unlinked: community_lemansultimate_com/index_php?threads/irffb-for-lmu-lmuffb_10440/
+4. Report issues - Let us know what works and what doesn't!
+
+Your testing and feedback is greatly appreciated!
 
 
 TROUBLESHOOTING
 ---------------
-
-Wheel Jerking / Fighting:
-  - You likely have a "Double FFB" conflict
-  - Ensure LMU FFB Strength is set to 0% (Off)
-  - If the wheel oscillates on straights, reduce SOP Effect to 0.0
 
 Inverted FFB (Force pushes away from center):
   - If the FFB feels "backwards" or "inverted" while driving (wheel pushes 
@@ -3121,22 +3116,29 @@ FFB Too Strong / Dangerous Forces:
   - Then adjust the "Gain" slider in lmuFFB to fine-tune
 
 No FFB:
-  - Ensure "FFB Device" in lmuFFB is your real wheel
-  - Check if Shared Memory is working (console should show "Connected")
-  - Verify you're running LMU 1.2 or later (earlier versions don't have 
-    native shared memory)
+  - Ensure the "FFB Device" in lmuFFB is your real wheel
+  - Check if the Shared Memory is working (Does "Connected to Le Mans 
+    Ultimate" appear in the GUI?)
+  - Verify the FFB strength in your device driver is not too low
 
-Device Unavailable:
-  - If you see "[DI Warning] Device unavailable" in the console, the game 
-    may have locked your wheel in Exclusive Mode
-  - Try Alt-Tabbing out of the game. If FFB suddenly works when the game 
-    is in the background, it confirms the game is interfering
-  - Some wheels work better than others with simultaneous access - this is 
-    a hardware/driver limitation
 
-"Could not open file mapping object":
-  - Start LMU and load a track first
-  - The shared memory only activates when driving
+LMU 1.2+ SUPPORT (v0.4.0+)
+--------------------------
+
+Enhanced Telemetry Access:
+With Le Mans Ultimate 1.2 (released December 9th, 2024), the game now includes 
+native shared memory support. lmuFFB v0.4.0+ fully supports LMU 1.2's new 
+interface, providing access to:
+- Patch Velocities - Allows physics-based texture generation
+- Steering Shaft Torque - Direct torque measurement for accurate FFB
+
+Note: Tire Load and Grip Fraction data are blocked from telemetry due to 
+licensing restrictions. lmuFFB automatically uses estimated values for these 
+parameters (see Known Issues section below).
+
+No Plugin Required:
+Unlike previous versions, LMU 1.2 has built-in shared memory - no external 
+plugins needed!
 
 
 KNOWN ISSUES (v0.4.2+)
@@ -3144,38 +3146,43 @@ KNOWN ISSUES (v0.4.2+)
 
 LMU 1.2 MISSING TELEMETRY DATA (LICENSING RESTRICTION):
 
-!!! Expected Warnings on Startup !!!
+Expected Warnings on Startup:
 
 When you start lmuFFB with LMU 1.2, you will see console warnings like:
 - [WARNING] Missing Tire Load data detected
 - [WARNING] Missing Grip Fraction data detected
 
-This is EXPECTED and NOT a bug in lmuFFB or LMU. This is a KNOWN SPECIFICATION 
-LIMITATION - LMU is intentionally returning ZERO (0) for all tire load and 
-grip fraction values due to LICENSING RESTRICTIONS that prevent the release 
+This is expected and NOT a bug in lmuFFB or LMU. This is a known specification 
+limitation - LMU is intentionally returning zero (0) for all tire load and 
+grip fraction values due to licensing restrictions that prevent the release 
 of such data via telemetry, even though the shared memory interface includes 
 these fields.
 
 Impact:
-- lmuFFB has AUTOMATIC FALLBACK LOGIC that detects this and uses estimated 
+- lmuFFB has automatic fallback logic that detects this and uses estimated 
   values instead
 - FFB will still work, but some effects (like load-sensitive textures and 
   grip-based understeer) will use approximations instead of real data
 - You can safely ignore these warnings - they confirm the fallback system 
   is working
 
-Note:
-- This is a licensing restriction, not a bug that can be fixed
-- The tire model data is proprietary and cannot be exposed through telemetry
-- lmuFFB's fallback estimations provide good approximations for FFB purposes
 
-Other Known Issues:
-- Telemetry Gaps: Some users report missing telemetry for Dashboard apps 
-  (ERS, Temps). lmuFFB has robust fallbacks that prevent dead FFB effects.
+UPCOMING FEATURES
+-----------------
+
+* Wet Weather Haptics (Hydro-Grain): vibration cues telling when the tires 
+  are on dry or wet surface, and if there is grip or not
+* Per wheel Hydro-Grain to give information about a drying racing line 
+  (e.g., left tires on dry, right tires on wet)
+* Adaptive Optimal Slip Angle
+* "ABS Rattle" (Pulsing)
+* Longitudinal Dynamic Weight Transfer: feeling of the car getting heavy 
+  under braking and light under acceleration
 
 
 FEEDBACK & SUPPORT
 ------------------
+
 For feedback, questions, or support:
 - LMU Forum Thread: 
   unlinked: community_lemansultimate_com/index_php?threads/irffb-for-lmu-lmuffb_10440/
@@ -3188,12 +3195,17 @@ see README.md or visit: unlinked: github_com/coasting-nc/LMUFFB
 
 
 ===============================================================================
-RFACTOR 2 SETUP (LEGACY)
+RFACTOR 2 COMPATIBILITY
 ===============================================================================
 
-NOTE: rFactor 2 support was removed in v0.4.0. To use lmuFFB with rFactor 2, 
-you must download and use version 0.3.x from the releases page:
+Note: rFactor 2 is NOT SUPPORTED in v0.4.0+. For rFactor 2, please use 
+earlier versions of lmuFFB (v0.3.x). See the releases page for v0.3.x 
+downloads:
 unlinked: github_com/coasting-nc/LMUFFB/releases
+
+rF2 will be supported again in a future version, in particular to compare 
+our grip approximation algorithm with the real values returned by the game 
+for non DLC cars.
 
 ```
 
@@ -3309,19 +3321,6 @@ struct rF2Telemetry {
 #pragma pack(pop)
 
 #endif // RF2DATA_H
-
-```
-
-# File: .pytest_cache\README.md
-```markdown
-# pytest cache directory #
-
-This directory contains data from the pytest's cache plugin,
-which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
-
-**Do not** commit this to version control.
-
-See [the docs](unlinked: docs_pytest_org/en/stable/how-to/cache_html) for more information.
 
 ```
 
@@ -8831,7 +8830,7 @@ I will now apply these changes to `tests/test_ffb_engine.cpp`.
 
 > **⚠️ API Source of Truth**  
 > All telemetry data units and field names are defined in **`src/lmu_sm_interface/InternalsPlugin.hpp`**.  
-> This is the official Studio 397 interface specification for LMU 1.2.  
+> That is the official Studio 397 interface specification for LMU 1.2.  
 > Critical: `mSteeringShaftTorque` is in **Newton-meters (Nm)**, not Newtons.
 
 Based on the `FFBEngine.h` file, here is the complete mathematical breakdown of the Force Feedback calculation.
@@ -10303,6 +10302,292 @@ ImGui::Text("Theoretical Wheel Freq: %.1f Hz", theoretical);
 3.  Enable "Dynamic Flatspot Suppression".
 4.  Verify vibration disappears from wheel but "Steering Torque" graph still shows road details.
 
+```
+
+# File: docs\dev_docs\Fix wheel device disconnecting.md
+```markdown
+# Technical Report: Connection Hardening & Device Persistence Implementation
+
+**Target Version:** v0.4.44
+**Priority:** Critical (User Experience / Stability)
+**Context:** Addressing feedback from user GamerMuscle regarding connection stability and usability.
+
+## 1. Executive Summary
+
+Users have reported two major usability issues:
+1.  **Connection Loss:** The app stops sending FFB when the window loses focus (Alt-Tab) or when the game momentarily steals Exclusive Mode. The current re-acquisition logic is insufficient because it does not explicitly restart the DirectInput Effect motor.
+2.  **Lack of Persistence:** The user must manually re-select their steering wheel from the dropdown every time the app is launched.
+
+Additionally, the console output is currently cluttered with "Clipping" warnings, which makes debugging connection issues difficult.
+
+## 2. Technical Strategy
+
+### A. Connection Hardening (The "Smart Reconnect")
+We will overhaul the `UpdateForce` loop in `DirectInputFFB.cpp`.
+*   **Diagnosis:** Instead of silently failing, we will catch specific DirectInput errors (`DIERR_INPUTLOST`, `DIERR_OTHERAPPHASPRIO`).
+*   **Context Logging:** We will log the **Active Foreground Window** when a failure occurs. This definitively proves if the Game (LMU) is stealing the device priority.
+*   **Motor Restart:** When we successfully re-acquire the device, we will explicitly call `m_pEffect->Start(1, 0)`. This fixes the "Silent Wheel" bug where the device is connected but the motor is stopped.
+
+### B. Device Persistence
+We will add logic to save the unique **GUID** of the selected DirectInput device to `config.ini`. On startup, the app will scan available devices and auto-select the one matching the saved GUID.
+
+### C. Console Decluttering
+We will remove the rate-limited "FFB Output Saturated" warning from the main loop to ensure the console remains clean for the new connection diagnostics.
+
+---
+
+## 3. Implementation Guide
+
+### Step 1: Update `src/DirectInputFFB.h`
+Add static helper methods to convert between the binary `GUID` struct and `std::string` for config storage.
+
+```cpp
+// src/DirectInputFFB.h
+
+// ... existing includes ...
+
+class DirectInputFFB {
+public:
+    // ... existing methods ...
+
+    // NEW: Helpers for Config persistence
+    static std::string GuidToString(const GUID& guid);
+    static GUID StringToGuid(const std::string& str);
+
+private:
+    // ... existing members ...
+};
+```
+
+### Step 2: Update `src/DirectInputFFB.cpp`
+This is the core logic update. It includes the helpers, the console decluttering, and the robust reconnection logic.
+
+```cpp
+// src/DirectInputFFB.cpp
+
+// ... existing includes ...
+#include <cstdio> // For sscanf, sprintf
+#include <psapi.h> // For GetActiveWindowTitle
+
+// NEW: Helper to get foreground window title for diagnostics
+std::string GetActiveWindowTitle() {
+    char wnd_title[256];
+    HWND hwnd = GetForegroundWindow();
+    if (hwnd) {
+        GetWindowTextA(hwnd, wnd_title, sizeof(wnd_title));
+        return std::string(wnd_title);
+    }
+    return "Unknown";
+}
+
+// NEW: Helper Implementations for GUID
+std::string DirectInputFFB::GuidToString(const GUID& guid) {
+    char buf[64];
+    sprintf_s(buf, "{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}",
+        guid.Data1, guid.Data2, guid.Data3,
+        guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
+        guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+    return std::string(buf);
+}
+
+GUID DirectInputFFB::StringToGuid(const std::string& str) {
+    GUID guid = { 0 };
+    if (str.empty()) return guid;
+    unsigned long p0;
+    unsigned int p1, p2, p3, p4, p5, p6, p7, p8, p9, p10;
+    int n = sscanf_s(str.c_str(), "{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+        &p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8, &p9, &p10);
+    if (n == 11) {
+        guid.Data1 = p0;
+        guid.Data2 = (unsigned short)p1;
+        guid.Data3 = (unsigned short)p2;
+        guid.Data4[0] = (unsigned char)p3; guid.Data4[1] = (unsigned char)p4;
+        guid.Data4[2] = (unsigned char)p5; guid.Data4[3] = (unsigned char)p6;
+        guid.Data4[4] = (unsigned char)p7; guid.Data4[5] = (unsigned char)p8;
+        guid.Data4[6] = (unsigned char)p9; guid.Data4[7] = (unsigned char)p10;
+    }
+    return guid;
+}
+
+void DirectInputFFB::UpdateForce(double normalizedForce) {
+    if (!m_active) return;
+
+    // Sanity Check: If 0.0, stop effect to prevent residual hum
+    if (std::abs(normalizedForce) < 0.00001) normalizedForce = 0.0;
+
+    // --- DECLUTTERING: REMOVED CLIPPING WARNING ---
+    /*
+    if (std::abs(normalizedForce) > 0.99) {
+        static int clip_log = 0;
+        if (clip_log++ % 400 == 0) { 
+            std::cout << "[DI] WARNING: FFB Output Saturated..." << std::endl;
+        }
+    }
+    */
+    // ----------------------------------------------
+
+    // Clamp
+    normalizedForce = (std::max)(-1.0, (std::min)(1.0, normalizedForce));
+
+    // Scale to -10000..10000
+    long magnitude = static_cast<long>(normalizedForce * 10000.0);
+
+    // Optimization: Don't call driver if value hasn't changed
+    if (magnitude == m_last_force) return;
+    m_last_force = magnitude;
+
+#ifdef _WIN32
+    if (m_pEffect) {
+        DICONSTANTFORCE cf;
+        cf.lMagnitude = magnitude;
+        
+        DIEFFECT eff;
+        ZeroMemory(&eff, sizeof(eff));
+        eff.dwSize = sizeof(DIEFFECT);
+        eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
+        eff.lpvTypeSpecificParams = &cf;
+        
+        // Try to update parameters
+        HRESULT hr = m_pEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
+        
+        // --- DIAGNOSTIC & RECOVERY LOGIC ---
+        if (FAILED(hr)) {
+            // 1. Identify the Error
+            std::string errorType = "Unknown";
+            bool recoverable = false;
+
+            if (hr == DIERR_INPUTLOST) {
+                errorType = "DIERR_INPUTLOST (Physical disconnect or Driver reset)";
+                recoverable = true;
+            } else if (hr == DIERR_NOTACQUIRED) {
+                errorType = "DIERR_NOTACQUIRED (Lost focus/lock)";
+                recoverable = true;
+            } else if (hr == DIERR_OTHERAPPHASPRIO) {
+                errorType = "DIERR_OTHERAPPHASPRIO (Another app stole the device!)";
+                recoverable = true;
+            }
+
+            // 2. Log the Context (Rate limited to 1s)
+            static DWORD lastLogTime = 0;
+            if (GetTickCount() - lastLogTime > 1000) {
+                std::cerr << "[DI ERROR] Failed to update force. Error: " << errorType << std::endl;
+                std::cerr << "           Active Window: [" << GetActiveWindowTitle() << "]" << std::endl;
+                lastLogTime = GetTickCount();
+            }
+
+            // 3. Attempt Recovery
+            if (recoverable) {
+                HRESULT hrAcq = m_pDevice->Acquire();
+                
+                if (SUCCEEDED(hrAcq)) {
+                    std::cout << "[DI RECOVERY] Device Re-Acquired successfully." << std::endl;
+                    
+                    // CRITICAL FIX: Restart the effect
+                    // Often, re-acquiring is not enough; the effect must be restarted.
+                    m_pEffect->Start(1, 0); 
+                    
+                    // Retry the update immediately
+                    m_pEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
+                } 
+            }
+        }
+    }
+#endif
+}
+```
+
+### Step 3: Update `src/Config.h`
+Add the static variable to hold the GUID string.
+
+```cpp
+// src/Config.h
+
+class Config {
+public:
+    // ... existing members ...
+    
+    // NEW: Persist selected device
+    static std::string m_last_device_guid;
+};
+```
+
+### Step 4: Update `src/Config.cpp`
+Implement the Save/Load logic for the GUID.
+
+```cpp
+// src/Config.cpp
+
+// Initialize
+std::string Config::m_last_device_guid = "";
+
+void Config::Save(const FFBEngine& engine, const std::string& filename) {
+    std::ofstream file(filename);
+    if (file.is_open()) {
+        // ... existing saves ...
+        file << "last_device_guid=" << m_last_device_guid << "\n"; // NEW
+        
+        // ... rest of save ...
+    }
+}
+
+void Config::Load(FFBEngine& engine, const std::string& filename) {
+    // ... existing load loop ...
+    while (std::getline(file, line)) {
+        // ... parsing ...
+        if (key == "last_device_guid") m_last_device_guid = value; // NEW
+        // ... existing keys ...
+    }
+}
+```
+
+### Step 5: Update `src/GuiLayer.cpp`
+Implement the auto-selection logic on startup and save logic on change.
+
+```cpp
+// src/GuiLayer.cpp
+
+void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
+    // ... [Setup] ...
+    
+    // Device Selection
+    static std::vector<DeviceInfo> devices;
+    static int selected_device_idx = -1;
+    
+    // Scan button (or auto scan once)
+    if (devices.empty()) {
+        devices = DirectInputFFB::Get().EnumerateDevices();
+        
+        // NEW: Auto-select last used device
+        if (selected_device_idx == -1 && !Config::m_last_device_guid.empty()) {
+            GUID target = DirectInputFFB::StringToGuid(Config::m_last_device_guid);
+            for (int i = 0; i < devices.size(); i++) {
+                if (memcmp(&devices[i].guid, &target, sizeof(GUID)) == 0) {
+                    selected_device_idx = i;
+                    DirectInputFFB::Get().SelectDevice(devices[i].guid);
+                    break;
+                }
+            }
+        }
+    }
+
+    if (ImGui::BeginCombo("FFB Device", selected_device_idx >= 0 ? devices[selected_device_idx].name.c_str() : "Select Device...")) {
+        for (int i = 0; i < devices.size(); i++) {
+            bool is_selected = (selected_device_idx == i);
+            if (ImGui::Selectable(devices[i].name.c_str(), is_selected)) {
+                selected_device_idx = i;
+                DirectInputFFB::Get().SelectDevice(devices[i].guid);
+                
+                // NEW: Save selection to config immediately
+                Config::m_last_device_guid = DirectInputFFB::GuidToString(devices[i].guid);
+                Config::Save(engine); 
+            }
+            if (is_selected) ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+    
+    // ... [Rest of file] ...
+```
 ```
 
 # File: docs\dev_docs\frame stutter issue fixes.md
@@ -20759,6 +21044,8 @@ Please refer to `docs/porting_guide_rust.md` in the root directory for instructi
 bool Config::m_ignore_vjoy_version_warning = false;
 bool Config::m_enable_vjoy = false;
 bool Config::m_output_ffb_to_vjoy = false;
+bool Config::m_always_on_top = false;
+std::string Config::m_last_device_guid = "";
 
 std::vector<Preset> Config::presets;
 
@@ -21145,6 +21432,8 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "ignore_vjoy_version_warning=" << m_ignore_vjoy_version_warning << "\n";
         file << "enable_vjoy=" << m_enable_vjoy << "\n";
         file << "output_ffb_to_vjoy=" << m_output_ffb_to_vjoy << "\n";
+        file << "always_on_top=" << m_always_on_top << "\n";
+        file << "last_device_guid=" << m_last_device_guid << "\n";
         file << "gain=" << engine.m_gain << "\n";
         file << "sop_smoothing_factor=" << engine.m_sop_smoothing_factor << "\n";
         file << "slip_angle_smoothing=" << engine.m_slip_angle_smoothing << "\n";
@@ -21245,6 +21534,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     if (key == "ignore_vjoy_version_warning") m_ignore_vjoy_version_warning = std::stoi(value);
                     else if (key == "enable_vjoy") m_enable_vjoy = std::stoi(value);
                     else if (key == "output_ffb_to_vjoy") m_output_ffb_to_vjoy = std::stoi(value);
+                    else if (key == "always_on_top") m_always_on_top = std::stoi(value);
+                    else if (key == "last_device_guid") m_last_device_guid = value;
                     else if (key == "gain") engine.m_gain = std::stof(value);
                     else if (key == "sop_smoothing_factor") engine.m_sop_smoothing_factor = std::stof(value);
                     else if (key == "sop_scale") engine.m_sop_scale = std::stof(value);
@@ -21488,10 +21779,14 @@ public:
     // NEW: Add a user preset
     static void AddUserPreset(const std::string& name, const FFBEngine& engine);
 
+    // NEW: Persist selected device
+    static std::string m_last_device_guid;
+
     // Global App Settings (not part of FFB Physics)
     static bool m_ignore_vjoy_version_warning;
     static bool m_enable_vjoy;        // Acquire vJoy device (Driver Enabled)
     static bool m_output_ffb_to_vjoy; // Output FFB signal to vJoy Axis X (Monitor)
+    static bool m_always_on_top;      // NEW: Keep window on top
 };
 
 #endif
@@ -21501,12 +21796,24 @@ public:
 # File: src\DirectInputFFB.cpp
 ```cpp
 #include "DirectInputFFB.h"
+
+// Standard Library Headers
 #include <iostream>
 #include <cmath>
+#include <cstdio> // For sscanf, sprintf
+#include <algorithm> // For std::max, std::min
 
+// Platform-Specific Headers
 #ifdef _WIN32
+#include <windows.h>
+#include <psapi.h>
 #include <dinput.h>
 #endif
+
+// Constants
+namespace {
+    constexpr DWORD DIAGNOSTIC_LOG_INTERVAL_MS = 1000; // Rate limit diagnostic logging to 1 second
+}
 
 // Keep existing implementations
 DirectInputFFB& DirectInputFFB::Get() {
@@ -21515,6 +21822,48 @@ DirectInputFFB& DirectInputFFB::Get() {
 }
 
 DirectInputFFB::DirectInputFFB() {}
+
+// NEW: Helper to get foreground window title for diagnostics
+std::string DirectInputFFB::GetActiveWindowTitle() {
+#ifdef _WIN32
+    char wnd_title[256];
+    HWND hwnd = GetForegroundWindow();
+    if (hwnd) {
+        GetWindowTextA(hwnd, wnd_title, sizeof(wnd_title));
+        return std::string(wnd_title);
+    }
+#endif
+    return "Unknown";
+}
+
+// NEW: Helper Implementations for GUID
+std::string DirectInputFFB::GuidToString(const GUID& guid) {
+    char buf[64];
+    sprintf_s(buf, "{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}",
+        guid.Data1, guid.Data2, guid.Data3,
+        guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
+        guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+    return std::string(buf);
+}
+
+GUID DirectInputFFB::StringToGuid(const std::string& str) {
+    GUID guid = { 0 };
+    if (str.empty()) return guid;
+    unsigned long p0;
+    unsigned int p1, p2, p3, p4, p5, p6, p7, p8, p9, p10;
+    int n = sscanf_s(str.c_str(), "{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+        &p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8, &p9, &p10);
+    if (n == 11) {
+        guid.Data1 = p0;
+        guid.Data2 = (unsigned short)p1;
+        guid.Data3 = (unsigned short)p2;
+        guid.Data4[0] = (unsigned char)p3; guid.Data4[1] = (unsigned char)p4;
+        guid.Data4[2] = (unsigned char)p5; guid.Data4[3] = (unsigned char)p6;
+        guid.Data4[4] = (unsigned char)p7; guid.Data4[5] = (unsigned char)p8;
+        guid.Data4[6] = (unsigned char)p9; guid.Data4[7] = (unsigned char)p10;
+    }
+    return guid;
+}
 
 DirectInputFFB::~DirectInputFFB() {
     Shutdown();
@@ -21706,16 +22055,18 @@ void DirectInputFFB::UpdateForce(double normalizedForce) {
     if (!m_active) return;
 
     // Sanity Check: If 0.0, stop effect to prevent residual hum
-    // Actually DirectInput 0 means center/off for Constant Force.
     if (std::abs(normalizedForce) < 0.00001) normalizedForce = 0.0;
 
-    // Safety Check: Saturation
+    // --- DECLUTTERING: REMOVED CLIPPING WARNING ---
+    /*
     if (std::abs(normalizedForce) > 0.99) {
         static int clip_log = 0;
-        if (clip_log++ % 400 == 0) { // Log approx once per second at 400Hz
-            std::cout << "[DI] WARNING: FFB Output Saturated (Clipping). Force: " << normalizedForce << ". Reduce Gain or increase Max Torque Ref." << std::endl;
+        if (clip_log++ % 400 == 0) { 
+            std::cout << "[DI] WARNING: FFB Output Saturated..." << std::endl;
         }
     }
+    */
+    // ----------------------------------------------
 
     // Clamp
     normalizedForce = (std::max)(-1.0, (std::min)(1.0, normalizedForce));
@@ -21735,31 +22086,51 @@ void DirectInputFFB::UpdateForce(double normalizedForce) {
         DIEFFECT eff;
         ZeroMemory(&eff, sizeof(eff));
         eff.dwSize = sizeof(DIEFFECT);
-        // We use DIEP_TYPESPECIFICPARAMS because we are only updating the Magnitude (Specific to ConstantForce).
-        // This is more efficient than updating the entire envelope or direction.
         eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
         eff.lpvTypeSpecificParams = &cf;
         
-        // Update parameters only (magnitude changes).
-        // DO NOT pass DIEP_START here as it restarts the envelope and can cause clicks/latency.
-        // The effect is started once in CreateEffect() and runs continuously.
-        // If device is lost, the re-acquisition logic below will restart it properly.
+        // Try to update parameters
         HRESULT hr = m_pEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
         
-        if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED) {
-            // Try to re-acquire once
-            HRESULT hrAcq = m_pDevice->Acquire();
-            if (SUCCEEDED(hrAcq)) {
-                // If we re-acquired, we might need to restart effect, or maybe just set params.
-                // Safest to SetParams and assume continuous play, but CreateEffect handles Start(1,0).
-                // If logic suggests effect stopped, we can explicitly start if needed, but avoid DIEP_START loop.
-                m_pEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
-            } else if (hrAcq == DIERR_OTHERAPPHASPRIO) {
-                static int log_limit = 0;
-                if (log_limit++ % 400 == 0) { // Log once per sec approx
-                    std::cerr << "[DI Warning] Device unavailable. LMU (or another app) has Exclusive Priority. " 
-                              << "You may have a 'Double FFB' conflict." << std::endl;
-                }
+        // --- DIAGNOSTIC & RECOVERY LOGIC ---
+        if (FAILED(hr)) {
+            // 1. Identify the Error
+            std::string errorType = "Unknown";
+            bool recoverable = false;
+
+            if (hr == DIERR_INPUTLOST) {
+                errorType = "DIERR_INPUTLOST (Physical disconnect or Driver reset)";
+                recoverable = true;
+            } else if (hr == DIERR_NOTACQUIRED) {
+                errorType = "DIERR_NOTACQUIRED (Lost focus/lock)";
+                recoverable = true;
+            } else if (hr == DIERR_OTHERAPPHASPRIO) {
+                errorType = "DIERR_OTHERAPPHASPRIO (Another app stole the device!)";
+                recoverable = true;
+            }
+
+            // 2. Log the Context (Rate limited)
+            static DWORD lastLogTime = 0;
+            if (GetTickCount() - lastLogTime > DIAGNOSTIC_LOG_INTERVAL_MS) {
+                std::cerr << "[DI ERROR] Failed to update force. Error: " << errorType << std::endl;
+                std::cerr << "           Active Window: [" << GetActiveWindowTitle() << "]" << std::endl;
+                lastLogTime = GetTickCount();
+            }
+
+            // 3. Attempt Recovery
+            if (recoverable) {
+                HRESULT hrAcq = m_pDevice->Acquire();
+                
+                if (SUCCEEDED(hrAcq)) {
+                    std::cout << "[DI RECOVERY] Device Re-Acquired successfully." << std::endl;
+                    
+                    // CRITICAL FIX: Restart the effect
+                    // Often, re-acquiring is not enough; the effect must be restarted.
+                    m_pEffect->Start(1, 0); 
+                    
+                    // Retry the update immediately
+                    m_pEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
+                } 
             }
         }
     }
@@ -21814,6 +22185,11 @@ public:
 
     // Update the Constant Force effect (-1.0 to 1.0)
     void UpdateForce(double normalizedForce);
+
+    // NEW: Helpers for Config persistence
+    static std::string GuidToString(const GUID& guid);
+    static GUID StringToGuid(const std::string& str);
+    static std::string GetActiveWindowTitle();
 
     bool IsActive() const { return m_active; }
     std::string GetCurrentDeviceName() const { return m_deviceName; }
@@ -22129,6 +22505,7 @@ void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+void SetWindowAlwaysOnTop(HWND hwnd, bool enabled); // NEW
 
 // External linkage to FFB loop status
 extern std::atomic<bool> g_running;
@@ -22156,6 +22533,11 @@ bool GuiLayer::Init() {
     std::wstring title = L"LMUFFB v" + wver;
 
     g_hwnd = ::CreateWindowW(wc.lpszClassName, title.c_str(), WS_OVERLAPPEDWINDOW, 100, 100, 800, 600, NULL, NULL, wc.hInstance, NULL);
+
+    // NEW: Apply saved "Always on Top" setting immediately
+    if (Config::m_always_on_top) {
+        SetWindowAlwaysOnTop(g_hwnd, true);
+    }
 
     // Initialize Direct3D
     if (!CreateDeviceD3D(g_hwnd)) {
@@ -22329,6 +22711,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     }
     ImGui::Separator();
 
+    // --- NEW: Window Settings ---
+    if (ImGui::Checkbox("Always on Top", &Config::m_always_on_top)) {
+        SetWindowAlwaysOnTop(g_hwnd, Config::m_always_on_top);
+    }
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Keep this window visible over the game.");
+    ImGui::Separator();
+
     ImGui::Text("Core Settings");
     
     // Device Selection
@@ -22338,6 +22727,18 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     // Scan button (or auto scan once)
     if (devices.empty()) {
         devices = DirectInputFFB::Get().EnumerateDevices();
+        
+        // NEW: Auto-select last used device
+        if (selected_device_idx == -1 && !Config::m_last_device_guid.empty()) {
+            GUID target = DirectInputFFB::StringToGuid(Config::m_last_device_guid);
+            for (int i = 0; i < (int)devices.size(); i++) {
+                if (memcmp(&devices[i].guid, &target, sizeof(GUID)) == 0) {
+                    selected_device_idx = i;
+                    DirectInputFFB::Get().SelectDevice(devices[i].guid);
+                    break;
+                }
+            }
+        }
     }
 
     if (ImGui::BeginCombo("FFB Device", selected_device_idx >= 0 ? devices[selected_device_idx].name.c_str() : "Select Device...")) {
@@ -22346,6 +22747,10 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             if (ImGui::Selectable(devices[i].name.c_str(), is_selected)) {
                 selected_device_idx = i;
                 DirectInputFFB::Get().SelectDevice(devices[i].guid);
+                
+                // NEW: Save selection to config immediately
+                Config::m_last_device_guid = DirectInputFFB::GuidToString(devices[i].guid);
+                Config::Save(engine); 
             }
             if (is_selected) ImGui::SetItemDefaultFocus();
         }
@@ -22426,6 +22831,32 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     auto FloatSetting = [&](const char* label, float* v, float min, float max, const char* fmt = "%.2f") {
         if (ImGui::SliderFloat(label, v, min, max, fmt)) {
             selected_preset = -1; // Mark as Custom
+        }
+
+        // NEW: Keyboard Fine-Tuning Logic
+        if (ImGui::IsItemHovered()) {
+            float range = max - min;
+            float step = (range > 50.0f) ? 0.5f : 0.01f; 
+            
+            bool changed = false;
+            if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) {
+                *v -= step;
+                changed = true;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) {
+                *v += step;
+                changed = true;
+            }
+
+            if (changed) {
+                *v = (std::max)(min, (std::min)(max, *v));
+                selected_preset = -1;
+            }
+            
+            ImGui::BeginTooltip();
+            ImGui::Text("Fine Tune: Arrow Keys");
+            ImGui::Text("Exact Input: Ctrl + Click");
+            ImGui::EndTooltip();
         }
     };
     
@@ -22707,6 +23138,14 @@ bool CreateDeviceD3D(HWND hWnd) {
 
     CreateRenderTarget();
     return true;
+}
+
+// Helper to toggle Topmost
+void SetWindowAlwaysOnTop(HWND hwnd, bool enabled) {
+    if (!hwnd) return;
+    HWND insertAfter = enabled ? HWND_TOPMOST : HWND_NOTOPMOST;
+    // SWP_NOMOVE | SWP_NOSIZE means we only change Z-order, not position/size
+    ::SetWindowPos(hwnd, insertAfter, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 }
 
 void CleanupDeviceD3D() {
@@ -24614,6 +25053,21 @@ add_executable(run_tests test_ffb_engine.cpp ../src/Config.cpp)
 # Enable testing
 enable_testing()
 add_test(NAME CoreLogicTest COMMAND run_tests)
+
+# Windows-Specific Tests (DirectInput Helpers, Persistence)
+if(WIN32)
+    add_executable(run_tests_win32 
+        test_windows_platform.cpp 
+        ../src/DirectInputFFB.cpp 
+        ../src/Config.cpp
+    )
+    
+    # Link required Windows libraries
+    target_link_libraries(run_tests_win32 dinput8 dxguid version imm32 winmm)
+    
+    # Add to CTest
+    add_test(NAME WindowsPlatformTest COMMAND run_tests_win32)
+endif()
 
 ```
 
@@ -28908,6 +29362,146 @@ static void test_static_notch_integration() {
         std::cout << "[FAIL] Static Notch attenuated 10Hz signal. Max Amp: " << max_amp_pass << std::endl;
         g_tests_failed++;
     }
+}
+
+```
+
+# File: tests\test_windows_platform.cpp
+```cpp
+#include <iostream>
+#include <string>
+#include <vector>
+#include <windows.h>
+#include <dinput.h>
+
+// Include headers to test
+#include "../src/DirectInputFFB.h"
+#include "../src/Config.h"
+
+// --- Simple Test Framework (Copy from main test file) ---
+int g_tests_passed = 0;
+int g_tests_failed = 0;
+
+#define ASSERT_TRUE(condition) \
+    if (condition) { \
+        std::cout << "[PASS] " << #condition << std::endl; \
+        g_tests_passed++; \
+    } else { \
+        std::cout << "[FAIL] " << #condition << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+        g_tests_failed++; \
+    }
+
+#define ASSERT_EQ_STR(a, b) \
+    if (std::string(a) == std::string(b)) { \
+        std::cout << "[PASS] " << #a << " == " << #b << std::endl; \
+        g_tests_passed++; \
+    } else { \
+        std::cout << "[FAIL] " << #a << " (" << a << ") != " << #b << " (" << b << ")" << std::endl; \
+        g_tests_failed++; \
+    }
+
+// --- TESTS ---
+
+void test_guid_string_conversion() {
+    std::cout << "\nTest: GUID <-> String Conversion (Persistence)" << std::endl;
+
+    // 1. Create a known GUID (e.g., a standard HID GUID)
+    // {4D1E55B2-F16F-11CF-88CB-001111000030}
+    GUID original = { 0x4D1E55B2, 0xF16F, 0x11CF, { 0x88, 0xCB, 0x00, 0x11, 0x11, 0x00, 0x00, 0x30 } };
+
+    // 2. Convert to String
+    std::string str = DirectInputFFB::GuidToString(original);
+    std::cout << "  Serialized: " << str << std::endl;
+
+    // 3. Convert back to GUID
+    GUID result = DirectInputFFB::StringToGuid(str);
+
+    // 4. Verify Integrity
+    bool match = (memcmp(&original, &result, sizeof(GUID)) == 0);
+    ASSERT_TRUE(match);
+
+    // 5. Test Empty/Invalid
+    GUID empty = DirectInputFFB::StringToGuid("");
+    bool isEmpty = (empty.Data1 == 0 && empty.Data2 == 0);
+    ASSERT_TRUE(isEmpty);
+}
+
+void test_window_title_extraction() {
+    std::cout << "\nTest: Active Window Title (Diagnostics)" << std::endl;
+    
+    std::string title = DirectInputFFB::GetActiveWindowTitle();
+    std::cout << "  Current Window: " << title << std::endl;
+    
+    // We expect something, even if it's "Unknown" (though on Windows it should work)
+    ASSERT_TRUE(!title.empty());
+}
+
+void test_config_persistence_guid() {
+    std::cout << "\nTest: Config Persistence (Last Device GUID)" << std::endl;
+
+    // 1. Setup
+    std::string test_file = "test_config_win.ini";
+    FFBEngine engine; // Dummy engine
+    
+    // 2. Set the static variable
+    std::string fake_guid = "{12345678-1234-1234-1234-1234567890AB}";
+    Config::m_last_device_guid = fake_guid;
+
+    // 3. Save
+    Config::Save(engine, test_file);
+
+    // 4. Clear
+    Config::m_last_device_guid = "";
+
+    // 5. Load
+    Config::Load(engine, test_file);
+
+    // 6. Verify
+    ASSERT_EQ_STR(Config::m_last_device_guid, fake_guid);
+
+    // Cleanup
+    remove(test_file.c_str());
+}
+
+void test_config_always_on_top_persistence() {
+    std::cout << "\nTest: Config Persistence (Always on Top)" << std::endl;
+
+    // 1. Setup
+    std::string test_file = "test_config_top.ini";
+    FFBEngine engine;
+    
+    // 2. Set the static variable
+    Config::m_always_on_top = true;
+
+    // 3. Save
+    Config::Save(engine, test_file);
+
+    // 4. Clear
+    Config::m_always_on_top = false;
+
+    // 5. Load
+    Config::Load(engine, test_file);
+
+    // 6. Verify
+    ASSERT_TRUE(Config::m_always_on_top == true);
+
+    // Cleanup
+    remove(test_file.c_str());
+}
+
+int main() {
+    std::cout << "=== Running Windows Platform Tests ===" << std::endl;
+
+    test_guid_string_conversion();
+    test_window_title_extraction();
+    test_config_persistence_guid();
+    test_config_always_on_top_persistence();
+
+    std::cout << "\n----------------" << std::endl;
+    std::cout << "Tests Passed: " << g_tests_passed << std::endl;
+    std::cout << "Tests Failed: " << g_tests_failed << std::endl;
+
+    return g_tests_failed > 0 ? 1 : 0;
 }
 
 ```

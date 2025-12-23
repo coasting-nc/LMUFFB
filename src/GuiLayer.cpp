@@ -38,6 +38,7 @@ void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+void SetWindowAlwaysOnTop(HWND hwnd, bool enabled); // NEW
 
 // External linkage to FFB loop status
 extern std::atomic<bool> g_running;
@@ -65,6 +66,11 @@ bool GuiLayer::Init() {
     std::wstring title = L"LMUFFB v" + wver;
 
     g_hwnd = ::CreateWindowW(wc.lpszClassName, title.c_str(), WS_OVERLAPPEDWINDOW, 100, 100, 800, 600, NULL, NULL, wc.hInstance, NULL);
+
+    // NEW: Apply saved "Always on Top" setting immediately
+    if (Config::m_always_on_top) {
+        SetWindowAlwaysOnTop(g_hwnd, true);
+    }
 
     // Initialize Direct3D
     if (!CreateDeviceD3D(g_hwnd)) {
@@ -238,6 +244,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     }
     ImGui::Separator();
 
+    // --- NEW: Window Settings ---
+    if (ImGui::Checkbox("Always on Top", &Config::m_always_on_top)) {
+        SetWindowAlwaysOnTop(g_hwnd, Config::m_always_on_top);
+    }
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Keep this window visible over the game.");
+    ImGui::Separator();
+
     ImGui::Text("Core Settings");
     
     // Device Selection
@@ -351,6 +364,32 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     auto FloatSetting = [&](const char* label, float* v, float min, float max, const char* fmt = "%.2f") {
         if (ImGui::SliderFloat(label, v, min, max, fmt)) {
             selected_preset = -1; // Mark as Custom
+        }
+
+        // NEW: Keyboard Fine-Tuning Logic
+        if (ImGui::IsItemHovered()) {
+            float range = max - min;
+            float step = (range > 50.0f) ? 0.5f : 0.01f; 
+            
+            bool changed = false;
+            if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) {
+                *v -= step;
+                changed = true;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) {
+                *v += step;
+                changed = true;
+            }
+
+            if (changed) {
+                *v = (std::max)(min, (std::min)(max, *v));
+                selected_preset = -1;
+            }
+            
+            ImGui::BeginTooltip();
+            ImGui::Text("Fine Tune: Arrow Keys");
+            ImGui::Text("Exact Input: Ctrl + Click");
+            ImGui::EndTooltip();
         }
     };
     
@@ -632,6 +671,14 @@ bool CreateDeviceD3D(HWND hWnd) {
 
     CreateRenderTarget();
     return true;
+}
+
+// Helper to toggle Topmost
+void SetWindowAlwaysOnTop(HWND hwnd, bool enabled) {
+    if (!hwnd) return;
+    HWND insertAfter = enabled ? HWND_TOPMOST : HWND_NOTOPMOST;
+    // SWP_NOMOVE | SWP_NOSIZE means we only change Z-order, not position/size
+    ::SetWindowPos(hwnd, insertAfter, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 }
 
 void CleanupDeviceD3D() {

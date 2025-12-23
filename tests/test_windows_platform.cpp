@@ -93,12 +93,39 @@ void test_config_persistence_guid() {
     remove(test_file.c_str());
 }
 
+void test_config_always_on_top_persistence() {
+    std::cout << "\nTest: Config Persistence (Always on Top)" << std::endl;
+
+    // 1. Setup
+    std::string test_file = "test_config_top.ini";
+    FFBEngine engine;
+    
+    // 2. Set the static variable
+    Config::m_always_on_top = true;
+
+    // 3. Save
+    Config::Save(engine, test_file);
+
+    // 4. Clear
+    Config::m_always_on_top = false;
+
+    // 5. Load
+    Config::Load(engine, test_file);
+
+    // 6. Verify
+    ASSERT_TRUE(Config::m_always_on_top == true);
+
+    // Cleanup
+    remove(test_file.c_str());
+}
+
 int main() {
     std::cout << "=== Running Windows Platform Tests ===" << std::endl;
 
     test_guid_string_conversion();
     test_window_title_extraction();
     test_config_persistence_guid();
+    test_config_always_on_top_persistence();
 
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;

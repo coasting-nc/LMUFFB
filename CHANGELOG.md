@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.45] - 2025-12-23
+### Added
+- **"Always on Top" Mode**: New checkbox in the Tuning Window to keep the application visible over the game or other windows.
+    - Prevents losing sight of telemetry or settings when clicking back into the game.
+    - Setting is persisted in `config.ini` and reapplied on startup.
+- **Keyboard Fine-Tuning for Sliders**: Enhanced slider control for precise adjustments.
+    - **Hover + Arrow Keys**: Simply hover the mouse over any slider and use **Left/Right Arrow** keys to adjust the value by small increments.
+    - **Dynamic Stepping**: Automatically uses `0.01` for small-range effects (Gains) and `0.5` for larger-range effects (Max Torque).
+    - **Tooltip Integration**: Added a hint to all sliders explaining the arrow key and Ctrl+Click shortcuts.
+- **Persistence Logic**: Added unit tests to ensure window settings are correctly saved and loaded.
+
 ## [0.4.44] - 2025-12-21
 ### Added
 - **Device Selection Persistence**: The application now remembers your selected steering wheel across restarts.

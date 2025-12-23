@@ -6,6 +6,7 @@
 bool Config::m_ignore_vjoy_version_warning = false;
 bool Config::m_enable_vjoy = false;
 bool Config::m_output_ffb_to_vjoy = false;
+bool Config::m_always_on_top = false;
 std::string Config::m_last_device_guid = "";
 
 std::vector<Preset> Config::presets;
@@ -393,6 +394,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "ignore_vjoy_version_warning=" << m_ignore_vjoy_version_warning << "\n";
         file << "enable_vjoy=" << m_enable_vjoy << "\n";
         file << "output_ffb_to_vjoy=" << m_output_ffb_to_vjoy << "\n";
+        file << "always_on_top=" << m_always_on_top << "\n";
         file << "last_device_guid=" << m_last_device_guid << "\n";
         file << "gain=" << engine.m_gain << "\n";
         file << "sop_smoothing_factor=" << engine.m_sop_smoothing_factor << "\n";
@@ -494,6 +496,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     if (key == "ignore_vjoy_version_warning") m_ignore_vjoy_version_warning = std::stoi(value);
                     else if (key == "enable_vjoy") m_enable_vjoy = std::stoi(value);
                     else if (key == "output_ffb_to_vjoy") m_output_ffb_to_vjoy = std::stoi(value);
+                    else if (key == "always_on_top") m_always_on_top = std::stoi(value);
                     else if (key == "last_device_guid") m_last_device_guid = value;
                     else if (key == "gain") engine.m_gain = std::stof(value);
                     else if (key == "sop_smoothing_factor") engine.m_sop_smoothing_factor = std::stof(value);
