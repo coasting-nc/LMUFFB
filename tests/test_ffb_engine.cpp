@@ -489,7 +489,7 @@ static void test_min_force() {
     // 20.0 is Max. Min force 0.10 means we want at least 2.0 Nm output effectively.
     // Input 0.05 Nm. 0.05 / 20.0 = 0.0025.
     data.mSteeringShaftTorque = 0.05; 
-    engine.m_min_force = 0.10; // 10% min force
+    engine.m_min_force = 0.10f; // 10% min force
     engine.m_max_torque_ref = 20.0f; // Fix Reference for Test (v0.4.4)
     engine.m_invert_force = false;
 
@@ -2390,8 +2390,8 @@ static void test_yaw_kick_signal_conditioning() {
     
     data.mWheel[0].mRideHeight = 0.1;
     data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mStaticUndeflectedRadius = 33.0f; // 33cm
-    data.mWheel[1].mStaticUndeflectedRadius = 33.0f;
+    data.mWheel[0].mStaticUndeflectedRadius = 33; // 33cm
+    data.mWheel[1].mStaticUndeflectedRadius = 33;
     data.mSteeringShaftTorque = 0.0;
     data.mDeltaTime = 0.0025f; // 400Hz
     data.mElapsedTime = 0.0;

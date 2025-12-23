@@ -53,7 +53,8 @@ GUID DirectInputFFB::StringToGuid(const std::string& str) {
     GUID guid = { 0 };
     if (str.empty()) return guid;
     unsigned long p0;
-    unsigned int p1, p2, p3, p4, p5, p6, p7, p8, p9, p10;
+    unsigned short p1, p2;
+    unsigned int p3, p4, p5, p6, p7, p8, p9, p10;
     int n = sscanf_s(str.c_str(), "{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}",
         &p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8, &p9, &p10);
     if (n == 11) {
