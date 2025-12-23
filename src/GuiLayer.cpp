@@ -405,15 +405,15 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     }
 
     // =========================================================
-    // SECTION 5: GENERAL
+    // SECTION 5: GENERAL FFB SETTINGS
     // =========================================================
-    if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGui::CollapsingHeader("General FFB Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+        BoolSetting("Invert FFB Signal", &engine.m_invert_force);
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Check this if the wheel pulls away from center instead of aligning.");
+        
         FloatSetting("Master Gain", &engine.m_gain, 0.0f, 2.0f);
         FloatSetting("Max Torque Ref (Nm)", &engine.m_max_torque_ref, 1.0f, 200.0f, "%.1f Nm");
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("The torque value that equals 100%% FFB output.\nFor T300/G29, try 60-100 Nm.");
-        
-        BoolSetting("Invert FFB Signal", &engine.m_invert_force);
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Check this if the wheel pulls away from center instead of aligning.");
         
         FloatSetting("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f");
         

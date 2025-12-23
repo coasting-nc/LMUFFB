@@ -2,10 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.47] - 2025-12-23
+### Changed
+- **GUI Refinement**:
+    - Renamed the **"General"** section to **"General FFB Settings"** to better reflect its purpose.
+    - Reordered widgets in the General section: **"Invert FFB Signal"** is now the first control, followed by **"Master Gain"**.
+
 ## [0.4.46] - 2025-12-23
 ### Added
 - **Major GUI Reorganization**: Completely restructured the Tuning Window for professional ergonomics and logical flow.
-    - **Logical Grouping**: Parameters are now grouped into 10 collapsible sections: *Core Settings, Game Status, App Controls, Presets, General, Understeer/Front Tyres, Oversteer/Rear Tyres, Grip Estimation, Haptics,* and *Textures*.
+    - **Logical Grouping**: Parameters are now grouped into 10 collapsible sections: *Core Settings, Game Status, App Controls, Presets, General FFB Settings, Understeer/Front Tyres, Oversteer/Rear Tyres, Grip Estimation, Haptics,* and *Textures*.
     - **Focused SoP Management**: Grouped all rear-end and rotation effects (Lateral G, Rear Align Torque, Yaw Kick, Gyro) into a dedicated SoP hierarchy.
     - **Compact App Controls**: Consolidated system controls (Always on Top, Graphs, Screenshots) onto a single functional line.
     - **Visual Cleanup**: Removed obsolete vJoy monitoring tools and development placeholders to declutter the user interface.
