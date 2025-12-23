@@ -7,6 +7,14 @@
 // Include headers to test
 #include "../src/DirectInputFFB.h"
 #include "../src/Config.h"
+#include "../src/GuiLayer.h"
+#include "imgui.h"
+#include <atomic>
+#include <mutex>
+
+// Global externs required by GuiLayer
+std::atomic<bool> g_running(true);
+std::mutex g_engine_mutex;
 
 // --- Simple Test Framework (Copy from main test file) ---
 int g_tests_passed = 0;
@@ -190,6 +198,43 @@ void test_preset_management_system() {
     remove("config.ini");
 }
 
+void test_gui_style_application() {
+    std::cout << "\nTest: GUI Style Application (Headless)" << std::endl;
+    
+    // 1. Initialize Headless ImGui Context
+    ImGuiContext* ctx = ImGui::CreateContext();
+    ASSERT_TRUE(ctx != nullptr);
+    
+    // 2. Apply Custom Style
+    GuiLayer::SetupGUIStyle();
+    
+    // 3. Verify specific color values from the plan
+    // Background should be (0.12, 0.12, 0.12)
+    float bg_r = ImGui::GetStyle().Colors[ImGuiCol_WindowBg].x;
+    float bg_g = ImGui::GetStyle().Colors[ImGuiCol_WindowBg].y;
+    float bg_b = ImGui::GetStyle().Colors[ImGuiCol_WindowBg].z;
+    
+    ASSERT_TRUE(abs(bg_r - 0.12f) < 0.001f);
+    ASSERT_TRUE(abs(bg_g - 0.12f) < 0.001f);
+    ASSERT_TRUE(abs(bg_b - 0.12f) < 0.001f);
+    
+    // Header should be transparent alpha=0
+    float header_a = ImGui::GetStyle().Colors[ImGuiCol_Header].w;
+    ASSERT_TRUE(header_a == 0.00f);
+    
+    // Slider Grab should be the Teal Accent (0.00, 0.60, 0.85)
+    float accent_r = ImGui::GetStyle().Colors[ImGuiCol_SliderGrab].x;
+    float accent_g = ImGui::GetStyle().Colors[ImGuiCol_SliderGrab].y;
+    float accent_b = ImGui::GetStyle().Colors[ImGuiCol_SliderGrab].z;
+    
+    ASSERT_TRUE(abs(accent_r - 0.00f) < 0.001f);
+    ASSERT_TRUE(abs(accent_g - 0.60f) < 0.001f);
+    ASSERT_TRUE(abs(accent_b - 0.85f) < 0.001f);
+
+    // 4. Destroy Context
+    ImGui::DestroyContext(ctx);
+}
+
 int main() {
     std::cout << "=== Running Windows Platform Tests ===" << std::endl;
 
@@ -199,6 +244,7 @@ int main() {
     test_config_always_on_top_persistence();
     test_window_always_on_top_behavior();
     test_preset_management_system();
+    test_gui_style_application();
 
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;

@@ -19,10 +19,13 @@ if(WIN32)
         test_windows_platform.cpp 
         ../src/DirectInputFFB.cpp 
         ../src/Config.cpp
+        ../src/GuiLayer.cpp
+        ../src/GameConnector.cpp
+        ${IMGUI_SOURCES}
     )
     
     # Link required Windows libraries
-    target_link_libraries(run_tests_win32 dinput8 dxguid version imm32 winmm)
+    target_link_libraries(run_tests_win32 dinput8 dxguid version imm32 winmm d3d11 d3dcompiler dxgi)
     
     # Add to CTest
     add_test(NAME WindowsPlatformTest COMMAND run_tests_win32)

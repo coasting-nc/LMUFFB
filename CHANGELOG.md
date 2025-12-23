@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.49] - 2025-12-23
+### Changed
+- **Visual Design Overhaul (Dark Theme & Grid Layout)**:
+    - Improved visual design and readability of the app.
+    - **Professional "Deep Dark" Theme**: Replaced the default ImGui style with a custom flat dark theme. Features a deep grey background and high-contrast teal/blue accents for interactive controls.
+    - **2-Column Grid Layout**: Refactored the Tuning Window to a strict 2-column layout (Labels on the Left, Controls on the Right). This eliminates the "ragged edge" and makes it significantly easier to scan settings and values.
+    - **Clean Section Headers**: Replaced solid-colored title bars with transparent headers and accent lines. This removes the distracting "zebra striping" effect and reduces visual noise.
+    - **Improved Hierarchy**: Added logical groupings and cleaner spacing between functional units (General, Front Axle, Rear Axle, Textures, etc.).
+    - **Developer Architecture**: Promoted `SetupGUIStyle()` to a public static method for external testing and flexible initialization.
+### Added
+- **UI Verification Test**: Added `test_gui_style_application` to the platform test suite. This headless test verifies that theme colors and layout constants are applied correctly to the ImGui style object without needing a physical window.
+
 ## [0.4.48] - 2025-12-23
 ### Fixed
 - **"Always on Top" Reliability**: 

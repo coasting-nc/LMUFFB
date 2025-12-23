@@ -53,6 +53,50 @@ extern std::mutex g_engine_mutex;
 #define LMUFFB_VERSION "Dev"
 #endif
 
+// NEW: Professional "Flat Dark" Theme
+void GuiLayer::SetupGUIStyle() {
+    ImGuiStyle& style = ImGui::GetStyle();
+    
+    // 1. Geometry
+    style.WindowRounding = 5.0f;
+    style.FrameRounding = 4.0f;
+    style.GrabRounding = 4.0f;
+    style.FramePadding = ImVec2(8, 4);
+    style.ItemSpacing = ImVec2(8, 6);
+    
+    // 2. Colors
+    ImVec4* colors = style.Colors;
+    
+    // Backgrounds: Deep Grey
+    colors[ImGuiCol_WindowBg]       = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
+    colors[ImGuiCol_ChildBg]        = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+    colors[ImGuiCol_PopupBg]        = ImVec4(0.15f, 0.15f, 0.15f, 0.98f);
+    
+    // Headers: Transparent (Just text highlight)
+    colors[ImGuiCol_Header]         = ImVec4(0.20f, 0.20f, 0.20f, 0.00f); // Transparent!
+    colors[ImGuiCol_HeaderHovered]  = ImVec4(0.25f, 0.25f, 0.25f, 0.50f);
+    colors[ImGuiCol_HeaderActive]   = ImVec4(0.30f, 0.30f, 0.30f, 0.50f);
+    
+    // Controls (Sliders/Buttons): Dark Grey container
+    colors[ImGuiCol_FrameBg]        = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
+    colors[ImGuiCol_FrameBgActive]  = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+    
+    // Accents (The Data): Bright Blue/Teal
+    // This draws the eye ONLY to the values
+    ImVec4 accent = ImVec4(0.00f, 0.60f, 0.85f, 1.00f); 
+    colors[ImGuiCol_SliderGrab]     = accent;
+    colors[ImGuiCol_SliderGrabActive] = ImVec4(0.00f, 0.70f, 0.95f, 1.00f);
+    colors[ImGuiCol_Button]         = ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
+    colors[ImGuiCol_ButtonHovered]  = accent;
+    colors[ImGuiCol_ButtonActive]   = ImVec4(0.00f, 0.50f, 0.75f, 1.00f);
+    colors[ImGuiCol_CheckMark]      = accent;
+    
+    // Text
+    colors[ImGuiCol_Text]           = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
+    colors[ImGuiCol_TextDisabled]   = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+}
+
 bool GuiLayer::Init() {
     // Create Application Window
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"LMUFFB", NULL };
@@ -90,7 +134,7 @@ bool GuiLayer::Init() {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 
     // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
+    SetupGUIStyle();
 
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_Init(g_hwnd);
@@ -228,13 +272,11 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     std::lock_guard<std::mutex> lock(g_engine_mutex);
 
     // Show Version in title bar or top text
-    std::string title = std::string("LMUFFB v") + LMUFFB_VERSION + " - FFB Configuration";
+    std::string title = std::string("LMUFFB v") + LMUFFB_VERSION + " - Configuration";
     ImGui::Begin(title.c_str());
 
-    // =========================================================
-    // SECTION 1: CORE SETTINGS & DEVICE
-    // =========================================================
-    ImGui::Text("Core Settings");
+    // --- 1. TOP BAR (System Status & Quick Controls) ---
+    // Keep this outside columns for full width awareness
     
     // Device Selection
     static std::vector<DeviceInfo> devices;
@@ -254,7 +296,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
     }
 
-    // FFB Device Dropdown
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.4f);
     if (ImGui::BeginCombo("FFB Device", selected_device_idx >= 0 ? devices[selected_device_idx].name.c_str() : "Select Device...")) {
         for (int i = 0; i < devices.size(); i++) {
             bool is_selected = (selected_device_idx == i);
@@ -269,57 +311,42 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::EndCombo();
     }
     
-    // Rescan & Unbind Buttons
-    if (ImGui::Button("Rescan Devices")) {
+    ImGui::SameLine();
+    if (ImGui::Button("Rescan")) {
         devices = DirectInputFFB::Get().EnumerateDevices();
         selected_device_idx = -1;
     }
     ImGui::SameLine();
-    if (ImGui::Button("Unbind Device")) {
+    if (ImGui::Button("Unbind")) {
         DirectInputFFB::Get().ReleaseDevice();
         selected_device_idx = -1;
     }
 
-    // Display Acquisition Mode
+    // Connection Status
+    bool connected = GameConnector::Get().IsConnected();
+    ImGui::SameLine();
+    if (connected) {
+        ImGui::TextColored(ImVec4(0,1,0,1), "| Connected to LMU");
+    } else {
+        ImGui::TextColored(ImVec4(1,0,0,1), "| Disconnected from LMU");
+        ImGui::SameLine();
+        if (ImGui::Button("Retry")) GameConnector::Get().TryConnect();
+    }
+
+    // Acquisition Mode & Troubleshooting
     if (DirectInputFFB::Get().IsActive()) {
         if (DirectInputFFB::Get().IsExclusive()) {
-            ImGui::TextColored(ImVec4(0, 1, 0, 1), "Mode: EXCLUSIVE (Game FFB Blocked)");
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB has exclusive control.\nThe game can read steering but cannot send FFB.\nThis prevents 'Double FFB' issues.");
+            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Mode: EXCLUSIVE (Game FFB Blocked)");
         } else {
-            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Mode: SHARED (Potential Conflict)");
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB is sharing the device.\nEnsure In-Game FFB is set to 'None' or 0%% strength\nto avoid two force signals fighting each other.");
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.4f, 1.0f), "Mode: SHARED (Ensure Game FFB is 0%%)");
         }
     }
 
-    ImGui::Separator();
-
-    // =========================================================
-    // SECTION 2: GAME STATUS
-    // =========================================================
-    bool connected = GameConnector::Get().IsConnected();
-    if (connected) {
-        ImGui::TextColored(ImVec4(0,1,0,1), "Status: Connected to Le Mans Ultimate");
-    } else {
-        ImGui::TextColored(ImVec4(1,0,0,1), "Status: Game Not Connected");
-        ImGui::SameLine();
-        if (ImGui::Button("Retry Connection")) {
-            GameConnector::Get().TryConnect();
-        }
-    }
-    
-    // =========================================================
-    // SECTION 3: APP CONTROLS (Single Line)
-    // =========================================================
-    ImGui::Separator();
-    
     if (ImGui::Checkbox("Always on Top", &Config::m_always_on_top)) {
         SetWindowAlwaysOnTop(g_hwnd, Config::m_always_on_top);
     }
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Keep this window visible over the game.");
-
     ImGui::SameLine();
-    ImGui::Checkbox("Show Troubleshooting Graphs", &m_show_debug_window);
-    
+    ImGui::Checkbox("Debug Graphs", &m_show_debug_window);
     ImGui::SameLine();
     if (ImGui::Button("Save Screenshot")) {
         time_t now = time(0);
@@ -329,14 +356,20 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         strftime(buf, sizeof(buf), "screenshot_%Y-%m-%d_%H-%M-%S.png", &tstruct);
         SaveScreenshot(buf);
     }
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Saves PNG to app folder.");
     
     ImGui::Separator();
 
     // --- HELPER LAMBDAS ---
     static int selected_preset = 0;
-    auto FloatSetting = [&](const char* label, float* v, float min, float max, const char* fmt = "%.2f") {
-        if (ImGui::SliderFloat(label, v, min, max, fmt)) selected_preset = -1;
+    
+    auto FloatSetting = [&](const char* label, float* v, float min, float max, const char* fmt = "%.2f", const char* tooltip = nullptr) {
+        ImGui::Text("%s", label);               // Column 1: Label
+        ImGui::NextColumn();                    // Switch to Column 2
+        
+        ImGui::SetNextItemWidth(-1);            // Fill width
+        std::string id = "##" + std::string(label);
+        if (ImGui::SliderFloat(id.c_str(), v, min, max, fmt)) selected_preset = -1;
+        
         if (ImGui::IsItemHovered()) {
             float range = max - min;
             float step = (range > 50.0f) ? 0.5f : 0.01f; 
@@ -345,29 +378,41 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) { *v += step; changed = true; }
             if (changed) { *v = (std::max)(min, (std::min)(max, *v)); selected_preset = -1; }
             
-            // Show keyboard shortcut tooltip
             ImGui::BeginTooltip();
-            ImGui::Text("Fine Tune: Arrow Keys");
-            ImGui::Text("Exact Input: Ctrl + Click");
+            if (tooltip) { ImGui::Text("%s", tooltip); ImGui::Separator(); }
+            ImGui::Text("Fine Tune: Arrow Keys | Exact: Ctrl+Click");
             ImGui::EndTooltip();
         }
-    };
-    auto BoolSetting = [&](const char* label, bool* v) {
-        if (ImGui::Checkbox(label, v)) selected_preset = -1;
-    };
-    auto IntSetting = [&](const char* label, int* v, const char* const items[], int items_count) {
-        if (ImGui::Combo(label, v, items, items_count)) selected_preset = -1;
+        ImGui::NextColumn();                    // Switch back to Column 1
     };
 
-    // =========================================================
-    // SECTION 4: PRESETS AND CONFIGURATION
-    // =========================================================
-    if (ImGui::CollapsingHeader("Presets and Configuration", ImGuiTreeNodeFlags_DefaultOpen)) {
+    auto BoolSetting = [&](const char* label, bool* v, const char* tooltip = nullptr) {
+        ImGui::Text("%s", label);
+        ImGui::NextColumn();
+        std::string id = "##" + std::string(label);
+        if (ImGui::Checkbox(id.c_str(), v)) selected_preset = -1;
+        if (tooltip && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", tooltip);
+        ImGui::NextColumn();
+    };
+
+    auto IntSetting = [&](const char* label, int* v, const char* const items[], int items_count, const char* tooltip = nullptr) {
+        ImGui::Text("%s", label);
+        ImGui::NextColumn();
+        ImGui::SetNextItemWidth(-1);
+        std::string id = "##" + std::string(label);
+        if (ImGui::Combo(id.c_str(), v, items, items_count)) selected_preset = -1;
+        if (tooltip && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", tooltip);
+        ImGui::NextColumn();
+    };
+
+    // --- 2. PRESETS AND CONFIGURATION ---
+    if (ImGui::TreeNodeEx("Presets and Configuration", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         if (Config::presets.empty()) Config::LoadPresets();
         
         const char* preview_value = (selected_preset >= 0 && selected_preset < Config::presets.size()) 
                                     ? Config::presets[selected_preset].name.c_str() : "Custom";
         
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.6f);
         if (ImGui::BeginCombo("Load Preset", preview_value)) {
             for (int i = 0; i < Config::presets.size(); i++) {
                 bool is_selected = (selected_preset == i);
@@ -381,12 +426,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
 
         static char new_preset_name[64] = "";
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.4f);
         ImGui::InputText("##NewPresetName", new_preset_name, 64);
         ImGui::SameLine();
-        if (ImGui::Button("Save as New Preset")) {
+        if (ImGui::Button("Save New")) {
             if (strlen(new_preset_name) > 0) {
                 Config::AddUserPreset(std::string(new_preset_name), engine);
-                for (int i = 0; i < Config::presets.size(); i++) {
+                for (int i = 0; i < (int)Config::presets.size(); i++) {
                     if (Config::presets[i].name == std::string(new_preset_name)) {
                         selected_preset = i;
                         break;
@@ -396,151 +442,149 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             }
         }
         
-        if (ImGui::Button("Save Configuration")) Config::Save(engine);
+        if (ImGui::Button("Save Current Config")) Config::Save(engine);
         ImGui::SameLine();
         if (ImGui::Button("Reset Defaults")) {
             Config::ApplyPreset(0, engine);
             selected_preset = 0;
         }
+        ImGui::TreePop();
     }
 
-    // =========================================================
-    // SECTION 5: GENERAL FFB SETTINGS
-    // =========================================================
-    if (ImGui::CollapsingHeader("General FFB Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-        BoolSetting("Invert FFB Signal", &engine.m_invert_force);
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Check this if the wheel pulls away from center instead of aligning.");
+    ImGui::Spacing();
+
+    // --- 3. MAIN SETTINGS GRID ---
+    ImGui::Columns(2, "SettingsGrid", false);
+    ImGui::SetColumnWidth(0, ImGui::GetWindowWidth() * 0.45f);
+
+    // --- GROUP: GENERAL ---
+    if (ImGui::TreeNodeEx("General FFB", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+        ImGui::NextColumn(); ImGui::NextColumn();
         
+        BoolSetting("Invert FFB Signal", &engine.m_invert_force, "Check this if the wheel pulls away from center instead of aligning.");
         FloatSetting("Master Gain", &engine.m_gain, 0.0f, 2.0f);
-        FloatSetting("Max Torque Ref (Nm)", &engine.m_max_torque_ref, 1.0f, 200.0f, "%.1f Nm");
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("The torque value that equals 100%% FFB output.\nFor T300/G29, try 60-100 Nm.");
-        
+        FloatSetting("Max Torque Ref", &engine.m_max_torque_ref, 1.0f, 200.0f, "%.1f Nm", "The torque value that equals 100% FFB output.\nFor T300/G29, try 60-100 Nm.");
         FloatSetting("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f");
+        FloatSetting("Load Cap", &engine.m_max_load_factor, 1.0f, 3.0f, "%.1fx", "Limits the maximum tire load factor used for scaling effects (Textures, etc).\nPrevents massive force spikes during high-downforce compressions.");
         
-        FloatSetting("Load Cap", &engine.m_max_load_factor, 1.0f, 3.0f, "%.1fx");
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Limits the maximum tire load factor used for scaling effects (Textures, etc).\nPrevents massive force spikes during high-downforce compressions.\nDoes not clip the main steering torque.");
+        ImGui::TreePop();
+    } else { 
+        // Keep columns synchronized when section is collapsed
+        ImGui::NextColumn(); ImGui::NextColumn(); 
     }
 
-    // =========================================================
-    // SECTION 6: UNDERSTEER AND FRONT TYRES
-    // =========================================================
-    if (ImGui::CollapsingHeader("Understeer and Front Tyres")) {
-        FloatSetting("Steering Shaft Gain", &engine.m_steering_shaft_gain, 0.0f, 1.0f);
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Attenuates raw game force without affecting telemetry.");
+    // --- GROUP: FRONT AXLE ---
+    if (ImGui::TreeNodeEx("Front Axle (Understeer)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+        ImGui::NextColumn(); ImGui::NextColumn();
         
-        FloatSetting("Understeer (Front Tyres Grip)", &engine.m_understeer_effect, 0.0f, 50.0f);
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Strength of the force drop when front grip is lost.");
+        FloatSetting("Steering Shaft Gain", &engine.m_steering_shaft_gain, 0.0f, 1.0f, "%.2f", "Attenuates raw game force without affecting telemetry.");
+        FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 50.0f, "%.2f", "Strength of the force drop when front grip is lost.");
         
         const char* base_modes[] = { "Native (Physics)", "Synthetic (Constant)", "Muted (Off)" };
-        IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, IM_ARRAYSIZE(base_modes));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Debug tool to isolate effects.\nNative: Raw physics.\nSynthetic: Constant force to tune Grip drop-off.\nMuted: Zero base force.");
+        IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, sizeof(base_modes)/sizeof(base_modes[0]), "Debug tool to isolate effects.");
 
-        // Nested Signal Filtering
-        if (ImGui::TreeNode("Signal Filtering")) {
-            BoolSetting("Dynamic Flatspot Suppression", &engine.m_flatspot_suppression);
-            if (engine.m_flatspot_suppression) {
-                ImGui::Indent();
-                FloatSetting("Notch Width (Q)", &engine.m_notch_q, 0.5f, 10.0f, "Q: %.1f");
-                FloatSetting("Suppression Strength", &engine.m_flatspot_strength, 0.0f, 1.0f);
-                ImGui::TextColored(ImVec4(0,1,1,1), "Est. Freq: %.1f Hz | Theory: %.1f Hz", engine.m_debug_freq, engine.m_theoretical_freq);
-                ImGui::Unindent();
-            }
-            
-            BoolSetting("Static Noise Filter", &engine.m_static_notch_enabled);
-            if (engine.m_static_notch_enabled) {
-                ImGui::Indent();
-                FloatSetting("Target Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.0f Hz");
-                ImGui::Unindent();
-            }
-            ImGui::TreePop();
+        ImGui::TextColored(ImVec4(0.0f, 0.6f, 0.85f, 1.0f), "Signal Filtering");
+        ImGui::NextColumn(); ImGui::NextColumn();
+        
+        BoolSetting("  Flatspot Suppression", &engine.m_flatspot_suppression, "Dynamic notch filter to remove flatspot vibrations while driving.");
+        if (engine.m_flatspot_suppression) {
+            FloatSetting("    Filter Width (Q)", &engine.m_notch_q, 0.5f, 10.0f, "Q: %.1f");
+            FloatSetting("    Suppression Strength", &engine.m_flatspot_strength, 0.0f, 1.0f);
+            ImGui::Text("    Est. / Theory Freq");
+            ImGui::NextColumn();
+            ImGui::TextDisabled("%.1f Hz / %.1f Hz", engine.m_debug_freq, engine.m_theoretical_freq);
+            ImGui::NextColumn();
         }
+        
+        BoolSetting("  Static Noise Filter", &engine.m_static_notch_enabled);
+        if (engine.m_static_notch_enabled) {
+            FloatSetting("    Target Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.0f Hz");
+        }
+        
+        ImGui::TreePop();
+    } else { 
+        // Keep columns synchronized when section is collapsed
+        ImGui::NextColumn(); ImGui::NextColumn(); 
     }
 
-    // =========================================================
-    // SECTION 7: OVERSTEER AND REAR TYRES
-    // =========================================================
-    if (ImGui::CollapsingHeader("Oversteer and Rear Tyres", ImGuiTreeNodeFlags_DefaultOpen)) {
+    // --- GROUP: REAR AXLE ---
+    if (ImGui::TreeNodeEx("Rear Axle (Oversteer)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+        ImGui::NextColumn(); ImGui::NextColumn();
+        
         FloatSetting("Oversteer Boost", &engine.m_oversteer_boost, 0.0f, 20.0f);
+        FloatSetting("SoP Lateral G", &engine.m_sop_effect, 0.0f, 20.0f);
+        FloatSetting("Rear Align Torque", &engine.m_rear_align_effect, 0.0f, 20.0f, "%.2f", "Counter-steering force generated by rear tire slip.");
+        FloatSetting("Yaw Kick", &engine.m_sop_yaw_gain, 0.0f, 20.0f, "%.2f", "Predictive kick based on Yaw Acceleration.");
+        FloatSetting("Gyro Damping", &engine.m_gyro_gain, 0.0f, 1.0f);
         
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        if (ImGui::TreeNode("SoP (Seat of Pants)")) {
-            FloatSetting("Rear Align Torque", &engine.m_rear_align_effect, 0.0f, 20.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Counter-steering force generated by rear tire slip.");
-            
-            FloatSetting("SoP Yaw (Kick)", &engine.m_sop_yaw_gain, 0.0f, 20.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Predictive kick based on Yaw Acceleration.");
-            
-            FloatSetting("Gyroscopic Damping", &engine.m_gyro_gain, 0.0f, 1.0f);
-            
-            FloatSetting("Lateral G (SoP Effect)", &engine.m_sop_effect, 0.0f, 20.0f);
-            
-            ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-            if (ImGui::TreeNode("Advanced SoP")) {
-                // SoP Smoothing
-                int lat_ms = (int)((1.0f - engine.m_sop_smoothing_factor) * 100.0f);
-                if (lat_ms > 20) ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "(SIGNAL LATENCY: %d ms)", lat_ms);
-                else ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "(Latency: %d ms - OK)", lat_ms);
-                char fmt[32]; snprintf(fmt, sizeof(fmt), "%%.2f (%dms lag)", lat_ms);
-                FloatSetting("SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, fmt);
-                
-                FloatSetting("SoP Scale", &engine.m_sop_scale, 0.0f, 20.0f, "%.1f");
-                ImGui::TreePop();
-            }
-            ImGui::TreePop();
-        }
+        ImGui::TextColored(ImVec4(0.0f, 0.6f, 0.85f, 1.0f), "Advanced SoP");
+        ImGui::NextColumn(); ImGui::NextColumn();
+
+        int lat_ms = (int)((1.0f - engine.m_sop_smoothing_factor) * 100.0f);
+        FloatSetting("  SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, lat_ms > 20 ? "%.2f (LAGGY)" : "%.2f");
+        FloatSetting("  SoP Scale", &engine.m_sop_scale, 0.0f, 20.0f);
+        
+        ImGui::TreePop();
+    } else { 
+        // Keep columns synchronized when section is collapsed
+        ImGui::NextColumn(); ImGui::NextColumn(); 
     }
 
-    // =========================================================
-    // SECTION 8: GRIP AND SLIP ANGLE ESTIMATION
-    // =========================================================
-    if (ImGui::CollapsingHeader("Grip and Slip Angle Estimation", ImGuiTreeNodeFlags_DefaultOpen)) {
+    // --- GROUP: PHYSICS ---
+    if (ImGui::TreeNodeEx("Physics & Estimation", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+        ImGui::NextColumn(); ImGui::NextColumn();
+        
         int slip_ms = (int)(engine.m_slip_angle_smoothing * 1000.0f);
-        if (slip_ms > 20) ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "(PHYSICS LATENCY: %d ms)", slip_ms);
-        else ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "(Physics: %d ms - OK)", slip_ms);
-        char fmt[32]; snprintf(fmt, sizeof(fmt), "%%.3f (%dms lag)", slip_ms);
-        FloatSetting("Slip Angle Smoothing", &engine.m_slip_angle_smoothing, 0.000f, 0.100f, fmt);
+        FloatSetting("Slip Smoothing", &engine.m_slip_angle_smoothing, 0.000f, 0.100f, "%.3f s", slip_ms > 20 ? "Physics Latency is High!" : "Physics Latency OK");
+        BoolSetting("Manual Slip Calc", &engine.m_use_manual_slip, "Uses local velocity instead of game's slip telemetry.");
+        
+        ImGui::TreePop();
+    } else { 
+        // Keep columns synchronized when section is collapsed
+        ImGui::NextColumn(); ImGui::NextColumn(); 
     }
 
-    // =========================================================
-    // SECTION 9: HAPTICS (DYNAMIC)
-    // =========================================================
-    if (ImGui::CollapsingHeader("Haptics (Dynamic)")) {
-        BoolSetting("Progressive Lockup", &engine.m_lockup_enabled);
-        if (engine.m_lockup_enabled) { ImGui::SameLine(); FloatSetting("##Lockup", &engine.m_lockup_gain, 0.0f, 5.0f, "Gain: %.2f"); }
+    // --- GROUP: TEXTURES ---
+    if (ImGui::TreeNodeEx("Tactile Textures", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+        ImGui::NextColumn(); ImGui::NextColumn();
         
-        BoolSetting("Spin Traction Loss", &engine.m_spin_enabled);
-        if (engine.m_spin_enabled) { ImGui::SameLine(); FloatSetting("##Spin", &engine.m_spin_gain, 0.0f, 5.0f, "Gain: %.2f"); }
-        
-        BoolSetting("Use Manual Slip Calc", &engine.m_use_manual_slip);
-    }
-
-    // =========================================================
-    // SECTION 10: TEXTURES
-    // =========================================================
-    if (ImGui::CollapsingHeader("Textures")) {
         BoolSetting("Slide Rumble", &engine.m_slide_texture_enabled);
         if (engine.m_slide_texture_enabled) {
-            ImGui::Indent();
-            FloatSetting("Slide Gain", &engine.m_slide_texture_gain, 0.0f, 5.0f);
-            FloatSetting("Slide Pitch (Freq)", &engine.m_slide_freq_scale, 0.5f, 5.0f, "%.1fx");
-            ImGui::Unindent();
+            FloatSetting("  Slide Gain", &engine.m_slide_texture_gain, 0.0f, 5.0f);
+            FloatSetting("  Slide Pitch", &engine.m_slide_freq_scale, 0.5f, 5.0f, "%.1fx");
         }
         
         BoolSetting("Road Details", &engine.m_road_texture_enabled);
         if (engine.m_road_texture_enabled) {
-            ImGui::Indent();
-            FloatSetting("Road Gain", &engine.m_road_texture_gain, 0.0f, 5.0f);
-            ImGui::Unindent();
+            FloatSetting("  Road Gain", &engine.m_road_texture_gain, 0.0f, 5.0f);
+        }
+
+        BoolSetting("Lockup Vibration", &engine.m_lockup_enabled);
+        if (engine.m_lockup_enabled) {
+            FloatSetting("  Lockup Strength", &engine.m_lockup_gain, 0.0f, 5.0f);
         }
         
-        FloatSetting("Scrub Drag Gain", &engine.m_scrub_drag_gain, 0.0f, 1.0f);
+        BoolSetting("Spin Vibration", &engine.m_spin_enabled);
+        if (engine.m_spin_enabled) {
+            FloatSetting("  Spin Strength", &engine.m_spin_gain, 0.0f, 5.0f);
+        }
+
+        FloatSetting("Scrub Drag", &engine.m_scrub_drag_gain, 0.0f, 1.0f);
+        
         const char* bottoming_modes[] = { "Method A: Scraping", "Method B: Susp. Spike" };
-        IntSetting("Bottoming Logic", &engine.m_bottoming_method, bottoming_modes, IM_ARRAYSIZE(bottoming_modes));
+        IntSetting("Bottoming Logic", &engine.m_bottoming_method, bottoming_modes, sizeof(bottoming_modes)/sizeof(bottoming_modes[0]));
+        
+        ImGui::TreePop();
+    } else { 
+        // Keep columns synchronized when section is collapsed
+        ImGui::NextColumn(); ImGui::NextColumn(); 
     }
 
+    // End Columns
+    ImGui::Columns(1);
+    
     ImGui::End();
 }
-
 // Win32 message handler
 // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
 // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.

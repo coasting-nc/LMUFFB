@@ -1,19 +1,25 @@
 # Quick guide
 
-## Update version and compile in one command:
+## Update app version, compile main app, compile all tests (including windows tests), all in one single command:
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release --clean-first
 
+# Run all tests that had already been compiled:
+.\tests\test_ffb_engine.exe; .\tests\test_windows_platform.exe
 
-## Compile and run tests in one command
+
+## Compile and run tests (physics only, no windows tests) in one command
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cl /EHsc /std:c++17 /I.. tests\test_ffb_engine.cpp src\Config.cpp /Fe:tests\test_ffb_engine.exe; tests\test_ffb_engine.exe 2>&1 | Tee-Object -FilePath tmp\test_results.txt
 
-# Include windows tests
+# Compile and run tests, including windows platform-specific tests
 
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; `
 cl /EHsc /std:c++17 /I.. /D_CRT_SECURE_NO_WARNINGS tests\test_ffb_engine.cpp src\Config.cpp /Fe:tests\test_ffb_engine.exe; `
 tests\test_ffb_engine.exe; `
-cl /EHsc /std:c++17 /I.. /DUNICODE /D_UNICODE /D_CRT_SECURE_NO_WARNINGS tests\test_windows_platform.cpp src\DirectInputFFB.cpp src\Config.cpp dinput8.lib dxguid.lib winmm.lib version.lib imm32.lib user32.lib ole32.lib /Fe:tests\test_windows_platform.exe; `
+# Note: For windows platform tests involving GUI, using CMake is highly recommended:
+# cmake -S . -B build; cmake --build build --config Release --target run_tests_win32; .\build\tests\Release\run_tests_win32.exe
+cl /EHsc /std:c++17 /I.. /Ivendor\imgui /Ivendor\imgui\backends /DUNICODE /D_UNICODE /D_CRT_SECURE_NO_WARNINGS /DENABLE_IMGUI tests\test_windows_platform.cpp src\DirectInputFFB.cpp src\Config.cpp src\GuiLayer.cpp src\GameConnector.cpp vendor\imgui\imgui.cpp vendor\imgui\imgui_draw.cpp vendor\imgui\imgui_widgets.cpp vendor\imgui\imgui_tables.cpp vendor\imgui\imgui_demo.cpp vendor\imgui\backends\imgui_impl_win32.cpp vendor\imgui\backends\imgui_impl_dx11.cpp dinput8.lib dxguid.lib winmm.lib version.lib imm32.lib user32.lib ole32.lib d3d11.lib dxgi.lib /Fe:tests\test_windows_platform.exe; `
 tests\test_windows_platform.exe
+
 
 
 # Prerequisites

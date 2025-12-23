@@ -14,13 +14,13 @@ if(NOT BUILD_HEADLESS)
         message(STATUS "ImGui found. Enabling GUI support.")
         add_definitions(-DENABLE_IMGUI)
         set(IMGUI_SOURCES
-            ${IMGUI_DIR}/imgui.cpp
-            ${IMGUI_DIR}/imgui_demo.cpp
-            ${IMGUI_DIR}/imgui_draw.cpp
-            ${IMGUI_DIR}/imgui_tables.cpp
-            ${IMGUI_DIR}/imgui_widgets.cpp
-            ${IMGUI_DIR}/backends/imgui_impl_win32.cpp
-            ${IMGUI_DIR}/backends/imgui_impl_dx11.cpp
+            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui.cpp
+            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui_demo.cpp
+            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui_draw.cpp
+            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui_tables.cpp
+            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui_widgets.cpp
+            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/backends/imgui_impl_win32.cpp
+            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/backends/imgui_impl_dx11.cpp
         )
         include_directories(${IMGUI_DIR})
         include_directories(${IMGUI_DIR}/backends)
