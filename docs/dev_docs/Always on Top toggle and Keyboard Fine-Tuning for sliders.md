@@ -179,3 +179,43 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     *   Modified the `FloatSetting` lambda.
     *   Now, simply **hovering** the mouse over any slider and pressing **Left/Right Arrow** will adjust the value by a small step (`0.01` for small ranges, `0.5` for large ranges).
     *   Added a tooltip hint reminding users they can also use `Ctrl + Click` to type exact numbers (a built-in ImGui feature).
+
+
+## 4. Testing Strategy
+
+Since `SetWindowPos` (Windows API) and `ImGui::IsKeyPressed` (GUI Interaction) are difficult to unit test in a headless environment, we will focus on verifying the **Persistence Logic** and **Default States**.
+
+### Automated Tests (`tests\test_windows_platform.cpp`)
+
+We will create a new test file `tests\test_windows_platform.cpp` to isolate platform-specific feature toggles.
+
+**Test Case 1: Always On Top Persistence**
+*   **Goal:** Verify that the `always_on_top` flag is correctly written to and read from the `config.ini` file.
+*   **Steps:**
+    1.  Initialize `Config::m_always_on_top = true`.
+    2.  Call `Config::Save` to a temporary file.
+    3.  Reset `Config::m_always_on_top = false`.
+    4.  Call `Config::Load` from the temporary file.
+    5.  **Assert:** `Config::m_always_on_top` is `true`.
+
+**Test Case 2: Default State**
+*   **Goal:** Ensure the feature defaults to `false` (standard window behavior) to avoid confusing new users.
+*   **Steps:**
+    1.  Reset Config static variables.
+    2.  **Assert:** `Config::m_always_on_top` is `false`.
+
+### Manual Verification (Post-Build)
+
+**1. Always on Top:**
+*   Launch LMUFFB.
+*   Open another window (e.g., Notepad) and drag it over LMUFFB. It should cover LMUFFB.
+*   Check "Always on Top".
+*   Click on Notepad. LMUFFB should remain **visible** on top of Notepad.
+*   Uncheck "Always on Top". LMUFFB should fall behind Notepad.
+
+**2. Keyboard Fine-Tuning:**
+*   Hover the mouse over "Master Gain".
+*   Press **Right Arrow**. Value should increase by `0.01`.
+*   Press **Left Arrow**. Value should decrease by `0.01`.
+*   Hover over "Max Torque Ref" (Range 1-100).
+*   Press Arrow Keys. Value should change by `0.5` (due to larger range logic).
