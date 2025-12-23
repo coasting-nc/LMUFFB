@@ -1,0 +1,45 @@
+Please proceed with the following task:
+
+**Task: Reorganize GUI Layout and Add Platform Tests**
+
+**Reference Documents:**
+*   `docs\dev_docs\GUI reorganization plan.md` (Contains the detailed hierarchy and grouping logic)
+*   `src/GuiLayer.cpp`
+*   `tests/test_windows_platform.cpp`
+
+**Context:**
+The current GUI layout in the "FFB Configuration" window has become cluttered as new features were added. We need to regroup existing widgets into logical sections (e.g., "Understeer and Front Tyres", "Oversteer and Rear Tyres") to make tuning more intuitive. Additionally, we need to verify platform-specific features like "Always on Top" and "Preset Management" with new tests.
+
+**Implementation Requirements:**
+
+1.  **GUI Refactoring (`src/GuiLayer.cpp`)**:
+    *   Completely rewrite the `DrawTuningWindow` function to match the structure defined in `docs\dev_docs\GUI reorganization plan.md`.
+    *   **Core Settings**: Keep FFB Device selection, Rescan, and Unbind buttons at the top.
+    *   **Game Status**: Keep connection status and retry button.
+    *   **App Controls**: Move "Always on Top", "Show Troubleshooting Graphs", and "Save Screenshot" to a single line below status.
+    *   **Collapsible Headers**: Implement the following sections:
+        *   **Presets and Configuration**: Load/Save/Reset controls.
+        *   **General**: Master gain, Max Torque, Invert, Min force, Load Cap.
+        *   **Understeer and Front Tyres**: Steering Shaft Gain, Understeer Effect, Base Force Mode, and the "Signal Filtering" tree node (Dynamic/Static filters).
+        *   **Oversteer and Rear Tyres**: Oversteer Boost, and a nested "SoP" tree node containing Rear Align Torque, Yaw Kick, Gyro Damping, Lateral G, and Advanced SoP settings.
+        *   **Grip and Slip Angle Estimation**: Slip Angle Smoothing slider.
+        *   **Haptics (Dynamic)**: Lockup, Spin, Manual Slip toggle.
+        *   **Textures**: Slide Rumble, Road Details, Scrub Drag, Bottoming Logic.
+    *   **Cleanup**: Remove "Monitor FFB on vJoy" and "Clipping Visualization Placeholder" as requested in the plan.
+
+2.  **Platform Tests (`tests/test_windows_platform.cpp`)**:
+    *   Add `test_window_always_on_top_behavior()`: Create a dummy window, apply the "Always on Top" helper, and verify the `WS_EX_TOPMOST` style bit is set.
+    *   Add `test_preset_management_system()`: Verify that `Config::presets` can be manipulated (add user preset) and that `UpdateFromEngine` correctly captures values.
+
+**Deliverables:**
+*   Modified `src/GuiLayer.cpp` with the new layout.
+*   Modified `tests/test_windows_platform.cpp` with new tests.
+
+**Check-list for completion:**
+- [ ] `DrawTuningWindow` implements the exact hierarchy from the plan.
+- [ ] "App Controls" (Always on Top, Graphs, Screenshot) are on a single line.
+- [ ] Widgets for Understeer/Front (Grip, Filters) are grouped together.
+- [ ] Widgets for Oversteer/Rear (Boost, SoP, Rear Align) are grouped together.
+- [ ] Removed obsolete vJoy monitor checkbox.
+- [ ] `tests/test_windows_platform.cpp` compiles and includes the 2 new tests.
+- [ ] All tests pass when running `tests\test_windows_platform.exe`.
