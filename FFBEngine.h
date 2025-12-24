@@ -326,13 +326,21 @@ public:
         return batch;
     }
 
-    // Helper Result Struct for calculate_grip
-    struct GripResult {
-        double value;           // Final grip value
-        bool approximated;      // Was approximation used?
-        double original;        // Original telemetry value
-        double slip_angle;      // Calculated slip angle (if approximated)
-    };
+    // ========================================
+    // UI Reference & Physics Multipliers (v0.4.50)
+    // ========================================
+    // These constants represent the physical force (in Newton-meters) that each effect 
+    // produces at a Gain setting of 1.0 (100%) and a MaxTorqueRef of 20.0 Nm.
+    static constexpr float BASE_NM_SOP_LATERAL      = 1.0f;
+    static constexpr float BASE_NM_REAR_ALIGN       = 3.0f;
+    static constexpr float BASE_NM_YAW_KICK         = 5.0f;
+    static constexpr float BASE_NM_GYRO_DAMPING     = 1.0f;
+    static constexpr float BASE_NM_SLIDE_TEXTURE    = 1.5f;
+    static constexpr float BASE_NM_ROAD_TEXTURE     = 2.5f;
+    static constexpr float BASE_NM_LOCKUP_VIBRATION = 4.0f;
+    static constexpr float BASE_NM_SPIN_VIBRATION   = 2.5f;
+    static constexpr float BASE_NM_SCRUB_DRAG       = 5.0f;
+    static constexpr float BASE_NM_BOTTOMING        = 1.0f;
 
 private:
     // ========================================
@@ -1002,11 +1010,11 @@ public:
         m_yaw_accel_smoothed = m_yaw_accel_smoothed + alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
         
         // Use SMOOTHED value for the kick
-        // Scaled by 5.0 (Base multiplier) and User Gain
+        // Scaled by BASE_NM_YAW_KICK (5.0 Nm at Gain 1.0)
         // Added AFTER Oversteer Boost to provide a clean, independent cue.
         // v0.4.20 FIX: Invert to provide counter-steering torque
-        // Positive yaw accel (right rotation) → Negative force (left pull)
-        double yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * 5.0 * decoupling_scale;
+        // Positive yaw accel (right rotation) -> Negative force (left pull)
+        double yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * (double)BASE_NM_YAW_KICK * decoupling_scale;
         sop_total += yaw_force;
         
         double total_force = output_force + sop_total;
@@ -1119,8 +1127,8 @@ public:
                 m_spin_phase += freq * dt * TWO_PI;
                 m_spin_phase = std::fmod(m_spin_phase, TWO_PI); // Wrap correctly
 
-                // Amplitude
-                double amp = severity * m_spin_gain * 2.5 * decoupling_scale; // Scaled for Nm (was 500)
+                // Base Sinusoid
+                double amp = severity * m_spin_gain * (double)BASE_NM_SPIN_VIBRATION * decoupling_scale; // Scaled for Nm (was 500)
                 spin_rumble = std::sin(m_spin_phase) * amp;
                 
                 total_force += spin_rumble;
@@ -1171,8 +1179,8 @@ public:
                 // High Load + Low Grip = Max Vibration.
                 // We use avg_grip (from understeer calc) which includes longitudinal slip.
                 double grip_scale = (std::max)(0.0, 1.0 - avg_grip);
-                
-                slide_noise = sawtooth * m_slide_texture_gain * 1.5 * load_factor * grip_scale * decoupling_scale;
+                // Resulting force
+                slide_noise = sawtooth * m_slide_texture_gain * (double)BASE_NM_SLIDE_TEXTURE * load_factor * grip_scale * decoupling_scale;
                 total_force += slide_noise;
             }
         }
@@ -1191,7 +1199,8 @@ public:
                     // Game: +X = Left, DirectInput: +Force = Right
                     // If sliding left (+vel), we want left torque (-force) to resist the slide
                     double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
-                    scrub_drag_force = drag_dir * m_scrub_drag_gain * 5.0 * fade * decoupling_scale; // Scaled & Faded
+                    // 3. Final force calculation
+                    scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade * decoupling_scale; // Scaled & Faded
                     total_force += scrub_drag_force;
                 }
             }
@@ -1280,7 +1289,7 @@ public:
 
             if (triggered) {
                 // Non-linear response (Square root softens the initial onset)
-                double bump_magnitude = intensity * m_bottoming_gain * 0.05 * 20.0 * decoupling_scale; // Scaled for Nm
+                double bump_magnitude = intensity * m_bottoming_gain * (double)BASE_NM_BOTTOMING * decoupling_scale; // Scaled for Nm
                 
                 // FIX: Use a 50Hz "Crunch" oscillation instead of directional DC offset
                 double freq = 50.0; 

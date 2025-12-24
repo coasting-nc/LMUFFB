@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.5.0] - 2025-12-24
+### Changed
+- **Code Quality Improvements**:
+    - **Eliminated Hardcoded Base Nm Values**: Refactored GUI layer to reference centralized physics constants from `FFBEngine.h` instead of duplicating magic numbers.
+        - All `FormatDecoupled()` calls in `GuiLayer.cpp` now use `FFBEngine::BASE_NM_*` constants (e.g., `BASE_NM_SLIDE_TEXTURE`, `BASE_NM_REAR_ALIGN`).
+        - **Benefit**: Single source of truth for physics multipliers. If base force values change in the engine, the GUI automatically reflects those changes without manual updates.
+        - **Maintainability**: Eliminates the risk of GUI and physics constants drifting out of sync.
+    - **GUI Layout Refinement**: Moved connection status ("Disconnected from LMU" text and "Retry" button) to a separate line in the main window.
+        - **Benefit**: Allows the overall window to be narrower, improving usability on smaller screens.
+
 ## [0.4.50] - 2025-12-24
 ### Added
 - **FFB Signal Gain Compensation (Decoupling)**: Implemented automatic scaling for Generator effects to resolve "signal compression" on high-torque wheels.
