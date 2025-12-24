@@ -177,3 +177,70 @@ if (engine.m_lockup_enabled) {
 1.  **Manual Slip Test:** Enable "Manual Slip Calc". Drive. Brake hard. Verify vibration occurs (proving sign fix).
 2.  **Rear Lockup Test:** Drive LMP2. Bias brakes to rear (or engine brake heavily). Lock rear wheels. Verify vibration is **Lower Pitch** (thudding) compared to front lockup.
 3.  **Threshold Test:** Set "Start %" to 1.0%. Lightly brake. Verify subtle vibration starts immediately. Set "Start %" to 10%. Lightly brake. Verify silence until heavy braking.
+
+---
+
+
+
+### 5. Future Enhancement: Advanced Response Curves (Non-Linearity)
+
+While the current implementation introduces a hardcoded **Quadratic ($x^2$)** ramp to improve the "sharpness" of the limit, future versions (v0.6.0+) should expose this as a fully configurable **Gamma** setting.
+
+*   **The Concept:** Instead of a linear progression ($0\% \to 100\%$ vibration as slip increases), a non-linear curve allows the user to define the "feel" of the approach.
+*   **Proposed Control:** **"Vibration Gamma"** slider (0.5 to 3.0).
+    *   **Gamma 1.0 (Linear):** Vibration builds steadily. Good for learning threshold braking.
+    *   **Gamma 2.0 (Quadratic - Current Default):** Vibration remains subtle in the "Warning Zone" (5-10% slip) and ramps up aggressively near the "Limit" (12-15%). This creates a distinct tactile "Wall" at the limit.
+    *   **Gamma 3.0 (Cubic):** The wheel is almost silent until the very last moment, then spikes to max. Preferred by aliens/pros who find early vibrations distracting.
+*   **Implementation Logic:**
+    $$ \text{Amplitude} = \text{BaseAmp} \times (\text{NormalizedSeverity})^{\gamma} $$
+
+### 6. Future Enhancement: Predictive Lockup via Angular Deceleration
+
+To achieve a true "ABS-like" prediction that triggers *before* significant slip occurs, we can implement **Wheel Angular Deceleration** monitoring.
+
+*   **The Physics:** Before a tire reaches its peak slip ratio, the wheel's rotational speed ($\omega$) drops rapidly. If the wheel decelerates significantly faster than the car chassis, a lockup is imminent.
+*   **The Metric:** $\alpha_{wheel} = \frac{d\omega}{dt}$ (Angular Acceleration).
+*   **Trigger Logic:**
+    *   Calculate $\alpha_{wheel}$ for each wheel (requires differentiating `mRotation` over time).
+    *   Compare against a threshold (e.g., $-100 \text{ rad/s}^2$).
+    *   If $\alpha_{wheel} < \text{Threshold}$, trigger the vibration *even if* Slip Ratio is still low.
+*   **Challenges:**
+    *   **Noise:** Derivatives amplify signal noise. Bumps and kerbs cause massive spikes in angular acceleration.
+    *   **Smoothing:** Requires a robust Low Pass Filter (LPF) on the derivative to prevent false positives, which adds slight latency.
+*   **Benefit:** This provides the earliest possible warning, potentially 50-100ms faster than Slip Ratio, allowing the driver to modulate brake pressure at the very onset of instability.
+
+### 7. Verification & Test Plan (New Changes)
+
+To ensure the stability and correctness of the v0.5.11 changes, the following tests must be implemented in `tests/test_ffb_engine.cpp`.
+
+#### A. `test_manual_slip_sign_fix`
+**Goal:** Verify that the "Manual Slip Calc" option now works correctly with LMU's negative forward velocity.
+*   **Setup:**
+    *   Enable `m_use_manual_slip`.
+    *   Set `mLocalVel.z = -20.0` (Forward).
+    *   Set Wheel Velocity to `0.0` (Locked).
+*   **Check:**
+    *   Previous Bug: Calculated Slip $= (0 - (-20)) / 20 = +1.0$ (Traction). Effect Silent.
+    *   Expected Fix: Calculated Slip $= (0 - 20) / 20 = -1.0$ (Lockup). Effect Active.
+*   **Assert:** `m_lockup_phase` > 0.0.
+
+#### B. `test_rear_lockup_differentiation`
+**Goal:** Verify that rear lockups trigger the effect AND produce a lower frequency.
+*   **Setup:**
+    *   **Pass 1 (Front):** Front Slip `-0.2`, Rear Slip `0.0`. Record `phase_delta_front`.
+    *   **Pass 2 (Rear):** Front Slip `0.0`, Rear Slip `-0.2`. Record `phase_delta_rear`.
+*   **Check:**
+    *   `phase_delta_rear > 0` (Rear lockup is detected).
+    *   `phase_delta_rear` $\approx$ `0.3 * phase_delta_front` (Frequency is lower).
+
+#### C. `test_lockup_threshold_config`
+**Goal:** Verify that the new `Start %` and `Full %` sliders correctly alter the trigger point and intensity.
+*   **Setup:**
+    *   Set `m_lockup_start_pct = 5.0`.
+    *   Set `m_lockup_full_pct = 15.0`.
+*   **Scenario 1:** Input Slip `-0.04` (4%).
+    *   **Assert:** Force == 0.0 (Below Start Threshold).
+*   **Scenario 2:** Input Slip `-0.10` (10%).
+    *   **Assert:** Force > 0.0 AND Force < Max (In the Ramp).
+*   **Scenario 3:** Input Slip `-0.20` (20%).
+    *   **Assert:** Force == Max (Saturated).
