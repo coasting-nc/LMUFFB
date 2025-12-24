@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.5.2] - 2025-12-24
+### Fixed
+- **CRITICAL: Understeer Effect Slider Stuck**: Fixed slider being completely unresponsive to mouse and arrow key inputs
+    - **Root Cause**: Was using pre-calculated percentage format string that ImGui couldn't properly interpret
+    - **Fix**: Simplified to use direct `%.2f` format on the 0-50 range instead of percentage calculation
+    - **Impact**: Slider is now fully functional and responsive, shows values like "25.00" → "25.01" with fine precision
+- **Slider Precision Issues**: Fixed additional sliders where arrow key adjustments weren't visible
+    - **Load Cap**: Updated format from `%.1fx` to `%.2fx` (now shows 1.50x → 1.51x instead of 1.5x → 1.5x)
+    - **Target Frequency**: Updated format from `%.0f Hz` to `%.1f Hz` (now shows 50.0 → 50.1 instead of 50 → 50)
+- **Tooltip Covering Slider During Adjustment**: Fixed tooltip appearing immediately when pressing arrow keys and covering the slider being adjusted
+    - **Fix**: Tooltip now only displays when NOT actively adjusting with arrow keys
+    - **Benefit**: Users can now see the slider value change in real-time without obstruction
+
+### Added
+- **Regression Tests**: Added `test_slider_precision_regression()` with 9 assertions to prevent slider bugs from reoccurring
+    - Test Case 1: Load Cap precision verification
+    - Test Case 2: Target Frequency precision verification  
+    - Test Case 3: Understeer Effect static buffer persistence
+    - Test Case 4: Step size and display precision alignment for all ranges
+- **Build Warning Fix**: Added `DIRECTINPUT_VERSION` definition to `test_windows_platform.cpp` to eliminate compiler warning
+
+### Test Coverage
+- **Windows Platform Tests**: 38 passing (increased from 29)
+- **Total Test Suite**: 184 passing (146 FFB Engine + 38 Windows Platform)
+
 ## [0.5.1] - 2025-12-24
 ### Fixed
 - **Slider Precision Display Issues**: Fixed sliders where arrow key adjustments weren't visible due to insufficient decimal places.

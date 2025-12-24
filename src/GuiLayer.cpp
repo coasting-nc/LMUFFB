@@ -398,10 +398,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) { *v += step; changed = true; }
             if (changed) { *v = (std::max)(min, (std::min)(max, *v)); selected_preset = -1; }
             
-            ImGui::BeginTooltip();
-            if (tooltip) { ImGui::Text("%s", tooltip); ImGui::Separator(); }
-            ImGui::Text("Fine Tune: Arrow Keys | Exact: Ctrl+Click");
-            ImGui::EndTooltip();
+            // Only show tooltip if not actively adjusting with keys (prevents tooltip from covering slider)
+            if (!changed) {
+                ImGui::BeginTooltip();
+                if (tooltip) { ImGui::Text("%s", tooltip); ImGui::Separator(); }
+                ImGui::Text("Fine Tune: Arrow Keys | Exact: Ctrl+Click");
+                ImGui::EndTooltip();
+            }
         }
         ImGui::NextColumn();                    // Switch back to Column 1
     };
@@ -485,7 +488,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Master Gain", &engine.m_gain, 0.0f, 2.0f, FormatPct(engine.m_gain));
         FloatSetting("Max Torque Ref", &engine.m_max_torque_ref, 1.0f, 200.0f, "%.1f Nm", "The torque value that equals 100% FFB output.\nFor T300/G29, try 60-100 Nm.");
         FloatSetting("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f");
-        FloatSetting("Load Cap", &engine.m_max_load_factor, 1.0f, 3.0f, "%.1fx", "Limits the maximum tire load factor used for scaling effects (Textures, etc).\nPrevents massive force spikes during high-downforce compressions.");
+        FloatSetting("Load Cap", &engine.m_max_load_factor, 1.0f, 3.0f, "%.2fx", "Limits the maximum tire load factor used for scaling effects (Textures, etc).\nPrevents massive force spikes during high-downforce compressions.");
         
         ImGui::TreePop();
     } else { 
@@ -498,10 +501,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::NextColumn(); ImGui::NextColumn();
         
         FloatSetting("Steering Shaft Gain", &engine.m_steering_shaft_gain, 0.0f, 1.0f, FormatPct(engine.m_steering_shaft_gain), "Attenuates raw game force without affecting telemetry.");
-        // Note: Using custom format to show 1 decimal for visibility with arrow keys (step 0.5)
-        char understeer_fmt[32];
-        snprintf(understeer_fmt, 32, "%.1f%%", (engine.m_understeer_effect / 50.0f) * 100.0f);
-        FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 50.0f, understeer_fmt, "Strength of the force drop when front grip is lost.");
+        // Display with 2 decimals to show fine arrow key adjustments (step 0.01 on 0-50 range)
+        FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 50.0f, "%.2f", "Strength of the force drop when front grip is lost.");
         
         const char* base_modes[] = { "Native (Physics)", "Synthetic (Constant)", "Muted (Off)" };
         IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, sizeof(base_modes)/sizeof(base_modes[0]), "Debug tool to isolate effects.");
@@ -521,7 +522,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         
         BoolSetting("  Static Noise Filter", &engine.m_static_notch_enabled);
         if (engine.m_static_notch_enabled) {
-            FloatSetting("    Target Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.0f Hz");
+            FloatSetting("    Target Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.1f Hz");
         }
         
         ImGui::TreePop();
