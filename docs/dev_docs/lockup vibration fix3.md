@@ -129,7 +129,7 @@ if (current_slip_ratio < -trigger_threshold) {
 3.  **Optimize for Sebring:** Do not use Deceleration as a standalone trigger. Use it to **dynamically lower the Slip Ratio threshold**. This gives you the "Predictive" speed advantage without the noise risks of a raw derivative.
 
 
-### Follow up questions
+## Follow up questions
 
 Regarding the < 10% threshold of braking for gating the effect: is this too much? are there condition on trail braking, or otherwise at the end of the braking zone, when we are still applying 5-10% brake pedal , that could trigger a lockup? Are we risking false negatives in this way? Should there be an alternative strategy for such scenarios (eg. low but still significant brake pressure, and the lockups that might happen because of this).
 
@@ -143,5 +143,116 @@ Regarding "Suppression Window", that is , If a suspension event is detected, we 
 Regarding Hybrid Thresholding (We use Angular Deceleration to lower the threshold of the Slip Ratio check dynamically): should we include also all of the gating / mitigation approaches in this?
 
 
-### Answers
+## Answers
 
+Here is the detailed analysis and technical recommendation for refining the Predictive Lockup logic.
+
+### 1. The Brake Threshold (< 10%): Is it too high?
+
+**Verdict: Yes, 10% is too high.**
+
+You are correct. In scenarios like trail braking deep into a corner, or driving on low-grip surfaces (rain/ice), a lockup can occur with very little brake pressure.
+*   **The Risk:** If a user is modulating the brake at 8% to manage a slide in the rain, and the wheel locks, a 10% gate would silence the FFB. This is a **False Negative**.
+*   **The Solution:** Lower the gate to a **Signal Noise Deadzone** only.
+    *   **Recommended Value:** **1% to 2% (`0.01 - 0.02`)**.
+    *   **Why:** We only need to filter out "noise" (e.g., resting a foot on the pedal registering 0.001). If the driver is applying *any* intentional braking force, the lockup logic should be active.
+
+### 2. Relative Deceleration Threshold (3x)
+
+**Verdict: 3x is a good heuristic, but an "Absolute Floor" is safer.**
+
+Comparing Wheel Decel ($\alpha_{wheel}$) to Chassis Decel ($\alpha_{chassis}$) is the right approach, but the multiplier depends on the car's grip.
+
+*   **High Grip (Slicks):** Car decels at 3G. Wheel locks at 10G. Ratio $\approx$ 3.3x.
+*   **Low Grip (Rain):** Car decels at 1G. Wheel locks at 5G. Ratio $\approx$ 5x.
+*   **The Danger Zone:** Low speed stops.
+    *   Car decels at 0.1G. Wheel decels at 0.4G. Ratio is 4x. **False Positive.**
+
+**Recommendation: Combined Threshold**
+The wheel must satisfy **TWO** conditions to trigger the prediction:
+1.  **Relative:** $\alpha_{wheel} > 2.0 \times \alpha_{chassis}$ (It is slowing down twice as fast as the car).
+2.  **Absolute:** $\alpha_{wheel} > 50.0 \text{ rad/s}^2$ (It is slowing down *violently*).
+
+This prevents triggers during gentle stops while catching high-speed lockups instantly.
+
+### 3. Airborne Detection (Approximation vs. Reality)
+
+**Verdict: Use `mSuspForce` directly.**
+
+Since `mTireLoad` is unreliable (encrypted), and our approximation (`Susp + 300`) is a calculated guess, we should look at the raw **Suspension Force** (`mSuspForce`) from `InternalsPlugin.hpp`.
+
+*   **Physics:** When a car is airborne, the suspension extends fully. The spring is no longer compressed by the car's weight.
+*   **Data:** `mSuspForce` (Pushrod Load) drops to near zero (or the preload value).
+*   **Threshold:** If `mSuspForce < 50.0 N`, the wheel is effectively unloaded/airborne.
+*   **Why this works:** Even if `mTireLoad` is blocked, `mSuspForce` is usually available because it drives the visual suspension model.
+
+**Implementation:**
+```cpp
+bool is_airborne = (wheel.mSuspForce < 50.0);
+```
+
+### 4. Suppression Window Risks (False Negatives)
+
+**Verdict: Do NOT suppress the "Standard" check.**
+
+If we disable *all* lockup logic for 50ms after a bump, we risk missing a real lockup that happens immediately after landing a jump or hitting a curb (a very common lockup scenario).
+
+**The Fix: Selective Suppression**
+Only suppress the **Predictive (Angular Decel)** trigger.
+*   **Standard Slip Ratio Check:** **ALWAYS ACTIVE.** If `Slip < -15%`, vibrate. This is the "Ground Truth."
+*   **Predictive Check:** **SUPPRESSIBLE.** If `Decel > Threshold`, lower the slip limit. *Disable this optimization* if a bump is detected.
+
+**Result:**
+*   **Bump:** Prediction disabled. Threshold stays at 15%. No false positive from the bump spike.
+*   **Real Lockup after Bump:** Prediction disabled. Threshold stays at 15%. As soon as slip hits 15%, vibration starts.
+*   **Latency Cost:** You lose the "Predictive" advantage for 50ms, but you don't lose the effect entirely.
+
+### 5. The Unified "Hybrid Thresholding" Architecture
+
+Here is how all these mitigations fit into the **Hybrid Thresholding** logic. This is the robust solution.
+
+```cpp
+// 1. Gating (Is this even a candidate for lockup?)
+bool brake_active = (data->mUnfilteredBrake > 0.02); // 2% Deadzone
+bool is_grounded = (wheel.mSuspForce > 50.0);        // Not Airborne
+
+// 2. Bump Detection (Reuse Road Texture logic)
+double susp_vel = abs(deflection - prev_deflection) / dt;
+bool is_bumpy = (susp_vel > 1.0); // 1.0 m/s threshold
+
+// 3. Calculate Deceleration
+double wheel_accel = (wheel.mRotation - prev_rot) / dt; // rad/s^2
+// Convert Chassis Accel to Angular equivalent (approx)
+double chassis_accel_ang = (data->mLocalAccel.z / tire_radius); 
+
+// 4. Determine Threshold
+// Start with the "Safe" threshold (e.g., 15%)
+double trigger_threshold = m_lockup_full_pct; 
+
+// 5. Apply Prediction (The Optimization)
+if (brake_active && is_grounded && !is_bumpy) {
+    // Check Relative Decel (2x) AND Absolute Decel (50 rad/s^2)
+    // Note: Accel is negative during braking
+    bool rapid_decel = (wheel_accel < chassis_accel_ang * 2.0) && (wheel_accel < -50.0);
+    
+    if (rapid_decel) {
+        // PREDICTION CONFIRMED:
+        // The wheel is stopping violently. A lockup is imminent.
+        // Lower the gate to catch it early.
+        trigger_threshold = m_lockup_start_pct; // e.g., 5%
+    }
+}
+
+// 6. Final Trigger (The Ground Truth)
+// We compare the ACTUAL Slip Ratio against our Dynamic Threshold
+if (current_slip_ratio < -trigger_threshold) {
+    // TRIGGER VIBRATION
+}
+```
+
+### Summary of Logic Flow
+1.  **Normal Braking:** Threshold is **15%**. Vibration starts when you are deep in the slip.
+2.  **Panic Stop (Smooth Surface):** Wheel slows fast. Prediction kicks in. Threshold drops to **5%**. Vibration starts *instantly* (feels like ABS prediction).
+3.  **Braking over Bumps (Sebring):** `is_bumpy` is true. Prediction is disabled. Threshold stays at **15%**. The bump spikes in deceleration are ignored. If you actually lock up, you will feel it once you hit 15% slip.
+
+This provides the **responsiveness** of prediction on smooth tarmac without the **false positives** on curbs.
