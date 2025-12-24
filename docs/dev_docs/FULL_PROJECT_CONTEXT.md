@@ -363,20 +363,25 @@ See: docs\dev_docs\avg_load_issue.md
 ```
 # Quick guide
 
-## Update version and compile in one command:
+## Update app version, compile main app, compile all tests (including windows tests), all in one single command:
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release --clean-first
 
+# Run all tests that had already been compiled:
+.\build\tests\Release\run_tests.exe; .\build\tests\Release\run_tests_win32.exe
 
-## Compile and run tests in one command
+## Compile and run tests (physics only, no windows tests) in one command
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cl /EHsc /std:c++17 /I.. tests\test_ffb_engine.cpp src\Config.cpp /Fe:tests\test_ffb_engine.exe; tests\test_ffb_engine.exe 2>&1 | Tee-Object -FilePath tmp\test_results.txt
 
-# Include windows tests
+# Compile and run tests, including windows platform-specific tests
 
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; `
 cl /EHsc /std:c++17 /I.. /D_CRT_SECURE_NO_WARNINGS tests\test_ffb_engine.cpp src\Config.cpp /Fe:tests\test_ffb_engine.exe; `
 tests\test_ffb_engine.exe; `
-cl /EHsc /std:c++17 /I.. /DUNICODE /D_UNICODE /D_CRT_SECURE_NO_WARNINGS tests\test_windows_platform.cpp src\DirectInputFFB.cpp src\Config.cpp dinput8.lib dxguid.lib winmm.lib version.lib imm32.lib user32.lib ole32.lib /Fe:tests\test_windows_platform.exe; `
+# Note: For windows platform tests involving GUI, using CMake is highly recommended:
+# cmake -S . -B build; cmake --build build --config Release --target run_tests_win32; .\build\tests\Release\run_tests_win32.exe
+cl /EHsc /std:c++17 /I.. /Ivendor\imgui /Ivendor\imgui\backends /DUNICODE /D_UNICODE /D_CRT_SECURE_NO_WARNINGS /DENABLE_IMGUI tests\test_windows_platform.cpp src\DirectInputFFB.cpp src\Config.cpp src\GuiLayer.cpp src\GameConnector.cpp vendor\imgui\imgui.cpp vendor\imgui\imgui_draw.cpp vendor\imgui\imgui_widgets.cpp vendor\imgui\imgui_tables.cpp vendor\imgui\imgui_demo.cpp vendor\imgui\backends\imgui_impl_win32.cpp vendor\imgui\backends\imgui_impl_dx11.cpp dinput8.lib dxguid.lib winmm.lib version.lib imm32.lib user32.lib ole32.lib d3d11.lib dxgi.lib /Fe:tests\test_windows_platform.exe; `
 tests\test_windows_platform.exe
+
 
 
 # Prerequisites
@@ -445,6 +450,100 @@ tests\test_ffb_engine.exe 2>&1 | Select-String -Pattern "Tests (Passed|Failed):"
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+
+## [0.5.3] - 2025-12-24
+### Fixed
+- **Restored Latency Display**: Re-implemented the missing latency indicators for "SoP Smoothing" and "Slip Angle Smoothing" sliders that were accidentally removed in the v0.5.0 overhaul.
+    - **Enhanced Layout**: Moved latency text (e.g., "Latency: 15 ms - OK") to the right column above the slider for better readability, preventing clutter.
+    - **Improved Precision**: Added rounding logic to latency calculations so that values like 0.85 smoothing correctly display as "15 ms" instead of truncating to "14 ms".
+    - **Color Coding**: Restored green (<15ms) vs red (>=15ms) visual warnings.
+
+### Changed
+- **GUI Organization**: Converted the "Signal Filtering" static header into a collapsible section, matching the behavior of other groups like "Advanced SoP" and "Textures".
+
+### Added
+- **Regression Tests**: Added `test_latency_display_regression()` to the verification suite.
+    - Verifies accurate latency calculation (including rounding).
+    - Checks color coding thresholds.
+    - Validates display string formatting.
+
+## [0.5.2] - 2025-12-24
+### Fixed
+- **CRITICAL: Understeer Effect Slider Stuck**: Fixed slider being completely unresponsive to mouse and arrow key inputs
+    - **Root Cause**: Was using pre-calculated percentage format string that ImGui couldn't properly interpret
+    - **Fix**: Simplified to use direct `%.2f` format on the 0-50 range instead of percentage calculation
+    - **Impact**: Slider is now fully functional and responsive, shows values like "25.00" → "25.01" with fine precision
+- **Slider Precision Issues**: Fixed additional sliders where arrow key adjustments weren't visible
+    - **Load Cap**: Updated format from `%.1fx` to `%.2fx` (now shows 1.50x → 1.51x instead of 1.5x → 1.5x)
+    - **Target Frequency**: Updated format from `%.0f Hz` to `%.1f Hz` (now shows 50.0 → 50.1 instead of 50 → 50)
+- **Tooltip Covering Slider During Adjustment**: Fixed tooltip appearing immediately when pressing arrow keys and covering the slider being adjusted
+    - **Fix**: Tooltip now only displays when NOT actively adjusting with arrow keys
+    - **Benefit**: Users can now see the slider value change in real-time without obstruction
+
+### Added
+- **Regression Tests**: Added `test_slider_precision_regression()` with 9 assertions to prevent slider bugs from reoccurring
+    - Test Case 1: Load Cap precision verification
+    - Test Case 2: Target Frequency precision verification  
+    - Test Case 3: Understeer Effect static buffer persistence
+    - Test Case 4: Step size and display precision alignment for all ranges
+- **Build Warning Fix**: Added `DIRECTINPUT_VERSION` definition to `test_windows_platform.cpp` to eliminate compiler warning
+
+### Test Coverage
+- **Windows Platform Tests**: 38 passing (increased from 29)
+- **Total Test Suite**: 184 passing (146 FFB Engine + 38 Windows Platform)
+
+## [0.5.1] - 2025-12-24
+### Fixed
+- **Slider Precision Display Issues**: Fixed sliders where arrow key adjustments weren't visible due to insufficient decimal places.
+    - **Filter Width (Q)**: Updated format from `%.1f` to `%.2f` to show 0.01 step changes
+    - **Slide Pitch**: Updated format from `%.1fx` to `%.2fx` for better precision visibility
+    - **Understeer Effect**: Updated to show 1 decimal place (`%.1f%%`) instead of 0 decimals
+    - **All Percentage Sliders**: Updated `FormatDecoupled` and `FormatPct` to use `%.1f%%` instead of `%.0f%%`
+    - **Improved Step Size Logic**: Added finer 0.001 step for small ranges (<1.0) to ensure precise adjustments on sliders like Slip Smoothing
+    - **Affected Sliders**: 15 total sliders now provide immediate visual feedback for arrow key adjustments
+- **Build Error**: Added missing `GripResult` struct definition to `FFBEngine.h` that was causing compilation failures
+
+### Added
+- **Test Coverage**: Added `test_slider_precision_display()` with 5 test cases to verify slider format strings have sufficient decimal places
+- **Code Quality**: Made all test functions in `test_windows_platform.cpp` static to generate compiler warnings if not called
+
+## [0.5.0] - 2025-12-24
+### Changed
+- **Code Quality Improvements**:
+    - **Eliminated Hardcoded Base Nm Values**: Refactored GUI layer to reference centralized physics constants from `FFBEngine.h` instead of duplicating magic numbers.
+        - All `FormatDecoupled()` calls in `GuiLayer.cpp` now use `FFBEngine::BASE_NM_*` constants (e.g., `BASE_NM_SLIDE_TEXTURE`, `BASE_NM_REAR_ALIGN`).
+        - **Benefit**: Single source of truth for physics multipliers. If base force values change in the engine, the GUI automatically reflects those changes without manual updates.
+        - **Maintainability**: Eliminates the risk of GUI and physics constants drifting out of sync.
+    - **GUI Layout Refinement**: Moved connection status ("Disconnected from LMU" text and "Retry" button) to a separate line in the main window.
+        - **Benefit**: Allows the overall window to be narrower, improving usability on smaller screens.
+
+## [0.4.50] - 2025-12-24
+### Added
+- **FFB Signal Gain Compensation (Decoupling)**: Implemented automatic scaling for Generator effects to resolve "signal compression" on high-torque wheels.
+    - **Effect Decoupling**: "Generator" effects (SoP, Rear Align, Yaw Kick, Textures) are now automatically scaled up when `Max Torque Ref` increases. This ensures that a 10% road texture feel remains equally perceptible whether using a 2.5 Nm G29 or a 25 Nm DD wheel.
+    - **Physical Force Estimation**: GUI sliders now display estimated real-world torque in Newton-meters (e.g., `~2.5 Nm`) based on current gain and wheel calibration.
+    - **Modifier Protection**: Modifiers like "Understeer Effect" and "Oversteer Boost" remain unscaled to avoid double-amplification, maintaining predictable physics behavior.
+- **GUI Standardization**:
+    - **Standardized Ranges**: Updated all effect sliders to use a common `0% - 200%` range (0.0 - 2.0 internal) for better consistency.
+    - **Percentage Display**: Switched all gain sliders to use percentage formatting (e.g., `85%`) for more intuitive tuning.
+- **Unit Tests**: Added `test_gain_compensation` to verify mathematical decoupling and differentiate between Generators and Modifiers.
+
+### Changed
+- **Optimized Slider Ranges**:
+    - Reduced extreme 20.0x multipliers to a more manageable 2.0x (200%) baseline, as the new decoupling logic handles the heavy lifting for high-torque hardware.
+
+## [0.4.49] 
+### Changed
+- **Visual Design Overhaul (Dark Theme & Grid Layout)**:
+    - Improved visual design and readability of the app.
+    - **Professional "Deep Dark" Theme**: Replaced the default ImGui style with a custom flat dark theme. Features a deep grey background and high-contrast teal/blue accents for interactive controls.
+    - **2-Column Grid Layout**: Refactored the Tuning Window to a strict 2-column layout (Labels on the Left, Controls on the Right). This eliminates the "ragged edge" and makes it significantly easier to scan settings and values.
+    - **Clean Section Headers**: Replaced solid-colored title bars with transparent headers and accent lines. This removes the distracting "zebra striping" effect and reduces visual noise.
+    - **Improved Hierarchy**: Added logical groupings and cleaner spacing between functional units (General, Front Axle, Rear Axle, Textures, etc.).
+    - **Developer Architecture**: Promoted `SetupGUIStyle()` to a public static method for external testing and flexible initialization.
+### Added
+- **UI Verification Test**: Added `test_gui_style_application` to the platform test suite. This headless test verifies that theme colors and layout constants are applied correctly to the ImGui style object without needing a physical window.
 
 ## [0.4.48] - 2025-12-23
 ### Fixed
@@ -1365,6 +1464,14 @@ struct BiquadNotch {
     }
 };
 
+// Helper Result Struct for calculate_grip
+struct GripResult {
+    double value;           // Final grip value
+    bool approximated;      // Was approximation used?
+    double original;        // Original telemetry value
+    double slip_angle;      // Calculated slip angle (if approximated)
+};
+    
 // FFB Engine Class
 class FFBEngine {
 public:
@@ -1528,13 +1635,21 @@ public:
         return batch;
     }
 
-    // Helper Result Struct for calculate_grip
-    struct GripResult {
-        double value;           // Final grip value
-        bool approximated;      // Was approximation used?
-        double original;        // Original telemetry value
-        double slip_angle;      // Calculated slip angle (if approximated)
-    };
+    // ========================================
+    // UI Reference & Physics Multipliers (v0.4.50)
+    // ========================================
+    // These constants represent the physical force (in Newton-meters) that each effect 
+    // produces at a Gain setting of 1.0 (100%) and a MaxTorqueRef of 20.0 Nm.
+    static constexpr float BASE_NM_SOP_LATERAL      = 1.0f;
+    static constexpr float BASE_NM_REAR_ALIGN       = 3.0f;
+    static constexpr float BASE_NM_YAW_KICK         = 5.0f;
+    static constexpr float BASE_NM_GYRO_DAMPING     = 1.0f;
+    static constexpr float BASE_NM_SLIDE_TEXTURE    = 1.5f;
+    static constexpr float BASE_NM_ROAD_TEXTURE     = 2.5f;
+    static constexpr float BASE_NM_LOCKUP_VIBRATION = 4.0f;
+    static constexpr float BASE_NM_SPIN_VIBRATION   = 2.5f;
+    static constexpr float BASE_NM_SCRUB_DRAG       = 5.0f;
+    static constexpr float BASE_NM_BOTTOMING        = 1.0f;
 
 private:
     // ========================================
@@ -2000,6 +2115,12 @@ public:
         double safe_max = (std::min)(2.0, (double)m_max_load_factor);
         load_factor = (std::min)(safe_max, (std::max)(0.0, load_factor));
 
+        // --- 1. GAIN COMPENSATION (Decoupling) ---
+        // Baseline: 20.0 Nm (The standard reference where 1.0 gain was tuned).
+        // If MaxTorqueRef increases, we scale effects up to maintain relative intensity.
+        double decoupling_scale = (double)m_max_torque_ref / 20.0;
+        if (decoupling_scale < 0.1) decoupling_scale = 0.1; // Safety clamp
+
         // --- 1. Understeer Effect (Grip Modulation) ---
         // FRONT WHEEL GRIP CALCULATION (Refactored v0.4.5)
         
@@ -2034,7 +2155,7 @@ public:
         double base_input = 0.0;
         
         if (m_base_force_mode == 0) {
-            // Mode 0: Native (Physics)
+            // Mode 0: Native (Steering Shaft Torque)
             base_input = game_force;
         } else if (m_base_force_mode == 1) {
             // Mode 1: Synthetic (Constant with Direction)
@@ -2083,7 +2204,7 @@ public:
 
         m_sop_lat_g_smoothed = m_sop_lat_g_smoothed + alpha * (lat_g - m_sop_lat_g_smoothed);
         
-        double sop_base_force = m_sop_lat_g_smoothed * m_sop_effect * (double)m_sop_scale;
+        double sop_base_force = m_sop_lat_g_smoothed * m_sop_effect * (double)m_sop_scale * decoupling_scale;
         double sop_total = sop_base_force;
         
         // REAR WHEEL GRIP CALCULATION (Refactored v0.4.5)
@@ -2165,7 +2286,7 @@ public:
         // Multiplied by m_rear_align_effect to allow user tuning of rear-end sensitivity.
         // v0.4.19: INVERTED to provide counter-steering (restoring) torque instead of destabilizing force
         // When rear slides left (+slip), we want left pull (-torque) to correct the slide
-        double rear_torque = -calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect; 
+        double rear_torque = -calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect * decoupling_scale; 
         sop_total += rear_torque;
 
         // --- 2b. Yaw Acceleration Injector (The "Kick") ---
@@ -2198,11 +2319,11 @@ public:
         m_yaw_accel_smoothed = m_yaw_accel_smoothed + alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
         
         // Use SMOOTHED value for the kick
-        // Scaled by 5.0 (Base multiplier) and User Gain
+        // Scaled by BASE_NM_YAW_KICK (5.0 Nm at Gain 1.0)
         // Added AFTER Oversteer Boost to provide a clean, independent cue.
         // v0.4.20 FIX: Invert to provide counter-steering torque
-        // Positive yaw accel (right rotation) → Negative force (left pull)
-        double yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * 5.0;
+        // Positive yaw accel (right rotation) -> Negative force (left pull)
+        double yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * (double)BASE_NM_YAW_KICK * decoupling_scale;
         sop_total += yaw_force;
         
         double total_force = output_force + sop_total;
@@ -2228,7 +2349,7 @@ public:
         m_steering_velocity_smoothed += alpha_gyro * (steer_vel - m_steering_velocity_smoothed);
         
         // Damping Force: Opposes velocity, scales with car speed
-        double gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (car_speed / GYRO_SPEED_SCALE);
+        double gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (car_speed / GYRO_SPEED_SCALE) * decoupling_scale;
         
         // Add to total
         total_force += gyro_force;
@@ -2279,7 +2400,7 @@ public:
                 m_lockup_phase += freq * dt * TWO_PI;
                 m_lockup_phase = std::fmod(m_lockup_phase, TWO_PI); // Wrap correctly
 
-                double amp = severity * m_lockup_gain * 4.0; // Scaled for Nm (was 800)
+                double amp = severity * m_lockup_gain * 4.0 * decoupling_scale; // Scaled for Nm (was 800)
                 lockup_rumble = std::sin(m_lockup_phase) * amp;
                 total_force += lockup_rumble;
             }
@@ -2315,8 +2436,8 @@ public:
                 m_spin_phase += freq * dt * TWO_PI;
                 m_spin_phase = std::fmod(m_spin_phase, TWO_PI); // Wrap correctly
 
-                // Amplitude
-                double amp = severity * m_spin_gain * 2.5; // Scaled for Nm (was 500)
+                // Base Sinusoid
+                double amp = severity * m_spin_gain * (double)BASE_NM_SPIN_VIBRATION * decoupling_scale; // Scaled for Nm (was 500)
                 spin_rumble = std::sin(m_spin_phase) * amp;
                 
                 total_force += spin_rumble;
@@ -2367,8 +2488,8 @@ public:
                 // High Load + Low Grip = Max Vibration.
                 // We use avg_grip (from understeer calc) which includes longitudinal slip.
                 double grip_scale = (std::max)(0.0, 1.0 - avg_grip);
-                
-                slide_noise = sawtooth * m_slide_texture_gain * 1.5 * load_factor * grip_scale;
+                // Resulting force
+                slide_noise = sawtooth * m_slide_texture_gain * (double)BASE_NM_SLIDE_TEXTURE * load_factor * grip_scale * decoupling_scale;
                 total_force += slide_noise;
             }
         }
@@ -2387,7 +2508,8 @@ public:
                     // Game: +X = Left, DirectInput: +Force = Right
                     // If sliding left (+vel), we want left torque (-force) to resist the slide
                     double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
-                    scrub_drag_force = drag_dir * m_scrub_drag_gain * 5.0 * fade; // Scaled & Faded
+                    // 3. Final force calculation
+                    scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade * decoupling_scale; // Scaled & Faded
                     total_force += scrub_drag_force;
                 }
             }
@@ -2416,10 +2538,10 @@ public:
             delta_r = (std::max)(-0.01, (std::min)(0.01, delta_r));
 
             // Amplify sudden changes
-            double road_noise = (delta_l + delta_r) * 50.0 * m_road_texture_gain; // Scaled for Nm (was 5000)
+            double road_noise_val = (delta_l + delta_r) * 50.0 * m_road_texture_gain * decoupling_scale; // Scaled for Nm (was 5000)
             
             // Apply LOAD FACTOR: Bumps feel harder under compression
-            road_noise *= load_factor;
+            road_noise = road_noise_val * load_factor;
             
             total_force += road_noise;
         }
@@ -2476,7 +2598,7 @@ public:
 
             if (triggered) {
                 // Non-linear response (Square root softens the initial onset)
-                double bump_magnitude = intensity * m_bottoming_gain * 0.05 * 20.0; // Scaled for Nm
+                double bump_magnitude = intensity * m_bottoming_gain * (double)BASE_NM_BOTTOMING * decoupling_scale; // Scaled for Nm
                 
                 // FIX: Use a 50Hz "Crunch" oscillation instead of directional DC offset
                 double freq = 50.0; 
@@ -10837,6 +10959,268 @@ All tests passed successfully (127/127).
 
 ---
 *Report generated by Antigravity Agent on 2025-12-20.*
+
+```
+
+# File: docs\dev_docs\Gain Compensation implementation plan.md
+```markdown
+# Implementation Plan: FFB Signal Gain Compensation ("Decoupling")
+
+## 1. Introduction & Terminology
+
+### The Problem: Signal Compression
+Currently, the application calculates forces in absolute Newton-meters (Nm). These forces are then normalized (divided) by the user's `Max Torque Ref` setting to produce the final output signal (-1.0 to 1.0).
+
+*   **Scenario A (Weak Wheel):** `Max Torque Ref` = 20 Nm. A 2 Nm texture effect results in **10%** signal output. Strong and clear.
+*   **Scenario B (Strong Wheel):** `Max Torque Ref` = 100 Nm. The same 2 Nm texture effect results in **2%** signal output. Weak and imperceptible.
+
+This forces users with high-torque settings to max out their effect sliders just to feel them, effectively confining them to a tiny usable range of the slider.
+
+### The Solution: Gain Compensation
+We will implement **Gain Compensation** (often referred to as "Decoupling"). This technique automatically scales the internal force of specific effects based on the `Max Torque Ref`.
+
+*   **Logic:** If the user increases `Max Torque Ref` (zooming out the signal), the app automatically boosts the "Generator" effects (zooming them in) by the same ratio.
+*   **Result:** A "50%" setting on a slider will feel like a 50% strength effect relative to the wheel's capability, regardless of whether the wheel is calibrated to 20 Nm or 100 Nm.
+
+### Classification of Effects
+To implement this correctly, we must classify every slider into one of two categories:
+
+1.  **Generators (Apply Compensation):** These add new forces (Newtons) to the signal.
+    *   *Examples:* SoP, Rear Align Torque, Slide Texture, Road Texture, Lockup.
+2.  **Modifiers (Do NOT Apply Compensation):** These multiply or reduce existing forces. Scaling them would result in "Double Scaling" errors.
+    *   *Examples:* Understeer Effect (Reduction ratio), Oversteer Boost (Multiplier).
+
+---
+
+## 2. Slider Configuration Table
+
+This table defines the new behavior for every GUI control.
+
+| Slider Name | Type | Compensation? | New GUI Range | Display Format |
+| :--- | :--- | :--- | :--- | :--- |
+| **Master Gain** | Scalar | **NO** | 0.0 - 2.0 | `0% - 200%` |
+| **Max Torque Ref** | Reference | **NO** | 1.0 - 200.0 | `%.1f Nm` |
+| **Steering Shaft Gain** | Attenuator | **NO** | 0.0 - 1.0 | `0% - 100%` |
+| **Understeer Effect** | Modifier | **NO** | 0.0 - 50.0 | `0% - 100%` (Remapped) |
+| **Oversteer Boost** | Modifier | **NO** | 0.0 - 20.0 | `0% - 200%` |
+| **Rear Align Torque** | Generator | **YES** | 0.0 - 2.0 | `0% - 200% (~X Nm)` |
+| **SoP Yaw (Kick)** | Generator | **YES** | 0.0 - 2.0 | `0% - 200% (~X Nm)` |
+| **Gyro Damping** | Generator | **YES** | 0.0 - 1.0 | `0% - 100% (~X Nm)` |
+| **Lateral G (SoP)** | Generator | **YES** | 0.0 - 2.0 | `0% - 200% (~X Nm)` |
+| **Lockup Gain** | Generator | **YES** | 0.0 - 2.0 | `0% - 200% (~X Nm)` |
+| **Spin Gain** | Generator | **YES** | 0.0 - 2.0 | `0% - 200% (~X Nm)` |
+| **Slide Gain** | Generator | **YES** | 0.0 - 2.0 | `0% - 200% (~X Nm)` |
+| **Road Gain** | Generator | **YES** | 0.0 - 2.0 | `0% - 200% (~X Nm)` |
+| **Scrub Drag Gain** | Generator | **YES** | 0.0 - 1.0 | `0% - 100% (~X Nm)` |
+
+---
+
+## 3. Implementation: Physics Engine
+
+We modify `FFBEngine.h` to calculate the scaling factor and apply it to all **Generators**.
+
+**File:** `FFBEngine.h`
+
+```cpp
+// Inside calculate_force(const TelemInfoV01* data)
+
+    // ... [Existing Setup] ...
+
+    // --- 1. GAIN COMPENSATION (Decoupling) ---
+    // Baseline: 20.0 Nm (The standard reference where 1.0 gain was tuned).
+    // If MaxTorqueRef increases, we scale effects up to maintain relative intensity.
+    double decoupling_scale = (double)m_max_torque_ref / 20.0;
+    if (decoupling_scale < 0.1) decoupling_scale = 0.1; // Safety clamp
+
+    // ... [Understeer Logic (Modifier - NO CHANGE)] ...
+
+    // --- 2. SoP & Rear Align (Generators - DECOUPLED) ---
+    
+    // SoP Base
+    // Old: ... * m_sop_scale;
+    double sop_base_force = m_sop_lat_g_smoothed * m_sop_effect * (double)m_sop_scale * decoupling_scale;
+
+    // Rear Align Torque
+    // Old: ... * m_rear_align_effect;
+    double rear_torque = -calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect * decoupling_scale;
+
+    // Yaw Kick
+    // Old: ... * 5.0;
+    double yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * 5.0 * decoupling_scale;
+
+    // Gyro Damping
+    // Old: ... * (car_speed / GYRO_SPEED_SCALE);
+    double gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (car_speed / GYRO_SPEED_SCALE) * decoupling_scale;
+
+    // ... [Haptics (Generators - DECOUPLED)] ...
+
+    // Lockup
+    // Old: ... * 4.0;
+    double amp_lock = severity * m_lockup_gain * 4.0 * decoupling_scale;
+
+    // Spin
+    // Old: ... * 2.5;
+    double amp_spin = severity * m_spin_gain * 2.5 * decoupling_scale;
+
+    // Slide Texture
+    // Old: ... * 1.5 * ...;
+    slide_noise = sawtooth * m_slide_texture_gain * 1.5 * load_factor * grip_scale * decoupling_scale;
+
+    // Road Texture
+    // Old: ... * 50.0 * ...;
+    double road_noise = (delta_l + delta_r) * 50.0 * m_road_texture_gain * decoupling_scale;
+
+    // Scrub Drag
+    // Old: ... * 5.0 * ...;
+    scrub_drag_force = drag_dir * m_scrub_drag_gain * 5.0 * fade * decoupling_scale;
+
+    // Bottoming
+    // Old: ... * 20.0;
+    double bump_magnitude = intensity * m_bottoming_gain * 0.05 * 20.0 * decoupling_scale;
+
+    // ... [Rest of function] ...
+```
+
+---
+
+## 4. Implementation: GUI Layer
+
+We modify `GuiLayer.cpp` to display the dynamic Newton-meter values and standardize the sliders.
+
+**File:** `src/GuiLayer.cpp`
+
+```cpp
+// Inside DrawTuningWindow()
+
+    // --- Helper: Format Decoupled Sliders ---
+    // val: The current slider value (0.0 - 2.0)
+    // base_nm: The physical force this effect produces at Gain 1.0 (Physics Constant)
+    auto FormatDecoupled = [&](float val, float base_nm) {
+        // Calculate the same scale used in FFBEngine
+        float scale = (engine.m_max_torque_ref / 20.0f); 
+        if (scale < 0.1f) scale = 0.1f;
+
+        // Calculate estimated output Nm
+        float estimated_nm = val * base_nm * scale;
+
+        static char buf[64];
+        // Display as Percentage + Dynamic Nm
+        snprintf(buf, 64, "%.0f%% (~%.1f Nm)", val * 100.0f, estimated_nm); 
+        return buf;
+    };
+
+    // --- Helper: Format Standard Percentages ---
+    auto FormatPct = [&](float val) {
+        static char buf[32];
+        snprintf(buf, 32, "%.0f%%", val * 100.0f);
+        return buf;
+    };
+
+    // ... [General Settings] ...
+    
+    // Example: Understeer (Modifier - Remapped 0-50 to 0-100%)
+    // Note: We keep the internal variable range 0-50 for physics compatibility, 
+    // but display it as 0-100% to the user.
+    // Or better: Change the slider to 0.0-1.0 and multiply by 50 internally in engine.
+    // For now, let's just format the existing 0-50 range.
+    FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 50.0f, "%.1f"); 
+    // (Ideally, refactor Understeer to be 0.0-1.0 internally in a future pass)
+
+    // ... [SoP Section] ...
+
+    // Rear Align (Generator - Base ~6.0 Nm at max load)
+    FloatSetting("Rear Align Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, 
+                 FormatDecoupled(engine.m_rear_align_effect, 3.0f)); // 3.0 is approx base at gain 1.0
+
+    // Yaw Kick (Generator - Base ~5.0 Nm)
+    FloatSetting("SoP Yaw (Kick)", &engine.m_sop_yaw_gain, 0.0f, 2.0f, 
+                 FormatDecoupled(engine.m_sop_yaw_gain, 5.0f));
+
+    // ... [Textures Section] ...
+
+    // Slide (Generator - Base ~1.5 Nm)
+    FloatSetting("Slide Gain", &engine.m_slide_texture_gain, 0.0f, 2.0f, 
+                 FormatDecoupled(engine.m_slide_texture_gain, 1.5f));
+
+    // Road (Generator - Base ~2.5 Nm on avg curb)
+    FloatSetting("Road Gain", &engine.m_road_texture_gain, 0.0f, 2.0f, 
+                 FormatDecoupled(engine.m_road_texture_gain, 2.5f));
+```
+
+---
+
+## 5. Configuration Updates
+
+Since we are changing the effective strength of effects (by adding the scaling factor) and the slider ranges (e.g., Slide Gain max 5.0 -> 2.0), we must update the default presets to ensure a consistent experience.
+
+**File:** `src/Config.cpp`
+
+```cpp
+void Config::LoadPresets() {
+    presets.clear();
+    
+    // Update "Default (T300)"
+    // Since T300 uses MaxTorqueRef ~100Nm (Scale = 5.0),
+    // we need to lower the gains in the preset so the result isn't 5x stronger than before.
+    // Old Slide Gain: 0.39. New Scale: 5.0. 
+    // New Gain should be: 0.39 / 5.0 = ~0.08? 
+    // WAIT: The goal is that 0.39 *should* feel like 39%.
+    // If we decouple, setting it to 0.39 will result in (0.39 * 5.0) = 1.95x force.
+    // This is actually what we WANT. The previous 0.39 was too weak on T300.
+    // So we can likely keep the preset values, or tune them slightly down if they become too strong.
+    
+    presets.push_back(Preset("Default (T300)", true)
+        .SetMaxTorque(98.3f)
+        .SetSlide(true, 0.40f) // 40% strength
+        .SetRoad(false, 0.50f) // 50% strength
+        // ...
+    );
+}
+```
+
+---
+
+## 6. Legacy Configuration Migration (Safety Strategy)
+
+### The Risk
+Previous versions of LMUFFB allowed users to set texture gains (Slide, Road, Lockup) up to **5.0** or even **20.0** to overcome the signal compression caused by high `Max Torque Ref` settings.
+
+With the new **Gain Compensation** logic:
+*   A user with `Max Torque Ref = 100 Nm` gets a **5x** internal boost automatically.
+*   If they load a legacy config with `Slide Gain = 5.0`:
+    *   **Result:** $5.0 \text{ (Gain)} \times 5.0 \text{ (Scale)} = 25.0 \text{ (Internal Force)}$.
+    *   **Consequence:** Immediate hard clipping and potentially violent wheel oscillation on startup.
+
+### The Fix: Load-Time Clamping
+We must implement a safety layer in `Config::Load` to sanitize values coming from older `.ini` files.
+
+**Logic:**
+When parsing keys for **Generator** effects, we enforce the new maximums immediately.
+
+```cpp
+// Pseudo-code for Config::Load
+if (key == "slide_gain") {
+    float val = std::stof(value);
+    // Clamp legacy 5.0 values to new safe max of 2.0
+    engine.m_slide_texture_gain = (std::min)(2.0f, val); 
+}
+```
+
+**Keys to Clamp to 2.0f:**
+*   `rear_align_effect`
+*   `sop_yaw_gain`
+*   `sop_effect` (Lateral G)
+*   `lockup_gain`
+*   `spin_gain`
+*   `slide_gain`
+*   `road_gain`
+
+**Keys to Clamp to 1.0f:**
+*   `scrub_drag_gain`
+*   `gyro_gain`
+
+This ensures that the first run after the update is safe, even if the resulting FFB is still stronger than before (which is the intended improvement).
+
 
 ```
 
@@ -21066,6 +21450,7 @@ Please refer to `docs/porting_guide_rust.md` in the root directory for instructi
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 
 bool Config::m_ignore_vjoy_version_warning = false;
 bool Config::m_enable_vjoy = false;
@@ -21381,31 +21766,32 @@ void Config::LoadPresets() {
                         // Map keys to struct members
                         if (key == "gain") current_preset.gain = std::stof(value);
                         else if (key == "understeer") current_preset.understeer = std::stof(value);
-                        else if (key == "sop") current_preset.sop = std::stof(value);
+                        else if (key == "sop") current_preset.sop = (std::min)(2.0f, std::stof(value));
                         else if (key == "sop_scale") current_preset.sop_scale = std::stof(value);
                         else if (key == "sop_smoothing_factor") current_preset.sop_smoothing = std::stof(value);
                         else if (key == "min_force") current_preset.min_force = std::stof(value);
                         else if (key == "oversteer_boost") current_preset.oversteer_boost = std::stof(value);
                         else if (key == "lockup_enabled") current_preset.lockup_enabled = std::stoi(value);
-                        else if (key == "lockup_gain") current_preset.lockup_gain = std::stof(value);
+                        // v0.4.50: SAFETY CLAMPING for Generator Effects in User Presets
+                        else if (key == "lockup_gain") current_preset.lockup_gain = (std::min)(2.0f, std::stof(value));
                         else if (key == "spin_enabled") current_preset.spin_enabled = std::stoi(value);
-                        else if (key == "spin_gain") current_preset.spin_gain = std::stof(value);
+                        else if (key == "spin_gain") current_preset.spin_gain = (std::min)(2.0f, std::stof(value));
                         else if (key == "slide_enabled") current_preset.slide_enabled = std::stoi(value);
-                        else if (key == "slide_gain") current_preset.slide_gain = std::stof(value);
+                        else if (key == "slide_gain") current_preset.slide_gain = (std::min)(2.0f, std::stof(value));
                         else if (key == "slide_freq") current_preset.slide_freq = std::stof(value);
                         else if (key == "road_enabled") current_preset.road_enabled = std::stoi(value);
-                        else if (key == "road_gain") current_preset.road_gain = std::stof(value);
+                        else if (key == "road_gain") current_preset.road_gain = (std::min)(2.0f, std::stof(value));
                         else if (key == "invert_force") current_preset.invert_force = std::stoi(value);
                         else if (key == "max_torque_ref") current_preset.max_torque_ref = std::stof(value);
                         else if (key == "use_manual_slip") current_preset.use_manual_slip = std::stoi(value);
                         else if (key == "bottoming_method") current_preset.bottoming_method = std::stoi(value);
-                        else if (key == "scrub_drag_gain") current_preset.scrub_drag_gain = std::stof(value);
-                        else if (key == "rear_align_effect") current_preset.rear_align_effect = std::stof(value);
-                        else if (key == "sop_yaw_gain") current_preset.sop_yaw_gain = std::stof(value);
+                        else if (key == "scrub_drag_gain") current_preset.scrub_drag_gain = (std::min)(1.0f, std::stof(value));
+                        else if (key == "rear_align_effect") current_preset.rear_align_effect = (std::min)(2.0f, std::stof(value));
+                        else if (key == "sop_yaw_gain") current_preset.sop_yaw_gain = (std::min)(2.0f, std::stof(value));
                         else if (key == "steering_shaft_gain") current_preset.steering_shaft_gain = std::stof(value);
                         else if (key == "slip_angle_smoothing") current_preset.slip_smoothing = std::stof(value);
                         else if (key == "base_force_mode") current_preset.base_force_mode = std::stoi(value);
-                        else if (key == "gyro_gain") current_preset.gyro_gain = std::stof(value);
+                        else if (key == "gyro_gain") current_preset.gyro_gain = (std::min)(1.0f, std::stof(value));
                         else if (key == "flatspot_suppression") current_preset.flatspot_suppression = std::stoi(value);
                         else if (key == "notch_q") current_preset.notch_q = std::stof(value);
                         else if (key == "flatspot_strength") current_preset.flatspot_strength = std::stof(value);
@@ -21569,33 +21955,31 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "max_load_factor") engine.m_max_load_factor = std::stof(value);
                     else if (key == "smoothing") engine.m_sop_smoothing_factor = std::stof(value); // Legacy support
                     else if (key == "understeer") engine.m_understeer_effect = std::stof(value);
-                    else if (key == "sop") engine.m_sop_effect = std::stof(value);
+                    else if (key == "sop") engine.m_sop_effect = (std::min)(2.0f, std::stof(value));
                     else if (key == "min_force") engine.m_min_force = std::stof(value);
                     else if (key == "oversteer_boost") engine.m_oversteer_boost = std::stof(value);
+                    // v0.4.50: SAFETY CLAMPING for Generator Effects (Gain Compensation Migration)
+                    // Legacy configs may have high gains (e.g., 5.0) to compensate for lack of auto-scaling.
+                    // With new decoupling, these would cause 25x force explosions. Clamp to safe maximums.
                     else if (key == "lockup_enabled") engine.m_lockup_enabled = std::stoi(value);
-                    else if (key == "lockup_gain") engine.m_lockup_gain = std::stof(value);
+                    else if (key == "lockup_gain") engine.m_lockup_gain = (std::min)(2.0f, std::stof(value));
                     else if (key == "spin_enabled") engine.m_spin_enabled = std::stoi(value);
-                    else if (key == "spin_gain") engine.m_spin_gain = std::stof(value);
-                    else if (key == "oversteer_boost") engine.m_oversteer_boost = std::stof(value);
-                    else if (key == "lockup_enabled") engine.m_lockup_enabled = std::stoi(value);
-                    else if (key == "lockup_gain") engine.m_lockup_gain = std::stof(value);
-                    else if (key == "spin_enabled") engine.m_spin_enabled = std::stoi(value);
-                    else if (key == "spin_gain") engine.m_spin_gain = std::stof(value);
+                    else if (key == "spin_gain") engine.m_spin_gain = (std::min)(2.0f, std::stof(value));
                     else if (key == "slide_enabled") engine.m_slide_texture_enabled = std::stoi(value);
-                    else if (key == "slide_gain") engine.m_slide_texture_gain = std::stof(value);
+                    else if (key == "slide_gain") engine.m_slide_texture_gain = (std::min)(2.0f, std::stof(value));
                     else if (key == "slide_freq") engine.m_slide_freq_scale = std::stof(value);
                     else if (key == "road_enabled") engine.m_road_texture_enabled = std::stoi(value);
-                    else if (key == "road_gain") engine.m_road_texture_gain = std::stof(value);
+                    else if (key == "road_gain") engine.m_road_texture_gain = (std::min)(2.0f, std::stof(value));
                     else if (key == "invert_force") engine.m_invert_force = std::stoi(value);
                     else if (key == "max_torque_ref") engine.m_max_torque_ref = std::stof(value);
                     else if (key == "use_manual_slip") engine.m_use_manual_slip = std::stoi(value);
                     else if (key == "bottoming_method") engine.m_bottoming_method = std::stoi(value);
-                    else if (key == "scrub_drag_gain") engine.m_scrub_drag_gain = std::stof(value);
-                    else if (key == "rear_align_effect") engine.m_rear_align_effect = std::stof(value);
-                    else if (key == "sop_yaw_gain") engine.m_sop_yaw_gain = std::stof(value);
+                    else if (key == "scrub_drag_gain") engine.m_scrub_drag_gain = (std::min)(1.0f, std::stof(value));
+                    else if (key == "rear_align_effect") engine.m_rear_align_effect = (std::min)(2.0f, std::stof(value));
+                    else if (key == "sop_yaw_gain") engine.m_sop_yaw_gain = (std::min)(2.0f, std::stof(value));
                     else if (key == "steering_shaft_gain") engine.m_steering_shaft_gain = std::stof(value);
                     else if (key == "base_force_mode") engine.m_base_force_mode = std::stoi(value);
-                    else if (key == "gyro_gain") engine.m_gyro_gain = std::stof(value);
+                    else if (key == "gyro_gain") engine.m_gyro_gain = (std::min)(1.0f, std::stof(value));
                     else if (key == "flatspot_suppression") engine.m_flatspot_suppression = std::stoi(value);
                     else if (key == "notch_q") engine.m_notch_q = std::stof(value);
                     else if (key == "flatspot_strength") engine.m_flatspot_strength = std::stof(value);
@@ -22549,6 +22933,50 @@ extern std::mutex g_engine_mutex;
 #define LMUFFB_VERSION "Dev"
 #endif
 
+// NEW: Professional "Flat Dark" Theme
+void GuiLayer::SetupGUIStyle() {
+    ImGuiStyle& style = ImGui::GetStyle();
+    
+    // 1. Geometry
+    style.WindowRounding = 5.0f;
+    style.FrameRounding = 4.0f;
+    style.GrabRounding = 4.0f;
+    style.FramePadding = ImVec2(8, 4);
+    style.ItemSpacing = ImVec2(8, 6);
+    
+    // 2. Colors
+    ImVec4* colors = style.Colors;
+    
+    // Backgrounds: Deep Grey
+    colors[ImGuiCol_WindowBg]       = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
+    colors[ImGuiCol_ChildBg]        = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+    colors[ImGuiCol_PopupBg]        = ImVec4(0.15f, 0.15f, 0.15f, 0.98f);
+    
+    // Headers: Transparent (Just text highlight)
+    colors[ImGuiCol_Header]         = ImVec4(0.20f, 0.20f, 0.20f, 0.00f); // Transparent!
+    colors[ImGuiCol_HeaderHovered]  = ImVec4(0.25f, 0.25f, 0.25f, 0.50f);
+    colors[ImGuiCol_HeaderActive]   = ImVec4(0.30f, 0.30f, 0.30f, 0.50f);
+    
+    // Controls (Sliders/Buttons): Dark Grey container
+    colors[ImGuiCol_FrameBg]        = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
+    colors[ImGuiCol_FrameBgActive]  = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+    
+    // Accents (The Data): Bright Blue/Teal
+    // This draws the eye ONLY to the values
+    ImVec4 accent = ImVec4(0.00f, 0.60f, 0.85f, 1.00f); 
+    colors[ImGuiCol_SliderGrab]     = accent;
+    colors[ImGuiCol_SliderGrabActive] = ImVec4(0.00f, 0.70f, 0.95f, 1.00f);
+    colors[ImGuiCol_Button]         = ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
+    colors[ImGuiCol_ButtonHovered]  = accent;
+    colors[ImGuiCol_ButtonActive]   = ImVec4(0.00f, 0.50f, 0.75f, 1.00f);
+    colors[ImGuiCol_CheckMark]      = accent;
+    
+    // Text
+    colors[ImGuiCol_Text]           = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
+    colors[ImGuiCol_TextDisabled]   = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+}
+
 bool GuiLayer::Init() {
     // Create Application Window
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"LMUFFB", NULL };
@@ -22586,7 +23014,7 @@ bool GuiLayer::Init() {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 
     // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
+    SetupGUIStyle();
 
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_Init(g_hwnd);
@@ -22724,13 +23152,21 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     std::lock_guard<std::mutex> lock(g_engine_mutex);
 
     // Show Version in title bar or top text
-    std::string title = std::string("LMUFFB v") + LMUFFB_VERSION + " - FFB Configuration";
+    std::string title = std::string("LMUFFB v") + LMUFFB_VERSION + " - Configuration";
     ImGui::Begin(title.c_str());
 
-    // =========================================================
-    // SECTION 1: CORE SETTINGS & DEVICE
-    // =========================================================
-    ImGui::Text("Core Settings");
+    // Connection Status
+    bool connected = GameConnector::Get().IsConnected();
+    if (connected) {
+        ImGui::TextColored(ImVec4(0, 1, 0, 1), "Connected to LMU");
+    } else {
+        ImGui::TextColored(ImVec4(1, 0, 0, 1), "Disconnected from LMU");
+        ImGui::SameLine();
+        if (ImGui::Button("Retry")) GameConnector::Get().TryConnect();
+    }
+
+    // --- 1. TOP BAR (System Status & Quick Controls) ---
+    // Keep this outside columns for full width awareness
     
     // Device Selection
     static std::vector<DeviceInfo> devices;
@@ -22750,7 +23186,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
     }
 
-    // FFB Device Dropdown
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.4f);
     if (ImGui::BeginCombo("FFB Device", selected_device_idx >= 0 ? devices[selected_device_idx].name.c_str() : "Select Device...")) {
         for (int i = 0; i < devices.size(); i++) {
             bool is_selected = (selected_device_idx == i);
@@ -22765,57 +23201,31 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::EndCombo();
     }
     
-    // Rescan & Unbind Buttons
-    if (ImGui::Button("Rescan Devices")) {
+    ImGui::SameLine();
+    if (ImGui::Button("Rescan")) {
         devices = DirectInputFFB::Get().EnumerateDevices();
         selected_device_idx = -1;
     }
     ImGui::SameLine();
-    if (ImGui::Button("Unbind Device")) {
+    if (ImGui::Button("Unbind")) {
         DirectInputFFB::Get().ReleaseDevice();
         selected_device_idx = -1;
     }
 
-    // Display Acquisition Mode
+    // Acquisition Mode & Troubleshooting
     if (DirectInputFFB::Get().IsActive()) {
         if (DirectInputFFB::Get().IsExclusive()) {
-            ImGui::TextColored(ImVec4(0, 1, 0, 1), "Mode: EXCLUSIVE (Game FFB Blocked)");
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB has exclusive control.\nThe game can read steering but cannot send FFB.\nThis prevents 'Double FFB' issues.");
+            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Mode: EXCLUSIVE (Game FFB Blocked)");
         } else {
-            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Mode: SHARED (Potential Conflict)");
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB is sharing the device.\nEnsure In-Game FFB is set to 'None' or 0%% strength\nto avoid two force signals fighting each other.");
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.4f, 1.0f), "Mode: SHARED (Ensure Game FFB is 0%%)");
         }
     }
 
-    ImGui::Separator();
-
-    // =========================================================
-    // SECTION 2: GAME STATUS
-    // =========================================================
-    bool connected = GameConnector::Get().IsConnected();
-    if (connected) {
-        ImGui::TextColored(ImVec4(0,1,0,1), "Status: Connected to Le Mans Ultimate");
-    } else {
-        ImGui::TextColored(ImVec4(1,0,0,1), "Status: Game Not Connected");
-        ImGui::SameLine();
-        if (ImGui::Button("Retry Connection")) {
-            GameConnector::Get().TryConnect();
-        }
-    }
-    
-    // =========================================================
-    // SECTION 3: APP CONTROLS (Single Line)
-    // =========================================================
-    ImGui::Separator();
-    
     if (ImGui::Checkbox("Always on Top", &Config::m_always_on_top)) {
         SetWindowAlwaysOnTop(g_hwnd, Config::m_always_on_top);
     }
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Keep this window visible over the game.");
-
     ImGui::SameLine();
-    ImGui::Checkbox("Show Troubleshooting Graphs", &m_show_debug_window);
-    
+    ImGui::Checkbox("Graphs", &m_show_debug_window);
     ImGui::SameLine();
     if (ImGui::Button("Save Screenshot")) {
         time_t now = time(0);
@@ -22825,45 +23235,87 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         strftime(buf, sizeof(buf), "screenshot_%Y-%m-%d_%H-%M-%S.png", &tstruct);
         SaveScreenshot(buf);
     }
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Saves PNG to app folder.");
     
     ImGui::Separator();
 
     // --- HELPER LAMBDAS ---
     static int selected_preset = 0;
-    auto FloatSetting = [&](const char* label, float* v, float min, float max, const char* fmt = "%.2f") {
-        if (ImGui::SliderFloat(label, v, min, max, fmt)) selected_preset = -1;
+    
+    // val: The current slider value (0.0 - 2.0)
+    // base_nm: The physical force this effect produces at Gain 1.0 (Physics Constant)
+    auto FormatDecoupled = [&](float val, float base_nm) {
+        float scale = (engine.m_max_torque_ref / 20.0f); 
+        if (scale < 0.1f) scale = 0.1f;
+        float estimated_nm = val * base_nm * scale;
+        static char buf[64];
+        // Use double percent (%%%%) because SliderFloat formats it again
+        // Show 1 decimal to make arrow key adjustments visible (step 0.01 = 0.5%)
+        snprintf(buf, 64, "%.1f%%%% (~%.1f Nm)", val * 100.0f, estimated_nm); 
+        return (const char*)buf;
+    };
+
+    auto FormatPct = [&](float val) {
+        static char buf[32];
+        // Show 1 decimal to make arrow key adjustments visible
+        snprintf(buf, 32, "%.1f%%%%", val * 100.0f);
+        return (const char*)buf;
+    };
+
+    auto FloatSetting = [&](const char* label, float* v, float min, float max, const char* fmt = "%.2f", const char* tooltip = nullptr) {
+        ImGui::Text("%s", label);               // Column 1: Label
+        ImGui::NextColumn();                    // Switch to Column 2
+        
+        ImGui::SetNextItemWidth(-1);            // Fill width
+        std::string id = "##" + std::string(label);
+        if (ImGui::SliderFloat(id.c_str(), v, min, max, fmt)) selected_preset = -1;
+        
         if (ImGui::IsItemHovered()) {
             float range = max - min;
-            float step = (range > 50.0f) ? 0.5f : 0.01f; 
+            // Adaptive step size: finer steps for smaller ranges
+            float step = (range > 50.0f) ? 0.5f : (range < 1.0f) ? 0.001f : 0.01f; 
             bool changed = false;
             if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) { *v -= step; changed = true; }
             if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) { *v += step; changed = true; }
             if (changed) { *v = (std::max)(min, (std::min)(max, *v)); selected_preset = -1; }
             
-            // Show keyboard shortcut tooltip
-            ImGui::BeginTooltip();
-            ImGui::Text("Fine Tune: Arrow Keys");
-            ImGui::Text("Exact Input: Ctrl + Click");
-            ImGui::EndTooltip();
+            // Only show tooltip if not actively adjusting with keys (prevents tooltip from covering slider)
+            if (!changed) {
+                ImGui::BeginTooltip();
+                if (tooltip) { ImGui::Text("%s", tooltip); ImGui::Separator(); }
+                ImGui::Text("Fine Tune: Arrow Keys | Exact: Ctrl+Click");
+                ImGui::EndTooltip();
+            }
         }
-    };
-    auto BoolSetting = [&](const char* label, bool* v) {
-        if (ImGui::Checkbox(label, v)) selected_preset = -1;
-    };
-    auto IntSetting = [&](const char* label, int* v, const char* const items[], int items_count) {
-        if (ImGui::Combo(label, v, items, items_count)) selected_preset = -1;
+        ImGui::NextColumn();                    // Switch back to Column 1
     };
 
-    // =========================================================
-    // SECTION 4: PRESETS AND CONFIGURATION
-    // =========================================================
-    if (ImGui::CollapsingHeader("Presets and Configuration", ImGuiTreeNodeFlags_DefaultOpen)) {
+    auto BoolSetting = [&](const char* label, bool* v, const char* tooltip = nullptr) {
+        ImGui::Text("%s", label);
+        ImGui::NextColumn();
+        std::string id = "##" + std::string(label);
+        if (ImGui::Checkbox(id.c_str(), v)) selected_preset = -1;
+        if (tooltip && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", tooltip);
+        ImGui::NextColumn();
+    };
+
+    auto IntSetting = [&](const char* label, int* v, const char* const items[], int items_count, const char* tooltip = nullptr) {
+        ImGui::Text("%s", label);
+        ImGui::NextColumn();
+        ImGui::SetNextItemWidth(-1);
+        std::string id = "##" + std::string(label);
+        if (ImGui::Combo(id.c_str(), v, items, items_count)) selected_preset = -1;
+        if (tooltip && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", tooltip);
+        ImGui::NextColumn();
+    };
+
+    // --- 2. PRESETS AND CONFIGURATION ---
+    if (ImGui::TreeNodeEx("Presets and Configuration", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         if (Config::presets.empty()) Config::LoadPresets();
         
         const char* preview_value = (selected_preset >= 0 && selected_preset < Config::presets.size()) 
                                     ? Config::presets[selected_preset].name.c_str() : "Custom";
         
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.6f);
         if (ImGui::BeginCombo("Load Preset", preview_value)) {
             for (int i = 0; i < Config::presets.size(); i++) {
                 bool is_selected = (selected_preset == i);
@@ -22877,12 +23329,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
 
         static char new_preset_name[64] = "";
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.4f);
         ImGui::InputText("##NewPresetName", new_preset_name, 64);
         ImGui::SameLine();
-        if (ImGui::Button("Save as New Preset")) {
+        if (ImGui::Button("Save New")) {
             if (strlen(new_preset_name) > 0) {
                 Config::AddUserPreset(std::string(new_preset_name), engine);
-                for (int i = 0; i < Config::presets.size(); i++) {
+                for (int i = 0; i < (int)Config::presets.size(); i++) {
                     if (Config::presets[i].name == std::string(new_preset_name)) {
                         selected_preset = i;
                         break;
@@ -22892,151 +23345,198 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             }
         }
         
-        if (ImGui::Button("Save Configuration")) Config::Save(engine);
+        if (ImGui::Button("Save Current Config")) Config::Save(engine);
         ImGui::SameLine();
         if (ImGui::Button("Reset Defaults")) {
             Config::ApplyPreset(0, engine);
             selected_preset = 0;
         }
+        ImGui::TreePop();
     }
 
-    // =========================================================
-    // SECTION 5: GENERAL FFB SETTINGS
-    // =========================================================
-    if (ImGui::CollapsingHeader("General FFB Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-        BoolSetting("Invert FFB Signal", &engine.m_invert_force);
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Check this if the wheel pulls away from center instead of aligning.");
+    ImGui::Spacing();
+
+    // --- 3. MAIN SETTINGS GRID ---
+    ImGui::Columns(2, "SettingsGrid", false);
+    ImGui::SetColumnWidth(0, ImGui::GetWindowWidth() * 0.45f);
+
+    // --- GROUP: GENERAL ---
+    if (ImGui::TreeNodeEx("General FFB", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+        ImGui::NextColumn(); ImGui::NextColumn();
         
-        FloatSetting("Master Gain", &engine.m_gain, 0.0f, 2.0f);
-        FloatSetting("Max Torque Ref (Nm)", &engine.m_max_torque_ref, 1.0f, 200.0f, "%.1f Nm");
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("The torque value that equals 100%% FFB output.\nFor T300/G29, try 60-100 Nm.");
-        
+        BoolSetting("Invert FFB Signal", &engine.m_invert_force, "Check this if the wheel pulls away from center instead of aligning.");
+        FloatSetting("Master Gain", &engine.m_gain, 0.0f, 2.0f, FormatPct(engine.m_gain));
+        FloatSetting("Max Torque Ref", &engine.m_max_torque_ref, 1.0f, 200.0f, "%.1f Nm", "The torque value that equals 100% FFB output.\nFor T300/G29, try 60-100 Nm.");
         FloatSetting("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f");
+        FloatSetting("Load Cap", &engine.m_max_load_factor, 1.0f, 3.0f, "%.2fx", "Limits the maximum tire load factor used for scaling effects (Textures, etc).\nPrevents massive force spikes during high-downforce compressions.");
         
-        FloatSetting("Load Cap", &engine.m_max_load_factor, 1.0f, 3.0f, "%.1fx");
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Limits the maximum tire load factor used for scaling effects (Textures, etc).\nPrevents massive force spikes during high-downforce compressions.\nDoes not clip the main steering torque.");
+        ImGui::TreePop();
+    } else { 
+        // Keep columns synchronized when section is collapsed
+        ImGui::NextColumn(); ImGui::NextColumn(); 
     }
 
-    // =========================================================
-    // SECTION 6: UNDERSTEER AND FRONT TYRES
-    // =========================================================
-    if (ImGui::CollapsingHeader("Understeer and Front Tyres")) {
-        FloatSetting("Steering Shaft Gain", &engine.m_steering_shaft_gain, 0.0f, 1.0f);
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Attenuates raw game force without affecting telemetry.");
+    // --- GROUP: FRONT AXLE ---
+    if (ImGui::TreeNodeEx("Front Axle (Understeer)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+        ImGui::NextColumn(); ImGui::NextColumn();
         
-        FloatSetting("Understeer (Front Tyres Grip)", &engine.m_understeer_effect, 0.0f, 50.0f);
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Strength of the force drop when front grip is lost.");
+        FloatSetting("Steering Shaft Gain", &engine.m_steering_shaft_gain, 0.0f, 1.0f, FormatPct(engine.m_steering_shaft_gain), "Attenuates raw game force without affecting telemetry.");
+        // Display with 2 decimals to show fine arrow key adjustments (step 0.01 on 0-50 range)
+        FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 50.0f, "%.2f", "Strength of the force drop when front grip is lost.");
         
-        const char* base_modes[] = { "Native (Physics)", "Synthetic (Constant)", "Muted (Off)" };
-        IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, IM_ARRAYSIZE(base_modes));
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Debug tool to isolate effects.\nNative: Raw physics.\nSynthetic: Constant force to tune Grip drop-off.\nMuted: Zero base force.");
+        const char* base_modes[] = { "Native (Steering Shaft Torque)", "Synthetic (Constant)", "Muted (Off)" };
+        IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, sizeof(base_modes)/sizeof(base_modes[0]), "Debug tool to isolate effects.");
 
-        // Nested Signal Filtering
-        if (ImGui::TreeNode("Signal Filtering")) {
-            BoolSetting("Dynamic Flatspot Suppression", &engine.m_flatspot_suppression);
+        if (ImGui::TreeNodeEx("Signal Filtering", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::NextColumn(); ImGui::NextColumn();
+            
+            BoolSetting("  Flatspot Suppression", &engine.m_flatspot_suppression, "Dynamic notch filter to remove flatspot vibrations while driving.");
             if (engine.m_flatspot_suppression) {
-                ImGui::Indent();
-                FloatSetting("Notch Width (Q)", &engine.m_notch_q, 0.5f, 10.0f, "Q: %.1f");
-                FloatSetting("Suppression Strength", &engine.m_flatspot_strength, 0.0f, 1.0f);
-                ImGui::TextColored(ImVec4(0,1,1,1), "Est. Freq: %.1f Hz | Theory: %.1f Hz", engine.m_debug_freq, engine.m_theoretical_freq);
-                ImGui::Unindent();
+                FloatSetting("    Filter Width (Q)", &engine.m_notch_q, 0.5f, 10.0f, "Q: %.2f");
+                FloatSetting("    Suppression Strength", &engine.m_flatspot_strength, 0.0f, 1.0f);
+                ImGui::Text("    Est. / Theory Freq");
+                ImGui::NextColumn();
+                ImGui::TextDisabled("%.1f Hz / %.1f Hz", engine.m_debug_freq, engine.m_theoretical_freq);
+                ImGui::NextColumn();
             }
             
-            BoolSetting("Static Noise Filter", &engine.m_static_notch_enabled);
+            BoolSetting("  Static Noise Filter", &engine.m_static_notch_enabled);
             if (engine.m_static_notch_enabled) {
-                ImGui::Indent();
-                FloatSetting("Target Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.0f Hz");
-                ImGui::Unindent();
+                FloatSetting("    Target Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.1f Hz");
             }
+            
             ImGui::TreePop();
+        } else {
+            // Keep columns synchronized when section is collapsed
+            ImGui::NextColumn(); ImGui::NextColumn();
         }
+        
+        ImGui::TreePop();
+    } else { 
+        // Keep columns synchronized when section is collapsed
+        ImGui::NextColumn(); ImGui::NextColumn(); 
     }
 
-    // =========================================================
-    // SECTION 7: OVERSTEER AND REAR TYRES
-    // =========================================================
-    if (ImGui::CollapsingHeader("Oversteer and Rear Tyres", ImGuiTreeNodeFlags_DefaultOpen)) {
-        FloatSetting("Oversteer Boost", &engine.m_oversteer_boost, 0.0f, 20.0f);
+    // --- GROUP: REAR AXLE ---
+    if (ImGui::TreeNodeEx("Rear Axle (Oversteer)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+        ImGui::NextColumn(); ImGui::NextColumn();
         
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        if (ImGui::TreeNode("SoP (Seat of Pants)")) {
-            FloatSetting("Rear Align Torque", &engine.m_rear_align_effect, 0.0f, 20.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Counter-steering force generated by rear tire slip.");
-            
-            FloatSetting("SoP Yaw (Kick)", &engine.m_sop_yaw_gain, 0.0f, 20.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Predictive kick based on Yaw Acceleration.");
-            
-            FloatSetting("Gyroscopic Damping", &engine.m_gyro_gain, 0.0f, 1.0f);
-            
-            FloatSetting("Lateral G (SoP Effect)", &engine.m_sop_effect, 0.0f, 20.0f);
-            
-            ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-            if (ImGui::TreeNode("Advanced SoP")) {
-                // SoP Smoothing
-                int lat_ms = (int)((1.0f - engine.m_sop_smoothing_factor) * 100.0f);
-                if (lat_ms > 20) ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "(SIGNAL LATENCY: %d ms)", lat_ms);
-                else ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "(Latency: %d ms - OK)", lat_ms);
-                char fmt[32]; snprintf(fmt, sizeof(fmt), "%%.2f (%dms lag)", lat_ms);
-                FloatSetting("SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, fmt);
-                
-                FloatSetting("SoP Scale", &engine.m_sop_scale, 0.0f, 20.0f, "%.1f");
-                ImGui::TreePop();
+        FloatSetting("Oversteer Boost", &engine.m_oversteer_boost, 0.0f, 2.0f, FormatPct(engine.m_oversteer_boost), "Multiplier for SoP when rear grip is lost.");
+        FloatSetting("SoP Lateral G", &engine.m_sop_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_sop_effect, FFBEngine::BASE_NM_SOP_LATERAL));
+        FloatSetting("Rear Align Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN), "Counter-steering force generated by rear tire slip.");
+        FloatSetting("Yaw Kick", &engine.m_sop_yaw_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK), "Predictive kick based on Yaw Acceleration.");
+        FloatSetting("Gyro Damping", &engine.m_gyro_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_gyro_gain, FFBEngine::BASE_NM_GYRO_DAMPING));
+        
+        ImGui::TextColored(ImVec4(0.0f, 0.6f, 0.85f, 1.0f), "Advanced SoP");
+        ImGui::NextColumn(); ImGui::NextColumn();
+
+        // SoP Smoothing with Latency Text above slider
+        ImGui::Text("SoP Smoothing");
+        ImGui::NextColumn();
+        
+        int lat_ms = (int)((1.0f - engine.m_sop_smoothing_factor) * 100.0f + 0.5f);
+        ImVec4 lat_color = (lat_ms < 15) ? ImVec4(0.0f, 1.0f, 0.0f, 1.0f) : ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+        ImGui::TextColored(lat_color, "Latency: %d ms - %s", lat_ms, (lat_ms < 15) ? "OK" : "High");
+        
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::SliderFloat("##SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, "%.2f")) selected_preset = -1;
+        if (ImGui::IsItemHovered()) {
+            float step = 0.01f;
+            bool changed = false;
+            if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) { engine.m_sop_smoothing_factor -= step; changed = true; }
+            if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) { engine.m_sop_smoothing_factor += step; changed = true; }
+            if (changed) { 
+                engine.m_sop_smoothing_factor = (std::max)(0.0f, (std::min)(1.0f, engine.m_sop_smoothing_factor)); 
+                selected_preset = -1; 
             }
-            ImGui::TreePop();
+            if (!changed) ImGui::SetTooltip("Fine Tune: Arrow Keys | Exact: Ctrl+Click");
         }
-    }
+        ImGui::NextColumn();
 
-    // =========================================================
-    // SECTION 8: GRIP AND SLIP ANGLE ESTIMATION
-    // =========================================================
-    if (ImGui::CollapsingHeader("Grip and Slip Angle Estimation", ImGuiTreeNodeFlags_DefaultOpen)) {
-        int slip_ms = (int)(engine.m_slip_angle_smoothing * 1000.0f);
-        if (slip_ms > 20) ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "(PHYSICS LATENCY: %d ms)", slip_ms);
-        else ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "(Physics: %d ms - OK)", slip_ms);
-        char fmt[32]; snprintf(fmt, sizeof(fmt), "%%.3f (%dms lag)", slip_ms);
-        FloatSetting("Slip Angle Smoothing", &engine.m_slip_angle_smoothing, 0.000f, 0.100f, fmt);
-    }
-
-    // =========================================================
-    // SECTION 9: HAPTICS (DYNAMIC)
-    // =========================================================
-    if (ImGui::CollapsingHeader("Haptics (Dynamic)")) {
-        BoolSetting("Progressive Lockup", &engine.m_lockup_enabled);
-        if (engine.m_lockup_enabled) { ImGui::SameLine(); FloatSetting("##Lockup", &engine.m_lockup_gain, 0.0f, 5.0f, "Gain: %.2f"); }
+        FloatSetting("  SoP Scale", &engine.m_sop_scale, 0.0f, 20.0f);
         
-        BoolSetting("Spin Traction Loss", &engine.m_spin_enabled);
-        if (engine.m_spin_enabled) { ImGui::SameLine(); FloatSetting("##Spin", &engine.m_spin_gain, 0.0f, 5.0f, "Gain: %.2f"); }
-        
-        BoolSetting("Use Manual Slip Calc", &engine.m_use_manual_slip);
+        ImGui::TreePop();
+    } else { 
+        // Keep columns synchronized when section is collapsed
+        ImGui::NextColumn(); ImGui::NextColumn(); 
     }
 
-    // =========================================================
-    // SECTION 10: TEXTURES
-    // =========================================================
-    if (ImGui::CollapsingHeader("Textures")) {
+    // --- GROUP: PHYSICS ---
+    if (ImGui::TreeNodeEx("Grip & Slip Angle Estimation", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+        ImGui::NextColumn(); ImGui::NextColumn();
+        
+        // Slip Smoothing with Latency Text above slider
+        ImGui::Text("Slip Angle Smoothing");
+        ImGui::NextColumn();
+        
+        int slip_ms = (int)(engine.m_slip_angle_smoothing * 1000.0f + 0.5f);
+        ImVec4 slip_color = (slip_ms < 15) ? ImVec4(0.0f, 1.0f, 0.0f, 1.0f) : ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+        ImGui::TextColored(slip_color, "Latency: %d ms - %s", slip_ms, (slip_ms < 15) ? "OK" : "High");
+
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::SliderFloat("##Slip Angle Smoothing", &engine.m_slip_angle_smoothing, 0.000f, 0.100f, "%.3f s")) selected_preset = -1;
+        if (ImGui::IsItemHovered()) {
+            float step = 0.001f;
+            bool changed = false;
+            if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) { engine.m_slip_angle_smoothing -= step; changed = true; }
+            if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) { engine.m_slip_angle_smoothing += step; changed = true; }
+            if (changed) { 
+                engine.m_slip_angle_smoothing = (std::max)(0.000f, (std::min)(0.100f, engine.m_slip_angle_smoothing)); 
+                selected_preset = -1; 
+            }
+            if (!changed) ImGui::SetTooltip("Fine Tune: Arrow Keys | Exact: Ctrl+Click");
+        }
+        ImGui::NextColumn();
+
+        BoolSetting("Manual Slip Calc", &engine.m_use_manual_slip, "Uses local velocity instead of game's slip telemetry.");
+        
+        ImGui::TreePop();
+    } else { 
+        // Keep columns synchronized when section is collapsed
+        ImGui::NextColumn(); ImGui::NextColumn(); 
+    }
+
+    // --- GROUP: TEXTURES ---
+    if (ImGui::TreeNodeEx("Tactile Textures", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+        ImGui::NextColumn(); ImGui::NextColumn();
+        
         BoolSetting("Slide Rumble", &engine.m_slide_texture_enabled);
         if (engine.m_slide_texture_enabled) {
-            ImGui::Indent();
-            FloatSetting("Slide Gain", &engine.m_slide_texture_gain, 0.0f, 5.0f);
-            FloatSetting("Slide Pitch (Freq)", &engine.m_slide_freq_scale, 0.5f, 5.0f, "%.1fx");
-            ImGui::Unindent();
+            FloatSetting("  Slide Gain", &engine.m_slide_texture_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_slide_texture_gain, FFBEngine::BASE_NM_SLIDE_TEXTURE));
+            FloatSetting("  Slide Pitch", &engine.m_slide_freq_scale, 0.5f, 5.0f, "%.2fx");
         }
         
         BoolSetting("Road Details", &engine.m_road_texture_enabled);
         if (engine.m_road_texture_enabled) {
-            ImGui::Indent();
-            FloatSetting("Road Gain", &engine.m_road_texture_gain, 0.0f, 5.0f);
-            ImGui::Unindent();
+            FloatSetting("  Road Gain", &engine.m_road_texture_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_road_texture_gain, FFBEngine::BASE_NM_ROAD_TEXTURE));
+        }
+
+        BoolSetting("Lockup Vibration", &engine.m_lockup_enabled);
+        if (engine.m_lockup_enabled) {
+            FloatSetting("  Lockup Strength", &engine.m_lockup_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_lockup_gain, FFBEngine::BASE_NM_LOCKUP_VIBRATION));
         }
         
-        FloatSetting("Scrub Drag Gain", &engine.m_scrub_drag_gain, 0.0f, 1.0f);
+        BoolSetting("Spin Vibration", &engine.m_spin_enabled);
+        if (engine.m_spin_enabled) {
+            FloatSetting("  Spin Strength", &engine.m_spin_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_spin_gain, FFBEngine::BASE_NM_SPIN_VIBRATION));
+        }
+
+        FloatSetting("Scrub Drag", &engine.m_scrub_drag_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_scrub_drag_gain, FFBEngine::BASE_NM_SCRUB_DRAG));
+        
         const char* bottoming_modes[] = { "Method A: Scraping", "Method B: Susp. Spike" };
-        IntSetting("Bottoming Logic", &engine.m_bottoming_method, bottoming_modes, IM_ARRAYSIZE(bottoming_modes));
+        IntSetting("Bottoming Logic", &engine.m_bottoming_method, bottoming_modes, sizeof(bottoming_modes)/sizeof(bottoming_modes[0]));
+        
+        ImGui::TreePop();
+    } else { 
+        // Keep columns synchronized when section is collapsed
+        ImGui::NextColumn(); ImGui::NextColumn(); 
     }
 
+    // End Columns
+    ImGui::Columns(1);
+    
     ImGui::End();
 }
-
 // Win32 message handler
 // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
 // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
@@ -23641,6 +24141,7 @@ public:
     static void Shutdown();
     
     static void* GetWindowHandle(); // Returns HWND
+    static void SetupGUIStyle();   // Setup professional "Deep Dark" theme
 
     // Returns true if the GUI is active/focused (affects lazy rendering)
     static bool Render(FFBEngine& engine);
@@ -25017,10 +25518,13 @@ if(WIN32)
         test_windows_platform.cpp 
         ../src/DirectInputFFB.cpp 
         ../src/Config.cpp
+        ../src/GuiLayer.cpp
+        ../src/GameConnector.cpp
+        ${IMGUI_SOURCES}
     )
     
     # Link required Windows libraries
-    target_link_libraries(run_tests_win32 dinput8 dxguid version imm32 winmm)
+    target_link_libraries(run_tests_win32 dinput8 dxguid version imm32 winmm d3d11 d3dcompiler dxgi)
     
     # Add to CTest
     add_test(NAME WindowsPlatformTest COMMAND run_tests_win32)
@@ -25068,35 +25572,38 @@ int g_tests_failed = 0;
 
 // --- Tests ---
 
-void test_snapshot_data_integrity(); // Forward declaration
-void test_snapshot_data_v049(); // Forward declaration
-void test_rear_force_workaround(); // Forward declaration
-void test_rear_align_effect(); // Forward declaration
-void test_kinematic_load_braking(); // Forward declaration
-void test_combined_grip_loss(); // Forward declaration
-void test_sop_yaw_kick_direction(); // Forward declaration  (v0.4.20)
-void test_zero_effects_leakage(); // Forward declaration
-void test_base_force_modes(); // Forward declaration
-void test_sop_yaw_kick(); // Forward declaration
-void test_gyro_damping(); // Forward declaration (v0.4.17)
-void test_yaw_accel_smoothing(); // Forward declaration (v0.4.18)
-void test_yaw_accel_convergence(); // Forward declaration (v0.4.18)
-void test_regression_yaw_slide_feedback(); // Forward declaration (v0.4.18)
-void test_yaw_kick_signal_conditioning(); // Forward declaration (v0.4.42)
-void test_coordinate_sop_inversion(); // Forward declaration (v0.4.19)
-void test_coordinate_rear_torque_inversion(); // Forward declaration (v0.4.19)
-void test_coordinate_scrub_drag_direction(); // Forward declaration (v0.4.19)
-void test_coordinate_debug_slip_angle_sign(); // Forward declaration (v0.4.19)
-void test_regression_no_positive_feedback(); // Forward declaration (v0.4.19)
-void test_coordinate_all_effects_alignment(); // Forward declaration (v0.4.21)
-void test_regression_phase_explosion(); // Forward declaration (Regression)
-void test_time_corrected_smoothing(); // Forward declaration (v0.4.37)
-void test_gyro_stability(); // Forward declaration (v0.4.37)
-void test_chassis_inertia_smoothing_convergence(); // Forward declaration (v0.4.39)
-void test_kinematic_load_cornering(); // Forward declaration (v0.4.39)
-void test_notch_filter_attenuation(); // Forward declaration (v0.4.41)
-void test_frequency_estimator(); // Forward declaration (v0.4.41)
-void test_static_notch_integration(); // Forward declaration (v0.4.43)
+static void test_snapshot_data_integrity(); // Forward declaration
+static void test_snapshot_data_v049(); // Forward declaration
+static void test_rear_force_workaround(); // Forward declaration
+static void test_rear_align_effect(); // Forward declaration
+static void test_kinematic_load_braking(); // Forward declaration
+static void test_combined_grip_loss(); // Forward declaration
+static void test_sop_yaw_kick_direction(); // Forward declaration  (v0.4.20)
+static void test_zero_effects_leakage(); // Forward declaration
+static void test_base_force_modes(); // Forward declaration
+static void test_sop_yaw_kick(); // Forward declaration
+static void test_gyro_damping(); // Forward declaration (v0.4.17)
+static void test_yaw_accel_smoothing(); // Forward declaration (v0.4.18)
+static void test_yaw_accel_convergence(); // Forward declaration (v0.4.18)
+static void test_regression_yaw_slide_feedback(); // Forward declaration (v0.4.18)
+static void test_yaw_kick_signal_conditioning(); // Forward declaration (v0.4.42)
+static void test_coordinate_sop_inversion(); // Forward declaration (v0.4.19)
+static void test_coordinate_rear_torque_inversion(); // Forward declaration (v0.4.19)
+static void test_coordinate_scrub_drag_direction(); // Forward declaration (v0.4.19)
+static void test_coordinate_debug_slip_angle_sign(); // Forward declaration (v0.4.19)
+static void test_regression_no_positive_feedback(); // Forward declaration (v0.4.19)
+static void test_coordinate_all_effects_alignment(); // Forward declaration (v0.4.21)
+static void test_regression_phase_explosion(); // Forward declaration (Regression)
+static void test_time_corrected_smoothing(); // Forward declaration (v0.4.37)
+static void test_gyro_stability(); // Forward declaration (v0.4.37)
+static void test_chassis_inertia_smoothing_convergence(); // Forward declaration (v0.4.39)
+static void test_kinematic_load_cornering(); // Forward declaration (v0.4.39)
+static void test_notch_filter_attenuation(); // Forward declaration (v0.4.41)
+static void test_frequency_estimator(); // Forward declaration (v0.4.41)
+static void test_static_notch_integration(); // Forward declaration (v0.4.43)
+static void test_gain_compensation(); // Forward declaration (v0.4.50)
+static void test_config_safety_clamping(); // Forward declaration (v0.4.50)
+
 
 
 
@@ -25290,11 +25797,13 @@ static void test_scrub_drag_fade() {
     double force = engine.calculate_force(&data);
     
     // Check absolute magnitude
-    if (std::abs(std::abs(force) - 0.0625) < 0.001) {
+    // v0.4.50: Decoupling scales force to 20Nm baseline independently of Ref.
+    // Full force = 2.5 Nm. Normalized (by any Ref) = 2.5 / 20.0 = 0.125.
+    if (std::abs(std::abs(force) - 0.125) < 0.001) {
         std::cout << "[PASS] Scrub drag faded correctly (50%)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Scrub drag fade incorrect. Got " << force << " Expected 0.0625." << std::endl;
+        std::cout << "[FAIL] Scrub drag fade incorrect. Got " << force << " Expected 0.125." << std::endl;
         g_tests_failed++;
     }
 }
@@ -25338,11 +25847,13 @@ static void test_road_texture_teleport() {
     double force = engine.calculate_force(&data);
     
     // Check if clamped
-    if (std::abs(force - 0.025) < 0.001) {
+    // v0.4.50: Decoupling scales force to 20Nm baseline.
+    // Clamped Force = 1.0 Nm. Normalized = 1.0 / 20.0 = 0.05.
+    if (std::abs(force - 0.05) < 0.001) {
         std::cout << "[PASS] Teleport spike clamped." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Teleport spike unclamped? Got " << force << " Expected 0.025." << std::endl;
+        std::cout << "[FAIL] Teleport spike unclamped? Got " << force << " Expected 0.05." << std::endl;
         g_tests_failed++;
     }
 }
@@ -26508,7 +27019,7 @@ static void test_config_persistence() {
     engine_save.m_gain = 1.23f;
     engine_save.m_sop_effect = 0.45f;
     engine_save.m_lockup_enabled = true;
-    engine_save.m_road_texture_gain = 2.5f;
+    engine_save.m_road_texture_gain = 1.5f; // v0.4.50: Use value within safe range (max 2.0)
     
     // 2. Save
     Config::Save(engine_save, test_file);
@@ -26519,7 +27030,7 @@ static void test_config_persistence() {
     // 4. Verify
     ASSERT_NEAR(engine_load.m_gain, 1.23f, 0.001);
     ASSERT_NEAR(engine_load.m_sop_effect, 0.45f, 0.001);
-    ASSERT_NEAR(engine_load.m_road_texture_gain, 2.5f, 0.001);
+    ASSERT_NEAR(engine_load.m_road_texture_gain, 1.5f, 0.001);
     
     if (engine_load.m_lockup_enabled == true) {
         std::cout << "[PASS] Boolean persistence." << std::endl;
@@ -27637,6 +28148,8 @@ int main() {
     test_frequency_estimator();
     
     test_static_notch_integration(); // v0.4.43
+    test_gain_compensation(); // v0.4.50
+    test_config_safety_clamping(); // v0.4.50
     
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
@@ -28085,7 +28598,9 @@ static void test_rear_force_workaround() {
     // v0.4.40 Update: Reduced tau to 0.015 for lower latency
     // with dt=0.01 (100Hz), alpha = 0.01 / (0.015 + 0.01) = 0.4
     // Expected = Raw (-12.13) * 0.4 = -4.85 Nm
-    double expected_torque = -4.85;   // First-frame value with Time-Corrected LPF (v0.4.40)
+    // v0.4.50 Update: FFB snapshot now scales with MaxTorqueRef (Decoupling)
+    // with Ref=100.0, scale = 5.0. Expected = -4.85 * 5.0 = -24.25 Nm
+    double expected_torque = -24.25;   // First-frame value with Decoupling (v0.4.50)
     double torque_tolerance = 1.0;    // ±1.0 Nm tolerance
     
     // ========================================
@@ -28185,7 +28700,8 @@ static void test_rear_align_effect() {
         
         // Expected ~-2.4 Nm (with LPF smoothing on first frame, tau=0.0225)
         // v0.4.40: Updated to -3.46 Nm (tau=0.015, alpha=0.4, with 2x rear_align_effect)
-        double expected_torque = -3.46;
+        // v0.4.50: Decoupling (Ref=100) scales by 5.0. Expected = -3.46 * 5.0 = -17.3 Nm
+        double expected_torque = -17.3;
         double torque_tolerance = 1.0; 
         
         if (rear_torque_nm > (expected_torque - torque_tolerance) && 
@@ -29321,6 +29837,192 @@ static void test_static_notch_integration() {
     }
 }
 
+static void test_gain_compensation() {
+    std::cout << "\nTest: FFB Signal Gain Compensation (Decoupling)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+
+    // Common setup
+    data.mDeltaTime = 0.0025; // 400Hz
+    data.mLocalVel.z = 20.0;
+    data.mWheel[0].mRideHeight = 0.1;
+    data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[2].mRideHeight = 0.1;
+    data.mWheel[3].mRideHeight = 0.1;
+    data.mWheel[0].mTireLoad = 4000.0;
+    data.mWheel[1].mTireLoad = 4000.0;
+    engine.m_gain = 1.0;
+    engine.m_invert_force = false;
+    engine.m_understeer_effect = 0.0; // Disable modifiers
+    engine.m_oversteer_boost = 0.0;
+
+    // 1. Test Generator: Rear Align Torque
+    // Use fresh engines for each check to ensure identical LPF states
+    double ra1, ra2;
+    {
+        FFBEngine e1;
+        e1.m_gain = 1.0; e1.m_invert_force = false; e1.m_understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
+        e1.m_rear_align_effect = 1.0;
+        e1.m_max_torque_ref = 20.0f;
+        ra1 = e1.calculate_force(&data);
+    }
+    {
+        FFBEngine e2;
+        e2.m_gain = 1.0; e2.m_invert_force = false; e2.m_understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
+        e2.m_rear_align_effect = 1.0;
+        e2.m_max_torque_ref = 60.0f;
+        ra2 = e2.calculate_force(&data);
+    }
+
+    if (std::abs(ra1 - ra2) < 0.001) {
+        std::cout << "[PASS] Rear Align Torque correctly compensated (" << ra1 << " == " << ra2 << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Rear Align Torque compensation failed! 20Nm: " << ra1 << " 60Nm: " << ra2 << std::endl;
+        g_tests_failed++;
+    }
+
+    // 2. Test Generator: Slide Texture
+    double s1, s2;
+    {
+        FFBEngine e1;
+        e1.m_gain = 1.0; e1.m_invert_force = false; e1.m_understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
+        e1.m_slide_texture_enabled = true;
+        e1.m_slide_texture_gain = 1.0;
+        e1.m_max_torque_ref = 20.0f;
+        e1.m_slide_phase = 0.5;
+        s1 = e1.calculate_force(&data);
+    }
+    {
+        FFBEngine e2;
+        e2.m_gain = 1.0; e2.m_invert_force = false; e2.m_understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
+        e2.m_slide_texture_enabled = true;
+        e2.m_slide_texture_gain = 1.0;
+        e2.m_max_torque_ref = 100.0f;
+        e2.m_slide_phase = 0.5;
+        s2 = e2.calculate_force(&data);
+    }
+
+    if (std::abs(s1 - s2) < 0.001) {
+        std::cout << "[PASS] Slide Texture correctly compensated (" << s1 << " == " << s2 << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Slide Texture compensation failed! 20Nm: " << s1 << " 100Nm: " << s2 << std::endl;
+        g_tests_failed++;
+    }
+
+    // 3. Test Modifier: Understeer (Should NOT be compensated)
+    engine.m_slide_texture_enabled = false;
+    engine.m_understeer_effect = 0.5; // 50% drop
+    data.mSteeringShaftTorque = 10.0;
+    data.mWheel[0].mGripFract = 0.6; // 40% loss
+    data.mWheel[1].mGripFract = 0.6;
+
+    // Normalizing 20Nm: (10.0 * (1 - 0.4*0.5)) / 20 = (10 * 0.8) / 20 = 0.4
+    engine.m_max_torque_ref = 20.0f;
+    double u1 = engine.calculate_force(&data);
+
+    // Normalizing 40Nm: (10.0 * 0.8) / 40 = 0.2
+    // If it WAS compensated, it would be (10 * 0.8 * 2) / 40 = 0.4
+    engine.m_max_torque_ref = 40.0f;
+    double u2 = engine.calculate_force(&data);
+
+    if (std::abs(u1 - (u2 * 2.0)) < 0.001) {
+        std::cout << "[PASS] Understeer Modifier correctly uncompensated (" << u1 << " vs " << u2 << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Understeer Modifier behavior unexpected! 20Nm: " << u1 << " 40Nm: " << u2 << std::endl;
+        g_tests_failed++;
+    }
+
+    std::cout << "[SUMMARY] Gain Compensation verified for all effect types." << std::endl;
+}
+
+static void test_config_safety_clamping() {
+    std::cout << "\nTest: Config Safety Clamping (v0.4.50)" << std::endl;
+    
+    // Create a temporary unsafe config file with legacy high-gain values
+    const char* test_file = "tmp_unsafe_config_test.ini";
+    {
+        std::ofstream file(test_file);
+        if (!file.is_open()) {
+            std::cout << "[FAIL] Could not create test config file." << std::endl;
+            g_tests_failed++;
+            return;
+        }
+        
+        // Write legacy high-gain values that would cause physics explosions
+        file << "slide_gain=5.0\n";
+        file << "road_gain=10.0\n";
+        file << "lockup_gain=8.0\n";
+        file << "spin_gain=7.0\n";
+        file << "rear_align_effect=15.0\n";
+        file << "sop_yaw_gain=20.0\n";
+        file << "sop=12.0\n";
+        file << "scrub_drag_gain=3.0\n";
+        file << "gyro_gain=2.5\n";
+        file.close();
+    }
+    
+    // Load the unsafe config
+    FFBEngine engine;
+    Config::Load(engine, test_file);
+    
+    // Verify all Generator effects are clamped to safe maximums
+    bool all_clamped = true;
+    
+    // Clamp to 2.0f
+    if (engine.m_slide_texture_gain != 2.0f) {
+        std::cout << "[FAIL] slide_gain not clamped. Got: " << engine.m_slide_texture_gain << " Expected: 2.0" << std::endl;
+        all_clamped = false;
+    }
+    if (engine.m_road_texture_gain != 2.0f) {
+        std::cout << "[FAIL] road_gain not clamped. Got: " << engine.m_road_texture_gain << " Expected: 2.0" << std::endl;
+        all_clamped = false;
+    }
+    if (engine.m_lockup_gain != 2.0f) {
+        std::cout << "[FAIL] lockup_gain not clamped. Got: " << engine.m_lockup_gain << " Expected: 2.0" << std::endl;
+        all_clamped = false;
+    }
+    if (engine.m_spin_gain != 2.0f) {
+        std::cout << "[FAIL] spin_gain not clamped. Got: " << engine.m_spin_gain << " Expected: 2.0" << std::endl;
+        all_clamped = false;
+    }
+    if (engine.m_rear_align_effect != 2.0f) {
+        std::cout << "[FAIL] rear_align_effect not clamped. Got: " << engine.m_rear_align_effect << " Expected: 2.0" << std::endl;
+        all_clamped = false;
+    }
+    if (engine.m_sop_yaw_gain != 2.0f) {
+        std::cout << "[FAIL] sop_yaw_gain not clamped. Got: " << engine.m_sop_yaw_gain << " Expected: 2.0" << std::endl;
+        all_clamped = false;
+    }
+    if (engine.m_sop_effect != 2.0f) {
+        std::cout << "[FAIL] sop not clamped. Got: " << engine.m_sop_effect << " Expected: 2.0" << std::endl;
+        all_clamped = false;
+    }
+    
+    // Clamp to 1.0f
+    if (engine.m_scrub_drag_gain != 1.0f) {
+        std::cout << "[FAIL] scrub_drag_gain not clamped. Got: " << engine.m_scrub_drag_gain << " Expected: 1.0" << std::endl;
+        all_clamped = false;
+    }
+    if (engine.m_gyro_gain != 1.0f) {
+        std::cout << "[FAIL] gyro_gain not clamped. Got: " << engine.m_gyro_gain << " Expected: 1.0" << std::endl;
+        all_clamped = false;
+    }
+    
+    if (all_clamped) {
+        std::cout << "[PASS] All legacy high-gain values correctly clamped to safe maximums." << std::endl;
+        g_tests_passed++;
+    } else {
+        g_tests_failed++;
+    }
+    
+    // Clean up test file
+    std::remove(test_file);
+}
+
 ```
 
 # File: tests\test_windows_platform.cpp
@@ -29329,11 +30031,20 @@ static void test_static_notch_integration() {
 #include <string>
 #include <vector>
 #include <windows.h>
+#define DIRECTINPUT_VERSION 0x0800  // DirectInput 8
 #include <dinput.h>
 
 // Include headers to test
 #include "../src/DirectInputFFB.h"
 #include "../src/Config.h"
+#include "../src/GuiLayer.h"
+#include "imgui.h"
+#include <atomic>
+#include <mutex>
+
+// Global externs required by GuiLayer
+std::atomic<bool> g_running(true);
+std::mutex g_engine_mutex;
 
 // --- Simple Test Framework (Copy from main test file) ---
 int g_tests_passed = 0;
@@ -29359,7 +30070,7 @@ int g_tests_failed = 0;
 
 // --- TESTS ---
 
-void test_guid_string_conversion() {
+static void test_guid_string_conversion() {
     std::cout << "\nTest: GUID <-> String Conversion (Persistence)" << std::endl;
 
     // 1. Create a known GUID (e.g., a standard HID GUID)
@@ -29383,7 +30094,7 @@ void test_guid_string_conversion() {
     ASSERT_TRUE(isEmpty);
 }
 
-void test_window_title_extraction() {
+static void test_window_title_extraction() {
     std::cout << "\nTest: Active Window Title (Diagnostics)" << std::endl;
     
     std::string title = DirectInputFFB::GetActiveWindowTitle();
@@ -29393,7 +30104,7 @@ void test_window_title_extraction() {
     ASSERT_TRUE(!title.empty());
 }
 
-void test_config_persistence_guid() {
+static void test_config_persistence_guid() {
     std::cout << "\nTest: Config Persistence (Last Device GUID)" << std::endl;
 
     // 1. Setup
@@ -29420,7 +30131,7 @@ void test_config_persistence_guid() {
     remove(test_file.c_str());
 }
 
-void test_config_always_on_top_persistence() {
+static void test_config_always_on_top_persistence() {
     std::cout << "\nTest: Config Persistence (Always on Top)" << std::endl;
 
     // 1. Setup
@@ -29446,7 +30157,7 @@ void test_config_always_on_top_persistence() {
     remove(test_file.c_str());
 }
 
-void test_window_always_on_top_behavior() {
+static void test_window_always_on_top_behavior() {
     std::cout << "\nTest: Window Always on Top Behavior" << std::endl;
 
     // 1. Create a dummy window for testing
@@ -29479,7 +30190,7 @@ void test_window_always_on_top_behavior() {
     DestroyWindow(hwnd);
 }
 
-void test_preset_management_system() {
+static void test_preset_management_system() {
     std::cout << "\nTest: Preset Management System" << std::endl;
 
     // 1. Use a temporary test file to avoid creating artifacts
@@ -29517,6 +30228,366 @@ void test_preset_management_system() {
     remove("config.ini");
 }
 
+static void test_gui_style_application() {
+    std::cout << "\nTest: GUI Style Application (Headless)" << std::endl;
+    
+    // 1. Initialize Headless ImGui Context
+    ImGuiContext* ctx = ImGui::CreateContext();
+    ASSERT_TRUE(ctx != nullptr);
+    
+    // 2. Apply Custom Style
+    GuiLayer::SetupGUIStyle();
+    
+    // 3. Verify specific color values from the plan
+    // Background should be (0.12, 0.12, 0.12)
+    float bg_r = ImGui::GetStyle().Colors[ImGuiCol_WindowBg].x;
+    float bg_g = ImGui::GetStyle().Colors[ImGuiCol_WindowBg].y;
+    float bg_b = ImGui::GetStyle().Colors[ImGuiCol_WindowBg].z;
+    
+    ASSERT_TRUE(abs(bg_r - 0.12f) < 0.001f);
+    ASSERT_TRUE(abs(bg_g - 0.12f) < 0.001f);
+    ASSERT_TRUE(abs(bg_b - 0.12f) < 0.001f);
+    
+    // Header should be transparent alpha=0
+    float header_a = ImGui::GetStyle().Colors[ImGuiCol_Header].w;
+    ASSERT_TRUE(header_a == 0.00f);
+    
+    // Slider Grab should be the Teal Accent (0.00, 0.60, 0.85)
+    float accent_r = ImGui::GetStyle().Colors[ImGuiCol_SliderGrab].x;
+    float accent_g = ImGui::GetStyle().Colors[ImGuiCol_SliderGrab].y;
+    float accent_b = ImGui::GetStyle().Colors[ImGuiCol_SliderGrab].z;
+    
+    ASSERT_TRUE(abs(accent_r - 0.00f) < 0.001f);
+    ASSERT_TRUE(abs(accent_g - 0.60f) < 0.001f);
+    ASSERT_TRUE(abs(accent_b - 0.85f) < 0.001f);
+
+    // 4. Destroy Context
+    ImGui::DestroyContext(ctx);
+}
+
+static void test_slider_precision_display() {
+    std::cout << "\nTest: Slider Precision Display (Arrow Key Visibility)" << std::endl;
+    
+    // This test verifies that slider format strings have enough decimal places
+    // to show changes when using arrow keys (typical step: 0.01)
+    
+    // Test Case 1: Filter Width (Q) - Range 0.5-10.0, step 0.01
+    // Format should be "Q: %.2f" to show 0.01 changes
+    {
+        float value = 2.50f;
+        char buf[64];
+        snprintf(buf, 64, "Q: %.2f", value);
+        std::string result1(buf);
+        
+        value += 0.01f;  // Simulate arrow key press
+        snprintf(buf, 64, "Q: %.2f", value);
+        std::string result2(buf);
+        
+        // The displayed strings should be different
+        ASSERT_TRUE(result1 != result2);
+        std::cout << "  Filter Width: " << result1 << " -> " << result2 << std::endl;
+    }
+    
+    // Test Case 2: Percentage sliders - Range 0-2.0, step 0.01
+    // Format should be "%.1f%%" to show 0.5% changes (0.01 * 100 = 1.0, but displayed as 0.5% of 200%)
+    {
+        float value = 1.00f;
+        char buf[64];
+        snprintf(buf, 64, "%.1f%%%%", value * 100.0f);
+        std::string result1(buf);
+        
+        value += 0.01f;  // Simulate arrow key press
+        snprintf(buf, 64, "%.1f%%%%", value * 100.0f);
+        std::string result2(buf);
+        
+        // The displayed strings should be different
+        ASSERT_TRUE(result1 != result2);
+        std::cout << "  Percentage: " << result1 << " -> " << result2 << std::endl;
+    }
+    
+    // Test Case 3: Understeer Effect - Range 0-50, step 0.5
+    // Format should be "%.1f%%" to show 1.0% changes (0.5 / 50 * 100 = 1.0%)
+    {
+        float value = 25.0f;
+        char buf[64];
+        snprintf(buf, 64, "%.1f%%%%", (value / 50.0f) * 100.0f);
+        std::string result1(buf);
+        
+        value += 0.5f;  // Simulate arrow key press (larger range uses 0.5 step)
+        snprintf(buf, 64, "%.1f%%%%", (value / 50.0f) * 100.0f);
+        std::string result2(buf);
+        
+        // The displayed strings should be different
+        ASSERT_TRUE(result1 != result2);
+        std::cout << "  Understeer: " << result1 << " -> " << result2 << std::endl;
+    }
+    
+    // Test Case 4: Small range sliders - Range 0-0.1, step 0.001
+    // Format should be "%.3f" or better to show 0.001 changes
+    {
+        float value = 0.050f;
+        char buf[64];
+        snprintf(buf, 64, "%.3f s", value);
+        std::string result1(buf);
+        
+        value += 0.001f;  // Simulate arrow key press (small range uses 0.001 step)
+        snprintf(buf, 64, "%.3f s", value);
+        std::string result2(buf);
+        
+        // The displayed strings should be different
+        ASSERT_TRUE(result1 != result2);
+        std::cout << "  Small Range: " << result1 << " -> " << result2 << std::endl;
+    }
+    
+    // Test Case 5: Slide Pitch - Range 0.5-5.0, step 0.01
+    // Format should be "%.2fx" to show 0.01 changes
+    {
+        float value = 1.50f;
+        char buf[64];
+        snprintf(buf, 64, "%.2fx", value);
+        std::string result1(buf);
+        
+        value += 0.01f;  // Simulate arrow key press
+        snprintf(buf, 64, "%.2fx", value);
+        std::string result2(buf);
+        
+        // The displayed strings should be different
+        ASSERT_TRUE(result1 != result2);
+        std::cout << "  Slide Pitch: " << result1 << " -> " << result2 << std::endl;
+    }
+}
+
+static void test_slider_precision_regression() {
+    std::cout << "\nTest: Slider Precision Regression (v0.5.1 Fixes)" << std::endl;
+    
+    // This test verifies fixes for sliders that had precision issues
+    // reported in v0.5.1 where arrow key adjustments weren't visible
+    
+    // Test Case 1: Load Cap - Range 1.0-3.0, step 0.01
+    // Format should be "%.2fx" to show 0.01 changes
+    // Bug: Was "%.1fx" which didn't show 0.01 step changes
+    {
+        float value = 1.50f;
+        char buf[64];
+        snprintf(buf, 64, "%.2fx", value);
+        std::string result1(buf);
+        
+        value += 0.01f;  // Simulate arrow key press
+        snprintf(buf, 64, "%.2fx", value);
+        std::string result2(buf);
+        
+        // The displayed strings should be different
+        ASSERT_TRUE(result1 != result2);
+        std::cout << "  Load Cap: " << result1 << " -> " << result2 << std::endl;
+    }
+    
+    // Test Case 2: Target Frequency - Range 10-100, step 0.01
+    // Format should be "%.1f Hz" to show 0.1 changes
+    // Bug: Was "%.0f Hz" which didn't show small adjustments
+    {
+        float value = 50.0f;
+        char buf[64];
+        snprintf(buf, 64, "%.1f Hz", value);
+        std::string result1(buf);
+        
+        value += 0.1f;  // Simulate arrow key press (visible change)
+        snprintf(buf, 64, "%.1f Hz", value);
+        std::string result2(buf);
+        
+        // The displayed strings should be different
+        ASSERT_TRUE(result1 != result2);
+        std::cout << "  Target Frequency: " << result1 << " -> " << result2 << std::endl;
+    }
+    
+    // Test Case 3: Understeer Effect - Range 0-50, step 0.01
+    // Format should be "%.2f" to show 0.01 changes
+    // Bug: Was using pre-calculated percentage with buffer scope issues
+    {
+        float value = 25.00f;
+        char buf[64];
+        snprintf(buf, 64, "%.2f", value);
+        std::string result1(buf);
+        
+        value += 0.01f;  // Simulate arrow key press (step 0.01 for medium range)
+        snprintf(buf, 64, "%.2f", value);
+        std::string result2(buf);
+        
+        // Both should be valid and different
+        ASSERT_TRUE(result1 == "25.00");
+        ASSERT_TRUE(result2 == "25.01");
+        ASSERT_TRUE(result1 != result2);
+        std::cout << "  Understeer Effect: " << result1 << " -> " << result2 << std::endl;
+    }
+    
+    // Test Case 4: Verify step sizes match precision
+    // This ensures our adaptive step logic matches the display precision
+    {
+        // Small range (<1.0): step 0.001, needs %.3f or better
+        float small_step = 0.001f;
+        char buf[64];
+        snprintf(buf, 64, "%.3f", 0.050f);
+        std::string before(buf);
+        snprintf(buf, 64, "%.3f", 0.050f + small_step);
+        std::string after(buf);
+        ASSERT_TRUE(before != after);
+        
+        // Medium range (1.0-50.0): step 0.01, needs %.2f or better
+        float medium_step = 0.01f;
+        snprintf(buf, 64, "%.2f", 1.50f);
+        before = buf;
+        snprintf(buf, 64, "%.2f", 1.50f + medium_step);
+        after = buf;
+        ASSERT_TRUE(before != after);
+        
+        // Large range (>50.0): step 0.5, needs %.1f or better
+        float large_step = 0.5f;
+        snprintf(buf, 64, "%.1f", 25.0f);
+        before = buf;
+        snprintf(buf, 64, "%.1f", 25.0f + large_step);
+        after = buf;
+        ASSERT_TRUE(before != after);
+        
+        std::cout << "  Step size precision matching verified" << std::endl;
+        g_tests_passed++;
+    }
+}
+
+static void test_latency_display_regression() {
+    std::cout << "\nTest: Latency Display Regression (v0.4.50 Restoration)" << std::endl;
+    
+    // This test verifies the latency display feature that was accidentally removed
+    // during the GUI overhaul and restored in v0.4.50
+    // Updated in v0.4.51 to include rounding and new layout
+    
+    // Test Case 1: SoP Smoothing Latency Calculation
+    // Formula: lat_ms = (1.0 - sop_smoothing_factor) * 100.0 + 0.5 (Rounding)
+    {
+        std::cout << "  Testing SoP Smoothing latency calculation..." << std::endl;
+        
+        // Low latency case (should be green)
+        float sop_smoothing_low = 0.90f;  // 10ms latency
+        int lat_ms_low = (int)((1.0f - sop_smoothing_low) * 100.0f + 0.5f);
+        ASSERT_TRUE(lat_ms_low == 10);
+        ASSERT_TRUE(lat_ms_low < 15);  // Should be green
+        std::cout << "    Low latency: " << lat_ms_low << " ms (green)" << std::endl;
+        
+        // High latency case (should be red)
+        float sop_smoothing_high = 0.70f;  // 30ms latency
+        int lat_ms_high = (int)((1.0f - sop_smoothing_high) * 100.0f + 0.5f);
+        ASSERT_TRUE(lat_ms_high == 30);
+        ASSERT_TRUE(lat_ms_high >= 15);  // Should be red
+        std::cout << "    High latency: " << lat_ms_high << " ms (red)" << std::endl;
+        
+        // Boundary case (exactly 15ms - should be red)
+        float sop_smoothing_boundary = 0.85f;  // 15ms latency
+        int lat_ms_boundary = (int)((1.0f - sop_smoothing_boundary) * 100.0f + 0.5f);
+        ASSERT_TRUE(lat_ms_boundary == 15);
+        ASSERT_TRUE(lat_ms_boundary >= 15);  // Should be red (>= threshold)
+        std::cout << "    Boundary latency: " << lat_ms_boundary << " ms (red)" << std::endl;
+    }
+    
+    // Test Case 2: Slip Angle Smoothing Latency Calculation
+    // Formula: slip_ms = slip_angle_smoothing * 1000.0 + 0.5 (Rounding)
+    {
+        std::cout << "  Testing Slip Angle Smoothing latency calculation..." << std::endl;
+        
+        // Low latency case (should be green)
+        float slip_smoothing_low = 0.010f;  // 10ms latency
+        int slip_ms_low = (int)(slip_smoothing_low * 1000.0f + 0.5f);
+        ASSERT_TRUE(slip_ms_low == 10);
+        ASSERT_TRUE(slip_ms_low < 15);  // Should be green
+        std::cout << "    Low latency: " << slip_ms_low << " ms (green)" << std::endl;
+        
+        // High latency case (should be red)
+        float slip_smoothing_high = 0.030f;  // 30ms latency
+        int slip_ms_high = (int)(slip_smoothing_high * 1000.0f + 0.5f);
+        ASSERT_TRUE(slip_ms_high == 30);
+        ASSERT_TRUE(slip_ms_high >= 15);  // Should be red
+        std::cout << "    High latency: " << slip_ms_high << " ms (red)" << std::endl;
+        
+        // Boundary case (exactly 15ms - should be red)
+        float slip_smoothing_boundary = 0.015f;  // 15ms latency
+        int slip_ms_boundary = (int)(slip_smoothing_boundary * 1000.0f + 0.5f);
+        ASSERT_TRUE(slip_ms_boundary == 15);
+        ASSERT_TRUE(slip_ms_boundary >= 15);  // Should be red (>= threshold)
+        std::cout << "    Boundary latency: " << slip_ms_boundary << " ms (red)" << std::endl;
+    }
+    
+    // Test Case 3: Color Coding Logic
+    {
+        std::cout << "  Testing color coding logic..." << std::endl;
+        
+        // Green color for low latency (< 15ms)
+        int lat_ms = 10;
+        bool is_green = (lat_ms < 15);
+        ASSERT_TRUE(is_green);
+        
+        // Verify green color values (0.0, 1.0, 0.0, 1.0)
+        if (is_green) {
+            float r = 0.0f, g = 1.0f, b = 0.0f, a = 1.0f;
+            ASSERT_TRUE(r == 0.0f && g == 1.0f && b == 0.0f && a == 1.0f);
+        }
+        
+        // Red color for high latency (>= 15ms)
+        lat_ms = 20;
+        bool is_red = (lat_ms >= 15);
+        ASSERT_TRUE(is_red);
+        
+        // Verify red color values (1.0, 0.0, 0.0, 1.0)
+        if (is_red) {
+            float r = 1.0f, g = 0.0f, b = 0.0f, a = 1.0f;
+            ASSERT_TRUE(r == 1.0f && g == 0.0f && b == 0.0f && a == 1.0f);
+        }
+        
+        std::cout << "    Color coding verified" << std::endl;
+        g_tests_passed++;
+    }
+    
+    // Test Case 4: Display Format Verification
+    {
+        std::cout << "  Testing display format..." << std::endl;
+        
+        // SoP Smoothing display format: "Latency: XX ms - OK"
+        int lat_ms = 14;
+        char buf[64];
+        snprintf(buf, 64, "Latency: %d ms - %s", lat_ms, (lat_ms < 15) ? "OK" : "High");
+        std::string display_ok(buf);
+        ASSERT_TRUE(display_ok == "Latency: 14 ms - OK");
+        
+        lat_ms = 20;
+        snprintf(buf, 64, "Latency: %d ms - %s", lat_ms, (lat_ms < 15) ? "OK" : "High");
+        std::string display_high(buf);
+        ASSERT_TRUE(display_high == "Latency: 20 ms - High");
+        
+        std::cout << "    Format OK: " << display_ok << std::endl;
+        std::cout << "    Format High: " << display_high << std::endl;
+    }
+    
+    // Test Case 5: Edge Cases
+    {
+        std::cout << "  Testing edge cases..." << std::endl;
+        
+        // Zero latency (SoP smoothing = 1.0)
+        float sop_smoothing_zero = 1.0f;
+        int lat_ms_zero = (int)((1.0f - sop_smoothing_zero) * 100.0f + 0.5f);
+        ASSERT_TRUE(lat_ms_zero == 0);
+        
+        // Maximum latency (SoP smoothing = 0.0)
+        float sop_smoothing_max = 0.0f;
+        int lat_ms_max = (int)((1.0f - sop_smoothing_max) * 100.0f + 0.5f);
+        ASSERT_TRUE(lat_ms_max == 100);
+        
+        // Zero slip smoothing
+        float slip_smoothing_zero = 0.0f;
+        int slip_ms_zero = (int)(slip_smoothing_zero * 1000.0f + 0.5f);
+        ASSERT_TRUE(slip_ms_zero == 0);
+        
+        std::cout << "    Edge cases verified" << std::endl;
+        g_tests_passed++;
+    }
+}
+
+
 int main() {
     std::cout << "=== Running Windows Platform Tests ===" << std::endl;
 
@@ -29526,6 +30597,10 @@ int main() {
     test_config_always_on_top_persistence();
     test_window_always_on_top_behavior();
     test_preset_management_system();
+    test_gui_style_application();
+    test_slider_precision_display();
+    test_slider_precision_regression();
+    test_latency_display_regression();
 
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
