@@ -2,7 +2,7 @@
 
 Do a code review of the staged changes from git. Save the diff to a txt file for easier consultation; all saved diffs must be saved under `tmp\diffs\`. Find our any issues with the changes. Read and follow the instructions in this document on the "Git Diff Retrieval Strategy for Code Reviews": docs\dev_docs\code_reviews\GIT_DIFF_RETRIEVAL_STRATEGY.md
 
-You can read the prompt with the instructions that were given to the coding agent at `docs\dev_docs\prompts\v_0.5.10.md`. Read this document to understand what was supposed to be implemented and verify that the staged changes fullfilled all requirements.
+You can read the prompt with the instructions that were given to the coding agent at `docs\dev_docs\prompts\v_0.5.11.md`. Read this document to understand what was supposed to be implemented and verify that the staged changes fullfilled all requirements.
 
 Save a detailed code review report in the `docs\dev_docs\code_reviews\` folder.
 
