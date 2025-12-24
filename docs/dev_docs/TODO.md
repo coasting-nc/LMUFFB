@@ -31,6 +31,8 @@ DONE: list effects affected by grip and load approximation, and list those that 
 DONE: add smoothing (and slider) for steering shaft torque
 DONE: expose sliders for additional smoothing: yaw kick, gyroscopic damping, Chassis Inertia (Load)
 
+Yaw Kick Smoothing, Gyroscopic Damping Smoothing, Chassis Inertia (Load) Smoothing
+
 update tooltips
 
 test default values after 0-100% normalization of sliders
