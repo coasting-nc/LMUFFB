@@ -256,3 +256,80 @@ if (current_slip_ratio < -trigger_threshold) {
 3.  **Braking over Bumps (Sebring):** `is_bumpy` is true. Prediction is disabled. Threshold stays at **15%**. The bump spikes in deceleration are ignored. If you actually lock up, you will feel it once you hit 15% slip.
 
 This provides the **responsiveness** of prediction on smooth tarmac without the **false positives** on curbs.
+
+
+## Follow up questions 2
+
+Which of the thresholds , constants, or other values used here, should we expose to the user for customization? Assume an esports user that needs to extract the maximum performance from the car.
+
+## Answers 2
+
+For an esports user seeking maximum performance, the priority is **Signal-to-Noise Ratio**. They need the earliest possible warning of a lockup (Signal) but cannot afford false vibrations over bumps (Noise) that might make them lift off the brake unnecessarily.
+
+Here are the specific values to expose, categorized by their function in the tuning workflow.
+
+### 1. The "Target" Controls (Essential)
+These define *where* the limit is. Every pro driver will adjust these based on the car (ABS vs Non-ABS) and tire compound.
+
+*   **Start Slip % (The "Pre-Cue")**
+    *   *Current Logic:* `m_lockup_start_pct` (e.g., 5%).
+    *   *Why Expose:* A pro driver wants this set **just before** the peak grip fall-off. If set too low, it's distracting noise. If set too high, the warning comes too late to save the tire.
+    *   *Range:* 1.0% to 10.0%.
+
+*   **Full Slip % (The "Limit")**
+    *   *Current Logic:* `m_lockup_full_pct` (e.g., 15%).
+    *   *Why Expose:* Defines the point of "No Return."
+    *   *Range:* 10.0% to 25.0%.
+
+*   **Vibration Gamma (The "Feel")**
+    *   *Current Logic:* `m_lockup_gamma` (Linear vs Quadratic vs Cubic).
+    *   *Why Expose:* Esports drivers often prefer **Cubic (3.0)**. They want the wheel silent during threshold braking and a violent spike *only* when they actually cross the line. Linear feels too "mushy" for precision work.
+
+---
+
+### 2. The "Prediction" Controls (Advanced)
+These control the **Hybrid Thresholding** logic. This is where the competitive advantage lies (getting the warning 50ms earlier).
+
+*   **Prediction Sensitivity (Angular Decel Threshold)**
+    *   *Internal Logic:* The `50.0 rad/s²` absolute threshold and `2.0x` relative threshold.
+    *   *Proposal:* Combine these into a single **"Prediction Sensitivity"** slider (Low/Med/High).
+    *   *Why Expose:*
+        *   **High Sensitivity:** Triggers on lighter rapid braking. Good for qualifying laps on smooth tracks.
+        *   **Low Sensitivity:** Only triggers on catastrophic lockups. Good for endurance races to avoid fatigue/false alarms.
+    *   *Implementation:* Map slider 0.0-1.0 to the internal `50.0` constant (e.g., 0.0 = 80 rad/s², 1.0 = 30 rad/s²).
+
+*   **Bump Rejection (Suspension Filter)**
+    *   *Internal Logic:* The `1.0 m/s` suspension velocity gate.
+    *   *Why Expose:* **Crucial for track-specific tuning.**
+        *   **Sebring (Bumpy):** Needs **High Rejection** (e.g., 0.5 m/s). You don't want the lockup alarm going off every time you hit a concrete patch.
+        *   **Paul Ricard (Smooth):** Needs **Low Rejection** (e.g., 2.0 m/s). You want to feel lockups even if you are riding a flat curb.
+    *   *Range:* 0.1 m/s (Strict) to 5.0 m/s (Loose).
+
+---
+
+### 3. The "Gating" Controls (Calibration)
+These ensure the effect only fires when intended.
+
+*   **Brake Deadzone**
+    *   *Internal Logic:* The `0.02` (2%) check.
+    *   *Why Expose:* Pedal calibration varies wildly. A user with a load cell might rest their foot at 3% pressure. They need to raise this to 5% to prevent "ghost vibrations" on straights.
+    *   *Range:* 0% to 10%.
+
+---
+
+### Summary of GUI Changes
+
+I recommend adding a **"Advanced Lockup Tuning"** collapsible section in the GUI with these specific controls:
+
+| Label | Tooltip | Range | Default |
+| :--- | :--- | :--- | :--- |
+| **Start Slip %** | Slip ratio where vibration begins. Lower = Earlier warning. | 1% - 10% | 5% |
+| **Full Slip %** | Slip ratio for max vibration. | 10% - 25% | 15% |
+| **Response Curve** | 1.0=Linear, 3.0=Late/Sharp. Higher values hide early vibrations. | 1.0 - 3.0 | 2.0 |
+| **Prediction Sens.** | How aggressively the app predicts lockups based on wheel deceleration. | Low - High | Med |
+| **Bump Rejection** | Ignores lockup prediction during suspension spikes. Increase for bumpy tracks (Sebring). | 0.0 - 5.0 m/s | 1.0 |
+| **Brake Deadzone** | Minimum pedal input required to activate effect. | 0% - 10% | 2% |
+
+**What to keep hidden (Hardcoded):**
+*   **Airborne Threshold (50N):** This is a physics constant. There is no competitive advantage to changing it.
+*   **Relative Decel Ratio (2x):** It is too abstract for users to tune alongside "Prediction Sensitivity." One slider for sensitivity is enough.
