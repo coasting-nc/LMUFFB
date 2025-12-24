@@ -427,6 +427,14 @@ private:
     // 10.0N is well below any realistic suspension force for a moving car
     static constexpr double MIN_VALID_SUSP_FORCE = 10.0; // N 
 
+    // Lockup Frequency Differentiation Constants (v0.5.11)
+    // These constants control the tactile differentiation between front and rear wheel lockups.
+    // Front lockup uses 1.0x frequency (high pitch "Screech") for standard understeer feedback.
+    // Rear lockup uses 0.5x frequency (low pitch "Heavy Judder") to warn of rear axle instability.
+    // The amplitude boost emphasizes the danger of potential spin during rear lockups.
+    static constexpr double LOCKUP_FREQ_MULTIPLIER_REAR = 0.5;  // Rear lockup frequency (50% of base)
+    static constexpr double LOCKUP_AMPLITUDE_BOOST_REAR = 1.2;  // Rear lockup amplitude boost (20% increase)
+
 public:
     // Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
     // Returns the average slip angle of two wheels using atan2(lateral_vel, longitudinal_vel)
@@ -1110,31 +1118,53 @@ public:
         
         // get_slip_angle was moved up for grip approximation reuse
 
-        // --- 2b. Progressive Lockup (Dynamic) ---
-        // Ensure phase updates even if force is small, but gated by enabled
+        // --- 2b. Progressive Lockup (Front & Rear with Differentiation) ---
         if (m_lockup_enabled && data->mUnfilteredBrake > 0.05) {
+            // 1. Calculate Slip Ratios for all wheels
             double slip_fl = get_slip_ratio(data->mWheel[0]);
             double slip_fr = get_slip_ratio(data->mWheel[1]);
-            // Use worst slip
-            double max_slip = (std::min)(slip_fl, slip_fr); // Slip is negative for braking
-            
-            // Thresholds: -0.1 (Peak Grip), -1.0 (Locked)
-            // Range of interest: -0.1 to -0.5
-            if (max_slip < -0.1) {
-                double severity = (std::abs(max_slip) - 0.1) / 0.4; // 0.0 to 1.0 scale
+            double slip_rl = get_slip_ratio(data->mWheel[2]);
+            double slip_rr = get_slip_ratio(data->mWheel[3]);
+
+            // 2. Find worst slip per axle (Slip is negative during braking, so use min)
+            double max_slip_front = (std::min)(slip_fl, slip_fr);
+            double max_slip_rear  = (std::min)(slip_rl, slip_rr);
+
+            // 3. Determine dominant lockup source
+            double effective_slip = 0.0;
+            double freq_multiplier = 1.0; // Default to Front (High Pitch)
+
+            // Check if Rear is locking up worse than Front
+            // (e.g. Rear -0.5 vs Front -0.1)
+            if (max_slip_rear < max_slip_front) {
+                effective_slip = max_slip_rear;
+                freq_multiplier = LOCKUP_FREQ_MULTIPLIER_REAR; // Lower pitch for Rear -> "Heavy Judder"
+            } else {
+                effective_slip = max_slip_front;
+                freq_multiplier = 1.0; // Standard pitch for Front -> "Screech"
+            }
+
+            // 4. Generate Effect
+            if (effective_slip < -0.1) {
+                double severity = (std::abs(effective_slip) - 0.1) / 0.4;
                 severity = (std::min)(1.0, severity);
                 
-                // DYNAMIC FREQUENCY: Linked to Car Speed (Slower car = Lower pitch grinding)
-                // As the car slows down, the "scrubbing" pitch drops.
-                // Speed is in m/s. 
-                // Example: 300kmh (83m/s) -> ~80Hz. 50kmh (13m/s) -> ~20Hz.
-                double freq = 10.0 + (car_speed_ms * 1.5); 
+                // Base Frequency linked to Car Speed
+                double base_freq = 10.0 + (car_speed_ms * 1.5); 
+                
+                // Apply Axle Differentiation
+                double final_freq = base_freq * freq_multiplier;
 
-                // PHASE ACCUMULATION (FIXED)
-                m_lockup_phase += freq * dt * TWO_PI;
-                m_lockup_phase = std::fmod(m_lockup_phase, TWO_PI); // Wrap correctly
+                // Phase Integration
+                m_lockup_phase += final_freq * dt * TWO_PI;
+                m_lockup_phase = std::fmod(m_lockup_phase, TWO_PI);
 
-                double amp = severity * m_lockup_gain * 4.0 * decoupling_scale; // Scaled for Nm (was 800)
+                // Amplitude
+                double amp = severity * m_lockup_gain * 4.0 * decoupling_scale;
+                
+                // Boost rear amplitude to emphasize danger
+                if (freq_multiplier < 1.0) amp *= LOCKUP_AMPLITUDE_BOOST_REAR;
+
                 lockup_rumble = std::sin(m_lockup_phase) * amp;
                 total_force += lockup_rumble;
             }

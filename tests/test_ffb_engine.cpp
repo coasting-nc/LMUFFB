@@ -71,6 +71,7 @@ static void test_grip_threshold_sensitivity(); // Forward declaration (v0.5.7)
 static void test_steering_shaft_smoothing(); // Forward declaration (v0.5.7)
 static void test_config_defaults_v057(); // Forward declaration (v0.5.7)
 static void test_config_safety_validation_v057(); // Forward declaration (v0.5.7)
+static void test_rear_lockup_differentiation(); // Forward declaration (v0.5.11)
 
 // --- Test Helper Functions (v0.5.7) ---
 
@@ -2660,6 +2661,7 @@ int main() {
     test_steering_shaft_smoothing();
     test_config_defaults_v057();
     test_config_safety_validation_v057();
+    test_rear_lockup_differentiation(); // v0.5.11
     
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
@@ -4712,6 +4714,80 @@ static void test_config_safety_validation_v057() {
     
     if (all_safe) {
         std::cout << "[SUMMARY] All division-by-zero protections working correctly." << std::endl;
+    }
+}
+
+static void test_rear_lockup_differentiation() {
+    std::cout << "\nTest: Rear Lockup Differentiation" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+
+    // Common Setup
+    engine.m_lockup_enabled = true;
+    engine.m_lockup_gain = 1.0;
+    engine.m_max_torque_ref = 20.0f;
+    engine.m_gain = 1.0f;
+    
+    data.mUnfilteredBrake = 1.0; // Braking
+    data.mLocalVel.z = 20.0;     // 20 m/s
+    data.mDeltaTime = 0.01;      // 10ms step
+    
+    // Setup Ground Velocity (Reference)
+    for(int i=0; i<4; i++) data.mWheel[i].mLongitudinalGroundVel = 20.0;
+
+    // --- PASS 1: Front Lockup Only ---
+    // Front Slip -0.5, Rear Slip 0.0
+    data.mWheel[0].mLongitudinalPatchVel = -0.5 * 20.0; // -10 m/s
+    data.mWheel[1].mLongitudinalPatchVel = -0.5 * 20.0;
+    data.mWheel[2].mLongitudinalPatchVel = 0.0;
+    data.mWheel[3].mLongitudinalPatchVel = 0.0;
+
+    engine.calculate_force(&data);
+    double phase_delta_front = engine.m_lockup_phase; // Phase started at 0
+
+    // Verify Front triggered
+    if (phase_delta_front > 0.0) {
+        std::cout << "[PASS] Front lockup triggered. Phase delta: " << phase_delta_front << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Front lockup silent." << std::endl;
+        g_tests_failed++;
+    }
+
+    // --- PASS 2: Rear Lockup Only ---
+    // Reset Engine State
+    engine.m_lockup_phase = 0.0;
+    
+    // Front Slip 0.0, Rear Slip -0.5
+    data.mWheel[0].mLongitudinalPatchVel = 0.0;
+    data.mWheel[1].mLongitudinalPatchVel = 0.0;
+    data.mWheel[2].mLongitudinalPatchVel = -0.5 * 20.0;
+    data.mWheel[3].mLongitudinalPatchVel = -0.5 * 20.0;
+
+    engine.calculate_force(&data);
+    double phase_delta_rear = engine.m_lockup_phase;
+
+    // Verify Rear triggered (Fixes the bug)
+    if (phase_delta_rear > 0.0) {
+        std::cout << "[PASS] Rear lockup triggered. Phase delta: " << phase_delta_rear << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Rear lockup silent (Bug not fixed)." << std::endl;
+        g_tests_failed++;
+    }
+
+    // --- PASS 3: Frequency Comparison ---
+    // Rear frequency should be 0.5x of Front frequency
+    // Therefore, phase delta should be roughly half
+    double ratio = phase_delta_rear / phase_delta_front;
+    
+    if (std::abs(ratio - 0.5) < 0.05) {
+        std::cout << "[PASS] Rear frequency is lower (Ratio: " << ratio << " vs expected 0.5)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Frequency differentiation failed. Ratio: " << ratio << std::endl;
+        g_tests_failed++;
     }
 }
 

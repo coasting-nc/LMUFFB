@@ -244,3 +244,11 @@ int main() {
 }
 ```
 
+### Test description 2
+
+**Update `tests/test_ffb_engine.cpp`**:
+    *   Add a new test function: `static void test_rear_lockup_differentiation()`.
+    *   **Pass 1:** Simulate Front Lockup. Verify `m_lockup_phase` advances. Store the delta.
+    *   **Pass 2:** Simulate Rear Lockup. Verify `m_lockup_phase` advances (fixing the bug). Store the delta.
+    *   **Pass 3:** Compare deltas. Verify that `RearDelta / FrontDelta` is approximately **0.5** (verifying the frequency drop).
+    *   Register the new test in `main()`.

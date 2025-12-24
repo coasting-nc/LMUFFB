@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.11] - 2025-12-24
+### Fixed
+- **Lockup Vibration Ignoring Rear Wheels**: Fixed a bug where locking the rear brakes (common in LMP2 or under heavy engine braking) would not trigger any vibration feedback.
+- **Improved Axle Differentiation**: Added tactile cues to distinguish between front and rear lockups using frequency:
+    - **Front Lockup**: Remains at a higher pitch ("Screech") for standard understeer feedback.
+    - **Rear Lockup**: Uses a 50% lower frequency ("Heavy Judder") to warn clearly of rear axle instability.
+    - **Intensity Boost**: Rear lockups now receive a 1.2x amplitude boost to emphasize the danger of a potential spin.
+
+### Added
+- **Unit Testing**: Added `test_rear_lockup_differentiation()` to the verification suite to ensure both axles trigger feedback and maintain correct frequency ratios.
+
 ## [0.5.10] - 2025-12-24
 ### Added
 - **Exposed Contextual Smoothing Sliders**:
