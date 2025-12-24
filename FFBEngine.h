@@ -432,8 +432,9 @@ private:
     // Front lockup uses 1.0x frequency (high pitch "Screech") for standard understeer feedback.
     // Rear lockup uses 0.5x frequency (low pitch "Heavy Judder") to warn of rear axle instability.
     // The amplitude boost emphasizes the danger of potential spin during rear lockups.
-    static constexpr double LOCKUP_FREQ_MULTIPLIER_REAR = 0.5;  // Rear lockup frequency (50% of base)
-    static constexpr double LOCKUP_AMPLITUDE_BOOST_REAR = 1.2;  // Rear lockup amplitude boost (20% increase)
+    static constexpr double LOCKUP_FREQ_MULTIPLIER_REAR = 0.3;  // Rear lockup frequency (0.5: 50% of base) // 0.3;  // Even lower pitch
+    static constexpr double LOCKUP_AMPLITUDE_BOOST_REAR = 1.5;  // Rear lockup amplitude boost (1.2: 20% increase) //  1.5;  // 50% boost
+
 
 public:
     // Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
