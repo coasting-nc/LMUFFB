@@ -23,21 +23,20 @@ improvements to the formulas
 
 ## Troubleshooting 25
 
+remove warnings about missing telemetry data
+
+add slider for optimal slip angle (and slip ratio)
+list effects affected by grip and load approximation, and list those that are not affected
+
+add smoothing (and slider) for steering shaft torque
+
+update tooltips
+
 test default values after 0-100% normalization of sliders
 
 test if some vibration effects are muted
 check lockup vibration effect, feel it before bracking up, enough to prevent it
 
-list effects affected by grip and load approximation, and list those that are not affected
-
-remove warnings about missing telemetry data
-
-add slider for optimal slip angle (and slip ratio)
-
-update tooltips
-
 yaw kick further fixes? smoothing? higher thresholds? non linear transformation? 
 experiment with gyro damping to compensate yaw kick
 
-
-add smoothing (and slider) for steering shaft torque
