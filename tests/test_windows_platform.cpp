@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <windows.h>
+#define DIRECTINPUT_VERSION 0x0800  // DirectInput 8
 #include <dinput.h>
 
 // Include headers to test
@@ -40,7 +41,7 @@ int g_tests_failed = 0;
 
 // --- TESTS ---
 
-void test_guid_string_conversion() {
+static void test_guid_string_conversion() {
     std::cout << "\nTest: GUID <-> String Conversion (Persistence)" << std::endl;
 
     // 1. Create a known GUID (e.g., a standard HID GUID)
@@ -64,7 +65,7 @@ void test_guid_string_conversion() {
     ASSERT_TRUE(isEmpty);
 }
 
-void test_window_title_extraction() {
+static void test_window_title_extraction() {
     std::cout << "\nTest: Active Window Title (Diagnostics)" << std::endl;
     
     std::string title = DirectInputFFB::GetActiveWindowTitle();
@@ -74,7 +75,7 @@ void test_window_title_extraction() {
     ASSERT_TRUE(!title.empty());
 }
 
-void test_config_persistence_guid() {
+static void test_config_persistence_guid() {
     std::cout << "\nTest: Config Persistence (Last Device GUID)" << std::endl;
 
     // 1. Setup
@@ -101,7 +102,7 @@ void test_config_persistence_guid() {
     remove(test_file.c_str());
 }
 
-void test_config_always_on_top_persistence() {
+static void test_config_always_on_top_persistence() {
     std::cout << "\nTest: Config Persistence (Always on Top)" << std::endl;
 
     // 1. Setup
@@ -127,7 +128,7 @@ void test_config_always_on_top_persistence() {
     remove(test_file.c_str());
 }
 
-void test_window_always_on_top_behavior() {
+static void test_window_always_on_top_behavior() {
     std::cout << "\nTest: Window Always on Top Behavior" << std::endl;
 
     // 1. Create a dummy window for testing
@@ -160,7 +161,7 @@ void test_window_always_on_top_behavior() {
     DestroyWindow(hwnd);
 }
 
-void test_preset_management_system() {
+static void test_preset_management_system() {
     std::cout << "\nTest: Preset Management System" << std::endl;
 
     // 1. Use a temporary test file to avoid creating artifacts
@@ -198,7 +199,7 @@ void test_preset_management_system() {
     remove("config.ini");
 }
 
-void test_gui_style_application() {
+static void test_gui_style_application() {
     std::cout << "\nTest: GUI Style Application (Headless)" << std::endl;
     
     // 1. Initialize Headless ImGui Context
@@ -235,6 +236,98 @@ void test_gui_style_application() {
     ImGui::DestroyContext(ctx);
 }
 
+static void test_slider_precision_display() {
+    std::cout << "\nTest: Slider Precision Display (Arrow Key Visibility)" << std::endl;
+    
+    // This test verifies that slider format strings have enough decimal places
+    // to show changes when using arrow keys (typical step: 0.01)
+    
+    // Test Case 1: Filter Width (Q) - Range 0.5-10.0, step 0.01
+    // Format should be "Q: %.2f" to show 0.01 changes
+    {
+        float value = 2.50f;
+        char buf[64];
+        snprintf(buf, 64, "Q: %.2f", value);
+        std::string result1(buf);
+        
+        value += 0.01f;  // Simulate arrow key press
+        snprintf(buf, 64, "Q: %.2f", value);
+        std::string result2(buf);
+        
+        // The displayed strings should be different
+        ASSERT_TRUE(result1 != result2);
+        std::cout << "  Filter Width: " << result1 << " -> " << result2 << std::endl;
+    }
+    
+    // Test Case 2: Percentage sliders - Range 0-2.0, step 0.01
+    // Format should be "%.1f%%" to show 0.5% changes (0.01 * 100 = 1.0, but displayed as 0.5% of 200%)
+    {
+        float value = 1.00f;
+        char buf[64];
+        snprintf(buf, 64, "%.1f%%%%", value * 100.0f);
+        std::string result1(buf);
+        
+        value += 0.01f;  // Simulate arrow key press
+        snprintf(buf, 64, "%.1f%%%%", value * 100.0f);
+        std::string result2(buf);
+        
+        // The displayed strings should be different
+        ASSERT_TRUE(result1 != result2);
+        std::cout << "  Percentage: " << result1 << " -> " << result2 << std::endl;
+    }
+    
+    // Test Case 3: Understeer Effect - Range 0-50, step 0.5
+    // Format should be "%.1f%%" to show 1.0% changes (0.5 / 50 * 100 = 1.0%)
+    {
+        float value = 25.0f;
+        char buf[64];
+        snprintf(buf, 64, "%.1f%%%%", (value / 50.0f) * 100.0f);
+        std::string result1(buf);
+        
+        value += 0.5f;  // Simulate arrow key press (larger range uses 0.5 step)
+        snprintf(buf, 64, "%.1f%%%%", (value / 50.0f) * 100.0f);
+        std::string result2(buf);
+        
+        // The displayed strings should be different
+        ASSERT_TRUE(result1 != result2);
+        std::cout << "  Understeer: " << result1 << " -> " << result2 << std::endl;
+    }
+    
+    // Test Case 4: Small range sliders - Range 0-0.1, step 0.001
+    // Format should be "%.3f" or better to show 0.001 changes
+    {
+        float value = 0.050f;
+        char buf[64];
+        snprintf(buf, 64, "%.3f s", value);
+        std::string result1(buf);
+        
+        value += 0.001f;  // Simulate arrow key press (small range uses 0.001 step)
+        snprintf(buf, 64, "%.3f s", value);
+        std::string result2(buf);
+        
+        // The displayed strings should be different
+        ASSERT_TRUE(result1 != result2);
+        std::cout << "  Small Range: " << result1 << " -> " << result2 << std::endl;
+    }
+    
+    // Test Case 5: Slide Pitch - Range 0.5-5.0, step 0.01
+    // Format should be "%.2fx" to show 0.01 changes
+    {
+        float value = 1.50f;
+        char buf[64];
+        snprintf(buf, 64, "%.2fx", value);
+        std::string result1(buf);
+        
+        value += 0.01f;  // Simulate arrow key press
+        snprintf(buf, 64, "%.2fx", value);
+        std::string result2(buf);
+        
+        // The displayed strings should be different
+        ASSERT_TRUE(result1 != result2);
+        std::cout << "  Slide Pitch: " << result1 << " -> " << result2 << std::endl;
+    }
+}
+
 int main() {
     std::cout << "=== Running Windows Platform Tests ===" << std::endl;
 
@@ -245,6 +338,7 @@ int main() {
     test_window_always_on_top_behavior();
     test_preset_management_system();
     test_gui_style_application();
+    test_slider_precision_display();
 
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;

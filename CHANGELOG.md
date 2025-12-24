@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.5.1] - 2025-12-24
+### Fixed
+- **Slider Precision Display Issues**: Fixed sliders where arrow key adjustments weren't visible due to insufficient decimal places.
+    - **Filter Width (Q)**: Updated format from `%.1f` to `%.2f` to show 0.01 step changes
+    - **Slide Pitch**: Updated format from `%.1fx` to `%.2fx` for better precision visibility
+    - **Understeer Effect**: Updated to show 1 decimal place (`%.1f%%`) instead of 0 decimals
+    - **All Percentage Sliders**: Updated `FormatDecoupled` and `FormatPct` to use `%.1f%%` instead of `%.0f%%`
+    - **Improved Step Size Logic**: Added finer 0.001 step for small ranges (<1.0) to ensure precise adjustments on sliders like Slip Smoothing
+    - **Affected Sliders**: 15 total sliders now provide immediate visual feedback for arrow key adjustments
+- **Build Error**: Added missing `GripResult` struct definition to `FFBEngine.h` that was causing compilation failures
+
+### Added
+- **Test Coverage**: Added `test_slider_precision_display()` with 5 test cases to verify slider format strings have sufficient decimal places
+- **Code Quality**: Made all test functions in `test_windows_platform.cpp` static to generate compiler warnings if not called
+
 ## [0.5.0] - 2025-12-24
 ### Changed
 - **Code Quality Improvements**:

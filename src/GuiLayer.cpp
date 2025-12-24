@@ -369,13 +369,15 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         float estimated_nm = val * base_nm * scale;
         static char buf[64];
         // Use double percent (%%%%) because SliderFloat formats it again
-        snprintf(buf, 64, "%.0f%%%% (~%.1f Nm)", val * 100.0f, estimated_nm); 
+        // Show 1 decimal to make arrow key adjustments visible (step 0.01 = 0.5%)
+        snprintf(buf, 64, "%.1f%%%% (~%.1f Nm)", val * 100.0f, estimated_nm); 
         return (const char*)buf;
     };
 
     auto FormatPct = [&](float val) {
         static char buf[32];
-        snprintf(buf, 32, "%.0f%%%%", val * 100.0f);
+        // Show 1 decimal to make arrow key adjustments visible
+        snprintf(buf, 32, "%.1f%%%%", val * 100.0f);
         return (const char*)buf;
     };
 
@@ -389,7 +391,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         
         if (ImGui::IsItemHovered()) {
             float range = max - min;
-            float step = (range > 50.0f) ? 0.5f : 0.01f; 
+            // Adaptive step size: finer steps for smaller ranges
+            float step = (range > 50.0f) ? 0.5f : (range < 1.0f) ? 0.001f : 0.01f; 
             bool changed = false;
             if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) { *v -= step; changed = true; }
             if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) { *v += step; changed = true; }
@@ -495,7 +498,10 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::NextColumn(); ImGui::NextColumn();
         
         FloatSetting("Steering Shaft Gain", &engine.m_steering_shaft_gain, 0.0f, 1.0f, FormatPct(engine.m_steering_shaft_gain), "Attenuates raw game force without affecting telemetry.");
-        FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 50.0f, FormatPct(engine.m_understeer_effect / 50.0f), "Strength of the force drop when front grip is lost.");
+        // Note: Using custom format to show 1 decimal for visibility with arrow keys (step 0.5)
+        char understeer_fmt[32];
+        snprintf(understeer_fmt, 32, "%.1f%%", (engine.m_understeer_effect / 50.0f) * 100.0f);
+        FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 50.0f, understeer_fmt, "Strength of the force drop when front grip is lost.");
         
         const char* base_modes[] = { "Native (Physics)", "Synthetic (Constant)", "Muted (Off)" };
         IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, sizeof(base_modes)/sizeof(base_modes[0]), "Debug tool to isolate effects.");
@@ -505,7 +511,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         
         BoolSetting("  Flatspot Suppression", &engine.m_flatspot_suppression, "Dynamic notch filter to remove flatspot vibrations while driving.");
         if (engine.m_flatspot_suppression) {
-            FloatSetting("    Filter Width (Q)", &engine.m_notch_q, 0.5f, 10.0f, "Q: %.1f");
+            FloatSetting("    Filter Width (Q)", &engine.m_notch_q, 0.5f, 10.0f, "Q: %.2f");
             FloatSetting("    Suppression Strength", &engine.m_flatspot_strength, 0.0f, 1.0f);
             ImGui::Text("    Est. / Theory Freq");
             ImGui::NextColumn();
@@ -568,7 +574,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         BoolSetting("Slide Rumble", &engine.m_slide_texture_enabled);
         if (engine.m_slide_texture_enabled) {
             FloatSetting("  Slide Gain", &engine.m_slide_texture_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_slide_texture_gain, FFBEngine::BASE_NM_SLIDE_TEXTURE));
-            FloatSetting("  Slide Pitch", &engine.m_slide_freq_scale, 0.5f, 5.0f, "%.1fx");
+            FloatSetting("  Slide Pitch", &engine.m_slide_freq_scale, 0.5f, 5.0f, "%.2fx");
         }
         
         BoolSetting("Road Details", &engine.m_road_texture_enabled);

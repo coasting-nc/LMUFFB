@@ -36,37 +36,38 @@ int g_tests_failed = 0;
 
 // --- Tests ---
 
-void test_snapshot_data_integrity(); // Forward declaration
-void test_snapshot_data_v049(); // Forward declaration
-void test_rear_force_workaround(); // Forward declaration
-void test_rear_align_effect(); // Forward declaration
-void test_kinematic_load_braking(); // Forward declaration
-void test_combined_grip_loss(); // Forward declaration
-void test_sop_yaw_kick_direction(); // Forward declaration  (v0.4.20)
-void test_zero_effects_leakage(); // Forward declaration
-void test_base_force_modes(); // Forward declaration
-void test_sop_yaw_kick(); // Forward declaration
-void test_gyro_damping(); // Forward declaration (v0.4.17)
-void test_yaw_accel_smoothing(); // Forward declaration (v0.4.18)
-void test_yaw_accel_convergence(); // Forward declaration (v0.4.18)
-void test_regression_yaw_slide_feedback(); // Forward declaration (v0.4.18)
-void test_yaw_kick_signal_conditioning(); // Forward declaration (v0.4.42)
-void test_coordinate_sop_inversion(); // Forward declaration (v0.4.19)
-void test_coordinate_rear_torque_inversion(); // Forward declaration (v0.4.19)
-void test_coordinate_scrub_drag_direction(); // Forward declaration (v0.4.19)
-void test_coordinate_debug_slip_angle_sign(); // Forward declaration (v0.4.19)
-void test_regression_no_positive_feedback(); // Forward declaration (v0.4.19)
-void test_coordinate_all_effects_alignment(); // Forward declaration (v0.4.21)
-void test_regression_phase_explosion(); // Forward declaration (Regression)
-void test_time_corrected_smoothing(); // Forward declaration (v0.4.37)
-void test_gyro_stability(); // Forward declaration (v0.4.37)
-void test_chassis_inertia_smoothing_convergence(); // Forward declaration (v0.4.39)
-void test_kinematic_load_cornering(); // Forward declaration (v0.4.39)
-void test_notch_filter_attenuation(); // Forward declaration (v0.4.41)
-void test_frequency_estimator(); // Forward declaration (v0.4.41)
-void test_static_notch_integration(); // Forward declaration (v0.4.43)
-void test_gain_compensation(); // Forward declaration (v0.4.50)
-void test_config_safety_clamping(); // Forward declaration (v0.4.50)
+static void test_snapshot_data_integrity(); // Forward declaration
+static void test_snapshot_data_v049(); // Forward declaration
+static void test_rear_force_workaround(); // Forward declaration
+static void test_rear_align_effect(); // Forward declaration
+static void test_kinematic_load_braking(); // Forward declaration
+static void test_combined_grip_loss(); // Forward declaration
+static void test_sop_yaw_kick_direction(); // Forward declaration  (v0.4.20)
+static void test_zero_effects_leakage(); // Forward declaration
+static void test_base_force_modes(); // Forward declaration
+static void test_sop_yaw_kick(); // Forward declaration
+static void test_gyro_damping(); // Forward declaration (v0.4.17)
+static void test_yaw_accel_smoothing(); // Forward declaration (v0.4.18)
+static void test_yaw_accel_convergence(); // Forward declaration (v0.4.18)
+static void test_regression_yaw_slide_feedback(); // Forward declaration (v0.4.18)
+static void test_yaw_kick_signal_conditioning(); // Forward declaration (v0.4.42)
+static void test_coordinate_sop_inversion(); // Forward declaration (v0.4.19)
+static void test_coordinate_rear_torque_inversion(); // Forward declaration (v0.4.19)
+static void test_coordinate_scrub_drag_direction(); // Forward declaration (v0.4.19)
+static void test_coordinate_debug_slip_angle_sign(); // Forward declaration (v0.4.19)
+static void test_regression_no_positive_feedback(); // Forward declaration (v0.4.19)
+static void test_coordinate_all_effects_alignment(); // Forward declaration (v0.4.21)
+static void test_regression_phase_explosion(); // Forward declaration (Regression)
+static void test_time_corrected_smoothing(); // Forward declaration (v0.4.37)
+static void test_gyro_stability(); // Forward declaration (v0.4.37)
+static void test_chassis_inertia_smoothing_convergence(); // Forward declaration (v0.4.39)
+static void test_kinematic_load_cornering(); // Forward declaration (v0.4.39)
+static void test_notch_filter_attenuation(); // Forward declaration (v0.4.41)
+static void test_frequency_estimator(); // Forward declaration (v0.4.41)
+static void test_static_notch_integration(); // Forward declaration (v0.4.43)
+static void test_gain_compensation(); // Forward declaration (v0.4.50)
+static void test_config_safety_clamping(); // Forward declaration (v0.4.50)
+
 
 
 

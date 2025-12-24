@@ -163,6 +163,14 @@ struct BiquadNotch {
     }
 };
 
+// Helper Result Struct for calculate_grip
+struct GripResult {
+    double value;           // Final grip value
+    bool approximated;      // Was approximation used?
+    double original;        // Original telemetry value
+    double slip_angle;      // Calculated slip angle (if approximated)
+};
+    
 // FFB Engine Class
 class FFBEngine {
 public:
