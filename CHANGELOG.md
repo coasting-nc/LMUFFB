@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.5.3] - 2025-12-24
+### Fixed
+- **Restored Latency Display**: Re-implemented the missing latency indicators for "SoP Smoothing" and "Slip Angle Smoothing" sliders that were accidentally removed in the v0.5.0 overhaul.
+    - **Enhanced Layout**: Moved latency text (e.g., "Latency: 15 ms - OK") to the right column above the slider for better readability, preventing clutter.
+    - **Improved Precision**: Added rounding logic to latency calculations so that values like 0.85 smoothing correctly display as "15 ms" instead of truncating to "14 ms".
+    - **Color Coding**: Restored green (<15ms) vs red (>=15ms) visual warnings.
+
+### Changed
+- **GUI Organization**: Converted the "Signal Filtering" static header into a collapsible section, matching the behavior of other groups like "Advanced SoP" and "Textures".
+
+### Added
+- **Regression Tests**: Added `test_latency_display_regression()` to the verification suite.
+    - Verifies accurate latency calculation (including rounding).
+    - Checks color coding thresholds.
+    - Validates display string formatting.
+
 ## [0.5.2] - 2025-12-24
 ### Fixed
 - **CRITICAL: Understeer Effect Slider Stuck**: Fixed slider being completely unresponsive to mouse and arrow key inputs

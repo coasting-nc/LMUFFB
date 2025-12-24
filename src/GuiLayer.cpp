@@ -507,22 +507,28 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         const char* base_modes[] = { "Native (Physics)", "Synthetic (Constant)", "Muted (Off)" };
         IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, sizeof(base_modes)/sizeof(base_modes[0]), "Debug tool to isolate effects.");
 
-        ImGui::TextColored(ImVec4(0.0f, 0.6f, 0.85f, 1.0f), "Signal Filtering");
-        ImGui::NextColumn(); ImGui::NextColumn();
-        
-        BoolSetting("  Flatspot Suppression", &engine.m_flatspot_suppression, "Dynamic notch filter to remove flatspot vibrations while driving.");
-        if (engine.m_flatspot_suppression) {
-            FloatSetting("    Filter Width (Q)", &engine.m_notch_q, 0.5f, 10.0f, "Q: %.2f");
-            FloatSetting("    Suppression Strength", &engine.m_flatspot_strength, 0.0f, 1.0f);
-            ImGui::Text("    Est. / Theory Freq");
-            ImGui::NextColumn();
-            ImGui::TextDisabled("%.1f Hz / %.1f Hz", engine.m_debug_freq, engine.m_theoretical_freq);
-            ImGui::NextColumn();
-        }
-        
-        BoolSetting("  Static Noise Filter", &engine.m_static_notch_enabled);
-        if (engine.m_static_notch_enabled) {
-            FloatSetting("    Target Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.1f Hz");
+        if (ImGui::TreeNodeEx("Signal Filtering", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::NextColumn(); ImGui::NextColumn();
+            
+            BoolSetting("  Flatspot Suppression", &engine.m_flatspot_suppression, "Dynamic notch filter to remove flatspot vibrations while driving.");
+            if (engine.m_flatspot_suppression) {
+                FloatSetting("    Filter Width (Q)", &engine.m_notch_q, 0.5f, 10.0f, "Q: %.2f");
+                FloatSetting("    Suppression Strength", &engine.m_flatspot_strength, 0.0f, 1.0f);
+                ImGui::Text("    Est. / Theory Freq");
+                ImGui::NextColumn();
+                ImGui::TextDisabled("%.1f Hz / %.1f Hz", engine.m_debug_freq, engine.m_theoretical_freq);
+                ImGui::NextColumn();
+            }
+            
+            BoolSetting("  Static Noise Filter", &engine.m_static_notch_enabled);
+            if (engine.m_static_notch_enabled) {
+                FloatSetting("    Target Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.1f Hz");
+            }
+            
+            ImGui::TreePop();
+        } else {
+            // Keep columns synchronized when section is collapsed
+            ImGui::NextColumn(); ImGui::NextColumn();
         }
         
         ImGui::TreePop();
@@ -544,8 +550,29 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::TextColored(ImVec4(0.0f, 0.6f, 0.85f, 1.0f), "Advanced SoP");
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        int lat_ms = (int)((1.0f - engine.m_sop_smoothing_factor) * 100.0f);
-        FloatSetting("  SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, lat_ms > 20 ? "%.2f (LAGGY)" : "%.2f");
+        // SoP Smoothing with Latency Text above slider
+        ImGui::Text("SoP Smoothing");
+        ImGui::NextColumn();
+        
+        int lat_ms = (int)((1.0f - engine.m_sop_smoothing_factor) * 100.0f + 0.5f);
+        ImVec4 lat_color = (lat_ms < 15) ? ImVec4(0.0f, 1.0f, 0.0f, 1.0f) : ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+        ImGui::TextColored(lat_color, "Latency: %d ms - %s", lat_ms, (lat_ms < 15) ? "OK" : "High");
+        
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::SliderFloat("##SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, "%.2f")) selected_preset = -1;
+        if (ImGui::IsItemHovered()) {
+            float step = 0.01f;
+            bool changed = false;
+            if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) { engine.m_sop_smoothing_factor -= step; changed = true; }
+            if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) { engine.m_sop_smoothing_factor += step; changed = true; }
+            if (changed) { 
+                engine.m_sop_smoothing_factor = (std::max)(0.0f, (std::min)(1.0f, engine.m_sop_smoothing_factor)); 
+                selected_preset = -1; 
+            }
+            if (!changed) ImGui::SetTooltip("Fine Tune: Arrow Keys | Exact: Ctrl+Click");
+        }
+        ImGui::NextColumn();
+
         FloatSetting("  SoP Scale", &engine.m_sop_scale, 0.0f, 20.0f);
         
         ImGui::TreePop();
@@ -555,11 +582,32 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     }
 
     // --- GROUP: PHYSICS ---
-    if (ImGui::TreeNodeEx("Physics & Estimation", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+    if (ImGui::TreeNodeEx("Grip & Slip Angle Estimation", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
         
-        int slip_ms = (int)(engine.m_slip_angle_smoothing * 1000.0f);
-        FloatSetting("Slip Smoothing", &engine.m_slip_angle_smoothing, 0.000f, 0.100f, "%.3f s", slip_ms > 20 ? "Physics Latency is High!" : "Physics Latency OK");
+        // Slip Smoothing with Latency Text above slider
+        ImGui::Text("Slip Angle Smoothing");
+        ImGui::NextColumn();
+        
+        int slip_ms = (int)(engine.m_slip_angle_smoothing * 1000.0f + 0.5f);
+        ImVec4 slip_color = (slip_ms < 15) ? ImVec4(0.0f, 1.0f, 0.0f, 1.0f) : ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+        ImGui::TextColored(slip_color, "Latency: %d ms - %s", slip_ms, (slip_ms < 15) ? "OK" : "High");
+
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::SliderFloat("##Slip Angle Smoothing", &engine.m_slip_angle_smoothing, 0.000f, 0.100f, "%.3f s")) selected_preset = -1;
+        if (ImGui::IsItemHovered()) {
+            float step = 0.001f;
+            bool changed = false;
+            if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) { engine.m_slip_angle_smoothing -= step; changed = true; }
+            if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) { engine.m_slip_angle_smoothing += step; changed = true; }
+            if (changed) { 
+                engine.m_slip_angle_smoothing = (std::max)(0.000f, (std::min)(0.100f, engine.m_slip_angle_smoothing)); 
+                selected_preset = -1; 
+            }
+            if (!changed) ImGui::SetTooltip("Fine Tune: Arrow Keys | Exact: Ctrl+Click");
+        }
+        ImGui::NextColumn();
+
         BoolSetting("Manual Slip Calc", &engine.m_use_manual_slip, "Uses local velocity instead of game's slip telemetry.");
         
         ImGui::TreePop();

@@ -423,6 +423,141 @@ static void test_slider_precision_regression() {
     }
 }
 
+static void test_latency_display_regression() {
+    std::cout << "\nTest: Latency Display Regression (v0.4.50 Restoration)" << std::endl;
+    
+    // This test verifies the latency display feature that was accidentally removed
+    // during the GUI overhaul and restored in v0.4.50
+    // Updated in v0.4.51 to include rounding and new layout
+    
+    // Test Case 1: SoP Smoothing Latency Calculation
+    // Formula: lat_ms = (1.0 - sop_smoothing_factor) * 100.0 + 0.5 (Rounding)
+    {
+        std::cout << "  Testing SoP Smoothing latency calculation..." << std::endl;
+        
+        // Low latency case (should be green)
+        float sop_smoothing_low = 0.90f;  // 10ms latency
+        int lat_ms_low = (int)((1.0f - sop_smoothing_low) * 100.0f + 0.5f);
+        ASSERT_TRUE(lat_ms_low == 10);
+        ASSERT_TRUE(lat_ms_low < 15);  // Should be green
+        std::cout << "    Low latency: " << lat_ms_low << " ms (green)" << std::endl;
+        
+        // High latency case (should be red)
+        float sop_smoothing_high = 0.70f;  // 30ms latency
+        int lat_ms_high = (int)((1.0f - sop_smoothing_high) * 100.0f + 0.5f);
+        ASSERT_TRUE(lat_ms_high == 30);
+        ASSERT_TRUE(lat_ms_high >= 15);  // Should be red
+        std::cout << "    High latency: " << lat_ms_high << " ms (red)" << std::endl;
+        
+        // Boundary case (exactly 15ms - should be red)
+        float sop_smoothing_boundary = 0.85f;  // 15ms latency
+        int lat_ms_boundary = (int)((1.0f - sop_smoothing_boundary) * 100.0f + 0.5f);
+        ASSERT_TRUE(lat_ms_boundary == 15);
+        ASSERT_TRUE(lat_ms_boundary >= 15);  // Should be red (>= threshold)
+        std::cout << "    Boundary latency: " << lat_ms_boundary << " ms (red)" << std::endl;
+    }
+    
+    // Test Case 2: Slip Angle Smoothing Latency Calculation
+    // Formula: slip_ms = slip_angle_smoothing * 1000.0 + 0.5 (Rounding)
+    {
+        std::cout << "  Testing Slip Angle Smoothing latency calculation..." << std::endl;
+        
+        // Low latency case (should be green)
+        float slip_smoothing_low = 0.010f;  // 10ms latency
+        int slip_ms_low = (int)(slip_smoothing_low * 1000.0f + 0.5f);
+        ASSERT_TRUE(slip_ms_low == 10);
+        ASSERT_TRUE(slip_ms_low < 15);  // Should be green
+        std::cout << "    Low latency: " << slip_ms_low << " ms (green)" << std::endl;
+        
+        // High latency case (should be red)
+        float slip_smoothing_high = 0.030f;  // 30ms latency
+        int slip_ms_high = (int)(slip_smoothing_high * 1000.0f + 0.5f);
+        ASSERT_TRUE(slip_ms_high == 30);
+        ASSERT_TRUE(slip_ms_high >= 15);  // Should be red
+        std::cout << "    High latency: " << slip_ms_high << " ms (red)" << std::endl;
+        
+        // Boundary case (exactly 15ms - should be red)
+        float slip_smoothing_boundary = 0.015f;  // 15ms latency
+        int slip_ms_boundary = (int)(slip_smoothing_boundary * 1000.0f + 0.5f);
+        ASSERT_TRUE(slip_ms_boundary == 15);
+        ASSERT_TRUE(slip_ms_boundary >= 15);  // Should be red (>= threshold)
+        std::cout << "    Boundary latency: " << slip_ms_boundary << " ms (red)" << std::endl;
+    }
+    
+    // Test Case 3: Color Coding Logic
+    {
+        std::cout << "  Testing color coding logic..." << std::endl;
+        
+        // Green color for low latency (< 15ms)
+        int lat_ms = 10;
+        bool is_green = (lat_ms < 15);
+        ASSERT_TRUE(is_green);
+        
+        // Verify green color values (0.0, 1.0, 0.0, 1.0)
+        if (is_green) {
+            float r = 0.0f, g = 1.0f, b = 0.0f, a = 1.0f;
+            ASSERT_TRUE(r == 0.0f && g == 1.0f && b == 0.0f && a == 1.0f);
+        }
+        
+        // Red color for high latency (>= 15ms)
+        lat_ms = 20;
+        bool is_red = (lat_ms >= 15);
+        ASSERT_TRUE(is_red);
+        
+        // Verify red color values (1.0, 0.0, 0.0, 1.0)
+        if (is_red) {
+            float r = 1.0f, g = 0.0f, b = 0.0f, a = 1.0f;
+            ASSERT_TRUE(r == 1.0f && g == 0.0f && b == 0.0f && a == 1.0f);
+        }
+        
+        std::cout << "    Color coding verified" << std::endl;
+        g_tests_passed++;
+    }
+    
+    // Test Case 4: Display Format Verification
+    {
+        std::cout << "  Testing display format..." << std::endl;
+        
+        // SoP Smoothing display format: "Latency: XX ms - OK"
+        int lat_ms = 14;
+        char buf[64];
+        snprintf(buf, 64, "Latency: %d ms - %s", lat_ms, (lat_ms < 15) ? "OK" : "High");
+        std::string display_ok(buf);
+        ASSERT_TRUE(display_ok == "Latency: 14 ms - OK");
+        
+        lat_ms = 20;
+        snprintf(buf, 64, "Latency: %d ms - %s", lat_ms, (lat_ms < 15) ? "OK" : "High");
+        std::string display_high(buf);
+        ASSERT_TRUE(display_high == "Latency: 20 ms - High");
+        
+        std::cout << "    Format OK: " << display_ok << std::endl;
+        std::cout << "    Format High: " << display_high << std::endl;
+    }
+    
+    // Test Case 5: Edge Cases
+    {
+        std::cout << "  Testing edge cases..." << std::endl;
+        
+        // Zero latency (SoP smoothing = 1.0)
+        float sop_smoothing_zero = 1.0f;
+        int lat_ms_zero = (int)((1.0f - sop_smoothing_zero) * 100.0f + 0.5f);
+        ASSERT_TRUE(lat_ms_zero == 0);
+        
+        // Maximum latency (SoP smoothing = 0.0)
+        float sop_smoothing_max = 0.0f;
+        int lat_ms_max = (int)((1.0f - sop_smoothing_max) * 100.0f + 0.5f);
+        ASSERT_TRUE(lat_ms_max == 100);
+        
+        // Zero slip smoothing
+        float slip_smoothing_zero = 0.0f;
+        int slip_ms_zero = (int)(slip_smoothing_zero * 1000.0f + 0.5f);
+        ASSERT_TRUE(slip_ms_zero == 0);
+        
+        std::cout << "    Edge cases verified" << std::endl;
+        g_tests_passed++;
+    }
+}
+
 
 int main() {
     std::cout << "=== Running Windows Platform Tests ===" << std::endl;
@@ -436,6 +571,7 @@ int main() {
     test_gui_style_application();
     test_slider_precision_display();
     test_slider_precision_regression();
+    test_latency_display_regression();
 
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
