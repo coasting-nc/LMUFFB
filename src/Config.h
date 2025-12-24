@@ -45,6 +45,11 @@ struct Preset {
     
     float steering_shaft_gain = 1.0f;
     int base_force_mode = 0; // 0=Native
+    
+    // NEW: Grip & Smoothing (v0.5.7)
+    float optimal_slip_angle = 0.10f;
+    float optimal_slip_ratio = 0.12f;
+    float steering_shaft_smoothing = 0.0f;
 
     // v0.4.41: Signal Filtering
     bool flatspot_suppression = false;
@@ -103,6 +108,13 @@ struct Preset {
         return *this;
     }
 
+    Preset& SetOptimalSlip(float angle, float ratio) {
+        optimal_slip_angle = angle;
+        optimal_slip_ratio = ratio;
+        return *this;
+    }
+    Preset& SetShaftSmoothing(float v) { steering_shaft_smoothing = v; return *this; }
+
     // Apply this preset to an engine instance
     void Apply(FFBEngine& engine) const {
         engine.m_gain = gain;
@@ -137,6 +149,9 @@ struct Preset {
         engine.m_flatspot_strength = flatspot_strength;
         engine.m_static_notch_enabled = static_notch_enabled;
         engine.m_static_notch_freq = static_notch_freq;
+        engine.m_optimal_slip_angle = optimal_slip_angle;
+        engine.m_optimal_slip_ratio = optimal_slip_ratio;
+        engine.m_steering_shaft_smoothing = steering_shaft_smoothing;
     }
 
     // NEW: Capture current engine state into this preset
@@ -173,6 +188,9 @@ struct Preset {
         flatspot_strength = engine.m_flatspot_strength;
         static_notch_enabled = engine.m_static_notch_enabled;
         static_notch_freq = engine.m_static_notch_freq;
+        optimal_slip_angle = engine.m_optimal_slip_angle;
+        optimal_slip_ratio = engine.m_optimal_slip_ratio;
+        steering_shaft_smoothing = engine.m_steering_shaft_smoothing;
     }
 };
 

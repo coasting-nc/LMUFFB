@@ -35,6 +35,36 @@ The `calculate_grip` function currently derives a "Grip Fraction" based on hardc
 *   **Rear Aligning Torque:** Uses the *calculated slip angle* (kinematic input), not the *grip fraction* (output).
 *   **Lockup / Spin Vibrations:** Use internal hardcoded thresholds (e.g., `-0.1` slip ratio).
 
+####  **Optimal Slip Ratio**
+
+Based on the code analysis, here is the breakdown of what the **Optimal Slip Ratio** setting affects.
+
+##### What it Affects (Grip Calculation)
+This setting controls the **"Combined Friction Circle"** logic. It determines how much **Longitudinal Slip** (Braking or Acceleration) contributes to the calculated "Grip Loss."
+
+1.  **Understeer Effect (Steering Weight during Braking/Accel):**
+    *   **How:** If you lower this value (e.g., to 0.10), the system thinks you have lost grip earlier when you brake hard.
+    *   **Result:** The steering wheel will **go light (lose weight)** more aggressively during heavy braking (lockups) or strong acceleration (wheelspin), simulating the loss of front-end bite.
+2.  **Slide Texture (Amplitude/Strength):**
+    *   **How:** The "Work-Based Scrubbing" logic scales the vibration strength based on `(1.0 - Grip)`.
+    *   **Result:** If you lower this value, the "Scrubbing" vibration will become **stronger** during braking and acceleration events, because the system calculates a lower grip value.
+
+##### What it Does NOT Affect (Independent Effects)
+Crucially, this setting does **not** change the trigger points for the specific "Haptic Vibration" effects, which use their own internal hardcoded thresholds.
+
+1.  **Lockup Vibration (The "Rumble"):**
+    *   **Reason:** This effect has a hardcoded trigger of **-0.1** (10% slip). Changing the "Optimal Slip Ratio" slider will **not** change when the lockup rumble starts.
+2.  **Wheel Spin Vibration (The "Revving" Vibe):**
+    *   **Reason:** This effect has a hardcoded trigger of **0.2** (20% slip). It is independent of the general grip calculation.
+3.  **Cornering Feel (Pure Lateral):**
+    *   **Reason:** Pure cornering is determined by **Slip Angle**, not Slip Ratio. If you are coasting through a turn, this setting does nothing.
+
+##### Summary for Tooltip
+*   **Optimal Slip Ratio:** Controls how much braking/acceleration contributes to the "Lightening" of the steering wheel.
+    *   **Lower:** Steering goes light earlier under braking.
+    *   **Higher:** Steering stays heavy longer under braking.
+    *   *Note:* Does not change the trigger point for Lockup/Spin vibrations.
+
 ### B. Steering Shaft Torque Rationale
 
 We are introducing a smoothing filter specifically for `mSteeringShaftTorque`.

@@ -220,6 +220,13 @@ public:
 
     float m_slip_angle_smoothing = 0.015f; // v0.4.40: Expose tau (Smoothing Time Constant in seconds)
     
+    // NEW: Grip Estimation Settings (v0.5.7)
+    float m_optimal_slip_angle = 0.10f; // Default 0.10 rad (5.7 deg)
+    float m_optimal_slip_ratio = 0.12f; // Default 0.12 (12%)
+    
+    // NEW: Steering Shaft Smoothing (v0.5.7)
+    float m_steering_shaft_smoothing = 0.0f; // Time constant in seconds (0.0 = off)
+    
     // v0.4.41: Signal Filtering Settings
     bool m_flatspot_suppression = false;
     float m_notch_q = 2.0f; // Default Q-Factor
@@ -262,6 +269,9 @@ public:
     
     // Yaw Acceleration Smoothing State (v0.4.18)
     double m_yaw_accel_smoothed = 0.0;
+
+    // Internal state for Steering Shaft Smoothing (v0.5.7)
+    double m_steering_shaft_torque_smoothed = 0.0;
 
     // Kinematic Smoothing State (v0.4.38)
     double m_accel_x_smoothed = 0.0;
@@ -509,14 +519,17 @@ public:
                 // v0.4.38: Combined Friction Circle (Advanced Reconstruction)
                 
                 // 1. Lateral Component (Alpha)
-                double lat_metric = std::abs(result.slip_angle) / 0.10; // Normalize (0.10 rad peak)
+                // USE CONFIGURABLE THRESHOLD (v0.5.7)
+                double lat_metric = std::abs(result.slip_angle) / (double)m_optimal_slip_angle;
 
                 // 2. Longitudinal Component (Kappa)
                 // Calculate manual slip for both wheels and average the magnitude
                 double ratio1 = calculate_manual_slip_ratio(w1, car_speed);
                 double ratio2 = calculate_manual_slip_ratio(w2, car_speed);
                 double avg_ratio = (std::abs(ratio1) + std::abs(ratio2)) / 2.0;
-                double long_metric = avg_ratio / 0.12; // Normalize (12% peak)
+
+                // USE CONFIGURABLE THRESHOLD (v0.5.7)
+                double long_metric = avg_ratio / (double)m_optimal_slip_ratio;
 
                 // 3. Combined Vector (Friction Circle)
                 double combined_slip = std::sqrt((lat_metric * lat_metric) + (long_metric * long_metric));
@@ -649,7 +662,23 @@ public:
         const TelemWheelV01& fr = data->mWheel[1];
 
         // Critical: Use mSteeringShaftTorque instead of mSteeringArmForce
+        // Explanation: LMU 1.2 introduced mSteeringShaftTorque (Nm) as the definitive FFB output.
+        // Legacy mSteeringArmForce (N) is often 0.0 or inaccurate for Hypercars due to 
+        // complex power steering modeling in the new engine.
         double game_force = data->mSteeringShaftTorque;
+
+        // --- NEW: Steering Shaft Smoothing (v0.5.7) ---
+        if (m_steering_shaft_smoothing > 0.0001f) {
+            double tau_shaft = (double)m_steering_shaft_smoothing;
+            double alpha_shaft = dt / (tau_shaft + dt);
+            // Safety clamp
+            alpha_shaft = (std::min)(1.0, (std::max)(0.001, alpha_shaft));
+            
+            m_steering_shaft_torque_smoothed += alpha_shaft * (game_force - m_steering_shaft_torque_smoothed);
+            game_force = m_steering_shaft_torque_smoothed;
+        } else {
+            m_steering_shaft_torque_smoothed = game_force; // Reset state
+        }
 
         // --- v0.4.41: Frequency Estimator & Dynamic Notch Filter ---
         

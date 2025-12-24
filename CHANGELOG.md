@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.5.7] - 2025-12-24
+### Added
+- **Steering Shaft Smoothing**: New "Steering Shaft Smooth" slider in the GUI.
+    - **Signal Conditioning**: Applies a Time-Corrected Low Pass Filter specifically to the `mSteeringShaftTorque` input, reducing mechanical graininess and high-frequency "fizz" from the game's physics engine.
+    - **Latency Awareness**: Displays real-time latency readout (ms) with color-coding (Green for < 15ms, Red for >= 15ms) to guide tuning decisions.
+- **Configurable Optimal Slip Parameters**: Added sliders to customize the tire physics model in the "Grip Estimation" section.
+    - **Optimal Slip Angle**: Allows users to define the peak lateral grip threshold (radians). Tunable for different car categories (e.g., lower for Hypercars, higher for GT3).
+    - **Optimal Slip Ratio**: Allows defining the peak longitudinal grip threshold (percentage).
+    - **Enhanced Grip Reconstruction**: The underlying grip approximation logic (used when telemetry is blocked or missing) now utilizes these configurable parameters instead of hardcoded defaults.
+- **Improved Test Coverage**: Added `test_grip_threshold_sensitivity()` and `test_steering_shaft_smoothing()` to verify physics integrity and filter convergence.
+
 ## [0.5.6] - 2025-12-24
 ### Changed
 - **Graphs Window Cleanup**:

@@ -67,6 +67,41 @@ static void test_frequency_estimator(); // Forward declaration (v0.4.41)
 static void test_static_notch_integration(); // Forward declaration (v0.4.43)
 static void test_gain_compensation(); // Forward declaration (v0.4.50)
 static void test_config_safety_clamping(); // Forward declaration (v0.4.50)
+static void test_grip_threshold_sensitivity(); // Forward declaration (v0.5.7)
+static void test_steering_shaft_smoothing(); // Forward declaration (v0.5.7)
+
+// --- Test Helper Functions (v0.5.7) ---
+
+/**
+ * Creates a standardized TelemInfoV01 structure for testing.
+ * Reduces code duplication across tests by providing common setup.
+ * 
+ * @param speed Car speed in m/s (default 20.0)
+ * @param slip_angle Slip angle in radians (default 0.0)
+ * @return Initialized TelemInfoV01 structure with realistic values
+ */
+static TelemInfoV01 CreateBasicTestTelemetry(double speed = 20.0, double slip_angle = 0.0) {
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    
+    // Time
+    data.mDeltaTime = 0.01; // 100Hz
+    
+    // Velocity
+    data.mLocalVel.z = -speed; // Game uses -Z for forward
+    
+    // Wheel setup (all 4 wheels)
+    for (int i = 0; i < 4; i++) {
+        data.mWheel[i].mGripFract = 0.0; // Trigger approximation mode
+        data.mWheel[i].mTireLoad = 4000.0; // Realistic load
+        data.mWheel[i].mStaticUndeflectedRadius = 30; // 0.3m radius
+        data.mWheel[i].mRotation = speed * 3.33f; // Match speed (rad/s)
+        data.mWheel[i].mLongitudinalGroundVel = speed;
+        data.mWheel[i].mLateralPatchVel = slip_angle * speed; // Convert to m/s
+    }
+    
+    return data;
+}
 
 
 
@@ -2614,6 +2649,10 @@ int main() {
     test_static_notch_integration(); // v0.4.43
     test_gain_compensation(); // v0.4.50
     test_config_safety_clamping(); // v0.4.50
+
+    // New Physics Tuning Tests (v0.5.7)
+    test_grip_threshold_sensitivity();
+    test_steering_shaft_smoothing();
     
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
@@ -4485,4 +4524,86 @@ static void test_config_safety_clamping() {
     
     // Clean up test file
     std::remove(test_file);
+}
+
+static void test_grip_threshold_sensitivity() {
+    std::cout << "\nTest: Grip Threshold Sensitivity (v0.5.7)" << std::endl;
+    FFBEngine engine;
+    
+    // Use helper function to create test data with 0.07 rad slip angle
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.07);
+
+    // Case 1: High Sensitivity (Hypercar style)
+    engine.m_optimal_slip_angle = 0.06f;
+    data.mWheel[0].mLateralPatchVel = 0.06 * 20.0; // Exact peak
+    data.mWheel[1].mLateralPatchVel = 0.06 * 20.0;
+    
+    // Settle LPF
+    for (int i = 0; i < 10; i++) engine.calculate_force(&data);
+    float grip_sensitive = engine.GetDebugBatch().back().calc_front_grip;
+
+    // Now increase slip slightly beyond peak (0.07)
+    data.mWheel[0].mLateralPatchVel = 0.07 * 20.0;
+    data.mWheel[1].mLateralPatchVel = 0.07 * 20.0;
+    for (int i = 0; i < 10; i++) engine.calculate_force(&data);
+    float grip_sensitive_post = engine.GetDebugBatch().back().calc_front_grip;
+
+    // Case 2: Low Sensitivity (GT3 style)
+    engine.m_optimal_slip_angle = 0.12f;
+    data.mWheel[0].mLateralPatchVel = 0.07 * 20.0; // Same slip as sensitive post
+    data.mWheel[1].mLateralPatchVel = 0.07 * 20.0;
+    for (int i = 0; i < 10; i++) engine.calculate_force(&data);
+    float grip_gt3 = engine.GetDebugBatch().back().calc_front_grip;
+
+    // Verify: post-peak sensitive car should have LESS grip than GT3 car at same slip
+    if (grip_sensitive_post < grip_gt3) {
+        std::cout << "[PASS] Sensitive car (0.06) lost more grip at 0.07 slip than GT3 car (0.12)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Sensitivity threshold not working. S: " << grip_sensitive_post << " G: " << grip_gt3 << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_steering_shaft_smoothing() {
+    std::cout << "\nTest: Steering Shaft Smoothing (v0.5.7)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+
+    engine.m_steering_shaft_smoothing = 0.050f; // 50ms tau
+    engine.m_gain = 1.0;
+    engine.m_max_torque_ref = 1.0;
+    engine.m_understeer_effect = 0.0; // Neutralize modifiers
+    engine.m_sop_effect = 0.0f;      // Disable SoP
+    engine.m_invert_force = false;   // Disable inversion
+    data.mDeltaTime = 0.01; // 100Hz
+
+    // Step input: 0.0 -> 1.0
+    data.mSteeringShaftTorque = 1.0;
+
+    // After 1 frame (10ms) with 50ms tau:
+    // alpha = dt / (tau + dt) = 10 / (50 + 10) = 1/6 ≈ 0.166
+    // Expected force: 0.166
+    double force = engine.calculate_force(&data);
+
+    if (std::abs(force - 0.166) < 0.01) {
+        std::cout << "[PASS] Shaft Smoothing delayed the step input (Frame 1: " << force << ")." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Shaft Smoothing mismatch. Got " << force << " Expected ~0.166." << std::endl;
+        g_tests_failed++;
+    }
+
+    // After 10 frames (100ms) it should be near 1.0 (approx 86% of target)
+    for (int i = 0; i < 9; i++) engine.calculate_force(&data);
+    force = engine.calculate_force(&data);
+
+    if (force > 0.8 && force < 0.95) {
+        std::cout << "[PASS] Shaft Smoothing converged correctly (Frame 11: " << force << ")." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Shaft Smoothing convergence failure. Got " << force << std::endl;
+        g_tests_failed++;
+    }
 }

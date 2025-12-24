@@ -37,6 +37,9 @@ static const float CONFIG_PANEL_WIDTH = 500.0f;  // Width of config panel when g
 static const int MIN_WINDOW_WIDTH = 400;         // Minimum window width to keep UI usable
 static const int MIN_WINDOW_HEIGHT = 600;        // Minimum window height to keep UI usable
 
+// v0.5.7 Latency Warning Threshold
+static const int LATENCY_WARNING_THRESHOLD_MS = 15; // Green if < 15ms, Red if >= 15ms
+
 // Forward declarations of helper functions
 bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
@@ -613,6 +616,23 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::NextColumn(); ImGui::NextColumn();
         
         FloatSetting("Steering Shaft Gain", &engine.m_steering_shaft_gain, 0.0f, 1.0f, FormatPct(engine.m_steering_shaft_gain), "Attenuates raw game force without affecting telemetry.");
+        
+        // --- NEW: Steering Shaft Smoothing (v0.5.7) ---
+        ImGui::Text("Steering Shaft Smoothing");
+        ImGui::NextColumn();
+        
+        int shaft_ms = (int)(engine.m_steering_shaft_smoothing * 1000.0f + 0.5f);
+        ImVec4 shaft_color = (shaft_ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0.0f, 1.0f, 0.0f, 1.0f) : ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+        ImGui::TextColored(shaft_color, "Latency: %d ms - %s", shaft_ms, (shaft_ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
+        
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::SliderFloat("##ShaftSmooth", &engine.m_steering_shaft_smoothing, 0.000f, 0.100f, "%.3f s")) selected_preset = -1;
+        if (ImGui::IsItemHovered()) {
+             ImGui::SetTooltip("Low Pass Filter applied ONLY to the raw game force.\nUse this to smooth out 'grainy' FFB from the game engine.\nWarning: Adds latency.");
+        }
+        ImGui::NextColumn();
+        // -------------------------------------
+
         // Display with 2 decimals to show fine arrow key adjustments (step 0.01 on 0-50 range)
         FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 50.0f, "%.2f", "Strength of the force drop when front grip is lost.");
         
@@ -667,8 +687,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::NextColumn();
         
         int lat_ms = (int)((1.0f - engine.m_sop_smoothing_factor) * 100.0f + 0.5f);
-        ImVec4 lat_color = (lat_ms < 15) ? ImVec4(0.0f, 1.0f, 0.0f, 1.0f) : ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-        ImGui::TextColored(lat_color, "Latency: %d ms - %s", lat_ms, (lat_ms < 15) ? "OK" : "High");
+        ImVec4 lat_color = (lat_ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0.0f, 1.0f, 0.0f, 1.0f) : ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+        ImGui::TextColored(lat_color, "Latency: %d ms - %s", lat_ms, (lat_ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
         
         ImGui::SetNextItemWidth(-1);
         if (ImGui::SliderFloat("##SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, "%.2f")) selected_preset = -1;
@@ -702,8 +722,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::NextColumn();
         
         int slip_ms = (int)(engine.m_slip_angle_smoothing * 1000.0f + 0.5f);
-        ImVec4 slip_color = (slip_ms < 15) ? ImVec4(0.0f, 1.0f, 0.0f, 1.0f) : ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-        ImGui::TextColored(slip_color, "Latency: %d ms - %s", slip_ms, (slip_ms < 15) ? "OK" : "High");
+        ImVec4 slip_color = (slip_ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0.0f, 1.0f, 0.0f, 1.0f) : ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+        ImGui::TextColored(slip_color, "Latency: %d ms - %s", slip_ms, (slip_ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
 
         ImGui::SetNextItemWidth(-1);
         if (ImGui::SliderFloat("##Slip Angle Smoothing", &engine.m_slip_angle_smoothing, 0.000f, 0.100f, "%.3f s")) selected_preset = -1;
@@ -719,6 +739,19 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             if (!changed) ImGui::SetTooltip("Fine Tune: Arrow Keys | Exact: Ctrl+Click");
         }
         ImGui::NextColumn();
+
+        // --- NEW: Optimal Slip Sliders (v0.5.7) ---
+        FloatSetting("Optimal Slip Angle", &engine.m_optimal_slip_angle, 0.05f, 0.20f, "%.2f rad", 
+            "The slip angle where peak grip occurs.\n"
+            "Lower = Earlier understeer warning (Hypercars ~0.06).\n"
+            "Higher = Later warning (GT3 ~0.10).\n"
+            "Affects: Understeer Effect, Oversteer Boost, Slide Texture.");
+
+        FloatSetting("Optimal Slip Ratio", &engine.m_optimal_slip_ratio, 0.05f, 0.20f, "%.2f", 
+            "The longitudinal slip ratio (braking/accel) where peak grip occurs.\n"
+            "Typical: 0.12 - 0.15 (12-15%).\n"
+            "Affects: How much braking/acceleration contributes to calculated grip loss.");
+        // ---------------------------------
 
         BoolSetting("Manual Slip Calc", &engine.m_use_manual_slip, "Uses local velocity instead of game's slip telemetry.");
         
