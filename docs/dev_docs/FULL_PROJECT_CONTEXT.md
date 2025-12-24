@@ -451,12 +451,44 @@ tests\test_ffb_engine.exe 2>&1 | Select-String -Pattern "Tests (Passed|Failed):"
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.10] - 2025-12-24
+### Added
+- **Exposed Contextual Smoothing Sliders**:
+    - **Kick Response**: Added smoothing slider for Yaw Acceleration (Kick) effect, placed immediately after the effect gain.
+    - **Gyro Smooth**: Added smoothing slider for Gyroscopic Damping, placed immediately after the effect gain.
+    - **Chassis Inertia (Load)**: Added smoothing slider for simulated tire load, placed in the Grip & Slip Estimation section.
+- **Visual Latency Indicators**:
+    - Real-time latency readout (ms) for smoothing parameters.
+    - **Red/Green Color Coding** for Yaw Kick (>15ms) and Gyro (>20ms) to warn against excessive lag.
+    - **Blue Info Text** for Chassis Inertia to indicate "Simulated" time constant.
+
+### Changed
+- **FFB Engine Refactoring**: 
+    - Moved hardcoded time constants for Yaw and Chassis Inertia into configurable member variables.
+    - Standardized Gyro Smoothing to use the same Time Constant (seconds) math as other filters.
+- **Config Persistence**: New smoothing parameters are now saved to `config.ini` and supported in user presets.
+
 ## [0.5.9] - 2025-12-24
 ### Changed
 - **Improved Load Cap widget**:
     - Moved the slider under the  "Tactile Textures" section, since it only affects Texture and Vibration effects: Road Textures (Bumps/Curbs), Slide, Lockup.
     - More informative Tooltip text.
 - **Improved Slip Angle Smoothing tooltip**: Added detailed technical explanation of the filter behavior and influenced effects.
+- **Optimized Yaw Kick Smoothing**: Reduced default smoothing latency from 22.5ms (7Hz) to **10.0ms (~16Hz)**.
+    - **Stability**: Prevents "Slide Texture" vibration (40-200Hz) from being misinterpreted by physics as Yaw Acceleration spikes, which previously caused feedback loops/explosions.
+    - **Responsiveness**: Improved reaction time to snap oversteer. 10ms provides the optimal balance: fast enough for car rotation (<5Hz) while effectively filtering high-frequency noise (>40Hz).
+    - **Detailed Technical Comments**: Added comprehensive documentation in `FFBEngine.h` regarding the impact of different smoothing levels (3.2ms to 31.8ms) on feedback loops and "raw" feel.
+- **Expanded Rear Axle (Oversteer) Tooltips**:
+    - **Lateral G Boost (Slide)** (formerly Oversteer Boost): Expanded to explain the relationship with car mass inertia and momentum.
+    - **Rear Align Torque**: Added guidance on buildup speed and its role as the active "pull" during counter-steering.
+    - **Yaw Kick**: Clarified its role as the sharp, momentary impulse signaling the onset of rotation.
+    - **Tuning Goals**: Integrated explicit tuning goals into the tooltips to help users balance the "active pull" (Rear Align) against the "sustained effort" (Lateral G Boost).
+- **Renamed "Oversteer Boost" to "Lateral G Boost (Slide)"**:
+    - Updated GUI label and Troubleshooting graphs for better clarity on the effect's physical mechanism.
+    - Synchronized all internal documentation, code comments, and unit tests with the new nomenclature.
+
+
+
 
 ## [0.5.8] - 2025-12-24
 ### Added
@@ -1553,7 +1585,9 @@ public:
     float m_rear_align_effect = 5.0f; 
     float m_sop_yaw_gain = 5.0f;      
     float m_gyro_gain = 0.0f;         
-    float m_gyro_smoothing = 0.1f;    
+    float m_gyro_smoothing = 0.010f; // v0.5.8: Changed to Time Constant (Seconds). Default 10ms.
+    float m_yaw_accel_smoothing = 0.010f;      // v0.5.8: Time Constant (Seconds). Default 10ms.
+    float m_chassis_inertia_smoothing = 0.025f; // v0.5.8: Time Constant (Seconds). Default 25ms.
     
     bool m_lockup_enabled = false;
     float m_lockup_gain = 0.5f;
@@ -2121,8 +2155,9 @@ public:
         double raw_lat_g = data->mLocalAccel.x;
         
         // --- SIGNAL CONDITIONING (Inertia Simulation) ---
-        // Filter accelerometers at ~5Hz to simulate chassis weight transfer lag
-        double chassis_tau = 0.035; // ~35ms lag
+        // Filter accelerometers to simulate chassis weight transfer lag
+        double chassis_tau = (double)m_chassis_inertia_smoothing;
+        if (chassis_tau < 0.0001) chassis_tau = 0.0001;
         double alpha_chassis = dt / (chassis_tau + dt);
         m_accel_x_smoothed += alpha_chassis * (data->mLocalAccel.x - m_accel_x_smoothed);
         m_accel_z_smoothed += alpha_chassis * (data->mLocalAccel.z - m_accel_z_smoothed);
@@ -2393,17 +2428,21 @@ public:
         }
         
         // Apply Smoothing (Low Pass Filter)
-        // v0.4.37: Time Corrected Alpha
-        // Target: Alpha 0.1 at 400Hz (dt=0.0025). 
-        // tau approx 0.0225s
-        const double tau_yaw = 0.0225;
+        // Yaw Kick Smoothing (LPF): Prevents "Slide Texture" vibration (40-200Hz) from being 
+        // misinterpreted by physics as Yaw Acceleration spikes, which causes feedback loops.
+        // - 31.8ms (5Hz): Car body motion; too laggy.
+        // - 22.5ms (7Hz): Aggressive; turns sharp "Kick" into soft "Push", delays reaction.
+        // - 10.0ms (New Default, ~16Hz): Optimal balance; responsive and filters the 40Hz+ vibration.
+        // - 3.2ms (50Hz): "Raw" feel; kills electrical buzz but risks feedback loops.
+        double tau_yaw = (double)m_yaw_accel_smoothing;
+        if (tau_yaw < 0.0001) tau_yaw = 0.0001; 
         double alpha_yaw = dt / (tau_yaw + dt);
         
         m_yaw_accel_smoothed = m_yaw_accel_smoothed + alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
         
         // Use SMOOTHED value for the kick
         // Scaled by BASE_NM_YAW_KICK (5.0 Nm at Gain 1.0)
-        // Added AFTER Oversteer Boost to provide a clean, independent cue.
+        // Added AFTER Lateral G Boost (Slide) to provide a clean, independent cue.
         // v0.4.20 FIX: Invert to provide counter-steering torque
         // Positive yaw accel (right rotation) -> Negative force (left pull)
         double yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * (double)BASE_NM_YAW_KICK * decoupling_scale;
@@ -2423,10 +2462,9 @@ public:
         m_prev_steering_angle = steer_angle; // Update history
         
         // Smoothing (LPF)
-        // v0.4.37: Time Corrected Alpha with Clamp
-        // Treat m_gyro_smoothing as "Smoothness" (0=Raw, 1=Slow)
-        double gyro_smoothness = (std::max)(0.0f, (std::min)(0.99f, m_gyro_smoothing)); // Clamp!
-        double tau_gyro = gyro_smoothness * 0.1; // Map to 0.0s - 0.1s time constant
+        // v0.5.8: m_gyro_smoothing is now a Time Constant (Seconds)
+        double tau_gyro = (double)m_gyro_smoothing;
+        if (tau_gyro < 0.0001) tau_gyro = 0.0001;
         double alpha_gyro = dt / (tau_gyro + dt);
         
         m_steering_velocity_smoothed += alpha_gyro * (steer_vel - m_steering_velocity_smoothed);
@@ -3176,6 +3214,7 @@ For feedback, questions, or support:
 
 ## Documentation
 
+*   [FFB Tuning Recommendations](docs/FFB%20Tuning%20Recommendations.md) 
 *   [Driver's Guide to Testing LMUFFB](docs/Driver's%20Guide%20to%20Testing%20LMUFFB.md) - Suggestions for specific driving scenarios and car setups to test each FFB effect 
 *   [The Physics of Feel - Driver's Guide](docs/the_physics_of__feel_-_driver_guide.md) - Explains how lmuFFB translates telemetry into tactile sensations, with telemetry visualizations
 *   [FFB Effects & Customization Guide](docs/ffb_effects.md)
@@ -3421,8 +3460,10 @@ For feedback, questions, or support:
   unlinked: github_com/coasting-nc/LMUFFB/issues
 
 
-For full documentation, advanced settings, and developer information, 
-see README.md or visit: unlinked: github_com/coasting-nc/LMUFFB
+For full documentation, advanced settings, and tuning tips, 
+see README.md or visit:
+- FFB Tuning Recommendations: unlinked: github_com/coasting-nc/LMUFFB/blob/main/docs/FFB%20Tuning%20Recommendations_md
+- Main Project Page: unlinked: github_com/coasting-nc/LMUFFB
 
 
 ===============================================================================
@@ -4665,6 +4706,221 @@ For technical implementation details, see: `docs/dev_docs/implementation_summary
 
 ```
 
+# File: docs\FFB Tuning Recommendations.md
+```markdown
+
+# LMUFFB Tuning Guide: The Physics of Feel
+
+This guide provides a systematic approach to tuning Force Feedback in LMUFFB. Instead of randomly moving sliders, follow this sequence to build a cohesive and informative force feedback profile.
+
+The philosophy is to build the signal in layers: **Calibration $\to$ Front Axle $\to$ Rear Axle $\to$ Textures $\to$ Refinement.**
+
+---
+
+## Phase 1: The Foundation (Calibration)
+
+Before adding effects, we must ensure the signal strength is correct for your hardware.
+
+### The Settings
+*   **Max Torque Ref (Nm):** The "Calibration Scale." It tells the app how strong the game's physics are.
+*   **Master Gain:** The "Volume Knob." It scales the final output sent to your wheel.
+
+### Tuning Steps
+1.  **Set Baseline:** Set `Master Gain` to **1.0** (100%).
+2.  **Set Reference:** Set `Max Torque Ref` based on your wheel:
+    *   **Logitech/Thrustmaster (Belt/Gear):** 30 - 40 Nm.
+    *   **Fanatec/Moza (Mid-Range DD):** 40 - 60 Nm.
+    *   **Simucube/VRS (High-End DD):** 60 - 100 Nm.
+3.  **Drive & Adjust:** Drive a high-downforce car (e.g., Hypercar) through high-speed corners (e.g., Porsche Curves).
+    *   *Goal:* The wheel should feel heavy and substantial, but **not** hit a "wall" of force where you lose detail.
+    *   *Check:* Open the **Troubleshooting Graphs**. If the "Clipping" graph hits 1.0 frequently, **increase** `Max Torque Ref`.
+
+---
+
+## Phase 2: The Front Axle (Grip & Connection)
+
+This layer communicates the connection between the front tires and the road.
+
+### The Settings
+*   **Steering Shaft Gain:** The raw aligning torque from the game physics.
+*   **Understeer Effect:** A modifier that *reduces* force when front grip is lost.
+
+### Tuning Steps
+1.  **Isolate:** Temporarily set `SoP Lateral G` to 0.0.
+2.  **Tune Weight:** Adjust `Steering Shaft Gain` until the car feels connected driving straight and turning slightly.
+3.  **Tune the Drop:** Drive into a corner too fast and turn the wheel past the grip limit (scrub the front tires).
+    *   **Adjust `Understeer Effect`:** Increase this slider until you feel the steering wheel go **light** or "hollow" the moment the car stops turning and starts sliding.
+    *   *Criteria:* You want a clear drop in weight that prompts you to unwind the wheel, but not so much that the wheel goes completely limp.
+
+---
+
+## Phase 3: The Rear Axle (Oversteer & Balance)
+
+This layer communicates what the rear of the car is doing. These effects interact to create the "Catch" sensation.
+
+### The Settings
+*   **SoP Lateral G:** Simulates chassis roll/weight transfer.
+*   **Yaw Kick:** Predictive impulse at the *start* of rotation.
+*   **Rear Align Torque:** Geometric counter-steering pull *during* the slide.
+*   **Lateral G Boost (Slide):** Adds weight/inertia *during* the slide.
+
+### Tuning Steps (The Sequence)
+1.  **SoP Lateral G (The Body):** Drive a clean lap. Adjust this until you feel the "weight" of the car leaning into corners. It should add heaviness, not twitchiness.
+2.  **Rear Align Torque (The Direction):** Induce a slide (power oversteer).
+    *   Adjust until the wheel actively **spins** in the counter-steer direction.
+    *   *Criteria:* The wheel should guide your hands to the correct angle to catch the slide.
+3.  **Lateral G Boost (Slide) (The Momentum):**
+    *   Increase this to add "heaviness" to the slide.
+    *   *Interaction:* Combined with Rear Align, this creates a "Heavy Counter-Steer" feel. The wheel pulls correctly (Rear Align) but feels like it has mass behind it (Boost).
+4.  **SoP Yaw Kick (The Warning):**
+    *   Adjust this to feel a sharp "jolt" the exact millisecond the rear tires break traction.
+    *   *Criteria:* This is your early warning system. It should be a quick impulse, not a sustained force.
+
+---
+
+## Phase 4: Textures & Immersion (The Surface)
+
+These are high-frequency vibrations that sit "on top" of the forces.
+
+### The Settings
+*   **Road Texture:** Vertical bumps and curbs.
+*   **Slide Texture:** Lateral scrubbing vibration (Sandpaper feel).
+*   **Scrub Drag:** Constant resistance (friction) when sliding.
+
+### Tuning Steps
+1.  **Road Texture:** Drive over curbs. Increase until you feel the impact, but ensure it doesn't rattle your teeth on straights.
+    *   *Tip:* Use `Load Cap` (General Settings) if curbs are too violent in high-speed corners.
+2.  **Slide Texture:** Induce understeer or oversteer.
+    *   Adjust until you feel a gritty "grinding" sensation.
+    *   *Criteria:* This confirms the tires are sliding. It should be distinct from road bumps.
+3.  **Scrub Drag:** (Optional) Increase to add a "thick" resistance when sliding sideways. This mimics the friction of rubber dragging across asphalt.
+
+---
+
+## Phase 5: Haptics (Pedals on Wheel)
+
+These simulate pedal feel through the wheel rim.
+
+### The Settings
+*   **Lockup Vibration:** Triggers when wheels stop rotating under braking.
+*   **Spin Vibration:** Triggers when rear wheels spin up under power.
+
+### Tuning Steps
+1.  **Lockup:** Brake hard (without ABS). Adjust until the vibration scares you into releasing the brake.
+2.  **Spin:** Mash the throttle in 1st gear. Adjust until you feel the "revving" vibration.
+
+---
+
+## Phase 6: Refinement (Signal Conditioning)
+
+The final polish to match your specific hardware capabilities.
+
+### The Settings
+*   **SoP Smoothing:** Filters the Lateral G signal.
+*   **Slip Angle Smoothing:** Filters the tire physics calculation.
+*   **Gyroscopic Damping:** Adds resistance to rapid movements.
+
+### Tuning Steps
+1.  **Smoothing (Latency vs. Noise):**
+    *   **Direct Drive:** Aim for **Low Latency** (Green text). Set SoP Smoothing to ~0.90 and Slip Smoothing to ~0.005.
+    *   **Belt/Gear:** Aim for **Medium Latency**. Set SoP Smoothing to ~0.60 and Slip Smoothing to ~0.030.
+    *   *Criteria:* Lower the smoothing until the wheel feels "grainy" or "robotic," then raise it just enough to make it smooth again.
+2.  **Gyroscopic Damping (Stability):**
+    *   If the wheel oscillates (wobbles left/right) on straights or snaps too violently when catching a slide ("Tank Slapper"), **increase** Gyro Damping.
+    *   *Criteria:* The wheel should feel "viscous" or fluid-like during rapid movements, not like a spring.
+
+---
+
+## Summary Checklist
+
+| Step | Goal | Primary Control | Success Criteria |
+| :--- | :--- | :--- | :--- |
+| **1** | **Calibrate** | `Max Torque Ref` | Strong forces without constant clipping. |
+| **2** | **Front Feel** | `Understeer Effect` | Wheel goes light when pushing too hard. |
+| **3** | **Body Roll** | `SoP Lateral G` | Wheel feels heavy in corners. |
+| **4** | **Slide Catch** | `Rear Align Torque` | Wheel spins to counter-steer automatically. |
+| **5** | **Slide Weight** | `Lat G Boost (Slide)` | Counter-steer feels heavy/substantial. |
+| **6** | **Slide Onset** | `Yaw Kick` | Sharp jolt when traction breaks. |
+| **7** | **Texture** | `Slide Texture` | Gritty vibration during slides. |
+| **8** | **Stability** | `Gyro Damping` | No oscillation on straights or catches. |
+
+---
+
+## Rear Align Torque, Lateral G Boost (Slide), and Yaw Kick
+
+The interaction between "Lateral G Boost (Slide)" (formerly Oversteer Weight) and "Rear Align Torque" is crucial for a natural and intuitive oversteer feel.
+
+### 1. The Interaction: "Heavy Counter-Steer"
+
+When both effects are present during a slide, they combine to create a sensation of **"Heavy Counter-Steer."**
+
+*   **Lateral G Boost (Slide):** This effect makes the wheel feel **heavier** (more resistance) as the car's body swings out. It's like feeling the inertia of the chassis through the steering.
+*   **Rear Align Torque:** This effect provides a **directional pull** in the counter-steering direction. It's the wheel actively trying to straighten itself or align with the direction of travel.
+
+**When they combine:**
+Instead of the wheel going light and vague (which happens in some sims during a slide), it becomes **heavy and pulls strongly** in the direction you need to counter-steer.
+
+**Are they confusing or well-blended?**
+If tuned correctly, they are **well-blended and complementary**. They provide two distinct but synergistic pieces of information:
+
+1.  **"I am sliding, and the car has a lot of momentum."** (Lateral G Boost)
+2.  **"Turn the wheel THIS WAY to catch it."** (Rear Align Torque)
+
+This combination is highly informative and is often praised in sims like Assetto Corsa for making slides "catchable."
+
+### 2. Criteria for a Natural and Intuitive Blend
+
+To make this blend feel natural, we need to consider the **magnitude, timing, and frequency** of each component.
+
+#### A. Magnitude Balance (The "Volume Knob")
+*   **Problem:** If one effect is too strong, it can mask the other.
+    *   Too much **Lateral G Boost**: The wheel feels like a brick, and you can't feel the subtle directional pull of the Rear Align Torque.
+    *   Too much **Rear Align Torque**: The wheel snaps violently, but it feels "light" or "digital" because it lacks the inertia of the chassis.
+*   **Criteria:**
+    *   **Rear Align Torque** should be strong enough to provide a clear, active counter-steering cue.
+    *   **Lateral G Boost** should add a layer of "weight" or "inertia" on top, making the counter-steer feel substantial, but not so much that it becomes a struggle to turn the wheel.
+*   **Tuning Goal:** The driver should feel the *direction* of the counter-steer (Rear Align) and the *effort* required to hold it (Lateral G Boost).
+
+#### B. Timing (The "Predictive Cue")
+*   **Problem:** If both effects kick in at the exact same time, they might feel like one undifferentiated "blob" of force.
+*   **Criteria:**
+    *   **Yaw Kick (already implemented):** This is the *earliest* cue. It's a sharp, momentary impulse that signals the *onset* of rotation.
+    *   **Rear Align Torque:** Should build up very quickly after the Yaw Kick, as the slip angle develops. This is the active "pull."
+    *   **Lateral G Boost (Slide):** Should build up slightly more gradually, reflecting the inertia of the car's mass swinging out. It's a sustained force that tells you about the *magnitude* of the slide.
+*   **Tuning Goal:** A sequence of cues: **Kick (onset) $\to$ Pull (direction) $\to$ Weight (momentum)**.
+
+#### C. Frequency (The "Texture")
+*   **Problem:** If both effects use similar frequencies, they can interfere.
+*   **Criteria:**
+    *   **Rear Align Torque:** This is a **low-frequency, sustained force**. It's a steady pull, not a vibration.
+    *   **Lateral G Boost (Slide):** This is also a **low-frequency, sustained force**. It's a steady increase in resistance.
+    *   **Slide Texture (separate effect):** This is a **high-frequency vibration** (the "sandpaper" feel). This is crucial for adding texture without interfering with the directional forces.
+*   **Tuning Goal:** Keep the directional forces (Lateral G, Rear Align) smooth and distinct from the high-frequency textures.
+
+### 3. Tuning Recommendations for the User
+
+To achieve a natural blend, users should:
+
+1.  **Start with "Rear Align Torque" first:** Tune this until the counter-steering pull feels clear and responsive.
+2.  **Then add "Lateral G Boost (Slide)":** Increase this gradually to add the sensation of chassis momentum without making the wheel too heavy to turn.
+3.  **Use "Yaw Kick" for early warning:** This should be a sharp, short impulse at the very start of the slide.
+4.  **Monitor "Clipping":** If the total force is clipping, reduce `Master Gain` or increase `Max Torque Ref` to ensure all these distinct forces have headroom.
+
+By understanding these individual roles and their combined effect, the user can tune a highly informative and intuitive oversteer experience.
+
+
+### Tuning Tips for Rear Align Torque, Lateral G Boost (Slide), and Yaw Kick
+
+To achieve a natural blend, users should:
+
+1.  **Start with "Rear Align Torque" first:** Tune this until the counter-steering pull feels clear and responsive.
+2.  **Then add "Lateral G Boost (Slide)":** Increase this gradually to add the sensation of chassis momentum without making the wheel too heavy to turn.
+3.  **Use "Yaw Kick" for early warning:** This should be a sharp, short impulse at the very start of the slide.
+4.  **Monitor "Clipping":** If the total force is clipping, reduce `Master Gain` or increase `Max Torque Ref` to ensure all these distinct forces have headroom.
+
+By understanding these individual roles and their combined effect, the user can tune a highly informative and intuitive oversteer experience.
+```
+
 # File: docs\ffb_customization.md
 ```markdown
 # Customization of Tire Grip FFB
@@ -4723,7 +4979,7 @@ This document details the Force Feedback effects implemented in LMUFFB, how they
 *   **Goal**: To communicate when the rear tires are losing grip (loose/sliding), allowing the driver to catch a slide early.
 *   **Current Dynamic Implementation (v0.2.2+)**:
     *   **Aligning Torque Integration**: Calculates a synthetic "Aligning Torque" for the rear axle using `Rear Lateral Force`.
-    *   **Mechanism**: This force is injected into the steering signal. If the rear tires generate large lateral forces (resisting a slide), the steering wheel will naturally counter-steer, providing a physical cue to catch the slide. This is modulated by the `Oversteer Boost` slider.
+    *   **Mechanism**: This force is injected into the steering signal. If the rear tires generate large lateral forces (resisting a slide), the steering wheel will naturally counter-steer, providing a physical cue to catch the slide. This is modulated by the `Lateral G Boost (Slide)` slider.
     *   **SoP (Seat of Pants)**: Also injects Lateral G-force into the wheel torque to provide "weight" cues.
 
 ## 3. Braking Lockup (Progressive Scrub)
@@ -8867,7 +9123,7 @@ The `ImGui::PlotLines` function accepts `scale_min` and `scale_max`.
 *   **Group A: Macro Forces (Keep ±20.0)**
     *   Base Torque
     *   SoP (Base Chassis G)
-    *   Oversteer Boost
+    *   Lateral G Boost (Slide)
     *   Rear Align Torque
     *   Scrub Drag Force
     *   Understeer Cut
@@ -9181,7 +9437,7 @@ This injects lateral G-force and rear-axle aligning torque to simulate the car b
         *   This filters out high-frequency noise while preserving actual rotation kicks regardless of frame rate.
     *   $K_{\text{yaw}}$: User setting `m_sop_yaw_gain` (0.0 - 2.0).
 
-4.  **Oversteer Boost**:
+4.  **Lateral G Boost (Slide)**:
     If Front Grip > Rear Grip:
 
     $$
@@ -20269,7 +20525,7 @@ The current implementation uses **Lateral Acceleration**, not Yaw.
 *   **SoP (Seat of Pants):** Using **Lateral G** is correct for simulating the weight transfer feel. It tells the driver "The car is turning hard."
 *   **Oversteer:** Using Lateral G alone is sometimes imperfect for detecting oversteer.
     *   *Scenario:* If the rear tires break loose completely (drifting), Lateral G might actually *drop* or plateau, while Yaw Rate spikes.
-    *   *Your Implementation:* To compensate for this, your code adds the **Rear Aligning Torque** (calculated from Slip Angle) and **Oversteer Boost** (calculated from Grip Delta). These help detect the slide even if Lateral G isn't telling the whole story.
+    *   *Your Implementation:* To compensate for this, your code adds the **Rear Aligning Torque** (calculated from Slip Angle) and **Lateral G Boost (Slide)** (calculated from Grip Delta). These help detect the slide even if Lateral G isn't telling the whole story.
 
 **Summary:** You are currently calculating forces based on the **sideways push** (Lateral G), not the **rotation speed** (Yaw).
 
@@ -21297,6 +21553,9 @@ void Config::LoadPresets() {
     presets.push_back(Preset("Default (T300)", true)
         .SetSmoothing(0.85f)
         .SetSlipSmoothing(0.015f)
+        .SetYawSmoothing(0.010f)
+        .SetChassisSmoothing(0.025f)
+        .SetGyroSmoothing(0.020f)
     );
     
     // 2. T300 (Redundant but kept for explicit selection)
@@ -21311,6 +21570,9 @@ void Config::LoadPresets() {
         .SetInvert(true)
         .SetSmoothing(0.85f)
         .SetSlipSmoothing(0.015f)
+        .SetYawSmoothing(0.010f)
+        .SetChassisSmoothing(0.025f)
+        .SetGyroSmoothing(0.020f)
         .SetSlide(true, 0.39f)
     );
     
@@ -21630,6 +21892,9 @@ void Config::LoadPresets() {
                         else if (key == "optimal_slip_angle") current_preset.optimal_slip_angle = std::stof(value);
                         else if (key == "optimal_slip_ratio") current_preset.optimal_slip_ratio = std::stof(value);
                         else if (key == "steering_shaft_smoothing") current_preset.steering_shaft_smoothing = std::stof(value);
+                        else if (key == "gyro_smoothing_factor") current_preset.gyro_smoothing = std::stof(value);
+                        else if (key == "yaw_accel_smoothing") current_preset.yaw_smoothing = std::stof(value);
+                        else if (key == "chassis_inertia_smoothing") current_preset.chassis_smoothing = std::stof(value);
                     } catch (...) {}
                 }
             }
@@ -21724,6 +21989,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "optimal_slip_angle=" << engine.m_optimal_slip_angle << "\n";
         file << "optimal_slip_ratio=" << engine.m_optimal_slip_ratio << "\n";
         file << "steering_shaft_smoothing=" << engine.m_steering_shaft_smoothing << "\n";
+        file << "gyro_smoothing_factor=" << engine.m_gyro_smoothing << "\n";
+        file << "yaw_accel_smoothing=" << engine.m_yaw_accel_smoothing << "\n";
+        file << "chassis_inertia_smoothing=" << engine.m_chassis_inertia_smoothing << "\n";
         
         // 3. User Presets
         file << "\n[Presets]\n";
@@ -21765,6 +22033,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
                 file << "optimal_slip_angle=" << p.optimal_slip_angle << "\n";
                 file << "optimal_slip_ratio=" << p.optimal_slip_ratio << "\n";
                 file << "steering_shaft_smoothing=" << p.steering_shaft_smoothing << "\n";
+                file << "gyro_smoothing_factor=" << p.gyro_smoothing << "\n";
+                file << "yaw_accel_smoothing=" << p.yaw_smoothing << "\n";
+                file << "chassis_inertia_smoothing=" << p.chassis_smoothing << "\n";
                 file << "\n";
             }
         }
@@ -21844,6 +22115,9 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "optimal_slip_angle") engine.m_optimal_slip_angle = std::stof(value);
                     else if (key == "optimal_slip_ratio") engine.m_optimal_slip_ratio = std::stof(value);
                     else if (key == "steering_shaft_smoothing") engine.m_steering_shaft_smoothing = std::stof(value);
+                    else if (key == "gyro_smoothing_factor") engine.m_gyro_smoothing = std::stof(value);
+                    else if (key == "yaw_accel_smoothing") engine.m_yaw_accel_smoothing = std::stof(value);
+                    else if (key == "chassis_inertia_smoothing") engine.m_chassis_inertia_smoothing = std::stof(value);
                 } catch (...) {
                     std::cerr << "[Config] Error parsing line: " << line << std::endl;
                 }
@@ -21922,6 +22196,11 @@ struct Preset {
     float optimal_slip_angle = 0.10f;
     float optimal_slip_ratio = 0.12f;
     float steering_shaft_smoothing = 0.0f;
+    
+    // NEW: Advanced Smoothing (v0.5.8)
+    float gyro_smoothing = 0.010f;
+    float yaw_smoothing = 0.010f;
+    float chassis_smoothing = 0.025f;
 
     // v0.4.41: Signal Filtering
     bool flatspot_suppression = false;
@@ -21986,6 +22265,10 @@ struct Preset {
         return *this;
     }
     Preset& SetShaftSmoothing(float v) { steering_shaft_smoothing = v; return *this; }
+    
+    Preset& SetGyroSmoothing(float v) { gyro_smoothing = v; return *this; }
+    Preset& SetYawSmoothing(float v) { yaw_smoothing = v; return *this; }
+    Preset& SetChassisSmoothing(float v) { chassis_smoothing = v; return *this; }
 
     // Apply this preset to an engine instance
     void Apply(FFBEngine& engine) const {
@@ -22024,6 +22307,9 @@ struct Preset {
         engine.m_optimal_slip_angle = optimal_slip_angle;
         engine.m_optimal_slip_ratio = optimal_slip_ratio;
         engine.m_steering_shaft_smoothing = steering_shaft_smoothing;
+        engine.m_gyro_smoothing = gyro_smoothing;
+        engine.m_yaw_accel_smoothing = yaw_smoothing;
+        engine.m_chassis_inertia_smoothing = chassis_smoothing;
     }
 
     // NEW: Capture current engine state into this preset
@@ -22063,6 +22349,9 @@ struct Preset {
         optimal_slip_angle = engine.m_optimal_slip_angle;
         optimal_slip_ratio = engine.m_optimal_slip_ratio;
         steering_shaft_smoothing = engine.m_steering_shaft_smoothing;
+        gyro_smoothing = engine.m_gyro_smoothing;
+        yaw_smoothing = engine.m_yaw_accel_smoothing;
+        chassis_smoothing = engine.m_chassis_inertia_smoothing;
     }
 };
 
@@ -23464,11 +23753,36 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::TreeNodeEx("Rear Axle (Oversteer)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
         
-        FloatSetting("Oversteer Boost", &engine.m_oversteer_boost, 0.0f, 2.0f, FormatPct(engine.m_oversteer_boost), "Multiplier for SoP when rear grip is lost.");
-        FloatSetting("SoP Lateral G", &engine.m_sop_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_sop_effect, FFBEngine::BASE_NM_SOP_LATERAL));
-        FloatSetting("Rear Align Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN), "Counter-steering force generated by rear tire slip.");
-        FloatSetting("Yaw Kick", &engine.m_sop_yaw_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK), "Predictive kick based on Yaw Acceleration.");
+        FloatSetting("Lateral G Boost (Slide)", &engine.m_oversteer_boost, 0.0f, 2.0f, FormatPct(engine.m_oversteer_boost), "Increases the Lateral G (SoP) force when the rear tires lose grip.\nMakes the car feel heavier during a slide, helping you judge the momentum.\nShould build up slightly more gradually than Rear Align Torque,\nreflecting the inertia of the car's mass swinging out.\nIt's a sustained force that tells you about the magnitude of the slide\nTuning Goal: The driver should feel the direction of the counter-steer (Rear Align)\nand the effort required to hold it (Lateral G Boost).");
+        FloatSetting("SoP Lateral G", &engine.m_sop_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_sop_effect, FFBEngine::BASE_NM_SOP_LATERAL), "Represents Chassis Roll, simulates the weight of the car leaning in the corner.");
+        FloatSetting("Rear Align Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN), "Counter-steering force generated by rear tire slip.\nShould build up very quickly after the Yaw Kick, as the slip angle develops.\nThis is the active \"pull.\"\nTuning Goal: The driver should feel the direction of the counter-steer (Rear Align)\nand the effort required to hold it (Lateral G Boost).");
+        FloatSetting("Yaw Kick", &engine.m_sop_yaw_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK), " This is the earliest cue for rear stepping out. It's a sharp, momentary impulse that signals the onset of rotation.");
+        
+        // --- NEW: Yaw Kick Smoothing (v0.5.8) ---
+        ImGui::Text("  Kick Response");
+        ImGui::NextColumn();
+        int yaw_ms = (int)(engine.m_yaw_accel_smoothing * 1000.0f + 0.5f);
+        ImVec4 yaw_color = (yaw_ms <= 15) ? ImVec4(0.0f, 1.0f, 0.0f, 1.0f) : ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+        ImGui::TextColored(yaw_color, "Latency: %d ms", yaw_ms);
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::SliderFloat("##YawSmooth", &engine.m_yaw_accel_smoothing, 0.000f, 0.050f, "%.3f s")) selected_preset = -1;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Reaction time of the slide kick.\nLower = Faster.\nHigher = Less noise.");
+        ImGui::NextColumn();
+        // ----------------------------------------
+
         FloatSetting("Gyro Damping", &engine.m_gyro_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_gyro_gain, FFBEngine::BASE_NM_GYRO_DAMPING));
+        
+        // --- NEW: Gyro Smoothing (v0.5.8) ---
+        ImGui::Text("  Gyro Smooth");
+        ImGui::NextColumn();
+        int gyro_ms = (int)(engine.m_gyro_smoothing * 1000.0f + 0.5f);
+        ImVec4 gyro_color = (gyro_ms <= 20) ? ImVec4(0.0f, 1.0f, 0.0f, 1.0f) : ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+        ImGui::TextColored(gyro_color, "Latency: %d ms", gyro_ms);
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::SliderFloat("##GyroSmooth", &engine.m_gyro_smoothing, 0.000f, 0.050f, "%.3f s")) selected_preset = -1;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Filters steering velocity.\nIncrease if damping feels 'sandy' or 'grainy'.");
+        ImGui::NextColumn();
+        // ------------------------------------
         
         ImGui::TextColored(ImVec4(0.0f, 0.6f, 0.85f, 1.0f), "Advanced SoP");
         ImGui::NextColumn(); ImGui::NextColumn();
@@ -23539,12 +23853,23 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
         ImGui::NextColumn();
 
+        // --- NEW: Chassis Inertia (v0.5.8) ---
+        ImGui::Text("Chassis Inertia (Load)");
+        ImGui::NextColumn();
+        int chassis_ms = (int)(engine.m_chassis_inertia_smoothing * 1000.0f + 0.5f);
+        ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "Simulation: %d ms", chassis_ms);
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::SliderFloat("##ChassisSmooth", &engine.m_chassis_inertia_smoothing, 0.000f, 0.100f, "%.3f s")) selected_preset = -1;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Simulates suspension settling time for Calculated Load.\n25ms = Stiff Race Car.\n50ms = Soft Road Car.");
+        ImGui::NextColumn();
+        // -------------------------------------
+
         // --- NEW: Optimal Slip Sliders (v0.5.7) ---
         FloatSetting("Optimal Slip Angle", &engine.m_optimal_slip_angle, 0.05f, 0.20f, "%.2f rad", 
             "The slip angle where peak grip occurs.\n"
             "Lower = Earlier understeer warning (Hypercars ~0.06).\n"
             "Higher = Later warning (GT3 ~0.10).\n"
-            "Affects: Understeer Effect, Oversteer Boost, Slide Texture.");
+            "Affects: Understeer Effect, Lateral G Boost (Slide), Slide Texture.");
 
         FloatSetting("Optimal Slip Ratio", &engine.m_optimal_slip_ratio, 0.05f, 0.20f, "%.2f", 
             "The longitudinal slip ratio (braking/accel) where peak grip occurs.\n"
@@ -23991,7 +24316,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         // Group: Modifiers
         ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.7f, 1.0f), "[Modifiers]");
         
-        PlotWithStats("Oversteer Boost", plot_oversteer, -20.0f, 20.0f, ImVec2(0, 40),
+        PlotWithStats("Lateral G Boost (Slide)", plot_oversteer, -20.0f, 20.0f, ImVec2(0, 40),
                       "Added force from Rear Grip loss");
         
         PlotWithStats("Understeer Cut", plot_understeer, -20.0f, 20.0f, ImVec2(0, 40),
@@ -25833,6 +26158,7 @@ static void test_sop_yaw_kick() {
     
     // Setup
     engine.m_sop_yaw_gain = 1.0f;
+    engine.m_yaw_accel_smoothing = 0.0225f; // v0.5.8: Explicitly set legacy value for test expectations
     engine.m_sop_effect = 0.0f; // Disable Base SoP
     engine.m_max_torque_ref = 20.0f; // Reference torque for normalization
     engine.m_gain = 1.0f;
@@ -26413,7 +26739,7 @@ static void test_suspension_bottoming() {
 }
 
 static void test_oversteer_boost() {
-    std::cout << "\nTest: Oversteer Boost (Rear Grip Loss)" << std::endl;
+    std::cout << "\nTest: Lateral G Boost (Slide)" << std::endl;
     FFBEngine engine;
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -26784,7 +27110,7 @@ static void test_rear_grip_fallback() {
     // We want to simulate that rear is NOT sliding (grip should be high)
     // but telemetry says 0.
     // If fallback works, it should calculate slip angle ~0, grip ~1.0.
-    // If fallback fails, it uses 0.0 -> Grip Delta = 1.0 - 0.0 = 1.0 -> Massive Oversteer Boost.
+    // If fallback fails, it uses 0.0 -> Grip Delta = 1.0 - 0.0 = 1.0 -> Massive Lateral G Boost (Slide).
     
     // Set minimal slip
     data.mWheel[2].mLongitudinalGroundVel = 20.0;
@@ -26806,7 +27132,7 @@ static void test_rear_grip_fallback() {
     
     // Verify calculated rear grip was high (restored)
     // With 0 slip, grip should be 1.0.
-    // engine doesn't expose avg_rear_grip publically, but we can infer from oversteer boost.
+    // engine doesn't expose avg_rear_grip publically, but we can infer from Lateral G Boost (Slide).
     // If grip restored to 1.0, delta = 1.0 - 1.0 = 0.0. No boost.
     // If grip is 0.0, delta = 1.0. Boost applied.
     
@@ -26815,10 +27141,10 @@ static void test_rear_grip_fallback() {
     if (!batch.empty()) {
         float boost = batch.back().oversteer_boost;
         if (std::abs(boost) < 0.001) {
-             std::cout << "[PASS] Oversteer boost correctly suppressed (Rear Grip restored)." << std::endl;
+             std::cout << "[PASS] Lateral G Boost (Slide) correctly suppressed (Rear Grip restored)." << std::endl;
              g_tests_passed++;
         } else {
-             std::cout << "[FAIL] False oversteer boost detected: " << boost << std::endl;
+             std::cout << "[FAIL] False Lateral G Boost (Slide) detected: " << boost << std::endl;
              g_tests_failed++;
         }
     } else {
@@ -27755,6 +28081,7 @@ static void test_yaw_accel_smoothing() {
     
     // Setup: Isolate Yaw Kick effect
     engine.m_sop_yaw_gain = 1.0f;
+    engine.m_yaw_accel_smoothing = 0.0225f; // v0.5.8: Legacy value
     engine.m_sop_effect = 0.0f;
     engine.m_max_torque_ref = 20.0f;
     engine.m_gain = 1.0f;
@@ -27859,6 +28186,7 @@ static void test_yaw_accel_convergence() {
     
     // Setup
     engine.m_sop_yaw_gain = 1.0f;
+    engine.m_yaw_accel_smoothing = 0.0225f; // v0.5.8: Explicitly set legacy value
     engine.m_sop_effect = 0.0f;
     engine.m_max_torque_ref = 20.0f;
     engine.m_gain = 1.0f;
@@ -28592,7 +28920,7 @@ static void test_rear_force_workaround() {
     // Engine Configuration
     // ========================================
     engine.m_sop_effect = 1.0;        // Enable SoP effect
-    engine.m_oversteer_boost = 1.0;   // Enable oversteer boost (multiplies rear torque)
+    engine.m_oversteer_boost = 1.0;   // Enable Lateral G Boost (Slide) (multiplies rear torque)
     engine.m_gain = 1.0;              // Full gain
     engine.m_sop_scale = 10.0;        // Moderate SoP scaling
     engine.m_rear_align_effect = 1.0f; // Fix effect gain for test calculation (Default is now 5.0)

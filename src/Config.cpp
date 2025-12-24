@@ -28,6 +28,9 @@ void Config::LoadPresets() {
     presets.push_back(Preset("Default (T300)", true)
         .SetSmoothing(0.85f)
         .SetSlipSmoothing(0.015f)
+        .SetYawSmoothing(0.010f)
+        .SetChassisSmoothing(0.025f)
+        .SetGyroSmoothing(0.020f)
     );
     
     // 2. T300 (Redundant but kept for explicit selection)
@@ -42,6 +45,9 @@ void Config::LoadPresets() {
         .SetInvert(true)
         .SetSmoothing(0.85f)
         .SetSlipSmoothing(0.015f)
+        .SetYawSmoothing(0.010f)
+        .SetChassisSmoothing(0.025f)
+        .SetGyroSmoothing(0.020f)
         .SetSlide(true, 0.39f)
     );
     
@@ -361,6 +367,9 @@ void Config::LoadPresets() {
                         else if (key == "optimal_slip_angle") current_preset.optimal_slip_angle = std::stof(value);
                         else if (key == "optimal_slip_ratio") current_preset.optimal_slip_ratio = std::stof(value);
                         else if (key == "steering_shaft_smoothing") current_preset.steering_shaft_smoothing = std::stof(value);
+                        else if (key == "gyro_smoothing_factor") current_preset.gyro_smoothing = std::stof(value);
+                        else if (key == "yaw_accel_smoothing") current_preset.yaw_smoothing = std::stof(value);
+                        else if (key == "chassis_inertia_smoothing") current_preset.chassis_smoothing = std::stof(value);
                     } catch (...) {}
                 }
             }
@@ -455,6 +464,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "optimal_slip_angle=" << engine.m_optimal_slip_angle << "\n";
         file << "optimal_slip_ratio=" << engine.m_optimal_slip_ratio << "\n";
         file << "steering_shaft_smoothing=" << engine.m_steering_shaft_smoothing << "\n";
+        file << "gyro_smoothing_factor=" << engine.m_gyro_smoothing << "\n";
+        file << "yaw_accel_smoothing=" << engine.m_yaw_accel_smoothing << "\n";
+        file << "chassis_inertia_smoothing=" << engine.m_chassis_inertia_smoothing << "\n";
         
         // 3. User Presets
         file << "\n[Presets]\n";
@@ -496,6 +508,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
                 file << "optimal_slip_angle=" << p.optimal_slip_angle << "\n";
                 file << "optimal_slip_ratio=" << p.optimal_slip_ratio << "\n";
                 file << "steering_shaft_smoothing=" << p.steering_shaft_smoothing << "\n";
+                file << "gyro_smoothing_factor=" << p.gyro_smoothing << "\n";
+                file << "yaw_accel_smoothing=" << p.yaw_smoothing << "\n";
+                file << "chassis_inertia_smoothing=" << p.chassis_smoothing << "\n";
                 file << "\n";
             }
         }
@@ -575,6 +590,9 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "optimal_slip_angle") engine.m_optimal_slip_angle = std::stof(value);
                     else if (key == "optimal_slip_ratio") engine.m_optimal_slip_ratio = std::stof(value);
                     else if (key == "steering_shaft_smoothing") engine.m_steering_shaft_smoothing = std::stof(value);
+                    else if (key == "gyro_smoothing_factor") engine.m_gyro_smoothing = std::stof(value);
+                    else if (key == "yaw_accel_smoothing") engine.m_yaw_accel_smoothing = std::stof(value);
+                    else if (key == "chassis_inertia_smoothing") engine.m_chassis_inertia_smoothing = std::stof(value);
                 } catch (...) {
                     std::cerr << "[Config] Error parsing line: " << line << std::endl;
                 }

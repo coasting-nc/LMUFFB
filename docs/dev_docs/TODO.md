@@ -29,6 +29,7 @@ DONE: add slider for optimal slip angle (and slip ratio)
 DONE: list effects affected by grip and load approximation, and list those that are not affected
 
 DONE: add smoothing (and slider) for steering shaft torque
+DONE: expose sliders for additional smoothing: yaw kick, gyroscopic damping, Chassis Inertia (Load)
 
 update tooltips
 

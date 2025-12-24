@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.10] - 2025-12-24
+### Added
+- **Exposed Contextual Smoothing Sliders**:
+    - **Kick Response**: Added smoothing slider for Yaw Acceleration (Kick) effect, placed immediately after the effect gain.
+    - **Gyro Smooth**: Added smoothing slider for Gyroscopic Damping, placed immediately after the effect gain.
+    - **Chassis Inertia (Load)**: Added smoothing slider for simulated tire load, placed in the Grip & Slip Estimation section.
+- **Visual Latency Indicators**:
+    - Real-time latency readout (ms) for smoothing parameters.
+    - **Red/Green Color Coding** for Yaw Kick (>15ms) and Gyro (>20ms) to warn against excessive lag.
+    - **Blue Info Text** for Chassis Inertia to indicate "Simulated" time constant.
+
+### Changed
+- **FFB Engine Refactoring**: 
+    - Moved hardcoded time constants for Yaw and Chassis Inertia into configurable member variables.
+    - Standardized Gyro Smoothing to use the same Time Constant (seconds) math as other filters.
+- **Config Persistence**: New smoothing parameters are now saved to `config.ini` and supported in user presets.
+
 ## [0.5.9] - 2025-12-24
 ### Changed
 - **Improved Load Cap widget**:

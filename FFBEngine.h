@@ -198,7 +198,9 @@ public:
     float m_rear_align_effect = 5.0f; 
     float m_sop_yaw_gain = 5.0f;      
     float m_gyro_gain = 0.0f;         
-    float m_gyro_smoothing = 0.1f;    
+    float m_gyro_smoothing = 0.010f; // v0.5.8: Changed to Time Constant (Seconds). Default 10ms.
+    float m_yaw_accel_smoothing = 0.010f;      // v0.5.8: Time Constant (Seconds). Default 10ms.
+    float m_chassis_inertia_smoothing = 0.025f; // v0.5.8: Time Constant (Seconds). Default 25ms.
     
     bool m_lockup_enabled = false;
     float m_lockup_gain = 0.5f;
@@ -766,8 +768,9 @@ public:
         double raw_lat_g = data->mLocalAccel.x;
         
         // --- SIGNAL CONDITIONING (Inertia Simulation) ---
-        // Filter accelerometers at ~5Hz to simulate chassis weight transfer lag
-        double chassis_tau = 0.035; // ~35ms lag
+        // Filter accelerometers to simulate chassis weight transfer lag
+        double chassis_tau = (double)m_chassis_inertia_smoothing;
+        if (chassis_tau < 0.0001) chassis_tau = 0.0001;
         double alpha_chassis = dt / (chassis_tau + dt);
         m_accel_x_smoothed += alpha_chassis * (data->mLocalAccel.x - m_accel_x_smoothed);
         m_accel_z_smoothed += alpha_chassis * (data->mLocalAccel.z - m_accel_z_smoothed);
@@ -1042,9 +1045,10 @@ public:
         // misinterpreted by physics as Yaw Acceleration spikes, which causes feedback loops.
         // - 31.8ms (5Hz): Car body motion; too laggy.
         // - 22.5ms (7Hz): Aggressive; turns sharp "Kick" into soft "Push", delays reaction.
-        // - 10.0ms (~16Hz): Optimal balance; responsive and filters the 40Hz+ vibration.
+        // - 10.0ms (New Default, ~16Hz): Optimal balance; responsive and filters the 40Hz+ vibration.
         // - 3.2ms (50Hz): "Raw" feel; kills electrical buzz but risks feedback loops.
-        const double tau_yaw = 0.010; // 10ms (Fast reaction, filters >16Hz noise)
+        double tau_yaw = (double)m_yaw_accel_smoothing;
+        if (tau_yaw < 0.0001) tau_yaw = 0.0001; 
         double alpha_yaw = dt / (tau_yaw + dt);
         
         m_yaw_accel_smoothed = m_yaw_accel_smoothed + alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
@@ -1071,10 +1075,9 @@ public:
         m_prev_steering_angle = steer_angle; // Update history
         
         // Smoothing (LPF)
-        // v0.4.37: Time Corrected Alpha with Clamp
-        // Treat m_gyro_smoothing as "Smoothness" (0=Raw, 1=Slow)
-        double gyro_smoothness = (std::max)(0.0f, (std::min)(0.99f, m_gyro_smoothing)); // Clamp!
-        double tau_gyro = gyro_smoothness * 0.1; // Map to 0.0s - 0.1s time constant
+        // v0.5.8: m_gyro_smoothing is now a Time Constant (Seconds)
+        double tau_gyro = (double)m_gyro_smoothing;
+        if (tau_gyro < 0.0001) tau_gyro = 0.0001;
         double alpha_gyro = dt / (tau_gyro + dt);
         
         m_steering_velocity_smoothed += alpha_gyro * (steer_vel - m_steering_velocity_smoothed);

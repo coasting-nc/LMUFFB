@@ -225,6 +225,7 @@ static void test_sop_yaw_kick() {
     
     // Setup
     engine.m_sop_yaw_gain = 1.0f;
+    engine.m_yaw_accel_smoothing = 0.0225f; // v0.5.8: Explicitly set legacy value for test expectations
     engine.m_sop_effect = 0.0f; // Disable Base SoP
     engine.m_max_torque_ref = 20.0f; // Reference torque for normalization
     engine.m_gain = 1.0f;
@@ -2147,6 +2148,7 @@ static void test_yaw_accel_smoothing() {
     
     // Setup: Isolate Yaw Kick effect
     engine.m_sop_yaw_gain = 1.0f;
+    engine.m_yaw_accel_smoothing = 0.0225f; // v0.5.8: Legacy value
     engine.m_sop_effect = 0.0f;
     engine.m_max_torque_ref = 20.0f;
     engine.m_gain = 1.0f;
@@ -2251,6 +2253,7 @@ static void test_yaw_accel_convergence() {
     
     // Setup
     engine.m_sop_yaw_gain = 1.0f;
+    engine.m_yaw_accel_smoothing = 0.0225f; // v0.5.8: Explicitly set legacy value
     engine.m_sop_effect = 0.0f;
     engine.m_max_torque_ref = 20.0f;
     engine.m_gain = 1.0f;

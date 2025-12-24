@@ -50,6 +50,11 @@ struct Preset {
     float optimal_slip_angle = 0.10f;
     float optimal_slip_ratio = 0.12f;
     float steering_shaft_smoothing = 0.0f;
+    
+    // NEW: Advanced Smoothing (v0.5.8)
+    float gyro_smoothing = 0.010f;
+    float yaw_smoothing = 0.010f;
+    float chassis_smoothing = 0.025f;
 
     // v0.4.41: Signal Filtering
     bool flatspot_suppression = false;
@@ -114,6 +119,10 @@ struct Preset {
         return *this;
     }
     Preset& SetShaftSmoothing(float v) { steering_shaft_smoothing = v; return *this; }
+    
+    Preset& SetGyroSmoothing(float v) { gyro_smoothing = v; return *this; }
+    Preset& SetYawSmoothing(float v) { yaw_smoothing = v; return *this; }
+    Preset& SetChassisSmoothing(float v) { chassis_smoothing = v; return *this; }
 
     // Apply this preset to an engine instance
     void Apply(FFBEngine& engine) const {
@@ -152,6 +161,9 @@ struct Preset {
         engine.m_optimal_slip_angle = optimal_slip_angle;
         engine.m_optimal_slip_ratio = optimal_slip_ratio;
         engine.m_steering_shaft_smoothing = steering_shaft_smoothing;
+        engine.m_gyro_smoothing = gyro_smoothing;
+        engine.m_yaw_accel_smoothing = yaw_smoothing;
+        engine.m_chassis_inertia_smoothing = chassis_smoothing;
     }
 
     // NEW: Capture current engine state into this preset
@@ -191,6 +203,9 @@ struct Preset {
         optimal_slip_angle = engine.m_optimal_slip_angle;
         optimal_slip_ratio = engine.m_optimal_slip_ratio;
         steering_shaft_smoothing = engine.m_steering_shaft_smoothing;
+        gyro_smoothing = engine.m_gyro_smoothing;
+        yaw_smoothing = engine.m_yaw_accel_smoothing;
+        chassis_smoothing = engine.m_chassis_inertia_smoothing;
     }
 };
 
