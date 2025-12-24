@@ -38,3 +38,6 @@ update tooltips
 
 yaw kick further fixes? smoothing? higher thresholds? non linear transformation? 
 experiment with gyro damping to compensate yaw kick
+
+
+add smoothing (and slider) for steering shaft torque
