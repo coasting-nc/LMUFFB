@@ -452,6 +452,13 @@ tests\test_ffb_engine.exe 2>&1 | Select-String -Pattern "Tests (Passed|Failed):"
 All notable changes to this project will be documented in this file.
 
 
+## [0.5.6] - 2025-12-24
+### Changed
+- **Graphs Window Cleanup**:
+    - **Removed Telemetry Warnings**: Removed "Missing Tire Load (Check shared memory)" and "Missing Grip Data (Ice or Error)" bullet points from the Troubleshooting Graphs window. These warnings were often distracting during normal gameplay with certain car classes.
+    - **Visual Optimization**: Eliminated the red "(MISSING)" status text from the "Raw Front Load" and "Raw Front Grip" graph labels for a cleaner interface.
+    - **Header Logic**: The "TELEMETRY WARNINGS:" section now only appears if there is a critical timing issue (Invalid DeltaTime), reducing visual noise.
+
 ## [0.5.5] - 2025-12-24
 ### Added
 - **"Smart Container" Dynamic Resizing**: The OS window now automatically resizes based on the GUI state.
@@ -461,6 +468,13 @@ All notable changes to this project will be documented in this file.
     - **Auto-Fill**: Tuning and Debug windows now automatically dock to the edges of the OS window, filling all available space without floating title bars or borders.
     - **Zero Clutter**: Removed overlapping window borders and unnecessary window decorations for a native-app feel.
 - **Regression Tests**: Added `test_window_config_persistence()` to verify that window states (x, y, width, height, graphs-on/off) are correctly saved and loaded.
+
+### Changed
+- **Code Quality Improvements** (Post-Review Refinements):
+    - **Minimum Window Size Enforcement**: Added validation to prevent window dimensions from falling below 400x600, ensuring UI remains usable even if config file is corrupted.
+    - **Window Position Validation**: Implemented bounds checking to detect and correct off-screen window positions (e.g., after monitor configuration changes).
+    - **Eliminated Magic Number Duplication**: Defined `CONFIG_PANEL_WIDTH` as a file-level constant to eliminate duplication between `DrawTuningWindow` and `DrawDebugWindow`.
+    - **Enhanced Documentation**: Improved inline comments for helper functions with detailed descriptions and parameter documentation.
 
 ## [0.5.3] - 2025-12-24
 ### Fixed
@@ -22692,6 +22706,11 @@ static IDXGISwapChain*          g_pSwapChain = NULL;
 static ID3D11RenderTargetView*  g_mainRenderTargetView = NULL;
 static HWND                     g_hwnd = NULL;
 
+// v0.5.5 Layout Constants
+static const float CONFIG_PANEL_WIDTH = 500.0f;  // Width of config panel when graphs are visible
+static const int MIN_WINDOW_WIDTH = 400;         // Minimum window width to keep UI usable
+static const int MIN_WINDOW_HEIGHT = 600;        // Minimum window height to keep UI usable
+
 // Forward declarations of helper functions
 bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
@@ -22700,11 +22719,26 @@ void CleanupRenderTarget();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 void SetWindowAlwaysOnTop(HWND hwnd, bool enabled); 
 
-// v0.5.5 Helpers
+// v0.5.5 Window Management Helpers
+
+/**
+ * Resizes the OS window with minimum size enforcement.
+ * Ensures window dimensions never fall below usability thresholds.
+ */
 void ResizeWindow(HWND hwnd, int x, int y, int w, int h) {
+    // Enforce minimum dimensions to prevent UI from becoming unusable
+    if (w < MIN_WINDOW_WIDTH) w = MIN_WINDOW_WIDTH;
+    if (h < MIN_WINDOW_HEIGHT) h = MIN_WINDOW_HEIGHT;
+    
     ::SetWindowPos(hwnd, NULL, x, y, w, h, SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
+/**
+ * Saves current window geometry to Config static variables.
+ * Stores position and dimensions based on current mode (small vs large).
+ * 
+ * @param is_graph_mode If true, saves to win_w_large/win_h_large; otherwise to win_w_small/win_h_small
+ */
 void SaveCurrentWindowGeometry(bool is_graph_mode) {
     RECT rect;
     if (::GetWindowRect(g_hwnd, &rect)) {
@@ -22712,6 +22746,10 @@ void SaveCurrentWindowGeometry(bool is_graph_mode) {
         Config::win_pos_y = rect.top;
         int w = rect.right - rect.left;
         int h = rect.bottom - rect.top;
+
+        // Enforce minimum dimensions before saving
+        if (w < MIN_WINDOW_WIDTH) w = MIN_WINDOW_WIDTH;
+        if (h < MIN_WINDOW_HEIGHT) h = MIN_WINDOW_HEIGHT;
 
         if (is_graph_mode) {
             Config::win_w_large = w;
@@ -22792,13 +22830,34 @@ bool GuiLayer::Init() {
     std::wstring wver(ver.begin(), ver.end());
     std::wstring title = L"LMUFFB v" + wver;
 
-    // 1. Determine startup size
+    // 1. Determine startup size with validation
     int start_w = Config::show_graphs ? Config::win_w_large : Config::win_w_small;
     int start_h = Config::show_graphs ? Config::win_h_large : Config::win_h_small;
+    
+    // Enforce minimum dimensions
+    if (start_w < MIN_WINDOW_WIDTH) start_w = MIN_WINDOW_WIDTH;
+    if (start_h < MIN_WINDOW_HEIGHT) start_h = MIN_WINDOW_HEIGHT;
+    
+    // 2. Validate window position (ensure it's on-screen)
+    int pos_x = Config::win_pos_x;
+    int pos_y = Config::win_pos_y;
+    
+    // Get primary monitor work area
+    RECT workArea;
+    SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
+    
+    // If saved position would place window completely off-screen, reset to default
+    if (pos_x < workArea.left - 100 || pos_x > workArea.right - 100 ||
+        pos_y < workArea.top - 100 || pos_y > workArea.bottom - 100) {
+        pos_x = 100;  // Reset to safe default
+        pos_y = 100;
+        Config::win_pos_x = pos_x;  // Update config
+        Config::win_pos_y = pos_y;
+    }
 
-    // 2. Create Window with saved position and size
+    // 3. Create Window with validated position and size
     g_hwnd = ::CreateWindowW(wc.lpszClassName, title.c_str(), WS_OVERLAPPEDWINDOW, 
-        Config::win_pos_x, Config::win_pos_y, 
+        pos_x, pos_y, 
         start_w, start_h, 
         NULL, NULL, wc.hInstance, NULL);
 
@@ -22966,8 +23025,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     std::lock_guard<std::mutex> lock(g_engine_mutex);
 
     // --- A. LAYOUT CALCULATION (v0.5.5 Smart Container) ---
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
-    const float CONFIG_PANEL_WIDTH = 500.0f; 
+    ImGuiViewport* viewport = ImGui::GetMainViewport(); 
 
     // Calculate width: Full viewport if graphs off, fixed width if graphs on
     float current_width = Config::show_graphs ? CONFIG_PANEL_WIDTH : viewport->Size.x;
@@ -23643,8 +23701,6 @@ static RollingBuffer plot_raw_rear_slip_angle;
 static RollingBuffer plot_raw_front_deflection; 
 
 // State for Warnings
-static bool g_warn_load = false;
-static bool g_warn_grip = false;
 static bool g_warn_dt = false;
 
 // Toggle State
@@ -23654,8 +23710,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
     // Only draw if enabled
     if (!Config::show_graphs) return;
 
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
-    const float CONFIG_PANEL_WIDTH = 500.0f; 
+    ImGuiViewport* viewport = ImGui::GetMainViewport(); 
 
     // Position: Start after the config panel
     ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x + CONFIG_PANEL_WIDTH, viewport->Pos.y));
@@ -23729,18 +23784,14 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         plot_raw_front_deflection.Add(snap.raw_front_deflection);
 
         // Update Warning Flags (Sticky-ish for display)
-        g_warn_load = snap.warn_load;
-        g_warn_grip = snap.warn_grip;
         g_warn_dt = snap.warn_dt;
     }
 
     // --- Draw Warnings ---
-    if (g_warn_load || g_warn_grip || g_warn_dt) {
+    if (g_warn_dt) {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
         ImGui::Text("TELEMETRY WARNINGS:");
-        if (g_warn_load) ImGui::Text("- Missing Tire Load (Check shared memory)");
-        if (g_warn_grip) ImGui::Text("- Missing Grip Data (Ice or Error)");
-        if (g_warn_dt) ImGui::Text("- Invalid DeltaTime (Using 400Hz fallback)");
+        ImGui::Text("- Invalid DeltaTime (Using 400Hz fallback)");
         ImGui::PopStyleColor();
         ImGui::Separator();
     }
@@ -23932,8 +23983,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
             snprintf(stats_label, sizeof(stats_label), "Raw Front Load | Val: %.4f | Min: %.3f | Max: %.3f", 
                      current, min_val, max_val);
             
-            if (g_warn_load) ImGui::TextColored(ImVec4(1,0,0,1), "%s (MISSING)", stats_label);
-            else ImGui::Text("%s", stats_label);
+            ImGui::Text("%s", stats_label);
             
             ImGui::PlotLines("##RawLoad", plot_raw_load.data.data(), (int)plot_raw_load.data.size(), 
                            plot_raw_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
@@ -23949,8 +23999,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
             snprintf(stats_label, sizeof(stats_label), "Raw Front Grip | Val: %.4f | Min: %.3f | Max: %.3f", 
                      current, min_val, max_val);
             
-            if (g_warn_grip) ImGui::TextColored(ImVec4(1,0,0,1), "%s (MISSING)", stats_label);
-            else ImGui::Text("%s", stats_label);
+            ImGui::Text("%s", stats_label);
             
             ImGui::PlotLines("##RawGrip", plot_raw_grip.data.data(), (int)plot_raw_grip.data.size(), 
                            plot_raw_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));
@@ -24013,6 +24062,8 @@ private:
     static void DrawDebugWindow(FFBEngine& engine);
     
     // UI State (Persistent state managed via Config::show_graphs)
+    // Note: Removed redundant GuiLayer::m_show_debug_window static variable in v0.5.5
+    // to consolidate state management in Config class for better persistence across sessions
 };
 
 #endif // GUILAYER_H

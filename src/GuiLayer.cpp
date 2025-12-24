@@ -1027,8 +1027,6 @@ static RollingBuffer plot_raw_rear_slip_angle;
 static RollingBuffer plot_raw_front_deflection; 
 
 // State for Warnings
-static bool g_warn_load = false;
-static bool g_warn_grip = false;
 static bool g_warn_dt = false;
 
 // Toggle State
@@ -1112,18 +1110,14 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         plot_raw_front_deflection.Add(snap.raw_front_deflection);
 
         // Update Warning Flags (Sticky-ish for display)
-        g_warn_load = snap.warn_load;
-        g_warn_grip = snap.warn_grip;
         g_warn_dt = snap.warn_dt;
     }
 
     // --- Draw Warnings ---
-    if (g_warn_load || g_warn_grip || g_warn_dt) {
+    if (g_warn_dt) {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
         ImGui::Text("TELEMETRY WARNINGS:");
-        if (g_warn_load) ImGui::Text("- Missing Tire Load (Check shared memory)");
-        if (g_warn_grip) ImGui::Text("- Missing Grip Data (Ice or Error)");
-        if (g_warn_dt) ImGui::Text("- Invalid DeltaTime (Using 400Hz fallback)");
+        ImGui::Text("- Invalid DeltaTime (Using 400Hz fallback)");
         ImGui::PopStyleColor();
         ImGui::Separator();
     }
@@ -1315,8 +1309,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
             snprintf(stats_label, sizeof(stats_label), "Raw Front Load | Val: %.4f | Min: %.3f | Max: %.3f", 
                      current, min_val, max_val);
             
-            if (g_warn_load) ImGui::TextColored(ImVec4(1,0,0,1), "%s (MISSING)", stats_label);
-            else ImGui::Text("%s", stats_label);
+            ImGui::Text("%s", stats_label);
             
             ImGui::PlotLines("##RawLoad", plot_raw_load.data.data(), (int)plot_raw_load.data.size(), 
                            plot_raw_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
@@ -1332,8 +1325,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
             snprintf(stats_label, sizeof(stats_label), "Raw Front Grip | Val: %.4f | Min: %.3f | Max: %.3f", 
                      current, min_val, max_val);
             
-            if (g_warn_grip) ImGui::TextColored(ImVec4(1,0,0,1), "%s (MISSING)", stats_label);
-            else ImGui::Text("%s", stats_label);
+            ImGui::Text("%s", stats_label);
             
             ImGui::PlotLines("##RawGrip", plot_raw_grip.data.data(), (int)plot_raw_grip.data.size(), 
                            plot_raw_grip.offset, NULL, 0.0f, 1.2f, ImVec2(0, 40));

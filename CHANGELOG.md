@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.5.6] - 2025-12-24
+### Changed
+- **Graphs Window Cleanup**:
+    - **Removed Telemetry Warnings**: Removed "Missing Tire Load (Check shared memory)" and "Missing Grip Data (Ice or Error)" bullet points from the Troubleshooting Graphs window. These warnings were often distracting during normal gameplay with certain car classes.
+    - **Visual Optimization**: Eliminated the red "(MISSING)" status text from the "Raw Front Load" and "Raw Front Grip" graph labels for a cleaner interface.
+    - **Header Logic**: The "TELEMETRY WARNINGS:" section now only appears if there is a critical timing issue (Invalid DeltaTime), reducing visual noise.
+
 ## [0.5.5] - 2025-12-24
 ### Added
 - **"Smart Container" Dynamic Resizing**: The OS window now automatically resizes based on the GUI state.
