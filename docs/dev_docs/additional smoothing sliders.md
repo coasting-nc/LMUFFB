@@ -6,23 +6,27 @@
 
 ---
 
-## 1. Executive Summary & Context
+## 1. Executive Summary  & Context
 
 While the default smoothing values in LMUFFB are tuned for a "Safe Baseline," advanced users with specific hardware (High-End Direct Drive) or specific car preferences (Hypercars vs. Historics) require granular control over the signal processing chain.
 
+We are exposing three critical internal time constants to allow advanced tuning of FFB latency and feel. Instead of grouping them in a separate menu, they will be placed **contextually** next to the effects they modify.
 Currently, three critical time constants are hardcoded or hidden:
 1.  **Yaw Acceleration Smoothing:** Determines how fast the "Kick" warns of a slide.
 2.  **Chassis Inertia (Kinematic):** Determines how fast the "Weight" transfers in the calculated physics model.
 3.  **Gyro Damping Smoothing:** Determines the "texture" of the stabilizing resistance.
 
-By exposing these, we transform LMUFFB from a "Black Box" into a professional tuning tool, allowing users to match the FFB latency to their specific hardware capabilities and the physical properties of the car they are driving.
+Here is where they are placed:
+1.  **Yaw Acceleration Smoothing:** Placed in **Rear Axle**, under "Yaw Kick".
+2.  **Gyro Damping Smoothing:** Placed in **Rear Axle**, under "Gyro Damping".
+3.  **Chassis Inertia (Load):** Placed in **Grip & Slip Estimation**, as it controls the physics reconstruction model.
 
+By exposing these, we transform LMUFFB from a "Black Box" into a professional tuning tool, allowing users to match the FFB latency to their specific hardware capabilities and the physical properties of the car they are driving.
 ---
 
 ## 2. Detailed Analysis of Settings
 
 ### A. Yaw Acceleration Smoothing (The "Kick" Response)
-
 **Internal Variable:** `m_yaw_accel_smoothing` (Currently `const double tau_yaw = 0.0225`)
 **Unit:** Seconds (Time Constant $\tau$).
 **Function:** Filters the `mLocalRotAccel.y` derivative. Raw acceleration is extremely noisy; this filter extracts the "Trend" (The Slide) from the "Noise" (Vibration).
@@ -68,7 +72,6 @@ By exposing these, we transform LMUFFB from a "Black Box" into a professional tu
 | **0.002 s** | **2 ms** | **Raw.** You feel every micro-step of the encoder. Can feel like sand in the bearings. | **High-Res Encoders** (>20-bit). |
 | **0.010 s** | **10 ms** | **Clean (Default).** Removes digital noise. Damping feels like hydraulic fluid. | **Most Direct Drive Wheels.** |
 | **0.030 s** | **30 ms** | **Smooth.** Hides the "cogging" or "teeth" of mechanical wheels. | **Belt / Gear Driven** (T300/G29). |
-
 ---
 
 ## 3. Implementation Plan
@@ -133,9 +136,9 @@ Persist the new float values.
 
 **3. Update `LoadPresets`:**
 *   **Default (T300):**
-    *   Yaw: `0.010f` (Fast kick).
-    *   Chassis: `0.025f` (Stiff).
-    *   Gyro: `0.020f` (Smoother for belt drive).
+    *   Yaw: `0.010f`
+    *   Chassis: `0.025f`
+    *   Gyro: `0.020f` (Smoother for belt)
 *   **Direct Drive (Hypothetical):**
     *   Yaw: `0.005f`.
     *   Chassis: `0.025f`.
@@ -145,51 +148,57 @@ Persist the new float values.
 
 ### Phase 3: GUI Layer (`src/GuiLayer.cpp`)
 
-We will add a new collapsible section **"Signal Processing (Advanced)"** inside the "Advanced Tuning" tree, or as a sibling to it.
+We will distribute the sliders into the existing sections.
 
-**Visual Style:**
-Use the same **Red/Green Latency Text** logic we developed for SoP/Slip smoothing.
-
-**Code Snippet (Concept):**
+#### A. Rear Axle Section (Update)
+Insert the smoothing sliders immediately after their respective gain sliders.
 
 ```cpp
-if (ImGui::TreeNode("Signal Processing (Advanced)")) {
-    
-    // 1. Yaw Kick Smoothing
-    int yaw_ms = (int)(engine.m_yaw_accel_smoothing * 1000.0f);
-    ImGui::Text("Yaw Kick Response");
-    ImGui::SameLine();
-    // Threshold: 15ms
-    ImGui::TextColored((yaw_ms > 15) ? Red : Green, "(LATENCY: %d ms)", yaw_ms);
-    
-    char yaw_fmt[32]; snprintf(yaw_fmt, 32, "%.3fs", engine.m_yaw_accel_smoothing);
-    FloatSetting("##YawSmooth", &engine.m_yaw_accel_smoothing, 0.0f, 0.050f, yaw_fmt);
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Filters the 'Kick' effect.\nLower = Faster reaction.\nHigher = Less noise.\nDD: 5-10ms. Belt: 10-25ms.");
+// Inside "Rear Axle" Tree Node...
 
-    // 2. Chassis Inertia
-    int chassis_ms = (int)(engine.m_chassis_inertia_smoothing * 1000.0f);
-    ImGui::Text("Chassis Inertia (Load)");
-    ImGui::SameLine();
-    // No Red/Green here, as it's a preference, not a lag issue. Maybe Blue?
-    ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "(Simulated: %d ms)", chassis_ms);
-    
-    char chassis_fmt[32]; snprintf(chassis_fmt, 32, "%.3fs", engine.m_chassis_inertia_smoothing);
-    FloatSetting("##ChassisSmooth", &engine.m_chassis_inertia_smoothing, 0.0f, 0.100f, chassis_fmt);
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Simulates suspension settling time for Calculated Load.\nAffects Texture volume build-up.\n25ms = Stiff (Race Car).\n50ms = Soft (Road Car).");
+// 1. Yaw Kick Gain
+FloatSetting("Yaw Kick", &engine.m_sop_yaw_gain, ...);
 
-    // 3. Gyro Smoothing
-    int gyro_ms = (int)(engine.m_gyro_smoothing * 1000.0f);
-    ImGui::Text("Gyro Signal Smooth");
-    ImGui::SameLine();
-    ImGui::TextColored((gyro_ms > 20) ? Red : Green, "(LATENCY: %d ms)", gyro_ms);
-    
-    char gyro_fmt[32]; snprintf(gyro_fmt, 32, "%.3fs", engine.m_gyro_smoothing);
-    FloatSetting("##GyroSmooth", &engine.m_gyro_smoothing, 0.0f, 0.050f, gyro_fmt);
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Filters steering velocity for Damping.\nPrevents 'sandy' feel on lower-res encoders.\nDD: 5-10ms. Belt/Gear: 20-30ms.");
+// -> Yaw Kick Smoothing (Indented or distinct)
+int yaw_ms = (int)(engine.m_yaw_accel_smoothing * 1000.0f);
+ImGui::Text("  Kick Response"); ImGui::SameLine();
+ImGui::TextColored((yaw_ms > 15) ? Red : Green, "(%d ms)", yaw_ms);
+char yaw_fmt[32]; snprintf(yaw_fmt, 32, "%.3fs", engine.m_yaw_accel_smoothing);
+FloatSetting("##YawSmooth", &engine.m_yaw_accel_smoothing, 0.0f, 0.050f, yaw_fmt);
+if (ImGui::IsItemHovered()) ImGui::SetTooltip("Reaction time of the slide kick.\nLower = Faster.\nHigher = Less noise.");
 
-    ImGui::TreePop();
-}
+// 2. Gyro Gain
+FloatSetting("Gyro Damping", &engine.m_gyro_gain, ...);
+
+// -> Gyro Smoothing
+int gyro_ms = (int)(engine.m_gyro_smoothing * 1000.0f);
+ImGui::Text("  Gyro Smooth"); ImGui::SameLine();
+ImGui::TextColored((gyro_ms > 20) ? Red : Green, "(%d ms)", gyro_ms);
+char gyro_fmt[32]; snprintf(gyro_fmt, 32, "%.3fs", engine.m_gyro_smoothing);
+FloatSetting("##GyroSmooth", &engine.m_gyro_smoothing, 0.0f, 0.050f, gyro_fmt);
+if (ImGui::IsItemHovered()) ImGui::SetTooltip("Filters steering velocity.\nIncrease if damping feels 'sandy' or 'grainy'.");
 ```
+
+#### B. Grip & Slip Section (Update)
+Add Chassis Inertia here.
+
+```cpp
+// Inside "Grip & Slip Estimation" Tree Node...
+
+// ... Existing Slip Angle Smoothing ...
+
+ImGui::Separator();
+
+// Chassis Inertia
+int chassis_ms = (int)(engine.m_chassis_inertia_smoothing * 1000.0f);
+ImGui::Text("Chassis Inertia (Load)"); ImGui::SameLine();
+ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "(%d ms)", chassis_ms); // Blue text for Info
+
+char chassis_fmt[32]; snprintf(chassis_fmt, 32, "%.3fs", engine.m_chassis_inertia_smoothing);
+FloatSetting("##ChassisSmooth", &engine.m_chassis_inertia_smoothing, 0.0f, 0.100f, chassis_fmt);
+if (ImGui::IsItemHovered()) ImGui::SetTooltip("Simulates suspension settling time for Calculated Load.\n25ms = Stiff Race Car.\n50ms = Soft Road Car.");
+```
+
 
 ---
 
@@ -203,16 +212,3 @@ if (ImGui::TreeNode("Signal Processing (Advanced)")) {
     *   **Chassis:** Set to 100ms. Turn in. Road texture should fade in slowly. Set to 0ms. Texture should spike instantly.
 
 ---
-
-## 5. Prompt for the Agent
-
-(This section is for your use to trigger the implementation).
-
-**Task:** Expose Advanced Smoothing Parameters to GUI
-**Context:** Implement the plan defined in `docs/dev_docs/Advanced_Smoothing_Implementation_Plan.md`.
-**Steps:**
-1.  Refactor `FFBEngine.h` to replace `tau_yaw` and `chassis_tau` constants with member variables.
-2.  Refactor `m_gyro_smoothing` to be a Time Constant (seconds) instead of a factor.
-3.  Update `Config` to persist these values.
-4.  Update `GuiLayer` to add the "Signal Processing" section with latency readouts.
-5.  Update `Default (T300)` preset to: Yaw=10ms, Chassis=25ms, Gyro=20ms.
