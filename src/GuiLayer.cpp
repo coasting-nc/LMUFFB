@@ -149,7 +149,7 @@ void GuiLayer::SetupGUIStyle() {
 
 bool GuiLayer::Init() {
     // Create Application Window
-    WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"LMUFFB", NULL };
+    WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"lmuFFB", NULL };
     ::RegisterClassExW(&wc);
     
     // Construct Title with Version
@@ -157,7 +157,7 @@ bool GuiLayer::Init() {
     // Simplified conversion for version string (assumes ASCII version)
     std::string ver = LMUFFB_VERSION;
     std::wstring wver(ver.begin(), ver.end());
-    std::wstring title = L"LMUFFB v" + wver;
+    std::wstring title = L"lmuFFB v" + wver;
 
     // 1. Determine startup size with validation
     int start_w = Config::show_graphs ? Config::win_w_large : Config::win_w_small;
@@ -232,7 +232,7 @@ void GuiLayer::Shutdown() {
 
     CleanupDeviceD3D();
     ::DestroyWindow(g_hwnd);
-    ::UnregisterClassW(L"LMUFFB", GetModuleHandle(NULL));
+    ::UnregisterClassW(L"lmuFFB", GetModuleHandle(NULL));
 }
 
 void* GuiLayer::GetWindowHandle() {
@@ -367,7 +367,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     ImGui::Begin("MainUI", nullptr, flags);
 
     // Header Text
-    ImGui::TextColored(ImVec4(1, 1, 1, 0.4f), "LMUFFB v%s", LMUFFB_VERSION);
+    ImGui::TextColored(ImVec4(1, 1, 1, 0.4f), "lmuFFB v%s", LMUFFB_VERSION);
     ImGui::Separator();
 
     // Connection Status
@@ -431,10 +431,10 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (DirectInputFFB::Get().IsActive()) {
         if (DirectInputFFB::Get().IsExclusive()) {
             ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Mode: EXCLUSIVE (Game FFB Blocked)");
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB has exclusive control.\nThe game can read steering but cannot send FFB.\nThis prevents 'Double FFB' issues.");
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("lmuFFB has exclusive control.\nThe game can read steering but cannot send FFB.\nThis prevents 'Double FFB' issues.");
         } else {
             ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.4f, 1.0f), "Mode: SHARED (Potential Conflict)");
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB is sharing the device.\nEnsure In-Game FFB is disabled\nto avoid LMU reacquiring the device.");
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("lmuFFB is sharing the device.\nEnsure In-Game FFB is disabled\nto avoid LMU reacquiring the device.");
         }
     }
 

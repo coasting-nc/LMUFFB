@@ -141,7 +141,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    std::cout << "Starting LMUFFB (C++ Port)..." << std::endl;
+    std::cout << "Starting lmuFFB (C++ Port)..." << std::endl;
 
     // Initialize FFBEngine with T300 defaults (Single Source of Truth: Config.h Preset struct)
     Preset::ApplyDefaultsToEngine(g_engine);

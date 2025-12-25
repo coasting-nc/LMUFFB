@@ -470,7 +470,7 @@ void DirectInputFFB::UpdateForce(double normalizedForce) {
                                 std::cout << "\n"
                                           << "========================================\n"
                                           << "[SUCCESS] Dynamic Promotion Active!\n"
-                                          << "LMUFFB has successfully recovered exclusive\n"
+                                          << "lmuFFB has successfully recovered exclusive\n"
                                           << "control after detecting a conflict.\n"
                                           << "This feature will continue to protect your\n"
                                           << "FFB experience automatically.\n"
