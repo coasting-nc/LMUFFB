@@ -9,12 +9,12 @@ These cars should have fully transparent telemetry visible from shared memory:
 * Historic F1 (Brabham BT20, BT44B, March 761, McLaren M23)
 * McLaren	MP4/8
 * McLaren	MP4/13
-* Riley MkXX Daytona Prototype
 * AC Cars	427 SC (Cobra)
 * Howston	G4 / G6 (Fictional) 
 * Panoz	AIV Roadster
 * Renault	Clio Cup / Megane	
-
+* ? Riley MkXX Daytona Prototype
+  
 # Other data that might be blocked for DLC cars
 
 * mSuspensionDeflection
