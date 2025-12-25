@@ -38,14 +38,16 @@ To ensure consistent feel across different wheels (e.g. G29 vs Simucube), effect
 ### 3. Component Breakdown
 
 #### A. Load Factors (Safe Caps)
-Texture and vibration effects are scaled by normalized tire load (`Load / 4000N`) to simulate connection with the road. Safe caps prevent force spikes during glitches or aero anomalies.
+Texture and vibration effects are scaled by normalized tire load (`Load / 4000N`) to simulate connection with the road.
 
 1.  **Texture Load Factor (Road/Slide)**:
-    *   $F_{\text{load-texture}} = \text{Clamp}(\text{Load} / 4000.0, 0.0, m_{\text{texture-load-cap}})$
+    *   **Input**: `AvgLoad = (FL.Load + FR.Load) / 2.0`.
+    *   **Robustness Check**: Uses a hysteresis counter; if `AvgLoad < 1.0` while moving, it falls back to **Kinematic Load** or **Approximate Load** logic.
+    *   $F_{\text{load-texture}} = \text{Clamp}(\text{AvgLoad} / 4000.0, 0.0, m_{\text{texture-load-cap}})$
     *   **Max Cap**: 2.0.
 
 2.  **Brake Load Factor (Lockup)**:
-    *   $F_{\text{load-brake}} = \text{Clamp}(\text{Load} / 4000.0, 0.0, m_{\text{brake-load-cap}})$
+    *   $F_{\text{load-brake}} = \text{Clamp}(\text{AvgLoad} / 4000.0, 0.0, m_{\text{brake-load-cap}})$
     *   **Max Cap**: 3.0 (Allows stronger vibration under high-downforce braking).
 
 #### B. Base Force Components
@@ -90,7 +92,12 @@ If `mSuspForce` is missing (encrypted content), tire load is estimated from chas
     *   **Smoothing**: Time-Corrected LPF ($\tau \approx 0.0225 - 0.1\text{s}$ mapped from scalar).
     *   **Formula**: $G_{\text{smooth}} \times K_{\text{sop}} \times K_{\text{sop-scale}} \times K_{\text{decouple}}$.
 
-2.  **Yaw Acceleration ("The Kick")**:
+2.  **Lateral G Boost ($F_{\text{boost}}$)**:
+    *   Amplifies the SoP force when the car is oversteering (Front Grip > Rear Grip).
+    *   **Condition**: `if (FrontGrip > RearGrip)`
+    *   **Formula**: `SoP_Total *= (1.0 + ((FrontGrip - RearGrip) * K_oversteer_boost * 2.0))`
+
+3.  **Yaw Acceleration ("The Kick")**:
     *   **Input**: `mLocalRotAccel.y` (rad/s²).
     *   **Conditioning**:
         *   **Low Speed Cutoff**: 0.0 if Speed < 5.0 m/s.
@@ -98,7 +105,7 @@ If `mSuspForce` is missing (encrypted content), tire load is estimated from chas
     *   **Formula**: $-\text{YawAccel}_{\text{smooth}} \times K_{\text{yaw}} \times 5.0 \text{Nm} \times K_{\text{decouple}}$.
     *   **Note**: Negative sign provides counter-steering torque.
 
-3.  **Rear Aligning Torque ($T_{\text{rear}}$)**:
+4.  **Rear Aligning Torque ($T_{\text{rear}}$)**:
     *   **Workaround**: Uses `RearSlipAngle * RearLoad * Stiffness(15.0)` to estimate lateral force.
     *   **Formula**: $-F_{\text{lat-rear}} \times 0.001 \times K_{\text{rear}} \times K_{\text{decouple}}$.
     *   **Clamp**: Lateral Force clamped to **+/- 6000N**.
@@ -158,10 +165,20 @@ If `mSuspForce` is missing (encrypted content), tire load is estimated from chas
 *   **Frequency Estimator**: Tracks zero-crossings of `mSteeringShaftTorque` (AC coupled).
 
 **2. Gyroscopic Damping ($F_{\text{gyro}}$)**
+*   **Input Derivation**:
+    *   $\text{SteerAngle} = \text{UnfilteredInput} \times (\text{RangeInRadians} / 2.0)$
+    *   $\text{SteerVel} = (\text{Angle}_{\text{current}} - \text{Angle}_{\text{prev}}) / dt$
 *   **Formula**: $-\text{SteerVel}_{\text{smooth}} \times K_{\text{gyro}} \times (\text{Speed} / 10.0) \times 1.0\text{Nm} \times K_{\text{decouple}}$.
 *   **Smoothing**: Time-Corrected LPF.
 
-**3. Min Force (Friction Cancellation)**
+**3. Time-Corrected LPF (Algorithm)**
+Standard exponential smoothing filter used for Slip Angle, Gyro, SoP, and Shaft Torque.
+*   **Formula**: $State += \alpha \times (Input - State)$
+*   **Alpha Calculation**: $\alpha = dt / (\tau + dt)$
+    *   $dt$: Delta Time (e.g., 0.0025s)
+    *   $\tau$ (Tau): Time Constant (User Configurable, or derived from smoothness).
+
+**4. Min Force (Friction Cancellation)**
 Applied at the very end of the pipeline to `F_norm` (before clipping).
 *   **Logic**: If $|F| > 0.0001$ AND $|F| < K_{\text{min-force}}$:
     *   $F_{\text{final}} = \text{Sign}(F) \times K_{\text{min-force}}$.
@@ -169,7 +186,24 @@ Applied at the very end of the pipeline to `F_norm` (before clipping).
 
 ---
 
-### 6. Legend: Physics Constants (Implementation Detail)
+### 7. Telemetry Variable Mapping
+
+| Math Symbol | API Variable | Description |
+| :--- | :--- | :--- |
+| $T_{\text{shaft}}$ | `mSteeringShaftTorque` | Raw steering torque (Nm) |
+| $\text{Load}$ | `mTireLoad` | Vertical load on tire (N) |
+| $\text{GripFract}$ | `mGripFract` | Tire grip scaler (0.0-1.0) |
+| $\text{Accel}_X$ | `mLocalAccel.x` | Lateral acceleration (m/s²) |
+| $\text{Accel}_Z$ | `mLocalAccel.z` | Longitudinal acceleration (m/s²) |
+| $\text{YawAccel}$ | `mLocalRotAccel.y` | Rotational acceleration (rad/s²) |
+| $\text{Vel}_Z$ | `mLocalVel.z` | Car speed (m/s) |
+| $\text{SlipVel}_{\text{lat}}$ | `mLateralPatchVel` | Scrubbing velocity (m/s) |
+| $\text{SuspForce}$ | `mSuspForce` | Suspension force (N) |
+| $\text{Pedal}_{\text{brake}}$ | `mUnfilteredBrake` | Raw brake input (0.0-1.0) |
+
+---
+
+### 8. Legend: Physics Constants (Implementation Detail)
 
 | Constant Name | Value | Description |
 | :--- | :--- | :--- |
