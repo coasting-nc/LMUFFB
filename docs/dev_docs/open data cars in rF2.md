@@ -7,7 +7,8 @@ These cars should have fully transparent telemetry visible from shared memory:
 * Formula Renault 3.5 (2014): One of the most highly regarded physics models in rFactor 2.
 * Marussia MR01 (F1 2012)
 * Historic F1 (Brabham BT20, BT44B, March 761, McLaren M23)
-* McLaren	M23 / MP4/8 / MP4/13
+* McLaren	MP4/8
+* McLaren	MP4/13
 * Riley MkXX Daytona Prototype
 * AC Cars	427 SC (Cobra)
 * Howston	G4 / G6 (Fictional) 
