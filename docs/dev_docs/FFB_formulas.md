@@ -104,7 +104,7 @@ If `mSuspForce` is missing (encrypted content), tire load is estimated from chas
     *   **Conditioning**:
         *   **Low Speed Cutoff**: 0.0 if Speed < 5.0 m/s.
         *   **Noise Gate**: 0.0 if $|Accel| < 0.2$ rad/s².
-    *   **Logic**: Provides a "predictive kick" when car rotation starts, before lateral G builds up.
+    *   **Rationale**: Requires heavy smoothing (LPF) to separate true chassis rotation from "Slide Texture" vibration noise, preventing a feedback loop where vibration is mistaken for rotation.
     *   **Formula**: $-\text{YawAccel}_{\text{smooth}} \times K_{\text{yaw}} \times 5.0 \text{Nm} \times K_{\text{decouple}}$.
     *   **Note**: Negative sign provides counter-steering torque.
 
@@ -120,6 +120,7 @@ If `mSuspForce` is missing (encrypted content), tire load is estimated from chas
 *   **Safety Trap**: If `CarSpeed < 2.0 m/s`, Slip Ratio is forced to 0.0 to prevent false lockup detection at standstill.
 *   **Predictive Logic (v0.6.0)**: Triggers early if `WheelDecel > CarDecel * 2.0` (Wheel stopping faster than car).
 *   **Bump Rejection**: Logic disabled if `SuspVelocity > m_lockup_bump_reject` (e.g. 1.0 m/s).
+*   **Frequency**: $10\text{Hz} + (\text{CarSpeed} \times 1.5)$. (Base frequency calculation).
 *   **Severity**: $\text{Severity} = \text{pow}(\text{NormSlip}, m_{\text{lockup-gamma}})$ (Quadratic).
 *   **Logic**:
     *   **Axle Diff**: Rear lockups use **0.3x Frequency** and **1.5x Amplitude**.
@@ -144,7 +145,11 @@ If `mSuspForce` is missing (encrypted content), tire load is estimated from chas
 *   **Formula**: `(DeltaL + DeltaR) * 50.0 * K_road * F_load_texture * Scale`.
 *   **Scrub Drag (Fade-In)**:
     *   Adds constant resistance when sliding laterally.
-    *   **Coordinate Note**: LMU uses **+X = Left**. Drag must oppose velocity, so we invert direction.
+    *   **Coordinate Note**:
+        *   Sliding **Left** (+Vel) requires force **Right**.
+        *   LMU reports **+X = Left**.
+        *   DirectInput requires **+Force = Right**.
+        *   Therefore: `DragDir = -1.0` (Inverted).
     *   **Fade-In**: Linear scale 0% to 100% between **0.0 m/s** and **0.5 m/s** lateral velocity.
     *   **Formula**: `(SideVel > 0 ? -1 : 1) * K_drag * 5.0Nm * Fade * Scale`.
 
