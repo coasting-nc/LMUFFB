@@ -1,4 +1,4 @@
-# Include wheel angular velocity
+# Technical Report on Lockup Vibration Fixes & Enhancements: Include wheel angular velocity and other enhancements (Batch 2)
 
 ## Enhancement: Predictive Lockup via Angular Deceleration
 
