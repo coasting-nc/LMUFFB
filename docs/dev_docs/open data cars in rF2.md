@@ -13,6 +13,7 @@ These cars should have fully transparent telemetry visible from shared memory:
 * Howston	G4 / G6 (Fictional)
 * ? Howston Dissenter 1974
 * ? Formula ISI 2012
+* ? Renault Megane Trophy 2013
 * Panoz	AIV Roadster
 * Renault	Clio Cup / Megane	
 * ? Riley MkXX Daytona Prototype
