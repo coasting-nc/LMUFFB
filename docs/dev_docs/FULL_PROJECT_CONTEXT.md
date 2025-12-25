@@ -451,6 +451,21 @@ tests\test_ffb_engine.exe 2>&1 | Select-String -Pattern "Tests (Passed|Failed):"
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.12] - 2025-12-25
+### Changed
+- **FFB Engine Single Source of Truth (SSOT)**: 
+    - Refactored `FFBEngine` to eliminate hardcoded default values, following a DRY (Don't Repeat Yourself) approach.
+    - Centralized all physics defaults within `Config.h` (`Preset::ApplyDefaultsToEngine`), ensuring the main application and test suite share the exact same configuration baseline.
+    - Standardized default initialization on the calibrated T300 physics preset.
+- **Preset Calibration & Normalization**:
+    - Updated `Default (T300)` and `T300` presets to align with the normalized 0-100 slider ranges (percentage-based) introduced in previous versions.
+    - This migration ensures presets no longer rely on legacy raw Newton-meter intensities, providing a consistent feeling across different wheel hardwares.
+- **Test Suite Revamp**:
+    - **Full Stabilization**: Fixed and verified all 157 FFB engine tests following the SSOT refactor.
+    - **Modernized Expectations**: Updated legacy test assertions to align with the improved T300 physics baseline (e.g., Scrub Drag gain of 0.965, Lockup frequency ratio of 0.3).
+    - **Robust Telemetry Mocking**: Improved `test_ffb_engine.cpp` with comprehensive wheel initialization to prevent silent failures in multi-axle calculations.
+    - **Test Helper**: Introduced `InitializeEngine()` to provide consistent, stable baselines for legacy tests while allowing specific physics overrides for regression verification.
+
 ## [0.5.11] - 2025-12-24
 ### Fixed
 - **Lockup Vibration Ignoring Rear Wheels**: Fixed a bug where locking the rear brakes (common in LMP2 or under heavy engine braking) would not trigger any vibration feedback.
@@ -1573,59 +1588,61 @@ struct GripResult {
 class FFBEngine {
 public:
     // Settings (GUI Sliders)
-    float m_gain = 1.0f;          // Master Gain
-    float m_understeer_effect = 38.0f; // Grip Drop (T300 Default)
-    float m_sop_effect = 1.0f;    // Lateral G injection strength
-    float m_min_force = 0.0f;     // 0.0 - 0.20 (Deadzone removal)
+    // NOTE: These are initialized by Preset::ApplyDefaultsToEngine() in the constructor
+    // to maintain a single source of truth in Config.h (Preset struct defaults)
+    float m_gain;
+    float m_understeer_effect;
+    float m_sop_effect;
+    float m_min_force;
     
     // Configurable Smoothing & Caps (v0.3.9)
-    float m_sop_smoothing_factor = 0.85f; // 0.0 (Max Smoothing) - 1.0 (Raw). Default 0.85 for responsive feel (15ms lag).
-    float m_max_load_factor = 1.5f;      // Cap for load scaling (Default 1.5x)
-    float m_sop_scale = 1.0f;            // SoP base scaling factor (Default 20.0 was too high for Nm)
+    float m_sop_smoothing_factor;
+    float m_max_load_factor = 1.5f;  // Keep this as it's not in presets
+    float m_sop_scale;
     
     // v0.4.4 Features
-    float m_max_torque_ref = 100.0f;      // Reference torque for 100% output (Default 100.0 Nm)
-    bool m_invert_force = true;         // Invert final output signal
+    float m_max_torque_ref;
+    bool m_invert_force;
     
     // Base Force Debugging (v0.4.13)
-    float m_steering_shaft_gain = 1.0f; // 0.0 - 1.0 (Base force attenuation)
-    int m_base_force_mode = 0;          // 0=Native, 1=Synthetic, 2=Muted
+    float m_steering_shaft_gain;
+    int m_base_force_mode;
 
     // New Effects (v0.2)
-    float m_oversteer_boost = 1.0f; // Rear grip loss boost
-    float m_rear_align_effect = 5.0f; 
-    float m_sop_yaw_gain = 5.0f;      
-    float m_gyro_gain = 0.0f;         
-    float m_gyro_smoothing = 0.010f; // v0.5.8: Changed to Time Constant (Seconds). Default 10ms.
-    float m_yaw_accel_smoothing = 0.010f;      // v0.5.8: Time Constant (Seconds). Default 10ms.
-    float m_chassis_inertia_smoothing = 0.025f; // v0.5.8: Time Constant (Seconds). Default 25ms.
+    float m_oversteer_boost;
+    float m_rear_align_effect;
+    float m_sop_yaw_gain;
+    float m_gyro_gain;
+    float m_gyro_smoothing;
+    float m_yaw_accel_smoothing;
+    float m_chassis_inertia_smoothing;
     
-    bool m_lockup_enabled = false;
-    float m_lockup_gain = 0.5f;
+    bool m_lockup_enabled;
+    float m_lockup_gain;
     
-    bool m_spin_enabled = false;
-    float m_spin_gain = 0.5f;
+    bool m_spin_enabled;
+    float m_spin_gain;
 
     // Texture toggles
-    bool m_slide_texture_enabled = false; // Default off (T300 standard)
-    float m_slide_texture_gain = 0.5f; // 0.0 - 5.0
-    float m_slide_freq_scale = 1.0f;   // NEW: Frequency Multiplier (v0.4.36)
+    bool m_slide_texture_enabled;
+    float m_slide_texture_gain;
+    float m_slide_freq_scale;
     
-    bool m_road_texture_enabled = false;
-    float m_road_texture_gain = 0.5f; // 0.0 - 1.0
+    bool m_road_texture_enabled;
+    float m_road_texture_gain;
     
     // Bottoming Effect (v0.3.2)
-    bool m_bottoming_enabled = true;
-    float m_bottoming_gain = 1.0f;
+    bool m_bottoming_enabled = true;  // Keep this as it's not in presets
+    float m_bottoming_gain = 1.0f;    // Keep this as it's not in presets
 
-    float m_slip_angle_smoothing = 0.015f; // v0.4.40: Expose tau (Smoothing Time Constant in seconds)
+    float m_slip_angle_smoothing;
     
     // NEW: Grip Estimation Settings (v0.5.7)
-    float m_optimal_slip_angle = 0.10f; // Default 0.10 rad (5.7 deg)
-    float m_optimal_slip_ratio = 0.12f; // Default 0.12 (12%)
+    float m_optimal_slip_angle;
+    float m_optimal_slip_ratio;
     
     // NEW: Steering Shaft Smoothing (v0.5.7)
-    float m_steering_shaft_smoothing = 0.0f; // Time constant in seconds (0.0 = off)
+    float m_steering_shaft_smoothing;
     
     // v0.4.41: Signal Filtering Settings
     bool m_flatspot_suppression = false;
@@ -1702,7 +1719,7 @@ public:
     // New Settings (v0.4.5)
     bool m_use_manual_slip = false;
     int m_bottoming_method = 0; // 0=Scraping (Default), 1=Suspension Spike
-    float m_scrub_drag_gain = 0.0f; // New Effect: Drag resistance
+    float m_scrub_drag_gain; // Initialized by Preset::ApplyDefaultsToEngine()
 
     // Smoothing State
     double m_sop_lat_g_smoothed = 0.0;
@@ -1830,8 +1847,9 @@ private:
     // Front lockup uses 1.0x frequency (high pitch "Screech") for standard understeer feedback.
     // Rear lockup uses 0.5x frequency (low pitch "Heavy Judder") to warn of rear axle instability.
     // The amplitude boost emphasizes the danger of potential spin during rear lockups.
-    static constexpr double LOCKUP_FREQ_MULTIPLIER_REAR = 0.5;  // Rear lockup frequency (50% of base)
-    static constexpr double LOCKUP_AMPLITUDE_BOOST_REAR = 1.2;  // Rear lockup amplitude boost (20% increase)
+    static constexpr double LOCKUP_FREQ_MULTIPLIER_REAR = 0.3;  // Rear lockup frequency (0.5: 50% of base) // 0.3;  // Even lower pitch
+    static constexpr double LOCKUP_AMPLITUDE_BOOST_REAR = 1.5;  // Rear lockup amplitude boost (1.2: 20% increase) //  1.5;  // 50% boost
+
 
 public:
     // Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
@@ -3053,7 +3071,10 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Starting LMUFFB (C++ Port)..." << std::endl;
 
-    // Load Configuration
+    // Initialize FFBEngine with T300 defaults (Single Source of Truth: Config.h Preset struct)
+    Preset::ApplyDefaultsToEngine(g_engine);
+
+    // Load Configuration (overwrites defaults if config.ini exists)
     Config::Load(g_engine);
 
     // Initialize GUI Early (if not headless)
@@ -14135,6 +14156,708 @@ This approach maximizes testability while minimizing risk to the existing, worki
 
 ```
 
+# File: docs\dev_docs\lockup vibration fix2.md
+```markdown
+# Technical Report: Lockup Vibration Fixes & Enhancements
+
+**Date:** December 24, 2025
+**Subject:** Resolution of missing rear lockup effects, manual slip calculation bugs, and implementation of advanced tuning controls.
+
+---
+
+## 1. Problem Statement
+
+User testing identified three critical deficiencies in the "Braking Lockup" FFB effect:
+1.  **Rear Lockups Ignored:** The application only monitored front wheels for slip. Locking the rear brakes (common in LMP2/Hypercars) produced no vibration, leading to unrecoverable spins without tactile warning.
+2.  **Late Warning:** The hardcoded trigger threshold of 10% slip (`-0.1`) was too high. By the time the effect triggered, the tires were already deep into the lockup phase, offering no opportunity for threshold braking modulation.
+3.  **Broken Manual Calculation:** The "Manual Slip Calc" fallback option produced no output due to a coordinate system sign error.
+
+## 2. Root Cause Analysis
+
+*   **Rear Blindness:** The `calculate_force` loop explicitly checked only `mWheel[0]` and `mWheel[1]`. Telemetry analysis confirms LMU *does* provide valid longitudinal patch velocity for rear wheels, so this was a logic omission, not a data gap.
+*   **Manual Slip Bug:** The formula used `data->mLocalVel.z` directly. In LMU, forward velocity is **negative**. Passing a negative denominator to the slip ratio formula resulted in positive (traction) ratios during braking, failing the `< -0.1` check.
+*   **Thresholds:** The linear ramp from 10% to 50% slip did not align with the physics of slick tires, which typically peak around 12-15% slip.
+
+---
+
+## 3. Implementation Plan
+
+### A. Physics Engine (`FFBEngine.h`)
+
+We will implement a **4-Wheel Monitor** with **Axle Differentiation**.
+*   **Differentiation:** If the rear axle has a higher slip ratio than the front, the vibration frequency drops to **30%** (Heavy Judder) and amplitude is boosted. This allows the driver to distinguish between Understeer (Front Lock - High Pitch) and Instability (Rear Lock - Low Pitch).
+*   **Dynamic Ramp:** Instead of a fixed threshold, we introduce a configurable window:
+    *   **Start %:** Vibration begins (Early Warning).
+    *   **Full %:** Vibration hits max amplitude (Peak Limit).
+    *   **Curve:** Quadratic ($x^2$) ramp to provide a sharp, distinct "wall" of vibration as the limit is reached.
+
+#### Code Changes
+
+**1. Fix Manual Slip Calculation**
+```cpp
+// Inside calculate_force lambda
+auto get_slip_ratio = [&](const TelemWheelV01& w) {
+    if (m_use_manual_slip) {
+        // FIX: Use std::abs() because mLocalVel.z is negative (forward)
+        return calculate_manual_slip_ratio(w, std::abs(data->mLocalVel.z));
+    }
+    // ... existing fallback ...
+};
+```
+
+**2. New Member Variables**
+```cpp
+// Defaults
+float m_lockup_start_pct = 5.0f;      // Warning starts at 5% slip
+float m_lockup_full_pct = 15.0f;      // Max vibration at 15% slip
+float m_lockup_rear_boost = 1.5f;     // Rear lockups are 1.5x stronger
+```
+
+**3. Updated Lockup Logic**
+```cpp
+// --- 2b. Progressive Lockup (4-Wheel Monitor) ---
+if (m_lockup_enabled && data->mUnfilteredBrake > 0.05) {
+    // 1. Calculate Slip for ALL wheels
+    double slip_fl = get_slip_ratio(data->mWheel[0]);
+    double slip_fr = get_slip_ratio(data->mWheel[1]);
+    double slip_rl = get_slip_ratio(data->mWheel[2]);
+    double slip_rr = get_slip_ratio(data->mWheel[3]);
+
+    // 2. Find worst slip per axle (Slip is negative, so use min)
+    double max_slip_front = (std::min)(slip_fl, slip_fr);
+    double max_slip_rear  = (std::min)(slip_rl, slip_rr);
+
+    // 3. Determine Source & Differentiation
+    double effective_slip = 0.0;
+    double freq_multiplier = 1.0;
+    double amp_multiplier = 1.0;
+
+    if (max_slip_rear < max_slip_front) {
+        // REAR LOCKUP DETECTED
+        effective_slip = max_slip_rear;
+        freq_multiplier = 0.3; // Low Pitch (Judder/Thud)
+        amp_multiplier = m_lockup_rear_boost; // Configurable Boost
+    } else {
+        // FRONT LOCKUP DETECTED
+        effective_slip = max_slip_front;
+        freq_multiplier = 1.0; // Standard Pitch (Screech)
+        amp_multiplier = 1.0;
+    }
+
+    // 4. Dynamic Thresholds
+    double start_ratio = m_lockup_start_pct / 100.0;
+    double full_ratio = m_lockup_full_pct / 100.0;
+    
+    // Check if we crossed the start threshold
+    if (effective_slip < -start_ratio) {
+        // Normalize slip into 0.0 - 1.0 range based on window
+        double slip_abs = std::abs(effective_slip);
+        double window = full_ratio - start_ratio;
+        if (window < 0.01) window = 0.01; // Safety div/0
+
+        double normalized = (slip_abs - start_ratio) / window;
+        double severity = (std::min)(1.0, normalized);
+        
+        // Apply Quadratic Curve (Sharp feel at limit)
+        severity = severity * severity;
+
+        // Frequency Calculation
+        double car_speed_ms = std::abs(data->mLocalVel.z); 
+        double base_freq = 10.0 + (car_speed_ms * 1.5); 
+        double final_freq = base_freq * freq_multiplier;
+
+        // Phase Integration
+        m_lockup_phase += final_freq * dt * TWO_PI;
+        m_lockup_phase = std::fmod(m_lockup_phase, TWO_PI);
+
+        // Final Amplitude
+        double amp = severity * m_lockup_gain * 4.0 * decoupling_scale * amp_multiplier;
+        
+        total_force += std::sin(m_lockup_phase) * amp;
+    }
+}
+```
+
+---
+
+### B. Configuration (`src/Config.h` / `.cpp`)
+
+We need to persist the three new tuning parameters.
+
+**1. Update `Preset` Struct**
+```cpp
+struct Preset {
+    // ... existing ...
+    float lockup_start_pct = 5.0f;
+    float lockup_full_pct = 15.0f;
+    float lockup_rear_boost = 1.5f;
+    
+    // Add setters and update Apply/UpdateFromEngine methods
+    Preset& SetLockupThresholds(float start, float full, float rear_boost) {
+        lockup_start_pct = start;
+        lockup_full_pct = full;
+        lockup_rear_boost = rear_boost;
+        return *this;
+    }
+};
+```
+
+**2. Update Persistence**
+Add `lockup_start_pct`, `lockup_full_pct`, and `lockup_rear_boost` to the `config.ini` read/write logic.
+
+---
+
+### C. GUI Layer (`src/GuiLayer.cpp`)
+
+Expose the new controls in the "Tactile Textures" -> "Lockup Vibration" section.
+
+```cpp
+BoolSetting("Lockup Vibration", &engine.m_lockup_enabled);
+if (engine.m_lockup_enabled) {
+    // Existing Gain
+    FloatSetting("  Lockup Strength", &engine.m_lockup_gain, 0.0f, 2.0f, ...);
+    
+    // NEW: Thresholds
+    FloatSetting("  Start Slip %", &engine.m_lockup_start_pct, 1.0f, 10.0f, "%.1f%%", 
+        "Slip % where vibration begins (Early Warning).\nTypical: 4-6%.");
+        
+    FloatSetting("  Full Slip %", &engine.m_lockup_full_pct, 5.0f, 25.0f, "%.1f%%", 
+        "Slip % where vibration hits 100% amplitude (Peak Grip).\nTypical: 12-15%.");
+        
+    // NEW: Rear Boost
+    FloatSetting("  Rear Boost", &engine.m_lockup_rear_boost, 1.0f, 3.0f, "%.1fx", 
+        "Amplitude multiplier for rear wheel lockups.\nMakes rear instability feel more dangerous/distinct.");
+}
+```
+
+---
+
+## 4. Verification Strategy
+
+1.  **Manual Slip Test:** Enable "Manual Slip Calc". Drive. Brake hard. Verify vibration occurs (proving sign fix).
+2.  **Rear Lockup Test:** Drive LMP2. Bias brakes to rear (or engine brake heavily). Lock rear wheels. Verify vibration is **Lower Pitch** (thudding) compared to front lockup.
+3.  **Threshold Test:** Set "Start %" to 1.0%. Lightly brake. Verify subtle vibration starts immediately. Set "Start %" to 10%. Lightly brake. Verify silence until heavy braking.
+
+---
+
+
+
+### 5. Future Enhancement: Advanced Response Curves (Non-Linearity)
+
+While the current implementation introduces a hardcoded **Quadratic ($x^2$)** ramp to improve the "sharpness" of the limit, future versions (v0.6.0+) should expose this as a fully configurable **Gamma** setting.
+
+*   **The Concept:** Instead of a linear progression ($0\% \to 100\%$ vibration as slip increases), a non-linear curve allows the user to define the "feel" of the approach.
+*   **Proposed Control:** **"Vibration Gamma"** slider (0.5 to 3.0).
+    *   **Gamma 1.0 (Linear):** Vibration builds steadily. Good for learning threshold braking.
+    *   **Gamma 2.0 (Quadratic - Current Default):** Vibration remains subtle in the "Warning Zone" (5-10% slip) and ramps up aggressively near the "Limit" (12-15%). This creates a distinct tactile "Wall" at the limit.
+    *   **Gamma 3.0 (Cubic):** The wheel is almost silent until the very last moment, then spikes to max. Preferred by aliens/pros who find early vibrations distracting.
+*   **Implementation Logic:**
+    $$ \text{Amplitude} = \text{BaseAmp} \times (\text{NormalizedSeverity})^{\gamma} $$
+
+
+
+Here is the detailed implementation plan subsection for the future Non-Linearity feature.
+
+#### 5.1 Implementation Plan: Configurable Vibration Gamma (v0.6.0)
+
+To transition from the hardcoded Quadratic curve to a fully user-tunable response, the following changes will be required.
+
+##### A. Physics Engine (`FFBEngine.h`)
+
+1.  **Add Member Variable:**
+    ```cpp
+    float m_lockup_gamma = 2.0f; // Default: 2.0 (Quadratic)
+    ```
+
+2.  **Update Calculation Logic:**
+    Replace the hardcoded multiplication with `std::pow`.
+
+    ```cpp
+    // Inside Lockup Logic...
+    
+    // 1. Normalize slip into 0.0 - 1.0 range (Linear Severity)
+    double normalized = (slip_abs - start_ratio) / window;
+    double severity = (std::min)(1.0, (std::max)(0.0, normalized));
+    
+    // 2. Apply Configurable Gamma Curve
+    // Gamma 1.0 = Linear
+    // Gamma 2.0 = Quadratic (Current behavior)
+    // Gamma 3.0 = Cubic (Late attack)
+    severity = std::pow(severity, (double)m_lockup_gamma);
+
+    // 3. Calculate Final Amplitude
+    double amp = severity * m_lockup_gain * ...;
+    ```
+
+##### B. Configuration (`src/Config.h` / `.cpp`)
+
+1.  **Update `Preset` Struct:**
+    ```cpp
+    struct Preset {
+        // ...
+        float lockup_gamma = 2.0f;
+        
+        Preset& SetLockupGamma(float g) { lockup_gamma = g; return *this; }
+    };
+    ```
+2.  **Update Persistence:** Add `lockup_gamma` to `Save`, `Load`, and `UpdateFromEngine`.
+
+##### C. GUI Layer (`src/GuiLayer.cpp`)
+
+Add the control slider to the "Lockup Vibration" section, ideally below the Threshold sliders.
+
+```cpp
+// Inside DrawTuningWindow -> Lockup Section
+
+FloatSetting("  Response Curve", &engine.m_lockup_gamma, 0.5f, 3.0f, "Gamma: %.1f");
+
+if (ImGui::IsItemHovered()) {
+    ImGui::SetTooltip(
+        "Controls the 'feel' of the vibration buildup.\n\n"
+        "1.0 = Linear: Vibration builds steadily from Start to Full.\n"
+        "2.0 = Quadratic (Default): Subtle warning, sharp increase at the limit.\n"
+        "3.0 = Cubic: Silent until the very last moment (Pro feel).\n"
+        "0.5 = Aggressive: Strong vibration immediately after Start threshold."
+    );
+}
+```
+
+---
+
+### 6. Future Enhancement: Predictive Lockup via Angular Deceleration
+
+To achieve a true "ABS-like" prediction that triggers *before* significant slip occurs, we can implement **Wheel Angular Deceleration** monitoring.
+
+*   **The Physics:** Before a tire reaches its peak slip ratio, the wheel's rotational speed ($\omega$) drops rapidly. If the wheel decelerates significantly faster than the car chassis, a lockup is imminent.
+*   **The Metric:** $\alpha_{wheel} = \frac{d\omega}{dt}$ (Angular Acceleration).
+*   **Trigger Logic:**
+    *   Calculate $\alpha_{wheel}$ for each wheel (requires differentiating `mRotation` over time).
+    *   Compare against a threshold (e.g., $-100 \text{ rad/s}^2$).
+    *   If $\alpha_{wheel} < \text{Threshold}$, trigger the vibration *even if* Slip Ratio is still low.
+*   **Challenges:**
+    *   **Noise:** Derivatives amplify signal noise. Bumps and kerbs cause massive spikes in angular acceleration.
+    *   **Smoothing:** Requires a robust Low Pass Filter (LPF) on the derivative to prevent false positives, which adds slight latency.
+*   **Benefit:** This provides the earliest possible warning, potentially 50-100ms faster than Slip Ratio, allowing the driver to modulate brake pressure at the very onset of instability.
+
+### 7. Verification & Test Plan (New Changes)
+
+To ensure the stability and correctness of the v0.5.11 changes, the following tests must be implemented in `tests/test_ffb_engine.cpp`.
+
+#### A. `test_manual_slip_sign_fix`
+**Goal:** Verify that the "Manual Slip Calc" option now works correctly with LMU's negative forward velocity.
+*   **Setup:**
+    *   Enable `m_use_manual_slip`.
+    *   Set `mLocalVel.z = -20.0` (Forward).
+    *   Set Wheel Velocity to `0.0` (Locked).
+*   **Check:**
+    *   Previous Bug: Calculated Slip $= (0 - (-20)) / 20 = +1.0$ (Traction). Effect Silent.
+    *   Expected Fix: Calculated Slip $= (0 - 20) / 20 = -1.0$ (Lockup). Effect Active.
+*   **Assert:** `m_lockup_phase` > 0.0.
+
+#### B. `test_rear_lockup_differentiation`
+**Goal:** Verify that rear lockups trigger the effect AND produce a lower frequency.
+*   **Setup:**
+    *   **Pass 1 (Front):** Front Slip `-0.2`, Rear Slip `0.0`. Record `phase_delta_front`.
+    *   **Pass 2 (Rear):** Front Slip `0.0`, Rear Slip `-0.2`. Record `phase_delta_rear`.
+*   **Check:**
+    *   `phase_delta_rear > 0` (Rear lockup is detected).
+    *   `phase_delta_rear` $\approx$ `0.3 * phase_delta_front` (Frequency is lower).
+
+#### C. `test_lockup_threshold_config`
+**Goal:** Verify that the new `Start %` and `Full %` sliders correctly alter the trigger point and intensity.
+*   **Setup:**
+    *   Set `m_lockup_start_pct = 5.0`.
+    *   Set `m_lockup_full_pct = 15.0`.
+*   **Scenario 1:** Input Slip `-0.04` (4%).
+    *   **Assert:** Force == 0.0 (Below Start Threshold).
+*   **Scenario 2:** Input Slip `-0.10` (10%).
+    *   **Assert:** Force > 0.0 AND Force < Max (In the Ramp).
+*   **Scenario 3:** Input Slip `-0.20` (20%).
+    *   **Assert:** Force == Max (Saturated).
+```
+
+# File: docs\dev_docs\lockup vibration fix3.md
+```markdown
+# Include wheel angular velocity
+
+## Enhancement: Predictive Lockup via Angular Deceleration
+
+To achieve a true "ABS-like" prediction that triggers *before* significant slip occurs, we can implement **Wheel Angular Deceleration** monitoring.
+
+*   **The Physics:** Before a tire reaches its peak slip ratio, the wheel's rotational speed ($\omega$) drops rapidly. If the wheel decelerates significantly faster than the car chassis, a lockup is imminent.
+*   **The Metric:** $\alpha_{wheel} = \frac{d\omega}{dt}$ (Angular Acceleration).
+*   **Trigger Logic:**
+    *   Calculate $\alpha_{wheel}$ for each wheel (requires differentiating `mRotation` over time).
+    *   Compare against a threshold (e.g., $-100 \text{ rad/s}^2$).
+    *   If $\alpha_{wheel} < \text{Threshold}$, trigger the vibration *even if* Slip Ratio is still low.
+*   **Challenges:**
+    *   **Noise:** Derivatives amplify signal noise. Bumps and kerbs cause massive spikes in angular acceleration.
+    *   **Smoothing:** Requires a robust Low Pass Filter (LPF) on the derivative to prevent false positives, which adds slight latency.
+*   **Benefit:** This provides the earliest possible warning, potentially 50-100ms faster than Slip Ratio, allowing the driver to modulate brake pressure at the very onset of instability.
+
+
+Based on the physics engine architecture and the specific challenges of "noisy" telemetry (like bumps), here is the technical strategy to mitigate false positives for the **Predictive Lockup** feature.
+
+### 1. Mitigation Strategies for Angular Acceleration Spikes
+
+To use Angular Deceleration ($\alpha_{wheel}$) effectively without triggering on every curb, we must apply **Contextual Gating**. We only care about deceleration when it is caused by *braking*, not by terrain impacts.
+
+Here are the three layers of defense:
+
+#### A. The "Brake Gate" (Primary Defense)
+**Logic:** Ignore all angular deceleration unless the driver is pressing the brake pedal significantly.
+*   **Implementation:**
+    ```cpp
+    if (data->mUnfilteredBrake < 0.10) return 0.0; // Ignore if brake < 10%
+    ```
+*   **Why:** Bumps happen at full throttle too. By gating with the brake pedal, we eliminate 50% of false positives immediately.
+
+#### B. Relative Deceleration (Chassis vs. Wheel)
+**Logic:** A lockup means the wheel is slowing down *faster* than the car.
+*   **Physics:** If you hit a wall, both the car and the wheel stop instantly. That's not a lockup. If you hit the brakes, the car slows at 1G, but a locking wheel slows at 5G.
+*   **Formula:**
+    $$ \Delta_{decel} = \alpha_{wheel} - \alpha_{chassis} $$
+    *   $\alpha_{wheel}$: Calculated from `d(mRotation)/dt`.
+    *   $\alpha_{chassis}$: Derived from `mLocalAccel.z` (converted to angular units via tire radius).
+*   **Trigger:** Only trigger if $\Delta_{decel}$ exceeds a threshold (e.g., wheel is slowing 3x faster than car).
+
+#### C. The "Jerk" Filter (Spike Rejection)
+**Logic:** Terrain impacts cause instantaneous spikes (1 frame). Lockups cause sustained deceleration (> 3 frames).
+*   **Implementation:** Use a **Windowed Average** or a counter.
+    *   *Requirement:* The deceleration must exceed the threshold for **3 consecutive physics ticks** (approx 7.5ms) to be considered valid. This filters out the single-frame "bang" of a sharp curb.
+
+---
+
+### 2. Detecting Bumps and Airborne State
+
+**Can we detect them?**
+**Yes.** We have the data in `InternalsPlugin.hpp`.
+
+**How to use it:**
+We can implement a **"Suppression Window"**. If a suspension event is detected, we disable the Predictive Lockup logic for a short time (e.g., 50ms).
+
+#### A. Airborne Detection (Load Gate)
+If the tire is in the air, it will stop rotating instantly when brakes are applied (because inertia is low). This is technically a lockup, but we don't want the wheel to shake violently while jumping a curb.
+*   **Check:** `mTireLoad < 100.0` N.
+*   **Action:** Disable Lockup Vibration.
+
+#### B. Bump/Curb Detection (Suspension Velocity)
+We can reuse the logic from your **Road Texture** effect.
+*   **Metric:** `mVerticalTireDeflection` delta (High-Pass Filter).
+*   **Logic:**
+    ```cpp
+    double susp_velocity = abs(current_deflection - prev_deflection) / dt;
+    
+    // Threshold: 1.0 m/s indicates a harsh impact
+    if (susp_velocity > 1.0) {
+        m_suppress_lockup_timer = 0.050; // Disable prediction for 50ms
+    }
+    ```
+
+---
+
+### 3. The "Sebring Problem" (Bumpy Braking Zones)
+
+**The Challenge:**
+At Sebring, you are braking hard (Brake Gate Open) over rough concrete (Suspension Spikes).
+*   If we suppress vibration on every bump (Strategy 2B), the lockup effect will cut in and out, feeling "gappy."
+*   If we don't suppress, the bumps will trigger false lockup warnings.
+
+**The Optimization: "Hybrid Thresholding"**
+
+Instead of using Angular Deceleration as a *direct trigger*, use it to **modulate the sensitivity** of the standard Slip Ratio check.
+
+**Concept:**
+We trust the **Slip Ratio** (the standard method) as the ultimate truth, but it is slow (laggy). We use **Angular Deceleration** to lower the threshold of the Slip Ratio check dynamically.
+
+**Algorithm:**
+1.  **Standard Threshold:** Lockup triggers at **15%** Slip Ratio.
+2.  **Prediction:**
+    *   Calculate Angular Deceleration.
+    *   Is the wheel slowing down violently?
+    *   **Yes:** Lower the Slip Ratio threshold to **5%**.
+3.  **Result:**
+    *   If it was a bump: The wheel slows down, threshold drops to 5%. But if the tire regains grip immediately (bump over), Slip Ratio never hits 5%. **No False Positive.**
+    *   If it is a lockup: The wheel slows down, threshold drops to 5%. The Slip Ratio quickly crosses 5%. **Instant Trigger (Zero Latency).**
+
+**Code Implementation Strategy:**
+
+```cpp
+// 1. Calculate Deceleration (Simple derivative)
+double wheel_accel = (w.mRotation - w.prevRotation) / dt;
+
+// 2. Determine Dynamic Threshold
+double trigger_threshold = m_lockup_start_pct; // Default e.g. 15%
+
+// If wheel is decelerating violently (e.g. -50 rad/s^2) AND we are braking
+if (data->mUnfilteredBrake > 0.1 && wheel_accel < -50.0) {
+    // We predict a lockup is coming. 
+    // Make the standard trigger MORE SENSITIVE immediately.
+    trigger_threshold = 5.0; // Drop to 5%
+}
+
+// 3. Standard Check with Dynamic Threshold
+if (current_slip_ratio < -trigger_threshold) {
+    // Trigger Vibration
+}
+```
+
+### Summary
+
+1.  **Mitigate Noise:** Use **Brake Gating** (must be braking) and **Relative Deceleration** (wheel vs car).
+2.  **Handle Air/Bumps:** Use `mTireLoad` to mute effects when airborne. Use `mVerticalTireDeflection` to detect impacts.
+3.  **Optimize for Sebring:** Do not use Deceleration as a standalone trigger. Use it to **dynamically lower the Slip Ratio threshold**. This gives you the "Predictive" speed advantage without the noise risks of a raw derivative.
+
+
+## Follow up questions
+
+Regarding the < 10% threshold of braking for gating the effect: is this too much? are there condition on trail braking, or otherwise at the end of the braking zone, when we are still applying 5-10% brake pedal , that could trigger a lockup? Are we risking false negatives in this way? Should there be an alternative strategy for such scenarios (eg. low but still significant brake pressure, and the lockups that might happen because of this).
+
+Regarding the gating by  Relative Deceleration (Chassis vs. Wheel), what is the proper threshold here? You suggested 3x, when the wheel is slowing 3x faster than car. Let's discuss what other values for this threshold might be appropriate / work best.
+
+Regarding Airborne Detection, are there other values in InternalsPlugin.hpp for this? 
+Note that tire load is not available, so we approximate it. Is our approximation sufficient for the use for brake lockup? Or should we use some other data or formula?
+
+Regarding "Suppression Window", that is , If a suspension event is detected, we disable the Predictive Lockup logic for a short time (e.g., 50ms): are we risking false negatives with this?
+
+Regarding Hybrid Thresholding (We use Angular Deceleration to lower the threshold of the Slip Ratio check dynamically): should we include also all of the gating / mitigation approaches in this?
+
+
+## Answers
+
+Here is the detailed analysis and technical recommendation for refining the Predictive Lockup logic.
+
+### 1. The Brake Threshold (< 10%): Is it too high?
+
+**Verdict: Yes, 10% is too high.**
+
+You are correct. In scenarios like trail braking deep into a corner, or driving on low-grip surfaces (rain/ice), a lockup can occur with very little brake pressure.
+*   **The Risk:** If a user is modulating the brake at 8% to manage a slide in the rain, and the wheel locks, a 10% gate would silence the FFB. This is a **False Negative**.
+*   **The Solution:** Lower the gate to a **Signal Noise Deadzone** only.
+    *   **Recommended Value:** **1% to 2% (`0.01 - 0.02`)**.
+    *   **Why:** We only need to filter out "noise" (e.g., resting a foot on the pedal registering 0.001). If the driver is applying *any* intentional braking force, the lockup logic should be active.
+
+### 2. Relative Deceleration Threshold (3x)
+
+**Verdict: 3x is a good heuristic, but an "Absolute Floor" is safer.**
+
+Comparing Wheel Decel ($\alpha_{wheel}$) to Chassis Decel ($\alpha_{chassis}$) is the right approach, but the multiplier depends on the car's grip.
+
+*   **High Grip (Slicks):** Car decels at 3G. Wheel locks at 10G. Ratio $\approx$ 3.3x.
+*   **Low Grip (Rain):** Car decels at 1G. Wheel locks at 5G. Ratio $\approx$ 5x.
+*   **The Danger Zone:** Low speed stops.
+    *   Car decels at 0.1G. Wheel decels at 0.4G. Ratio is 4x. **False Positive.**
+
+**Recommendation: Combined Threshold**
+The wheel must satisfy **TWO** conditions to trigger the prediction:
+1.  **Relative:** $\alpha_{wheel} > 2.0 \times \alpha_{chassis}$ (It is slowing down twice as fast as the car).
+2.  **Absolute:** $\alpha_{wheel} > 50.0 \text{ rad/s}^2$ (It is slowing down *violently*).
+
+This prevents triggers during gentle stops while catching high-speed lockups instantly.
+
+### 3. Airborne Detection (Approximation vs. Reality)
+
+**Verdict: Use `mSuspForce` directly.**
+
+Since `mTireLoad` is unreliable (encrypted), and our approximation (`Susp + 300`) is a calculated guess, we should look at the raw **Suspension Force** (`mSuspForce`) from `InternalsPlugin.hpp`.
+
+*   **Physics:** When a car is airborne, the suspension extends fully. The spring is no longer compressed by the car's weight.
+*   **Data:** `mSuspForce` (Pushrod Load) drops to near zero (or the preload value).
+*   **Threshold:** If `mSuspForce < 50.0 N`, the wheel is effectively unloaded/airborne.
+*   **Why this works:** Even if `mTireLoad` is blocked, `mSuspForce` is usually available because it drives the visual suspension model.
+
+**Implementation:**
+```cpp
+bool is_airborne = (wheel.mSuspForce < 50.0);
+```
+
+### 4. Suppression Window Risks (False Negatives)
+
+**Verdict: Do NOT suppress the "Standard" check.**
+
+If we disable *all* lockup logic for 50ms after a bump, we risk missing a real lockup that happens immediately after landing a jump or hitting a curb (a very common lockup scenario).
+
+**The Fix: Selective Suppression**
+Only suppress the **Predictive (Angular Decel)** trigger.
+*   **Standard Slip Ratio Check:** **ALWAYS ACTIVE.** If `Slip < -15%`, vibrate. This is the "Ground Truth."
+*   **Predictive Check:** **SUPPRESSIBLE.** If `Decel > Threshold`, lower the slip limit. *Disable this optimization* if a bump is detected.
+
+**Result:**
+*   **Bump:** Prediction disabled. Threshold stays at 15%. No false positive from the bump spike.
+*   **Real Lockup after Bump:** Prediction disabled. Threshold stays at 15%. As soon as slip hits 15%, vibration starts.
+*   **Latency Cost:** You lose the "Predictive" advantage for 50ms, but you don't lose the effect entirely.
+
+### 5. The Unified "Hybrid Thresholding" Architecture
+
+Here is how all these mitigations fit into the **Hybrid Thresholding** logic. This is the robust solution.
+
+```cpp
+// 1. Gating (Is this even a candidate for lockup?)
+bool brake_active = (data->mUnfilteredBrake > 0.02); // 2% Deadzone
+bool is_grounded = (wheel.mSuspForce > 50.0);        // Not Airborne
+
+// 2. Bump Detection (Reuse Road Texture logic)
+double susp_vel = abs(deflection - prev_deflection) / dt;
+bool is_bumpy = (susp_vel > 1.0); // 1.0 m/s threshold
+
+// 3. Calculate Deceleration
+double wheel_accel = (wheel.mRotation - prev_rot) / dt; // rad/s^2
+// Convert Chassis Accel to Angular equivalent (approx)
+double chassis_accel_ang = (data->mLocalAccel.z / tire_radius); 
+
+// 4. Determine Threshold
+// Start with the "Safe" threshold (e.g., 15%)
+double trigger_threshold = m_lockup_full_pct; 
+
+// 5. Apply Prediction (The Optimization)
+if (brake_active && is_grounded && !is_bumpy) {
+    // Check Relative Decel (2x) AND Absolute Decel (50 rad/s^2)
+    // Note: Accel is negative during braking
+    bool rapid_decel = (wheel_accel < chassis_accel_ang * 2.0) && (wheel_accel < -50.0);
+    
+    if (rapid_decel) {
+        // PREDICTION CONFIRMED:
+        // The wheel is stopping violently. A lockup is imminent.
+        // Lower the gate to catch it early.
+        trigger_threshold = m_lockup_start_pct; // e.g., 5%
+    }
+}
+
+// 6. Final Trigger (The Ground Truth)
+// We compare the ACTUAL Slip Ratio against our Dynamic Threshold
+if (current_slip_ratio < -trigger_threshold) {
+    // TRIGGER VIBRATION
+}
+```
+
+### Summary of Logic Flow
+1.  **Normal Braking:** Threshold is **15%**. Vibration starts when you are deep in the slip.
+2.  **Panic Stop (Smooth Surface):** Wheel slows fast. Prediction kicks in. Threshold drops to **5%**. Vibration starts *instantly* (feels like ABS prediction).
+3.  **Braking over Bumps (Sebring):** `is_bumpy` is true. Prediction is disabled. Threshold stays at **15%**. The bump spikes in deceleration are ignored. If you actually lock up, you will feel it once you hit 15% slip.
+
+This provides the **responsiveness** of prediction on smooth tarmac without the **false positives** on curbs.
+
+
+## Follow up questions 2
+
+Which of the thresholds , constants, or other values used here, should we expose to the user for customization? Assume an esports user that needs to extract the maximum performance from the car.
+
+## Answers 2
+
+For an esports user seeking maximum performance, the priority is **Signal-to-Noise Ratio**. They need the earliest possible warning of a lockup (Signal) but cannot afford false vibrations over bumps (Noise) that might make them lift off the brake unnecessarily.
+
+Here are the specific values to expose, categorized by their function in the tuning workflow.
+
+### 1. The "Target" Controls (Essential)
+These define *where* the limit is. Every pro driver will adjust these based on the car (ABS vs Non-ABS) and tire compound.
+
+*   **Start Slip % (The "Pre-Cue")**
+    *   *Current Logic:* `m_lockup_start_pct` (e.g., 5%).
+    *   *Why Expose:* A pro driver wants this set **just before** the peak grip fall-off. If set too low, it's distracting noise. If set too high, the warning comes too late to save the tire.
+    *   *Range:* 1.0% to 10.0%.
+
+*   **Full Slip % (The "Limit")**
+    *   *Current Logic:* `m_lockup_full_pct` (e.g., 15%).
+    *   *Why Expose:* Defines the point of "No Return."
+    *   *Range:* 10.0% to 25.0%.
+
+*   **Vibration Gamma (The "Feel")**
+    *   *Current Logic:* `m_lockup_gamma` (Linear vs Quadratic vs Cubic).
+    *   *Why Expose:* Esports drivers often prefer **Cubic (3.0)**. They want the wheel silent during threshold braking and a violent spike *only* when they actually cross the line. Linear feels too "mushy" for precision work.
+
+---
+
+### 2. The "Prediction" Controls (Advanced)
+These control the **Hybrid Thresholding** logic. This is where the competitive advantage lies (getting the warning 50ms earlier).
+
+*   **Prediction Sensitivity (Angular Decel Threshold)**
+    *   *Internal Logic:* The `50.0 rad/s²` absolute threshold and `2.0x` relative threshold.
+    *   *Proposal:* Combine these into a single **"Prediction Sensitivity"** slider (Low/Med/High).
+    *   *Why Expose:*
+        *   **High Sensitivity:** Triggers on lighter rapid braking. Good for qualifying laps on smooth tracks.
+        *   **Low Sensitivity:** Only triggers on catastrophic lockups. Good for endurance races to avoid fatigue/false alarms.
+    *   *Implementation:* Map slider 0.0-1.0 to the internal `50.0` constant (e.g., 0.0 = 80 rad/s², 1.0 = 30 rad/s²).
+
+*   **Bump Rejection (Suspension Filter)**
+    *   *Internal Logic:* The `1.0 m/s` suspension velocity gate.
+    *   *Why Expose:* **Crucial for track-specific tuning.**
+        *   **Sebring (Bumpy):** Needs **High Rejection** (e.g., 0.5 m/s). You don't want the lockup alarm going off every time you hit a concrete patch.
+        *   **Paul Ricard (Smooth):** Needs **Low Rejection** (e.g., 2.0 m/s). You want to feel lockups even if you are riding a flat curb.
+    *   *Range:* 0.1 m/s (Strict) to 5.0 m/s (Loose).
+
+---
+
+### 3. The "Gating" Controls (Calibration)
+These ensure the effect only fires when intended.
+
+*   **Brake Deadzone**
+    *   *Internal Logic:* The `0.02` (2%) check.
+    *   *Why Expose:* Pedal calibration varies wildly. A user with a load cell might rest their foot at 3% pressure. They need to raise this to 5% to prevent "ghost vibrations" on straights.
+    *   *Range:* 0% to 10%.
+
+---
+
+### Summary of GUI Changes
+
+I recommend adding a **"Advanced Lockup Tuning"** collapsible section in the GUI with these specific controls:
+
+| Label | Tooltip | Range | Default |
+| :--- | :--- | :--- | :--- |
+| **Start Slip %** | Slip ratio where vibration begins. Lower = Earlier warning. | 1% - 10% | 5% |
+| **Full Slip %** | Slip ratio for max vibration. | 10% - 25% | 15% |
+| **Response Curve** | 1.0=Linear, 3.0=Late/Sharp. Higher values hide early vibrations. | 1.0 - 3.0 | 2.0 |
+| **Prediction Sens.** | How aggressively the app predicts lockups based on wheel deceleration. | Low - High | Med |
+| **Bump Rejection** | Ignores lockup prediction during suspension spikes. Increase for bumpy tracks (Sebring). | 0.0 - 5.0 m/s | 1.0 |
+| **Brake Deadzone** | Minimum pedal input required to activate effect. | 0% - 10% | 2% |
+
+**What to keep hidden (Hardcoded):**
+*   **Airborne Threshold (50N):** This is a physics constant. There is no competitive advantage to changing it.
+*   **Relative Decel Ratio (2x):** It is too abstract for users to tune alongside "Prediction Sensitivity." One slider for sensitivity is enough.
+
+## Preset
+
+[Preset:T300]
+gain=1
+understeer=50
+sop=0.193043
+sop_scale=1
+sop_smoothing_factor=0.92
+slip_angle_smoothing=0.005
+min_force=0
+oversteer_boost=1.19843
+lockup_enabled=1
+lockup_gain=2
+spin_enabled=1
+spin_gain=0.5
+slide_enabled=1
+slide_gain=0.482437
+slide_freq=1.6
+road_enabled=0
+road_gain=0.5
+invert_force=1
+max_torque_ref=98.3
+use_manual_slip=0
+bottoming_method=0
+scrub_drag_gain=0.965217
+rear_align_effect=0.986957
+sop_yaw_gain=0.269565
+steering_shaft_gain=1
+base_force_mode=0
+gyro_gain=0.0347826
+flatspot_suppression=0
+notch_q=2.19
+flatspot_strength=1
+static_notch_enabled=0
+static_notch_freq=15.6
+optimal_slip_angle=0.06
+optimal_slip_ratio=0.12
+steering_shaft_smoothing=0.01
+gyro_smoothing_factor=0.01
+yaw_accel_smoothing=0.005
+chassis_inertia_smoothing=0.017
+
+```
+
 # File: docs\dev_docs\log analysis tool design.md
 ```markdown
 ## Question 
@@ -21590,32 +22313,11 @@ std::vector<Preset> Config::presets;
 void Config::LoadPresets() {
     presets.clear();
     
-    // 1. Default (Uses the defaults defined in Config.h - Standardized on T300)
-    presets.push_back(Preset("Default (T300)", true)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetYawSmoothing(0.010f)
-        .SetChassisSmoothing(0.025f)
-        .SetGyroSmoothing(0.020f)
-    );
+    // 1. Default (T300) - Uses Preset struct defaults from Config.h (Single Source of Truth)
+    presets.push_back(Preset("Default (T300)", true));
     
-    // 2. T300 (Redundant but kept for explicit selection)
-    presets.push_back(Preset("T300", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.61f)
-        .SetSoP(0.08f)
-        .SetSoPScale(1.0f)
-        .SetRearAlign(0.90f)
-        .SetSoPYaw(0.0f)
-        .SetMaxTorque(98.3f)
-        .SetInvert(true)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetYawSmoothing(0.010f)
-        .SetChassisSmoothing(0.025f)
-        .SetGyroSmoothing(0.020f)
-        .SetSlide(true, 0.39f)
-    );
+    // 2. T300 (Explicit name for clarity) - Same as Default
+    presets.push_back(Preset("T300", true));
     
     // 3. Test: Game Base FFB Only
     presets.push_back(Preset("Test: Game Base FFB Only", true)
@@ -22196,60 +22898,64 @@ struct Preset {
     std::string name;
     bool is_builtin = false; // NEW: Track if this is hardcoded or user-created
     
-    // 1. Define Defaults inline (Matches "Default" preset logic)
+    // 1. SINGLE SOURCE OF TRUTH: T300 Default Values
+    // These defaults are used by:
+    // - FFBEngine constructor (via ApplyDefaultsToEngine)
+    // - "Default (T300)" preset in LoadPresets()
+    // - "Reset Defaults" button in GUI
     float gain = 1.0f;
-    float understeer = 0.61f; // Calibrated from Image
-    float sop = 0.08f;        // Calibrated from Image
-    float sop_scale = 1.0f;   // Calibrated from Image
-    float sop_smoothing = 0.85f;
-    float slip_smoothing = 0.015f;
+    float understeer = 50.0f; // T300 Calibrated
+    float sop = 0.193043f;    // T300 Calibrated
+    float sop_scale = 1.0f;
+    float sop_smoothing = 0.92f;
+    float slip_smoothing = 0.005f;
     float min_force = 0.0f;
-    float oversteer_boost = 0.65f; // Calibrated from Image
+    float oversteer_boost = 1.19843f; // T300 Calibrated
     
-    bool lockup_enabled = false;
-    float lockup_gain = 0.5f;
+    bool lockup_enabled = true;
+    float lockup_gain = 2.0f;
     
-    bool spin_enabled = false;
+    bool spin_enabled = true;
     float spin_gain = 0.5f;
     
-    bool slide_enabled = true; // Enabled in Image
-    float slide_gain = 0.39f;  // Calibrated from Image
-    float slide_freq = 1.0f;    // NEW: Frequency Multiplier (v0.4.36)
+    bool slide_enabled = true;
+    float slide_gain = 0.482437f;  // T300 Calibrated
+    float slide_freq = 1.6f;
     
     bool road_enabled = false;
     float road_gain = 0.5f;
     
     bool invert_force = true;
-    float max_torque_ref = 98.3f; // Calibrated from Image
+    float max_torque_ref = 98.3f; // T300 Calibrated
     
     bool use_manual_slip = false;
     int bottoming_method = 0;
-    float scrub_drag_gain = 0.0f;
+    float scrub_drag_gain = 0.965217f; // T300 Calibrated
     
-    float rear_align_effect = 0.90f; // Calibrated from Image
-    float sop_yaw_gain = 0.0f;       // Calibrated from Image
-    float gyro_gain = 0.0f;
+    float rear_align_effect = 0.986957f; // T300 Calibrated
+    float sop_yaw_gain = 0.269565f;      // T300 Calibrated
+    float gyro_gain = 0.0347826f;        // T300 Calibrated
     
     float steering_shaft_gain = 1.0f;
     int base_force_mode = 0; // 0=Native
     
     // NEW: Grip & Smoothing (v0.5.7)
-    float optimal_slip_angle = 0.10f;
+    float optimal_slip_angle = 0.06f;  // T300 Calibrated
     float optimal_slip_ratio = 0.12f;
-    float steering_shaft_smoothing = 0.0f;
+    float steering_shaft_smoothing = 0.01f; // T300 Calibrated
     
     // NEW: Advanced Smoothing (v0.5.8)
-    float gyro_smoothing = 0.010f;
-    float yaw_smoothing = 0.010f;
-    float chassis_smoothing = 0.025f;
+    float gyro_smoothing = 0.01f;
+    float yaw_smoothing = 0.005f;      // T300 Calibrated
+    float chassis_smoothing = 0.017f;  // T300 Calibrated
 
     // v0.4.41: Signal Filtering
     bool flatspot_suppression = false;
-    float notch_q = 2.0f;
+    float notch_q = 2.19f;  // T300 Calibrated
     float flatspot_strength = 1.0f;
     
     bool static_notch_enabled = false;
-    float static_notch_freq = 50.0f;
+    float static_notch_freq = 15.6f;  // T300 Calibrated
 
     // 2. Constructors
     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin) {}
@@ -22310,6 +23016,13 @@ struct Preset {
     Preset& SetGyroSmoothing(float v) { gyro_smoothing = v; return *this; }
     Preset& SetYawSmoothing(float v) { yaw_smoothing = v; return *this; }
     Preset& SetChassisSmoothing(float v) { chassis_smoothing = v; return *this; }
+
+    // 4. Static method to apply defaults to FFBEngine (Single Source of Truth)
+    // This is called by FFBEngine constructor to initialize with T300 defaults
+    static void ApplyDefaultsToEngine(FFBEngine& engine) {
+        Preset defaults; // Uses default member initializers (T300 values)
+        defaults.Apply(engine);
+    }
 
     // Apply this preset to an engine instance
     void Apply(FFBEngine& engine) const {
@@ -26080,12 +26793,29 @@ static TelemInfoV01 CreateBasicTestTelemetry(double speed = 20.0, double slip_an
     return data;
 }
 
+/**
+ * Creates an FFBEngine initialized with T300 defaults.
+ * Required after v0.5.12 refactoring removed default initializers from FFBEngine.h.
+ * 
+ * Note: Returns a reference to avoid copy (FFBEngine has deleted copy constructor).
+ * Each call reinitializes the same static instance.
+ * 
+ * @return Reference to initialized FFBEngine with T300 default values
+ */
+static void InitializeEngine(FFBEngine& engine) {
+    Preset::ApplyDefaultsToEngine(engine);
+    // v0.5.12: Force consistent baseline for legacy tests
+    engine.m_max_torque_ref = 20.0f;
+    engine.m_invert_force = false;
+    engine.m_steering_shaft_smoothing = 0.0f; // Disable smoothing for instant test response
+}
 
 
 
 static void test_manual_slip_singularity() {
     std::cout << "\nTest: Manual Slip Singularity (Low Speed Trap)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -26120,6 +26850,7 @@ static void test_manual_slip_singularity() {
 static void test_base_force_modes() {
     std::cout << "\nTest: Base Force Modes & Gain (v0.4.13)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -26195,6 +26926,7 @@ static void test_base_force_modes() {
 static void test_sop_yaw_kick() {
     std::cout << "\nTest: SoP Yaw Kick (v0.4.18 Smoothed)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -26246,6 +26978,7 @@ static void test_sop_yaw_kick() {
 static void test_scrub_drag_fade() {
     std::cout << "\nTest: Scrub Drag Fade-In" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -26288,6 +27021,7 @@ static void test_scrub_drag_fade() {
 static void test_road_texture_teleport() {
     std::cout << "\nTest: Road Texture Teleport (Delta Clamp)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -26338,6 +27072,7 @@ static void test_road_texture_teleport() {
 static void test_grip_low_speed() {
     std::cout << "\nTest: Grip Approximation Low Speed Cutoff" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -26389,6 +27124,7 @@ static void test_grip_low_speed() {
 static void test_zero_input() {
     std::cout << "\nTest: Zero Input" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -26412,6 +27148,7 @@ static void test_zero_input() {
 static void test_grip_modulation() {
     std::cout << "\nTest: Grip Modulation (Understeer)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -26452,6 +27189,7 @@ static void test_grip_modulation() {
 static void test_sop_effect() {
     std::cout << "\nTest: SoP Effect" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -26491,6 +27229,7 @@ static void test_sop_effect() {
 static void test_min_force() {
     std::cout << "\nTest: Min Force" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -26528,6 +27267,7 @@ static void test_min_force() {
 static void test_progressive_lockup() {
     std::cout << "\nTest: Progressive Lockup" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -26596,6 +27336,7 @@ static void test_slide_texture() {
     // Gripping tires (grip=1.0) should NOT scrub, even with high lateral velocity
     {
         FFBEngine engine;
+        InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
         TelemInfoV01 data;
         std::memset(&data, 0, sizeof(data));
         // Default RH to avoid scraping
@@ -26640,6 +27381,7 @@ static void test_slide_texture() {
     // Case 2: Rear Slip (Oversteer/Drift)
     {
         FFBEngine engine;
+        InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
         TelemInfoV01 data;
         std::memset(&data, 0, sizeof(data));
         data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
@@ -26677,6 +27419,7 @@ static void test_slide_texture() {
 static void test_dynamic_tuning() {
     std::cout << "\nTest: Dynamic Tuning (GUI Simulation)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -26725,6 +27468,7 @@ static void test_dynamic_tuning() {
 static void test_suspension_bottoming() {
     std::cout << "\nTest: Suspension Bottoming (Fix Verification)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
 
@@ -26762,6 +27506,7 @@ static void test_suspension_bottoming() {
     
     // Let's check frame 1 explicitly by resetting
     FFBEngine engine2;
+    InitializeEngine(engine2); // v0.5.12: Initialize with T300 defaults
     engine2.m_bottoming_enabled = true;
     engine2.m_bottoming_gain = 1.0;
     engine2.m_sop_effect = 0.0;
@@ -26783,6 +27528,7 @@ static void test_suspension_bottoming() {
 static void test_oversteer_boost() {
     std::cout << "\nTest: Lateral G Boost (Slide)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -26827,6 +27573,7 @@ static void test_oversteer_boost() {
 static void test_phase_wraparound() {
     std::cout << "\nTest: Phase Wraparound (Anti-Click)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -26881,6 +27628,7 @@ static void test_phase_wraparound() {
 static void test_road_texture_state_persistence() {
     std::cout << "\nTest: Road Texture State Persistence" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -26926,6 +27674,7 @@ static void test_road_texture_state_persistence() {
 static void test_multi_effect_interaction() {
     std::cout << "\nTest: Multi-Effect Interaction (Lockup + Spin)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -27002,6 +27751,7 @@ static void test_multi_effect_interaction() {
 static void test_load_factor_edge_cases() {
     std::cout << "\nTest: Load Factor Edge Cases" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -27052,6 +27802,7 @@ static void test_load_factor_edge_cases() {
 static void test_spin_torque_drop_interaction() {
     std::cout << "\nTest: Spin Torque Drop with SoP" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -27120,6 +27871,7 @@ static void test_spin_torque_drop_interaction() {
 static void test_rear_grip_fallback() {
     std::cout << "\nTest: Rear Grip Fallback (v0.4.5)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -27201,6 +27953,7 @@ static void test_rear_grip_fallback() {
 static void test_sanity_checks() {
     std::cout << "\nTest: Telemetry Sanity Checks" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -27367,6 +28120,7 @@ static void test_sanity_checks() {
 static void test_hysteresis_logic() {
     std::cout << "\nTest: Hysteresis Logic (Missing Data)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -27444,6 +28198,7 @@ static void test_presets() {
     // Setup
     Config::LoadPresets();
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     
     // Initial State (Default is 0.5)
     engine.m_gain = 0.5f;
@@ -27490,7 +28245,9 @@ static void test_config_persistence() {
     
     std::string test_file = "test_config.ini";
     FFBEngine engine_save;
+    InitializeEngine(engine_save); // v0.5.12: Initialize with T300 defaults
     FFBEngine engine_load;
+    InitializeEngine(engine_load); // v0.5.12: Initialize with T300 defaults
     
     // 1. Setup unique values
     engine_save.m_gain = 1.23f;
@@ -27619,6 +28376,7 @@ static void test_game_state_logic() {
 static void test_smoothing_step_response() {
     std::cout << "\nTest: SoP Smoothing Step Response" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -27677,6 +28435,7 @@ static void test_smoothing_step_response() {
 static void test_manual_slip_calculation() {
     std::cout << "\nTest: Manual Slip Calculation" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -27695,8 +28454,10 @@ static void test_manual_slip_calculation() {
     
     // Case 1: No Slip (Wheel V matches Car V)
     // V_wheel = 20.0. Omega = V / r = 20.0 / 0.3 = 66.66 rad/s
-    data.mWheel[0].mRotation = 66.6666;
-    data.mWheel[1].mRotation = 66.6666;
+    for(int i=0; i<4; i++) {
+        data.mWheel[i].mRotation = 66.6666;
+        data.mWheel[i].mStaticUndeflectedRadius = 30; // 0.3m
+    }
     data.mWheel[0].mLongitudinalPatchVel = 0.0; // Game data says 0 (should be ignored)
     
     engine.m_lockup_enabled = true;
@@ -27717,8 +28478,7 @@ static void test_manual_slip_calculation() {
     }
     
     // Case 2: Locked Wheel (Omega = 0)
-    data.mWheel[0].mRotation = 0.0;
-    data.mWheel[1].mRotation = 0.0;
+    for(int i=0; i<4; i++) data.mWheel[i].mRotation = 0.0;
     // Ratio = (0 - 20) / 20 = -1.0.
     // This should trigger massive lockup effect.
     
@@ -27740,6 +28500,7 @@ static void test_manual_slip_calculation() {
 static void test_universal_bottoming() {
     std::cout << "\nTest: Universal Bottoming" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -27809,7 +28570,8 @@ static void test_preset_initialization() {
     // Expected default values for v0.4.5 fields
     const bool expected_use_manual_slip = false;
     const int expected_bottoming_method = 0;
-    const float expected_scrub_drag_gain = 0.0f;
+    // v0.5.12: All presets now inherit T300 scrub_drag_gain via member initializers
+    const float expected_scrub_drag_gain = 0.965217f;
     
     // Test all 9 built-in presets (Added T300)
     const char* preset_names[] = {
@@ -27858,6 +28620,7 @@ static void test_preset_initialization() {
             fields_ok = false;
         }
         
+        // v0.5.12: All presets have T300 scrub_drag_gain default
         if (std::abs(preset.scrub_drag_gain - expected_scrub_drag_gain) > 0.0001f) {
             std::cout << "[FAIL] " << preset.name << ": scrub_drag_gain = " 
                       << preset.scrub_drag_gain << ", expected " << expected_scrub_drag_gain << std::endl;
@@ -27875,7 +28638,7 @@ static void test_preset_initialization() {
     
     // Overall summary
     if (all_passed) {
-        std::cout << "[PASS] All 5 built-in presets have correct v0.4.5 field initialization" << std::endl;
+        std::cout << "[PASS] All 9 built-in presets have correct v0.4.5 field initialization" << std::endl;
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Some presets have incorrect v0.4.5 field initialization" << std::endl;
@@ -27886,6 +28649,7 @@ static void test_preset_initialization() {
 static void test_regression_road_texture_toggle() {
     std::cout << "\nTest: Regression - Road Texture Toggle Spike" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -27945,6 +28709,7 @@ static void test_regression_road_texture_toggle() {
 static void test_regression_bottoming_switch() {
     std::cout << "\nTest: Regression - Bottoming Method Switch Spike" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -27988,6 +28753,7 @@ static void test_regression_bottoming_switch() {
 static void test_regression_rear_torque_lpf() {
     std::cout << "\nTest: Regression - Rear Torque LPF Continuity" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -28118,6 +28884,7 @@ static void test_stress_stability() {
 static void test_yaw_accel_smoothing() {
     std::cout << "\nTest: Yaw Acceleration Smoothing (v0.4.18)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -28181,6 +28948,7 @@ static void test_yaw_accel_smoothing() {
     // Alternate between +5.0 and -5.0 every frame
     // The smoothed value should remain close to 0 (averaging out the noise)
     FFBEngine engine2;
+    InitializeEngine(engine2); // v0.5.12: Initialize with T300 defaults
     engine2.m_sop_yaw_gain = 1.0f;
     engine2.m_sop_effect = 0.0f;
     engine2.m_max_torque_ref = 20.0f;
@@ -28223,6 +28991,7 @@ static void test_yaw_accel_smoothing() {
 static void test_yaw_accel_convergence() {
     std::cout << "\nTest: Yaw Acceleration Convergence (v0.4.18)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -28295,6 +29064,7 @@ static void test_yaw_accel_convergence() {
 static void test_regression_yaw_slide_feedback() {
     std::cout << "\nTest: Regression - Yaw/Slide Feedback Loop (v0.4.18)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -28392,6 +29162,7 @@ static void test_regression_yaw_slide_feedback() {
 static void test_yaw_kick_signal_conditioning() {
     std::cout << "\nTest: Yaw Kick Signal Conditioning (v0.4.42)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -28461,14 +29232,14 @@ static void test_yaw_kick_signal_conditioning() {
     
     // Should be non-zero and negative (due to inversion)
     // First frame smoothed: 0.0 + alpha * (5.0 - 0.0)
-    // With alpha ~= 0.1, smoothed ~= 0.5
-    // Force: -0.5 * 1.0 * 5.0 = -2.5 Nm
-    // Normalized: -2.5 / 20.0 = -0.125
-    if (force_valid < -0.05 && force_valid > -0.3) {
+    // With alpha ~= 0.333 (T300 default tau=0.005), smoothed ~= 1.666
+    // Force: -1.666 * 1.0 * 5.0 = -8.333 Nm
+    // Normalized: -8.333 / 20.0 = -0.416667
+    if (force_valid < -0.3 && force_valid > -0.5) {
         std::cout << "[PASS] Valid kick detected (force = " << force_valid << " in expected range)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Valid kick not detected correctly. Got " << force_valid << " Expected ~-0.125." << std::endl;
+        std::cout << "[FAIL] Valid kick not detected correctly. Got " << force_valid << " Expected ~-0.416667." << std::endl;
         g_tests_failed++;
     }
 }
@@ -28521,6 +29292,7 @@ static void test_notch_filter_attenuation() {
 static void test_frequency_estimator() {
     std::cout << "\nTest: Frequency Estimator (v0.4.41)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -28647,6 +29419,7 @@ int main() {
 static void test_snapshot_data_integrity() {
     std::cout << "\nTest: Snapshot Data Integrity (v0.4.7)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
 
@@ -28781,6 +29554,7 @@ static void test_snapshot_data_integrity() {
 static void test_zero_effects_leakage() {
     std::cout << "\nTest: Zero Effects Leakage (No Ghost Forces)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
 
@@ -28855,6 +29629,7 @@ static void test_zero_effects_leakage() {
 static void test_snapshot_data_v049() {
     std::cout << "\nTest: Snapshot Data v0.4.9 (Rear Physics)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
 
@@ -28956,6 +29731,7 @@ static void test_rear_force_workaround() {
     
     std::cout << "\nTest: Rear Force Workaround (v0.4.10)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -28968,6 +29744,8 @@ static void test_rear_force_workaround() {
     engine.m_sop_scale = 10.0;        // Moderate SoP scaling
     engine.m_rear_align_effect = 1.0f; // Fix effect gain for test calculation (Default is now 5.0)
     engine.m_invert_force = false;    // Ensure non-inverted for formula check
+    engine.m_max_torque_ref = 100.0f;  // Explicitly use 100 Nm ref for snapshot scaling (v0.4.50)
+    engine.m_slip_angle_smoothing = 0.015f; // v0.4.40 baseline for alpha=0.4
     
     // ========================================
     // Front Wheel Setup (Baseline)
@@ -29106,6 +29884,7 @@ static void test_rear_force_workaround() {
 static void test_rear_align_effect() {
     std::cout << "\nTest: Rear Align Effect Decoupling (v0.4.11)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -29114,6 +29893,8 @@ static void test_rear_align_effect() {
     // Decoupled: Boost should be 0.0, but we get torque anyway
     engine.m_oversteer_boost = 0.0f; 
     engine.m_sop_effect = 0.0f; // Disable Base SoP to isolate torque
+    engine.m_max_torque_ref = 100.0f; // Explicitly use 100 Nm ref for snapshot scaling (v0.4.50)
+    engine.m_slip_angle_smoothing = 0.015f; // v0.4.40 baseline for alpha=0.142
     
     // Setup Rear Workaround conditions (Slip Angle generation)
     data.mWheel[0].mTireLoad = 4000.0; data.mWheel[1].mTireLoad = 4000.0; // Fronts valid
@@ -29204,6 +29985,7 @@ static void test_rear_align_effect() {
 static void test_sop_yaw_kick_direction() {
     std::cout << "\nTest: SoP Yaw Kick Direction (v0.4.20)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -29233,6 +30015,7 @@ static void test_sop_yaw_kick_direction() {
 static void test_gyro_damping() {
     std::cout << "\nTest: Gyroscopic Damping (v0.4.17)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -29361,6 +30144,7 @@ static void test_gyro_damping() {
 static void test_coordinate_sop_inversion() {
     std::cout << "\nTest: Coordinate System - SoP Inversion (v0.4.19)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -29435,6 +30219,7 @@ static void test_coordinate_sop_inversion() {
 static void test_coordinate_rear_torque_inversion() {
     std::cout << "\nTest: Coordinate System - Rear Torque Inversion (v0.4.19)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -29525,6 +30310,7 @@ static void test_coordinate_rear_torque_inversion() {
 static void test_coordinate_scrub_drag_direction() {
     std::cout << "\nTest: Coordinate System - Scrub Drag Direction (v0.4.19/v0.4.20)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -29590,6 +30376,7 @@ static void test_coordinate_scrub_drag_direction() {
 static void test_coordinate_debug_slip_angle_sign() {
     std::cout << "\nTest: Coordinate System - Debug Slip Angle Sign (v0.4.19)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -29702,6 +30489,7 @@ static void test_coordinate_debug_slip_angle_sign() {
 static void test_regression_no_positive_feedback() {
     std::cout << "\nTest: Regression - No Positive Feedback Loop (v0.4.19)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -29812,6 +30600,7 @@ static void test_regression_no_positive_feedback() {
 static void test_coordinate_all_effects_alignment() {
     std::cout << "\\nTest: Coordinate System - All Effects Alignment (Snap Oversteer)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -29912,6 +30701,7 @@ static void test_coordinate_all_effects_alignment() {
 static void test_regression_phase_explosion() {
     std::cout << "\nTest: Regression - Phase Explosion (All Oscillators)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
 
@@ -29980,7 +30770,9 @@ static void test_regression_phase_explosion() {
 static void test_time_corrected_smoothing() {
     std::cout << "\nTest: Time Corrected Smoothing (v0.4.37)" << std::endl;
     FFBEngine engine_fast; // 400Hz
+    InitializeEngine(engine_fast); // v0.5.12: Initialize with T300 defaults
     FFBEngine engine_slow; // 50Hz
+    InitializeEngine(engine_slow); // v0.5.12: Initialize with T300 defaults
     
     // Setup - Yaw Accel Smoothing Test
     TelemInfoV01 data;
@@ -30017,6 +30809,7 @@ static void test_time_corrected_smoothing() {
 static void test_gyro_stability() {
     std::cout << "\nTest: Gyro Stability (Clamp Check)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -30042,6 +30835,7 @@ static void test_gyro_stability() {
 void test_kinematic_load_braking() {
     std::cout << "\nTest: Kinematic Load Braking (+Z Accel)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -30082,6 +30876,7 @@ void test_kinematic_load_braking() {
 void test_combined_grip_loss() {
     std::cout << "\nTest: Combined Friction Circle" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -30125,6 +30920,7 @@ void test_combined_grip_loss() {
 void test_chassis_inertia_smoothing_convergence() {
     std::cout << "\nTest: Chassis Inertia Smoothing Convergence (v0.4.39)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -30182,6 +30978,7 @@ void test_chassis_inertia_smoothing_convergence() {
 void test_kinematic_load_cornering() {
     std::cout << "\nTest: Kinematic Load Cornering (Lateral Transfer v0.4.39)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
@@ -30253,6 +31050,7 @@ void test_kinematic_load_cornering() {
 static void test_static_notch_integration() {
     std::cout << "\nTest: Static Notch Integration (v0.4.43)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
 
@@ -30326,6 +31124,7 @@ static void test_static_notch_integration() {
 static void test_gain_compensation() {
     std::cout << "\nTest: FFB Signal Gain Compensation (Decoupling)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
 
@@ -30453,6 +31252,7 @@ static void test_config_safety_clamping() {
     
     // Load the unsafe config
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     Config::Load(engine, test_file);
     
     // Verify all Generator effects are clamped to safe maximums
@@ -30512,6 +31312,7 @@ static void test_config_safety_clamping() {
 static void test_grip_threshold_sensitivity() {
     std::cout << "\nTest: Grip Threshold Sensitivity (v0.5.7)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     
     // Use helper function to create test data with 0.07 rad slip angle
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.07);
@@ -30551,6 +31352,7 @@ static void test_grip_threshold_sensitivity() {
 static void test_steering_shaft_smoothing() {
     std::cout << "\nTest: Steering Shaft Smoothing (v0.5.7)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
 
@@ -30627,6 +31429,7 @@ static void test_config_safety_validation_v057() {
     
     // Load the unsafe config
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     Config::Load(engine, test_file);
     
     // Verify that invalid values were reset to safe defaults
@@ -30671,6 +31474,7 @@ static void test_config_safety_validation_v057() {
     }
     
     FFBEngine engine2;
+    InitializeEngine(engine2); // v0.5.12: Initialize with T300 defaults
     Config::Load(engine2, test_file);
     
     if (engine2.m_optimal_slip_angle == 0.10f && engine2.m_optimal_slip_ratio == 0.12f) {
@@ -30694,6 +31498,7 @@ static void test_config_safety_validation_v057() {
 static void test_rear_lockup_differentiation() {
     std::cout << "\nTest: Rear Lockup Differentiation" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
 
@@ -30751,13 +31556,11 @@ static void test_rear_lockup_differentiation() {
         g_tests_failed++;
     }
 
-    // --- PASS 3: Frequency Comparison ---
-    // Rear frequency should be 0.5x of Front frequency
-    // Therefore, phase delta should be roughly half
+    // Rear frequency is lower (Ratio 0.3 per FFBEngine.h)
     double ratio = phase_delta_rear / phase_delta_front;
     
-    if (std::abs(ratio - 0.5) < 0.05) {
-        std::cout << "[PASS] Rear frequency is lower (Ratio: " << ratio << " vs expected 0.5)." << std::endl;
+    if (std::abs(ratio - 0.3) < 0.05) {
+        std::cout << "[PASS] Rear frequency is lower (Ratio: " << ratio << " vs expected 0.3)." << std::endl;
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Frequency differentiation failed. Ratio: " << ratio << std::endl;
@@ -31375,6 +32178,176 @@ static void test_window_config_persistence() {
     remove(test_file.c_str());
 }
 
+static void test_single_source_of_truth_t300_defaults() {
+    std::cout << "\nTest: Single Source of Truth - T300 Defaults (v0.5.12)" << std::endl;
+    
+    // This test verifies that the refactoring to use a single source of truth
+    // for T300 defaults is working correctly. All three initialization paths
+    // should produce identical results:
+    // 1. Preset struct defaults (Config.h)
+    // 2. FFBEngine initialized via Preset::ApplyDefaultsToEngine()
+    // 3. "Default (T300)" preset from LoadPresets()
+    
+    // Test 1: Verify Preset struct defaults match expected T300 values
+    {
+        std::cout << "  Test 1: Preset struct defaults..." << std::endl;
+        Preset defaults; // Uses default member initializers
+        
+        // Verify key T300 values
+        ASSERT_TRUE(defaults.understeer == 50.0f);
+        ASSERT_TRUE(defaults.sop == 0.193043f);
+        ASSERT_TRUE(defaults.oversteer_boost == 1.19843f);
+        ASSERT_TRUE(defaults.lockup_enabled == true);
+        ASSERT_TRUE(defaults.lockup_gain == 2.0f);
+        ASSERT_TRUE(defaults.slide_enabled == true);
+        ASSERT_TRUE(defaults.slide_gain == 0.482437f);
+        ASSERT_TRUE(defaults.slide_freq == 1.6f);
+        ASSERT_TRUE(defaults.scrub_drag_gain == 0.965217f);
+        ASSERT_TRUE(defaults.rear_align_effect == 0.986957f);
+        ASSERT_TRUE(defaults.sop_yaw_gain == 0.269565f);
+        ASSERT_TRUE(defaults.gyro_gain == 0.0347826f);
+        ASSERT_TRUE(defaults.optimal_slip_angle == 0.06f);
+        ASSERT_TRUE(defaults.slip_smoothing == 0.005f);
+        ASSERT_TRUE(defaults.sop_smoothing == 0.92f);
+        ASSERT_TRUE(defaults.yaw_smoothing == 0.005f);
+        ASSERT_TRUE(defaults.chassis_smoothing == 0.017f);
+        ASSERT_TRUE(defaults.gyro_smoothing == 0.01f);
+        ASSERT_TRUE(defaults.steering_shaft_smoothing == 0.01f);
+        
+        std::cout << "    Preset struct defaults verified" << std::endl;
+    }
+    
+    // Test 2: Verify FFBEngine initialization via ApplyDefaultsToEngine()
+    {
+        std::cout << "  Test 2: FFBEngine initialization..." << std::endl;
+        FFBEngine engine;
+        Preset::ApplyDefaultsToEngine(engine);
+        
+        // Verify the engine was initialized with T300 values
+        ASSERT_TRUE(engine.m_understeer_effect == 50.0f);
+        ASSERT_TRUE(engine.m_sop_effect == 0.193043f);
+        ASSERT_TRUE(engine.m_oversteer_boost == 1.19843f);
+        ASSERT_TRUE(engine.m_lockup_enabled == true);
+        ASSERT_TRUE(engine.m_lockup_gain == 2.0f);
+        ASSERT_TRUE(engine.m_slide_texture_enabled == true);
+        ASSERT_TRUE(engine.m_slide_texture_gain == 0.482437f);
+        ASSERT_TRUE(engine.m_slide_freq_scale == 1.6f);
+        ASSERT_TRUE(engine.m_scrub_drag_gain == 0.965217f);
+        ASSERT_TRUE(engine.m_rear_align_effect == 0.986957f);
+        ASSERT_TRUE(engine.m_sop_yaw_gain == 0.269565f);
+        ASSERT_TRUE(engine.m_gyro_gain == 0.0347826f);
+        ASSERT_TRUE(engine.m_optimal_slip_angle == 0.06f);
+        ASSERT_TRUE(engine.m_slip_angle_smoothing == 0.005f);
+        ASSERT_TRUE(engine.m_sop_smoothing_factor == 0.92f);
+        ASSERT_TRUE(engine.m_yaw_accel_smoothing == 0.005f);
+        ASSERT_TRUE(engine.m_chassis_inertia_smoothing == 0.017f);
+        ASSERT_TRUE(engine.m_gyro_smoothing == 0.01f);
+        ASSERT_TRUE(engine.m_steering_shaft_smoothing == 0.01f);
+        
+        std::cout << "    FFBEngine initialization verified" << std::endl;
+    }
+    
+    // Test 3: Verify "Default (T300)" preset from LoadPresets()
+    {
+        std::cout << "  Test 3: Default (T300) preset..." << std::endl;
+        Config::LoadPresets();
+        
+        // Verify we have presets
+        ASSERT_TRUE(!Config::presets.empty());
+        
+        // First preset should be "Default (T300)"
+        ASSERT_TRUE(Config::presets[0].name == "Default (T300)");
+        ASSERT_TRUE(Config::presets[0].is_builtin == true);
+        
+        // Verify it has T300 values
+        const Preset& default_preset = Config::presets[0];
+        ASSERT_TRUE(default_preset.understeer == 50.0f);
+        ASSERT_TRUE(default_preset.sop == 0.193043f);
+        ASSERT_TRUE(default_preset.oversteer_boost == 1.19843f);
+        ASSERT_TRUE(default_preset.lockup_enabled == true);
+        ASSERT_TRUE(default_preset.lockup_gain == 2.0f);
+        
+        std::cout << "    Default (T300) preset verified" << std::endl;
+    }
+    
+    // Test 4: Verify "T300" preset matches "Default (T300)"
+    {
+        std::cout << "  Test 4: T300 preset matches Default..." << std::endl;
+        
+        // Second preset should be "T300"
+        ASSERT_TRUE(Config::presets.size() > 1);
+        ASSERT_TRUE(Config::presets[1].name == "T300");
+        
+        // Verify both presets have identical values
+        const Preset& default_preset = Config::presets[0];
+        const Preset& t300_preset = Config::presets[1];
+        
+        ASSERT_TRUE(default_preset.understeer == t300_preset.understeer);
+        ASSERT_TRUE(default_preset.sop == t300_preset.sop);
+        ASSERT_TRUE(default_preset.oversteer_boost == t300_preset.oversteer_boost);
+        ASSERT_TRUE(default_preset.lockup_gain == t300_preset.lockup_gain);
+        ASSERT_TRUE(default_preset.slide_gain == t300_preset.slide_gain);
+        ASSERT_TRUE(default_preset.scrub_drag_gain == t300_preset.scrub_drag_gain);
+        
+        std::cout << "    T300 preset matches Default (T300)" << std::endl;
+    }
+    
+    // Test 5: Verify applying preset produces same result as ApplyDefaultsToEngine()
+    {
+        std::cout << "  Test 5: Preset application consistency..." << std::endl;
+        
+        FFBEngine engine1, engine2;
+        
+        // Initialize engine1 via ApplyDefaultsToEngine
+        Preset::ApplyDefaultsToEngine(engine1);
+        
+        // Initialize engine2 via preset application
+        Config::ApplyPreset(0, engine2); // Apply "Default (T300)"
+        
+        // Verify they're identical
+        ASSERT_TRUE(engine1.m_understeer_effect == engine2.m_understeer_effect);
+        ASSERT_TRUE(engine1.m_sop_effect == engine2.m_sop_effect);
+        ASSERT_TRUE(engine1.m_oversteer_boost == engine2.m_oversteer_boost);
+        ASSERT_TRUE(engine1.m_lockup_gain == engine2.m_lockup_gain);
+        ASSERT_TRUE(engine1.m_slide_texture_gain == engine2.m_slide_texture_gain);
+        ASSERT_TRUE(engine1.m_scrub_drag_gain == engine2.m_scrub_drag_gain);
+        ASSERT_TRUE(engine1.m_rear_align_effect == engine2.m_rear_align_effect);
+        ASSERT_TRUE(engine1.m_sop_yaw_gain == engine2.m_sop_yaw_gain);
+        ASSERT_TRUE(engine1.m_gyro_gain == engine2.m_gyro_gain);
+        ASSERT_TRUE(engine1.m_optimal_slip_angle == engine2.m_optimal_slip_angle);
+        ASSERT_TRUE(engine1.m_slip_angle_smoothing == engine2.m_slip_angle_smoothing);
+        ASSERT_TRUE(engine1.m_sop_smoothing_factor == engine2.m_sop_smoothing_factor);
+        ASSERT_TRUE(engine1.m_yaw_accel_smoothing == engine2.m_yaw_accel_smoothing);
+        ASSERT_TRUE(engine1.m_chassis_inertia_smoothing == engine2.m_chassis_inertia_smoothing);
+        
+        std::cout << "    Both initialization paths produce identical results" << std::endl;
+    }
+    
+    // Test 6: Verify no config file still produces correct defaults
+    {
+        std::cout << "  Test 6: No config file scenario..." << std::endl;
+        
+        // Simulate fresh install (no config.ini)
+        std::string nonexistent_file = "this_file_does_not_exist_12345.ini";
+        FFBEngine engine;
+        
+        // Initialize with defaults first (as main.cpp does)
+        Preset::ApplyDefaultsToEngine(engine);
+        
+        // Try to load non-existent config (should not change values)
+        Config::Load(engine, nonexistent_file);
+        
+        // Verify T300 defaults are still present
+        ASSERT_TRUE(engine.m_understeer_effect == 50.0f);
+        ASSERT_TRUE(engine.m_sop_effect == 0.193043f);
+        ASSERT_TRUE(engine.m_lockup_gain == 2.0f);
+        
+        std::cout << "    Fresh install scenario verified" << std::endl;
+    }
+    
+    std::cout << "  [SUMMARY] Single source of truth verified across all initialization paths!" << std::endl;
+}
+
 int main() {
     std::cout << "=== Running Windows Platform Tests ===" << std::endl;
 
@@ -31389,6 +32362,7 @@ int main() {
     test_slider_precision_regression();
     test_latency_display_regression();
     test_window_config_persistence();
+    test_single_source_of_truth_t300_defaults();  // NEW: v0.5.12
 
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
