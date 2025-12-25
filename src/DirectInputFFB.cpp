@@ -463,6 +463,20 @@ void DirectInputFFB::UpdateForce(double normalizedForce) {
                         // Update our internal state if we fixed the exclusivity
                         if (hr == DIERR_NOTEXCLUSIVEACQUIRED) {
                             m_isExclusive = true; 
+                            
+                            // One-time notification when Dynamic Promotion first succeeds
+                            static bool firstPromotionSuccess = false;
+                            if (!firstPromotionSuccess) {
+                                std::cout << "\n"
+                                          << "========================================\n"
+                                          << "[SUCCESS] Dynamic Promotion Active!\n"
+                                          << "LMUFFB has successfully recovered exclusive\n"
+                                          << "control after detecting a conflict.\n"
+                                          << "This feature will continue to protect your\n"
+                                          << "FFB experience automatically.\n"
+                                          << "========================================\n" << std::endl;
+                                firstPromotionSuccess = true;
+                            }
                         }
 
                         // Restart the effect to ensure motor is active

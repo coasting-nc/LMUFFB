@@ -112,6 +112,101 @@ A: Each device is acquired independently. LMUFFB will try exclusive mode for the
 
 ## Version Information
 
-This feature was implemented in version 0.4.21 (2025-12-19)
+This feature was implemented in version 0.4.21 (2025-12-19)  
+**Dynamic Promotion (Automatic Recovery)** added in version 0.6.2 (2025-12-25)
 
 For technical implementation details, see: `docs/dev_docs/implementation_summary_exclusive_acquisition.md`
+
+---
+
+## 🆕 Dynamic Promotion (v0.6.2)
+
+### What is Dynamic Promotion?
+
+Starting in v0.6.2, LMUFFB includes an **automatic recovery system** that fights back when the game tries to steal device priority.
+
+**The Problem It Solves:**
+- You Alt-Tab between LMUFFB and the game
+- The game steals exclusive access when it gains focus
+- Your FFB stops working (the "Muted Wheel" issue)
+
+**The Solution:**
+- LMUFFB detects when it loses exclusive access
+- Automatically attempts to reclaim exclusive control
+- Restarts the FFB motor to ensure immediate feedback
+- All happens automatically in the background
+
+### How to Know It's Working
+
+1. **GUI Indicator**: Watch the mode indicator in LMUFFB
+   - Should show **green "EXCLUSIVE"** most of the time
+   - May briefly flash **yellow "SHARED"** during conflicts
+   - Should automatically return to **green "EXCLUSIVE"** within 2 seconds
+
+2. **Console Message**: The first time Dynamic Promotion succeeds, you'll see:
+   ```
+   ========================================
+   [SUCCESS] Dynamic Promotion Active!
+   LMUFFB has successfully recovered exclusive
+   control after detecting a conflict.
+   This feature will continue to protect your
+   FFB experience automatically.
+   ========================================
+   ```
+
+3. **FFB Continues Working**: Your wheel should maintain force feedback even after Alt-Tabbing
+
+### Limitations
+
+- Recovery attempts are throttled to once every 2 seconds (prevents system spam)
+- If the game aggressively re-steals priority, you may experience brief FFB dropouts
+- **Best practice**: Still recommended to start LMUFFB before the game when possible
+
+---
+
+## Manual Testing Procedure
+
+Want to verify that Dynamic Promotion is working correctly? Follow this test:
+
+### Test: Exclusive Recovery (Alt-Tab)
+
+**Prerequisites:**
+- LMUFFB running with a device selected
+- Le Mans Ultimate (or any game that uses DirectInput FFB)
+
+**Steps:**
+
+1. **Setup**
+   - Start LMUFFB
+   - Select your FFB device
+   - ✅ **Verify:** Status shows **"Mode: EXCLUSIVE (Game FFB Blocked)"** in green
+
+2. **Create Conflict**
+   - Start Le Mans Ultimate (LMU)
+   - Click inside the game window to give it focus
+   - 📝 **Observation:** If you have a second monitor, you might briefly see LMUFFB switch to "SHARED"
+
+3. **Test Recovery**
+   - Alt-Tab back to LMUFFB window
+   - ✅ **Verify:** Status should return to **"Mode: EXCLUSIVE"** (green) within 2 seconds
+   - ✅ **Verify:** Turn your wheel - Force Feedback should work normally
+   - 💡 **First time:** You should see the success banner in the console
+
+4. **Test Persistence**
+   - Alt-Tab back to the game
+   - Drive a few laps
+   - ✅ **Verify:** FFB continues to work while driving
+   - ✅ **Verify:** LMUFFB maintains exclusive control
+
+**Expected Results:**
+- ✅ FFB works continuously, even after Alt-Tabbing
+- ✅ Mode indicator stays green (EXCLUSIVE) most of the time
+- ✅ No manual intervention required
+
+**If It Fails:**
+- Check that you're running LMUFFB v0.6.2 or later
+- Ensure in-game FFB is disabled (set to 0% or "None")
+- Try restarting both LMUFFB and the game
+- Report the issue with console logs
+
+---
