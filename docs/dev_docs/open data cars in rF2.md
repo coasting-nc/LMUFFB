@@ -12,6 +12,7 @@ These cars should have fully transparent telemetry visible from shared memory:
 * AC Cars	427 SC (Cobra)
 * Howston	G4 / G6 (Fictional)
 * ? Howston Dissenter 1974
+* ? Formula ISI 2012
 * Panoz	AIV Roadster
 * Renault	Clio Cup / Megane	
 * ? Riley MkXX Daytona Prototype
