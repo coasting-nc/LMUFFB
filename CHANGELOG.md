@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.2] - 2025-12-25
+### Added
+- **Dynamic Promotion (DirectInput Recovery)**: 
+  - Implemented an aggressive recovery mechanism for "Muted Wheel" issues caused by focus loss or the game stealing device priority.
+  - When `DIERR_NOTEXCLUSIVEACQUIRED` is detected, the app now explicitly unacquires the device and re-requests **Exclusive Access** before re-acquiring.
+  - **FFB Motor Restart**: Now explicitly calls `m_pEffect->Start(1, 0)` immediately after successful re-acquisition, fixing cases where the device is acquired but the haptic motor remains inactive.
+  - **Real-time State Tracking**: The internal exclusivity state is now dynamically updated during recovery, ensuring the GUI reflects the actual hardware status.
+- **Linux Mock Improvement**: Updated non-Windows device initialization to default to "Exclusive" mode, allowing UI logic (colors/tooltips) to be verified in development environments without physical hardware.
+
+### Changed
+- **GUI Indicator Refinement**:
+  - Updated Mode indicator labels ("Mode: EXCLUSIVE (Game FFB Blocked)" / "Mode: SHARED (Potential Conflict)").
+  - Added detailed troubleshooting tooltips to the Mode indicator to guide users on how to resolve Force Feedback conflicts with the game.
+
 ## [0.6.1] - 2025-12-25
 ### Changed
 - **Default Preset Values Updated**:

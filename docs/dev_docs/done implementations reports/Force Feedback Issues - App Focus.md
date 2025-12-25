@@ -161,3 +161,38 @@ Display the current mode so the user knows if they are in a "Safe" (Exclusive) o
         }
     }
 ```
+
+
+## Manual verification, no new automated tests
+
+**Recommendation: No additional automated unit tests.**
+
+Implementing automated tests for this specific feature ("Dynamic Promotion" and "Exclusive Access") is **not recommended** for the following reasons:
+
+1.  **OS-Level Arbitration**: The issue depends on how the Windows OS arbitrates control between two separate processes (The Game vs. LMUFFB). Simulating an "Alt-Tab" event or a "Focus Steal" inside a unit test environment is extremely complex and fragile.
+2.  **Hardware Driver Dependency**: The `DIERR_NOTEXCLUSIVEACQUIRED` error comes directly from the hardware driver. Mocking this behavior requires a sophisticated "Mock Object" framework for COM interfaces, which would require significant refactoring of the codebase (Dependency Injection) just for this one test.
+3.  **Cost vs. Benefit**: The logic change is relatively simple (about 10 lines of code), but the test infrastructure required to verify it automatically would be massive.
+
+### Alternative: Manual Verification Plan
+
+Instead of code-based tests, I recommend adding a **Manual Verification Procedure** to your testing documentation. This is the only reliable way to verify this fix.
+
+**Add this to `docs/Driver's Guide to Testing LMUFFB.md` (or similar):**
+
+#### Test: Exclusive Recovery (Alt-Tab)
+1.  **Setup**:
+    *   Start LMUFFB. Select Wheel.
+    *   Verify Status says **"Mode: EXCLUSIVE"** (Green).
+2.  **Conflict**:
+    *   Start Le Mans Ultimate (LMU).
+    *   Click inside the game window (Game takes focus).
+    *   *Observation:* LMUFFB might momentarily lose FFB or show "SHARED" if you have a second monitor to watch.
+3.  **Recovery**:
+    *   Alt-Tab back to LMUFFB.
+    *   **Verify:** The status should immediately (or within 2 seconds) return to **"Mode: EXCLUSIVE"** (Green).
+    *   **Verify:** Force Feedback works (test by turning the wheel).
+4.  **Persistence**:
+    *   Alt-Tab back to Game.
+    *   Drive.
+    *   **Verify:** FFB continues to work (because LMUFFB fought back and kept the lock, or gracefully handled the shared state).
+

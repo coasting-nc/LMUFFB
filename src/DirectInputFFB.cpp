@@ -320,6 +320,7 @@ bool DirectInputFFB::SelectDevice(const GUID& guid) {
     return false;
 #else
     m_active = true;
+    m_isExclusive = true; // Default to true in mock to verify UI logic
     m_deviceName = "Mock Device Selected";
     return true;
 #endif
@@ -439,6 +440,16 @@ void DirectInputFFB::UpdateForce(double normalizedForce) {
                 if (now - lastRecoveryAttempt > RECOVERY_COOLDOWN_MS) {
                     lastRecoveryAttempt = now; // Mark this attempt
                     
+                    // --- DYNAMIC PROMOTION FIX ---
+                    // If we are stuck in "Shared Mode" (0x80040205), standard Acquire() 
+                    // just re-confirms Shared Mode. We must force a mode switch.
+                    if (hr == DIERR_NOTEXCLUSIVEACQUIRED) {
+                        std::cout << "[DI] Attempting to promote to Exclusive Mode..." << std::endl;
+                        m_pDevice->Unacquire();
+                        m_pDevice->SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);
+                    }
+                    // -----------------------------
+
                     HRESULT hrAcq = m_pDevice->Acquire();
                     
                     if (SUCCEEDED(hrAcq)) {
@@ -449,6 +460,11 @@ void DirectInputFFB::UpdateForce(double normalizedForce) {
                             lastSuccessLog = GetTickCount();
                         }
                         
+                        // Update our internal state if we fixed the exclusivity
+                        if (hr == DIERR_NOTEXCLUSIVEACQUIRED) {
+                            m_isExclusive = true; 
+                        }
+
                         // Restart the effect to ensure motor is active
                         m_pEffect->Start(1, 0); 
                         

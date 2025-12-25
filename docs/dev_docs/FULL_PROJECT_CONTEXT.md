@@ -451,6 +451,20 @@ tests\test_ffb_engine.exe 2>&1 | Select-String -Pattern "Tests (Passed|Failed):"
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.2] - 2025-12-25
+### Added
+- **Dynamic Promotion (DirectInput Recovery)**: 
+  - Implemented an aggressive recovery mechanism for "Muted Wheel" issues caused by focus loss or the game stealing device priority.
+  - When `DIERR_NOTEXCLUSIVEACQUIRED` is detected, the app now explicitly unacquires the device and re-requests **Exclusive Access** before re-acquiring.
+  - **FFB Motor Restart**: Now explicitly calls `m_pEffect->Start(1, 0)` immediately after successful re-acquisition, fixing cases where the device is acquired but the haptic motor remains inactive.
+  - **Real-time State Tracking**: The internal exclusivity state is now dynamically updated during recovery, ensuring the GUI reflects the actual hardware status.
+- **Linux Mock Improvement**: Updated non-Windows device initialization to default to "Exclusive" mode, allowing UI logic (colors/tooltips) to be verified in development environments without physical hardware.
+
+### Changed
+- **GUI Indicator Refinement**:
+  - Updated Mode indicator labels ("Mode: EXCLUSIVE (Game FFB Blocked)" / "Mode: SHARED (Potential Conflict)").
+  - Added detailed troubleshooting tooltips to the Mode indicator to guide users on how to resolve Force Feedback conflicts with the game.
+
 ## [0.6.1] - 2025-12-25
 ### Changed
 - **Default Preset Values Updated**:
@@ -3970,126 +3984,6 @@ Directly using `CreateWindow` or Microsoft Foundation Classes.
 
 ```
 
-# File: docs\dev_docs\add button and save screenshot plan.md
-```markdown
-See vendor\stb_image_write.h
-
-The simplest and most standard way to do this in C++ graphics applications (especially those using ImGui) is to use **`stb_image_write.h`**.
-
-It is a **single-header library**. You do not need to compile a `.lib` or link anything. You just drop the file into your project folder.
-
-Here is the implementation plan:
-
-### 1. Get the Library
-Download `stb_image_write.h` from the [nothings/stb GitHub repository](unlinked: github_com/nothings/stb/blob/master/stb_image_write_h).
-Place it in your `src/` or `vendor/` folder.
-
-### 2. Implementation Code
-Since your app uses **DirectX 11** (based on `GuiLayer.cpp`), you cannot just "save the window." You must read the pixels from the GPU's Back Buffer.
-
-Add this function to `GuiLayer.cpp`.
-
-**A. Include the library**
-At the top of `GuiLayer.cpp`:
-```cpp
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
-#include <d3d11.h> // Already there
-```
-
-**B. The Capture Function**
-Add this helper function. It handles the complex DirectX logic of moving texture data from GPU to CPU memory.
-
-```cpp
-void SaveScreenshot(const char* filename) {
-    if (!g_pSwapChain || !g_pd3dDevice || !g_pd3dDeviceContext) return;
-
-    // 1. Get the Back Buffer
-    ID3D11Texture2D* pBackBuffer = nullptr;
-    HRESULT hr = g_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
-    if (FAILED(hr)) return;
-
-    // 2. Create a Staging Texture (CPU Readable)
-    D3D11_TEXTURE2D_DESC desc;
-    pBackBuffer->GetDesc(&desc);
-    desc.BindFlags = 0;
-    desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-    desc.Usage = D3D11_USAGE_STAGING;
-
-    ID3D11Texture2D* pStagingTexture = nullptr;
-    hr = g_pd3dDevice->CreateTexture2D(&desc, NULL, &pStagingTexture);
-    if (FAILED(hr)) {
-        pBackBuffer->Release();
-        return;
-    }
-
-    // 3. Copy GPU -> CPU
-    g_pd3dDeviceContext->CopyResource(pStagingTexture, pBackBuffer);
-
-    // 4. Map the data to read it
-    D3D11_MAPPED_SUBRESOURCE mapped;
-    hr = g_pd3dDeviceContext->Map(pStagingTexture, 0, D3D11_MAP_READ, 0, &mapped);
-    if (SUCCEEDED(hr)) {
-        // 5. Handle Format (DX11 is usually BGRA, PNG needs RGBA)
-        int width = desc.Width;
-        int height = desc.Height;
-        int channels = 4;
-        
-        // Allocate buffer for the image
-        std::vector<unsigned char> image_data(width * height * channels);
-        unsigned char* src = (unsigned char*)mapped.pData;
-        unsigned char* dst = image_data.data();
-
-        for (int y = 0; y < height; ++y) {
-            for (int x = 0; x < width; ++x) {
-                // Calculate positions
-                int src_index = (y * mapped.RowPitch) + (x * 4);
-                int dst_index = (y * width * 4) + (x * 4);
-
-                // Swap B and R (BGRA -> RGBA)
-                dst[dst_index + 0] = src[src_index + 2]; // R
-                dst[dst_index + 1] = src[src_index + 1]; // G
-                dst[dst_index + 2] = src[src_index + 0]; // B
-                dst[dst_index + 3] = 255;                // Alpha (Force Opaque)
-            }
-        }
-
-        // 6. Save to PNG using STB
-        stbi_write_png(filename, width, height, channels, image_data.data(), width * channels);
-
-        g_pd3dDeviceContext->Unmap(pStagingTexture, 0);
-    }
-
-    // Cleanup
-    pStagingTexture->Release();
-    pBackBuffer->Release();
-    
-    std::cout << "[GUI] Screenshot saved to " << filename << std::endl;
-}
-```
-
-**C. Add the Button**
-In `DrawTuningWindow` or `DrawDebugWindow`:
-
-```cpp
-if (ImGui::Button("Save Screenshot")) {
-    // Generate a timestamped filename
-    time_t now = time(0);
-    struct tm tstruct;
-    char buf[80];
-    localtime_s(&tstruct, &now);
-    strftime(buf, sizeof(buf), "screenshot_%Y-%m-%d_%H-%M-%S.png", &tstruct);
-    
-    SaveScreenshot(buf);
-}
-```
-
-### Why this is the best approach
-1.  **Zero Linker Errors:** You don't need to mess with CMake or `.lib` files.
-2.  **Lightweight:** It adds about 50KB to your executable.
-3.  **Standard:** This is how almost every custom game engine handles screenshots.
-```
-
 # File: docs\dev_docs\Advanced Approximation of rF2 and LMU Telemetry data.md
 ```markdown
 # **Advanced Telemetry Approximation and Physics Reconstruction for High-Fidelity Force Feedback in rFactor 2 and Le Mans Ultimate**
@@ -4732,43 +4626,6 @@ The wheel will be thrown across the center so fast that it overshoots the correc
 **Tuning Tip:** If you find yourself getting into unrecoverable tank slappers, **lower the Yaw Kick** or **increase Gyro Damping**. You want the "Kick" to be just strong enough to tell you the snap is coming, but not so strong that it rips the wheel out of your hands.
 ```
 
-# File: docs\dev_docs\avg_load_issue.md
-```markdown
-
-This applies for version 0.4.6
-
-### 🟡 Minor Issue: avg_load Dependency
-
-**Location:** `FFBEngine.h` - `calculate_grip()` function
-
-**Issue:** The fallback logic depends on `avg_load` which is calculated from front wheels only. This means:
-- Rear grip fallback won't trigger if front wheels are unloaded (even if rear wheels have load)
-- This is documented in `AGENTS_MEMORY.md` but not in the code
-
-**Impact:** Low - Most driving scenarios have all wheels loaded
-
-**Recommendation:**
-```cpp
-// Add comment near calculate_grip() declaration:
-// NOTE: avg_load is calculated from front wheels only. 
-// Rear fallback requires front wheels to have load (see AGENTS_MEMORY.md §6)
-```
-
-
-## Grip Calculation Logic (v0.4.6)
-
-### Fallback Mechanism
-*   **Behavior**: When telemetry grip (`mGripFract`) is 0.0 but load is present, the engine approximates grip from slip angle.
-*   **Front vs Rear**: As of v0.4.6, this logic applies to BOTH front and rear wheels.
-*   **Constraint**: The fallback triggers if `avg_grip < 0.0001` AND `avg_load > 100.0`.
-    *   *Gotcha*: `avg_load` is currently calculated from **Front Wheels Only**. This means rear fallback depends on front loading. This works for most cases (grounded car) but requires care in synthetic tests (must set front load even when testing rear behavior).
-
-### Diagnostics
-*   **Struct**: `GripDiagnostics m_grip_diag` tracks whether approximation was used and the original values.
-*   **Why**: Original telemetry values are overwritten by the fallback logic. To debug or display "raw" data, use `m_grip_diag.original` instead of the modified variables.
-
-```
-
 # File: docs\dev_docs\coordinate_system_reference.md
 ```markdown
 # Coordinate System Reference Guide (v0.4.19)
@@ -5057,520 +4914,6 @@ Before adding any new lateral effect, complete this checklist:
 
 **⚠️ WARNING**: Ignoring this coordinate system mismatch can create positive feedback loops that make the car uncontrollable. Always verify sign conventions when working with lateral vectors.
 
-```
-
-# File: docs\dev_docs\damp_plugin_troubleshooting.md
-```markdown
-Check that you have this:
-* in LMU_install_dir\Plugins you have rFactor2SharedMemoryMapPlugin64.dll
-* in LMU_install_dir\UserData\Player\CustomPluginVariables.JSON you have " Enabled":1 and 
-"EnableDirectMemoryAccess":1 for rFactor2SharedMemoryMapPlugin64.dll
-
-It should look something like this:
-
-// other lines..
-  "rFactor2SharedMemoryMapPlugin64.dll": {
-    "Enabled": 1,
-    "DebugISIInternals": 0,
-    "DebugOutputLevel": 0,
-    "DebugOutputSource": 1,
-    "DedicatedServerMapGlobally": 0,
-    "EnableDirectMemoryAccess": 1,
-    "EnableHWControlInput": 1,
-    "EnableRulesControlInput": 0,
-    "EnableWeatherControlInput": 0,
-    "UnsubscribedBuffersMask": 160
-  },
-// other lines ..
-
-See also: unlinked: community_lemansultimate_com/index_php?threads/download-here-simhub-dashboards_646/
-
-## Tiny pedal
-Follow up research: find out how the TinyPedal app is accessing Le Mans Ultimate telemetry about car physics, in particular the tires, and in particular these values that I am currently unable to properly read:
-    *   `mSteeringArmForce` 
-    *   `mLocalAccel.x` 
-    *   `mTireLoad` 
-    *   `mGripFract` 
-    *   `mSlipRatio` 
-    *   `mSlipAngle` 
-    *   `mLateralPatchVel` 
-    *   `mVerticalTireDeflection` 
-
-Please do this test:
-
-Run TinyPedal (install it if you don't have it) and configure to display widgets about Tire physics.
-Then do a screenshot in which you are in driving mode in game, and show both the TinyPedal widgets and the lmuFFB app. 
-This is to see if using vJoy is causing the game not to output the telemetry data about the tires.
-If TinyPedal still show the values, while lmuFFB does not, it then means that I have to figure out how TinyPedal is reading these (or similar) values from the rFactor 2 Shared Memory plugin:
-    *   `mSteeringArmForce` 
-    *   `mLocalAccel.x` 
-    *   `mTireLoad` 
-    *   `mGripFract` 
-    *   `mSlipRatio` 
-    *   `mSlipAngle` 
-    *   `mLateralPatchVel` 
-    *   `mVerticalTireDeflection` 
-
-### How it does it
-
-Based on the research into the **TinyPedal** application and its interaction with Le Mans Ultimate (LMU), I can confirm that your suspicion is correct: **TinyPedal primarily uses the standard shared memory interface** and faces the same data limitations you are experiencing.
-
-However, it overcomes these limitations for *visualization purposes* by using **client-side calculations and approximations** rather than reading the "real" physics values that are currently broken (0 or null) in the standard output.
-
-Here is the detailed breakdown of how TinyPedal handles the specific values you are looking for:
-
-### 1\. The Data Source: Standard Plugin
-
-TinyPedal does **not** use the memory-scanning `LMU_SharedMemoryMapPlugin64.dll` (the DMA solution mentioned in the previous report).
-
-  * **Evidence:** Its documentation and installation guides explicitly instruct users to install **The Iron Wolf's `rFactor2SharedMemoryMapPlugin64.dll`**.
-  * **Consequence:** TinyPedal reads the exact same zero/null values for `mTireLoad` and `mSteeringArmForce` that your C++ app does.
-
-### 2\. How TinyPedal "Fixes" the Missing Data
-
-Since TinyPedal is an overlay tool (visuals) rather than a physics processor (FFB), it can afford to use estimations. It generates values by reading *other* available telemetry channels and running math on them within the app code.
-
-#### A. `mTireLoad` (Tire Load)
-
-  * **TinyPedal's Method:** It implements a fallback mechanism. When `mTireLoad` is detected as 0 (which is the case for LMGT3 and Hypercars in LMU), TinyPedal calculates an approximate load using **Suspension Position** and **Suspension Force**.
-  * **Relevance to you:** You can replicate this in your C++ app, but it is an approximation. It assumes a linear relationship and ignores complex tire carcass deformation, which might be insufficient for high-fidelity Force Feedback generation.
-      * *Calculation Logic:* `ApproxLoad = SuspensionForce + (SuspensionPosition * SpringRate)` (Simplified).
-
-#### B. `mSlipRatio` & `mSlipAngle`
-
-  * **TinyPedal's Method:** These are likely calculated client-side.
-      * **Slip Ratio:** Calculated by comparing `mLocalVel.z` (car surge velocity) with the rotational velocity of the wheel (`mWheelRotation` \* `mTireRadius`).
-      * **Relevance to you:** You can easily calculate `mSlipRatio` in your C++ app using standard telemetry data that *is* working.
-      * *Formula:* $SlipRatio = \frac{\omega r - v}{v}$
-
-#### C. `mSteeringArmForce` & `mLateralPatchVel`
-
-  * **Status in TinyPedal:** There is no evidence that TinyPedal uses or displays these specific values. TinyPedal focuses on tire wear, temps, and pressures.
-  * **Conclusion:** TinyPedal likely ignores these fields because they are 0 and not required for a visual dashboard. You cannot look to TinyPedal's source for a "fix" to read these directly from memory; they simply aren't there in the standard interface.
-
-### 3\. Summary of Availability for Your Requested Values
-
-| Variable | TinyPedal Status | How to get it in your C++ App |
-| :--- | :--- | :--- |
-| **`mSteeringArmForce`** | **Not Used** | **Must use DMA Plugin** (tembob64 fork). The standard API does not output this for LMU cars. |
-| **`mTireLoad`** | **Calculated** | **Option A:** Use DMA Plugin (Best for FFB).<br>**Option B:** Calculate from `mSuspensionForce` (Less accurate). |
-| **`mSlipRatio`** | **Calculated** | Calculate `(WheelRotSpeed * Radius) / CarSpeed`. |
-| **`mGripFract`** | **Unknown/Unused** | Likely requires DMA Plugin. |
-| **`mLateralPatchVel`** | **Not Used** | **Must use DMA Plugin**. Essential for detailed pneumatic trail calculations. |
-| **`mVerticalTireDeflection`**| **Not Used** | **Must use DMA Plugin**. |
-
-### Recommendation for your C++ App
-
-Since you are generating **Force Feedback (FFB)**, approximations based on suspension data (like TinyPedal uses) will likely feel "numb" or disconnected because they miss the high-frequency transient tire dynamics (like contact patch velocity) that LMU's new tire model calculates.
-
-**Do not rely on TinyPedal's open-source code for reading these values.** It does not have a secret method to read them; it forces a visual approximation.
-
-**Your best path forward remains:**
-
-1.  Use the `LMU_SharedMemoryMapPlugin64.dll` (the DMA fork).
-2.  Enable `EnableDirectMemoryAccess: 1` in `CustomPluginVariables.JSON`.
-3.  Map the shared memory file created by *that* plugin (which may use a different name or write to the standard buffer if configured). This will populate the `mTireLoad` and `mSteeringArmForce` slots with the real physics engine values.
-
-## Follup research
-
-Investigate in dept TinyPedal lastest version, its documentation and code here: TinyPedal/TinyPedal: Free and Open Source telemetry overlay application for racing simulation
-
-Check which data it can display about: tire data (load, velocity, acceleration, etc.), chassis acceleration (longitudinal, g forces, etc.), and other values relevant for my calculations. Note that it does also display a steering wheel position, and a FFB meter.
-
-
-## More notes
-From unlinked: community_lemansultimate_com/index_php?threads/download-here-simhub-dashboards_646/
-
-copy the LMU_SharedMemoryMapPlugin64.dll in your LMU install folder/Plugins
-
-(so you have both runing: rfactor and LMU Shared Memory...)
-
-LMU_install_dir\UserData\Player\CustomPluginVariables.JSON
-need " Enabled":1 and 
-"EnableDirectMemoryAccess":1 for LMU_SharedMemoryMapPlugin64.dll
-
-
-  "rFactor2SharedMemoryMapPlugin64.dll": {
-    "Enabled": 1,
-    "DebugISIInternals": 0,
-    "DebugOutputLevel": 0,
-    "DebugOutputSource": 1,
-    "DedicatedServerMapGlobally": 0,
-    "EnableDirectMemoryAccess": 1,
-    "EnableHWControlInput": 1,
-    "EnableRulesControlInput": 0,
-    "EnableWeatherControlInput": 0,
-    "UnsubscribedBuffersMask": 160
-  },
-
-"rFactor2SharedMemoryMapPlugin64.dll": {
-" Enabled": 1,
-"DebugISIInternals": 0,
-"DebugOutputLevel": 0,
-"DebugOutputSource": 1,
-"DedicatedServerMapGlobally": 0,
-"EnableDirectMemoryAccess": 1,
-"EnableHWControlInput": 1,
-"EnableRulesControlInput": 0,
-"EnableWeatherControlInput": 0,
-"UnsubscribedBuffersMask": 0
-}
-
-
-```
-
-# File: docs\dev_docs\decouple_plots_from_gui_refresh.md
-```markdown
-# User request
-I want to decouple the refresh rate of the GUI from the look of the plots. When I do a new frame, I want to update each plot with all of the values for since the last frame. We could also have a separate "plot resolution" parameter, to plot fewer points than the telemetry 400 Hz (if this slows down performance).
-
-# Answer
-This is a great architectural improvement. You are correctly identifying that the current "Snapshot" approach (sampling once per frame) causes **Aliasing**. You are missing the high-frequency details (spikes, vibrations) that happen between GUI frames.
-
-To fix this, we need to implement a **Producer-Consumer** pattern using a thread-safe buffer.
-
-1.  **Producer (FFB Thread):** Pushes *every* calculated sample (400Hz) into a temporary buffer.
-2.  **Consumer (GUI Thread):** Swaps that buffer every frame (60Hz), reads *all* the accumulated samples (approx 6-7 per frame), and adds them to the plots.
-
-Here is the implementation plan and the code.
-
-### Step 1: Define the Data Structure (`FFBEngine.h`)
-
-We need a struct to hold one "tick" of data, and a thread-safe way to store it.
-
-**Modify `FFBEngine.h`**:
-Add these includes at the top:
-```cpp
-#include <vector>
-#include <mutex>
-```
-
-Add this struct inside `FFBEngine.h` (before the class):
-```cpp
-struct FFBSnapshot {
-    // FFB Outputs
-    float total_force;
-    float base_force;
-    float sop_force;
-    // ... add other FFB components as needed ...
-    
-    // Telemetry Inputs
-    float steer_force;
-    float accel_x;
-    float tire_load;
-    // ... add other telemetry as needed ...
-};
-```
-
-Add these members and methods to the `FFBEngine` class:
-
-```cpp
-class FFBEngine {
-public:
-    // ... Existing members ...
-
-    // --- Thread-Safe Debug Buffer ---
-    std::vector<FFBSnapshot> m_debug_buffer;
-    std::mutex m_debug_mutex;
-    int m_plot_resolution = 1; // 1 = Every sample, 2 = Every 2nd sample, etc.
-    int m_sample_counter = 0;
-
-    // Call this from GUI Thread to get all data since last frame
-    std::vector<FFBSnapshot> GetDebugBatch() {
-        std::vector<FFBSnapshot> batch;
-        {
-            std::lock_guard<std::mutex> lock(m_debug_mutex);
-            // Efficiently swap contents to minimize lock time
-            batch.swap(m_debug_buffer); 
-        }
-        return batch;
-    }
-
-    // ... inside calculate_force ...
-    double calculate_force(const rF2Telemetry* data) {
-        // ... [All existing calculation logic] ...
-        
-        // --- END OF FUNCTION: Store Snapshot ---
-        // Decimation logic (Plot Resolution)
-        m_sample_counter++;
-        if (m_sample_counter >= m_plot_resolution) {
-            m_sample_counter = 0;
-            
-            FFBSnapshot snap;
-            snap.total_force = (float)norm_force; // The final result
-            snap.base_force = (float)output_force;
-            snap.sop_force = (float)sop_force;
-            
-            // Telemetry
-            snap.steer_force = (float)data->mSteeringArmForce;
-            snap.accel_x = (float)data->mLocalAccel.x;
-            snap.tire_load = (float)((fl.mTireLoad + fr.mTireLoad) / 2.0);
-            
-            {
-                // Quick lock to push data
-                std::lock_guard<std::mutex> lock(m_debug_mutex);
-                m_debug_buffer.push_back(snap);
-            }
-        }
-
-        return (std::max)(-1.0, (std::min)(1.0, norm_force));
-    }
-};
-```
-
-### Step 2: Update the GUI Consumer (`src/GuiLayer.cpp`)
-
-Now we modify `DrawDebugWindow` to consume the batch instead of reading a single value.
-
-**Modify `src/GuiLayer.cpp`**:
-
-```cpp
-void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
-    ImGui::Begin("FFB Analysis", &m_show_debug_window);
-    
-    // 1. CONSUME BATCH
-    // Get all physics ticks that happened since the last frame
-    std::vector<FFBSnapshot> batch = engine.GetDebugBatch();
-
-    // 2. PROCESS BATCH
-    // Loop through ALL samples and add them to the rolling plots
-    for (const auto& snap : batch) {
-        plot_total.Add(snap.total_force);
-        plot_base.Add(snap.base_force);
-        plot_sop.Add(snap.sop_force);
-        
-        plot_input_steer.Add(snap.steer_force);
-        plot_input_accel.Add(snap.accel_x);
-        plot_input_load.Add(snap.tire_load);
-        // ... add others ...
-    }
-
-    // 3. UI CONTROLS
-    ImGui::SliderInt("Plot Resolution", &engine.m_plot_resolution, 1, 10, "1:%d");
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("1 = Plot 400Hz (All Data)\n2 = Plot 200Hz\n4 = Plot 100Hz");
-
-    // 4. DRAW PLOTS (Same as before)
-    if (ImGui::CollapsingHeader("FFB Components (Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Text("Total Output");
-        // Note: The cast to (int) is safe as long as buffer size < 2 Billion
-        ImGui::PlotLines("##Total", plot_total.data.data(), (int)plot_total.data.size(), plot_total.offset, "Total", -1.0f, 1.0f, ImVec2(0, 60));
-        
-        // ... rest of your plots ...
-    }
-    
-    // ...
-    ImGui::End();
-}
-```
-
-### Why this is better
-
-1.  **No Aliasing:** If the wheel vibrates for just 2.5ms (one physics tick), it will now appear on the graph. Previously, if that vibration happened between frames, the graph would miss it entirely.
-2.  **Smoother Lines:** Because you are plotting 400 points per second instead of 60, the lines will look continuous and detailed, rather than "steppy" or "binary".
-3.  **Performance:**
-    *   **FFB Thread:** `std::vector::push_back` is extremely fast. The mutex lock is held for nanoseconds.
-    *   **GUI Thread:** `std::vector::swap` is instant. The loop to add ~7 items to the rolling buffer is negligible.
-
-### Regarding the "Binary" Look
-With this change, if the graph *still* looks binary (square waves), it confirms that the physics signal itself is actually square (jumping instantly between values). However, if the signal was actually a high-frequency sine wave (like a vibration), the old code would show it as random noise/binary, while this new code will draw the actual wave shape.
-
-### Timespan Calculation Update
-With this change, the timespan of the plot depends on the **Physics Rate**, not the Frame Rate.
-
-*   **Buffer Size:** 1000 points.
-*   **Data Rate:** 400 Hz (assuming Resolution = 1).
-*   **Timespan:** $1000 / 400 = 2.5 \text{ seconds}$.
-
-This is much faster than before (16s), meaning the graph will scroll quickly, acting like a real-time oscilloscope. This is excellent for debugging spikes. If you want a longer history, simply increase the `RollingBuffer` size to 4000 (10 seconds).
-
-# User request 2
-
-I want to have a parameter for the length of the timespan of the plots. 2.5 seconds seems to low, I want a default of 5 or 10 seconds. But in any case I want it as a parameter (in code, no need to expose it to the gui yet).
-
-# Answer 2 
-
-
-Yes, defining the timespan as a code parameter is the correct approach. It makes the memory usage predictable and the visualization consistent regardless of the frame rate.
-
-Here is the complete implementation plan to **decouple the GUI** (Producer-Consumer pattern) and **configure the timespan**.
-
-### 1. Update `FFBEngine.h` (The Producer)
-
-We need a struct to hold the "Snapshot" of one physics tick, and a thread-safe buffer to store them.
-
-**Add to `FFBEngine.h`:**
-
-```cpp
-// Add these includes at the top
-#include <vector>
-#include <mutex>
-
-// 1. Define the Snapshot Struct
-struct FFBSnapshot {
-    // Outputs
-    float total_force;
-    float base_force;
-    float sop_force;
-    float understeer_cut;
-    float oversteer_boost;
-    float road_tex;
-    float slide_tex;
-    float lockup_vib;
-    float spin_vib;
-    float bottoming;
-    float clipping;
-
-    // Inputs (Telemetry)
-    float steer_force;
-    float accel_x;
-    float tire_load;
-    float grip_fract;
-    float slip_ratio;
-    float slip_angle;
-    float patch_vel;
-    float deflection;
-};
-
-class FFBEngine {
-public:
-    // ... [Existing Members] ...
-
-    // 2. Thread-Safe Buffer
-    std::vector<FFBSnapshot> m_debug_buffer;
-    std::mutex m_debug_mutex;
-    
-    // 3. Helper to retrieve data (Consumer)
-    std::vector<FFBSnapshot> GetDebugBatch() {
-        std::vector<FFBSnapshot> batch;
-        {
-            std::lock_guard<std::mutex> lock(m_debug_mutex);
-            if (!m_debug_buffer.empty()) {
-                batch.swap(m_debug_buffer); // Fast swap
-            }
-        }
-        return batch;
-    }
-
-    // 4. Update calculate_force (Producer)
-    double calculate_force(const rF2Telemetry* data) {
-        // ... [Existing Calculation Logic] ...
-        
-        // --- SNAPSHOT LOGIC (At end of function) ---
-        // Only capture if buffer isn't exploding (safety cap)
-        // Assuming 60Hz GUI, buffer shouldn't exceed ~10 items. Cap at 100 just in case.
-        if (m_debug_buffer.size() < 100) {
-            FFBSnapshot snap;
-            snap.total_force = (float)norm_force; // The final result
-            snap.base_force = (float)output_force;
-            snap.sop_force = (float)sop_force;
-            // ... fill the rest from your internal variables ...
-            // Note: You might need to promote local vars (like road_noise) to member vars 
-            // or struct members to access them here.
-            
-            // Telemetry
-            snap.steer_force = (float)data->mSteeringArmForce;
-            snap.accel_x = (float)data->mLocalAccel.x;
-            // ... fill the rest ...
-
-            {
-                std::lock_guard<std::mutex> lock(m_debug_mutex);
-                m_debug_buffer.push_back(snap);
-            }
-        }
-        
-        return (std::max)(-1.0, (std::min)(1.0, norm_force));
-    }
-};
-```
-
-### 2. Update `src/GuiLayer.cpp` (The Consumer)
-
-Here we define the **Timespan Parameter** and update the drawing logic to consume the batch.
-
-**Modify `src/GuiLayer.cpp`:**
-
-```cpp
-// ... [Includes] ...
-
-// --- CONFIGURABLE PLOT SETTINGS ---
-const float PLOT_HISTORY_SEC = 10.0f;   // <--- YOUR PARAMETER (10 Seconds)
-const int PHYSICS_RATE_HZ = 400;        // The fixed update rate of FFBThread
-const int PLOT_BUFFER_SIZE = (int)(PLOT_HISTORY_SEC * PHYSICS_RATE_HZ); // 4000 points
-
-// --- Helper: Ring Buffer ---
-struct RollingBuffer {
-    std::vector<float> data;
-    int offset = 0;
-    
-    // Initialize with the calculated size
-    RollingBuffer() {
-        data.resize(PLOT_BUFFER_SIZE, 0.0f);
-    }
-    
-    void Add(float val) {
-        data[offset] = val;
-        offset = (offset + 1) % data.size();
-    }
-};
-
-// Static buffers (Size is now 4000)
-static RollingBuffer plot_total; 
-static RollingBuffer plot_base;
-static RollingBuffer plot_sop;
-// ... [Define all buffers] ...
-
-// ... [Init / Shutdown code] ...
-
-void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
-    // 1. LOCK MUTEX (Critical Fix)
-    // We lock here to ensure engine state doesn't change while we query it,
-    // although GetDebugBatch has its own internal lock for the buffer.
-    // Locking the main engine mutex is safer if we access other members.
-    std::lock_guard<std::mutex> lock(g_engine_mutex);
-
-    ImGui::Begin("FFB Analysis", &m_show_debug_window);
-    
-    // 2. CONSUME BATCH (Decoupled Update)
-    // This retrieves ~7 samples (at 60fps) or ~40 samples (at 10fps lazy)
-    std::vector<FFBSnapshot> batch = engine.GetDebugBatch();
-
-    // 3. PROCESS BATCH
-    for (const auto& snap : batch) {
-        plot_total.Add(snap.total_force);
-        plot_base.Add(snap.base_force);
-        plot_sop.Add(snap.sop_force);
-        // ... add all others ...
-        
-        plot_input_steer.Add(snap.steer_force);
-        plot_input_accel.Add(snap.accel_x);
-        // ... add all others ...
-    }
-
-    // 4. DRAW PLOTS
-    if (ImGui::CollapsingHeader("FFB Components (Stack)", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Text("Total Output");
-        // The cast to (int) is safe (4000 fits in int)
-        ImGui::PlotLines("##Total", plot_total.data.data(), (int)plot_total.data.size(), plot_total.offset, "Total", -1.0f, 1.0f, ImVec2(0, 60));
-        
-        // ... [Rest of drawing code] ...
-    }
-    
-    // ...
-    ImGui::End();
-}
-```
-
-### Summary of Changes
-1.  **Timespan:** Controlled by `PLOT_HISTORY_SEC = 10.0f`.
-2.  **Resolution:** The graph now contains **every single physics tick** (400Hz), not just one snapshot per frame. This will reveal the true shape of the "spikes" (likely high-frequency noise) instead of the "binary" aliasing artifacts.
-3.  **Performance:** The `GetDebugBatch` swap method is extremely efficient and won't stall the physics thread.
-
-# Previous context
-
-User: Looking at all of the 20+ images (screenshots of the app in use), it seems in all rolling plots all the values are always like "binary" either maxed out, zero, or negative maxed out. This seems to happen also with low values in the adjustments, like 0.01. Isn't this strange. Can you find any plot that has smoother lines? Even if the G lateral forces are "spiky" they gradually increase and decrease, so they should show some intermediate values.
-
-User: Look at this image again. If "Local Accel X" is the lateral G force, as the raw value we read from the game shared memory, and "SoP (Lat G)" is the Seat of Pants feel we calculate based on those lateral G forces (and other factors) I don't see why the two plots look so different. The one from the game is more noisy, with many values, while the SoP has the "min max" look, like discrete values. How can I adjust the parameters of the SoP formula to have a plot as dynamic as the one in the Local Accel X plot?
-Remember the full math formulas: docs\dev_docs\FFB_formulas.md .
 ```
 
 # File: docs\dev_docs\design proposal for a High-Performance Asynchronous Telemetry Logger.md
@@ -5991,361 +5334,6 @@ if (AsyncLogger::Get().IsLogging()) {
 
 ```
 
-# File: docs\dev_docs\directinput_implementation.md
-```markdown
-# DirectInput FFB Implementation Guide
-
-This document outlines the technical steps required to transition LMUFFB from a vJoy-based "Axis Mapping" architecture to a native **DirectInput Force Feedback** architecture. This change allows the application to send specific "Constant Force" packets directly to the steering wheel driver, bypassing the need for a virtual joystick and allowing the application to coexist seamlessly with the game's input system.
-
-## 1. Overview
-
-**Priority: CRITICAL / REQUIRED**
-
-Currently, LMUFFB acts as a virtual joystick (`vJoy`) and maps the calculated force to the **Axis Position**. This visualizes the force but does **not** drive the physical motors of a user's steering wheel.
-To function as a true Force Feedback application (like iRFFB or Marvin's AIRA), LMUFFB **must** implement a DirectInput client that opens the physical wheel and sends `Constant Force` packets.
-
-*Hypothetical Feature Note: Implementing DirectInput correctly is complex due to device enumeration, exclusive locking (cooperative levels), and handling lost devices. It effectively turns the app into a specialized driver client.*
-
-## 2. Technical Requirements
-
-*   **API**: DirectInput8 (via `dinput8.lib` / `dinput8.dll`).
-*   **Language**: C++ (Native COM interfaces).
-*   **Privileges**: Exclusive access to the FFB device is often required (`DISCL_EXCLUSIVE | DISCL_BACKGROUND`).
-
-## 3. Implementation Steps
-
-### Phase 1: Device Enumeration & Initialization
-Instead of connecting to vJoy ID 1, we must scan connected hardware.
-
-```cpp
-IDirectInput8* g_pDI = NULL;
-IDirectInputDevice8* g_pDevice = NULL;
-
-// 1. Create DirectInput Object
-DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&g_pDI, NULL);
-
-// 2. Enumerate Devices (Filter for Wheels/FFB)
-g_pDI->EnumDevices(DI8DEVCLASS_GAMECTRL, EnumJoysticksCallback, NULL, DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK);
-
-// 3. Callback Logic
-BOOL CALLBACK EnumJoysticksCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext) {
-    // Check if device supports FFB
-    // Create Device
-    g_pDI->CreateDevice(pdidInstance->guidInstance, &g_pDevice, NULL);
-    return DIENUM_STOP; // Stop after finding first FFB wheel
-}
-```
-
-### Phase 2: Setting Cooperative Level
-This is critical. FFB usually requires Exclusive/Background access so forces continue when the app is minimized (running alongside the game).
-
-```cpp
-g_pDevice->SetCooperativeLevel(hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);
-g_pDevice->SetDataFormat(&c_dfDIJoystick);
-g_pDevice->Acquire();
-```
-
-### Phase 3: Creating the Effect
-We need a **Constant Force** effect.
-
-```cpp
-DIEFFECT diEffect;
-DICONSTANTFORCE diConstantForce;
-LPDIRECTINPUTEFFECT g_pEffect = NULL;
-
-// Initialize parameters
-diConstantForce.lMagnitude = 0;
-
-diEffect.dwSize = sizeof(DIEFFECT);
-diEffect.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-diEffect.dwDuration = INFINITE;
-diEffect.dwGain = DI_FFNOMINALMAX;
-diEffect.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
-diEffect.lpvTypeSpecificParams = &diConstantForce;
-// ... (Set Axes/Directions) ...
-
-// Create
-g_pDevice->CreateEffect(GUID_ConstantForce, &diEffect, &g_pEffect, NULL);
-g_pEffect->Start(1, 0);
-```
-
-### Phase 4: Updating the Force (The Loop)
-Inside the `FFBThread` (400Hz loop), instead of calling `SetAxis` (vJoy), we update the effect.
-
-```cpp
-void UpdateDirectInputForce(double normalizedForce) {
-    if (!g_pEffect) return;
-
-    // Map -1.0..1.0 to -10000..10000
-    LONG magnitude = (LONG)(normalizedForce * 10000.0);
-    
-    // Clamp
-    if (magnitude > 10000) magnitude = 10000;
-    if (magnitude < -10000) magnitude = -10000;
-
-    DICONSTANTFORCE cf;
-    cf.lMagnitude = magnitude;
-
-    DIEFFECT eff;
-    ZeroMemory(&eff, sizeof(eff));
-    eff.dwSize = sizeof(DIEFFECT);
-    eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
-    eff.lpvTypeSpecificParams = &cf;
-
-    // Send to driver (Low latency call)
-    g_pEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_START);
-}
-```
-
-## 4. Challenges & Solutions
-
-1.  **Device Selection**: Users may have multiple controllers (Handbrake, Shifter, Wheel). The GUI must allow selecting the specific FFB device from a list.
-2.  **Spring/Damper Effects**: Some wheels default to a heavy centering spring. The app should explicitly create specific Spring/Damper effects with 0 magnitude to "clear" the driver's default behavior.
-3.  **Loss of Focus**: Even with `DISCL_BACKGROUND`, some games (or drivers) steal exclusive access. The app must handle `DIERR_NOTACQUIRED` errors and attempt to `Acquire()` periodically.
-
-## 5. Benefits
-*   **Latency**: Bypasses the vJoy -> Driver bridge.
-*   **Usability**: User does not need to configure vJoy. They just select their wheel in LMUFFB.
-*   **Compatibility**: Works with games that don't support multiple controllers well (though LMU is generally good with this).
-
-```
-
-# File: docs\dev_docs\Eliminat flatspot vibration.md
-```markdown
-## Question 1
-
-Here is the full codebase and documentation of a  force feedback (FFB) app. Your task is to investigate an issue. 
-
-An user tested the app and reported that there was a constant vibration that he want to eliminate or mask. This vibration might be coming from the Steering Shaft Torque given by the game Le Mans Ultimate (LMU). This vibration might be due to tyre flat-spots. The user identified the frequency of the vibration as being between 10 and 60 Hz.
-
-The user disabled many settings / sliders in our LMUFFB app to determine what was causing the vibration, and it seems it was caused by the Steering Shaft Torque signal itself, and not by any effect our app produces.
-
-The user tried to mask the vibration by various means (eg. FFB signal equalizer in the Moza device driver, or adding smoothing), but he said that the things he tried also masked other useful details from the force feedback in addition to the vibration. Therefore, we want to find out if we can improve the LMUFFB app to more effectively mask out or eliminate this vibration without reducing, compromising or affecting any other detail of the force feedback.
-
-Your task is to investigate the following:
-
-* verify whether  we might still be causing some vibration from our app, even when we have only the Steering Torque Shaft force enabled and everything else disabled.
-* if we are not causing this vibration, and the game signal itself is the cause, determine ways in which we can "mask" or eliminate this vibration. What are the possible solutions for this?
-
-	* Can we add a "counter" frequency signal that cancels out that vibration? This is assuming that that vibration is at a constant frequency.
-
-	* Can we add some tools to "troubleshoot" and identify the exact frequency of this vibration in the steering shaft torque? Like some spectrum analyzer plot, or something else?
-
-	* Can we add some form of damping or smoothing only to the steering shaft torque? Can we do this without adding any significant latency (that is, less than 15 milliseconds)?
-
-	* Are there other recommended solutions?
-
-----
-
-```
-
-# File: docs\dev_docs\Eliminate flatspot vibration.md
-```markdown
-## Question 1
-
-Here is the full codebase and documentation of a  force feedback (FFB) app. Your task is to investigate an issue. 
-
-An user tested the app and reported that there was a constant vibration that he want to eliminate or mask. This vibration might be coming from the Steering Shaft Torque given by the game Le Mans Ultimate (LMU). This vibration might be due to tyre flat-spots. The user identified the frequency of the vibration as being between 10 and 60 Hz.
-
-The user disabled many settings / sliders in our LMUFFB app to determine what was causing the vibration, and it seems it was caused by the Steering Shaft Torque signal itself, and not by any effect our app produces.
-
-The user tried to mask the vibration by various means (eg. FFB signal equalizer in the Moza device driver, or adding smoothing), but he said that the things he tried also masked other useful details from the force feedback in addition to the vibration. Therefore, we want to find out if we can improve the LMUFFB app to more effectively mask out or eliminate this vibration without reducing, compromising or affecting any other detail of the force feedback.
-
-Your task is to investigate the following:
-
-* verify whether  we might still be causing some vibration from our app, even when we have only the Steering Torque Shaft force enabled and everything else disabled.
-* if we are not causing this vibration, and the game signal itself is the cause, determine ways in which we can "mask" or eliminate this vibration. What are the possible solutions for this?
-
-	* Can we add a "counter" frequency signal that cancels out that vibration? This is assuming that that vibration is at a constant frequency.
-
-	* Can we add some tools to "troubleshoot" and identify the exact frequency of this vibration in the steering shaft torque? Like some spectrum analyzer plot, or something else?
-
-	* Can we add some form of damping or smoothing only to the steering shaft torque? Can we do this without adding any significant latency (that is, less than 15 milliseconds)?
-
-	* Are there other recommended solutions?
-
-----
-
-## Answer 1
-
-Based on the codebase and the user's description, here is the investigation report and the recommended technical solutions.
-
-### 1. Verification: Is the App Causing the Vibration?
-
-**Analysis:**
-I have reviewed `FFBEngine.h` and `calculate_force`.
-If the user has disabled all effects (SoP, Textures, etc.), the app acts as a pass-through for `mSteeringShaftTorque`. However, there is **one setting** in our app that can artificially amplify noise into a constant vibration: **`m_min_force`**.
-
-*   **The Mechanism:**
-    ```cpp
-    // FFBEngine.h ~line 830
-    if (std::abs(norm_force) > 0.0001 && std::abs(norm_force) < m_min_force) {
-        double sign = (norm_force > 0.0) ? 1.0 : -1.0;
-        norm_force = sign * m_min_force;
-    }
-    ```
-*   **The Risk:** If the game signal is noisy around zero (e.g., oscillating between -0.001 and +0.001 Nm due to the flat spot), and `m_min_force` is set to e.g., 0.05 (5%), the app will amplify this tiny noise into a **Square Wave** of +/- 5% force. This feels like a harsh, constant rattle.
-
-**Verification Step:**
-Ask the user to ensure **Min Force is set to 0.0**. If the vibration persists with Min Force at 0, then the app is innocent, and we must filter the game signal.
-
----
-
-### 2. Solution: The "Surgical" Fix (Dynamic Notch Filter)
-
-The user identified the frequency as **10-60 Hz**. This range perfectly matches the rotational frequency of a race car tire:
-*   **100 km/h** $\approx$ 14 Hz
-*   **300 km/h** $\approx$ 42 Hz
-
-This confirms the vibration is a **Flat Spot** or **Polygon/Mesh** issue linked to wheel speed.
-Standard smoothing (Low Pass Filter) fails because to kill 14 Hz, you need a heavy filter that destroys steering latency.
-
-**The Solution:** Implement a **Speed-Tracking Notch Filter**.
-A Notch Filter removes *only* a specific frequency band. By linking the center frequency to the car's speed, we can surgically remove the "flat spot" thumping frequency while leaving the rest of the FFB (road texture, curb strikes, weight transfer) completely untouched.
-
-#### Implementation Plan
-
-**A. Add Biquad Filter Class**
-Add this struct to `FFBEngine.h`. It implements a standard Biquad filter that can be updated in real-time.
-
-```cpp
-// Add to FFBEngine.h
-
-struct BiquadNotch {
-    double b0, b1, b2, a0, a1, a2;
-    double x1 = 0, x2 = 0, y1 = 0, y2 = 0; // State history
-
-    void Update(double center_freq, double sample_rate, double Q) {
-        // Prevent explosion at low freq
-        if (center_freq < 1.0) center_freq = 1.0;
-        
-        double omega = 2.0 * 3.14159265358979323846 * center_freq / sample_rate;
-        double sn = std::sin(omega);
-        double cs = std::cos(omega);
-        double alpha = sn / (2.0 * Q);
-
-        b0 = 1.0;
-        b1 = -2.0 * cs;
-        b2 = 1.0;
-        a0 = 1.0 + alpha;
-        a1 = -2.0 * cs;
-        a2 = 1.0 - alpha;
-
-        // Normalize
-        b0 /= a0; b1 /= a0; b2 /= a0;
-        a1 /= a0; a2 /= a0;
-    }
-
-    double Process(double in) {
-        double out = b0 * in + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
-        x2 = x1; x1 = in;
-        y2 = y1; y1 = out;
-        return out;
-    }
-};
-```
-
-**B. Update `FFBEngine` Class**
-Add the filter instance and a new setting.
-
-```cpp
-class FFBEngine {
-public:
-    // ... existing settings ...
-    bool m_flatspot_suppression = false; // New Toggle
-    BiquadNotch m_notch_filter;
-    
-    // ... inside calculate_force ...
-    
-    // 1. Calculate Wheel Frequency
-    // F = Velocity / Circumference
-    double car_speed = std::abs(data->mLocalVel.z);
-    
-    // Get radius (convert cm to m)
-    double radius = (double)fl.mStaticUndeflectedRadius / 100.0;
-    if (radius < 0.1) radius = 0.33; // Safety fallback
-    
-    double circumference = 2.0 * 3.14159 * radius;
-    double wheel_freq = car_speed / circumference;
-
-    // 2. Apply Filter to Base Force
-    double game_force = data->mSteeringShaftTorque;
-
-    if (m_flatspot_suppression && wheel_freq > 1.0) {
-        // Q factor determines width. 2.0 is a good balance.
-        // 400.0 is our physics loop rate
-        m_notch_filter.Update(wheel_freq, 400.0, 2.0);
-        game_force = m_notch_filter.Process(game_force);
-    }
-    
-    // ... continue with game_force ...
-```
-
-**Why this works:**
-*   **Zero Latency:** Outside the target frequency (e.g., steering inputs at 1-2Hz), the filter has near-zero phase shift.
-*   **Precision:** It tracks the car speed perfectly. As the user accelerates, the filter moves up the spectrum, constantly deleting the vibration.
-
----
-
-### 3. Solution: Troubleshooting Tool (Spectrum Analyzer)
-
-To help the user confirm the frequency, we can add a simple **Frequency Estimator** to the Debug Window.
-
-**Implementation in `FFBEngine.h`:**
-We don't need a full FFT. We can just measure the time between "Zero Crossings" of the AC component of the torque.
-
-```cpp
-// Add to FFBEngine class
-double m_debug_freq = 0.0;
-double m_last_crossing_time = 0.0;
-double m_torque_ac_accum = 0.0; // High-pass filter state
-
-// Inside calculate_force
-// 1. Isolate AC component (Vibration) using simple High Pass
-double ac_torque = game_force - m_torque_smoothed; // Assuming you have a smoothed var
-// 2. Detect Zero Crossing
-if ((m_prev_ac_torque > 0 && ac_torque <= 0) || (m_prev_ac_torque < 0 && ac_torque >= 0)) {
-    double now = data->mElapsedTime;
-    double period = now - m_last_crossing_time;
-    m_last_crossing_time = now;
-    if (period > 0.001) {
-        m_debug_freq = 1.0 / period; // Hz
-    }
-}
-m_prev_ac_torque = ac_torque;
-```
-
-**GUI Update:**
-Display `m_debug_freq` in the "Raw Telemetry" window. If it matches the `Wheel Frequency` calculated above, the Notch Filter is guaranteed to work.
-
----
-
-### 4. Alternative: Slew Rate Limiter (The "Damping" Approach)
-
-If the Notch Filter is too complex or the vibration is irregular, a **Slew Rate Limiter** is the best "Masking" technique that preserves latency better than smoothing.
-
-*   **Concept:** Limit the maximum change in torque per millisecond.
-*   **Effect:** It "chops off" the sharp spikes of the vibration without delaying the slower steering movements.
-
-```cpp
-// Inside calculate_force
-double delta = game_force - m_prev_game_force;
-double max_delta = 50.0 * dt; // Allow max 50 Nm/sec change (Tunable)
-
-if (delta > max_delta) game_force = m_prev_game_force + max_delta;
-if (delta < -max_delta) game_force = m_prev_game_force - max_delta;
-
-m_prev_game_force = game_force;
-```
-
-### Recommendation Summary
-
-1.  **Immediate Check:** Verify `Min Force` is 0.0.
-2.  **Best Solution:** Implement the **Speed-Tracking Notch Filter**. It is the only way to eliminate a variable-frequency vibration without compromising FFB detail or latency.
-3.  **Backup Solution:** Implement the **Slew Rate Limiter** as a "Softening" slider.
-
-```
-
 # File: docs\dev_docs\encrypted_content_gaps.md
 ```markdown
 # Encrypted Content Gaps Documentation (v0.4.39)
@@ -6581,1072 +5569,6 @@ if (car_speed > 5.0) {
 **Document Version**: 1.0  
 **Last Updated**: 2025-12-20  
 **Status**: Monitoring - No action required unless user reports received
-
-```
-
-# File: docs\dev_docs\exclusive device acquisition.md
-```markdown
-# Question
-
-Regarding the acquisition of the wheel device, currently the app seems to attempt the acquisition with a single request in OR, exclusive or not exclusive. I'd like to know if the device was acquired exclusively or not. This is mainly because sometimes the game FFB is enable, which we don't want if we are trying to test only the FFB signal we get from our app. How do you suggest to implement this? Should we attempt an exclusive acquisition first, and if this fails / raise an exception, try the non exclusive acquisition?
-If we acquire the wheel device exclusively, will the game still be able to receive the driver inputs from the steering wheel?
-
-
-# Answer
-
-To address your requirements, we need to expose the **Acquisition Mode** (Exclusive vs. Shared) to the GUI. This allows you to confirm if LMUFFB has successfully "locked" the device (preventing the game from sending double FFB) or if it is running in shared mode.
-
-### 1. Answers to your questions
-
-**Q: How do you suggest to implement this? Should we attempt an exclusive acquisition first?**
-**A: Yes.** The best practice for FFB apps is:
-1.  **Try Exclusive Mode first.** If successful, you have priority. This often prevents the game from acquiring the device for FFB (solving the "Double FFB" fight automatically), while still allowing the game to read inputs.
-2.  **Fallback to Non-Exclusive.** If Exclusive fails (e.g., the game already grabbed it), catch the error and retry in Non-Exclusive mode so the app still works, even if it has to share the device.
-
-**Q: If we acquire the wheel device exclusively, will the game still be able to receive driver inputs?**
-**A: Yes.**
-In DirectInput, `DISCL_EXCLUSIVE` means "Only one application can have **Exclusive** access." It does **not** block other applications from getting **Non-Exclusive** access.
-*   **LMUFFB (Exclusive):** Can read inputs and send FFB.
-*   **Game (Non-Exclusive):** Can read inputs (Steering/Pedals work fine).
-*   **Game (FFB):** If the game tries to acquire Exclusive access to send FFB, it will fail. This is actually **desirable** as it mutes the game's native FFB, leaving only LMUFFB's signal.
-
----
-
-### 2. Implementation Plan
-
-We will modify `DirectInputFFB` to track the acquisition state and update `GuiLayer` to display it.
-
-#### Step 1: Update `src/DirectInputFFB.h`
-Add a getter and a member variable to track the mode.
-
-```cpp
-// src/DirectInputFFB.h
-
-class DirectInputFFB {
-public:
-    // ... existing methods ...
-
-    // NEW: Check if we hold Exclusive lock
-    bool IsExclusive() const { return m_isExclusive; }
-
-private:
-    // ... existing members ...
-    
-    bool m_isExclusive = false; // Track acquisition mode
-};
-```
-
-#### Step 2: Update `src/DirectInputFFB.cpp`
-Update `SelectDevice` to store the result of the cooperative level attempt.
-
-```cpp
-// src/DirectInputFFB.cpp
-
-bool DirectInputFFB::SelectDevice(const GUID& guid) {
-    // ... [Creation logic] ...
-
-    // Reset state
-    m_isExclusive = false;
-
-    // Attempt 1: Exclusive/Background (Best for FFB)
-    std::cout << "[DI] Attempting to set Cooperative Level (Exclusive | Background)..." << std::endl;
-    HRESULT hr = m_pDevice->SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);
-    
-    if (SUCCEEDED(hr)) {
-        m_isExclusive = true; // Success!
-        std::cout << "[DI] Cooperative Level set to EXCLUSIVE." << std::endl;
-    } else {
-        // Fallback: Non-Exclusive
-        std::cerr << "[DI] Exclusive mode failed (Error: " << std::hex << hr << std::dec << "). Retrying in Non-Exclusive mode..." << std::endl;
-        hr = m_pDevice->SetCooperativeLevel(m_hwnd, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
-        
-        if (SUCCEEDED(hr)) {
-            m_isExclusive = false; // Shared mode
-            std::cout << "[DI] Cooperative Level set to NON-EXCLUSIVE." << std::endl;
-        }
-    }
-    
-    if (FAILED(hr)) {
-        std::cerr << "[DI] Failed to set cooperative level." << std::endl;
-        return false;
-    }
-
-    // ... [Acquire and CreateEffect logic] ...
-}
-```
-
-#### Step 3: Update `src/GuiLayer.cpp`
-Display the status in the Tuning Window.
-
-```cpp
-// src/GuiLayer.cpp inside DrawTuningWindow
-
-    // ... [After Device Selection Combo] ...
-
-    // NEW: Display Acquisition Mode
-    if (DirectInputFFB::Get().IsActive()) {
-        if (DirectInputFFB::Get().IsExclusive()) {
-            ImGui::TextColored(ImVec4(0, 1, 0, 1), "Mode: EXCLUSIVE (Game FFB Blocked)");
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB has exclusive control.\nThe game can read steering but cannot send FFB.\nThis prevents 'Double FFB' issues.");
-        } else {
-            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Mode: SHARED (Potential Conflict)");
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB is sharing the device.\nEnsure In-Game FFB is set to 'None' or 0% strength\nto avoid two force signals fighting each other.");
-        }
-    }
-
-    // ... [Rest of UI] ...
-```
-
-### 3. Applying the Changes
-
-I will now apply these changes to the codebase.
-
-#### 1. Modify `src/DirectInputFFB.h`
-
-```cpp
-#ifndef DIRECTINPUTFFB_H
-#define DIRECTINPUTFFB_H
-
-#include <vector>
-#include <string>
-#include <atomic>
-
-#ifdef _WIN32
-#define DIRECTINPUT_VERSION 0x0800
-#include <dinput.h>
-#pragma comment(lib, "dinput8.lib")
-#pragma comment(lib, "dxguid.lib")
-#else
-// Mock types for non-Windows build/test
-typedef void* HWND;
-typedef void* LPDIRECTINPUT8;
-typedef void* LPDIRECTINPUTDEVICE8;
-typedef void* LPDIRECTINPUTEFFECT;
-struct GUID { unsigned long Data1; unsigned short Data2; unsigned short Data3; unsigned char Data4[8]; };
-#endif
-
-struct DeviceInfo {
-    GUID guid;
-    std::string name;
-};
-
-class DirectInputFFB {
-public:
-    static DirectInputFFB& Get();
-
-    bool Initialize(HWND hwnd);
-    void Shutdown();
-
-    // Returns a list of FFB-capable devices
-    std::vector<DeviceInfo> EnumerateDevices();
-
-    // Select and Acquire a device
-    bool SelectDevice(const GUID& guid);
-    
-    // Release the currently acquired device (User unbind)
-    void ReleaseDevice();
-
-    // Update the Constant Force effect (-1.0 to 1.0)
-    void UpdateForce(double normalizedForce);
-
-    bool IsActive() const { return m_active; }
-    std::string GetCurrentDeviceName() const { return m_deviceName; }
-    
-    // NEW: Check acquisition mode
-    bool IsExclusive() const { return m_isExclusive; }
-
-private:
-    DirectInputFFB();
-    ~DirectInputFFB();
-
-    LPDIRECTINPUT8 m_pDI = nullptr;
-    LPDIRECTINPUTDEVICE8 m_pDevice = nullptr;
-    LPDIRECTINPUTEFFECT m_pEffect = nullptr;
-    HWND m_hwnd = nullptr;
-    
-    bool m_active = false;
-    bool m_isExclusive = false; // Track mode
-    std::string m_deviceName = "None";
-    
-    // Internal helper to create the Constant Force effect
-    bool CreateEffect();
-
-    long m_last_force = -999999; 
-};
-
-#endif // DIRECTINPUTFFB_H
-```
-
-#### 2. Modify `src/DirectInputFFB.cpp`
-
-```cpp
-#include "DirectInputFFB.h"
-#include <iostream>
-#include <cmath>
-
-#ifdef _WIN32
-#include <dinput.h>
-#endif
-
-// Keep existing implementations
-DirectInputFFB& DirectInputFFB::Get() {
-    static DirectInputFFB instance;
-    return instance;
-}
-
-DirectInputFFB::DirectInputFFB() {}
-
-DirectInputFFB::~DirectInputFFB() {
-    Shutdown();
-}
-
-bool DirectInputFFB::Initialize(HWND hwnd) {
-    m_hwnd = hwnd;
-#ifdef _WIN32
-    if (FAILED(DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&m_pDI, NULL))) {
-        std::cerr << "[DI] Failed to create DirectInput8 interface." << std::endl;
-        return false;
-    }
-    std::cout << "[DI] Initialized." << std::endl;
-    return true;
-#else
-    std::cout << "[DI] Mock Initialized (Non-Windows)." << std::endl;
-    return true;
-#endif
-}
-
-void DirectInputFFB::Shutdown() {
-    ReleaseDevice(); // Reuse logic
-    if (m_pDI) {
-        #ifdef _WIN32
-        m_pDI->Release();
-        m_pDI = nullptr;
-        #endif
-    }
-}
-
-#ifdef _WIN32
-BOOL CALLBACK EnumJoysticksCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext) {
-    auto* devices = (std::vector<DeviceInfo>*)pContext;
-    DeviceInfo info;
-    info.guid = pdidInstance->guidInstance;
-    char name[260];
-    WideCharToMultiByte(CP_ACP, 0, pdidInstance->tszProductName, -1, name, 260, NULL, NULL);
-    info.name = std::string(name);
-    devices->push_back(info);
-    return DIENUM_CONTINUE;
-}
-#endif
-
-std::vector<DeviceInfo> DirectInputFFB::EnumerateDevices() {
-    std::vector<DeviceInfo> devices;
-#ifdef _WIN32
-    if (!m_pDI) return devices;
-    m_pDI->EnumDevices(DI8DEVCLASS_GAMECTRL, EnumJoysticksCallback, &devices, DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK);
-#else
-    DeviceInfo d1; d1.name = "Simucube 2 Pro (Mock)";
-    DeviceInfo d2; d2.name = "Logitech G29 (Mock)";
-    devices.push_back(d1);
-    devices.push_back(d2);
-#endif
-    return devices;
-}
-
-void DirectInputFFB::ReleaseDevice() {
-#ifdef _WIN32
-    if (m_pEffect) {
-        m_pEffect->Stop();
-        m_pEffect->Unload();
-        m_pEffect->Release();
-        m_pEffect = nullptr;
-    }
-    if (m_pDevice) {
-        m_pDevice->Unacquire();
-        m_pDevice->Release();
-        m_pDevice = nullptr;
-    }
-    m_active = false;
-    m_isExclusive = false;
-    m_deviceName = "None";
-    std::cout << "[DI] Device released by user." << std::endl;
-#else
-    m_active = false;
-    m_deviceName = "None";
-#endif
-}
-
-bool DirectInputFFB::SelectDevice(const GUID& guid) {
-#ifdef _WIN32
-    if (!m_pDI) return false;
-
-    // Cleanup old using new method
-    ReleaseDevice();
-
-    std::cout << "[DI] Attempting to create device..." << std::endl;
-    if (FAILED(m_pDI->CreateDevice(guid, &m_pDevice, NULL))) {
-        std::cerr << "[DI] Failed to create device." << std::endl;
-        return false;
-    }
-
-    std::cout << "[DI] Setting Data Format..." << std::endl;
-    if (FAILED(m_pDevice->SetDataFormat(&c_dfDIJoystick))) {
-        std::cerr << "[DI] Failed to set data format." << std::endl;
-        return false;
-    }
-
-    // Attempt 1: Exclusive/Background (Best for FFB)
-    std::cout << "[DI] Attempting to set Cooperative Level (Exclusive | Background)..." << std::endl;
-    HRESULT hr = m_pDevice->SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);
-    
-    std::string mode_str = "EXCLUSIVE | BACKGROUND"; 
-
-    if (SUCCEEDED(hr)) {
-        m_isExclusive = true;
-    } else {
-        // Fallback: Non-Exclusive
-        std::cerr << "[DI] Exclusive mode failed (Error: " << std::hex << hr << std::dec << "). Retrying in Non-Exclusive mode..." << std::endl;
-        hr = m_pDevice->SetCooperativeLevel(m_hwnd, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
-        mode_str = "NON-EXCLUSIVE | BACKGROUND";
-        m_isExclusive = false;
-    }
-    
-    if (FAILED(hr)) {
-        std::cerr << "[DI] Failed to set cooperative level (Non-Exclusive failed too)." << std::endl;
-        return false;
-    }
-
-    std::cout << "[DI] Acquiring device..." << std::endl;
-    if (FAILED(m_pDevice->Acquire())) {
-        std::cerr << "[DI] Failed to acquire device." << std::endl;
-        // Don't return false yet, might just need focus/retry
-    } else {
-        std::cout << "[DI] Device Acquired in " << mode_str << " mode." << std::endl;
-    }
-
-    // Create Effect
-    if (CreateEffect()) {
-       m_active = true;
-        std::cout << "[DI] SUCCESS: Physical Device fully initialized and FFB Effect created." << std::endl;
- 
-        return true;
-    }
-    return false;
-#else
-    m_active = true;
-    m_deviceName = "Mock Device Selected";
-    return true;
-#endif
-}
-
-bool DirectInputFFB::CreateEffect() {
-#ifdef _WIN32
-    if (!m_pDevice) return false;
-
-    DWORD rgdwAxes[1] = { DIJOFS_X };
-    LONG rglDirection[1] = { 0 };
-    DICONSTANTFORCE cf;
-    cf.lMagnitude = 0;
-
-    DIEFFECT eff;
-    ZeroMemory(&eff, sizeof(eff));
-    eff.dwSize = sizeof(DIEFFECT);
-    eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-    eff.dwDuration = INFINITE;
-    eff.dwSamplePeriod = 0;
-    eff.dwGain = DI_FFNOMINALMAX;
-    eff.dwTriggerButton = DIEB_NOTRIGGER;
-    eff.dwTriggerRepeatInterval = 0;
-    eff.cAxes = 1;
-    eff.rgdwAxes = rgdwAxes;
-    eff.rglDirection = rglDirection;
-    eff.lpEnvelope = NULL;
-    eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
-    eff.lpvTypeSpecificParams = &cf;
-    eff.dwStartDelay = 0;
-
-    if (FAILED(m_pDevice->CreateEffect(GUID_ConstantForce, &eff, &m_pEffect, NULL))) {
-        std::cerr << "[DI] Failed to create Constant Force effect." << std::endl;
-        return false;
-    }
-    
-    // Start immediately
-    m_pEffect->Start(1, 0);
-    return true;
-#endif
-    return true;
-}
-
-void DirectInputFFB::UpdateForce(double normalizedForce) {
-    if (!m_active) return;
-
-    // Sanity Check: If 0.0, stop effect to prevent residual hum
-    // Actually DirectInput 0 means center/off for Constant Force.
-    if (std::abs(normalizedForce) < 0.00001) normalizedForce = 0.0;
-
-    // Safety Check: Saturation
-    if (std::abs(normalizedForce) > 0.99) {
-        static int clip_log = 0;
-        if (clip_log++ % 400 == 0) { // Log approx once per second at 400Hz
-            std::cout << "[DI] WARNING: FFB Output Saturated (Clipping). Force: " << normalizedForce << ". Reduce Gain or increase Max Torque Ref." << std::endl;
-        }
-    }
-
-    // Clamp
-    normalizedForce = (std::max)(-1.0, (std::min)(1.0, normalizedForce));
-
-    // Scale to -10000..10000
-    long magnitude = static_cast<long>(normalizedForce * 10000.0);
-
-    // Optimization: Don't call driver if value hasn't changed
-    if (magnitude == m_last_force) return;
-    m_last_force = magnitude;
-
-#ifdef _WIN32
-    if (m_pEffect) {
-        DICONSTANTFORCE cf;
-        cf.lMagnitude = magnitude;
-        
-        DIEFFECT eff;
-        ZeroMemory(&eff, sizeof(eff));
-        eff.dwSize = sizeof(DIEFFECT);
-        // We use DIEP_TYPESPECIFICPARAMS because we are only updating the Magnitude (Specific to ConstantForce).
-        // This is more efficient than updating the entire envelope or direction.
-        eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
-        eff.lpvTypeSpecificParams = &cf;
-        
-        // Update parameters only (magnitude changes).
-        // DO NOT pass DIEP_START here as it restarts the envelope and can cause clicks/latency.
-        // The effect is started once in CreateEffect() and runs continuously.
-        // If device is lost, the re-acquisition logic below will restart it properly.
-        HRESULT hr = m_pEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
-        
-        if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED) {
-            // Try to re-acquire once
-            HRESULT hrAcq = m_pDevice->Acquire();
-            if (SUCCEEDED(hrAcq)) {
-                // If we re-acquired, we might need to restart effect, or maybe just set params.
-                // Safest to SetParams and assume continuous play, but CreateEffect handles Start(1,0).
-                // If logic suggests effect stopped, we can explicitly start if needed, but avoid DIEP_START loop.
-                m_pEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
-            } else if (hrAcq == DIERR_OTHERAPPHASPRIO) {
-                static int log_limit = 0;
-                if (log_limit++ % 400 == 0) { // Log once per sec approx
-                    std::cerr << "[DI Warning] Device unavailable. LMU (or another app) has Exclusive Priority. " 
-                              << "You may have a 'Double FFB' conflict." << std::endl;
-                }
-            }
-        }
-    }
-#endif
-}
-```
-
-#### 3. Modify `src/GuiLayer.cpp`
-
-```cpp
-// ... [Includes] ...
-
-void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
-    // LOCK MUTEX to prevent race condition with FFB Thread
-    std::lock_guard<std::mutex> lock(g_engine_mutex);
-
-    // ... [Connection Status] ...
-
-    ImGui::Text("Core Settings");
-    
-    // Device Selection
-    static std::vector<DeviceInfo> devices;
-    static int selected_device_idx = -1;
-    
-    // Scan button (or auto scan once)
-    if (devices.empty()) {
-        devices = DirectInputFFB::Get().EnumerateDevices();
-    }
-
-    if (ImGui::BeginCombo("FFB Device", selected_device_idx >= 0 ? devices[selected_device_idx].name.c_str() : "Select Device...")) {
-        for (int i = 0; i < devices.size(); i++) {
-            bool is_selected = (selected_device_idx == i);
-            if (ImGui::Selectable(devices[i].name.c_str(), is_selected)) {
-                selected_device_idx = i;
-                DirectInputFFB::Get().SelectDevice(devices[i].guid);
-            }
-            if (is_selected) ImGui::SetItemDefaultFocus();
-        }
-        ImGui::EndCombo();
-    }
-    if (ImGui::Button("Rescan Devices")) {
-        devices = DirectInputFFB::Get().EnumerateDevices();
-        selected_device_idx = -1;
-    }
-    
-    // NEW: Unbind Device Button
-    ImGui::SameLine();
-    if (ImGui::Button("Unbind Device")) {
-        DirectInputFFB::Get().ReleaseDevice();
-        selected_device_idx = -1;
-    }
-
-    // NEW: Display Acquisition Mode
-    if (DirectInputFFB::Get().IsActive()) {
-        if (DirectInputFFB::Get().IsExclusive()) {
-            ImGui::TextColored(ImVec4(0, 1, 0, 1), "Mode: EXCLUSIVE (Game FFB Blocked)");
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB has exclusive control.\nThe game can read steering but cannot send FFB.\nThis prevents 'Double FFB' issues.");
-        } else {
-            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Mode: SHARED (Potential Conflict)");
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB is sharing the device.\nEnsure In-Game FFB is set to 'None' or 0% strength\nto avoid two force signals fighting each other.");
-        }
-    }
-
-    ImGui::Separator();
-
-    // ... [Rest of UI] ...
-```
-```
-
-# File: docs\dev_docs\FFB App Issues And Debugging v0.4.3.md
-```markdown
-Here is the implementation plan to address the three issues you identified.
-
-### Plan Overview
-
-1.  **Inverted FFB**:
-    *   **Logic**: Add a boolean flag `m_invert_force` to the Engine. Multiply the final output force by `-1.0` if true.
-    *   **UI**: Add a checkbox in `GuiLayer`.
-    *   **Persistence**: Update `Config.h` and `Config.cpp` to save/load this setting.
-2.  **DirectInput Logging**:
-    *   **Logic**: Modify `DirectInputFFB::SelectDevice` to track which Cooperative Level succeeded (Exclusive vs. Non-Exclusive) and print that specific string in the success message.
-3.  **Telemetry Stats**:
-    *   **Logic**: Refactor the `ChannelStats` struct in `FFBEngine.h`. Split the logic so `Min` and `Max` persist for the whole session, while `Sum` and `Count` (used for Average) are reset every second.
-    *   **Output**: Update the console print to explicitly label "Session Min/Max" and "Interval Avg".
-4.  **FFB Scaling (Intensity Fix)**:
-    *   **Logic**: Replace the hardcoded `20.0` Nm normalization constant in `FFBEngine` with a configurable variable `m_max_torque_ref` (Defaulting to 40.0 Nm to correct the 2x signal strength).
-    *   **UI**: Add a slider "Max Torque Ref (Nm)" in `GuiLayer` to allow users to calibrate 100% output to their specific car/wheel torque.
-    *   **Persistence**: Update `Config` to save/load this reference value.
-
----
-
-### Step 1: Inverted FFB Signal
-
-**1.1 Update `FFBEngine.h`**
-Add the boolean variable.
-
-```cpp
-class FFBEngine {
-public:
-    // ... existing settings ...
-    bool m_invert_force = false; // New setting
-
-    double calculate_force(const TelemInfoV01* data) {
-        // ... [All existing calculations] ...
-
-        // --- 5. Min Force & Output ---
-        // ... [Existing normalization logic] ...
-        
-        // APPLY INVERSION HERE (Before clipping)
-        if (m_invert_force) {
-            norm_force *= -1.0;
-        }
-
-        return (std::max)(-1.0, (std::min)(1.0, norm_force));
-    }
-};
-```
-
-**1.2 Update `src/Config.h` & `src/Config.cpp`**
-Ensure the setting is saved to `config.ini`.
-
-*In `src/Config.h` (Preset struct):*
-```cpp
-struct Preset {
-    // ... existing ...
-    bool invert_force; // Add this
-
-    void Apply(FFBEngine& engine) const {
-        // ... existing ...
-        engine.m_invert_force = invert_force;
-    }
-};
-```
-
-*In `src/Config.cpp` (LoadPresets):*
-Update the built-in presets (default to `false`).
-```cpp
-presets.push_back({ "Default", 
-    0.5f, 1.0f, 0.15f, 5.0f, 0.05f, 0.0f, 0.0f, 
-    false, 0.5f, false, 0.5f, true, 0.5f, false, 0.5f,
-    false // <--- Invert default
-});
-// Update other presets similarly...
-```
-
-*In `src/Config.cpp` (Save/Load):*
-```cpp
-void Config::Save(...) {
-    // ...
-    file << "invert_force=" << engine.m_invert_force << "\n";
-    // ...
-}
-
-void Config::Load(...) {
-    // ...
-    else if (key == "invert_force") engine.m_invert_force = std::stoi(value);
-    // ...
-}
-```
-
-**1.3 Update `src/GuiLayer.cpp`**
-Add the checkbox to the "Output" section.
-
-```cpp
-// Inside DrawTuningWindow
-ImGui::Separator();
-ImGui::Text("Output");
-
-ImGui::Checkbox("Invert FFB Signal", &engine.m_invert_force); // <--- Add this
-if (ImGui::IsItemHovered()) ImGui::SetTooltip("Check this if the wheel pulls away from center instead of aligning.");
-
-// ... existing vJoy checkbox ...
-```
-
----
-
-### Step 2: DirectInput Logging Clarity
-
-**Update `src/DirectInputFFB.cpp`**
-Modify the `SelectDevice` function to capture the mode.
-
-```cpp
-bool DirectInputFFB::SelectDevice(const GUID& guid) {
-    // ... [Creation logic] ...
-
-    // Attempt 1: Exclusive/Background
-    std::cout << "[DI] Attempting to set Cooperative Level..." << std::endl;
-    HRESULT hr = m_pDevice->SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);
-    
-    std::string mode_str = "EXCLUSIVE | BACKGROUND"; // Default assumption
-
-    // Fallback: Non-Exclusive
-    if (FAILED(hr)) {
-         std::cerr << "[DI] Exclusive mode failed (Error: " << std::hex << hr << std::dec << "). Retrying in Non-Exclusive mode..." << std::endl;
-         hr = m_pDevice->SetCooperativeLevel(m_hwnd, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
-         mode_str = "NON-EXCLUSIVE | BACKGROUND";
-    }
-    
-    if (FAILED(hr)) {
-        std::cerr << "[DI] Failed to set cooperative level." << std::endl;
-        return false;
-    }
-
-    std::cout << "[DI] Acquiring device..." << std::endl;
-    if (FAILED(m_pDevice->Acquire())) {
-        std::cerr << "[DI] Failed to acquire device." << std::endl;
-    } else {
-        std::cout << "[DI] Device Acquired in " << mode_str << " mode." << std::endl; // <--- Explicit Log
-    }
-
-    // ... [Rest of function] ...
-}
-```
-
----
-
-### Step 3: Telemetry Stats Clarification
-
-**Update `FFBEngine.h`**
-Refactor `ChannelStats` to separate session-long tracking from interval tracking.
-
-```cpp
-// FFBEngine.h
-
-struct ChannelStats {
-    // Session-wide stats (Persistent)
-    double session_min = 1e9;
-    double session_max = -1e9;
-    
-    // Interval stats (Reset every second)
-    double interval_sum = 0.0;
-    long interval_count = 0;
-    
-    void Update(double val) {
-        // Update Session Min/Max
-        if (val < session_min) session_min = val;
-        if (val > session_max) session_max = val;
-        
-        // Update Interval Accumulator
-        interval_sum += val;
-        interval_count++;
-    }
-    
-    void ResetInterval() {
-        interval_sum = 0.0; 
-        interval_count = 0;
-        // Do NOT reset session_min/max here
-    }
-    
-    double GetIntervalAvg() { 
-        return interval_count > 0 ? interval_sum / interval_count : 0.0; 
-    }
-};
-
-// Inside calculate_force logging block:
-if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1) {
-    std::cout << "--- TELEMETRY STATS (Last 1s Avg | Session Min/Max) ---" << std::endl;
-    
-    std::cout << "Torque (Nm): Avg=" << s_torque.GetIntervalAvg() 
-              << " | Min=" << s_torque.session_min 
-              << " Max=" << s_torque.session_max << std::endl;
-              
-    std::cout << "Load (N):    Avg=" << s_load.GetIntervalAvg()   
-              << " | Min=" << s_load.session_min   
-              << " Max=" << s_load.session_max << std::endl;
-              
-    // ... repeat for Grip and Lat G ...
-    
-    // Reset only the interval data
-    s_torque.ResetInterval(); 
-    s_load.ResetInterval(); 
-    s_grip.ResetInterval(); 
-    s_lat_g.ResetInterval();
-    
-    last_log_time = now;
-}
-```
-
----
-
-### Step 4: Fix FFB Scaling (Intensity Mismatch)
-
-**Investigation:**
-The issue where "Gain 0.5" feels correct implies that the hardcoded reference torque (`20.0 Nm`) used for normalization is too low.
-*   **Current Logic:** `Output = RawTorque / 20.0`.
-*   **Observation:** If the game's internal FFB processing (which we bypass) uses a higher reference (e.g., 40Nm) or applies a default reduction factor (e.g., 0.5x Car Specific Multiplier), our raw output appears double the intensity.
-*   **Fix:** Instead of hardcoding `20.0`, we should expose this as a configurable **"Max Torque Reference"**. Increasing this value will reduce the signal strength at a given Gain, allowing the user to keep Master Gain at 1.0 for a 1:1 feel.
-
-**4.1 Update `FFBEngine.h`**
-Replace the hardcoded constant with a configurable variable.
-
-```cpp
-class FFBEngine {
-public:
-    // ... existing settings ...
-    float m_max_torque_ref = 40.0f; // New setting (Default 40.0 based on feedback)
-
-    double calculate_force(const TelemInfoV01* data) {
-        // ... [Calculations] ...
-
-        // --- 6. Min Force (Deadzone Removal) ---
-        // Use the configurable reference instead of hardcoded 20.0
-        double max_force_ref = (double)m_max_torque_ref; 
-        
-        // Safety: Prevent divide by zero
-        if (max_force_ref < 1.0) max_force_ref = 1.0;
-
-        double norm_force = total_force / max_force_ref;
-        
-        // ... [Gain application] ...
-    }
-};
-```
-
-**4.2 Update `src/Config.h` & `src/Config.cpp`**
-Persist the new setting.
-
-*In `src/Config.h` (Preset struct):*
-```cpp
-struct Preset {
-    // ... existing ...
-    float max_torque_ref; // Add this
-
-    void Apply(FFBEngine& engine) const {
-        // ... existing ...
-        engine.m_max_torque_ref = max_torque_ref;
-    }
-};
-```
-
-*In `src/Config.cpp` (LoadPresets):*
-Update presets (Default to 40.0f).
-```cpp
-presets.push_back({ "Default", 
-    // ... existing values ...
-    false, // invert
-    40.0f  // <--- Max Torque Ref
-});
-```
-
-*In `src/Config.cpp` (Save/Load):*
-```cpp
-void Config::Save(...) {
-    // ...
-    file << "max_torque_ref=" << engine.m_max_torque_ref << "\n";
-    // ...
-}
-
-void Config::Load(...) {
-    // ...
-    else if (key == "max_torque_ref") engine.m_max_torque_ref = std::stof(value);
-    // ...
-}
-```
-
-**4.3 Update `src/GuiLayer.cpp`**
-Add the slider to the "Core Settings" or "Advanced Tuning" section.
-
-```cpp
-// Inside DrawTuningWindow, under "Core Settings" or "Advanced"
-ImGui::SliderFloat("Max Torque Ref (Nm)", &engine.m_max_torque_ref, 10.0f, 100.0f, "%.1f Nm");
-if (ImGui::IsItemHovered()) ImGui::SetTooltip("The torque value that equals 100% FFB output.\nIncrease this if FFB is too strong at Gain 1.0.\nTypical values: 20-40 Nm.");
-```
-
-**4.4 Update Documentation (`docs/dev_docs/FFB_formulas.md`)**
-Update the formula reference.
-
-```markdown
-### 1. The Master Formula
-$$ F_{final} = \text{Clamp}\left( \left( \frac{F_{total}}{T_{ref}} \times K_{gain} \right), -1.0, 1.0 \right) $$
-
-*   $T_{ref}$: User setting `m_max_torque_ref` (Default 40.0 Nm).
-```
-```
-
-# File: docs\dev_docs\FFB Coefficient Tuning & Visualization Refinement (v0.4.11).md
-```markdown
-# Technical Specification: FFB Coefficient Tuning & Visualization Refinement (v0.4.11)
-
-**Target Version:** v0.4.11
-**Date:** December 13, 2025
-**Priority:** High (Usability/Tuning)
-
-## 1. Problem Statement
-
-Following the implementation of physics workarounds in v0.4.10, the FFB engine is now correctly calculating forces for Rear Aligning Torque and Scrub Drag. However, the **magnitude** of these forces is numerically too small to be effective.
-
-*   **Rear Align Torque:** Currently peaks at ~0.75 Nm. On a 20 Nm wheel, this is barely perceptible.
-*   **Scrub Drag:** Peaks at ~0.5 Nm. Invisible on graphs and undetectable by the driver.
-*   **Visualization:** The Troubleshooting Graphs use a uniform ±20 Nm scale. While appropriate for the main Steering Torque, it hides the detail of subtle texture effects (Road, Slide, Vibrations) which typically operate in the 0-5 Nm range.
-
-## 2. Physics Tuning Requirements (`FFBEngine.h`)
-
-We need to adjust the hardcoded scaling coefficients to produce meaningful torque values in the Newton-meter domain.
-
-### A. Rear Aligning Torque
-*   **Current Logic:** `rear_torque = calc_rear_lat_force * 0.00025 * m_oversteer_boost`
-*   **Analysis:** Max lateral force is clamped at 6000 N.
-    *   $6000 \times 0.00025 = 1.5 \text{ Nm}$.
-    *   With default boost (0.5), output is $0.75 \text{ Nm}$.
-*   **New Coefficient:** **`0.001`**
-    *   $6000 \times 0.001 = 6.0 \text{ Nm}$.
-    *   With default boost (0.5), output is $3.0 \text{ Nm}$. This provides a distinct, feelable counter-steering cue.
-
-### B. Scrub Drag
-*   **Current Logic:** `drag_force = ... * m_scrub_drag_gain * 2.0 * fade`
-*   **Analysis:** At max gain (1.0), output is 2.0 Nm.
-*   **New Multiplier:** **`5.0`**
-    *   Max output becomes $5.0 \text{ Nm}$. This allows the user to dial in a very heavy resistance if desired, or keep it subtle at lower gain settings.
-
-### C. Road Texture
-*   **Current Logic:** `road_noise = (delta_l + delta_r) * 25.0 * ...`
-*   **Analysis:** Suspension deltas are tiny (e.g., 0.002m). $0.004 \times 25 = 0.1 \text{ Nm}$.
-*   **New Multiplier:** **`50.0`**
-    *   Boosts the signal to ensure bumps are felt on direct drive wheels.
-
----
-
-## 3. GUI Visualization Refinement (`GuiLayer.cpp`)
-
-To make debugging easier, we will "zoom in" the Y-axis for texture-based plots.
-
-### Plot Scaling Logic
-The `ImGui::PlotLines` function accepts `scale_min` and `scale_max`.
-
-*   **Group A: Macro Forces (Keep ±20.0)**
-    *   Base Torque
-    *   SoP (Base Chassis G)
-    *   Lateral G Boost (Slide)
-    *   Rear Align Torque
-    *   Scrub Drag Force
-    *   Understeer Cut
-
-*   **Group B: Micro Textures (Change to ±10.0)**
-    *   Road Texture
-    *   Slide Texture
-    *   Lockup Vib
-    *   Spin Vib
-    *   Bottoming
-
-**Implementation Example:**
-```cpp
-// Old
-ImGui::PlotLines("##Road", ..., -20.0f, 20.0f, ...);
-
-// New
-ImGui::PlotLines("##Road", ..., -10.0f, 10.0f, ...);
-```
-
-## 4. Summary of Changes
-
-| Component | Variable/Function | Old Value | New Value |
-| :--- | :--- | :--- | :--- |
-| `FFBEngine.h` | Rear Torque Coeff | `0.00025` | **`0.001`** |
-| `FFBEngine.h` | Scrub Drag Multiplier | `2.0` | **`5.0`** |
-| `FFBEngine.h` | Road Texture Multiplier | `25.0` | **`50.0`** |
-| `GuiLayer.cpp` | Texture Plot Scales | `±20.0f` | **`±10.0f`** |
-```
-
-# File: docs\dev_docs\FFB Coordinate System Fixes Verified.md
-```markdown
-# Question
-
-Look at the full codebase and documentation of a force feedback (FFB) app, v0.4.21. 
-Recently, we had these changes (...). They are related to the proper use of the rF2 / LMU coordinate system, avoiding force direction inversions.
-
-Your task is to determine if the latest version of the app is fully correct in regard to these types of issues, and to verify that we are not going back and forth fixing and then reintroducing the same bugs.
-You also have to determine if we need to add additional test to fully cover these types of issues.
-
-
-# Answer 
-
-Based on a detailed review of the codebase (specifically `FFBEngine.h` and `tests/test_ffb_engine.cpp`) and the changelog history, here is the assessment of the current state (v0.4.20).
-
-### 1. Is the latest version fully correct?
-**YES.**
-Version 0.4.20 appears to have finally resolved the coordinate system confusion by aligning all lateral effects to the **"Stabilizing / Counter-Steering"** principle.
-
-*   **The Logic Chain:**
-    1.  **Game Coordinate:** `+X` = Left.
-    2.  **DirectInput:** `-Force` = Left (Pull).
-    3.  **Scenario:** Car slides Left (`+X` velocity) or Rotates Right (`+Yaw` accel, rear swings Left).
-    4.  **Physics Goal:** The steering wheel should pull **Left** (Negative) to help the driver counter-steer and align the wheels with the slide vector (Caster effect).
-*   **Code Verification (`FFBEngine.h`):**
-    *   **SoP:** `lat_g = -(raw_g / 9.81)` $\rightarrow$ **Correct** (Inverted).
-    *   **Rear Torque:** `rear_torque = -calc_rear_lat_force...` $\rightarrow$ **Correct** (Inverted).
-    *   **Yaw Kick:** `yaw_force = -1.0 * m_yaw_accel...` $\rightarrow$ **Correct** (Inverted).
-    *   **Scrub Drag:** `drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0` $\rightarrow$ **Correct** (Inverted).
-        *   *Note:* In v0.4.19, this was set to `1.0` (Positive/Right), which simulated the friction force vector on the *ground*, but failed to account for the *mechanical trail* (caster) which converts that ground force into a torque in the *opposite* direction on the steering shaft. v0.4.20 correctly models the aligning torque.
-
-### 2. Are we going back and forth?
-**No.**
-The changes in v0.4.20 correct a specific physics misunderstanding in v0.4.19 regarding Scrub Drag (Force Vector vs. Aligning Torque) and apply the necessary inversion to the new Yaw Kick effect. The logic is now consistent across all 4 lateral effects: **Any event implying a Leftward slide/turn must produce a Negative (Left) output.**
-
-### 3. Do we need additional tests?
-**YES.**
-While you have individual unit tests for each effect, you lack a **Holistic Alignment Test**.
-Currently, `test_regression_no_positive_feedback` checks SoP + Rear Torque + Scrub Drag, but it explicitly disables Yaw Kick (`m_sop_yaw_gain = 0.0`).
-
-To guarantee stability during a violent "Snap Oversteer" event (where all physics cues happen simultaneously), we should add a test that enables **ALL** lateral effects and verifies they all pull in the same direction (Negative). If one effect fights the others, it dilutes the FFB detail and delays driver reaction.
-
-### 4. Implementation
-
-I will add the `test_coordinate_all_effects_alignment` to `tests/test_ffb_engine.cpp`.
-
-#### **Step 1: Update `tests/test_ffb_engine.cpp`**
-
-```cpp
-// Add this new test function
-static void test_coordinate_all_effects_alignment() {
-    std::cout << "\nTest: Coordinate System - All Effects Alignment (Snap Oversteer)" << std::endl;
-    FFBEngine engine;
-    TelemInfoV01 data;
-    std::memset(&data, 0, sizeof(data));
-    
-    // Enable ALL lateral effects
-    engine.m_gain = 1.0f;
-    engine.m_max_torque_ref = 20.0f;
-    
-    engine.m_sop_effect = 1.0f;          // Lateral G
-    engine.m_rear_align_effect = 1.0f;   // Rear Slip
-    engine.m_sop_yaw_gain = 1.0f;        // Yaw Accel
-    engine.m_scrub_drag_gain = 1.0f;     // Front Slip
-    
-    // Disable others to isolate lateral logic
-    engine.m_understeer_effect = 0.0f;
-    engine.m_lockup_enabled = false;
-    engine.m_spin_enabled = false;
-    engine.m_slide_texture_enabled = false;
-    engine.m_road_texture_enabled = false;
-    engine.m_bottoming_enabled = false;
-    
-    // SCENARIO: Violent Snap Oversteer to the Right
-    // 1. Car rotates Right (+Yaw)
-    // 2. Rear slides Left (+Lat Vel)
-    // 3. Body accelerates Left (+Lat G)
-    // 4. Front tires drag Left (+Lat Vel)
-    
-    data.mLocalRotAccel.y = 10.0;        // Violent Yaw Right
-    data.mWheel[2].mLateralPatchVel = 5.0; // Rear Sliding Left
-    data.mWheel[3].mLateralPatchVel = 5.0;
-    data.mLocalAccel.x = 9.81;           // 1G Left
-    data.mWheel[0].mLateralPatchVel = 2.0; // Front Dragging Left
-    data.mWheel[1].mLateralPatchVel = 2.0;
-    
-    // Auxiliary data for calculations
-    data.mWheel[2].mGripFract = 0.0; // Trigger rear calc
-    data.mWheel[3].mGripFract = 0.0;
-    data.mWheel[2].mSuspForce = 4000.0;
-    data.mWheel[3].mSuspForce = 4000.0;
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
-    data.mDeltaTime = 0.01;
-    
-    // Run to settle LPFs
-    for(int i=0; i<20; i++) engine.calculate_force(&data);
-    
-    // Capture Snapshot to verify individual components
-    auto batch = engine.GetDebugBatch();
-    if (batch.empty()) {
-        std::cout << "[FAIL] No snapshot." << std::endl;
-        g_tests_failed++;
-        return;
-    }
-    FFBSnapshot snap = batch.back();
-    
-    bool all_aligned = true;
-    
-    // 1. SoP (Should be Negative)
-    if (snap.sop_force > -0.1) {
-        std::cout << "[FAIL] SoP fighting alignment! Val: " << snap.sop_force << std::endl;
-        all_aligned = false;
-    }
-    
-    // 2. Rear Torque (Should be Negative)
-    if (snap.ffb_rear_torque > -0.1) {
-        std::cout << "[FAIL] Rear Torque fighting alignment! Val: " << snap.ffb_rear_torque << std::endl;
-        all_aligned = false;
-    }
-    
-    // 3. Yaw Kick (Should be Negative)
-    if (snap.ffb_yaw_kick > -0.1) {
-        std::cout << "[FAIL] Yaw Kick fighting alignment! Val: " << snap.ffb_yaw_kick << std::endl;
-        all_aligned = false;
-    }
-    
-    // 4. Scrub Drag (Should be Negative)
-    if (snap.ffb_scrub_drag > -0.01) { // Smaller magnitude usually
-        std::cout << "[FAIL] Scrub Drag fighting alignment! Val: " << snap.ffb_scrub_drag << std::endl;
-        all_aligned = false;
-    }
-    
-    if (all_aligned) {
-        std::cout << "[PASS] All lateral effects aligned (Counter-Steer Left)." << std::endl;
-        g_tests_passed++;
-    } else {
-        g_tests_failed++;
-    }
-}
-```
-
-#### **Step 2: Register the test in `main()`**
-
-```cpp
-// Inside main() in tests/test_ffb_engine.cpp
-// ...
-test_regression_no_positive_feedback();
-test_coordinate_all_effects_alignment(); // <--- Add this
-// ...
-```
-
-I will now apply these changes to `tests/test_ffb_engine.cpp`.
-
 
 ```
 
@@ -7925,176 +5847,6 @@ $$
 *   **20.0**: SoP Scaling factor (was 5.0 in v0.4.x)
 *   **25.0**: Road Texture stiffness (was 5000.0 before Nm conversion)
 *   **8000.0**: Bottoming threshold (N, unchanged)
-
-```
-
-# File: docs\dev_docs\Fix Latency of SoP Smoothing and Slip Angle smoothing (Analysis & Implementation Plan).md
-```markdown
-# Latency Analysis & Implementation Plan: SoP and Slip Angle Smoothing
-
-**Date:** December 21, 2025
-**Status:** Ready for Implementation
-**Target Version:** v0.4.40
-
----
-
-## 1. Executive Summary
-
-Users with high-end Direct Drive wheels reported a perceptible delay in the Force Feedback signal compared to the base game. Investigation confirmed that the default smoothing settings in the FFB Engine introduce approximately **95ms of latency** to the Seat of Pants (SoP) effect and **22.5ms** to the Slip Angle calculation.
-
-This report outlines the necessary changes to:
-1.  **Reduce Default Latency:** Shift defaults to target **15ms**, which is responsive enough for Direct Drive wheels while remaining stable for Belt/Gear driven wheels (T300/G29).
-2.  **Expose Hidden Parameters:** Make the internal Slip Angle smoothing time constant user-configurable.
-3.  **Improve GUI Feedback:** Explicitly display calculated latency in milliseconds with color-coded warnings (Red/Green) to educate users about the trade-off between smoothness and lag.
-
----
-
-## 2. Problem Analysis
-
-### A. The Primary Cause: SoP Smoothing
-The "Seat of Pants" (Lateral G) effect uses a Low Pass Filter (LPF) controlled by `m_sop_smoothing_factor`.
-*   **Formula:** $\tau = (1.0 - \text{factor}) \times 0.1 \text{ seconds}$.
-*   **Current Default:** `0.05`.
-*   **Resulting Latency:** $(1.0 - 0.05) \times 100\text{ms} = \mathbf{95\text{ms}}$.
-*   **Impact:** A nearly 0.1-second delay between the car's physical movement and the FFB weight transfer is highly noticeable on responsive hardware.
-
-### B. The Secondary Cause: Slip Angle Smoothing
-In v0.4.37, a "Time-Corrected" smoothing filter was added to the Slip Angle calculation to prevent noise.
-*   **Current Implementation:** Hardcoded constant `const double tau = 0.0225;`.
-*   **Resulting Latency:** **22.5ms**.
-*   **Impact:** Delays the onset of Understeer (Grip Loss) and Rear Aligning Torque effects.
-
-### C. Hardware Suitability Analysis (15ms Target)
-We have determined that **15ms** is the optimal baseline target.
-*   **Direct Drive:** 15ms is fast enough to feel "connected" and "raw".
-*   **Belt/Gear (T300/G29):** These wheels have inherent mechanical damping and friction. A 15ms electronic filter is sufficient to remove high-frequency digital noise (>60Hz) without making the wheel feel "lazy" or disconnected. The previous 95ms default was excessive for these wheels.
-
----
-
-## 3. Mathematical Derivation for Defaults
-
-To achieve the **15ms** target, the configuration defaults must be updated as follows:
-
-### A. SoP Smoothing Factor
-*   **Target:** 15ms.
-*   **Equation:** $15 = (1.0 - \text{Factor}) \times 100$.
-*   **Solution:** $0.15 = 1.0 - \text{Factor} \rightarrow \text{Factor} = \mathbf{0.85}$.
-
-### B. Slip Angle Smoothing (Tau)
-*   **Target:** 15ms.
-*   **Equation:** Direct time constant in seconds.
-*   **Solution:** $\mathbf{0.015\text{s}}$.
-
----
-
-## 4. Implementation Specification
-
-### Component A: Physics Engine (`FFBEngine.h`)
-
-1.  **Promote Constant to Variable:**
-    *   Remove the local `const double tau = 0.0225;` from `calculate_slip_angle`.
-    *   Add a public member variable: `float m_slip_angle_smoothing = 0.015f;`.
-2.  **Update Logic:**
-    *   Use the member variable in the LPF calculation.
-    *   Add a safety clamp to prevent division by zero: `if (tau < 0.0001) tau = 0.0001;`.
-
-### Component B: Configuration (`src/Config.h` & `src/Config.cpp`)
-
-1.  **Update Defaults (`Config.h`):**
-    *   Change `sop_smoothing` default from `0.05f` to **`0.85f`**.
-    *   Add `float slip_smoothing = 0.015f;` to the `Preset` struct.
-2.  **Update Methods:**
-    *   Implement `SetSlipSmoothing`, `Apply`, and `UpdateFromEngine` to handle the new variable.
-3.  **Update Presets (`Config.cpp`):**
-    *   Update "Default (T300)" and "T300" presets to explicitly set `.SetSmoothing(0.85f)` and `.SetSlipSmoothing(0.015f)`.
-4.  **Persistence:**
-    *   Update `Save` and `Load` to handle the key `slip_angle_smoothing`.
-
-### Component C: GUI Layer (`src/GuiLayer.cpp`)
-
-The GUI must be updated to provide "Event Driven" visual feedback using Immediate Mode logic.
-
-#### 1. Visual Design Requirements
-*   **Latency Label:** A text line *above* the slider explicitly stating the latency.
-*   **Color Coding:**
-    *   **Red:** If Latency > 20ms (Warning: High Lag).
-    *   **Green:** If Latency <= 20ms (OK).
-*   **Slider Text:** The slider bar must display the value AND the lag (e.g., `0.85 (15ms lag)`).
-
-#### 2. SoP Smoothing Implementation Logic
-```cpp
-// Calculate Latency
-int lat_ms = (int)((1.0f - engine.m_sop_smoothing_factor) * 100.0f);
-
-// Draw Label
-ImGui::Text("SoP Smoothing");
-ImGui::SameLine();
-if (lat_ms > 20) 
-    ImGui::TextColored(Red, "(SIGNAL LATENCY: %d ms)", lat_ms);
-else 
-    ImGui::TextColored(Green, "(Latency: %d ms - OK)", lat_ms);
-
-// Draw Slider (Hidden Label ##)
-char fmt[64];
-snprintf(fmt, sizeof(fmt), "%.2f (%dms lag)", lat_ms);
-FloatSetting("##SoPSmoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, fmt);
-```
-
-#### 3. Slip Angle Smoothing Implementation Logic
-*   **Location:** "Advanced Tuning" section.
-*   **Range:** `0.000` to `0.100` seconds.
-*   **Logic:** Same Red/Green logic as SoP, but calculating `ms = value * 1000`.
-
----
-
-## 5. Implementation Checklist
-
-### 1. Physics Engine (`FFBEngine.h`)
-- [ ] **Promote Constant to Variable**:
-    - Remove `const double tau = 0.0225;` inside `calculate_slip_angle`.
-    - Add public member variable: `float m_slip_angle_smoothing = 0.015f;` (Default 15ms).
-- [ ] **Update Logic**:
-    - In `calculate_slip_angle`, set `double tau = (double)m_slip_angle_smoothing;`.
-    - Add safety clamp: `if (tau < 0.0001) tau = 0.0001;`.
-
-### 2. Configuration Structure (`src/Config.h`)
-- [ ] **Update Defaults**:
-    - Change `float sop_smoothing` default from `0.05f` to **`0.85f`** (15ms).
-    - Add `float slip_smoothing = 0.015f;` (15ms).
-- [ ] **Update Methods**:
-    - Add `Preset& SetSlipSmoothing(float v)`.
-    - Update `Apply(FFBEngine& engine)` to copy `slip_smoothing` to `engine.m_slip_angle_smoothing`.
-    - Update `UpdateFromEngine` to read `engine.m_slip_angle_smoothing`.
-
-### 3. Persistence & Presets (`src/Config.cpp`)
-- [ ] **Update `LoadPresets`**:
-    - Ensure "Default (T300)" and "T300" presets explicitly set `.SetSmoothing(0.85f)` and `.SetSlipSmoothing(0.015f)`.
-- [ ] **Update `Save`**:
-    - Write `file << "slip_angle_smoothing=" << engine.m_slip_angle_smoothing << "\n";`.
-- [ ] **Update `Load`**:
-    - Add parsing logic for key `"slip_angle_smoothing"`.
-
-### 4. GUI Layer (`src/GuiLayer.cpp`)
-- [ ] **Refactor SoP Smoothing Slider** (inside `DrawTuningWindow` -> "Advanced Tuning"):
-    - Calculate latency: `int lat_ms = (int)((1.0f - engine.m_sop_smoothing_factor) * 100.0f);`.
-    - Add colored text label above slider:
-        - **Red** if `lat_ms > 20`.
-        - **Green** if `lat_ms <= 20`.
-    - Create dynamic format string: `snprintf(buf, ..., "%.2f (%dms lag)", lat_ms)`.
-    - Update `FloatSetting` to use the dynamic format string and `##HiddenLabel`.
-    - Update Tooltip to explain the trade-off.
-
-- [ ] **Add Slip Angle Smoothing Slider**:
-    - Calculate latency: `int slip_ms = (int)(engine.m_slip_angle_smoothing * 1000.0f);`.
-    - Add colored text label (Red > 20ms / Green <= 20ms).
-    - Create dynamic format string: `snprintf(buf, ..., "%.3fs (%dms lag)", slip_ms)`.
-    - Add `FloatSetting` for `engine.m_slip_angle_smoothing` (Range 0.000 to 0.100).
-    - Add Tooltip explaining "Physics Response Time".
-
-### 5. Documentation & Build
-- [ ] **Update `CHANGELOG.md`**: Document the new defaults (15ms) and the new "Physics Response" slider.
-- [ ] **Update `VERSION`**: Increment version number.
-- [ ] **Verify**: Compile and run tests.
 
 ```
 
@@ -9414,6 +7166,209 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     
     // ... [Rest of file] ...
 ```
+```
+
+# File: docs\dev_docs\Force Feedback Issues - App Focus.md
+```markdown
+# Exclusive Device Acquisition & Recovery Report
+
+## 1. Problem Analysis: The "Tug of War"
+The reported issue where Force Feedback stops working after Alt-Tabbing or changing window focus is caused by a conflict over **DirectInput Exclusive Access**.
+
+*   **The Mechanism:** To send Force Feedback commands, an application must hold **Exclusive Access** to the device.
+*   **The Conflict:** When Le Mans Ultimate (LMU) gains focus, it automatically attempts to acquire the wheel in Exclusive Mode. Windows grants this priority to the foreground window, silently "demoting" LMUFFB to **Shared Mode** (Non-Exclusive).
+*   **The Symptom:** In Shared Mode, LMUFFB can still read steering inputs (so the graphs might move), but any attempt to write FFB forces fails with error `0x80040205` (`DIERR_NOTEXCLUSIVEACQUIRED`).
+*   **The Loop:** Standard recovery logic simply calls `Acquire()`. However, since the device handle is already in "Shared Mode" (due to the demotion), `Acquire()` succeeds immediately but **keeps the app in Shared Mode**. The app remains trapped in a state where it is "Connected" but "Muted."
+
+## 2. The Solution: Dynamic Promotion
+To break this loop, we implement **Dynamic Promotion** within the existing connection recovery logic.
+
+*   **Logic:** When the app detects the specific error `DIERR_NOTEXCLUSIVEACQUIRED`, it does not just try to re-acquire. It explicitly:
+    1.  **Unacquires** the device (releasing the Shared handle).
+    2.  **Requests Promotion** by calling `SetCooperativeLevel` with `DISCL_EXCLUSIVE`.
+    3.  **Re-acquires** the device.
+*   **Safety Throttle:** This logic is placed inside the existing **2-second recovery cooldown**. This prevents a "resource race" or stuttering that would occur if we attempted this heavy operation every frame (400Hz).
+*   **Motor Restart:** Upon successful re-acquisition, we explicitly call `m_pEffect->Start(1, 0)` to ensure the FFB motor is reactivated, fixing the "silent wheel" bug.
+
+---
+
+## 3. Implementation Plan
+
+### Step 1: Track Acquisition State
+We need to know if we currently hold Exclusive rights so we can display this status to the user.
+
+**File:** `src/DirectInputFFB.h`
+
+```cpp
+class DirectInputFFB {
+public:
+    // ... existing methods ...
+    
+    // NEW: Check if device was acquired in exclusive mode
+    bool IsExclusive() const { return m_isExclusive; }
+
+private:
+    // ... existing members ...
+    
+    bool m_isExclusive = false; // Track acquisition mode
+};
+```
+
+### Step 2: Implement Dynamic Promotion Logic
+We modify the `UpdateForce` loop to handle the specific error code and promote the cooperative level.
+
+**File:** `src/DirectInputFFB.cpp`
+
+```cpp
+// Inside DirectInputFFB::UpdateForce(double normalizedForce)
+
+    // ... [Calculation of magnitude] ...
+
+#ifdef _WIN32
+    if (m_pEffect) {
+        // ... [Setup DICONSTANTFORCE cf and DIEFFECT eff] ...
+        
+        // Try to update parameters
+        HRESULT hr = m_pEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
+        
+        // --- DIAGNOSTIC & RECOVERY LOGIC ---
+        if (FAILED(hr)) {
+            // 1. Identify if the error is recoverable
+            bool recoverable = (hr == DIERR_INPUTLOST || 
+                                hr == DIERR_NOTACQUIRED || 
+                                hr == DIERR_OTHERAPPHASPRIO || 
+                                hr == DIERR_NOTEXCLUSIVEACQUIRED);
+
+            // 2. Log Error (Rate limited to 1s)
+            // ... [Existing logging logic] ...
+
+            // 3. Attempt Recovery (Throttled to every 2 seconds)
+            static DWORD lastRecoveryAttempt = 0;
+            DWORD now = GetTickCount();
+            
+            if (recoverable && (now - lastRecoveryAttempt > RECOVERY_COOLDOWN_MS)) {
+                lastRecoveryAttempt = now; 
+                
+                // --- DYNAMIC PROMOTION FIX ---
+                // If we are stuck in "Shared Mode" (0x80040205), standard Acquire() 
+                // just re-confirms Shared Mode. We must force a mode switch.
+                if (hr == DIERR_NOTEXCLUSIVEACQUIRED) {
+                    std::cout << "[DI] Attempting to promote to Exclusive Mode..." << std::endl;
+                    m_pDevice->Unacquire();
+                    m_pDevice->SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);
+                }
+                // -----------------------------
+
+                HRESULT hrAcq = m_pDevice->Acquire();
+                
+                if (SUCCEEDED(hrAcq)) {
+                    std::cout << "[DI RECOVERY] Device re-acquired successfully." << std::endl;
+                    
+                    // Update our internal state if we fixed the exclusivity
+                    if (hr == DIERR_NOTEXCLUSIVEACQUIRED) {
+                            m_isExclusive = true; 
+                    }
+
+                    // CRITICAL FIX: Restart the effect motor
+                    // Often, re-acquiring is not enough; the effect must be restarted.
+                    m_pEffect->Start(1, 0); 
+                    
+                    // Retry the update immediately so the user feels it instantly
+                    m_pEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
+                }
+            }
+        }
+    }
+#endif
+```
+
+### Step 3: Initialize State Correctly
+Ensure we reset the state when selecting a new device.
+
+**File:** `src/DirectInputFFB.cpp`
+
+```cpp
+bool DirectInputFFB::SelectDevice(const GUID& guid) {
+    // ... [Device Creation] ...
+
+    // Reset state
+    m_isExclusive = false;
+
+    // Attempt 1: Exclusive/Background (Best for FFB)
+    HRESULT hr = m_pDevice->SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);
+    
+    if (SUCCEEDED(hr)) {
+        m_isExclusive = true;
+        std::cout << "[DI] Cooperative Level set to EXCLUSIVE." << std::endl;
+    } else {
+        // Fallback: Non-Exclusive
+        std::cerr << "[DI] Exclusive mode failed. Retrying in Non-Exclusive mode..." << std::endl;
+        hr = m_pDevice->SetCooperativeLevel(m_hwnd, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+        
+        if (SUCCEEDED(hr)) {
+            m_isExclusive = false;
+        }
+    }
+    
+    // ... [Acquire and CreateEffect] ...
+}
+```
+
+### Step 4: Visual Feedback in GUI
+Display the current mode so the user knows if they are in a "Safe" (Exclusive) or "Conflict-Prone" (Shared) state.
+
+**File:** `src/GuiLayer.cpp`
+
+```cpp
+// Inside DrawTuningWindow...
+
+    // Acquisition Mode & Troubleshooting
+    if (DirectInputFFB::Get().IsActive()) {
+        if (DirectInputFFB::Get().IsExclusive()) {
+            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Mode: EXCLUSIVE (Game FFB Blocked)");
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB has exclusive control.\nThe game can read steering but cannot send FFB.\nThis prevents 'Double FFB' issues.");
+        } else {
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.4f, 1.0f), "Mode: SHARED (Potential Conflict)");
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB is sharing the device.\nEnsure In-Game FFB is set to 'None' or 0% strength\nto avoid two force signals fighting each other.");
+        }
+    }
+```
+
+
+## Manual verification, no new automated tests
+
+**Recommendation: No additional automated unit tests.**
+
+Implementing automated tests for this specific feature ("Dynamic Promotion" and "Exclusive Access") is **not recommended** for the following reasons:
+
+1.  **OS-Level Arbitration**: The issue depends on how the Windows OS arbitrates control between two separate processes (The Game vs. LMUFFB). Simulating an "Alt-Tab" event or a "Focus Steal" inside a unit test environment is extremely complex and fragile.
+2.  **Hardware Driver Dependency**: The `DIERR_NOTEXCLUSIVEACQUIRED` error comes directly from the hardware driver. Mocking this behavior requires a sophisticated "Mock Object" framework for COM interfaces, which would require significant refactoring of the codebase (Dependency Injection) just for this one test.
+3.  **Cost vs. Benefit**: The logic change is relatively simple (about 10 lines of code), but the test infrastructure required to verify it automatically would be massive.
+
+### Alternative: Manual Verification Plan
+
+Instead of code-based tests, I recommend adding a **Manual Verification Procedure** to your testing documentation. This is the only reliable way to verify this fix.
+
+**Add this to `docs/Driver's Guide to Testing LMUFFB.md` (or similar):**
+
+#### Test: Exclusive Recovery (Alt-Tab)
+1.  **Setup**:
+    *   Start LMUFFB. Select Wheel.
+    *   Verify Status says **"Mode: EXCLUSIVE"** (Green).
+2.  **Conflict**:
+    *   Start Le Mans Ultimate (LMU).
+    *   Click inside the game window (Game takes focus).
+    *   *Observation:* LMUFFB might momentarily lose FFB or show "SHARED" if you have a second monitor to watch.
+3.  **Recovery**:
+    *   Alt-Tab back to LMUFFB.
+    *   **Verify:** The status should immediately (or within 2 seconds) return to **"Mode: EXCLUSIVE"** (Green).
+    *   **Verify:** Force Feedback works (test by turning the wheel).
+4.  **Persistence**:
+    *   Alt-Tab back to Game.
+    *   Drive.
+    *   **Verify:** FFB continues to work (because LMUFFB fought back and kept the lock, or gracefully handled the shared state).
+
+
 ```
 
 # File: docs\dev_docs\frame stutter issue fixes.md
@@ -19287,6 +17242,7 @@ bool DirectInputFFB::SelectDevice(const GUID& guid) {
     return false;
 #else
     m_active = true;
+    m_isExclusive = true; // Default to true in mock to verify UI logic
     m_deviceName = "Mock Device Selected";
     return true;
 #endif
@@ -19406,6 +17362,16 @@ void DirectInputFFB::UpdateForce(double normalizedForce) {
                 if (now - lastRecoveryAttempt > RECOVERY_COOLDOWN_MS) {
                     lastRecoveryAttempt = now; // Mark this attempt
                     
+                    // --- DYNAMIC PROMOTION FIX ---
+                    // If we are stuck in "Shared Mode" (0x80040205), standard Acquire() 
+                    // just re-confirms Shared Mode. We must force a mode switch.
+                    if (hr == DIERR_NOTEXCLUSIVEACQUIRED) {
+                        std::cout << "[DI] Attempting to promote to Exclusive Mode..." << std::endl;
+                        m_pDevice->Unacquire();
+                        m_pDevice->SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);
+                    }
+                    // -----------------------------
+
                     HRESULT hrAcq = m_pDevice->Acquire();
                     
                     if (SUCCEEDED(hrAcq)) {
@@ -19416,6 +17382,11 @@ void DirectInputFFB::UpdateForce(double normalizedForce) {
                             lastSuccessLog = GetTickCount();
                         }
                         
+                        // Update our internal state if we fixed the exclusivity
+                        if (hr == DIERR_NOTEXCLUSIVEACQUIRED) {
+                            m_isExclusive = true; 
+                        }
+
                         // Restart the effect to ensure motor is active
                         m_pEffect->Start(1, 0); 
                         
@@ -21816,8 +19787,10 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (DirectInputFFB::Get().IsActive()) {
         if (DirectInputFFB::Get().IsExclusive()) {
             ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Mode: EXCLUSIVE (Game FFB Blocked)");
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB has exclusive control.\nThe game can read steering but cannot send FFB.\nThis prevents 'Double FFB' issues.");
         } else {
-            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.4f, 1.0f), "Mode: SHARED (Ensure Game FFB is 0%%)");
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.4f, 1.0f), "Mode: SHARED (Potential Conflict)");
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("LMUFFB is sharing the device.\nEnsure In-Game FFB is disabled\nto avoid LMU reacquiring the device.");
         }
     }
 
