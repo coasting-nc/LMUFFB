@@ -318,8 +318,11 @@ void Config::LoadPresets() {
                         else if (key == "min_force") current_preset.min_force = std::stof(value);
                         else if (key == "oversteer_boost") current_preset.oversteer_boost = std::stof(value);
                         else if (key == "lockup_enabled") current_preset.lockup_enabled = std::stoi(value);
-                        // v0.4.50: SAFETY CLAMPING for Generator Effects in User Presets
                         else if (key == "lockup_gain") current_preset.lockup_gain = (std::min)(2.0f, std::stof(value));
+                        else if (key == "lockup_start_pct") current_preset.lockup_start_pct = std::stof(value);
+                        else if (key == "lockup_full_pct") current_preset.lockup_full_pct = std::stof(value);
+                        else if (key == "lockup_rear_boost") current_preset.lockup_rear_boost = std::stof(value);
+                        else if (key == "brake_load_cap") current_preset.brake_load_cap = (std::min)(3.0f, std::stof(value));
                         else if (key == "spin_enabled") current_preset.spin_enabled = std::stoi(value);
                         else if (key == "spin_gain") current_preset.spin_gain = (std::min)(2.0f, std::stof(value));
                         else if (key == "slide_enabled") current_preset.slide_enabled = std::stoi(value);
@@ -411,7 +414,8 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "sop_smoothing_factor=" << engine.m_sop_smoothing_factor << "\n";
         file << "slip_angle_smoothing=" << engine.m_slip_angle_smoothing << "\n";
         file << "sop_scale=" << engine.m_sop_scale << "\n";
-        file << "max_load_factor=" << engine.m_max_load_factor << "\n";
+        file << "texture_load_cap=" << engine.m_texture_load_cap << "\n";
+        file << "brake_load_cap=" << engine.m_brake_load_cap << "\n"; 
         file << "understeer=" << engine.m_understeer_effect << "\n";
         file << "sop=" << engine.m_sop_effect << "\n";
         file << "min_force=" << engine.m_min_force << "\n";
@@ -428,6 +432,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "invert_force=" << engine.m_invert_force << "\n";
         file << "max_torque_ref=" << engine.m_max_torque_ref << "\n";
         file << "use_manual_slip=" << engine.m_use_manual_slip << "\n";
+        file << "lockup_start_pct=" << engine.m_lockup_start_pct << "\n";
+        file << "lockup_full_pct=" << engine.m_lockup_full_pct << "\n";
+        file << "lockup_rear_boost=" << engine.m_lockup_rear_boost << "\n";
         file << "bottoming_method=" << engine.m_bottoming_method << "\n";
         file << "scrub_drag_gain=" << engine.m_scrub_drag_gain << "\n";
         file << "rear_align_effect=" << engine.m_rear_align_effect << "\n";
@@ -472,6 +479,10 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
                 file << "invert_force=" << p.invert_force << "\n";
                 file << "max_torque_ref=" << p.max_torque_ref << "\n";
                 file << "use_manual_slip=" << p.use_manual_slip << "\n";
+                file << "lockup_start_pct=" << p.lockup_start_pct << "\n";
+                file << "lockup_full_pct=" << p.lockup_full_pct << "\n";
+                file << "lockup_rear_boost=" << p.lockup_rear_boost << "\n";
+                file << "brake_load_cap=" << p.brake_load_cap << "\n";
                 file << "bottoming_method=" << p.bottoming_method << "\n";
                 file << "scrub_drag_gain=" << p.scrub_drag_gain << "\n";
                 file << "rear_align_effect=" << p.rear_align_effect << "\n";
@@ -533,7 +544,9 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "sop_smoothing_factor") engine.m_sop_smoothing_factor = std::stof(value);
                     else if (key == "sop_scale") engine.m_sop_scale = std::stof(value);
                     else if (key == "slip_angle_smoothing") engine.m_slip_angle_smoothing = std::stof(value);
-                    else if (key == "max_load_factor") engine.m_max_load_factor = std::stof(value);
+                    else if (key == "texture_load_cap") engine.m_texture_load_cap = std::stof(value);
+                    else if (key == "max_load_factor") engine.m_texture_load_cap = std::stof(value); // Legacy Backward Compatibility
+                    else if (key == "brake_load_cap") engine.m_brake_load_cap = std::stof(value);
                     else if (key == "smoothing") engine.m_sop_smoothing_factor = std::stof(value); // Legacy support
                     else if (key == "understeer") engine.m_understeer_effect = std::stof(value);
                     else if (key == "sop") engine.m_sop_effect = (std::min)(2.0f, std::stof(value));
@@ -544,6 +557,9 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     // With new decoupling, these would cause 25x force explosions. Clamp to safe maximums.
                     else if (key == "lockup_enabled") engine.m_lockup_enabled = std::stoi(value);
                     else if (key == "lockup_gain") engine.m_lockup_gain = (std::min)(2.0f, std::stof(value));
+                    else if (key == "lockup_start_pct") engine.m_lockup_start_pct = std::stof(value);
+                    else if (key == "lockup_full_pct") engine.m_lockup_full_pct = std::stof(value);
+                    else if (key == "lockup_rear_boost") engine.m_lockup_rear_boost = std::stof(value);
                     else if (key == "spin_enabled") engine.m_spin_enabled = std::stoi(value);
                     else if (key == "spin_gain") engine.m_spin_gain = (std::min)(2.0f, std::stof(value));
                     else if (key == "slide_enabled") engine.m_slide_texture_enabled = std::stoi(value);

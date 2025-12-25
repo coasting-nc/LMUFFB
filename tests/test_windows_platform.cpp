@@ -12,6 +12,8 @@
 #include "imgui.h"
 #include <atomic>
 #include <mutex>
+#include <fstream>
+#include <cstdio>
 
 // Global externs required by GuiLayer
 std::atomic<bool> g_running(true);
@@ -38,6 +40,14 @@ int g_tests_failed = 0;
         std::cout << "[FAIL] " << #a << " (" << a << ") != " << #b << " (" << b << ")" << std::endl; \
         g_tests_failed++; \
     }
+
+// --- Test Helpers ---
+static void InitializeEngine(FFBEngine& engine) {
+    Preset::ApplyDefaultsToEngine(engine);
+    engine.m_max_torque_ref = 20.0f;
+    engine.m_invert_force = false;
+    engine.m_steering_shaft_smoothing = 0.0f;
+}
 
 // --- TESTS ---
 
@@ -773,6 +783,57 @@ static void test_single_source_of_truth_t300_defaults() {
     std::cout << "  [SUMMARY] Single source of truth verified across all initialization paths!" << std::endl;
 }
 
+static void test_config_persistence_braking_group() {
+    std::cout << "\nTest: Config Persistence (Braking Group)" << std::endl;
+    
+    std::string test_file = "test_config_brake.ini";
+    FFBEngine engine_save;
+    InitializeEngine(engine_save);
+    FFBEngine engine_load;
+    InitializeEngine(engine_load);
+    
+    // 1. Set non-default values
+    engine_save.m_brake_load_cap = 2.5f;
+    engine_save.m_lockup_start_pct = 8.0f;
+    engine_save.m_lockup_full_pct = 20.0f;
+    engine_save.m_lockup_rear_boost = 2.0f;
+    
+    // 2. Save
+    Config::Save(engine_save, test_file);
+    
+    // 3. Load
+    Config::Load(engine_load, test_file);
+    
+    // 4. Verify
+    ASSERT_TRUE(engine_load.m_brake_load_cap == 2.5f);
+    ASSERT_TRUE(engine_load.m_lockup_start_pct == 8.0f);
+    ASSERT_TRUE(engine_load.m_lockup_full_pct == 20.0f);
+    ASSERT_TRUE(engine_load.m_lockup_rear_boost == 2.0f);
+    
+    remove(test_file.c_str());
+}
+
+static void test_legacy_config_migration() {
+    std::cout << "\nTest: Legacy Config Migration (Load Cap)" << std::endl;
+    
+    std::string test_file = "test_config_legacy.ini";
+    {
+        std::ofstream file(test_file);
+        // Write old key
+        file << "max_load_factor=1.8\n";
+        file.close();
+    }
+    
+    FFBEngine engine;
+    InitializeEngine(engine);
+    Config::Load(engine, test_file);
+    
+    // Verify it mapped to texture_load_cap
+    ASSERT_TRUE(engine.m_texture_load_cap == 1.8f);
+    
+    remove(test_file.c_str());
+}
+
 int main() {
     std::cout << "=== Running Windows Platform Tests ===" << std::endl;
 
@@ -788,6 +849,8 @@ int main() {
     test_latency_display_regression();
     test_window_config_persistence();
     test_single_source_of_truth_t300_defaults();  // NEW: v0.5.12
+    test_config_persistence_braking_group(); // NEW: v0.5.13
+    test_legacy_config_migration(); // NEW: v0.5.13
 
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;

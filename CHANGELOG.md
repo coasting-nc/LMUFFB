@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.13] - 2025-12-25
+
+### Added
+- **Quadratic Lockup Ramp**: Replaced the linear lockup severity ramp with a quadratic curve for a more progressive and natural-feeling onset of vibration during brake modulation.
+- **Split Load Caps**: Introduced separate safety limiters for Textures vs. Braking:
+    - **Texture Load Cap**: Specifically limits Road and Slide vibration intensity.
+    - **Brake Load Cap**: A dedicated limiter for Lockup vibration, allowing for stronger feedback during high-downforce braking events (~3.0x).
+- **Advanced Lockup Tuning**:
+    - **Dynamic Thresholds**: Added "Start Slip %" and "Full Slip %" sliders to customize the vibration trigger window.
+    - **Rear Lockup Boost**: Added a multiplier (1.0 - 3.0x) to amplify vibrations when the rear axle is the dominant lockup source.
+- **GUI Organization**:
+    - New **"Braking & Lockup"** collapsible section grouping all related sliders and checkboxes.
+    - Renamed "Load Cap" in the Textures section to **"Texture Load Cap"** to clarify its specific scope.
+
+### Fixed
+- **Manual Slip Calculation**: Corrected a sign error in the manual slip ratio calculation by properly handling forward velocity direction in `get_slip_ratio`.
+- **Axle Differentiation Refinement**: Improved the detection logic for dominant lockup source to ensure "Heavy Judder" triggers reliably when rear wheels lock harder than front wheels.
+
 ## [0.5.12] - 2025-12-25
 ### Changed
 - **FFB Engine Single Source of Truth (SSOT)**: 

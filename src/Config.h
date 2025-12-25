@@ -25,6 +25,10 @@ struct Preset {
     
     bool lockup_enabled = true;
     float lockup_gain = 2.0f;
+    float lockup_start_pct = 5.0f;  // New v0.5.11
+    float lockup_full_pct = 15.0f;  // New v0.5.11
+    float lockup_rear_boost = 1.5f; // New v0.5.11
+    float brake_load_cap = 1.5f;    // New v0.5.11
     
     bool spin_enabled = true;
     float spin_gain = 0.5f;
@@ -82,7 +86,15 @@ struct Preset {
     Preset& SetOversteer(float v) { oversteer_boost = v; return *this; }
     Preset& SetSlipSmoothing(float v) { slip_smoothing = v; return *this; }
     
-    Preset& SetLockup(bool enabled, float g) { lockup_enabled = enabled; lockup_gain = g; return *this; }
+    Preset& SetLockup(bool enabled, float g, float start = 5.0f, float full = 15.0f, float boost = 1.5f) { 
+        lockup_enabled = enabled; 
+        lockup_gain = g; 
+        lockup_start_pct = start;
+        lockup_full_pct = full;
+        lockup_rear_boost = boost;
+        return *this; 
+    }
+    Preset& SetBrakeCap(float v) { brake_load_cap = v; return *this; }
     Preset& SetSpin(bool enabled, float g) { spin_enabled = enabled; spin_gain = g; return *this; }
     Preset& SetSlide(bool enabled, float g, float f = 1.0f) { 
         slide_enabled = enabled; 
@@ -147,6 +159,11 @@ struct Preset {
         engine.m_oversteer_boost = oversteer_boost;
         engine.m_lockup_enabled = lockup_enabled;
         engine.m_lockup_gain = lockup_gain;
+        engine.m_lockup_start_pct = lockup_start_pct;
+        engine.m_lockup_full_pct = lockup_full_pct;
+        engine.m_lockup_rear_boost = lockup_rear_boost;
+        engine.m_brake_load_cap = brake_load_cap;
+
         engine.m_spin_enabled = spin_enabled;
         engine.m_spin_gain = spin_gain;
         engine.m_slide_texture_enabled = slide_enabled;
@@ -189,6 +206,11 @@ struct Preset {
         oversteer_boost = engine.m_oversteer_boost;
         lockup_enabled = engine.m_lockup_enabled;
         lockup_gain = engine.m_lockup_gain;
+        lockup_start_pct = engine.m_lockup_start_pct;
+        lockup_full_pct = engine.m_lockup_full_pct;
+        lockup_rear_boost = engine.m_lockup_rear_boost;
+        brake_load_cap = engine.m_brake_load_cap;
+        
         spin_enabled = engine.m_spin_enabled;
         spin_gain = engine.m_spin_gain;
         slide_enabled = engine.m_slide_texture_enabled;

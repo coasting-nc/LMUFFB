@@ -72,6 +72,9 @@ static void test_steering_shaft_smoothing(); // Forward declaration (v0.5.7)
 static void test_config_defaults_v057(); // Forward declaration (v0.5.7)
 static void test_config_safety_validation_v057(); // Forward declaration (v0.5.7)
 static void test_rear_lockup_differentiation(); // Forward declaration (v0.5.11)
+static void test_manual_slip_sign_fix(); // Forward declaration (v0.5.13)
+static void test_split_load_caps(); // Forward declaration (v0.5.13)
+static void test_dynamic_thresholds(); // Forward declaration (v0.5.13)
 
 // --- Test Helper Functions (v0.5.7) ---
 
@@ -581,11 +584,7 @@ static void test_progressive_lockup() {
     std::cout << "\nTest: Progressive Lockup" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
-    TelemInfoV01 data;
-    std::memset(&data, 0, sizeof(data));
-    
-    // Default RH to avoid scraping
-    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
     engine.m_lockup_enabled = true;
     engine.m_lockup_gain = 1.0;
@@ -595,17 +594,20 @@ static void test_progressive_lockup() {
     data.mSteeringShaftTorque = 0.0;
     data.mUnfilteredBrake = 1.0;
     
-    // Set DeltaTime for phase integration
-    data.mDeltaTime = 0.01;
-    data.mLocalVel.z = 20.0; // 20 m/s
+    // Use production defaults: Start 5%, Full 15% (v0.5.13)
+    // These are the default values that ship to users
+    engine.m_lockup_start_pct = 5.0f;
+    engine.m_lockup_full_pct = 15.0f;
     
-    // Case 1: Low Slip (-0.15). Severity = (0.15 - 0.1) / 0.4 = 0.125
+    // Case 1: Low Slip (-0.08 = 8%). 
+    // With Start=5%, Full=15%: severity = (0.08 - 0.05) / (0.15 - 0.05) = 0.03 / 0.10 = 0.3
+    // Quadratic ramp: 0.3^2 = 0.09
     // Emulate slip ratio by setting longitudinal velocity difference
     // Ratio = PatchVel / GroundVel. So PatchVel = Ratio * GroundVel.
     data.mWheel[0].mLongitudinalGroundVel = 20.0;
     data.mWheel[1].mLongitudinalGroundVel = 20.0;
-    data.mWheel[0].mLongitudinalPatchVel = -0.15 * 20.0; // -3.0 m/s
-    data.mWheel[1].mLongitudinalPatchVel = -0.15 * 20.0;
+    data.mWheel[0].mLongitudinalPatchVel = -0.08 * 20.0; // -1.6 m/s
+    data.mWheel[1].mLongitudinalPatchVel = -0.08 * 20.0;
     
     // Ensure data.mDeltaTime is set! 
     data.mDeltaTime = 0.01;
@@ -1749,17 +1751,10 @@ static void test_manual_slip_calculation() {
     std::cout << "\nTest: Manual Slip Calculation" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
-    TelemInfoV01 data;
-    std::memset(&data, 0, sizeof(data));
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
     // Enable manual calculation
     engine.m_use_manual_slip = true;
-    // Avoid scraping noise
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    
-    // Setup Car Speed: 20 m/s
-    data.mLocalVel.z = 20.0;
     
     // Setup Wheel: 30cm radius (30 / 100 = 0.3m)
     data.mWheel[0].mStaticUndeflectedRadius = 30; // cm
@@ -2721,6 +2716,9 @@ int main() {
     test_config_defaults_v057();
     test_config_safety_validation_v057();
     test_rear_lockup_differentiation(); // v0.5.11
+    test_manual_slip_sign_fix(); // v0.5.13
+    test_split_load_caps(); // v0.5.13
+    test_dynamic_thresholds(); // v0.5.13
     
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
@@ -4877,6 +4875,156 @@ static void test_rear_lockup_differentiation() {
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Frequency differentiation failed. Ratio: " << ratio << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_manual_slip_sign_fix() {
+    std::cout << "\nTest: Manual Slip Sign Fix (Negative Velocity)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0); // 20 m/s
+    
+    engine.m_lockup_enabled = true;
+    engine.m_use_manual_slip = true;
+    engine.m_lockup_gain = 1.0f;
+    
+    // Setup: Car moving forward (-20 m/s), Wheels Locked (0 rad/s)
+    data.mLocalVel.z = -20.0; 
+    for(int i=0; i<4; i++) data.mWheel[i].mRotation = 0.0;
+    data.mUnfilteredBrake = 1.0;
+
+    // Execute
+    engine.calculate_force(&data);
+
+    // Verification
+    // Old Bug: (-20 - 0) / -20 = +1.0 (Traction) -> No Lockup
+    // Fix: (0 - 20) / 20 = -1.0 (Lockup) -> Phase Advances
+    ASSERT_TRUE(engine.m_lockup_phase > 0.0);
+}
+
+static void test_split_load_caps() {
+    std::cout << "\nTest: Split Load Caps (Brake vs Texture)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+
+    // Setup High Load (12000N = 3.0x Load Factor)
+    for(int i=0; i<4; i++) data.mWheel[i].mTireLoad = 12000.0;
+
+    // Config: Texture Cap = 1.0x, Brake Cap = 3.0x
+    engine.m_texture_load_cap = 1.0f; 
+    engine.m_brake_load_cap = 3.0f;
+    
+    // ===================================================================
+    // PART 1: Test Road Texture (Should be clamped to 1.0x)
+    // ===================================================================
+    engine.m_road_texture_enabled = true;
+    engine.m_road_texture_gain = 1.0;
+    engine.m_lockup_enabled = false;
+    data.mWheel[0].mVerticalTireDeflection = 0.01; // Bump FL
+    data.mWheel[1].mVerticalTireDeflection = 0.01; // Bump FR
+    
+    // Road Texture Baseline: Delta * Sum * 50.0
+    // Bump 0.01 -> Delta Sum = 0.02. 0.02 * 50.0 = 1.0 Nm.
+    // 1.0 Nm * Texture Load Cap (1.0) = 1.0 Nm.
+    // Normalized by 20 Nm (Default decoupling baseline) = 0.05.
+    double force_road = engine.calculate_force(&data);
+    
+    // Verify road texture is clamped to 1.0x (not using the 3.0x brake cap)
+    if (std::abs(force_road - 0.05) < 0.001) {
+        std::cout << "[PASS] Road texture correctly clamped to 1.0x (Force: " << force_road << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Road texture clamping failed. Expected 0.05, got " << force_road << std::endl;
+        g_tests_failed++;
+        return; // Early exit if first part fails
+    }
+
+    // ===================================================================
+    // PART 2: Test Lockup (Should use Brake Load Cap 3.0x)
+    // ===================================================================
+    engine.m_road_texture_enabled = false;
+    engine.m_lockup_enabled = true;
+    engine.m_lockup_gain = 1.0;
+    data.mUnfilteredBrake = 1.0;
+    data.mWheel[0].mLongitudinalPatchVel = -10.0; // Slip
+    data.mWheel[1].mLongitudinalPatchVel = -10.0; // Slip (both wheels for consistency)
+    
+    // Baseline engine with 1.0 cap for comparison
+    FFBEngine engine_low;
+    InitializeEngine(engine_low);
+    engine_low.m_brake_load_cap = 1.0f;
+    engine_low.m_lockup_enabled = true;
+    engine_low.m_lockup_gain = 1.0;
+    
+    // Reset phase to ensure both engines start from same state
+    engine.m_lockup_phase = 0.0;
+    engine_low.m_lockup_phase = 0.0;
+    
+    double force_low = engine_low.calculate_force(&data);
+    double force_high = engine.calculate_force(&data);
+    
+    // Verify the 3x ratio more precisely
+    // Expected: force_high ≈ 3.0 * force_low (within tolerance for phase differences)
+    double expected_ratio = 3.0;
+    double actual_ratio = std::abs(force_high) / (std::abs(force_low) + 0.0001); // Add epsilon to avoid div-by-zero
+    
+    // Use a tolerance of ±0.5 to account for phase integration differences
+    if (std::abs(actual_ratio - expected_ratio) < 0.5) {
+        std::cout << "[PASS] Brake load cap applies 3x scaling (Ratio: " << actual_ratio << ", High: " << std::abs(force_high) << ", Low: " << std::abs(force_low) << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Expected ~3x ratio, got " << actual_ratio << " (High: " << std::abs(force_high) << ", Low: " << std::abs(force_low) << ")" << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_dynamic_thresholds() {
+    std::cout << "\nTest: Dynamic Lockup Thresholds" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    
+    engine.m_lockup_enabled = true;
+    engine.m_lockup_gain = 1.0;
+    data.mUnfilteredBrake = 1.0;
+    
+    // Config: Start 5%, Full 15%
+    engine.m_lockup_start_pct = 5.0f;
+    engine.m_lockup_full_pct = 15.0f;
+    
+    // Case A: 4% Slip (Below Start)
+    // 0.04 * 20.0 = 0.8
+    data.mWheel[0].mLongitudinalPatchVel = -0.8; 
+    engine.calculate_force(&data);
+    if (engine.m_lockup_phase == 0.0) {
+        std::cout << "[PASS] No trigger below 5% start." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Triggered below start threshold." << std::endl;
+        g_tests_failed++;
+    }
+
+    // Case B: 10% Slip (In Range)
+    // 0.10 * 20.0 = 2.0
+    data.mWheel[0].mLongitudinalPatchVel = -2.0;
+    double force_mid = engine.calculate_force(&data);
+    ASSERT_TRUE(std::abs(force_mid) > 0.0);
+    
+    // Case C: 20% Slip (Saturated)
+    // 0.20 * 20.0 = 4.0
+    data.mWheel[0].mLongitudinalPatchVel = -4.0;
+    double force_max = engine.calculate_force(&data);
+    
+    // Both should have non-zero force, and max should be significantly higher due to quadratic ramp
+    // 10% slip: severity = (0.5)^2 = 0.25
+    // 20% slip: severity = 1.0
+    if (std::abs(force_max) > std::abs(force_mid)) {
+        std::cout << "[PASS] Force increases with slip depth." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Force saturation/ramp failed." << std::endl;
         g_tests_failed++;
     }
 }

@@ -804,11 +804,29 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::NextColumn(); ImGui::NextColumn(); 
     }
 
+    // --- GROUP: BRAKING & LOCKUP ---
+    if (ImGui::TreeNodeEx("Braking & Lockup", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+        ImGui::NextColumn(); ImGui::NextColumn();
+
+        BoolSetting("Lockup Vibration", &engine.m_lockup_enabled, "Simulates tire judder when wheels are locked under braking.");
+        if (engine.m_lockup_enabled) {
+            FloatSetting("  Lockup Strength", &engine.m_lockup_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_lockup_gain, FFBEngine::BASE_NM_LOCKUP_VIBRATION));
+            FloatSetting("  Brake Load Cap", &engine.m_brake_load_cap, 1.0f, 3.0f, "%.2fx", "Scales vibration intensity based on tire load.\nPrevents weak vibrations during high-speed heavy braking.");
+            FloatSetting("  Start Slip %", &engine.m_lockup_start_pct, 1.0f, 10.0f, "%.1f%%");
+            FloatSetting("  Full Slip %", &engine.m_lockup_full_pct, 5.0f, 25.0f, "%.1f%%");
+            FloatSetting("  Rear Boost", &engine.m_lockup_rear_boost, 1.0f, 3.0f, "%.2fx", "Multiplies amplitude when rear wheels lock harder than front wheels.");
+        }
+
+        ImGui::TreePop();
+    } else {
+        ImGui::NextColumn(); ImGui::NextColumn();
+    }
+
     // --- GROUP: TEXTURES ---
     if (ImGui::TreeNodeEx("Tactile Textures", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
         
-        FloatSetting("Load Cap", &engine.m_max_load_factor, 1.0f, 3.0f, "%.2fx", "Safety Limiter specific to Texture and Vibration effects, \nwhich are scaled by tire load.\nPrevents violent shaking when under high downforce or compression.\nAffects high-freq. effects: Road Text. (Bumps/Curbs), Slide, Lockup.\nLower this if curbs feel too violent in fast corners.");
+        FloatSetting("Texture Load Cap", &engine.m_texture_load_cap, 1.0f, 3.0f, "%.2fx", "Safety Limiter specific to Road and Slide textures.\nPrevents violent shaking when under high downforce or compression.\nONLY affects Road Details and Slide Rumble.");
 
         BoolSetting("Slide Rumble", &engine.m_slide_texture_enabled);
         if (engine.m_slide_texture_enabled) {
@@ -821,11 +839,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             FloatSetting("  Road Gain", &engine.m_road_texture_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_road_texture_gain, FFBEngine::BASE_NM_ROAD_TEXTURE));
         }
 
-        BoolSetting("Lockup Vibration", &engine.m_lockup_enabled);
-        if (engine.m_lockup_enabled) {
-            FloatSetting("  Lockup Strength", &engine.m_lockup_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_lockup_gain, FFBEngine::BASE_NM_LOCKUP_VIBRATION));
-        }
-        
         BoolSetting("Spin Vibration", &engine.m_spin_enabled);
         if (engine.m_spin_enabled) {
             FloatSetting("  Spin Strength", &engine.m_spin_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_spin_gain, FFBEngine::BASE_NM_SPIN_VIBRATION));

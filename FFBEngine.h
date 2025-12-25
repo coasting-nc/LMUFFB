@@ -184,7 +184,8 @@ public:
     
     // Configurable Smoothing & Caps (v0.3.9)
     float m_sop_smoothing_factor;
-    float m_max_load_factor = 1.5f;  // Keep this as it's not in presets
+    float m_texture_load_cap = 1.5f; // Renamed from m_max_load_factor (v0.5.11)
+    float m_brake_load_cap = 1.5f;   // New v0.5.11
     float m_sop_scale;
     
     // v0.4.4 Features
@@ -206,6 +207,10 @@ public:
     
     bool m_lockup_enabled;
     float m_lockup_gain;
+    // NEW Lockup Tuning (v0.5.11)
+    float m_lockup_start_pct = 5.0f;
+    float m_lockup_full_pct = 15.0f;
+    float m_lockup_rear_boost = 1.5f;
     
     bool m_spin_enabled;
     float m_spin_gain;
@@ -436,6 +441,11 @@ private:
     // The amplitude boost emphasizes the danger of potential spin during rear lockups.
     static constexpr double LOCKUP_FREQ_MULTIPLIER_REAR = 0.3;  // Rear lockup frequency (0.5: 50% of base) // 0.3;  // Even lower pitch
     static constexpr double LOCKUP_AMPLITUDE_BOOST_REAR = 1.5;  // Rear lockup amplitude boost (1.2: 20% increase) //  1.5;  // 50% boost
+    
+    // Axle Differentiation Hysteresis (v0.5.13)
+    // Prevents rapid switching between front/rear lockup modes due to sensor noise.
+    // Rear lockup is only triggered when rear slip exceeds front slip by this margin (1% slip).
+    static constexpr double AXLE_DIFF_HYSTERESIS = 0.01;  // 1% slip buffer to prevent mode chattering
 
 
 public:
@@ -850,12 +860,17 @@ public:
         }
         
         // Normalize: 4000N is a reference "loaded" GT tire.
-        double load_factor = avg_load / 4000.0;
+        double raw_load_factor = avg_load / 4000.0;
         
-        // SAFETY CLAMP (v0.4.6): Hard clamp at 2.0 (regardless of config) to prevent explosion
-        // Also respect configured max if lower.
-        double safe_max = (std::min)(2.0, (double)m_max_load_factor);
-        load_factor = (std::min)(safe_max, (std::max)(0.0, load_factor));
+        // Split Load Caps (v0.5.11)
+        // 1. Texture Load Factor (Road/Slide)
+        double texture_safe_max = (std::min)(2.0, (double)m_texture_load_cap);
+        double texture_load_factor = (std::min)(texture_safe_max, (std::max)(0.0, raw_load_factor));
+
+        // 2. Brake Load Factor (Lockup)
+        // Hard clamp at 3.0 as per GUI limits
+        double brake_safe_max = (std::min)(3.0, (double)m_brake_load_cap);
+        double brake_load_factor = (std::min)(brake_safe_max, (std::max)(0.0, raw_load_factor));
 
         // --- 1. GAIN COMPENSATION (Decoupling) ---
         // Baseline: 20.0 Nm (The standard reference where 1.0 gain was tuned).
@@ -1111,7 +1126,7 @@ public:
         auto get_slip_ratio = [&](const TelemWheelV01& w) {
             // v0.4.5: Option to use manual calculation
             if (m_use_manual_slip) {
-                return calculate_manual_slip_ratio(w, data->mLocalVel.z);
+                return calculate_manual_slip_ratio(w, std::abs(data->mLocalVel.z));
             }
             // Default Game Data
             double v_long = std::abs(w.mLongitudinalGroundVel);
@@ -1123,50 +1138,52 @@ public:
 
         // --- 2b. Progressive Lockup (Front & Rear with Differentiation) ---
         if (m_lockup_enabled && data->mUnfilteredBrake > 0.05) {
-            // 1. Calculate Slip Ratios for all wheels
+            // 1. Calculate Slip Ratios for all 4 wheels (v0.5.11)
             double slip_fl = get_slip_ratio(data->mWheel[0]);
             double slip_fr = get_slip_ratio(data->mWheel[1]);
             double slip_rl = get_slip_ratio(data->mWheel[2]);
             double slip_rr = get_slip_ratio(data->mWheel[3]);
 
-            // 2. Find worst slip per axle (Slip is negative during braking, so use min)
+            // 2. Find worst slip per axle (Slip is negative during braking)
             double max_slip_front = (std::min)(slip_fl, slip_fr);
             double max_slip_rear  = (std::min)(slip_rl, slip_rr);
 
-            // 3. Determine dominant lockup source
-            double effective_slip = 0.0;
-            double freq_multiplier = 1.0; // Default to Front (High Pitch)
+            // 3. Determine dominant lockup source and severity
+            double effective_slip = (std::min)(max_slip_front, max_slip_rear);
+            double freq_multiplier = 1.0; 
 
-            // Check if Rear is locking up worse than Front
-            // (e.g. Rear -0.5 vs Front -0.1)
-            if (max_slip_rear < max_slip_front) {
-                effective_slip = max_slip_rear;
-                freq_multiplier = LOCKUP_FREQ_MULTIPLIER_REAR; // Lower pitch for Rear -> "Heavy Judder"
-            } else {
-                effective_slip = max_slip_front;
-                freq_multiplier = 1.0; // Standard pitch for Front -> "Screech"
+            // Implement Axle Differentiation (v0.5.11, refined v0.5.13)
+            if (max_slip_rear < (max_slip_front - AXLE_DIFF_HYSTERESIS)) { // Rear locking more than front
+                freq_multiplier = LOCKUP_FREQ_MULTIPLIER_REAR; // 0.3x Frequency -> Heavy Judder
             }
 
-            // 4. Generate Effect
-            if (effective_slip < -0.1) {
-                double severity = (std::abs(effective_slip) - 0.1) / 0.4;
-                severity = (std::min)(1.0, severity);
+            // 4. Generate Effect with Dynamic Thresholds and Quadratic Ramp
+            double start_pct = (double)m_lockup_start_pct / 100.0;
+            double full_pct = (double)m_lockup_full_pct / 100.0;
+            
+            if (std::abs(effective_slip) > start_pct) {
+                double range = full_pct - start_pct;
+                if (range < 0.01) range = 0.01; // Avoid div by zero
+                
+                double x = (std::abs(effective_slip) - start_pct) / range;
+                x = (std::min)(1.0, x);
+                double severity = x * x; // Quadratic Ramp (v0.5.11)
                 
                 // Base Frequency linked to Car Speed
                 double base_freq = 10.0 + (car_speed_ms * 1.5); 
-                
-                // Apply Axle Differentiation
                 double final_freq = base_freq * freq_multiplier;
 
                 // Phase Integration
                 m_lockup_phase += final_freq * dt * TWO_PI;
                 m_lockup_phase = std::fmod(m_lockup_phase, TWO_PI);
 
-                // Amplitude
-                double amp = severity * m_lockup_gain * 4.0 * decoupling_scale;
+                // Amplitude using Brake Load Factor (v0.5.11)
+                double amp = severity * m_lockup_gain * 4.0 * decoupling_scale * brake_load_factor;
                 
-                // Boost rear amplitude to emphasize danger
-                if (freq_multiplier < 1.0) amp *= LOCKUP_AMPLITUDE_BOOST_REAR;
+                // Apply Rear Boost if Rear is dominant
+                if (freq_multiplier < 1.0) {
+                    amp *= (double)m_lockup_rear_boost;
+                }
 
                 lockup_rumble = std::sin(m_lockup_phase) * amp;
                 total_force += lockup_rumble;
@@ -1256,7 +1273,7 @@ public:
                 // We use avg_grip (from understeer calc) which includes longitudinal slip.
                 double grip_scale = (std::max)(0.0, 1.0 - avg_grip);
                 // Resulting force
-                slide_noise = sawtooth * m_slide_texture_gain * (double)BASE_NM_SLIDE_TEXTURE * load_factor * grip_scale * decoupling_scale;
+                slide_noise = sawtooth * m_slide_texture_gain * (double)BASE_NM_SLIDE_TEXTURE * texture_load_factor * grip_scale * decoupling_scale;
                 total_force += slide_noise;
             }
         }
@@ -1308,7 +1325,7 @@ public:
             double road_noise_val = (delta_l + delta_r) * 50.0 * m_road_texture_gain * decoupling_scale; // Scaled for Nm (was 5000)
             
             // Apply LOAD FACTOR: Bumps feel harder under compression
-            road_noise = road_noise_val * load_factor;
+            road_noise = road_noise_val * texture_load_factor;
             
             total_force += road_noise;
         }

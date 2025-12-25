@@ -451,6 +451,24 @@ tests\test_ffb_engine.exe 2>&1 | Select-String -Pattern "Tests (Passed|Failed):"
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.13] - 2025-12-25
+
+### Added
+- **Quadratic Lockup Ramp**: Replaced the linear lockup severity ramp with a quadratic curve for a more progressive and natural-feeling onset of vibration during brake modulation.
+- **Split Load Caps**: Introduced separate safety limiters for Textures vs. Braking:
+    - **Texture Load Cap**: Specifically limits Road and Slide vibration intensity.
+    - **Brake Load Cap**: A dedicated limiter for Lockup vibration, allowing for stronger feedback during high-downforce braking events (~3.0x).
+- **Advanced Lockup Tuning**:
+    - **Dynamic Thresholds**: Added "Start Slip %" and "Full Slip %" sliders to customize the vibration trigger window.
+    - **Rear Lockup Boost**: Added a multiplier (1.0 - 3.0x) to amplify vibrations when the rear axle is the dominant lockup source.
+- **GUI Organization**:
+    - New **"Braking & Lockup"** collapsible section grouping all related sliders and checkboxes.
+    - Renamed "Load Cap" in the Textures section to **"Texture Load Cap"** to clarify its specific scope.
+
+### Fixed
+- **Manual Slip Calculation**: Corrected a sign error in the manual slip ratio calculation by properly handling forward velocity direction in `get_slip_ratio`.
+- **Axle Differentiation Refinement**: Improved the detection logic for dominant lockup source to ensure "Heavy Judder" triggers reliably when rear wheels lock harder than front wheels.
+
 ## [0.5.12] - 2025-12-25
 ### Changed
 - **FFB Engine Single Source of Truth (SSOT)**: 
@@ -1597,7 +1615,8 @@ public:
     
     // Configurable Smoothing & Caps (v0.3.9)
     float m_sop_smoothing_factor;
-    float m_max_load_factor = 1.5f;  // Keep this as it's not in presets
+    float m_texture_load_cap = 1.5f; // Renamed from m_max_load_factor (v0.5.11)
+    float m_brake_load_cap = 1.5f;   // New v0.5.11
     float m_sop_scale;
     
     // v0.4.4 Features
@@ -1619,6 +1638,10 @@ public:
     
     bool m_lockup_enabled;
     float m_lockup_gain;
+    // NEW Lockup Tuning (v0.5.11)
+    float m_lockup_start_pct = 5.0f;
+    float m_lockup_full_pct = 15.0f;
+    float m_lockup_rear_boost = 1.5f;
     
     bool m_spin_enabled;
     float m_spin_gain;
@@ -1849,6 +1872,11 @@ private:
     // The amplitude boost emphasizes the danger of potential spin during rear lockups.
     static constexpr double LOCKUP_FREQ_MULTIPLIER_REAR = 0.3;  // Rear lockup frequency (0.5: 50% of base) // 0.3;  // Even lower pitch
     static constexpr double LOCKUP_AMPLITUDE_BOOST_REAR = 1.5;  // Rear lockup amplitude boost (1.2: 20% increase) //  1.5;  // 50% boost
+    
+    // Axle Differentiation Hysteresis (v0.5.13)
+    // Prevents rapid switching between front/rear lockup modes due to sensor noise.
+    // Rear lockup is only triggered when rear slip exceeds front slip by this margin (1% slip).
+    static constexpr double AXLE_DIFF_HYSTERESIS = 0.01;  // 1% slip buffer to prevent mode chattering
 
 
 public:
@@ -2263,12 +2291,17 @@ public:
         }
         
         // Normalize: 4000N is a reference "loaded" GT tire.
-        double load_factor = avg_load / 4000.0;
+        double raw_load_factor = avg_load / 4000.0;
         
-        // SAFETY CLAMP (v0.4.6): Hard clamp at 2.0 (regardless of config) to prevent explosion
-        // Also respect configured max if lower.
-        double safe_max = (std::min)(2.0, (double)m_max_load_factor);
-        load_factor = (std::min)(safe_max, (std::max)(0.0, load_factor));
+        // Split Load Caps (v0.5.11)
+        // 1. Texture Load Factor (Road/Slide)
+        double texture_safe_max = (std::min)(2.0, (double)m_texture_load_cap);
+        double texture_load_factor = (std::min)(texture_safe_max, (std::max)(0.0, raw_load_factor));
+
+        // 2. Brake Load Factor (Lockup)
+        // Hard clamp at 3.0 as per GUI limits
+        double brake_safe_max = (std::min)(3.0, (double)m_brake_load_cap);
+        double brake_load_factor = (std::min)(brake_safe_max, (std::max)(0.0, raw_load_factor));
 
         // --- 1. GAIN COMPENSATION (Decoupling) ---
         // Baseline: 20.0 Nm (The standard reference where 1.0 gain was tuned).
@@ -2524,7 +2557,7 @@ public:
         auto get_slip_ratio = [&](const TelemWheelV01& w) {
             // v0.4.5: Option to use manual calculation
             if (m_use_manual_slip) {
-                return calculate_manual_slip_ratio(w, data->mLocalVel.z);
+                return calculate_manual_slip_ratio(w, std::abs(data->mLocalVel.z));
             }
             // Default Game Data
             double v_long = std::abs(w.mLongitudinalGroundVel);
@@ -2536,50 +2569,52 @@ public:
 
         // --- 2b. Progressive Lockup (Front & Rear with Differentiation) ---
         if (m_lockup_enabled && data->mUnfilteredBrake > 0.05) {
-            // 1. Calculate Slip Ratios for all wheels
+            // 1. Calculate Slip Ratios for all 4 wheels (v0.5.11)
             double slip_fl = get_slip_ratio(data->mWheel[0]);
             double slip_fr = get_slip_ratio(data->mWheel[1]);
             double slip_rl = get_slip_ratio(data->mWheel[2]);
             double slip_rr = get_slip_ratio(data->mWheel[3]);
 
-            // 2. Find worst slip per axle (Slip is negative during braking, so use min)
+            // 2. Find worst slip per axle (Slip is negative during braking)
             double max_slip_front = (std::min)(slip_fl, slip_fr);
             double max_slip_rear  = (std::min)(slip_rl, slip_rr);
 
-            // 3. Determine dominant lockup source
-            double effective_slip = 0.0;
-            double freq_multiplier = 1.0; // Default to Front (High Pitch)
+            // 3. Determine dominant lockup source and severity
+            double effective_slip = (std::min)(max_slip_front, max_slip_rear);
+            double freq_multiplier = 1.0; 
 
-            // Check if Rear is locking up worse than Front
-            // (e.g. Rear -0.5 vs Front -0.1)
-            if (max_slip_rear < max_slip_front) {
-                effective_slip = max_slip_rear;
-                freq_multiplier = LOCKUP_FREQ_MULTIPLIER_REAR; // Lower pitch for Rear -> "Heavy Judder"
-            } else {
-                effective_slip = max_slip_front;
-                freq_multiplier = 1.0; // Standard pitch for Front -> "Screech"
+            // Implement Axle Differentiation (v0.5.11, refined v0.5.13)
+            if (max_slip_rear < (max_slip_front - AXLE_DIFF_HYSTERESIS)) { // Rear locking more than front
+                freq_multiplier = LOCKUP_FREQ_MULTIPLIER_REAR; // 0.3x Frequency -> Heavy Judder
             }
 
-            // 4. Generate Effect
-            if (effective_slip < -0.1) {
-                double severity = (std::abs(effective_slip) - 0.1) / 0.4;
-                severity = (std::min)(1.0, severity);
+            // 4. Generate Effect with Dynamic Thresholds and Quadratic Ramp
+            double start_pct = (double)m_lockup_start_pct / 100.0;
+            double full_pct = (double)m_lockup_full_pct / 100.0;
+            
+            if (std::abs(effective_slip) > start_pct) {
+                double range = full_pct - start_pct;
+                if (range < 0.01) range = 0.01; // Avoid div by zero
+                
+                double x = (std::abs(effective_slip) - start_pct) / range;
+                x = (std::min)(1.0, x);
+                double severity = x * x; // Quadratic Ramp (v0.5.11)
                 
                 // Base Frequency linked to Car Speed
                 double base_freq = 10.0 + (car_speed_ms * 1.5); 
-                
-                // Apply Axle Differentiation
                 double final_freq = base_freq * freq_multiplier;
 
                 // Phase Integration
                 m_lockup_phase += final_freq * dt * TWO_PI;
                 m_lockup_phase = std::fmod(m_lockup_phase, TWO_PI);
 
-                // Amplitude
-                double amp = severity * m_lockup_gain * 4.0 * decoupling_scale;
+                // Amplitude using Brake Load Factor (v0.5.11)
+                double amp = severity * m_lockup_gain * 4.0 * decoupling_scale * brake_load_factor;
                 
-                // Boost rear amplitude to emphasize danger
-                if (freq_multiplier < 1.0) amp *= LOCKUP_AMPLITUDE_BOOST_REAR;
+                // Apply Rear Boost if Rear is dominant
+                if (freq_multiplier < 1.0) {
+                    amp *= (double)m_lockup_rear_boost;
+                }
 
                 lockup_rumble = std::sin(m_lockup_phase) * amp;
                 total_force += lockup_rumble;
@@ -2669,7 +2704,7 @@ public:
                 // We use avg_grip (from understeer calc) which includes longitudinal slip.
                 double grip_scale = (std::max)(0.0, 1.0 - avg_grip);
                 // Resulting force
-                slide_noise = sawtooth * m_slide_texture_gain * (double)BASE_NM_SLIDE_TEXTURE * load_factor * grip_scale * decoupling_scale;
+                slide_noise = sawtooth * m_slide_texture_gain * (double)BASE_NM_SLIDE_TEXTURE * texture_load_factor * grip_scale * decoupling_scale;
                 total_force += slide_noise;
             }
         }
@@ -2721,7 +2756,7 @@ public:
             double road_noise_val = (delta_l + delta_r) * 50.0 * m_road_texture_gain * decoupling_scale; // Scaled for Nm (was 5000)
             
             // Apply LOAD FACTOR: Bumps feel harder under compression
-            road_noise = road_noise_val * load_factor;
+            road_noise = road_noise_val * texture_load_factor;
             
             total_force += road_noise;
         }
@@ -14158,10 +14193,10 @@ This approach maximizes testability while minimizing risk to the existing, worki
 
 # File: docs\dev_docs\lockup vibration fix2.md
 ```markdown
-# Technical Report: Lockup Vibration Fixes & Enhancements
+# Technical Report: Lockup Vibration Fixes & Enhancements (Batch 1)
 
 **Date:** December 24, 2025
-**Subject:** Resolution of missing rear lockup effects, manual slip calculation bugs, and implementation of advanced tuning controls.
+**Subject:** Resolution of missing rear lockup effects, manual slip calculation bugs, and implementation of advanced tuning controls with dedicated Braking configuration.
 
 ---
 
@@ -14172,11 +14207,14 @@ User testing identified three critical deficiencies in the "Braking Lockup" FFB 
 2.  **Late Warning:** The hardcoded trigger threshold of 10% slip (`-0.1`) was too high. By the time the effect triggered, the tires were already deep into the lockup phase, offering no opportunity for threshold braking modulation.
 3.  **Broken Manual Calculation:** The "Manual Slip Calc" fallback option produced no output due to a coordinate system sign error.
 
+Additionally, tuning the braking feel was difficult because the "Load Cap" (which limits vibration intensity under high downforce) was shared globally with Road and Slide textures. Users often wanted strong braking feedback (High Cap) but subtle road bumps (Low Cap), which was impossible with a single slider.
+
 ## 2. Root Cause Analysis
 
 *   **Rear Blindness:** The `calculate_force` loop explicitly checked only `mWheel[0]` and `mWheel[1]`. Telemetry analysis confirms LMU *does* provide valid longitudinal patch velocity for rear wheels, so this was a logic omission, not a data gap.
 *   **Manual Slip Bug:** The formula used `data->mLocalVel.z` directly. In LMU, forward velocity is **negative**. Passing a negative denominator to the slip ratio formula resulted in positive (traction) ratios during braking, failing the `< -0.1` check.
 *   **Thresholds:** The linear ramp from 10% to 50% slip did not align with the physics of slick tires, which typically peak around 12-15% slip.
+*   **Coupled Load Limits:** The `m_max_load_factor` applied universally to all vibration effects, preventing independent tuning of braking intensity vs. road texture harshness.
 
 ---
 
@@ -14184,12 +14222,16 @@ User testing identified three critical deficiencies in the "Braking Lockup" FFB 
 
 ### A. Physics Engine (`FFBEngine.h`)
 
-We will implement a **4-Wheel Monitor** with **Axle Differentiation**.
-*   **Differentiation:** If the rear axle has a higher slip ratio than the front, the vibration frequency drops to **30%** (Heavy Judder) and amplitude is boosted. This allows the driver to distinguish between Understeer (Front Lock - High Pitch) and Instability (Rear Lock - Low Pitch).
-*   **Dynamic Ramp:** Instead of a fixed threshold, we introduce a configurable window:
+We will implement a **4-Wheel Monitor** with **Axle Differentiation** and split the Load Cap logic.
+
+*   **Differentiation:** If the rear axle has a higher slip ratio than the front, the vibration frequency drops to **30%** (Heavy Judder) and amplitude is boosted.
+*   **Dynamic Ramp:** Configurable Start/Full thresholds with a Quadratic ($x^2$) ramp. We introduce a configurable window:
     *   **Start %:** Vibration begins (Early Warning).
     *   **Full %:** Vibration hits max amplitude (Peak Limit).
     *   **Curve:** Quadratic ($x^2$) ramp to provide a sharp, distinct "wall" of vibration as the limit is reached.
+*   **Split Load Caps:**
+    *   **`m_texture_load_cap`**: Limits Road and Slide textures (prevents shaking on straights).
+    *   **`m_brake_load_cap`**: Limits Lockup vibration (allows strong feedback during high-downforce braking).
 
 #### Code Changes
 
@@ -14211,6 +14253,8 @@ auto get_slip_ratio = [&](const TelemWheelV01& w) {
 float m_lockup_start_pct = 5.0f;      // Warning starts at 5% slip
 float m_lockup_full_pct = 15.0f;      // Max vibration at 15% slip
 float m_lockup_rear_boost = 1.5f;     // Rear lockups are 1.5x stronger
+float m_brake_load_cap = 1.5f;        // Specific load cap for braking
+// Note: Existing m_max_load_factor will be renamed/repurposed to m_texture_load_cap
 ```
 
 **3. Updated Lockup Logic**
@@ -14270,8 +14314,14 @@ if (m_lockup_enabled && data->mUnfilteredBrake > 0.05) {
         m_lockup_phase += final_freq * dt * TWO_PI;
         m_lockup_phase = std::fmod(m_lockup_phase, TWO_PI);
 
+        // Calculate Braking-Specific Load Factor
+        // We calculate raw load factor, then clamp it using the NEW Brake Load Cap
+        double raw_load_factor = avg_load / 4000.0;
+        double brake_load_factor = (std::min)((double)m_brake_load_cap, (std::max)(0.0, raw_load_factor));
+
         // Final Amplitude
-        double amp = severity * m_lockup_gain * 4.0 * decoupling_scale * amp_multiplier;
+        // Uses brake_load_factor instead of the generic load_factor
+        double amp = severity * m_lockup_gain * 4.0 * decoupling_scale * amp_multiplier * brake_load_factor;
         
         total_force += std::sin(m_lockup_phase) * amp;
     }
@@ -14282,7 +14332,7 @@ if (m_lockup_enabled && data->mUnfilteredBrake > 0.05) {
 
 ### B. Configuration (`src/Config.h` / `.cpp`)
 
-We need to persist the three new tuning parameters.
+We need to persist the new tuning parameters and the split load cap.
 
 **1. Update `Preset` Struct**
 ```cpp
@@ -14291,42 +14341,86 @@ struct Preset {
     float lockup_start_pct = 5.0f;
     float lockup_full_pct = 15.0f;
     float lockup_rear_boost = 1.5f;
+    float brake_load_cap = 1.5f; // New separate cap
     
     // Add setters and update Apply/UpdateFromEngine methods
-    Preset& SetLockupThresholds(float start, float full, float rear_boost) {
+    Preset& SetLockupThresholds(float start, float full, float rear_boost, float load_cap) {
         lockup_start_pct = start;
         lockup_full_pct = full;
         lockup_rear_boost = rear_boost;
+        brake_load_cap = load_cap;
         return *this;
     }
 };
 ```
 
 **2. Update Persistence**
-Add `lockup_start_pct`, `lockup_full_pct`, and `lockup_rear_boost` to the `config.ini` read/write logic.
+Add `lockup_start_pct`, `lockup_full_pct`, `lockup_rear_boost`, and `brake_load_cap` to the `config.ini` read/write logic.
 
 ---
 
 ### C. GUI Layer (`src/GuiLayer.cpp`)
 
-Expose the new controls in the "Tactile Textures" -> "Lockup Vibration" section.
+We will reorganize the GUI to create a dedicated **"Braking & Lockup"** section and split the Load Cap controls.
+
+#### 1. New Group: "Braking & Lockup"
+This section will house all brake-related settings, moving them out of "Tactile Textures".
 
 ```cpp
-BoolSetting("Lockup Vibration", &engine.m_lockup_enabled);
-if (engine.m_lockup_enabled) {
-    // Existing Gain
-    FloatSetting("  Lockup Strength", &engine.m_lockup_gain, 0.0f, 2.0f, ...);
+if (ImGui::TreeNodeEx("Braking & Lockup", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+    ImGui::NextColumn(); ImGui::NextColumn();
+
+    BoolSetting("Lockup Vibration", &engine.m_lockup_enabled);
     
-    // NEW: Thresholds
-    FloatSetting("  Start Slip %", &engine.m_lockup_start_pct, 1.0f, 10.0f, "%.1f%%", 
-        "Slip % where vibration begins (Early Warning).\nTypical: 4-6%.");
+    if (engine.m_lockup_enabled) {
+        // Basic Strength
+        FloatSetting("  Lockup Strength", &engine.m_lockup_gain, 0.0f, 2.0f, ...);
         
-    FloatSetting("  Full Slip %", &engine.m_lockup_full_pct, 5.0f, 25.0f, "%.1f%%", 
-        "Slip % where vibration hits 100% amplitude (Peak Grip).\nTypical: 12-15%.");
-        
-    // NEW: Rear Boost
-    FloatSetting("  Rear Boost", &engine.m_lockup_rear_boost, 1.0f, 3.0f, "%.1fx", 
-        "Amplitude multiplier for rear wheel lockups.\nMakes rear instability feel more dangerous/distinct.");
+        // NEW: Brake-Specific Load Cap
+        FloatSetting("  Brake Load Cap", &engine.m_brake_load_cap, 1.0f, 3.0f, "%.2fx", 
+            "Limits vibration intensity under high downforce braking.\n"
+            "Higher = Stronger vibration at high speed.\n"
+            "Lower = Consistent vibration regardless of speed.");
+
+        ImGui::Separator();
+        ImGui::Text("Advanced Thresholds");
+        ImGui::NextColumn(); ImGui::NextColumn();
+
+        // NEW: Thresholds
+        FloatSetting("  Start Slip %", &engine.m_lockup_start_pct, 1.0f, 10.0f, "%.1f%%", 
+            "Slip % where vibration begins (Early Warning).\nTypical: 4-6%.");
+            
+        FloatSetting("  Full Slip %", &engine.m_lockup_full_pct, 5.0f, 25.0f, "%.1f%%", 
+            "Slip % where vibration hits 100% amplitude (Peak Grip).\nTypical: 12-15%.");
+            
+        // NEW: Rear Boost
+        FloatSetting("  Rear Boost", &engine.m_lockup_rear_boost, 1.0f, 3.0f, "%.1fx", 
+            "Amplitude multiplier for rear wheel lockups.\nMakes rear instability feel more dangerous/distinct.");
+    }
+    ImGui::TreePop();
+} else { 
+    ImGui::NextColumn(); ImGui::NextColumn(); 
+}
+```
+
+#### 2. Updated Group: "Tactile Textures"
+This section retains Road and Slide effects but renames the Load Cap to clarify it no longer affects braking.
+
+```cpp
+if (ImGui::TreeNodeEx("Tactile Textures", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+    ImGui::NextColumn(); ImGui::NextColumn();
+    
+    // Renamed and Repurposed
+    FloatSetting("Texture Load Cap", &engine.m_max_load_factor, 1.0f, 3.0f, "%.2fx", 
+        "Safety Limiter for Road and Slide textures ONLY.\n"
+        "Prevents violent shaking over curbs under high downforce.\n"
+        "Does NOT affect Braking Lockup (see Braking section).");
+
+    // ... [Slide Rumble and Road Details controls remain here] ...
+    
+    // ... [Lockup controls REMOVED from here] ...
+    
+    ImGui::TreePop();
 }
 ```
 
@@ -14337,30 +14431,24 @@ if (engine.m_lockup_enabled) {
 1.  **Manual Slip Test:** Enable "Manual Slip Calc". Drive. Brake hard. Verify vibration occurs (proving sign fix).
 2.  **Rear Lockup Test:** Drive LMP2. Bias brakes to rear (or engine brake heavily). Lock rear wheels. Verify vibration is **Lower Pitch** (thudding) compared to front lockup.
 3.  **Threshold Test:** Set "Start %" to 1.0%. Lightly brake. Verify subtle vibration starts immediately. Set "Start %" to 10%. Lightly brake. Verify silence until heavy braking.
+4.  **Split Cap Test:**
+    *   Set `Texture Load Cap` to **1.0x** and `Brake Load Cap` to **3.0x**.
+    *   Drive high downforce car.
+    *   Verify curbs feel mild (limited by 1.0x).
+    *   Verify high-speed lockup feels violent (allowed by 3.0x).
 
 ---
 
-
-
 ### 5. Future Enhancement: Advanced Response Curves (Non-Linearity)
 
-While the current implementation introduces a hardcoded **Quadratic ($x^2$)** ramp to improve the "sharpness" of the limit, future versions (v0.6.0+) should expose this as a fully configurable **Gamma** setting.
-
-*   **The Concept:** Instead of a linear progression ($0\% \to 100\%$ vibration as slip increases), a non-linear curve allows the user to define the "feel" of the approach.
 *   **Proposed Control:** **"Vibration Gamma"** slider (0.5 to 3.0).
     *   **Gamma 1.0 (Linear):** Vibration builds steadily. Good for learning threshold braking.
-    *   **Gamma 2.0 (Quadratic - Current Default):** Vibration remains subtle in the "Warning Zone" (5-10% slip) and ramps up aggressively near the "Limit" (12-15%). This creates a distinct tactile "Wall" at the limit.
+    *   **Gamma 2.0 (Quadratic):** Vibration remains subtle in the "Warning Zone" (5-10% slip) and ramps up aggressively near the "Limit" (12-15%). This creates a distinct tactile "Wall" at the limit.
     *   **Gamma 3.0 (Cubic):** The wheel is almost silent until the very last moment, then spikes to max. Preferred by aliens/pros who find early vibrations distracting.
-*   **Implementation Logic:**
-    $$ \text{Amplitude} = \text{BaseAmp} \times (\text{NormalizedSeverity})^{\gamma} $$
 
 
+#### 5.1 Implementation Plan: Configurable Vibration Gamma 
 
-Here is the detailed implementation plan subsection for the future Non-Linearity feature.
-
-#### 5.1 Implementation Plan: Configurable Vibration Gamma (v0.6.0)
-
-To transition from the hardcoded Quadratic curve to a fully user-tunable response, the following changes will be required.
 
 ##### A. Physics Engine (`FFBEngine.h`)
 
@@ -14426,54 +14514,264 @@ if (ImGui::IsItemHovered()) {
 
 ### 6. Future Enhancement: Predictive Lockup via Angular Deceleration
 
-To achieve a true "ABS-like" prediction that triggers *before* significant slip occurs, we can implement **Wheel Angular Deceleration** monitoring.
+*   **Concept:** Trigger vibration based on `d(Omega)/dt` (Wheel Deceleration) before Slip Ratio spikes.
+*   **Mitigation:** Requires "Brake Gating" and "Bump Rejection" to avoid false positives on curbs.
 
-*   **The Physics:** Before a tire reaches its peak slip ratio, the wheel's rotational speed ($\omega$) drops rapidly. If the wheel decelerates significantly faster than the car chassis, a lockup is imminent.
-*   **The Metric:** $\alpha_{wheel} = \frac{d\omega}{dt}$ (Angular Acceleration).
-*   **Trigger Logic:**
-    *   Calculate $\alpha_{wheel}$ for each wheel (requires differentiating `mRotation` over time).
-    *   Compare against a threshold (e.g., $-100 \text{ rad/s}^2$).
-    *   If $\alpha_{wheel} < \text{Threshold}$, trigger the vibration *even if* Slip Ratio is still low.
-*   **Challenges:**
-    *   **Noise:** Derivatives amplify signal noise. Bumps and kerbs cause massive spikes in angular acceleration.
-    *   **Smoothing:** Requires a robust Low Pass Filter (LPF) on the derivative to prevent false positives, which adds slight latency.
-*   **Benefit:** This provides the earliest possible warning, potentially 50-100ms faster than Slip Ratio, allowing the driver to modulate brake pressure at the very onset of instability.
 
-### 7. Verification & Test Plan (New Changes)
+---
 
-To ensure the stability and correctness of the v0.5.11 changes, the following tests must be implemented in `tests/test_ffb_engine.cpp`.
+## 7. Comprehensive Test Plan
 
-#### A. `test_manual_slip_sign_fix`
-**Goal:** Verify that the "Manual Slip Calc" option now works correctly with LMU's negative forward velocity.
-*   **Setup:**
-    *   Enable `m_use_manual_slip`.
-    *   Set `mLocalVel.z = -20.0` (Forward).
-    *   Set Wheel Velocity to `0.0` (Locked).
-*   **Check:**
-    *   Previous Bug: Calculated Slip $= (0 - (-20)) / 20 = +1.0$ (Traction). Effect Silent.
-    *   Expected Fix: Calculated Slip $= (0 - 20) / 20 = -1.0$ (Lockup). Effect Active.
-*   **Assert:** `m_lockup_phase` > 0.0.
+To ensure the stability and correctness of the v0.5.11 changes, the following extensive test suite must be implemented. This covers both the core physics logic and the configuration persistence required for the GUI.
 
-#### B. `test_rear_lockup_differentiation`
-**Goal:** Verify that rear lockups trigger the effect AND produce a lower frequency.
-*   **Setup:**
-    *   **Pass 1 (Front):** Front Slip `-0.2`, Rear Slip `0.0`. Record `phase_delta_front`.
-    *   **Pass 2 (Rear):** Front Slip `0.0`, Rear Slip `-0.2`. Record `phase_delta_rear`.
-*   **Check:**
-    *   `phase_delta_rear > 0` (Rear lockup is detected).
-    *   `phase_delta_rear` $\approx$ `0.3 * phase_delta_front` (Frequency is lower).
+### A. Physics Engine Tests (`tests/test_ffb_engine.cpp`)
 
-#### C. `test_lockup_threshold_config`
-**Goal:** Verify that the new `Start %` and `Full %` sliders correctly alter the trigger point and intensity.
-*   **Setup:**
-    *   Set `m_lockup_start_pct = 5.0`.
-    *   Set `m_lockup_full_pct = 15.0`.
-*   **Scenario 1:** Input Slip `-0.04` (4%).
-    *   **Assert:** Force == 0.0 (Below Start Threshold).
-*   **Scenario 2:** Input Slip `-0.10` (10%).
-    *   **Assert:** Force > 0.0 AND Force < Max (In the Ramp).
-*   **Scenario 3:** Input Slip `-0.20` (20%).
-    *   **Assert:** Force == Max (Saturated).
+These tests verify the mathematical correctness of the new lockup logic, axle differentiation, and split load caps.
+
+#### 1. `test_manual_slip_sign_fix`
+**Goal:** Verify that "Manual Slip Calc" correctly handles LMU's negative forward velocity coordinate.
+```cpp
+static void test_manual_slip_sign_fix() {
+    std::cout << "\nTest: Manual Slip Sign Fix (Negative Velocity)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0); // 20 m/s
+    
+    engine.m_lockup_enabled = true;
+    engine.m_use_manual_slip = true;
+    engine.m_lockup_gain = 1.0f;
+    
+    // Setup: Car moving forward (-20 m/s), Wheels Locked (0 rad/s)
+    data.mLocalVel.z = -20.0; 
+    for(int i=0; i<4; i++) data.mWheel[i].mRotation = 0.0;
+    data.mUnfilteredBrake = 1.0;
+
+    // Execute
+    engine.calculate_force(&data);
+
+    // Verification
+    // Old Bug: (-20 - 0) / -20 = +1.0 (Traction) -> No Lockup
+    // Fix: (0 - 20) / 20 = -1.0 (Lockup) -> Phase Advances
+    if (engine.m_lockup_phase > 0.0) {
+        std::cout << "[PASS] Lockup detected with negative velocity." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Lockup silent (Sign Error)." << std::endl;
+        g_tests_failed++;
+    }
+}
+```
+
+#### 2. `test_rear_lockup_differentiation`
+**Goal:** Verify that rear lockups trigger the effect AND produce a lower frequency (0.3x) compared to front lockups.
+```cpp
+static void test_rear_lockup_differentiation() {
+    std::cout << "\nTest: Rear Lockup Differentiation" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+
+    engine.m_lockup_enabled = true;
+    engine.m_lockup_gain = 1.0;
+    data.mUnfilteredBrake = 1.0;
+    
+    // Pass 1: Front Lockup Only
+    data.mWheel[0].mLongitudinalPatchVel = -10.0; // High Slip
+    data.mWheel[2].mLongitudinalPatchVel = 0.0;   // Rear Grip
+    engine.calculate_force(&data);
+    double phase_front = engine.m_lockup_phase;
+
+    // Reset
+    engine.m_lockup_phase = 0.0;
+
+    // Pass 2: Rear Lockup Only
+    data.mWheel[0].mLongitudinalPatchVel = 0.0;   // Front Grip
+    data.mWheel[2].mLongitudinalPatchVel = -10.0; // Rear Slip
+    engine.calculate_force(&data);
+    double phase_rear = engine.m_lockup_phase;
+
+    // Verification
+    // 1. Rear must trigger
+    if (phase_rear <= 0.0) {
+        std::cout << "[FAIL] Rear lockup ignored." << std::endl;
+        g_tests_failed++;
+        return;
+    }
+
+    // 2. Frequency Check (Rear should be ~30% of Front)
+    double ratio = phase_rear / phase_front;
+    if (std::abs(ratio - 0.3) < 0.05) {
+        std::cout << "[PASS] Rear frequency is lower (Ratio: " << ratio << ")." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Frequency differentiation failed. Ratio: " << ratio << std::endl;
+        g_tests_failed++;
+    }
+}
+```
+
+#### 3. `test_split_load_caps`
+**Goal:** Verify that `m_brake_load_cap` affects Lockup but NOT Road Texture, and vice versa.
+```cpp
+static void test_split_load_caps() {
+    std::cout << "\nTest: Split Load Caps (Brake vs Texture)" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+
+    // Setup High Load (12000N = 3.0x Load Factor)
+    for(int i=0; i<4; i++) data.mWheel[i].mTireLoad = 12000.0;
+
+    // Config: Texture Cap = 1.0x, Brake Cap = 3.0x
+    engine.m_texture_load_cap = 1.0f; // Was m_max_load_factor
+    engine.m_brake_load_cap = 3.0f;
+    
+    // 1. Test Road Texture (Should be clamped to 1.0x)
+    engine.m_road_texture_enabled = true;
+    engine.m_road_texture_gain = 1.0;
+    data.mWheel[0].mVerticalTireDeflection = 0.01; // Bump
+    
+    double force_road = engine.calculate_force(&data);
+    // Expected: Base * 1.0 (Cap)
+    // If it used 3.0, force would be 3x higher.
+    
+    // 2. Test Lockup (Should be clamped to 3.0x)
+    engine.m_road_texture_enabled = false;
+    engine.m_lockup_enabled = true;
+    engine.m_lockup_gain = 1.0;
+    data.mUnfilteredBrake = 1.0;
+    data.mWheel[0].mLongitudinalPatchVel = -10.0; // Slip
+    
+    double force_lockup = engine.calculate_force(&data);
+    
+    // Verification Logic
+    // We compare against a baseline engine with 1.0 caps for both
+    FFBEngine baseline;
+    baseline.m_texture_load_cap = 1.0f;
+    baseline.m_brake_load_cap = 1.0f;
+    // ... setup baseline ...
+    
+    // Assertions
+    // Road force should match baseline (1.0x)
+    // Lockup force should be ~3x baseline
+    
+    std::cout << "[PASS] Split caps verified (Logic check)." << std::endl;
+    g_tests_passed++;
+}
+```
+
+#### 4. `test_dynamic_thresholds`
+**Goal:** Verify `Start %` and `Full %` sliders work.
+```cpp
+static void test_dynamic_thresholds() {
+    std::cout << "\nTest: Dynamic Lockup Thresholds" << std::endl;
+    FFBEngine engine;
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    
+    engine.m_lockup_enabled = true;
+    engine.m_lockup_gain = 1.0;
+    data.mUnfilteredBrake = 1.0;
+    
+    // Config: Start 5%, Full 15%
+    engine.m_lockup_start_pct = 5.0f;
+    engine.m_lockup_full_pct = 15.0f;
+    
+    // Case A: 4% Slip (Below Start)
+    data.mWheel[0].mLongitudinalPatchVel = -0.04 * 20.0; 
+    engine.calculate_force(&data);
+    if (engine.m_lockup_phase > 0.0) {
+        std::cout << "[FAIL] Triggered below start threshold." << std::endl;
+        g_tests_failed++;
+    }
+
+    // Case B: 10% Slip (In Range)
+    data.mWheel[0].mLongitudinalPatchVel = -0.10 * 20.0;
+    double force_mid = engine.calculate_force(&data);
+    
+    // Case C: 20% Slip (Saturated)
+    data.mWheel[0].mLongitudinalPatchVel = -0.20 * 20.0;
+    double force_max = engine.calculate_force(&data);
+    
+    if (std::abs(force_mid) > 0.0 && std::abs(force_max) > std::abs(force_mid)) {
+        std::cout << "[PASS] Thresholds and Ramp working." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Ramp logic failed." << std::endl;
+        g_tests_failed++;
+    }
+}
+```
+
+### B. Platform & Config Tests (`tests/test_windows_platform.cpp`)
+
+These tests verify that the new settings are correctly saved to and loaded from `config.ini`, ensuring the GUI controls actually persist.
+
+#### 1. `test_config_persistence_braking_group`
+**Goal:** Verify persistence of the new Braking Group variables.
+```cpp
+static void test_config_persistence_braking_group() {
+    std::cout << "\nTest: Config Persistence (Braking Group)" << std::endl;
+    
+    std::string test_file = "test_config_brake.ini";
+    FFBEngine engine_save;
+    FFBEngine engine_load;
+    
+    // 1. Set non-default values
+    engine_save.m_brake_load_cap = 2.5f;
+    engine_save.m_lockup_start_pct = 8.0f;
+    engine_save.m_lockup_full_pct = 20.0f;
+    engine_save.m_lockup_rear_boost = 2.0f;
+    
+    // 2. Save
+    Config::Save(engine_save, test_file);
+    
+    // 3. Load
+    Config::Load(engine_load, test_file);
+    
+    // 4. Verify
+    bool ok = true;
+    if (engine_load.m_brake_load_cap != 2.5f) ok = false;
+    if (engine_load.m_lockup_start_pct != 8.0f) ok = false;
+    if (engine_load.m_lockup_full_pct != 20.0f) ok = false;
+    if (engine_load.m_lockup_rear_boost != 2.0f) ok = false;
+    
+    if (ok) {
+        std::cout << "[PASS] Braking config persisted." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Braking config mismatch." << std::endl;
+        g_tests_failed++;
+    }
+    
+    remove(test_file.c_str());
+}
+```
+
+#### 2. `test_legacy_config_migration`
+**Goal:** Verify that `m_max_load_factor` (old key) correctly maps to `m_texture_load_cap` (new variable) to preserve user settings.
+```cpp
+static void test_legacy_config_migration() {
+    std::cout << "\nTest: Legacy Config Migration (Load Cap)" << std::endl;
+    
+    std::string test_file = "test_config_legacy.ini";
+    std::ofstream file(test_file);
+    
+    // Write old key
+    file << "max_load_factor=1.8\n";
+    file.close();
+    
+    FFBEngine engine;
+    Config::Load(engine, test_file);
+    
+    // Verify it mapped to texture_load_cap
+    if (engine.m_texture_load_cap == 1.8f) {
+        std::cout << "[PASS] Legacy max_load_factor mapped to texture_load_cap." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Legacy mapping failed." << std::endl;
+        g_tests_failed++;
+    }
+    
+    remove(test_file.c_str());
+}
+```
 ```
 
 # File: docs\dev_docs\lockup vibration fix3.md
@@ -14813,6 +15111,136 @@ I recommend adding a **"Advanced Lockup Tuning"** collapsible section in the GUI
 **What to keep hidden (Hardcoded):**
 *   **Airborne Threshold (50N):** This is a physics constant. There is no competitive advantage to changing it.
 *   **Relative Decel Ratio (2x):** It is too abstract for users to tune alongside "Prediction Sensitivity." One slider for sensitivity is enough.
+
+## Follow up questions 3
+
+The game data also provides this value: mBrakePressure.
+
+How can we use to give additional information to the driver?
+
+Can we use to give a feel of when abs is engaging (eg. a "pulse" effect if mBrakePressure goes on and off).
+
+Can we use mBrakePressure even in cars that do not have ABS, to provide some useful information?
+
+## Answers 3
+
+Yes, `mBrakePressure` is a highly valuable telemetry channel because it represents the **physical state of the caliper**, which is distinct from the driver's **pedal input** (`mUnfilteredBrake`).
+
+Here is how we can use it to implement **ABS Haptics** and improve the feel for non-ABS cars.
+
+---
+
+### 1. ABS Haptics (The "Pulse")
+
+In a car with ABS, when the system engages, it rapidly modulates the brake pressure (opens and closes valves) to prevent lockup. This happens even if your foot is planted 100% on the pedal.
+
+**The Logic:**
+We can detect ABS activation by comparing the **Pedal Input** vs. the **Caliper Pressure**.
+*   If `Pedal` is constant/high, but `Pressure` is oscillating or dropping, **ABS is active**.
+
+**Implementation Plan:**
+We calculate the **derivative (rate of change)** of the pressure. If the pressure changes rapidly while the pedal is held steady, we inject a vibration pulse.
+
+**Code Concept (`FFBEngine.h`):**
+
+```cpp
+// 1. Calculate Pressure Delta (Rate of change)
+double current_pressure = w.mBrakePressure; // 0.0 - 1.0
+double pressure_delta = (current_pressure - w.prevBrakePressure) / dt;
+w.prevBrakePressure = current_pressure;
+
+// 2. Detect ABS Activity
+// Condition: Pedal is pressed (> 50%) BUT Pressure is changing rapidly
+// The threshold (e.g., 2.0) needs tuning based on how fast LMU modulates ABS
+bool abs_active = (data->mUnfilteredBrake > 0.5) && (std::abs(pressure_delta) > 2.0);
+
+if (m_abs_pulse_enabled && abs_active) {
+    // 3. Generate Pulse
+    // We use a square wave or sharp sine to mimic the valve "kick"
+    // Frequency: ABS usually pumps at 15-30Hz
+    m_abs_phase += 20.0 * dt * TWO_PI; 
+    m_abs_phase = std::fmod(m_abs_phase, TWO_PI);
+    
+    double pulse = std::sin(m_abs_phase) * m_abs_gain * 2.0; // 2.0 Nm kick
+    total_force += pulse;
+}
+```
+
+**Why this is better than "Lockup Vibration":**
+*   **Lockup Vibration** tells you "The tire is sliding."
+*   **ABS Pulse** tells you "The computer is intervening."
+*   In a modern GT3 car, you often want to ride the ABS. This effect gives you the tactile confirmation that you are exactly at the limit of the system.
+
+---
+
+### 2. Non-ABS Cars: Pressure-Scaled Lockup
+
+For cars without ABS (GTE, Hypercar, Historic), `mBrakePressure` is usually linear with pedal input, but it accounts for **Brake Bias**.
+
+**The Problem with Current Logic:**
+Currently, we scale the Lockup Vibration based on `mUnfilteredBrake` (Pedal Position).
+*   *Scenario:* You set Brake Bias to **70% Front**. You press the pedal 100%.
+*   *Reality:* Front calipers get 100% pressure. Rear calipers get ~40% pressure.
+*   *Current App:* If Rears lock, we vibrate at 100% amplitude because Pedal is 100%. This feels wrong; rear lockups should feel lighter because there is less energy/pressure involved.
+
+**The Solution:**
+Use `mBrakePressure` as the **Amplitude Multiplier** for the Lockup effect instead of `mUnfilteredBrake`.
+
+**Code Update:**
+```cpp
+// Old Logic
+// double amp = severity * m_lockup_gain * ...;
+
+// New Logic (Pressure Sensitive)
+// If pressure is low (rear bias), the vibration is subtler.
+// If pressure is high (front bias), the vibration is violent.
+double pressure_factor = w.mBrakePressure; 
+
+// Fallback for Engine Braking (Pressure 0, but locking due to downshift)
+if (pressure_factor < 0.1 && std::abs(slip) > 0.5) {
+    pressure_factor = 0.5; // Arbitrary "Engine Drag" weight
+}
+
+double amp = severity * pressure_factor * m_lockup_gain * ...;
+```
+
+---
+
+### 3. Brake Fade / Overheating (The "Sponge" Effect)
+
+We can combine `mBrakePressure` with `mBrakeTemp` (also in `TelemWheelV01`) to simulate **Brake Fade**.
+
+**The Physics:**
+When brakes overheat (e.g., > 800°C for Carbon), the friction coefficient drops. You press the pedal, pressure goes up, but the car doesn't stop.
+
+**The FFB Effect:**
+We can't change the car's stopping distance, but we can change the **FFB Texture**.
+*   **Normal:** Braking feels "gritty" (Road Texture + Micro-vibrations).
+*   **Faded:** Braking feels "smooth" or "glassy."
+
+**Implementation:**
+```cpp
+if (w.mBrakeTemp > 800.0) { // Celsius
+    // Reduce Road Texture and Lockup Detail to simulate "Mushy" pedal feel
+    // transmitted through the chassis
+    double fade_factor = 1.0 - ((w.mBrakeTemp - 800.0) / 200.0);
+    fade_factor = std::max(0.0, fade_factor);
+    
+    road_noise *= fade_factor;
+    lockup_vibration *= fade_factor;
+    
+    // Optional: Add a low-frequency "Warped Disc" shudder
+    if (w.mBrakePressure > 0.2) {
+        total_force += std::sin(time * 10.0) * 1.0; // 10Hz Judder
+    }
+}
+```
+
+### Summary of Recommendations
+
+1.  **Implement ABS Pulse:** Use the derivative of `mBrakePressure` to detect rapid modulation and inject a 20Hz pulse. This is a "Game Changer" feature for GT3 drivers.
+2.  **Update Lockup Scaling:** Replace Pedal Input with `mBrakePressure` for amplitude scaling. This makes rear lockups feel physically correct relative to brake bias.
+3.  **Add Brake Judder:** Use `mBrakeTemp` to inject a low-frequency wobble when brakes are overheated.
 
 ## Preset
 
@@ -22607,8 +23035,11 @@ void Config::LoadPresets() {
                         else if (key == "min_force") current_preset.min_force = std::stof(value);
                         else if (key == "oversteer_boost") current_preset.oversteer_boost = std::stof(value);
                         else if (key == "lockup_enabled") current_preset.lockup_enabled = std::stoi(value);
-                        // v0.4.50: SAFETY CLAMPING for Generator Effects in User Presets
                         else if (key == "lockup_gain") current_preset.lockup_gain = (std::min)(2.0f, std::stof(value));
+                        else if (key == "lockup_start_pct") current_preset.lockup_start_pct = std::stof(value);
+                        else if (key == "lockup_full_pct") current_preset.lockup_full_pct = std::stof(value);
+                        else if (key == "lockup_rear_boost") current_preset.lockup_rear_boost = std::stof(value);
+                        else if (key == "brake_load_cap") current_preset.brake_load_cap = (std::min)(3.0f, std::stof(value));
                         else if (key == "spin_enabled") current_preset.spin_enabled = std::stoi(value);
                         else if (key == "spin_gain") current_preset.spin_gain = (std::min)(2.0f, std::stof(value));
                         else if (key == "slide_enabled") current_preset.slide_enabled = std::stoi(value);
@@ -22700,7 +23131,8 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "sop_smoothing_factor=" << engine.m_sop_smoothing_factor << "\n";
         file << "slip_angle_smoothing=" << engine.m_slip_angle_smoothing << "\n";
         file << "sop_scale=" << engine.m_sop_scale << "\n";
-        file << "max_load_factor=" << engine.m_max_load_factor << "\n";
+        file << "texture_load_cap=" << engine.m_texture_load_cap << "\n";
+        file << "brake_load_cap=" << engine.m_brake_load_cap << "\n"; 
         file << "understeer=" << engine.m_understeer_effect << "\n";
         file << "sop=" << engine.m_sop_effect << "\n";
         file << "min_force=" << engine.m_min_force << "\n";
@@ -22717,6 +23149,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "invert_force=" << engine.m_invert_force << "\n";
         file << "max_torque_ref=" << engine.m_max_torque_ref << "\n";
         file << "use_manual_slip=" << engine.m_use_manual_slip << "\n";
+        file << "lockup_start_pct=" << engine.m_lockup_start_pct << "\n";
+        file << "lockup_full_pct=" << engine.m_lockup_full_pct << "\n";
+        file << "lockup_rear_boost=" << engine.m_lockup_rear_boost << "\n";
         file << "bottoming_method=" << engine.m_bottoming_method << "\n";
         file << "scrub_drag_gain=" << engine.m_scrub_drag_gain << "\n";
         file << "rear_align_effect=" << engine.m_rear_align_effect << "\n";
@@ -22761,6 +23196,10 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
                 file << "invert_force=" << p.invert_force << "\n";
                 file << "max_torque_ref=" << p.max_torque_ref << "\n";
                 file << "use_manual_slip=" << p.use_manual_slip << "\n";
+                file << "lockup_start_pct=" << p.lockup_start_pct << "\n";
+                file << "lockup_full_pct=" << p.lockup_full_pct << "\n";
+                file << "lockup_rear_boost=" << p.lockup_rear_boost << "\n";
+                file << "brake_load_cap=" << p.brake_load_cap << "\n";
                 file << "bottoming_method=" << p.bottoming_method << "\n";
                 file << "scrub_drag_gain=" << p.scrub_drag_gain << "\n";
                 file << "rear_align_effect=" << p.rear_align_effect << "\n";
@@ -22822,7 +23261,9 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "sop_smoothing_factor") engine.m_sop_smoothing_factor = std::stof(value);
                     else if (key == "sop_scale") engine.m_sop_scale = std::stof(value);
                     else if (key == "slip_angle_smoothing") engine.m_slip_angle_smoothing = std::stof(value);
-                    else if (key == "max_load_factor") engine.m_max_load_factor = std::stof(value);
+                    else if (key == "texture_load_cap") engine.m_texture_load_cap = std::stof(value);
+                    else if (key == "max_load_factor") engine.m_texture_load_cap = std::stof(value); // Legacy Backward Compatibility
+                    else if (key == "brake_load_cap") engine.m_brake_load_cap = std::stof(value);
                     else if (key == "smoothing") engine.m_sop_smoothing_factor = std::stof(value); // Legacy support
                     else if (key == "understeer") engine.m_understeer_effect = std::stof(value);
                     else if (key == "sop") engine.m_sop_effect = (std::min)(2.0f, std::stof(value));
@@ -22833,6 +23274,9 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     // With new decoupling, these would cause 25x force explosions. Clamp to safe maximums.
                     else if (key == "lockup_enabled") engine.m_lockup_enabled = std::stoi(value);
                     else if (key == "lockup_gain") engine.m_lockup_gain = (std::min)(2.0f, std::stof(value));
+                    else if (key == "lockup_start_pct") engine.m_lockup_start_pct = std::stof(value);
+                    else if (key == "lockup_full_pct") engine.m_lockup_full_pct = std::stof(value);
+                    else if (key == "lockup_rear_boost") engine.m_lockup_rear_boost = std::stof(value);
                     else if (key == "spin_enabled") engine.m_spin_enabled = std::stoi(value);
                     else if (key == "spin_gain") engine.m_spin_gain = (std::min)(2.0f, std::stof(value));
                     else if (key == "slide_enabled") engine.m_slide_texture_enabled = std::stoi(value);
@@ -22914,6 +23358,10 @@ struct Preset {
     
     bool lockup_enabled = true;
     float lockup_gain = 2.0f;
+    float lockup_start_pct = 5.0f;  // New v0.5.11
+    float lockup_full_pct = 15.0f;  // New v0.5.11
+    float lockup_rear_boost = 1.5f; // New v0.5.11
+    float brake_load_cap = 1.5f;    // New v0.5.11
     
     bool spin_enabled = true;
     float spin_gain = 0.5f;
@@ -22971,7 +23419,15 @@ struct Preset {
     Preset& SetOversteer(float v) { oversteer_boost = v; return *this; }
     Preset& SetSlipSmoothing(float v) { slip_smoothing = v; return *this; }
     
-    Preset& SetLockup(bool enabled, float g) { lockup_enabled = enabled; lockup_gain = g; return *this; }
+    Preset& SetLockup(bool enabled, float g, float start = 5.0f, float full = 15.0f, float boost = 1.5f) { 
+        lockup_enabled = enabled; 
+        lockup_gain = g; 
+        lockup_start_pct = start;
+        lockup_full_pct = full;
+        lockup_rear_boost = boost;
+        return *this; 
+    }
+    Preset& SetBrakeCap(float v) { brake_load_cap = v; return *this; }
     Preset& SetSpin(bool enabled, float g) { spin_enabled = enabled; spin_gain = g; return *this; }
     Preset& SetSlide(bool enabled, float g, float f = 1.0f) { 
         slide_enabled = enabled; 
@@ -23036,6 +23492,11 @@ struct Preset {
         engine.m_oversteer_boost = oversteer_boost;
         engine.m_lockup_enabled = lockup_enabled;
         engine.m_lockup_gain = lockup_gain;
+        engine.m_lockup_start_pct = lockup_start_pct;
+        engine.m_lockup_full_pct = lockup_full_pct;
+        engine.m_lockup_rear_boost = lockup_rear_boost;
+        engine.m_brake_load_cap = brake_load_cap;
+
         engine.m_spin_enabled = spin_enabled;
         engine.m_spin_gain = spin_gain;
         engine.m_slide_texture_enabled = slide_enabled;
@@ -23078,6 +23539,11 @@ struct Preset {
         oversteer_boost = engine.m_oversteer_boost;
         lockup_enabled = engine.m_lockup_enabled;
         lockup_gain = engine.m_lockup_gain;
+        lockup_start_pct = engine.m_lockup_start_pct;
+        lockup_full_pct = engine.m_lockup_full_pct;
+        lockup_rear_boost = engine.m_lockup_rear_boost;
+        brake_load_cap = engine.m_brake_load_cap;
+        
         spin_enabled = engine.m_spin_enabled;
         spin_gain = engine.m_spin_gain;
         slide_enabled = engine.m_slide_texture_enabled;
@@ -24639,11 +25105,29 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::NextColumn(); ImGui::NextColumn(); 
     }
 
+    // --- GROUP: BRAKING & LOCKUP ---
+    if (ImGui::TreeNodeEx("Braking & Lockup", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+        ImGui::NextColumn(); ImGui::NextColumn();
+
+        BoolSetting("Lockup Vibration", &engine.m_lockup_enabled, "Simulates tire judder when wheels are locked under braking.");
+        if (engine.m_lockup_enabled) {
+            FloatSetting("  Lockup Strength", &engine.m_lockup_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_lockup_gain, FFBEngine::BASE_NM_LOCKUP_VIBRATION));
+            FloatSetting("  Brake Load Cap", &engine.m_brake_load_cap, 1.0f, 3.0f, "%.2fx", "Scales vibration intensity based on tire load.\nPrevents weak vibrations during high-speed heavy braking.");
+            FloatSetting("  Start Slip %", &engine.m_lockup_start_pct, 1.0f, 10.0f, "%.1f%%");
+            FloatSetting("  Full Slip %", &engine.m_lockup_full_pct, 5.0f, 25.0f, "%.1f%%");
+            FloatSetting("  Rear Boost", &engine.m_lockup_rear_boost, 1.0f, 3.0f, "%.2fx", "Multiplies amplitude when rear wheels lock harder than front wheels.");
+        }
+
+        ImGui::TreePop();
+    } else {
+        ImGui::NextColumn(); ImGui::NextColumn();
+    }
+
     // --- GROUP: TEXTURES ---
     if (ImGui::TreeNodeEx("Tactile Textures", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
         
-        FloatSetting("Load Cap", &engine.m_max_load_factor, 1.0f, 3.0f, "%.2fx", "Safety Limiter specific to Texture and Vibration effects, \nwhich are scaled by tire load.\nPrevents violent shaking when under high downforce or compression.\nAffects high-freq. effects: Road Text. (Bumps/Curbs), Slide, Lockup.\nLower this if curbs feel too violent in fast corners.");
+        FloatSetting("Texture Load Cap", &engine.m_texture_load_cap, 1.0f, 3.0f, "%.2fx", "Safety Limiter specific to Road and Slide textures.\nPrevents violent shaking when under high downforce or compression.\nONLY affects Road Details and Slide Rumble.");
 
         BoolSetting("Slide Rumble", &engine.m_slide_texture_enabled);
         if (engine.m_slide_texture_enabled) {
@@ -24656,11 +25140,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             FloatSetting("  Road Gain", &engine.m_road_texture_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_road_texture_gain, FFBEngine::BASE_NM_ROAD_TEXTURE));
         }
 
-        BoolSetting("Lockup Vibration", &engine.m_lockup_enabled);
-        if (engine.m_lockup_enabled) {
-            FloatSetting("  Lockup Strength", &engine.m_lockup_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_lockup_gain, FFBEngine::BASE_NM_LOCKUP_VIBRATION));
-        }
-        
         BoolSetting("Spin Vibration", &engine.m_spin_enabled);
         if (engine.m_spin_enabled) {
             FloatSetting("  Spin Strength", &engine.m_spin_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_spin_gain, FFBEngine::BASE_NM_SPIN_VIBRATION));
@@ -26759,6 +27238,9 @@ static void test_steering_shaft_smoothing(); // Forward declaration (v0.5.7)
 static void test_config_defaults_v057(); // Forward declaration (v0.5.7)
 static void test_config_safety_validation_v057(); // Forward declaration (v0.5.7)
 static void test_rear_lockup_differentiation(); // Forward declaration (v0.5.11)
+static void test_manual_slip_sign_fix(); // Forward declaration (v0.5.13)
+static void test_split_load_caps(); // Forward declaration (v0.5.13)
+static void test_dynamic_thresholds(); // Forward declaration (v0.5.13)
 
 // --- Test Helper Functions (v0.5.7) ---
 
@@ -27268,11 +27750,7 @@ static void test_progressive_lockup() {
     std::cout << "\nTest: Progressive Lockup" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
-    TelemInfoV01 data;
-    std::memset(&data, 0, sizeof(data));
-    
-    // Default RH to avoid scraping
-    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
     engine.m_lockup_enabled = true;
     engine.m_lockup_gain = 1.0;
@@ -27282,17 +27760,20 @@ static void test_progressive_lockup() {
     data.mSteeringShaftTorque = 0.0;
     data.mUnfilteredBrake = 1.0;
     
-    // Set DeltaTime for phase integration
-    data.mDeltaTime = 0.01;
-    data.mLocalVel.z = 20.0; // 20 m/s
+    // Use production defaults: Start 5%, Full 15% (v0.5.13)
+    // These are the default values that ship to users
+    engine.m_lockup_start_pct = 5.0f;
+    engine.m_lockup_full_pct = 15.0f;
     
-    // Case 1: Low Slip (-0.15). Severity = (0.15 - 0.1) / 0.4 = 0.125
+    // Case 1: Low Slip (-0.08 = 8%). 
+    // With Start=5%, Full=15%: severity = (0.08 - 0.05) / (0.15 - 0.05) = 0.03 / 0.10 = 0.3
+    // Quadratic ramp: 0.3^2 = 0.09
     // Emulate slip ratio by setting longitudinal velocity difference
     // Ratio = PatchVel / GroundVel. So PatchVel = Ratio * GroundVel.
     data.mWheel[0].mLongitudinalGroundVel = 20.0;
     data.mWheel[1].mLongitudinalGroundVel = 20.0;
-    data.mWheel[0].mLongitudinalPatchVel = -0.15 * 20.0; // -3.0 m/s
-    data.mWheel[1].mLongitudinalPatchVel = -0.15 * 20.0;
+    data.mWheel[0].mLongitudinalPatchVel = -0.08 * 20.0; // -1.6 m/s
+    data.mWheel[1].mLongitudinalPatchVel = -0.08 * 20.0;
     
     // Ensure data.mDeltaTime is set! 
     data.mDeltaTime = 0.01;
@@ -28436,17 +28917,10 @@ static void test_manual_slip_calculation() {
     std::cout << "\nTest: Manual Slip Calculation" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
-    TelemInfoV01 data;
-    std::memset(&data, 0, sizeof(data));
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
     // Enable manual calculation
     engine.m_use_manual_slip = true;
-    // Avoid scraping noise
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    
-    // Setup Car Speed: 20 m/s
-    data.mLocalVel.z = 20.0;
     
     // Setup Wheel: 30cm radius (30 / 100 = 0.3m)
     data.mWheel[0].mStaticUndeflectedRadius = 30; // cm
@@ -29408,6 +29882,9 @@ int main() {
     test_config_defaults_v057();
     test_config_safety_validation_v057();
     test_rear_lockup_differentiation(); // v0.5.11
+    test_manual_slip_sign_fix(); // v0.5.13
+    test_split_load_caps(); // v0.5.13
+    test_dynamic_thresholds(); // v0.5.13
     
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
@@ -31568,6 +32045,156 @@ static void test_rear_lockup_differentiation() {
     }
 }
 
+static void test_manual_slip_sign_fix() {
+    std::cout << "\nTest: Manual Slip Sign Fix (Negative Velocity)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0); // 20 m/s
+    
+    engine.m_lockup_enabled = true;
+    engine.m_use_manual_slip = true;
+    engine.m_lockup_gain = 1.0f;
+    
+    // Setup: Car moving forward (-20 m/s), Wheels Locked (0 rad/s)
+    data.mLocalVel.z = -20.0; 
+    for(int i=0; i<4; i++) data.mWheel[i].mRotation = 0.0;
+    data.mUnfilteredBrake = 1.0;
+
+    // Execute
+    engine.calculate_force(&data);
+
+    // Verification
+    // Old Bug: (-20 - 0) / -20 = +1.0 (Traction) -> No Lockup
+    // Fix: (0 - 20) / 20 = -1.0 (Lockup) -> Phase Advances
+    ASSERT_TRUE(engine.m_lockup_phase > 0.0);
+}
+
+static void test_split_load_caps() {
+    std::cout << "\nTest: Split Load Caps (Brake vs Texture)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+
+    // Setup High Load (12000N = 3.0x Load Factor)
+    for(int i=0; i<4; i++) data.mWheel[i].mTireLoad = 12000.0;
+
+    // Config: Texture Cap = 1.0x, Brake Cap = 3.0x
+    engine.m_texture_load_cap = 1.0f; 
+    engine.m_brake_load_cap = 3.0f;
+    
+    // ===================================================================
+    // PART 1: Test Road Texture (Should be clamped to 1.0x)
+    // ===================================================================
+    engine.m_road_texture_enabled = true;
+    engine.m_road_texture_gain = 1.0;
+    engine.m_lockup_enabled = false;
+    data.mWheel[0].mVerticalTireDeflection = 0.01; // Bump FL
+    data.mWheel[1].mVerticalTireDeflection = 0.01; // Bump FR
+    
+    // Road Texture Baseline: Delta * Sum * 50.0
+    // Bump 0.01 -> Delta Sum = 0.02. 0.02 * 50.0 = 1.0 Nm.
+    // 1.0 Nm * Texture Load Cap (1.0) = 1.0 Nm.
+    // Normalized by 20 Nm (Default decoupling baseline) = 0.05.
+    double force_road = engine.calculate_force(&data);
+    
+    // Verify road texture is clamped to 1.0x (not using the 3.0x brake cap)
+    if (std::abs(force_road - 0.05) < 0.001) {
+        std::cout << "[PASS] Road texture correctly clamped to 1.0x (Force: " << force_road << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Road texture clamping failed. Expected 0.05, got " << force_road << std::endl;
+        g_tests_failed++;
+        return; // Early exit if first part fails
+    }
+
+    // ===================================================================
+    // PART 2: Test Lockup (Should use Brake Load Cap 3.0x)
+    // ===================================================================
+    engine.m_road_texture_enabled = false;
+    engine.m_lockup_enabled = true;
+    engine.m_lockup_gain = 1.0;
+    data.mUnfilteredBrake = 1.0;
+    data.mWheel[0].mLongitudinalPatchVel = -10.0; // Slip
+    data.mWheel[1].mLongitudinalPatchVel = -10.0; // Slip (both wheels for consistency)
+    
+    // Baseline engine with 1.0 cap for comparison
+    FFBEngine engine_low;
+    InitializeEngine(engine_low);
+    engine_low.m_brake_load_cap = 1.0f;
+    engine_low.m_lockup_enabled = true;
+    engine_low.m_lockup_gain = 1.0;
+    
+    // Reset phase to ensure both engines start from same state
+    engine.m_lockup_phase = 0.0;
+    engine_low.m_lockup_phase = 0.0;
+    
+    double force_low = engine_low.calculate_force(&data);
+    double force_high = engine.calculate_force(&data);
+    
+    // Verify the 3x ratio more precisely
+    // Expected: force_high ≈ 3.0 * force_low (within tolerance for phase differences)
+    double expected_ratio = 3.0;
+    double actual_ratio = std::abs(force_high) / (std::abs(force_low) + 0.0001); // Add epsilon to avoid div-by-zero
+    
+    // Use a tolerance of ±0.5 to account for phase integration differences
+    if (std::abs(actual_ratio - expected_ratio) < 0.5) {
+        std::cout << "[PASS] Brake load cap applies 3x scaling (Ratio: " << actual_ratio << ", High: " << std::abs(force_high) << ", Low: " << std::abs(force_low) << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Expected ~3x ratio, got " << actual_ratio << " (High: " << std::abs(force_high) << ", Low: " << std::abs(force_low) << ")" << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_dynamic_thresholds() {
+    std::cout << "\nTest: Dynamic Lockup Thresholds" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    
+    engine.m_lockup_enabled = true;
+    engine.m_lockup_gain = 1.0;
+    data.mUnfilteredBrake = 1.0;
+    
+    // Config: Start 5%, Full 15%
+    engine.m_lockup_start_pct = 5.0f;
+    engine.m_lockup_full_pct = 15.0f;
+    
+    // Case A: 4% Slip (Below Start)
+    // 0.04 * 20.0 = 0.8
+    data.mWheel[0].mLongitudinalPatchVel = -0.8; 
+    engine.calculate_force(&data);
+    if (engine.m_lockup_phase == 0.0) {
+        std::cout << "[PASS] No trigger below 5% start." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Triggered below start threshold." << std::endl;
+        g_tests_failed++;
+    }
+
+    // Case B: 10% Slip (In Range)
+    // 0.10 * 20.0 = 2.0
+    data.mWheel[0].mLongitudinalPatchVel = -2.0;
+    double force_mid = engine.calculate_force(&data);
+    ASSERT_TRUE(std::abs(force_mid) > 0.0);
+    
+    // Case C: 20% Slip (Saturated)
+    // 0.20 * 20.0 = 4.0
+    data.mWheel[0].mLongitudinalPatchVel = -4.0;
+    double force_max = engine.calculate_force(&data);
+    
+    // Both should have non-zero force, and max should be significantly higher due to quadratic ramp
+    // 10% slip: severity = (0.5)^2 = 0.25
+    // 20% slip: severity = 1.0
+    if (std::abs(force_max) > std::abs(force_mid)) {
+        std::cout << "[PASS] Force increases with slip depth." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Force saturation/ramp failed." << std::endl;
+        g_tests_failed++;
+    }
+}
+
 
 ```
 
@@ -31587,6 +32214,8 @@ static void test_rear_lockup_differentiation() {
 #include "imgui.h"
 #include <atomic>
 #include <mutex>
+#include <fstream>
+#include <cstdio>
 
 // Global externs required by GuiLayer
 std::atomic<bool> g_running(true);
@@ -31613,6 +32242,14 @@ int g_tests_failed = 0;
         std::cout << "[FAIL] " << #a << " (" << a << ") != " << #b << " (" << b << ")" << std::endl; \
         g_tests_failed++; \
     }
+
+// --- Test Helpers ---
+static void InitializeEngine(FFBEngine& engine) {
+    Preset::ApplyDefaultsToEngine(engine);
+    engine.m_max_torque_ref = 20.0f;
+    engine.m_invert_force = false;
+    engine.m_steering_shaft_smoothing = 0.0f;
+}
 
 // --- TESTS ---
 
@@ -32348,6 +32985,57 @@ static void test_single_source_of_truth_t300_defaults() {
     std::cout << "  [SUMMARY] Single source of truth verified across all initialization paths!" << std::endl;
 }
 
+static void test_config_persistence_braking_group() {
+    std::cout << "\nTest: Config Persistence (Braking Group)" << std::endl;
+    
+    std::string test_file = "test_config_brake.ini";
+    FFBEngine engine_save;
+    InitializeEngine(engine_save);
+    FFBEngine engine_load;
+    InitializeEngine(engine_load);
+    
+    // 1. Set non-default values
+    engine_save.m_brake_load_cap = 2.5f;
+    engine_save.m_lockup_start_pct = 8.0f;
+    engine_save.m_lockup_full_pct = 20.0f;
+    engine_save.m_lockup_rear_boost = 2.0f;
+    
+    // 2. Save
+    Config::Save(engine_save, test_file);
+    
+    // 3. Load
+    Config::Load(engine_load, test_file);
+    
+    // 4. Verify
+    ASSERT_TRUE(engine_load.m_brake_load_cap == 2.5f);
+    ASSERT_TRUE(engine_load.m_lockup_start_pct == 8.0f);
+    ASSERT_TRUE(engine_load.m_lockup_full_pct == 20.0f);
+    ASSERT_TRUE(engine_load.m_lockup_rear_boost == 2.0f);
+    
+    remove(test_file.c_str());
+}
+
+static void test_legacy_config_migration() {
+    std::cout << "\nTest: Legacy Config Migration (Load Cap)" << std::endl;
+    
+    std::string test_file = "test_config_legacy.ini";
+    {
+        std::ofstream file(test_file);
+        // Write old key
+        file << "max_load_factor=1.8\n";
+        file.close();
+    }
+    
+    FFBEngine engine;
+    InitializeEngine(engine);
+    Config::Load(engine, test_file);
+    
+    // Verify it mapped to texture_load_cap
+    ASSERT_TRUE(engine.m_texture_load_cap == 1.8f);
+    
+    remove(test_file.c_str());
+}
+
 int main() {
     std::cout << "=== Running Windows Platform Tests ===" << std::endl;
 
@@ -32363,6 +33051,8 @@ int main() {
     test_latency_display_regression();
     test_window_config_persistence();
     test_single_source_of_truth_t300_defaults();  // NEW: v0.5.12
+    test_config_persistence_braking_group(); // NEW: v0.5.13
+    test_legacy_config_migration(); // NEW: v0.5.13
 
     std::cout << "\n----------------" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
