@@ -54,6 +54,7 @@ Inlcude:
 overhaul the graphs: add new ones for new effects.
 reorganize them, so they also take less vertical and horizontal space.
 
+verify and investigate: LMU 1.2 bug where mLateralForce is zero for rear wheels; see the workaround in use.
 
 Yaw Kick Smoothing, Gyroscopic Damping Smoothing, Chassis Inertia (Load) Smoothing
 
