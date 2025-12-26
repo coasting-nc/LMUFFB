@@ -4,10 +4,10 @@
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release --clean-first
 
 ## Run all tests that had already been compiled:
-.\build\tests\Release\run_tests.exe; .\build\tests\Release\run_tests_win32.exe; .\build\tests\Release\run_tests_screenshot.exe
+.\build\tests\Release\run_combined_tests.exe
 
 ## Compile and run tests (physics only, no windows tests) in one command
-& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cl /EHsc /std:c++17 /I.. tests\test_ffb_engine.cpp src\Config.cpp /Fe:tests\test_ffb_engine.exe; tests\test_ffb_engine.exe 2>&1 | Tee-Object -FilePath tmp\test_results.txt
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake --build build --config Release --target run_combined_tests; .\build\tests\Release\run_combined_tests.exe
 
 # Compile and run tests, including windows platform-specific tests
 

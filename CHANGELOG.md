@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.7] - 2025-12-26
+### Changed
+- **Unified Test Runner**: Consolidated `test_ffb_engine`, `test_windows_platform`, and `test_screenshot` into a single executable (`run_combined_tests`). This significantly reduces compilation time and provides a comprehensive pass/fail summary for all test suites at once.
+- **Security Check**: Replaced `strcpy` with `strcpy_s` in test files to resolve MSVC build warnings and improve safety.
+
 ## [0.6.6] - 2025-12-26
 ### Added
 - **Missing Telemetry Warnings**: 

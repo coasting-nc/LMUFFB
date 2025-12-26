@@ -11,8 +11,10 @@
 #include <fstream>
 #include <cstdio> // for remove()
 #include <random>
+
 #include <sstream>
 
+namespace FFBEngineTests {
 // --- Simple Test Framework ---
 int g_tests_passed = 0;
 int g_tests_failed = 0;
@@ -5081,8 +5083,9 @@ static void test_missing_telemetry_warnings() {
     std::cout.rdbuf(prev_cout_buf);
 }
 
-int main() {
-    std::cout << "Starting FFB Engine Tests..." << std::endl;
+// Main Runner
+void Run() {
+    std::cout << "=== Running FFB Engine Tests ===" << std::endl;
     
     // Run all tests
     // Regression Tests (v0.4.14)
@@ -5177,9 +5180,9 @@ int main() {
     test_abs_pulse_v060(); // v0.6.0
     test_missing_telemetry_warnings(); // New in v0.6.3
     
-    std::cout << "\n---Physics Engine Test Summary:" << std::endl;
+    std::cout << "\n--- Physics Engine Test Summary ---" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
     std::cout << "Tests Failed: " << g_tests_failed << std::endl;
-    
-    return g_tests_failed > 0 ? 1 : 0;
 }
+
+} // namespace FFBEngineTests

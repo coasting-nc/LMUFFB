@@ -97,31 +97,45 @@ For feedback, questions, or support:
 
 ## Building (for developers)
 
-### Prerequisites
-*   **Compiler**: MSVC (Visual Studio 2022 Build Tools) or generic C++ compiler.
-*   **Build System**: CMake (3.10+).
-*   **Dear ImGui (Optional)**: Download from [GitHub](https://github.com/ocornut/imgui) and place in `vendor/imgui` to enable the GUI.
+## Building (for developers)
 
-### Option A: Command Line (Windows)
-1.  Open the Powershell.
-2.  Navigate to the repository root.
-3.  Run the following commands:
-    ```cmd
-    'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake --build build --config Release --clean-first
-    ```
+### Prerequisites (First Setup)
 
-### Option C: Visual Studio 2022 (IDE)
-1.  Open Visual Studio.
-2.  Select "Open a local folder" and choose the repo root.
-3.  Visual Studio will auto-detect `CMakeLists.txt`.
-4.  Select **Build > Build All**.
+1.  **Compiler**: MSVC (Visual Studio 2022 Build Tools) or generic C++ compiler.
+2.  **Build System**: CMake (3.10+).
 
-### Option B: Visual Studio Code
-1.  Install **VS Code**.
-2.  Install extensions: **C/C++** (Microsoft) and **CMake Tools** (Microsoft).
-3.  Open the repo folder in VS Code.
-4.  When prompted to configure CMake, select your installed compiler kit (e.g., *Visual Studio Community 2022 Release - x86_amd64*).
-5.  Click **Build** in the bottom status bar.
+**One-time Setup Steps (PowerShell):**
+
+```powershell
+# Enable execution of scripts
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Initialize build files
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -B build
+
+# Download and Install ImGui (Required for GUI)
+New-Item -ItemType Directory -Path "vendor\imgui" -Force
+Invoke-WebRequest -Uri "https://github.com/ocornut/imgui/archive/refs/heads/master.zip" -OutFile "vendor\imgui-master.zip"
+Expand-Archive -Path "vendor\imgui-master.zip" -DestinationPath "vendor" -Force
+Copy-Item -Path "vendor\imgui-master\*" -Destination "vendor\imgui\" -Recurse -Force
+Test-Path "vendor\imgui\imgui.cpp"
+Remove-Item -Path "vendor\imgui-master.zip", "vendor\imgui-master" -Recurse -Force
+```
+
+### Build & Test
+
+**Option 1: Build EVERYTHING (App + Tests) in one command:**
+This will compile the main application, compile all test suites, and report build status.
+```powershell
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release --clean-first
+```
+
+**Option 2: Run All Tests:**
+After building, run the unified test runner to verify everything (Physics, Windows Platform, Screenshots):
+```powershell
+.\build\tests\Release\run_combined_tests.exe
+```
+
 
 
 ### rFactor 2 Compatibility

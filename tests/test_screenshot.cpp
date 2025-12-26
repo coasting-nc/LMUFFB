@@ -7,13 +7,13 @@
 #include <mutex>
 
 // Global externs required by GuiLayer
-std::atomic<bool> g_running(true);
-std::mutex g_engine_mutex;
+
 
 // Forward declaration from GuiLayer.cpp
 bool CaptureWindowToBuffer(HWND hwnd, std::vector<unsigned char>& buffer, int& width, int& height);
 
 // --- Simple Test Framework (Same as other test files) ---
+namespace ScreenshotTests {
 int g_tests_passed = 0;
 int g_tests_failed = 0;
 
@@ -426,7 +426,9 @@ static void test_window_enumeration_for_console() {
 
 // --- MAIN ---
 
-int main() {
+// --- MAIN ---
+
+void Run() {
     std::cout << "=== Running Composite Screenshot Tests ===\n";
     
     // Run all tests
@@ -445,13 +447,7 @@ int main() {
     std::cout << "\n=== Screenshot Test Summary ===\n";
     std::cout << "Tests Passed: " << g_tests_passed << "\n";
     std::cout << "Tests Failed: " << g_tests_failed << "\n";
-
-    if (g_tests_failed == 0) {
-        std::cout << "\n=== All Screenshot Tests Passed! ===\n";
-        return 0;
-    } else {
-        std::cout << "\n=== Some Screenshot Tests Failed ===\n";
-        return 1;
-    }
 }
+
+} // namespace ScreenshotTests
 

@@ -6,43 +6,30 @@ set(CMAKE_CXX_STANDARD 17)
 # Include main source dir for headers
 include_directories(..)
 
-# Test Executable
-add_executable(run_tests test_ffb_engine.cpp ../src/Config.cpp)
+# Combined Test Executable
+set(TEST_SOURCES 
+    main_test_runner.cpp 
+    test_ffb_engine.cpp 
+    ../src/Config.cpp
+)
 
-# Enable testing
-enable_testing()
-add_test(NAME CoreLogicTest COMMAND run_tests)
-
-# Windows-Specific Tests (DirectInput Helpers, Persistence)
 if(WIN32)
-    add_executable(run_tests_win32 
+    list(APPEND TEST_SOURCES 
         test_windows_platform.cpp 
-        ../src/DirectInputFFB.cpp 
-        ../src/Config.cpp
-        ../src/GuiLayer.cpp
-        ../src/GameConnector.cpp
-        ${IMGUI_SOURCES}
-    )
-    
-    # Link required Windows libraries
-    target_link_libraries(run_tests_win32 dinput8 dxguid version imm32 winmm d3d11 d3dcompiler dxgi)
-    
-    # Add to CTest
-    add_test(NAME WindowsPlatformTest COMMAND run_tests_win32)
-    
-    # Screenshot Tests (v0.6.5)
-    add_executable(run_tests_screenshot
         test_screenshot.cpp
+        ../src/DirectInputFFB.cpp 
         ../src/GuiLayer.cpp
-        ../src/Config.cpp
-        ../src/DirectInputFFB.cpp
         ../src/GameConnector.cpp
         ${IMGUI_SOURCES}
     )
-    
-    # Link required Windows libraries (same as win32 tests)
-    target_link_libraries(run_tests_screenshot dinput8 dxguid version imm32 winmm d3d11 d3dcompiler dxgi)
-    
-    # Add to CTest
-    add_test(NAME ScreenshotTest COMMAND run_tests_screenshot)
 endif()
+
+enable_testing()
+add_executable(run_combined_tests ${TEST_SOURCES})
+
+if(WIN32)
+    target_link_libraries(run_combined_tests dinput8 dxguid version imm32 winmm d3d11 d3dcompiler dxgi)
+endif()
+
+# Add to CTest
+add_test(NAME CombinedTests COMMAND run_combined_tests)

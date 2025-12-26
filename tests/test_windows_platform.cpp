@@ -16,10 +16,10 @@
 #include <cstdio>
 
 // Global externs required by GuiLayer
-std::atomic<bool> g_running(true);
-std::mutex g_engine_mutex;
+
 
 // --- Simple Test Framework (Copy from main test file) ---
+namespace WindowsPlatformTests {
 int g_tests_passed = 0;
 int g_tests_failed = 0;
 
@@ -813,7 +813,7 @@ static void test_legacy_config_migration() {
     remove(test_file.c_str());
 }
 
-int main() {
+void Run() {
     std::cout << "=== Running Windows Platform Tests ===" << std::endl;
 
     test_guid_string_conversion();
@@ -836,6 +836,6 @@ int main() {
     std::cout << "\n=== Windows Platform Test Summary ===\n";
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
     std::cout << "Tests Failed: " << g_tests_failed << std::endl;
-
-    return g_tests_failed > 0 ? 1 : 0;
 }
+
+} // namespace WindowsPlatformTests
