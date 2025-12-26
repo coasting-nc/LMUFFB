@@ -6,21 +6,13 @@ Experimental alpha version.
 
 ![lmuFFB GUI](docs/screenshots/v_0.6.4.png)
 
-
-## ⚠️ CRITICAL SAFETY WARNING ⚠️
-
-**BEFORE USING THIS APPLICATION, YOU MUST CONFIGURE YOUR STEERING WHEEL DEVICE DRIVER:**
-
-This is an **experimental early alpha version** of a force feedback application. The FFB formulas are still being refined and **may produce strong force spikes and oscillations** that could be dangerous or damage your equipment. 
-**BEFORE running LMU and lmuFFB**, open your wheelbase/steering wheel device driver configurator (e.g., Simucube TrueDrive, Fanatec Control Panel, Moza Pit House, etc.) and **Reduce the Maximum FFB Strength/Torque to a LOW value:**
-   - **For Direct Drive Wheelbases**: Set to **10% or lower** of maximum torque
-   - **For Belt/Gear-Driven Wheels**: Set to **20-30%** of maximum strength
-
-Increase gradualy the values while monitoring for unexpected behavior.
-
 ## 📥 Download
 
 **[Download the latest release from GitHub](https://github.com/coasting-nc/LMUFFB/releases)**
+
+
+
+
 
 
 
@@ -28,12 +20,6 @@ Increase gradualy the values while monitoring for unexpected behavior.
 
 ### Step-by-Step Setup
 
-**⚠️ STEP 0: Reduce Wheel Strength FIRST (CRITICAL)**
-1.  **BEFORE doing anything else**, open your wheel device driver (Simucube TrueDrive, Fanatec Control Panel, Moza Pit House, etc.)
-2.  **Reduce Maximum FFB Strength/Torque**:
-    *   Direct Drive Wheels: Set to **10% or lower**
-    *   Belt/Gear Wheels: Set to **20-30%**
-3.  **Save the settings** and keep the driver software open for adjustments
 
 **A. Configure Le Mans Ultimate (LMU)**
 1.  Start LMU.
