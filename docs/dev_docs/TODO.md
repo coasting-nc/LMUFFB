@@ -34,6 +34,8 @@ DONE: lockup vibration improvements
 
 add "basic mode" with only main sliders shown, and auto-adjust of settings.
 
+fix: "curbs and road surface almost mute, i'm racing at Sebring and i can hear curbs by ingame sound not wheel.."
+
 expand the range of some sliders that currently are maxed out or minimized, to give more range to feel the effects when too weak. Inlcude: Understeer Effect, and others.
 
 Yaw Kick Smoothing, Gyroscopic Damping Smoothing, Chassis Inertia (Load) Smoothing
