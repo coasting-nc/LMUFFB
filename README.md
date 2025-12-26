@@ -62,6 +62,7 @@ Your testing and feedback is greatly appreciated! 🙏
 
 ### Upcoming Features
 
+* Basic mode with only main sliders and auto adjustment of other settings
 * Adaptive Optimal Slip Angle
 * Wet Weather Haptics (Hydro-Grain): vibration cues telling when the tires are on dry or wet surface, and if there is grip or not 
 * Per wheel Hydro-Grain to give information about a drying racing line (e.g., left tires on dry, right tires on wet)  
