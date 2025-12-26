@@ -81,7 +81,7 @@ Available for each of the 4 wheels (`mWheel[0]`=FL, `[1]`=FR, `[2]`=RL, `[3]`=RR
 | `mTerrainName` | char[16] | Name of surface (e.g., "ROAD", "GRASS") | Unused | **Surface FX**: Different rumble for Kerbs/Grass/Gravel |
 | `mSurfaceType` | unsigned char | 0=dry, 1=wet, 2=grass, 3=dirt, 4=gravel, 5=rumblestrip, 6=special | Unused | Faster lookup for Surface FX |
 | `mCamber`, `mToe` | radians | Wheel alignment | Unused | Setup analysis |
-| `mStaticUndeflectedRadius` | cm | Tire radius (static) | **Used**: **Dynamic Notch Filter** center freq, **Predictive Lockup** reference | |
+| `mStaticUndeflectedRadius` | cm | Tire radius (static) | **Used**: **Dynamic Notch Filter** center freq, **Predictive Lockup** reference. **Safety**: Defaults to **0.33m** (33cm) if < 10cm or missing. | |
 
 ### Condition
 

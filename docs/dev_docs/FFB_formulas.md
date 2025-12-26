@@ -75,6 +75,7 @@ If telemetry grip (`mGripFract`) is missing or invalid (< 0.0001), the engine ap
     *   **Metric Formulation**:
         *   $\text{Metric}_{\text{lat}} = |\alpha| / \text{OptAlpha}$ (Lateral Slip Angle). **Default**: 0.10 rad.
         *   $\text{Metric}_{\text{long}} = |\kappa| / \text{OptRatio}$ (Longitudinal Slip Ratio). **Default**: 0.12 (12%).
+        *   *Note on $\kappa$*: Calculated via Manual Slip Ratio ($V_{wheel} / V_{car} - 1$). If `mTireRadius` is invalid (< 0.1m), it defaults to **0.33m** (33cm).
     *   $\text{Combined} = \sqrt{\text{Metric}_{\text{lat}}^2 + \text{Metric}_{\text{long}}^2}$
     *   $\text{ApproxGrip} = (1.0 \text{ if } \text{Combined} < 1.0 \text{ else } 1.0 / (1.0 + (\text{Combined}-1.0) \times 2.0))$
 *   **Safety Clamp**: Approx Grip is usually clamped to min **0.2** to prevent total loss of force.
@@ -120,6 +121,7 @@ If `mSuspForce` is missing (encrypted content), tire load is estimated from chas
 **1. Progressive Lockup ($F_{\text{vib-lock}}$)**
 *   **Safety Trap**: If `CarSpeed < 2.0 m/s`, Slip Ratio is forced to 0.0 to prevent false lockup detection at standstill.
 *   **Predictive Logic (v0.6.0)**: Triggers early if `WheelDecel > CarDecel * 2.0` (Wheel stopping faster than car).
+    *   *Note*: `CarDecel` (angular equivalent) depends on `mTireRadius`. If radius < 0.1m, defaults to **0.33m**.
 *   **Bump Rejection**: Logic disabled if `SuspVelocity > m_lockup_bump_reject` (e.g. 1.0 m/s).
 *   **Frequency**: $10\text{Hz} + (\text{CarSpeed} \times 1.5)$. (Base frequency calculation).
 *   **Severity**: $\text{Severity} = \text{pow}(\text{NormSlip}, m_{\text{lockup-gamma}})$ (Quadratic).
@@ -175,6 +177,7 @@ If `mSuspForce` is missing (encrypted content), tire load is estimated from chas
 **1. Signal Filtering**
 *   **Notch Filters**:
     *   **Dynamic**: $Freq = \text{Speed} / \text{Circumference}$. Uses Biquad.
+        *   *Safety*: If radius is invalid, defaults to **0.33m** (33cm).
     *   **Static**: Fixed frequency (e.g. 50Hz) Biquad.
 *   **Frequency Estimator**: Tracks zero-crossings of `mSteeringShaftTorque` (AC coupled).
 
@@ -230,3 +233,4 @@ Applied at the very end of the pipeline to `F_norm` (before clipping).
 | `BOTTOMING_LOAD` | 8000.0 N | Load required to trigger legacy bottoming |
 | `BOTTOMING_RATE` | 100kN/s | Suspension force rate for impact bottoming |
 | `MIN_SLIP_VEL` | 0.5 m/s | Low speed threshold for slip angle calculation |
+| `RADIUS_FALLBACK` | 0.33 m | Safety default if tire radius telemetry is invalid (<0.1m) |

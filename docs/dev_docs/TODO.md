@@ -62,9 +62,18 @@ more telemetry data to be used:
 * "filtered throttle" (if available): use similarly to ABS pulse, to detect when Traction Control kicks in
 * mElectricBoostMotorTorque, Hybrid motor torque, Hybrid Haptics: Vibration during deployment/regen (is it useful? or just "immersive"?). From other data: warning when battery full, and risk of rear brakes lockup?
 * mLongitudinalForce: currently unused (add weight under braking? remove under acceleration?)
-* set bottoming trigger to method B as default, to use mSuspForce instead of mTireLoad
-
-
+* mSuspForce, mSuspensionDeflection: set bottoming trigger to method B as default, to use mSuspForce instead of mTireLoad. Add use of mSuspensionDeflection. Use mRideHeight for scraping effects.
+* mLateralPatchVel: More accurate "scrub" feel
+* (other data): feel for "weight of car", eg. make GT3s feel heavier.
+* mLongitudinalPatchVel: TC / slip? (if already used, try/experiment to see which sliders value make it felt on T300)
+* mRotation, mVerticalTireDeflection, and others: for TC effect? more advanced TC effect, inspired by current brake and ABS effects?
+* mTerrainName: Surface FX: Different rumble for Kerbs/Grass/Gravel. 
+* mSurfaceType: Faster lookup for Surface FX (?)
+* mCamber, mToe?
+* mTemperature[3]: Cold Tire Feel: Reduce grip when cold (isn't this already taken into account from our grip estimation?)
+* mWear: Wear Feel: Reduce overall gain as tires wear (isn't this already taken into account from our grip estimation?)
+* mPressure: Pressure-sensitive handling?
+* mBrakePressure: Brake Fade: Judder when overheated
 
 Yaw Kick Smoothing, Gyroscopic Damping Smoothing, Chassis Inertia (Load) Smoothing
 
