@@ -68,6 +68,11 @@ test and fix current effects:
 * min force: set a value that works wheel for belt and gear driven wheels. The point it to overcome the resistance of the belt/gear for these wheels, to feel the lower forces of the FFB.
 
 verify and investigate: LMU 1.2 bug where mLateralForce is zero for rear wheels; see the workaround in use.
+* check if the new console warning for missing data triggers
+
+Fix: the game exited from the session, and there were still forces
+in particular self align torque and slide vibration
+improve logic of detecting when not driving / not live, and stop ffb
 
 add "basic mode" with only main sliders shown, and auto-adjust of settings.
 
@@ -95,17 +100,13 @@ more telemetry data to be used:
 Implement "Jardier" wet grip effects.
 Implement adaptive (auto) optimal slip angle (and slip rate?)
 
-
-Fix: the game exited from the session, and there were still forces
-in particular self align torque and slide vibratio
-improve logic of detecting when not driving / not live, and stop ffb
-
-add timestamps to console prints
-
 Basic Mode: lmuFFB has now so many advance options. This might be confusing for users. Introduce a simplified mode, which shows in the GUI only the most important and intruidtive options, and hide the advanced options. This is similar to the VLC media player, which has a basic mode and an advanced mode for the settings.
 
 overhaul the graphs: add new ones for new effects.
 reorganize them, so they also take less vertical and horizontal space.
+
+
+add timestamps to console prints
 
 we need a button for ..disconnect from game? reset data from dame? signal session finished?
 the telemetry persist even after quitting the game (slide texture and rear align torque)
