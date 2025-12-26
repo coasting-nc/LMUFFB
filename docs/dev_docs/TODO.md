@@ -100,7 +100,8 @@ more telemetry data to be used:
 * Suspension Bottoming (Deflection Limit): Triggering a heavy jolt when mSuspensionDeflection or mFront3rdDeflection hits stops (currently uses Ride Height/Force Spike/Load).
 
 * lockup due to turn in under braking (circle of grip): do current lockup prediction cover this? will planned effect cover it? Or do we need some addition to the formulas?
-
+    * additionally, for longitudinal lockup only (no turn in): in real life, there is a feel in the change of deceleration (..."a weird rubbery feel"), when the rear starts to lock up (a similar thing happens when drifting: the point where the tyre goes from when you are just starting to drift, there is this little "hump" that you can feel. But you need a LOAD FORCE for that, YOU CANNOT DO IT WITH VIBRATIONS). Does the current lock up effect cover this?
+    * considering that the current lockup effect is a vibration (although with varying amplitude and frequency), should we also add something that is not a "vibration effect" but a change in a continuous force effect? (also "change of deceleration" effect?)
 * Doc with new effects:Yaw Kick Smoothing, Gyroscopic Damping Smoothing, Chassis Inertia (Load) Smoothing
 Implement "Jardier" wet grip effects.
 Implement adaptive (auto) optimal slip angle (and slip rate?)
