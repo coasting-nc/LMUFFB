@@ -51,6 +51,8 @@ Inlcude:
 
 * Static noise filter: add a range or width slider: how many frequency to the left and right of the center frequency should we also suppress.
 
+overhaul the graphs: add new ones for new effects.
+reorganize them, so they also take less vertical and horizontal space.
 
 
 Yaw Kick Smoothing, Gyroscopic Damping Smoothing, Chassis Inertia (Load) Smoothing
