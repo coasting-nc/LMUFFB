@@ -36,7 +36,22 @@ add "basic mode" with only main sliders shown, and auto-adjust of settings.
 
 fix: "curbs and road surface almost mute, i'm racing at Sebring and i can hear curbs by ingame sound not wheel.."
 
-expand the range of some sliders that currently are maxed out or minimized, to give more range to feel the effects when too weak. Inlcude: Understeer Effect, and others.
+expand the range of some sliders that currently are maxed out or minimized, to give more range to feel the effects when too weak. 
+Inlcude: 
+* Understeer Effect (what "measure unit" is this value?) Increase the max from 50 to 200.
+* Steering Shft Gain: increase max from 100% to 200%.
+* ABS Pulse (increase max gain from 2.0 to 10.0)
+* Lockup response Gamma: min from 0.1 instead of 0.5
+* Lockup strength up to 300%
+* brake load cap: up to 10x
+* Lockup prediction sensitivity: min down to 10 (from 20). Also add what unit is this.
+* Lockup prediction Rear boost: max up to 10x (from 3x)
+* Yaw Kick: max at 100% (which is already way too much), down from 200%
+* Lateral G Boost (Slide): max up to 400% (from 200%)
+
+* Static noise filter: add a range or width slider: how many frequency to the left and right of the center frequency should we also suppress.
+
+
 
 Yaw Kick Smoothing, Gyroscopic Damping Smoothing, Chassis Inertia (Load) Smoothing
 
