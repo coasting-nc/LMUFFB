@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
   - "Baseline vibration": Explains the 10-12Hz Steering Shaft frequency fix.
   - "Strange pull": Advises reducing Rear Align Torque.
 - **Developer Guide**: Updated build instructions to reflect the new unified test runner workflow.
+- **Feedback & Support**: Added instructions on the "Basic Mode" roadmap and how to effectively report issues using the Screenshot feature.
 
 ## [0.6.7] - 2025-12-26
 ### Changed
