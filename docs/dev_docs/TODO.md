@@ -32,6 +32,8 @@ DONE: add smoothing (and slider) for steering shaft torque
 DONE: expose sliders for additional smoothing: yaw kick, gyroscopic damping, Chassis Inertia (Load)
 DONE: lockup vibration improvements
 
+add "basic mode" with only main sliders shown, and auto-adjust of settings.
+
 Yaw Kick Smoothing, Gyroscopic Damping Smoothing, Chassis Inertia (Load) Smoothing
 
 understeer effect: experiment to make it work.
