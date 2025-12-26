@@ -74,6 +74,7 @@ more telemetry data to be used:
 * mWear: Wear Feel: Reduce overall gain as tires wear (isn't this already taken into account from our grip estimation?)
 * mPressure: Pressure-sensitive handling?
 * mBrakePressure: Brake Fade: Judder when overheated
+* Suspension Bottoming (Deflection Limit): Triggering a heavy jolt when mSuspensionDeflection or mFront3rdDeflection hits stops (currently uses Ride Height/Force Spike/Load).
 
 Yaw Kick Smoothing, Gyroscopic Damping Smoothing, Chassis Inertia (Load) Smoothing
 
