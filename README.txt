@@ -74,6 +74,7 @@ No FFB:
 UPCOMING FEATURES
 -----------------
 
+* Basic mode with only main sliders and auto adjustment of other settings
 * Adaptive Optimal Slip Angle
 * Wet Weather Haptics (Hydro-Grain): vibration cues telling when the tires 
   are on dry or wet surface, and if there is grip or not
