@@ -73,6 +73,21 @@ test and fix current effects:
 verify and investigate: LMU 1.2 bug where mLateralForce is zero for rear wheels; see the workaround in use.
 * check if the new console warning for missing data triggers
 
+overhaul the presets:
+delete the test and possibly also the guide presets
+add a zero latency preset
+presets for future: t300, g29, standard DD (<20 bit encoder), high end DD (>20 bit encoder)
+
+
+---
+
+possible notes for readme:
+the current version of the app uses a steering rack force that, in the case of GT3s, corresponds to the game FFB (LMU 1.2). In the case of the LMP2, the ingame FFB (LMU 1.2) adds significant smoothing or damping (this seems to mask a baseline tire vibration) so even the steering rack force alone is significantly more detailed in lmuFFB. In lmuFFB there are some settings to get rid of the baseline tire vibration from the steering rack (satich notch filter, steering torque smoothing). 
+
+lmuFFB is particularly useful for lower end wheels (belt/gear driven, and DDs < 12 Nm), because it enhances details that are difficult to feel or absent otherwise.
+
+---
+
 Fix: the game exited from the session, and there were still forces
 in particular self align torque and slide vibration
 improve logic of detecting when not driving / not live, and stop ffb
@@ -102,6 +117,8 @@ more telemetry data to be used:
 * lockup due to turn in under braking (circle of grip): do current lockup prediction cover this? will planned effect cover it? Or do we need some addition to the formulas?
     * additionally, for longitudinal lockup only (no turn in): in real life, there is a feel in the change of deceleration (..."a weird rubbery feel"), when the rear starts to lock up (a similar thing happens when drifting: the point where the tyre goes from when you are just starting to drift, there is this little "hump" that you can feel. But you need a LOAD FORCE for that, YOU CANNOT DO IT WITH VIBRATIONS). Does the current lock up effect cover this?
     * considering that the current lockup effect is a vibration (although with varying amplitude and frequency), should we also add something that is not a "vibration effect" but a change in a continuous force effect? (also "change of deceleration" effect?)
+-> the planned feature for dynamic longitudinal weight transfer migth help convey this "rubbery" feeling of locking up as a load force
+
 * Doc with new effects:Yaw Kick Smoothing, Gyroscopic Damping Smoothing, Chassis Inertia (Load) Smoothing
 Implement "Jardier" wet grip effects.
 Implement adaptive (auto) optimal slip angle (and slip rate?)
