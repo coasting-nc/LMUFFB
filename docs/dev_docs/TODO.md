@@ -101,22 +101,24 @@ more telemetry data to be used:
 -> the planned feature for dynamic longitudinal weight transfer migth help convey this "rubbery" feeling of locking up as a load force
 
 
-### Other stuff
+* See this doc with new effects to be implemented (some already are implemented): "Yaw Kick Smoothing, Gyroscopic Damping Smoothing, Chassis Inertia (Load) Smoothing"
+Implement "Jardier" wet grip effects.
+Implement adaptive (auto) optimal slip angle (and slip rate?)
+
+### Basic Mode
+
+
+add "basic mode" with only main sliders shown, and auto-adjust of settings.
+Basic Mode: lmuFFB has now so many advance options. This might be confusing for users. Introduce a simplified mode, which shows in the GUI only the most important and intruidtive options, and hide the advanced options. This is similar to the VLC media player, which has a basic mode and an advanced mode for the settings.
+
+### Manunal testing current effects, new presets and default values
 
 overhaul the presets:
 delete the test and possibly also the guide presets
 add a zero latency preset
 presets for future: t300, g29, standard DD (<20 bit encoder), high end DD (>20 bit encoder)
 
-Fix: the game exited from the session, and there were still forces
-in particular self align torque and slide vibration
-improve logic of detecting when not driving / not live, and stop ffb
-
-add "basic mode" with only main sliders shown, and auto-adjust of settings.
-Basic Mode: lmuFFB has now so many advance options. This might be confusing for users. Introduce a simplified mode, which shows in the GUI only the most important and intruidtive options, and hide the advanced options. This is similar to the VLC media player, which has a basic mode and an advanced mode for the settings.
-
-in GM stream (https://www.youtube.com/watch?v=z2pprGlRssw&t=18889s) the "delay" of FFB and disconnect from game physics was there even with SoP smoothing off ("raw"). Only the steering rack force was active. Investigate if there might still be a source of latency / delay / disconnect from game physics.
-
+* min force: set a value that works wheel for belt and gear driven wheels. The point it to overcome the resistance of the belt/gear for these wheels, to feel the lower forces of the FFB.
 
 test and fix current effects (this requires manual testing of the app; only check if we need to implement anything to support such testing):
 * understeer effect: experiment to make it work.
@@ -128,10 +130,17 @@ test and fix current effects (this requires manual testing of the app; only chec
 * experiment with gyro damping to compensate yaw kick
 * spin vibration might also not be working
 
-* min force: set a value that works wheel for belt and gear driven wheels. The point it to overcome the resistance of the belt/gear for these wheels, to feel the lower forces of the FFB.
-
 verify and investigate: LMU 1.2 bug where mLateralForce is zero for rear wheels; see the workaround in use.
 * check if the new console warning for missing data triggers
+
+### Other stuff
+
+
+Fix: the game exited from the session, and there were still forces
+in particular self align torque and slide vibration
+improve logic of detecting when not driving / not live, and stop ffb
+
+in GM stream (https://www.youtube.com/watch?v=z2pprGlRssw&t=18889s) the "delay" of FFB and disconnect from game physics was there even with SoP smoothing off ("raw"). Only the steering rack force was active. Investigate if there might still be a source of latency / delay / disconnect from game physics.
 
 
 ---
@@ -142,13 +151,6 @@ the current version of the app uses a steering rack force that, in the case of G
 lmuFFB is particularly useful for lower end wheels (belt/gear driven, and DDs < 12 Nm), because it enhances details that are difficult to feel or absent otherwise.
 
 ---
-
-
-
-* See this doc with new effects to be implemented (some already are implemented): "Yaw Kick Smoothing, Gyroscopic Damping Smoothing, Chassis Inertia (Load) Smoothing"
-Implement "Jardier" wet grip effects.
-Implement adaptive (auto) optimal slip angle (and slip rate?)
-
 
 
 overhaul the graphs: add new ones for new effects.
