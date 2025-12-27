@@ -82,8 +82,6 @@ improve logic of detecting when not driving / not live, and stop ffb
 
 ### Preset Updates
 
-
-
 2. **Preset Updates**: Consider updating built-in presets to showcase new frequency tuning:
    - "High-End DD" preset could use 40Hz ABS for sharper feedback
    - "Belt-Driven" preset could use 15Hz ABS for smoother feel
@@ -96,8 +94,6 @@ presets for future: t300, g29, standard DD (<20 bit encoder), high end DD (>20 b
 * min force: set a value that works wheel for belt and gear driven wheels. The point it to overcome the resistance of the belt/gear for these wheels, to feel the lower forces of the FFB.
 
 ### Manunal testing current effects, new presets and default values
-
-
 
 test and fix current effects (this requires manual testing of the app; only check if we need to implement anything to support such testing):
 * understeer effect: experiment to make it work.

@@ -6,9 +6,12 @@ The "Troubleshooting 25" list and following notes suggest a desire to expand the
 **Features Requested:**
 *   **Chassis Movement**: Use `mLocalRot`, `mLocalRotAccel` to feel the car's body roll and pitch.
 *   **Deceleration Cues**: Use `mLocalAccel.z` for "Brake Dive" (weight transfer feeling on steering) and "Acceleration Squat".
-*   **True Bottoming**: Use `mSuspensionDeflection` (if available) to detect hitting bump stops, rather than just Force spikes.
 *   **"Rubbery" Lockup**: A feeling of "change in deceleration" constant force rather than just vibration when locking up.
+*   **True Bottoming**: Use `mSuspensionDeflection` (if available) to detect hitting bump stops, rather than just Force spikes.
 *   **Wet/Surface Effects**: Use `mSurfaceType`, `mRaining`, `mTemperature` to modulate grip and friction dynamically.
+
+TODO: mLocalRotAccel is not used in any of the proposed solutions.
+TODO: split this report in two: have a separate report only for **Chassis Movement**, **Deceleration Cues**, **"Rubbery" Lockup** (Chassis Body Effects, Advanced Lockup - Longitudinal Force). Also include a more fleshed out description of each effect, and what feeling  from real life driving are we trying to recreate. Expand on the notes in docs\dev_docs\TODO.md
 
 ## 2. Proposed Solution
 
@@ -21,6 +24,8 @@ The "Troubleshooting 25" list and following notes suggest a desire to expand the
 *   **Theory**: When a tire locks, the longitudinal braking force drops (or plateaus) and becomes erratic. The driver feels a loss of deceleration "G-force".
 *   **Implementation**: Calculate the derivative of `mLocalAccel.z` (Jerk). If `Jerk` is negative (losing deceleration) AND `BrakePressure` is constant/increasing, it indicates a Lockup Slide.
 *   **Effect**: Reduce the `Master Gain` momentarily or inject a "Counter-Force" to simulate the loss of resistance.
+
+TODO: reconsider; this seems to only trigger when we have already lockup, so it's not predictive, just reactive; however, since this is not a vibration (which is a lower class of effects), but rather a force/load effect, this could be an improvement over what we already have among the reactive effects to lockups, and could be enabled independently of the lockup vibration effect.
 
 ### 2.3. Surface & Weather
 *   **Wet Mod**: If `mSurfaceType == 1` (Wet) or `mRaining > 0.1`:
