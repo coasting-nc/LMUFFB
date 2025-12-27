@@ -33,6 +33,11 @@ TODO: reconsider; this seems to only trigger when we have already lockup, so it'
     *   Scale `m_global_friction` by 0.7 (Overall forces lower).
     *   Enhance "Slide Texture" (easier to slide).
 
+TODO: this needs its own separate report. It should include a per wheel hydro gain. See "docs\dev_docs\TODO.md and "docs\dev_docs\Yaw, Gyroscopic Damping , Dynamic Weight, Per-Wheel Hydro-Grain, and Adaptive Optimal Slip Angle implementation.md"
+
+
+TODO: have a separate report to implement adaptive (auto) optimal slip angle (and slip rate?)" as described in "docs\dev_docs\TODO.md and "docs\dev_docs\Yaw, Gyroscopic Damping , Dynamic Weight, Per-Wheel Hydro-Grain, and Adaptive Optimal Slip Angle implementation.md".
+
 ### 2.4. Bottoming Method C
 *   **Logic**: If `mSuspensionDeflection` > `limit` (e.g. 95% of travel):
     *   Trigger "Hard Bump" (Single impulse).
