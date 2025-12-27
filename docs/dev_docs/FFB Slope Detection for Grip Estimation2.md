@@ -335,4 +335,53 @@ Regarding the  Kalman Filtering, I have some data from those two games telemetr
 
 ## Answer
 
+**Mode 2: Simple Q&A**
+
+### 1. Savitzky-Golay Latency at 400 Hz
+
+At a telemetry update rate of **400 Hz**, the time between samples () is **2.5 ms**. Because the data density is much higher, you can use significantly larger window sizes to achieve smoother signals while maintaining lower latency than is possible at 60 Hz.
+
+Using the group delay formula for real-time applications (), here is the expected latency for various Window Sizes ():
+
+| Window Size () | Latency (ms) | Filtering Characteristic |
+| --- | --- | --- |
+| **9 samples** | **10.0 ms** | Very Low Latency. Minimal smoothing, still captures some noise. |
+| **15 samples** | **17.5 ms** | **Sweet Spot.** Excellent noise rejection with imperceptible delay. |
+| **25 samples** | **30.0 ms** | Strong smoothing. Good for very noisy signals (e.g., rFactor 2/LMU raw force). |
+| **41 samples** | **50.0 ms** | Noticeable delay. Only recommended for indicators (like tire wear), not FFB. |
+
+**Key Takeaway:** At 400 Hz, a window of **15 to 25 samples** is ideal. It provides a latency of 17–30ms, which is faster than a single frame of video at 60 FPS (16.6ms), making the delay effectively imperceptible to the driver while providing a very smooth derivative for the Slope Detection logic.
+
+### 2. Kalman Filtering with Unknown Tire Stiffness
+
+**Can you calculate it without known stiffness?**
+Strictly speaking, a standard Kalman Filter (KF) **cannot** function correctly if the tire cornering stiffness () is completely unknown, as the filter uses this parameter to predict how the vehicle *should* react to steering inputs. However, you **can** still solve this problem using advanced estimation techniques.
+
+**How to Estimate Tire Stiffness ():**
+Since you have the vehicle mass () and wheelbase (), you can implement a **Dual Estimation** strategy. This involves running two algorithms simultaneously or using a specialized filter that treats stiffness as a variable to be found, rather than a constant.
+
+#### Method A: Recursive Least Squares (RLS) (Recommended)
+
+This is the industry-standard method for real-time parameter estimation.
+
+1. **Concept:** You assume the tire behaves linearly at low slip angles (e.g., straight-line driving or gentle cornering).
+2. **The Formula:** The algorithm monitors the relationship between Lateral Acceleration () and the Steering Angle ().
+*  (Lateral Force is approx. mass times lateral acceleration).
+* At low slip, .
+
+
+3. **Process:** The RLS algorithm continuously solves for  whenever the car is driving straight or turning gently. It "learns" the stiffness of the tire.
+4. **Integration:** Once RLS estimates the stiffness (e.g., 150,000 N/rad), it feeds this value into your main Kalman Filter to estimate the Slip Angle during aggressive cornering.
+
+#### Method B: Joint Extended Kalman Filter (Joint EKF)
+
+This method includes the tire stiffness as a "state" in the state vector () alongside Yaw Rate and Sideslip.
+
+* **State Vector:**  (Sideslip, Yaw Rate, Stiffness).
+* **Mechanism:** The filter observes the error between the *predicted* yaw rate and the *measured* yaw rate (from telemetry). It attributes slow, consistent errors to a wrong stiffness value and updates  automatically.
+* **Pros:** It adapts dynamically to tire wear and rain (as stiffness drops).
+* **Cons:** It is computationally expensive and difficult to tune. If the filter is not tuned perfectly, the stiffness estimate can oscillate wildy, causing FFB glitches.
+
+**Recommendation:**
+Start with **Method A (RLS)**. It is computationally lighter and more stable. Use the telemetry from *Le Mans Ultimate* (which has high-quality tire physics) to "train" your stiffness estimator on the straightaways and gentle corners, then lock that value to calculate the slip angle limits during the heavy braking and cornering zones.
 
