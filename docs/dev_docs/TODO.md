@@ -71,6 +71,28 @@ Inlcude:
 * remove "Manual Slip Calc", not needed, all physics info there to get slip info.
 
 
+### Manunal testing current effects, new presets and default values
+
+overhaul the presets:
+delete the test and possibly also the guide presets
+add a zero latency preset
+presets for future: t300, g29, standard DD (<20 bit encoder), high end DD (>20 bit encoder)
+
+* min force: set a value that works wheel for belt and gear driven wheels. The point it to overcome the resistance of the belt/gear for these wheels, to feel the lower forces of the FFB.
+
+test and fix current effects (this requires manual testing of the app; only check if we need to implement anything to support such testing):
+* understeer effect: experiment to make it work.
+* fix: "curbs and road surface almost mute, i'm racing at Sebring and i can hear curbs by ingame sound not wheel.."
+* test default values after 0-100% normalization of sliders
+* test if some vibration effects are muted
+* check lockup vibration effect, feel it before bracking up, enough to prevent it
+* yaw kick further fixes? smoothing? higher thresholds? non linear transformation? 
+* experiment with gyro damping to compensate yaw kick
+* spin vibration might also not be working
+
+verify and investigate: LMU 1.2 bug where mLateralForce is zero for rear wheels; see the workaround in use.
+* check if the new console warning for missing data triggers
+
 ### New Telemetry Effects & Advanced Physics
 * [Report: New Telemetry Effects & Advanced Physics](report_new_telemetry_advanced_physics.md)
 
@@ -106,27 +128,6 @@ Implement "Jardier" wet grip effects.
 Implement adaptive (auto) optimal slip angle (and slip rate?)
 
 
-### Manunal testing current effects, new presets and default values
-
-overhaul the presets:
-delete the test and possibly also the guide presets
-add a zero latency preset
-presets for future: t300, g29, standard DD (<20 bit encoder), high end DD (>20 bit encoder)
-
-* min force: set a value that works wheel for belt and gear driven wheels. The point it to overcome the resistance of the belt/gear for these wheels, to feel the lower forces of the FFB.
-
-test and fix current effects (this requires manual testing of the app; only check if we need to implement anything to support such testing):
-* understeer effect: experiment to make it work.
-* fix: "curbs and road surface almost mute, i'm racing at Sebring and i can hear curbs by ingame sound not wheel.."
-* test default values after 0-100% normalization of sliders
-* test if some vibration effects are muted
-* check lockup vibration effect, feel it before bracking up, enough to prevent it
-* yaw kick further fixes? smoothing? higher thresholds? non linear transformation? 
-* experiment with gyro damping to compensate yaw kick
-* spin vibration might also not be working
-
-verify and investigate: LMU 1.2 bug where mLateralForce is zero for rear wheels; see the workaround in use.
-* check if the new console warning for missing data triggers
 
 
 ### Basic Mode
