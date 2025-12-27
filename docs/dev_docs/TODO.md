@@ -156,6 +156,7 @@ $F = K \cdot x + D \cdot v$ (Spring Rate $\times$ Travel + Damper Rate $\times$ 
 
 Do we need to update the  Self-Aligning Torque (SAT) calculation to account for caster angle? 
 "4.1. The Self-Aligning Torque (SAT) ModelThe primary force a driver feels is the SAT. In a real car, this is generated mechanically by the interaction of the tyre patch and the caster angle. In a simulator, this must be calculated.$$T_{total} = T_{pneumatic} + T_{mechanical}$$"
+Mechanical Torque ($T_{mechanical}$): Derived from the caster angle and the lateral force. It always tries to center the wheel.Data: Requires steerAngle (from Shared Memory) and lateral force (Fy, often found in wheelLoad or separate force vectors if available).Pneumatic Torque ($T_{pneumatic}$): Derived from the tyre offset.Data: Requires slipAngle (or wheelSlip proxy) and wheelLoad.
 
 in GM stream (https://www.youtube.com/watch?v=z2pprGlRssw&t=18889s) the "delay" of FFB and disconnect from game physics was there even with SoP smoothing off ("raw"). Only the steering rack force was active. Investigate if there might still be a source of latency / delay / disconnect from game physics. We need manual testing to verify this, from DD users.
 
