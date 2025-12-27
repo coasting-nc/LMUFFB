@@ -324,5 +324,6 @@ Instead of trying to know the static peak value, monitor the **rate of change** 
 
 
 See also:
+* docs\dev_docs\slope_detection_implementation_plan.md
 * docs\dev_docs\FFB Slope Detection for Grip Estimation.md
 * docs\dev_docs\FFB Slope Detection for Grip Estimation2.md
