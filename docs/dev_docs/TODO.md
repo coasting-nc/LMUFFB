@@ -175,6 +175,32 @@ Algorithm: DampingForce = GyroConstant * wheelAngularSpeed * SteeringVelocity.
 
 Effect: This adds stability at high speeds (e.g., 250 km/h on the Nürburgring straight) without making the car feel heavy at low speeds (hairpins)."
 
+Peak / Optimal slip angle and slip rate
+How to Find the Missing Peak
+Domain experts and telemetry tool developers utilize distinct methodologies to bypass this limitation.
+6.1 The "Viper" Calculation Method (Real-Time Estimation)
+Research snippet  details the C# source code for a SimHub plugin named "Viper.PluginCalcLngWheelSlip." This plugin exists precisely because the native data is insufficient.
+The Algorithm:The plugin manually calculates longitudinal slip because the game's wheelSlip output is often a combined vector or unitless.Inputs: WheelAngularSpeed (from Shared Memory), CarSpeed (from Shared Memory).Unknown: TyreRadius ($r$).Challenge: The shared memory does not output the dynamic rolling radius of the tire.Workaround: The plugin likely estimates radius based on the car model or requires user calibration (driving at constant speed to solve for $r = v / \omega$).
+Calculation: Once $r$ is estimated, the plugin calculates $\kappa = (\omega r - v) / v$.
+Peak Detection: The plugin still does not know the optimal peak. It simply provides the accurate slip ratio. The user must then watch the dashboard, lock the brakes to find the peak (e.g., observing that deceleration is max at 15% slip), and then manually set a "Limit" variable in the plugin settings.
+
+"The MoTeC Histogram Method (Post-Process Analysis)
+Professional engineers use data logging to derive the peak. This is the standard workflow for ACC and ACE.
+
+Data Acquisition: Use a tool (like ACC-Motec wrapper) to log SteeringAngle, Speed, G_Lat, and G_Long to a .ld file.
+
+Scatter Plotting: In analysis software (MoTeC i2), generate a scatter plot.
+
+X-Axis: Slip Angle (calculated or raw).
+
+Y-Axis: Lateral G-Force.
+
+Curve Fitting: The data points will form a curve. The top of this curve (the apex) represents the Optimal Peak for that specific setup.
+
+Result: The engineer notes, "For the Porsche 992 GT3 R at Monza, the peak slip is 3.1 degrees."
+
+Application: This value is then manually entered into dashboards or mental notes. It is not read dynamically from the game."
+
 
 in GM stream (https://www.youtube.com/watch?v=z2pprGlRssw&t=18889s) the "delay" of FFB and disconnect from game physics was there even with SoP smoothing off ("raw"). Only the steering rack force was active. Investigate if there might still be a source of latency / delay / disconnect from game physics. We need manual testing to verify this, from DD users.
 
