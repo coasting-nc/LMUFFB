@@ -3,6 +3,8 @@
 ## 1. Introduction and Context
 This report addresses several related issues found in the "Troubleshooting 25" list concerning the quality, timing, and filtering of the Force Feedback signals.
 
+
+
 **Problems Identified:**
 *   **Static Noise / Notch Filter Limitations**: The current implementation uses a fixed Q-factor (width) for the static notch filter. User reports (specifically user "Neebula") indicate that a broader range (10-12 Hz) is more effective at blocking baseline vibration than the current surgical filter. The default center frequency should also be adjusted to ~11 Hz to cover this band.
 *   **Perceived Latency**: Users report a "delay" and "disconnect from game physics" even when smoothing is disabled. We need to investigate if this is inherent to the specific game/wheel combination or if the app's processing loop introduces avoidable lag.
@@ -73,3 +75,8 @@ This report addresses several related issues found in the "Troubleshooting 25" l
 *   **Setup**: Enable the new timestamp logging.
 *   **Action**: Correlate game physics update time (from `mElapsedTime`) with the wall-clock time of the FFB packet submission.
 *   **Verification**: Calculate the delta. If > 10ms, investigate thread scheduling or VSync settings.
+
+
+## TODO, updates to this document:
+* move the **Perceived Latency** discussion and implementation to a separate document; this will be addressed / implemented later; we will also first need confirmation from testing by other users with DDs that the issue is still present before proceeding with this.
+* regarding yaw kick: verify that there is already a threshold implemented based on yaw acceleration; we need to expose this in the UI and allow users to adjust it. Veryfy if the proposed implementation described in this document (`mLocalRotAccel` magnitude exceeds a user-defined value (e.g., 2.0 rad/s²)) it is an additional gating mechanism or it is the same threshold used in the current implementation. If it is the same threshold, we need to expose it in the UI and allow users to adjust it. If it is an additional gating mechanism, we need to expose both the exiting and the new threshold in the UI and allow users to adjust both.

@@ -38,9 +38,15 @@ Done: in the GUI, rename "SoP Lateral G" to "lateral G", and "Real Align Torque"
 
 ## Troubleshooting 25
 
+### Signal Processing
+* [Report: Signal Processing & Latency Optimization](report_signal_processing_latency.md)
+
 * Static noise / notch filter: add a range or width slider: how many frequency to the left and right of the center frequency should we also suppress.
     * set the default blocked center frequency to 10-12 Hz, which as reported by user Neebula is the correct one to block the baseline vibration. Set the default range accordingly, to block from 10 to 12 Hz. (so center frequency is 11 Hz?) 
     Note: user Neebula reports that the current notch filter set at 10-12 did not seem to  take away any important feedback (no difference found), it just resulted in much smoother ffb ("from the short testing i did i couldnt find a difference except much smoother ffb"). However, some noise was still remaining.
+* add a slider for the yaw kick thresshold to determine at which acceleration or force the yaw kick effect starts to be applied. There is still too much noise in the signal, and it does not actually work when needed (feeling a kick for the rear starting to step out).
+
+### Other stuff
 
 in GM stream (https://www.youtube.com/watch?v=z2pprGlRssw&t=18889s) the "delay" of FFB and disconnect from game physics was there even with SoP smoothing off ("raw"). Only the steering rack force was active. Investigate if there might still be a source of latency / delay / disconnect from game physics.
 
@@ -67,7 +73,7 @@ test and fix current effects:
 * test if some vibration effects are muted
 * check lockup vibration effect, feel it before bracking up, enough to prevent it
 * yaw kick further fixes? smoothing? higher thresholds? non linear transformation? 
-    * add a slider for the yaw kick thresshold to determine at which acceleration or force the yaw kick effect starts to be applied. There is still too much noise in the signal, and it does not actually work when needed (feeling a kick for the rear starting to step out).
+    
 * For all vibration effects, add a slider to select the frequency of vibration (if fixed).
 * experiment with gyro damping to compensate yaw kick
 * spin vibration might also not be working
