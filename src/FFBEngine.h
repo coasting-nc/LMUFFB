@@ -727,10 +727,30 @@ public:
         // complex power steering modeling in the new engine.
         double game_force = data->mSteeringShaftTorque;
 
-        // --- NEW: Steering Shaft Smoothing (v0.5.7) ---
-        if (m_steering_shaft_smoothing > 0.0001f) {
-            double tau_shaft = (double)m_steering_shaft_smoothing;
-            double alpha_shaft = dt / (tau_shaft + dt);
+        // --- AUTOMATIC IDLE SMOOTHING (Fix for Engine Vibration) ---
+        // If the car is moving slowly (< 3.0 m/s), the "Road Feel" is mostly just 
+        // engine noise and sensor jitter. We apply heavy smoothing to kill the 
+        // vibration while preserving the heavy static weight of the steering.
+        
+        double effective_shaft_smoothing = (double)m_steering_shaft_smoothing;
+        double car_speed_abs = std::abs(data->mLocalVel.z);
+        
+        const double IDLE_SPEED_THRESHOLD = 3.0; // m/s (~10 kph)
+        const double IDLE_SMOOTHING_TARGET = 0.1; // 0.1s = ~1.6Hz cutoff (Kills engine vibes)
+
+        if (car_speed_abs < IDLE_SPEED_THRESHOLD) {
+            // Linear blend: 100% idle smoothing at 0 m/s, 0% at 3 m/s
+            double idle_blend = (IDLE_SPEED_THRESHOLD - car_speed_abs) / IDLE_SPEED_THRESHOLD;
+            
+            // Use the higher of the two: User Setting vs Idle Target
+            // This ensures we never make the wheel *more* raw than the user wants
+            double dynamic_smooth = IDLE_SMOOTHING_TARGET * idle_blend;
+            effective_shaft_smoothing = (std::max)(effective_shaft_smoothing, dynamic_smooth);
+        }
+
+        // --- APPLY SMOOTHING ---
+        if (effective_shaft_smoothing > 0.0001) {
+            double alpha_shaft = dt / (effective_shaft_smoothing + dt);
             // Safety clamp
             alpha_shaft = (std::min)(1.0, (std::max)(0.001, alpha_shaft));
             

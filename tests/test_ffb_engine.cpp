@@ -88,6 +88,7 @@ static void test_notch_filter_edge_cases(); // Forward declaration (v0.6.10 - Ed
 static void test_yaw_kick_edge_cases(); // Forward declaration (v0.6.10 - Edge Cases)
 static void test_high_gain_stability(); // Forward declaration (v0.6.20)
 static void test_stationary_gate(); // Forward declaration (v0.6.21)
+static void test_idle_smoothing(); // Forward declaration (v0.6.22)
 
 // --- Test Helper Functions (v0.5.7) ---
 
@@ -237,6 +238,8 @@ static void test_base_force_modes() {
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
+    data.mDeltaTime = 0.0025;
+    data.mLocalVel.z = -20.0; // Moving fast (v0.6.22)
     
     // Common Setup
     engine.m_max_torque_ref = 20.0f; // Reference for normalization
@@ -385,6 +388,7 @@ static void test_scrub_drag_fade() {
     
     data.mWheel[0].mLateralPatchVel = 0.25;
     data.mWheel[1].mLateralPatchVel = 0.25;
+    data.mLocalVel.z = -20.0; // Moving fast (v0.6.22)
     engine.m_max_torque_ref = 40.0f;
     engine.m_gain = 1.0;
     
@@ -494,6 +498,9 @@ static void test_grip_low_speed() {
     data.mWheel[0].mLongitudinalGroundVel = 1.0;
     data.mWheel[1].mLongitudinalGroundVel = 1.0;
     
+    // Warm up or bypass idle smoothing for this test
+    engine.m_steering_shaft_torque_smoothed = 40.0; 
+    
     double force = engine.calculate_force(&data);
     
     if (std::abs(force - 1.0) < 0.001) {
@@ -539,7 +546,7 @@ static void test_grip_modulation() {
     
     // Default RH to avoid scraping
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
-    data.mLocalVel.z = 20.0; // Ensure moving to avoid low-speed cutoffs
+    data.mLocalVel.z = -20.0; // Ensure moving to avoid low-speed cutoffs
 
     // Set Gain to 1.0 for testing logic (default is now 0.5)
     engine.m_gain = 1.0; 
@@ -583,6 +590,7 @@ static void test_sop_effect() {
 
     // Disable Game Force
     data.mSteeringShaftTorque = 0.0;
+    data.mLocalVel.z = -20.0; // Moving fast (v0.6.22)
     engine.m_sop_effect = 0.5; 
     engine.m_gain = 1.0; // Ensure gain is 1.0
     engine.m_sop_smoothing_factor = 1.0; // Disable smoothing for instant result
@@ -633,6 +641,7 @@ static void test_min_force() {
     // 20.0 is Max. Min force 0.10 means we want at least 2.0 Nm output effectively.
     // Input 0.05 Nm. 0.05 / 20.0 = 0.0025.
     data.mSteeringShaftTorque = 0.05; 
+    data.mLocalVel.z = -20.0; // Moving fast (v0.6.22)
     engine.m_min_force = 0.10f; // 10% min force
     engine.m_max_torque_ref = 20.0f; // Fix Reference for Test (v0.4.4)
     engine.m_invert_force = false;
@@ -803,6 +812,8 @@ static void test_dynamic_tuning() {
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
+    data.mDeltaTime = 0.0025;
+    data.mLocalVel.z = -20.0;
     
     // Default RH to avoid scraping
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
@@ -2626,6 +2637,7 @@ static void test_frequency_estimator() {
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
+    data.mLocalVel.z = -20.0; // Moving fast (v0.6.22)
     
     data.mDeltaTime = 0.0025; // 400Hz
     double target_freq = 20.0; // 20Hz vibration
@@ -4594,6 +4606,8 @@ static void test_steering_shaft_smoothing() {
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
+    data.mDeltaTime = 0.01; // 100Hz for this test math
+    data.mLocalVel.z = -20.0;
 
     engine.m_steering_shaft_smoothing = 0.050f; // 50ms tau
     engine.m_gain = 1.0;
@@ -5372,6 +5386,64 @@ static void test_stationary_gate() {
     }
 }
 
+static void test_idle_smoothing() {
+    std::cout << "\nTest: Automatic Idle Smoothing" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(0.0); // Stopped
+    
+    // Setup: User wants RAW FFB (0 smoothing)
+    engine.m_steering_shaft_smoothing = 0.0f;
+    engine.m_gain = 1.0f;
+    engine.m_max_torque_ref = 10.0f; // Allow up to 10 Nm without clipping
+    
+    // 1. Simulate Engine Vibration at Idle (20Hz sine wave)
+    // Amplitude 5.0 Nm. 
+    // With 0.1s smoothing (Idle Target), 20Hz should be heavily attenuated.
+    double max_force_idle = 0.0;
+    data.mDeltaTime = 0.0025; // 400Hz
+    
+    for(int i=0; i<100; i++) {
+        double t = i * data.mDeltaTime;
+        data.mSteeringShaftTorque = 5.0 * std::sin(20.0 * 6.28 * t);
+        double force = engine.calculate_force(&data);
+        max_force_idle = (std::max)(max_force_idle, std::abs(force));
+    }
+    
+    // Expect significant attenuation (e.g. < 0.15 normalized instead of 0.5)
+    if (max_force_idle < 0.15) {
+        std::cout << "[PASS] Idle vibration attenuated (Max: " << max_force_idle << " < 0.15)" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Idle vibration too strong! Max: " << max_force_idle << std::endl;
+        g_tests_failed++;
+    }
+    
+    // 2. Simulate Driving (High Speed)
+    TelemInfoV01 data_driving = CreateBasicTestTelemetry(20.0);
+    data_driving.mDeltaTime = 0.0025;
+    
+    // Reset smoother
+    engine.m_steering_shaft_torque_smoothed = 0.0;
+    
+    double max_force_driving = 0.0;
+    for(int i=0; i<100; i++) {
+        double t = i * data_driving.mDeltaTime;
+        data_driving.mSteeringShaftTorque = 5.0 * std::sin(20.0 * 6.28 * t); // Same vibration (e.g. curb)
+        double force = engine.calculate_force(&data_driving);
+        max_force_driving = (std::max)(max_force_driving, std::abs(force));
+    }
+    
+    // Expect RAW pass-through (near 0.5)
+    if (max_force_driving > 0.4) {
+        std::cout << "[PASS] Driving vibration passed through (Max: " << max_force_driving << " > 0.4)" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Driving vibration over-smoothed. Max: " << max_force_driving << std::endl;
+        g_tests_failed++;
+    }
+}
+
 // Main Runner
 void Run() {
     std::cout << "=== Running FFB Engine Tests ===" << std::endl;
@@ -5392,6 +5464,7 @@ void Run() {
     test_grip_low_speed();
     test_sop_yaw_kick();  
     test_stationary_gate(); // v0.6.21
+    test_idle_smoothing(); // v0.6.22
     // Run Regression Tests
     test_zero_input();
     test_suspension_bottoming();

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.22] - 2025-12-28
+### Added
+- **Automatic Idle Smoothing**:
+  - Implemented a dynamic Low Pass Filter (LPF) for the steering shaft torque that automatically increases smoothing when the car is stationary or moving slowly (< 3.0 m/s).
+  - This surgically removes high-frequency engine vibration (idle "buzz") while preserving the heavy static weight required to turn the wheel at a standstill.
+  - The smoothing gracefully fades out as speed increases, returning to the user-defined raw setting by 10 kph.
+- **Improved Test Coverage**:
+  - Added `test_idle_smoothing()` to verify vibration attenuation at idle and raw pass-through while driving.
+
 ## [0.6.21] - 2025-12-28
 ### Added
 - **Stationary Signal Gate**:
