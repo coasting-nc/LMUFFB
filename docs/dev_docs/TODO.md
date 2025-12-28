@@ -209,6 +209,18 @@ we need a button for ..disconnect from game? reset data from dame? signal sessio
 the telemetry persist even after quitting the game (slide texture and rear align torque)
 
 
+Console logs confirm that mLateralForce (Sideways force on the tire), both front and rear, is encrypted by the game. Verify all effects that use it, and make sure there always are appopriate fallbacks. Verify if mLongitudinalForce has the same problem (add console warning, also with gating).
+The other suspected missing data was mSuspensionDeflection, but no console print was shown about this in thests. Note: we do have a console warning for mSuspensionDeflection, and mSuspForce.
+Notes from InternalsPlugin.hpp:
+  double mVerticalTireDeflection;// how much is tire deflected from its (speed-sensitive) radius
+  double mSuspensionDeflection;  // meters
+  double mRideHeight;            // meters
+  double mSuspForce;             // pushrod load in Newtons
+  double mBrakePressure;         // currently 0.0-1.0, depending on driver input and brake balance; will convert to true brake pressure (kPa) in future
+  double mLateralForce;          // Newtons
+  double mLongitudinalForce;     // Newtons
+  double mTireLoad;              // Newtons
+  
 ## Implementation Plans
 * [Report: Signal Processing & Latency Optimization](report_signal_processing_latency.md)
 * [Report: Effect Tuning & Slider Range Expansion](report_effect_tuning_slider_ranges.md)

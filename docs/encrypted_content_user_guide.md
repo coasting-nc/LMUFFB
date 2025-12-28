@@ -32,7 +32,7 @@ Force feedback apps like lmuFFB rely on **telemetry data** from the game to calc
 - `mVerticalTireDeflection` - How much the tire is compressed/deformed
 - `mTireLoad` - Vertical force on the tire
 - `mSuspensionDeflection` - Suspension travel
-- `mLateralForce` - Sideways force on the tire (rear wheels)
+- `mLateralForce` - Sideways force on the tire (front/rear wheels)
 
 ---
 
