@@ -74,6 +74,18 @@ Baseline vibration from the FFB:
   - To fix it, enable the "Static Noise Filter" in lmuFFB and set a Target Frequency of 10-12 Hz
   - If some noise is still present, you can increase the Steering Shaft Smoothing.
 
+Steering wheel bouncing/shaking when stationary (engine vibration):
+  - If your wheel "bounces around on the tune of the engine rpm" when the car 
+    is stopped or idling, this is caused by the game's engine vibration physics 
+    being transmitted through the steering column
+  - Automatic Fix (v0.6.22+): This is now automatically handled by the Automatic 
+    Idle Smoothing feature. The vibration should fade out when you're stationary 
+    and return to normal when driving
+  - Manual Workaround (older versions): Go to Signal Filtering, enable Static 
+    Noise Filter, and set the frequency to 10-15 Hz. Adjust until the bouncing 
+    stops. This will surgically remove the engine bounce without making the 
+    steering feel light
+
 FFB too weak:
   - Increase Master Gain
   - Or reduce Max Torque Ref (this amplifies the signal by setting a lower reference point for maximum torque)
