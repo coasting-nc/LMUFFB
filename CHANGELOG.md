@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.29] - 2025-12-31
+### Added
+- **Config File Structure Reordering**:
+  - Reordered `config.ini` file structure to mirror GUI hierarchy for improved readability.
+  - Added comment headers (e.g., `; --- System & Window ---`, `; --- General FFB ---`) to organize settings into logical sections.
+  - Settings now save in this order: System & Window → General FFB → Front Axle → Rear Axle → Physics → Braking & Lockup → Tactile Textures → Advanced Settings.
+  - Fixed critical bug where `Config::Load` would overwrite main configuration with preset values by stopping parsing at `[Presets]` section.
+  - User presets also follow the same reordered structure for consistency.
+  - Maintained backward compatibility with legacy config keys (`smoothing`, `max_load_factor`).
+- **Enhanced Persistence Test Suite**:
+  - Added comprehensive `test_persistence_v0628.cpp` with 16 new tests covering config reordering, section isolation, legacy support, and comment structure validation.
+  
 ## [0.6.28] - 2025-12-31
 ### Added
 - **Test Sandbox & Artifact Cleanup**:

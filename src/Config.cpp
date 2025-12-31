@@ -415,14 +415,13 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
     std::string final_path = filename.empty() ? m_config_path : filename;
     std::ofstream file(final_path);
     if (file.is_open()) {
-        file << "ini_version=" << LMUFFB_VERSION << "\n"; // NEW v0.6.25
+        file << "; --- System & Window ---\n";
+        file << "ini_version=" << LMUFFB_VERSION << "\n";
         file << "ignore_vjoy_version_warning=" << m_ignore_vjoy_version_warning << "\n";
         file << "enable_vjoy=" << m_enable_vjoy << "\n";
         file << "output_ffb_to_vjoy=" << m_output_ffb_to_vjoy << "\n";
         file << "always_on_top=" << m_always_on_top << "\n";
         file << "last_device_guid=" << m_last_device_guid << "\n";
-        
-        // Window Geometry (v0.5.5)
         file << "win_pos_x=" << win_pos_x << "\n";
         file << "win_pos_y=" << win_pos_y << "\n";
         file << "win_w_small=" << win_w_small << "\n";
@@ -430,132 +429,151 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "win_w_large=" << win_w_large << "\n";
         file << "win_h_large=" << win_h_large << "\n";
         file << "show_graphs=" << show_graphs << "\n";
-        file << "gain=" << engine.m_gain << "\n";
-        file << "sop_smoothing_factor=" << engine.m_sop_smoothing_factor << "\n";
-        file << "slip_angle_smoothing=" << engine.m_slip_angle_smoothing << "\n";
-        file << "sop_scale=" << engine.m_sop_scale << "\n";
-        file << "texture_load_cap=" << engine.m_texture_load_cap << "\n";
-        file << "brake_load_cap=" << engine.m_brake_load_cap << "\n"; 
-        file << "understeer=" << engine.m_understeer_effect << "\n";
-        file << "sop=" << engine.m_sop_effect << "\n";
-        file << "min_force=" << engine.m_min_force << "\n";
-        file << "oversteer_boost=" << engine.m_oversteer_boost << "\n";
-        file << "lockup_enabled=" << engine.m_lockup_enabled << "\n";
-        file << "lockup_gain=" << engine.m_lockup_gain << "\n";
-        file << "spin_enabled=" << engine.m_spin_enabled << "\n";
-        file << "spin_gain=" << engine.m_spin_gain << "\n";
-        file << "slide_enabled=" << engine.m_slide_texture_enabled << "\n";
-        file << "slide_gain=" << engine.m_slide_texture_gain << "\n";
-        file << "slide_freq=" << engine.m_slide_freq_scale << "\n";
-        file << "road_enabled=" << engine.m_road_texture_enabled << "\n";
-        file << "road_gain=" << engine.m_road_texture_gain << "\n";
+
+        file << "\n; --- General FFB ---\n";
         file << "invert_force=" << engine.m_invert_force << "\n";
+        file << "gain=" << engine.m_gain << "\n";
         file << "max_torque_ref=" << engine.m_max_torque_ref << "\n";
-        file << "abs_freq=" << engine.m_abs_freq_hz << "\n";
-        file << "lockup_freq_scale=" << engine.m_lockup_freq_scale << "\n";
-        file << "spin_freq_scale=" << engine.m_spin_freq_scale << "\n";
-        file << "lockup_start_pct=" << engine.m_lockup_start_pct << "\n";
-        file << "lockup_full_pct=" << engine.m_lockup_full_pct << "\n";
-        file << "lockup_rear_boost=" << engine.m_lockup_rear_boost << "\n";
-        file << "lockup_gamma=" << engine.m_lockup_gamma << "\n";
-        file << "lockup_prediction_sens=" << engine.m_lockup_prediction_sens << "\n";
-        file << "lockup_bump_reject=" << engine.m_lockup_bump_reject << "\n";
-        file << "abs_pulse_enabled=" << engine.m_abs_pulse_enabled << "\n";
-        file << "abs_gain=" << engine.m_abs_gain << "\n";
-        file << "bottoming_method=" << engine.m_bottoming_method << "\n";
-        file << "scrub_drag_gain=" << engine.m_scrub_drag_gain << "\n";
-        file << "rear_align_effect=" << engine.m_rear_align_effect << "\n";
-        file << "sop_yaw_gain=" << engine.m_sop_yaw_gain << "\n";
+        file << "min_force=" << engine.m_min_force << "\n";
+
+        file << "\n; --- Front Axle (Understeer) ---\n";
         file << "steering_shaft_gain=" << engine.m_steering_shaft_gain << "\n";
+        file << "steering_shaft_smoothing=" << engine.m_steering_shaft_smoothing << "\n";
+        file << "understeer=" << engine.m_understeer_effect << "\n";
         file << "base_force_mode=" << engine.m_base_force_mode << "\n";
-        file << "gyro_gain=" << engine.m_gyro_gain << "\n";
         file << "flatspot_suppression=" << engine.m_flatspot_suppression << "\n";
         file << "notch_q=" << engine.m_notch_q << "\n";
         file << "flatspot_strength=" << engine.m_flatspot_strength << "\n";
         file << "static_notch_enabled=" << engine.m_static_notch_enabled << "\n";
         file << "static_notch_freq=" << engine.m_static_notch_freq << "\n";
         file << "static_notch_width=" << engine.m_static_notch_width << "\n";
+
+        file << "\n; --- Rear Axle (Oversteer) ---\n";
+        file << "oversteer_boost=" << engine.m_oversteer_boost << "\n";
+        file << "sop=" << engine.m_sop_effect << "\n";
+        file << "rear_align_effect=" << engine.m_rear_align_effect << "\n";
+        file << "sop_yaw_gain=" << engine.m_sop_yaw_gain << "\n";
         file << "yaw_kick_threshold=" << engine.m_yaw_kick_threshold << "\n";
+        file << "yaw_accel_smoothing=" << engine.m_yaw_accel_smoothing << "\n";
+        file << "gyro_gain=" << engine.m_gyro_gain << "\n";
+        file << "gyro_smoothing_factor=" << engine.m_gyro_smoothing << "\n";
+        file << "sop_smoothing_factor=" << engine.m_sop_smoothing_factor << "\n";
+        file << "sop_scale=" << engine.m_sop_scale << "\n";
+        file << "understeer_affects_sop=" << engine.m_understeer_affects_sop << "\n";
+
+        file << "\n; --- Physics (Grip & Slip Angle) ---\n";
+        file << "slip_angle_smoothing=" << engine.m_slip_angle_smoothing << "\n";
+        file << "chassis_inertia_smoothing=" << engine.m_chassis_inertia_smoothing << "\n";
         file << "optimal_slip_angle=" << engine.m_optimal_slip_angle << "\n";
         file << "optimal_slip_ratio=" << engine.m_optimal_slip_ratio << "\n";
-        file << "steering_shaft_smoothing=" << engine.m_steering_shaft_smoothing << "\n";
-        file << "gyro_smoothing_factor=" << engine.m_gyro_smoothing << "\n";
-        file << "yaw_accel_smoothing=" << engine.m_yaw_accel_smoothing << "\n";
-        file << "chassis_inertia_smoothing=" << engine.m_chassis_inertia_smoothing << "\n";
-        file << "speed_gate_lower=" << engine.m_speed_gate_lower << "\n";  // NEW v0.6.25
-        file << "speed_gate_upper=" << engine.m_speed_gate_upper << "\n";  // NEW v0.6.25
-        file << "road_fallback_scale=" << engine.m_road_fallback_scale << "\n";  // NEW v0.6.25
-        file << "understeer_affects_sop=" << engine.m_understeer_affects_sop << "\n";  // NEW v0.6.25
-        
-        // 3. User Presets
+
+        file << "\n; --- Braking & Lockup ---\n";
+        file << "lockup_enabled=" << engine.m_lockup_enabled << "\n";
+        file << "lockup_gain=" << engine.m_lockup_gain << "\n";
+        file << "brake_load_cap=" << engine.m_brake_load_cap << "\n";
+        file << "lockup_freq_scale=" << engine.m_lockup_freq_scale << "\n";
+        file << "lockup_gamma=" << engine.m_lockup_gamma << "\n";
+        file << "lockup_start_pct=" << engine.m_lockup_start_pct << "\n";
+        file << "lockup_full_pct=" << engine.m_lockup_full_pct << "\n";
+        file << "lockup_prediction_sens=" << engine.m_lockup_prediction_sens << "\n";
+        file << "lockup_bump_reject=" << engine.m_lockup_bump_reject << "\n";
+        file << "lockup_rear_boost=" << engine.m_lockup_rear_boost << "\n";
+        file << "abs_pulse_enabled=" << engine.m_abs_pulse_enabled << "\n";
+        file << "abs_gain=" << engine.m_abs_gain << "\n";
+        file << "abs_freq=" << engine.m_abs_freq_hz << "\n";
+
+        file << "\n; --- Tactile Textures ---\n";
+        file << "texture_load_cap=" << engine.m_texture_load_cap << "\n";
+        file << "slide_enabled=" << engine.m_slide_texture_enabled << "\n";
+        file << "slide_gain=" << engine.m_slide_texture_gain << "\n";
+        file << "slide_freq=" << engine.m_slide_freq_scale << "\n";
+        file << "road_enabled=" << engine.m_road_texture_enabled << "\n";
+        file << "road_gain=" << engine.m_road_texture_gain << "\n";
+        file << "road_fallback_scale=" << engine.m_road_fallback_scale << "\n";
+        file << "spin_enabled=" << engine.m_spin_enabled << "\n";
+        file << "spin_gain=" << engine.m_spin_gain << "\n";
+        file << "spin_freq_scale=" << engine.m_spin_freq_scale << "\n";
+        file << "scrub_drag_gain=" << engine.m_scrub_drag_gain << "\n";
+        file << "bottoming_method=" << engine.m_bottoming_method << "\n";
+
+        file << "\n; --- Advanced Settings ---\n";
+        file << "speed_gate_lower=" << engine.m_speed_gate_lower << "\n";
+        file << "speed_gate_upper=" << engine.m_speed_gate_upper << "\n";
+
         file << "\n[Presets]\n";
         for (const auto& p : presets) {
             if (!p.is_builtin) {
                 file << "[Preset:" << p.name << "]\n";
+                file << "invert_force=" << (p.invert_force ? "1" : "0") << "\n";
                 file << "gain=" << p.gain << "\n";
-                file << "understeer=" << p.understeer << "\n";
-                file << "sop=" << p.sop << "\n";
-                file << "sop_scale=" << p.sop_scale << "\n";
-                file << "sop_smoothing_factor=" << p.sop_smoothing << "\n";
-                file << "slip_angle_smoothing=" << p.slip_smoothing << "\n";
-                file << "min_force=" << p.min_force << "\n";
-                file << "oversteer_boost=" << p.oversteer_boost << "\n";
-                file << "lockup_enabled=" << p.lockup_enabled << "\n";
-                file << "lockup_gain=" << p.lockup_gain << "\n";
-                file << "spin_enabled=" << p.spin_enabled << "\n";
-                file << "spin_gain=" << p.spin_gain << "\n";
-                file << "slide_enabled=" << p.slide_enabled << "\n";
-                file << "slide_gain=" << p.slide_gain << "\n";
-                file << "slide_freq=" << p.slide_freq << "\n";
-                file << "road_enabled=" << p.road_enabled << "\n";
-                file << "road_gain=" << p.road_gain << "\n";
-                file << "invert_force=" << p.invert_force << "\n";
                 file << "max_torque_ref=" << p.max_torque_ref << "\n";
-                file << "abs_freq=" << p.abs_freq << "\n";
-                file << "lockup_freq_scale=" << p.lockup_freq_scale << "\n";
-                file << "spin_freq_scale=" << p.spin_freq_scale << "\n";
-                file << "lockup_start_pct=" << p.lockup_start_pct << "\n";
-                file << "lockup_full_pct=" << p.lockup_full_pct << "\n";
-                file << "lockup_rear_boost=" << p.lockup_rear_boost << "\n";
-                file << "lockup_gamma=" << p.lockup_gamma << "\n";
-                file << "lockup_prediction_sens=" << p.lockup_prediction_sens << "\n";
-                file << "lockup_bump_reject=" << p.lockup_bump_reject << "\n";
-                file << "brake_load_cap=" << p.brake_load_cap << "\n";
-                file << "texture_load_cap=" << p.texture_load_cap << "\n"; // NEW v0.6.25
-                file << "abs_pulse_enabled=" << p.abs_pulse_enabled << "\n";
-                file << "abs_gain=" << p.abs_gain << "\n";
-                file << "bottoming_method=" << p.bottoming_method << "\n";
-                file << "scrub_drag_gain=" << p.scrub_drag_gain << "\n";
-                file << "rear_align_effect=" << p.rear_align_effect << "\n";
-                file << "sop_yaw_gain=" << p.sop_yaw_gain << "\n";
+                file << "min_force=" << p.min_force << "\n";
+
                 file << "steering_shaft_gain=" << p.steering_shaft_gain << "\n";
+                file << "steering_shaft_smoothing=" << p.steering_shaft_smoothing << "\n";
+                file << "understeer=" << p.understeer << "\n";
                 file << "base_force_mode=" << p.base_force_mode << "\n";
-                file << "gyro_gain=" << p.gyro_gain << "\n";
                 file << "flatspot_suppression=" << p.flatspot_suppression << "\n";
                 file << "notch_q=" << p.notch_q << "\n";
                 file << "flatspot_strength=" << p.flatspot_strength << "\n";
                 file << "static_notch_enabled=" << p.static_notch_enabled << "\n";
                 file << "static_notch_freq=" << p.static_notch_freq << "\n";
                 file << "static_notch_width=" << p.static_notch_width << "\n";
+
+                file << "oversteer_boost=" << p.oversteer_boost << "\n";
+                file << "sop=" << p.sop << "\n";
+                file << "rear_align_effect=" << p.rear_align_effect << "\n";
+                file << "sop_yaw_gain=" << p.sop_yaw_gain << "\n";
                 file << "yaw_kick_threshold=" << p.yaw_kick_threshold << "\n";
+                file << "yaw_accel_smoothing=" << p.yaw_smoothing << "\n";
+                file << "gyro_gain=" << p.gyro_gain << "\n";
+                file << "gyro_smoothing_factor=" << p.gyro_smoothing << "\n";
+                file << "sop_smoothing_factor=" << p.sop_smoothing << "\n";
+                file << "sop_scale=" << p.sop_scale << "\n";
+                file << "understeer_affects_sop=" << p.understeer_affects_sop << "\n";
+
+                file << "slip_angle_smoothing=" << p.slip_smoothing << "\n";
+                file << "chassis_inertia_smoothing=" << p.chassis_smoothing << "\n";
                 file << "optimal_slip_angle=" << p.optimal_slip_angle << "\n";
                 file << "optimal_slip_ratio=" << p.optimal_slip_ratio << "\n";
-                file << "steering_shaft_smoothing=" << p.steering_shaft_smoothing << "\n";
-                file << "gyro_smoothing_factor=" << p.gyro_smoothing << "\n";
-                file << "yaw_accel_smoothing=" << p.yaw_smoothing << "\n";
-                file << "chassis_inertia_smoothing=" << p.chassis_smoothing << "\n";
-                file << "speed_gate_lower=" << p.speed_gate_lower << "\n";  // NEW v0.6.25
-                file << "speed_gate_upper=" << p.speed_gate_upper << "\n";  // NEW v0.6.25
-                file << "road_fallback_scale=" << p.road_fallback_scale << "\n";  // NEW v0.6.25
-                file << "understeer_affects_sop=" << p.understeer_affects_sop << "\n";  // NEW v0.6.25
+
+                file << "lockup_enabled=" << (p.lockup_enabled ? "1" : "0") << "\n";
+                file << "lockup_gain=" << p.lockup_gain << "\n";
+                file << "brake_load_cap=" << p.brake_load_cap << "\n";
+                file << "lockup_freq_scale=" << p.lockup_freq_scale << "\n";
+                file << "lockup_gamma=" << p.lockup_gamma << "\n";
+                file << "lockup_start_pct=" << p.lockup_start_pct << "\n";
+                file << "lockup_full_pct=" << p.lockup_full_pct << "\n";
+                file << "lockup_prediction_sens=" << p.lockup_prediction_sens << "\n";
+                file << "lockup_bump_reject=" << p.lockup_bump_reject << "\n";
+                file << "lockup_rear_boost=" << p.lockup_rear_boost << "\n";
+                file << "abs_pulse_enabled=" << (p.abs_pulse_enabled ? "1" : "0") << "\n";
+                file << "abs_gain=" << p.abs_gain << "\n";
+                file << "abs_freq=" << p.abs_freq << "\n";
+
+                file << "texture_load_cap=" << p.texture_load_cap << "\n";
+                file << "slide_enabled=" << (p.slide_enabled ? "1" : "0") << "\n";
+                file << "slide_gain=" << p.slide_gain << "\n";
+                file << "slide_freq=" << p.slide_freq << "\n";
+                file << "road_enabled=" << (p.road_enabled ? "1" : "0") << "\n";
+                file << "road_gain=" << p.road_gain << "\n";
+                file << "road_fallback_scale=" << p.road_fallback_scale << "\n";
+                file << "spin_enabled=" << (p.spin_enabled ? "1" : "0") << "\n";
+                file << "spin_gain=" << p.spin_gain << "\n";
+                file << "spin_freq_scale=" << p.spin_freq_scale << "\n";
+                file << "scrub_drag_gain=" << p.scrub_drag_gain << "\n";
+                file << "bottoming_method=" << p.bottoming_method << "\n";
+
+                file << "speed_gate_lower=" << p.speed_gate_lower << "\n";
+                file << "speed_gate_upper=" << p.speed_gate_upper << "\n";
                 file << "\n";
             }
         }
         
         file.close();
-        std::cout << "[Config] Saved to " << filename << std::endl;
+        std::cout << "[Config] Saved to " << final_path << std::endl;
     } else {
-        std::cerr << "[Config] Failed to save to " << filename << std::endl;
+        std::cerr << "[Config] Failed to save to " << final_path << std::endl;
     }
 }
 
@@ -569,6 +587,11 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
 
     std::string line;
     while (std::getline(file, line)) {
+        // Strip whitespace and check for section headers
+        line.erase(0, line.find_first_not_of(" \t\r\n"));
+        if (line.empty() || line[0] == ';') continue;
+        if (line[0] == '[') break; // Top-level settings end here (e.g. [Presets])
+
         std::istringstream is_line(line);
         std::string key;
         if (std::getline(is_line, key, '=')) {

@@ -23,6 +23,11 @@ namespace PersistenceTests {
     extern int g_tests_failed; 
     void Run(); 
 }
+namespace PersistenceTests_v0628 { 
+    extern int g_tests_passed; 
+    extern int g_tests_failed; 
+    void Run(); 
+}
 
 #ifdef _WIN32
 namespace WindowsPlatformTests { 
@@ -65,6 +70,14 @@ int main() {
         PersistenceTests::Run();
         total_passed += PersistenceTests::g_tests_passed;
         total_failed += PersistenceTests::g_tests_failed;
+    } catch (...) {
+        total_failed++;
+    }
+
+    try {
+        PersistenceTests_v0628::Run();
+        total_passed += PersistenceTests_v0628::g_tests_passed;
+        total_failed += PersistenceTests_v0628::g_tests_failed;
     } catch (...) {
         total_failed++;
     }
@@ -127,6 +140,10 @@ int main() {
     std::remove("test_version.ini");
     std::remove("roundtrip.ini");
     std::remove("test_clamp.ini");
+    std::remove("test_isolation.ini");
+    std::remove("test_order.ini");
+    std::remove("test_legacy.ini");
+    std::remove("test_comments.ini");
     std::remove("imgui.ini");
 
     return (total_failed > 0) ? 1 : 0;

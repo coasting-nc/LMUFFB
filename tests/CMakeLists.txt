@@ -12,6 +12,7 @@ set(TEST_SOURCES
     main_test_runner.cpp 
     test_ffb_engine.cpp 
     test_persistence_v0625.cpp
+    test_persistence_v0628.cpp
     ../src/Config.cpp
 )
 

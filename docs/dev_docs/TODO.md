@@ -84,6 +84,10 @@ Split into a separate report only the features that we want:
 DONE: Auto-Save
 auto save last configuration. Is the save config button any longer needed?
 
+"Manual testing current effects, new presets and default values": see section below
+
+implement fixed based on users reports.
+
 additionally, in the ini file, the settings should be saved in the same order as they are displayed in the GUI. This makes it easier to find them in the ini, and to compare the ini with the Gui.
 
 
@@ -94,10 +98,6 @@ Preset and confix fix: saving new sliders values to the ini file, adding app ver
 Update default values: eg yaw kick default cut oof
 
 preset updates (see subsection below)
-
-
-
-
 
 
 
@@ -128,9 +128,12 @@ test and fix current effects (this requires manual testing of the app; only chec
 * test default values after 0-100% normalization of sliders
 * test if some vibration effects are muted
 * check lockup vibration effect, feel it before bracking up, enough to prevent it
-* yaw kick further fixes? smoothing? higher thresholds? non linear transformation? 
+
 * experiment with gyro damping to compensate yaw kick
 * spin vibration might also not be working
+* min force (0.5) on a T300
+* yaw kick with activation threshold at 2.0
+  * yaw kick further fixes? smoothing? higher thresholds? non linear transformation? 
 
 verify and investigate: LMU 1.2 bug where mLateralForce is zero for rear wheels; see the workaround in use.
 * check if the new console warning for missing data triggers
