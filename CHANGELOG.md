@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.27] - 2025-12-31
+### Added
+- **Reactive Auto-Save**:
+  - Implemented automatic persistence of all GUI adjustments. Settings are now saved to `config.ini` the moment an interaction is completed (e.g., releasing a slider or toggling a checkbox).
+  - Added auto-save to **Load Preset** actions, ensuring that applying a preset persists it as the current configuration for future sessions.
+  - Added auto-save to "Always on Top" and "Stationary Vibration Gate" (Speed Gate) settings.
+- **Unified UI Widget Library (`GuiWidgets.h`)**:
+  - Extracted UI logic into a reusable library, standardizing behavior (Arrow Keys, Tooltips, Auto-Save) across all controls.
+  - Introduced "Decorators" support for sliders, allowing complex info like Latency indicators to be cleanly integrated without code duplication.
+- **Automated UI Interaction Tests**:
+  - Added `GuiInteractionTests` to verify widget logic, deactivation flags, and decorator execution in a headless environment.
+
+### Changed
+- Refactored `src/GuiLayer.cpp` to use the unified `GuiWidgets` library, significantly reducing lines of code and improving maintainability of the Tuning Window.
+- Optimized Disk I/O by using deactivation triggers, preventing "thrashing" during real-time slider drags.
+
 ## [0.6.26] - 2025-12-31
 ### Fixed
 - **Remaining Low-Speed Vibrations (SoP & Base Torque)**:
