@@ -1,4 +1,5 @@
 #include "Config.h"
+#include "Version.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -318,14 +319,16 @@ void Config::LoadPresets() {
                         else if (key == "min_force") current_preset.min_force = std::stof(value);
                         else if (key == "oversteer_boost") current_preset.oversteer_boost = std::stof(value);
                         else if (key == "lockup_enabled") current_preset.lockup_enabled = std::stoi(value);
-                        else if (key == "lockup_gain") current_preset.lockup_gain = (std::min)(2.0f, std::stof(value));
+                        else if (key == "lockup_gain") current_preset.lockup_gain = (std::min)(3.0f, std::stof(value));
                         else if (key == "lockup_start_pct") current_preset.lockup_start_pct = std::stof(value);
                         else if (key == "lockup_full_pct") current_preset.lockup_full_pct = std::stof(value);
                         else if (key == "lockup_rear_boost") current_preset.lockup_rear_boost = std::stof(value);
                         else if (key == "lockup_gamma") current_preset.lockup_gamma = std::stof(value);
                         else if (key == "lockup_prediction_sens") current_preset.lockup_prediction_sens = std::stof(value);
                         else if (key == "lockup_bump_reject") current_preset.lockup_bump_reject = std::stof(value);
-                        else if (key == "brake_load_cap") current_preset.brake_load_cap = (std::min)(3.0f, std::stof(value));
+                        else if (key == "brake_load_cap") current_preset.brake_load_cap = (std::min)(10.0f, std::stof(value));
+                        else if (key == "texture_load_cap") current_preset.texture_load_cap = std::stof(value); // NEW v0.6.25
+                        else if (key == "max_load_factor") current_preset.texture_load_cap = std::stof(value); // Legacy Backward Compatibility
                         else if (key == "abs_pulse_enabled") current_preset.abs_pulse_enabled = std::stoi(value);
                         else if (key == "abs_gain") current_preset.abs_gain = std::stof(value);
                         else if (key == "spin_enabled") current_preset.spin_enabled = std::stoi(value);
@@ -361,6 +364,10 @@ void Config::LoadPresets() {
                         else if (key == "gyro_smoothing_factor") current_preset.gyro_smoothing = std::stof(value);
                         else if (key == "yaw_accel_smoothing") current_preset.yaw_smoothing = std::stof(value);
                         else if (key == "chassis_inertia_smoothing") current_preset.chassis_smoothing = std::stof(value);
+                        else if (key == "speed_gate_lower") current_preset.speed_gate_lower = std::stof(value); // NEW v0.6.25
+                        else if (key == "speed_gate_upper") current_preset.speed_gate_upper = std::stof(value); // NEW v0.6.25
+                        else if (key == "road_fallback_scale") current_preset.road_fallback_scale = std::stof(value); // NEW v0.6.25
+                        else if (key == "understeer_affects_sop") current_preset.understeer_affects_sop = std::stoi(value); // NEW v0.6.25
                     } catch (...) {}
                 }
             }
@@ -405,6 +412,7 @@ void Config::AddUserPreset(const std::string& name, const FFBEngine& engine) {
 void Config::Save(const FFBEngine& engine, const std::string& filename) {
     std::ofstream file(filename);
     if (file.is_open()) {
+        file << "ini_version=" << LMUFFB_VERSION << "\n"; // NEW v0.6.25
         file << "ignore_vjoy_version_warning=" << m_ignore_vjoy_version_warning << "\n";
         file << "enable_vjoy=" << m_enable_vjoy << "\n";
         file << "output_ffb_to_vjoy=" << m_output_ffb_to_vjoy << "\n";
@@ -471,6 +479,10 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "gyro_smoothing_factor=" << engine.m_gyro_smoothing << "\n";
         file << "yaw_accel_smoothing=" << engine.m_yaw_accel_smoothing << "\n";
         file << "chassis_inertia_smoothing=" << engine.m_chassis_inertia_smoothing << "\n";
+        file << "speed_gate_lower=" << engine.m_speed_gate_lower << "\n";  // NEW v0.6.25
+        file << "speed_gate_upper=" << engine.m_speed_gate_upper << "\n";  // NEW v0.6.25
+        file << "road_fallback_scale=" << engine.m_road_fallback_scale << "\n";  // NEW v0.6.25
+        file << "understeer_affects_sop=" << engine.m_understeer_affects_sop << "\n";  // NEW v0.6.25
         
         // 3. User Presets
         file << "\n[Presets]\n";
@@ -506,6 +518,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
                 file << "lockup_prediction_sens=" << p.lockup_prediction_sens << "\n";
                 file << "lockup_bump_reject=" << p.lockup_bump_reject << "\n";
                 file << "brake_load_cap=" << p.brake_load_cap << "\n";
+                file << "texture_load_cap=" << p.texture_load_cap << "\n"; // NEW v0.6.25
                 file << "abs_pulse_enabled=" << p.abs_pulse_enabled << "\n";
                 file << "abs_gain=" << p.abs_gain << "\n";
                 file << "bottoming_method=" << p.bottoming_method << "\n";
@@ -528,6 +541,10 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
                 file << "gyro_smoothing_factor=" << p.gyro_smoothing << "\n";
                 file << "yaw_accel_smoothing=" << p.yaw_smoothing << "\n";
                 file << "chassis_inertia_smoothing=" << p.chassis_smoothing << "\n";
+                file << "speed_gate_lower=" << p.speed_gate_lower << "\n";  // NEW v0.6.25
+                file << "speed_gate_upper=" << p.speed_gate_upper << "\n";  // NEW v0.6.25
+                file << "road_fallback_scale=" << p.road_fallback_scale << "\n";  // NEW v0.6.25
+                file << "understeer_affects_sop=" << p.understeer_affects_sop << "\n";  // NEW v0.6.25
                 file << "\n";
             }
         }
@@ -554,7 +571,12 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
             std::string value;
             if (std::getline(is_line, value)) {
                 try {
-                    if (key == "ignore_vjoy_version_warning") m_ignore_vjoy_version_warning = std::stoi(value);
+                    if (key == "ini_version") {
+                        // Store for future migration logic
+                        std::string config_version = value;
+                        std::cout << "[Config] Loading config version: " << config_version << std::endl;
+                    }
+                    else if (key == "ignore_vjoy_version_warning") m_ignore_vjoy_version_warning = std::stoi(value);
                     else if (key == "enable_vjoy") m_enable_vjoy = std::stoi(value);
                     else if (key == "output_ffb_to_vjoy") m_output_ffb_to_vjoy = std::stoi(value);
                     else if (key == "always_on_top") m_always_on_top = std::stoi(value);
@@ -624,6 +646,10 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "gyro_smoothing_factor") engine.m_gyro_smoothing = std::stof(value);
                     else if (key == "yaw_accel_smoothing") engine.m_yaw_accel_smoothing = std::stof(value);
                     else if (key == "chassis_inertia_smoothing") engine.m_chassis_inertia_smoothing = std::stof(value);
+                    else if (key == "speed_gate_lower") engine.m_speed_gate_lower = std::stof(value); // NEW v0.6.25
+                    else if (key == "speed_gate_upper") engine.m_speed_gate_upper = std::stof(value); // NEW v0.6.25
+                    else if (key == "road_fallback_scale") engine.m_road_fallback_scale = std::stof(value); // NEW v0.6.25
+                    else if (key == "understeer_affects_sop") engine.m_understeer_affects_sop = std::stoi(value); // NEW v0.6.25
                 } catch (...) {
                     std::cerr << "[Config] Error parsing line: " << line << std::endl;
                 }

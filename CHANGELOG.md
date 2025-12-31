@@ -2,6 +2,49 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.25] - 2025-12-31
+### Added
+- **Configuration Versioning**:
+  - Implemented `ini_version` field in config files to track which version of LMUFFB created the configuration.
+  - Enables future migration logic for handling breaking changes in configuration format.
+  - Version is automatically written when saving and logged when loading for diagnostics.
+
+- **Complete Persistence for v0.6.23 Features**:
+  - **Speed Gate Persistence**: Added full save/load support for `speed_gate_lower` and `speed_gate_upper` in both main configuration and user presets.
+  - **Advanced Physics Settings**: Added persistence for `road_fallback_scale` and `understeer_affects_sop` (reserved for future implementation).
+  - **Texture Load Cap**: Completed implementation of `texture_load_cap` persistence in preset system (was partially implemented in v0.6.23).
+
+- **Comprehensive Test Suite** (10 new tests, 414 total passing):
+  - **Test 1**: Texture Load Cap in Presets - Verifies preset serialization of texture_load_cap field.
+  - **Test 2**: Main Config Speed Gate Persistence - Validates save/load round-trip for speed gate thresholds.
+  - **Test 3**: Main Config Advanced Physics - Tests road_fallback_scale and understeer_affects_sop persistence.
+  - **Test 4**: Preset Serialization - All New Fields - Comprehensive test of all v0.6.25 fields in user presets.
+  - **Test 5-6**: Preset Clamping Regression Tests - Ensures brake_load_cap and lockup_gain are NOT clamped during preset loading (preserving user intent).
+  - **Test 7-8**: Main Config Clamping Regression Tests - Verifies safety clamping (1.0-10.0 for brake_load_cap, 0.0-3.0 for lockup_gain) during main config loading.
+  - **Test 9**: Configuration Versioning - Validates ini_version is written and read correctly.
+  - **Test 10**: Comprehensive Round-Trip Test - End-to-end validation of all persistence mechanisms (main config → preset → load → apply).
+
+### Fixed
+- **Test Isolation Bug**: Fixed test failures caused by preset pollution between tests.
+  - **Root Cause**: `Config::Save()` writes both main configuration AND all user presets to the file. When tests ran sequentially, presets created in Test 1 (with default values for new fields) were being saved alongside Test 2's main config, causing the default values to overwrite the test values during loading.
+  - **Solution**: Added `Config::presets.clear()` at the beginning of Tests 2, 3, and 9 to ensure clean test isolation.
+  - **Impact**: All 22 previously failing tests now pass (414 total tests passing, 0 failures).
+
+### Changed
+- **Config.h/Config.cpp**: 
+  - Added `speed_gate_lower`, `speed_gate_upper`, `road_fallback_scale`, and `understeer_affects_sop` to both main config save/load and preset serialization.
+  - Added backward compatibility for legacy `max_load_factor` → `texture_load_cap` migration.
+  - Ensured all new fields are properly initialized with Preset struct defaults.
+
+### Technical Details
+- **Preset System Enhancement**: The `Preset` struct now includes all v0.6.23+ fields with proper defaults:
+  - `speed_gate_lower = 1.0f` (3.6 km/h)
+  - `speed_gate_upper = 5.0f` (18.0 km/h)
+  - `road_fallback_scale = 0.05f`
+  - `understeer_affects_sop = false`
+- **Test File**: Added `tests/test_persistence_v0625.cpp` with comprehensive coverage of all persistence mechanisms.
+- **No Breaking Changes**: Existing configurations load seamlessly. New fields default to safe values if not present in older config files.
+
 ## [0.6.24] - 2025-12-28
 ### Changed
 - **Max Torque Ref Documentation Update**:

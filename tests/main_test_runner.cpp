@@ -16,6 +16,11 @@ namespace FFBEngineTests {
     extern int g_tests_failed; 
     void Run(); 
 }
+namespace PersistenceTests { 
+    extern int g_tests_passed; 
+    extern int g_tests_failed; 
+    void Run(); 
+}
 
 #ifdef _WIN32
 namespace WindowsPlatformTests { 
@@ -40,11 +45,15 @@ int main() {
         FFBEngineTests::Run();
         total_passed += FFBEngineTests::g_tests_passed;
         total_failed += FFBEngineTests::g_tests_failed;
-    } catch (const std::exception& e) {
-        std::cout << "[FATAL] FFB Engine Tests threw exception: " << e.what() << std::endl;
-        total_failed++;
     } catch (...) {
-        std::cout << "[FATAL] FFB Engine Tests threw unknown exception" << std::endl;
+        total_failed++;
+    }
+
+    try {
+        PersistenceTests::Run();
+        total_passed += PersistenceTests::g_tests_passed;
+        total_failed += PersistenceTests::g_tests_failed;
+    } catch (...) {
         total_failed++;
     }
 

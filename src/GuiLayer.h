@@ -9,7 +9,7 @@ struct GuiContext;
 class GuiLayer {
 public:
     static bool Init();
-    static void Shutdown();
+    static void Shutdown(FFBEngine& engine);
     
     static void* GetWindowHandle(); // Returns HWND
     static void SetupGUIStyle();   // Setup professional "Deep Dark" theme

@@ -32,6 +32,7 @@ struct Preset {
     float lockup_prediction_sens = 20.0f; // New v0.6.0
     float lockup_bump_reject = 0.1f;     // New v0.6.0
     float brake_load_cap = 3.0f;    // New v0.5.11
+    float texture_load_cap = 1.5f;  // NEW v0.6.25
     
     bool abs_pulse_enabled = true;       // New v0.6.0
     float abs_gain = 2.0f;               // New v0.6.0
@@ -203,6 +204,7 @@ struct Preset {
         engine.m_lockup_prediction_sens = lockup_prediction_sens;
         engine.m_lockup_bump_reject = lockup_bump_reject;
         engine.m_brake_load_cap = brake_load_cap;
+        engine.m_texture_load_cap = texture_load_cap;  // NEW v0.6.25
         engine.m_abs_pulse_enabled = abs_pulse_enabled;
         engine.m_abs_gain = abs_gain;
 
@@ -263,6 +265,7 @@ struct Preset {
         lockup_prediction_sens = engine.m_lockup_prediction_sens;
         lockup_bump_reject = engine.m_lockup_bump_reject;
         brake_load_cap = engine.m_brake_load_cap;
+        texture_load_cap = engine.m_texture_load_cap;  // NEW v0.6.25
         abs_pulse_enabled = engine.m_abs_pulse_enabled;
         abs_gain = engine.m_abs_gain;
         

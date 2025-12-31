@@ -1,4 +1,5 @@
 #include "GuiLayer.h"
+#include "Version.h"
 #include "Config.h"
 #include "DirectInputFFB.h"
 #include "GameConnector.h"
@@ -104,10 +105,7 @@ extern std::mutex g_engine_mutex;
 #define XSTR(x) STR(x)
 #define STR(x) #x
 
-// If VERSION is not defined via CMake, default
-#ifndef LMUFFB_VERSION
-#define LMUFFB_VERSION "Dev"
-#endif
+// VERSION is now defined in Version.h
 
 // NEW: Professional "Flat Dark" Theme
 void GuiLayer::SetupGUIStyle() {
@@ -228,9 +226,12 @@ bool GuiLayer::Init() {
     return true;
 }
 
-void GuiLayer::Shutdown() {
+void GuiLayer::Shutdown(FFBEngine& engine) {
     // Capture the final position/size before destroying the window
     SaveCurrentWindowGeometry(Config::show_graphs);
+
+    // Call Save to persist all settings (Auto-save on shutdown v0.6.25)
+    Config::Save(engine);
 
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();

@@ -81,6 +81,8 @@ Split into a separate report only the features that we want:
 Auto-Save
 auto save last configuration. Is the save config button any longer needed?
 
+additionally, in the ini file, the settings should be saved in the same order as they are displayed in the GUI. This makes it easier to find them in the ini, and to compare the ini with the Gui.
+
 fix persistent vibrations at low speed. Apply muting and smoothing to rear align torque, all of SoP / oversteer effects, and to base game force.
 
 renaming each setting to be fully descriptive, backward compatibility, loading values from version 06.24.

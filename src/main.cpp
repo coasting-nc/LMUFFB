@@ -201,7 +201,7 @@ int main(int argc, char* argv[]) {
     Config::Save(g_engine);
 
     // Cleanup
-    if (!headless) GuiLayer::Shutdown();
+    if (!headless) GuiLayer::Shutdown(g_engine);
     if (ffb_thread.joinable()) ffb_thread.join();
     
     DirectInputFFB::Get().Shutdown();

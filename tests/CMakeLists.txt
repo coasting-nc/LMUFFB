@@ -10,6 +10,7 @@ include_directories(..)
 set(TEST_SOURCES 
     main_test_runner.cpp 
     test_ffb_engine.cpp 
+    test_persistence_v0625.cpp
     ../src/Config.cpp
 )
 
