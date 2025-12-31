@@ -237,33 +237,43 @@ auto ShaftDecorator = [&]() {
 FloatSetting("Steering Shaft Smoothing", &engine.m_steering_shaft_smoothing, 0.0f, 0.1f, "%.3f s", "Tooltip...", ShaftDecorator);
 ```
 
-### 6.3. Phase 1 Verification Tests
+### 6.3. Automated Testing Strategy
+To ensure the refactoring preserves functionality without requiring manual verification, we will implement an **Automated Interaction Test** using a headless ImGui context. This test will verify that the unified helper correctly modifies values when keys are simulated, proving the logic is active.
 
-#### Test 1.1: UI Integrity Check
-1.  **Action:** Launch application.
-2.  **Check:** Verify all "Latency" sliders (Steering, SoP, etc.) still display the colored "Latency: XX ms" text above the slider.
-3.  **Check:** Verifiy alignment is correct (Label on left, Slider+Text on right).
+#### Pre-requisite: Extract Helper Logic
+To make the UI logic testable without running the full application, we must extract the `FloatSetting` logic from the local lambda in `GuiLayer.cpp` to a reusable class/helper (e.g., `GuiWidgets`) that can be instantiated in a test environment.
 
-#### Test 1.2: Unified Interaction Check
-1.  **Action:** Hover over "Steering Shaft Smoothing" (previously a manual control).
-2.  **Action:** Press Left/Right Arrow keys.
-3.  **Expectation:** The slider value changes. (This proves the unified logic is active, as many manual controls previously *lacked* this feature).
-4.  **Action:** Verify Tooltip appears.
+#### Test 1.1: Standardized Interaction Test (Automated)
+**Objective:** Verify that the refactored `FloatSetting` helper correctly processes input (Arrow Keys) to modify the target float value.
+1.  **Environment:** Headless ImGui Context (No Graphics, just Logic).
+2.  **Parameters:** `float value = 1.0f`, `min = 0.0f`, `max = 2.0f`.
+3.  **Simulate:** `io.KeysDown[ImGuiKey_RightArrow] = true`.
+4.  **Action:** Call `GuiWidgets::Float("Test", &value, ...)`.
+5.  **Assert:** `value > 1.0f` (Value incremented).
+6.  **Simulate:** `io.KeysDown[ImGuiKey_LeftArrow] = true`.
+7.  **Assert:** `value` decrements.
+
+This test proves that the *interaction logic* is properly hooked up in the new helper, covering all sliders that use it (including the newly converted complex ones).
+
+#### Test 1.2: Decorator Execution Test (Automated)
+**Objective:** Verify that the "Decorator" callback is actually executed.
+1.  **Setup:** Create a boolean flag `bool decoratorCalled = false`.
+2.  **Action:** Call `GuiWidgets::Float(..., [&](){ decoratorCalled = true; })`.
+3.  **Assert:** `decoratorCalled == true`.
 
 ### 6.4. Phase 2 (Auto-Save) Preparation
-Once this refactoring is complete, Phase 2 becomes trivial: we simply add the `Config::Save(engine)` call into the *single* `FloatSetting` lambda, and it automatically applies to every slider in the application, including the complex ones.
+Once this refactoring is complete, Phase 2 becomes trivial: we simply add the `Config::Save(engine)` call into the *single* `FloatSetting` helper, and it automatically applies to every slider in the application.
 
 ## 7. Implementation Roadmap (Updated)
 
-1.  **Phase 1: Refactoring**
-    - [ ] Update `FloatSetting` lambda signature to accept `std::function<void()>`.
-    - [ ] Refactor "Steering Shaft Smoothing" to use new helper.
-    - [ ] Refactor "Yaw Kick Smoothing".
-    - [ ] Refactor "Gyro Smoothing".
-    - [ ] Refactor "SoP Smoothing".
-    - [ ] Refactor "Slip Angle Smoothing".
-    - [ ] Refactor "Chassis Inertia".
-    - [ ] Verify functionality (Tests 1.1, 1.2).
+1.  **Phase 1: Refactoring & Test Infrastructure**
+    - [ ] **Extraction:** Move `FloatSetting` logic to a new header `src/GuiWidgets.h`.
+    - [ ] **Test Setup:** Create `tests/test_gui_interaction.cpp` with headless ImGui setup.
+    - [ ] **Implementation:** Implement `FloatSetting` with Decorator support in `src/GuiWidgets.h`.
+    - [ ] **Test:** Implement `test_arrow_key_interaction` and `test_decorator_execution` (Automated).
+    - [ ] **Verification:** Run `run_combined_tests.exe` to ensure new specific UI tests pass.
+    - [ ] **Integration:** Update `src/GuiLayer.cpp` to use `GuiWidgets::Float`.
+    - [ ] **Refactor:** Convert all manual complex sliders (Smoothing, Inertia, etc.) to use `GuiWidgets::Float` with decorators.
 
 2.  **Phase 2: Auto-Save Implementation**
     - [ ] Add `ImGui::IsItemDeactivatedAfterEdit()` check to `FloatSetting`.
