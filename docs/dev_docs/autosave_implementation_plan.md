@@ -83,7 +83,7 @@ auto IntSetting = [&](const char* label, int* v, const char* const items[], int 
 ```
 
 ### 3.2. Update Individual Controls (Manual Implementation)
-Several controls are defined directly in the UI loop, often because they have custom layouts (e.g., latency latency/color indicators) or exist outside the main grid. These **DO NOT** use the helper lambdas and must be updated individually:
+Several controls are defined directly in the UI loop, often because they have custom layouts (e.g., latency/color indicators) or exist outside the main grid. These **DO NOT** use the helper lambdas and must be updated individually:
 
 #### A. Custom Sliders (Latency Indicated)
 The following sliders use raw `ImGui::SliderFloat` calls to accommodate latency text/color above them. They need `ImGui::IsItemDeactivatedAfterEdit()` and `Config::Save(engine)` added:
@@ -144,3 +144,25 @@ Since `DrawTuningWindow` already holds `g_engine_mutex`, calling `Config::Save(e
 - [ ] Implement Auto-Save for "Speed Gate" sliders (Lower/Upper).
 - [ ] Add Auto-Save to "Always on Top".
 - [ ] Perform binary size / performance check (disk thrashing test).
+
+## 6. Design Analysis & Refactoring Recommendation
+
+### The "Manual Control" Issue
+The need to duplicate the auto-save logic across multiple "manual" controls highlights a minor design smell in the `GuiLayer`. Specifically:
+- **Inconsistent Abstraction:** Most controls use the `FloatSetting` abstraction, but significantly complex ones (e.g., those needing latency indicators) drop down to raw `ImGui` calls. All these controls share the same underlying need: *Display Label -> Edit Value -> Save on Completion*.
+- **Code Duplication:** The logic for "save on release" and "save on arrow key press" (which is quite verbose) must now be copied to 6+ different locations. This increases the risk of bugs where one slider behaves differently from another.
+- **Maintenance Burden:** Future global behavior changes (e.g., "disable editing when game is running") would require updating both the lambda and every individual manual control.
+
+### Recommendation
+While out of scope for the immediate Auto-Save implementation, it is recommended to refactor these manual controls into a more capable helper or builder pattern in a future update (e.g., v0.7.0).
+
+**Proposed Solution: `FloatSettingEx`**
+Create an extended helper that accepts optional "header" or "decorator" lambdas:
+```cpp
+auto FloatSettingv2 = [&](const char* label, float* v, ..., std::function<void()> pre_render_callback = nullptr) {
+    if (pre_render_callback) pre_render_callback(); // Renders the latency text/color
+    // ... Standard Slider Logic ...
+    // ... Standard Auto-Save Logic ...
+};
+```
+This would unify behavior across all 20+ sliders in the application, ensuring consistent Auto-Save, Arrow Key, and Tooltip behavior.
