@@ -82,11 +82,24 @@ auto IntSetting = [&](const char* label, int* v, const char* const items[], int 
 };
 ```
 
-### 3.2. Update Individual Controls
-Several controls are defined directly in the UI loop rather than via lambdas. These must be updated as well:
-- **"Always on Top" Checkbox**: Already calls `SetWindowAlwaysOnTop`, needs `Config::Save(engine)`.
-- **"Graphs" Checkbox**: Already calls `Config::Save`. (Verify)
-- **Speed Gate Sliders**: Inside "Advanced Settings", these use raw `ImGui::SliderFloat`.
+### 3.2. Update Individual Controls (Manual Implementation)
+Several controls are defined directly in the UI loop, often because they have custom layouts (e.g., latency latency/color indicators) or exist outside the main grid. These **DO NOT** use the helper lambdas and must be updated individually:
+
+#### A. Custom Sliders (Latency Indicated)
+The following sliders use raw `ImGui::SliderFloat` calls to accommodate latency text/color above them. They need `ImGui::IsItemDeactivatedAfterEdit()` and `Config::Save(engine)` added:
+- **Steering Shaft Smoothing:** `##ShaftSmooth`
+- **Yaw Kick Response (Smoothing):** `##YawSmooth`
+- **Gyro Smoothing:** `##GyroSmooth`
+- **SoP Smoothing:** `##SoP Smoothing` (Note: Uses Arrow Key logic too)
+- **Slip Angle Smoothing:** `##Slip Angle Smoothing` (Note: Uses Arrow Key logic too)
+- **Chassis Inertia:** `##ChassisSmooth`
+
+#### B. Advanced Settings
+- **Speed Gate (Mute Below/Full Above):** `##Mute Below` (Derived), `##Full Above` (Derived). These use raw `ImGui::SliderFloat`.
+
+#### C. Top Bar Controls
+- **"Always on Top" Checkbox**: Already calls `SetWindowAlwaysOnTop`. Add `Config::Save(engine)`.
+- **"Graphs" Checkbox**: **ALREADY IMPLEMENTED**. (Calls `Config::Save(engine)`).
 
 ### 3.3. Thread Safety Note
 Since `DrawTuningWindow` already holds `g_engine_mutex`, calling `Config::Save(engine)` is safe as it accesses the engine state while the mutex is locked.
@@ -109,7 +122,12 @@ Since `DrawTuningWindow` already holds `g_engine_mutex`, calling `Config::Save(e
 1. Uncheck "Invert FFB Signal".
 2. Verify `config.ini` contains `invert_force=0` immediately.
 
-### Test 4: Presets Coexistence
+### Test 4: Custom Slider Persistence (Latency Controls)
+1. Drag "SoP Smoothing" slider.
+2. Release mouse.
+3. Verify `config.ini` updates `sop_smoothing_factor`.
+
+### Test 5: Presets Coexistence
 1. Load a preset.
 2. Verify the preset name is NOT saved as a global setting (it shouldn't be), but the values within the preset are written to the main section.
 
@@ -117,6 +135,12 @@ Since `DrawTuningWindow` already holds `g_engine_mutex`, calling `Config::Save(e
 - [ ] Refactor `FloatSetting` lambda.
 - [ ] Refactor `BoolSetting` lambda.
 - [ ] Refactor `IntSetting` lambda.
-- [ ] Audit remaining `ImGui` calls (`Checkbox`, `SliderFloat`, `Combo`) outside lambdas.
-- [ ] Verify persistence of "Always on Top" and "Graphs" state.
+- [ ] Implement Auto-Save for "Steering Shaft Smoothing".
+- [ ] Implement Auto-Save for "Yaw Kick Smoothing".
+- [ ] Implement Auto-Save for "Gyro Smoothing".
+- [ ] Implement Auto-Save for "SoP Smoothing".
+- [ ] Implement Auto-Save for "Slip Angle Smoothing".
+- [ ] Implement Auto-Save for "Chassis Inertia".
+- [ ] Implement Auto-Save for "Speed Gate" sliders (Lower/Upper).
+- [ ] Add Auto-Save to "Always on Top".
 - [ ] Perform binary size / performance check (disk thrashing test).
