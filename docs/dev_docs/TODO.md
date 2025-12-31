@@ -74,16 +74,18 @@ DONE: **Frequency Tuning Guide**: Created comprehensive user guide at `docs/user
 
 ## Troubleshooting 25
 
-Check each slider and setting in the main GUI window, and verify that it is saved to the ini file (both as a "saved preset" and as a saved current configuration).
+DONE: fix persistent vibrations at low speed. Apply muting and smoothing to rear align torque, all of SoP / oversteer effects, and to base game force.
+
+DONE: Check each slider and setting in the main GUI window, and verify that it is saved to the ini file (both as a "saved preset" and as a saved current configuration).
 Implement auto-save of the settings as current configuration every time the user makes a change to any of the sliders or inputs.
 See: docs\dev_docs\report_ui_ux_overhaul.md
 Split into a separate report only the features that we want:
+
 Auto-Save
 auto save last configuration. Is the save config button any longer needed?
 
 additionally, in the ini file, the settings should be saved in the same order as they are displayed in the GUI. This makes it easier to find them in the ini, and to compare the ini with the Gui.
 
-fix persistent vibrations at low speed. Apply muting and smoothing to rear align torque, all of SoP / oversteer effects, and to base game force.
 
 renaming each setting to be fully descriptive, backward compatibility, loading values from version 06.24.
 Preset and confix fix: saving new sliders values to the ini file, adding app version, 
