@@ -85,6 +85,13 @@ DONE: Auto-Save
 auto save last configuration. Is the save config button any longer needed?
 
 "Manual testing current effects, new presets and default values": see section below
+test back to back from LMP2 to GT3. Do the new T300 preset for the LMP2 work for the GT3? Try again the understeer effect: in the LMP3 is too sensitive (even 0.84 is too much), in the GT3?
+
+yaw kick findings: belos a certain threshold, it is transmitting road texture. Exploit this fact for a separate effect, that would work only below (instead of above) a certain threshold. 
+See which component of the current yaw kick effect is causing this. Local rotation / acceleration? What if we use also the other degrees of freedom other than yaw? That is pitch and roll? All combined for a "texture" effect. Or as separate effects.
+Review again the distinction betwen yaw kick and self aligning torque: compare the two formulas.
+
+Self aligning torque: rename also the plot. Rename all plots to match the settings name in the main GUI window.
 
 implement fixed based on users reports.
 
