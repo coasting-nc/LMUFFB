@@ -94,6 +94,11 @@ Review again the distinction betwen yaw kick and self aligning torque: compare t
 
 Self aligning torque: rename also the plot. Rename all plots to match the settings name in the main GUI window.
 
+next effects to add:
+* longitudinal weight / load changes under bracking and acceleration.
+* grip loss effect different calculation, using derivative. Keep exiting method too, but add a drop down to select which method to use.
+* option to "invert" mechanism for understerr grip loss: wheel gets heavier instead of lighter. Consider inverting the "weight" feel of also some of the oversteer effects (eg. wheel gets heaverier instead of lighter, and viceversa).
+
 implement fixed based on users reports.
 
 additionally, in the ini file, the settings should be saved in the same order as they are displayed in the GUI. This makes it easier to find them in the ini, and to compare the ini with the Gui.
