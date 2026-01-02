@@ -91,257 +91,7 @@ void Config::LoadPresets() {
         presets.push_back(p);
     }
     
-    // 3. Test: Game Base FFB Only
-    presets.push_back(Preset("Test: Game Base FFB Only", true)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetSoPScale(1.0f)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetSlide(false, 0.0f)
-        .SetRearAlign(0.0f)
-    );
-
-    // 4. Test: SoP Only
-    presets.push_back(Preset("Test: SoP Only", true)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.08f)
-        .SetSoPScale(1.0f)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetSlide(false, 0.0f)
-        .SetRearAlign(0.0f)
-        .SetSoPYaw(0.0f)
-        .SetBaseMode(2) // Muted
-    );
-
-    // 5. Test: Understeer Only (Updated v0.6.31 for proper effect isolation)
-    presets.push_back(Preset("Test: Understeer Only", true)
-        // PRIMARY EFFECT
-        .SetUndersteer(0.61f)
-        
-        // DISABLE ALL OTHER EFFECTS
-        .SetSoP(0.0f)
-        .SetSoPScale(1.0f)
-        .SetOversteer(0.0f)          // Disable oversteer boost
-        .SetRearAlign(0.0f)
-        .SetSoPYaw(0.0f)             // Disable yaw kick
-        .SetGyro(0.0f)               // Disable gyro damping
-        
-        // DISABLE ALL TEXTURES
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)        // Disable road texture
-        .SetSpin(false, 0.0f)        // Disable spin
-        .SetLockup(false, 0.0f)      // Disable lockup vibration
-        .SetAdvancedBraking(0.5f, 20.0f, 0.1f, false, 0.0f)  // Disable ABS pulse
-        .SetScrub(0.0f)
-        
-        // SMOOTHING
-        .SetSmoothing(0.85f)         // SoP smoothing (doesn't affect test since SoP=0)
-        .SetSlipSmoothing(0.015f)    // Slip angle smoothing (important for grip calculation)
-        
-        // PHYSICS PARAMETERS (Explicit for clarity and future-proofing)
-        .SetOptimalSlip(0.10f, 0.12f)  // Explicit optimal slip thresholds
-        .SetBaseMode(0)                 // Native physics mode (required for understeer)
-        .SetSpeedGate(0.0f, 0.0f)      // Disable speed gate (0 = no gating)
-    );
-
-
-    // 6. Test: Textures Only
-    presets.push_back(Preset("Test: Textures Only", true)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetSoPScale(0.0f)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetLockup(true, 1.0f)
-        .SetSpin(true, 1.0f)
-        .SetSlide(true, 0.39f)
-        .SetRoad(true, 1.0f)
-        .SetRearAlign(0.0f)
-        .SetBaseMode(2) // Muted
-    );
-
-    // 7. Test: Rear Align Torque Only
-    presets.push_back(Preset("Test: Rear Align Torque Only", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetSlide(false, 0.0f)
-        .SetRearAlign(0.90f)
-        .SetSoPYaw(0.0f)
-    );
-
-    // 8. Test: SoP Base Only
-    presets.push_back(Preset("Test: SoP Base Only", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.08f)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetSlide(false, 0.0f)
-        .SetRearAlign(0.0f)
-        .SetSoPYaw(0.0f)
-        .SetBaseMode(2) // Muted
-    );
-
-    // 9. Test: Slide Texture Only
-    presets.push_back(Preset("Test: Slide Texture Only", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetSlide(true, 0.39f, 1.0f)
-        .SetRearAlign(0.0f)
-        .SetBaseMode(2) // Muted
-    );
-
-    // 10. Test: No Effects
-    presets.push_back(Preset("Test: No Effects", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetSlide(false, 0.0f)
-        .SetRearAlign(0.0f)
-        .SetBaseMode(2) // Muted
-    );
-
-    // --- NEW GUIDE PRESETS (v0.4.24) ---
-
-    // 11. Guide: Understeer (Front Grip Loss)
-    presets.push_back(Preset("Guide: Understeer (Front Grip)", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.61f)
-        .SetSoP(0.0f)
-        .SetOversteer(0.0f)
-        .SetRearAlign(0.0f)
-        .SetSoPYaw(0.0f)
-        .SetGyro(0.0f)
-        .SetLockup(false, 0.0f)
-        .SetSpin(false, 0.0f)
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetBaseMode(0) // Native Physics needed to feel the drop
-    );
-
-    // 12. Guide: Oversteer (Rear Grip Loss)
-    presets.push_back(Preset("Guide: Oversteer (Rear Grip)", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.08f)
-        .SetSoPScale(1.0f)
-        .SetRearAlign(0.90f)
-        .SetOversteer(0.65f)
-        .SetSoPYaw(0.0f)
-        .SetGyro(0.0f)
-        .SetLockup(false, 0.0f)
-        .SetSpin(false, 0.0f)
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetBaseMode(0) // Native Physics + Boost
-    );
-
-    // 13. Guide: Slide Texture (Scrubbing)
-    presets.push_back(Preset("Guide: Slide Texture (Scrub)", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetOversteer(0.0f)
-        .SetRearAlign(0.0f)
-        .SetSlide(true, 0.39f, 1.0f) // Gain 0.39, Freq 1.0 (Rumble)
-        .SetScrub(1.0f)
-        .SetLockup(false, 0.0f)
-        .SetSpin(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetBaseMode(2) // Muted for clear texture feel
-    );
-
-    // 14. Guide: Braking Lockup
-    presets.push_back(Preset("Guide: Braking Lockup", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetOversteer(0.0f)
-        .SetRearAlign(0.0f)
-        .SetLockup(true, 1.0f)
-        .SetSpin(false, 0.0f)
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetBaseMode(2) // Muted
-    );
-
-    // 15. Guide: Traction Loss (Wheel Spin)
-    presets.push_back(Preset("Guide: Traction Loss (Spin)", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetOversteer(0.0f)
-        .SetRearAlign(0.0f)
-        .SetSpin(true, 1.0f)
-        .SetLockup(false, 0.0f)
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetBaseMode(2) // Muted
-    );
-
-     // 16. Guide: SoP Yaw (Kick)
-    presets.push_back(Preset("Guide: SoP Yaw (Kick)", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetOversteer(0.0f)
-        .SetRearAlign(0.0f)
-        .SetSoPYaw(5.0f) // Standard T300 level
-        .SetGyro(0.0f)
-        .SetLockup(false, 0.0f)
-        .SetSpin(false, 0.0f)
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetBaseMode(2) // Muted: Feel only the rotation impulse
-    );
-
-    // 17. Guide: Gyroscopic Damping
-    presets.push_back(Preset("Guide: Gyroscopic Damping", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetOversteer(0.0f)
-        .SetRearAlign(0.0f)
-        .SetSoPYaw(0.0f)
-        .SetGyro(1.0f) // Max damping
-        .SetLockup(false, 0.0f)
-        .SetSpin(false, 0.0f)
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetBaseMode(2) // Muted: Feel only the resistance to movement
-    );
-
-    // 18. DD 15 Nm
+    // 3. DD 15 Nm (Simagic Alpha)
     {
         Preset p("DD 15 Nm (Simagic Alpha)", true);
         p.gain = 1.0f;
@@ -401,6 +151,286 @@ void Config::LoadPresets() {
         p.speed_gate_upper = 5.0f;
         presets.push_back(p);
     }
+    
+    // 4. Test: Game Base FFB Only
+    presets.push_back(Preset("Test: Game Base FFB Only", true)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetSoPScale(1.0f)
+        .SetSmoothing(0.85f)
+        .SetSlipSmoothing(0.015f)
+        .SetSlide(false, 0.0f)
+        .SetRearAlign(0.0f)
+    );
+
+    // 5. Test: SoP Only
+    presets.push_back(Preset("Test: SoP Only", true)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.08f)
+        .SetSoPScale(1.0f)
+        .SetSmoothing(0.85f)
+        .SetSlipSmoothing(0.015f)
+        .SetSlide(false, 0.0f)
+        .SetRearAlign(0.0f)
+        .SetSoPYaw(0.0f)
+        .SetBaseMode(2) // Muted
+    );
+
+    // 6. Test: Understeer Only (Updated v0.6.31 for proper effect isolation)
+    presets.push_back(Preset("Test: Understeer Only", true)
+        // PRIMARY EFFECT
+        .SetUndersteer(0.61f)
+        
+        // DISABLE ALL OTHER EFFECTS
+        .SetSoP(0.0f)
+        .SetSoPScale(1.0f)
+        .SetOversteer(0.0f)          // Disable oversteer boost
+        .SetRearAlign(0.0f)
+        .SetSoPYaw(0.0f)             // Disable yaw kick
+        .SetGyro(0.0f)               // Disable gyro damping
+        
+        // DISABLE ALL TEXTURES
+        .SetSlide(false, 0.0f)
+        .SetRoad(false, 0.0f)        // Disable road texture
+        .SetSpin(false, 0.0f)        // Disable spin
+        .SetLockup(false, 0.0f)      // Disable lockup vibration
+        .SetAdvancedBraking(0.5f, 20.0f, 0.1f, false, 0.0f)  // Disable ABS pulse
+        .SetScrub(0.0f)
+        
+        // SMOOTHING
+        .SetSmoothing(0.85f)         // SoP smoothing (doesn't affect test since SoP=0)
+        .SetSlipSmoothing(0.015f)    // Slip angle smoothing (important for grip calculation)
+        
+        // PHYSICS PARAMETERS (Explicit for clarity and future-proofing)
+        .SetOptimalSlip(0.10f, 0.12f)  // Explicit optimal slip thresholds
+        .SetBaseMode(0)                 // Native physics mode (required for understeer)
+        .SetSpeedGate(0.0f, 0.0f)      // Disable speed gate (0 = no gating)
+    );
+
+    // 7. Test: Yaw Kick Only
+    presets.push_back(Preset("Test: Yaw Kick Only", true)
+        // PRIMARY EFFECT
+        .SetSoPYaw(0.386555f)        // Yaw kick at T300 level
+        .SetYawKickThreshold(1.68f)  // T300 threshold
+        .SetYawSmoothing(0.005f)     // T300 smoothing
+        
+        // DISABLE ALL OTHER EFFECTS
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetSoPScale(1.0f)
+        .SetOversteer(0.0f)
+        .SetRearAlign(0.0f)
+        .SetGyro(0.0f)
+        
+        // DISABLE ALL TEXTURES
+        .SetSlide(false, 0.0f)
+        .SetRoad(false, 0.0f)
+        .SetSpin(false, 0.0f)
+        .SetLockup(false, 0.0f)
+        .SetAdvancedBraking(0.5f, 20.0f, 0.1f, false, 0.0f)
+        .SetScrub(0.0f)
+        
+        // SMOOTHING
+        .SetSmoothing(0.85f)
+        .SetSlipSmoothing(0.015f)
+        
+        // BASE MODE
+        .SetBaseMode(2)  // Muted: Feel only the yaw kick impulse
+    );
+
+    // 8. Test: Textures Only
+    presets.push_back(Preset("Test: Textures Only", true)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetSoPScale(0.0f)
+        .SetSmoothing(0.85f)
+        .SetSlipSmoothing(0.015f)
+        .SetLockup(true, 1.0f)
+        .SetSpin(true, 1.0f)
+        .SetSlide(true, 0.39f)
+        .SetRoad(true, 1.0f)
+        .SetRearAlign(0.0f)
+        .SetBaseMode(2) // Muted
+    );
+
+    // 9. Test: Rear Align Torque Only
+    presets.push_back(Preset("Test: Rear Align Torque Only", true)
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetSmoothing(0.85f)
+        .SetSlipSmoothing(0.015f)
+        .SetSlide(false, 0.0f)
+        .SetRearAlign(0.90f)
+        .SetSoPYaw(0.0f)
+    );
+
+    // 10. Test: SoP Base Only
+    presets.push_back(Preset("Test: SoP Base Only", true)
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.08f)
+        .SetSmoothing(0.85f)
+        .SetSlipSmoothing(0.015f)
+        .SetSlide(false, 0.0f)
+        .SetRearAlign(0.0f)
+        .SetSoPYaw(0.0f)
+        .SetBaseMode(2) // Muted
+    );
+
+    // 11. Test: Slide Texture Only
+    presets.push_back(Preset("Test: Slide Texture Only", true)
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetSmoothing(0.85f)
+        .SetSlipSmoothing(0.015f)
+        .SetSlide(true, 0.39f, 1.0f)
+        .SetRearAlign(0.0f)
+        .SetBaseMode(2) // Muted
+    );
+
+    // 12. Test: No Effects
+    presets.push_back(Preset("Test: No Effects", true)
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetSmoothing(0.85f)
+        .SetSlipSmoothing(0.015f)
+        .SetSlide(false, 0.0f)
+        .SetRearAlign(0.0f)
+        .SetBaseMode(2) // Muted
+    );
+
+    // --- NEW GUIDE PRESETS (v0.4.24) ---
+
+    // 13. Guide: Understeer (Front Grip Loss)
+    presets.push_back(Preset("Guide: Understeer (Front Grip)", true)
+        .SetGain(1.0f)
+        .SetUndersteer(0.61f)
+        .SetSoP(0.0f)
+        .SetOversteer(0.0f)
+        .SetRearAlign(0.0f)
+        .SetSoPYaw(0.0f)
+        .SetGyro(0.0f)
+        .SetLockup(false, 0.0f)
+        .SetSpin(false, 0.0f)
+        .SetSlide(false, 0.0f)
+        .SetRoad(false, 0.0f)
+        .SetScrub(0.0f)
+        .SetSmoothing(0.85f)
+        .SetSlipSmoothing(0.015f)
+        .SetBaseMode(0) // Native Physics needed to feel the drop
+    );
+
+    // 14. Guide: Oversteer (Rear Grip Loss)
+    presets.push_back(Preset("Guide: Oversteer (Rear Grip)", true)
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.08f)
+        .SetSoPScale(1.0f)
+        .SetRearAlign(0.90f)
+        .SetOversteer(0.65f)
+        .SetSoPYaw(0.0f)
+        .SetGyro(0.0f)
+        .SetLockup(false, 0.0f)
+        .SetSpin(false, 0.0f)
+        .SetSlide(false, 0.0f)
+        .SetRoad(false, 0.0f)
+        .SetScrub(0.0f)
+        .SetSmoothing(0.85f)
+        .SetSlipSmoothing(0.015f)
+        .SetBaseMode(0) // Native Physics + Boost
+    );
+
+    // 15. Guide: Slide Texture (Scrubbing)
+    presets.push_back(Preset("Guide: Slide Texture (Scrub)", true)
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetOversteer(0.0f)
+        .SetRearAlign(0.0f)
+        .SetSlide(true, 0.39f, 1.0f) // Gain 0.39, Freq 1.0 (Rumble)
+        .SetScrub(1.0f)
+        .SetLockup(false, 0.0f)
+        .SetSpin(false, 0.0f)
+        .SetRoad(false, 0.0f)
+        .SetSmoothing(0.85f)
+        .SetSlipSmoothing(0.015f)
+        .SetBaseMode(2) // Muted for clear texture feel
+    );
+
+    // 16. Guide: Braking Lockup
+    presets.push_back(Preset("Guide: Braking Lockup", true)
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetOversteer(0.0f)
+        .SetRearAlign(0.0f)
+        .SetLockup(true, 1.0f)
+        .SetSpin(false, 0.0f)
+        .SetSlide(false, 0.0f)
+        .SetRoad(false, 0.0f)
+        .SetScrub(0.0f)
+        .SetSmoothing(0.85f)
+        .SetSlipSmoothing(0.015f)
+        .SetBaseMode(2) // Muted
+    );
+
+    // 17. Guide: Traction Loss (Wheel Spin)
+    presets.push_back(Preset("Guide: Traction Loss (Spin)", true)
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetOversteer(0.0f)
+        .SetRearAlign(0.0f)
+        .SetSpin(true, 1.0f)
+        .SetLockup(false, 0.0f)
+        .SetSlide(false, 0.0f)
+        .SetRoad(false, 0.0f)
+        .SetScrub(0.0f)
+        .SetSmoothing(0.85f)
+        .SetSlipSmoothing(0.015f)
+        .SetBaseMode(2) // Muted
+    );
+
+     // 18. Guide: SoP Yaw (Kick)
+    presets.push_back(Preset("Guide: SoP Yaw (Kick)", true)
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetOversteer(0.0f)
+        .SetRearAlign(0.0f)
+        .SetSoPYaw(5.0f) // Standard T300 level
+        .SetGyro(0.0f)
+        .SetLockup(false, 0.0f)
+        .SetSpin(false, 0.0f)
+        .SetSlide(false, 0.0f)
+        .SetRoad(false, 0.0f)
+        .SetScrub(0.0f)
+        .SetSmoothing(0.85f)
+        .SetSlipSmoothing(0.015f)
+        .SetBaseMode(2) // Muted: Feel only the rotation impulse
+    );
+
+    // 19. Guide: Gyroscopic Damping
+    presets.push_back(Preset("Guide: Gyroscopic Damping", true)
+        .SetGain(1.0f)
+        .SetUndersteer(0.0f)
+        .SetSoP(0.0f)
+        .SetOversteer(0.0f)
+        .SetRearAlign(0.0f)
+        .SetSoPYaw(0.0f)
+        .SetGyro(1.0f) // Max damping
+        .SetLockup(false, 0.0f)
+        .SetSpin(false, 0.0f)
+        .SetSlide(false, 0.0f)
+        .SetRoad(false, 0.0f)
+        .SetScrub(0.0f)
+        .SetSmoothing(0.85f)
+        .SetSlipSmoothing(0.015f)
+        .SetBaseMode(2) // Muted: Feel only the resistance to movement
+    );
 
     // --- Parse User Presets from config.ini ---
     // (Keep the existing parsing logic below, it works fine for file I/O)
