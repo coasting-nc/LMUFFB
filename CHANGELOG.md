@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.34] - 2026-01-02
+### Changed
+- **Preset Naming**: Renamed "Default (T300)" preset to "Default" to reflect that it now has different settings from the T300 preset (which was decoupled in v0.6.30).
+  - Updated all test files and documentation to reference the new preset name
+  - The "Default" preset continues to use the Preset struct defaults from `Config.h` as the single source of truth
+
 ## [0.6.33] - 2026-01-02
 ### Fixed
 - **Negative Speed Gate Display in "Test: Understeer Only" Preset**:

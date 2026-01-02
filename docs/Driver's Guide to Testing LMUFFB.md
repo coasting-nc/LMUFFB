@@ -11,7 +11,7 @@
 **Global Setup:**
 1.  **In-Game (LMU):** FFB Strength 0%, Smoothing 0.
 2.  **Wheel Driver:** Set your physical wheel strength to **20-30%** (Safety first!).
-3.  **LMUFFB:** Start with the **"Default (T300)"** preset, then modify as instructed below.
+3.  **LMUFFB:** Start with the **"Default"** preset, then modify as instructed below.
 
 ---
 

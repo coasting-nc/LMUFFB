@@ -12,7 +12,7 @@ struct Preset {
     // 1. SINGLE SOURCE OF TRUTH: T300 Default Values
     // These defaults are used by:
     // - FFBEngine constructor (via ApplyDefaultsToEngine)
-    // - "Default (T300)" preset in LoadPresets()
+    // - "Default" preset in LoadPresets()
     // - "Reset Defaults" button in GUI
    float gain = 1.0f;
     float understeer = 1.0f;  // New scale: 0.0-2.0, where 1.0 = proportional

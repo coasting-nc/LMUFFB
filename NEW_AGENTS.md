@@ -76,6 +76,7 @@ Run all tests that had already been compiled:
 *   **Update Version**: Increment the number in the `VERSION` file (root directory).
     *   *Patch (0.0.X)*: Bug fixes, tweaks, refactoring.
     *   *Minor (0.X.0)*: New features, new effects.
+    *   You must also update `src\Version.h`.
 *   **Update Changelog**: Add a concise entry to `CHANGELOG.md` under the new version number.
 
 ### 6. 🧠 Update Memory (Critical)

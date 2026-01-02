@@ -1982,7 +1982,7 @@ static void test_preset_initialization() {
     const float t300_notch_q = 2.0f;
     
     const char* preset_names[] = {
-        "Default (T300)",
+        "Default",
         "T300",
         "Test: Game Base FFB Only",
         "Test: SoP Only",

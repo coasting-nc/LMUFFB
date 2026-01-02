@@ -622,7 +622,7 @@ static void test_single_source_of_truth_t300_defaults() {
     // should produce identical results:
     // 1. Preset struct defaults (Config.h)
     // 2. FFBEngine initialized via Preset::ApplyDefaultsToEngine()
-    // 3. "Default (T300)" preset from LoadPresets()
+    // 3. "Default" preset from LoadPresets()
     //
     // NOTE: This test does NOT check specific values - it only verifies that
     // all paths produce CONSISTENT results. This makes the test resilient to
@@ -662,16 +662,16 @@ static void test_single_source_of_truth_t300_defaults() {
         std::cout << "    FFBEngine initialization matches reference" << std::endl;
     }
     
-    // Test 3: Verify "Default (T300)" preset from LoadPresets() matches
+    // Test 3: Verify "Default" preset from LoadPresets() matches
     {
-        std::cout << "  Test 3: Default (T300) preset consistency..." << std::endl;
+        std::cout << "  Test 3: Default preset consistency..." << std::endl;
         Config::LoadPresets();
         
         // Verify we have presets
         ASSERT_TRUE(!Config::presets.empty());
         
-        // First preset should be "Default (T300)"
-        ASSERT_TRUE(Config::presets[0].name == "Default (T300)");
+        // First preset should be "Default"
+        ASSERT_TRUE(Config::presets[0].name == "Default");
         ASSERT_TRUE(Config::presets[0].is_builtin == true);
         
         // Verify it matches the reference
@@ -682,7 +682,7 @@ static void test_single_source_of_truth_t300_defaults() {
         ASSERT_TRUE(default_preset.lockup_enabled == reference_defaults.lockup_enabled);
         ASSERT_TRUE(default_preset.lockup_gain == reference_defaults.lockup_gain);
         
-        std::cout << "    Default (T300) preset matches reference" << std::endl;
+        std::cout << "    Default preset matches reference" << std::endl;
     }
     
     // Test 4: Verify "T300" preset has specialized values (v0.6.30 Decoupling)
@@ -703,7 +703,7 @@ static void test_single_source_of_truth_t300_defaults() {
         ASSERT_TRUE(t300_preset.lockup_freq_scale == 1.02f);
         ASSERT_TRUE(t300_preset.scrub_drag_gain == 0.0462185f);
         
-        // Verify it is DIFFERENT from Default (T300) for key decoupled fields
+        // Verify it is DIFFERENT from Default for key decoupled fields
         ASSERT_TRUE(default_preset.understeer != t300_preset.understeer);
         ASSERT_TRUE(default_preset.sop != t300_preset.sop);
         
@@ -720,7 +720,7 @@ static void test_single_source_of_truth_t300_defaults() {
         Preset::ApplyDefaultsToEngine(engine1);
         
         // Initialize engine2 via preset application
-        Config::ApplyPreset(0, engine2); // Apply "Default (T300)"
+        Config::ApplyPreset(0, engine2); // Apply "Default"
         
         // Verify they're identical
         ASSERT_TRUE(engine1.m_understeer_effect == engine2.m_understeer_effect);

@@ -26,8 +26,8 @@ std::vector<Preset> Config::presets;
 void Config::LoadPresets() {
     presets.clear();
     
-    // 1. Default (T300) - Uses Preset struct defaults from Config.h (Single Source of Truth)
-    presets.push_back(Preset("Default (T300)", true));
+    // 1. Default - Uses Preset struct defaults from Config.h (Single Source of Truth)
+    presets.push_back(Preset("Default", true));
     
     // 2. T300 (Custom optimized)
     {
