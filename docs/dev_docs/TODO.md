@@ -99,6 +99,9 @@ next effects to add:
 * grip loss effect different calculation, using derivative. Keep exiting method too, but add a drop down to select which method to use.
 * option to "invert" mechanism for understerr grip loss: wheel gets heavier instead of lighter. Consider inverting the "weight" feel of also some of the oversteer effects (eg. wheel gets heaverier instead of lighter, and viceversa).
 
+New video and FFB testing advice from @mo-r-racing: https://www.youtube.com/watch?v=AHMet8rgPxk
+"	- One effective method to test what the FFB is doing with different settings is to find a long straight like at Fuji, keep a constant speed (try different constant speeds) and weave, as if you're warming tyres up. You can use the weaving to induce understeer or oversteer and feel what changes in forces are coming through the wheel. This takes away the visual element and allows you to focus on force feedback changes. "
+
 Compare formulas with those used in Marvin's app.
 Checklists for completedness for LMU before porting to other sims:
 * stable settings, found optimal settings for each car (GT3, LMP2, LMP3, HY, GTE) and wheel type (gear, belt, direct drive, direct drive >20 bit encoder).
