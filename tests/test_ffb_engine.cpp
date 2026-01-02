@@ -122,6 +122,7 @@ static void test_understeer_output_clamp(); // v0.6.28
 static void test_understeer_range_validation(); // v0.6.31
 static void test_understeer_effect_scaling(); // v0.6.31
 static void test_legacy_config_migration(); // v0.6.31
+static void test_preset_understeer_only_isolation(); // v0.6.31
 
 // --- Test Helper Functions (v0.5.7) ---
 
@@ -5732,6 +5733,7 @@ void Run() {
     test_understeer_range_validation();
     test_understeer_effect_scaling();
     test_legacy_config_migration();
+    test_preset_understeer_only_isolation();
     
     // Core Engine Features (v0.6.25)
     test_stationary_silence();
@@ -5875,6 +5877,60 @@ static void test_legacy_config_migration() {
     migrated = modern_val;
     if (migrated > 2.0f) migrated /= 100.0f;
     ASSERT_NEAR(migrated, 1.5f, 0.001);
+}
+
+static void test_preset_understeer_only_isolation() {
+    std::cout << "\nTest: Preset 'Test: Understeer Only' Isolation (v0.6.31)" << std::endl;
+    
+    // Load presets
+    Config::LoadPresets();
+    
+    // Find the "Test: Understeer Only" preset
+    int preset_idx = -1;
+    for (size_t i = 0; i < Config::presets.size(); i++) {
+        if (Config::presets[i].name == "Test: Understeer Only") {
+            preset_idx = (int)i;
+            break;
+        }
+    }
+    
+    if (preset_idx == -1) {
+        std::cout << "[FAIL] 'Test: Understeer Only' preset not found" << std::endl;
+        g_tests_failed++;
+        return;
+    }
+    
+    const Preset& p = Config::presets[preset_idx];
+    
+    // VERIFY: Primary effect is enabled
+    ASSERT_TRUE(p.understeer > 0.0f && p.understeer <= 2.0f);
+    
+    // VERIFY: All other effects are DISABLED
+    ASSERT_NEAR(p.sop, 0.0f, 0.001f);                    // SoP disabled
+    ASSERT_NEAR(p.oversteer_boost, 0.0f, 0.001f);        // Oversteer boost disabled
+    ASSERT_NEAR(p.rear_align_effect, 0.0f, 0.001f);      // Rear align disabled
+    ASSERT_NEAR(p.sop_yaw_gain, 0.0f, 0.001f);           // Yaw kick disabled
+    ASSERT_NEAR(p.gyro_gain, 0.0f, 0.001f);              // Gyro damping disabled
+    ASSERT_NEAR(p.scrub_drag_gain, 0.0f, 0.001f);        // Scrub drag disabled
+    
+    // VERIFY: All textures are DISABLED
+    ASSERT_TRUE(p.slide_enabled == false);               // Slide texture disabled
+    ASSERT_TRUE(p.road_enabled == false);                // Road texture disabled
+    ASSERT_TRUE(p.spin_enabled == false);                // Spin texture disabled
+    ASSERT_TRUE(p.lockup_enabled == false);              // Lockup vibration disabled
+    ASSERT_TRUE(p.abs_pulse_enabled == false);           // ABS pulse disabled
+    
+    // VERIFY: Critical physics parameters are set correctly
+    ASSERT_NEAR(p.optimal_slip_angle, 0.10f, 0.001f);    // Optimal slip angle threshold
+    ASSERT_NEAR(p.optimal_slip_ratio, 0.12f, 0.001f);    // Optimal slip ratio threshold
+    ASSERT_TRUE(p.base_force_mode == 0);                 // Native physics mode
+    
+    // VERIFY: Speed gate is disabled (negative values = disabled)
+    ASSERT_TRUE(p.speed_gate_lower < 0.0f);              // Speed gate disabled
+    ASSERT_TRUE(p.speed_gate_upper < 0.0f);              // Speed gate disabled
+    
+    std::cout << "[PASS] 'Test: Understeer Only' preset properly isolates understeer effect" << std::endl;
+    g_tests_passed++;
 }
 
 } // namespace FFBEngineTests

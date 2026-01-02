@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.32] - 2026-01-02
+### Fixed
+- **"Test: Understeer Only" Preset Isolation**:
+  - Completely overhauled the preset to ensure proper effect isolation for diagnostic testing.
+  - **Fixed Contamination Issues**: Explicitly disabled all non-understeer effects (lockup vibration, ABS pulse, road texture, oversteer boost, yaw kick, gyro damping) that were previously active due to inherited defaults.
+  - **Explicit Physics Parameters**: Added explicit settings for `optimal_slip_angle` (0.10), `optimal_slip_ratio` (0.12), `base_force_mode` (0), and disabled speed gate for complete testing control.
+  - **Impact**: The preset now provides a clean, isolated test environment for the understeer effect without interference from other FFB systems.
+
+### Added
+- **Regression Test**: Added `test_preset_understeer_only_isolation()` with 17 assertions to verify proper effect isolation:
+  - Verifies primary effect is enabled (1 check)
+  - Verifies all other effects are disabled (6 checks)
+  - Verifies all textures are disabled (5 checks)
+  - Verifies critical physics parameters are correct (5 checks)
+
+### Documentation
+- **Preset Review**: Created `docs/dev_docs/preset_review_understeer_only.md` with comprehensive analysis of all 50+ preset parameters, identifying missing settings and providing implementation recommendations.
+- **Test Documentation**: Created `docs/dev_docs/test_preset_understeer_only_isolation.md` with detailed test rationale, historical context, and maintenance guidelines.
+
 ## [0.6.31] - 2026-01-02
 ### Added
 - **Understeer Effect Improvements**:
@@ -17,7 +36,7 @@ All notable changes to this project will be documented in this file.
   - **Refined T300 Physics**: Increased default `optimal_slip_angle` from 0.06 to 0.10 rad in the T300 preset. This provides a larger "buffer zone" before grip loss begins, addressing user reports of the wheel feeling too light too early.
   - **Enhanced UI Tooltips**: Overhauled the tooltips for "Understeer Effect" and "Optimal Slip Angle" to provide clearer guidance on when and how to adjust these settings. Added a specific "When to Adjust" guide and a scale guide.
   - **Percentage Formatting**: Updated the "Understeer Effect" slider to display as a percentage (0-200%) for better consistency with other gain settings.
-  - **Regression Test Suite**: Added 6 comprehensive unit tests in `test_ffb_engine.cpp` to verify understeer physics:
+  - **Regression Test Suite**: Added 7 comprehensive unit tests in `test_ffb_engine.cpp` to verify understeer physics:
     - `test_optimal_slip_buffer_zone`: Verifies no force loss below optimal slip threshold
     - `test_progressive_loss_curve`: Verifies smooth, progressive grip loss beyond threshold
     - `test_grip_floor_clamp`: Verifies grip never drops below safety floor (0.2)
@@ -25,6 +44,14 @@ All notable changes to this project will be documented in this file.
     - `test_understeer_range_validation`: Verifies new 0.0-2.0 range enforcement
     - `test_understeer_effect_scaling`: Verifies effect properly scales force output
     - `test_legacy_config_migration`: Verifies automatic migration of legacy 0-200 values
+
+### Code Quality
+- **Code Review Implementation**:
+  - **Preset Migration Logging**: Added console logging when migrating legacy understeer values in preset loading (matching main config behavior).
+  - **Test Constants**: Added `FILTER_SETTLING_FRAMES = 40` constant in test suite for better maintainability.
+  - **Test Isolation Documentation**: Added comprehensive warning comment in `InitializeEngine()` for future test authors about breaking changes in default values.
+  - **Grip Floor Documentation**: Enhanced documentation of the 0.2 grip floor safety clamp in `test_grip_floor_clamp()`.
+  - **Config Versioning Documentation**: Added detailed comments explaining how `ini_version` serves as both app version tracker and implicit config format version.
 
 
 ## [0.6.30] - 2026-01-01

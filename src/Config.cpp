@@ -115,16 +115,37 @@ void Config::LoadPresets() {
         .SetBaseMode(2) // Muted
     );
 
-    // 5. Test: Understeer Only
+    // 5. Test: Understeer Only (Updated v0.6.31 for proper effect isolation)
     presets.push_back(Preset("Test: Understeer Only", true)
+        // PRIMARY EFFECT
         .SetUndersteer(0.61f)
+        
+        // DISABLE ALL OTHER EFFECTS
         .SetSoP(0.0f)
         .SetSoPScale(1.0f)
-        .SetSmoothing(0.85f)
-        .SetSlipSmoothing(0.015f)
-        .SetSlide(false, 0.0f)
+        .SetOversteer(0.0f)          // Disable oversteer boost
         .SetRearAlign(0.0f)
+        .SetSoPYaw(0.0f)             // Disable yaw kick
+        .SetGyro(0.0f)               // Disable gyro damping
+        
+        // DISABLE ALL TEXTURES
+        .SetSlide(false, 0.0f)
+        .SetRoad(false, 0.0f)        // Disable road texture
+        .SetSpin(false, 0.0f)        // Disable spin
+        .SetLockup(false, 0.0f)      // Disable lockup vibration
+        .SetAdvancedBraking(0.5f, 20.0f, 0.1f, false, 0.0f)  // Disable ABS pulse
+        .SetScrub(0.0f)
+        
+        // SMOOTHING
+        .SetSmoothing(0.85f)         // SoP smoothing (doesn't affect test since SoP=0)
+        .SetSlipSmoothing(0.015f)    // Slip angle smoothing (important for grip calculation)
+        
+        // PHYSICS PARAMETERS (Explicit for clarity and future-proofing)
+        .SetOptimalSlip(0.10f, 0.12f)  // Explicit optimal slip thresholds
+        .SetBaseMode(0)                 // Native physics mode (required for understeer)
+        .SetSpeedGate(-10.0f, -5.0f)   // Disable speed gate (negative = disabled)
     );
+
 
     // 6. Test: Textures Only
     presets.push_back(Preset("Test: Textures Only", true)
