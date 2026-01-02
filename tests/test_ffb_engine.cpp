@@ -123,6 +123,7 @@ static void test_understeer_range_validation(); // v0.6.31
 static void test_understeer_effect_scaling(); // v0.6.31
 static void test_legacy_config_migration(); // v0.6.31
 static void test_preset_understeer_only_isolation(); // v0.6.31
+static void test_all_presets_non_negative_speed_gate(); // v0.6.32
 
 // --- Test Helper Functions (v0.5.7) ---
 
@@ -5734,6 +5735,7 @@ void Run() {
     test_understeer_effect_scaling();
     test_legacy_config_migration();
     test_preset_understeer_only_isolation();
+    test_all_presets_non_negative_speed_gate();
     
     // Core Engine Features (v0.6.25)
     test_stationary_silence();
@@ -5925,12 +5927,54 @@ static void test_preset_understeer_only_isolation() {
     ASSERT_NEAR(p.optimal_slip_ratio, 0.12f, 0.001f);    // Optimal slip ratio threshold
     ASSERT_TRUE(p.base_force_mode == 0);                 // Native physics mode
     
-    // VERIFY: Speed gate is disabled (negative values = disabled)
-    ASSERT_TRUE(p.speed_gate_lower < 0.0f);              // Speed gate disabled
-    ASSERT_TRUE(p.speed_gate_upper < 0.0f);              // Speed gate disabled
+    // VERIFY: Speed gate is disabled (0.0 = no gating)
+    ASSERT_NEAR(p.speed_gate_lower, 0.0f, 0.001f);       // Speed gate disabled
+    ASSERT_NEAR(p.speed_gate_upper, 0.0f, 0.001f);       // Speed gate disabled
     
     std::cout << "[PASS] 'Test: Understeer Only' preset properly isolates understeer effect" << std::endl;
     g_tests_passed++;
+}
+
+static void test_all_presets_non_negative_speed_gate() {
+    std::cout << "\nTest: All Presets Have Non-Negative Speed Gate Values (v0.6.32)" << std::endl;
+    
+    // Load all presets
+    Config::LoadPresets();
+    
+    // Verify every preset has non-negative speed gate values
+    bool all_valid = true;
+    for (size_t i = 0; i < Config::presets.size(); i++) {
+        const Preset& p = Config::presets[i];
+        
+        // Check lower threshold
+        if (p.speed_gate_lower < 0.0f) {
+            std::cout << "[FAIL] Preset '" << p.name << "' has negative speed_gate_lower: " 
+                      << p.speed_gate_lower << " m/s (" << (p.speed_gate_lower * 3.6f) << " km/h)" << std::endl;
+            all_valid = false;
+        }
+        
+        // Check upper threshold
+        if (p.speed_gate_upper < 0.0f) {
+            std::cout << "[FAIL] Preset '" << p.name << "' has negative speed_gate_upper: " 
+                      << p.speed_gate_upper << " m/s (" << (p.speed_gate_upper * 3.6f) << " km/h)" << std::endl;
+            all_valid = false;
+        }
+        
+        // Verify upper >= lower (sanity check)
+        if (p.speed_gate_upper < p.speed_gate_lower) {
+            std::cout << "[FAIL] Preset '" << p.name << "' has speed_gate_upper < speed_gate_lower: " 
+                      << p.speed_gate_upper << " < " << p.speed_gate_lower << std::endl;
+            all_valid = false;
+        }
+    }
+    
+    if (all_valid) {
+        std::cout << "[PASS] All " << Config::presets.size() << " presets have valid non-negative speed gate values" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] One or more presets have invalid speed gate values" << std::endl;
+        g_tests_failed++;
+    }
 }
 
 } // namespace FFBEngineTests

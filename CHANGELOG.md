@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.33] - 2026-01-02
+### Fixed
+- **Negative Speed Gate Display in "Test: Understeer Only" Preset**:
+  - Fixed confusing negative km/h values in GUI (-36.0 km/h, -18.0 km/h) caused by negative speed gate values.
+  - Changed speed gate from `.SetSpeedGate(-10.0f, -5.0f)` to `.SetSpeedGate(0.0f, 0.0f)`.
+  - GUI now correctly displays "0.0 km/h" for both thresholds, indicating the speed gate is disabled.
+
+### Added
+- **Regression Test**: Added `test_all_presets_non_negative_speed_gate()` to prevent negative speed gate values in any preset:
+  - Checks all presets for non-negative `speed_gate_lower` and `speed_gate_upper`
+  - Verifies `upper >= lower` (sanity check)
+  - Prevents confusing negative km/h displays in GUI
+  - Automatically validates all current and future presets
+
+### Documentation
+- **Test Documentation**: Created `docs/dev_docs/test_all_presets_non_negative_speed_gate.md` with detailed explanation of the issue, fix, and test behavior.
+
 ## [0.6.32] - 2026-01-02
 ### Fixed
 - **"Test: Understeer Only" Preset Isolation**:

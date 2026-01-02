@@ -191,7 +191,7 @@ presets.push_back(Preset("Test: Understeer Only", true)
     // PHYSICS PARAMETERS (Explicit for clarity and future-proofing)
     .SetOptimalSlip(0.10f, 0.12f)  // Explicit optimal slip thresholds
     .SetBaseMode(0)                 // Native physics mode (required for understeer)
-    .SetSpeedGate(-10.0f, -5.0f)   // Disable speed gate (negative = disabled)
+    .SetSpeedGate(0.0f, 0.0f)      // Disable speed gate (0 = no gating)
 );
 ```
 
