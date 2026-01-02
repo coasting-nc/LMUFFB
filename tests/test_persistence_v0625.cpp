@@ -341,7 +341,7 @@ void test_comprehensive_roundtrip() {
     Preset::ApplyDefaultsToEngine(engine);
     
     engine.m_gain = 0.77f;
-    engine.m_understeer_effect = 44.4f;
+    engine.m_understeer_effect = 0.444f;
     engine.m_sop_effect = 1.23f;
     engine.m_texture_load_cap = 2.1f;
     engine.m_brake_load_cap = 6.6f;
@@ -357,7 +357,7 @@ void test_comprehensive_roundtrip() {
     Config::Load(engine2, "roundtrip.ini");
     
     ASSERT_NEAR(engine2.m_gain, 0.77f, 0.001f);
-    ASSERT_NEAR(engine2.m_understeer_effect, 44.4f, 0.001f);
+    ASSERT_NEAR(engine2.m_understeer_effect, 0.444f, 0.001f);
     ASSERT_NEAR(engine2.m_sop_effect, 1.23f, 0.001f);
     ASSERT_NEAR(engine2.m_texture_load_cap, 2.1f, 0.001f);
     ASSERT_NEAR(engine2.m_brake_load_cap, 6.6f, 0.001f);
@@ -385,7 +385,7 @@ void test_comprehensive_roundtrip() {
     if (idx != -1) {
         Config::ApplyPreset(idx, engine3);
         ASSERT_NEAR(engine3.m_gain, 0.77f, 0.001f);
-        ASSERT_NEAR(engine3.m_understeer_effect, 44.4f, 0.001f);
+        ASSERT_NEAR(engine3.m_understeer_effect, 0.444f, 0.001f);
         ASSERT_NEAR(engine3.m_sop_effect, 1.23f, 0.001f);
         ASSERT_NEAR(engine3.m_texture_load_cap, 2.1f, 0.001f);
         ASSERT_NEAR(engine3.m_brake_load_cap, 6.6f, 0.001f);

@@ -957,8 +957,18 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                 ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
             });
 
-        // Display with 2 decimals to show fine arrow key adjustments (step 0.01 on 0-200 range)
-        FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 200.0f, "%.2f", "Reduces the strength of the Steering Shaft Torque when front tires lose grip (Understeer).\nHelps you feel the limit of adhesion.\n0% = No feeling.\nHigh = Wheel goes light immediately upon sliding. Note: grip is calculated based on the Optimal Slip Angle setting.");
+        // Display with percentage format for better clarity
+        FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 2.0f, FormatPct(engine.m_understeer_effect), 
+            "Scales how much front grip loss reduces steering force.\n\n"
+            "SCALE:\n"
+            "  0% = Disabled (no understeer feel)\n"
+            "  50% = Subtle (half of grip loss reflected)\n"
+            "  100% = Normal (force matches grip) [RECOMMENDED]\n"
+            "  200% = Maximum (very light wheel on any slide)\n\n"
+            "If wheel feels too light at the limit:\n"
+            "  → First INCREASE 'Optimal Slip Angle' setting in the Physics section.\n"
+            "  → Then reduce this slider if still too sensitive.\n\n"
+            "Technical: Force = Base * (1.0 - GripLoss * Effect)");
         
         const char* base_modes[] = { "Native (Steering Shaft Torque)", "Synthetic (Constant)", "Muted (Off)" };
         IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, sizeof(base_modes)/sizeof(base_modes[0]), "Debug tool to isolate effects.\nNative: Normal Operation.\nSynthetic: Constant force to test direction.\nMuted: Disables base physics (good for tuning vibrations).");
@@ -1064,11 +1074,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                 ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "Simulation: %d ms", ms);
             });
 
-        // --- NEW: Optimal Slip Sliders (v0.5.7) ---
         FloatSetting("Optimal Slip Angle", &engine.m_optimal_slip_angle, 0.05f, 0.20f, "%.2f rad", 
-            "The slip angle (radians) where the tire generates peak grip.\nTuning parameter for the Grip Estimator.\nMatch this to the car's physics (GT3 ~0.10, LMDh ~0.06).\n"
-            "Lower = Earlier understeer warning.\n"
-            "Higher = Later warning.\n"
+            "The slip angle THRESHOLD above which grip loss begins.\n"
+            "Set this HIGHER than the car's physical peak slip angle.\n"
+            "Recommended: 0.10 for LMDh/LMP2, 0.12 for GT3.\n\n"
+            "Lower = More sensitive (force drops earlier).\n"
+            "Higher = More buffer zone before force drops.\n\n"
+            "NOTE: If the wheel feels too light at the limit, INCREASE this value.\n"
             "Affects: Understeer Effect, Lateral G Boost (Slide), Slide Texture.");
 
         FloatSetting("Optimal Slip Ratio", &engine.m_optimal_slip_ratio, 0.05f, 0.20f, "%.2f", 

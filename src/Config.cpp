@@ -59,7 +59,7 @@ void Config::LoadPresets() {
         p.understeer_affects_sop = false;
         p.slip_smoothing = 0.0f;
         p.chassis_smoothing = 0.0f;
-        p.optimal_slip_angle = 0.06f;
+        p.optimal_slip_angle = 0.10f;   // CHANGED from 0.06f
         p.optimal_slip_ratio = 0.12f;
         p.lockup_enabled = true;
         p.lockup_gain = 2.0f;
@@ -372,7 +372,16 @@ void Config::LoadPresets() {
                     try {
                         // Map keys to struct members
                         if (key == "gain") current_preset.gain = std::stof(value);
-                        else if (key == "understeer") current_preset.understeer = std::stof(value);
+                        else if (key == "understeer") {
+                            float val = std::stof(value);
+                            if (val > 2.0f) {
+                                float old_val = val;
+                                val = val / 100.0f; // Migrating 0-200 range to 0-2
+                                std::cout << "[Preset] Migrated legacy understeer: " << old_val 
+                                          << " -> " << val << std::endl;
+                            }
+                            current_preset.understeer = (std::min)(2.0f, (std::max)(0.0f, val));
+                        }
                         else if (key == "sop") current_preset.sop = (std::min)(2.0f, std::stof(value));
                         else if (key == "sop_scale") current_preset.sop_scale = std::stof(value);
                         else if (key == "sop_smoothing_factor") current_preset.sop_smoothing = std::stof(value);
@@ -475,6 +484,11 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
     std::ofstream file(final_path);
     if (file.is_open()) {
         file << "; --- System & Window ---\n";
+        // Config Version Tracking: The ini_version field serves dual purposes:
+        // 1. Records the app version that last saved this config
+        // 2. Acts as an implicit config format version for migration logic
+        // NOTE: Currently migration is threshold-based (e.g., understeer > 2.0 = legacy).
+        //       For more complex migrations, consider adding explicit config_format_version field.
         file << "ini_version=" << LMUFFB_VERSION << "\n";
         file << "ignore_vjoy_version_warning=" << m_ignore_vjoy_version_warning << "\n";
         file << "enable_vjoy=" << m_enable_vjoy << "\n";
@@ -658,7 +672,11 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
             if (std::getline(is_line, value)) {
                 try {
                     if (key == "ini_version") {
-                        // Store for future migration logic
+                        // Config Version Tracking: This field records the app version that last saved the config.
+                        // It serves as an implicit config format version for migration decisions.
+                        // Current approach: Threshold-based detection (e.g., understeer > 2.0 = legacy format).
+                        // Future improvement: Add explicit config_format_version field if migrations become
+                        // more complex (e.g., structural changes, removed fields, renamed keys).
                         std::string config_version = value;
                         std::cout << "[Config] Loading config version: " << config_version << std::endl;
                     }
@@ -777,8 +795,16 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                   << "), clamping to range [0.0, 10.0]" << std::endl;
         engine.m_abs_gain = (std::max)(0.0f, (std::min)(10.0f, engine.m_abs_gain));
     }
-    if (engine.m_understeer_effect < 0.0f || engine.m_understeer_effect > 200.0f) {
-        engine.m_understeer_effect = (std::max)(0.0f, (std::min)(200.0f, engine.m_understeer_effect));
+    // Legacy Migration: Convert 0-200 range to 0-2.0 range
+    if (engine.m_understeer_effect > 2.0f) {
+        float old_val = engine.m_understeer_effect;
+        engine.m_understeer_effect = engine.m_understeer_effect / 100.0f;
+        std::cout << "[Config] Migrated legacy understeer_effect: " << old_val 
+                  << " -> " << engine.m_understeer_effect << std::endl;
+    }
+    // Clamp to new valid range [0.0, 2.0]
+    if (engine.m_understeer_effect < 0.0f || engine.m_understeer_effect > 2.0f) {
+        engine.m_understeer_effect = (std::max)(0.0f, (std::min)(2.0f, engine.m_understeer_effect));
     }
     if (engine.m_steering_shaft_gain < 0.0f || engine.m_steering_shaft_gain > 2.0f) {
         engine.m_steering_shaft_gain = (std::max)(0.0f, (std::min)(2.0f, engine.m_steering_shaft_gain));

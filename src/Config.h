@@ -15,7 +15,7 @@ struct Preset {
     // - "Default (T300)" preset in LoadPresets()
     // - "Reset Defaults" button in GUI
    float gain = 1.0f;
-    float understeer = 50.0f;
+    float understeer = 1.0f;  // New scale: 0.0-2.0, where 1.0 = proportional
     float sop = 1.5f;
     float sop_scale = 1.0f;
     float sop_smoothing = 1.0f;

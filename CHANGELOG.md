@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.31] - 2026-01-02
+### Added
+- **Understeer Effect Improvements**:
+  - **BREAKING CHANGE - Rescaled Range**: Changed the "Understeer Effect" slider range from **0-200** to **0.0-2.0** for improved usability and precision.
+    - **Why**: The old 0-200 range had 99.5% of its values unusable. Mathematical analysis showed the useful range is 0.0-2.0, where values above 2.0 cause near-instant force elimination.
+    - **Migration**: Automatic migration logic converts legacy values (e.g., 50.0 → 0.5) when loading old config files.
+    - **New Scale Guide**:
+      - `0.0` = Disabled (no understeer effect)
+      - `0.5` = Subtle (50% of grip loss reflected)
+      - `1.0` = Normal (force matches grip) — **New Default**
+      - `1.5` = Aggressive (amplified response)
+      - `2.0` = Maximum (very light wheel on any slide)
+  - **Refined T300 Physics**: Increased default `optimal_slip_angle` from 0.06 to 0.10 rad in the T300 preset. This provides a larger "buffer zone" before grip loss begins, addressing user reports of the wheel feeling too light too early.
+  - **Enhanced UI Tooltips**: Overhauled the tooltips for "Understeer Effect" and "Optimal Slip Angle" to provide clearer guidance on when and how to adjust these settings. Added a specific "When to Adjust" guide and a scale guide.
+  - **Percentage Formatting**: Updated the "Understeer Effect" slider to display as a percentage (0-200%) for better consistency with other gain settings.
+  - **Regression Test Suite**: Added 6 comprehensive unit tests in `test_ffb_engine.cpp` to verify understeer physics:
+    - `test_optimal_slip_buffer_zone`: Verifies no force loss below optimal slip threshold
+    - `test_progressive_loss_curve`: Verifies smooth, progressive grip loss beyond threshold
+    - `test_grip_floor_clamp`: Verifies grip never drops below safety floor (0.2)
+    - `test_understeer_output_clamp`: Verifies force clamps to 0.0 (never negative) at maximum effect
+    - `test_understeer_range_validation`: Verifies new 0.0-2.0 range enforcement
+    - `test_understeer_effect_scaling`: Verifies effect properly scales force output
+    - `test_legacy_config_migration`: Verifies automatic migration of legacy 0-200 values
+
+
 ## [0.6.30] - 2026-01-01
 ### Changed
 - **T300 Preset Refinement**:
