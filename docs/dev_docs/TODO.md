@@ -146,6 +146,14 @@ user report: "Yaw kick: I'm not sure what the intention of Yaw Kick is.. from my
 * If enabled, but activation threshold on 0.0 rads you feel all ffb as intended(y)
 * If enabled, with rads set higher then it feels ffb is missing (like disabled) until rad/s threshold is crossed. The kicker doesnt feel good at all, or perhaps specifically with direct drive ffb."
 
+Slide Rumble: investigate and fix this effect: user report "should not be used, it is constant vibration which makes takes away from all other ffb more important ffb."
+
+investigate: "Road Details: Even after setting a manual input of like 100Nm with a Texture cap of 50x, it does not add anything."
+
+investigate: "Scrub Drag: works if Road details enabled but set to 0. Can scrub be disconnected from road details?"
+
+fix: "Bug: If the client gets disconnected from server (end of practice time) ffb remains active, eg if i was going full speed through corner, that force will remain on the wheel."
+
 renaming each setting to be fully descriptive, backward compatibility, loading values from version 06.24.
 Preset and confix fix: saving new sliders values to the ini file, adding app version, 
 -> about this, expand prompt about updating the ini format (if it needs to be updated)
