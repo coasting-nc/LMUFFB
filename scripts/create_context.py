@@ -41,7 +41,8 @@ EXCLUDE_DIRS = {
 
 # Files to exclude
 EXCLUDE_FILES = {
-    OUTPUT_FILE, 'LICENSE', 'compile_commands.json', 'TODO.md', 'prompts_for_coding_agents.md', 'create_context.py'
+    OUTPUT_FILE, 'LICENSE', 'compile_commands.json', 'TODO.md', 'prompts_for_coding_agents.md', 'create_context.py',
+    'LEGACY_JULES_ONLY_AGENTS_MEMORY.md', 'LEGACY_JULES_ONLY_AGENTS.md'
 }
 
 def is_text_file(filename):
