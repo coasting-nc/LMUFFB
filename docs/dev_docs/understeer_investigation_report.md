@@ -1,75 +1,106 @@
 # Understeer Investigation Report (Final)
 
 ## Executive Summary
-The "Understeer Effect" issue is confirmed to be a systemic problem caused by the interaction between the application's **Grip Estimation Logic** (which acts as the default physics engine for LMU due to missing API data) and the **T300 Preset Configuration**.
+The "Understeer Effect" issues (lightness/signal loss) are caused by a misunderstanding of the `optimal_slip_angle` setting in the context of the Fallback Estimator. While **0.06 rad (3.4°)** is a physically accurate peak slip angle for LMP2/Hypercars, using it as the **cutoff threshold** for the FFB effect causes the system to punish the driver for merely reaching the limit of adhesion, rather than exceeding it.
+## User reports
+Below are the reports by two users about an issue with the understeer effect. These report were the reason for the present investgation and report document.
 
-Specifically, the T300 preset defines the "Optimal Slip Angle" at an unrealistically low value (**0.06 rad / 3.4°**). Because modern race cars (LMP2/GT3) naturally operate effectively at higher slip angles (5-7°), the estimator calculates that the car is in a state of drastic grip loss (50% or less) during normal cornering. This perceived "loss," multiplied by the Understeer Effect slider, causes the FFB to collapse or disappear entirely.
+### User 1:
+Findings from more testing: the Understeer Effect seems to be working. In fact, with the LMP2 it is even too sensitive and makes the wheel too light. I had to set the understeer effect slider to 0.84, and even then it was too strong.
 
-## Detailed Technical Analysis
+### User 2:
+With regards to the understeer effect I have to say that it is not working for me (Fanatec CLS DD). I tried the "test understeer only" preset and if I set the understeer effect to anything from 1 to 200 I can't feel anything, no FFB. Only below 1 there is some weight in the FFB when turning. When I turn more than I should and the front tires lose grip, I expect the wheel to go light, but that is not the case. The wheel stays just as heavy. So I cannot feel the point of the front tires losing grip. I tried GT3 and LMP2, same result.
 
-### 1. The "Fallback" is the Standard
-User feedback confirms that `mGripFract` is consistently `0.0` for LMU cars. Therefore, the function `calculate_grip` in `FFBEngine.h` **always** executes the fallback estimation logic. This is not an edge case; it is the primary operating mode of the application.
+## The "Physics vs. Algorithm" Conflict
 
-### 2. The Tuning Discrepancy (The Root Cause)
-The Grip Estimator uses a "Friction Circle" model defined by `m_optimal_slip_angle`.
-*   **Math:** `Lateral_Metric = Current_Slip_Angle / Optimal_Slip_Angle`.
-*   **Logic:** If `Metric > 1.0`, the system assumes traction is breaking and penalizes Grip.
+### 1. The Physical Reality
+User 1 is correct: LMP2 and Hypercars have very stiff tires with peak grip occurring around **0.06 - 0.08 radians (3.4° - 4.5°)**.
 
-**The Config Bug:**
-*   The **T300 Preset** sets `optimal_slip_angle` to **0.06 radians (3.4 degrees)**.
-*   **Reality:** LMP2 and GT3 slicks typically produce peak cornering force at **5.0 to 7.0 degrees** (0.09 - 0.12 rad).
+### 2. The Algorithmic Flaw
+The application uses this value not as the "Peak", but as the **Penalty Start Line**.
+*   **Rule:** `If Current_Slip > Optimal_Slip, Reduce_Force`.
+*   **Result:** If `Optimal_Slip` is set to 0.06:
+    *   The moment the driver reaches optimal grip (0.06), the FFB begins to cut.
+    *   This creates a "Hole" in the FFB exactly where the steering should feel heaviest (maximum load/alignment torque).
+    *   *Symptom:* "The wheel makes the steering too light" (User 1).
 
-**The Consequence:**
-When a user corners an LMP2 car hard (e.g., at 5.0 degrees slip):
-1.  `Metric` = 0.087 rad / 0.06 rad = **1.45**.
-2.  The Friction Circle math sees this as **45% past the limit**.
-3.  The Penalty Curve (`1.0 / (1.0 + Excess * 2.0)`) kicks in:
-    *   `Value` = 1.0 / (1.0 + (0.45 * 2.0)) = 1.0 / 1.9 = **0.52**.
-4.  **Result:** The engine calculates **52% Grip** for a car that is actually cornering perfectly fine.
+### 3. Why the Default must be Higher
+To provide useful Force Feedback, the "Understeer Effect" should only reduce force when the user **exceeds** the optimal slip angle significantly (i.e., when they are actually scrubbing/wasting grip), not when they are utilizing it.
+*   **Proposed Default:** **0.10 radians (5.7°)**.
+*   **Logic:** This creates a "buffer zone" (0.06 to 0.10) where the driver can lean on the tire and feel full weight. The force only drops when the slip becomes excessive (true understeer), creating a *dynamic* feeling of loss as the limit is exceeded.
 
-### 3. The Understeer Multiplier (The "Kill Switch")
-The Understeer Effect formula is:
-```cpp
-Grip_Loss = (1.0 - Estimated_Grip) * Effect_Setting
-Final_Force = Base_Force * (1.0 - Grip_Loss)
-```
+## Detailed Failure Cases
 
-**Scenario: User Settings "0.84" (User 1)**
-*   Estimated Grip: **0.52** (due to the tuning error above).
-*   Grip Loss: (1.0 - 0.52) = **0.48**.
-*   Multiplier: 0.48 * 0.84 = **0.40**.
-*   Final Force: 60% of original.
-*   *Result:* The wheel feels "too light" during normal cornering.
+### Case A: The "False Understeer" (User 1)
+*   **Car:** LMP2 (Stiff).
+*   **Setting:** `Optimal = 0.06`.
+*   **Action:** Driver takes Porsche Curves at the limit (Slip = 0.065).
+*   **Algorithm:** "Slip (0.065) > Optimal (0.06). Grip reduced."
+*   **Result:** Steering goes light.
+*   **Driver Perception:** "I lost grip!" (False).
+*   **Reality:** The car is gripping perfectly; the FFB logic is too aggressive.
 
-**Scenario: User Settings "2.0" (User 2)**
-*   Estimated Grip: **0.52**.
-*   Grip Loss: 0.48 * 2.0 = **0.96**.
-*   Final Force: 4% of original (Effectively Zero).
-*   *Result:* Total loss of FFB.
+### Case B: The "Signal Collapse" (User 2)
+*   **Car:** GT3.
+*   **Setting:** `Optimal = 0.06` (T300 Preset).
+*   **Action:** Driver pushes hard (Slip = 0.09 / 5°).
+*   **Algorithm:** "Slip (0.09) is 150% of Optimal (0.06). HUGE PENALTY."
+*   **Grip Calc:** Drops to near limit (0.2).
+*   **Effect Multiplier:** User sets `Understeer Gain = 2.0`.
+*   **Math:** `Force = Base * (1.0 - (0.8 * 2.0)) = Base * -0.6`.
+*   **Result:** Force clamped to 0. Total FFB loss.
 
-### 4. "Double Dipping" on Physics
-The `mSteeringShaftTorque` from the game engine usually typically includes the physical drop of Self-Aligning Torque (SAT) as the tires pass their peak.
-*   **Game Physics:** Torque drops naturally at the limit.
-*   **App Logic:** We calculate a "Grip Factor" and force the torque to drop *again*.
-*   By using a `0.06` optimum in the app, we force the software drop to happen *before* the physics drop (3.4° vs ~6°), creating a strange "hole" in the FFB in the middle of the corner.
+## Recommendations
 
-## Recommendations for Remediation
+### 1. Renaming / Re-tooltiping
+The parameter name `m_optimal_slip_angle` is scientifically accurate but practically misleading for tuning.
+*   **Concept:** It acts as an **"Understeer Tolerance"** or **"Punishment Threshold"**.
+*   **New Tooltip Definition:** "The slip angle limit above which the force begins to drop. Set this **higher** than the physical peak (e.g., 0.10 for LMP2) to allow driving at the limit without force loss."
 
-### 1. Update Preset Defaults (Critical)
-The default `optimal_slip_angle` in the T300 preset (and typically others) must be increased to match realistic tire physics.
-*   **Change:** `0.06` -> **0.10** or **0.12** (approx 6-7 degrees).
-*   This ensures "100% Grip" is maintained up to the actual limit of adhesion, preventing premature FFB cutouts.
+### 2. Update Configuration Defaults
+*   **T300/Default Presets:** Change `optimal_slip_angle` from **0.06** to **0.10**.
+*   **Rationale:** 0.10 provides a safe buffer. It is high enough that "Peak Grip" (0.06) feels fully weighted, but low enough that a "Slide" (0.12+) will still cause a noticeable drop in tension. This restores the dynamic communication of the tire limit.
 
-### 2. Refine the Drop-Off Curve
-The current curve `1 / (1 + 2x)` is extremely aggressive. A softer roll-off would prevent the "on/off" feel reported by User 2.
-*   **Proposal:** Change to `1 / (1 + x)`.
+### 3. Refine the Drop-Off Curve
+The current penalty curve `1.0 / (1.0 + Excess * 2.0)` is effectively a "Cliff".
+*   **Issue:** Once the threshold is crossed, grip plummets too fast, causing the "On/Off" feeling reported by User 2.
+*   **Solution:** Change formula to `1.0 / (1.0 + Excess)`.
+*   **Benefit:** This creates a progressive fade-out of force as the slide worsens, allowing the driver to feel the *approach* of the limit and catch the slide, rather than incorrectly feeling that the slide has already happened.
 
-### 3. Cap the UI Range
-As previously noted, a slider that goes to 200.0 is dangerous.
-*   **Action:** Limit valid input to range **0.0 - 2.0**.
+### 4. Range Safety
+*   **Slider Cap:** Limit `understeer_effect` to **2.0** (or 200%).
+*   **Fallback Safety:** clamp the effect internally so that a single calculation cannot invert the force.
 
-### 4. Implement Thresholding
-Prevent the Understeer Effect from acting until grip drops significantly (e.g., below 0.9), to act as a "save mechanism" rather than a constant filter.
+## Automated Regression Tests
 
-## Conclusion
-The users are experiencing correctly calculated math based on incorrect physical constants. The software believes the car is constantly sliding because it has been told that "3.4 degrees" is the maximum valid slip angle. Fixing the `optimal_slip_angle` default is the primary solution.
+The following tests should be added to `tests/test_ffb_engine.cpp` to verify the fix and prevent regression:
+
+**Test 1: `test_optimal_slip_buffer_zone`**
+*   **Goal:** Verify that driving at the physical tire peak (0.06) does NOT trigger force reduction when using the new default (0.10).
+*   **Setup:**
+    *   `m_optimal_slip_angle` = 0.10
+    *   `m_understeer_effect` = 1.0
+    *   Simulate Telemetry: `LateralVelocity` consistent with 0.06 rad slip.
+*   **Expect:** `GripFactor` should be 1.0 (or > 0.99). Force should equal Base Torque.
+*   **Why:** Ensures User 1's issue (lightness in corners) is solved.
+
+**Test 2: `test_progressive_loss_dynamic`**
+*   **Goal:** Verify force drops smoothly as slip exceeds the threshold, not instantly.
+*   **Setup:**
+    *   `m_optimal_slip_angle` = 0.10
+    *   Step `Slip` from 0.08 -> 0.10 -> 0.12 -> 0.14.
+*   **Expect:**
+    *   At 0.08: No Drop.
+    *   At 0.10: Minimal Drop.
+    *   At 0.12: Moderate Drop.
+    *   At 0.14: Significant Drop.
+*   **Why:** Ensures dynamic feel is preserved and the "Cliff" is removed.
+
+**Test 3: `test_understeer_clipping_safety`**
+*   **Goal:** Verify that maximum settings do not cause math errors or zero-force on minor slips.
+*   **Setup:**
+    *   `m_optimal_slip_angle` = 0.10
+    *   `m_understeer_effect` = 2.0 (Max)
+    *   `Slip` = 0.11 (Minor overshoot).
+*   **Expect:** Force should be reduced but POSITIVE and perceptible (> 0.0).
+*   **Why:** Ensures User 2's issue (total signal loss) is protected against.
