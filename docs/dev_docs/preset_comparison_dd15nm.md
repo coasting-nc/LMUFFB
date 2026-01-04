@@ -297,95 +297,59 @@ The Default preset sits in the middle as a **safe starting point** for users to 
 
 | Setting | Screenshot Value | Preset Value | Location |
 |---------|------------------|--------------|----------|
-| **Lateral G Boost (Slide)** | 200% | `p.understeer = 0.75f` (×2.66 = 200%) | Line 102 |
-| **Lateral G** | 166.6% (~5.3 Nm) | `p.sop = 1.666f` | Line 111 |
-| **Lateral Damping Torque** | 66.6% (~10.0 Nm) | `p.rear_align_effect = 0.666f` | Line 112 |
-| **Yaw Kick** | 38.5% (~6.3 Nm) | `p.sop_yaw_gain = 0.333f` | Line 113 |
-| **Activation Threshold** | 1.51 s | `p.yaw_kick_threshold = 0.0f` | Line 114 ⚠️ |
-| **Kick Response** | Latency: 1 ms = OK | `p.yaw_smoothing = 0.001f` | Line 115 |
+| **Lateral G (SoP)** | 166.6% (~8.3 Nm) | `p.sop = 1.666f` | Line 111 |
+| **SoP Self-Aligning Torque** | 66.6% (~10.0 Nm) | `p.rear_align_effect = 0.666f` | Line 112 |
+| **Yaw Kick Gain** | 33.3% (~8.3 Nm) | `p.sop_yaw_gain = 0.333f` | Line 113 |
+| **Kick Response** | Latency: 1 ms | `p.yaw_smoothing = 0.001f` | Line 115 |
 | **Gyro Damping** | 0.0% (~0.0 Nm) | `p.gyro_gain = 0.0f` | Line 116 |
-| **Gyro Smooth** | Latency: 0 ms = OK | `p.gyro_smoothing = 0.0f` | Line 117 |
-| **SoP Smoothing** | Latency: 1 ms = OK | `p.sop_smoothing = 0.99f` | Line 118 |
-| **SoP Scale** | 0.99 | `p.sop_scale = 1.98f` | Line 119 ⚠️ |
-| **Slip Angle Smoothing** | Latency: 2 ms = OK | `p.slip_smoothing = 0.002f` | Line 121 |
-| **Optimal Slip Angle** | 0.012 s | `p.optimal_slip_angle = 0.12f` | Line 123 ⚠️ |
+| **SoP Smoothing** | Latency: 1 ms | `p.sop_smoothing = 0.99f` | Line 118 |
+| **SoP Scale** | 1.98 | `p.sop_scale = 1.98f` | Line 119 |
+| **Slip Angle Smoothing** | Latency: 2 ms | `p.slip_smoothing = 0.002f` | Line 121 |
+| **Chassis Inertia** | 0.012 s | `p.chassis_smoothing = 0.012f` | Line 122 |
 | **Optimal Slip Ratio** | 0.12 | `p.optimal_slip_ratio = 0.12f` | Line 124 |
-| **Lockup Vibration** | ✓ Enabled | `p.lockup_enabled = true` | Line 125 |
-| **Lookup Strength** | 37.5% (~7.5 Nm) | `p.lockup_gain = 0.37479f` | Line 126 |
-| **Brake Load Cap** | 2.98% | `p.brake_load_cap = 2.0f` | Line 127 ⚠️ |
-| **Vibration Pitch** | 1.08% | `p.lockup_gamma = 1.0f` | Line 129 ⚠️ |
-| **Damping** | 1.0 | `p.lockup_start_pct = 1.0f` | Line 130 |
-| **Start Slip %** | 1.0% | `p.lockup_full_pct = 7.5f` | Line 131 ⚠️ |
-| **Full Slip %** | 7.5% | `p.lockup_prediction_sens = 10.0f` | Line 132 |
-| **Sensitivity** | 10 | `p.lockup_bump_reject = 0.1f` | Line 133 |
-| **Bump Rejection** | 0.1 m/s | `p.lockup_rear_boost = 1.0f` | Line 134 |
-| **Rear Boost** | 1.08% | `p.abs_pulse_enabled = false` | Line 135 |
-| **ABS Pulse** | ✗ Disabled | `p.texture_load_cap = 1.5f` | Line 138 |
-| **Texture Load Cap** | 1.58% | `p.slide_enabled = false` | Line 139 |
-| **Slide Bundle** | ✗ Disabled | `p.road_enabled = true` | Line 142 |
-| **Road Details** | ✓ Enabled | `p.spin_enabled = true` | Line 145 |
-| **Road Gain** | 0.0% (~0.0 Nm) | `p.road_gain = 0.0f` | Line 143 |
-| **Spin Vibration** | ✓ Enabled | `p.spin_gain = 0.462185f` | Line 146 |
-| **Spin Strength** | 46.2% (~5.8 Nm) | `p.spin_freq_scale = 1.8f` | Line 147 |
-| **Spin Pitch** | 1.8% | `p.scrub_drag_gain = 0.333f` | Line 148 |
-| **Scrub Drag** | 33.3% (~3.3 Nm) | `p.bottoming_method = 1` | Line 149 |
-| **Bottoming Logic** | Method E: Susp. Spike | `p.speed_gate_lower = 1.0f` | Line 150 |
-| **Speed Gate Lower** | 1.0 m/s | `p.speed_gate_upper = 5.0f` | Line 151 |
-| **Speed Gate Upper** | 5.0 m/s |  |  |
+| **Brake Load Cap** | 2.00x | `p.brake_load_cap = 2.0f` | Line 127 |
+| **Lockup Strength** | 37.5% (~7.5 Nm) | `p.lockup_gain = 0.37479f` | Line 126 |
+| **Vibration Pitch** | 1.00x | `p.lockup_gamma = 1.0f` | Line 129 |
+| **Start Slip %** | 1.0% | `p.lockup_start_pct = 1.0f` | Line 130 |
+| **Full Slip %** | 7.5% | `p.lockup_full_pct = 7.5f` | Line 131 |
+| **Sensitivity** | 10 | `p.lockup_prediction_sens = 10.0f` | Line 132 |
+| **Rear Boost** | 1.00x | `p.lockup_rear_boost = 1.0f` | Line 134 |
+| **Texture Load Cap** | 1.50x | `p.texture_load_cap = 1.5f` | Line 138 |
+| **Spin Strength** | 46.2% (~5.8 Nm) | `p.spin_gain = 0.462185f` | Line 146 |
+| **Scrub Drag** | 33.3% (~8.3 Nm) | `p.scrub_drag_gain = 0.333f` | Line 148 |
+| **Bottoming Logic** | Method B: Susp. Spike | `p.bottoming_method = 1` | Line 149 |
 
 ### ⚠️ DISCREPANCIES FOUND
 
-| Setting | Screenshot Value | Preset Value | Line | Issue |
-|---------|------------------|--------------|------|-------|
-| **Activation Threshold** | 1.51 s | `0.0f` | 114 | Screenshot shows 1.51, preset is 0.0 |
-| **SoP Scale** | 0.99 | `1.98f` | 119 | Screenshot shows 0.99, preset is 1.98 (2× difference) |
-| **Optimal Slip Angle** | 0.012 s | `0.12f` | 123 | Screenshot shows 0.012, preset is 0.12 (10× difference) |
-| **Brake Load Cap** | 2.98% | `2.0f` | 127 | Screenshot shows 2.98%, preset is 2.0 |
-| **Vibration Pitch** | 1.08% | `1.0f` | 129 | Screenshot shows 1.08%, preset is 1.0 |
-| **Full Slip %** | 1.0% | `7.5f` | 131 | Screenshot shows 1.0%, preset is 7.5% (major difference) |
-| **Rear Boost** | 1.08% | `1.0f` | 134 | Screenshot shows 1.08%, preset is 1.0 |
-| **Texture Load Cap** | 1.58% | `1.5f` | 138 | Screenshot shows 1.58%, preset is 1.5 |
+| Setting | Screenshot Value | Preset Value | Location | Issue |
+|---------|------------------|--------------|----------|-------|
+| **Lateral G Boost (Slide)** | 200.0% | `252.1%` (`2.52101f`) | Line 110 | Code value is ~52% higher than screenshot. |
+| **Yaw Kick Threshold** | ~1.81 (Active) | `0.0f` (Disabled) | Line 114 | Code disables this feature (0.0), screenshot shows it active (~1.81). |
+| **Optimal Slip Angle** | 0.08 rad | `0.12 rad` (`0.12f`) | Line 123 | Code allows for more slip (0.12) than screenshot (0.08). |
 
 ## Analysis
 
-### Critical Differences
+### 1. Lateral G Boost (Oversteer Boost) Mismatch
+- **Screenshot**: 200.0%
+- **Code**: 252.1% (`2.52101f`)
+- **Impact**: The code version provides significantly stronger oversteer cues than what is shown in the screenshot. If the screenshot represents the "tuned" feel, the current code is too aggressive.
 
-1. **SoP Scale (Line 119)**: The preset has `1.98f` but the screenshot shows `0.99`. This is a **2× difference** and would significantly affect the Seat of Pants effect magnitude.
+### 2. Yaw Kick Threshold Mismatch
+- **Screenshot**: ~1.81 (Slider is clearly advanced)
+- **Code**: 0.0 (`0.0f`)
+- **Impact**: Be default, the code **disables** the activation threshold for the Yaw Kick effect, meaning it will activate immediately. The screenshot shows a tuning where the kick only activates after a certain threshold (likely Yaw Acceleration).
 
-2. **Optimal Slip Angle (Line 123)**: The preset has `0.12f` but the screenshot shows `0.012 s`. This is a **10× difference** and would drastically change the grip calculation threshold.
-
-3. **Full Slip % (Line 131)**: The preset has `7.5f` but the screenshot shows `1.0%`. This is a **7.5× difference** and would significantly affect when lockup vibration reaches full intensity.
-
-4. **Activation Threshold (Line 114)**: The preset has `0.0f` (disabled) but the screenshot shows `1.51 s`, indicating the yaw kick threshold is active in the GUI.
-
-### Minor Differences (Likely Rounding/Display)
-
-These differences are small enough to be attributed to display rounding or slider precision:
-- Brake Load Cap: 2.98% vs 2.0
-- Vibration Pitch: 1.08% vs 1.0
-- Rear Boost: 1.08% vs 1.0
-- Texture Load Cap: 1.58% vs 1.5
+### 3. Optimal Slip Angle Mismatch
+- **Screenshot**: 0.08 rad
+- **Code**: 0.12 rad (`0.12f`)
+- **Impact**: The code uses a wider optimal slip window (0.12 rad) compared to the screenshot (0.08 rad). A higher value here means peak forces occur at a larger slip angle, potentially making the car feel "looser" or requiring more steering input to reach peak FFB force.
 
 ## Recommendations
 
-1. **Verify Current State**: Check if the user has modified the preset after loading it, or if there's a bug in the preset loading logic.
+1. **Update `Config.cpp` to match the Screenshot:**
+   - Reduce `p.oversteer_boost` from `2.52101f` to `2.0f`.
+   - Increase `p.yaw_kick_threshold` from `0.0f` to `1.81f`.
+   - Decrease `p.optimal_slip_angle` from `0.12f` to `0.08f`.
 
-2. **Update Preset or GUI**: Decide which is the "correct" version:
-   - If the screenshot represents the desired state, update the preset in `Config.cpp`
-   - If the preset is correct, investigate why the GUI shows different values
-
-3. **Priority Issues to Address**:
-   - **SoP Scale** discrepancy (2× difference)
-   - **Optimal Slip Angle** discrepancy (10× difference)
-   - **Full Slip %** discrepancy (7.5× difference)
-   - **Activation Threshold** discrepancy (0.0 vs 1.51)
-
-## Next Steps
-
-1. Load the "DD 15 Nm (Simagic Alpha)" preset in the application
-2. Compare the loaded values with the screenshot
-3. Determine if the discrepancies are due to:
-   - User modifications after loading
-   - Preset loading bug
-   - Preset definition error
-   - GUI display bug
+2. **Verify Intent:**
+   - Confirm if the screenshot settings were temporary experimental values or the intended final "Golden Tune". If they are the Golden Tune, the code update is mandatory.
