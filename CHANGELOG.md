@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.35] - 2026-01-04
+### Added
+- **Three New DD Presets**:
+  - **GT3 DD 15 Nm (Simagic Alpha)**: Optimized for GT3 racing with sharp, responsive feedback. Features balanced effects with moderate smoothing for maximum communication of grip changes. Ideal for GT3, GT4, and touring cars.
+  - **LMPx/HY DD 15 Nm (Simagic Alpha)**: Optimized for LMP prototypes and hypercars with smooth, refined feedback for high-speed stability. Features increased smoothing parameters (yaw, gyro, slip, chassis) and higher optimal slip angle (0.12 rad) for high-downforce racing. Ideal for endurance racing and high-speed circuits.
+  - **GM DD 21 Nm (Moza R21 Ultra)**: "Steering Shaft Purist" preset emphasizing raw mechanical torque over computed effects. Features high master gain (1.454), nearly 2x steering shaft gain (1.989), minimal SoP (0.29), disabled oversteer boost/rear align/yaw kick, strong lockup feedback (0.977), and zero smoothing on SoP/chassis. Represents a fundamentally different FFB philosophy for drivers seeking pure mechanical feel.
+
+### Documentation
+- **Preset Comparison Report**: Created comprehensive analysis document `docs/dev_docs/preset_comparison_gt3_vs_lmpx.md` comparing all three presets:
+  - Detailed parameter-by-parameter comparison table
+  - FFB character analysis for each preset
+  - Migration guides for switching between presets
+  - Technical deep dive into the "Steering Shaft Purist" philosophy
+  - Use case recommendations for each racing category
+  - Screenshot analysis confirming GM preset consistency
+
+### Technical Details
+- **Preset Differences**:
+  - GT3 vs LMPx/HY: Differ in 7 smoothing/physics parameters (11.7% of total)
+  - GM vs GT3/LMPx: Differs in 12+ parameters (20% of total), representing a different FFB paradigm
+  - All three presets share 38 identical parameters (63.3% of total)
+- **Key GM Preset Characteristics**:
+  - Combined torque output: ~2.9x stronger than GT3/LMPx (1.454 gain × 1.989 shaft gain)
+  - Flatspot suppression enabled (unique among the three)
+  - Brake load cap: 81.0 (vs 2.0 for GT3/LMPx) for unrestricted lockup feedback
+  - Philosophy: Maximize direct torque, minimize computed effects, zero smoothing
+
 ## [0.6.34] - 2026-01-02
 ### Changed
 - **Preset Naming**: Renamed "Default (T300)" preset to "Default" to reflect that it now has different settings from the T300 preset (which was decoupled in v0.6.30).

@@ -213,7 +213,130 @@ void Config::LoadPresets() {
         presets.push_back(p);
     }
     
-    // 6. Test: Game Base FFB Only
+    // 5. GM DD 21 Nm (Moza R21 Ultra)
+    {
+        Preset p("GM DD 21 Nm (Moza R21 Ultra)", true);
+        p.gain = 1.454f;
+        p.max_torque_ref = 100.1f;
+        p.min_force = 0.0f;
+        p.steering_shaft_gain = 1.989f;
+        p.steering_shaft_smoothing = 0.0f;
+        p.understeer = 0.638f;
+        p.base_force_mode = 0;
+        p.flatspot_suppression = true;
+        p.notch_q = 0.57f;
+        p.flatspot_strength = 1.0f;
+        p.static_notch_enabled = false;
+        p.static_notch_freq = 11.0f;
+        p.static_notch_width = 2.0f;
+        p.oversteer_boost = 0.0f;
+        p.sop = 0.0f;
+        p.rear_align_effect = 0.29f;
+        p.sop_yaw_gain = 0.0f;
+        p.yaw_kick_threshold = 0.0f;
+        p.yaw_smoothing = 0.015f;
+        p.gyro_gain = 0.0f;
+        p.gyro_smoothing = 0.0f;
+        p.sop_smoothing = 0.0f;
+        p.sop_scale = 0.89f;
+        p.understeer_affects_sop = false;
+        p.slip_smoothing = 0.002f;
+        p.chassis_smoothing = 0.0f;
+        p.optimal_slip_angle = 0.1f;
+        p.optimal_slip_ratio = 0.12f;
+        p.lockup_enabled = true;
+        p.lockup_gain = 0.977f;
+        p.brake_load_cap = 81.0f;
+        p.lockup_freq_scale = 1.0f;
+        p.lockup_gamma = 1.0f;
+        p.lockup_start_pct = 1.0f;
+        p.lockup_full_pct = 7.5f;
+        p.lockup_prediction_sens = 10.0f;
+        p.lockup_bump_reject = 0.1f;
+        p.lockup_rear_boost = 1.0f;
+        p.abs_pulse_enabled = false;
+        p.abs_gain = 2.1f;
+        p.abs_freq = 25.5f;
+        p.texture_load_cap = 1.5f;
+        p.slide_enabled = false;
+        p.slide_gain = 0.0f;
+        p.slide_freq = 1.47f;
+        p.road_enabled = true;
+        p.road_gain = 0.0f;
+        p.road_fallback_scale = 0.05f;
+        p.spin_enabled = true;
+        p.spin_gain = 0.462185f;
+        p.spin_freq_scale = 1.8f;
+        p.scrub_drag_gain = 0.333f;
+        p.bottoming_method = 1;
+        p.speed_gate_lower = 1.0f;
+        p.speed_gate_upper = 5.0f;
+        presets.push_back(p);
+    }
+    
+    // 6. GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)
+    {
+        // Copy GM preset and add yaw kick
+        Preset p("GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)", true);
+        p.gain = 1.454f;
+        p.max_torque_ref = 100.1f;
+        p.min_force = 0.0f;
+        p.steering_shaft_gain = 1.989f;
+        p.steering_shaft_smoothing = 0.0f;
+        p.understeer = 0.638f;
+        p.base_force_mode = 0;
+        p.flatspot_suppression = true;
+        p.notch_q = 0.57f;
+        p.flatspot_strength = 1.0f;
+        p.static_notch_enabled = false;
+        p.static_notch_freq = 11.0f;
+        p.static_notch_width = 2.0f;
+        p.oversteer_boost = 0.0f;
+        p.sop = 0.0f;
+        p.rear_align_effect = 0.29f;
+        p.sop_yaw_gain = 0.333f;  // ONLY DIFFERENCE: Added yaw kick
+        p.yaw_kick_threshold = 0.0f;
+        p.yaw_smoothing = 0.003f;
+        p.gyro_gain = 0.0f;
+        p.gyro_smoothing = 0.0f;
+        p.sop_smoothing = 0.0f;
+        p.sop_scale = 0.89f;
+        p.understeer_affects_sop = false;
+        p.slip_smoothing = 0.002f;
+        p.chassis_smoothing = 0.0f;
+        p.optimal_slip_angle = 0.1f;
+        p.optimal_slip_ratio = 0.12f;
+        p.lockup_enabled = true;
+        p.lockup_gain = 0.977f;
+        p.brake_load_cap = 81.0f;
+        p.lockup_freq_scale = 1.0f;
+        p.lockup_gamma = 1.0f;
+        p.lockup_start_pct = 1.0f;
+        p.lockup_full_pct = 7.5f;
+        p.lockup_prediction_sens = 10.0f;
+        p.lockup_bump_reject = 0.1f;
+        p.lockup_rear_boost = 1.0f;
+        p.abs_pulse_enabled = false;
+        p.abs_gain = 2.1f;
+        p.abs_freq = 25.5f;
+        p.texture_load_cap = 1.5f;
+        p.slide_enabled = false;
+        p.slide_gain = 0.0f;
+        p.slide_freq = 1.47f;
+        p.road_enabled = true;
+        p.road_gain = 0.0f;
+        p.road_fallback_scale = 0.05f;
+        p.spin_enabled = true;
+        p.spin_gain = 0.462185f;
+        p.spin_freq_scale = 1.8f;
+        p.scrub_drag_gain = 0.333f;
+        p.bottoming_method = 1;
+        p.speed_gate_lower = 1.0f;
+        p.speed_gate_upper = 5.0f;
+        presets.push_back(p);
+    }
+    
+    // 8. Test: Game Base FFB Only
     presets.push_back(Preset("Test: Game Base FFB Only", true)
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
@@ -224,7 +347,7 @@ void Config::LoadPresets() {
         .SetRearAlign(0.0f)
     );
 
-    // 7. Test: SoP Only
+    // 9. Test: SoP Only
     presets.push_back(Preset("Test: SoP Only", true)
         .SetUndersteer(0.0f)
         .SetSoP(0.08f)
@@ -237,7 +360,7 @@ void Config::LoadPresets() {
         .SetBaseMode(2) // Muted
     );
 
-    // 8. Test: Understeer Only (Updated v0.6.31 for proper effect isolation)
+    // 10. Test: Understeer Only (Updated v0.6.31 for proper effect isolation)
     presets.push_back(Preset("Test: Understeer Only", true)
         // PRIMARY EFFECT
         .SetUndersteer(0.61f)
@@ -268,7 +391,7 @@ void Config::LoadPresets() {
         .SetSpeedGate(0.0f, 0.0f)      // Disable speed gate (0 = no gating)
     );
 
-    // 9. Test: Yaw Kick Only
+    // 11. Test: Yaw Kick Only
     presets.push_back(Preset("Test: Yaw Kick Only", true)
         // PRIMARY EFFECT
         .SetSoPYaw(0.386555f)        // Yaw kick at T300 level
@@ -299,7 +422,7 @@ void Config::LoadPresets() {
         .SetBaseMode(2)  // Muted: Feel only the yaw kick impulse
     );
 
-    // 10. Test: Textures Only
+    // 12. Test: Textures Only
     presets.push_back(Preset("Test: Textures Only", true)
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
@@ -314,7 +437,7 @@ void Config::LoadPresets() {
         .SetBaseMode(2) // Muted
     );
 
-    // 11. Test: Rear Align Torque Only
+    // 13. Test: Rear Align Torque Only
     presets.push_back(Preset("Test: Rear Align Torque Only", true)
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
@@ -326,7 +449,7 @@ void Config::LoadPresets() {
         .SetSoPYaw(0.0f)
     );
 
-    // 12. Test: SoP Base Only
+    // 14. Test: SoP Base Only
     presets.push_back(Preset("Test: SoP Base Only", true)
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
@@ -339,7 +462,7 @@ void Config::LoadPresets() {
         .SetBaseMode(2) // Muted
     );
 
-    // 13. Test: Slide Texture Only
+    // 15. Test: Slide Texture Only
     presets.push_back(Preset("Test: Slide Texture Only", true)
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
@@ -351,7 +474,7 @@ void Config::LoadPresets() {
         .SetBaseMode(2) // Muted
     );
 
-    // 14. Test: No Effects
+    // 16. Test: No Effects
     presets.push_back(Preset("Test: No Effects", true)
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
@@ -365,7 +488,7 @@ void Config::LoadPresets() {
 
     // --- NEW GUIDE PRESETS (v0.4.24) ---
 
-    // 15. Guide: Understeer (Front Grip Loss)
+    // 17. Guide: Understeer (Front Grip Loss)
     presets.push_back(Preset("Guide: Understeer (Front Grip)", true)
         .SetGain(1.0f)
         .SetUndersteer(0.61f)
@@ -384,7 +507,7 @@ void Config::LoadPresets() {
         .SetBaseMode(0) // Native Physics needed to feel the drop
     );
 
-    // 16. Guide: Oversteer (Rear Grip Loss)
+    // 18. Guide: Oversteer (Rear Grip Loss)
     presets.push_back(Preset("Guide: Oversteer (Rear Grip)", true)
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
@@ -404,7 +527,7 @@ void Config::LoadPresets() {
         .SetBaseMode(0) // Native Physics + Boost
     );
 
-    // 17. Guide: Slide Texture (Scrubbing)
+    // 19. Guide: Slide Texture (Scrubbing)
     presets.push_back(Preset("Guide: Slide Texture (Scrub)", true)
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
@@ -421,7 +544,7 @@ void Config::LoadPresets() {
         .SetBaseMode(2) // Muted for clear texture feel
     );
 
-    // 18. Guide: Braking Lockup
+    // 20. Guide: Braking Lockup
     presets.push_back(Preset("Guide: Braking Lockup", true)
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
@@ -438,7 +561,7 @@ void Config::LoadPresets() {
         .SetBaseMode(2) // Muted
     );
 
-    // 19. Guide: Traction Loss (Wheel Spin)
+    // 21. Guide: Traction Loss (Wheel Spin)
     presets.push_back(Preset("Guide: Traction Loss (Spin)", true)
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
@@ -455,7 +578,7 @@ void Config::LoadPresets() {
         .SetBaseMode(2) // Muted
     );
 
-     // 20. Guide: SoP Yaw (Kick)
+     // 22. Guide: SoP Yaw (Kick)
     presets.push_back(Preset("Guide: SoP Yaw (Kick)", true)
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
@@ -474,7 +597,7 @@ void Config::LoadPresets() {
         .SetBaseMode(2) // Muted: Feel only the rotation impulse
     );
 
-    // 21. Guide: Gyroscopic Damping
+    // 23. Guide: Gyroscopic Damping
     presets.push_back(Preset("Guide: Gyroscopic Damping", true)
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
