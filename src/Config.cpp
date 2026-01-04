@@ -91,15 +91,15 @@ void Config::LoadPresets() {
         presets.push_back(p);
     }
     
-    // 3. DD 15 Nm (Simagic Alpha)
+    // 3. GT3 DD 15 Nm (Simagic Alpha)
     {
-        Preset p("DD 15 Nm (Simagic Alpha)", true);
+        Preset p("GT3 DD 15 Nm (Simagic Alpha)", true);
         p.gain = 1.0f;
         p.max_torque_ref = 100.0f;
         p.min_force = 0.0f;
         p.steering_shaft_gain = 1.0f;
         p.steering_shaft_smoothing = 0.0f;
-        p.understeer = 0.75f;
+        p.understeer = 1.0f;
         p.base_force_mode = 0;
         p.flatspot_suppression = false;
         p.notch_q = 2.0f;
@@ -120,7 +120,7 @@ void Config::LoadPresets() {
         p.understeer_affects_sop = false;
         p.slip_smoothing = 0.002f;
         p.chassis_smoothing = 0.012f;
-        p.optimal_slip_angle = 0.12f;
+        p.optimal_slip_angle = 0.1f;
         p.optimal_slip_ratio = 0.12f;
         p.lockup_enabled = true;
         p.lockup_gain = 0.37479f;
