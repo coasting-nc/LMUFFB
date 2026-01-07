@@ -443,7 +443,9 @@ yaw_force = (std::max)(yaw_force, weber_scale);
 
 ### 2. Gated Algorithm (Yaw + Rear Slip)
 **Priority**: Medium  
-Combine yaw acceleration with rear slip angle to eliminate false positives:
+**⚠️ LATENCY CONCERN**: This approach may negate the benefit of yaw acceleration as an early warning.
+
+The idea is to combine yaw acceleration with rear slip angle to eliminate false positives:
 ```cpp
 // Only trigger kick when BOTH conditions are met:
 // A) Rear tires are saturated (slip angle > 4°)
@@ -454,6 +456,19 @@ if (rear_saturated && yaw_significant) {
     // Apply kick
 }
 ```
+
+**Problem**: The causal chain is:
+1. Rear tires saturate → 2. **Yaw acceleration spikes** → 3. Yaw rate increases → 4. **Slip angle increases**
+
+Yaw acceleration is valuable precisely because it's a **leading indicator** (step 2). Slip angle is a **lagging indicator** (step 4). Gating on slip angle forces us to wait until the car is already rotating significantly, which defeats the purpose of the early warning.
+
+**Research Finding** (Section 5.1):
+> *"Yaw acceleration is the precursor to sideslip... it is a **leading indicator**, whereas sideslip is a **lagging indicator**."*
+
+**Better Alternatives**:
+1. **Sustained Acceleration Gate**: Instead of slip angle, check if yaw acceleration is sustained over 2-3 frames (50-75ms). A true slide will sustain; turn-in will peak and fall.
+2. **Acceleration + Throttle Gate**: Check `YawAccel > 2.0 && Throttle > 0.5`. Most snap oversteer occurs under power.
+3. **Direction Check**: Compare yaw acceleration sign vs steering input. If they're opposite (countersteering already happening), skip the kick.
 
 ### 3. 2nd-Order Butterworth LPF
 **Priority**: Medium  
