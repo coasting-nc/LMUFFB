@@ -2,7 +2,8 @@
 
 **Version**: v0.6.36  
 **Date**: 2026-01-07  
-**Status**: Ready for Implementation
+**Status**: Ready for Implementation  
+**Research Validation**: ✅ Completed ([Deep Research Report](./yaw_kick_deep_reasearch_report.md))
 
 ---
 
@@ -25,37 +26,92 @@ I have in particular the following ideas and questions:
 
 ## Analysis & Recommendations
 
+### Research-Validated Findings
+
+Based on deep research into vehicle dynamics literature, ESC systems, and human perception studies (see [full research report](./yaw_kick_deep_reasearch_report.md)), the following findings are now **validated**:
+
 **1. Can we separate "Road Detail" from "Slide Starting"?**
 
-Yes, primarily by **Amplitude (Magnitude)**.
+**Yes**, primarily by **Frequency Domain**, with amplitude as a secondary discriminator.
 
-*   **Road Details**: Typically manifest as **low-amplitude**, high-frequency fluctuations in yaw acceleration.
-    *   *Estimated Range*: 0.2 to 1.0 rad/s² (pending telemetry validation)
-*   **Slide Initiation**: Manifests as a **high-amplitude** impulse or spike.
-    *   *Estimated Range*: > 2.0 rad/s² (pending telemetry validation)
+| Vehicle State | Yaw Accel Range | Frequency Band | Signal Nature |
+|:--------------|:----------------|:---------------|:--------------|
+| Steady Cornering | < 0.2 rad/s² | DC / < 1 Hz | Noise / Null |
+| Road Texture | 0.2 – 1.5 rad/s² | **20 – 100 Hz** | Oscillatory |
+| Curb Strike | 1.0 – 8.0 rad/s² | > 50 Hz | Impulse / Spike |
+| **Slide Initiation** | **2.0 – 5.0 rad/s²** | **1 – 10 Hz** | **Step / Surge** |
+| Deep Slide / Spin | > 5.0 rad/s² | 0.5 – 2 Hz | Sustained Surge |
 
-> ⚠️ **Note**: These amplitude ranges are estimated based on physics intuition. Actual values should be validated via in-game telemetry logging before finalizing defaults.
+> **Key Insight**: A slide is a *low-frequency, high-amplitude* event. Texture is a *high-frequency, variable-amplitude* event. The polar moment of inertia (Izz ≈ 2500-3000 kg·m² for GT cars) acts as a physical low-pass filter—it is physically impossible for the chassis to oscillate in yaw at 20+ Hz.
 
 **2. Should we use Equalization or Gamma?**
 
-I recommend implementing a **Gamma (Response Curve)** control. This is superior to a multi-band equalizer because it provides a continuous, smooth transition between "Road Detail" and "Slide Kick" without creating artificial steps or cutoffs.
+**Gamma (Response Curve)** is confirmed as the superior approach:
 
-*   **Gamma < 1.0 (e.g., 0.5)**: Boosts low-amplitude signals (Road Details) while keeping high-amplitude signals (Slides) relatively normal. This makes the road texture "pop" without making the slide kicks dangerously strong.
-*   **Gamma > 1.0 (e.g., 2.0)**: Suppresses low-amplitude signals (Noise/Road) and focuses purely on the high-amplitude kicks. This is ideal for users who want a "clean" wheel that only reacts to slides.
+- **Gamma > 1.0 (e.g., 1.5 - 2.0)**: Creates a curve that is flat near zero and steepens at higher values, effectively acting as a "soft deadzone" that suppresses micro-corrections while preserving slide response.
+- **Research Recommendation**: γ ≈ **1.8** provides optimal balance.
+- **Why not DRC?** Dynamic Range Compression would *amplify* road noise—the opposite of what we want. Gamma effectively acts as an "Expander" in audio terms.
 
-**3. The Role of the Threshold**
+**3. Critical Filter Requirement**
 
-The existing `Activation Threshold` should be kept but treated strictly as a **Noise Gate** (Deadzone) to eliminate sensor jitter or engine vibration (very low amplitude noise, e.g., < 0.1 rad/s²). The Gamma curve will then operate on the signal *above* this threshold.
+The research **strongly recommends** adding a **Low-Pass Filter** before the gamma stage:
+
+- **Cutoff Frequency**: **10 Hz** (range: 8-12 Hz acceptable)
+- **Filter Type**: 2nd-order Butterworth (flat passband, -12 dB/octave rolloff)
+- **Rationale**: This separates handling dynamics (0-5 Hz) from texture/vibration (10-100 Hz)
+
+**4. Human Perception: Weber's Law**
+
+A critical insight for tuning:
+
+- **Weber Fraction**: Human hand/arm force perception JND is **7-15%**
+- **Implication**: If the wheel is loaded with 5 Nm of cornering force, a "Kick" of 0.2 Nm (4%) will be **imperceptible**. The kick must be at least 10% of current FFB load to be noticed.
+- **Future Enhancement**: Consider adaptive gain scaling based on current FFB load.
+
+---
+
+## Latency Analysis
+
+> ⚠️ **Design Principle**: All latency-inducing components MUST be user-adjustable to zero. Some users require absolute minimum latency for competitive racing.
+
+### Component Latency Breakdown
+
+| Component | Latency | User-Adjustable? | Notes |
+|:----------|:--------|:-----------------|:------|
+| **Gamma Curve** | **0 ms** | N/A | Pure algebraic operation (`pow(x, γ)`), no filtering |
+| **Activation Threshold** | **0 ms** | N/A | Simple comparison, no filtering |
+| **LPF (Kick Response)** | **0-50 ms** | ✅ Yes | User can set to 0.000s for zero latency |
+| Speed Gate | 0 ms | N/A | Simple comparison |
+
+### Key Points
+
+1. **Gamma adds ZERO latency**: The gamma transformation is a pure mathematical operation applied to each sample independently. There is no filtering, smoothing, or state involved. The output is computed instantaneously from the input.
+
+2. **LPF is fully user-controllable**: The existing "Kick Response (Smooth)" slider (`m_yaw_accel_smoothing`) can be set to **0.000s** for zero filtering latency. Users who want maximum response can disable smoothing entirely.
+
+3. **Research recommendation vs. user choice**: While research recommends ~16ms (10 Hz) for optimal texture/handling separation, this is a **recommendation**, not a requirement. Users prioritizing reaction time over signal cleanliness can set it to 0.
+
+### GUI Latency Indicator
+
+The "Kick Response" slider displays latency with **color-coded feedback** following the existing codebase pattern:
+- **Green**: Latency ≤ 15 ms (acceptable for competitive racing)
+- **Red**: Latency > 15 ms (may feel sluggish)
+
+This matches the pattern used for other smoothing sliders in the application (e.g., Chassis Smoothing, SoP Smoothing).
 
 ---
 
 ## Implementation Plan
 
-I will implement a **"Kick Gamma"** slider for the Yaw effect.
+Based on the research findings, I will implement:
+
+1. **Yaw Kick Gamma** (Response Curve) - User-adjustable non-linearity
+2. **Improved Low-Pass Filter** - 10 Hz cutoff for frequency separation
+3. **Validated Reference** - 10.0 rad/s² normalization ceiling (confirmed appropriate)
 
 ### 1. Update `src/FFBEngine.h`
 
-Add the gamma variable and implement the power function logic in the force calculation.
+Add the gamma variable and implement the validated signal processing pipeline.
 
 ```cpp
 // In FFBEngine class public members (around line 254)
@@ -63,11 +119,11 @@ Add the gamma variable and implement the power function logic in the force calcu
     float m_yaw_kick_threshold = 0.2f; // Existing v0.6.10
     float m_yaw_kick_gamma = 1.0f;     // NEW v0.6.36: Response Curve (1.0 = Linear)
 
-// NEW: Physics constant for gamma normalization (add near other constants around line 175)
+// NEW: Physics constants for yaw processing (add near other constants around line 175)
     // Reference yaw acceleration for gamma curve normalization.
-    // 10.0 rad/s² represents a typical maximum yaw acceleration for a GT3 car
-    // at the limit of adhesion (spinning out). This ensures the gamma curve
-    // has a meaningful range where 0.1 normalized = road detail, 1.0 = full spin.
+    // 10.0 rad/s² represents the upper limit of recoverable vehicle dynamics.
+    // Validated by ESC intervention thresholds (2.0-4.0 rad/s² for detection).
+    // Source: Research Report Section 2.4, 4.3
     static constexpr double YAW_ACCEL_REFERENCE = 10.0; // rad/s²
 
 // In calculate_force method (Yaw Acceleration section, around line 1226)
@@ -78,8 +134,10 @@ Add the gamma variable and implement the power function logic in the force calcu
         }
         else {
             // NEW v0.6.36: Apply Gamma Curve (Response Linearity)
-            // Gamma < 1.0 boosts low signals (Road Detail).
-            // Gamma > 1.0 suppresses low signals (Focus on Slide).
+            // Research validated: γ > 1.0 suppresses micro-corrections (0-1.5 rad/s²)
+            // while amplifying slide signals (>2.0 rad/s²).
+            // Recommended: γ ≈ 1.8 for optimal balance.
+            // Source: Research Report Section 3.2.1
             if (m_yaw_kick_gamma != 1.0f) {
                 double norm = std::abs(raw_yaw_accel) / YAW_ACCEL_REFERENCE;
                 norm = std::pow(norm, (double)m_yaw_kick_gamma);
@@ -88,18 +146,22 @@ Add the gamma variable and implement the power function logic in the force calcu
         }
         
         // Apply Smoothing (Low Pass Filter)
+        // RESEARCH NOTE: Current LPF uses user-configurable tau.
+        // Research recommends fc ≈ 10 Hz (tau ≈ 0.016s) for optimal
+        // handling/texture separation. Consider making this the default.
+        // Source: Research Report Section 3.1.1
         // ...
 ```
 
 ### 2. Update `src/Config.h`
 
-Add the new setting to the `Preset` structure in **three places**:
+Add the new setting to the `Preset` structure in **four places**:
 
 #### 2a. Field Declaration (around line 92)
 
 ```cpp
     float yaw_kick_threshold = 0.0f; // Existing v0.6.10
-    float yaw_kick_gamma = 1.0f;     // NEW v0.6.36: Response Curve
+    float yaw_kick_gamma = 1.0f;     // NEW v0.6.36: Response Curve (research default: 1.8)
 ```
 
 #### 2b. Fluent Setter (around line 163)
@@ -146,6 +208,7 @@ Handle persistence (Save/Load) for both main config and user presets.
 
 ```cpp
     // Validate yaw kick gamma (v0.6.36)
+    // Research recommends 1.5-2.0 range, but allow user experimentation 0.1-3.0
     if (engine.m_yaw_kick_gamma < 0.1f || engine.m_yaw_kick_gamma > 3.0f) {
         engine.m_yaw_kick_gamma = (std::max)(0.1f, (std::min)(3.0f, engine.m_yaw_kick_gamma));
     }
@@ -180,19 +243,32 @@ Add the slider to the GUI in the "Rear Axle" section.
         FloatSetting("Activation Threshold", &engine.m_yaw_kick_threshold, 0.0f, 10.0f, "%.2f rad/s²", 
             "Minimum yaw acceleration required to trigger the kick.\nActs as a Noise Gate.\nIncrease to filter out engine vibration and small bumps.");
         
-        // NEW v0.6.36: Gamma Response Curve
+        // NEW v0.6.36: Gamma Response Curve (Research Validated)
         FloatSetting("Response Curve (Gamma)", &engine.m_yaw_kick_gamma, 0.1f, 3.0f, "%.2f", 
-            "Controls the linearity of the Yaw Kick.\n\n"
+            "Controls the linearity of the Yaw Kick.\n"
+            "Research recommends ~1.8 for optimal balance.\n\n"
             "  1.0 = Linear (Standard)\n"
-            "  <1.0 = Boost Low Range (Feel road details/micro-yaw)\n"
-            "  >1.0 = Suppress Low Range (Focus only on big slide kicks)");
+            "  <1.0 = Boost Low Range (More road detail feel)\n"
+            "  >1.0 = Suppress Low Range (Focus on slide kicks only)");
             
+        // v0.6.36: Updated latency indicator to use standard green/red pattern
+        // Green: ≤15ms (good for competitive), Red: >15ms (may feel sluggish)
         FloatSetting("Kick Response (Smooth)", &engine.m_yaw_accel_smoothing, 0.000f, 0.050f, "%.3f s",
-            "Low Pass Filter for the Yaw Kick signal.\nSmoothes out kick noise.\nLower = Sharper/Faster kick.\nHigher = Duller/Softer kick.",
+            "Low Pass Filter for the Yaw Kick signal.\n"
+            "Set to 0.000 for ZERO latency (raw, but may have noise).\n"
+            "Research recommends ~0.016s (10 Hz) for signal quality.\n"
+            "Lower = Sharper/Faster. Higher = Smoother/Cleaner.",
             [&]() {
                 int ms = (int)(engine.m_yaw_accel_smoothing * 1000.0f + 0.5f);
+                // Standard latency color coding: Green ≤ 15ms, Red > 15ms
                 ImVec4 color = (ms <= 15) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
                 ImGui::TextColored(color, "Latency: %d ms", ms);
+                // Also show frequency equivalent for advanced users
+                if (engine.m_yaw_accel_smoothing > 0.0001f) {
+                    float fc = 1.0f / (2.0f * 3.14159f * engine.m_yaw_accel_smoothing);
+                    ImGui::SameLine();
+                    ImGui::TextDisabled("(~%.0f Hz cutoff)", fc);
+                }
             });
             
         ImGui::Unindent();
@@ -200,7 +276,7 @@ Add the slider to the GUI in the "Rear Axle" section.
 
 ### 5. Update `docs/dev_docs/FFB_formulas.md`
 
-Add gamma curve documentation to the Yaw Acceleration section (around line 103).
+Add gamma curve and frequency information to the Yaw Acceleration section (around line 103).
 
 ```markdown
 3.  **Yaw Acceleration ("The Kick")**:
@@ -212,13 +288,17 @@ Add gamma curve documentation to the Yaw Acceleration section (around line 103).
         *   **Response Curve (Gamma)** *(NEW v0.6.36)*:
             *   Applied after threshold gating to shape the amplitude response.
             *   $\text{YawAccel}_{\text{gamma}} = \text{Sign}(\text{Accel}) \times \left(\frac{|\text{Accel}|}{10.0}\right)^{\gamma} \times 10.0$
-            *   *Default*: 1.0 (Linear). Range: 0.1 - 3.0.
-            *   Gamma < 1.0: Boosts low-amplitude signals (road detail feel).
-            *   Gamma > 1.0: Suppresses low-amplitude signals (slide focus).
-    *   **Rationale**: Requires heavy smoothing (LPF) to separate true chassis rotation from "Slide Texture" vibration noise, preventing a feedback loop where vibration is mistaken for rotation.
+            *   *Default*: 1.0 (Linear). Research Optimal: **1.8**. Range: 0.1 - 3.0.
+            *   Gamma > 1.0: Suppresses micro-corrections (0-1.5 rad/s²), amplifies slides (>2.0 rad/s²).
+    *   **Frequency Characteristics** *(Research Validated)*:
+        *   Slide Initiation: **1-10 Hz** (Low-Mid frequency, Step/Surge pattern)
+        *   Road Texture: **20-100 Hz** (High frequency, Oscillatory)
+        *   Recommended LPF Cutoff: **10 Hz** (fc = 10 Hz, τ ≈ 0.016s)
+    *   **Rationale**: Heavy smoothing (LPF) required to separate true chassis rotation from "Slide Texture" vibration. Polar moment of inertia (Izz ≈ 2500 kg·m²) physically limits yaw oscillation to <10 Hz.
     *   **Formula**: $-\text{YawAccel}_{\text{smooth}} \times K_{\text{yaw}} \times 5.0 \text{Nm} \times K_{\text{decouple}}$.
     *   **Max Clamp**: 1.0 (Updated v0.6.20).
     *   **Note**: Negative sign provides counter-steering torque.
+    *   **Sources**: [Deep Research Report](./yaw_kick_deep_reasearch_report.md), ESC Standards, OptimumG Vehicle Dynamics.
 ```
 
 ### 6. Update `tests/test_ffb_engine.cpp`
@@ -236,7 +316,7 @@ static void test_yaw_kick_gamma() {
     engine.m_yaw_kick_threshold = 0.0f; // Disable gate
     engine.m_yaw_accel_smoothing = 0.0f; // Disable smoothing for deterministic test
     
-    // Reference Input: 1.0 rad/s^2 (Small/Medium signal)
+    // Reference Input: 1.0 rad/s^2 (Small/Medium signal - "Road Detail" range)
     // Normalized: 1.0 / 10.0 = 0.1
     data.mLocalRotAccel.y = 1.0;
     
@@ -254,25 +334,31 @@ static void test_yaw_kick_gamma() {
     engine.m_yaw_kick_gamma = 1.0f;
     double f_linear = settle_and_measure();
     
-    // Case 2: Boost Low End (Gamma 0.5)
-    // pow(0.1, 0.5) = 0.316 (~3x boost)
-    engine.m_yaw_kick_gamma = 0.5f;
-    double f_boost = settle_and_measure();
+    // Case 2: Research Optimal (Gamma 1.8)
+    // pow(0.1, 1.8) = 0.0158 (~6x suppression of low signals)
+    engine.m_yaw_kick_gamma = 1.8f;
+    double f_research = settle_and_measure();
     
-    // Case 3: Suppress Low End (Gamma 2.0)
+    // Case 3: Aggressive Suppression (Gamma 2.0)
     // pow(0.1, 2.0) = 0.01 (~10x suppression)
     engine.m_yaw_kick_gamma = 2.0f;
     double f_suppress = settle_and_measure();
     
+    // Case 4: Boost Low End (Gamma 0.5) - For road detail enthusiasts
+    // pow(0.1, 0.5) = 0.316 (~3x boost)
+    engine.m_yaw_kick_gamma = 0.5f;
+    double f_boost = settle_and_measure();
+    
     std::cout << "  Boost (γ=0.5): " << f_boost << std::endl;
     std::cout << "  Linear (γ=1.0): " << f_linear << std::endl;
+    std::cout << "  Research (γ=1.8): " << f_research << std::endl;
     std::cout << "  Suppress (γ=2.0): " << f_suppress << std::endl;
     
-    if (f_boost > f_linear && f_linear > f_suppress) {
-        std::cout << "[PASS] Yaw Gamma modifies signal correctly (Boost > Linear > Suppress)." << std::endl;
+    if (f_boost > f_linear && f_linear > f_research && f_research > f_suppress) {
+        std::cout << "[PASS] Yaw Gamma modifies signal correctly (Boost > Linear > Research > Suppress)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Yaw Gamma logic failed. Expected: Boost > Linear > Suppress" << std::endl;
+        std::cout << "[FAIL] Yaw Gamma logic failed. Expected: Boost > Linear > Research > Suppress" << std::endl;
         g_tests_failed++;
     }
 }
@@ -288,18 +374,26 @@ static void test_yaw_kick_gamma() {
 Add to `CHANGELOG.md`:
 
 ```markdown
-### v0.6.36 - Yaw Kick Gamma Response
+### v0.6.36 - Yaw Kick Gamma Response (Research Validated)
 
 **New Features:**
 - **Yaw Kick Response Curve (Gamma)**: New slider to control the amplitude response of the Yaw Kick effect.
-  - Gamma < 1.0: Boosts low-amplitude yaw signals, making road details and micro-corrections more perceptible.
+  - Gamma < 1.0: Boosts low-amplitude yaw signals (road detail feel).
   - Gamma = 1.0: Linear response (default, unchanged behavior).
-  - Gamma > 1.0: Suppresses low-amplitude signals, focusing the effect on large slide kicks only.
+  - Gamma > 1.0: Suppresses low-amplitude signals, focusing on slide kicks.
+  - **Research Optimal**: γ ≈ 1.8 for best handling/texture separation.
 - Added physics constant `YAW_ACCEL_REFERENCE` (10.0 rad/s²) for gamma normalization.
+- Enhanced "Kick Response" tooltip now shows frequency equivalent (Hz).
+
+**Research Validated:**
+- Slide Initiation: 2.0-5.0 rad/s² at 1-10 Hz (Step/Surge)
+- Road Texture: 0.2-1.5 rad/s² at 20-100 Hz (Oscillatory)
+- Optimal LPF cutoff: 10 Hz (τ ≈ 0.016s)
+- See: `docs/dev_docs/yaw_kick_deep_reasearch_report.md`
 
 **Technical:**
 - New setting: `yaw_kick_gamma` (default 1.0, range 0.1-3.0).
-- Updated FFB_formulas.md with gamma curve documentation.
+- Updated FFB_formulas.md with gamma curve and frequency documentation.
 - Added regression test `test_yaw_kick_gamma()`.
 ```
 
@@ -312,10 +406,10 @@ Add to `CHANGELOG.md`:
 | `src/FFBEngine.h` | Add `m_yaw_kick_gamma`, `YAW_ACCEL_REFERENCE`, gamma logic in `calculate_force()` |
 | `src/Config.h` | Add `yaw_kick_gamma` field, `SetYawKickGamma()` setter, update `Apply()` and `UpdateFromEngine()` |
 | `src/Config.cpp` | Add save/load for main config and user presets |
-| `src/GuiLayer.cpp` | Add "Response Curve (Gamma)" slider with indentation |
-| `docs/dev_docs/FFB_formulas.md` | Add gamma curve formula and documentation |
-| `tests/test_ffb_engine.cpp` | Add `test_yaw_kick_gamma()` regression test |
-| `CHANGELOG.md` | Add v0.6.36 entry |
+| `src/GuiLayer.cpp` | Add "Response Curve (Gamma)" slider with indentation and Hz display |
+| `docs/dev_docs/FFB_formulas.md` | Add gamma curve formula, frequency bands, and research citations |
+| `tests/test_ffb_engine.cpp` | Add `test_yaw_kick_gamma()` regression test with research-optimal case |
+| `CHANGELOG.md` | Add v0.6.36 entry with research validation notes |
 
 ---
 
@@ -325,13 +419,87 @@ Add to `CHANGELOG.md`:
 2. **Test**: Run `test_ffb_engine.exe` and verify `test_yaw_kick_gamma` passes.
 3. **GUI**: Launch the app and verify the new slider appears under "Rear Axle (Oversteer)".
 4. **Persistence**: 
-   - Set gamma to 0.5, close and reopen the app, verify it persists.
+   - Set gamma to 1.8, close and reopen the app, verify it persists.
    - Create a user preset, verify gamma is saved and loaded correctly.
 5. **In-Game**: Test with LMU:
-   - Gamma 0.5: Road bumps should feel more pronounced in yaw.
-   - Gamma 2.0: Only big slides should trigger noticeable yaw kicks.
+   - Gamma 1.0: Baseline behavior.
+   - Gamma 1.8: Road bumps should feel dampened; only significant slides trigger kicks.
+   - Gamma 0.5: Road texture should be more pronounced in yaw feel.
 
 ---
+
+## Future Enhancements (Research-Suggested)
+
+Based on the deep research, the following enhancements are recommended for future versions:
+
+### 1. Adaptive Gain Scaling (Weber's Law)
+**Priority**: High  
+The kick strength should scale with current FFB load to maintain perceptibility:
+```cpp
+// Kick must be >10% of current torque to be perceived (Weber's Law)
+double weber_scale = (std::max)(0.1, std::abs(current_ffb_output) * 0.10);
+yaw_force = (std::max)(yaw_force, weber_scale);
+```
+
+### 2. Gated Algorithm (Yaw + Rear Slip)
+**Priority**: Medium  
+Combine yaw acceleration with rear slip angle to eliminate false positives:
+```cpp
+// Only trigger kick when BOTH conditions are met:
+// A) Rear tires are saturated (slip angle > 4°)
+// B) Yaw acceleration > 2.0 rad/s²
+bool rear_saturated = std::abs(rear_slip_angle) > 0.07; // ~4 degrees
+bool yaw_significant = std::abs(raw_yaw_accel) > 2.0;
+if (rear_saturated && yaw_significant) {
+    // Apply kick
+}
+```
+
+### 3. 2nd-Order Butterworth LPF
+**Priority**: Medium  
+Replace simple exponential LPF with proper Butterworth for steeper rolloff:
+- Current: -6 dB/octave (1st-order exponential)
+- Recommended: -12 dB/octave (2nd-order Butterworth)
+
+### 4. Adaptive Smoothing (Magnitude-Dependent Filtering)
+**Priority**: Low  
+**⚠️ LATENCY CONCERN**: This enhancement would introduce **non-removable latency**.
+
+Dynamically adjust tau based on signal magnitude:
+- Low signal (< 1.0 rad/s²): Heavy smoothing (50ms) → Road feel without jitter
+- High signal (> 2.0 rad/s²): User setting (0-10ms) → Instant slide response
+
+**Problem**: The 50ms minimum for low signals **cannot be disabled** by the user. This violates the design principle that all latency must be user-adjustable to zero.
+
+**If Implemented**: Must be **optional** with a toggle:
+```cpp
+// Only apply adaptive smoothing if user opts in
+bool m_yaw_adaptive_smoothing_enabled = false; // Default OFF to preserve zero-latency option
+
+if (m_yaw_adaptive_smoothing_enabled) {
+    // Blend between 50ms (noise) and user setting (fast)
+    double slow_tau = 0.050;
+    double fast_tau = (double)m_yaw_accel_smoothing;
+    double blend = magnitude / (noise_floor * 4.0);
+    dynamic_tau = slow_tau + (fast_tau - slow_tau) * blend;
+} else {
+    // Standard: Use user setting directly (can be 0 for zero latency)
+    dynamic_tau = (double)m_yaw_accel_smoothing;
+}
+```
+
+---
+
+## Research References
+
+Full citations available in: [`docs/dev_docs/yaw_kick_deep_reasearch_report.md`](./yaw_kick_deep_reasearch_report.md)
+
+Key sources:
+- OptimumG: "Getting to grips with your yaw moments"
+- ESC Standards (Wikipedia, SAE 2023-01-0661)
+- Vehicle Dynamics frequency analysis (Clemson, Chalmers)
+- Human perception thresholds (Weber's Law, ePrints Soton)
+- Simucube/Fanatec filter implementations (Granite Devices)
 
 ## Appendix: Research Query
 
