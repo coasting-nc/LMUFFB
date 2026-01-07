@@ -384,3 +384,100 @@ I am developing a Force Feedback (FFB) application for racing simulators (specif
 ---
 
 *Query created: 2026-01-07*
+
+
+# Adaptive smoothing for Yaw
+
+## User question
+
+Should we have a smoothing that differentiates between different values of yaw (eg. with a threshold)? What I mean is, having something that smooths out lower acceleration value, and does not smooth out higher yaw values (or viceversa). This is in the case in which different types of yaw signal require different levels of smoothing (eg. road noise might require more, while slides less).
+
+## Answer 
+
+This is an excellent idea. What you are describing is known in signal processing as **Adaptive Smoothing** or **Magnitude-Dependent Filtering**.
+
+It is superior to a simple "Threshold/Gate" because:
+1.  **Hard Threshold (Current):** Below 0.2, the signal is **0.0** (Dead). You feel nothing.
+2.  **Adaptive Smoothing (Proposed):** Below 0.2, the signal is **heavily smoothed** (e.g., 50ms latency). You feel a subtle, smooth "weight" or "texture" (Road Detail) without the jagged noise.
+3.  **The Kick:** Above 0.2, the smoothing drops to **0ms** (or whatever the user set). You feel the slide instantly.
+
+### The Logic: "The Harder the Kick, the Faster the Filter"
+
+We can implement a dynamic Time Constant ($\tau$) that changes based on the input magnitude.
+
+*   **Input:** `Yaw Acceleration`
+*   **User Setting:** `Kick Response` (Let's say 0ms / Raw).
+*   **Logic:**
+    *   **Low Input (< 1.0 rad/s²):** We force a high smoothing (e.g., **50ms**). This turns "jittery noise" into "smooth road information."
+    *   **High Input (> 5.0 rad/s²):** We use the **User Setting** (0ms). This ensures zero latency when catching a slide.
+    *   **Transition:** Linearly blend between them.
+
+### Implementation Plan
+
+We can modify the existing `calculate_force` logic to make the smoothing dynamic. We don't even need a new slider; we can just use a sensible "Noise Smoothing" constant (like 50ms) and blend to the user's "Performance Smoothing" setting.
+
+#### 1. Update `src/FFBEngine.h`
+
+We will modify the Yaw Kick section. We will effectively replace the "Hard Cut" threshold logic with this "Soft Blend" logic, or use the threshold to define the blend range.
+
+```cpp
+// In calculate_force...
+
+// ... [Yaw Kick Logic] ...
+
+double raw_yaw_accel = data->mLocalRotAccel.y;
+
+// 1. Low Speed Cutoff (Keep this, we don't want idle vibration)
+if (car_v_long < 5.0) {
+    raw_yaw_accel = 0.0;
+} 
+else {
+    // 2. ADAPTIVE SMOOTHING (The Fix)
+    
+    // Define the range of acceleration where we transition from "Noise" to "Signal"
+    // We can use the existing m_yaw_kick_threshold as the "Start of the Kick"
+    // Default threshold is usually 0.2 to 1.0.
+    double noise_floor = (double)m_yaw_kick_threshold; 
+    if (noise_floor < 0.5) noise_floor = 0.5; // Ensure a reasonable blend window
+    
+    double magnitude = std::abs(raw_yaw_accel);
+    
+    // Calculate Blend Factor (0.0 = Noise, 1.0 = Kick)
+    // If mag < noise_floor, we are in noise territory.
+    // If mag > noise_floor * 4, we are in full kick territory.
+    double blend = (magnitude) / (noise_floor * 4.0);
+    blend = (std::max)(0.0, (std::min)(1.0, blend));
+    
+    // Define Smoothing Targets
+    double slow_tau = 0.050; // 50ms (Smooths out road noise/jitter)
+    double fast_tau = (double)m_yaw_accel_smoothing; // User setting (e.g. 0ms)
+    
+    // Interpolate Tau
+    // Low Signal -> Slow Tau. High Signal -> Fast Tau.
+    double dynamic_tau = slow_tau + (fast_tau - slow_tau) * blend;
+    
+    // Apply Smoothing with Dynamic Tau
+    if (dynamic_tau < 0.0001) dynamic_tau = 0.0001;
+    double alpha_yaw = dt / (dynamic_tau + dt);
+    
+    m_yaw_accel_smoothed += alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
+    
+    // Apply Gamma (Optional, if you still want it)
+    // ...
+}
+```
+
+### Benefits of this approach
+
+1.  **No Latency on Slides:** When a real slide happens (high acceleration), the filter opens up instantly.
+2.  **Road Feel Restored:** Instead of cutting small signals to zero (deadzone), we smooth them. You will feel the chassis "breathing" and reacting to the road, but it won't feel like digital noise or spikes.
+3.  **User Simplicity:** The user still only adjusts "Kick Response" (their desired performance). The "Noise Smoothing" happens automatically in the background.
+
+### Recommendation
+
+I recommend implementing this **Adaptive Smoothing** instead of the hard "Activation Threshold" cut.
+
+*   **Current Behavior:** Signal < Threshold = 0. (Dead).
+*   **New Behavior:** Signal < Threshold = Smoothed. (Detailed but calm).
+
+Do you want me to generate the code changes to replace the hard threshold with this adaptive logic?
