@@ -1017,6 +1017,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::NextColumn(); ImGui::NextColumn(); 
     }
 
+    // QoL Main Window menu rearrangement
     // --- GROUP: BODY & AXLE ---
     ImGui::Separator();
     if (ImGui::TreeNodeEx("Steering & Vehicle Physics", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
