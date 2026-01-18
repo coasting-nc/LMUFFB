@@ -937,26 +937,99 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Max Torque Ref", &engine.m_max_torque_ref, 1.0f, 200.0f, "%.1f Nm", "The expected PEAK torque of the CAR in the game.\nGT3/LMP2 cars produce 30-60 Nm of torque.\nSet this to ~40-60 Nm to prevent clipping.\nHigher values = Less Clipping, Less Noise, Lighter Steering.\nLower values = More Clipping, More Noise, Heavier Steering.");
         FloatSetting("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f", "Boosts small forces to overcome the mechanical friction/deadzone of gear/belt driven wheels.\nPrevents the 'dead center' feeling.\nTypical: 0.0 for DD, 0.01-0.05 for Belt/Gear.");
         
+        FloatSetting("Gyro Damping", &engine.m_gyro_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_gyro_gain, FFBEngine::BASE_NM_GYRO_DAMPING), "Simulates the gyroscopic solidity of the spinning wheels.\nResists rapid steering movements.\nPrevents oscillation and 'Tank Slappers'.\nActs like a steering damper.");
+
+        FloatSetting("Gyro Smoothing", &engine.m_gyro_smoothing, 0.000f, 0.050f, "%.3f s",
+            "Filters the steering velocity signal used for damping.\nReduces noise in the damping effect.\nLow = Crisper damping, High = Smoother.",
+            [&]() {
+                int ms = (int)(engine.m_gyro_smoothing * 1000.0f + 0.5f);
+                ImVec4 color = (ms <= 20) ? ImVec4(0, 1, 0, 1) : ImVec4(1, 0, 0, 1);
+                ImGui::TextColored(color, "Latency: %d ms", ms);
+            });
+
+        // --- ADVANCED SETTINGS ---
+        if (ImGui::CollapsingHeader("Advanced")) {
+            ImGui::NextColumn(); ImGui::NextColumn();
+            const char* base_modes[] = { "Native (Steering Shaft Torque)", "Synthetic (Constant)", "Muted (Off)" };
+            IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, sizeof(base_modes) / sizeof(base_modes[0]), "Debug tool to isolate effects.\nNative: Normal/Default.\nSynthetic: Constant force to test direction.\nMuted: Disables base physics (good for tuning vibrations).");
+            ImGui::Text("Stationary Vibration Gate");
+            ImGui::NextColumn();
+            ImGui::NextColumn();
+            ImGui::Text("    Mute Below");
+            ImGui::NextColumn();
+            float lower_kmh = engine.m_speed_gate_lower * 3.6f;
+            if (ImGui::SliderFloat("  ", &lower_kmh, 0.0f, 20.0f, "%.1f km/h")) {
+                engine.m_speed_gate_lower = lower_kmh / 3.6f;
+                if (engine.m_speed_gate_upper <= engine.m_speed_gate_lower + 0.1f)
+                    engine.m_speed_gate_upper = engine.m_speed_gate_lower + 0.5f;
+                selected_preset = -1;
+            }
+            if (ImGui::IsItemDeactivatedAfterEdit()) {
+                Config::Save(engine);
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip(
+                "Speed where vibrations are disabled\n"
+                "to eliminate engine idle vibration.");
+
+            ImGui::NextColumn();
+            ImGui::Text("    Full Above");
+            ImGui::NextColumn();
+            float upper_kmh = engine.m_speed_gate_upper * 3.6f;
+            if (ImGui::SliderFloat(" ", &upper_kmh, 1.0f, 50.0f, "%.1f km/h")) {
+                engine.m_speed_gate_upper = upper_kmh / 3.6f;
+                if (engine.m_speed_gate_upper <= engine.m_speed_gate_lower + 0.1f)
+                    engine.m_speed_gate_upper = engine.m_speed_gate_lower + 0.5f;
+                selected_preset = -1;
+            }
+            if (ImGui::IsItemDeactivatedAfterEdit()) {
+                Config::Save(engine);
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip(
+                "Speed where vibrations are enabled\n"
+                "CRITICAL: Speeds below this value will have SMOOTHING applied\n"
+                "Default: 18.0 km/h (Safe for all wheels).");
+            ImGui::NextColumn();
+            
+            ImGui::NextColumn(); ImGui::NextColumn();
+            BoolSetting("Flatspot Suppression", &engine.m_flatspot_suppression, "Dynamic Notch Filter that targets wheel rotation frequency.\nSuppresses vibrations caused by tire flatspots.");
+            if (engine.m_flatspot_suppression) {
+                FloatSetting("    Filter Width (Q)", &engine.m_notch_q, 0.5f, 10.0f, "Q: %.2f", "Quality Factor of the Notch Filter.\nHigher = Narrower bandwidth (surgical removal).\nLower = Wider bandwidth (affects surrounding frequencies).");
+                FloatSetting("    Suppression Strength", &engine.m_flatspot_strength, 0.0f, 1.0f, "%.2f", "How strongly to mute the flatspot vibration.\n1.0 = 100% removal.");
+                ImGui::Text("    Est. / Theory Freq");
+                ImGui::NextColumn();
+                ImGui::TextDisabled("%.1f Hz / %.1f Hz", engine.m_debug_freq, engine.m_theoretical_freq);
+                ImGui::NextColumn();
+            }
+
+            ImGui::NextColumn(); ImGui::NextColumn();
+            BoolSetting("Static Noise Filter", &engine.m_static_notch_enabled, "Fixed frequency notch filter to remove hardware resonance or specific noise.");
+            if (engine.m_static_notch_enabled) {
+                FloatSetting("    Target Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.1f Hz", "Center frequency to suppress.");
+                FloatSetting("    Filter Width", &engine.m_static_notch_width, 0.1f, 10.0f, "%.1f Hz", "Bandwidth of the notch filter.\nLarger = Blocks more frequencies around the target.");
+            }
+
+
+        }
+
         ImGui::TreePop();
     } else { 
         // Keep columns synchronized when section is collapsed
         ImGui::NextColumn(); ImGui::NextColumn(); 
     }
 
-    // --- GROUP: FRONT AXLE ---
-    if (ImGui::TreeNodeEx("Front Axle (Understeer)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+    // --- GROUP: BODY & AXLE ---
+    ImGui::Separator();
+    if (ImGui::TreeNodeEx("Steering & Vehicle Physics", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
         
         FloatSetting("Steering Shaft Gain", &engine.m_steering_shaft_gain, 0.0f, 2.0f, FormatPct(engine.m_steering_shaft_gain), "Scales the raw steering torque from the physics engine.\n100% = 1:1 with game physics.\nLowering this allows other effects (SoP, Vibes) to stand out more without clipping.");
-        
-        FloatSetting("Steering Shaft Smoothing", &engine.m_steering_shaft_smoothing, 0.000f, 0.100f, "%.3f s", 
+        FloatSetting("  Steering Shaft Smoothing", &engine.m_steering_shaft_smoothing, 0.000f, 0.100f, "%.3f s", 
             "Low Pass Filter applied ONLY to the raw game force (Steering Shaft Gain).\nSmoothes out grainy or noisy signals from the game engine.",
             [&]() {
                 int ms = (int)(engine.m_steering_shaft_smoothing * 1000.0f + 0.5f);
                 ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
                 ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
             });
-
         // Display with percentage format for better clarity
         FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 2.0f, FormatPct(engine.m_understeer_effect), 
             "Scales how much front grip loss reduces steering force.\n\n"
@@ -969,269 +1042,153 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             "  → First INCREASE 'Optimal Slip Angle' setting in the Physics section.\n"
             "  → Then reduce this slider if still too sensitive.\n\n"
             "Technical: Force = Base * (1.0 - GripLoss * Effect)");
+        FloatSetting("Oversteer Effect (SoP)", &engine.m_oversteer_boost, 0.0f, 4.0f, FormatPct(engine.m_oversteer_boost), "Increases the Lateral G (SoP) force when the rear tires lose grip.\nMakes the car feel heavier during a slide, helping you judge the momentum.\nShould build up slightly more gradually than Rear Align Torque,\nreflecting the inertia of the car's mass swinging out.\nIt's a sustained force that tells you about the magnitude of the slide\nTuning Goal: The driver should feel the direction of the counter-steer (Rear Align)\nand the effort required to hold it (Lateral G Boost).");
+        FloatSetting("Self-Align Effect (SoP)", &engine.m_rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN), "Counter-steering force generated by rear tire slip.\nShould build up very quickly after the Yaw Kick, as the slip angle develops.\nThis is the active \"pull.\"\nTuning Goal: The driver should feel the direction of the counter-steer (Rear Align)\nand the effort required to hold it (Lateral G Boost).");
+        FloatSetting("Yaw Effect (SoP Kick)", &engine.m_sop_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK), "This is the earliest cue for rear stepping out. It's a sharp, momentary impulse that signals the onset of rotation.\nBased on Yaw Acceleration.");
         
-        const char* base_modes[] = { "Native (Steering Shaft Torque)", "Synthetic (Constant)", "Muted (Off)" };
-        IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, sizeof(base_modes)/sizeof(base_modes[0]), "Debug tool to isolate effects.\nNative: Normal Operation.\nSynthetic: Constant force to test direction.\nMuted: Disables base physics (good for tuning vibrations).");
+        // --- ADVANCED SoP SETTINGS ---
+        if (ImGui::CollapsingHeader("Advanced")) {
+            ImGui::TextColored(ImVec4(0.0f, 0.6f, 0.85f, 1.0f), "Advanced SoP Settings");
+            ImGui::NextColumn(); ImGui::NextColumn();
+            FloatSetting("  SoP Global Gain", &engine.m_sop_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_sop_effect, FFBEngine::BASE_NM_SOP_LATERAL), "Represents Chassis Roll, simulates the weight of the car leaning in the corner.");
+            // SoP Smoothing with Latency Text above slider
+            FloatSetting("  SoP Global Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, "%.2f",
+                "Filters the Lateral G signal.\nReduces jerkiness in the SoP effect.",
+                [&]() {
+                    int ms = (int)((1.0f - engine.m_sop_smoothing_factor) * 100.0f + 0.5f);
+                    ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0, 1, 0, 1) : ImVec4(1, 0, 0, 1);
+                    ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
+                });
+            FloatSetting("  SoP Global Scaling", &engine.m_sop_scale, 0.0f, 20.0f, "%.2f", "Multiplies the raw G-force signal before limiting.\nAdjusts the dynamic range of the SoP effect.");
+            FloatSetting("  SoP Yaw Effect Threshold (Kick)", &engine.m_yaw_kick_threshold, 0.0f, 10.0f, "%.2f rad/s²", "Minimum yaw acceleration required to trigger the kick.\nIncrease to filter out road noise and small vibrations.");
+            FloatSetting("  SoP Yaw Effect Smoothing (Kick)", &engine.m_yaw_accel_smoothing, 0.000f, 0.050f, "%.3f s",
+                "Low Pass Filter for the Yaw Kick signal.\nSmoothes out kick noise.\nLower = Sharper/Faster kick.\nHigher = Duller/Softer kick.",
+                [&]() {
+                    int ms = (int)(engine.m_yaw_accel_smoothing * 1000.0f + 0.5f);
+                    ImVec4 color = (ms <= 15) ? ImVec4(0, 1, 0, 1) : ImVec4(1, 0, 0, 1);
+                    ImGui::TextColored(color, "Latency: %d ms", ms);
+                });
+            // --- GROUP: PHYSICS ---
+            ImGui::TextColored(ImVec4(0.0f, 0.6f, 0.85f, 1.0f), "Slip Angle & Grip Estimations");
+            ImGui::NextColumn(); ImGui::NextColumn();
+            FloatSetting("Chassis Inertia (Load)", &engine.m_chassis_inertia_smoothing, 0.000f, 0.100f, "%.3f s",
+                "Simulation time for weight transfer.\nSimulates how fast the suspension settles.\nAffects calculated tire load magnitude.\n25ms = Stiff Race Car.\n50ms = Soft Road Car.",
+                [&]() {
+                    int ms = (int)(engine.m_chassis_inertia_smoothing * 1000.0f + 0.5f);
+                    ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "Simulation: %d ms", ms);
+                });
 
-        if (ImGui::TreeNodeEx("Signal Filtering", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::NextColumn(); ImGui::NextColumn();
-            
-            BoolSetting("  Flatspot Suppression", &engine.m_flatspot_suppression, "Dynamic Notch Filter that targets wheel rotation frequency.\nSuppresses vibrations caused by tire flatspots.");
-            if (engine.m_flatspot_suppression) {
-                FloatSetting("    Filter Width (Q)", &engine.m_notch_q, 0.5f, 10.0f, "Q: %.2f", "Quality Factor of the Notch Filter.\nHigher = Narrower bandwidth (surgical removal).\nLower = Wider bandwidth (affects surrounding frequencies).");
-                FloatSetting("    Suppression Strength", &engine.m_flatspot_strength, 0.0f, 1.0f, "%.2f", "How strongly to mute the flatspot vibration.\n1.0 = 100% removal.");
-                ImGui::Text("    Est. / Theory Freq");
-                ImGui::NextColumn();
-                ImGui::TextDisabled("%.1f Hz / %.1f Hz", engine.m_debug_freq, engine.m_theoretical_freq);
-                ImGui::NextColumn();
-            }
-            
-            BoolSetting("  Static Noise Filter", &engine.m_static_notch_enabled, "Fixed frequency notch filter to remove hardware resonance or specific noise.");
-            if (engine.m_static_notch_enabled) {
-                FloatSetting("    Target Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.1f Hz", "Center frequency to suppress.");
-                FloatSetting("    Filter Width", &engine.m_static_notch_width, 0.1f, 10.0f, "%.1f Hz", "Bandwidth of the notch filter.\nLarger = Blocks more frequencies around the target.");
-            }
-            
-            ImGui::TreePop();
-        } else {
-            // Keep columns synchronized when section is collapsed
-            ImGui::NextColumn(); ImGui::NextColumn();
+            FloatSetting("Optimal Slip Angle", &engine.m_optimal_slip_angle, 0.05f, 0.20f, "%.2f rad",
+                "The slip angle THRESHOLD above which grip loss begins.\n"
+                "Set this HIGHER than the car's physical peak slip angle.\n"
+                "Recommended: 0.10 for LMDh/LMP2, 0.12 for GT3.\n\n"
+                "Lower = More sensitive (force drops earlier).\n"
+                "Higher = More buffer zone before force drops.\n\n"
+                "NOTE: If the wheel feels too light at the limit, INCREASE this value.\n"
+                "Affects: Understeer Effect, Lateral G Boost (Slide), Slide Texture.");
+
+            FloatSetting("Optimal Slip Ratio", &engine.m_optimal_slip_ratio, 0.05f, 0.20f, "%.2f",
+                "The longitudinal slip ratio (0.0-1.0) where peak braking/traction occurs.\n"
+                "Typical: 0.12 - 0.15 (12-15%).\n"
+                "Used to estimate grip loss under braking/acceleration.\n"
+                "Affects: How much braking/acceleration contributes to calculated grip loss.");
+
+            // Slip Smoothing with Latency Text above slider
+            FloatSetting("Slip Angle Smoothing", &engine.m_slip_angle_smoothing, 0.000f, 0.100f, "%.3f s",
+                "Applies a time-based filter (LPF) to the Calculated Slip Angle used to estimate tire grip.\n"
+                "Smooths the high fluctuations from lateral and longitudinal velocity,\nespecially over bumps or curbs.\n"
+                "Affects: Understeer effect, Rear Aligning Torque.",
+                [&]() {
+                    int ms = (int)(engine.m_slip_angle_smoothing * 1000.0f + 0.5f);
+                    ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0, 1, 0, 1) : ImVec4(1, 0, 0, 1);
+                    ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
+                });
         }
-        
         ImGui::TreePop();
-    } else { 
+    } else {
         // Keep columns synchronized when section is collapsed
-        ImGui::NextColumn(); ImGui::NextColumn(); 
+        ImGui::NextColumn(); ImGui::NextColumn();
     }
 
-    // --- GROUP: REAR AXLE ---
-    if (ImGui::TreeNodeEx("Rear Axle (Oversteer)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
-        ImGui::NextColumn(); ImGui::NextColumn();
-        
-        FloatSetting("Lateral G Boost (Slide)", &engine.m_oversteer_boost, 0.0f, 4.0f, FormatPct(engine.m_oversteer_boost), "Increases the Lateral G (SoP) force when the rear tires lose grip.\nMakes the car feel heavier during a slide, helping you judge the momentum.\nShould build up slightly more gradually than Rear Align Torque,\nreflecting the inertia of the car's mass swinging out.\nIt's a sustained force that tells you about the magnitude of the slide\nTuning Goal: The driver should feel the direction of the counter-steer (Rear Align)\nand the effort required to hold it (Lateral G Boost).");
-        FloatSetting("Lateral G", &engine.m_sop_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_sop_effect, FFBEngine::BASE_NM_SOP_LATERAL), "Represents Chassis Roll, simulates the weight of the car leaning in the corner.");
-        FloatSetting("SoP Self-Aligning Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN), "Counter-steering force generated by rear tire slip.\nShould build up very quickly after the Yaw Kick, as the slip angle develops.\nThis is the active \"pull.\"\nTuning Goal: The driver should feel the direction of the counter-steer (Rear Align)\nand the effort required to hold it (Lateral G Boost).");
-        FloatSetting("Yaw Kick", &engine.m_sop_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK), "This is the earliest cue for rear stepping out. It's a sharp, momentary impulse that signals the onset of rotation.\nBased on Yaw Acceleration.");
-        FloatSetting("  Activation Threshold", &engine.m_yaw_kick_threshold, 0.0f, 10.0f, "%.2f rad/s²", "Minimum yaw acceleration required to trigger the kick.\nIncrease to filter out road noise and small vibrations.");
-        
-        FloatSetting("  Kick Response", &engine.m_yaw_accel_smoothing, 0.000f, 0.050f, "%.3f s",
-            "Low Pass Filter for the Yaw Kick signal.\nSmoothes out kick noise.\nLower = Sharper/Faster kick.\nHigher = Duller/Softer kick.",
-            [&]() {
-                int ms = (int)(engine.m_yaw_accel_smoothing * 1000.0f + 0.5f);
-                ImVec4 color = (ms <= 15) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
-                ImGui::TextColored(color, "Latency: %d ms", ms);
-            });
-
-        FloatSetting("Gyro Damping", &engine.m_gyro_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_gyro_gain, FFBEngine::BASE_NM_GYRO_DAMPING), "Simulates the gyroscopic solidity of the spinning wheels.\nResists rapid steering movements.\nPrevents oscillation and 'Tank Slappers'.\nActs like a steering damper.");
-        
-        FloatSetting("  Gyro Smooth", &engine.m_gyro_smoothing, 0.000f, 0.050f, "%.3f s",
-            "Filters the steering velocity signal used for damping.\nReduces noise in the damping effect.\nLow = Crisper damping, High = Smoother.",
-            [&]() {
-                int ms = (int)(engine.m_gyro_smoothing * 1000.0f + 0.5f);
-                ImVec4 color = (ms <= 20) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
-                ImGui::TextColored(color, "Latency: %d ms", ms);
-            });
-        
-        ImGui::TextColored(ImVec4(0.0f, 0.6f, 0.85f, 1.0f), "Advanced SoP");
-        ImGui::NextColumn(); ImGui::NextColumn();
-
-        // SoP Smoothing with Latency Text above slider
-        FloatSetting("SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, "%.2f", 
-            "Filters the Lateral G signal.\nReduces jerkiness in the SoP effect.",
-            [&]() {
-                int ms = (int)((1.0f - engine.m_sop_smoothing_factor) * 100.0f + 0.5f);
-                ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
-                ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
-            });
-
-        FloatSetting("  SoP Scale", &engine.m_sop_scale, 0.0f, 20.0f, "%.2f", "Multiplies the raw G-force signal before limiting.\nAdjusts the dynamic range of the SoP effect.");
-        
-        ImGui::TreePop();
-    } else { 
-        // Keep columns synchronized when section is collapsed
-        ImGui::NextColumn(); ImGui::NextColumn(); 
-    }
-
-    // --- GROUP: PHYSICS ---
-    if (ImGui::TreeNodeEx("Grip & Slip Angle Estimation", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
-        ImGui::NextColumn(); ImGui::NextColumn();
-        
-        // Slip Smoothing with Latency Text above slider
-        FloatSetting("Slip Angle Smoothing", &engine.m_slip_angle_smoothing, 0.000f, 0.100f, "%.3f s",
-            "Applies a time-based filter (LPF) to the Calculated Slip Angle used to estimate tire grip.\n"
-            "Smooths the high fluctuations from lateral and longitudinal velocity,\nespecially over bumps or curbs.\n"
-            "Affects: Understeer effect, Rear Aligning Torque.",
-            [&]() {
-                int ms = (int)(engine.m_slip_angle_smoothing * 1000.0f + 0.5f);
-                ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
-                ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
-            });
-
-        FloatSetting("Chassis Inertia (Load)", &engine.m_chassis_inertia_smoothing, 0.000f, 0.100f, "%.3f s",
-            "Simulation time for weight transfer.\nSimulates how fast the suspension settles.\nAffects calculated tire load magnitude.\n25ms = Stiff Race Car.\n50ms = Soft Road Car.",
-            [&]() {
-                int ms = (int)(engine.m_chassis_inertia_smoothing * 1000.0f + 0.5f);
-                ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "Simulation: %d ms", ms);
-            });
-
-        FloatSetting("Optimal Slip Angle", &engine.m_optimal_slip_angle, 0.05f, 0.20f, "%.2f rad", 
-            "The slip angle THRESHOLD above which grip loss begins.\n"
-            "Set this HIGHER than the car's physical peak slip angle.\n"
-            "Recommended: 0.10 for LMDh/LMP2, 0.12 for GT3.\n\n"
-            "Lower = More sensitive (force drops earlier).\n"
-            "Higher = More buffer zone before force drops.\n\n"
-            "NOTE: If the wheel feels too light at the limit, INCREASE this value.\n"
-            "Affects: Understeer Effect, Lateral G Boost (Slide), Slide Texture.");
-
-        FloatSetting("Optimal Slip Ratio", &engine.m_optimal_slip_ratio, 0.05f, 0.20f, "%.2f", 
-            "The longitudinal slip ratio (0.0-1.0) where peak braking/traction occurs.\n"
-            "Typical: 0.12 - 0.15 (12-15%).\n"
-            "Used to estimate grip loss under braking/acceleration.\n"
-            "Affects: How much braking/acceleration contributes to calculated grip loss.");
-        // ---------------------------------
-
-        
-        
-        ImGui::TreePop();
-    } else { 
-        // Keep columns synchronized when section is collapsed
-        ImGui::NextColumn(); ImGui::NextColumn(); 
-    }
-
+    ImGui::Separator();
     // --- GROUP: BRAKING & LOCKUP ---
-    if (ImGui::TreeNodeEx("Braking & Lockup", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
-        ImGui::NextColumn(); ImGui::NextColumn();
-
-        BoolSetting("Lockup Vibration", &engine.m_lockup_enabled, "Simulates tire judder when wheels are locked under braking.");
-        if (engine.m_lockup_enabled) {
-            FloatSetting("  Lockup Strength", &engine.m_lockup_gain, 0.0f, 3.0f, FormatDecoupled(engine.m_lockup_gain, FFBEngine::BASE_NM_LOCKUP_VIBRATION));
-            FloatSetting("  Brake Load Cap", &engine.m_brake_load_cap, 1.0f, 10.0f, "%.2fx", "Scales vibration intensity based on tire load.\nPrevents weak vibrations during high-speed heavy braking.");
-            
-            FloatSetting("  Vibration Pitch", &engine.m_lockup_freq_scale, 0.5f, 2.0f, "%.2fx", "Scales the frequency of lockup and wheel spin vibrations.\nMatch to your hardware resonance.");
-            
-            
-            // Precision formatting rationale (v0.6.0):
-            // - Gamma: %.1f (1 decimal) - Allows fine-tuning of response curve
-            // - Sensitivity: %.0f (0 decimals) - Integer values are sufficient for threshold
-            // - Bump Rejection: %.1f m/s (1 decimal) - Balances precision with readability
-            // - ABS Gain: %.2f (2 decimals) - Standard gain precision across all effects
-            ImGui::Separator();
-            ImGui::Text("Response Curve");
-            ImGui::NextColumn(); ImGui::NextColumn();
-
-            FloatSetting("  Gamma", &engine.m_lockup_gamma, 0.1f, 3.0f, "%.1f", "Response Curve Non-Linearity.\n1.0 = Linear.\n>1.0 = Progressive (Starts weak, gets strong fast).\n<1.0 = Aggressive (Starts strong). 2.0=Quadratic, 3.0=Cubic (Late/Sharp)");
-            FloatSetting("  Start Slip %", &engine.m_lockup_start_pct, 1.0f, 10.0f, "%.1f%%", "Slip percentage where vibration begins.\n1.0% = Immediate feedback.\n5.0% = Only on deep lock.");
-            FloatSetting("  Full Slip %", &engine.m_lockup_full_pct, 5.0f, 25.0f, "%.1f%%", "Slip percentage where vibration reaches maximum intensity.");
-            
-            
-            // Precision formatting rationale (v0.6.0):
-            // - Gamma: %.1f (1 decimal) - Allows fine-tuning of response curve
-            // - Sensitivity: %.0f (0 decimals) - Integer values are sufficient for threshold
-            // - Bump Rejection: %.1f m/s (1 decimal) - Balances precision with readability
-            // - ABS Gain: %.2f (2 decimals) - Standard gain precision across all effects
-            ImGui::Separator();
-            ImGui::Text("Prediction (Advanced)");
-            ImGui::NextColumn(); ImGui::NextColumn();
-
-            FloatSetting("  Sensitivity", &engine.m_lockup_prediction_sens, 10.0f, 100.0f, "%.0f", "Angular Deceleration Threshold.\nHow aggressively the system predicts a lockup before it physically occurs.\nLower = More sensitive (triggers earlier).\nHigher = Less sensitive.");
-            FloatSetting("  Bump Rejection", &engine.m_lockup_bump_reject, 0.1f, 5.0f, "%.1f m/s", "Suspension velocity threshold.\nDisables prediction on bumpy surfaces to prevent false positives.\nIncrease for bumpy tracks (Sebring).");
-
-            FloatSetting("  Rear Boost", &engine.m_lockup_rear_boost, 1.0f, 10.0f, "%.2fx", "Multiplies amplitude when rear wheels lock harder than front wheels.\nHelps distinguish rear locking (dangerous) from front locking (understeer).");
-        }
-
-        ImGui::Separator();
-        ImGui::Text("ABS & Hardware");
+    if (ImGui::TreeNodeEx("Braking Effects", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
         // ABS
-        BoolSetting("ABS Pulse", &engine.m_abs_pulse_enabled, "Simulates the pulsing of an ABS system.\nInjects high-frequency pulse when ABS modulates pressure.");
+        BoolSetting("ABS Vibration", &engine.m_abs_pulse_enabled, "Simulates the pulsing of an ABS system.\nInjects high-frequency pulse when ABS modulates pressure.");
         if (engine.m_abs_pulse_enabled) {
-            FloatSetting("  Pulse Gain", &engine.m_abs_gain, 0.0f, 10.0f, "%.2f", "Intensity of the ABS pulse.");
-            FloatSetting("  Pulse Frequency", &engine.m_abs_freq_hz, 10.0f, 50.0f, "%.1f Hz", "Rate of the ABS pulse oscillation.");
+            FloatSetting("  ABS Gain", &engine.m_abs_gain, 0.0f, 10.0f, "%.2f", "Intensity of the ABS pulse.");
+            FloatSetting("  ABS Frequency", &engine.m_abs_freq_hz, 10.0f, 50.0f, "%.1f Hz", "Rate of the ABS pulse oscillation.");
+        }
+        // LOCKUP
+        BoolSetting("Lockup Vibration", &engine.m_lockup_enabled, "Simulates tire judder when wheels are locked under braking.");
+        if (engine.m_lockup_enabled) {
+            FloatSetting("  Lockup Gain", &engine.m_lockup_gain, 0.0f, 3.0f, FormatDecoupled(engine.m_lockup_gain, FFBEngine::BASE_NM_LOCKUP_VIBRATION));
+            FloatSetting("  Lockup Frequency", &engine.m_lockup_freq_scale, 0.5f, 2.0f, "%.2fx", "Scales the frequency of lockup and wheel spin vibrations.\nMatch to your hardware resonance.");
+            
+            if (ImGui::CollapsingHeader("Advanced")) {
+                ImGui::TextColored(ImVec4(0.0f, 0.6f, 0.85f, 1.0f), "Lockup Response");
+                ImGui::NextColumn(); ImGui::NextColumn();
+                FloatSetting("  Gamma Curve", &engine.m_lockup_gamma, 0.1f, 3.0f, "%.1f", "Response Curve Non-Linearity.\n1.0 = Linear.\n>1.0 = Progressive (Starts weak, gets strong fast).\n<1.0 = Aggressive (Starts strong). 2.0=Quadratic, 3.0=Cubic (Late/Sharp)");
+                FloatSetting("  Tire Minimum Load Cap", &engine.m_brake_load_cap, 1.0f, 10.0f, "%.2fx", "Scales vibration intensity based on tire load.\nPrevents weak vibrations during high-speed heavy braking.");
+                FloatSetting("  Tire Minimum Slip %", &engine.m_lockup_start_pct, 1.0f, 10.0f, "%.1f%%", "Slip percentage where vibration begins.\n1.0% = Immediate feedback.\n5.0% = Only on deep lock.");
+                FloatSetting("  Tire Full Slip %", &engine.m_lockup_full_pct, 5.0f, 25.0f, "%.1f%%", "Slip percentage where vibration reaches maximum intensity.");
+
+                ImGui::TextColored(ImVec4(0.0f, 0.6f, 0.85f, 1.0f), "Lockup Prediction");
+                ImGui::NextColumn(); ImGui::NextColumn();
+                FloatSetting("  Prediction Sensitivity", &engine.m_lockup_prediction_sens, 10.0f, 100.0f, "%.0f", "Angular Deceleration Threshold.\nHow aggressively the system predicts a lockup before it physically occurs.\nLower = More sensitive (triggers earlier).\nHigher = Less sensitive.");
+                FloatSetting("  Track Roughness Filter", &engine.m_lockup_bump_reject, 0.1f, 5.0f, "%.1f m/s", "Suspension velocity threshold.\nDisables prediction on bumpy surfaces to prevent false positives.\nIncrease for bumpy tracks (Sebring).");
+                FloatSetting("  Rear Lockup Gain", &engine.m_lockup_rear_boost, 1.0f, 10.0f, "%.2fx", "Multiplies amplitude when rear wheels lock harder than front wheels.\nHelps distinguish rear locking (dangerous) from front locking (understeer).");
+
+                // Precision formatting rationale (v0.6.0):
+                // - Gamma: %.1f (1 decimal) - Allows fine-tuning of response curve
+                // - Sensitivity: %.0f (0 decimals) - Integer values are sufficient for threshold
+                // - Bump Rejection: %.1f m/s (1 decimal) - Balances precision with readability
+                // - ABS Gain: %.2f (2 decimals) - Standard gain precision across all effects
+            }
         }
 
         ImGui::TreePop();
     } else {
+        // Keep columns synchronized when section is collapsed
         ImGui::NextColumn(); ImGui::NextColumn();
     }
 
+    ImGui::Separator();
     // --- GROUP: TEXTURES ---
     if (ImGui::TreeNodeEx("Tactile Textures", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
         
-        FloatSetting("Texture Load Cap", &engine.m_texture_load_cap, 1.0f, 3.0f, "%.2fx", "Safety Limiter specific to Road and Slide textures.\nPrevents violent shaking when under high downforce or compression.\nONLY affects Road Details and Slide Rumble.");
+        FloatSetting("Tactile Texture Cap", &engine.m_texture_load_cap, 1.0f, 3.0f, "%.2fx", "Safety Limiter specific to Road and Slide textures.\nPrevents violent shaking when under high downforce or compression.\nONLY affects Road Details and Slide Rumble.");
+
+        FloatSetting("Scrub Drag (Understeer)", &engine.m_scrub_drag_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_scrub_drag_gain, FFBEngine::BASE_NM_SCRUB_DRAG), "Constant resistance force when pushing tires laterally (Understeer drag).\nAdds weight to the wheel when scrubbing.");
 
         BoolSetting("Slide Rumble", &engine.m_slide_texture_enabled, "Vibration proportional to tire sliding/scrubbing velocity.");
         if (engine.m_slide_texture_enabled) {
             FloatSetting("  Slide Gain", &engine.m_slide_texture_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_slide_texture_gain, FFBEngine::BASE_NM_SLIDE_TEXTURE), "Intensity of the scrubbing vibration.");
             FloatSetting("  Slide Pitch", &engine.m_slide_freq_scale, 0.5f, 5.0f, "%.2fx", "Frequency multiplier for the scrubbing sound/feel.\nHigher = Screeching.\nLower = Grinding.");
         }
-        
-        BoolSetting("Road Details", &engine.m_road_texture_enabled, "Vibration derived from high-frequency suspension movement.\nFeels road surface, cracks, and bumps.");
-        if (engine.m_road_texture_enabled) {
-            FloatSetting("  Road Gain", &engine.m_road_texture_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_road_texture_gain, FFBEngine::BASE_NM_ROAD_TEXTURE), "Intensity of road details.");
-        }
 
-        BoolSetting("Spin Vibration", &engine.m_spin_enabled, "Vibration when wheels lose traction under acceleration (Wheel Spin).");
+        BoolSetting("Spin Rumble", &engine.m_spin_enabled, "Vibration when wheels lose traction under acceleration (Wheel Spin).");
         if (engine.m_spin_enabled) {
             FloatSetting("  Spin Strength", &engine.m_spin_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_spin_gain, FFBEngine::BASE_NM_SPIN_VIBRATION), "Intensity of the wheel spin vibration.");
             FloatSetting("  Spin Pitch", &engine.m_spin_freq_scale, 0.5f, 2.0f, "%.2fx", "Scales the frequency of the wheel spin vibration.");
         }
 
-        FloatSetting("Scrub Drag", &engine.m_scrub_drag_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_scrub_drag_gain, FFBEngine::BASE_NM_SCRUB_DRAG), "Constant resistance force when pushing tires laterally (Understeer drag).\nAdds weight to the wheel when scrubbing.");
-        
+        BoolSetting("Road Details", &engine.m_road_texture_enabled, "Vibration derived from high-frequency suspension movement.\nFeels road surface, cracks, and bumps.");
+        if (engine.m_road_texture_enabled) {
+            FloatSetting("  Road Gain", &engine.m_road_texture_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_road_texture_gain, FFBEngine::BASE_NM_ROAD_TEXTURE), "Intensity of road details.");
+        }
+
         const char* bottoming_modes[] = { "Method A: Scraping", "Method B: Susp. Spike" };
         IntSetting("Bottoming Logic", &engine.m_bottoming_method, bottoming_modes, sizeof(bottoming_modes)/sizeof(bottoming_modes[0]), "Algorithm for detecting suspension bottoming.\nScraping = Ride height based.\nSusp Spike = Force rate based.");
         
         ImGui::TreePop();
-    } else { 
-        // Keep columns synchronized when section is collapsed
-        ImGui::NextColumn(); ImGui::NextColumn(); 
-    }
-
-    // --- ADVANCED SETTINGS ---
-    if (ImGui::CollapsingHeader("Advanced Settings")) {
-        ImGui::Indent();
-        
-        if (ImGui::TreeNode("Stationary Vibration Gate")) {
-            ImGui::TextWrapped("Controls when vibrations fade out and Idle Smoothing activates.");
-            
-            float lower_kmh = engine.m_speed_gate_lower * 3.6f;
-            if (ImGui::SliderFloat("Mute Below", &lower_kmh, 0.0f, 20.0f, "%.1f km/h")) {
-                engine.m_speed_gate_lower = lower_kmh / 3.6f;
-                if (engine.m_speed_gate_upper <= engine.m_speed_gate_lower + 0.1f) 
-                    engine.m_speed_gate_upper = engine.m_speed_gate_lower + 0.5f;
-                selected_preset = -1;
-            }
-            if (ImGui::IsItemDeactivatedAfterEdit()) {
-                Config::Save(engine);
-            }
-
-            float upper_kmh = engine.m_speed_gate_upper * 3.6f;
-            if (ImGui::SliderFloat("Full Above", &upper_kmh, 1.0f, 50.0f, "%.1f km/h")) {
-                engine.m_speed_gate_upper = upper_kmh / 3.6f;
-                if (engine.m_speed_gate_upper <= engine.m_speed_gate_lower + 0.1f)
-                    engine.m_speed_gate_upper = engine.m_speed_gate_lower + 0.5f;
-                selected_preset = -1;
-            }
-            if (ImGui::IsItemDeactivatedAfterEdit()) {
-                Config::Save(engine);
-            }
-            
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip(
-                "Speed where vibrations reach full strength.\n"
-                "CRITICAL: Speeds below this value will have SMOOTHING applied\n"
-                "to eliminate engine idle vibration.\n"
-                "Default: 18.0 km/h (Safe for all wheels).");
-            
-            ImGui::TreePop();
-        }
-        ImGui::Unindent();
     }
 
     // End Columns
     ImGui::Columns(1);
-    
     ImGui::End();
 }
 // Win32 message handler
