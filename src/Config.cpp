@@ -91,9 +91,9 @@ void Config::LoadPresets() {
         presets.push_back(p);
     }
     
-    // 3. GT3 DD 15 Nm (Simagic Alpha)
+    // 3. GT3 DD 15Nm (Simagic Alpha)
     {
-        Preset p("GT3 DD 15 Nm (Simagic Alpha)", true);
+        Preset p("GT3 DD 15Nm (Simagic Alpha)", true);
         p.gain = 1.0f;
         p.max_torque_ref = 100.0f;
         p.min_force = 0.0f;
@@ -148,13 +148,13 @@ void Config::LoadPresets() {
         p.scrub_drag_gain = 0.333f;
         p.bottoming_method = 1;
         p.speed_gate_lower = 1.0f;
-        p.speed_gate_upper = 5.0f;
+        p.speed_gate_upper = 2.1f;
         presets.push_back(p);
     }
     
-    // 4. LMPx/HY DD 15 Nm (Simagic Alpha)
+    // 4. LMPx/HY DD 15Nm (Simagic Alpha)
     {
-        Preset p("LMPx/HY DD 15 Nm (Simagic Alpha)", true);
+        Preset p("LMPx/HY DD 15Nm (Simagic Alpha)", true);
         p.gain = 1.0f;
         p.max_torque_ref = 100.0f;
         p.min_force = 0.0f;
@@ -209,13 +209,74 @@ void Config::LoadPresets() {
         p.scrub_drag_gain = 0.333f;
         p.bottoming_method = 1;
         p.speed_gate_lower = 1.0f;
-        p.speed_gate_upper = 5.0f;
+        p.speed_gate_upper = 2.1f;
         presets.push_back(p);
     }
-    
-    // 5. GM DD 21 Nm (Moza R21 Ultra)
+
+    // 4b. LMPx/HY +Kick DD 15Nm (Simagic Alpha)
     {
-        Preset p("GM DD 21 Nm (Moza R21 Ultra)", true);
+        Preset p("LMPx/HY +Kick DD 15Nm (Simagic Alpha)", true);
+        p.gain = 1.0f;
+        p.max_torque_ref = 100.0f;
+        p.min_force = 0.0f;
+        p.steering_shaft_gain = 1.0f;
+        p.steering_shaft_smoothing = 0.0f;
+        p.understeer = 1.0f;
+        p.base_force_mode = 0;
+        p.flatspot_suppression = false;
+        p.notch_q = 2.0f;
+        p.flatspot_strength = 1.0f;
+        p.static_notch_enabled = false;
+        p.static_notch_freq = 11.0f;
+        p.static_notch_width = 2.0f;
+        p.oversteer_boost = 2.52101f;
+        p.sop = 1.666f;
+        p.rear_align_effect = 0.666f;
+        p.sop_yaw_gain = 0.333f;
+        p.yaw_kick_threshold = 1.2f;
+        p.yaw_smoothing = 0.003f;
+        p.gyro_gain = 0.0f;
+        p.gyro_smoothing = 0.003f;
+        p.sop_smoothing = 0.97f;
+        p.sop_scale = 1.59f;
+        p.understeer_affects_sop = false;
+        p.slip_smoothing = 0.003f;
+        p.chassis_smoothing = 0.019f;
+        p.optimal_slip_angle = 0.12f;
+        p.optimal_slip_ratio = 0.12f;
+        p.lockup_enabled = true;
+        p.lockup_gain = 0.37479f;
+        p.brake_load_cap = 2.0f;
+        p.lockup_freq_scale = 1.0f;
+        p.lockup_gamma = 1.0f;
+        p.lockup_start_pct = 1.0f;
+        p.lockup_full_pct = 7.5f;
+        p.lockup_prediction_sens = 10.0f;
+        p.lockup_bump_reject = 0.1f;
+        p.lockup_rear_boost = 1.0f;
+        p.abs_pulse_enabled = false;
+        p.abs_gain = 2.1f;
+        p.abs_freq = 25.5f;
+        p.texture_load_cap = 1.5f;
+        p.slide_enabled = false;
+        p.slide_gain = 0.226562f;
+        p.slide_freq = 1.47f;
+        p.road_enabled = true;
+        p.road_gain = 0.0f;
+        p.road_fallback_scale = 0.05f;
+        p.spin_enabled = true;
+        p.spin_gain = 0.462185f;
+        p.spin_freq_scale = 1.8f;
+        p.scrub_drag_gain = 0.333f;
+        p.bottoming_method = 1;
+        p.speed_gate_lower = 1.0f;
+        p.speed_gate_upper = 2.1f;
+        presets.push_back(p);
+    }
+
+    // 5. GM DD 21Nm (Moza R21 Ultra)
+    {
+        Preset p("GM DD 21Nm (Moza R21 Ultra)", true);
         p.gain = 1.454f;
         p.max_torque_ref = 100.1f;
         p.min_force = 0.0f;
@@ -274,10 +335,10 @@ void Config::LoadPresets() {
         presets.push_back(p);
     }
     
-    // 6. GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)
+    // 6. GM +Kick DD 21Nm (Moza R21 Ultra)
     {
         // Copy GM preset and add yaw kick
-        Preset p("GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)", true);
+        Preset p("GM +Kick DD 21Nm (Moza R21 Ultra)", true);
         p.gain = 1.454f;
         p.max_torque_ref = 100.1f;
         p.min_force = 0.0f;
@@ -335,7 +396,69 @@ void Config::LoadPresets() {
         p.speed_gate_upper = 5.0f;
         presets.push_back(p);
     }
-    
+
+    // 7. CSL Elite 6Nm (Fanatec)
+    {
+        // https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/post-78417
+        Preset p("CSL Elite 6Nm belt (Fanatec)", true);
+        p.gain = 1.45f;
+        p.max_torque_ref = 61.6f;
+        p.min_force = 0.0f;
+        p.steering_shaft_gain = 2.0f;
+        p.steering_shaft_smoothing = 0.0f;
+        p.understeer = 0.417f;
+        p.base_force_mode = 0;
+        p.flatspot_suppression = true;
+        p.notch_q = 0.57f;
+        p.flatspot_strength = 1.0f;
+        p.static_notch_enabled = false;
+        p.static_notch_freq = 11.0f;
+        p.static_notch_width = 2.0f;
+        p.oversteer_boost = 2.4f;
+        p.sop = 0.425f;
+        p.rear_align_effect = 0.97f;
+        p.sop_yaw_gain = 0.386f;  // ONLY DIFFERENCE: Added yaw kick
+        p.yaw_kick_threshold = 1.68f;
+        p.yaw_smoothing = 0.0f;
+        p.gyro_gain = 0.0f;
+        p.gyro_smoothing = 0.0f;
+        p.sop_smoothing = 1.0f;
+        p.sop_scale = 1.00f;
+        p.understeer_affects_sop = false;
+        p.slip_smoothing = 0.0f;
+        p.chassis_smoothing = 0.0f;
+        p.optimal_slip_angle = 0.12f;
+        p.optimal_slip_ratio = 0.12f;
+        p.lockup_enabled = true;
+        p.lockup_gain = 2.0f;
+        p.brake_load_cap = 10.0f;
+        p.lockup_freq_scale = 1.0f;
+        p.lockup_gamma = 0.1f;
+        p.lockup_start_pct = 1.0f;
+        p.lockup_full_pct = 5.0f;
+        p.lockup_prediction_sens = 10.0f;
+        p.lockup_bump_reject = 0.1f;
+        p.lockup_rear_boost = 10.0f;
+        p.abs_pulse_enabled = false;
+        p.abs_gain = 2.0f;
+        p.abs_freq = 20.0f;
+        p.texture_load_cap = 1.96f;
+        p.slide_enabled = true;
+        p.slide_gain = 0.23f;
+        p.slide_freq = 1.0f;
+        p.road_enabled = true;
+        p.road_gain = 2.0f;
+        p.road_fallback_scale = 0.05f;
+        p.spin_enabled = true;
+        p.spin_gain = 0.5f;
+        p.spin_freq_scale = 1.0f;
+        p.scrub_drag_gain = 0.05f;
+        p.bottoming_method = 0;
+        p.speed_gate_lower = 1.0f;
+        p.speed_gate_upper = 2.1f;
+        presets.push_back(p);
+    }
+
     // 8. Test: Game Base FFB Only
     presets.push_back(Preset("Test: Game Base FFB Only", true)
         .SetUndersteer(0.0f)

@@ -1992,10 +1992,12 @@ static void test_preset_initialization() {
     const char* preset_names[] = {
         "Default",
         "T300",
-        "GT3 DD 15 Nm (Simagic Alpha)",
-        "LMPx/HY DD 15 Nm (Simagic Alpha)",
-        "GM DD 21 Nm (Moza R21 Ultra)",
-        "GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)",
+        "GT3 DD 15Nm (Simagic Alpha)",
+        "LMPx/HY DD 15Nm (Simagic Alpha)",
+        "LMPx/HY +Kick DD 15Nm (Simagic Alpha)",
+        "GM DD 21Nm (Moza R21 Ultra)",
+        "GM +Kick DD 21Nm (Moza R21 Ultra)",
+        "CSL Elite 6Nm belt (Fanatec)",
         "Test: Game Base FFB Only",
         "Test: SoP Only",
         "Test: Understeer Only",
@@ -2008,8 +2010,8 @@ static void test_preset_initialization() {
     
     bool all_passed = true;
     
-    // ⚠️ IMPORTANT: Loop count (14) must match preset_names array size above!
-    for (int i = 0; i < 14; i++) {
+    // ⚠️ IMPORTANT: Loop count (16) must match preset_names array size above!
+    for (int i = 0; i < 16; i++) {
         if (i >= Config::presets.size()) {
             std::cout << "[FAIL] Preset " << i << " (" << preset_names[i] << ") not found!" << std::endl;
             all_passed = false;
@@ -2036,10 +2038,12 @@ static void test_preset_initialization() {
         // Current specialized presets: Default, T300, GT3, LMPx/HY, GM, GM + Yaw Kick
         bool is_specialized = (preset.name == "Default" || 
                               preset.name == "T300" ||
-                              preset.name == "GT3 DD 15 Nm (Simagic Alpha)" ||
-                              preset.name == "LMPx/HY DD 15 Nm (Simagic Alpha)" ||
-                              preset.name == "GM DD 21 Nm (Moza R21 Ultra)" ||
-                              preset.name == "GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)");
+                              preset.name == "GT3 DD 15Nm (Simagic Alpha)" ||
+                              preset.name == "LMPx/HY DD 15Nm (Simagic Alpha)" ||
+                              preset.name == "LMPx/HY +Kick DD 15Nm (Simagic Alpha)" ||
+                              preset.name == "GM DD 21Nm (Moza R21 Ultra)" ||
+                              preset.name == "GM +Kick DD 21Nm (Moza R21 Ultra)" ||
+                              preset.name == "CSL Elite 6Nm belt (Fanatec)");
         
         // Determine expectations based on whether it's the specialized T300 preset
         bool is_specialized_t300 = (preset.name == "T300");
@@ -2112,7 +2116,7 @@ static void test_preset_initialization() {
     }
     
     if (all_passed) {
-        std::cout << "[PASS] All 14 built-in presets have correct field initialization" << std::endl;
+        std::cout << "[PASS] All 16 built-in presets have correct field initialization" << std::endl;
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Some presets have incorrect specialization or defaults" << std::endl;
