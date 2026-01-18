@@ -994,7 +994,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             BoolSetting("Flatspot Suppression", &engine.m_flatspot_suppression, "Dynamic Notch Filter that targets wheel rotation frequency.\nSuppresses vibrations caused by tire flatspots.");
             if (engine.m_flatspot_suppression) {
                 FloatSetting("    Filter Width (Q)", &engine.m_notch_q, 0.5f, 10.0f, "Q: %.2f", "Quality Factor of the Notch Filter.\nHigher = Narrower bandwidth (surgical removal).\nLower = Wider bandwidth (affects surrounding frequencies).");
-                FloatSetting("    Suppression Strength", &engine.m_flatspot_strength, 0.0f, 1.0f, "%.2f", "How strongly to mute the flatspot vibration.\n1.0 = 100% removal.");
+                FloatSetting("    Suppression Gain", &engine.m_flatspot_strength, 0.0f, 1.0f, "%.2f", "How strongly to mute the flatspot vibration.\n1.0 = 100% removal.");
                 ImGui::Text("    Est. / Theory Freq");
                 ImGui::NextColumn();
                 ImGui::TextDisabled("%.1f Hz / %.1f Hz", engine.m_debug_freq, engine.m_theoretical_freq);
@@ -1004,7 +1004,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             ImGui::NextColumn(); ImGui::NextColumn();
             BoolSetting("Static Noise Filter", &engine.m_static_notch_enabled, "Fixed frequency notch filter to remove hardware resonance or specific noise.");
             if (engine.m_static_notch_enabled) {
-                FloatSetting("    Target Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.1f Hz", "Center frequency to suppress.");
+                FloatSetting("    Filter Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.1f Hz", "Center frequency to suppress.");
                 FloatSetting("    Filter Width", &engine.m_static_notch_width, 0.1f, 10.0f, "%.1f Hz", "Bandwidth of the notch filter.\nLarger = Blocks more frequencies around the target.");
             }
 
@@ -1017,7 +1017,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::NextColumn(); ImGui::NextColumn(); 
     }
 
-    // QoL Main Window menu rearrangement
     // --- GROUP: BODY & AXLE ---
     ImGui::Separator();
     if (ImGui::TreeNodeEx("Steering & Vehicle Physics", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
@@ -1061,8 +1060,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                     ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
                 });
             FloatSetting("  SoP Global Scaling", &engine.m_sop_scale, 0.0f, 20.0f, "%.2f", "Multiplies the raw G-force signal before limiting.\nAdjusts the dynamic range of the SoP effect.");
-            FloatSetting("  SoP Yaw Effect Threshold (Kick)", &engine.m_yaw_kick_threshold, 0.0f, 10.0f, "%.2f rad/s²", "Minimum yaw acceleration required to trigger the kick.\nIncrease to filter out road noise and small vibrations.");
-            FloatSetting("  SoP Yaw Effect Smoothing (Kick)", &engine.m_yaw_accel_smoothing, 0.000f, 0.050f, "%.3f s",
+            FloatSetting("  SoP Yaw Threshold (Kick)", &engine.m_yaw_kick_threshold, 0.0f, 10.0f, "%.2f rad/s²", "Minimum yaw acceleration required to trigger the kick.\nIncrease to filter out road noise and small vibrations.");
+            FloatSetting("  SoP Yaw Smoothing (Kick)", &engine.m_yaw_accel_smoothing, 0.000f, 0.050f, "%.3f s",
                 "Low Pass Filter for the Yaw Kick signal.\nSmoothes out kick noise.\nLower = Sharper/Faster kick.\nHigher = Duller/Softer kick.",
                 [&]() {
                     int ms = (int)(engine.m_yaw_accel_smoothing * 1000.0f + 0.5f);
@@ -1120,13 +1119,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         BoolSetting("ABS Vibration", &engine.m_abs_pulse_enabled, "Simulates the pulsing of an ABS system.\nInjects high-frequency pulse when ABS modulates pressure.");
         if (engine.m_abs_pulse_enabled) {
             FloatSetting("  ABS Gain", &engine.m_abs_gain, 0.0f, 10.0f, "%.2f", "Intensity of the ABS pulse.");
-            FloatSetting("  ABS Frequency", &engine.m_abs_freq_hz, 10.0f, 50.0f, "%.1f Hz", "Rate of the ABS pulse oscillation.");
+            FloatSetting("  ABS Pitch", &engine.m_abs_freq_hz, 10.0f, 50.0f, "%.1f Hz", "Rate of the ABS pulse oscillation.");
         }
         // LOCKUP
         BoolSetting("Lockup Vibration", &engine.m_lockup_enabled, "Simulates tire judder when wheels are locked under braking.");
         if (engine.m_lockup_enabled) {
             FloatSetting("  Lockup Gain", &engine.m_lockup_gain, 0.0f, 3.0f, FormatDecoupled(engine.m_lockup_gain, FFBEngine::BASE_NM_LOCKUP_VIBRATION));
-            FloatSetting("  Lockup Frequency", &engine.m_lockup_freq_scale, 0.5f, 2.0f, "%.2fx", "Scales the frequency of lockup and wheel spin vibrations.\nMatch to your hardware resonance.");
+            FloatSetting("  Lockup Pitch", &engine.m_lockup_freq_scale, 0.5f, 2.0f, "%.2fx", "Scales the frequency of lockup and wheel spin vibrations.\nMatch to your hardware resonance.");
             
             if (ImGui::CollapsingHeader("Advanced")) {
                 ImGui::TextColored(ImVec4(0.0f, 0.6f, 0.85f, 1.0f), "Lockup Response");
@@ -1161,7 +1160,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::TreeNodeEx("Tactile Textures", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
         
-        FloatSetting("Tactile Texture Cap", &engine.m_texture_load_cap, 1.0f, 3.0f, "%.2fx", "Safety Limiter specific to Road and Slide textures.\nPrevents violent shaking when under high downforce or compression.\nONLY affects Road Details and Slide Rumble.");
+        FloatSetting("Texture Scaling", &engine.m_texture_load_cap, 1.0f, 3.0f, "%.2fx", "Safety Limiter specific to Road and Slide textures.\nPrevents violent shaking when under high downforce or compression.\nONLY affects Road Details and Slide Rumble.");
 
         FloatSetting("Scrub Drag (Understeer)", &engine.m_scrub_drag_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_scrub_drag_gain, FFBEngine::BASE_NM_SCRUB_DRAG), "Constant resistance force when pushing tires laterally (Understeer drag).\nAdds weight to the wheel when scrubbing.");
 
@@ -1173,7 +1172,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
         BoolSetting("Spin Rumble", &engine.m_spin_enabled, "Vibration when wheels lose traction under acceleration (Wheel Spin).");
         if (engine.m_spin_enabled) {
-            FloatSetting("  Spin Strength", &engine.m_spin_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_spin_gain, FFBEngine::BASE_NM_SPIN_VIBRATION), "Intensity of the wheel spin vibration.");
+            FloatSetting("  Spin Gain", &engine.m_spin_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_spin_gain, FFBEngine::BASE_NM_SPIN_VIBRATION), "Intensity of the wheel spin vibration.");
             FloatSetting("  Spin Pitch", &engine.m_spin_freq_scale, 0.5f, 2.0f, "%.2fx", "Scales the frequency of the wheel spin vibration.");
         }
 
