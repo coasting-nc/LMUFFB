@@ -135,3 +135,7 @@ build_test/CMakeCache.txt
 build_test/
 tests/build-tests/run_tests_win32.vcxproj
 tests/build-tests/run_tests_win32.vcxproj.filters
+/.vs/LMUFFB/v17
+/.vs/LMUFFB/FileContentIndex
+/.vs
+/CMakeSettings.json
