@@ -35,3 +35,4 @@ docs/dev_docs/code_reviews/CRITICAL_FIXES_REQUIRED_v0.4.49.md
 build_test/CMakeCache.txt
 build_test/
 /CMakeSettings.json
+subagents/
