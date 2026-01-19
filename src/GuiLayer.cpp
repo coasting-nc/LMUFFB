@@ -1443,6 +1443,13 @@ static RollingBuffer plot_raw_front_long_patch_vel;
 static RollingBuffer plot_raw_rear_lat_patch_vel;
 static RollingBuffer plot_raw_rear_long_patch_vel;
 
+// New Telemetry Sources (v0.7.0)
+static RollingBuffer plot_axle_front_3rd_deflection;
+static RollingBuffer plot_axle_rear_3rd_deflection;
+static RollingBuffer plot_axle_front_downforce;
+static RollingBuffer plot_axle_rear_downforce;
+static RollingBuffer plot_global_drag_force;
+
 // Extras
 static RollingBuffer plot_raw_slip_angle; // Kept but grouped appropriately
 static RollingBuffer plot_raw_rear_slip_angle;
@@ -1525,6 +1532,13 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         plot_raw_front_long_patch_vel.Add(snap.raw_front_long_patch_vel);
         plot_raw_rear_lat_patch_vel.Add(snap.raw_rear_lat_patch_vel);
         plot_raw_rear_long_patch_vel.Add(snap.raw_rear_long_patch_vel);
+
+        // New Telemetry Sources (v0.7.0)
+        plot_axle_front_3rd_deflection.Add(snap.axle_front_3rd_deflection);
+        plot_axle_rear_3rd_deflection.Add(snap.axle_rear_3rd_deflection);
+        plot_axle_front_downforce.Add(snap.axle_front_downforce);
+        plot_axle_rear_downforce.Add(snap.axle_rear_downforce);
+        plot_global_drag_force.Add(snap.global_drag_force);
 
         // Updates for extra buffers
         plot_raw_slip_angle.Add(snap.raw_front_slip_angle);
@@ -1775,6 +1789,36 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
                       "Longitudinal Velocity at Contact Patch (Rear)");
 
         ImGui::Separator();
+
+        ImGui::Columns(1);
+    }
+
+    // --- New Telemetry Sources (v0.7.0) ---
+    if (ImGui::CollapsingHeader("D. New Telemetry Sources (v0.7.0)", ImGuiTreeNodeFlags_None)) {
+        ImGui::Columns(3, "NewTelCols", false);
+
+        // Group: Axle 3rd Deflection
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "[Axle 3rd Deflection]");
+        PlotWithStats("Front 3rd Deflect", plot_axle_front_3rd_deflection, 0.0f, 1.0f, ImVec2(0, 40),
+                      "Front axle 3rd spring deflection (0-1)");
+        PlotWithStats("Rear 3rd Deflect", plot_axle_rear_3rd_deflection, 0.0f, 1.0f, ImVec2(0, 40),
+                      "Rear axle 3rd spring deflection (0-1)");
+
+        ImGui::NextColumn();
+
+        // Group: Suspension Force Enhancements
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "[Suspension Forces]");
+        PlotWithStats("Front Downforce", plot_axle_front_downforce, 0.0f, 1000.0f, ImVec2(0, 40),
+                      "Front wing downforce contribution");
+        PlotWithStats("Rear Downforce", plot_axle_rear_downforce, 0.0f, 1000.0f, ImVec2(0, 40),
+                      "Rear wing downforce contribution");
+
+        ImGui::NextColumn();
+
+        // Group: Global Forces
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "[Global Forces]");
+        PlotWithStats("Aerodynamic Drag", plot_global_drag_force, 0.0f, 2000.0f, ImVec2(0, 40),
+                      "Global aerodynamic drag force");
 
         ImGui::Columns(1);
     }

@@ -111,6 +111,13 @@ struct FFBSnapshot {
     float raw_rear_lat_patch_vel;   // New v0.4.9
     float raw_rear_long_patch_vel;  // New v0.4.9
 
+    // New Telemetry Sources (v0.7.0)
+    float axle_front_3rd_deflection;    // Front axle 3rd deflection (0-1)
+    float axle_rear_3rd_deflection;     // Rear axle 3rd deflection (0-1)
+    float axle_front_downforce;         // Front downforce contribution
+    float axle_rear_downforce;          // Rear downforce contribution
+    float global_drag_force;            // Global drag contribution
+
     // Telemetry Health Flags
     bool warn_load;
     bool warn_grip;
@@ -266,6 +273,9 @@ public:
     // implemented in the calculate_force() logic. They will be activated in a future release.
     float m_road_fallback_scale = 0.05f;
     bool m_understeer_affects_sop = false;
+
+    // New Telemetry Mappings (v0.7.0)
+    bool m_enable_telemetry_mappings = true;  // Enable axle deflection, suspension force, tire condition mappings
     
     // Signal Diagnostics
     double m_debug_freq = 0.0; // Estimated frequency for GUI
@@ -735,6 +745,136 @@ public:
         const TelemWheelV01& fl = data->mWheel[0];
         const TelemWheelV01& fr = data->mWheel[1];
 
+        // --- NEW TELEMETRY SOURCES (v0.7.0+) ---
+        // Extract axle-level 3rd deflection signals with safety validation
+        double front_3rd_deflection = data->mFront3rdDeflection;  // 0-1 range
+        double rear_3rd_deflection = data->mRear3rdDeflection;    // 0-1 range
+
+        // Safety clamps for axle deflection (fallback to 0.0 if invalid)
+        front_3rd_deflection = (std::max)(0.0, (std::min)(1.0, front_3rd_deflection));
+        rear_3rd_deflection = (std::max)(0.0, (std::min)(1.0, rear_3rd_deflection));
+
+        // Extract suspension force enhancement signals with safety validation
+        double drag_force = data->mDrag;                    // Global drag
+        double front_downforce = data->mFrontDownforce;     // Front wing downforce
+        double rear_downforce = data->mRearDownforce;       // Rear wing downforce
+
+        // Safety clamps for aerodynamic forces (reasonable force ranges)
+        drag_force = (std::max)(-50000.0, (std::min)(50000.0, drag_force));        // ±50kN drag
+        front_downforce = (std::max)(-10000.0, (std::min)(10000.0, front_downforce)); // ±10kN downforce
+        rear_downforce = (std::max)(-10000.0, (std::min)(10000.0, rear_downforce));   // ±10kN downforce
+
+        // Extract per-wheel ride height with safety validation
+        double fl_ride_height = fl.mRideHeight;             // Per-wheel ride height
+        double fr_ride_height = fr.mRideHeight;
+        double rl_ride_height = data->mWheel[2].mRideHeight;
+        double rr_ride_height = data->mWheel[3].mRideHeight;
+
+        // Safety clamps for ride height (reasonable compression ranges in meters)
+        fl_ride_height = (std::max)(-0.5, (std::min)(0.5, fl_ride_height));
+        fr_ride_height = (std::max)(-0.5, (std::min)(0.5, fr_ride_height));
+        rl_ride_height = (std::max)(-0.5, (std::min)(0.5, rl_ride_height));
+        rr_ride_height = (std::max)(-0.5, (std::min)(0.5, rr_ride_height));
+
+        // Extract per-wheel tire condition signals with safety validation
+        double fl_wear = fl.mWear;     // 0-1 wear fraction
+        double fr_wear = fr.mWear;
+        double rl_wear = data->mWheel[2].mWear;
+        double rr_wear = data->mWheel[3].mWear;
+
+        // Safety clamps for wear (0-1 range, fallback to 0.0 if invalid)
+        fl_wear = (std::max)(0.0, (std::min)(1.0, fl_wear));
+        fr_wear = (std::max)(0.0, (std::min)(1.0, fr_wear));
+        rl_wear = (std::max)(0.0, (std::min)(1.0, rl_wear));
+        rr_wear = (std::max)(0.0, (std::min)(1.0, rr_wear));
+
+        bool fl_flat = fl.mFlat;       // Tire flat status
+        bool fr_flat = fr.mFlat;
+        bool rl_flat = data->mWheel[2].mFlat;
+        bool rr_flat = data->mWheel[3].mFlat;
+
+        // --- CREATE MUTABLE COPIES FOR TELEMETRY MAPPINGS (v0.7.0+) ---
+
+        // Create mutable copies of wheel data for applying mappings
+        TelemWheelV01 fl_mapped = fl;
+        TelemWheelV01 fr_mapped = fr;
+        TelemWheelV01 rl_mapped = data->mWheel[2];
+        TelemWheelV01 rr_mapped = data->mWheel[3];
+
+        // Only apply mappings if enabled (default: true)
+        if (m_enable_telemetry_mappings) {
+
+        // 1. Axle 3rd Deflection → Suspension Deflection
+        // Add axle-level deflection to per-wheel suspension deflection
+        // Result range: 0-2 per wheel (original + axle deflection)
+        fl_mapped.mSuspensionDeflection += front_3rd_deflection;
+        fr_mapped.mSuspensionDeflection += front_3rd_deflection;
+        rl_mapped.mSuspensionDeflection += rear_3rd_deflection;
+        rr_mapped.mSuspensionDeflection += rear_3rd_deflection;
+
+        // Safety clamp suspension deflection (0-2 range)
+        fl_mapped.mSuspensionDeflection = (std::max)(0.0, (std::min)(2.0, fl_mapped.mSuspensionDeflection));
+        fr_mapped.mSuspensionDeflection = (std::max)(0.0, (std::min)(2.0, fr_mapped.mSuspensionDeflection));
+        rl_mapped.mSuspensionDeflection = (std::max)(0.0, (std::min)(2.0, rl_mapped.mSuspensionDeflection));
+        rr_mapped.mSuspensionDeflection = (std::max)(0.0, (std::min)(2.0, rr_mapped.mSuspensionDeflection));
+
+        // 2. Suspension Force Enhancements
+        // Add aerodynamic and ride height contributions to suspension force
+        double drag_per_wheel = drag_force / 4.0;  // Distribute global drag
+        double front_df_per_wheel = front_downforce / 2.0;  // Split front downforce
+        double rear_df_per_wheel = rear_downforce / 2.0;    // Split rear downforce
+
+        // Apply ride height functions (simplified linear for now)
+        double fl_ride_contrib = fl_ride_height * 1000.0;  // Scale ride height to force
+        double fr_ride_contrib = fr_ride_height * 1000.0;
+        double rl_ride_contrib = rl_ride_height * 1000.0;
+        double rr_ride_contrib = rr_ride_height * 1000.0;
+
+        // Safety clamp ride height contributions (reasonable force ranges)
+        fl_ride_contrib = (std::max)(-5000.0, (std::min)(5000.0, fl_ride_contrib));
+        fr_ride_contrib = (std::max)(-5000.0, (std::min)(5000.0, fr_ride_contrib));
+        rl_ride_contrib = (std::max)(-5000.0, (std::min)(5000.0, rl_ride_contrib));
+        rr_ride_contrib = (std::max)(-5000.0, (std::min)(5000.0, rr_ride_contrib));
+
+        // Add contributions to suspension force
+        fl_mapped.mSuspForce += drag_per_wheel + front_df_per_wheel + fl_ride_contrib;
+        fr_mapped.mSuspForce += drag_per_wheel + front_df_per_wheel + fr_ride_contrib;
+        rl_mapped.mSuspForce += drag_per_wheel + rear_df_per_wheel + rl_ride_contrib;
+        rr_mapped.mSuspForce += drag_per_wheel + rear_df_per_wheel + rr_ride_contrib;
+
+        // Safety clamp suspension force (reasonable ranges for automotive suspension)
+        fl_mapped.mSuspForce = (std::max)(-20000.0, (std::min)(20000.0, fl_mapped.mSuspForce));
+        fr_mapped.mSuspForce = (std::max)(-20000.0, (std::min)(20000.0, fr_mapped.mSuspForce));
+        rl_mapped.mSuspForce = (std::max)(-20000.0, (std::min)(20000.0, rl_mapped.mSuspForce));
+        rr_mapped.mSuspForce = (std::max)(-20000.0, (std::min)(20000.0, rr_mapped.mSuspForce));
+
+        // 3. Tire Condition Mappings
+        // Apply wear effects to grip fraction
+        fl_mapped.mGripFract *= (1.0 - fl_wear);
+        fr_mapped.mGripFract *= (1.0 - fr_wear);
+        rl_mapped.mGripFract *= (1.0 - rl_wear);
+        rr_mapped.mGripFract *= (1.0 - rr_wear);
+
+        // Safety clamp grip fraction (0-1 range)
+        fl_mapped.mGripFract = (std::max)(0.0, (std::min)(1.0, fl_mapped.mGripFract));
+        fr_mapped.mGripFract = (std::max)(0.0, (std::min)(1.0, fr_mapped.mGripFract));
+        rl_mapped.mGripFract = (std::max)(0.0, (std::min)(1.0, rl_mapped.mGripFract));
+        rr_mapped.mGripFract = (std::max)(0.0, (std::min)(1.0, rr_mapped.mGripFract));
+
+        // Apply flat tire effects to load
+        if (fl_flat) fl_mapped.mTireLoad *= 0.2;  // Flat tires carry 20% normal load
+        if (fr_flat) fr_mapped.mTireLoad *= 0.2;
+        if (rl_flat) rl_mapped.mTireLoad *= 0.2;
+        if (rr_flat) rr_mapped.mTireLoad *= 0.2;
+
+        // Safety clamp tire load (prevent negative loads)
+        fl_mapped.mTireLoad = (std::max)(0.0, fl_mapped.mTireLoad);
+        fr_mapped.mTireLoad = (std::max)(0.0, fr_mapped.mTireLoad);
+        rl_mapped.mTireLoad = (std::max)(0.0, rl_mapped.mTireLoad);
+        rr_mapped.mTireLoad = (std::max)(0.0, rr_mapped.mTireLoad);
+
+        } // End telemetry mappings if block
+
         // Critical: Use mSteeringShaftTorque instead of mSteeringArmForce
         // Explanation: LMU 1.2 introduced mSteeringShaftTorque (Nm) as the definitive FFB output.
         // Legacy mSteeringArmForce (N) is often 0.0 or inaccurate for Hypercars due to 
@@ -873,8 +1013,8 @@ public:
         
         // --- 0. UPDATE STATS ---
         double raw_torque = game_force;
-        double raw_load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
-        double raw_grip = (fl.mGripFract + fr.mGripFract) / 2.0;
+        double raw_load = (fl_mapped.mTireLoad + fr_mapped.mTireLoad) / 2.0;
+        double raw_grip = (fl_mapped.mGripFract + fr_mapped.mGripFract) / 2.0;
         double raw_lat_g = data->mLocalAccel.x;
         
         // --- SIGNAL CONDITIONING (Inertia Simulation) ---
@@ -930,7 +1070,7 @@ public:
             // v0.4.39: Adaptive Kinematic Load
             // If SuspForce is ALSO missing (common in encrypted content), use Kinematic Model.
             // Check FL SuspForce (index 0). If < MIN_VALID_SUSP_FORCE, assume blocked.
-            if (fl.mSuspForce > MIN_VALID_SUSP_FORCE) {
+            if (fl_mapped.mSuspForce > MIN_VALID_SUSP_FORCE) {
                 double calc_load_fl = approximate_load(fl);
                 double calc_load_fr = approximate_load(fr);
                 avg_load = (calc_load_fl + calc_load_fr) / 2.0;
@@ -953,7 +1093,7 @@ public:
         
         // 1. Suspension Force (mSuspForce)
         // Check: If average front susp force < minimum valid (10N) while moving
-        double avg_susp_f = (fl.mSuspForce + fr.mSuspForce) / 2.0;
+        double avg_susp_f = (fl_mapped.mSuspForce + fr_mapped.mSuspForce) / 2.0;
         if (avg_susp_f < MIN_VALID_SUSP_FORCE && std::abs(data->mLocalVel.z) > 1.0) {
             m_missing_susp_force_frames++;
         } else {
@@ -966,7 +1106,7 @@ public:
 
         // 2. Suspension Deflection (mSuspensionDeflection)
         // Check: If exactly 0.0 while moving fast (deflection usually noisy)
-        double avg_susp_def = (std::abs(fl.mSuspensionDeflection) + std::abs(fr.mSuspensionDeflection)) / 2.0;
+        double avg_susp_def = (std::abs(fl_mapped.mSuspensionDeflection) + std::abs(fr_mapped.mSuspensionDeflection)) / 2.0;
         if (avg_susp_def < 0.000001 && std::abs(data->mLocalVel.z) > 10.0) {
             m_missing_susp_deflection_frames++;
         } else {
@@ -979,7 +1119,7 @@ public:
 
         // 3. Front Lateral Force (mLateralForce)
         // Check: If 0.0 while cornering hard (> 3 m/s² lateral accel)
-        double avg_lat_force_front = (std::abs(fl.mLateralForce) + std::abs(fr.mLateralForce)) / 2.0;
+        double avg_lat_force_front = (std::abs(fl_mapped.mLateralForce) + std::abs(fr_mapped.mLateralForce)) / 2.0;
         if (avg_lat_force_front < 1.0 && std::abs(data->mLocalAccel.x) > 3.0) {
             m_missing_lat_force_front_frames++;
         } else {
@@ -993,7 +1133,7 @@ public:
         // 4. Rear Lateral Force (mLateralForce)
         // Check: If 0.0 while cornering hard (> 3 m/s² lateral accel)
         // Note: Known bug in LMU 1.2, this is expected to trigger often.
-        double avg_lat_force_rear = (std::abs(data->mWheel[2].mLateralForce) + std::abs(data->mWheel[3].mLateralForce)) / 2.0;
+        double avg_lat_force_rear = (std::abs(rl_mapped.mLateralForce) + std::abs(rr_mapped.mLateralForce)) / 2.0;
         if (avg_lat_force_rear < 1.0 && std::abs(data->mLocalAccel.x) > 3.0) {
             m_missing_lat_force_rear_frames++;
         } else {
@@ -1006,7 +1146,7 @@ public:
 
         // 5. Vertical Tire Deflection (mVerticalTireDeflection) - NEW (v0.6.21)
         // Check: If exactly 0.0 while moving fast (deflection usually noisy)
-        double avg_vert_def = (std::abs(fl.mVerticalTireDeflection) + std::abs(fr.mVerticalTireDeflection)) / 2.0;
+        double avg_vert_def = (std::abs(fl_mapped.mVerticalTireDeflection) + std::abs(fr_mapped.mVerticalTireDeflection)) / 2.0;
         if (avg_vert_def < 0.000001 && std::abs(data->mLocalVel.z) > 10.0) {
             m_missing_vert_deflection_frames++;
         } else {
@@ -1131,7 +1271,7 @@ public:
         
         // Calculate Rear Grip using helper (now includes fallback)
         // Pass persistent state for LPF (v0.4.6) - Indices 2 and 3
-        GripResult rear_grip_res = calculate_grip(data->mWheel[2], data->mWheel[3], avg_load, m_warned_rear_grip,
+        GripResult rear_grip_res = calculate_grip(rl_mapped, rr_mapped, avg_load, m_warned_rear_grip,
                                                   m_prev_slip_angle[2], m_prev_slip_angle[3], car_speed, dt, data->mVehicleName);
         double avg_rear_grip = rear_grip_res.value;
         
@@ -1173,8 +1313,8 @@ public:
         // However, empirical testing shows mSuspForce is typically available even when mTireLoad
         // is blocked, so this is a low-priority enhancement.
         // See: docs/dev_docs/code_reviews/rear_load_approximation_note.md
-        double calc_load_rl = approximate_rear_load(data->mWheel[2]);
-        double calc_load_rr = approximate_rear_load(data->mWheel[3]);
+        double calc_load_rl = approximate_rear_load(rl_mapped);
+        double calc_load_rr = approximate_rear_load(rr_mapped);
         double avg_rear_load = (calc_load_rl + calc_load_rr) / 2.0;
 
         // Step 2: Calculate Rear Lateral Force (Workaround for missing mLateralForce)
@@ -1426,8 +1566,8 @@ public:
 
         // --- 2c. Wheel Spin (Tire Physics Based) ---
         if (m_spin_enabled && data->mUnfilteredThrottle > 0.05) {
-            double slip_rl = get_slip_ratio(data->mWheel[2]); // mWheel
-            double slip_rr = get_slip_ratio(data->mWheel[3]); // mWheel
+            double slip_rl = get_slip_ratio(rl_mapped); // mWheel
+            double slip_rr = get_slip_ratio(rr_mapped); // mWheel
             double max_slip = (std::max)(slip_rl, slip_rr);
             
             if (max_slip > 0.2) {
@@ -1468,13 +1608,13 @@ public:
             // This is cleaner as it represents actual scrubbing speed.
             
             // Front Slip Speed
-            double lat_vel_fl = std::abs(fl.mLateralPatchVel);
-            double lat_vel_fr = std::abs(fr.mLateralPatchVel);
+            double lat_vel_fl = std::abs(fl_mapped.mLateralPatchVel);
+            double lat_vel_fr = std::abs(fr_mapped.mLateralPatchVel);
             double front_slip_avg = (lat_vel_fl + lat_vel_fr) / 2.0;
 
             // Rear Slip Speed (New v0.4.34)
-            double lat_vel_rl = std::abs(data->mWheel[2].mLateralPatchVel);
-            double lat_vel_rr = std::abs(data->mWheel[3].mLateralPatchVel);
+            double lat_vel_rl = std::abs(rl_mapped.mLateralPatchVel);
+            double lat_vel_rr = std::abs(rr_mapped.mLateralPatchVel);
             double rear_slip_avg = (lat_vel_rl + lat_vel_rr) / 2.0;
 
             // Use the WORST slip (Max)
@@ -1517,7 +1657,7 @@ public:
             // Scrub Drag (v0.4.5)
             // Add resistance when sliding laterally (Dragging rubber)
             if (m_scrub_drag_gain > 0.0) {
-                double avg_lat_vel = (fl.mLateralPatchVel + fr.mLateralPatchVel) / 2.0;
+                double avg_lat_vel = (fl_mapped.mLateralPatchVel + fr_mapped.mLateralPatchVel) / 2.0;
                 // v0.4.6: Linear Fade-In Window (0.0 - 0.5 m/s)
                 double abs_lat_vel = std::abs(avg_lat_vel);
                 if (abs_lat_vel > 0.001) { // Avoid noise
@@ -1532,8 +1672,8 @@ public:
                 }
             }
 
-            double vert_l = fl.mVerticalTireDeflection;
-            double vert_r = fr.mVerticalTireDeflection;
+            double vert_l = fl_mapped.mVerticalTireDeflection;
+            double vert_r = fr_mapped.mVerticalTireDeflection;
             
             // Delta from previous frame
             double delta_l = vert_l - m_prev_vert_deflection[0];
@@ -1595,7 +1735,7 @@ public:
                 // (physically impossible), disable Method A or switch to Method B.
                 // See: docs/dev_docs/Improving FFB App Tyres.md "Gap B: Bottoming Effect"
                 // Threshold: 2mm (0.002m)
-                double min_rh = (std::min)(fl.mRideHeight, fr.mRideHeight);
+                double min_rh = (std::min)(fl_mapped.mRideHeight, fr_mapped.mRideHeight);
                 if (min_rh < 0.002 && min_rh > -1.0) { // Check valid range
                     triggered = true;
                     // Closer to 0 = stronger. Map 0.002->0.0 to 0.0->1.0 intensity
@@ -1603,8 +1743,8 @@ public:
                 }
             } else {
                 // Method B: Suspension Force Spike (Derivative)
-                double susp_l = fl.mSuspForce;
-                double susp_r = fr.mSuspForce;
+                double susp_l = fl_mapped.mSuspForce;
+                double susp_r = fr_mapped.mSuspForce;
                 double dForceL = (susp_l - m_prev_susp_force[0]) / dt;
                 double dForceR = (susp_r - m_prev_susp_force[1]) / dt;
                 
@@ -1618,7 +1758,7 @@ public:
             
             // Legacy/Fallback check: High Load
             if (!triggered) {
-                double max_load = (std::max)(fl.mTireLoad, fr.mTireLoad);
+                double max_load = (std::max)(fl_mapped.mTireLoad, fr_mapped.mTireLoad);
                 if (max_load > 8000.0) {
                     triggered = true;
                     double excess = max_load - 8000.0;
@@ -1685,8 +1825,8 @@ public:
         }
 
         // Bottoming Method B State (Separate from loop as it's just front)
-        m_prev_susp_force[0] = fl.mSuspForce;
-        m_prev_susp_force[1] = fr.mSuspForce;
+        m_prev_susp_force[0] = fl_mapped.mSuspForce;
+        m_prev_susp_force[1] = fr_mapped.mSuspForce;
         // ==================================================================================
 
         // --- SNAPSHOT LOGIC ---
@@ -1725,43 +1865,25 @@ public:
                 
                 // Calculate Raw Slip Angles for visualization (v0.4.9 Refactored)
                 snap.raw_front_slip_angle = (float)calculate_raw_slip_angle_pair(fl, fr);
-                snap.raw_rear_slip_angle = (float)calculate_raw_slip_angle_pair(data->mWheel[2], data->mWheel[3]);
+                snap.raw_rear_slip_angle = (float)calculate_raw_slip_angle_pair(rl_mapped, rr_mapped);
+                snap.raw_rear_grip = (float)((rl_mapped.mGripFract + rr_mapped.mGripFract) / 2.0);
+                snap.raw_rear_lat_force = (float)((rl_mapped.mLateralForce + rr_mapped.mLateralForce) / 2.0);
+                snap.raw_rear_lat_patch_vel = (float)((std::abs(rl_mapped.mLateralPatchVel) + std::abs(rr_mapped.mLateralPatchVel)) / 2.0);
+                snap.raw_rear_long_patch_vel = (float)((rl_mapped.mLongitudinalPatchVel + rr_mapped.mLongitudinalPatchVel) / 2.0);
 
-                // Helper for Raw Game Slip Ratio
-                auto get_raw_game_slip = [&](const TelemWheelV01& w) {
-                    double v_long = std::abs(w.mLongitudinalGroundVel);
-                    if (v_long < MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;
-                    return w.mLongitudinalPatchVel / v_long;
-                };
-
-                // --- Header C: Raw Game Telemetry (Inputs) ---
-                snap.steer_force = (float)raw_torque;
-                snap.raw_input_steering = (float)data->mUnfilteredSteering;
-                snap.raw_front_tire_load = (float)raw_load; // Raw from game
-                snap.raw_front_grip_fract = (float)raw_grip; // Raw from game
-                snap.raw_rear_grip = (float)((data->mWheel[2].mGripFract + data->mWheel[3].mGripFract) / 2.0);
-                snap.raw_front_susp_force = (float)((fl.mSuspForce + fr.mSuspForce) / 2.0);
-                snap.raw_front_ride_height = (float)((std::min)(fl.mRideHeight, fr.mRideHeight));
-                snap.raw_rear_lat_force = (float)((data->mWheel[2].mLateralForce + data->mWheel[3].mLateralForce) / 2.0);
-                snap.raw_car_speed = (float)data->mLocalVel.z;
-                snap.raw_front_slip_ratio = (float)((get_raw_game_slip(fl) + get_raw_game_slip(fr)) / 2.0);
-                snap.raw_input_throttle = (float)data->mUnfilteredThrottle;
-                snap.raw_input_brake = (float)data->mUnfilteredBrake;
-                snap.accel_x = (float)data->mLocalAccel.x;
-                snap.raw_front_lat_patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
-                snap.raw_front_deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
-                
-                // New Patch Velocities (v0.4.9)
-                snap.raw_front_long_patch_vel = (float)((fl.mLongitudinalPatchVel + fr.mLongitudinalPatchVel) / 2.0);
-                snap.raw_rear_lat_patch_vel = (float)((std::abs(data->mWheel[2].mLateralPatchVel) + std::abs(data->mWheel[3].mLateralPatchVel)) / 2.0);
-                snap.raw_rear_long_patch_vel = (float)((data->mWheel[2].mLongitudinalPatchVel + data->mWheel[3].mLongitudinalPatchVel) / 2.0);
+                // New Telemetry Sources (v0.7.0)
+                snap.axle_front_3rd_deflection = (float)front_3rd_deflection;
+                snap.axle_rear_3rd_deflection = (float)rear_3rd_deflection;
+                snap.axle_front_downforce = (float)front_downforce;
+                snap.axle_rear_downforce = (float)rear_downforce;
+                snap.global_drag_force = (float)drag_force;
 
                 // Warnings
                 snap.warn_load = frame_warn_load;
                 snap.warn_grip = frame_warn_grip || frame_warn_rear_grip; // Combined warning
                 snap.warn_dt = frame_warn_dt;
                 snap.debug_freq = (float)m_debug_freq;
-                snap.tire_radius = (float)fl.mStaticUndeflectedRadius / 100.0f; // Convert cm to m
+                snap.tire_radius = (float)fl_mapped.mStaticUndeflectedRadius / 100.0f; // Convert cm to m
 
 
                 m_debug_buffer.push_back(snap);

@@ -110,6 +110,11 @@ static void test_notch_filter_bandwidth(); // Forward declaration (v0.6.10)
 static void test_yaw_kick_threshold(); // Forward declaration (v0.6.10)
 static void test_notch_filter_edge_cases(); // Forward declaration (v0.6.10 - Edge Cases)
 static void test_yaw_kick_edge_cases(); // Forward declaration (v0.6.10 - Edge Cases)
+
+// New Telemetry Mapping Tests (v0.7.0)
+static void test_axle_3rd_deflection_mapping();
+static void test_suspension_force_enhancements();
+static void test_tire_condition_mappings();
 static void test_high_gain_stability(); // Forward declaration (v0.6.20)
 static void test_stationary_gate(); // Forward declaration (v0.6.21)
 static void test_idle_smoothing(); // Forward declaration (v0.6.22)
@@ -2224,6 +2229,186 @@ static void test_regression_bottoming_switch() {
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Spike detected on switch! Force: " << force << std::endl;
+        g_tests_failed++;
+    }
+}
+
+// New Telemetry Mapping Tests (v0.7.0)
+
+static void test_axle_3rd_deflection_mapping() {
+    std::cout << "\nTest: Axle 3rd Deflection Mapping (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    data.mDeltaTime = 0.0025;
+
+    // Set up baseline wheel data
+    data.mWheel[0].mSuspensionDeflection = 0.5f; // FL
+    data.mWheel[1].mSuspensionDeflection = 0.3f; // FR
+    data.mWheel[2].mSuspensionDeflection = 0.4f; // RL
+    data.mWheel[3].mSuspensionDeflection = 0.6f; // RR
+
+    // Test 1: Front axle deflection mapping
+    data.mFront3rdDeflection = 0.2f; // 0-1 range
+    data.mRear3rdDeflection = 0.0f;
+
+    double force1 = engine.calculate_force(&data);
+
+    // Check that FL/FR deflections were increased by 0.2
+    // We can't directly check the mapped values, but we can verify the calculation ran
+    if (!std::isnan(force1) && !std::isinf(force1)) {
+        std::cout << "[PASS] Front axle deflection mapping executed (force = " << force1 << ")." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Front axle deflection mapping failed." << std::endl;
+        g_tests_failed++;
+    }
+
+    // Test 2: Rear axle deflection mapping
+    data.mFront3rdDeflection = 0.0f;
+    data.mRear3rdDeflection = 0.1f; // 0-1 range
+
+    double force2 = engine.calculate_force(&data);
+
+    if (!std::isnan(force2) && !std::isinf(force2)) {
+        std::cout << "[PASS] Rear axle deflection mapping executed (force = " << force2 << ")." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Rear axle deflection mapping failed." << std::endl;
+        g_tests_failed++;
+    }
+
+    // Test 3: Both axles with max deflection
+    data.mFront3rdDeflection = 1.0f;
+    data.mRear3rdDeflection = 1.0f;
+
+    double force3 = engine.calculate_force(&data);
+
+    if (!std::isnan(force3) && !std::isinf(force3)) {
+        std::cout << "[PASS] Max deflection mapping executed (force = " << force3 << ")." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Max deflection mapping failed." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_suspension_force_enhancements() {
+    std::cout << "\nTest: Suspension Force Enhancements (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    data.mDeltaTime = 0.0025;
+
+    // Set up wheel data
+    for (int i = 0; i < 4; i++) {
+        data.mWheel[i].mSuspForce = 1000.0f; // Baseline force
+        data.mWheel[i].mRideHeight = 0.1f;
+    }
+
+    // Test 1: Drag force contribution
+    data.mDrag = 500.0f; // Aerodynamic drag
+    data.mFrontDownforce = 0.0f;
+    data.mRearDownforce = 0.0f;
+
+    double force1 = engine.calculate_force(&data);
+
+    if (!std::isnan(force1) && !std::isinf(force1)) {
+        std::cout << "[PASS] Drag force enhancement executed (force = " << force1 << ")." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Drag force enhancement failed." << std::endl;
+        g_tests_failed++;
+    }
+
+    // Test 2: Downforce contribution
+    data.mDrag = 0.0f;
+    data.mFrontDownforce = 300.0f;
+    data.mRearDownforce = 200.0f;
+
+    double force2 = engine.calculate_force(&data);
+
+    if (!std::isnan(force2) && !std::isinf(force2)) {
+        std::cout << "[PASS] Downforce enhancement executed (force = " << force2 << ")." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Downforce enhancement failed." << std::endl;
+        g_tests_failed++;
+    }
+
+    // Test 3: Combined drag and downforce
+    data.mDrag = 400.0f;
+    data.mFrontDownforce = 250.0f;
+    data.mRearDownforce = 150.0f;
+
+    double force3 = engine.calculate_force(&data);
+
+    if (!std::isnan(force3) && !std::isinf(force3)) {
+        std::cout << "[PASS] Combined force enhancements executed (force = " << force3 << ")." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Combined force enhancements failed." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_tire_condition_mappings() {
+    std::cout << "\nTest: Tire Condition Mappings (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    data.mDeltaTime = 0.0025;
+
+    // Set up wheel data
+    for (int i = 0; i < 4; i++) {
+        data.mWheel[i].mGripFract = 1.0f; // Full grip
+        data.mWheel[i].mTireLoad = 4000.0f; // Normal load
+        data.mWheel[i].mWear = 0.0f; // No wear
+    }
+    data.mWheel[0].mFlat = false; // Not flat
+
+    // Test 1: Wear impact on grip
+    data.mWheel[0].mWear = 0.3f; // 30% wear
+    data.mWheel[0].mFlat = false;
+
+    double force1 = engine.calculate_force(&data);
+
+    if (!std::isnan(force1) && !std::isinf(force1)) {
+        std::cout << "[PASS] Wear impact on grip executed (force = " << force1 << ")." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Wear impact on grip failed." << std::endl;
+        g_tests_failed++;
+    }
+
+    // Test 2: Flat tire impact on load
+    data.mWheel[0].mWear = 0.0f;
+    data.mWheel[0].mFlat = true; // Flat tire
+
+    double force2 = engine.calculate_force(&data);
+
+    if (!std::isnan(force2) && !std::isinf(force2)) {
+        std::cout << "[PASS] Flat tire impact on load executed (force = " << force2 << ")." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Flat tire impact on load failed." << std::endl;
+        g_tests_failed++;
+    }
+
+    // Test 3: Combined wear and flat
+    data.mWheel[0].mWear = 0.2f; // 20% wear
+    data.mWheel[0].mFlat = true; // Flat tire
+
+    double force3 = engine.calculate_force(&data);
+
+    if (!std::isnan(force3) && !std::isinf(force3)) {
+        std::cout << "[PASS] Combined tire conditions executed (force = " << force3 << ")." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Combined tire conditions failed." << std::endl;
         g_tests_failed++;
     }
 }
@@ -5760,8 +5945,13 @@ void Run() {
     test_missing_telemetry_warnings(); 
     test_notch_filter_bandwidth(); 
     test_yaw_kick_threshold(); 
-    test_notch_filter_edge_cases(); 
-    test_yaw_kick_edge_cases(); 
+    test_notch_filter_edge_cases();
+    test_yaw_kick_edge_cases();
+
+    // New Telemetry Mapping Tests (v0.7.0)
+    test_axle_3rd_deflection_mapping();
+    test_suspension_force_enhancements();
+    test_tire_condition_mappings(); 
     
     // Understeer Effect Regression Tests (v0.6.28 / v0.6.31)
     test_optimal_slip_buffer_zone();

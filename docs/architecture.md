@@ -74,6 +74,11 @@ The core logic is encapsulated in a header-only class to facilitate unit testing
     *   **Hysteresis (v0.4.1)**: 20-frame stability filter for missing telemetry data.
     *   **Diagnostic Logging (v0.4.1)**: Non-blocking 1Hz stats output.
     *   **Min Force**: Boosts small signals to overcome wheel friction.
+*   **New Telemetry Mappings (v0.7.0)**:
+    *   **Axle 3rd Deflection**: Front3rdDeflection/Rear3rdDeflection (0-1) added to per-wheel suspension deflection (0-2 total range).
+    *   **Suspension Force Enhancements**: RideHeight, Drag, Downforce contributions to mSuspForce calculations.
+    *   **Tire Condition Effects**: Wear reduces mGripFract, Flat tires reduce mTireLoad.
+    *   **GUI Surface**: Axle contributions displayed in telemetry inspector with separate visualization.
 
 ### 4. Output Driver
 

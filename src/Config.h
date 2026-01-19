@@ -99,6 +99,9 @@ struct Preset {
     float road_fallback_scale = 0.05f;      // Planned: Road texture fallback scaling
     bool understeer_affects_sop = false;     // Planned: Understeer modulation of SoP
 
+    // New Telemetry Mappings (v0.7.0)
+    bool enable_telemetry_mappings = true;  // Enable axle deflection, suspension force, tire condition mappings
+
     // 2. Constructors
     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin) {}
     Preset() : name("Unnamed"), is_builtin(false) {} // Default constructor for file loading
@@ -316,6 +319,9 @@ struct Preset {
         gyro_smoothing = engine.m_gyro_smoothing;
         yaw_smoothing = engine.m_yaw_accel_smoothing;
         chassis_smoothing = engine.m_chassis_inertia_smoothing;
+
+        // New Telemetry Mappings (v0.7.0) - Default enabled
+        enable_telemetry_mappings = true;
     }
 };
 

@@ -140,6 +140,61 @@ These checks prevent FFB dropout during telemetry glitches or on encrypted conte
 
 ---
 
+## 5. New Telemetry Source Mappings (v0.7.0+)
+
+This section documents the new telemetry sources that will be mapped into the FFB Engine for enhanced force feedback effects.
+
+### Axle-Level 3rd Deflection Signals
+
+| Variable | Units | Range | Description | Mapping Target | Notes |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `mFront3rdDeflection` | meters | 0.0-1.0 | Front axle 3rd spring deflection | FL/FR `mSuspensionDeflection` | Axle-level signal applied to both front wheels |
+| `mRear3rdDeflection` | meters | 0.0-1.0 | Rear axle 3rd spring deflection | RL/RR `mSuspensionDeflection` | Axle-level signal applied to both rear wheels |
+
+**Mapping Logic:**
+- FL `mSuspensionDeflection` += `mFront3rdDeflection`
+- FR `mSuspensionDeflection` += `mFront3rdDeflection`
+- RL `mSuspensionDeflection` += `mRear3rdDeflection`
+- RR `mSuspensionDeflection` += `mRear3rdDeflection`
+- **Result Range:** 0.0-2.0 per wheel (original + axle deflection)
+- **Fallback:** Missing signals treated as 0.0
+
+### Suspension Force Enhancements
+
+| Variable | Units | Description | Mapping Target | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| `mRideHeight` | meters | Chassis height per wheel | `mSuspForce` | Per-wheel contribution to suspension force |
+| `mDrag` | N | Aerodynamic drag force | `mSuspForce` (all wheels) | Global contribution added to all wheels |
+| `mFrontDownforce` | N | Front wing downforce | `mSuspForce` (FL/FR) | Front axle contribution |
+| `mRearDownforce` | N | Rear wing downforce | `mSuspForce` (RL/RR) | Rear axle contribution |
+
+**Mapping Logic:**
+- `mSuspForce` += f(`mRideHeight`) // Per-wheel function
+- `mSuspForce` += `mDrag` / 4 // Distributed across all wheels
+- FL/FR `mSuspForce` += `mFrontDownforce` / 2
+- RL/RR `mSuspForce` += `mRearDownforce` / 2
+
+### Tire Condition Mappings
+
+| Variable | Units | Range | Description | Mapping Target | Notes |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `mWear` | 0.0-1.0 | 0.0-1.0 | Tire wear fraction | `mGripFract` | Per-wheel grip reduction |
+| `mFlat` | bool | true/false | Tire flat status | `mTireLoad` | Per-wheel load reduction |
+
+**Mapping Logic:**
+- `mGripFract` *= (1.0 - `mWear`) // Wear reduces available grip
+- `mTireLoad` *= (1.0 - `mFlat` * 0.8) // Flat tires reduce load by 80%
+
+### GUI Surface Requirements
+
+The GUI should display:
+- Axle deflection contributions separately from wheel deflections
+- Warning indicators when 3rd deflection signals are missing
+- Visualization of the 0-2 deflection range per wheel
+- Tire condition effects on grip and load
+
+---
+
 ## 6. Coordinate Systems & Sign Conventions (v0.4.30+)
 
 Understanding the coordinate systems is critical for effect direction (e.g., ensuring SoP pulls the correct way).
