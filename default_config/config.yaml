@@ -1,0 +1,1258 @@
+---
+# --- System & Window ---
+ini_version: "0.6.35"
+ignore_vjoy_version_warning: false
+enable_vjoy: false
+output_ffb_to_vjoy: false
+always_on_top: true
+enable_auto_save: true
+last_device_guid: ""
+win_pos_x: 100
+win_pos_y: 100
+win_w_small: 550
+win_h_small: 800
+win_w_large: 1400
+win_h_large: 800
+show_graphs: false
+
+# --- Presets ---
+selected_preset: GT3 DD 15 Nm (Simagic Alpha)
+presets:
+  - name: GT3 DD 15 Nm (Simagic Alpha)
+    is_builtin: true
+    invert_force: true
+    gain: 1.0
+    max_torque_ref: 100.0
+    min_force: 0.0
+    steering_shaft_gain: 1.0
+    steering_shaft_smoothing: 0.0
+    understeer: 1.0
+    base_force_mode: 0
+    flatspot_suppression: false
+    notch_q: 2.0
+    flatspot_strength: 1.0
+    static_notch_enabled: false
+    static_notch_freq: 11.0
+    static_notch_width: 2.0
+    oversteer_boost: 2.52101
+    sop: 1.666
+    rear_align_effect: 0.666
+    sop_yaw_gain: 0.333
+    yaw_kick_threshold: 0.0
+    yaw_accel_smoothing: 0.001
+    gyro_gain: 0.0
+    gyro_smoothing_factor: 0.0
+    sop_smoothing_factor: 0.99
+    sop_scale: 1.98
+    understeer_affects_sop: false
+    slip_angle_smoothing: 0.002
+    chassis_inertia_smoothing: 0.012
+    optimal_slip_angle: 0.1
+    optimal_slip_ratio: 0.12
+    lockup_enabled: true
+    lockup_gain: 0.37479
+    brake_load_cap: 2.0
+    lockup_freq_scale: 1.0
+    lockup_gamma: 1.0
+    lockup_start_pct: 1.0
+    lockup_full_pct: 7.5
+    lockup_prediction_sens: 10
+    lockup_bump_reject: 0.1
+    lockup_rear_boost: 1.0
+    abs_pulse_enabled: false
+    abs_gain: 2.1
+    abs_freq: 25.5
+    texture_load_cap: 1.5
+    slide_enabled: false
+    slide_gain: 0.226562
+    slide_freq: 1.47
+    road_enabled: true
+    road_gain: 0.0
+    road_fallback_scale: 0.05
+    spin_enabled: true
+    spin_gain: 0.462185
+    spin_freq_scale: 1.8
+    scrub_drag_gain: 0.333
+    bottoming_method: 1
+    speed_gate_lower: 1.0
+    speed_gate_upper: 5.0
+
+  - name: T300
+    is_builtin: true
+    invert_force: true
+    gain: 1.0
+    max_torque_ref: 100.1
+    min_force: 0.01
+    steering_shaft_gain: 1.0
+    steering_shaft_smoothing: 0.0
+    understeer: 0.5
+    base_force_mode: 0
+    flatspot_suppression: false
+    notch_q: 2.0
+    flatspot_strength: 1.0
+    static_notch_enabled: false
+    static_notch_freq: 11.0
+    static_notch_width: 2.0
+    oversteer_boost: 2.40336
+    sop: 0.425003
+    rear_align_effect: 0.966383
+    sop_yaw_gain: 0.386555
+    yaw_kick_threshold: 1.68
+    yaw_accel_smoothing: 0.005
+    gyro_gain: 0.0336134
+    gyro_smoothing_factor: 0.0
+    sop_smoothing_factor: 1.0
+    sop_scale: 1.0
+    understeer_affects_sop: false
+    slip_angle_smoothing: 0.0
+    chassis_inertia_smoothing: 0.0
+    optimal_slip_angle: 0.1
+    optimal_slip_ratio: 0.12
+    lockup_enabled: true
+    lockup_gain: 2.0
+    brake_load_cap: 10.0
+    lockup_freq_scale: 1.02
+    lockup_gamma: 0.1
+    lockup_start_pct: 1.0
+    lockup_full_pct: 5.0
+    lockup_prediction_sens: 10.0
+    lockup_bump_reject: 0.1
+    lockup_rear_boost: 10.0
+    abs_pulse_enabled: true
+    abs_gain: 2.0
+    abs_freq: 20.0
+    texture_load_cap: 1.96
+    slide_enabled: true
+    slide_gain: 0.235294
+    slide_freq: 1.0
+    road_enabled: true
+    road_gain: 2.0
+    road_fallback_scale: 0.05
+    spin_enabled: true
+    spin_gain: 0.5
+    spin_freq_scale: 1.0
+    scrub_drag_gain: 0.0462185
+    bottoming_method: 0
+    speed_gate_lower: 0.0
+    speed_gate_upper: 0.277778
+
+  - name: LMPx/HY DD 15 Nm (Simagic Alpha)
+    is_builtin: true
+    invert_force: true
+    gain: 1.0
+    max_torque_ref: 100.0
+    min_force: 0.0
+    steering_shaft_gain: 1.0
+    steering_shaft_smoothing: 0.0
+    understeer: 1.0
+    base_force_mode: 0
+    flatspot_suppression: false
+    notch_q: 2.0
+    flatspot_strength: 1.0
+    static_notch_enabled: false
+    static_notch_freq: 11.0
+    static_notch_width: 2.0
+    oversteer_boost: 2.52101
+    sop: 1.666
+    rear_align_effect: 0.666
+    sop_yaw_gain: 0.333
+    yaw_kick_threshold: 0.0
+    yaw_accel_smoothing: 0.003
+    gyro_gain: 0.0
+    gyro_smoothing_factor: 0.003
+    sop_smoothing_factor: 0.97
+    sop_scale: 1.59
+    understeer_affects_sop: false
+    slip_angle_smoothing: 0.003
+    chassis_inertia_smoothing: 0.019
+    optimal_slip_angle: 0.12
+    optimal_slip_ratio: 0.12
+    lockup_enabled: true
+    lockup_gain: 0.37479
+    brake_load_cap: 2.0
+    lockup_freq_scale: 1.0
+    lockup_gamma: 1.0
+    lockup_start_pct: 1.0
+    lockup_full_pct: 7.5
+    lockup_prediction_sens: 10.0
+    lockup_bump_reject: 0.1
+    lockup_rear_boost: 1.0
+    abs_pulse_enabled: false
+    abs_gain: 2.1
+    abs_freq: 25.5
+    texture_load_cap: 1.5
+    slide_enabled: false
+    slide_gain: 0.226562
+    slide_freq: 1.47
+    road_enabled: true
+    road_gain: 0.0
+    road_fallback_scale: 0.05
+    spin_enabled: true
+    spin_gain: 0.462185
+    spin_freq_scale: 1.8
+    scrub_drag_gain: 0.333
+    bottoming_method: 1
+    speed_gate_lower: 1.0
+    speed_gate_upper: 5.0
+
+  - name: GM DD 21 Nm (Moza R21 Ultra)
+    is_builtin: true
+    invert_force: true
+    gain: 1.454
+    max_torque_ref: 100.1
+    min_force: 0.0
+    steering_shaft_gain: 1.989
+    steering_shaft_smoothing: 0.0
+    understeer: 0.638
+    base_force_mode: 0
+    flatspot_suppression: true
+    notch_q: 0.57
+    flatspot_strength: 1.0
+    static_notch_enabled: false
+    static_notch_freq: 11.0
+    static_notch_width: 2.0
+    oversteer_boost: 0.0
+    sop: 0.0
+    rear_align_effect: 0.29
+    sop_yaw_gain: 0.0
+    yaw_kick_threshold: 0.0
+    yaw_accel_smoothing: 0.015
+    gyro_gain: 0.0
+    gyro_smoothing_factor: 0.0
+    sop_smoothing_factor: 0.0
+    sop_scale: 0.89
+    understeer_affects_sop: false
+    slip_angle_smoothing: 0.002
+    chassis_inertia_smoothing: 0.0
+    optimal_slip_angle: 0.1
+    optimal_slip_ratio: 0.12
+    lockup_enabled: true
+    lockup_gain: 0.977
+    brake_load_cap: 81
+    lockup_freq_scale: 1.0
+    lockup_gamma: 1.0
+    lockup_start_pct: 1.0
+    lockup_full_pct: 7.5
+    lockup_prediction_sens: 10.0
+    lockup_bump_reject: 0.1
+    lockup_rear_boost: 1.0
+    abs_pulse_enabled: false
+    abs_gain: 2.1
+    abs_freq: 25.5
+    texture_load_cap: 1.5
+    slide_enabled: false
+    slide_gain: 0.0
+    slide_freq: 1.47
+    road_enabled: true
+    road_gain: 0.0
+    road_fallback_scale: 0.05
+    spin_enabled: true
+    spin_gain: 0.462185
+    spin_freq_scale: 1.8
+    scrub_drag_gain: 0.333
+    bottoming_method: 1
+    speed_gate_lower: 1.0
+    speed_gate_upper: 5.0
+
+  - name: GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)
+    is_builtin: true
+    invert_force: true
+    gain: 1.454
+    max_torque_ref: 100.1
+    min_force: 0.0
+    steering_shaft_gain: 1.989
+    steering_shaft_smoothing: 0.0
+    understeer: 0.638
+    base_force_mode: 0
+    flatspot_suppression: true
+    notch_q: 0.57
+    flatspot_strength: 1.0
+    static_notch_enabled: false
+    static_notch_freq: 11.0
+    static_notch_width: 2.0
+    oversteer_boost: 0.0
+    sop: 0.0
+    rear_align_effect: 0.29
+    sop_yaw_gain: 0.333
+    yaw_kick_threshold: 0.0
+    yaw_accel_smoothing: 0.003
+    gyro_gain: 0.0
+    gyro_smoothing_factor: 0.0
+    sop_smoothing_factor: 0.0
+    sop_scale: 0.89
+    understeer_affects_sop: false
+    slip_angle_smoothing: 0.002
+    chassis_inertia_smoothing: 0.0
+    optimal_slip_angle: 0.1
+    optimal_slip_ratio: 0.12
+    lockup_enabled: true
+    lockup_gain: 0.977
+    brake_load_cap: 81.0
+    lockup_freq_scale: 1.0
+    lockup_gamma: 1.0
+    lockup_start_pct: 1.0
+    lockup_full_pct: 7.5
+    lockup_prediction_sens: 10.0
+    lockup_bump_reject: 0.1
+    lockup_rear_boost: 1.0
+    abs_pulse_enabled: false
+    abs_gain: 2.1
+    abs_freq: 25.5
+    texture_load_cap: 1.5
+    slide_enabled: false
+    slide_gain: 0.0
+    slide_freq: 1.47
+    road_enabled: true
+    road_gain: 0.0
+    road_fallback_scale: 0.05
+    spin_enabled: true
+    spin_gain: 0.462185
+    spin_freq_scale: 1.8
+    scrub_drag_gain: 0.333
+    bottoming_method: 1
+    speed_gate_lower: 1.0
+    speed_gate_upper: 5.0
+
+  - name: Test - Game Base FFB Only
+    is_builtin: true
+    invert_force: true
+    gain: 1.0
+    max_torque_ref: 100.0
+    min_force: 0.0
+    steering_shaft_gain: 1.0
+    steering_shaft_smoothing: 0.0
+    understeer: 0.0
+    base_force_mode: 0
+    flatspot_suppression: false
+    notch_q: 2.0
+    flatspot_strength: 1.0
+    static_notch_enabled: false
+    static_notch_freq: 11.0
+    static_notch_width: 2.0
+    oversteer_boost: 2.52101
+    sop: 0.0
+    rear_align_effect: 0.0
+    sop_yaw_gain: 0.333
+    yaw_kick_threshold: 0.0
+    yaw_accel_smoothing: 0.001
+    gyro_gain: 0.0
+    gyro_smoothing_factor: 0.0
+    sop_smoothing_factor: 0.85
+    sop_scale: 1.0
+    understeer_affects_sop: false
+    slip_angle_smoothing: 0.015
+    chassis_inertia_smoothing: 0.0
+    optimal_slip_angle: 0.1
+    optimal_slip_ratio: 0.12
+    lockup_enabled: true
+    lockup_gain: 0.37479
+    brake_load_cap: 2.0
+    lockup_freq_scale: 1.02
+    lockup_gamma: 0.1
+    lockup_start_pct: 1.0
+    lockup_full_pct: 5.0
+    lockup_prediction_sens: 10.0
+    lockup_bump_reject: 0.1
+    lockup_rear_boost: 10.0
+    abs_pulse_enabled: false
+    abs_gain: 2.0
+    abs_freq: 25.5
+    texture_load_cap: 1.5
+    slide_enabled: false
+    slide_gain: 0.0
+    slide_freq: 1.0
+    road_enabled: true
+    road_gain: 0.0
+    road_fallback_scale: 0.05
+    spin_enabled: true
+    spin_gain: 0.5
+    spin_freq_scale: 1.0
+    scrub_drag_gain: 0.0
+    bottoming_method: 0
+    speed_gate_lower: 1.0
+    speed_gate_upper: 5.0
+
+  - name: Test - SoP Only
+    is_builtin: true
+    invert_force: true
+    gain: 1.0
+    max_torque_ref: 100.0
+    min_force: 0.0
+    steering_shaft_gain: 1.0
+    steering_shaft_smoothing: 0.0
+    understeer: 0.0
+    base_force_mode: 2
+    flatspot_suppression: false
+    notch_q: 2.0
+    flatspot_strength: 1.0
+    static_notch_enabled: false
+    static_notch_freq: 11.0
+    static_notch_width: 2.0
+    oversteer_boost: 2.52101
+    sop: 0.08
+    rear_align_effect: 0.0
+    sop_yaw_gain: 0.0
+    yaw_kick_threshold: 0.0
+    yaw_accel_smoothing: 0.001
+    gyro_gain: 0.0
+    gyro_smoothing_factor: 0.0
+    sop_smoothing_factor: 0.85
+    sop_scale: 1.0
+    understeer_affects_sop: false
+    slip_angle_smoothing: 0.015
+    chassis_inertia_smoothing: 0.0
+    optimal_slip_angle: 0.1
+    optimal_slip_ratio: 0.12
+    lockup_enabled: true
+    lockup_gain: 0.37479
+    brake_load_cap: 2.0
+    lockup_freq_scale: 1.02
+    lockup_gamma: 0.1
+    lockup_start_pct: 1.0
+    lockup_full_pct: 5.0
+    lockup_prediction_sens: 10.0
+    lockup_bump_reject: 0.1
+    lockup_rear_boost: 10.0
+    abs_pulse_enabled: false
+    abs_gain: 2.0
+    abs_freq: 25.5
+    texture_load_cap: 1.5
+    slide_enabled: false
+    slide_gain: 0.0
+    slide_freq: 1.0
+    road_enabled: true
+    road_gain: 0.0
+    road_fallback_scale: 0.05
+    spin_enabled: true
+    spin_gain: 0.5
+    spin_freq_scale: 1.0
+    scrub_drag_gain: 0.0
+    bottoming_method: 0
+    speed_gate_lower: 1.0
+    speed_gate_upper: 5.0
+
+  - name: Test - Understeer Only
+    is_builtin: true
+    invert_force: true
+    gain: 1.0
+    max_torque_ref: 100.0
+    min_force: 0.0
+    steering_shaft_gain: 1.0
+    steering_shaft_smoothing: 0.0
+    understeer: 0.61
+    base_force_mode: 0
+    flatspot_suppression: false
+    notch_q: 2.0
+    flatspot_strength: 1.0
+    static_notch_enabled: false
+    static_notch_freq: 11.0
+    static_notch_width: 2.0
+    oversteer_boost: 0.0
+    sop: 0.0
+    rear_align_effect: 0.0
+    sop_yaw_gain: 0.0
+    yaw_kick_threshold: 0.0
+    yaw_accel_smoothing: 0.001
+    gyro_gain: 0.0
+    gyro_smoothing_factor: 0.0
+    sop_smoothing_factor: 0.85
+    sop_scale: 1.0
+    understeer_affects_sop: false
+    slip_angle_smoothing: 0.015
+    chassis_inertia_smoothing: 0.0
+    optimal_slip_angle: 0.1
+    optimal_slip_ratio: 0.12
+    lockup_enabled: false
+    lockup_gain: 0.0
+    brake_load_cap: 2.0
+    lockup_freq_scale: 1.02
+    lockup_gamma: 0.5
+    lockup_start_pct: 5.0
+    lockup_full_pct: 15.0
+    lockup_prediction_sens: 20.0
+    lockup_bump_reject: 0.1
+    lockup_rear_boost: 1.5
+    abs_pulse_enabled: false
+    abs_gain: 0.0
+    abs_freq: 25.5
+    texture_load_cap: 1.5
+    slide_enabled: false
+    slide_gain: 0.0
+    slide_freq: 1.0
+    road_enabled: false
+    road_gain: 0.0
+    road_fallback_scale: 0.05
+    spin_enabled: false
+    spin_gain: 0.0
+    spin_freq_scale: 1.0
+    scrub_drag_gain: 0.0
+    bottoming_method: 0
+    speed_gate_lower: 0.0
+    speed_gate_upper: 0.0
+
+  - name: Test - Yaw Kick Only
+    is_builtin: true
+    invert_force: true
+    gain: 1.0
+    max_torque_ref: 100.0
+    min_force: 0.0
+    steering_shaft_gain: 1.0
+    steering_shaft_smoothing: 0.0
+    understeer: 0.0
+    base_force_mode: 2
+    flatspot_suppression: false
+    notch_q: 2.0
+    flatspot_strength: 1.0
+    static_notch_enabled: false
+    static_notch_freq: 11.0
+    static_notch_width: 2.0
+    oversteer_boost: 0.0
+    sop: 0.0
+    rear_align_effect: 0.0
+    sop_yaw_gain: 0.386555
+    yaw_kick_threshold: 1.68
+    yaw_accel_smoothing: 0.005
+    gyro_gain: 0.0
+    gyro_smoothing_factor: 0.0
+    sop_smoothing_factor: 0.85
+    sop_scale: 1.0
+    understeer_affects_sop: false
+    slip_angle_smoothing: 0.015
+    chassis_inertia_smoothing: 0.0
+    optimal_slip_angle: 0.1
+    optimal_slip_ratio: 0.12
+    lockup_enabled: false
+    lockup_gain: 0.0
+    brake_load_cap: 2.0
+    lockup_freq_scale: 1.02
+    lockup_gamma: 0.5
+    lockup_start_pct: 5.0
+    lockup_full_pct: 15.0
+    lockup_prediction_sens: 20.0
+    lockup_bump_reject: 0.1
+    lockup_rear_boost: 1.5
+    abs_pulse_enabled: false
+    abs_gain: 0.0
+    abs_freq: 25.5
+    texture_load_cap: 1.5
+    slide_enabled: false
+    slide_gain: 0.0
+    slide_freq: 1.0
+    road_enabled: false
+    road_gain: 0.0
+    road_fallback_scale: 0.05
+    spin_enabled: false
+    spin_gain: 0.0
+    spin_freq_scale: 1.0
+    scrub_drag_gain: 0.0
+    bottoming_method: 0
+    speed_gate_lower: 1.0
+    speed_gate_upper: 5.0
+
+  # - name: Test - Textures Only
+  #   is_builtin: 1
+  #   invert_force: 1
+  #   gain: 1
+  #   max_torque_ref: 100
+  #   min_force: 0
+  #   steering_shaft_gain: 1
+  #   steering_shaft_smoothing: 0
+  #   understeer: 0
+  #   base_force_mode: 2
+  #   flatspot_suppression: 0
+  #   notch_q: 2
+  #   flatspot_strength: 1
+  #   static_notch_enabled: 0
+  #   static_notch_freq: 11
+  #   static_notch_width: 2
+  #   oversteer_boost: 2.52101
+  #   sop: 0
+  #   rear_align_effect: 0
+  #   sop_yaw_gain: 0.333
+  #   yaw_kick_threshold: 0
+  #   yaw_accel_smoothing: 0.001
+  #   gyro_gain: 0
+  #   gyro_smoothing_factor: 0
+  #   sop_smoothing_factor: 0.85
+  #   sop_scale: 0
+  #   understeer_affects_sop: 0
+  #   slip_angle_smoothing: 0.015
+  #   chassis_inertia_smoothing: 0
+  #   optimal_slip_angle: 0.1
+  #   optimal_slip_ratio: 0.12
+  #   lockup_enabled: 1
+  #   lockup_gain: 1
+  #   brake_load_cap: 2
+  #   lockup_freq_scale: 1.02
+  #   lockup_gamma: 0.1
+  #   lockup_start_pct: 5
+  #   lockup_full_pct: 15
+  #   lockup_prediction_sens: 10
+  #   lockup_bump_reject: 0.1
+  #   lockup_rear_boost: 1.5
+  #   abs_pulse_enabled: 0
+  #   abs_gain: 2
+  #   abs_freq: 25.5
+  #   texture_load_cap: 1.5
+  #   slide_enabled: 1
+  #   slide_gain: 0.39
+  #   slide_freq: 1
+  #   road_enabled: 1
+  #   road_gain: 1
+  #   road_fallback_scale: 0.05
+  #   spin_enabled: 1
+  #   spin_gain: 1
+  #   spin_freq_scale: 1
+  #   scrub_drag_gain: 0
+  #   bottoming_method: 0
+  #   speed_gate_lower: 1
+  #   speed_gate_upper: 5
+
+  # - name: Test - Rear Align Torque Only
+  #   is_builtin: 1
+  #   invert_force: 1
+  #   gain: 1
+  #   max_torque_ref: 100
+  #   min_force: 0
+  #   steering_shaft_gain: 1
+  #   steering_shaft_smoothing: 0
+  #   understeer: 0
+  #   base_force_mode: 0
+  #   flatspot_suppression: 0
+  #   notch_q: 2
+  #   flatspot_strength: 1
+  #   static_notch_enabled: 0
+  #   static_notch_freq: 11
+  #   static_notch_width: 2
+  #   oversteer_boost: 2.52101
+  #   sop: 0
+  #   rear_align_effect: 0.9
+  #   sop_yaw_gain: 0
+  #   yaw_kick_threshold: 0
+  #   yaw_accel_smoothing: 0.001
+  #   gyro_gain: 0
+  #   gyro_smoothing_factor: 0
+  #   sop_smoothing_factor: 0.85
+  #   sop_scale: 1
+  #   understeer_affects_sop: 0
+  #   slip_angle_smoothing: 0.015
+  #   chassis_inertia_smoothing: 0
+  #   optimal_slip_angle: 0.1
+  #   optimal_slip_ratio: 0.12
+  #   lockup_enabled: 1
+  #   lockup_gain: 0.37479
+  #   brake_load_cap: 2
+  #   lockup_freq_scale: 1.02
+  #   lockup_gamma: 0.1
+  #   lockup_start_pct: 1
+  #   lockup_full_pct: 5
+  #   lockup_prediction_sens: 10
+  #   lockup_bump_reject: 0.1
+  #   lockup_rear_boost: 10
+  #   abs_pulse_enabled: 0
+  #   abs_gain: 2
+  #   abs_freq: 25.5
+  #   texture_load_cap: 1.5
+  #   slide_enabled: 0
+  #   slide_gain: 0
+  #   slide_freq: 1
+  #   road_enabled: 1
+  #   road_gain: 0
+  #   road_fallback_scale: 0.05
+  #   spin_enabled: 1
+  #   spin_gain: 0.5
+  #   spin_freq_scale: 1
+  #   scrub_drag_gain: 0
+  #   bottoming_method: 0
+  #   speed_gate_lower: 1
+  #   speed_gate_upper: 5
+
+  # - name: Test - SoP Base Only
+  #   is_builtin: 1
+  #   invert_force: 1
+  #   gain: 1
+  #   max_torque_ref: 100
+  #   min_force: 0
+  #   steering_shaft_gain: 1
+  #   steering_shaft_smoothing: 0
+  #   understeer: 0
+  #   base_force_mode: 2
+  #   flatspot_suppression: 0
+  #   notch_q: 2
+  #   flatspot_strength: 1
+  #   static_notch_enabled: 0
+  #   static_notch_freq: 11
+  #   static_notch_width: 2
+  #   oversteer_boost: 2.52101
+  #   sop: 0.08
+  #   rear_align_effect: 0
+  #   sop_yaw_gain: 0
+  #   yaw_kick_threshold: 0
+  #   yaw_accel_smoothing: 0.001
+  #   gyro_gain: 0
+  #   gyro_smoothing_factor: 0
+  #   sop_smoothing_factor: 0.85
+  #   sop_scale: 1
+  #   understeer_affects_sop: 0
+  #   slip_angle_smoothing: 0.015
+  #   chassis_inertia_smoothing: 0
+  #   optimal_slip_angle: 0.1
+  #   optimal_slip_ratio: 0.12
+  #   lockup_enabled: 1
+  #   lockup_gain: 0.37479
+  #   brake_load_cap: 2
+  #   lockup_freq_scale: 1.02
+  #   lockup_gamma: 0.1
+  #   lockup_start_pct: 1
+  #   lockup_full_pct: 5
+  #   lockup_prediction_sens: 10
+  #   lockup_bump_reject: 0.1
+  #   lockup_rear_boost: 10
+  #   abs_pulse_enabled: 0
+  #   abs_gain: 2
+  #   abs_freq: 25.5
+  #   texture_load_cap: 1.5
+  #   slide_enabled: 0
+  #   slide_gain: 0
+  #   slide_freq: 1
+  #   road_enabled: 1
+  #   road_gain: 0
+  #   road_fallback_scale: 0.05
+  #   spin_enabled: 1
+  #   spin_gain: 0.5
+  #   spin_freq_scale: 1
+  #   scrub_drag_gain: 0
+  #   bottoming_method: 0
+  #   speed_gate_lower: 1
+  #   speed_gate_upper: 5
+
+  # - name: Test - Slide Texture Only
+  #   is_builtin: 1
+  #   invert_force: 1
+  #   gain: 1
+  #   max_torque_ref: 100
+  #   min_force: 0
+  #   steering_shaft_gain: 1
+  #   steering_shaft_smoothing: 0
+  #   understeer: 0
+  #   base_force_mode: 2
+  #   flatspot_suppression: 0
+  #   notch_q: 2
+  #   flatspot_strength: 1
+  #   static_notch_enabled: 0
+  #   static_notch_freq: 11
+  #   static_notch_width: 2
+  #   oversteer_boost: 2.52101
+  #   sop: 0
+  #   rear_align_effect: 0
+  #   sop_yaw_gain: 0.333
+  #   yaw_kick_threshold: 0
+  #   yaw_accel_smoothing: 0.001
+  #   gyro_gain: 0
+  #   gyro_smoothing_factor: 0
+  #   sop_smoothing_factor: 0.85
+  #   sop_scale: 1
+  #   understeer_affects_sop: 0
+  #   slip_angle_smoothing: 0.015
+  #   chassis_inertia_smoothing: 0
+  #   optimal_slip_angle: 0.1
+  #   optimal_slip_ratio: 0.12
+  #   lockup_enabled: 1
+  #   lockup_gain: 0.37479
+  #   brake_load_cap: 2
+  #   lockup_freq_scale: 1.02
+  #   lockup_gamma: 0.1
+  #   lockup_start_pct: 1
+  #   lockup_full_pct: 5
+  #   lockup_prediction_sens: 10
+  #   lockup_bump_reject: 0.1
+  #   lockup_rear_boost: 10
+  #   abs_pulse_enabled: 0
+  #   abs_gain: 2
+  #   abs_freq: 25.5
+  #   texture_load_cap: 1.5
+  #   slide_enabled: 1
+  #   slide_gain: 0.39
+  #   slide_freq: 1
+  #   road_enabled: 1
+  #   road_gain: 0
+  #   road_fallback_scale: 0.05
+  #   spin_enabled: 1
+  #   spin_gain: 0.5
+  #   spin_freq_scale: 1
+  #   scrub_drag_gain: 0
+  #   bottoming_method: 0
+  #   speed_gate_lower: 1
+  #   speed_gate_upper: 5
+
+  # - name: Test - No Effects
+  #   is_builtin: 1
+  #   invert_force: 1
+  #   gain: 1
+  #   max_torque_ref: 100
+  #   min_force: 0
+  #   steering_shaft_gain: 1
+  #   steering_shaft_smoothing: 0
+  #   understeer: 0
+  #   base_force_mode: 2
+  #   flatspot_suppression: 0
+  #   notch_q: 2
+  #   flatspot_strength: 1
+  #   static_notch_enabled: 0
+  #   static_notch_freq: 11
+  #   static_notch_width: 2
+  #   oversteer_boost: 2.52101
+  #   sop: 0
+  #   rear_align_effect: 0
+  #   sop_yaw_gain: 0.333
+  #   yaw_kick_threshold: 0
+  #   yaw_accel_smoothing: 0.001
+  #   gyro_gain: 0
+  #   gyro_smoothing_factor: 0
+  #   sop_smoothing_factor: 0.85
+  #   sop_scale: 1
+  #   understeer_affects_sop: 0
+  #   slip_angle_smoothing: 0.015
+  #   chassis_inertia_smoothing: 0
+  #   optimal_slip_angle: 0.1
+  #   optimal_slip_ratio: 0.12
+  #   lockup_enabled: 1
+  #   lockup_gain: 0.37479
+  #   brake_load_cap: 2
+  #   lockup_freq_scale: 1.02
+  #   lockup_gamma: 0.1
+  #   lockup_start_pct: 1
+  #   lockup_full_pct: 5
+  #   lockup_prediction_sens: 10
+  #   lockup_bump_reject: 0.1
+  #   lockup_rear_boost: 10
+  #   abs_pulse_enabled: 0
+  #   abs_gain: 2
+  #   abs_freq: 25.5
+  #   texture_load_cap: 1.5
+  #   slide_enabled: 0
+  #   slide_gain: 0
+  #   slide_freq: 1
+  #   road_enabled: 1
+  #   road_gain: 0
+  #   road_fallback_scale: 0.05
+  #   spin_enabled: 1
+  #   spin_gain: 0.5
+  #   spin_freq_scale: 1
+  #   scrub_drag_gain: 0
+  #   bottoming_method: 0
+  #   speed_gate_lower: 1
+  #   speed_gate_upper: 5
+
+  # - name: Guide - Understeer (Front Grip)
+  #   is_builtin: 1
+  #   invert_force: 1
+  #   gain: 1
+  #   max_torque_ref: 100
+  #   min_force: 0
+  #   steering_shaft_gain: 1
+  #   steering_shaft_smoothing: 0
+  #   understeer: 0.61
+  #   base_force_mode: 0
+  #   flatspot_suppression: 0
+  #   notch_q: 2
+  #   flatspot_strength: 1
+  #   static_notch_enabled: 0
+  #   static_notch_freq: 11
+  #   static_notch_width: 2
+  #   oversteer_boost: 0
+  #   sop: 0
+  #   rear_align_effect: 0
+  #   sop_yaw_gain: 0
+  #   yaw_kick_threshold: 0
+  #   yaw_accel_smoothing: 0.001
+  #   gyro_gain: 0
+  #   gyro_smoothing_factor: 0
+  #   sop_smoothing_factor: 0.85
+  #   sop_scale: 1
+  #   understeer_affects_sop: 0
+  #   slip_angle_smoothing: 0.015
+  #   chassis_inertia_smoothing: 0
+  #   optimal_slip_angle: 0.1
+  #   optimal_slip_ratio: 0.12
+  #   lockup_enabled: 0
+  #   lockup_gain: 0
+  #   brake_load_cap: 2
+  #   lockup_freq_scale: 1.02
+  #   lockup_gamma: 0.1
+  #   lockup_start_pct: 5
+  #   lockup_full_pct: 15
+  #   lockup_prediction_sens: 10
+  #   lockup_bump_reject: 0.1
+  #   lockup_rear_boost: 1.5
+  #   abs_pulse_enabled: 0
+  #   abs_gain: 2
+  #   abs_freq: 25.5
+  #   texture_load_cap: 1.5
+  #   slide_enabled: 0
+  #   slide_gain: 0
+  #   slide_freq: 1
+  #   road_enabled: 0
+  #   road_gain: 0
+  #   road_fallback_scale: 0.05
+  #   spin_enabled: 0
+  #   spin_gain: 0
+  #   spin_freq_scale: 1
+  #   scrub_drag_gain: 0
+  #   bottoming_method: 0
+  #   speed_gate_lower: 1
+  #   speed_gate_upper: 5
+
+  # - name: Guide - Oversteer (Rear Grip)
+  #   is_builtin: 1
+  #   invert_force: 1
+  #   gain: 1
+  #   max_torque_ref: 100
+  #   min_force: 0
+  #   steering_shaft_gain: 1
+  #   steering_shaft_smoothing: 0
+  #   understeer: 0
+  #   base_force_mode: 0
+  #   flatspot_suppression: 0
+  #   notch_q: 2
+  #   flatspot_strength: 1
+  #   static_notch_enabled: 0
+  #   static_notch_freq: 11
+  #   static_notch_width: 2
+  #   oversteer_boost: 0.65
+  #   sop: 0.08
+  #   rear_align_effect: 0.9
+  #   sop_yaw_gain: 0
+  #   yaw_kick_threshold: 0
+  #   yaw_accel_smoothing: 0.001
+  #   gyro_gain: 0
+  #   gyro_smoothing_factor: 0
+  #   sop_smoothing_factor: 0.85
+  #   sop_scale: 1
+  #   understeer_affects_sop: 0
+  #   slip_angle_smoothing: 0.015
+  #   chassis_inertia_smoothing: 0
+  #   optimal_slip_angle: 0.1
+  #   optimal_slip_ratio: 0.12
+  #   lockup_enabled: 0
+  #   lockup_gain: 0
+  #   brake_load_cap: 2
+  #   lockup_freq_scale: 1.02
+  #   lockup_gamma: 0.1
+  #   lockup_start_pct: 5
+  #   lockup_full_pct: 15
+  #   lockup_prediction_sens: 10
+  #   lockup_bump_reject: 0.1
+  #   lockup_rear_boost: 1.5
+  #   abs_pulse_enabled: 0
+  #   abs_gain: 2
+  #   abs_freq: 25.5
+  #   texture_load_cap: 1.5
+  #   slide_enabled: 0
+  #   slide_gain: 0
+  #   slide_freq: 1
+  #   road_enabled: 0
+  #   road_gain: 0
+  #   road_fallback_scale: 0.05
+  #   spin_enabled: 0
+  #   spin_gain: 0
+  #   spin_freq_scale: 1
+  #   scrub_drag_gain: 0
+  #   bottoming_method: 0
+  #   speed_gate_lower: 1
+  #   speed_gate_upper: 5
+
+  # - name: Guide - Slide Texture (Scrub)
+  #   is_builtin: 1
+  #   invert_force: 1
+  #   gain: 1
+  #   max_torque_ref: 100
+  #   min_force: 0
+  #   steering_shaft_gain: 1
+  #   steering_shaft_smoothing: 0
+  #   understeer: 0
+  #   base_force_mode: 2
+  #   flatspot_suppression: 0
+  #   notch_q: 2
+  #   flatspot_strength: 1
+  #   static_notch_enabled: 0
+  #   static_notch_freq: 11
+  #   static_notch_width: 2
+  #   oversteer_boost: 0
+  #   sop: 0
+  #   rear_align_effect: 0
+  #   sop_yaw_gain: 0.333
+  #   yaw_kick_threshold: 0
+  #   yaw_accel_smoothing: 0.001
+  #   gyro_gain: 0
+  #   gyro_smoothing_factor: 0
+  #   sop_smoothing_factor: 0.85
+  #   sop_scale: 1
+  #   understeer_affects_sop: 0
+  #   slip_angle_smoothing: 0.015
+  #   chassis_inertia_smoothing: 0
+  #   optimal_slip_angle: 0.1
+  #   optimal_slip_ratio: 0.12
+  #   lockup_enabled: 0
+  #   lockup_gain: 0
+  #   brake_load_cap: 2
+  #   lockup_freq_scale: 1.02
+  #   lockup_gamma: 0.1
+  #   lockup_start_pct: 5
+  #   lockup_full_pct: 15
+  #   lockup_prediction_sens: 10
+  #   lockup_bump_reject: 0.1
+  #   lockup_rear_boost: 1.5
+  #   abs_pulse_enabled: 0
+  #   abs_gain: 2
+  #   abs_freq: 25.5
+  #   texture_load_cap: 1.5
+  #   slide_enabled: 1
+  #   slide_gain: 0.39
+  #   slide_freq: 1
+  #   road_enabled: 0
+  #   road_gain: 0
+  #   road_fallback_scale: 0.05
+  #   spin_enabled: 0
+  #   spin_gain: 0
+  #   spin_freq_scale: 1
+  #   scrub_drag_gain: 1
+  #   bottoming_method: 0
+  #   speed_gate_lower: 1
+  #   speed_gate_upper: 5
+
+  # - name: Guide - Braking Lockup
+  #   is_builtin: 1
+  #   invert_force: 1
+  #   gain: 1
+  #   max_torque_ref: 100
+  #   min_force: 0
+  #   steering_shaft_gain: 1
+  #   steering_shaft_smoothing: 0
+  #   understeer: 0
+  #   base_force_mode: 2
+  #   flatspot_suppression: 0
+  #   notch_q: 2
+  #   flatspot_strength: 1
+  #   static_notch_enabled: 0
+  #   static_notch_freq: 11
+  #   static_notch_width: 2
+  #   oversteer_boost: 0
+  #   sop: 0
+  #   rear_align_effect: 0
+  #   sop_yaw_gain: 0.333
+  #   yaw_kick_threshold: 0
+  #   yaw_accel_smoothing: 0.001
+  #   gyro_gain: 0
+  #   gyro_smoothing_factor: 0
+  #   sop_smoothing_factor: 0.85
+  #   sop_scale: 1
+  #   understeer_affects_sop: 0
+  #   slip_angle_smoothing: 0.015
+  #   chassis_inertia_smoothing: 0
+  #   optimal_slip_angle: 0.1
+  #   optimal_slip_ratio: 0.12
+  #   lockup_enabled: 1
+  #   lockup_gain: 1
+  #   brake_load_cap: 2
+  #   lockup_freq_scale: 1.02
+  #   lockup_gamma: 0.1
+  #   lockup_start_pct: 5
+  #   lockup_full_pct: 15
+  #   lockup_prediction_sens: 10
+  #   lockup_bump_reject: 0.1
+  #   lockup_rear_boost: 1.5
+  #   abs_pulse_enabled: 0
+  #   abs_gain: 2
+  #   abs_freq: 25.5
+  #   texture_load_cap: 1.5
+  #   slide_enabled: 0
+  #   slide_gain: 0
+  #   slide_freq: 1
+  #   road_enabled: 0
+  #   road_gain: 0
+  #   road_fallback_scale: 0.05
+  #   spin_enabled: 0
+  #   spin_gain: 0
+  #   spin_freq_scale: 1
+  #   scrub_drag_gain: 0
+  #   bottoming_method: 0
+  #   speed_gate_lower: 1
+  #   speed_gate_upper: 5
+
+  # - name: Guide - Traction Loss (Spin)
+  #   is_builtin: 1
+  #   invert_force: 1
+  #   gain: 1
+  #   max_torque_ref: 100
+  #   min_force: 0
+  #   steering_shaft_gain: 1
+  #   steering_shaft_smoothing: 0
+  #   understeer: 0
+  #   base_force_mode: 2
+  #   flatspot_suppression: 0
+  #   notch_q: 2
+  #   flatspot_strength: 1
+  #   static_notch_enabled: 0
+  #   static_notch_freq: 11
+  #   static_notch_width: 2
+  #   oversteer_boost: 0
+  #   sop: 0
+  #   rear_align_effect: 0
+  #   sop_yaw_gain: 0.333
+  #   yaw_kick_threshold: 0
+  #   yaw_accel_smoothing: 0.001
+  #   gyro_gain: 0
+  #   gyro_smoothing_factor: 0
+  #   sop_smoothing_factor: 0.85
+  #   sop_scale: 1
+  #   understeer_affects_sop: 0
+  #   slip_angle_smoothing: 0.015
+  #   chassis_inertia_smoothing: 0
+  #   optimal_slip_angle: 0.1
+  #   optimal_slip_ratio: 0.12
+  #   lockup_enabled: 0
+  #   lockup_gain: 0
+  #   brake_load_cap: 2
+  #   lockup_freq_scale: 1.02
+  #   lockup_gamma: 0.1
+  #   lockup_start_pct: 5
+  #   lockup_full_pct: 15
+  #   lockup_prediction_sens: 10
+  #   lockup_bump_reject: 0.1
+  #   lockup_rear_boost: 1.5
+  #   abs_pulse_enabled: 0
+  #   abs_gain: 2
+  #   abs_freq: 25.5
+  #   texture_load_cap: 1.5
+  #   slide_enabled: 0
+  #   slide_gain: 0
+  #   slide_freq: 1
+  #   road_enabled: 0
+  #   road_gain: 0
+  #   road_fallback_scale: 0.05
+  #   spin_enabled: 1
+  #   spin_gain: 1
+  #   spin_freq_scale: 1
+  #   scrub_drag_gain: 0
+  #   bottoming_method: 0
+  #   speed_gate_lower: 1
+  #   speed_gate_upper: 5
+
+  # - name: Guide - SoP Yaw (Kick)
+  #   is_builtin: 1
+  #   invert_force: 1
+  #   gain: 1
+  #   max_torque_ref: 100
+  #   min_force: 0
+  #   steering_shaft_gain: 1
+  #   steering_shaft_smoothing: 0
+  #   understeer: 0
+  #   base_force_mode: 2
+  #   flatspot_suppression: 0
+  #   notch_q: 2
+  #   flatspot_strength: 1
+  #   static_notch_enabled: 0
+  #   static_notch_freq: 11
+  #   static_notch_width: 2
+  #   oversteer_boost: 0
+  #   sop: 0
+  #   rear_align_effect: 0
+  #   sop_yaw_gain: 5
+  #   yaw_kick_threshold: 0
+  #   yaw_accel_smoothing: 0.001
+  #   gyro_gain: 0
+  #   gyro_smoothing_factor: 0
+  #   sop_smoothing_factor: 0.85
+  #   sop_scale: 1
+  #   understeer_affects_sop: 0
+  #   slip_angle_smoothing: 0.015
+  #   chassis_inertia_smoothing: 0
+  #   optimal_slip_angle: 0.1
+  #   optimal_slip_ratio: 0.12
+  #   lockup_enabled: 0
+  #   lockup_gain: 0
+  #   brake_load_cap: 2
+  #   lockup_freq_scale: 1.02
+  #   lockup_gamma: 0.1
+  #   lockup_start_pct: 5
+  #   lockup_full_pct: 15
+  #   lockup_prediction_sens: 10
+  #   lockup_bump_reject: 0.1
+  #   lockup_rear_boost: 1.5
+  #   abs_pulse_enabled: 0
+  #   abs_gain: 2
+  #   abs_freq: 25.5
+  #   texture_load_cap: 1.5
+  #   slide_enabled: 0
+  #   slide_gain: 0
+  #   slide_freq: 1
+  #   road_enabled: 0
+  #   road_gain: 0
+  #   road_fallback_scale: 0.05
+  #   spin_enabled: 0
+  #   spin_gain: 0
+  #   spin_freq_scale: 1
+  #   scrub_drag_gain: 0
+  #   bottoming_method: 0
+  #   speed_gate_lower: 1
+  #   speed_gate_upper: 5
+
+  # - name: Guide - Gyroscopic Damping
+  #   is_builtin: 1
+  #   invert_force: 1
+  #   gain: 1
+  #   max_torque_ref: 100
+  #   min_force: 0
+  #   steering_shaft_gain: 1
+  #   steering_shaft_smoothing: 0
+  #   understeer: 0
+  #   base_force_mode: 2
+  #   flatspot_suppression: 0
+  #   notch_q: 2
+  #   flatspot_strength: 1
+  #   static_notch_enabled: 0
+  #   static_notch_freq: 11
+  #   static_notch_width: 2
+  #   oversteer_boost: 0
+  #   sop: 0
+  #   rear_align_effect: 0
+  #   sop_yaw_gain: 0
+  #   yaw_kick_threshold: 0
+  #   yaw_accel_smoothing: 0.001
+  #   gyro_gain: 1
+  #   gyro_smoothing_factor: 0
+  #   sop_smoothing_factor: 0.85
+  #   sop_scale: 1
+  #   understeer_affects_sop: 0
+  #   slip_angle_smoothing: 0.015
+  #   chassis_inertia_smoothing: 0
+  #   optimal_slip_angle: 0.1
+  #   optimal_slip_ratio: 0.12
+  #   lockup_enabled: 0
+  #   lockup_gain: 0
+  #   brake_load_cap: 2
+  #   lockup_freq_scale: 1.02
+  #   lockup_gamma: 0.1
+  #   lockup_start_pct: 5
+  #   lockup_full_pct: 15
+  #   lockup_prediction_sens: 10
+  #   lockup_bump_reject: 0.1
+  #   lockup_rear_boost: 1.5
+  #   abs_pulse_enabled: 0
+  #   abs_gain: 2
+  #   abs_freq: 25.5
+  #   texture_load_cap: 1.5
+  #   slide_enabled: 0
+  #   slide_gain: 0
+  #   slide_freq: 1
+  #   road_enabled: 0
+  #   road_gain: 0
+  #   road_fallback_scale: 0.05
+  #   spin_enabled: 0
+  #   spin_gain: 0
+  #   spin_freq_scale: 1
+  #   scrub_drag_gain: 0
+  #   bottoming_method: 0
+  #   speed_gate_lower: 1
+  #   speed_gate_upper: 5

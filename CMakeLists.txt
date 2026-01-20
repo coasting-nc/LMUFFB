@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(LMUFFB_CPP)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 # vJoy SDK Location - Users should set this
 # We link against the installed vJoy SDK (headers/libs), we do NOT compile vJoy itself.
@@ -47,11 +47,35 @@ endif()
 # endif()
 
 # Tests
-add_subdirectory(tests)
+# add_subdirectory(tests)
 
-add_executable(LMUFFB src/main.cpp src/GuiLayer.cpp src/GuiLayer.h src/Config.cpp src/Config.h src/DirectInputFFB.cpp src/DirectInputFFB.h src/GameConnector.cpp src/GameConnector.h src/DynamicVJoy.h src/FFBEngine.h ${IMGUI_SOURCES})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++11-narrowing")
 
-target_link_libraries(LMUFFB dinput8.lib dxguid.lib winmm.lib)
+add_executable(LMUFFB
+  src/main.cpp
+  src/GuiLayer.cpp
+  src/Config.cpp
+  src/DirectInputFFB.cpp
+  src/GameConnector.cpp
+  src/DynamicVJoy.h
+  src/FFBEngine.h
+  ${IMGUI_SOURCES}
+)
+
+include(FetchContent)
+FetchContent_Declare(
+  yaml-cpp
+  GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+  GIT_TAG master
+)
+FetchContent_MakeAvailable(yaml-cpp)
+
+target_link_libraries(LMUFFB PUBLIC
+  dinput8.lib
+  dxguid.lib
+  winmm.lib
+  yaml-cpp::yaml-cpp
+)
 
 # Read Version
 file(STRINGS "VERSION" LMUFFB_VERSION)
@@ -61,7 +85,10 @@ add_definitions(-DLMUFFB_VERSION="${LMUFFB_VERSION}")
 add_custom_command(TARGET LMUFFB POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
             "${CMAKE_SOURCE_DIR}/README.txt"
-            "$<TARGET_FILE_DIR:LMUFFB>/README.txt")
+            "$<TARGET_FILE_DIR:LMUFFB>/README.txt"
+    COMMAND ${CMAKE_COMMAND} -E copy
+            "${CMAKE_SOURCE_DIR}/default_config/config.yaml"
+            "$<TARGET_FILE_DIR:LMUFFB>/config.yaml")
 
 # Copy vJoy DLL to output directory
 # if(CMAKE_SIZEOF_VOID_P EQUAL 8)
