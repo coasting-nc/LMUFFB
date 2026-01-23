@@ -37,7 +37,7 @@ Note: some of the steps of the workflow are suggestions, meaning that you might 
 
 Use a slightly less capable model in Antigravity (Gemini 3 flash or Sonnet 4.5) and ask it to implement the plan. 
 * The coding agent should also make sure all tests pass, and if they don't iterate until they all pass.
-* * At the end, it should also increase the app version number and add an entry to the changelog.
+* At the end, it should also increase the app version number and add an entry to the changelog.
 
 Once the model finishes the implementation, quickly read / skim through it (to make sure no apparent gross issues are there).
 * Also make sure that the app and test compile, and that all tests pass (see the following section about this). 
