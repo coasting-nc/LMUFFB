@@ -83,11 +83,15 @@ If I want to investigate a bug, or some issue that a user reported, and need sug
 
 ## Simple use case: add a FFB preset to the app
 
-(TODO)
+* In Antigravity, Cursor, or other IDE, paste the portion of the ini file with your preset settings in the AI chat, and ask to create a new preset.
+
+* When the model is finished, double check the diff and the git changes in the IDE to make sure no other files or presets were changed.
+
+* Compile the app and tests, run the tests and make sure they pass (see above).
+
+* You don't need any of the more complex steps described above (deep research, implementation plan, code review).
 
 # TODOs 
-
-TODO: also add an example workflow for a contributor that just wants to add a new preset to the app.
 
 TODO: add a list of planned feature that contributors can choose from for things to implement.
 
