@@ -31,7 +31,7 @@ Note: some of the steps of the workflow are suggestions, meaning that you might 
     * to include in the implementation plan an introduction and overview to explain the motivation for implementing that particular feature.
     * to inlcude only code snippets of (some of) the changes proposed in the plan. The implementation plan should not include whole code files if they are too large and mostly unchanged.
 
-* Review the implementation plan to make sure it is aligned with the  requirements and that there are no issues that require further investigation or refinement.
+* You should review the implementation plan to make sure it is aligned with the  requirements and that there are no issues that require further investigation or refinement.
 
 ## Step 2: Implementation
 
