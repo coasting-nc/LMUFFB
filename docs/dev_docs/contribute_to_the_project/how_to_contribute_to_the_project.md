@@ -15,7 +15,7 @@ Note: some of the steps of the workflow are suggestions, meaning that you might 
 
 * If it's a complex new feature that requires expertise information (like how to implement a particular effects), use Gemini Deep Research to gather the information that there is out there (eg. how TC control systems in cars use certain formulas to determine when the rear is stepping out).
 
-* After that, the Deep Research Report needs to be exported into markdown format and saved to the project, so that AI coding agents can read it. To export a Gemini Deep Research report into markdown, you can first export it to Google docs, and from Google docs (if you have enabled markdown) you can do "copy as markdown" of the whole document, and then paste it into a new file in the lmuFFB project.
+* After that, the Deep Research Report needs to be exported into markdown format and saved to the project, so that AI coding agents can read it. To export a Gemini Deep Research report into markdown, you can first export it to Google docs, and from Google docs (if you have enabled markdown) you can select the whole document and do "copy as markdown", and then paste it into a new file in the lmuFFB project.
 
 ## Step 1: Implementation plan
 * After you have the report from the deep research, you need to produce an implementation plan for the feature you want to implement, as a separate markdown file. To create the file, you could either:
