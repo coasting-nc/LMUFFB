@@ -28,6 +28,8 @@ Note: some of the steps of the workflow are suggestions, meaning that you might 
 * When you ask AI to create an implementation plan, always ask also: 
     * to include in the plan instruction to create additional automated tests (the plan should include a test description and some code snippets) that comprehensively cover the new features and changes;
     * to include instructions to update the documentation in the project. The project has many documents, and it is better to keep them up to date as the code evolves.
+    * to include in the implementation plan an introduction and overview to explain the motivation for implementing that particular feature.
+    * to inlcude only code snippets of (some of) the changes proposed in the plan. The implementation plan should not include whole code files if they are too large and mostly unchanged.
 
 * Review the implementation plan to make sure it is aligned with the  requirements and that there are no issues that require further investigation or refinement.
 
