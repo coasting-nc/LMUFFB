@@ -23,7 +23,7 @@ Note: some of the steps of the workflow are suggestions, meaning that you might 
    * Paste the whole codebase into Google AI Studio, and ask Gemini 3 Pro to create it. You can then use "copy as markdown" and paste the plan into a new .md file in the project.
        * In order to have the whole project as context in AI Studio, you need to create a markdown file that contains the whole codebase of the project (code, documents, and tests), by running the Python script that is here: "scripts\create_context.py". This updates the file docs\dev_docs\FULL_PROJECT_CONTEXT.md, which then you can paste into Google AI studio.
 
-       * Note that Google AI studio can be used in this way (pasting the whole codebase and asking questions) for many more things, not just to create implementation file, but also to investigate bugs (ask what might be wrong with the code), or ask any kind of questions and suggestions. This is also free with generous rate limits.
+       * Note that Google AI studio can be used in this way (pasting the whole codebase and asking questions) for many more things, not just to create implementation plan. Eg. also to investigate bugs (ask what might be wrong with the code), or ask any kind of questions and suggestions. AI Studio is also free, with larger rate limits than Antigravity.
 
 * When you ask AI to create an implementation plan, always ask also: 
     * to include in the plan instruction to create additional automated tests (the plan should include a test description and some code snippets) that comprehensively cover the new features and changes;
