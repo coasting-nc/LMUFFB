@@ -29,14 +29,14 @@ Note: some of the steps of the workflow are suggestions, meaning that you might 
     * to include in the plan instruction to create additional automated tests (the plan should include a test description and some code snippets) that comprehensively cover the new features and changes;
     * to include instruction to update the documentation in the project. The project has many documents, and it is better to keep them up to date as the code evolve.
 
-* Review the implementation plan to make sure it is aligned with what I want and that that there are no issues that require further investigation or refinement.
+* Review the implementation plan to make sure it is aligned with the  requirements and that there are no issues that require further investigation or refinement.
 
 ## Implementation
 
 Use a slightly less capable model in Antigravity (Gemini 3 flash or Sonnet 4.5) and ask it to implement the plan, and to increase the app version number and add an entry to the changelog.
 
-* Once the model finishes the implementation, I quickly read / skim through it (to make sure no apparent gross issues are there).
-* I also make sure that the app and test compile, and that all tests pass (see the following section about this). 
+* Once the model finishes the implementation, quickly read / skim through it (to make sure no apparent gross issues are there).
+* Also make sure that the app and test compile, and that all tests pass (see the following section about this). 
 
 ## Make sure the app and tests compile and pass
 
@@ -46,11 +46,11 @@ Use a slightly less capable model in Antigravity (Gemini 3 flash or Sonnet 4.5) 
 
 ## Code review
 
-I open a new chat in Antigravity, and ask Sonnet 4.5 to do a code review of the changes, producing a markdown file with a detailed code review and recommended things to improve.
+Open a new chat in Antigravity, and ask Sonnet 4.5 to do a code review of the changes, producing a markdown file with a detailed code review and recommended things to improve.
 
-* Then I skim through the code review, and read in detail only the recommended improvements to the current changes. I usually ask Sonnet 4.5 in the same chat to implement most if not all of those recommendations.
+* Then skim through the code review, and read in detail only the recommended improvements to the current changes. You should usually ask Sonnet 4.5 in the same chat to implement most if not all of those recommendations.
 
-* After all the recommended improvements are implemented, I make sure again that the app and test compile, and that all tests pass.
+* After all the recommended improvements are implemented, make sure again that the app and test compile, and that all tests pass.
 
 ## Commit and release
 
@@ -76,12 +76,12 @@ This is to facilitate / speed up the review on my side before I can accept the m
 
 ## Investigating a bug
 
-If I want to investigate a bug, or some issue that a user reported, and need suggestion on what might be causing it and how to fix it, I will do any of the following:
+If you want to investigate a bug, or some issue that a user reported, and need suggestion on what might be causing it and how to fix it, you can do any of the following:
 
-* **Ask Google AI Studio:** Paste the whole codebase into Google AI Studio (update and use docs\dev_docs\FULL_PROJECT_CONTEXT.md as described above), and ask Gemini 3 to investigate the bug. I then use "copy as markdown" and paste the plan into a new .md file in the project.
-* **Ask in the IDE (Antigravity):** I will use one of the best models (Opus 4.5 or Gemini 3 Pro) to investigate the bug and create a markdown report about it. 
+* **Ask Google AI Studio:** Paste the whole codebase into Google AI Studio (update and use docs\dev_docs\FULL_PROJECT_CONTEXT.md as described above), and ask Gemini 3 to investigate the bug. Then use "copy as markdown" and paste the plan into a new .md file in the project.
+* **Ask in the IDE (Antigravity):** Use one of the best models (Opus 4.5 or Gemini 3 Pro) to investigate the bug and create a markdown report about it. 
 
-If I'm persuaded of the suggested cause and proposed solution to the issue, I will go ahead and produce an implementation plan as described above, and follow all subsequent steps (implement the implementation plan, do a code review, etc.). In this case the implementation plan must include one or more regression tests (a description of the test and some code snippets) that check that the sme issue we are fixing is not reintroduced in the future. 
+If you are persuaded of the suggested cause and proposed solution to the issue, go ahead and produce an implementation plan as described above, and follow all subsequent steps (implement the implementation plan, do a code review, etc.). In this case the implementation plan must include one or more regression tests (a description of the test and some code snippets) that check that the same issue being fixed is not reintroduced in the future. 
 
 ## Simple use case: add a FFB preset to the app
 
