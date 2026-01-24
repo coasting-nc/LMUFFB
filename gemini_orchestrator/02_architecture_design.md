@@ -93,13 +93,19 @@ Responsible for assembling the final prompt string sent to the agent.
     > TASK: Implement the code. Run tests.
     > FORMAT: End your response with JSON: { 'status': 'success', ... }"
 
-### 2.3 The `ResponseParser` Module
-Responsible for extracting structured data from the unstructured LLM output.
-*   **Algorithm:**
-    1.  Receive raw stdout string.
-    2.  Regex search for the last occurrence of `{...}` structure.
+### 2.5 The `ResponseValidator` Module
+Responsible for extracting and validating structured data from the unstructured LLM output.
+
+*   **Extraction Logic (Fuzzy):**
+    1.  Look for Markdown code blocks tagged `json`.
+    2.  If missing, search for the last outermost `{` and `}` pair.
     3.  `json.loads()` the extracted substring.
-    4.  Validate against a Pydantic model or schema.
+*   **Validation Logic (Strict):**
+    *   Uses **Pydantic Models** to enforce schemas (e.g., `class InvestigatorResult(BaseModel)`).
+    *   Checks for required fields (e.g., `report_path`, `verdict`).
+    *   Raises `ValidationError` if the output is malformed.
+*   **Error Handling:**
+    *   If validation fails, the Orchestrator captures the error message and sends it back to the Agent in a "Retry" prompt, allowing the Agent to self-correct.
 
 ### 2.4 The `WorkflowEngine` Class
 The main state machine.

@@ -26,7 +26,17 @@ This project will not be built in a single "Big Bang". Instead, we will build a 
 *   Implement `extract_json(raw_text: str) -> dict`.
 *   **Test:** Feed it dummy text with embedded JSON and verify extraction.
 
-### Task 1.3: Single-Step Orchestration
+### Task 1.4: Response Validation (Schemas)
+*   Create `src/schemas.py`.
+*   Define Pydantic models for each agent output:
+    *   `InvestigatorResult(report_path: str)`
+    *   `GatekeeperResult(verdict: Literal["APPROVE",...])`
+    *   `PlanResult(plan_path: str)`
+    *   `DeveloperResult(commit_hash: str)`
+    *   `ReviewResult(verdict: str)`
+*   Implement `validate_response(raw_text: str, schema: Type[BaseModel]) -> BaseModel`.
+
+### Task 1.5: Single-Step Orchestration
 *   Create `orchestrator_v0.py`.
 *   Hardcode a simple task: "Create a file named `test.txt` with content 'Hello World' and return JSON."
 *   Verify the file is created and the JSON confirms it.
