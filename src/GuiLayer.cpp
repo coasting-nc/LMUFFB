@@ -1837,10 +1837,11 @@ struct RollingBuffer {
 // Helper function to plot with numerical readouts
 // Displays: [Title]
 // Overlay:  Cur: X.XXXX Min: Y.YYY Max: Z.ZZZ (Small print)
-inline void PlotWithStats(const char *label, const RollingBuffer &buffer,
-                          float scale_min, float scale_max,
-                          const ImVec2 &size = ImVec2(0, 40),
-                          const char *tooltip = nullptr) {
+inline void
+PlotWithStats(const char *label, const RollingBuffer &buffer, float scale_min,
+              float scale_max, const ImVec2 &size = ImVec2(0, 40),
+              const char *tooltip = nullptr, bool show_counter = false,
+              int *counter = nullptr) {
   // 1. Draw Title
   ImGui::Text("%s", label);
 
@@ -1905,6 +1906,17 @@ inline void PlotWithStats(const char *label, const RollingBuffer &buffer,
   // Draw Text with scaled font
   draw_list->AddText(font, font_size, p_min, IM_COL32(255, 255, 255, 255),
                      stats_overlay);
+
+  if (show_counter && counter) {
+    if (current >= 1.0F) {
+      (*counter)++;
+    }
+    if (ImGui::Button("Reset Count")) {
+      *counter = 0;
+    }
+    ImGui::SameLine();
+    ImGui::Text("Count: %d", *counter);
+  }
 }
 
 // --- Header A: FFB Components (Output) ---
@@ -2065,218 +2077,68 @@ void GuiLayer::DrawDebugWindow(FFBEngine &engine) {
     PlotWithStats("Total Output", plot_total, -1.0f, 1.0f, ImVec2(0, 60),
                   "Final FFB Output (-1.0 to 1.0)");
 
-    ImGui::Separator();
-    ImGui::Columns(3, "FFBMain", false);
+    // --- Header A: FFB Components (Output) ---
+    // [Main Forces], [Modifiers], [Textures]
+    if (ImGui::CollapsingHeader("A. FFB Components (Output)", ImGuiTreeNodeFlags_DefaultOpen)) {
+        PlotWithStats("Total Output", plot_total, -1.0f, 1.0f, ImVec2(0, 60), 
+                      "Final FFB Output (-1.0 to 1.0)");
+        
+        ImGui::Separator();
+        ImGui::Columns(3, "FFBMain", false);
+        
+        // Group: Main Forces
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 1.0f, 1.0f), "[Main Forces]");
+        
+        PlotWithStats("Base Torque (Nm)", plot_base, -30.0f, 30.0f, ImVec2(0, 40),
+                      "Steering Rack Force derived from Game Physics");
+        
+        PlotWithStats("SoP (Base Chassis G)", plot_sop, -20.0f, 20.0f, ImVec2(0, 40),
+                      "Force from Lateral G-Force (Seat of Pants)");
 
-    // Group: Main Forces
-    ImGui::TextColored(ImVec4(0.7f, 0.7f, 1.0f, 1.0f), "[Main Forces]");
+        PlotWithStats("Yaw Kick", plot_yaw_kick, -20.0f, 20.0f, ImVec2(0, 40),
+                      "Force from Yaw Acceleration (Rotation Kick)");
+        
+        PlotWithStats("Rear Align Torque", plot_rear_torque, -20.0f, 20.0f, ImVec2(0, 40),
+                      "Force from Rear Lateral Force");
+        
+        PlotWithStats("Gyro Damping", plot_gyro_damping, -20.0f, 20.0f, ImVec2(0, 40),
+                      "Synthetic damping force");
 
-    PlotWithStats("Base Torque (Nm)", plot_base, -30.0f, 30.0f, ImVec2(0, 40),
-                  "Steering Rack Force derived from Game Physics");
+        PlotWithStats("Scrub Drag Force", plot_scrub_drag, -20.0f, 20.0f, ImVec2(0, 40),
+                      "Resistance force from sideways tire dragging");
+        
+        ImGui::NextColumn();
+        
+        // Group: Modifiers
+        ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.7f, 1.0f), "[Modifiers]");
+        
+        PlotWithStats("Lateral G Boost (Slide)", plot_oversteer, -20.0f, 20.0f, ImVec2(0, 40),
+                      "Added force from Rear Grip loss");
+        
+        PlotWithStats("Understeer Cut", plot_understeer, -20.0f, 20.0f, ImVec2(0, 40),
+                      "Reduction in force due to front grip loss");
+        
+        static int clip_count = 0;
+        PlotWithStats("Clipping", plot_clipping, 0.0f, 1.1f, ImVec2(0, 40),
+                      "Indicates when Output hits max limit", true, &clip_count);
+        
+        ImGui::NextColumn();
+        
+        // Group: Textures
+        ImGui::TextColored(ImVec4(0.7f, 1.0f, 0.7f, 1.0f), "[Textures]");
+        
+        PlotWithStats("Road Texture", plot_road, -10.0f, 10.0f, ImVec2(0, 40),
+                      "Vibration from Suspension Velocity");
+        PlotWithStats("Slide Texture", plot_slide, -10.0f, 10.0f, ImVec2(0, 40),
+                      "Vibration from Lateral Scrubbing");
+        PlotWithStats("Lockup Vib", plot_lockup, -10.0f, 10.0f, ImVec2(0, 40),
+                      "Vibration from Wheel Lockup");
+        PlotWithStats("Spin Vib", plot_spin, -10.0f, 10.0f, ImVec2(0, 40),
+                      "Vibration from Wheel Spin");
+        PlotWithStats("Bottoming", plot_bottoming, -10.0f, 10.0f, ImVec2(0, 40),
+                      "Vibration from Suspension Bottoming");
 
-    PlotWithStats("SoP (Base Chassis G)", plot_sop, -20.0f, 20.0f,
-                  ImVec2(0, 40), "Force from Lateral G-Force (Seat of Pants)");
-
-    PlotWithStats("Yaw Kick", plot_yaw_kick, -20.0f, 20.0f, ImVec2(0, 40),
-                  "Force from Yaw Acceleration (Rotation Kick)");
-
-    PlotWithStats("Rear Align Torque", plot_rear_torque, -20.0f, 20.0f,
-                  ImVec2(0, 40), "Force from Rear Lateral Force");
-
-    PlotWithStats("Gyro Damping", plot_gyro_damping, -20.0f, 20.0f,
-                  ImVec2(0, 40), "Synthetic damping force");
-
-    PlotWithStats("Scrub Drag Force", plot_scrub_drag, -20.0f, 20.0f,
-                  ImVec2(0, 40),
-                  "Resistance force from sideways tire dragging");
-
-    ImGui::NextColumn();
-
-    // Group: Modifiers
-    ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.7f, 1.0f), "[Modifiers]");
-
-    PlotWithStats("Lateral G Boost (Slide)", plot_oversteer, -20.0f, 20.0f,
-                  ImVec2(0, 40), "Added force from Rear Grip loss");
-
-    PlotWithStats("Understeer Cut", plot_understeer, -20.0f, 20.0f,
-                  ImVec2(0, 40), "Reduction in force due to front grip loss");
-
-    PlotWithStats("Clipping", plot_clipping, 0.0f, 1.1f, ImVec2(0, 40),
-                  "Indicates when Output hits max limit");
-
-    ImGui::NextColumn();
-
-    // Group: Textures
-    ImGui::TextColored(ImVec4(0.7f, 1.0f, 0.7f, 1.0f), "[Textures]");
-
-    PlotWithStats("Road Texture", plot_road, -10.0f, 10.0f, ImVec2(0, 40),
-                  "Vibration from Suspension Velocity");
-    PlotWithStats("Slide Texture", plot_slide, -10.0f, 10.0f, ImVec2(0, 40),
-                  "Vibration from Lateral Scrubbing");
-    PlotWithStats("Lockup Vib", plot_lockup, -10.0f, 10.0f, ImVec2(0, 40),
-                  "Vibration from Wheel Lockup");
-    PlotWithStats("Spin Vib", plot_spin, -10.0f, 10.0f, ImVec2(0, 40),
-                  "Vibration from Wheel Spin");
-    PlotWithStats("Bottoming", plot_bottoming, -10.0f, 10.0f, ImVec2(0, 40),
-                  "Vibration from Suspension Bottoming");
-
-    ImGui::Columns(1);
-  }
-
-  // --- Header B: Internal Physics (Brain) ---
-  // [Loads], [Grip/Slip], [Forces]
-  if (ImGui::CollapsingHeader("B. Internal Physics (Brain)",
-                              ImGuiTreeNodeFlags_None)) {
-    ImGui::Columns(3, "PhysCols", false);
-
-    // Group: Loads
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Loads]");
-
-    // --- Manually draw stats for the Multi-line Load Graph ---
-    float cur_f = plot_calc_front_load.GetCurrent();
-    float cur_r = plot_calc_rear_load.GetCurrent();
-    char load_label[128];
-    snprintf(load_label, sizeof(load_label), "Front: %.0f N | Rear: %.0f N",
-             cur_f, cur_r);
-    ImGui::Text("%s", load_label);
-    // ---------------------------------------------------------
-
-    ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 1.0f, 1.0f));
-    ImGui::PlotLines("##CLoadF", plot_calc_front_load.data.data(),
-                     (int)plot_calc_front_load.data.size(),
-                     plot_calc_front_load.offset, NULL, 0.0f, 10000.0f,
-                     ImVec2(0, 40));
-    ImGui::PopStyleColor();
-
-    // Reset Cursor to draw on top
-    ImVec2 pos_load = ImGui::GetItemRectMin();
-    ImGui::SetCursorScreenPos(pos_load);
-
-    // Draw Rear (Magenta) - Transparent Background
-    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
-    ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(1.0f, 0.0f, 1.0f, 1.0f));
-    ImGui::PlotLines("##CLoadR", plot_calc_rear_load.data.data(),
-                     (int)plot_calc_rear_load.data.size(),
-                     plot_calc_rear_load.offset, NULL, 0.0f, 10000.0f,
-                     ImVec2(0, 40));
-    ImGui::PopStyleColor(2);
-
-    if (ImGui::IsItemHovered())
-      ImGui::SetTooltip("Cyan: Front, Magenta: Rear");
-
-    ImGui::NextColumn();
-
-    // Group: Grip/Slip
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Grip/Slip]");
-
-    PlotWithStats("Calc Front Grip", plot_calc_front_grip, 0.0f, 1.2f,
-                  ImVec2(0, 40),
-                  "Grip used for physics math (approximated if missing)");
-
-    PlotWithStats("Calc Rear Grip", plot_calc_rear_grip, 0.0f, 1.2f,
-                  ImVec2(0, 40), "Rear Grip used for SoP/Oversteer math");
-
-    PlotWithStats("Front Slip Ratio", plot_calc_slip_ratio, -1.0f, 1.0f,
-                  ImVec2(0, 40), "Calculated or Game-provided Slip Ratio");
-
-    PlotWithStats("Front Slip Angle (Sm)", plot_calc_slip_angle_smoothed, 0.0f,
-                  1.0f, ImVec2(0, 40),
-                  "Smoothed Slip Angle (LPF) used for approximation");
-
-    PlotWithStats("Rear Slip Angle (Sm)", plot_calc_rear_slip_angle_smoothed,
-                  0.0f, 1.0f, ImVec2(0, 40), "Smoothed Rear Slip Angle (LPF)");
-
-    ImGui::NextColumn();
-
-    // Group: Forces
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Forces]");
-
-    PlotWithStats("Calc Rear Lat Force", plot_calc_rear_lat_force, -5000.0f,
-                  5000.0f, ImVec2(0, 40),
-                  "Calculated Rear Lateral Force (Workaround)");
-
-    ImGui::Columns(1);
-  }
-
-  // --- Header C: Raw Game Telemetry (Input) ---
-  // [Driver Input], [Vehicle State], [Raw Tire Data], [Patch Velocities]
-  if (ImGui::CollapsingHeader("C. Raw Game Telemetry (Input)",
-                              ImGuiTreeNodeFlags_None)) {
-    ImGui::Columns(4, "TelCols", false);
-
-    // Group: Driver Input
-    ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Driver Input]");
-
-    PlotWithStats("Steering Torque", plot_raw_steer, -30.0f, 30.0f,
-                  ImVec2(0, 40), "Raw Steering Torque from Game API");
-
-    PlotWithStats("Steering Input", plot_raw_input_steering, -1.0f, 1.0f,
-                  ImVec2(0, 40), "Driver wheel position -1 to 1");
-
-    ImGui::Text("Combined Input");
-
-    // --- Manually draw stats for Input ---
-    float thr = plot_raw_throttle.GetCurrent();
-    float brk = plot_raw_brake.GetCurrent();
-    char input_label[128];
-    snprintf(input_label, sizeof(input_label), "Thr: %.2f | Brk: %.2f", thr,
-             brk);
-    ImGui::SameLine();
-    ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "(%s)", input_label);
-    // -------------------------------------
-
-    ImVec2 pos = ImGui::GetCursorScreenPos();
-    ImGui::PushStyleColor(ImGuiCol_PlotLines,
-                          ImVec4(1.0f, 0.0f, 0.0f, 1.0f)); // Red for Brake
-    ImGui::PlotLines("##BrkComb", plot_raw_brake.data.data(),
-                     (int)plot_raw_brake.data.size(), plot_raw_brake.offset,
-                     NULL, 0.0f, 1.0f, ImVec2(0, 40));
-    ImGui::PopStyleColor();
-    if (ImGui::IsItemHovered())
-      ImGui::SetTooltip("Green: Throttle, Red: Brake");
-    ImGui::SetCursorScreenPos(pos); // Reset
-    ImGui::PushStyleColor(ImGuiCol_PlotLines,
-                          ImVec4(0.0f, 1.0f, 0.0f, 1.0f)); // Green for Throttle
-    ImGui::PushStyleColor(ImGuiCol_FrameBg,
-                          ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // Transparent Bg
-    ImGui::PlotLines("##ThrComb", plot_raw_throttle.data.data(),
-                     (int)plot_raw_throttle.data.size(),
-                     plot_raw_throttle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
-    ImGui::PopStyleColor(2);
-
-    ImGui::NextColumn();
-
-    // Group: Vehicle State
-    ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Vehicle State]");
-
-    PlotWithStats("Chassis Lat Accel", plot_input_accel, -20.0f, 20.0f,
-                  ImVec2(0, 40), "Local Lateral Acceleration (G)");
-
-    PlotWithStats("Car Speed (m/s)", plot_raw_car_speed, 0.0f, 100.0f,
-                  ImVec2(0, 40), "Vehicle Speed");
-
-    ImGui::NextColumn();
-
-    // Group: Raw Tire Data
-    ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Raw Tire Data]");
-
-    // Raw Front Load with warning label and stats
-    {
-      float current = plot_raw_load.GetCurrent();
-      float min_val = plot_raw_load.GetMin();
-      float max_val = plot_raw_load.GetMax();
-      char stats_label[256];
-      snprintf(stats_label, sizeof(stats_label),
-               "Raw Front Load | Val: %.4f | Min: %.3f | Max: %.3f", current,
-               min_val, max_val);
-
-      ImGui::Text("%s", stats_label);
-
-      ImGui::PlotLines("##RawLoad", plot_raw_load.data.data(),
-                       (int)plot_raw_load.data.size(), plot_raw_load.offset,
-                       NULL, 0.0f, 10000.0f, ImVec2(0, 40));
-      if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Raw Tire Load from Game API");
+        ImGui::Columns(1);
     }
 
     // Raw Front Grip with warning label and stats
