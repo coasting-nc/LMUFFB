@@ -22,8 +22,10 @@ By managing the Gemini CLI as an atomic subprocess, this orchestrator enforces s
 The system MUST support the following distinct phases in a linear or looping pipeline:
 
 0.  **Phase Init: Initialization**
-    *   **Action:** The Orchestrator creates a new feature branch AND checks it out into a **dedicated Git Worktree** (e.g., `../.worktrees/task-xyz`).
-    *   **Goal:** Ensure physical file-system isolation. The Agent operates in a separate folder, protecting the user's main working directory and uncommitted changes.
+    *   **Action:**
+        1.  **Remote Safety Check:** Verify (via GitHub API) that the remote `main` branch has **Branch Protection** enabled (specifically "Require Pull Request" and "Block Force Pushes"). If not, warn the user or abort.
+        2.  **Worktree Setup:** Create a new feature branch AND check it out into a **dedicated Git Worktree** (e.g., `../.worktrees/task-xyz`).
+    *   **Goal:** Ensure physical file-system isolation and verify remote safety nets are in place.
 
 1.  **Phase 0: Analysis Strategy (Dynamic Entry)**
     *   **Modes:**

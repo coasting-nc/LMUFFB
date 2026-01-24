@@ -80,9 +80,11 @@ This project will not be built in a single "Big Bang". Instead, we will build a 
 *   Implement `archive_artifacts(feature_name: str)`.
 *   Ensure it moves files from `docs/dev_docs/plans/` to `docs/dev_docs/archived/plans/`.
 
-### Task 3.3: Retry Logic
-*   Wrap `run_gemini_command` in a retry loop.
-*   If JSON parsing fails, feed the error back to the agent: "You failed to output JSON. Please try again."
+### Task 3.4: Remote Safety (GitHub Integration)
+*   Create `src/github_utils.py`.
+*   Implement `verify_branch_protection(branch="main")`.
+*   Use `subprocess` to call `gh api repos/:owner/:repo/branches/main/protection` and check for `required_pull_request_reviews`.
+*   If `gh` CLI is not installed or the check fails, prompt the user to manually verify or skip.
 
 ## Phase 4: Polish & CLI (Day 4)
 **Goal:** Make it usable for the end user.
