@@ -21,14 +21,23 @@ By managing the Gemini CLI as an atomic subprocess, this orchestrator enforces s
 ### 3.2 Workflow Orchestration
 The system MUST support the following distinct phases in a linear or looping pipeline:
 
-0.  **Phase 0: Researcher (Deep Research) - Optional**
-    *   **Trigger:** Activated via user flag (e.g., `--research`).
-    *   **Input:** High-level user request.
-    *   **Goal:** Perform deep internet research and codebase analysis to understand complex domains or requirements.
-    *   **Output:** Path to Research Report (Markdown).
+0.  **Phase 0: Analysis Strategy (Dynamic Entry)**
+    *   **Modes:**
+        *   `--mode bugfix`: Spawns **Investigator** (Internal Focus).
+        *   `--mode research`: Spawns **Researcher** (External Focus).
+        *   `--mode direct`: Skips Phase 0.
+    *   **Phase 0.1: Analysis**
+        *   **Investigator:** Uses `codebase_investigator` to diagnose bugs. Output: `diagnostic_report.md`.
+        *   **Researcher:** Uses `google_web_search` for theory/feasibility. Output: `research_report.md`.
+    *   **Phase 0.2: Lead Analyst (Gatekeeper)**
+        *   **Input:** The Report from 0.1.
+        *   **Verdict:**
+            *   **APPROVE:** Proceed to Architect.
+            *   **REJECT:** Loop back to 0.1 with feedback.
+            *   **ESCALATE:** Trigger **Researcher** (e.g., if Investigator finds a math issue).
 
 1.  **Phase A.1: Architect (Planning)**
-    *   **Input:** High-level user request (and optional Research Report from Phase 0).
+    *   **Input:** User Request + Any Reports from Phase 0 (Diagnostic and/or Research).
     *   **Goal:** Analyze requirements and produce a Markdown implementation plan.
     *   **Output:** Path to the generated Implementation Plan file.
 
@@ -79,9 +88,11 @@ The following table defines the exact Inputs and Deliverables for each phase.
 
 | Phase | Agent | Input Artifacts (Provided via Prompt) | Output Deliverables (Must be Created/Updated) | Output JSON Payload |
 | :--- | :--- | :--- | :--- | :--- |
-| **0** | **Researcher** | • User Request String | • `docs/dev_docs/research/report_[feat].md` | `{"report_path": "..."}` |
-| **A.1** | **Architect** | • User Request String<br>• Research Report Path (Optional) | • `docs/dev_docs/plans/plan_[feat].md`<br>*(Must include: List of Reference Documents, Detailed Logic, specific Test Scenarios with expected values, List of Documentation to update, List of Expected Deliverables, and a Completion Checklist)* | `{"plan_path": "..."}` |
-| **A.2** | **Plan Reviewer** | • User Request String<br>• Plan File Path<br>• Research Report Path (Optional) | • `docs/dev_docs/reviews/plan_review_[feat]_v[N].md` (Optional, usually just feedback) | `{"verdict": "APPROVE"}`<br>OR<br>`{"verdict": "REJECT", "feedback": "..."}` |
+| **0.1** | **Investigator** | • User Request String (Bug Report) | • `docs/dev_docs/research/diagnostic_report_[feat].md` | `{"report_path": "..."}` |
+| **0.1** | **Researcher** | • User Request String (Feature Idea) | • `docs/dev_docs/research/research_report_[feat].md` | `{"report_path": "..."}` |
+| **0.2** | **Lead Analyst** | • Report from Phase 0.1 | • Feedback (if Rejected) | `{"verdict": "APPROVE"}`<br>`{"verdict": "REJECT", "feedback": "..."}`<br>`{"verdict": "ESCALATE"}` |
+| **A.1** | **Architect** | • User Request String<br>• Diagnostic/Research Reports (Optional) | • `docs/dev_docs/plans/plan_[feat].md`<br>*(Must include: List of Reference Documents, Detailed Logic, specific Test Scenarios with expected values, List of Documentation to update, List of Expected Deliverables, and a Completion Checklist)* | `{"plan_path": "..."}` |
+| **A.2** | **Plan Reviewer** | • User Request String<br>• Plan File Path<br>• Reports from Phase 0 (Optional) | • `docs/dev_docs/reviews/plan_review_[feat]_v[N].md` (Optional, usually just feedback) | `{"verdict": "APPROVE"}`<br>OR<br>`{"verdict": "REJECT", "feedback": "..."}` |
 | **B** | **Developer** | • Approved Implementation Plan File Path<br>• Code Review Report Path (Optional/Loop) | • **Source Code Changes**<br>• **Test Files**<br>• **Updated Documentation**<br>• **Updated VERSION & CHANGELOG**<br>• **Verification Report** (Checked-off list) | `{"commit_hash": "...", "status": "success"}` |
 | **C** | **Auditor** | • Implementation Plan File Path<br>• Git Diff (via `git diff master...HEAD`)<br>• Previous Code Review Report (Optional/Loop) | • `docs/dev_docs/reviews/code_review_[feat]_v[N].md` | `{"verdict": "PASS", "review_path": "..."}`<br>OR<br>`{"verdict": "FAIL", "review_path": "..."}` |
 
@@ -99,7 +110,7 @@ Any agent in the pipeline MUST be able to capture ideas for future enhancements 
 *   **Configurability:** Workflow steps and system prompts MUST be defined in configuration files (JSON/YAML) to allow easy tuning without code changes.
 
 ## 5. User Interface
-*   **CLI Entry Point:** The user runs the tool via `python orchestrator.py --task "description" [--research]`.
+*   **CLI Entry Point:** The user runs the tool via `python orchestrator.py --task "description" [--mode {bugfix,research,direct}]`.
 *   **Progress Feedback:** The tool displays real-time status of the pipeline (e.g., "[PLANNING]... Done", "[IMPLEMENTING]... In Progress").
 
 ## 6. Example Use Case: "Add a Dark Mode Toggle"

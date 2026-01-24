@@ -10,15 +10,22 @@ graph TD
     Orch -->|Reads| Config[Workflow Config (JSON)]
     Orch -->|Manages| State[State Manager]
     
-    Orch -->|Spawns| P0[Phase 0: Researcher]
-    Orch -->|Spawns| P1[Phase A.1: Architect]
-    Orch -->|Spawns| P2[Phase A.2: Lead Architect]
-    Orch -->|Spawns| P3[Phase B: Developer]
-    Orch -->|Spawns| P4[Phase C: Auditor]
+    Orch -->|Spawns| P0A[P0: Investigator]
+    Orch -->|Spawns| P0B[P0: Researcher]
+    Orch -->|Spawns| P0C[P0: Lead Analyst]
+    Orch -->|Spawns| P1[P A.1: Architect]
+    Orch -->|Spawns| P2[P A.2: Lead Architect]
+    Orch -->|Spawns| P3[P B: Developer]
+    Orch -->|Spawns| P4[P C: Auditor]
     
     subgraph "Isolation Boundary"
-        P0 -- Writes --> Art0[Research Report]
+        P0A -- Writes --> Art0[Diagnostic Report]
+        P0B -- Writes --> Art0B[Research Report]
+        P0C -- Reads --> Art0
+        P0C -- Reads --> Art0B
+        P0C -- Verdict --> Orch
         P1 -- Reads --> Art0
+        P1 -- Reads --> Art0B
         P1 -- Writes --> Art1[Plan Artifact]
         P2 -- Reads --> Art1
         P2 -- Verdict --> Orch
@@ -30,6 +37,8 @@ graph TD
     end
 
     %% Feedback Loops
+    Orch -.->|Reject| P0A
+    Orch -.->|Escalate| P0B
     Orch -.->|Reject| P1
     Orch -.->|Fail| P3
 ```
@@ -64,28 +73,32 @@ Responsible for extracting structured data from the unstructured LLM output.
 ### 2.4 The `WorkflowEngine` Class
 The main state machine.
 *   **State:**
-    *   `current_step`: (enum: RESEARCH, PLAN, PLAN_REVIEW, CODE, CODE_REVIEW)
-    *   `workspace_root`: Path to repo.
+    *   `current_step`: (enum: INVESTIGATE, RESEARCH, ANALYST_REVIEW, PLAN, PLAN_REVIEW, CODE, CODE_REVIEW)
+    *   `mode`: (bugfix, research, direct)
     *   `artifacts`: Dictionary of paths.
-*   **Transitions:**
-    *   `RESEARCH` -> `PLAN`
-    *   `PLAN` -> `PLAN_REVIEW`
-    *   `PLAN_REVIEW` -> `CODE` (if Approved)
-    *   `PLAN_REVIEW` -> `PLAN` (if Rejected - Feedback Loop)
-    *   `CODE` -> `CODE_REVIEW` (if Git Commit made)
-    *   `CODE_REVIEW` -> `MERGE` (if Pass)
-    *   `CODE_REVIEW` -> `CODE` (if Fail - Feedback Loop)
+*   **Transitions (Phase 0):**
+    *   `START` -> `INVESTIGATE` (if bugfix)
+    *   `START` -> `RESEARCH` (if research)
+    *   `START` -> `PLAN` (if direct)
+    *   `INVESTIGATE` -> `ANALYST_REVIEW`
+    *   `RESEARCH` -> `ANALYST_REVIEW`
+    *   `ANALYST_REVIEW` -> `PLAN` (Approve)
+    *   `ANALYST_REVIEW` -> `RESEARCH` (Escalate)
+    *   `ANALYST_REVIEW` -> `INVESTIGATE/RESEARCH` (Reject/Loop)
 
 ## 3. Data Flow
 
-### Phase 0: Research (Optional)
-1.  **Orchestrator** checks if `--research` flag is on.
-2.  **Orchestrator** spawns **Researcher**.
-3.  **Agent** produces `docs/dev_docs/research/report_X.md`.
+### Phase 0: Analysis (Dynamic)
+1.  **Orchestrator** checks `--mode`.
+2.  **Orchestrator** spawns **Investigator** (Bug) or **Researcher** (Feature).
+3.  **Agent** produces Report.
+4.  **Orchestrator** spawns **Lead Analyst**.
+    *   *If ESCALATE:* Trigger **Researcher** (if coming from Investigator).
+    *   *If APPROVE:* Proceed to Phase A.
 
 ### Phase A: Planning
 1.  **Orchestrator** spawns **Architect**.
-    *   *Input:* User Request + Research Report (if any).
+    *   *Input:* User Request + Any Reports from Phase 0.
 2.  **Agent** writes `docs/dev_docs/plans/feature_X.md`.
 3.  **Orchestrator** spawns **Lead Architect (Plan Reviewer)**.
     *   *Input:* The Plan File.

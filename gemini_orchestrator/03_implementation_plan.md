@@ -40,7 +40,9 @@ This project will not be built in a single "Big Bang". Instead, we will build a 
 
 ### Task 2.2: Prompt Templates
 *   Create `templates/` directory.
-*   `researcher_prompt.txt`: Instructions for deep research.
+*   `investigator_prompt.txt`: Instructions for bug diagnosis.
+*   `researcher_prompt.txt`: Instructions for feature research.
+*   `analyst_gatekeeper_prompt.txt`: Instructions for reviewing reports/escalating.
 *   `architect_prompt.txt`: Instructions for planning.
 *   `plan_reviewer_prompt.txt`: Instructions for validating the plan.
 *   `developer_prompt.txt`: Instructions for coding (includes JSON schema).
@@ -48,8 +50,11 @@ This project will not be built in a single "Big Bang". Instead, we will build a 
 
 ### Task 2.3: The Pipeline Loop
 *   Update `orchestrator.py` to chain the steps:
-    0.  `Research = run_step(Researcher)` (Optional)
-    1.  `Plan = run_step(Architect, input=Research)`
+    0.  **Phase 0 (Dynamic):**
+        *   If `bugfix`: `Report = run_step(Investigator)`
+        *   If `research` or `escalated`: `Report = run_step(Researcher)`
+        *   `Verdict = run_step(Gatekeeper, input=Report)` -> Loop/Escalate/Approve.
+    1.  `Plan = run_step(Architect, input=Reports)`
     2.  `PlanVerdict = run_step(PlanReviewer, input=Plan)` -> Loop if Rejected.
     3.  `Result = run_step(Developer, input=Plan)`
     4.  `CodeVerdict = run_step(Auditor, input=Result)` -> Loop if Failed.
