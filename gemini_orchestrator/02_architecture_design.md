@@ -90,20 +90,25 @@ The main state machine.
 
 ### Phase 0: Analysis (Dynamic)
 1.  **Orchestrator** checks `--mode`.
-2.  **Orchestrator** spawns **Investigator** (Bug) or **Researcher** (Feature).
-3.  **Agent** produces Report.
-4.  **Orchestrator** spawns **Lead Analyst**.
+2.  **Orchestrator** creates and switches to branch `task/[id]-[desc]`.
+3.  **Orchestrator** spawns **Investigator** (Bug) or **Researcher** (Feature).
+4.  **Agent** produces Report.
+5.  **Orchestrator** commits the Report.
+6.  **Orchestrator** spawns **Lead Analyst**.
     *   *If ESCALATE:* Trigger **Researcher** (if coming from Investigator).
     *   *If APPROVE:* Proceed to Phase A.
+    *   **Orchestrator** commits the Verdict/Feedback.
 
 ### Phase A: Planning
 1.  **Orchestrator** spawns **Architect**.
     *   *Input:* User Request + Any Reports from Phase 0.
 2.  **Agent** writes `docs/dev_docs/plans/feature_X.md`.
-3.  **Orchestrator** spawns **Lead Architect (Plan Reviewer)**.
+3.  **Orchestrator** commits the Plan.
+4.  **Orchestrator** spawns **Lead Architect (Plan Reviewer)**.
     *   *Input:* The Plan File.
-4.  **Agent** outputs JSON: `{"verdict": "APPROVE"}` or `{"verdict": "REJECT", "feedback": "..."}`.
+5.  **Agent** outputs JSON: `{"verdict": "APPROVE"}` or `{"verdict": "REJECT", "feedback": "..."}`.
     *   *If REJECT:* Loop back to Architect with feedback.
+6.  **Orchestrator** commits the Review Verdict.
 
 ### Phase B: Implementation
 1.  **Orchestrator** reads Approved Plan.
@@ -116,7 +121,8 @@ The main state machine.
 1.  **Orchestrator** spawns **Auditor**.
     *   *Input:* Plan + Commit Hash.
 2.  **Agent** writes `docs/dev_docs/reviews/review_X.md`.
-3.  **Agent** prints JSON: `{"verdict": "PASS"}` or `{"verdict": "FAIL"}`.
+3.  **Orchestrator** commits the Review Report.
+4.  **Agent** prints JSON: `{"verdict": "PASS"}` or `{"verdict": "FAIL"}`.
     *   *If FAIL:* Loop back to Developer with Review Report.
 
 ### Phase D: Finalization

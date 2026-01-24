@@ -50,14 +50,15 @@ This project will not be built in a single "Big Bang". Instead, we will build a 
 
 ### Task 2.3: The Pipeline Loop
 *   Update `orchestrator.py` to chain the steps:
+    -1. **Initialization:** `create_branch("task/...")`
     0.  **Phase 0 (Dynamic):**
-        *   If `bugfix`: `Report = run_step(Investigator)`
-        *   If `research` or `escalated`: `Report = run_step(Researcher)`
-        *   `Verdict = run_step(Gatekeeper, input=Report)` -> Loop/Escalate/Approve.
-    1.  `Plan = run_step(Architect, input=Reports)`
-    2.  `PlanVerdict = run_step(PlanReviewer, input=Plan)` -> Loop if Rejected.
-    3.  `Result = run_step(Developer, input=Plan)`
-    4.  `CodeVerdict = run_step(Auditor, input=Result)` -> Loop if Failed.
+        *   If `bugfix`: `Report = run_step(Investigator)` -> `git_commit(Report)`
+        *   If `research` or `escalated`: `Report = run_step(Researcher)` -> `git_commit(Report)`
+        *   `Verdict = run_step(Gatekeeper, input=Report)` -> `git_commit(Verdict)` -> Loop/Escalate/Approve.
+    1.  `Plan = run_step(Architect, input=Reports)` -> `git_commit(Plan)`
+    2.  `PlanVerdict = run_step(PlanReviewer, input=Plan)` -> `git_commit(PlanVerdict)` -> Loop if Rejected.
+    3.  `Result = run_step(Developer, input=Plan)` (Developer commits code)
+    4.  `CodeVerdict = run_step(Auditor, input=Result)` -> `git_commit(CodeVerdict)` -> Loop if Failed.
 
 ## Phase 3: Robustness (Day 3)
 **Goal:** Error handling and Git integration.
@@ -88,8 +89,8 @@ This project will not be built in a single "Big Bang". Instead, we will build a 
 The system is ready when I can run:
 `python orchestrator.py --task "Add a new 'About' page"`
 ...and it autonomously:
-1.  Creates a plan.
-2.  Creates a branch.
-3.  Implements the code.
-4.  Reviews the code.
+1.  Creates a branch immediately.
+2.  Creates a plan (and commits it).
+3.  Implements the code (and commits it).
+4.  Reviews the code (and commits the report).
 5.  Stops and asks me to Merge.

@@ -21,55 +21,64 @@ By managing the Gemini CLI as an atomic subprocess, this orchestrator enforces s
 ### 3.2 Workflow Orchestration
 The system MUST support the following distinct phases in a linear or looping pipeline:
 
-0.  **Phase 0: Analysis Strategy (Dynamic Entry)**
+0.  **Phase Init: Initialization**
+    *   **Action:** The Orchestrator immediately creates and switches to a new feature branch (e.g., `feature/task-name`) based on the user request.
+    *   **Goal:** Ensure all subsequent artifacts and changes are isolated.
+
+1.  **Phase 0: Analysis Strategy (Dynamic Entry)**
     *   **Modes:**
         *   `--mode bugfix`: Spawns **Investigator** (Internal Focus).
         *   `--mode research`: Spawns **Researcher** (External Focus).
         *   `--mode direct`: Skips Phase 0.
     *   **Phase 0.1: Analysis**
-        *   **Investigator:** Uses `codebase_investigator` to diagnose bugs. Output: `diagnostic_report.md`.
-        *   **Researcher:** Uses `google_web_search` for theory/feasibility. Output: `research_report.md`.
+        *   **Investigator:** Uses `codebase_investigator` to diagnose bugs. Output: `diagnostic_report.md`. **(Orchestrator commits artifact)**
+        *   **Researcher:** Uses `google_web_search` for theory/feasibility. Output: `research_report.md`. **(Orchestrator commits artifact)**
     *   **Phase 0.2: Lead Analyst (Gatekeeper)**
         *   **Input:** The Report from 0.1.
         *   **Verdict:**
             *   **APPROVE:** Proceed to Architect.
             *   **REJECT:** Loop back to 0.1 with feedback.
             *   **ESCALATE:** Trigger **Researcher** (e.g., if Investigator finds a math issue).
+        *   **(Orchestrator commits decision/feedback)**
 
-1.  **Phase A.1: Architect (Planning)**
+2.  **Phase A.1: Architect (Planning)**
     *   **Input:** User Request + Any Reports from Phase 0 (Diagnostic and/or Research).
     *   **Goal:** Analyze requirements and produce a Markdown implementation plan.
     *   **Output:** Path to the generated Implementation Plan file.
+    *   **(Orchestrator commits plan)**
 
-2.  **Phase A.2: Lead Architect (Plan Review)**
+3.  **Phase A.2: Lead Architect (Plan Review)**
     *   **Input:** The Original Request and the Implementation Plan.
     *   **Goal:** Verify the plan matches the requirements and is technically sound.
     *   **Verdict:**
         *   **APPROVE:** Proceed to Implementation.
         *   **REJECT:** Return to **Phase A.1** with feedback.
+    *   **(Orchestrator commits review)**
 
-3.  **Phase B: Developer (Implementation)**
+4.  **Phase B: Developer (Implementation)**
     *   **Input:** Path to the Approved Implementation Plan file.
     *   **Goal:** Write code, run tests, fix errors until tests pass.
-    *   **Constraint:** Must work on a specific Git branch.
-    *   **Output:** Git Commit Hash or "Success" status.
+    *   **Output:** Git Commit Hash or "Success" status. (Developer performs atomic commits).
 
-4.  **Phase C: Auditor (Code Review)**
+5.  **Phase C: Auditor (Code Review)**
     *   **Input:** Path to Implementation Plan file and Git Diff.
     *   **Goal:** Critique changes against project standards.
     *   **Verdict:**
         *   **PASS:** Trigger Merge.
         *   **FAIL:** Return to **Phase B** (Developer) with the Review Report as new input.
+    *   **(Orchestrator commits review report)**
 
 ### 3.3 Structured Communication
 *   **JSON Enforcement:** The Orchestrator MUST instruct the agent to output key results (status, file paths) in a strict JSON format at the end of its response.
 *   **Fuzzy Parsing:** The Orchestrator MUST be able to extract this JSON payload from the raw text output, ignoring conversational filler.
 
 ### 3.4 Git Integration
-*   The Orchestrator MUST handle git operations that are "above" the agent's pay grade, such as:
-    *   Creating feature branches before the Developer starts.
-    *   Merging branches after the Auditor approves.
-    *   Resetting/Cleaning the workspace between runs.
+*   **Immediate Branching:** The Orchestrator MUST creates a task-specific branch (e.g., `task/feature-name`) **immediately** upon receiving a request, before any agent interaction occurs. This ensures all generated artifacts (plans, reports) are contained and do not pollute the main branch.
+*   **Step-wise Commits:** The Orchestrator MUST perform a git commit after each successful step in the pipeline.
+    *   For documentation phases (Investigation, Planning, Review), the Orchestrator commits the generated files.
+    *   For the Implementation phase, the Developer agent creates the commits.
+    *   This provides a granular "undo" history and crash recovery checkpoints.
+*   **Merge Management:** The Orchestrator handles the final merge after Auditor approval.
 
 ### 3.5 Document Management
 The system MUST enforce a structured lifecycle for all generated documents:
@@ -123,14 +132,17 @@ python orchestrator.py --task "Add a simple Dark Mode toggle to the main setting
 
 **Orchestrator Output:**
 ```text
-[11:00:00] ORCHESTRATOR: Task Received. Spawning ARCHITECT...
+[11:00:00] ORCHESTRATOR: Task Received.
+[11:00:01] ORCHESTRATOR: Created branch 'feature/dark-mode-toggle'.
+[11:00:02] ORCHESTRATOR: Spawning ARCHITECT...
 [11:00:45] ARCHITECT: Implementation Plan created at 'docs/plans/dark_mode_plan.md'.
-[11:00:46] ORCHESTRATOR: Verifying plan... OK.
-[11:00:46] ORCHESTRATOR: Creating branch 'feature/dark-mode-toggle'.
+[11:00:46] ORCHESTRATOR: Committing Plan... OK.
+[11:00:47] ORCHESTRATOR: Verifying plan... OK. (Review Committed)
 [11:00:48] ORCHESTRATOR: Spawning DEVELOPER...
 [11:05:20] DEVELOPER: Implementation complete. Tests passed. Commit: 7f3a2b1.
 [11:05:22] ORCHESTRATOR: Spawning AUDITOR...
 [11:06:10] AUDITOR: Review passed. Report at 'docs/reviews/dark_mode_review.md'.
+[11:06:11] ORCHESTRATOR: Committing Review Report... OK.
 [11:06:12] ORCHESTRATOR: Pipeline Success! Branch 'feature/dark-mode-toggle' is ready for merge.
 ```
 
