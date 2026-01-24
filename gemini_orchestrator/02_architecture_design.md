@@ -9,8 +9,16 @@ graph TD
     User[User Terminal] -->|Starts| Orch[Python Orchestrator]
     Orch -->|Reads| Config[Workflow Config (JSON)]
     Orch -->|Manages| State[State Manager]
+    Orch -->|Enforces| Sec[Security Middleware]
     
     Orch -->|Spawns| P0A[P0: Investigator]
+    
+    subgraph "Execution Pipeline"
+         Agent[AI Agent] -->|Requests Tool| Sec
+         Sec -->|Validates| OS[Operating System]
+         Sec -.->|Blocks| Agent
+    end
+    
     Orch -->|Spawns| P0B[P0: Researcher]
     Orch -->|Spawns| P0C[P0: Lead Analyst]
     Orch -->|Spawns| P1[P A.1: Architect]
@@ -57,7 +65,17 @@ This class encapsulates the interface with the Gemini CLI.
     *   Injecting the "System Prompt" (e.g., "You are a rigid worker. Output JSON only.").
     *   Handling timeouts and process cleanup.
 
-### 2.2 The `PromptBuilder` Module
+### 2.2 The `ToolValidator` (Security Middleware)
+Sits between the `AgentWrapper` and the OS.
+*   **Responsibilities:**
+    *   Intercepts every `run_shell_command` request.
+    *   Parses the command string (e.g., using `shlex`).
+    *   **Policy Enforcement:**
+        *   **Blocked:** `git checkout`, `git switch`, `git branch` (creation/deletion), `git push` (except to origin/feature-branch).
+        *   **Allowed:** `git status`, `git add`, `git commit`, `git diff`, `ls`, `cat`, `grep`.
+    *   Raises `SecurityException` if a violation is detected, preventing execution.
+
+### 2.3 The `PromptBuilder` Module
 Responsible for assembling the final prompt string sent to the agent.
 *   **Logic:** `Base Prompt` + `Task Context` + `Input Artifacts` + `Output Instructions`.
 *   **Example:**
@@ -133,9 +151,11 @@ The main state machine.
 1.  **Orchestrator** attempts `git merge main` into current branch.
     *   *If Conflict:* **Orchestrator** spawns **Integration Specialist**.
     *   **Agent** resolves conflicts and commits.
-2.  **Orchestrator** pushes branch to remote.
-3.  **Orchestrator** creates Pull Request (via API or prints URL).
-4.  **Orchestrator** moves artifacts to `docs/dev_docs/archived/`.
+2.  **Orchestrator** spawns **Auditor** (Merge Review).
+    *   *Goal:* Ensure integrity after merge.
+3.  **Orchestrator** pushes branch to remote.
+4.  **Orchestrator** creates Pull Request (via API or prints URL).
+5.  **Orchestrator** moves artifacts to `docs/dev_docs/archived/`.
 
 ## 4. Key Decisions & Trade-offs
 
