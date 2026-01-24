@@ -217,3 +217,121 @@ Based on a review of the Gemini CLI roadmap and current capabilities, here is ho
 
 ### Summary
 While Gemini CLI is powerful and open-source, the specific **"Orchestrator with Separation"** architecture designed in this document—where one agent programmatically manages others with strict context barriers—is currently **easier to implement "out of the box" with Claude Code**. Gemini CLI is moving in that direction with "Background Agents," but the programmatic control flow is a key differentiator for Claude Code right now.
+
+---
+
+## 🐍 The "Wrapper" Solution: External Python Orchestrator
+
+An alternative to waiting for native features is to use an **external Python Orchestrator** (a script that calls the Gemini CLI via subprocess). This approach resolves several key bottlenecks by treating the CLI as an atomic tool rather than a persistent chat partner.
+
+### ✅ Problems Solved
+
+1.  **Session Isolation (The "Context Contamination" Problem)**
+    *   **Solved:** By calling `subprocess.run(["gemini", "prompt", ...])` for each step, you force a fresh process every time. The "Reviewer" invocation literally cannot see the "Implementer" chat history because it's a completely new OS process.
+    *   **Mechanism:** The Python script holds the "State" (branch names, file paths) and passes *only* the necessary artifacts (e.g., "Read `plan.md` and `code.cpp`") to the agent via the prompt.
+
+2.  **The "Wait/Polling" Bottleneck**
+    *   **Solved:** Python can reliably manage the control flow. Instead of a fragile shell loop, the script can:
+        *   Trigger the implementation task.
+        *   Enter a `while` loop checking `git log` or `git status` every 30 seconds.
+        *   Parse the output reliably.
+        *   Automatically trigger the Review step the moment the commit lands.
+
+3.  **Programmatic Orchestration**
+    *   **Solved:** You don't need the Agent to be the orchestrator (risking hallucinations). Logic is defined in Python: `if review_passed: merge() else: kick_back_to_implementer()`. This is deterministic and safer.
+
+### ⚠️ Remaining Limitations
+
+1.  **Tool Restriction (Role Enforcement)**
+    *   **Issue:** You cannot easily "disable" tools for a specific invocation. Even if prompted "You are a Reviewer, do not write code," the agent *still has* the `write_file` tool available.
+    *   **Mitigation:** Requires strong system prompts in the script.
+
+2.  **Context Loading "Friction"**
+    *   **Issue:** Since every step is a fresh process, the agent has zero context. The Python script must explicitly feed it everything or trust it to find it, which may increase token usage.
+
+3.  **Error Recovery**
+    *   **Issue:** If the CLI crashes or returns malformed output in headless mode, the Python script needs robust exception handling to retry or alert the user.
+
+### Verdict
+The Python Orchestrator is a viable bridge. It effectively achieves **Isolation** and **Automation** with the current Gemini CLI by treating it as an API rather than a chat partner.
+
+### Writing a sophisticated Python orchestrator (using LangChain or just robust Python logic)
+
+Writing a sophisticated Python orchestrator (using LangChain or just robust Python logic) that treats the Gemini CLI as a "black box function" is likely the definitive solution for your requirements.
+
+Here is why this approach works so well and how it addresses the remaining gaps:
+
+  1. The "Agentic Pipeline" Architecture
+  By shifting the logic out of the prompt and into Python code, you turn a "Chat" into a "Pipeline".
+
+   * The CLI acts as the "Worker": It has the tools (edit files, run tests, Git). It doesn't need to know why it's doing task B
+     after task A; it just executes.
+   * Python acts as the "Manager": It holds the state. It knows that "The Plan is in docs/plan_X.md" and "The Code is in       
+     src/main.cpp".
+
+  2. Solving the Context/Linking Problem
+  Your idea to pass file paths instead of conversation history is the key to efficient isolation.
+
+   * Step 1 (Architect):
+       * Input: "Analyze the crash in log.txt."
+       * Action: Agent runs, researches, and writes docs/plans/fix_crash_v1.md.
+       * Output (Structured):
+   1         {
+   2           "status": "success",
+   3           "artifact_path": "docs/plans/fix_crash_v1.md",
+   4           "next_recommended_step": "implementation"
+   5         }
+   * The Python Orchestrator: Parses this JSON. It doesn't care about the content of the plan, only the path.
+   * Step 2 (Developer):
+       * Orchestrator Prompt: "You are a Developer. Read the plan at docs/plans/fix_crash_v1.md. Implement it. Output a JSON   
+         summary when done."
+       * Context: The agent starts fresh. It reads the file (using its read_file tool). It has zero "memory" of the Architect's
+         web searches or internal monologue, ensuring pure implementation based only on the documentation.
+
+  3. Why Wrapping the CLI is better than using the Raw API (for now)
+  You might ask, "Why not just use LangChain with the Gemini API directly?"
+
+   * The CLI has "Batteries Included": The Gemini CLI already has a pre-configured toolset (replace, run_shell_command,        
+     google_web_search, codebase_investigator).
+   * Effort Saver: If you use the raw API, you have to re-write all those tools and their permission/sandboxing logic yourself.
+   * Workflow: Wrapping the CLI lets you leverage the agent's ability to navigate the filesystem and run shell commands, which 
+     is complex to implement reliably from scratch.
+
+  4. Implementation Details (The "Sophisticated" Part)
+
+  To make this robust, your Python Orchestrator needs to enforce Strict Interfaces:
+
+   1. Input Injection:
+       * Use the --headless flag (if available) or simply pipe stdin to gemini.
+       * Construct prompts that explicitly demand JSON output at the end:
+          > "...When you are finished, output the result in this JSON format: {"files_created": [], "status": "..."}. Do not   
+  output any other text after the JSON."
+
+   2. Output Parsing (The Hard Part):
+       * LLMs love to talk before/after the JSON. Your Python script should use a "fuzzy parser" (e.g., a regex that finds the 
+         first { and last }) to extract the JSON payload from the CLI's stdout.
+
+   3. State Management:
+       * The Python script should maintain a workflow_state.json object that tracks:
+           * current_branch
+           * plan_path
+           * review_path
+           * test_results_path
+
+  Conclusion
+  You are essentially building a CI/CD pipeline for Intelligence.
+
+   * Jenkins/GitHub Actions orchestrates Build Tools (Compiler, Linter).
+   * Your Python Script orchestrates Cognitive Tools (Planner, Coder, Reviewer).
+
+  This approach gives you the Context Isolation of separate processes, the Control of a programming language, and the Power of 
+  the Gemini CLI's toolset. It is the most robust way to achieve your goal today.
+
+
+## Subagents in Gemini CLI
+
+### Resources
+
+* https://github.com/google-gemini/gemini-cli/issues/3132
+* https://medium.com/google-cloud/advanced-gemini-cli-part-3-isolated-agents-b9dbab70eeff
+* https://aipositive.substack.com/p/how-i-turned-gemini-cli-into-a-multi
