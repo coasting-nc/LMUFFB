@@ -82,7 +82,7 @@ This is to facilitate / speed up the review on my side before I can accept the m
 
 If you want to investigate a bug, or some issue that a user reported, and need suggestions on what might be causing it and how to fix it, you can do any of the following:
 
-* **Ask Google AI Studio:** Paste the whole codebase into Google AI Studio (update and use docs\dev_docs\FULL_PROJECT_CONTEXT.md as described above), and ask Gemini 3 to investigate the bug. After the model as given you a solution that you find satisfying / plausible, ask it to produce and implemenation plan for the fix. Then use "copy as markdown" and paste the plan into a new .md file in the project.
+* **Ask Google AI Studio:** Paste the whole codebase into Google AI Studio (update and use docs\dev_docs\FULL_PROJECT_CONTEXT.md as described above), and ask Gemini 3 Pro to investigate the bug. After the model has given you a solution that you find satisfying / plausible, ask it to produce and implemenation plan for the fix. Then use "copy as markdown" and paste the plan into a new .md file in the project.
 * **Ask in the IDE (Antigravity):** Use one of the best models (Opus 4.5 or Gemini 3 Pro) to investigate the bug and create a markdown report about it. 
 
 If you are persuaded of the suggested cause and proposed solution to the issue, go ahead and produce an implementation plan as described above, and follow all subsequent steps (implement the implementation plan, do a code review, etc.). 
