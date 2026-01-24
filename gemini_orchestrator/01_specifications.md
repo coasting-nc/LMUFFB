@@ -81,9 +81,9 @@ The following table defines the exact Inputs and Deliverables for each phase.
 | :--- | :--- | :--- | :--- | :--- |
 | **0** | **Researcher** | • User Request String | • `docs/dev_docs/research/report_[feat].md` | `{"report_path": "..."}` |
 | **A.1** | **Architect** | • User Request String<br>• Research Report Path (Optional) | • `docs/dev_docs/plans/plan_[feat].md` | `{"plan_path": "..."}` |
-| **A.2** | **Plan Reviewer** | • User Request String<br>• Plan File Path<br>• Research Report Path (Optional) | • `docs/dev_docs/reviews/plan_review_[feat].md` (Optional, usually just feedback) | `{"verdict": "APPROVE"}`<br>OR<br>`{"verdict": "REJECT", "feedback": "..."}` |
+| **A.2** | **Plan Reviewer** | • User Request String<br>• Plan File Path<br>• Research Report Path (Optional) | • `docs/dev_docs/reviews/plan_review_[feat]_v[N].md` | `{"verdict": "APPROVE"}`<br>OR<br>`{"verdict": "REJECT", "feedback": "..."}` |
 | **B** | **Developer** | • Approved Implementation Plan File Path<br>• Code Review Report Path (Optional/Loop) | • **Source Code Changes**<br>• **Test Files**<br>• **Updated Documentation**<br>• **Updated VERSION & CHANGELOG** | `{"commit_hash": "...", "status": "success"}` |
-| **C** | **Auditor** | • Implementation Plan File Path<br>• Git Diff (via `git diff master...HEAD`)<br>• Previous Code Review Report (Optional/Loop) | • `docs/dev_docs/reviews/code_review_[feat].md` | `{"verdict": "PASS", "review_path": "..."}`<br>OR<br>`{"verdict": "FAIL", "review_path": "..."}` |
+| **C** | **Auditor** | • Implementation Plan File Path<br>• Git Diff (via `git diff master...HEAD`)<br>• Previous Code Review Report (Optional/Loop) | • `docs/dev_docs/reviews/code_review_[feat]_v[N].md` | `{"verdict": "PASS", "review_path": "..."}`<br>OR<br>`{"verdict": "FAIL", "review_path": "..."}` |
 
 *> **Universal Output:** All agents may optionally include `"backlog_items": ["Idea 1", "Idea 2"]` in their JSON payload. The Orchestrator will automatically capture these.*
 
