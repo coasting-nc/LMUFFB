@@ -87,7 +87,7 @@ If you want to investigate a bug, or some issue that a user reported, and need s
 
 If you are persuaded of the suggested cause and proposed solution to the issue, go ahead and produce an implementation plan as described above, and follow all subsequent steps (implement the implementation plan, do a code review, etc.). 
 
-In this case the implementation plan, in the tests section, must include one or more regression tests (with a a description of the tests and some code snippets) that check that the same issue being fixed is not reintroduced in the future. 
+In this case the implementation plan must include, in the tests section, one or more regression tests (with a a description of the tests and some code snippets) that check that the same issue being fixed is not reintroduced in the future. 
 
 ## Simple use case: add a FFB preset to the app
 
