@@ -193,6 +193,13 @@ We will adopt an **Iterative "Dogfooding" Approach**:
 *   **Use Case:** A Developer notices a vague requirement in the Plan. They implement it anyway (to pass the task) but flag it in `feedback`: "The plan for 'UserAuth' was ambiguous; I assumed JWT." The Lead Architect can then decide to update the documentation later.
 *   **Caveat (Honesty vs. Feedback):** The Orchestrator MUST ensure agents do not use the feedback field to hide failures. A `status: success` MUST NOT be accepted if the feedback contains reports of crashes or unresolvable errors.
 *   **Note:** This channel is ideal for flagging **Technical Debt** or documentation gaps identified during implementation.
+*   **Feedback Triage Workflow:**
+    *   If an agent returns non-empty `feedback`, the Orchestrator spawns a **Feedback Triager** (e.g., Lead Analyst).
+    *   The Triager reviews the note and decides:
+        1.  **Backlog:** Create a new entry in `docs/dev_docs/backlog.md` (e.g., "Refactor UserAuth later").
+        2.  **Docs:** Update existing documentation immediately.
+        3.  **Ignore:** Deem the feedback trivial.
+    *   This ensures "soft warnings" are not lost in the logs but are actively curated into future work.
 *   **Feasibility Note:** **Low Complexity.** Requires only a schema update (adding an optional field) and prompt tweaking. Easily integrated into v0.1 or v0.2.
 
 ### 8.2 Persistent Agent Memory (`AGENT_MEMORY.md`)
