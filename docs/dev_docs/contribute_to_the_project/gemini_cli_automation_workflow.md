@@ -109,7 +109,44 @@ To overcome the "wait bottleneck" (where the CLI waits for a human to confirm a 
 *   **Action**: 
     1.  Stage all implementation artifacts (the Plan, the Review, and the Code).
     2.  Propose a commit message that reflects the "Why" and links to the generated documents.
-    3.  Awaiting user confirmation to finalize the commit.
+    5.  Awaiting user confirmation to finalize the commit.
+
+---
+
+## 🤖 Claude Code: A Modern Alternative for This Workflow
+
+Based on an analysis of **Claude Code** (Anthropic's CLI tool), the orchestration with separation workflow described in this document can be accomplished more natively using its specific features.
+
+### 1. Solving the "Context Isolation" Bottleneck
+*   **The Goal:** Distinct "sessions" (Planner, Implementer, Reviewer) that share *no* chat history, only artifacts (files/git branches).
+*   **Claude Code Feature:** **"Multi-Claude Workflows" & Sub-Agents.**
+    *   Claude Code explicitly supports spawning **sub-agents** for specific tasks to manage context.
+    *   It can utilize **Git Worktrees** to run multiple instances in parallel on different branches without conflict.
+    *   This means the "Implementer" agent can be spawned in a fresh process, unaware of the "Planner's" research, effectively enforcing the isolation you want without needing the complex `start_new_jules_task` scaffolding.
+
+### 2. Solving the "Wait/Polling" Bottleneck
+*   **The Goal:** The Orchestrator monitors progress without the user manually checking or keeping a terminal window hostage.
+*   **Claude Code Feature:** **Programmatic Tool Calling & Headless Mode.**
+    *   Unlike the standard REPL (Read-Eval-Print Loop), Claude Code can act as a **programmatic orchestrator**. It can write and execute Python scripts to handle the control flow (loops, conditionals, waiting for git commits).
+    *   It has a **Headless Mode** designed for CI/CD and automation. This allows the orchestrator to run in the background or as a dedicated process that "wakes up" when a sub-agent pushes a commit, solving the "active polling loop" issue elegantly.
+
+### 3. Solving the "Role Definition" Bottleneck
+*   **The Goal:** Strict roles (e.g., "Reviewer" must only critique, not code).
+*   **Claude Code Feature:** **`CLAUDE.md` & Skills.**
+    *   Claude Code uses a configuration file (`CLAUDE.md`) to define project-specific commands and context.
+    *   You can define specific **Skills** or instructions for each "role" that are loaded dynamically. For example, the "Reviewer" agent could be initialized with a specific instruction set that disables file-writing tools and only allows reading and commenting, enforcing the role at the system level.
+
+### Summary Comparison
+
+| Requirement | Gemini CLI + Jules Bottleneck | Claude Code Solution |
+| :--- | :--- | :--- |
+| **Isolation** | Relies on starting new, separate tasks (`start_new_jules_task`) which can be disjointed. | **Native Sub-agents & Worktrees:** Can manage parallel, isolated contexts natively. |
+| **Orchestration** | "Active Polling Loop" (a simple generic loop) blocks the terminal. | **Programmatic Orchestration:** Can run scripts/code to manage the workflow logic reliably. |
+| **Automation** | Requires user confirmation for many steps; "Wait bottleneck". | **Headless Mode:** Can run autonomously for long-duration tasks without user input. |
+| **Context** | Large context can get "polluted" over a long session. | **Automatic Context Management:** actively compacts history and uses sub-agents to keep context clean. |
+
+### Conclusion
+The architecture designed in this document—specifically the **Orchestrator Pattern** with **Session Isolation**—is practically the native design philosophy of Claude Code. Moving to that tool would allow for the implementation of this workflow "out of the box" rather than requiring manual polling loops.
 
 ---
 
@@ -150,3 +187,33 @@ Adapted Workflow for Gemini CLI (v 0, directly from the chat)
    * Original: Commit all artifacts (Plan, Review, Code).
    * My Automation: I will stage all generated markdown files (Plan, Review) and code changes, then generate a commit message
      for your approval.
+
+---
+
+## 🔮 Gemini CLI Roadmap vs. Desired Features (Jan 2026)
+
+Based on a review of the Gemini CLI roadmap and current capabilities, here is how it stacks up against the "Orchestration with Separation" requirements:
+
+### 1. Multi-Agent Workflows / Parallelism
+*   **Gemini CLI Status:** **Not natively available** in the same seamless way as Claude Code.
+*   **Current State:** You can technically run multiple instances of Gemini CLI in different terminal tabs, but there is no built-in "Multi-Gemini" orchestration where one agent spawns and manages others in parallel native processes (Worktrees) to solve a single task cooperatively.
+*   **Workarounds:** You can use `run_shell_command` to execute `gemini` commands in the background, but this is manual plumbing rather than a first-class feature.
+
+### 2. Sub-Agents (Dynamic & Isolated)
+*   **Gemini CLI Status:** **Experimental / In-Development.**
+*   **Current State:** There is an open feature request and active development for a `SubAgent` class to allow LLM-driven tool orchestration and custom system prompts.
+*   **Jules Integration:** The "Jules" extension (`start_new_jules_task`) is effectively a specialized sub-agent for coding tasks, but it is a specific implementation rather than a generic "spawn a sub-agent for X" capability.
+*   **Roadmap:** "Background Agents" are on the roadmap to enable long-running, autonomous tasks.
+
+### 3. Programmatic Orchestrator
+*   **Gemini CLI Status:** **Limited / Different Philosophy.**
+*   **Current State:** Gemini CLI focuses on a **ReAct loop** (Reason & Act) where the model iterates on a thought process. It does not currently expose a Python-like scripting interface *to the model itself* to write control flow logic (loops, conditionals) for its own tools.
+*   **Comparison:** Claude Code allows writing Python code to orchestrate tools (e.g., `for file in files: process(file)`). Gemini CLI typically relies on the model deciding to call a tool one by one, or you (the user) writing a bash script that calls Gemini CLI.
+
+### 4. Headless Mode
+*   **Gemini CLI Status:** **Fully Supported.**
+*   **Current State:** Gemini CLI has a robust **Headless Mode** designed for CI/CD and automation. You can pipe prompts into it (`echo "prompt" | gemini ...`) and get JSON output.
+*   **Utility:** This matches the need for the "Polling Supervisor" to run without a GUI, but the *logic* of the supervisor (the polling loop itself) currently has to be written by the user in a shell script, whereas Claude Code aims to let the agent write that logic itself.
+
+### Summary
+While Gemini CLI is powerful and open-source, the specific **"Orchestrator with Separation"** architecture designed in this document—where one agent programmatically manages others with strict context barriers—is currently **easier to implement "out of the box" with Claude Code**. Gemini CLI is moving in that direction with "Background Agents," but the programmatic control flow is a key differentiator for Claude Code right now.
