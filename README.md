@@ -67,7 +67,7 @@ Your testing and feedback is greatly appreciated! 🙏
     -   **Automatic Fix (v0.6.22+)**: This is now automatically handled by the Automatic Idle Smoothing feature. The vibration should fade out when you're stationary and return to normal when driving.
     -   **Manual Workaround (older versions)**: Go to **Signal Filtering**, enable **Static Noise Filter**, and set the frequency to **10-15 Hz**. Adjust until the bouncing stops. This will surgically remove the engine bounce without making the steering feel light.
 -   **FFB too weak**:
-    -   Increase **Master Gain**.
+    -   Increase **Master Gain** (slider ranges from 0% to 200%, so you can boost beyond 100%).
     -   Or reduce **Max Torque Ref** (this amplifies the signal by setting a lower reference point for maximum torque).
 -   **Violent oscillations or shaking**:
     -   If you experience violent oscillations that the Smoothing or Speed Gate settings don't catch, try **increasing Max Torque Ref** (e.g., from 45 to 60-80 Nm).

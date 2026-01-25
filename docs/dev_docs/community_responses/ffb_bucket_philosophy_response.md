@@ -225,74 +225,55 @@ This aligns with the planned "Basic Mode" mentioned in the README.
 
 ## Documentation Discrepancies Found During Investigation
 
-During the code verification for this response, the following documentation inconsistencies were identified:
+During the code verification for this response, the following documentation inconsistencies were identified and **have been resolved**:
 
-### 1. `docs/ffb_effects.md` — Outdated Effect Descriptions
+### 1. ✅ RESOLVED: `docs/ffb_effects.md` — Outdated Effect Descriptions
 
-**Location**: Lines 14-19
-**Issue**: The Oversteer/Rear Grip section references "v0.2.2+" but describes a simpler implementation than what currently exists.
-**Current Code**: 
-- `FFBEngine.h` now has separate `calculate_sop_lateral()`, `calculate_gyro_damping()`, and distinct handling for Rear Align Torque (lines 1177-1251)
-- The Lateral G Boost (Slide) is calculated separately from the base SoP effect
-- Yaw Kick now has a configurable activation threshold (`m_yaw_kick_threshold`)
-
-**Recommended Update**: Rewrite section 2 to accurately describe the current multi-effect oversteer system.
+**Location**: Lines 14-19  
+**Issue**: The Oversteer/Rear Grip section referenced "v0.2.2+" but described a simpler implementation than what currently exists.  
+**Fix Applied**: Rewrote section 2 to accurately describe the current multi-effect oversteer system (Lateral G, Lateral G Boost, Rear Align Torque, Yaw Kick with threshold).
 
 ---
 
-### 2. `docs/FFB Formulas.md` — Missing decoupling_scale in Context Struct
+### 2. ✅ RESOLVED: `docs/dev_docs/FFB_formulas.md` — Missing decoupling_scale Minimum Clamp
 
-**Location**: Line 34
-**Issue**: Documentation says `K_decouple = m_max_torque_ref / 20.0` but doesn't mention the minimum clamp.
-**Current Code** (`FFBEngine.h` lines 929-930):
-```cpp
-ctx.decoupling_scale = max_torque_safe / 20.0;
-if (ctx.decoupling_scale < 0.1) ctx.decoupling_scale = 0.1;
-```
-**Recommended Update**: Add the minimum clamp of 0.1 to the documentation.
+**Location**: Line 34  
+**Issue**: Documentation said `K_decouple = m_max_torque_ref / 20.0` but didn't mention the minimum clamp.  
+**Fix Applied**: Added note about the minimum clamp of 0.1 to prevent effect collapse.
 
 ---
 
-### 3. `docs/FFB Formulas.md` — Missing BASE_NM Constants
+### 3. ✅ RESOLVED: `docs/dev_docs/FFB_formulas.md` — Missing BASE_NM Constants
 
-**Location**: Lines 226-239 (Legend section)
-**Issue**: The table lists some but not all BASE_NM constants.
-**Current Code** (`FFBEngine.h` lines 447-456) includes:
-- `BASE_NM_SOP_LATERAL = 1.0` (MISSING from docs)
-- `BASE_NM_REAR_ALIGN = 3.0` (MISSING from docs)
-- `BASE_NM_YAW_KICK = 5.0` (MISSING from docs)
-- `BASE_NM_GYRO_DAMPING = 1.0` (MISSING from docs)
-- `BASE_NM_BOTTOMING = 1.0` (MISSING from docs)
-
-**Recommended Update**: Add complete list of all BASE_NM constants to the Legend.
+**Location**: Lines 226-239 (Legend section)  
+**Issue**: The table listed only some BASE_NM constants.  
+**Fix Applied**: Added all 10 BASE_NM constants to the Legend table:
+- `BASE_NM_SOP_LATERAL`, `BASE_NM_REAR_ALIGN`, `BASE_NM_YAW_KICK`, `BASE_NM_GYRO_DAMPING`
+- `BASE_NM_SLIDE_TEXTURE`, `BASE_NM_SCRUB_DRAG`, `BASE_NM_BOTTOMING`
 
 ---
 
-### 4. `docs/ffb_effects.md` — Priority System Listed as "Future"
+### 4. ✅ RESOLVED: `docs/ffb_effects.md` — Priority System Listed as "Future"
 
-**Location**: Lines 54-55
-**Issue**: States "Future versions should implement" — should clarify this is still not implemented.
-**Recommended Update**: Either implement the feature or update to clarify timeline/status.
-
----
-
-### 5. `docs/FFB Formulas.md` — Gyro Damping Formula Incomplete
-
-**Location**: Lines 187-192
-**Issue**: The formula shows `* 1.0Nm * K_decouple` but the code (`FFBEngine.h` line 1250) doesn't explicitly use `BASE_NM_GYRO_DAMPING`:
-```cpp
-ctx.gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE) * ctx.decoupling_scale;
-```
-The BASE_NM_GYRO_DAMPING constant exists (1.0 Nm) but isn't used in the actual calculation — the `1.0` is implicit.
-**Recommended Update**: Either add `BASE_NM_GYRO_DAMPING` to the code for consistency, or update the formula documentation to show the actual implementation.
+**Location**: Lines 54-55  
+**Issue**: Stated "Future versions should implement" without clarifying implementation status.  
+**Fix Applied**: Updated to explicitly state *(Planned, Not Yet Implemented)* with clearer description.
 
 ---
 
-### 6. `README.md` — Master Gain Tooltip Discrepancy
+### 5. ✅ RESOLVED: `docs/dev_docs/FFB_formulas.md` — Gyro Damping Formula Incomplete
 
-**Location**: `GuiLayer.cpp` line 936 vs README troubleshooting
-**Issue**: The tooltip says "100% = No attenuation" but the code allows up to 200% (0.0 to 2.0 range). The README troubleshooting advice says "Increase Master Gain" but doesn't clarify the 0-200% range.
-**Recommended Update**: Clarify that Master Gain allows boosting above 100% in both locations.
+**Location**: Lines 187-192  
+**Issue**: The formula showed `* 1.0Nm * K_decouple` but code doesn't explicitly use `BASE_NM_GYRO_DAMPING`.  
+**Fix Applied**: Updated formula and added note explaining that `BASE_NM_GYRO_DAMPING` (1.0 Nm) exists but is implicit in the calculation.
+
+---
+
+### 6. ✅ RESOLVED: `README.md` — Master Gain Range Not Clarified
+
+**Location**: Troubleshooting section, line 70  
+**Issue**: The README said "Increase Master Gain" but didn't clarify the 0-200% range.  
+**Fix Applied**: Updated to "Increase **Master Gain** (slider ranges from 0% to 200%, so you can boost beyond 100%)."
 
 ---
 

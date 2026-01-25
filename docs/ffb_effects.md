@@ -13,10 +13,16 @@ This document details the Force Feedback effects implemented in LMUFFB, how they
 
 ## 2. Oversteer (Rear Grip Loss)
 *   **Goal**: To communicate when the rear tires are losing grip (loose/sliding), allowing the driver to catch a slide early.
-*   **Current Dynamic Implementation (v0.2.2+)**:
-    *   **Aligning Torque Integration**: Calculates a synthetic "Aligning Torque" for the rear axle using `Rear Lateral Force`.
-    *   **Mechanism**: This force is injected into the steering signal. If the rear tires generate large lateral forces (resisting a slide), the steering wheel will naturally counter-steer, providing a physical cue to catch the slide. This is modulated by the `Lateral G Boost (Slide)` slider.
-    *   **SoP (Seat of Pants)**: Also injects Lateral G-force into the wheel torque to provide "weight" cues.
+*   **Current Multi-Effect Implementation (v0.6+)**:
+    The oversteer system uses multiple distinct effects that work together:
+    
+    1. **Lateral G (SoP)**: Injects chassis lateral acceleration into wheel torque, providing "weight" cues during cornering. Calculated in `calculate_sop_lateral()`.
+    
+    2. **Lateral G Boost (Slide)**: Amplifies the SoP force when rear grip is lower than front grip (oversteer condition). Formula: `SoP *= (1.0 + (FrontGrip - RearGrip) * OversteerBoost * 2.0)`.
+    
+    3. **Rear Align Torque (SoP Self-Aligning)**: Calculates a synthetic aligning torque for the rear axle using slip angle and estimated load. Provides directional counter-steering pull during slides.
+    
+    4. **Yaw Kick**: Sharp momentary impulse at the onset of rotation. Derived from `mLocalRotAccel.y` with configurable activation threshold (`m_yaw_kick_threshold`, default 0.2 rad/s²) to filter road noise.
 
 ## 3. Braking Lockup (Progressive Scrub)
 *   **Goal**: To signal when tires have stopped rotating during braking (flat-spotting risk), allowing the driver to find the threshold.
@@ -51,7 +57,7 @@ A critical challenge in FFB design is managing the "Noise Floor". When multiple 
 ### 1. Signal Masking
 *   **The Issue**: High-frequency vibrations (like **Lockup Rumble** or **Road Texture**) can physically overpower subtle torque changes (like **Understeer Lightness** or **SoP**). If the wheel is vibrating violently due to a lockup, the driver might miss the feeling of the rear end stepping out (SoP).
 *   **Mitigation**:
-    *   **Priority System**: Future versions should implement "Side-chaining" or "Ducking". For example, if a severe Lockup event occurs, reduce Road Texture gain to ensure the Lockup signal is clear.
+    *   **Priority System** *(Planned, Not Yet Implemented)*: A future version will implement "Side-chaining" or "Ducking" to dynamically reduce lower-priority effects when higher-priority signals need headroom. For example, if understeer occurs during curb contact, the system would reduce Road Texture to preserve the grip information signal.
     *   **Frequency Separation**: Ideally, "Information" (Grip/SoP) should be low-frequency (< 20Hz), while "Texture" (Lockup/Spin/Road) should be high-frequency (> 50Hz). This helps the human hand distinguish them.
 
 ### 2. Clipping
