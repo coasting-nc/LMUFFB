@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.36] - 2026-01-05
+### Refactored
+- **FFB Engine Architecture**: Massive refactoring of `FFBEngine::calculate_force` to improve maintainability and scalability.
+  - **Context-Based Processing**: Introduced `FFBCalculationContext` struct to pass derived values (speed, load, dt) efficiently between methods.
+  - **Modular Helper Methods**: Extracted monolithic logic into focused private methods (`calculate_sop_lateral`, `calculate_gyro_damping`, `calculate_abs_pulse`, etc.).
+  - **Improved Readability**: Significantly reduced the complexity of the main calculation loop.
+
+### Fixed
+- **Torque Drop Logic Regression**: Fixed a critical issue where the "Torque Drop" (Spin Gain Reduction) was incorrectly attenuating texture effects (Road, Slide, Spin, Bottoming).
+  - **Restored Behavior**: Torque Drop now ONLY applies to "Structural" forces (Base, SoP, Rear Torque, Yaw, Gyro, ABS, Lockup, Scrub). Texture forces are added *after* the drop, ensuring vibrations remain distinct even during traction loss (drifting/burnouts).
+- **Telemetry Snapshot Regression**: Fixed `sop_force` in debug snapshots incorrectly including the oversteer boost component.
+  - **Restored Behavior**: Snapshots now correctly report the unboosted lateral force for `sop_force` and the boost delta for `oversteer_boost`, enabling accurate debugging of the SoP pipeline.
+- **ABS Pulse Summation**: Fixed a logic error where the ABS pulse force was not being added to the final FFB sum in some scenarios.
+
 ## [0.6.35] - 2026-01-04
 ### Added
 - **Three New DD Presets**:

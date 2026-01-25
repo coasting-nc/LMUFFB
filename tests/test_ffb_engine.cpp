@@ -124,6 +124,10 @@ static void test_understeer_effect_scaling(); // v0.6.31
 static void test_legacy_config_migration(); // v0.6.31
 static void test_preset_understeer_only_isolation(); // v0.6.31
 static void test_all_presets_non_negative_speed_gate(); // v0.6.32
+static void test_refactor_abs_pulse(); // v0.6.36
+static void test_refactor_torque_drop(); // v0.6.36
+static void test_refactor_snapshot_sop(); // v0.6.36
+static void test_refactor_units(); // v0.6.36
 
 // --- Test Helper Functions (v0.5.7) ---
 
@@ -5163,7 +5167,8 @@ static void test_missing_telemetry_warnings() {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
     // Set Vehicle Name
-    strcpy_s(data.mVehicleName, "TestCar_GT3");
+    strncpy(data.mVehicleName, "TestCar_GT3", sizeof(data.mVehicleName) - 1);
+    data.mVehicleName[sizeof(data.mVehicleName) - 1] = '\0';
 
     // Capture stdout
     std::stringstream buffer;
@@ -5774,6 +5779,12 @@ void Run() {
     test_stationary_silence();
     test_driving_forces_restored();
     
+    // Refactoring Regression Tests (v0.6.36)
+    test_refactor_abs_pulse();
+    test_refactor_torque_drop();
+    test_refactor_snapshot_sop();
+    test_refactor_units(); // v0.6.36
+
     std::cout << "\n--- Physics Engine Test Summary ---" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
     std::cout << "Tests Failed: " << g_tests_failed << std::endl;
@@ -6008,6 +6019,247 @@ static void test_all_presets_non_negative_speed_gate() {
         std::cout << "[FAIL] One or more presets have invalid speed gate values" << std::endl;
         g_tests_failed++;
     }
+}
+
+
+
+static void test_refactor_abs_pulse() {
+    std::cout << "\nTest: Refactor Regression - ABS Pulse (v0.6.36)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+
+    // Enable ABS
+    engine.m_abs_pulse_enabled = true;
+    engine.m_abs_gain = 1.0f;
+    engine.m_max_torque_ref = 20.0f; // Scale 1.0
+
+    // Trigger condition: High Brake + Pressure Delta
+    data.mUnfilteredBrake = 1.0;
+    data.mWheel[0].mBrakePressure = 1.0;
+    engine.calculate_force(&data); // Frame 1: Set previous pressure
+
+    data.mWheel[0].mBrakePressure = 0.5; // Frame 2: Rapid drop (delta)
+    double force = engine.calculate_force(&data);
+
+    // Should be non-zero (previously regressed to 0)
+    if (std::abs(force) > 0.001) {
+        std::cout << "[PASS] ABS Pulse generated force: " << force << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] ABS Pulse silent (force=0). Refactor regression?" << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_refactor_torque_drop() {
+    std::cout << "\nTest: Refactor Regression - Torque Drop (v0.6.36)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+
+    // Setup: Base force + Spin
+    data.mSteeringShaftTorque = 10.0; // 0.5 normalized
+    engine.m_spin_enabled = true;
+    engine.m_spin_gain = 1.0f;
+    engine.m_gain = 1.0f;
+
+    // Trigger Spin
+    data.mUnfilteredThrottle = 1.0;
+    // Slip = 0.5 (Severe) -> Severity = (0.5 - 0.2) / 0.5 = 0.6
+    // Drop Factor = 1.0 - (0.6 * 1.0 * 0.6) = 1.0 - 0.36 = 0.64
+    double ground_vel = 20.0;
+    data.mWheel[2].mLongitudinalPatchVel = 0.5 * ground_vel;
+    data.mWheel[2].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[3].mLongitudinalPatchVel = 0.5 * ground_vel;
+    data.mWheel[3].mLongitudinalGroundVel = ground_vel;
+
+    // Disable Spin Vibration (gain 0) to check just the drop?
+    // No, can't separate gain easily. But vibration is AC.
+    // If we check magnitude, it might be messy.
+    // Let's check with Spin Gain = 1.0, but Spin Freq Scale = 0 (Constant force?)
+    // No, freq scale 0 -> phase 0 -> sin(0) = 0. No vibration.
+    // Perfect for checking torque drop!
+
+    engine.m_spin_freq_scale = 0.0f;
+
+    // Add Road Texture (Texture Group - Should NOT be dropped)
+    // Setup deflection delta for constant road noise
+    // Force = Delta * 50.0. Target 0.1 normalized (2.0 Nm).
+    // Delta = 2.0 / 50.0 = 0.04.
+    engine.m_road_texture_enabled = true;
+    engine.m_road_texture_gain = 1.0f;
+    engine.m_max_torque_ref = 20.0f; // Scale 1.0
+    // Reset deflection state in engine first
+    engine.calculate_force(&data);
+
+    // Apply Delta
+    data.mWheel[0].mVerticalTireDeflection += 0.02; // +2cm
+    data.mWheel[1].mVerticalTireDeflection += 0.02; // +2cm
+    // Total Delta = 0.04. Road Force = 0.04 * 50.0 = 2.0 Nm.
+    // Normalized Road = 2.0 / 20.0 = 0.1.
+
+    double force = engine.calculate_force(&data);
+
+    // Base Force (Structural) = 10.0 Nm -> 0.5 Norm.
+    // Torque Drop = 0.64.
+    // Road Force (Texture) = 1.0 Nm (Clamped) -> 0.05 Norm.
+
+    // Logic A (Broken): (Base + Texture) * Drop = (0.5 + 0.05) * 0.64 = 0.352
+    // Logic B (Correct): (Base * Drop) + Texture = (0.5 * 0.64) + 0.05 = 0.32 + 0.05 = 0.37
+
+    if (std::abs(force - 0.37) < 0.01) {
+        std::cout << "[PASS] Torque Drop correctly isolated from Textures (Force: " << force << " Expected: 0.37)" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Torque Drop logic error. Got: " << force << " Expected: 0.37 (Broken: 0.352)" << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_refactor_snapshot_sop() {
+    std::cout << "\nTest: Refactor Regression - Snapshot SoP (v0.6.36)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+
+    // Setup SoP + Boost
+    engine.m_sop_effect = 1.0f;
+    engine.m_oversteer_boost = 1.0f;
+    engine.m_sop_smoothing_factor = 1.0f; // Instant
+    engine.m_sop_scale = 10.0f; // 1G -> 1.0 unboosted (normalized 20Nm)
+
+    data.mLocalAccel.x = 9.81; // 1G Lat
+
+    // Trigger Boost: Rear Grip Loss
+    data.mWheel[0].mGripFract = 1.0;
+    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[2].mGripFract = 0.5;
+    data.mWheel[3].mGripFract = 0.5;
+    // Delta = 0.5. Boost = 1.0 + (0.5 * 1.0 * 2.0) = 2.0x.
+
+    // Expected:
+    // SoP Base (Unboosted) = 1.0 * 1.0 * 10 = 10.0 Nm
+    // SoP Total (Boosted) = 10.0 * 2.0 = 20.0 Nm
+    // Snapshot SoP Force = 10.0 (Unboosted Nm)
+    // Snapshot Boost = 20.0 - 10.0 = 10.0 (Nm)
+
+    engine.calculate_force(&data);
+
+    auto batch = engine.GetDebugBatch();
+    if (!batch.empty()) {
+        FFBSnapshot snap = batch.back();
+
+        bool sop_ok = (std::abs(snap.sop_force - 10.0) < 0.01);
+        bool boost_ok = (std::abs(snap.oversteer_boost - 10.0) < 0.01);
+
+        if (sop_ok && boost_ok) {
+            std::cout << "[PASS] Snapshot values correct (SoP: " << snap.sop_force << ", Boost: " << snap.oversteer_boost << ")" << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] Snapshot logic error. SoP: " << snap.sop_force << " (Exp: 10.0) Boost: " << snap.oversteer_boost << " (Exp: 10.0)" << std::endl;
+            g_tests_failed++;
+        }
+    } else {
+        std::cout << "[FAIL] No snapshot." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+// --- Unit Tests for Private Helper Methods (v0.6.36) ---
+class FFBEngineTestAccess {
+public:
+    static void test_unit_sop_lateral() {
+        std::cout << "\nTest Unit: calculate_sop_lateral" << std::endl;
+        FFBEngine engine;
+        InitializeEngine(engine);
+        FFBCalculationContext ctx;
+        ctx.dt = 0.01;
+        ctx.car_speed = 20.0;
+        ctx.avg_load = 4000.0;
+
+        TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+        data.mLocalAccel.x = 9.81; // 1G
+        engine.m_sop_effect = 1.0;
+        engine.m_sop_scale = 10.0;
+        engine.m_sop_smoothing_factor = 1.0; // Instant
+
+        engine.calculate_sop_lateral(&data, ctx);
+
+        // Unboosted: 1G * 1.0 * 10.0 = 10.0
+        // No rear grip loss -> Boost 0.
+        // ctx.sop_base_force should be 10.0
+        if (std::abs(ctx.sop_base_force - 10.0) < 0.01) {
+            std::cout << "[PASS] calculate_sop_lateral base logic." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] calculate_sop_lateral failed. Got " << ctx.sop_base_force << std::endl;
+            g_tests_failed++;
+        }
+    }
+
+    static void test_unit_gyro_damping() {
+        std::cout << "\nTest Unit: calculate_gyro_damping" << std::endl;
+        FFBEngine engine;
+        InitializeEngine(engine);
+        FFBCalculationContext ctx;
+        ctx.dt = 0.01;
+        ctx.car_speed = 10.0; // GYRO_SPEED_SCALE baseline
+
+        TelemInfoV01 data = CreateBasicTestTelemetry(10.0);
+        data.mUnfilteredSteering = 0.1; // Moving right
+        engine.m_prev_steering_angle = 0.0;
+
+        engine.m_gyro_gain = 1.0;
+        engine.m_gyro_smoothing = 0.0001; // Instant
+
+        engine.calculate_gyro_damping(&data, ctx);
+
+        // Steer Range 9.42 / 2 = 4.71.
+        // Delta Angle = 0.1 * 4.71 = 0.471.
+        // Vel = 0.471 / 0.01 = 47.1 rad/s.
+        // Force = -47.1 * 1.0 * (10/10) * 1.0 = -47.1
+
+        if (ctx.gyro_force < -40.0) {
+            std::cout << "[PASS] calculate_gyro_damping logic." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] calculate_gyro_damping failed. Got " << ctx.gyro_force << std::endl;
+            g_tests_failed++;
+        }
+    }
+
+    static void test_unit_abs_pulse() {
+        std::cout << "\nTest Unit: calculate_abs_pulse" << std::endl;
+        FFBEngine engine;
+        InitializeEngine(engine);
+        FFBCalculationContext ctx;
+        ctx.dt = 0.01;
+
+        TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+        data.mUnfilteredBrake = 1.0;
+        data.mWheel[0].mBrakePressure = 0.5;
+        engine.m_prev_brake_pressure[0] = 1.0; // Delta -50.0/s
+
+        engine.m_abs_pulse_enabled = true;
+        engine.m_abs_gain = 1.0;
+
+        engine.calculate_abs_pulse(&data, ctx);
+
+        if (std::abs(ctx.abs_pulse_force) > 0.0001 || engine.m_abs_phase > 0.0) {
+            std::cout << "[PASS] calculate_abs_pulse triggered." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] calculate_abs_pulse failed." << std::endl;
+            g_tests_failed++;
+        }
+    }
+};
+
+static void test_refactor_units() {
+    FFBEngineTestAccess::test_unit_sop_lateral();
+    FFBEngineTestAccess::test_unit_gyro_damping();
+    FFBEngineTestAccess::test_unit_abs_pulse();
 }
 
 } // namespace FFBEngineTests

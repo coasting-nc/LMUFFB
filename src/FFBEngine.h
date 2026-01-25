@@ -170,6 +170,49 @@ struct GripResult {
     double original;        // Original telemetry value
     double slip_angle;      // Calculated slip angle (if approximated)
 };
+
+namespace FFBEngineTests { class FFBEngineTestAccess; }
+
+// Calculation Context Struct
+// Holds common derived values used across multiple effect calculations
+struct FFBCalculationContext {
+    double dt = 0.0025;
+    double car_speed = 0.0;       // Absolute m/s
+    double car_speed_long = 0.0;  // Longitudinal m/s (Raw)
+    double decoupling_scale = 1.0;
+    double speed_gate = 1.0;
+    double texture_load_factor = 1.0;
+    double brake_load_factor = 1.0;
+    double avg_load = 0.0;
+    double avg_grip = 0.0;
+
+    // Diagnostics
+    bool frame_warn_load = false;
+    bool frame_warn_grip = false;
+    bool frame_warn_rear_grip = false;
+    bool frame_warn_dt = false;
+
+    // Intermediate results
+    double grip_factor = 1.0;     // 1.0 = full grip, 0.0 = no grip
+    double sop_base_force = 0.0;
+    double sop_unboosted_force = 0.0; // For snapshot compatibility
+    double rear_torque = 0.0;
+    double yaw_force = 0.0;
+    double scrub_drag_force = 0.0;
+    double gyro_force = 0.0;
+    double avg_rear_grip = 0.0;
+    double calc_rear_lat_force = 0.0;
+    double avg_rear_load = 0.0;
+
+    // Effect outputs
+    double road_noise = 0.0;
+    double slide_noise = 0.0;
+    double lockup_rumble = 0.0;
+    double spin_rumble = 0.0;
+    double bottoming_crunch = 0.0;
+    double abs_pulse_force = 0.0;
+    double gain_reduction_factor = 1.0;
+};
     
 // FFB Engine Class
 class FFBEngine {
@@ -377,6 +420,9 @@ public:
     std::vector<FFBSnapshot> m_debug_buffer;
     std::mutex m_debug_mutex;
     
+    // Friend class for unit testing private helper methods
+    friend class FFBEngineTests::FFBEngineTestAccess;
+
     FFBEngine() {
         last_log_time = std::chrono::steady_clock::now();
     }
@@ -711,192 +757,55 @@ public:
         return (wheel_vel - car_speed_ms) / denom;
     }
 
+    // Refactored calculate_force
     double calculate_force(const TelemInfoV01* data) {
         if (!data) return 0.0;
         
-        double dt = data->mDeltaTime;
+        // --- 1. INITIALIZE CONTEXT ---
+        FFBCalculationContext ctx;
+        ctx.dt = data->mDeltaTime;
 
-        // Sanity Check Flags for this frame
-        bool frame_warn_load = false;
-        bool frame_warn_grip = false;
-        bool frame_warn_dt = false;
-
-        // --- SANITY CHECK: DELTA TIME ---
-        if (dt <= 0.000001) {
-            dt = 0.0025; // Default to 400Hz
+        // Sanity Check: Delta Time
+        if (ctx.dt <= 0.000001) {
+            ctx.dt = 0.0025; // Default to 400Hz
             if (!m_warned_dt) {
                 std::cout << "[WARNING] Invalid DeltaTime (<=0). Using default 0.0025s." << std::endl;
                 m_warned_dt = true;
             }
-            frame_warn_dt = true;
-        }
-
-        // Front Left and Front Right (Note: mWheel, not mWheels)
-        const TelemWheelV01& fl = data->mWheel[0];
-        const TelemWheelV01& fr = data->mWheel[1];
-
-        // Critical: Use mSteeringShaftTorque instead of mSteeringArmForce
-        // Explanation: LMU 1.2 introduced mSteeringShaftTorque (Nm) as the definitive FFB output.
-        // Legacy mSteeringArmForce (N) is often 0.0 or inaccurate for Hypercars due to 
-        // complex power steering modeling in the new engine.
-        double game_force = data->mSteeringShaftTorque;
-
-        // --- AUTOMATIC IDLE SMOOTHING (Fix for Engine Vibration) ---
-        // If the car is moving slowly (< 3.0 m/s), the "Road Feel" is mostly just 
-        // engine noise and sensor jitter. We apply heavy smoothing to kill the 
-        // vibration while preserving the heavy static weight of the steering.
-        
-        double effective_shaft_smoothing = (double)m_steering_shaft_smoothing;
-        double car_speed_abs = std::abs(data->mLocalVel.z);
-        
-        // Use the user-configured Upper Threshold
-        // Default is now 5.0 m/s (18 km/h), which covers the user's "below 15km/h" issue.
-        double idle_speed_threshold = (double)m_speed_gate_upper; 
-        
-        // Safety floor: Never go below 3.0 m/s even if user lowers the gate
-        if (idle_speed_threshold < 3.0) idle_speed_threshold = 3.0;
-
-        const double IDLE_SMOOTHING_TARGET = 0.1; // 0.1s = ~1.6Hz cutoff (Kills engine vibes)
-
-        if (car_speed_abs < idle_speed_threshold) {
-            // Linear blend: 100% idle smoothing at 0 m/s, 0% at threshold
-            double idle_blend = (idle_speed_threshold - car_speed_abs) / idle_speed_threshold;
-            
-            // Use the higher of the two: User Setting vs Idle Target
-            // This ensures we never make the wheel *more* raw than the user wants
-            double dynamic_smooth = IDLE_SMOOTHING_TARGET * idle_blend;
-            effective_shaft_smoothing = (std::max)(effective_shaft_smoothing, dynamic_smooth);
-        }
-
-        // --- APPLY SMOOTHING ---
-        if (effective_shaft_smoothing > 0.0001) {
-            double alpha_shaft = dt / (effective_shaft_smoothing + dt);
-            // Safety clamp
-            alpha_shaft = (std::min)(1.0, (std::max)(0.001, alpha_shaft));
-            
-            m_steering_shaft_torque_smoothed += alpha_shaft * (game_force - m_steering_shaft_torque_smoothed);
-            game_force = m_steering_shaft_torque_smoothed;
-        } else {
-            m_steering_shaft_torque_smoothed = game_force; // Reset state
-        }
-
-        // --- v0.4.41: Frequency Estimator & Dynamic Notch Filter ---
-        
-        // 1. Frequency Estimator Logic
-        // Isolate AC component (Vibration) using simple High Pass (remove DC offset)
-        // Alpha for HPF: fast smoothing to get the "average" center
-        double alpha_hpf = dt / (0.1 + dt); 
-        m_torque_ac_smoothed += alpha_hpf * (game_force - m_torque_ac_smoothed);
-        double ac_torque = game_force - m_torque_ac_smoothed;
-
-        // Detect Zero Crossing (Sign change)
-        // Add hysteresis (0.05 Nm) to avoid noise triggering
-        if ((m_prev_ac_torque < -0.05 && ac_torque > 0.05) || 
-            (m_prev_ac_torque > 0.05 && ac_torque < -0.05)) {
-            
-            double now = data->mElapsedTime;
-            double period = now - m_last_crossing_time;
-            
-            // Sanity check period (e.g., 1Hz to 200Hz)
-            if (period > 0.005 && period < 1.0) {
-                // Half-cycle * 2 = Full Cycle Period
-                // Let's assume we detect every crossing (2 per cycle).
-                double inst_freq = 1.0 / (period * 2.0);
-                
-                // Smooth the readout for GUI
-                m_debug_freq = m_debug_freq * 0.9 + inst_freq * 0.1;
-            }
-            m_last_crossing_time = now;
-        }
-        m_prev_ac_torque = ac_torque;
-
-
-        // 2. Dynamic Notch Filter Logic
-        // Calculate Wheel Frequency (always, for GUI display)
-        double car_v_long = std::abs(data->mLocalVel.z);
-        
-        // 1. Calculate Stationary Gate (Fade out vibrations at low speed)
-        // Ramp from m_speed_gate_lower to m_speed_gate_upper
-        double speed_gate_range = (double)m_speed_gate_upper - (double)m_speed_gate_lower;
-        if (speed_gate_range < 0.1) speed_gate_range = 0.1; // Safety clamp
-        double speed_gate = (car_v_long - (double)m_speed_gate_lower) / speed_gate_range;
-        speed_gate = (std::max)(0.0, (std::min)(1.0, speed_gate));
-        
-        // Get radius (convert cm to m)
-        // Use Front Left as reference
-        const TelemWheelV01& fl_ref = data->mWheel[0];
-        double radius = (double)fl_ref.mStaticUndeflectedRadius / 100.0;
-        if (radius < 0.1) radius = 0.33; // Safety fallback
-        
-        double circumference = 2.0 * PI * radius;
-        
-        // Avoid divide by zero
-        double wheel_freq = (circumference > 0.0) ? (car_v_long / circumference) : 0.0;
-        
-        // Store for GUI display
-        m_theoretical_freq = wheel_freq;
-        
-        // Apply filter if enabled
-        if (m_flatspot_suppression) {
-            // Only filter if moving fast enough (> 1Hz)
-            if (wheel_freq > 1.0) {
-                // Update filter coefficients
-                m_notch_filter.Update(wheel_freq, 1.0/dt, (double)m_notch_q);
-                
-                // Apply filter
-                double input_force = game_force;
-                double filtered_force = m_notch_filter.Process(input_force);
-                
-                // Blend Output (Linear Interpolation)
-                // Strength 1.0 = Fully Filtered. Strength 0.0 = Raw.
-                game_force = input_force * (1.0f - m_flatspot_strength) + filtered_force * m_flatspot_strength;
-
-            } else {
-                // Reset filter state when stopped to prevent "ringing" on start
-                m_notch_filter.Reset();
-            }
+            ctx.frame_warn_dt = true;
         }
         
-        // 3. Static Notch Filter (v0.4.43)
-        if (m_static_notch_enabled) {
-             // v0.6.10: Variable Width (Bandwidth based Q calculation)
-             // Q = CenterFreq / Bandwidth
-             double bw = (double)m_static_notch_width;
-             if (bw < 0.1) bw = 0.1; // Safety clamp
-             double q = (double)m_static_notch_freq / bw;
-             
-             m_static_notch_filter.Update((double)m_static_notch_freq, 1.0/dt, q);
-             game_force = m_static_notch_filter.Process(game_force);
-        } else {
-             m_static_notch_filter.Reset();
-        }
+        ctx.car_speed_long = data->mLocalVel.z;
+        ctx.car_speed = std::abs(ctx.car_speed_long);
         
-        // --- 0. UPDATE STATS ---
-        double raw_torque = game_force;
-        double raw_load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
-        double raw_grip = (fl.mGripFract + fr.mGripFract) / 2.0;
-        double raw_lat_g = data->mLocalAccel.x;
+        // --- 2. SIGNAL CONDITIONING (STATE UPDATES) ---
         
-        // --- SIGNAL CONDITIONING (Inertia Simulation) ---
-        // Filter accelerometers to simulate chassis weight transfer lag
+        // Chassis Inertia Simulation
         double chassis_tau = (double)m_chassis_inertia_smoothing;
         if (chassis_tau < 0.0001) chassis_tau = 0.0001;
-        double alpha_chassis = dt / (chassis_tau + dt);
+        double alpha_chassis = ctx.dt / (chassis_tau + ctx.dt);
         m_accel_x_smoothed += alpha_chassis * (data->mLocalAccel.x - m_accel_x_smoothed);
         m_accel_z_smoothed += alpha_chassis * (data->mLocalAccel.z - m_accel_z_smoothed);
 
+        // --- 3. TELEMETRY PROCESSING ---
+        // Front Wheels
+        const TelemWheelV01& fl = data->mWheel[0];
+        const TelemWheelV01& fr = data->mWheel[1];
+
+        // Raw Inputs
+        double raw_torque = data->mSteeringShaftTorque;
+        double raw_load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
+        double raw_grip = (fl.mGripFract + fr.mGripFract) / 2.0;
+
+        // Update Stats
         s_torque.Update(raw_torque);
         s_load.Update(raw_load);
         s_grip.Update(raw_grip);
-        s_lat_g.Update(raw_lat_g);
-
-        // Blocking I/O removed for performance (Report v0.4.2)
-        // Stats logic preserved in s_* objects for potential GUI display or async logging.
-        // If console logging is desired for debugging, it should be done in a separate thread.
+        s_lat_g.Update(data->mLocalAccel.x);
         
+        // Stats Latching
         auto now = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1) {
-            // Latch stats for external reading
             s_torque.ResetInterval(); 
             s_load.ResetInterval(); 
             s_grip.ResetInterval(); 
@@ -904,55 +813,39 @@ public:
             last_log_time = now;
         }
 
-        // Debug variables (initialized to 0)
-        double road_noise = 0.0;
-        double slide_noise = 0.0;
-        double lockup_rumble = 0.0;
-        double spin_rumble = 0.0;
-        double bottoming_crunch = 0.0;
-        double scrub_drag_force = 0.0; // v0.4.7
+        // --- 4. PRE-CALCULATIONS ---
 
-        // --- PRE-CALCULATION: TIRE LOAD FACTOR ---
-        double avg_load = raw_load;
+        // Average Load & Fallback Logic
+        ctx.avg_load = raw_load;
 
-        // SANITY CHECK: Hysteresis Logic
-        // If load is exactly 0.0 but car is moving, telemetry is likely broken.
-        // Use a counter to prevent flickering if data is noisy.
-        if (avg_load < 1.0 && std::abs(data->mLocalVel.z) > 1.0) {
+        // Hysteresis for missing load
+        if (ctx.avg_load < 1.0 && ctx.car_speed > 1.0) {
             m_missing_load_frames++;
         } else {
-            // Decay count if data is good
             m_missing_load_frames = (std::max)(0, m_missing_load_frames - 1);
         }
 
-        // Only trigger fallback if missing for > 20 frames (approx 50ms at 400Hz)
         if (m_missing_load_frames > 20) {
-            // v0.4.39: Adaptive Kinematic Load
-            // If SuspForce is ALSO missing (common in encrypted content), use Kinematic Model.
-            // Check FL SuspForce (index 0). If < MIN_VALID_SUSP_FORCE, assume blocked.
+            // Fallback Logic
             if (fl.mSuspForce > MIN_VALID_SUSP_FORCE) {
                 double calc_load_fl = approximate_load(fl);
                 double calc_load_fr = approximate_load(fr);
-                avg_load = (calc_load_fl + calc_load_fr) / 2.0;
+                ctx.avg_load = (calc_load_fl + calc_load_fr) / 2.0;
             } else {
-                // SuspForce blocked -> Use Kinematic Model (Mass + Aero + Transfer)
                 double kin_load_fl = calculate_kinematic_load(data, 0);
                 double kin_load_fr = calculate_kinematic_load(data, 1);
-                avg_load = (kin_load_fl + kin_load_fr) / 2.0;
+                ctx.avg_load = (kin_load_fl + kin_load_fr) / 2.0;
             }
-            
-            
             if (!m_warned_load) {
                 std::cout << "Warning: Data for mTireLoad from the game seems to be missing for this car (" << data->mVehicleName << "). (Likely Encrypted/DLC Content). Using Kinematic Fallback." << std::endl;
                 m_warned_load = true;
             }
-            frame_warn_load = true;
+            ctx.frame_warn_load = true;
         }
 
-        // --- SANITY CHECKS: NEW MISSING DATA DETECTION (v0.6.3) ---
+        // Sanity Checks (Missing Data)
         
         // 1. Suspension Force (mSuspForce)
-        // Check: If average front susp force < minimum valid (10N) while moving
         double avg_susp_f = (fl.mSuspForce + fr.mSuspForce) / 2.0;
         if (avg_susp_f < MIN_VALID_SUSP_FORCE && std::abs(data->mLocalVel.z) > 1.0) {
             m_missing_susp_force_frames++;
@@ -965,7 +858,6 @@ public:
         }
 
         // 2. Suspension Deflection (mSuspensionDeflection)
-        // Check: If exactly 0.0 while moving fast (deflection usually noisy)
         double avg_susp_def = (std::abs(fl.mSuspensionDeflection) + std::abs(fr.mSuspensionDeflection)) / 2.0;
         if (avg_susp_def < 0.000001 && std::abs(data->mLocalVel.z) > 10.0) {
             m_missing_susp_deflection_frames++;
@@ -978,7 +870,6 @@ public:
         }
 
         // 3. Front Lateral Force (mLateralForce)
-        // Check: If 0.0 while cornering hard (> 3 m/s² lateral accel)
         double avg_lat_force_front = (std::abs(fl.mLateralForce) + std::abs(fr.mLateralForce)) / 2.0;
         if (avg_lat_force_front < 1.0 && std::abs(data->mLocalAccel.x) > 3.0) {
             m_missing_lat_force_front_frames++;
@@ -991,8 +882,6 @@ public:
         }
 
         // 4. Rear Lateral Force (mLateralForce)
-        // Check: If 0.0 while cornering hard (> 3 m/s² lateral accel)
-        // Note: Known bug in LMU 1.2, this is expected to trigger often.
         double avg_lat_force_rear = (std::abs(data->mWheel[2].mLateralForce) + std::abs(data->mWheel[3].mLateralForce)) / 2.0;
         if (avg_lat_force_rear < 1.0 && std::abs(data->mLocalAccel.x) > 3.0) {
             m_missing_lat_force_rear_frames++;
@@ -1004,8 +893,7 @@ public:
              m_warned_lat_force_rear = true;
         }
 
-        // 5. Vertical Tire Deflection (mVerticalTireDeflection) - NEW (v0.6.21)
-        // Check: If exactly 0.0 while moving fast (deflection usually noisy)
+        // 5. Vertical Tire Deflection (mVerticalTireDeflection)
         double avg_vert_def = (std::abs(fl.mVerticalTireDeflection) + std::abs(fr.mVerticalTireDeflection)) / 2.0;
         if (avg_vert_def < 0.000001 && std::abs(data->mLocalVel.z) > 10.0) {
             m_missing_vert_deflection_frames++;
@@ -1018,758 +906,552 @@ public:
             m_warned_vert_deflection = true;
         }
         
-        // Normalize: 4000N is a reference "loaded" GT tire.
-        double raw_load_factor = avg_load / 4000.0;
-        
-        // Split Load Caps (v0.5.11)
-        // 1. Texture Load Factor (Road/Slide)
+        // Load Factors
+        double raw_load_factor = ctx.avg_load / 4000.0;
         double texture_safe_max = (std::min)(2.0, (double)m_texture_load_cap);
-        double texture_load_factor = (std::min)(texture_safe_max, (std::max)(0.0, raw_load_factor));
+        ctx.texture_load_factor = (std::min)(texture_safe_max, (std::max)(0.0, raw_load_factor));
 
-        // 2. Brake Load Factor (Lockup)
-        // Expanded to 10.0 in v0.6.20
         double brake_safe_max = (std::min)(10.0, (double)m_brake_load_cap);
-        double brake_load_factor = (std::min)(brake_safe_max, (std::max)(0.0, raw_load_factor));
-
-        // --- 1. GAIN COMPENSATION (Decoupling) ---
-        // Baseline: 20.0 Nm (The standard reference where 1.0 gain was tuned).
-        // If MaxTorqueRef increases, we scale effects up to maintain relative intensity.
-        double decoupling_scale = (double)m_max_torque_ref / 20.0;
-        if (decoupling_scale < 0.1) decoupling_scale = 0.1; // Safety clamp
-
-        // --- 1. Understeer Effect (Grip Modulation) ---
-        // FRONT WHEEL GRIP CALCULATION (Refactored v0.4.5)
+        ctx.brake_load_factor = (std::min)(brake_safe_max, (std::max)(0.0, raw_load_factor));
         
-        double car_speed = std::abs(data->mLocalVel.z);
+        // Decoupling Scale
+        double max_torque_safe = (double)m_max_torque_ref;
+        if (max_torque_safe < 1.0) max_torque_safe = 1.0;
+        ctx.decoupling_scale = max_torque_safe / 20.0;
+        if (ctx.decoupling_scale < 0.1) ctx.decoupling_scale = 0.1;
 
-        // Calculate Front Grip using helper (handles fallback and diagnostics)
-        // Pass persistent state for LPF (v0.4.6) - Indices 0 and 1
-        GripResult front_grip_res = calculate_grip(fl, fr, avg_load, m_warned_grip, 
-                                                   m_prev_slip_angle[0], m_prev_slip_angle[1], car_speed, dt, data->mVehicleName);
-        double avg_grip = front_grip_res.value;
-        
-        // Update Diagnostics
+        // Speed Gate
+        double speed_gate_range = (double)m_speed_gate_upper - (double)m_speed_gate_lower;
+        if (speed_gate_range < 0.1) speed_gate_range = 0.1;
+        ctx.speed_gate = (ctx.car_speed - (double)m_speed_gate_lower) / speed_gate_range;
+        ctx.speed_gate = (std::max)(0.0, (std::min)(1.0, ctx.speed_gate));
+
+        // Frequency Estimator & Dynamic Notch
+        // ... (Keep existing logic or extract to helper if complex)
+        // Ideally extract: update_signal_filters(game_force, data, ctx);
+        // For now, let's keep the core flow.
+
+        // --- 5. EFFECT CALCULATIONS ---
+
+        // A. Understeer (Base Torque + Grip Loss)
+
+        // 1. Calculate Grip
+        GripResult front_grip_res = calculate_grip(fl, fr, ctx.avg_load, m_warned_grip,
+                                                   m_prev_slip_angle[0], m_prev_slip_angle[1], ctx.car_speed, ctx.dt, data->mVehicleName);
+        ctx.avg_grip = front_grip_res.value;
+        // ... update diag ...
         m_grip_diag.front_original = front_grip_res.original;
         m_grip_diag.front_approximated = front_grip_res.approximated;
         m_grip_diag.front_slip_angle = front_grip_res.slip_angle;
-        
-        // Update Frame Warning Flag
-        if (front_grip_res.approximated) {
-            frame_warn_grip = true;
+        if (front_grip_res.approximated) ctx.frame_warn_grip = true;
+
+        // 2. Base Force Processing (Smoothing, Notch, Speed Gate)
+        // ... (Logic from original calculate_force)
+        // Let's process the base force here.
+        double game_force_proc = data->mSteeringShaftTorque;
+
+        // Idle Smoothing
+        double effective_shaft_smoothing = (double)m_steering_shaft_smoothing;
+        double idle_speed_threshold = (double)m_speed_gate_upper;
+        if (idle_speed_threshold < 3.0) idle_speed_threshold = 3.0;
+        if (ctx.car_speed < idle_speed_threshold) {
+            double idle_blend = (idle_speed_threshold - ctx.car_speed) / idle_speed_threshold;
+            double dynamic_smooth = 0.1 * idle_blend; // 0.1s target
+            effective_shaft_smoothing = (std::max)(effective_shaft_smoothing, dynamic_smooth);
         }
         
-        // Apply grip to steering force
-        // grip_factor: 1.0 = full force, 0.0 = no force (full understeer)
-        // m_understeer_effect: 0.0 = disabled, 1.0 = full effect
-        double grip_loss = (1.0 - avg_grip) * m_understeer_effect;
-        double grip_factor = 1.0 - grip_loss;
-        
-        // FIX: Clamp to 0.0 to prevent negative force (inversion) if effect > 1.0
-        grip_factor = (std::max)(0.0, grip_factor);
-        
-        // --- BASE FORCE PROCESSING (v0.4.13) ---
-        double base_input = 0.0;
-        
-        if (m_base_force_mode == 0) {
-            // Mode 0: Native (Steering Shaft Torque)
-            base_input = game_force;
-        } else if (m_base_force_mode == 1) {
-            // Mode 1: Synthetic (Constant with Direction)
-            // Apply deadzone to prevent sign flickering at center
-            if (std::abs(game_force) > SYNTHETIC_MODE_DEADZONE_NM) {
-                double sign = (game_force > 0.0) ? 1.0 : -1.0;
-                base_input = sign * (double)m_max_torque_ref; // Use Max Torque as reference constant
-            } else {
-                base_input = 0.0;
-            }
+        if (effective_shaft_smoothing > 0.0001) {
+            double alpha_shaft = ctx.dt / (effective_shaft_smoothing + ctx.dt);
+            alpha_shaft = (std::min)(1.0, (std::max)(0.001, alpha_shaft));
+            m_steering_shaft_torque_smoothed += alpha_shaft * (game_force_proc - m_steering_shaft_torque_smoothed);
+            game_force_proc = m_steering_shaft_torque_smoothed;
         } else {
-            // Mode 2: Muted
-            base_input = 0.0;
+            m_steering_shaft_torque_smoothed = game_force_proc;
+        }
+
+        // Frequency Estimator Logic
+        double alpha_hpf = ctx.dt / (0.1 + ctx.dt);
+        m_torque_ac_smoothed += alpha_hpf * (game_force_proc - m_torque_ac_smoothed);
+        double ac_torque = game_force_proc - m_torque_ac_smoothed;
+
+        if ((m_prev_ac_torque < -0.05 && ac_torque > 0.05) ||
+            (m_prev_ac_torque > 0.05 && ac_torque < -0.05)) {
+
+            double now = data->mElapsedTime;
+            double period = now - m_last_crossing_time;
+
+            if (period > 0.005 && period < 1.0) {
+                double inst_freq = 1.0 / (period * 2.0);
+                m_debug_freq = m_debug_freq * 0.9 + inst_freq * 0.1;
+            }
+            m_last_crossing_time = now;
+        }
+        m_prev_ac_torque = ac_torque;
+
+        // Dynamic Notch Filter
+        const TelemWheelV01& fl_ref = data->mWheel[0];
+        double radius = (double)fl_ref.mStaticUndeflectedRadius / 100.0;
+        if (radius < 0.1) radius = 0.33;
+        double circumference = 2.0 * PI * radius;
+        double wheel_freq = (circumference > 0.0) ? (ctx.car_speed / circumference) : 0.0;
+        m_theoretical_freq = wheel_freq;
+        
+        if (m_flatspot_suppression) {
+            if (wheel_freq > 1.0) {
+                m_notch_filter.Update(wheel_freq, 1.0/ctx.dt, (double)m_notch_q);
+                double input_force = game_force_proc;
+                double filtered_force = m_notch_filter.Process(input_force);
+                game_force_proc = input_force * (1.0f - m_flatspot_strength) + filtered_force * m_flatspot_strength;
+            } else {
+                m_notch_filter.Reset();
+            }
         }
         
-        // Apply Gain and Grip Modulation
-        double output_force = (base_input * (double)m_steering_shaft_gain) * grip_factor;
+        // Static Notch Filter
+        if (m_static_notch_enabled) {
+             double bw = (double)m_static_notch_width;
+             if (bw < 0.1) bw = 0.1;
+             double q = (double)m_static_notch_freq / bw;
+             m_static_notch_filter.Update((double)m_static_notch_freq, 1.0/ctx.dt, q);
+             game_force_proc = m_static_notch_filter.Process(game_force_proc);
+        } else {
+             m_static_notch_filter.Reset();
+        }
+
+        // Base Force Mode
+        double base_input = 0.0;
+        if (m_base_force_mode == 0) {
+            base_input = game_force_proc;
+        } else if (m_base_force_mode == 1) {
+            if (std::abs(game_force_proc) > SYNTHETIC_MODE_DEADZONE_NM) {
+                double sign = (game_force_proc > 0.0) ? 1.0 : -1.0;
+                base_input = sign * (double)m_max_torque_ref;
+            }
+        }
         
-        // Apply Speed Gate to Base Torque
-        // This eliminates "Engine Rumble" from the steering shaft at standstill
-        output_force *= speed_gate;
+        // Apply Grip Modulation
+        double grip_loss = (1.0 - ctx.avg_grip) * m_understeer_effect;
+        ctx.grip_factor = (std::max)(0.0, 1.0 - grip_loss);
         
-        // --- 2. Seat of Pants (SoP) / Oversteer ---
-        // Lateral G-force
-        // v0.4.6: Clamp Input to reasonable Gs (+/- 5G)
+        double output_force = (base_input * (double)m_steering_shaft_gain) * ctx.grip_factor;
+        output_force *= ctx.speed_gate;
+        
+        // B. SoP Lateral (Oversteer)
+        calculate_sop_lateral(data, ctx);
+        
+        // C. Gyro Damping
+        calculate_gyro_damping(data, ctx);
+        
+        // D. Effects
+        calculate_abs_pulse(data, ctx);
+        calculate_lockup_vibration(data, ctx);
+        calculate_wheel_spin(data, ctx);
+        calculate_slide_texture(data, ctx);
+        calculate_road_texture(data, ctx);
+        calculate_suspension_bottoming(data, ctx);
+        
+        // --- 6. SUMMATION ---
+        // Split into Structural (Attenuated by Spin) and Texture (Raw) groups
+        double structural_sum = output_force + ctx.sop_base_force + ctx.rear_torque + ctx.yaw_force + ctx.gyro_force +
+                                ctx.abs_pulse_force + ctx.lockup_rumble + ctx.scrub_drag_force;
+
+        // Apply Torque Drop (from Spin/Traction Loss) only to structural physics
+        structural_sum *= ctx.gain_reduction_factor;
+        
+        double texture_sum = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch;
+
+        double total_sum = structural_sum + texture_sum;
+
+        // --- 7. OUTPUT SCALING ---
+        double norm_force = total_sum / max_torque_safe;
+        norm_force *= m_gain;
+
+        // Min Force
+        if (std::abs(norm_force) > 0.0001 && std::abs(norm_force) < m_min_force) {
+            double sign = (norm_force > 0.0) ? 1.0 : -1.0;
+            norm_force = sign * m_min_force;
+        }
+
+        if (m_invert_force) {
+            norm_force *= -1.0;
+        }
+
+        // --- 8. STATE UPDATES (POST-CALC) ---
+        for (int i = 0; i < 4; i++) {
+            m_prev_vert_deflection[i] = data->mWheel[i].mVerticalTireDeflection;
+            m_prev_rotation[i] = data->mWheel[i].mRotation;
+            m_prev_brake_pressure[i] = data->mWheel[i].mBrakePressure;
+        }
+        m_prev_susp_force[0] = fl.mSuspForce;
+        m_prev_susp_force[1] = fr.mSuspForce;
+
+        // --- 9. SNAPSHOT ---
+        {
+            std::lock_guard<std::mutex> lock(m_debug_mutex);
+            if (m_debug_buffer.size() < 100) {
+                FFBSnapshot snap;
+                snap.total_output = (float)norm_force;
+                snap.base_force = (float)base_input;
+                snap.sop_force = (float)ctx.sop_unboosted_force; // Use unboosted for snapshot
+                snap.understeer_drop = (float)((base_input * m_steering_shaft_gain) * (1.0 - ctx.grip_factor));
+                snap.oversteer_boost = (float)(ctx.sop_base_force - ctx.sop_unboosted_force); // Exact boost amount
+
+                snap.ffb_rear_torque = (float)ctx.rear_torque;
+                snap.ffb_scrub_drag = (float)ctx.scrub_drag_force;
+                snap.ffb_yaw_kick = (float)ctx.yaw_force;
+                snap.ffb_gyro_damping = (float)ctx.gyro_force;
+                snap.texture_road = (float)ctx.road_noise;
+                snap.texture_slide = (float)ctx.slide_noise;
+                snap.texture_lockup = (float)ctx.lockup_rumble;
+                snap.texture_spin = (float)ctx.spin_rumble;
+                snap.texture_bottoming = (float)ctx.bottoming_crunch;
+                snap.clipping = (std::abs(norm_force) > 0.99f) ? 1.0f : 0.0f;
+
+                // Physics
+                snap.calc_front_load = (float)ctx.avg_load;
+                snap.calc_rear_load = (float)ctx.avg_rear_load;
+                snap.calc_rear_lat_force = (float)ctx.calc_rear_lat_force;
+                snap.calc_front_grip = (float)ctx.avg_grip;
+                snap.calc_rear_grip = (float)ctx.avg_rear_grip;
+                snap.calc_front_slip_angle_smoothed = (float)m_grip_diag.front_slip_angle;
+                snap.calc_rear_slip_angle_smoothed = (float)m_grip_diag.rear_slip_angle;
+
+                snap.raw_front_slip_angle = (float)calculate_raw_slip_angle_pair(fl, fr);
+                snap.raw_rear_slip_angle = (float)calculate_raw_slip_angle_pair(data->mWheel[2], data->mWheel[3]);
+
+                // Telemetry
+                snap.steer_force = (float)raw_torque;
+                snap.raw_input_steering = (float)data->mUnfilteredSteering;
+                snap.raw_front_tire_load = (float)raw_load;
+                snap.raw_front_grip_fract = (float)raw_grip;
+                snap.raw_rear_grip = (float)((data->mWheel[2].mGripFract + data->mWheel[3].mGripFract) / 2.0);
+                snap.raw_front_susp_force = (float)((fl.mSuspForce + fr.mSuspForce) / 2.0);
+                snap.raw_front_ride_height = (float)((std::min)(fl.mRideHeight, fr.mRideHeight));
+                snap.raw_rear_lat_force = (float)((data->mWheel[2].mLateralForce + data->mWheel[3].mLateralForce) / 2.0);
+                snap.raw_car_speed = (float)ctx.car_speed_long;
+                snap.raw_input_throttle = (float)data->mUnfilteredThrottle;
+                snap.raw_input_brake = (float)data->mUnfilteredBrake;
+                snap.accel_x = (float)data->mLocalAccel.x;
+                snap.raw_front_lat_patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
+                snap.raw_front_deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
+                snap.raw_front_long_patch_vel = (float)((fl.mLongitudinalPatchVel + fr.mLongitudinalPatchVel) / 2.0);
+                snap.raw_rear_lat_patch_vel = (float)((std::abs(data->mWheel[2].mLateralPatchVel) + std::abs(data->mWheel[3].mLateralPatchVel)) / 2.0);
+                snap.raw_rear_long_patch_vel = (float)((data->mWheel[2].mLongitudinalPatchVel + data->mWheel[3].mLongitudinalPatchVel) / 2.0);
+
+                snap.warn_load = ctx.frame_warn_load;
+                snap.warn_grip = ctx.frame_warn_grip || ctx.frame_warn_rear_grip;
+                snap.warn_dt = ctx.frame_warn_dt;
+                snap.debug_freq = (float)m_debug_freq;
+                snap.tire_radius = (float)fl.mStaticUndeflectedRadius / 100.0f;
+
+                m_debug_buffer.push_back(snap);
+            }
+        }
+        
+        return (std::max)(-1.0, (std::min)(1.0, norm_force));
+    }
+
+private:
+    // Helper: Declare extracted methods
+
+    void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        // Lateral G
         double raw_g = (std::max)(-49.05, (std::min)(49.05, data->mLocalAccel.x));
-        
-        // v0.4.30 FIX: Removed inversion. 
-        // Analysis shows mLocalAccel.x sign matches desired FFB direction.
-        // Right Turn -> Accel +X (Centrifugal Left) -> Force + (Left Pull / Aligning).
-        // Left Turn -> Accel -X (Centrifugal Right) -> Force - (Right Pull / Aligning).
         double lat_g = (raw_g / 9.81);
         
-        // SoP Smoothing (Time-Corrected Low Pass Filter) (Report v0.4.2)
-        // m_sop_smoothing_factor (0.0 to 1.0) is treated as a "Smoothness" knob.
-        // 0.0 = Very slow (High smoothness), 1.0 = Instant (Raw).
-        // We map 0-1 to a Time Constant (tau) from ~0.2s to 0.0s.
-        // Formula: alpha = dt / (tau + dt)
-        
-        double smoothness = 1.0 - (double)m_sop_smoothing_factor; // Invert: 1.0 input -> 0.0 smoothness
+        // Smoothing
+        double smoothness = 1.0 - (double)m_sop_smoothing_factor;
         smoothness = (std::max)(0.0, (std::min)(0.999, smoothness));
-        
-        // Map smoothness to tau: 0.0 -> 0s, 1.0 -> 0.1s (approx 1.5Hz cutoff)
-        double tau = smoothness * 0.1; 
-        
-        double alpha = dt / (tau + dt);
-        
-        // Safety clamp
+        double tau = smoothness * 0.1;
+        double alpha = ctx.dt / (tau + ctx.dt);
         alpha = (std::max)(0.001, (std::min)(1.0, alpha));
-
-        m_sop_lat_g_smoothed = m_sop_lat_g_smoothed + alpha * (lat_g - m_sop_lat_g_smoothed);
+        m_sop_lat_g_smoothed += alpha * (lat_g - m_sop_lat_g_smoothed);
         
-        double sop_base_force = m_sop_lat_g_smoothed * m_sop_effect * (double)m_sop_scale * decoupling_scale;
-        double sop_total = sop_base_force;
+        double sop_base = m_sop_lat_g_smoothed * m_sop_effect * (double)m_sop_scale * ctx.decoupling_scale;
+        ctx.sop_unboosted_force = sop_base; // Store unboosted for snapshot
         
-        // REAR WHEEL GRIP CALCULATION (Refactored v0.4.5)
-        
-        // Calculate Rear Grip using helper (now includes fallback)
-        // Pass persistent state for LPF (v0.4.6) - Indices 2 and 3
-        GripResult rear_grip_res = calculate_grip(data->mWheel[2], data->mWheel[3], avg_load, m_warned_rear_grip,
-                                                  m_prev_slip_angle[2], m_prev_slip_angle[3], car_speed, dt, data->mVehicleName);
-        double avg_rear_grip = rear_grip_res.value;
-        
-        // Update Diagnostics
+        // Rear Grip Calc
+        GripResult rear_grip_res = calculate_grip(data->mWheel[2], data->mWheel[3], ctx.avg_load, m_warned_rear_grip,
+                                                  m_prev_slip_angle[2], m_prev_slip_angle[3], ctx.car_speed, ctx.dt, data->mVehicleName);
+        ctx.avg_rear_grip = rear_grip_res.value;
         m_grip_diag.rear_original = rear_grip_res.original;
         m_grip_diag.rear_approximated = rear_grip_res.approximated;
         m_grip_diag.rear_slip_angle = rear_grip_res.slip_angle;
+        if (rear_grip_res.approximated) ctx.frame_warn_rear_grip = true;
         
-        // Update local frame warning for rear grip
-        bool frame_warn_rear_grip = rear_grip_res.approximated;
-
-        // Delta between front and rear grip
-        double grip_delta = avg_grip - avg_rear_grip;
+        // Lateral G Boost (Oversteer)
+        double grip_delta = ctx.avg_grip - ctx.avg_rear_grip;
         if (grip_delta > 0.0) {
-            sop_total *= (1.0 + (grip_delta * m_oversteer_boost * 2.0));
+            sop_base *= (1.0 + (grip_delta * m_oversteer_boost * 2.0));
         }
+        ctx.sop_base_force = sop_base;
         
-        // ========================================
-        // --- 2a. Rear Aligning Torque Integration ---
-        // ========================================
-        // WORKAROUND for LMU 1.2 API Bug (v0.4.10)
-        // 
-        // PROBLEM: LMU 1.2 reports mLateralForce = 0.0 for rear tires, making it impossible
-        // to calculate rear aligning torque using the standard formula. This breaks oversteer
-        // feedback and rear-end feel.
-        // 
-        // SOLUTION: Manually calculate rear lateral force using tire physics approximation:
-        //   F_lateral = SlipAngle × Load × TireStiffness
-        // 
-        // This workaround will be removed when the LMU API is fixed to report rear lateral forces.
-        // See: docs/dev_docs/FFB_formulas.md "Rear Aligning Torque (v0.4.10 Workaround)"
-        
-        // Step 1: Calculate Rear Loads
-        // Use suspension force + estimated unsprung mass (300N) to approximate tire load.
-        // This captures weight transfer (braking/accel) and aero downforce via suspension compression.
-        // 
-        // TODO (v0.4.40): If mSuspForce is also blocked for rear wheels (encrypted content),
-        // this approximation will be weak. Consider using calculate_kinematic_load() here as well.
-        // However, empirical testing shows mSuspForce is typically available even when mTireLoad
-        // is blocked, so this is a low-priority enhancement.
-        // See: docs/dev_docs/code_reviews/rear_load_approximation_note.md
+        // Rear Align Torque
         double calc_load_rl = approximate_rear_load(data->mWheel[2]);
         double calc_load_rr = approximate_rear_load(data->mWheel[3]);
-        double avg_rear_load = (calc_load_rl + calc_load_rr) / 2.0;
-
-        // Step 2: Calculate Rear Lateral Force (Workaround for missing mLateralForce)
-        // Use the slip angle calculated by the grip approximation logic (if triggered).
-        // The grip calculator computes slip angle = atan2(lateral_vel, longitudinal_vel)
-        // and applies low-pass filtering for stability.
-        double rear_slip_angle = m_grip_diag.rear_slip_angle; 
+        ctx.avg_rear_load = (calc_load_rl + calc_load_rr) / 2.0;
         
-        // Apply simplified tire model: F = α × F_z × C_α
-        // Where:
-        //   α (alpha) = slip angle in radians
-        //   F_z = vertical load on tire (N)
-        //   C_α = tire cornering stiffness coefficient (N/rad per N of load)
-        // 
-        // Using REAR_TIRE_STIFFNESS_COEFFICIENT = 15.0 N/(rad·N)
-        // This is an empirical value tuned for realistic behavior.
-        double calc_rear_lat_force = rear_slip_angle * avg_rear_load * REAR_TIRE_STIFFNESS_COEFFICIENT;
-
-        // Step 3: Safety Clamp (Prevent physics explosions)
-        // Clamp to ±MAX_REAR_LATERAL_FORCE (6000 N) to prevent unrealistic forces
-        // during extreme conditions (e.g., spins, collisions, teleports).
-        // Without this clamp, slip angle spikes could saturate FFB or cause oscillations.
-        calc_rear_lat_force = (std::max)(-MAX_REAR_LATERAL_FORCE, (std::min)(MAX_REAR_LATERAL_FORCE, calc_rear_lat_force));
-
-        // Step 4: Convert to Torque and Apply to SoP
-        // Scale from Newtons to Newton-meters for torque output.
-        // Coefficient was tuned to produce ~3.0 Nm contribution at 3000N lateral force (v0.4.11).
-        // This provides a distinct counter-steering cue.
-        // Multiplied by m_rear_align_effect to allow user tuning of rear-end sensitivity.
-        // v0.4.19: INVERTED to provide counter-steering (restoring) torque instead of destabilizing force
-        // When rear slides left (+slip), we want left pull (-torque) to correct the slide
-        double rear_torque = -calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect * decoupling_scale; 
-        sop_total += rear_torque;
-
-        // --- 2b. Yaw Acceleration Injector (The "Kick") ---
-        // Reads rotational acceleration (radians/sec^2)
-        // 
-        // v0.4.18 FIX: Apply Low Pass Filter to prevent noise feedback loop
-        // PROBLEM: Slide Rumble injects high-frequency vibrations -> Yaw Accel spikes (derivatives are noise-sensitive)
-        //          -> Yaw Kick amplifies the noise -> Wheel shakes harder -> Feedback loop
-        // SOLUTION: Smooth the yaw acceleration to filter out high-frequency noise while keeping low-frequency signal
+        double rear_slip_angle = m_grip_diag.rear_slip_angle;
+        ctx.calc_rear_lat_force = rear_slip_angle * ctx.avg_rear_load * REAR_TIRE_STIFFNESS_COEFFICIENT;
+        ctx.calc_rear_lat_force = (std::max)(-MAX_REAR_LATERAL_FORCE, (std::min)(MAX_REAR_LATERAL_FORCE, ctx.calc_rear_lat_force));
+        
+        ctx.rear_torque = -ctx.calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect * ctx.decoupling_scale;
+        
+        // Yaw Kick
         double raw_yaw_accel = data->mLocalRotAccel.y;
+        if (ctx.car_speed < 5.0) raw_yaw_accel = 0.0;
+        else if (std::abs(raw_yaw_accel) < (double)m_yaw_kick_threshold) raw_yaw_accel = 0.0;
         
-        // v0.4.42: Signal Conditioning - Eliminate idle jitter and road noise
-        // Low Speed Cutoff: Mute below 5 m/s (18 kph) to prevent parking lot jitter
-        if (car_v_long < 5.0) {
-            raw_yaw_accel = 0.0;
-        }
-        // v0.6.10: Configurable Noise Gate (Activation Threshold)
-        // Filter out micro-corrections and road bumps based on user preference
-        else if (std::abs(raw_yaw_accel) < (double)m_yaw_kick_threshold) {
-            raw_yaw_accel = 0.0;
-        }
-        
-        // Apply Smoothing (Low Pass Filter)
-        // Yaw Kick Smoothing (LPF): Prevents "Slide Texture" vibration (40-200Hz) from being 
-        // misinterpreted by physics as Yaw Acceleration spikes, which causes feedback loops.
-        // - 31.8ms (5Hz): Car body motion; too laggy.
-        // - 22.5ms (7Hz): Aggressive; turns sharp "Kick" into soft "Push", delays reaction.
-        // - 10.0ms (New Default, ~16Hz): Optimal balance; responsive and filters the 40Hz+ vibration.
-        // - 3.2ms (50Hz): "Raw" feel; kills electrical buzz but risks feedback loops.
         double tau_yaw = (double)m_yaw_accel_smoothing;
-        if (tau_yaw < 0.0001) tau_yaw = 0.0001; 
-        double alpha_yaw = dt / (tau_yaw + dt);
+        if (tau_yaw < 0.0001) tau_yaw = 0.0001;
+        double alpha_yaw = ctx.dt / (tau_yaw + ctx.dt);
+        m_yaw_accel_smoothed += alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
         
-        m_yaw_accel_smoothed = m_yaw_accel_smoothed + alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
+        ctx.yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * (double)BASE_NM_YAW_KICK * ctx.decoupling_scale;
         
-        // Use SMOOTHED value for the kick
-        // Scaled by BASE_NM_YAW_KICK (5.0 Nm at Gain 1.0)
-        // Added AFTER Lateral G Boost (Slide) to provide a clean, independent cue.
-        // v0.4.20 FIX: Invert to provide counter-steering torque
-        // Positive yaw accel (right rotation) -> Negative force (left pull)
-        double yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * (double)BASE_NM_YAW_KICK * decoupling_scale;
-        sop_total += yaw_force;
-        
-        // Apply Speed Gate to SoP
-        // This eliminates vibration from noisy Lateral G and Yaw Accel sensors at idle
-        sop_total *= speed_gate;
-        
-        double total_force = output_force + sop_total;
+        // Apply Speed Gate
+        ctx.sop_base_force *= ctx.speed_gate;
+        ctx.rear_torque *= ctx.speed_gate;
+        ctx.yaw_force *= ctx.speed_gate;
+    }
 
-        // --- 2c. Synthetic Gyroscopic Damping (v0.4.17) ---
-        // Calculate Steering Angle (Radians)
+    void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext& ctx) {
         float range = data->mPhysicalSteeringWheelRange;
-        if (range <= 0.0f) range = (float)DEFAULT_STEERING_RANGE_RAD; // Fallback 540 deg
-        
+        if (range <= 0.0f) range = (float)DEFAULT_STEERING_RANGE_RAD;
         double steer_angle = data->mUnfilteredSteering * (range / 2.0);
+        double steer_vel = (steer_angle - m_prev_steering_angle) / ctx.dt;
+        m_prev_steering_angle = steer_angle;
         
-        // Calculate Velocity (rad/s)
-        double steer_vel = (steer_angle - m_prev_steering_angle) / dt;
-        m_prev_steering_angle = steer_angle; // Update history
-        
-        // Smoothing (LPF)
-        // v0.5.8: m_gyro_smoothing is now a Time Constant (Seconds)
         double tau_gyro = (double)m_gyro_smoothing;
         if (tau_gyro < 0.0001) tau_gyro = 0.0001;
-        double alpha_gyro = dt / (tau_gyro + dt);
-        
+        double alpha_gyro = ctx.dt / (tau_gyro + ctx.dt);
         m_steering_velocity_smoothed += alpha_gyro * (steer_vel - m_steering_velocity_smoothed);
         
-        // Damping Force: Opposes velocity, scales with car speed
-        double gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (car_speed / GYRO_SPEED_SCALE) * decoupling_scale;
+        ctx.gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE) * ctx.decoupling_scale;
+    }
+
+    void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        if (!m_abs_pulse_enabled) return;
         
-        // Add to total
-        total_force += gyro_force;
+        bool abs_active = false;
+        for (int i = 0; i < 4; i++) {
+            double pressure_delta = (data->mWheel[i].mBrakePressure - m_prev_brake_pressure[i]) / ctx.dt;
+            if (data->mUnfilteredBrake > ABS_PEDAL_THRESHOLD && std::abs(pressure_delta) > ABS_PRESSURE_RATE_THRESHOLD) {
+                abs_active = true;
+                break;
+            }
+        }
         
-        // --- Helper: Calculate Slip Data (Approximation) ---
-        // The new LMU interface does not expose mSlipRatio/mSlipAngle directly.
-        // We approximate them from mLongitudinalPatchVel and mLateralPatchVel.
+        if (abs_active) {
+            m_abs_phase += (double)m_abs_freq_hz * ctx.dt * TWO_PI;
+            m_abs_phase = std::fmod(m_abs_phase, TWO_PI);
+            ctx.abs_pulse_force = (double)(std::sin(m_abs_phase) * m_abs_gain * 2.0 * ctx.decoupling_scale * ctx.speed_gate);
+        }
+    }
+
+    // ... Implement other helpers inline ...
+
+    void calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        if (!m_lockup_enabled) return;
         
-        // Slip Ratio = PatchVelLong / GroundVelLong
-        // Slip Angle = atan(PatchVelLat / GroundVelLong)
+        // ... (Keep existing logic, updating ctx.lockup_rumble) ...
+        double worst_severity = 0.0;
+        double chosen_freq_multiplier = 1.0;
+        double chosen_pressure_factor = 0.0;
         
-        double car_speed_ms = std::abs(data->mLocalVel.z); // Or mLongitudinalGroundVel per wheel
-        
-        auto get_slip_ratio = [&](const TelemWheelV01& w) {
-            // v0.6.20: Engine always uses game data for base slip detection
-            // Fallback estimation is handled in calculate_grip()
-            double v_long = std::abs(w.mLongitudinalGroundVel);
-            if (v_long < MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;
-            return w.mLongitudinalPatchVel / v_long;
+        auto get_slip = [&](const TelemWheelV01& w) {
+             double v_long = std::abs(w.mLongitudinalGroundVel);
+             if (v_long < MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;
+             return w.mLongitudinalPatchVel / v_long;
         };
-        
-        // get_slip_angle was moved up for grip approximation reuse
 
-        // --- 2a. ABS PULSE (System-wide) ---
-        bool abs_system_active = false;
-        if (m_abs_pulse_enabled) {
-            for (int i = 0; i < 4; i++) {
-                const auto& w = data->mWheel[i];
-                double pressure_delta = (w.mBrakePressure - m_prev_brake_pressure[i]) / dt;
-                
-                // Detect ABS: High Pedal but fluctuating Pressure
-                // Real ABS modulates at 20-50 Hz; we detect the pressure derivative.
-                if (data->mUnfilteredBrake > ABS_PEDAL_THRESHOLD && std::abs(pressure_delta) > ABS_PRESSURE_RATE_THRESHOLD) {
-                     abs_system_active = true;
-                     break;
+        double slip_fl = get_slip(data->mWheel[0]);
+        double slip_fr = get_slip(data->mWheel[1]);
+        double worst_front = (std::min)(slip_fl, slip_fr);
+
+        for (int i = 0; i < 4; i++) {
+            const auto& w = data->mWheel[i];
+            double slip = get_slip(w);
+            double slip_abs = std::abs(slip);
+            double wheel_accel = (w.mRotation - m_prev_rotation[i]) / ctx.dt;
+            double radius = (double)w.mStaticUndeflectedRadius / 100.0;
+            if (radius < 0.1) radius = 0.33;
+            double car_dec_ang = -std::abs(data->mLocalAccel.z / radius);
+            double susp_vel = std::abs(w.mVerticalTireDeflection - m_prev_vert_deflection[i]) / ctx.dt;
+            bool is_bumpy = (susp_vel > (double)m_lockup_bump_reject);
+            bool brake_active = (data->mUnfilteredBrake > PREDICTION_BRAKE_THRESHOLD);
+            bool is_grounded = (w.mSuspForce > PREDICTION_LOAD_THRESHOLD);
+
+            double start_threshold = (double)m_lockup_start_pct / 100.0;
+            double full_threshold = (double)m_lockup_full_pct / 100.0;
+            double trigger_threshold = full_threshold;
+
+            if (brake_active && is_grounded && !is_bumpy) {
+                double sensitivity_threshold = -1.0 * (double)m_lockup_prediction_sens;
+                if (wheel_accel < car_dec_ang * 2.0 && wheel_accel < sensitivity_threshold) {
+                    trigger_threshold = start_threshold;
                 }
             }
-            
-            if (abs_system_active) {
-                m_abs_phase += (double)m_abs_freq_hz * dt * TWO_PI; // Configurable Frequency
-                m_abs_phase = std::fmod(m_abs_phase, TWO_PI);
-                total_force += (float)(std::sin(m_abs_phase) * m_abs_gain * 2.0 * decoupling_scale * speed_gate);
+
+            if (slip_abs > trigger_threshold) {
+                double window = full_threshold - start_threshold;
+                if (window < 0.01) window = 0.01;
+                double normalized = (slip_abs - start_threshold) / window;
+                double severity = (std::min)(1.0, (std::max)(0.0, normalized));
+                severity = std::pow(severity, (double)m_lockup_gamma);
+                
+                double freq_mult = 1.0;
+                if (i >= 2) {
+                    if (slip < (worst_front - AXLE_DIFF_HYSTERESIS)) {
+                        freq_mult = LOCKUP_FREQ_MULTIPLIER_REAR;
+                    }
+                }
+                double pressure_factor = w.mBrakePressure;
+                if (pressure_factor < 0.1 && slip_abs > 0.5) pressure_factor = 0.5;
+
+                if (severity > worst_severity) {
+                    worst_severity = severity;
+                    chosen_freq_multiplier = freq_mult;
+                    chosen_pressure_factor = pressure_factor;
+                }
             }
         }
 
-        // --- 2b. Progressive Lockup (Refactored v0.6.0) ---
-        if (m_lockup_enabled) {
-            double worst_severity = 0.0;
-            double chosen_freq_multiplier = 1.0;
-            double chosen_pressure_factor = 0.0;
-
-            // Pre-calculate front slip for axle differentiation (optimization: avoid redundant calls)
-            double slip_fl = get_slip_ratio(data->mWheel[0]);
-            double slip_fr = get_slip_ratio(data->mWheel[1]);
-            double worst_front = (std::min)(slip_fl, slip_fr);
-
-            for (int i = 0; i < 4; i++) {
-                const auto& w = data->mWheel[i];
-                double slip = get_slip_ratio(w);
-                double slip_abs = std::abs(slip);
-
-                // 1. Calculate Angular Deceleration (rad/s^2)
-                double wheel_accel = (w.mRotation - m_prev_rotation[i]) / dt;
-
-                // 2. Predictive Logic Gating
-                double radius = (double)w.mStaticUndeflectedRadius / 100.0;
-                // Safety check: Prevent division by zero in angular deceleration calculation.
-                // If radius is invalid/zero, use typical race tire radius (0.33m ≈ 26" wheel).
-                if (radius < 0.1) radius = 0.33;
-                
-                // Chassis angular equivalent deceleration (Negative)
-                // LMU: +Z is rearward (positive during braking)
-                double car_dec_ang = -std::abs(data->mLocalAccel.z / radius); 
-                
-                // Bump Detection (Suspension Velocity)
-                double susp_vel = std::abs(w.mVerticalTireDeflection - m_prev_vert_deflection[i]) / dt;
-                bool is_bumpy = (susp_vel > (double)m_lockup_bump_reject);
-                bool brake_active = (data->mUnfilteredBrake > PREDICTION_BRAKE_THRESHOLD);
-                bool is_grounded = (w.mSuspForce > PREDICTION_LOAD_THRESHOLD);
-
-                double start_threshold = (double)m_lockup_start_pct / 100.0;
-                double full_threshold = (double)m_lockup_full_pct / 100.0;
-                double trigger_threshold = full_threshold;
-
-                if (brake_active && is_grounded && !is_bumpy) {
-                    double sensitivity_threshold = -1.0 * (double)m_lockup_prediction_sens;
-                    
-                    // PREDICTION: If wheel slowing down 2x faster than car AND exceeds sensitivity
-                    if (wheel_accel < car_dec_ang * 2.0 && wheel_accel < sensitivity_threshold) {
-                        trigger_threshold = start_threshold; // Trigger early
-                    }
-                }
-
-                // 3. Severity Calculation
-                if (slip_abs > trigger_threshold) {
-                    double window = full_threshold - start_threshold;
-                    if (window < 0.01) window = 0.01;
-                    
-                    double normalized = (slip_abs - start_threshold) / window;
-                    double severity = (std::min)(1.0, (std::max)(0.0, normalized));
-                    
-                    // Apply Gamma Curve (Response Non-Linearity)
-                    severity = std::pow(severity, (double)m_lockup_gamma);
-                    
-                    // Axle Differentiation (use pre-calculated worst_front)
-                    double freq_mult = 1.0;
-                    if (i >= 2) { 
-                        // Only use rear frequency if it's worse than front
-                        if (slip < (worst_front - AXLE_DIFF_HYSTERESIS)) {
-                            freq_mult = LOCKUP_FREQ_MULTIPLIER_REAR;
-                        }
-                    }
-                    
-                    // Pressure Scaling (Physics-based intensity)
-                    double pressure_factor = w.mBrakePressure;
-                    if (pressure_factor < 0.1 && slip_abs > 0.5) pressure_factor = 0.5; // Engine braking fallback
-
-                    if (severity > worst_severity) {
-                        worst_severity = severity;
-                        chosen_freq_multiplier = freq_mult;
-                        chosen_pressure_factor = pressure_factor;
-                    }
-                }
-            }
-
-            if (worst_severity > 0.0) {
-                // Base Frequency linked to Car Speed
-                double base_freq = 10.0 + (car_speed_ms * 1.5); 
-                double final_freq = base_freq * chosen_freq_multiplier * (double)m_lockup_freq_scale;
-
-                // Phase Integration
-                m_lockup_phase += final_freq * dt * TWO_PI;
-                m_lockup_phase = std::fmod(m_lockup_phase, TWO_PI);
-
-                // Amplitude using Brake Load Factor and Pressure Scaling
-                double amp = worst_severity * chosen_pressure_factor * m_lockup_gain * (double)BASE_NM_LOCKUP_VIBRATION * decoupling_scale * brake_load_factor;
-                
-                // Apply Rear Boost if Rear is dominant
-                if (chosen_freq_multiplier < 1.0) {
-                    amp *= (double)m_lockup_rear_boost;
-                }
-
-                lockup_rumble = std::sin(m_lockup_phase) * amp * speed_gate;
-                total_force += lockup_rumble;
-            }
+        if (worst_severity > 0.0) {
+            double base_freq = 10.0 + (ctx.car_speed * 1.5);
+            double final_freq = base_freq * chosen_freq_multiplier * (double)m_lockup_freq_scale;
+            m_lockup_phase += final_freq * ctx.dt * TWO_PI;
+            m_lockup_phase = std::fmod(m_lockup_phase, TWO_PI);
+            double amp = worst_severity * chosen_pressure_factor * m_lockup_gain * (double)BASE_NM_LOCKUP_VIBRATION * ctx.decoupling_scale * ctx.brake_load_factor;
+            if (chosen_freq_multiplier < 1.0) amp *= (double)m_lockup_rear_boost;
+            ctx.lockup_rumble = std::sin(m_lockup_phase) * amp * ctx.speed_gate;
         }
+    }
 
-        // --- 2c. Wheel Spin (Tire Physics Based) ---
+    void calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationContext& ctx) {
         if (m_spin_enabled && data->mUnfilteredThrottle > 0.05) {
-            double slip_rl = get_slip_ratio(data->mWheel[2]); // mWheel
-            double slip_rr = get_slip_ratio(data->mWheel[3]); // mWheel
+            auto get_slip = [&](const TelemWheelV01& w) {
+                 double v_long = std::abs(w.mLongitudinalGroundVel);
+                 if (v_long < MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;
+                 return w.mLongitudinalPatchVel / v_long;
+            };
+            double slip_rl = get_slip(data->mWheel[2]);
+            double slip_rr = get_slip(data->mWheel[3]);
             double max_slip = (std::max)(slip_rl, slip_rr);
             
             if (max_slip > 0.2) {
                 double severity = (max_slip - 0.2) / 0.5;
                 severity = (std::min)(1.0, severity);
                 
-                // 1. Torque Drop (Floating feel)
-                total_force *= (1.0 - (severity * m_spin_gain * 0.6)); 
-
-                // 2. Vibration Frequency: Based on SLIP SPEED (Not RPM)
-                // Calculate how fast the tire surface is moving relative to the road.
-                // Slip Speed (m/s) approx = Car Speed (m/s) * Slip Ratio
-                double slip_speed_ms = car_speed_ms * max_slip;
-
-                // Mapping:
-                // 2 m/s (~7kph) slip -> 15Hz (Judder/Grip fighting)
-                // 20 m/s (~72kph) slip -> 60Hz (Smooth spin)
+                // Torque Drop (Floating feel)
+                ctx.gain_reduction_factor = (1.0 - (severity * m_spin_gain * 0.6));
+                
+                double slip_speed_ms = ctx.car_speed * max_slip;
                 double freq = (10.0 + (slip_speed_ms * 2.5)) * (double)m_spin_freq_scale;
-                
-                // Cap frequency to prevent ultrasonic feeling on high speed burnouts
                 if (freq > 80.0) freq = 80.0;
-
-                // PHASE ACCUMULATION (FIXED)
-                m_spin_phase += freq * dt * TWO_PI;
-                m_spin_phase = std::fmod(m_spin_phase, TWO_PI); // Wrap correctly
-
-                // Base Sinusoid
-                double amp = severity * m_spin_gain * (double)BASE_NM_SPIN_VIBRATION * decoupling_scale; // Scaled for Nm (was 500)
-                spin_rumble = std::sin(m_spin_phase) * amp;
-                
-                total_force += spin_rumble;
+                m_spin_phase += freq * ctx.dt * TWO_PI;
+                m_spin_phase = std::fmod(m_spin_phase, TWO_PI);
+                double amp = severity * m_spin_gain * (double)BASE_NM_SPIN_VIBRATION * ctx.decoupling_scale;
+                ctx.spin_rumble = std::sin(m_spin_phase) * amp;
             }
         }
+    }
 
-        // --- 3. Slide Texture (Dynamic Sawtooth) ---
-        if (m_slide_texture_enabled) {
-            // New logic: Use mLateralPatchVel directly instead of Angle
-            // This is cleaner as it represents actual scrubbing speed.
-            
-            // Front Slip Speed
-            double lat_vel_fl = std::abs(fl.mLateralPatchVel);
-            double lat_vel_fr = std::abs(fr.mLateralPatchVel);
-            double front_slip_avg = (lat_vel_fl + lat_vel_fr) / 2.0;
+    void calculate_slide_texture(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        if (!m_slide_texture_enabled) return;
+        double lat_vel_fl = std::abs(data->mWheel[0].mLateralPatchVel);
+        double lat_vel_fr = std::abs(data->mWheel[1].mLateralPatchVel);
+        double front_slip_avg = (lat_vel_fl + lat_vel_fr) / 2.0;
+        double lat_vel_rl = std::abs(data->mWheel[2].mLateralPatchVel);
+        double lat_vel_rr = std::abs(data->mWheel[3].mLateralPatchVel);
+        double rear_slip_avg = (lat_vel_rl + lat_vel_rr) / 2.0;
+        double effective_slip_vel = (std::max)(front_slip_avg, rear_slip_avg);
+        
+        if (effective_slip_vel > 0.5) {
+            double base_freq = 10.0 + (effective_slip_vel * 5.0);
+            double freq = base_freq * (double)m_slide_freq_scale;
+            if (freq > 250.0) freq = 250.0;
+            m_slide_phase += freq * ctx.dt * TWO_PI;
+            m_slide_phase = std::fmod(m_slide_phase, TWO_PI);
+            double sawtooth = (m_slide_phase / TWO_PI) * 2.0 - 1.0;
+            double grip_scale = (std::max)(0.0, 1.0 - ctx.avg_grip);
+            ctx.slide_noise = sawtooth * m_slide_texture_gain * (double)BASE_NM_SLIDE_TEXTURE * ctx.texture_load_factor * grip_scale * ctx.decoupling_scale;
+        }
+    }
 
-            // Rear Slip Speed (New v0.4.34)
-            double lat_vel_rl = std::abs(data->mWheel[2].mLateralPatchVel);
-            double lat_vel_rr = std::abs(data->mWheel[3].mLateralPatchVel);
-            double rear_slip_avg = (lat_vel_rl + lat_vel_rr) / 2.0;
+    void calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        if (!m_road_texture_enabled) return;
 
-            // Use the WORST slip (Max)
-            // This ensures we feel understeer (Front) AND oversteer/drifting (Rear)
-            double effective_slip_vel = (std::max)(front_slip_avg, rear_slip_avg);
-            
-            if (effective_slip_vel > 0.5) {
-                
-                // BASE FORMULA (v0.4.36): 10Hz start, +5Hz per m/s. (Rumble optimized for scale 1.0)
-                double base_freq = 10.0 + (effective_slip_vel * 5.0);
-                
-                // APPLY USER SCALE
-                double freq = base_freq * (double)m_slide_freq_scale;
-                
-                // CAP AT 250Hz (Nyquist safety for 400Hz loop)
-                if (freq > 250.0) freq = 250.0;
-
-                // PHASE ACCUMULATION (CRITICAL FIX)
-                // Use fmod to handle large dt spikes safely
-                m_slide_phase += freq * dt * TWO_PI;
-                m_slide_phase = std::fmod(m_slide_phase, TWO_PI);
-
-                // Sawtooth wave
-                double sawtooth = (m_slide_phase / TWO_PI) * 2.0 - 1.0;
-
-                // Amplitude: Scaled by PRE-CALCULATED global load_factor
-                // v0.4.38: Work-Based Scrubbing
-                // Scale by Load * (1.0 - Grip). Scrubbing happens when grip is LOST.
-                // High Load + Low Grip = Max Vibration.
-                // We use avg_grip (from understeer calc) which includes longitudinal slip.
-                double grip_scale = (std::max)(0.0, 1.0 - avg_grip);
-                // Resulting force
-                slide_noise = sawtooth * m_slide_texture_gain * (double)BASE_NM_SLIDE_TEXTURE * texture_load_factor * grip_scale * decoupling_scale;
-                total_force += slide_noise;
+        // Scrub Drag
+        if (m_scrub_drag_gain > 0.0) {
+            double avg_lat_vel = (data->mWheel[0].mLateralPatchVel + data->mWheel[1].mLateralPatchVel) / 2.0;
+            double abs_lat_vel = std::abs(avg_lat_vel);
+            if (abs_lat_vel > 0.001) {
+                double fade = (std::min)(1.0, abs_lat_vel / 0.5);
+                double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
+                ctx.scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade * ctx.decoupling_scale;
             }
         }
         
-        // --- 4. Road Texture (High Pass Filter) ---
-        if (m_road_texture_enabled) {
-            // Scrub Drag (v0.4.5)
-            // Add resistance when sliding laterally (Dragging rubber)
-            if (m_scrub_drag_gain > 0.0) {
-                double avg_lat_vel = (fl.mLateralPatchVel + fr.mLateralPatchVel) / 2.0;
-                // v0.4.6: Linear Fade-In Window (0.0 - 0.5 m/s)
-                double abs_lat_vel = std::abs(avg_lat_vel);
-                if (abs_lat_vel > 0.001) { // Avoid noise
-                    double fade = (std::min)(1.0, abs_lat_vel / 0.5);
-                    // v0.4.20 FIX: Provide counter-steering (stabilizing) torque
-                    // Game: +X = Left, DirectInput: +Force = Right
-                    // If sliding left (+vel), we want left torque (-force) to resist the slide
-                    double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
-                    // 3. Final force calculation
-                    scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade * decoupling_scale; // Scaled & Faded
-                    total_force += scrub_drag_force;
-                }
-            }
-
-            double vert_l = fl.mVerticalTireDeflection;
-            double vert_r = fr.mVerticalTireDeflection;
-            
-            // Delta from previous frame
-            double delta_l = vert_l - m_prev_vert_deflection[0];
-            double delta_r = vert_r - m_prev_vert_deflection[1];
-            
-            // v0.4.6: Delta Clamping (+/- 0.01m)
-            delta_l = (std::max)(-0.01, (std::min)(0.01, delta_l));
-            delta_r = (std::max)(-0.01, (std::min)(0.01, delta_r));
-
-            double road_noise_val = 0.0;
-
-            // FALLBACK LOGIC (v0.6.21): Check if Deflection is active
-            // If deltas are exactly 0.0 but we are moving fast, data is likely blocked.
-            bool deflection_active = (std::abs(delta_l) > 0.000001 || std::abs(delta_r) > 0.000001);
-            
-            if (deflection_active || car_v_long < 5.0) {
-                // Standard Logic
-                road_noise_val = (delta_l + delta_r) * 50.0;
-            } else {
-                // Fallback: Use Vertical Acceleration (Heave)
-                // This captures bumps even if suspension telemetry is encrypted
-                double vert_accel = data->mLocalAccel.y;
-                double delta_accel = vert_accel - m_prev_vert_accel;
-                
-                // Scaling: Accel delta needs to be converted to equivalent force
-                // Empirically, 1.0 m/s^2 delta ~ equivalent to small bump
-                // Multiplier 0.05 gives similar magnitude to deflection method
-                road_noise_val = delta_accel * 0.05 * 50.0; 
-            }
-            
-            // Update History
-            m_prev_vert_accel = data->mLocalAccel.y;
-
-            // Apply Gain & Load
-            road_noise = road_noise_val * m_road_texture_gain * decoupling_scale * texture_load_factor;
-            
-            // Apply Stationary Gate (Fix for Violent Shaking at Stop)
-            road_noise *= speed_gate;
-
-            total_force += road_noise;
+        double delta_l = data->mWheel[0].mVerticalTireDeflection - m_prev_vert_deflection[0];
+        double delta_r = data->mWheel[1].mVerticalTireDeflection - m_prev_vert_deflection[1];
+        delta_l = (std::max)(-0.01, (std::min)(0.01, delta_l));
+        delta_r = (std::max)(-0.01, (std::min)(0.01, delta_r));
+        
+        double road_noise_val = 0.0;
+        bool deflection_active = (std::abs(delta_l) > 0.000001 || std::abs(delta_r) > 0.000001);
+        
+        if (deflection_active || ctx.car_speed < 5.0) {
+            road_noise_val = (delta_l + delta_r) * 50.0;
+        } else {
+            double vert_accel = data->mLocalAccel.y;
+            double delta_accel = vert_accel - m_prev_vert_accel;
+            road_noise_val = delta_accel * 0.05 * 50.0;
         }
+        // Existing "Technical Debt" Note: m_prev_vert_accel (used for road texture fallback) is only updated inside the calculate_road_texture helper when enabled. This preserves the behaviour of the original code, even if it's not ideal. It should be changed / fixed in the future
+        m_prev_vert_accel = data->mLocalAccel.y;
+        
+        ctx.road_noise = road_noise_val * m_road_texture_gain * ctx.decoupling_scale * ctx.texture_load_factor;
+        ctx.road_noise *= ctx.speed_gate;
+    }
 
-        // --- 5. Suspension Bottoming (High Load Impulse) ---
-        if (m_bottoming_enabled) {
-            bool triggered = false;
-            double intensity = 0.0;
-
-            if (m_bottoming_method == 0) {
-                // Method A: Scraping (Ride Height)
-                // 
-                // TODO (v0.4.40 - Encrypted Content Gap B): Bottoming False Positive
-                // If mRideHeight is blocked (0.0) on encrypted content, the check `min_rh < 0.002`
-                // will be constantly true, causing permanent scraping vibration.
-                // 
-                // Risk: If mSuspensionDeflection is blocked, mRideHeight is likely also blocked
-                // (same suspension physics packet).
-                // 
-                // Potential Fix: Add sanity check - if mRideHeight is exactly 0.0 while car is moving
-                // (physically impossible), disable Method A or switch to Method B.
-                // See: docs/dev_docs/Improving FFB App Tyres.md "Gap B: Bottoming Effect"
-                // Threshold: 2mm (0.002m)
-                double min_rh = (std::min)(fl.mRideHeight, fr.mRideHeight);
-                if (min_rh < 0.002 && min_rh > -1.0) { // Check valid range
-                    triggered = true;
-                    // Closer to 0 = stronger. Map 0.002->0.0 to 0.0->1.0 intensity
-                    intensity = (0.002 - min_rh) / 0.002;
-                }
-            } else {
-                // Method B: Suspension Force Spike (Derivative)
-                double susp_l = fl.mSuspForce;
-                double susp_r = fr.mSuspForce;
-                double dForceL = (susp_l - m_prev_susp_force[0]) / dt;
-                double dForceR = (susp_r - m_prev_susp_force[1]) / dt;
-                
-                double max_dForce = (std::max)(dForceL, dForceR);
-                // Threshold: 100,000 N/s
-                if (max_dForce > 100000.0) {
-                    triggered = true;
-                    intensity = (max_dForce - 100000.0) / 200000.0; // Scale
-                }
+    void calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        if (!m_bottoming_enabled) return;
+        bool triggered = false;
+        double intensity = 0.0;
+        
+        if (m_bottoming_method == 0) {
+            double min_rh = (std::min)(data->mWheel[0].mRideHeight, data->mWheel[1].mRideHeight);
+            if (min_rh < 0.002 && min_rh > -1.0) {
+                triggered = true;
+                intensity = (0.002 - min_rh) / 0.002;
             }
-            
-            // Legacy/Fallback check: High Load
-            if (!triggered) {
-                double max_load = (std::max)(fl.mTireLoad, fr.mTireLoad);
-                if (max_load > 8000.0) {
-                    triggered = true;
-                    double excess = max_load - 8000.0;
-                    intensity = std::sqrt(excess) * 0.05; // Tuned
-                }
-            }
-
-            if (triggered) {
-                // Non-linear response (Square root softens the initial onset)
-                double bump_magnitude = intensity * m_bottoming_gain * (double)BASE_NM_BOTTOMING * decoupling_scale; // Scaled for Nm
-                
-                // FIX: Use a 50Hz "Crunch" oscillation instead of directional DC offset
-                double freq = 50.0; 
-                
-                // Phase Integration (FIXED)
-                m_bottoming_phase += freq * dt * TWO_PI;
-                m_bottoming_phase = std::fmod(m_bottoming_phase, TWO_PI); // Wrap correctly
-
-                // Generate vibration (Sine wave)
-                // This creates a heavy shudder regardless of steering direction
-                double crunch = std::sin(m_bottoming_phase) * bump_magnitude * speed_gate;
-                
-                total_force += crunch;
+        } else {
+            double dForceL = (data->mWheel[0].mSuspForce - m_prev_susp_force[0]) / ctx.dt;
+            double dForceR = (data->mWheel[1].mSuspForce - m_prev_susp_force[1]) / ctx.dt;
+            double max_dForce = (std::max)(dForceL, dForceR);
+            if (max_dForce > 100000.0) {
+                triggered = true;
+                intensity = (max_dForce - 100000.0) / 200000.0;
             }
         }
 
-        // --- 6. Min Force & Output Scaling ---
-        // Boost small forces to overcome wheel friction
-        // Use the configurable reference instead of hardcoded 20.0 (v0.4.4 Fix)
-        double max_force_ref = (double)m_max_torque_ref; 
-        
-        // Safety: Prevent divide by zero
-        if (max_force_ref < 1.0) max_force_ref = 1.0;
-
-        double norm_force = total_force / max_force_ref;
-        
-        // Apply Master Gain
-        norm_force *= m_gain;
-        
-        // Apply Min Force
-        // If force is non-zero but smaller than min_force, boost it.
-        if (std::abs(norm_force) > 0.0001 && std::abs(norm_force) < m_min_force) {
-            // Sign check
-            double sign = (norm_force > 0.0) ? 1.0 : -1.0;
-            norm_force = sign * m_min_force;
-        }
-        
-        // APPLY INVERSION HERE (Before clipping)
-        if (m_invert_force) {
-            norm_force *= -1.0;
-        }
-        
-        // ==================================================================================
-        // CRITICAL: UNCONDITIONAL STATE UPDATES (Fix for Toggle Spikes)
-        // ==================================================================================
-        // We must update history variables every frame, even if effects are disabled.
-        // This prevents "stale state" spikes when effects are toggled on.
-        
-        // History Updates for all 4 wheels (v0.6.0)
-        for (int i = 0; i < 4; i++) {
-            m_prev_vert_deflection[i] = data->mWheel[i].mVerticalTireDeflection;
-            m_prev_rotation[i] = data->mWheel[i].mRotation;
-            m_prev_brake_pressure[i] = data->mWheel[i].mBrakePressure;
-        }
-
-        // Bottoming Method B State (Separate from loop as it's just front)
-        m_prev_susp_force[0] = fl.mSuspForce;
-        m_prev_susp_force[1] = fr.mSuspForce;
-        // ==================================================================================
-
-        // --- SNAPSHOT LOGIC ---
-        // Capture all internal states for visualization
-        {
-            std::lock_guard<std::mutex> lock(m_debug_mutex);
-            if (m_debug_buffer.size() < 100) {
-                FFBSnapshot snap;
-                
-                // --- Header A: Outputs ---
-                snap.total_output = (float)norm_force;
-                snap.base_force = (float)base_input; // Show the processed base input
-                snap.sop_force = (float)sop_base_force;
-                snap.understeer_drop = (float)((base_input * m_steering_shaft_gain) * (1.0 - grip_factor));
-                snap.oversteer_boost = (float)(sop_total - sop_base_force - rear_torque - yaw_force); // Split boost from other SoP components
-                snap.ffb_rear_torque = (float)rear_torque;
-                snap.ffb_scrub_drag = (float)scrub_drag_force;
-                snap.ffb_yaw_kick = (float)yaw_force;
-                snap.ffb_gyro_damping = (float)gyro_force; // New v0.4.17
-                snap.texture_road = (float)road_noise;
-                snap.texture_slide = (float)slide_noise;
-                snap.texture_lockup = (float)lockup_rumble;
-                snap.texture_spin = (float)spin_rumble;
-                snap.texture_bottoming = (float)bottoming_crunch;
-                snap.clipping = (std::abs(norm_force) > 0.99f) ? 1.0f : 0.0f;
-                
-                // --- Header B: Internal Physics (Calculated) ---
-                snap.calc_front_load = (float)avg_load; // This is the final load used (maybe approximated)
-                snap.calc_rear_load = (float)avg_rear_load; // New v0.4.10
-                snap.calc_rear_lat_force = (float)calc_rear_lat_force; // New v0.4.10
-                snap.calc_front_grip = (float)avg_grip; // This is the final grip used (maybe approximated)
-                snap.calc_rear_grip = (float)avg_rear_grip;
-                snap.calc_front_slip_ratio = (float)((calculate_manual_slip_ratio(fl, data->mLocalVel.z) + calculate_manual_slip_ratio(fr, data->mLocalVel.z)) / 2.0);
-                snap.calc_front_slip_angle_smoothed = (float)m_grip_diag.front_slip_angle; // Smoothed Slip Angle
-                snap.calc_rear_slip_angle_smoothed = (float)m_grip_diag.rear_slip_angle; // Smoothed Rear Slip Angle
-                
-                // Calculate Raw Slip Angles for visualization (v0.4.9 Refactored)
-                snap.raw_front_slip_angle = (float)calculate_raw_slip_angle_pair(fl, fr);
-                snap.raw_rear_slip_angle = (float)calculate_raw_slip_angle_pair(data->mWheel[2], data->mWheel[3]);
-
-                // Helper for Raw Game Slip Ratio
-                auto get_raw_game_slip = [&](const TelemWheelV01& w) {
-                    double v_long = std::abs(w.mLongitudinalGroundVel);
-                    if (v_long < MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;
-                    return w.mLongitudinalPatchVel / v_long;
-                };
-
-                // --- Header C: Raw Game Telemetry (Inputs) ---
-                snap.steer_force = (float)raw_torque;
-                snap.raw_input_steering = (float)data->mUnfilteredSteering;
-                snap.raw_front_tire_load = (float)raw_load; // Raw from game
-                snap.raw_front_grip_fract = (float)raw_grip; // Raw from game
-                snap.raw_rear_grip = (float)((data->mWheel[2].mGripFract + data->mWheel[3].mGripFract) / 2.0);
-                snap.raw_front_susp_force = (float)((fl.mSuspForce + fr.mSuspForce) / 2.0);
-                snap.raw_front_ride_height = (float)((std::min)(fl.mRideHeight, fr.mRideHeight));
-                snap.raw_rear_lat_force = (float)((data->mWheel[2].mLateralForce + data->mWheel[3].mLateralForce) / 2.0);
-                snap.raw_car_speed = (float)data->mLocalVel.z;
-                snap.raw_front_slip_ratio = (float)((get_raw_game_slip(fl) + get_raw_game_slip(fr)) / 2.0);
-                snap.raw_input_throttle = (float)data->mUnfilteredThrottle;
-                snap.raw_input_brake = (float)data->mUnfilteredBrake;
-                snap.accel_x = (float)data->mLocalAccel.x;
-                snap.raw_front_lat_patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
-                snap.raw_front_deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
-                
-                // New Patch Velocities (v0.4.9)
-                snap.raw_front_long_patch_vel = (float)((fl.mLongitudinalPatchVel + fr.mLongitudinalPatchVel) / 2.0);
-                snap.raw_rear_lat_patch_vel = (float)((std::abs(data->mWheel[2].mLateralPatchVel) + std::abs(data->mWheel[3].mLateralPatchVel)) / 2.0);
-                snap.raw_rear_long_patch_vel = (float)((data->mWheel[2].mLongitudinalPatchVel + data->mWheel[3].mLongitudinalPatchVel) / 2.0);
-
-                // Warnings
-                snap.warn_load = frame_warn_load;
-                snap.warn_grip = frame_warn_grip || frame_warn_rear_grip; // Combined warning
-                snap.warn_dt = frame_warn_dt;
-                snap.debug_freq = (float)m_debug_freq;
-                snap.tire_radius = (float)fl.mStaticUndeflectedRadius / 100.0f; // Convert cm to m
-
-
-                m_debug_buffer.push_back(snap);
+        if (!triggered) {
+            double max_load = (std::max)(data->mWheel[0].mTireLoad, data->mWheel[1].mTireLoad);
+            if (max_load > 8000.0) {
+                triggered = true;
+                double excess = max_load - 8000.0;
+                intensity = std::sqrt(excess) * 0.05;
             }
         }
 
-        // Clip
-        return (std::max)(-1.0, (std::min)(1.0, norm_force));
+        if (triggered) {
+            double bump_magnitude = intensity * m_bottoming_gain * (double)BASE_NM_BOTTOMING * ctx.decoupling_scale;
+            double freq = 50.0;
+            m_bottoming_phase += freq * ctx.dt * TWO_PI;
+            m_bottoming_phase = std::fmod(m_bottoming_phase, TWO_PI);
+            ctx.bottoming_crunch = std::sin(m_bottoming_phase) * bump_magnitude * ctx.speed_gate;
+        }
     }
 };
 
