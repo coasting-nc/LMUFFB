@@ -19,7 +19,7 @@ Note: some of the steps of the workflow are suggestions, meaning that you might 
 
 ## Step 1: Implementation plan
 * After you have the report from the deep research, you need to produce an implementation plan for the feature you want to implement, as a separate markdown file. To create the file, you could either:
-   * Ask Opus 4.5 or Gemini 3 Pro to create it, based on the deep research report and a description of what you want to implement.
+   * In Antigravity: Ask Opus 4.5 or Gemini 3 Pro to create it, based on the deep research report and a description of what you want to implement.
    * Paste the whole codebase into Google AI Studio, and ask Gemini 3 Pro to create it. You can then use "copy as markdown" and paste the plan into a new .md file in the project.
        * In order to have the whole project as context in AI Studio, you need to create a markdown file that contains the whole codebase of the project (code, documents, and tests), by running the Python script that is here: "scripts\create_context.py". This updates the file docs\dev_docs\FULL_PROJECT_CONTEXT.md, which then you can paste into Google AI studio.
 
@@ -39,7 +39,7 @@ Use a slightly less capable model in Antigravity (Gemini 3 flash or Sonnet 4.5) 
 * The coding agent should also make sure all tests pass, and if they don't, it should iterate fixing the code and the tests until they all pass.
 * At the end, it should also increase the app version number and add an entry to the changelog.
 
-Once the model finishes the implementation, quickly read / skim through it (to make sure no apparent gross issues are there).
+Once the model finishes the implementation, quickly read / skim through the diff (to make sure no apparent gross issues are there).
 * Also make sure that the app and test compile, and that all tests pass (see the following section about this). 
 
 ## Make sure the app and tests compile and pass
@@ -82,16 +82,18 @@ This is to facilitate / speed up the review on my side before I can accept the m
 
 If you want to investigate a bug, or some issue that a user reported, and need suggestions on what might be causing it and how to fix it, you can do any of the following:
 
-* **Ask Google AI Studio:** Paste the whole codebase into Google AI Studio (update and use docs\dev_docs\FULL_PROJECT_CONTEXT.md as described above), and ask Gemini 3 to investigate the bug. After the model as given you a solution that you find satisfying / plausible, ask it to produce and implemenation plan for the fix. Then use "copy as markdown" and paste the plan into a new .md file in the project.
+* **Ask Google AI Studio:** Paste the whole codebase into Google AI Studio (update and use docs\dev_docs\FULL_PROJECT_CONTEXT.md as described above), and ask Gemini 3 Pro to investigate the bug. After the model has given you a solution that you find satisfying / plausible, ask it to produce and implemenation plan for the fix. Then use "copy as markdown" and paste the plan into a new .md file in the project.
 * **Ask in the IDE (Antigravity):** Use one of the best models (Opus 4.5 or Gemini 3 Pro) to investigate the bug and create a markdown report about it. 
 
 If you are persuaded of the suggested cause and proposed solution to the issue, go ahead and produce an implementation plan as described above, and follow all subsequent steps (implement the implementation plan, do a code review, etc.). 
 
-In this case the implementation plan, in the tests section, must include one or more regression tests (with a a description of the tests and some code snippets) that check that the same issue being fixed is not reintroduced in the future. 
+In this case the implementation plan must include, in the tests section, one or more regression tests (with a a description of the tests and some code snippets) that check that the same issue being fixed is not reintroduced in the future. 
 
 ## Simple use case: add a FFB preset to the app
 
 * In Antigravity, Cursor, or other IDE, paste the portion of the ini file with your preset settings in the AI chat, and ask to create a new preset in the app.
+
+* Also add an entry to the changelog and update the app version (either manually or with AI).
 
 * When the model is finished, double check the diff and the git changes in the IDE to make sure no other files or presets were changed.
 
