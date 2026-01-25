@@ -3,7 +3,8 @@
 
 **Date**: 2026-01-25  
 **Original Post**: Understanding the Percentages and Nm Values  
-**Status**: For Community Discussion
+**Status**: For Community Discussion  
+**Code Verification**: ✅ Complete (verified against `FFBEngine.h` and `GuiLayer.cpp`)
 
 ---
 
@@ -26,7 +27,7 @@ The `~7.2 Nm` value is an **estimation of the physical torque contribution** of 
 
 However, this is **not the actual torque being sent to your wheel** — it's a *normalized reference value* based on a mathematical formula that helps compare effects relative to each other.
 
-**The formula** (from `GuiLayer.cpp`):
+**The display formula** (from `GuiLayer.cpp` lines 831-840):
 
 ```cpp
 auto FormatDecoupled = [&](float val, float base_nm) {
@@ -39,15 +40,24 @@ auto FormatDecoupled = [&](float val, float base_nm) {
 
 **What this means:**
 - `val` = Your slider value (e.g., 1.47 for 147%)
-- `base_nm` = A physics constant for that effect (e.g., `BASE_NM_SOP_LATERAL = 1.0 Nm`, `BASE_NM_YAW_KICK = 5.0 Nm`)
-- `scale = Max Torque Ref / 20.0` = How much the torque reference amplifies the display
+- `base_nm` = A physics constant for that effect (defined in `FFBEngine.h` lines 447-456):
+  - `BASE_NM_SOP_LATERAL = 1.0 Nm`
+  - `BASE_NM_REAR_ALIGN = 3.0 Nm`
+  - `BASE_NM_YAW_KICK = 5.0 Nm`
+  - `BASE_NM_GYRO_DAMPING = 1.0 Nm`
+  - `BASE_NM_SLIDE_TEXTURE = 1.5 Nm`
+  - `BASE_NM_ROAD_TEXTURE = 2.5 Nm`
+  - `BASE_NM_LOCKUP_VIBRATION = 4.0 Nm`
+  - `BASE_NM_SPIN_VIBRATION = 2.5 Nm`
+  - `BASE_NM_SCRUB_DRAG = 5.0 Nm`
+- `scale = Max Torque Ref / 20.0` = The decoupling scale
 
 **Example calculation:**
 - SoP Lateral G at 147% (1.47), with Base Nm = 1.0, and Max Torque Ref = 98 Nm:
   - `scale = 98 / 20 = 4.9`
   - `estimated_nm = 1.47 × 1.0 × 4.9 = 7.2 Nm` 
 
-**Important**: This is purely for **display purposes** to help you gauge relative effect strength. It is NOT the actual torque being output.
+**Important**: This is purely for **display purposes** to help you gauge relative effect strength. This value represents the effect's contribution *before* normalization. The actual output is then **divided by Max Torque Ref** (see below). 
 
 ---
 
@@ -63,56 +73,62 @@ The percentage represents the **gain multiplier** for each effect:
 
 **The reference is always 100% = 1.0 multiplier.**
 
-When you set "SoP Lateral G" to 147%, you're telling the system to multiply the raw Lateral G physics by 1.47x before mixing it into the final signal.
+When you set "SoP Lateral G" to 147%, you're telling the system to multiply the raw Lateral G physics by 1.47× before mixing it into the final signal.
 
 ---
 
 ### 3. Why Does Increasing Max Torque Ref Increase the Nm Numbers But Make the Wheel Lighter?
 
-This is the most confusing part of the current UI, and your observation is **completely correct**. Here's what's happening:
+This is the most confusing part of the current UI, and your observation is **completely correct**. Here's the verified code flow:
 
-**Max Torque Ref is the "Calibration Scale"** — it represents the **expected peak torque of the simulated car**, NOT your wheel base.
+**Max Torque Ref is used twice with opposite effects:**
 
-**How it works:**
-
+**A. Effect Calculation (Makes effects stronger)** — From `FFBEngine.h` line 929:
+```cpp
+// Decoupling Scale
+ctx.decoupling_scale = max_torque_safe / 20.0;
 ```
-Final Output = (Sum of all effects) / Max Torque Ref × Master Gain
+This `decoupling_scale` is then multiplied into each effect, e.g., line 1230:
+```cpp
+ctx.yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * (double)BASE_NM_YAW_KICK * ctx.decoupling_scale;
 ```
 
-| Max Torque Ref | Effect on Output |
-|----------------|------------------|
-| Lower (e.g., 30 Nm) | Stronger forces (more clipping risk) |
-| Higher (e.g., 100 Nm) | Lighter forces (less clipping, more headroom) |
+**B. Final Normalization (Makes output weaker)** — From `FFBEngine.h` line 999:
+```cpp
+double norm_force = total_sum / max_torque_safe;
+```
 
-**Why the UI shows higher Nm with higher Max Torque Ref:**
-- The displayed Nm is scaled by `Max Torque Ref / 20.0`
-- Higher Max Torque Ref → Higher displayed Nm
-- But the *actual output* is **divided** by Max Torque Ref
-- So the wheel feels lighter despite the higher number
+**The net effect is that these cancel out for effects, but the UI display only shows step A.**
 
-**This is undeniably confusing!** The display formula was intended to show "how much torque this effect would produce in the simulation," but this mental model conflicts with the user's expectation of "how much torque my wheel will output."
+| Max Torque Ref | UI Display (Step A) | Final Output (Step B) |
+|----------------|---------------------|----------------------|
+| 40 Nm | ~3.0 Nm | ÷40 = lighter |
+| 80 Nm | ~6.0 Nm | ÷80 = even lighter |
+
+**The confusion arises because:**
+- The UI scales the display by `MaxTorqueRef / 20` (making numbers bigger)
+- But the actual output divides by `MaxTorqueRef` (making forces smaller)
+- These two operations are meant to "decouple" effect tuning from overall strength, but the display formula doesn't reflect the normalization step.
 
 ---
 
 ### 4. Why Can Torque Numbers Exceed My Wheel's Max Without Clipping?
 
-**Excellent observation!** This gets to the heart of why the current system differs from your "bucket" analogy.
+**Verified from code** — The numbers shown are **pre-normalization values**.
 
-**Key insight**: The numbers in the UI are **potential maximum contributions**, not actual real-time outputs.
+**Complete signal flow (from `FFBEngine.h` `calculate_force()`):**
+
+1. **Individual effects are calculated** with `decoupling_scale` (lines 1177-1468)
+2. **Effects are summed** into `total_sum` (line 996)
+3. **Normalization**: `norm_force = total_sum / max_torque_ref` (line 999)
+4. **Master Gain applied**: `norm_force *= m_gain` (line 1000)
+5. **Final clamp**: `return max(-1.0, min(1.0, norm_force))` (line 1091)
 
 **Why you don't always clip:**
-1. **Effects are not all active simultaneously at maximum** — For example:
-   - Lateral G is at maximum only in high-speed corners
-   - Yaw Kick fires only for milliseconds at slide onset
-   - Lockup Vibration only when braking past the limit
-   
-2. **Many effects are subtractive, not additive** — For example:
-   - Understeer Effect **reduces** force (makes wheel lighter)
-   - Effects like Gyro Damping **resist movement** rather than adding direction
-
-3. **The "Decoupling Scale"** — The system divides all raw effects by `Max Torque Ref` before sending them to your wheel. This normalization step is what provides the headroom.
-
-4. **Different frequency domains** — SoP/Lateral G is low-frequency (sustained force), while Lockup Vibration is high-frequency (rapid oscillation). They don't compete in the same way that two sustained forces would.
+1. **Effects are not all active simultaneously at maximum**
+2. **Many effects are subtractive** (Understeer lightens the wheel)
+3. **The normalization step provides headroom** — All effects are divided by Max Torque Ref
+4. **Different time domains** — Yaw Kick is milliseconds, Lateral G is sustained
 
 ---
 
@@ -125,6 +141,14 @@ Your proposed approach:
 
 This is **closer to how irFFB and similar tools work** and is definitely more intuitive for end users.
 
+**Current vs. Proposed mental model:**
+
+| Current System | Bucket System |
+|----------------|---------------|
+| Max Torque Ref = Expected peak physics torque from the car | Max Torque = Your wheel's physical limit |
+| Sliders = Gain multipliers on physics | Sliders = % of headroom allocated |
+| Display shows pre-normalization Nm | Display would show post-normalization Nm |
+
 ---
 
 ## Analysis of Suggested UI Improvements
@@ -132,12 +156,12 @@ This is **closer to how irFFB and similar tools work** and is definitely more in
 | Suggestion | Feasibility | Notes |
 |------------|-------------|-------|
 | **Input for wheel base max torque** | ✅ High | Easy to add; could replace or complement Max Torque Ref |
-| **Master Gain as 0-100% (no attenuation)** | ⚠️ Medium | 100% = full output, not "no attenuation" — terminology might still confuse. Could be renamed "Output Scale" |
-| **Min Force as 0-30%** | ✅ High | Already effectively this; just display formatting change |
+| **Master Gain as 0-100% (no attenuation)** | ⚠️ Medium | Semantically, 100% would mean "full pass-through". Current max is 200%. |
+| **Min Force as 0-30%** | ✅ High | Already effectively works this way; just display formatting change |
 | **Sliders show % of wheel max + Nm calculated** | ✅ High | Formula: `(effect_contribution / wheel_max_nm) × 100%` |
 | **Sum of all effects with clipping indicator** | ✅ High | Very useful! Could show: `Total: 12.4 Nm / 8.0 Nm = 155% (High Clipping Risk)` |
 | **Color coding (green/orange/red)** | ✅ High | Easy implementation; see existing clipping graph for precedent |
-| **Effect priority system** | ⚠️ Medium-High | This is essentially a **Dynamic Range Compressor** or **Side-chain/Ducking** system. Complex but very valuable. |
+| **Effect priority system** | ⚠️ Medium-High | This is a **Dynamic Range Compressor** or **Side-chain/Ducking** system. Complex but valuable. |
 
 ---
 
@@ -146,9 +170,9 @@ This is **closer to how irFFB and similar tools work** and is definitely more in
 Your example scenario:
 > *"LMP2 in a high-speed corner touching curbs while the rear steps out. Instead of losing the understeer feel due to clipping, reduce the curb effect to free up space."*
 
-This is actually a feature mentioned in our internal roadmap under **"Signal Masking Mitigation"**:
+This is actually a feature mentioned in our documentation under **"Signal Masking Mitigation"**:
 
-From `ffb_effects.md`:
+From `ffb_effects.md` line 54:
 > **Priority System**: Future versions should implement "Side-chaining" or "Ducking". For example, if a severe Lockup event occurs, reduce Road Texture gain to ensure the Lockup signal is clear.
 
 **How it would work:**
@@ -166,7 +190,7 @@ This is absolutely realistic and is something we've been considering. Your feedb
 |--------|----------------|--------------------------|
 | **Reference point** | Max Torque Ref (game physics headroom) | Wheel Base Max Torque (physical limit) |
 | **Percentage meaning** | Gain multiplier (100% = 1.0×) | % of physical headroom used |
-| **Displayed Nm** | Theoretical physics contribution | Actual expected output |
+| **Displayed Nm** | Pre-normalization physics contribution | Post-normalization expected output |
 | **Clipping indicator** | Graphs panel only | Real-time sum with color coding |
 | **Intuitive?** | Requires understanding FFB physics | Maps directly to hardware |
 
@@ -195,6 +219,80 @@ This aligns with the planned "Basic Mode" mentioned in the README.
 3. [ ] Consider Basic Mode implementation prioritizing the "bucket" mental model
 4. [ ] Evaluate priority/ducking system for effect compression
 5. [ ] Improve tooltips to clarify the difference between "physics contribution" and "output torque"
+6. [ ] Update UI display formula to show post-normalization values
+
+---
+
+## Documentation Discrepancies Found During Investigation
+
+During the code verification for this response, the following documentation inconsistencies were identified:
+
+### 1. `docs/ffb_effects.md` — Outdated Effect Descriptions
+
+**Location**: Lines 14-19
+**Issue**: The Oversteer/Rear Grip section references "v0.2.2+" but describes a simpler implementation than what currently exists.
+**Current Code**: 
+- `FFBEngine.h` now has separate `calculate_sop_lateral()`, `calculate_gyro_damping()`, and distinct handling for Rear Align Torque (lines 1177-1251)
+- The Lateral G Boost (Slide) is calculated separately from the base SoP effect
+- Yaw Kick now has a configurable activation threshold (`m_yaw_kick_threshold`)
+
+**Recommended Update**: Rewrite section 2 to accurately describe the current multi-effect oversteer system.
+
+---
+
+### 2. `docs/FFB Formulas.md` — Missing decoupling_scale in Context Struct
+
+**Location**: Line 34
+**Issue**: Documentation says `K_decouple = m_max_torque_ref / 20.0` but doesn't mention the minimum clamp.
+**Current Code** (`FFBEngine.h` lines 929-930):
+```cpp
+ctx.decoupling_scale = max_torque_safe / 20.0;
+if (ctx.decoupling_scale < 0.1) ctx.decoupling_scale = 0.1;
+```
+**Recommended Update**: Add the minimum clamp of 0.1 to the documentation.
+
+---
+
+### 3. `docs/FFB Formulas.md` — Missing BASE_NM Constants
+
+**Location**: Lines 226-239 (Legend section)
+**Issue**: The table lists some but not all BASE_NM constants.
+**Current Code** (`FFBEngine.h` lines 447-456) includes:
+- `BASE_NM_SOP_LATERAL = 1.0` (MISSING from docs)
+- `BASE_NM_REAR_ALIGN = 3.0` (MISSING from docs)
+- `BASE_NM_YAW_KICK = 5.0` (MISSING from docs)
+- `BASE_NM_GYRO_DAMPING = 1.0` (MISSING from docs)
+- `BASE_NM_BOTTOMING = 1.0` (MISSING from docs)
+
+**Recommended Update**: Add complete list of all BASE_NM constants to the Legend.
+
+---
+
+### 4. `docs/ffb_effects.md` — Priority System Listed as "Future"
+
+**Location**: Lines 54-55
+**Issue**: States "Future versions should implement" — should clarify this is still not implemented.
+**Recommended Update**: Either implement the feature or update to clarify timeline/status.
+
+---
+
+### 5. `docs/FFB Formulas.md` — Gyro Damping Formula Incomplete
+
+**Location**: Lines 187-192
+**Issue**: The formula shows `* 1.0Nm * K_decouple` but the code (`FFBEngine.h` line 1250) doesn't explicitly use `BASE_NM_GYRO_DAMPING`:
+```cpp
+ctx.gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE) * ctx.decoupling_scale;
+```
+The BASE_NM_GYRO_DAMPING constant exists (1.0 Nm) but isn't used in the actual calculation — the `1.0` is implicit.
+**Recommended Update**: Either add `BASE_NM_GYRO_DAMPING` to the code for consistency, or update the formula documentation to show the actual implementation.
+
+---
+
+### 6. `README.md` — Master Gain Tooltip Discrepancy
+
+**Location**: `GuiLayer.cpp` line 936 vs README troubleshooting
+**Issue**: The tooltip says "100% = No attenuation" but the code allows up to 200% (0.0 to 2.0 range). The README troubleshooting advice says "Increase Master Gain" but doesn't clarify the 0-200% range.
+**Recommended Update**: Clarify that Master Gain allows boosting above 100% in both locations.
 
 ---
 
