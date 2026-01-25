@@ -43,9 +43,34 @@ bool GameConnector::TryConnect() {
         return false;
     }
 
-    m_connected = true;
-    std::cout << "[GameConnector] Connected to LMU Shared Memory." << std::endl;
-    return true;
+    // Close any stale process handle from a previous connection
+    if (m_hProcess) {
+        CloseHandle(m_hProcess);
+        m_hProcess = NULL;
+    }
+
+    HWND hwnd = m_pSharedMemLayout->data.generic.appInfo.mAppWindow;
+    if (hwnd) {
+      DWORD pid = 0;
+      GetWindowThreadProcessId(hwnd, &pid);
+      if (pid) {
+        m_processId = pid;
+        m_hProcess = OpenProcess(
+            SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+        if (m_hProcess) {
+          // Successfully obtained a valid process handle - we're truly connected
+          m_connected = true;
+          std::cout << "[GameConnector] Connected to LMU Shared Memory." << std::endl;
+          return true;
+        } else {
+          std::cout << "[GameConnector] Failed to open process handle. Error: " << GetLastError() << std::endl;
+        }
+      }
+    }
+
+    // If we get here, we have shared memory but no valid process handle
+    // Don't mark as connected yet - will try again on next attempt
+    return false;
 }
 
 bool GameConnector::CheckLegacyConflict() {
@@ -59,7 +84,23 @@ bool GameConnector::CheckLegacyConflict() {
 }
 
 bool GameConnector::IsConnected() const {
-    return m_connected;
+  // Check if the game process is still running
+  if (m_hProcess) {
+    DWORD wait = WaitForSingleObject(m_hProcess, 0);
+    if (wait == WAIT_OBJECT_0) {
+      // Process has exited - clean up connection state
+      m_connected = false;
+      return false;
+    }
+    if (wait == WAIT_FAILED) {
+      // Handle is invalid - clean up connection state
+      m_connected = false;
+      return false;
+    }      
+  }
+
+  return m_connected && m_pSharedMemLayout &&
+         m_smLock.has_value();
 }
 
 void GameConnector::CopyTelemetry(SharedMemoryObjectOut& dest) {
