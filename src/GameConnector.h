@@ -31,8 +31,10 @@ private:
     SharedMemoryLayout* m_pSharedMemLayout = nullptr;
     mutable std::optional<SharedMemoryLock> m_smLock;
     HANDLE m_hMapFile = NULL;
-    
-    bool m_connected = false;
+    mutable HANDLE m_hProcess = NULL;
+    DWORD m_processId = 0;
+
+    mutable bool m_connected = false;
 };
 
 #endif // GAMECONNECTOR_H
