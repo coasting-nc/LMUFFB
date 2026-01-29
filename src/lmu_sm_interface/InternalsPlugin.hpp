@@ -7,7 +7,7 @@
 //# This source code module, and all information, data, and algorithms      #
 //# associated with it, are part of isiMotor Technology (tm).               #
 //#                 PROPRIETARY AND CONFIDENTIAL                            #
-//# Copyright (c) 2018 Studio 397 B.V.  All rights reserved.                #
+//# Copyright (c) 2025 Studio 397 BV and Motorsport Games Inc.              #
 //#                                                                         #
 //###########################################################################
 
@@ -16,11 +16,7 @@
 
 #include "PluginObjects.hpp"     // base class for plugin objects to derive from
 #include <cmath>                 // for sqrt()
-#ifdef _WIN32
 #include <windows.h>             // for HWND
-#else
-typedef void* HWND;
-#endif
 // rF2 and plugins must agree on structure packing, so set it explicitly here.
 // Whatever the current packing is will be restored at the end of this include
 // with another #pragma.
