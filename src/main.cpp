@@ -51,10 +51,10 @@ void FFBThread() {
         if (g_ffb_active && GameConnector::Get().IsConnected()) {
             
             // --- CRITICAL SECTION: READ DATA ---
-            GameConnector::Get().CopyTelemetry(g_localData);
+            // CopyTelemetry now returns realtime status to avoid extra lock acquisition
+            bool in_realtime = GameConnector::Get().CopyTelemetry(g_localData);
             
             // Check if player is in an active driving session (not in menu/replay)
-            bool in_realtime = GameConnector::Get().IsInRealtime();
             static bool was_in_menu = true;
             
             if (was_in_menu && in_realtime) {

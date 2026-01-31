@@ -9,6 +9,7 @@
 #include <vector>
 #include <algorithm>
 #include <mutex>
+#include <chrono>
 
 // Define STB_IMAGE_WRITE_IMPLEMENTATION only once in the project (here is fine)
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -48,8 +49,10 @@ static const int LATENCY_WARNING_THRESHOLD_MS = 15; // Green if < 15ms, Red if >
 #define PW_RENDERFULLCONTENT 0x00000002
 #endif
 
-// Forward declarations of helper functions
-bool CreateDeviceD3D(HWND hWnd);
+static constexpr std::chrono::seconds CONNECT_ATTEMPT_INTERVAL(2);
+
+  // Forward declarations of helper functions
+  bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
@@ -718,13 +721,18 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     ImGui::Separator();
 
     // Connection Status
-    bool connected = GameConnector::Get().IsConnected();
-    if (connected) {
-        ImGui::TextColored(ImVec4(0, 1, 0, 1), "Connected to LMU");
+    static std::chrono::steady_clock::time_point last_check_time =
+        std::chrono::steady_clock::now();
+    
+    if (!GameConnector::Get().IsConnected()) {
+      ImGui::TextColored(ImVec4(1, 1, 0, 1), "Connecting to LMU...");
+      if (std::chrono::steady_clock::now() - last_check_time >
+          CONNECT_ATTEMPT_INTERVAL) {
+        last_check_time = std::chrono::steady_clock::now();
+        GameConnector::Get().TryConnect();
+      }
     } else {
-        ImGui::TextColored(ImVec4(1, 0, 0, 1), "Disconnected from LMU");
-        ImGui::SameLine();
-        if (ImGui::Button("Retry")) GameConnector::Get().TryConnect();
+      ImGui::TextColored(ImVec4(0, 1, 0, 1), "Connected to LMU");
     }
 
     // --- 1. TOP BAR (System Status & Quick Controls) ---

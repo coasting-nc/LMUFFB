@@ -9,9 +9,11 @@
 #include "../src/DirectInputFFB.h"
 #include "../src/Config.h"
 #include "../src/GuiLayer.h"
+#include "../src/GameConnector.h"
 #include "imgui.h"
 #include <atomic>
 #include <mutex>
+#include <thread>
 #include <fstream>
 #include <cstdio>
 
@@ -880,6 +882,64 @@ static void test_icon_presence() {
     }
 }
 
+static void test_game_connector_lifecycle() {
+    std::cout << "\nTest: GameConnector Lifecycle (Disconnect/Reconnect)" << std::endl;
+
+    // 1. Ensure we start in a known state (likely disconnected since LMU isn't running)
+    bool initial_state = GameConnector::Get().IsConnected();
+    std::cout << "  Initial State: " << (initial_state ? "Connected" : "Disconnected") << std::endl;
+
+    // 2. Call Disconnect() - This is the new method we expect to exist.
+    // It should be safe to call even if disconnected (idempotent).
+    GameConnector::Get().Disconnect();
+
+    // 3. Verify state is explicitly false after Disconnect
+    bool after_disconnect = GameConnector::Get().IsConnected();
+    ASSERT_TRUE(after_disconnect == false);
+
+    // 4. TryConnect should handle the clean slate
+    bool connect_result = GameConnector::Get().TryConnect();
+    // We expect this to fail in the test environment, but NOT crash and NOT leak.
+    // (Leak checking isn't easily possible here, but crash checking is implicit)
+    ASSERT_TRUE(connect_result == false);
+    
+    // 5. Verify still disconnected
+    ASSERT_TRUE(GameConnector::Get().IsConnected() == false);
+}
+
+static void test_game_connector_thread_safety() {
+    std::cout << "\nTest: GameConnector Thread Safety (Stress Test)" << std::endl;
+
+    std::atomic<bool> running{true};
+    
+    // Thread 1: Rapidly call CopyTelemetry and check realtime status
+    std::thread t1([&]() {
+        SharedMemoryObjectOut telemetry;
+        while (running) {
+            bool in_realtime = GameConnector::Get().CopyTelemetry(telemetry);
+            (void)in_realtime; // Use the value to prevent optimization
+        }
+    });
+
+    // Thread 2: Rapidly call Disconnect and TryConnect
+    std::thread t2([&]() {
+        while (running) {
+            GameConnector::Get().Disconnect();
+            GameConnector::Get().TryConnect();
+        }
+    });
+
+    // Run for a short duration
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    running = false;
+    
+    t1.join();
+    t2.join();
+
+    std::cout << "  [PASS] GameConnector survived stress test without crashing." << std::endl;
+    g_tests_passed++;
+}
+
 void Run() {
     std::cout << "=== Running Windows Platform Tests ===" << std::endl;
 
@@ -898,6 +958,8 @@ void Run() {
     test_config_persistence_braking_group(); // NEW: v0.5.13
     test_legacy_config_migration(); // NEW: v0.5.13
     test_icon_presence(); // NEW: Icon check
+    test_game_connector_lifecycle(); // NEW: TDD for PR #16
+    test_game_connector_thread_safety(); // NEW: Thread safety TDD
 
     // Report results
     std::cout << "\n----------------" << std::endl;

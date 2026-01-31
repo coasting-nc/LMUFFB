@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.39] - 2026-01-31
+
+**Special Thanks** to the community contributors for this release:
+- **@AndersHogqvist** for the Auto-connect to LMU PR.
+
+### Added
+- **Auto-Connect to LMU**:
+  - Implemented automatic connection logic that attempts to connect to LMU shared memory every 2 seconds when disconnected.
+  - Added robust connection state management: detects if the game process exits and automatically resets the connection state.
+  - **Improved UX**: The GUI now displays "Connecting to LMU..." in yellow while searching and "Connected to LMU" in green when active, eliminating the need for manual "Retry" clicks.
+- **SafeSharedMemoryLock Wrapper** (`src/lmu_sm_interface/SafeSharedMemoryLock.h`):
+  - Created wrapper class for vendor's `SharedMemoryLock` to add timeout support without modifying vendor code.
+  - Follows the same pattern as `LmuSharedMemoryWrapper.h` (which adds missing includes).
+  - **Benefit**: Avoids maintenance burden of modifying vendor files - easier to update when vendor releases new SDK versions.
+
+### Optimized
+- **FFB Loop Performance** (400Hz Critical Path):
+  - Reduced lock acquisitions from **3 to 2 per frame** (33% reduction in mutex operations).
+  - Modified `CopyTelemetry()` to return `bool` indicating realtime status instead of requiring separate `IsInRealtime()` call.
+  - Eliminated redundant O(104) vehicle iteration from the FFB critical section.
+  - **Impact**: 800 mutex operations/second (down from 1,200), improved responsiveness.
+
+### Refactored
+- **GameConnector Lifecycle**:
+  - Introduced `Disconnect()` method to centralize resource cleanup (closing handles, unmapping memory views).
+  - Fixed potential resource leaks in `TryConnect()` by ensuring cleanup before every connection attempt.
+  - Updated `IsConnected()` with double-checked locking pattern for performance (atomic fast-path, mutex for thorough check).
+  - **Process Handle Robustness**: Connection now succeeds even if window handle isn't immediately available or if `OpenProcess` fails, with informative logging.
+  - Updated destructor to ensure all handles are properly closed on application exit.
+- **Thread Safety**:
+  - Added `std::mutex` to protect shared state between FFB thread (400Hz) and GUI thread (60Hz).
+  - Added `std::atomic<bool>` for lock-free fast-path checks in `IsConnected()`.
+  - All public methods now properly synchronized with appropriate locking strategies.
+
+### Fixed
+- **GUI Static Variable**: Moved `last_check_time` initialization outside conditional block to prevent redundant re-initialization every frame.
+- **Test Suite**: Updated thread safety test to use new `CopyTelemetry()` return value API.
+
+### Documentation
+- **Vendor Code Tracking**: Created `docs/dev_docs/vendor_modifications.md` documenting known issues in vendor headers and our workaround strategies.
+- **Implementation Summary**: Detailed review fix implementation in `docs/dev_docs/code_reviews/implementation_summary_v0.6.39_fixes.md`.
+
 ## [0.6.38] - 2026-01-31
 
 **Special Thanks** to the community contributors for this release:
