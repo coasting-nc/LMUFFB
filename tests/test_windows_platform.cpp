@@ -819,6 +819,67 @@ static void test_legacy_config_migration() {
     remove(test_file.c_str());
 }
 
+static void test_icon_presence() {
+    std::cout << "\nTest: Icon Presence (Build Artifact)" << std::endl;
+    
+    // Robustness Fix: Use the executable's path to find the artifact, 
+    // strictly validating the build structure regardless of CWD.
+    char buffer[MAX_PATH];
+    GetModuleFileNameA(NULL, buffer, MAX_PATH);
+    std::string exe_path(buffer);
+    
+    // Find the directory of the executable
+    size_t last_slash = exe_path.find_last_of("\\/");
+    std::string exe_dir = (last_slash != std::string::npos) ? exe_path.substr(0, last_slash) : ".";
+    
+    std::cout << "  Exe Dir: " << exe_dir << std::endl;
+
+    // Expected locations relative to build output (e.g., build/tests/Release/run.exe)
+    // We expect the icon to be in the build root (copied by CMake)
+    std::vector<std::string> candidates;
+    candidates.push_back(exe_dir + "/../../lmuffb.ico"); // Standard CMake Release/Debug layout
+    candidates.push_back(exe_dir + "/../lmuffb.ico");    // Flat layout
+    candidates.push_back(exe_dir + "/lmuffb.ico");       // Same dir
+
+    bool found = false;
+    std::string found_path;
+    for (const auto& path : candidates) {
+        std::ifstream f(path, std::ios::binary);
+        if (f.good()) {
+            std::cout << "  [PASS] Found artifact at: " << path << std::endl;
+            found = true;
+            found_path = path;
+            
+            // Verify ICO Header (00 00 01 00)
+            char header[4];
+            f.read(header, 4);
+            if (f.gcount() == 4) {
+                if (header[0] == 0x00 && header[1] == 0x00 && header[2] == 0x01 && header[3] == 0x00) {
+                    std::cout << "  [PASS] Valid ICO header detected (00 00 01 00)" << std::endl;
+                } else {
+                    std::cout << "  [FAIL] Invalid ICO header: " 
+                              << std::hex << (int)header[0] << " " << (int)header[1] << " " 
+                              << (int)header[2] << " " << (int)header[3] << std::dec << std::endl;
+                    found = false; // Invalidate match if header is wrong
+                }
+            } else {
+                std::cout << "  [FAIL] File too small to be a valid icon." << std::endl;
+                found = false;
+            }
+            break;
+        }
+    }
+
+    if (found) {
+        g_tests_passed++;
+    } else {
+        std::cout << "  [FAIL] lmuffb.ico NOT found in build artifacts." << std::endl;
+        std::cout << "         Checked paths relative to executable:" << std::endl;
+        for (const auto& path : candidates) std::cout << "         - " << path << std::endl;
+        g_tests_failed++;
+    }
+}
+
 void Run() {
     std::cout << "=== Running Windows Platform Tests ===" << std::endl;
 
@@ -836,6 +897,7 @@ void Run() {
     test_single_source_of_truth_t300_defaults();  // NEW: v0.5.12
     test_config_persistence_braking_group(); // NEW: v0.5.13
     test_legacy_config_migration(); // NEW: v0.5.13
+    test_icon_presence(); // NEW: Icon check
 
     // Report results
     std::cout << "\n----------------" << std::endl;

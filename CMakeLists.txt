@@ -46,10 +46,22 @@ endif()
 #    link_directories(${VJOY_SDK_DIR}/lib/i386)
 # endif()
 
+# Copy icon file into build directory
+configure_file(${CMAKE_SOURCE_DIR}/icon/lmuffb.ico ${CMAKE_BINARY_DIR}/lmuffb.ico COPYONLY)
+
 # Tests
 add_subdirectory(tests)
 
-add_executable(LMUFFB src/main.cpp src/GuiLayer.cpp src/GuiLayer.h src/Config.cpp src/Config.h src/DirectInputFFB.cpp src/DirectInputFFB.h src/GameConnector.cpp src/GameConnector.h src/DynamicVJoy.h src/FFBEngine.h ${IMGUI_SOURCES})
+add_executable(LMUFFB 
+               src/main.cpp
+               src/GuiLayer.cpp src/GuiLayer.h
+               src/Config.cpp src/Config.h
+               src/DirectInputFFB.cpp src/DirectInputFFB.h
+               src/GameConnector.cpp src/GameConnector.h
+               src/DynamicVJoy.h 
+               src/FFBEngine.h 
+               src/res.rc
+               ${IMGUI_SOURCES})
 
 target_link_libraries(LMUFFB dinput8.lib dxguid.lib winmm.lib)
 

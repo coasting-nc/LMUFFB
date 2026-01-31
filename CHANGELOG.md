@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.37] - 2026-01-31
+
+**Special Thanks** to the community contributors for this release:
+- **@MartinVindis** for designing and providing the application icon.
+- **@DiSHTiX** for the pull request and implementation logic to integrate the icon.
+
+### Added
+- **Application Icon**: Added a custom application icon (`lmuffb.ico`) to the executable.
+  - The icon is now embedded in the Windows executable and displayed in Explorer and the Taskbar.
+  - Added build system support (`CMakeLists.txt`) to compile and link the resource file.
+  - **Robust Build Verification**: Added `tests/test_icon_presence` to ensure the icon is correctly staged.
+    - **Path Agnostic**: Uses the Windows API to locate the build artifact relative to the running executable, ensuring the test passes regardless of the working directory.
+    - **Data Integrity**: Inspects the icon file's binary header (0x00000100) to verify it is a valid `.ico` file and not an empty placeholder.
+
 ## [0.6.36] - 2026-01-05
 ### Refactored
 - **FFB Engine Architecture**: Massive refactoring of `FFBEngine::calculate_force` to improve maintainability and scalability.
