@@ -38,3 +38,19 @@ After successfully pushing `main`:
 # Delete the local feature branch
 git branch -d pr-19
 ```
+
+# Update the PR Branch and Let GitHub Auto-Close
+
+## Switch to the PR branch
+git checkout feature/auto-connect-lmu
+
+## Reset it to match main (all your changes are already in main)
+git reset --hard main
+
+## Force push to update the remote PR branch
+git push origin feature/auto-connect-lmu --force
+
+## Switch back to main
+git checkout main
+
+
