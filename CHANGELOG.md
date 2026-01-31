@@ -12,7 +12,9 @@ All notable changes to this project will be documented in this file.
 - **Application Icon**: Added a custom application icon (`lmuffb.ico`) to the executable.
   - The icon is now embedded in the Windows executable and displayed in Explorer and the Taskbar.
   - Added build system support (`CMakeLists.txt`) to compile and link the resource file.
-  - Added `tests/test_icon_presence` to verify the icon is correctly staged during the build process.
+  - **Robust Build Verification**: Added `tests/test_icon_presence` to ensure the icon is correctly staged.
+    - **Path Agnostic**: Uses the Windows API to locate the build artifact relative to the running executable, ensuring the test passes regardless of the working directory.
+    - **Data Integrity**: Inspects the icon file's binary header (0x00000100) to verify it is a valid `.ico` file and not an empty placeholder.
 
 ## [0.6.36] - 2026-01-05
 ### Refactored
