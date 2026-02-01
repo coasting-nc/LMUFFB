@@ -7,6 +7,10 @@
 - `docs/dev_docs/investigations/slope_detection_issues_v0.7.0.md`
 - `docs/dev_docs/implementation_plans/plan_slope_detection_fixes_v0.7.1.md`
 
+**Update:**
+The research has been completed and the findings are documented here:
+- `docs/dev_docs/research/deep research report - rear grip estimation.md`
+
 **Question Under Investigation:**  
 Can we improve rear grip estimation to make it compatible with the front Slope Detection algorithm, thereby preserving the Lateral G Boost effect?
 
