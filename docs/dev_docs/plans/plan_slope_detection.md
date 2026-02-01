@@ -202,14 +202,52 @@ double m_slope_smoothed_output = 1.0;
 
 ```cpp
 // Helper: Calculate Savitzky-Golay First Derivative - v0.7.0
-// Uses pre-computed coefficients for quadratic polynomial fit
+// Uses closed-form coefficient generation for quadratic polynomial fit.
+// Reference: docs/dev_docs/plans/savitzky-golay coefficients deep research report.md
+//
+// Mathematical basis (Quadratic First Derivative, N=2):
+//   For a symmetric window with half-width M (total window = 2M+1 points),
+//   the derivative weight for sample at position k is:
+//     w_k = k / (S_2 * h)
+//   where:
+//     S_2 = M(M+1)(2M+1)/3  (sum of k^2 from -M to M)
+//     h = sampling interval (dt)
+//
+// Key properties:
+//   - Weights are anti-symmetric: w_{-k} = -w_k
+//   - Center weight (k=0) is always 0
+//   - Derivative has O(n) complexity per sample
+//
 double calculate_sg_derivative(const std::array<double, SLOPE_BUFFER_MAX>& buffer, 
-                               int count, int window, double dt);
+                               int count, int window, double dt) {
+    // Ensure we have enough samples
+    if (count < window) return 0.0;
+    
+    int M = window / 2;  // Half-width (e.g., window=15 -> M=7)
+    
+    // Calculate S_2 = M(M+1)(2M+1)/3
+    double S2 = (double)M * (M + 1.0) * (2.0 * M + 1.0) / 3.0;
+    
+    // Convolution: sum of w_k * y_k
+    // Optimization: exploit anti-symmetry w_{-k} = -w_k
+    //   sum = sum_{k=1}^{M} (k/S2) * (y_k - y_{-k}) / h
+    double sum = 0.0;
+    for (int k = 1; k <= M; ++k) {
+        // Calculate buffer indices (circular buffer handling)
+        int idx_pos = (m_slope_buffer_index - M + k + SLOPE_BUFFER_MAX) % SLOPE_BUFFER_MAX;
+        int idx_neg = (m_slope_buffer_index - M - k + SLOPE_BUFFER_MAX) % SLOPE_BUFFER_MAX;
+        
+        double w_k = (double)k / S2;
+        sum += w_k * (buffer[idx_pos] - buffer[idx_neg]);
+    }
+    
+    // Divide by dt to get derivative in units/second
+    return sum / dt;
+}
 
 // Helper: Calculate Grip Factor from Slope - v0.7.0
 // Main slope detection algorithm entry point
 double calculate_slope_grip(double lateral_g, double slip_angle, double dt);
-```
 
 #### 2.4 Modify `calculate_grip()` Function (~lines 630-665):
 
@@ -584,6 +622,43 @@ Savitzky-Golay filter is chosen over simple moving average because:
 2. Provides derivative as direct output
 3. Superior noise rejection without excessive phase lag
 
+### Savitzky-Golay Coefficient Generation
+
+**Mathematical Formula (Quadratic Fit, First Derivative):**
+
+For a symmetric window with half-width `M` (total window size = `2M+1` samples):
+
+```
+w_k = k / (S_2 × h)
+
+where:
+  S_2 = M(M+1)(2M+1)/3    (sum of k² from -M to M)
+  h   = sampling interval (dt)
+  k   = sample index relative to center (-M to +M)
+```
+
+**Key Insight (Linear-Quadratic Equivalence):**
+For first derivative estimation on symmetric windows, quadratic (N=2) and linear (N=1) polynomial fits produce **identical coefficients**. The quadratic term captures curvature (second derivative) but does not affect the slope at the center point due to the orthogonality of basis functions.
+
+**Implementation Strategy:**
+- Coefficients are generated at **runtime** using the closed-form formula (O(1) computation)
+- No pre-computed lookup tables required
+- Convolution exploits **anti-symmetry** (`w_{-k} = -w_k`) for ~50% reduction in multiplications
+
+**Reference:** `docs/dev_docs/plans/savitzky-golay coefficients deep research report.md`
+
+### Boundary Handling (Shrinking Symmetric Window)
+
+At signal boundaries (startup, buffer not filled), the algorithm uses a **shrinking symmetric window** strategy:
+
+1. At index `i` where `i < M`, set effective window size: `M_eff = i`
+2. This maintains the symmetric window property and preserves phase linearity
+3. Trade-off: Reduced noise suppression at edges (smaller window = higher variance)
+4. Minimum window: `M=2` (5 samples) - below this, return 0.0 (not enough data)
+
+**Why not asymmetric fit?**
+Asymmetric polynomial fits (e.g., using only forward samples at startup) are susceptible to "Runge's Phenomenon" - polynomial oscillation at interval edges. The shrinking symmetric approach avoids this instability.
+
 ### Safety Considerations
 - Grip factor has a floor of 0.2 to prevent complete FFB loss
 - Feature is disabled by default to avoid surprising existing users
@@ -608,5 +683,13 @@ If Slope Detection proves superior after user testing:
 ---
 
 *Plan created: 2026-02-01*  
-*Last updated: 2026-02-01*  
+*Last updated: 2026-02-01 (added SG coefficient details)*  
 *Estimated implementation effort: ~300 lines of C++ code across 4 files*
+
+---
+
+## Appendix: Reference Documents
+
+1. **Savitzky-Golay Coefficients Deep Research Report**  
+   `docs/dev_docs/plans/savitzky-golay coefficients deep research report.md`  
+   Comprehensive mathematical derivation and C++ implementation patterns for SG filter coefficients.

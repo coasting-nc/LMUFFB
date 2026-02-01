@@ -137,13 +137,17 @@ The plan includes **8 unit tests** with sufficient detail for TDD:
 
 The following are **optional improvements** that do not affect the approval status:
 
-### 1. Savitzky-Golay Coefficient Source
+### 1. ✅ ~~Savitzky-Golay Coefficient Source~~ (RESOLVED)
 
-The plan mentions "pre-computed coefficients for quadratic polynomial fit" but does not specify:
-- How coefficients are computed (runtime vs. compile-time)
-- Reference for SG coefficient formulas
+~~The plan mentions "pre-computed coefficients for quadratic polynomial fit" but does not specify:~~
+- ~~How coefficients are computed (runtime vs. compile-time)~~
+- ~~Reference for SG coefficient formulas~~
 
-**Suggestion:** Add a brief note referencing the standard SG coefficient generation formula or a quick code snippet showing coefficient computation.
+**Resolution (2026-02-01):** A comprehensive Savitzky-Golay Coefficients Deep Research Report has been created at `docs/dev_docs/plans/savitzky-golay coefficients deep research report.md`  and `docs/dev_docs/plans/savitzky-golay coefficients deep research report(2).md`. The implementation plan has been updated to include:
+- The closed-form coefficient generation formula: `w_k = k / (S_2 × h)` where `S_2 = M(M+1)(2M+1)/3`
+- Full C++ implementation of `calculate_sg_derivative()` with algorithm comments
+- Boundary handling strategy (shrinking symmetric window)
+- Reference to the deep research report
 
 ### 2. Edge Case: Very Low Speed
 
