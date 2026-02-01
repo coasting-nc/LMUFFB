@@ -1,3 +1,5 @@
+TODO: archive this document because already implemented. Create a new document (if it does not exist already) with only the relevan architecture info on how we import the shared memory interface files from LMU.
+
 # Implementation Plan: Auto-Connect to LMU (PR #16 Refinement)
 
 ## Objective
