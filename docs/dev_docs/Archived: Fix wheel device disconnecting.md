@@ -1,3 +1,5 @@
+TODO: move this document to an archive subfolder because it is outdate (already fixed).
+
 # Technical Report: Connection Hardening & Device Persistence Implementation
 
 **Target Version:** v0.4.44
