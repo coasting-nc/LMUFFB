@@ -150,3 +150,9 @@ https://github.com/coasting-nc/LMUFFB/releases
 rF2 will be supported again in a future version, in particular to compare 
 our grip approximation algorithm with the real values returned by the game 
 for non DLC cars.
+
+===============================================================================
+SUPPORT FOR OTHER SIMS
+===============================================================================
+ 
+Support for AC, ACC, ACE is planned for a future release. See https://github.com/coasting-nc/LMUFFB/issues/30
