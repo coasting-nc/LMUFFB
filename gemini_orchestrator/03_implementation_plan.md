@@ -53,8 +53,14 @@ This project will not be built in a single "Big Bang". Instead, we will build a 
 *   `investigator_prompt.txt`: Instructions for bug diagnosis.
 *   `researcher_prompt.txt`: Instructions for feature research.
 *   `analyst_gatekeeper_prompt.txt`: Instructions for reviewing reports/escalating.
-*   `architect_prompt.txt`: Instructions for planning.
-*   `plan_reviewer_prompt.txt`: Instructions for validating the plan.
+*   `architect_prompt.txt`: Instructions for planning. **MUST include:**
+    *   **Codebase Analysis:** Architect must review current codebase, identify impacted functionalities, and trace data flows.
+    *   **FFB Effect Impact Analysis:** For FFB-related tasks, document affected effects (understeer, oversteer, lockup, etc.) from both technical (files, functions, data changes) and user (FFB feel, UI settings, presets) perspectives.
+    *   **User Settings & Presets Impact:** Migration logic considerations.
+*   `plan_reviewer_prompt.txt`: Instructions for validating the plan. **MUST verify:**
+    *   Codebase analysis section is complete.
+    *   FFB effect impact is documented (if applicable).
+    *   Test plan is TDD-ready.
 *   `developer_prompt.txt`: Instructions for TDD-based coding (includes JSON schema).
 *   `auditor_prompt.txt`: Instructions for reviewing code.
 

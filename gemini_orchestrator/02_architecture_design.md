@@ -139,13 +139,25 @@ The main state machine.
 ### Phase A: Planning
 1.  **Orchestrator** spawns **Architect**.
     *   *Input:* User Request + Any Reports from Phase 0.
-2.  **Agent** writes `docs/dev_docs/plans/feature_X.md`.
-3.  **Orchestrator** commits the Plan.
-4.  **Orchestrator** spawns **Lead Architect (Plan Reviewer)**.
+2.  **Agent** performs **Codebase Analysis**:
+    *   Reviews existing architecture and identifies impacted functionalities.
+    *   Traces data flows through affected areas.
+    *   Documents which modules/functions will be affected.
+3.  **Agent** performs **FFB Effect Impact Analysis** (if FFB-related task):
+    *   Identifies all affected FFB effects (understeer, oversteer, lockup, ABS, road texture, etc.).
+    *   Documents technical impact (files, functions, data changes).
+    *   Documents user-facing impact (FFB feel changes, UI settings, preset adjustments).
+4.  **Agent** writes `docs/dev_docs/plans/feature_X.md` including the analysis sections.
+5.  **Orchestrator** commits the Plan.
+6.  **Orchestrator** spawns **Lead Architect (Plan Reviewer)**.
     *   *Input:* The Plan File.
-5.  **Agent** outputs JSON: `{"verdict": "APPROVE"}` or `{"verdict": "REJECT", "feedback": "..."}`.
-    *   *If REJECT:* Loop back to Architect with feedback.
-6.  **Orchestrator** commits the Review Verdict.
+    *   *Verification:* Plan includes complete codebase analysis and FFB effect impact (if applicable).
+7.  **Agent** outputs JSON: `{"verdict": "APPROVE"}` or `{"verdict": "REJECT", "feedback": "..."}`.
+    *   *If REJECT:* Loop back to Architect with feedback. Common rejection reasons:
+        *   Missing/incomplete codebase analysis.
+        *   Missing/incomplete FFB effect impact analysis.
+        *   Test cases not TDD-ready.
+8.  **Orchestrator** commits the Review Verdict.
 
 ### Phase B: Implementation (TDD)
 1.  **Orchestrator** reads Approved Plan.
