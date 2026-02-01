@@ -74,8 +74,10 @@ Run all tests that had already been compiled:
 
 ### 5. 📦 Versioning & Changelog
 *   **Update Version**: Increment the number in the `VERSION` file (root directory).
-    *   *Patch (0.0.X)*: Bug fixes, tweaks, refactoring.
-    *   *Minor (0.X.0)*: New features, new effects.
+    *   **Always use the smallest increment:** Add **+1 to the rightmost number** in the version.
+    *   Example: `0.6.39` → `0.6.40`
+    *   Example: `0.7.0` → `0.7.1`
+    *   **Do NOT** increment the minor or major version unless explicitly instructed by the user.
     *   You must also update `src\Version.h`.
 *   **Update Changelog**: Add a concise entry to `CHANGELOG_DEV.md` under the new version number.
 

@@ -38,6 +38,16 @@ Use these commands to build and run tests:
 .\build\tests\Release\run_combined_tests.exe
 ```
 
+## 📦 Version Increment Rule
+
+When incrementing the version number (in `VERSION` and `src/Version.h`), you **MUST** always use the **smallest possible increment**:
+*   Add **+1 to the rightmost number** in the version string.
+*   Example: `0.6.39` → `0.6.40`
+*   Example: `0.7.0` → `0.7.1`
+
+**Do NOT** increment higher-level numbers unless explicitly instructed by the user.
+
+
 ## 📁 File Encoding Issues
 
 When working with source files, you may encounter encoding issues that prevent file reading/editing tools from working correctly.

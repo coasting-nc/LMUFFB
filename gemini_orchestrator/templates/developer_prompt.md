@@ -51,6 +51,7 @@ In some cases, writing tests may be **impractical, excessively complex, or techn
     *   If existing user configurations could be affected: implement migration logic.
     *   Ensure new settings are properly documented.
 9.  **Update Documentation:** Update CHANGELOG.md, VERSION, or other docs as required by the Plan.
+    *   **Version Increment Rule:** When updating the VERSION file, always use the **smallest possible increment**—add **+1 to the rightmost number** (e.g., `0.6.39` → `0.6.40`, `0.7.0` → `0.7.1`). Do NOT increment the minor or major version unless explicitly instructed.
 10. **Document Implementation Issues:** Append an **"Implementation Notes"** section to the end of the Implementation Plan document (`docs/dev_docs/plans/plan_{{TASK_ID}}.md`). This section MUST include:
     *   **Unforeseen Issues:** Any issues encountered during implementation that the plan did not anticipate or adequately address.
     *   **Plan Deviations:** Any deviations from the original plan and the rationale for them.
