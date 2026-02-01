@@ -39,11 +39,115 @@ The Slope Detection Algorithm monitors the **rate of change (derivative)** of la
 
 ---
 
+## Codebase Analysis Summary
+
+### Current Architecture
+
+The FFB calculation pipeline in `FFBEngine.h` follows this flow:
+
+1. **Telemetry Input** → Raw data from game (TelemInfoV01)
+2. **Grip Calculation** → `calculate_grip()` function (lines 593-678)
+3. **Effect Calculations** → Multiple effect functions use grip data
+4. **Output Summation** → Forces combined and normalized
+5. **FFB Output** → Sent to wheel hardware
+
+### Key Existing Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `calculate_grip()` | FFBEngine.h:593-678 | Main grip calculation function |
+| `GripResult` struct | FFBEngine.h:167-172 | Return type with grip value + diagnostics |
+| `FFBCalculationContext` | FFBEngine.h:178-215 | Shared context for all effect calculations |
+| `m_optimal_slip_angle` | FFBEngine.h:282 | Static threshold setting (current) |
+| `m_optimal_slip_ratio` | FFBEngine.h:283 | Static threshold setting (current) |
+| `Preset` struct | Config.h:8-320 | All user settings including grip thresholds |
+
+### Current Grip Calculation Flow (`calculate_grip()`)
+
+```
+1. Read raw mGripFract from telemetry (game-provided)
+2. If mGripFract is zero AND car has load → Fallback approximation:
+   a. Calculate slip angle (via calculate_slip_angle())
+   b. Calculate slip ratio (via calculate_manual_slip_ratio())
+   c. Compare against m_optimal_slip_angle and m_optimal_slip_ratio thresholds
+   d. Compute combined friction circle metric
+   e. Apply sigmoid decay for grip loss
+3. Return GripResult with .value and diagnostics
+```
+
+**Critical Insight:** The slope detection algorithm will replace **step 2c/2d/2e** (the static threshold comparison and fixed decay curve) with a dynamic derivative-based approach.
+
+---
+
+## FFB Effects Impact Analysis
+
+The following table shows **all FFB effects that consume grip data** and how they will be impacted by the Slope Detection Algorithm.
+
+### Effects Using Front Grip (`ctx.avg_grip`)
+
+| Effect | Location | How Grip is Used | Technical Impact | User Experience Impact |
+|--------|----------|------------------|------------------|------------------------|
+| **Understeer Effect** | FFBEngine.h:966-969 | `grip_loss = (1.0 - ctx.avg_grip) * m_understeer_effect` | Core consumer - directly affected | FFB lightens as front tires approach/exceed peak grip. With slope detection, this will be **smoother and more progressive** as it tracks the tire curve rather than a hard threshold. |
+| **Slide Texture** | FFBEngine.h:1389-1391 | `grip_scale = max(0.0, 1.0 - ctx.avg_grip)` | Scales vibration intensity by grip loss | Texture intensity will scale more naturally with sliding severity. Less "on/off" feeling. |
+
+### Effects Using Rear Grip (`ctx.avg_rear_grip`)
+
+| Effect | Location | How Grip is Used | Technical Impact | User Experience Impact |
+|--------|----------|------------------|------------------|------------------------|
+| **Lateral G Boost (Oversteer)** | FFBEngine.h:1203-1206 | `grip_delta = ctx.avg_grip - ctx.avg_rear_grip` | Uses differential between front and rear grip | Oversteer boost will trigger more precisely when rear actually breaks traction vs. front. **Better oversteer detection in mixed conditions.** |
+
+### Effects Using Slip Angle (Derived from Grip Calculation)
+
+| Effect | Location | How Slip Angle is Used | Technical Impact | User Experience Impact |
+|--------|----------|------------------------|------------------|------------------------|
+| **Rear Aligning Torque** | FFBEngine.h:1214-1218 | `rear_slip_angle = m_grip_diag.rear_slip_angle` → `calc_rear_lat_force` | Uses slip angle from grip calculation | No direct change - slip angle calculation is preserved. Counter-steering cues remain accurate. |
+
+### Effects NOT Using Grip Data (No Impact)
+
+| Effect | Notes |
+|--------|-------|
+| Steering Shaft Gain | Uses raw game force (mSteeringShaftTorque) |
+| Yaw Kick | Uses yaw acceleration (mLocalRotAccel.y) |
+| Gyro Damping | Uses steering velocity only |
+| Lockup Vibration | Uses wheel slip ratio, not grip factor |
+| Wheel Spin | Uses wheel rotation deltas |
+| Road Texture | Uses vertical tire deflection |
+| ABS Pulse | Uses brake pressure modulation |
+| Bottoming | Uses suspension force/deflection |
+| Scrub Drag | Uses lateral patch velocity |
+
+---
+
+## User Experience Summary
+
+### What Will Change (When Slope Detection Is Enabled)
+
+| Aspect | Current (Static Threshold) | With Slope Detection |
+|--------|---------------------------|---------------------|
+| **Understeer Onset** | Force drops at fixed slip angle (e.g., 0.10 rad) | Force drops when tire curve inflects - adapts per car/condition |
+| **Understeer Progression** | Fixed sigmoid decay curve | Proportional to how negative the slope is |
+| **Oversteer Detection** | Based on fixed front/rear grip difference | Based on gradient comparison - more sensitive to rear breakaway |
+| **Temperature/Wear Adaptation** | None - same threshold cold or worn | Automatic - tracks tire's changing peak |
+| **Slide Texture Feel** | Binary-ish: intense above threshold | Graduated - scales with slide severity |
+
+### What Will NOT Change
+
+- Base steering feel (steering shaft torque)
+- Counter-steering cues (rear aligning torque direction)
+- Yaw kick timing and intensity
+- Gyroscopic damping feel
+- Lockup/spin vibration character
+- Road texture detail
+- ABS pulse behavior
+- All other signal processing (notch filters, smoothing)
+
+---
+
 ## Proposed Changes
 
 ### 1. New Configuration Parameters
 
-**File: `src/Config.h`** - Add to `Preset` struct (~line 70):
+**File: `src/Config.h`** - Add to `Preset` struct (~line 100, after `understeer_affects_sop`):
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -53,14 +157,24 @@ The Slope Detection Algorithm monitors the **rate of change (derivative)** of la
 | `slope_negative_threshold` | `float` | `-0.1f` | Slope below which grip loss is detected |
 | `slope_smoothing_tau` | `float` | `0.02f` | Output smoothing time constant (seconds) |
 
+**Preset Fluent Setter:**
+```cpp
+Preset& SetSlopeDetection(bool enabled, int window = 15, float sens = 1.0f) {
+    slope_detection_enabled = enabled;
+    slope_sg_window = window;
+    slope_sensitivity = sens;
+    return *this;
+}
+```
+
 ### 2. FFBEngine Core Changes
 
 **File: `src/FFBEngine.h`**
 
-#### 2.1 New Member Variables (public section, ~line 244):
+#### 2.1 New Member Variables (public section, ~line 312, after `m_understeer_affects_sop`):
 
 ```cpp
-// ===== SLOPE DETECTION =====
+// ===== SLOPE DETECTION (v0.7.0) =====
 bool m_slope_detection_enabled = false;
 int m_slope_sg_window = 15;
 float m_slope_sensitivity = 1.0f;
@@ -68,49 +182,74 @@ float m_slope_negative_threshold = -0.1f;
 float m_slope_smoothing_tau = 0.02f;
 ```
 
-#### 2.2 Internal State Buffers (private section, ~line 350):
+#### 2.2 Internal State Buffers (private section, ~line 410, after `m_static_notch_filter`):
 
 ```cpp
-// Slope Detection Buffers (Circular)
-static constexpr int SLOPE_BUFFER_MAX = 41;
+// Slope Detection Buffers (Circular) - v0.7.0
+static constexpr int SLOPE_BUFFER_MAX = 41;  // Max window size supported
 std::array<double, SLOPE_BUFFER_MAX> m_slope_lat_g_buffer = {};
 std::array<double, SLOPE_BUFFER_MAX> m_slope_slip_buffer = {};
 int m_slope_buffer_index = 0;
 int m_slope_buffer_count = 0;
 
-// Slope Detection State (Public for diagnostics)
+// Slope Detection State (Public for diagnostics) - v0.7.0
 double m_slope_current = 0.0;
 double m_slope_grip_factor = 1.0;
 double m_slope_smoothed_output = 1.0;
 ```
 
-#### 2.3 New Helper Functions:
+#### 2.3 New Helper Functions (private section, ~line 1170):
 
-1. **`CalculateSGDerivative()`** - Savitzky-Golay derivative calculation:
-   - Input: Buffer array, count, window size, dt
-   - Output: Derivative (slope) at the center point
-   - Uses symmetric SG coefficients for 1st derivative
+```cpp
+// Helper: Calculate Savitzky-Golay First Derivative - v0.7.0
+// Uses pre-computed coefficients for quadratic polynomial fit
+double calculate_sg_derivative(const std::array<double, SLOPE_BUFFER_MAX>& buffer, 
+                               int count, int window, double dt);
 
-2. **`CalculateSlopeGrip()`** - Main slope detection function:
-   - Input: lateral_g, slip_angle, dt
-   - Process:
-     1. Push samples into circular buffers
-     2. Calculate derivatives using Savitzky-Golay
-     3. Compute slope (dG/dSlip)
-     4. Convert slope to grip factor (sigmoid response for negative slopes)
-     5. Apply output smoothing (time-corrected LPF)
-   - Output: Smoothed grip factor (0.2 to 1.0)
+// Helper: Calculate Grip Factor from Slope - v0.7.0
+// Main slope detection algorithm entry point
+double calculate_slope_grip(double lateral_g, double slip_angle, double dt);
+```
 
-#### 2.4 Modify `calculate_grip()` Function (~lines 576-601):
+#### 2.4 Modify `calculate_grip()` Function (~lines 630-665):
 
-Add conditional path that uses `CalculateSlopeGrip()` when `m_slope_detection_enabled` is true, falling back to the existing static threshold logic otherwise.
+**Current Code (lines 638-664):**
+```cpp
+} else {
+    // v0.4.38: Combined Friction Circle (Advanced Reconstruction)
+    
+    // 1. Lateral Component (Alpha)
+    double lat_metric = std::abs(result.slip_angle) / (double)m_optimal_slip_angle;
+    // ... rest of static threshold logic
+}
+```
+
+**New Code (replacement):**
+```cpp
+} else {
+    // v0.7.0: Slope Detection OR Static Threshold
+    if (m_slope_detection_enabled) {
+        // Dynamic grip estimation via derivative monitoring
+        result.value = calculate_slope_grip(
+            data->mLocalAccel.x / 9.81,  // Lateral G
+            result.slip_angle,            // Slip angle (radians)
+            ctx.dt
+        );
+    } else {
+        // v0.4.38: Combined Friction Circle (Static Threshold - Legacy)
+        double lat_metric = std::abs(result.slip_angle) / (double)m_optimal_slip_angle;
+        // ... existing static threshold logic unchanged
+    }
+}
+```
 
 ### 3. Config Persistence
 
 **File: `src/Config.cpp`**
 
-#### 3.1 Save Logic (~line 470):
+#### 3.1 Save Logic (~line 840, after `understeer_affects_sop`):
 ```cpp
+// Slope Detection (v0.7.0)
 file << "slope_detection_enabled=" << (engine.m_slope_detection_enabled ? "1" : "0") << "\n";
 file << "slope_sg_window=" << engine.m_slope_sg_window << "\n";
 file << "slope_sensitivity=" << engine.m_slope_sensitivity << "\n";
@@ -118,8 +257,9 @@ file << "slope_negative_threshold=" << engine.m_slope_negative_threshold << "\n"
 file << "slope_smoothing_tau=" << engine.m_slope_smoothing_tau << "\n";
 ```
 
-#### 3.2 Load Logic (~line 622):
+#### 3.2 Load Logic (~line 1055, after `understeer_affects_sop`):
 ```cpp
+// Slope Detection (v0.7.0)
 else if (key == "slope_detection_enabled") engine.m_slope_detection_enabled = (value == "1");
 else if (key == "slope_sg_window") engine.m_slope_sg_window = std::stoi(value);
 else if (key == "slope_sensitivity") engine.m_slope_sensitivity = std::stof(value);
@@ -127,40 +267,123 @@ else if (key == "slope_negative_threshold") engine.m_slope_negative_threshold = 
 else if (key == "slope_smoothing_tau") engine.m_slope_smoothing_tau = std::stof(value);
 ```
 
-#### 3.3 Validation Logic (~line 640):
-- `slope_sg_window`: Clamp to [5, 41] range
-- `slope_sensitivity`: Clamp to [0.1, 10.0] range
-- `slope_smoothing_tau`: Reset to 0.02f if < 0.001f
+#### 3.3 Validation Logic (~line 1075, new section):
+```cpp
+// Slope Detection Validation (v0.7.0)
+if (engine.m_slope_sg_window < 5) engine.m_slope_sg_window = 5;
+if (engine.m_slope_sg_window > 41) engine.m_slope_sg_window = 41;
+if (engine.m_slope_sg_window % 2 == 0) engine.m_slope_sg_window++; // Must be odd
+if (engine.m_slope_sensitivity < 0.1f) engine.m_slope_sensitivity = 0.1f;
+if (engine.m_slope_sensitivity > 10.0f) engine.m_slope_sensitivity = 10.0f;
+if (engine.m_slope_smoothing_tau < 0.001f) engine.m_slope_smoothing_tau = 0.02f;
+```
 
-#### 3.4 Preset Synchronization:
-Update `ApplyDefaultsToEngine()` and `SyncFromEngine()` methods.
+#### 3.4 Preset Apply/UpdateFromEngine (Config.h):
+
+**Add to `Apply()` method (~line 252):**
+```cpp
+engine.m_slope_detection_enabled = slope_detection_enabled;
+engine.m_slope_sg_window = slope_sg_window;
+engine.m_slope_sensitivity = slope_sensitivity;
+engine.m_slope_negative_threshold = slope_negative_threshold;
+engine.m_slope_smoothing_tau = slope_smoothing_tau;
+```
+
+**Add to `UpdateFromEngine()` method (~line 313):**
+```cpp
+slope_detection_enabled = engine.m_slope_detection_enabled;
+slope_sg_window = engine.m_slope_sg_window;
+slope_sensitivity = engine.m_slope_sensitivity;
+slope_negative_threshold = engine.m_slope_negative_threshold;
+slope_smoothing_tau = engine.m_slope_smoothing_tau;
+```
 
 ### 4. GUI Integration
 
-**File: `src/GuiLayer.cpp`** (~line 1140, after Optimal Slip settings):
+**File: `src/GuiLayer.cpp`** (~line 1100, after "Grip & Slip Angle Estimation" section):
 
-Add a new collapsible section "Slope Detection (Experimental)":
-- Enable/Disable checkbox
-- Filter Window slider (5-41 samples)
-- Sensitivity slider (0.1x - 5.0x)
-- Advanced Settings (collapsed by default):
-  - Slope Threshold slider
-  - Output Smoothing slider
-- Live Diagnostics display:
-  - Current Slope value
-  - Grip Factor percentage
+```cpp
+// --- SLOPE DETECTION (EXPERIMENTAL) ---
+if (ImGui::TreeNodeEx("Slope Detection (Experimental)", ImGuiTreeNodeFlags_Framed)) {
+    ImGui::NextColumn(); ImGui::NextColumn();
+    
+    ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "⚠ Dynamic grip estimation");
+    ImGui::NextColumn(); ImGui::NextColumn();
+    
+    BoolSetting("Enable Slope Detection", &engine.m_slope_detection_enabled,
+        "Replaces static 'Optimal Slip Angle' threshold with dynamic derivative monitoring.\n\n"
+        "When enabled:\n"
+        "• Grip is estimated by tracking the slope of lateral-G vs slip angle\n"
+        "• Automatically adapts to tire temperature, wear, and conditions\n"
+        "• 'Optimal Slip Angle' and 'Optimal Slip Ratio' settings are IGNORED\n\n"
+        "When disabled:\n"
+        "• Uses the static threshold method (default behavior)");
+    
+    if (engine.m_slope_detection_enabled) {
+        // Filter Window
+        int window = engine.m_slope_sg_window;
+        if (ImGui::SliderInt("Filter Window", &window, 5, 41)) {
+            if (window % 2 == 0) window++;  // Force odd
+            engine.m_slope_sg_window = window;
+            selected_preset = -1;
+        }
+        if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
+        ImGui::SameLine();
+        float latency_ms = (float)(engine.m_slope_sg_window / 2) * 2.5f;
+        ImVec4 color = (latency_ms < 25.0f) ? ImVec4(0,1,0,1) : ImVec4(1,0.5f,0,1);
+        ImGui::TextColored(color, "~%.0f ms latency", latency_ms);
+        ImGui::NextColumn(); ImGui::NextColumn();
+        
+        FloatSetting("Sensitivity", &engine.m_slope_sensitivity, 0.1f, 5.0f, "%.1fx",
+            "Multiplier for slope-to-grip conversion.\n"
+            "Higher = More aggressive grip loss detection.\n"
+            "Lower = Smoother, less pronounced effect.");
+        
+        // Advanced (Collapsed by Default)
+        if (ImGui::TreeNode("Advanced")) {
+            ImGui::NextColumn(); ImGui::NextColumn();
+            FloatSetting("Slope Threshold", &engine.m_slope_negative_threshold, -1.0f, 0.0f, "%.2f",
+                "Slope value below which grip loss begins.\n"
+                "More negative = Later detection (safer).");
+            FloatSetting("Output Smoothing", &engine.m_slope_smoothing_tau, 0.005f, 0.100f, "%.3f s",
+                "Time constant for grip factor smoothing.\n"
+                "Prevents abrupt FFB changes.");
+            ImGui::TreePop();
+        } else {
+            ImGui::NextColumn(); ImGui::NextColumn();
+        }
+        
+        // Diagnostics
+        ImGui::Separator();
+        ImGui::Text("Live Diagnostics");
+        ImGui::NextColumn();
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 1.0f, 1.0f), 
+            "Slope: %.3f | Grip: %.0f%%", 
+            engine.m_slope_current, 
+            engine.m_slope_smoothed_output * 100.0f);
+        ImGui::NextColumn();
+    }
+    
+    ImGui::TreePop();
+} else {
+    ImGui::NextColumn(); ImGui::NextColumn();
+}
+```
 
 ### 5. Built-in Preset Updates
 
-Update preset defaults to include slope detection parameters:
+**All existing presets** in Config.cpp receive these defaults (feature OFF):
 
 ```cpp
-// All presets - conservative defaults
-preset.slope_detection_enabled = false;  // Off by default
-preset.slope_sg_window = 15;
-preset.slope_sensitivity = 1.0f;
-preset.slope_negative_threshold = -0.1f;
-preset.slope_smoothing_tau = 0.02f;
+// In LoadPresets() or Preset constructors:
+.SetSlopeDetection(false)  // Or rely on member defaults
+```
+
+The fluent setter `SetSlopeDetection()` can optionally be used for experimental presets:
+```cpp
+Preset("Experimental - Dynamic Grip", true)
+    .SetSlopeDetection(true, 15, 1.0f)
+    // ... other settings
 ```
 
 ---
@@ -288,15 +511,33 @@ static void test_slope_noise_rejection()
 ## User Settings & Presets Impact
 
 ### New Settings
+
 Five new configurable parameters are being added (see Section 1). All have sensible defaults and the feature is **disabled by default** to ensure backward compatibility.
 
+| Setting | GUI Location | Visibility |
+|---------|--------------|------------|
+| Enable Slope Detection | Grip & Slip section | Always |
+| Filter Window | Slope Detection section | When enabled |
+| Sensitivity | Slope Detection section | When enabled |
+| Slope Threshold | Advanced (collapsed) | When enabled |
+| Output Smoothing | Advanced (collapsed) | When enabled |
+
 ### Migration Logic
+
 **No migration required.** When loading old configuration files:
 - Missing settings will use default values
 - `slope_detection_enabled = false` ensures existing users see no change in behavior
 - Static threshold logic remains as fallback
 
+### Settings Interaction
+
+When Slope Detection is **enabled**:
+- `m_optimal_slip_angle` is **IGNORED** (not used)
+- `m_optimal_slip_ratio` is **IGNORED** (not used)
+- UI should clearly indicate this (tooltip mentions settings are ignored)
+
 ### Preset Updates
+
 All built-in presets should be updated to include the new settings with the feature disabled by default. This is a non-breaking change.
 
 ---
@@ -304,13 +545,16 @@ All built-in presets should be updated to include the new settings with the feat
 ## Deliverables Checklist
 
 ### Code Changes
-- [ ] `src/FFBEngine.h` - Add slope detection members and helper functions
-- [ ] `src/Config.h` - Add new settings to Preset struct
-- [ ] `src/Config.cpp` - Add save/load/validation logic
-- [ ] `src/GuiLayer.cpp` - Add GUI controls for slope detection
+- [ ] `src/FFBEngine.h` - Add slope detection members and helper functions (~50 lines)
+- [ ] `src/FFBEngine.h` - Modify `calculate_grip()` to use slope detection (~30 lines)
+- [ ] `src/Config.h` - Add new settings to Preset struct (~15 lines)
+- [ ] `src/Config.h` - Add fluent setter `SetSlopeDetection()` (~5 lines)
+- [ ] `src/Config.h` - Update `Apply()` and `UpdateFromEngine()` (~10 lines)
+- [ ] `src/Config.cpp` - Add save/load/validation logic (~30 lines)
+- [ ] `src/GuiLayer.cpp` - Add GUI controls for slope detection (~60 lines)
 
 ### Test Files
-- [ ] `tests/test_ffb_engine.cpp` - Add 8 new unit tests (~80 lines)
+- [ ] `tests/test_ffb_engine.cpp` - Add 8 new unit tests (~100 lines)
 
 ### Documentation
 - [ ] `CHANGELOG.md` - Add feature entry
@@ -321,6 +565,8 @@ All built-in presets should be updated to include the new settings with the feat
 - [ ] All new tests pass
 - [ ] Build succeeds in Release mode
 - [ ] GUI displays correctly and values persist on restart
+- [ ] Understeer effect works correctly with static thresholds (feature OFF)
+- [ ] Understeer effect works correctly with slope detection (feature ON)
 
 ---
 
@@ -342,17 +588,25 @@ Savitzky-Golay filter is chosen over simple moving average because:
 - Grip factor has a floor of 0.2 to prevent complete FFB loss
 - Feature is disabled by default to avoid surprising existing users
 - Static threshold logic remains as fallback
+- Window size validation ensures odd number (required for SG filter)
+
+### Interaction with Existing Features
+- **Speed Gate**: Slope detection output is still multiplied by speed gate
+- **Grip Approximation Fallback**: Slope detection only active when mGripFract is missing (same condition as static threshold)
+- **Diagnostics**: Graph plots will show the same `calc_front_grip` value regardless of method
 
 ---
 
 ## Future Deprecation Path (Informational)
 
 If Slope Detection proves superior after user testing:
-1. **v0.8.0**: Slope Detection enabled by default for new users
-2. **v0.9.0**: Static threshold sliders moved to "Legacy" section
-3. **v1.0.0**: Static threshold logic removed (or kept as hidden fallback)
+1. **v0.7.x**: Gather user feedback, iterate on sensitivity defaults
+2. **v0.8.0**: Slope Detection enabled by default for new users
+3. **v0.9.0**: Static threshold sliders moved to "Legacy" section in GUI
+4. **v1.0.0**: Static threshold logic removed (or kept as hidden fallback)
 
 ---
 
-*Plan created: 2026-02-01*
-*Estimated implementation effort: ~200 lines of C++ code across 4 files*
+*Plan created: 2026-02-01*  
+*Last updated: 2026-02-01*  
+*Estimated implementation effort: ~300 lines of C++ code across 4 files*
