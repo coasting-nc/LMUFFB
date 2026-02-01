@@ -356,7 +356,7 @@ Not in v0.6.21, but planned for v0.6.22+.
 - **Technical Analysis:** `docs/dev_docs/road_texture_fallback_scaling_factor.md`
 - **Implementation Details:** `docs/dev_docs/Fix Violent Shaking when Stopping and no road textures.md`
 - **FFB Formulas:** `docs/dev_docs/FFB_formulas.md`
-- **Telemetry Reference:** `docs/dev_docs/telemetry_data_reference.md`
+- **Telemetry Reference:** `docs/dev_docs/references/Reference - telemetry_data_reference.md`
 
 ---
 

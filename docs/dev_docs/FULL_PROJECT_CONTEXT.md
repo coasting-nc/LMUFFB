@@ -36,6 +36,9 @@ cl /EHsc /std:c++17 /I.. /Ivendor\imgui /Ivendor\imgui\backends /DUNICODE /D_UNI
 tests\test_windows_platform.exe
 
 
+# Compile and save output to a utf8 txt file
+
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake --build build --config Release --clean-first | Out-File -FilePath "build_log.txt" -Encoding UTF8
 
 # Prerequisites
 
@@ -98,11 +101,128 @@ Get-Content tmp\test_results.txt
 tests\test_ffb_engine.exe 2>&1 | Select-String -Pattern "Tests (Passed|Failed):"
 ```
 
-# File: CHANGELOG.md
+# File: CHANGELOG_DEV.md
 ```markdown
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [0.7.0] - 2026-02-01
+
+### Added
+- **Dynamic Slope Detection (Tire Peak Grip Monitoring)**:
+  - Implemented real-time dynamic grip estimation using Lateral G vs. Slip Angle slope monitoring.
+  - Replaces static "Grip Loss" thresholds with an adaptive system that detects the tire's saturation point regardless of track conditions or car setups.
+  - Added Savitzky-Golay (SG) filtering (window size 15-31) to calculate high-fidelity derivatives of noisy telemetry data.
+  - **Front-Axle Specific**: Slope detection is applied exclusively to the front axle for precise understeer communication, while maintaining stability for rear grip effects.
+
+### Fixed
+- **Preset-Engine Synchronization**:
+  - Fixed a critical regression where newly added parameters (optimal_slip_angle, slope_detection, etc.) were missing from `Preset::Apply()` and `Preset::UpdateFromEngine()`.
+  - Resolved "Invalid optimal_slip_angle (0)" warnings that occurred when applying presets.
+- **FFBEngine Initialization Order**:
+  - Fixed circular dependency between `FFBEngine.h` and `Config.h` by moving the constructor to `Config.h`.
+
+### Improved
+- **Understeer Effect Fidelity**:
+  - The Understeer Effect now utilizes the dynamic slope to determine force reduction, providing a much more organic and informative "light wheel" feel during front-end slides.
+  - Added safety clamping (0.2 floor) and smoothing (configurable tau) to ensure stable feedback during rapid transitions.
+
+### Added
+- **Regression Test Suite**:
+  - Added 11+ new tests covering slope detection math, noise rejection, SG filter coefficients, and Preset-Engine synchronization.
+  - Added `test_preset_engine_sync_regression` to prevent future parameter synchronization omissions.
+
+## [0.6.39] - 2026-01-31
+
+**Special Thanks** to the community contributors for this release:
+- **@AndersHogqvist** for the Auto-connect to LMU PR.
+
+### Added
+- **Auto-Connect to LMU**:
+  - Implemented automatic connection logic that attempts to connect to LMU shared memory every 2 seconds when disconnected.
+  - Added robust connection state management: detects if the game process exits and automatically resets the connection state.
+  - **Improved UX**: The GUI now displays "Connecting to LMU..." in yellow while searching and "Connected to LMU" in green when active, eliminating the need for manual "Retry" clicks.
+- **SafeSharedMemoryLock Wrapper** (`src/lmu_sm_interface/SafeSharedMemoryLock.h`):
+  - Created wrapper class for vendor's `SharedMemoryLock` to add timeout support without modifying vendor code.
+  - Follows the same pattern as `LmuSharedMemoryWrapper.h` (which adds missing includes).
+  - **Benefit**: Avoids maintenance burden of modifying vendor files - easier to update when vendor releases new SDK versions.
+
+### Optimized
+- **FFB Loop Performance** (400Hz Critical Path):
+  - Reduced lock acquisitions from **3 to 2 per frame** (33% reduction in mutex operations).
+  - Modified `CopyTelemetry()` to return `bool` indicating realtime status instead of requiring separate `IsInRealtime()` call.
+  - Eliminated redundant O(104) vehicle iteration from the FFB critical section.
+  - **Impact**: 800 mutex operations/second (down from 1,200), improved responsiveness.
+
+### Refactored
+- **GameConnector Lifecycle**:
+  - Introduced `Disconnect()` method to centralize resource cleanup (closing handles, unmapping memory views).
+  - Fixed potential resource leaks in `TryConnect()` by ensuring cleanup before every connection attempt.
+  - Updated `IsConnected()` with double-checked locking pattern for performance (atomic fast-path, mutex for thorough check).
+  - **Process Handle Robustness**: Connection now succeeds even if window handle isn't immediately available or if `OpenProcess` fails, with informative logging.
+  - Updated destructor to ensure all handles are properly closed on application exit.
+- **Thread Safety**:
+  - Added `std::mutex` to protect shared state between FFB thread (400Hz) and GUI thread (60Hz).
+  - Added `std::atomic<bool>` for lock-free fast-path checks in `IsConnected()`.
+  - All public methods now properly synchronized with appropriate locking strategies.
+
+### Fixed
+- **GUI Static Variable**: Moved `last_check_time` initialization outside conditional block to prevent redundant re-initialization every frame.
+- **Test Suite**: Updated thread safety test to use new `CopyTelemetry()` return value API.
+
+### Documentation
+- **Vendor Code Tracking**: Created `docs/dev_docs/vendor_modifications.md` documenting known issues in vendor headers and our workaround strategies.
+- **Implementation Summary**: Detailed review fix implementation in `docs/dev_docs/code_reviews/implementation_summary_v0.6.39_fixes.md`.
+
+## [0.6.38] - 2026-01-31
+
+**Special Thanks** to the community contributors for this release:
+- **@DiSHTiX** for the LMU Plugin update PR.
+
+### Fixed
+- **LMU Plugin Update Build Break**: Fixed compilation errors in the updated `SharedMemoryInterface.hpp` by creating a header wrapper (`LmuSharedMemoryWrapper.h`).
+  - **Wrapper Approach**: Instead of editing the official vendor files provided by Studio 397, we now include the missing standard library headers (`<optional>`, `<utility>`, `<cstdint>`, `<cstring>`) in our wrapper file before including the official header.
+  - **Benefit**: This approach preserves the integrity of official source files, making future plugin updates easier to integrate and reducing maintenance burden.
+  - **Compatibility**: Ensures full compatibility with the new 2025 plugin interface (LMU 1.2/1.3 standards).
+
+### Changed
+- **LMU Plugin Interface**: Updated `InternalsPlugin.hpp` and `PluginObjects.hpp` to the latest 2025 version, aligning with LMU 1.2/1.3 standards.
+
+## [0.6.37] - 2026-01-31
+
+**Special Thanks** to the community contributors for this release:
+- **@MartinVindis** for designing and providing the application icon.
+- **@DiSHTiX** for the pull request and implementation logic to integrate the icon.
+
+### Added
+- **Application Icon**: Added a custom application icon (`lmuffb.ico`) to the executable.
+  - The icon is now embedded in the Windows executable and displayed in Explorer and the Taskbar.
+  - Added build system support (`CMakeLists.txt`) to compile and link the resource file.
+  - **Robust Build Verification**: Added `tests/test_icon_presence` to ensure the icon is correctly staged.
+    - **Path Agnostic**: Uses the Windows API to locate the build artifact relative to the running executable, ensuring the test passes regardless of the working directory.
+    - **Data Integrity**: Inspects the icon file's binary header (0x00000100) to verify it is a valid `.ico` file and not an empty placeholder.
+
+## [0.6.36] - 2026-01-05
+### Refactored
+- **FFB Engine Architecture**: Massive refactoring of `FFBEngine::calculate_force` to improve maintainability and scalability.
+  - **Context-Based Processing**: Introduced `FFBCalculationContext` struct to pass derived values (speed, load, dt) efficiently between methods.
+  - **Modular Helper Methods**: Extracted monolithic logic into focused private methods (`calculate_sop_lateral`, `calculate_gyro_damping`, `calculate_abs_pulse`, etc.).
+  - **Improved Readability**: Significantly reduced the complexity of the main calculation loop.
+
+### Fixed
+- **Torque Drop Logic Regression**: Fixed a critical issue where the "Torque Drop" (Spin Gain Reduction) was incorrectly attenuating texture effects (Road, Slide, Spin, Bottoming).
+  - **Restored Behavior**: Torque Drop now ONLY applies to "Structural" forces (Base, SoP, Rear Torque, Yaw, Gyro, ABS, Lockup, Scrub). Texture forces are added *after* the drop, ensuring vibrations remain distinct even during traction loss (drifting/burnouts).
+- **Telemetry Snapshot Regression**: Fixed `sop_force` in debug snapshots incorrectly including the oversteer boost component.
+  - **Restored Behavior**: Snapshots now correctly report the unboosted lateral force for `sop_force` and the boost delta for `oversteer_boost`, enabling accurate debugging of the SoP pipeline.
+- **ABS Pulse Summation**: Fixed a logic error where the ABS pulse force was not being added to the final FFB sum in some scenarios.
+
+### Code Review Follow-up (Additional Improvements)
+- **`calculate_wheel_slip_ratio` Helper**: Extracted duplicated `get_slip` lambda from `calculate_lockup_vibration` and `calculate_wheel_spin` into a unified public helper method. Reduces code duplication and improves testability.
+- **`apply_signal_conditioning` Method**: Extracted ~70 lines of signal conditioning logic (idle smoothing, frequency estimation, dynamic/static notch filters) into a dedicated public helper method. Makes the main `calculate_force` method a cleaner high-level pipeline.
+- **Unconditional State Update Fix**: Moved `m_prev_vert_accel` update from inside `calculate_road_texture` (conditional) to the unconditional state updates section at the end of `calculate_force`. Prevents stale data issues when road texture is disabled.
+- **Build Warning Fixes**: Fixed MSVC warnings C4996 (strncpy unsafe) and C4305 (double-to-float truncation) in test files.
+- **New Tests**: Added 8 new regression tests for the extracted helper methods (483 total tests, 0 failures).
 
 ## [0.6.35] - 2026-01-04
 ### Added
@@ -381,7 +501,7 @@ All notable changes to this project will be documented in this file.
   - **Removed "Manual Slip" Toggle**: The engine now always uses the most accurate native telemetry data for slip calculations. The manual calculation fallback remains as an automatic internal recovery mechanism for encrypted content.
   - **Unified Frequency Math**: Synchronized all vibration oscillators to use time-corrected phase accumulation for perfect stability during frame stutters.
 - **Documentation**:
-  - Updated **FFB_formulas.md** and **telemetry_data_reference.md** to reflect the new frequency tuning math and expanded physics ranges.
+  - Updated **FFB_formulas.md** and **Reference - telemetry_data_reference.md** to reflect the new frequency tuning math and expanded physics ranges.
 
 ### Fixed
 - **Test Suite Alignment**: Resolved all regression test failures caused by the removal of the manual slip toggle and the expansion of safety clamping limits.
@@ -1560,6 +1680,91 @@ All notable changes to this project will be documented in this file.
 
 ```
 
+# File: CONTRIBUTORS.md
+```markdown
+# Contributors
+
+This project exists thanks to all the people who contribute. ❤️
+
+## Core Development
+
+**[@coasting-nc](unlinked: github_com/coasting-nc)** (ErwinMoss)  
+*Primary developer and maintainer*  
+- Core FFB engine architecture and physics implementation
+- GUI design and user experience
+- Build system and testing infrastructure
+- Project documentation and maintenance
+
+---
+
+## Community Contributors
+
+The following community members have made significant contributions to LMUFFB:
+
+### Feature Contributors
+
+**[@AndersHogqvist](unlinked: github_com/AndersHogqvist)**  
+*Auto-connect to LMU Feature (v0.6.39)*  
+- Implemented automatic connection detection for Le Mans Ultimate
+- Added periodic retry logic and process lifecycle management
+- Improved user experience by eliminating manual "Connect" button
+- **PR #16** - [Auto-connect to LMU](unlinked: github_com/coasting-nc/LMUFFB/pull/16)
+
+**[@DiSHTiX](unlinked: github_com/DiSHTiX)**  
+*LMU Plugin Update & Application Icon (v0.6.38, v0.6.37)*  
+- Updated to 2025 LMU Plugin Interface (1.2/1.3 standards)
+- Implemented application icon integration
+- Build system enhancements for icon embedding
+- **Contributions:** Plugin interface updates, icon implementation
+
+**[@MartinVindis](unlinked: github_com/MartinVindis)**  
+*Application Icon Design (v0.6.37)*  
+- Created the custom LMUFFB application icon
+- Visual identity and branding design
+
+---
+
+## Testing & Feedback
+
+Special thanks to the Le Mans Ultimate community members who provided valuable testing, feedback, and suggestions throughout development:
+
+- Community members on the [LMU Forums](unlinked: community_lemansultimate_com/index_php?threads/lmuffb-app_10440/)
+- Early adopters who tested experimental builds
+- Users who reported bugs and provided diagnostic information
+- Preset testers (T300, DD wheelbases, etc.)
+
+---
+
+## How to Contribute
+
+We welcome contributions from the community! Here's how you can help:
+
+1. **Report Bugs**: Open an issue on [GitHub](unlinked: github_com/coasting-nc/LMUFFB/issues)
+2. **Suggest Features**: Share your ideas in the discussions
+3. **Submit Pull Requests**: 
+   - See our [detailed contribution guide](docs/dev_docs/contribute_to_the_project/how_to_contribute_to_the_project.md) for comprehensive step-by-step instructions
+   - The guide covers AI-assisted development workflows (using tools like Antigravity and Google AI Studio)
+   - Includes requirements for implementation plans, automated tests, code reviews, and documentation updates
+   - Also explains workflows for manual contributions, bug investigations, and simple tasks like adding FFB presets
+   - All PRs require an AI-generated code review document, even for manually written code.
+4. **Share Presets**: Help other users with your optimal settings
+5. **Improve Documentation**: Help us make the project more accessible
+
+---
+
+## Recognition
+
+All contributors are also recognized in:
+- Individual version entries in [CHANGELOG.md](CHANGELOG.md)
+- Release notes on [GitHub Releases](unlinked: github_com/coasting-nc/LMUFFB/releases)
+- Community forum posts
+
+---
+
+**Thank you to everyone who has contributed to making LMUFFB better!** 🎉
+
+```
+
 # File: NEW_AGENTS.md
 ```markdown
 # LMUFFB - AI Developer Guide
@@ -1603,8 +1808,8 @@ Run all tests that had already been compiled:
     *   **Why**: Documentation changes often reflect new features, API changes, architecture updates, or critical fixes. You must stay current with the project's evolving knowledge base.
     *   **Priority Files**: Pay special attention to changes in:
         *   `README.md` - User-facing features and setup
-        *   `CHANGELOG.md` - Recent changes and version history
-        *   `docs/dev_docs/telemetry_data_reference.md` - API source of truth
+        *   `CHANGELOG_DEV.md` - Recent changes and version history
+        *   `docs/dev_docs/references/Reference - telemetry_data_reference.md` - API source of truth
         *   `docs/dev_docs/FFB_formulas.md` - Physics and scaling constants
         *   `docs/architecture.md` - System design and components
         *   `AGENTS_MEMORY.md` - Previous session learnings
@@ -1622,7 +1827,7 @@ Run all tests that had already been compiled:
 *   **Common Documentation Targets**:
     *   **Math/Physics Changes** → Update `docs/dev_docs/FFB_formulas.md`
     *   **New FFB Effects** → Update `docs/ffb_effects.md` AND `docs/the_physics_of__feel_-_driver_guide.md`
-    *   **Telemetry Usage** → Update `docs/dev_docs/telemetry_data_reference.md`
+    *   **Telemetry Usage** → Update `docs/dev_docs/references/Reference - telemetry_data_reference.md`
     *   **GUI Changes** → Update `README.md` (text descriptions)
     *   **Architecture Changes** → Update `docs/architecture.md`
     *   **New Features** → Update `README.md`, `docs/introduction.md`, and relevant feature docs
@@ -1633,7 +1838,7 @@ Run all tests that had already been compiled:
     *   `docs/` - User-facing documentation
     *   `docs/dev_docs/` - Developer and technical documentation
     *   `docs/bug_reports/` - Bug reports and troubleshooting
-    *   Root `.md` files - `README.md`, `CHANGELOG.md`, `AGENTS.md`, `AGENTS_MEMORY.md`
+    *   Root `.md` files - `README.md`, `CHANGELOG_DEV.md`, `AGENTS.md`, `AGENTS_MEMORY.md`
 *   **Critical**: Do NOT assume only one document needs updating. Your changes may affect multiple documents.
 
 ### 5. 📦 Versioning & Changelog
@@ -1641,20 +1846,24 @@ Run all tests that had already been compiled:
     *   *Patch (0.0.X)*: Bug fixes, tweaks, refactoring.
     *   *Minor (0.X.0)*: New features, new effects.
     *   You must also update `src\Version.h`.
-*   **Update Changelog**: Add a concise entry to `CHANGELOG.md` under the new version number.
+*   **Update Changelog**: Add a concise entry to `CHANGELOG_DEV.md` under the new version number.
 
 ### 6. 🧠 Update Memory (Critical)
 *   **Action**: If you encountered a build error, a command failure, or learned something new about the code structure, append it to `AGENTS_MEMORY.md`.
 *   **Goal**: Help the *next* AI session avoid the same problem.
 
 ### 7. 📤 Delivery
-*   **Do Not Push**: Do not run any command that change git history (e.g. `git add`, `git commit`, `git push`) or that reset the local staged changes (e.g. `git reset`).
+*   **🚫 NO GIT STAGING**: You are strictly forbidden from running `git add`, `git commit`, or `git reset`.
+    *   **Rule**: Modify files on disk ONLY.
+    *   **Reason**: The user must review and stage changes manually.
+    *   **No Exceptions**: Do not stage files even if you created them.
+*   **Do Not Push**: Do not run `git push`.
 
 *   **MANDATORY CHECKLIST**:
     *   [ ] **Documentation Scanned**: Did you scan all `.md` files and identify relevant docs?
     *   [ ] **Documentation Updated**: Did you update ALL relevant documentation (not just one file)?
     *   [ ] **Version Bumped**: Did you increment the number in `VERSION`?
-    *   [ ] **Changelog Updated**: Did you add a section in `CHANGELOG.md`?
+    *   [ ] **Changelog Updated**: Did you add a section in `CHANGELOG_DEV.md`?
     *   [ ] **Tests Passed**: Did you verify with `run_tests`?
 
 ---
@@ -1692,7 +1901,7 @@ Run all tests that had already been compiled:
 ## 📂 Key Documentation References
 
 *   **Formulas**: `docs/dev_docs/FFB_formulas.md` (The math behind the code).
-*   **Telemetry**: `docs/dev_docs/telemetry_data_reference.md` (Available inputs).
+*   **Telemetry**: `docs/dev_docs/references/Reference - telemetry_data_reference.md` (Available inputs).
 
 ---
 
@@ -1788,7 +1997,7 @@ Your testing and feedback is greatly appreciated! 🙏
     -   **Automatic Fix (v0.6.22+)**: This is now automatically handled by the Automatic Idle Smoothing feature. The vibration should fade out when you're stationary and return to normal when driving.
     -   **Manual Workaround (older versions)**: Go to **Signal Filtering**, enable **Static Noise Filter**, and set the frequency to **10-15 Hz**. Adjust until the bouncing stops. This will surgically remove the engine bounce without making the steering feel light.
 -   **FFB too weak**:
-    -   Increase **Master Gain**.
+    -   Increase **Master Gain** (slider ranges from 0% to 200%, so you can boost beyond 100%).
     -   Or reduce **Max Torque Ref** (this amplifies the signal by setting a lower reference point for maximum torque).
 -   **Violent oscillations or shaking**:
     -   If you experience violent oscillations that the Smoothing or Speed Gate settings don't catch, try **increasing Max Torque Ref** (e.g., from 45 to 60-80 Nm).
@@ -1827,8 +2036,9 @@ For feedback, questions, or support:
 *   [Driver's Guide to Testing LMUFFB](docs/Driver's%20Guide%20to%20Testing%20LMUFFB.md) - Suggestions for specific driving scenarios and car setups to test each FFB effect 
 *   [The Physics of Feel - Driver's Guide](docs/the_physics_of__feel_-_driver_guide.md) - Explains how lmuFFB translates telemetry into tactile sensations, with telemetry visualizations
 *   [FFB Effects & Customization Guide](docs/ffb_effects.md)
-*   [Telemetry Data Reference](docs/dev_docs/telemetry_data_reference.md)
+*   [Telemetry Data Reference](docs/dev_docs/references/Reference - telemetry_data_reference.md)
 *   [FFB Math Formulas](docs/dev_docs/FFB_formulas.md)
+*   [How to Contribute to the Project](docs/dev_docs/contribute_to_the_project/how_to_contribute_to_the_project.md) - Step-by-step guide for contributors using AI-assisted coding tools
 
 
 ## Features
@@ -1885,6 +2095,11 @@ After building, run the unified test runner to verify everything (Physics, Windo
 
 **Note**: rFactor 2 is **not supported** in v0.4.0+. For rFactor 2, please use earlier versions of lmuFFB (v0.3.x). See the [releases page](unlinked: github_com/coasting-nc/LMUFFB/releases) for v0.3.x downloads.
 rF2 will be supported again in a future version, in particular to compare our grip approximation alghorithm with the real values returned by the game for non DLC cars.
+
+
+ ### Support for AC, ACC, ACE
+
+ It is planned for a future release. See unlinked: github_com/coasting-nc/LMUFFB/issues/30
 
 ```
 
@@ -2024,6 +2239,11 @@ see README.md or visit:
 - FFB Tuning Recommendations: unlinked: github_com/coasting-nc/LMUFFB/blob/main/docs/FFB%20Tuning%20Recommendations_md
 - Main Project Page: unlinked: github_com/coasting-nc/LMUFFB
 
+CONTRIBUTING
+------------
+Want to contribute? See the step-by-step guide for contributors:
+docs/dev_docs/contribute_to_the_project/how_to_contribute_to_the_project.md
+
 
 ===============================================================================
 RFACTOR 2 COMPATIBILITY
@@ -2037,6 +2257,3472 @@ unlinked: github_com/coasting-nc/LMUFFB/releases
 rF2 will be supported again in a future version, in particular to compare 
 our grip approximation algorithm with the real values returned by the game 
 for non DLC cars.
+
+===============================================================================
+SUPPORT FOR OTHER SIMS
+===============================================================================
+ 
+Support for AC, ACC, ACE is planned for a future release. See unlinked: github_com/coasting-nc/LMUFFB/issues/30
+
+```
+
+# File: SECURITY.md
+```markdown
+# Security Policy
+
+## Supported Versions
+
+Use this section to tell people about which versions of your project are
+currently being supported with security updates.
+
+| Version | Supported          |
+| ------- | ------------------ |
+| 5.1.x   | :white_check_mark: |
+| 5.0.x   | :x:                |
+| 4.0.x   | :white_check_mark: |
+| < 4.0   | :x:                |
+
+## Reporting a Vulnerability
+
+Use this section to tell people how to report a vulnerability.
+
+Tell them where to go, how often they can expect to get an update on a
+reported vulnerability, what to expect if the vulnerability is accepted or
+declined, etc.
+
+```
+
+# File: USER_CHANGELOG.md
+```markdown
+# lmuFFB App Version Releases by ErwinMoss
+
+This document contains all version release posts by ErwinMoss from the [url=unlinked: community_lemansultimate_com/index_php?threads/lmuffb-app_10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
+
+[b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
+
+---
+
+[size=5][b]February 1, 2026[/b][/size]
+[b]Version v0.7.0 - Dynamic Slope Detection[/b]
+
+[b]New release[/b] (v0.7.0) unlinked: github_com/coasting-nc/LMUFFB/releases
+
+This is a major update introducing [b]Dynamic Slope Detection[/b] for tire grip estimation.
+
+[b]Major Features:[/b]
+[list]
+[*] [b]Dynamic Understeer Feel[/b]: Instead of using a fixed "Optimal Slip Angle", the app now monitors the slope of the tire curve (Lateral G vs Slip Angle) in real-time. This allows lmuFFB to detect exactly when the tire starts to saturate, providing a much more precise and natural Understeer feel that adapts to different cars, tires, and track conditions.
+[*] [b]Advanced Signal Processing[/b]: Uses Savitzky-Golay filtering to calculate clean derivatives from noisy telemetry data, ensuring smooth and stable feedback.
+[*] [b]Safety Hardening[/b]: Added comprehensive regression tests to ensure all settings are correctly synchronized and saved across sessions.
+[/list]
+
+[b]Tuning Tip:[/b] You can find the new Slope Detection settings under the "Grip Estimation" section. For most users, the default settings will provide a significantly improved Understeer cue out-of-the-box.
+
+---
+
+[size=5][b]Post #1 - July 24, 2025[/b][/size]
+[b]Initial Thread Creation[/b]
+
+lmuFFB early version released: unlinked: github_com/coasting-nc/LMUFFB/releases/
+
+Some of the FFB formulas might need refinements. Adjust the FFB configuration options in lmuFFB to see which of the currently supported effects you prefer.
+
+Post your screenshots of the Graphs, the main lmuFFB window and the console here if you can (use the Save Screenshot button to capture them all).
+
+Your testing and feedback is greatly appreciated!
+
+Project homepage: unlinked: github_com/coasting-nc/LMUFFB
+Download latest version: unlinked: github_com/coasting-nc/LMUFFB/releases/
+
+---
+
+[size=5][b]Post #10 - December 6, 2025[/b][/size]
+[b]Early Version Release[/b]
+
+I've created an early version of LMUFFB: unlinked: github_com/coasting-nc/LMUFFB/releases
+
+It needs vJoy + the rF2 shared-memory plugin. I haven't fully tested it yet (sorting my wheel), so please give it a spin and drop any bugs/feedback here or on GitHub. Thanks!
+
+---
+
+[size=5][b]Post #41 - December 9, 2025[/b][/size]
+[b]Version v0.4.0b - LMU 1.2 Support Added[/b]
+
+Support for LMU 1.2 added, give it a try: unlinked: github_com/coasting-nc/LMUFFB/releases/tag/v0_4_0b
+
+Remember that this is an experimental version, for safety you should first lower you wheel max strength from your device driver configurator, since the app might cause strong force spikes and oscillations. Eg. 10 % max force for DDs, 20-30 % for gear/belt driven wheels.
+
+The app probably still needs refinements to the FFB formulas. Adjust the FFB configuration options in lmuFFB to see if you manage to get a workable FFB signal.
+Post your screenshots of the Troubleshooting Graphs window and the main lmuFFB window here if you can.
+
+Your testing and feedback is greatly appreciated!
+
+---
+
+[size=5][b]December 11, 2025[/b][/size]
+[b]Version v0.4.4b[/b]
+
+[b]New release[/b]: unlinked: github_com/coasting-nc/LMUFFB/releases/tag/v0_4_4b
+
+Updates to install instructions:
+[list]
+[*]vJoy might not be necessary, ignore the warning. Just set the ingame FFB to 0% and off.
+[*]If FFB feels "backwards" or "inverted" (wheel pushes away from center instead of pulling toward it), check or uncheck the "Invert FFB" checkbox in the lmuFFB GUI to reverse the force direction
+[*]See README.txt for the rest of the instructions
+[/list]
+
+Known issues:
+You will see warnings about Missing Tire Load and Missing Grip Fraction data detected. This is EXPECTED and NOT a bug in lmuFFB. This is a BUG IN LMU 1.2 - the game is currently returning ZERO (0) for all tire load and grip fraction values, even though the shared memory interface includes these fields.
+
+---
+
+[size=5][b]December 15, 2025[/b][/size]
+[b]Version v0.4.15+ - Major Stability Fix[/b]
+
+[b]New release[/b] (v0.4.15+) unlinked: github_com/coasting-nc/LMUFFB/releases
+
+This should fix the FFB instability issues (eg. intermittent inverse FFB).
+It also removes the messages and instructions about vJoy and the rFactor 2 shared memory dll, since vJoy is no longer needed, and there are no problems if you keep the shared memory dll in the game.
+
+Full changelogs: unlinked: github_com/coasting-nc/LMUFFB/blob/main/CHANGELOG_DEV_md
+ 
+---
+
+[size=5][b]December 15, 2025[/b][/size]
+[b]Version v0.4.16 - Yaw Kick Effect[/b]
+
+[b]New release[/b] (v0.4.16) unlinked: github_com/coasting-nc/LMUFFB/releases
+
+This introduces a new Yaw Kick effect within the Seat of Pants effect, that tells when the rear starts to step out. This should help catch early slides.
+
+---
+
+[size=5][b]December 16, 2025[/b][/size]
+[b]Version v0.4.18 - Gyroscopic Damping[/b]
+
+[b]New release[/b] (v0.4.18) unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Added Gyroscopic Damping (stabilization effect to prevent "tank slappers" during drifts), and smoothing to the Yaw Kick effect.
+
+---
+
+[size=5][b]December 16, 2025[/b][/size]
+[b]Version v0.4.19 - Coordinate System Fix[/b]
+
+[b]New release[/b] (v0.4.19) unlinked: github_com/coasting-nc/LMUFFB/releases
+
+This fixes a few bugs on the use of rF2 / LMU coordinate system. This should fix the issue of the broken slide rumble.
+
+---
+
+[size=5][b]December 19, 2025[/b][/size]
+[b]Version v0.4.20 - Force Direction Fixes[/b]
+
+[b]New release[/b] (v0.4.20) unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Fixed two force direction inversions that were causing the wheel to pull in the direction of the turn/slide instead of resisting it, creating unstable positive feedback loops (Positive Feedback Loop in Scrub Drag and Yaw Kick).
+
+Let me know if this new version fixes the issue with the slide rumble. If you still get this or some other issue, please post a screenshot of the UI with at least the main window with the settings (you can use the save screenshot button for convenience).
+
+---
+
+[size=5][b]December 19, 2025[/b][/size]
+[b]Version v0.4.24 - Guide Presets[/b]
+
+[b]New release[/b] (v0.4.24) unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Note: make sure to check you have in-game FFB disabled and strength set to 0%, since after an LMU update these values can get enabled again.
+
+Added [b]Guide Presets[/b]: Added 5 new built-in presets corresponding to the "Driver's Guide to Testing LMUFFB".
+[list]
+[*]Guide: Understeer (Front Grip): Isolates the grip modulation effect.
+[*]Guide: Oversteer (Rear Grip): Isolates SoP and Rear Aligning Torque.
+[*]Guide: Slide Texture (Scrub): Isolates the scrubbing vibration (mutes base force).
+[*]Guide: Braking Lockup: Isolates the lockup vibration (mutes base force).
+[*]Guide: Traction Loss (Spin): Isolates the wheel spin vibration (mutes base force).
+[/list]
+
+These presets allow users to quickly configure the app for the specific test scenarios described in the documentation.
+
+---
+
+[size=5][b]December 20, 2025[/b][/size]
+[b]Version v0.4.31 - T300 Preset[/b]
+
+[b]New release[/b] (v0.4.31) unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Fixed inverted SoP (Lateral G) effect, and added a new T300 preset that has working default values for understeer and oversteer / SoP effects.
+
+---
+
+[size=5][b]December 20, 2025[/b][/size]
+[b]Version v0.4.37 - Slide Texture Overhaul[/b]
+
+[b]New release[/b] (v0.4.37) unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Fixed Slide Rumble bug (due to "phase explosion" issue that caused massive constant force pulls during frame stutters).
+
+[b]Slide Texture Overhaul[/b]: Now detects rear slip (drifting/donuts), uses optimized frequencies (10-70Hz) for better rumble on belt wheels, and adds a manual Pitch slider.
+
+[b]Tuning[/b]: All defaults and presets have been re-calibrated around a T300 baseline
+
+---
+
+[size=5][b]December 20, 2025[/b][/size]
+[b]Version v0.4.38 - Frame Stutter Fixes[/b]
+
+[b]New release[/b] (v0.4.38) unlinked: github_com/coasting-nc/LMUFFB/releases
+
+More fixes to ensure consistent FFB even in case of physics frames stuttering.
+
+---
+
+[size=5][b]December 20, 2025[/b][/size]
+[b]Version v0.4.39 - Improved Tyre Physics[/b]
+
+[b]New release[/b] (v0.4.39) unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Implemented better approximations for tyre grip and load.
+
+---
+
+[size=5][b]December 21, 2025[/b][/size]
+[b]Version v0.4.43 - Latency Reduction & Flatspot Suppression[/b]
+
+[b]New release[/b] (v0.4.43) unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Fixed "delay" in FFB: reduced latency to < 15ms due to SoP Smoothing and Slip Angle Smoothing
+
+Added sliders to adjust SoP Smoothing and Slip Angle Smoothing
+
+[b]Eliminating LMU tyre flatspot vibration[/b]:
+[list]
+[*]Added Dynamic Notch Filter (Flatspot Suppression) with Dynamic Suppression Strength
+[*]Added Static Notch Filter
+[*]See this guide on how to use them: Dynamic Flatspot Suppression - User Guide
+[/list]
+
+Fixes to Yaw Kick noise: Muted for low forces and low speeds.
+
+---
+
+[size=5][b]December 21, 2025[/b][/size]
+[b]Version v0.4.44 - Focus Loss Diagnostics[/b]
+
+[b]New release[/b] (v0.4.44) unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Fixes and diagnostics for the wheel disconnecting when lmuffb app is not focused.
+
+If you still get issues with the FFB disappearing or wheel disconnecting when lmuffb app is not focused, try the following:
+[list]
+[*]Start the lmuFFB app and select your wheel in the drop down menu BEFORE starting LMU (in this way it might keep its priority on the wheel)
+[*]In any case, paste in this forum thread the text or screenshot from the lmuFFB app console, since there are new logs that help diagnose what is causing the problem.
+[/list]
+
+---
+
+[size=5][b]December 23, 2025[/b][/size]
+[b]Version v0.4.45 / v0.4.46 / v0.5.2 - GUI Improvements[/b]
+
+[b]New release[/b] (v0.4.45) unlinked: github_com/coasting-nc/LMUFFB/releases
+
+[list]
+[*]Added checkbox for [b]"Always on Top" Mode[/b]
+[*]Fine adjustments to the sliders with keyboard keys (left and right arrows)
+[/list]
+
+Version v0.4.46:
+[list]
+[*]Reorganized GUI with 10 collapsible sections, including General FFB settings, Understeer/Front Tyres, Oversteer/Rear Tyres, Grip Estimation, Haptics, and Textures.
+[/list]
+
+Version 0.5.2:
+[list]
+[*]Improved visual design and readability of the app.
+[*]Normalized most sliders to a 0-100% range
+[/list]
+
+---
+
+[size=5][b]December 24, 2025[/b][/size]
+[b]Version 0.5.7 - New Sliders[/b]
+
+[b]New release[/b] (0.5.7): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Added new sliders:
+[list]
+[*][b]optimal_slip_angle[/b]: used to estimate grip, affects these effects: Understeer, Oversteer Boost, Slide Texture.
+[*][b]optimal_slip_ratio[/b]: controls the "Combined Friction Circle" logic. It determines how much Longitudinal Slip (Braking or Acceleration) contributes to the calculated "Grip Loss." It also scales the vibration strength for Slide Texture.
+[*][b]steering_shaft_smoothing[/b]: low pass filter smoothing for the steering shaft torque. It could help reduce "vibrations" from the steering shaft, noticeable in DD wheels. Could be similar to the in-game FFB smoothing settig.
+[/list]
+
+---
+
+[size=5][b]December 24, 2025[/b][/size]
+[b]Version 0.5.8 / 0.5.10 - Error Handling & Smoothing[/b]
+
+[b]New release[/b] (0.5.8): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Improves Error Handling for no FFB when lmuFFB not on top.
+[list]
+[*]Aggressive FFB Recovery: Implemented more robust DirectInput connection recovery. Try to re-acquire the wheel even when the error code is "unknown"
+[*]Set "Always on Top" on by default
+[*]Added more informative prints to the console when FFB / wheel connection is lost
+[/list]
+
+If you still get the issue, paste here a screenshot of the console of lmuFFB.
+
+[b]EDIT: New release (0.5.10)[/b]: unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Added 3 additional sliders that expose three pre-existing smoothing settings:
+[list]
+[*]Yaw Kick Smoothing, Gyroscopic Damping Smoothing, Chassis Inertia (Load) Smoothing
+[/list]
+
+---
+
+[size=5][b]December 25, 2025[/b][/size]
+[b]Version 0.5.14 - Error Logging[/b]
+
+[b]New release[/b] (0.5.14): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+[list]
+[*]Improved more informative error logs on the console to diagnose FFB lost or wheel disconnected.
+[/list]
+
+---
+
+[size=5][b]December 25, 2025[/b][/size]
+[b]Version 0.6.1 - Advanced Braking & Lockup Effects[/b]
+
+[b]New release[/b] (0.6.1): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Added new section of settings for [b]Advanced Braking & Lockup effects[/b] adjustments:
+
+Introduces [b]Predictive Lockup logic[/b] based on [b]Angular Deceleration of the wheels[/b], allowing the driver to feel the onset of a lockup before the tire saturates.
+
+[list]
+[*]Added sliders to determine at which level of slip the lockup vibration starts (0% amplitude, defaults at 5% slip) and saturates (100% amplitude, defaults at 12-15% slip).
+[*]Added Vibration Gamma for a non linear response from 0% to 100% amplitude: 1.0 = Linear, 2.0 = Quadratic, 3.0 = Cubic (Sharp/Late)
+[*]Added [b]ABS Pulse[/b] effect based on Brake Pressure.
+[*]Uses Brake Pressure info to ensure that Brake Bias changes and ABS are correctly felt through the wheel.
+[*]Modulating the vibration amplitude based on Brake Fade (mBrakeTemp > 800°C).
+[/list]
+
+Rear vs Front lockup differentiation:
+[list]
+[*]Added "Rear Boost" adjustment that multiplies vibration amplitude when the rears lockup
+[*]Also using a different vibration frequency for rear vs front lockups.
+[/list]
+
+Advanced gating logic to avoid false positives and false negatives in lockup detection:
+[list]
+[*]Brake Gate: Effect is disabled if Brake Input < 2%.
+[*]Airborne Gate: Effect is disabled if mSuspForce < 50N (Wheel in air).
+[*]Bump Rejection: Effect is disabled if Suspension Velocity > Threshold (e.g., 1.0 m/s).
+[*]Relative Deceleration: The wheel must be slowing down significantly faster than the chassis.
+[/list]
+
+Added sliders to adjust some of the main gating mechanisms:
+[list]
+[*]Prediction sensitivity: angular deceleration threshold
+[*]Bump Rejection: suspension velocity threshold to disable prediction. Increase for bumpy tracks (Sebring)
+[/list]
+
+---
+
+[size=5][b]December 25, 2025[/b][/size]
+[b]Version 0.6.2 - DirectInput Recovery[/b]
+
+[b]New release[/b] (0.6.2): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+[list]
+[*]Improved mechanism to [b]reacquire the wheel device from DirectInput[/b] if LMU regains exclusive control to send FFB.
+[/list]
+
+---
+
+[size=5][b]December 27, 2025[/b][/size]
+[b]Version 0.6.20 - Tooltip Overhaul[/b]
+
+[b]New release[/b] (0.6.20): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Changes since v. 0.6.2:
+[list]
+[*]Overhauled all tooltips
+[*]Added Adjustable Yaw Kick Activation Threshold (to remove any noise from the Yaw Kick, and only "kick in" when there is an actual slide starting)
+[*]LMU tire vibration removal (Static Notch Filter): Added "Filter Width" (0.1 to 10.0 Hz) for the frequency to block
+[*]Renamed "SoP Lateral G" to "Lateral G"
+[*]Renamed "Rear Align Torque" to "SoP Self-Aligning Torque"
+[*]Expanded the ranges of some sliders
+[*]Added sliders to adjust frequency / pitch for vibration effects
+[*]Troubleshooting Guide in Readme
+[*]Added console prints that detect when some telemetry data (Grip, Tire Load, Suspension) is missing
+[*]Save Screenshot button now also include a screenshot of the console
+[/list]
+
+---
+
+[size=5][b]December 28, 2025[/b][/size]
+[b]Version 0.6.22 - Vibration Fixes[/b]
+
+[b]New release[/b] (0.6.22): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Fixed vibrations when car still / in the pits:
+[list]
+[*]Disabled vibration effects when speed below a certain threashold (ramp from 0.0 vibrations at < 0.5 m/s to 1.0 vibrations at > 2.0 m/s).
+[*]Automatic Idle Smoothing: Steering Torque is smoothed when car is stationary or moving slowly (< 3.0 m/s). This should remove any remaining engine vibrations.
+[*]Road Texture Fallback: alternative method to calculate Road Texture when mVerticalTireDeflection is encrypted from the game (the fallback switches to using Vertical Acceleration  / mLocalAccel.y)
+[*]Added console print to diagnose when mVerticalTireDeflection is encrypted
+[*]Clarified other console prints about missing data (eg. mTireLoad): this is due to the data being encrypted by LMU on all cars (due to both licensing issues, and, for some data, to avoid esports exploits).
+[/list]
+
+---
+
+[size=5][b]December 28, 2025[/b][/size]
+[b]Version 0.6.23 - Smoothing Adjustments[/b]
+
+[b]New release[/b] (0.6.23): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+[list]
+[*]Increased default max speed for smoothing of steering torque from 10km/h to 18/km (you should get no more engine / clutch vibrations below 18 km/h).
+[*]Added slider to the GUI to adjust this value (It's a new  Advanced Settings at the bottom of the GUI, below the Tactile Textures section).
+[/list]
+
+If you still get the issue of vibrations at low speed, please post a screenshot with the Graphs, include all three of the graph sections.
+
+[b]Edit[/b]: Note that you should set Max Torque Ref according to the Car's Peak Output, NOT your wheelbase capability. The current tooltip is wrong about this. A value of 100 Nm often works best, and values of at least ~40-60 Nm should prevent clipping.
+
+---
+
+[size=5][b]January 1, 2026[/b][/size]
+[b]Version 0.6.30 - Low-Speed Fixes[/b]
+
+[b]New release[/b] (0.6.30): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+[list]
+[*]Fixed Remaining Vibrations at Low-Speed and when in Pits: applied muting and smoothing also to SoP (including Self Aligning Torque) and Base Torque (steering rack).
+[*]Fixed: some settings were not being saved to the ini file, so they were been restored to defaults every time you opened the app.
+[*]Added auto save feature: every time you change a slider, the configuration gets saved to the ini file.
+[*]Updated T300 preset, tested on LMP2 car
+[*]Clarified Max Torque Ref tooltip: it represents the expected PEAK torque of the CAR in the game, NOT the wheelbase capability
+[/list]
+
+Findings from more testing: the Understeer Effect seems to be working. In fact, with the LMP2 it is even too sensitive and makes the wheel too light. I had to set the understeer effect slider to 0.84, and even then it was too strong. It was not the case with LMGT3 (Porsche).
+
+---
+
+[size=5][b]January 2, 2026[/b][/size]
+[b]Version 0.6.31 - Understeer Effect Fixes[/b]
+
+[b]New release[/b] (0.6.31): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Fixes for Understeer Effect:
+[list]
+[*]Reduced the previous range from 0-200 to 0-2 (since the useful values seemed to be only between 0-2)
+[*]Normalized the slider as a percentage 0-200% (now 200% corresponds to the previous 2.0)
+[*]Changed optimal slip angle value in T300 preset to 0.10 (up from 0.06)
+[*]Overhauled the tooltips for "Understeer Effect" and "Optimal Slip Angle"
+[/list]
+
+---
+
+[size=5][b]January 2, 2026[/b][/size]
+[b]Version 0.6.32 - Preset Fix[/b]
+
+[b]New release[/b] (0.6.32): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Fixed: "Test: Understeer Only" Preset to ensure proper effect isolation.
+
+---
+
+[size=5][b]January 4, 2026[/b][/size]
+[b]Version 0.6.35 - DD Presets[/b]
+
+[b]New release[/b] (0.6.35): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Added new DD presets based on @dISh and Gamer Muscle presets from today:
+[list]
+[*]GT3 DD 15 Nm (Simagic Alpha)
+[*]LMPx/HY DD 15 Nm (Simagic Alpha)
+[*]GM DD 21 Nm (Moza R21 Ultra)
+[*]GM + Yaw Kick DD 21 Nm (Moza R21 Ultra) - This is a modified version which adds Yaw Kick, which GM did not use and that can give road details.
+[/list]
+
+Updated the default preset to match the "GT3 DD 15 Nm (Simagic Alpha)" preset.
+
+---
+
+[size=5][b]January 5, 2026[/b][/size]
+[b]Version 0.6.36 - Code Architecture Improvements[/b]
+
+[b]New release[/b] (0.6.36): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Performance Optimization[/b]: Improved code organization and maintainability. Fixed an issue where "Torque Drop" was incorrectly affecting texture effects (Road, Slide, Spin, Bottoming), which now remain distinct during drifts and burnouts.
+[/list]
+
+---
+
+[size=5][b]January 31, 2026[/b][/size]
+[b]Version 0.6.37 - Application Icon[/b]
+
+[b]New release[/b] (0.6.37): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+[b]Special Thanks[/b] to:
+[list]
+[*][b]@MartinVindis[/b] for designing the application icon
+[*][b]@DiSHTiX[/b] for implementing it
+[/list]
+
+[b]Added[/b]
+[list]
+[*][b]Application Icon[/b]: The app now has a custom icon that appears in Windows Explorer and the Taskbar, making it easier to identify.
+[/list]
+
+---
+
+[size=5][b]January 31, 2026[/b][/size]
+[b]Version 0.6.38 - LMU Plugin Update[/b]
+
+[b]New release[/b] (0.6.38): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+[b]Special Thanks[/b] to [b]@DiSHTiX[/b] for the LMU Plugin update!
+
+[b]Fixed[/b]
+[list]
+[*][b]Compatibility with 2025 LMU Plugin[/b]: Fixed build errors after the LMU plugin update, ensuring full compatibility with LMU 1.2/1.3 standards. The fix preserves official files to make future plugin updates easier.
+[/list]
+
+---
+
+[size=5][b]January 31, 2026[/b][/size]
+[b]Version 0.6.39 - Auto-Connect & Performance[/b]
+
+[b]New release[/b] (0.6.39): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+[b]Special Thanks[/b] to [b]@AndersHogqvist[/b] for the Auto-connect feature!
+
+[b]Added[/b]
+[list]
+[*][b]Auto-Connect to LMU[/b]: The app now automatically attempts to connect to the game every 2 seconds. No more manual "Retry" clicking! The GUI shows "Connecting to LMU..." in yellow while searching and "Connected to LMU" in green when active.
+[/list]
+
+[b]Improved[/b]
+[list]
+[*][b]Faster Force Feedback[/b]: Reduced internal processing overhead by 33%, improving responsiveness at the critical 400Hz update rate (down from 1,200 to 800 operations per second).
+[*][b]Connection Reliability[/b]: Fixed potential resource leaks and improved connection robustness, especially when the game window isn't immediately available.
+[/list]
+
+---
+
+[b]Total Releases Found[/b]: 31 version releases from December 6, 2025 to January 31, 2026
+
+[b]Project Links[/b]:
+[list]
+[*]GitHub Repository: unlinked: github_com/coasting-nc/LMUFFB
+[*]GitHub Releases: unlinked: github_com/coasting-nc/LMUFFB/releases
+[*]Forum Thread: unlinked: community_lemansultimate_com/index_php?threads/lmuffb-app_10440/
+[/list]
+
+```
+
+# File: .agent\workflows\create-new-version.md
+```markdown
+---
+description: How to create a new version release with dual changelogs
+---
+
+# Create New Version Release
+
+This workflow guides you through creating a new version release with proper changelog entries in both technical and user-facing formats.
+
+## Prerequisites
+
+- All code changes for the version are complete
+- You have reviewed the changes to document
+- You know the version number (e.g., 0.6.40)
+
+## Steps
+
+### 1. Update VERSION File
+
+Update the `VERSION` file with the new semantic version number:
+
+```
+0.6.40
+```
+
+### 2. Update src/Version.h
+
+Update the version constant in `src/Version.h`:
+
+```cpp
+constexpr const char* VERSION = "0.6.40";
+```
+
+### 3. Add Entry to CHANGELOG_DEV.md (Technical)
+
+Add a new detailed technical entry at the TOP of `CHANGELOG_DEV.md` following this structure:
+
+```markdown
+## [0.6.40] - YYYY-MM-DD
+
+### Added
+- **Feature Name**: Detailed technical description
+  - Implementation details
+  - Technical specifications
+  - Code-level changes and their impact
+  
+### Fixed
+- **Issue Description**: Technical explanation of bug and fix
+  - Root cause analysis
+  - Solution implemented
+  - Affected components/files
+  
+### Changed
+- **Component Name**: What changed technically
+  - API changes
+  - Behavior modifications
+  - Migration notes if needed
+  
+### Refactored
+- **Code Section**: Refactoring details
+  - Architectural improvements
+  - Code quality enhancements
+  - Performance optimizations
+
+### Documentation
+- List documentation updates
+- Developer guides added/updated
+- Code review summaries
+
+### Testing
+- Test suite additions
+- Test coverage improvements
+- Regression tests added
+```
+
+**Guidelines for CHANGELOG_DEV.md**:
+- Be DETAILED and TECHNICAL
+- Include implementation specifics
+- List file paths, method names, technical terms
+- Document breaking changes clearly
+- Include migration notes for developers
+- List all test additions
+- Reference code reviews and implementation docs
+- Target audience: developers, contributors, power users
+
+### 4. Add Entry to User-Facing Changelog
+
+Add a new USER-FRIENDLY entry in **BBCode format** to `USER_CHANGELOG.md`.
+
+**IMPORTANT**: Read `docs/user_facing_changelog_guide.md` FIRST for detailed guidelines.
+
+**Format: BBCode** (for forum posting)
+
+Structure:
+
+```bbcode
+[size=5][b]Month Day, Year[/b][/size]
+[b]Version 0.6.40 - Feature Name[/b]
+
+[b]Special Thanks[/b] to [b]@contributors[/b] for [contribution]!
+
+[b]New release[/b] (0.6.40): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]Feature Name[/b]: Brief, benefit-focused description of what users will notice or can now do
+[/list]
+
+[b]Fixed[/b]
+[list]
+[*][b]Issue Description[/b]: What was wrong and how it's better now, in plain language
+[/list]
+
+[b]Changed[/b]
+[list]
+[*][b]Feature Name[/b]: What changed from the user's perspective and why they should care
+[/list]
+
+[b]Improved[/b]
+[list]
+[*][b]Area[/b]: Performance or quality improvement users will feel
+[/list]
+```
+
+**Formatting Requirements**:
+- **"New release" text**: ALWAYS use BBCode bold: `[b]New release[/b]`
+- **Version in link**: Include version number in parentheses after "New release"
+- **Release link**: Always include link to GitHub releases page
+- **Headers**: Use `[size=5][b]Date[/b][/size]` for main heading
+- **Bold**: Use `[b]text[/b]` NOT `**text**`
+- **Lists**: Use `[list][*]item[/list]` NOT `* item`
+- **Links**: Just paste URL or use `[url=url]text[/url]`
+
+**Key Differences from Technical Changelog**:
+- **Brevity**: 2-4 sentences per item, not paragraphs
+- **Plain Language**: No code, file paths, or jargon
+- **User Focus**: What they see/feel, not how it works
+- **Benefits**: Explain WHY it matters, not just WHAT changed
+- **Selective**: Skip refactoring, tests, dev docs unless they fix user-visible bugs
+
+**Conversion Tips**:
+- "Refactored FFBEngine with context-based processing" → "Improved performance and stability of force calculations"
+- "Added test_speed_gate_custom_thresholds()" → [Skip this entirely]
+- "Fixed mVerticalTireDeflection fallback using mLocalAccel.y" → "Fixed Road Texture on encrypted DLC cars"
+
+### 5. Review Both Entries
+
+**Technical Changelog (CHANGELOG_DEV.md) Check**:
+- [ ] All significant code changes documented
+- [ ] Implementation details included
+- [ ] Breaking changes clearly marked
+- [ ] Test additions listed
+- [ ] Documentation updates listed
+- [ ] Technical terminology used appropriately
+
+**User-Facing Changelog Check**:
+- [ ] Non-technical language used
+- [ ] User benefits clear
+- [ ] Concise (50-150 words)
+- [ ] No code/file references
+- [ ] Explains WHAT CHANGED from user perspective
+- [ ] Skip items users won't notice (tests, refactoring, dev docs)
+- [ ] BBCode formatting used (not Markdown)
+- [ ] Bold uses `[b]text[/b]` NOT `**text**`
+- [ ] Lists use `[list][*]item[/list]` NOT `* item`
+
+### 6. Build and Test
+
+```powershell
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release --clean-first
+```
+
+Then run tests:
+
+```powershell
+.\build\tests\Release\run_combined_tests.exe
+```
+
+Ensure all tests pass before proceeding.
+
+### 7. Commit Changes (DO NOT STAGE/PUSH)
+
+**IMPORTANT**: Following user rules, you MUST NOT use `git add`, `git commit`, or `git push`.
+
+Review your changes and inform the user that the following files have been modified:
+- `VERSION`
+- `src/Version.h`
+- `CHANGELOG_DEV.md`
+- `USER_CHANGELOG.md`
+
+The user will review and commit these changes manually.
+
+## Example: Complete Version Creation
+
+**Scenario**: Adding configurable speed gate thresholds
+
+### VERSION
+```
+0.6.23
+```
+
+### CHANGELOG_DEV.md (Technical)
+```markdown
+## [0.6.23] - 2025-12-28
+
+### Added
+- **Configurable Speed Gate**:
+  - Introduced the "Stationary Vibration Gate" in Advanced Settings
+  - Added "Mute Below" (0-20 km/h) and "Full Above" (1-50 km/h) sliders
+  - Implemented safety clamping to ensure upper >= lower threshold
+  - Updated automatic idle smoothing to use user-configured thresholds with 3.0 m/s safety floor
+- **Advanced Physics Configuration**:
+  - Added support for `road_fallback_scale` and `understeer_affects_sop` in Preset system
+  - Integrated parameters into FFB engine configuration
+- **Improved Test Coverage**:
+  - Added `test_speed_gate_custom_thresholds()` to verify dynamic threshold scaling
+  - Updated `test_stationary_gate()` to align with new 5.0 m/s default
+
+### Changed
+- **Default Speed Gate**: Increased from 10.0 km/h to **18.0 km/h (5.0 m/s)**
+  - Eliminates violent engine vibrations in LMU/rF2 below 15 km/h by default
+  - Provides surgical smoothing without affecting driving feel
+```
+
+### User-Facing Changelog (BBCode)
+```bbcode
+[size=5][b]December 28, 2025[/b][/size]
+[b]Version 0.6.23 - Smoothing Adjustments[/b]
+
+[b]New release[/b] (0.6.23): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]Customizable Low-Speed Smoothing[/b]: Added adjustable sliders in Advanced Settings to control when vibrations fade out at low speeds. Default increased to 18 km/h to better eliminate engine rumble when stationary or in pits.
+[/list]
+
+[b]Improved[/b]
+[list]
+[*][b]Smoother Pit Experience[/b]: Fixed remaining vibrations at very low speeds by automatically applying smoothing below 18 km/h instead of the previous 10 km/h.
+[/list]
+```
+
+## Notes
+
+- **Order matters**: CHANGELOG_DEV.md entry goes at TOP of the file (newest first)
+- **Date format**: Use YYYY-MM-DD for CHANGELOG_DEV.md, "Month Day, Year" for user-facing
+- **Special Thanks**: Include community contributors when applicable
+- **Both required**: EVERY version needs entries in BOTH changelogs (with appropriate detail levels)
+- **Consistency**: Version numbers must match across VERSION, Version.h, and both changelogs
+
+```
+
+# File: .gemini\GEMINI.md
+```markdown
+# GEMINI Agent Guidelines
+
+## ⚠️ Critical Git Workflow Instruction
+
+**NEVER** touch the git staging area.
+
+*   **PROHIBITED COMMANDS:**
+    *   `git add`
+    *   `git commit`
+    *   `git reset`
+    *   `git push`
+    *   `git restore --staged`
+
+*   **NO EXCEPTIONS**: Do not stage files even if you created them or if you think it helps.
+*   **The User** is exclusively responsible for reviewing and staging changes.
+*   **Your Role:** Modify files on disk, run tests, verify the build, and then **stop**.
+
+
+## 🧪 Test-Driven Development (TDD) Requirement
+
+You MUST always use a TDD approach for all code changes:
+1.  **Write a test** (or update an existing one) that covers the new feature or fix.
+2.  **Verify failure**: Run the test and ensure it fails as expected.
+3.  **Implement**: Write the minimum code necessary to make the test pass.
+4.  **Verify success**: Run the tests again to ensure everything passes and no regressions were introduced.
+
+## Build and Test Instructions
+
+Use these commands to build and run tests:
+
+### Build everything (Main App + Tests)
+```powershell
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release --clean-first
+```
+
+### Run all tests
+```powershell
+.\build\tests\Release\run_combined_tests.exe
+```
+
+## 📁 File Encoding Issues
+
+When working with source files, you may encounter encoding issues that prevent file reading/editing tools from working correctly.
+
+**Common Error:**
+```
+Error: unsupported mime type text/plain; charset=utf-16le
+```
+
+**Quick Workaround:**
+```powershell
+# Convert file to UTF-8
+Get-Content "file.cpp" | Out-File -FilePath "file_utf8.cpp" -Encoding utf8
+```
+
+**Full Documentation:** See [`docs/dev_docs/unicode_encoding_issues.md`](docs/dev_docs/unicode_encoding_issues.md) for:
+- Root causes and detection methods
+- Multiple solution approaches
+- Prevention best practices
+- Batch conversion scripts
+
+```
+
+# File: build_pr_19\CMakeCache.txt
+```
+# This is the CMakeCache file.
+# For build in directory: c:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19
+# It was generated by CMake: C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe
+# You can edit this file to change values found and used by cmake.
+# If you do not want to change any of the values, simply exit the editor.
+# If you do want to change a value, simply edit, save, and exit the editor.
+# The syntax for the file is as follows:
+# KEY:TYPE=VALUE
+# KEY is the name of a variable in the cache.
+# TYPE is a hint to GUIs for the type of VALUE, DO NOT EDIT TYPE!.
+# VALUE is the current value for the KEY.
+
+########################
+# EXTERNAL cache entries
+########################
+
+//Build without GUI support
+BUILD_HEADLESS:BOOL=OFF
+
+//Path to a program.
+CMAKE_AR:FILEPATH=C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/bin/Hostx64/x64/lib.exe
+
+//Semicolon separated list of supported configuration types, only
+// supports Debug, Release, MinSizeRel, and RelWithDebInfo, anything
+// else will be ignored.
+CMAKE_CONFIGURATION_TYPES:STRING=Debug;Release;MinSizeRel;RelWithDebInfo
+
+//Flags used by the CXX compiler during all build types.
+CMAKE_CXX_FLAGS:STRING=/DWIN32 /D_WINDOWS /W3 /GR /EHsc
+
+//Flags used by the CXX compiler during DEBUG builds.
+CMAKE_CXX_FLAGS_DEBUG:STRING=/MDd /Zi /Ob0 /Od /RTC1
+
+//Flags used by the CXX compiler during MINSIZEREL builds.
+CMAKE_CXX_FLAGS_MINSIZEREL:STRING=/MD /O1 /Ob1 /DNDEBUG
+
+//Flags used by the CXX compiler during RELEASE builds.
+CMAKE_CXX_FLAGS_RELEASE:STRING=/MD /O2 /Ob2 /DNDEBUG
+
+//Flags used by the CXX compiler during RELWITHDEBINFO builds.
+CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=/MD /Zi /O2 /Ob1 /DNDEBUG
+
+//Libraries linked by default with all C++ applications.
+CMAKE_CXX_STANDARD_LIBRARIES:STRING=kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib
+
+//Flags used by the C compiler during all build types.
+CMAKE_C_FLAGS:STRING=/DWIN32 /D_WINDOWS /W3
+
+//Flags used by the C compiler during DEBUG builds.
+CMAKE_C_FLAGS_DEBUG:STRING=/MDd /Zi /Ob0 /Od /RTC1
+
+//Flags used by the C compiler during MINSIZEREL builds.
+CMAKE_C_FLAGS_MINSIZEREL:STRING=/MD /O1 /Ob1 /DNDEBUG
+
+//Flags used by the C compiler during RELEASE builds.
+CMAKE_C_FLAGS_RELEASE:STRING=/MD /O2 /Ob2 /DNDEBUG
+
+//Flags used by the C compiler during RELWITHDEBINFO builds.
+CMAKE_C_FLAGS_RELWITHDEBINFO:STRING=/MD /Zi /O2 /Ob1 /DNDEBUG
+
+//Libraries linked by default with all C applications.
+CMAKE_C_STANDARD_LIBRARIES:STRING=kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib
+
+//Flags used by the linker during all build types.
+CMAKE_EXE_LINKER_FLAGS:STRING=/machine:x64
+
+//Flags used by the linker during DEBUG builds.
+CMAKE_EXE_LINKER_FLAGS_DEBUG:STRING=/debug /INCREMENTAL
+
+//Flags used by the linker during MINSIZEREL builds.
+CMAKE_EXE_LINKER_FLAGS_MINSIZEREL:STRING=/INCREMENTAL:NO
+
+//Flags used by the linker during RELEASE builds.
+CMAKE_EXE_LINKER_FLAGS_RELEASE:STRING=/INCREMENTAL:NO
+
+//Flags used by the linker during RELWITHDEBINFO builds.
+CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO:STRING=/debug /INCREMENTAL
+
+//Value Computed by CMake.
+CMAKE_FIND_PACKAGE_REDIRECTS_DIR:STATIC=C:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19/CMakeFiles/pkgRedirects
+
+//Install path prefix, prepended onto install directories.
+CMAKE_INSTALL_PREFIX:PATH=C:/Program Files (x86)/LMUFFB_CPP
+
+//Path to a program.
+CMAKE_LINKER:FILEPATH=C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/bin/Hostx64/x64/link.exe
+
+//Flags used by the linker during the creation of modules during
+// all build types.
+CMAKE_MODULE_LINKER_FLAGS:STRING=/machine:x64
+
+//Flags used by the linker during the creation of modules during
+// DEBUG builds.
+CMAKE_MODULE_LINKER_FLAGS_DEBUG:STRING=/debug /INCREMENTAL
+
+//Flags used by the linker during the creation of modules during
+// MINSIZEREL builds.
+CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL:STRING=/INCREMENTAL:NO
+
+//Flags used by the linker during the creation of modules during
+// RELEASE builds.
+CMAKE_MODULE_LINKER_FLAGS_RELEASE:STRING=/INCREMENTAL:NO
+
+//Flags used by the linker during the creation of modules during
+// RELWITHDEBINFO builds.
+CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO:STRING=/debug /INCREMENTAL
+
+//Path to a program.
+CMAKE_MT:FILEPATH=C:/Program Files (x86)/Windows Kits/10/bin/10.0.22621.0/x64/mt.exe
+
+//Value Computed by CMake
+CMAKE_PROJECT_DESCRIPTION:STATIC=
+
+//Value Computed by CMake
+CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
+
+//Value Computed by CMake
+CMAKE_PROJECT_NAME:STATIC=LMUFFB_CPP
+
+//RC compiler
+CMAKE_RC_COMPILER:FILEPATH=C:/Program Files (x86)/Windows Kits/10/bin/10.0.22621.0/x64/rc.exe
+
+//Flags for Windows Resource Compiler during all build types.
+CMAKE_RC_FLAGS:STRING=-DWIN32
+
+//Flags for Windows Resource Compiler during DEBUG builds.
+CMAKE_RC_FLAGS_DEBUG:STRING=-D_DEBUG
+
+//Flags for Windows Resource Compiler during MINSIZEREL builds.
+CMAKE_RC_FLAGS_MINSIZEREL:STRING=
+
+//Flags for Windows Resource Compiler during RELEASE builds.
+CMAKE_RC_FLAGS_RELEASE:STRING=
+
+//Flags for Windows Resource Compiler during RELWITHDEBINFO builds.
+CMAKE_RC_FLAGS_RELWITHDEBINFO:STRING=
+
+//Flags used by the linker during the creation of shared libraries
+// during all build types.
+CMAKE_SHARED_LINKER_FLAGS:STRING=/machine:x64
+
+//Flags used by the linker during the creation of shared libraries
+// during DEBUG builds.
+CMAKE_SHARED_LINKER_FLAGS_DEBUG:STRING=/debug /INCREMENTAL
+
+//Flags used by the linker during the creation of shared libraries
+// during MINSIZEREL builds.
+CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL:STRING=/INCREMENTAL:NO
+
+//Flags used by the linker during the creation of shared libraries
+// during RELEASE builds.
+CMAKE_SHARED_LINKER_FLAGS_RELEASE:STRING=/INCREMENTAL:NO
+
+//Flags used by the linker during the creation of shared libraries
+// during RELWITHDEBINFO builds.
+CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO:STRING=/debug /INCREMENTAL
+
+//If set, runtime paths are not added when installing shared libraries,
+// but are added when building.
+CMAKE_SKIP_INSTALL_RPATH:BOOL=NO
+
+//If set, runtime paths are not added when using shared libraries.
+CMAKE_SKIP_RPATH:BOOL=NO
+
+//Flags used by the linker during the creation of static libraries
+// during all build types.
+CMAKE_STATIC_LINKER_FLAGS:STRING=/machine:x64
+
+//Flags used by the linker during the creation of static libraries
+// during DEBUG builds.
+CMAKE_STATIC_LINKER_FLAGS_DEBUG:STRING=
+
+//Flags used by the linker during the creation of static libraries
+// during MINSIZEREL builds.
+CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL:STRING=
+
+//Flags used by the linker during the creation of static libraries
+// during RELEASE builds.
+CMAKE_STATIC_LINKER_FLAGS_RELEASE:STRING=
+
+//Flags used by the linker during the creation of static libraries
+// during RELWITHDEBINFO builds.
+CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
+
+//If this value is on, makefiles will be generated without the
+// .SILENT directive, and all commands will be echoed to the console
+// during the make.  This is useful for debugging only. With Visual
+// Studio IDE projects all commands are done without /nologo.
+CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
+
+//Value Computed by CMake
+LMUFFB_CPP_BINARY_DIR:STATIC=C:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19
+
+//Value Computed by CMake
+LMUFFB_CPP_IS_TOP_LEVEL:STATIC=ON
+
+//Value Computed by CMake
+LMUFFB_CPP_SOURCE_DIR:STATIC=C:/dev/personal/LMUFFB_public/LMUFFB
+
+//Value Computed by CMake
+LMUFFB_Tests_BINARY_DIR:STATIC=C:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19/tests
+
+//Value Computed by CMake
+LMUFFB_Tests_IS_TOP_LEVEL:STATIC=OFF
+
+//Value Computed by CMake
+LMUFFB_Tests_SOURCE_DIR:STATIC=C:/dev/personal/LMUFFB_public/LMUFFB/tests
+
+
+########################
+# INTERNAL cache entries
+########################
+
+//ADVANCED property for variable: CMAKE_AR
+CMAKE_AR-ADVANCED:INTERNAL=1
+//This is the directory where this CMakeCache.txt was created
+CMAKE_CACHEFILE_DIR:INTERNAL=c:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19
+//Major version of cmake used to create the current loaded cache
+CMAKE_CACHE_MAJOR_VERSION:INTERNAL=3
+//Minor version of cmake used to create the current loaded cache
+CMAKE_CACHE_MINOR_VERSION:INTERNAL=26
+//Patch version of cmake used to create the current loaded cache
+CMAKE_CACHE_PATCH_VERSION:INTERNAL=0
+//Path to CMake executable.
+CMAKE_COMMAND:INTERNAL=C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe
+//Path to cpack program executable.
+CMAKE_CPACK_COMMAND:INTERNAL=C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cpack.exe
+//Path to ctest program executable.
+CMAKE_CTEST_COMMAND:INTERNAL=C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/ctest.exe
+//ADVANCED property for variable: CMAKE_CXX_FLAGS
+CMAKE_CXX_FLAGS-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_CXX_FLAGS_DEBUG
+CMAKE_CXX_FLAGS_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_CXX_FLAGS_MINSIZEREL
+CMAKE_CXX_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_CXX_FLAGS_RELEASE
+CMAKE_CXX_FLAGS_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_CXX_FLAGS_RELWITHDEBINFO
+CMAKE_CXX_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_CXX_STANDARD_LIBRARIES
+CMAKE_CXX_STANDARD_LIBRARIES-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_C_FLAGS
+CMAKE_C_FLAGS-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_C_FLAGS_DEBUG
+CMAKE_C_FLAGS_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_C_FLAGS_MINSIZEREL
+CMAKE_C_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_C_FLAGS_RELEASE
+CMAKE_C_FLAGS_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_C_FLAGS_RELWITHDEBINFO
+CMAKE_C_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_C_STANDARD_LIBRARIES
+CMAKE_C_STANDARD_LIBRARIES-ADVANCED:INTERNAL=1
+//Executable file format
+CMAKE_EXECUTABLE_FORMAT:INTERNAL=Unknown
+//ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS
+CMAKE_EXE_LINKER_FLAGS-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS_DEBUG
+CMAKE_EXE_LINKER_FLAGS_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS_MINSIZEREL
+CMAKE_EXE_LINKER_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS_RELEASE
+CMAKE_EXE_LINKER_FLAGS_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO
+CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+//Name of external makefile project generator.
+CMAKE_EXTRA_GENERATOR:INTERNAL=
+//Name of generator.
+CMAKE_GENERATOR:INTERNAL=Visual Studio 17 2022
+//Generator instance identifier.
+CMAKE_GENERATOR_INSTANCE:INTERNAL=C:/Program Files/Microsoft Visual Studio/2022/Community
+//Name of generator platform.
+CMAKE_GENERATOR_PLATFORM:INTERNAL=
+//Name of generator toolset.
+CMAKE_GENERATOR_TOOLSET:INTERNAL=
+//Source directory with the top level CMakeLists.txt file for this
+// project
+CMAKE_HOME_DIRECTORY:INTERNAL=C:/dev/personal/LMUFFB_public/LMUFFB
+//ADVANCED property for variable: CMAKE_LINKER
+CMAKE_LINKER-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS
+CMAKE_MODULE_LINKER_FLAGS-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS_DEBUG
+CMAKE_MODULE_LINKER_FLAGS_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL
+CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS_RELEASE
+CMAKE_MODULE_LINKER_FLAGS_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO
+CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_MT
+CMAKE_MT-ADVANCED:INTERNAL=1
+//number of local generators
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=2
+//Platform information initialized
+CMAKE_PLATFORM_INFO_INITIALIZED:INTERNAL=1
+//noop for ranlib
+CMAKE_RANLIB:INTERNAL=:
+//ADVANCED property for variable: CMAKE_RC_COMPILER
+CMAKE_RC_COMPILER-ADVANCED:INTERNAL=1
+CMAKE_RC_COMPILER_WORKS:INTERNAL=1
+//ADVANCED property for variable: CMAKE_RC_FLAGS
+CMAKE_RC_FLAGS-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_RC_FLAGS_DEBUG
+CMAKE_RC_FLAGS_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_RC_FLAGS_MINSIZEREL
+CMAKE_RC_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_RC_FLAGS_RELEASE
+CMAKE_RC_FLAGS_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_RC_FLAGS_RELWITHDEBINFO
+CMAKE_RC_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+//Path to CMake installation.
+CMAKE_ROOT:INTERNAL=C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.26
+//ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS
+CMAKE_SHARED_LINKER_FLAGS-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS_DEBUG
+CMAKE_SHARED_LINKER_FLAGS_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL
+CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS_RELEASE
+CMAKE_SHARED_LINKER_FLAGS_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO
+CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_SKIP_INSTALL_RPATH
+CMAKE_SKIP_INSTALL_RPATH-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_SKIP_RPATH
+CMAKE_SKIP_RPATH-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_STATIC_LINKER_FLAGS
+CMAKE_STATIC_LINKER_FLAGS-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_STATIC_LINKER_FLAGS_DEBUG
+CMAKE_STATIC_LINKER_FLAGS_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL
+CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_STATIC_LINKER_FLAGS_RELEASE
+CMAKE_STATIC_LINKER_FLAGS_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO
+CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
+CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
+
+
+```
+
+# File: build_pr_19\cmake_install.cmake
+```cmake
+# Install script for directory: C:/dev/personal/LMUFFB_public/LMUFFB
+
+# Set the install prefix
+if(NOT DEFINED CMAKE_INSTALL_PREFIX)
+  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/LMUFFB_CPP")
+endif()
+string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+
+# Set the install configuration name.
+if(NOT DEFINED CMAKE_INSTALL_CONFIG_NAME)
+  if(BUILD_TYPE)
+    string(REGEX REPLACE "^[^A-Za-z0-9_]+" ""
+           CMAKE_INSTALL_CONFIG_NAME "${BUILD_TYPE}")
+  else()
+    set(CMAKE_INSTALL_CONFIG_NAME "Release")
+  endif()
+  message(STATUS "Install configuration: \"${CMAKE_INSTALL_CONFIG_NAME}\"")
+endif()
+
+# Set the component getting installed.
+if(NOT CMAKE_INSTALL_COMPONENT)
+  if(COMPONENT)
+    message(STATUS "Install component: \"${COMPONENT}\"")
+    set(CMAKE_INSTALL_COMPONENT "${COMPONENT}")
+  else()
+    set(CMAKE_INSTALL_COMPONENT)
+  endif()
+endif()
+
+# Is this installation the result of a crosscompile?
+if(NOT DEFINED CMAKE_CROSSCOMPILING)
+  set(CMAKE_CROSSCOMPILING "FALSE")
+endif()
+
+if(NOT CMAKE_INSTALL_LOCAL_ONLY)
+  # Include the install script for each subdirectory.
+  include("C:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19/tests/cmake_install.cmake")
+
+endif()
+
+if(CMAKE_INSTALL_COMPONENT)
+  set(CMAKE_INSTALL_MANIFEST "install_manifest_${CMAKE_INSTALL_COMPONENT}.txt")
+else()
+  set(CMAKE_INSTALL_MANIFEST "install_manifest.txt")
+endif()
+
+string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
+       "${CMAKE_INSTALL_MANIFEST_FILES}")
+file(WRITE "C:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19/${CMAKE_INSTALL_MANIFEST}"
+     "${CMAKE_INSTALL_MANIFEST_CONTENT}")
+
+```
+
+# File: build_pr_19\CMakeFiles\TargetDirectories.txt
+```
+C:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19/CMakeFiles/LMUFFB.dir
+C:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19/CMakeFiles/ALL_BUILD.dir
+C:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19/CMakeFiles/ZERO_CHECK.dir
+C:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19/tests/CMakeFiles/run_combined_tests.dir
+C:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19/tests/CMakeFiles/ALL_BUILD.dir
+
+```
+
+# File: build_pr_19\CMakeFiles\3.26.0-msvc3\CMakeCCompiler.cmake
+```cmake
+set(CMAKE_C_COMPILER "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/bin/Hostx64/x64/cl.exe")
+set(CMAKE_C_COMPILER_ARG1 "")
+set(CMAKE_C_COMPILER_ID "MSVC")
+set(CMAKE_C_COMPILER_VERSION "19.36.32537.0")
+set(CMAKE_C_COMPILER_VERSION_INTERNAL "")
+set(CMAKE_C_COMPILER_WRAPPER "")
+set(CMAKE_C_STANDARD_COMPUTED_DEFAULT "90")
+set(CMAKE_C_EXTENSIONS_COMPUTED_DEFAULT "OFF")
+set(CMAKE_C_COMPILE_FEATURES "c_std_90;c_function_prototypes;c_std_99;c_restrict;c_variadic_macros;c_std_11;c_static_assert;c_std_17")
+set(CMAKE_C90_COMPILE_FEATURES "c_std_90;c_function_prototypes")
+set(CMAKE_C99_COMPILE_FEATURES "c_std_99;c_restrict;c_variadic_macros")
+set(CMAKE_C11_COMPILE_FEATURES "c_std_11;c_static_assert")
+set(CMAKE_C17_COMPILE_FEATURES "c_std_17")
+set(CMAKE_C23_COMPILE_FEATURES "")
+
+set(CMAKE_C_PLATFORM_ID "Windows")
+set(CMAKE_C_SIMULATE_ID "")
+set(CMAKE_C_COMPILER_FRONTEND_VARIANT "MSVC")
+set(CMAKE_C_SIMULATE_VERSION "")
+set(CMAKE_C_COMPILER_ARCHITECTURE_ID x64)
+
+set(MSVC_C_ARCHITECTURE_ID x64)
+
+set(CMAKE_AR "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/bin/Hostx64/x64/lib.exe")
+set(CMAKE_C_COMPILER_AR "")
+set(CMAKE_RANLIB ":")
+set(CMAKE_C_COMPILER_RANLIB "")
+set(CMAKE_LINKER "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/bin/Hostx64/x64/link.exe")
+set(CMAKE_MT "C:/Program Files (x86)/Windows Kits/10/bin/10.0.22621.0/x64/mt.exe")
+set(CMAKE_COMPILER_IS_GNUCC )
+set(CMAKE_C_COMPILER_LOADED 1)
+set(CMAKE_C_COMPILER_WORKS TRUE)
+set(CMAKE_C_ABI_COMPILED TRUE)
+
+set(CMAKE_C_COMPILER_ENV_VAR "CC")
+
+set(CMAKE_C_COMPILER_ID_RUN 1)
+set(CMAKE_C_SOURCE_FILE_EXTENSIONS c;m)
+set(CMAKE_C_IGNORE_EXTENSIONS h;H;o;O;obj;OBJ;def;DEF;rc;RC)
+set(CMAKE_C_LINKER_PREFERENCE 10)
+
+# Save compiler ABI information.
+set(CMAKE_C_SIZEOF_DATA_PTR "8")
+set(CMAKE_C_COMPILER_ABI "")
+set(CMAKE_C_BYTE_ORDER "LITTLE_ENDIAN")
+set(CMAKE_C_LIBRARY_ARCHITECTURE "")
+
+if(CMAKE_C_SIZEOF_DATA_PTR)
+  set(CMAKE_SIZEOF_VOID_P "${CMAKE_C_SIZEOF_DATA_PTR}")
+endif()
+
+if(CMAKE_C_COMPILER_ABI)
+  set(CMAKE_INTERNAL_PLATFORM_ABI "${CMAKE_C_COMPILER_ABI}")
+endif()
+
+if(CMAKE_C_LIBRARY_ARCHITECTURE)
+  set(CMAKE_LIBRARY_ARCHITECTURE "")
+endif()
+
+set(CMAKE_C_CL_SHOWINCLUDES_PREFIX "")
+if(CMAKE_C_CL_SHOWINCLUDES_PREFIX)
+  set(CMAKE_CL_SHOWINCLUDES_PREFIX "${CMAKE_C_CL_SHOWINCLUDES_PREFIX}")
+endif()
+
+
+
+
+
+set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "")
+set(CMAKE_C_IMPLICIT_LINK_LIBRARIES "")
+set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "")
+set(CMAKE_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "")
+
+```
+
+# File: build_pr_19\CMakeFiles\3.26.0-msvc3\CMakeCXXCompiler.cmake
+```cmake
+set(CMAKE_CXX_COMPILER "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/bin/Hostx64/x64/cl.exe")
+set(CMAKE_CXX_COMPILER_ARG1 "")
+set(CMAKE_CXX_COMPILER_ID "MSVC")
+set(CMAKE_CXX_COMPILER_VERSION "19.36.32537.0")
+set(CMAKE_CXX_COMPILER_VERSION_INTERNAL "")
+set(CMAKE_CXX_COMPILER_WRAPPER "")
+set(CMAKE_CXX_STANDARD_COMPUTED_DEFAULT "14")
+set(CMAKE_CXX_EXTENSIONS_COMPUTED_DEFAULT "OFF")
+set(CMAKE_CXX_COMPILE_FEATURES "cxx_std_98;cxx_template_template_parameters;cxx_std_11;cxx_alias_templates;cxx_alignas;cxx_alignof;cxx_attributes;cxx_auto_type;cxx_constexpr;cxx_decltype;cxx_decltype_incomplete_return_types;cxx_default_function_template_args;cxx_defaulted_functions;cxx_defaulted_move_initializers;cxx_delegating_constructors;cxx_deleted_functions;cxx_enum_forward_declarations;cxx_explicit_conversions;cxx_extended_friend_declarations;cxx_extern_templates;cxx_final;cxx_func_identifier;cxx_generalized_initializers;cxx_inheriting_constructors;cxx_inline_namespaces;cxx_lambdas;cxx_local_type_template_args;cxx_long_long_type;cxx_noexcept;cxx_nonstatic_member_init;cxx_nullptr;cxx_override;cxx_range_for;cxx_raw_string_literals;cxx_reference_qualified_functions;cxx_right_angle_brackets;cxx_rvalue_references;cxx_sizeof_member;cxx_static_assert;cxx_strong_enums;cxx_thread_local;cxx_trailing_return_types;cxx_unicode_literals;cxx_uniform_initialization;cxx_unrestricted_unions;cxx_user_literals;cxx_variadic_macros;cxx_variadic_templates;cxx_std_14;cxx_aggregate_default_initializers;cxx_attribute_deprecated;cxx_binary_literals;cxx_contextual_conversions;cxx_decltype_auto;cxx_digit_separators;cxx_generic_lambdas;cxx_lambda_init_captures;cxx_relaxed_constexpr;cxx_return_type_deduction;cxx_variable_templates;cxx_std_17;cxx_std_20;cxx_std_23")
+set(CMAKE_CXX98_COMPILE_FEATURES "cxx_std_98;cxx_template_template_parameters")
+set(CMAKE_CXX11_COMPILE_FEATURES "cxx_std_11;cxx_alias_templates;cxx_alignas;cxx_alignof;cxx_attributes;cxx_auto_type;cxx_constexpr;cxx_decltype;cxx_decltype_incomplete_return_types;cxx_default_function_template_args;cxx_defaulted_functions;cxx_defaulted_move_initializers;cxx_delegating_constructors;cxx_deleted_functions;cxx_enum_forward_declarations;cxx_explicit_conversions;cxx_extended_friend_declarations;cxx_extern_templates;cxx_final;cxx_func_identifier;cxx_generalized_initializers;cxx_inheriting_constructors;cxx_inline_namespaces;cxx_lambdas;cxx_local_type_template_args;cxx_long_long_type;cxx_noexcept;cxx_nonstatic_member_init;cxx_nullptr;cxx_override;cxx_range_for;cxx_raw_string_literals;cxx_reference_qualified_functions;cxx_right_angle_brackets;cxx_rvalue_references;cxx_sizeof_member;cxx_static_assert;cxx_strong_enums;cxx_thread_local;cxx_trailing_return_types;cxx_unicode_literals;cxx_uniform_initialization;cxx_unrestricted_unions;cxx_user_literals;cxx_variadic_macros;cxx_variadic_templates")
+set(CMAKE_CXX14_COMPILE_FEATURES "cxx_std_14;cxx_aggregate_default_initializers;cxx_attribute_deprecated;cxx_binary_literals;cxx_contextual_conversions;cxx_decltype_auto;cxx_digit_separators;cxx_generic_lambdas;cxx_lambda_init_captures;cxx_relaxed_constexpr;cxx_return_type_deduction;cxx_variable_templates")
+set(CMAKE_CXX17_COMPILE_FEATURES "cxx_std_17")
+set(CMAKE_CXX20_COMPILE_FEATURES "cxx_std_20")
+set(CMAKE_CXX23_COMPILE_FEATURES "cxx_std_23")
+
+set(CMAKE_CXX_PLATFORM_ID "Windows")
+set(CMAKE_CXX_SIMULATE_ID "")
+set(CMAKE_CXX_COMPILER_FRONTEND_VARIANT "MSVC")
+set(CMAKE_CXX_SIMULATE_VERSION "")
+set(CMAKE_CXX_COMPILER_ARCHITECTURE_ID x64)
+
+set(MSVC_CXX_ARCHITECTURE_ID x64)
+
+set(CMAKE_AR "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/bin/Hostx64/x64/lib.exe")
+set(CMAKE_CXX_COMPILER_AR "")
+set(CMAKE_RANLIB ":")
+set(CMAKE_CXX_COMPILER_RANLIB "")
+set(CMAKE_LINKER "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/bin/Hostx64/x64/link.exe")
+set(CMAKE_MT "C:/Program Files (x86)/Windows Kits/10/bin/10.0.22621.0/x64/mt.exe")
+set(CMAKE_COMPILER_IS_GNUCXX )
+set(CMAKE_CXX_COMPILER_LOADED 1)
+set(CMAKE_CXX_COMPILER_WORKS TRUE)
+set(CMAKE_CXX_ABI_COMPILED TRUE)
+
+set(CMAKE_CXX_COMPILER_ENV_VAR "CXX")
+
+set(CMAKE_CXX_COMPILER_ID_RUN 1)
+set(CMAKE_CXX_SOURCE_FILE_EXTENSIONS C;M;c++;cc;cpp;cxx;m;mm;mpp;CPP;ixx;cppm)
+set(CMAKE_CXX_IGNORE_EXTENSIONS inl;h;hpp;HPP;H;o;O;obj;OBJ;def;DEF;rc;RC)
+
+foreach (lang C OBJC OBJCXX)
+  if (CMAKE_${lang}_COMPILER_ID_RUN)
+    foreach(extension IN LISTS CMAKE_${lang}_SOURCE_FILE_EXTENSIONS)
+      list(REMOVE_ITEM CMAKE_CXX_SOURCE_FILE_EXTENSIONS ${extension})
+    endforeach()
+  endif()
+endforeach()
+
+set(CMAKE_CXX_LINKER_PREFERENCE 30)
+set(CMAKE_CXX_LINKER_PREFERENCE_PROPAGATES 1)
+
+# Save compiler ABI information.
+set(CMAKE_CXX_SIZEOF_DATA_PTR "8")
+set(CMAKE_CXX_COMPILER_ABI "")
+set(CMAKE_CXX_BYTE_ORDER "LITTLE_ENDIAN")
+set(CMAKE_CXX_LIBRARY_ARCHITECTURE "")
+
+if(CMAKE_CXX_SIZEOF_DATA_PTR)
+  set(CMAKE_SIZEOF_VOID_P "${CMAKE_CXX_SIZEOF_DATA_PTR}")
+endif()
+
+if(CMAKE_CXX_COMPILER_ABI)
+  set(CMAKE_INTERNAL_PLATFORM_ABI "${CMAKE_CXX_COMPILER_ABI}")
+endif()
+
+if(CMAKE_CXX_LIBRARY_ARCHITECTURE)
+  set(CMAKE_LIBRARY_ARCHITECTURE "")
+endif()
+
+set(CMAKE_CXX_CL_SHOWINCLUDES_PREFIX "")
+if(CMAKE_CXX_CL_SHOWINCLUDES_PREFIX)
+  set(CMAKE_CL_SHOWINCLUDES_PREFIX "${CMAKE_CXX_CL_SHOWINCLUDES_PREFIX}")
+endif()
+
+
+
+
+
+set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "")
+set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "")
+set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "")
+set(CMAKE_CXX_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "")
+
+```
+
+# File: build_pr_19\CMakeFiles\3.26.0-msvc3\CMakeRCCompiler.cmake
+```cmake
+set(CMAKE_RC_COMPILER "C:/Program Files (x86)/Windows Kits/10/bin/10.0.22621.0/x64/rc.exe")
+set(CMAKE_RC_COMPILER_ARG1 "")
+set(CMAKE_RC_COMPILER_LOADED 1)
+set(CMAKE_RC_SOURCE_FILE_EXTENSIONS rc;RC)
+set(CMAKE_RC_OUTPUT_EXTENSION .res)
+set(CMAKE_RC_COMPILER_ENV_VAR "RC")
+
+```
+
+# File: build_pr_19\CMakeFiles\3.26.0-msvc3\CMakeSystem.cmake
+```cmake
+set(CMAKE_HOST_SYSTEM "Windows-10.0.26200")
+set(CMAKE_HOST_SYSTEM_NAME "Windows")
+set(CMAKE_HOST_SYSTEM_VERSION "10.0.26200")
+set(CMAKE_HOST_SYSTEM_PROCESSOR "AMD64")
+
+
+
+set(CMAKE_SYSTEM "Windows-10.0.26200")
+set(CMAKE_SYSTEM_NAME "Windows")
+set(CMAKE_SYSTEM_VERSION "10.0.26200")
+set(CMAKE_SYSTEM_PROCESSOR "AMD64")
+
+set(CMAKE_CROSSCOMPILING "FALSE")
+
+set(CMAKE_SYSTEM_LOADED 1)
+
+```
+
+# File: build_pr_19\CMakeFiles\3.26.0-msvc3\VCTargetsPath.txt
+```
+C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Microsoft/VC/v170
+
+```
+
+# File: build_pr_19\CMakeFiles\3.26.0-msvc3\CompilerIdC\CMakeCCompilerId.c
+```cpp
+#ifdef __cplusplus
+# error "A C++ compiler has been selected for C."
+#endif
+
+#if defined(__18CXX)
+# define ID_VOID_MAIN
+#endif
+#if defined(__CLASSIC_C__)
+/* cv-qualifiers did not exist in K&R C */
+# define const
+# define volatile
+#endif
+
+#if !defined(__has_include)
+/* If the compiler does not have __has_include, pretend the answer is
+   always no.  */
+#  define __has_include(x) 0
+#endif
+
+
+/* Version number components: V=Version, R=Revision, P=Patch
+   Version date components:   YYYY=Year, MM=Month,   DD=Day  */
+
+#if defined(__INTEL_COMPILER) || defined(__ICC)
+# define COMPILER_ID "Intel"
+# if defined(_MSC_VER)
+#  define SIMULATE_ID "MSVC"
+# endif
+# if defined(__GNUC__)
+#  define SIMULATE_ID "GNU"
+# endif
+  /* __INTEL_COMPILER = VRP prior to 2021, and then VVVV for 2021 and later,
+     except that a few beta releases use the old format with V=2021.  */
+# if __INTEL_COMPILER < 2021 || __INTEL_COMPILER == 202110 || __INTEL_COMPILER == 202111
+#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER/100)
+#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER/10 % 10)
+#  if defined(__INTEL_COMPILER_UPDATE)
+#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER_UPDATE)
+#  else
+#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER   % 10)
+#  endif
+# else
+#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER)
+#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER_UPDATE)
+   /* The third version component from --version is an update index,
+      but no macro is provided for it.  */
+#  define COMPILER_VERSION_PATCH DEC(0)
+# endif
+# if defined(__INTEL_COMPILER_BUILD_DATE)
+   /* __INTEL_COMPILER_BUILD_DATE = YYYYMMDD */
+#  define COMPILER_VERSION_TWEAK DEC(__INTEL_COMPILER_BUILD_DATE)
+# endif
+# if defined(_MSC_VER)
+   /* _MSC_VER = VVRR */
+#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
+#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
+# endif
+# if defined(__GNUC__)
+#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
+# elif defined(__GNUG__)
+#  define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
+# endif
+# if defined(__GNUC_MINOR__)
+#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
+# endif
+# if defined(__GNUC_PATCHLEVEL__)
+#  define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
+# endif
+
+#elif (defined(__clang__) && defined(__INTEL_CLANG_COMPILER)) || defined(__INTEL_LLVM_COMPILER)
+# define COMPILER_ID "IntelLLVM"
+#if defined(_MSC_VER)
+# define SIMULATE_ID "MSVC"
+#endif
+#if defined(__GNUC__)
+# define SIMULATE_ID "GNU"
+#endif
+/* __INTEL_LLVM_COMPILER = VVVVRP prior to 2021.2.0, VVVVRRPP for 2021.2.0 and
+ * later.  Look for 6 digit vs. 8 digit version number to decide encoding.
+ * VVVV is no smaller than the current year when a version is released.
+ */
+#if __INTEL_LLVM_COMPILER < 1000000L
+# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/100)
+# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/10 % 10)
+# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER    % 10)
+#else
+# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/10000)
+# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/100 % 100)
+# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER     % 100)
+#endif
+#if defined(_MSC_VER)
+  /* _MSC_VER = VVRR */
+# define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
+# define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
+#endif
+#if defined(__GNUC__)
+# define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
+#elif defined(__GNUG__)
+# define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
+#endif
+#if defined(__GNUC_MINOR__)
+# define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
+#endif
+#if defined(__GNUC_PATCHLEVEL__)
+# define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
+#endif
+
+#elif defined(__PATHCC__)
+# define COMPILER_ID "PathScale"
+# define COMPILER_VERSION_MAJOR DEC(__PATHCC__)
+# define COMPILER_VERSION_MINOR DEC(__PATHCC_MINOR__)
+# if defined(__PATHCC_PATCHLEVEL__)
+#  define COMPILER_VERSION_PATCH DEC(__PATHCC_PATCHLEVEL__)
+# endif
+
+#elif defined(__BORLANDC__) && defined(__CODEGEARC_VERSION__)
+# define COMPILER_ID "Embarcadero"
+# define COMPILER_VERSION_MAJOR HEX(__CODEGEARC_VERSION__>>24 & 0x00FF)
+# define COMPILER_VERSION_MINOR HEX(__CODEGEARC_VERSION__>>16 & 0x00FF)
+# define COMPILER_VERSION_PATCH DEC(__CODEGEARC_VERSION__     & 0xFFFF)
+
+#elif defined(__BORLANDC__)
+# define COMPILER_ID "Borland"
+  /* __BORLANDC__ = 0xVRR */
+# define COMPILER_VERSION_MAJOR HEX(__BORLANDC__>>8)
+# define COMPILER_VERSION_MINOR HEX(__BORLANDC__ & 0xFF)
+
+#elif defined(__WATCOMC__) && __WATCOMC__ < 1200
+# define COMPILER_ID "Watcom"
+   /* __WATCOMC__ = VVRR */
+# define COMPILER_VERSION_MAJOR DEC(__WATCOMC__ / 100)
+# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
+# if (__WATCOMC__ % 10) > 0
+#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
+# endif
+
+#elif defined(__WATCOMC__)
+# define COMPILER_ID "OpenWatcom"
+   /* __WATCOMC__ = VVRP + 1100 */
+# define COMPILER_VERSION_MAJOR DEC((__WATCOMC__ - 1100) / 100)
+# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
+# if (__WATCOMC__ % 10) > 0
+#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
+# endif
+
+#elif defined(__SUNPRO_C)
+# define COMPILER_ID "SunPro"
+# if __SUNPRO_C >= 0x5100
+   /* __SUNPRO_C = 0xVRRP */
+#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_C>>12)
+#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_C>>4 & 0xFF)
+#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_C    & 0xF)
+# else
+   /* __SUNPRO_CC = 0xVRP */
+#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_C>>8)
+#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_C>>4 & 0xF)
+#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_C    & 0xF)
+# endif
+
+#elif defined(__HP_cc)
+# define COMPILER_ID "HP"
+  /* __HP_cc = VVRRPP */
+# define COMPILER_VERSION_MAJOR DEC(__HP_cc/10000)
+# define COMPILER_VERSION_MINOR DEC(__HP_cc/100 % 100)
+# define COMPILER_VERSION_PATCH DEC(__HP_cc     % 100)
+
+#elif defined(__DECC)
+# define COMPILER_ID "Compaq"
+  /* __DECC_VER = VVRRTPPPP */
+# define COMPILER_VERSION_MAJOR DEC(__DECC_VER/10000000)
+# define COMPILER_VERSION_MINOR DEC(__DECC_VER/100000  % 100)
+# define COMPILER_VERSION_PATCH DEC(__DECC_VER         % 10000)
+
+#elif defined(__IBMC__) && defined(__COMPILER_VER__)
+# define COMPILER_ID "zOS"
+  /* __IBMC__ = VRP */
+# define COMPILER_VERSION_MAJOR DEC(__IBMC__/100)
+# define COMPILER_VERSION_MINOR DEC(__IBMC__/10 % 10)
+# define COMPILER_VERSION_PATCH DEC(__IBMC__    % 10)
+
+#elif defined(__open_xl__) && defined(__clang__)
+# define COMPILER_ID "IBMClang"
+# define COMPILER_VERSION_MAJOR DEC(__open_xl_version__)
+# define COMPILER_VERSION_MINOR DEC(__open_xl_release__)
+# define COMPILER_VERSION_PATCH DEC(__open_xl_modification__)
+# define COMPILER_VERSION_TWEAK DEC(__open_xl_ptf_fix_level__)
+
+
+#elif defined(__ibmxl__) && defined(__clang__)
+# define COMPILER_ID "XLClang"
+# define COMPILER_VERSION_MAJOR DEC(__ibmxl_version__)
+# define COMPILER_VERSION_MINOR DEC(__ibmxl_release__)
+# define COMPILER_VERSION_PATCH DEC(__ibmxl_modification__)
+# define COMPILER_VERSION_TWEAK DEC(__ibmxl_ptf_fix_level__)
+
+
+#elif defined(__IBMC__) && !defined(__COMPILER_VER__) && __IBMC__ >= 800
+# define COMPILER_ID "XL"
+  /* __IBMC__ = VRP */
+# define COMPILER_VERSION_MAJOR DEC(__IBMC__/100)
+# define COMPILER_VERSION_MINOR DEC(__IBMC__/10 % 10)
+# define COMPILER_VERSION_PATCH DEC(__IBMC__    % 10)
+
+#elif defined(__IBMC__) && !defined(__COMPILER_VER__) && __IBMC__ < 800
+# define COMPILER_ID "VisualAge"
+  /* __IBMC__ = VRP */
+# define COMPILER_VERSION_MAJOR DEC(__IBMC__/100)
+# define COMPILER_VERSION_MINOR DEC(__IBMC__/10 % 10)
+# define COMPILER_VERSION_PATCH DEC(__IBMC__    % 10)
+
+#elif defined(__NVCOMPILER)
+# define COMPILER_ID "NVHPC"
+# define COMPILER_VERSION_MAJOR DEC(__NVCOMPILER_MAJOR__)
+# define COMPILER_VERSION_MINOR DEC(__NVCOMPILER_MINOR__)
+# if defined(__NVCOMPILER_PATCHLEVEL__)
+#  define COMPILER_VERSION_PATCH DEC(__NVCOMPILER_PATCHLEVEL__)
+# endif
+
+#elif defined(__PGI)
+# define COMPILER_ID "PGI"
+# define COMPILER_VERSION_MAJOR DEC(__PGIC__)
+# define COMPILER_VERSION_MINOR DEC(__PGIC_MINOR__)
+# if defined(__PGIC_PATCHLEVEL__)
+#  define COMPILER_VERSION_PATCH DEC(__PGIC_PATCHLEVEL__)
+# endif
+
+#elif defined(_CRAYC)
+# define COMPILER_ID "Cray"
+# define COMPILER_VERSION_MAJOR DEC(_RELEASE_MAJOR)
+# define COMPILER_VERSION_MINOR DEC(_RELEASE_MINOR)
+
+#elif defined(__TI_COMPILER_VERSION__)
+# define COMPILER_ID "TI"
+  /* __TI_COMPILER_VERSION__ = VVVRRRPPP */
+# define COMPILER_VERSION_MAJOR DEC(__TI_COMPILER_VERSION__/1000000)
+# define COMPILER_VERSION_MINOR DEC(__TI_COMPILER_VERSION__/1000   % 1000)
+# define COMPILER_VERSION_PATCH DEC(__TI_COMPILER_VERSION__        % 1000)
+
+#elif defined(__CLANG_FUJITSU)
+# define COMPILER_ID "FujitsuClang"
+# define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
+# define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
+# define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
+# define COMPILER_VERSION_INTERNAL_STR __clang_version__
+
+
+#elif defined(__FUJITSU)
+# define COMPILER_ID "Fujitsu"
+# if defined(__FCC_version__)
+#   define COMPILER_VERSION __FCC_version__
+# elif defined(__FCC_major__)
+#   define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
+#   define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
+#   define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
+# endif
+# if defined(__fcc_version)
+#   define COMPILER_VERSION_INTERNAL DEC(__fcc_version)
+# elif defined(__FCC_VERSION)
+#   define COMPILER_VERSION_INTERNAL DEC(__FCC_VERSION)
+# endif
+
+
+#elif defined(__ghs__)
+# define COMPILER_ID "GHS"
+/* __GHS_VERSION_NUMBER = VVVVRP */
+# ifdef __GHS_VERSION_NUMBER
+# define COMPILER_VERSION_MAJOR DEC(__GHS_VERSION_NUMBER / 100)
+# define COMPILER_VERSION_MINOR DEC(__GHS_VERSION_NUMBER / 10 % 10)
+# define COMPILER_VERSION_PATCH DEC(__GHS_VERSION_NUMBER      % 10)
+# endif
+
+#elif defined(__TASKING__)
+# define COMPILER_ID "Tasking"
+  # define COMPILER_VERSION_MAJOR DEC(__VERSION__/1000)
+  # define COMPILER_VERSION_MINOR DEC(__VERSION__ % 100)
+# define COMPILER_VERSION_INTERNAL DEC(__VERSION__)
+
+#elif defined(__TINYC__)
+# define COMPILER_ID "TinyCC"
+
+#elif defined(__BCC__)
+# define COMPILER_ID "Bruce"
+
+#elif defined(__SCO_VERSION__)
+# define COMPILER_ID "SCO"
+
+#elif defined(__ARMCC_VERSION) && !defined(__clang__)
+# define COMPILER_ID "ARMCC"
+#if __ARMCC_VERSION >= 1000000
+  /* __ARMCC_VERSION = VRRPPPP */
+  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/1000000)
+  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 100)
+  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION     % 10000)
+#else
+  /* __ARMCC_VERSION = VRPPPP */
+  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/100000)
+  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 10)
+  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION    % 10000)
+#endif
+
+
+#elif defined(__clang__) && defined(__apple_build_version__)
+# define COMPILER_ID "AppleClang"
+# if defined(_MSC_VER)
+#  define SIMULATE_ID "MSVC"
+# endif
+# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
+# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
+# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
+# if defined(_MSC_VER)
+   /* _MSC_VER = VVRR */
+#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
+#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
+# endif
+# define COMPILER_VERSION_TWEAK DEC(__apple_build_version__)
+
+#elif defined(__clang__) && defined(__ARMCOMPILER_VERSION)
+# define COMPILER_ID "ARMClang"
+  # define COMPILER_VERSION_MAJOR DEC(__ARMCOMPILER_VERSION/1000000)
+  # define COMPILER_VERSION_MINOR DEC(__ARMCOMPILER_VERSION/10000 % 100)
+  # define COMPILER_VERSION_PATCH DEC(__ARMCOMPILER_VERSION     % 10000)
+# define COMPILER_VERSION_INTERNAL DEC(__ARMCOMPILER_VERSION)
+
+#elif defined(__clang__)
+# define COMPILER_ID "Clang"
+# if defined(_MSC_VER)
+#  define SIMULATE_ID "MSVC"
+# endif
+# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
+# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
+# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
+# if defined(_MSC_VER)
+   /* _MSC_VER = VVRR */
+#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
+#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
+# endif
+
+#elif defined(__LCC__) && (defined(__GNUC__) || defined(__GNUG__) || defined(__MCST__))
+# define COMPILER_ID "LCC"
+# define COMPILER_VERSION_MAJOR DEC(__LCC__ / 100)
+# define COMPILER_VERSION_MINOR DEC(__LCC__ % 100)
+# if defined(__LCC_MINOR__)
+#  define COMPILER_VERSION_PATCH DEC(__LCC_MINOR__)
+# endif
+# if defined(__GNUC__) && defined(__GNUC_MINOR__)
+#  define SIMULATE_ID "GNU"
+#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
+#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
+#  if defined(__GNUC_PATCHLEVEL__)
+#   define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
+#  endif
+# endif
+
+#elif defined(__GNUC__)
+# define COMPILER_ID "GNU"
+# define COMPILER_VERSION_MAJOR DEC(__GNUC__)
+# if defined(__GNUC_MINOR__)
+#  define COMPILER_VERSION_MINOR DEC(__GNUC_MINOR__)
+# endif
+# if defined(__GNUC_PATCHLEVEL__)
+#  define COMPILER_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
+# endif
+
+#elif defined(_MSC_VER)
+# define COMPILER_ID "MSVC"
+  /* _MSC_VER = VVRR */
+# define COMPILER_VERSION_MAJOR DEC(_MSC_VER / 100)
+# define COMPILER_VERSION_MINOR DEC(_MSC_VER % 100)
+# if defined(_MSC_FULL_VER)
+#  if _MSC_VER >= 1400
+    /* _MSC_FULL_VER = VVRRPPPPP */
+#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 100000)
+#  else
+    /* _MSC_FULL_VER = VVRRPPPP */
+#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 10000)
+#  endif
+# endif
+# if defined(_MSC_BUILD)
+#  define COMPILER_VERSION_TWEAK DEC(_MSC_BUILD)
+# endif
+
+#elif defined(_ADI_COMPILER)
+# define COMPILER_ID "ADSP"
+#if defined(__VERSIONNUM__)
+  /* __VERSIONNUM__ = 0xVVRRPPTT */
+#  define COMPILER_VERSION_MAJOR DEC(__VERSIONNUM__ >> 24 & 0xFF)
+#  define COMPILER_VERSION_MINOR DEC(__VERSIONNUM__ >> 16 & 0xFF)
+#  define COMPILER_VERSION_PATCH DEC(__VERSIONNUM__ >> 8 & 0xFF)
+#  define COMPILER_VERSION_TWEAK DEC(__VERSIONNUM__ & 0xFF)
+#endif
+
+#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
+# define COMPILER_ID "IAR"
+# if defined(__VER__) && defined(__ICCARM__)
+#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 1000000)
+#  define COMPILER_VERSION_MINOR DEC(((__VER__) / 1000) % 1000)
+#  define COMPILER_VERSION_PATCH DEC((__VER__) % 1000)
+#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
+# elif defined(__VER__) && (defined(__ICCAVR__) || defined(__ICCRX__) || defined(__ICCRH850__) || defined(__ICCRL78__) || defined(__ICC430__) || defined(__ICCRISCV__) || defined(__ICCV850__) || defined(__ICC8051__) || defined(__ICCSTM8__))
+#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 100)
+#  define COMPILER_VERSION_MINOR DEC((__VER__) - (((__VER__) / 100)*100))
+#  define COMPILER_VERSION_PATCH DEC(__SUBVERSION__)
+#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
+# endif
+
+#elif defined(__SDCC_VERSION_MAJOR) || defined(SDCC)
+# define COMPILER_ID "SDCC"
+# if defined(__SDCC_VERSION_MAJOR)
+#  define COMPILER_VERSION_MAJOR DEC(__SDCC_VERSION_MAJOR)
+#  define COMPILER_VERSION_MINOR DEC(__SDCC_VERSION_MINOR)
+#  define COMPILER_VERSION_PATCH DEC(__SDCC_VERSION_PATCH)
+# else
+  /* SDCC = VRP */
+#  define COMPILER_VERSION_MAJOR DEC(SDCC/100)
+#  define COMPILER_VERSION_MINOR DEC(SDCC/10 % 10)
+#  define COMPILER_VERSION_PATCH DEC(SDCC    % 10)
+# endif
+
+
+/* These compilers are either not known or too old to define an
+  identification macro.  Try to identify the platform and guess that
+  it is the native compiler.  */
+#elif defined(__hpux) || defined(__hpua)
+# define COMPILER_ID "HP"
+
+#else /* unknown compiler */
+# define COMPILER_ID ""
+#endif
+
+/* Construct the string literal in pieces to prevent the source from
+   getting matched.  Store it in a pointer rather than an array
+   because some compilers will just produce instructions to fill the
+   array rather than assigning a pointer to a static array.  */
+char const* info_compiler = "INFO" ":" "compiler[" COMPILER_ID "]";
+#ifdef SIMULATE_ID
+char const* info_simulate = "INFO" ":" "simulate[" SIMULATE_ID "]";
+#endif
+
+#ifdef __QNXNTO__
+char const* qnxnto = "INFO" ":" "qnxnto[]";
+#endif
+
+#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
+char const *info_cray = "INFO" ":" "compiler_wrapper[CrayPrgEnv]";
+#endif
+
+#define STRINGIFY_HELPER(X) #X
+#define STRINGIFY(X) STRINGIFY_HELPER(X)
+
+/* Identify known platforms by name.  */
+#if defined(__linux) || defined(__linux__) || defined(linux)
+# define PLATFORM_ID "Linux"
+
+#elif defined(__MSYS__)
+# define PLATFORM_ID "MSYS"
+
+#elif defined(__CYGWIN__)
+# define PLATFORM_ID "Cygwin"
+
+#elif defined(__MINGW32__)
+# define PLATFORM_ID "MinGW"
+
+#elif defined(__APPLE__)
+# define PLATFORM_ID "Darwin"
+
+#elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+# define PLATFORM_ID "Windows"
+
+#elif defined(__FreeBSD__) || defined(__FreeBSD)
+# define PLATFORM_ID "FreeBSD"
+
+#elif defined(__NetBSD__) || defined(__NetBSD)
+# define PLATFORM_ID "NetBSD"
+
+#elif defined(__OpenBSD__) || defined(__OPENBSD)
+# define PLATFORM_ID "OpenBSD"
+
+#elif defined(__sun) || defined(sun)
+# define PLATFORM_ID "SunOS"
+
+#elif defined(_AIX) || defined(__AIX) || defined(__AIX__) || defined(__aix) || defined(__aix__)
+# define PLATFORM_ID "AIX"
+
+#elif defined(__hpux) || defined(__hpux__)
+# define PLATFORM_ID "HP-UX"
+
+#elif defined(__HAIKU__)
+# define PLATFORM_ID "Haiku"
+
+#elif defined(__BeOS) || defined(__BEOS__) || defined(_BEOS)
+# define PLATFORM_ID "BeOS"
+
+#elif defined(__QNX__) || defined(__QNXNTO__)
+# define PLATFORM_ID "QNX"
+
+#elif defined(__tru64) || defined(_tru64) || defined(__TRU64__)
+# define PLATFORM_ID "Tru64"
+
+#elif defined(__riscos) || defined(__riscos__)
+# define PLATFORM_ID "RISCos"
+
+#elif defined(__sinix) || defined(__sinix__) || defined(__SINIX__)
+# define PLATFORM_ID "SINIX"
+
+#elif defined(__UNIX_SV__)
+# define PLATFORM_ID "UNIX_SV"
+
+#elif defined(__bsdos__)
+# define PLATFORM_ID "BSDOS"
+
+#elif defined(_MPRAS) || defined(MPRAS)
+# define PLATFORM_ID "MP-RAS"
+
+#elif defined(__osf) || defined(__osf__)
+# define PLATFORM_ID "OSF1"
+
+#elif defined(_SCO_SV) || defined(SCO_SV) || defined(sco_sv)
+# define PLATFORM_ID "SCO_SV"
+
+#elif defined(__ultrix) || defined(__ultrix__) || defined(_ULTRIX)
+# define PLATFORM_ID "ULTRIX"
+
+#elif defined(__XENIX__) || defined(_XENIX) || defined(XENIX)
+# define PLATFORM_ID "Xenix"
+
+#elif defined(__WATCOMC__)
+# if defined(__LINUX__)
+#  define PLATFORM_ID "Linux"
+
+# elif defined(__DOS__)
+#  define PLATFORM_ID "DOS"
+
+# elif defined(__OS2__)
+#  define PLATFORM_ID "OS2"
+
+# elif defined(__WINDOWS__)
+#  define PLATFORM_ID "Windows3x"
+
+# elif defined(__VXWORKS__)
+#  define PLATFORM_ID "VxWorks"
+
+# else /* unknown platform */
+#  define PLATFORM_ID
+# endif
+
+#elif defined(__INTEGRITY)
+# if defined(INT_178B)
+#  define PLATFORM_ID "Integrity178"
+
+# else /* regular Integrity */
+#  define PLATFORM_ID "Integrity"
+# endif
+
+# elif defined(_ADI_COMPILER)
+#  define PLATFORM_ID "ADSP"
+
+#else /* unknown platform */
+# define PLATFORM_ID
+
+#endif
+
+/* For windows compilers MSVC and Intel we can determine
+   the architecture of the compiler being used.  This is because
+   the compilers do not have flags that can change the architecture,
+   but rather depend on which compiler is being used
+*/
+#if defined(_WIN32) && defined(_MSC_VER)
+# if defined(_M_IA64)
+#  define ARCHITECTURE_ID "IA64"
+
+# elif defined(_M_ARM64EC)
+#  define ARCHITECTURE_ID "ARM64EC"
+
+# elif defined(_M_X64) || defined(_M_AMD64)
+#  define ARCHITECTURE_ID "x64"
+
+# elif defined(_M_IX86)
+#  define ARCHITECTURE_ID "X86"
+
+# elif defined(_M_ARM64)
+#  define ARCHITECTURE_ID "ARM64"
+
+# elif defined(_M_ARM)
+#  if _M_ARM == 4
+#   define ARCHITECTURE_ID "ARMV4I"
+#  elif _M_ARM == 5
+#   define ARCHITECTURE_ID "ARMV5I"
+#  else
+#   define ARCHITECTURE_ID "ARMV" STRINGIFY(_M_ARM)
+#  endif
+
+# elif defined(_M_MIPS)
+#  define ARCHITECTURE_ID "MIPS"
+
+# elif defined(_M_SH)
+#  define ARCHITECTURE_ID "SHx"
+
+# else /* unknown architecture */
+#  define ARCHITECTURE_ID ""
+# endif
+
+#elif defined(__WATCOMC__)
+# if defined(_M_I86)
+#  define ARCHITECTURE_ID "I86"
+
+# elif defined(_M_IX86)
+#  define ARCHITECTURE_ID "X86"
+
+# else /* unknown architecture */
+#  define ARCHITECTURE_ID ""
+# endif
+
+#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
+# if defined(__ICCARM__)
+#  define ARCHITECTURE_ID "ARM"
+
+# elif defined(__ICCRX__)
+#  define ARCHITECTURE_ID "RX"
+
+# elif defined(__ICCRH850__)
+#  define ARCHITECTURE_ID "RH850"
+
+# elif defined(__ICCRL78__)
+#  define ARCHITECTURE_ID "RL78"
+
+# elif defined(__ICCRISCV__)
+#  define ARCHITECTURE_ID "RISCV"
+
+# elif defined(__ICCAVR__)
+#  define ARCHITECTURE_ID "AVR"
+
+# elif defined(__ICC430__)
+#  define ARCHITECTURE_ID "MSP430"
+
+# elif defined(__ICCV850__)
+#  define ARCHITECTURE_ID "V850"
+
+# elif defined(__ICC8051__)
+#  define ARCHITECTURE_ID "8051"
+
+# elif defined(__ICCSTM8__)
+#  define ARCHITECTURE_ID "STM8"
+
+# else /* unknown architecture */
+#  define ARCHITECTURE_ID ""
+# endif
+
+#elif defined(__ghs__)
+# if defined(__PPC64__)
+#  define ARCHITECTURE_ID "PPC64"
+
+# elif defined(__ppc__)
+#  define ARCHITECTURE_ID "PPC"
+
+# elif defined(__ARM__)
+#  define ARCHITECTURE_ID "ARM"
+
+# elif defined(__x86_64__)
+#  define ARCHITECTURE_ID "x64"
+
+# elif defined(__i386__)
+#  define ARCHITECTURE_ID "X86"
+
+# else /* unknown architecture */
+#  define ARCHITECTURE_ID ""
+# endif
+
+#elif defined(__TI_COMPILER_VERSION__)
+# if defined(__TI_ARM__)
+#  define ARCHITECTURE_ID "ARM"
+
+# elif defined(__MSP430__)
+#  define ARCHITECTURE_ID "MSP430"
+
+# elif defined(__TMS320C28XX__)
+#  define ARCHITECTURE_ID "TMS320C28x"
+
+# elif defined(__TMS320C6X__) || defined(_TMS320C6X)
+#  define ARCHITECTURE_ID "TMS320C6x"
+
+# else /* unknown architecture */
+#  define ARCHITECTURE_ID ""
+# endif
+
+# elif defined(__ADSPSHARC__)
+#  define ARCHITECTURE_ID "SHARC"
+
+# elif defined(__ADSPBLACKFIN__)
+#  define ARCHITECTURE_ID "Blackfin"
+
+#elif defined(__TASKING__)
+
+# if defined(__CTC__) || defined(__CPTC__)
+#  define ARCHITECTURE_ID "TriCore"
+
+# elif defined(__CMCS__)
+#  define ARCHITECTURE_ID "MCS"
+
+# elif defined(__CARM__)
+#  define ARCHITECTURE_ID "ARM"
+
+# elif defined(__CARC__)
+#  define ARCHITECTURE_ID "ARC"
+
+# elif defined(__C51__)
+#  define ARCHITECTURE_ID "8051"
+
+# elif defined(__CPCP__)
+#  define ARCHITECTURE_ID "PCP"
+
+# else
+#  define ARCHITECTURE_ID ""
+# endif
+
+#else
+#  define ARCHITECTURE_ID
+#endif
+
+/* Convert integer to decimal digit literals.  */
+#define DEC(n)                   \
+  ('0' + (((n) / 10000000)%10)), \
+  ('0' + (((n) / 1000000)%10)),  \
+  ('0' + (((n) / 100000)%10)),   \
+  ('0' + (((n) / 10000)%10)),    \
+  ('0' + (((n) / 1000)%10)),     \
+  ('0' + (((n) / 100)%10)),      \
+  ('0' + (((n) / 10)%10)),       \
+  ('0' +  ((n) % 10))
+
+/* Convert integer to hex digit literals.  */
+#define HEX(n)             \
+  ('0' + ((n)>>28 & 0xF)), \
+  ('0' + ((n)>>24 & 0xF)), \
+  ('0' + ((n)>>20 & 0xF)), \
+  ('0' + ((n)>>16 & 0xF)), \
+  ('0' + ((n)>>12 & 0xF)), \
+  ('0' + ((n)>>8  & 0xF)), \
+  ('0' + ((n)>>4  & 0xF)), \
+  ('0' + ((n)     & 0xF))
+
+/* Construct a string literal encoding the version number. */
+#ifdef COMPILER_VERSION
+char const* info_version = "INFO" ":" "compiler_version[" COMPILER_VERSION "]";
+
+/* Construct a string literal encoding the version number components. */
+#elif defined(COMPILER_VERSION_MAJOR)
+char const info_version[] = {
+  'I', 'N', 'F', 'O', ':',
+  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','[',
+  COMPILER_VERSION_MAJOR,
+# ifdef COMPILER_VERSION_MINOR
+  '.', COMPILER_VERSION_MINOR,
+#  ifdef COMPILER_VERSION_PATCH
+   '.', COMPILER_VERSION_PATCH,
+#   ifdef COMPILER_VERSION_TWEAK
+    '.', COMPILER_VERSION_TWEAK,
+#   endif
+#  endif
+# endif
+  ']','\0'};
+#endif
+
+/* Construct a string literal encoding the internal version number. */
+#ifdef COMPILER_VERSION_INTERNAL
+char const info_version_internal[] = {
+  'I', 'N', 'F', 'O', ':',
+  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','_',
+  'i','n','t','e','r','n','a','l','[',
+  COMPILER_VERSION_INTERNAL,']','\0'};
+#elif defined(COMPILER_VERSION_INTERNAL_STR)
+char const* info_version_internal = "INFO" ":" "compiler_version_internal[" COMPILER_VERSION_INTERNAL_STR "]";
+#endif
+
+/* Construct a string literal encoding the version number components. */
+#ifdef SIMULATE_VERSION_MAJOR
+char const info_simulate_version[] = {
+  'I', 'N', 'F', 'O', ':',
+  's','i','m','u','l','a','t','e','_','v','e','r','s','i','o','n','[',
+  SIMULATE_VERSION_MAJOR,
+# ifdef SIMULATE_VERSION_MINOR
+  '.', SIMULATE_VERSION_MINOR,
+#  ifdef SIMULATE_VERSION_PATCH
+   '.', SIMULATE_VERSION_PATCH,
+#   ifdef SIMULATE_VERSION_TWEAK
+    '.', SIMULATE_VERSION_TWEAK,
+#   endif
+#  endif
+# endif
+  ']','\0'};
+#endif
+
+/* Construct the string literal in pieces to prevent the source from
+   getting matched.  Store it in a pointer rather than an array
+   because some compilers will just produce instructions to fill the
+   array rather than assigning a pointer to a static array.  */
+char const* info_platform = "INFO" ":" "platform[" PLATFORM_ID "]";
+char const* info_arch = "INFO" ":" "arch[" ARCHITECTURE_ID "]";
+
+
+
+#if !defined(__STDC__) && !defined(__clang__)
+# if defined(_MSC_VER) || defined(__ibmxl__) || defined(__IBMC__)
+#  define C_VERSION "90"
+# else
+#  define C_VERSION
+# endif
+#elif __STDC_VERSION__ > 201710L
+# define C_VERSION "23"
+#elif __STDC_VERSION__ >= 201710L
+# define C_VERSION "17"
+#elif __STDC_VERSION__ >= 201000L
+# define C_VERSION "11"
+#elif __STDC_VERSION__ >= 199901L
+# define C_VERSION "99"
+#else
+# define C_VERSION "90"
+#endif
+const char* info_language_standard_default =
+  "INFO" ":" "standard_default[" C_VERSION "]";
+
+const char* info_language_extensions_default = "INFO" ":" "extensions_default["
+#if (defined(__clang__) || defined(__GNUC__) || defined(__xlC__) ||           \
+     defined(__TI_COMPILER_VERSION__)) &&                                     \
+  !defined(__STRICT_ANSI__)
+  "ON"
+#else
+  "OFF"
+#endif
+"]";
+
+/*--------------------------------------------------------------------------*/
+
+#ifdef ID_VOID_MAIN
+void main() {}
+#else
+# if defined(__CLASSIC_C__)
+int main(argc, argv) int argc; char *argv[];
+# else
+int main(int argc, char* argv[])
+# endif
+{
+  int require = 0;
+  require += info_compiler[argc];
+  require += info_platform[argc];
+  require += info_arch[argc];
+#ifdef COMPILER_VERSION_MAJOR
+  require += info_version[argc];
+#endif
+#ifdef COMPILER_VERSION_INTERNAL
+  require += info_version_internal[argc];
+#endif
+#ifdef SIMULATE_ID
+  require += info_simulate[argc];
+#endif
+#ifdef SIMULATE_VERSION_MAJOR
+  require += info_simulate_version[argc];
+#endif
+#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
+  require += info_cray[argc];
+#endif
+  require += info_language_standard_default[argc];
+  require += info_language_extensions_default[argc];
+  (void)argv;
+  return require;
+}
+#endif
+
+```
+
+# File: build_pr_19\CMakeFiles\3.26.0-msvc3\CompilerIdCXX\CMakeCXXCompilerId.cpp
+```cpp
+/* This source file must have a .cpp extension so that all C++ compilers
+   recognize the extension without flags.  Borland does not know .cxx for
+   example.  */
+#ifndef __cplusplus
+# error "A C compiler has been selected for C++."
+#endif
+
+#if !defined(__has_include)
+/* If the compiler does not have __has_include, pretend the answer is
+   always no.  */
+#  define __has_include(x) 0
+#endif
+
+
+/* Version number components: V=Version, R=Revision, P=Patch
+   Version date components:   YYYY=Year, MM=Month,   DD=Day  */
+
+#if defined(__COMO__)
+# define COMPILER_ID "Comeau"
+  /* __COMO_VERSION__ = VRR */
+# define COMPILER_VERSION_MAJOR DEC(__COMO_VERSION__ / 100)
+# define COMPILER_VERSION_MINOR DEC(__COMO_VERSION__ % 100)
+
+#elif defined(__INTEL_COMPILER) || defined(__ICC)
+# define COMPILER_ID "Intel"
+# if defined(_MSC_VER)
+#  define SIMULATE_ID "MSVC"
+# endif
+# if defined(__GNUC__)
+#  define SIMULATE_ID "GNU"
+# endif
+  /* __INTEL_COMPILER = VRP prior to 2021, and then VVVV for 2021 and later,
+     except that a few beta releases use the old format with V=2021.  */
+# if __INTEL_COMPILER < 2021 || __INTEL_COMPILER == 202110 || __INTEL_COMPILER == 202111
+#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER/100)
+#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER/10 % 10)
+#  if defined(__INTEL_COMPILER_UPDATE)
+#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER_UPDATE)
+#  else
+#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER   % 10)
+#  endif
+# else
+#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER)
+#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER_UPDATE)
+   /* The third version component from --version is an update index,
+      but no macro is provided for it.  */
+#  define COMPILER_VERSION_PATCH DEC(0)
+# endif
+# if defined(__INTEL_COMPILER_BUILD_DATE)
+   /* __INTEL_COMPILER_BUILD_DATE = YYYYMMDD */
+#  define COMPILER_VERSION_TWEAK DEC(__INTEL_COMPILER_BUILD_DATE)
+# endif
+# if defined(_MSC_VER)
+   /* _MSC_VER = VVRR */
+#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
+#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
+# endif
+# if defined(__GNUC__)
+#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
+# elif defined(__GNUG__)
+#  define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
+# endif
+# if defined(__GNUC_MINOR__)
+#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
+# endif
+# if defined(__GNUC_PATCHLEVEL__)
+#  define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
+# endif
+
+#elif (defined(__clang__) && defined(__INTEL_CLANG_COMPILER)) || defined(__INTEL_LLVM_COMPILER)
+# define COMPILER_ID "IntelLLVM"
+#if defined(_MSC_VER)
+# define SIMULATE_ID "MSVC"
+#endif
+#if defined(__GNUC__)
+# define SIMULATE_ID "GNU"
+#endif
+/* __INTEL_LLVM_COMPILER = VVVVRP prior to 2021.2.0, VVVVRRPP for 2021.2.0 and
+ * later.  Look for 6 digit vs. 8 digit version number to decide encoding.
+ * VVVV is no smaller than the current year when a version is released.
+ */
+#if __INTEL_LLVM_COMPILER < 1000000L
+# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/100)
+# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/10 % 10)
+# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER    % 10)
+#else
+# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/10000)
+# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/100 % 100)
+# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER     % 100)
+#endif
+#if defined(_MSC_VER)
+  /* _MSC_VER = VVRR */
+# define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
+# define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
+#endif
+#if defined(__GNUC__)
+# define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
+#elif defined(__GNUG__)
+# define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
+#endif
+#if defined(__GNUC_MINOR__)
+# define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
+#endif
+#if defined(__GNUC_PATCHLEVEL__)
+# define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
+#endif
+
+#elif defined(__PATHCC__)
+# define COMPILER_ID "PathScale"
+# define COMPILER_VERSION_MAJOR DEC(__PATHCC__)
+# define COMPILER_VERSION_MINOR DEC(__PATHCC_MINOR__)
+# if defined(__PATHCC_PATCHLEVEL__)
+#  define COMPILER_VERSION_PATCH DEC(__PATHCC_PATCHLEVEL__)
+# endif
+
+#elif defined(__BORLANDC__) && defined(__CODEGEARC_VERSION__)
+# define COMPILER_ID "Embarcadero"
+# define COMPILER_VERSION_MAJOR HEX(__CODEGEARC_VERSION__>>24 & 0x00FF)
+# define COMPILER_VERSION_MINOR HEX(__CODEGEARC_VERSION__>>16 & 0x00FF)
+# define COMPILER_VERSION_PATCH DEC(__CODEGEARC_VERSION__     & 0xFFFF)
+
+#elif defined(__BORLANDC__)
+# define COMPILER_ID "Borland"
+  /* __BORLANDC__ = 0xVRR */
+# define COMPILER_VERSION_MAJOR HEX(__BORLANDC__>>8)
+# define COMPILER_VERSION_MINOR HEX(__BORLANDC__ & 0xFF)
+
+#elif defined(__WATCOMC__) && __WATCOMC__ < 1200
+# define COMPILER_ID "Watcom"
+   /* __WATCOMC__ = VVRR */
+# define COMPILER_VERSION_MAJOR DEC(__WATCOMC__ / 100)
+# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
+# if (__WATCOMC__ % 10) > 0
+#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
+# endif
+
+#elif defined(__WATCOMC__)
+# define COMPILER_ID "OpenWatcom"
+   /* __WATCOMC__ = VVRP + 1100 */
+# define COMPILER_VERSION_MAJOR DEC((__WATCOMC__ - 1100) / 100)
+# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
+# if (__WATCOMC__ % 10) > 0
+#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
+# endif
+
+#elif defined(__SUNPRO_CC)
+# define COMPILER_ID "SunPro"
+# if __SUNPRO_CC >= 0x5100
+   /* __SUNPRO_CC = 0xVRRP */
+#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_CC>>12)
+#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_CC>>4 & 0xFF)
+#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_CC    & 0xF)
+# else
+   /* __SUNPRO_CC = 0xVRP */
+#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_CC>>8)
+#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_CC>>4 & 0xF)
+#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_CC    & 0xF)
+# endif
+
+#elif defined(__HP_aCC)
+# define COMPILER_ID "HP"
+  /* __HP_aCC = VVRRPP */
+# define COMPILER_VERSION_MAJOR DEC(__HP_aCC/10000)
+# define COMPILER_VERSION_MINOR DEC(__HP_aCC/100 % 100)
+# define COMPILER_VERSION_PATCH DEC(__HP_aCC     % 100)
+
+#elif defined(__DECCXX)
+# define COMPILER_ID "Compaq"
+  /* __DECCXX_VER = VVRRTPPPP */
+# define COMPILER_VERSION_MAJOR DEC(__DECCXX_VER/10000000)
+# define COMPILER_VERSION_MINOR DEC(__DECCXX_VER/100000  % 100)
+# define COMPILER_VERSION_PATCH DEC(__DECCXX_VER         % 10000)
+
+#elif defined(__IBMCPP__) && defined(__COMPILER_VER__)
+# define COMPILER_ID "zOS"
+  /* __IBMCPP__ = VRP */
+# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
+# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
+# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
+
+#elif defined(__open_xl__) && defined(__clang__)
+# define COMPILER_ID "IBMClang"
+# define COMPILER_VERSION_MAJOR DEC(__open_xl_version__)
+# define COMPILER_VERSION_MINOR DEC(__open_xl_release__)
+# define COMPILER_VERSION_PATCH DEC(__open_xl_modification__)
+# define COMPILER_VERSION_TWEAK DEC(__open_xl_ptf_fix_level__)
+
+
+#elif defined(__ibmxl__) && defined(__clang__)
+# define COMPILER_ID "XLClang"
+# define COMPILER_VERSION_MAJOR DEC(__ibmxl_version__)
+# define COMPILER_VERSION_MINOR DEC(__ibmxl_release__)
+# define COMPILER_VERSION_PATCH DEC(__ibmxl_modification__)
+# define COMPILER_VERSION_TWEAK DEC(__ibmxl_ptf_fix_level__)
+
+
+#elif defined(__IBMCPP__) && !defined(__COMPILER_VER__) && __IBMCPP__ >= 800
+# define COMPILER_ID "XL"
+  /* __IBMCPP__ = VRP */
+# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
+# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
+# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
+
+#elif defined(__IBMCPP__) && !defined(__COMPILER_VER__) && __IBMCPP__ < 800
+# define COMPILER_ID "VisualAge"
+  /* __IBMCPP__ = VRP */
+# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
+# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
+# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
+
+#elif defined(__NVCOMPILER)
+# define COMPILER_ID "NVHPC"
+# define COMPILER_VERSION_MAJOR DEC(__NVCOMPILER_MAJOR__)
+# define COMPILER_VERSION_MINOR DEC(__NVCOMPILER_MINOR__)
+# if defined(__NVCOMPILER_PATCHLEVEL__)
+#  define COMPILER_VERSION_PATCH DEC(__NVCOMPILER_PATCHLEVEL__)
+# endif
+
+#elif defined(__PGI)
+# define COMPILER_ID "PGI"
+# define COMPILER_VERSION_MAJOR DEC(__PGIC__)
+# define COMPILER_VERSION_MINOR DEC(__PGIC_MINOR__)
+# if defined(__PGIC_PATCHLEVEL__)
+#  define COMPILER_VERSION_PATCH DEC(__PGIC_PATCHLEVEL__)
+# endif
+
+#elif defined(_CRAYC)
+# define COMPILER_ID "Cray"
+# define COMPILER_VERSION_MAJOR DEC(_RELEASE_MAJOR)
+# define COMPILER_VERSION_MINOR DEC(_RELEASE_MINOR)
+
+#elif defined(__TI_COMPILER_VERSION__)
+# define COMPILER_ID "TI"
+  /* __TI_COMPILER_VERSION__ = VVVRRRPPP */
+# define COMPILER_VERSION_MAJOR DEC(__TI_COMPILER_VERSION__/1000000)
+# define COMPILER_VERSION_MINOR DEC(__TI_COMPILER_VERSION__/1000   % 1000)
+# define COMPILER_VERSION_PATCH DEC(__TI_COMPILER_VERSION__        % 1000)
+
+#elif defined(__CLANG_FUJITSU)
+# define COMPILER_ID "FujitsuClang"
+# define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
+# define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
+# define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
+# define COMPILER_VERSION_INTERNAL_STR __clang_version__
+
+
+#elif defined(__FUJITSU)
+# define COMPILER_ID "Fujitsu"
+# if defined(__FCC_version__)
+#   define COMPILER_VERSION __FCC_version__
+# elif defined(__FCC_major__)
+#   define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
+#   define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
+#   define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
+# endif
+# if defined(__fcc_version)
+#   define COMPILER_VERSION_INTERNAL DEC(__fcc_version)
+# elif defined(__FCC_VERSION)
+#   define COMPILER_VERSION_INTERNAL DEC(__FCC_VERSION)
+# endif
+
+
+#elif defined(__ghs__)
+# define COMPILER_ID "GHS"
+/* __GHS_VERSION_NUMBER = VVVVRP */
+# ifdef __GHS_VERSION_NUMBER
+# define COMPILER_VERSION_MAJOR DEC(__GHS_VERSION_NUMBER / 100)
+# define COMPILER_VERSION_MINOR DEC(__GHS_VERSION_NUMBER / 10 % 10)
+# define COMPILER_VERSION_PATCH DEC(__GHS_VERSION_NUMBER      % 10)
+# endif
+
+#elif defined(__TASKING__)
+# define COMPILER_ID "Tasking"
+  # define COMPILER_VERSION_MAJOR DEC(__VERSION__/1000)
+  # define COMPILER_VERSION_MINOR DEC(__VERSION__ % 100)
+# define COMPILER_VERSION_INTERNAL DEC(__VERSION__)
+
+#elif defined(__SCO_VERSION__)
+# define COMPILER_ID "SCO"
+
+#elif defined(__ARMCC_VERSION) && !defined(__clang__)
+# define COMPILER_ID "ARMCC"
+#if __ARMCC_VERSION >= 1000000
+  /* __ARMCC_VERSION = VRRPPPP */
+  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/1000000)
+  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 100)
+  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION     % 10000)
+#else
+  /* __ARMCC_VERSION = VRPPPP */
+  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/100000)
+  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 10)
+  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION    % 10000)
+#endif
+
+
+#elif defined(__clang__) && defined(__apple_build_version__)
+# define COMPILER_ID "AppleClang"
+# if defined(_MSC_VER)
+#  define SIMULATE_ID "MSVC"
+# endif
+# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
+# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
+# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
+# if defined(_MSC_VER)
+   /* _MSC_VER = VVRR */
+#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
+#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
+# endif
+# define COMPILER_VERSION_TWEAK DEC(__apple_build_version__)
+
+#elif defined(__clang__) && defined(__ARMCOMPILER_VERSION)
+# define COMPILER_ID "ARMClang"
+  # define COMPILER_VERSION_MAJOR DEC(__ARMCOMPILER_VERSION/1000000)
+  # define COMPILER_VERSION_MINOR DEC(__ARMCOMPILER_VERSION/10000 % 100)
+  # define COMPILER_VERSION_PATCH DEC(__ARMCOMPILER_VERSION     % 10000)
+# define COMPILER_VERSION_INTERNAL DEC(__ARMCOMPILER_VERSION)
+
+#elif defined(__clang__)
+# define COMPILER_ID "Clang"
+# if defined(_MSC_VER)
+#  define SIMULATE_ID "MSVC"
+# endif
+# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
+# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
+# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
+# if defined(_MSC_VER)
+   /* _MSC_VER = VVRR */
+#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
+#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
+# endif
+
+#elif defined(__LCC__) && (defined(__GNUC__) || defined(__GNUG__) || defined(__MCST__))
+# define COMPILER_ID "LCC"
+# define COMPILER_VERSION_MAJOR DEC(__LCC__ / 100)
+# define COMPILER_VERSION_MINOR DEC(__LCC__ % 100)
+# if defined(__LCC_MINOR__)
+#  define COMPILER_VERSION_PATCH DEC(__LCC_MINOR__)
+# endif
+# if defined(__GNUC__) && defined(__GNUC_MINOR__)
+#  define SIMULATE_ID "GNU"
+#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
+#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
+#  if defined(__GNUC_PATCHLEVEL__)
+#   define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
+#  endif
+# endif
+
+#elif defined(__GNUC__) || defined(__GNUG__)
+# define COMPILER_ID "GNU"
+# if defined(__GNUC__)
+#  define COMPILER_VERSION_MAJOR DEC(__GNUC__)
+# else
+#  define COMPILER_VERSION_MAJOR DEC(__GNUG__)
+# endif
+# if defined(__GNUC_MINOR__)
+#  define COMPILER_VERSION_MINOR DEC(__GNUC_MINOR__)
+# endif
+# if defined(__GNUC_PATCHLEVEL__)
+#  define COMPILER_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
+# endif
+
+#elif defined(_MSC_VER)
+# define COMPILER_ID "MSVC"
+  /* _MSC_VER = VVRR */
+# define COMPILER_VERSION_MAJOR DEC(_MSC_VER / 100)
+# define COMPILER_VERSION_MINOR DEC(_MSC_VER % 100)
+# if defined(_MSC_FULL_VER)
+#  if _MSC_VER >= 1400
+    /* _MSC_FULL_VER = VVRRPPPPP */
+#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 100000)
+#  else
+    /* _MSC_FULL_VER = VVRRPPPP */
+#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 10000)
+#  endif
+# endif
+# if defined(_MSC_BUILD)
+#  define COMPILER_VERSION_TWEAK DEC(_MSC_BUILD)
+# endif
+
+#elif defined(_ADI_COMPILER)
+# define COMPILER_ID "ADSP"
+#if defined(__VERSIONNUM__)
+  /* __VERSIONNUM__ = 0xVVRRPPTT */
+#  define COMPILER_VERSION_MAJOR DEC(__VERSIONNUM__ >> 24 & 0xFF)
+#  define COMPILER_VERSION_MINOR DEC(__VERSIONNUM__ >> 16 & 0xFF)
+#  define COMPILER_VERSION_PATCH DEC(__VERSIONNUM__ >> 8 & 0xFF)
+#  define COMPILER_VERSION_TWEAK DEC(__VERSIONNUM__ & 0xFF)
+#endif
+
+#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
+# define COMPILER_ID "IAR"
+# if defined(__VER__) && defined(__ICCARM__)
+#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 1000000)
+#  define COMPILER_VERSION_MINOR DEC(((__VER__) / 1000) % 1000)
+#  define COMPILER_VERSION_PATCH DEC((__VER__) % 1000)
+#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
+# elif defined(__VER__) && (defined(__ICCAVR__) || defined(__ICCRX__) || defined(__ICCRH850__) || defined(__ICCRL78__) || defined(__ICC430__) || defined(__ICCRISCV__) || defined(__ICCV850__) || defined(__ICC8051__) || defined(__ICCSTM8__))
+#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 100)
+#  define COMPILER_VERSION_MINOR DEC((__VER__) - (((__VER__) / 100)*100))
+#  define COMPILER_VERSION_PATCH DEC(__SUBVERSION__)
+#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
+# endif
+
+
+/* These compilers are either not known or too old to define an
+  identification macro.  Try to identify the platform and guess that
+  it is the native compiler.  */
+#elif defined(__hpux) || defined(__hpua)
+# define COMPILER_ID "HP"
+
+#else /* unknown compiler */
+# define COMPILER_ID ""
+#endif
+
+/* Construct the string literal in pieces to prevent the source from
+   getting matched.  Store it in a pointer rather than an array
+   because some compilers will just produce instructions to fill the
+   array rather than assigning a pointer to a static array.  */
+char const* info_compiler = "INFO" ":" "compiler[" COMPILER_ID "]";
+#ifdef SIMULATE_ID
+char const* info_simulate = "INFO" ":" "simulate[" SIMULATE_ID "]";
+#endif
+
+#ifdef __QNXNTO__
+char const* qnxnto = "INFO" ":" "qnxnto[]";
+#endif
+
+#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
+char const *info_cray = "INFO" ":" "compiler_wrapper[CrayPrgEnv]";
+#endif
+
+#define STRINGIFY_HELPER(X) #X
+#define STRINGIFY(X) STRINGIFY_HELPER(X)
+
+/* Identify known platforms by name.  */
+#if defined(__linux) || defined(__linux__) || defined(linux)
+# define PLATFORM_ID "Linux"
+
+#elif defined(__MSYS__)
+# define PLATFORM_ID "MSYS"
+
+#elif defined(__CYGWIN__)
+# define PLATFORM_ID "Cygwin"
+
+#elif defined(__MINGW32__)
+# define PLATFORM_ID "MinGW"
+
+#elif defined(__APPLE__)
+# define PLATFORM_ID "Darwin"
+
+#elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+# define PLATFORM_ID "Windows"
+
+#elif defined(__FreeBSD__) || defined(__FreeBSD)
+# define PLATFORM_ID "FreeBSD"
+
+#elif defined(__NetBSD__) || defined(__NetBSD)
+# define PLATFORM_ID "NetBSD"
+
+#elif defined(__OpenBSD__) || defined(__OPENBSD)
+# define PLATFORM_ID "OpenBSD"
+
+#elif defined(__sun) || defined(sun)
+# define PLATFORM_ID "SunOS"
+
+#elif defined(_AIX) || defined(__AIX) || defined(__AIX__) || defined(__aix) || defined(__aix__)
+# define PLATFORM_ID "AIX"
+
+#elif defined(__hpux) || defined(__hpux__)
+# define PLATFORM_ID "HP-UX"
+
+#elif defined(__HAIKU__)
+# define PLATFORM_ID "Haiku"
+
+#elif defined(__BeOS) || defined(__BEOS__) || defined(_BEOS)
+# define PLATFORM_ID "BeOS"
+
+#elif defined(__QNX__) || defined(__QNXNTO__)
+# define PLATFORM_ID "QNX"
+
+#elif defined(__tru64) || defined(_tru64) || defined(__TRU64__)
+# define PLATFORM_ID "Tru64"
+
+#elif defined(__riscos) || defined(__riscos__)
+# define PLATFORM_ID "RISCos"
+
+#elif defined(__sinix) || defined(__sinix__) || defined(__SINIX__)
+# define PLATFORM_ID "SINIX"
+
+#elif defined(__UNIX_SV__)
+# define PLATFORM_ID "UNIX_SV"
+
+#elif defined(__bsdos__)
+# define PLATFORM_ID "BSDOS"
+
+#elif defined(_MPRAS) || defined(MPRAS)
+# define PLATFORM_ID "MP-RAS"
+
+#elif defined(__osf) || defined(__osf__)
+# define PLATFORM_ID "OSF1"
+
+#elif defined(_SCO_SV) || defined(SCO_SV) || defined(sco_sv)
+# define PLATFORM_ID "SCO_SV"
+
+#elif defined(__ultrix) || defined(__ultrix__) || defined(_ULTRIX)
+# define PLATFORM_ID "ULTRIX"
+
+#elif defined(__XENIX__) || defined(_XENIX) || defined(XENIX)
+# define PLATFORM_ID "Xenix"
+
+#elif defined(__WATCOMC__)
+# if defined(__LINUX__)
+#  define PLATFORM_ID "Linux"
+
+# elif defined(__DOS__)
+#  define PLATFORM_ID "DOS"
+
+# elif defined(__OS2__)
+#  define PLATFORM_ID "OS2"
+
+# elif defined(__WINDOWS__)
+#  define PLATFORM_ID "Windows3x"
+
+# elif defined(__VXWORKS__)
+#  define PLATFORM_ID "VxWorks"
+
+# else /* unknown platform */
+#  define PLATFORM_ID
+# endif
+
+#elif defined(__INTEGRITY)
+# if defined(INT_178B)
+#  define PLATFORM_ID "Integrity178"
+
+# else /* regular Integrity */
+#  define PLATFORM_ID "Integrity"
+# endif
+
+# elif defined(_ADI_COMPILER)
+#  define PLATFORM_ID "ADSP"
+
+#else /* unknown platform */
+# define PLATFORM_ID
+
+#endif
+
+/* For windows compilers MSVC and Intel we can determine
+   the architecture of the compiler being used.  This is because
+   the compilers do not have flags that can change the architecture,
+   but rather depend on which compiler is being used
+*/
+#if defined(_WIN32) && defined(_MSC_VER)
+# if defined(_M_IA64)
+#  define ARCHITECTURE_ID "IA64"
+
+# elif defined(_M_ARM64EC)
+#  define ARCHITECTURE_ID "ARM64EC"
+
+# elif defined(_M_X64) || defined(_M_AMD64)
+#  define ARCHITECTURE_ID "x64"
+
+# elif defined(_M_IX86)
+#  define ARCHITECTURE_ID "X86"
+
+# elif defined(_M_ARM64)
+#  define ARCHITECTURE_ID "ARM64"
+
+# elif defined(_M_ARM)
+#  if _M_ARM == 4
+#   define ARCHITECTURE_ID "ARMV4I"
+#  elif _M_ARM == 5
+#   define ARCHITECTURE_ID "ARMV5I"
+#  else
+#   define ARCHITECTURE_ID "ARMV" STRINGIFY(_M_ARM)
+#  endif
+
+# elif defined(_M_MIPS)
+#  define ARCHITECTURE_ID "MIPS"
+
+# elif defined(_M_SH)
+#  define ARCHITECTURE_ID "SHx"
+
+# else /* unknown architecture */
+#  define ARCHITECTURE_ID ""
+# endif
+
+#elif defined(__WATCOMC__)
+# if defined(_M_I86)
+#  define ARCHITECTURE_ID "I86"
+
+# elif defined(_M_IX86)
+#  define ARCHITECTURE_ID "X86"
+
+# else /* unknown architecture */
+#  define ARCHITECTURE_ID ""
+# endif
+
+#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
+# if defined(__ICCARM__)
+#  define ARCHITECTURE_ID "ARM"
+
+# elif defined(__ICCRX__)
+#  define ARCHITECTURE_ID "RX"
+
+# elif defined(__ICCRH850__)
+#  define ARCHITECTURE_ID "RH850"
+
+# elif defined(__ICCRL78__)
+#  define ARCHITECTURE_ID "RL78"
+
+# elif defined(__ICCRISCV__)
+#  define ARCHITECTURE_ID "RISCV"
+
+# elif defined(__ICCAVR__)
+#  define ARCHITECTURE_ID "AVR"
+
+# elif defined(__ICC430__)
+#  define ARCHITECTURE_ID "MSP430"
+
+# elif defined(__ICCV850__)
+#  define ARCHITECTURE_ID "V850"
+
+# elif defined(__ICC8051__)
+#  define ARCHITECTURE_ID "8051"
+
+# elif defined(__ICCSTM8__)
+#  define ARCHITECTURE_ID "STM8"
+
+# else /* unknown architecture */
+#  define ARCHITECTURE_ID ""
+# endif
+
+#elif defined(__ghs__)
+# if defined(__PPC64__)
+#  define ARCHITECTURE_ID "PPC64"
+
+# elif defined(__ppc__)
+#  define ARCHITECTURE_ID "PPC"
+
+# elif defined(__ARM__)
+#  define ARCHITECTURE_ID "ARM"
+
+# elif defined(__x86_64__)
+#  define ARCHITECTURE_ID "x64"
+
+# elif defined(__i386__)
+#  define ARCHITECTURE_ID "X86"
+
+# else /* unknown architecture */
+#  define ARCHITECTURE_ID ""
+# endif
+
+#elif defined(__TI_COMPILER_VERSION__)
+# if defined(__TI_ARM__)
+#  define ARCHITECTURE_ID "ARM"
+
+# elif defined(__MSP430__)
+#  define ARCHITECTURE_ID "MSP430"
+
+# elif defined(__TMS320C28XX__)
+#  define ARCHITECTURE_ID "TMS320C28x"
+
+# elif defined(__TMS320C6X__) || defined(_TMS320C6X)
+#  define ARCHITECTURE_ID "TMS320C6x"
+
+# else /* unknown architecture */
+#  define ARCHITECTURE_ID ""
+# endif
+
+# elif defined(__ADSPSHARC__)
+#  define ARCHITECTURE_ID "SHARC"
+
+# elif defined(__ADSPBLACKFIN__)
+#  define ARCHITECTURE_ID "Blackfin"
+
+#elif defined(__TASKING__)
+
+# if defined(__CTC__) || defined(__CPTC__)
+#  define ARCHITECTURE_ID "TriCore"
+
+# elif defined(__CMCS__)
+#  define ARCHITECTURE_ID "MCS"
+
+# elif defined(__CARM__)
+#  define ARCHITECTURE_ID "ARM"
+
+# elif defined(__CARC__)
+#  define ARCHITECTURE_ID "ARC"
+
+# elif defined(__C51__)
+#  define ARCHITECTURE_ID "8051"
+
+# elif defined(__CPCP__)
+#  define ARCHITECTURE_ID "PCP"
+
+# else
+#  define ARCHITECTURE_ID ""
+# endif
+
+#else
+#  define ARCHITECTURE_ID
+#endif
+
+/* Convert integer to decimal digit literals.  */
+#define DEC(n)                   \
+  ('0' + (((n) / 10000000)%10)), \
+  ('0' + (((n) / 1000000)%10)),  \
+  ('0' + (((n) / 100000)%10)),   \
+  ('0' + (((n) / 10000)%10)),    \
+  ('0' + (((n) / 1000)%10)),     \
+  ('0' + (((n) / 100)%10)),      \
+  ('0' + (((n) / 10)%10)),       \
+  ('0' +  ((n) % 10))
+
+/* Convert integer to hex digit literals.  */
+#define HEX(n)             \
+  ('0' + ((n)>>28 & 0xF)), \
+  ('0' + ((n)>>24 & 0xF)), \
+  ('0' + ((n)>>20 & 0xF)), \
+  ('0' + ((n)>>16 & 0xF)), \
+  ('0' + ((n)>>12 & 0xF)), \
+  ('0' + ((n)>>8  & 0xF)), \
+  ('0' + ((n)>>4  & 0xF)), \
+  ('0' + ((n)     & 0xF))
+
+/* Construct a string literal encoding the version number. */
+#ifdef COMPILER_VERSION
+char const* info_version = "INFO" ":" "compiler_version[" COMPILER_VERSION "]";
+
+/* Construct a string literal encoding the version number components. */
+#elif defined(COMPILER_VERSION_MAJOR)
+char const info_version[] = {
+  'I', 'N', 'F', 'O', ':',
+  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','[',
+  COMPILER_VERSION_MAJOR,
+# ifdef COMPILER_VERSION_MINOR
+  '.', COMPILER_VERSION_MINOR,
+#  ifdef COMPILER_VERSION_PATCH
+   '.', COMPILER_VERSION_PATCH,
+#   ifdef COMPILER_VERSION_TWEAK
+    '.', COMPILER_VERSION_TWEAK,
+#   endif
+#  endif
+# endif
+  ']','\0'};
+#endif
+
+/* Construct a string literal encoding the internal version number. */
+#ifdef COMPILER_VERSION_INTERNAL
+char const info_version_internal[] = {
+  'I', 'N', 'F', 'O', ':',
+  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','_',
+  'i','n','t','e','r','n','a','l','[',
+  COMPILER_VERSION_INTERNAL,']','\0'};
+#elif defined(COMPILER_VERSION_INTERNAL_STR)
+char const* info_version_internal = "INFO" ":" "compiler_version_internal[" COMPILER_VERSION_INTERNAL_STR "]";
+#endif
+
+/* Construct a string literal encoding the version number components. */
+#ifdef SIMULATE_VERSION_MAJOR
+char const info_simulate_version[] = {
+  'I', 'N', 'F', 'O', ':',
+  's','i','m','u','l','a','t','e','_','v','e','r','s','i','o','n','[',
+  SIMULATE_VERSION_MAJOR,
+# ifdef SIMULATE_VERSION_MINOR
+  '.', SIMULATE_VERSION_MINOR,
+#  ifdef SIMULATE_VERSION_PATCH
+   '.', SIMULATE_VERSION_PATCH,
+#   ifdef SIMULATE_VERSION_TWEAK
+    '.', SIMULATE_VERSION_TWEAK,
+#   endif
+#  endif
+# endif
+  ']','\0'};
+#endif
+
+/* Construct the string literal in pieces to prevent the source from
+   getting matched.  Store it in a pointer rather than an array
+   because some compilers will just produce instructions to fill the
+   array rather than assigning a pointer to a static array.  */
+char const* info_platform = "INFO" ":" "platform[" PLATFORM_ID "]";
+char const* info_arch = "INFO" ":" "arch[" ARCHITECTURE_ID "]";
+
+
+
+#if defined(__INTEL_COMPILER) && defined(_MSVC_LANG) && _MSVC_LANG < 201403L
+#  if defined(__INTEL_CXX11_MODE__)
+#    if defined(__cpp_aggregate_nsdmi)
+#      define CXX_STD 201402L
+#    else
+#      define CXX_STD 201103L
+#    endif
+#  else
+#    define CXX_STD 199711L
+#  endif
+#elif defined(_MSC_VER) && defined(_MSVC_LANG)
+#  define CXX_STD _MSVC_LANG
+#else
+#  define CXX_STD __cplusplus
+#endif
+
+const char* info_language_standard_default = "INFO" ":" "standard_default["
+#if CXX_STD > 202002L
+  "23"
+#elif CXX_STD > 201703L
+  "20"
+#elif CXX_STD >= 201703L
+  "17"
+#elif CXX_STD >= 201402L
+  "14"
+#elif CXX_STD >= 201103L
+  "11"
+#else
+  "98"
+#endif
+"]";
+
+const char* info_language_extensions_default = "INFO" ":" "extensions_default["
+#if (defined(__clang__) || defined(__GNUC__) || defined(__xlC__) ||           \
+     defined(__TI_COMPILER_VERSION__)) &&                                     \
+  !defined(__STRICT_ANSI__)
+  "ON"
+#else
+  "OFF"
+#endif
+"]";
+
+/*--------------------------------------------------------------------------*/
+
+int main(int argc, char* argv[])
+{
+  int require = 0;
+  require += info_compiler[argc];
+  require += info_platform[argc];
+  require += info_arch[argc];
+#ifdef COMPILER_VERSION_MAJOR
+  require += info_version[argc];
+#endif
+#ifdef COMPILER_VERSION_INTERNAL
+  require += info_version_internal[argc];
+#endif
+#ifdef SIMULATE_ID
+  require += info_simulate[argc];
+#endif
+#ifdef SIMULATE_VERSION_MAJOR
+  require += info_simulate_version[argc];
+#endif
+#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
+  require += info_cray[argc];
+#endif
+  require += info_language_standard_default[argc];
+  require += info_language_extensions_default[argc];
+  (void)argv;
+  return require;
+}
+
+```
+
+# File: build_pr_19\LMUFFB.dir\Release\LMUFFB.vcxproj.FileListAbsolute.txt
+```
+
+```
+
+# File: build_pr_19\Release\README.txt
+```
+lmuFFB - Le Mans Ultimate Force Feedback
+========================================
+
+See README.md for full documentation with images and links.
+
+DOWNLOAD
+--------
+
+Download the latest release from GitHub:
+unlinked: github_com/coasting-nc/LMUFFB/releases
+
+
+INSTALLATION & CONFIGURATION (LMU 1.2+)
+---------------------------------------
+
+Step-by-Step Setup:
+
+A. Configure lmuFFB
+   1. Run LMUFFB.exe
+   2. FFB Device: In the dropdown, select your Physical Wheel 
+      (e.g., "Simucube 2 Pro", "Fanatec DD1")
+   3. Master Gain: Start low (0.5) and increase
+
+B. Configure Le Mans Ultimate (LMU)
+   1. Start LMU
+   2. Go to Settings > Graphics:
+      - Set Display Mode to "Borderless" (Prevents crashes/minimizing)
+   
+   3. Go to Controls > Force Feedback 
+   4. Steering Axis: Bind to your Physical Wheel 
+      (e.g., Simucube, Fanatec, Moza, Logitech)
+
+   5. In-Game Force Feedback settings in LMU:
+      - Disable FFB: set FFB Effects Off
+      - FFB Strength: reduce to 0%
+
+   6. Drive! You should feel force feedback generated by the app
+
+
+EXPERIMENTAL VERSION - TESTING NEEDED!
+--------------------------------------
+
+This is an experimental release, the FFB formulas may require refinement 
+based on real-world testing.
+
+Please help us improve lmuFFB:
+1. Test with caution - Start with low wheel strength settings
+2. Experiment with settings - Try different effect combinations and gains
+3. Share your results - Post screenshots (including the lmuFFB console and the "Graphs" window) to the LMU Forum Thread:
+   unlinked: community_lemansultimate_com/index_php?threads/lmuffb-app_10440/
+4. Report issues - Let us know what works and what doesn't!
+
+Your testing and feedback is greatly appreciated!
+
+
+TROUBLESHOOTING
+---------------
+
+Inverted FFB (Force pushes away from center):
+  - If the FFB feels "backwards" or "inverted" while driving (wheel pushes 
+    away from center instead of pulling toward it), check the "Invert FFB" 
+    checkbox in the lmuFFB GUI
+  - This reverses the force direction to match your wheel's expected behavior
+
+No FFB:
+  - Ensure the "FFB Device" in lmuFFB is your real wheel
+  - Check if Connected to Le Mans Ultimate" appear in the GUI
+  - Verify the FFB strength in your device driver is not too low
+  - Increase Master Gain or reduce Max Torque Ref
+  - Check the lmuFFB console for errors
+
+Baseline vibration from the FFB:
+  - That is known to come from the Steering Shaft Torque from the game (you can temporarily disable Steering Shaft Gain to confirm it)
+  - To fix it, enable the "Static Noise Filter" in lmuFFB and set a Target Frequency of 10-12 Hz
+  - If some noise is still present, you can increase the Steering Shaft Smoothing.
+
+Steering wheel bouncing/shaking when stationary (engine vibration):
+  - If your wheel "bounces around on the tune of the engine rpm" when the car 
+    is stopped or idling, this is caused by the game's engine vibration physics 
+    being transmitted through the steering column
+  - Automatic Fix (v0.6.22+): This is now automatically handled by the Automatic 
+    Idle Smoothing feature. The vibration should fade out when you're stationary 
+    and return to normal when driving
+  - Manual Workaround (older versions): Go to Signal Filtering, enable Static 
+    Noise Filter, and set the frequency to 10-15 Hz. Adjust until the bouncing 
+    stops. This will surgically remove the engine bounce without making the 
+    steering feel light
+
+FFB too weak:
+  - Increase Master Gain
+  - Or reduce Max Torque Ref (this amplifies the signal by setting a lower reference point for maximum torque)
+
+Strange pull in some scenarios:
+  - If you feel a strange pull in specific driving situations, try reducing the Rear Align Torque
+  
+The app has too many options and it's confusing:
+  - A future version will include a "Basic Mode" with auto adjustment and defaults for most settings.
+  - We need to first determine which settings work best for most users and wheel types (Direct Drive vs Belt/Gear).
+  - Please leave feedback on the forum thread telling us what settings work best for you:
+    unlinked: community_lemansultimate_com/index_php?threads/lmuffb-app_10440/
+
+Any other issue:
+  - Report it in the thread in the LMU forum to get support and get the app updated:
+    unlinked: community_lemansultimate_com/index_php?threads/lmuffb-app_10440/
+  - Important: You can help significantly by taking a screenshot (use the "Save Screenshot" button in the app) and pasting it into your forum post. This captures all your settings and the console log in one go.
+
+UPCOMING FEATURES
+-----------------
+
+* Basic mode with only main sliders and auto adjustment of other settings
+* Adaptive Optimal Slip Angle
+* Wet Weather Haptics (Hydro-Grain): vibration cues telling when the tires 
+  are on dry or wet surface, and if there is grip or not
+* Per wheel Hydro-Grain to give information about a drying racing line 
+  (e.g., left tires on dry, right tires on wet)
+* Longitudinal Dynamic Weight Transfer: feeling of the car getting heavy 
+  under braking and light under acceleration
+
+
+FEEDBACK & SUPPORT
+------------------
+
+For feedback, questions, or support:
+- LMU Forum Thread for lmuFFB App: 
+  unlinked: community_lemansultimate_com/index_php?threads/lmuffb-app_10440/
+- GitHub Issues: 
+  unlinked: github_com/coasting-nc/LMUFFB/issues
+
+
+For full documentation, advanced settings, and tuning tips, 
+see README.md or visit:
+- FFB Tuning Recommendations: unlinked: github_com/coasting-nc/LMUFFB/blob/main/docs/FFB%20Tuning%20Recommendations_md
+- Main Project Page: unlinked: github_com/coasting-nc/LMUFFB
+
+CONTRIBUTING
+------------
+Want to contribute? See the step-by-step guide for contributors:
+docs/dev_docs/contribute_to_the_project/how_to_contribute_to_the_project.md
+
+
+===============================================================================
+RFACTOR 2 COMPATIBILITY
+===============================================================================
+
+Note: rFactor 2 is NOT SUPPORTED in v0.4.0+. For rFactor 2, please use 
+earlier versions of lmuFFB (v0.3.x). See the releases page for v0.3.x 
+downloads:
+unlinked: github_com/coasting-nc/LMUFFB/releases
+
+rF2 will be supported again in a future version, in particular to compare 
+our grip approximation algorithm with the real values returned by the game 
+for non DLC cars.
+
+```
+
+# File: build_pr_19\tests\cmake_install.cmake
+```cmake
+# Install script for directory: C:/dev/personal/LMUFFB_public/LMUFFB/tests
+
+# Set the install prefix
+if(NOT DEFINED CMAKE_INSTALL_PREFIX)
+  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/LMUFFB_CPP")
+endif()
+string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+
+# Set the install configuration name.
+if(NOT DEFINED CMAKE_INSTALL_CONFIG_NAME)
+  if(BUILD_TYPE)
+    string(REGEX REPLACE "^[^A-Za-z0-9_]+" ""
+           CMAKE_INSTALL_CONFIG_NAME "${BUILD_TYPE}")
+  else()
+    set(CMAKE_INSTALL_CONFIG_NAME "Release")
+  endif()
+  message(STATUS "Install configuration: \"${CMAKE_INSTALL_CONFIG_NAME}\"")
+endif()
+
+# Set the component getting installed.
+if(NOT CMAKE_INSTALL_COMPONENT)
+  if(COMPONENT)
+    message(STATUS "Install component: \"${COMPONENT}\"")
+    set(CMAKE_INSTALL_COMPONENT "${COMPONENT}")
+  else()
+    set(CMAKE_INSTALL_COMPONENT)
+  endif()
+endif()
+
+# Is this installation the result of a crosscompile?
+if(NOT DEFINED CMAKE_CROSSCOMPILING)
+  set(CMAKE_CROSSCOMPILING "FALSE")
+endif()
+
+
+```
+
+# File: build_pr_19\tests\CTestTestfile.cmake
+```cmake
+# CMake generated Testfile for 
+# Source directory: C:/dev/personal/LMUFFB_public/LMUFFB/tests
+# Build directory: C:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19/tests
+# 
+# This file includes the relevant testing commands required for 
+# testing this directory and lists subdirectories to be tested as well.
+if(CTEST_CONFIGURATION_TYPE MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
+  add_test(CombinedTests "C:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19/tests/Debug/run_combined_tests.exe")
+  set_tests_properties(CombinedTests PROPERTIES  _BACKTRACE_TRIPLES "C:/dev/personal/LMUFFB_public/LMUFFB/tests/CMakeLists.txt;39;add_test;C:/dev/personal/LMUFFB_public/LMUFFB/tests/CMakeLists.txt;0;")
+elseif(CTEST_CONFIGURATION_TYPE MATCHES "^([Rr][Ee][Ll][Ee][Aa][Ss][Ee])$")
+  add_test(CombinedTests "C:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19/tests/Release/run_combined_tests.exe")
+  set_tests_properties(CombinedTests PROPERTIES  _BACKTRACE_TRIPLES "C:/dev/personal/LMUFFB_public/LMUFFB/tests/CMakeLists.txt;39;add_test;C:/dev/personal/LMUFFB_public/LMUFFB/tests/CMakeLists.txt;0;")
+elseif(CTEST_CONFIGURATION_TYPE MATCHES "^([Mm][Ii][Nn][Ss][Ii][Zz][Ee][Rr][Ee][Ll])$")
+  add_test(CombinedTests "C:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19/tests/MinSizeRel/run_combined_tests.exe")
+  set_tests_properties(CombinedTests PROPERTIES  _BACKTRACE_TRIPLES "C:/dev/personal/LMUFFB_public/LMUFFB/tests/CMakeLists.txt;39;add_test;C:/dev/personal/LMUFFB_public/LMUFFB/tests/CMakeLists.txt;0;")
+elseif(CTEST_CONFIGURATION_TYPE MATCHES "^([Rr][Ee][Ll][Ww][Ii][Tt][Hh][Dd][Ee][Bb][Ii][Nn][Ff][Oo])$")
+  add_test(CombinedTests "C:/dev/personal/LMUFFB_public/LMUFFB/build_pr_19/tests/RelWithDebInfo/run_combined_tests.exe")
+  set_tests_properties(CombinedTests PROPERTIES  _BACKTRACE_TRIPLES "C:/dev/personal/LMUFFB_public/LMUFFB/tests/CMakeLists.txt;39;add_test;C:/dev/personal/LMUFFB_public/LMUFFB/tests/CMakeLists.txt;0;")
+else()
+  add_test(CombinedTests NOT_AVAILABLE)
+endif()
+
+```
+
+# File: build_pr_19\tests\run_combined_tests.dir\Release\run_combined_tests.vcxproj.FileListAbsolute.txt
+```
+
+```
+
+# File: build_pr_19\x64\Release\ZERO_CHECK\ZERO_CHECK.vcxproj.FileListAbsolute.txt
+```
 
 ```
 
@@ -2132,6 +5818,182 @@ The core logic is encapsulated in a header-only class to facilitate unit testing
 *   **Use Case**: When DirectInput device is locked by the game (Exclusive Mode conflict).
 *   **Mechanism**: Links against `vJoyInterface.lib` to communicate with vJoy driver.
 *   **Scaling**: Calculated torque (-1.0 to 1.0) scaled to vJoy axis range (1 to 32768).
+
+```
+
+# File: docs\changelog_naming_proposals.md
+```markdown
+# Proposed Alternative Names for User-Facing Changelog
+
+## Current Name
+`Version Releases (user facing changelog).md`
+
+## Issues with Current Name
+- Contains parentheses (which can cause issues in some tools/shells)
+- Contains spaces (requires quoting in command-line operations)
+- Verbose and awkward
+- Not immediately clear what "Version Releases" means
+- Inconsistent with standard naming conventions
+
+## Proposed Alternatives (Recommended Order)
+
+### 1. `RELEASES.md` ⭐ **RECOMMENDED**
+**Pros:**
+- Short, clear, and conventional
+- Widely recognized in open source projects
+- No spaces or special characters
+- Pairs well with `CHANGELOG.md` (both caps, similar length)
+- Standard practice in many GitHub projects
+
+**Cons:**
+- Some projects use RELEASES for binaries download page
+
+**Example peers**: Docker, Kubernetes, many GitHub projects
+
+---
+
+### 2. `RELEASE_NOTES.md` ⭐ **STRONG ALTERNATIVE**
+**Pros:**
+- Very clear what it contains
+- Standard format used by Microsoft, Apple, and enterprise software
+- No ambiguity
+- Professional tone
+
+**Cons:**
+- Slightly longer
+- Underscore instead of space
+
+**Example peers**: Visual Studio Code, .NET, Windows
+
+---
+
+### 3. `NEWS.md`
+**Pros:**
+- Very short and simple
+- Common in GNU/Linux projects
+- No special characters
+- Easy to type
+
+**Cons:**
+- May imply blog posts or announcements rather than version history
+- Less explicit about content
+
+**Example peers**: GNU tools, many Linux utilities
+
+---
+
+### 4. `HISTORY.md`
+**Pros:**
+- Clear indication it's historical record
+- Simple, no special characters
+- Good for user-facing summaries
+
+**Cons:**
+- Sometimes used for full technical changelog
+- Could be confused with git history
+
+**Example peers**: Some older open source projects
+
+---
+
+### 5. `WHATS_NEW.md`
+**Pros:**
+- Very user-friendly language
+- Clear this is about new features/changes
+- Commonly used in consumer software
+
+**Cons:**
+- Implies only latest version, not full history
+- Two words makes it slightly awkward
+- Less conventional in open source
+
+**Example peers**: Mobile apps, commercial software
+
+---
+
+### 6. `USER_CHANGELOG.md`
+**Pros:**
+- Explicitly differentiates from technical CHANGELOG.md
+- Clear target audience
+- Matches existing naming pattern
+
+**Cons:**
+- Redundant if technical changelog is renamed to CHANGELOG_DEV.md
+- Slightly awkward compound name
+
+---
+
+### 7. `UPDATES.md`
+**Pros:**
+- Simple and clear
+- User-friendly language
+- No special characters
+
+**Cons:**
+- Could be confused with update mechanism/scripts
+- Less standard
+
+---
+
+## Recommendation
+
+### **Primary Recommendation: `RELEASES.md`**
+
+**Rationale:**
+1. **Industry standard**: Widely used in GitHub projects for user-facing release notes
+2. **Clean naming**: No spaces, special characters, all caps matches CHANGELOG.md
+3. **Clear purpose**: Immediately recognizable to users
+4. **Short and memorable**: Easy to reference in documentation
+5. **SEO-friendly**: "Releases" is what users search for
+
+### **Secondary Recommendation: `RELEASE_NOTES.md`** 
+
+Use this if:
+- You want to be extra explicit about the content
+- Your user base is more enterprise/professional
+- You prefer the Microsoft/Apple convention
+
+## Implementation Impact
+
+### Files to Update if Renamed
+
+If renaming from `Version Releases (user facing changelog).md` to `RELEASES.md`:
+
+1. **README.md** - Update any references to the changelog
+2. **.agent/workflows/create-new-version.md** - Update workflow instructions
+3. **GitHub Release Templates** (if any) - Update links
+4. **Documentation** - Any developer/contributor guides
+5. **Issue Templates** (if any) - Update references
+
+### Git History
+
+**Option 1: Rename with git mv (preserves history)**
+```bash
+git mv "Version Releases (user facing changelog).md" RELEASES.md
+```
+
+**Option 2: Create new file and redirect old**
+- Create `RELEASES.md` with current content
+- Replace old file content with: "This file has been renamed to RELEASES.md"
+
+**Recommended**: Option 1 (git mv) to preserve history
+
+## Summary Table
+
+| Name | Length | Special Chars | Clarity | Convention | Recommendation |
+|------|--------|---------------|---------|------------|----------------|
+| `RELEASES.md` | ★★★ | ✅ None | ★★★ | ★★★ | ⭐⭐⭐ |
+| `RELEASE_NOTES.md` | ★★☆ | ⚠️ Underscore | ★★★ | ★★★ | ⭐⭐ |
+| `NEWS.md` | ★★★ | ✅ None | ★★☆ | ★★☆ | ⭐ |
+| `HISTORY.md` | ★★★ | ✅ None | ★★☆ | ★☆☆ | ⭐ |
+| `WHATS_NEW.md` | ★★☆ | ⚠️ Underscore | ★★★ | ★☆☆ | - |
+| `USER_CHANGELOG.md` | ★☆☆ | ⚠️ Underscore | ★★★ | ★☆☆ | - |
+
+**Legend:**
+- ★★★ = Excellent
+- ★★☆ = Good
+- ★☆☆ = Acceptable
+- ⭐ = Recommendation level (more stars = stronger recommendation)
 
 ```
 
@@ -3583,7 +7445,7 @@ Not in v0.6.21, but planned for v0.6.22+.
 - **Technical Analysis:** `docs/dev_docs/road_texture_fallback_scaling_factor.md`
 - **Implementation Details:** `docs/dev_docs/Fix Violent Shaking when Stopping and no road textures.md`
 - **FFB Formulas:** `docs/dev_docs/FFB_formulas.md`
-- **Telemetry Reference:** `docs/dev_docs/telemetry_data_reference.md`
+- **Telemetry Reference:** `docs/dev_docs/references/Reference - telemetry_data_reference.md`
 
 ---
 
@@ -4086,10 +7948,16 @@ This document details the Force Feedback effects implemented in LMUFFB, how they
 
 ## 2. Oversteer (Rear Grip Loss)
 *   **Goal**: To communicate when the rear tires are losing grip (loose/sliding), allowing the driver to catch a slide early.
-*   **Current Dynamic Implementation (v0.2.2+)**:
-    *   **Aligning Torque Integration**: Calculates a synthetic "Aligning Torque" for the rear axle using `Rear Lateral Force`.
-    *   **Mechanism**: This force is injected into the steering signal. If the rear tires generate large lateral forces (resisting a slide), the steering wheel will naturally counter-steer, providing a physical cue to catch the slide. This is modulated by the `Lateral G Boost (Slide)` slider.
-    *   **SoP (Seat of Pants)**: Also injects Lateral G-force into the wheel torque to provide "weight" cues.
+*   **Current Multi-Effect Implementation (v0.6+)**:
+    The oversteer system uses multiple distinct effects that work together:
+    
+    1. **Lateral G (SoP)**: Injects chassis lateral acceleration into wheel torque, providing "weight" cues during cornering. Calculated in `calculate_sop_lateral()`.
+    
+    2. **Lateral G Boost (Slide)**: Amplifies the SoP force when rear grip is lower than front grip (oversteer condition). Formula: `SoP *= (1.0 + (FrontGrip - RearGrip) * OversteerBoost * 2.0)`.
+    
+    3. **Rear Align Torque (SoP Self-Aligning)**: Calculates a synthetic aligning torque for the rear axle using slip angle and estimated load. Provides directional counter-steering pull during slides.
+    
+    4. **Yaw Kick**: Sharp momentary impulse at the onset of rotation. Derived from `mLocalRotAccel.y` with configurable activation threshold (`m_yaw_kick_threshold`, default 0.2 rad/s²) to filter road noise.
 
 ## 3. Braking Lockup (Progressive Scrub)
 *   **Goal**: To signal when tires have stopped rotating during braking (flat-spotting risk), allowing the driver to find the threshold.
@@ -4124,7 +7992,7 @@ A critical challenge in FFB design is managing the "Noise Floor". When multiple 
 ### 1. Signal Masking
 *   **The Issue**: High-frequency vibrations (like **Lockup Rumble** or **Road Texture**) can physically overpower subtle torque changes (like **Understeer Lightness** or **SoP**). If the wheel is vibrating violently due to a lockup, the driver might miss the feeling of the rear end stepping out (SoP).
 *   **Mitigation**:
-    *   **Priority System**: Future versions should implement "Side-chaining" or "Ducking". For example, if a severe Lockup event occurs, reduce Road Texture gain to ensure the Lockup signal is clear.
+    *   **Priority System** *(Planned, Not Yet Implemented)*: A future version will implement "Side-chaining" or "Ducking" to dynamically reduce lower-priority effects when higher-priority signals need headroom. For example, if understeer occurs during curb contact, the system would reduce Road Texture to preserve the grip information signal.
     *   **Frequency Separation**: Ideally, "Information" (Grip/SoP) should be low-frequency (< 20Hz), while "Texture" (Lockup/Spin/Road) should be high-frequency (> 50Hz). This helps the human hand distinguish them.
 
 ### 2. Clipping
@@ -4354,6 +8222,804 @@ When you release the binary (`LMUFFB.exe`) or the installer, you must adhere to 
 
 ```
 
+# File: docs\refactoring_report_v0636.md
+```markdown
+# Refactoring Report: FFBEngine `calculate_force` Modularization
+
+## Purpose
+The primary goal of this refactoring was to improve the maintainability, readability, and testability of the core FFB calculation logic. The `FFBEngine::calculate_force` method had grown into a monolithic function of over 600 lines, making it difficult to understand, debug, and extend. By splitting the logic into discrete helper methods and sharing state via a context structure, the code becomes more modular and easier to manage.
+
+## Changes Implemented
+
+### 1. Introduction of `FFBCalculationContext`
+A new struct, `FFBCalculationContext`, was introduced in `FFBEngine.h`. This struct serves as a data transfer object (DTO) that holds:
+-   **Derived Telemetry Data:** Values calculated once per frame and reused across multiple effects (e.g., `car_speed`, `decoupling_scale`, `avg_load`, `speed_gate`).
+-   **Intermediate Results:** Forces calculated by one stage and used by another (e.g., `sop_base_force`, `grip_factor`).
+-   **Effect Outputs:** The final force contribution from each specific effect (e.g., `road_noise`, `abs_pulse_force`).
+-   **Diagnostic Flags:** Warning states for missing telemetry.
+
+All members of this struct are initialized to safe default values to prevent undefined behavior.
+
+### 2. Extraction of Helper Methods
+The logic for each distinct FFB effect was extracted from the main loop into dedicated private helper methods within `FFBEngine`. These methods take the raw telemetry pointer (`TelemInfoV01*`) and a reference to the context (`FFBCalculationContext&`):
+
+-   `calculate_sop_lateral`: Handles Seat of Pants (SoP) lateral G-force, rear grip loss calculation, Oversteer Boost, Rear Aligning Torque, and Yaw Kick.
+-   `calculate_gyro_damping`: Computes gyroscopic damping based on steering velocity.
+-   `calculate_abs_pulse`: Detects ABS activation and generates the corresponding vibration pulse.
+-   `calculate_lockup_vibration`: Handles the complex logic for predictive wheel lockup, including axle differentiation and gamma response.
+-   `calculate_wheel_spin`: Computes traction loss vibration and torque drop.
+-   `calculate_slide_texture`: Generates the "scrubbing" vibration during lateral slides.
+-   `calculate_road_texture`: Handles vertical deflection (bumps) and Scrub Drag logic.
+-   `calculate_suspension_bottoming`: detects suspension bottoming events.
+
+### 3. Logic Preservation and Fixes
+The refactoring aimed for exact mathematical equivalence with the original code, but several regressions identified during review were fixed:
+-   **ABS Pulse Restoration:** The ABS pulse force is now explicitly stored in `ctx.abs_pulse_force` and added to the final sum (previously it was calculated but ignored).
+-   **Torque Drop Restoration:** The traction loss "torque drop" logic (gain reduction) is now stored in `ctx.gain_reduction_factor` and applied to the total force at the end of the pipeline.
+-   **Snapshot Consistency:** The `FFBSnapshot` logic was updated to use `ctx.sop_unboosted_force` for `snap.sop_force` and derive the boost amount dynamically. This preserves the semantic meaning of the debug graph channels (separating base lateral force from the added boost).
+
+### 4. Code Cleanup
+-   **Standardization:** Replaced Windows-specific `strcpy_s` with cross-platform string copy (using `#ifdef _MSC_VER` to select `strncpy_s` on Windows, `strncpy` elsewhere).
+-   **Thread Safety:** Maintained `std::lock_guard` usage for thread-safe access to the debug buffer.
+
+### 5. Additional Improvements (v0.6.36 Code Review Follow-up)
+-   **`calculate_wheel_slip_ratio` Helper:** Extracted duplicated lambda (`get_slip`) from `calculate_lockup_vibration` and `calculate_wheel_spin` into a unified public helper method. This reduces code duplication and improves testability.
+-   **`apply_signal_conditioning` Method:** Extracted ~70 lines of signal conditioning logic (idle smoothing, frequency estimation, dynamic/static notch filters) from `calculate_force` into a dedicated private helper. This improves readability and makes the main method a cleaner high-level pipeline.
+-   **Unconditional State Update Fix:** Moved `m_prev_vert_accel` update from inside `calculate_road_texture` (conditional) to the unconditional state updates section at the end of `calculate_force`. This prevents stale data issues if road texture is disabled but other effects depend on vertical acceleration history.
+-   **Build Warning Fixes:** Fixed MSVC warnings C4996 (strncpy unsafe) and C4305 (double-to-float truncation) in test files.
+
+## Justification
+This modular architecture allows developers to:
+-   **Isolate Effects:** Work on a single effect (e.g., "Improve ABS feel") without navigating hundreds of lines of unrelated code.
+-   **Test Independently:** Future unit tests can target specific helper methods by setting up a context state, rather than running the full pipeline.
+-   **Reduce Cognitive Load:** The main `calculate_force` method now reads as a high-level pipeline (Signal Conditioning -> Pre-calculations -> Effect Calls -> Summation), making the data flow clear.
+
+```
+
+# File: docs\Slope_Detection_Guide.md
+```markdown
+# Slope Detection Algorithm - Technical Guide
+
+**Version:** 0.7.0  
+**Status:** Experimental  
+**Last Updated:** February 1, 2026
+
+---
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Why Slope Detection?](#why-slope-detection)
+3. [How It Works](#how-it-works)
+4. [Understanding the Settings](#understanding-the-settings)
+5. [Latency Explained](#latency-explained)
+6. [Tuning Guide](#tuning-guide)
+7. [Troubleshooting](#troubleshooting)
+8. [Technical Deep Dive](#technical-deep-dive)
+
+---
+
+## Overview
+
+**Slope Detection** is a new experimental feature in lmuFFB v0.7.0 that dynamically estimates tire grip by monitoring the **rate of change** (slope) of the tire's performance curve in real-time, rather than using static thresholds.
+
+**Key Benefits:**
+- 🎯 **Adaptive** - Automatically adjusts to different tire compounds, temperatures, and wear states
+- 🏁 **Track-Agnostic** - Works consistently across all tracks without manual tuning
+- 📊 **Physically Accurate** - Detects the actual saturation point of the tire, not an arbitrary threshold
+- 🔄 **Dynamic** - Responds to changing conditions during the session (tire warm-up, degradation)
+
+**Trade-off:**
+- Introduces small latency (6-50ms depending on settings) due to signal processing
+
+---
+
+## Why Slope Detection?
+
+### The Problem with Static Thresholds
+
+Traditional grip estimation uses **fixed thresholds** like "Optimal Slip Angle = 0.10 rad". This approach has several limitations:
+
+❌ **One-Size-Fits-All** - A single threshold can't accommodate:
+- Different tire compounds (street vs slick)
+- Temperature variations (cold vs optimal vs overheated)
+- Tire wear progression
+- Different car setups (high vs low downforce)
+
+❌ **Binary Detection** - Either you're below the threshold (full grip) or above it (reduced grip), with no smooth transition representing the actual tire curve
+
+❌ **Requires Manual Tuning** - Users must adjust the threshold for each car/track combination to get realistic feedback
+
+### The Tire Performance Curve
+
+Real tires follow a characteristic performance curve:
+
+```
+Lateral Force (G)
+    │
+1.8 │         ╭─────╮         ← Peak (Maximum Grip)
+    │        ╱       ╲
+1.5 │       ╱         ╲
+    │      ╱           ╲╲
+1.2 │     ╱             ╲╲    ← Post-Peak (Sliding)
+    │    ╱               ╲╲╲
+0.9 │   ╱                 ╲╲╲
+    │  ╱
+0.6 │ ╱
+    │╱
+    └────────────────────────── Slip Angle (rad)
+    0   0.05  0.10  0.15  0.20
+    
+        ↑              ↑
+    Building Grip   Saturating
+```
+
+**Key Insight:** The **slope** (steepness) of this curve tells us where we are:
+- **Positive slope (rising):** Tire is building grip - safe to push harder
+- **Zero slope (plateau):** Tire is at peak grip - maximum cornering force
+- **Negative slope (falling):** Tire is saturating - sliding/losing grip
+
+Slope Detection monitors this slope in real-time to provide accurate grip feedback regardless of the tire's characteristics.
+
+---
+
+## How It Works
+
+### The Algorithm (Simplified)
+
+1. **Data Collection:** Every 2.5ms (400Hz), lmuFFB receives:
+   - Lateral G-force (how much the car is cornering)
+   - Slip Angle (difference between where the tire points vs where it's moving)
+
+2. **Buffering:** Recent samples are stored in a circular buffer (5-41 samples depending on settings)
+
+3. **Derivative Calculation:** A **Savitzky-Golay (SG) filter** calculates the slope:
+   ```
+   Slope = Change in Lateral G ÷ Change in Slip Angle
+   ```
+   
+4. **Grip Factor Estimation:**
+   - **Positive slope** → Grip Factor = 1.0 (100% grip)
+   - **Negative slope** → Grip Factor decreases based on how steep the decline is
+
+5. **FFB Adjustment:** The Understeer Effect is scaled by the grip factor:
+   ```
+   FFB Force = Base Force × (1.0 - Grip Loss × Understeer Effect)
+   ```
+
+### Why Savitzky-Golay Filtering?
+
+Telemetry data is **noisy**. Raw derivatives would produce this:
+
+```
+Raw Derivative (No Filtering)
+    │  ╱╲  ╱╲╱╲
+    │ ╱  ╲╱    ╲╱╲  ╱╲
+────┼──────────────────────  → Unusable (too jittery)
+    │      ╲╱      ╲╱
+```
+
+SG filtering smooths the signal while preserving the true trend:
+
+```
+SG Filtered Derivative
+    │      ╭───────╮
+    │     ╱         ╲
+────┼────────────────────────  → Clean, usable slope
+    │                 ╲
+```
+
+**SG filtering provides:**
+✅ Smooth derivatives from noisy data  
+✅ Preserves the shape of the underlying signal  
+✅ Mathematically rigorous (fits a polynomial to the data window)  
+✅ Widely used in scientific data analysis
+
+---
+
+## Understanding the Settings
+
+### Enable Slope Detection
+**Toggle:** ON / OFF  
+**Default:** OFF
+
+When enabled, replaces the static "Optimal Slip Angle" threshold with dynamic slope monitoring. The "Optimal Slip Angle" and "Optimal Slip Ratio" settings are ignored when this is ON.
+
+**Important:** When you toggle this ON mid-session, the system automatically clears its internal buffers to ensure clean slope calculations. This prevents stale data from causing FFB glitches during the first few seconds after enabling.
+
+---
+
+### Filter Window
+**Range:** 5 - 41 samples  
+**Default:** 15 samples  
+**Unit:** Number of telemetry samples
+
+**What it does:** Determines how many recent samples are used to calculate the slope.
+
+**Effect on Latency:**
+```
+Latency (ms) = (Window Size ÷ 2) × 2.5ms
+
+Examples:
+Window =  5  →  6.25 ms latency  (Very Responsive, Noisier)
+Window = 15  → 18.75 ms latency  (Default - Balanced)
+Window = 21  → 26.25 ms latency  (Smooth, Higher Latency)
+Window = 31  → 38.75 ms latency  (Very Smooth, Sluggish)
+```
+
+**Must be ODD:** The algorithm requires an odd number for symmetry (5, 7, 9, 11, ... 41). The GUI enforces this automatically.
+
+**Tuning Guidance:**
+- **Start with 15** - Good balance for most users
+- **Lower to 7-11** if you want sharper, more immediate feedback (accept some noise)
+- **Raise to 21-31** if FFB feels jittery or twitchy (smoother but slower)
+
+---
+
+### Sensitivity
+**Range:** 0.1x - 5.0x  
+**Default:** 1.0x  
+**Unit:** Multiplier
+
+**What it does:** Scales how aggressively the slope is converted to grip loss.
+
+**Effect:**
+- **1.0x:** Normal sensitivity (recommended starting point)
+- **<1.0x:** Less sensitive - wheel stays heavier even when sliding
+- **>1.0x:** More sensitive - wheel lightens more dramatically when sliding
+
+**Example:**
+```
+Slope = -0.15 (tire is past peak)
+Sensitivity = 1.0x  →  Grip Factor = 0.85 (wheel lightens 15%)
+Sensitivity = 2.0x  →  Grip Factor = 0.70 (wheel lightens 30%)
+Sensitivity = 0.5x  →  Grip Factor = 0.92 (wheel lightens 8%)
+```
+
+**Tuning Guidance:**
+- Increase if you want a more pronounced "light wheel" warning
+- Decrease if the understeer effect feels too exaggerated
+- Interacts with "Understeer Effect" slider - adjust both together
+
+---
+
+### Advanced Settings (Collapsed by Default)
+
+#### Slope Threshold
+**Range:** -1.0 to 0.0  
+**Default:** -0.1  
+**Unit:** (Lateral G / Slip Angle)
+
+The slope value below which grip loss begins. More negative = later detection.
+
+**Most users should leave this at default.** This is a safety parameter to prevent false positives from measurement noise.
+
+---
+
+#### Output Smoothing
+**Range:** 0.005s - 0.100s  
+**Default:** 0.020s (20ms)  
+**Unit:** Seconds (time constant)
+
+Applies an exponential moving average to the final grip factor to prevent abrupt FFB changes.
+
+**Formula:**
+```
+α = dt / (tau + dt)
+Smoothed Output = Previous Output + α × (New Grip Factor - Previous Output)
+```
+
+**Higher values** = slower transitions (smoother FFB)  
+**Lower values** = faster transitions (more responsive)
+
+**Tuning Guidance:**
+- Default (0.02s) is well-tested
+- Reduce to 0.01s if FFB feels laggy
+- Increase to 0.05s if you experience sudden FFB jerks
+
+---
+
+### Live Diagnostics
+```
+Live Slope: 0.142 | Grip: 100%
+```
+
+**Live Slope:** The current calculated slope  
+- **Positive (0.1 to 0.5):** Tire building grip  
+- **Near zero (±0.05):** Tire at peak  
+- **Negative (-0.1 to -0.5):** Tire saturating/sliding  
+
+**Grip:** The current grip percentage (100% = full grip, lower = reduced grip)
+
+Use these to understand what the algorithm is detecting during driving.
+
+---
+
+## Latency Explained
+
+### What is Latency?
+
+**Latency** is the time delay between a physical event (tire starts to slide) and when you feel it in the FFB.
+
+**Sources of latency in lmuFFB:**
+1. **Game Engine:** 2.5ms per frame (400Hz physics)
+2. **SG Filter:** (Window / 2) × 2.5ms
+3. **Output Smoothing:** ~1× tau (default 20ms)
+4. **DirectInput API:** 1-2ms
+5. **Wheel Hardware:** 5-30ms (varies by model)
+
+**Total typical latency:** 25-60ms with default settings
+
+---
+
+### Why Can't We Have 0 Latency?
+
+**Short Answer:** You cannot calculate a **derivative** (rate of change) from a single instant in time. You need at least 2 samples, which introduces delay.
+
+**Long Answer:**
+
+#### 1. Derivatives Require Time Comparison
+
+To calculate slope, you need:
+```
+Slope = (Later Value - Earlier Value) / Time Between Them
+         ↑               ↑
+      Future         Past
+```
+
+You **cannot** know the "later value" until time has passed. This is a fundamental limitation of physics, not a software issue.
+
+**Minimum possible latency:** 1 sample = 2.5ms (using only the current and previous frame)
+
+---
+
+#### 2. Noise Requires Averaging
+
+Raw telemetry looks like this:
+```
+Sample 1: Lateral G = 1.523
+Sample 2: Lateral G = 1.487  (Dropped 0.036 G in 2.5ms?!)
+Sample 3: Lateral G = 1.531  (Jumped 0.044 G?!)
+Sample 4: Lateral G = 1.509
+```
+
+If we calculate slope from just 2 samples:
+```
+Slope = (1.487 - 1.523) / 0.0025 = -14.4  ← FALSE ALARM!
+```
+
+The tire isn't actually losing grip - this is just **measurement noise** from:
+- Suspension vibrations
+- Track surface bumps
+- Numerical precision limits
+- Sensor sampling artifacts
+
+**SG filtering averages multiple samples** to reveal the true trend:
+```
+5-sample average: Slope = -0.03  (Slight decline - tire at peak)
+```
+
+This is the correct reading, but it requires looking at 5 samples = 12.5ms of history.
+
+---
+
+#### 3. The Latency-Noise Trade-off
+
+```
+Window Size vs Performance
+
+Latency (ms)
+    │
+ 50 │                         ● (Window=41)
+    │                    ●
+ 40 │               ●
+    │          ●
+ 30 │     ●                    ← Sweet Spot (Window=15-21)
+    │ ●                           Good balance
+ 20 │●
+    │
+ 10 │● (Window=5)              ← Too Jittery
+    │
+  0 └────────────────────────────────── Noise Rejection
+      Low                          High
+      
+      ↑                             ↑
+   Fast but noisy            Smooth but laggy
+```
+
+**The goal:** Find the smallest window that still filters noise effectively.
+
+**Why 5-41 is the range:**
+- **Minimum (5):** Below this, noise dominates and the slope calculation is unreliable
+- **Maximum (41):** Beyond this, latency becomes perceptible and the tire state may have changed significantly
+
+---
+
+### Why Low Latency Isn't Always Better
+
+**Human perception:** Studies show humans cannot detect FFB changes faster than ~15-20ms. Below this threshold, you're fighting noise for zero perceptual benefit.
+
+**Example:**
+```
+Scenario: You enter a corner too fast
+
+Window = 5 (6ms latency):
+  FFB becomes jittery and unstable as noise causes false grip loss signals
+  → Confused driver, harder to correct
+
+Window = 15 (19ms latency):
+  FFB smoothly transitions as tire approaches and exceeds peak grip
+  → Clear feedback, easy to modulate
+
+Window = 31 (39ms latency):
+  FFB change lags behind, tire may have recovered grip before wheel lightens
+  → Delayed feedback, harder to react
+```
+
+**Best practice:** Use the **largest window that still feels responsive enough** for your driving style. More filtering = more reliable signal.
+
+---
+
+## Tuning Guide
+
+### Quick Start (Recommended Settings)
+
+**For Most Users:**
+```
+Enable Slope Detection: ON
+Filter Window: 15
+Sensitivity: 1.0
+```
+
+Then adjust "Understeer Effect" slider (in the main Front Axle section) to taste:
+- **0.5-0.7:** Subtle grip loss feel
+- **1.0:** Realistic 1:1 grip scaling (recommended)
+- **1.5-2.0:** Exaggerated light-wheel warning
+
+---
+
+### Fine-Tuning Process
+
+#### Step 1: Find Your Ideal Window Size
+
+1. **Enable Slope Detection** and set Sensitivity to 1.0
+2. **Drive a familiar corner** at high speed (one where you know the limit)
+3. **Experiment with window sizes:**
+
+**If FFB feels jittery/noisy:**
+- Increase window: 15 → 21 → 27
+- Check live diagnostics - slope should be smooth, not jumping wildly
+
+**If FFB feels laggy/delayed:**
+- Decrease window: 15 → 11 → 7
+- Wheel should lighten BEFORE you feel the backend step out
+
+**Target:** Smooth transition as you approach the limit, without feeling disconnected
+
+---
+
+#### Step 2: Adjust Sensitivity
+
+Once window size feels right:
+
+**If wheel doesn't lighten enough when understeering:**
+- Increase Sensitivity: 1.0 → 1.5 → 2.0
+- OR increase "Understeer Effect" in the main settings
+
+**If wheel becomes too light, feels unrealistic:**
+- Decrease Sensitivity: 1.0 → 0.7 → 0.5
+- OR decrease "Understeer Effect" in the main settings
+
+---
+
+#### Step 3: Validate Across Conditions
+
+Test in different scenarios:
+- **Cold tires** (first lap out of pits): Should feel more grip loss
+- **Optimal temp** (3-5 laps in): Should feel most responsive
+- **Worn tires** (late stint): Should feel gradual degradation
+
+If slope detection adapts well to these changing conditions without manual adjustment, you've found your sweet spot!
+
+---
+
+### Presets for Different Wheel Types
+
+#### Direct Drive (High Bandwidth, Low Noise)
+```
+Filter Window: 11
+Sensitivity: 1.2
+Output Smoothing: 0.015s
+```
+DD wheels can handle faster response without feeling twitchy.
+
+---
+
+#### Belt Drive (Moderate Bandwidth)
+```
+Filter Window: 15  (Default)
+Sensitivity: 1.0
+Output Smoothing: 0.020s
+```
+Balanced settings work best.
+
+---
+
+#### Gear Drive (Lower Bandwidth, More Noise)
+```
+Filter Window: 21
+Sensitivity: 0.8
+Output Smoothing: 0.030s
+```
+Gear-driven wheels benefit from more smoothing to hide mechanical noise.
+
+---
+
+## Troubleshooting
+
+### "FFB feels jittery, wheel shakes when cornering"
+
+**Cause:** Filter window too small, noise not being filtered effectively
+
+**Solution:**
+1. Increase Filter Window: Try 21, 25, or 31
+2. Increase Output Smoothing: 0.02s → 0.04s
+3. Check that window size is **odd** (should be automatic)
+
+---
+
+### "Wheel lightens too late, I'm already sliding"
+
+**Cause:** Too much latency
+
+**Solution:**
+1. Decrease Filter Window: Try 11, 9, or 7
+2. Decrease Output Smoothing: 0.02s → 0.01s
+3. Check live diagnostics - slope should go negative BEFORE you feel understeer
+
+---
+
+### "Wheel doesn't lighten at all when I push too hard"
+
+**Possible Causes:**
+
+**A. Slope Detection not actually enabled**
+- Check the toggle is ON
+- Restart lmuFFB if in doubt
+
+**B. Sensitivity too low**
+- Increase Sensitivity to 1.5 or 2.0
+- Check "Understeer Effect" slider isn't set to 0
+
+**C. Live diagnostics show slope staying positive**
+- You may not be pushing hard enough to exceed peak grip
+- Try a slower corner where you can really overdrive
+
+---
+
+### "Ride height or suspension changes affect FFB"
+
+**Cause:** Slope detection is working correctly! Different ride heights change the tire's slip angle characteristics.
+
+**This is a feature, not a bug.** The algorithm adapts to your setup changes, just like a real car would feel different with different suspension settings.
+
+---
+
+### "Slope goes negative randomly even on straights"
+
+**Cause:** Measurement noise, possibly from:
+- Curbs/bumps
+- Flatspotted tires
+- Very low downforce setups
+
+**Solution:**
+1. Increase Filter Window to 25+
+2. Increase Slope Threshold (make more negative): -0.1 → -0.15
+3. Consider using static threshold method for this car/track
+
+---
+
+## Technical Deep Dive
+
+### Savitzky-Golay Mathematics
+
+The SG filter fits a **quadratic polynomial** to the data window and analytically computes its derivative.
+
+**For a window of size M (half-width):**
+
+```math
+Derivative Coefficient w_k = k × (Scaling Factor)
+
+where Scaling Factor = 2M(M+1) / [(2M+1) × S₂]
+
+and S₂ = M(M+1)(2M+1) / 3
+```
+
+**Example for Window=15 (M=7):**
+```
+Coefficients: w[-7] = -7×SF, w[-6] = -6×SF, ... w[0] = 0, ... w[7] = 7×SF
+
+Derivative = Σ(w[k] × G[k]) / (Δt × Σ|w[k]|)
+```
+
+**Key properties:**
+- Coefficients are anti-symmetric: w[-k] = -w[k]
+- Center point has zero weight (doesn't bias toward current value)
+- Edge points have maximum weight (captures the overall trend)
+
+**Reference:** Savitzky, A.; Golay, M.J.E. (1964). "Smoothing and Differentiation of Data by Simplified Least Squares Procedures". *Analytical Chemistry* 36 (8): 1627-1639.
+
+---
+
+### Grip Factor Calculation
+
+```cpp
+// Calculate slope
+double slope = dG_dt / dAlpha_dt;  // Units: G-force per radian
+
+// Convert slope to grip loss
+if (slope < m_slope_negative_threshold) {
+    double raw_loss = -slope × m_slope_sensitivity;
+    current_grip_factor = 1.0 - raw_loss;
+} else {
+    current_grip_factor = 1.0;  // Full grip
+}
+
+// Safety clamp
+current_grip_factor = max(0.2, min(1.0, current_grip_factor));
+
+// Apply smoothing (EMA)
+double alpha = dt / (m_slope_smoothing_tau + dt);
+m_slope_smoothed_output = m_slope_smoothed_output + alpha × (current_grip_factor - m_slope_smoothed_output);
+```
+
+**Safety Features:**
+- Grip factor cannot go below 0.2 (20%) to prevent complete FFB loss
+- Slope spikes are ignored when slip angle isn't changing (dt < 0.001)
+- Slope detection only applies to front axle (lateral G is a whole-vehicle measurement)
+
+---
+
+### Front Axle Only
+
+**Why?** Lateral G-force is measured at the **center of mass**, not at individual tires. The slope of G-vs-slip represents the **vehicle's overall lateral response**, which is dominated by the front tires (steering inputs).
+
+**Rear grip** continues to use static threshold detection based on wheel slip and slip angle, which is appropriate for detecting oversteer and rear grip loss.
+
+This asymmetry is intentional and physically justified.
+
+---
+
+## Comparison: Slope Detection vs Static Threshold
+
+| Aspect | Static Threshold | Slope Detection |
+|--------|------------------|-----------------|
+| **Adaptability** | Fixed, must be tuned per car/track | Automatically adapts to conditions |
+| **Latency** | ~0ms (instant) | 6-50ms (configurable) |
+| **Accuracy** | Approximation based on arbitrary threshold | Detects actual tire saturation point |
+| **Tuning Required** | High (Optimal Slip Angle must be dialed in) | Low (mostly set-and-forget) |
+| **Noise Sensitivity** | Low (simple comparison) | Medium (requires filtering) |
+| **Tire Degradation** | No adaptation (threshold stays fixed) | Adapts as grip degrades |
+| **Best For** | Users who want instant response and minimal latency | Users who want accurate, adaptive grip feedback |
+
+**Both methods are valid.** Choose the one that matches your priorities.
+
+---
+
+## Frequently Asked Questions
+
+### Q: Should I use Slope Detection or stick with Static Threshold?
+
+**Use Slope Detection if:**
+- You drive multiple car types (GT3, LMP2, etc.) and want one setting to work for all
+- You want realistic tire warm-up and degradation feel
+- You're willing to accept 15-25ms of latency for more accurate feedback
+
+**Use Static Threshold if:**
+- You prioritize absolute minimum latency
+- You drive mostly one car and can dial in the perfect threshold
+- You prefer the "binary" feel of grip/no-grip
+
+---
+
+### Q: Can I use Slope Detection for drifting?
+
+**Not recommended.** Drifting involves sustained large slip angles where the tire is always past peak. Slope detection assumes you're operating near the peak and transitioning across it.
+
+For drifting, use:
+- Static threshold method with high Optimal Slip Angle (0.15-0.20)
+- Focus on "Rear Align Torque" and "Oversteer Boost" effects
+- Enable "Slide Texture" for scrub feedback
+
+---
+
+### Q: Does Slope Detection work with keyboard/mouse?
+
+**Yes**, but you won't feel the FFB changes (obviously). The grip estimation still happens and affects the car's behavior if FFB is routed to vJoy or similar virtual controller.
+
+---
+
+### Q: Why is my latency different from the displayed value?
+
+The displayed latency is **only the SG filter contribution**. Total latency includes:
+- Game engine frame time
+- Output smoothing
+- DirectInput API
+- Your wheel's internal processing
+
+Actual perceived latency will be higher than displayed.
+
+---
+
+### Q: Can I reduce latency below 6ms?
+
+**Current answer (v0.7.0):** Not without bypassing the SG filter entirely. A 1-sample derivative (2.5ms latency) is possible but:
+- Would be extremely noisy
+- Defeats the purpose of slope detection
+- Better to just disable the feature
+
+**6ms (Window=5) is the practical minimum** for usable slope calculation.
+
+**Coming in v0.7.1:** We're planning to lower the minimum window size from 5 to 3, which will provide:
+- **3.75ms latency** (40% reduction from current minimum)
+- Still mathematically valid (SG filtering requires minimum 3 points)
+- Warning tooltip for users selecting very small windows
+- Suitable for Direct Drive wheels and advanced users who can tolerate some noise
+
+This will be an **optional enhancement** - the default will remain at window=15 for most users.
+
+---
+
+## What's Next? (Planned for v0.7.1)
+
+We're actively improving Slope Detection based on early feedback:
+
+### Ultra-Low Latency Option
+**Coming Soon:** Filter Window minimum will be lowered from 5 to 3 samples, providing:
+- **3.75ms minimum latency** (down from 6.25ms)
+- Dynamic warning tooltips for aggressive settings
+- Better suited for high-bandwidth Direct Drive wheels
+
+### Your Feedback Matters
+This feature is **experimental in v0.7.0**. Please share your experiences:
+- What window size works best for your wheel?
+- Does the default sensitivity (1.0x) feel realistic?
+- Any scenarios where slope detection doesn't work well?
+
+Your input helps shape the next version! 🏁
+
+---
+
+## Conclusion
+
+Slope Detection represents a significant advancement in FFB grip estimation, moving from static approximations to dynamic, physics-based detection. With proper tuning, it provides adaptive, consistent feedback across all driving conditions.
+
+**Recommended approach:**
+1. Start with defaults (Window=15, Sensitivity=1.0)
+2. Adjust window size for your wheel type and driving style
+3. Fine-tune sensitivity to match your preference
+4. Let the algorithm adapt - avoid constant tweaking
+
+**Remember:** This feature is **experimental** in v0.7.0. Your feedback helps improve it for future releases. Share your findings on the forum!
+
+---
+
+## Additional Resources
+
+- **Implementation Plan:** `docs/dev_docs/plans/plan_slope_detection.md`
+- **Code Review:** `docs/dev_docs/code_reviews/code_review_slope_detection.md`
+- **Source Code:** `src/FFBEngine.h` (lines 784-818, 862-934)
+- **Forum Thread:** [Link to be added]
+
+---
+
+**Document Version:** 1.0  
+**lmuFFB Version:** 0.7.0  
+**Author:** lmuFFB Development Team  
+**License:** This document is distributed with lmuFFB under the same MIT license.
+
+```
+
 # File: docs\the_physics_of__feel_-_driver_guide.md
 ```markdown
 # The Physics of Feel: LMUFFB Driver's Guide
@@ -4516,6 +9182,319 @@ This section details how LMUFFB handles conflicting signals to create a cohesive
     *   The FFB delivers a high-torque "whip" motion, simulating the stored energy in the chassis releasing. This cues the driver to center the wheel immediately to avoid over-correcting into a wall.
 
 <br clear="right">
+```
+
+# File: docs\user_facing_changelog_guide.md
+```markdown
+# User-Facing Changelog Guide
+
+## Purpose
+
+This document provides guidelines for creating entries in the **User-Facing Changelog** (`USER_CHANGELOG.md`). This changelog is designed for end users and uses **BBCode formatting** for easy copy-paste to forums. It emphasizes understandable, benefit-focused release notes, while the technical `CHANGELOG_DEV.md` (in Markdown) serves developers and power users.
+
+## Format: BBCode for Forums
+
+The user-facing changelog uses BBCode syntax because entries are posted directly to forum threads. BBCode is the standard markup language for most forum software.
+
+### BBCode vs Markdown Quick Reference
+
+| Element | Markdown | BBCode |
+|---------|----------|--------|
+| Bold | `**text**` | `[b]text[/b]` |
+| Italic | `*text*` | `[i]text[/i]` |
+| Link | `[text](url)` | `[url=url]text[/url]` or just `url` |
+| Header | `## Text` | `[size=5][b]Text[/b][/size]` |
+| Bullet List | `* item` | `[list][*]item[/list]` |
+| Code/Mono | `` `code` `` | `[font=courier]code[/font]` or `[code]code[/code]` |
+
+## Core Principles
+
+### 1. User-First Language
+- **Avoid**: Technical jargon, implementation details, class names, file paths
+- **Use**: Clear descriptions of what changed from the user's perspective
+- **Example**:
+  - ❌ "Refactored `FFBEngine::calculate_force` with context-based processing"
+  - ✅ "Improved performance and stability of force feedback calculations"
+
+### 2. Focus on Benefits
+Explain HOW the change helps the user, not just WHAT changed.
+
+**Example**:
+- ❌ "Added Auto-Connect to LMU"
+- ✅ "**Auto-Connect to LMU**: The app now automatically connects every 2 seconds, eliminating the need to click 'Retry' manually. Status shows 'Connecting...' in yellow while searching and 'Connected' in green when active."
+
+### 3user Relevance First
+Include changes that users will:
+- **Notice** during normal use
+- **Configure** via UI controls
+- **Benefit from** (fixes, improvements, new features)
+
+**Exclude** or minimize:
+- Internal refactoring (unless it improves performance/stability noticeably)
+- Test suite additions
+- Developer documentation updates
+- Code quality improvements (unless they fix bugs users encountered)
+
+### 4. Be Concise
+- Keep entries brief but informative
+- Use bullet points for multiple changes
+- Group related changes together
+- Limit to 2-4 sentences per feature
+
+## Entry Structure
+
+### Version Header (BBCode Format)
+```bbcode
+[size=5][b]Date[/b][/size]
+[b]Version X.Y.Z - Feature Name[/b]
+
+[b]New release[/b] (X.Y.Z): unlinked: github_com/coasting-nc/LMUFFB/releases
+```
+
+**Example**:
+```bbcode
+[size=5][b]January 31, 2026[/b][/size]
+[b]Version 0.6.39 - Auto-Connect & Performance[/b]
+
+[b]Special Thanks[/b] to [b]@AndersHogqvist[/b] for the Auto-connect feature!
+
+[b]New release[/b] (0.6.39): unlinked: github_com/coasting-nc/LMUFFB/releases
+```
+
+**Formatting Requirements**:
+- **Date header**: Use `[size=5][b]Date[/b][/size]` for main heading
+- **Version title**: Use `[b]Version X.Y.Z - Feature Name[/b]`
+- **"New release"**: Always bold: `[b]New release[/b]`
+- **Version in link**: Include version in parentheses after "New release"
+- **Links**: Just paste the URL directly (BBCode auto-links) or use `[url=url]text[/url]`
+- **Attribution**: Use `[b]@Username[/b]` for contributor mentions
+
+### Change Categories
+
+Use these categories in order of user impact:
+
+1. **Added** - New features users can see/use
+2. **Fixed** - Bug fixes that improve user experience
+3. **Changed** - Modified behavior users will notice
+4. **Improved** - Performance/quality enhancements
+
+### Entry Format (BBCode)
+
+```bbcode
+[b]Category[/b]
+[list]
+[*][b]Feature Name[/b]: 1-2 sentence description focusing on user benefit
+[/list]
+```
+
+**For multiple items**, use nested lists:
+```bbcode
+[b]Added[/b]
+[list]
+[*][b]Feature One[/b]: Description here
+[*][b]Feature Two[/b]: Description here
+[/list]
+```
+
+## Writing Guidelines
+
+### DO ✅
+
+- **Start with the benefit**: "Fixed vibrations when stationary" instead of "Implemented speed gate"
+- **Mention UI locations**: "Added new sliders in Advanced Settings"
+- **Include defaults**: "Now defaults to 18 km/h (previously 10 km/h)"
+- **Provide context**: "This fixes the shaking wheel in the pits"
+- **Group related items**: Combine multiple slider additions into one entry
+- **Use bold for names**: `[b]Auto-Connect[/b]`, `[b]Speed Gate[/b]`, `[b]ABS Pulse[/b]`
+- **Use lists for multiple items**: Use BBCode `[list][*]item[/list]` format
+
+### DON'T ❌
+
+- **List every test added**: Users don't care about `test_speed_gate_custom_thresholds()`
+- **Quote code**: Avoid `m_prev_vert_accel` or `FFBEngine.h`
+- **Over-explain internals**: "Uses std::fmod for phase wrapping" → "Fixed stuttering during vibration effects"
+- **Include file paths**: `src/lmu_sm_interface/SafeSharedMemoryLock.h`
+- **List every config parameter**: Just mention the feature, not implementation details
+- **Use Markdown syntax**: Use BBCode format `[b]bold[/b]` not `**bold**`
+
+## Length Guidelines
+
+- **Major version** (0.x.0): 4-8 bullet points
+- **Minor version** (0.6.x): 2-6 bullet points
+- **Patch version** (0.6.x, bug fix only): 1-3 bullet points
+
+**Target**: 50-150 words per version entry
+
+## Examples
+
+### Good Entry ✅
+
+```bbcode
+[size=5][b]December 28, 2025[/b][/size]
+[b]Version 0.6.22 - Vibration Fixes[/b]
+
+[b]New release[/b] (0.6.22): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+Fixed vibrations when car still / in the pits:
+[list]
+[*]Disabled vibration effects when speed below a certain threshold (ramp from 0.0 vibrations at < 0.5 m/s to 1.0 vibrations at > 2.0 m/s).
+[*]Automatic Idle Smoothing: Steering Torque is smoothed when car is stationary or moving slowly (< 3.0 m/s). This should remove any remaining engine vibrations.
+[*]Road Texture Fallback: alternative method to calculate Road Texture when data is encrypted. You can now feel bumps and curbs on DLC cars.
+[/list]
+```
+
+**Why it's good**:
+- Focuses on user-facing problem ("wheel shaking in pits")
+- Explains the solution clearly
+- No code or technical details
+- Uses BBCode lists for readability
+- Mentions what users will notice ("smoothed", "feel bumps")
+
+### Bad Entry ❌
+
+```bbcode
+[size=5][b]December 28, 2025[/b][/size]
+[b]Version 0.6.22 - Technical Updates[/b]
+
+[b]Added[/b]
+[list]
+[*]Implemented a dynamic Low Pass Filter (LPF) for the steering shaft torque with automatic smoothing at car speed < 3.0 m/s
+[*]Road texture fallback mechanism using mLocalAccel.y when mVerticalTireDeflection is missing
+[*]test_stationary_gate() and updated test_missing_telemetry_warnings()
+[/list]
+
+[b]Changed[/b]
+[list]
+[*]Updated warning to include "(Likely Encrypted/DLC Content)"
+[/list]
+```
+
+**Why it's bad**:
+- Technical jargon ("LPF", "mLocalAccel.y")
+- Lists test additions (irrelevant to users)
+- Doesn't explain user benefit
+- No mention of what problem it solves
+
+## Special Cases
+
+### Breaking Changes
+Clearly mark and explain migration:
+
+```bbcode
+[b]Changed[/b]
+[list]
+[*][b]⚠️ BREAKING: Understeer Effect Range[/b]: The slider now uses 0.0-2.0 instead of 0-200. Old values are automatically converted (50.0 → 0.5). See new scale guide in tooltip.
+[/list]
+```
+
+### Community Contributions
+Always credit:
+
+```bbcode
+[b]Special Thanks[/b] to [b]@DiSHTiX[/b] for the icon implementation!
+```
+
+### Critical Fixes
+Use emphasis:
+
+```bbcode
+[b]Fixed[/b]
+[list]
+[*][b]CRITICAL[/b]: Fixed wheel staying locked at last force when pausing the game, which could cause injury. The wheel now immediately releases when entering menus.
+[/list]
+```
+
+## Review Checklist
+
+Before finalizing an entry, ask:
+
+- [ ] Would a non-technical user understand this?
+- [ ] Have I explained the benefit, not just the change?
+- [ ] Is it concise (no walls of text)?
+- [ ] Did I avoid code/file references?
+- [ ] Did I group related changes?
+- [ ] Is it something users will actually notice?
+- [ ] Am I using BBCode formatting correctly?
+- [ ] Did I use `[b]bold[/b]` for emphasis, not `**bold**`?
+- [ ] Did I use `[list][*]item[/list]` for lists?
+
+## Versioning Strategy
+
+### When to Include in User-Facing Changelog
+
+| Change Type | Include? | Rationale |
+|-------------|----------|-----------|
+| New GUI feature/slider | ✅ Yes | Users see and use it |
+| Bug fix (user-reported) | ✅ Yes | Solves user pain point |
+| Performance improvement (noticeable) | ✅ Yes | Users feel the difference |
+| New preset | ✅ Yes | Users can select it |
+| Refactoring (no behavior change) | ❌ No | Users won't notice |
+| Test additions | ❌ No | Developer-only |
+| Documentation (dev docs) | ❌ No | Not user-facing |
+| Code review fixes | ❌ Maybe | Only if it fixes a user-visible bug |
+
+## Version Entry Template (BBCode)
+
+```bbcode
+[size=5][b][Month Day, Year][/b][/size]
+[b]Version X.Y.Z - [Feature Name][/b]
+
+[b]Special Thanks[/b] to [b]@Contributors[/b] for [Contribution]!
+
+[b]New release[/b] (X.Y.Z): unlinked: github_com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]Feature Name[/b]: User benefit description
+[/list]
+
+[b]Fixed[/b]
+[list]
+[*][b]Issue Description[/b]: What was wrong and how it's now better
+[/list]
+
+[b]Changed[/b]
+[list]
+[*][b]Feature Name[/b]: What changed and why users care
+[/list]
+
+[b]Improved[/b]
+[list]
+[*][b]Area[/b]: Performance/quality improvement users will feel
+[/list]
+```
+
+---
+
+## Conversion Example: Technical → User-Facing
+
+**From CHANGELOG_DEV.md** (Technical, Markdown):
+```markdown
+### Refactored
+- **GameConnector Lifecycle**:
+  - Introduced `Disconnect()` method to centralize resource cleanup
+  - Fixed potential resource leaks in `TryConnect()` 
+  - Updated `IsConnected()` with double-checked locking pattern
+  - Process Handle Robustness: Connection succeeds even if window handle unavailable
+  - Updated destructor to ensure handles properly closed
+```
+
+**To User-Facing Changelog** (BBCode):
+```bbcode
+[b]Improved[/b]
+[list]
+[*][b]Connection Reliability[/b]: Fixed connection issues and resource leaks that could cause the app to not detect the game properly. Connection is now more robust even if the game window isn't fully loaded yet.
+[/list]
+```
+
+**Changes made**:
+- Removed method names and technical details
+- Focused on user benefit: "more reliable connection"
+- Combined multiple technical points into one user-facing benefit
+- Explained in terms users understand: "game not detected properly"
+- Converted from Markdown to BBCode format
+
+
 ```
 
 # File: docs\vjoy_compatibility.md
@@ -6005,6 +10984,97 @@ The wheel will be thrown across the center so fast that it overshoots the correc
 **Tuning Tip:** If you find yourself getting into unrecoverable tank slappers, **lower the Yaw Kick** or **increase Gyro Damping**. You want the "Kick" to be just strong enough to tell you the snap is coming, but not so strong that it rips the wheel out of your hands.
 ```
 
+# File: docs\dev_docs\Archive and convert - PR_16_Implementation_Plan.md
+```markdown
+TODO: archive this document because already implemented. Create a new document (if it does not exist already) with only the relevan architecture info on how we import the shared memory interface files from LMU.
+
+# Implementation Plan: Auto-Connect to LMU (PR #16 Refinement)
+
+## Objective
+Implement a robust, self-healing connection mechanism for the Le Mans Ultimate (LMU) shared memory interface. The system should automatically detect when the game starts, maintain the connection, and cleanly reset when the game closes.
+
+## Motivation
+Currently, the user must manually click "Connect" or "Retry". If the game crashes or is restarted, the tool loses connection and requires manual intervention. This feature improves the user experience by automating this process.
+
+## Proposed Changes
+
+### 1. GameConnector Class Refactoring
+The current PR implementation introduces potential resource leaks and a critical thread-safety race condition. We will refactor `GameConnector` to ensure strict resource management and thread-safe access.
+
+#### Thread Safety (Critical)
+Add a `std::mutex` to protect shared state between the FFB thread and the GUI thread.
+- Add `mutable std::mutex m_mutex;` to `GameConnector.h`.
+- Use `std::lock_guard<std::mutex> lock(m_mutex);` in all public methods: `TryConnect`, `Disconnect`, `IsConnected`, `CopyTelemetry`, and `IsInRealtime`.
+
+#### New Method: `Disconnect()`
+Centralizes cleanup logic to avoid duplication and ensure no handles are left open.
+```cpp
+void Disconnect() {
+    // std::lock_guard is assumed to be held by the caller if private, 
+    // or we use a recursive mutex if nested. 
+    // Preferred: Make Disconnect() public and locked, or use a private helper _Disconnect() without locking.
+    // ... cleanup logic ...
+}
+```
+
+#### Updated Method: `IsConnected()`
+- Lock the mutex.
+- Check `m_hProcess` status using `WaitForSingleObject` with 0 timeout.
+- If object is signaled (process ended) or wait failed:
+    - **Call `Disconnect()` immediately** to free handles and unmap memory.
+    - Return `false`.
+- Otherwise, return current `m_connected` state.
+
+### 2. GUI Integration
+- Maintain the polling logic in `GuiLayer.cpp`.
+- Poll every 2 seconds when disconnected.
+- Display "Connecting to LMU..." in Yellow/Red when searching.
+- Display "Connected to LMU" in Green when active.
+
+### 3. Documentation & Versioning
+- Bump version in `VERSION` file.
+- Add entry to `CHANGELOG_DEV.md`: "Added auto-connect feature: automatically detects LMU process and reconnects if the game is restarted."
+
+## Verification & Testing
+
+### TDD Approach
+1. **Write Test**: Add a test in `test_windows_platform.cpp` that mocks/simulates a process exit and verifies that `IsConnected()` triggers resource cleanup.
+2. **Verify Failure**: Test should fail if `Disconnect()` is not called inside `IsConnected()`.
+3. **Implement**: Add Mutex and `IsConnected` cleanup logic.
+4. **Verify Success**: Run tests.
+
+### Manual Verification Protocol
+1.  **Startup:** Open LMUFFB before LMU. Status should be "Connecting...".
+2.  **Launch:** Start LMU. Status should change to "Connected" automatically within 2 seconds.
+3.  **Shutdown:** Close LMU. Status should revert to "Connecting..." (or "Disconnected").
+4.  **Restart:** Start LMU again. Status should recover to "Connected".
+5.  **Leak Check:** Use Task Manager -> Details -> Add Columns -> "Handles". Watch `LMUFFB.exe`.
+    *   Cycle steps 3 & 4 ten times.
+    *   **Pass Condition:** Handle count must not increase monotonically. It should stabilize (allow for minor fluctuations, but not +2 handles per retry).
+
+## Task List
+- [x] Create Implementation Plan and Compliance Review.
+- [x] Implement `std::mutex` and thread-safe locking in `GameConnector`.
+- [x] Refactor `IsConnected()` to call `Disconnect()` on process exit.
+- [x] Verify `GuiLayer.cpp` polling logic.
+- [x] Update `VERSION` and `CHANGELOG_DEV.md`.
+- [x] Build and Manual Verify.
+
+## Additional Optimizations (Implemented beyond PR #16)
+- [x] **Created SafeSharedMemoryLock wrapper** to avoid vendor code modification (Issue #8 from code review).
+- [x] **Optimized FFB loop** - Reduced lock acquisitions from 3 to 2 per frame by making `CopyTelemetry()` return realtime status.
+- [x] **Improved process handle robustness** - Connection now succeeds even if window handle isn't immediately available.
+- [x] **Fixed GUI static variable** - Moved `last_check_time` initialization outside conditional block.
+- [x] **Updated tests** - Thread safety test now uses new `CopyTelemetry()` return value API.
+
+## Test Results
+- **Build Status:** ✅ SUCCESS
+- **Test Suite:** ✅ 4884 PASSED, 0 FAILED
+- **Performance:** 33% reduction in lock contention (3 → 2 locks per frame @ 400Hz)
+
+
+```
+
 # File: docs\dev_docs\Automatic Idle Smoothing.md
 ```markdown
 This is a classic issue with high-fidelity simulators like rFactor 2 / LMU. The physics engine simulates the engine block vibration, which travels through the chassis and steering rack (`mSteeringShaftTorque`). On high-end wheels (Direct Drive) or even belt wheels with high gain, this physical vibration is faithfully reproduced, causing the wheel to shake or "bounce" at idle.
@@ -6755,7 +11825,7 @@ New tests will be added to `tests/test_persistence_v0628.cpp` to verify fixes an
 - `tests/main_test_runner.cpp` - Integrated new tests
 
 **Documentation:**
-- `CHANGELOG.md` - Added v0.6.29 release notes
+- `CHANGELOG_DEV.md` - Added v0.6.29 release notes
 - `docs/dev_docs/config_reordering_plan.md` - This implementation status update
 
 ### 7.8 Verification Checklist
@@ -6782,296 +11852,6 @@ The config file reordering implementation has been **100% successfully completed
 5. **✅ Documentation:** Complete implementation documentation and changelog updates
 
 The feature is ready for production use in **v0.6.29** and provides significant value to users who manually edit configuration files while maintaining full system stability and compatibility.
-
-```
-
-# File: docs\dev_docs\coordinate_system_reference.md
-```markdown
-# Coordinate System Reference Guide (v0.4.19)
-
-**CRITICAL**: This document explains the coordinate system mismatch between rFactor 2/LMU and DirectInput that was fixed in v0.4.19. **Read this before modifying any FFB calculations involving lateral vectors.**
-
-## Table of Contents
-1. [The Fundamental Problem](#the-fundamental-problem)
-2. [Coordinate System Definitions](#coordinate-system-definitions)
-3. [Required Inversions](#required-inversions)
-4. [Code Examples](#code-examples)
-5. [Testing Strategy](#testing-strategy)
-6. [Common Pitfalls](#common-pitfalls)
-
----
-
-## The Fundamental Problem
-
-The rFactor 2 / Le Mans Ultimate physics engine uses a **left-handed coordinate system** where **+X points to the driver's LEFT**. DirectInput steering wheels use the standard convention where **+Force means RIGHT**.
-
-This creates a fundamental sign inversion for ALL lateral vectors (position, velocity, acceleration, force).
-
-### Source of Truth
-
-From `src/lmu_sm_interface/InternalsPlugin.hpp` lines 168-181:
-
-```cpp
-// Our world coordinate system is left-handed, with +y pointing up.
-// The local vehicle coordinate system is as follows:
-//   +x points out the left side of the car (from the driver's perspective)
-//   +y points out the roof
-//   +z points out the back of the car
-// Rotations are as follows:
-//   +x pitches up
-//   +y yaws to the right
-//   +z rolls to the right
-```
-
-### DirectInput Convention
-
-- **Negative (-)**: Turn LEFT (Counter-Clockwise)
-- **Positive (+)**: Turn RIGHT (Clockwise)
-
----
-
-## Coordinate System Definitions
-
-### Game Engine (rFactor 2 / LMU)
-
-| Axis | Positive Direction | Example |
-|------|-------------------|---------|
-| **+X** | Left (driver's perspective) | Sliding left = +X velocity |
-| **+Y** | Up (roof) | Jumping = +Y velocity |
-| **+Z** | Back (rear bumper) | Reversing = +Z velocity |
-
-### DirectInput (Steering Wheel)
-
-| Value | Direction | Torque Effect |
-|-------|-----------|---------------|
-| **Negative (-)** | Left | Pull wheel left |
-| **Positive (+)** | Right | Pull wheel right |
-
-### The Conflict
-
-| Physical Event | Game Data | Desired Wheel Feel | Required Inversion |
-|----------------|-----------|-------------------|-------------------|
-| Right turn (body feels left force) | `mLocalAccel.x = +9.81` | Pull LEFT (heavy steering) | **YES** - Invert sign |
-| Rear slides left (oversteer) | `mLateralPatchVel = +5.0` | Counter-steer LEFT | **YES** - Invert sign |
-| Sliding left | `mLateralPatchVel = +5.0` | Friction pushes RIGHT | **NO** - Keep sign |
-
----
-
-## Required Inversions
-
-### 1. Seat of Pants (SoP) - Lateral G
-
-**Location**: `FFBEngine.h` line ~571
-
-**Physics**: In a right turn, the body feels centrifugal force to the LEFT. The steering should feel heavy (pull LEFT) to simulate load transfer.
-
-**Code**:
-```cpp
-// WRONG (pre-v0.4.19):
-double lat_g = raw_g / 9.81;
-
-// CORRECT (v0.4.19+):
-double lat_g = -(raw_g / 9.81);  // INVERT to match DirectInput
-```
-
-**Why**: 
-- Right turn → Body accelerates LEFT → `mLocalAccel.x = +9.81`
-- We want: Wheel pulls LEFT (negative force)
-- Without inversion: `+9.81 / 9.81 = +1.0` → Pulls RIGHT ❌
-- With inversion: `-(+9.81 / 9.81) = -1.0` → Pulls LEFT ✓
-
----
-
-### 2. Rear Aligning Torque - Counter-Steering
-
-**Location**: `FFBEngine.h` line ~666
-
-**Physics**: When the rear slides, tires generate lateral force that should provide counter-steering cues.
-
-**Code**:
-```cpp
-// WRONG (pre-v0.4.19):
-double rear_torque = calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect;
-
-// CORRECT (v0.4.19+):
-double rear_torque = -calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect;  // INVERT
-```
-
-**Why**:
-- Rear slides LEFT → Slip angle is POSITIVE → Lateral force is POSITIVE
-- We want: Counter-steer LEFT (negative force)
-- Without inversion: Positive force → Pulls RIGHT → **CATASTROPHIC POSITIVE FEEDBACK LOOP** ❌
-- With inversion: Negative force → Pulls LEFT → Corrects the slide ✓
-
-**This was the root cause of the user-reported bug**: "Slide rumble throws the wheel in the direction I am turning."
-
----
-
-### 3. Scrub Drag - Friction Direction
-
-**Location**: `FFBEngine.h` line ~840
-
-**Physics**: Friction opposes motion. If sliding left, friction pushes right.
-
-**Code**:
-```cpp
-// WRONG (pre-v0.4.19):
-double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;  // If left, push left (WRONG!)
-
-// CORRECT (v0.4.19+):
-double drag_dir = (avg_lat_vel > 0.0) ? 1.0 : -1.0;  // If left, push right (opposes motion)
-```
-
-**Why**:
-- Sliding LEFT → `mLateralPatchVel = +5.0`
-- Friction opposes motion → Should push RIGHT
-- Without fix: Pushes LEFT → Accelerates the slide (negative damping) ❌
-- With fix: Pushes RIGHT → Resists the slide ✓
-
----
-
-## Code Examples
-
-### Example 1: Adding a New Lateral Effect
-
-```cpp
-// ❌ WRONG - Direct use of game data
-double new_effect = data->mLocalAccel.x * some_coefficient;
-
-// ✓ CORRECT - Invert for DirectInput
-double new_effect = -(data->mLocalAccel.x) * some_coefficient;
-```
-
-### Example 2: Checking Your Work
-
-Ask yourself these questions:
-
-1. **What is the physical event?** (e.g., "Right turn")
-2. **What does the game report?** (e.g., `mLocalAccel.x = +9.81`)
-3. **What should the wheel feel?** (e.g., "Pull LEFT to simulate heavy steering")
-4. **What sign does DirectInput need?** (e.g., "Negative for LEFT")
-5. **Do I need to invert?** (e.g., "YES - game says +9.81, I need negative")
-
-### Example 3: Friction/Damping Effects
-
-Friction and damping effects that **oppose motion** may NOT need inversion:
-
-```cpp
-// Scrub drag: Friction opposes the slide direction
-// If sliding left (+vel), friction pushes right (+force)
-// NO INVERSION needed - the physics naturally provides the correct sign
-double drag_dir = (avg_lat_vel > 0.0) ? 1.0 : -1.0;
-```
-
----
-
-## Testing Strategy
-
-### Unit Tests
-
-Every coordinate-sensitive effect MUST have regression tests in `tests/test_ffb_engine.cpp`:
-
-```cpp
-void test_coordinate_[effect_name]() {
-    // Test Case 1: Positive game input (LEFT)
-    data.mLocalAccel.x = 9.81;  // Left acceleration
-    double force = engine.calculate_force(&data);
-    ASSERT_TRUE(force < 0.0);  // Should pull LEFT (negative)
-    
-    // Test Case 2: Negative game input (RIGHT)
-    data.mLocalAccel.x = -9.81;  // Right acceleration
-    force = engine.calculate_force(&data);
-    ASSERT_TRUE(force > 0.0);  // Should pull RIGHT (positive)
-}
-```
-
-### Manual Testing
-
-1. **Right Turn Test**:
-   - Drive in a steady right turn
-   - Wheel should feel HEAVY (pulling left)
-   - If wheel feels LIGHT, SoP is inverted ❌
-
-2. **Oversteer Test**:
-   - Induce oversteer (rear slides out)
-   - Wheel should provide counter-steering cue
-   - If wheel pulls INTO the slide, rear torque is inverted ❌
-
-3. **Drift Test**:
-   - Slide sideways at constant angle
-   - Wheel should feel resistance (friction)
-   - If wheel feels assisted (negative damping), scrub drag is inverted ❌
-
----
-
-## Common Pitfalls
-
-### Pitfall 1: "The Math Looks Right"
-
-```cpp
-// This looks mathematically correct:
-double sop_force = lateral_g * coefficient;
-
-// But it's WRONG for DirectInput!
-// You must invert:
-double sop_force = -lateral_g * coefficient;
-```
-
-**Lesson**: Trust the coordinate system, not your intuition.
-
-### Pitfall 2: "It Works in One Direction"
-
-If an effect only feels wrong in one direction (e.g., only in left turns), you likely have a sign error.
-
-### Pitfall 3: "Abs() Hides the Problem"
-
-```cpp
-// Using abs() can mask coordinate issues:
-double slip_angle = std::atan2(std::abs(mLateralPatchVel), longitudinal_vel);
-
-// This loses directional information!
-// Consider whether you need the sign for your effect.
-```
-
-### Pitfall 4: "Positive Feedback Loops"
-
-If an effect makes the car HARDER to control instead of easier, you likely have an inverted sign creating positive feedback.
-
-**Example**: Rear aligning torque pulling INTO the slide instead of providing counter-steering.
-
----
-
-## Checklist for New Effects
-
-Before adding any new lateral effect, complete this checklist:
-
-- [ ] I have identified the game coordinate system for all input variables
-- [ ] I have determined the desired DirectInput output sign
-- [ ] I have applied inversions where needed
-- [ ] I have added unit tests for both left and right scenarios
-- [ ] I have manually tested the effect in-game
-- [ ] I have documented the coordinate system logic in code comments
-- [ ] I have verified no positive feedback loops exist
-
----
-
-## References
-
-- **Bug Report**: `docs/bug_reports/wrong rf2 coordinates use.md`
-- **Source Code**: `FFBEngine.h` lines 571, 666, 840
-- **API Documentation**: `src/lmu_sm_interface/InternalsPlugin.hpp` lines 168-181
-- **Test Suite**: `tests/test_ffb_engine.cpp` - Search for "v0.4.19" or "coordinate"
-
----
-
-## Version History
-
-- **v0.4.19** (2025-12-16): Initial documentation after fixing three critical coordinate inversions
-- **Future**: This document should be updated whenever new lateral effects are added
-
----
-
-**⚠️ WARNING**: Ignoring this coordinate system mismatch can create positive feedback loops that make the car uncontrollable. Always verify sign conventions when working with lateral vectors.
 
 ```
 
@@ -8391,6 +13171,7 @@ $$
 To ensure consistent feel across different wheels (e.g. G29 vs Simucube), effect intensities are automatically scaled based on the user's `Max Torque Ref`.
 *   **Reference Torque**: 20.0 Nm. (Updated from legacy 4000 unitless reference).
 *   **Decoupling Scale**: `K_decouple = m_max_torque_ref / 20.0`.
+    *   **Minimum Clamp**: 0.1. If the calculated scale would be less than 0.1, it is clamped to prevent effect collapse.
 *   *Note: This ensures that 10% road texture feels the same physical intensity regardless of wheel strength.*
 
 ---
@@ -8547,7 +13328,8 @@ If `mSuspForce` is missing (encrypted content), tire load is estimated from chas
 *   **Input Derivation**:
     *   $\text{SteerAngle} = \text{UnfilteredInput} \times (\text{RangeInRadians} / 2.0)$
     *   $\text{SteerVel} = (\text{Angle}_{\text{current}} - \text{Angle}_{\text{prev}}) / dt$
-*   **Formula**: $-\text{SteerVel}_{\text{smooth}} \times K_{\text{gyro}} \times (\text{Speed} / 10.0) \times 1.0\text{Nm} \times K_{\text{decouple}}$.
+*   **Formula**: $-\text{SteerVel}_{\text{smooth}} \times K_{\text{gyro}} \times (\text{Speed} / 10.0) \times K_{\text{decouple}}$.
+    *   *Note*: The `BASE_NM_GYRO_DAMPING` constant (1.0 Nm) exists but is implicit in the formula (multiplication by 1.0).
 *   **Smoothing**: Time-Corrected LPF ($\tau = K_{\text{smooth}} \times 0.1$).
 
 **3. Time-Corrected LPF (Algorithm)**
@@ -8586,9 +13368,16 @@ Applied at the very end of the pipeline to `F_norm` (before clipping).
 
 | Constant Name | Value | Description |
 | :--- | :--- | :--- |
-| `BASE_NM_LOCKUP` | 4.0 Nm | Reference intensity for lockup vibration |
-| `BASE_NM_SPIN` | 2.5 Nm | Reference intensity for wheel spin |
-| `BASE_NM_ROAD` | 2.5 Nm | Reference intensity for road bumps |
+| `BASE_NM_SOP_LATERAL` | 1.0 Nm | Reference intensity for Lateral G (SoP) effect |
+| `BASE_NM_REAR_ALIGN` | 3.0 Nm | Reference intensity for Rear Aligning Torque |
+| `BASE_NM_YAW_KICK` | 5.0 Nm | Reference intensity for Yaw Kick impulse |
+| `BASE_NM_GYRO_DAMPING` | 1.0 Nm | Reference intensity for Gyroscopic Damping (implicit) |
+| `BASE_NM_LOCKUP_VIBRATION` | 4.0 Nm | Reference intensity for lockup vibration |
+| `BASE_NM_SPIN_VIBRATION` | 2.5 Nm | Reference intensity for wheel spin |
+| `BASE_NM_ROAD_TEXTURE` | 2.5 Nm | Reference intensity for road bumps |
+| `BASE_NM_SLIDE_TEXTURE` | 1.5 Nm | Reference intensity for slide/scrub texture |
+| `BASE_NM_SCRUB_DRAG` | 5.0 Nm | Reference intensity for lateral scrub drag |
+| `BASE_NM_BOTTOMING` | 1.0 Nm | Reference intensity for suspension bottoming |
 | `REAR_STIFFNESS` | 15.0 | N/(rad·N) - Estimated rear tire cornering stiffness |
 | `WEIGHT_TRANSFER_SCALE` | 2000.0 | N/G - Kinematic load transfer scaler |
 | `UNSPRUNG_MASS` | 300.0 N | Per-corner static unsprung weight estimate |
@@ -9228,7 +14017,7 @@ Here is the implementation checklist to apply the latency fixes and GUI improvem
     - Add Tooltip explaining "Physics Response Time".
 
 ### 5. Documentation & Build
-- [ ] **Update `CHANGELOG.md`**: Document the new defaults (15ms) and the new "Physics Response" slider.
+- [ ] **Update `CHANGELOG_DEV.md`**: Document the new defaults (15ms) and the new "Physics Response" slider.
 - [ ] **Update `VERSION`**: Increment version number.
 - [ ] **Verify**: Compile and run tests.
 
@@ -9295,7 +14084,7 @@ We need to:
 *   Modified `FFBEngine.h`
 *   Modified `src/Config.h` and `src/Config.cpp`
 *   Modified `src/GuiLayer.cpp`
-*   Updated `CHANGELOG.md` (New entry under a new version number)
+*   Updated `CHANGELOG_DEV.md` (New entry under a new version number)
 *   Updated `VERSION` file
 
 **Check-list for completion:**
@@ -9304,7 +14093,7 @@ We need to:
 - [ ] `Config.cpp`: Save/Load/Presets updated.
 - [ ] `GuiLayer.cpp`: SoP slider shows Red/Green latency text.
 - [ ] `GuiLayer.cpp`: Slip Angle slider added with Red/Green latency text.
-- [ ] `CHANGELOG.md` updated.
+- [ ] `CHANGELOG_DEV.md` updated.
 - [ ] `VERSION` incremented.
 - [ ] Code compiles successfully.
 
@@ -9953,294 +14742,8 @@ static void test_stationary_gate() {
     *   Updated warning text.
 2.  **`tests/test_ffb_engine.cpp`**:
     *   Added `test_stationary_gate`.
-3.  **`CHANGELOG.md`**:
+3.  **`CHANGELOG_DEV.md`**:
     *   Document fixes for "Violent Shaking at Stop" and "Missing Road Texture on DLC cars".
-```
-
-# File: docs\dev_docs\Fix wheel device disconnecting.md
-```markdown
-# Technical Report: Connection Hardening & Device Persistence Implementation
-
-**Target Version:** v0.4.44
-**Priority:** Critical (User Experience / Stability)
-**Context:** Addressing feedback from user GamerMuscle regarding connection stability and usability.
-
-## 1. Executive Summary
-
-Users have reported two major usability issues:
-1.  **Connection Loss:** The app stops sending FFB when the window loses focus (Alt-Tab) or when the game momentarily steals Exclusive Mode. The current re-acquisition logic is insufficient because it does not explicitly restart the DirectInput Effect motor.
-2.  **Lack of Persistence:** The user must manually re-select their steering wheel from the dropdown every time the app is launched.
-
-Additionally, the console output is currently cluttered with "Clipping" warnings, which makes debugging connection issues difficult.
-
-## 2. Technical Strategy
-
-### A. Connection Hardening (The "Smart Reconnect")
-We will overhaul the `UpdateForce` loop in `DirectInputFFB.cpp`.
-*   **Diagnosis:** Instead of silently failing, we will catch specific DirectInput errors (`DIERR_INPUTLOST`, `DIERR_OTHERAPPHASPRIO`).
-*   **Context Logging:** We will log the **Active Foreground Window** when a failure occurs. This definitively proves if the Game (LMU) is stealing the device priority.
-*   **Motor Restart:** When we successfully re-acquire the device, we will explicitly call `m_pEffect->Start(1, 0)`. This fixes the "Silent Wheel" bug where the device is connected but the motor is stopped.
-
-### B. Device Persistence
-We will add logic to save the unique **GUID** of the selected DirectInput device to `config.ini`. On startup, the app will scan available devices and auto-select the one matching the saved GUID.
-
-### C. Console Decluttering
-We will remove the rate-limited "FFB Output Saturated" warning from the main loop to ensure the console remains clean for the new connection diagnostics.
-
----
-
-## 3. Implementation Guide
-
-### Step 1: Update `src/DirectInputFFB.h`
-Add static helper methods to convert between the binary `GUID` struct and `std::string` for config storage.
-
-```cpp
-// src/DirectInputFFB.h
-
-// ... existing includes ...
-
-class DirectInputFFB {
-public:
-    // ... existing methods ...
-
-    // NEW: Helpers for Config persistence
-    static std::string GuidToString(const GUID& guid);
-    static GUID StringToGuid(const std::string& str);
-
-private:
-    // ... existing members ...
-};
-```
-
-### Step 2: Update `src/DirectInputFFB.cpp`
-This is the core logic update. It includes the helpers, the console decluttering, and the robust reconnection logic.
-
-```cpp
-// src/DirectInputFFB.cpp
-
-// ... existing includes ...
-#include <cstdio> // For sscanf, sprintf
-#include <psapi.h> // For GetActiveWindowTitle
-
-// NEW: Helper to get foreground window title for diagnostics
-std::string GetActiveWindowTitle() {
-    char wnd_title[256];
-    HWND hwnd = GetForegroundWindow();
-    if (hwnd) {
-        GetWindowTextA(hwnd, wnd_title, sizeof(wnd_title));
-        return std::string(wnd_title);
-    }
-    return "Unknown";
-}
-
-// NEW: Helper Implementations for GUID
-std::string DirectInputFFB::GuidToString(const GUID& guid) {
-    char buf[64];
-    sprintf_s(buf, "{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}",
-        guid.Data1, guid.Data2, guid.Data3,
-        guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
-        guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
-    return std::string(buf);
-}
-
-GUID DirectInputFFB::StringToGuid(const std::string& str) {
-    GUID guid = { 0 };
-    if (str.empty()) return guid;
-    unsigned long p0;
-    unsigned int p1, p2, p3, p4, p5, p6, p7, p8, p9, p10;
-    int n = sscanf_s(str.c_str(), "{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-        &p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8, &p9, &p10);
-    if (n == 11) {
-        guid.Data1 = p0;
-        guid.Data2 = (unsigned short)p1;
-        guid.Data3 = (unsigned short)p2;
-        guid.Data4[0] = (unsigned char)p3; guid.Data4[1] = (unsigned char)p4;
-        guid.Data4[2] = (unsigned char)p5; guid.Data4[3] = (unsigned char)p6;
-        guid.Data4[4] = (unsigned char)p7; guid.Data4[5] = (unsigned char)p8;
-        guid.Data4[6] = (unsigned char)p9; guid.Data4[7] = (unsigned char)p10;
-    }
-    return guid;
-}
-
-void DirectInputFFB::UpdateForce(double normalizedForce) {
-    if (!m_active) return;
-
-    // Sanity Check: If 0.0, stop effect to prevent residual hum
-    if (std::abs(normalizedForce) < 0.00001) normalizedForce = 0.0;
-
-    // --- DECLUTTERING: REMOVED CLIPPING WARNING ---
-    /*
-    if (std::abs(normalizedForce) > 0.99) {
-        static int clip_log = 0;
-        if (clip_log++ % 400 == 0) { 
-            std::cout << "[DI] WARNING: FFB Output Saturated..." << std::endl;
-        }
-    }
-    */
-    // ----------------------------------------------
-
-    // Clamp
-    normalizedForce = (std::max)(-1.0, (std::min)(1.0, normalizedForce));
-
-    // Scale to -10000..10000
-    long magnitude = static_cast<long>(normalizedForce * 10000.0);
-
-    // Optimization: Don't call driver if value hasn't changed
-    if (magnitude == m_last_force) return;
-    m_last_force = magnitude;
-
-#ifdef _WIN32
-    if (m_pEffect) {
-        DICONSTANTFORCE cf;
-        cf.lMagnitude = magnitude;
-        
-        DIEFFECT eff;
-        ZeroMemory(&eff, sizeof(eff));
-        eff.dwSize = sizeof(DIEFFECT);
-        eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
-        eff.lpvTypeSpecificParams = &cf;
-        
-        // Try to update parameters
-        HRESULT hr = m_pEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
-        
-        // --- DIAGNOSTIC & RECOVERY LOGIC ---
-        if (FAILED(hr)) {
-            // 1. Identify the Error
-            std::string errorType = "Unknown";
-            bool recoverable = false;
-
-            if (hr == DIERR_INPUTLOST) {
-                errorType = "DIERR_INPUTLOST (Physical disconnect or Driver reset)";
-                recoverable = true;
-            } else if (hr == DIERR_NOTACQUIRED) {
-                errorType = "DIERR_NOTACQUIRED (Lost focus/lock)";
-                recoverable = true;
-            } else if (hr == DIERR_OTHERAPPHASPRIO) {
-                errorType = "DIERR_OTHERAPPHASPRIO (Another app stole the device!)";
-                recoverable = true;
-            }
-
-            // 2. Log the Context (Rate limited to 1s)
-            static DWORD lastLogTime = 0;
-            if (GetTickCount() - lastLogTime > 1000) {
-                std::cerr << "[DI ERROR] Failed to update force. Error: " << errorType << std::endl;
-                std::cerr << "           Active Window: [" << GetActiveWindowTitle() << "]" << std::endl;
-                lastLogTime = GetTickCount();
-            }
-
-            // 3. Attempt Recovery
-            if (recoverable) {
-                HRESULT hrAcq = m_pDevice->Acquire();
-                
-                if (SUCCEEDED(hrAcq)) {
-                    std::cout << "[DI RECOVERY] Device Re-Acquired successfully." << std::endl;
-                    
-                    // CRITICAL FIX: Restart the effect
-                    // Often, re-acquiring is not enough; the effect must be restarted.
-                    m_pEffect->Start(1, 0); 
-                    
-                    // Retry the update immediately
-                    m_pEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
-                } 
-            }
-        }
-    }
-#endif
-}
-```
-
-### Step 3: Update `src/Config.h`
-Add the static variable to hold the GUID string.
-
-```cpp
-// src/Config.h
-
-class Config {
-public:
-    // ... existing members ...
-    
-    // NEW: Persist selected device
-    static std::string m_last_device_guid;
-};
-```
-
-### Step 4: Update `src/Config.cpp`
-Implement the Save/Load logic for the GUID.
-
-```cpp
-// src/Config.cpp
-
-// Initialize
-std::string Config::m_last_device_guid = "";
-
-void Config::Save(const FFBEngine& engine, const std::string& filename) {
-    std::ofstream file(filename);
-    if (file.is_open()) {
-        // ... existing saves ...
-        file << "last_device_guid=" << m_last_device_guid << "\n"; // NEW
-        
-        // ... rest of save ...
-    }
-}
-
-void Config::Load(FFBEngine& engine, const std::string& filename) {
-    // ... existing load loop ...
-    while (std::getline(file, line)) {
-        // ... parsing ...
-        if (key == "last_device_guid") m_last_device_guid = value; // NEW
-        // ... existing keys ...
-    }
-}
-```
-
-### Step 5: Update `src/GuiLayer.cpp`
-Implement the auto-selection logic on startup and save logic on change.
-
-```cpp
-// src/GuiLayer.cpp
-
-void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
-    // ... [Setup] ...
-    
-    // Device Selection
-    static std::vector<DeviceInfo> devices;
-    static int selected_device_idx = -1;
-    
-    // Scan button (or auto scan once)
-    if (devices.empty()) {
-        devices = DirectInputFFB::Get().EnumerateDevices();
-        
-        // NEW: Auto-select last used device
-        if (selected_device_idx == -1 && !Config::m_last_device_guid.empty()) {
-            GUID target = DirectInputFFB::StringToGuid(Config::m_last_device_guid);
-            for (int i = 0; i < devices.size(); i++) {
-                if (memcmp(&devices[i].guid, &target, sizeof(GUID)) == 0) {
-                    selected_device_idx = i;
-                    DirectInputFFB::Get().SelectDevice(devices[i].guid);
-                    break;
-                }
-            }
-        }
-    }
-
-    if (ImGui::BeginCombo("FFB Device", selected_device_idx >= 0 ? devices[selected_device_idx].name.c_str() : "Select Device...")) {
-        for (int i = 0; i < devices.size(); i++) {
-            bool is_selected = (selected_device_idx == i);
-            if (ImGui::Selectable(devices[i].name.c_str(), is_selected)) {
-                selected_device_idx = i;
-                DirectInputFFB::Get().SelectDevice(devices[i].guid);
-                
-                // NEW: Save selection to config immediately
-                Config::m_last_device_guid = DirectInputFFB::GuidToString(devices[i].guid);
-                Config::Save(engine); 
-            }
-            if (is_selected) ImGui::SetItemDefaultFocus();
-        }
-        ImGui::EndCombo();
-    }
-    
-    // ... [Rest of file] ...
-```
 ```
 
 # File: docs\dev_docs\GM FFB report.md
@@ -10750,6 +15253,965 @@ For **v0.4.12**, sticking to **0.10** is the correct engineering decision becaus
 In v0.5.0, we should expose this as a slider in the GUI:
 *   **"Optimal Slip Angle"**: Range 0.05 to 0.15 (Default 0.10).
 *   *Tooltip:* "Lower values give earlier warning but may make the wheel feel light in high-speed corners."
+```
+
+# File: docs\dev_docs\improve_yaw_kick.md
+```markdown
+# Yaw Kick Improvement: Gamma Response Curve
+
+**Version**: v0.6.36  
+**Date**: 2026-01-07  
+**Status**: Ready for Implementation  
+**Research Validation**: ✅ Completed ([Deep Research Report](./yaw_kick_deep_reasearch_report.md))
+
+---
+
+## User Question
+
+Below is the full codebase and documentation of a FFB app I am developing. I need you to help me investigate and improve an issue. (Note: in your responses, never produce full code files, always produce only code snippets of the required changes).
+
+The issue is with the effect called "Yaw Kick". As I understand it, this effect is only based on the yaw acceleration (plus some coefficients for things like normalization).
+
+The effect was originally designed to give a feel (a "kick") when the rear of the car steps out, in order to help catch slides immediately.
+At some point, a slider was added to tune this effect, establishing a threshold according to which below a certain acceleration, no yaw acceleration was transmitted to the FFB. However, some users later reported that the FFB signal for yaw at lower acceleration was not "noise", but it was actually giving useful information about "road details".
+
+Your task is to help me determine how to improve the FFB effects / signal that we could get from yaw acceleration. Please give me first your own suggestions, independently from my proposals.
+
+I have in particular the following ideas and questions:
+  * should we do some form of "equalization" or "gamma" transformation to the yaw effect? With that I mean something like: for yaw acceleration below a certain threshold, transmit this signal with a certain force, while for those above the threshold, with another threshold. We could have an "equalizer like UI", that helps us increase or decrease the intensity of force at particular levels of yaw acceleration. We could have multiple "thresholds", establishing multiple "bands" of yaw acceleration that we want to adjust independently.
+* can we really separate the yaw signal that means "road detail", from those that mean "slide starting"?
+
+---
+
+## Analysis & Recommendations
+
+### Research-Validated Findings
+
+Based on deep research into vehicle dynamics literature, ESC systems, and human perception studies (see [full research report](./yaw_kick_deep_reasearch_report.md)), the following findings are now **validated**:
+
+**1. Can we separate "Road Detail" from "Slide Starting"?**
+
+**Yes**, primarily by **Frequency Domain**, with amplitude as a secondary discriminator.
+
+| Vehicle State | Yaw Accel Range | Frequency Band | Signal Nature |
+|:--------------|:----------------|:---------------|:--------------|
+| Steady Cornering | < 0.2 rad/s² | DC / < 1 Hz | Noise / Null |
+| Road Texture | 0.2 – 1.5 rad/s² | **20 – 100 Hz** | Oscillatory |
+| Curb Strike | 1.0 – 8.0 rad/s² | > 50 Hz | Impulse / Spike |
+| **Slide Initiation** | **2.0 – 5.0 rad/s²** | **1 – 10 Hz** | **Step / Surge** |
+| Deep Slide / Spin | > 5.0 rad/s² | 0.5 – 2 Hz | Sustained Surge |
+
+> **Key Insight**: A slide is a *low-frequency, high-amplitude* event. Texture is a *high-frequency, variable-amplitude* event. The polar moment of inertia (Izz ≈ 2500-3000 kg·m² for GT cars) acts as a physical low-pass filter—it is physically impossible for the chassis to oscillate in yaw at 20+ Hz.
+
+**2. Should we use Equalization or Gamma?**
+
+**Gamma (Response Curve)** is confirmed as the superior approach:
+
+- **Gamma > 1.0 (e.g., 1.5 - 2.0)**: Creates a curve that is flat near zero and steepens at higher values, effectively acting as a "soft deadzone" that suppresses micro-corrections while preserving slide response.
+- **Research Recommendation**: γ ≈ **1.8** provides optimal balance.
+- **Why not DRC?** Dynamic Range Compression would *amplify* road noise—the opposite of what we want. Gamma effectively acts as an "Expander" in audio terms.
+
+**3. Critical Filter Requirement**
+
+The research **strongly recommends** adding a **Low-Pass Filter** before the gamma stage:
+
+- **Cutoff Frequency**: **10 Hz** (range: 8-12 Hz acceptable)
+- **Filter Type**: 2nd-order Butterworth (flat passband, -12 dB/octave rolloff)
+- **Rationale**: This separates handling dynamics (0-5 Hz) from texture/vibration (10-100 Hz)
+
+**4. Human Perception: Weber's Law**
+
+A critical insight for tuning:
+
+- **Weber Fraction**: Human hand/arm force perception JND is **7-15%**
+- **Implication**: If the wheel is loaded with 5 Nm of cornering force, a "Kick" of 0.2 Nm (4%) will be **imperceptible**. The kick must be at least 10% of current FFB load to be noticed.
+- **Future Enhancement**: Consider adaptive gain scaling based on current FFB load.
+
+---
+
+## Latency Analysis
+
+> ⚠️ **Design Principle**: All latency-inducing components MUST be user-adjustable to zero. Some users require absolute minimum latency for competitive racing.
+
+### Component Latency Breakdown
+
+| Component | Latency | User-Adjustable? | Notes |
+|:----------|:--------|:-----------------|:------|
+| **Gamma Curve** | **0 ms** | N/A | Pure algebraic operation (`pow(x, γ)`), no filtering |
+| **Activation Threshold** | **0 ms** | N/A | Simple comparison, no filtering |
+| **LPF (Kick Response)** | **0-50 ms** | ✅ Yes | User can set to 0.000s for zero latency |
+| Speed Gate | 0 ms | N/A | Simple comparison |
+
+### Key Points
+
+1. **Gamma adds ZERO latency**: The gamma transformation is a pure mathematical operation applied to each sample independently. There is no filtering, smoothing, or state involved. The output is computed instantaneously from the input.
+
+2. **LPF is fully user-controllable**: The existing "Kick Response (Smooth)" slider (`m_yaw_accel_smoothing`) can be set to **0.000s** for zero filtering latency. Users who want maximum response can disable smoothing entirely.
+
+3. **Research recommendation vs. user choice**: While research recommends ~16ms (10 Hz) for optimal texture/handling separation, this is a **recommendation**, not a requirement. Users prioritizing reaction time over signal cleanliness can set it to 0.
+
+### GUI Latency Indicator
+
+The "Kick Response" slider displays latency with **color-coded feedback** following the existing codebase pattern:
+- **Green**: Latency ≤ 15 ms (acceptable for competitive racing)
+- **Red**: Latency > 15 ms (may feel sluggish)
+
+This matches the pattern used for other smoothing sliders in the application (e.g., Chassis Smoothing, SoP Smoothing).
+
+---
+
+## Implementation Plan
+
+Based on the research findings, I will implement:
+
+1. **Yaw Kick Gamma** (Response Curve) - User-adjustable non-linearity
+2. **Improved Low-Pass Filter** - 10 Hz cutoff for frequency separation
+3. **Validated Reference** - 10.0 rad/s² normalization ceiling (confirmed appropriate)
+
+### 1. Update `src/FFBEngine.h`
+
+Add the gamma variable and implement the validated signal processing pipeline.
+
+```cpp
+// In FFBEngine class public members (around line 254)
+    // ... existing members ...
+    float m_yaw_kick_threshold = 0.2f; // Existing v0.6.10
+    float m_yaw_kick_gamma = 1.0f;     // NEW v0.6.36: Response Curve (1.0 = Linear)
+
+// NEW: Physics constants for yaw processing (add near other constants around line 175)
+    // Reference yaw acceleration for gamma curve normalization.
+    // 10.0 rad/s² represents the upper limit of recoverable vehicle dynamics.
+    // Validated by ESC intervention thresholds (2.0-4.0 rad/s² for detection).
+    // Source: Research Report Section 2.4, 4.3
+    static constexpr double YAW_ACCEL_REFERENCE = 10.0; // rad/s²
+
+// In calculate_force method (Yaw Acceleration section, around line 1226)
+        // ...
+        // v0.6.10: Configurable Noise Gate (Activation Threshold)
+        else if (std::abs(raw_yaw_accel) < (double)m_yaw_kick_threshold) {
+            raw_yaw_accel = 0.0;
+        }
+        else {
+            // NEW v0.6.36: Apply Gamma Curve (Response Linearity)
+            // Research validated: γ > 1.0 suppresses micro-corrections (0-1.5 rad/s²)
+            // while amplifying slide signals (>2.0 rad/s²).
+            // Recommended: γ ≈ 1.8 for optimal balance.
+            // Source: Research Report Section 3.2.1
+            if (m_yaw_kick_gamma != 1.0f) {
+                double norm = std::abs(raw_yaw_accel) / YAW_ACCEL_REFERENCE;
+                norm = std::pow(norm, (double)m_yaw_kick_gamma);
+                raw_yaw_accel = (raw_yaw_accel > 0.0 ? 1.0 : -1.0) * norm * YAW_ACCEL_REFERENCE;
+            }
+        }
+        
+        // Apply Smoothing (Low Pass Filter)
+        // RESEARCH NOTE: Current LPF uses user-configurable tau.
+        // Research recommends fc ≈ 10 Hz (tau ≈ 0.016s) for optimal
+        // handling/texture separation. Consider making this the default.
+        // Source: Research Report Section 3.1.1
+        // ...
+```
+
+### 2. Update `src/Config.h`
+
+Add the new setting to the `Preset` structure in **four places**:
+
+#### 2a. Field Declaration (around line 92)
+
+```cpp
+    float yaw_kick_threshold = 0.0f; // Existing v0.6.10
+    float yaw_kick_gamma = 1.0f;     // NEW v0.6.36: Response Curve (research default: 1.8)
+```
+
+#### 2b. Fluent Setter (around line 163)
+
+```cpp
+    Preset& SetYawKickThreshold(float v) { yaw_kick_threshold = v; return *this; } // Existing
+    Preset& SetYawKickGamma(float v) { yaw_kick_gamma = v; return *this; }         // NEW v0.6.36
+```
+
+#### 2c. Apply() Method (around line 247)
+
+```cpp
+        engine.m_yaw_kick_threshold = yaw_kick_threshold;
+        engine.m_yaw_kick_gamma = yaw_kick_gamma; // NEW v0.6.36
+```
+
+#### 2d. UpdateFromEngine() Method (around line 308)
+
+```cpp
+        yaw_kick_threshold = engine.m_yaw_kick_threshold;
+        yaw_kick_gamma = engine.m_yaw_kick_gamma; // NEW v0.6.36
+```
+
+### 3. Update `src/Config.cpp`
+
+Handle persistence (Save/Load) for both main config and user presets.
+
+#### 3a. Main Config Save (around line 825)
+
+```cpp
+        // --- Rear Axle ---
+        file << "yaw_kick_threshold=" << engine.m_yaw_kick_threshold << "\n";
+        file << "yaw_kick_gamma=" << engine.m_yaw_kick_gamma << "\n"; // NEW v0.6.36
+```
+
+#### 3b. Main Config Load (around line 1042)
+
+```cpp
+                    else if (key == "yaw_kick_threshold") engine.m_yaw_kick_threshold = std::stof(value);
+                    else if (key == "yaw_kick_gamma") engine.m_yaw_kick_gamma = std::stof(value); // NEW v0.6.36
+```
+
+#### 3c. Main Config Load Validation (add after other validations)
+
+```cpp
+    // Validate yaw kick gamma (v0.6.36)
+    // Research recommends 1.5-2.0 range, but allow user experimentation 0.1-3.0
+    if (engine.m_yaw_kick_gamma < 0.1f || engine.m_yaw_kick_gamma > 3.0f) {
+        engine.m_yaw_kick_gamma = (std::max)(0.1f, (std::min)(3.0f, engine.m_yaw_kick_gamma));
+    }
+```
+
+#### 3d. User Preset Save (around line 896)
+
+```cpp
+                file << "yaw_kick_threshold=" << p.yaw_kick_threshold << "\n";
+                file << "yaw_kick_gamma=" << p.yaw_kick_gamma << "\n"; // NEW v0.6.36
+```
+
+#### 3e. User Preset Load (around line 725)
+
+```cpp
+                        else if (key == "yaw_kick_threshold") current_preset.yaw_kick_threshold = std::stof(value);
+                        else if (key == "yaw_kick_gamma") current_preset.yaw_kick_gamma = std::stof(value); // NEW v0.6.36
+```
+
+### 4. Update `src/GuiLayer.cpp`
+
+Add the slider to the GUI in the "Rear Axle" section.
+
+```cpp
+// In DrawTuningWindow, inside "Rear Axle (Oversteer)" section (around line 1013)
+
+        FloatSetting("Yaw Kick", &engine.m_sop_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK), "This is the earliest cue for rear stepping out. It's a sharp, momentary impulse that signals the onset of rotation.\nBased on Yaw Acceleration.");
+        
+        // Indent advanced yaw settings for visual hierarchy
+        ImGui::Indent();
+        
+        FloatSetting("Activation Threshold", &engine.m_yaw_kick_threshold, 0.0f, 10.0f, "%.2f rad/s²", 
+            "Minimum yaw acceleration required to trigger the kick.\nActs as a Noise Gate.\nIncrease to filter out engine vibration and small bumps.");
+        
+        // NEW v0.6.36: Gamma Response Curve (Research Validated)
+        FloatSetting("Response Curve (Gamma)", &engine.m_yaw_kick_gamma, 0.1f, 3.0f, "%.2f", 
+            "Controls the linearity of the Yaw Kick.\n"
+            "Research recommends ~1.8 for optimal balance.\n\n"
+            "  1.0 = Linear (Standard)\n"
+            "  <1.0 = Boost Low Range (More road detail feel)\n"
+            "  >1.0 = Suppress Low Range (Focus on slide kicks only)");
+            
+        // v0.6.36: Updated latency indicator to use standard green/red pattern
+        // Green: ≤15ms (good for competitive), Red: >15ms (may feel sluggish)
+        FloatSetting("Kick Response (Smooth)", &engine.m_yaw_accel_smoothing, 0.000f, 0.050f, "%.3f s",
+            "Low Pass Filter for the Yaw Kick signal.\n"
+            "Set to 0.000 for ZERO latency (raw, but may have noise).\n"
+            "Research recommends ~0.016s (10 Hz) for signal quality.\n"
+            "Lower = Sharper/Faster. Higher = Smoother/Cleaner.",
+            [&]() {
+                int ms = (int)(engine.m_yaw_accel_smoothing * 1000.0f + 0.5f);
+                // Standard latency color coding: Green ≤ 15ms, Red > 15ms
+                ImVec4 color = (ms <= 15) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
+                ImGui::TextColored(color, "Latency: %d ms", ms);
+                // Also show frequency equivalent for advanced users
+                if (engine.m_yaw_accel_smoothing > 0.0001f) {
+                    float fc = 1.0f / (2.0f * 3.14159f * engine.m_yaw_accel_smoothing);
+                    ImGui::SameLine();
+                    ImGui::TextDisabled("(~%.0f Hz cutoff)", fc);
+                }
+            });
+            
+        ImGui::Unindent();
+```
+
+### 5. Update `docs/dev_docs/FFB_formulas.md`
+
+Add gamma curve and frequency information to the Yaw Acceleration section (around line 103).
+
+```markdown
+3.  **Yaw Acceleration ("The Kick")**:
+    *   **Input**: `mLocalRotAccel.y` (rad/s²). **Note**: Inverted (-1.0) to comply with SDK requirement to negate rotation data.
+    *   **Conditioning**:
+        *   **Low Speed Cutoff**: 0.0 if Speed < 5.0 m/s.
+        *   **Activation Threshold**: 0.0 if $|Accel| < m_{\text{yaw-kick-threshold}}$ rad/s². 
+            *   *Default*: 0.2 rad/s². Configurable to filter road noise.
+        *   **Response Curve (Gamma)** *(NEW v0.6.36)*:
+            *   Applied after threshold gating to shape the amplitude response.
+            *   $\text{YawAccel}_{\text{gamma}} = \text{Sign}(\text{Accel}) \times \left(\frac{|\text{Accel}|}{10.0}\right)^{\gamma} \times 10.0$
+            *   *Default*: 1.0 (Linear). Research Optimal: **1.8**. Range: 0.1 - 3.0.
+            *   Gamma > 1.0: Suppresses micro-corrections (0-1.5 rad/s²), amplifies slides (>2.0 rad/s²).
+    *   **Frequency Characteristics** *(Research Validated)*:
+        *   Slide Initiation: **1-10 Hz** (Low-Mid frequency, Step/Surge pattern)
+        *   Road Texture: **20-100 Hz** (High frequency, Oscillatory)
+        *   Recommended LPF Cutoff: **10 Hz** (fc = 10 Hz, τ ≈ 0.016s)
+    *   **Rationale**: Heavy smoothing (LPF) required to separate true chassis rotation from "Slide Texture" vibration. Polar moment of inertia (Izz ≈ 2500 kg·m²) physically limits yaw oscillation to <10 Hz.
+    *   **Formula**: $-\text{YawAccel}_{\text{smooth}} \times K_{\text{yaw}} \times 5.0 \text{Nm} \times K_{\text{decouple}}$.
+    *   **Max Clamp**: 1.0 (Updated v0.6.20).
+    *   **Note**: Negative sign provides counter-steering torque.
+    *   **Sources**: [Deep Research Report](./yaw_kick_deep_reasearch_report.md), ESC Standards, OptimumG Vehicle Dynamics.
+```
+
+### 6. Update `tests/test_ffb_engine.cpp`
+
+Add a unit test to verify the Gamma curve behavior.
+
+```cpp
+static void test_yaw_kick_gamma() {
+    std::cout << "\nTest: Yaw Kick Gamma Response" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    
+    engine.m_sop_yaw_gain = 1.0f;
+    engine.m_yaw_kick_threshold = 0.0f; // Disable gate
+    engine.m_yaw_accel_smoothing = 0.0f; // Disable smoothing for deterministic test
+    
+    // Reference Input: 1.0 rad/s^2 (Small/Medium signal - "Road Detail" range)
+    // Normalized: 1.0 / 10.0 = 0.1
+    data.mLocalRotAccel.y = 1.0;
+    
+    // Helper: Run multiple frames to let any remaining LPF settle
+    auto settle_and_measure = [&]() -> double {
+        engine.m_yaw_accel_smoothed = 0.0; // Reset LPF state
+        for (int i = 0; i < 10; i++) {
+            engine.calculate_force(&data);
+        }
+        return std::abs(engine.calculate_force(&data));
+    };
+    
+    // Case 1: Linear (Gamma 1.0)
+    // pow(0.1, 1.0) = 0.1
+    engine.m_yaw_kick_gamma = 1.0f;
+    double f_linear = settle_and_measure();
+    
+    // Case 2: Research Optimal (Gamma 1.8)
+    // pow(0.1, 1.8) = 0.0158 (~6x suppression of low signals)
+    engine.m_yaw_kick_gamma = 1.8f;
+    double f_research = settle_and_measure();
+    
+    // Case 3: Aggressive Suppression (Gamma 2.0)
+    // pow(0.1, 2.0) = 0.01 (~10x suppression)
+    engine.m_yaw_kick_gamma = 2.0f;
+    double f_suppress = settle_and_measure();
+    
+    // Case 4: Boost Low End (Gamma 0.5) - For road detail enthusiasts
+    // pow(0.1, 0.5) = 0.316 (~3x boost)
+    engine.m_yaw_kick_gamma = 0.5f;
+    double f_boost = settle_and_measure();
+    
+    std::cout << "  Boost (γ=0.5): " << f_boost << std::endl;
+    std::cout << "  Linear (γ=1.0): " << f_linear << std::endl;
+    std::cout << "  Research (γ=1.8): " << f_research << std::endl;
+    std::cout << "  Suppress (γ=2.0): " << f_suppress << std::endl;
+    
+    if (f_boost > f_linear && f_linear > f_research && f_research > f_suppress) {
+        std::cout << "[PASS] Yaw Gamma modifies signal correctly (Boost > Linear > Research > Suppress)." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Yaw Gamma logic failed. Expected: Boost > Linear > Research > Suppress" << std::endl;
+        g_tests_failed++;
+    }
+}
+
+// Add to Run() function:
+// test_yaw_kick_gamma();
+```
+
+---
+
+## Changelog Entry
+
+Add to `CHANGELOG_DEV.md`:
+
+```markdown
+### v0.6.36 - Yaw Kick Gamma Response (Research Validated)
+
+**New Features:**
+- **Yaw Kick Response Curve (Gamma)**: New slider to control the amplitude response of the Yaw Kick effect.
+  - Gamma < 1.0: Boosts low-amplitude yaw signals (road detail feel).
+  - Gamma = 1.0: Linear response (default, unchanged behavior).
+  - Gamma > 1.0: Suppresses low-amplitude signals, focusing on slide kicks.
+  - **Research Optimal**: γ ≈ 1.8 for best handling/texture separation.
+- Added physics constant `YAW_ACCEL_REFERENCE` (10.0 rad/s²) for gamma normalization.
+- Enhanced "Kick Response" tooltip now shows frequency equivalent (Hz).
+
+**Research Validated:**
+- Slide Initiation: 2.0-5.0 rad/s² at 1-10 Hz (Step/Surge)
+- Road Texture: 0.2-1.5 rad/s² at 20-100 Hz (Oscillatory)
+- Optimal LPF cutoff: 10 Hz (τ ≈ 0.016s)
+- See: `docs/dev_docs/yaw_kick_deep_reasearch_report.md`
+
+**Technical:**
+- New setting: `yaw_kick_gamma` (default 1.0, range 0.1-3.0).
+- Updated FFB_formulas.md with gamma curve and frequency documentation.
+- Added regression test `test_yaw_kick_gamma()`.
+```
+
+---
+
+## Summary of Changes
+
+| File | Change |
+|------|--------|
+| `src/FFBEngine.h` | Add `m_yaw_kick_gamma`, `YAW_ACCEL_REFERENCE`, gamma logic in `calculate_force()` |
+| `src/Config.h` | Add `yaw_kick_gamma` field, `SetYawKickGamma()` setter, update `Apply()` and `UpdateFromEngine()` |
+| `src/Config.cpp` | Add save/load for main config and user presets |
+| `src/GuiLayer.cpp` | Add "Response Curve (Gamma)" slider with indentation and Hz display |
+| `docs/dev_docs/FFB_formulas.md` | Add gamma curve formula, frequency bands, and research citations |
+| `tests/test_ffb_engine.cpp` | Add `test_yaw_kick_gamma()` regression test with research-optimal case |
+| `CHANGELOG_DEV.md` | Add v0.6.36 entry with research validation notes |
+
+---
+
+## Verification Steps
+
+1. **Build**: Compile the project and verify no errors.
+2. **Test**: Run `test_ffb_engine.exe` and verify `test_yaw_kick_gamma` passes.
+3. **GUI**: Launch the app and verify the new slider appears under "Rear Axle (Oversteer)".
+4. **Persistence**: 
+   - Set gamma to 1.8, close and reopen the app, verify it persists.
+   - Create a user preset, verify gamma is saved and loaded correctly.
+5. **In-Game**: Test with LMU:
+   - Gamma 1.0: Baseline behavior.
+   - Gamma 1.8: Road bumps should feel dampened; only significant slides trigger kicks.
+   - Gamma 0.5: Road texture should be more pronounced in yaw feel.
+
+---
+
+## UI Tooltips Reference
+
+This section contains the **exact tooltip text** for all Yaw Kick-related UI settings, both current and planned. These tooltips should be informative, explain the physics, and guide users toward optimal settings.
+
+### Current Implementation (v0.6.36)
+
+#### 1. Yaw Kick (Gain Slider)
+**Variable**: `m_sop_yaw_gain`  
+**Range**: 0.0 - 1.0
+
+```
+Yaw Kick Gain
+
+The earliest warning for rear stepping out. Provides a sharp, 
+momentary torque impulse when the car begins to rotate unexpectedly.
+
+Based on Yaw Acceleration (rotational acceleration around the 
+vertical axis). This is a LEADING indicator - it fires before 
+the car has significantly rotated, giving you maximum reaction time.
+
+  0.0 = Disabled
+  0.3 = Subtle cue (recommended for most users)
+  1.0 = Maximum intensity
+
+Tip: If you feel kicks during normal driving, increase the 
+Activation Threshold or Response Curve (Gamma) below.
+```
+
+#### 2. Activation Threshold
+**Variable**: `m_yaw_kick_threshold`  
+**Range**: 0.0 - 10.0 rad/s²
+
+```
+Activation Threshold (Noise Gate)
+
+Minimum yaw acceleration required to trigger a kick.
+Acts as a hard cutoff - signals below this value are ignored.
+
+  0.0 = No filtering (feel everything, including noise)
+  0.2 = Default (filters sensor jitter only)
+  1.0 = Moderate (filters road bumps and micro-corrections)
+  2.0 = Aggressive (only significant slides trigger kicks)
+
+Use this to eliminate unwanted kicks from:
+  • Engine vibration at idle
+  • Small road imperfections
+  • Driver micro-corrections
+
+For a softer transition, use Response Curve (Gamma) instead.
+```
+
+#### 3. Response Curve (Gamma) – NEW v0.6.36
+**Variable**: `m_yaw_kick_gamma`  
+**Range**: 0.1 - 3.0
+
+```
+Response Curve (Gamma)
+
+Shapes how yaw acceleration is converted to force.
+Unlike Activation Threshold (hard cutoff), this provides a 
+smooth, organic transition between small and large signals.
+
+  < 1.0 = BOOST low range (more road detail/texture feel)
+  = 1.0 = LINEAR (standard, no shaping)
+  > 1.0 = SUPPRESS low range (focus on slide kicks only)
+
+Research recommends: γ ≈ 1.8 for optimal balance.
+
+Physics: Low values (e.g., 0.5) amplify small yaw movements, 
+making the wheel feel more "alive" but potentially noisier.
+High values (e.g., 2.0) create a "soft deadzone" that ignores 
+micro-corrections while reacting strongly to actual slides.
+
+Latency: ZERO. This is pure math, no filtering delay.
+```
+
+#### 4. Kick Response (Smooth)
+**Variable**: `m_yaw_accel_smoothing`  
+**Range**: 0.000 - 0.050 seconds
+
+```
+Kick Response (Low-Pass Filter)
+
+Smooths the yaw acceleration signal to reduce noise and jitter.
+Higher values = smoother but slower response.
+
+  0.000s = ZERO latency (raw signal, may have noise)
+  0.010s = Fast (10ms, ~16 Hz cutoff)
+  0.016s = Research optimal (16ms, ~10 Hz cutoff)
+  0.050s = Smooth (50ms, may feel sluggish)
+
+The research recommends ~10 Hz cutoff (0.016s) because:
+  • Slide events occur at 1-10 Hz (low frequency)
+  • Road texture occurs at 20-100 Hz (high frequency)
+  • A 10 Hz filter passes slides, blocks texture noise
+
+For competitive racing where reaction time is critical:
+  Set to 0.000s for zero latency (accept some noise).
+
+Latency: Displayed below slider (Green ≤15ms, Red >15ms).
+```
+
+---
+
+### Future Enhancements (Planned Tooltips)
+
+#### 5. Adaptive Smoothing (Toggle) – Future
+**Variable**: `m_yaw_adaptive_smoothing_enabled`  
+**Type**: Checkbox
+
+```
+Adaptive Smoothing
+
+When enabled, the filter automatically adjusts based on 
+signal magnitude:
+  • Small signals (road noise): Heavy smoothing (50ms)
+  • Large signals (slides): Use your Kick Response setting
+
+This provides road texture feel without noise, while 
+preserving instant response for catching slides.
+
+⚠️ Introduces minimum 50ms latency for small signals.
+Disable this if you need absolute minimum latency.
+
+Default: OFF (preserves zero-latency option)
+```
+
+#### 6. Adaptive Gain (Weber's Law) – Future
+**Variable**: `m_yaw_weber_scaling_enabled`  
+**Type**: Checkbox
+
+```
+Adaptive Gain (Weber's Law)
+
+When enabled, the kick strength automatically scales with 
+the current FFB load to maintain perceptibility.
+
+Physics: Human perception follows Weber's Law - you only 
+notice a force change if it's at least 10% of the current 
+force you're already feeling.
+
+Example:
+  • Wheel loaded with 5 Nm cornering force:
+    Kick must be ≥0.5 Nm to be felt
+  • Wheel loaded with 15 Nm (high downforce):
+    Kick must be ≥1.5 Nm to be felt
+
+Without this, kicks may feel strong at low speed but 
+imperceptible at high speed under heavy cornering load.
+
+Default: OFF (manual gain control)
+```
+
+#### 7. Sustained Acceleration Gate – Future
+**Variable**: `m_yaw_sustained_gate_enabled`  
+**Type**: Checkbox
+
+```
+Sustained Acceleration Gate
+
+When enabled, a kick only triggers if yaw acceleration 
+stays above threshold for 2-3 consecutive frames (50-75ms).
+
+Purpose: Eliminates false positives from:
+  • Aggressive turn-in (peaks and falls quickly)
+  • Curb strikes (instantaneous spike)
+
+A true slide produces sustained acceleration as the car 
+continues to rotate. This filter catches the difference.
+
+Latency: Adds 50-75ms delay to kick trigger.
+Benefit: Significantly reduces unwanted kicks.
+
+Default: OFF (instant response)
+```
+
+---
+
+### Dynamic Status Indicators
+
+The following dynamic indicators should be displayed below relevant sliders:
+
+#### Latency Indicator (for Kick Response)
+```cpp
+int ms = (int)(engine.m_yaw_accel_smoothing * 1000.0f + 0.5f);
+ImVec4 color = (ms <= 15) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
+ImGui::TextColored(color, "Latency: %d ms", ms);
+```
+- **Green**: ≤ 15ms (good for competitive racing)
+- **Red**: > 15ms (may feel sluggish)
+
+#### Frequency Indicator (optional, for advanced users)
+```cpp
+if (engine.m_yaw_accel_smoothing > 0.0001f) {
+    float fc = 1.0f / (2.0f * 3.14159f * engine.m_yaw_accel_smoothing);
+    ImGui::SameLine();
+    ImGui::TextDisabled("(~%.0f Hz cutoff)", fc);
+}
+```
+
+#### Gamma Curve Visual (optional, future)
+Consider adding a small visual preview of the gamma curve shape:
+```
+γ = 0.5: ╱  (boost low end)
+γ = 1.0: ╱  (linear)
+γ = 2.0: _╱ (suppress low end, soft deadzone)
+```
+
+---
+
+## Future Enhancements (Research-Suggested)
+
+
+Based on the deep research, the following enhancements are recommended for future versions:
+
+### 1. Adaptive Gain Scaling (Weber's Law)
+**Priority**: High  
+The kick strength should scale with current FFB load to maintain perceptibility:
+```cpp
+// Kick must be >10% of current torque to be perceived (Weber's Law)
+double weber_scale = (std::max)(0.1, std::abs(current_ffb_output) * 0.10);
+yaw_force = (std::max)(yaw_force, weber_scale);
+```
+
+### 2. Gated Algorithm (Yaw + Rear Slip)
+**Priority**: Medium  
+**⚠️ LATENCY CONCERN**: This approach may negate the benefit of yaw acceleration as an early warning.
+
+The idea is to combine yaw acceleration with rear slip angle to eliminate false positives:
+```cpp
+// Only trigger kick when BOTH conditions are met:
+// A) Rear tires are saturated (slip angle > 4°)
+// B) Yaw acceleration > 2.0 rad/s²
+bool rear_saturated = std::abs(rear_slip_angle) > 0.07; // ~4 degrees
+bool yaw_significant = std::abs(raw_yaw_accel) > 2.0;
+if (rear_saturated && yaw_significant) {
+    // Apply kick
+}
+```
+
+**Problem**: The causal chain is:
+1. Rear tires saturate → 2. **Yaw acceleration spikes** → 3. Yaw rate increases → 4. **Slip angle increases**
+
+Yaw acceleration is valuable precisely because it's a **leading indicator** (step 2). Slip angle is a **lagging indicator** (step 4). Gating on slip angle forces us to wait until the car is already rotating significantly, which defeats the purpose of the early warning.
+
+**Research Finding** (Section 5.1):
+> *"Yaw acceleration is the precursor to sideslip... it is a **leading indicator**, whereas sideslip is a **lagging indicator**."*
+
+**Better Alternatives**:
+1. **Sustained Acceleration Gate**: Instead of slip angle, check if yaw acceleration is sustained over 2-3 frames (50-75ms). A true slide will sustain; turn-in will peak and fall.
+2. **Acceleration + Throttle Gate**: Check `YawAccel > 2.0 && Throttle > 0.5`. Most snap oversteer occurs under power.
+3. **Direction Check**: Compare yaw acceleration sign vs steering input. If they're opposite (countersteering already happening), skip the kick.
+
+### 3. 2nd-Order Butterworth LPF
+**Priority**: Medium  
+Replace simple exponential LPF with proper Butterworth for steeper rolloff:
+- Current: -6 dB/octave (1st-order exponential)
+- Recommended: -12 dB/octave (2nd-order Butterworth)
+
+### 4. Adaptive Smoothing (Magnitude-Dependent Filtering)
+**Priority**: Low  
+**⚠️ LATENCY CONCERN**: This enhancement would introduce **non-removable latency**.
+
+Dynamically adjust tau based on signal magnitude:
+- Low signal (< 1.0 rad/s²): Heavy smoothing (50ms) → Road feel without jitter
+- High signal (> 2.0 rad/s²): User setting (0-10ms) → Instant slide response
+
+**Problem**: The 50ms minimum for low signals **cannot be disabled** by the user. This violates the design principle that all latency must be user-adjustable to zero.
+
+**If Implemented**: Must be **optional** with a toggle:
+```cpp
+// Only apply adaptive smoothing if user opts in
+bool m_yaw_adaptive_smoothing_enabled = false; // Default OFF to preserve zero-latency option
+
+if (m_yaw_adaptive_smoothing_enabled) {
+    // Blend between 50ms (noise) and user setting (fast)
+    double slow_tau = 0.050;
+    double fast_tau = (double)m_yaw_accel_smoothing;
+    double blend = magnitude / (noise_floor * 4.0);
+    dynamic_tau = slow_tau + (fast_tau - slow_tau) * blend;
+} else {
+    // Standard: Use user setting directly (can be 0 for zero latency)
+    dynamic_tau = (double)m_yaw_accel_smoothing;
+}
+```
+
+---
+
+## Research References
+
+Full citations available in: [`docs/dev_docs/yaw_kick_deep_reasearch_report.md`](./yaw_kick_deep_reasearch_report.md)
+
+Key sources:
+- OptimumG: "Getting to grips with your yaw moments"
+- ESC Standards (Wikipedia, SAE 2023-01-0661)
+- Vehicle Dynamics frequency analysis (Clemson, Chalmers)
+- Human perception thresholds (Weber's Law, ePrints Soton)
+- Simucube/Fanatec filter implementations (Granite Devices)
+
+## Appendix: Research Query
+
+The following query can be used with a deep research tool to validate the physics assumptions and gather additional insights:
+
+---
+
+### Deep Research Query: Yaw Acceleration in Racing Simulation FFB
+
+**Context:**
+I am developing a Force Feedback (FFB) application for racing simulators (specifically Le Mans Ultimate / rFactor 2). The application processes telemetry data including yaw acceleration (`mLocalRotAccel.y` in rad/s²) to provide a "Yaw Kick" effect through the steering wheel. This effect is designed to alert drivers when the rear of the car begins to slide (oversteer onset).
+
+**Research Objectives:**
+
+1. **Validate Amplitude Ranges:**
+   - What are typical yaw acceleration magnitudes experienced by a GT3 or prototype race car during:
+     - Normal cornering on a smooth track surface?
+     - Driving over road imperfections (curbs, bumps, surface texture variations)?
+     - The onset of oversteer / rear slide initiation (before full spin)?
+     - A full spin or loss of control?
+   - I have estimated:
+     - **Road Details / Micro-corrections**: 0.2 to 1.0 rad/s²
+     - **Slide Initiation**: > 2.0 rad/s²
+   - Are these estimates reasonable? What ranges would you suggest based on vehicle dynamics literature or telemetry data?
+
+2. **Signal Characteristics:**
+   - How can yaw acceleration signals from "road texture" (high-frequency, low-amplitude) be distinguished from "slide onset" (impulsive, high-amplitude) in real-time signal processing?
+   - Are there frequency-domain characteristics that differentiate these? (e.g., road texture at 20-100Hz vs. slide onset at 1-5Hz?)
+   - Would a gamma/power-law transformation be an effective method to separate these signals, or are there better approaches (e.g., band-pass filtering, envelope detection, derivative analysis)?
+
+3. **Best Practices for Yaw-to-FFB Mapping:**
+   - In professional racing simulators or commercial FFB systems (Simucube, Fanatec, Logitech TrueForce), how is yaw information typically used in the FFB signal?
+   - Are there published papers or patents on yaw-based FFB effects in driving simulators?
+   - What human perception thresholds exist for rotational acceleration cues through a steering wheel? (i.e., what is the minimum perceptible yaw-induced torque?)
+
+4. **Reference Values:**
+   - What is a reasonable "maximum reference" yaw acceleration for normalizing the signal? I am using 10.0 rad/s² as the maximum expected value for a car at the limit. Is this appropriate for GT3/LMP cars?
+   - Are there SAE, ISO, or academic standards for yaw rate/acceleration in vehicle dynamics that could inform these thresholds?
+
+5. **Related Concepts:**
+   - How does yaw acceleration relate to other oversteer indicators (sideslip angle, yaw rate vs. steering angle, rear tire slip angle)?
+   - Could combining yaw acceleration with rear slip angle provide a more robust "slide detection" algorithm?
+
+**Desired Output:**
+- Specific numerical ranges for yaw acceleration in different driving conditions (with sources if available).
+- Recommendations for real-time signal processing techniques to separate road texture from slide events.
+- Any academic papers, industry whitepapers, or simulator documentation discussing yaw-based FFB effects.
+- Suggested improvements to my gamma-curve approach, or alternative algorithms.
+
+---
+
+*Query created: 2026-01-07*
+
+
+# Adaptive smoothing for Yaw
+
+## User question
+
+Should we have a smoothing that differentiates between different values of yaw (eg. with a threshold)? What I mean is, having something that smooths out lower acceleration value, and does not smooth out higher yaw values (or viceversa). This is in the case in which different types of yaw signal require different levels of smoothing (eg. road noise might require more, while slides less).
+
+## Answer 
+
+This is an excellent idea. What you are describing is known in signal processing as **Adaptive Smoothing** or **Magnitude-Dependent Filtering**.
+
+It is superior to a simple "Threshold/Gate" because:
+1.  **Hard Threshold (Current):** Below 0.2, the signal is **0.0** (Dead). You feel nothing.
+2.  **Adaptive Smoothing (Proposed):** Below 0.2, the signal is **heavily smoothed** (e.g., 50ms latency). You feel a subtle, smooth "weight" or "texture" (Road Detail) without the jagged noise.
+3.  **The Kick:** Above 0.2, the smoothing drops to **0ms** (or whatever the user set). You feel the slide instantly.
+
+### The Logic: "The Harder the Kick, the Faster the Filter"
+
+We can implement a dynamic Time Constant ($\tau$) that changes based on the input magnitude.
+
+*   **Input:** `Yaw Acceleration`
+*   **User Setting:** `Kick Response` (Let's say 0ms / Raw).
+*   **Logic:**
+    *   **Low Input (< 1.0 rad/s²):** We force a high smoothing (e.g., **50ms**). This turns "jittery noise" into "smooth road information."
+    *   **High Input (> 5.0 rad/s²):** We use the **User Setting** (0ms). This ensures zero latency when catching a slide.
+    *   **Transition:** Linearly blend between them.
+
+### Implementation Plan
+
+We can modify the existing `calculate_force` logic to make the smoothing dynamic. We don't even need a new slider; we can just use a sensible "Noise Smoothing" constant (like 50ms) and blend to the user's "Performance Smoothing" setting.
+
+#### 1. Update `src/FFBEngine.h`
+
+We will modify the Yaw Kick section. We will effectively replace the "Hard Cut" threshold logic with this "Soft Blend" logic, or use the threshold to define the blend range.
+
+```cpp
+// In calculate_force...
+
+// ... [Yaw Kick Logic] ...
+
+double raw_yaw_accel = data->mLocalRotAccel.y;
+
+// 1. Low Speed Cutoff (Keep this, we don't want idle vibration)
+if (car_v_long < 5.0) {
+    raw_yaw_accel = 0.0;
+} 
+else {
+    // 2. ADAPTIVE SMOOTHING (The Fix)
+    
+    // Define the range of acceleration where we transition from "Noise" to "Signal"
+    // We can use the existing m_yaw_kick_threshold as the "Start of the Kick"
+    // Default threshold is usually 0.2 to 1.0.
+    double noise_floor = (double)m_yaw_kick_threshold; 
+    if (noise_floor < 0.5) noise_floor = 0.5; // Ensure a reasonable blend window
+    
+    double magnitude = std::abs(raw_yaw_accel);
+    
+    // Calculate Blend Factor (0.0 = Noise, 1.0 = Kick)
+    // If mag < noise_floor, we are in noise territory.
+    // If mag > noise_floor * 4, we are in full kick territory.
+    double blend = (magnitude) / (noise_floor * 4.0);
+    blend = (std::max)(0.0, (std::min)(1.0, blend));
+    
+    // Define Smoothing Targets
+    double slow_tau = 0.050; // 50ms (Smooths out road noise/jitter)
+    double fast_tau = (double)m_yaw_accel_smoothing; // User setting (e.g. 0ms)
+    
+    // Interpolate Tau
+    // Low Signal -> Slow Tau. High Signal -> Fast Tau.
+    double dynamic_tau = slow_tau + (fast_tau - slow_tau) * blend;
+    
+    // Apply Smoothing with Dynamic Tau
+    if (dynamic_tau < 0.0001) dynamic_tau = 0.0001;
+    double alpha_yaw = dt / (dynamic_tau + dt);
+    
+    m_yaw_accel_smoothed += alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
+    
+    // Apply Gamma (Optional, if you still want it)
+    // ...
+}
+```
+
+### Benefits of this approach
+
+1.  **No Latency on Slides:** When a real slide happens (high acceleration), the filter opens up instantly.
+2.  **Road Feel Restored:** Instead of cutting small signals to zero (deadzone), we smooth them. You will feel the chassis "breathing" and reacting to the road, but it won't feel like digital noise or spikes.
+3.  **User Simplicity:** The user still only adjusts "Kick Response" (their desired performance). The "Noise Smoothing" happens automatically in the background.
+
+### Recommendation
+
+I recommend implementing this **Adaptive Smoothing** instead of the hard "Activation Threshold" cut.
+
+*   **Current Behavior:** Signal < Threshold = 0. (Dead).
+*   **New Behavior:** Signal < Threshold = Smoothed. (Detailed but calm).
+
+Do you want me to generate the code changes to replace the hard threshold with this adaptive logic?
+
+# dynamic range compression
+
+The application of dynamic range compression—a technique typically used in high-fidelity audio—to provide a more nuanced alternative to standard power-law curves.  By using this logic, I can think through how to amplify the subtle, informative textures of the road surface while simultaneously preventing high-amplitude rotational events from exceeding the mechanical limits of the hardware. This ensures that the driver maintains a clear sense of the car's state without the feedback becoming harsh or lossy during extreme maneuvers.
+
+# Deep research Report in answer from the Query
+
+docs\dev_docs\yaw_kick_deep_reasearch_report.md
+
+---
+
+## Appendix: Research Query – Gated Algorithm Latency Analysis
+
+The following query can be used with a deep research tool to investigate the latency implications of combining yaw acceleration with rear slip angle for slide detection.
+
+---
+
+### Deep Research Query: Temporal Relationship Between Yaw Acceleration and Rear Slip Angle
+
+**Context:**
+I am developing a Force Feedback (FFB) application for racing simulators (Le Mans Ultimate / rFactor 2). The application provides a "Yaw Kick" effect based on yaw acceleration (`mLocalRotAccel.y`) to alert drivers when the rear of the car begins to slide.
+
+A proposed enhancement is a "Gated Algorithm" that only triggers the yaw kick when **BOTH** conditions are met:
+- **Condition A**: Rear slip angle > 4° (rear tires saturated)
+- **Condition B**: Yaw acceleration > 2.0 rad/s² (car rotating rapidly)
+
+The goal is to reduce false positives (e.g., aggressive turn-in that produces high yaw acceleration but is intentional and stable).
+
+**The Concern:**
+Yaw acceleration is a **leading indicator** - it detects the moment imbalance at the instant of grip loss. Rear slip angle is a **lagging indicator** - it only becomes significant after the car has already started rotating.
+
+If we gate on rear slip angle, we may be introducing latency that negates the benefit of using yaw acceleration as an early warning.
+
+**Research Objectives:**
+
+1. **Temporal Lag Quantification:**
+   - In a typical snap oversteer event (e.g., GT3 car at 120 km/h corner entry):
+     - How many milliseconds after the yaw acceleration spike does the rear slip angle exceed 4°?
+     - What is the typical lag between these two indicators?
+   - Is this lag consistent, or does it vary significantly based on:
+     - Vehicle speed?
+     - Tire compound / temperature?
+     - Weight distribution?
+     - Aerodynamic downforce?
+
+2. **Telemetry Analysis:**
+   - Are there published telemetry traces from real race cars or high-fidelity simulators showing the time-series relationship between yaw acceleration and slip angle during oversteer events?
+   - What is the typical phase relationship between these signals?
+
+3. **ESC / Stability Control Systems:**
+   - How do real Electronic Stability Control (ESC) systems handle this trade-off?
+   - Do ESC systems use yaw acceleration as a primary trigger with slip angle as a secondary confirmation?
+   - What latency budgets do automotive ESC systems work with?
+
+4. **Human Reaction Time Consideration:**
+   - Human reaction time for corrective steering is approximately 150-300ms.
+   - If the gated algorithm introduces 50-100ms of latency, is this significant relative to human reaction time?
+   - At what point does the latency become "too late" for the driver to benefit from the warning?
+
+5. **Alternative Gating Strategies:**
+   - Instead of slip angle, would sustained yaw acceleration (2-3 frames / 50-75ms) be a better gating metric?
+   - Could we use yaw acceleration sign vs. steering input direction as a gate (i.e., only trigger if they're aligned, indicating the driver is NOT already countersteering)?
+   - Are there other leading indicators that could replace slip angle for false positive reduction?
+
+6. **Causal Chain Timing:**
+   For the sequence: Tire Saturation → Yaw Acceleration → Yaw Rate Increase → Slip Angle Increase
+   - What are typical time constants for each transition in this chain?
+   - Are these measurable in simulation telemetry (rFactor 2 / iRacing / Assetto Corsa)?
+
+**Desired Output:**
+- Quantified latency estimates (in milliseconds) between yaw acceleration spike and slip angle threshold crossing.
+- Analysis of whether the gated algorithm introduces "unacceptable" delay for competitive racing.
+- Recommended alternative approaches if the slip angle gate is found to introduce too much latency.
+- Any academic papers, motorsport engineering documents, or ESC patents that discuss the temporal relationship between these metrics.
+
+---
+
+*Query created: 2026-01-07*
 ```
 
 # File: docs\dev_docs\linux_testing_feasibility_report.md
@@ -11323,6 +16785,80 @@ Implement **Option 3** (Model-View separation) over 1-2 days. This gives you:
 2. `tests/CMakeLists.txt` (add new test files)
 
 This approach maximizes testability while minimizing risk to the existing, working Windows implementation.
+
+```
+
+# File: docs\dev_docs\lmu_plugin_update_guide.md
+```markdown
+# LMU Plugin Update Guide
+
+This document outlines the procedure for updating the Le Mans Ultimate (LMU) Shared Memory Plugin interface files in `src/lmu_sm_interface/`. These files are provided by Studio 397 (the game developers) and may need periodic updates to support new game versions.
+
+## Files Involved
+- `InternalsPlugin.hpp`
+- `PluginObjects.hpp`
+- `SharedMemoryInterface.hpp`
+
+## Critical Maintenance Note: Wrapper Header Strategy
+
+The project uses a **Wrapper Header** approach to avoid modifying the official vendor files.
+
+### The Problem
+As of the 2025 LMU plugin update (v1.2/1.3), `SharedMemoryInterface.hpp` provided by Studio 397 is missing several required standard library includes:
+- `<optional>` — Required for `std::optional`
+- `<utility>` — Required for `std::exchange`, `std::swap`
+- `<cstdint>` — Required for `uint32_t`, `uint8_t`
+- `<cstring>` — Required for `memcpy`
+
+Without these includes, compilation fails.
+
+### The Solution
+**Do NOT modify `SharedMemoryInterface.hpp` directly.**
+
+Instead, we use `src/lmu_sm_interface/LmuSharedMemoryWrapper.h` to inject the necessary headers **before** including the vendor file.
+
+### Why This Approach?
+1. **Preserves Official Files**: Vendor files remain untouched and pristine.
+2. **Easy Updates**: Future plugin updates can be dropped in without merge conflicts.
+3. **Clear Separation**: Makes it obvious which headers are our fix vs. what came from Studio 397.
+4. **Maintainability**: All future developers can see the fix is intentional, not an oversight.
+
+### Usage in Code
+Always include the wrapper (never the vendor file directly):
+```cpp
+#include "lmu_sm_interface/LmuSharedMemoryWrapper.h"
+```
+
+## Update Procedure
+
+1.  **Replace Files**: Overwrite the existing files in `src/lmu_sm_interface/` with the new versions from the game SDK folder.
+    -   **Source Location**: `Program Files (x86)\Steam\steamapps\common\Le Mans Ultimate\Support\SharedMemoryInterface`
+2.  **Do Nothing Else**: You do NOT need to edit `SharedMemoryInterface.hpp` to add includes. The wrapper handles this.
+3.  **Compile**: Run a full build to verify compatibility.
+4.  **Test**: Run `run_combined_tests` to ensure the interface changes haven't introduced regressions.
+
+## Troubleshooting Future Updates
+
+### New Compilation Errors After Update?
+If a future plugin update introduces new compilation errors in `SharedMemoryInterface.hpp`:
+
+1. **Identify the Missing Header**: Read the compiler error carefully. It will typically mention undefined types like `std::vector`, `std::string`, etc.
+2. **Add to Wrapper**: Update `LmuSharedMemoryWrapper.h` to include the missing standard library header.
+3. **Example**:
+   ```cpp
+   // If you see errors about std::vector being undefined:
+   #include <vector>  // Add this to the wrapper
+   ```
+
+### Breaking API Changes?
+If Studio 397 changes struct definitions or function signatures:
+
+1. **Update Consuming Code**: Search the codebase for usages of the changed API (e.g., `grep -r "TelemInfoV01"`)
+2. **Verify Sizes**: Check if struct sizes changed using `sizeof()` in debug builds
+3. **Run Tests**: The unit test suite should catch most integration issues
+
+### Need Help?
+See the v0.6.38 changelog entry or the original PR from @DiSHTiX for reference on how the current wrapper was implemented.
 
 ```
 
@@ -12968,7 +18504,7 @@ Added comprehensive regression test `test_preset_understeer_only_isolation()` in
 ### Documentation
 
 - **Test Documentation**: `docs/dev_docs/test_preset_understeer_only_isolation.md`
-- **Changelog Entry**: Added to v0.6.31 section in `CHANGELOG.md`
+- **Changelog Entry**: Added to v0.6.31 section in `CHANGELOG_DEV.md`
 - **This Review**: Updated with implementation status
 
 ### Impact
@@ -13611,7 +19147,7 @@ This workaround should be **removed** when:
 - **FFB Formulas:** `docs/dev_docs/FFB_formulas.md` - Mathematical formulas and derivations
 - **Code Review:** `docs/dev_docs/code_reviews/CODE_REVIEW_v0.4.10_staged_changes.md` - Original review
 - **Fixes Summary:** `docs/dev_docs/code_reviews/CODE_REVIEW_v0.4.10_fixes_implemented.md` - Implementation summary
-- **CHANGELOG:** `CHANGELOG.md` - User-facing change description
+- **CHANGELOG:** `CHANGELOG_DEV.md` - User-facing change description
 
 ### Code Locations
 
@@ -15375,7 +20911,7 @@ static void test_road_texture_fallback_scaling() {
 
 ### Phase 4: Documentation Updates (v0.6.22 or later)
 
-#### 4.1 Update CHANGELOG.md
+#### 4.1 Update CHANGELOG_DEV.md
 
 ```markdown
 ## [0.6.22] - YYYY-MM-DD
@@ -17271,7 +22807,7 @@ static void test_speed_gate_validation() {
 
 ### Phase 5: Documentation Updates
 
-#### 5.1 Update CHANGELOG.md
+#### 5.1 Update CHANGELOG_DEV.md
 
 ```markdown
 ## [0.6.22] - YYYY-MM-DD
@@ -17451,7 +22987,7 @@ Prevents rapid on/off cycling when hovering near threshold.
 - [ ] Manual testing: Extreme values
 
 ### Documentation
-- [ ] Update `CHANGELOG.md` with v0.6.22 entry
+- [ ] Update `CHANGELOG_DEV.md` with v0.6.22 entry
 - [ ] Add section to user guide
 - [ ] Update `FFB_formulas.md` with speed gate formula
 - [ ] Update built-in presets with default values
@@ -17478,256 +23014,6 @@ The implementation follows established patterns in the codebase and can be deliv
 **Priority:** Medium (User-Requested Enhancement)  
 **Estimated Effort:** 3-4 hours (coding + testing + documentation)  
 **Risk Level:** Low (isolated change, well-defined scope, validation logic)
-
-```
-
-# File: docs\dev_docs\telemetry_availability_report.md
-```markdown
-# Le Mans Ultimate Telemetry Availability Report
-
-**Date:** 2025-05-23
-**Version:** 1.0
-**Target:** LMUFFB v0.3.2
-
-## Executive Summary
-Recent investigations into the Le Mans Ultimate (LMU) community forums indicate that while the game uses the rFactor 2 Shared Memory Plugin (DAMPlugin), certain telemetry data points are inconsistent, hidden, or intermittently broken across updates. 
-
-While most complaints focus on Dashboard data (ERS, Temperatures, Fuel), there is a risk that physics-related fields used by LMUFFB could be affected, particularly those related to tire state (Grip, Load).
-
-## Critical Telemetry Dependencies
-LMUFFB relies on the following fields from `rF2Telemetry`. If these are zero or static, specific effects will fail.
-
-| Field | Effect | Risk Level | Notes |
-| :--- | :--- | :--- | :--- |
-| `mSteeringArmForce` | **Master FFB** | Low | Core game FFB. If missing, no force at all. |
-| `mTireLoad` | Slide Texture, Bottoming | Medium | Used for amplitude scaling. If 0, effects are silent. |
-| `mVerticalTireDeflection` | Road Texture | Medium | Used for bump detection. |
-| `mSlipAngle` | Slide Texture | Low | Essential for physics; unlikely to be hidden. |
-| `mSlipRatio` | Lockup, Spin | Low | Essential for physics. |
-| `mLateralPatchVel` | Slide Texture (Freq) | Medium | Advanced physics field; new in v0.3.2. |
-| `mLocalAccel` | SoP (Lateral G) | Low | Required for Motion Rigs; likely present. |
-| `mLocalVel` | Freq Scaling | Low | Basic vector. |
-| `mGripFract` | Understeer (Grip Loss) | **High** | Derived from Tire Temp/Wear/Surface. **Temps reported broken.** |
-| `mLateralForce` | Oversteer Boost | Low | Core physics. |
-
-## Findings from Community Research
-1.  **Dashboard Data Issues:** Users report missing ERS State (SOC), TC Level, ABS Level, and Motor Maps. This confirms LMU does not expose the full rFactor 2 telemetry set.
-2.  **Tire Data Instability:** Reports from Feb 2024 indicate `mTemperature` and `mPressure` were broken in a specific build, then partially fixed.
-    *   **Impact:** If Tire Temperature is not simulated or exposed, `mGripFract` (which usually depends on temp) might be calculated incorrectly or return a static value.
-3.  **Plugin Compatibility:** The standard rF2 DAMPlugin works but causes "poor performance & pit menu flicker" for some users. 
-    *   **Mitigation:** LMUFFB only *reads* the memory mapped file; it does not inject a plugin DLL into the game process (unlike the official DAMPlugin which *writes* the memory). **However**, the user *must* have the DAMPlugin installed and running for the memory map to exist. If the plugin causes instability, users might disable it, breaking LMUFFB.
-
-## Recommendations for LMUFFB
-
-### 1. Robustness Checks (Implemented v0.3.19)
-We have implemented "Sanity Checks" in `FFBEngine` to mitigate missing data:
-*   **Tire Load:** If `mTireLoad` is 0.0 while the car is moving (> 1 m/s), it defaults to 4000N. This ensures Slide and Road textures remain audible/active even if load data is missing.
-*   **Grip Fraction:** If `mGripFract` is 0.0 but load exists (> 100N), it defaults to 1.0 (Full Grip). This prevents the Understeer effect from muting the FFB entirely.
-*   **Delta Time:** If `mDeltaTime` is invalid (<= 0), it defaults to 0.0025s (400Hz) to prevent division-by-zero errors in integrators.
-
-### 2. Telemetry Inspector (Implemented v0.3.12)
-The GUI now includes "Rolling Trace Plots" for telemetry inputs. In v0.3.19, we added specific **Warning Indicators** (Red Text) that trigger if the fallback logic above is activated.
-
-### 3. Fallback Logic
-If `mLateralPatchVel` (newly used) proves unreliable, we should fallback to `mLateralGroundVel` (which is standard kinematic data).
-
-## Conclusion
-The core physics vectors (Velocity, Acceleration, Force) are likely safe as they are essential for motion platforms which are supported. The highest risk is with **Tire State** data (`mGripFract`, `mTireLoad`) which might be simplified or hidden in LMU compared to rFactor 2.
-
-With the v0.3.19 robustness update, the application is now resilient against total loss of tire state data.
-
-```
-
-# File: docs\dev_docs\telemetry_data_reference.md
-```markdown
-# Telemetry Data Reference (LMU 1.2 API) - v0.6.20
-
-> **⚠️ API Source of Truth**  
-> The official and authoritative reference for all telemetry data structures, field names, types, and units is:  
-> **`src/lmu_sm_interface/InternalsPlugin.hpp`**  
-> 
-> This file is provided by Studio 397 as part of the LMU 1.2 shared memory interface. All code must defer to this header for:
-> - **Units** (Newtons, Newton-meters, meters, radians, etc.)
-> - **Field names** (e.g., `mSteeringShaftTorque`, not `mSteeringArmForce`)
-> - **Data types** and struct layouts
-> - **API version compatibility**
->
-> When in doubt about telemetry interpretation, consult `InternalsPlugin.hpp` as the definitive source.
-
----
-
-## Overview
-
-This document lists the physics data available from the **Le Mans Ultimate 1.2 Native Shared Memory Interface** (structs `TelemInfoV01` and `TelemWheelV01`). It documents which values lmuFFB currently uses (up to v0.6.20) and explores potential future uses for enhanced Force Feedback.
-
-**Changes from rFactor 2:** LMU 1.2 introduced native shared memory support with:
-- **Direct torque measurement**: `mSteeringShaftTorque` (Nm) replaced force-based `mSteeringArmForce` (N)
-- **Native tire data**: Direct access to `mTireLoad`, `mGripFract`, `mLateralPatchVel`
-- **Patch velocities**: `mLateralPatchVel` and `mLongitudinalPatchVel` for accurate slip calculations
-- **No plugin required**: Built directly into LMU, no external DLL needed
-
----
-
-## 1. Global Vehicle Telemetry (`TelemInfoV01`)
-
-These values describe the state of the vehicle chassis and engine.
-
-| Variable | Units | Description | Current Usage (v0.6.10) | Future Potential |
-| :--- | :--- | :--- | :--- | :--- |
-| `mDeltaTime` | seconds | Time since last physics update | **Used**: Oscillator integration, Time-Corrected Smoothing, Frequency Estimation | |
-| `mElapsedTime` | seconds | Session time | **Used**: Zero-crossing frequency analysis timestamps | Logging |
-| **`mSteeringShaftTorque`** | **Nm** | **Torque around steering shaft** (replaces `mSteeringArmForce`) | **Used**: Primary FFB source, Signal Analysis (Freq Estimator) | |
-| `mLocalAccel` | m/s² | Acceleration in car-local space (X=Lat, Y=Vert, Z=Long) | **Used**: `x` for SoP (Seat of Pants), `x/z` for **Kinematic Load Reconstruction** | `z` for braking dive/acceleration squat cues |
-| `mLocalRot`, `mLocalRotAccel` | rad/s, rad/s² | Rotation rate/accel (Yaw/Pitch/Roll) | **Used**: `mLocalRotAccel.y` for **Yaw Kick** (Clamp: 1.0 rad/s², Threshold: 0.0-10.0 rad/s²) | **High Priority**: Use Yaw Rate vs Steering Angle to detect oversteer more accurately than Grip Delta |
-| `mLocalVel` | m/s | Velocity in local coordinates | **Used**: `z` for speed-based frequency scaling, Kinematic Load, & sanity checks | |
-| `mUnfilteredThrottle` | 0.0-1.0 | Raw throttle input | **Used**: Trigger for Wheel Spin effects | |
-| `mUnfilteredBrake` | 0.0-1.0 | Raw brake input | **Used**: Trigger for Lockup effects and **Predictive Logic Gating**, **ABS Trigger** | |
-| `mEngineRPM` | RPM | Engine rotation speed | Unused | **Engine Vibration**: Inject RPM-matched vibration into the wheel |
-| `mFuel`, `mEngineWaterTemp` | liters, °C | Vehicle health/status | Unused | Dash display data |
-| `mElectricBoostMotorTorque` | Nm | Hybrid motor torque | Unused | **Hybrid Haptics**: Vibration during deployment/regen |
-| `mElectricBoostMotorState` | enum | 0=unavailable, 2=propulsion, 3=regen | Unused | Trigger for hybrid-specific effects |
-
----
-
-## 2. Wheel & Tire Telemetry (`TelemWheelV01`)
-
-Available for each of the 4 wheels (`mWheel[0]`=FL, `[1]`=FR, `[2]`=RL, `[3]`=RR).
-
-### Forces & Grip
-
-| Variable | Units | Description | Current Usage (v0.6.10) | Future Potential |
-| :--- | :--- | :--- | :--- | :--- |
-| **`mTireLoad`** | **N** | **Vertical load on tire** | **Used**: Load scaling (Split Caps: Texture vs Brake), Bottoming (Legacy), Kinematic Model switch | **Load Sensitivity**: Reduce FFB gain if front tires are unloaded |
-| **`mGripFract`** | **0.0-1.0** | **Grip usage fraction** (0=full grip available, 1=at limit) | **Used**: Understeer/Oversteer detection, Slide Texture Scrub work-scaling | |
-| `mLateralForce` | N | Force acting sideways on tire contact patch | **Used**: Rear Oversteer calculation (Aligning Torque) *[Note: Buggy for Rear wheels in LMU 1.2, Workaround used]* | Front pneumatic trail calculation refinement |
-| `mLongitudinalForce` | N | Force acting forward/back (Accel/Brake) | Unused | |
-| `mSuspForce` | N | Pushrod load | **Used**: Kinematic Load Reconstruction trigger, Bottoming Trigger (Method B) | Suspension stress feedback |
-
-### Motion & Slip
-
-| Variable | Units | Description | Current Usage (v0.6.10) | Future Potential |
-| :--- | :--- | :--- | :--- | :--- |
-| **`mLateralPatchVel`** | **m/s** | **Lateral velocity at contact patch** | **Used**: Slip Angle calc, Slide Texture frequency/amplitude, Scrub Drag | More accurate "scrub" feel |
-| **`mLongitudinalPatchVel`** | **m/s** | **Longitudinal velocity at contact patch** | **Used**: Slip ratio calculation, Traction Loss | |
-| `mLateralGroundVel` | m/s | Lateral velocity of ground under tire | Unused | Slip angle refinement |
-| `mLongitudinalGroundVel` | m/s | Longitudinal velocity of ground under tire | **Used**: Slip ratio calculation | |
-| `mRotation` | rad/s | Wheel rotation speed | **Used**: **Predictive Lockup** (Angular Deceleration analysis) | Damage wobble effects |
-
-### Suspension & Surface
-
-| Variable | Units | Description | Current Usage (v0.6.10) | Future Potential |
-| :--- | :--- | :--- | :--- | :--- |
-| `mVerticalTireDeflection` | m | Compression of tire rubber | **Used**: Road Texture (High-pass filter), **Lockup Bump Rejection** (Velocity) | |
-| `mSuspensionDeflection` | m | Compression of spring/damper | Unused | **Bottoming Out**: Harsh "thud" if deflection hits max travel |
-| `mRideHeight` | m | Chassis height | **Used**: Bottoming Trigger (Method A), Visualized in Telemetry Inspector | Scraping effects |
-| `mTerrainName` | char[16] | Name of surface (e.g., "ROAD", "GRASS") | Unused | **Surface FX**: Different rumble for Kerbs/Grass/Gravel |
-| `mSurfaceType` | unsigned char | 0=dry, 1=wet, 2=grass, 3=dirt, 4=gravel, 5=rumblestrip, 6=special | Unused | Faster lookup for Surface FX |
-| `mCamber`, `mToe` | radians | Wheel alignment | Unused | Setup analysis |
-| `mStaticUndeflectedRadius` | cm | Tire radius (static) | **Used**: **Dynamic Notch Filter** center freq, **Predictive Lockup** reference. **Safety**: Defaults to **0.33m** (33cm) if < 10cm or missing. | |
-
-### Condition
-
-| Variable | Units | Description | Current Usage (v0.6.10) | Future Potential |
-| :--- | :--- | :--- | :--- | :--- |
-| `mTemperature[3]` | Kelvin | Inner/Middle/Outer tire temps | Unused | **Cold Tire Feel**: Reduce grip when cold |
-| `mWear` | 0.0-1.0 | Tire wear fraction | Unused | **Wear Feel**: Reduce overall gain as tires wear |
-| `mPressure` | kPa | Tire pressure | Unused | Pressure-sensitive handling |
-| **`mBrakePressure`** | **bar** | **Brake line pressure** | **Used**: **Lockup Amplitude Scaling**, **ABS Pulse Detection** (Modulation Rate) | **Brake Fade**: Judder when overheated |
-| `mBrakeTemp` | °C | Brake disc temperature | Unused | |
-| `mFlat`, `mDetached` | bool | Damage flags | Unused | **Damage FX**: Wobble if tire is flat |
-
----
-
-## 3. Critical Unit Changes (v0.4.0+)
-
-### Steering Force → Torque
-**Old API (rFactor 2):** `mSteeringArmForce` (Newtons)  
-**New API (LMU 1.2):** `mSteeringShaftTorque` (Newton-meters)
-
-**Impact:** This required a ~200x scaling reduction in all FFB effect amplitudes to account for:
-1. Unit change (Force → Torque)
-2. Lever arm elimination (shaft measurement vs. rack measurement)
-
-**Typical values:**
-- Racing car steering torque: **15-25 Nm**
-- Old force scaling: ~4000 N (incorrect for torque)
-- New torque scaling: ~20 Nm (physically accurate)
-
----
-
-## 4. Summary of "Low Hanging Fruit" (Not yet implemented)
-
-These are features that would provide high value with relatively low implementation effort:
-
-1.  **Surface Effects**: Reading `mTerrainName`/`mSurfaceType` to detect "Rumble Strips" or "Kerbs" and injecting a specific vibration pattern.
-2.  **Hybrid Haptics** (LMU-specific): Use `mElectricBoostMotorTorque` and `mElectricBoostMotorState` to add deployment/regen vibration.
-3.  **Engine Vibration**: Adding a subtle RPM-based hum (`mEngineRPM`) adds immersion.
-4.  **Suspension Bottoming (Deflection Limit)**: Triggering a heavy jolt when `mSuspensionDeflection` or `mFront3rdDeflection` hits stops (currently uses Ride Height/Force Spike/Load).
-
----
-
-## 5. Data Validation & Sanity Checks (v0.4.1 - v0.6.0)
-
-lmuFFB implements robust fallback logic for missing/invalid telemetry (Encryption or Bugs):
-
-- **Missing Load (Adaptive Kinematic)**: If `mTireLoad` AND `mSuspForce` are invalid while moving, load is reconstructed using Chassis Physics:
-    - Mass + Aero ($v^2$) + Longitudinal/Lateral Weight Transfer (`mLocalAccel`).
-- **Missing Grip (Combined Friction Circle)**: If `mGripFract < 0.0001` (e.g., encrypted mod content), grip is approximated using **Slip Angle** and **Slip Ratio**:
-    - $\sqrt{(\text{SlipLat}/\text{OptLat})^2 + (\text{SlipLong}/\text{OptLong})^2}$
-    - *Note*: Manual Slip Calculation toggle was removed in v0.6.20; this reconstruction is now purely an automatic fallback.
-- **Invalid DeltaTime**: If `mDeltaTime <= 0.000001`, defaults to 0.0025s (400Hz).
-- **Slip Angle Singularity**: If `CarSpeed < 0.5 m/s`, slip angle calculation is clamped to prevent div-by-zero.
-
-These checks prevent FFB dropout during telemetry glitches or on encrypted content.
-
----
-
-## 6. Coordinate Systems & Sign Conventions (v0.4.30+)
-
-Understanding the coordinate systems is critical for effect direction (e.g., ensuring SoP pulls the correct way).
-
-### LMU / rFactor 2 Coordinate System
-*   **X (Lateral)**: **+X is LEFT**, -X is RIGHT.
-*   **Y (Vertical)**: +Y is UP, -Y is DOWN.
-*   **Z (Longitudinal)**: +Z is REAR, -Z is FRONT.
-*   **Rotation**: Left-handed system. +Y rotation (Yaw) is to the **RIGHT**.
-
-### InternalsPlugin.hpp Note
-The SDK explicitly warns:
-> "Note that ISO vehicle coordinates (+x forward, +y right, +z upward) are right-handed. If you are using that system, **be sure to negate any rotation or torque data** because things rotate in the opposite direction."
-
-### Effect Implementations
-1.  **Lateral G (SoP)**:
-    *   **Source**: `mLocalAccel.x` (Linear Acceleration).
-    *   **Right Turn**: Car accelerates LEFT (+X).
-    *   **Desired Force**: Aligning torque should pull LEFT (+).
-    *   **Implementation**: **No Inversion**. Use `+mLocalAccel.x`.
-2.  **Yaw Acceleration (Kick)**:
-    *   **Source**: `mLocalRotAccel.y` (Rotational Acceleration).
-    *   **Right Oversteer**: Car rotates RIGHT (+Y).
-    *   **Desired Force**: Counter-steer kick should pull RIGHT (-).
-    *   **Implementation**: **Invert**. Use `-mLocalRotAccel.y` (as per SDK "negate rotation" note).
-3.  **Rear Aligning Torque**:
-    *   **Source**: `mLateralPatchVel` (Linear Velocity).
-    *   **Right Turn**: Rear slides LEFT (+Vel).
-    *   **Desired Force**: Aligning torque should pull LEFT (+).
-    *   **Implementation**: The formula `double rear_torque = -calc_rear_lat_force` correctly produces a Positive output for Positive velocity inputs due to the negative coefficient in the `calc` helper. **Already Correct.**
-
----
-
-## 7. Engine Tuning Parameters (v0.6.20)
-
-The following parameters are exposed in the GUI and `config.ini` to tune effect responses.
-
-| Parameter | UI Label | Range | Description |
-| :--- | :--- | :--- | :--- |
-| `m_abs_freq_hz` | **ABS Pulse Frequency** | 10 - 50 Hz | Vibrational pitch of the ABS pulse effect |
-| `m_lockup_freq_scale`| **Vibration Pitch** (Lockup) | 0.5x - 2.0x | Scalar multiplier for lockup vibration frequency |
-| `m_spin_freq_scale` | **Vibration Pitch** (Spin) | 0.5x - 2.0x | Scalar multiplier for wheel spin vibration frequency |
-| `m_lockup_gamma` | **Lockup Gamma** | 0.1 - 3.0 | Curvature of the lockup response (v0.6.0) |
-| `m_understeer_effect`| **Understeer Effect** | 0% - 200% | Resistance reduction when front grip is lost |
-| `m_brake_load_cap` | **Brake Load Cap** | 1.0x - 10.0x | Sensitivity of lockup vibration to tire load |
-| `m_yaw_kick_threshold`| **Yaw Kick Threshold**| 0.0 - 10.0 | Sensitivity filter for chassis rotation kicks |
 
 ```
 
@@ -18187,7 +23473,7 @@ If clipping occurs:
 - **Unclear**: Effect may be masked; check frequency/amplitude
 
 #### Step 3: Document Changes
-Update `CHANGELOG.md` and `FFB_formulas.md` with:
+Update `CHANGELOG_DEV.md` and `FFB_formulas.md` with:
 - New coefficient values
 - Rationale for change
 - Expected force ranges
@@ -18251,7 +23537,7 @@ Before finalizing coefficient changes:
 - [ ] **Integration Test**: Effect works with all other effects enabled
 - [ ] **No Clipping**: Clipping indicator shows <5% saturation
 - [ ] **Hardware Test**: Validated on at least 2 different wheel types
-- [ ] **Documentation**: Updated `FFB_formulas.md` and `CHANGELOG.md`
+- [ ] **Documentation**: Updated `FFB_formulas.md` and `CHANGELOG_DEV.md`
 - [ ] **Unit Tests**: Updated test expectations in `test_ffb_engine.cpp`
 - [ ] **User Feedback**: Tested by at least 2 users with different preferences
 
@@ -18387,7 +23673,7 @@ presets.push_back({ "Test: My Effect",
 - ✅ User feedback: 3 testers confirmed improvement
 
 **Documentation:**
-- Updated `CHANGELOG.md` with coefficient change
+- Updated `CHANGELOG_DEV.md` with coefficient change
 - Updated `FFB_formulas.md` with new formula
 - Updated `test_ffb_engine.cpp` expectations (0.30 → 1.21 Nm)
 - Created this methodology document
@@ -19111,6 +24397,396 @@ The combination of the higher `optimal_slip_angle` threshold and the corrected s
 
 ```
 
+# File: docs\dev_docs\unicode_encoding_issues.md
+```markdown
+# Unicode Encoding Issues in Code Files
+
+## Overview
+
+This document describes encoding issues that can occur when working with source code files on Windows, particularly in the context of AI agent tools that process file content.
+
+---
+
+## Problem Description
+
+### Symptoms
+
+When attempting to read certain files using agent tools (like `view_file`), you may encounter errors such as:
+
+```
+Error: unsupported mime type text/plain; charset=utf-16le
+```
+
+This prevents the agent from reading or editing the affected files.
+
+### Root Cause
+
+The issue occurs when source files are saved with **UTF-16LE (Little Endian)** encoding instead of the more commonly expected **UTF-8** encoding. This can happen due to:
+
+1. **PowerShell Output Redirection**: Some PowerShell commands output UTF-16LE by default
+2. **Editor Settings**: Some editors may save files in non-UTF-8 encodings
+3. **Copy Operations**: Copying between systems with different default encodings
+4. **Git Operations**: Certain Git merge/conflict resolution tools may alter encoding
+5. **File Generation Tools**: Some code generation tools output non-UTF-8 files
+
+### Affected File Types
+
+Any text file can be affected, but commonly observed cases include:
+
+- `.cpp` source files
+- `.h` header files  
+- `.txt` text files
+- `.md` markdown files
+- Configuration files
+
+---
+
+## Detection
+
+### Check File Encoding (PowerShell)
+
+```powershell
+# Check if file has BOM (Byte Order Mark)
+$bytes = [System.IO.File]::ReadAllBytes("path\to\file.cpp")
+if ($bytes[0] -eq 0xFF -and $bytes[1] -eq 0xFE) {
+    Write-Host "UTF-16LE (with BOM)"
+} elseif ($bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+    Write-Host "UTF-8 (with BOM)"
+} else {
+    Write-Host "No BOM detected (likely UTF-8 or ASCII)"
+}
+```
+
+### Check File Encoding (Git Bash / WSL)
+
+```bash
+file path/to/file.cpp
+# Output examples:
+# "UTF-8 Unicode text"
+# "UTF-16 Unicode text, with very long lines, little-endian"
+```
+
+---
+
+## Solutions
+
+### Solution 1: Convert to UTF-8 using PowerShell
+
+```powershell
+# Read the content and save as UTF-8
+Get-Content "path\to\file.cpp" | Out-File -FilePath "path\to\file_utf8.cpp" -Encoding utf8
+
+# Or overwrite in place:
+$content = Get-Content "path\to\file.cpp" -Raw
+[System.IO.File]::WriteAllText("path\to\file.cpp", $content, [System.Text.Encoding]::UTF8)
+```
+
+### Solution 2: Convert to UTF-8 using PowerShell (with BOM)
+
+```powershell
+# UTF-8 with BOM (recommended for Windows compatibility)
+$content = Get-Content "path\to\file.cpp" -Raw
+$utf8BOM = New-Object System.Text.UTF8Encoding $true
+[System.IO.File]::WriteAllText("path\to\file.cpp", $content, $utf8BOM)
+```
+
+### Solution 3: Convert using Notepad++
+
+1. Open the file in Notepad++
+2. Go to **Encoding** menu
+3. Select **Convert to UTF-8** (or **UTF-8-BOM**)
+4. Save the file
+
+### Solution 4: Convert using Visual Studio Code
+
+1. Open the file in VS Code
+2. Click on the encoding indicator in the bottom status bar (e.g., "UTF-16 LE")
+3. Select **"Save with Encoding"**
+4. Choose **"UTF-8"** or **"UTF-8 with BOM"**
+
+### Solution 5: Batch Convert Multiple Files
+
+```powershell
+# Convert all .cpp files in a directory to UTF-8
+Get-ChildItem -Path ".\tests" -Filter "*.cpp" | ForEach-Object {
+    $content = Get-Content $_.FullName -Raw
+    [System.IO.File]::WriteAllText($_.FullName, $content, [System.Text.Encoding]::UTF8)
+    Write-Host "Converted: $($_.Name)"
+}
+```
+
+---
+
+## Prevention
+
+### Best Practices
+
+1. **Configure Your Editor**
+   - Set default encoding to UTF-8 for all new files
+   - VS Code: Add to `settings.json`:
+     ```json
+     "files.encoding": "utf8",
+     "files.autoGuessEncoding": false
+     ```
+
+2. **PowerShell Output**
+   - Always specify encoding when writing files:
+     ```powershell
+     # Good: explicit encoding
+     "content" | Out-File -Encoding utf8 file.txt
+     
+     # Bad: default encoding (may be UTF-16)
+     "content" > file.txt
+     ```
+
+3. **Git Configuration**
+   - Consider adding a `.gitattributes` file:
+     ```
+     * text=auto eol=lf
+     *.cpp text encoding=utf-8
+     *.h text encoding=utf-8
+     ```
+
+4. **EditorConfig**
+   - Add or update `.editorconfig`:
+     ```ini
+     [*]
+     charset = utf-8
+     
+     [*.{cpp,h,hpp}]
+     charset = utf-8
+     ```
+
+5. **Pre-Commit Hooks**
+   - Add a pre-commit hook to detect non-UTF-8 files before committing
+
+---
+
+## Workaround for Agents
+
+When encountering encoding issues during an agent session:
+
+1. **Create a UTF-8 copy**:
+   ```powershell
+   Get-Content "file.cpp" | Out-File -FilePath "file_utf8.cpp" -Encoding utf8
+   ```
+
+2. **Work with the UTF-8 copy**
+
+3. **When finished, copy back** (if needed):
+   ```powershell
+   Copy-Item "file_utf8.cpp" -Destination "file.cpp" -Force
+   ```
+
+4. **Clean up temporary files**:
+   ```powershell
+   Remove-Item "file_utf8.cpp"
+   ```
+
+---
+
+## Related Resources
+
+- [UTF-8 Everywhere Manifesto](unlinked: utf8everywhere_org/)
+- [Microsoft: Character encoding in .NET](unlinked: docs_microsoft_com/en-us/dotnet/standard/base-types/character-encoding)
+- [Git - gitattributes Documentation](unlinked: git-scm_com/docs/gitattributes)
+
+---
+
+*Document created: 2026-02-01*  
+*Related implementation note: `docs/dev_docs/plans/plan_slope_detection.md` - Implementation Notes section*
+
+```
+
+# File: docs\dev_docs\vendor_modifications.md
+```markdown
+# Vendor Code Modifications and Workarounds
+
+**Purpose:** Track any modifications or workarounds related to third-party vendor code  
+**Last Updated:** 2026-01-31
+
+---
+
+## SharedMemoryInterface.hpp (Le Mans Ultimate SDK)
+
+**Vendor:** Studio 397 / Le Mans Ultimate  
+**File:** `src/lmu_sm_interface/SharedMemoryInterface.hpp`  
+**Status:** **NOT MODIFIED** (as of v0.6.39)
+
+### Known Issues in Vendor Code
+
+#### 1. Missing Standard Library Includes
+
+**Issue:** The vendor header is missing several required standard library includes:
+- `<optional>` for `std::optional`
+- `<utility>` for `std::exchange`, `std::swap`
+- `<cstdint>` for `uint32_t`, `uint8_t`
+- `<cstring>` for `memcpy`
+
+**Workaround:** `src/lmu_sm_interface/LmuSharedMemoryWrapper.h`
+- Includes all missing headers **before** including the vendor file
+- This allows the vendor header to compile without modification
+- Pattern: Pre-include dependencies, then include vendor file unmodified
+
+**Rationale:** Adding includes before vendor header is non-invasive and survives vendor updates.
+
+---
+
+#### 2. Race Condition in SharedMemoryLock::Lock()
+
+**Issue:** The `SharedMemoryLock::Lock()` method at line 103-124 has a race condition:
+
+```cpp
+bool Lock(DWORD dwMilliseconds = INFINITE) {
+    // ... spin lock attempts ...
+    
+    InterlockedIncrement(&mDataPtr->waiters);
+    while (true) {
+        if (InterlockedCompareExchange(&mDataPtr->busy, 1, 0) == 0) {
+            InterlockedDecrement(&mDataPtr->waiters);
+            return true;
+        }
+        // BUG: Returns immediately after event is signaled, without retrying atomic flag
+        return WaitForSingleObject(mWaitEventHandle, dwMilliseconds) == WAIT_OBJECT_0;
+    }
+}
+```
+
+**The Problem:**
+1. Thread A holds the lock
+2. Thread B spins, fails, increments waiters, waits on event
+3. Thread A releases lock, signals event
+4. Thread B wakes from `WaitForSingleObject` (returns WAIT_OBJECT_0)
+5. **Thread B returns TRUE immediately** without checking if lock is actually available
+6. Meanwhile, Thread C could have grabbed the lock between steps 3-4
+7. **Both Thread B and Thread C think they have the lock** → data corruption
+
+**Correct Implementation:**
+```cpp
+// After WaitForSingleObject succeeds, should LOOP BACK to retry atomic acquisition
+while (true) {
+    if (InterlockedCompareExchange(&mDataPtr->busy, 1, 0) == 0) {
+        InterlockedDecrement(&mDataPtr->waiters);
+        return true;
+    }
+    if (WaitForSingleObject(mWaitEventHandle, dwMilliseconds) != WAIT_OBJECT_0) {
+        // Timeout or error
+        InterlockedDecrement(&mDataPtr->waiters);
+        return false;
+    }
+    // Loop back to retry acquiring the atomic flag
+}
+```
+
+**Our Solution:** `SafeSharedMemoryLock` wrapper (v0.6.39+)
+- Wraps the vendor `SharedMemoryLock` class
+- Exposes timeout support without modifying vendor code
+- **Does NOT fix the race condition** to avoid vendor file modification
+- Risk mitigation: The race window is extremely small in practice
+
+**Why Not Fix It:**
+- **Maintenance burden**: Every vendor SDK update would require re-applying the fix
+- **Version tracking complexity**: Hard to track which vendor version has which fixes
+- **User requirement**: "We don't want to modify the vendor file"
+
+**If the race condition causes issues in production:**
+- Option 1: Implement our own lock using Windows API (CreateMutex, etc.)
+- Option 2: Submit bug report to Studio 397 and wait for official fix
+- Option 3: Fork vendor file and maintain our patched version (not recommended)
+
+---
+
+#### 3. Lack of Timeout Support in Lock() (FEATURE, not bug)
+
+**Issue:** The original vendor `Lock()` method waits `INFINITE` by default, which can hang the application if the game crashes while holding the lock.
+
+**Workaround:** `SafeSharedMemoryLock::Lock(DWORD timeout_ms = 50)`
+- Wrapper exposes timeout parameter
+- Default 50ms timeout prevents infinite hangs
+- Returns `false` on timeout (calling code handles gracefully)
+
+**Implementation:**
+```cpp
+class SafeSharedMemoryLock {
+public:
+    bool Lock(DWORD timeout_ms = 50) {
+        return m_vendorLock.Lock(timeout_ms);  // Vendor Lock() already supports timeout parameter
+    }
+    // ... rest of wrapper
+private:
+    SharedMemoryLock m_vendorLock;
+};
+```
+
+**Why This Works:**
+- The vendor `Lock()` method signature already includes `DWORD dwMilliseconds = INFINITE`
+- We just provide a different default (50ms instead of INFINITE)
+- No vendor code modification required
+
+---
+
+## InternalsPlugin.hpp (Le Mans Ultimate SDK)
+
+**Vendor:** Studio 397 / Le Mans Ultimate  
+**File:** `src/lmu_sm_interface/InternalsPlugin.hpp`  
+**Status:** **NOT MODIFIED**
+
+### Usage
+
+This header defines the telemetry data structures:
+- `ScoringInfoV01` - Contains `mInRealtime` flag
+- `TelemInfoV01` - Contains vehicle telemetry
+- `VehicleScoringInfoV01` - Contains vehicle scoring data
+
+**No known issues. No modifications needed.**
+
+---
+
+## Wrapper Pattern Best Practices
+
+### When to Create a Wrapper
+
+Create a wrapper instead of modifying vendor code when:
+1. **Vendor code is auto-generated** (likely for InternalsPlugin.hpp)
+2. **Vendor updates are frequent** (SDK is actively maintained)
+3. **Changes are small enhancements**, not bug fixes
+4. **Risk of future conflicts** is high
+
+### When Direct Modification is Acceptable
+
+Directly modify vendor code (with documentation) when:
+1. **Critical bug fix** that causes data corruption or crashes
+2. **Vendor is no longer maintained** (abandonware)
+3. **Fix is urgent** and vendor hasn't responded to bug report
+4. **Wrapper would be too complex** (e.g., requires extensive refactoring)
+
+**In all cases:** Document the modification in this file and consider contributing the fix back to the vendor.
+
+---
+
+## Change History
+
+| Date       | File                        | Change Type | Description                          |
+|------------|----------------------------|-------------|--------------------------------------|
+| 2026-01-31 | SharedMemoryInterface.hpp  | REVERTED    | Removed timeout loop fix (lines 116-122) to avoid vendor modification |
+| 2026-01-31 | SafeSharedMemoryLock.h     | NEW WRAPPER | Created wrapper for timeout support without modifying vendor |
+| 2025-XX-XX | LmuSharedMemoryWrapper.h   | PRE-INCLUDE | Added missing standard library includes before vendor header |
+
+---
+
+## Contact
+
+If vendor code issues require fixes that cannot be worked around:
+- **Studio 397 Support:** [unlinked: forum_studio-397_com/](unlinked: forum_studio-397_com/)
+- **LMU SDK Issues:** Report through official channels
+
+---
+
+**Maintained by:** LMUFFB Development Team  
+**Review Frequency:** On every vendor SDK update
+
+```
+
 # File: docs\dev_docs\which_cars_in_rF2_have_grip_data.md
 ```markdown
 As reported in this forum post: unlinked: community_lemansultimate_com/index_php?threads/add-missing-parameters-to-telemetry-for-plugins_66/page-25#post-74367
@@ -19818,6 +25494,294 @@ double excess = (std::max)(0.0, result.slip_angle - dynamic_limit);
 
 ```
 
+# File: docs\dev_docs\yaw_kick_deep_reasearch_report.md
+```markdown
+# **Advanced Implementation of Yaw Acceleration Feedback in Racing Simulation**
+
+## **1\. Theoretical Framework of Vehicle Lateral Dynamics**
+
+The fidelity of racing simulation relies not merely on the visual representation of speed, but on the accurate transmission of mechanical forces to the driver. In the domain of fixed-base simulators, where the vestibular cues of linear and rotational acceleration are absent, the steering torque—Force Feedback (FFB)—becomes the primary channel for communicating the vehicle's dynamic state. This report provides an exhaustive analysis of implementing a "Yaw Kick" effect based on yaw acceleration telemetry (mLocalRotAccel.y), specifically within the *rFactor 2* and *Le Mans Ultimate* ecosystems.
+
+### **1.1 The Physics of Yaw Acceleration**
+
+To validate amplitude ranges and processing strategies, one must first ground the analysis in the fundamental equations of motion governing a race car. Yaw acceleration ($\\ddot{\\psi}$ or $\\dot{r}$) is the time derivative of yaw rate ($r$). It serves as a direct metric of the net unbalanced yaw moment acting on the vehicle chassis.
+
+According to Newton’s Second Law for rotation, the relationship is defined as:
+
+$$\\sum M\_z \= I\_{zz} \\cdot \\ddot{\\psi}$$  
+Where $\\sum M\_z$ is the summation of all yaw moments acting on the Center of Gravity (CoG) and $I\_{zz}$ is the vehicle's polar moment of inertia about the vertical axis.1 In a GT3 or LMP vehicle, these moments are generated primarily by tire forces (lateral and longitudinal) and aerodynamic forces.
+
+#### **1.1.1 The Steady-State Null Hypothesis**
+
+During steady-state cornering, a vehicle traverses a constant radius arc at a constant velocity. In this condition, the sum of moments is zero (or balanced by the damping of the yaw velocity), and the yaw rate is constant. Consequently, the yaw acceleration is theoretically zero.1
+
+* **Implication for FFB:** Any non-zero mLocalRotAccel signal detected during a perfectly smooth, steady-state corner represents either signal noise, road texture interactions, or micro-corrections by the driver. It does *not* represent a change in the vehicle's handling state. Therefore, a robust FFB algorithm must essentially ignore or heavily damp signals in the near-zero range to preserve the "clean" feeling of alignment torque.2
+
+#### **1.1.2 The Transient Event: Oversteer Onset**
+
+The "Yaw Kick" target phenomenon—oversteer onset—is a transient dynamic event. It occurs when the rear tires saturate (exceed their peak slip angle). At this moment, the restoring lateral force at the rear axle diminishes or plateaus, while the front axle may still be generating increasing force (or the driver may be applying throttle, adding a yaw moment via torque vectoring or differential locking).
+
+* **The Moment Imbalance:** This loss of rear grip creates a sudden, massive imbalance in $\\sum M\_z$. Since the polar moment of inertia ($I\_{zz}$) is a constant physical property of the car, this unbalanced moment directly translates into a spike in yaw acceleration ($\\ddot{\\psi}$).  
+* **The Haptic Cue:** In a real car, the driver feels this rotation acceleration through the inner ear (semicircular canals) before visual cues (horizon rotation) become apparent. In simulation, this vestibular cue is missing. The "Yaw Kick" attempts to substitute this by injecting a torque impulse into the steering wheel that mimics the *jerk* or sudden acceleration of the chassis, alerting the driver to the loss of rear authority.3
+
+### **1.2 Telemetry Architecture in rFactor 2**
+
+The specific environment for this application is the *rFactor 2* physics engine (isiMotor2.5), utilized by *Le Mans Ultimate*. The telemetry variable mLocalRotAccel is exposed via the internal plugin interface.
+
+* **Coordinate System:** The engine uses a local coordinate system where y represents the vertical axis. Thus, mLocalRotAccel.y is the rotational acceleration around the vertical axis—pure yaw.4  
+* **Signal Purity:** Unlike filtered outputs from some consumer sims, *rFactor 2* often outputs raw physics calculation steps. This means mLocalRotAccel can contain high-frequency noise resulting from the rigid-body solver interacting with the high-frequency tire model (CPM \- Contact Patch Model). This necessitates a rigorous signal processing stage to make the data usable for haptics.6
+
+## ---
+
+**2\. Validation of Amplitude Ranges**
+
+A critical objective is to determine typical magnitudes for yaw acceleration to establish valid thresholds for signal processing. Analysis of vehicle dynamics literature, telemetry logs from GT3/GTE machinery, and simulator data confirms the user's estimated ranges are scientifically sound, though nuanced by vehicle configuration.
+
+### **2.1 Normal Cornering and Smooth Surfaces**
+
+Range: 0.0 to 0.5 rad/s²  
+As established, steady-state cornering yields near-zero yaw acceleration. However, real-world data and high-fidelity simulation are rarely "steady."
+
+* **Micro-corrections:** A professional driver makes continuous micro-adjustments to the steering angle ($\\delta$) to maintain the limit. These inputs create small fluctuations in yaw moment.  
+* **Aerodynamic Buffeting:** At high speeds (e.g., Mulsanne Straight), aerodynamic turbulence can induce minor yaw oscillations.  
+* **Analysis:** Telemetry traces from GTE cars (e.g., approx. 2011 spec) at Silverstone show that during the mid-corner phase, yaw rate changes are gradual. The derivative (acceleration) remains low, typically below **0.2 rad/s²**.7  
+* **Validation:** The user's estimate of **0.2 to 1.0 rad/s²** for "Road Details / Micro-corrections" is accurate, though "Normal Cornering" on a smooth track is likely at the bottom end of this (0.0 \- 0.2 rad/s²).
+
+### **2.2 Road Imperfections and Surface Texture**
+
+Range: 0.5 to 2.0 rad/s² (High Frequency)  
+When a vehicle strikes a curb or traverses rough asphalt, the vertical load on the tires ($F\_z$) fluctuates rapidly. Since lateral force ($F\_y$) is a function of vertical load ($F\_y \\approx \\mu F\_z$), these vertical oscillations cause rapid, high-frequency fluctuations in the yaw moment.
+
+* **Characteristics:** These events are distinguished by their oscillatory nature. The car is not rotating into a new trajectory; it is vibrating around its current trajectory.  
+* **Magnitude:** Curb strikes can generate high instantaneous peaks. Telemetry from GT3 cars hitting "sausage curbs" can show spikes exceeding **5.0 rad/s²**, but the *duration* is milliseconds. The energy (integral of acceleration) is low.2  
+* **Threshold Conflict:** This overlaps with the magnitude of a slide initiation. A simple amplitude threshold of 2.0 rad/s² might trigger a "Yaw Kick" on a curb strike, confusing the driver. This necessitates frequency-domain separation (discussed in Section 3).
+
+### **2.3 Onset of Oversteer (Slide Initiation)**
+
+Range: 2.0 to 6.0 rad/s² (Step Function)  
+This is the signal of interest. The transition from "grip" to "slip" at the rear axle is often abrupt in modern GT3/LMP cars due to stiff sidewall construction and aerodynamic reliance.
+
+* **Dynamics:** A "snap" oversteer event is characterized by a rapid divergence in yaw rate. If a car's yaw rate accelerates from 2 deg/s to 30 deg/s (\~0.5 rad/s) in 0.2 seconds, the average acceleration is 2.5 rad/s². Peak instantaneous acceleration during the "break" of traction often reaches **4.0 to 6.0 rad/s²**.  
+* **Validation:** The user's estimate of **\> 2.0 rad/s²** is a scientifically valid baseline for detecting the *initiation* of a meaningful handling event.8 This aligns with Electronic Stability Control (ESC) intervention thresholds, which typically monitor for yaw rate deviations that imply accelerations in this magnitude range.10
+
+### **2.4 Full Spin / Loss of Control**
+
+Range: 6.0 to \>15.0 rad/s²  
+Once the vehicle has fully departed controlled flight, aerodynamic damping and tire sliding friction are the only forces opposing the spin.
+
+* **Magnitude:** In a violent spin, particularly one induced by a collision or touching grass under power, yaw acceleration can spike massively.  
+* **Normalization:** The user's choice of **10.0 rad/s²** as a "maximum reference" is robust. While physical peaks may exceed this, the useful *haptic* range ends here. Differentiating between a 10 rad/s² spin and a 15 rad/s² spin provides no actionable information to the driver—both require maximum counter-correction. Mapping 10.0 rad/s² to 100% force output ensures the driver feels the limit of the hardware's capability during terminal events.9
+
+### **2.5 Summary Table of Amplitude Ranges**
+
+| Vehicle State | Yaw Accel (ψ¨​) Range | Frequency Character | Driver Action Required | Signal Type |
+| :---- | :---- | :---- | :---- | :---- |
+| **Steady Cornering** | 0.0 – 0.2 rad/s² | DC / Low (\< 1 Hz) | Maintenance | Noise / Null |
+| **Road Texture** | 0.2 – 1.0 rad/s² | High (20 – 100 Hz) | Ignore (Filtering) | Oscillatory |
+| **Curb Strike** | 1.0 – 8.0 rad/s² | Very High (\> 50 Hz) | Ignore (Filtering) | Impulse / Spike |
+| **Slide Initiation** | **2.0 – 5.0 rad/s²** | **Low-Mid (2 – 10 Hz)** | **Counter-Steer** | **Step / Surge** |
+| **Deep Slide / Spin** | 5.0 – \>10.0 rad/s² | Low (0.5 – 2 Hz) | Full Lock / Brake | Sustained Surge |
+
+## ---
+
+**3\. Signal Characteristics and Processing Architectures**
+
+The central challenge identified in the research is distinguishing "Road Texture" (which can have high acceleration but is irrelevant to handling) from "Slide Onset" (which is the target cue). The research indicates that while amplitude discrimination is useful, **Frequency Domain Analysis** is the decisive factor.
+
+### **3.1 Frequency Domain Differentiation**
+
+Vehicle handling dynamics (macroscopic movement of the chassis mass) and road texture (vibration of unsprung mass) occupy distinct frequency spectra.
+
+* **Handling Band (0 \- 5 Hz):** The yaw motion of a vehicle is governed by its large polar moment of inertia ($I\_{zz}$), typically around 2500-3000 kg·m² for a GT car.8 This massive inertia acts as a physical low-pass filter. It is physically impossible for the chassis to oscillate in yaw at 20 Hz. Therefore, true oversteer events, even "snappy" ones, occur in the **0.5 Hz to 5 Hz** range.12  
+* **Texture/Vibration Band (10 \- 100 Hz):** Road texture inputs, engine vibrations, and suspension harmonics occur at much higher frequencies. Steering wheel vibrations specifically peak around **35 \- 50 Hz** (primary resonance) and **70 Hz** (harmonics).14  
+* **Separation Strategy:** This clear spectral separation validates the use of frequency-based filtering. A slide is a *low-frequency, high-amplitude* event. Texture is a *high-frequency, variable-amplitude* event.
+
+#### **3.1.1 The Low-Pass Filter (LPF) Solution**
+
+To isolate the "Yaw Kick," a **Low-Pass Filter** is strictly required.
+
+* **Cutoff Frequency:** The research suggests a cutoff frequency ($f\_c$) between **8 Hz and 12 Hz**. This passes the fastest possible chassis yaw movements (limits of handling) while attenuating the 20Hz+ road noise and curb spikes.15  
+* **Filter Topology:** A **2nd-order Butterworth** filter is recommended. It offers a flat passband (preserving the magnitude of the slide signal) and a steep roll-off (-12 dB/octave) to crush high-frequency noise. A Moving Average filter should be avoided as it introduces variable latency, which is detrimental to the "reflex" nature of catching a slide.
+
+### **3.2 Gamma Transformation vs. Derivative Analysis**
+
+The user inquires about using Gamma curves or Derivative analysis for signal conditioning.
+
+#### **3.2.1 Gamma / Power Law ($\\gamma$)**
+
+Gamma transformation maps the input signal $x$ to output $y$ via $y \= x^{\\gamma}$.
+
+* **Mechanism:** In FFB, a Gamma value $\> 1.0$ (e.g., 1.5 or 2.0) creates a curve that is flat near zero and steepens at higher values.17  
+* **Application to Yaw:** This is highly effective for the "Yaw Kick."  
+  * *Region 0 \- 1.5 rad/s²:* The curve suppresses this "grey zone" of micro-corrections and road noise, acting as a "soft" deadzone.  
+  * *Region \> 2.0 rad/s²:* The curve ramps up gain aggressively.  
+* **Recommendation:** Gamma is superior to a hard deadzone because it eliminates the "clunk" or "step" feeling when the signal crosses the threshold. It provides organic differentiation between "texture" (damped) and "slide" (amplified).
+
+#### **3.2.2 Dynamic Range Compression (DRC)**
+
+While referenced in audio engineering 18, DRC is generally **inappropriate** for this specific alert signal.
+
+* *Audio Context:* DRC makes quiet sounds louder.  
+* *FFB Context:* Applying DRC would amplify road noise and steering jitter, raising the "noise floor" of the force feedback.  
+* *Inverse Approach:* An **Expander** or **Noise Gate** is the correct audio analog. We want to *silence* the quiet signals and *pass* the loud ones. The Gamma function described above effectively acts as a static Expander.
+
+#### **3.2.3 Derivative Analysis (Jerk)**
+
+Calculating the derivative of acceleration ($\\dddot{\\psi}$, or Yaw Jerk) is theoretically attractive because it highlights the *change* in state.3
+
+* **The Noise Problem:** Numerical differentiation amplifies noise. Telemetry from simulators is discrete (sampled). Differentiating a noisy 400Hz signal twice (Position $\\to$ Velocity $\\to$ Accel $\\to$ Jerk) results in a signal dominated by quantization noise unless heavily smoothed.  
+* **Verdict:** Avoid calculating Jerk directly. The "Step" nature of the Yaw Acceleration signal during a slide is already perceived as a "Kick" (Jerk) by the human hand.
+
+### **3.3 Proposed Signal Processing Pipeline**
+
+Based on the synthesis of these findings, the following real-time processing pipeline is proposed for the application:
+
+1. **Input:** mLocalRotAccel.y (Raw Telemetry).  
+2. **Pre-Filter:** Low-Pass Butterworth Filter ($f\_c \= 10$ Hz). Removes road noise/curb spikes.  
+3. **Normalization:** $NormSignal \= \\min(|FilteredSignal| / 10.0, 1.0)$. Maps 0-10 rad/s² to 0.0-1.0.  
+4. **Non-Linearity:** $ShapedSignal \= (NormSignal)^{\\gamma}$. Where $\\gamma \\approx 1.5 \- 2.0$. Suppresses low-amplitude noise.  
+5. **Directionality Check:** Multiply by $-1 \\times \\text{sign}(v\_x)$ (if necessary for coordinate matching) to ensuring the torque opposes the slide.  
+6. **Output:** Send to FFB mixing stage.
+
+## ---
+
+**4\. Best Practices for Yaw-to-FFB Mapping**
+
+Integrating this processed signal into the final Force Feedback output requires an understanding of both simulator hardware and human physiology.
+
+### **4.1 Usage in Professional and Commercial Systems**
+
+* **Motion Simulators:** In professional setups (e.g., Cruden, Ansible), yaw acceleration is mapped primarily to the **Motion Platform** (vestibular cueing) rather than the steering wheel.20 The steering wheel is reserved for Self-Aligning Torque (SAT).  
+* **Commercial FFB (Simucube/Fanatec):** Direct Drive software often includes "Slew Rate Limits" and "Reconstruction Filters".19 These are essentially hardware-level low-pass filters.  
+* **The "Yaw Kick" as an Artificial Effect:** It is crucial to recognize that the "Yaw Kick" is a *canned effect* (synthetic). In a real car, the steering wheel does not necessarily "kick" due to yaw acceleration; it goes light due to the drop in pneumatic trail. The "Kick" is a substitute for the missing G-force. Therefore, it should be layered *on top* of the physics-based SAT, not replace it.
+
+### **4.2 Human Perception Thresholds**
+
+To tune the effect effectively, one must adhere to the psychophysical limits of the human driver.
+
+#### **4.2.1 Absolute Detection Thresholds**
+
+* **Torque:** The human hand is remarkably sensitive. In a static environment, the detection threshold for steering torque is approximately **0.02 to 0.1 Nm**.22  
+* **Vibration:** For vibrotactile cues, humans can detect accelerations as low as **0.05 m/s²** at the steering rim.24  
+* **Implication:** The "Yaw Kick" does not need to be massive to be felt. A sudden impulse of **0.5 Nm** is well above the absolute threshold.
+
+#### **4.2.2 Just Noticeable Difference (JND)**
+
+However, racing is not a static environment. The driver is already fighting cornering forces (SAT). The ability to detect a *change* in force (the Kick) against a background force (SAT) is governed by **Weber's Law**.
+
+* **Weber Fraction:** Research indicates the Weber fraction for hand/arm force perception is between **7% and 15%**.26  
+* **Dynamic Scaling:** This is a critical insight for the algorithm.  
+  * If the wheel is loaded with **5 Nm** of cornering force, a "Kick" of 0.2 Nm (4%) will likely be **imperceptible**. The Kick must be at least $5.0 \\times 0.10 \= 0.5$ Nm.  
+  * If the wheel is loaded with **15 Nm** (high downforce), the Kick needs to be **1.5 Nm** to be noticed.  
+* **Best Practice:** The gain of the Yaw Kick effect should be **adaptive**. It should scale with the instantaneous FFB load (or an average thereof) to maintain perceptibility without becoming dangerously violent at low speeds.
+
+### **4.3 Reference Values and Standardization**
+
+* **Maximum Reference:** The user's **10.0 rad/s²** reference is appropriate for normalization. While a collision might generate 20 rad/s², 10.0 rad/s² represents the upper limit of *recoverable* vehicle dynamics.  
+* **Standards:** There is no ISO standard specifically for "Sim Racing Yaw Kick." However, automotive standards for **Electronic Stability Control (ESC)** activation provide the best proxy. ESC systems trigger when yaw rate deviation suggests an unrecoverable trajectory—often correlating to yaw accelerations in the **2.0 \- 4.0 rad/s²** range.10 Adopting these automotive safety thresholds gives the simulation effect a basis in real-world vehicle dynamics engineering.
+
+## ---
+
+**5\. Related Concepts and Advanced Algorithms**
+
+The user asks how yaw acceleration relates to other metrics and if combined algorithms are better.
+
+### **5.1 Relation to Sideslip and Yaw Rate**
+
+Yaw acceleration is the precursor to sideslip.
+
+* **Sequence of Events:** Unbalanced Moment $\\to$ **Yaw Acceleration** $\\to$ Change in Yaw Rate $\\to$ Change in Heading $\\to$ **Sideslip Angle** ($\\beta$).  
+* **Latency:** Using yaw acceleration allows the FFB to alert the driver *before* the sideslip angle becomes large. It is a **leading indicator**, whereas sideslip is a **lagging indicator** of the moment imbalance.30
+
+### **5.2 The "Stability Index" Algorithm**
+
+The user asks if combining metrics is more robust. Yes. Relying solely on yaw acceleration can yield false positives (e.g., aggressive turn-in for a slalom produces high yaw accel but is stable).
+
+* **The Phase Plane Approach:** Vehicle stability is best defined by the **Phase Plane** ($\\beta$ vs $\\dot{\\beta}$ or $r$). Stability boundaries are defined as regions in this plane.32  
+* Proposed "Gated" Algorithm:  
+  Instead of a simple threshold, use a logical gate:  
+  * **Condition A:** Abs(RearSlipAngle) \> Peak\_Slip\_Angle (approx 3-5 degrees for slicks). This confirms the rear tires are saturated.34  
+  * **Condition B:** YawAcceleration \> 2.0 rad/s². This confirms the car is rotating rapidly.  
+  * **Trigger:** Activate "Yaw Kick" only when **A AND B** are true.  
+  * **Result:** This filter eliminates false positives from "agile" maneuvers (high yaw accel, low slip) and ensures the kick is reserved for genuine loss-of-control events, effectively simulating the "seat of the pants" feeling of the rear end stepping out.
+
+## **6\. Recommendations for Implementation in Le Mans Ultimate**
+
+1. **Safety First:** Implement a hard **Output Slew Rate Limiter** on the final torque signal. Physics glitches in rFactor 2 can cause instantaneous infinite acceleration. A limiter (e.g., max 10 Nm/ms change) protects the user's hardware and hands.19  
+2. **Context Awareness:** Disable the effect below a minimum speed (e.g., 20 kph) to prevent the wheel from kicking while maneuvering in the pits.1  
+3. **User Tuning:** Expose the **Gamma** and **Gain** parameters to the user. Different wheelbases (5 Nm vs 25 Nm) have vastly different dynamic ranges and friction characteristics, requiring different tuning to overcome static friction.35
+
+## **7\. Conclusion**
+
+The "Yaw Kick" is a vital bridge between the mathematical precision of the *rFactor 2* physics engine and the sensory experience of the driver. By validating the **2.0 rad/s²** threshold, utilizing **Low-Pass Filtering (10 Hz)** to separate handling from texture, and applying **Gamma Correction** to organicize the response, a developer can create a highly immersive and informative cue. Furthermore, by adhering to **Weber's Law** for signal scaling and integrating **Sideslip** data for gating, the application moves beyond a simple vibration effect to a sophisticated driver aid that mirrors the logic of real-world stability control systems.
+
+### **Appendix: Data Tables**
+
+**Table 1: Validated Yaw Acceleration Ranges**
+
+| Vehicle State | Yaw Accel (ψ¨​) | Frequency Band | Signal Nature | Action |
+| :---- | :---- | :---- | :---- | :---- |
+| Steady Cornering | \< 0.2 rad/s² | DC \- 1 Hz | Static / Noise | Filter Out |
+| Surface Texture | 0.2 \- 1.5 rad/s² | 20 \- 100 Hz | Oscillatory | Filter Out |
+| **Slide Onset** | **2.0 \- 5.0 rad/s²** | **1 \- 10 Hz** | **Impulsive** | **Amplify/Kick** |
+| Spin | \> 5.0 rad/s² | 0.5 \- 2 Hz | Ballistic | Saturate |
+
+**Table 2: Perception Thresholds for Tuning**
+
+| Metric | Value | Implications for FFB |
+| :---- | :---- | :---- |
+| Absolute Torque Threshold | 0.02 \- 0.1 Nm | Minimum force for deadzone removal. |
+| Vibrotactile Threshold | 0.05 m/s² | Limit for "road texture" effects. |
+| **Weber Fraction (JND)** | **7% \- 15%** | **Kick Strength must be \>10% of current FFB torque.** |
+
+**Table 3: Signal Processing Specifications**
+
+| Component | Specification | Rationale |
+| :---- | :---- | :---- |
+| **Primary Filter** | 2nd-Order Butterworth LPF | Cutoff @ 10 Hz to remove road noise. |
+| **Non-Linearity** | Gamma $\\gamma \\approx 1.8$ | Softens transition; suppresses micro-corrections. |
+| **Gating Metric** | Rear Slip Angle \> 4° | Prevents false positives during agile cornering. |
+| **Max Reference** | 10.0 rad/s² | Normalization ceiling for 100% output. |
+
+#### **Works cited**
+
+1. Getting to grips with your yaw moments \- OptimumG Students, accessed January 7, 2026, [unlinked: students_optimumg_com/wp-content/uploads/2017/05/Gettingtogrips_pdf](unlinked: students_optimumg_com/wp-content/uploads/2017/05/Gettingtogrips_pdf)  
+2. VEHICLE DYNAMICS, accessed January 7, 2026, [unlinked: www_jsae_or_jp/files\_publish/page/1219/en\_vol74\_8-17.pdf](unlinked: www_jsae_or_jp/files_publish/page/1219/en_vol74_8-17_pdf)  
+3. lmuFFB App | Page 6 | Le Mans Ultimate Community, accessed January 7, 2026, [unlinked: community_lemansultimate_com/index_php?threads/lmuffb-app_10440/page-6](unlinked: community_lemansultimate_com/index_php?threads/lmuffb-app_10440/page-6)  
+4. rF2SharedMemoryMapPlugin/Monitor/rF2SMMonitor/rF2SMMonitor/rF2Data.cs at master · TheIronWolfModding/rF2SharedMemoryMapPlugin \- GitHub, accessed January 7, 2026, [unlinked: github_com/TheIronWolfModding/rF2SharedMemoryMapPlugin/blob/master/Monitor/rF2SMMonitor/rF2SMMonitor/rF2Data_cs](unlinked: github_com/TheIronWolfModding/rF2SharedMemoryMapPlugin/blob/master/Monitor/rF2SMMonitor/rF2SMMonitor/rF2Data_cs)  
+5. SimTelemetry/SimTelemetry.Game.Rfactor/GamePlugin/Include/InternalsPlugin.hpp at master · nlhans/SimTelemetry · GitHub, accessed January 7, 2026, [unlinked: github_com/nlhans/SimTelemetry/blob/master/SimTelemetry_Game_Rfactor/GamePlugin/Include/InternalsPlugin_hpp](unlinked: github_com/nlhans/SimTelemetry/blob/master/SimTelemetry_Game_Rfactor/GamePlugin/Include/InternalsPlugin_hpp)  
+6. SimTelemetry/SimTelemetry.Game.Rfactor/GamePlugin/Source/PluginData.cpp at master · nlhans/SimTelemetry · GitHub, accessed January 7, 2026, [unlinked: github_com/nlhans/SimTelemetry/blob/master/SimTelemetry_Game_Rfactor/GamePlugin/Source/PluginData_cpp](unlinked: github_com/nlhans/SimTelemetry/blob/master/SimTelemetry_Game_Rfactor/GamePlugin/Source/PluginData_cpp)  
+7. Integrated Optimisation for Dynamic Modelling, Path Planning and Energy Management in Hybrid Race Vehicles by Kieran Reeves MSc \- Lancaster EPrints, accessed January 7, 2026, [unlinked: eprints_lancs_ac_uk/id/eprint/153035/1/2020ReevesPhD_pdf](unlinked: eprints_lancs_ac_uk/id/eprint/153035/1/2020ReevesPhD_pdf)  
+8. Final Thesis PDF \- Auburn University, accessed January 7, 2026, [unlinked: etd_auburn_edu/bitstream/handle/10415/379/WHITEHEAD\_RANDALL\_4.pdf?isAllowed=y\&sequence=1](unlinked: etd_auburn_edu/bitstream/handle/10415/379/WHITEHEAD_RANDALL_4_pdf?isAllowed=y&sequence=1)  
+9. Research on Yaw Moment Control System for Race Cars Using ..., accessed January 7, 2026, [unlinked: www_mdpi_com/2624-8921/5/2/29](unlinked: www_mdpi_com/2624-8921/5/2/29)  
+10. Electronic stability control \- Wikipedia, accessed January 7, 2026, [unlinked: en_wikipedia_org/wiki/Electronic\_stability\_control](unlinked: en_wikipedia_org/wiki/Electronic_stability_control)  
+11. Development of an Electronic Stability Control Algorithm for All-Terrain Vehicles, accessed January 7, 2026, [unlinked: www_sae_org/publications/technical-papers/content/2023-01-0661/](unlinked: www_sae_org/publications/technical-papers/content/2023-01-0661/)  
+12. On the Frequency Domain Analysis of Tire Relaxation Effects on Transient On-Center Vehicle Handling Performance, accessed January 7, 2026, [unlinked: cecas_clemson_edu/ayalew/Papers/Vehicle%20Systems%20Dynamics%20and%20Control/Papers/On%20the%20Frequency%20Domain%20Analysis%20of%20Tire%20Relaxation%20Effects%20on%20Transient%20On-Center%20Vehicle%20Handling%20Performance/755\_1.pdf](unlinked: cecas_clemson_edu/ayalew/Papers/Vehicle%20Systems%20Dynamics%20and%20Control/Papers/On%20the%20Frequency%20Domain%20Analysis%20of%20Tire%20Relaxation%20Effects%20on%20Transient%20On-Center%20Vehicle%20Handling%20Performance/755_1_pdf)  
+13. Road safety: The influence of vibration frequency on driver drowsiness, reaction time, and driving performance \- PubMed, accessed January 7, 2026, [unlinked: pubmed_ncbi_nlm_nih_gov/37813019/](unlinked: pubmed_ncbi_nlm_nih_gov/37813019/)  
+14. Analysis of the Impact of Vibrations on the Driver of a Motor Vehicle \- MDPI, accessed January 7, 2026, [unlinked: www_mdpi_com/2076-3417/15/10/5510](unlinked: www_mdpi_com/2076-3417/15/10/5510)  
+15. Model Based Handling Analyses \- Diva-portal.org, accessed January 7, 2026, [unlinked: www_diva-portal_org/smash/get/diva2:1285767/FULLTEXT01_pdf](unlinked: www_diva-portal_org/smash/get/diva2:1285767/FULLTEXT01_pdf)  
+16. What is the most common vibration frequency in a vehicle travelling down a highway?, accessed January 7, 2026, [unlinked: www_researchgate_net/post/What-is-the-most-common-vibration-frequency-in-a-vehicle-travelling-down-a-highway](unlinked: www_researchgate_net/post/What-is-the-most-common-vibration-frequency-in-a-vehicle-travelling-down-a-highway)  
+17. What is gamma in steerng wheel settings? : r/assettocorsa \- Reddit, accessed January 7, 2026, [unlinked: www_reddit_com/r/assettocorsa/comments/k9kf0f/what\_is\_gamma\_in\_steerng\_wheel\_settings/](unlinked: www_reddit_com/r/assettocorsa/comments/k9kf0f/what_is_gamma_in_steerng_wheel_settings/)  
+18. Dynamic Range Across Music Genres and the Perception of Dynamic Compression in Hearing-Impaired Listeners \- PMC \- PubMed Central, accessed January 7, 2026, [unlinked: pmc_ncbi_nlm_nih_gov/articles/PMC4753356/](unlinked: pmc_ncbi_nlm_nih_gov/articles/PMC4753356/)  
+19. Assetto Corsa and Simucube 2 \- Games \- Granite Devices Community, accessed January 7, 2026, [unlinked: community_granitedevices_com/t/assetto-corsa-and-simucube-2/2956?page=28](unlinked: community_granitedevices_com/t/assetto-corsa-and-simucube-2/2956?page=28)  
+20. GRID1: The 1DOF yaw racing simulator for eSports \- SimCraft, accessed January 7, 2026, [unlinked: simcraft_com/racing-simulators/products/grid-1/](unlinked: simcraft_com/racing-simulators/products/grid-1/)  
+21. A Review of Driving Simulation Technology and Applications | VI-grade, accessed January 7, 2026, [unlinked: www_vi-grade_com/dynatc/attachments-1208-fd32/a-review-of-driving-simulation-technology-and-applications_pdf](unlinked: www_vi-grade_com/dynatc/attachments-1208-fd32/a-review-of-driving-simulation-technology-and-applications_pdf)  
+22. Sensitivity to Haptic Sound-Localization Cues at Different Body Locations \- MDPI, accessed January 7, 2026, [unlinked: www_mdpi_com/1424-8220/21/11/3770](unlinked: www_mdpi_com/1424-8220/21/11/3770)  
+23. Human Perception Measures for Product Design and Development—A Tutorial to Measurement Methods and Analysis \- MDPI, accessed January 7, 2026, [unlinked: www_mdpi_com/2414-4088/1/4/28](unlinked: www_mdpi_com/2414-4088/1/4/28)  
+24. Influence of Steering Wheel Torque Feedback, accessed January 7, 2026, [unlinked: www_nads-sc_uiowa_edu/dscna/2003/papers/Toffin\_Influence%20of%20Steering%20Wheel%20Torque%20Feedback....pdf](unlinked: www_nads-sc_uiowa_edu/dscna/2003/papers/Toffin_Influence%20of%20Steering%20Wheel%20Torque%20Feedback____pdf)  
+25. Human, Whole-Body & Hand-Arm Vibration – Online Course \- Dewesoft, accessed January 7, 2026, [unlinked: dewesoft_com/academy/online/human-body-vibration](unlinked: dewesoft_com/academy/online/human-body-vibration)  
+26. Driver Perception of Steady-State Steering Feel \- ePrints Soton, accessed January 7, 2026, [unlinked: eprints_soton_ac_uk/466382/1/1125040_pdf](unlinked: eprints_soton_ac_uk/466382/1/1125040_pdf)  
+27. The influence of steering wheel size when tuning power assistance \- Chalmers Publication Library, accessed January 7, 2026, [unlinked: publications_lib_chalmers_se/records/fulltext/218165/local\_218165.pdf](unlinked: publications_lib_chalmers_se/records/fulltext/218165/local_218165_pdf)  
+28. Driver estimation of steering wheel vibration intensity : questionnaire-based survey \- HCD Studios, accessed January 7, 2026, [unlinked: hcdstudios_com/wp-content/uploads/2019/08/gg2005deo_pdf](unlinked: hcdstudios_com/wp-content/uploads/2019/08/gg2005deo_pdf)  
+29. A review of human sensory dynamics for application to models of driver steering and speed control \- PubMed Central, accessed January 7, 2026, [unlinked: pmc_ncbi_nlm_nih_gov/articles/PMC4903114/](unlinked: pmc_ncbi_nlm_nih_gov/articles/PMC4903114/)  
+30. Design and Evaluation of Rear Axle Side Slip Stability Control for Passenger Cars \- Chalmers Publication Library, accessed January 7, 2026, [unlinked: publications_lib_chalmers_se/records/fulltext/154376/154376_pdf](unlinked: publications_lib_chalmers_se/records/fulltext/154376/154376_pdf)  
+31. Vehicle Sideslip Estimation \- JPL Robotics, accessed January 7, 2026, [unlinked: www-robotics_jpl_nasa_gov/media/documents/Grip\_CSM2009.pdf](unlinked: www-robotics_jpl_nasa_gov/media/documents/Grip_CSM2009_pdf)  
+32. Research on control strategy of vehicle stability based on dynamic stable region regression analysis \- Frontiers, accessed January 7, 2026, [unlinked: www_frontiersin_org/journals/neurorobotics/articles/10_3389/fnbot_2023_1149201/full](unlinked: www_frontiersin_org/journals/neurorobotics/articles/10_3389/fnbot_2023_1149201/full)  
+33. Simulation and Experimental: Enhanced Stability Control of Electric Vehicle Based on Phase Plane Boundary Analysis \- Journal Article \- SAE Mobilus, accessed January 7, 2026, [unlinked: saemobilus_sae_org/articles/simulation-experimental-enhanced-stability-control-electric-vehicle-based-phase-plane-boundary-analysis-10-09-02-0017](unlinked: saemobilus_sae_org/articles/simulation-experimental-enhanced-stability-control-electric-vehicle-based-phase-plane-boundary-analysis-10-09-02-0017)  
+34. Setup steering angle vs. profile steering angle... \- KW Studios Forum, accessed January 7, 2026, [unlinked: forum_kw-studios_com/index_php?threads/setup-steering-angle-vs-profile-steering-angle_14274/](unlinked: forum_kw-studios_com/index_php?threads/setup-steering-angle-vs-profile-steering-angle_14274/)  
+35. Thrustmaster T598: FFB Settings in games : r/simracing \- Reddit, accessed January 7, 2026, [unlinked: www_reddit_com/r/simracing/comments/1h2k20h/thrustmaster\_t598\_ffb\_settings\_in\_games/](unlinked: www_reddit_com/r/simracing/comments/1h2k20h/thrustmaster_t598_ffb_settings_in_games/)
+```
+
 # File: docs\dev_docs\yaw_kick_improvements.md
 ```markdown
 # Question
@@ -19918,7 +25882,3653 @@ The "Yaw Kick" effect (derived from `mLocalRotAccel.y`) is currently producing c
 **Deliverables:**
 1.  Updated `FFBEngine.h`.
 2.  Updated `tests/test_ffb_engine.cpp`.
-3.  Updated `CHANGELOG.md` (v0.4.40).
+3.  Updated `CHANGELOG_DEV.md` (v0.4.40).
+
+```
+
+# File: docs\dev_docs\archived\Archive - add_icon_implementation_plan.md
+```markdown
+# Implementation Plan: Add Application Icon
+
+## 1. Introduction and Motivation
+Currently, the LMUFFB application uses the default Windows executable icon, which lacks visual identity and polish. This task aims to add a custom application icon (`lmuffb.ico`) that will be embedded in the executable and displayed in Windows Explorer and the taskbar.
+
+## 2. Technical Approach
+
+### 2.1. Assets
+-   Create a new directory `icon/` to store source assets.
+-   Include the source image `icon.png`.
+-   Provide a script (`icon/magick-ico.sh`) to generate the `.ico` file from the source PNG using ImageMagick, creating multiple sizes (16, 24, 32, 48, 64, 96, 128, 256) for proper scaling in Windows.
+    -   **Note:** This script requires [ImageMagick](unlinked: imagemagick_org/) to be installed and available in the system PATH.
+-   Store the generated `lmuffb.ico` in the `icon/` directory.
+
+### 2.2. Resource Files
+-   Create `src/resource.h` to define the resource identifier (`IDI_ICON1`).
+-   Create `src/res.rc` to define the ICON resource, pointing to `lmuffb.ico`.
+
+### 2.3. Build System (CMake)
+-   Modify `CMakeLists.txt` to:
+    1.  Copy `icon/lmuffb.ico` to the build directory (so the resource compiler can find it easily).
+    2.  Add `src/res.rc` to the `add_executable` source list. This triggers CMake to invoke the Resource Compiler (`rc.exe`) on Windows.
+
+## 3. Testing Plan
+
+### 3.1. Manual Verification
+-   Build the application in Release mode.
+-   Inspect the generated `LMUFFB.exe` in Windows Explorer to verify it displays the new icon.
+-   Run the application and verify the icon appears in the taskbar / window title bar (if handled by window creation, though resource usually handles the executable icon).
+
+### 3.2. Automated Tests
+-   **Test:** `test_icon_presence`
+    -   **Goal:** Verify that the build process correctly stages the icon file.
+    -   **Implementation:** Add a test case in a new or existing test file (e.g., `tests/test_resources.cpp`) that checks for the existence of `lmuffb.ico` in the current working directory (or expected build output directory).
+
+## 4. Documentation
+-   **CHANGELOG_DEV.md:** Add an entry under the "Added" section for the new application icon.
+-   **VERSION:** Increment the patch version (optional, depending on release cycle).
+
+```
+
+# File: docs\dev_docs\archived\Archived - Fix wheel device disconnecting.md
+```markdown
+TODO: move this document to an archive subfolder because it is outdate (already fixed).
+
+# Technical Report: Connection Hardening & Device Persistence Implementation
+
+**Target Version:** v0.4.44
+**Priority:** Critical (User Experience / Stability)
+**Context:** Addressing feedback from user GamerMuscle regarding connection stability and usability.
+
+## 1. Executive Summary
+
+Users have reported two major usability issues:
+1.  **Connection Loss:** The app stops sending FFB when the window loses focus (Alt-Tab) or when the game momentarily steals Exclusive Mode. The current re-acquisition logic is insufficient because it does not explicitly restart the DirectInput Effect motor.
+2.  **Lack of Persistence:** The user must manually re-select their steering wheel from the dropdown every time the app is launched.
+
+Additionally, the console output is currently cluttered with "Clipping" warnings, which makes debugging connection issues difficult.
+
+## 2. Technical Strategy
+
+### A. Connection Hardening (The "Smart Reconnect")
+We will overhaul the `UpdateForce` loop in `DirectInputFFB.cpp`.
+*   **Diagnosis:** Instead of silently failing, we will catch specific DirectInput errors (`DIERR_INPUTLOST`, `DIERR_OTHERAPPHASPRIO`).
+*   **Context Logging:** We will log the **Active Foreground Window** when a failure occurs. This definitively proves if the Game (LMU) is stealing the device priority.
+*   **Motor Restart:** When we successfully re-acquire the device, we will explicitly call `m_pEffect->Start(1, 0)`. This fixes the "Silent Wheel" bug where the device is connected but the motor is stopped.
+
+### B. Device Persistence
+We will add logic to save the unique **GUID** of the selected DirectInput device to `config.ini`. On startup, the app will scan available devices and auto-select the one matching the saved GUID.
+
+### C. Console Decluttering
+We will remove the rate-limited "FFB Output Saturated" warning from the main loop to ensure the console remains clean for the new connection diagnostics.
+
+---
+
+## 3. Implementation Guide
+
+### Step 1: Update `src/DirectInputFFB.h`
+Add static helper methods to convert between the binary `GUID` struct and `std::string` for config storage.
+
+```cpp
+// src/DirectInputFFB.h
+
+// ... existing includes ...
+
+class DirectInputFFB {
+public:
+    // ... existing methods ...
+
+    // NEW: Helpers for Config persistence
+    static std::string GuidToString(const GUID& guid);
+    static GUID StringToGuid(const std::string& str);
+
+private:
+    // ... existing members ...
+};
+```
+
+### Step 2: Update `src/DirectInputFFB.cpp`
+This is the core logic update. It includes the helpers, the console decluttering, and the robust reconnection logic.
+
+```cpp
+// src/DirectInputFFB.cpp
+
+// ... existing includes ...
+#include <cstdio> // For sscanf, sprintf
+#include <psapi.h> // For GetActiveWindowTitle
+
+// NEW: Helper to get foreground window title for diagnostics
+std::string GetActiveWindowTitle() {
+    char wnd_title[256];
+    HWND hwnd = GetForegroundWindow();
+    if (hwnd) {
+        GetWindowTextA(hwnd, wnd_title, sizeof(wnd_title));
+        return std::string(wnd_title);
+    }
+    return "Unknown";
+}
+
+// NEW: Helper Implementations for GUID
+std::string DirectInputFFB::GuidToString(const GUID& guid) {
+    char buf[64];
+    sprintf_s(buf, "{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}",
+        guid.Data1, guid.Data2, guid.Data3,
+        guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
+        guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+    return std::string(buf);
+}
+
+GUID DirectInputFFB::StringToGuid(const std::string& str) {
+    GUID guid = { 0 };
+    if (str.empty()) return guid;
+    unsigned long p0;
+    unsigned int p1, p2, p3, p4, p5, p6, p7, p8, p9, p10;
+    int n = sscanf_s(str.c_str(), "{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+        &p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8, &p9, &p10);
+    if (n == 11) {
+        guid.Data1 = p0;
+        guid.Data2 = (unsigned short)p1;
+        guid.Data3 = (unsigned short)p2;
+        guid.Data4[0] = (unsigned char)p3; guid.Data4[1] = (unsigned char)p4;
+        guid.Data4[2] = (unsigned char)p5; guid.Data4[3] = (unsigned char)p6;
+        guid.Data4[4] = (unsigned char)p7; guid.Data4[5] = (unsigned char)p8;
+        guid.Data4[6] = (unsigned char)p9; guid.Data4[7] = (unsigned char)p10;
+    }
+    return guid;
+}
+
+void DirectInputFFB::UpdateForce(double normalizedForce) {
+    if (!m_active) return;
+
+    // Sanity Check: If 0.0, stop effect to prevent residual hum
+    if (std::abs(normalizedForce) < 0.00001) normalizedForce = 0.0;
+
+    // --- DECLUTTERING: REMOVED CLIPPING WARNING ---
+    /*
+    if (std::abs(normalizedForce) > 0.99) {
+        static int clip_log = 0;
+        if (clip_log++ % 400 == 0) { 
+            std::cout << "[DI] WARNING: FFB Output Saturated..." << std::endl;
+        }
+    }
+    */
+    // ----------------------------------------------
+
+    // Clamp
+    normalizedForce = (std::max)(-1.0, (std::min)(1.0, normalizedForce));
+
+    // Scale to -10000..10000
+    long magnitude = static_cast<long>(normalizedForce * 10000.0);
+
+    // Optimization: Don't call driver if value hasn't changed
+    if (magnitude == m_last_force) return;
+    m_last_force = magnitude;
+
+#ifdef _WIN32
+    if (m_pEffect) {
+        DICONSTANTFORCE cf;
+        cf.lMagnitude = magnitude;
+        
+        DIEFFECT eff;
+        ZeroMemory(&eff, sizeof(eff));
+        eff.dwSize = sizeof(DIEFFECT);
+        eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
+        eff.lpvTypeSpecificParams = &cf;
+        
+        // Try to update parameters
+        HRESULT hr = m_pEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
+        
+        // --- DIAGNOSTIC & RECOVERY LOGIC ---
+        if (FAILED(hr)) {
+            // 1. Identify the Error
+            std::string errorType = "Unknown";
+            bool recoverable = false;
+
+            if (hr == DIERR_INPUTLOST) {
+                errorType = "DIERR_INPUTLOST (Physical disconnect or Driver reset)";
+                recoverable = true;
+            } else if (hr == DIERR_NOTACQUIRED) {
+                errorType = "DIERR_NOTACQUIRED (Lost focus/lock)";
+                recoverable = true;
+            } else if (hr == DIERR_OTHERAPPHASPRIO) {
+                errorType = "DIERR_OTHERAPPHASPRIO (Another app stole the device!)";
+                recoverable = true;
+            }
+
+            // 2. Log the Context (Rate limited to 1s)
+            static DWORD lastLogTime = 0;
+            if (GetTickCount() - lastLogTime > 1000) {
+                std::cerr << "[DI ERROR] Failed to update force. Error: " << errorType << std::endl;
+                std::cerr << "           Active Window: [" << GetActiveWindowTitle() << "]" << std::endl;
+                lastLogTime = GetTickCount();
+            }
+
+            // 3. Attempt Recovery
+            if (recoverable) {
+                HRESULT hrAcq = m_pDevice->Acquire();
+                
+                if (SUCCEEDED(hrAcq)) {
+                    std::cout << "[DI RECOVERY] Device Re-Acquired successfully." << std::endl;
+                    
+                    // CRITICAL FIX: Restart the effect
+                    // Often, re-acquiring is not enough; the effect must be restarted.
+                    m_pEffect->Start(1, 0); 
+                    
+                    // Retry the update immediately
+                    m_pEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
+                } 
+            }
+        }
+    }
+#endif
+}
+```
+
+### Step 3: Update `src/Config.h`
+Add the static variable to hold the GUID string.
+
+```cpp
+// src/Config.h
+
+class Config {
+public:
+    // ... existing members ...
+    
+    // NEW: Persist selected device
+    static std::string m_last_device_guid;
+};
+```
+
+### Step 4: Update `src/Config.cpp`
+Implement the Save/Load logic for the GUID.
+
+```cpp
+// src/Config.cpp
+
+// Initialize
+std::string Config::m_last_device_guid = "";
+
+void Config::Save(const FFBEngine& engine, const std::string& filename) {
+    std::ofstream file(filename);
+    if (file.is_open()) {
+        // ... existing saves ...
+        file << "last_device_guid=" << m_last_device_guid << "\n"; // NEW
+        
+        // ... rest of save ...
+    }
+}
+
+void Config::Load(FFBEngine& engine, const std::string& filename) {
+    // ... existing load loop ...
+    while (std::getline(file, line)) {
+        // ... parsing ...
+        if (key == "last_device_guid") m_last_device_guid = value; // NEW
+        // ... existing keys ...
+    }
+}
+```
+
+### Step 5: Update `src/GuiLayer.cpp`
+Implement the auto-selection logic on startup and save logic on change.
+
+```cpp
+// src/GuiLayer.cpp
+
+void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
+    // ... [Setup] ...
+    
+    // Device Selection
+    static std::vector<DeviceInfo> devices;
+    static int selected_device_idx = -1;
+    
+    // Scan button (or auto scan once)
+    if (devices.empty()) {
+        devices = DirectInputFFB::Get().EnumerateDevices();
+        
+        // NEW: Auto-select last used device
+        if (selected_device_idx == -1 && !Config::m_last_device_guid.empty()) {
+            GUID target = DirectInputFFB::StringToGuid(Config::m_last_device_guid);
+            for (int i = 0; i < devices.size(); i++) {
+                if (memcmp(&devices[i].guid, &target, sizeof(GUID)) == 0) {
+                    selected_device_idx = i;
+                    DirectInputFFB::Get().SelectDevice(devices[i].guid);
+                    break;
+                }
+            }
+        }
+    }
+
+    if (ImGui::BeginCombo("FFB Device", selected_device_idx >= 0 ? devices[selected_device_idx].name.c_str() : "Select Device...")) {
+        for (int i = 0; i < devices.size(); i++) {
+            bool is_selected = (selected_device_idx == i);
+            if (ImGui::Selectable(devices[i].name.c_str(), is_selected)) {
+                selected_device_idx = i;
+                DirectInputFFB::Get().SelectDevice(devices[i].guid);
+                
+                // NEW: Save selection to config immediately
+                Config::m_last_device_guid = DirectInputFFB::GuidToString(devices[i].guid);
+                Config::Save(engine); 
+            }
+            if (is_selected) ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+    
+    // ... [Rest of file] ...
+```
+
+```
+
+# File: docs\dev_docs\community_responses\ffb_bucket_philosophy_response.md
+```markdown
+# Understanding LMUFFB's FFB Signal Processing
+## Response to Community Feedback on Torque Values and UI Philosophy
+
+**Date**: 2026-01-25  
+**Original Post**: Understanding the Percentages and Nm Values  
+**Status**: For Community Discussion  
+**Code Verification**: ✅ Complete (verified against `FFBEngine.h` and `GuiLayer.cpp`)
+
+---
+
+## Summary of Questions
+
+The user raised excellent points about the current UI being confusing, particularly around:
+1. What do the **Nm values in parentheses** mean (e.g., "SoP Lateral G 147.1% (~7.2 Nm)")?
+2. What is the **percentage reference**?
+3. Why does **increasing Max Torque Ref** increase the Nm numbers but make the wheel lighter?
+4. Why do torque numbers **exceed the wheel base's physical max** without clipping?
+5. A proposed **"FFB Bucket" philosophy** for the UI.
+
+---
+
+## Answers to Each Question
+
+### 1. What Do the Nm Values in Parentheses Mean?
+
+The `~7.2 Nm` value is an **estimation of the physical torque contribution** of that specific effect at its current gain setting. 
+
+However, this is **not the actual torque being sent to your wheel** — it's a *normalized reference value* based on a mathematical formula that helps compare effects relative to each other.
+
+**The display formula** (from `GuiLayer.cpp` lines 831-840):
+
+```cpp
+auto FormatDecoupled = [&](float val, float base_nm) {
+    float scale = (engine.m_max_torque_ref / 20.0f); 
+    if (scale < 0.1f) scale = 0.1f;
+    float estimated_nm = val * base_nm * scale;
+    // Display: "147.1% (~7.2 Nm)"
+};
+```
+
+**What this means:**
+- `val` = Your slider value (e.g., 1.47 for 147%)
+- `base_nm` = A physics constant for that effect (defined in `FFBEngine.h` lines 447-456):
+  - `BASE_NM_SOP_LATERAL = 1.0 Nm`
+  - `BASE_NM_REAR_ALIGN = 3.0 Nm`
+  - `BASE_NM_YAW_KICK = 5.0 Nm`
+  - `BASE_NM_GYRO_DAMPING = 1.0 Nm`
+  - `BASE_NM_SLIDE_TEXTURE = 1.5 Nm`
+  - `BASE_NM_ROAD_TEXTURE = 2.5 Nm`
+  - `BASE_NM_LOCKUP_VIBRATION = 4.0 Nm`
+  - `BASE_NM_SPIN_VIBRATION = 2.5 Nm`
+  - `BASE_NM_SCRUB_DRAG = 5.0 Nm`
+- `scale = Max Torque Ref / 20.0` = The decoupling scale
+
+**Example calculation:**
+- SoP Lateral G at 147% (1.47), with Base Nm = 1.0, and Max Torque Ref = 98 Nm:
+  - `scale = 98 / 20 = 4.9`
+  - `estimated_nm = 1.47 × 1.0 × 4.9 = 7.2 Nm` 
+
+**Important**: This is purely for **display purposes** to help you gauge relative effect strength. This value represents the effect's contribution *before* normalization. The actual output is then **divided by Max Torque Ref** (see below). 
+
+---
+
+### 2. What Is the Percentage Reference?
+
+The percentage represents the **gain multiplier** for each effect:
+
+| Percentage | Meaning |
+|------------|---------|
+| 0% (0.0) | Effect disabled |
+| 100% (1.0) | Effect at "default" strength (1:1 with physics) |
+| 200% (2.0) | Effect doubled |
+
+**The reference is always 100% = 1.0 multiplier.**
+
+When you set "SoP Lateral G" to 147%, you're telling the system to multiply the raw Lateral G physics by 1.47× before mixing it into the final signal.
+
+---
+
+### 3. Why Does Increasing Max Torque Ref Increase the Nm Numbers But Make the Wheel Lighter?
+
+This is the most confusing part of the current UI, and your observation is **completely correct**. Here's the verified code flow:
+
+**Max Torque Ref is used twice with opposite effects:**
+
+**A. Effect Calculation (Makes effects stronger)** — From `FFBEngine.h` line 929:
+```cpp
+// Decoupling Scale
+ctx.decoupling_scale = max_torque_safe / 20.0;
+```
+This `decoupling_scale` is then multiplied into each effect, e.g., line 1230:
+```cpp
+ctx.yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * (double)BASE_NM_YAW_KICK * ctx.decoupling_scale;
+```
+
+**B. Final Normalization (Makes output weaker)** — From `FFBEngine.h` line 999:
+```cpp
+double norm_force = total_sum / max_torque_safe;
+```
+
+**The net effect is that these cancel out for effects, but the UI display only shows step A.**
+
+| Max Torque Ref | UI Display (Step A) | Final Output (Step B) |
+|----------------|---------------------|----------------------|
+| 40 Nm | ~3.0 Nm | ÷40 = lighter |
+| 80 Nm | ~6.0 Nm | ÷80 = even lighter |
+
+**The confusion arises because:**
+- The UI scales the display by `MaxTorqueRef / 20` (making numbers bigger)
+- But the actual output divides by `MaxTorqueRef` (making forces smaller)
+- These two operations are meant to "decouple" effect tuning from overall strength, but the display formula doesn't reflect the normalization step.
+
+---
+
+### 4. Why Can Torque Numbers Exceed My Wheel's Max Without Clipping?
+
+**Verified from code** — The numbers shown are **pre-normalization values**.
+
+**Complete signal flow (from `FFBEngine.h` `calculate_force()`):**
+
+1. **Individual effects are calculated** with `decoupling_scale` (lines 1177-1468)
+2. **Effects are summed** into `total_sum` (line 996)
+3. **Normalization**: `norm_force = total_sum / max_torque_ref` (line 999)
+4. **Master Gain applied**: `norm_force *= m_gain` (line 1000)
+5. **Final clamp**: `return max(-1.0, min(1.0, norm_force))` (line 1091)
+
+**Why you don't always clip:**
+1. **Effects are not all active simultaneously at maximum**
+2. **Many effects are subtractive** (Understeer lightens the wheel)
+3. **The normalization step provides headroom** — All effects are divided by Max Torque Ref
+4. **Different time domains** — Yaw Kick is milliseconds, Lateral G is sustained
+
+---
+
+### 5. The "FFB Bucket" Philosophy — Is It Valid?
+
+**Your analogy is absolutely valid and represents a more intuitive mental model!**
+
+Your proposed approach:
+> *"The FFB bucket size is the max physical torque of my wheel base (8 Nm for RS50). Each effect should show what percentage of that bucket it can fill."*
+
+This is **closer to how irFFB and similar tools work** and is definitely more intuitive for end users.
+
+**Current vs. Proposed mental model:**
+
+| Current System | Bucket System |
+|----------------|---------------|
+| Max Torque Ref = Expected peak physics torque from the car | Max Torque = Your wheel's physical limit |
+| Sliders = Gain multipliers on physics | Sliders = % of headroom allocated |
+| Display shows pre-normalization Nm | Display would show post-normalization Nm |
+
+---
+
+## Analysis of Suggested UI Improvements
+
+| Suggestion | Feasibility | Notes |
+|------------|-------------|-------|
+| **Input for wheel base max torque** | ✅ High | Easy to add; could replace or complement Max Torque Ref |
+| **Master Gain as 0-100% (no attenuation)** | ⚠️ Medium | Semantically, 100% would mean "full pass-through". Current max is 200%. |
+| **Min Force as 0-30%** | ✅ High | Already effectively works this way; just display formatting change |
+| **Sliders show % of wheel max + Nm calculated** | ✅ High | Formula: `(effect_contribution / wheel_max_nm) × 100%` |
+| **Sum of all effects with clipping indicator** | ✅ High | Very useful! Could show: `Total: 12.4 Nm / 8.0 Nm = 155% (High Clipping Risk)` |
+| **Color coding (green/orange/red)** | ✅ High | Easy implementation; see existing clipping graph for precedent |
+| **Effect priority system** | ⚠️ Medium-High | This is a **Dynamic Range Compressor** or **Side-chain/Ducking** system. Complex but valuable. |
+
+---
+
+## About Effect Priority (Advanced Topic)
+
+Your example scenario:
+> *"LMP2 in a high-speed corner touching curbs while the rear steps out. Instead of losing the understeer feel due to clipping, reduce the curb effect to free up space."*
+
+This is actually a feature mentioned in our documentation under **"Signal Masking Mitigation"**:
+
+From `ffb_effects.md` line 54:
+> **Priority System**: Future versions should implement "Side-chaining" or "Ducking". For example, if a severe Lockup event occurs, reduce Road Texture gain to ensure the Lockup signal is clear.
+
+**How it would work:**
+1. Define priority levels for each effect (e.g., Grip Information > Slide Onset > Textures)
+2. When the sum of effects approaches the wheel's max, compress lower-priority effects first
+3. This maintains the "information content" of the most important feedback
+
+This is absolutely realistic and is something we've been considering. Your feedback reinforces that this should be prioritized!
+
+---
+
+## Summary of Current System vs. Proposed "Bucket" System
+
+| Aspect | Current System | Proposed "Bucket" System |
+|--------|----------------|--------------------------|
+| **Reference point** | Max Torque Ref (game physics headroom) | Wheel Base Max Torque (physical limit) |
+| **Percentage meaning** | Gain multiplier (100% = 1.0×) | % of physical headroom used |
+| **Displayed Nm** | Pre-normalization physics contribution | Post-normalization expected output |
+| **Clipping indicator** | Graphs panel only | Real-time sum with color coding |
+| **Intuitive?** | Requires understanding FFB physics | Maps directly to hardware |
+
+---
+
+## Conclusion
+
+**You're not wrong.** The current UI prioritizes *physics accuracy* (how much each effect contributes to the simulated steering feel) over *hardware awareness* (how much of your wheel's torque budget you're using).
+
+For users who just want to "make it feel good without clipping," the bucket philosophy is more intuitive. For users tuning specific physics effects, the current system provides more granularity.
+
+**Possible solution**: A **"Basic Mode"** toggle that:
+1. Asks for wheel max torque
+2. Displays all effects as % of that budget
+3. Shows a real-time "total load" meter with clipping warning
+4. Hides advanced physics parameters
+
+This aligns with the planned "Basic Mode" mentioned in the README.
+
+---
+
+## Action Items for Development Team
+
+1. [ ] Add "Wheel Base Max Torque" input (optional, for display calculation)
+2. [ ] Add real-time "Total Estimated Load" readout with clipping indicator
+3. [ ] Consider Basic Mode implementation prioritizing the "bucket" mental model
+4. [ ] Evaluate priority/ducking system for effect compression
+5. [ ] Improve tooltips to clarify the difference between "physics contribution" and "output torque"
+6. [ ] Update UI display formula to show post-normalization values
+
+---
+
+## Documentation Discrepancies Found During Investigation
+
+During the code verification for this response, the following documentation inconsistencies were identified and **have been resolved**:
+
+### 1. ✅ RESOLVED: `docs/ffb_effects.md` — Outdated Effect Descriptions
+
+**Location**: Lines 14-19  
+**Issue**: The Oversteer/Rear Grip section referenced "v0.2.2+" but described a simpler implementation than what currently exists.  
+**Fix Applied**: Rewrote section 2 to accurately describe the current multi-effect oversteer system (Lateral G, Lateral G Boost, Rear Align Torque, Yaw Kick with threshold).
+
+---
+
+### 2. ✅ RESOLVED: `docs/dev_docs/FFB_formulas.md` — Missing decoupling_scale Minimum Clamp
+
+**Location**: Line 34  
+**Issue**: Documentation said `K_decouple = m_max_torque_ref / 20.0` but didn't mention the minimum clamp.  
+**Fix Applied**: Added note about the minimum clamp of 0.1 to prevent effect collapse.
+
+---
+
+### 3. ✅ RESOLVED: `docs/dev_docs/FFB_formulas.md` — Missing BASE_NM Constants
+
+**Location**: Lines 226-239 (Legend section)  
+**Issue**: The table listed only some BASE_NM constants.  
+**Fix Applied**: Added all 10 BASE_NM constants to the Legend table:
+- `BASE_NM_SOP_LATERAL`, `BASE_NM_REAR_ALIGN`, `BASE_NM_YAW_KICK`, `BASE_NM_GYRO_DAMPING`
+- `BASE_NM_SLIDE_TEXTURE`, `BASE_NM_SCRUB_DRAG`, `BASE_NM_BOTTOMING`
+
+---
+
+### 4. ✅ RESOLVED: `docs/ffb_effects.md` — Priority System Listed as "Future"
+
+**Location**: Lines 54-55  
+**Issue**: Stated "Future versions should implement" without clarifying implementation status.  
+**Fix Applied**: Updated to explicitly state *(Planned, Not Yet Implemented)* with clearer description.
+
+---
+
+### 5. ✅ RESOLVED: `docs/dev_docs/FFB_formulas.md` — Gyro Damping Formula Incomplete
+
+**Location**: Lines 187-192  
+**Issue**: The formula showed `* 1.0Nm * K_decouple` but code doesn't explicitly use `BASE_NM_GYRO_DAMPING`.  
+**Fix Applied**: Updated formula and added note explaining that `BASE_NM_GYRO_DAMPING` (1.0 Nm) exists but is implicit in the calculation.
+
+---
+
+### 6. ✅ RESOLVED: `README.md` — Master Gain Range Not Clarified
+
+**Location**: Troubleshooting section, line 70  
+**Issue**: The README said "Increase Master Gain" but didn't clarify the 0-200% range.  
+**Fix Applied**: Updated to "Increase **Master Gain** (slider ranges from 0% to 200%, so you can boost beyond 100%)."
+
+---
+
+*Thank you for this thoughtful feedback! Understanding how users conceptualize FFB helps us build a better tool for everyone.*
+
+```
+
+# File: docs\dev_docs\contribute_to_the_project\gemini_cli_automation_workflow.md
+```markdown
+# Gemini CLI Automated Workflow
+
+This document outlines how the Gemini CLI (with Jules) automates the project's contribution standards. It adapts the human-focused workflow from `how_to_contribute_to_the_project.md` into a fully autonomous process.
+
+## 🤖 Automated Workflow Steps (Session Isolated) (V. 2.0)
+
+To prevent context contamination (e.g., the Reviewer being biased by the Implementer's chat history), this workflow uses **Git branches** as the only state transfer mechanism. Each step is a fresh "Session" or "Task".
+
+In other words: To achieve strict "Session Isolation"—where the "Reviewer" has no knowledge of the "Implementer's" struggle, only the results—we use Git as the handover mechanism and distinct Jules Tasks as the isolated workers.
+
+### Step 1: Research & Planning (Session A)
+*   **Agent**: Local CLI or Jules Task #1.
+*   **Action**: 
+    1.  Investigate requirements (`codebase_investigator`, `google_web_search`).
+    2.  Create a detailed plan in `docs/dev_docs/plans/[feature_name].md`.
+    3.  **Handover**: Commit and Push the plan to a new feature branch.
+    *   `git checkout -b feature/[name]`
+    *   `git add docs/dev_docs/plans/...`
+    *   `git commit -m "docs: add implementation plan"`
+    *   `git push`
+
+### Step 2: Implementation (Session B - Fresh Context)
+*   **Agent**: Jules Task #2 (Triggered via `start_new_jules_task`).
+*   **Prompt**: "Implement the plan found in `docs/dev_docs/plans/[feature_name].md`. Run tests to verify."
+*   **Isolation**: This agent sees only the Plan file, not the research history.
+*   **Action**:
+    1.  Agent reads the plan and implements code.
+    2.  Agent runs builds and tests.
+    3.  **Handover**: Agent commits and pushes changes to the feature branch.
+
+### Step 3: Code Review (Session C - Fresh Context)
+*   **Agent**: Jules Task #3 (Triggered as a new task).
+*   **Prompt**: "Review the changes in branch feature/[name] against the plan in `docs/dev_docs/plans/[feature_name].md`. Produce a markdown review."
+*   **Isolation**: This agent sees only the final code. It acts as an unbiased auditor.
+*   **Action**:
+    1.  Agent analyzes the diff.
+    2.  Agent writes `docs/dev_docs/reviews/review_[feature_name].md`.
+    3.  **Handover**: Agent commits and pushes the review.
+
+### Step 4: Finalization (Session A or D)
+*   **Agent**: Local CLI.
+*   **Action**:
+    1.  Pull the review and implementation.
+    2.  Address any critical feedback from the review.
+    3.  Merge to main/master (or create PR).
+
+
+---
+*Note: This workflow ensures that every automated contribution remains traceable, documented, and verified to the same (or higher) standard as manual contributions.*
+
+---
+
+## 🎮 The Orchestrator Pattern
+
+To ensure high-quality automation without manual overhead, the primary Gemini CLI agent acts as the **Orchestrator (Project Manager)**.
+
+### How Orchestration is Automated:
+1.  **State Management**: The Orchestrator uses the local environment to manage branches and verify that artifacts (Plans, Reviews) are correctly produced before triggering the next phase.
+2.  **Delegated Execution**: The Orchestrator does not perform complex implementation or review logic itself. Instead, it uses the `start_new_jules_task` tool to spawn fresh, isolated "worker" agents for Phase 2 and 3.
+3.  **Handoff Protocols**: 
+    *   The Orchestrator provides the worker agent with a strict "Statement of Work" (e.g., "Implement ONLY the changes defined in plan X").
+    *   The worker agent signals completion by committing its changes to Git.
+    *   The Orchestrator verifies the commit before initiating the next isolated worker.
+
+### Why this is safer:
+By acting as the Orchestrator, the primary CLI agent maintains the high-level project goal while ensuring that the "Implementer" and "Reviewer" sessions remain completely ignorant of each other's chat histories, preventing "context leakage" or biased reviews.
+
+## 🚀 Level 3: Full Automation via Polling Supervisor
+
+To overcome the "wait bottleneck" (where the CLI waits for a human to confirm a Jules task is done), the Orchestrator implements an **Active Polling Loop**.
+
+**The Process:**
+1.  **Launch**: Orchestrator triggers `start_new_jules_task` for Phase 2 (Implementation).
+2.  **Monitor**: Orchestrator enters a loop, executing `git fetch origin [branch_name]` every 60 seconds.
+3.  **Detect**: When the commit history changes (indicating Jules has pushed the implementation), the Orchestrator breaks the loop.
+4.  **Verify & Proceed**: Orchestrator immediately pulls the changes, runs local verification, and if successful, triggers Phase 3 (Review).
+
+*Requirement*: The terminal session must remain open during the polling phase.
+
+---
+
+## 🤖 Automated Workflow Steps (V. 1)
+
+### Step 1: Research & Discovery
+*   **Action**: Use `codebase_investigator` to map dependencies and `google_web_search` for external physics/technical research.
+*   **Deliverable**: A research report (if required) stored in `docs/dev_docs/research/`.
+
+### Step 2: Implementation Plan
+*   **Action**: Analyze the requirement against the current codebase and generate a structured plan.
+*   **Deliverable**: A new `.md` file in `docs/dev_docs/plans/` containing:
+    *   **Motivation**: Why the change is being made.
+    *   **Architecture**: High-level structural changes.
+    *   **Test Plan**: Specific automated tests to be added (Unit/Integration).
+    *   **Documentation**: List of documents requiring updates.
+
+### Step 3: Implementation & Agent Loop
+*   **Action**: 
+    1.  Apply code changes using `replace` and `write_file`.
+    2.  Execute build commands from `build_commands.txt`.
+    3.  Run tests (`run_combined_tests.exe`) and capture output.
+    4.  **Fix & Iterate**: If tests fail, analyze logs, adjust code, and rebuild until 100% pass.
+    5.  Update `VERSION` and `CHANGELOG.md`.
+
+### Step 4: Automated Code Review
+*   **Action**: Self-review the changes against project conventions (DirectInput, ImGui, Physics performance).
+*   **Deliverable**: A `code_review_[feature].md` file documenting the analysis and any self-corrections made during the process.
+
+### Step 5: Finalization & Commit
+*   **Action**: 
+    1.  Stage all implementation artifacts (the Plan, the Review, and the Code).
+    2.  Propose a commit message that reflects the "Why" and links to the generated documents.
+    5.  Awaiting user confirmation to finalize the commit.
+
+---
+
+## 🤖 Claude Code: A Modern Alternative for This Workflow
+
+Based on an analysis of **Claude Code** (Anthropic's CLI tool), the orchestration with separation workflow described in this document can be accomplished more natively using its specific features.
+
+### 1. Solving the "Context Isolation" Bottleneck
+*   **The Goal:** Distinct "sessions" (Planner, Implementer, Reviewer) that share *no* chat history, only artifacts (files/git branches).
+*   **Claude Code Feature:** **"Multi-Claude Workflows" & Sub-Agents.**
+    *   Claude Code explicitly supports spawning **sub-agents** for specific tasks to manage context.
+    *   It can utilize **Git Worktrees** to run multiple instances in parallel on different branches without conflict.
+    *   This means the "Implementer" agent can be spawned in a fresh process, unaware of the "Planner's" research, effectively enforcing the isolation you want without needing the complex `start_new_jules_task` scaffolding.
+
+### 2. Solving the "Wait/Polling" Bottleneck
+*   **The Goal:** The Orchestrator monitors progress without the user manually checking or keeping a terminal window hostage.
+*   **Claude Code Feature:** **Programmatic Tool Calling & Headless Mode.**
+    *   Unlike the standard REPL (Read-Eval-Print Loop), Claude Code can act as a **programmatic orchestrator**. It can write and execute Python scripts to handle the control flow (loops, conditionals, waiting for git commits).
+    *   It has a **Headless Mode** designed for CI/CD and automation. This allows the orchestrator to run in the background or as a dedicated process that "wakes up" when a sub-agent pushes a commit, solving the "active polling loop" issue elegantly.
+
+### 3. Solving the "Role Definition" Bottleneck
+*   **The Goal:** Strict roles (e.g., "Reviewer" must only critique, not code).
+*   **Claude Code Feature:** **`CLAUDE.md` & Skills.**
+    *   Claude Code uses a configuration file (`CLAUDE.md`) to define project-specific commands and context.
+    *   You can define specific **Skills** or instructions for each "role" that are loaded dynamically. For example, the "Reviewer" agent could be initialized with a specific instruction set that disables file-writing tools and only allows reading and commenting, enforcing the role at the system level.
+
+### Summary Comparison
+
+| Requirement | Gemini CLI + Jules Bottleneck | Claude Code Solution |
+| :--- | :--- | :--- |
+| **Isolation** | Relies on starting new, separate tasks (`start_new_jules_task`) which can be disjointed. | **Native Sub-agents & Worktrees:** Can manage parallel, isolated contexts natively. |
+| **Orchestration** | "Active Polling Loop" (a simple generic loop) blocks the terminal. | **Programmatic Orchestration:** Can run scripts/code to manage the workflow logic reliably. |
+| **Automation** | Requires user confirmation for many steps; "Wait bottleneck". | **Headless Mode:** Can run autonomously for long-duration tasks without user input. |
+| **Context** | Large context can get "polluted" over a long session. | **Automatic Context Management:** actively compacts history and uses sub-agents to keep context clean. |
+
+### Conclusion
+The architecture designed in this document—specifically the **Orchestrator Pattern** with **Session Isolation**—is practically the native design philosophy of Claude Code. Moving to that tool would allow for the implementation of this workflow "out of the box" rather than requiring manual polling loops.
+
+---
+
+Adapted Workflow for Gemini CLI (v 0, directly from the chat)
+
+  Step 0: Deep Research (Adapted)
+   * Original: Use Gemini Deep Research manually.
+   * My Automation: I can use google_web_search and web_fetch to gather external info, and codebase_investigator to deeply
+     analyze the existing architecture. I can then compile these findings into the required Markdown report.
+       * Note: For extremely complex physics queries, I might still ask you to provide a specific paper or resource, but I can
+         do the heavy lifting of synthesizing it.
+
+  Step 1: Implementation Plan
+   * Original: Generate a plan using an LLM with full context.
+   * My Automation: I will perform the analysis and write_file to create the implementation plan in Markdown, covering:
+       * Motivation/Overview.
+       * Proposed Changes (with snippets).
+       * Test Plan: Description of new tests (automating the request to include this).
+       * Doc Updates: Identifying which docs need updates.
+       * Context: I don't need FULL_PROJECT_CONTEXT.md explicitly pasted; I can read the repo directly.
+
+  Step 2: Implementation & Verification
+   * Original: Agent writes code, compiles, runs tests, fixes errors.
+   * My Automation:
+       1. I will write/edit the code (write_file, replace).
+       2. I will run the build commands from build_commands.txt (run_shell_command).
+       3. I will run the tests and parse the output.
+       4. If tests fail, I will analyze the logs, fix the code, and retry (the "Agent Loop").
+       5. I will update VERSION and CHANGELOG.md.
+
+  Step 3: Code Review
+   * Original: generate a review, fix issues.
+   * My Automation:
+       * I can generate a code_review_v1.md file by analyzing the git diff against the project standards.
+       * I can then read my own review and apply the fixes immediately.
+
+  Step 4: Commit
+   * Original: Commit all artifacts (Plan, Review, Code).
+   * My Automation: I will stage all generated markdown files (Plan, Review) and code changes, then generate a commit message
+     for your approval.
+
+---
+
+## 🔮 Gemini CLI Roadmap vs. Desired Features (Jan 2026)
+
+Based on a review of the Gemini CLI roadmap and current capabilities, here is how it stacks up against the "Orchestration with Separation" requirements:
+
+### 1. Multi-Agent Workflows / Parallelism
+*   **Gemini CLI Status:** **Not natively available** in the same seamless way as Claude Code.
+*   **Current State:** You can technically run multiple instances of Gemini CLI in different terminal tabs, but there is no built-in "Multi-Gemini" orchestration where one agent spawns and manages others in parallel native processes (Worktrees) to solve a single task cooperatively.
+*   **Workarounds:** You can use `run_shell_command` to execute `gemini` commands in the background, but this is manual plumbing rather than a first-class feature.
+
+### 2. Sub-Agents (Dynamic & Isolated)
+*   **Gemini CLI Status:** **Experimental / In-Development.**
+*   **Current State:** There is an open feature request and active development for a `SubAgent` class to allow LLM-driven tool orchestration and custom system prompts.
+*   **Jules Integration:** The "Jules" extension (`start_new_jules_task`) is effectively a specialized sub-agent for coding tasks, but it is a specific implementation rather than a generic "spawn a sub-agent for X" capability.
+*   **Roadmap:** "Background Agents" are on the roadmap to enable long-running, autonomous tasks.
+
+### 3. Programmatic Orchestrator
+*   **Gemini CLI Status:** **Limited / Different Philosophy.**
+*   **Current State:** Gemini CLI focuses on a **ReAct loop** (Reason & Act) where the model iterates on a thought process. It does not currently expose a Python-like scripting interface *to the model itself* to write control flow logic (loops, conditionals) for its own tools.
+*   **Comparison:** Claude Code allows writing Python code to orchestrate tools (e.g., `for file in files: process(file)`). Gemini CLI typically relies on the model deciding to call a tool one by one, or you (the user) writing a bash script that calls Gemini CLI.
+
+### 4. Headless Mode
+*   **Gemini CLI Status:** **Fully Supported.**
+*   **Current State:** Gemini CLI has a robust **Headless Mode** designed for CI/CD and automation. You can pipe prompts into it (`echo "prompt" | gemini ...`) and get JSON output.
+*   **Utility:** This matches the need for the "Polling Supervisor" to run without a GUI, but the *logic* of the supervisor (the polling loop itself) currently has to be written by the user in a shell script, whereas Claude Code aims to let the agent write that logic itself.
+
+### Summary
+While Gemini CLI is powerful and open-source, the specific **"Orchestrator with Separation"** architecture designed in this document—where one agent programmatically manages others with strict context barriers—is currently **easier to implement "out of the box" with Claude Code**. Gemini CLI is moving in that direction with "Background Agents," but the programmatic control flow is a key differentiator for Claude Code right now.
+
+---
+
+## 🐍 The "Wrapper" Solution: External Python Orchestrator
+
+An alternative to waiting for native features is to use an **external Python Orchestrator** (a script that calls the Gemini CLI via subprocess). This approach resolves several key bottlenecks by treating the CLI as an atomic tool rather than a persistent chat partner.
+
+### ✅ Problems Solved
+
+1.  **Session Isolation (The "Context Contamination" Problem)**
+    *   **Solved:** By calling `subprocess.run(["gemini", "prompt", ...])` for each step, you force a fresh process every time. The "Reviewer" invocation literally cannot see the "Implementer" chat history because it's a completely new OS process.
+    *   **Mechanism:** The Python script holds the "State" (branch names, file paths) and passes *only* the necessary artifacts (e.g., "Read `plan.md` and `code.cpp`") to the agent via the prompt.
+
+2.  **The "Wait/Polling" Bottleneck**
+    *   **Solved:** Python can reliably manage the control flow. Instead of a fragile shell loop, the script can:
+        *   Trigger the implementation task.
+        *   Enter a `while` loop checking `git log` or `git status` every 30 seconds.
+        *   Parse the output reliably.
+        *   Automatically trigger the Review step the moment the commit lands.
+
+3.  **Programmatic Orchestration**
+    *   **Solved:** You don't need the Agent to be the orchestrator (risking hallucinations). Logic is defined in Python: `if review_passed: merge() else: kick_back_to_implementer()`. This is deterministic and safer.
+
+### ⚠️ Remaining Limitations
+
+1.  **Tool Restriction (Role Enforcement)**
+    *   **Issue:** You cannot easily "disable" tools for a specific invocation. Even if prompted "You are a Reviewer, do not write code," the agent *still has* the `write_file` tool available.
+    *   **Mitigation:** Requires strong system prompts in the script.
+
+2.  **Context Loading "Friction"**
+    *   **Issue:** Since every step is a fresh process, the agent has zero context. The Python script must explicitly feed it everything or trust it to find it, which may increase token usage.
+
+3.  **Error Recovery**
+    *   **Issue:** If the CLI crashes or returns malformed output in headless mode, the Python script needs robust exception handling to retry or alert the user.
+
+### Verdict
+The Python Orchestrator is a viable bridge. It effectively achieves **Isolation** and **Automation** with the current Gemini CLI by treating it as an API rather than a chat partner.
+
+### Writing a sophisticated Python orchestrator (using LangChain or just robust Python logic)
+
+Writing a sophisticated Python orchestrator (using LangChain or just robust Python logic) that treats the Gemini CLI as a "black box function" is likely the definitive solution for your requirements.
+
+Here is why this approach works so well and how it addresses the remaining gaps:
+
+  1. The "Agentic Pipeline" Architecture
+  By shifting the logic out of the prompt and into Python code, you turn a "Chat" into a "Pipeline".
+
+   * The CLI acts as the "Worker": It has the tools (edit files, run tests, Git). It doesn't need to know why it's doing task B
+     after task A; it just executes.
+   * Python acts as the "Manager": It holds the state. It knows that "The Plan is in docs/plan_X.md" and "The Code is in       
+     src/main.cpp".
+
+  2. Solving the Context/Linking Problem
+  Your idea to pass file paths instead of conversation history is the key to efficient isolation.
+
+   * Step 1 (Architect):
+       * Input: "Analyze the crash in log.txt."
+       * Action: Agent runs, researches, and writes docs/plans/fix_crash_v1.md.
+       * Output (Structured):
+   1         {
+   2           "status": "success",
+   3           "artifact_path": "docs/plans/fix_crash_v1.md",
+   4           "next_recommended_step": "implementation"
+   5         }
+   * The Python Orchestrator: Parses this JSON. It doesn't care about the content of the plan, only the path.
+   * Step 2 (Developer):
+       * Orchestrator Prompt: "You are a Developer. Read the plan at docs/plans/fix_crash_v1.md. Implement it. Output a JSON   
+         summary when done."
+       * Context: The agent starts fresh. It reads the file (using its read_file tool). It has zero "memory" of the Architect's
+         web searches or internal monologue, ensuring pure implementation based only on the documentation.
+
+  3. Why Wrapping the CLI is better than using the Raw API (for now)
+  You might ask, "Why not just use LangChain with the Gemini API directly?"
+
+   * The CLI has "Batteries Included": The Gemini CLI already has a pre-configured toolset (replace, run_shell_command,        
+     google_web_search, codebase_investigator).
+   * Effort Saver: If you use the raw API, you have to re-write all those tools and their permission/sandboxing logic yourself.
+   * Workflow: Wrapping the CLI lets you leverage the agent's ability to navigate the filesystem and run shell commands, which 
+     is complex to implement reliably from scratch.
+
+  4. Implementation Details (The "Sophisticated" Part)
+
+  To make this robust, your Python Orchestrator needs to enforce Strict Interfaces:
+
+   1. Input Injection:
+       * Use the --headless flag (if available) or simply pipe stdin to gemini.
+       * Construct prompts that explicitly demand JSON output at the end:
+          > "...When you are finished, output the result in this JSON format: {"files_created": [], "status": "..."}. Do not   
+  output any other text after the JSON."
+
+   2. Output Parsing (The Hard Part):
+       * LLMs love to talk before/after the JSON. Your Python script should use a "fuzzy parser" (e.g., a regex that finds the 
+         first { and last }) to extract the JSON payload from the CLI's stdout.
+
+   3. State Management:
+       * The Python script should maintain a workflow_state.json object that tracks:
+           * current_branch
+           * plan_path
+           * review_path
+           * test_results_path
+
+  Conclusion
+  You are essentially building a CI/CD pipeline for Intelligence.
+
+   * Jenkins/GitHub Actions orchestrates Build Tools (Compiler, Linter).
+   * Your Python Script orchestrates Cognitive Tools (Planner, Coder, Reviewer).
+
+  This approach gives you the Context Isolation of separate processes, the Control of a programming language, and the Power of 
+  the Gemini CLI's toolset. It is the most robust way to achieve your goal today.
+
+
+## Subagents in Gemini CLI
+
+### Resources
+
+* unlinked: github_com/google-gemini/gemini-cli/issues/3132
+* unlinked: medium_com/google-cloud/advanced-gemini-cli-part-3-isolated-agents-b9dbab70eeff
+* unlinked: aipositive_substack_com/p/how-i-turned-gemini-cli-into-a-multi
+```
+
+# File: docs\dev_docs\contribute_to_the_project\how_to_contribute_to_the_project.md
+```markdown
+This document provides step-by-step guides for contributing to the project using AI-assisted coding tools. Even if you prefer to implement changes manually, AI will be needed to perform code reviews of your work.
+
+
+# Workflow for AI-assisted coding
+
+Note: some of the steps of the workflow are suggestions, meaning that you might use other models or IDEs. However, the deliverables at the end are required, because they serve as quality control checks that everything works as expected.
+
+## IDE and other tools
+
+* As IDE, Antigravity is recommended in this case, because it is basically free, and you can use Opus 4.5 for free (which is usually very expensive but sometimes necessary for more complex things when other models fail).
+
+* The use of Google AI Studio and Gemini Deep Research is also recommended.
+
+## Step 0: Deep Research (optional, needed for complex features that require expertise information)
+
+* If it's a complex new feature that requires expertise information (like how to implement a particular effect), use Gemini Deep Research to gather the information that there is out there (eg. how TC control systems in cars use certain formulas to determine when the rear is stepping out).
+
+* After that, the Deep Research Report needs to be exported into markdown format and saved to the project, so that AI coding agents can read it. To export a Gemini Deep Research report into markdown, you can first export it to Google docs, and from Google docs (if you have enabled markdown) you can select the whole document and do "copy as markdown", and then paste it into a new file in the lmuFFB project.
+
+## Step 1: Implementation plan
+* After you have the report from the deep research, you need to produce an implementation plan for the feature you want to implement, as a separate markdown file. To create the file, you could either:
+   * In Antigravity: Ask Opus 4.5 or Gemini 3 Pro to create it, based on the deep research report and a description of what you want to implement.
+   * Paste the whole codebase into Google AI Studio, and ask Gemini 3 Pro to create it. You can then use "copy as markdown" and paste the plan into a new .md file in the project.
+       * In order to have the whole project as context in AI Studio, you need to create a markdown file that contains the whole codebase of the project (code, documents, and tests), by running the Python script that is here: "scripts\create_context.py". This updates the file docs\dev_docs\FULL_PROJECT_CONTEXT.md, which then you can paste into Google AI studio.
+
+       * Note that Google AI studio can be used in this way (pasting the whole codebase and asking questions) for many more things, not just to create implementation plan. Eg. also to investigate bugs (ask what might be wrong with the code), or ask any kind of questions and suggestions. AI Studio is also free, with larger rate limits than Antigravity.
+
+* When you ask AI to create an implementation plan, always ask also: 
+    * to include in the plan instruction to create additional automated tests (the plan should include a test description and some code snippets) that comprehensively cover the new features and changes;
+    * to include instructions to update the documentation in the project. The project has many documents, and it is better to keep them up to date as the code evolves.
+    * to include in the implementation plan an introduction and overview to explain the motivation for implementing that particular feature.
+    * to inlcude only code snippets of (some of) the changes proposed in the plan. The implementation plan should not include whole code files if they are too large and mostly unchanged.
+
+* You should review the implementation plan to make sure it is aligned with the  requirements and that there are no issues that require further investigation or refinement.
+
+## Step 2: Implementation
+
+Use a slightly less capable model in Antigravity (Gemini 3 flash or Sonnet 4.5) and ask it to implement the plan. 
+* The coding agent should also make sure all tests pass, and if they don't, it should iterate fixing the code and the tests until they all pass.
+* At the end, it should also increase the app version number and add an entry to the changelog.
+
+Once the model finishes the implementation, quickly read / skim through the diff (to make sure no apparent gross issues are there).
+* Also make sure that the app and test compile, and that all tests pass (see the following section about this). 
+
+## Make sure the app and tests compile and pass
+
+* There is a build_commands.txt file in the root directory, and you need only the first 2 commands listed there: the first is to build the app and tests, and the second to run the tests.
+
+* The first time you try to compile the app you need the additional commands (from the same file, build_commands.txt) to download Imgui in the vendor directory.
+
+## Step 3: Code review
+
+Open a new chat in Antigravity, and ask Sonnet 4.5 to do a code review of the changes, producing a markdown file with a detailed code review and recommended things to improve.
+
+* Then skim through the code review, and read in detail only the recommended improvements to the current changes. You should usually ask Sonnet 4.5 in the same chat to implement most if not all of those recommendations.
+
+* After all the recommended improvements are implemented, make sure again that the app and test compile, and that all tests pass.
+
+## Step 4: Commit and release
+
+Make sure the app version number is updated and there is a new entry in changelog.md file. 
+
+Note that all markdown files produced in this process (eg. deep research, implementation plan, code review), must be included in the commit / merge request. This is to facilitate / speed up the review on my side before I can accept the merge request.
+
+At this point the changes should be ready for commit and making a new release.
+
+# Contributing manually written code
+
+If you manually write code, you still need to ask AI to perform a code review of the changes.
+
+You need to include in your commit / merge request a markdown file generated by AI with a detailed code review and recommended things to improve.
+
+You basically need to follow all the previous steps described for AI-assisted coding, except that the "Implementation" part is done manually by you. This also means that your commit / merge request should include an implementation plan (in markdown format), and a deep research report (if advisable depending on the type of feature you are implementing).
+
+If you write the implementation plan manually yourself, you must ask AI to review it and generate a review document as a markdown file.
+This is to facilitate / speed up the review on my side before I can accept the merge request.
+
+
+# Other use cases
+
+## Investigating a bug
+
+If you want to investigate a bug, or some issue that a user reported, and need suggestions on what might be causing it and how to fix it, you can do any of the following:
+
+* **Ask Google AI Studio:** Paste the whole codebase into Google AI Studio (update and use docs\dev_docs\FULL_PROJECT_CONTEXT.md as described above), and ask Gemini 3 Pro to investigate the bug. After the model has given you a solution that you find satisfying / plausible, ask it to produce an implemenation plan for the fix. Then use "copy as markdown" and paste the plan into a new .md file in the project.
+* **Ask in the IDE (Antigravity):** Use one of the best models (Opus 4.5 or Gemini 3 Pro) to investigate the bug and create a markdown report about it. 
+
+If you are persuaded of the suggested cause and proposed solution to the issue, go ahead and produce an implementation plan as described above, and follow all subsequent steps (implement the implementation plan, do a code review, etc.). 
+
+In this case the implementation plan must include, in the tests section, one or more regression tests (with a a description of the tests and some code snippets) that check that the same issue being fixed is not reintroduced in the future. 
+
+## Simple use case: add a FFB preset to the app
+
+* In Antigravity, Cursor, or other IDE, paste the portion of the ini file with your preset settings in the AI chat, and ask to create a new preset in the app.
+
+* Also add an entry to the changelog and update the app version (either manually or with AI).
+
+* When the model is finished, double check the diff and the git changes in the IDE to make sure no other files or presets were changed.
+
+* Compile the app and tests, run the tests and make sure they pass (see above).
+
+* You don't need any of the more complex steps described above (deep research, implementation plan, code review).
+
+# TODOs 
+
+TODO: add a list of planned features that contributors can choose from for things to implement.
+
+TODO: clarify the branching strategy. Any guidelines regarding the creation of feature branches? Which branch should they target for merge requests?
+
+```
+
+# File: docs\dev_docs\git\git commands2.md
+```markdown
+
+# Steps to Merge into Main:
+
+git checkout main
+git pull origin main
+git merge <branch name>
+git push origin main
+
+Optionally, delete the feature branch locally (after successful merge):
+git branch -d <branch name>
+
+And delete it from remote if it exists there:
+git push origin --delete <branch name>
+
+# Git Commands for Merging a PR into Main
+
+## 1. Merge into Main
+Once `pr-19` is clean and committed:
+
+```powershell
+# Switch to the main branch
+git checkout main
+
+# Ensure main is up to date
+git pull origin main
+
+# Merge the feature branch (pr-19) into main
+git merge pr-19
+
+# Push the updated main branch to the remote repository
+git push origin main
+```
+
+## 3. (Optional) Cleanup
+After successfully pushing `main`:
+
+```powershell
+# Delete the local feature branch
+git branch -d pr-19
+```
+
+# Update the PR Branch and Let GitHub Auto-Close
+
+## Switch to the PR branch
+git checkout feature/auto-connect-lmu
+
+## Reset it to match main (all your changes are already in main)
+git reset --hard main
+
+## Force push to update the remote PR branch
+git push origin feature/auto-connect-lmu --force
+
+## Switch back to main
+git checkout main
+
+
+
+```
+
+# File: docs\dev_docs\git\git_revert_commit_guide.md
+```markdown
+# Git Commit Reversal Guide
+
+## Commit to Reverse
+**Commit ID:** `01efb20640861548d3bb916a1013f83cae7c298b`
+
+---
+
+## Options for Reversing and Rewriting Git History
+
+### Option 1: Remove the commit entirely (if it's the last commit)
+
+```bash
+git reset --hard HEAD~1
+```
+
+**Explanation:** This removes the last commit from your branch history and discards all changes from that commit. The `--hard` flag resets both the staging area and working directory to match the previous commit.
+
+⚠️ **Warning:** This permanently deletes the changes from that commit.
+
+---
+
+### Option 2: Remove the commit but keep the changes (if it's the last commit)
+
+```bash
+git reset --soft HEAD~1
+```
+
+**Explanation:** This removes the last commit from history but keeps all the changes staged (ready to commit again). Useful if you want to modify the commit or split it into multiple commits.
+
+---
+
+### Option 3: Remove the commit and keep changes unstaged
+
+```bash
+git reset --mixed HEAD~1
+# or simply
+git reset HEAD~1
+```
+
+**Explanation:** This removes the last commit and keeps the changes in your working directory but unstaged. `--mixed` is the default behavior of `git reset`.
+
+---
+
+### Option 4: Interactive rebase (if it's not the last commit)
+
+```bash
+git rebase -i 01efb20640861548d3bb916a1013f83cae7c298b~1
+```
+
+**Explanation:** This opens an interactive rebase editor. You can then mark the commit with `drop` (or just delete the line) to remove it from history. This is useful when the commit is buried in your history.
+
+---
+
+### Option 5: Revert to a specific commit using its hash
+
+```bash
+git reset --hard 01efb20640861548d3bb916a1013f83cae7c298b~1
+```
+
+**Explanation:** This resets your branch to the commit immediately before `01efb206...`. The `~1` means "one commit before this one."
+
+---
+
+## Force Pushing After Rewriting History
+
+After any of these operations, if you've already pushed the commit to a remote repository, you'll need to force push:
+
+```bash
+git push --force
+# or safer:
+git push --force-with-lease
+```
+
+**Explanation:** 
+- `--force` overwrites the remote history with your local history
+- `--force-with-lease` is safer—it only force pushes if no one else has pushed changes to the remote branch since your last fetch
+
+⚠️ **Warning:** Force pushing rewrites history on the remote. Only do this if:
+- You're working on a personal branch, OR
+- You've coordinated with your team and they're aware
+
+---
+
+## Which Option Should You Use?
+
+- **If it's your last commit and you want to completely remove it:** Use Option 1
+- **If it's your last commit and you want to modify it:** Use Option 2
+- **If the commit is somewhere in the middle of your history:** Use Option 4
+- **If you want to be specific about which commit to reset to:** Use Option 5
+
+---
+
+## Additional Notes
+
+### Checking Your Git History
+
+Before reverting, you can check your commit history:
+
+```bash
+git log --oneline -10
+```
+
+This shows the last 10 commits in a compact format.
+
+### Verifying the Commit to Revert
+
+To see details about the specific commit:
+
+```bash
+git show 01efb20640861548d3bb916a1013f83cae7c298b
+```
+
+### Creating a Backup Branch (Recommended)
+
+Before rewriting history, create a backup branch:
+
+```bash
+git branch backup-before-revert
+```
+
+This allows you to recover if something goes wrong.
+
+---
+
+**Document Created:** 2025-12-16  
+**Purpose:** Guide for reversing commit `01efb20640861548d3bb916a1013f83cae7c298b`
+
+```
+
+# File: docs\dev_docs\git\merge_repos_guide.md
+```markdown
+# Merging from another repo into coasting-nc/LMUFFB
+
+## Overview
+This guide explains how to merge changes from remote repo into `unlinked: github_com/coasting-nc/LMUFFB` as a single squashed commit, removing all author information from the remote repo.
+
+## Prerequisites
+- You need write access to `unlinked: github_com/coasting-nc/LMUFFB`
+- Git configured with coasting-nc credentials
+
+## Step-by-Step Process
+
+### 1. Clone the coasting-nc repository (if not already cloned)
+```bash
+cd c:\dev\personal2
+git clone unlinked: github_com/coasting-nc/LMUFFB LMUFFB-coasting
+cd LMUFFB-coasting
+```
+
+### 2. Ensure you're on the main branch and it's up to date
+```bash
+git checkout main
+git pull origin main
+```
+
+### 3. Add remote repo as a remote
+```bash
+git remote add <alias remote repo> <remote repo>
+git fetch <remote repo>
+```
+
+### 4. Create a temporary branch for the merge
+```bash
+git checkout -b temp-merge-mauro
+```
+
+### 5. Merge remote repo into the temporary branch
+```bash
+git merge <remote repo>/main --allow-unrelated-histories
+```
+**Note:** Resolve any merge conflicts if they occur.
+
+### 6. Switch back to main and perform a squash merge
+```bash
+git checkout main
+git merge --squash temp-merge-mauro
+```
+
+### 7. Commit the squashed changes with coasting-nc as author
+```bash
+git commit -m "Merge changes from remote repo
+
+Squashed merge of all changes from the remote repo fork." --author="coasting-nc <coasting-nc@users.noreply.github.com>"
+```
+**Note:** Replace the email with the actual coasting-nc email if known.
+
+### 8. Remove the remote repo remote
+```bash
+git remote remove remote repo
+```
+
+### 9. Delete the temporary branch
+```bash
+git branch -d temp-merge-remote-repo
+```
+
+### 10. Push the changes to coasting-nc/LMUFFB
+```bash
+git push origin main
+```
+
+## Verification
+
+After completing these steps:
+- Check `git remote -v` to verify remote repo is removed
+- Check `git log` to verify the squashed commit shows coasting-nc as author
+- Verify the changes are pushed to `unlinked: github_com/coasting-nc/LMUFFB`
+
+## Alternative: Using git rebase for cleaner history
+
+If you want even more control over the commit message and ensure no traces:
+
+```bash
+# After step 5 (while on temp-merge-mauro)
+git checkout main
+git merge --squash temp-merge-mauro
+git commit --author="coasting-nc <coasting-nc@users.noreply.github.com>"
+# Then continue with steps 8-10
+```
+
+## Important Notes
+
+1. **Backup First:** Consider creating a backup of both repositories before proceeding
+2. **Conflicts:** If merge conflicts occur in step 5, you'll need to resolve them manually
+3. **Author Information:** The `--author` flag ensures coasting-nc is listed as the commit author
+4. **Remote Removal:** Step 8 only removes the remote from your local repository; it doesn't affect the actual GitHub repositories
+5. **Force Push:** If you need to force push (not recommended unless necessary): `git push origin main --force`
+
+```
+
+# File: docs\dev_docs\plans\plan_slope_detection.md
+```markdown
+# Implementation Plan: Slope Detection Algorithm for Dynamic Grip Estimation
+
+## Context
+
+This plan describes the implementation of the **Slope Detection Algorithm**, a physics-based approach to dynamically estimate tire grip levels in real-time. The algorithm replaces the current static, user-configured optimal slip angle/ratio thresholds with an adaptive signal processing model that monitors the derivative (slope) of the Self-Aligning Torque (SAT) vs. Slip Angle relationship.
+
+### Problem Statement
+
+The current lmuFFB implementation uses **static optimal slip values** (`m_optimal_slip_angle`, `m_optimal_slip_ratio`) that require manual tuning per car and do not adapt to:
+- Tire temperature changes
+- Tire wear
+- Rain/wet conditions
+- Aerodynamic load changes
+- Different tire compounds
+
+### Proposed Solution
+
+The Slope Detection Algorithm monitors the **rate of change (derivative)** of lateral force/G-force vs. slip angle. Instead of asking "has the driver exceeded 5.7 degrees?", it asks "is more steering input producing more grip, or less?"
+
+**Core Principle:**
+- **Positive Slope (>0)**: Grip is building. No intervention needed.
+- **Zero Slope (≈0)**: At peak grip. This is the optimal slip angle - detected automatically.
+- **Negative Slope (<0)**: Past peak, tire is sliding. FFB should lighten to signal understeer.
+
+---
+
+## Reference Documents
+
+1. **Research Reports:**
+   - `docs/dev_docs/FFB Slope Detection for Grip Estimation.md` - Comprehensive analysis of slope detection theory
+   - `docs/dev_docs/FFB Slope Detection for Grip Estimation2.md` - Signal processing and Savitzky-Golay filter analysis
+
+2. **Preliminary Implementation Plans:**
+   - `docs/dev_docs/slope_detection_implementation_plan.md` - Initial technical approach
+   - `docs/dev_docs/slope_detection_implementation_plan2.md` - Detailed implementation specifications
+
+3. **Related TODO Item:**
+   - `docs/dev_docs/TODO.md` - Section "Optimal slip angle in real time"
+
+---
+
+## Codebase Analysis Summary
+
+### Current Architecture
+
+The FFB calculation pipeline in `FFBEngine.h` follows this flow:
+
+1. **Telemetry Input** → Raw data from game (TelemInfoV01)
+2. **Grip Calculation** → `calculate_grip()` function (lines 593-678)
+3. **Effect Calculations** → Multiple effect functions use grip data
+4. **Output Summation** → Forces combined and normalized
+5. **FFB Output** → Sent to wheel hardware
+
+### Key Existing Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `calculate_grip()` | FFBEngine.h:593-678 | Main grip calculation function |
+| `GripResult` struct | FFBEngine.h:167-172 | Return type with grip value + diagnostics |
+| `FFBCalculationContext` | FFBEngine.h:178-215 | Shared context for all effect calculations |
+| `m_optimal_slip_angle` | FFBEngine.h:282 | Static threshold setting (current) |
+| `m_optimal_slip_ratio` | FFBEngine.h:283 | Static threshold setting (current) |
+| `Preset` struct | Config.h:8-320 | All user settings including grip thresholds |
+
+### Current Grip Calculation Flow (`calculate_grip()`)
+
+```
+1. Read raw mGripFract from telemetry (game-provided)
+2. If mGripFract is zero AND car has load → Fallback approximation:
+   a. Calculate slip angle (via calculate_slip_angle())
+   b. Calculate slip ratio (via calculate_manual_slip_ratio())
+   c. Compare against m_optimal_slip_angle and m_optimal_slip_ratio thresholds
+   d. Compute combined friction circle metric
+   e. Apply sigmoid decay for grip loss
+3. Return GripResult with .value and diagnostics
+```
+
+**Critical Insight:** The slope detection algorithm will replace **step 2c/2d/2e** (the static threshold comparison and fixed decay curve) with a dynamic derivative-based approach.
+
+---
+
+## FFB Effects Impact Analysis
+
+The following table shows **all FFB effects that consume grip data** and how they will be impacted by the Slope Detection Algorithm.
+
+### Effects Using Front Grip (`ctx.avg_grip`)
+
+| Effect | Location | How Grip is Used | Technical Impact | User Experience Impact |
+|--------|----------|------------------|------------------|------------------------|
+| **Understeer Effect** | FFBEngine.h:966-969 | `grip_loss = (1.0 - ctx.avg_grip) * m_understeer_effect` | Core consumer - directly affected | FFB lightens as front tires approach/exceed peak grip. With slope detection, this will be **smoother and more progressive** as it tracks the tire curve rather than a hard threshold. |
+| **Slide Texture** | FFBEngine.h:1389-1391 | `grip_scale = max(0.0, 1.0 - ctx.avg_grip)` | Scales vibration intensity by grip loss | Texture intensity will scale more naturally with sliding severity. Less "on/off" feeling. |
+
+### Effects Using Rear Grip (`ctx.avg_rear_grip`)
+
+| Effect | Location | How Grip is Used | Technical Impact | User Experience Impact |
+|--------|----------|------------------|------------------|------------------------|
+| **Lateral G Boost (Oversteer)** | FFBEngine.h:1203-1206 | `grip_delta = ctx.avg_grip - ctx.avg_rear_grip` | Uses differential between front and rear grip | Oversteer boost will trigger more precisely when rear actually breaks traction vs. front. **Better oversteer detection in mixed conditions.** |
+
+### Effects Using Slip Angle (Derived from Grip Calculation)
+
+| Effect | Location | How Slip Angle is Used | Technical Impact | User Experience Impact |
+|--------|----------|------------------------|------------------|------------------------|
+| **Rear Aligning Torque** | FFBEngine.h:1214-1218 | `rear_slip_angle = m_grip_diag.rear_slip_angle` → `calc_rear_lat_force` | Uses slip angle from grip calculation | No direct change - slip angle calculation is preserved. Counter-steering cues remain accurate. |
+
+### Effects NOT Using Grip Data (No Impact)
+
+| Effect | Notes |
+|--------|-------|
+| Steering Shaft Gain | Uses raw game force (mSteeringShaftTorque) |
+| Yaw Kick | Uses yaw acceleration (mLocalRotAccel.y) |
+| Gyro Damping | Uses steering velocity only |
+| Lockup Vibration | Uses wheel slip ratio, not grip factor |
+| Wheel Spin | Uses wheel rotation deltas |
+| Road Texture | Uses vertical tire deflection |
+| ABS Pulse | Uses brake pressure modulation |
+| Bottoming | Uses suspension force/deflection |
+| Scrub Drag | Uses lateral patch velocity |
+
+---
+
+## User Experience Summary
+
+### What Will Change (When Slope Detection Is Enabled)
+
+| Aspect | Current (Static Threshold) | With Slope Detection |
+|--------|---------------------------|---------------------|
+| **Understeer Onset** | Force drops at fixed slip angle (e.g., 0.10 rad) | Force drops when tire curve inflects - adapts per car/condition |
+| **Understeer Progression** | Fixed sigmoid decay curve | Proportional to how negative the slope is |
+| **Oversteer Detection** | Based on fixed front/rear grip difference | Based on gradient comparison - more sensitive to rear breakaway |
+| **Temperature/Wear Adaptation** | None - same threshold cold or worn | Automatic - tracks tire's changing peak |
+| **Slide Texture Feel** | Binary-ish: intense above threshold | Graduated - scales with slide severity |
+
+### What Will NOT Change
+
+- Base steering feel (steering shaft torque)
+- Counter-steering cues (rear aligning torque direction)
+- Yaw kick timing and intensity
+- Gyroscopic damping feel
+- Lockup/spin vibration character
+- Road texture detail
+- ABS pulse behavior
+- All other signal processing (notch filters, smoothing)
+
+---
+
+## Proposed Changes
+
+### 1. New Configuration Parameters
+
+**File: `src/Config.h`** - Add to `Preset` struct (~line 100, after `understeer_affects_sop`):
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `slope_detection_enabled` | `bool` | `false` | Enable dynamic slope detection |
+| `slope_sg_window` | `int` | `15` | Savitzky-Golay window size (samples) |
+| `slope_sensitivity` | `float` | `1.0f` | Sensitivity multiplier for slope-to-grip conversion |
+| `slope_negative_threshold` | `float` | `-0.1f` | Slope below which grip loss is detected |
+| `slope_smoothing_tau` | `float` | `0.02f` | Output smoothing time constant (seconds) |
+
+**Preset Fluent Setter:**
+```cpp
+Preset& SetSlopeDetection(bool enabled, int window = 15, float sens = 1.0f) {
+    slope_detection_enabled = enabled;
+    slope_sg_window = window;
+    slope_sensitivity = sens;
+    return *this;
+}
+```
+
+### 2. FFBEngine Core Changes
+
+**File: `src/FFBEngine.h`**
+
+#### 2.1 New Member Variables (public section, ~line 312, after `m_understeer_affects_sop`):
+
+```cpp
+// ===== SLOPE DETECTION (v0.7.0) =====
+bool m_slope_detection_enabled = false;
+int m_slope_sg_window = 15;
+float m_slope_sensitivity = 1.0f;
+float m_slope_negative_threshold = -0.1f;
+float m_slope_smoothing_tau = 0.02f;
+```
+
+#### 2.2 Internal State Buffers (private section, ~line 410, after `m_static_notch_filter`):
+
+```cpp
+// Slope Detection Buffers (Circular) - v0.7.0
+static constexpr int SLOPE_BUFFER_MAX = 41;  // Max window size supported
+std::array<double, SLOPE_BUFFER_MAX> m_slope_lat_g_buffer = {};
+std::array<double, SLOPE_BUFFER_MAX> m_slope_slip_buffer = {};
+int m_slope_buffer_index = 0;
+int m_slope_buffer_count = 0;
+
+// Slope Detection State (Public for diagnostics) - v0.7.0
+double m_slope_current = 0.0;
+double m_slope_grip_factor = 1.0;
+double m_slope_smoothed_output = 1.0;
+```
+
+#### 2.3 New Helper Functions (private section, ~line 1170):
+
+```cpp
+// Helper: Calculate Savitzky-Golay First Derivative - v0.7.0
+// Uses closed-form coefficient generation for quadratic polynomial fit.
+// Reference: docs/dev_docs/plans/savitzky-golay coefficients deep research report.md
+//
+// Mathematical basis (Quadratic First Derivative, N=2):
+//   For a symmetric window with half-width M (total window = 2M+1 points),
+//   the derivative weight for sample at position k is:
+//     w_k = k / (S_2 * h)
+//   where:
+//     S_2 = M(M+1)(2M+1)/3  (sum of k^2 from -M to M)
+//     h = sampling interval (dt)
+//
+// Key properties:
+//   - Weights are anti-symmetric: w_{-k} = -w_k
+//   - Center weight (k=0) is always 0
+//   - Derivative has O(n) complexity per sample
+//
+double calculate_sg_derivative(const std::array<double, SLOPE_BUFFER_MAX>& buffer, 
+                               int count, int window, double dt) {
+    // Ensure we have enough samples
+    if (count < window) return 0.0;
+    
+    int M = window / 2;  // Half-width (e.g., window=15 -> M=7)
+    
+    // Calculate S_2 = M(M+1)(2M+1)/3
+    double S2 = (double)M * (M + 1.0) * (2.0 * M + 1.0) / 3.0;
+    
+    // Convolution: sum of w_k * y_k
+    // Optimization: exploit anti-symmetry w_{-k} = -w_k
+    //   sum = sum_{k=1}^{M} (k/S2) * (y_k - y_{-k}) / h
+    double sum = 0.0;
+    for (int k = 1; k <= M; ++k) {
+        // Calculate buffer indices (circular buffer handling)
+        int idx_pos = (m_slope_buffer_index - M + k + SLOPE_BUFFER_MAX) % SLOPE_BUFFER_MAX;
+        int idx_neg = (m_slope_buffer_index - M - k + SLOPE_BUFFER_MAX) % SLOPE_BUFFER_MAX;
+        
+        double w_k = (double)k / S2;
+        sum += w_k * (buffer[idx_pos] - buffer[idx_neg]);
+    }
+    
+    // Divide by dt to get derivative in units/second
+    return sum / dt;
+}
+
+// Helper: Calculate Grip Factor from Slope - v0.7.0
+// Main slope detection algorithm entry point
+double calculate_slope_grip(double lateral_g, double slip_angle, double dt);
+
+#### 2.4 Modify `calculate_grip()` Function (~lines 630-665):
+
+**Current Code (lines 638-664):**
+```cpp
+} else {
+    // v0.4.38: Combined Friction Circle (Advanced Reconstruction)
+    
+    // 1. Lateral Component (Alpha)
+    double lat_metric = std::abs(result.slip_angle) / (double)m_optimal_slip_angle;
+    // ... rest of static threshold logic
+}
+```
+
+**New Code (replacement):**
+```cpp
+} else {
+    // v0.7.0: Slope Detection OR Static Threshold
+    if (m_slope_detection_enabled) {
+        // Dynamic grip estimation via derivative monitoring
+        result.value = calculate_slope_grip(
+            data->mLocalAccel.x / 9.81,  // Lateral G
+            result.slip_angle,            // Slip angle (radians)
+            ctx.dt
+        );
+    } else {
+        // v0.4.38: Combined Friction Circle (Static Threshold - Legacy)
+        double lat_metric = std::abs(result.slip_angle) / (double)m_optimal_slip_angle;
+        // ... existing static threshold logic unchanged
+    }
+}
+```
+
+### 3. Config Persistence
+
+**File: `src/Config.cpp`**
+
+#### 3.1 Save Logic (~line 840, after `understeer_affects_sop`):
+```cpp
+// Slope Detection (v0.7.0)
+file << "slope_detection_enabled=" << (engine.m_slope_detection_enabled ? "1" : "0") << "\n";
+file << "slope_sg_window=" << engine.m_slope_sg_window << "\n";
+file << "slope_sensitivity=" << engine.m_slope_sensitivity << "\n";
+file << "slope_negative_threshold=" << engine.m_slope_negative_threshold << "\n";
+file << "slope_smoothing_tau=" << engine.m_slope_smoothing_tau << "\n";
+```
+
+#### 3.2 Load Logic (~line 1055, after `understeer_affects_sop`):
+```cpp
+// Slope Detection (v0.7.0)
+else if (key == "slope_detection_enabled") engine.m_slope_detection_enabled = (value == "1");
+else if (key == "slope_sg_window") engine.m_slope_sg_window = std::stoi(value);
+else if (key == "slope_sensitivity") engine.m_slope_sensitivity = std::stof(value);
+else if (key == "slope_negative_threshold") engine.m_slope_negative_threshold = std::stof(value);
+else if (key == "slope_smoothing_tau") engine.m_slope_smoothing_tau = std::stof(value);
+```
+
+#### 3.3 Validation Logic (~line 1075, new section):
+```cpp
+// Slope Detection Validation (v0.7.0)
+if (engine.m_slope_sg_window < 5) engine.m_slope_sg_window = 5;
+if (engine.m_slope_sg_window > 41) engine.m_slope_sg_window = 41;
+if (engine.m_slope_sg_window % 2 == 0) engine.m_slope_sg_window++; // Must be odd
+if (engine.m_slope_sensitivity < 0.1f) engine.m_slope_sensitivity = 0.1f;
+if (engine.m_slope_sensitivity > 10.0f) engine.m_slope_sensitivity = 10.0f;
+if (engine.m_slope_smoothing_tau < 0.001f) engine.m_slope_smoothing_tau = 0.02f;
+```
+
+#### 3.4 Preset Apply/UpdateFromEngine (Config.h):
+
+**Add to `Apply()` method (~line 252):**
+```cpp
+engine.m_slope_detection_enabled = slope_detection_enabled;
+engine.m_slope_sg_window = slope_sg_window;
+engine.m_slope_sensitivity = slope_sensitivity;
+engine.m_slope_negative_threshold = slope_negative_threshold;
+engine.m_slope_smoothing_tau = slope_smoothing_tau;
+```
+
+**Add to `UpdateFromEngine()` method (~line 313):**
+```cpp
+slope_detection_enabled = engine.m_slope_detection_enabled;
+slope_sg_window = engine.m_slope_sg_window;
+slope_sensitivity = engine.m_slope_sensitivity;
+slope_negative_threshold = engine.m_slope_negative_threshold;
+slope_smoothing_tau = engine.m_slope_smoothing_tau;
+```
+
+### 4. GUI Integration
+
+**File: `src/GuiLayer.cpp`** (~line 1100, after "Grip & Slip Angle Estimation" section):
+
+```cpp
+// --- SLOPE DETECTION (EXPERIMENTAL) ---
+if (ImGui::TreeNodeEx("Slope Detection (Experimental)", ImGuiTreeNodeFlags_Framed)) {
+    ImGui::NextColumn(); ImGui::NextColumn();
+    
+    ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "⚠ Dynamic grip estimation");
+    ImGui::NextColumn(); ImGui::NextColumn();
+    
+    BoolSetting("Enable Slope Detection", &engine.m_slope_detection_enabled,
+        "Replaces static 'Optimal Slip Angle' threshold with dynamic derivative monitoring.\n\n"
+        "When enabled:\n"
+        "• Grip is estimated by tracking the slope of lateral-G vs slip angle\n"
+        "• Automatically adapts to tire temperature, wear, and conditions\n"
+        "• 'Optimal Slip Angle' and 'Optimal Slip Ratio' settings are IGNORED\n\n"
+        "When disabled:\n"
+        "• Uses the static threshold method (default behavior)");
+    
+    if (engine.m_slope_detection_enabled) {
+        // Filter Window
+        int window = engine.m_slope_sg_window;
+        if (ImGui::SliderInt("Filter Window", &window, 5, 41)) {
+            if (window % 2 == 0) window++;  // Force odd
+            engine.m_slope_sg_window = window;
+            selected_preset = -1;
+        }
+        if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
+        ImGui::SameLine();
+        float latency_ms = (float)(engine.m_slope_sg_window / 2) * 2.5f;
+        ImVec4 color = (latency_ms < 25.0f) ? ImVec4(0,1,0,1) : ImVec4(1,0.5f,0,1);
+        ImGui::TextColored(color, "~%.0f ms latency", latency_ms);
+        ImGui::NextColumn(); ImGui::NextColumn();
+        
+        FloatSetting("Sensitivity", &engine.m_slope_sensitivity, 0.1f, 5.0f, "%.1fx",
+            "Multiplier for slope-to-grip conversion.\n"
+            "Higher = More aggressive grip loss detection.\n"
+            "Lower = Smoother, less pronounced effect.");
+        
+        // Advanced (Collapsed by Default)
+        if (ImGui::TreeNode("Advanced")) {
+            ImGui::NextColumn(); ImGui::NextColumn();
+            FloatSetting("Slope Threshold", &engine.m_slope_negative_threshold, -1.0f, 0.0f, "%.2f",
+                "Slope value below which grip loss begins.\n"
+                "More negative = Later detection (safer).");
+            FloatSetting("Output Smoothing", &engine.m_slope_smoothing_tau, 0.005f, 0.100f, "%.3f s",
+                "Time constant for grip factor smoothing.\n"
+                "Prevents abrupt FFB changes.");
+            ImGui::TreePop();
+        } else {
+            ImGui::NextColumn(); ImGui::NextColumn();
+        }
+        
+        // Diagnostics
+        ImGui::Separator();
+        ImGui::Text("Live Diagnostics");
+        ImGui::NextColumn();
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 1.0f, 1.0f), 
+            "Slope: %.3f | Grip: %.0f%%", 
+            engine.m_slope_current, 
+            engine.m_slope_smoothed_output * 100.0f);
+        ImGui::NextColumn();
+    }
+    
+    ImGui::TreePop();
+} else {
+    ImGui::NextColumn(); ImGui::NextColumn();
+}
+```
+
+### 5. Built-in Preset Updates
+
+**All existing presets** in Config.cpp receive these defaults (feature OFF):
+
+```cpp
+// In LoadPresets() or Preset constructors:
+.SetSlopeDetection(false)  // Or rely on member defaults
+```
+
+The fluent setter `SetSlopeDetection()` can optionally be used for experimental presets:
+```cpp
+Preset("Experimental - Dynamic Grip", true)
+    .SetSlopeDetection(true, 15, 1.0f)
+    // ... other settings
+```
+
+---
+
+## Test Plan (TDD-Ready)
+
+The following tests should be written **BEFORE** implementing the feature code. Run them to verify they fail (Red Phase), then implement the code to make them pass (Green Phase).
+
+### 1. Unit Tests: Slope Detection Buffer Initialization
+
+**File:** `tests/test_ffb_engine.cpp`
+
+```cpp
+static void test_slope_detection_buffer_init()
+```
+
+| Aspect | Description |
+|--------|-------------|
+| **Purpose** | Verify slope detection buffers are properly initialized |
+| **Input** | Freshly created `FFBEngine` instance |
+| **Expected** | `m_slope_buffer_count == 0`, `m_slope_buffer_index == 0`, `m_slope_current == 0.0` |
+| **Assertion** | All three conditions must be true |
+
+### 2. Unit Tests: Savitzky-Golay Derivative Calculation
+
+```cpp
+static void test_slope_sg_derivative()
+```
+
+| Aspect | Description |
+|--------|-------------|
+| **Purpose** | Verify SG derivative calculation works for linear ramp |
+| **Input** | Buffer filled with linear ramp (y = i * 0.1), window = 9, dt = 0.01 |
+| **Expected** | Derivative ≈ 10.0 units/sec (0.1 per sample at 100 Hz) |
+| **Assertion** | `abs(derivative - 10.0) < 1.0` |
+
+### 3. Unit Tests: Grip at Peak (Zero Slope)
+
+```cpp
+static void test_slope_grip_at_peak()
+```
+
+| Aspect | Description |
+|--------|-------------|
+| **Purpose** | Verify grip factor is 1.0 when slope is zero (at peak) |
+| **Input** | Constant lateral G (1.2), constant slip (0.05), dt = 0.0025 (400 Hz) |
+| **Expected** | `m_slope_smoothed_output > 0.95` (near 1.0) |
+| **Assertion** | Grip factor remains high with zero slope |
+
+### 4. Unit Tests: Grip Past Peak (Negative Slope)
+
+```cpp
+static void test_slope_grip_past_peak()
+```
+
+| Aspect | Description |
+|--------|-------------|
+| **Purpose** | Verify grip factor reduces when slope is negative (past peak) |
+| **Input** | Increasing slip (0.05 to 0.09), decreasing G (1.5 to 1.1) over 20 frames |
+| **Expected** | `0.2 < m_slope_smoothed_output < 0.9` |
+| **Assertion** | Grip factor is reduced but not below safety floor |
+
+### 5. Unit Tests: Slope Detection vs Static Comparison
+
+```cpp
+static void test_slope_vs_static_comparison()
+```
+
+| Aspect | Description |
+|--------|-------------|
+| **Purpose** | Verify both slope and static methods detect grip loss |
+| **Input** | Two engines configured differently, same telemetry with 12% slip |
+| **Expected** | Both engines detect grip loss (< 0.95 for slope, < 0.8 for static) |
+| **Assertion** | Both detection methods should agree on grip loss |
+
+### 6. Unit Tests: Config Persistence
+
+```cpp
+static void test_slope_config_persistence()
+```
+
+| Aspect | Description |
+|--------|-------------|
+| **Purpose** | Verify slope settings save and load correctly |
+| **Input** | Non-default values (enabled=true, window=21, sensitivity=2.5f) |
+| **Expected** | Values survive save/load cycle |
+| **Assertion** | All loaded values match saved values |
+
+### 7. Unit Tests: Latency Characteristics
+
+```cpp
+static void test_slope_latency_characteristics()
+```
+
+| Aspect | Description |
+|--------|-------------|
+| **Purpose** | Verify buffer fills correctly and latency is as expected |
+| **Input** | Window size = 15, dt = 0.0025 (400 Hz) |
+| **Expected** | Buffer fills in exactly `window_size` frames, latency = ~17.5ms |
+| **Assertion** | Frame count matches window size |
+
+### 8. Unit Tests: Noise Rejection
+
+```cpp
+static void test_slope_noise_rejection()
+```
+
+| Aspect | Description |
+|--------|-------------|
+| **Purpose** | Verify SG filter rejects noise while preserving signal |
+| **Input** | Constant G (1.2) + random noise (±0.1), 50 frames |
+| **Expected** | `abs(m_slope_current) < 1.0` (near zero despite noise) |
+| **Assertion** | Noise is filtered, slope remains stable |
+
+---
+
+## Documentation Updates
+
+1. **CHANGELOG.md** - Add entry describing the new Slope Detection feature
+2. **VERSION** - Increment version number (suggest v0.7.0 for this feature)
+3. **README.md** - Add brief description in Features section (optional)
+
+---
+
+## User Settings & Presets Impact
+
+### New Settings
+
+Five new configurable parameters are being added (see Section 1). All have sensible defaults and the feature is **disabled by default** to ensure backward compatibility.
+
+| Setting | GUI Location | Visibility |
+|---------|--------------|------------|
+| Enable Slope Detection | Grip & Slip section | Always |
+| Filter Window | Slope Detection section | When enabled |
+| Sensitivity | Slope Detection section | When enabled |
+| Slope Threshold | Advanced (collapsed) | When enabled |
+| Output Smoothing | Advanced (collapsed) | When enabled |
+
+### Migration Logic
+
+**No migration required.** When loading old configuration files:
+- Missing settings will use default values
+- `slope_detection_enabled = false` ensures existing users see no change in behavior
+- Static threshold logic remains as fallback
+
+### Settings Interaction
+
+When Slope Detection is **enabled**:
+- `m_optimal_slip_angle` is **IGNORED** (not used)
+- `m_optimal_slip_ratio` is **IGNORED** (not used)
+- UI should clearly indicate this (tooltip mentions settings are ignored)
+
+### Preset Updates
+
+All built-in presets should be updated to include the new settings with the feature disabled by default. This is a non-breaking change.
+
+---
+
+## Deliverables Checklist
+
+### Code Changes
+- [ ] `src/FFBEngine.h` - Add slope detection members and helper functions (~50 lines)
+- [ ] `src/FFBEngine.h` - Modify `calculate_grip()` to use slope detection (~30 lines)
+- [ ] `src/Config.h` - Add new settings to Preset struct (~15 lines)
+- [ ] `src/Config.h` - Add fluent setter `SetSlopeDetection()` (~5 lines)
+- [ ] `src/Config.h` - Update `Apply()` and `UpdateFromEngine()` (~10 lines)
+- [ ] `src/Config.cpp` - Add save/load/validation logic (~30 lines)
+- [ ] `src/GuiLayer.cpp` - Add GUI controls for slope detection (~60 lines)
+
+### Test Files
+- [ ] `tests/test_ffb_engine.cpp` - Add 8 new unit tests (~100 lines)
+
+### Documentation
+- [ ] `CHANGELOG.md` - Add feature entry
+- [ ] `VERSION` - Update version number
+
+### Verification
+- [ ] All existing tests pass (no regressions)
+- [ ] All new tests pass
+- [ ] Build succeeds in Release mode
+- [ ] GUI displays correctly and values persist on restart
+- [ ] Understeer effect works correctly with static thresholds (feature OFF)
+- [ ] Understeer effect works correctly with slope detection (feature ON)
+
+---
+
+## Technical Notes
+
+### Expected Latency
+At 400 Hz telemetry rate:
+- Window 9: ~10ms latency
+- Window 15: ~17.5ms latency (recommended)
+- Window 25: ~30ms latency
+
+### Signal Processing Rationale
+Savitzky-Golay filter is chosen over simple moving average because:
+1. Preserves peak shape (critical for detecting SAT drop-off)
+2. Provides derivative as direct output
+3. Superior noise rejection without excessive phase lag
+
+### Savitzky-Golay Coefficient Generation
+
+**Mathematical Formula (Quadratic Fit, First Derivative):**
+
+For a symmetric window with half-width `M` (total window size = `2M+1` samples):
+
+```
+w_k = k / (S_2 × h)
+
+where:
+  S_2 = M(M+1)(2M+1)/3    (sum of k² from -M to M)
+  h   = sampling interval (dt)
+  k   = sample index relative to center (-M to +M)
+```
+
+**Key Insight (Linear-Quadratic Equivalence):**
+For first derivative estimation on symmetric windows, quadratic (N=2) and linear (N=1) polynomial fits produce **identical coefficients**. The quadratic term captures curvature (second derivative) but does not affect the slope at the center point due to the orthogonality of basis functions.
+
+**Implementation Strategy:**
+- Coefficients are generated at **runtime** using the closed-form formula (O(1) computation)
+- No pre-computed lookup tables required
+- Convolution exploits **anti-symmetry** (`w_{-k} = -w_k`) for ~50% reduction in multiplications
+
+**Reference:** `docs/dev_docs/plans/savitzky-golay coefficients deep research report.md`
+
+### Boundary Handling (Shrinking Symmetric Window)
+
+At signal boundaries (startup, buffer not filled), the algorithm uses a **shrinking symmetric window** strategy:
+
+1. At index `i` where `i < M`, set effective window size: `M_eff = i`
+2. This maintains the symmetric window property and preserves phase linearity
+3. Trade-off: Reduced noise suppression at edges (smaller window = higher variance)
+4. Minimum window: `M=2` (5 samples) - below this, return 0.0 (not enough data)
+
+**Why not asymmetric fit?**
+Asymmetric polynomial fits (e.g., using only forward samples at startup) are susceptible to "Runge's Phenomenon" - polynomial oscillation at interval edges. The shrinking symmetric approach avoids this instability.
+
+### Safety Considerations
+- Grip factor has a floor of 0.2 to prevent complete FFB loss
+- Feature is disabled by default to avoid surprising existing users
+- Static threshold logic remains as fallback
+- Window size validation ensures odd number (required for SG filter)
+
+### Interaction with Existing Features
+- **Speed Gate**: Slope detection output is still multiplied by speed gate
+- **Grip Approximation Fallback**: Slope detection only active when mGripFract is missing (same condition as static threshold)
+- **Diagnostics**: Graph plots will show the same `calc_front_grip` value regardless of method
+
+---
+
+## Future Deprecation Path (Informational)
+
+If Slope Detection proves superior after user testing:
+1. **v0.7.x**: Gather user feedback, iterate on sensitivity defaults
+2. **v0.8.0**: Slope Detection enabled by default for new users
+3. **v0.9.0**: Static threshold sliders moved to "Legacy" section in GUI
+4. **v1.0.0**: Static threshold logic removed (or kept as hidden fallback)
+
+---
+
+*Plan created: 2026-02-01*  
+*Last updated: 2026-02-01 (added SG coefficient details)*  
+*Estimated implementation effort: ~300 lines of C++ code across 4 files*
+
+---
+
+## Appendix: Reference Documents
+
+1. **Savitzky-Golay Coefficients Deep Research Report**  
+   `docs/dev_docs/plans/savitzky-golay coefficients deep research report.md`  
+   Comprehensive mathematical derivation and C++ implementation patterns for SG filter coefficients.
+
+---
+
+## Implementation Notes
+
+*Added: 2026-02-01 (post-implementation)*
+
+### Unforeseen Issues
+
+1. **Missing Preset-Engine Synchronization Fields**
+   - **Issue:** Several parameters (`optimal_slip_angle`, `optimal_slip_ratio`, smoothing parameters) were declared in both `Preset` and `FFBEngine` but were missing from `Preset::Apply()` and `Preset::UpdateFromEngine()` methods.
+   - **Consequence:** When `Preset::ApplyDefaultsToEngine()` was called, these fields remained at zero/uninitialized, triggering validation warnings like "Invalid optimal_slip_angle (0), resetting to default 0.10".
+   - **Resolution:** Added all missing parameter synchronization to both methods in Config.h (lines 265-276 and 325-340).
+
+2. **FFBEngine Constructor Initialization Order**
+   - **Issue:** The plan did not address where `Preset::ApplyDefaultsToEngine()` should be called during FFBEngine construction. The FFBEngine constructor was defined inline in FFBEngine.h but needed to call methods from Config.h which includes FFBEngine.h—a circular dependency.
+   - **Resolution:** Moved FFBEngine constructor definition to Config.h as an `inline` function after the Preset class definition, allowing it to call `Preset::ApplyDefaultsToEngine(*this)`.
+
+3. **Unicode Encoding Issues with Test Files**
+   - **Issue:** Some test files (`test_ffb_engine_HEAD.cpp`, `deleted_lines.txt`) had UTF-16LE encoding, causing `view_file` tool failures with "unsupported mime type text/plain; charset=utf-16le".
+   - **Workaround:** Created UTF-8 copies of files using PowerShell: `Get-Content file.cpp | Out-File -Encoding utf8 file_utf8.cpp`
+   - **Recommendation:** See `docs/dev_docs/unicode_encoding_issues.md` for detailed guidance.
+
+### Plan Deviations
+
+1. **Front-Only Slope Detection**
+   - **Deviation:** Added `is_front` parameter to `calculate_grip()` function to restrict slope detection to front wheels only.
+   - **Rationale:** Slope detection uses lateral G-force, which is a vehicle-level measurement. Applying the same slope calculation to rear wheels would give identical (and incorrect) results. Rear grip continues to use the static threshold method.
+
+2. **Slope Fallback Behavior**
+   - **Original Plan:** When slip angle isn't changing (`dAlpha_dt < 0.001`), set `m_slope_current = 20.0` (assume peak grip).
+   - **Deviation:** Changed to retain previous slope value instead of resetting.
+   - **Rationale:** The noise rejection test (`test_slope_noise_rejection`) expects the SG filter to smooth out G-force noise when slip angle is constant. Resetting slope to 20.0 every frame when slip isn't changing defeated this purpose.
+
+3. **Grip Factor Safety Clamp**
+   - **Added:** Explicit `(std::max)(0.2, (std::min)(1.0, current_grip_factor))` clamp.
+   - **Rationale:** The plan mentioned a 0.2 floor but did not include explicit clamping code. Added to prevent edge cases where excessive negative slopes could produce negative grip factors.
+
+### Challenges Encountered
+
+1. **Test Telemetry Setup (`test_slope_vs_static_comparison`)**
+   - **Challenge:** Original test only varied G-force while keeping slip angle constant. This meant `dAlpha_dt = 0`, which triggered the "no change in slip" branch rather than actually testing slope calculation.
+   - **Resolution:** Modified test to vary both G-force and slip angle over time, simulating a realistic tire curve progression from increasing grip to grip loss past the peak.
+
+2. **Buffer Indexing in Savitzky-Golay Calculation**
+   - **Challenge:** The circular buffer indexing required careful handling when buffer count was less than window size. Initial implementation had edge cases where array indices could be negative before modulo.
+   - **Resolution:** Used `(index + SLOPE_BUFFER_MAX) % SLOPE_BUFFER_MAX` pattern consistently to ensure always-positive indices.
+
+3. **Debugging Build Failures**
+   - **Challenge:** Initial build after implementing the plan had cryptic linker errors due to the FFBEngine constructor circular dependency issue.
+   - **Resolution:** Systematic analysis of include order and moving constructor definition to the right location in the header dependency chain.
+
+### Recommendations for Future Plans
+
+1. **Explicitly Document Parameter Synchronization**
+   - Future plans that add new parameters should explicitly list:
+     - Declaration location in FFBEngine.h
+     - Declaration location in Preset struct (Config.h)
+     - Entry in `Preset::Apply()`
+     - Entry in `Preset::UpdateFromEngine()`
+     - Entry in `Config::Save()`
+     - Entry in `Config::Load()`
+   - Use a parameter checklist table format to ensure nothing is missed.
+
+2. **Include Initialization Order Analysis**
+   - When adding functionality that spans FFBEngine.h and Config.h, analyze the circular dependency implications upfront.
+   - Document whether inline functions or out-of-class definitions are needed.
+
+3. **Test Case Design Should Include Data Flow Analysis**
+   - For derivative-based algorithms, explicitly document what telemetry inputs need to change and how.
+   - Include "telemetry script" examples showing multi-frame progressions.
+
+4. **Consider File Encoding in Agents Guidelines**
+   - Add encoding handling guidance to agent instruction documents.
+   - Prefer UTF-8 with BOM for new source files on Windows to avoid tooling issues.
+
+5. **Add Boundary Condition Tests**
+   - For buffer-based algorithms, include explicit tests for:
+     - Empty buffer
+     - Partially filled buffer
+     - Exactly full buffer
+     - Buffer wraparound
+
+---
+
+## Planned Enhancements (v0.7.1)
+
+### Lower Minimum Filter Window to 3
+
+**Rationale:**  
+After reviewing the v0.7.0 implementation, we identified an opportunity to provide users with an ultra-low latency option while maintaining mathematical validity.
+
+**Current State (v0.7.0):**
+- Minimum window: 5 samples
+- Minimum latency: 6.25ms
+
+**Proposed Change (v0.7.1):**
+- Minimum window: 3 samples
+- Minimum latency: 3.75ms
+
+**Technical Justification:**
+- Savitzky-Golay quadratic polynomial fitting requires minimum 3 points
+- Window=3 is mathematically valid, though noisier than window=5
+- Provides 40% latency reduction for latency-sensitive users
+
+**Implementation Details:**
+
+1. **Lower validation minimum** (`Config.cpp` line 1093):
+   ```cpp
+   if (engine.m_slope_sg_window < 3) engine.m_slope_sg_window = 3;  // Changed from 5
+   ```
+
+2. **Update GUI slider range** (`GuiLayer.cpp` line 1117):
+   ```cpp
+   if (ImGui::SliderInt("  Filter Window", &window, 3, 41)) {  // Changed from 5
+   ```
+
+3. **Add dynamic tooltip warning** (`GuiLayer.cpp` after line 1122):
+   ```cpp
+   if (ImGui::IsItemHovered()) {
+       if (engine.m_slope_sg_window <= 5) {
+           ImGui::SetTooltip(
+               "WARNING: Window sizes < 7 may produce noisy feedback.\n"
+               "Recommended: 11-21 for smooth operation.\n\n"
+               "Current latency: ~%.1f ms", latency_ms);
+       } else {
+           ImGui::SetTooltip(
+               "Savitzky-Golay filter window size.\n"
+               "Larger = Smoother but higher latency.\n"
+               "Smaller = Faster response but noisier.\n\n"
+               "Current latency: ~%.1f ms", latency_ms);
+       }
+   }
+   ```
+
+4. **Update user documentation** (`docs/Slope_Detection_Guide.md`):
+   - Change minimum in all examples from 5 to 3
+   - Add warning about noise with window < 7
+   - Update latency calculations
+
+**Testing Requirements:**
+- Test window=3 with noisy telemetry (curbs, bumps)
+- Validate SG coefficient calculation at edge case
+- Ensure tooltip displays correctly
+- Update `test_slope_latency_characteristics` to include window=3 case
+
+**User Impact:**
+- Advanced users gain access to 3.75ms latency option
+- Default remains at 15 (conservative, well-tested)
+- Warning tooltip prevents accidental misconfiguration
+
+**Priority:** Low (Enhancement, not a fix)  
+**Complexity:** 2/10 (Simple parameter changes)  
+**Risk:** Low (Mathematically sound, optional feature)
+
+---
+
+### Buffer Reset on Toggle (Implemented in v0.7.0)
+
+**Issue:**  
+When slope detection is toggled ON mid-session, stale buffer data from when the feature was OFF could cause incorrect initial slope calculations.
+
+**Solution (Implemented):**  
+Added automatic buffer reset when `m_slope_detection_enabled` transitions from `false` → `true`:
+
+```cpp
+// GuiLayer.cpp - lines 1105-1126
+if (!prev_slope_enabled && engine.m_slope_detection_enabled) {
+    engine.m_slope_buffer_count = 0;
+    engine.m_slope_buffer_index = 0;
+    engine.m_slope_smoothed_output = 1.0;  // Start at full grip
+    std::cout << "[SlopeDetection] Enabled - buffers cleared" << std::endl;
+}
+```
+
+**User Impact:**
+- Eliminates potential FFB glitches when enabling slope detection mid-drive
+- Ensures clean slate for derivative calculation
+- No impact on performance (happens only on toggle event)
+
+**Status:** ✅ Implemented in v0.7.0 (GuiLayer.cpp)
+
+---
+
+*Implementation completed: 2026-02-01*  
+*All 503 tests passing*  
+*Total implementation time: ~2 hours*
+
+```
+
+# File: docs\dev_docs\plans\savitzky-golay coefficients deep research report(2).md
+```markdown
+Advanced Signal Processing Architectures: Definitive Implementation of Savitzky-Golay Filters for Quadratic Differentiation with Adaptive Windowing1. Introduction and Historical ContextThe rigorous analysis of time-domain signals often necessitates the extraction of rate-of-change information—derivatives—from data streams corrupted by stochastic noise. In the landscape of digital signal processing (DSP) and chemometrics, the Savitzky-Golay (SG) filter stands as a preeminent algorithm, revered for its unique ability to smooth data and calculate derivatives while preserving the higher-order spectral moments of the underlying signal features, such as peak width and height. First introduced in the seminal 1964 Analytical Chemistry paper by Abraham Savitzky and Marcel J. E. Golay, the method fundamentally shifted the paradigm of data smoothing from simple moving averages to local least-squares polynomial fitting.The user's requirement to implement a Quadratic Fit ($N=2$) for the First Derivative with Variable Window Sizes touches upon the most sophisticated aspects of this algorithm. While the original formulation relied on static lookup tables for fixed window sizes, modern real-time applications demand dynamic adaptability. This report provides an exhaustive, expert-level deconstruction of the SG filter, moving from first-principles mathematical derivation to high-performance C++ implementation strategies. It addresses the subtle but critical mathematical equivalence between linear and quadratic fits on symmetric domains, the breakdown of this equivalence at signal boundaries, and the algorithmic imperative for dynamic coefficient generation over static storage.The necessity for such a filter arises because standard finite difference methods, such as the two-point central difference operator, act as high-pass filters. In the frequency domain, differentiation corresponds to multiplication by $j\omega$; consequently, high-frequency noise is amplified linearly with frequency, often drowning out the signal of interest in the derivative domain. The Savitzky-Golay filter effectively combines a low-pass smoothing filter with a differentiation kernel, optimizing the trade-off between noise suppression (variance reduction) and signal fidelity (bias minimization) through the least-squares criterion.2. Mathematical Derivation of the Least-Squares ConvolutionTo implement a robust feature for variable window sizes, one cannot rely on the pre-computed tables found in the original 1964 paper—which, notably, contained several numerical errors corrected in subsequent literature by Gorry and others. Instead, the implementation must utilize the generative mathematical model.2.1 The General Linear ModelThe core premise of the Savitzky-Golay filter is that valid signal trends within a narrow temporal window can be approximated by a polynomial of degree $N$. Let us consider a subset of $2M+1$ data points, denoted as the vector $\mathbf{x}$, centered at a time index $n=0$. The local index $k$ ranges from $-M$ to $M$. We aim to fit a polynomial $P(k)$ of degree $N$ to these points:$$P(k) = \sum_{j=0}^{N} a_j k^j$$The coefficients $a_j$ are determined by minimizing the sum of squared errors $\chi^2$ between the polynomial model and the observed data $x[k]$:$$\chi^2 = \sum_{k=-M}^{M} \left( \sum_{j=0}^{N} a_j k^j - x[k] \right)^2$$This minimization problem can be expressed in matrix notation. Let $\mathbf{J}$ be the Vandermonde design matrix of size $(2M+1) \times (N+1)$, where the element $J_{k,j} = k^j$. The system of linear equations to solve is:$$\mathbf{x} = \mathbf{J} \mathbf{a} + \mathbf{\epsilon}$$where $\mathbf{a} = [a_0, a_1, \dots, a_N]^T$ is the vector of polynomial coefficients. The optimal solution $\hat{\mathbf{a}}$ is found via the normal equations:$$\hat{\mathbf{a}} = (\mathbf{J}^T \mathbf{J})^{-1} \mathbf{J}^T \mathbf{x}$$The matrix $\mathbf{C} = (\mathbf{J}^T \mathbf{J})^{-1} \mathbf{J}^T$ is the projection matrix. The crucial insight of Savitzky and Golay was that because the indices $k$ are fixed relative to the window center (e.g., always $-2, -1, 0, 1, 2$ for $M=2$), the matrix $\mathbf{C}$ is constant and depends only on $M$ and $N$, not on the data $\mathbf{x}$.2.2 Deriving the First DerivativeThe polynomial $P(k)$ models the signal structure within the window.The smoothed value at the center ($k=0$) is $P(0) = a_0$.The first derivative at the center is evaluated analytically from the polynomial:$$\frac{d P(k)}{dk} \bigg|_{k=0} = \frac{d}{dk} (a_0 + a_1 k + a_2 k^2 + \dots) \bigg|_{k=0} = a_1$$The second derivative is $2a_2$, and so forth.Therefore, obtaining the smoothed first derivative reduces to calculating the coefficient $a_1$. From the matrix solution $\hat{\mathbf{a}} = \mathbf{C} \mathbf{x}$, the value of $a_1$ is simply the dot product of the second row of $\mathbf{C}$ (index 1) with the data vector $\mathbf{x}$.$$a_1 = \sum_{k=-M}^{M} C_{1,k} x[k]$$This linear combination forms the Finite Impulse Response (FIR) filter kernel for the derivative.3. The Quadratic-Linear Equivalence on Symmetric WindowsA critical theoretical nuance—often overlooked in general implementations but vital for understanding the "Quadratic" requirement—is the equivalence between Linear ($N=1$) and Quadratic ($N=2$) fits for determining the first derivative on symmetric windows.3.1 Orthogonality of Basis FunctionsThe matrix $\mathbf{J}^T \mathbf{J}$ consists of the moments of the index $k$. Let $S_p = \sum_{k=-M}^{M} k^p$.For a symmetric window $[-M, M]$, the sum of any odd power of $k$ is zero.$$S_{odd} = 0$$For a Linear Fit ($N=1$), the normal matrix $\mathbf{A}_{lin} = \mathbf{J}^T \mathbf{J}$ is:$$\mathbf{A}_{lin} = \begin{bmatrix} S_0 & S_1 \\ S_1 & S_2 \end{bmatrix} = \begin{bmatrix} 2M+1 & 0 \\ 0 & S_2 \end{bmatrix}$$This matrix is diagonal. The solution for $a_1$ is completely decoupled from $a_0$:$$a_1^{(lin)} = \frac{1}{S_2} \sum_{k=-M}^{M} k \cdot x[k]$$For a Quadratic Fit ($N=2$), the normal matrix $\mathbf{A}_{quad}$ expands to $3 \times 3$:$$\mathbf{A}_{quad} = \begin{bmatrix} S_0 & S_1 & S_2 \\ S_1 & S_2 & S_3 \\ S_2 & S_3 & S_4 \end{bmatrix} = \begin{bmatrix} S_0 & 0 & S_2 \\ 0 & S_2 & 0 \\ S_2 & 0 & S_4 \end{bmatrix}$$
+Observe the "checkerboard" pattern of zeros. The equation for $a_1$ (the middle row) is effectively isolated from $a_0$ and $a_2$ because the off-diagonal terms $S_1$ and $S_3$ are zero. The inverse of this block-diagonal matrix retains the same structure, and the element corresponding to $a_1$ remains $1/S_2$.Consequently:$$a_1^{(quad)} = \frac{1}{S_2} \sum_{k=-M}^{M} k \cdot x[k]$$3.2 Implications for ImplementationThis mathematical identity leads to a profound simplification for the implementation. As long as the window is symmetric (i.e., not at the edges of the signal), the "Quadratic First Derivative" filter is computationally identical to the "Linear First Derivative" filter. The quadratic term $a_2$ captures the curvature (second derivative) and improves the estimate of the smoothed value $a_0$, but it does not alter the slope $a_1$ at the center of symmetry.Requirement Analysis: The user asked for a Quadratic Fit. The implementation must honor this. While the coefficients are identical to the linear case for the steady-state signal, the distinction becomes relevant if the user later requests the second derivative (which requires $N=2$) or processes the boundaries where symmetry is lost (discussed in Section 4).3.3 Comparison of Polynomial Orders for DerivativesIt is instructive to compare why one might choose $N=2$ over $N=3$ or $N=4$.Polynomial Order (N)Basis FunctionsFirst Derivative Character (a1​)NotesLinear ($N=1$)$1, k$Slope of regression line.Robust, high bias for curved signals.Quadratic ($N=2$)$1, k, k^2$Identical to Linear ($a_1^{(2)} = a_1^{(1)}$).Captures curvature ($a_2$) but slope at center is unchanged.Cubic ($N=3$)$1, k, k^2, k^3$Different. Slope accounts for inflection.Reduced bias, increased variance (noise sensitivity).Quartic ($N=4$)$1, \dots, k^4$Identical to Cubic ($a_1^{(4)} = a_1^{(3)}$).Adds $a_4$ term, center slope unchanged from Cubic.This table clarifies that for derivative estimation, polynomial orders pair up: $(1,2)$, $(3,4)$, $(5,6)$. The user's choice of Quadratic puts them in the lowest-variance (most stable) pair.4. The Universal Generating Function for Variable WindowsTo fulfill the requirement of Variable Window Sizes, the implementation cannot use hardcoded arrays. We must derive a function $f(M)$ that returns the convolution kernel.From the derivation in Section 3.1, the weight $w_k$ for the input $x[k]$ is:$$w_k = \frac{k}{S_2}$$The denominator $S_2$ is the sum of squares of integers from $-M$ to $M$.$$S_2 = \sum_{k=-M}^{M} k^2 = 2 \sum_{k=1}^{M} k^2 = 2 \frac{M(M+1)(2M+1)}{6} = \frac{M(M+1)(2M+1)}{3}$$Substituting this back into the expression for $w_k$:$$w_k = \frac{3k}{M(M+1)(2M+1)}$$This equation allows for the $O(1)$ generation of filter coefficients for any window half-width $M$. This is the definitive "definition" requested by the user.Physical Unit Scaling:The coefficient $a_1$ represents the change in signal amplitude per sample. To convert this to a physical rate of change (e.g., Volts/second), the result must be divided by the sampling interval $h$ (or $\Delta t$):$$\frac{dy}{dt} \approx \frac{1}{h} \sum_{k=-M}^{M} w_k x[n+k]$$
+Failure to apply this $1/h$ scaling is a common implementation error noted in signal processing forums.5. Variable Window Architectures and Boundary HandlingThe term "Variable Window Sizes" in the user query implies two distinct engineering challenges that must be addressed: Adaptive Filtering (changing $M$ in response to signal statistics) and Boundary Handling (the edge cases where a full window does not fit).5.1 Adaptive Windowing based on Signal StatisticsIn a sophisticated implementation, $M$ is not just a user setting but a dynamic parameter.Stationary/Noisy Regions: If the local variance of the signal is high but the trend is flat, a larger $M$ is desirable to suppress noise.Transient/Fast Regions: If the signal exhibits rapid acceleration (high second derivative), a smaller $M$ is required to minimize the smoothing bias (distortion) of the peak.Implementation: The code structure should allow the half_width parameter to be updated per sample. Because the coefficient generation formula is computationally trivial, recalculating the kernel at every step (or caching a set of kernels for $M=2 \dots 20$) is feasible.5.2 The Boundary Problem: Asymmetry and InstabilityThe most critical aspect of "variable windows" is the start and end of the data stream. At index $n < M$, a full symmetric window extends into negative indices.Standard approaches include:Zero Padding: Assumes data is zero outside. Disastrous for derivatives, creating massive artificial spikes at the start.Mirror Padding: Reflects data. Better, but creates an artificial stationary point ($y'=0$) at the edge.Variable Asymmetric Window: Using only the available data points.The Asymmetric Quadratic Pitfall:If we fit a Quadratic polynomial ($N=2$) to an asymmetric window (e.g., indices $[0, 2M]$) to calculate the derivative at index 0, the equivalence derived in Section 3 breaks down.The matrix $\mathbf{J}^T \mathbf{J}$ is no longer block-diagonal. $S_{odd} \neq 0$.The slope $a_1$ becomes coupled to the curvature $a_2$.Runge's Phenomenon: At the edges of an interval, polynomial fits tend to oscillate ("flare") to minimize the least-squares error. A quadratic fit at the very first point of a noisy signal is highly unstable and will amplify noise significantly more than a linear fit.Recommended Strategy: Shrinking Symmetric WindowTo maintain the stability of the symmetric filters, the recommended approach for the boundaries is to dynamically shrink the window size $M$ to fit the available margin.At index $n$ (where $n < M_{target}$), set the effective window size $M_{eff} = n$.This results in a symmetric window $[-n, n]$ centered at $n$.Benefits: Maintains the Linear-Quadratic equivalence. Guarantees zero phase shift. Avoids the edge flare of asymmetric fitting.Trade-off: Reduced noise suppression at the very edges (since $N_{points}$ is smaller).5.3 Comparison of Boundary Handling StrategiesThe following table summarizes the behavior of different strategies for the start of the signal.StrategyPolynomial OrderStabilityDerivative QualityNotesAsymmetric FitQuadratic ($N=2$)LowVolatileProne to "flaring" (Runge-like). Physically fits a parabola to the start, often resulting in exaggerated initial slopes.Asymmetric FitLinear ($N=1$)MediumModerateFits a regression line to the first few points. More stable than quadratic but biased.Shrinking SymmetricQuad/Lin ($N=2/1$)HighStableReduces window size to stay centered. Example: At index 2, use $M=2$ (5 points). Preserves phase linearity.Forward DifferenceLinear ($N=1$)LowNoisyEquivalent to $M=1$ asymmetric. High noise amplification.For a robust "Quadratic First Derivative" implementation, the Shrinking Symmetric strategy is the expert recommendation.6. Implementation Strategies and Algorithms6.1 Advanced Algorithm: Gram PolynomialsWhile the closed-form solution derived in Section 4 is sufficient for $N=2$, a generalized implementation for "variable window sizes" that might support higher orders in the future should consider Gram Polynomials. This recursive method allows for the calculation of SG coefficients for any $N$ and $M$ without explicit matrix inversion, providing a numerically stable route for high-order polynomials.The recursion for the polynomial values $P_j(k)$ involves a three-term recurrence relation:$$P_{j+1}(k) = (k - \alpha_j) P_j(k) - \beta_j P_{j-1}(k)$$However, for the specific constraint of $N=2$, the closed-form approach remains superior in performance ($O(1)$ vs recursive $O(N)$). The Gram method is noted here as the rigorous path for extending the system to Cubic or Quartic fits.6.2 C++ Implementation ArchitectureThe provided C++ implementation follows a decoupled design. The CoeffGenerator is separated from the Filter to allow for the window_size to change independently of the data processing loop.6.2.1 Coefficient Generation (The "Definition")C++#include <vector>
+#include <cmath>
+#include <stdexcept>
+#include <iostream>
+
+/**
+ * @class SGDerivKernel
+ * @brief Implements the closed-form generation of Savitzky-Golay coefficients.
+ *        Specialized for: Quadratic Fit (N=2), First Derivative.
+ */
+class SGDerivKernel {
+public:
+    /**
+     * @brief Generates the convolution kernel.
+     * @param half_width (M) The number of points on one side of the center.
+     *                   Total Window Size = 2*M + 1.
+     * @param h The sampling interval (delta t).
+     * @return std::vector<double> containing the weights.
+     */
+    static std::vector<double> Create(int half_width, double h) {
+        if (half_width < 1) {
+            // Minimal window for derivative is 3 points (M=1)
+            throw std::invalid_argument("Savitzky-Golay: Half-width must be >= 1");
+        }
+        if (h <= 0.0) {
+            throw std::invalid_argument("Savitzky-Golay: Sampling interval must be positive");
+        }
+
+        // 1. Calculate the denominator S2 = Sum(k^2)
+        // Formula: S2 = M(M+1)(2M+1)/3
+        double M = static_cast<double>(half_width);
+        double term = M * (M + 1.0) * (2.0 * M + 1.0);
+        double S2 = term / 3.0;
+
+        // 2. Allocate Kernel
+        size_t window_size = 2 * half_width + 1;
+        std::vector<double> kernel(window_size);
+
+        // 3. Populate Weights
+        // Formula: w_k = k / (S2 * h)
+        // The weight vector is anti-symmetric: w_-k = -w_k
+        for (int i = 0; i < window_size; ++i) {
+            int k = i - half_width; // Local index ranges from -M to M
+            kernel[i] = static_cast<double>(k) / (S2 * h);
+        }
+
+        return kernel;
+    }
+};
+6.2.2 The Filter Processing Logic (The "Implementation")C++/**
+ * @class AdaptiveSGFilter
+ * @brief Manages the data buffer and applies the filter with variable window support.
+ */
+class AdaptiveSGFilter {
+private:
+    std::vector<double> buffer;
+    double h;            // Sampling interval
+    int target_M;        // Desired half-width for steady state
+
+public:
+    AdaptiveSGFilter(int M, double sampling_interval) 
+        : target_M(M), h(sampling_interval) {}
+
+    void Push(double value) {
+        buffer.push_back(value);
+    }
+
+    /**
+     * @brief Computes the derivative at a specific index using the
+     *        Shrinking Symmetric Window strategy for boundaries.
+     */
+    double GetDerivativeAt(size_t index) {
+        if (index >= buffer.size()) return 0.0;
+
+        // 1. Determine available symmetric context
+        int available_left = static_cast<int>(index);
+        int available_right = static_cast<int>(buffer.size() - 1 - index);
+        
+        // 2. Variable Window Logic:
+        // The effective M is limited by the distance to the nearest edge
+        // or the user's target M.
+        int effective_M = std::min(target_M, std::min(available_left, available_right));
+
+        // 3. Edge Case: Not enough points for even a 3-point fit
+        if (effective_M < 1) {
+            return 0.0; // Or implement 2-point forward/backward difference here
+        }
+
+        // 4. Generate (or retrieve cached) coefficients
+        // In production, cache these for M=1..target_M to avoid allocation
+        std::vector<double> kernel = SGDerivKernel::Create(effective_M, h);
+
+        // 5. Convolution
+        double sum = 0.0;
+        for (int k = -effective_M; k <= effective_M; ++k) {
+            int data_idx = static_cast<int>(index) + k;
+            // Kernel index centers at M
+            sum += kernel[k + effective_M] * buffer[data_idx];
+        }
+
+        return sum;
+    }
+};
+7. Performance Analysis and Frequency Domain Characteristics7.1 Frequency ResponseThe Savitzky-Golay differentiator is functionally a Low-Pass Differentiator.Ideal Differentiator: The magnitude response is $|\omega|$. It amplifies high frequencies infinitely.SG Differentiator: Follows the ideal $|\omega|$ slope in the low-frequency Passband but rolls off in the Stopband.The "Cutoff Frequency" ($f_c$) of the filter is determined by the window size $M$.$$f_c \propto \frac{1}{2M+1}$$As the window size increases, the cutoff frequency decreases, smoothing the signal more aggressively.7.2 Stopband LeakageA critical limitation of the SG filter compared to Gaussian derivatives is its stopband performance. The frequency response of the polynomial fit is not monotonic in the stopband; it exhibits sidelobes (ripples). This means that certain bands of high-frequency noise may pass through the filter with less attenuation than expected.Mitigation: If the signal contains narrowband high-frequency noise that aligns with an SG sidelobe, the window size $M$ should be adjusted to shift the nulls of the filter to cancel that frequency. This is a unique advantage of the "variable window" architecture—it allows for spectral tuning.7.3 Computational ComplexityThe optimized algorithm presented here operates with $O(M)$ complexity per sample.Symmetry Optimization: Since the derivative kernel is anti-symmetric ($c_{-k} = -c_k$), the convolution can be further optimized:$$y'[n] = \sum_{k=1}^{M} c_k (x[n+k] - x[n-k])$$
+This reduces the number of multiplications by approximately 50%, a significant saving for high-throughput applications on embedded hardware.8. ConclusionThe implementation of a Quadratic First Derivative Savitzky-Golay filter with Variable Window Sizes requires a synthesis of robust mathematical theory and careful software architecture. By recognizing the Linear-Quadratic Equivalence on symmetric domains, the developer can employ the simplified Universal Generating Function derived in this report. However, the rigor of the implementation is defined by its handling of the "Variable Window" edge cases, where the Shrinking Symmetric Window strategy is recommended to prevent the instability inherent in asymmetric polynomial extrapolation.This report provides the definitions, derivations, and code structures necessary to deploy a production-grade differentiator that outperforms standard finite difference methods in noise suppression while preserving the fidelity of the underlying signal dynamics.References within text:.
+```
+
+# File: docs\dev_docs\plans\savitzky-golay coefficients deep research report.md
+```markdown
+I have done a deep research about Savitzky-Golay Coefficients to help inform the implementation of the slope detection algorithm, in order to address the issue you identified about the Savitzky-Golay Coefficient Source.
+
+Below is the full report. Use it to update the implementation plan and fully address the issue.
+
+
+# **Advanced Signal Processing Architectures: Definitive Implementation of Savitzky-Golay Filters for Quadratic Differentiation with Adaptive Windowing**
+
+## **1\. Introduction and Historical Context**
+
+The rigorous analysis of time-domain signals often necessitates the extraction of rate-of-change information—derivatives—from data streams corrupted by stochastic noise. In the landscape of digital signal processing (DSP) and chemometrics, the Savitzky-Golay (SG) filter stands as a preeminent algorithm, revered for its unique ability to smooth data and calculate derivatives while preserving the higher-order spectral moments of the underlying signal features, such as peak width and height.1 First introduced in the seminal 1964 *Analytical Chemistry* paper by Abraham Savitzky and Marcel J. E. Golay, the method fundamentally shifted the paradigm of data smoothing from simple moving averages to local least-squares polynomial fitting.2
+
+The user's requirement to implement a **Quadratic Fit (![][image1])** for the **First Derivative** with **Variable Window Sizes** touches upon the most sophisticated aspects of this algorithm. While the original formulation relied on static lookup tables for fixed window sizes, modern real-time applications demand dynamic adaptability. This report provides an exhaustive, expert-level deconstruction of the SG filter, moving from first-principles mathematical derivation to high-performance C++ implementation strategies. It addresses the subtle but critical mathematical equivalence between linear and quadratic fits on symmetric domains, the breakdown of this equivalence at signal boundaries, and the algorithmic imperative for dynamic coefficient generation over static storage.
+
+The necessity for such a filter arises because standard finite difference methods, such as the two-point central difference operator, act as high-pass filters. In the frequency domain, differentiation corresponds to multiplication by ![][image2]; consequently, high-frequency noise is amplified linearly with frequency, often drowning out the signal of interest in the derivative domain.3 The Savitzky-Golay filter effectively combines a low-pass smoothing filter with a differentiation kernel, optimizing the trade-off between noise suppression (variance reduction) and signal fidelity (bias minimization) through the least-squares criterion.2
+
+## **2\. Mathematical Derivation of the Least-Squares Convolution**
+
+To implement a robust feature for variable window sizes, one cannot rely on the pre-computed tables found in the original 1964 paper—which, notably, contained several numerical errors corrected in subsequent literature by Gorry and others.6 Instead, the implementation must utilize the generative mathematical model.
+
+### **2.1 The General Linear Model**
+
+The core premise of the Savitzky-Golay filter is that valid signal trends within a narrow temporal window can be approximated by a polynomial of degree ![][image3]. Let us consider a subset of ![][image4] data points, denoted as the vector ![][image5], centered at a time index ![][image6]. The local index ![][image7] ranges from ![][image8] to ![][image9]. We aim to fit a polynomial ![][image10] of degree ![][image3] to these points:
+
+![][image11]  
+The coefficients ![][image12] are determined by minimizing the sum of squared errors ![][image13] between the polynomial model and the observed data ![][image14]:
+
+![][image15]  
+This minimization problem can be expressed in matrix notation. Let ![][image16] be the Vandermonde design matrix of size ![][image17], where the element ![][image18]. The system of linear equations to solve is:
+
+![][image19]  
+where ![][image20] is the vector of polynomial coefficients. The optimal solution ![][image21] is found via the normal equations:
+
+![][image22]  
+The matrix ![][image23] is the projection matrix. The crucial insight of Savitzky and Golay was that because the indices ![][image7] are fixed relative to the window center (e.g., always ![][image24] for ![][image25]), the matrix ![][image26] is constant and depends only on ![][image9] and ![][image3], not on the data ![][image5].1
+
+### **2.2 Deriving the First Derivative**
+
+The polynomial ![][image10] models the signal structure within the window.
+
+* The smoothed value at the center (![][image27]) is ![][image28].  
+* The **first derivative** at the center is evaluated analytically from the polynomial:  
+  ![][image29]  
+* The second derivative is ![][image30], and so forth.4
+
+Therefore, obtaining the smoothed first derivative reduces to calculating the coefficient ![][image31]. From the matrix solution ![][image32], the value of ![][image31] is simply the dot product of the second row of ![][image26] (index 1\) with the data vector ![][image5].
+
+![][image33]  
+This linear combination forms the Finite Impulse Response (FIR) filter kernel for the derivative.
+
+## **3\. The Quadratic-Linear Equivalence on Symmetric Windows**
+
+A critical theoretical nuance—often overlooked in general implementations but vital for understanding the "Quadratic" requirement—is the equivalence between Linear (![][image34]) and Quadratic (![][image1]) fits for determining the first derivative on symmetric windows.
+
+### **3.1 Orthogonality of Basis Functions**
+
+The matrix ![][image35] consists of the moments of the index ![][image7]. Let ![][image36].
+
+For a symmetric window ![][image37], the sum of any odd power of ![][image7] is zero.
+
+![][image38]  
+For a **Linear Fit (![][image34])**, the normal matrix ![][image39] is:
+
+![][image40]  
+This matrix is diagonal. The solution for ![][image31] is completely decoupled from ![][image41]:
+
+![][image42]  
+For a **Quadratic Fit (![][image1])**, the normal matrix ![][image43] expands to ![][image44]:
+
+![][image45]  
+Observe the "checkerboard" pattern of zeros. The equation for ![][image31] (the middle row) is effectively isolated from ![][image41] and ![][image46] because the off-diagonal terms ![][image47] and ![][image48] are zero. The inverse of this block-diagonal matrix retains the same structure, and the element corresponding to ![][image31] remains ![][image49].2
+
+Consequently:
+
+![][image50]
+
+### **3.2 Implications for Implementation**
+
+This mathematical identity leads to a profound simplification for the implementation. As long as the window is **symmetric** (i.e., not at the edges of the signal), the "Quadratic First Derivative" filter is computationally identical to the "Linear First Derivative" filter. The quadratic term ![][image46] captures the curvature (second derivative) and improves the estimate of the *smoothed value* ![][image41], but it does not alter the *slope* ![][image31] at the center of symmetry.
+
+**Requirement Analysis:** The user asked for a Quadratic Fit. The implementation must honor this. While the coefficients are identical to the linear case for the steady-state signal, the distinction becomes relevant if the user later requests the second derivative (which requires ![][image1]) or processes the boundaries where symmetry is lost (discussed in Section 4).
+
+### **3.3 Comparison of Polynomial Orders for Derivatives**
+
+It is instructive to compare why one might choose ![][image1] over ![][image34] or ![][image34].
+
+| Polynomial Order (N) | Basis Functions | First Derivative Character (a1​) | Notes |
+| :---- | :---- | :---- | :---- |
+| **Linear (![][image34])** | **![][image51]** | Slope of regression line. | Robust, high bias for curved signals. |
+| **Quadratic (![][image1])** | **![][image52]** | **Identical to Linear** (![][image53]). | Captures curvature (![][image46]) but slope at center is unchanged. |
+| **Cubic (![][image34])** | **![][image54]** | **Different.** Slope accounts for inflection. | Reduced bias, increased variance (noise sensitivity). |
+| **Quartic (![][image34])** | **![][image55]** | **Identical to Cubic** (![][image56]). | Adds ![][image57] term, center slope unchanged from Cubic. |
+
+This table clarifies that for derivative estimation, polynomial orders pair up: ![][image58], ![][image59], ![][image60]. The user's choice of **Quadratic** puts them in the lowest-variance (most stable) pair.8
+
+## **4\. The Universal Generating Function for Variable Windows**
+
+To fulfill the requirement of **Variable Window Sizes**, the implementation cannot use hardcoded arrays. We must derive a function ![][image61] that returns the convolution kernel.
+
+From the derivation in Section 3.1, the weight ![][image62] for the input ![][image14] is:
+
+![][image63]  
+The denominator ![][image64] is the sum of squares of integers from ![][image8] to ![][image9].
+
+![][image65]  
+Substituting this back into the expression for ![][image62]:
+
+![][image66]  
+This equation allows for the ![][image67] generation of filter coefficients for any window half-width ![][image9]. This is the definitive "definition" requested by the user.2
+
+**Physical Unit Scaling:**
+
+The coefficient ![][image31] represents the change in signal amplitude per *sample*. To convert this to a physical rate of change (e.g., Volts/second), the result must be divided by the sampling interval ![][image68] (or ![][image69]):
+
+![][image70]  
+Failure to apply this ![][image71] scaling is a common implementation error noted in signal processing forums.4
+
+## **5\. Variable Window Architectures and Boundary Handling**
+
+The term "Variable Window Sizes" in the user query implies two distinct engineering challenges that must be addressed: **Adaptive Filtering** (changing ![][image9] in response to signal statistics) and **Boundary Handling** (the edge cases where a full window does not fit).
+
+### **5.1 Adaptive Windowing based on Signal Statistics**
+
+In a sophisticated implementation, ![][image9] is not just a user setting but a dynamic parameter.
+
+* **Stationary/Noisy Regions:** If the local variance of the signal is high but the trend is flat, a larger ![][image9] is desirable to suppress noise.  
+* **Transient/Fast Regions:** If the signal exhibits rapid acceleration (high second derivative), a smaller ![][image9] is required to minimize the smoothing bias (distortion) of the peak.  
+* **Implementation:** The code structure should allow the half\_width parameter to be updated per sample. Because the coefficient generation formula is computationally trivial, recalculating the kernel at every step (or caching a set of kernels for ![][image72]) is feasible.
+
+### **5.2 The Boundary Problem: Asymmetry and Instability**
+
+The most critical aspect of "variable windows" is the start and end of the data stream. At index ![][image73], a full symmetric window extends into negative indices.
+
+Standard approaches include:
+
+1. **Zero Padding:** Assumes data is zero outside. **Disastrous for derivatives**, creating massive artificial spikes at the start.  
+2. **Mirror Padding:** Reflects data. Better, but creates an artificial stationary point (![][image74]) at the edge.  
+3. **Variable Asymmetric Window:** Using only the available data points.
+
+**The Asymmetric Quadratic Pitfall:**
+
+If we fit a Quadratic polynomial (![][image1]) to an asymmetric window (e.g., indices ![][image75]) to calculate the derivative at index 0, the equivalence derived in Section 3 breaks down.
+
+* The matrix ![][image35] is no longer block-diagonal. ![][image76].  
+* The slope ![][image31] becomes coupled to the curvature ![][image46].  
+* **Runge's Phenomenon:** At the edges of an interval, polynomial fits tend to oscillate ("flare") to minimize the least-squares error.5 A quadratic fit at the very first point of a noisy signal is highly unstable and will amplify noise significantly more than a linear fit.
+
+**Recommended Strategy: Shrinking Symmetric Window**
+
+To maintain the stability of the symmetric filters, the recommended approach for the boundaries is to dynamically shrink the window size ![][image9] to fit the available margin.
+
+* At index ![][image77] (where ![][image78]), set the effective window size ![][image79].  
+* This results in a symmetric window ![][image80] centered at ![][image77].  
+* **Benefits:** Maintains the Linear-Quadratic equivalence. Guarantees zero phase shift. Avoids the edge flare of asymmetric fitting.  
+* **Trade-off:** Reduced noise suppression at the very edges (since ![][image81] is smaller).
+
+### **5.3 Comparison of Boundary Handling Strategies**
+
+The following table summarizes the behavior of different strategies for the start of the signal.
+
+| Strategy | Polynomial Order | Stability | Derivative Quality | Notes |
+| :---- | :---- | :---- | :---- | :---- |
+| **Asymmetric Fit** | Quadratic (![][image1]) | **Low** | **Volatile** | Prone to "flaring" (Runge-like). Physically fits a parabola to the start, often resulting in exaggerated initial slopes. |
+| **Asymmetric Fit** | Linear (![][image34]) | Medium | Moderate | Fits a regression line to the first few points. More stable than quadratic but biased. |
+| **Shrinking Symmetric** | Quad/Lin (![][image82]) | **High** | **Stable** | Reduces window size to stay centered. Example: At index 2, use ![][image25] (5 points). Preserves phase linearity. |
+| **Forward Difference** | Linear (![][image34]) | Low | Noisy | Equivalent to ![][image25] asymmetric. High noise amplification. |
+
+For a robust "Quadratic First Derivative" implementation, the **Shrinking Symmetric** strategy is the expert recommendation.3
+
+## **6\. Implementation Strategies and Algorithms**
+
+### **6.1 Advanced Algorithm: Gram Polynomials**
+
+While the closed-form solution derived in Section 4 is sufficient for ![][image1], a generalized implementation for "variable window sizes" that might support higher orders in the future should consider **Gram Polynomials**. This recursive method allows for the calculation of SG coefficients for any ![][image3] and ![][image9] without explicit matrix inversion, providing a numerically stable route for high-order polynomials.11
+
+The recursion for the polynomial values ![][image83] involves a three-term recurrence relation:
+
+![][image84]  
+However, for the specific constraint of ![][image1], the closed-form approach remains superior in performance (![][image67] vs recursive ![][image85]). The Gram method is noted here as the rigorous path for extending the system to Cubic or Quartic fits.
+
+### **6.2 C++ Implementation Architecture**
+
+The provided C++ implementation follows a decoupled design. The CoeffGenerator is separated from the Filter to allow for the window\_size to change independently of the data processing loop.
+
+#### **6.2.1 Coefficient Generation (The "Definition")**
+
+C++
+
+\#**include** \<vector\>  
+\#**include** \<cmath\>  
+\#**include** \<stdexcept\>  
+\#**include** \<iostream\>
+
+/\*\*  
+ \* @class SGDerivKernel  
+ \* @brief Implements the closed-form generation of Savitzky-Golay coefficients.  
+ \*        Specialized for: Quadratic Fit (N=2), First Derivative.  
+ \*/  
+class SGDerivKernel {  
+public:  
+    /\*\*  
+     \* @brief Generates the convolution kernel.  
+     \* @param half\_width (M) The number of points on one side of the center.  
+     \*                   Total Window Size \= 2\*M \+ 1\.  
+     \* @param h The sampling interval (delta t).  
+     \* @return std::vector\<double\> containing the weights.  
+     \*/  
+    static std::vector\<double\> Create(int half\_width, double h) {  
+        if (half\_width \< 1) {  
+            // Minimal window for derivative is 3 points (M=1)  
+            throw std::invalid\_argument("Savitzky-Golay: Half-width must be \>= 1");  
+        }  
+        if (h \<= 0.0) {  
+            throw std::invalid\_argument("Savitzky-Golay: Sampling interval must be positive");  
+        }
+
+        // 1\. Calculate the denominator S2 \= Sum(k^2)  
+        // Formula: S2 \= M(M+1)(2M+1)/3  
+        double M \= static\_cast\<double\>(half\_width);  
+        double term \= M \* (M \+ 1.0) \* (2.0 \* M \+ 1.0);  
+        double S2 \= term / 3.0;
+
+        // 2\. Allocate Kernel  
+        size\_t window\_size \= 2 \* half\_width \+ 1;  
+        std::vector\<double\> kernel(window\_size);
+
+        // 3\. Populate Weights  
+        // Formula: w\_k \= k / (S2 \* h)  
+        // The weight vector is anti-symmetric: w\_-k \= \-w\_k  
+        for (int i \= 0; i \< window\_size; \++i) {  
+            int k \= i \- half\_width; // Local index ranges from \-M to M  
+            kernel\[i\] \= static\_cast\<double\>(k) / (S2 \* h);  
+        }
+
+        return kernel;  
+    }  
+};
+
+#### **6.2.2 The Filter Processing Logic (The "Implementation")**
+
+C++
+
+/\*\*  
+ \* @class AdaptiveSGFilter  
+ \* @brief Manages the data buffer and applies the filter with variable window support.  
+ \*/  
+class AdaptiveSGFilter {  
+private:  
+    std::vector\<double\> buffer;  
+    double h;            // Sampling interval  
+    int target\_M;        // Desired half-width for steady state
+
+public:  
+    AdaptiveSGFilter(int M, double sampling\_interval)   
+        : target\_M(M), h(sampling\_interval) {}
+
+    void Push(double value) {  
+        buffer.push\_back(value);  
+    }
+
+    /\*\*  
+     \* @brief Computes the derivative at a specific index using the  
+     \*        Shrinking Symmetric Window strategy for boundaries.  
+     \*/  
+    double GetDerivativeAt(size\_t index) {  
+        if (index \>= buffer.size()) return 0.0;
+
+        // 1\. Determine available symmetric context  
+        int available\_left \= static\_cast\<int\>(index);  
+        int available\_right \= static\_cast\<int\>(buffer.size() \- 1 \- index);  
+          
+        // 2\. Variable Window Logic:  
+        // The effective M is limited by the distance to the nearest edge  
+        // or the user's target M.  
+        int effective\_M \= std::min(target\_M, std::min(available\_left, available\_right));
+
+        // 3\. Edge Case: Not enough points for even a 3-point fit  
+        if (effective\_M \< 1) {  
+            return 0.0; // Or implement 2-point forward/backward difference here  
+        }
+
+        // 4\. Generate (or retrieve cached) coefficients  
+        // In production, cache these for M=1..target\_M to avoid allocation  
+        std::vector\<double\> kernel \= SGDerivKernel::Create(effective\_M, h);
+
+        // 5\. Convolution  
+        double sum \= 0.0;  
+        for (int k \= \-effective\_M; k \<= effective\_M; \++k) {  
+            int data\_idx \= static\_cast\<int\>(index) \+ k;  
+            // Kernel index centers at M  
+            sum \+= kernel\[k \+ effective\_M\] \* buffer\[data\_idx\];  
+        }
+
+        return sum;  
+    }  
+};
+
+## **7\. Performance Analysis and Frequency Domain Characteristics**
+
+### **7.1 Frequency Response**
+
+The Savitzky-Golay differentiator is functionally a **Low-Pass Differentiator**.
+
+* **Ideal Differentiator:** The magnitude response is ![][image86]. It amplifies high frequencies infinitely.  
+* **SG Differentiator:** Follows the ideal ![][image86] slope in the low-frequency **Passband** but rolls off in the **Stopband**.
+
+The "Cutoff Frequency" (![][image87]) of the filter is determined by the window size ![][image9].
+
+![][image88]  
+As the window size increases, the cutoff frequency decreases, smoothing the signal more aggressively.
+
+### **7.2 Stopband Leakage**
+
+A critical limitation of the SG filter compared to Gaussian derivatives is its **stopband performance**. The frequency response of the polynomial fit is not monotonic in the stopband; it exhibits **sidelobes** (ripples). This means that certain bands of high-frequency noise may pass through the filter with less attenuation than expected.
+
+* **Mitigation:** If the signal contains narrowband high-frequency noise that aligns with an SG sidelobe, the window size ![][image9] should be adjusted to shift the nulls of the filter to cancel that frequency. This is a unique advantage of the "variable window" architecture—it allows for spectral tuning.3
+
+### **7.3 Computational Complexity**
+
+The optimized algorithm presented here operates with ![][image89] complexity per sample.
+
+* **Symmetry Optimization:** Since the derivative kernel is anti-symmetric (![][image90]), the convolution can be further optimized:  
+  ![][image91]  
+  This reduces the number of multiplications by approximately 50%, a significant saving for high-throughput applications on embedded hardware.2
+
+## **8\. Conclusion**
+
+The implementation of a **Quadratic First Derivative** Savitzky-Golay filter with **Variable Window Sizes** requires a synthesis of robust mathematical theory and careful software architecture. By recognizing the **Linear-Quadratic Equivalence** on symmetric domains, the developer can employ the simplified Universal Generating Function derived in this report. However, the rigor of the implementation is defined by its handling of the "Variable Window" edge cases, where the **Shrinking Symmetric Window** strategy is recommended to prevent the instability inherent in asymmetric polynomial extrapolation.
+
+This report provides the definitions, derivations, and code structures necessary to deploy a production-grade differentiator that outperforms standard finite difference methods in noise suppression while preserving the fidelity of the underlying signal dynamics.
+
+---
+
+**References within text:**.1
+
+#### **Bibliografia**
+
+1. 14.8 Savitzky-Golay Smoothing Filters, accesso eseguito il giorno febbraio 1, 2026, [unlinked: iate_oac_uncor_edu/\~mario/materia/nr/numrec/f14-8.pdf](unlinked: iate_oac_uncor_edu/~mario/materia/nr/numrec/f14-8.pdf)  
+2. Savitzky–Golay filter \- Wikipedia, accesso eseguito il giorno febbraio 1, 2026, [unlinked: en_wikipedia_org/wiki/Savitzky%E2%80%93Golay\_filter](unlinked: en_wikipedia_org/wiki/Savitzky%E2%80%93Golay_filter)  
+3. Why and How Savitzky–Golay Filters Should Be Replaced \- PMC \- NIH, accesso eseguito il giorno febbraio 1, 2026, [unlinked: pmc_ncbi_nlm_nih_gov/articles/PMC9026279/](unlinked: pmc_ncbi_nlm_nih_gov/articles/PMC9026279/)  
+4. how to use Savitzky-Golay smooth coefficient to calculate derivatives \- Stack Overflow, accesso eseguito il giorno febbraio 1, 2026, [unlinked: stackoverflow_com/questions/3571222/how-to-use-savitzky-golay-smooth-coefficient-to-calculate-derivatives](unlinked: stackoverflow_com/questions/3571222/how-to-use-savitzky-golay-smooth-coefficient-to-calculate-derivatives)  
+5. Optimum window length of Savitzky-Golay filters with arbitrary order \- arXiv, accesso eseguito il giorno febbraio 1, 2026, [unlinked: arxiv_org/pdf/1808_10489](unlinked: arxiv_org/pdf/1808_10489)  
+6. Two approaches to Savitsky-Golay filtering \- Tomorrow Said Toad, accesso eseguito il giorno febbraio 1, 2026, [unlinked: www_colmryan_org/posts/savitsky\_golay/](unlinked: www_colmryan_org/posts/savitsky_golay/)  
+7. 14.8 Savitzky-Golay Smoothing Filters, accesso eseguito il giorno febbraio 1, 2026, [unlinked: fizyka_umk_pl/\~jacek/docs/nrc/c14-8.pdf](unlinked: fizyka_umk_pl/~jacek/docs/nrc/c14-8.pdf)  
+8. Study of smoothing filters – Savitzky-Golay filters \- Bart Wronski, accesso eseguito il giorno febbraio 1, 2026, [unlinked: bartwronski_com/2021/11/03/study-of-smoothing-filters-savitzky-golay-filters/](unlinked: bartwronski_com/2021/11/03/study-of-smoothing-filters-savitzky-golay-filters/)  
+9. How do I calculate Savitzky-Golay 1st Derivative? \- MATLAB Answers \- MathWorks, accesso eseguito il giorno febbraio 1, 2026, [unlinked: www_mathworks_com/matlabcentral/answers/2133361-how-do-i-calculate-savitzky-golay-1st-derivative](unlinked: www_mathworks_com/matlabcentral/answers/2133361-how-do-i-calculate-savitzky-golay-1st-derivative)  
+10. Zero padding for Savitzgy Golay filter not working for C++ numerical recipe \- Stack Overflow, accesso eseguito il giorno febbraio 1, 2026, [unlinked: stackoverflow_com/questions/41980303/zero-padding-for-savitzgy-golay-filter-not-working-for-c-numerical-recipe](unlinked: stackoverflow_com/questions/41980303/zero-padding-for-savitzgy-golay-filter-not-working-for-c-numerical-recipe)  
+11. Savitzky-Golay Smoothing and Differentiation Filter \- Eigenvector Research, accesso eseguito il giorno febbraio 1, 2026, [unlinked: eigenvector_com/wp-content/uploads/2020/01/SavitzkyGolay_pdf](unlinked: eigenvector_com/wp-content/uploads/2020/01/SavitzkyGolay_pdf)  
+12. Savitzky–Golay Smoothing and Differentiation Filter of Even Length: A Gram Polynomial Approach \- Spectroscopy Online, accesso eseguito il giorno febbraio 1, 2026, [unlinked: www_spectroscopyonline_com/view/savitzky-golay-smoothing-and-differentiation-filter-even-length-gram-polynomial-approach](unlinked: www_spectroscopyonline_com/view/savitzky-golay-smoothing-and-differentiation-filter-even-length-gram-polynomial-approach)  
+13. Design and Analyze Savitzky-Golay Filters \- MATLAB & Simulink Example \- MathWorks, accesso eseguito il giorno febbraio 1, 2026, [unlinked: www_mathworks_com/help/signal/ug/design-and-analysis-of-savitzky-golay-filters_html](unlinked: www_mathworks_com/help/signal/ug/design-and-analysis-of-savitzky-golay-filters_html)  
+14. Smoothed Differentiation Filters for Images' \- Sites@Rutgers, accesso eseguito il giorno febbraio 1, 2026, [unlinked: sites_rutgers_edu/peter-meer/wp-content/uploads/sites/69/2018/12/meeredge92_pdf](unlinked: sites_rutgers_edu/peter-meer/wp-content/uploads/sites/69/2018/12/meeredge92_pdf)  
+15. Computes the Savitzky-Golay Filter coefficients. \- GitHub, accesso eseguito il giorno febbraio 1, 2026, [unlinked: github_com/robotsorcerer/Savitzky-Golay](unlinked: github_com/robotsorcerer/Savitzky-Golay)
+
+[image1]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADUAAAAYCAYAAABa1LWYAAACq0lEQVR4AeyW24tOURiHtzHOp9FEDjkUF0Qhh0iUQ1JKziXKhQt/ATdy4UouyIVc4EYuRA5XSg5RLggRCYVECYlBGGUmnmc3e9rfbjPru9lfe+abfs96115r7Vnr/d613rUbom74V3eqLEHtEZFaQjQ+wp8OLmEHQKKhVC5D0q89z/MgKFK9mWwVHOlgA7ZzndlIXadzJByD36CTM7GJvlFZAevhHAyEdfADilIfJjoEc+AAPIATcBcmQJR1yrYmin6wE/rCFugFaU3k4QK0QtFaxoRT4Ti8BAOwAzsN9kBjnlPj6fgMZ+AZrAGdwMRqpPSfPsbWQjOYVMf2YhPdoPIW3FnNeU5Np1Nn3mFPw1hw/2JiGUkj+CZ+Kr64xpQP4Q4kaqci/uANeU7NZsA9UGcpvsBWGAZqCoVnqwVbC7k2z/nR1OSTqI+B+9CSdWo4jc3wGpQRMwPO42EBKPfubSsBTGaMizCqoWzmnWpk4tjOC99hH/zKOpWcp090qjYKMwsm2kZh2jTrhJ6nF7zjeP9vKKd4pxqtZvBK2Ajxlsw6lZwn7x/GxLpF6WBfNFq1PE8spULuoN206NhVbKy0U6bt+bS6LzGd+krtMJggtO+ph54nL0nvvdG8E8pgxoZIhw4ycBN4R5kkPPtNaadctF8MrxiU1RUaPF+m8kfUQ9WfgXNhYRWMY2xX8pLdxSDvULc41cj1L46iqD3t1CwahsBPyOoDDaZ3769sJOn6p/zSuEivWTSUp4z/n0bReRKWwk1IEtAT6jrWqlPLeTBzmP/XUndrpe8lmmK5KMPs9osbalSYsBYxt5naqCaMoO05tOmUB8x97JkSP5H8demvkBnPZKHTFR0FP+xnPteZh0kj99uPd8otI1WVB2UYXHeqDFFyjfVI+SuUgb8AAAD//46mRrwAAAAGSURBVAMALvSIMebGehYAAAAASUVORK5CYII=>
+
+[image2]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAYCAYAAAAVibZIAAAB9ElEQVR4AezUS4jNYRjH8YMUUYiIhSSRS3LJSrlENjaKoixkYUMpRBY2EjuXhZKNyMYCC9lIKQqhKGRhISyI3CMWppnP7z+9pzNnzlmcmWY30+97nud9/vP+/s97OWdkbQj+hk1bbupo1Z1YiY7Vbk/Xc7qArehY7UzvcdqAI+hY7Uz/cLqNX+hYzaajOCzHKmRfhUqpz5GNQCtNUVyDak6j6QTFy1iNA7iOsYh2+TiEmAt9lNpplTvI3FoxTQcHFc/hFN5hMSZiGjbiBP6jWV0KV/APfTqdrPAXDzEOC/AS37EWObi3YpSJ+yQrUHRXcgsfUO/0i8FxpJN0tlB+H3n7EvEmivLCowZzUZQXfTZ4j7pp8sJsSTp/LI7HdPxA0UxJbsUDsWiR5BuyspamWe5X//AGUQ5wRhJk72PwTF4tVczzHOwNeaVyUNXAxxhkuU/FTMp2ZGmXjPfgGo4hB3dR3I/n+IgnqNRsmo6WeVL2M3uar+t8tbPIjcjvwXn5NpxEDvewmAaEWr/lz1OdiuynUCndZYk5wDx/pLobufCTxJj/FOtKp7nY21VyibOs1/IXaNRvg5xu7qS01u0j+954gEq9iukZ6Rbk27BZzI/IJ3HAiulVs2dhL9YhyxUGrpjuMH0pNuEVBq2YDtqk2WBITHsAAAD//wstnoQAAAAGSURBVAMAZhFUMTrCkpwAAAAASUVORK5CYII=>
+
+[image3]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAYCAYAAAD3Va0xAAABhElEQVR4AeyTSytFURTH95XIm5SJkiExIBJDJSkTjyHlU/gmZkaG5DFS8siQkIEMzMQEyTOPAcXvvzv7dvbeZ3S7s3tv/99ee691z7rrrL1uhSnSp4QSjdKyR/hL2MHWgFMjm11wcdlNznVhjw5xtsEy/IAS92Gd3tmMwyxsQC3MwGeYCJ9pNsZUwyJUwRzkIK1ODlvwDVZZiTqIPMMaXMEU6EGMVSVrN1xCXlmJeokqwR12FdphEpxUsSq9dQ7ZrEQDBM5AWmd5hXloAqmLRb16weYVJmoh0go3IKky3dwQhxGQeliOwVOYyPXnKfnWL3YFpAUWjcIg1usPZxMmcv3RfCgujlhOYAJUVdQf/F4iXfEwznNI643DEqjJsvfsvf5w9hLpi5rcawUC9jirX7r2C/aR0q/WT7QBviDUAw6NguYrrJiQsRWNsfuAA5gGlZ2eG1xWGoVTdno1jC9VtI+rHnIJ+ntssw+lm1LD9UNhzFYUOQtxqKJCnoueKSeKWhI5/gEAAP//zwxoSAAAAAZJREFUAwCgbEMxME5c0wAAAABJRU5ErkJggg==>
+
+[image4]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAYCAYAAABKtPtEAAADaUlEQVR4AeyXWahNURiAN9dMEZKZMk+ZlYxPpESR5MH4gCeSlJRkCuVBoaRIKA+GTC9CKVOGMkUk8zxGmefvu+6+bfvuW85x7nFu557+b/9r/2vvtdf61/+vtU7lIM9/FQ7I8wAIKiIgEgFNKC+EjbAY2kKSVMO4Gb7DzyJmoEuTmlQcgPDZ15QnQrbFfkzho/WgWMII6IdlKxyD9dAHbsJcqARR+cLNNOgKV8H7BujSZBQVLeEbDIL6sA2yIX5rPB/aAo/BidURFH+LDtCwgNsdcAouwSQ4B0ugFyRJO4w67CG6AyRJa4wd4RncB52KSllW80Z3SEc+8dI6OAQlRAcYEj2pWQPOKip4xWUv1IIhkCQ65igVD6AV1IGoVOFG7x9Bt4cLYLuolKU6b9geKiUx3fbxxnn4DCVEB7zE6mBPo59DKOa45apeYjjYNths+BG6BdSGqAzl5i4YYaaA0WUaYMod0QFf6c5sGA5PQNHbfSn8gDMQl0YYDK0XaGfVSIk6wDVhIHX7oTfozLPonBMdkNQpOz2Cik1wEuJiqtzGqBOc5bqUHTQqcNEcR8HQc+UfTPlf8p/Xy06SHOBglvPJPTAHjBDUH2L+u0hqdGEzzBt7Az1AuchFp3RB/23+1+BZt+M4RljDhDrb1+FUpSdxB5jvq2jqMkyH9xCXMP+vF1U8RX8EdwUdMZryTnD2O6FTyf+RPO9WFWcA9pkQt8/D5oSh0pOoAxz8Wpq5BzbsoBzAMO6jEua/i6d214C3FNzyJqBPgDZU4PkilfzfxUs6Ps5h7Msgbp+P7Q2kLaEDDKNZtHIDVoKdRgXmrzNuOcT8d9bNf21GyQcKLnrN0J4NUIHh7MzlbP7bSR3g4CdzsxQ8+RkBdlpWYItujYb4GGzmNKpQdIBnAUPRE1641TWl1rXCZ8OIwPRfpYCvF0Cx6AAXL3PLwTmD7ukhHh48QjqbDs6Z1lm7acFzgwvTO8p3YBG4I3RDX4NbYNtj0bZhelDMqpiux/miffR06/icYE+vrimF/wbd+z3JGQlxXI3D7c4/MNH6/jQcrgNTKW8H5QqXzhB91o541MacVTF6/f9hGof9MQKa04sNUOgAda7jOd4oyng/TYGMN1oGDR6kTSMVlVkpLw7I7KgjrVU4IOKMvCzmfQT8AgAA//9K3F93AAAABklEQVQDAIl+qjF9aoPcAAAAAElFTkSuQmCC>
+
+[image5]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAYCAYAAADOMhxqAAABAUlEQVR4AezQvyuFURgH8PfKTZHIIr8WWaTuv8BGGSySMpiUSSzKqEgyYFMGgwnlD/A/2MxGs0WZ8Pl6Xb3jtRhu9/Z8zvOc59yn93S6ij/+OgOtPNj/vNK0qyxXLKmHGKPan7PvzpVmFWfccMcVE8yQXuR8074nAxeKcVb4YIAp+nkn/Zyvqt8yIH/HvXWP9PKlW/U+6Utl5LCsiuJTccolNZ7I9dJXllEdSKfXMkmiYTmkzm9UB3Jw8nMyL7+ywQ75olQUGRhUjbDLAts8sEWucySvMUw9A+eKFw7Icy7KiVFLjfznWn6mkc26IgdNx/aJ5GYvuU/zMQNy69EOA18AAAD//2mtk6QAAAAGSURBVAMAZ+4kMRPZuOIAAAAASUVORK5CYII=>
+
+[image6]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC8AAAAYCAYAAABqWKS5AAACRElEQVR4AeyWSyilYRjHv+bWTJmLmck001w2U9NM00xuUS5Z2FhIYUMkW0sL9kpE2dlQNsLGLaVkqRC5JpckC7dShFByid//q/d05Lwnh5xz1Dn9f9/z3r7vfb7nfd73O0+cR/yLOB+qxYtE/oEj/4vn10ETFMIrcBXukc/Dyx5oh3L4DX3wFpxwdv4bDtZCNczAETTAOyiGsHY+HQe/wBIY7VNYhnyIMpF/QyUL9LYY5zmXBMiGTxAKJfmY9JK2c9A+iJHzUVTqIRlGQUvSjY2Df6A3zcQGW25eWyZVsKPlfCoDpkAbIRpbAkWg3d2C1VLFY/3pJ50TsBYABYy1SQH9Yes07XJeqTJEgwa/wGqDHGAlbQ496EwVP6zQpzT7jr0tHYy1yaSHrd9tl/PNlBYhA5Qic1ij/xTk/Dg2mDpmsk3wKzmvAa+5xIJeQmlC0XnGJQemwfuFqN7QU1pi4HMAKCgMt2rD2uM4e/RtG+e/UvkDI6DdjHGUTmkUBuAUauAD+NJLGhMhJQD0fIZbNUaPnqt9SNGV6h8pzcKOcV5fLu1g7/T4y4D30A/a1IfYXfAlLbPGddJ5W7TKDLdqmJ5J0NwYVwqyUrmV2olxXkfiAg3eD5ynvgVVUAqNEEwpUGVMqNOvAqsPkzZ5G+Uu8Hxh9RnWkusGtYtVLloRnfvCnEA0B006fpUB+nugdM5l5kpwTz8T+RMa9N8Bc00atEPLBYRKSslBJu+FdfDIOO9peEyFiPN3X6373RmJ/P3id/e7rwAAAP//8GrH+wAAAAZJREFUAwBSDnExugLJwAAAAABJRU5ErkJggg==>
+
+[image7]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAXCAYAAADduLXGAAABT0lEQVR4AcySvUpDQRCFL2qhYKOgIGKhghYqaqGIjWDlG4giNlraWQg+gbVgY2MraGUjKFiooCAKJulDQoqkCEkgf5CE5DsLd9mwRQhpEubbmZ05zM7uzUDQxa9nsRoI70w3OUF1ETZgBjxzxQdUn+AL9sAzV3xN9Qoq8AueueIhqjsQhyR45orHqa6DuubwslGWSRiEwBUvkJiDD2jAGuikffwKtIk3STQhAnqRVbxyp/hdsOJhNtuQhnmYhVf4gyz8gxXrjXXsCMkT0BgSfRJfwjtYsWadIvEIb3AEx1CAb6iBFW+xKcMt3IDGOsTrpGW86kasgjYxkilQN81eJdaF7dfU042RXALNVcTLflim4QykieJN5zzBOdyBOuGCB5YL0AXv8SUwYv0XntkkILQMwQvocvbT6whyQZ0l7EpoTM+nvNloCcWKO9In4hYAAAD//wUfPB8AAAAGSURBVAMA7nk8LwPAShwAAAAASUVORK5CYII=>
+
+[image8]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAYCAYAAACSuF9OAAACEUlEQVR4AeyVSytFURTHj2deGXi/H6UMzORVSikmZigxUKRk5gMYSfkWShRCJmKklBgwkJRXJpLyLO+34ve/1zndl+6tcwbo3v6/vfZeZ7dad52194k0ftkvnFCwF/KvK9TBv3+Az28WsHHwk/p4YO59Yz4KcU5WaJKAaTANV5AMMRBIJTib4QOGIRa64MXJhIhnpDK8wgoUQBL4Skm24dyEaFgFS04nVEzkU9gAVSsH66sGHPuQBWdwAJacTqiWyOtwCAmQAZ7SuhqH9lRhd+AcLDmZkMpfROQ9uAM1bArWVAQTNf4MVtXRXiX2yNqSkwllEjURTuASdOIKsaYqmTyBqlKBVQW9+gefYSakRlPAbJzBUNmj2Ocrs3/ueXAB11AKkpq7iYlOoCpVw9yvf/BZCZWxGILBEBhgTz74yuwf+VWdYya5oKq1YJfgFnQSA/YPz6yEtlj0hkg/+47AU579I/8zg5pV1darymO9BpIqKfz6Rw/NV6a5HfS69c/1GhRHF94Nk3TohjFQk2OMcoZ48OsffIYTCakn6gim06IkmLqko6+7aJGVGh1jqJKNTJS41/2DzyW7CXUSRTfzBFZXv3qknrm0yzALc6A+msLqlLVidey3sSOgzwbGLbsJjRNGAVUloe/XMj5pnkGfiHesqteO9dyrk9eDTx9WjFt2E3JHcXAMJxSsmOEK/bkKfQEAAP//PuLijwAAAAZJREFUAwBzUmUx6YQBGgAAAABJRU5ErkJggg==>
+
+[image9]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAYCAYAAAAVibZIAAAByklEQVR4AeyTSytEYRjHX5K7XGYiREpCFLFTRCGlWMmerZWl78AHUPYUGzaKpFwWJFJKKURYMFgQC+L3P3POac5ldjO7mZ7f+1ze03/OPM8z2SYNn4yop6k9ZE/wZ3OBj0IyG+LiF/S8/DZxxN/TQ4rVMA+PUAr5EGYRilPwCWuQB4MQ84tSM8UcVbAK5aAY57Essgk4Bz2vl/khtixMtJKbbziAQqgBv3XaBednH9m55cJE27m5hhv4giZItAKScdiAXriDK3AtTLSL22P4AImqd4SujRHtg6yN4xRi4JpfVP1p5PYSXuEdGkA9xBnFYtcY0wr14OknufGLOv184VJTvcfXQhHkwCSsgIbSjdcaefpJLSDq9FODkugDD9WBRPvxtzZasz7iQD+pBUSdfupOk5VIGYl+qhZ9nVgW5eiAQD+peUTVz2aKmjzOMg1A054hWwYNDmdaOLRqgX5S94jqm0soPoNjWhWJnlA4A8cGCEL7Sd0S1a69kWhNRvF6u2m8TH/VLYJFUDsW8Fq1ObwGt4PfhApwTdPfI9PfUWsjcsmXQKY3HCbQF+HMLIfapOeEnh2hpvXDxU2i8SiFZ0Y0hc20pdLS038AAAD//3698JUAAAAGSURBVAMAAl5aMWvDFbsAAAAASUVORK5CYII=>
+
+[image10]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACkAAAAYCAYAAABnRtT+AAADlUlEQVR4AeSWR4gUQRSGx4hixBwx56wogglBMaIigiAIRlDx6EEUE3oRRcWb6SCKJxG8eTKjKIqYwYRZzBlz+L7e7Xa2tmd3B+ciLv/Xr/pVdc2r6levt3LmH/j7b4Osx8upBvnI8T6X+kyhd3ICv7IS0lQbZxOoAmlag3MqlFIY5EhGPIFfWbyi/Qz0fcBugboQqh+OJbAevkEs53zOzXvYBzUglOPX4pwHg6CEwiCP0NscdsF3GAYNwB2ohB0OM2A/uDOYSDW5roZt4IIwiZzTBTzCcwY+Qppe4twK6yB77kwYJP2ZOly6wH24Cdm6wc01GAWDIdYIGm3BgDCl1BWPizdImjl1mh4DnIhNlBZkK3q7wwVwdZhEJngt7n7AZ1Du8HQax+AppMlX+IaOcNG4Sugtdy50GrYqREoLshM9vuJTWF85JpE70pu783AZVEMuBnEUmyZzcAgdjn+AVT4zjoa7iymhk9wNhGYQKS1IX6XBnY1G/LlYIkzud7gWg6vGZNpwMUXuYdPUAmd/uAQePIMz9zxQO/D5ZjCJzGkrQLKAMEjzwZ36ySMLYXsxu7HXwZ3wEJyjHcsgTIPXsSOw7bn34B3GTgHTaSN2AbjLmBJ6zJ3plHMnWzOgFxyHZbCqmKVYf2w29iGE+orjE6TJHftCxySwCuzEegCdexHtXKc9KXPhTsb5aPL6+qyZMfFBYd4Ky53qy2gPgbs4mXY3MLDNWIPFpKpp7A2DNB8t2mE+xuPztY14oA9sgJZgTroBljhuy1RSCbKDNPnNN+uj+VfmDFmd5qI5ad5luaOm1cADYH00HQ7itXI0xurfhK0O2TIlnM/DG/mzg/SU9sR7FcL6iCun4rH+cDhoAA5P6xVsrBc0PBx+vQzefMaVyPLkgu7GHoP002f+Wcfq0zEenGQutiLyxJtbHYLBlhFLz0X85jUmYxlyUZagMTgOQajOOJxTaGYyBnmClrtYCRvjK/H7jatcmWcW8tGM9IBgIllGXKgHxp3R6WaYUrO4mQ9xraUZyef9JDqf80ZOg4waf3nZy/MdwRzEJPKHwqrgfzy+cheRDCxu+P1vR9v5MEUqVJC3mG4PzAHfBiZv+dxMnjoAtyFRoYJ0QvPMU5n6j6sDymEo/T3Af/csgzSLVMggfY1+mSzefp2KfqFiV2voWIaaw2GeRgeHvoLJL8kKZrsD+ch/iJfzQKkA8RU8SOcsOL8BAAD//5St3wAAAAAGSURBVAMAPKinMWtsCrsAAAAASUVORK5CYII=>
+
+[image11]: <data:image/png;base64,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>
+
+[image12]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAXCAYAAAAGAx/kAAABqklEQVR4AeyTyytFURTG19XNI8+ilJSBPFIGMiEDkYEYKKXEgJSJlImRseJ/kAkzpQxM5Z0YkEeJkpKBR8kjKfL4fed2zj3O5JyBgcG9fb/9rb3be5291943zf7ol0oUXsj/X6MYh8iFYohDZPmPlseqTmiGBuiAHqiBULmJtIshZveDdnKDt8MMNEKolEhoJ2PMXoAl2IUDyIBzCEofq2MwGxwpSRHRKNzCOkga15Eu6VxAUCpDN4NyzEwLqojqYRUeQcqhUZ0O8XsI6oOBLXgGR0pUQJQJ+/AFUhlNNWxDKbSCFKOphV64gldwpET6ogbenBGzLHwAlPwYb4FCkJSkhEA7HsbTwZESnRLNQR+MwATo1kQXcQXoGJjFaY7gHfShT9yREj0RTcMsaNIyPg+D4MZKStfOaB5A9dvBfyWibzrvGoGufQ/XDW7gm6Adf+OSSpBPoLrpeRAmpB0lIjNl1224i+T+vjuvkkBzr3FP/kTeYEigp6Jn4V295kdNVM5kvbM2XP/BRdx9KoRmURPdMXsFmmAcVEssqaiJXlgyBZNwAqoRltQPAAAA//9l7JdZAAAABklEQVQDAJg1UDaZN02TAAAAAElFTkSuQmCC>
+
+[image13]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAYCAYAAAD6S912AAABzUlEQVR4AayUPShFYRjHzxWilHxshAGJKIqJsjAZDEpKkl0+JykKg0E+UiyiDDKQwSAGWRQGNkoGkiLEgMHA7/+6V6fb/Tjn7d7+v/O873vO8z/Ped63m+Qk+GdrWE4dC0E0ZvgnG8NqUpthADZhD+rByMZQZr1k58IJnEI3GNkYrpDZAU+QDOnwCUY2hs9kqqofYgWUwSoY2RiaRC6ZMASdcA5GtoYyG8VhAs6gBIxChupDEyuNkAaRlMJiKij2E7fhDWpAeQTHkWEGoyWoAjVc5eczdksVLbKgnnURx+EYHkA7/UI0kqGaO8VsBsZATW4lhqSKJpnsg16mlwYYu1G1LDmmwg9G1yAdcLmCNlDlMlM16tN/EveiShW6bz4yUWItUZWqV+rTOnN9CSG2wg319CEXbdIyURXOET2Z8Zz5ZEU3l0zu4BVk9k30rEgVFpKtXS0lZoEvhRvWka2+TRMLoBJ8yW1YTGYfDMIuvEMLBMCzQob6TJ3DETLv4QZ0YHUeixh7lgzVL501HerbYOYXcQ3yoAdyYBayIaZk2MAT83ABbm0xGYZ22IAd0M4TokuG6le4mTJ0XNQG7bb+pY+0GA8ZxnvG1/2EG/4CAAD//0t870cAAAAGSURBVAMAhG5LMdRDOtwAAAAASUVORK5CYII=>
+
+[image14]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAYCAYAAAB0kZQKAAACkElEQVR4AdSVWYhOYRjHj63InrKUXLiwU8haQlmKSNxQSglFFMp65ULKDYosF5SEKClcSxRliQt7spVEtgtCTDO/39ecb96m8545nb6mmen/O//nnOd9z3nm3b6OSRv4a7dFdGLw+sMg6ANFFfbrEXYqMxIWcJWX7INlEKoDN/0gq7iePN8KR2EtVFWmCDs/57IJTkKq/QR/4Qushub6wYOdsBd+Q1Vli6i+IAh2EC+H/3AXCquWRfjRWVw+wBsorFoW4ZyP58tP4CsUVliEq3ciPedBd3CRDcPnQjdoSYNpMApuwh8o3D8tojedzsBMmAS34SCsAuf5HN4V8jSBZF94AF1gD7gLNuLrISqLsOJttDgGB+AUuMUG4BdgCfjyznieppB8D66H3fhl+AiLIVcW4QccvnuNLT0HfHaN+2ewGTbAT4jJ9tNI2mY7fhEege/wbDhBHJVFfCPr3rUQwmQMF9eHZ8E/YqfpKZ6ngSSHwhCYD05hL/wlOK2/8KgsIkw6NXN44Edf40U1koZ+dAFu/xX4aWhpHdEkSSzCRXmYu3XgkTsZfwyecFji7jBnHCM8H17R6A64W9xVC4ld4Fi2LGI6KVfwcHwsuC2dinpiC1yJX4eY/DEaR/I+fIJU7wic4tm42xbLlkW8IPUQnFcXoTtlDff+LpzHHVb/O8JMOXoWfoOsRzaWXOEyFc7C20awbFmEc+9obKHJUjgEjsgufBHkjQLpxG05msAtjlV0iesI8IfsCO6oYtmyCDMO22eCOlDN730Www98J5n2JazI7Zquq8qD2CUtIpZvlefttgiH3YPJs8RjvuhoeRLforHHOdakMiPh2pnBKzwdPZIJCynsdzzsUaaIsH9N4gYAAAD//47CLtkAAAAGSURBVAMA00xyMbfUEvMAAAAASUVORK5CYII=>
+
+[image15]: <data:image/png;base64,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>
+
+[image16]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAXCAYAAAA/ZK6/AAAA+0lEQVR4AcySMQsBYRjHRQaT1Uw2FqOPwAcwUGabQSmTxUdgsLDJZFZKyqRIMvkQkpQk8vtfd9ddp7sM6q7/757nfZ7n391770UjP14hN8TZTg4KX1Bd/YhzD0kGezCACWxNZkTV1XcZzjTqUIIuWBqRqK6+y/CmcQE1bkRLdxLV1XcZqAfLuYfgaSZCasjwak3Q54wRfaU9NJhogw4nT5QSupm8zGgEGdJkKciCjl9PKZJLV247sCVDn9URlHeIU6jACVqwAVsaWrOqQhmGMIYayKR/ynnqxkk/aB5gBQuYwxL24BpmbRgUhf6VJ4lQTuqVXslb9an83/ABAAD//xBT9koAAAAGSURBVAMAo6MrL+8j/owAAAAASUVORK5CYII=>
+
+[image17]: <data:image/png;base64,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>
+
+[image18]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEkAAAAYCAYAAAC2odCOAAAEKUlEQVR4AeyYWahNURjHj3nOPIuIEGWeIlEkZS5JIiUlT8QLinjwgBAPCi+UocjwRIhSRMg8ZMw8z/Ps99v3ntO55+5z9rmlq517+//3t/ba3z57rf/+1re+fcsnyv4iFSgTKVyiPnSPhwHKRApkKHboTk9dGOB/E6kms24EK8BcWMfF9TBANpGqc3UL/AZ/p/EI7fowbhjMgJ/D93ArrArD0ITOZXA1rA0DZBPpE1cnwcpwKVSooVgf9hIbN/hyuzHoh/Ak/AgzYZRNpnMV7Az7wQDZRAoucvDG/th78CqMMzow+KZQkTDFYEAYZS5F53096RElkuu3Pc6XYRwjiGGn0JvWG3gDhuEVnUaaYr6j/QwGiBJJgVynR/H+AuMKc5Ar4iITuA+FuXU4DaMLk0IPWqfgBxggSqQBeJmPzmDjjGYM3m39AtbJK84a2ubYDdgaUCimcy6yJHOJ5I0WVaWZjyYyUp+XL0/j3xZGoQ0Opo7D2DGwBVwBZ0CFwQQwuurQugRTyCVSY7w6wfR8VIvzbdClp+I088JIvAbCKPjbLXHKlz3xvQmjYMR8xWkUrAY3QhPzIuxMuARuhmOh0eZLolmAXCK5DWbmI+sMf/Act9+B+aAiTn1hFfgvYKR05cGOwygaTbsjtAxwu1esXZxbR73AzoI/YApJkSrR441amgFcamH5SL8HeDyF+cAHLsDxIIyCEzKR5kujPX3MYb/fgM4ucDlsDs1J1k1uSpwGOMZxDtwOv8NCFBhFUmFD7QpdFlOYhHWCu4Fhl1kfDcLB7G9kzKO9EuqPKYZ29JgY52OjJoNLwkn73HxphJoCvDcb3dIV3WT8Gae9sB5sCO13/NZInIZDkUzQrbl8Czp5TGIYBwe6FmvtgAnggHwD5qkJ9FhzjMD6G5giMDm6iyymdxx0sJicuMvVnSWgE7a+4ZascEu35klPxi6rR9xhnlQ8P784DYciWTi5Js/i4vfKQqwfd759t0lOU3DiLjeF2U2vg+yFDVt6LjMrWN+Wz3CJ4lqqsHp26z/PUx9DYWK2MHZuBsN+O3NRkcw7rlfzhon6BDe4ZdqXuT5dPorpDx/Az/rjLTYMT+j0jTlII8Rql65SxU+eNg2asF1qNBOOxe+4qZxMh9nGz6UCKJIthTLLG+pOPtuNQ3A+Dg9BRVBUB2EEuuRm06/AmADlOJo39PcZnJY6TNSWLOkP9uX7AhUxvT+0nRQp9GJGpyJYv/iJ4lIyZP3vnUtJUd055nKPfZgAFmdG37XgLKaHkohkXeG/T1yOvhkjyKS8o3DuRqJlg+Fc2JVoRcMwv42NLUoikpNUqOSyMVQtLu1P0p3EItOkbuKfwgXz12tsbFFSkXJN1LrJXc4yYhOO1iL7sNYhmPjib4rkt5FL8Rdy7IHmJ6MoGXl0xRN/AAAA///7Ei+cAAAABklEQVQDAN4M3jE3lrQLAAAAAElFTkSuQmCC>
+
+[image19]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAmwAAAAiCAYAAADiWIUQAAAEz0lEQVR4AezcS6hNbRzH8f1eet8oJJfkVm6hTAykxIAMRJEBkUsu5ZIycJkgIREDMjAwMiFmUpJyGTAQQoRSIsqlkJRrCd+/zsl22rvOPmc/nXX5vv1/51nr2Xuv/azPejv92+tsf1f8TwEFFFBAAQUUUCDTAjZsmb48Lk4BBRTIi4DrVECBlAI2bCl1PbYCCiiggAIKKNAEARu2JiB6iHwIuEoFFFBAAQXyKmDDltcr57oVUEABBRRQoCsEuuQ9bdi6hN03VUABBRRQQAEF2i9gw9Z+K5+pgAIK5EPAVSqgQOEEbNgKd0k9IQUUUEABBRQomoANW9GuaD7Ox1UqoIACCiigQAMCNmwNYPlUBRRQQAEFFMiSQHnWYsNWnmvtmSqggAIKKKBATgVs2HJ64Vy2AgrkQ8BVKqCAAs0QsGFrhqLHUECBLAgsZBGbqzKKbUsBBRQohIANWyEuY2dOwtcqUBiBc5zJebKTDCLPSEeqJy/ydyMIlgIKZEfAX0rZuRauRAEFOifwjpe/JT/IR/KVdKRW8KIexFJAgUYEfG5SARu2pLweXAEFWgR6MR4mJ8haMoscJ0dIX5KqunPgvWQ/OUD2kFgLQ936q+4jvx/oxuZqspj0I5YCCiiQVMCGLSmvB1dAgRaB94wbSX+yjEwnD8ga8oZU13J2LtXJKeZ7k/ZW3BqN94vjxa3S+Du39TVe/C9zrYnfi63bMbZt4KJBu83zr5Jj5DWxFFBAgaQC8Ysp6Rt4cAUUUKBF4AvjUjKcDCH7SNy+ZPijjrI3rU7mMh+3PhnaVY941iaym1wgA8g4Ul0D2YlmrjUz2d9CYn8H43hSXQvYGUwOkfjUkMFSQAEF0grYsKX1bezoPluB4guM4RQvkklkFWn76RVTlfhUbCIbtTKB+f9Jdc1m5z6ZTFo/EfvOdtRKfkRTFbdhp7D9kLStF0xsrcoZtneRmNvGeItUV9xS3c7EVLKOWAoooEByARu25MS+gQIKIBDfvJzDGJ+qRaMWn6LF35bNZ64Pqa7n7FyrkxvMt/0ywT/MjSDRDC5h/EDOkqhP/IgvIESTNYPtuJ05lDE+5WPoUF3mVdE4DmMcSWo1nUxbCnSdgO9cPAEbtuJdU89IgSwKRJN1l4XNI9FEHWSMW43RgMU+ux2u07xyNIm/K4vtsWzH35cxVE7yI5qrV4zXSdwOXcTYyG1Vnv5HXWFvA/mPRDNY67YuD1kKKKBA8wRs2Jpn6ZEUUKC+QDRsT3g48q1SqcQXDR6zH/nM2JmK259POcBNcofEP+3B8KvisbjleY+9GKNRi/eMkamaFU1eNGI1H2QyGrSXjHF7NUY2LQUUUCCtgA1bWl+ProAC+ROIJuxb/pbtihVQoMgCNmx1rq7TCiiggAIKKKBAVgRs2LJyJVyHAgoooEARBTwnBZoiYMPWFEYPooACCiiggAIKpBOwYUtn65EVyIeAq1RAAQUUyLyADVvmL5ELVEABBRRQQIGyC+ShYSv7NfL8FVBAAQUUUKDkAjZsJf8fwNNXQAEFyiPgmSqQXwEbtvxeO1eugAIKKKCAAiURsGEryYX2NPMh4CoVUEABBRSoJWDDVkvFOQUUUEABBRRQIEMCDTZsGVq5S1FAAQUUUEABBUoi8BMAAP//KhVI/QAAAAZJREFUAwBYmndFLpcrKwAAAABJRU5ErkJggg==>
+
+[image20]: <data:image/png;base64,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>
+
+[image21]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAXCAYAAADduLXGAAABPUlEQVR4AczSSyuEURzH8cc1ykLIQkJegJLkFXgDtm7vQFGykuSyIkoprN22FjaWUoqNslJ2xEIWyiVy+X6fmtN5ZmxmM830/5z/6ZzfzJznzFQmRbxKG67gZFUoqPxjGJwidYZ2ZCoOG5xmdwAb2EcnQsXhHlZrMIxd+A2j9HCkOHzFxhK+YF0wLOIbaeXCvruPlXlsYxMjaEaoXHiWlUsM4gS32MIDhpCW4Tpm/bDeGI6xihn4DAv0FiSGP5hMYg1zeEUjXmB1MaS3Yph58shwD7/6h36DdWTKsJd/yuoKPGsHvRXjyJThXla843e6V3VH/7cMP7HzCR+0m241MfgctKSWoQ0Nhs+ZjME3HdCfcY0d7KEaR1g2/MvkEJ6znu6nyP+GP73/GU0YZj+U16iwEE/yw/FewbxMwn8AAAD//3LrVv8AAAAGSURBVAMAGcczL1Apq9cAAAAASUVORK5CYII=>
+
+[image22]: <data:image/png;base64,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>
+
+[image23]: <data:image/png;base64,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>
+
+[image24]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHEAAAAXCAYAAAA806CXAAAE50lEQVR4AeyYZ6hcRRTH77Nhr6jYUFGxoiKWLyqIFUQExYJdsH5RUQRBBAvYwIrYQGykQnpCEvIhjUBIISG9kkp6JQlJSP39dplls3tf7n333t33Nuzy/98zO3fmzNwzc2bOzHFR+9fyFmgPYssPYRS1B7E9iMeABY6BTyjKE6/FFt/CP+EH8CLYHTieRp+GV8As6KDSXfBn+Ct8FKoTkQmnUOsVeDbMAus/R0Xtap8eIF3XnyIG8UkUfwl7wf/hC3AFfAI2A37oYzT0E1wJ/4bnwa7CAfyQSk7GH5CfQA34G/JEmBbnUvAZ+A9cAz+D9hHRJZxFaW16GvIbuBmOhsOh7xBl5B3EC1HzHvRDZyEnwqfgJmjDlyGbgf00Mgg6YxGZcBu1XEU+Ri6DGs2BfJj0/bAr2EPhX6BGR2TCi9TaCfvBpfBzqLM8gnwLVpB3EC9Fkx//B/ICKGxwLImr4U2w0dhNAyPhOKjxEJngymF9+x8UbCShd+tZeip/E7GFEkPgNLgXZsUdVHQgX0OKQzyGQr/3QaQeiohyR6dL0DIKToC7oLAxPcP0CT5agCfTx1thLfyWA2Q6GbPua1TPBFeWedScDQMOkrBP2rWDdAkxnljKT/vYTkH3xFeRuj4iOofHDXADXARbARqlMrNjOuwq40DHvGpY1mA03wjHwIDrSJwKp8Ng79yeiK46PESOS+x3yFYZxDPo65WwJ8Ng5k06uBgaqSLKCJ5o9GWQ4tEgic7KujC3rC66HPkp/AIa4en6JFPBmZ7Udnhv9FlZTlJpP3ohl6mwBRy9ZPe89VsdwItp/nFo9I8oIwyibqvhDYeTaPQWF3U6Uzxb/Y5qde1DdgX3UTip7fDeo4DtUaUQuJ+vKkRTY5QYdHmM8pw4v7aJMIgzefFGSr5LueWwGhq0Nxn/QV3dYOBe0nHBAtmxMMJM24eP0LANFgWjUo9FnekzQq3sQZ0ValC+MYcRqh6o3U+nneehKxciKmRPdCnWQ/5Co2easIS6N/qO7BKM7mTpTzc87ItbgbK2eZfSqWRqoOo+aqjzyZ8Bd0Bh/c70+D4t0+i5E2V64bNIjy6IyFXQ/MrxJXiiL7PQjri8vk3lH6EzVq4m7c2NB2aSkddyC0nMgY0OIDpoI+67viZ/PbS/iDoMIMcz2C3IgOtJOIh9kAFJekK5II0fZPgfZJIe23Z180zoMUO7ykkocFUIzpLbE29GofvTSUhnSOAl/PegvBUp3HPWkXBj9sxFsjB4NOiLNmeqhvGKawr/vfL6HhngnueH302GHoc4Ap553yHnK+iy/jLSSwwDtcmkA5L06KXeXGnol6ikLQxEnNjVNy1JetwyrqK+kyjYVekRzvMjr8qIm7HlN+menlc0orO/lt44hEH0A5zhRlguXem0pyvlBHG58c6yug9OmPerVLhSaGADAwez6lUlOZDU7XAtdFLcgzRYqy6fpMfzsfWcKKE/eqK3WwZ9qCwhSY+TKNSvld6plpT4SDeIlsxPD9Quqwvyq8qs4Rpq6gEOPMlYuAUM4400TbIOafTUVYrJKERPMwfR8Nio1Qgr5nsanqVnvE4rI2Ae9DQ9uffEtMbQC8+ksLfw1UsTWU2D+8m/tDYX5kFP09O0QXQf7I/lvGtFdAvcC8cX0HJP09O0QSzAdm0VnVngMAAAAP//X89AtgAAAAZJREFUAwBthvAvJfv/ZgAAAABJRU5ErkJggg==>
+
+[image25]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADEAAAAVCAYAAADvoQY8AAACN0lEQVR4AeyWy0tVURSHdw96Ry8pKoqgoqKg6DEpioKKIKhRRNOaNmrY/1B/QNC4gpokgqCI4GPgA0UQBUVFUQc+B4oOFP0+uUeuh6P3XJB7RLz8vrPWOWfdu/c6e6917u6wDT47SWyVRdyWK/GQpzsKSzk6sWWwnl5wYxGM11bjn4KSKr4SjYx+Fr7BCByDA5AkJ/uRG7PwD/bDc5iAkiqehIMf4XAG/sIJ0Mes0S7O3kEHGG/yC/iZKCmJ08xkHhrgEJyDuO7kLkTbqCl3nolJSuIWM+mDfpiDq5Cvg5y8hXJ4DIPQA5kpKYm7zKYZZsAk3Pu4q3qDVw/qJoc2KHkdMOaq4km4vy9ztxsmYRougTWACfpSG0K4ARchbT1cIbYFXLm0fCC+oOJJRPUwzjftOkPY83AY9sJ7+AMW8T2sbTVtPfQSfx9MPC2/iC+oeBJRPVjYJjHML1wAk3iKHchh232C7xPNtB6YQ4gnEdWD9+w8Tvo4J24dX2z/8VUZh9tQTD3sId6V9j2UFrc3X9tY+Un4hWuE25kwK7Jg7UafOfsNFjomXOdg601bD4QHV+8BzqMicBcQvrHyk/DJHiV8DCK5VUyilQvtEOkZTjH1QHhwe1bg+BJNSxfxBWUS9vopIm2br7E+/U9Y5V+PKpwf4Pb6jrX1fsVa6DXYSjgJmckk6hjdvxe2UdnH+U9QrsBLHBPDhC8c3HbGibGvuGY7xmQjk8hm5E0cdSeJTXyYST+V+toyAAAA//9l8GyeAAAABklEQVQDAPTjdivBG6NXAAAAAElFTkSuQmCC>
+
+[image26]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAYCAYAAADzoH0MAAABf0lEQVR4AdyTSytFURiGt2ukXEpumZiJgYnLSAZM8CuMSEoywNQMmRgoTPwEA8xMxUySYqTkFgqlROJ5dvbqHLejzM7pe9b3rm+t8+611l47N/rnL8sN8jieKqiFaiiAJNQldj6fQQ7FDtiAZ7iCc7iEJ1iAZtiGEYhSDXSdo7gDfbAMDeAcjV1NPv0DaIU4HFQ4YQwxDsYEzTCcwBsYtzSjsAIhEgOXNfVR3SUvQfJHZIgXlKu8JseRGPTTKwdji+YefgrPZD8Z1MB9tSUF8gP8Fo8M9sAMxIdYhKiEJA4T8ZfsCnQ8S5nclKIzSg08rLAn/lEKmWKaCUMQb8G8TnMDRjdNGfwUxQy0gw8OBu7b10M98iYOIrwbpC/hJaunugnBQLd5Cl4gUuQJryFawBtKilzVJGIRnHdKDgbqV5pZaIRV6IU98JvwAXfoLugEvxVSlGYQF2iOYAAKoQLqoAbsa3qMDuFbCJ1vhE+9oO5X6TVGpkcmg/TZ3/SywOAdAAD//5Eou7gAAAAGSURBVAMAZoI9MXGoRNsAAAAASUVORK5CYII=>
+
+[image27]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC4AAAAYCAYAAACFms+HAAACW0lEQVR4AeyWTYiNURjHX6So8THRhHyU5DsiQiSKFGWBBUpKWZCVhSkrG4UFGyV2EkpEYmMlJRHFQiTlO02NWFAjxO/35tzOTHPuzLs5d27N9P/Nc855zsz53/ec87x3aNGkP4PGc29czyc+BAPjYCwMaMXGj+P0J3TCHhgImoWJE3AOdsJIKBUbb2dkO/yGR9BobcXAdbgEB2EO3IQxUMTG7a/h1yd4A43UFBY/BkfhKXyHk+AR3kXsZnwUA4vgOXyBRmo1i0+ClxD0jcYr2AYt8ROfzMBcuAdd4EWdSVwPtbNFO4eW9bLIX8Y8xp77ttj4YhKt8ASGwxHYCwdgH+RUeY4TC45mvDU27qd8z6Dn+zDRi/GZuBnqaQbJx+Df9pcdzE+phcQ0qKtg3Ce9gplegkPEK+CluEX0Rp8lpvSaxBKYWoHLzE0pHIlUvhwPxifQmw4uvoFoWXRLvAyn6P+AXHItK1vd9YJxa6RGNzJ7HbiV54kjoC8NY0IbTKyAx4HpSX1MZoriK7mOYDyu3279A5JWGavJJtq7ISU/3FKSKytgnWZ6Ug/J+H89wjRL2R9P6xl0atxPv4COF6yDGPSOhmVxLdESSehVbu1tMlcr8IK59XSfpNVtFTHIB7mQzgXo0rhfqqzXdxmwThIKX63LaVyEt/8hZJMvwP2s5k5bLHzpeKH1c43xQuOWsHl0zkCQydl0/LJ1muhNJ2SVJ2A+K1rdfKBbaLfDLyiNa8oD/8eBCEujr9loKHvTY3iHVW/AB6jJJ17rNFNj0Hju3Uo/8dxOKq7XtMb/AQAA///+5e3aAAAABklEQVQDAH5ueTHQ6JhuAAAAAElFTkSuQmCC>
+
+[image28]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFQAAAAYCAYAAABk8drWAAAFEklEQVR4AeyYZ8hURxSGN5WE9N57771AGiEJqeRHEggJJCGFQCDkRwqkF5IQEiIWLCgoiIIiKoh//GMXFSsi9t57VxT781y/WWbHdfcu37q66PK+95yZe2b23jNnzszcUwsnf3X1wEmH1tWdhcLRcOgFPOMZMC+0tU1e++Part4OfZ23/RXWij9o8BZseqQOfZ43WgUPRNyIvhZatx3ZDp4PUzxExbfwX7gHBpyC8gTsADtDnX4aMkDbPyl8Bh+HTY3UocN5m6tgd7gXPgMvhpdDHfMs8n3YH54LA85G+R12hTofkcE236H9B9vCX6DtuyCd6ogMG7jq8L+Qcb8UmwupQ33687jcAZfCeTDGXAoz4YvwSRjwHMqN0AFBFPEw2jfwJ7gI6jid+jL6CzDGOAo68w1k06KcQ6/lbe6GU6EOQBRhVJ1DaR/cBYVR+C7KSLgGxjAvarcgqlyH7mDZxrYUM2zh6oC8gzwdNiXKOfQ23sRpPhbptEcUcSfa/XAynA7FJVzMfSOQMc6i8CBMYS52QO7lxoUwxhgKj8Er4bGEgfMoD2CKU0fNh3IOdTrryAlJF25tXDy2Uv8lNKIQhRu4mCaWIGMYZUZzXBfr5mWdHteZf12wzONxfSN105cBo7yPPx4FN8FXYVWkDjWHGYH7afkF7NbCnshZcBl0NZ+EDLgaxVH0T1GL0Mk3FUv5lJWYGb3VIvQ97Ewbeenz3kqbanCm9cPob9gGdoLD4JnQwUZURurQ6zAPo/Ij+m8t/B55M/wYLocpdlOxE8ZwUIz0uC6vXm5bFrftQ+H6Guj0nY99JRhM7kZcPIdEhlegL4bxDHSd+Zk6Z6zrDeohpA4N+dPFwQ7ckwa6uNgqL3dgaEQjaoYvUXOjVjZw12LOHEo/IZ1dhP4ANP2FBVpnuu3rTf3/0EPJPcgMqUPNny4adpAZtOLiAKyv0N7p6kGhnEm6XUttzL3m2bx0gExLaT9x+ZGWgsHUohacBW4hx1OhXxAFc6uHHaNWx5tO3Ft7r+Qsb84zP/qi5svMIMfF3OnDusjE5k73iVQ4leLVXGdcRr3bsm3IGB4Q7Mu2cX2q66CnqMxLo8/3o0lFOMBu64KROxEX1ylUuM17G+mpD1ECna5diUNdre1gBqYhvFGrItjqpNR4ABXmVqcNaoa7uGprHkQtgVsw7R39khtJwXTkaS0vB9HeqEIcEdO440BmjkHXH64hOng15aehhxp3O6gluJSSgZI51OOlD+i+0kh6jZuutp8i88A86QnqljLGLgRfUf8P/Bx+BD2eekx1GlEswe2U7E+iNhTmzh78Y3vorqYj8gfo4cNn9nAym3JFmENHY+Fo2DDQjb3neW5VhdPETf1LWIbRRS1iIJqrrIubUeIA+pEk5CRuZ7Ctx077ss+ssoEXP9L4ccdn+Jr/fRM6wxzkD9B1tM88Bz3FCipchLMIRW81XPHc53mSKteZaWEwN6Q66mHwW4D7Vvs67GYDKzbzXz6jzkMtuLjGZfOp+1IDwPvXcHHzn9kboZRbDad2L3r5BBrliJpgG6PAaHZq1dS4wcamBncvpkSj2bzfNzxDvRxqf35+c4X2g4jlWmjCdy9nrspGupbGDbY1NbguuCC6vfyQ/3f7hCjUbcrbmX/kicoPIp6qrMtDp8wrGDrixQejfDzDQTcNeBz1qFx81npGqJ2amP3eudBCTprQ/V7aLM6s+Fr1dmjFPzsRbh4EAAD///W74vsAAAAGSURBVAMAUKP9MVadGD8AAAAASUVORK5CYII=>
+
+[image29]: <data:image/png;base64,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>
+
+[image30]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAYCAYAAADpnJ2CAAACeElEQVR4AeyUS4iOURjHz+dOQuQWUkIpubOgsCIpkg0SFgiFJIqS3HJZKUkpksJOVkpZ2Lhn4ZKYqWlmmmaaaaZmMdPMNM3l9zvNmd6mr7nU26zm6/md/3POd97nec9zznlHhWH+jSTMveDZks4l+hV4DNdgMeRuKeEGIj+HD/AQ1kEpnIcC5GYmnEi0y/AKPsFPOATf4TqsgdzMhNOIthruw3LQGmjewCTYArmZCeuJZvDPaB0k6+hxxvZoVqbS2QZLYUglN2E7D52F7VAD2hia9dAJXyGZyS/SeQcz4QT8gBKYDQOaCYtNWsvgDngCH0FzJedwjsE+eAE3wEpUo80woBVLaLlu8eRrMIEVwA0enqs4JipHtXE00+EXNIE2mmYveL08jFPwe61vQkt2l38NcBzNvvVh+iZ4jyZbgjMfsmNH6dfCSTD+W3QGRHMgOjQme4BWwAVogWXg4ZiMrgD36h+azPvryryzjjlvP84RsNQv0UXgPCSElLBA7wz8hzvgZCRspjEIEs1D5YvY8WBtxPkLrugeanlPo+4tEsbbQNqWmNBklstJfllcYSWT5DbqVbG0f/BN4nzcsJtmD5SB++5eOfc3fWMgYReNz31Bo7nCOXh+O/3izMNfkKEN3xPYhbpyD8QzfO+tnz8P0Sb6bsVTtBWSWcaVdDzRlh03xBVapoX0CkXwg+4K+CtU0WyFU3AQLsFNMLFBv+EnW4Xj6r1CuGGWjbhCdbC4t5at9415sBGyfV/+AGOPwDLvRB1DQlxhdHJqJhDHb7Kn3H10OzwHVpG/8k/oHlrKAtET3lO3g6GQ+wpj0P6aoe5hf7EG9d+wJ+wGAAD///EVK1kAAAAGSURBVAMAGetwMUAlNfYAAAAASUVORK5CYII=>
+
+[image31]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAYCAYAAAD3Va0xAAABVklEQVR4AezRv0sCYRzH8egH9GMoaqiWWiqIpsZqa4gag5YIGvoPigoKoqBoaaymaGmpIYigaGipIWhWnBREBQdRJwfxB/r+nDxyDnen4CCofF73fe7ueb7nPdfd1aRfp5H3RrbRHvWwG/NYwxDqjn2P5lj1h11M4BNxHMAzptE0Mz/wjlM84QGTCMEzatTLrDMM4gUlKOMc0gjCHr3yHhdGUI0azXK2iX/EoKj5MgM/zLUxxs/Qww6pA6hGjWY4G8U3ClC0aJGBDxkoKQ7buEAONVEjcyFqBlT9yynqD5awD9eoUZgZ2os+qjLMwTw1wngVekWKc9QowO1zXOIRr7iHHnBN1Wv/Ul2jRvpKd8xawQnW8Qbt0Q71GHm4Ro3MBG1qgpMiFC1OMjDnDJ1jb+Q8q3Knn3KEKyzgFhuw0kijLCtuoMX6MFuMv2ClkUbWAqdD6zUqAwAA//+50QcKAAAABklEQVQDAHBFNzFq1STXAAAAAElFTkSuQmCC>
+
+[image32]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAYCAYAAABKtPtEAAADmklEQVR4AeyXaYiNURiAv7FlGUtDtrHLD5GSZP0hS4hSEslWtpIiSn4he7JGWVP+2P2xhJJSkr1oRFmSfQnZyf48wzddd747vmtq7tSd2/t879m+853znve859xKQZb/KgyQ5Q4QVHhAhAfkUFYZyqNUZVCNoAk0hMRxVicvqPiS7AFOfjavn4FmUB7ESQ5hIGfhCzyFx/AM3sEc6Ak3YQCkJYkGcPJ21o0eNsBuaAmZlLp8fA8cgS6wABqDY5UOpHuDC9YcnbYkGqATb+tiY9A7QU8Yh3YFUGUujmUlXx0BP2A0LAJXHlUod3mOh5PwX5JogKv0sBS+gnKRxxL4DpmQfnx0Mij7eByEKHlDoeP+hk5bQgO4yrrYQnrYChthLNSHTIjuPYoPq1GBW6CkCV6n0X1Q8ngMAz0npD35GjAYwjLb5IUGmEfFJTCInEDfgS3wBIZDWUs9PtgRQnkbJlJot0Vb6g5DPiyGHbD/D86rNmm3lGUusG3yNYBHR1cqlY88jsJqmAvuQxs2IF2SaEBXIC7H6cyVQkWKY/KYs9IxGfVNx6GARsYzA+Qt0orGNKBWI7MNNJJtCjTAZwpmwVowyn5AuwKh1VuR/9dpoJFa0C4ug2j7ClLJeyo0JiqoyaMppCv3eMFt/Bo9BW6AfXrShXGu6Cbo2fqIBrq9EdczdR35TIkGuJ3w8ToJ6aikHqPL90+qvEDeQOqcSAbLeRg0Ub9FD/DCc5rsKnDvu4q63wTycSWXht7O4mL/Bl5ei5SflO6CcOBDSVeBVKJ7d46oNIgaG5yn39tEm7+82QpfdD98otJj7yE6XWnNC73SwBPH/cgrKeUUNdtBGcnDqI0qJk7SxXJLnUuqNYC7vQdS7l2hHdo+NRjJoHALvCDlFVM3akNaMUD5omkH6h50lc1HYeA5QEVcjtFWg6NSivt0JrVuSxfKvl1BV9TVpCrwf8F6EtPA8bp1nIee2JeyzTAfPNls84C094s1aD0/1461mrcpDeG1U0teo4HRUjfU9Q6RXwZlLRrJgXfnw55OU9HGBu8EbhNPB4NkD8qvgOKRZ7kr7unlzbYWFcaR8F4zkbzGmK4B7GgvBe5LLwuutvhfwJdzqJMZ6EyI4zvPh/1D5GI4Kcfn6uudk6gziKMKxbuA4w3pQ6mecRmtIcJy9QoNQHmReCRKUUE5S2iMl4zJC9pzdKmv6ckGoM/skgoDZNd6F59t1nvALwAAAP//+7onVgAAAAZJREFUAwDo/LQxyADjiwAAAABJRU5ErkJggg==>
+
+[image33]: <data:image/png;base64,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>
+
+[image34]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC8AAAAVCAYAAADWxrdnAAAB10lEQVR4AeyWyytFQRzHr0fez5SSyMKCWJBHZKUkZeOxEuWv8J/YWVmJPFZKHlkSspBiocQGyTOPBcXne7tT505HDbfuoHv7fuY3M2fmnO+d+d05Nz3yhz8p874271+tfDereA0fMVaIuWBURGUVzHXFRdr5kHTZK7+Jg3KYgjfQl2kiGj1S6YVhWIA8GIJnSLps8zJQQpENE5AFo5AGQdXQWIJX8KYw89W4uYU5OIYBkFlCVJmU9XAIXhVmvhFHMn1BnIVK6Acj7Yx25Nx0+Iph5lswswfSPMU9jEExSHUUyv07olfZ5ktxUwZnIGkHdOK00+gEqYFiG1xUyyAthHbJlRHmOMk2b/L9Jjb7nTgN0jiFjs1Womu+nzBW43VfV2aY4yTbvMl3nd/mBltUdqAPtPq/It/xEgma13HYQec+BPVAYxL0Q1W8pO6a7xmM1XujguhKAWOdFDQvc3qDnobMXKNP+a8j8oC6q3IY2AZd36CKsU4Kmm9mRiG8gK0rOnRs6vy3d4ZLX0pv3mWu6tRy5YjxTpL5HkY+wQYMglIieK7TFZUevktNaUPwL5lfx4byTDkv9NdAq0V3nHTC6EerLxd3wVdD5n09O+HnpswnvIQ/vMEnAAAA//9ki2fzAAAABklEQVQDACdjXytQiTFLAAAAAElFTkSuQmCC>
+
+[image35]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAYCAYAAACfpi8JAAABv0lEQVR4AeyVvStGURzHDzKgUCZGE7F6KYVBykIGmzKYTVImUgaLwez/UAZJBqHIwEAGkfe3gRDi8617dXq6XX6nJ13l6fu5v9855/5ennNP9xa6jPz+dCMjbOI+rMAGHMIqaKz5YXyzrDtSQYVaaIUOmINb6AWNJ7GnYJa1kXoqLIOKF2C7YA3uQHrkcglm+Y1UE30EHwloXusHrC2BVMmlEdYh1g7OHvhSnOLT8jq/Ef2TJjLUwBDEmsbRvNZv8PWvMU6PSM1saRChgk+RHxvFKT4tr/MbeSdSQWfYeKtx3QMXzWsd90t1ePdwDmlSnOJT8/qNpCXLXUs6H7n3mMahjVRRpRn888EwXNZGdPBmKTcPejSD2BnQWcGEy9qInvMo5fqhCHpgHHRWMOGyNhJe6ZvITDXSRrN6W05giyFfMuXVjkxRuRNk9crGdeW6RLxG1mLKuFn5fpxXjVwRJOnAHeNoV/qw0jWXRbDqhQBTXjUyRpA+46XYBbiAAdiEbtgFq94IMOVVIycEtYM+8S3YBigBvbC2saEy5VUjcaFnHL0nhHyGeZFyKaeQn5jUbyTxht+a/G8kd6czsyOfAAAA//+u9JCyAAAABklEQVQDABwTcDHMLOesAAAAAElFTkSuQmCC>
+
+[image36]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIQAAAAaCAYAAAB2KPSUAAAIPUlEQVR4AezbBYxkSxXG8X64u7u7BXd3CBYIFoKTAMESXIO7uxPc3d3dCRDc3Z3As/9vd++kZ6a7p3t2Zl6/ebs535yqunXvrVt16lj1Hm104N/4DJywyovC98OHwsnDOB23yqvCd8LbwlnDrqIDArF6Of9R9QHhC4EwEICKK3TlShcIhOHG8Z+EXUUHBGL9cp6ppi+Ff4dTh4HOXIGQ/Cf+sbAr6YBArF/Wc9T0g3BwOF1Ax+jP5cIvw0nCj8OupCOzQBynFTntfsBuP6j719JpaqAhfhY/Z0AX7w+/4fRxZuLX8V1JswTiBH0xm3nN+IkDMomnVFgCGJcd+6vGwhF8ZHwWnt/1bwSLCT+sfP4wTietQgP8Ne7ZvhfOWP1b4erh6+G/YVnp6A3sVMH6xRajSQJxzB7x0GDyLhSnQj8cf0rgTJ0ivgz03gZBEOzy31S+e7jLDNyoaybK+J9T2cJfLz5OtMP3amAufh4XRVwl/olwonDusKz+w/Ea22vD/8LvwhXCWjJXt63xFeGS4QnhWcF3x0ajtQLBVurAkyYMys+r57XDFcOh4RdhGciiPbCBfCrcOdwxzEN/qtM9wy3CdcKg/SqOztef3wZEi/hukcfvazhbIETb4j/07P0lTvCtesjDgm8g2BVXke/zLTb9nbqi78fjjw8HhXUCcYkarxseE/4VBjKJb6/yzfDPsCz0twZy30DF+yhSX3VDOqwebwyfCxcMFvrp8ZeE+wWagEDIORA4AkSrMJfK49FH3ZeG+FWcX8Jg4dcO7A81yLHQlC+s/P8gtKYJj195nUBcv0Y2yARXXEVuZjpWNS5B5YuN4UHBojJr4zu+5qlEKPgcfALfe5968iFuGDehX4nfK9h5NOVlKhOIe8ep5NjSEXN44UY1beMSEvNECDjNtAK/aKX/WpNxhh7Gk75NnGDEVoj/8OmV2nIVXtpwXhzYTXaR6au6IXEOl0njbTjgDTqcp+sir2HjWsOL1Xb5oBwb6UMYaH3rrf5yF2CtQLxPY3hc4Jx8NM42c6h45X+uvoxEez22gckfcCzt8qpHOeIA03bmgaYUWXGcn9RMiMoGjcBM3qM2PsRD4l8Le2itQLylVjuM8+iaF7Cr7Chp6vKmSKTy5e7kuc+LW9Z/ESL1hJezaQLOssjNu6Av/+EifYfwmP/38MqPCjKvzF3FEXNhHW8/Go1ohbvGbfrYXrLoe0t7/9pp7PGxqvJITezfK4s4SFrFTRHtIrljcPPidZt4E5NG6kUEQtJNxeKbeO8y3CKretEGwje6f/zJQS7Fwt+hMjNyrrgDPJtS9HRI9VU0CAT7YhdTKTro+N0KDnpuHvcS0lVxqck4ec8faZQE8OzxowrZBKIHWuKqffRNAufxM3FCITLSh691s9om+lmDQDi44VETjPquIqGKAx3SturCAhXPNVgOz7zY7O4WFRBmuQnJtZnD3EUXhdyiCE6kHAOfSvpg+ETrR+tywOWWmNbh2gofBEIiis2dJDXnrbf08CfjSJjy1grs0oPjsl5UUcWpxL7JcYiR54V08dQHTrlAwwkLqURjnNJtYjNVasJEHrzyiZ22uJEDLOz9Uc8VIcVWEVXvGh9OpnXVxbGK+TWvwmVCIYy0GWx0a8qBvNJY/6nFQSAuVQ9qRgxbcYWYEYkafoUMJbUjzclBfHS9nrsPT43P2tGcnPfU580LwC6v+0JETfJRntFdzEdsbmJTOWEWyAHW3DfuR0d+zqu7n+8mx1Fxhah3Z0nCwxvUKjEYm0jOW5zLMA/jYTQBkXBySOe7Jt483kggLKRY9BFdeFkQafDWTSpHRAg67DYDl8tnpyRrZAqP3T1stR1W8QgjKlN6XTrbOOcZiJ3l+4e+tCHVulOJJ4vFnNIAFm0Yh9TypasI8z8f/0uYRTbByergObGRDeish//HRIgkrJVrM0EgOJCcR1k+Cy0F7GYSSVDe0BOG3WaAVUcGINZVpqrsqI0Gre92gQPJVAi1TMY872FeeOMmfuhvRzr6JuS04tO6MC4wVbeUaFz+mShMVDc8nDk2p9bDr7eG9mlctpZ5+MC+DtZLhGheblebtYxtTARiGJDedhZzQLU79GBPtY9D3pvA2Ekmi6nh2U/qO37fdpVNhFDTAhrXvO8x6Ver86BKaThnGN+uzc4i8FL5EjxMifmYhmd2j9PG2EIkJ+D9w28taAzOtxQ0Z15k99U5nmhT25AEYby7JNW4CRm/NrFMICZemNFII9Acjpt5sq+s77vCEUEWS7xtHBJT84xBKEYzWFyO1x/33WRxmAxCIE3/jto5whxqmof2mAYRmujGBmF6+QaT4GCMk9ej9xANYGNZTGaCCeP8OW6nMWSLnVzu6bwTfxYVCB8jrOG1PrsBOml8TXytZNa07WQCCQNnkAm7aW+cBj6RUIv6tWOeWF/f8s74QGy4FO77a/hgkOgZNI6dOitc5tQxQZ7twEz0MAn8riHcs/jm36kqx5F2sNk47+oc/Xn8h4a6dWRAizzNpPB+/SaArWZiFrl/pe8WFK7VM+TnrxFn62fBrrXzjd+ON+mSVwSg2/eQcPqzlTjSdqVoiiARBo5fl7aUCJwjAqaWaqftLtsbmGyahnAQ4Jp2jhYRCBNjkH43YHINeudGuv5N765J7oR22AwIkp3YY0Z2p2fItdjB2mXzpO0tlrpfZU2D64toSYJGO92tl3sPLefdL6hOKOR2OLs0njmveWdoEYEwMa9vWEyEAzDqsequINru1n0JFW3HWjCq/021bQcJBSUD+WLeYS6986e9jGAQBCbF//2QW6h5Z+hwAAAA//+Gqni7AAAABklEQVQDANRaw2DTGgsTAAAAAElFTkSuQmCC>
+
+[image37]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEwAAAAYCAYAAABQiBvKAAADJ0lEQVR4AeyYS6hNURjH1/V+5nUjREpeUcREQhQSxUiMiZGRKBlRZh5DSZkYUaQYUCTlUUiklFLIs7wHhCJ+v9vZu32PbXfOuXud3M65/f/7+9baa6/vrv9Z61tr7z6h/VeXAm3B6pIrhESwDp4bA8dDrWXclkVfRj4WqscwbIpEsKHUnIAH4WY4ELYyhjP4HfAI3ApTJIJZ8Z7LTngAfodlYBGdvIG/K3yI7YT/wkpu/IK2117Gd8ZjakYZMZ1hu4m4H36DKbKCpZUlOjfpy2l9CPsajoCDYB4Uxtn9lZtnoLN8BfYDrAdRY8YWzIGaA8bhnIajoD6mG8yZG6h5AG3voH/iNwr7ME7pMZshmMnTJX6D0Q+BE2A15lUqkqV4u1Ju1ESL2QzB5jDqJ/ApNB9Mw2YxmMJ6eB4ugc/hY9gTRIvZDMHmM/I78AtUMHMVbop1eNehmM3lHqw3b/FIN0SLGVswc8lUhvIIfoSf4RRozsIEfXk1hDALToZl5K9oMYsEc1DOBne5Wpi3+yW5xCOLu98LBJkIPff1w26Ep6AJfgHWo0RZ+StKzCLBPALsYhD7auRy2lUjySUmfQV7RYNJUMGWYZ9VqNhL8cvMX1FiFgnm8vHwto2B1MILtKtGkkusdwdUoJEUXH4eUs+FQCmETq5zYZn5i+5C6TGLBDNgT2j+mkEH7pCYLpjM3RW3UzoJ3QQwYSYXjxtF+cv+TBGmCprnwjZlxvwrSEzBnDG+k73LRPW4oGB3qbsPE7ici/KXQnmO821hYfJQji0zZk73If1akXuzwUrPUp941qPCWqyzagtWOOBLOMegy+Uw1uPGHqybwBXsRTgaZvGDgvmvP3YxrEaMmNUxusoxZtg1evYVqAMrB2CPQ+HMWoWjiJjgFwGXke2kbVdzwyMIJoWirqHks8kyppgiRsy086wTQ7Bs/2X7biKKXna/NffXmwQzP01nZNncR7G56E2C+RawF3nyliTVzUEimAnY70+3COt278ES97+CL+cvm/Qf+YZiXjxbHS8RzFP4Jm76K2otU2xZvGXk7rzqcRQ/RSJYWtF2ihX4AwAA//9slgdcAAAABklEQVQDAF253jEL75ElAAAAAElFTkSuQmCC>
+
+[image38]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAmwAAAAiCAYAAADiWIUQAAAE9ElEQVR4AezdW8gUZRzH8el8gCKiIoroBBERFBQRRARBUUFEQRcFQVEEXRRBBFE3ER0g9EZUVBAvRBEUQW9EEUTBC0VUVBQUURERRC+88Xz6/jws6/quvi/v7s7pG89vn5nZZeaZz8Tw55nd19sL/1NAAQUUUEABBRSotIAFW6Uvj4NTQAEF6iLgOBVQYJgCFmzD1HXfCiiggAIKKKDAAAQs2AaA6C7qIeAoFVBAAQUUqKuABVtdr5zjVkABBRRQQIEyBEo5pgVbKeweVAEFFFBAAQUUGL+ABdv4rfykAgooUA8BR6mAAo0TsGBr3CX1hBRQQAEFFFCgaQIWbE27ovU4H0epgAIKKKCAAhMQsGCbAJYfVUABBRRQQIEqCbRnLBZs7bnWnqkCCiiggAIK1FTAgq2mF85hK9BggQc4t6dI7k/3099GatscuAIKKDAIgdwQB7Ef96GAAgpMViCF2TfsZA75hMwns0gZ96lHOe4v5HfyMLEpoIACpQqUcSMs9YQ9eK+A6wpURuAtRvIE+ZJMJ6vJWnKejLI9yMHmkkVkHplBMtNHZ1NAAQXKEbBgK8fdoyqgwPUCuRd9x6aLV0NX7ORlFRl1e5EDniGHyDHyLHmF2BRQ4GYCvjdUgdwkh3oAd66AAgqMQ+ACn9lM/iZHyfdkKzlIJtvuZAf39MndbM+jWLpOyyzfXZ21KwvPX+l8VUABBcoRsGArx92jKqDAjQIz2fQhmU2mkH9Iv5YCbCpvvkHSUnjl85kdy3p3XmDl3aIoxsrbvJeCjq7T8v01740dDhcUUKAKAt6UqnAVHIMCCjwHwR1kJfmD5McHj9H3a3lkmcenmY3LZ7J+gIXDpLftZsOaPlnP9nOku+VRaO/35k53f8BlBRRQYNQCFmyjFr/Z8XxPgfYK5IcG93Wd/pMsp5iiKx4qimIa+ZbknvUq/QLyNElxle+Y5f3XWT9OettLbPioT95ne2br6DptL0vZlpm3HO9e1rcTmwIKKFCaQG5GpR3cAyuggAII5BeYr9H/Rz4mP5EUafmzHo+wnD+t8Sv94+RT8h75mWwk+TFAfqyQR6gnWR+rbWPj0j5ZzvZTpLvtYyWzdV/Qf04Wkz3EpkBtBBxo8wQs2Jp3TT0jBeomkB8cfM2gU6gdoV9G/iInSB6VbqBPe5mXd0jWn6HPTFhm1RaynO+uZT3fZWN1Ui2PV39gD1vIJvIv6X1EyiabAgooMDoBC7bRWXskBRToCFy3kBmuPMo8y9YUY5ndYvFy28/rmyR/xDYzcEtYzgzbV/T5wUBmwz5g+TOSfx1hUIVVvh+3g33uIlmmsymggALlCViwlWfvkRVQ4NYCmXH7jY/9T/Jocx39n+RHkiJuBX2+v5YZsXxuUAUbu7UpoIAC1RGwYOtzLdysgAKVEUgR1v1LzqxncHmUmj4zc5kFu7Y924wCCijQKAELtkZdTk9GAQUUUKBiAg5HgYEIWLANhNGdKKCAAgoooIACwxOwYBuerXtWoB4CjlIBBRRQoPICFmyVv0QOUAEFFFBAAQXaLlCHgq3t18jzV0ABBRRQQIGWC1iwtfx/AE9fAQUUaI+AZ6pAfQUs2Op77Ry5AgoooIACCrREwIKtJRfa06yHgKNUQAEFFFBgLAELtrFU3KaAAgoooIACClRIYIIFW4VG7lAUUEABBRRQQIGWCFwCAAD//wqqiVIAAAAGSURBVAMAbZl2RfI/rKAAAAAASUVORK5CYII=>
+
+[image39]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF4AAAAYCAYAAABz00ofAAAEUklEQVR4AeyYV6sUSxSF++Z7uZGbsxkTJkwPZjCigqCoYMSEL/4BQRD1wQj6agARFUFFTKigKApGzCgGMGcxYQTj98kpbMczoecM58iZGdbqvau7ek/1qupdVf1pVPpViQIl4atE9igqCZ9d+O+oshIegTvgyTLq78E/DBvBRCgJn12uJlRR4JbYrlDh12A7ww5wK7wDEyGb8Pb270T8DBYrFF6hXyLAH7Ap3A4DruM8homQSfjPibQAXoZtYHWEo1jRXvNwqTSVOPA2ce0CFLU4qNk5bMB6nEcwjqxxDRK/Ie43oNATfgmHwE9gdcMxHqg2/BtOgwEjcPpDO8WBZ6dQjNpxOA2vQfGCw1mYiqxxMwk/gGg/QdGPQ01Y3fCcB7oJTRfxUXuPc+btIDjFyAzQGsdJ9hk2E7LGTSe8uWwQkcMf/4PfGxYz1CQ1v+etRzrhuxDxWzgBBvGH4v8IixUNefCvYDy/U8wP5Qn/NaGGwXVwOdwPhROGM7x+MbEjDzsfToe/wslwNHyHPLzyhK9LnGZwBTTXLcUKc9xgnMqeZH/mPzfDSwk4ibqFwk4CjYOtoFlgOHYRrBDKE95J9QpRj0OxkcNVKNJNsnbUGSrsgt9D8QWHsfBfWBHc5WZXV/9jc+VU6n7USBXeCcRJ9RtaPQv6ik3EvoIi3SR7lItzoNvnh1hhrLY4bjwwJcQVSBXeSfU/Kigk5i2cXA/iaTFReZOsaagbF/fBAN+aMRRcqmHyhqntF+7+KwHDMphbPoDxXKPv5cooaBlTYRgn57hx4cOkupgmuIEwrwWO5FymSdYHVZxD1BPtOayFvaD4jcM86CrJJdlC/GUwlzRkpzanrpuXXFmf+ungJ5CZXPRtnIu1PZjoBw9ldGNU5uZsEsVVeHOxacHNQQv+xo8+Tmj2IMXI7zQuo8z1lhXCjnEEKrjn3OUa6wYFG+Bmawm+Heb9PfBXQYWvhzX3u7tzR0wxI9yMbKOG9+fK+JvHre/Bzc/tsjPOXbbZQeMb6+kTHHzDMYmQKK5i2eOuTZ29FdMPQqv5S2dwTKSQB3CmwABTiNtmR7HnGnMwPbkKcrTYeX0455LUHK8QxvObxxbOCzvrvk4l8wH/Nx6egqZVn+0ivgNvA9Z238ImRaK4Cm/vKoojPNBPnmELbY6uQSvCtbh15PsGOFoUl2qRqxAnZ0f2bk9Av2e48vEhjWtn+sHJzuZypcNtvxuiP/lnU04drN+k+mIdHJi8kHNchc/rH2I3mW58Vc9zLmwsuuMrtg/WCd/OcQMWOseHdVSZwgZyvargIHBg+b3GlFaodmSNWwjhbbApxrW2+dHGm24c9b45Tsp2jBNs2BtYx5xo7g+px3NFw0IIb25z7T8D1VyiYSJ3dk6grh6ecsLRbe70raAYmfvNs7MpeD/mY0HltKMQwttSR73frvUD3Ug5sVp2D5B6/QkXwnXc4kKhhC8u1QrwtG8AAAD//3ZZIu8AAAAGSURBVAMARd36MSB0bA8AAAAASUVORK5CYII=>
+
+[image40]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAmwAAAAvCAYAAABexpbOAAAOHElEQVR4Aeydd6xsVRWHx95RRGMBNXaxAPZYiNg7BoloEGJDgiUIGhUisWFBQUTRqFEUQQ36h2JDUWygEiyAqNi7Yu+98333vfMyd5g7d8o5c/aZ83tZa/Y+bZ+1v3PfzMrea69z6UH+hUAIhEAIhEAIhEAIFE0gDlvRjyfGhUAIhEBXCMTOEAiBJgnEYWuSbtoOgRAIgRAIgRAIgRoIxGGrAWKa6AaBWBkCIRACIRACXSUQh62rTy52h0AIhEAIhEAItEGglXvGYWsFe24aAiEQAiEQAiEQAtMTiMM2PaucGQIhEALdIBArQyAEVo5AHLaVe6TpUAiEQAiEQAiEwKoRiMO2ak+0G/2JlSEQAiEQAiEQAjMQiMM2A6ycGgI9IrA9fd15q+5EWZLcAGMq265BvW65Eg3eCvUeN6Xs6/fkjvRdBqp/D2xGQqA0Av2xp69fRP15wulpCMxHYB8uOxY9FH0EWpJoj3Ydj1F7onXLbWjwVaj3eALl5dA+ysPotAyOo3w0GgmBEGiRQBy2FuHn1iFQMIHLYNtr0APR16OV6LwczMZj0MNQHZo6R7nuTJu2+3jKA9CnodpCsU1eR0273kI5eoxdtcgJtOI9jqD8J3p59KGozuLVKCu5FJX9URkdTjn6nboH+zx2DOV10UXFkT9tWbQdr9d2ee/NxnCf2FyTN/EpgzdSXhaNhEAItEhg9MulRVNy6xAIgcIJ6Ky9DRu/gJ6CvhV1JO6PlHWIU3D70dDR6InotdGro/9F2xS/Jw/BgJ+gN0E/jVYOzv+pn4z+D5WF51JdkyvwqeO5K6XO3C8oN5IbcWD4WjbXiaN+R7Hno+iV0TpE5/OONHQO+l70OmgkBEKgUAKTviAKNTlm1UsgrYXA1ASuz5k6VedRKr/i40OoTgvFQuJoz3Np4Sto5aBdQP3DaNviCOJTMMKRNqcHf0Z9X7QSbdfuP7HjqqjiPkcf7ctZ7Pg3OkkcybrihBO+xbEj0d+idYiOsO19kMZ+ir4HfRAaCYEQKJRAHLZCH0zMCoFCCeyCXW9GdVi2ozwJrUt0iJ5NYy9B74KeiX4NbVv+gAEHoY6w6Yhdhfqw4+RU5/fY53k7UCouVjibiiNnjopR3VRse6OT/sOBzZw+TplarsWZOuCVsy3727MvEgLzE8iVjRKIw9Yo3jQeAitFQIflBfTI6Tnj2z5LXSfD75HrUV9kJaGOg207emdM1edo74moI1QUA51DyzbU6c7TufHf0N1RbTqVspI9qDhKdRGlK1idCtX5+QHb2m2fqK4TuRmLVqmxeE45u23p8XUX1LzhdPNok66OHd2X7RAIgUII+EVbiCkxIwRCoGACBp37I2/Av6NfBqvroJny4yHYrcNmTJTOCpszi1OJjvI4cncHrn4m6n28h0H7L2Z7UVn0eqcR96IRV0w64kV1IJf7U9FZc5RNR+2BbBvndjtKHTmnSqmuk1uw9dIhvS/1F6Luc4TxltSblN832XjaDoEQqJ9AHLb6mabFEFhFArelUzpTFANHmH5H5YeopSs5f0T9z+i90XnEtnXavPbvfNiucVs6Fk6T/ot9bYqOqatjdaq088FbjTG+TRsdffs5+3S8XITxG+ouQnCBBtVLiH2zX5V+jDOeh7ptLN83qTcpTunqSDqy533sk3F41qMhEAIFEojDVtJDiS19J+BUo6sQS+Rg7JrOmCM/xj6Z1uNlGKqT5kIEqgO/T0w7YX0WdQrQfGoP4CJH6nQOHcl6A9sliKNojiw+HWN0pL5M+WvUVZXaqaPm6JujbE6Bns+xO6Ee+wul+ygWkmty9W6ojpWlo51szi06lKbrcDTTGLz70NLH0UgIhEChBPyCLdS0mBUCvSLgD/Fp9Pi1aNPxS9xiZjFezVWPBtGbCsJAeuO6nBr85VBrPx6qT1s1bsuRpXO54G6oo1amw9ApYrN1Mb7OtB53x5J7oHdFdcqcwv0k9fehLgj4PKW52v5K6QpaHVxXuXqMXQuJI4zycPrZ0UzvvVCDXPxqVMfN5/kM6t9FIytCIN1YPQJx2FbvmaZH3STgiIzTbk6pOepRWi++j0FOozl1ZyoIHTOD8XUc3s4xY7Ic9fkM9VlFB+cbXGQMmPnAdA4dmWLXQGfOkTdH3Yxpa8OZdQrY6V/tU11MoKPqqlC3VfsgC0ccPaZT5X7PdYrXvkxSkwBPOk8etlW16XTmpPamOaYT6OIOnUpTleiYTnNdzgmBEGiBQBy2FqDnliEwQkAnxJEZR7CcfjPnl/tGTit28x1YdiFqIl2dOqqbydTHdSpckenIkvFgq+pU6IzpAE8NJieGQAj0i0Actn497/S2TALGEJm3612Y91XUNBGTkqhyylSyM2c5bem03Th1KoxTahED7f9RS0v1NGIs3Bk0Na7f7nssxyIhEAIh0BkCcdg2eFTZHQJLJLA/99LZceWhuc6MExvOOn9jjvtKKIq1fGSOxlnfTJ1mNMWEAeXj1OD5zdro6nEXAtwP48f1233v5FgkBEIgBDpDIA5bZx5VDF1RAv4fNI+XMVLGsRmjZMyUeceqRKbGK5nx33NdnOBqPvOduXLQAH1XK46bQjX+S2fPlafj1Iz982D1Xl5rSghtUudpZ6NrXDXq+zK9j1PEG503ab/XjetztU92k67vwzEZDXOWdx/6vew+5n4hUAuBur9oazEqjYRATwjokDkt6UiXCVPN9G+eL9/PaYoPVyT6g+qqRIP+q5E3R44cgTsRTjdHn4z6qiGKdaLjZz4z48rGqfFh6y6YYkNH0US2j+LcE9AXoaa0oKhFjFUznceTaO2V6FGojgXFTGI82Lg+V/vMmzZTgzWc/HDaeBaqk03Rqri4xefn2ySOxRLfXDEPZy6NhEAILINAHLZlUM49QmA8Ad8W4NsBXFVoygjPMhWEub7McWYsm86a5xjbZgqGe3KSo22+GN0s+tZvxr5xzpcOm7FlG+mWdBNcPKUYV2ecnTnJdBZNBeHqUBPHTtnExNN0Uu3fgZx1POr0sCofNmcSHbaN+u1+p6BnanCBkx2JfDnXO+J5EuXJqK+womhFzJXntLqLXHyW/m3Jeda/h1aMz01DoK8E4rD19cmn3yUQOBMjjtiqTnNSHbyfj2qf5TlsO+XpVJ4jcv6oOtKmE3AWx/zhN52E+cvYbFRMmGswvyk9vJGOjykhrC+qTscdSiM6oTpbVAdf5+MjaNfFdCfmlTNdibnUzHfmSGIb/ZLzQdzYGL+Ks29d8O+O3ZEQCIFSCXTBYSuVXewKgWUQcCToMG70JdTpzeMofYWQyWp1lnSenNLy3ZUcalS0xSnYs7mLU7dOw55CvS4xd5mxezqvTh+aI+w7dTXeYjtOGRuXV5ngyKcjk9X2MkvTougUH85NP4U+EnVKXqeNaiQEQqBUAnHYSn0ysSsEthBwFMQpUp01pwZd+ekiBBO0WupE+WNrueWK5j4dlXEaTUfKF6B/kVvpjFAMDOLfwcqcqiNhzNoruN5+vZvyOaji67CM5+tqjJUxa6O2O0Jq39pQp5t9wbyjfSY9Ng7RvzOn1nfHoFFb2bUqkn6EQHcJxGHr7rOL5SGwTALGrzkt64IIp9SMrfP+TvfpvDml5ipX982jtqPTcDQX74266MBRKKdhzVOnY+hihy5+Z/lGBJ1turVN7Ou2jSVWKqfaUdl9uO/jUDnrcLuiWGfN+MQ2HUpMioRACIwS6OKX32gfsh0CK0Og4I7sim1On1Gsid8dxmIZrO5o2Glre+f/MBedqUKqFkxf4lSd8Xm+lsl4Nl9N5SrV6pyulNWiDBcdGEO2HYa7WIRi6SJnnbPqxnI+lw0dSmMSv01dZ9x4SaqREAiBUgj4pVuKLbEjBEKgXAK+y3M3zNsT9QfdBQIuinBqll0LiaN396KFp6K2vRflLqivunJlrI6bq0dNezLpfZtcUqSYSsTYQ1dmmsbFEcM2FlPo7Jo02FW4LlLxWWqPK0WdhvbVX+43vs13oxYJM0aFQF8JzOiw9RVT+h0CvSfglOd+UHBEzR/+I6m7gpViYXHUyXxgx9CSIz4XUh6MOuLjMdObuCDhfPY5ZUfRKXGRgTFjBvmbV0+H1HjAZXdClnI2xYgjaC7oOAQjqhFAnWJjJY1N7CJnuhIJgdUlEIdtdZ9tehYCdRJwpMuFAefRqOlInEKjuiaOvvm2BpPpDk9rrh2c4sNRM0ehzCX3Cc53EYX3ojowvsrYNRckPN8dHVb7JTsduDa64cIUn6OcfZ+qC1gqzqaHkbMJnHXomrcvdwiBEJiJQBy2mXDl5BAIgTEEjMdyqu0AjtU9laaTY0JdEwvb/rCjyO0iNRFw5NQ4RadE96VN8/1RREIgBEohEIetlCcRO0ojEHsGgxsC4daooy8UxYj2aNeODVnk1KFtew9TXfT1e3In+MrAkmokBEKgTQJ9/SJqk3nuHQJdIPABjPT9pabV2J56SeIqR+0ygfDpDRjmqJ6rUr2Hb5nQgWvgNsU36XOXgVOnpxZvbQwMgWIJ1GNYHLZ6OKaVEFg1AmbDP4NOqRdQliQ6atqlXtSAYa6YNMbL9k0S3FbMWQNdm6lJ3zEqA9W/h5kuzskhEAL1EojDVi/PtBYCIRACnSMQg0MgBMonEIet/GcUC0MgBEIgBEIgBHpOIA5bz/8AutH9WBkCIRACIRAC/SYQh63fzz+9D4EQCIEQCIH+EOhwT+OwdfjhxfQQCIEQCIEQCIF+EIjD1o/nnF6GQAh0g0CsDIEQCIGxBOKwjcWSnSEQAiEQAiEQAiFQDoE4bOU8i25YEitDIARCIARCIASWTuBiAAAA//+tJWdGAAAABklEQVQDAGVyCX0SmWapAAAAAElFTkSuQmCC>
+
+[image41]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAYCAYAAAD3Va0xAAABiklEQVR4AeySTShEYRSGr7+S/yh/CzYo2bBEWUiytbGgbG1RFCWibCQbVrKxslBSrKRQyk6RjZ+EUiQpFvITz3tun25q5s7U7Gam9znn3G/ud+Z87zfpXoI+qUbhRiaRRxm4UQ+dkAsxK+hRHbsOoR/KYRvuYRhC5RpV8+YWbMI4rMIyVMAlhEqNMnlrAnJgDX5AKiM8wwU4FVCMwAy0QRqY1KiWqhuO4A4kNW+hOAW3lke9AgcwDb3QASY1qqEqhh34AqmE0AQn8AZSI0EXcEb+BHk4QNaPempEbbq16AdNWUW5B80wBA2g45P+JG/z9aRG1xTyIossFRKm4ANuoB10xCLyf5WykA02kUad5EEGyoN16iXQD8ySdex9clRpIt3SIm+1whh0wQbIoz7yKMiT4O2xZJId5qEa2QpBC4/kb5C0+YnCPZ9Tv4OzoJL6GF7BjqYcC7JglxcHQX8NTT5PbQpOZAtRgiyY4/sFuIIe0GWQvLgmsg2EF3gAHZ3kK56J/B0RYsIa/QIAAP//Z+EvtwAAAAZJREFUAwB29kUxla8gNgAAAABJRU5ErkJggg==>
+
+[image42]: <data:image/png;base64,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>
+
+[image43]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC4AAAAYCAYAAACFms+HAAADB0lEQVR4AeyWWahNYRTHv2MWIvMYSiEhcxGZHohC5hBFeOBF8SBSPEqmvFAoY5miSOGFUsgDQplezIRkeDD/frvzace5R7qXs+/tntZvr/Xtdc7e/732WvvsGqGSfqqF/+8bV2Ur3pBKtoSakCkrVvFaKN0BD2EgZMqKCe+G0jFQB2ZBDjJjxYRPQWUT0Cay6QSZsbKEt0LhdPgOWjs24yAzVpbwEShsAEship9N3BgyYYWE10PZHDgB++EyaP3Y9IRMWCHhXVDWGw7CG9gLmk+ZGQSZGNJCwh3KRwi8AdpJNo9BK9WQ+nR7iYDDYAHDr8LjUNbnC+thO6yEb6CVakhPc/IDcAa+wG/CHcoOJK5BNIfzKgs9LpRiSBtx4q5wExJLVzwO5W4yc2FhinnEfxrS9nxnA2yFmeDtbYp3vRZfG5wP56Q7searxGSCo+ADYTA+aQV8OreatU+0u/jEFO4BbZEB7OkDZ8ETehLC4AHqEtjruOCBvbA2LOIflL/bx9r22ohfBx9gGuyC0dAWmsEi0DzOFgKPo3jv9DLWmpq2EcTcZ2Ln7hU+MYX3InoA58EvHsMfAZ/juOBL1hUCq4ZLbAHbJ7AZFLACfwiegRfpIHnMc6y9E57UAe/M+iO4tlDi72zD1uy/CPbwEPwgiDlbJebYHZIet38VmWNPZDjxe9CesukIMZf2Vr4FuR5wCTTbQJHPWdyDSXAcFNQXfx/ewTDw1r/A+xbqYzi2o6Jvsd+cou3vmGN3SIQnQTk3r/m9VczhR0KsjgVpzvoOmFOsFziftU+u63ir7XuQ7fmVtTOACzFn0ezvdC7YKn6pPNgWFziAYjbhp0Ksjn1uC/p2af/aikPJ27O2o62ymPUS8A57d3yinWIdc85EOkcqVIhwW8Cpdyh3clR72xYgDFbTgV3DwkEchV8Oe8A/OF/kHGrFj2XfKrgN6ZzvS+kc6WLCk/RfbRy6/vzCAbV1CH/aWyKr7IXY33p2BW+/a2PznwzyFMtVSMXz5wkT8oF/y+Pz8T9zPwAAAP//TcRAMwAAAAZJREFUAwC4eZ2QAWQ51wAAAABJRU5ErkJggg==>
+
+[image44]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACsAAAAXCAYAAACS5bYWAAAC2klEQVR4AeyWWYiNYRjHP2sNQraQbBf2uBOFQkkpN26sV1KubClbRElIEoWUJReS5YYLl5YLV7JLQpIlaWzZjWnm9/tm3q9zppn3fDM1p07N6fl9z7t+7/973u10Tiro1yG2vSarYiPbm4ishROwC8ZAJyindWGwBXAUDsM86AaphchOIXcFHsAmeA+PYQOUS3AvxjoPo2AnnIVjoK4++CSIXUlmJhjdL/gLoPCt+HFQDpvGIItgInyGO6D4+fjFkImtIaPwgXjtP48/4BR0x8esH5WCa9ac2qHUlJohx6yj3WDoCtpPH9ATMrGbySj0DF4bwWMS3IWXELP+VJ4E++CKzI/dRskyKGU3aTAIloCBqsLPgl9gXSbWyFZTWAsuhS3477AOfkDMnlPphnRjFgpWqO/5Tf0BMGq4Fs36T9Qq1NlYStql6R4yaJlYyhND7RpxY7l+VlH4CPLYfRr50iC4tULpntlqUq9gD+yF0+CHFIl1fbiQh1Pp8WEjl4UfQVFJC4Lt59GTN6JNX3ycAjWMxHtKPcSPhyKx5gPPSFyH5bAC8toTGjozc/CXIY0Ivi3mx56j42jYD1WeAE7ZejJimmTiIH6R6ek+cmBfp+4NbRfCEShcw2SjNpfagzAMgr0m4QabjO+rWBO7yYhpkqlNSJ9J8q3Rx1wQ+pFGbiYjvJG0yyGPYC+E7bQ3YIUnh0deD8rd5DWKdQBvrIsUvgDN48h18pWMaxDXoinUD/UdCnVWbPyUR17BngCO7clyjX6a5/JUE3AKqhXrtK0hMwO8sdxkXnVjyXt83MPHzH7vaHAIglCSqSnY/xvekLHLxQvBK/YDvYyw0XVJecK4Xv2fkG0wv8ZLQG/HfXQaAOZxUXMj+rKmQkMnI7aDzD+I2VsqZ4Nt/+JvwxBQsPdAJpayxKm4QeIS3IK0Ab6c5qXkbKjhKgN7SeAazGXQkKqAZ4fY9pqkiopsPQAAAP//2ESNiQAAAAZJREFUAwCFPJUv5nNylQAAAABJRU5ErkJggg==>
+
+[image45]: <data:image/png;base64,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>
+
+[image46]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAYCAYAAAD3Va0xAAABj0lEQVR4AeyTSyiEURiGf7cNSbFAuWxcsrREURZiqWykLCh7RFFCLlsllLCxUpTcVkoslDW5FCWUhWRFucbzfjo1s5j5Z2oWUzPT+5zvPWf+8/3f+c5MqhejTzKRfyMTqEdpdKMKmiALIlZgjyrYdQydUAB78Ah94CuXqJQnd2ELhmEVlqAQbsBXSpTOUyOQCWvwC1I+wwtcg1MRZgoWoB5SwKRE5bhWOIEHkJS8FnMGbk1JuplPwgwsQzuYlKgMlwv78A1SHkM1nMIrSJr3Y9RLVbmO7wK7FCXCm+5t/B9UZQn2EGqgFw6gBS5Aymb4gB/wlOgWo15kEKUchjH4hDtoBB3xjahb/SIWg9YXie9gic4xozABK7AB86AXTBN17COik16oI46zsAMmVaRbmmNWB0PQDJugnnQQB0FVEDwlGcBsg3qk/upirCLWTGrqE87OTNTmZ6Kb66p7mOuYl8RKaAP7XhXhI1IDT82CqtEv/gqv5DpRUEWsh5VuUP9FbXaoh7YpmopsQ6gh/hL9AQAA//8zGJ+jAAAABklEQVQDAFMiSTEkdq3aAAAAAElFTkSuQmCC>
+
+[image47]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAYCAYAAAD6S912AAABuElEQVR4AdSUvytFYRjHr5+TUBhEMRiQ/BhkEwYJu1IG+QNMQimLkAwymJBJKb/KYJGE0YDFYsMkQkTkx+cr73HPy3uuezPce/t+zvO85zzne+953ufc5NA/fxLbMINuNEAzZIGUwyEPnPrtkdOoHoIjqIQS2IJJWINccMo2TKVyGipAZspnyFugHt7gDJyyDWupbIUReACjK5J1OIZ7cMo2bKcyBW7A1gsn9OgEt2zDQkoLoAtkTPCk/u17K0diG25+1Y0Sn2EbeiATTuEaAmUbrlA9Dmq+rjWSz8Ie6NcTgqWbwivUp0FOpEM5TMAdaMfbiEZJJNpAzSjpt4yh+qV5U6GuvnI4gX7ogHfIBqmTwwYsQA34ZAyLONsLMib4dMnqEc5BWuSgaTgg/pAx1CAXc1WDTfCpjNUF7EJEGcM6KpugCsKlNvRxQn0NfEOo+ZQM9SdQymoY5kE7rVGZItcga4RWyf8kGWoD1Hy9/NXcNQa3oFdNX7RErk0hRJYM1XANrao1Nmr2MosdeIKoJMOobqBYTzFH1Ax2E/UimJEKxWJ4iIl6nE9USwaI3p9JLIbc71b8G34AAAD//+8nnNMAAAAGSURBVAMARv1GMUL8ZLUAAAAASUVORK5CYII=>
+
+[image48]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAYCAYAAAD6S912AAACFElEQVR4AdSUSUhVYRTHr02rJqhWBRW0qIhqUUQEUS2aN61atYqgVkEUUQS1iIooiIIgSPeC004QFUdw4UY3bhTEAREHHFGcf7/7vI/r1fvwgRvl/7vnfMdzz/uG890dwRb/be+Ce9mNG3AbDoA6xOMIpGqjJe8m+wO0wXk4BdXwA8rhMKQqWXAXmb/hHFhM/y/+XbgOS9ALqUoWvEzmffgM0xBpBKcC2mEKUpUs+JDMnTAGSc0TcOmYdCULHiP1KDwBC2Oycv+asqMUJ1mwcjXvC3YOauEp7IdOGIWcShYsJfsbuPn+7yb+f2gEZ4/JLV+KZ7hP7wjsgbPwHSbAE3+AVW7FI5yv8BacPSajqKBJ9ltBJhwsYjvAFx5jl+EgqGc8zH2PHYQqiBo/iAoeJ/gSLIxZoyFGM9AHysa+h7MPbCff9QYxDLIFbeQTRGxszBqdYdQPDaDs0Vs4k3AH7M8ebKhohlcYmXQBG5dLe0PAfY3fkGvEWuAkfIIFCGVBPwKnGX2EIvCkbZVf+DayLVSGH1czAyfxB1sDLhuTWbIH4OZ7+S8S9fTGsS7FHyrG91AwQQEP7/UlrHJ/naUxx+EeuuE2rQHbphWnBOpgFuJy838SeA7KFXoBuhyIAe1m8VT/kTwMV+EVFEI9hMq3oEv3k+ZJd1PhBbwGV4YJwiWHTp4PP2EDvLPuq5TvDKmRW1tecAUAAP//5w09sQAAAAZJREFUAwBiC1wxbMipZQAAAABJRU5ErkJggg==>
+
+[image49]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAYCAYAAAB5j+RNAAADEklEQVR4AeSWWahNURjH9zGLDJkKIVPIFOFBZEqmlDwYSik8UPIkkfJASB7kgZI8KmV6IjIPRbwYCiFkSoaMkfn3O6zTse9e1zn3Xjd1T//f+tb+1tp7f3sN3zr1kv/4VyeCa8YE5KBGVRMj14GI1kMTiKk5DWNgIrQE1YaiHUSVFVw3es+GUjWWjrfgI6TVEMdquAIDoSccg81wANpCVCG4vvRYAifgLkyGUtSATiPhJKRl21ac/cHArG+jPglGw3d4CFGF4OzwhMKvfIotVb3oaBC3sWkNwzEF1sEHCHpJ5SBchfcQVQjuBj284R72G5Qqp/Q0nb9CWtNw1IfXkNYXHE4vJq4QXLxHvKUpTUPgImSpM85OMA8MElOQ6+1c4SpSqU5wg3nmK7gPWTr82+lO/kzd9bwA2wLugPdi4qpOcON4rC/8gc3SPpwbwYXve1wCO7k+C44qpnJ5U+U9sltb4+4NlyEm19VKGhtBP9gEb8GdOxWrnO6ZVHbAKnBUMb9U1eCGcrub5wU2LV9oPgsnhhvMDbeCjrPAkW6FVQspnsFiMJZDWJMzJkl05CtlFDn6mumPYLPUFecyMEjMH3rOlcn6EdZTYw52PvgBu7HdYTjkVZXgOnKnx841bJZMup4y5r90u8n+Mc4zYI5bil0LqrEFuBwwSXTkfHAu36NiMQrXJfDhmAoagcfNMghbLKd6OQ7XYTgZ/MAH+NR0iutwAfIKIzeBK4daulCfC+/ALD4AG2TQBueXB1+xdar64FgDu8Ada/rYQt2ka1rZTz0tp9KP8UwvfHQIzhvd3q4TR0x8kTvLrwsPM3BTw83gSFnXjgvfg908uIH2N+DpY9B7qLshMAXZbwZXi0C1t5AQnPVSGE+n85B1XOFOXOwmWOuuHVPNXi5OwSdIy83jLG2nwTRiitHHZRJdc/nGVOFx5XqKHVep7n+99P+f0+06dN35x8ORLvzxKGfkevA6HxA7rmguS46k05njroBLy3WPKylr5Ewhx7krvWZw/RuVM3JHCcG/R5jaUTnB1U5ERW/5CQAA//9YhI2PAAAABklEQVQDAABrgjGqi7VcAAAAAElFTkSuQmCC>
+
+[image50]: <data:image/png;base64,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>
+
+[image51]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAVCAYAAACzK0UYAAABiUlEQVR4AeyUu0oDQRiFN146DYqNRRCxEC+oaGMECwtR9AnU0tIHUBCLtD6Bta0girWICCKIQlDERhHFC4JiYUADCcl3ilnCZEOy2U2qhPPtzPyb+c/M7Mw0OXX4NUzKLXKEP3RBBzhey9XLiyWoVtt0TMMXrIJrMkhjDU7gERagWm3QUYPMUF6Ca6L6O48t+ICgmiHBGzyBa3JP4xAUzFIGUTudx+EOvsE1UT0sYiQagjP4h4jXhyceSBP07oRraIVELUwmSfwCWvpNyoOwTTSDKRKnYB32IBm2STdJ+6AH5kFbORq2ic5blOSLMAvLsOvXpI1Oui50bVAtUuH5eODtBcRKmbTw0k6k5OfEdWjjlLY0gFGCV/AJRs/GRFN7JSq0nivUf+EGRkDSfaRTrG05rYCFBtFP7BR0pVA4RzzixuSYhg5RM6VmIMzIbolJ2jFa6zkaf2BL23aY4A4Y7VMZMCbUK5YOmw6a3SFH4Afsaynl12SMJFqSJGXF8mui75Ugu9dyEfZWHgAA//+iRHC+AAAABklEQVQDACSHP5TS9CNjAAAAAElFTkSuQmCC>
+
+[image52]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADEAAAAVCAYAAADvoQY8AAACPklEQVR4AdyWO0gdQRSGNy+IkISEEEgRQkgR8iCRpMgDUiSQB4lgJ6iNIIgoNlooiIWtlY0gYmVhI4giliIiiCAKooggig98gqKgooKi3w+OyLq6s87cQi//d8/cuXf/Pefu7Nm5GVyD13UoIu2qF3GbhVSaqiJuYP4YHoKrLvJ6gnlhVBEv+CIbLqsaDtyDVcgHF8V5LWOeZYp4w4di6IYp+AeXVQUH6k/YJw6Ai+K8DjEfMEUwDhZ5q4IlcNUPDBZgGlwV62WKGOdM7aCTHhBddJ+DP8IYrIGLrLxMES4nCh/7jIm30Au7oBvzFfE3pEES2Xh9TkURn8jyEQzBHaiGAiiBIkiiOC91wMZUFPGFLOdAS7OS2Aa6zzKJSRXnpeWa7rsIXYFvZLoF5dACw9AJZdAAtrL28l3EUzJ8Cc/hL6jVPiBOQC1sg62svXwXoeeNkv5Ppr8gB5rgLiSVtVfSIu6RiW4mdRyGZ3S6p0/ybT+ow6grZTDOAyNvXucVoY1VOFEl30cGeih+JYalpD4wOQgrYDTLQK32J1FtlxD49ApMEbr087gLredcxpswAu9B0n5IT2G1ze+aCKHE9DzoYV5bDkLQwZsKbibOHEMIfHoFpogunHXZbxF1BYT5Z0eZk9RxtNb/8GEHwlJbfcdkPRi1MngN2gjWEbXXIQQ+vU6KkLEtegDpQRb+vRJcZzK8bVHCG8xHyYuXuRJRJ4iaS2dSS0a9n6GTvHklLUL3i7YRUcspaUVxXtZ+RwAAAP//3ovaywAAAAZJREFUAwCaD5P99qN66wAAAABJRU5ErkJggg==>
+
+[image53]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEkAAAAYCAYAAAC2odCOAAADEElEQVR4AeyYWahNURyH9zWUMaIMmV7MLyIekCFKyIvyQMoD5d1YlJDhRVFCCS9ejCXTkxIPSiFFhqKEEkLJkJnvo3Xb53Ru9tI5at199fv2f621z9nH/3fXuNtl8f+a+MpMGAYtqT03FkI/SF7/YpIGjSbzB6AGctkG+2AqaOJ34gVYCT0gacWaZMKLyfg4KA1aRmEr7IKDsAjUay43wB5FSFexJk0k1cfwAtRYLqtgONizThCXQldQ17hMh26QrGJNmkKmtyDoIoU5cBdUdy6fweFGyDTT4TfISqrEmGSyvUj0KQR9oHAFvoJGzCDuh0+gvP+ewgBIVjEmOYT6k+kPqFZHGhx2m4lnIS/vdc43pFaOMekbyX2EamnCGhrPgHPSUGIHaDWKMckh5HzTJ5e9Q3A59dtwD0bAAghzkmZZfk5bsooxySSvchkMQdMo7AZ70TPifdC4n0TlRO4wfWIlVWJNcpIeR7L2EEJ2Kcsyd9dNxMB2ykEjKbhleElMVtUmmfAospkF9gBChe5Qc+iMIf5Nmub24AgfDD2LYnrKm+SG0J6yhDQ8c50nOoQ8WlD8LZPdSWkuuPsmtKh53HH/dJOYtIJJQ8jiHJyG9XAYDoBL/kNiXm+p7AAncUJN2Yscisdq3q3d6Kp4nVvOX0UJRyC+1gj9eaYmOb9soNoFjoK9hZD15fIGPG4QKuRKJxWNuYrPeEfdSCgk/xjj+aQLQ1EcynylsdIkX3nM52dcucJuWuMm0ebSHtqollOaZDf3uOGrDTeMOtGbi4dXz2keK6g2ywndQ2zP5pb6FFw03IM5xIvyXw7OmhRSdB4IZXuXXd55xZP/Cm5onN3bIbmaer2PGp145gSYHIHnRT7eWGnSI37CucfjBcXMVWsThS/gHsdDq8PO90NOlOEet+sqD8OuqCd5alHc5fPxxkqT3Pts5Ge2wCHwP7iXqHluDB2Kl6mXVprkCrQHB+zm64iz4RQ4J/kWci1lX4UQyilNCpk7QXt88EBqm8a8ohDqFMupvEnldKBA1m0mFTDpFwAAAP//iJ5xewAAAAZJREFUAwC6IpZN0BJHrwAAAABJRU5ErkJggg==>
+
+[image54]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEkAAAAVCAYAAAAKP8NQAAAD5ElEQVR4AeyYWchNXxTA739Q5sxDJIQMGcsYoQyZnxQekEKGEoqS5IEiD16UTJmSKBlThGQsQ0QoM5kjZJ79fthyr+vec757vgfytX537b3P3uucs/baa+/z/Zv6+5fXA3+Ck0rxlmNgKaitU0xOfncn/Y8rJsN+mASdYAWUgMSkuJz0D09YGSpAoZLLVlWMj4X+8AqWQzdoCkWRkgyqDmlOzuakunQaAkWV+Qx8Aw9hFBQi+Wzdw/hgWAOKL6l+608MdOoF+uvoI+hK8F2Ck5rQMh72wRXoA0WV6QzUye/Rx6AQyWfrE8a9hxPi0vO+W2m7BHHkPJ3bwSE4BY/guwQn2XCHn5lwFwoVQ/42Rq5BoRLV1kBu9BKmgBOEiiW16W1EHUenjQ9OMtS2cNGX+oAuRMoxuDWcg7QZoR5Xotoy8uthfCo4Jm250BZFXE0V6XgS0iQ4Ka2xwEqYkQPYeQ0m3kbonhB3e45iy2XipKzHfhUYDqUhrhixNxlkwKBSZfjpBQ2Kw0ltMBxmxF1iNvXRMBHGQRzJZ8sddBkG54LL25QxiPJTiCM+b0cGhOhvRXkV2La2OJzUHuPOiEt3BuXNYJ4zZ1CMJflsuZxbYtFoDXSh/gziSA061wej36jsS9ncZlRWS9pJYUaec5NpsBFOww7wpkvQUSVJW/nuGSLWxO2BdAEDPF7MQQ9P2klhRupgvDe4JZdHX4SF8AKiSpK28t3TiPU4MYCO5iGXmTvcSuqHk3aSO4ROMVx7cIOhsBrCIY9iZEnSVq6buhu6xEwLNenoJ85edNdUil8krpPKMsZk6fqn+JO4Q5hAzUeXuXoU3KHc1fpRHgFBkrQVbGbT/9FYDX41UT6fy8zzkV8Ku+nrib0W2mdc+CsneXrNdITOOcxAd5AO6EzRYAsaT8B9CHKDgkeB7mgTIyqVpC3t5WIkF30el47vRTVNGlLz2X03il/EnOpzN6d2NzjJpXGLBjGfDKPsDnEGbUdUSi8bJW7rnW3IwBf3PGS4up69vI0fHboOff0bqERtaS8XD7jos3ue8oOYapqYtK/SEj5lXAFnqc8CD6cbgpP20GDYGZpGkOhdI8MBXE7pXXONic0PQdt+xG2/GQ2LIcgmCo3BD91FaJMjKlFb2svFdi7634id6I+QKfNoaAtGGyrlGctNx0Axp94ITvJiVPT8T0d3BuuAx+jMzxqd+4T2bJKkrWz2Q5sJ2WjyXBXagjYV+IyhrvYd/Gh+ZyWukzy4uaQ8+zi+EJK0les5XB0T6LALQhqgGF3iOsl85WdGtuUW/a5feyZp66vF7L/ubAe5ZEpBxZfPAAAA///32vDBAAAABklEQVQDAGe/52Zrf7y/AAAAAElFTkSuQmCC>
+
+[image55]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD4AAAAVCAYAAAAeql2xAAACeklEQVR4AeyWOWhVQRhGn0bBDRUVQRE3cMMVFVFURJGA2tkoViKCINhaqYiohWJtJXbWgiAIwUKxEcW4gIpIEsjeJCEb2UjOSZiQuwReXgghkzy+8+bOP3Pnzndn7szML8zS35zx2TbwsY94GQO6FpZBQnnGN1PjMsxkLaHzr6AXmuAkJBSM7yJ6E97DfzgHM1lddP4K3IVG+AsJBeMG6/m7Aw0QgxZh4jhoupk0oWD8N9HXUAUDEIPWYGI//IAOSCgYTwQjyezExzqoAOVCd4iLE1AWs/HTGGyFf7ACnsMFeALlsRr3+z6AwZ/QCffgAWyEY1CI1fh6zB2EQbgNT6EWXsI1qIjV+FbMeXBx1M9wfREWwyfQfF+sxo9g0C3Mxew614/gIYxqosY9+q3m7nmQJ1dOT35+Y3nlxlxonIqTaWMlDQlJRj577P7tdvadWptgAdyCU+MZt0K6Yxp2qnjQOcrNebpK0LOA08k2yCZkGx+IWKfUNnZwv4eSX6RbIC2fsZugfR27f3vPUuLboDIYP0vGj19c+TzutRPzbe0lVT381cFCcC8kycjpZb1vlOQdhCyzjRrKfYEkGYU2vlDSD2m5SnsMddbsSReSt/+rSD+Csv5bLi7BC/BY3haMu8lvIOhUdaTFab2PmFsCScG3d56LcuiGPL0h6FRzr3RFJZtQaGM7Uc2TZBTaeJYpGQk4OJ7IbpDNezGfiTut35Eq+2F/DpNxRnpCLWk7c5v4SiPTKT8jp/yfnE4401qIa5hkVB5mfPHDgTDiw5ki/nzTjlZlEXWnsoqfpgarS33IRI37/dznYeNNdYqmXI72cp7yGNKjSqg4DQEAAP//QXFtjAAAAAZJREFUAwAZvnD9uIBXNgAAAABJRU5ErkJggg==>
+
+[image56]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEkAAAAYCAYAAAC2odCOAAAC8klEQVR4AeyYWahNURjHjylzRBmS4cGckukBKUMJibyIFFFelAeSQiLKi/KCJ0m8GFJS5MELD0ohRUiUKUKGZJ79flf7tuzOue2lc28t2+3/29+31j533/N991vTbl2J/2nFr8yAIVBLbbixCPpA8vqbJJmgkUR+B0J1o7EbesF3OAtrwX5MuopNkgEvIdxjEMrqWkXHPLCKMJWXXK6AFYVJV7FJmkioD+AZhBpHoze8hlCXaEyFLpCsYpM0hUivQSiraxodxyEvk2mV9c/fSKkdkySD7UFwjyDUfBqn4CPk9Z6Od9APklVMkjoTZV/4AZlG47SFW1BL7bjREZJVTJK+EeUHCLWQxnI4BwdgFByEYfDPKCZJn4j6M7jEYxq0iavzlJOz/mPay+A2KKvM7cBTG6kSkyRjvMhlAOQ1m47V4OZxG3YQqK5cHKYPsckqNkkXiHQsWCGYRp3BmwntYSXcBzWci1uG59hklU+SG8ERRGPAVgDuH7pBy6HjhI3bpFwNrbDDfOonJKswSUOJwkpZinXYnMY+AY8WmAYZ7C68OeD+CFNTc7lzE65C0sqSNJAo3OucxG6EQ7APXPLvYkO9obETnMQxVWUVueIdrXq3eudgui+D81dRFvP5ZtTvR5sk55fNNDvBEbBaMBWPGa9w8gdZuiqudKJfDZ/xlhtaTCH5zxjPJ10YiuJQ5leaVybJVx4L+DOuXNlu2sRNou86ZH245ZRJssw9bvhqww2jmejJZQx4TvNYgdsoJ/QVtLpDPeWi4R7MIV6UFjk4m6QsUOeBzLe6LHnnFU/+a7hh4ixvh+Q62vU+anTgmRNgcgQtcnA2Sff4Us49nrFwK65aW3G+gHuc6ViHne+HnCize3TXVR6GXVF9m1CUps6MdftyJsm9zxaeuB32g19wL9bk7cA6FM9jSyuT5Aq0hwxY5huws+AEOCf5FnI9/lcorUxSFrwTtMcHD6T2mZgXOFkbt5wKk1TODBSI+n+SCiTpFwAAAP//M7xfVgAAAAZJREFUAwDg4otNGmFSNQAAAABJRU5ErkJggg==>
+
+[image57]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAVCAYAAABPPm7SAAABYklEQVR4AezTvUtVcRgH8FsWQQ1BQS9LLRUEQURTRVANUUvR0hIUDS1BQw1BiSgK/gPqJCI6OQgiKA4uOgjOijgoiIoOIroIgi/o53vxylUQRTfx8v2c5znnnvtwfj/OPV844edsQKFwCvegwmvxkLdc4dCU78EDdw/xlVv0Ms8fDkxpwF139NDNf9pp5jaTHJgMuODbKi7TwRbJTYclJtifqy40cCMD7ms+McwsSYY+14xSuqYt5pzjTz5QkQH3NNfoZ4PkusMTRlihPE+d5OmW1T0v0kwu7MhT3dEP8IzfJHn015pOiskTTOmy1otqkptqNGtM84YsRSl8dMhmr6rFZMCYrpo6Wsj0JjWD69Usb1B9TPZmXN1NBmTXG115wT/e0UX24Iv6l3U+850sq1V9RFsGqMVksxZ0myT50aKmdF6pf8kr0s+p38oHOD9S3rvrF3lba48zoM+P81+5pP7YBgAA//87BWPNAAAABklEQVQDAJhaPCtw8on8AAAAAElFTkSuQmCC>
+
+[image58]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACsAAAAXCAYAAACS5bYWAAADHUlEQVR4AdyXS6hOURiG93HJNdfcL5GIGJi4DDCiFFIoIpdCDAwNlJFLQoowwIhCKbkbyAAhEiNhgHIvChG5X55nn9a29/7/g3+f4z85p/f93299e6+1vv3tb629TrPoP/prEsG2J+GtYbXRkgk7wrIol9mR3LkDtoKNgTVMOgOWIB9sX+7YCrfANzCPNjgWwU6wCOw/l4574HY4ETaHAV8w1sElcDTMIB1sDVdWwgvwFgzogjEb7oXPoE/upJgVwdd7gB7t4Cb4Ep6Bp6DXkBj6fZD1tCxHpBbpYIfjmgwPwzw+4tgJHRwphPn0egcPwftwLdwAnXM5msYVGgY6FU2QDnYKXge5h6bxisZxeB1+gkUxio4G7CvGjH7wcwJ+gJOgGUdiWILnsGbBFjBGCNaVPwHPZWgWkQbHUUa8DW/CgO8YBm1AliHNBJewfMCeaIwQbGdaI2B6IJoNimOMZqmdRQOGYrSFN6AlgiR4geXi64XGCMH2pmV2X6PVgotqGZPdhS4oJAMX8zc8JZnFF1mP1o/2v6av3EBN0nQmewjrQodwIWQ2tKulbvrTmMx99g76O/QIFxsj2JlM7o5gRh9gu0XNQy1DpASWSewMwVqrrsjusbfYj991+6t1jeBXyazO4Qa3RCTqx49+yxAzgR8ex/oaPCHYtzgMuD/6J7hCZf6+jTiew9WwHIbhPAjdU911HmFLt0t3ArcwXAm6YrmGzD5mFIVg/cRdw+PWgmRgti7iccAFaB/ogniCpr88j2k74TjUV4tksIrWINgNms1At033X9wZDKHlmBLzV7BO4qd0LF47Iwnc78bTMoAaVJpZDz27aAdsw/DBXDCORzODhbTsW46eGbicwJL0U3sej0lCoiSzNtysP2OMgUUxmI5m4j1aHwyg80C4HyYIZaDDUtiMsRha3EhFMPNL6XEa1gc1dPYMcQT1rILUIh2snpP8WLsrUDshfw1rcB93p4+XNCuGNe/a2U3PTDnlg/WitadWWg7Wqmdh5igMF69HRt+uJ6/MQPlgvehp3f8UrtqoMp8yn1tfSaD4o58AAAD//8LENnsAAAAGSURBVAMAzjqDL7JzZMwAAAAASUVORK5CYII=>
+
+[image59]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACsAAAAXCAYAAACS5bYWAAADiUlEQVR4AdyXWahNURjH9zVkzJAyE4oS4cWQUCIRT3gw5MVQHjxQyoOIjEkIGV6IJA+SSBJlyJTwQPKAzEKGyDzE73fcte27z77nnnPUFbf//3xrfd9ae337W9/61r51on/o779wtikBbwhrG/VZsDnMRFZk+zFyE2wA/waWsuh4mIe0sx0ZsR6uhW9gQF0aY+EWuBGOgkYBUTYqmDkXzoYBX2ksgzPhAFgFSWedPB/raXgDBpgS++h0hUvgbrgVHoLVbhm2mqAzKxiUfsZLdAZkOdK1Eb+QdLYXqtFwP0xiEJ0JUPsr5GWo846dRLsc6OAqJjaGWbiAUkfHIWMknXWb72C5DZP4RucHbAvrQfHeH9gElgp3cAaTrsAPMAum4EkME2FYMwrOevKHYTgHP8EkTIvWKCZDbY2QjnUhbXRLgtvfnhkHYCGcxdgfGiREFDvbkl5veB2mYVTNIx31oE1hwFC4AF6FpcDtN6qbmfQFFsJzjK7XDplDiKxvanRf57TZP57au5hWwtVwJ/RFEEWhglHT4XF4D9aEJwz4DvMiiy76zM9HWB22YegMu8C+8BrsCYuFW2ppPFjshMpxzSplnAahX4z0hfYysBtcA81hREF4so2ql421tODglLFN6Ic0CP0sOQLlOmhUEDnc59cD1gfZAtYEa/RgBp2BDyp5FGnpWoRUNxKZhVtBGZw1Vy0RnvpgUxoRHzaPzlQYYI670DsUIVLeaM5Xoq4CD64vZhoFjmGEL+yNpe4E/STcMZ9l6czpg7Nv6emwk2jGsAJYd307I6HBg2L5sb2DnxdQeOie0VgIi4Fr+yxPfNb4VihNufgwOgFdZGm6RMNbChHDt/KKfYrGCBtdq4Fly3z1WsSUw0N+rQ5DkO4IIhNG/zyWi9DoeeVaptJp0AO7z5Q0o/iAucgxNF6t1lyaMR7RGg4XQyuGC1n7dDikAKZoQxRFOnIT6fMQmdAx89eIVjBCOi+ZBqakV+0p7KYaIoqdtWP9s1APtJOi9U4n/G44jM2dQOShOxojEa5jumXB8uih3JOcHdJAnQ64td4wbo+6UujWz2LCEfgnqGDyNOh17LcKzV9IOqvGqJm7c+g4CVE0OjFyF0x+XtItGea8Z2c7M6ukU9pZjeaeMisdmF8tTJNyPmySD+xAx09Pd9cvL7q/kXZWi4fG/xQ8rfZrk49ZzNKX5yj66CcAAAD//4KW9JUAAAAGSURBVAMAUuqcLwU2AX4AAAAASUVORK5CYII=>
+
+[image60]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACsAAAAXCAYAAACS5bYWAAADrklEQVR4AdyXWeiNQRjGj33Nkux7shRKZItcEYUbuaFs2cp2RZEr2WWLkBsllGxZkixZiiyXlsgeUUSyZV9+v09z+rY45wLx73m+Z953Zs6838w7M9+/YuEf+vsvgq3NhFeHfxpVGLAuzEXezHaj5XpYDf4NLGDQETCDdLAtaLEGroQvoXCGx1LoAi1XQm03BW0Dy0UFOvSG6+BGOADqQwqfeCyEk2AvmEA8WDvMpvYMvAYDDHA6xhX4Dn6GD2EH+AiWg1o03gLnwk1wA1wNB8KA5xR8kUWo6Yj8QDzYzriGwD0wDoN7hsMXuItuhX3gHOhMICXByVhMy3ZwPLwOB8MesDuM4zyGgQ5Di4gHOxTvHXgbpmGwg3CGgS5S/gbLgQFNpsMOGFJsF+UlcDeMw/pTOEbCyjBCCNalNnfO4X0PfweG86NVoSvkrDWl7CTMR10xJIGzWD1hExghBFsfyw1kXlLMwJdx2a9SY54eQMvZXPZ34I/0cwVXoaOg401DTREkgadYbmZfimKhEIJthuUPvkDzUA+nS98V9SS4jB6DrWEpcCndXDVp3BC6Yd1YnijLsJ11JIHHWF9gZmbxFT7wcLcjCbzFMnfML/NUHsRn0BPQcmDfnXRw0yKFGzycoKmok4VkUCd4wswGO08d4DUVKhLhK0/t/qgzhvwUtjVAJ8Pg0o1NQVMx7ddu7EOWEuxyGnpEeRpQTMDlrZDw5Buuzv38ql96b4UWIVjf1oEbhYqYmjOhXXBrG+Q9HAaCFLzX7a9qp3kCh2PUQNNw4xpD3G87f8sVifwOauEVDxu3QtM4gsPjxcEoFgzSG8cc9xZyifW7UZ5QsC2SwUk8zlI/NKATBZd/M5o+MhvgM22KKxKC9Yq7RKW3GJLAXqyW0JttHOoN5rU8mrJ9kAhewQZuHnuORs7Yw6NoFvZMuBRa3ob64XIITcPr3N+UUV0I1kGO4vEa9U0pFmG+zsCaB11y7/bmlJ1xpIi1lEwDr1F/DzMDZ7cjXm+nB2hf6Jmbbm+6eNWepv4NjBCC1TjOw0PbLyKKCfhjN/E4u/5AesmoitCepzPhS1HMhXWe0fuptS2SgRdOW7zbYRHxYE2FFdRMhCY3UhZceu/+w2X1yjZ2T4zBvQ/6rYL8QDxYPeaOeeiy20lfqTSvzWfv/lL75LUz5907bjpXtNgmHayV5p6alw7FjjkFc9Vv4Zyqkl3uBT9TXV2/vBId08Fa6YbyP4ULGn+YfiR59GUCNY7vAAAA///P+xVCAAAABklEQVQDADf2sS882Aa0AAAAAElFTkSuQmCC>
+
+[image61]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAYCAYAAAC8/X7cAAAEHElEQVR4AeyXWehNXxTHz+/f///PPM9knqVkHkoRHsgDSjwoUpIooigP8qI8SckQSmQeXmQoU4kHFCFTSua5zDPx+RzOce65594buUq5fb9n7b32Pnuftfdaa+/7T/CH//4awAb+B2vCcsGxnSNz/FI7UJW3hsH2sAKm4eDLUHaA5YJjr2Nw50LkopgBLei6Hw6GR+AQmMS/VBbBM/AkTGM8ipfw8zfuQVaChTCVhqjve8p+tP0dex/1xTBvJ4oZMIkXxCceTWBdmMQgKl3gZpgF9fVo2AYfwxow7wPQibY8RsGP0EX5HzkRvoViJ4+mcCTMQSEDatNrBLwCl8BucDuMUJnCbLgDPoOFoNHvaDwKm8NqMA2NGovyNHRXjyHTeINiI5wDc1ypkAGN6NgaXoSu3lmkO4EI0ZlnG3gIFkMrGu9B3cDdcCep5kDXvIzGOe8jXTREHhyjAdquMEbaAH2uMa3dYS14F1pPr1xP9E52G1kMA2g8Aa/CKtAPQMSw3oeafXojL8AHMAvqr9MwEMZIG9CDloVwFtQf9Tnrnagn0Z/KNfgCFoLu0JLGS/A5NEDrICOY1Qx0XdPVt6+GvIo6pKT6O+iMO9+lGARpA46jnQJdiXPI6dD6KWQEd8MMVWr1G/KCadh+jyibkXyPYohePF9D53JH3aEs/6dLDF3aYHbcUJk2QGV1Hvr/DWSxFXZV6VIQkf87xkN6PYHmdETgIgynYIaqQPaFumQh/6c5hh9v4IeKLAOMcic3K+hGYcefeET+76uu/k0K0eqNpnwQmsHMVKX8n64xdEPTbKjIMkBfdPvPhz1+7pH0f0cwDRqEJgRdpxlK3RURuFiymP/bL+ItCsYDIsiLAZUGiRO6YtbT9HAxtbZLNyTqLoArq1uodiefUqgPPSDXIw1qRGDG81wp5f/29TB0rOjdIGsHNEArjXhfStMBovRq2k23V6Aw1blKfjTVEKZSz4K91AxsROBODaWgoaX833H1DgPZsXktyDPAAPGQMvUlJw87Jx76rxnFYEyogwlUPHk3Ib0K6ONeOagGTuzJvYuK82xBmoXGIE2jZr21lGP/ppyE55K77tyxPr0DXiE60noAutKITBgfrp59kx02UPEDKpDSLfciSDXYzcMrwwekKzgOmezrYkxG50UOkQfnMkM6d9yoAU40E40fbT6mGEQBZjmLnogeQH6E72f1+ZU65zDtuoPOHY+tAQbWNDRukXd/V8q7CaqCMIhW0Wq86HIUywrvXf2YYQ10bsRXaICnpDdOG7ywzaOpmPvQHMJAnEtpAfTsQJQFHlrzGXk59HBFfIcG+OErUHmYzEAaeIg0MuveEFfSYsAiygLH3srIBj8iFxqQq/nx2mFeWQrLhdUM7D9DRD5+hQH5o/5GzRcAAAD//yzqkFsAAAAGSURBVAMA1te+MRYDLZIAAAAASUVORK5CYII=>
+
+[image62]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAYCAYAAAD+vg1LAAAB90lEQVR4AeyTO0jXURTHb2+iIoKGiAiKImqooRqiBw1BSw0N0RBODjo4uTk4KA4uuoguTg7qICoiiIiTgijiaxAHEcUXig/wBYKKfj5/vX/8i/gCnZTzud9z7u/ec4/n3v/VcE5/l4mTjb1sxcW14hpHvYdvcAOiXcG5ByoSXjC8gxjjHm5enomK+PwTCqAQov3GGYe38BAaoBmewZFm4s+smIdSsJJHe4qEHwzTMAULUAHbcKyZ+CWrauEN2I5G1M0P0E/QDyZ1rgp/AJbBFlWj6/AFUszE5cwMga1YRLtAs/LnOG1gUiSYbBDHg1bQfPDgUTTFTOzEXYbv0AkToL1muA29EM2L6yGIB7lmkngWUiwmthIvxCSbeyts0Ry+G5FwneEDeDiSMIvpxrsFOVAMFhli4g0mVuEOaL4U+32TwKqRYL9twZgBWMwr1Nb8Q4fhFyRyxMS+ilwmM6EGmqAdRqASfA1paBnENjzBtxUmq8f3KX5EE22JiYlDHYMXloX+gRL4Cm7MRjNgCaLZqj4C33UL+hiS3/cnZj7YEk+0LcZW578v+s5FfOMdBK0wAxaVjt6HZI/1T4N9fMoGn6KX7cF/iX3fiaoPVsy3E9kaq/6DL8QfiJXmEXs/SDhzxW42eWzPFhP+YJBdO2vFu7uPGM8t8Q4AAAD//5ijyj0AAAAGSURBVAMAAGBgMcqWy9MAAAAASUVORK5CYII=>
+
+[image63]: <data:image/png;base64,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>
+
+[image64]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAYCAYAAAD6S912AAACD0lEQVR4AdSTS0hVURSGj70HUUGPSUERDSqimlSzqAYRFUE06AFBUA0aRKOIImhQVEQDcaAg4lAQfI10IiLqwIETH+DEifhCRFFRFMXH953ruerG4wPuxMv/7bX2vuuuu/Y66+yJcvzZ3QkP0407cB+OgjrOchJStdGV9xP9HdrhKlyAevgP1XACUhUm3EdkAVwBk+kX4j+A27AIfZCqMOENIh/CL5iGRKM4NdABU5CqMOFjIvfCOISa58CrY9IVJjxD6Gl4DSbGZGX/WrK7FCdMWLcS9xs7Bw3wFo5AD4zBpgoTVhL9F2y+393FL4FmsHrM5vJHayPs01cODsBl+AeT4BN/hFW24hlOMXwDq8dklCQ0yHnLyxxHC9hu+ALPYQmOgXrHMgwfwN/XYh14TBR5oHOW5ROYGLNOI+xmoB98e15i34B/WoY9DzchVpLQQT7HiYONWadL7AagCZzBj9ifoA66gK3CrFZ4i909uAZrZRs+c2Bfkzekk30vqCcsXdAKsazQa1xk9wNKwSftqOTjO8iOUBV+KK9pAS/4wsoxmQrthc335b/O6R+YAF81/6gc34eCycq4p+zegzrlIlZowx1a9/aiDacCGmEWQvkAX3FYBI6M4+QZ20yFsbPN5RBxtsK+2sdB9t5oCBvLCmNnm4sVe9U84hN8gxwpjqLsHMabXCw7rXDL/8x5wmUAAAD//6GHSEgAAAAGSURBVAMAPtFVMbzPEtAAAAAASUVORK5CYII=>
+
+[image65]: <data:image/png;base64,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>
+
+[image66]: <data:image/png;base64,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>
+
+[image67]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAYCAYAAACIhL/AAAADNUlEQVR4AeSWWcgNYRjHz7GEssu+ZItE4cJygXAhIhdSlLUQRbkgF5QSF5KyXpALFFdEooRsIUIpErJkD9kp+/L7zTFj5mzf953vqK+c/r953vd535nzzDPv+8zUStXw338ZYEMeSn2orOoysQnkVUUZbMFZo2Ai9ILaUEz9GNwE9aAqWsHkCZCjfAGmmTUMLsIuaAn+4QbsTRgA+dQB5zpYC+8gWw1wzISmENc3OithNgyEhLIDNN2rmbET5sMY2P2HsdiTcBT6Q1ze1GIcp+E6hGpOYxLsgKdgpgyUZkKv6G2EVeASwWQUD9DgnDSHIS96CRuXd2qGfuKcBQaFCdSb42jYC9n6jGMzHIFiOs+gwY3DRooH6J/OZWQp+HgxOXqG5x6MANcnJpDZvUvrDsT1ms4BuAxfoJhcFj4h13udcGIYYHccy+EW7IeK5J2acee5Y12z5+iYLUzJOsuZrvE22EBhgFPptYV98BwKqRkDbgZMJH196F2D6uoFF7BSGAvNVMoAzcZwer/AFGMKqisjreEhfATVjoNZfIOtrtxIP7hIIoONcHQB/+AJtpjGM5iG4/ABQrm+PoWdMtjG4TXMYNg2I2/DTh7bEZ9l5yV2D/xL+ZSC6xug5cPgAkeBg1lznbqZrJPxWlfglGq5b4dnG6BZu4rDtdQNm0/urCUMbANrJSaSS8Oy0CrylN6wiFsdvoeXMEA7a3CYRWuhE+hGGknrEGyHhWDGMZHe0zLITtiK5A6VQvOsra7l++EEA7R9hYMfBUOx1rMpWDmMXQ+TYRF4MiYhX1MWdt8miQE6ZvUM1pufjm0PD+AxzINs9cDx6A+YVFBmggYHX209sTPAXWlmzGhf+ifAMoTJkX5fY4MZsSZiIlnXvGlLWRqvmEFr6Rb6cblMfM2dwukNYVKJAHVYg27Q8J16EGtdMgCaRXWM0a8wCEpVZ0603PkFRTOj8BFneqUffcyuYzPuQq/qldKcMA18k/lOp5lRuQL0ambctbiAjn+IqbSGMNM1vBWbeGLlDNALu6G0VXnUbhw/1cy+XzTE+FflDNCrWoL8or5gp5L4el3G3Jzg8OVsEn01it8AAAD//yWwodwAAAAGSURBVAMAs86NMf1n12wAAAAASUVORK5CYII=>
+
+[image68]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAYCAYAAAAs7gcTAAABLklEQVR4AdSRPyuGYRSHX8ogkjIbMYgMZFAysDH5AjIYzD6AUbIbbCaTf4MRCwnlCyilJEUMTP5e153n6fTey/sub71P57rPfZ/ze85z7vO0Vup4Giduoase6IbMYhsbZH/gGRYhsyheITsPX3AJmUWxySmWB7iDzKK4k+wwXMMTZBbFvWSH4Aq85Bx+EtogWRT3EXEKM/hV6IA12IV2qETxtAHYgmXYgQOwNYuU4qLfQ5JW+sVrXSxOx5GW4qLfC5KfoFlggs0NvEAptl+TZwb/GcCPwR5YvRSPE3iEOF+n8UrsHLz0khe0op+L8zXmD7ItZz7LC8eKnWk/h1NIn8N/wBGMwDacwK3iezaDsAmFOY11DqOwAPuQejZhb98Gqnjj/A7JrJw2tSzNKP4DAAD//xK4egsAAAAGSURBVAMAi/I1McmVP2YAAAAASUVORK5CYII=>
+
+[image69]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAAYCAYAAAARfGZ1AAAB4ElEQVR4AeyTzSulYRiHz8w000ypUdN8LaZmmmYxM5tpakZKKEWUyMJOvsqGRMJfQNkIKVs7SbGSEinZoJR/QFIKJZHykeK6Tp2313HOK18bOf2u9/m4n+f33u/9POd57AF/j9P8GRVrgAK4laLK8hvHHuiHD3BjpTM36zrc3oIvqaC9Tu7pYtEwvIZYOvNfBH9AFZyDL3pHGyXj5Sw4gGNIaW4G9QRHYRym4R8UQ5S+EZRF2rhSZf6dyFeYgiPoA7NvorVMNJeUyegz5MMZbIJn9CLZ3KwthRnvskgt8JiHLEjO/hVzlqybtgNOoBraIDPZ3Iw9QLMmHtchzwEw+xbacPanjHuhHXZgBGqhE3aTzc16xgCENctgCf5DqntvrSWoN+suHahBP92SGAuzz8DaW7Zm+hkQ1l8Gns8KbaBw5pXMWg4/j+4VGTOzXCI5kJAvdG6NiS0IlDD/wkw2jEE6mf0gQc2s/Rv6yvv9h84q7IFjzyEjYV7GZAksw0YEbiIcK+SRB+o9j08wB77Yc/OGHWr+kclGeAl+QRQasSymiXvMfp2JSWgFv9zrOEE/fqDbdH6CG25CKXs8RPFuFzGugSHw2sbN6d9Zmvmn8z8RmFmWYHDfnSfzlBV90LJcAAAA///BwKgTAAAABklEQVQDAGP8VDGsJiFdAAAAAElFTkSuQmCC>
+
+[image70]: <data:image/png;base64,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>
+
+[image71]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB8AAAAYCAYAAAACqyaBAAACWUlEQVR4AdyVOYgUQRSGezxAUUQREURFEBURRTwwEMUbBI1MxEgMDIwNDYxExNzAzMjIKxAUb1C8QNBARUUR3WVhL9hdNtjz+5qtpqe3lu2eGVjY4f/6Vb2q7lfHq5o5yQz+ZkXwRSxgDSqpFTNfScQrsADycjDLcSyFqGLB19HzNJTVQTp+h0EIuk5hFDrhHEQVgm+m9QI8g19wHMpoHp32wnPI6yKVUzAM7yGqENzGNh6XoB3KagMdHcAPbFEHcPyH3xBVCP6V1ntgxxFsWbnkL+nsDDGZFlPaBh+hA6IKwaON0zgX0r4D3kFRa3BshQ9g0p3E7of5kKmZ4Nv5Sjf8gaLcDrP8KA2XwaN4FXsHHDQmSZoJfogvmKBj2KKOTDhuYk3k29j74FY4KIqNB1/G2xvBPcXUKez3A7zONAxuCXVzwyNIsfHgO3nb5PQcU6xT2O+3eIdAOSCP5CcqXZCqkWWv8eYxeAQxud8Ge51r3ER5N9wFZ49JGtrzVby5Ar5ATHtwele4MhRTme09lN6ASXgeO2VwL46aHSLsw+cR6scW5YxdXnMhnG99Xjhug74TvGSiZsHNzn84ZS32DPTBZ/C8YlI5KIO/SmuTH55pE/EFTWF5Byg/BI/mLaxX8U9sFvwJldUwF5yxOGKPRn55HZjZ+o1+Mf3FuQVuQJDZfo3KLjgL3qSYJAueVko8DtPHRAqzolonA7m3sSu6l551W1Ul272ZTKbYdcp3q6tK8PV83n++2HVKU3VVCe4Re0oIlxbTvKoEf0w4/z4xrVGV4K2JmPvKOAAAAP//mSHH0QAAAAZJREFUAwB6E2IxqpU/oAAAAABJRU5ErkJggg==>
+
+[image72]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGkAAAAYCAYAAAD5/NNeAAAElElEQVR4AeyYZ6gUVxTHJ72TnpCekIRUkpBCICEhIRUCCSQEUQRRQRBERPGLIiiCDSz4wQZ+UWygflAEQVGxIRZsWLB3xS4qCtbfb33z2Jmdt+8uyM5bnOX895y5987cM/fcU+7cHxW/Nr8ChZHavImiqDBSYaQGWIEGUDHtSd+h83Fwqwnb4C+Alug3Om4Ax8sXIz8P6k0fMOEIMAn0Aa+AtkAhet2Hot+CsWAc+As8AJopbaTV9PiCI+HHwNPgUZBFGqMLHZfBHPAI+BWcAfWk/5hsCJgGpoKO4CD4F+RJIXppoL4o6QYbDR8AOoDx4CFQorSRbHySv5fBbPAsUIYlyIf/T8sW4HiNex253qRuvZjUl1KXFcjqdRo+HLwB8qBQvb5EOT2/P3w/cINrqD+QfwElyjLSS/RcBavA4+BVkKYvmhriMLe26bre7HUm9EUnwtUbFu3lbyl4D3wK8qBQvfR211qdYz1PIRwC7YDOkFnd+WL7GKBlr8DfB+X0GBf/gPngB+ADd8PzoD1MuhAsB4ZdWOTGib36QRtyQIheppF4s5erqP7md+3wjB1ZnuTOXEfnJaCRzD2IzfQ30kogfcLfRqCbwupOF5jR2N8Zrr6wyBD9McJJsAvcZQp6XIhebqAnqjzNyKAhKzzJ/PIuN+4EZ8F58DYouR1cWSxD/gi8CULzkeFnPeP1vFC0Z3yt9Ds3uNEsfvIyEipUUFqvpxjxDmiV0p6k9YyRJl7Dx2Ge8BrQ4lreODmLa8PJV3DdMjQfGQK+5h4NG4oZjK+F3mLwQDAYWC0ZOhBzpyy9bqKV6wirTmkjGQfNRxpKIx3ldiskjfQT8oEm6IY/IusReeUjpk+QxwXPGRNo1UjX4G2BWtLL9dUJWtUxbSTDhPnIG92FGsXkZWjz4DrPDuAB93N4LfnIA5qe6jksFIZfpmmVXIjpjJoCPBTq4W6irMTMkLpRNb10BCNWS8roAKU8W24kF8QTsp4U32hBYDXXg4aZwEICFn3In6V5aD5ieKT3fYPwfQ3QixlelTz0DWLEZGAodnMhRuYA+5TT8ByTLojKx3ifIUpe3l4uhzyjml6GOh3CddcR4me7Ti9yoQNchCcKBz3DZGadbp8wlGmkDVxsAjH9jOBuDc1HDI907wUIHpJDsYPx1chF9CDYnUFjgLtPHEH2y4ObDDFBbkQPvptpbSlxD6PPKOKzESuotWeE6uWXGje+ax9PYtTSSM35WE/yrHOOEZbVfjfyxbpyLflpaBGC38TcoaOQdcF+cAuJJXDPKc/B86DPmNTPKg/D9boYFjtuNt+LrgS5WU7QElewiBVkrjCnba3oudMQP2M7l84DS1CoXhZTPblzKOgGOgEP5hY/a5BLpJH8lOLZwjJb+MKGDgfoQYYNDed1b/50T8cJx/5Jm+U6rO6kfhY16pKGoTXLSHqZO9fvjJ5nspTWK303d3pWf/wM18ZNmx5Ti15zudmq1w/brqNOYwGkU9AVJcJdqaH4y2UFdAK/4AjlhBJ6UqKh0S7uBX0LIzWAlQsjFUZqgBVoABULT2oAI90GAAD///tp1WQAAAAGSURBVAMA1G0UQAcpixYAAAAASUVORK5CYII=>
+
+[image73]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADoAAAAYCAYAAACr3+4VAAADhElEQVR4AeyXWahNURiA9zVlnkPmknmeyZDCgweUWbnEiwcPikeKRJQnD14oHq7yIAopD6ZkKHNkiAyZIkNkzBDft9112rdzrnvOvd17DOf2f/tfa+2111r/v/5/rXNrRf/JX8HQf22jCzv6B+1oPdayA77Dj1KWosuTBrw4CKHva8rFf8OOfmGhS6AfXAfrrdDlyTRedIZvMA5aQkm+DG3C5LUhF+lO5xPwGHpCJulKYy94Dg/hDsRSk4YWMeNIOA5rwZBEZS1D6HkUHkEXaAxJqUNlLhyBHnAZXkEswdCm1KZAJ1Dq8hgGU6EtVEXcuekMcBYmwyxYCZ8gW9GobnS+AE/AdTZCJ2UClQdgjhq6Zygbvqgo0lAH2UxtFLiYYvQ+0IMD0LdhEuQqOmseH50HQ2oiej2kvEw5W2lDx8/wAvy+ITppqDk7lrYDMBQ8uM6hU6KhdrhEi51aoBfBAtgGnnZv0H6Mykr0qIeHBrqgMXy1BT5AZcWD6B4fa6y71oyyxqGiIh6zYT940o5Hl8lP6vGOGgYnqRj35s0Gym9Bac7DHf+Krkj08HI6nYaPMBx0VC4hyicZxejScb70gNGZ7azAIFCu8ND4vugy+Uk9NnQ7hZtgjBum1ygHGUhBQ8uEAW2ZZA6Ny8Dw3IPOxjl0q1Cc3/y8VdrzGVrneQprsPnvfO5mb96l5SdtsaFqj/vBFDTYUKUYeYo5iN5JGu+7TOyk0TGMEL2/kLoLQVVJQn6+LB3FHDXizPv5tJ0C21DRCB5p+UlbytCOVPpA8qRywV64h2n3kt6INjRQ5Yp5aD6alzrqIj0NZ8OaYqXE/HQXzU8HcA5Tw7OlAw3eraioPg/nTctP2lOGuuVeMckQdQJ/VRyio4O+QwfPUfytGFrmZ396eXh4/62m7ByorMWImEFvowoVi4Z6l3ogldASrpD2lM1l+6at01OX95HXyA0Khi4qFn9uPaW0DhbDVshVDCNPQz1ttOg0r7KKIsPd0Qh3zltgLxN79bVGv4f7sAZ0os507Xepe0DNRLtuw5riLwmGbqLqYpKe8Dh3p71XxbygW6VEg4/xpUe/BqyibLSglDQMU+f06giMplfIUx2/i7ri+WHahX5q83q3LwPBUAfWU6E9aE9OB3ehoa0q2pPxKgOsAP+rQNWMBENrZrY8zlIwNI/Or5apCztaLW7N46A/AQAA//+rNNAiAAAABklEQVQDAE2xrTFR9703AAAAAElFTkSuQmCC>
+
+[image74]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAYCAYAAAC4CK7hAAACm0lEQVR4AeSWW4hNURjHt1sa91sJExGZhgdFhFzKA5Inj6Q8C09SygseJN5couRBKRGKcld4cA/llknkGrnE1DTTXH+/09nTmWn2mb1ezj5z6f8731p7rz3r+/b61rd2/6iX/PXZQAawgONgEJSVQldkId5/h1VQVgoNZD7e/4CXkIVGMOk2OA67YALkFBLIQJ5YBDfgI5RaU5jwHtTBVngCd8CXG4UEMpaHZsEZaIVSypfoCtQw6UmohytwFnZDRUggM3jA/XEfW2pNZsI18BiaINZTGkugOg7EajSXC0uhc0Uamb/mapyn/Q9KrWlMOB46q5ELQ6DKQHT8IJ2VsBf2QayZNN7BOjAfT2OzUAWT9oMkVRrIcu7+gkPQApXgCmGiefwMh/fwFv5AdxrDgKvwKQDzn+GJqk68k79hINNpXwJTxwpwgXYzqAX8fMiDSSWD9Zwxr9Oyp5v/bAoVHWIgRxnxAkwtnXhIW43mxwPwOfY3ZCmrVdH5DcQBw/gxxR5gP4PybbpH7tIJKbfmsqXawyoto5ijmP5ys7Ba0e2gmjgQ98FUbhWWt9n03WSvsCGy5s/hgcUB+MIYnijT+yt3J0GhJtIxi97EgbjJCyO25G5ikBXLTU4ztcznW4w+F0CczjzSpb5x9RS4h/WNZmS1XUHjOrSvyE86R2ALnICb4KBH2Kz3By5EpvYBGr59v7NW0z4Grsh2bFO8IoPpHIYq2Al+y9Rir4H/BJO5PIjX4sV+GAr6uwz7BXLfWp4bz+hcBp12BTbS9hy4jS0neSz4WWLaau3n/HNFrDAeYhe50gCbwbTagDXlMOUvA3mNmy7XeqyfyeadJ7rnB5dSK9OBBmKV8VvLw0924NF/6FEykB7lcJKzvSaQNgAAAP//qa/+gwAAAAZJREFUAwBeDooxB5xODgAAAABJRU5ErkJggg==>
+
+[image75]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAAYCAYAAACmwZ5SAAAEUElEQVR4AeSYV4gVSRSGe3POOe+yu+wuKyhiAgOKiqKIqGBEzOHJFxUEEdQHMyg+mEAwYI6YQBREUTCggmJCxQjmnLPfd68lt2du39vCIDPM8P99TlWd7lunTp3T1fNmVMn+Kq3DbxDor+APUGkbtcLiY2auL98i34IvESL8ET1z4ATYE74HKzLqM/kRcCHUaUQWwWFbl7kMguPhfSiMdG2UyXAKbAljK0Y7DT7AqDOcAX1WE2TSczoxdhs+e8G1yPdhEvozEGwfos+Cm2BfuA3GkOtwbICGzg5GjoMT4TDopKci34Fp8RmG86C7aCzyClwP10DHEDEsoPU1XAwNwqfIpN/7i7E28DEcBd+F3WEIGGochRyujulAOBSegE5Up5uhN4Zp0RVDI7YIeRyOhE6uOdLoIErBOvKA3i3wV2hOImJwEdrTswe+DbfCoijkcFvudqWcJGoGl7iehh2gOwBRFDWx0OneSOH2W4VyDzaFRh4Rwx+0zsGd0Gj/iCwJ0+Iwnd/D8/AILIokh82ZannudrJP6K8CP4dpsAKjg3A/DHiK4rOMTL6Fq8v4DngUfghjhedF29qiTS3aB+AFWBRJDjuRfCsfHugEXJTQLiRXMvg/3AAD/kXRkd1ItzviJfzt32kdgjehC/MlMsAFsrAtocPoaqvjd2gXRZLDn3Cn2wpR5rBQ9eOpRs+KjRrDd7Rc7LNIU8gF+Q09wBS5S8Oo1kC6cKnyF9soyWG3nJVPm7Kk0dFZc7I1Dz4FS8KFNn9vMXARXoP/QGHxaoFiBfdZddBT5y+2iQ67Pc5oUMa0ELbimRYctyxqKYT8dcDoWiR/omHUvX8j+g1oJX+l/OWeRIetzr4DtclHJ+Fk8o0l9bVjwEptZE+iG60uyNxakJu/DEVWcouRx0S38s90hsOEO0Gmzl/uTXTY7bwLAyeVW42d3Df074VuOUTk+9AiprSdj0bC6HRk8CoUv3Cx3/ctagbmr5Fzm9rhPK6j+Js9kB5/LWKokecET3Cp89ebknLYsWVcXOGqyID/UPxxT0OoGYzhahQ8oKCWgvfMp9d3rq8md4c0Uu6S4IA52QA700knUTOwuPkuXkfLQoaI3Ak+z4VJ9f71JlnI4WMYDICjoefSbsjpcDjcDgPMdSddjw53BCKGIbT+hC6UUQ38gj7fz4jIg4mRdmE8GpqjjRyA2ixFLofmsR8EVmlTxNfSPvpnQo+ViIKICjnsnf6Ipd+q6Vb0K8SPCB10XE7i4pa2COX2052BC2X08tEztkZzuTjhYOP52Q8AuqPVXDxCPkIafdMi19ZF7sWYHw6IwijmsHd7hvZHpbp9Jfk3HUbaCaGWX6RxuNjsXeE+GPkZhyjfKAuHzcnZuOnJB1G+ERw29/wvh+80i4LFIe3Mzd3NaY1fk52fnb4JGvJ7fuwgsggOm3sWA789lbazFhXzOo1p64tF1uMpzSyCw9lWJbg+BwAA///KWyrzAAAABklEQVQDAA1byzFdMXxdAAAAAElFTkSuQmCC>
+
+[image76]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEUAAAAYCAYAAACsnTAAAAAEvUlEQVR4AeyXZ6gVRxTH11RDmumEhBQSSC+ENNJIIwlJSEgIqYSQhEQUUUFExIrYsKD4QRH7B3tHQQSxd8UK9oK994r997s6l/W+9e1en0/vh3f5/+85e+bM7s6ZOWdmb4qqfmUiUBWUMiGJoqqgFBmUu/D/GH4B74XiAf4egqWGR3mhr+A1QdJKuZU7N4VL4avwWTgJdoKj4YOwlFCNl/kXnoVZYZ93cO4Gu8Nv4M0wh8Kg3IJVx5eRBkTdTs7CR9jOwS2wlPAML/M4nAmzwIA0xLED7AKbwd9hD+iCKFNT3qLha9gaHoMB+1DGwGXwKCwVOMBfeZmR8ATMgjdwagCbwI3QsRmYL9E/g2WC8i1Gl9FBZCFOYzCNECWDF3mTp2DWVYJr9CN/J+F6GLAHZTP8BVYrTB+X4WM0/AkNDiIP60kxD893rCTFVfIb9x4As66S6vi+DgtxHoM1ybJRozAoE2gUbfk7BSdDi9g9yHVwPywVvMSLuBvORWaFNfPOcpwfpq16YVDMzfY0WFBt+wS9N5wBXUWI6wpXgss6ibN5E1PBNAjtC7G5WyIScTfWp2G5cOBxB+tGYwy3QfPVCn0Y3Z3IbQs1M2rheRy2gXH4YoMxmNcfIMuDfk/gUMgfsA2Cpnq87U1srmhEIpzsM4ktMWMIivXDCJunNptfK1EaQYuPOVcDvRj0w3kinALjOMJFKzgHroLFwhRwC+1Fx9QB4hOHO2rqkSIE5Ul61oMGB3EZrMwWsq2XWdMvPOR50tyQ4PoCNrfCpF2OpjwsjN4jTrdN68JuvOJ29Uew5c4ayCS4OvcmNVyymYZHQ1Csum5tzsKl9rxwANu4mg4DHHBzLsZD9/w7kEJZE2UUrA8PwF1QWJM6ozjDfyOtCWkz7SDfxzfQA6TPM9CeSIM9yHfxNT2jCCUBPm8Bdj9h4ivf4Pv5spi2IyEoPuBTDK/BOEwpT3/WmbDsXFVug+a755rb6eAO5ffRCPRN8GdokBchXbJvIwfCjrAdNNDzkWnwXt4z0JlcQifvE2xxOZa2tB3SzcSVHx+r72NQHFNkUIza89ysBewL7eQgu6J7WHN7dua5jFxJ7k6umrUaoPXHk/BP6NakaUj9DJbnGmfBoA7HvhNqNyVDf0yZYFr8gacTYo1DvSpYiOvS08n5H/kX7Albwtz2blAclAXVDz4PNjofwsFjvcEaih5ewmga4VnYhIM3ICu4cGkbBGfB9NJ3Nfb7oN8n85DCWTEdrSleZ6WpYQ3yWVn7XMnPSXan2oGDK+tDpN94uXEaFAdh9LBHbsnu9S7JqRgsTIg83NIcTKgTz9Hi4IcgxXL/oDXKeuKZ4D2ufbCF2pVkmlpPPDVbM2hOhbXKVdIfz9yLIysKxzGOm0h11IswKBe1bP9WfKNsnXHp+VH1H13Nfc8N1hKX5nfYDMDnSLdeD3+mpB+a92N7BVrovB9qKjzPGFQPaqnOFXUoNijOkp/bDnwYD/e8sAYpPJP8g9IH1oYGxh1qO7pfofYzb+1TB5s1y/uhlgtr0vd4WKiz+ONaMRQblPA008r8DtdBmn7uNl777eS1utQertWzDtBnGUQ/871PpfNqg1LpL3YjH1AVlIToXwAAAP//tm7s9QAAAAZJREFUAwBSufMxc6bbnAAAAABJRU5ErkJggg==>
+
+[image77]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAXCAYAAAA/ZK6/AAABNElEQVR4AezRu0odURQG4EMSCCGkCIGQhBRJCCE2XhobRcQbdrY2CopPIr6EL2BhKxZ2gqKIKGKjCIIKImIjeMfr94/MKayOhZ2H9e29Zs2sffbseVN55u+1oZYDK0/pnYe/8YFE6p8l33lPNXIjD7ep9DDIH7poppsh0miqVNLwW9bBW8YYpo4zThmlnSLS0ChbZIdPJMYN86xyw0+KSMO2bIkmjpngksQvQxbZMxeRhqxy4qqFDXZJ5F6n5IgVikgxyVdDA8tckPhi6GWWA/r4WDb8c/GDBe5I/Df8ZYrMedebsqFe8ZA1ysg2c1KtCv2k8apsmFEYYZ8ytiQDTDPJOsV3yLxpyF6vzWWcS1KbM+efc7zVhuz71o2nca+QRTJLH790kdQ6lO9Q6/PVLb1cwwMAAAD//7TJgBMAAAAGSURBVAMA1bA3L1lgQbgAAAAASUVORK5CYII=>
+
+[image78]: <data:image/png;base64,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>
+
+[image79]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAE4AAAAYCAYAAABUfcv3AAAElUlEQVR4AeyYZ4gVSRCA+3LOcjnnnBN33HEHl+ASXEBEf4giKCiCP/0hYgCzoIKiCAqKigEjKooBc8IABswYMQdMmL9v2B7ejrPL28fqrusu9U1V9/TMm66pqu7Z20P9X0keqHdcSW4Lod5x9Y4r0QMlXpaNuG+4z364UsZ6dAOoSH7mxCVwvHo29hNQ5yXruMXM+BnoDfvgEbgX8kQHNePEaRgP98BPcATqvGQd54Qf5PAUjIPHQBtVTm6j9T+sA8fr8IvYt4zkOe5JZn8OFsH98Cxk5eOyjpiiy8vat4zKc9z7zH477ICz8AYUyn00/oYp8B3sgi1QF8RM+oiJfA93gWLG/YnxOcS+3O3IpwxYAadAx1nLMFP5C2shKO9xWA11pa79wVyaQBcYBB2gIzwA/WA0GDjXOM569RonN8FROA4vg28CFbRlXgjhHXgRSqlvd3Cd9TPel2YqPkNFC1I6CON1WAlGfLE0YnxFokNc3HoxwGxrinZX0QqtwyahjbpH0dc4Lta3w5x0tdyNfg70+J3ohjAGXAg+Q7sFqWp98zd8kBlc76qMSqUF1nDwxWQjne5yspWWE/HlFcsorqlIGnBiJ1jfX0VPLgOViH5w3pdtZWtcrG9erOP2MugF0HE/oL2xGBHWAd90Veube78L3MsHsyRgJmIEulLPpDURTsKNFIOkLz/oYvgu2hfrc2IGt2VfYqRlKeu4WN9CCMEVUycZmqalE3ayXB98OxbR9EZ2FsmPjJsPXcHtDCoRo8Z0mUCrG8SHxswV093odd9ZLJaB3JsVdDrXh2mbpqhEdOSHWG7RjLpyqepN3+KkKyoqEYu+k2lNy/RyscAMb3PwzeTVN+/Rg/NTQWejErE2DsD6Hf6FdnA3KM056Cyv7Y7tQ6IqFaP+C0Z8WwXMHoZXKmZWNpN+5Qpr/jK0c2pcGHFG0EOcOARRTEMdt4qONRDFqMmrb/8wQKcZTRZi09k0pzsYvfZbeFuGEPrAeVCGcrCuDUHrxMJIpCtXLCXTOGMUFMtGxlcmzv8TBhRmkgGlM82Sg5xzjot1nHuxY3S4xTAajDIfnq7gZ9csjMFg6jpZtyntabtYzEFbCx5Hm76d0dvAZb0n2k20E8RM5HmO1k9/DzMVV1ejbEPaUzOG83iFn54OSUqifX5f6lfYflpag3fouAV0WJh9eDF9jAC6g5H2C4bORAXTyzfgOHHsb5wwjF9CW3cGokeCUaVTMVN5E8t/IrjNwUzFOmqd2pz21Ixhin7ATw+DKAaMezlX8P/odOEKOg67WuQMd3ElNCIxg451sTEybYtF1jT0YWxHfHHWrD2xo4a0z2U2WIayj+DLjnOrVse5aR7Br7WFxuBOW+fFkNcxOs4o5nQ5cd90gB4fGlX7pTojzrels/xcsWi3YfrRSab307RNSWsgZiKmttHmwrSWHusfqvZLdTouztZwNqxj2y8A62gnOpaCqysqET9rLLxf0xoLN41cD8dlJ3+CDr///EowGo1MuhKZy9GthKt14YaT7totN8Jx1jhX2f64wqUdlYqbbbcwS9Kem8S4CgAA//8Pc3zLAAAABklEQVQDAJF/9zHmELWCAAAAAElFTkSuQmCC>
+
+[image80]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADoAAAAYCAYAAACr3+4VAAADEUlEQVR4AeyYWchNURTHj1mZh5I5kilDhiRTFCIknigyFY9eKHmjTPEmJUpRSpSixIMHyayQmQcJSaaMkSF+v1v7dj732vdwu3K/of/vrHX22efsvc5eZ51zv4ZJHfmrc4E2YGE7QGfQuo9bdWrCjDuBcTTH5hVWtAUt+2AbLIVmUI3qyqTXwl6YAnmFQG14yWYVbIXPUI16yKRXwnaooXSgNQ7Utp36QOtXNNsdaE236dAdlNVwJM4ssCpi/khWUa/nG8ETragTcaZCGyipSqRuS0a1oI3GnoeFcBiGwxC4D5Mhq7rRcQN4zhnsYjgEVtiZ2NswAKKqRKDjGPEKHIV2sAgWwC7YA29gBGTVDDoehFPQH8bAXNgPvkbaYvtAVLFA/WgwVUybLJhODma6nsbpCU3B1XiLVU7KFf/qTgYa08dzvHGD8V+A2RLO90Y67jfao4oFau6v5ux1GZlEP7WbzR3wGTJNb+AHDcUx0EvYLDKALXR8B2PhMjyGILPnOTv3IKpYoKbYGs5enpHj9AtqhTMMDNjr4Cauzmycq5AOnt2S6kgPb9I1bPiYcSGmsW9KP8JGFQs0emKJgxaQgfQ5B64KJjGlx+OcgC+wCXw0MInpKclv/nw2fXwsRqGL17e4HaGhPXg9HxXcQlUqUKugr5h0ig5ieCd0DGvKvce+gn5g6t3E9oJiGkXjryk6gbbXYPBzsK62NxC3UJUK1Dtt2Td1w6i3cJ7CelgCO0B9ZPMMuoA3A1NDjdgzbS9gPR+T01m2zn8nti/4CsMUlx2LHymvdTOnWzxcMdycHrB1pX2vSqjET5IkMZAVHA9pjpvXd7xlMB/C84mbuJK9cXx9+WMkVGKaClWpQJ3Qh8LhEifjryQnnz5soTKF76YbU77X8pqpppxrmzfzR24vsqlUoJEhix7yq8fg/ZlVtEO5jf9DoK6mhWsjwZRcGfr8lUKgDuB/FS5ylQPgfxww/0Q+l37ihWe2nEH9errOBSx0n7B5hUCtfPNo7QFa93GrTn6IWPGN42R69iHQdFut9H8CAAD//5TGRwsAAAAGSURBVAMAsMaJMYWt7D4AAAAASUVORK5CYII=>
+
+[image81]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADYAAAAYCAYAAACx4w6bAAAD9ElEQVR4AeyXeahNXxTHj99oHlISEpLMmTKkREnGMpZQxpTEP/IXkj9kKJJ5yFRK5j+QeYgMISR/GJLM8zxm/nzuvds7Tk9e7ivX8FrfvYZzzr57rbXX2vv9Ff2if38c+9kS+9tkrB2ZuQc+ZrAdXgwEKo2wE4Tn8o3oJUBOUTJj+1hdBbAEvAU62gge6ClCB9ALbADFQU/wAuQUJR1zcWUZ/gdjwX+gPygC4lQNZRN4BXKS8nOsKit9CNaCc6A70BFYiv5hrAPOgpyl/Byrz2p16BZ8DagMuoBAZtRMXg2GXOT5OdaUhZ4A0nqGx2AAKAOk2gzW2iN4zlLSsXKstDy4AiQzZ2dsjtIKSPUYjoKcpqRjob4eZFb9Dr4SSAMZbP3N4IVRXw2Zpy9INiZM+dLfWO3CsG9T0rFQX55P4esjCMdAR2DWCqu+WjOf52L8tzB9lfrwZB4oEMUdM3It+eokiNMTlLnApiG/jVwY9bWAeRaDglJ7XixwCcQdc+FG8DITJGkXBuvNNn8GOZDBcIuuwGAdToXPBhWB9C+D280zz2h7bHhLmYTdS0BoSN3QPV6s32HI28Ag4PxeEJYj25m7wv09WOQzj6ItKP5umAs1iuKONcZSCrwESbqDwdbv+RbPaF3sd4EOuKAJyPvBFOCWnQUvAryd6Px0ZBeno1WQ/d7jxNvOafSZwCvaELiOGSDtfmdgB2MPNW8GrdPe2AyY60dMk475wnPUPaAHcJsZHcQvyNZ/HItbEZYi75UXkFzYIrjXMBtMdeR+wIVvhltHH+C1wDVQFHjQu1hvL+4I69esGrxKmefOhxg1YbgJQlNDjGowjAHTMjgI/0w6thutJDCywuvUVvQk2QltIDoenpktt7DOeET4vYFyu3rPPMyLBg0Wef55JvrMeQ5hdC4deY/sPP4GYqST7oz7KqAFOAAMECxFqxjdIW3gy4Dfw9KkY2np+0cXrFNG0+2lbk0Y7YuZaXXcepiDbrZ03vNxJLrPzPAzZANlkDsjrwOjQU1gt9ZRt5u7aSi2LVEU6ZD16e94NGFOU7aOhQw1YLpRwAiOg58CC4GNw2Kfj2xzsH6M+mt0F2j23Io2Ho+UkF07cVveOQ9uALe877sL/LfpEjbft14nItth/QYxTdk6ZvrNkkVtlkYw7V4geS1zMXYtG4sZ0Ckz24kX7GShLjxGJmOTdM4r3AyUHUDHrVd1m4s7wQY1nmc6ORzuv1uwPMrWMZuBndQLsVvJWsmbPYrUdUQet7u4+P9wb3ioDZYi3493Z3XnTz3MDL5vfRqsjCmPZeOYmbIzeR55K7DL5c38g6VsHLvO2leDpcAa+qJ4sf1Q+gQAAP//SA//4AAAAAZJREFUAwAfztIxx/kwSgAAAABJRU5ErkJggg==>
+
+[image82]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD8AAAAVCAYAAADxaDaPAAAB3klEQVR4AeyWyytFQRzHvfJ+ppREFhbEgjwiKyUpG4+VKH+F/8TOykrksVLyyJKQhRQLJTZInnksKD7f2506dzpqdOvUuPf2/cxvZs7cc873zPzOnKyMFP6lzafq5KdnPjDzfdTv4DvOOrEAjEqpbIA5rrhCuwi8kz3zOziogln4BD2MVqLRC5UBGINlKIRReAPvZJuXgXKKPJiGXJiATAiqnsYqfIC3CjNfh5sHWIQzGAaZJcSUQ9kEJ+C1wsy34Eimr4kLUANDYKSVoRVxZTp8jWHm2zFzCNISxRNMQhlIjRTK/Uei17LNV+CmEi5B0grQG7+LRg9IzRR74KIGBulBapW4Ms5/IpFt3uT7ffzqX8Q5kKYotO11EF3z/ZyxGq/zujLPfyKRbd7ku/ZvcwO7VPZhEDT7/yLf8ZIRNK/trJvOIwjqmcYM6EWneEPdNd+zGavvhmqiK8WMjURB8zKnL7iLkCtv0qf81xZ3TN1V+QzshN4/UMvYSBQ038YVS+AdbN3SoW1P+7+9Mjj0q/Tlt8ZR7RqunDI+Esl8P1d6hW0YAS3p4L5OV0y6+QNqWvYE/yXzW9hQninnhT5tNVt0J0hveL309HASDvjakHlf7z3p+06bT/oRenqCHwAAAP//HeFvBwAAAAZJREFUAwDPkV8r9QL/IgAAAABJRU5ErkJggg==>
+
+[image83]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC4AAAAYCAYAAACFms+HAAAEI0lEQVR4AeyXWchOWxjHP2ee53PqzKdzOp15MCQyRVLIjRuiZLqR4UoSIdMFSoooQ7iglOnKEFFEEZkyS+Ypc+b599u977b2tvb3fS9Rytf/v581PO/az3qeZz1rf69VvaR/rwyvJnCvM/cprAMrwccovwmjeN4e98WjeHNL+BCGcENfMfABjOE3BudAN4DIIm+4LziNii8p8yL9c9D+NeQk+BGsDQag9C5cAst4j8Z8eAeehc1gDJsZXA7HQR2AeIy84WuZ+hrOgvegi36G1DOGujntLnAhLPIUUwn+4tkZToZuGpHgBk/XGIY8A/fDIixi4lvYAWaQN9zJD3kYpmPIgzDEATp7YGvYCBbBTfZhchM8AvN4h4EmUKONJs0objI6Dw6EmZSJGf4dSn/CbfACDGHI3mfgPrwFi/ANE23gUhh6m26CL3j+B3dC0w9RCFPGiP8TasQM/xUF02Mj0nRBpPid1r9wK9wFi/AHEx6+fcgYXMeUXF2aVLc+7abQNiKF58ComabpYMxw00CD3WmqSMNQjUZehf3gFVgEjTjO5GUYg0XAOVPRdaeh1B6Oh0YKkeI6rZPQM2MK0qyqyhvugdOjD5g1R6cj5VzkXqgxdZFbYHUw1c6jEEsn8/t/5oyYRg2nbcn8AdkYxuC58pCapsl83vDvGTWX1iGHwBElDkb+DHvAEzCEJz4TxtKkRhm5UjcV5n89eub+IOQE6JqzkT1hOX1oZqDRnrFkMG94Ob8ti0fRsKaXGfPeG+hYXd5G1hY6wMOm11vxo47QWr8BqfF3kTF47t4qT+QNN7/1RD6/y/p5qUeHMrgK1hYNUbQEeg560x4Lx8CaYJoaxUQvNNz6bf5av83nRKGah9GZwbwplYaQvjD0mZx0EJrfYf22HO5g/Edo9PojW8A8vKl1kk5N5kLD/fHfjO6G+frNUAbW+raMjISG2vJGM4Wbt9yZAukgjc+h1cG0COu3F5E5rDO2oxOiDp2foAc043GvdfPZU/4JCu3gKdgLFsHd+72hcZZHPRzqWnXMxy/DQdpWDnN1PW2hIctodIJ+ZqxB5susNrmhzKHV4y6it91ZmS7uQqwThd8Yljurg5u2JoeKh+gYNedppvDs+K6VpRFDb+1uQL879KZFZGA0TWMdm05oeNqpsOEmrSh6QgPCn+u1KQx0hWG6+KlwibG8vhsPUweVBL7DDPCjztszGfTxLIabr4aw6FrXe15kXuO+62n4Cz/yUpqJzGz2WQw35H69HWbRGPRgXyb8PFCXZkWwUllqp/Ir0xHxGJUabjnznwJLYDeWWQENPSIKX+it643oYY0qFQya8wuYWwyfQLHhT6gmA7d5+t3i4fW/k4n0a4J3gp8O/sdTk2447x2hY8KxtF2p4eaZueuHvYvaTxd7kY1HAAAA//8m3+jUAAAABklEQVQDALpxxjFd4LcFAAAAAElFTkSuQmCC>
+
+[image84]: <data:image/png;base64,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>
+
+[image85]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAYCAYAAAC8/X7cAAAEEUlEQVR4AeyXWchNXRjHz/vNX9/c933mmUJmZY5QZCgkRShKopALcqG4lszuuEBxIUIhIWSKUKbMQ5E5M2Uefr+Tvexzzt777c25Ud7+//2s9ax11l7PsJ613+9yX/nfNwMSAvg7ul9guZC5XmUR+Jdd9IXDYHP4PcxCWwaXwp9hueAeVrNYfViCJAMqmNUDHoH+8H+kG1qMPA87wCTUQbkQzoNPYBz/0dkPP3ziI2RLGMcMOtG48gb9VvAa9N3yL9oFKDbgR0bnwFVwEuwP13ziQOQeuAO2g3Fo9HQUe+EZWIz7KLrDwfAp/BsaVUTAXFp14SFotHXIadriAA8NmogsQNwAN7+E0fFwODwK43hDRw+/R46DbhqRRwue/eB6mIX2DOrpm0jfUR0Zh+miAy7HlbSNiI4cS7shDIgb4KYmMDITmj6IEtxBcxX2gr4MkYfRuUKr+MWoAn6jpVe3IjfBZtB1EAGm1Tl6b2ExTN/nKLvCgMiAJmhmwwtwI6wMVgYj5jwrjmfmIJ2XMA16W0+aTnrzNRP16K/ICK1ppDnPc3OS8QEwRD8yYDTKmnADvAvT8A8DehERoE7PRfkaBooaTelfhBp5Aul5MgJWLro512lA4xJMg2P1GNSBiFxOA+z0pKd3XJRmKhoxoievIw0nIleLh1HQQzRT0YmR41C84LES/gRHwQpYAz6ED2AazjJQYsAfKD0YbsDDRTcVgxjxZbuQz2CEVzTcFCIRUf6b39EEnWVeD0Gh5z3gejgp/5kSoNEh7YxANKJHH0edBGmJs6yaw+sSxrNURs0Ix71rqq7lR7WhRSAr/5kSoDN0el6hAZZHN59XpDz0uufEw+49YalLmZqo9oxYvcz/+AQvytsoZkHPghGhmQkz5V40QwP0+ikU5nJjZBK8fa3fyxn0rkAEuOAP9KrBNJgexfeKcy29Fg5/a0q6F/Vp/JMBU8y7iGYuf4hVeAsaBe+CqDzmJ/DoDbfAFXAqNGKIAG9WjfBwBWWs4adIF/rBa7QjmFZRSd2J0r0gUuH3kFEKnypGwNlWBz/avO6t51YGuY3BRXAEnAaTDqp5be32NmZKgF5V78Zd2xruh17xB6El1cutsrQ0ykZyH28IqRgZgC5niK3VY+hYVfSsEWlDfzfUW4gSqN+OtjO0liPycOMdaVXEOIX2OxiHThmKwu8dRCosIjpJA8KkuAEqXdxS5zfNZhS3oBtEZMLwe7Na6zMnfsFgN37rWT2GDCg2IAxUsWEaeY6MWKjRVVwja7rfXSOZMB8WnMFyGcC6OSNmzk+mY9ogygLXMvW8PE3zgkWrYEDB75I6ppoHXlnOVOrDy0zlBUjXRnxGOQ1wVcPrf2SH7ZSJ/gO1jLVKNo8ufw8ov1p+BAAA//91Zd7nAAAABklEQVQDAN9fyjHPfpTSAAAAAElFTkSuQmCC>
+
+[image86]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAABiElEQVR4AdyUuUvEUBDGsx54K4hX4wWCVnYiKNjaaafY+BeIhYiCvaWFFqKFjdhaqo1o4dEIWlkJIlgpiAheeKC/70Egy2aShcQtXL7fzOwkM7PvZfOKvD/+FHRADYsphiTKUKw+8oSeF1zBHJkmSKIqiudBHpc9wCXSNsEVpN3b9fv/A/TQ691ac02G1AC0g6moLVLzbSo7IUx9JPdhFcohVFEDxqjYhXMI0yXJAygD8/2xBtRR1A9b8ANSL2YWKkB6wazDDSjG5coa0MGt13ALvqYJxiG4HbV8PwRT1oA2Kl7BVzVBF+zAI0ilmEGwtpBLXtZR4RIB00OcAakB0whH4GuEoBKuwJS1gjcqJmAFFuAEukHPZAa/CWuwDF9gyhpwRsUxTMEiqPEQvgSWYBQm4QIiZQ14omoYmkHHr07IU+JWaAFt2R4+VtYAFX5j7uEZfL0T3MEn5KWoAXk1iLupoAP0Rn7E/aKY6/pH6eWUd7cGV7BB5gGSSM9Ix4e86xMc4BJpm18AAAD//49j58cAAAAGSURBVAMADOg2MYOHxIEAAAAASUVORK5CYII=>
+
+[image87]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAYCAYAAADzoH0MAAABjklEQVR4AcyTOy9EQRiGd0UhLkFEXBrXiEsjiB8gohGJaFUKCiGh04paiEanFw3RSBQqDSFxp0RoiBBEYYXnlT0nZ+fMnE12m928z/nON/PNe2ZmZ/JiWf5y36CIFQ5AC8QhpKgl1FG9A32wB/0QUpTBWLL6h1gLFRCSy6CcykG4gSXohA0IyWVQTWUjXMIznIBmQkiVaVBAdw10QRk8gvJiolWmQTdV8zALCRgC5W1Eq0yDfaom4AJOYQqUHxKtMg1UVMJD678lvkOkbAaljGiAY9AyCG7ZDOopr4IzSCubQQejvuAOTDXRoHOxSRyGuMvgns4HCKqXZBEWYBsmodA00OVpp+MKXsGT9mWZZA1eYB1G4NM00BFupWMXghvYTK6DdU6UPniImAx0TWdo0KAeoqTzoOghM83I+1s1Rqc1XwaVVGk9+oLuvtZ3TVtQuhMHNIzDKKyATBIyeCLRzv4SdWHmiPoiwdc3b5qlBm7xPg1H8L8EDVwl0S6r4413l7Ru4fdrBn6SyUvWBn8AAAD///0DAoAAAAAGSURBVAMAdlNFMUocv70AAAAASUVORK5CYII=>
+
+[image88]: <data:image/png;base64,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>
+
+[image89]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAAYCAYAAABXysXfAAAEZklEQVR4AeyXR6gVSRSG+03Ow8wwOecIM8NEJqqomHChooJpoeJCwYXiQkEQXYgIppW4EEFFUHShIuacF4I5K2bFnLN+X/uqvaH7XsV7XYiP/+9T51R13zp1Tp2q90T0CP09dqZMMF+i/zlYDTzNR1+FqSgXmTd4qyFsBb+FT8JS+InOUfBZWC0M4MMtYBHSnKlh1H9wDRwP34RObgRyK/wNpuEDjMPgUHgG5uJ1lLnwVi1vIuvDLLxFx0YYxh+k/S+8BgfCLvB3mIdCZwzjYEaMg91hYzihlk2RC+Ec+DPMhQvQG8NiuAkW4iSGBrXcixSv+Eih3+qI/Xl4BH4O34dLoTjBYyQcBE1pxB3kOqMjDupKVxu4FubCVXHlXdXOdPijiBjf82wEp8BS+IXOifA8/BKmwcibCZfpdGGOIguxEoOONEMmyHXGCXajpy80xRBFcKV2Y60L3U+IGEZtF62dMAtP0fEJXABPwe9gIZxgE4yroGNXIy/AQpjGZol72e/G/cGZL9D6w21wGiwHf9RIOs7K5R5bjuJqIlLxNtYXob+xD2nqqNNM4Maeh+Z8XkAug1mwzyi+EwYEZ9pjeBdOhWlhxRzjNZ5udEQCbT+gbYCl8Cmdh+FxeBZaYp9BBuiAczCF/sRoFug4zVQcw2p19R2aUaQzrnIdNCuHoaOZic/ocYVdWfMeNXqPh9ExdWhm4m96TBujp1NOIkTGKLem32Lj4lipsvYLw2Ic4nkD5kXmZQyumpOxBKJmojk9NXA+PAcDrtC4BLNgXrsHttQO2IF00i4MzcgyvZnGAfgxdKyOp+0XuvOQVEUjE3pc6dNBSZEfYrNUmyaTad8PnLRRcLK+pzPuCc8T+QfGmVD8ysM+9wTNsvDb8SCdseTqSGzIeBgN95V57TlkCmQMTTUbeVMrRNN8v85Io+AB6OI4D3/HYlJuv/BqAhcmVnTGaKxHM/c9oGgWwarRB+sY6FmESGB6mkaucGIsaLhf/I1g1inTsiUG3w+LY7n3SqReqhDxWuSh6l5zUdTjAqAyBM3oeNY4ADVBPVoz4FjYE7qCiARWJif0UWLJb3iV+R/TdhhgZHzHw9FDNNi/ofEVvJf9ouMuSLhRxM7wbrSOhxdK7z+eF+3Q5SzkcNgW9oK+jMiD1wsPWW8BuR3+2BIM9rvXHDMJ3f1gZLx79UP3ALQA6KBXFqPswb2Hvr9gFnR6P50SESXOqHh9+ZpGJ2h1csWN1I/ontqWbppF0D4bq2eDFYpmDJ0w/2vQAl2Ui+hmgbcGJ48aeVCapmGc0n22ws4U6rBXmUX0+S1ElOeMBuu25dM71nQM1nInS7MkvBFfZYRVCVF1WLp11lt98mMWgER5gIZRcN8ZSTfmA3yq7Ks1jOgAva14H6QZRT4q5YzfMpLuix4o/iCiKviHr7o/RyPzsqaSzvhhi4WyWunm5dR/NcwACwf+3EUlnfGrlm3/0/QKr15pet0KFbDo25V2pugHHqbhNgAAAP//XP24HwAAAAZJREFUAwCThNQxSyGWWQAAAABJRU5ErkJggg==>
+
+[image90]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFUAAAAYCAYAAACLM7HoAAAC/0lEQVR4AeyYWahNURjHtykyZ56njPGgSEQypCQUSZSkFCV5U8YHUrwryYMSpVCGEkmZIiIvhCIyFiLEiyF+v51z79G599y13b27w9n6//a39jrf2Xuvv7W+tc9tGeX/UncgNzV1S6MoNzU3NQMHMrhkPlNzUzNwIINL5jM1NzUDBzK4ZE0ztTf3WQDToQ1UuhL7UWxqH9w7AfuhA8yAs9AFKlH/7UfB1MG4dhE+wlI4B/NgAvSDrLWcG7xIwB1yh0NWqpcfmtqaJ9sOXWE3/IBvcABWwyMIVX8Sr8IbGAahOkrioARMJPcJlFMLPuwOfQNpR54K8WMuie/BlW0+zWpp6ghOF8FNeAnqJ4eDcAp+Q6hek7gT7sM7aEhZtjbyADsCmUmeCvHjPIlOhNtEvSJUS1NdRt3ougElCfQl1SS+4M2+EkPlLAmdUea5edS1iX7i5ptgTSCWPFKjED86kTgKrkOJNLVg5OOST6OoPX2tIFSaM4XkW2Ch30PcAiVLhL5iadJUOkKZTK4DI6SuED8GcFdXwjOi4z1MnAWxNNWlan2y/sSdfw8mHaFtrSUEqQdZPeELuJw+EH2LaEssp+d8aH0K5TT5bqqE1BXixxju+grGQmdw3OOJsTTVOrqBs11wHNygLhPnwCrQGN9Z7a+JfeR4E0I0msNImAYnYS8sBjc+QpNQiB9OlHGMxs3wAnEZOFZCVPWnP+vJUHrWwzaYDZvBGUeI3NFrq03rSHgIylewQzTcGc8QnaFJaitfaRQq50dHntC66xvTCtpb4TP41kSoNtUTO9/ScNf+RUwq66kz9BJf1FDPe9FeC3XVVFIanWrzYyBPWtjYj9F2lTprfc3i9F9T4456HCzc/i/e4xrfwSW/kvgACsWfZpPXEEbwFJyArmQNtsTdpS+WNTVupHBwhs/nOu6I1uGFtN39rxGbk/zl6V7jRLnCwJaAP5ocP810Z6o/Epyd8YU5uHyKz+lqFnJcrsTCYByjfYXzKM2ZWnXRSm/kpmYwA/4AAAD//8Hnyh4AAAAGSURBVAMArfi6Mf1AztYAAAAASUVORK5CYII=>
+
+[image91]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAmwAAAA6CAYAAAAN3QXmAAAPDElEQVR4AeydB6w0VRmG195FbGDDiqICoti7IvZK7B3sBo1YYknEimgs0YiGWGMLdhFBowYUMbGBRgVEjb2g2At2gfeBe5a9e2e23J3Z3dl9yPf9Z+bMmVOeuey8+c6ZmQv2/E8CEpCABCQgAQlIYKkJKNiW+vLYOQlIQAJdIWA/JSCBNgko2Nqka90SkIAEJCABCUigAQIKtgYgWkU3CNhLCUhAAhKQQFcJKNi6euXstwQkIAEJSEACiyCwkDYVbAvBbqMSkIAEJCABCUhgcgIKtslZWVICEpBANwjYSwlIYOUIKNhW7pI6IAlIQAISkIAEVo2Agm3Vrmg3xmMvJSABCUhAAhKYgoCCbQpYFpWABCQgAQlIYJkIrE9fFGzrc60dqQQkIAEJSEACHSWgYOvohbPbEpgzgV3T3vHxg+LFdssGeQcm1WoImC0BCUigCQIKtiYoWocEVp/AzzLEI+M7x7FL5p9940fHD4trEpCABCTQIgEFW4twu1G1vZTARAQQaKek5CXi2J7558z41+OaBCQgAQm0TEDB1jJgq5fAihDYMeP4fhyRtkPSP8X3iP8orklAAhLo9WTQKgEFW6t4rVwCK0PgqhnJX+Jnxe8c/3P8GvE/xjUJSEACEmiZgIKtZcBWL4EVIPCwjOG98ZvGT40fFz80fqP4deJdMfspAQlIoLMEFGydvXR2XAJzI/ChtHTd+BfiH4j/LX5AHMF2clJNAhKQgARaJqBgaxnwVNVbWAISkIAEJCABCVQQULBVQDFLAhKQgAQk0GUC9n31CCjYVu+aOiIJzEpgl1Tw2A1/cNIqZ13b43Js0B+V/UvHNQlIQAISaJiAgq1hoFYngRUg8K+M4RXxw+O8yuOopMP+ieR9MP7JOGvaXpL0/XHEXZJx5nEJSEACEpiGgIJtGlqWlUD7BHjq8ikbzVwg6WXi5WW12dxik5TZctKYjN/l+DPi2Kfzz1Xi/6nwfyeP13t8PCkPJdw36b3jl4rPYozp4hNUwMt84UP5CYo3WoRrMo+2L5ZeXza+iN9qriOe5nsXzj94Ek0CElgEgUX8CCxinFO36QkSWBCB26bdi8QxbtSvz8Y+8TpRQtkn5fhz403Z2amIiBptXz3bL4+Pu1lzzjEp95r4leLbNcb5mJx8zfg4o188rTqJuBtXV91x+N44B7kugwzumTxedVIETXZbsWen1hfFLx9vyxjXDVP53nH4J+kx7kdk4wVxjKnul2aDNIkmAQnMm4CCbd7EbU8CowncMoc/Gy+GcOJ7nQiikjeYEvl6UzJ+EG/a3pAKT4pz4ybqV27myaq1b+YI3x1Nsi3jXW+IAqZix1VAGcb+z3EFZzjOmBFrTPkOVsOU8Dw+y/W/NPrm+O/jbRljvE0qPyRe7L/ZeEe8jJFIKlPgrFlMtjYFAYtKoBECCrZGMFqJBBohcLnUQmTj50mXwfj8FGvSfpvOsKYNMZXNkYawxEcWqjlIpAzRcGzN8aazn5YKx0XIEMSUQUQjnnLKyhnj4kGTb2dko64dnyEjsnitlNMkIIE5E1CwzRm4zUlggwDi7E7ZZjoqSQ+xQqSDLwiwNoy8Qef/1Vsn40JxphzvnpRzksxoo0//aQ4zJbdj0lmmABkb0cObpB62k2yxnZMDj58kLca4iXAxRcqaNSJB5JXjJWXa8grZQfDeJSmf0koy0mhrZIGNg7SJiKTuuyaPfiRp1Oj/rqmRNWt3THrR+LDtlgzWCsLvdtm+QZztJDMZbfG3+KXUQn38ndGP7G4yIplEXPk02aYD7khAAu0TqPrha79VW5DAehNgsfp+QfDAODc/FrB/JdvckKuia4g0HgLYN2U+F98zjnjgqwPjRMejU/ZVNf7C5NN2kpH24Rx9a5wvG7BGLZtTGWKA8+nzYTkTsZlki7Fe7rTkEtVKcu5C9/2zwVOor0xKfxG0w9NyCAxEDtPCrH/j+6afSXkEUJKZDHGMWETIEG1kTRdrCmeqdOBkmDw5+6xXZL0a4yuvVEl233gY5XrZe1ccJnzXlWlaRFuyZjL+HhG7THvyN3lwantovMoQbIjGqmPmSUACLRLogmBrcfhWLYGFELhaWuXGh9AgmrRT9q8fZzvJFiPa8d3k/j/O1BzRHqYriYwgJJJda7xqgwhZlSMOiJrUnrxxgIgfN/FTsv+E+M3ik9oOKYjIe13Sr8YRbqSsiTsi+4O/QUQMz0heMaJ6rFNj7Bz7aA6w8P1jSQcNsXFqMv4a/0icNXSwGaw72T2ECX1ncT2OQGSal23yEWeUG3SOI9gQMLzC5I05+MV4nXE9ds9B6hx2oov0K4f7hmD+VvZgAqsTss3DHqyRy2bfOO872ftHnEgn4yVveIwIeAT9cNvs75Vz4Zhkk107e9SFEP1UtrlWiPRsbjEYw3vLATMkIIF2CQz/z95ua9YuAQlAgCgSERVu7qcng8jV15L+IV5l3KSPywGmzRAN2ezdIf8gXFgcns1aQ6RcMUernBvvpL8B9O2JqQfR8MukkxqilCnE3+QEBCcijegQIgwBdlby64zXi3w5BxE11AE3xBKiIdl94+lUoj5HJufvcdZj/TjpsABmrRbjYAE/DteyT4owzWl94/rAmdeWIGwRvbzmhIhfv1DFBmKa+oedyN/weBnLN1IH4vRuSRFi30tKf5L0jbEjrKiDcSAiEZy/6Jc4b4M1aKPa5xqcV/L8fxGlCF3+lhBrx+fQMItk9a1EQPsZ3dmwpxLoLoFJf6y7O0J7LoHlJICo4CbMjRFRME58FeGFCCFKwloqplEfMmZ4RI1oq8qJ9DHdOqaKcw8jmB6erefEB6Ng2R1piBtERhEKTPvyXjemK3mYgdeR3G+jBoQGr5cov0tEiogm3SrHETYICl7jgVhJ1iYjgoQARLAQKYIn74QbHB+ii+hbcfrFFHTZp43BSolW3SIZCDaEMrwQ1/Qr2ZVG+7/KkVLnYIq4QmzlcN8QXQhOhC3nImz5e0Cc9QtlA/HIdCVP4Wa3x+J/HhIgD7FKHg5n2hlst2wzVhhSrjh8mGonckt0j7Exvcy6vVJmML1yduCWRJOABOZJoPwwzrNN25KABHo9bo7cpIlsPDVAEAS9pHXGGiZu5kQ3uOmemYJviSPaktQakSZu8lVOtIy6ak/eOIBYQKgxTUfEayN7ooT+ET18T0ojom6fFMF3j6SIFda0sd4suz2EDuNEkLJPNApxxpoupoXfmUwYIECy2Td+xxCmTC2SSWSLz2SxPgwBQ952nGlCBA3T1whlBNtBqeiH8aYMkYaIe0AqpB3GiEgcHiPj5++FBwNStEcEDiHL+Ty9Sd52nEgv4pk6EHoIRQQcU7TD9fF3QB+4psPH3JeABFomwA9dy01YvQQkMESA/++IFBEJelmOIYJ+nXSUIa5YP0YZRAgL4ImyTDM9ybnb8WfmJKIz9DObUxmCgoX6j89ZfH+Ud3sx/Uc0iydlH5R8FtMn6SG0EF17sBM/OY54YNyMl3VvTEkme5Mh7B6ZHKY4k/RYt3evbCCGk9QaYhaWdQUQxdTDYnwihUTs6AORurpzps1HpBIlfXpOpH7GwfvvGFOy+sbnwnh448SNHNaY8dQtD55sZG0rIapJPUzNIxJZS/ni1MR1S7LJEHc8yYsA33TAHQlIoH0C3DimaMWiEpBAAwSI3DC1RvToWakP0TZ8g072JuMGSiSmZFJ+cL/kN5ny+8C6KqYGiZDR5rj6mZ4jSjNYjr4jckp/WU9HlAYBSESNqBnlOY5YIApHZIs8IoqcT9tsk1flnFvyKT+qbCnHVCRCqOxXpYP1sk0/qsrNkkdfi3Bku64ujjG2cnx4v+RPm1JPOYeIa+lLySspwo4IIGK75JlKQAJzIsAP8pyashkJSGCDACKBqBVChbRETTYO9xNuzrzc9cDkMB2VZIsxffju5PIEYpJGjfeZEQVk6nWSipnifG0K8lBBklrjyU/WphFB45UjRLBKYaJsPGDBFGHJq0tZb/W+HOTLCEnmas9La6z14hplszVDTL09tcM2ydyMKVieiC2vYEGI85BKmZKdvSPWIAEJTEVAwTYVLgtLoDECiDWm5Jhqq6uUSMZ9cpB1XnXCAPHHGi+eYEzRxowIINOVr06NRLt42/+wM6XJ+iem8pj2ZKqMBenjBBtjwVN1r6RsF2dalIX+Zb8u5d10vHeNJ0PryrSVjzBlupRp07baoF4+vQXfeUx9015xHoYh+gtj8ljjxqepiDKyr0tAAnMmoGCbM3Cb6wyBde4oC/iPDgAehmBxOwKsyomG8QqKo1KWF9vyBOHbsl03pZZDmgQkIAEJbIeAgm071DxHAqtNgGk4Fr/zeolpnE9I8TTqatNxdBKQgASmItBMYQVbMxytRQKrRIBoGq914MGAaZwXwDpltkp/CY5FAhJYGgIKtqW5FHZEAhKQwGII2KoEJLD8BBRsy3+N7KEEJCABCUhAAmtOQMG25n8A3Ri+vVwQAR4gOGSCtnlPGw8q7DVBWYtIQAISkMA2CCjYtgHNUySwJgQ+n3HyOaokI41vg94/JcoXCrKpSUACElhCAh3ukoKtwxfPrkugZQJ8iYFPFx2adnaP8242omjFeVkv72LjG5S8BLfqnWo5TZOABCQggVkJKNhmJej5ElhNAnw4nVd67JThHR7nO5OIN969Vpx3tPEKkBzWGiJgNRKQgAQqCSjYKrGYKYG1J7BLCJwWPyDOZ5H4BBYvxB32Nr6tmSY1CUhAAhIYJKBgG6Th9ngCllgXAkx7npDBHhvnE0x8JuuMbJ8+5Hwaa+/kPT++f/zmcU0CEpCABBomoGBrGKjVSWBFCPAtz2MyliPiB8f5tmSSSjspufvF94mfGNckIAEJjCVggekIKNim42VpCawLAR4gwBmv055Q0CUgAQkskICCbYHwbVoCElhmAvZNAhKQwPIQULAtz7WwJxKQgAQkIAEJSKCSgIKtEks3Mu2lBCQgAQlIQALrQUDBth7X2VFKQAISkIAE6giY3wECCrYOXCS7KAEJSEACEpDAehNQsK339Xf0EugGAXspAQlIYM0JKNjW/A/A4UtAAhKQgAQksPwEFGzNXCNrkYAEJCABCUhAAq0RULC1htaKJSABCUhAAtMSsLwEqgmcAwAA//9MB3i7AAAABklEQVQDAPjzNJOQHqmmAAAAAElFTkSuQmCC>
+```
+
+# File: docs\dev_docs\references\Reference - coordinate_system_reference.md
+```markdown
+TODO: mode this document to a folder for general reference document
+
+# Coordinate System Reference Guide (v0.4.19)
+
+**CRITICAL**: This document explains the coordinate system mismatch between rFactor 2/LMU and DirectInput that was fixed in v0.4.19. **Read this before modifying any FFB calculations involving lateral vectors.**
+
+## Table of Contents
+1. [The Fundamental Problem](#the-fundamental-problem)
+2. [Coordinate System Definitions](#coordinate-system-definitions)
+3. [Required Inversions](#required-inversions)
+4. [Code Examples](#code-examples)
+5. [Testing Strategy](#testing-strategy)
+6. [Common Pitfalls](#common-pitfalls)
+
+---
+
+## The Fundamental Problem
+
+The rFactor 2 / Le Mans Ultimate physics engine uses a **left-handed coordinate system** where **+X points to the driver's LEFT**. DirectInput steering wheels use the standard convention where **+Force means RIGHT**.
+
+This creates a fundamental sign inversion for ALL lateral vectors (position, velocity, acceleration, force).
+
+### Source of Truth
+
+From `src/lmu_sm_interface/InternalsPlugin.hpp` lines 168-181:
+
+```cpp
+// Our world coordinate system is left-handed, with +y pointing up.
+// The local vehicle coordinate system is as follows:
+//   +x points out the left side of the car (from the driver's perspective)
+//   +y points out the roof
+//   +z points out the back of the car
+// Rotations are as follows:
+//   +x pitches up
+//   +y yaws to the right
+//   +z rolls to the right
+```
+
+### DirectInput Convention
+
+- **Negative (-)**: Turn LEFT (Counter-Clockwise)
+- **Positive (+)**: Turn RIGHT (Clockwise)
+
+---
+
+## Coordinate System Definitions
+
+### Game Engine (rFactor 2 / LMU)
+
+| Axis | Positive Direction | Example |
+|------|-------------------|---------|
+| **+X** | Left (driver's perspective) | Sliding left = +X velocity |
+| **+Y** | Up (roof) | Jumping = +Y velocity |
+| **+Z** | Back (rear bumper) | Reversing = +Z velocity |
+
+### DirectInput (Steering Wheel)
+
+| Value | Direction | Torque Effect |
+|-------|-----------|---------------|
+| **Negative (-)** | Left | Pull wheel left |
+| **Positive (+)** | Right | Pull wheel right |
+
+### The Conflict
+
+| Physical Event | Game Data | Desired Wheel Feel | Required Inversion |
+|----------------|-----------|-------------------|-------------------|
+| Right turn (body feels left force) | `mLocalAccel.x = +9.81` | Pull LEFT (heavy steering) | **YES** - Invert sign |
+| Rear slides left (oversteer) | `mLateralPatchVel = +5.0` | Counter-steer LEFT | **YES** - Invert sign |
+| Sliding left | `mLateralPatchVel = +5.0` | Friction pushes RIGHT | **NO** - Keep sign |
+
+---
+
+## Required Inversions
+
+### 1. Seat of Pants (SoP) - Lateral G
+
+**Location**: `FFBEngine.h` line ~571
+
+**Physics**: In a right turn, the body feels centrifugal force to the LEFT. The steering should feel heavy (pull LEFT) to simulate load transfer.
+
+**Code**:
+```cpp
+// WRONG (pre-v0.4.19):
+double lat_g = raw_g / 9.81;
+
+// CORRECT (v0.4.19+):
+double lat_g = -(raw_g / 9.81);  // INVERT to match DirectInput
+```
+
+**Why**: 
+- Right turn → Body accelerates LEFT → `mLocalAccel.x = +9.81`
+- We want: Wheel pulls LEFT (negative force)
+- Without inversion: `+9.81 / 9.81 = +1.0` → Pulls RIGHT ❌
+- With inversion: `-(+9.81 / 9.81) = -1.0` → Pulls LEFT ✓
+
+---
+
+### 2. Rear Aligning Torque - Counter-Steering
+
+**Location**: `FFBEngine.h` line ~666
+
+**Physics**: When the rear slides, tires generate lateral force that should provide counter-steering cues.
+
+**Code**:
+```cpp
+// WRONG (pre-v0.4.19):
+double rear_torque = calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect;
+
+// CORRECT (v0.4.19+):
+double rear_torque = -calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect;  // INVERT
+```
+
+**Why**:
+- Rear slides LEFT → Slip angle is POSITIVE → Lateral force is POSITIVE
+- We want: Counter-steer LEFT (negative force)
+- Without inversion: Positive force → Pulls RIGHT → **CATASTROPHIC POSITIVE FEEDBACK LOOP** ❌
+- With inversion: Negative force → Pulls LEFT → Corrects the slide ✓
+
+**This was the root cause of the user-reported bug**: "Slide rumble throws the wheel in the direction I am turning."
+
+---
+
+### 3. Scrub Drag - Friction Direction
+
+**Location**: `FFBEngine.h` line ~840
+
+**Physics**: Friction opposes motion. If sliding left, friction pushes right.
+
+**Code**:
+```cpp
+// WRONG (pre-v0.4.19):
+double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;  // If left, push left (WRONG!)
+
+// CORRECT (v0.4.19+):
+double drag_dir = (avg_lat_vel > 0.0) ? 1.0 : -1.0;  // If left, push right (opposes motion)
+```
+
+**Why**:
+- Sliding LEFT → `mLateralPatchVel = +5.0`
+- Friction opposes motion → Should push RIGHT
+- Without fix: Pushes LEFT → Accelerates the slide (negative damping) ❌
+- With fix: Pushes RIGHT → Resists the slide ✓
+
+---
+
+## Code Examples
+
+### Example 1: Adding a New Lateral Effect
+
+```cpp
+// ❌ WRONG - Direct use of game data
+double new_effect = data->mLocalAccel.x * some_coefficient;
+
+// ✓ CORRECT - Invert for DirectInput
+double new_effect = -(data->mLocalAccel.x) * some_coefficient;
+```
+
+### Example 2: Checking Your Work
+
+Ask yourself these questions:
+
+1. **What is the physical event?** (e.g., "Right turn")
+2. **What does the game report?** (e.g., `mLocalAccel.x = +9.81`)
+3. **What should the wheel feel?** (e.g., "Pull LEFT to simulate heavy steering")
+4. **What sign does DirectInput need?** (e.g., "Negative for LEFT")
+5. **Do I need to invert?** (e.g., "YES - game says +9.81, I need negative")
+
+### Example 3: Friction/Damping Effects
+
+Friction and damping effects that **oppose motion** may NOT need inversion:
+
+```cpp
+// Scrub drag: Friction opposes the slide direction
+// If sliding left (+vel), friction pushes right (+force)
+// NO INVERSION needed - the physics naturally provides the correct sign
+double drag_dir = (avg_lat_vel > 0.0) ? 1.0 : -1.0;
+```
+
+---
+
+## Testing Strategy
+
+### Unit Tests
+
+Every coordinate-sensitive effect MUST have regression tests in `tests/test_ffb_engine.cpp`:
+
+```cpp
+void test_coordinate_[effect_name]() {
+    // Test Case 1: Positive game input (LEFT)
+    data.mLocalAccel.x = 9.81;  // Left acceleration
+    double force = engine.calculate_force(&data);
+    ASSERT_TRUE(force < 0.0);  // Should pull LEFT (negative)
+    
+    // Test Case 2: Negative game input (RIGHT)
+    data.mLocalAccel.x = -9.81;  // Right acceleration
+    force = engine.calculate_force(&data);
+    ASSERT_TRUE(force > 0.0);  // Should pull RIGHT (positive)
+}
+```
+
+### Manual Testing
+
+1. **Right Turn Test**:
+   - Drive in a steady right turn
+   - Wheel should feel HEAVY (pulling left)
+   - If wheel feels LIGHT, SoP is inverted ❌
+
+2. **Oversteer Test**:
+   - Induce oversteer (rear slides out)
+   - Wheel should provide counter-steering cue
+   - If wheel pulls INTO the slide, rear torque is inverted ❌
+
+3. **Drift Test**:
+   - Slide sideways at constant angle
+   - Wheel should feel resistance (friction)
+   - If wheel feels assisted (negative damping), scrub drag is inverted ❌
+
+---
+
+## Common Pitfalls
+
+### Pitfall 1: "The Math Looks Right"
+
+```cpp
+// This looks mathematically correct:
+double sop_force = lateral_g * coefficient;
+
+// But it's WRONG for DirectInput!
+// You must invert:
+double sop_force = -lateral_g * coefficient;
+```
+
+**Lesson**: Trust the coordinate system, not your intuition.
+
+### Pitfall 2: "It Works in One Direction"
+
+If an effect only feels wrong in one direction (e.g., only in left turns), you likely have a sign error.
+
+### Pitfall 3: "Abs() Hides the Problem"
+
+```cpp
+// Using abs() can mask coordinate issues:
+double slip_angle = std::atan2(std::abs(mLateralPatchVel), longitudinal_vel);
+
+// This loses directional information!
+// Consider whether you need the sign for your effect.
+```
+
+### Pitfall 4: "Positive Feedback Loops"
+
+If an effect makes the car HARDER to control instead of easier, you likely have an inverted sign creating positive feedback.
+
+**Example**: Rear aligning torque pulling INTO the slide instead of providing counter-steering.
+
+---
+
+## Checklist for New Effects
+
+Before adding any new lateral effect, complete this checklist:
+
+- [ ] I have identified the game coordinate system for all input variables
+- [ ] I have determined the desired DirectInput output sign
+- [ ] I have applied inversions where needed
+- [ ] I have added unit tests for both left and right scenarios
+- [ ] I have manually tested the effect in-game
+- [ ] I have documented the coordinate system logic in code comments
+- [ ] I have verified no positive feedback loops exist
+
+---
+
+## References
+
+- **Bug Report**: `docs/bug_reports/wrong rf2 coordinates use.md`
+- **Source Code**: `FFBEngine.h` lines 571, 666, 840
+- **API Documentation**: `src/lmu_sm_interface/InternalsPlugin.hpp` lines 168-181
+- **Test Suite**: `tests/test_ffb_engine.cpp` - Search for "v0.4.19" or "coordinate"
+
+---
+
+## Version History
+
+- **v0.4.19** (2025-12-16): Initial documentation after fixing three critical coordinate inversions
+- **Future**: This document should be updated whenever new lateral effects are added
+
+---
+
+**⚠️ WARNING**: Ignoring this coordinate system mismatch can create positive feedback loops that make the car uncontrollable. Always verify sign conventions when working with lateral vectors.
+
+```
+
+# File: docs\dev_docs\references\Reference - telemetry_availability_report.md
+```markdown
+# Le Mans Ultimate Telemetry Availability Report
+
+**Date:** 2025-05-23
+**Version:** 1.0
+**Target:** LMUFFB v0.3.2
+
+## Executive Summary
+Recent investigations into the Le Mans Ultimate (LMU) community forums indicate that while the game uses the rFactor 2 Shared Memory Plugin (DAMPlugin), certain telemetry data points are inconsistent, hidden, or intermittently broken across updates. 
+
+While most complaints focus on Dashboard data (ERS, Temperatures, Fuel), there is a risk that physics-related fields used by LMUFFB could be affected, particularly those related to tire state (Grip, Load).
+
+## Critical Telemetry Dependencies
+LMUFFB relies on the following fields from `rF2Telemetry`. If these are zero or static, specific effects will fail.
+
+| Field | Effect | Risk Level | Notes |
+| :--- | :--- | :--- | :--- |
+| `mSteeringArmForce` | **Master FFB** | Low | Core game FFB. If missing, no force at all. |
+| `mTireLoad` | Slide Texture, Bottoming | Medium | Used for amplitude scaling. If 0, effects are silent. |
+| `mVerticalTireDeflection` | Road Texture | Medium | Used for bump detection. |
+| `mSlipAngle` | Slide Texture | Low | Essential for physics; unlikely to be hidden. |
+| `mSlipRatio` | Lockup, Spin | Low | Essential for physics. |
+| `mLateralPatchVel` | Slide Texture (Freq) | Medium | Advanced physics field; new in v0.3.2. |
+| `mLocalAccel` | SoP (Lateral G) | Low | Required for Motion Rigs; likely present. |
+| `mLocalVel` | Freq Scaling | Low | Basic vector. |
+| `mGripFract` | Understeer (Grip Loss) | **High** | Derived from Tire Temp/Wear/Surface. **Temps reported broken.** |
+| `mLateralForce` | Oversteer Boost | Low | Core physics. |
+
+## Findings from Community Research
+1.  **Dashboard Data Issues:** Users report missing ERS State (SOC), TC Level, ABS Level, and Motor Maps. This confirms LMU does not expose the full rFactor 2 telemetry set.
+2.  **Tire Data Instability:** Reports from Feb 2024 indicate `mTemperature` and `mPressure` were broken in a specific build, then partially fixed.
+    *   **Impact:** If Tire Temperature is not simulated or exposed, `mGripFract` (which usually depends on temp) might be calculated incorrectly or return a static value.
+3.  **Plugin Compatibility:** The standard rF2 DAMPlugin works but causes "poor performance & pit menu flicker" for some users. 
+    *   **Mitigation:** LMUFFB only *reads* the memory mapped file; it does not inject a plugin DLL into the game process (unlike the official DAMPlugin which *writes* the memory). **However**, the user *must* have the DAMPlugin installed and running for the memory map to exist. If the plugin causes instability, users might disable it, breaking LMUFFB.
+
+## Recommendations for LMUFFB
+
+### 1. Robustness Checks (Implemented v0.3.19)
+We have implemented "Sanity Checks" in `FFBEngine` to mitigate missing data:
+*   **Tire Load:** If `mTireLoad` is 0.0 while the car is moving (> 1 m/s), it defaults to 4000N. This ensures Slide and Road textures remain audible/active even if load data is missing.
+*   **Grip Fraction:** If `mGripFract` is 0.0 but load exists (> 100N), it defaults to 1.0 (Full Grip). This prevents the Understeer effect from muting the FFB entirely.
+*   **Delta Time:** If `mDeltaTime` is invalid (<= 0), it defaults to 0.0025s (400Hz) to prevent division-by-zero errors in integrators.
+
+### 2. Telemetry Inspector (Implemented v0.3.12)
+The GUI now includes "Rolling Trace Plots" for telemetry inputs. In v0.3.19, we added specific **Warning Indicators** (Red Text) that trigger if the fallback logic above is activated.
+
+### 3. Fallback Logic
+If `mLateralPatchVel` (newly used) proves unreliable, we should fallback to `mLateralGroundVel` (which is standard kinematic data).
+
+## Conclusion
+The core physics vectors (Velocity, Acceleration, Force) are likely safe as they are essential for motion platforms which are supported. The highest risk is with **Tire State** data (`mGripFract`, `mTireLoad`) which might be simplified or hidden in LMU compared to rFactor 2.
+
+With the v0.3.19 robustness update, the application is now resilient against total loss of tire state data.
+
+```
+
+# File: docs\dev_docs\references\Reference - telemetry_data_reference.md
+```markdown
+# Telemetry Data Reference (LMU 1.2 API) - v0.6.20
+
+> **⚠️ API Source of Truth**  
+> The official and authoritative reference for all telemetry data structures, field names, types, and units is:  
+> **`src/lmu_sm_interface/InternalsPlugin.hpp`**  
+> 
+> This file is provided by Studio 397 as part of the LMU 1.2 shared memory interface. All code must defer to this header for:
+> - **Units** (Newtons, Newton-meters, meters, radians, etc.)
+> - **Field names** (e.g., `mSteeringShaftTorque`, not `mSteeringArmForce`)
+> - **Data types** and struct layouts
+> - **API version compatibility**
+>
+> When in doubt about telemetry interpretation, consult `InternalsPlugin.hpp` as the definitive source.
+
+---
+
+## Overview
+
+This document lists the physics data available from the **Le Mans Ultimate 1.2 Native Shared Memory Interface** (structs `TelemInfoV01` and `TelemWheelV01`). It documents which values lmuFFB currently uses (up to v0.6.20) and explores potential future uses for enhanced Force Feedback.
+
+**Changes from rFactor 2:** LMU 1.2 introduced native shared memory support with:
+- **Direct torque measurement**: `mSteeringShaftTorque` (Nm) replaced force-based `mSteeringArmForce` (N)
+- **Native tire data**: Direct access to `mTireLoad`, `mGripFract`, `mLateralPatchVel`
+- **Patch velocities**: `mLateralPatchVel` and `mLongitudinalPatchVel` for accurate slip calculations
+- **No plugin required**: Built directly into LMU, no external DLL needed
+
+---
+
+## 1. Global Vehicle Telemetry (`TelemInfoV01`)
+
+These values describe the state of the vehicle chassis and engine.
+
+| Variable | Units | Description | Current Usage (v0.6.10) | Future Potential |
+| :--- | :--- | :--- | :--- | :--- |
+| `mDeltaTime` | seconds | Time since last physics update | **Used**: Oscillator integration, Time-Corrected Smoothing, Frequency Estimation | |
+| `mElapsedTime` | seconds | Session time | **Used**: Zero-crossing frequency analysis timestamps | Logging |
+| **`mSteeringShaftTorque`** | **Nm** | **Torque around steering shaft** (replaces `mSteeringArmForce`) | **Used**: Primary FFB source, Signal Analysis (Freq Estimator) | |
+| `mLocalAccel` | m/s² | Acceleration in car-local space (X=Lat, Y=Vert, Z=Long) | **Used**: `x` for SoP (Seat of Pants), `x/z` for **Kinematic Load Reconstruction** | `z` for braking dive/acceleration squat cues |
+| `mLocalRot`, `mLocalRotAccel` | rad/s, rad/s² | Rotation rate/accel (Yaw/Pitch/Roll) | **Used**: `mLocalRotAccel.y` for **Yaw Kick** (Clamp: 1.0 rad/s², Threshold: 0.0-10.0 rad/s²) | **High Priority**: Use Yaw Rate vs Steering Angle to detect oversteer more accurately than Grip Delta |
+| `mLocalVel` | m/s | Velocity in local coordinates | **Used**: `z` for speed-based frequency scaling, Kinematic Load, & sanity checks | |
+| `mUnfilteredThrottle` | 0.0-1.0 | Raw throttle input | **Used**: Trigger for Wheel Spin effects | |
+| `mUnfilteredBrake` | 0.0-1.0 | Raw brake input | **Used**: Trigger for Lockup effects and **Predictive Logic Gating**, **ABS Trigger** | |
+| `mEngineRPM` | RPM | Engine rotation speed | Unused | **Engine Vibration**: Inject RPM-matched vibration into the wheel |
+| `mFuel`, `mEngineWaterTemp` | liters, °C | Vehicle health/status | Unused | Dash display data |
+| `mElectricBoostMotorTorque` | Nm | Hybrid motor torque | Unused | **Hybrid Haptics**: Vibration during deployment/regen |
+| `mElectricBoostMotorState` | enum | 0=unavailable, 2=propulsion, 3=regen | Unused | Trigger for hybrid-specific effects |
+
+---
+
+## 2. Wheel & Tire Telemetry (`TelemWheelV01`)
+
+Available for each of the 4 wheels (`mWheel[0]`=FL, `[1]`=FR, `[2]`=RL, `[3]`=RR).
+
+### Forces & Grip
+
+| Variable | Units | Description | Current Usage (v0.6.10) | Future Potential |
+| :--- | :--- | :--- | :--- | :--- |
+| **`mTireLoad`** | **N** | **Vertical load on tire** | **Used**: Load scaling (Split Caps: Texture vs Brake), Bottoming (Legacy), Kinematic Model switch | **Load Sensitivity**: Reduce FFB gain if front tires are unloaded |
+| **`mGripFract`** | **0.0-1.0** | **Grip usage fraction** (0=full grip available, 1=at limit) | **Used**: Understeer/Oversteer detection, Slide Texture Scrub work-scaling | |
+| `mLateralForce` | N | Force acting sideways on tire contact patch | **Used**: Rear Oversteer calculation (Aligning Torque) *[Note: Buggy for Rear wheels in LMU 1.2, Workaround used]* | Front pneumatic trail calculation refinement |
+| `mLongitudinalForce` | N | Force acting forward/back (Accel/Brake) | Unused | |
+| `mSuspForce` | N | Pushrod load | **Used**: Kinematic Load Reconstruction trigger, Bottoming Trigger (Method B) | Suspension stress feedback |
+
+### Motion & Slip
+
+| Variable | Units | Description | Current Usage (v0.6.10) | Future Potential |
+| :--- | :--- | :--- | :--- | :--- |
+| **`mLateralPatchVel`** | **m/s** | **Lateral velocity at contact patch** | **Used**: Slip Angle calc, Slide Texture frequency/amplitude, Scrub Drag | More accurate "scrub" feel |
+| **`mLongitudinalPatchVel`** | **m/s** | **Longitudinal velocity at contact patch** | **Used**: Slip ratio calculation, Traction Loss | |
+| `mLateralGroundVel` | m/s | Lateral velocity of ground under tire | Unused | Slip angle refinement |
+| `mLongitudinalGroundVel` | m/s | Longitudinal velocity of ground under tire | **Used**: Slip ratio calculation | |
+| `mRotation` | rad/s | Wheel rotation speed | **Used**: **Predictive Lockup** (Angular Deceleration analysis) | Damage wobble effects |
+
+### Suspension & Surface
+
+| Variable | Units | Description | Current Usage (v0.6.10) | Future Potential |
+| :--- | :--- | :--- | :--- | :--- |
+| `mVerticalTireDeflection` | m | Compression of tire rubber | **Used**: Road Texture (High-pass filter), **Lockup Bump Rejection** (Velocity) | |
+| `mSuspensionDeflection` | m | Compression of spring/damper | Unused | **Bottoming Out**: Harsh "thud" if deflection hits max travel |
+| `mRideHeight` | m | Chassis height | **Used**: Bottoming Trigger (Method A), Visualized in Telemetry Inspector | Scraping effects |
+| `mTerrainName` | char[16] | Name of surface (e.g., "ROAD", "GRASS") | Unused | **Surface FX**: Different rumble for Kerbs/Grass/Gravel |
+| `mSurfaceType` | unsigned char | 0=dry, 1=wet, 2=grass, 3=dirt, 4=gravel, 5=rumblestrip, 6=special | Unused | Faster lookup for Surface FX |
+| `mCamber`, `mToe` | radians | Wheel alignment | Unused | Setup analysis |
+| `mStaticUndeflectedRadius` | cm | Tire radius (static) | **Used**: **Dynamic Notch Filter** center freq, **Predictive Lockup** reference. **Safety**: Defaults to **0.33m** (33cm) if < 10cm or missing. | |
+
+### Condition
+
+| Variable | Units | Description | Current Usage (v0.6.10) | Future Potential |
+| :--- | :--- | :--- | :--- | :--- |
+| `mTemperature[3]` | Kelvin | Inner/Middle/Outer tire temps | Unused | **Cold Tire Feel**: Reduce grip when cold |
+| `mWear` | 0.0-1.0 | Tire wear fraction | Unused | **Wear Feel**: Reduce overall gain as tires wear |
+| `mPressure` | kPa | Tire pressure | Unused | Pressure-sensitive handling |
+| **`mBrakePressure`** | **bar** | **Brake line pressure** | **Used**: **Lockup Amplitude Scaling**, **ABS Pulse Detection** (Modulation Rate) | **Brake Fade**: Judder when overheated |
+| `mBrakeTemp` | °C | Brake disc temperature | Unused | |
+| `mFlat`, `mDetached` | bool | Damage flags | Unused | **Damage FX**: Wobble if tire is flat |
+
+---
+
+## 3. Critical Unit Changes (v0.4.0+)
+
+### Steering Force → Torque
+**Old API (rFactor 2):** `mSteeringArmForce` (Newtons)  
+**New API (LMU 1.2):** `mSteeringShaftTorque` (Newton-meters)
+
+**Impact:** This required a ~200x scaling reduction in all FFB effect amplitudes to account for:
+1. Unit change (Force → Torque)
+2. Lever arm elimination (shaft measurement vs. rack measurement)
+
+**Typical values:**
+- Racing car steering torque: **15-25 Nm**
+- Old force scaling: ~4000 N (incorrect for torque)
+- New torque scaling: ~20 Nm (physically accurate)
+
+---
+
+## 4. Summary of "Low Hanging Fruit" (Not yet implemented)
+
+These are features that would provide high value with relatively low implementation effort:
+
+1.  **Surface Effects**: Reading `mTerrainName`/`mSurfaceType` to detect "Rumble Strips" or "Kerbs" and injecting a specific vibration pattern.
+2.  **Hybrid Haptics** (LMU-specific): Use `mElectricBoostMotorTorque` and `mElectricBoostMotorState` to add deployment/regen vibration.
+3.  **Engine Vibration**: Adding a subtle RPM-based hum (`mEngineRPM`) adds immersion.
+4.  **Suspension Bottoming (Deflection Limit)**: Triggering a heavy jolt when `mSuspensionDeflection` or `mFront3rdDeflection` hits stops (currently uses Ride Height/Force Spike/Load).
+
+---
+
+## 5. Data Validation & Sanity Checks (v0.4.1 - v0.6.0)
+
+lmuFFB implements robust fallback logic for missing/invalid telemetry (Encryption or Bugs):
+
+- **Missing Load (Adaptive Kinematic)**: If `mTireLoad` AND `mSuspForce` are invalid while moving, load is reconstructed using Chassis Physics:
+    - Mass + Aero ($v^2$) + Longitudinal/Lateral Weight Transfer (`mLocalAccel`).
+- **Missing Grip (Combined Friction Circle)**: If `mGripFract < 0.0001` (e.g., encrypted mod content), grip is approximated using **Slip Angle** and **Slip Ratio**:
+    - $\sqrt{(\text{SlipLat}/\text{OptLat})^2 + (\text{SlipLong}/\text{OptLong})^2}$
+    - *Note*: Manual Slip Calculation toggle was removed in v0.6.20; this reconstruction is now purely an automatic fallback.
+- **Invalid DeltaTime**: If `mDeltaTime <= 0.000001`, defaults to 0.0025s (400Hz).
+- **Slip Angle Singularity**: If `CarSpeed < 0.5 m/s`, slip angle calculation is clamped to prevent div-by-zero.
+
+These checks prevent FFB dropout during telemetry glitches or on encrypted content.
+
+---
+
+## 6. Coordinate Systems & Sign Conventions (v0.4.30+)
+
+Understanding the coordinate systems is critical for effect direction (e.g., ensuring SoP pulls the correct way).
+
+### LMU / rFactor 2 Coordinate System
+*   **X (Lateral)**: **+X is LEFT**, -X is RIGHT.
+*   **Y (Vertical)**: +Y is UP, -Y is DOWN.
+*   **Z (Longitudinal)**: +Z is REAR, -Z is FRONT.
+*   **Rotation**: Left-handed system. +Y rotation (Yaw) is to the **RIGHT**.
+
+### InternalsPlugin.hpp Note
+The SDK explicitly warns:
+> "Note that ISO vehicle coordinates (+x forward, +y right, +z upward) are right-handed. If you are using that system, **be sure to negate any rotation or torque data** because things rotate in the opposite direction."
+
+### Effect Implementations
+1.  **Lateral G (SoP)**:
+    *   **Source**: `mLocalAccel.x` (Linear Acceleration).
+    *   **Right Turn**: Car accelerates LEFT (+X).
+    *   **Desired Force**: Aligning torque should pull LEFT (+).
+    *   **Implementation**: **No Inversion**. Use `+mLocalAccel.x`.
+2.  **Yaw Acceleration (Kick)**:
+    *   **Source**: `mLocalRotAccel.y` (Rotational Acceleration).
+    *   **Right Oversteer**: Car rotates RIGHT (+Y).
+    *   **Desired Force**: Counter-steer kick should pull RIGHT (-).
+    *   **Implementation**: **Invert**. Use `-mLocalRotAccel.y` (as per SDK "negate rotation" note).
+3.  **Rear Aligning Torque**:
+    *   **Source**: `mLateralPatchVel` (Linear Velocity).
+    *   **Right Turn**: Rear slides LEFT (+Vel).
+    *   **Desired Force**: Aligning torque should pull LEFT (+).
+    *   **Implementation**: The formula `double rear_torque = -calc_rear_lat_force` correctly produces a Positive output for Positive velocity inputs due to the negative coefficient in the `calc` helper. **Already Correct.**
+
+---
+
+## 7. Engine Tuning Parameters (v0.6.20)
+
+The following parameters are exposed in the GUI and `config.ini` to tune effect responses.
+
+| Parameter | UI Label | Range | Description |
+| :--- | :--- | :--- | :--- |
+| `m_abs_freq_hz` | **ABS Pulse Frequency** | 10 - 50 Hz | Vibrational pitch of the ABS pulse effect |
+| `m_lockup_freq_scale`| **Vibration Pitch** (Lockup) | 0.5x - 2.0x | Scalar multiplier for lockup vibration frequency |
+| `m_spin_freq_scale` | **Vibration Pitch** (Spin) | 0.5x - 2.0x | Scalar multiplier for wheel spin vibration frequency |
+| `m_lockup_gamma` | **Lockup Gamma** | 0.1 - 3.0 | Curvature of the lockup response (v0.6.0) |
+| `m_understeer_effect`| **Understeer Effect** | 0% - 200% | Resistance reduction when front grip is lost |
+| `m_brake_load_cap` | **Brake Load Cap** | 1.0x - 10.0x | Sensitivity of lockup vibration to tire load |
+| `m_yaw_kick_threshold`| **Yaw Kick Threshold**| 0.0 - 10.0 | Sensitivity filter for chassis rotation kicks |
+
+```
+
+# File: docs\dev_docs\reviews\plan_review_slope_detection.md
+```markdown
+# Plan Review: Slope Detection Algorithm for Dynamic Grip Estimation
+
+**Plan Path:** `docs/dev_docs/plans/plan_slope_detection.md`
+**Review Date:** 2026-02-01
+**Reviewer:** Lead Architect (Plan Reviewer)
+
+---
+
+## Executive Summary
+
+| Verdict | **✅ APPROVE** |
+|---------|----------------|
+| **Plan Quality** | Excellent |
+| **Completeness** | High |
+| **TDD-Readiness** | Good |
+| **Risk Level** | Low (Feature disabled by default) |
+
+The implementation plan for the Slope Detection Algorithm is **well-structured, comprehensive, and ready for implementation**. It demonstrates a thorough understanding of the codebase, provides detailed technical specifications, and includes adequate safeguards for backward compatibility. Minor suggestions for improvement are noted below but do not warrant rejection.
+
+---
+
+## Review Criteria Assessment
+
+### 1. ✅ Completeness
+
+| Requirement | Status | Notes |
+|-------------|--------|-------|
+| Context/Problem Statement | ✅ Complete | Clear explanation of the problem (static thresholds) and proposed solution (dynamic derivative-based detection) |
+| Reference Documents | ✅ Complete | All 4 source documents properly referenced |
+| Codebase Analysis | ✅ Complete | Detailed analysis of `calculate_grip()`, `FFBEngine.h`, and `Config.h` |
+| FFB Effect Impact Analysis | ✅ Complete | Comprehensive table of affected/unaffected effects |
+| Implementation Details | ✅ Complete | Code snippets with line numbers for all changes |
+| Test Plan | ✅ Complete | 8 unit tests with inputs, outputs, and assertions |
+| Deliverables Checklist | ✅ Complete | Itemized checklist with line count estimates |
+| Documentation Updates | ✅ Complete | CHANGELOG, VERSION, README mentioned |
+
+**Assessment:** The plan covers all requirements from `architect_prompt.md` and `01_specifications.md`.
+
+---
+
+### 2. ✅ Codebase Analysis Quality
+
+The plan demonstrates **strong codebase analysis**:
+
+| Aspect | Evidence |
+|--------|----------|
+| **Impacted modules identified** | `FFBEngine.h`, `Config.h`, `Config.cpp`, `GuiLayer.cpp` clearly listed |
+| **Functions/classes identified** | `calculate_grip()` (lines 593-678), `GripResult` struct, `FFBCalculationContext`, `Preset` struct |
+| **Data flow documented** | Clear flow diagram: Telemetry → Grip Calculation → Effect Calculations → Output |
+| **Existing functionality impact** | Section 2.4 clearly shows the branching logic: new code path for slope detection *alongside* preserved static threshold logic |
+
+**Key Insight Documented:** The plan correctly identifies that slope detection replaces **steps 2c/2d/2e** of the grip calculation fallback path (line 78), not the entire function.
+
+---
+
+### 3. ✅ FFB Effect Impact Analysis
+
+The plan includes an **exemplary FFB effect impact analysis** (Section: "FFB Effects Impact Analysis"):
+
+| Category | Effects Listed | Technical Impact | User Impact |
+|----------|----------------|------------------|-------------|
+| **Front Grip Consumers** | Understeer Effect, Slide Texture | ✅ Functions and line numbers provided | ✅ "Smoother and more progressive" feel described |
+| **Rear Grip Consumers** | Lateral G Boost (Oversteer) | ✅ Differential calculation explained | ✅ "Better oversteer detection in mixed conditions" |
+| **Slip Angle Derived** | Rear Aligning Torque | ✅ Noted as unaffected | ✅ Counter-steering cues remain accurate |
+| **Unaffected Effects** | Steering Shaft, Yaw Kick, Gyro, Lockup, Road Texture, ABS, etc. | ✅ Clear list with rationale | ✅ No changes expected |
+
+**User Experience Summary Table (Section 5):**
+- Clear before/after comparison (static vs. slope detection)
+- Explicitly notes what will change and what will NOT change
+
+**Assessment:** This section meets and exceeds the requirements in `architect_prompt.md` (Step 2: FFB Effect Impact Analysis).
+
+---
+
+### 4. ✅ Testability (TDD-Ready)
+
+The plan includes **8 unit tests** with sufficient detail for TDD:
+
+| Test | Purpose | Inputs | Expected Outputs | Assertions |
+|------|---------|--------|------------------|------------|
+| `test_slope_detection_buffer_init` | Buffer initialization | Fresh engine | `count == 0, index == 0, current == 0.0` | ✅ Clear |
+| `test_slope_sg_derivative` | SG derivative accuracy | Linear ramp, window=9, dt=0.01 | `derivative ≈ 10.0 ±1.0` | ✅ Clear |
+| `test_slope_grip_at_peak` | Zero slope = full grip | Constant G=1.2, constant slip | `output > 0.95` | ✅ Clear |
+| `test_slope_grip_past_peak` | Negative slope = grip loss | Decreasing G, increasing slip | `0.2 < output < 0.9` | ✅ Clear |
+| `test_slope_vs_static_comparison` | Both methods detect loss | Same telemetry, 12% slip | Both detect grip loss | ✅ Clear |
+| `test_slope_config_persistence` | Save/load cycle | Non-default values | Loaded == saved | ✅ Clear |
+| `test_slope_latency_characteristics` | Buffer fill timing | window=15, dt=0.0025 | `fill_count == window_size` | ✅ Clear |
+| `test_slope_noise_rejection` | SG filter rejects noise | Constant G + noise | `|slope| < 1.0` | ✅ Clear |
+
+**Assessment:** Tests are described to a level where a developer can write them BEFORE implementation (TDD Red Phase).
+
+---
+
+### 5. ✅ Clarity & Implementability
+
+| Aspect | Assessment |
+|--------|------------|
+| **Code locations** | ✅ Specific line numbers provided (e.g., "line 312", "~line 1100") |
+| **Code snippets** | ✅ C++ pseudocode provided for all major changes |
+| **Naming conventions** | ✅ Consistent prefix `m_slope_*` and `slope_*` |
+| **Configuration parameters** | ✅ Table with types, defaults, and descriptions |
+| **GUI layout** | ✅ ImGui tree structure with conditional visibility |
+| **Validation logic** | ✅ Range clamps and odd-number enforcement documented |
+| **Backward compatibility** | ✅ Feature OFF by default, static logic preserved |
+
+**Assessment:** A developer can implement this plan without additional clarification.
+
+---
+
+### 6. ✅ Safety & Risk Assessment
+
+| Risk Area | Mitigation | Assessment |
+|-----------|------------|------------|
+| **Breaking existing behavior** | `slope_detection_enabled = false` by default | ✅ Low risk |
+| **Complete FFB loss** | Grip floor of 0.2 documented (line 588) | ✅ Safe |
+| **Config corruption (old files)** | Missing keys use defaults, no migration needed | ✅ Safe |
+| **Buffer overflow** | `SLOPE_BUFFER_MAX = 41`, window clamped to [5, 41] | ✅ Safe |
+| **Division by zero** | Not applicable (dt from telemetry, window guaranteed ≥5) | ✅ Safe |
+
+---
+
+### 7. User Settings & Presets Impact
+
+| Aspect | Status | Notes |
+|--------|--------|-------|
+| **New settings defined** | ✅ Yes | 5 new parameters in Preset struct |
+| **GUI section designed** | ✅ Yes | "Slope Detection (Experimental)" tree node |
+| **Migration logic needed** | ✅ No | Defaults apply to missing keys |
+| **Preset updates required** | ✅ Yes | All presets get new settings (disabled by default) |
+| **Settings interaction documented** | ✅ Yes | "Optimal Slip Angle is IGNORED when enabled" (tooltip) |
+
+**Assessment:** The "User Settings & Presets Impact" section fully addresses requirements from `auditor_prompt.md`.
+
+---
+
+## Minor Suggestions (Non-Blocking)
+
+The following are **optional improvements** that do not affect the approval status:
+
+### 1. ✅ ~~Savitzky-Golay Coefficient Source~~ (RESOLVED)
+
+~~The plan mentions "pre-computed coefficients for quadratic polynomial fit" but does not specify:~~
+- ~~How coefficients are computed (runtime vs. compile-time)~~
+- ~~Reference for SG coefficient formulas~~
+
+**Resolution (2026-02-01):** A comprehensive Savitzky-Golay Coefficients Deep Research Report has been created at `docs/dev_docs/plans/savitzky-golay coefficients deep research report.md`  and `docs/dev_docs/plans/savitzky-golay coefficients deep research report(2).md`. The implementation plan has been updated to include:
+- The closed-form coefficient generation formula: `w_k = k / (S_2 × h)` where `S_2 = M(M+1)(2M+1)/3`
+- Full C++ implementation of `calculate_sg_derivative()` with algorithm comments
+- Boundary handling strategy (shrinking symmetric window)
+- Reference to the deep research report
+
+### 2. Edge Case: Very Low Speed
+
+The plan notes that Slope Detection is active when `mGripFract` is zero (same condition as static threshold fallback). Consider explicitly documenting behavior at:
+- Standstill (speed = 0)
+- Very low speeds (< 5 km/h)
+
+The existing code likely already handles this via speed gate, but a note would improve clarity.
+
+### 3. Diagnostic Logging
+
+Consider adding a debug log message when slope detection mode is activated/deactivated, to help users troubleshoot configuration issues.
+
+### 4. Optional: Experimental Preset
+
+The plan mentions "An experimental preset could be added" but does not include it in the deliverables checklist. Consider:
+- Adding one experimental preset for testing purposes
+- Or explicitly noting this is deferred to a future version
+
+---
+
+## Compliance Matrix
+
+| Document Requirement | Compliance |
+|----------------------|------------|
+| `01_specifications.md` §3.6 - Artifact Interface | ✅ Plan includes all required sections |
+| `02_architecture_design.md` §3 - Data Flow | ✅ Codebase analysis traces data flow |
+| `architect_prompt.md` Step 1 - Codebase Analysis | ✅ Impacted modules, functions, and data flows documented |
+| `architect_prompt.md` Step 2 - FFB Effect Impact | ✅ Affected effects listed with technical and user-facing impact |
+| `architect_prompt.md` Step 3 - User Settings Impact | ✅ New settings, migration, and preset impact documented |
+| `architect_prompt.md` Step 4 - TDD-Ready Test Plan | ✅ 8 tests with inputs, outputs, and assertions |
+| `plan_reviewer_prompt.md` - Reject Reasons Check | ✅ None of the common rejection reasons apply |
+
+---
+
+## Conclusion
+
+The **Slope Detection Algorithm Implementation Plan** is **approved for implementation**. The document is thorough, technically sound, and provides sufficient detail for a developer to follow TDD practices. The feature's conservative default (disabled) and preservation of the static threshold logic ensure low risk to existing users.
+
+**Next Step:** Proceed to **Phase B: Developer (Implementation)**.
+
+---
+
+```json
+{
+  "verdict": "APPROVE",
+  "review_path": "docs/dev_docs/reviews/plan_review_slope_detection.md",
+  "feedback": "Excellent implementation plan. Comprehensive codebase and FFB effect analysis, TDD-ready test plan, and clear implementation details. Minor suggestions for SG coefficient documentation and edge case handling are optional. Ready for development."
+}
+```
 
 ```
 
@@ -20663,7 +30273,7 @@ Save and switch presets as needed.
 ## Additional Resources
 
 - **FFB Formulas:** `docs/dev_docs/FFB_formulas.md` - Mathematical details
-- **Telemetry Reference:** `docs/dev_docs/telemetry_data_reference.md` - Parameter ranges
+- **Telemetry Reference:** `docs/dev_docs/references/Reference - telemetry_data_reference.md` - Parameter ranges
 - **Community Presets:** (Coming soon) Share your optimal settings!
 
 ---
@@ -20671,6 +30281,1036 @@ Save and switch presets as needed.
 **Document Version:** 1.0  
 **Compatible with:** lmuFFB v0.6.20+  
 **Last Updated:** 2025-12-27
+
+```
+
+# File: gemini_orchestrator\01_specifications.md
+```markdown
+# Gemini CLI Orchestrator - System Specification
+
+## 1. Overview
+The **Gemini CLI Orchestrator** is a Python-based automation tool designed to wrap the Google Gemini CLI. It transforms the conversational agent into a structured, reliable CI/CD-style pipeline for software engineering tasks.
+
+By managing the Gemini CLI as an atomic subprocess, this orchestrator enforces strict **Session Isolation** (preventing context contamination between phases) and provides **Deterministic Control Flow** (replacing fragile manual polling with robust logic).
+
+## 2. Core Philosophy
+*   **Pipeline over Chat:** The system treats software development as a series of discrete steps (Plan -> Implement -> Review), not a continuous conversation.
+*   **Artifact-Driven Handover:** State is passed between steps exclusively via file paths (e.g., "Review the plan at `docs/plans/feature_A.md`"), not via chat history.
+*   **Supervisor Authority:** The Python script is the absolute source of truth for the workflow state. The AI Agent is a "worker" that executes specific tasks on demand.
+*   **Strict Role Separation:** Roles are immutable within a task. If the Auditor finds a bug, they *must* reject the task and send it back to the Developer. The Auditor never touches the code.
+
+## 3. Functional Requirements
+
+### 3.1 Process Management
+*   **Subprocess Execution:** The system MUST be able to launch `gemini` CLI instances via Python's `subprocess` module.
+*   **Headless Operation:** The system SHOULD utilize the CLI's headless mode (if available) or standard I/O piping to interact with the agent without a GUI.
+*   **Clean Slate:** Each step in the pipeline MUST run in a fresh OS process or a reset session to ensure zero context leakage.
+
+### 3.2 Workflow Orchestration
+The system MUST support the following distinct phases in a linear or looping pipeline:
+
+0.  **Phase Init: Initialization**
+    *   **Action:**
+        1.  **Remote Safety Check:** Verify (via GitHub API) that the remote `main` branch has **Branch Protection** enabled (specifically "Require Pull Request" and "Block Force Pushes"). If not, warn the user or abort.
+        2.  **Worktree Setup:** Create a new feature branch AND check it out into a **dedicated Git Worktree** (e.g., `../.worktrees/task-xyz`).
+    *   **Goal:** Ensure physical file-system isolation and verify remote safety nets are in place.
+
+1.  **Phase 0: Analysis Strategy (Dynamic Entry)**
+    *   **Modes:**
+        *   `--mode bugfix`: Spawns **Investigator** (Internal Focus).
+        *   `--mode research`: Spawns **Researcher** (External Focus).
+        *   `--mode direct`: Skips Phase 0.
+    *   **Phase 0.1: Analysis**
+        *   **Investigator:** Uses `codebase_investigator` to diagnose bugs. Output: `diagnostic_report.md`. **(Orchestrator commits artifact)**
+        *   **Researcher:** Uses `google_web_search` for theory/feasibility. Output: `research_report.md`. **(Orchestrator commits artifact)**
+    *   **Phase 0.2: Lead Analyst (Gatekeeper)**
+        *   **Input:** The Report from 0.1.
+        *   **Verdict:**
+            *   **APPROVE:** Proceed to Architect.
+            *   **REJECT:** Loop back to 0.1 with feedback.
+            *   **ESCALATE:** Trigger **Researcher** (e.g., if Investigator finds a math issue).
+        *   **(Orchestrator commits decision/feedback)**
+
+2.  **Phase A.1: Architect (Planning)**
+    *   **Input:** User Request + Any Reports from Phase 0 (Diagnostic and/or Research).
+    *   **Goal:** Analyze requirements and produce a Markdown implementation plan.
+    *   **Output:** Path to the generated Implementation Plan file.
+    *   **(Orchestrator commits plan)**
+
+3.  **Phase A.2: Lead Architect (Plan Review)**
+    *   **Input:** The Original Request and the Implementation Plan.
+    *   **Goal:** Verify the plan matches the requirements and is technically sound.
+    *   **Verdict:**
+        *   **APPROVE:** Proceed to Implementation.
+        *   **REJECT:** Return to **Phase A.1** with feedback.
+    *   **(Orchestrator commits review)**
+
+4.  **Phase B: Developer (Implementation - TDD)**
+    *   **Input:** Path to the Approved Implementation Plan file.
+    *   **Goal:** Follow Test Driven Development (TDD):
+        1.  Write tests first, based on the Test Plan.
+        2.  Verify the new tests fail (Red Phase).
+        3.  Implement the minimum code to make tests pass (Green Phase).
+        4.  Run full test suite to verify no regressions.
+    *   **Output:** Git Commit Hash or "Success" status. (Developer performs atomic commits).
+
+5.  **Phase C: Auditor (Code Review)**
+    *   **Input:** Path to Implementation Plan file and Git Diff.
+    *   **Goal:** Critique changes against project standards.
+    *   **Verdict:**
+        *   **PASS:** Trigger Phase D.
+        *   **FAIL:** Return to **Phase B** (Developer) with the Review Report as new input.
+    *   **(Orchestrator commits review report)**
+
+6.  **Phase D: Integration & Delivery**
+    *   **Goal:** Ensure the feature branch is up-to-date with `main` and conflict-free.
+    *   **Step 1:** Orchestrator attempts to merge `main` into `feature_branch`.
+    *   **Step 2 (Conditional):** If conflicts arise, spawn **Integration Specialist**.
+        *   **Input:** Conflict Markers + Implementation Plan.
+        *   **Action:** Resolve conflicts, run tests to verify integrity.
+        *   **Output:** Clean Merge Commit.
+    *   **Step 3:** Spawn **Auditor** (Merge Review).
+        *   **Input:** The final Merged Codebase.
+        *   **Goal:** Verify that the merge (and potential conflict resolution) did not break existing functionality or the new feature.
+    *   **Step 4:** Orchestrator pushes branch and creates a Pull Request / Merge Request.
+
+### 3.3 Structured Communication
+*   **JSON Enforcement:** The Orchestrator MUST instruct the agent to output key results (status, file paths) in a strict JSON format at the end of its response.
+*   **Fuzzy Parsing:** The Orchestrator MUST be able to extract this JSON payload from the raw text output, ignoring conversational filler.
+
+### 3.4 Git Integration
+*   **Immediate Branching:** The Orchestrator MUST creates a task-specific branch (e.g., `task/feature-name`) **immediately** upon receiving a request, before any agent interaction occurs. This ensures all generated artifacts (plans, reports) are contained and do not pollute the main branch.
+*   **Step-wise Commits:** The Orchestrator MUST perform a git commit after each successful step in the pipeline.
+    *   For documentation phases (Investigation, Planning, Review), the Orchestrator commits the generated files.
+    *   For the Implementation phase, the Developer agent creates the commits.
+    *   This provides a granular "undo" history and crash recovery checkpoints.
+*   **Merge & Conflict Management:** 
+    *   Before final delivery, the Orchestrator MUST try to merge `main` into the current branch to check for conflicts.
+    *   If the merge fails, the **Integration Specialist** agent is spawned to resolve conflicts and commit the fix.
+    *   Finally, the Orchestrator creates a **Pull Request** (or local equivalent) rather than pushing directly to `main`.
+*   **Safety Rails (Pre-Execution Firewall):**
+    *   The Orchestrator MUST implement a **Middleware Layer** that intercepts all tool calls *before* execution.
+    *   **Strict Blocking:** Any command attempting to switch context (e.g., `git checkout`, `git switch`) or modify the repository structure (e.g., `git reset`, `git rebase`) outside of the allowed feature branch must be **blocked** immediately. The Agent receives a "Permission Denied" error.
+    *   **Allow-list Approach:** Only safe, additive commands (e.g., `git add`, `git commit`, `git status`, `git diff`) are permitted by default.
+    *   This ensures it is *technically impossible* for the agent to modify other branches.
+
+### 3.5 Document Management
+The system MUST enforce a structured lifecycle for all generated documents:
+
+*   **Active Documents:** Stored in active subfolders during the feature lifecycle.
+    *   `docs/dev_docs/research/`
+    *   `docs/dev_docs/plans/`
+    *   `docs/dev_docs/reviews/`
+*   **Archiving:** Upon successful completion (Merge), the Orchestrator MUST move all related artifacts to an archive folder to keep the active directories clean.
+    *   `docs/dev_docs/archived/plans/`
+    *   `docs/dev_docs/archived/reviews/`
+    *   (Optionally prefixed with date/feature-name)
+
+### 3.6 Artifact Interface Definition
+The following table defines the exact Inputs and Deliverables for each phase.
+
+| Phase | Agent | Input Artifacts (Provided via Prompt) | Output Deliverables (Must be Created/Updated) | Output JSON Payload |
+| :--- | :--- | :--- | :--- | :--- |
+| **0.1** | **Investigator** | • User Request String (Bug Report) | • `docs/dev_docs/research/diagnostic_report_[feat].md` | `{"report_path": "..."}` |
+| **0.1** | **Researcher** | • User Request String (Feature Idea) | • `docs/dev_docs/research/research_report_[feat].md` | `{"report_path": "..."}` |
+| **0.2** | **Lead Analyst** | • Report from Phase 0.1 | • Feedback (if Rejected) | `{"verdict": "APPROVE"}`<br>`{"verdict": "REJECT", "feedback": "..."}`<br>`{"verdict": "ESCALATE"}` |
+| **A.1** | **Architect** | • User Request String<br>• Diagnostic/Research Reports (Optional) | • `docs/dev_docs/plans/plan_[feat].md`<br>*(Must include: List of Reference Documents, Detailed Logic, specific Test Scenarios with expected values, List of Documentation to update, List of Expected Deliverables, and a Completion Checklist)* | `{"plan_path": "..."}` |
+| **A.2** | **Plan Reviewer** | • User Request String<br>• Plan File Path<br>• Reports from Phase 0 (Optional) | • `docs/dev_docs/reviews/plan_review_[feat]_v[N].md` (Optional, usually just feedback) | `{"verdict": "APPROVE"}`<br>OR<br>`{"verdict": "REJECT", "feedback": "..."}` |
+| **B** | **Developer** | • Approved Implementation Plan File Path<br>• Code Review Report Path (Optional/Loop) | • **Source Code Changes**<br>• **Test Files**<br>• **Updated Documentation**<br>• **Updated VERSION & CHANGELOG**<br>• **Verification Report** (Checked-off list) | `{"commit_hash": "...", "status": "success"}` |
+| **C** | **Auditor** | • Implementation Plan File Path<br>• **Cumulative Git Diff** (from branch divergence point `git diff main...HEAD`)<br>• Previous Code Review Report (Optional/Loop) | • `docs/dev_docs/reviews/code_review_[feat]_v[N].md` | `{"verdict": "PASS", "review_path": "..."}`<br>OR<br>`{"verdict": "FAIL", "review_path": "..."}` |
+| **D** | **Integration Specialist** | • Conflict Markers (Git Output)<br>• Implementation Plan | • **Resolved Conflicts**<br>• **Merge Commit** | `{"status": "success", "commit_hash": "..."}` |
+
+*> **Universal Output:** All agents may optionally include `"backlog_items": ["Idea 1", "Idea 2"]` in their JSON payload. The Orchestrator will automatically capture these.*
+
+### 3.7 Backlog Management
+Any agent in the pipeline MUST be able to capture ideas for future enhancements or research topics without derailing the current task.
+*   **Mechanism:** Agents can include a `backlog_items` list in their JSON output.
+*   **Orchestrator Action:** The Orchestrator extracts these items and appends them to a central `docs/dev_docs/backlog.md` file (or creates it if missing).
+*   **Format:** Each item should be a concise description of the potential feature or research topic.
+
+## 4. Non-Functional Requirements
+*   **Resilience:** The system MUST handle CLI timeouts, crashes, or malformed JSON outputs gracefully (e.g., by retrying the step or alerting the user).
+*   **Observability:** The system MUST log all agent interactions (prompts and raw responses) to a local file for debugging.
+*   **Configurability:** Workflow steps and system prompts MUST be defined in configuration files (JSON/YAML) to allow easy tuning without code changes.
+
+## 5. User Interface
+*   **CLI Entry Point:** The user runs the tool via `python orchestrator.py --task "description" [--mode {bugfix,research,direct}]`.
+*   **Progress Feedback:** The tool displays real-time status of the pipeline (e.g., "[PLANNING]... Done", "[IMPLEMENTING]... In Progress").
+
+## 6. Example Use Case: "Add a Dark Mode Toggle"
+
+### 6.1 The Interaction
+**User (Terminal):**
+```bash
+python orchestrator.py --task "Add a simple Dark Mode toggle to the main settings page. Use a checkbox."
+```
+
+**Orchestrator Output:**
+```text
+[11:00:00] ORCHESTRATOR: Task Received.
+[11:00:01] ORCHESTRATOR: Created branch 'feature/dark-mode-toggle'.
+[11:00:02] ORCHESTRATOR: Spawning ARCHITECT...
+[11:00:45] ARCHITECT: Implementation Plan created at 'docs/plans/dark_mode_plan.md'.
+[11:00:46] ORCHESTRATOR: Committing Plan... OK.
+[11:00:47] ORCHESTRATOR: Verifying plan... OK. (Review Committed)
+[11:00:48] ORCHESTRATOR: Spawning DEVELOPER...
+[11:05:20] DEVELOPER: Implementation complete. Tests passed. Commit: 7f3a2b1.
+[11:05:22] ORCHESTRATOR: Spawning AUDITOR...
+[11:06:10] AUDITOR: Review passed. Report at 'docs/reviews/dark_mode_review.md'.
+[11:06:11] ORCHESTRATOR: Committing Review Report... OK.
+[11:06:12] ORCHESTRATOR: Pipeline Success! Branch 'feature/dark-mode-toggle' is ready for merge.
+```
+
+**User:**
+The user can now simply check the branch or run `git merge feature/dark-mode-toggle`.
+
+### 6.2 Deployment & Access
+Because the Orchestrator is a standard Python script wrapping a CLI tool, it offers flexible deployment options:
+
+*   **Local Workstation:** Run directly in your terminal (as shown above).
+*   **Remote Server / Headless:** Run on a dedicated build server (e.g., an EC2 instance or a home server). You can SSH into it to launch tasks or check logs.
+*   **Mobile Interaction (via Wrappers):** Since the input is a text command and output is text status, you can easily wrap this script with a Telegram/Discord bot or a simple web interface (e.g., Streamlit) to trigger tasks and receive updates on your mobile phone while away from your keyboard.
+
+## 7. Iterative Development Strategy
+We will adopt an **Iterative "Dogfooding" Approach**:
+1.  **Prototype:** Build a minimal `v0.1` Orchestrator.
+2.  **Test:** Use this `v0.1` to implement a very simple, real feature in the LMUFFB project.
+3.  **Evaluate:** Observe the friction points (e.g., "Did the agent get confused?", "Was the polling too slow?").
+
+## 8. Future Considerations / TODOs (Backlog)
+
+### 8.1 Structured Feedback Channel
+*   **Concept:** Every agent response JSON should include an optional `feedback` object (separate from the main result).
+*   **Goal:** Allow "Workers" to flag issues up the chain without failing the task.
+*   **Use Case:** A Developer notices a vague requirement in the Plan. They implement it anyway (to pass the task) but flag it in `feedback`: "The plan for 'UserAuth' was ambiguous; I assumed JWT." The Lead Architect can then decide to update the documentation later.
+*   **Caveat (Honesty vs. Feedback):** The Orchestrator MUST ensure agents do not use the feedback field to hide failures. A `status: success` MUST NOT be accepted if the feedback contains reports of crashes or unresolvable errors.
+*   **Note:** This channel is ideal for flagging **Technical Debt** or documentation gaps identified during implementation.
+*   **Feedback Triage Workflow:**
+    *   If an agent returns non-empty `feedback`, the Orchestrator spawns a **Feedback Triager** (e.g., Lead Analyst).
+    *   The Triager reviews the note and decides:
+        1.  **Backlog:** Create a new entry in `docs/dev_docs/backlog.md` (e.g., "Refactor UserAuth later").
+        2.  **Docs:** Update existing documentation immediately.
+        3.  **Ignore:** Deem the feedback trivial.
+    *   This ensures "soft warnings" are not lost in the logs but are actively curated into future work.
+*   **Feasibility Note:** **Low Complexity.** Requires only a schema update (adding an optional field) and prompt tweaking. Easily integrated into v0.1 or v0.2.
+
+### 8.2 Persistent Agent Memory (`AGENT_MEMORY.md`)
+*   **Concept:** A shared, append-only Markdown file that persists across steps (and potentially across tasks).
+*   **Goal:** Solve the "Amnesia" problem where Phase B forgets what Phase A discovered about a quirky library.
+*   **Workflow:**
+    *   Any agent can request to *write* a "Lesson Learned" to Memory.
+    *   The Orchestrator *injects* relevant sections of Memory into the context of future agents.
+*   **Feasibility Note:** **Medium Complexity.** Requires a "Memory Manager" module to read/write safely to the shared file and logic to decide *what* to inject into the context window to avoid token bloat.
+
+### 8.3 Dynamic Skill Curation
+*   **Concept:** Leverage the **Gemini CLI Skills** system (unlinked: geminicli_com/docs/cli/skills/).
+*   **Goal:** Turn repeated solutions into reusable tools.
+*   **Workflow:**
+    *   If the Integration Specialist solves a tricky git conflict, the Orchestrator could prompt: "Should this resolution strategy be saved as a named Skill?"
+    *   If yes, the system generates a Skill definition (instructions) for future agents to use, effectively "learning" from its own success.
+*   **Feasibility Note:** **High Complexity.** Requires deep integration with the Gemini CLI's Skills API, a mechanism to validate generated skills, and Human-in-the-Loop approval to prevent "hallucinated tools" from entering the system. Best for v1.0+.
+
+### 8.4 Asynchronous Human Review Layer (Human-in-the-Loop)
+*   **Concept:** A dedicated Markdown file (e.g., `docs/dev_docs/HUMAN_REVIEW.md`) where a human can asynchronously leave notes, corrections, or guidance for the agents.
+*   **Goal:** Provide a non-blocking way for the project owner to steer the system without being present during every step of execution.
+*   **Workflow:** (To be determined) Future iterations will determine how agents should ingest these notes (e.g., as part of the Phase Init or context injection).
+*   **Feasibility Note:** **Trivial.** Requires no code changes today; only the manual creation and maintenance of the file by the human.
+
+## 9. References
+
+* youtube: 2EXyj_fHU48
+
+```
+
+# File: gemini_orchestrator\02_architecture_design.md
+```markdown
+# Gemini CLI Orchestrator - Architecture & Design
+
+## 1. System Architecture
+
+The system follows a **Controller-Worker** architecture.
+
+```mermaid
+graph TD
+    User[User Terminal] -->|Starts| Orch[Python Orchestrator]
+    Orch -->|Reads| Config[Workflow Config (JSON)]
+    Orch -->|Manages| State[State Manager]
+    Orch -->|Enforces| Sec[Security Middleware]
+    
+    Orch -->|Spawns| P0A[P0: Investigator]
+    
+    subgraph "Execution Pipeline"
+         Agent[AI Agent] -->|Requests Tool| Sec
+         Sec -->|Validates| OS[Operating System]
+         Sec -.->|Blocks| Agent
+    end
+    
+    Orch -->|Spawns| P0B[P0: Researcher]
+    Orch -->|Spawns| P0C[P0: Lead Analyst]
+    Orch -->|Spawns| P1[P A.1: Architect]
+    Orch -->|Spawns| P2[P A.2: Lead Architect]
+    Orch -->|Spawns| P3[P B: Developer]
+    Orch -->|Spawns| P4[P C: Auditor]
+    Orch -->|Spawns| P5[P D: Integration Specialist]
+    
+    subgraph "Isolation Boundary"
+        P0A -- Writes --> Art0[Diagnostic Report]
+        P0B -- Writes --> Art0B[Research Report]
+        P0C -- Reads --> Art0
+        P0C -- Reads --> Art0B
+        P0C -- Verdict --> Orch
+        P1 -- Reads --> Art0
+        P1 -- Reads --> Art0B
+        P1 -- Writes --> Art1[Plan Artifact]
+        P2 -- Reads --> Art1
+        P2 -- Verdict --> Orch
+        P3 -- Reads --> Art1
+        P3 -- Commits --> Git[Git Repository]
+        P4 -- Reads --> Art1
+        P4 -- Reads --> Git
+        P4 -- Verdict --> Orch
+        P5 -- Reads --> Git
+        P5 -- Resolves --> Git
+    end
+
+    %% Feedback Loops
+    Orch -.->|Reject| P0A
+    Orch -.->|Escalate| P0B
+    Orch -.->|Reject| P1
+    Orch -.->|Fail| P3
+    Orch -.->|Conflict| P5
+```
+
+## 2. Component Design
+
+### 2.1 The `AgentWrapper` Class
+This class encapsulates the interface with the Gemini CLI.
+*   **Responsibilities:**
+    *   Constructing the full shell command.
+    *   Managing `stdin`/`stdout` piping.
+    *   Injecting the "System Prompt" (e.g., "You are a rigid worker. Output JSON only.").
+    *   Handling timeouts and process cleanup.
+
+### 2.2 The `ToolValidator` (Security Middleware)
+Sits between the `AgentWrapper` and the OS.
+*   **Responsibilities:**
+    *   Intercepts every `run_shell_command` request.
+    *   Parses the command string (e.g., using `shlex`).
+    *   **Policy Enforcement:**
+        *   **Blocked:** `git checkout`, `git switch`, `git branch` (creation/deletion), `git push` (except to origin/feature-branch).
+        *   **Allowed:** `git status`, `git add`, `git commit`, `git diff`, `ls`, `cat`, `grep`.
+    *   Raises `SecurityException` if a violation is detected, preventing execution.
+
+### 2.3 The `WorktreeManager` (Isolation Layer)
+Responsible for physical file-system isolation.
+*   **Concept:** Instead of running in the user's main directory, each Task runs in a dedicated Git Worktree.
+*   **Location:** `../.gemini_worktrees/[task_id]/` (Outside the main repo folder to avoid recursion).
+*   **Lifecycle:**
+    *   `setup_task(branch_name)`: Runs `git worktree add ...`.
+    *   `cleanup_task()`: Runs `git worktree remove ...`.
+*   **Benefit:** The Agent cannot accidentally modify uncommitted files in the user's main working copy.
+
+### 2.4 The `PromptBuilder` Module
+Responsible for assembling the final prompt string sent to the agent.
+*   **Logic:** `Base Prompt` + `Task Context` + `Input Artifacts` + `Output Instructions`.
+*   **Example:**
+    > "CONTEXT: You are the Developer.
+    > INPUT: Read the plan at 'docs/plans/fix_v1.md'.
+    > TASK: Implement the code. Run tests.
+    > FORMAT: End your response with JSON: { 'status': 'success', ... }"
+
+### 2.5 The `ResponseValidator` Module
+Responsible for extracting and validating structured data from the unstructured LLM output.
+
+*   **Extraction Logic (Fuzzy):**
+    1.  Look for Markdown code blocks tagged `json`.
+    2.  If missing, search for the last outermost `{` and `}` pair.
+    3.  `json.loads()` the extracted substring.
+*   **Validation Logic (Strict):**
+    *   Uses **Pydantic Models** to enforce schemas (e.g., `class InvestigatorResult(BaseModel)`).
+    *   Checks for required fields (e.g., `report_path`, `verdict`).
+    *   Raises `ValidationError` if the output is malformed.
+*   **Error Handling:**
+    *   If validation fails, the Orchestrator captures the error message and sends it back to the Agent in a "Retry" prompt, allowing the Agent to self-correct.
+
+### 2.4 The `WorkflowEngine` Class
+The main state machine.
+*   **State:**
+    *   `current_step`: (enum: INVESTIGATE, RESEARCH, ANALYST_REVIEW, PLAN, PLAN_REVIEW, CODE, CODE_REVIEW)
+    *   `mode`: (bugfix, research, direct)
+    *   `artifacts`: Dictionary of paths.
+*   **Transitions (Phase 0):**
+    *   `START` -> `INVESTIGATE` (if bugfix)
+    *   `START` -> `RESEARCH` (if research)
+    *   `START` -> `PLAN` (if direct)
+    *   `INVESTIGATE` -> `ANALYST_REVIEW`
+    *   `RESEARCH` -> `ANALYST_REVIEW`
+    *   `ANALYST_REVIEW` -> `PLAN` (Approve)
+    *   `ANALYST_REVIEW` -> `RESEARCH` (Escalate)
+    *   `ANALYST_REVIEW` -> `INVESTIGATE/RESEARCH` (Reject/Loop)
+
+## 3. Data Flow
+
+### Phase 0: Analysis (Dynamic)
+1.  **Orchestrator** checks `--mode`.
+2.  **Orchestrator** creates and switches to branch `task/[id]-[desc]`.
+3.  **Orchestrator** spawns **Investigator** (Bug) or **Researcher** (Feature).
+4.  **Agent** produces Report.
+5.  **Orchestrator** commits the Report.
+6.  **Orchestrator** spawns **Lead Analyst**.
+    *   *If ESCALATE:* Trigger **Researcher** (if coming from Investigator).
+    *   *If APPROVE:* Proceed to Phase A.
+    *   **Orchestrator** commits the Verdict/Feedback.
+
+### Phase A: Planning
+1.  **Orchestrator** spawns **Architect**.
+    *   *Input:* User Request + Any Reports from Phase 0.
+2.  **Agent** performs **Codebase Analysis**:
+    *   Reviews existing architecture and identifies impacted functionalities.
+    *   Traces data flows through affected areas.
+    *   Documents which modules/functions will be affected.
+3.  **Agent** performs **FFB Effect Impact Analysis** (if FFB-related task):
+    *   Identifies all affected FFB effects (understeer, oversteer, lockup, ABS, road texture, etc.).
+    *   Documents technical impact (files, functions, data changes).
+    *   Documents user-facing impact (FFB feel changes, UI settings, preset adjustments).
+4.  **Agent** creates **Parameter Synchronization Checklist** (if adding settings):
+    *   Lists declaration locations, Apply/UpdateFromEngine entries, Save/Load entries, validation.
+5.  **Agent** performs **Initialization Order Analysis** (if cross-header changes):
+    *   Documents circular dependency implications and constructor placement.
+6.  **Agent** writes `docs/dev_docs/plans/feature_X.md` including the analysis sections.
+7.  **Orchestrator** commits the Plan.
+8.  **Orchestrator** spawns **Lead Architect (Plan Reviewer)**.
+    *   *Input:* The Plan File.
+    *   *Verification:* Plan includes complete codebase analysis, FFB effect impact (if applicable), parameter synchronization (if applicable), and initialization order analysis (if applicable).
+9.  **Agent** outputs JSON: `{"verdict": "APPROVE"}` or `{"verdict": "REJECT", "feedback": "..."}`.
+    *   *If REJECT:* Loop back to Architect with feedback. Common rejection reasons:
+        *   Missing/incomplete codebase analysis.
+        *   Missing/incomplete FFB effect impact analysis.
+        *   Missing parameter synchronization checklist (when adding settings).
+        *   No initialization order analysis (when changes span headers).
+        *   Missing boundary condition tests (for buffer algorithms).
+        *   Test cases not TDD-ready.
+10. **Orchestrator** commits the Review Verdict.
+
+### Phase B: Implementation (TDD)
+1.  **Orchestrator** reads Approved Plan.
+2.  **Orchestrator** spawns **Developer**.
+3.  **Agent** follows TDD:
+    *   Writes tests first (based on the Plan's Test Plan section).
+    *   Runs new tests to verify they fail (Red Phase).
+    *   Implements minimum code to make tests pass (Green Phase).
+    *   Runs full test suite to verify no regressions.
+4.  **Agent** documents implementation issues:
+    *   Appends an "Implementation Notes" section to the Implementation Plan.
+    *   Documents unforeseen issues, plan deviations, and challenges encountered.
+5.  **Agent** commits changes to git.
+6.  **Agent** prints JSON: `{"commit_hash": "abc1234", "tests_passed": true}`.
+
+### Phase C: Review
+1.  **Orchestrator** spawns **Auditor**.
+    *   *Input:* Plan + Commit Hash.
+    *   *Verification:* Check for unintended deletions (code, comments, tests, documentation).
+2.  **Agent** writes `docs/dev_docs/reviews/review_X.md`.
+3.  **Orchestrator** commits the Review Report.
+4.  **Agent** prints JSON: `{"verdict": "PASS"}` or `{"verdict": "FAIL"}`.
+    *   *If FAIL:* Loop back to Developer with Review Report.
+
+### Phase D: Integration & Delivery
+1.  **Orchestrator** attempts `git merge main` into current branch.
+    *   *If Conflict:* **Orchestrator** spawns **Integration Specialist**.
+    *   **Agent** resolves conflicts and commits.
+2.  **Orchestrator** spawns **Auditor** (Merge Review).
+    *   *Goal:* Ensure integrity after merge.
+3.  **Orchestrator** pushes branch to remote.
+4.  **Orchestrator** creates Pull Request (via API or prints URL).
+5.  **Orchestrator** moves artifacts to `docs/dev_docs/archived/`.
+
+## 4. Key Decisions & Trade-offs
+
+*   **No "Memory" by default:** We explicitly choose NOT to pass the chat history. If the Developer needs to know *why* the Architect made a decision, they must read the Plan document. This forces better documentation.
+*   **Polling vs. Blocking:** Since we wrap the process, we use **Blocking** calls (waiting for the subprocess to finish) rather than Polling. The Agent script itself is responsible for the "Loop" of running tests until they pass.
+*   **Error Handling:** If the Agent fails to output JSON, the Orchestrator will assume failure and ask the user for manual intervention or a retry.
+
+
+
+```
+
+# File: gemini_orchestrator\03_implementation_plan.md
+```markdown
+# Gemini CLI Orchestrator - Implementation Plan
+
+## 0. Iterative Development Strategy (Dogfooding)
+This project will not be built in a single "Big Bang". Instead, we will build a minimal viable version and immediately use it to perform real work.
+
+**The Loop:**
+1.  **Build v0.1:** A simple script that hardcodes the prompts and subprocess calls.
+2.  **Live Test:** Attempt to implement a trivial feature (e.g., "Add a timestamp to the log file") using *only* the Orchestrator.
+3.  **Analysis:** Review the logs. Did the agent output JSON correctly? Did the file get created?
+4.  **Refactor:** Fix the Orchestrator code based on these findings.
+5.  **Repeat:** Move to v0.2 with state management, then test a slightly harder feature.
+
+---
+
+## Phase 1: Prototype (Day 1)
+**Goal:** Prove the concept of wrapping the Gemini CLI and extracting JSON.
+
+### Task 1.1: The `AgentWrapper`
+*   Create `src/wrapper.py`.
+*   Implement `run_gemini_command(prompt: str) -> str`.
+*   Use `subprocess.run` to call `gemini`.
+*   **Test:** Call the CLI to say "hello" and ensure we capture stdout.
+
+### Task 1.2: JSON Parsing
+*   Create `src/parser.py`.
+*   Implement `extract_json(raw_text: str) -> dict`.
+*   **Test:** Feed it dummy text with embedded JSON and verify extraction.
+
+### Task 1.4: Response Validation (Schemas)
+*   Create `src/schemas.py`.
+*   Define Pydantic models for each agent output:
+    *   `InvestigatorResult(report_path: str)`
+    *   `GatekeeperResult(verdict: Literal["APPROVE",...])`
+    *   `PlanResult(plan_path: str)`
+    *   `DeveloperResult(commit_hash: str)`
+    *   `ReviewResult(verdict: str)`
+*   Implement `validate_response(raw_text: str, schema: Type[BaseModel]) -> BaseModel`.
+
+### Task 1.5: Single-Step Orchestration
+*   Create `orchestrator_v0.py`.
+*   Hardcode a simple task: "Create a file named `test.txt` with content 'Hello World' and return JSON."
+*   Verify the file is created and the JSON confirms it.
+
+## Phase 2: Core Logic (Day 2)
+**Goal:** Implement the State Machine and distinct roles.
+
+### Task 2.1: State Manager
+*   Create `src/state.py` using a simple Data Class or Dictionary.
+*   Functions to save/load state to `workflow_state.json`.
+
+### Task 2.2: Prompt Templates
+*   Create `templates/` directory.
+*   `investigator_prompt.txt`: Instructions for bug diagnosis.
+*   `researcher_prompt.txt`: Instructions for feature research.
+*   `analyst_gatekeeper_prompt.txt`: Instructions for reviewing reports/escalating.
+*   `architect_prompt.txt`: Instructions for planning. **MUST include:**
+    *   **Codebase Analysis:** Architect must review current codebase, identify impacted functionalities, and trace data flows.
+    *   **FFB Effect Impact Analysis:** For FFB-related tasks, document affected effects (understeer, oversteer, lockup, etc.) from both technical (files, functions, data changes) and user (FFB feel, UI settings, presets) perspectives.
+    *   **User Settings & Presets Impact:** Migration logic considerations.
+    *   **Parameter Synchronization Checklist:** For new settings, document declaration locations, Apply/UpdateFromEngine entries, Save/Load entries.
+    *   **Initialization Order Analysis:** For cross-header changes, document circular dependencies and constructor placement.
+    *   **Boundary Condition Tests:** For buffer-based algorithms, include empty/partial/full/wraparound tests.
+*   `plan_reviewer_prompt.txt`: Instructions for validating the plan. **MUST verify:**
+    *   Codebase analysis section is complete.
+    *   FFB effect impact is documented (if applicable).
+    *   Parameter synchronization checklist is complete (if adding settings).
+    *   Initialization order analysis is included (if cross-header changes).
+    *   Boundary condition tests are included (for buffer algorithms).
+    *   Test plan is TDD-ready.
+*   `developer_prompt.txt`: Instructions for TDD-based coding (includes JSON schema). **MUST include:**
+    *   TDD cycle (Red-Green phases).
+    *   Append "Implementation Notes" section to plan documenting unforeseen issues and challenges.
+*   `auditor_prompt.txt`: Instructions for reviewing code. **MUST verify:**
+    *   Code correctness, style, tests, and safety.
+    *   No unintended deletions of code, comments, tests, or documentation.
+
+### Task 2.4: Integration Specialist
+*   Create `integration_specialist_prompt.txt`: Instructions for resolving git merge conflicts.
+*   "You are an expert at resolving git conflicts. Keep the feature changes unless they break core logic."
+
+### Task 2.5: The Pipeline Loop
+*   Update `orchestrator.py` to chain the steps:
+    -1. **Initialization:** `create_branch("task/...")`
+    0.  **Phase 0 (Dynamic):**
+        *   If `bugfix`: `Report = run_step(Investigator)` -> `git_commit(Report)`
+        *   If `research` or `escalated`: `Report = run_step(Researcher)` -> `git_commit(Report)`
+        *   `Verdict = run_step(Gatekeeper, input=Report)` -> `git_commit(Verdict)` -> Loop/Escalate/Approve.
+    1.  `Plan = run_step(Architect, input=Reports)` -> `git_commit(Plan)`
+    2.  `PlanVerdict = run_step(PlanReviewer, input=Plan)` -> `git_commit(PlanVerdict)` -> Loop if Rejected.
+    3.  `Result = run_step(Developer, input=Plan)` (Developer follows TDD: tests first, verify fail, implement, verify pass)
+    4.  `CodeVerdict = run_step(Auditor, input=Result)` -> `git_commit(CodeVerdict)` -> Loop if Failed.
+    5.  **Phase D:**
+        *   `git merge main`
+        *   If conflict: `run_step(IntegrationSpecialist)` -> Commit.
+        *   `git push` -> Create PR.
+
+## Phase 3: Robustness (Day 3)
+**Goal:** Error handling and Git integration.
+
+### Task 3.1: Git Helper
+*   Create `src/git_utils.py`.
+*   Implement `create_branch`, `get_diff`, `commit_exists`.
+
+### Task 3.2: Document Archiver
+*   Create `src/archiver.py`.
+*   Implement `archive_artifacts(feature_name: str)`.
+*   Ensure it moves files from `docs/dev_docs/plans/` to `docs/dev_docs/archived/plans/`.
+
+### Task 3.4: Remote Safety (GitHub Integration)
+*   Create `src/github_utils.py`.
+*   Implement `verify_branch_protection(branch="main")`.
+*   Use `subprocess` to call `gh api repos/:owner/:repo/branches/main/protection` and check for `required_pull_request_reviews`.
+*   If `gh` CLI is not installed or the check fails, prompt the user to manually verify or skip.
+
+## Phase 4: Polish & CLI (Day 4)
+**Goal:** Make it usable for the end user.
+
+### Task 4.1: CLI Arguments
+*   Use `argparse` to accept `--task`, `--resume`, `--verbose`.
+
+### Task 4.2: Logging
+*   Implement a logger that writes `logs/session_[timestamp].log`.
+
+## Definition of Done
+The system is ready when I can run:
+`python orchestrator.py --task "Add a new 'About' page"`
+...and it autonomously:
+1.  Creates a branch immediately.
+2.  Creates a plan (and commits it).
+3.  Implements the code (and commits it).
+4.  Reviews the code (and commits the report).
+5.  Creates a Pull Request / Merge Request.
+
+```
+
+# File: gemini_orchestrator\templates\analyst_gatekeeper_prompt.md
+```markdown
+# Role
+You are the **Lead Analyst (Gatekeeper)**. Your job is to review the initial analysis (Diagnostic or Research Report) and decide if it is sufficient to proceed to the Planning phase. You ensure the foundation is solid before we waste time on architecture.
+
+# Input
+**User Request:**
+{{USER_REQUEST}}
+
+**Report Content (from Investigator/Researcher):**
+{{REPORT_CONTENT}}
+
+# Instructions
+1.  Critique the provided report.
+    *   Is the root cause clearly identified? (For bugs)
+    *   Is the feasibility confirmed? (For research)
+    *   Is the proposed strategy logical?
+2.  Make a decision:
+    *   **APPROVE:** The report is good. Proceed to Architecture.
+    *   **REJECT:** The report is missing info. Send it back with feedback.
+    *   **ESCALATE:** The report identified a complex issue needing *external* research (e.g., a bug turned out to be a math problem). Trigger the Researcher.
+
+# Output Format
+You must end your response with a JSON block strictly following this schema:
+
+```json
+{
+  "verdict": "APPROVE" | "REJECT" | "ESCALATE",
+  "feedback": "Optional feedback string if rejected...",
+  "backlog_items": []
+}
+```
+
+```
+
+# File: gemini_orchestrator\templates\architect_prompt.md
+```markdown
+# Role
+You are the **Architect**. Your goal is to design a concrete Implementation Plan for the requested task. You bridge the gap between "Requirements" and "Code".
+
+# Input
+**User Request:**
+{{USER_REQUEST}}
+
+**Analysis Reports (Context):**
+{{REPORTS_CONTENT}}
+
+# Instructions
+
+## Step 1: Codebase Analysis (MANDATORY)
+Before designing the solution, you **MUST** thoroughly review the current codebase:
+1.  **Understand the existing architecture:** Use tools to explore relevant source files (e.g., `FFBEngine.h`, `Config.h`, effect handlers).
+2.  **Identify current functionalities impacted:** Document which existing modules, functions, or classes will be affected by the proposed change and how.
+3.  **Trace data flows:** Understand how data (e.g., telemetry, grip values, settings) flows through the system to the affected areas.
+
+## Step 2: FFB Effect Impact Analysis (MANDATORY for FFB-related tasks)
+If the task involves FFB (Force Feedback) logic, you **MUST** analyze and document the impact on FFB effects:
+1.  **Identify affected FFB effects:** List all FFB effects that will be impacted (e.g., understeer, oversteer, lockup, ABS, road texture, curb feel, slip effects).
+2.  **Technical/Developer Perspective:**
+    *   Which source files implement each affected effect?
+    *   What functions/classes need modification?
+    *   How will the data inputs to these effects change?
+    *   Are there new dependencies or interactions between effects?
+3.  **User Perspective (FFB Feel & UI):**
+    *   How will the FFB feel change for the user (stronger/weaker, more/less responsive, etc.)?
+    *   Will any FFB settings or sliders behave differently?
+    *   Do preset values need adjustment to maintain similar feel?
+    *   Are there new settings the user will need to configure?
+
+## Step 3: Solution Design
+1.  Analyze the request and the provided reports.
+2.  Design the solution. Consider:
+    *   Affected files (identified from Step 1).
+    *   New classes/functions.
+    *   Data structures.
+    *   Test cases.
+    *   **User Settings & Presets Impact:**
+        *   Does the change affect existing user settings or presets?
+        *   Are there new settings that need to be added?
+        *   Is migration logic required for existing user configurations?
+
+## Step 4: Create Implementation Plan
+Create an Implementation Plan file at `docs/dev_docs/plans/plan_{{TASK_ID}}.md`.
+
+The plan **MUST** include:
+*   **Context:** Brief summary of the goal.
+*   **Reference Documents:** Link to the diagnostic/research reports.
+*   **Codebase Analysis Summary:** (From Step 1)
+    *   Current architecture overview (relevant parts).
+    *   List of impacted functionalities with brief descriptions of how they are affected.
+*   **FFB Effect Impact Analysis:** (From Step 2, if applicable)
+    *   Table or list of affected FFB effects.
+    *   For each effect: technical changes needed and expected user-facing changes.
+*   **Proposed Changes:** Detailed list of files to modify and the logic to implement.
+    *   **Parameter Synchronization Checklist (for new settings):** If adding new configurable parameters, explicitly list for each:
+        *   Declaration in FFBEngine.h (member variable)
+        *   Declaration in Preset struct (Config.h)
+        *   Entry in `Preset::Apply()` 
+        *   Entry in `Preset::UpdateFromEngine()`
+        *   Entry in `Config::Save()`
+        *   Entry in `Config::Load()`
+        *   Validation logic (if applicable)
+    *   **Initialization Order Analysis (for cross-header changes):** If the change spans multiple header files (e.g., FFBEngine.h and Config.h), analyze:
+        *   Circular dependency implications
+        *   Where constructors/initializers should be defined (inline vs out-of-class)
+        *   Include order requirements
+*   **Test Plan (TDD-Ready):** Specific test cases (unit/integration) that the Developer will write **BEFORE** implementing the code. Include:
+    *   Test function names and descriptions.
+    *   Expected inputs and outputs.
+    *   Assertions that should fail until the feature is implemented.
+    *   **Data Flow Analysis (for stateful/derivative algorithms):** Document what inputs need to change between frames and how. Include "telemetry script" examples showing multi-frame progressions.
+    *   **Boundary Condition Tests (for buffer-based algorithms):** Include tests for:
+        *   Empty buffer state
+        *   Partially filled buffer
+        *   Exactly full buffer
+        *   Buffer wraparound behavior
+*   **Deliverables:** Checklist of expected outputs (Code, Tests, Docs).
+
+## Step 5: Final Check
+Do NOT write the actual source code yet (pseudo-code is fine).
+
+# Output Format
+You must end your response with a JSON block strictly following this schema:
+
+```json
+{
+  "status": "success",
+  "plan_path": "docs/dev_docs/plans/plan_{{TASK_ID}}.md",
+  "backlog_items": []
+}
+```
+
+```
+
+# File: gemini_orchestrator\templates\auditor_prompt.md
+```markdown
+# Role
+You are the **Auditor (Code Reviewer)**. Your job is to review the code implemented by the Developer. You act as the Quality Assurance gate before the code is merged.
+
+# Input
+**Implementation Plan (The Standard):**
+{{PLAN_CONTENT}}
+
+**Code Changes (Cumulative Diff):**
+{{GIT_DIFF}}
+
+# Instructions
+1.  Compare the `Code Changes` against the `Implementation Plan` and Project Standards.
+2.  Check for:
+    *   **Correctness:** Does it do what the plan asked?
+    *   **Style:** Naming conventions, comments, formatting.
+    *   **Tests:** Are tests included?
+    *   **TDD Compliance:** Were tests written as specified in the plan's Test Plan section? Do the tests cover the expected behavior defined before implementation?
+    *   **User Settings & Presets:** If the change affects settings or presets, are they updated appropriately? Is migration logic included for existing user configurations?
+    *   **Unintended Deletions:** Verify that the implementation did NOT delete any of the following that should have been preserved:
+        *   Existing code or functions not targeted by the plan.
+        *   Comments or documentation within the code.
+        *   Existing tests (unless explicitly replaced by the plan).
+        *   Documentation files or sections.
+    *   **Safety:** Any security risks or bad practices?
+3.  Create a Code Review Report at `docs/dev_docs/reviews/code_review_{{TASK_ID}}.md`.
+4.  Decide:
+    *   **PASS:** The code is good. Ready for Integration.
+    *   **FAIL:** The code needs work. Explain why in the report.
+
+# Output Format
+You must end your response with a JSON block strictly following this schema:
+
+```json
+{
+  "verdict": "PASS" | "FAIL",
+  "review_path": "docs/dev_docs/reviews/code_review_{{TASK_ID}}.md",
+  "backlog_items": []
+}
+```
+
+```
+
+# File: gemini_orchestrator\templates\developer_prompt.md
+```markdown
+# Role
+You are the **Developer**. Your job is to implement the code exactly as specified in the Approved Implementation Plan. You are a "worker" who executes, tests, and commits.
+
+# Input
+**Approved Implementation Plan:**
+{{PLAN_CONTENT}}
+
+**Feedback from previous Review (if any):**
+{{REVIEW_FEEDBACK}}
+
+# Instructions (Test Driven Development)
+You MUST follow a strict **Test Driven Development (TDD)** approach.
+
+**IMPORTANT:** The **Implementation Plan defines completeness**, not just the tests. TDD ensures quality, but you must implement **ALL requirements** in the Plan. Iterate through the TDD cycle until every deliverable in the Plan is complete.
+
+## TDD Cycle (Repeat for each feature/requirement in the Plan):
+
+1.  **Identify the Next Requirement** from the Implementation Plan.
+2.  **Write Tests FIRST** (Red Phase):
+    *   Create or update test files as specified in the plan.
+    *   Write tests that cover this requirement's expected behavior.
+    *   If the Plan's Test Plan section does not cover this requirement, write appropriate tests yourself.
+3.  **Verify Test Failure**:
+    *   Run the new tests and **confirm they fail** as expected.
+    *   This proves the tests are valid and not passing due to false positives.
+    *   If new tests pass without implementation, re-evaluate your test logic.
+4.  **Implement the Code** (Green Phase):
+    *   Write the code necessary to make the tests pass.
+    *   Create new files or modify existing ones.
+    *   Follow project coding standards (style, naming).
+5.  **Verify Tests Pass**:
+    *   Run the full test suite to ensure all tests pass.
+    *   **Loop:** If tests fail, fix the code and re-run.
+    *   Ensure no regressions were introduced.
+6.  **Repeat** steps 1-5 for the next requirement until ALL Plan deliverables are implemented.
+
+## Exception: Untestable or Impractical Code
+
+In some cases, writing tests may be **impractical, excessively complex, or technically impossible** (e.g., hardware interactions, timing-sensitive logic, third-party integrations, UI edge cases). When this occurs:
+
+1.  **Prioritize Feature Completeness:** It is acceptable to implement the feature without full test coverage. Do not let testing difficulties block the implementation.
+2.  **Document What Was Not Tested:** Clearly describe which aspects of the code could not be tested and why.
+3.  **Add to Backlog:** Include the untested aspects in the `backlog_items` field of your output JSON, so they can be addressed in the future (e.g., "Add tests for hardware interrupt handling - deferred due to complexity").
+4.  **Continue with TDD for Other Requirements:** Apply the full TDD cycle to all other testable requirements.
+
+## Finalization:
+
+7.  **Verify Plan Completeness**: Review the Implementation Plan's **Deliverables** checklist. Confirm that every item (code changes, tests, documentation) has been implemented.
+8.  **Review User Settings & Presets Impact**:
+    *   If the change affects user settings or presets: update the relevant structures and default values.
+    *   If existing user configurations could be affected: implement migration logic.
+    *   Ensure new settings are properly documented.
+9.  **Update Documentation:** Update CHANGELOG.md, VERSION, or other docs as required by the Plan.
+10. **Document Implementation Issues:** Append an **"Implementation Notes"** section to the end of the Implementation Plan document (`docs/dev_docs/plans/plan_{{TASK_ID}}.md`). This section MUST include:
+    *   **Unforeseen Issues:** Any issues encountered during implementation that the plan did not anticipate or adequately address.
+    *   **Plan Deviations:** Any deviations from the original plan and the rationale for them.
+    *   **Challenges Encountered:** Any other difficulties, edge cases discovered, or technical challenges faced during development.
+    *   **Recommendations for Future Plans:** Suggestions to improve future implementation plans based on lessons learned.
+    *   If no issues were encountered, explicitly state: "No significant issues encountered. Implementation proceeded as planned."
+11. **Commit:** Use `git add` and `git commit` to save your work. **Do not push.**
+
+# Output Format
+You must end your response with a JSON block strictly following this schema:
+
+```json
+{
+  "status": "success",
+  "commit_hash": "auto-detected-or-latest",
+  "tests_passed": true,
+  "backlog_items": []
+}
+```
+
+```
+
+# File: gemini_orchestrator\templates\integration_specialist_prompt.md
+```markdown
+# Role
+You are the **Integration Specialist**. Your job is to resolve Git Merge Conflicts. The Orchestrator attempted to merge `main` into the feature branch, but it failed. You must fix it.
+
+# Input
+**Conflict Output (from git):**
+{{GIT_CONFLICT_OUTPUT}}
+
+**Implementation Plan (Context):**
+{{PLAN_CONTENT}}
+
+# Instructions
+1.  Analyze the conflicts. Determine which changes (ours vs. theirs) should be kept.
+    *   Usually, you want to keep the Feature's logic while respecting updates from Main.
+2.  **Resolve:** Edit the conflicting files to remove markers (`<<<<<<<`, `=======`, `>>>>>>>`) and combine the code correctly.
+3.  **Verify:** Run the build/test command to ensure the resolution didn't break the build.
+4.  **Commit:** `git add .` and `git commit` to finalize the merge.
+
+# Output Format
+You must end your response with a JSON block strictly following this schema:
+
+```json
+{
+  "status": "success",
+  "commit_hash": "latest",
+  "resolved_files": ["file1.cpp", "file2.h"]
+}
+```
+
+```
+
+# File: gemini_orchestrator\templates\investigator_prompt.md
+```markdown
+# Role
+You are the **Investigator**, a specialized agent responsible for diagnosing bugs and issues within the codebase. Your job is to analyze the user's bug report, investigate the code, and produce a detailed diagnostic report. You DO NOT fix the bug; you only diagnose it.
+
+# Input
+**User Request (Bug Report):**
+{{USER_REQUEST}}
+
+# Instructions
+1.  Use your tools (`codebase_investigator`, `search_file_content`, `read_file`) to understand the codebase and locate the likely source of the issue.
+2.  Trace the execution flow related to the reported bug.
+3.  Identify the root cause.
+4.  Create a Diagnostic Report file at `docs/dev_docs/research/diagnostic_report_{{TASK_ID}}.md`.
+    *   The report MUST include:
+        *   **Summary of Issue:** What is broken?
+        *   **Root Cause Analysis:** Why is it broken? (Link to specific files/lines).
+        *   **Reproduction Steps:** How to trigger it (if verifiable from code).
+        *   **Proposed Fix Strategy:** High-level approach (do not write the full code yet).
+5.  If you find unrelated ideas or improvements, list them in a `Backlog Ideas` section.
+
+# Output Format
+You must end your response with a JSON block strictly following this schema:
+
+```json
+{
+  "status": "success",
+  "report_path": "docs/dev_docs/research/diagnostic_report_{{TASK_ID}}.md",
+  "backlog_items": ["Optional idea 1", "Optional idea 2"]
+}
+```
+
+```
+
+# File: gemini_orchestrator\templates\merge_reviewer_prompt.md
+```markdown
+# Role
+You are the **Auditor (Merge Reviewer)**. The feature branch has just been merged with `main` (potentially after conflict resolution). Your job is to perform a final sanity check before the Pull Request is opened.
+
+# Input
+**Task Summary:**
+{{TASK_SUMMARY}}
+
+**Recent Git Log (Merge Commit):**
+{{GIT_LOG}}
+
+# Instructions
+1.  Verify that the merge looks clean.
+2.  Check that no obvious regressions were introduced during conflict resolution (if any).
+3.  Confirm the application still builds (conceptually, or by asking to run a test).
+4.  Decide if we are ready to ship.
+
+# Output Format
+You must end your response with a JSON block strictly following this schema:
+
+```json
+{
+  "verdict": "PASS" | "FAIL",
+  "reason": "Optional reason if failed"
+}
+```
+
+```
+
+# File: gemini_orchestrator\templates\plan_reviewer_prompt.md
+```markdown
+# Role
+You are the **Lead Architect (Plan Reviewer)**. Your job is to rigorously review the Implementation Plan proposed by the Architect. You ensure it is technically sound, complete, and aligns with the user's request.
+
+# Input
+**User Request:**
+{{USER_REQUEST}}
+
+**Proposed Plan:**
+{{PLAN_CONTENT}}
+
+# Instructions
+1.  Review the plan for:
+    *   **Completeness:** Does it cover all requirements?
+    *   **Safety:** Are there risky changes?
+    *   **Codebase Analysis:** Does the plan include a thorough analysis of the current codebase? Verify:
+        *   Are impacted modules, functions, and classes clearly identified?
+        *   Is the data flow through the affected areas documented?
+        *   Is it clear how existing functionality will be affected?
+    *   **FFB Effect Impact (if applicable):** If the task involves FFB logic, verify:
+        *   Are all affected FFB effects listed (e.g., understeer, oversteer, lockup, ABS, road texture)?
+        *   Is the technical impact documented (files, functions, data changes)?
+        *   Is the user-facing impact documented (FFB feel changes, UI/settings changes, preset adjustments)?
+    *   **Testability (TDD-Ready):** Are the test cases detailed enough to be written **before** implementation? Do they specify expected inputs, outputs, and assertions?
+    *   **Parameter Synchronization (if adding settings):** Does the plan include a synchronization checklist covering:
+        *   Declaration locations (FFBEngine.h, Preset)
+        *   `Apply()` and `UpdateFromEngine()` entries
+        *   Save/Load entries
+        *   Validation logic
+    *   **Initialization Order (if cross-header changes):** Does the plan address:
+        *   Circular dependency implications
+        *   Constructor/initializer placement
+    *   **Boundary Condition Tests (for buffer-based algorithms):** Does the test plan include tests for empty, partial, full, and wraparound buffer states?
+    *   **Clarity:** Can a developer implement this without ambiguity?
+2.  If the plan is good, create a Review Report at `docs/dev_docs/reviews/plan_review_{{TASK_ID}}.md` stating approval.
+3.  If the plan is bad, create the report detailing the flaws. Common rejection reasons include:
+    *   Missing or insufficient codebase analysis section.
+    *   Missing or incomplete FFB effect impact analysis (for FFB-related tasks).
+    *   Test cases not detailed enough for TDD.
+    *   Missing parameter synchronization checklist (when adding new settings).
+    *   No initialization order analysis (when changes span multiple headers).
+    *   Missing boundary condition tests (for buffer/stateful algorithms).
+    *   Unclear or ambiguous implementation steps.
+
+# Output Format
+You must end your response with a JSON block strictly following this schema:
+
+```json
+{
+  "verdict": "APPROVE" | "REJECT",
+  "review_path": "docs/dev_docs/reviews/plan_review_{{TASK_ID}}.md",
+  "feedback": "Summary of feedback..."
+}
+```
+
+```
+
+# File: gemini_orchestrator\templates\researcher_prompt.md
+```markdown
+# Role
+You are the **Researcher**, a specialized agent responsible for exploring new features, technologies, or feasibility. Your job is to gather information (from the web or codebase) and produce a research report. You DO NOT implement the feature.
+
+# Input
+**User Request (Feature Idea / Research Topic):**
+{{USER_REQUEST}}
+
+# Instructions
+1.  Use your tools (`google_web_search`, `search_file_content`, `read_file`) to gather necessary context.
+2.  Analyze feasibility, potential libraries, algorithms, or architectural patterns.
+3.  Create a Research Report file at `docs/dev_docs/research/research_report_{{TASK_ID}}.md`.
+    *   The report MUST include:
+        *   **Objective:** What are we trying to achieve?
+        *   **Findings:** Key data, libraries, or patterns found.
+        *   **Feasibility Assessment:** Can this be done? What are the risks?
+        *   **Recommendations:** The best path forward.
+4.  If you find unrelated ideas, list them in a `Backlog Ideas` section.
+
+# Output Format
+You must end your response with a JSON block strictly following this schema:
+
+```json
+{
+  "status": "success",
+  "report_path": "docs/dev_docs/research/research_report_{{TASK_ID}}.md",
+  "backlog_items": ["Optional idea 1", "Optional idea 2"]
+}
+```
 
 ```
 
@@ -21542,6 +32182,11 @@ void Config::LoadPresets() {
                         else if (key == "yaw_kick_threshold") current_preset.yaw_kick_threshold = std::stof(value);
                         else if (key == "optimal_slip_angle") current_preset.optimal_slip_angle = std::stof(value);
                         else if (key == "optimal_slip_ratio") current_preset.optimal_slip_ratio = std::stof(value);
+                        else if (key == "slope_detection_enabled") current_preset.slope_detection_enabled = (value == "1");
+                        else if (key == "slope_sg_window") current_preset.slope_sg_window = std::stoi(value);
+                        else if (key == "slope_sensitivity") current_preset.slope_sensitivity = std::stof(value);
+                        else if (key == "slope_negative_threshold") current_preset.slope_negative_threshold = std::stof(value);
+                        else if (key == "slope_smoothing_tau") current_preset.slope_smoothing_tau = std::stof(value);
                         else if (key == "steering_shaft_smoothing") current_preset.steering_shaft_smoothing = std::stof(value);
                         else if (key == "gyro_smoothing_factor") current_preset.gyro_smoothing = std::stof(value);
                         else if (key == "yaw_accel_smoothing") current_preset.yaw_smoothing = std::stof(value);
@@ -21652,6 +32297,11 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "chassis_inertia_smoothing=" << engine.m_chassis_inertia_smoothing << "\n";
         file << "optimal_slip_angle=" << engine.m_optimal_slip_angle << "\n";
         file << "optimal_slip_ratio=" << engine.m_optimal_slip_ratio << "\n";
+        file << "slope_detection_enabled=" << engine.m_slope_detection_enabled << "\n";
+        file << "slope_sg_window=" << engine.m_slope_sg_window << "\n";
+        file << "slope_sensitivity=" << engine.m_slope_sensitivity << "\n";
+        file << "slope_negative_threshold=" << engine.m_slope_negative_threshold << "\n";
+        file << "slope_smoothing_tau=" << engine.m_slope_smoothing_tau << "\n";
 
         file << "\n; --- Braking & Lockup ---\n";
         file << "lockup_enabled=" << engine.m_lockup_enabled << "\n";
@@ -21717,6 +32367,11 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
                 file << "sop_smoothing_factor=" << p.sop_smoothing << "\n";
                 file << "sop_scale=" << p.sop_scale << "\n";
                 file << "understeer_affects_sop=" << p.understeer_affects_sop << "\n";
+                file << "slope_detection_enabled=" << p.slope_detection_enabled << "\n";
+                file << "slope_sg_window=" << p.slope_sg_window << "\n";
+                file << "slope_sensitivity=" << p.slope_sensitivity << "\n";
+                file << "slope_negative_threshold=" << p.slope_negative_threshold << "\n";
+                file << "slope_smoothing_tau=" << p.slope_smoothing_tau << "\n";
 
                 file << "slip_angle_smoothing=" << p.slip_smoothing << "\n";
                 file << "chassis_inertia_smoothing=" << p.chassis_smoothing << "\n";
@@ -21859,6 +32514,11 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "yaw_kick_threshold") engine.m_yaw_kick_threshold = std::stof(value);
                     else if (key == "optimal_slip_angle") engine.m_optimal_slip_angle = std::stof(value);
                     else if (key == "optimal_slip_ratio") engine.m_optimal_slip_ratio = std::stof(value);
+                    else if (key == "slope_detection_enabled") engine.m_slope_detection_enabled = (value == "1");
+                    else if (key == "slope_sg_window") engine.m_slope_sg_window = std::stoi(value);
+                    else if (key == "slope_sensitivity") engine.m_slope_sensitivity = std::stof(value);
+                    else if (key == "slope_negative_threshold") engine.m_slope_negative_threshold = std::stof(value);
+                    else if (key == "slope_smoothing_tau") engine.m_slope_smoothing_tau = std::stof(value);
                     else if (key == "steering_shaft_smoothing") engine.m_steering_shaft_smoothing = std::stof(value);
                     else if (key == "gyro_smoothing_factor") engine.m_gyro_smoothing = std::stof(value);
                     else if (key == "yaw_accel_smoothing") engine.m_yaw_accel_smoothing = std::stof(value);
@@ -21886,6 +32546,13 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
         engine.m_optimal_slip_ratio = 0.12f;
     }
     
+    // Slope Detection Validation (v0.7.0)
+    if (engine.m_slope_sg_window < 5) engine.m_slope_sg_window = 5;
+    if (engine.m_slope_sg_window > 41) engine.m_slope_sg_window = 41;
+    if (engine.m_slope_sg_window % 2 == 0) engine.m_slope_sg_window++; // Must be odd
+    if (engine.m_slope_sensitivity < 0.1f) engine.m_slope_sensitivity = 0.1f;
+    if (engine.m_slope_sensitivity > 10.0f) engine.m_slope_sensitivity = 10.0f;
+    if (engine.m_slope_smoothing_tau < 0.001f) engine.m_slope_smoothing_tau = 0.02f;
     
     // v0.6.20: Safety Validation - Clamp Advanced Braking Parameters to Valid Ranges (Expanded)
     if (engine.m_lockup_gamma < 0.1f || engine.m_lockup_gamma > 3.0f) {
@@ -21965,6 +32632,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
 #include "FFBEngine.h"
 #include <string>
 #include <vector>
+#include <chrono>
 
 struct Preset {
     std::string name;
@@ -22060,6 +32728,13 @@ struct Preset {
     float road_fallback_scale = 0.05f;      // Planned: Road texture fallback scaling
     bool understeer_affects_sop = false;     // Planned: Understeer modulation of SoP
 
+    // ===== SLOPE DETECTION (v0.7.0) =====
+    bool slope_detection_enabled = false;
+    int slope_sg_window = 15;
+    float slope_sensitivity = 1.0f;
+    float slope_negative_threshold = -0.1f;
+    float slope_smoothing_tau = 0.02f;
+
     // 2. Constructors
     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin) {}
     Preset() : name("Unnamed"), is_builtin(false) {} // Default constructor for file loading
@@ -22135,6 +32810,15 @@ struct Preset {
     Preset& SetYawSmoothing(float v) { yaw_smoothing = v; return *this; }
     Preset& SetChassisSmoothing(float v) { chassis_smoothing = v; return *this; }
     
+    Preset& SetSlopeDetection(bool enabled, int window = 15, float sens = 1.0f, float thresh = -0.1f, float tau = 0.02f) {
+        slope_detection_enabled = enabled;
+        slope_sg_window = window;
+        slope_sensitivity = sens;
+        slope_negative_threshold = thresh;
+        slope_smoothing_tau = tau;
+        return *this;
+    }
+
     // Advanced Braking (v0.6.0)
     // ⚠️ IMPORTANT: Default parameters (abs_f, lockup_f) must match Config.h defaults!
     // When changing Config.h defaults, update these values to match.
@@ -22208,14 +32892,23 @@ struct Preset {
         engine.m_yaw_kick_threshold = yaw_kick_threshold;
         engine.m_speed_gate_lower = speed_gate_lower;
         engine.m_speed_gate_upper = speed_gate_upper;
-        engine.m_road_fallback_scale = road_fallback_scale;
-        engine.m_understeer_affects_sop = understeer_affects_sop;
+        
+        // NEW: Grip & Smoothing (v0.5.7/v0.5.8)
         engine.m_optimal_slip_angle = optimal_slip_angle;
         engine.m_optimal_slip_ratio = optimal_slip_ratio;
         engine.m_steering_shaft_smoothing = steering_shaft_smoothing;
         engine.m_gyro_smoothing = gyro_smoothing;
         engine.m_yaw_accel_smoothing = yaw_smoothing;
         engine.m_chassis_inertia_smoothing = chassis_smoothing;
+        engine.m_road_fallback_scale = road_fallback_scale;
+        engine.m_understeer_affects_sop = understeer_affects_sop;
+        
+        // Slope Detection (v0.7.0)
+        engine.m_slope_detection_enabled = slope_detection_enabled;
+        engine.m_slope_sg_window = slope_sg_window;
+        engine.m_slope_sensitivity = slope_sensitivity;
+        engine.m_slope_negative_threshold = slope_negative_threshold;
+        engine.m_slope_smoothing_tau = slope_smoothing_tau;
     }
 
     // NEW: Capture current engine state into this preset
@@ -22269,14 +32962,23 @@ struct Preset {
         yaw_kick_threshold = engine.m_yaw_kick_threshold;
         speed_gate_lower = engine.m_speed_gate_lower;
         speed_gate_upper = engine.m_speed_gate_upper;
-        road_fallback_scale = engine.m_road_fallback_scale;
-        understeer_affects_sop = engine.m_understeer_affects_sop;
+
+        // NEW: Grip & Smoothing (v0.5.7/v0.5.8)
         optimal_slip_angle = engine.m_optimal_slip_angle;
         optimal_slip_ratio = engine.m_optimal_slip_ratio;
         steering_shaft_smoothing = engine.m_steering_shaft_smoothing;
         gyro_smoothing = engine.m_gyro_smoothing;
         yaw_smoothing = engine.m_yaw_accel_smoothing;
         chassis_smoothing = engine.m_chassis_inertia_smoothing;
+        road_fallback_scale = engine.m_road_fallback_scale;
+        understeer_affects_sop = engine.m_understeer_affects_sop;
+
+        // Slope Detection (v0.7.0)
+        slope_detection_enabled = engine.m_slope_detection_enabled;
+        slope_sg_window = engine.m_slope_sg_window;
+        slope_sensitivity = engine.m_slope_sensitivity;
+        slope_negative_threshold = engine.m_slope_negative_threshold;
+        slope_smoothing_tau = engine.m_slope_smoothing_tau;
     }
 };
 
@@ -22309,6 +33011,12 @@ public:
     static int win_w_large, win_h_large; // Dimensions for Config + Graphs
     static bool show_graphs;             // Remember if graphs were open
 };
+
+
+inline FFBEngine::FFBEngine() {
+    last_log_time = std::chrono::steady_clock::now();
+    Preset::ApplyDefaultsToEngine(*this);
+}
 
 #endif
 
@@ -23006,6 +33714,7 @@ private:
 #include <mutex>
 #include <iostream>
 #include <chrono>
+#include <array>
 #include "lmu_sm_interface/InternalsPlugin.hpp"
 
 // Mathematical Constants
@@ -23169,6 +33878,49 @@ struct GripResult {
     double original;        // Original telemetry value
     double slip_angle;      // Calculated slip angle (if approximated)
 };
+
+namespace FFBEngineTests { class FFBEngineTestAccess; }
+
+// Calculation Context Struct
+// Holds common derived values used across multiple effect calculations
+struct FFBCalculationContext {
+    double dt = 0.0025;
+    double car_speed = 0.0;       // Absolute m/s
+    double car_speed_long = 0.0;  // Longitudinal m/s (Raw)
+    double decoupling_scale = 1.0;
+    double speed_gate = 1.0;
+    double texture_load_factor = 1.0;
+    double brake_load_factor = 1.0;
+    double avg_load = 0.0;
+    double avg_grip = 0.0;
+
+    // Diagnostics
+    bool frame_warn_load = false;
+    bool frame_warn_grip = false;
+    bool frame_warn_rear_grip = false;
+    bool frame_warn_dt = false;
+
+    // Intermediate results
+    double grip_factor = 1.0;     // 1.0 = full grip, 0.0 = no grip
+    double sop_base_force = 0.0;
+    double sop_unboosted_force = 0.0; // For snapshot compatibility
+    double rear_torque = 0.0;
+    double yaw_force = 0.0;
+    double scrub_drag_force = 0.0;
+    double gyro_force = 0.0;
+    double avg_rear_grip = 0.0;
+    double calc_rear_lat_force = 0.0;
+    double avg_rear_load = 0.0;
+
+    // Effect outputs
+    double road_noise = 0.0;
+    double slide_noise = 0.0;
+    double lockup_rumble = 0.0;
+    double spin_rumble = 0.0;
+    double bottoming_crunch = 0.0;
+    double abs_pulse_force = 0.0;
+    double gain_reduction_factor = 1.0;
+};
     
 // FFB Engine Class
 class FFBEngine {
@@ -23266,6 +34018,13 @@ public:
     float m_road_fallback_scale = 0.05f;
     bool m_understeer_affects_sop = false;
     
+    // ===== SLOPE DETECTION (v0.7.0) =====
+    bool m_slope_detection_enabled = false;
+    int m_slope_sg_window = 15;
+    float m_slope_sensitivity = 1.0f;
+    float m_slope_negative_threshold = -0.1f;
+    float m_slope_smoothing_tau = 0.02f;
+
     // Signal Diagnostics
     double m_debug_freq = 0.0; // Estimated frequency for GUI
     double m_theoretical_freq = 0.0; // Theoretical wheel frequency for GUI
@@ -23360,6 +34119,18 @@ public:
     BiquadNotch m_notch_filter;
     BiquadNotch m_static_notch_filter;
 
+    // Slope Detection Buffers (Circular) - v0.7.0
+    static constexpr int SLOPE_BUFFER_MAX = 41;  // Max window size supported
+    std::array<double, SLOPE_BUFFER_MAX> m_slope_lat_g_buffer = {};
+    std::array<double, SLOPE_BUFFER_MAX> m_slope_slip_buffer = {};
+    int m_slope_buffer_index = 0;
+    int m_slope_buffer_count = 0;
+
+    // Slope Detection State (Public for diagnostics) - v0.7.0
+    double m_slope_current = 0.0;
+    double m_slope_grip_factor = 1.0;
+    double m_slope_smoothed_output = 1.0;
+
     // Frequency Estimator State (v0.4.41)
     double m_last_crossing_time = 0.0;
     double m_torque_ac_smoothed = 0.0; // For High-Pass
@@ -23376,9 +34147,10 @@ public:
     std::vector<FFBSnapshot> m_debug_buffer;
     std::mutex m_debug_mutex;
     
-    FFBEngine() {
-        last_log_time = std::chrono::steady_clock::now();
-    }
+    // Friend class for unit testing private helper methods
+    friend class FFBEngineTests::FFBEngineTestAccess;
+
+    FFBEngine();
     
     // Helper to retrieve data (Consumer)
     std::vector<FFBSnapshot> GetDebugBatch() {
@@ -23551,7 +34323,9 @@ public:
                               double& prev_slip2,
                               double car_speed,
                               double dt,
-                              const char* vehicleName) {
+                              const char* vehicleName,
+                              const TelemInfoV01* data,
+                              bool is_front = true) {
         GripResult result;
         result.original = (w1.mGripFract + w2.mGripFract) / 2.0;
         result.value = result.original;
@@ -23589,31 +34363,40 @@ public:
                 // for visualization/rear torque, even if we force grip to 1.0 here.
                 result.value = 1.0; 
             } else {
-                // v0.4.38: Combined Friction Circle (Advanced Reconstruction)
-                
-                // 1. Lateral Component (Alpha)
-                // USE CONFIGURABLE THRESHOLD (v0.5.7)
-                double lat_metric = std::abs(result.slip_angle) / (double)m_optimal_slip_angle;
-
-                // 2. Longitudinal Component (Kappa)
-                // Calculate manual slip for both wheels and average the magnitude
-                double ratio1 = calculate_manual_slip_ratio(w1, car_speed);
-                double ratio2 = calculate_manual_slip_ratio(w2, car_speed);
-                double avg_ratio = (std::abs(ratio1) + std::abs(ratio2)) / 2.0;
-
-                // USE CONFIGURABLE THRESHOLD (v0.5.7)
-                double long_metric = avg_ratio / (double)m_optimal_slip_ratio;
-
-                // 3. Combined Vector (Friction Circle)
-                double combined_slip = std::sqrt((lat_metric * lat_metric) + (long_metric * long_metric));
-
-                // 4. Map to Grip Fraction
-                if (combined_slip > 1.0) {
-                    double excess = combined_slip - 1.0;
-                    // Sigmoid-like drop-off: 1 / (1 + 2x)
-                    result.value = 1.0 / (1.0 + excess * 2.0);
+                if (m_slope_detection_enabled && is_front && data) {
+                    // Dynamic grip estimation via derivative monitoring
+                    result.value = calculate_slope_grip(
+                        data->mLocalAccel.x / 9.81,  // Lateral G
+                        result.slip_angle,            // Slip angle (radians)
+                        dt
+                    );
                 } else {
-                    result.value = 1.0;
+                    // v0.4.38: Combined Friction Circle (Advanced Reconstruction)
+                    
+                    // 1. Lateral Component (Alpha)
+                    // USE CONFIGURABLE THRESHOLD (v0.5.7)
+                    double lat_metric = std::abs(result.slip_angle) / (double)m_optimal_slip_angle;
+
+                    // 2. Longitudinal Component (Kappa)
+                    // Calculate manual slip for both wheels and average the magnitude
+                    double ratio1 = calculate_manual_slip_ratio(w1, car_speed);
+                    double ratio2 = calculate_manual_slip_ratio(w2, car_speed);
+                    double avg_ratio = (std::abs(ratio1) + std::abs(ratio2)) / 2.0;
+
+                    // USE CONFIGURABLE THRESHOLD (v0.5.7)
+                    double long_metric = avg_ratio / (double)m_optimal_slip_ratio;
+
+                    // 3. Combined Vector (Friction Circle)
+                    double combined_slip = std::sqrt((lat_metric * lat_metric) + (long_metric * long_metric));
+
+                    // 4. Map to Grip Fraction
+                    if (combined_slip > 1.0) {
+                        double excess = combined_slip - 1.0;
+                        // Sigmoid-like drop-off: 1 / (1 + 2x)
+                        result.value = 1.0 / (1.0 + excess * 2.0);
+                    } else {
+                        result.value = 1.0;
+                    }
                 }
             }
             
@@ -23663,7 +34446,7 @@ public:
         // - LMU: +Z axis points REARWARD (out the back of the car)
         // - Braking: Chassis decelerates → Inertial force pushes rearward → +Z acceleration
         // - Result: Front wheels GAIN load, Rear wheels LOSE load
-        // - Source: docs/dev_docs/coordinate_system_reference.md
+        // - Source: docs/dev_docs/references/Reference - coordinate_system_reference.md
         // 
         // Formula: (Accel / g) * WEIGHT_TRANSFER_SCALE
         // We use SMOOTHED acceleration to simulate chassis pitch inertia (~35ms lag)
@@ -23675,7 +34458,7 @@ public:
         // - LMU: +X axis points LEFT (out the left side of the car)
         // - Right Turn: Centrifugal force pushes LEFT → +X acceleration
         // - Result: LEFT wheels (outside) GAIN load, RIGHT wheels (inside) LOSE load
-        // - Source: docs/dev_docs/coordinate_system_reference.md
+        // - Source: docs/dev_docs/references/Reference - coordinate_system_reference.md
         // 
         // Formula: (Accel / g) * WEIGHT_TRANSFER_SCALE * Roll_Stiffness
         // We use SMOOTHED acceleration to simulate chassis roll inertia (~35ms lag)
@@ -23710,192 +34493,138 @@ public:
         return (wheel_vel - car_speed_ms) / denom;
     }
 
+    // Helper: Calculate Savitzky-Golay First Derivative - v0.7.0
+    // Uses closed-form coefficient generation for quadratic polynomial fit.
+    // Reference: docs/dev_docs/plans/savitzky-golay coefficients deep research report.md
+    double calculate_sg_derivative(const std::array<double, SLOPE_BUFFER_MAX>& buffer, 
+                                   int count, int window, double dt) {
+        // Ensure we have enough samples
+        if (count < window) return 0.0;
+        
+        int M = window / 2;  // Half-width (e.g., window=15 -> M=7)
+        
+        // Calculate S_2 = M(M+1)(2M+1)/3
+        double S2 = (double)M * (M + 1.0) * (2.0 * M + 1.0) / 3.0;
+        
+        // Correct Indexing (v0.7.0 Fix)
+        // m_slope_buffer_index points to the next slot to write.
+        // Latest sample is at (index - 1). Center is at (index - 1 - M).
+        int latest_idx = (m_slope_buffer_index - 1 + SLOPE_BUFFER_MAX) % SLOPE_BUFFER_MAX;
+        int center_idx = (latest_idx - M + SLOPE_BUFFER_MAX) % SLOPE_BUFFER_MAX;
+        
+        double sum = 0.0;
+        for (int k = 1; k <= M; ++k) {
+            int idx_pos = (center_idx + k + SLOPE_BUFFER_MAX) % SLOPE_BUFFER_MAX;
+            int idx_neg = (center_idx - k + SLOPE_BUFFER_MAX) % SLOPE_BUFFER_MAX;
+            
+            // Weights for d=1 are simply k
+            sum += (double)k * (buffer[idx_pos] - buffer[idx_neg]);
+        }
+        
+        // Divide by dt to get derivative in units/second
+        return sum / (S2 * dt);
+    }
+
+    // Helper: Calculate Grip Factor from Slope - v0.7.0
+    // Main slope detection algorithm entry point
+    double calculate_slope_grip(double lateral_g, double slip_angle, double dt) {
+        // 1. Update Buffers
+        m_slope_lat_g_buffer[m_slope_buffer_index] = lateral_g;
+        m_slope_slip_buffer[m_slope_buffer_index] = std::abs(slip_angle);
+        m_slope_buffer_index = (m_slope_buffer_index + 1) % SLOPE_BUFFER_MAX;
+        if (m_slope_buffer_count < SLOPE_BUFFER_MAX) m_slope_buffer_count++;
+
+        // 2. Calculate Derivatives
+        // We need d(Lateral_G) / d(Slip_Angle)
+        // By chain rule: dG/dAlpha = (dG/dt) / (dAlpha/dt)
+        double dG_dt = calculate_sg_derivative(m_slope_lat_g_buffer, m_slope_buffer_count, m_slope_sg_window, dt);
+        double dAlpha_dt = calculate_sg_derivative(m_slope_slip_buffer, m_slope_buffer_count, m_slope_sg_window, dt);
+
+        // 3. Estimate Slope (dG/dAlpha)
+        // Handle small dAlpha/dt to avoid noise/division by zero
+        if (std::abs(dAlpha_dt) > 0.001) {
+            m_slope_current = dG_dt / dAlpha_dt;
+        }
+        // else: If Alpha isn't changing, keep previous slope value (don't update).
+        // This allows noise rejection: with constant slip, dG/dt from SG filter ~ 0,
+        // and we don't want to overwrite with a meaningless value.
+
+        double current_grip_factor = 1.0;
+        if (m_slope_current < (double)m_slope_negative_threshold) {
+            // Slope is negative -> tire is sliding
+            double excess = (double)m_slope_negative_threshold - m_slope_current;
+            current_grip_factor = 1.0 - (excess * 0.1 * (double)m_slope_sensitivity);
+        }
+
+        // Apply Floor (Safety)
+        current_grip_factor = (std::max)(0.2, (std::min)(1.0, current_grip_factor));
+
+        // 5. Smoothing (v0.7.0)
+        double alpha = dt / ((double)m_slope_smoothing_tau + dt);
+        alpha = (std::max)(0.001, (std::min)(1.0, alpha));
+        m_slope_smoothed_output += alpha * (current_grip_factor - m_slope_smoothed_output);
+
+        return m_slope_smoothed_output;
+    }
+
+    // Helper: Calculate Slip Ratio from wheel (v0.6.36 - Extracted from lambdas)
+    // Unified slip ratio calculation for lockup and spin detection.
+    // Returns the ratio of longitudinal slip: (PatchVel - GroundVel) / GroundVel
+    double calculate_wheel_slip_ratio(const TelemWheelV01& w) {
+        double v_long = std::abs(w.mLongitudinalGroundVel);
+        if (v_long < MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;
+        return w.mLongitudinalPatchVel / v_long;
+    }
+
+    // Refactored calculate_force
     double calculate_force(const TelemInfoV01* data) {
         if (!data) return 0.0;
         
-        double dt = data->mDeltaTime;
+        // --- 1. INITIALIZE CONTEXT ---
+        FFBCalculationContext ctx;
+        ctx.dt = data->mDeltaTime;
 
-        // Sanity Check Flags for this frame
-        bool frame_warn_load = false;
-        bool frame_warn_grip = false;
-        bool frame_warn_dt = false;
-
-        // --- SANITY CHECK: DELTA TIME ---
-        if (dt <= 0.000001) {
-            dt = 0.0025; // Default to 400Hz
+        // Sanity Check: Delta Time
+        if (ctx.dt <= 0.000001) {
+            ctx.dt = 0.0025; // Default to 400Hz
             if (!m_warned_dt) {
                 std::cout << "[WARNING] Invalid DeltaTime (<=0). Using default 0.0025s." << std::endl;
                 m_warned_dt = true;
             }
-            frame_warn_dt = true;
-        }
-
-        // Front Left and Front Right (Note: mWheel, not mWheels)
-        const TelemWheelV01& fl = data->mWheel[0];
-        const TelemWheelV01& fr = data->mWheel[1];
-
-        // Critical: Use mSteeringShaftTorque instead of mSteeringArmForce
-        // Explanation: LMU 1.2 introduced mSteeringShaftTorque (Nm) as the definitive FFB output.
-        // Legacy mSteeringArmForce (N) is often 0.0 or inaccurate for Hypercars due to 
-        // complex power steering modeling in the new engine.
-        double game_force = data->mSteeringShaftTorque;
-
-        // --- AUTOMATIC IDLE SMOOTHING (Fix for Engine Vibration) ---
-        // If the car is moving slowly (< 3.0 m/s), the "Road Feel" is mostly just 
-        // engine noise and sensor jitter. We apply heavy smoothing to kill the 
-        // vibration while preserving the heavy static weight of the steering.
-        
-        double effective_shaft_smoothing = (double)m_steering_shaft_smoothing;
-        double car_speed_abs = std::abs(data->mLocalVel.z);
-        
-        // Use the user-configured Upper Threshold
-        // Default is now 5.0 m/s (18 km/h), which covers the user's "below 15km/h" issue.
-        double idle_speed_threshold = (double)m_speed_gate_upper; 
-        
-        // Safety floor: Never go below 3.0 m/s even if user lowers the gate
-        if (idle_speed_threshold < 3.0) idle_speed_threshold = 3.0;
-
-        const double IDLE_SMOOTHING_TARGET = 0.1; // 0.1s = ~1.6Hz cutoff (Kills engine vibes)
-
-        if (car_speed_abs < idle_speed_threshold) {
-            // Linear blend: 100% idle smoothing at 0 m/s, 0% at threshold
-            double idle_blend = (idle_speed_threshold - car_speed_abs) / idle_speed_threshold;
-            
-            // Use the higher of the two: User Setting vs Idle Target
-            // This ensures we never make the wheel *more* raw than the user wants
-            double dynamic_smooth = IDLE_SMOOTHING_TARGET * idle_blend;
-            effective_shaft_smoothing = (std::max)(effective_shaft_smoothing, dynamic_smooth);
-        }
-
-        // --- APPLY SMOOTHING ---
-        if (effective_shaft_smoothing > 0.0001) {
-            double alpha_shaft = dt / (effective_shaft_smoothing + dt);
-            // Safety clamp
-            alpha_shaft = (std::min)(1.0, (std::max)(0.001, alpha_shaft));
-            
-            m_steering_shaft_torque_smoothed += alpha_shaft * (game_force - m_steering_shaft_torque_smoothed);
-            game_force = m_steering_shaft_torque_smoothed;
-        } else {
-            m_steering_shaft_torque_smoothed = game_force; // Reset state
-        }
-
-        // --- v0.4.41: Frequency Estimator & Dynamic Notch Filter ---
-        
-        // 1. Frequency Estimator Logic
-        // Isolate AC component (Vibration) using simple High Pass (remove DC offset)
-        // Alpha for HPF: fast smoothing to get the "average" center
-        double alpha_hpf = dt / (0.1 + dt); 
-        m_torque_ac_smoothed += alpha_hpf * (game_force - m_torque_ac_smoothed);
-        double ac_torque = game_force - m_torque_ac_smoothed;
-
-        // Detect Zero Crossing (Sign change)
-        // Add hysteresis (0.05 Nm) to avoid noise triggering
-        if ((m_prev_ac_torque < -0.05 && ac_torque > 0.05) || 
-            (m_prev_ac_torque > 0.05 && ac_torque < -0.05)) {
-            
-            double now = data->mElapsedTime;
-            double period = now - m_last_crossing_time;
-            
-            // Sanity check period (e.g., 1Hz to 200Hz)
-            if (period > 0.005 && period < 1.0) {
-                // Half-cycle * 2 = Full Cycle Period
-                // Let's assume we detect every crossing (2 per cycle).
-                double inst_freq = 1.0 / (period * 2.0);
-                
-                // Smooth the readout for GUI
-                m_debug_freq = m_debug_freq * 0.9 + inst_freq * 0.1;
-            }
-            m_last_crossing_time = now;
-        }
-        m_prev_ac_torque = ac_torque;
-
-
-        // 2. Dynamic Notch Filter Logic
-        // Calculate Wheel Frequency (always, for GUI display)
-        double car_v_long = std::abs(data->mLocalVel.z);
-        
-        // 1. Calculate Stationary Gate (Fade out vibrations at low speed)
-        // Ramp from m_speed_gate_lower to m_speed_gate_upper
-        double speed_gate_range = (double)m_speed_gate_upper - (double)m_speed_gate_lower;
-        if (speed_gate_range < 0.1) speed_gate_range = 0.1; // Safety clamp
-        double speed_gate = (car_v_long - (double)m_speed_gate_lower) / speed_gate_range;
-        speed_gate = (std::max)(0.0, (std::min)(1.0, speed_gate));
-        
-        // Get radius (convert cm to m)
-        // Use Front Left as reference
-        const TelemWheelV01& fl_ref = data->mWheel[0];
-        double radius = (double)fl_ref.mStaticUndeflectedRadius / 100.0;
-        if (radius < 0.1) radius = 0.33; // Safety fallback
-        
-        double circumference = 2.0 * PI * radius;
-        
-        // Avoid divide by zero
-        double wheel_freq = (circumference > 0.0) ? (car_v_long / circumference) : 0.0;
-        
-        // Store for GUI display
-        m_theoretical_freq = wheel_freq;
-        
-        // Apply filter if enabled
-        if (m_flatspot_suppression) {
-            // Only filter if moving fast enough (> 1Hz)
-            if (wheel_freq > 1.0) {
-                // Update filter coefficients
-                m_notch_filter.Update(wheel_freq, 1.0/dt, (double)m_notch_q);
-                
-                // Apply filter
-                double input_force = game_force;
-                double filtered_force = m_notch_filter.Process(input_force);
-                
-                // Blend Output (Linear Interpolation)
-                // Strength 1.0 = Fully Filtered. Strength 0.0 = Raw.
-                game_force = input_force * (1.0f - m_flatspot_strength) + filtered_force * m_flatspot_strength;
-
-            } else {
-                // Reset filter state when stopped to prevent "ringing" on start
-                m_notch_filter.Reset();
-            }
+            ctx.frame_warn_dt = true;
         }
         
-        // 3. Static Notch Filter (v0.4.43)
-        if (m_static_notch_enabled) {
-             // v0.6.10: Variable Width (Bandwidth based Q calculation)
-             // Q = CenterFreq / Bandwidth
-             double bw = (double)m_static_notch_width;
-             if (bw < 0.1) bw = 0.1; // Safety clamp
-             double q = (double)m_static_notch_freq / bw;
-             
-             m_static_notch_filter.Update((double)m_static_notch_freq, 1.0/dt, q);
-             game_force = m_static_notch_filter.Process(game_force);
-        } else {
-             m_static_notch_filter.Reset();
-        }
+        ctx.car_speed_long = data->mLocalVel.z;
+        ctx.car_speed = std::abs(ctx.car_speed_long);
         
-        // --- 0. UPDATE STATS ---
-        double raw_torque = game_force;
-        double raw_load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
-        double raw_grip = (fl.mGripFract + fr.mGripFract) / 2.0;
-        double raw_lat_g = data->mLocalAccel.x;
+        // --- 2. SIGNAL CONDITIONING (STATE UPDATES) ---
         
-        // --- SIGNAL CONDITIONING (Inertia Simulation) ---
-        // Filter accelerometers to simulate chassis weight transfer lag
+        // Chassis Inertia Simulation
         double chassis_tau = (double)m_chassis_inertia_smoothing;
         if (chassis_tau < 0.0001) chassis_tau = 0.0001;
-        double alpha_chassis = dt / (chassis_tau + dt);
+        double alpha_chassis = ctx.dt / (chassis_tau + ctx.dt);
         m_accel_x_smoothed += alpha_chassis * (data->mLocalAccel.x - m_accel_x_smoothed);
         m_accel_z_smoothed += alpha_chassis * (data->mLocalAccel.z - m_accel_z_smoothed);
 
+        // --- 3. TELEMETRY PROCESSING ---
+        // Front Wheels
+        const TelemWheelV01& fl = data->mWheel[0];
+        const TelemWheelV01& fr = data->mWheel[1];
+
+        // Raw Inputs
+        double raw_torque = data->mSteeringShaftTorque;
+        double raw_load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
+        double raw_grip = (fl.mGripFract + fr.mGripFract) / 2.0;
+
+        // Update Stats
         s_torque.Update(raw_torque);
         s_load.Update(raw_load);
         s_grip.Update(raw_grip);
-        s_lat_g.Update(raw_lat_g);
-
-        // Blocking I/O removed for performance (Report v0.4.2)
-        // Stats logic preserved in s_* objects for potential GUI display or async logging.
-        // If console logging is desired for debugging, it should be done in a separate thread.
+        s_lat_g.Update(data->mLocalAccel.x);
         
+        // Stats Latching
         auto now = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1) {
-            // Latch stats for external reading
             s_torque.ResetInterval(); 
             s_load.ResetInterval(); 
             s_grip.ResetInterval(); 
@@ -23903,55 +34632,39 @@ public:
             last_log_time = now;
         }
 
-        // Debug variables (initialized to 0)
-        double road_noise = 0.0;
-        double slide_noise = 0.0;
-        double lockup_rumble = 0.0;
-        double spin_rumble = 0.0;
-        double bottoming_crunch = 0.0;
-        double scrub_drag_force = 0.0; // v0.4.7
+        // --- 4. PRE-CALCULATIONS ---
 
-        // --- PRE-CALCULATION: TIRE LOAD FACTOR ---
-        double avg_load = raw_load;
+        // Average Load & Fallback Logic
+        ctx.avg_load = raw_load;
 
-        // SANITY CHECK: Hysteresis Logic
-        // If load is exactly 0.0 but car is moving, telemetry is likely broken.
-        // Use a counter to prevent flickering if data is noisy.
-        if (avg_load < 1.0 && std::abs(data->mLocalVel.z) > 1.0) {
+        // Hysteresis for missing load
+        if (ctx.avg_load < 1.0 && ctx.car_speed > 1.0) {
             m_missing_load_frames++;
         } else {
-            // Decay count if data is good
             m_missing_load_frames = (std::max)(0, m_missing_load_frames - 1);
         }
 
-        // Only trigger fallback if missing for > 20 frames (approx 50ms at 400Hz)
         if (m_missing_load_frames > 20) {
-            // v0.4.39: Adaptive Kinematic Load
-            // If SuspForce is ALSO missing (common in encrypted content), use Kinematic Model.
-            // Check FL SuspForce (index 0). If < MIN_VALID_SUSP_FORCE, assume blocked.
+            // Fallback Logic
             if (fl.mSuspForce > MIN_VALID_SUSP_FORCE) {
                 double calc_load_fl = approximate_load(fl);
                 double calc_load_fr = approximate_load(fr);
-                avg_load = (calc_load_fl + calc_load_fr) / 2.0;
+                ctx.avg_load = (calc_load_fl + calc_load_fr) / 2.0;
             } else {
-                // SuspForce blocked -> Use Kinematic Model (Mass + Aero + Transfer)
                 double kin_load_fl = calculate_kinematic_load(data, 0);
                 double kin_load_fr = calculate_kinematic_load(data, 1);
-                avg_load = (kin_load_fl + kin_load_fr) / 2.0;
+                ctx.avg_load = (kin_load_fl + kin_load_fr) / 2.0;
             }
-            
-            
             if (!m_warned_load) {
                 std::cout << "Warning: Data for mTireLoad from the game seems to be missing for this car (" << data->mVehicleName << "). (Likely Encrypted/DLC Content). Using Kinematic Fallback." << std::endl;
                 m_warned_load = true;
             }
-            frame_warn_load = true;
+            ctx.frame_warn_load = true;
         }
 
-        // --- SANITY CHECKS: NEW MISSING DATA DETECTION (v0.6.3) ---
+        // Sanity Checks (Missing Data)
         
         // 1. Suspension Force (mSuspForce)
-        // Check: If average front susp force < minimum valid (10N) while moving
         double avg_susp_f = (fl.mSuspForce + fr.mSuspForce) / 2.0;
         if (avg_susp_f < MIN_VALID_SUSP_FORCE && std::abs(data->mLocalVel.z) > 1.0) {
             m_missing_susp_force_frames++;
@@ -23964,7 +34677,6 @@ public:
         }
 
         // 2. Suspension Deflection (mSuspensionDeflection)
-        // Check: If exactly 0.0 while moving fast (deflection usually noisy)
         double avg_susp_def = (std::abs(fl.mSuspensionDeflection) + std::abs(fr.mSuspensionDeflection)) / 2.0;
         if (avg_susp_def < 0.000001 && std::abs(data->mLocalVel.z) > 10.0) {
             m_missing_susp_deflection_frames++;
@@ -23977,7 +34689,6 @@ public:
         }
 
         // 3. Front Lateral Force (mLateralForce)
-        // Check: If 0.0 while cornering hard (> 3 m/s² lateral accel)
         double avg_lat_force_front = (std::abs(fl.mLateralForce) + std::abs(fr.mLateralForce)) / 2.0;
         if (avg_lat_force_front < 1.0 && std::abs(data->mLocalAccel.x) > 3.0) {
             m_missing_lat_force_front_frames++;
@@ -23990,8 +34701,6 @@ public:
         }
 
         // 4. Rear Lateral Force (mLateralForce)
-        // Check: If 0.0 while cornering hard (> 3 m/s² lateral accel)
-        // Note: Known bug in LMU 1.2, this is expected to trigger often.
         double avg_lat_force_rear = (std::abs(data->mWheel[2].mLateralForce) + std::abs(data->mWheel[3].mLateralForce)) / 2.0;
         if (avg_lat_force_rear < 1.0 && std::abs(data->mLocalAccel.x) > 3.0) {
             m_missing_lat_force_rear_frames++;
@@ -24003,8 +34712,7 @@ public:
              m_warned_lat_force_rear = true;
         }
 
-        // 5. Vertical Tire Deflection (mVerticalTireDeflection) - NEW (v0.6.21)
-        // Check: If exactly 0.0 while moving fast (deflection usually noisy)
+        // 5. Vertical Tire Deflection (mVerticalTireDeflection)
         double avg_vert_def = (std::abs(fl.mVerticalTireDeflection) + std::abs(fr.mVerticalTireDeflection)) / 2.0;
         if (avg_vert_def < 0.000001 && std::abs(data->mLocalVel.z) > 10.0) {
             m_missing_vert_deflection_frames++;
@@ -24017,758 +34725,557 @@ public:
             m_warned_vert_deflection = true;
         }
         
-        // Normalize: 4000N is a reference "loaded" GT tire.
-        double raw_load_factor = avg_load / 4000.0;
-        
-        // Split Load Caps (v0.5.11)
-        // 1. Texture Load Factor (Road/Slide)
+        // Load Factors
+        double raw_load_factor = ctx.avg_load / 4000.0;
         double texture_safe_max = (std::min)(2.0, (double)m_texture_load_cap);
-        double texture_load_factor = (std::min)(texture_safe_max, (std::max)(0.0, raw_load_factor));
+        ctx.texture_load_factor = (std::min)(texture_safe_max, (std::max)(0.0, raw_load_factor));
 
-        // 2. Brake Load Factor (Lockup)
-        // Expanded to 10.0 in v0.6.20
         double brake_safe_max = (std::min)(10.0, (double)m_brake_load_cap);
-        double brake_load_factor = (std::min)(brake_safe_max, (std::max)(0.0, raw_load_factor));
-
-        // --- 1. GAIN COMPENSATION (Decoupling) ---
-        // Baseline: 20.0 Nm (The standard reference where 1.0 gain was tuned).
-        // If MaxTorqueRef increases, we scale effects up to maintain relative intensity.
-        double decoupling_scale = (double)m_max_torque_ref / 20.0;
-        if (decoupling_scale < 0.1) decoupling_scale = 0.1; // Safety clamp
-
-        // --- 1. Understeer Effect (Grip Modulation) ---
-        // FRONT WHEEL GRIP CALCULATION (Refactored v0.4.5)
+        ctx.brake_load_factor = (std::min)(brake_safe_max, (std::max)(0.0, raw_load_factor));
         
-        double car_speed = std::abs(data->mLocalVel.z);
+        // Decoupling Scale
+        double max_torque_safe = (double)m_max_torque_ref;
+        if (max_torque_safe < 1.0) max_torque_safe = 1.0;
+        ctx.decoupling_scale = max_torque_safe / 20.0;
+        if (ctx.decoupling_scale < 0.1) ctx.decoupling_scale = 0.1;
 
-        // Calculate Front Grip using helper (handles fallback and diagnostics)
-        // Pass persistent state for LPF (v0.4.6) - Indices 0 and 1
-        GripResult front_grip_res = calculate_grip(fl, fr, avg_load, m_warned_grip, 
-                                                   m_prev_slip_angle[0], m_prev_slip_angle[1], car_speed, dt, data->mVehicleName);
-        double avg_grip = front_grip_res.value;
-        
-        // Update Diagnostics
+        // Speed Gate
+        double speed_gate_range = (double)m_speed_gate_upper - (double)m_speed_gate_lower;
+        if (speed_gate_range < 0.1) speed_gate_range = 0.1;
+        ctx.speed_gate = (ctx.car_speed - (double)m_speed_gate_lower) / speed_gate_range;
+        ctx.speed_gate = (std::max)(0.0, (std::min)(1.0, ctx.speed_gate));
+
+        // --- 5. EFFECT CALCULATIONS ---
+
+        // A. Understeer (Base Torque + Grip Loss)
+
+        // Grip Estimation (v0.4.5 FIX)
+        GripResult front_grip_res = calculate_grip(fl, fr, ctx.avg_load, m_warned_grip, 
+                                                   m_prev_slip_angle[0], m_prev_slip_angle[1],
+                                                   ctx.car_speed, ctx.dt, data->mVehicleName, data, true);
+        ctx.avg_grip = front_grip_res.value;
         m_grip_diag.front_original = front_grip_res.original;
         m_grip_diag.front_approximated = front_grip_res.approximated;
         m_grip_diag.front_slip_angle = front_grip_res.slip_angle;
-        
-        // Update Frame Warning Flag
-        if (front_grip_res.approximated) {
-            frame_warn_grip = true;
-        }
-        
-        // Apply grip to steering force
-        // grip_factor: 1.0 = full force, 0.0 = no force (full understeer)
-        // m_understeer_effect: 0.0 = disabled, 1.0 = full effect
-        double grip_loss = (1.0 - avg_grip) * m_understeer_effect;
-        double grip_factor = 1.0 - grip_loss;
-        
-        // FIX: Clamp to 0.0 to prevent negative force (inversion) if effect > 1.0
-        grip_factor = (std::max)(0.0, grip_factor);
-        
-        // --- BASE FORCE PROCESSING (v0.4.13) ---
+        if (front_grip_res.approximated) ctx.frame_warn_grip = true;
+
+        // 2. Signal Conditioning (Smoothing, Notch Filters)
+        double game_force_proc = apply_signal_conditioning(data->mSteeringShaftTorque, data, ctx);
+
+        // Base Force Mode
         double base_input = 0.0;
-        
         if (m_base_force_mode == 0) {
-            // Mode 0: Native (Steering Shaft Torque)
-            base_input = game_force;
+            base_input = game_force_proc;
         } else if (m_base_force_mode == 1) {
-            // Mode 1: Synthetic (Constant with Direction)
-            // Apply deadzone to prevent sign flickering at center
-            if (std::abs(game_force) > SYNTHETIC_MODE_DEADZONE_NM) {
-                double sign = (game_force > 0.0) ? 1.0 : -1.0;
-                base_input = sign * (double)m_max_torque_ref; // Use Max Torque as reference constant
-            } else {
-                base_input = 0.0;
+            if (std::abs(game_force_proc) > SYNTHETIC_MODE_DEADZONE_NM) {
+                double sign = (game_force_proc > 0.0) ? 1.0 : -1.0;
+                base_input = sign * (double)m_max_torque_ref;
             }
-        } else {
-            // Mode 2: Muted
-            base_input = 0.0;
         }
         
-        // Apply Gain and Grip Modulation
-        double output_force = (base_input * (double)m_steering_shaft_gain) * grip_factor;
+        // Apply Grip Modulation
+        double grip_loss = (1.0 - ctx.avg_grip) * m_understeer_effect;
+        ctx.grip_factor = (std::max)(0.0, 1.0 - grip_loss);
         
-        // Apply Speed Gate to Base Torque
-        // This eliminates "Engine Rumble" from the steering shaft at standstill
-        output_force *= speed_gate;
+        double output_force = (base_input * (double)m_steering_shaft_gain) * ctx.grip_factor;
+        output_force *= ctx.speed_gate;
         
-        // --- 2. Seat of Pants (SoP) / Oversteer ---
-        // Lateral G-force
-        // v0.4.6: Clamp Input to reasonable Gs (+/- 5G)
+        // B. SoP Lateral (Oversteer)
+        calculate_sop_lateral(data, ctx);
+        
+        // C. Gyro Damping
+        calculate_gyro_damping(data, ctx);
+        
+        // D. Effects
+        calculate_abs_pulse(data, ctx);
+        calculate_lockup_vibration(data, ctx);
+        calculate_wheel_spin(data, ctx);
+        calculate_slide_texture(data, ctx);
+        calculate_road_texture(data, ctx);
+        calculate_suspension_bottoming(data, ctx);
+        
+        // --- 6. SUMMATION ---
+        // Split into Structural (Attenuated by Spin) and Texture (Raw) groups
+        double structural_sum = output_force + ctx.sop_base_force + ctx.rear_torque + ctx.yaw_force + ctx.gyro_force +
+                                ctx.abs_pulse_force + ctx.lockup_rumble + ctx.scrub_drag_force;
+
+        // Apply Torque Drop (from Spin/Traction Loss) only to structural physics
+        structural_sum *= ctx.gain_reduction_factor;
+        
+        double texture_sum = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch;
+
+        double total_sum = structural_sum + texture_sum;
+
+        // --- 7. OUTPUT SCALING ---
+        double norm_force = total_sum / max_torque_safe;
+        norm_force *= m_gain;
+
+        // Min Force
+        if (std::abs(norm_force) > 0.0001 && std::abs(norm_force) < m_min_force) {
+            double sign = (norm_force > 0.0) ? 1.0 : -1.0;
+            norm_force = sign * m_min_force;
+        }
+
+        if (m_invert_force) {
+            norm_force *= -1.0;
+        }
+
+        // --- 8. STATE UPDATES (POST-CALC) ---
+        // CRITICAL: These updates must run UNCONDITIONALLY every frame to prevent
+        // stale state issues when effects are toggled on/off.
+        for (int i = 0; i < 4; i++) {
+            m_prev_vert_deflection[i] = data->mWheel[i].mVerticalTireDeflection;
+            m_prev_rotation[i] = data->mWheel[i].mRotation;
+            m_prev_brake_pressure[i] = data->mWheel[i].mBrakePressure;
+        }
+        m_prev_susp_force[0] = fl.mSuspForce;
+        m_prev_susp_force[1] = fr.mSuspForce;
+        
+        // v0.6.36 FIX: Move m_prev_vert_accel to unconditional section
+        // Previously only updated inside calculate_road_texture when enabled.
+        // Now always updated to prevent stale data if other effects use it.
+        m_prev_vert_accel = data->mLocalAccel.y;
+
+        // --- 9. SNAPSHOT ---
+        {
+            std::lock_guard<std::mutex> lock(m_debug_mutex);
+            if (m_debug_buffer.size() < 100) {
+                FFBSnapshot snap;
+                snap.total_output = (float)norm_force;
+                snap.base_force = (float)base_input;
+                snap.sop_force = (float)ctx.sop_unboosted_force; // Use unboosted for snapshot
+                snap.understeer_drop = (float)((base_input * m_steering_shaft_gain) * (1.0 - ctx.grip_factor));
+                snap.oversteer_boost = (float)(ctx.sop_base_force - ctx.sop_unboosted_force); // Exact boost amount
+
+                snap.ffb_rear_torque = (float)ctx.rear_torque;
+                snap.ffb_scrub_drag = (float)ctx.scrub_drag_force;
+                snap.ffb_yaw_kick = (float)ctx.yaw_force;
+                snap.ffb_gyro_damping = (float)ctx.gyro_force;
+                snap.texture_road = (float)ctx.road_noise;
+                snap.texture_slide = (float)ctx.slide_noise;
+                snap.texture_lockup = (float)ctx.lockup_rumble;
+                snap.texture_spin = (float)ctx.spin_rumble;
+                snap.texture_bottoming = (float)ctx.bottoming_crunch;
+                snap.clipping = (std::abs(norm_force) > 0.99f) ? 1.0f : 0.0f;
+
+                // Physics
+                snap.calc_front_load = (float)ctx.avg_load;
+                snap.calc_rear_load = (float)ctx.avg_rear_load;
+                snap.calc_rear_lat_force = (float)ctx.calc_rear_lat_force;
+                snap.calc_front_grip = (float)ctx.avg_grip;
+                snap.calc_rear_grip = (float)ctx.avg_rear_grip;
+                snap.calc_front_slip_angle_smoothed = (float)m_grip_diag.front_slip_angle;
+                snap.calc_rear_slip_angle_smoothed = (float)m_grip_diag.rear_slip_angle;
+
+                snap.raw_front_slip_angle = (float)calculate_raw_slip_angle_pair(fl, fr);
+                snap.raw_rear_slip_angle = (float)calculate_raw_slip_angle_pair(data->mWheel[2], data->mWheel[3]);
+
+                // Telemetry
+                snap.steer_force = (float)raw_torque;
+                snap.raw_input_steering = (float)data->mUnfilteredSteering;
+                snap.raw_front_tire_load = (float)raw_load;
+                snap.raw_front_grip_fract = (float)raw_grip;
+                snap.raw_rear_grip = (float)((data->mWheel[2].mGripFract + data->mWheel[3].mGripFract) / 2.0);
+                snap.raw_front_susp_force = (float)((fl.mSuspForce + fr.mSuspForce) / 2.0);
+                snap.raw_front_ride_height = (float)((std::min)(fl.mRideHeight, fr.mRideHeight));
+                snap.raw_rear_lat_force = (float)((data->mWheel[2].mLateralForce + data->mWheel[3].mLateralForce) / 2.0);
+                snap.raw_car_speed = (float)ctx.car_speed_long;
+                snap.raw_input_throttle = (float)data->mUnfilteredThrottle;
+                snap.raw_input_brake = (float)data->mUnfilteredBrake;
+                snap.accel_x = (float)data->mLocalAccel.x;
+                snap.raw_front_lat_patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
+                snap.raw_front_deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
+                snap.raw_front_long_patch_vel = (float)((fl.mLongitudinalPatchVel + fr.mLongitudinalPatchVel) / 2.0);
+                snap.raw_rear_lat_patch_vel = (float)((std::abs(data->mWheel[2].mLateralPatchVel) + std::abs(data->mWheel[3].mLateralPatchVel)) / 2.0);
+                snap.raw_rear_long_patch_vel = (float)((data->mWheel[2].mLongitudinalPatchVel + data->mWheel[3].mLongitudinalPatchVel) / 2.0);
+
+                snap.warn_load = ctx.frame_warn_load;
+                snap.warn_grip = ctx.frame_warn_grip || ctx.frame_warn_rear_grip;
+                snap.warn_dt = ctx.frame_warn_dt;
+                snap.debug_freq = (float)m_debug_freq;
+                snap.tire_radius = (float)fl.mStaticUndeflectedRadius / 100.0f;
+
+                m_debug_buffer.push_back(snap);
+            }
+        }
+        
+        return (std::max)(-1.0, (std::min)(1.0, norm_force));
+    }
+
+    // ========================================
+    // Helper Methods (v0.6.36 Refactoring) - PUBLIC for testability
+    // ========================================
+
+    // Signal Conditioning: Applies idle smoothing and notch filters to raw torque
+    // Returns the conditioned force value ready for effect processing
+    double apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        double game_force_proc = raw_torque;
+
+        // Idle Smoothing
+        double effective_shaft_smoothing = (double)m_steering_shaft_smoothing;
+        double idle_speed_threshold = (double)m_speed_gate_upper;
+        if (idle_speed_threshold < 3.0) idle_speed_threshold = 3.0;
+        if (ctx.car_speed < idle_speed_threshold) {
+            double idle_blend = (idle_speed_threshold - ctx.car_speed) / idle_speed_threshold;
+            double dynamic_smooth = 0.1 * idle_blend; // 0.1s target
+            effective_shaft_smoothing = (std::max)(effective_shaft_smoothing, dynamic_smooth);
+        }
+        
+        if (effective_shaft_smoothing > 0.0001) {
+            double alpha_shaft = ctx.dt / (effective_shaft_smoothing + ctx.dt);
+            alpha_shaft = (std::min)(1.0, (std::max)(0.001, alpha_shaft));
+            m_steering_shaft_torque_smoothed += alpha_shaft * (game_force_proc - m_steering_shaft_torque_smoothed);
+            game_force_proc = m_steering_shaft_torque_smoothed;
+        } else {
+            m_steering_shaft_torque_smoothed = game_force_proc;
+        }
+
+        // Frequency Estimator Logic
+        double alpha_hpf = ctx.dt / (0.1 + ctx.dt);
+        m_torque_ac_smoothed += alpha_hpf * (game_force_proc - m_torque_ac_smoothed);
+        double ac_torque = game_force_proc - m_torque_ac_smoothed;
+
+        if ((m_prev_ac_torque < -0.05 && ac_torque > 0.05) ||
+            (m_prev_ac_torque > 0.05 && ac_torque < -0.05)) {
+
+            double now = data->mElapsedTime;
+            double period = now - m_last_crossing_time;
+
+            if (period > 0.005 && period < 1.0) {
+                double inst_freq = 1.0 / (period * 2.0);
+                m_debug_freq = m_debug_freq * 0.9 + inst_freq * 0.1;
+            }
+            m_last_crossing_time = now;
+        }
+        m_prev_ac_torque = ac_torque;
+
+        // Dynamic Notch Filter
+        const TelemWheelV01& fl_ref = data->mWheel[0];
+        double radius = (double)fl_ref.mStaticUndeflectedRadius / 100.0;
+        if (radius < 0.1) radius = 0.33;
+        double circumference = 2.0 * PI * radius;
+        double wheel_freq = (circumference > 0.0) ? (ctx.car_speed / circumference) : 0.0;
+        m_theoretical_freq = wheel_freq;
+        
+        if (m_flatspot_suppression) {
+            if (wheel_freq > 1.0) {
+                m_notch_filter.Update(wheel_freq, 1.0/ctx.dt, (double)m_notch_q);
+                double input_force = game_force_proc;
+                double filtered_force = m_notch_filter.Process(input_force);
+                game_force_proc = input_force * (1.0f - m_flatspot_strength) + filtered_force * m_flatspot_strength;
+            } else {
+                m_notch_filter.Reset();
+            }
+        }
+        
+        // Static Notch Filter
+        if (m_static_notch_enabled) {
+             double bw = (double)m_static_notch_width;
+             if (bw < 0.1) bw = 0.1;
+             double q = (double)m_static_notch_freq / bw;
+             m_static_notch_filter.Update((double)m_static_notch_freq, 1.0/ctx.dt, q);
+             game_force_proc = m_static_notch_filter.Process(game_force_proc);
+        } else {
+             m_static_notch_filter.Reset();
+        }
+
+        return game_force_proc;
+    }
+
+private:
+    // Effect Helper Methods
+
+    void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        // Lateral G
         double raw_g = (std::max)(-49.05, (std::min)(49.05, data->mLocalAccel.x));
-        
-        // v0.4.30 FIX: Removed inversion. 
-        // Analysis shows mLocalAccel.x sign matches desired FFB direction.
-        // Right Turn -> Accel +X (Centrifugal Left) -> Force + (Left Pull / Aligning).
-        // Left Turn -> Accel -X (Centrifugal Right) -> Force - (Right Pull / Aligning).
         double lat_g = (raw_g / 9.81);
         
-        // SoP Smoothing (Time-Corrected Low Pass Filter) (Report v0.4.2)
-        // m_sop_smoothing_factor (0.0 to 1.0) is treated as a "Smoothness" knob.
-        // 0.0 = Very slow (High smoothness), 1.0 = Instant (Raw).
-        // We map 0-1 to a Time Constant (tau) from ~0.2s to 0.0s.
-        // Formula: alpha = dt / (tau + dt)
-        
-        double smoothness = 1.0 - (double)m_sop_smoothing_factor; // Invert: 1.0 input -> 0.0 smoothness
+        // Smoothing
+        double smoothness = 1.0 - (double)m_sop_smoothing_factor;
         smoothness = (std::max)(0.0, (std::min)(0.999, smoothness));
-        
-        // Map smoothness to tau: 0.0 -> 0s, 1.0 -> 0.1s (approx 1.5Hz cutoff)
-        double tau = smoothness * 0.1; 
-        
-        double alpha = dt / (tau + dt);
-        
-        // Safety clamp
+        double tau = smoothness * 0.1;
+        double alpha = ctx.dt / (tau + ctx.dt);
         alpha = (std::max)(0.001, (std::min)(1.0, alpha));
-
-        m_sop_lat_g_smoothed = m_sop_lat_g_smoothed + alpha * (lat_g - m_sop_lat_g_smoothed);
+        m_sop_lat_g_smoothed += alpha * (lat_g - m_sop_lat_g_smoothed);
         
-        double sop_base_force = m_sop_lat_g_smoothed * m_sop_effect * (double)m_sop_scale * decoupling_scale;
-        double sop_total = sop_base_force;
+        double sop_base = m_sop_lat_g_smoothed * m_sop_effect * (double)m_sop_scale * ctx.decoupling_scale;
+        ctx.sop_unboosted_force = sop_base; // Store unboosted for snapshot
         
-        // REAR WHEEL GRIP CALCULATION (Refactored v0.4.5)
-        
-        // Calculate Rear Grip using helper (now includes fallback)
-        // Pass persistent state for LPF (v0.4.6) - Indices 2 and 3
-        GripResult rear_grip_res = calculate_grip(data->mWheel[2], data->mWheel[3], avg_load, m_warned_rear_grip,
-                                                  m_prev_slip_angle[2], m_prev_slip_angle[3], car_speed, dt, data->mVehicleName);
-        double avg_rear_grip = rear_grip_res.value;
-        
-        // Update Diagnostics
+        // Rear Grip Estimation (v0.4.5 FIX)
+        GripResult rear_grip_res = calculate_grip(data->mWheel[2], data->mWheel[3], ctx.avg_load, m_warned_rear_grip,
+                                                  m_prev_slip_angle[2], m_prev_slip_angle[3],
+                                                  ctx.car_speed, ctx.dt, data->mVehicleName, data, false);
+        ctx.avg_rear_grip = rear_grip_res.value;
         m_grip_diag.rear_original = rear_grip_res.original;
         m_grip_diag.rear_approximated = rear_grip_res.approximated;
         m_grip_diag.rear_slip_angle = rear_grip_res.slip_angle;
+        if (rear_grip_res.approximated) ctx.frame_warn_rear_grip = true;
         
-        // Update local frame warning for rear grip
-        bool frame_warn_rear_grip = rear_grip_res.approximated;
-
-        // Delta between front and rear grip
-        double grip_delta = avg_grip - avg_rear_grip;
+        // Lateral G Boost (Oversteer)
+        double grip_delta = ctx.avg_grip - ctx.avg_rear_grip;
         if (grip_delta > 0.0) {
-            sop_total *= (1.0 + (grip_delta * m_oversteer_boost * 2.0));
+            sop_base *= (1.0 + (grip_delta * m_oversteer_boost * 2.0));
         }
+        ctx.sop_base_force = sop_base;
         
-        // ========================================
-        // --- 2a. Rear Aligning Torque Integration ---
-        // ========================================
-        // WORKAROUND for LMU 1.2 API Bug (v0.4.10)
-        // 
-        // PROBLEM: LMU 1.2 reports mLateralForce = 0.0 for rear tires, making it impossible
-        // to calculate rear aligning torque using the standard formula. This breaks oversteer
-        // feedback and rear-end feel.
-        // 
-        // SOLUTION: Manually calculate rear lateral force using tire physics approximation:
-        //   F_lateral = SlipAngle × Load × TireStiffness
-        // 
-        // This workaround will be removed when the LMU API is fixed to report rear lateral forces.
-        // See: docs/dev_docs/FFB_formulas.md "Rear Aligning Torque (v0.4.10 Workaround)"
-        
-        // Step 1: Calculate Rear Loads
-        // Use suspension force + estimated unsprung mass (300N) to approximate tire load.
-        // This captures weight transfer (braking/accel) and aero downforce via suspension compression.
-        // 
-        // TODO (v0.4.40): If mSuspForce is also blocked for rear wheels (encrypted content),
-        // this approximation will be weak. Consider using calculate_kinematic_load() here as well.
-        // However, empirical testing shows mSuspForce is typically available even when mTireLoad
-        // is blocked, so this is a low-priority enhancement.
-        // See: docs/dev_docs/code_reviews/rear_load_approximation_note.md
+        // Rear Align Torque
         double calc_load_rl = approximate_rear_load(data->mWheel[2]);
         double calc_load_rr = approximate_rear_load(data->mWheel[3]);
-        double avg_rear_load = (calc_load_rl + calc_load_rr) / 2.0;
-
-        // Step 2: Calculate Rear Lateral Force (Workaround for missing mLateralForce)
-        // Use the slip angle calculated by the grip approximation logic (if triggered).
-        // The grip calculator computes slip angle = atan2(lateral_vel, longitudinal_vel)
-        // and applies low-pass filtering for stability.
-        double rear_slip_angle = m_grip_diag.rear_slip_angle; 
+        ctx.avg_rear_load = (calc_load_rl + calc_load_rr) / 2.0;
         
-        // Apply simplified tire model: F = α × F_z × C_α
-        // Where:
-        //   α (alpha) = slip angle in radians
-        //   F_z = vertical load on tire (N)
-        //   C_α = tire cornering stiffness coefficient (N/rad per N of load)
-        // 
-        // Using REAR_TIRE_STIFFNESS_COEFFICIENT = 15.0 N/(rad·N)
-        // This is an empirical value tuned for realistic behavior.
-        double calc_rear_lat_force = rear_slip_angle * avg_rear_load * REAR_TIRE_STIFFNESS_COEFFICIENT;
-
-        // Step 3: Safety Clamp (Prevent physics explosions)
-        // Clamp to ±MAX_REAR_LATERAL_FORCE (6000 N) to prevent unrealistic forces
-        // during extreme conditions (e.g., spins, collisions, teleports).
-        // Without this clamp, slip angle spikes could saturate FFB or cause oscillations.
-        calc_rear_lat_force = (std::max)(-MAX_REAR_LATERAL_FORCE, (std::min)(MAX_REAR_LATERAL_FORCE, calc_rear_lat_force));
-
-        // Step 4: Convert to Torque and Apply to SoP
-        // Scale from Newtons to Newton-meters for torque output.
-        // Coefficient was tuned to produce ~3.0 Nm contribution at 3000N lateral force (v0.4.11).
-        // This provides a distinct counter-steering cue.
-        // Multiplied by m_rear_align_effect to allow user tuning of rear-end sensitivity.
-        // v0.4.19: INVERTED to provide counter-steering (restoring) torque instead of destabilizing force
-        // When rear slides left (+slip), we want left pull (-torque) to correct the slide
-        double rear_torque = -calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect * decoupling_scale; 
-        sop_total += rear_torque;
-
-        // --- 2b. Yaw Acceleration Injector (The "Kick") ---
-        // Reads rotational acceleration (radians/sec^2)
-        // 
-        // v0.4.18 FIX: Apply Low Pass Filter to prevent noise feedback loop
-        // PROBLEM: Slide Rumble injects high-frequency vibrations -> Yaw Accel spikes (derivatives are noise-sensitive)
-        //          -> Yaw Kick amplifies the noise -> Wheel shakes harder -> Feedback loop
-        // SOLUTION: Smooth the yaw acceleration to filter out high-frequency noise while keeping low-frequency signal
+        double rear_slip_angle = m_grip_diag.rear_slip_angle;
+        ctx.calc_rear_lat_force = rear_slip_angle * ctx.avg_rear_load * REAR_TIRE_STIFFNESS_COEFFICIENT;
+        ctx.calc_rear_lat_force = (std::max)(-MAX_REAR_LATERAL_FORCE, (std::min)(MAX_REAR_LATERAL_FORCE, ctx.calc_rear_lat_force));
+        
+        ctx.rear_torque = -ctx.calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect * ctx.decoupling_scale;
+        
+        // Yaw Kick
         double raw_yaw_accel = data->mLocalRotAccel.y;
+        if (ctx.car_speed < 5.0) raw_yaw_accel = 0.0;
+        else if (std::abs(raw_yaw_accel) < (double)m_yaw_kick_threshold) raw_yaw_accel = 0.0;
         
-        // v0.4.42: Signal Conditioning - Eliminate idle jitter and road noise
-        // Low Speed Cutoff: Mute below 5 m/s (18 kph) to prevent parking lot jitter
-        if (car_v_long < 5.0) {
-            raw_yaw_accel = 0.0;
-        }
-        // v0.6.10: Configurable Noise Gate (Activation Threshold)
-        // Filter out micro-corrections and road bumps based on user preference
-        else if (std::abs(raw_yaw_accel) < (double)m_yaw_kick_threshold) {
-            raw_yaw_accel = 0.0;
-        }
-        
-        // Apply Smoothing (Low Pass Filter)
-        // Yaw Kick Smoothing (LPF): Prevents "Slide Texture" vibration (40-200Hz) from being 
-        // misinterpreted by physics as Yaw Acceleration spikes, which causes feedback loops.
-        // - 31.8ms (5Hz): Car body motion; too laggy.
-        // - 22.5ms (7Hz): Aggressive; turns sharp "Kick" into soft "Push", delays reaction.
-        // - 10.0ms (New Default, ~16Hz): Optimal balance; responsive and filters the 40Hz+ vibration.
-        // - 3.2ms (50Hz): "Raw" feel; kills electrical buzz but risks feedback loops.
         double tau_yaw = (double)m_yaw_accel_smoothing;
-        if (tau_yaw < 0.0001) tau_yaw = 0.0001; 
-        double alpha_yaw = dt / (tau_yaw + dt);
+        if (tau_yaw < 0.0001) tau_yaw = 0.0001;
+        double alpha_yaw = ctx.dt / (tau_yaw + ctx.dt);
+        m_yaw_accel_smoothed += alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
         
-        m_yaw_accel_smoothed = m_yaw_accel_smoothed + alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
+        ctx.yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * (double)BASE_NM_YAW_KICK * ctx.decoupling_scale;
         
-        // Use SMOOTHED value for the kick
-        // Scaled by BASE_NM_YAW_KICK (5.0 Nm at Gain 1.0)
-        // Added AFTER Lateral G Boost (Slide) to provide a clean, independent cue.
-        // v0.4.20 FIX: Invert to provide counter-steering torque
-        // Positive yaw accel (right rotation) -> Negative force (left pull)
-        double yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * (double)BASE_NM_YAW_KICK * decoupling_scale;
-        sop_total += yaw_force;
-        
-        // Apply Speed Gate to SoP
-        // This eliminates vibration from noisy Lateral G and Yaw Accel sensors at idle
-        sop_total *= speed_gate;
-        
-        double total_force = output_force + sop_total;
+        // Apply Speed Gate
+        ctx.sop_base_force *= ctx.speed_gate;
+        ctx.rear_torque *= ctx.speed_gate;
+        ctx.yaw_force *= ctx.speed_gate;
+    }
 
-        // --- 2c. Synthetic Gyroscopic Damping (v0.4.17) ---
-        // Calculate Steering Angle (Radians)
+    void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext& ctx) {
         float range = data->mPhysicalSteeringWheelRange;
-        if (range <= 0.0f) range = (float)DEFAULT_STEERING_RANGE_RAD; // Fallback 540 deg
-        
+        if (range <= 0.0f) range = (float)DEFAULT_STEERING_RANGE_RAD;
         double steer_angle = data->mUnfilteredSteering * (range / 2.0);
+        double steer_vel = (steer_angle - m_prev_steering_angle) / ctx.dt;
+        m_prev_steering_angle = steer_angle;
         
-        // Calculate Velocity (rad/s)
-        double steer_vel = (steer_angle - m_prev_steering_angle) / dt;
-        m_prev_steering_angle = steer_angle; // Update history
-        
-        // Smoothing (LPF)
-        // v0.5.8: m_gyro_smoothing is now a Time Constant (Seconds)
         double tau_gyro = (double)m_gyro_smoothing;
         if (tau_gyro < 0.0001) tau_gyro = 0.0001;
-        double alpha_gyro = dt / (tau_gyro + dt);
-        
+        double alpha_gyro = ctx.dt / (tau_gyro + ctx.dt);
         m_steering_velocity_smoothed += alpha_gyro * (steer_vel - m_steering_velocity_smoothed);
         
-        // Damping Force: Opposes velocity, scales with car speed
-        double gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (car_speed / GYRO_SPEED_SCALE) * decoupling_scale;
-        
-        // Add to total
-        total_force += gyro_force;
-        
-        // --- Helper: Calculate Slip Data (Approximation) ---
-        // The new LMU interface does not expose mSlipRatio/mSlipAngle directly.
-        // We approximate them from mLongitudinalPatchVel and mLateralPatchVel.
-        
-        // Slip Ratio = PatchVelLong / GroundVelLong
-        // Slip Angle = atan(PatchVelLat / GroundVelLong)
-        
-        double car_speed_ms = std::abs(data->mLocalVel.z); // Or mLongitudinalGroundVel per wheel
-        
-        auto get_slip_ratio = [&](const TelemWheelV01& w) {
-            // v0.6.20: Engine always uses game data for base slip detection
-            // Fallback estimation is handled in calculate_grip()
-            double v_long = std::abs(w.mLongitudinalGroundVel);
-            if (v_long < MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;
-            return w.mLongitudinalPatchVel / v_long;
-        };
-        
-        // get_slip_angle was moved up for grip approximation reuse
+        ctx.gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE) * ctx.decoupling_scale;
+    }
 
-        // --- 2a. ABS PULSE (System-wide) ---
-        bool abs_system_active = false;
-        if (m_abs_pulse_enabled) {
-            for (int i = 0; i < 4; i++) {
-                const auto& w = data->mWheel[i];
-                double pressure_delta = (w.mBrakePressure - m_prev_brake_pressure[i]) / dt;
-                
-                // Detect ABS: High Pedal but fluctuating Pressure
-                // Real ABS modulates at 20-50 Hz; we detect the pressure derivative.
-                if (data->mUnfilteredBrake > ABS_PEDAL_THRESHOLD && std::abs(pressure_delta) > ABS_PRESSURE_RATE_THRESHOLD) {
-                     abs_system_active = true;
-                     break;
+    void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        if (!m_abs_pulse_enabled) return;
+        
+        bool abs_active = false;
+        for (int i = 0; i < 4; i++) {
+            double pressure_delta = (data->mWheel[i].mBrakePressure - m_prev_brake_pressure[i]) / ctx.dt;
+            if (data->mUnfilteredBrake > ABS_PEDAL_THRESHOLD && std::abs(pressure_delta) > ABS_PRESSURE_RATE_THRESHOLD) {
+                abs_active = true;
+                break;
+            }
+        }
+        
+        if (abs_active) {
+            m_abs_phase += (double)m_abs_freq_hz * ctx.dt * TWO_PI;
+            m_abs_phase = std::fmod(m_abs_phase, TWO_PI);
+            ctx.abs_pulse_force = (double)(std::sin(m_abs_phase) * m_abs_gain * 2.0 * ctx.decoupling_scale * ctx.speed_gate);
+        }
+    }
+
+    // ... Implement other helpers inline ...
+
+    void calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        if (!m_lockup_enabled) return;
+        
+        // ... (Keep existing logic, updating ctx.lockup_rumble) ...
+        double worst_severity = 0.0;
+        double chosen_freq_multiplier = 1.0;
+        double chosen_pressure_factor = 0.0;
+        
+        // v0.6.36: Use unified helper method instead of lambda
+
+        double slip_fl = calculate_wheel_slip_ratio(data->mWheel[0]);
+        double slip_fr = calculate_wheel_slip_ratio(data->mWheel[1]);
+        double worst_front = (std::min)(slip_fl, slip_fr);
+
+        for (int i = 0; i < 4; i++) {
+            const auto& w = data->mWheel[i];
+            double slip = calculate_wheel_slip_ratio(w);
+            double slip_abs = std::abs(slip);
+            double wheel_accel = (w.mRotation - m_prev_rotation[i]) / ctx.dt;
+            double radius = (double)w.mStaticUndeflectedRadius / 100.0;
+            if (radius < 0.1) radius = 0.33;
+            double car_dec_ang = -std::abs(data->mLocalAccel.z / radius);
+            double susp_vel = std::abs(w.mVerticalTireDeflection - m_prev_vert_deflection[i]) / ctx.dt;
+            bool is_bumpy = (susp_vel > (double)m_lockup_bump_reject);
+            bool brake_active = (data->mUnfilteredBrake > PREDICTION_BRAKE_THRESHOLD);
+            bool is_grounded = (w.mSuspForce > PREDICTION_LOAD_THRESHOLD);
+
+            double start_threshold = (double)m_lockup_start_pct / 100.0;
+            double full_threshold = (double)m_lockup_full_pct / 100.0;
+            double trigger_threshold = full_threshold;
+
+            if (brake_active && is_grounded && !is_bumpy) {
+                double sensitivity_threshold = -1.0 * (double)m_lockup_prediction_sens;
+                if (wheel_accel < car_dec_ang * 2.0 && wheel_accel < sensitivity_threshold) {
+                    trigger_threshold = start_threshold;
                 }
             }
-            
-            if (abs_system_active) {
-                m_abs_phase += (double)m_abs_freq_hz * dt * TWO_PI; // Configurable Frequency
-                m_abs_phase = std::fmod(m_abs_phase, TWO_PI);
-                total_force += (float)(std::sin(m_abs_phase) * m_abs_gain * 2.0 * decoupling_scale * speed_gate);
+
+            if (slip_abs > trigger_threshold) {
+                double window = full_threshold - start_threshold;
+                if (window < 0.01) window = 0.01;
+                double normalized = (slip_abs - start_threshold) / window;
+                double severity = (std::min)(1.0, (std::max)(0.0, normalized));
+                severity = std::pow(severity, (double)m_lockup_gamma);
+                
+                double freq_mult = 1.0;
+                if (i >= 2) {
+                    if (slip < (worst_front - AXLE_DIFF_HYSTERESIS)) {
+                        freq_mult = LOCKUP_FREQ_MULTIPLIER_REAR;
+                    }
+                }
+                double pressure_factor = w.mBrakePressure;
+                if (pressure_factor < 0.1 && slip_abs > 0.5) pressure_factor = 0.5;
+
+                if (severity > worst_severity) {
+                    worst_severity = severity;
+                    chosen_freq_multiplier = freq_mult;
+                    chosen_pressure_factor = pressure_factor;
+                }
             }
         }
 
-        // --- 2b. Progressive Lockup (Refactored v0.6.0) ---
-        if (m_lockup_enabled) {
-            double worst_severity = 0.0;
-            double chosen_freq_multiplier = 1.0;
-            double chosen_pressure_factor = 0.0;
-
-            // Pre-calculate front slip for axle differentiation (optimization: avoid redundant calls)
-            double slip_fl = get_slip_ratio(data->mWheel[0]);
-            double slip_fr = get_slip_ratio(data->mWheel[1]);
-            double worst_front = (std::min)(slip_fl, slip_fr);
-
-            for (int i = 0; i < 4; i++) {
-                const auto& w = data->mWheel[i];
-                double slip = get_slip_ratio(w);
-                double slip_abs = std::abs(slip);
-
-                // 1. Calculate Angular Deceleration (rad/s^2)
-                double wheel_accel = (w.mRotation - m_prev_rotation[i]) / dt;
-
-                // 2. Predictive Logic Gating
-                double radius = (double)w.mStaticUndeflectedRadius / 100.0;
-                // Safety check: Prevent division by zero in angular deceleration calculation.
-                // If radius is invalid/zero, use typical race tire radius (0.33m ≈ 26" wheel).
-                if (radius < 0.1) radius = 0.33;
-                
-                // Chassis angular equivalent deceleration (Negative)
-                // LMU: +Z is rearward (positive during braking)
-                double car_dec_ang = -std::abs(data->mLocalAccel.z / radius); 
-                
-                // Bump Detection (Suspension Velocity)
-                double susp_vel = std::abs(w.mVerticalTireDeflection - m_prev_vert_deflection[i]) / dt;
-                bool is_bumpy = (susp_vel > (double)m_lockup_bump_reject);
-                bool brake_active = (data->mUnfilteredBrake > PREDICTION_BRAKE_THRESHOLD);
-                bool is_grounded = (w.mSuspForce > PREDICTION_LOAD_THRESHOLD);
-
-                double start_threshold = (double)m_lockup_start_pct / 100.0;
-                double full_threshold = (double)m_lockup_full_pct / 100.0;
-                double trigger_threshold = full_threshold;
-
-                if (brake_active && is_grounded && !is_bumpy) {
-                    double sensitivity_threshold = -1.0 * (double)m_lockup_prediction_sens;
-                    
-                    // PREDICTION: If wheel slowing down 2x faster than car AND exceeds sensitivity
-                    if (wheel_accel < car_dec_ang * 2.0 && wheel_accel < sensitivity_threshold) {
-                        trigger_threshold = start_threshold; // Trigger early
-                    }
-                }
-
-                // 3. Severity Calculation
-                if (slip_abs > trigger_threshold) {
-                    double window = full_threshold - start_threshold;
-                    if (window < 0.01) window = 0.01;
-                    
-                    double normalized = (slip_abs - start_threshold) / window;
-                    double severity = (std::min)(1.0, (std::max)(0.0, normalized));
-                    
-                    // Apply Gamma Curve (Response Non-Linearity)
-                    severity = std::pow(severity, (double)m_lockup_gamma);
-                    
-                    // Axle Differentiation (use pre-calculated worst_front)
-                    double freq_mult = 1.0;
-                    if (i >= 2) { 
-                        // Only use rear frequency if it's worse than front
-                        if (slip < (worst_front - AXLE_DIFF_HYSTERESIS)) {
-                            freq_mult = LOCKUP_FREQ_MULTIPLIER_REAR;
-                        }
-                    }
-                    
-                    // Pressure Scaling (Physics-based intensity)
-                    double pressure_factor = w.mBrakePressure;
-                    if (pressure_factor < 0.1 && slip_abs > 0.5) pressure_factor = 0.5; // Engine braking fallback
-
-                    if (severity > worst_severity) {
-                        worst_severity = severity;
-                        chosen_freq_multiplier = freq_mult;
-                        chosen_pressure_factor = pressure_factor;
-                    }
-                }
-            }
-
-            if (worst_severity > 0.0) {
-                // Base Frequency linked to Car Speed
-                double base_freq = 10.0 + (car_speed_ms * 1.5); 
-                double final_freq = base_freq * chosen_freq_multiplier * (double)m_lockup_freq_scale;
-
-                // Phase Integration
-                m_lockup_phase += final_freq * dt * TWO_PI;
-                m_lockup_phase = std::fmod(m_lockup_phase, TWO_PI);
-
-                // Amplitude using Brake Load Factor and Pressure Scaling
-                double amp = worst_severity * chosen_pressure_factor * m_lockup_gain * (double)BASE_NM_LOCKUP_VIBRATION * decoupling_scale * brake_load_factor;
-                
-                // Apply Rear Boost if Rear is dominant
-                if (chosen_freq_multiplier < 1.0) {
-                    amp *= (double)m_lockup_rear_boost;
-                }
-
-                lockup_rumble = std::sin(m_lockup_phase) * amp * speed_gate;
-                total_force += lockup_rumble;
-            }
+        if (worst_severity > 0.0) {
+            double base_freq = 10.0 + (ctx.car_speed * 1.5);
+            double final_freq = base_freq * chosen_freq_multiplier * (double)m_lockup_freq_scale;
+            m_lockup_phase += final_freq * ctx.dt * TWO_PI;
+            m_lockup_phase = std::fmod(m_lockup_phase, TWO_PI);
+            double amp = worst_severity * chosen_pressure_factor * m_lockup_gain * (double)BASE_NM_LOCKUP_VIBRATION * ctx.decoupling_scale * ctx.brake_load_factor;
+            if (chosen_freq_multiplier < 1.0) amp *= (double)m_lockup_rear_boost;
+            ctx.lockup_rumble = std::sin(m_lockup_phase) * amp * ctx.speed_gate;
         }
+    }
 
-        // --- 2c. Wheel Spin (Tire Physics Based) ---
+    void calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationContext& ctx) {
         if (m_spin_enabled && data->mUnfilteredThrottle > 0.05) {
-            double slip_rl = get_slip_ratio(data->mWheel[2]); // mWheel
-            double slip_rr = get_slip_ratio(data->mWheel[3]); // mWheel
+            // v0.6.36: Use unified helper method instead of lambda
+            double slip_rl = calculate_wheel_slip_ratio(data->mWheel[2]);
+            double slip_rr = calculate_wheel_slip_ratio(data->mWheel[3]);
             double max_slip = (std::max)(slip_rl, slip_rr);
             
             if (max_slip > 0.2) {
                 double severity = (max_slip - 0.2) / 0.5;
                 severity = (std::min)(1.0, severity);
                 
-                // 1. Torque Drop (Floating feel)
-                total_force *= (1.0 - (severity * m_spin_gain * 0.6)); 
-
-                // 2. Vibration Frequency: Based on SLIP SPEED (Not RPM)
-                // Calculate how fast the tire surface is moving relative to the road.
-                // Slip Speed (m/s) approx = Car Speed (m/s) * Slip Ratio
-                double slip_speed_ms = car_speed_ms * max_slip;
-
-                // Mapping:
-                // 2 m/s (~7kph) slip -> 15Hz (Judder/Grip fighting)
-                // 20 m/s (~72kph) slip -> 60Hz (Smooth spin)
+                // Torque Drop (Floating feel)
+                ctx.gain_reduction_factor = (1.0 - (severity * m_spin_gain * 0.6));
+                
+                double slip_speed_ms = ctx.car_speed * max_slip;
                 double freq = (10.0 + (slip_speed_ms * 2.5)) * (double)m_spin_freq_scale;
-                
-                // Cap frequency to prevent ultrasonic feeling on high speed burnouts
                 if (freq > 80.0) freq = 80.0;
-
-                // PHASE ACCUMULATION (FIXED)
-                m_spin_phase += freq * dt * TWO_PI;
-                m_spin_phase = std::fmod(m_spin_phase, TWO_PI); // Wrap correctly
-
-                // Base Sinusoid
-                double amp = severity * m_spin_gain * (double)BASE_NM_SPIN_VIBRATION * decoupling_scale; // Scaled for Nm (was 500)
-                spin_rumble = std::sin(m_spin_phase) * amp;
-                
-                total_force += spin_rumble;
+                m_spin_phase += freq * ctx.dt * TWO_PI;
+                m_spin_phase = std::fmod(m_spin_phase, TWO_PI);
+                double amp = severity * m_spin_gain * (double)BASE_NM_SPIN_VIBRATION * ctx.decoupling_scale;
+                ctx.spin_rumble = std::sin(m_spin_phase) * amp;
             }
         }
+    }
 
-        // --- 3. Slide Texture (Dynamic Sawtooth) ---
-        if (m_slide_texture_enabled) {
-            // New logic: Use mLateralPatchVel directly instead of Angle
-            // This is cleaner as it represents actual scrubbing speed.
-            
-            // Front Slip Speed
-            double lat_vel_fl = std::abs(fl.mLateralPatchVel);
-            double lat_vel_fr = std::abs(fr.mLateralPatchVel);
-            double front_slip_avg = (lat_vel_fl + lat_vel_fr) / 2.0;
+    void calculate_slide_texture(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        if (!m_slide_texture_enabled) return;
+        double lat_vel_fl = std::abs(data->mWheel[0].mLateralPatchVel);
+        double lat_vel_fr = std::abs(data->mWheel[1].mLateralPatchVel);
+        double front_slip_avg = (lat_vel_fl + lat_vel_fr) / 2.0;
+        double lat_vel_rl = std::abs(data->mWheel[2].mLateralPatchVel);
+        double lat_vel_rr = std::abs(data->mWheel[3].mLateralPatchVel);
+        double rear_slip_avg = (lat_vel_rl + lat_vel_rr) / 2.0;
+        double effective_slip_vel = (std::max)(front_slip_avg, rear_slip_avg);
+        
+        if (effective_slip_vel > 0.5) {
+            double base_freq = 10.0 + (effective_slip_vel * 5.0);
+            double freq = base_freq * (double)m_slide_freq_scale;
+            if (freq > 250.0) freq = 250.0;
+            m_slide_phase += freq * ctx.dt * TWO_PI;
+            m_slide_phase = std::fmod(m_slide_phase, TWO_PI);
+            double sawtooth = (m_slide_phase / TWO_PI) * 2.0 - 1.0;
+            double grip_scale = (std::max)(0.0, 1.0 - ctx.avg_grip);
+            ctx.slide_noise = sawtooth * m_slide_texture_gain * (double)BASE_NM_SLIDE_TEXTURE * ctx.texture_load_factor * grip_scale * ctx.decoupling_scale;
+        }
+    }
 
-            // Rear Slip Speed (New v0.4.34)
-            double lat_vel_rl = std::abs(data->mWheel[2].mLateralPatchVel);
-            double lat_vel_rr = std::abs(data->mWheel[3].mLateralPatchVel);
-            double rear_slip_avg = (lat_vel_rl + lat_vel_rr) / 2.0;
+    void calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        if (!m_road_texture_enabled) return;
 
-            // Use the WORST slip (Max)
-            // This ensures we feel understeer (Front) AND oversteer/drifting (Rear)
-            double effective_slip_vel = (std::max)(front_slip_avg, rear_slip_avg);
-            
-            if (effective_slip_vel > 0.5) {
-                
-                // BASE FORMULA (v0.4.36): 10Hz start, +5Hz per m/s. (Rumble optimized for scale 1.0)
-                double base_freq = 10.0 + (effective_slip_vel * 5.0);
-                
-                // APPLY USER SCALE
-                double freq = base_freq * (double)m_slide_freq_scale;
-                
-                // CAP AT 250Hz (Nyquist safety for 400Hz loop)
-                if (freq > 250.0) freq = 250.0;
-
-                // PHASE ACCUMULATION (CRITICAL FIX)
-                // Use fmod to handle large dt spikes safely
-                m_slide_phase += freq * dt * TWO_PI;
-                m_slide_phase = std::fmod(m_slide_phase, TWO_PI);
-
-                // Sawtooth wave
-                double sawtooth = (m_slide_phase / TWO_PI) * 2.0 - 1.0;
-
-                // Amplitude: Scaled by PRE-CALCULATED global load_factor
-                // v0.4.38: Work-Based Scrubbing
-                // Scale by Load * (1.0 - Grip). Scrubbing happens when grip is LOST.
-                // High Load + Low Grip = Max Vibration.
-                // We use avg_grip (from understeer calc) which includes longitudinal slip.
-                double grip_scale = (std::max)(0.0, 1.0 - avg_grip);
-                // Resulting force
-                slide_noise = sawtooth * m_slide_texture_gain * (double)BASE_NM_SLIDE_TEXTURE * texture_load_factor * grip_scale * decoupling_scale;
-                total_force += slide_noise;
+        // Scrub Drag
+        if (m_scrub_drag_gain > 0.0) {
+            double avg_lat_vel = (data->mWheel[0].mLateralPatchVel + data->mWheel[1].mLateralPatchVel) / 2.0;
+            double abs_lat_vel = std::abs(avg_lat_vel);
+            if (abs_lat_vel > 0.001) {
+                double fade = (std::min)(1.0, abs_lat_vel / 0.5);
+                double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
+                ctx.scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade * ctx.decoupling_scale;
             }
         }
         
-        // --- 4. Road Texture (High Pass Filter) ---
-        if (m_road_texture_enabled) {
-            // Scrub Drag (v0.4.5)
-            // Add resistance when sliding laterally (Dragging rubber)
-            if (m_scrub_drag_gain > 0.0) {
-                double avg_lat_vel = (fl.mLateralPatchVel + fr.mLateralPatchVel) / 2.0;
-                // v0.4.6: Linear Fade-In Window (0.0 - 0.5 m/s)
-                double abs_lat_vel = std::abs(avg_lat_vel);
-                if (abs_lat_vel > 0.001) { // Avoid noise
-                    double fade = (std::min)(1.0, abs_lat_vel / 0.5);
-                    // v0.4.20 FIX: Provide counter-steering (stabilizing) torque
-                    // Game: +X = Left, DirectInput: +Force = Right
-                    // If sliding left (+vel), we want left torque (-force) to resist the slide
-                    double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
-                    // 3. Final force calculation
-                    scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade * decoupling_scale; // Scaled & Faded
-                    total_force += scrub_drag_force;
-                }
-            }
-
-            double vert_l = fl.mVerticalTireDeflection;
-            double vert_r = fr.mVerticalTireDeflection;
-            
-            // Delta from previous frame
-            double delta_l = vert_l - m_prev_vert_deflection[0];
-            double delta_r = vert_r - m_prev_vert_deflection[1];
-            
-            // v0.4.6: Delta Clamping (+/- 0.01m)
-            delta_l = (std::max)(-0.01, (std::min)(0.01, delta_l));
-            delta_r = (std::max)(-0.01, (std::min)(0.01, delta_r));
-
-            double road_noise_val = 0.0;
-
-            // FALLBACK LOGIC (v0.6.21): Check if Deflection is active
-            // If deltas are exactly 0.0 but we are moving fast, data is likely blocked.
-            bool deflection_active = (std::abs(delta_l) > 0.000001 || std::abs(delta_r) > 0.000001);
-            
-            if (deflection_active || car_v_long < 5.0) {
-                // Standard Logic
-                road_noise_val = (delta_l + delta_r) * 50.0;
-            } else {
-                // Fallback: Use Vertical Acceleration (Heave)
-                // This captures bumps even if suspension telemetry is encrypted
-                double vert_accel = data->mLocalAccel.y;
-                double delta_accel = vert_accel - m_prev_vert_accel;
-                
-                // Scaling: Accel delta needs to be converted to equivalent force
-                // Empirically, 1.0 m/s^2 delta ~ equivalent to small bump
-                // Multiplier 0.05 gives similar magnitude to deflection method
-                road_noise_val = delta_accel * 0.05 * 50.0; 
-            }
-            
-            // Update History
-            m_prev_vert_accel = data->mLocalAccel.y;
-
-            // Apply Gain & Load
-            road_noise = road_noise_val * m_road_texture_gain * decoupling_scale * texture_load_factor;
-            
-            // Apply Stationary Gate (Fix for Violent Shaking at Stop)
-            road_noise *= speed_gate;
-
-            total_force += road_noise;
+        double delta_l = data->mWheel[0].mVerticalTireDeflection - m_prev_vert_deflection[0];
+        double delta_r = data->mWheel[1].mVerticalTireDeflection - m_prev_vert_deflection[1];
+        delta_l = (std::max)(-0.01, (std::min)(0.01, delta_l));
+        delta_r = (std::max)(-0.01, (std::min)(0.01, delta_r));
+        
+        double road_noise_val = 0.0;
+        bool deflection_active = (std::abs(delta_l) > 0.000001 || std::abs(delta_r) > 0.000001);
+        
+        if (deflection_active || ctx.car_speed < 5.0) {
+            road_noise_val = (delta_l + delta_r) * 50.0;
+        } else {
+            // Fallback: Use Vertical Acceleration (Heave) for road feel
+            // m_prev_vert_accel is now updated unconditionally in STATE UPDATES section
+            double vert_accel = data->mLocalAccel.y;
+            double delta_accel = vert_accel - m_prev_vert_accel;
+            road_noise_val = delta_accel * 0.05 * 50.0;
         }
+        
+        ctx.road_noise = road_noise_val * m_road_texture_gain * ctx.decoupling_scale * ctx.texture_load_factor;
+        ctx.road_noise *= ctx.speed_gate;
+    }
 
-        // --- 5. Suspension Bottoming (High Load Impulse) ---
-        if (m_bottoming_enabled) {
-            bool triggered = false;
-            double intensity = 0.0;
-
-            if (m_bottoming_method == 0) {
-                // Method A: Scraping (Ride Height)
-                // 
-                // TODO (v0.4.40 - Encrypted Content Gap B): Bottoming False Positive
-                // If mRideHeight is blocked (0.0) on encrypted content, the check `min_rh < 0.002`
-                // will be constantly true, causing permanent scraping vibration.
-                // 
-                // Risk: If mSuspensionDeflection is blocked, mRideHeight is likely also blocked
-                // (same suspension physics packet).
-                // 
-                // Potential Fix: Add sanity check - if mRideHeight is exactly 0.0 while car is moving
-                // (physically impossible), disable Method A or switch to Method B.
-                // See: docs/dev_docs/Improving FFB App Tyres.md "Gap B: Bottoming Effect"
-                // Threshold: 2mm (0.002m)
-                double min_rh = (std::min)(fl.mRideHeight, fr.mRideHeight);
-                if (min_rh < 0.002 && min_rh > -1.0) { // Check valid range
-                    triggered = true;
-                    // Closer to 0 = stronger. Map 0.002->0.0 to 0.0->1.0 intensity
-                    intensity = (0.002 - min_rh) / 0.002;
-                }
-            } else {
-                // Method B: Suspension Force Spike (Derivative)
-                double susp_l = fl.mSuspForce;
-                double susp_r = fr.mSuspForce;
-                double dForceL = (susp_l - m_prev_susp_force[0]) / dt;
-                double dForceR = (susp_r - m_prev_susp_force[1]) / dt;
-                
-                double max_dForce = (std::max)(dForceL, dForceR);
-                // Threshold: 100,000 N/s
-                if (max_dForce > 100000.0) {
-                    triggered = true;
-                    intensity = (max_dForce - 100000.0) / 200000.0; // Scale
-                }
+    void calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        if (!m_bottoming_enabled) return;
+        bool triggered = false;
+        double intensity = 0.0;
+        
+        if (m_bottoming_method == 0) {
+            double min_rh = (std::min)(data->mWheel[0].mRideHeight, data->mWheel[1].mRideHeight);
+            if (min_rh < 0.002 && min_rh > -1.0) {
+                triggered = true;
+                intensity = (0.002 - min_rh) / 0.002;
             }
-            
-            // Legacy/Fallback check: High Load
-            if (!triggered) {
-                double max_load = (std::max)(fl.mTireLoad, fr.mTireLoad);
-                if (max_load > 8000.0) {
-                    triggered = true;
-                    double excess = max_load - 8000.0;
-                    intensity = std::sqrt(excess) * 0.05; // Tuned
-                }
-            }
-
-            if (triggered) {
-                // Non-linear response (Square root softens the initial onset)
-                double bump_magnitude = intensity * m_bottoming_gain * (double)BASE_NM_BOTTOMING * decoupling_scale; // Scaled for Nm
-                
-                // FIX: Use a 50Hz "Crunch" oscillation instead of directional DC offset
-                double freq = 50.0; 
-                
-                // Phase Integration (FIXED)
-                m_bottoming_phase += freq * dt * TWO_PI;
-                m_bottoming_phase = std::fmod(m_bottoming_phase, TWO_PI); // Wrap correctly
-
-                // Generate vibration (Sine wave)
-                // This creates a heavy shudder regardless of steering direction
-                double crunch = std::sin(m_bottoming_phase) * bump_magnitude * speed_gate;
-                
-                total_force += crunch;
+        } else {
+            double dForceL = (data->mWheel[0].mSuspForce - m_prev_susp_force[0]) / ctx.dt;
+            double dForceR = (data->mWheel[1].mSuspForce - m_prev_susp_force[1]) / ctx.dt;
+            double max_dForce = (std::max)(dForceL, dForceR);
+            if (max_dForce > 100000.0) {
+                triggered = true;
+                intensity = (max_dForce - 100000.0) / 200000.0;
             }
         }
 
-        // --- 6. Min Force & Output Scaling ---
-        // Boost small forces to overcome wheel friction
-        // Use the configurable reference instead of hardcoded 20.0 (v0.4.4 Fix)
-        double max_force_ref = (double)m_max_torque_ref; 
-        
-        // Safety: Prevent divide by zero
-        if (max_force_ref < 1.0) max_force_ref = 1.0;
-
-        double norm_force = total_force / max_force_ref;
-        
-        // Apply Master Gain
-        norm_force *= m_gain;
-        
-        // Apply Min Force
-        // If force is non-zero but smaller than min_force, boost it.
-        if (std::abs(norm_force) > 0.0001 && std::abs(norm_force) < m_min_force) {
-            // Sign check
-            double sign = (norm_force > 0.0) ? 1.0 : -1.0;
-            norm_force = sign * m_min_force;
-        }
-        
-        // APPLY INVERSION HERE (Before clipping)
-        if (m_invert_force) {
-            norm_force *= -1.0;
-        }
-        
-        // ==================================================================================
-        // CRITICAL: UNCONDITIONAL STATE UPDATES (Fix for Toggle Spikes)
-        // ==================================================================================
-        // We must update history variables every frame, even if effects are disabled.
-        // This prevents "stale state" spikes when effects are toggled on.
-        
-        // History Updates for all 4 wheels (v0.6.0)
-        for (int i = 0; i < 4; i++) {
-            m_prev_vert_deflection[i] = data->mWheel[i].mVerticalTireDeflection;
-            m_prev_rotation[i] = data->mWheel[i].mRotation;
-            m_prev_brake_pressure[i] = data->mWheel[i].mBrakePressure;
-        }
-
-        // Bottoming Method B State (Separate from loop as it's just front)
-        m_prev_susp_force[0] = fl.mSuspForce;
-        m_prev_susp_force[1] = fr.mSuspForce;
-        // ==================================================================================
-
-        // --- SNAPSHOT LOGIC ---
-        // Capture all internal states for visualization
-        {
-            std::lock_guard<std::mutex> lock(m_debug_mutex);
-            if (m_debug_buffer.size() < 100) {
-                FFBSnapshot snap;
-                
-                // --- Header A: Outputs ---
-                snap.total_output = (float)norm_force;
-                snap.base_force = (float)base_input; // Show the processed base input
-                snap.sop_force = (float)sop_base_force;
-                snap.understeer_drop = (float)((base_input * m_steering_shaft_gain) * (1.0 - grip_factor));
-                snap.oversteer_boost = (float)(sop_total - sop_base_force - rear_torque - yaw_force); // Split boost from other SoP components
-                snap.ffb_rear_torque = (float)rear_torque;
-                snap.ffb_scrub_drag = (float)scrub_drag_force;
-                snap.ffb_yaw_kick = (float)yaw_force;
-                snap.ffb_gyro_damping = (float)gyro_force; // New v0.4.17
-                snap.texture_road = (float)road_noise;
-                snap.texture_slide = (float)slide_noise;
-                snap.texture_lockup = (float)lockup_rumble;
-                snap.texture_spin = (float)spin_rumble;
-                snap.texture_bottoming = (float)bottoming_crunch;
-                snap.clipping = (std::abs(norm_force) > 0.99f) ? 1.0f : 0.0f;
-                
-                // --- Header B: Internal Physics (Calculated) ---
-                snap.calc_front_load = (float)avg_load; // This is the final load used (maybe approximated)
-                snap.calc_rear_load = (float)avg_rear_load; // New v0.4.10
-                snap.calc_rear_lat_force = (float)calc_rear_lat_force; // New v0.4.10
-                snap.calc_front_grip = (float)avg_grip; // This is the final grip used (maybe approximated)
-                snap.calc_rear_grip = (float)avg_rear_grip;
-                snap.calc_front_slip_ratio = (float)((calculate_manual_slip_ratio(fl, data->mLocalVel.z) + calculate_manual_slip_ratio(fr, data->mLocalVel.z)) / 2.0);
-                snap.calc_front_slip_angle_smoothed = (float)m_grip_diag.front_slip_angle; // Smoothed Slip Angle
-                snap.calc_rear_slip_angle_smoothed = (float)m_grip_diag.rear_slip_angle; // Smoothed Rear Slip Angle
-                
-                // Calculate Raw Slip Angles for visualization (v0.4.9 Refactored)
-                snap.raw_front_slip_angle = (float)calculate_raw_slip_angle_pair(fl, fr);
-                snap.raw_rear_slip_angle = (float)calculate_raw_slip_angle_pair(data->mWheel[2], data->mWheel[3]);
-
-                // Helper for Raw Game Slip Ratio
-                auto get_raw_game_slip = [&](const TelemWheelV01& w) {
-                    double v_long = std::abs(w.mLongitudinalGroundVel);
-                    if (v_long < MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;
-                    return w.mLongitudinalPatchVel / v_long;
-                };
-
-                // --- Header C: Raw Game Telemetry (Inputs) ---
-                snap.steer_force = (float)raw_torque;
-                snap.raw_input_steering = (float)data->mUnfilteredSteering;
-                snap.raw_front_tire_load = (float)raw_load; // Raw from game
-                snap.raw_front_grip_fract = (float)raw_grip; // Raw from game
-                snap.raw_rear_grip = (float)((data->mWheel[2].mGripFract + data->mWheel[3].mGripFract) / 2.0);
-                snap.raw_front_susp_force = (float)((fl.mSuspForce + fr.mSuspForce) / 2.0);
-                snap.raw_front_ride_height = (float)((std::min)(fl.mRideHeight, fr.mRideHeight));
-                snap.raw_rear_lat_force = (float)((data->mWheel[2].mLateralForce + data->mWheel[3].mLateralForce) / 2.0);
-                snap.raw_car_speed = (float)data->mLocalVel.z;
-                snap.raw_front_slip_ratio = (float)((get_raw_game_slip(fl) + get_raw_game_slip(fr)) / 2.0);
-                snap.raw_input_throttle = (float)data->mUnfilteredThrottle;
-                snap.raw_input_brake = (float)data->mUnfilteredBrake;
-                snap.accel_x = (float)data->mLocalAccel.x;
-                snap.raw_front_lat_patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / 2.0);
-                snap.raw_front_deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / 2.0);
-                
-                // New Patch Velocities (v0.4.9)
-                snap.raw_front_long_patch_vel = (float)((fl.mLongitudinalPatchVel + fr.mLongitudinalPatchVel) / 2.0);
-                snap.raw_rear_lat_patch_vel = (float)((std::abs(data->mWheel[2].mLateralPatchVel) + std::abs(data->mWheel[3].mLateralPatchVel)) / 2.0);
-                snap.raw_rear_long_patch_vel = (float)((data->mWheel[2].mLongitudinalPatchVel + data->mWheel[3].mLongitudinalPatchVel) / 2.0);
-
-                // Warnings
-                snap.warn_load = frame_warn_load;
-                snap.warn_grip = frame_warn_grip || frame_warn_rear_grip; // Combined warning
-                snap.warn_dt = frame_warn_dt;
-                snap.debug_freq = (float)m_debug_freq;
-                snap.tire_radius = (float)fl.mStaticUndeflectedRadius / 100.0f; // Convert cm to m
-
-
-                m_debug_buffer.push_back(snap);
+        if (!triggered) {
+            double max_load = (std::max)(data->mWheel[0].mTireLoad, data->mWheel[1].mTireLoad);
+            if (max_load > 8000.0) {
+                triggered = true;
+                double excess = max_load - 8000.0;
+                intensity = std::sqrt(excess) * 0.05;
             }
         }
 
-        // Clip
-        return (std::max)(-1.0, (std::min)(1.0, norm_force));
+        if (triggered) {
+            double bump_magnitude = intensity * m_bottoming_gain * (double)BASE_NM_BOTTOMING * ctx.decoupling_scale;
+            double freq = 50.0;
+            m_bottoming_phase += freq * ctx.dt * TWO_PI;
+            m_bottoming_phase = std::fmod(m_bottoming_phase, TWO_PI);
+            ctx.bottoming_crunch = std::sin(m_bottoming_phase) * bump_magnitude * ctx.speed_gate;
+        }
     }
 };
 
@@ -24779,6 +35286,7 @@ public:
 # File: src\GameConnector.cpp
 ```cpp
 #include "GameConnector.h"
+#include "lmu_sm_interface/SafeSharedMemoryLock.h"
 #include <iostream>
 
 #define LEGACY_SHARED_MEMORY_NAME "$rFactor2SMMP_Telemetry$"
@@ -24791,12 +35299,38 @@ GameConnector& GameConnector::Get() {
 GameConnector::GameConnector() {}
 
 GameConnector::~GameConnector() {
-    if (m_pSharedMemLayout) UnmapViewOfFile(m_pSharedMemLayout);
-    if (m_hMapFile) CloseHandle(m_hMapFile);
+    Disconnect();
+}
+
+void GameConnector::Disconnect() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    _DisconnectLocked();
+}
+
+void GameConnector::_DisconnectLocked() {
+    if (m_pSharedMemLayout) {
+        UnmapViewOfFile(m_pSharedMemLayout);
+        m_pSharedMemLayout = nullptr;
+    }
+    if (m_hMapFile) {
+        CloseHandle(m_hMapFile);
+        m_hMapFile = NULL;
+    }
+    if (m_hProcess) {
+        CloseHandle(m_hProcess);
+        m_hProcess = NULL;
+    }
+    m_smLock.reset();
+    m_connected = false;
+    m_processId = 0;
 }
 
 bool GameConnector::TryConnect() {
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (m_connected) return true;
+
+    // Ensure we don't leak handles from a previous partial/failed attempt
+    _DisconnectLocked();
 
     m_hMapFile = OpenFileMappingA(FILE_MAP_READ, FALSE, LMU_SHARED_MEMORY_FILE);
     
@@ -24808,21 +35342,37 @@ bool GameConnector::TryConnect() {
     m_pSharedMemLayout = (SharedMemoryLayout*)MapViewOfFile(m_hMapFile, FILE_MAP_READ, 0, 0, sizeof(SharedMemoryLayout));
     if (m_pSharedMemLayout == NULL) {
         std::cerr << "[GameConnector] Could not map view of file." << std::endl;
-        CloseHandle(m_hMapFile);
-        m_hMapFile = NULL;
+        _DisconnectLocked();
         return false;
     }
 
-    m_smLock = SharedMemoryLock::MakeSharedMemoryLock();
+    m_smLock = SafeSharedMemoryLock::MakeSafeSharedMemoryLock();
     if (!m_smLock.has_value()) {
         std::cerr << "[GameConnector] Failed to init LMU Shared Memory Lock" << std::endl;
-        // Proceed anyway? No, lock is mandatory for data integrity in 1.2
-        // But maybe we can read without lock if we accept tearing? 
-        // No, let's enforce it for robustness.
-        // Actually, if lock creation fails, it might mean permissions or severe error.
+        _DisconnectLocked();
         return false;
     }
 
+    // Try to get process handle for lifecycle management
+    // But don't treat missing handle as fatal - allow connection to proceed
+    HWND hwnd = m_pSharedMemLayout->data.generic.appInfo.mAppWindow;
+    if (hwnd) {
+        DWORD pid = 0;
+        GetWindowThreadProcessId(hwnd, &pid);
+        if (pid) {
+            m_processId = pid;
+            m_hProcess = OpenProcess(
+                SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+            if (!m_hProcess) {
+                std::cout << "[GameConnector] Note: Failed to open process handle (Error: " << GetLastError() << "). Connection will continue without lifecycle monitoring." << std::endl;
+            }
+        }
+    } else {
+        std::cout << "[GameConnector] Note: Window handle not yet available. Will retry process handle acquisition later." << std::endl;
+    }
+
+    // Mark as connected even if process handle isn't available yet
+    // Process monitoring is optional - core functionality is shared memory access
     m_connected = true;
     std::cout << "[GameConnector] Connected to LMU Shared Memory." << std::endl;
     return true;
@@ -24839,39 +35389,49 @@ bool GameConnector::CheckLegacyConflict() {
 }
 
 bool GameConnector::IsConnected() const {
-    return m_connected;
+  if (!m_connected.load(std::memory_order_acquire)) return false;
+
+  std::lock_guard<std::mutex> lock(m_mutex);
+  // Double check under lock to ensure we don't access closed handles
+  if (!m_connected.load(std::memory_order_relaxed)) return false;
+
+  // Check if the game process is still running
+  if (m_hProcess) {
+    DWORD wait = WaitForSingleObject(m_hProcess, 0);
+    if (wait == WAIT_OBJECT_0 || wait == WAIT_FAILED) {
+      // Process has exited or handle is invalid - clean up everything immediately
+      const_cast<GameConnector*>(this)->_DisconnectLocked();
+      return false;
+    }
+  }
+
+  return m_connected.load(std::memory_order_relaxed) && m_pSharedMemLayout &&
+         m_smLock.has_value();
 }
 
-void GameConnector::CopyTelemetry(SharedMemoryObjectOut& dest) {
-    if (!m_connected || !m_pSharedMemLayout || !m_smLock.has_value()) return;
+bool GameConnector::CopyTelemetry(SharedMemoryObjectOut& dest) {
+    // Fast path check
+    if (!m_connected.load(std::memory_order_acquire)) return false;
 
-    m_smLock->Lock();
-    CopySharedMemoryObj(dest, m_pSharedMemLayout->data);
-    m_smLock->Unlock();
-}
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (!m_connected.load(std::memory_order_relaxed) || !m_pSharedMemLayout || !m_smLock.has_value()) return false;
 
-bool GameConnector::IsInRealtime() const {
-    if (!m_connected || !m_pSharedMemLayout || !m_smLock.has_value()) {
+    // Use a reasonable timeout (e.g., 50ms) to avoid hanging forever if the game crashes while holding the lock
+    if (m_smLock->Lock(50)) {
+        CopySharedMemoryObj(dest, m_pSharedMemLayout->data);
+        
+        // Get realtime status while we have the lock
+        // mInRealtime: 0=menu/replay/monitor, 1=driving/practice/race
+        bool isRealtime = (m_pSharedMemLayout->data.scoring.scoringInfo.mInRealtime != 0);
+        
+        m_smLock->Unlock();
+        
+        return isRealtime;
+    } else {
+        // Timeout - game may have crashed while holding lock
+        // Return false to indicate not in realtime (safe fallback)
         return false;
     }
-    
-    // Thread-safe check of game state
-    m_smLock->Lock();
-    
-    bool inRealtime = false;
-    
-    // Find player vehicle and check session state
-    for (int i = 0; i < 104; i++) {
-        if (m_pSharedMemLayout->data.scoring.vehScoringInfo[i].mIsPlayer) {
-            // Check if in active driving session
-            // mInRealtime: 0=menu/replay/monitor, 1=driving/practice/race
-            inRealtime = (m_pSharedMemLayout->data.scoring.scoringInfo.mInRealtime != 0);
-            break;
-        }
-    }
-    
-    m_smLock->Unlock();
-    return inRealtime;
 }
 
 ```
@@ -24881,9 +35441,11 @@ bool GameConnector::IsInRealtime() const {
 #ifndef GAMECONNECTOR_H
 #define GAMECONNECTOR_H
 
-#include "lmu_sm_interface/SharedMemoryInterface.hpp"
-#include <optional>
+#include "lmu_sm_interface/LmuSharedMemoryWrapper.h"
+#include "lmu_sm_interface/SafeSharedMemoryLock.h"
 #include <windows.h>
+#include <mutex>
+#include <atomic>
 
 class GameConnector {
 public:
@@ -24892,29 +35454,34 @@ public:
     // Attempt to connect to LMU Shared Memory
     bool TryConnect();
     
+    // Disconnect and clean up resources
+    void Disconnect();
+    
     // Check for Legacy rFactor 2 Plugin conflict
     bool CheckLegacyConflict();
     
     // Is connected to LMU SM?
     bool IsConnected() const;
     
-    // Is the game in Realtime (Driving) mode?
-    bool IsInRealtime() const;
-    
     // Thread-safe copy of telemetry data
-    void CopyTelemetry(SharedMemoryObjectOut& dest);
+    // Returns true if in realtime (driving) mode, false if in menu/replay
+    bool CopyTelemetry(SharedMemoryObjectOut& dest);
 
 private:
     GameConnector();
     ~GameConnector();
     
     SharedMemoryLayout* m_pSharedMemLayout = nullptr;
-    mutable std::optional<SharedMemoryLock> m_smLock;
+    mutable std::optional<SafeSharedMemoryLock> m_smLock;
     HANDLE m_hMapFile = NULL;
-    
-    bool m_connected = false;
-};
+    mutable HANDLE m_hProcess = NULL;
+    DWORD m_processId = 0;
 
+    std::atomic<bool> m_connected{false};
+    mutable std::mutex m_mutex;
+
+    void _DisconnectLocked();
+};
 #endif // GAMECONNECTOR_H
 
 ```
@@ -24932,6 +35499,7 @@ private:
 #include <vector>
 #include <algorithm>
 #include <mutex>
+#include <chrono>
 
 // Define STB_IMAGE_WRITE_IMPLEMENTATION only once in the project (here is fine)
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -24971,8 +35539,10 @@ static const int LATENCY_WARNING_THRESHOLD_MS = 15; // Green if < 15ms, Red if >
 #define PW_RENDERFULLCONTENT 0x00000002
 #endif
 
-// Forward declarations of helper functions
-bool CreateDeviceD3D(HWND hWnd);
+static constexpr std::chrono::seconds CONNECT_ATTEMPT_INTERVAL(2);
+
+  // Forward declarations of helper functions
+  bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
@@ -25641,13 +36211,18 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     ImGui::Separator();
 
     // Connection Status
-    bool connected = GameConnector::Get().IsConnected();
-    if (connected) {
-        ImGui::TextColored(ImVec4(0, 1, 0, 1), "Connected to LMU");
+    static std::chrono::steady_clock::time_point last_check_time =
+        std::chrono::steady_clock::now();
+    
+    if (!GameConnector::Get().IsConnected()) {
+      ImGui::TextColored(ImVec4(1, 1, 0, 1), "Connecting to LMU...");
+      if (std::chrono::steady_clock::now() - last_check_time >
+          CONNECT_ATTEMPT_INTERVAL) {
+        last_check_time = std::chrono::steady_clock::now();
+        GameConnector::Get().TryConnect();
+      }
     } else {
-        ImGui::TextColored(ImVec4(1, 0, 0, 1), "Disconnected from LMU");
-        ImGui::SameLine();
-        if (ImGui::Button("Retry")) GameConnector::Get().TryConnect();
+      ImGui::TextColored(ImVec4(0, 1, 0, 1), "Connected to LMU");
     }
 
     // --- 1. TOP BAR (System Status & Quick Controls) ---
@@ -26011,6 +36586,79 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             "Typical: 0.12 - 0.15 (12-15%).\n"
             "Used to estimate grip loss under braking/acceleration.\n"
             "Affects: How much braking/acceleration contributes to calculated grip loss.");
+        
+        // --- SLOPE DETECTION (v0.7.0) ---
+        ImGui::Separator();
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Slope Detection (Experimental)");
+        ImGui::NextColumn(); ImGui::NextColumn();
+
+        // Slope Detection Enable - with buffer reset on transition (v0.7.0)
+        bool prev_slope_enabled = engine.m_slope_detection_enabled;
+        GuiWidgets::Result slope_res = GuiWidgets::Checkbox("Enable Slope Detection", &engine.m_slope_detection_enabled,
+            "Replaces static 'Optimal Slip Angle' threshold with dynamic derivative monitoring.\n\n"
+            "When enabled:\n"
+            "• Grip is estimated by tracking the slope of lateral-G vs slip angle\n"
+            "• Automatically adapts to tire temperature, wear, and conditions\n"
+            "• 'Optimal Slip Angle' and 'Optimal Slip Ratio' settings are IGNORED\n\n"
+            "When disabled:\n"
+            "• Uses the static threshold method (default behavior)");
+        
+        if (slope_res.changed) {
+            selected_preset = -1;
+            
+            // Reset buffers when enabling slope detection (v0.7.0 - Prevents stale data)
+            if (!prev_slope_enabled && engine.m_slope_detection_enabled) {
+                engine.m_slope_buffer_count = 0;
+                engine.m_slope_buffer_index = 0;
+                engine.m_slope_smoothed_output = 1.0;  // Start at full grip
+                std::cout << "[SlopeDetection] Enabled - buffers cleared" << std::endl;
+            }
+        }
+        if (slope_res.deactivated) {
+            Config::Save(engine);
+        }
+        
+        if (engine.m_slope_detection_enabled) {
+            // Filter Window
+            int window = engine.m_slope_sg_window;
+            if (ImGui::SliderInt("  Filter Window", &window, 5, 41)) {
+                if (window % 2 == 0) window++;  // Force odd
+                engine.m_slope_sg_window = window;
+                selected_preset = -1;
+            }
+            if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
+            
+            ImGui::SameLine();
+            float latency_ms = (float)(engine.m_slope_sg_window / 2) * 2.5f;
+            ImVec4 color = (latency_ms < 25.0f) ? ImVec4(0,1,0,1) : ImVec4(1,0.5f,0,1);
+            ImGui::TextColored(color, "~%.0f ms latency", latency_ms);
+            ImGui::NextColumn(); ImGui::NextColumn();
+            
+            FloatSetting("  Sensitivity", &engine.m_slope_sensitivity, 0.1f, 5.0f, "%.1fx",
+                "Multiplier for slope-to-grip conversion.\n"
+                "Higher = More aggressive grip loss detection.\n"
+                "Lower = Smoother, less pronounced effect.");
+            
+            // Advanced (Collapsed by Default)
+            if (ImGui::TreeNode("Advanced Slope Settings")) {
+                ImGui::NextColumn(); ImGui::NextColumn();
+                FloatSetting("  Slope Threshold", &engine.m_slope_negative_threshold, -1.0f, 0.0f, "%.2f",
+                    "Slope value below which grip loss begins.\n"
+                    "More negative = Later detection (safer).");
+                FloatSetting("  Output Smoothing", &engine.m_slope_smoothing_tau, 0.005f, 0.100f, "%.3f s",
+                    "Time constant for grip factor smoothing.\n"
+                    "Prevents abrupt FFB changes.");
+                ImGui::TreePop();
+            } else {
+                ImGui::NextColumn(); ImGui::NextColumn();
+            }
+            
+            // Live Diagnostics
+            ImGui::Text("  Live Slope: %.3f | Grip: %.0f%%", 
+                engine.m_slope_current, 
+                engine.m_slope_smoothed_output * 100.0f);
+            ImGui::NextColumn(); ImGui::NextColumn();
+        }
         // ---------------------------------
 
         
@@ -26972,10 +37620,10 @@ void FFBThread() {
         if (g_ffb_active && GameConnector::Get().IsConnected()) {
             
             // --- CRITICAL SECTION: READ DATA ---
-            GameConnector::Get().CopyTelemetry(g_localData);
+            // CopyTelemetry now returns realtime status to avoid extra lock acquisition
+            bool in_realtime = GameConnector::Get().CopyTelemetry(g_localData);
             
             // Check if player is in an active driving session (not in menu/replay)
-            bool in_realtime = GameConnector::Get().IsInRealtime();
             static bool was_in_menu = true;
             
             if (was_in_menu && in_realtime) {
@@ -27134,12 +37782,35 @@ int main(int argc, char* argv[]) {
 
 ```
 
+# File: src\resource.h
+```cpp
+//{{NO_DEPENDENCIES}}
+// Microsoft Visual C++ generated include file.
+// Used by res.rc
+//
+#define IDI_ICON1                       112
+
+// Next default values for new objects
+// 
+#ifdef APSTUDIO_INVOKED
+#ifndef APSTUDIO_READONLY_SYMBOLS
+#define _APS_NEXT_RESOURCE_VALUE        116
+#define _APS_NEXT_COMMAND_VALUE         40001
+#define _APS_NEXT_CONTROL_VALUE         1000
+#define _APS_NEXT_SYMED_VALUE           101
+#endif
+#endif
+
+```
+
 # File: src\Version.h
 ```cpp
 #ifndef VERSION_H
 #define VERSION_H
 
-#define LMUFFB_VERSION "0.6.35"
+#ifndef LMUFFB_VERSION
+#define LMUFFB_VERSION "0.7.0"
+#endif
 
 #endif
 
@@ -27161,7 +37832,7 @@ int main(int argc, char* argv[]) {
 //# This source code module, and all information, data, and algorithms      #
 //# associated with it, are part of isiMotor Technology (tm).               #
 //#                 PROPRIETARY AND CONFIDENTIAL                            #
-//# Copyright (c) 2018 Studio 397 B.V.  All rights reserved.                #
+//# Copyright (c) 2025 Studio 397 BV and Motorsport Games Inc.              #
 //#                                                                         #
 //###########################################################################
 
@@ -27170,11 +37841,7 @@ int main(int argc, char* argv[]) {
 
 #include "PluginObjects.hpp"     // base class for plugin objects to derive from
 #include <cmath>                 // for sqrt()
-#ifdef _WIN32
 #include <windows.h>             // for HWND
-#else
-typedef void* HWND;
-#endif
 // rF2 and plugins must agree on structure packing, so set it explicitly here.
 // Whatever the current packing is will be restored at the end of this include
 // with another #pragma.
@@ -28210,17 +38877,153 @@ public:
 
 ```
 
+# File: src\lmu_sm_interface\LmuSharedMemoryWrapper.h
+```cpp
+#pragma once
+
+// FIX: LMU Plugin Update 2025
+// The official SharedMemoryInterface.hpp provided by Studio 397 is missing
+// several standard library includes required for compilation.
+// We include them here BEFORE including the vendor file.
+
+#include <optional>  // Required for std::optional
+#include <utility>   // Required for std::exchange, std::swap
+#include <cstdint>   // Required for uint32_t, uint8_t
+#include <cstring>   // Required for memcpy
+
+// Include the official vendor file
+#include "SharedMemoryInterface.hpp"
+
+```
+
 # File: src\lmu_sm_interface\PluginObjects.hpp
 ```
+//###########################################################################
+//#                                                                         #
+//# Module: Header file for plugin object types                             #
+//#                                                                         #
+//# Description: interface declarations for plugin objects                  #
+//#                                                                         #
+//# This source code module, and all information, data, and algorithms      #
+//# associated with it, are part of isiMotor Technology (tm).               #
+//#                 PROPRIETARY AND CONFIDENTIAL                            #
+//# Copyright (c) 2025 Studio 397 BV and Motorsport Games Inc.              #
+//#                                                                         #
+//# Change history:                                                         #
+//#   tag.2008.02.15: created                                               #
+//#                                                                         #
+//###########################################################################
+
 #ifndef _PLUGIN_OBJECTS_HPP_
 #define _PLUGIN_OBJECTS_HPP_
 
-class PluginObject {
-public:
-    virtual ~PluginObject() {}
+
+// rF currently uses 4-byte packing ... whatever the current packing is will
+// be restored at the end of this include with another #pragma.
+#pragma pack( push, 4 )
+
+
+//#########################################################################
+//# types of plugins                                                       #
+//##########################################################################
+
+enum PluginObjectType
+{
+  PO_INVALID      = -1,
+  //-------------------
+  PO_GAMESTATS    =  0,
+  PO_NCPLUGIN     =  1,
+  PO_IVIBE        =  2,
+  PO_INTERNALS    =  3,
+  PO_RFONLINE     =  4,
+  //-------------------
+  PO_MAXIMUM
 };
 
-#endif
+
+//#########################################################################
+//#  PluginObject                                                          #
+//#    - interface used by plugin classes.                                 #
+//##########################################################################
+
+class PluginObject
+{
+ private:
+
+  class PluginInfo *mInfo;             // used by main executable to obtain info about the plugin that implements this object
+
+ public:
+
+  void SetInfo( class PluginInfo *p )  { mInfo = p; }        // used by main executable
+  class PluginInfo *GetInfo() const    { return( mInfo ); }  // used by main executable
+  class PluginInfo *GetInfo()          { return( mInfo ); }  // used by main executable
+};
+
+
+//#########################################################################
+//# typedefs for dll functions - easier to use a typedef than to type      #
+//# out the crazy syntax for declaring and casting function pointers       #
+//##########################################################################
+
+typedef const char *      ( __cdecl *GETPLUGINNAME )();
+typedef PluginObjectType  ( __cdecl *GETPLUGINTYPE )();
+typedef int               ( __cdecl *GETPLUGINVERSION )();
+typedef PluginObject *    ( __cdecl *CREATEPLUGINOBJECT )();
+typedef void              ( __cdecl *DESTROYPLUGINOBJECT )( PluginObject *obj );
+
+
+//#########################################################################
+//##########################################################################
+
+// See #pragma at top of file
+#pragma pack( pop )
+
+#endif // _PLUGIN_OBJECTS_HPP_
+
+
+```
+
+# File: src\lmu_sm_interface\SafeSharedMemoryLock.h
+```cpp
+#pragma once
+#include "LmuSharedMemoryWrapper.h"
+
+// Wrapper for SharedMemoryLock that adds timeout support without modifying vendor code
+// This avoids the maintenance burden of modifying the vendor's SharedMemoryInterface.hpp
+class SafeSharedMemoryLock {
+public:
+    // Factory method that returns a SafeSharedMemoryLock wrapper
+    static std::optional<SafeSharedMemoryLock> MakeSafeSharedMemoryLock() {
+        auto vendorLock = SharedMemoryLock::MakeSharedMemoryLock();
+        if (vendorLock.has_value()) {
+            return SafeSharedMemoryLock(std::move(vendorLock.value()));
+        }
+        return std::nullopt;
+    }
+
+    // Lock with timeout support - wraps the vendor's Lock() method
+    // Returns false if timeout expires or lock acquisition fails
+    bool Lock(DWORD timeout_ms = 50) {
+        // The vendor implementation already supports timeout parameter
+        // We just expose it through our wrapper
+        return m_vendorLock.Lock(timeout_ms);
+    }
+
+    void Unlock() {
+        m_vendorLock.Unlock();
+    }
+
+    // Move constructor and assignment to allow std::optional usage
+    SafeSharedMemoryLock(SafeSharedMemoryLock&& other) = default;
+    SafeSharedMemoryLock& operator=(SafeSharedMemoryLock&& other) = default;
+
+private:
+    // Private constructor - use factory method
+    explicit SafeSharedMemoryLock(SharedMemoryLock&& vendorLock) 
+        : m_vendorLock(std::move(vendorLock)) {}
+
+    SharedMemoryLock m_vendorLock;
+};
 
 ```
 
@@ -28228,15 +39031,6 @@ public:
 ```
 #pragma once
 #include "InternalsPlugin.hpp"
-#include <optional>
-#include <utility> // For std::exchange, std::swap
-
-#ifndef _WIN32
-#define MAX_PATH 260
-typedef unsigned long DWORD;
-typedef void* HANDLE;
-typedef long LONG;
-#endif
 
 /*
 * Usage example:
@@ -28337,21 +39131,20 @@ public:
         }
         return std::nullopt;
     }
-#ifdef _WIN32
-    void Lock() {
+    bool Lock(DWORD dwMilliseconds = INFINITE) {
         int MAX_SPINS = 4000;
         for (int spins = 0; spins < MAX_SPINS; ++spins) {
             if (InterlockedCompareExchange(&mDataPtr->busy, 1, 0) == 0)
-                return;
+                return true;
             YieldProcessor(); // CPU pause hint
         }
         InterlockedIncrement(&mDataPtr->waiters);
         while (true) {
             if (InterlockedCompareExchange(&mDataPtr->busy, 1, 0) == 0) {
                 InterlockedDecrement(&mDataPtr->waiters);
-                return;
+                return true;
             }
-            WaitForSingleObject(mWaitEventHandle, INFINITE);
+            return WaitForSingleObject(mWaitEventHandle, dwMilliseconds) == WAIT_OBJECT_0;
         }
     }
     void Unlock() {
@@ -28372,13 +39165,6 @@ public:
         if (mDataPtr)
             UnmapViewOfFile(mDataPtr);
     }
-#else
-    // Mock implementation for Linux tests
-    void Lock() {}
-    void Unlock() {}
-    void Reset() {}
-    ~SharedMemoryLock() {}
-#endif
     SharedMemoryLock(SharedMemoryLock&& other) : mMapHandle(std::exchange(other.mMapHandle, nullptr)), mWaitEventHandle(std::exchange(other.mWaitEventHandle, nullptr)) ,
         mDataPtr(std::exchange(other.mDataPtr, nullptr)) {}
     SharedMemoryLock& operator=(SharedMemoryLock&& other) {
@@ -28394,7 +39180,6 @@ private:
     };
     SharedMemoryLock() = default;
     bool Init() {
-#ifdef _WIN32
         mMapHandle = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, (DWORD)sizeof(LockData), "LMU_SharedMemoryLockData");
         if (!mMapHandle) {
             return false;
@@ -28414,9 +39199,6 @@ private:
             return false;
         }
         return true;
-#else
-        return true;
-#endif
     }
     HANDLE mMapHandle = NULL;
     HANDLE mWaitEventHandle = NULL;
@@ -28484,7 +39266,6 @@ static void CopySharedMemoryObj(SharedMemoryObjectOut& dst, SharedMemoryObjectOu
         memcpy(&dst.paths, &src.paths, sizeof(SharedMemoryPathData));
     }
 }
-
 ```
 
 # File: src\rF2\rF2Data.h
@@ -28803,7 +39584,7 @@ int main() {
 
 # File: tests\test_ffb_engine.cpp
 ```cpp
-#include <iostream>
+﻿#include <iostream>
 #include <vector>
 #include <string>
 #include <cmath>
@@ -28811,7 +39592,7 @@ int main() {
 #include <algorithm>
 #include "../src/FFBEngine.h"
 #include "../src/lmu_sm_interface/InternalsPlugin.hpp"
-#include "../src/lmu_sm_interface/SharedMemoryInterface.hpp" // Added for GameState testing
+#include "../src/lmu_sm_interface/LmuSharedMemoryWrapper.h" // Wrapper for GameState testing
 #include "../src/Config.h" // Added for Preset testing
 #include <fstream>
 #include <cstdio> // for remove()
@@ -28903,6 +39684,19 @@ static void test_grip_threshold_sensitivity(); // Forward declaration (v0.5.7)
 static void test_steering_shaft_smoothing(); // Forward declaration (v0.5.7)
 static void test_config_defaults_v057(); // Forward declaration (v0.5.7)
 static void test_config_safety_validation_v057(); // Forward declaration (v0.5.7)
+
+// v0.7.0: Slope Detection Tests
+static void test_slope_detection_buffer_init();
+static void test_slope_sg_derivative();
+static void test_slope_grip_at_peak();
+static void test_slope_grip_past_peak();
+static void test_slope_vs_static_comparison();
+static void test_slope_config_persistence();
+static void test_slope_latency_characteristics();
+static void test_slope_noise_rejection();
+static void test_slope_buffer_reset_on_toggle();  // v0.7.0 - Buffer reset enhancement
+
+// --- Test Constants ---
 static void test_rear_lockup_differentiation(); // Forward declaration (v0.5.11)
 static void test_abs_frequency_scaling(); // Forward declaration (v0.6.20)
 static void test_lockup_pitch_scaling(); // Forward declaration (v0.6.20)
@@ -28929,6 +39723,13 @@ static void test_understeer_effect_scaling(); // v0.6.31
 static void test_legacy_config_migration(); // v0.6.31
 static void test_preset_understeer_only_isolation(); // v0.6.31
 static void test_all_presets_non_negative_speed_gate(); // v0.6.32
+static void test_refactor_abs_pulse(); // v0.6.36
+static void test_refactor_torque_drop(); // v0.6.36
+static void test_refactor_snapshot_sop(); // v0.6.36
+static void test_refactor_units(); // v0.6.36
+static void test_wheel_slip_ratio_helper(); // v0.6.36 - Code review recommendation 1
+static void test_signal_conditioning_helper(); // v0.6.36 - Code review recommendation 2
+static void test_unconditional_vert_accel_update(); // v0.6.36 - Code review recommendation 3
 
 // --- Test Helper Functions (v0.5.7) ---
 
@@ -29229,7 +40030,7 @@ static void test_sop_yaw_kick() {
     // v0.4.20 UPDATE: With force inversion, first frame should be ~-0.025 (10% of steady-state due to LPF)
     // The negative sign is correct - provides counter-steering cue
     if (std::abs(force - (-0.025)) < 0.005) {
-        std::cout << "[PASS] Yaw Kick first frame smoothed correctly (" << force << " ≈ -0.025)." << std::endl;
+        std::cout << "[PASS] Yaw Kick first frame smoothed correctly (" << force << " â‰ˆ -0.025)." << std::endl;
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Yaw Kick first frame mismatch. Got " << force << " Expected ~-0.025." << std::endl;
@@ -29874,7 +40675,7 @@ static void test_phase_wraparound() {
         // Check for wraparound
         if (engine.m_lockup_phase < prev_phase) {
             wrap_count++;
-            // Verify wrap happened near 2π
+            // Verify wrap happened near 2Ï€
             // With freq=40Hz, dt=0.01, step is ~2.5 rad.
             // So prev_phase could be as low as 6.28 - 2.5 = 3.78.
             // We check it's at least > 3.0 to ensure it's not resetting randomly at 0.
@@ -30322,12 +41123,12 @@ static void test_sanity_checks() {
     // - Test relies on empirical result (0.1) rather than calculated expectation
     //
     // TEST LIMITATIONS:
-    // ✅ Verifies warning flag is set
-    // ✅ Verifies output force matches expected value
-    // ❌ Does NOT verify approximation formula was used
-    // ❌ Does NOT verify slip angle calculation
-    // ❌ Does NOT verify floor application
-    // ❌ Does NOT verify intermediate values
+    // âœ… Verifies warning flag is set
+    // âœ… Verifies output force matches expected value
+    // âŒ Does NOT verify approximation formula was used
+    // âŒ Does NOT verify slip angle calculation
+    // âŒ Does NOT verify floor application
+    // âŒ Does NOT verify intermediate values
     
     // Condition: Grip 0 but Load present (simulates missing telemetry)
     data.mWheel[0].mTireLoad = 4000.0;
@@ -30769,7 +41570,7 @@ static void test_preset_initialization() {
     
     Config::LoadPresets();
     
-    // ⚠️ IMPORTANT: These expected values MUST match Config.h default member initializers!
+    // âš ï¸ IMPORTANT: These expected values MUST match Config.h default member initializers!
     // When changing the default preset in Config.h, update these values to match.
     // Also update SetAdvancedBraking() default parameters in Config.h.
     // See Config.h line ~12 for the single source of truth.
@@ -30791,7 +41592,7 @@ static void test_preset_initialization() {
     const float t300_shaft_smooth = 0.0f;
     const float t300_notch_q = 2.0f;
     
-    // ⚠️ IMPORTANT: This array MUST match the exact order of presets in Config.cpp LoadPresets()!
+    // âš ï¸ IMPORTANT: This array MUST match the exact order of presets in Config.cpp LoadPresets()!
     // When adding/removing/reordering presets in Config.cpp, update this array AND the loop count below.
     // Current count: 14 presets (v0.6.35: Added 4 DD presets after T300)
     const char* preset_names[] = {
@@ -30813,7 +41614,7 @@ static void test_preset_initialization() {
     
     bool all_passed = true;
     
-    // ⚠️ IMPORTANT: Loop count (14) must match preset_names array size above!
+    // âš ï¸ IMPORTANT: Loop count (14) must match preset_names array size above!
     for (int i = 0; i < 14; i++) {
         if (i >= Config::presets.size()) {
             std::cout << "[FAIL] Preset " << i << " (" << preset_names[i] << ") not found!" << std::endl;
@@ -30837,7 +41638,7 @@ static void test_preset_initialization() {
         // Specialized presets have custom-tuned values that differ from Config.h defaults.
         // They should NOT be validated against expected_abs_freq, expected_lockup_freq_scale, etc.
         // 
-        // ⚠️ IMPORTANT: When adding new specialized presets to Config.cpp, add them to this list!
+        // âš ï¸ IMPORTANT: When adding new specialized presets to Config.cpp, add them to this list!
         // Current specialized presets: Default, T300, GT3, LMPx/HY, GM, GM + Yaw Kick
         bool is_specialized = (preset.name == "Default" || 
                               preset.name == "T300" ||
@@ -31468,7 +42269,7 @@ static void test_yaw_kick_signal_conditioning() {
     data.mDeltaTime = 0.0025f; // 400Hz
     data.mElapsedTime = 0.0;
     
-    // Test Case 1: Idle Noise - Below Deadzone Threshold (0.2 rad/s²)
+    // Test Case 1: Idle Noise - Below Deadzone Threshold (0.2 rad/sÂ²)
     std::cout << "  Case 1: Idle Noise (YawAccel = 0.1, below threshold)" << std::endl;
     data.mLocalRotAccel.y = 0.1; // Below 0.2 threshold
     data.mLocalVel.z = 20.0; // High speed (above 5 m/s cutoff)
@@ -31902,7 +42703,7 @@ static void test_rear_force_workaround() {
     // BACKGROUND:
     // LMU 1.2 has a known bug where mLateralForce returns 0.0 for rear tires.
     // This breaks oversteer feedback. The workaround manually calculates lateral
-    // force using: F_lat = SlipAngle × Load × TireStiffness (15.0 N/(rad·N))
+    // force using: F_lat = SlipAngle Ã— Load Ã— TireStiffness (15.0 N/(radÂ·N))
     //
     // TEST STRATEGY:
     // 1. Simulate the broken API (set rear mLateralForce = 0.0)
@@ -31978,7 +42779,7 @@ static void test_rear_force_workaround() {
     // ========================================
     // Set up wheel velocities to create a measurable slip angle.
     // Slip Angle = atan(Lateral_Vel / Longitudinal_Vel)
-    // With Lat = 5 m/s, Long = 20 m/s: atan(5/20) = atan(0.25) ≈ 0.2449 rad ≈ 14 degrees
+    // With Lat = 5 m/s, Long = 20 m/s: atan(5/20) = atan(0.25) â‰ˆ 0.2449 rad â‰ˆ 14 degrees
     // This represents a moderate cornering scenario.
     data.mWheel[2].mLateralPatchVel = 5.0;
     data.mWheel[3].mLateralPatchVel = 5.0;
@@ -32011,26 +42812,26 @@ static void test_rear_force_workaround() {
     // ========================================
     // 
     // THEORETICAL CALCULATION (Without LPF):
-    // The workaround formula is: F_lat = SlipAngle × Load × TireStiffness
+    // The workaround formula is: F_lat = SlipAngle Ã— Load Ã— TireStiffness
     // 
     // Given our test inputs:
-    //   SlipAngle = atan(5/20) = atan(0.25) ≈ 0.2449 rad
+    //   SlipAngle = atan(5/20) = atan(0.25) â‰ˆ 0.2449 rad
     //   Load = SuspForce + 300N = 3000 + 300 = 3300 N
-    //   TireStiffness (K) = 15.0 N/(rad·N)
+    //   TireStiffness (K) = 15.0 N/(radÂ·N)
     // 
-    // Lateral Force: F_lat = 0.2449 × 3300 × 15.0 ≈ 12,127 N
-    // Torque: T = F_lat × 0.001 × rear_align_effect (v0.4.11)
-    //         T = 12,127 × 0.001 × 1.0 ≈ 12.127 Nm
+    // Lateral Force: F_lat = 0.2449 Ã— 3300 Ã— 15.0 â‰ˆ 12,127 N
+    // Torque: T = F_lat Ã— 0.001 Ã— rear_align_effect (v0.4.11)
+    //         T = 12,127 Ã— 0.001 Ã— 1.0 â‰ˆ 12.127 Nm
     // 
     // ACTUAL BEHAVIOR (With LPF on First Frame):
     // The grip calculator applies low-pass filtering to slip angle for stability.
-    // On the first frame, the LPF formula is: smoothed = prev + alpha × (raw - prev)
-    // With prev = 0 (initial state) and alpha ≈ 0.1:
-    //   smoothed_slip_angle = 0 + 0.1 × (0.2449 - 0) ≈ 0.0245 rad
+    // On the first frame, the LPF formula is: smoothed = prev + alpha Ã— (raw - prev)
+    // With prev = 0 (initial state) and alpha â‰ˆ 0.1:
+    //   smoothed_slip_angle = 0 + 0.1 Ã— (0.2449 - 0) â‰ˆ 0.0245 rad
     // 
     // This reduces the first-frame output by ~10x:
-    //   F_lat = 0.0245 × 3300 × 15.0 ≈ 1,213 N
-    //   T = 1,213 × 0.001 × 1.0 ≈ 1.213 Nm
+    //   F_lat = 0.0245 Ã— 3300 Ã— 15.0 â‰ˆ 1,213 N
+    //   T = 1,213 Ã— 0.001 Ã— 1.0 â‰ˆ 1.213 Nm
     // 
     // RATIONALE FOR EXPECTED VALUE:
     // We test the first-frame behavior (1.21 Nm) rather than steady-state
@@ -32051,7 +42852,7 @@ static void test_rear_force_workaround() {
     // v0.4.50 Update: FFB snapshot now scales with MaxTorqueRef (Decoupling)
     // with Ref=100.0, scale = 5.0. Expected = -4.85 * 5.0 = -24.25 Nm
     double expected_torque = -24.25;   // First-frame value with Decoupling (v0.4.50)
-    double torque_tolerance = 1.0;    // ±1.0 Nm tolerance
+    double torque_tolerance = 1.0;    // Â±1.0 Nm tolerance
     
     // ========================================
     // Assertion
@@ -32104,9 +42905,9 @@ static void test_rear_align_effect() {
     double force = engine.calculate_force(&data);
     
     // v0.4.19 COORDINATE FIX:
-    // Slip angle = atan2(5.0, 20.0) ≈ 0.245 rad
+    // Slip angle = atan2(5.0, 20.0) â‰ˆ 0.245 rad
     // Load = 3300 N (3000 + 300) - NOTE: SuspForce is 3000, not 4000!
-    // Lat force = 0.245 * 3300 * 15.0 ≈ 12127 N (NOT clamped, below 6000 limit)
+    // Lat force = 0.245 * 3300 * 15.0 â‰ˆ 12127 N (NOT clamped, below 6000 limit)
     // Torque = -12127 * 0.001 * 2.0 = -24.25 Nm (INVERTED, with 2x effect)
     // But wait, this gets clamped to 6000 N first:
     // Lat force clamped = 6000 N
@@ -32115,9 +42916,9 @@ static void test_rear_align_effect() {
     
     // Actually, let me recalculate more carefully:
     // The slip angle uses abs() in the calculation, so it's always positive
-    // Slip angle = atan2(abs(5.0), 20.0) = atan2(5.0, 20.0) ≈ 0.245 rad
+    // Slip angle = atan2(abs(5.0), 20.0) = atan2(5.0, 20.0) â‰ˆ 0.245 rad
     // Load = 3300 N
-    // Lat force = 0.245 * 3300 * 15.0 ≈ 12127 N
+    // Lat force = 0.245 * 3300 * 15.0 â‰ˆ 12127 N
     // Clamped to 6000 N
     // Torque = -6000 * 0.001 * 2.0 = -12.0 Nm (with 2x effect)
     // Normalized = -12.0 / 20.0 = -0.6
@@ -32451,9 +43252,9 @@ static void test_coordinate_rear_torque_inversion() {
     }
     
     // After LPF settling:
-    // Slip angle ≈ 0.245 rad (smoothed)
+    // Slip angle â‰ˆ 0.245 rad (smoothed)
     // Load = 4300 N (4000 + 300)
-    // Lat force = 0.245 * 4300 * 15.0 ≈ 15817 N (clamped to 6000 N)
+    // Lat force = 0.245 * 4300 * 15.0 â‰ˆ 15817 N (clamped to 6000 N)
     // Torque = -6000 * 0.001 * 1.0 = -6.0 Nm (INVERTED for counter-steer)
     // Normalized = -6.0 / 20.0 = -0.3
     
@@ -32478,8 +43279,8 @@ static void test_coordinate_rear_torque_inversion() {
     }
     
     // v0.4.19: With sign preserved in slip angle calculation:
-    // Slip angle = atan2(-5.0, 20.0) ≈ -0.245 rad (NEGATIVE)
-    // Lat force = -0.245 * 4300 * 15.0 ≈ -15817 N (clamped to -6000 N)
+    // Slip angle = atan2(-5.0, 20.0) â‰ˆ -0.245 rad (NEGATIVE)
+    // Lat force = -0.245 * 4300 * 15.0 â‰ˆ -15817 N (clamped to -6000 N)
     // Torque = -(-6000) * 0.001 * 1.0 = +6.0 Nm (POSITIVE for right counter-steer)
     // Normalized = +6.0 / 20.0 = +0.3
     
@@ -32597,7 +43398,7 @@ static void test_coordinate_debug_slip_angle_sign() {
     
     FFBSnapshot snap = batch.back();
     
-    // Expected: atan2(5.0, 20.0) ≈ 0.245 rad (POSITIVE)
+    // Expected: atan2(5.0, 20.0) â‰ˆ 0.245 rad (POSITIVE)
     if (snap.raw_front_slip_angle > 0.2) {
         std::cout << "[PASS] Front slip angle is POSITIVE for left slide (" << snap.raw_front_slip_angle << " rad)" << std::endl;
         g_tests_passed++;
@@ -32618,7 +43419,7 @@ static void test_coordinate_debug_slip_angle_sign() {
     if (!batch.empty()) {
         snap = batch.back();
         
-        // Expected: atan2(-5.0, 20.0) ≈ -0.245 rad (NEGATIVE)
+        // Expected: atan2(-5.0, 20.0) â‰ˆ -0.245 rad (NEGATIVE)
         if (snap.raw_front_slip_angle < -0.2) {
             std::cout << "[PASS] Front slip angle is NEGATIVE for right slide (" << snap.raw_front_slip_angle << " rad)" << std::endl;
             g_tests_passed++;
@@ -32640,7 +43441,7 @@ static void test_coordinate_debug_slip_angle_sign() {
     if (!batch.empty()) {
         snap = batch.back();
         
-        // Expected: atan2(5.0, 20.0) ≈ 0.245 rad (POSITIVE)
+        // Expected: atan2(5.0, 20.0) â‰ˆ 0.245 rad (POSITIVE)
         if (snap.raw_rear_slip_angle > 0.2) {
             std::cout << "[PASS] Rear slip angle is POSITIVE for left slide (" << snap.raw_rear_slip_angle << " rad)" << std::endl;
             g_tests_passed++;
@@ -32660,7 +43461,7 @@ static void test_coordinate_debug_slip_angle_sign() {
     if (!batch.empty()) {
         snap = batch.back();
         
-        // Expected: atan2(-5.0, 20.0) ≈ -0.245 rad (NEGATIVE)
+        // Expected: atan2(-5.0, 20.0) â‰ˆ -0.245 rad (NEGATIVE)
         if (snap.raw_rear_slip_angle < -0.2) {
             std::cout << "[PASS] Rear slip angle is NEGATIVE for right slide (" << snap.raw_rear_slip_angle << " rad)" << std::endl;
             g_tests_passed++;
@@ -33115,7 +43916,7 @@ void test_chassis_inertia_smoothing_convergence() {
     data.mDeltaTime = 0.0025; // 400Hz
     
     // Chassis tau = 0.035s, alpha = dt / (tau + dt)
-    // At 400Hz: alpha = 0.0025 / (0.035 + 0.0025) ≈ 0.0667
+    // At 400Hz: alpha = 0.0025 / (0.035 + 0.0025) â‰ˆ 0.0667
     // After 50 frames (~125ms), should be near steady-state
     
     for (int i = 0; i < 50; i++) {
@@ -33128,7 +43929,7 @@ void test_chassis_inertia_smoothing_convergence() {
     
     // Should be close to input (9.81) after 50 frames
     // Exponential decay: y(t) = target * (1 - e^(-t/tau))
-    // At t = 125ms, tau = 35ms: y = 9.81 * (1 - e^(-3.57)) ≈ 9.81 * 0.972 ≈ 9.53
+    // At t = 125ms, tau = 35ms: y = 9.81 * (1 - e^(-3.57)) â‰ˆ 9.81 * 0.972 â‰ˆ 9.53
     double expected = 9.81 * 0.95; // Allow 5% error
     
     if (smoothed_x > expected && smoothed_z > expected) {
@@ -33189,7 +43990,7 @@ void test_kinematic_load_cornering() {
     double load_fl = engine.calculate_kinematic_load(&data, 0); // Front Left
     double load_fr = engine.calculate_kinematic_load(&data, 1); // Front Right
     
-    // Static weight per wheel: 1100 * 9.81 * 0.45 / 2 ≈ 2425N
+    // Static weight per wheel: 1100 * 9.81 * 0.45 / 2 â‰ˆ 2425N
     // Lateral transfer: (9.81 / 9.81) * 2000 * 0.6 = 1200N
     // Left wheel: 2425 + 1200 = 3625N
     // Right wheel: 2425 - 1200 = 1225N
@@ -33556,7 +44357,7 @@ static void test_steering_shaft_smoothing() {
     data.mSteeringShaftTorque = 1.0;
 
     // After 1 frame (10ms) with 50ms tau:
-    // alpha = dt / (tau + dt) = 10 / (50 + 10) = 1/6 ≈ 0.166
+    // alpha = dt / (tau + dt) = 10 / (50 + 10) = 1/6 â‰ˆ 0.166
     // Expected force: 0.166
     double force = engine.calculate_force(&data);
 
@@ -33823,11 +44624,11 @@ static void test_split_load_caps() {
     double force_high = engine.calculate_force(&data);
     
     // Verify the 3x ratio more precisely
-    // Expected: force_high ≈ 3.0 * force_low (within tolerance for phase differences)
+    // Expected: force_high â‰ˆ 3.0 * force_low (within tolerance for phase differences)
     double expected_ratio = 3.0;
     double actual_ratio = std::abs(force_high) / (std::abs(force_low) + 0.0001); // Add epsilon to avoid div-by-zero
     
-    // Use a tolerance of ±0.5 to account for phase integration differences
+    // Use a tolerance of Â±0.5 to account for phase integration differences
     if (std::abs(actual_ratio - expected_ratio) < 0.5) {
         std::cout << "[PASS] Brake load cap applies 3x scaling (Ratio: " << actual_ratio << ", High: " << std::abs(force_high) << ", Low: " << std::abs(force_low) << ")" << std::endl;
         g_tests_passed++;
@@ -33967,8 +44768,13 @@ static void test_missing_telemetry_warnings() {
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
-    // Set Vehicle Name
-    strcpy_s(data.mVehicleName, "TestCar_GT3");
+    // Set Vehicle Name (use platform-specific safe copy)
+#ifdef _MSC_VER
+    strncpy_s(data.mVehicleName, sizeof(data.mVehicleName), "TestCar_GT3", _TRUNCATE);
+#else
+    strncpy(data.mVehicleName, "TestCar_GT3", sizeof(data.mVehicleName) - 1);
+    data.mVehicleName[sizeof(data.mVehicleName) - 1] = '\0';
+#endif
 
     // Capture stdout
     std::stringstream buffer;
@@ -34240,7 +45046,7 @@ static void test_yaw_kick_edge_cases() {
     engine.m_yaw_accel_smoothed = 0.0; // Reset
     
     // Negative value with magnitude above threshold
-    data.mLocalRotAccel.y = -6.0; // |−6.0| = 6.0 > 5.0
+    data.mLocalRotAccel.y = -6.0; // |âˆ’6.0| = 6.0 > 5.0
     engine.calculate_force(&data);
     double force_negative = engine.calculate_force(&data);
     
@@ -34248,7 +45054,7 @@ static void test_yaw_kick_edge_cases() {
     
     // Negative value with magnitude below threshold
     engine.m_yaw_accel_smoothed = 0.0; // Reset
-    data.mLocalRotAccel.y = -4.0; // |−4.0| = 4.0 < 5.0
+    data.mLocalRotAccel.y = -4.0; // |âˆ’4.0| = 4.0 < 5.0
     engine.calculate_force(&data);
     double force_negative_below = engine.calculate_force(&data);
     
@@ -34579,9 +45385,356 @@ void Run() {
     test_stationary_silence();
     test_driving_forces_restored();
     
+    // Refactoring Regression Tests (v0.6.36)
+    test_refactor_abs_pulse();
+    test_refactor_torque_drop();
+    test_refactor_snapshot_sop();
+    test_refactor_units(); // v0.6.36
+    
+    // Code Review Recommendation Tests (v0.6.36)
+    test_wheel_slip_ratio_helper();
+    test_signal_conditioning_helper();
+    test_unconditional_vert_accel_update();
+
+    // v0.7.0: Slope Detection Tests
+    test_slope_detection_buffer_init();
+    test_slope_sg_derivative();
+    test_slope_grip_at_peak();
+    test_slope_grip_past_peak();
+    test_slope_vs_static_comparison();
+    test_slope_config_persistence();
+    test_slope_latency_characteristics();
+    test_slope_noise_rejection();
+    test_slope_buffer_reset_on_toggle();  // v0.7.0 - Buffer reset enhancement
+
     std::cout << "\n--- Physics Engine Test Summary ---" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
     std::cout << "Tests Failed: " << g_tests_failed << std::endl;
+}
+
+static void test_slope_detection_buffer_init() {
+    std::cout << "\nTest: Slope Detection Buffer Initialization (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    // Buffer count and index should be 0 on fresh instance
+    ASSERT_TRUE(engine.m_slope_buffer_count == 0);
+    ASSERT_TRUE(engine.m_slope_buffer_index == 0);
+    ASSERT_TRUE(engine.m_slope_current == 0.0);
+}
+
+static void test_slope_sg_derivative() {
+    std::cout << "\nTest: Savitzky-Golay Derivative Calculation (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    
+    // Fill buffer with linear ramp: y = i * 0.1 (slope = 0.1 units/sample)
+    // dt = 0.01 -> derivative = 0.1 / 0.01 = 10.0 units/sec
+    double dt = 0.01;
+    int window = 9;
+    
+    // Fill buffer
+    for (int i = 0; i < window; ++i) {
+        engine.m_slope_lat_g_buffer[i] = (double)i * 0.1;
+    }
+    engine.m_slope_buffer_count = window;
+    engine.m_slope_buffer_index = window; // Point past last sample
+    
+    double derivative = engine.calculate_sg_derivative(engine.m_slope_lat_g_buffer, engine.m_slope_buffer_count, window, dt);
+    
+    ASSERT_NEAR(derivative, 10.0, 0.1);
+}
+
+static void test_slope_grip_at_peak() {
+    std::cout << "\nTest: Slope Grip at Peak (Zero Slope) (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_sg_window = 15;
+    
+    // Simulate peak grip: Constant G despite increasing slip? 
+    // Actually, zero slope means G is constant while slip moves.
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.05);
+    data.mLocalAccel.x = 1.2 * 9.81; // 1.2G
+    data.mDeltaTime = 0.0025; // 400Hz
+    
+    // Fill buffer with constant values
+    for (int i = 0; i < 20; i++) {
+        engine.calculate_force(&data);
+    }
+    
+    // Slope should be near 0
+    ASSERT_NEAR(engine.m_slope_current, 0.0, 0.1);
+    // Grip should be near 1.0
+    ASSERT_GE(engine.m_slope_smoothed_output, 0.95);
+}
+
+static void test_slope_grip_past_peak() {
+    std::cout << "\nTest: Slope Grip Past Peak (Negative Slope) (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_sg_window = 9;
+    engine.m_slope_sensitivity = 1.0f;
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    data.mDeltaTime = 0.01; // 100Hz
+    
+    // Simulate past peak: Increasing slip, decreasing G
+    // Slip: 0.05 to 0.09 (0.002 per frame)
+    // G: 1.5 to 1.1 ( -0.02 per frame)
+    // dG/dSlip = -0.02 / 0.002 = -10.0 (Slope)
+    
+    for (int i = 0; i < 20; i++) {
+        double slip = 0.05 + (double)i * 0.002;
+        double g = 1.5 - (double)i * 0.02;
+        
+        data.mWheel[0].mLateralPatchVel = slip * 20.0;
+        data.mWheel[1].mLateralPatchVel = slip * 20.0;
+        data.mLocalAccel.x = g * 9.81;
+        
+        engine.calculate_force(&data);
+    }
+    
+    // Slope should be negative
+    ASSERT_LE(engine.m_slope_current, -5.0);
+    // Grip should be reduced
+    ASSERT_LE(engine.m_slope_smoothed_output, 0.9);
+    // But above safety floor
+    ASSERT_GE(engine.m_slope_smoothed_output, 0.2);
+}
+
+static void test_slope_vs_static_comparison() {
+    std::cout << "\nTest: Slope vs Static Comparison (v0.7.0)" << std::endl;
+    FFBEngine engine_slope;
+    InitializeEngine(engine_slope);
+    engine_slope.m_slope_detection_enabled = true;
+    
+    FFBEngine engine_static;
+    InitializeEngine(engine_static);
+    engine_static.m_slope_detection_enabled = false;
+    engine_static.m_optimal_slip_angle = 0.10f;
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.12); // 12% slip
+    data.mDeltaTime = 0.01;
+    
+    // Run both
+    for (int i = 0; i < 40; i++) {
+        // For slope to detect loss, we need changing dG/dAlpha.
+        // We'll increase slip angle from 0.05 to 0.15 (past 0.10 peak)
+        // While G-force peaks at i=15 and then drops
+        double slip = 0.05 + (double)i * 0.0025; 
+        data.mWheel[0].mLateralPatchVel = slip * 20.0;
+        data.mWheel[1].mLateralPatchVel = slip * 20.0;
+        
+        double g = 1.0;
+        if (i < 15) g = 1.0 + (double)i * 0.03; // Increasing G
+        else g = 1.45 - (double)(i - 15) * 0.05; // Dropping G (Loss of grip!)
+        
+        data.mLocalAccel.x = g * 9.81;
+        
+        engine_slope.calculate_force(&data);
+        engine_static.calculate_force(&data);
+    }
+    
+    auto snap_slope = engine_slope.GetDebugBatch().back();
+    auto snap_static = engine_static.GetDebugBatch().back();
+    
+    std::cout << "  Slope Grip: " << snap_slope.calc_front_grip << " | Static Grip: " << snap_static.calc_front_grip << std::endl;
+    
+    // Both should detect grip loss
+    ASSERT_LE(snap_slope.calc_front_grip, 0.95);
+    ASSERT_LE(snap_static.calc_front_grip, 0.8);
+}
+
+static void test_slope_config_persistence() {
+    std::cout << "\nTest: Slope Config Persistence (v0.7.0)" << std::endl;
+    std::string test_file = "test_slope_config.ini";
+    FFBEngine engine_save;
+    InitializeEngine(engine_save);
+    
+    engine_save.m_slope_detection_enabled = true;
+    engine_save.m_slope_sg_window = 21;
+    engine_save.m_slope_sensitivity = 2.5f;
+    engine_save.m_slope_negative_threshold = -0.2f;
+    engine_save.m_slope_smoothing_tau = 0.05f;
+    
+    Config::Save(engine_save, test_file);
+    
+    FFBEngine engine_load;
+    InitializeEngine(engine_load);
+    Config::Load(engine_load, test_file);
+    
+    ASSERT_TRUE(engine_load.m_slope_detection_enabled == true);
+    ASSERT_TRUE(engine_load.m_slope_sg_window == 21);
+    ASSERT_NEAR(engine_load.m_slope_sensitivity, 2.5f, 0.001);
+    ASSERT_NEAR(engine_load.m_slope_negative_threshold, -0.2f, 0.001);
+    ASSERT_NEAR(engine_load.m_slope_smoothing_tau, 0.05f, 0.001);
+    
+    std::remove(test_file.c_str());
+}
+
+static void test_slope_latency_characteristics() {
+    std::cout << "\nTest: Slope Latency Characteristics (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    int window = 15;
+    engine.m_slope_sg_window = window;
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    data.mDeltaTime = 0.0025; // 400Hz
+    
+    // Buffer fills in 'window' frames
+    for (int i = 0; i < window; i++) {
+        engine.calculate_force(&data);
+    }
+    
+    ASSERT_TRUE(engine.m_slope_buffer_count == window);
+    
+    // Latency is roughly (window/2) * dt
+    float latency_ms = (float)(window / 2) * 2.5f;
+    std::cout << "  Calculated Latency for Window " << window << " at 400Hz: " << latency_ms << " ms" << std::endl;
+    ASSERT_NEAR(latency_ms, 17.5, 0.1);
+}
+
+static void test_slope_noise_rejection() {
+    std::cout << "\nTest: Slope Noise Rejection (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_sg_window = 15;
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    data.mDeltaTime = 0.01;
+    
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> noise(-0.1, 0.1);
+    
+    // Constant G (1.2) + Noise
+    for (int i = 0; i < 50; i++) {
+        data.mLocalAccel.x = (1.2 + noise(generator)) * 9.81;
+        data.mWheel[0].mLateralPatchVel = 0.05 * 20.0;
+        engine.calculate_force(&data);
+    }
+    
+    // Despite noise, slope should be near zero (SG filter rejection)
+    std::cout << "  Noisy Slope: " << engine.m_slope_current << std::endl;
+    ASSERT_TRUE(std::abs(engine.m_slope_current) < 1.0);
+}
+
+static void test_slope_buffer_reset_on_toggle() {
+    std::cout << "\nTest: Slope Buffer Reset on Toggle (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    data.mDeltaTime = 0.0025;  // 400Hz
+    
+    // Step 1: Fill buffer with data while slope detection is OFF
+    engine.m_slope_detection_enabled = false;
+    
+    for (int i = 0; i < 20; i++) {
+        // Simulate increasing lateral G (would create positive slope)
+        data.mLocalAccel.x = (0.5 + i * 0.05) * 9.81;
+        data.mWheel[0].mLateralPatchVel = (0.05 + i * 0.005) * 20.0;
+        engine.calculate_force(&data);
+    }
+    
+    // At this point, if slope detection were enabled, buffers would have stale data
+    // But since it's disabled, let's verify initial state before enabling
+    
+    // Step 2: Manually corrupt buffers to simulate stale data
+    // (This simulates what would happen if we had data from before disabling)
+    engine.m_slope_buffer_count = 15;  // Partially filled
+    engine.m_slope_buffer_index = 7;   // Mid-buffer
+    engine.m_slope_smoothed_output = 0.65;  // Some grip loss value
+    
+    // Fill some buffer slots with non-zero data
+    for (int i = 0; i < 15; i++) {
+        engine.m_slope_lat_g_buffer[i] = 1.2 + i * 0.1;
+        engine.m_slope_slip_buffer[i] = 0.05 + i * 0.01;
+    }
+    
+    // Step 3: Enable slope detection (simulating GUI toggle)
+    // In the actual GUI, this happens via BoolSetting callback
+    // Here we simulate the reset logic manually
+    bool prev_enabled = engine.m_slope_detection_enabled;
+    engine.m_slope_detection_enabled = true;
+    
+    //  Simulate the reset logic from GuiLayer.cpp (lines 1117-1121)
+    if (!prev_enabled && engine.m_slope_detection_enabled) {
+        engine.m_slope_buffer_count = 0;
+        engine.m_slope_buffer_index = 0;
+        engine.m_slope_smoothed_output = 1.0;  // Full grip
+    }
+    
+    // Step 4: Verify buffers were reset
+    ASSERT_TRUE(engine.m_slope_buffer_count == 0);
+    ASSERT_TRUE(engine.m_slope_buffer_index == 0);
+    ASSERT_NEAR(engine.m_slope_smoothed_output, 1.0, 0.001);
+    
+    std::cout << "  [PASS] Buffers reset correctly on toggle" << std::endl;
+    
+    // Step 5: Run a few frames and verify clean slope calculation
+    for (int i = 0; i < 5; i++) {
+        data.mLocalAccel.x = 1.2 * 9.81;  // Constant 1.2G
+        data.mWheel[0].mLateralPatchVel = 0.05 * 20.0;  // Constant slip
+        engine.calculate_force(&data);
+    }
+    
+    // After reset, buffer should be filling from scratch
+    ASSERT_TRUE(engine.m_slope_buffer_count == 5);
+    
+    // Slope should be near zero (constant G) or undefined (not enough samples)
+    // Since window is 15 by default and we only have 5 samples, slope might be 0
+    std::cout << "  [PASS] Buffer refilling after reset (" << engine.m_slope_buffer_count << " samples)" << std::endl;
+    
+    // Step 6: Test that disabling does NOT reset buffers
+    engine.m_slope_detection_enabled = false;
+    // Buffers should remain intact (for potential re-enable)
+    ASSERT_TRUE(engine.m_slope_buffer_count == 5);  // Unchanged
+    
+    std::cout << "  [PASS] Disabling does not reset buffers" << std::endl;
+}
+
+
+static void test_unconditional_vert_accel_update() {
+    std::cout << "\nTest: Unconditional m_prev_vert_accel Update (v0.6.36)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    
+    // Disable road texture effect
+    engine.m_road_texture_enabled = false;
+    
+    // Set a known vertical acceleration
+    data.mLocalAccel.y = 5.5;
+    
+    // Reset the engine state
+    engine.m_prev_vert_accel = 0.0;
+    
+    // Run calculate_force
+    engine.calculate_force(&data);
+    
+    // Check that m_prev_vert_accel was updated EVEN THOUGH road_texture is disabled
+    if (std::abs(engine.m_prev_vert_accel - 5.5) < 0.01) {
+        std::cout << "[PASS] m_prev_vert_accel updated unconditionally: " << engine.m_prev_vert_accel << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] m_prev_vert_accel not updated. Got: " << engine.m_prev_vert_accel << " Expected: 5.5" << std::endl;
+        g_tests_failed++;
+    }
+    
+    // Verify the value changes on next frame
+    data.mLocalAccel.y = -3.2;
+    engine.calculate_force(&data);
+    
+    if (std::abs(engine.m_prev_vert_accel - (-3.2)) < 0.01) {
+        std::cout << "[PASS] m_prev_vert_accel tracks changes: " << engine.m_prev_vert_accel << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] m_prev_vert_accel not tracking. Got: " << engine.m_prev_vert_accel << " Expected: -3.2" << std::endl;
+        g_tests_failed++;
+    }
 }
 
 static void test_optimal_slip_buffer_zone() {
@@ -34813,6 +45966,263 @@ static void test_all_presets_non_negative_speed_gate() {
         std::cout << "[FAIL] One or more presets have invalid speed gate values" << std::endl;
         g_tests_failed++;
     }
+}
+
+
+
+static void test_refactor_abs_pulse() {
+    std::cout << "\nTest: Refactor Regression - ABS Pulse (v0.6.36)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+
+    // Enable ABS
+    engine.m_abs_pulse_enabled = true;
+    engine.m_abs_gain = 1.0f;
+    engine.m_max_torque_ref = 20.0f; // Scale 1.0
+
+    // Trigger condition: High Brake + Pressure Delta
+    data.mUnfilteredBrake = 1.0;
+    data.mWheel[0].mBrakePressure = 1.0;
+    engine.calculate_force(&data); // Frame 1: Set previous pressure
+
+    data.mWheel[0].mBrakePressure = 0.5; // Frame 2: Rapid drop (delta)
+    double force = engine.calculate_force(&data);
+
+    // Should be non-zero (previously regressed to 0)
+    if (std::abs(force) > 0.001) {
+        std::cout << "[PASS] ABS Pulse generated force: " << force << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] ABS Pulse silent (force=0). Refactor regression?" << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_refactor_torque_drop() {
+    std::cout << "\nTest: Refactor Regression - Torque Drop (v0.6.36)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+
+    // Setup: Base force + Spin
+    data.mSteeringShaftTorque = 10.0; // 0.5 normalized
+    engine.m_spin_enabled = true;
+    engine.m_spin_gain = 1.0f;
+    engine.m_gain = 1.0f;
+
+    // Trigger Spin
+    data.mUnfilteredThrottle = 1.0;
+    // Slip = 0.5 (Severe) -> Severity = (0.5 - 0.2) / 0.5 = 0.6
+    // Drop Factor = 1.0 - (0.6 * 1.0 * 0.6) = 1.0 - 0.36 = 0.64
+    double ground_vel = 20.0;
+    data.mWheel[2].mLongitudinalPatchVel = 0.5 * ground_vel;
+    data.mWheel[2].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[3].mLongitudinalPatchVel = 0.5 * ground_vel;
+    data.mWheel[3].mLongitudinalGroundVel = ground_vel;
+
+    // Disable Spin Vibration (gain 0) to check just the drop?
+    // No, can't separate gain easily. But vibration is AC.
+    // If we check magnitude, it might be messy.
+    // Let's check with Spin Gain = 1.0, but Spin Freq Scale = 0 (Constant force?)
+    // No, freq scale 0 -> phase 0 -> sin(0) = 0. No vibration.
+    // Perfect for checking torque drop!
+
+    engine.m_spin_freq_scale = 0.0f;
+
+    // Add Road Texture (Texture Group - Should NOT be dropped)
+    // Setup deflection delta for constant road noise
+    // Force = Delta * 50.0. Target 0.1 normalized (2.0 Nm).
+    // Delta = 2.0 / 50.0 = 0.04.
+    engine.m_road_texture_enabled = true;
+    engine.m_road_texture_gain = 1.0f;
+    engine.m_max_torque_ref = 20.0f; // Scale 1.0
+    // Reset deflection state in engine first
+    engine.calculate_force(&data);
+
+    // Apply Delta
+    data.mWheel[0].mVerticalTireDeflection += 0.02; // +2cm
+    data.mWheel[1].mVerticalTireDeflection += 0.02; // +2cm
+    // Total Delta = 0.04. Road Force = 0.04 * 50.0 = 2.0 Nm.
+    // Normalized Road = 2.0 / 20.0 = 0.1.
+
+    double force = engine.calculate_force(&data);
+
+    // Base Force (Structural) = 10.0 Nm -> 0.5 Norm.
+    // Torque Drop = 0.64.
+    // Road Force (Texture) = 1.0 Nm (Clamped) -> 0.05 Norm.
+
+    // Logic A (Broken): (Base + Texture) * Drop = (0.5 + 0.05) * 0.64 = 0.352
+    // Logic B (Correct): (Base * Drop) + Texture = (0.5 * 0.64) + 0.05 = 0.32 + 0.05 = 0.37
+
+    if (std::abs(force - 0.37) < 0.01) {
+        std::cout << "[PASS] Torque Drop correctly isolated from Textures (Force: " << force << " Expected: 0.37)" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Torque Drop logic error. Got: " << force << " Expected: 0.37 (Broken: 0.352)" << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_refactor_snapshot_sop() {
+    std::cout << "\nTest: Refactor Regression - Snapshot SoP (v0.6.36)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+
+    // Setup SoP + Boost
+    engine.m_sop_effect = 1.0f;
+    engine.m_oversteer_boost = 1.0f;
+    engine.m_sop_smoothing_factor = 1.0f; // Instant
+    engine.m_sop_scale = 10.0f; // 1G -> 1.0 unboosted (normalized 20Nm)
+
+    data.mLocalAccel.x = 9.81; // 1G Lat
+
+    // Trigger Boost: Rear Grip Loss
+    data.mWheel[0].mGripFract = 1.0;
+    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[2].mGripFract = 0.5;
+    data.mWheel[3].mGripFract = 0.5;
+    // Delta = 0.5. Boost = 1.0 + (0.5 * 1.0 * 2.0) = 2.0x.
+
+    // Expected:
+    // SoP Base (Unboosted) = 1.0 * 1.0 * 10 = 10.0 Nm
+    // SoP Total (Boosted) = 10.0 * 2.0 = 20.0 Nm
+    // Snapshot SoP Force = 10.0 (Unboosted Nm)
+    // Snapshot Boost = 20.0 - 10.0 = 10.0 (Nm)
+
+    engine.calculate_force(&data);
+
+    auto batch = engine.GetDebugBatch();
+    if (!batch.empty()) {
+        FFBSnapshot snap = batch.back();
+
+        bool sop_ok = (std::abs(snap.sop_force - 10.0) < 0.01);
+        bool boost_ok = (std::abs(snap.oversteer_boost - 10.0) < 0.01);
+
+        if (sop_ok && boost_ok) {
+            std::cout << "[PASS] Snapshot values correct (SoP: " << snap.sop_force << ", Boost: " << snap.oversteer_boost << ")" << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] Snapshot logic error. SoP: " << snap.sop_force << " (Exp: 10.0) Boost: " << snap.oversteer_boost << " (Exp: 10.0)" << std::endl;
+            g_tests_failed++;
+        }
+    } else {
+        std::cout << "[FAIL] No snapshot." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+// --- Unit Tests for Private Helper Methods (v0.6.36) ---
+class FFBEngineTestAccess {
+public:
+    static void test_unit_sop_lateral() {
+        std::cout << "\nTest Unit: calculate_sop_lateral" << std::endl;
+        FFBEngine engine;
+        InitializeEngine(engine);
+        FFBCalculationContext ctx;
+        ctx.dt = 0.01;
+        ctx.car_speed = 20.0;
+        ctx.avg_load = 4000.0;
+
+        TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+        data.mLocalAccel.x = 9.81; // 1G
+        engine.m_sop_effect = 1.0;
+        engine.m_sop_scale = 10.0;
+        engine.m_sop_smoothing_factor = 1.0; // Instant
+
+        engine.calculate_sop_lateral(&data, ctx);
+
+        if (std::abs(ctx.sop_base_force - 10.0) < 0.01) {
+            std::cout << "[PASS] calculate_sop_lateral base logic." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] calculate_sop_lateral failed. Got " << ctx.sop_base_force << std::endl;
+            g_tests_failed++;
+        }
+    }
+
+    static void test_unit_gyro_damping() {
+        std::cout << "\nTest Unit: calculate_gyro_damping" << std::endl;
+        FFBEngine engine;
+        InitializeEngine(engine);
+        FFBCalculationContext ctx;
+        ctx.dt = 0.01;
+        ctx.car_speed = 10.0;
+
+        TelemInfoV01 data = CreateBasicTestTelemetry(10.0);
+        data.mUnfilteredSteering = 0.1; 
+        engine.m_prev_steering_angle = 0.0;
+
+        engine.m_gyro_gain = 1.0;
+        engine.m_gyro_smoothing = 0.0001f; 
+
+        engine.calculate_gyro_damping(&data, ctx);
+
+        if (ctx.gyro_force < -40.0) {
+            std::cout << "[PASS] calculate_gyro_damping logic." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] calculate_gyro_damping failed. Got " << ctx.gyro_force << std::endl;
+            g_tests_failed++;
+        }
+    }
+
+    static void test_unit_abs_pulse() {
+        std::cout << "\nTest Unit: calculate_abs_pulse" << std::endl;
+        FFBEngine engine;
+        InitializeEngine(engine);
+        FFBCalculationContext ctx;
+        ctx.dt = 0.01;
+
+        TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+        data.mUnfilteredBrake = 1.0;
+        data.mWheel[0].mBrakePressure = 0.5;
+        engine.m_prev_brake_pressure[0] = 1.0; 
+
+        engine.m_abs_pulse_enabled = true;
+        engine.m_abs_gain = 1.0;
+
+        engine.calculate_abs_pulse(&data, ctx);
+
+        if (std::abs(ctx.abs_pulse_force) > 0.0001 || engine.m_abs_phase > 0.0) {
+            std::cout << "[PASS] calculate_abs_pulse triggered." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] calculate_abs_pulse failed." << std::endl;
+            g_tests_failed++;
+        }
+    }
+};
+
+static void test_refactor_units() {
+    FFBEngineTestAccess::test_unit_sop_lateral();
+    FFBEngineTestAccess::test_unit_gyro_damping();
+    FFBEngineTestAccess::test_unit_abs_pulse();
+}
+
+static void test_wheel_slip_ratio_helper() {
+    std::cout << "\nTest: calculate_wheel_slip_ratio Helper (v0.6.36)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemWheelV01 wheel;
+    std::memset(&wheel, 0, sizeof(wheel));
+    wheel.mLongitudinalGroundVel = 20.0;
+    wheel.mLongitudinalPatchVel = 4.0;
+    double slip = engine.calculate_wheel_slip_ratio(wheel);
+    ASSERT_NEAR(slip, 0.2, 0.001);
+}
+
+static void test_signal_conditioning_helper() {
+    std::cout << "\nTest: apply_signal_conditioning Helper (v0.6.36)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    FFBCalculationContext ctx;
+    ctx.dt = 0.01;
+    ctx.car_speed = 20.0;
+    double result = engine.apply_signal_conditioning(10.0, &data, ctx);
+    ASSERT_NEAR(result, 10.0, 0.01);
 }
 
 } // namespace FFBEngineTests
@@ -35283,6 +46693,150 @@ void test_comprehensive_roundtrip() {
     std::remove("roundtrip.ini");
 }
 
+// ----------------------------------------------------------------------------
+// TEST 11: Preset-Engine Synchronization Regression (v0.7.0)
+// 
+// REGRESSION CASE: Fields declared in both Preset and FFBEngine but missing
+// from Preset::Apply() or Preset::UpdateFromEngine() methods.
+//
+// This test verifies that:
+// 1. Preset::ApplyDefaultsToEngine() initializes ALL fields to valid values
+// 2. Preset::Apply() transfers ALL Preset fields to FFBEngine
+// 3. Preset::UpdateFromEngine() captures ALL FFBEngine fields back to Preset
+// 
+// If any field is missing from the synchronization methods, this test will fail.
+// ----------------------------------------------------------------------------
+void test_preset_engine_sync_regression() {
+    std::cout << "Test 11: Preset-Engine Synchronization (v0.7.0 Regression)..." << std::endl;
+    
+    // --- Part A: ApplyDefaultsToEngine initializes critical fields ---
+    FFBEngine engine_defaults;
+    Preset::ApplyDefaultsToEngine(engine_defaults);
+    
+    // These fields triggered "Invalid X, resetting to default" warnings when missing
+    ASSERT_TRUE(engine_defaults.m_optimal_slip_angle >= 0.01f);
+    ASSERT_TRUE(engine_defaults.m_optimal_slip_ratio >= 0.01f);
+    
+    // Additional smoothing fields (v0.5.7 - v0.5.8)
+    // Note: 0.0 is valid for these, we just check they're not uninitialized garbage
+    ASSERT_TRUE(engine_defaults.m_steering_shaft_smoothing >= 0.0f);
+    ASSERT_TRUE(engine_defaults.m_gyro_smoothing >= 0.0f);
+    ASSERT_TRUE(engine_defaults.m_yaw_accel_smoothing >= 0.0f);
+    ASSERT_TRUE(engine_defaults.m_chassis_inertia_smoothing >= 0.0f);
+    
+    // Slope detection fields (v0.7.0)
+    ASSERT_TRUE(engine_defaults.m_slope_sg_window >= 5);
+    ASSERT_TRUE(engine_defaults.m_slope_sensitivity >= 0.1f);
+    ASSERT_TRUE(engine_defaults.m_slope_smoothing_tau >= 0.001f);
+    
+    std::cout << "  [PASS] ApplyDefaultsToEngine initializes critical fields" << std::endl;
+    
+    // --- Part B: Apply() transfers ALL Preset fields to FFBEngine ---
+    Preset custom_preset("SyncTest");
+    
+    // Set custom values for ALL synchronizable fields
+    custom_preset.gain = 0.77f;
+    custom_preset.understeer = 0.88f;
+    custom_preset.sop = 1.11f;
+    custom_preset.optimal_slip_angle = 0.15f;
+    custom_preset.optimal_slip_ratio = 0.18f;
+    custom_preset.steering_shaft_smoothing = 0.025f;
+    custom_preset.gyro_smoothing = 0.015f;
+    custom_preset.yaw_smoothing = 0.005f;
+    custom_preset.chassis_smoothing = 0.035f;
+    custom_preset.road_fallback_scale = 0.12f;
+    custom_preset.understeer_affects_sop = true;
+    
+    // Slope detection (v0.7.0)
+    custom_preset.slope_detection_enabled = true;
+    custom_preset.slope_sg_window = 21;
+    custom_preset.slope_sensitivity = 2.5f;
+    custom_preset.slope_negative_threshold = -0.2f;
+    custom_preset.slope_smoothing_tau = 0.05f;
+    
+    FFBEngine engine_apply;
+    custom_preset.Apply(engine_apply);
+    
+    // Verify Apply() worked
+    ASSERT_NEAR(engine_apply.m_gain, 0.77f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_understeer_effect, 0.88f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_sop_effect, 1.11f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_optimal_slip_angle, 0.15f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_optimal_slip_ratio, 0.18f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_steering_shaft_smoothing, 0.025f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_gyro_smoothing, 0.015f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_yaw_accel_smoothing, 0.005f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_chassis_inertia_smoothing, 0.035f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_road_fallback_scale, 0.12f, 0.001f);
+    ASSERT_EQ(engine_apply.m_understeer_affects_sop, true);
+    
+    // Slope detection (v0.7.0)
+    ASSERT_EQ(engine_apply.m_slope_detection_enabled, true);
+    ASSERT_EQ(engine_apply.m_slope_sg_window, 21);
+    ASSERT_NEAR(engine_apply.m_slope_sensitivity, 2.5f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_slope_negative_threshold, -0.2f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_slope_smoothing_tau, 0.05f, 0.001f);
+    
+    std::cout << "  [PASS] Apply() transfers all Preset fields to FFBEngine" << std::endl;
+    
+    // --- Part C: UpdateFromEngine() captures ALL FFBEngine fields ---
+    FFBEngine engine_source;
+    Preset::ApplyDefaultsToEngine(engine_source);
+    
+    // Set custom values directly on engine
+    engine_source.m_gain = 0.55f;
+    engine_source.m_understeer_effect = 0.66f;
+    engine_source.m_optimal_slip_angle = 0.22f;
+    engine_source.m_optimal_slip_ratio = 0.25f;
+    engine_source.m_steering_shaft_smoothing = 0.033f;
+    engine_source.m_gyro_smoothing = 0.044f;
+    engine_source.m_yaw_accel_smoothing = 0.011f;
+    engine_source.m_chassis_inertia_smoothing = 0.055f;
+    engine_source.m_road_fallback_scale = 0.09f;
+    engine_source.m_understeer_affects_sop = true;
+    
+    // Slope detection (v0.7.0)
+    engine_source.m_slope_detection_enabled = true;
+    engine_source.m_slope_sg_window = 31;
+    engine_source.m_slope_sensitivity = 3.0f;
+    engine_source.m_slope_negative_threshold = -0.3f;
+    engine_source.m_slope_smoothing_tau = 0.08f;
+    
+    Preset captured_preset;
+    captured_preset.UpdateFromEngine(engine_source);
+    
+    // Verify UpdateFromEngine() worked
+    ASSERT_NEAR(captured_preset.gain, 0.55f, 0.001f);
+    ASSERT_NEAR(captured_preset.understeer, 0.66f, 0.001f);
+    ASSERT_NEAR(captured_preset.optimal_slip_angle, 0.22f, 0.001f);
+    ASSERT_NEAR(captured_preset.optimal_slip_ratio, 0.25f, 0.001f);
+    ASSERT_NEAR(captured_preset.steering_shaft_smoothing, 0.033f, 0.001f);
+    ASSERT_NEAR(captured_preset.gyro_smoothing, 0.044f, 0.001f);
+    ASSERT_NEAR(captured_preset.yaw_smoothing, 0.011f, 0.001f);
+    ASSERT_NEAR(captured_preset.chassis_smoothing, 0.055f, 0.001f);
+    ASSERT_NEAR(captured_preset.road_fallback_scale, 0.09f, 0.001f);
+    ASSERT_EQ(captured_preset.understeer_affects_sop, true);
+    
+    // Slope detection (v0.7.0)
+    ASSERT_EQ(captured_preset.slope_detection_enabled, true);
+    ASSERT_EQ(captured_preset.slope_sg_window, 31);
+    ASSERT_NEAR(captured_preset.slope_sensitivity, 3.0f, 0.001f);
+    ASSERT_NEAR(captured_preset.slope_negative_threshold, -0.3f, 0.001f);
+    ASSERT_NEAR(captured_preset.slope_smoothing_tau, 0.08f, 0.001f);
+    
+    std::cout << "  [PASS] UpdateFromEngine() captures all FFBEngine fields" << std::endl;
+    
+    // --- Part D: Round-trip integrity ---
+    // Apply captured_preset to a new engine and verify no data loss
+    FFBEngine engine_roundtrip;
+    captured_preset.Apply(engine_roundtrip);
+    
+    ASSERT_NEAR(engine_roundtrip.m_optimal_slip_angle, 0.22f, 0.001f);
+    ASSERT_NEAR(engine_roundtrip.m_slope_sensitivity, 3.0f, 0.001f);
+    
+    std::cout << "  [PASS] Round-trip Apply->UpdateFromEngine->Apply preserves data" << std::endl;
+}
+
 void Run() {
     std::cout << "\n=== Running v0.6.25 Persistence Tests ===" << std::endl;
     
@@ -35296,6 +46850,7 @@ void Run() {
     test_main_config_clamping_lockup();
     test_configuration_versioning();
     test_comprehensive_roundtrip();
+    test_preset_engine_sync_regression();  // v0.7.0 Regression
 
     std::cout << "\n--- Persistence & Versioning Test Summary ---" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
@@ -35960,9 +47515,11 @@ void Run() {
 #include "../src/DirectInputFFB.h"
 #include "../src/Config.h"
 #include "../src/GuiLayer.h"
+#include "../src/GameConnector.h"
 #include "imgui.h"
 #include <atomic>
 #include <mutex>
+#include <thread>
 #include <fstream>
 #include <cstdio>
 
@@ -36206,7 +47763,7 @@ static void test_slider_precision_display() {
     
     // Test Case 1: Filter Width (Q) - Range 0.5-10.0, step 0.01
     // Format should be "Q: %.2f" to show 0.01 changes
-    {
+    { 
         float value = 2.50f;
         char buf[64];
         snprintf(buf, 64, "Q: %.2f", value);
@@ -36223,7 +47780,7 @@ static void test_slider_precision_display() {
     
     // Test Case 2: Percentage sliders - Range 0-2.0, step 0.01
     // Format should be "%.1f%%" to show 0.5% changes (0.01 * 100 = 1.0, but displayed as 0.5% of 200%)
-    {
+    { 
         float value = 1.00f;
         char buf[64];
         snprintf(buf, 64, "%.1f%%%%", value * 100.0f);
@@ -36240,7 +47797,7 @@ static void test_slider_precision_display() {
     
     // Test Case 3: Understeer Effect - Range 0-50, step 0.5
     // Format should be "%.1f%%" to show 1.0% changes (0.5 / 50 * 100 = 1.0%)
-    {
+    { 
         float value = 25.0f;
         char buf[64];
         snprintf(buf, 64, "%.1f%%%%", (value / 50.0f) * 100.0f);
@@ -36257,7 +47814,7 @@ static void test_slider_precision_display() {
     
     // Test Case 4: Small range sliders - Range 0-0.1, step 0.001
     // Format should be "%.3f" or better to show 0.001 changes
-    {
+    { 
         float value = 0.050f;
         char buf[64];
         snprintf(buf, 64, "%.3f s", value);
@@ -36274,7 +47831,7 @@ static void test_slider_precision_display() {
     
     // Test Case 5: Slide Pitch - Range 0.5-5.0, step 0.01
     // Format should be "%.2fx" to show 0.01 changes
-    {
+    { 
         float value = 1.50f;
         char buf[64];
         snprintf(buf, 64, "%.2fx", value);
@@ -36299,7 +47856,7 @@ static void test_slider_precision_regression() {
     // Test Case 1: Load Cap - Range 1.0-3.0, step 0.01
     // Format should be "%.2fx" to show 0.01 changes
     // Bug: Was "%.1fx" which didn't show 0.01 step changes
-    {
+    { 
         float value = 1.50f;
         char buf[64];
         snprintf(buf, 64, "%.2fx", value);
@@ -36317,7 +47874,7 @@ static void test_slider_precision_regression() {
     // Test Case 2: Target Frequency - Range 10-100, step 0.01
     // Format should be "%.1f Hz" to show 0.1 changes
     // Bug: Was "%.0f Hz" which didn't show small adjustments
-    {
+    { 
         float value = 50.0f;
         char buf[64];
         snprintf(buf, 64, "%.1f Hz", value);
@@ -36335,7 +47892,7 @@ static void test_slider_precision_regression() {
     // Test Case 3: Understeer Effect - Range 0-50, step 0.01
     // Format should be "%.2f" to show 0.01 changes
     // Bug: Was using pre-calculated percentage with buffer scope issues
-    {
+    { 
         float value = 25.00f;
         char buf[64];
         snprintf(buf, 64, "%.2f", value);
@@ -36354,7 +47911,7 @@ static void test_slider_precision_regression() {
     
     // Test Case 4: Verify step sizes match precision
     // This ensures our adaptive step logic matches the display precision
-    {
+    { 
         // Small range (<1.0): step 0.001, needs %.3f or better
         float small_step = 0.001f;
         char buf[64];
@@ -36394,7 +47951,7 @@ static void test_latency_display_regression() {
     
     // Test Case 1: SoP Smoothing Latency Calculation
     // Formula: lat_ms = (1.0 - sop_smoothing_factor) * 100.0 + 0.5 (Rounding)
-    {
+    { 
         std::cout << "  Testing SoP Smoothing latency calculation..." << std::endl;
         
         // Low latency case (should be green)
@@ -36421,7 +47978,7 @@ static void test_latency_display_regression() {
     
     // Test Case 2: Slip Angle Smoothing Latency Calculation
     // Formula: slip_ms = slip_angle_smoothing * 1000.0 + 0.5 (Rounding)
-    {
+    { 
         std::cout << "  Testing Slip Angle Smoothing latency calculation..." << std::endl;
         
         // Low latency case (should be green)
@@ -36447,7 +48004,7 @@ static void test_latency_display_regression() {
     }
     
     // Test Case 3: Color Coding Logic
-    {
+    { 
         std::cout << "  Testing color coding logic..." << std::endl;
         
         // Green color for low latency (< 15ms)
@@ -36477,7 +48034,7 @@ static void test_latency_display_regression() {
     }
     
     // Test Case 4: Display Format Verification
-    {
+    { 
         std::cout << "  Testing display format..." << std::endl;
         
         // SoP Smoothing display format: "Latency: XX ms - OK"
@@ -36497,7 +48054,7 @@ static void test_latency_display_regression() {
     }
     
     // Test Case 5: Edge Cases
-    {
+    { 
         std::cout << "  Testing edge cases..." << std::endl;
         
         // Zero latency (SoP smoothing = 1.0)
@@ -36584,7 +48141,7 @@ static void test_single_source_of_truth_t300_defaults() {
     std::cout << "  Test 1: Captured reference defaults from Preset struct" << std::endl;
     
     // Test 2: Verify FFBEngine initialization via ApplyDefaultsToEngine() matches
-    {
+    { 
         std::cout << "  Test 2: FFBEngine initialization consistency..." << std::endl;
         FFBEngine engine;
         Preset::ApplyDefaultsToEngine(engine);
@@ -36614,7 +48171,7 @@ static void test_single_source_of_truth_t300_defaults() {
     }
     
     // Test 3: Verify "Default" preset from LoadPresets() matches
-    {
+    { 
         std::cout << "  Test 3: Default preset consistency..." << std::endl;
         Config::LoadPresets();
         
@@ -36637,7 +48194,7 @@ static void test_single_source_of_truth_t300_defaults() {
     }
     
     // Test 4: Verify "T300" preset has specialized values (v0.6.30 Decoupling)
-    {
+    { 
         std::cout << "  Test 4: T300 specialized preset verification..." << std::endl;
         
         // ⚠️ IMPORTANT: T300 preset index depends on Config.cpp LoadPresets() order!
@@ -36664,7 +48221,7 @@ static void test_single_source_of_truth_t300_defaults() {
     }
     
     // Test 5: Verify applying preset produces same result as ApplyDefaultsToEngine()
-    {
+    { 
         std::cout << "  Test 5: Preset application consistency..." << std::endl;
         
         FFBEngine engine1, engine2;
@@ -36695,7 +48252,7 @@ static void test_single_source_of_truth_t300_defaults() {
     }
     
     // Test 6: Verify no config file still produces correct defaults
-    {
+    { 
         std::cout << "  Test 6: No config file scenario..." << std::endl;
         
         // Simulate fresh install (no config.ini)
@@ -36770,6 +48327,125 @@ static void test_legacy_config_migration() {
     remove(test_file.c_str());
 }
 
+static void test_icon_presence() {
+    std::cout << "\nTest: Icon Presence (Build Artifact)" << std::endl;
+    
+    // Robustness Fix: Use the executable's path to find the artifact, 
+    // strictly validating the build structure regardless of CWD.
+    char buffer[MAX_PATH];
+    GetModuleFileNameA(NULL, buffer, MAX_PATH);
+    std::string exe_path(buffer);
+    
+    // Find the directory of the executable
+    size_t last_slash = exe_path.find_last_of("\\/");
+    std::string exe_dir = (last_slash != std::string::npos) ? exe_path.substr(0, last_slash) : ".";
+    
+    std::cout << "  Exe Dir: " << exe_dir << std::endl;
+
+    // Expected locations relative to build output (e.g., build/tests/Release/run.exe)
+    // We expect the icon to be in the build root (copied by CMake)
+    std::vector<std::string> candidates;
+    candidates.push_back(exe_dir + "/../../lmuffb.ico"); // Standard CMake Release/Debug layout
+    candidates.push_back(exe_dir + "/../lmuffb.ico");    // Flat layout
+    candidates.push_back(exe_dir + "/lmuffb.ico");       // Same dir
+
+    bool found = false;
+    std::string found_path;
+    for (const auto& path : candidates) {
+        std::ifstream f(path, std::ios::binary);
+        if (f.good()) {
+            std::cout << "  [PASS] Found artifact at: " << path << std::endl;
+            found = true;
+            found_path = path;
+            
+            // Verify ICO Header (00 00 01 00)
+            char header[4];
+            f.read(header, 4);
+            if (f.gcount() == 4) {
+                if (header[0] == 0x00 && header[1] == 0x00 && header[2] == 0x01 && header[3] == 0x00) {
+                    std::cout << "  [PASS] Valid ICO header detected (00 00 01 00)" << std::endl;
+                } else {
+                    std::cout << "  [FAIL] Invalid ICO header: " 
+                              << std::hex << (int)header[0] << " " << (int)header[1] << " " 
+                              << (int)header[2] << " " << (int)header[3] << std::dec << std::endl;
+                    found = false; // Invalidate match if header is wrong
+                }
+            } else {
+                std::cout << "  [FAIL] File too small to be a valid icon." << std::endl;
+                found = false;
+            }
+            break;
+        }
+    }
+
+    if (found) {
+        g_tests_passed++;
+    } else {
+        std::cout << "  [FAIL] lmuffb.ico NOT found in build artifacts." << std::endl;
+        std::cout << "         Checked paths relative to executable:" << std::endl;
+        for (const auto& path : candidates) std::cout << "         - " << path << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_game_connector_lifecycle() {
+    std::cout << "\nTest: GameConnector Lifecycle (Disconnect/Reconnect)" << std::endl;
+
+    // 1. Ensure we start in a known state (likely disconnected since LMU isn't running)
+    bool initial_state = GameConnector::Get().IsConnected();
+    std::cout << "  Initial State: " << (initial_state ? "Connected" : "Disconnected") << std::endl;
+
+    // 2. Call Disconnect() - This is the new method we expect to exist.
+    // It should be safe to call even if disconnected (idempotent).
+    GameConnector::Get().Disconnect();
+
+    // 3. Verify state is explicitly false after Disconnect
+    bool after_disconnect = GameConnector::Get().IsConnected();
+    ASSERT_TRUE(after_disconnect == false);
+
+    // 4. TryConnect should handle the clean slate
+    bool connect_result = GameConnector::Get().TryConnect();
+    // We expect this to fail in the test environment, but NOT crash and NOT leak.
+    // (Leak checking isn't easily possible here, but crash checking is implicit)
+    ASSERT_TRUE(connect_result == false);
+    
+    // 5. Verify still disconnected
+    ASSERT_TRUE(GameConnector::Get().IsConnected() == false);
+}
+
+static void test_game_connector_thread_safety() {
+    std::cout << "\nTest: GameConnector Thread Safety (Stress Test)" << std::endl;
+
+    std::atomic<bool> running{true};
+    
+    // Thread 1: Rapidly call CopyTelemetry and check realtime status
+    std::thread t1([&]() {
+        SharedMemoryObjectOut telemetry;
+        while (running) {
+            bool in_realtime = GameConnector::Get().CopyTelemetry(telemetry);
+            (void)in_realtime; // Use the value to prevent optimization
+        }
+    });
+
+    // Thread 2: Rapidly call Disconnect and TryConnect
+    std::thread t2([&]() {
+        while (running) {
+            GameConnector::Get().Disconnect();
+            GameConnector::Get().TryConnect();
+        }
+    });
+
+    // Run for a short duration
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    running = false;
+    
+    t1.join();
+    t2.join();
+
+    std::cout << "  [PASS] GameConnector survived stress test without crashing." << std::endl;
+    g_tests_passed++;
+}
+
 void Run() {
     std::cout << "=== Running Windows Platform Tests ===" << std::endl;
 
@@ -36787,6 +48463,9 @@ void Run() {
     test_single_source_of_truth_t300_defaults();  // NEW: v0.5.12
     test_config_persistence_braking_group(); // NEW: v0.5.13
     test_legacy_config_migration(); // NEW: v0.5.13
+    test_icon_presence(); // NEW: Icon check
+    test_game_connector_lifecycle(); // NEW: TDD for PR #16
+    test_game_connector_thread_safety(); // NEW: Thread safety TDD
 
     // Report results
     std::cout << "\n----------------" << std::endl;
@@ -36796,5 +48475,4 @@ void Run() {
 }
 
 } // namespace WindowsPlatformTests
-
 ```

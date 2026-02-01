@@ -396,7 +396,7 @@ All notable changes to this project will be documented in this file.
   - **Removed "Manual Slip" Toggle**: The engine now always uses the most accurate native telemetry data for slip calculations. The manual calculation fallback remains as an automatic internal recovery mechanism for encrypted content.
   - **Unified Frequency Math**: Synchronized all vibration oscillators to use time-corrected phase accumulation for perfect stability during frame stutters.
 - **Documentation**:
-  - Updated **FFB_formulas.md** and **telemetry_data_reference.md** to reflect the new frequency tuning math and expanded physics ranges.
+  - Updated **FFB_formulas.md** and **Reference - telemetry_data_reference.md** to reflect the new frequency tuning math and expanded physics ranges.
 
 ### Fixed
 - **Test Suite Alignment**: Resolved all regression test failures caused by the removal of the manual slip toggle and the expansion of safety clamping limits.

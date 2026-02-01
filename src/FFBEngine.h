@@ -739,7 +739,7 @@ public:
         // - LMU: +Z axis points REARWARD (out the back of the car)
         // - Braking: Chassis decelerates → Inertial force pushes rearward → +Z acceleration
         // - Result: Front wheels GAIN load, Rear wheels LOSE load
-        // - Source: docs/dev_docs/coordinate_system_reference.md
+        // - Source: docs/dev_docs/references/Reference - coordinate_system_reference.md
         // 
         // Formula: (Accel / g) * WEIGHT_TRANSFER_SCALE
         // We use SMOOTHED acceleration to simulate chassis pitch inertia (~35ms lag)
@@ -751,7 +751,7 @@ public:
         // - LMU: +X axis points LEFT (out the left side of the car)
         // - Right Turn: Centrifugal force pushes LEFT → +X acceleration
         // - Result: LEFT wheels (outside) GAIN load, RIGHT wheels (inside) LOSE load
-        // - Source: docs/dev_docs/coordinate_system_reference.md
+        // - Source: docs/dev_docs/references/Reference - coordinate_system_reference.md
         // 
         // Formula: (Accel / g) * WEIGHT_TRANSFER_SCALE * Roll_Stiffness
         // We use SMOOTHED acceleration to simulate chassis roll inertia (~35ms lag)

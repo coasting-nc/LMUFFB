@@ -25,7 +25,7 @@ The implementation is highly compliant with the project's standards (`docs\dev_d
 ### 2.4. Documentation and Versioning
 - Consistency is maintained across `VERSION`, `src/Version.h`, and `CHANGELOG.md` (Version `0.6.37`).
 - `CHANGELOG.md` properly acknowledges contributors.
-- `docs/dev_docs/add_icon_implementation_plan.md` explicitly notes the `ImageMagick` dependency for the generation script.
+- `docs/dev_docs/archived/Archive - add_icon_implementation_plan.md` explicitly notes the `ImageMagick` dependency for the generation script.
 
 ## 3. Potential Issues
 - None identified. The previous concerns regarding test robustness and documentation have been addressed.

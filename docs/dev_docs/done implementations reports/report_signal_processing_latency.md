@@ -72,7 +72,7 @@ This report addresses several related issues found in the "Troubleshooting 25" l
 The following documents need to be updated to reflect the changes detailed in this report:
 
 *   `docs\dev_docs\FFB_formulas.md`
-*   `docs\dev_docs\telemetry_data_reference.md`
+*   `docs\dev_docs\references\Reference - telemetry_data_reference.md`
 
 ## 6. Automated Tests
 
@@ -109,7 +109,7 @@ This report outlines critical optimizations for the Force Feedback signal chain,
 **References:**
 *   `docs\dev_docs\report_signal_processing_latency.md` (This Report)
 *   `docs\dev_docs\FFB_formulas.md`
-*   `docs\dev_docs\telemetry_data_reference.md`
+*   `docs\dev_docs\references\Reference - telemetry_data_reference.md`
 *   `src/FFBEngine.h`
 *   `src/GuiLayer.cpp`
 *   `tests/test_ffb_engine.cpp`
@@ -128,7 +128,7 @@ This report outlines critical optimizations for the Force Feedback signal chain,
     *   Ensure all tests pass.
 5.  **Update Documentation**:
     *   Update logic descriptions in `docs\dev_docs\FFB_formulas.md`.
-    *   Update parameter lists in `docs\dev_docs\telemetry_data_reference.md`.
+    *   Update parameter lists in `docs\dev_docs\references\Reference - telemetry_data_reference.md`.
 6.  **Update Version & Changelog**:
     *   Increment the version number in `VERSION`.
     *   Add a detailed entry in `CHANGELOG.md`.

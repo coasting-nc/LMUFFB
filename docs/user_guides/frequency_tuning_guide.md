@@ -456,7 +456,7 @@ Save and switch presets as needed.
 ## Additional Resources
 
 - **FFB Formulas:** `docs/dev_docs/FFB_formulas.md` - Mathematical details
-- **Telemetry Reference:** `docs/dev_docs/telemetry_data_reference.md` - Parameter ranges
+- **Telemetry Reference:** `docs/dev_docs/references/Reference - telemetry_data_reference.md` - Parameter ranges
 - **Community Presets:** (Coming soon) Share your optimal settings!
 
 ---

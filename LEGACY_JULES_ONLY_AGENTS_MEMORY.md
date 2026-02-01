@@ -121,14 +121,14 @@ After performing `git fetch` or `git pull`, you **must** review what documentati
 *   **What to Read**:
     *   **Always read** any files shown by the diff command
     *   **Priority files** if they changed:
-        *   `docs/dev_docs/telemetry_data_reference.md` - API units and field names (source of truth)
+        *   `docs/dev_docs/references/Reference - telemetry_data_reference.md` - API units and field names (source of truth)
         *   `docs/dev_docs/FFB_formulas.md` - Scaling constants and physics equations
         *   `docs/architecture.md` - System components and design patterns
         *   `README.md` - User features and setup instructions
         *   `CHANGELOG_DEV.md` - What changed and when
         *   `AGENTS_MEMORY.md` - Lessons from previous sessions
 
-*   **Example**: If `telemetry_data_reference.md` was updated to document the Force→Torque unit change in LMU 1.2, you must read it to understand that `mSteeringShaftTorque` is in Newton-meters, not Newtons. Without this knowledge, you might use incorrect scaling factors.
+*   **Example**: If `references/Reference - telemetry_data_reference.md` was updated to document the Force→Torque unit change in LMU 1.2, you must read it to understand that `mSteeringShaftTorque` is in Newton-meters, not Newtons. Without this knowledge, you might use incorrect scaling factors.
 
 **Action Item**: Make reviewing changed documentation the **second step** of every session (right after reading AGENTS_MEMORY.md).
 

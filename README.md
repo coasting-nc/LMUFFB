@@ -106,7 +106,7 @@ For feedback, questions, or support:
 *   [Driver's Guide to Testing LMUFFB](docs/Driver's%20Guide%20to%20Testing%20LMUFFB.md) - Suggestions for specific driving scenarios and car setups to test each FFB effect 
 *   [The Physics of Feel - Driver's Guide](docs/the_physics_of__feel_-_driver_guide.md) - Explains how lmuFFB translates telemetry into tactile sensations, with telemetry visualizations
 *   [FFB Effects & Customization Guide](docs/ffb_effects.md)
-*   [Telemetry Data Reference](docs/dev_docs/telemetry_data_reference.md)
+*   [Telemetry Data Reference](docs/dev_docs/references/Reference - telemetry_data_reference.md)
 *   [FFB Math Formulas](docs/dev_docs/FFB_formulas.md)
 *   [How to Contribute to the Project](docs/dev_docs/contribute_to_the_project/how_to_contribute_to_the_project.md) - Step-by-step guide for contributors using AI-assisted coding tools
 

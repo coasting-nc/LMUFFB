@@ -40,7 +40,7 @@ Run all tests that had already been compiled:
     *   **Priority Files**: Pay special attention to changes in:
         *   `README.md` - User-facing features and setup
         *   `CHANGELOG_DEV.md` - Recent changes and version history
-        *   `docs/dev_docs/telemetry_data_reference.md` - API source of truth
+        *   `docs/dev_docs/references/Reference - telemetry_data_reference.md` - API source of truth
         *   `docs/dev_docs/FFB_formulas.md` - Physics and scaling constants
         *   `docs/architecture.md` - System design and components
         *   `AGENTS_MEMORY.md` - Previous session learnings
@@ -58,7 +58,7 @@ Run all tests that had already been compiled:
 *   **Common Documentation Targets**:
     *   **Math/Physics Changes** → Update `docs/dev_docs/FFB_formulas.md`
     *   **New FFB Effects** → Update `docs/ffb_effects.md` AND `docs/the_physics_of__feel_-_driver_guide.md`
-    *   **Telemetry Usage** → Update `docs/dev_docs/telemetry_data_reference.md`
+    *   **Telemetry Usage** → Update `docs/dev_docs/references/Reference - telemetry_data_reference.md`
     *   **GUI Changes** → Update `README.md` (text descriptions)
     *   **Architecture Changes** → Update `docs/architecture.md`
     *   **New Features** → Update `README.md`, `docs/introduction.md`, and relevant feature docs
@@ -132,7 +132,7 @@ Run all tests that had already been compiled:
 ## 📂 Key Documentation References
 
 *   **Formulas**: `docs/dev_docs/FFB_formulas.md` (The math behind the code).
-*   **Telemetry**: `docs/dev_docs/telemetry_data_reference.md` (Available inputs).
+*   **Telemetry**: `docs/dev_docs/references/Reference - telemetry_data_reference.md` (Available inputs).
 
 ---
 
