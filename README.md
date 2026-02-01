@@ -165,3 +165,8 @@ After building, run the unified test runner to verify everything (Physics, Windo
 
 **Note**: rFactor 2 is **not supported** in v0.4.0+. For rFactor 2, please use earlier versions of lmuFFB (v0.3.x). See the [releases page](https://github.com/coasting-nc/LMUFFB/releases) for v0.3.x downloads.
 rF2 will be supported again in a future version, in particular to compare our grip approximation alghorithm with the real values returned by the game for non DLC cars.
+
+
+ ### Support for AC, ACC, ACE
+
+ It is planned for a future release. See https://github.com/coasting-nc/LMUFFB/issues/30
