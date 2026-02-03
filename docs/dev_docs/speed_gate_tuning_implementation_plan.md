@@ -562,7 +562,7 @@ static void test_speed_gate_validation() {
 
 ### Phase 5: Documentation Updates
 
-#### 5.1 Update CHANGELOG.md
+#### 5.1 Update CHANGELOG_DEV.md
 
 ```markdown
 ## [0.6.22] - YYYY-MM-DD
@@ -742,7 +742,7 @@ Prevents rapid on/off cycling when hovering near threshold.
 - [ ] Manual testing: Extreme values
 
 ### Documentation
-- [ ] Update `CHANGELOG.md` with v0.6.22 entry
+- [ ] Update `CHANGELOG_DEV.md` with v0.6.22 entry
 - [ ] Add section to user guide
 - [ ] Update `FFB_formulas.md` with speed gate formula
 - [ ] Update built-in presets with default values

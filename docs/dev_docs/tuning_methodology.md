@@ -116,7 +116,7 @@ If clipping occurs:
 - **Unclear**: Effect may be masked; check frequency/amplitude
 
 #### Step 3: Document Changes
-Update `CHANGELOG.md` and `FFB_formulas.md` with:
+Update `CHANGELOG_DEV.md` and `FFB_formulas.md` with:
 - New coefficient values
 - Rationale for change
 - Expected force ranges
@@ -180,7 +180,7 @@ Before finalizing coefficient changes:
 - [ ] **Integration Test**: Effect works with all other effects enabled
 - [ ] **No Clipping**: Clipping indicator shows <5% saturation
 - [ ] **Hardware Test**: Validated on at least 2 different wheel types
-- [ ] **Documentation**: Updated `FFB_formulas.md` and `CHANGELOG.md`
+- [ ] **Documentation**: Updated `FFB_formulas.md` and `CHANGELOG_DEV.md`
 - [ ] **Unit Tests**: Updated test expectations in `test_ffb_engine.cpp`
 - [ ] **User Feedback**: Tested by at least 2 users with different preferences
 
@@ -316,7 +316,7 @@ presets.push_back({ "Test: My Effect",
 - ✅ User feedback: 3 testers confirmed improvement
 
 **Documentation:**
-- Updated `CHANGELOG.md` with coefficient change
+- Updated `CHANGELOG_DEV.md` with coefficient change
 - Updated `FFB_formulas.md` with new formula
 - Updated `test_ffb_engine.cpp` expectations (0.30 → 1.21 Nm)
 - Created this methodology document

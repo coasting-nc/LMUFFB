@@ -2,6 +2,143 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.1] - 2026-02-02
+
+### Fixed
+- **Slope Detection Stability**:
+  - Automatically disable **Lateral G Boost (Slide)** when Slope Detection is enabled. This prevents artificial grip-delta oscillations caused by asymmetric calculation methods between axles.
+  - Updated default parameters for a more conservative and smoother experience on initial activation (Sensitivity: 0.5, Smoothing Tau: 0.04s).
+- **GUI & UX Improvements**:
+  - Added a dedicated **Slope (dG/dAlpha) Graph** in the Internal Physics section for real-time monitoring of the tire curve derivative.
+  - Implemented detailed **Tuning Tooltips** for the SG Filter Window, providing hardware-specific recommendations for Direct Drive, Belt, and Gear-driven wheels.
+  - Added a dashboard warning when both Slope Detection and Lateral G Boost are conceptually enabled, informing the user that the boost has been auto-suppressed.
+- **Diagnostic Coverage**:
+  - Populated the `slope_current` field in `FFBSnapshot` to ensure slope detection state is visible in telemetry logs and debugging tools.
+
+### Added
+- **v0.7.1 Regression Tests**:
+  - `test_slope_detection_defaults_v071`: Verifies the new, less aggressive default parameters.
+  - `test_slope_detection_diag_v071`: Confirms the slope diagnostic is correctly populated in snapshots.
+  - `test_slope_detection_boost_disable_v071`: Ensures Lateral G Boost is properly suppressed when slope detection is active.
+  - `test_slope_detection_less_aggressive_v071`: End-to-end physics test verifying the reduced sensitivity compared to v0.7.0.
+
+## [0.7.0] - 2026-02-01
+
+### Added
+- **Dynamic Slope Detection (Tire Peak Grip Monitoring)**:
+  - Implemented real-time dynamic grip estimation using Lateral G vs. Slip Angle slope monitoring.
+  - Replaces static "Grip Loss" thresholds with an adaptive system that detects the tire's saturation point regardless of track conditions or car setups.
+  - Added Savitzky-Golay (SG) filtering (window size 15-31) to calculate high-fidelity derivatives of noisy telemetry data.
+  - **Front-Axle Specific**: Slope detection is applied exclusively to the front axle for precise understeer communication, while maintaining stability for rear grip effects.
+
+### Fixed
+- **Preset-Engine Synchronization**:
+  - Fixed a critical regression where newly added parameters (optimal_slip_angle, slope_detection, etc.) were missing from `Preset::Apply()` and `Preset::UpdateFromEngine()`.
+  - Resolved "Invalid optimal_slip_angle (0)" warnings that occurred when applying presets.
+- **FFBEngine Initialization Order**:
+  - Fixed circular dependency between `FFBEngine.h` and `Config.h` by moving the constructor to `Config.h`.
+
+### Improved
+- **Understeer Effect Fidelity**:
+  - The Understeer Effect now utilizes the dynamic slope to determine force reduction, providing a much more organic and informative "light wheel" feel during front-end slides.
+  - Added safety clamping (0.2 floor) and smoothing (configurable tau) to ensure stable feedback during rapid transitions.
+
+### Added
+- **Regression Test Suite**:
+  - Added 11+ new tests covering slope detection math, noise rejection, SG filter coefficients, and Preset-Engine synchronization.
+  - Added `test_preset_engine_sync_regression` to prevent future parameter synchronization omissions.
+
+## [0.6.39] - 2026-01-31
+
+**Special Thanks** to the community contributors for this release:
+- **@AndersHogqvist** for the Auto-connect to LMU PR.
+
+### Added
+- **Auto-Connect to LMU**:
+  - Implemented automatic connection logic that attempts to connect to LMU shared memory every 2 seconds when disconnected.
+  - Added robust connection state management: detects if the game process exits and automatically resets the connection state.
+  - **Improved UX**: The GUI now displays "Connecting to LMU..." in yellow while searching and "Connected to LMU" in green when active, eliminating the need for manual "Retry" clicks.
+- **SafeSharedMemoryLock Wrapper** (`src/lmu_sm_interface/SafeSharedMemoryLock.h`):
+  - Created wrapper class for vendor's `SharedMemoryLock` to add timeout support without modifying vendor code.
+  - Follows the same pattern as `LmuSharedMemoryWrapper.h` (which adds missing includes).
+  - **Benefit**: Avoids maintenance burden of modifying vendor files - easier to update when vendor releases new SDK versions.
+
+### Optimized
+- **FFB Loop Performance** (400Hz Critical Path):
+  - Reduced lock acquisitions from **3 to 2 per frame** (33% reduction in mutex operations).
+  - Modified `CopyTelemetry()` to return `bool` indicating realtime status instead of requiring separate `IsInRealtime()` call.
+  - Eliminated redundant O(104) vehicle iteration from the FFB critical section.
+  - **Impact**: 800 mutex operations/second (down from 1,200), improved responsiveness.
+
+### Refactored
+- **GameConnector Lifecycle**:
+  - Introduced `Disconnect()` method to centralize resource cleanup (closing handles, unmapping memory views).
+  - Fixed potential resource leaks in `TryConnect()` by ensuring cleanup before every connection attempt.
+  - Updated `IsConnected()` with double-checked locking pattern for performance (atomic fast-path, mutex for thorough check).
+  - **Process Handle Robustness**: Connection now succeeds even if window handle isn't immediately available or if `OpenProcess` fails, with informative logging.
+  - Updated destructor to ensure all handles are properly closed on application exit.
+- **Thread Safety**:
+  - Added `std::mutex` to protect shared state between FFB thread (400Hz) and GUI thread (60Hz).
+  - Added `std::atomic<bool>` for lock-free fast-path checks in `IsConnected()`.
+  - All public methods now properly synchronized with appropriate locking strategies.
+
+### Fixed
+- **GUI Static Variable**: Moved `last_check_time` initialization outside conditional block to prevent redundant re-initialization every frame.
+- **Test Suite**: Updated thread safety test to use new `CopyTelemetry()` return value API.
+
+### Documentation
+- **Vendor Code Tracking**: Created `docs/dev_docs/vendor_modifications.md` documenting known issues in vendor headers and our workaround strategies.
+- **Implementation Summary**: Detailed review fix implementation in `docs/dev_docs/code_reviews/implementation_summary_v0.6.39_fixes.md`.
+
+## [0.6.38] - 2026-01-31
+
+**Special Thanks** to the community contributors for this release:
+- **@DiSHTiX** for the LMU Plugin update PR.
+
+### Fixed
+- **LMU Plugin Update Build Break**: Fixed compilation errors in the updated `SharedMemoryInterface.hpp` by creating a header wrapper (`LmuSharedMemoryWrapper.h`).
+  - **Wrapper Approach**: Instead of editing the official vendor files provided by Studio 397, we now include the missing standard library headers (`<optional>`, `<utility>`, `<cstdint>`, `<cstring>`) in our wrapper file before including the official header.
+  - **Benefit**: This approach preserves the integrity of official source files, making future plugin updates easier to integrate and reducing maintenance burden.
+  - **Compatibility**: Ensures full compatibility with the new 2025 plugin interface (LMU 1.2/1.3 standards).
+
+### Changed
+- **LMU Plugin Interface**: Updated `InternalsPlugin.hpp` and `PluginObjects.hpp` to the latest 2025 version, aligning with LMU 1.2/1.3 standards.
+
+## [0.6.37] - 2026-01-31
+
+**Special Thanks** to the community contributors for this release:
+- **@MartinVindis** for designing and providing the application icon.
+- **@DiSHTiX** for the pull request and implementation logic to integrate the icon.
+
+### Added
+- **Application Icon**: Added a custom application icon (`lmuffb.ico`) to the executable.
+  - The icon is now embedded in the Windows executable and displayed in Explorer and the Taskbar.
+  - Added build system support (`CMakeLists.txt`) to compile and link the resource file.
+  - **Robust Build Verification**: Added `tests/test_icon_presence` to ensure the icon is correctly staged.
+    - **Path Agnostic**: Uses the Windows API to locate the build artifact relative to the running executable, ensuring the test passes regardless of the working directory.
+    - **Data Integrity**: Inspects the icon file's binary header (0x00000100) to verify it is a valid `.ico` file and not an empty placeholder.
+
+## [0.6.36] - 2026-01-05
+### Refactored
+- **FFB Engine Architecture**: Massive refactoring of `FFBEngine::calculate_force` to improve maintainability and scalability.
+  - **Context-Based Processing**: Introduced `FFBCalculationContext` struct to pass derived values (speed, load, dt) efficiently between methods.
+  - **Modular Helper Methods**: Extracted monolithic logic into focused private methods (`calculate_sop_lateral`, `calculate_gyro_damping`, `calculate_abs_pulse`, etc.).
+  - **Improved Readability**: Significantly reduced the complexity of the main calculation loop.
+
+### Fixed
+- **Torque Drop Logic Regression**: Fixed a critical issue where the "Torque Drop" (Spin Gain Reduction) was incorrectly attenuating texture effects (Road, Slide, Spin, Bottoming).
+  - **Restored Behavior**: Torque Drop now ONLY applies to "Structural" forces (Base, SoP, Rear Torque, Yaw, Gyro, ABS, Lockup, Scrub). Texture forces are added *after* the drop, ensuring vibrations remain distinct even during traction loss (drifting/burnouts).
+- **Telemetry Snapshot Regression**: Fixed `sop_force` in debug snapshots incorrectly including the oversteer boost component.
+  - **Restored Behavior**: Snapshots now correctly report the unboosted lateral force for `sop_force` and the boost delta for `oversteer_boost`, enabling accurate debugging of the SoP pipeline.
+- **ABS Pulse Summation**: Fixed a logic error where the ABS pulse force was not being added to the final FFB sum in some scenarios.
+
+### Code Review Follow-up (Additional Improvements)
+- **`calculate_wheel_slip_ratio` Helper**: Extracted duplicated `get_slip` lambda from `calculate_lockup_vibration` and `calculate_wheel_spin` into a unified public helper method. Reduces code duplication and improves testability.
+- **`apply_signal_conditioning` Method**: Extracted ~70 lines of signal conditioning logic (idle smoothing, frequency estimation, dynamic/static notch filters) into a dedicated public helper method. Makes the main `calculate_force` method a cleaner high-level pipeline.
+- **Unconditional State Update Fix**: Moved `m_prev_vert_accel` update from inside `calculate_road_texture` (conditional) to the unconditional state updates section at the end of `calculate_force`. Prevents stale data issues when road texture is disabled.
+- **Build Warning Fixes**: Fixed MSVC warnings C4996 (strncpy unsafe) and C4305 (double-to-float truncation) in test files.
+- **New Tests**: Added 8 new regression tests for the extracted helper methods (483 total tests, 0 failures).
+
 ## [0.6.35] - 2026-01-04
 ### Added
 - **Three New DD Presets**:
@@ -279,7 +416,7 @@ All notable changes to this project will be documented in this file.
   - **Removed "Manual Slip" Toggle**: The engine now always uses the most accurate native telemetry data for slip calculations. The manual calculation fallback remains as an automatic internal recovery mechanism for encrypted content.
   - **Unified Frequency Math**: Synchronized all vibration oscillators to use time-corrected phase accumulation for perfect stability during frame stutters.
 - **Documentation**:
-  - Updated **FFB_formulas.md** and **telemetry_data_reference.md** to reflect the new frequency tuning math and expanded physics ranges.
+  - Updated **FFB_formulas.md** and **Reference - telemetry_data_reference.md** to reflect the new frequency tuning math and expanded physics ranges.
 
 ### Fixed
 - **Test Suite Alignment**: Resolved all regression test failures caused by the removal of the manual slip toggle and the expansion of safety clamping limits.

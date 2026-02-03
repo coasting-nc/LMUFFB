@@ -9,9 +9,11 @@
 #include "../src/DirectInputFFB.h"
 #include "../src/Config.h"
 #include "../src/GuiLayer.h"
+#include "../src/GameConnector.h"
 #include "imgui.h"
 #include <atomic>
 #include <mutex>
+#include <thread>
 #include <fstream>
 #include <cstdio>
 
@@ -255,7 +257,7 @@ static void test_slider_precision_display() {
     
     // Test Case 1: Filter Width (Q) - Range 0.5-10.0, step 0.01
     // Format should be "Q: %.2f" to show 0.01 changes
-    {
+    { 
         float value = 2.50f;
         char buf[64];
         snprintf(buf, 64, "Q: %.2f", value);
@@ -272,7 +274,7 @@ static void test_slider_precision_display() {
     
     // Test Case 2: Percentage sliders - Range 0-2.0, step 0.01
     // Format should be "%.1f%%" to show 0.5% changes (0.01 * 100 = 1.0, but displayed as 0.5% of 200%)
-    {
+    { 
         float value = 1.00f;
         char buf[64];
         snprintf(buf, 64, "%.1f%%%%", value * 100.0f);
@@ -289,7 +291,7 @@ static void test_slider_precision_display() {
     
     // Test Case 3: Understeer Effect - Range 0-50, step 0.5
     // Format should be "%.1f%%" to show 1.0% changes (0.5 / 50 * 100 = 1.0%)
-    {
+    { 
         float value = 25.0f;
         char buf[64];
         snprintf(buf, 64, "%.1f%%%%", (value / 50.0f) * 100.0f);
@@ -306,7 +308,7 @@ static void test_slider_precision_display() {
     
     // Test Case 4: Small range sliders - Range 0-0.1, step 0.001
     // Format should be "%.3f" or better to show 0.001 changes
-    {
+    { 
         float value = 0.050f;
         char buf[64];
         snprintf(buf, 64, "%.3f s", value);
@@ -323,7 +325,7 @@ static void test_slider_precision_display() {
     
     // Test Case 5: Slide Pitch - Range 0.5-5.0, step 0.01
     // Format should be "%.2fx" to show 0.01 changes
-    {
+    { 
         float value = 1.50f;
         char buf[64];
         snprintf(buf, 64, "%.2fx", value);
@@ -348,7 +350,7 @@ static void test_slider_precision_regression() {
     // Test Case 1: Load Cap - Range 1.0-3.0, step 0.01
     // Format should be "%.2fx" to show 0.01 changes
     // Bug: Was "%.1fx" which didn't show 0.01 step changes
-    {
+    { 
         float value = 1.50f;
         char buf[64];
         snprintf(buf, 64, "%.2fx", value);
@@ -366,7 +368,7 @@ static void test_slider_precision_regression() {
     // Test Case 2: Target Frequency - Range 10-100, step 0.01
     // Format should be "%.1f Hz" to show 0.1 changes
     // Bug: Was "%.0f Hz" which didn't show small adjustments
-    {
+    { 
         float value = 50.0f;
         char buf[64];
         snprintf(buf, 64, "%.1f Hz", value);
@@ -384,7 +386,7 @@ static void test_slider_precision_regression() {
     // Test Case 3: Understeer Effect - Range 0-50, step 0.01
     // Format should be "%.2f" to show 0.01 changes
     // Bug: Was using pre-calculated percentage with buffer scope issues
-    {
+    { 
         float value = 25.00f;
         char buf[64];
         snprintf(buf, 64, "%.2f", value);
@@ -403,7 +405,7 @@ static void test_slider_precision_regression() {
     
     // Test Case 4: Verify step sizes match precision
     // This ensures our adaptive step logic matches the display precision
-    {
+    { 
         // Small range (<1.0): step 0.001, needs %.3f or better
         float small_step = 0.001f;
         char buf[64];
@@ -443,7 +445,7 @@ static void test_latency_display_regression() {
     
     // Test Case 1: SoP Smoothing Latency Calculation
     // Formula: lat_ms = (1.0 - sop_smoothing_factor) * 100.0 + 0.5 (Rounding)
-    {
+    { 
         std::cout << "  Testing SoP Smoothing latency calculation..." << std::endl;
         
         // Low latency case (should be green)
@@ -470,7 +472,7 @@ static void test_latency_display_regression() {
     
     // Test Case 2: Slip Angle Smoothing Latency Calculation
     // Formula: slip_ms = slip_angle_smoothing * 1000.0 + 0.5 (Rounding)
-    {
+    { 
         std::cout << "  Testing Slip Angle Smoothing latency calculation..." << std::endl;
         
         // Low latency case (should be green)
@@ -496,7 +498,7 @@ static void test_latency_display_regression() {
     }
     
     // Test Case 3: Color Coding Logic
-    {
+    { 
         std::cout << "  Testing color coding logic..." << std::endl;
         
         // Green color for low latency (< 15ms)
@@ -526,7 +528,7 @@ static void test_latency_display_regression() {
     }
     
     // Test Case 4: Display Format Verification
-    {
+    { 
         std::cout << "  Testing display format..." << std::endl;
         
         // SoP Smoothing display format: "Latency: XX ms - OK"
@@ -546,7 +548,7 @@ static void test_latency_display_regression() {
     }
     
     // Test Case 5: Edge Cases
-    {
+    { 
         std::cout << "  Testing edge cases..." << std::endl;
         
         // Zero latency (SoP smoothing = 1.0)
@@ -633,7 +635,7 @@ static void test_single_source_of_truth_t300_defaults() {
     std::cout << "  Test 1: Captured reference defaults from Preset struct" << std::endl;
     
     // Test 2: Verify FFBEngine initialization via ApplyDefaultsToEngine() matches
-    {
+    { 
         std::cout << "  Test 2: FFBEngine initialization consistency..." << std::endl;
         FFBEngine engine;
         Preset::ApplyDefaultsToEngine(engine);
@@ -663,7 +665,7 @@ static void test_single_source_of_truth_t300_defaults() {
     }
     
     // Test 3: Verify "Default" preset from LoadPresets() matches
-    {
+    { 
         std::cout << "  Test 3: Default preset consistency..." << std::endl;
         Config::LoadPresets();
         
@@ -686,7 +688,7 @@ static void test_single_source_of_truth_t300_defaults() {
     }
     
     // Test 4: Verify "T300" preset has specialized values (v0.6.30 Decoupling)
-    {
+    { 
         std::cout << "  Test 4: T300 specialized preset verification..." << std::endl;
         
         // ⚠️ IMPORTANT: T300 preset index depends on Config.cpp LoadPresets() order!
@@ -713,7 +715,7 @@ static void test_single_source_of_truth_t300_defaults() {
     }
     
     // Test 5: Verify applying preset produces same result as ApplyDefaultsToEngine()
-    {
+    { 
         std::cout << "  Test 5: Preset application consistency..." << std::endl;
         
         FFBEngine engine1, engine2;
@@ -744,7 +746,7 @@ static void test_single_source_of_truth_t300_defaults() {
     }
     
     // Test 6: Verify no config file still produces correct defaults
-    {
+    { 
         std::cout << "  Test 6: No config file scenario..." << std::endl;
         
         // Simulate fresh install (no config.ini)
@@ -819,6 +821,125 @@ static void test_legacy_config_migration() {
     remove(test_file.c_str());
 }
 
+static void test_icon_presence() {
+    std::cout << "\nTest: Icon Presence (Build Artifact)" << std::endl;
+    
+    // Robustness Fix: Use the executable's path to find the artifact, 
+    // strictly validating the build structure regardless of CWD.
+    char buffer[MAX_PATH];
+    GetModuleFileNameA(NULL, buffer, MAX_PATH);
+    std::string exe_path(buffer);
+    
+    // Find the directory of the executable
+    size_t last_slash = exe_path.find_last_of("\\/");
+    std::string exe_dir = (last_slash != std::string::npos) ? exe_path.substr(0, last_slash) : ".";
+    
+    std::cout << "  Exe Dir: " << exe_dir << std::endl;
+
+    // Expected locations relative to build output (e.g., build/tests/Release/run.exe)
+    // We expect the icon to be in the build root (copied by CMake)
+    std::vector<std::string> candidates;
+    candidates.push_back(exe_dir + "/../../lmuffb.ico"); // Standard CMake Release/Debug layout
+    candidates.push_back(exe_dir + "/../lmuffb.ico");    // Flat layout
+    candidates.push_back(exe_dir + "/lmuffb.ico");       // Same dir
+
+    bool found = false;
+    std::string found_path;
+    for (const auto& path : candidates) {
+        std::ifstream f(path, std::ios::binary);
+        if (f.good()) {
+            std::cout << "  [PASS] Found artifact at: " << path << std::endl;
+            found = true;
+            found_path = path;
+            
+            // Verify ICO Header (00 00 01 00)
+            char header[4];
+            f.read(header, 4);
+            if (f.gcount() == 4) {
+                if (header[0] == 0x00 && header[1] == 0x00 && header[2] == 0x01 && header[3] == 0x00) {
+                    std::cout << "  [PASS] Valid ICO header detected (00 00 01 00)" << std::endl;
+                } else {
+                    std::cout << "  [FAIL] Invalid ICO header: " 
+                              << std::hex << (int)header[0] << " " << (int)header[1] << " " 
+                              << (int)header[2] << " " << (int)header[3] << std::dec << std::endl;
+                    found = false; // Invalidate match if header is wrong
+                }
+            } else {
+                std::cout << "  [FAIL] File too small to be a valid icon." << std::endl;
+                found = false;
+            }
+            break;
+        }
+    }
+
+    if (found) {
+        g_tests_passed++;
+    } else {
+        std::cout << "  [FAIL] lmuffb.ico NOT found in build artifacts." << std::endl;
+        std::cout << "         Checked paths relative to executable:" << std::endl;
+        for (const auto& path : candidates) std::cout << "         - " << path << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_game_connector_lifecycle() {
+    std::cout << "\nTest: GameConnector Lifecycle (Disconnect/Reconnect)" << std::endl;
+
+    // 1. Ensure we start in a known state (likely disconnected since LMU isn't running)
+    bool initial_state = GameConnector::Get().IsConnected();
+    std::cout << "  Initial State: " << (initial_state ? "Connected" : "Disconnected") << std::endl;
+
+    // 2. Call Disconnect() - This is the new method we expect to exist.
+    // It should be safe to call even if disconnected (idempotent).
+    GameConnector::Get().Disconnect();
+
+    // 3. Verify state is explicitly false after Disconnect
+    bool after_disconnect = GameConnector::Get().IsConnected();
+    ASSERT_TRUE(after_disconnect == false);
+
+    // 4. TryConnect should handle the clean slate
+    bool connect_result = GameConnector::Get().TryConnect();
+    // We expect this to fail in the test environment, but NOT crash and NOT leak.
+    // (Leak checking isn't easily possible here, but crash checking is implicit)
+    ASSERT_TRUE(connect_result == false);
+    
+    // 5. Verify still disconnected
+    ASSERT_TRUE(GameConnector::Get().IsConnected() == false);
+}
+
+static void test_game_connector_thread_safety() {
+    std::cout << "\nTest: GameConnector Thread Safety (Stress Test)" << std::endl;
+
+    std::atomic<bool> running{true};
+    
+    // Thread 1: Rapidly call CopyTelemetry and check realtime status
+    std::thread t1([&]() {
+        SharedMemoryObjectOut telemetry;
+        while (running) {
+            bool in_realtime = GameConnector::Get().CopyTelemetry(telemetry);
+            (void)in_realtime; // Use the value to prevent optimization
+        }
+    });
+
+    // Thread 2: Rapidly call Disconnect and TryConnect
+    std::thread t2([&]() {
+        while (running) {
+            GameConnector::Get().Disconnect();
+            GameConnector::Get().TryConnect();
+        }
+    });
+
+    // Run for a short duration
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    running = false;
+    
+    t1.join();
+    t2.join();
+
+    std::cout << "  [PASS] GameConnector survived stress test without crashing." << std::endl;
+    g_tests_passed++;
+}
+
 void Run() {
     std::cout << "=== Running Windows Platform Tests ===" << std::endl;
 
@@ -836,6 +957,9 @@ void Run() {
     test_single_source_of_truth_t300_defaults();  // NEW: v0.5.12
     test_config_persistence_braking_group(); // NEW: v0.5.13
     test_legacy_config_migration(); // NEW: v0.5.13
+    test_icon_presence(); // NEW: Icon check
+    test_game_connector_lifecycle(); // NEW: TDD for PR #16
+    test_game_connector_thread_safety(); // NEW: Thread safety TDD
 
     // Report results
     std::cout << "\n----------------" << std::endl;

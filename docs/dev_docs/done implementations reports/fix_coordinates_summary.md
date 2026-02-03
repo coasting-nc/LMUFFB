@@ -9,7 +9,7 @@ Fix failing tests resulting from the necessary revert/adjustments to the coordin
 ## Changes Implemented
 
 ### 1. Documentation Updates
-*   **`docs/dev_docs/telemetry_data_reference.md`**: Added Section 6 "Coordinate Systems & Sign Conventions" clarifying LMU (+X=Left) vs ISO (+X=Forward?) vs DirectInput contexts.
+*   **`docs/dev_docs/references/Reference - telemetry_data_reference.md`**: Added Section 6 "Coordinate Systems & Sign Conventions" clarifying LMU (+X=Left) vs ISO (+X=Forward?) vs DirectInput contexts.
 *   **`docs/dev_docs/FFB_formulas.md`**: Updated SoP, Yaw Kick, and Rear Torque formulas to reflect v0.4.30 logic (SoP Positive, Yaw Kick Inverted, Rear Torque Negative-Input-Logic).
 
 ### 2. Test Suite Updates (`tests/test_ffb_engine.cpp`)

@@ -1,3 +1,5 @@
+TODO: mode this document to a folder for general reference document
+
 # Coordinate System Reference Guide (v0.4.19)
 
 **CRITICAL**: This document explains the coordinate system mismatch between rFactor 2/LMU and DirectInput that was fixed in v0.4.19. **Read this before modifying any FFB calculations involving lateral vectors.**

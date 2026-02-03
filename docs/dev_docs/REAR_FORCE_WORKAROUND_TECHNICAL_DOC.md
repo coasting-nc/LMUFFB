@@ -409,7 +409,7 @@ This workaround should be **removed** when:
 - **FFB Formulas:** `docs/dev_docs/FFB_formulas.md` - Mathematical formulas and derivations
 - **Code Review:** `docs/dev_docs/code_reviews/CODE_REVIEW_v0.4.10_staged_changes.md` - Original review
 - **Fixes Summary:** `docs/dev_docs/code_reviews/CODE_REVIEW_v0.4.10_fixes_implemented.md` - Implementation summary
-- **CHANGELOG:** `CHANGELOG.md` - User-facing change description
+- **CHANGELOG:** `CHANGELOG_DEV.md` - User-facing change description
 
 ### Code Locations
 

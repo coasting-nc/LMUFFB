@@ -96,4 +96,4 @@ The "Yaw Kick" effect (derived from `mLocalRotAccel.y`) is currently producing c
 **Deliverables:**
 1.  Updated `FFBEngine.h`.
 2.  Updated `tests/test_ffb_engine.cpp`.
-3.  Updated `CHANGELOG.md` (v0.4.40).
+3.  Updated `CHANGELOG_DEV.md` (v0.4.40).

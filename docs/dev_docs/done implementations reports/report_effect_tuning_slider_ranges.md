@@ -74,7 +74,7 @@ We will systematically update the Min/Max values in the GUI for the following:
 The following documents need to be updated to reflect the changes detailed in this report:
 
 *   `docs\dev_docs\FFB_formulas.md`
-*   `docs\dev_docs\telemetry_data_reference.md`
+*   `docs\dev_docs\references\Reference - telemetry_data_reference.md`
 
 ## 6. Automated Tests
 
@@ -111,7 +111,7 @@ This report identifies limitations in current FFB adjustment ranges and missing 
 **References:**
 *   `docs\dev_docs\report_effect_tuning_slider_ranges.md` (This Report)
 *   `docs\dev_docs\FFB_formulas.md`
-*   `docs\dev_docs\telemetry_data_reference.md`
+*   `docs\dev_docs\references\Reference - telemetry_data_reference.md`
 *   `src/FFBEngine.h`
 *   `src/GuiLayer.cpp`
 *   `tests/test_ffb_engine.cpp`
@@ -131,7 +131,7 @@ This report identifies limitations in current FFB adjustment ranges and missing 
     *   Ensure all tests pass.
 5.  **Update Documentation**:
     *   Reflect removal of Manual Slip in `docs\dev_docs\FFB_formulas.md`.
-    *   Document new sliders in `docs\dev_docs\telemetry_data_reference.md`.
+    *   Document new sliders in `docs\dev_docs\references\Reference - telemetry_data_reference.md`.
 6.  **Update Version & Changelog**:
     *   Increment the version number in `VERSION`.
     *   Add a detailed entry in `CHANGELOG.md`.

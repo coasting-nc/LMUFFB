@@ -1,4 +1,5 @@
 #include "GameConnector.h"
+#include "lmu_sm_interface/SafeSharedMemoryLock.h"
 #include <iostream>
 
 #define LEGACY_SHARED_MEMORY_NAME "$rFactor2SMMP_Telemetry$"
@@ -11,12 +12,38 @@ GameConnector& GameConnector::Get() {
 GameConnector::GameConnector() {}
 
 GameConnector::~GameConnector() {
-    if (m_pSharedMemLayout) UnmapViewOfFile(m_pSharedMemLayout);
-    if (m_hMapFile) CloseHandle(m_hMapFile);
+    Disconnect();
+}
+
+void GameConnector::Disconnect() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    _DisconnectLocked();
+}
+
+void GameConnector::_DisconnectLocked() {
+    if (m_pSharedMemLayout) {
+        UnmapViewOfFile(m_pSharedMemLayout);
+        m_pSharedMemLayout = nullptr;
+    }
+    if (m_hMapFile) {
+        CloseHandle(m_hMapFile);
+        m_hMapFile = NULL;
+    }
+    if (m_hProcess) {
+        CloseHandle(m_hProcess);
+        m_hProcess = NULL;
+    }
+    m_smLock.reset();
+    m_connected = false;
+    m_processId = 0;
 }
 
 bool GameConnector::TryConnect() {
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (m_connected) return true;
+
+    // Ensure we don't leak handles from a previous partial/failed attempt
+    _DisconnectLocked();
 
     m_hMapFile = OpenFileMappingA(FILE_MAP_READ, FALSE, LMU_SHARED_MEMORY_FILE);
     
@@ -28,21 +55,37 @@ bool GameConnector::TryConnect() {
     m_pSharedMemLayout = (SharedMemoryLayout*)MapViewOfFile(m_hMapFile, FILE_MAP_READ, 0, 0, sizeof(SharedMemoryLayout));
     if (m_pSharedMemLayout == NULL) {
         std::cerr << "[GameConnector] Could not map view of file." << std::endl;
-        CloseHandle(m_hMapFile);
-        m_hMapFile = NULL;
+        _DisconnectLocked();
         return false;
     }
 
-    m_smLock = SharedMemoryLock::MakeSharedMemoryLock();
+    m_smLock = SafeSharedMemoryLock::MakeSafeSharedMemoryLock();
     if (!m_smLock.has_value()) {
         std::cerr << "[GameConnector] Failed to init LMU Shared Memory Lock" << std::endl;
-        // Proceed anyway? No, lock is mandatory for data integrity in 1.2
-        // But maybe we can read without lock if we accept tearing? 
-        // No, let's enforce it for robustness.
-        // Actually, if lock creation fails, it might mean permissions or severe error.
+        _DisconnectLocked();
         return false;
     }
 
+    // Try to get process handle for lifecycle management
+    // But don't treat missing handle as fatal - allow connection to proceed
+    HWND hwnd = m_pSharedMemLayout->data.generic.appInfo.mAppWindow;
+    if (hwnd) {
+        DWORD pid = 0;
+        GetWindowThreadProcessId(hwnd, &pid);
+        if (pid) {
+            m_processId = pid;
+            m_hProcess = OpenProcess(
+                SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+            if (!m_hProcess) {
+                std::cout << "[GameConnector] Note: Failed to open process handle (Error: " << GetLastError() << "). Connection will continue without lifecycle monitoring." << std::endl;
+            }
+        }
+    } else {
+        std::cout << "[GameConnector] Note: Window handle not yet available. Will retry process handle acquisition later." << std::endl;
+    }
+
+    // Mark as connected even if process handle isn't available yet
+    // Process monitoring is optional - core functionality is shared memory access
     m_connected = true;
     std::cout << "[GameConnector] Connected to LMU Shared Memory." << std::endl;
     return true;
@@ -59,37 +102,47 @@ bool GameConnector::CheckLegacyConflict() {
 }
 
 bool GameConnector::IsConnected() const {
-    return m_connected;
+  if (!m_connected.load(std::memory_order_acquire)) return false;
+
+  std::lock_guard<std::mutex> lock(m_mutex);
+  // Double check under lock to ensure we don't access closed handles
+  if (!m_connected.load(std::memory_order_relaxed)) return false;
+
+  // Check if the game process is still running
+  if (m_hProcess) {
+    DWORD wait = WaitForSingleObject(m_hProcess, 0);
+    if (wait == WAIT_OBJECT_0 || wait == WAIT_FAILED) {
+      // Process has exited or handle is invalid - clean up everything immediately
+      const_cast<GameConnector*>(this)->_DisconnectLocked();
+      return false;
+    }
+  }
+
+  return m_connected.load(std::memory_order_relaxed) && m_pSharedMemLayout &&
+         m_smLock.has_value();
 }
 
-void GameConnector::CopyTelemetry(SharedMemoryObjectOut& dest) {
-    if (!m_connected || !m_pSharedMemLayout || !m_smLock.has_value()) return;
+bool GameConnector::CopyTelemetry(SharedMemoryObjectOut& dest) {
+    // Fast path check
+    if (!m_connected.load(std::memory_order_acquire)) return false;
 
-    m_smLock->Lock();
-    CopySharedMemoryObj(dest, m_pSharedMemLayout->data);
-    m_smLock->Unlock();
-}
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (!m_connected.load(std::memory_order_relaxed) || !m_pSharedMemLayout || !m_smLock.has_value()) return false;
 
-bool GameConnector::IsInRealtime() const {
-    if (!m_connected || !m_pSharedMemLayout || !m_smLock.has_value()) {
+    // Use a reasonable timeout (e.g., 50ms) to avoid hanging forever if the game crashes while holding the lock
+    if (m_smLock->Lock(50)) {
+        CopySharedMemoryObj(dest, m_pSharedMemLayout->data);
+        
+        // Get realtime status while we have the lock
+        // mInRealtime: 0=menu/replay/monitor, 1=driving/practice/race
+        bool isRealtime = (m_pSharedMemLayout->data.scoring.scoringInfo.mInRealtime != 0);
+        
+        m_smLock->Unlock();
+        
+        return isRealtime;
+    } else {
+        // Timeout - game may have crashed while holding lock
+        // Return false to indicate not in realtime (safe fallback)
         return false;
     }
-    
-    // Thread-safe check of game state
-    m_smLock->Lock();
-    
-    bool inRealtime = false;
-    
-    // Find player vehicle and check session state
-    for (int i = 0; i < 104; i++) {
-        if (m_pSharedMemLayout->data.scoring.vehScoringInfo[i].mIsPlayer) {
-            // Check if in active driving session
-            // mInRealtime: 0=menu/replay/monitor, 1=driving/practice/race
-            inRealtime = (m_pSharedMemLayout->data.scoring.scoringInfo.mInRealtime != 0);
-            break;
-        }
-    }
-    
-    m_smLock->Unlock();
-    return inRealtime;
 }

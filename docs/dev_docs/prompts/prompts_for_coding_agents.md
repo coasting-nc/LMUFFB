@@ -102,7 +102,7 @@ Refer to **`docs/dev_docs/workaounds_and_improvements_ffb_v0.4.4+.md`** for the 
 3.  **Documentation:**
     *   Update `docs/dev_docs/FFB_formulas.md` with the new approximation formulas.
     *   Update `docs/ffb_effects.md` describing the new "Scrub Drag" and "Universal Bottoming".
-    *   Update `docs/dev_docs/telemetry_data_reference.md` marking the new fields (`mSuspForce`, `mRideHeight`, etc.) as "Used".
+    *   Update `docs/dev_docs/references/Reference - telemetry_data_reference.md` marking the new fields (`mSuspForce`, `mRideHeight`, etc.) as "Used".
     *   Update `CHANGELOG.md` (v0.4.5).
 
 **Constraints:**

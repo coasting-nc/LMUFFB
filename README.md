@@ -67,7 +67,7 @@ Your testing and feedback is greatly appreciated! 🙏
     -   **Automatic Fix (v0.6.22+)**: This is now automatically handled by the Automatic Idle Smoothing feature. The vibration should fade out when you're stationary and return to normal when driving.
     -   **Manual Workaround (older versions)**: Go to **Signal Filtering**, enable **Static Noise Filter**, and set the frequency to **10-15 Hz**. Adjust until the bouncing stops. This will surgically remove the engine bounce without making the steering feel light.
 -   **FFB too weak**:
-    -   Increase **Master Gain**.
+    -   Increase **Master Gain** (slider ranges from 0% to 200%, so you can boost beyond 100%).
     -   Or reduce **Max Torque Ref** (this amplifies the signal by setting a lower reference point for maximum torque).
 -   **Violent oscillations or shaking**:
     -   If you experience violent oscillations that the Smoothing or Speed Gate settings don't catch, try **increasing Max Torque Ref** (e.g., from 45 to 60-80 Nm).
@@ -106,7 +106,7 @@ For feedback, questions, or support:
 *   [Driver's Guide to Testing LMUFFB](docs/Driver's%20Guide%20to%20Testing%20LMUFFB.md) - Suggestions for specific driving scenarios and car setups to test each FFB effect 
 *   [The Physics of Feel - Driver's Guide](docs/the_physics_of__feel_-_driver_guide.md) - Explains how lmuFFB translates telemetry into tactile sensations, with telemetry visualizations
 *   [FFB Effects & Customization Guide](docs/ffb_effects.md)
-*   [Telemetry Data Reference](docs/dev_docs/telemetry_data_reference.md)
+*   [Telemetry Data Reference](docs/dev_docs/references/Reference - telemetry_data_reference.md)
 *   [FFB Math Formulas](docs/dev_docs/FFB_formulas.md)
 *   [How to Contribute to the Project](docs/dev_docs/contribute_to_the_project/how_to_contribute_to_the_project.md) - Step-by-step guide for contributors using AI-assisted coding tools
 
@@ -165,3 +165,8 @@ After building, run the unified test runner to verify everything (Physics, Windo
 
 **Note**: rFactor 2 is **not supported** in v0.4.0+. For rFactor 2, please use earlier versions of lmuFFB (v0.3.x). See the [releases page](https://github.com/coasting-nc/LMUFFB/releases) for v0.3.x downloads.
 rF2 will be supported again in a future version, in particular to compare our grip approximation alghorithm with the real values returned by the game for non DLC cars.
+
+
+ ### Support for AC, ACC, ACE
+
+ It is planned for a future release. See https://github.com/coasting-nc/LMUFFB/issues/30

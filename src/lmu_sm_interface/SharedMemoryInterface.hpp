@@ -1,14 +1,5 @@
 #pragma once
 #include "InternalsPlugin.hpp"
-#include <optional>
-#include <utility> // For std::exchange, std::swap
-
-#ifndef _WIN32
-#define MAX_PATH 260
-typedef unsigned long DWORD;
-typedef void* HANDLE;
-typedef long LONG;
-#endif
 
 /*
 * Usage example:
@@ -109,21 +100,20 @@ public:
         }
         return std::nullopt;
     }
-#ifdef _WIN32
-    void Lock() {
+    bool Lock(DWORD dwMilliseconds = INFINITE) {
         int MAX_SPINS = 4000;
         for (int spins = 0; spins < MAX_SPINS; ++spins) {
             if (InterlockedCompareExchange(&mDataPtr->busy, 1, 0) == 0)
-                return;
+                return true;
             YieldProcessor(); // CPU pause hint
         }
         InterlockedIncrement(&mDataPtr->waiters);
         while (true) {
             if (InterlockedCompareExchange(&mDataPtr->busy, 1, 0) == 0) {
                 InterlockedDecrement(&mDataPtr->waiters);
-                return;
+                return true;
             }
-            WaitForSingleObject(mWaitEventHandle, INFINITE);
+            return WaitForSingleObject(mWaitEventHandle, dwMilliseconds) == WAIT_OBJECT_0;
         }
     }
     void Unlock() {
@@ -144,13 +134,6 @@ public:
         if (mDataPtr)
             UnmapViewOfFile(mDataPtr);
     }
-#else
-    // Mock implementation for Linux tests
-    void Lock() {}
-    void Unlock() {}
-    void Reset() {}
-    ~SharedMemoryLock() {}
-#endif
     SharedMemoryLock(SharedMemoryLock&& other) : mMapHandle(std::exchange(other.mMapHandle, nullptr)), mWaitEventHandle(std::exchange(other.mWaitEventHandle, nullptr)) ,
         mDataPtr(std::exchange(other.mDataPtr, nullptr)) {}
     SharedMemoryLock& operator=(SharedMemoryLock&& other) {
@@ -166,7 +149,6 @@ private:
     };
     SharedMemoryLock() = default;
     bool Init() {
-#ifdef _WIN32
         mMapHandle = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, (DWORD)sizeof(LockData), "LMU_SharedMemoryLockData");
         if (!mMapHandle) {
             return false;
@@ -186,9 +168,6 @@ private:
             return false;
         }
         return true;
-#else
-        return true;
-#endif
     }
     HANDLE mMapHandle = NULL;
     HANDLE mWaitEventHandle = NULL;

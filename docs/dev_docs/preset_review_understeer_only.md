@@ -208,7 +208,7 @@ Added comprehensive regression test `test_preset_understeer_only_isolation()` in
 ### Documentation
 
 - **Test Documentation**: `docs/dev_docs/test_preset_understeer_only_isolation.md`
-- **Changelog Entry**: Added to v0.6.31 section in `CHANGELOG.md`
+- **Changelog Entry**: Added to v0.6.31 section in `CHANGELOG_DEV.md`
 - **This Review**: Updated with implementation status
 
 ### Impact

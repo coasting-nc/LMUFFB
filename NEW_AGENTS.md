@@ -39,8 +39,8 @@ Run all tests that had already been compiled:
     *   **Why**: Documentation changes often reflect new features, API changes, architecture updates, or critical fixes. You must stay current with the project's evolving knowledge base.
     *   **Priority Files**: Pay special attention to changes in:
         *   `README.md` - User-facing features and setup
-        *   `CHANGELOG.md` - Recent changes and version history
-        *   `docs/dev_docs/telemetry_data_reference.md` - API source of truth
+        *   `CHANGELOG_DEV.md` - Recent changes and version history
+        *   `docs/dev_docs/references/Reference - telemetry_data_reference.md` - API source of truth
         *   `docs/dev_docs/FFB_formulas.md` - Physics and scaling constants
         *   `docs/architecture.md` - System design and components
         *   `AGENTS_MEMORY.md` - Previous session learnings
@@ -58,7 +58,7 @@ Run all tests that had already been compiled:
 *   **Common Documentation Targets**:
     *   **Math/Physics Changes** → Update `docs/dev_docs/FFB_formulas.md`
     *   **New FFB Effects** → Update `docs/ffb_effects.md` AND `docs/the_physics_of__feel_-_driver_guide.md`
-    *   **Telemetry Usage** → Update `docs/dev_docs/telemetry_data_reference.md`
+    *   **Telemetry Usage** → Update `docs/dev_docs/references/Reference - telemetry_data_reference.md`
     *   **GUI Changes** → Update `README.md` (text descriptions)
     *   **Architecture Changes** → Update `docs/architecture.md`
     *   **New Features** → Update `README.md`, `docs/introduction.md`, and relevant feature docs
@@ -69,28 +69,34 @@ Run all tests that had already been compiled:
     *   `docs/` - User-facing documentation
     *   `docs/dev_docs/` - Developer and technical documentation
     *   `docs/bug_reports/` - Bug reports and troubleshooting
-    *   Root `.md` files - `README.md`, `CHANGELOG.md`, `AGENTS.md`, `AGENTS_MEMORY.md`
+    *   Root `.md` files - `README.md`, `CHANGELOG_DEV.md`, `AGENTS.md`, `AGENTS_MEMORY.md`
 *   **Critical**: Do NOT assume only one document needs updating. Your changes may affect multiple documents.
 
 ### 5. 📦 Versioning & Changelog
 *   **Update Version**: Increment the number in the `VERSION` file (root directory).
-    *   *Patch (0.0.X)*: Bug fixes, tweaks, refactoring.
-    *   *Minor (0.X.0)*: New features, new effects.
+    *   **Always use the smallest increment:** Add **+1 to the rightmost number** in the version.
+    *   Example: `0.6.39` → `0.6.40`
+    *   Example: `0.7.0` → `0.7.1`
+    *   **Do NOT** increment the minor or major version unless explicitly instructed by the user.
     *   You must also update `src\Version.h`.
-*   **Update Changelog**: Add a concise entry to `CHANGELOG.md` under the new version number.
+*   **Update Changelog**: Add a concise entry to `CHANGELOG_DEV.md` under the new version number.
 
 ### 6. 🧠 Update Memory (Critical)
 *   **Action**: If you encountered a build error, a command failure, or learned something new about the code structure, append it to `AGENTS_MEMORY.md`.
 *   **Goal**: Help the *next* AI session avoid the same problem.
 
 ### 7. 📤 Delivery
-*   **Do Not Push**: Do not run any command that change git history (e.g. `git add`, `git commit`, `git push`) or that reset the local staged changes (e.g. `git reset`).
+*   **🚫 NO GIT STAGING**: You are strictly forbidden from running `git add`, `git commit`, or `git reset`.
+    *   **Rule**: Modify files on disk ONLY.
+    *   **Reason**: The user must review and stage changes manually.
+    *   **No Exceptions**: Do not stage files even if you created them.
+*   **Do Not Push**: Do not run `git push`.
 
 *   **MANDATORY CHECKLIST**:
     *   [ ] **Documentation Scanned**: Did you scan all `.md` files and identify relevant docs?
     *   [ ] **Documentation Updated**: Did you update ALL relevant documentation (not just one file)?
     *   [ ] **Version Bumped**: Did you increment the number in `VERSION`?
-    *   [ ] **Changelog Updated**: Did you add a section in `CHANGELOG.md`?
+    *   [ ] **Changelog Updated**: Did you add a section in `CHANGELOG_DEV.md`?
     *   [ ] **Tests Passed**: Did you verify with `run_tests`?
 
 ---
@@ -128,7 +134,7 @@ Run all tests that had already been compiled:
 ## 📂 Key Documentation References
 
 *   **Formulas**: `docs/dev_docs/FFB_formulas.md` (The math behind the code).
-*   **Telemetry**: `docs/dev_docs/telemetry_data_reference.md` (Available inputs).
+*   **Telemetry**: `docs/dev_docs/references/Reference - telemetry_data_reference.md` (Available inputs).
 
 ---
 

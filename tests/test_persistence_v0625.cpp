@@ -398,6 +398,150 @@ void test_comprehensive_roundtrip() {
     std::remove("roundtrip.ini");
 }
 
+// ----------------------------------------------------------------------------
+// TEST 11: Preset-Engine Synchronization Regression (v0.7.0)
+// 
+// REGRESSION CASE: Fields declared in both Preset and FFBEngine but missing
+// from Preset::Apply() or Preset::UpdateFromEngine() methods.
+//
+// This test verifies that:
+// 1. Preset::ApplyDefaultsToEngine() initializes ALL fields to valid values
+// 2. Preset::Apply() transfers ALL Preset fields to FFBEngine
+// 3. Preset::UpdateFromEngine() captures ALL FFBEngine fields back to Preset
+// 
+// If any field is missing from the synchronization methods, this test will fail.
+// ----------------------------------------------------------------------------
+void test_preset_engine_sync_regression() {
+    std::cout << "Test 11: Preset-Engine Synchronization (v0.7.0 Regression)..." << std::endl;
+    
+    // --- Part A: ApplyDefaultsToEngine initializes critical fields ---
+    FFBEngine engine_defaults;
+    Preset::ApplyDefaultsToEngine(engine_defaults);
+    
+    // These fields triggered "Invalid X, resetting to default" warnings when missing
+    ASSERT_TRUE(engine_defaults.m_optimal_slip_angle >= 0.01f);
+    ASSERT_TRUE(engine_defaults.m_optimal_slip_ratio >= 0.01f);
+    
+    // Additional smoothing fields (v0.5.7 - v0.5.8)
+    // Note: 0.0 is valid for these, we just check they're not uninitialized garbage
+    ASSERT_TRUE(engine_defaults.m_steering_shaft_smoothing >= 0.0f);
+    ASSERT_TRUE(engine_defaults.m_gyro_smoothing >= 0.0f);
+    ASSERT_TRUE(engine_defaults.m_yaw_accel_smoothing >= 0.0f);
+    ASSERT_TRUE(engine_defaults.m_chassis_inertia_smoothing >= 0.0f);
+    
+    // Slope detection fields (v0.7.0)
+    ASSERT_TRUE(engine_defaults.m_slope_sg_window >= 5);
+    ASSERT_TRUE(engine_defaults.m_slope_sensitivity >= 0.1f);
+    ASSERT_TRUE(engine_defaults.m_slope_smoothing_tau >= 0.001f);
+    
+    std::cout << "  [PASS] ApplyDefaultsToEngine initializes critical fields" << std::endl;
+    
+    // --- Part B: Apply() transfers ALL Preset fields to FFBEngine ---
+    Preset custom_preset("SyncTest");
+    
+    // Set custom values for ALL synchronizable fields
+    custom_preset.gain = 0.77f;
+    custom_preset.understeer = 0.88f;
+    custom_preset.sop = 1.11f;
+    custom_preset.optimal_slip_angle = 0.15f;
+    custom_preset.optimal_slip_ratio = 0.18f;
+    custom_preset.steering_shaft_smoothing = 0.025f;
+    custom_preset.gyro_smoothing = 0.015f;
+    custom_preset.yaw_smoothing = 0.005f;
+    custom_preset.chassis_smoothing = 0.035f;
+    custom_preset.road_fallback_scale = 0.12f;
+    custom_preset.understeer_affects_sop = true;
+    
+    // Slope detection (v0.7.0)
+    custom_preset.slope_detection_enabled = true;
+    custom_preset.slope_sg_window = 21;
+    custom_preset.slope_sensitivity = 2.5f;
+    custom_preset.slope_negative_threshold = -0.2f;
+    custom_preset.slope_smoothing_tau = 0.05f;
+    
+    FFBEngine engine_apply;
+    custom_preset.Apply(engine_apply);
+    
+    // Verify Apply() worked
+    ASSERT_NEAR(engine_apply.m_gain, 0.77f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_understeer_effect, 0.88f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_sop_effect, 1.11f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_optimal_slip_angle, 0.15f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_optimal_slip_ratio, 0.18f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_steering_shaft_smoothing, 0.025f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_gyro_smoothing, 0.015f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_yaw_accel_smoothing, 0.005f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_chassis_inertia_smoothing, 0.035f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_road_fallback_scale, 0.12f, 0.001f);
+    ASSERT_EQ(engine_apply.m_understeer_affects_sop, true);
+    
+    // Slope detection (v0.7.0)
+    ASSERT_EQ(engine_apply.m_slope_detection_enabled, true);
+    ASSERT_EQ(engine_apply.m_slope_sg_window, 21);
+    ASSERT_NEAR(engine_apply.m_slope_sensitivity, 2.5f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_slope_negative_threshold, -0.2f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_slope_smoothing_tau, 0.05f, 0.001f);
+    
+    std::cout << "  [PASS] Apply() transfers all Preset fields to FFBEngine" << std::endl;
+    
+    // --- Part C: UpdateFromEngine() captures ALL FFBEngine fields ---
+    FFBEngine engine_source;
+    Preset::ApplyDefaultsToEngine(engine_source);
+    
+    // Set custom values directly on engine
+    engine_source.m_gain = 0.55f;
+    engine_source.m_understeer_effect = 0.66f;
+    engine_source.m_optimal_slip_angle = 0.22f;
+    engine_source.m_optimal_slip_ratio = 0.25f;
+    engine_source.m_steering_shaft_smoothing = 0.033f;
+    engine_source.m_gyro_smoothing = 0.044f;
+    engine_source.m_yaw_accel_smoothing = 0.011f;
+    engine_source.m_chassis_inertia_smoothing = 0.055f;
+    engine_source.m_road_fallback_scale = 0.09f;
+    engine_source.m_understeer_affects_sop = true;
+    
+    // Slope detection (v0.7.0)
+    engine_source.m_slope_detection_enabled = true;
+    engine_source.m_slope_sg_window = 31;
+    engine_source.m_slope_sensitivity = 3.0f;
+    engine_source.m_slope_negative_threshold = -0.3f;
+    engine_source.m_slope_smoothing_tau = 0.08f;
+    
+    Preset captured_preset;
+    captured_preset.UpdateFromEngine(engine_source);
+    
+    // Verify UpdateFromEngine() worked
+    ASSERT_NEAR(captured_preset.gain, 0.55f, 0.001f);
+    ASSERT_NEAR(captured_preset.understeer, 0.66f, 0.001f);
+    ASSERT_NEAR(captured_preset.optimal_slip_angle, 0.22f, 0.001f);
+    ASSERT_NEAR(captured_preset.optimal_slip_ratio, 0.25f, 0.001f);
+    ASSERT_NEAR(captured_preset.steering_shaft_smoothing, 0.033f, 0.001f);
+    ASSERT_NEAR(captured_preset.gyro_smoothing, 0.044f, 0.001f);
+    ASSERT_NEAR(captured_preset.yaw_smoothing, 0.011f, 0.001f);
+    ASSERT_NEAR(captured_preset.chassis_smoothing, 0.055f, 0.001f);
+    ASSERT_NEAR(captured_preset.road_fallback_scale, 0.09f, 0.001f);
+    ASSERT_EQ(captured_preset.understeer_affects_sop, true);
+    
+    // Slope detection (v0.7.0)
+    ASSERT_EQ(captured_preset.slope_detection_enabled, true);
+    ASSERT_EQ(captured_preset.slope_sg_window, 31);
+    ASSERT_NEAR(captured_preset.slope_sensitivity, 3.0f, 0.001f);
+    ASSERT_NEAR(captured_preset.slope_negative_threshold, -0.3f, 0.001f);
+    ASSERT_NEAR(captured_preset.slope_smoothing_tau, 0.08f, 0.001f);
+    
+    std::cout << "  [PASS] UpdateFromEngine() captures all FFBEngine fields" << std::endl;
+    
+    // --- Part D: Round-trip integrity ---
+    // Apply captured_preset to a new engine and verify no data loss
+    FFBEngine engine_roundtrip;
+    captured_preset.Apply(engine_roundtrip);
+    
+    ASSERT_NEAR(engine_roundtrip.m_optimal_slip_angle, 0.22f, 0.001f);
+    ASSERT_NEAR(engine_roundtrip.m_slope_sensitivity, 3.0f, 0.001f);
+    
+    std::cout << "  [PASS] Round-trip Apply->UpdateFromEngine->Apply preserves data" << std::endl;
+}
+
 void Run() {
     std::cout << "\n=== Running v0.6.25 Persistence Tests ===" << std::endl;
     
@@ -411,6 +555,7 @@ void Run() {
     test_main_config_clamping_lockup();
     test_configuration_versioning();
     test_comprehensive_roundtrip();
+    test_preset_engine_sync_regression();  // v0.7.0 Regression
 
     std::cout << "\n--- Persistence & Versioning Test Summary ---" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;

@@ -371,7 +371,7 @@ static void test_yaw_kick_gamma() {
 
 ## Changelog Entry
 
-Add to `CHANGELOG.md`:
+Add to `CHANGELOG_DEV.md`:
 
 ```markdown
 ### v0.6.36 - Yaw Kick Gamma Response (Research Validated)
@@ -409,7 +409,7 @@ Add to `CHANGELOG.md`:
 | `src/GuiLayer.cpp` | Add "Response Curve (Gamma)" slider with indentation and Hz display |
 | `docs/dev_docs/FFB_formulas.md` | Add gamma curve formula, frequency bands, and research citations |
 | `tests/test_ffb_engine.cpp` | Add `test_yaw_kick_gamma()` regression test with research-optimal case |
-| `CHANGELOG.md` | Add v0.6.36 entry with research validation notes |
+| `CHANGELOG_DEV.md` | Add v0.6.36 entry with research validation notes |
 
 ---
 

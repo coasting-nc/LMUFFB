@@ -8,7 +8,7 @@
 - `docs/dev_docs/prompts/v0,4,44_tests.md`
 
 **Reference Documentation:**
-- `docs/dev_docs/Fix wheel device disconnecting.md`
+- `docs/dev_docs/archived/Archived - Fix wheel device disconnecting.md`
 - `docs/dev_docs/windows_platform_tests_plan.md`
 
 ---

@@ -403,7 +403,7 @@ static void test_road_texture_fallback_scaling() {
 
 ### Phase 4: Documentation Updates (v0.6.22 or later)
 
-#### 4.1 Update CHANGELOG.md
+#### 4.1 Update CHANGELOG_DEV.md
 
 ```markdown
 ## [0.6.22] - YYYY-MM-DD

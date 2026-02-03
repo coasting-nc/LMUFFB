@@ -625,7 +625,7 @@ Here is the implementation checklist to apply the latency fixes and GUI improvem
     - Add Tooltip explaining "Physics Response Time".
 
 ### 5. Documentation & Build
-- [ ] **Update `CHANGELOG.md`**: Document the new defaults (15ms) and the new "Physics Response" slider.
+- [ ] **Update `CHANGELOG_DEV.md`**: Document the new defaults (15ms) and the new "Physics Response" slider.
 - [ ] **Update `VERSION`**: Increment version number.
 - [ ] **Verify**: Compile and run tests.
 
@@ -692,7 +692,7 @@ We need to:
 *   Modified `FFBEngine.h`
 *   Modified `src/Config.h` and `src/Config.cpp`
 *   Modified `src/GuiLayer.cpp`
-*   Updated `CHANGELOG.md` (New entry under a new version number)
+*   Updated `CHANGELOG_DEV.md` (New entry under a new version number)
 *   Updated `VERSION` file
 
 **Check-list for completion:**
@@ -701,7 +701,7 @@ We need to:
 - [ ] `Config.cpp`: Save/Load/Presets updated.
 - [ ] `GuiLayer.cpp`: SoP slider shows Red/Green latency text.
 - [ ] `GuiLayer.cpp`: Slip Angle slider added with Red/Green latency text.
-- [ ] `CHANGELOG.md` updated.
+- [ ] `CHANGELOG_DEV.md` updated.
 - [ ] `VERSION` incremented.
 - [ ] Code compiles successfully.
 

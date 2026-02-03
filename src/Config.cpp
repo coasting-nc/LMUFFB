@@ -725,6 +725,11 @@ void Config::LoadPresets() {
                         else if (key == "yaw_kick_threshold") current_preset.yaw_kick_threshold = std::stof(value);
                         else if (key == "optimal_slip_angle") current_preset.optimal_slip_angle = std::stof(value);
                         else if (key == "optimal_slip_ratio") current_preset.optimal_slip_ratio = std::stof(value);
+                        else if (key == "slope_detection_enabled") current_preset.slope_detection_enabled = (value == "1");
+                        else if (key == "slope_sg_window") current_preset.slope_sg_window = std::stoi(value);
+                        else if (key == "slope_sensitivity") current_preset.slope_sensitivity = std::stof(value);
+                        else if (key == "slope_negative_threshold") current_preset.slope_negative_threshold = std::stof(value);
+                        else if (key == "slope_smoothing_tau") current_preset.slope_smoothing_tau = std::stof(value);
                         else if (key == "steering_shaft_smoothing") current_preset.steering_shaft_smoothing = std::stof(value);
                         else if (key == "gyro_smoothing_factor") current_preset.gyro_smoothing = std::stof(value);
                         else if (key == "yaw_accel_smoothing") current_preset.yaw_smoothing = std::stof(value);
@@ -835,6 +840,11 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "chassis_inertia_smoothing=" << engine.m_chassis_inertia_smoothing << "\n";
         file << "optimal_slip_angle=" << engine.m_optimal_slip_angle << "\n";
         file << "optimal_slip_ratio=" << engine.m_optimal_slip_ratio << "\n";
+        file << "slope_detection_enabled=" << engine.m_slope_detection_enabled << "\n";
+        file << "slope_sg_window=" << engine.m_slope_sg_window << "\n";
+        file << "slope_sensitivity=" << engine.m_slope_sensitivity << "\n";
+        file << "slope_negative_threshold=" << engine.m_slope_negative_threshold << "\n";
+        file << "slope_smoothing_tau=" << engine.m_slope_smoothing_tau << "\n";
 
         file << "\n; --- Braking & Lockup ---\n";
         file << "lockup_enabled=" << engine.m_lockup_enabled << "\n";
@@ -900,6 +910,11 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
                 file << "sop_smoothing_factor=" << p.sop_smoothing << "\n";
                 file << "sop_scale=" << p.sop_scale << "\n";
                 file << "understeer_affects_sop=" << p.understeer_affects_sop << "\n";
+                file << "slope_detection_enabled=" << p.slope_detection_enabled << "\n";
+                file << "slope_sg_window=" << p.slope_sg_window << "\n";
+                file << "slope_sensitivity=" << p.slope_sensitivity << "\n";
+                file << "slope_negative_threshold=" << p.slope_negative_threshold << "\n";
+                file << "slope_smoothing_tau=" << p.slope_smoothing_tau << "\n";
 
                 file << "slip_angle_smoothing=" << p.slip_smoothing << "\n";
                 file << "chassis_inertia_smoothing=" << p.chassis_smoothing << "\n";
@@ -1042,6 +1057,11 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "yaw_kick_threshold") engine.m_yaw_kick_threshold = std::stof(value);
                     else if (key == "optimal_slip_angle") engine.m_optimal_slip_angle = std::stof(value);
                     else if (key == "optimal_slip_ratio") engine.m_optimal_slip_ratio = std::stof(value);
+                    else if (key == "slope_detection_enabled") engine.m_slope_detection_enabled = (value == "1");
+                    else if (key == "slope_sg_window") engine.m_slope_sg_window = std::stoi(value);
+                    else if (key == "slope_sensitivity") engine.m_slope_sensitivity = std::stof(value);
+                    else if (key == "slope_negative_threshold") engine.m_slope_negative_threshold = std::stof(value);
+                    else if (key == "slope_smoothing_tau") engine.m_slope_smoothing_tau = std::stof(value);
                     else if (key == "steering_shaft_smoothing") engine.m_steering_shaft_smoothing = std::stof(value);
                     else if (key == "gyro_smoothing_factor") engine.m_gyro_smoothing = std::stof(value);
                     else if (key == "yaw_accel_smoothing") engine.m_yaw_accel_smoothing = std::stof(value);
@@ -1069,6 +1089,13 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
         engine.m_optimal_slip_ratio = 0.12f;
     }
     
+    // Slope Detection Validation (v0.7.0)
+    if (engine.m_slope_sg_window < 5) engine.m_slope_sg_window = 5;
+    if (engine.m_slope_sg_window > 41) engine.m_slope_sg_window = 41;
+    if (engine.m_slope_sg_window % 2 == 0) engine.m_slope_sg_window++; // Must be odd
+    if (engine.m_slope_sensitivity < 0.1f) engine.m_slope_sensitivity = 0.1f;
+    if (engine.m_slope_sensitivity > 10.0f) engine.m_slope_sensitivity = 10.0f;
+    if (engine.m_slope_smoothing_tau < 0.001f) engine.m_slope_smoothing_tau = 0.04f;
     
     // v0.6.20: Safety Validation - Clamp Advanced Braking Parameters to Valid Ranges (Expanded)
     if (engine.m_lockup_gamma < 0.1f || engine.m_lockup_gamma > 3.0f) {

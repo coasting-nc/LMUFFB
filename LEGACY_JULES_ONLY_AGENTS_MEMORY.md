@@ -73,7 +73,7 @@ To avoid "aliasing" (square-wave look) in the GUI graphs:
 *   **Lesson:** Yaw Acceleration is noisy (derivative of velocity). Must be smoothed (LPF) before use in FFB to avoid feedback loops with vibration effects.
 
 ### v0.3.20: Documentation Discipline
-*   **Lesson:** Every submission **MUST** include updates to `VERSION` and `CHANGELOG.md`. This is now enforced in `AGENTS.md`.
+*   **Lesson:** Every submission **MUST** include updates to `VERSION` and `CHANGELOG_DEV.md`. This is now enforced in `AGENTS.md`.
 
 ## 5. Documentation Maintenance
 
@@ -88,13 +88,13 @@ When making changes to the codebase, you **must** follow this documentation upda
 ### Documentation Categories
 *   **User Documentation** (`docs/`): End-user guides, feature descriptions, troubleshooting
 *   **Developer Documentation** (`docs/dev_docs/`): Technical specs, formulas, architecture, investigations
-*   **Root Documentation**: `README.md`, `CHANGELOG.md`, `AGENTS.md`, `AGENTS_MEMORY.md`
+*   **Root Documentation**: `README.md`, `CHANGELOG_DEV.md`, `AGENTS.md`, `AGENTS_MEMORY.md`
 
 ### Common Documentation Update Patterns
 *   **New FFB Effect**: Update `docs/ffb_effects.md`, `docs/the_physics_of__feel_-_driver_guide.md`, `docs/dev_docs/FFB_formulas.md`, and `README.md`
 *   **LMU 1.2 Changes**: Update `docs/dev_docs/new_ffb_features_enabled_by_lmu_1.2.md` and `README.md`
 *   **Architecture Changes**: Update `docs/architecture.md` and potentially `AGENTS.md` if it affects development workflow
-*   **Bug Fixes**: Update `CHANGELOG.md` and consider updating `docs/dev_docs/TODO.md`
+*   **Bug Fixes**: Update `CHANGELOG_DEV.md` and consider updating `docs/dev_docs/TODO.md`
 
 ### Documentation Anti-Patterns
 *   ❌ **Don't** assume only one document needs updating
@@ -121,14 +121,14 @@ After performing `git fetch` or `git pull`, you **must** review what documentati
 *   **What to Read**:
     *   **Always read** any files shown by the diff command
     *   **Priority files** if they changed:
-        *   `docs/dev_docs/telemetry_data_reference.md` - API units and field names (source of truth)
+        *   `docs/dev_docs/references/Reference - telemetry_data_reference.md` - API units and field names (source of truth)
         *   `docs/dev_docs/FFB_formulas.md` - Scaling constants and physics equations
         *   `docs/architecture.md` - System components and design patterns
         *   `README.md` - User features and setup instructions
-        *   `CHANGELOG.md` - What changed and when
+        *   `CHANGELOG_DEV.md` - What changed and when
         *   `AGENTS_MEMORY.md` - Lessons from previous sessions
 
-*   **Example**: If `telemetry_data_reference.md` was updated to document the Force→Torque unit change in LMU 1.2, you must read it to understand that `mSteeringShaftTorque` is in Newton-meters, not Newtons. Without this knowledge, you might use incorrect scaling factors.
+*   **Example**: If `references/Reference - telemetry_data_reference.md` was updated to document the Force→Torque unit change in LMU 1.2, you must read it to understand that `mSteeringShaftTorque` is in Newton-meters, not Newtons. Without this knowledge, you might use incorrect scaling factors.
 
 **Action Item**: Make reviewing changed documentation the **second step** of every session (right after reading AGENTS_MEMORY.md).
 

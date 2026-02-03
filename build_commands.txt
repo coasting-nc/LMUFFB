@@ -20,6 +20,9 @@ cl /EHsc /std:c++17 /I.. /Ivendor\imgui /Ivendor\imgui\backends /DUNICODE /D_UNI
 tests\test_windows_platform.exe
 
 
+# Compile and save output to a utf8 txt file
+
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake --build build --config Release --clean-first | Out-File -FilePath "build_log.txt" -Encoding UTF8
 
 # Prerequisites
 

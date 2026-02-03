@@ -113,7 +113,7 @@ void test_sop_yaw_kick_direction() {
 }
 ```
 
-### 3. Update `CHANGELOG.md`
+### 3. Update `CHANGELOG_DEV.md`
 
 ```markdown
 ## [0.4.20] - 2025-12-18

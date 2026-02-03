@@ -9,6 +9,7 @@
 #include <vector>
 #include <algorithm>
 #include <mutex>
+#include <chrono>
 
 // Define STB_IMAGE_WRITE_IMPLEMENTATION only once in the project (here is fine)
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -48,8 +49,10 @@ static const int LATENCY_WARNING_THRESHOLD_MS = 15; // Green if < 15ms, Red if >
 #define PW_RENDERFULLCONTENT 0x00000002
 #endif
 
-// Forward declarations of helper functions
-bool CreateDeviceD3D(HWND hWnd);
+static constexpr std::chrono::seconds CONNECT_ATTEMPT_INTERVAL(2);
+
+  // Forward declarations of helper functions
+  bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
@@ -718,13 +721,18 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     ImGui::Separator();
 
     // Connection Status
-    bool connected = GameConnector::Get().IsConnected();
-    if (connected) {
-        ImGui::TextColored(ImVec4(0, 1, 0, 1), "Connected to LMU");
+    static std::chrono::steady_clock::time_point last_check_time =
+        std::chrono::steady_clock::now();
+    
+    if (!GameConnector::Get().IsConnected()) {
+      ImGui::TextColored(ImVec4(1, 1, 0, 1), "Connecting to LMU...");
+      if (std::chrono::steady_clock::now() - last_check_time >
+          CONNECT_ATTEMPT_INTERVAL) {
+        last_check_time = std::chrono::steady_clock::now();
+        GameConnector::Get().TryConnect();
+      }
     } else {
-        ImGui::TextColored(ImVec4(1, 0, 0, 1), "Disconnected from LMU");
-        ImGui::SameLine();
-        if (ImGui::Button("Retry")) GameConnector::Get().TryConnect();
+      ImGui::TextColored(ImVec4(0, 1, 0, 1), "Connected to LMU");
     }
 
     // --- 1. TOP BAR (System Status & Quick Controls) ---
@@ -1088,6 +1096,96 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             "Typical: 0.12 - 0.15 (12-15%).\n"
             "Used to estimate grip loss under braking/acceleration.\n"
             "Affects: How much braking/acceleration contributes to calculated grip loss.");
+        
+        // --- SLOPE DETECTION (v0.7.0) ---
+        ImGui::Separator();
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Slope Detection (Experimental)");
+        ImGui::NextColumn(); ImGui::NextColumn();
+
+        // Slope Detection Enable - with buffer reset on transition (v0.7.0)
+        bool prev_slope_enabled = engine.m_slope_detection_enabled;
+        GuiWidgets::Result slope_res = GuiWidgets::Checkbox("Enable Slope Detection", &engine.m_slope_detection_enabled,
+            "Replaces static 'Optimal Slip Angle' threshold with dynamic derivative monitoring.\n\n"
+            "When enabled:\n"
+            "• Grip is estimated by tracking the slope of lateral-G vs slip angle\n"
+            "• Automatically adapts to tire temperature, wear, and conditions\n"
+            "• 'Optimal Slip Angle' and 'Optimal Slip Ratio' settings are IGNORED\n\n"
+            "When disabled:\n"
+            "• Uses the static threshold method (default behavior)");
+        
+        if (slope_res.changed) {
+            selected_preset = -1;
+            
+            // Reset buffers when enabling slope detection (v0.7.0 - Prevents stale data)
+            if (!prev_slope_enabled && engine.m_slope_detection_enabled) {
+                engine.m_slope_buffer_count = 0;
+                engine.m_slope_buffer_index = 0;
+                engine.m_slope_smoothed_output = 1.0;  // Start at full grip
+                std::cout << "[SlopeDetection] Enabled - buffers cleared" << std::endl;
+            }
+        }
+        if (slope_res.deactivated) {
+            Config::Save(engine);
+        }
+        
+        if (engine.m_slope_detection_enabled && engine.m_oversteer_boost > 0.01f) {
+            ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), 
+                "Note: Lateral G Boost (Slide) is auto-disabled when Slope Detection is ON.");
+            ImGui::NextColumn(); ImGui::NextColumn();
+        }
+
+        if (engine.m_slope_detection_enabled) {
+            // Filter Window
+            int window = engine.m_slope_sg_window;
+            if (ImGui::SliderInt("  Filter Window", &window, 5, 41)) {
+                if (window % 2 == 0) window++;  // Force odd
+                engine.m_slope_sg_window = window;
+                selected_preset = -1;
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip(
+                    "Savitzky-Golay filter window size (samples).\n\n"
+                    "Larger = Smoother but higher latency\n"
+                    "Smaller = Faster response but noisier\n\n"
+                    "Recommended:\n"
+                    "  Direct Drive: 11-15\n"
+                    "  Belt Drive: 15-21\n"
+                    "  Gear Drive: 21-31\n\n"
+                    "Must be ODD (enforced automatically).");
+            }
+            if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
+            
+            ImGui::SameLine();
+            float latency_ms = (float)(engine.m_slope_sg_window / 2) * 2.5f;
+            ImVec4 color = (latency_ms < 25.0f) ? ImVec4(0,1,0,1) : ImVec4(1,0.5f,0,1);
+            ImGui::TextColored(color, "~%.0f ms latency", latency_ms);
+            ImGui::NextColumn(); ImGui::NextColumn();
+            
+            FloatSetting("  Sensitivity", &engine.m_slope_sensitivity, 0.1f, 5.0f, "%.1fx",
+                "Multiplier for slope-to-grip conversion.\n"
+                "Higher = More aggressive grip loss detection.\n"
+                "Lower = Smoother, less pronounced effect.");
+            
+            // Advanced (Collapsed by Default)
+            if (ImGui::TreeNode("Advanced Slope Settings")) {
+                ImGui::NextColumn(); ImGui::NextColumn();
+                FloatSetting("  Slope Threshold", &engine.m_slope_negative_threshold, -1.0f, 0.0f, "%.2f",
+                    "Slope value below which grip loss begins.\n"
+                    "More negative = Later detection (safer).");
+                FloatSetting("  Output Smoothing", &engine.m_slope_smoothing_tau, 0.005f, 0.100f, "%.3f s",
+                    "Time constant for grip factor smoothing.\n"
+                    "Prevents abrupt FFB changes.");
+                ImGui::TreePop();
+            } else {
+                ImGui::NextColumn(); ImGui::NextColumn();
+            }
+            
+            // Live Diagnostics
+            ImGui::Text("  Live Slope: %.3f | Grip: %.0f%%", 
+                engine.m_slope_current, 
+                engine.m_slope_smoothed_output * 100.0f);
+            ImGui::NextColumn(); ImGui::NextColumn();
+        }
         // ---------------------------------
 
         
@@ -1465,6 +1563,7 @@ static RollingBuffer plot_calc_rear_grip;
 static RollingBuffer plot_calc_slip_ratio;
 static RollingBuffer plot_calc_slip_angle_smoothed; 
 static RollingBuffer plot_calc_rear_slip_angle_smoothed; 
+static RollingBuffer plot_slope_current;  // New v0.7.1: Slope detection diagnostic
 // Moved here from Header C
 static RollingBuffer plot_calc_rear_lat_force; 
 
@@ -1547,6 +1646,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         plot_calc_slip_angle_smoothed.Add(snap.calc_front_slip_angle_smoothed);
         plot_calc_rear_slip_angle_smoothed.Add(snap.calc_rear_slip_angle_smoothed);
         plot_calc_rear_lat_force.Add(snap.calc_rear_lat_force);
+        plot_slope_current.Add(snap.slope_current); // v0.7.1
 
         // --- Header C: Raw Telemetry ---
         plot_raw_steer.Add(snap.steer_force);
@@ -1701,6 +1801,14 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         
         PlotWithStats("Rear Slip Angle (Sm)", plot_calc_rear_slip_angle_smoothed, 0.0f, 1.0f, ImVec2(0, 40),
                       "Smoothed Rear Slip Angle (LPF)");
+        
+        if (engine.m_slope_detection_enabled) {
+            PlotWithStats("Slope (dG/dAlpha)", plot_slope_current, -5.0f, 5.0f, ImVec2(0, 40),
+                "Slope detection derivative value.\n"
+                "Positive = building grip.\n"
+                "Near zero = at peak grip.\n"
+                "Negative = past peak, sliding.");
+        }
         
         ImGui::NextColumn();
         

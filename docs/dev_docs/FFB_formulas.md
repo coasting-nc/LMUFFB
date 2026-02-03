@@ -32,6 +32,7 @@ $$
 To ensure consistent feel across different wheels (e.g. G29 vs Simucube), effect intensities are automatically scaled based on the user's `Max Torque Ref`.
 *   **Reference Torque**: 20.0 Nm. (Updated from legacy 4000 unitless reference).
 *   **Decoupling Scale**: `K_decouple = m_max_torque_ref / 20.0`.
+    *   **Minimum Clamp**: 0.1. If the calculated scale would be less than 0.1, it is clamped to prevent effect collapse.
 *   *Note: This ensures that 10% road texture feels the same physical intensity regardless of wheel strength.*
 
 ---
@@ -188,7 +189,8 @@ If `mSuspForce` is missing (encrypted content), tire load is estimated from chas
 *   **Input Derivation**:
     *   $\text{SteerAngle} = \text{UnfilteredInput} \times (\text{RangeInRadians} / 2.0)$
     *   $\text{SteerVel} = (\text{Angle}_{\text{current}} - \text{Angle}_{\text{prev}}) / dt$
-*   **Formula**: $-\text{SteerVel}_{\text{smooth}} \times K_{\text{gyro}} \times (\text{Speed} / 10.0) \times 1.0\text{Nm} \times K_{\text{decouple}}$.
+*   **Formula**: $-\text{SteerVel}_{\text{smooth}} \times K_{\text{gyro}} \times (\text{Speed} / 10.0) \times K_{\text{decouple}}$.
+    *   *Note*: The `BASE_NM_GYRO_DAMPING` constant (1.0 Nm) exists but is implicit in the formula (multiplication by 1.0).
 *   **Smoothing**: Time-Corrected LPF ($\tau = K_{\text{smooth}} \times 0.1$).
 
 **3. Time-Corrected LPF (Algorithm)**
@@ -227,9 +229,16 @@ Applied at the very end of the pipeline to `F_norm` (before clipping).
 
 | Constant Name | Value | Description |
 | :--- | :--- | :--- |
-| `BASE_NM_LOCKUP` | 4.0 Nm | Reference intensity for lockup vibration |
-| `BASE_NM_SPIN` | 2.5 Nm | Reference intensity for wheel spin |
-| `BASE_NM_ROAD` | 2.5 Nm | Reference intensity for road bumps |
+| `BASE_NM_SOP_LATERAL` | 1.0 Nm | Reference intensity for Lateral G (SoP) effect |
+| `BASE_NM_REAR_ALIGN` | 3.0 Nm | Reference intensity for Rear Aligning Torque |
+| `BASE_NM_YAW_KICK` | 5.0 Nm | Reference intensity for Yaw Kick impulse |
+| `BASE_NM_GYRO_DAMPING` | 1.0 Nm | Reference intensity for Gyroscopic Damping (implicit) |
+| `BASE_NM_LOCKUP_VIBRATION` | 4.0 Nm | Reference intensity for lockup vibration |
+| `BASE_NM_SPIN_VIBRATION` | 2.5 Nm | Reference intensity for wheel spin |
+| `BASE_NM_ROAD_TEXTURE` | 2.5 Nm | Reference intensity for road bumps |
+| `BASE_NM_SLIDE_TEXTURE` | 1.5 Nm | Reference intensity for slide/scrub texture |
+| `BASE_NM_SCRUB_DRAG` | 5.0 Nm | Reference intensity for lateral scrub drag |
+| `BASE_NM_BOTTOMING` | 1.0 Nm | Reference intensity for suspension bottoming |
 | `REAR_STIFFNESS` | 15.0 | N/(rad·N) - Estimated rear tire cornering stiffness |
 | `WEIGHT_TRANSFER_SCALE` | 2000.0 | N/G - Kinematic load transfer scaler |
 | `UNSPRUNG_MASS` | 300.0 N | Per-corner static unsprung weight estimate |

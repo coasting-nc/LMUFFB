@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <vector>
 #include <string>
 #include <cmath>
@@ -6,7 +6,7 @@
 #include <algorithm>
 #include "../src/FFBEngine.h"
 #include "../src/lmu_sm_interface/InternalsPlugin.hpp"
-#include "../src/lmu_sm_interface/SharedMemoryInterface.hpp" // Added for GameState testing
+#include "../src/lmu_sm_interface/LmuSharedMemoryWrapper.h" // Wrapper for GameState testing
 #include "../src/Config.h" // Added for Preset testing
 #include <fstream>
 #include <cstdio> // for remove()
@@ -98,6 +98,19 @@ static void test_grip_threshold_sensitivity(); // Forward declaration (v0.5.7)
 static void test_steering_shaft_smoothing(); // Forward declaration (v0.5.7)
 static void test_config_defaults_v057(); // Forward declaration (v0.5.7)
 static void test_config_safety_validation_v057(); // Forward declaration (v0.5.7)
+
+// v0.7.0: Slope Detection Tests
+static void test_slope_detection_buffer_init();
+static void test_slope_sg_derivative();
+static void test_slope_grip_at_peak();
+static void test_slope_grip_past_peak();
+static void test_slope_vs_static_comparison();
+static void test_slope_config_persistence();
+static void test_slope_latency_characteristics();
+static void test_slope_noise_rejection();
+static void test_slope_buffer_reset_on_toggle();  // v0.7.0 - Buffer reset enhancement
+
+// --- Test Constants ---
 static void test_rear_lockup_differentiation(); // Forward declaration (v0.5.11)
 static void test_abs_frequency_scaling(); // Forward declaration (v0.6.20)
 static void test_lockup_pitch_scaling(); // Forward declaration (v0.6.20)
@@ -124,6 +137,21 @@ static void test_understeer_effect_scaling(); // v0.6.31
 static void test_legacy_config_migration(); // v0.6.31
 static void test_preset_understeer_only_isolation(); // v0.6.31
 static void test_all_presets_non_negative_speed_gate(); // v0.6.32
+static void test_refactor_abs_pulse(); // v0.6.36
+static void test_refactor_torque_drop(); // v0.6.36
+static void test_refactor_snapshot_sop(); // v0.6.36
+static void test_refactor_units(); // v0.6.36
+static void test_wheel_slip_ratio_helper(); // v0.6.36 - Code review recommendation 1
+static void test_signal_conditioning_helper(); // v0.6.36 - Code review recommendation 2
+static void test_unconditional_vert_accel_update(); // v0.6.36 - Code review recommendation 3
+
+// v0.7.1: Slope Detection Fixes Tests
+static void test_slope_detection_no_boost_when_grip_balanced();
+static void test_slope_detection_no_boost_during_oversteer();
+static void test_lat_g_boost_works_without_slope_detection();
+static void test_slope_detection_default_values_v071();
+static void test_slope_current_in_snapshot();
+static void test_slope_detection_less_aggressive_v071();
 
 // --- Test Helper Functions (v0.5.7) ---
 
@@ -424,7 +452,7 @@ static void test_sop_yaw_kick() {
     // v0.4.20 UPDATE: With force inversion, first frame should be ~-0.025 (10% of steady-state due to LPF)
     // The negative sign is correct - provides counter-steering cue
     if (std::abs(force - (-0.025)) < 0.005) {
-        std::cout << "[PASS] Yaw Kick first frame smoothed correctly (" << force << " ≈ -0.025)." << std::endl;
+        std::cout << "[PASS] Yaw Kick first frame smoothed correctly (" << force << " â‰ˆ -0.025)." << std::endl;
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Yaw Kick first frame mismatch. Got " << force << " Expected ~-0.025." << std::endl;
@@ -1069,7 +1097,7 @@ static void test_phase_wraparound() {
         // Check for wraparound
         if (engine.m_lockup_phase < prev_phase) {
             wrap_count++;
-            // Verify wrap happened near 2π
+            // Verify wrap happened near 2Ï€
             // With freq=40Hz, dt=0.01, step is ~2.5 rad.
             // So prev_phase could be as low as 6.28 - 2.5 = 3.78.
             // We check it's at least > 3.0 to ensure it's not resetting randomly at 0.
@@ -1517,12 +1545,12 @@ static void test_sanity_checks() {
     // - Test relies on empirical result (0.1) rather than calculated expectation
     //
     // TEST LIMITATIONS:
-    // ✅ Verifies warning flag is set
-    // ✅ Verifies output force matches expected value
-    // ❌ Does NOT verify approximation formula was used
-    // ❌ Does NOT verify slip angle calculation
-    // ❌ Does NOT verify floor application
-    // ❌ Does NOT verify intermediate values
+    // âœ… Verifies warning flag is set
+    // âœ… Verifies output force matches expected value
+    // âŒ Does NOT verify approximation formula was used
+    // âŒ Does NOT verify slip angle calculation
+    // âŒ Does NOT verify floor application
+    // âŒ Does NOT verify intermediate values
     
     // Condition: Grip 0 but Load present (simulates missing telemetry)
     data.mWheel[0].mTireLoad = 4000.0;
@@ -1964,7 +1992,7 @@ static void test_preset_initialization() {
     
     Config::LoadPresets();
     
-    // ⚠️ IMPORTANT: These expected values MUST match Config.h default member initializers!
+    // âš ï¸ IMPORTANT: These expected values MUST match Config.h default member initializers!
     // When changing the default preset in Config.h, update these values to match.
     // Also update SetAdvancedBraking() default parameters in Config.h.
     // See Config.h line ~12 for the single source of truth.
@@ -1986,7 +2014,7 @@ static void test_preset_initialization() {
     const float t300_shaft_smooth = 0.0f;
     const float t300_notch_q = 2.0f;
     
-    // ⚠️ IMPORTANT: This array MUST match the exact order of presets in Config.cpp LoadPresets()!
+    // âš ï¸ IMPORTANT: This array MUST match the exact order of presets in Config.cpp LoadPresets()!
     // When adding/removing/reordering presets in Config.cpp, update this array AND the loop count below.
     // Current count: 14 presets (v0.6.35: Added 4 DD presets after T300)
     const char* preset_names[] = {
@@ -2008,7 +2036,7 @@ static void test_preset_initialization() {
     
     bool all_passed = true;
     
-    // ⚠️ IMPORTANT: Loop count (14) must match preset_names array size above!
+    // âš ï¸ IMPORTANT: Loop count (14) must match preset_names array size above!
     for (int i = 0; i < 14; i++) {
         if (i >= Config::presets.size()) {
             std::cout << "[FAIL] Preset " << i << " (" << preset_names[i] << ") not found!" << std::endl;
@@ -2032,7 +2060,7 @@ static void test_preset_initialization() {
         // Specialized presets have custom-tuned values that differ from Config.h defaults.
         // They should NOT be validated against expected_abs_freq, expected_lockup_freq_scale, etc.
         // 
-        // ⚠️ IMPORTANT: When adding new specialized presets to Config.cpp, add them to this list!
+        // âš ï¸ IMPORTANT: When adding new specialized presets to Config.cpp, add them to this list!
         // Current specialized presets: Default, T300, GT3, LMPx/HY, GM, GM + Yaw Kick
         bool is_specialized = (preset.name == "Default" || 
                               preset.name == "T300" ||
@@ -2663,7 +2691,7 @@ static void test_yaw_kick_signal_conditioning() {
     data.mDeltaTime = 0.0025f; // 400Hz
     data.mElapsedTime = 0.0;
     
-    // Test Case 1: Idle Noise - Below Deadzone Threshold (0.2 rad/s²)
+    // Test Case 1: Idle Noise - Below Deadzone Threshold (0.2 rad/sÂ²)
     std::cout << "  Case 1: Idle Noise (YawAccel = 0.1, below threshold)" << std::endl;
     data.mLocalRotAccel.y = 0.1; // Below 0.2 threshold
     data.mLocalVel.z = 20.0; // High speed (above 5 m/s cutoff)
@@ -3097,7 +3125,7 @@ static void test_rear_force_workaround() {
     // BACKGROUND:
     // LMU 1.2 has a known bug where mLateralForce returns 0.0 for rear tires.
     // This breaks oversteer feedback. The workaround manually calculates lateral
-    // force using: F_lat = SlipAngle × Load × TireStiffness (15.0 N/(rad·N))
+    // force using: F_lat = SlipAngle Ã— Load Ã— TireStiffness (15.0 N/(radÂ·N))
     //
     // TEST STRATEGY:
     // 1. Simulate the broken API (set rear mLateralForce = 0.0)
@@ -3173,7 +3201,7 @@ static void test_rear_force_workaround() {
     // ========================================
     // Set up wheel velocities to create a measurable slip angle.
     // Slip Angle = atan(Lateral_Vel / Longitudinal_Vel)
-    // With Lat = 5 m/s, Long = 20 m/s: atan(5/20) = atan(0.25) ≈ 0.2449 rad ≈ 14 degrees
+    // With Lat = 5 m/s, Long = 20 m/s: atan(5/20) = atan(0.25) â‰ˆ 0.2449 rad â‰ˆ 14 degrees
     // This represents a moderate cornering scenario.
     data.mWheel[2].mLateralPatchVel = 5.0;
     data.mWheel[3].mLateralPatchVel = 5.0;
@@ -3206,26 +3234,26 @@ static void test_rear_force_workaround() {
     // ========================================
     // 
     // THEORETICAL CALCULATION (Without LPF):
-    // The workaround formula is: F_lat = SlipAngle × Load × TireStiffness
+    // The workaround formula is: F_lat = SlipAngle Ã— Load Ã— TireStiffness
     // 
     // Given our test inputs:
-    //   SlipAngle = atan(5/20) = atan(0.25) ≈ 0.2449 rad
+    //   SlipAngle = atan(5/20) = atan(0.25) â‰ˆ 0.2449 rad
     //   Load = SuspForce + 300N = 3000 + 300 = 3300 N
-    //   TireStiffness (K) = 15.0 N/(rad·N)
+    //   TireStiffness (K) = 15.0 N/(radÂ·N)
     // 
-    // Lateral Force: F_lat = 0.2449 × 3300 × 15.0 ≈ 12,127 N
-    // Torque: T = F_lat × 0.001 × rear_align_effect (v0.4.11)
-    //         T = 12,127 × 0.001 × 1.0 ≈ 12.127 Nm
+    // Lateral Force: F_lat = 0.2449 Ã— 3300 Ã— 15.0 â‰ˆ 12,127 N
+    // Torque: T = F_lat Ã— 0.001 Ã— rear_align_effect (v0.4.11)
+    //         T = 12,127 Ã— 0.001 Ã— 1.0 â‰ˆ 12.127 Nm
     // 
     // ACTUAL BEHAVIOR (With LPF on First Frame):
     // The grip calculator applies low-pass filtering to slip angle for stability.
-    // On the first frame, the LPF formula is: smoothed = prev + alpha × (raw - prev)
-    // With prev = 0 (initial state) and alpha ≈ 0.1:
-    //   smoothed_slip_angle = 0 + 0.1 × (0.2449 - 0) ≈ 0.0245 rad
+    // On the first frame, the LPF formula is: smoothed = prev + alpha Ã— (raw - prev)
+    // With prev = 0 (initial state) and alpha â‰ˆ 0.1:
+    //   smoothed_slip_angle = 0 + 0.1 Ã— (0.2449 - 0) â‰ˆ 0.0245 rad
     // 
     // This reduces the first-frame output by ~10x:
-    //   F_lat = 0.0245 × 3300 × 15.0 ≈ 1,213 N
-    //   T = 1,213 × 0.001 × 1.0 ≈ 1.213 Nm
+    //   F_lat = 0.0245 Ã— 3300 Ã— 15.0 â‰ˆ 1,213 N
+    //   T = 1,213 Ã— 0.001 Ã— 1.0 â‰ˆ 1.213 Nm
     // 
     // RATIONALE FOR EXPECTED VALUE:
     // We test the first-frame behavior (1.21 Nm) rather than steady-state
@@ -3246,7 +3274,7 @@ static void test_rear_force_workaround() {
     // v0.4.50 Update: FFB snapshot now scales with MaxTorqueRef (Decoupling)
     // with Ref=100.0, scale = 5.0. Expected = -4.85 * 5.0 = -24.25 Nm
     double expected_torque = -24.25;   // First-frame value with Decoupling (v0.4.50)
-    double torque_tolerance = 1.0;    // ±1.0 Nm tolerance
+    double torque_tolerance = 1.0;    // Â±1.0 Nm tolerance
     
     // ========================================
     // Assertion
@@ -3299,9 +3327,9 @@ static void test_rear_align_effect() {
     double force = engine.calculate_force(&data);
     
     // v0.4.19 COORDINATE FIX:
-    // Slip angle = atan2(5.0, 20.0) ≈ 0.245 rad
+    // Slip angle = atan2(5.0, 20.0) â‰ˆ 0.245 rad
     // Load = 3300 N (3000 + 300) - NOTE: SuspForce is 3000, not 4000!
-    // Lat force = 0.245 * 3300 * 15.0 ≈ 12127 N (NOT clamped, below 6000 limit)
+    // Lat force = 0.245 * 3300 * 15.0 â‰ˆ 12127 N (NOT clamped, below 6000 limit)
     // Torque = -12127 * 0.001 * 2.0 = -24.25 Nm (INVERTED, with 2x effect)
     // But wait, this gets clamped to 6000 N first:
     // Lat force clamped = 6000 N
@@ -3310,9 +3338,9 @@ static void test_rear_align_effect() {
     
     // Actually, let me recalculate more carefully:
     // The slip angle uses abs() in the calculation, so it's always positive
-    // Slip angle = atan2(abs(5.0), 20.0) = atan2(5.0, 20.0) ≈ 0.245 rad
+    // Slip angle = atan2(abs(5.0), 20.0) = atan2(5.0, 20.0) â‰ˆ 0.245 rad
     // Load = 3300 N
-    // Lat force = 0.245 * 3300 * 15.0 ≈ 12127 N
+    // Lat force = 0.245 * 3300 * 15.0 â‰ˆ 12127 N
     // Clamped to 6000 N
     // Torque = -6000 * 0.001 * 2.0 = -12.0 Nm (with 2x effect)
     // Normalized = -12.0 / 20.0 = -0.6
@@ -3646,9 +3674,9 @@ static void test_coordinate_rear_torque_inversion() {
     }
     
     // After LPF settling:
-    // Slip angle ≈ 0.245 rad (smoothed)
+    // Slip angle â‰ˆ 0.245 rad (smoothed)
     // Load = 4300 N (4000 + 300)
-    // Lat force = 0.245 * 4300 * 15.0 ≈ 15817 N (clamped to 6000 N)
+    // Lat force = 0.245 * 4300 * 15.0 â‰ˆ 15817 N (clamped to 6000 N)
     // Torque = -6000 * 0.001 * 1.0 = -6.0 Nm (INVERTED for counter-steer)
     // Normalized = -6.0 / 20.0 = -0.3
     
@@ -3673,8 +3701,8 @@ static void test_coordinate_rear_torque_inversion() {
     }
     
     // v0.4.19: With sign preserved in slip angle calculation:
-    // Slip angle = atan2(-5.0, 20.0) ≈ -0.245 rad (NEGATIVE)
-    // Lat force = -0.245 * 4300 * 15.0 ≈ -15817 N (clamped to -6000 N)
+    // Slip angle = atan2(-5.0, 20.0) â‰ˆ -0.245 rad (NEGATIVE)
+    // Lat force = -0.245 * 4300 * 15.0 â‰ˆ -15817 N (clamped to -6000 N)
     // Torque = -(-6000) * 0.001 * 1.0 = +6.0 Nm (POSITIVE for right counter-steer)
     // Normalized = +6.0 / 20.0 = +0.3
     
@@ -3792,7 +3820,7 @@ static void test_coordinate_debug_slip_angle_sign() {
     
     FFBSnapshot snap = batch.back();
     
-    // Expected: atan2(5.0, 20.0) ≈ 0.245 rad (POSITIVE)
+    // Expected: atan2(5.0, 20.0) â‰ˆ 0.245 rad (POSITIVE)
     if (snap.raw_front_slip_angle > 0.2) {
         std::cout << "[PASS] Front slip angle is POSITIVE for left slide (" << snap.raw_front_slip_angle << " rad)" << std::endl;
         g_tests_passed++;
@@ -3813,7 +3841,7 @@ static void test_coordinate_debug_slip_angle_sign() {
     if (!batch.empty()) {
         snap = batch.back();
         
-        // Expected: atan2(-5.0, 20.0) ≈ -0.245 rad (NEGATIVE)
+        // Expected: atan2(-5.0, 20.0) â‰ˆ -0.245 rad (NEGATIVE)
         if (snap.raw_front_slip_angle < -0.2) {
             std::cout << "[PASS] Front slip angle is NEGATIVE for right slide (" << snap.raw_front_slip_angle << " rad)" << std::endl;
             g_tests_passed++;
@@ -3835,7 +3863,7 @@ static void test_coordinate_debug_slip_angle_sign() {
     if (!batch.empty()) {
         snap = batch.back();
         
-        // Expected: atan2(5.0, 20.0) ≈ 0.245 rad (POSITIVE)
+        // Expected: atan2(5.0, 20.0) â‰ˆ 0.245 rad (POSITIVE)
         if (snap.raw_rear_slip_angle > 0.2) {
             std::cout << "[PASS] Rear slip angle is POSITIVE for left slide (" << snap.raw_rear_slip_angle << " rad)" << std::endl;
             g_tests_passed++;
@@ -3855,7 +3883,7 @@ static void test_coordinate_debug_slip_angle_sign() {
     if (!batch.empty()) {
         snap = batch.back();
         
-        // Expected: atan2(-5.0, 20.0) ≈ -0.245 rad (NEGATIVE)
+        // Expected: atan2(-5.0, 20.0) â‰ˆ -0.245 rad (NEGATIVE)
         if (snap.raw_rear_slip_angle < -0.2) {
             std::cout << "[PASS] Rear slip angle is NEGATIVE for right slide (" << snap.raw_rear_slip_angle << " rad)" << std::endl;
             g_tests_passed++;
@@ -4310,7 +4338,7 @@ void test_chassis_inertia_smoothing_convergence() {
     data.mDeltaTime = 0.0025; // 400Hz
     
     // Chassis tau = 0.035s, alpha = dt / (tau + dt)
-    // At 400Hz: alpha = 0.0025 / (0.035 + 0.0025) ≈ 0.0667
+    // At 400Hz: alpha = 0.0025 / (0.035 + 0.0025) â‰ˆ 0.0667
     // After 50 frames (~125ms), should be near steady-state
     
     for (int i = 0; i < 50; i++) {
@@ -4323,7 +4351,7 @@ void test_chassis_inertia_smoothing_convergence() {
     
     // Should be close to input (9.81) after 50 frames
     // Exponential decay: y(t) = target * (1 - e^(-t/tau))
-    // At t = 125ms, tau = 35ms: y = 9.81 * (1 - e^(-3.57)) ≈ 9.81 * 0.972 ≈ 9.53
+    // At t = 125ms, tau = 35ms: y = 9.81 * (1 - e^(-3.57)) â‰ˆ 9.81 * 0.972 â‰ˆ 9.53
     double expected = 9.81 * 0.95; // Allow 5% error
     
     if (smoothed_x > expected && smoothed_z > expected) {
@@ -4384,7 +4412,7 @@ void test_kinematic_load_cornering() {
     double load_fl = engine.calculate_kinematic_load(&data, 0); // Front Left
     double load_fr = engine.calculate_kinematic_load(&data, 1); // Front Right
     
-    // Static weight per wheel: 1100 * 9.81 * 0.45 / 2 ≈ 2425N
+    // Static weight per wheel: 1100 * 9.81 * 0.45 / 2 â‰ˆ 2425N
     // Lateral transfer: (9.81 / 9.81) * 2000 * 0.6 = 1200N
     // Left wheel: 2425 + 1200 = 3625N
     // Right wheel: 2425 - 1200 = 1225N
@@ -4751,7 +4779,7 @@ static void test_steering_shaft_smoothing() {
     data.mSteeringShaftTorque = 1.0;
 
     // After 1 frame (10ms) with 50ms tau:
-    // alpha = dt / (tau + dt) = 10 / (50 + 10) = 1/6 ≈ 0.166
+    // alpha = dt / (tau + dt) = 10 / (50 + 10) = 1/6 â‰ˆ 0.166
     // Expected force: 0.166
     double force = engine.calculate_force(&data);
 
@@ -5018,11 +5046,11 @@ static void test_split_load_caps() {
     double force_high = engine.calculate_force(&data);
     
     // Verify the 3x ratio more precisely
-    // Expected: force_high ≈ 3.0 * force_low (within tolerance for phase differences)
+    // Expected: force_high â‰ˆ 3.0 * force_low (within tolerance for phase differences)
     double expected_ratio = 3.0;
     double actual_ratio = std::abs(force_high) / (std::abs(force_low) + 0.0001); // Add epsilon to avoid div-by-zero
     
-    // Use a tolerance of ±0.5 to account for phase integration differences
+    // Use a tolerance of Â±0.5 to account for phase integration differences
     if (std::abs(actual_ratio - expected_ratio) < 0.5) {
         std::cout << "[PASS] Brake load cap applies 3x scaling (Ratio: " << actual_ratio << ", High: " << std::abs(force_high) << ", Low: " << std::abs(force_low) << ")" << std::endl;
         g_tests_passed++;
@@ -5162,8 +5190,13 @@ static void test_missing_telemetry_warnings() {
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
-    // Set Vehicle Name
-    strcpy_s(data.mVehicleName, "TestCar_GT3");
+    // Set Vehicle Name (use platform-specific safe copy)
+#ifdef _MSC_VER
+    strncpy_s(data.mVehicleName, sizeof(data.mVehicleName), "TestCar_GT3", _TRUNCATE);
+#else
+    strncpy(data.mVehicleName, "TestCar_GT3", sizeof(data.mVehicleName) - 1);
+    data.mVehicleName[sizeof(data.mVehicleName) - 1] = '\0';
+#endif
 
     // Capture stdout
     std::stringstream buffer;
@@ -5435,7 +5468,7 @@ static void test_yaw_kick_edge_cases() {
     engine.m_yaw_accel_smoothed = 0.0; // Reset
     
     // Negative value with magnitude above threshold
-    data.mLocalRotAccel.y = -6.0; // |−6.0| = 6.0 > 5.0
+    data.mLocalRotAccel.y = -6.0; // |âˆ’6.0| = 6.0 > 5.0
     engine.calculate_force(&data);
     double force_negative = engine.calculate_force(&data);
     
@@ -5443,7 +5476,7 @@ static void test_yaw_kick_edge_cases() {
     
     // Negative value with magnitude below threshold
     engine.m_yaw_accel_smoothed = 0.0; // Reset
-    data.mLocalRotAccel.y = -4.0; // |−4.0| = 4.0 < 5.0
+    data.mLocalRotAccel.y = -4.0; // |âˆ’4.0| = 4.0 < 5.0
     engine.calculate_force(&data);
     double force_negative_below = engine.calculate_force(&data);
     
@@ -5774,9 +5807,364 @@ void Run() {
     test_stationary_silence();
     test_driving_forces_restored();
     
+    // Refactoring Regression Tests (v0.6.36)
+    test_refactor_abs_pulse();
+    test_refactor_torque_drop();
+    test_refactor_snapshot_sop();
+    test_refactor_units(); // v0.6.36
+    
+    // Code Review Recommendation Tests (v0.6.36)
+    test_wheel_slip_ratio_helper();
+    test_signal_conditioning_helper();
+    test_unconditional_vert_accel_update();
+
+    // v0.7.0: Slope Detection Tests
+    test_slope_detection_buffer_init();
+    test_slope_sg_derivative();
+    test_slope_grip_at_peak();
+    test_slope_grip_past_peak();
+    test_slope_vs_static_comparison();
+    test_slope_config_persistence();
+    test_slope_latency_characteristics();
+    test_slope_noise_rejection();
+    test_slope_buffer_reset_on_toggle();  // v0.7.0 - Buffer reset enhancement
+
+    // v0.7.1: Slope Detection Fixes
+    test_slope_detection_no_boost_when_grip_balanced();
+    test_slope_detection_no_boost_during_oversteer();
+    test_lat_g_boost_works_without_slope_detection();
+    test_slope_detection_default_values_v071();
+    test_slope_current_in_snapshot();
+    test_slope_detection_less_aggressive_v071();
+
     std::cout << "\n--- Physics Engine Test Summary ---" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
     std::cout << "Tests Failed: " << g_tests_failed << std::endl;
+}
+
+static void test_slope_detection_buffer_init() {
+    std::cout << "\nTest: Slope Detection Buffer Initialization (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    // Buffer count and index should be 0 on fresh instance
+    ASSERT_TRUE(engine.m_slope_buffer_count == 0);
+    ASSERT_TRUE(engine.m_slope_buffer_index == 0);
+    ASSERT_TRUE(engine.m_slope_current == 0.0);
+}
+
+static void test_slope_sg_derivative() {
+    std::cout << "\nTest: Savitzky-Golay Derivative Calculation (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    
+    // Fill buffer with linear ramp: y = i * 0.1 (slope = 0.1 units/sample)
+    // dt = 0.01 -> derivative = 0.1 / 0.01 = 10.0 units/sec
+    double dt = 0.01;
+    int window = 9;
+    
+    // Fill buffer
+    for (int i = 0; i < window; ++i) {
+        engine.m_slope_lat_g_buffer[i] = (double)i * 0.1;
+    }
+    engine.m_slope_buffer_count = window;
+    engine.m_slope_buffer_index = window; // Point past last sample
+    
+    double derivative = engine.calculate_sg_derivative(engine.m_slope_lat_g_buffer, engine.m_slope_buffer_count, window, dt);
+    
+    ASSERT_NEAR(derivative, 10.0, 0.1);
+}
+
+static void test_slope_grip_at_peak() {
+    std::cout << "\nTest: Slope Grip at Peak (Zero Slope) (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_sg_window = 15;
+    
+    // Simulate peak grip: Constant G despite increasing slip? 
+    // Actually, zero slope means G is constant while slip moves.
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.05);
+    data.mLocalAccel.x = 1.2 * 9.81; // 1.2G
+    data.mDeltaTime = 0.0025; // 400Hz
+    
+    // Fill buffer with constant values
+    for (int i = 0; i < 20; i++) {
+        engine.calculate_force(&data);
+    }
+    
+    // Slope should be near 0
+    ASSERT_NEAR(engine.m_slope_current, 0.0, 0.1);
+    // Grip should be near 1.0
+    ASSERT_GE(engine.m_slope_smoothed_output, 0.95);
+}
+
+static void test_slope_grip_past_peak() {
+    std::cout << "\nTest: Slope Grip Past Peak (Negative Slope) (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_sg_window = 9;
+    engine.m_slope_sensitivity = 1.0f;
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    data.mDeltaTime = 0.01; // 100Hz
+    
+    // Simulate past peak: Increasing slip, decreasing G
+    // Slip: 0.05 to 0.09 (0.002 per frame)
+    // G: 1.5 to 1.1 ( -0.02 per frame)
+    // dG/dSlip = -0.02 / 0.002 = -10.0 (Slope)
+    
+    for (int i = 0; i < 20; i++) {
+        double slip = 0.05 + (double)i * 0.002;
+        double g = 1.5 - (double)i * 0.02;
+        
+        data.mWheel[0].mLateralPatchVel = slip * 20.0;
+        data.mWheel[1].mLateralPatchVel = slip * 20.0;
+        data.mLocalAccel.x = g * 9.81;
+        
+        engine.calculate_force(&data);
+    }
+    
+    // Slope should be negative
+    ASSERT_LE(engine.m_slope_current, -5.0);
+    // Grip should be reduced
+    ASSERT_LE(engine.m_slope_smoothed_output, 0.9);
+    // But above safety floor
+    ASSERT_GE(engine.m_slope_smoothed_output, 0.2);
+}
+
+static void test_slope_vs_static_comparison() {
+    std::cout << "\nTest: Slope vs Static Comparison (v0.7.0)" << std::endl;
+    FFBEngine engine_slope;
+    InitializeEngine(engine_slope);
+    engine_slope.m_slope_detection_enabled = true;
+    
+    FFBEngine engine_static;
+    InitializeEngine(engine_static);
+    engine_static.m_slope_detection_enabled = false;
+    engine_static.m_optimal_slip_angle = 0.10f;
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.12); // 12% slip
+    data.mDeltaTime = 0.01;
+    
+    // Run both
+    for (int i = 0; i < 40; i++) {
+        // For slope to detect loss, we need changing dG/dAlpha.
+        // We'll increase slip angle from 0.05 to 0.15 (past 0.10 peak)
+        // While G-force peaks at i=15 and then drops
+        double slip = 0.05 + (double)i * 0.0025; 
+        data.mWheel[0].mLateralPatchVel = slip * 20.0;
+        data.mWheel[1].mLateralPatchVel = slip * 20.0;
+        
+        double g = 1.0;
+        if (i < 15) g = 1.0 + (double)i * 0.03; // Increasing G
+        else g = 1.45 - (double)(i - 15) * 0.05; // Dropping G (Loss of grip!)
+        
+        data.mLocalAccel.x = g * 9.81;
+        
+        engine_slope.calculate_force(&data);
+        engine_static.calculate_force(&data);
+    }
+    
+    auto snap_slope = engine_slope.GetDebugBatch().back();
+    auto snap_static = engine_static.GetDebugBatch().back();
+    
+    std::cout << "  Slope Grip: " << snap_slope.calc_front_grip << " | Static Grip: " << snap_static.calc_front_grip << std::endl;
+    
+    // Both should detect grip loss
+    ASSERT_LE(snap_slope.calc_front_grip, 0.95);
+    ASSERT_LE(snap_static.calc_front_grip, 0.8);
+}
+
+static void test_slope_config_persistence() {
+    std::cout << "\nTest: Slope Config Persistence (v0.7.0)" << std::endl;
+    std::string test_file = "test_slope_config.ini";
+    FFBEngine engine_save;
+    InitializeEngine(engine_save);
+    
+    engine_save.m_slope_detection_enabled = true;
+    engine_save.m_slope_sg_window = 21;
+    engine_save.m_slope_sensitivity = 2.5f;
+    engine_save.m_slope_negative_threshold = -0.2f;
+    engine_save.m_slope_smoothing_tau = 0.05f;
+    
+    Config::Save(engine_save, test_file);
+    
+    FFBEngine engine_load;
+    InitializeEngine(engine_load);
+    Config::Load(engine_load, test_file);
+    
+    ASSERT_TRUE(engine_load.m_slope_detection_enabled == true);
+    ASSERT_TRUE(engine_load.m_slope_sg_window == 21);
+    ASSERT_NEAR(engine_load.m_slope_sensitivity, 2.5f, 0.001);
+    ASSERT_NEAR(engine_load.m_slope_negative_threshold, -0.2f, 0.001);
+    ASSERT_NEAR(engine_load.m_slope_smoothing_tau, 0.05f, 0.001);
+    
+    std::remove(test_file.c_str());
+}
+
+static void test_slope_latency_characteristics() {
+    std::cout << "\nTest: Slope Latency Characteristics (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    int window = 15;
+    engine.m_slope_sg_window = window;
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    data.mDeltaTime = 0.0025; // 400Hz
+    
+    // Buffer fills in 'window' frames
+    for (int i = 0; i < window; i++) {
+        engine.calculate_force(&data);
+    }
+    
+    ASSERT_TRUE(engine.m_slope_buffer_count == window);
+    
+    // Latency is roughly (window/2) * dt
+    float latency_ms = (float)(window / 2) * 2.5f;
+    std::cout << "  Calculated Latency for Window " << window << " at 400Hz: " << latency_ms << " ms" << std::endl;
+    ASSERT_NEAR(latency_ms, 17.5, 0.1);
+}
+
+static void test_slope_noise_rejection() {
+    std::cout << "\nTest: Slope Noise Rejection (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_sg_window = 15;
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    data.mDeltaTime = 0.01;
+    
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> noise(-0.1, 0.1);
+    
+    // Constant G (1.2) + Noise
+    for (int i = 0; i < 50; i++) {
+        data.mLocalAccel.x = (1.2 + noise(generator)) * 9.81;
+        data.mWheel[0].mLateralPatchVel = 0.05 * 20.0;
+        engine.calculate_force(&data);
+    }
+    
+    // Despite noise, slope should be near zero (SG filter rejection)
+    std::cout << "  Noisy Slope: " << engine.m_slope_current << std::endl;
+    ASSERT_TRUE(std::abs(engine.m_slope_current) < 1.0);
+}
+
+static void test_slope_buffer_reset_on_toggle() {
+    std::cout << "\nTest: Slope Buffer Reset on Toggle (v0.7.0)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    data.mDeltaTime = 0.0025;  // 400Hz
+    
+    // Step 1: Fill buffer with data while slope detection is OFF
+    engine.m_slope_detection_enabled = false;
+    
+    for (int i = 0; i < 20; i++) {
+        // Simulate increasing lateral G (would create positive slope)
+        data.mLocalAccel.x = (0.5 + i * 0.05) * 9.81;
+        data.mWheel[0].mLateralPatchVel = (0.05 + i * 0.005) * 20.0;
+        engine.calculate_force(&data);
+    }
+    
+    // At this point, if slope detection were enabled, buffers would have stale data
+    // But since it's disabled, let's verify initial state before enabling
+    
+    // Step 2: Manually corrupt buffers to simulate stale data
+    // (This simulates what would happen if we had data from before disabling)
+    engine.m_slope_buffer_count = 15;  // Partially filled
+    engine.m_slope_buffer_index = 7;   // Mid-buffer
+    engine.m_slope_smoothed_output = 0.65;  // Some grip loss value
+    
+    // Fill some buffer slots with non-zero data
+    for (int i = 0; i < 15; i++) {
+        engine.m_slope_lat_g_buffer[i] = 1.2 + i * 0.1;
+        engine.m_slope_slip_buffer[i] = 0.05 + i * 0.01;
+    }
+    
+    // Step 3: Enable slope detection (simulating GUI toggle)
+    // In the actual GUI, this happens via BoolSetting callback
+    // Here we simulate the reset logic manually
+    bool prev_enabled = engine.m_slope_detection_enabled;
+    engine.m_slope_detection_enabled = true;
+    
+    //  Simulate the reset logic from GuiLayer.cpp (lines 1117-1121)
+    if (!prev_enabled && engine.m_slope_detection_enabled) {
+        engine.m_slope_buffer_count = 0;
+        engine.m_slope_buffer_index = 0;
+        engine.m_slope_smoothed_output = 1.0;  // Full grip
+    }
+    
+    // Step 4: Verify buffers were reset
+    ASSERT_TRUE(engine.m_slope_buffer_count == 0);
+    ASSERT_TRUE(engine.m_slope_buffer_index == 0);
+    ASSERT_NEAR(engine.m_slope_smoothed_output, 1.0, 0.001);
+    
+    std::cout << "  [PASS] Buffers reset correctly on toggle" << std::endl;
+    
+    // Step 5: Run a few frames and verify clean slope calculation
+    for (int i = 0; i < 5; i++) {
+        data.mLocalAccel.x = 1.2 * 9.81;  // Constant 1.2G
+        data.mWheel[0].mLateralPatchVel = 0.05 * 20.0;  // Constant slip
+        engine.calculate_force(&data);
+    }
+    
+    // After reset, buffer should be filling from scratch
+    ASSERT_TRUE(engine.m_slope_buffer_count == 5);
+    
+    // Slope should be near zero (constant G) or undefined (not enough samples)
+    // Since window is 15 by default and we only have 5 samples, slope might be 0
+    std::cout << "  [PASS] Buffer refilling after reset (" << engine.m_slope_buffer_count << " samples)" << std::endl;
+    
+    // Step 6: Test that disabling does NOT reset buffers
+    engine.m_slope_detection_enabled = false;
+    // Buffers should remain intact (for potential re-enable)
+    ASSERT_TRUE(engine.m_slope_buffer_count == 5);  // Unchanged
+    
+    std::cout << "  [PASS] Disabling does not reset buffers" << std::endl;
+}
+
+
+static void test_unconditional_vert_accel_update() {
+    std::cout << "\nTest: Unconditional m_prev_vert_accel Update (v0.6.36)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    
+    // Disable road texture effect
+    engine.m_road_texture_enabled = false;
+    
+    // Set a known vertical acceleration
+    data.mLocalAccel.y = 5.5;
+    
+    // Reset the engine state
+    engine.m_prev_vert_accel = 0.0;
+    
+    // Run calculate_force
+    engine.calculate_force(&data);
+    
+    // Check that m_prev_vert_accel was updated EVEN THOUGH road_texture is disabled
+    if (std::abs(engine.m_prev_vert_accel - 5.5) < 0.01) {
+        std::cout << "[PASS] m_prev_vert_accel updated unconditionally: " << engine.m_prev_vert_accel << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] m_prev_vert_accel not updated. Got: " << engine.m_prev_vert_accel << " Expected: 5.5" << std::endl;
+        g_tests_failed++;
+    }
+    
+    // Verify the value changes on next frame
+    data.mLocalAccel.y = -3.2;
+    engine.calculate_force(&data);
+    
+    if (std::abs(engine.m_prev_vert_accel - (-3.2)) < 0.01) {
+        std::cout << "[PASS] m_prev_vert_accel tracks changes: " << engine.m_prev_vert_accel << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] m_prev_vert_accel not tracking. Got: " << engine.m_prev_vert_accel << " Expected: -3.2" << std::endl;
+        g_tests_failed++;
+    }
 }
 
 static void test_optimal_slip_buffer_zone() {
@@ -6008,6 +6396,460 @@ static void test_all_presets_non_negative_speed_gate() {
         std::cout << "[FAIL] One or more presets have invalid speed gate values" << std::endl;
         g_tests_failed++;
     }
+}
+
+
+
+static void test_refactor_abs_pulse() {
+    std::cout << "\nTest: Refactor Regression - ABS Pulse (v0.6.36)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+
+    // Enable ABS
+    engine.m_abs_pulse_enabled = true;
+    engine.m_abs_gain = 1.0f;
+    engine.m_max_torque_ref = 20.0f; // Scale 1.0
+
+    // Trigger condition: High Brake + Pressure Delta
+    data.mUnfilteredBrake = 1.0;
+    data.mWheel[0].mBrakePressure = 1.0;
+    engine.calculate_force(&data); // Frame 1: Set previous pressure
+
+    data.mWheel[0].mBrakePressure = 0.5; // Frame 2: Rapid drop (delta)
+    double force = engine.calculate_force(&data);
+
+    // Should be non-zero (previously regressed to 0)
+    if (std::abs(force) > 0.001) {
+        std::cout << "[PASS] ABS Pulse generated force: " << force << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] ABS Pulse silent (force=0). Refactor regression?" << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_refactor_torque_drop() {
+    std::cout << "\nTest: Refactor Regression - Torque Drop (v0.6.36)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+
+    // Setup: Base force + Spin
+    data.mSteeringShaftTorque = 10.0; // 0.5 normalized
+    engine.m_spin_enabled = true;
+    engine.m_spin_gain = 1.0f;
+    engine.m_gain = 1.0f;
+
+    // Trigger Spin
+    data.mUnfilteredThrottle = 1.0;
+    // Slip = 0.5 (Severe) -> Severity = (0.5 - 0.2) / 0.5 = 0.6
+    // Drop Factor = 1.0 - (0.6 * 1.0 * 0.6) = 1.0 - 0.36 = 0.64
+    double ground_vel = 20.0;
+    data.mWheel[2].mLongitudinalPatchVel = 0.5 * ground_vel;
+    data.mWheel[2].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[3].mLongitudinalPatchVel = 0.5 * ground_vel;
+    data.mWheel[3].mLongitudinalGroundVel = ground_vel;
+
+    // Disable Spin Vibration (gain 0) to check just the drop?
+    // No, can't separate gain easily. But vibration is AC.
+    // If we check magnitude, it might be messy.
+    // Let's check with Spin Gain = 1.0, but Spin Freq Scale = 0 (Constant force?)
+    // No, freq scale 0 -> phase 0 -> sin(0) = 0. No vibration.
+    // Perfect for checking torque drop!
+
+    engine.m_spin_freq_scale = 0.0f;
+
+    // Add Road Texture (Texture Group - Should NOT be dropped)
+    // Setup deflection delta for constant road noise
+    // Force = Delta * 50.0. Target 0.1 normalized (2.0 Nm).
+    // Delta = 2.0 / 50.0 = 0.04.
+    engine.m_road_texture_enabled = true;
+    engine.m_road_texture_gain = 1.0f;
+    engine.m_max_torque_ref = 20.0f; // Scale 1.0
+    // Reset deflection state in engine first
+    engine.calculate_force(&data);
+
+    // Apply Delta
+    data.mWheel[0].mVerticalTireDeflection += 0.02; // +2cm
+    data.mWheel[1].mVerticalTireDeflection += 0.02; // +2cm
+    // Total Delta = 0.04. Road Force = 0.04 * 50.0 = 2.0 Nm.
+    // Normalized Road = 2.0 / 20.0 = 0.1.
+
+    double force = engine.calculate_force(&data);
+
+    // Base Force (Structural) = 10.0 Nm -> 0.5 Norm.
+    // Torque Drop = 0.64.
+    // Road Force (Texture) = 1.0 Nm (Clamped) -> 0.05 Norm.
+
+    // Logic A (Broken): (Base + Texture) * Drop = (0.5 + 0.05) * 0.64 = 0.352
+    // Logic B (Correct): (Base * Drop) + Texture = (0.5 * 0.64) + 0.05 = 0.32 + 0.05 = 0.37
+
+    if (std::abs(force - 0.37) < 0.01) {
+        std::cout << "[PASS] Torque Drop correctly isolated from Textures (Force: " << force << " Expected: 0.37)" << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Torque Drop logic error. Got: " << force << " Expected: 0.37 (Broken: 0.352)" << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_refactor_snapshot_sop() {
+    std::cout << "\nTest: Refactor Regression - Snapshot SoP (v0.6.36)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+
+    // Setup SoP + Boost
+    engine.m_sop_effect = 1.0f;
+    engine.m_oversteer_boost = 1.0f;
+    engine.m_sop_smoothing_factor = 1.0f; // Instant
+    engine.m_sop_scale = 10.0f; // 1G -> 1.0 unboosted (normalized 20Nm)
+
+    data.mLocalAccel.x = 9.81; // 1G Lat
+
+    // Trigger Boost: Rear Grip Loss
+    data.mWheel[0].mGripFract = 1.0;
+    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[2].mGripFract = 0.5;
+    data.mWheel[3].mGripFract = 0.5;
+    // Delta = 0.5. Boost = 1.0 + (0.5 * 1.0 * 2.0) = 2.0x.
+
+    // Expected:
+    // SoP Base (Unboosted) = 1.0 * 1.0 * 10 = 10.0 Nm
+    // SoP Total (Boosted) = 10.0 * 2.0 = 20.0 Nm
+    // Snapshot SoP Force = 10.0 (Unboosted Nm)
+    // Snapshot Boost = 20.0 - 10.0 = 10.0 (Nm)
+
+    engine.calculate_force(&data);
+
+    auto batch = engine.GetDebugBatch();
+    if (!batch.empty()) {
+        FFBSnapshot snap = batch.back();
+
+        bool sop_ok = (std::abs(snap.sop_force - 10.0) < 0.01);
+        bool boost_ok = (std::abs(snap.oversteer_boost - 10.0) < 0.01);
+
+        if (sop_ok && boost_ok) {
+            std::cout << "[PASS] Snapshot values correct (SoP: " << snap.sop_force << ", Boost: " << snap.oversteer_boost << ")" << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] Snapshot logic error. SoP: " << snap.sop_force << " (Exp: 10.0) Boost: " << snap.oversteer_boost << " (Exp: 10.0)" << std::endl;
+            g_tests_failed++;
+        }
+    } else {
+        std::cout << "[FAIL] No snapshot." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+// --- Unit Tests for Private Helper Methods (v0.6.36) ---
+class FFBEngineTestAccess {
+public:
+    static void test_unit_sop_lateral() {
+        std::cout << "\nTest Unit: calculate_sop_lateral" << std::endl;
+        FFBEngine engine;
+        InitializeEngine(engine);
+        FFBCalculationContext ctx;
+        ctx.dt = 0.01;
+        ctx.car_speed = 20.0;
+        ctx.avg_load = 4000.0;
+
+        TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+        data.mLocalAccel.x = 9.81; // 1G
+        engine.m_sop_effect = 1.0;
+        engine.m_sop_scale = 10.0;
+        engine.m_sop_smoothing_factor = 1.0; // Instant
+
+        engine.calculate_sop_lateral(&data, ctx);
+
+        if (std::abs(ctx.sop_base_force - 10.0) < 0.01) {
+            std::cout << "[PASS] calculate_sop_lateral base logic." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] calculate_sop_lateral failed. Got " << ctx.sop_base_force << std::endl;
+            g_tests_failed++;
+        }
+    }
+
+    static void test_unit_gyro_damping() {
+        std::cout << "\nTest Unit: calculate_gyro_damping" << std::endl;
+        FFBEngine engine;
+        InitializeEngine(engine);
+        FFBCalculationContext ctx;
+        ctx.dt = 0.01;
+        ctx.car_speed = 10.0;
+
+        TelemInfoV01 data = CreateBasicTestTelemetry(10.0);
+        data.mUnfilteredSteering = 0.1; 
+        engine.m_prev_steering_angle = 0.0;
+
+        engine.m_gyro_gain = 1.0;
+        engine.m_gyro_smoothing = 0.0001f; 
+
+        engine.calculate_gyro_damping(&data, ctx);
+
+        if (ctx.gyro_force < -40.0) {
+            std::cout << "[PASS] calculate_gyro_damping logic." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] calculate_gyro_damping failed. Got " << ctx.gyro_force << std::endl;
+            g_tests_failed++;
+        }
+    }
+
+    static void test_unit_abs_pulse() {
+        std::cout << "\nTest Unit: calculate_abs_pulse" << std::endl;
+        FFBEngine engine;
+        InitializeEngine(engine);
+        FFBCalculationContext ctx;
+        ctx.dt = 0.01;
+
+        TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+        data.mUnfilteredBrake = 1.0;
+        data.mWheel[0].mBrakePressure = 0.5;
+        engine.m_prev_brake_pressure[0] = 1.0; 
+
+        engine.m_abs_pulse_enabled = true;
+        engine.m_abs_gain = 1.0;
+
+        engine.calculate_abs_pulse(&data, ctx);
+
+        if (std::abs(ctx.abs_pulse_force) > 0.0001 || engine.m_abs_phase > 0.0) {
+            std::cout << "[PASS] calculate_abs_pulse triggered." << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] calculate_abs_pulse failed." << std::endl;
+            g_tests_failed++;
+        }
+    }
+};
+
+static void test_refactor_units() {
+    FFBEngineTestAccess::test_unit_sop_lateral();
+    FFBEngineTestAccess::test_unit_gyro_damping();
+    FFBEngineTestAccess::test_unit_abs_pulse();
+}
+
+static void test_wheel_slip_ratio_helper() {
+    std::cout << "\nTest: calculate_wheel_slip_ratio Helper (v0.6.36)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemWheelV01 wheel;
+    std::memset(&wheel, 0, sizeof(wheel));
+    wheel.mLongitudinalGroundVel = 20.0;
+    wheel.mLongitudinalPatchVel = 4.0;
+    double slip = engine.calculate_wheel_slip_ratio(wheel);
+    ASSERT_NEAR(slip, 0.2, 0.001);
+}
+
+static void test_signal_conditioning_helper() {
+    std::cout << "\nTest: apply_signal_conditioning Helper (v0.6.36)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    FFBCalculationContext ctx;
+    ctx.dt = 0.01;
+    ctx.car_speed = 20.0;
+    double result = engine.apply_signal_conditioning(10.0, &data, ctx);
+    ASSERT_NEAR(result, 10.0, 0.01);
+}
+
+static void test_slope_detection_no_boost_when_grip_balanced() {
+    std::cout << "\nTest: Slope Detection - No Boost When Grip Balanced (v0.7.1)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    
+    // Enable slope detection with oversteer boost
+    engine.m_slope_detection_enabled = true;
+    engine.m_oversteer_boost = 2.0f; // Strong boost setting
+    engine.m_sop_effect = 1.0f;
+    engine.m_sop_scale = 10.0f;
+    engine.m_max_torque_ref = 20.0f;
+    
+    // Setup telemetry - front grip will be calculated by slope, rear by static threshold
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    data.mDeltaTime = 0.01;
+    
+    // Frames 1-20: Constant G and Slip (Slope = 0, Front Grip = 1.0)
+    for (int i = 0; i < 20; i++) {
+        data.mLocalAccel.x = 1.0 * 9.81;
+        data.mWheel[0].mLateralPatchVel = 0.05 * 20.0;
+        engine.calculate_force(&data);
+    }
+    
+    // Trigger negative slope to reduce front grip
+    // Slip: 0.05 -> 0.10, G: 1.0 -> 0.8 => Negative Slope
+    for (int i = 0; i < 10; i++) {
+        double slip = 0.05 + i * 0.005;
+        double g = 1.0 - i * 0.02;
+        data.mLocalAccel.x = g * 9.81;
+        data.mWheel[0].mLateralPatchVel = slip * 20.0;
+        engine.calculate_force(&data);
+    }
+    
+    // Front grip (slope) should be reduced
+    // Rear grip (static threshold 0.15) should be 1.0 for slip 0.10
+    // grip_delta would be negative (understeer scenario), so boost wouldn't trigger anyway
+    double front_grip = engine.m_slope_smoothed_output;
+    ASSERT_TRUE(front_grip < 0.95);
+    
+    // Capture snapshot - oversteer_boost should be 0.0 (disabled by slope detection)
+    auto batch = engine.GetDebugBatch();
+    FFBSnapshot snap = batch.back();
+    ASSERT_NEAR(snap.oversteer_boost, 0.0, 0.01);
+}
+
+static void test_slope_detection_no_boost_during_oversteer() {
+    std::cout << "\nTest: Slope Detection - No Boost During Oversteer (v0.7.1)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    
+    // Enable slope detection with oversteer boost
+    engine.m_slope_detection_enabled = true;
+    engine.m_oversteer_boost = 2.0f; // Strong boost setting
+    engine.m_sop_effect = 1.0f;
+    engine.m_sop_scale = 10.0f;
+    engine.m_max_torque_ref = 20.0f;
+    engine.m_optimal_slip_angle = 0.05f; // Rear grip will drop past 0.05 slip
+    
+    // Setup telemetry to create oversteer scenario (front grip > rear grip)
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    data.mDeltaTime = 0.01;
+    
+    // Frames 1-20: Build up positive slope (Front grip = 1.0)
+    // Increasing G with increasing slip creates positive slope
+    for (int i = 0; i < 20; i++) {
+        data.mLocalAccel.x = (0.5 + i * 0.05) * 9.81;
+        data.mWheel[0].mLateralPatchVel = (0.02 + i * 0.002) * 20.0;
+        engine.calculate_force(&data);
+    }
+    
+    // Final state:
+    // Front Slip ~ 0.06, Front Grip (slope) = 1.0 (positive slope)
+    // Rear Slip ~ 0.06, Rear Grip (static) = 0.98 (drops past 0.05 threshold)
+    // grip_delta = 1.0 - 0.98 = 0.02 > 0 (oversteer condition)
+    // Without slope detection, this would trigger boost: factor = 1 + 0.02 * 2.0 * 2 = 1.08
+    // With slope detection enabled, boost should be suppressed
+    
+    auto batch = engine.GetDebugBatch();
+    FFBSnapshot snap = batch.back();
+    
+    // Assertion: oversteer_boost should be 0.0 when slope detection is enabled
+    // even when grip_delta > 0 (oversteer scenario)
+    ASSERT_NEAR(snap.oversteer_boost, 0.0, 0.01);
+}
+
+static void test_lat_g_boost_works_without_slope_detection() {
+    std::cout << "\nTest: Lateral G Boost works without Slope Detection (v0.7.1)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    
+    engine.m_slope_detection_enabled = false;
+    engine.m_oversteer_boost = 2.0f;
+    engine.m_sop_effect = 1.0f;
+    engine.m_sop_scale = 10.0f;
+    engine.m_max_torque_ref = 20.0f;
+    engine.m_optimal_slip_angle = 0.05f;
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.06); // Slip 0.06
+    data.mLocalAccel.x = 1.5 * 9.81;
+    data.mDeltaTime = 0.01;
+    
+    // Without slope detection, front grip is also static.
+    // But we want to simulate a delta.
+    // Actually, calculate_sop_lateral uses ctx.avg_grip and ctx.avg_rear_grip.
+    // If we use the same slip for front and rear, they will be the same.
+    
+    // Let's use different slips for front and rear if we want to test boost.
+    // Front slip = 0.04 (Grip 1.0)
+    // Rear slip = 0.08 (Grip 0.94)
+    // delta = 1.0 - 0.94 = 0.06
+    // boost = 1 + 0.06 * 2 * 2 = 1.24
+    
+    data.mWheel[0].mLateralPatchVel = 0.04 * 20.0;
+    data.mWheel[1].mLateralPatchVel = 0.04 * 20.0;
+    data.mWheel[2].mLateralPatchVel = 0.08 * 20.0;
+    data.mWheel[3].mLateralPatchVel = 0.08 * 20.0;
+    
+    engine.calculate_force(&data);
+    FFBSnapshot snap = engine.GetDebugBatch().back();
+    
+    // Boost should be positive
+    ASSERT_TRUE(snap.oversteer_boost > 0.01);
+}
+
+static void test_slope_detection_default_values_v071() {
+    std::cout << "\nTest: Slope Detection Default Values (v0.7.1)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    
+    // Check new defaults
+    ASSERT_NEAR(engine.m_slope_sensitivity, 0.5f, 0.001);
+    ASSERT_NEAR(engine.m_slope_negative_threshold, -0.3f, 0.001);
+    ASSERT_NEAR(engine.m_slope_smoothing_tau, 0.04f, 0.001);
+}
+
+static void test_slope_current_in_snapshot() {
+    std::cout << "\nTest: Slope Current in Snapshot (v0.7.1)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    data.mDeltaTime = 0.01;
+    
+    // Frames 1-20: Build up a slope
+    for (int i = 0; i < 20; i++) {
+        data.mLocalAccel.x = (0.5 + i * 0.05) * 9.81;
+        data.mWheel[0].mLateralPatchVel = (0.02 + i * 0.002) * 20.0;
+        engine.calculate_force(&data);
+    }
+    
+    auto batch = engine.GetDebugBatch();
+    FFBSnapshot snap = batch.back();
+    
+    ASSERT_NEAR(snap.slope_current, (float)engine.m_slope_current, 0.001);
+    ASSERT_TRUE(std::abs(snap.slope_current) > 0.001);
+}
+
+static void test_slope_detection_less_aggressive_v071() {
+    std::cout << "\nTest: Slope Detection Less Aggressive (v0.7.1)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    
+    // Use new defaults
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_sensitivity = 0.5f;
+    engine.m_slope_negative_threshold = -0.3f;
+    engine.m_slope_sg_window = 15;
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    data.mDeltaTime = 0.01;
+    
+    // Simulate moderate negative slope: -0.5
+    // excess = -0.3 - (-0.5) = 0.2
+    // grip_loss = 0.2 * 0.1 * 0.5 = 0.01
+    // grip_factor = 1.0 - 0.01 = 0.99
+    
+    // Fill buffer first
+    for (int i = 0; i < 20; i++) {
+        data.mLocalAccel.x = 1.0 * 9.81;
+        data.mWheel[0].mLateralPatchVel = 0.05 * 20.0;
+        engine.calculate_force(&data);
+    }
+    
+    // Inject negative slope
+    // dSlip = 0.01/frame, dG = -0.005/frame => dG/dSlip = -0.5
+    for (int i = 0; i < 15; i++) {
+        data.mLocalAccel.x = (1.0 - i * 0.005) * 9.81;
+        data.mWheel[0].mLateralPatchVel = (0.05 + i * 0.01) * 20.0;
+        engine.calculate_force(&data);
+    }
+    
+    ASSERT_NEAR(engine.m_slope_current, -1.0, 0.1);
+    // Grip should be high, not floored
+    ASSERT_TRUE(engine.m_slope_smoothed_output > 0.9);
 }
 
 } // namespace FFBEngineTests

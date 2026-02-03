@@ -302,7 +302,7 @@ New tests will be added to `tests/test_persistence_v0628.cpp` to verify fixes an
 - `tests/main_test_runner.cpp` - Integrated new tests
 
 **Documentation:**
-- `CHANGELOG.md` - Added v0.6.29 release notes
+- `CHANGELOG_DEV.md` - Added v0.6.29 release notes
 - `docs/dev_docs/config_reordering_plan.md` - This implementation status update
 
 ### 7.8 Verification Checklist

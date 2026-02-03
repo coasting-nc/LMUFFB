@@ -191,5 +191,5 @@ static void test_stationary_gate() {
     *   Updated warning text.
 2.  **`tests/test_ffb_engine.cpp`**:
     *   Added `test_stationary_gate`.
-3.  **`CHANGELOG.md`**:
+3.  **`CHANGELOG_DEV.md`**:
     *   Document fixes for "Violent Shaking at Stop" and "Missing Road Texture on DLC cars".

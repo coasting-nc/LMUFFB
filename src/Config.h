@@ -4,6 +4,7 @@
 #include "FFBEngine.h"
 #include <string>
 #include <vector>
+#include <chrono>
 
 struct Preset {
     std::string name;
@@ -99,6 +100,13 @@ struct Preset {
     float road_fallback_scale = 0.05f;      // Planned: Road texture fallback scaling
     bool understeer_affects_sop = false;     // Planned: Understeer modulation of SoP
 
+    // ===== SLOPE DETECTION (v0.7.0 → v0.7.1 defaults) =====
+    bool slope_detection_enabled = false;
+    int slope_sg_window = 15;
+    float slope_sensitivity = 0.5f;          // Reduced from 1.0 (less aggressive)
+    float slope_negative_threshold = -0.3f;  // Changed from -0.1 (later trigger)
+    float slope_smoothing_tau = 0.04f;       // Changed from 0.02 (smoother transitions)
+
     // 2. Constructors
     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin) {}
     Preset() : name("Unnamed"), is_builtin(false) {} // Default constructor for file loading
@@ -174,6 +182,15 @@ struct Preset {
     Preset& SetYawSmoothing(float v) { yaw_smoothing = v; return *this; }
     Preset& SetChassisSmoothing(float v) { chassis_smoothing = v; return *this; }
     
+    Preset& SetSlopeDetection(bool enabled, int window = 15, float sens = 0.5f, float thresh = -0.3f, float tau = 0.04f) {
+        slope_detection_enabled = enabled;
+        slope_sg_window = window;
+        slope_sensitivity = sens;
+        slope_negative_threshold = thresh;
+        slope_smoothing_tau = tau;
+        return *this;
+    }
+
     // Advanced Braking (v0.6.0)
     // ⚠️ IMPORTANT: Default parameters (abs_f, lockup_f) must match Config.h defaults!
     // When changing Config.h defaults, update these values to match.
@@ -247,14 +264,23 @@ struct Preset {
         engine.m_yaw_kick_threshold = yaw_kick_threshold;
         engine.m_speed_gate_lower = speed_gate_lower;
         engine.m_speed_gate_upper = speed_gate_upper;
-        engine.m_road_fallback_scale = road_fallback_scale;
-        engine.m_understeer_affects_sop = understeer_affects_sop;
+        
+        // NEW: Grip & Smoothing (v0.5.7/v0.5.8)
         engine.m_optimal_slip_angle = optimal_slip_angle;
         engine.m_optimal_slip_ratio = optimal_slip_ratio;
         engine.m_steering_shaft_smoothing = steering_shaft_smoothing;
         engine.m_gyro_smoothing = gyro_smoothing;
         engine.m_yaw_accel_smoothing = yaw_smoothing;
         engine.m_chassis_inertia_smoothing = chassis_smoothing;
+        engine.m_road_fallback_scale = road_fallback_scale;
+        engine.m_understeer_affects_sop = understeer_affects_sop;
+        
+        // Slope Detection (v0.7.0)
+        engine.m_slope_detection_enabled = slope_detection_enabled;
+        engine.m_slope_sg_window = slope_sg_window;
+        engine.m_slope_sensitivity = slope_sensitivity;
+        engine.m_slope_negative_threshold = slope_negative_threshold;
+        engine.m_slope_smoothing_tau = slope_smoothing_tau;
     }
 
     // NEW: Capture current engine state into this preset
@@ -308,14 +334,23 @@ struct Preset {
         yaw_kick_threshold = engine.m_yaw_kick_threshold;
         speed_gate_lower = engine.m_speed_gate_lower;
         speed_gate_upper = engine.m_speed_gate_upper;
-        road_fallback_scale = engine.m_road_fallback_scale;
-        understeer_affects_sop = engine.m_understeer_affects_sop;
+
+        // NEW: Grip & Smoothing (v0.5.7/v0.5.8)
         optimal_slip_angle = engine.m_optimal_slip_angle;
         optimal_slip_ratio = engine.m_optimal_slip_ratio;
         steering_shaft_smoothing = engine.m_steering_shaft_smoothing;
         gyro_smoothing = engine.m_gyro_smoothing;
         yaw_smoothing = engine.m_yaw_accel_smoothing;
         chassis_smoothing = engine.m_chassis_inertia_smoothing;
+        road_fallback_scale = engine.m_road_fallback_scale;
+        understeer_affects_sop = engine.m_understeer_affects_sop;
+
+        // Slope Detection (v0.7.0)
+        slope_detection_enabled = engine.m_slope_detection_enabled;
+        slope_sg_window = engine.m_slope_sg_window;
+        slope_sensitivity = engine.m_slope_sensitivity;
+        slope_negative_threshold = engine.m_slope_negative_threshold;
+        slope_smoothing_tau = engine.m_slope_smoothing_tau;
     }
 };
 
@@ -348,5 +383,11 @@ public:
     static int win_w_large, win_h_large; // Dimensions for Config + Graphs
     static bool show_graphs;             // Remember if graphs were open
 };
+
+
+inline FFBEngine::FFBEngine() {
+    last_log_time = std::chrono::steady_clock::now();
+    Preset::ApplyDefaultsToEngine(*this);
+}
 
 #endif
