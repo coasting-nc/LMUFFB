@@ -72,6 +72,7 @@ The plan **MUST** include:
     *   Test function names and descriptions.
     *   Expected inputs and outputs.
     *   Assertions that should fail until the feature is implemented.
+    *   **Test Count Specification:** When specifying expected test counts, use relative references (e.g., "Baseline + 5 new tests") rather than hard totals, as the baseline can shift due to parallel work.
     *   **Data Flow Analysis (for stateful/derivative algorithms):** Document what inputs need to change between frames and how. Include "telemetry script" examples showing multi-frame progressions.
     *   **Boundary Condition Tests (for buffer-based algorithms):** Include tests for:
         *   Empty buffer state

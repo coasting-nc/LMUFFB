@@ -6,6 +6,23 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 ---
 
+[size=5][b]February 3, 2026[/b][/size]
+[b]Version 0.7.2 - Smooth Transitions[/b]
+
+[b]New release[/b] (0.7.2): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Smoother Low-Speed FFB[/b]: Upgraded the low-speed "fade-in" logic from linear to a smooth S-curve (Smoothstep). This results in a more natural transition as you begin moving from a standstill or drive through the pit lane, eliminating "angular" changes in steering weight.
+[/list]
+
+[b]Added[/b]
+[list]
+[*][b]Enhanced Reliability Suite[/b]: Added a dedicated suite of physics verification tests to ensure the new Smoothstep transitions are mathematically perfect and don't introduce noise while stationary.
+[/list]
+
+---
+
 [size=5][b]February 2, 2026[/b][/size]
 [b]Version v0.7.1 - Slope Detection Stability & UI[/b]
 

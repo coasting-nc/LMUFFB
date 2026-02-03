@@ -153,6 +153,13 @@ static void test_slope_detection_default_values_v071();
 static void test_slope_current_in_snapshot();
 static void test_slope_detection_less_aggressive_v071();
 
+// v0.7.2: Smoothstep Speed Gating Tests
+static void test_smoothstep_helper_function();
+static void test_smoothstep_vs_linear();
+static void test_smoothstep_edge_cases();
+static void test_speed_gate_uses_smoothstep();
+static void test_smoothstep_stationary_silence_preserved();
+
 // --- Test Helper Functions (v0.5.7) ---
 
 /**
@@ -5837,6 +5844,13 @@ void Run() {
     test_slope_current_in_snapshot();
     test_slope_detection_less_aggressive_v071();
 
+    // v0.7.2: Smoothstep Speed Gating Tests
+    test_smoothstep_helper_function();
+    test_smoothstep_vs_linear();
+    test_smoothstep_edge_cases();
+    test_speed_gate_uses_smoothstep();
+    test_smoothstep_stationary_silence_preserved();
+
     std::cout << "\n--- Physics Engine Test Summary ---" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
     std::cout << "Tests Failed: " << g_tests_failed << std::endl;
@@ -6850,6 +6864,135 @@ static void test_slope_detection_less_aggressive_v071() {
     ASSERT_NEAR(engine.m_slope_current, -1.0, 0.1);
     // Grip should be high, not floored
     ASSERT_TRUE(engine.m_slope_smoothed_output > 0.9);
+}
+
+// v0.7.2: Smoothstep Speed Gating Tests
+
+static void test_smoothstep_helper_function() {
+    std::cout << "\nTest: Smoothstep Helper Function (v0.7.2)" << std::endl;
+    FFBEngine engine;
+    
+    // At lower edge: t=0 → result=0
+    double at_lower = engine.smoothstep(1.0, 5.0, 1.0);
+    ASSERT_NEAR(at_lower, 0.0, 0.001);
+    
+    // At upper edge: t=1 → result=1
+    double at_upper = engine.smoothstep(1.0, 5.0, 5.0);
+    ASSERT_NEAR(at_upper, 1.0, 0.001);
+    
+    // At midpoint: t=0.5 → result=0.5 (symmetric)
+    double at_mid = engine.smoothstep(1.0, 5.0, 3.0);
+    ASSERT_NEAR(at_mid, 0.5, 0.001);
+    
+    // At 25%: t=0.25 → result=0.15625 (t²(3-2t) = 0.0625 * 2.5)
+    double at_25 = engine.smoothstep(1.0, 5.0, 2.0);
+    ASSERT_NEAR(at_25, 0.15625, 0.001);
+    
+    // At 75%: t=0.75 → result=0.84375 (t²(3-2t) = 0.5625 * 1.5)
+    double at_75 = engine.smoothstep(1.0, 5.0, 4.0);
+    ASSERT_NEAR(at_75, 0.84375, 0.001);
+}
+
+static void test_smoothstep_vs_linear() {
+    std::cout << "\nTest: Smoothstep vs Linear Comparison (v0.7.2)" << std::endl;
+    FFBEngine engine;
+    
+    // At t=0.25, linear=0.25, smoothstep=0.15625
+    double smooth_25 = engine.smoothstep(1.0, 5.0, 2.0);
+    ASSERT_TRUE(smooth_25 < 0.25);  // Below linear
+    
+    // At t=0.75, linear=0.75, smoothstep=0.84375
+    double smooth_75 = engine.smoothstep(1.0, 5.0, 4.0);
+    ASSERT_TRUE(smooth_75 > 0.75);  // Above linear
+    
+    // This asymmetry is the key benefit - faster fade-in at end, slower at start
+}
+
+static void test_smoothstep_edge_cases() {
+    std::cout << "\nTest: Smoothstep Edge Cases (v0.7.2)" << std::endl;
+    FFBEngine engine;
+    
+    // Below lower threshold → 0
+    double below = engine.smoothstep(1.0, 5.0, 0.0);
+    ASSERT_NEAR(below, 0.0, 0.001);
+    
+    // Above upper threshold → 1
+    double above = engine.smoothstep(1.0, 5.0, 10.0);
+    ASSERT_NEAR(above, 1.0, 0.001);
+    
+    // Negative speed (reverse) → 0
+    double negative = engine.smoothstep(1.0, 5.0, -5.0);
+    ASSERT_NEAR(negative, 0.0, 0.001);
+    
+    // Zero range (edge0 == edge1) → safe behavior
+    double zero_range = engine.smoothstep(3.0, 3.0, 3.0);
+    ASSERT_TRUE(zero_range == 0.0 || zero_range == 1.0);
+    
+    // Very small range → no crash
+    double tiny_range = engine.smoothstep(1.0, 1.0001, 1.00005);
+    ASSERT_TRUE(tiny_range >= 0.0 && tiny_range <= 1.0);
+}
+
+static void test_speed_gate_uses_smoothstep() {
+    std::cout << "\nTest: Speed Gate Uses Smoothstep (v0.7.2)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_speed_gate_lower = 1.0f;
+    engine.m_speed_gate_upper = 5.0f;
+    
+    // Enable road texture as probe
+    engine.m_road_texture_enabled = true;
+    engine.m_road_texture_gain = 1.0f;
+    engine.m_max_torque_ref = 20.0f;
+    
+    // Test at 25% speed (2.0 m/s)
+    TelemInfoV01 data_25 = CreateBasicTestTelemetry(2.0);
+    data_25.mWheel[0].mVerticalTireDeflection = 0.002;
+    data_25.mWheel[1].mVerticalTireDeflection = 0.002;
+    engine.calculate_force(&data_25);
+    
+    // Test at 50% speed (3.0 m/s) 
+    TelemInfoV01 data_50 = CreateBasicTestTelemetry(3.0);
+    data_50.mWheel[0].mVerticalTireDeflection = 0.002;
+    data_50.mWheel[1].mVerticalTireDeflection = 0.002;
+    
+    // Reset deflection state
+    engine.m_prev_vert_deflection[0] = 0.0;
+    engine.m_prev_vert_deflection[1] = 0.0;
+    double force_50 = engine.calculate_force(&data_50);
+    
+    // Reset for 25% test
+    engine.m_prev_vert_deflection[0] = 0.0;
+    engine.m_prev_vert_deflection[1] = 0.0;
+    double force_25 = engine.calculate_force(&data_25);
+    
+    // At 25%, smoothstep=0.156, at 50%, smoothstep=0.5
+    // Ratio should be approximately 0.156/0.5 = 0.3125
+    // With linear it would be 0.25/0.5 = 0.5
+    if (std::abs(force_50) > 0.0001) {
+        double ratio = std::abs(force_25 / force_50);
+        ASSERT_TRUE(ratio < 0.4);  // Confirms curve is not linear
+    } else {
+        std::cout << "[FAIL] Force at 50% is zero, cannot check ratio." << std::endl;
+        g_tests_failed++;
+    }
+}
+
+static void test_smoothstep_stationary_silence_preserved() {
+    std::cout << "\nTest: Smoothstep Stationary Silence (v0.7.2)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_speed_gate_lower = 1.0f;
+    engine.m_speed_gate_upper = 5.0f;
+    
+    TelemInfoV01 data = CreateBasicTestTelemetry(0.0);
+    data.mSteeringShaftTorque = 10.0;  // Heavy input
+    data.mLocalAccel.x = 5.0;           // Lateral G
+    
+    double force = engine.calculate_force(&data);
+    
+    // Speed gate at 0 m/s should still be 0.0
+    ASSERT_NEAR(force, 0.0, 0.001);
 }
 
 } // namespace FFBEngineTests

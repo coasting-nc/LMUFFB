@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.2] - 2026-02-03
+
+### Added
+- **Smoothstep Speed Gating**:
+  - Replaced linear interpolation for speed-based FFB gating with a smooth Hermite S-curve (Smoothstep).
+  - Implemented `smoothstep(edge0, edge1, x)` helper function in `FFBEngine` using polynomial `t² * (3 - 2t)`.
+  - Provides zero-derivative endpoints for a more natural "fade-in" of FFB forces at low speeds.
+  - Improves the pit-lane and stationary-to-moving transition by eliminating the "angular" feel of linear scaling.
+- **v0.7.2 Test Suite**:
+  - `test_smoothstep_helper_function`: Verifies mathematical correctness of the Hermite polynomial.
+  - `test_smoothstep_vs_linear`: Confirms the S-curve characteristic (above/below linear at different points).
+  - `test_smoothstep_edge_cases`: Validates boundary safety (below/above thresholds) and zero-range handling.
+  - `test_speed_gate_uses_smoothstep`: End-to-end physics test verifying the non-linear force ratio at intermediate speeds.
+  - `test_smoothstep_stationary_silence_preserved`: Ensures no regression in stationary noise suppression.
+
+### Changed
+- **FFB Speed Gating Logic**: Refactored `calculate_force` to use the new `smoothstep` helper, simplifying the code while enhancing physical fidelity.
+
 ## [0.7.1] - 2026-02-02
 
 ### Fixed

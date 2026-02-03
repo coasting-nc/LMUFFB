@@ -1,5 +1,8 @@
 # Implementation Plan: Smoothstep Speed Gating
 
+**Status: COMPLETED (2026-02-03) - Version 0.7.2**
+
+
 ## Context
 
 This plan describes the implementation of **Smoothstep Speed Gating**, a signal processing improvement adopted from Marvin's AIRA. The change replaces the current linear speed gate interpolation with a smooth S-curve (Hermite interpolation) for more natural FFB transitions at low speeds.
@@ -95,7 +98,7 @@ ctx.speed_gate = (std::max)(0.0, (std::min)(1.0, ctx.speed_gate));
 **Location:** After line 790 (helper functions section, near `calculate_sg_derivative`)
 
 ```cpp
-// Helper: Smoothstep interpolation - v0.8.0
+// Helper: Smoothstep interpolation - v0.7.2
 // Returns smooth S-curve interpolation from 0 to 1
 // Uses Hermite polynomial: t² × (3 - 2t)
 // Zero derivative at both endpoints for seamless transitions
@@ -140,7 +143,7 @@ ctx.speed_gate = smoothstep(
 **Test Script:**
 ```cpp
 static void test_smoothstep_helper_function() {
-    std::cout << "\nTest: Smoothstep Helper Function (v0.8.0)" << std::endl;
+    std::cout << "\nTest: Smoothstep Helper Function (v0.7.2)" << std::endl;
     FFBEngine engine;
     
     // At lower edge: t=0 → result=0
@@ -172,7 +175,7 @@ static void test_smoothstep_helper_function() {
 **Test Script:**
 ```cpp
 static void test_smoothstep_vs_linear() {
-    std::cout << "\nTest: Smoothstep vs Linear Comparison (v0.8.0)" << std::endl;
+    std::cout << "\nTest: Smoothstep vs Linear Comparison (v0.7.2)" << std::endl;
     FFBEngine engine;
     
     // At t=0.25, linear=0.25, smoothstep=0.15625
@@ -195,7 +198,7 @@ static void test_smoothstep_vs_linear() {
 **Test Script:**
 ```cpp
 static void test_smoothstep_edge_cases() {
-    std::cout << "\nTest: Smoothstep Edge Cases (v0.8.0)" << std::endl;
+    std::cout << "\nTest: Smoothstep Edge Cases (v0.7.2)" << std::endl;
     FFBEngine engine;
     
     // Below lower threshold → 0
@@ -236,7 +239,7 @@ static void test_smoothstep_edge_cases() {
 **Test Script:**
 ```cpp
 static void test_speed_gate_uses_smoothstep() {
-    std::cout << "\nTest: Speed Gate Uses Smoothstep (v0.8.0)" << std::endl;
+    std::cout << "\nTest: Speed Gate Uses Smoothstep (v0.7.2)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_speed_gate_lower = 1.0f;
@@ -283,7 +286,7 @@ static void test_speed_gate_uses_smoothstep() {
 **Test Script:**
 ```cpp
 static void test_smoothstep_stationary_silence_preserved() {
-    std::cout << "\nTest: Smoothstep Stationary Silence (v0.8.0)" << std::endl;
+    std::cout << "\nTest: Smoothstep Stationary Silence (v0.7.2)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_speed_gate_lower = 1.0f;
@@ -319,7 +322,7 @@ static void test_smoothstep_stationary_silence_preserved() {
 
 ### Documentation
 
-- [ ] Update CHANGELOG.md with v0.8.0 entry
+- [ ] Update CHANGELOG.md with v0.7.2 entry
 - [ ] Add note in user documentation about smoother low-speed FFB
 
 ---
@@ -328,13 +331,18 @@ static void test_smoothstep_stationary_silence_preserved() {
 
 *This section should be filled in by the developer during implementation.*
 
-### Issues Encountered
+### Unforeseen Issues
+*   **None checked.** Implementation of the Hermite math and integration into the physics engine proceeded without valid technical errors.
 
-*(Document any unforeseen issues)*
+### Plan Deviations
+*   **Version Numbering:** The plan originally targeted version `0.8.0`. This was changed to `0.7.2` during the release phase to adhere to strict versioning protocols (smallest possible increment).
+*   **Test Suite Count:** The final test count (575) differed from the initial estimate (580) due to a baseline miscalculation, though all 5 new tests were successfully implemented and verified.
 
-### Deviations from Plan
+### Challenges Encountered
+*   **Test Count Verification:** There was a brief confusion regarding the total number of passing tests vs the expected count. This required manual verification of the logs to confirm that the new tests were indeed running and passing, rather than relying solely on the total count.
 
-*(Document any necessary deviations)*
+### Recommendations for Future Plans
+*   **Baseline Referencing:** Future plans should specify "Baseline Count + N New Tests" rather than a hard number for total tests, as the baseline can shift due to other parallel work.
 
 ---
 

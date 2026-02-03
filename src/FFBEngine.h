@@ -861,6 +861,19 @@ public:
         return m_slope_smoothed_output;
     }
 
+    // Helper: Smoothstep interpolation - v0.7.2
+    // Returns smooth S-curve interpolation from 0 to 1
+    // Uses Hermite polynomial: t² × (3 - 2t)
+    // Zero derivative at both endpoints for seamless transitions
+    inline double smoothstep(double edge0, double edge1, double x) {
+        double range = edge1 - edge0;
+        if (range < 0.0001) return (x < edge0) ? 0.0 : 1.0;
+        
+        double t = (x - edge0) / range;
+        t = (std::max)(0.0, (std::min)(1.0, t));
+        return t * t * (3.0 - 2.0 * t);
+    }
+
     // Helper: Calculate Slip Ratio from wheel (v0.6.36 - Extracted from lambdas)
     // Unified slip ratio calculation for lockup and spin detection.
     // Returns the ratio of longitudinal slip: (PatchVel - GroundVel) / GroundVel
@@ -1033,11 +1046,12 @@ public:
         ctx.decoupling_scale = max_torque_safe / 20.0;
         if (ctx.decoupling_scale < 0.1) ctx.decoupling_scale = 0.1;
 
-        // Speed Gate
-        double speed_gate_range = (double)m_speed_gate_upper - (double)m_speed_gate_lower;
-        if (speed_gate_range < 0.1) speed_gate_range = 0.1;
-        ctx.speed_gate = (ctx.car_speed - (double)m_speed_gate_lower) / speed_gate_range;
-        ctx.speed_gate = (std::max)(0.0, (std::min)(1.0, ctx.speed_gate));
+        // Speed Gate - v0.7.2 Smoothstep S-curve
+        ctx.speed_gate = smoothstep(
+            (double)m_speed_gate_lower, 
+            (double)m_speed_gate_upper, 
+            ctx.car_speed
+        );
 
         // --- 5. EFFECT CALCULATIONS ---
 
