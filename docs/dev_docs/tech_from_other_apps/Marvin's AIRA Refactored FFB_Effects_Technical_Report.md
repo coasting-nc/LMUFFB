@@ -1,4 +1,4 @@
-# Marvin's AIRA Refactored - Force Feedback Effects Technical Report
+# Marvin's AIRA - Force Feedback Effects Technical Report
 
 ## Table of Contents
 1. [Overview](#overview)
@@ -22,6 +22,11 @@
    - [Wheel Spin Detection](#wheel-spin-detection)
 7. [Core FFB Processing Algorithms](#core-ffb-processing-algorithms)
 8. [Helper Functions Reference](#helper-functions-reference)
+9. [Signal Processing Techniques](#signal-processing-techniques)
+   - [Smoothstep Speed Gating](#smoothstep-speed-gating)
+   - [Threshold System (Min/Max with Linear Interpolation)](#threshold-system-minmax-with-linear-interpolation)
+10. [Summary](#summary)
+
 
 ---
 
@@ -564,6 +569,281 @@ Compression(value, rate, threshold, width):
         // Linear compression
         return sign(value) × (threshold + (|value| - threshold) × (1 - rate))
 ```
+
+---
+
+## Signal Processing Techniques
+
+This section provides an in-depth explanation of two fundamental signal processing techniques used throughout the AIRA application to transform raw physics data into smooth, responsive haptic feedback.
+
+### Smoothstep Speed Gating
+
+#### Purpose
+Smoothstep Speed Gating prevents false effect triggering at very low speeds where physics data can be noisy or unreliable. Instead of using a hard on/off cutoff, the smoothstep function provides a **gradual fade** that feels natural and avoids sudden haptic changes.
+
+#### The Problem It Solves
+At low speeds (especially below 5 kph):
+- **Yaw rate normalization** (`yawRate / speed`) becomes unstable as speed approaches zero
+- **Minor steering inputs** can produce large deviation values
+- **Parking lot maneuvers** would otherwise trigger understeer/oversteer effects
+- **Pit lane driving** would produce distracting false vibrations
+
+A simple threshold like `if (speed > 10) enableEffect()` would cause a jarring on/off transition.
+
+#### Implementation
+
+The app uses **smoothstep** to create a smooth fade-in curve between two speed values:
+
+```
+speedFade = smoothstep(startSpeed, endSpeed, currentSpeed)
+```
+
+Where:
+- `startSpeed = 1 kph` - Below this, effects are completely off
+- `endSpeed = 20 kph` - Above this, effects are at full strength
+- `currentSpeed` - The player's current speed in kph
+
+#### Mathematical Formula
+
+```
+function smoothstep(start, end, value):
+    // Normalize the value to 0-1 range
+    t = clamp((value - start) / (end - start), 0, 1)
+    
+    // Apply the S-curve polynomial
+    return t × t × (3 - 2t)
+```
+
+#### Breakdown of the Formula
+
+1. **Normalization**: `t = (value - start) / (end - start)`
+   - At `value = start` (1 kph): `t = 0`
+   - At `value = end` (20 kph): `t = 1`
+   - Values are clamped to [0, 1]
+
+2. **S-Curve**: `t² × (3 - 2t)`
+   - This is a **Hermite interpolation** polynomial
+   - At `t = 0`: returns `0`
+   - At `t = 1`: returns `1`
+   - At `t = 0.5`: returns `0.5`
+   - **Crucially**: The first derivative is **zero** at both endpoints
+
+#### Why Smoothstep (Not Linear)?
+
+| Approach | Formula | Disadvantage |
+|----------|---------|--------------|
+| **Hard threshold** | `if speed > 10 then 1 else 0` | Jarring on/off transition |
+| **Linear fade** | `(speed - start) / (end - start)` | Perceivable kink at start/end points |
+| **Smoothstep** | `t²(3 - 2t)` | ✅ Smooth at both endpoints with zero velocity |
+
+The smoothstep polynomial ensures:
+- **Zero velocity at start**: Effect fades in gradually, not abruptly
+- **Zero velocity at end**: Effect reaches full strength smoothly
+- **Symmetrical S-curve**: Equal transition feel on both sides
+
+#### Visual Representation
+
+```
+Effect Intensity (0-1)
+    ^
+1.0 |                         ************
+    |                    *****
+    |                ****
+0.5 |             ***
+    |          ***
+    |       ***
+0.0 |*******
+    +---------------------------------> Speed (kph)
+         1     5     10    15    20
+         ^                       ^
+       start                    end
+        (effects off)     (full effects)
+```
+
+#### Application in AIRA
+
+The `speedFade` factor is multiplied with every effect output:
+
+```
+UndersteerEffect = speedFade × understeerEffect
+OversteerEffect = speedFade × oversteerEffect
+SeatOfPantsEffect = speedFade × seatOfPantsEffect
+SkidSlip = speedFade × skidSlip
+```
+
+**Result**: All effects smoothly fade in as the car accelerates from 1 to 20 kph, and fade out when decelerating, preventing any abrupt haptic changes during slow driving.
+
+---
+
+### Threshold System (Min/Max with Linear Interpolation)
+
+#### Purpose
+The threshold system converts a **continuous physical measurement** (like deviation from expected yaw rate) into a **normalized effect intensity** (0 to 1) that can drive haptic outputs. This system provides:
+- **Dead zone** elimination (ignore noise below minimum threshold)
+- **Progressive response** (gradual increase between thresholds)
+- **Saturation** (limit effect at maximum threshold)
+
+#### The Problem It Solves
+Raw physics data (e.g., yaw rate deviation) varies across a wide range:
+- Very small values = normal driving, should produce no effect
+- Medium values = mild understeer, should produce proportional feedback
+- Large values = severe understeer, should produce maximum effect
+
+Without thresholding:
+- Tiny deviations would trigger subtle unwanted vibrations
+- The effect would never reach "full intensity" since deviation has no theoretical maximum
+- Users would have no control over sensitivity
+
+#### Implementation: InverseLerp with Thresholds
+
+AIRA uses an **inverse linear interpolation** (InverseLerp) between user-configurable minimum and maximum thresholds:
+
+```
+if |deviation| >= minThreshold:
+    effectIntensity = inverseLerp(minThreshold, maxThreshold, |deviation|)
+else:
+    effectIntensity = 0  // Dead zone
+```
+
+#### Mathematical Formula
+
+```
+function inverseLerp(min, max, value):
+    // Handle edge case where min == max
+    if |max - min| < epsilon:
+        return (value < min) ? 0 : 1
+    
+    // Calculate normalized position
+    t = (value - min) / (max - min)
+    
+    // Clamp to valid range
+    return clamp(t, 0, 1)
+```
+
+#### Breakdown of the Formula
+
+Given:
+- `minThreshold` = 0.05 (default understeer minimum)
+- `maxThreshold` = 0.15 (default understeer maximum)
+- `deviation` = current measured deviation
+
+**Case Analysis:**
+
+| Deviation Value | Calculation | Effect Intensity |
+|-----------------|-------------|------------------|
+| 0.02 | Below min threshold | 0.0 (dead zone) |
+| 0.05 | `(0.05 - 0.05) / 0.10 = 0.00` | 0.0 (threshold start) |
+| 0.08 | `(0.08 - 0.05) / 0.10 = 0.30` | 0.3 (linear region) |
+| 0.10 | `(0.10 - 0.05) / 0.10 = 0.50` | 0.5 (midpoint) |
+| 0.15 | `(0.15 - 0.05) / 0.10 = 1.00` | 1.0 (maximum) |
+| 0.25 | `(0.25 - 0.05) / 0.10 = 2.00` → clamped | 1.0 (saturated) |
+
+#### Visual Representation
+
+```
+Effect Intensity (0-1)
+    ^
+1.0 |                    ************  (saturation)
+    |                  **
+    |                **
+0.5 |              **
+    |            **
+    |          **
+0.0 |**********                        (dead zone)
+    +---------------------------------> |Deviation|
+         0.00  0.05  0.10  0.15  0.20
+               ^           ^
+            minThresh   maxThresh
+```
+
+#### Why Two Thresholds (Not One)?
+
+| Approach | Behavior | Problem |
+|----------|----------|---------|
+| **Single threshold** | `if deviation > threshold then effect = 1` | Binary on/off, no progressive feedback |
+| **Single threshold + linear** | `effect = deviation × sensitivity` | No dead zone, no saturation |
+| **Min/Max thresholds** | Progressive between min and max | ✅ Dead zone + linear response + saturation |
+
+#### User-Controllable Parameters
+
+In AIRA, users can adjust these thresholds for each effect:
+
+**Understeer Effect:**
+- `SteeringEffectsUndersteerMinimumThreshold` (default: 0.05)
+- `SteeringEffectsUndersteerMaximumThreshold` (default: 0.15)
+
+**Oversteer Effect:**
+- `SteeringEffectsOversteerMinimumThreshold` (default: 0.05)
+- `SteeringEffectsOversteerMaximumThreshold` (default: 0.15)
+
+**Seat-of-Pants Effect:**
+- `SteeringEffectsSeatOfPantsMinimumThreshold` (default varies per algorithm)
+- `SteeringEffectsSeatOfPantsMaximumThreshold` (default varies per algorithm)
+
+#### Threshold Tuning Guidelines
+
+| Adjustment | Effect |
+|------------|--------|
+| **Increase minThreshold** | Larger dead zone, ignores more subtle slip |
+| **Decrease minThreshold** | More sensitive, may trigger on minor variations |
+| **Increase maxThreshold** | Slower ramp-up, full effect only at severe slip |
+| **Decrease maxThreshold** | Faster ramp-up, reaches full intensity sooner |
+| **Narrow range (min ≈ max)** | Sharp on/off behavior at threshold |
+| **Wide range (max >> min)** | Very gradual, progressive response |
+
+#### Code Implementation in AIRA
+
+```csharp
+// From SteeringEffects.cs UpdateEffects()
+
+// Calculate deviation from expected yaw rate
+var deviation = actualYawRate - expectedYawRate;
+var absDeviation = MathF.Abs(deviation);
+
+// Apply threshold system for understeer (deviation < 0)
+var understeerEffect = 0f;
+if ((deviation < 0f) && (absDeviation >= settings.SteeringEffectsUndersteerMinimumThreshold))
+{
+    understeerEffect = MathZ.InverseLerp(
+        settings.SteeringEffectsUndersteerMinimumThreshold,
+        settings.SteeringEffectsUndersteerMaximumThreshold,
+        absDeviation
+    );
+}
+
+// Apply speed gating
+UndersteerEffect = speedFade * understeerEffect;
+```
+
+#### Combined Effect: Threshold + Speed Gating
+
+The final effect intensity is the **product** of both processing stages:
+
+```
+finalEffect = speedFade × thresholdedEffect
+```
+
+This means:
+- At **low speed** (< 1 kph): Effect is always 0 regardless of deviation
+- At **high speed** with **small deviation**: Effect is 0 (dead zone)
+- At **high speed** with **medium deviation**: Effect scales linearly
+- At **high speed** with **large deviation**: Effect saturates at 1.0
+
+**Example Calculation:**
+
+Given:
+- Speed = 15 kph
+- Deviation = 0.10
+- minThreshold = 0.05
+- maxThreshold = 0.15
+
+```
+speedFade = smoothstep(1, 20, 15) = 0.843  (approximately)
+thresholdedEffect = inverseLerp(0.05, 0.15, 0.10) = 0.50
+finalEffect = 0.843 × 0.50 = 0.42
+```
+
+The understeer effect would be at **42% intensity** - partially gated by speed (not yet at 20 kph) and in the middle of the threshold range.
 
 ---
 
