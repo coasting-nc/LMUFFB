@@ -132,6 +132,11 @@ see README.md or visit:
 - FFB Tuning Recommendations: https://github.com/coasting-nc/LMUFFB/blob/main/docs/FFB%20Tuning%20Recommendations.md
 - Main Project Page: https://github.com/coasting-nc/LMUFFB
 
+CONTRIBUTING
+------------
+Want to contribute? See the step-by-step guide for contributors:
+docs/dev_docs/contribute_to_the_project/how_to_contribute_to_the_project.md
+
 
 ===============================================================================
 RFACTOR 2 COMPATIBILITY
