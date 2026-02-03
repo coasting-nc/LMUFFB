@@ -721,9 +721,11 @@ TODO:
 ## Prompt for code review (upcoming)
 
 Please perform a code review of the comulative changes from these commits:
+
 * c4879475bc38db54d4457282ff9d8599dedad0d1
 * fe1615a8b8707b9fcc2daa506057b7208055f1f5
-* ...
+* 9271836437e1bbd5d62b8c62f46dd0ee292d1d11
+* 1e5012b567dfe93367a3a99f3fda4b55e2e0ebec
 
 The changes were pushed incrementally with those commits.
 
@@ -737,7 +739,7 @@ For tips on how to see the diff of changes without errors, see the commands sugg
 This is the implementation plan that the changes in the commits were supposed to carry out: docs\dev_docs\implementation_plans\plan_split_test_ffb_engine.md
 
 
-Among the changes in the commits, there are also several temporary txt, log and ini  files (which will be deleted later) that were used for some aspects of the work, including tracking the original total number of tests (591) and their names, to make sure we didn't  delete any.
+Among the changes in the commits, there are also several temporary txt, log and ini  files (which have been deleted with the last commit) that were used for some aspects of the work, including tracking the original total number of tests (591) and their names, to make sure we didn't  delete any.
 
 Among the staged changes, there are also several .md files under gemini_chats\ , you should ignore those. You should also ignore this script: convert_chats_to_md.py
 
