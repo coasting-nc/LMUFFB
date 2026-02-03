@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.3] - 2026-02-03
+
+### Fixed
+- **Slope Detection Stability Fixes**:
+  - **Decay on Straight**: Implemented a decay mechanism that returns the slope to zero when steering movement is below a threshold. This eliminates the "sticky" understeer feel where the wheel would remain light after exiting a corner.
+  - **Configurability**: Added `slope_alpha_threshold` and `slope_decay_rate` parameters to allow user fine-tuning of stability vs. response time.
+  - **Confidence Gate**: Introduced an optional confidence-based grip scaling. The grip loss effect is now scaled by the magnitude of `dAlpha/dt`, automatically smoothing out random FFB jolts during low-intensity maneuvers.
+- **Physics Calculation Robustness**:
+  - Added protection against large telemetry discontinuities (e.g., jumps from high slip to zero) which previously could cause garbage derivatives and "FFB explosions."
+  - Improved Savitzky-Golay derivative calculations by enforcing a configurable minimum activity threshold (`m_slope_alpha_threshold`).
+
+### Added
+- **v0.7.3 Stability Controls**:
+  - **Alpha Threshold**: Minimum `dAlpha/dt` (rad/s) required to update the slope calculation.
+  - **Decay Rate**: Time constant for how fast the slope "forgets" the previous cornering state.
+  - **Confidence Gate Toggle**: Enable/Disable the steering-speed based confidence scaling.
+- **Verification Suite (v0.7.3)**:
+  - `test_slope_decay_on_straight`: Verifies that `m_slope_current` returns to zero after cornering.
+  - `test_slope_alpha_threshold_configurable`: Confirms the calculation only updates when steering movement is sufficient.
+  - `test_slope_confidence_gate`: Validates the mathematical scaling of the grip effect based on `dAlpha/dt`.
+  - `test_slope_stability_config_persistence`: Ensures new parameters are correctly saved to `config.ini` and presets.
+  - `test_slope_no_understeer_on_straight_v073`: End-to-end physics test confirming zero force reduction when driving straight after a slide.
+  - `test_slope_decay_rate_boundaries`: Verifies the impact of different decay rates on recovery speed.
+  - `test_slope_alpha_threshold_validation`: Conforms that out-of-range parameters are clamped to safe defaults during loading.
+
+### Changed
+- **Config Persistence Logic**: Updated `Config::Save`, `Config::Load`, and `Preset` structures to include the new stability parameters, maintaining full backward compatibility.
+- **GUI Organization**: Grouped the new stability controls under a dedicated "Stability Fixes (v0.7.3)" sub-header within the Physics section for better discoverability.
+
 ## [0.7.2] - 2026-02-03
 
 ### Added

@@ -456,19 +456,26 @@ engine.m_slope_detection_enabled = true;
 - [ ] Update `docs/Slope_Detection_Guide.md` with new parameters
 - [ ] Update this plan with "Implementation Notes" section
 
-### 8.4 Implementation Notes (To Be Updated After Implementation)
+### 8.4 Implementation Notes
 
 **Unforeseen Issues:**
-- *(To be filled in during implementation)*
+- **Compiler Header Sync (MSVC):** Encountered a persistent build error (`error C2039: 'm_slope_alpha_threshold': is not a member of 'FFBEngine'`) despite the member being present in the header. This required a `--clean-first` build to force the compiler to correctly synchronize the pre-compiled headers/object files.
+- **Telemetry Discontinuity in Tests:** In `test_slope_decay_on_straight`, the sudden jump from 1.2G cornering to 0G straight-line telemetry created a massive derivative spike in the Savitzky-Golay filter. This spike would sometimes overwrite the slope with a "garbage" value right before the decay phase started.
+- **Test Reference Errors:** Initial test implementations used non-existent or refactored methods like `Config::SavePreset` and `Config::ValidateSettings`.
 
 **Plan Deviations:**
-- *(To be filled in during implementation)*
+- **Config Testing Strategy:** Instead of using non-existent `SavePreset` methods, I modified the persistence tests to use `Config::Save` and `Config::Load` with temporary local filenames (`test_stability.ini`, `test_val.ini`). This more accurately tests the production persistence pipeline.
+- **Validation Trigger:** Triggered the `Config::Load` validation logic by performing a save-load round-trip in the validation tests, rather than calling a standalone validation function which was internal to the loader.
+- **Buffer Management in Tests:** Added explicit buffer clears (`m_slope_buffer_count = 0`) during telemetry transitions in tests to ensure transition spikes didn't contaminate decay measurements.
 
-**Challenges:**
-- *(To be filled in during implementation)*
+**Challenges Encountered:**
+- **Savitzky-Golay Settling Time:** Ensuring the SG filter had enough frames to "see" the derivative change while also allowing enough frames for the 5.0/s decay to be statistically significant required careful adjustment of frame counts in the tests (increasing from 100 to 150 frames).
+- **Persistence Verification:** Verifying the boolean `slope_confidence_enabled` required careful attention in the custom `.ini` parser to ensure "1" was correctly interpreted as `true`.
 
-**Recommendations for Future Work:**
-- *(To be filled in during implementation)*
+**Recommendations for Future Plans:**
+- **Standardize Test Filenames:** Future plans should explicitly state that persistence tests should use unique, non-user filenames (e.g., `test_sandbox.ini`) to avoid side effects.
+- **Transition Buffer Logic:** When testing derivative-based features like Slope Detection, the plan should always include a "Buffer Reset" step when telemetry parameters change abruptly.
+- **PCH Awareness:** Include a checklist item for "Clean Build" if header changes aren't being reflected in CI/local builds.
 
 ---
 

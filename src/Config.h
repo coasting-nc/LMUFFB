@@ -107,6 +107,11 @@ struct Preset {
     float slope_negative_threshold = -0.3f;  // Changed from -0.1 (later trigger)
     float slope_smoothing_tau = 0.04f;       // Changed from 0.02 (smoother transitions)
 
+    // v0.7.3: Slope detection stability fixes
+    float slope_alpha_threshold = 0.02f;
+    float slope_decay_rate = 5.0f;
+    bool slope_confidence_enabled = true;
+
     // 2. Constructors
     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin) {}
     Preset() : name("Unnamed"), is_builtin(false) {} // Default constructor for file loading
@@ -188,6 +193,13 @@ struct Preset {
         slope_sensitivity = sens;
         slope_negative_threshold = thresh;
         slope_smoothing_tau = tau;
+        return *this;
+    }
+
+    Preset& SetSlopeStability(float alpha_thresh = 0.02f, float decay = 5.0f, bool conf = true) {
+        slope_alpha_threshold = alpha_thresh;
+        slope_decay_rate = decay;
+        slope_confidence_enabled = conf;
         return *this;
     }
 
@@ -281,6 +293,11 @@ struct Preset {
         engine.m_slope_sensitivity = slope_sensitivity;
         engine.m_slope_negative_threshold = slope_negative_threshold;
         engine.m_slope_smoothing_tau = slope_smoothing_tau;
+
+        // v0.7.3: Slope stability fixes
+        engine.m_slope_alpha_threshold = slope_alpha_threshold;
+        engine.m_slope_decay_rate = slope_decay_rate;
+        engine.m_slope_confidence_enabled = slope_confidence_enabled;
     }
 
     // NEW: Capture current engine state into this preset
@@ -351,6 +368,11 @@ struct Preset {
         slope_sensitivity = engine.m_slope_sensitivity;
         slope_negative_threshold = engine.m_slope_negative_threshold;
         slope_smoothing_tau = engine.m_slope_smoothing_tau;
+
+        // v0.7.3: Slope stability fixes
+        slope_alpha_threshold = engine.m_slope_alpha_threshold;
+        slope_decay_rate = engine.m_slope_decay_rate;
+        slope_confidence_enabled = engine.m_slope_confidence_enabled;
     }
 };
 

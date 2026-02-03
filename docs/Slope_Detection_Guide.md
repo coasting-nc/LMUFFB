@@ -1,8 +1,8 @@
 # Slope Detection Algorithm - Technical Guide
 
-**Version:** 0.7.1  
+**Version:** 0.7.3  
 **Status:** Stable / Recommended  
-**Last Updated:** February 2, 2026
+**Last Updated:** February 3, 2026
 
 ---
 
@@ -21,7 +21,7 @@
 
 ## Overview
 
-**Slope Detection** is an adaptive algorithm in lmuFFB v0.7.1 that dynamically estimates tire grip by monitoring the **rate of change** (slope) of the tire's performance curve in real-time, rather than using static thresholds.
+**Slope Detection** is an adaptive algorithm in lmuFFB v0.7.3 that dynamically estimates tire grip by monitoring the **rate of change** (slope) of the tire's performance curve in real-time, rather than using static thresholds.
 
 **Key Benefits:**
 - 🎯 **Adaptive** - Automatically adjusts to different tire compounds, temperatures, and wear states
@@ -239,6 +239,79 @@ Smoothed Output = Previous Output + α × (New Grip Factor - Previous Output)
 
 ---
 
+### v0.7.3 Stability Fixes
+
+These parameters address the "sticky understeer" and oscillation issues from v0.7.0-0.7.2.
+
+#### Alpha Threshold
+**Range:** 0.001 - 0.100  
+**Default:** 0.020  
+**Unit:** rad/s (steering rate)
+
+**What it does:** Minimum change in slip angle (dAlpha/dt) required to calculate the slope. Below this threshold, the slope **decays toward zero** instead of being held constant.
+
+**Effect:**
+- **Higher values (0.05+):** More stable on straights, slower response to corner entry
+- **Lower values (0.01-):** Faster response, but may trigger on minor steering inputs
+- **Default (0.02):** Balanced - filters out noise while remaining responsive
+
+**Why this matters:** In v0.7.0-0.7.2, if you cornered hard then straightened the wheel, the slope value would "stick" at its last calculated value, making the understeer effect persist on straights. Now it smoothly fades away.
+
+**Tuning Guidance:**
+- Increase if you feel understeer on straights or during gentle lane changes
+- Decrease if the wheel doesn't lighten quickly enough when approaching the limit
+
+---
+
+#### Decay Rate
+**Range:** 0.5 - 20.0  
+**Default:** 5.0  
+**Unit:** 1/s (inverse seconds)
+
+**What it does:** Controls how fast the slope returns to zero when you're not actively cornering (i.e., when dAlpha/dt is below the threshold).
+
+**Effect:**
+```
+Decay Rate =  5.0  →  ~200ms to reach neutral (Default)
+Decay Rate = 10.0  →  ~100ms to reach neutral (Fast recovery)
+Decay Rate =  2.0  →  ~500ms to reach neutral (Slow fade)
+```
+
+**Why this matters:** After exiting a corner, you want the "light wheel" feeling to fade quickly so straights feel normal again. Too slow = sticky understeer. Too fast = abrupt transitions.
+
+**Tuning Guidance:**
+- Increase (10-15) if you want instant recovery when straightening the wheel
+- Decrease (2-3) if transitions feel too sudden or artificial
+- Default (5.0) provides natural fade that matches tire physics
+
+---
+
+#### Confidence Gate
+**Type:** Toggle (ON / OFF)  
+**Default:** ON  
+
+**What it does:** Scales the grip loss effect by the magnitude of dAlpha/dt (steering activity). When dAlpha/dt is low, the algorithm has low "confidence" in its slope calculation, so it reduces the effect.
+
+**Mathematical Scaling:**
+```
+Confidence = min(1.0, |dAlpha/dt| / 0.1)
+
+If dAlpha/dt = 0.02  →  Confidence = 20%  →  Only 20% of grip loss applied
+If dAlpha/dt = 0.10+ →  Confidence = 100% →  Full grip loss applied
+```
+
+**Effect:**
+- **ON (Default):** Smooth, progressive transitions. Low-speed maneuvering doesn't trigger false alarms.
+- **OFF:** Previous behavior - full effect always applies when slope is negative. Can cause jolts during parking lot speeds or minor corrections.
+
+**Why this matters:** Prevents random FFB jolts when driving slowly or making tiny steering adjustments (e.g., highway driving). The effect only reaches full strength during active cornering.
+
+**Tuning Guidance:**
+- **Keep ON** unless you specifically want the old binary behavior
+- Turn OFF if you want maximum sensitivity (e.g., autocross where every mm of slip matters)
+
+---
+
 ### Live Diagnostics
 ```
 Live Slope: 0.142 | Grip: 100% | Cur derivative: -0.15
@@ -381,11 +454,14 @@ Window = 31 (39ms latency):
 
 ### Quick Start (Recommended Settings)
 
-**For Most Users:**
+**For Most Users (v0.7.3 Recommended):**
 ```
 Enable Slope Detection: ON
 Filter Window: 15
-Sensitivity: 0.5 (Default)
+Sensitivity: 0.5
+Alpha Threshold: 0.02 (Default)
+Decay Rate: 5.0 (Default)
+Confidence Gate: ON (Default)
 ```
 
 Then adjust "Understeer Effect" slider (in the main Front Axle section) to taste:
@@ -533,15 +609,14 @@ Gear-driven wheels benefit from more smoothing to hide mechanical noise.
 
 ### "Slope goes negative randomly even on straights"
 
-**Cause:** Measurement noise, possibly from:
-- Curbs/bumps
-- Flatspotted tires
-- Very low downforce setups
+**Cause (v0.7.0-0.7.2):** Measurement noise from curbs, bumps, or flatspotted tires.
 
-**Solution:**
-1. Increase Filter Window to 25+
-2. Increase Slope Threshold (make more negative): -0.1 → -0.15
-3. Consider using static threshold method for this car/track
+**Fixed in v0.7.3:** The Alpha Threshold and Decay Rate parameters now prevent this. The slope automatically decays to zero when steering input is minimal.
+
+**If still experiencing issues:**
+1. Increase Alpha Threshold: 0.02 → 0.03 (requires more steering activity)
+2. Increase Filter Window: 15 → 21 (more smoothing)
+3. Verify Confidence Gate is ON (should filter out low-confidence triggers)
 
 ---
 
@@ -739,7 +814,7 @@ Slope Detection represents a significant advancement in FFB grip estimation, mov
 
 ---
 
-**Document Version:** 1.1 (v0.7.1)
-**lmuFFB Version:** 0.7.1  
+**Document Version:** 1.2 (v0.7.3)
+**lmuFFB Version:** 0.7.3  
 **Author:** lmuFFB Development Team  
 **License:** This document is distributed with lmuFFB under the same MIT license.

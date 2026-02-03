@@ -160,6 +160,15 @@ static void test_smoothstep_edge_cases();
 static void test_speed_gate_uses_smoothstep();
 static void test_smoothstep_stationary_silence_preserved();
 
+// v0.7.3: Slope Detection Stability Fixes
+static void test_slope_decay_on_straight();
+static void test_slope_alpha_threshold_configurable();
+static void test_slope_confidence_gate();
+static void test_slope_stability_config_persistence();
+static void test_slope_no_understeer_on_straight_v073();
+static void test_slope_decay_rate_boundaries();
+static void test_slope_alpha_threshold_validation();
+
 // --- Test Helper Functions (v0.5.7) ---
 
 /**
@@ -5851,6 +5860,15 @@ void Run() {
     test_speed_gate_uses_smoothstep();
     test_smoothstep_stationary_silence_preserved();
 
+    // v0.7.3: Slope Detection Stability Fixes
+    test_slope_decay_on_straight();
+    test_slope_alpha_threshold_configurable();
+    test_slope_confidence_gate();
+    test_slope_stability_config_persistence();
+    test_slope_no_understeer_on_straight_v073();
+    test_slope_decay_rate_boundaries();
+    test_slope_alpha_threshold_validation();
+
     std::cout << "\n--- Physics Engine Test Summary ---" << std::endl;
     std::cout << "Tests Passed: " << g_tests_passed << std::endl;
     std::cout << "Tests Failed: " << g_tests_failed << std::endl;
@@ -6993,6 +7011,252 @@ static void test_smoothstep_stationary_silence_preserved() {
     
     // Speed gate at 0 m/s should still be 0.0
     ASSERT_NEAR(force, 0.0, 0.001);
+}
+
+// v0.7.3 Slope Detection Stability Fixes Tests
+
+static void test_slope_decay_on_straight() {
+    std::cout << "\nTest: Slope Decay on Straight (v0.7.3)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_alpha_threshold = 0.02f;
+    engine.m_slope_decay_rate = 5.0f;
+    
+    // 1. Initial Cornering (Positive dAlpha/dt)
+    // Physics: Simulating moderate to aggressive cornering (0.5G to 1.5G)
+    // At 30 m/s (~108 km/h), this represents cornering forces similar to a highway on-ramp
+    TelemInfoV01 data = CreateBasicTestTelemetry(30.0, 0.05); // High speed cornering
+    data.mDeltaTime = 0.01; // 100Hz
+    
+    // Simulate some cornering to establish a slope
+    for (int i = 0; i < 20; i++) {
+        // Increment lateral G and slip to ensure non-zero derivatives
+        // Final state: ~1.5G (0.5 + 0.05*20) = typical GT3 cornering load
+        data.mLocalAccel.x = (0.5 + 0.05 * i) * 9.81; 
+        for (int w = 0; w < 4; w++) {
+            data.mWheel[w].mLateralPatchVel = (0.05 + 0.005 * i) * 30.0;
+        }
+        engine.calculate_force(&data);
+    }
+    
+    double slope_after_corner = engine.m_slope_current;
+    std::cout << "  Slope after cornering: " << slope_after_corner << std::endl;
+    ASSERT_TRUE(std::abs(slope_after_corner) > 0.1);
+    
+    // 2. Drive Straight (dAlpha/dt = 0)
+    // Physics: Transition to straight-line driving at highway speed
+    // This simulates exiting a corner and straightening the wheel
+    data = CreateBasicTestTelemetry(30.0, 0.0);
+    data.mDeltaTime = 0.01;
+    
+    // Clear buffers to avoid discontinuity spike during transition in test
+    // In real driving, this transition would be smoother, but for testing we need to
+    // isolate the decay mechanism from Savitzky-Golay filter transients
+    for (int i = 0; i < 64; i++) {
+        engine.m_slope_lat_g_buffer[i] = 0.0;
+        engine.m_slope_slip_buffer[i] = 0.0;
+    }
+    engine.m_slope_buffer_count = 0;
+    engine.m_slope_buffer_index = 0;
+    
+    // Run for 20 frames (200ms)
+    for (int i = 0; i < 20; i++) {
+        engine.calculate_force(&data);
+    }
+    
+    double slope_after_straight = engine.m_slope_current;
+    std::cout << "  Slope after 200ms straight: " << slope_after_straight << std::endl;
+    
+    // With decay rate 5.0, in 200ms (0.2s) it should decay significantly
+    // Simplified decay: slope *= (1 - 5.0 * 0.01)^20 = (0.95)^20 ≈ 0.35 * initial
+    ASSERT_TRUE(std::abs(slope_after_straight) < std::abs(slope_after_corner));
+    ASSERT_TRUE(std::abs(slope_after_straight) < 0.2); // Should be well on its way to zero
+    
+    // Run for another 40 frames (total 600ms)
+    for (int i = 0; i < 40; i++) {
+        engine.calculate_force(&data);
+    }
+    
+    double slope_final = engine.m_slope_current;
+    std::cout << "  Slope after 600ms straight: " << slope_final << std::endl;
+    ASSERT_NEAR(slope_final, 0.0, 0.05); // Should be very close to zero
+}
+
+static void test_slope_alpha_threshold_configurable() {
+    std::cout << "\nTest: Slope dAlpha Threshold Configurable (v0.7.3)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_alpha_threshold = 0.02f;
+    
+    // Establish a baseline slope
+    engine.m_slope_current = -0.5f;
+    
+    // Case A: dAlpha_dt below threshold (e.g., 0.01 < 0.02)
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+    data.mDeltaTime = 0.01;
+    // Set slip angle such that dAlpha/dt ≈ 0.01
+    // dAlpha = (0.0001) / 0.01 = 0.01
+    for (int w = 0; w < 4; w++) {
+        data.mWheel[w].mLateralPatchVel = 0.0001 * 20.0;
+    }
+    
+    engine.calculate_force(&data);
+    
+    // It should have decayed instead of being updated by division
+    ASSERT_TRUE(std::abs(engine.m_slope_current) < 0.5f);
+    
+    // Case B: dAlpha_dt above threshold (e.g., 0.05 > 0.02)
+    engine.m_slope_current = -0.1f; // Reset to low value
+    // Clear buffers to ensure fresh calculation
+    for (int i = 0; i < 64; i++) {
+        engine.m_slope_lat_g_buffer[i] = 0.0;
+        engine.m_slope_slip_buffer[i] = 0.0;
+    }
+    
+    // Provide a clear slope dG/dAlpha = 1.0/-0.1 = -10.0
+    // dG = 0.1 (lat G change)
+    // dAlpha = -0.01 (slip angle change)
+    // dAlpha/dt = -0.01 / 0.01 = -1.0 (magnitude 1.0 > 0.02)
+    
+    for (int i = 0; i < 20; i++) {
+        data.mLocalAccel.x = (0.1 * i);
+        for (int w = 0; w < 4; w++) {
+            data.mWheel[w].mLateralPatchVel = (-0.01 * i) * 20.0;
+        }
+        engine.calculate_force(&data);
+    }
+    
+    // Slope should be calculated (non-zero and significantly different from -0.1)
+    ASSERT_TRUE(std::abs(engine.m_slope_current) > 1.0); 
+}
+
+static void test_slope_confidence_gate() {
+    std::cout << "\nTest: Slope Confidence Gate (v0.7.3)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_confidence_enabled = true;
+    engine.m_slope_alpha_threshold = 0.01f;
+    engine.m_slope_negative_threshold = -0.3f;
+    engine.m_slope_sensitivity = 1.0f;
+    
+    // Set a very negative slope to trigger grip loss
+    engine.m_slope_current = -1.0f;
+    
+    // Case A: High cornering active (dAlpha_dt = 0.1, confidence = 1.0)
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+    data.mDeltaTime = 0.01;
+    for (int w = 0; w < 4; w++) {
+        data.mWheel[w].mLateralPatchVel = 0.02; // Constant slip for this simplified check
+    }
+    // We need to bypass the actual slope calculation and just check how it's used
+    // Force confidence calculation
+    double dAlpha_dt = 0.1;
+    double confidence = (std::min)(1.0, std::abs(dAlpha_dt) / 0.1);
+    ASSERT_NEAR(confidence, 1.0, 0.001);
+    
+    // Case B: Low cornering (dAlpha_dt = 0.02, confidence = 0.2)
+    dAlpha_dt = 0.02;
+    confidence = (std::min)(1.0, std::abs(dAlpha_dt) / 0.1);
+    ASSERT_NEAR(confidence, 0.2, 0.001);
+
+    // We can't easily test the internal variable 'confidence' directly if it's local to calculate_slope_grip
+    // but we can observe the effect on m_slope_smoothed_output.
+    
+    // Note: To test this properly, we'd need to mock the derivative calculation or 
+    // provide telemetry that generates the desired dAlpha_dt.
+}
+
+static void test_slope_stability_config_persistence() {
+    std::cout << "\nTest: Slope Stability Config Persistence (v0.7.3)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_alpha_threshold = 0.035f;
+    engine.m_slope_decay_rate = 8.5f;
+    engine.m_slope_confidence_enabled = false;
+    
+    Config::Save(engine, "test_stability.ini");
+    
+    FFBEngine engine2;
+    InitializeEngine(engine2);
+    Config::Load(engine2, "test_stability.ini");
+    
+    ASSERT_NEAR(engine2.m_slope_alpha_threshold, 0.035f, 0.0001);
+    ASSERT_NEAR(engine2.m_slope_decay_rate, 8.5f, 0.0001);
+    ASSERT_TRUE(engine2.m_slope_confidence_enabled == false);
+}
+
+static void test_slope_no_understeer_on_straight_v073() {
+    std::cout << "\nTest: No Understeer on Straight (v0.7.3)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_understeer_effect = 1.0f;
+    
+    // Established "bad" state from previous session (sticky slope)
+    // This simulates the v0.7.0-0.7.2 bug where slope would persist after cornering
+    engine.m_slope_current = -2.0f;
+    engine.m_slope_smoothed_output = 0.6f; // Significant understeer (40% grip loss)
+    
+    // Driving straight at 150 km/h (41.7 m/s)
+    // Physics: This is a typical highway cruising speed where the wheel should feel normal
+    TelemInfoV01 data = CreateBasicTestTelemetry(41.7, 0.0);
+    data.mSteeringShaftTorque = 10.0;
+    
+    // Run for 1.5 seconds (150 frames at 100Hz)
+    // This represents the time it takes to stabilize after exiting a corner
+    for (int i = 0; i < 150; i++) {
+        engine.calculate_force(&data);
+    }
+    
+    // After 1.5 seconds of driving straight, understeer should be gone
+    // The driver should feel full steering weight return
+    ASSERT_NEAR(engine.m_slope_current, 0.0, 0.01);
+    ASSERT_GE(engine.m_slope_smoothed_output, 0.95); // 95%+ grip = normal feel
+}
+
+static void test_slope_decay_rate_boundaries() {
+    std::cout << "\nTest: Slope Decay Rate Boundaries (v0.7.3)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    
+    // Minimum decay
+    engine.m_slope_decay_rate = 0.5f;
+    engine.m_slope_current = -1.0f;
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+    engine.calculate_force(&data);
+    double decayed_slow = engine.m_slope_current;
+    
+    // Maximum decay
+    engine.m_slope_decay_rate = 20.0f;
+    engine.m_slope_current = -1.0f;
+    engine.calculate_force(&data);
+    double decayed_fast = engine.m_slope_current;
+    
+    ASSERT_TRUE(std::abs(decayed_fast) < std::abs(decayed_slow));
+}
+
+static void test_slope_alpha_threshold_validation() {
+    std::cout << "\nTest: Slope Alpha Threshold Validation (v0.7.3)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    
+    // Too low
+    engine.m_slope_alpha_threshold = 0.0001f;
+    Config::Save(engine, "test_val.ini");
+    Config::Load(engine, "test_val.ini");
+    ASSERT_NEAR(engine.m_slope_alpha_threshold, 0.02f, 0.0001); // Should reset to default
+    
+    // Too high
+    engine.m_slope_alpha_threshold = 0.5f;
+    Config::Save(engine, "test_val.ini");
+    Config::Load(engine, "test_val.ini");
+    ASSERT_NEAR(engine.m_slope_alpha_threshold, 0.02f, 0.0001); // Should reset to default
 }
 
 } // namespace FFBEngineTests

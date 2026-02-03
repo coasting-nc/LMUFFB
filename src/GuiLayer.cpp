@@ -1175,6 +1175,24 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                 FloatSetting("  Output Smoothing", &engine.m_slope_smoothing_tau, 0.005f, 0.100f, "%.3f s",
                     "Time constant for grip factor smoothing.\n"
                     "Prevents abrupt FFB changes.");
+                
+                // v0.7.3: Stability Fixes
+                ImGui::Separator();
+                ImGui::Text("Stability Fixes (v0.7.3)");
+                ImGui::NextColumn(); ImGui::NextColumn();
+                FloatSetting("  Alpha Threshold", &engine.m_slope_alpha_threshold, 0.001f, 0.100f, "%.3f",
+                    "Minimum change in slip angle (dAlpha/dt) to calculate slope.\n"
+                    "Larger = More stable on straights, but slower response.\n"
+                    "Default: 0.020");
+                FloatSetting("  Decay Rate", &engine.m_slope_decay_rate, 0.5f, 20.0f, "%.1f",
+                    "How fast the slope returns to zero when driving straight.\n"
+                    "Prevents 'sticky' understeer feel after a corner.\n"
+                    "Default: 5.0");
+                BoolSetting("  Confidence Gate", &engine.m_slope_confidence_enabled,
+                    "Scales the grip loss effect by how 'certain' the calculation is.\n"
+                    "Uses dAlpha/dt to determine confidence.\n"
+                    "Prevents random FFB jolts when slip is low.");
+                
                 ImGui::TreePop();
             } else {
                 ImGui::NextColumn(); ImGui::NextColumn();

@@ -312,12 +312,17 @@ public:
     float m_road_fallback_scale = 0.05f;
     bool m_understeer_affects_sop = false;
     
-    // ===== SLOPE DETECTION (v0.7.0 → v0.7.1 defaults) =====
+    // ===== SLOPE DETECTION (v0.7.0 → v0.7.3 stability fixes) =====
     bool m_slope_detection_enabled = false;
     int m_slope_sg_window = 15;
     float m_slope_sensitivity = 0.5f;            // v0.7.1: Reduced from 1.0 (less aggressive)
     float m_slope_negative_threshold = -0.3f;    // v0.7.1: Changed from -0.1 (later trigger)
     float m_slope_smoothing_tau = 0.04f;         // v0.7.1: Changed from 0.02 (smoother transitions)
+
+    // NEW v0.7.3: Stability fixes
+    float m_slope_alpha_threshold = 0.02f;    // NEW: Minimum dAlpha/dt to calculate slope
+    float m_slope_decay_rate = 5.0f;          // NEW: Decay rate toward 0 when not cornering
+    bool m_slope_confidence_enabled = true;   // NEW: Enable confidence-based grip scaling
 
     // Signal Diagnostics
     double m_debug_freq = 0.0; // Estimated frequency for GUI
@@ -836,18 +841,29 @@ public:
 
         // 3. Estimate Slope (dG/dAlpha)
         // Handle small dAlpha/dt to avoid noise/division by zero
-        if (std::abs(dAlpha_dt) > 0.001) {
+        // FIX 1: Configurable threshold (was hard-coded 0.001)
+        if (std::abs(dAlpha_dt) > (double)m_slope_alpha_threshold) {
             m_slope_current = dG_dt / dAlpha_dt;
+        } else {
+            // FIX 2: Decay slope toward 0 when not actively cornering
+            // This prevents "sticky" understeer on straights
+            m_slope_current += (double)m_slope_decay_rate * dt * (0.0 - m_slope_current);
         }
-        // else: If Alpha isn't changing, keep previous slope value (don't update).
-        // This allows noise rejection: with constant slip, dG/dt from SG filter ~ 0,
-        // and we don't want to overwrite with a meaningless value.
 
         double current_grip_factor = 1.0;
+
+        // FIX 3: Confidence-based grip scaling (optional)
+        double confidence = 1.0;
+        if (m_slope_confidence_enabled) {
+            confidence = std::abs(dAlpha_dt) / 0.1; // Scale: 0 to 1
+            confidence = (std::min)(1.0, confidence);
+        }
+
         if (m_slope_current < (double)m_slope_negative_threshold) {
             // Slope is negative -> tire is sliding
             double excess = (double)m_slope_negative_threshold - m_slope_current;
-            current_grip_factor = 1.0 - (excess * 0.1 * (double)m_slope_sensitivity);
+            double raw_loss = excess * 0.1 * (double)m_slope_sensitivity;
+            current_grip_factor = 1.0 - (raw_loss * confidence); // Apply confidence
         }
 
         // Apply Floor (Safety)

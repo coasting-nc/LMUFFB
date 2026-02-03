@@ -7,6 +7,30 @@ This document contains all version release posts by ErwinMoss from the [url=http
 ---
 
 [size=5][b]February 3, 2026[/b][/size]
+[b]Version 0.7.3 - Slope Stability Fixes[/b]
+
+[b]New release[/b] (0.7.3): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]Understeer Stability Overhaul[/b]: Resolved issues with "sticky" understeer on straights and random FFB jolts when using Slope Detection. The algorithm now intelligently decays the slip-slope toward zero when not cornering and uses a configurable confidence gate based on steering speed.
+[*][b]Oscillation Prevention[/b]: Introduced a new "Alpha Threshold" parameter to prevent the slope calculation from reacting to tiny, noisy telemetry fluctuations during straight-line driving.
+[/list]
+
+[b]Added[/b]
+[list]
+[*][b]Advanced Stability Controls[/b]: Added new Sliders to the GUI for fine-tuning Slope Detection:
+    [list]
+    [*][b]Alpha Threshold[/b]: Controls the sensitivity to steering changes.
+    [*][b]Decay Rate[/b]: Controls how fast the effect fades after a corner.
+    [*][b]Confidence Gate[/b]: Automatically smooths out jolts during low-intensity maneuvers.
+    [/list]
+[*][b]Stability Verification Suite[/b]: Added 7 new automated tests to ensure slope detection remains stable across various driving scenarios (corner-to-straight transitions, noise rejection, and persistence).
+[/list]
+
+---
+
+[size=5][b]February 3, 2026[/b][/size]
 [b]Version 0.7.2 - Smooth Transitions[/b]
 
 [b]New release[/b] (0.7.2): https://github.com/coasting-nc/LMUFFB/releases

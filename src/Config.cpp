@@ -730,6 +730,9 @@ void Config::LoadPresets() {
                         else if (key == "slope_sensitivity") current_preset.slope_sensitivity = std::stof(value);
                         else if (key == "slope_negative_threshold") current_preset.slope_negative_threshold = std::stof(value);
                         else if (key == "slope_smoothing_tau") current_preset.slope_smoothing_tau = std::stof(value);
+                        else if (key == "slope_alpha_threshold") current_preset.slope_alpha_threshold = std::stof(value);
+                        else if (key == "slope_decay_rate") current_preset.slope_decay_rate = std::stof(value);
+                        else if (key == "slope_confidence_enabled") current_preset.slope_confidence_enabled = (value == "1");
                         else if (key == "steering_shaft_smoothing") current_preset.steering_shaft_smoothing = std::stof(value);
                         else if (key == "gyro_smoothing_factor") current_preset.gyro_smoothing = std::stof(value);
                         else if (key == "yaw_accel_smoothing") current_preset.yaw_smoothing = std::stof(value);
@@ -845,6 +848,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "slope_sensitivity=" << engine.m_slope_sensitivity << "\n";
         file << "slope_negative_threshold=" << engine.m_slope_negative_threshold << "\n";
         file << "slope_smoothing_tau=" << engine.m_slope_smoothing_tau << "\n";
+        file << "slope_alpha_threshold=" << engine.m_slope_alpha_threshold << "\n";
+        file << "slope_decay_rate=" << engine.m_slope_decay_rate << "\n";
+        file << "slope_confidence_enabled=" << engine.m_slope_confidence_enabled << "\n";
 
         file << "\n; --- Braking & Lockup ---\n";
         file << "lockup_enabled=" << engine.m_lockup_enabled << "\n";
@@ -915,6 +921,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
                 file << "slope_sensitivity=" << p.slope_sensitivity << "\n";
                 file << "slope_negative_threshold=" << p.slope_negative_threshold << "\n";
                 file << "slope_smoothing_tau=" << p.slope_smoothing_tau << "\n";
+                file << "slope_alpha_threshold=" << p.slope_alpha_threshold << "\n";
+                file << "slope_decay_rate=" << p.slope_decay_rate << "\n";
+                file << "slope_confidence_enabled=" << p.slope_confidence_enabled << "\n";
 
                 file << "slip_angle_smoothing=" << p.slip_smoothing << "\n";
                 file << "chassis_inertia_smoothing=" << p.chassis_smoothing << "\n";
@@ -1062,6 +1071,9 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "slope_sensitivity") engine.m_slope_sensitivity = std::stof(value);
                     else if (key == "slope_negative_threshold") engine.m_slope_negative_threshold = std::stof(value);
                     else if (key == "slope_smoothing_tau") engine.m_slope_smoothing_tau = std::stof(value);
+                    else if (key == "slope_alpha_threshold") engine.m_slope_alpha_threshold = std::stof(value);
+                    else if (key == "slope_decay_rate") engine.m_slope_decay_rate = std::stof(value);
+                    else if (key == "slope_confidence_enabled") engine.m_slope_confidence_enabled = (value == "1");
                     else if (key == "steering_shaft_smoothing") engine.m_steering_shaft_smoothing = std::stof(value);
                     else if (key == "gyro_smoothing_factor") engine.m_gyro_smoothing = std::stof(value);
                     else if (key == "yaw_accel_smoothing") engine.m_yaw_accel_smoothing = std::stof(value);
@@ -1096,6 +1108,18 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     if (engine.m_slope_sensitivity < 0.1f) engine.m_slope_sensitivity = 0.1f;
     if (engine.m_slope_sensitivity > 10.0f) engine.m_slope_sensitivity = 10.0f;
     if (engine.m_slope_smoothing_tau < 0.001f) engine.m_slope_smoothing_tau = 0.04f;
+    
+    // v0.7.3: Slope stability parameter validation
+    if (engine.m_slope_alpha_threshold < 0.001f || engine.m_slope_alpha_threshold > 0.1f) {
+        std::cerr << "[Config] Invalid slope_alpha_threshold (" << engine.m_slope_alpha_threshold 
+                  << "), resetting to 0.02f" << std::endl;
+        engine.m_slope_alpha_threshold = 0.02f; // Safe default
+    }
+    if (engine.m_slope_decay_rate < 0.5f || engine.m_slope_decay_rate > 20.0f) {
+        std::cerr << "[Config] Invalid slope_decay_rate (" << engine.m_slope_decay_rate 
+                  << "), resetting to 5.0f" << std::endl;
+        engine.m_slope_decay_rate = 5.0f; // Safe default
+    }
     
     // v0.6.20: Safety Validation - Clamp Advanced Braking Parameters to Valid Ranges (Expanded)
     if (engine.m_lockup_gamma < 0.1f || engine.m_lockup_gamma > 3.0f) {
