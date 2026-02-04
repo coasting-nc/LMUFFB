@@ -120,6 +120,7 @@ void Run_CorePhysics();
 void Run_SlipGrip();
 void Run_Understeer();
 void Run_SlopeDetection();
+void Run_RoadTexture();
 void Run_Texture();
 void Run_LockupBraking();
 void Run_YawGyro();

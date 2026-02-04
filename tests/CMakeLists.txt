@@ -18,6 +18,7 @@ set(TEST_SOURCES
     test_ffb_yaw_gyro.cpp
     test_ffb_coordinates.cpp
     test_ffb_features.cpp
+    test_ffb_road_texture.cpp
     test_ffb_lockup_braking.cpp
     test_ffb_config.cpp
     test_ffb_slip_grip.cpp

@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.7.7] - 2026-02-04
+### Changed
+- **Test Suite Refactoring**:
+  - Split `test_ffb_features.cpp` further by extracting road texture tests.
+  - **New File**: `test_ffb_road_texture.cpp` containing 8 tests:
+    - Road texture regression tests (Toggle, Teleport, Persistence)
+    - Suspension bottoming tests (Scrape, Spike, Universal)
+    - Scrub drag fade tests
+  - **Verification**: All 590 tests passing using the new `Run_RoadTexture()` runner.
+  - `test_ffb_features.cpp` now focuses on Integration, Speed Gate, and Notch Filter tests.
+
 ## [0.7.6] - 2026-02-04
 ### Changed
 - **Test Suite Refactoring**:

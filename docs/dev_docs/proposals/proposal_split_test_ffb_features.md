@@ -1,8 +1,8 @@
 # Proposal: Split `test_ffb_features.cpp` Into Focused Test Files
 
-**Status:** Proposal  
-**Target Version:** Future (0.8.x or later)  
-**Date Created:** 2026-02-04  
+**Status:** In Progress
+**Target Version:** 0.7.6+
+**Date Created:** 2026-02-04
 **Complexity:** Medium  
 **Estimated Effort:** 4-6 hours
 
@@ -352,16 +352,16 @@ Example: If current is 0.7.5, increment to 0.7.6
 ## Deliverables
 
 ### Code Changes
-- [ ] Create `tests/test_ffb_road_texture.cpp`
-- [ ] Create `tests/test_ffb_lockup_braking.cpp`
+- [x] Create `tests/test_ffb_road_texture.cpp` (Completed v0.7.7)
+- [x] Create `tests/test_ffb_lockup_braking.cpp` (Completed v0.7.6)
 - [ ] Create `tests/test_ffb_notch_filter.cpp`
 - [ ] Create `tests/test_ffb_integration.cpp`
-- [ ] Update `tests/CMakeLists.txt`
-- [ ] Update `tests/test_ffb_common.h`
-- [ ] Update `tests/test_ffb_common.cpp`
-- [ ] Delete `tests/test_ffb_features.cpp`
-- [ ] Update `VERSION`
-- [ ] Update `src/Version.h`
+- [x] Update `tests/CMakeLists.txt` (Partial)
+- [x] Update `tests/test_ffb_common.h` (Partial)
+- [x] Update `tests/test_ffb_common.cpp` (Partial)
+- [x] Delete `tests/test_ffb_features.cpp` (In Progress - Reduced size)
+- [x] Update `VERSION` (v0.7.6)
+- [x] Update `src/Version.h` (v0.7.6)
 
 ### Testing
 - [ ] Verify build succeeds

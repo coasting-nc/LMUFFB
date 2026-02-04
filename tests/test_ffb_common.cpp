@@ -177,6 +177,7 @@ void Run() {
     Run_SpeedGate();
     Run_YawGyro();
     Run_Coordinates();
+    Run_RoadTexture();
     Run_Texture(); // Features
     Run_LockupBraking();
     Run_Config();
