@@ -3,7 +3,7 @@
 namespace FFBEngineTests {
 
 // [Texture][Physics] Progressive lockup effect with frequency-based vibration
-static void test_progressive_lockup() {
+TEST_CASE(test_progressive_lockup, "LockupBraking") {
     std::cout << "\nTest: Progressive Lockup [Texture][Physics]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -64,7 +64,7 @@ static void test_progressive_lockup() {
 }
 
 // [Texture][Physics][Regression] Predictive lockup activation based on wheel deceleration
-static void test_predictive_lockup_v060() {
+TEST_CASE(test_predictive_lockup_v060, "LockupBraking") {
     std::cout << "\nTest: Predictive Lockup (v0.6.0) [Texture][Physics][Regression]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -111,7 +111,7 @@ static void test_predictive_lockup_v060() {
 }
 
 // [Texture][Physics][Regression] ABS pulse detection from brake pressure modulation
-static void test_abs_pulse_v060() {
+TEST_CASE(test_abs_pulse_v060, "LockupBraking") {
     std::cout << "\nTest: ABS Pulse Detection (v0.6.0) [Texture][Physics][Regression]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -141,7 +141,7 @@ static void test_abs_pulse_v060() {
 }
 
 // [Texture][Physics][Regression] Rear lockup differentiation with frequency scaling
-static void test_rear_lockup_differentiation() {
+TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
     std::cout << "\nTest: Rear Lockup Differentiation [Texture][Physics][Regression]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -215,7 +215,7 @@ static void test_rear_lockup_differentiation() {
 }
 
 // [Config][Physics] Split load caps for braking vs texture effects
-static void test_split_load_caps() {
+TEST_CASE(test_split_load_caps, "LockupBraking") {
     std::cout << "\nTest: Split Load Caps (Brake vs Texture) [Config][Physics]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -296,7 +296,7 @@ static void test_split_load_caps() {
 }
 
 // [Config][Physics] Dynamic lockup thresholds with progressive severity
-static void test_dynamic_thresholds() {
+TEST_CASE(test_dynamic_thresholds, "LockupBraking") {
     std::cout << "\nTest: Dynamic Lockup Thresholds [Config][Physics]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -346,7 +346,7 @@ static void test_dynamic_thresholds() {
 }
 
 // [Regression][Physics] ABS pulse refactor regression test (v0.6.36)
-static void test_refactor_abs_pulse() {
+TEST_CASE(test_refactor_abs_pulse, "LockupBraking") {
     std::cout << "\nTest: Refactor Regression - ABS Pulse (v0.6.36) [Regression][Physics]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -376,7 +376,7 @@ static void test_refactor_abs_pulse() {
 }
 
 // [Regression][Physics][Integration] Torque drop refactor regression test (v0.6.36)
-static void test_refactor_torque_drop() {
+TEST_CASE(test_refactor_torque_drop, "LockupBraking") {
     std::cout << "\nTest: Refactor Regression - Torque Drop (v0.6.36) [Regression][Physics][Integration]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -441,16 +441,6 @@ static void test_refactor_torque_drop() {
     }
 }
 
-void Run_LockupBraking() {
-    std::cout << "\n=== Lockup & Braking Haptics Tests ===" << std::endl;
-    test_progressive_lockup();
-    test_predictive_lockup_v060();
-    test_abs_pulse_v060();
-    test_rear_lockup_differentiation();
-    test_split_load_caps();
-    test_dynamic_thresholds();
-    test_refactor_abs_pulse();
-    test_refactor_torque_drop();
-}
+
 
 } // namespace FFBEngineTests

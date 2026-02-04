@@ -116,19 +116,7 @@ void ParseTagArguments(int argc, char* argv[]);
 TelemInfoV01 CreateBasicTestTelemetry(double speed = 20.0, double slip_angle = 0.0);
 void InitializeEngine(FFBEngine& engine);
 
-// --- Sub-Runner Declarations ---
-void Run_CorePhysics();
-void Run_SlipGrip();
-void Run_Understeer();
-void Run_SlopeDetection();
-void Run_RoadTexture();
-void Run_Texture();
-void Run_LockupBraking();
-void Run_YawGyro();
-void Run_Coordinates();
-void Run_Config();
-void Run_SpeedGate();
-void Run_Internal(); // New runner for internal tests
+
 void Run(); // Main runner
 
 // --- Friend Access for Testing ---

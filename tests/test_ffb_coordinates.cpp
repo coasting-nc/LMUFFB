@@ -2,7 +2,7 @@
 
 namespace FFBEngineTests {
 
-static void test_coordinate_sop_inversion() {
+TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     std::cout << "\nTest: Coordinate System - SoP Inversion (v0.4.19)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -77,7 +77,7 @@ static void test_coordinate_sop_inversion() {
     }
 }
 
-static void test_coordinate_rear_torque_inversion() {
+TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     std::cout << "\nTest: Coordinate System - Rear Torque Inversion (v0.4.19)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -177,7 +177,7 @@ static void test_coordinate_rear_torque_inversion() {
     }
 }
 
-static void test_coordinate_scrub_drag_direction() {
+TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
     std::cout << "\nTest: Coordinate System - Scrub Drag Direction (v0.4.19/v0.4.20)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -243,7 +243,7 @@ static void test_coordinate_scrub_drag_direction() {
     }
 }
 
-static void test_coordinate_debug_slip_angle_sign() {
+TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
     std::cout << "\nTest: Coordinate System - Debug Slip Angle Sign (v0.4.19)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -340,7 +340,7 @@ static void test_coordinate_debug_slip_angle_sign() {
     }
 }
 
-static void test_coordinate_all_effects_alignment() {
+TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     std::cout << "\nTest: Coordinate System - All Effects Alignment (Snap Oversteer)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -441,7 +441,7 @@ static void test_coordinate_all_effects_alignment() {
     }
 }
 
-static void test_regression_no_positive_feedback() {
+TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     std::cout << "\nTest: Regression - No Positive Feedback Loop (v0.4.19)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -552,7 +552,7 @@ static void test_regression_no_positive_feedback() {
     }
 }
 
-static void test_regression_phase_explosion() {
+TEST_CASE(test_regression_phase_explosion, "Coordinates") {
     std::cout << "\nTest: Regression - Phase Explosion (All Oscillators)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -621,15 +621,6 @@ static void test_regression_phase_explosion() {
     }
 }
 
-void Run_Coordinates() {
-    std::cout << "\n=== Coordinate System Tests ===" << std::endl;
-    test_coordinate_sop_inversion();
-    test_coordinate_rear_torque_inversion();
-    test_coordinate_scrub_drag_direction();
-    test_coordinate_debug_slip_angle_sign();
-    test_regression_no_positive_feedback();
-    test_coordinate_all_effects_alignment();
-    test_regression_phase_explosion();
-}
+
 
 } // namespace FFBEngineTests

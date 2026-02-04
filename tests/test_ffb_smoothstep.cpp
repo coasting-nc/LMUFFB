@@ -2,7 +2,7 @@
 
 namespace FFBEngineTests {
 
-static void test_smoothstep_helper_function() {
+TEST_CASE(test_smoothstep_helper_function, "SpeedGate") {
     std::cout << "\nTest: Smoothstep Helper Function (v0.7.2)" << std::endl;
     FFBEngine engine;
     double at_lower = engine.smoothstep(1.0, 5.0, 1.0);
@@ -17,7 +17,7 @@ static void test_smoothstep_helper_function() {
     ASSERT_NEAR(at_75, 0.84375, 0.001);
 }
 
-static void test_smoothstep_vs_linear() {
+TEST_CASE(test_smoothstep_vs_linear, "SpeedGate") {
     std::cout << "\nTest: Smoothstep vs Linear Comparison (v0.7.2)" << std::endl;
     FFBEngine engine;
     double smooth_25 = engine.smoothstep(1.0, 5.0, 2.0);
@@ -26,7 +26,7 @@ static void test_smoothstep_vs_linear() {
     ASSERT_TRUE(smooth_75 > 0.75);
 }
 
-static void test_smoothstep_edge_cases() {
+TEST_CASE(test_smoothstep_edge_cases, "SpeedGate") {
     std::cout << "\nTest: Smoothstep Edge Cases (v0.7.2)" << std::endl;
     FFBEngine engine;
     double below = engine.smoothstep(1.0, 5.0, 0.0);
@@ -41,7 +41,7 @@ static void test_smoothstep_edge_cases() {
     ASSERT_TRUE(tiny_range >= 0.0 && tiny_range <= 1.0);
 }
 
-static void test_speed_gate_uses_smoothstep() {
+TEST_CASE(test_speed_gate_uses_smoothstep, "SpeedGate") {
     std::cout << "\nTest: Speed Gate Uses Smoothstep (v0.7.2)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -72,7 +72,7 @@ static void test_speed_gate_uses_smoothstep() {
     }
 }
 
-static void test_smoothstep_stationary_silence_preserved() {
+TEST_CASE(test_smoothstep_stationary_silence_preserved, "SpeedGate") {
     std::cout << "\nTest: Smoothstep Stationary Silence (v0.7.2)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -85,7 +85,7 @@ static void test_smoothstep_stationary_silence_preserved() {
     ASSERT_NEAR(force, 0.0, 0.001);
 }
 
-static void test_speed_gate_custom_thresholds() {
+TEST_CASE(test_speed_gate_custom_thresholds, "SpeedGate") {
     std::cout << "\nTest: Speed Gate Custom Thresholds" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -118,14 +118,6 @@ static void test_speed_gate_custom_thresholds() {
     ASSERT_NEAR(force, 0.0025, 0.0001);
 }
 
-void Run_SpeedGate() {
-    std::cout << "\n=== Smoothstep & Speed Gating Tests ===" << std::endl;
-    test_smoothstep_helper_function();
-    test_smoothstep_vs_linear();
-    test_smoothstep_edge_cases();
-    test_speed_gate_uses_smoothstep();
-    test_smoothstep_stationary_silence_preserved();
-    test_speed_gate_custom_thresholds();
-}
+
 
 } // namespace FFBEngineTests

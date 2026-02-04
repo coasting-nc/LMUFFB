@@ -3,7 +3,7 @@
 namespace FFBEngineTests {
 
 // [Regression][Texture] Road texture toggle spike fix
-static void test_regression_road_texture_toggle() {
+TEST_CASE(test_regression_road_texture_toggle, "RoadTexture") {
     std::cout << "\nTest: Regression - Road Texture Toggle Spike [Regression][Texture]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -17,7 +17,7 @@ static void test_regression_road_texture_toggle() {
 }
 
 // [Regression][Texture] Bottoming method switch spike fix
-static void test_regression_bottoming_switch() {
+TEST_CASE(test_regression_bottoming_switch, "RoadTexture") {
     std::cout << "\nTest: Regression - Bottoming Method Switch Spike [Regression][Texture]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -31,7 +31,7 @@ static void test_regression_bottoming_switch() {
 }
 
 // [Texture][Physics] Road texture teleport delta clamp
-static void test_road_texture_teleport() {
+TEST_CASE(test_road_texture_teleport, "RoadTexture") {
     std::cout << "\nTest: Road Texture Teleport (Delta Clamp) [Texture][Physics]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -84,7 +84,7 @@ static void test_road_texture_teleport() {
 }
 
 // [Texture][Physics] Suspension bottoming effect
-static void test_suspension_bottoming() {
+TEST_CASE(test_suspension_bottoming, "RoadTexture") {
     std::cout << "\nTest: Suspension Bottoming (Fix Verification) [Texture][Physics]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -146,7 +146,7 @@ static void test_suspension_bottoming() {
 }
 
 // [Texture][Integration] Road texture persistence
-static void test_road_texture_state_persistence() {
+TEST_CASE(test_road_texture_state_persistence, "RoadTexture") {
     std::cout << "\nTest: Road Texture State Persistence [Texture][Integration]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -159,7 +159,7 @@ static void test_road_texture_state_persistence() {
 }
 
 // [Texture][Physics] Universal bottoming (Scrape & Spike)
-static void test_universal_bottoming() {
+TEST_CASE(test_universal_bottoming, "RoadTexture") {
     std::cout << "\nTest: Universal Bottoming [Texture][Physics]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -212,7 +212,7 @@ static void test_universal_bottoming() {
 }
 
 // [Physics][Integration] Unconditional vertical accel update
-static void test_unconditional_vert_accel_update() {
+TEST_CASE(test_unconditional_vert_accel_update, "RoadTexture") {
     std::cout << "\nTest: Unconditional m_prev_vert_accel Update (v0.6.36) [Physics][Integration]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -225,7 +225,7 @@ static void test_unconditional_vert_accel_update() {
 }
 
 // [Texture][Physics] Scrub drag fade-in
-static void test_scrub_drag_fade() {
+TEST_CASE(test_scrub_drag_fade, "RoadTexture") {
     std::cout << "\nTest: Scrub Drag Fade-In [Texture][Physics]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -269,16 +269,6 @@ static void test_scrub_drag_fade() {
     }
 }
 
-void Run_RoadTexture() {
-    std::cout << "\n=== Road Texture & Suspension Tests ===" << std::endl;
-    test_regression_road_texture_toggle();
-    test_regression_bottoming_switch();
-    test_road_texture_teleport();
-    test_suspension_bottoming();
-    test_road_texture_state_persistence();
-    test_universal_bottoming();
-    test_unconditional_vert_accel_update();
-    test_scrub_drag_fade();
-}
+
 
 } // namespace FFBEngineTests

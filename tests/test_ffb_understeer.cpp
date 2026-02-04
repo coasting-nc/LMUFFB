@@ -2,7 +2,7 @@
 
 namespace FFBEngineTests {
 
-static void test_optimal_slip_buffer_zone() {
+TEST_CASE(test_optimal_slip_buffer_zone, "Understeer") {
     std::cout << "\nTest: Optimal Slip Buffer Zone (v0.6.28/v0.6.31)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -22,7 +22,7 @@ static void test_optimal_slip_buffer_zone() {
     ASSERT_NEAR(force, 1.0, 0.001);
 }
 
-static void test_progressive_loss_curve() {
+TEST_CASE(test_progressive_loss_curve, "Understeer") {
     std::cout << "\nTest: Progressive Loss Curve (v0.6.28/v0.6.31)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -49,7 +49,7 @@ static void test_progressive_loss_curve() {
     ASSERT_TRUE(f10 > f12 && f12 > f14);
 }
 
-static void test_grip_floor_clamp() {
+TEST_CASE(test_grip_floor_clamp, "Understeer") {
     std::cout << "\nTest: Grip Floor Clamp" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -69,7 +69,7 @@ static void test_grip_floor_clamp() {
     ASSERT_NEAR(force, 0.2, 0.001);
 }
 
-static void test_understeer_output_clamp() {
+TEST_CASE(test_understeer_output_clamp, "Understeer") {
     std::cout << "\nTest: Understeer Output Clamp (v0.6.28/v0.6.31)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -88,7 +88,7 @@ static void test_understeer_output_clamp() {
     ASSERT_NEAR(force, 0.0, 0.001);
 }
 
-static void test_understeer_range_validation() {
+TEST_CASE(test_understeer_range_validation, "Understeer") {
     std::cout << "\nTest: Understeer Range Validation" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -98,7 +98,7 @@ static void test_understeer_range_validation() {
     ASSERT_LE(engine.m_understeer_effect, 2.0f);
 }
 
-static void test_understeer_effect_scaling() {
+TEST_CASE(test_understeer_effect_scaling, "Understeer") {
     std::cout << "\nTest: Understeer Effect Scaling" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -122,7 +122,7 @@ static void test_understeer_effect_scaling() {
     ASSERT_TRUE(f0 > f1 && f1 > f2);
 }
 
-static void test_legacy_config_migration() {
+TEST_CASE(test_legacy_config_migration, "Understeer") {
     std::cout << "\nTest: Legacy Config Migration" << std::endl;
     
     float legacy_val = 50.0f; 
@@ -137,7 +137,7 @@ static void test_legacy_config_migration() {
     ASSERT_NEAR(migrated, 1.5f, 0.001);
 }
 
-static void test_preset_understeer_only_isolation() {
+TEST_CASE(test_preset_understeer_only_isolation, "Understeer") {
     std::cout << "\nTest: Preset 'Test: Understeer Only' Isolation (v0.6.31)" << std::endl;
     
     // Load presets
@@ -191,7 +191,7 @@ static void test_preset_understeer_only_isolation() {
     g_tests_passed++;
 }
 
-static void test_all_presets_non_negative_speed_gate() {
+TEST_CASE(test_all_presets_non_negative_speed_gate, "Understeer") {
     std::cout << "\nTest: All Presets Have Non-Negative Speed Gate Values (v0.6.32)" << std::endl;
     
     // Load all presets
@@ -233,17 +233,6 @@ static void test_all_presets_non_negative_speed_gate() {
     }
 }
 
-void Run_Understeer() {
-    std::cout << "\n=== Understeer & Progression Tests ===" << std::endl;
-    test_optimal_slip_buffer_zone();
-    test_progressive_loss_curve();
-    test_grip_floor_clamp();
-    test_understeer_output_clamp();
-    test_understeer_range_validation();
-    test_understeer_effect_scaling();
-    test_legacy_config_migration();
-    test_preset_understeer_only_isolation();
-    test_all_presets_non_negative_speed_gate();
-}
+
 
 } // namespace FFBEngineTests

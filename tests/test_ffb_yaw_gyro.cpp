@@ -2,7 +2,7 @@
 
 namespace FFBEngineTests {
 
-static void test_sop_yaw_kick() {
+TEST_CASE(test_sop_yaw_kick, "YawGyro") {
     std::cout << "\nTest: SoP Yaw Kick (v0.4.18 Smoothed)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -54,7 +54,7 @@ static void test_sop_yaw_kick() {
     }
 }
 
-static void test_gyro_damping() {
+TEST_CASE(test_gyro_damping, "YawGyro") {
     std::cout << "\nTest: Gyroscopic Damping (v0.4.17)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -175,7 +175,7 @@ static void test_gyro_damping() {
     }
 }
 
-static void test_yaw_accel_smoothing() {
+TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     std::cout << "\nTest: Yaw Acceleration Smoothing (v0.4.18)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -282,7 +282,7 @@ static void test_yaw_accel_smoothing() {
     }
 }
 
-static void test_yaw_accel_convergence() {
+TEST_CASE(test_yaw_accel_convergence, "YawGyro") {
     std::cout << "\nTest: Yaw Acceleration Convergence (v0.4.18)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -355,7 +355,7 @@ static void test_yaw_accel_convergence() {
     }
 }
 
-static void test_regression_yaw_slide_feedback() {
+TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
     std::cout << "\nTest: Regression - Yaw/Slide Feedback Loop (v0.4.18)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -453,7 +453,7 @@ static void test_regression_yaw_slide_feedback() {
     }
 }
 
-static void test_yaw_kick_signal_conditioning() {
+TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     std::cout << "\nTest: Yaw Kick Signal Conditioning (v0.4.42)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -537,7 +537,7 @@ static void test_yaw_kick_signal_conditioning() {
     }
 }
 
-static void test_yaw_kick_threshold() {
+TEST_CASE(test_yaw_kick_threshold, "YawGyro") {
     std::cout << "\nTest: Yaw Kick Threshold (v0.6.10)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -562,7 +562,7 @@ static void test_yaw_kick_threshold() {
     ASSERT_TRUE(std::abs(force_high) > 0.01);
 }
 
-static void test_yaw_kick_edge_cases() {
+TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     std::cout << "\nTest: Yaw Kick Threshold Edge Cases (v0.6.10)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -633,7 +633,7 @@ static void test_yaw_kick_edge_cases() {
     ASSERT_NEAR(force_low_speed, 0.0, 0.001); // Low speed cutoff takes precedence
 }
 
-static void test_gyro_stability() {
+TEST_CASE(test_gyro_stability, "YawGyro") {
     std::cout << "\nTest: Gyro Stability (Clamp Check)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -659,7 +659,7 @@ static void test_gyro_stability() {
     }
 }
 
-static void test_sop_yaw_kick_direction() {
+TEST_CASE(test_sop_yaw_kick_direction, "YawGyro") {
     std::cout << "\nTest: SoP Yaw Kick Direction (v0.4.20)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -688,7 +688,7 @@ static void test_sop_yaw_kick_direction() {
     }
 }
 
-static void test_chassis_inertia_smoothing_convergence() {
+TEST_CASE(test_chassis_inertia_smoothing_convergence, "YawGyro") {
     std::cout << "\nTest: Chassis Inertia Smoothing Convergence (v0.4.39)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -746,19 +746,6 @@ static void test_chassis_inertia_smoothing_convergence() {
     }
 }
 
-void Run_YawGyro() {
-    std::cout << "\n=== Yaw & Gyro Tests ===" << std::endl;
-    test_sop_yaw_kick();
-    test_sop_yaw_kick_direction();
-    test_gyro_damping();
-    test_yaw_accel_smoothing();
-    test_yaw_accel_convergence();
-    test_chassis_inertia_smoothing_convergence();
-    test_regression_yaw_slide_feedback();
-    test_yaw_kick_signal_conditioning();
-    test_yaw_kick_threshold();
-    test_yaw_kick_edge_cases();
-    test_gyro_stability();
-}
+
 
 } // namespace FFBEngineTests

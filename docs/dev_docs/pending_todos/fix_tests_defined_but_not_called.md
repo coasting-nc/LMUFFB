@@ -340,18 +340,18 @@ Use this checklist to track progress. Migrate in order of increasing complexity:
 
 | Order | File | Tests | Category | Status |
 |-------|------|-------|----------|--------|
-| 1 | `test_ffb_internal.cpp` | ~10 | Internal | ✅ |
-| 2 | `test_ffb_coordinates.cpp` | ~15 | Coordinates | ⬜ |
-| 3 | `test_ffb_road_texture.cpp` | ~20 | RoadTexture | ⬜ |
-| 4 | `test_ffb_features.cpp` | ~25 | Texture | ⬜ |
-| 5 | `test_ffb_lockup_braking.cpp` | ~30 | LockupBraking | ⬜ |
-| 6 | `test_ffb_yaw_gyro.cpp` | ~25 | YawGyro | ⬜ |
-| 7 | `test_ffb_smoothstep.cpp` | ~30 | SpeedGate | ⬜ |
-| 8 | `test_ffb_config.cpp` | ~40 | Config | ⬜ |
-| 9 | `test_ffb_understeer.cpp` | ~50 | Understeer | ⬜ |
-| 10 | `test_ffb_slip_grip.cpp` | ~60 | SlipGrip | ⬜ |
-| 11 | `test_ffb_slope_detection.cpp` | ~80 | SlopeDetection | ⬜ |
-| 12 | `test_ffb_core_physics.cpp` | ~100 | CorePhysics | ⬜ |
+| 1 | `test_ffb_internal.cpp` | ~10 | Internal | ✅ Migrated & Verified |
+| 2 | `test_ffb_coordinates.cpp` | ~15 | Coordinates | ✅ Migrated & Verified |
+| 3 | `test_ffb_road_texture.cpp` | ~20 | RoadTexture | ✅ Migrated & Verified |
+| 4 | `test_ffb_features.cpp` | ~25 | Texture | ✅ Migrated & Verified |
+| 5 | `test_ffb_lockup_braking.cpp` | ~30 | LockupBraking | ✅ Migrated & Verified |
+| 6 | `test_ffb_yaw_gyro.cpp` | ~25 | YawGyro | ✅ Migrated & Verified |
+| 7 | `test_ffb_smoothstep.cpp` | ~30 | SpeedGate | ✅ Migrated & Verified |
+| 8 | `test_ffb_config.cpp` | ~40 | Config | ✅ Migrated & Verified |
+| 9 | `test_ffb_understeer.cpp` | ~50 | Understeer | ✅ Migrated & Verified |
+| 10 | `test_ffb_slip_grip.cpp` | ~60 | SlipGrip | ✅ Migrated & Verified |
+| 11 | `test_ffb_core_physics.cpp` | ~100 | CorePhysics | ✅ Migrated & Verified |
+| 12 | `test_ffb_slope_detection.cpp` | ~80 | SlopeDetection | ✅ Migrated & Verified |
 
 **Legend:** ⬜ Not started | 🔄 In progress | ✅ Complete
 

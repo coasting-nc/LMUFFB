@@ -3,7 +3,7 @@
 
 namespace FFBEngineTests {
 
-static void test_slope_detection_buffer_init() {
+TEST_CASE(test_slope_detection_buffer_init, "SlopeDetection") {
     std::cout << "\nTest: Slope Detection Buffer Initialization (v0.7.0)" << std::endl;
     FFBEngine engine;
     // Buffer count and index should be 0 on fresh instance
@@ -12,7 +12,7 @@ static void test_slope_detection_buffer_init() {
     ASSERT_TRUE(engine.m_slope_current == 0.0);
 }
 
-static void test_slope_sg_derivative() {
+TEST_CASE(test_slope_sg_derivative, "SlopeDetection") {
     std::cout << "\nTest: Savitzky-Golay Derivative Calculation (v0.7.0)" << std::endl;
     FFBEngine engine;
     
@@ -33,7 +33,7 @@ static void test_slope_sg_derivative() {
     ASSERT_NEAR(derivative, 10.0, 0.1);
 }
 
-static void test_slope_grip_at_peak() {
+TEST_CASE(test_slope_grip_at_peak, "SlopeDetection") {
     std::cout << "\nTest: Slope Grip at Peak (Zero Slope) (v0.7.0)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -57,7 +57,7 @@ static void test_slope_grip_at_peak() {
     ASSERT_GE(engine.m_slope_smoothed_output, 0.95);
 }
 
-static void test_slope_grip_past_peak() {
+TEST_CASE(test_slope_grip_past_peak, "SlopeDetection") {
     std::cout << "\nTest: Slope Grip Past Peak (Negative Slope) (v0.7.0)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -92,7 +92,7 @@ static void test_slope_grip_past_peak() {
     ASSERT_GE(engine.m_slope_smoothed_output, 0.2);
 }
 
-static void test_slope_vs_static_comparison() {
+TEST_CASE(test_slope_vs_static_comparison, "SlopeDetection") {
     std::cout << "\nTest: Slope vs Static Comparison (v0.7.0)" << std::endl;
     FFBEngine engine_slope;
     InitializeEngine(engine_slope);
@@ -135,7 +135,7 @@ static void test_slope_vs_static_comparison() {
     ASSERT_LE(snap_static.calc_front_grip, 0.8);
 }
 
-static void test_slope_config_persistence() {
+TEST_CASE(test_slope_config_persistence, "SlopeDetection") {
     std::cout << "\nTest: Slope Config Persistence (v0.7.0)" << std::endl;
     std::string test_file = "test_slope_config.ini";
     FFBEngine engine_save;
@@ -162,7 +162,7 @@ static void test_slope_config_persistence() {
     std::remove(test_file.c_str());
 }
 
-static void test_slope_latency_characteristics() {
+TEST_CASE(test_slope_latency_characteristics, "SlopeDetection") {
     std::cout << "\nTest: Slope Latency Characteristics (v0.7.0)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -186,7 +186,7 @@ static void test_slope_latency_characteristics() {
     ASSERT_NEAR(latency_ms, 17.5, 0.1);
 }
 
-static void test_slope_noise_rejection() {
+TEST_CASE(test_slope_noise_rejection, "SlopeDetection") {
     std::cout << "\nTest: Slope Noise Rejection (v0.7.0)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -211,7 +211,7 @@ static void test_slope_noise_rejection() {
     ASSERT_TRUE(std::abs(engine.m_slope_current) < 1.0);
 }
 
-static void test_slope_buffer_reset_on_toggle() {
+TEST_CASE(test_slope_buffer_reset_on_toggle, "SlopeDetection") {
     std::cout << "\nTest: Slope Buffer Reset on Toggle (v0.7.0)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -271,7 +271,7 @@ static void test_slope_buffer_reset_on_toggle() {
     ASSERT_TRUE(engine.m_slope_buffer_count == 5);  // Unchanged
 }
 
-static void test_slope_detection_no_boost_when_grip_balanced() {
+TEST_CASE(test_slope_detection_no_boost_when_grip_balanced, "SlopeDetection") {
     std::cout << "\nTest: Slope Detection - No Boost When Grip Balanced (v0.7.1)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -309,7 +309,7 @@ static void test_slope_detection_no_boost_when_grip_balanced() {
     ASSERT_NEAR(snap.oversteer_boost, 0.0, 0.01);
 }
 
-static void test_slope_detection_no_boost_during_oversteer() {
+TEST_CASE(test_slope_detection_no_boost_during_oversteer, "SlopeDetection") {
     std::cout << "\nTest: Slope Detection - No Boost During Oversteer (v0.7.1)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -340,7 +340,7 @@ static void test_slope_detection_no_boost_during_oversteer() {
     ASSERT_NEAR(snap.oversteer_boost, 0.0, 0.01);
 }
 
-static void test_lat_g_boost_works_without_slope_detection() {
+TEST_CASE(test_lat_g_boost_works_without_slope_detection, "SlopeDetection") {
     std::cout << "\nTest: Lateral G Boost works without Slope Detection (v0.7.1)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -367,7 +367,7 @@ static void test_lat_g_boost_works_without_slope_detection() {
     ASSERT_TRUE(snap.oversteer_boost > 0.01);
 }
 
-static void test_slope_detection_default_values_v071() {
+TEST_CASE(test_slope_detection_default_values_v071, "SlopeDetection") {
     std::cout << "\nTest: Slope Detection Default Values (v0.7.1)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -377,7 +377,7 @@ static void test_slope_detection_default_values_v071() {
     ASSERT_NEAR(engine.m_slope_smoothing_tau, 0.04f, 0.001);
 }
 
-static void test_slope_current_in_snapshot() {
+TEST_CASE(test_slope_current_in_snapshot, "SlopeDetection") {
     std::cout << "\nTest: Slope Current in Snapshot (v0.7.1)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -400,7 +400,7 @@ static void test_slope_current_in_snapshot() {
     ASSERT_TRUE(std::abs(snap.slope_current) > 0.001);
 }
 
-static void test_slope_detection_less_aggressive_v071() {
+TEST_CASE(test_slope_detection_less_aggressive_v071, "SlopeDetection") {
     std::cout << "\nTest: Slope Detection Less Aggressive (v0.7.1)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -429,7 +429,7 @@ static void test_slope_detection_less_aggressive_v071() {
     ASSERT_TRUE(engine.m_slope_smoothed_output > 0.9);
 }
 
-static void test_slope_decay_on_straight() {
+TEST_CASE(test_slope_decay_on_straight, "SlopeDetection") {
     std::cout << "\nTest: Slope Decay on Straight (v0.7.3)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -477,7 +477,7 @@ static void test_slope_decay_on_straight() {
     ASSERT_NEAR(slope_final, 0.0, 0.05); 
 }
 
-static void test_slope_alpha_threshold_configurable() {
+TEST_CASE(test_slope_alpha_threshold_configurable, "SlopeDetection") {
     std::cout << "\nTest: Slope dAlpha Threshold Configurable (v0.7.3)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -512,7 +512,7 @@ static void test_slope_alpha_threshold_configurable() {
     ASSERT_TRUE(std::abs(engine.m_slope_current) > 1.0); 
 }
 
-static void test_slope_confidence_gate() {
+TEST_CASE(test_slope_confidence_gate, "SlopeDetection") {
     std::cout << "\nTest: Slope Confidence Gate (v0.7.3)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -531,7 +531,7 @@ static void test_slope_confidence_gate() {
     ASSERT_NEAR(confidence, 0.2, 0.001);
 }
 
-static void test_slope_stability_config_persistence() {
+TEST_CASE(test_slope_stability_config_persistence, "SlopeDetection") {
     std::cout << "\nTest: Slope Stability Config Persistence (v0.7.3)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -551,7 +551,7 @@ static void test_slope_stability_config_persistence() {
     ASSERT_TRUE(engine2.m_slope_confidence_enabled == false);
 }
 
-static void test_slope_no_understeer_on_straight_v073() {
+TEST_CASE(test_slope_no_understeer_on_straight_v073, "SlopeDetection") {
     std::cout << "\nTest: No Understeer on Straight (v0.7.3)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -572,7 +572,7 @@ static void test_slope_no_understeer_on_straight_v073() {
     ASSERT_GE(engine.m_slope_smoothed_output, 0.95);
 }
 
-static void test_slope_decay_rate_boundaries() {
+TEST_CASE(test_slope_decay_rate_boundaries, "SlopeDetection") {
     std::cout << "\nTest: Slope Decay Rate Boundaries (v0.7.3)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -592,7 +592,7 @@ static void test_slope_decay_rate_boundaries() {
     ASSERT_TRUE(std::abs(decayed_fast) < std::abs(decayed_slow));
 }
 
-static void test_slope_alpha_threshold_validation() {
+TEST_CASE(test_slope_alpha_threshold_validation, "SlopeDetection") {
     std::cout << "\nTest: Slope Alpha Threshold Validation (v0.7.3)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -608,30 +608,6 @@ static void test_slope_alpha_threshold_validation() {
     ASSERT_NEAR(engine.m_slope_alpha_threshold, 0.02f, 0.0001);
 }
 
-void Run_SlopeDetection() {
-    std::cout << "\n=== Slope Detection Tests ===" << std::endl;
-    test_slope_detection_buffer_init();
-    test_slope_sg_derivative();
-    test_slope_grip_at_peak();
-    test_slope_grip_past_peak();
-    test_slope_vs_static_comparison();
-    test_slope_config_persistence();
-    test_slope_latency_characteristics();
-    test_slope_noise_rejection();
-    test_slope_buffer_reset_on_toggle();
-    test_slope_detection_no_boost_when_grip_balanced();
-    test_slope_detection_no_boost_during_oversteer();
-    test_lat_g_boost_works_without_slope_detection();
-    test_slope_detection_default_values_v071();
-    test_slope_current_in_snapshot();
-    test_slope_detection_less_aggressive_v071();
-    test_slope_decay_on_straight();
-    test_slope_alpha_threshold_configurable();
-    test_slope_confidence_gate();
-    test_slope_stability_config_persistence();
-    test_slope_no_understeer_on_straight_v073();
-    test_slope_decay_rate_boundaries();
-    test_slope_alpha_threshold_validation();
-}
+
 
 } // namespace FFBEngineTests

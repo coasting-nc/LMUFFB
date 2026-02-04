@@ -3,7 +3,7 @@
 
 namespace FFBEngineTests {
 
-static void test_base_force_modes() {
+TEST_CASE(test_base_force_modes, "CorePhysics") {
     std::cout << "\nTest: Base Force Modes & Gain (v0.4.13)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); 
@@ -68,7 +68,7 @@ static void test_base_force_modes() {
     }
 }
 
-static void test_grip_modulation() {
+TEST_CASE(test_grip_modulation, "CorePhysics") {
     std::cout << "\nTest: Grip Modulation (Understeer)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); 
@@ -101,7 +101,7 @@ static void test_grip_modulation() {
     ASSERT_NEAR(force_half, 0.25, 0.001);
 }
 
-static void test_min_force() {
+TEST_CASE(test_min_force, "CorePhysics") {
     std::cout << "\nTest: Min Force" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); 
@@ -126,7 +126,7 @@ static void test_min_force() {
     ASSERT_NEAR(force, 0.10, 0.001);
 }
 
-static void test_zero_input() {
+TEST_CASE(test_zero_input, "CorePhysics") {
     std::cout << "\nTest: Zero Input" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); 
@@ -142,7 +142,7 @@ static void test_zero_input() {
     ASSERT_NEAR(force, 0.0, 0.001);
 }
 
-static void test_grip_low_speed() {
+TEST_CASE(test_grip_low_speed, "CorePhysics") {
     std::cout << "\nTest: Grip Approximation Low Speed Cutoff" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); 
@@ -183,7 +183,7 @@ static void test_grip_low_speed() {
     }
 }
 
-static void test_gain_compensation() {
+TEST_CASE(test_gain_compensation, "CorePhysics") {
     std::cout << "\nTest: FFB Signal Gain Compensation (Decoupling)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); 
@@ -278,7 +278,7 @@ static void test_gain_compensation() {
     std::cout << "[SUMMARY] Gain Compensation verified for all effect types." << std::endl;
 }
 
-static void test_high_gain_stability() {
+TEST_CASE(test_high_gain_stability, "CorePhysics") {
     std::cout << "\nTest: High Gain Stability (Max Ranges)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -306,7 +306,7 @@ static void test_high_gain_stability() {
     g_tests_passed++;
 }
 
-static void test_stress_stability() {
+TEST_CASE(test_stress_stability, "CorePhysics") {
     std::cout << "\nTest: Stress Stability (Fuzzing)" << std::endl;
     FFBEngine engine;
     TelemInfoV01 data;
@@ -364,7 +364,7 @@ static void test_stress_stability() {
     }
 }
 
-static void test_smoothing_step_response() {
+TEST_CASE(test_smoothing_step_response, "CorePhysics") {
     std::cout << "\nTest: SoP Smoothing Step Response" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); 
@@ -405,7 +405,7 @@ static void test_smoothing_step_response() {
     }
 }
 
-static void test_time_corrected_smoothing() {
+TEST_CASE(test_time_corrected_smoothing, "CorePhysics") {
     std::cout << "\nTest: Time Corrected Smoothing (v0.4.37)" << std::endl;
     FFBEngine engine_fast; // 400Hz
     InitializeEngine(engine_fast); 
@@ -436,7 +436,7 @@ static void test_time_corrected_smoothing() {
     }
 }
 
-static void test_abs_frequency_scaling() {
+TEST_CASE(test_abs_frequency_scaling, "CorePhysics") {
     std::cout << "\nTest: ABS Frequency Scaling" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -462,7 +462,7 @@ static void test_abs_frequency_scaling() {
     ASSERT_NEAR(delta_phase_40, delta_phase_20 * 2.0, 0.0001);
 }
 
-static void test_lockup_pitch_scaling() {
+TEST_CASE(test_lockup_pitch_scaling, "CorePhysics") {
     std::cout << "\nTest: Lockup Pitch Scaling" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -488,7 +488,7 @@ static void test_lockup_pitch_scaling() {
     ASSERT_NEAR(delta_2, delta_1 * 2.0, 0.0001);
 }
 
-static void test_sop_effect() {
+TEST_CASE(test_sop_effect, "CorePhysics") {
     std::cout << "\nTest: SoP Effect" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -502,7 +502,7 @@ static void test_sop_effect() {
     ASSERT_NEAR(force, 0.125, 0.05);
 }
 
-static void test_regression_rear_torque_lpf() {
+TEST_CASE(test_regression_rear_torque_lpf, "CorePhysics") {
     std::cout << "\nTest: Regression - Rear Torque LPF Continuity" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -553,7 +553,7 @@ static void test_regression_rear_torque_lpf() {
     }
 }
 
-static void test_steering_shaft_smoothing() {
+TEST_CASE(test_steering_shaft_smoothing, "CorePhysics") {
     std::cout << "\nTest: Steering Shaft Smoothing (v0.5.7)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -599,23 +599,6 @@ static void test_steering_shaft_smoothing() {
     }
 }
 
-void Run_CorePhysics() {
-    std::cout << "\n=== Core Physics Tests ===" << std::endl;
-    test_base_force_modes();
-    test_grip_modulation();
-    test_min_force();
-    test_zero_input();
-    test_grip_low_speed();
-    test_gain_compensation();
-    test_high_gain_stability();
-    test_stress_stability();
-    test_smoothing_step_response();
-    test_time_corrected_smoothing();
-    test_abs_frequency_scaling();
-    test_lockup_pitch_scaling();
-    test_sop_effect();
-    test_steering_shaft_smoothing();
-    test_regression_rear_torque_lpf();
-}
+
 
 } // namespace FFBEngineTests

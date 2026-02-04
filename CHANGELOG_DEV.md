@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.7.8] - 2026-02-04
+### Changed
+- **Test Suite Refactoring**:
+  - **Auto-Registration Pattern**: Migrated the entire test suite (591 tests across 12 files) to use the self-registering `TEST_CASE` macro.
+  - **Eliminated "Fixed but not Called" Bug**: Tests are now automatically registered at startup, removing the need to manually add them to `Run_Category()` functions.
+  - **Code Cleanup**: Removed all `Run_*` legacy runner functions from `test_ffb_common.cpp` and `test_ffb_common.h`.
+  - **Verification**: All 591 tests passing.
+
 ## [0.7.7] - 2026-02-04
 ### Changed
 - **Test Suite Refactoring**:

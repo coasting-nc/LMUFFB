@@ -2,7 +2,7 @@
 
 namespace FFBEngineTests {
 
-static void test_config_persistence() {
+TEST_CASE(test_config_persistence, "Config") {
     std::cout << "\nTest: Config Save/Load Persistence" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -18,7 +18,7 @@ static void test_config_persistence() {
     ASSERT_TRUE(engine_load.m_road_texture_enabled);
 }
 
-static void test_channel_stats() {
+TEST_CASE(test_channel_stats, "Config") {
     std::cout << "\nTest: Channel Stats Logic" << std::endl;
     
     ChannelStats stats;
@@ -52,7 +52,7 @@ static void test_channel_stats() {
     ASSERT_NEAR(stats.Avg(), 0.0, 0.001); // Handle divide by zero check
 }
 
-static void test_game_state_logic() {
+TEST_CASE(test_game_state_logic, "Config") {
     std::cout << "\nTest: Game State Logic (Mock)" << std::endl;
     
     // Mock Layout
@@ -113,7 +113,7 @@ static void test_game_state_logic() {
     }
 }
 
-static void test_presets() {
+TEST_CASE(test_presets, "Config") {
     std::cout << "\nTest: Configuration Presets" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -137,7 +137,7 @@ static void test_presets() {
     }
 }
 
-static void test_preset_initialization() {
+TEST_CASE(test_preset_initialization, "Config") {
     std::cout << "\nTest: Built-in Preset Fidelity (v0.6.30 Refinement)" << std::endl;
     
     // REGRESSION TEST: Verify all built-in presets properly initialize tuning fields.
@@ -301,14 +301,14 @@ static void test_preset_initialization() {
     }
 }
 
-static void test_config_defaults_v057() {
+TEST_CASE(test_config_defaults_v057, "Config") {
     std::cout << "\nTest: Config Defaults (v0.5.7)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
     ASSERT_TRUE(Config::m_always_on_top);
 }
 
-static void test_config_safety_validation_v057() {
+TEST_CASE(test_config_safety_validation_v057, "Config") {
     std::cout << "\nTest: Config Safety Validation (v0.5.7)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -333,7 +333,7 @@ static void test_config_safety_validation_v057() {
     ASSERT_NEAR(engine.m_optimal_slip_ratio, 0.12f, 0.01);
 }
 
-static void test_config_safety_clamping() {
+TEST_CASE(test_config_safety_clamping, "Config") {
     std::cout << "\nTest: Config Safety Clamping (v0.4.50)" << std::endl;
     
     // Create a temporary unsafe config file with legacy high-gain values
@@ -418,7 +418,7 @@ static void test_config_safety_clamping() {
     std::remove(test_file);
 }
 
-static void test_dynamic_thresholds() {
+TEST_CASE(test_config_dynamic_thresholds, "Config") {
     std::cout << "\nTest: Dynamic Lockup Thresholds" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -427,17 +427,6 @@ static void test_dynamic_thresholds() {
     ASSERT_TRUE(engine.m_lockup_full_pct > engine.m_lockup_start_pct);
 }
 
-void Run_Config() {
-    std::cout << "\n=== Configuration & Presets Tests ===" << std::endl;
-    test_config_persistence();
-    test_channel_stats();
-    test_game_state_logic();
-    test_presets();
-    test_preset_initialization();
-    test_config_defaults_v057();
-    test_config_safety_validation_v057();
-    test_config_safety_clamping();
-    test_dynamic_thresholds();
-}
+
 
 } // namespace FFBEngineTests

@@ -4,7 +4,7 @@ namespace FFBEngineTests {
 
 
 
-static void test_stationary_gate() {
+TEST_CASE(test_stationary_gate, "Texture") {
     std::cout << "\nTest: Stationary Signal Gate" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -60,7 +60,7 @@ static void test_stationary_gate() {
     }
 }
 
-static void test_idle_smoothing() {
+TEST_CASE(test_idle_smoothing, "Texture") {
     std::cout << "\nTest: Automatic Idle Smoothing" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -118,7 +118,7 @@ static void test_idle_smoothing() {
     }
 }
 
-static void test_stationary_silence() {
+TEST_CASE(test_stationary_silence, "Texture") {
     std::cout << "\nTest: Stationary Silence (Base Torque & SoP Gating)" << std::endl;
     // Setup engine with defaults (Gate: 1.0m/s to 5.0m/s)
     FFBEngine engine;
@@ -145,7 +145,7 @@ static void test_stationary_silence() {
     ASSERT_NEAR(force, 0.0, 0.001);
 }
 
-static void test_driving_forces_restored() {
+TEST_CASE(test_driving_forces_restored, "Texture") {
     std::cout << "\nTest: Driving Forces Restored" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -166,7 +166,7 @@ static void test_driving_forces_restored() {
 
 
 
-static void test_slide_texture() {
+TEST_CASE(test_slide_texture, "Texture") {
     std::cout << "\nTest: Slide Texture (Front & Rear)" << std::endl;
     
     // Case 1: Front Slip (Understeer)
@@ -257,7 +257,7 @@ static void test_slide_texture() {
     }
 }
 
-static void test_dynamic_tuning() {
+TEST_CASE(test_dynamic_tuning, "Texture") {
     std::cout << "\nTest: Dynamic Tuning (GUI Simulation)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -308,7 +308,7 @@ static void test_dynamic_tuning() {
     g_tests_passed++;
 }
 
-static void test_oversteer_boost() {
+TEST_CASE(test_oversteer_boost, "Texture") {
     std::cout << "\nTest: Lateral G Boost (Slide)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -355,7 +355,7 @@ static void test_oversteer_boost() {
 
 
 
-static void test_spin_torque_drop_interaction() {
+TEST_CASE(test_spin_torque_drop_interaction, "Texture") {
     std::cout << "\nTest: Spin Torque Drop with SoP" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -426,7 +426,7 @@ static void test_spin_torque_drop_interaction() {
 
 
 
-static void test_static_notch_integration() {
+TEST_CASE(test_static_notch_integration, "Texture") {
     std::cout << "\nTest: Static Notch Integration (v0.4.43)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -499,7 +499,7 @@ static void test_static_notch_integration() {
     }
 }
 
-static void test_notch_filter_bandwidth() {
+TEST_CASE(test_notch_filter_bandwidth, "Texture") {
     std::cout << "\nTest: Notch Filter Bandwidth (v0.6.10)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -550,7 +550,7 @@ static void test_notch_filter_bandwidth() {
     ASSERT_TRUE(max_output > 0.2);
 }
 
-static void test_notch_filter_edge_cases() {
+TEST_CASE(test_notch_filter_edge_cases, "Texture") {
     std::cout << "\nTest: Notch Filter Edge Cases (v0.6.10)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -616,7 +616,7 @@ static void test_notch_filter_edge_cases() {
 
 
 
-static void test_phase_wraparound() {
+TEST_CASE(test_phase_wraparound, "Texture") {
     std::cout << "\nTest: Phase Wraparound (Anti-Click)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -671,7 +671,7 @@ static void test_phase_wraparound() {
     }
 }
 
-static void test_multi_effect_interaction() {
+TEST_CASE(test_multi_effect_interaction, "Texture") {
     std::cout << "\nTest: Multi-Effect Interaction (Lockup + Spin)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -748,7 +748,7 @@ static void test_multi_effect_interaction() {
     }
 }
 
-static void test_notch_filter_attenuation() {
+TEST_CASE(test_notch_filter_attenuation, "Texture") {
     std::cout << "\nTest: Notch Filter Attenuation (v0.4.41)" << std::endl;
     BiquadNotch filter;
     double sample_rate = 400.0;
@@ -793,7 +793,7 @@ static void test_notch_filter_attenuation() {
     }
 }
 
-static void test_frequency_estimator() {
+TEST_CASE(test_frequency_estimator, "Texture") {
     std::cout << "\nTest: Frequency Estimator (v0.4.41)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -827,25 +827,6 @@ static void test_frequency_estimator() {
     }
 }
 
-void Run_Texture() {
-    std::cout << "\n=== Road Effects & Features Tests ===" << std::endl;
 
-    test_stationary_gate();
-    test_idle_smoothing();
-    test_stationary_silence();
-    test_driving_forces_restored();
-    test_slide_texture();
-    test_dynamic_tuning();
-    test_oversteer_boost();
-    test_phase_wraparound();
-    test_multi_effect_interaction();
-
-    test_spin_torque_drop_interaction();
-    test_notch_filter_attenuation();
-    test_frequency_estimator();
-    test_static_notch_integration();
-    test_notch_filter_bandwidth();
-    test_notch_filter_edge_cases();
-}
 
 } // namespace FFBEngineTests

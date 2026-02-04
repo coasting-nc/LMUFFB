@@ -2,7 +2,7 @@
 
 namespace FFBEngineTests {
 
-static void test_kinematic_load_braking() {
+TEST_CASE(test_kinematic_load_braking, "SlipGrip") {
     std::cout << "\nTest: Kinematic Load Braking (+Z Accel)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -43,7 +43,7 @@ static void test_kinematic_load_braking() {
     }
 }
 
-static void test_kinematic_load_cornering() {
+TEST_CASE(test_kinematic_load_cornering, "SlipGrip") {
     std::cout << "\nTest: Kinematic Load Cornering (Lateral Transfer v0.4.39)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -115,7 +115,7 @@ static void test_kinematic_load_cornering() {
     }
 }
 
-static void test_combined_grip_loss() {
+TEST_CASE(test_combined_grip_loss, "SlipGrip") {
     std::cout << "\nTest: Combined Friction Circle" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -159,7 +159,7 @@ static void test_combined_grip_loss() {
     }
 }
 
-static void test_rear_force_workaround() {
+TEST_CASE(test_rear_force_workaround, "SlipGrip") {
     std::cout << "\nTest: Rear Force Workaround (v0.4.10)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -268,7 +268,7 @@ static void test_rear_force_workaround() {
     }
 }
 
-static void test_rear_align_effect() {
+TEST_CASE(test_rear_align_effect, "SlipGrip") {
     std::cout << "\nTest: Rear Align Effect Decoupling (v0.4.11)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -353,7 +353,7 @@ static void test_rear_align_effect() {
     }
 }
 
-static void test_rear_grip_fallback() {
+TEST_CASE(test_rear_grip_fallback, "SlipGrip") {
     std::cout << "\nTest: Rear Grip Fallback (v0.4.5)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -433,7 +433,7 @@ static void test_rear_grip_fallback() {
     }
 }
 
-static void test_load_factor_edge_cases() {
+TEST_CASE(test_load_factor_edge_cases, "SlipGrip") {
     std::cout << "\nTest: Load Factor Edge Cases" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -484,7 +484,7 @@ static void test_load_factor_edge_cases() {
     }
 }
 
-static void test_missing_telemetry_warnings() {
+TEST_CASE(test_missing_telemetry_warnings, "SlipGrip") {
     std::cout << "\nTest: Missing Telemetry Warnings (v0.6.3)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
@@ -584,7 +584,7 @@ static void test_missing_telemetry_warnings() {
     std::cout.rdbuf(prev_cout_buf);
 }
 
-static void test_sanity_checks() {
+TEST_CASE(test_sanity_checks, "SlipGrip") {
     std::cout << "\nTest: Telemetry Sanity Checks" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -694,7 +694,7 @@ static void test_sanity_checks() {
     }
 }
 
-static void test_hysteresis_logic() {
+TEST_CASE(test_hysteresis_logic, "SlipGrip") {
     std::cout << "\nTest: Hysteresis Logic (Missing Data)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -769,7 +769,7 @@ static void test_hysteresis_logic() {
     }
 }
 
-static void test_grip_threshold_sensitivity() {
+TEST_CASE(test_grip_threshold_sensitivity, "SlipGrip") {
     std::cout << "\nTest: Grip Threshold Sensitivity (v0.5.7)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
@@ -809,19 +809,6 @@ static void test_grip_threshold_sensitivity() {
     }
 }
 
-void Run_SlipGrip() {
-    std::cout << "\n=== Slip & Grip Tests ===" << std::endl;
-    test_kinematic_load_braking();
-    test_kinematic_load_cornering();
-    test_combined_grip_loss();
-    test_rear_force_workaround();
-    test_rear_align_effect();
-    test_rear_grip_fallback();
-    test_load_factor_edge_cases();
-    test_missing_telemetry_warnings();
-    test_sanity_checks();
-    test_hysteresis_logic();
-    test_grip_threshold_sensitivity();
-}
+
 
 } // namespace FFBEngineTests

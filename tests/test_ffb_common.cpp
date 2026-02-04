@@ -226,21 +226,6 @@ AutoRegister::AutoRegister(const std::string& name,
 void Run() {
     std::cout << "\n--- FFTEngine Regression Suite ---" << std::endl;
     
-    // Categorized Runners
-    // Categorized Runners (Legacy/Manual)
-    Run_CorePhysics();
-    Run_SlopeDetection();
-    Run_Understeer();
-    Run_SpeedGate();
-    Run_YawGyro();
-    Run_Coordinates();
-    Run_RoadTexture();
-    Run_Texture(); // Features
-    Run_LockupBraking();
-    Run_Config();
-    Run_SlipGrip();
-    // Run_Internal(); // Migrated to Auto-Registration
-
     // Auto-Registered Tests
     auto& registry = TestRegistry::Instance();
     if (!registry.GetTests().empty()) {
