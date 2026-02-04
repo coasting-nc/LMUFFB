@@ -36,3 +36,7 @@ build_test/
 build_pr_*/
 test_full_output.txt
 test_output.txt
+test_config.ini
+test_stability.ini
+tmp_invalid.ini
+test_val.ini
