@@ -89,4 +89,85 @@ TEST_CASE_TAGGED(test_logger_marker, "Diagnostics", {"Logger"}) {
     ASSERT_GE(AsyncLogger::Get().GetFrameCount(), 1);
 }
 
+TEST_CASE_TAGGED(test_logger_filename_sanitization, "Diagnostics", {"Logger"}) {
+    std::cout << "\nTest: AsyncLogger Filename Sanitization" << std::endl;
+    AsyncLogger::Get().Stop();
+    
+    SessionInfo info;
+    info.driver_name = "TestDriver";
+    info.vehicle_name = "Porsche 911 GT3*R?";  // Contains invalid chars
+    info.track_name = "Spa/Belgium<Test>";     // Contains invalid chars
+    info.app_version = "0.7.9-test";
+    
+    AsyncLogger::Get().Start(info, "test_logs");
+    
+    std::string full_path = AsyncLogger::Get().GetFilename();
+    std::cout << "Generated filename: " << full_path << std::endl;
+    
+    // Get just the filename part for character validation
+    std::string filename = std::filesystem::path(full_path).filename().string();
+    
+    // Verify no invalid Windows filename characters in the filename component
+    ASSERT_TRUE(filename.find('*') == std::string::npos);
+    ASSERT_TRUE(filename.find('?') == std::string::npos);
+    ASSERT_TRUE(filename.find('/') == std::string::npos);
+    ASSERT_TRUE(filename.find('\\') == std::string::npos);
+    ASSERT_TRUE(filename.find('<') == std::string::npos);
+    ASSERT_TRUE(filename.find('>') == std::string::npos);
+    ASSERT_TRUE(filename.find('|') == std::string::npos);
+    ASSERT_TRUE(filename.find('"') == std::string::npos);
+    
+    // Verify underscores were used as replacements
+    ASSERT_TRUE(filename.find('_') != std::string::npos);
+    
+    AsyncLogger::Get().Stop();
+}
+
+TEST_CASE_TAGGED(test_logger_performance_impact, "Diagnostics", {"Logger"}) {
+    std::cout << "\nTest: AsyncLogger Performance Impact" << std::endl;
+    AsyncLogger::Get().Stop();
+    
+    SessionInfo info;
+    info.driver_name = "PerfTest";
+    info.vehicle_name = "TestCar";
+    info.track_name = "TestTrack";
+    info.app_version = "0.7.9-test";
+    
+    const int iterations = 1000;
+    LogFrame frame = {};
+    frame.timestamp = 1.0;
+    
+    // Measure without logging
+    auto start_no_log = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < iterations; i++) {
+        // Simulate minimal work (just the check)
+        if (AsyncLogger::Get().IsLogging()) {
+            AsyncLogger::Get().Log(frame);
+        }
+    }
+    auto end_no_log = std::chrono::high_resolution_clock::now();
+    auto duration_no_log = std::chrono::duration_cast<std::chrono::microseconds>(end_no_log - start_no_log).count();
+    
+    // Measure with logging
+    AsyncLogger::Get().Start(info, "test_logs");
+    auto start_with_log = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < iterations; i++) {
+        if (AsyncLogger::Get().IsLogging()) {
+            AsyncLogger::Get().Log(frame);
+        }
+    }
+    auto end_with_log = std::chrono::high_resolution_clock::now();
+    auto duration_with_log = std::chrono::duration_cast<std::chrono::microseconds>(end_with_log - start_with_log).count();
+    
+    AsyncLogger::Get().Stop();
+    
+    double overhead_per_call = (double)(duration_with_log - duration_no_log) / iterations;
+    std::cout << "  No logging: " << duration_no_log << " μs total" << std::endl;
+    std::cout << "  With logging: " << duration_with_log << " μs total" << std::endl;
+    std::cout << "  Overhead per call: " << overhead_per_call << " μs" << std::endl;
+    
+    // Verify overhead is less than 10 microseconds per call (as per plan)
+    ASSERT_TRUE(overhead_per_call < 10.0);
+}
+
 } // namespace FFBEngineTests

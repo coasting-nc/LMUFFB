@@ -110,8 +110,17 @@ public:
         // Generate filename
         auto now = std::chrono::system_clock::now();
         auto in_time_t = std::chrono::system_clock::to_time_t(now);
+        
+        // Use localtime_s for thread safety (MSVC)
+        std::tm time_info;
+        #ifdef _WIN32
+            localtime_s(&time_info, &in_time_t);
+        #else
+            localtime_r(&in_time_t, &time_info);
+        #endif
+        
         std::stringstream ss;
-        ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d_%H-%M-%S");
+        ss << std::put_time(&time_info, "%Y-%m-%d_%H-%M-%S");
         std::string timestamp_str = ss.str();
         
         std::string car = SanitizeFilename(info.vehicle_name);
@@ -172,38 +181,21 @@ public:
 
         LogFrame f = frame;
         if (m_pending_marker) {
-            f.marker = true; // Use passed frame combined with marker? Or previous frame? 
-            // The passed frame is current.
-            // But if pending marker was set asynchronously, we tag THIS frame.
+            f.marker = true;
             m_pending_marker = false;
         }
-        // Also if frame.marker was already true, we keep it true.
-        if (f.marker) {
-            // Nothing to do
-        } else if (m_pending_marker) { // Double check logic
-             // I already checked m_pending_marker above. 
-             // "if (m_pending_marker) { f.marker = true; ... }"
-             // Wait, I used `f` vs `frame`. `LogFrame f = frame;`
-             // Code above:
-             /*
-                LogFrame f = frame;
-                if (m_pending_marker) {
-                    f.marker = true;
-                    m_pending_marker = false;
-                }
-             */
-             // This is correct.
-        }
 
+        bool should_notify = false;
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (!m_running) return; 
             m_buffer_active.push_back(f);
+            should_notify = (m_buffer_active.size() >= BUFFER_THRESHOLD);
         }
         
         m_frame_count++;
         
-        if (m_buffer_active.size() >= BUFFER_THRESHOLD) {
+        if (should_notify) {
              m_cv.notify_one();
         }
     }
@@ -215,9 +207,11 @@ public:
     bool IsLogging() const { return m_running; }
     size_t GetFrameCount() const { return m_frame_count; }
     std::string GetFilename() const { return m_filename; }
+    size_t GetFileSizeBytes() const { return m_file_size_bytes; }
 
 private:
-    AsyncLogger() : m_running(false), m_pending_marker(false), m_frame_count(0), m_decimation_counter(0) {}
+    AsyncLogger() : m_running(false), m_pending_marker(false), m_frame_count(0), m_decimation_counter(0), 
+                    m_file_size_bytes(0), m_last_flush_time(std::chrono::steady_clock::now()) {}
     ~AsyncLogger() { Stop(); }
     
     // No copy
@@ -246,6 +240,14 @@ private:
                 WriteFrame(frame);
             }
             m_buffer_writing.clear();
+            
+            // Periodic flush to minimize data loss on crash
+            auto now = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - m_last_flush_time).count();
+            if (elapsed >= FLUSH_INTERVAL_SECONDS) {
+                m_file.flush();
+                m_last_flush_time = now;
+            }
             
             if (!m_running) break;
         }
@@ -299,15 +301,24 @@ private:
                << frame.ffb_total << "," << frame.ffb_base << "," << frame.ffb_sop << "," 
                << frame.ffb_grip_factor << "," << frame.speed_gate << "," 
                << (frame.clipping ? 1 : 0) << "," << (frame.marker ? 1 : 0) << "\n";
+        
+        // Track file size for monitoring
+        m_file_size_bytes += 200; // Approximate bytes per line
     }
 
     std::string SanitizeFilename(const std::string& input) {
         std::string out = input;
+        // Replace invalid Windows filename characters
         std::replace(out.begin(), out.end(), ' ', '_');
         std::replace(out.begin(), out.end(), '/', '_');
         std::replace(out.begin(), out.end(), '\\', '_');
         std::replace(out.begin(), out.end(), ':', '_');
-        // Remove other invalid chars if needed
+        std::replace(out.begin(), out.end(), '*', '_');
+        std::replace(out.begin(), out.end(), '?', '_');
+        std::replace(out.begin(), out.end(), '"', '_');
+        std::replace(out.begin(), out.end(), '<', '_');
+        std::replace(out.begin(), out.end(), '>', '_');
+        std::replace(out.begin(), out.end(), '|', '_');
         return out;
     }
     
@@ -325,8 +336,12 @@ private:
     std::atomic<size_t> m_frame_count;
     
     int m_decimation_counter;
+    std::atomic<size_t> m_file_size_bytes;
+    std::chrono::steady_clock::time_point m_last_flush_time;
+    
     static const int DECIMATION_FACTOR = 4; // 400Hz -> 100Hz
     static const size_t BUFFER_THRESHOLD = 200; // ~0.5s of data
+    static const int FLUSH_INTERVAL_SECONDS = 5; // Flush every 5 seconds
 };
 
 #endif // ASYNCLOGGER_H

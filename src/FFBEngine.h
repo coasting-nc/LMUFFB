@@ -866,11 +866,8 @@ public:
         double current_grip_factor = 1.0;
 
         // FIX 3: Confidence-based grip scaling (optional)
-        double confidence = 1.0;
-        if (m_slope_confidence_enabled) {
-            confidence = std::abs(dAlpha_dt) / 0.1; // Scale: 0 to 1
-            confidence = (std::min)(1.0, confidence);
-        }
+        // Use extracted helper to avoid duplication with logging code
+        double confidence = calculate_slope_confidence(dAlpha_dt);
 
         if (m_slope_current < (double)m_slope_negative_threshold) {
             // Slope is negative -> tire is sliding
@@ -888,6 +885,14 @@ public:
         m_slope_smoothed_output += alpha * (current_grip_factor - m_slope_smoothed_output);
 
         return m_slope_smoothed_output;
+    }
+
+    // Helper: Calculate confidence factor for slope detection
+    // Extracted to avoid code duplication between slope detection and logging
+    inline double calculate_slope_confidence(double dAlpha_dt) {
+        if (!m_slope_confidence_enabled) return 1.0;
+        double conf_raw = std::abs(dAlpha_dt) / 0.1; // Normalize to 0.1 rad/s
+        return (std::min)(1.0, conf_raw);
     }
 
     // Helper: Smoothstep interpolation - v0.7.2
@@ -1266,6 +1271,8 @@ public:
             // Front Axle raw
             frame.slip_angle_fl = (float)fl.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
             frame.slip_angle_fr = (float)fr.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
+            frame.slip_ratio_fl = (float)calculate_wheel_slip_ratio(fl);
+            frame.slip_ratio_fr = (float)calculate_wheel_slip_ratio(fr);
             frame.grip_fl = (float)fl.mGripFract;
             frame.grip_fr = (float)fr.mGripFract;
             frame.load_fl = (float)fl.mTireLoad;
@@ -1281,12 +1288,8 @@ public:
             frame.slope_current = (float)m_slope_current;
             frame.slope_smoothed = (float)m_slope_smoothed_output;
             
-            // Recalculate confidence for logging
-            frame.confidence = 1.0f;
-            if (m_slope_confidence_enabled) {
-                 float conf = (float)(std::abs(m_slope_dAlpha_dt) / 0.1);
-                 frame.confidence = (std::min)(1.0f, conf);
-            }
+            // Use extracted confidence calculation
+            frame.confidence = (float)calculate_slope_confidence(m_slope_dAlpha_dt);
             
             // Rear axle
             frame.calc_grip_rear = (float)ctx.avg_rear_grip;

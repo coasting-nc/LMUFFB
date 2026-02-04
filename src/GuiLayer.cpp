@@ -834,7 +834,11 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
          ImGui::TextColored(blink ? ImVec4(1,0,0,1) : ImVec4(0.6f,0,0,1), "REC");
          
          ImGui::SameLine();
-         ImGui::Text("%zu f", AsyncLogger::Get().GetFrameCount());
+         size_t bytes = AsyncLogger::Get().GetFileSizeBytes();
+         if (bytes < 1024 * 1024)
+             ImGui::Text("%zu f (%.0f KB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / 1024.0f);
+         else
+             ImGui::Text("%zu f (%.1f MB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / (1024.0f * 1024.0f));
          
          ImGui::SameLine();
          if (ImGui::Button("MARKER")) {
@@ -1397,6 +1401,18 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                 Config::Save(engine);
             }
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("Automatically start logging when you leave the pit/menu,\nand stop when you return.");
+            
+            char log_path[260];
+            strncpy_s(log_path, Config::m_log_path.c_str(), _TRUNCATE);
+            if (ImGui::InputText("Log Path", log_path, sizeof(log_path))) {
+                Config::m_log_path = log_path;
+            }
+            if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Directory where log files will be saved.\nRelative to app root if no drive letter.\nExample: logs/");
+
+            if (AsyncLogger::Get().IsLogging()) {
+                ImGui::BulletText("Filename: %s", AsyncLogger::Get().GetFilename().c_str());
+            }
 
             char log_path_buf[256];
             strncpy_s(log_path_buf, Config::m_log_path.c_str(), 255);
