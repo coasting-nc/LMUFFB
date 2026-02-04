@@ -1,4 +1,5 @@
 ## **Driver's Guide to Testing LMUFFB**
+> **Current Version:** v0.7.5
 
 ### 🏁 Prerequisites
 
@@ -38,6 +39,9 @@
     *   *Normal:* Resistance builds up as you turn.
     *   *The Cue:* Suddenly, the resistance **stops increasing** or even **drops**. The wheel feels "hollow" or "disconnected."
     *   *Correct Behavior:* If you unwind the wheel (straighten slightly), the weight returns.
+
+**Advanced Note (Slope Detection v0.7.3):**
+If you have **Slope Detection** enabled, this feeling is dynamic. Instead of a linear drop based on a threshold, the weight will fall off organically as the tire's grip slope flattens and reverses. It feels less like a "switch" and more like a real tire giving up.
 
 ---
 
@@ -289,7 +293,7 @@
 
 ---
 
-### Effects currently missing in lmuFFB v0.4.41
+### Effects analysis (v0.7.5)
 
 Does LMUFFB produce all the effects described in this video `https://www.youtube.com/watch?v=XHSEAMQgN2c`?
 
@@ -306,12 +310,11 @@ Does LMUFFB produce all the effects described in this video `https://www.youtube
     *   Our implementation uses `mLateralPatchVel` (Scrubbing Speed) and a **Sawtooth Wave**. This creates exactly the "grinding/sandpaper" feel described.
     *   *Nuance:* The author mentions feeling it *before* the slide. Our effect triggers based on `Slip Angle`. If our threshold (0.10 rad) is too high, it might trigger too late. (See `docs/dev_docs/grip_calculation_and_slip_angle_v0.4.12.md` for discussion on lowering this).
 
-**3. The "ABS Rattle" (Pulsing): ⚠️ PARTIAL / UNCERTAIN**
+**3. The "ABS Rattle" (Pulsing): ✅ YES (v0.6.0)**
 *   **Video:** Describes a "pseudo feeling of the ABS pump working."
-*   **LMUFFB:** We have a **Lockup Effect** (`m_lockup_enabled`).
-    *   *Logic:* Triggers when `Slip Ratio < -0.1`.
-    *   *The Gap:* If the car's ABS system is very good, it might keep the slip ratio *above* -0.1 (e.g., at -0.08). In that case, LMUFFB would be silent.
-    *   *Missing Feature:* We do not have a specific "ABS Active" trigger. We rely on the physics result (Slip). If the ABS hides the slip, we hide the vibration. We might need to lower the threshold or read `mBrakePressure` oscillation to simulate the pump directly.
+*   **LMUFFB:** We now have a dedicated **ABS Pulse** effect.
+    *   *Logic:* Triggers when Brake Pressure modulates rapidly (> 2.0 bar/s) while pedal is pressed (> 50%).
+    *   *Feel:* A 10-50Hz vibration matching the pump frequency.
 
 **4. Dynamic Weight Transfer (Longitudinal): ❌ MISSING**
 *   **Video:** Praises AC1 for the feeling of the car getting heavy under braking and light under acceleration.

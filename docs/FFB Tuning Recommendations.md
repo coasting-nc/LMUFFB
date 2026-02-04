@@ -1,5 +1,5 @@
-
 # LMUFFB Tuning Guide: The Physics of Feel
+> **Current Version:** v0.7.5
 
 This guide provides a systematic approach to tuning Force Feedback in LMUFFB. Instead of randomly moving sliders, follow this sequence to build a cohesive and informative force feedback profile.
 
@@ -42,6 +42,17 @@ This layer communicates the connection between the front tires and the road.
     *   **Adjust `Understeer Effect`:** Increase this slider until you feel the steering wheel go **light** or "hollow" the moment the car stops turning and starts sliding.
     *   *Criteria:* You want a clear drop in weight that prompts you to unwind the wheel, but not so much that the wheel goes completely limp.
 
+    *   *Criteria:* You want a clear drop in weight that prompts you to unwind the wheel, but not so much that the wheel goes completely limp.
+
+### Advanced: Slope Detection (v0.7.3)
+For Direct Drive users who want more dynamic feedback, you can enable **Slope Detection**. This replaces the static "Understeer Effect" logic.
+*   **What it does:** Monitors the tire's physics curve ($dG/d\alpha$). When the tire hits peak load and starts to scrub, it dynamically reduces force.
+*   **Tuning the feel:**
+    *   **Sensitivity:** Controls how abruptly the force drops. Lower (0.5) is smoother; Higher (1.0) is sharper.
+    *   **Decay Rate:** Controls how fast the force returns to normal on straights. Default (5.0) is usually best.
+    *   **Confidence Gate:** Keep this **ON**. It prevents false triggers when you aren't really pushing the car.
+*   **Warning:** This automatically disables "Lateral G Boost" to prevent feedback loops.
+
 ---
 
 ## Phase 3: The Rear Axle (Oversteer & Balance)
@@ -74,7 +85,7 @@ These are high-frequency vibrations that sit "on top" of the forces.
 
 ### The Settings
 *   **Road Texture:** Vertical bumps and curbs.
-*   **Slide Texture:** Lateral scrubbing vibration (Sandpaper feel).
+*   **Slide Texture:** Lateral scrubbing vibration (Sandpaper feel). **Note:** Works even at low speeds (exempt from Speed Gate).
 *   **Scrub Drag:** Constant resistance (friction) when sliding.
 
 ### Tuning Steps
@@ -115,9 +126,12 @@ The final polish to match your specific hardware capabilities.
     *   **Direct Drive:** Aim for **Low Latency** (Green text). Set SoP Smoothing to ~0.90 and Slip Smoothing to ~0.005.
     *   **Belt/Gear:** Aim for **Medium Latency**. Set SoP Smoothing to ~0.60 and Slip Smoothing to ~0.030.
     *   *Criteria:* Lower the smoothing until the wheel feels "grainy" or "robotic," then raise it just enough to make it smooth again.
-2.  **Gyroscopic Damping (Stability):**
     *   If the wheel oscillates (wobbles left/right) on straights or snaps too violently when catching a slide ("Tank Slapper"), **increase** Gyro Damping.
     *   *Criteria:* The wheel should feel "viscous" or fluid-like during rapid movements, not like a spring.
+3.  **Speed Gate (Oscillation Prevention):**
+    *   Limits forces at very low speeds (< 18 km/h) to prevent violent shaking when stopped.
+    *   **Defaults:** 1.0 m/s (start) to 5.0 m/s (full).
+    *   *Tip:* If you feel a "dead zone" when leaving the pits, try lowering the Upper Limit (e.g., to 3.0 m/s). If the wheel shakes when stopped, raise the Lower Limit.
 
 ---
 
