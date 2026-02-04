@@ -1,6 +1,6 @@
 # lmuFFB
 
-A FFB app for LMU, similar to irFFB and Marvin's iRacing App
+A Telemetry-bases FFB app for LMU, similar to irFFB and Marvin's iRacing App
 
 Experimental alpha version.
 
