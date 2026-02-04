@@ -112,16 +112,6 @@ See also this Reddit thread:
 *   [FFB Math Formulas](docs/dev_docs/references/FFB_formulas.md)
 *   [How to Contribute to the Project](docs/dev_docs/contribute_to_the_project/how_to_contribute_to_the_project.md) - Step-by-step guide for contributors using AI-assisted coding tools
 
-
-## Features
-
-*   **Custom Effects**:
-    *   **Grip Modulation**: Feel the wheel lighten as front tires lose grip.
-    *   **Dynamic Oversteer**: Counter-steering force suggestion based on rear axle alignment torque (v0.2.2).
-    *   **Progressive Lockup**: Feel the edge of tire braking limit before full lock (v0.2.2).
-    *   **Traction Loss**: Feel the rear "float" and spin up under power (v0.2.2).
-
-
 ## Building (for developers)
 
 ### Prerequisites (First Setup)
