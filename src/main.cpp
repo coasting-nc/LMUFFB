@@ -11,6 +11,7 @@
 #include "DirectInputFFB.h"
 #include "DynamicVJoy.h"
 #include "GameConnector.h"
+#include "Version.h"
 #include <optional>
 
 // Constants
@@ -59,8 +60,35 @@ void FFBThread() {
             
             if (was_in_menu && in_realtime) {
                 std::cout << "[Game] User entered driving session." << std::endl;
+                
+                // Auto-Start Logging
+                if (Config::m_auto_start_logging && !AsyncLogger::Get().IsLogging()) {
+                    SessionInfo info;
+                    info.app_version = LMUFFB_VERSION;
+                    
+                    std::lock_guard<std::mutex> lock(g_engine_mutex);
+                    info.vehicle_name = g_engine.m_vehicle_name;
+                    info.track_name = g_engine.m_track_name;
+                    info.driver_name = "Auto";
+                    
+                    info.gain = g_engine.m_gain;
+                    info.understeer_effect = g_engine.m_understeer_effect;
+                    info.sop_effect = g_engine.m_sop_effect;
+                    info.slope_enabled = g_engine.m_slope_detection_enabled;
+                    info.slope_sensitivity = g_engine.m_slope_sensitivity;
+                    info.slope_threshold = (float)g_engine.m_slope_negative_threshold;
+                    info.slope_alpha_threshold = g_engine.m_slope_alpha_threshold;
+                    info.slope_decay_rate = g_engine.m_slope_decay_rate;
+                    
+                    AsyncLogger::Get().Start(info, Config::m_log_path);
+                }
             } else if (!was_in_menu && !in_realtime) {
                 std::cout << "[Game] User exited to menu (FFB Muted)." << std::endl;
+                
+                // Auto-Stop Logging
+                if (Config::m_auto_start_logging && AsyncLogger::Get().IsLogging()) {
+                    AsyncLogger::Get().Stop();
+                }
             }
             was_in_menu = !in_realtime;
             

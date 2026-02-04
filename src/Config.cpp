@@ -11,6 +11,8 @@ bool Config::m_output_ffb_to_vjoy = false;
 bool Config::m_always_on_top = true;
 std::string Config::m_last_device_guid = "";
 std::string Config::m_config_path = "config.ini";
+bool Config::m_auto_start_logging = false;
+std::string Config::m_log_path = "logs/";
 
 // Window Geometry Defaults (v0.5.5)
 int Config::win_pos_x = 100;
@@ -806,6 +808,8 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "win_w_large=" << win_w_large << "\n";
         file << "win_h_large=" << win_h_large << "\n";
         file << "show_graphs=" << show_graphs << "\n";
+        file << "auto_start_logging=" << m_auto_start_logging << "\n";
+        file << "log_path=" << m_log_path << "\n";
 
         file << "\n; --- General FFB ---\n";
         file << "invert_force=" << engine.m_invert_force << "\n";
@@ -1013,6 +1017,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "win_w_large") win_w_large = std::stoi(value);
                     else if (key == "win_h_large") win_h_large = std::stoi(value);
                     else if (key == "show_graphs") show_graphs = std::stoi(value);
+                    else if (key == "auto_start_logging") m_auto_start_logging = std::stoi(value);
+                    else if (key == "log_path") m_log_path = value;
                     else if (key == "gain") engine.m_gain = std::stof(value);
                     else if (key == "sop_smoothing_factor") engine.m_sop_smoothing_factor = std::stof(value);
                     else if (key == "sop_scale") engine.m_sop_scale = std::stof(value);

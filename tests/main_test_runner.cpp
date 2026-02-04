@@ -2,6 +2,7 @@
 #include <atomic>
 #include <mutex>
 #include <cstdio>
+#include <filesystem>
 #include "src/Config.h"
 
 #ifdef _WIN32
@@ -149,6 +150,12 @@ int main(int argc, char* argv[]) {
     std::remove("test_legacy.ini");
     std::remove("test_comments.ini");
     std::remove("imgui.ini");
+    
+    try {
+        if (std::filesystem::exists("test_logs")) {
+            std::filesystem::remove_all("test_logs");
+        }
+    } catch (...) {}
 
     return (total_failed > 0) ? 1 : 0;
 }

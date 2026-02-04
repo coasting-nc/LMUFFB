@@ -9,6 +9,7 @@
 #include <chrono>
 #include <array>
 #include "lmu_sm_interface/InternalsPlugin.hpp"
+#include "AsyncLogger.h"
 
 // Mathematical Constants
 static constexpr double PI = 3.14159265358979323846;
@@ -429,6 +430,14 @@ public:
     double m_slope_current = 0.0;
     double m_slope_grip_factor = 1.0;
     double m_slope_smoothed_output = 1.0;
+    
+    // Context for Logging (v0.7.x)
+    char m_vehicle_name[64] = "Unknown";
+    char m_track_name[64] = "Unknown";
+
+    // Logging intermediate values (exposed for AsyncLogger)
+    double m_slope_dG_dt = 0.0;       // Last calculated dG/dt
+    double m_slope_dAlpha_dt = 0.0;   // Last calculated dAlpha/dt
 
     // Frequency Estimator State (v0.4.41)
     double m_last_crossing_time = 0.0;
@@ -839,6 +848,10 @@ public:
         double dG_dt = calculate_sg_derivative(m_slope_lat_g_buffer, m_slope_buffer_count, m_slope_sg_window, dt);
         double dAlpha_dt = calculate_sg_derivative(m_slope_slip_buffer, m_slope_buffer_count, m_slope_sg_window, dt);
 
+        // Store for logging
+        m_slope_dG_dt = dG_dt;
+        m_slope_dAlpha_dt = dAlpha_dt;
+
         // 3. Estimate Slope (dG/dAlpha)
         // Handle small dAlpha/dt to avoid noise/division by zero
         // FIX 1: Configurable threshold (was hard-coded 0.001)
@@ -920,6 +933,15 @@ public:
         ctx.car_speed_long = data->mLocalVel.z;
         ctx.car_speed = std::abs(ctx.car_speed_long);
         
+        // Update Context strings (for UI/Logging)
+        // Only update if first char differs to avoid redundant copies
+        if (m_vehicle_name[0] != data->mVehicleName[0] || m_vehicle_name[10] != data->mVehicleName[10]) {
+             strncpy_s(m_vehicle_name, data->mVehicleName, 63);
+             m_vehicle_name[63] = '\0';
+             strncpy_s(m_track_name, data->mTrackName, 63);
+             m_track_name[63] = '\0';
+        }
+
         // --- 2. SIGNAL CONDITIONING (STATE UPDATES) ---
         
         // Chassis Inertia Simulation
@@ -1222,6 +1244,63 @@ public:
 
                 m_debug_buffer.push_back(snap);
             }
+        }
+        
+        // Telemetry Logging (v0.7.x)
+        if (AsyncLogger::Get().IsLogging()) {
+            LogFrame frame;
+            frame.timestamp = data->mElapsedTime;
+            frame.delta_time = data->mDeltaTime;
+            
+            // Inputs
+            frame.steering = (float)data->mUnfilteredSteering;
+            frame.throttle = (float)data->mUnfilteredThrottle;
+            frame.brake = (float)data->mUnfilteredBrake;
+            
+            // Vehicle state
+            frame.speed = (float)ctx.car_speed;
+            frame.lat_accel = (float)data->mLocalAccel.x;
+            frame.long_accel = (float)data->mLocalAccel.z;
+            frame.yaw_rate = (float)data->mLocalRot.y;
+            
+            // Front Axle raw
+            frame.slip_angle_fl = (float)fl.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
+            frame.slip_angle_fr = (float)fr.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
+            frame.grip_fl = (float)fl.mGripFract;
+            frame.grip_fr = (float)fr.mGripFract;
+            frame.load_fl = (float)fl.mTireLoad;
+            frame.load_fr = (float)fr.mTireLoad;
+            
+            // Calculated values
+            frame.calc_slip_angle_front = (float)m_grip_diag.front_slip_angle;
+            frame.calc_grip_front = (float)ctx.avg_grip;
+            
+            // Slope detection
+            frame.dG_dt = (float)m_slope_dG_dt;
+            frame.dAlpha_dt = (float)m_slope_dAlpha_dt;
+            frame.slope_current = (float)m_slope_current;
+            frame.slope_smoothed = (float)m_slope_smoothed_output;
+            
+            // Recalculate confidence for logging
+            frame.confidence = 1.0f;
+            if (m_slope_confidence_enabled) {
+                 float conf = (float)(std::abs(m_slope_dAlpha_dt) / 0.1);
+                 frame.confidence = (std::min)(1.0f, conf);
+            }
+            
+            // Rear axle
+            frame.calc_grip_rear = (float)ctx.avg_rear_grip;
+            frame.grip_delta = (float)(ctx.avg_grip - ctx.avg_rear_grip);
+            
+            // FFB output
+            frame.ffb_total = (float)norm_force;
+            frame.ffb_grip_factor = (float)ctx.grip_factor;
+            frame.ffb_sop = (float)ctx.sop_base_force;
+            frame.speed_gate = (float)ctx.speed_gate;
+            frame.clipping = (std::abs(norm_force) > 0.99);
+            frame.ffb_base = (float)base_input; // Plan included ffb_base
+            
+            AsyncLogger::Get().Log(frame);
         }
         
         return (std::max)(-1.0, (std::min)(1.0, norm_force));

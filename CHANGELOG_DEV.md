@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.7.9] - 2026-02-04
+### Added
+- **Telemetry Logger Integration**:
+  - **High-Performance Asynchronous Logging**: Implemented a double-buffered 100Hz CSV logger that captures 40+ physics channels without impacting FFB loop performance.
+  - **FFB Engine Integration**: Captures raw telemetry, intermediate slope detection derivatives (dG/dt, dAlpha/dt), and final force components.
+  - **GUI Controls**: Added manual Start/Stop/Marker buttons and a recording status indicator ("REC").
+  - **Auto-Start Support**: Optional setting to automatically begin logging when entering a driving session.
+  - **Persistence**: New settings for `log_path` and `auto_start_logging` saved to `config.ini`.
+  - **Context-Aware Filenames**: Log files are automatically named using timestamp, car name, and track name.
+
 ## [0.7.8] - 2026-02-04
 ### Changed
 - **Test Suite Refactoring**:

@@ -25,6 +25,7 @@ set(TEST_SOURCES
     test_ffb_internal.cpp
     test_persistence_v0625.cpp
     test_persistence_v0628.cpp
+    test_async_logger.cpp
     ../src/Config.cpp
 )
 

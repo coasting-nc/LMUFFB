@@ -551,13 +551,25 @@ file << "log_autostart=" << Config::m_log_autostart << "\n";
 - [ ] Create `docs/diagnostics/how_to_use_telemetry_logging.md`
 - [ ] Update this plan with implementation notes
 
-### 8.4 Implementation Notes (To Be Updated)
+## 8.4 Implementation Notes
 
 **Unforeseen Issues:**
-- *(To be filled in)*
+- **Compiler Warning C4996 (strncpy)**: MSVC 2022 flagged `strncpy` as unsafe. Updated to `strncpy_s` in both `FFBEngine.h` and `GuiLayer.cpp` to resolve build errors in newer toolchains.
+- **ImGui String Buffer Management**: Handling the dynamic `log_path` in ImGui required creating a local char buffer and using `strncpy_s` to safely update the `std::string` in `Config`.
+- **Directory Creation Permission**: Discovered that `std::filesystem::create_directories` can fail if the app doesn't have write permissions in the root folder. Added a try-catch block to prevent crashes, letting the subsequent file open operation handle the actual failure reporting.
 
-**Recommendations:**
-- *(To be filled in)*
+**Plan Deviations:**
+- **Vehicle/Track Name Location**: Instead of passing names every frame (which would bloat the 400Hz API), I integrated string capture directly into `FFBEngine::calculate_force`. It now only copies the strings when it detects a mismatch (e.g., car change or new session), which is much more efficient.
+- **Persistence Bonus**: Integrated `auto_start_logging` into the global `Config` persistence system, which wasn't strictly required by the initial MVP but provides significant UX value.
+- **Decimation logic modification**: Initial plan suggested 100Hz fixed. Implementation uses a `DECIMATION_FACTOR` which is easier to tune if users want higher/lower fidelity later.
+
+**Challenges Encountered:**
+- **Thread Safety in Auto-Start**: Coordinating the session detection in `main.cpp` (FFB Thread) with settings loaded by the GUI thread required careful use of `g_engine_mutex` to avoid race conditions when capturing the initial `SessionInfo`.
+- **UTF-8 File Encoding**: Encountered some issues with file reading tools when `config.ini` was saved in specific encodings. Standardized all string handling to UTF-8.
+
+**Recommendations for Future Plans:**
+- **Binary Logging Option**: For long endurance races, CSV files can grow quite large (~10MB/hr). Future versions should consider a compressed binary format (e.g., Protobuf or custom flatbuffer) to reduce disk footprint.
+- **Live Telemetry Overlay**: The logging infrastructure could be reused to feed a live performance overlay in the GUI, reducing the need for post-processing of CSVs for quick tuning.
 
 ---
 

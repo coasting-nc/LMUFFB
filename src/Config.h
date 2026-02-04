@@ -398,6 +398,8 @@ public:
     static bool m_enable_vjoy;        // Acquire vJoy device (Driver Enabled)
     static bool m_output_ffb_to_vjoy; // Output FFB signal to vJoy Axis X (Monitor)
     static bool m_always_on_top;      // NEW: Keep window on top
+    static bool m_auto_start_logging; // NEW: Auto-start logging
+    static std::string m_log_path;    // NEW: Path to save logs
 
     // Window Geometry Persistence (v0.5.5)
     static int win_pos_x, win_pos_y;

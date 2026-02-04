@@ -4,6 +4,7 @@
 #include "DirectInputFFB.h"
 #include "GameConnector.h"
 #include "GuiWidgets.h"
+#include "AsyncLogger.h"
 #include <windows.h>
 #include <iostream>
 #include <vector>
@@ -819,6 +820,54 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         Config::Save(engine);
     }
     
+    // --- Telemetry Logger ---
+    ImGui::Separator();
+    bool is_logging = AsyncLogger::Get().IsLogging();
+    if (is_logging) {
+         if (ImGui::Button("STOP LOG", ImVec2(80, 0))) {
+             AsyncLogger::Get().Stop();
+         }
+         ImGui::SameLine();
+         // Pulse effect or color
+         float time = (float)ImGui::GetTime();
+         bool blink = (fmod(time, 1.0f) < 0.5f);
+         ImGui::TextColored(blink ? ImVec4(1,0,0,1) : ImVec4(0.6f,0,0,1), "REC");
+         
+         ImGui::SameLine();
+         ImGui::Text("%zu f", AsyncLogger::Get().GetFrameCount());
+         
+         ImGui::SameLine();
+         if (ImGui::Button("MARKER")) {
+             AsyncLogger::Get().SetMarker();
+         }
+    } else {
+         if (ImGui::Button("START LOGGING", ImVec2(120, 0))) {
+             SessionInfo info;
+             info.app_version = LMUFFB_VERSION;
+             if (engine.m_vehicle_name[0] != '\0') info.vehicle_name = engine.m_vehicle_name;
+             else info.vehicle_name = "UnknownCar";
+             
+             if (engine.m_track_name[0] != '\0') info.track_name = engine.m_track_name;
+             else info.track_name = "UnknownTrack";
+             
+             info.driver_name = "User";
+             
+             // Snapshot critical FFB settings
+             info.gain = engine.m_gain;
+             info.understeer_effect = engine.m_understeer_effect;
+             info.sop_effect = engine.m_sop_effect;
+             info.slope_enabled = engine.m_slope_detection_enabled;
+             info.slope_sensitivity = engine.m_slope_sensitivity;
+             info.slope_threshold = (float)engine.m_slope_negative_threshold;
+             info.slope_alpha_threshold = engine.m_slope_alpha_threshold;
+             info.slope_decay_rate = engine.m_slope_decay_rate;
+             
+             AsyncLogger::Get().Start(info, Config::m_log_path);
+         }
+         ImGui::SameLine();
+         ImGui::TextDisabled("(Diagnostics)");
+    }
+    
     ImGui::SameLine();
     if (ImGui::Button("Save Screenshot")) {
         time_t now = time(0);
@@ -1339,6 +1388,26 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                 "CRITICAL: Speeds below this value will have SMOOTHING applied\n"
                 "to eliminate engine idle vibration.\n"
                 "Default: 18.0 km/h (Safe for all wheels).");
+            
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Telemetry Logger")) {
+            if (ImGui::Checkbox("Auto-Start on Session", &Config::m_auto_start_logging)) {
+                Config::Save(engine);
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Automatically start logging when you leave the pit/menu,\nand stop when you return.");
+
+            char log_path_buf[256];
+            strncpy_s(log_path_buf, Config::m_log_path.c_str(), 255);
+            log_path_buf[255] = '\0';
+            if (ImGui::InputText("Log Path", log_path_buf, 255)) {
+                Config::m_log_path = log_path_buf;
+            }
+            if (ImGui::IsItemDeactivatedAfterEdit()) {
+                Config::Save(engine);
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Directory where .csv logs will be saved.\nDefault: logs/");
             
             ImGui::TreePop();
         }

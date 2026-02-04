@@ -4,6 +4,24 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]February 4, 2026[/b][/size]
+[b]Version 0.7.9 - Telemetry Logger[/b]
+
+[b]New release[/b] (0.7.9): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]High-Frequency Telemetry Logger[/b]: You can now record your FFB data to `.csv` files for diagnostics and tuning. The logger runs in the background at 100Hz (decimated from 400Hz) and captures every nuance of the physics engine, including hidden values like slip-derivatives and grip factors.
+[*][b]User Markers[/b]: Press the "MARKER" button during a slide or interesting moment to tag it in the log file for easy searching later.
+[*][b]Auto-Logging Mode[/b]: Enable "Auto-Start on Session" in Advanced Settings to have lmuFFB automatically record every time you leave the pits.
+[*][b]Smart Filenaming[/b]: Logs are automatically sorted by time, car, and track name (e.g., `lmuffb_log_..._Ferrari_488_Spa.csv`).
+[/list]
+
+[b]Improved[/b]
+[list]
+[*][b]Stability & Performance[/b]: The logger uses a dedicated worker thread, ensuring zero impact on your FFB feel or frame timing.
+[/list]
+
 ---
  
 [size=5][b]February 3, 2026[/b][/size]
