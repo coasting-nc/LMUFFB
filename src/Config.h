@@ -405,6 +405,10 @@ public:
     // NEW: Add a user preset
     static void AddUserPreset(const std::string& name, const FFBEngine& engine);
 
+    // NEW: Import/Export (v0.7.12)
+    static void ExportPreset(int index, const std::string& filename);
+    static bool ImportPreset(const std::string& filename, const FFBEngine& engine);
+
     // NEW: Persist selected device
     static std::string m_last_device_guid;
 
@@ -421,6 +425,12 @@ public:
     static int win_w_small, win_h_small; // Dimensions for Config Only
     static int win_w_large, win_h_large; // Dimensions for Config + Graphs
     static bool show_graphs;             // Remember if graphs were open
+
+private:
+    // Helper for parsing preset lines (v0.7.12)
+    static void ParsePresetLine(const std::string& line, Preset& p, std::string& version, bool& needs_save);
+    // Helper for writing preset fields (v0.7.12)
+    static void WritePresetFields(std::ofstream& file, const Preset& p);
 };
 
 

@@ -6,6 +6,7 @@
 #include "GuiWidgets.h"
 #include "AsyncLogger.h"
 #include <windows.h>
+#include <commdlg.h>
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -53,7 +54,10 @@ static const int LATENCY_WARNING_THRESHOLD_MS = 15; // Green if < 15ms, Red if >
 static constexpr std::chrono::seconds CONNECT_ATTEMPT_INTERVAL(2);
 
   // Forward declarations of helper functions
-  bool CreateDeviceD3D(HWND hWnd);
+bool OpenPresetFileDialog(HWND hwnd, std::string& outPath);
+bool SavePresetFileDialog(HWND hwnd, std::string& outPath, const std::string& defaultName);
+
+bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
@@ -980,6 +984,28 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             Config::ApplyPreset(0, engine);
             selected_preset = 0;
         }
+
+        ImGui::Separator();
+        if (ImGui::Button("Import Preset...")) {
+            std::string path;
+            if (OpenPresetFileDialog(g_hwnd, path)) {
+                if (Config::ImportPreset(path, engine)) {
+                    // Success! The new preset is at the end of the list
+                    selected_preset = (int)Config::presets.size() - 1;
+                }
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Export Selected...")) {
+            if (selected_preset >= 0 && selected_preset < Config::presets.size()) {
+                std::string path;
+                std::string defaultName = Config::presets[selected_preset].name + ".ini";
+                if (SavePresetFileDialog(g_hwnd, path, defaultName)) {
+                    Config::ExportPreset(selected_preset, path);
+                }
+            }
+        }
+
         ImGui::TreePop();
     }
 
@@ -1435,6 +1461,49 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     
     ImGui::End();
 }
+
+// --- FILE DIALOG HELPERS ---
+
+bool OpenPresetFileDialog(HWND hwnd, std::string& outPath) {
+    char filename[MAX_PATH] = "";
+    OPENFILENAMEA ofn;
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwnd;
+    ofn.lpstrFilter = "Preset Files (*.ini)\0*.ini\0All Files (*.*)\0*.*\0";
+    ofn.lpstrFile = filename;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+    ofn.lpstrDefExt = "ini";
+
+    if (GetOpenFileNameA(&ofn)) {
+        outPath = filename;
+        return true;
+    }
+    return false;
+}
+
+bool SavePresetFileDialog(HWND hwnd, std::string& outPath, const std::string& defaultName) {
+    char filename[MAX_PATH] = "";
+    strncpy_s(filename, defaultName.c_str(), _TRUNCATE);
+
+    OPENFILENAMEA ofn;
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwnd;
+    ofn.lpstrFilter = "Preset Files (*.ini)\0*.ini\0All Files (*.*)\0*.*\0";
+    ofn.lpstrFile = filename;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
+    ofn.lpstrDefExt = "ini";
+
+    if (GetSaveFileNameA(&ofn)) {
+        outPath = filename;
+        return true;
+    }
+    return false;
+}
+
 // Win32 message handler
 // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
 // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.

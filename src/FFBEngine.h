@@ -8,7 +8,7 @@
 #include <iostream>
 #include <chrono>
 #include <array>
-#include "lmu_sm_interface/InternalsPlugin.hpp"
+#include "lmu_sm_interface/InternalsPluginWrapper.h"
 #include "AsyncLogger.h"
 
 // Mathematical Constants

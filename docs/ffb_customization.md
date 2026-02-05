@@ -32,3 +32,22 @@ The C++ version of LMUFFB implements the following customizable effects:
 ## 5. Min Force
 *   **Description**: Boosts small force signals to overcome the internal friction/deadzone of mechanical wheels (Gears/Belts).
 *   **Implementation**: If force is non-zero but below threshold, set it to threshold (preserving sign).
+
+## 6. Preset Management & Sharing
+LMUFFB allows you to save and share your configurations easily.
+
+### Saving Custom Presets
+1. Adjust the sliders to your preference.
+2. Enter a name in the text box next to **"Save New"**.
+3. Click **"Save New"**. Your preset is now saved to `config.ini` and will appear in the **"Load Preset"** dropdown.
+
+### Exporting for Sharing
+1. Select the preset you want to share from the **"Load Preset"** dropdown.
+2. Click **"Export Selected..."**.
+3. Choose a location to save the `.ini` file. This file contains all your settings and can be sent to other users.
+
+### Importing a Shared Preset
+1. Click **"Import Preset..."**.
+2. Select the `.ini` file you received.
+3. LMUFFB will automatically add it to your user presets. If a preset with the same name exists, it will be renamed (e.g., "FastGT3 (1)").
+4. The imported preset is automatically saved to your `config.ini` for future use.

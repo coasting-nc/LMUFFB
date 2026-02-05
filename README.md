@@ -75,6 +75,9 @@ Your testing and feedback is greatly appreciated! 🙏
     -   **Tuning Tip**: Max Torque Ref is the primary way to control the balance between clipping/noise and steering weight. Start at 45 Nm and adjust based on your preference.
 -   **Strange pull in some scenarios**:
     -   If you feel a strange pull in specific driving situations, try reducing the **Rear Align Torque**.
+- **Sharing Presets**:
+    -   You can now easily share your FFB settings with others using the **"Export Selected..."** and **"Import Preset..."** buttons in the Presets section.
+    -   Exported presets are saved as small `.ini` files that can be sent to other users.
 -   **The app has too many options and it's confusing**:
     -   A future version will include a **"Basic Mode"** with auto adjustment and defaults for most settings.
     -   We need to first determine which settings work best for most users and wheel types (Direct Drive vs Belt/Gear).
