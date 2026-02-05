@@ -2,7 +2,7 @@
 #define VERSION_H
 
 #ifndef LMUFFB_VERSION
-#define LMUFFB_VERSION "0.7.14"
+#define LMUFFB_VERSION "0.7.15"
 #endif
 
 #endif
