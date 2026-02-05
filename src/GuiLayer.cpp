@@ -944,9 +944,28 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     // --- 2. PRESETS AND CONFIGURATION ---
     if (ImGui::TreeNodeEx("Presets and Configuration", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         if (Config::presets.empty()) Config::LoadPresets();
+
+        // Initialize selected_preset from last saved name if first run
+        static bool first_run = true;
+        if (first_run && !Config::presets.empty()) {
+            for (int i = 0; i < (int)Config::presets.size(); i++) {
+                if (Config::presets[i].name == Config::m_last_preset_name) {
+                    selected_preset = i;
+                    break;
+                }
+            }
+            first_run = false;
+        }
         
-        const char* preview_value = (selected_preset >= 0 && selected_preset < Config::presets.size()) 
-                                    ? Config::presets[selected_preset].name.c_str() : "Custom";
+        static std::string preview_buf;
+        const char* preview_value = "Custom";
+        if (selected_preset >= 0 && selected_preset < (int)Config::presets.size()) {
+            preview_buf = Config::presets[selected_preset].name;
+            if (Config::IsEngineDirtyRelativeToPreset(selected_preset, engine)) {
+                preview_buf += "*";
+            }
+            preview_value = preview_buf.c_str();
+        }
         
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.6f);
         if (ImGui::BeginCombo("Load Preset", preview_value)) {
@@ -978,12 +997,40 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             }
         }
         
-        if (ImGui::Button("Save Current Config")) Config::Save(engine);
+        if (ImGui::Button("Save Current Config")) {
+            if (selected_preset >= 0 && selected_preset < (int)Config::presets.size() && !Config::presets[selected_preset].is_builtin) {
+                Config::AddUserPreset(Config::presets[selected_preset].name, engine);
+            } else {
+                Config::Save(engine);
+            }
+        }
         ImGui::SameLine();
         if (ImGui::Button("Reset Defaults")) {
             Config::ApplyPreset(0, engine);
             selected_preset = 0;
         }
+        ImGui::SameLine();
+        if (ImGui::Button("Duplicate")) {
+            if (selected_preset >= 0) {
+                Config::DuplicatePreset(selected_preset, engine);
+                // Select the newly added preset
+                for (int i = 0; i < (int)Config::presets.size(); i++) {
+                    if (Config::presets[i].name == Config::m_last_preset_name) {
+                        selected_preset = i;
+                        break;
+                    }
+                }
+            }
+        }
+        ImGui::SameLine();
+        bool can_delete = (selected_preset >= 0 && selected_preset < (int)Config::presets.size() && !Config::presets[selected_preset].is_builtin);
+        if (!can_delete) ImGui::BeginDisabled();
+        if (ImGui::Button("Delete")) {
+            Config::DeletePreset(selected_preset, engine);
+            selected_preset = 0;
+            Config::ApplyPreset(0, engine);
+        }
+        if (!can_delete) ImGui::EndDisabled();
 
         ImGui::Separator();
         if (ImGui::Button("Import Preset...")) {

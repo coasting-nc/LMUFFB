@@ -10,6 +10,7 @@ bool Config::m_enable_vjoy = false;
 bool Config::m_output_ffb_to_vjoy = false;
 bool Config::m_always_on_top = true;
 std::string Config::m_last_device_guid = "";
+std::string Config::m_last_preset_name = "Default";
 std::string Config::m_config_path = "config.ini";
 bool Config::m_auto_start_logging = false;
 std::string Config::m_log_path = "logs/";
@@ -802,6 +803,7 @@ void Config::LoadPresets() {
 void Config::ApplyPreset(int index, FFBEngine& engine) {
     if (index >= 0 && index < presets.size()) {
         presets[index].Apply(engine);
+        m_last_preset_name = presets[index].name;
         std::cout << "[Config] Applied preset: " << presets[index].name << std::endl;
         Save(engine); // Integrated Auto-Save (v0.6.27)
     }
@@ -985,8 +987,150 @@ void Config::AddUserPreset(const std::string& name, const FFBEngine& engine) {
         presets.push_back(p);
     }
     
+    m_last_preset_name = name;
+
     // Save immediately to persist
     Save(engine);
+}
+
+void Config::DeletePreset(int index, const FFBEngine& engine) {
+    if (index < 0 || index >= (int)presets.size()) return;
+    if (presets[index].is_builtin) return; // Cannot delete builtin presets
+
+    std::string name = presets[index].name;
+    presets.erase(presets.begin() + index);
+    std::cout << "[Config] Deleted preset: " << name << std::endl;
+
+    // If the deleted preset was the last used one, reset it
+    if (m_last_preset_name == name) {
+        m_last_preset_name = "Default";
+    }
+
+    Save(engine);
+}
+
+void Config::DuplicatePreset(int index, const FFBEngine& engine) {
+    if (index < 0 || index >= (int)presets.size()) return;
+
+    Preset p = presets[index];
+    p.name = p.name + " (Copy)";
+    p.is_builtin = false;
+    p.app_version = LMUFFB_VERSION;
+
+    // Ensure unique name
+    std::string base_name = p.name;
+    int counter = 1;
+    bool exists = true;
+    while (exists) {
+        exists = false;
+        for (const auto& existing : presets) {
+            if (existing.name == p.name) {
+                p.name = base_name + " " + std::to_string(counter++);
+                exists = true;
+                break;
+            }
+        }
+    }
+
+    presets.push_back(p);
+    m_last_preset_name = p.name;
+    std::cout << "[Config] Duplicated preset to: " << p.name << std::endl;
+    Save(engine);
+}
+
+bool Config::IsEngineDirtyRelativeToPreset(int index, const FFBEngine& engine) {
+    // ⚠ IMPORTANT MAINTENANCE WARNING:
+    // When adding new FFB parameters to the FFBEngine class or Preset struct,
+    // you MUST add a comparison check here to ensure the "dirty" flag (*)
+    // appears correctly in the GUI.
+
+    if (index < 0 || index >= (int)presets.size()) return false;
+
+    const Preset& p = presets[index];
+    const float eps = 0.0001f;
+
+    auto is_near = [](float a, float b, float epsilon) { return std::abs(a - b) < epsilon; };
+
+    if (!is_near(p.gain, engine.m_gain, eps)) return true;
+    if (!is_near(p.understeer, engine.m_understeer_effect, eps)) return true;
+    if (!is_near(p.sop, engine.m_sop_effect, eps)) return true;
+    if (!is_near(p.sop_scale, engine.m_sop_scale, eps)) return true;
+    if (!is_near(p.sop_smoothing, engine.m_sop_smoothing_factor, eps)) return true;
+    if (!is_near(p.slip_smoothing, engine.m_slip_angle_smoothing, eps)) return true;
+    if (!is_near(p.min_force, engine.m_min_force, eps)) return true;
+    if (!is_near(p.oversteer_boost, engine.m_oversteer_boost, eps)) return true;
+
+    if (p.lockup_enabled != engine.m_lockup_enabled) return true;
+    if (!is_near(p.lockup_gain, engine.m_lockup_gain, eps)) return true;
+    if (!is_near(p.lockup_start_pct, engine.m_lockup_start_pct, eps)) return true;
+    if (!is_near(p.lockup_full_pct, engine.m_lockup_full_pct, eps)) return true;
+    if (!is_near(p.lockup_rear_boost, engine.m_lockup_rear_boost, eps)) return true;
+    if (!is_near(p.lockup_gamma, engine.m_lockup_gamma, eps)) return true;
+    if (!is_near(p.lockup_prediction_sens, engine.m_lockup_prediction_sens, eps)) return true;
+    if (!is_near(p.lockup_bump_reject, engine.m_lockup_bump_reject, eps)) return true;
+    if (!is_near(p.brake_load_cap, engine.m_brake_load_cap, eps)) return true;
+    if (!is_near(p.texture_load_cap, engine.m_texture_load_cap, eps)) return true;
+
+    if (p.abs_pulse_enabled != engine.m_abs_pulse_enabled) return true;
+    if (!is_near(p.abs_gain, engine.m_abs_gain, eps)) return true;
+    if (!is_near(p.abs_freq, engine.m_abs_freq_hz, eps)) return true;
+
+    if (p.spin_enabled != engine.m_spin_enabled) return true;
+    if (!is_near(p.spin_gain, engine.m_spin_gain, eps)) return true;
+    if (!is_near(p.spin_freq_scale, engine.m_spin_freq_scale, eps)) return true;
+
+    if (p.slide_enabled != engine.m_slide_texture_enabled) return true;
+    if (!is_near(p.slide_gain, engine.m_slide_texture_gain, eps)) return true;
+    if (!is_near(p.slide_freq, engine.m_slide_freq_scale, eps)) return true;
+
+    if (p.road_enabled != engine.m_road_texture_enabled) return true;
+    if (!is_near(p.road_gain, engine.m_road_texture_gain, eps)) return true;
+
+    if (p.invert_force != engine.m_invert_force) return true;
+    if (!is_near(p.max_torque_ref, engine.m_max_torque_ref, eps)) return true;
+    if (!is_near(p.lockup_freq_scale, engine.m_lockup_freq_scale, eps)) return true;
+    if (p.bottoming_method != engine.m_bottoming_method) return true;
+    if (!is_near(p.scrub_drag_gain, engine.m_scrub_drag_gain, eps)) return true;
+    if (!is_near(p.rear_align_effect, engine.m_rear_align_effect, eps)) return true;
+    if (!is_near(p.sop_yaw_gain, engine.m_sop_yaw_gain, eps)) return true;
+    if (!is_near(p.gyro_gain, engine.m_gyro_gain, eps)) return true;
+    if (!is_near(p.steering_shaft_gain, engine.m_steering_shaft_gain, eps)) return true;
+    if (p.base_force_mode != engine.m_base_force_mode) return true;
+
+    if (!is_near(p.optimal_slip_angle, engine.m_optimal_slip_angle, eps)) return true;
+    if (!is_near(p.optimal_slip_ratio, engine.m_optimal_slip_ratio, eps)) return true;
+    if (!is_near(p.steering_shaft_smoothing, engine.m_steering_shaft_smoothing, eps)) return true;
+    if (!is_near(p.gyro_smoothing, engine.m_gyro_smoothing, eps)) return true;
+    if (!is_near(p.yaw_smoothing, engine.m_yaw_accel_smoothing, eps)) return true;
+    if (!is_near(p.chassis_smoothing, engine.m_chassis_inertia_smoothing, eps)) return true;
+
+    if (p.flatspot_suppression != engine.m_flatspot_suppression) return true;
+    if (!is_near(p.notch_q, engine.m_notch_q, eps)) return true;
+    if (!is_near(p.flatspot_strength, engine.m_flatspot_strength, eps)) return true;
+
+    if (p.static_notch_enabled != engine.m_static_notch_enabled) return true;
+    if (!is_near(p.static_notch_freq, engine.m_static_notch_freq, eps)) return true;
+    if (!is_near(p.static_notch_width, engine.m_static_notch_width, eps)) return true;
+    if (!is_near(p.yaw_kick_threshold, engine.m_yaw_kick_threshold, eps)) return true;
+
+    if (!is_near(p.speed_gate_lower, engine.m_speed_gate_lower, eps)) return true;
+    if (!is_near(p.speed_gate_upper, engine.m_speed_gate_upper, eps)) return true;
+
+    if (!is_near(p.road_fallback_scale, engine.m_road_fallback_scale, eps)) return true;
+    if (p.understeer_affects_sop != engine.m_understeer_affects_sop) return true;
+
+    if (p.slope_detection_enabled != engine.m_slope_detection_enabled) return true;
+    if (p.slope_sg_window != engine.m_slope_sg_window) return true;
+    if (!is_near(p.slope_sensitivity, engine.m_slope_sensitivity, eps)) return true;
+    if (!is_near(p.slope_negative_threshold, (float)engine.m_slope_negative_threshold, eps)) return true;
+    if (!is_near(p.slope_smoothing_tau, engine.m_slope_smoothing_tau, eps)) return true;
+    if (!is_near(p.slope_alpha_threshold, engine.m_slope_alpha_threshold, eps)) return true;
+    if (!is_near(p.slope_decay_rate, engine.m_slope_decay_rate, eps)) return true;
+    if (p.slope_confidence_enabled != engine.m_slope_confidence_enabled) return true;
+    if (!is_near(p.slope_min_threshold, engine.m_slope_min_threshold, eps)) return true;
+    if (!is_near(p.slope_max_threshold, engine.m_slope_max_threshold, eps)) return true;
+
+    return false;
 }
 
 void Config::Save(const FFBEngine& engine, const std::string& filename) {
@@ -1005,6 +1149,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "output_ffb_to_vjoy=" << m_output_ffb_to_vjoy << "\n";
         file << "always_on_top=" << m_always_on_top << "\n";
         file << "last_device_guid=" << m_last_device_guid << "\n";
+        file << "last_preset_name=" << m_last_preset_name << "\n";
         file << "win_pos_x=" << win_pos_x << "\n";
         file << "win_pos_y=" << win_pos_y << "\n";
         file << "win_w_small=" << win_w_small << "\n";
@@ -1146,6 +1291,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "output_ffb_to_vjoy") m_output_ffb_to_vjoy = std::stoi(value);
                     else if (key == "always_on_top") m_always_on_top = std::stoi(value);
                     else if (key == "last_device_guid") m_last_device_guid = value;
+                    else if (key == "last_preset_name") m_last_preset_name = value;
                     // Window Geometry (v0.5.5)
                     else if (key == "win_pos_x") win_pos_x = std::stoi(value);
                     else if (key == "win_pos_y") win_pos_y = std::stoi(value);

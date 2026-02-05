@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.15] - 2026-02-06
+### Fixed
+- **Build Error**: Resolved compilation error C2513 in `Config.cpp` by renaming the local lambda `near` to `is_near` to avoid collision with legacy MSVC macros.
+
+## [0.7.14] - 2026-02-05
+### Added
+- **Preset Handling Improvements**:
+  - **Last Preset Persistence**: The app now remembers and automatically selects the last used preset on startup.
+  - **Dirty State Indication**: Added a `*` suffix to the preset name in the GUI when settings have been modified but not saved.
+  - **Improved "Save Current Config"**: Now updates the currently selected user preset instead of just saving to the top-level config.
+  - **Preset Management**: Added "Delete" and "Duplicate" buttons to the GUI for easier preset management.
+  - **Safety**: Built-in presets are protected from deletion.
 
 ## [0.7.13] - 2026-02-05
 ### Added

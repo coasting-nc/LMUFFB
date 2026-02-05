@@ -219,6 +219,13 @@ struct FFBCalculationContext {
     
 // FFB Engine Class
 class FFBEngine {
+    // ⚠ IMPORTANT MAINTENANCE WARNING:
+    // When adding new FFB parameters to this class, you MUST also update:
+    // 1. Preset struct in Config.h
+    // 2. Preset::Apply() and Preset::UpdateFromEngine() in Config.h
+    // 3. Config::Save() and Config::Load() in Config.cpp
+    // 4. Config::IsEngineDirtyRelativeToPreset() in Config.cpp (for the '*' indicator)
+
 public:
     // Settings (GUI Sliders)
     // NOTE: These are initialized by Preset::ApplyDefaultsToEngine() in the constructor

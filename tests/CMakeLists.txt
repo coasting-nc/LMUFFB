@@ -7,6 +7,10 @@ set(CMAKE_CXX_STANDARD 17)
 include_directories(..)
 include_directories(../src)
 
+if(NOT WIN32)
+    include_directories(linux_mock)
+endif()
+
 # Combined Test Executable
 set(TEST_SOURCES 
     main_test_runner.cpp 
@@ -27,6 +31,7 @@ set(TEST_SOURCES
     test_persistence_v0628.cpp
     test_async_logger.cpp
     test_versioned_presets.cpp
+    test_preset_improvements.cpp
     ../src/Config.cpp
 )
 

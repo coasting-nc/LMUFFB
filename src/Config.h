@@ -399,11 +399,17 @@ public:
     
     // Preset Management
     static std::vector<Preset> presets;
+    static std::string m_last_preset_name; // NEW (v0.7.14)
     static void LoadPresets(); // Populates presets vector
     static void ApplyPreset(int index, FFBEngine& engine);
     
     // NEW: Add a user preset
     static void AddUserPreset(const std::string& name, const FFBEngine& engine);
+
+    // NEW: Delete and Duplicate (v0.7.14)
+    static void DeletePreset(int index, const FFBEngine& engine);
+    static void DuplicatePreset(int index, const FFBEngine& engine);
+    static bool IsEngineDirtyRelativeToPreset(int index, const FFBEngine& engine);
 
     // NEW: Import/Export (v0.7.12)
     static void ExportPreset(int index, const std::string& filename);
