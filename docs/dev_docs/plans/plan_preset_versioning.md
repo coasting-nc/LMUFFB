@@ -1,4 +1,4 @@
-# Implementation Plan - Preset Versioning and Telemetry Version Header
+﻿# Implementation Plan - Preset Versioning and Telemetry Version Header
 
 This plan outlines the implementation of version tracking for saved presets and telemetry logs. This ensures that shared presets can be correctly interpreted and migrated by different versions of the application, and telemetry logs are tagged with the version that generated them.
 
@@ -47,7 +47,8 @@ User presets in `config.ini` currently lack version metadata. When users share p
 - **`Config::Save()`**:
     - In the preset loop (line ~897), write `file << "app_version=" << p.app_version << "\n";`.
 - **Migration Logic**:
-    - Implement (or expand) migration logic to handle changes between versions. 
+    - Implement (or expand) migration logic to handle changes between versions.
+    - **Initial Implementation:** For legacy presets (empty version), migration simply involves setting \pp_version\ to \LMUFFB_VERSION\. 
     - Note: The app should auto-save the config if any user presets were migrated during load.
 
 ### 3. Telemetry Header
@@ -100,3 +101,4 @@ User presets in `config.ini` currently lack version metadata. When users share p
 - [ ] Updated `tests/test_async_logger.cpp`.
 - [ ] Updated `CHANGELOG_DEV.md` and `USER_CHANGELOG.md`.
 - [ ] Implementation Notes (to be updated after execution).
+
