@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.7.13] - 2026-02-05
+### Added
+- **Preset Import/Export**:
+  - Implemented standalone preset file I/O (.ini) for easy sharing of FFB configurations.
+  - Added "Import Preset..." and "Export Selected..." buttons to the GUI with native Win32 file dialogs.
+  - Robust name collision handling for imported presets (automatic renaming).
+### Testing
+- **New Test Suite**: `tests/test_ffb_import_export.cpp`
+  - `test_preset_export_import`: Verifies single-preset round-trip integrity.
+  - `test_import_name_collision`: Validates automatic renaming logic.
+
 ## [0.7.12] - 2026-02-05
 ### Added
 - **Preset & Telemetry Versioning**:
