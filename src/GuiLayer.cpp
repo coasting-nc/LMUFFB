@@ -913,9 +913,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
     auto FloatSetting = [&](const char* label, float* v, float min, float max, const char* fmt = "%.2f", const char* tooltip = nullptr, std::function<void()> decorator = nullptr) {
         GuiWidgets::Result res = GuiWidgets::Float(label, v, min, max, fmt, tooltip, decorator);
-        if (res.changed) {
-            selected_preset = -1;
-        }
         if (res.deactivated) {
             Config::Save(engine);
         }
@@ -923,9 +920,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
     auto BoolSetting = [&](const char* label, bool* v, const char* tooltip = nullptr) {
         GuiWidgets::Result res = GuiWidgets::Checkbox(label, v, tooltip);
-        if (res.changed) {
-            selected_preset = -1;
-        }
         if (res.deactivated) {
             Config::Save(engine);
         }
@@ -933,9 +927,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
     auto IntSetting = [&](const char* label, int* v, const char* const items[], int items_count, const char* tooltip = nullptr) {
         GuiWidgets::Result res = GuiWidgets::Combo(label, v, items, items_count, tooltip);
-        if (res.changed) {
-            selected_preset = -1;
-        }
         if (res.deactivated) {
             Config::Save(engine);
         }
@@ -997,8 +988,14 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             }
         }
         
-        if (ImGui::Button("Save Current Config")) {
-            if (selected_preset >= 0 && selected_preset < (int)Config::presets.size() && !Config::presets[selected_preset].is_builtin) {
+        std::string save_btn_label = "Save Current Config";
+        bool is_user_preset = (selected_preset >= 0 && selected_preset < (int)Config::presets.size() && !Config::presets[selected_preset].is_builtin);
+        if (is_user_preset) {
+            save_btn_label = "Save to '" + Config::presets[selected_preset].name + "'";
+        }
+
+        if (ImGui::Button(save_btn_label.c_str())) {
+            if (is_user_preset) {
                 Config::AddUserPreset(Config::presets[selected_preset].name, engine);
             } else {
                 Config::Save(engine);
@@ -1240,8 +1237,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             "• Uses the static threshold method (default behavior)");
         
         if (slope_res.changed) {
-            selected_preset = -1;
-            
             // Reset buffers when enabling slope detection (v0.7.0 - Prevents stale data)
             if (!prev_slope_enabled && engine.m_slope_detection_enabled) {
                 engine.m_slope_buffer_count = 0;
@@ -1266,7 +1261,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             if (ImGui::SliderInt("  Filter Window", &window, 5, 41)) {
                 if (window % 2 == 0) window++;  // Force odd
                 engine.m_slope_sg_window = window;
-                selected_preset = -1;
             }
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip(
@@ -1443,7 +1437,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                 engine.m_speed_gate_lower = lower_kmh / 3.6f;
                 if (engine.m_speed_gate_upper <= engine.m_speed_gate_lower + 0.1f) 
                     engine.m_speed_gate_upper = engine.m_speed_gate_lower + 0.5f;
-                selected_preset = -1;
             }
             if (ImGui::IsItemDeactivatedAfterEdit()) {
                 Config::Save(engine);
@@ -1454,7 +1447,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                 engine.m_speed_gate_upper = upper_kmh / 3.6f;
                 if (engine.m_speed_gate_upper <= engine.m_speed_gate_lower + 0.1f)
                     engine.m_speed_gate_upper = engine.m_speed_gate_lower + 0.5f;
-                selected_preset = -1;
             }
             if (ImGui::IsItemDeactivatedAfterEdit()) {
                 Config::Save(engine);

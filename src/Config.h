@@ -437,6 +437,8 @@ private:
     static void ParsePresetLine(const std::string& line, Preset& p, std::string& version, bool& needs_save);
     // Helper for writing preset fields (v0.7.12)
     static void WritePresetFields(std::ofstream& file, const Preset& p);
+    // Helper to find the correct insertion point for a user preset (v0.7.16)
+    static std::vector<Preset>::iterator GetUserInsertionPoint();
 };
 
 
