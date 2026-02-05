@@ -2,7 +2,7 @@ Implement a fix for this issue:
 
 <link to issue>
 
-As in the title. For convenience when sharing presets, without having to copy and past and edit files.
+<issue title and text>
 
 Create a new branch to work on this task.
 
