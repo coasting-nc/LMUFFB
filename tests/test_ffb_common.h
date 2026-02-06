@@ -16,6 +16,7 @@
 #include "../src/FFBEngine.h"
 #include "../src/lmu_sm_interface/InternalsPlugin.hpp"
 #include "../src/lmu_sm_interface/LmuSharedMemoryWrapper.h"
+#include "../src/TelemetryProcessor.h"
 #include "../src/Config.h"
 
 namespace FFBEngineTests {
