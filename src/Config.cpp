@@ -123,7 +123,69 @@ void Config::LoadPresets() {
     // 1. Default - Uses Preset struct defaults from Config.h (Single Source of Truth)
     presets.push_back(Preset("Default", true));
     
-    // 2. T300 (Custom optimized)
+    // --- 2. Parse User Presets from config.ini ---
+    // User presets are loaded early so they appear at the top of the list (after Default)
+    {
+        std::ifstream file(m_config_path);
+        if (file.is_open()) {
+            std::string line;
+            bool needs_save = false; // Note: migration status tracked but we don't auto-save here to avoid risking global config
+            std::string current_preset_name = "";
+            Preset current_preset;
+            std::string current_preset_version = "";
+            bool preset_pending = false;
+
+            while (std::getline(file, line)) {
+                line.erase(0, line.find_first_not_of(" \t\r\n"));
+                line.erase(line.find_last_not_of(" \t\r\n") + 1);
+                if (line.empty() || line[0] == ';') continue;
+
+                if (line[0] == '[') {
+                    if (preset_pending && !current_preset_name.empty()) {
+                        current_preset.name = current_preset_name;
+                        current_preset.is_builtin = false;
+                        if (current_preset_version.empty()) {
+                            current_preset.app_version = LMUFFB_VERSION;
+                            std::cout << "[Config] Migrated legacy preset '" << current_preset_name << "' to version " << LMUFFB_VERSION << std::endl;
+                        } else {
+                            current_preset.app_version = current_preset_version;
+                        }
+                        presets.push_back(current_preset);
+                        preset_pending = false;
+                    }
+
+                    if (line.rfind("[Preset:", 0) == 0) {
+                        size_t end_pos = line.find(']');
+                        if (end_pos != std::string::npos) {
+                            current_preset_name = line.substr(8, end_pos - 8);
+                            current_preset = Preset(current_preset_name, false);
+                            preset_pending = true;
+                            current_preset_version = "";
+                        }
+                    }
+                    continue;
+                }
+
+                if (preset_pending) {
+                    ParsePresetLine(line, current_preset, current_preset_version, needs_save);
+                }
+            }
+
+            if (preset_pending && !current_preset_name.empty()) {
+                current_preset.name = current_preset_name;
+                current_preset.is_builtin = false;
+                if (current_preset_version.empty()) {
+                    current_preset.app_version = LMUFFB_VERSION;
+                    std::cout << "[Config] Migrated legacy preset '" << current_preset_name << "' to version " << LMUFFB_VERSION << std::endl;
+                } else {
+                    current_preset.app_version = current_preset_version;
+                }
+                presets.push_back(current_preset);
+            }
+        }
+    }
+
+    // 3. T300 (Custom optimized)
     {
         Preset p("T300", true);
         p.invert_force = true;
@@ -710,94 +772,6 @@ void Config::LoadPresets() {
         .SetBaseMode(2) // Muted: Feel only the resistance to movement
     );
 
-    // --- Parse User Presets from config.ini ---
-    // (Keep the existing parsing logic below, it works fine for file I/O)
-    std::ifstream file(m_config_path);
-    if (!file.is_open()) return;
-
-    std::string line;
-    bool in_presets = false;
-    bool needs_save = false;
-    
-    std::string current_preset_name = "";
-    Preset current_preset; // Uses default constructor with default values
-    std::string current_preset_version = "";
-    bool preset_pending = false;
-
-    while (std::getline(file, line)) {
-        // Strip whitespace
-        line.erase(0, line.find_first_not_of(" \t\r\n"));
-        line.erase(line.find_last_not_of(" \t\r\n") + 1);
-        
-        if (line.empty() || line[0] == ';') continue;
-
-        if (line[0] == '[') {
-            if (preset_pending && !current_preset_name.empty()) {
-                current_preset.name = current_preset_name;
-                current_preset.is_builtin = false; // User preset
-                
-                // MIGRATION: If version is missing or old, update it
-                if (current_preset_version.empty()) {
-                    current_preset.app_version = LMUFFB_VERSION;
-                    needs_save = true;
-                    std::cout << "[Config] Migrated legacy preset '" << current_preset_name << "' to version " << LMUFFB_VERSION << std::endl;
-                } else {
-                    current_preset.app_version = current_preset_version;
-                }
-                
-                presets.push_back(current_preset);
-                preset_pending = false;
-            }
-            
-            if (line == "[Presets]") {
-                in_presets = true;
-            } else if (line.rfind("[Preset:", 0) == 0) { 
-                in_presets = false; 
-                size_t end_pos = line.find(']');
-                if (end_pos != std::string::npos) {
-                    current_preset_name = line.substr(8, end_pos - 8);
-                    current_preset = Preset(current_preset_name, false); // Reset to defaults, not builtin
-                    preset_pending = true;
-                    current_preset_version = "";
-                }
-            } else {
-                in_presets = false;
-            }
-            continue;
-        }
-
-        if (preset_pending) {
-            ParsePresetLine(line, current_preset, current_preset_version, needs_save);
-        }
-    }
-    
-    if (preset_pending && !current_preset_name.empty()) {
-        current_preset.name = current_preset_name;
-        current_preset.is_builtin = false;
-        
-        // MIGRATION: If version is missing or old, update it
-        if (current_preset_version.empty()) {
-            current_preset.app_version = LMUFFB_VERSION;
-            needs_save = true;
-            std::cout << "[Config] Migrated legacy preset '" << current_preset_name << "' to version " << LMUFFB_VERSION << std::endl;
-        } else {
-            current_preset.app_version = current_preset_version;
-        }
-        
-        presets.push_back(current_preset);
-    }
-
-    // Auto-save if migration occurred
-    if (needs_save) {
-        FFBEngine temp_engine; // Just to satisfy the Save signature
-        // We might want a version of Save that doesn't overwrite current engine settings
-        // but for now, the plan says "call Config::SaveManualPresetsOnly() (or similar)".
-        // Looking at Save(), it saves everything. 
-        // If we just loaded presets, we haven't applied them to any engine yet.
-        // But Config::Save takes an engine.
-        // Actually, if we just want to update the presets on disk, we should call Save.
-        Save(temp_engine);
-    }
 }
 
 void Config::ApplyPreset(int index, FFBEngine& engine) {
@@ -957,7 +931,7 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
             }
         }
 
-        presets.push_back(current_preset);
+        presets.insert(GetUserInsertionPoint(), current_preset);
         imported = true;
     }
 
@@ -971,21 +945,20 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
 }
 
 void Config::AddUserPreset(const std::string& name, const FFBEngine& engine) {
-    // Check if name exists and overwrite, or add new
-    bool found = false;
+    // Check if name exists and overwrite
     for (auto& p : presets) {
         if (p.name == name && !p.is_builtin) {
             p.UpdateFromEngine(engine);
-            found = true;
-            break;
+            m_last_preset_name = name;
+            Save(engine);
+            return;
         }
     }
     
-    if (!found) {
-        Preset p(name, false);
-        p.UpdateFromEngine(engine);
-        presets.push_back(p);
-    }
+    // If not found, insert after existing user presets
+    Preset p(name, false);
+    p.UpdateFromEngine(engine);
+    presets.insert(GetUserInsertionPoint(), p);
     
     m_last_preset_name = name;
 
@@ -1032,10 +1005,24 @@ void Config::DuplicatePreset(int index, const FFBEngine& engine) {
         }
     }
 
-    presets.push_back(p);
+    presets.insert(GetUserInsertionPoint(), p);
+
     m_last_preset_name = p.name;
     std::cout << "[Config] Duplicated preset to: " << p.name << std::endl;
     Save(engine);
+}
+
+std::vector<Preset>::iterator Config::GetUserInsertionPoint() {
+    auto it = presets.begin();
+    // 1. Skip "Default" built-in at index 0 if it exists
+    if (it != presets.end() && it->name == "Default" && it->is_builtin) {
+        it++;
+    }
+    // 2. Skip all existing user presets
+    while (it != presets.end() && !it->is_builtin) {
+        it++;
+    }
+    return it;
 }
 
 bool Config::IsEngineDirtyRelativeToPreset(int index, const FFBEngine& engine) {

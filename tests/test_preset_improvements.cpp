@@ -61,9 +61,49 @@ TEST_CASE(test_duplicate_preset, "Presets") {
     Config::DuplicatePreset(0, engine); // Duplicate "Default"
 
     ASSERT_TRUE(Config::presets.size() == initial_count + 1);
-    ASSERT_TRUE(Config::presets.back().name.find("Default") != std::string::npos);
-    ASSERT_TRUE(Config::presets.back().name.find("(Copy)") != std::string::npos);
-    ASSERT_TRUE(!Config::presets.back().is_builtin);
+
+    // Find the duplicated preset by name (it should be Config::m_last_preset_name)
+    int found_idx = -1;
+    for (int i = 0; i < (int)Config::presets.size(); i++) {
+        if (Config::presets[i].name == Config::m_last_preset_name) {
+            found_idx = i;
+            break;
+        }
+    }
+
+    ASSERT_TRUE(found_idx != -1);
+    ASSERT_TRUE(Config::presets[found_idx].name.find("Default") != std::string::npos);
+    ASSERT_TRUE(Config::presets[found_idx].name.find("(Copy)") != std::string::npos);
+    ASSERT_TRUE(!Config::presets[found_idx].is_builtin);
+}
+
+TEST_CASE(test_add_user_preset_overwrite, "Presets") {
+    std::cout << "\nTest: Add User Preset Overwrite" << std::endl;
+    FFBEngine engine;
+    Config::LoadPresets();
+
+    // 1. Add a preset
+    engine.m_gain = 0.5f;
+    Config::AddUserPreset("Overlap", engine);
+    size_t count_after_add = Config::presets.size();
+
+    // 2. Add it again with different value
+    engine.m_gain = 0.8f;
+    Config::AddUserPreset("Overlap", engine);
+
+    // Should NOT have increased count
+    ASSERT_TRUE(Config::presets.size() == count_after_add);
+
+    // Verify it was updated
+    int idx = -1;
+    for (int i = 0; i < (int)Config::presets.size(); i++) {
+        if (Config::presets[i].name == "Overlap") {
+            idx = i;
+            break;
+        }
+    }
+    ASSERT_TRUE(idx != -1);
+    ASSERT_NEAR(Config::presets[idx].gain, 0.8f, 0.001);
 }
 
 TEST_CASE(test_delete_user_preset, "Presets") {

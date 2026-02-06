@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.16] - 2026-02-06
+### Added
+- **Preset UI Improvements**:
+  - **User Presets Priority**: User-saved presets are now displayed at the top of the dropdown list (immediately after the "Default" preset), making them easier to find among built-in presets.
+  - **Improved "Save" Workflow**: The active preset selection is now preserved even after settings are modified (indicated by a `*` suffix).
+  - **Context-Aware Save Button**: The save button now dynamically updates its label (e.g., "Save to 'MyPreset'") to clarify that it will update the currently selected user preset.
+### Refactored
+- **Internal Preset Management**: Centralized user preset insertion logic to ensure consistent ordering across Add, Duplicate, and Import operations.
+- **Safety Fix**: Removed risky auto-save from `Config::LoadPresets()` that could have overwritten global settings with defaults during legacy migrations.
+
 ## [0.7.15] - 2026-02-06
 ### Fixed
 - **Build Error**: Resolved compilation error C2513 in `Config.cpp` by renaming the local lambda `near` to `is_near` to avoid collision with legacy MSVC macros.
