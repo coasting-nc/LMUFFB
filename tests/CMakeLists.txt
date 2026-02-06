@@ -32,6 +32,7 @@ set(TEST_SOURCES
     test_async_logger.cpp
     test_versioned_presets.cpp
     test_preset_improvements.cpp
+    test_ffb_stability.cpp
     ../src/Config.cpp
 )
 

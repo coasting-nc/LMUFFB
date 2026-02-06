@@ -55,6 +55,11 @@ void FFBThread() {
             // CopyTelemetry now returns realtime status to avoid extra lock acquisition
             bool in_realtime = GameConnector::Get().CopyTelemetry(g_localData);
             
+            // Check for staleness (v0.7.15)
+            // If the game freezes or crashes, shared memory stops updating.
+            // We mute FFB if data is older than 100ms.
+            bool is_stale = GameConnector::Get().IsStale(100);
+
             // Check if player is in an active driving session (not in menu/replay)
             static bool was_in_menu = true;
             
@@ -95,8 +100,8 @@ void FFBThread() {
             double force = 0.0;
             bool should_output = false;
 
-            // Only calculate FFB if actually driving
-            if (in_realtime && g_localData.telemetry.playerHasVehicle) {
+            // Only calculate FFB if actually driving and data is fresh
+            if (in_realtime && !is_stale && g_localData.telemetry.playerHasVehicle) {
                 uint8_t idx = g_localData.telemetry.playerVehicleIdx;
                 if (idx < 104) {
                     // Get pointer to specific car data
@@ -111,7 +116,7 @@ void FFBThread() {
                 }
             }
             
-            // --- FIX: Explicitly send 0.0 if not driving ---
+            // --- FIX: Explicitly send 0.0 if not driving or stale ---
             if (!should_output) {
                 force = 0.0;
             }
