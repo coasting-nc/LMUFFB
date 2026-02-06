@@ -52,22 +52,27 @@ None. This is a configuration and UI improvement. Physics logic is unaffected.
 - **Description**: Verify that `AddUserPreset` inserts at the correct position (after "Default" and other user presets).
 
 ## Deliverables
-- [x] Code changes in `Config.cpp`.
+- [x] Code changes in `Config.cpp`, `Config.h`, `GuiLayer.cpp`.
+- [x] Created `PresetRegistry.h` and `PresetRegistry.cpp`.
 - [x] Version bump in `VERSION`, `src/Version.h`.
 - [x] Changelog entry in `CHANGELOG_DEV.md`.
-- [x] New test cases in `tests/test_issue_59.cpp`.
+- [x] New test cases in `tests/test_issue_59.cpp` and `tests/test_preset_registry.cpp`.
+- [x] Updated existing test files to support new architecture.
 - [x] Implementation Notes (to be updated during development).
 
 ## Implementation Notes
 
 ### Unforeseen Issues
 - **Test Fragility**: Moving user presets to the top of the list broke `test_duplicate_preset` which assumed duplicated presets were appended to the end of the vector. Updated the test to find the preset by name.
+- **Persistence Clamping**: The architectural refactor initially lost some boundary clamping logic for FFB parameters (e.g., `brake_load_cap`, `lockup_gain`). This was identified through test failures and subsequently restored in `PresetRegistry::ParsePresetLine` and `Config::Load`.
 
 ### Plan Deviations
 - **Refined Insertion Point**: Specifically ensured user presets are inserted after "Default" (index 0) but before any other built-in presets.
+- **Major Refactor**: Following the initial implementation of the ordering fix, a significant refactor was performed to move all preset management from the `Config` class into a new `PresetRegistry` singleton. This improved code organization and addressed the long-term recommendation for the project.
 
 ### Challenges
 - **Vector Reordering**: Careful refactoring of `LoadPresets` was required to ensure user presets are loaded and inserted at the correct position without breaking built-in loading.
+- **Linker Errors in Tests**: The refactor required updating multiple test files to use the new `PresetRegistry` API, leading to temporary linker errors that were resolved by unifying the `PersistenceTests` namespace.
 
 ### Recommendations
-- **Preset Registry Class**: Consider moving preset management into a dedicated class with explicit methods for `AddUserPreset`, `GetBuiltinPresets`, etc., to make ordering more robust and less dependent on raw vector operations.
+- **Registry Event System**: Consider adding an observer pattern to `PresetRegistry` so `GuiLayer` can automatically refresh when presets are modified from other parts of the system.

@@ -1,97 +1,60 @@
-﻿#include "test_ffb_common.h"
+#include "test_ffb_common.h"
+#include "../src/PresetRegistry.h"
 #include <fstream>
 #include <cstdio>
-#include "../src/Config.h"
-#include "../src/Version.h"
 
 namespace FFBEngineTests {
 
-TEST_CASE(test_preset_version_persistence, "Config") {
+TEST_CASE(test_preset_version_persistence, "Presets") {
     std::cout << "\nTest: Preset Version Persistence" << std::endl;
+    FFBEngine engine;
+    PresetRegistry& registry = PresetRegistry::Get();
     
-    // 1. Create a user preset
-    Preset p;
-    p.name = "VersionTestPreset";
-    p.app_version = "0.7.12"; 
-    
-    // 2. Save it to a temporary INI
     const char* test_file = "test_version_presets.ini";
-    std::string original_path = Config::m_config_path;
-    Config::m_config_path = test_file;
-    
     {
         std::ofstream file(test_file);
-        file << "[Preset:VersionTestPreset]\n";
-        file << "app_version=" << p.app_version << "\n";
-        file << "gain=1.0\n";
+        file << "[Presets]\n";
+        file << "[Preset:VersionedTest]\n";
+        file << "app_version=0.1.2\n";
+        file << "gain=0.5\n";
         file.close();
     }
-
-    // 3. Load it back and verify
-    Config::LoadPresets();
     
+    registry.Load(test_file);
     bool found = false;
-    for (const auto& preset : Config::presets) {
-        if (preset.name == "VersionTestPreset") {
+    for (const auto& preset : registry.GetPresets()) {
+        if (preset.name == "VersionedTest") {
+            ASSERT_TRUE(preset.app_version == "0.1.2");
             found = true;
-            if (preset.app_version == "0.7.12") {
-                std::cout << "[PASS] Preset app_version loaded correctly." << std::endl;
-                g_tests_passed++;
-            } else {
-                std::cout << "[FAIL] Preset app_version mismatch. Got: " << preset.app_version << std::endl;
-                g_tests_failed++;
-            }
-            break;
         }
     }
-    
-    if (!found) {
-        std::cout << "[FAIL] VersionTestPreset not found after loading." << std::endl;
-        g_tests_failed++;
-    }
-
-    Config::m_config_path = original_path;
+    ASSERT_TRUE(found);
     std::remove(test_file);
 }
 
-TEST_CASE(test_legacy_preset_migration, "Config") {
+TEST_CASE(test_legacy_preset_migration, "Presets") {
     std::cout << "\nTest: Legacy Preset Migration" << std::endl;
+    FFBEngine engine;
+    PresetRegistry& registry = PresetRegistry::Get();
     
     const char* test_file = "test_legacy_presets.ini";
-    std::string original_path = Config::m_config_path;
-    Config::m_config_path = test_file;
-    
     {
         std::ofstream file(test_file);
-        file << "[Preset:LegacyPreset]\n";
-        file << "gain=0.85\n"; // No app_version
+        file << "[Presets]\n";
+        file << "[Preset:LegacyTest]\n";
+        file << "gain=0.5\n"; // Missing version
         file.close();
     }
-
-    // Load presets - should trigger migration
-    Config::LoadPresets();
     
+    registry.Load(test_file);
     bool found = false;
-    for (const auto& preset : Config::presets) {
-        if (preset.name == "LegacyPreset") {
+    for (const auto& preset : registry.GetPresets()) {
+        if (preset.name == "LegacyTest") {
+            ASSERT_TRUE(preset.app_version == LMUFFB_VERSION);
             found = true;
-            if (preset.app_version == LMUFFB_VERSION) {
-                std::cout << "[PASS] Legacy preset migrated to current version: " << LMUFFB_VERSION << std::endl;
-                g_tests_passed++;
-            } else {
-                std::cout << "[FAIL] Legacy preset NOT migrated. Version: " << preset.app_version << std::endl;
-                g_tests_failed++;
-            }
-            break;
         }
     }
-    
-    if (!found) {
-        std::cout << "[FAIL] LegacyPreset not found." << std::endl;
-        g_tests_failed++;
-    }
-
-    Config::m_config_path = original_path;
+    ASSERT_TRUE(found);
     std::remove(test_file);
 }
 

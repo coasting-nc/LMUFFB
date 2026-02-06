@@ -1,6 +1,7 @@
 #include "GuiLayer.h"
 #include "Version.h"
 #include "Config.h"
+#include "PresetRegistry.h"
 #include "DirectInputFFB.h"
 #include "GameConnector.h"
 #include "GuiWidgets.h"
@@ -943,13 +944,15 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
     // --- 2. PRESETS AND CONFIGURATION ---
     if (ImGui::TreeNodeEx("Presets and Configuration", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
-        if (Config::presets.empty()) Config::LoadPresets();
+        PresetRegistry& registry = PresetRegistry::Get();
+        const auto& presets = registry.GetPresets();
 
         // Initialize selected_preset from last saved name if first run
         static bool first_run = true;
-        if (first_run && !Config::presets.empty()) {
-            for (int i = 0; i < (int)Config::presets.size(); i++) {
-                if (Config::presets[i].name == Config::m_last_preset_name) {
+        if (first_run && !presets.empty()) {
+            std::string last_name = registry.GetLastPresetName();
+            for (int i = 0; i < (int)presets.size(); i++) {
+                if (presets[i].name == last_name) {
                     selected_preset = i;
                     break;
                 }
@@ -959,9 +962,9 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         
         static std::string preview_buf;
         const char* preview_value = "Custom";
-        if (selected_preset >= 0 && selected_preset < (int)Config::presets.size()) {
-            preview_buf = Config::presets[selected_preset].name;
-            if (Config::IsEngineDirtyRelativeToPreset(selected_preset, engine)) {
+        if (selected_preset >= 0 && selected_preset < (int)presets.size()) {
+            preview_buf = presets[selected_preset].name;
+            if (registry.IsDirty(selected_preset, engine)) {
                 preview_buf += "*";
             }
             preview_value = preview_buf.c_str();
@@ -969,11 +972,11 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.6f);
         if (ImGui::BeginCombo("Load Preset", preview_value)) {
-            for (int i = 0; i < Config::presets.size(); i++) {
+            for (int i = 0; i < (int)presets.size(); i++) {
                 bool is_selected = (selected_preset == i);
-                if (ImGui::Selectable(Config::presets[i].name.c_str(), is_selected)) {
+                if (ImGui::Selectable(presets[i].name.c_str(), is_selected)) {
                     selected_preset = i;
-                    Config::ApplyPreset(i, engine);
+                    registry.ApplyPreset(i, engine);
                 }
                 if (is_selected) ImGui::SetItemDefaultFocus();
             }
@@ -986,9 +989,10 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::SameLine();
         if (ImGui::Button("Save New")) {
             if (strlen(new_preset_name) > 0) {
-                Config::AddUserPreset(std::string(new_preset_name), engine);
-                for (int i = 0; i < (int)Config::presets.size(); i++) {
-                    if (Config::presets[i].name == std::string(new_preset_name)) {
+                registry.AddUserPreset(std::string(new_preset_name), engine);
+                const auto& new_presets = registry.GetPresets();
+                for (int i = 0; i < (int)new_presets.size(); i++) {
+                    if (new_presets[i].name == std::string(new_preset_name)) {
                         selected_preset = i;
                         break;
                     }
@@ -998,24 +1002,25 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
         
         if (ImGui::Button("Save Current Config")) {
-            if (selected_preset >= 0 && selected_preset < (int)Config::presets.size() && !Config::presets[selected_preset].is_builtin) {
-                Config::AddUserPreset(Config::presets[selected_preset].name, engine);
+            if (selected_preset >= 0 && selected_preset < (int)presets.size() && !presets[selected_preset].is_builtin) {
+                registry.AddUserPreset(presets[selected_preset].name, engine);
             } else {
                 Config::Save(engine);
             }
         }
         ImGui::SameLine();
         if (ImGui::Button("Reset Defaults")) {
-            Config::ApplyPreset(0, engine);
+            registry.ApplyPreset(0, engine);
             selected_preset = 0;
         }
         ImGui::SameLine();
         if (ImGui::Button("Duplicate")) {
             if (selected_preset >= 0) {
-                Config::DuplicatePreset(selected_preset, engine);
-                // Select the newly added preset
-                for (int i = 0; i < (int)Config::presets.size(); i++) {
-                    if (Config::presets[i].name == Config::m_last_preset_name) {
+                registry.DuplicatePreset(selected_preset, engine);
+                std::string last_name = registry.GetLastPresetName();
+                const auto& new_presets = registry.GetPresets();
+                for (int i = 0; i < (int)new_presets.size(); i++) {
+                    if (new_presets[i].name == last_name) {
                         selected_preset = i;
                         break;
                     }
@@ -1023,12 +1028,12 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             }
         }
         ImGui::SameLine();
-        bool can_delete = (selected_preset >= 0 && selected_preset < (int)Config::presets.size() && !Config::presets[selected_preset].is_builtin);
+        bool can_delete = (selected_preset >= 0 && selected_preset < (int)presets.size() && !presets[selected_preset].is_builtin);
         if (!can_delete) ImGui::BeginDisabled();
         if (ImGui::Button("Delete")) {
-            Config::DeletePreset(selected_preset, engine);
+            registry.DeletePreset(selected_preset, engine);
             selected_preset = 0;
-            Config::ApplyPreset(0, engine);
+            registry.ApplyPreset(0, engine);
         }
         if (!can_delete) ImGui::EndDisabled();
 
@@ -1036,19 +1041,25 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         if (ImGui::Button("Import Preset...")) {
             std::string path;
             if (OpenPresetFileDialog(g_hwnd, path)) {
-                if (Config::ImportPreset(path, engine)) {
-                    // Success! The new preset is at the end of the list
-                    selected_preset = (int)Config::presets.size() - 1;
+                if (registry.ImportPreset(path, engine)) {
+                    std::string last_name = registry.GetLastPresetName();
+                    const auto& new_presets = registry.GetPresets();
+                    for (int i = 0; i < (int)new_presets.size(); i++) {
+                        if (new_presets[i].name == last_name) {
+                            selected_preset = i;
+                            break;
+                        }
+                    }
                 }
             }
         }
         ImGui::SameLine();
         if (ImGui::Button("Export Selected...")) {
-            if (selected_preset >= 0 && selected_preset < Config::presets.size()) {
+            if (selected_preset >= 0 && selected_preset < presets.size()) {
                 std::string path;
-                std::string defaultName = Config::presets[selected_preset].name + ".ini";
+                std::string defaultName = presets[selected_preset].name + ".ini";
                 if (SavePresetFileDialog(g_hwnd, path, defaultName)) {
-                    Config::ExportPreset(selected_preset, path);
+                    registry.ExportPreset(selected_preset, path);
                 }
             }
         }

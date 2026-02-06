@@ -33,7 +33,9 @@ set(TEST_SOURCES
     test_versioned_presets.cpp
     test_preset_improvements.cpp
     test_issue_59.cpp
+    test_preset_registry.cpp
     ../src/Config.cpp
+    ../src/PresetRegistry.cpp
 )
 
 if(WIN32)
