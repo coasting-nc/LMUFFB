@@ -940,6 +940,67 @@ static void test_game_connector_thread_safety() {
     g_tests_passed++;
 }
 
+static void test_game_connector_staleness() {
+    std::cout << "\nTest: GameConnector Staleness (Heartbeat Watchdog)" << std::endl;
+
+    // 1. Disconnected state should be stale
+    GameConnector::Get().Disconnect();
+    ASSERT_TRUE(GameConnector::Get().IsStale() == true);
+
+    // 2. Mocking connection to test watchdog logic
+    // We create the shared memory mapping LMU expects
+    HANDLE hMap = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, (DWORD)sizeof(SharedMemoryLayout), LMU_SHARED_MEMORY_FILE);
+    if (hMap) {
+        SharedMemoryLayout* pBuf = (SharedMemoryLayout*)MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(SharedMemoryLayout));
+        if (pBuf) {
+            memset(pBuf, 0, sizeof(SharedMemoryLayout));
+            
+            // Setup minimal telemetry
+            pBuf->data.telemetry.playerHasVehicle = true;
+            pBuf->data.telemetry.playerVehicleIdx = 0;
+            pBuf->data.telemetry.activeVehicles = 1;
+            pBuf->data.generic.events[SME_UPDATE_TELEMETRY] = static_cast<SharedMemoryEvent>(1);
+            pBuf->data.telemetry.telemInfo[0].mElapsedTime = 100.0;
+            
+            // SharedMemoryLock for GameConnector::TryConnect
+            // This will create the lock mapping and event that GameConnector expects
+            auto mockLock = SharedMemoryLock::MakeSharedMemoryLock(); 
+
+            // Connect (should succeed now that mapping & lock exist)
+            if (GameConnector::Get().TryConnect()) {
+                SharedMemoryObjectOut dest;
+                
+                // First update - should be fresh
+                GameConnector::Get().CopyTelemetry(dest);
+                ASSERT_TRUE(GameConnector::Get().IsStale(100) == false);
+
+                // Wait 150ms without updating pBuf->data.telemetry.telemInfo[0].mElapsedTime
+                std::this_thread::sleep_for(std::chrono::milliseconds(150));
+                
+                // Call CopyTelemetry again (simulates the loop running)
+                // Since mElapsedTime hasn't changed, heartbeat shouldn't update
+                GameConnector::Get().CopyTelemetry(dest);
+                
+                // Now it should be stale
+                ASSERT_TRUE(GameConnector::Get().IsStale(100) == true);
+
+                // Update mElapsedTime to simulate game advancing
+                pBuf->data.telemetry.telemInfo[0].mElapsedTime = 100.01;
+                GameConnector::Get().CopyTelemetry(dest);
+                
+                // Should be fresh again
+                ASSERT_TRUE(GameConnector::Get().IsStale(100) == false);
+            } else {
+                std::cout << "  [SKIP] Could not mock connection for staleness test." << std::endl;
+            }
+            UnmapViewOfFile(pBuf);
+        }
+        CloseHandle(hMap);
+    }
+    
+    GameConnector::Get().Disconnect();
+}
+
 void Run() {
     std::cout << "=== Running Windows Platform Tests ===" << std::endl;
 
@@ -960,6 +1021,7 @@ void Run() {
     test_icon_presence(); // NEW: Icon check
     test_game_connector_lifecycle(); // NEW: TDD for PR #16
     test_game_connector_thread_safety(); // NEW: Thread safety TDD
+    test_game_connector_staleness(); // NEW: Watchdog verification
 
     // Report results
     std::cout << "\n----------------" << std::endl;
