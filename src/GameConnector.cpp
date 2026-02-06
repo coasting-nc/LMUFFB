@@ -87,6 +87,7 @@ bool GameConnector::TryConnect() {
     // Mark as connected even if process handle isn't available yet
     // Process monitoring is optional - core functionality is shared memory access
     m_connected = true;
+    m_lastUpdateLocalTime = std::chrono::steady_clock::now(); // Initialize heartbeat
     std::cout << "[GameConnector] Connected to LMU Shared Memory." << std::endl;
     return true;
 }
@@ -133,6 +134,24 @@ bool GameConnector::CopyTelemetry(SharedMemoryObjectOut& dest) {
     if (m_smLock->Lock(50)) {
         CopySharedMemoryObj(dest, m_pSharedMemLayout->data);
         
+        // Update heartbeat (v0.7.15)
+        // If the game freezes or crashes, mElapsedTime will stop advancing.
+        // We use this to detect staleness and mute FFB in main.cpp
+        if (dest.telemetry.playerHasVehicle) {
+            uint8_t idx = dest.telemetry.playerVehicleIdx;
+            if (idx < 104) {
+                double currentET = dest.telemetry.telemInfo[idx].mElapsedTime;
+                if (currentET != m_lastElapsedTime) {
+                    m_lastElapsedTime = currentET;
+                    m_lastUpdateLocalTime = std::chrono::steady_clock::now();
+                }
+            }
+        } else {
+            // If not driving, just keep heartbeat alive to avoid false staleness
+            // trigger during menu transitions.
+            m_lastUpdateLocalTime = std::chrono::steady_clock::now();
+        }
+
         // Get realtime status while we have the lock
         // mInRealtime: 0=menu/replay/monitor, 1=driving/practice/race
         bool isRealtime = (m_pSharedMemLayout->data.scoring.scoringInfo.mInRealtime != 0);
@@ -145,4 +164,12 @@ bool GameConnector::CopyTelemetry(SharedMemoryObjectOut& dest) {
         // Return false to indicate not in realtime (safe fallback)
         return false;
     }
+}
+
+bool GameConnector::IsStale(long timeoutMs) const {
+    if (!m_connected.load(std::memory_order_acquire)) return true;
+
+    auto now = std::chrono::steady_clock::now();
+    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastUpdateLocalTime).count();
+    return (diff > timeoutMs);
 }

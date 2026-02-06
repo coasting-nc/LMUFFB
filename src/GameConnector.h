@@ -27,6 +27,9 @@ public:
     // Returns true if in realtime (driving) mode, false if in menu/replay
     bool CopyTelemetry(SharedMemoryObjectOut& dest);
 
+    // Returns true if telemetry data hasn't changed for more than timeout (v0.7.15)
+    bool IsStale(long timeoutMs = 100) const;
+
 private:
     GameConnector();
     ~GameConnector();
@@ -39,6 +42,10 @@ private:
 
     std::atomic<bool> m_connected{false};
     mutable std::mutex m_mutex;
+
+    // Heartbeat for staleness detection (v0.7.15)
+    double m_lastElapsedTime = -1.0;
+    mutable std::chrono::steady_clock::time_point m_lastUpdateLocalTime;
 
     void _DisconnectLocked();
 };

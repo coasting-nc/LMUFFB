@@ -232,82 +232,139 @@ struct Preset {
     }
 
     // Apply this preset to an engine instance
+    // v0.7.16: Added comprehensive safety clamping to prevent crashes/NaN from invalid config values
     void Apply(FFBEngine& engine) const {
-        engine.m_gain = gain;
-        engine.m_understeer_effect = understeer;
-        engine.m_sop_effect = sop;
-        engine.m_sop_scale = sop_scale;
-        engine.m_sop_smoothing_factor = sop_smoothing;
-        engine.m_slip_angle_smoothing = slip_smoothing;
-        engine.m_min_force = min_force;
-        engine.m_oversteer_boost = oversteer_boost;
+        engine.m_gain = (std::max)(0.0f, gain);
+        engine.m_understeer_effect = (std::max)(0.0f, (std::min)(2.0f, understeer));
+        engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, sop));
+        engine.m_sop_scale = (std::max)(0.01f, sop_scale);
+        engine.m_sop_smoothing_factor = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing));
+        engine.m_slip_angle_smoothing = (std::max)(0.0001f, slip_smoothing);
+        engine.m_min_force = (std::max)(0.0f, min_force);
+        engine.m_oversteer_boost = (std::max)(0.0f, oversteer_boost);
+
         engine.m_lockup_enabled = lockup_enabled;
-        engine.m_lockup_gain = lockup_gain;
-        engine.m_lockup_start_pct = lockup_start_pct;
-        engine.m_lockup_full_pct = lockup_full_pct;
-        engine.m_lockup_rear_boost = lockup_rear_boost;
-        engine.m_lockup_gamma = lockup_gamma;
-        engine.m_lockup_prediction_sens = lockup_prediction_sens;
-        engine.m_lockup_bump_reject = lockup_bump_reject;
-        engine.m_brake_load_cap = brake_load_cap;
-        engine.m_texture_load_cap = texture_load_cap;  // NEW v0.6.25
+        engine.m_lockup_gain = (std::max)(0.0f, lockup_gain);
+        engine.m_lockup_start_pct = (std::max)(0.1f, lockup_start_pct);
+        engine.m_lockup_full_pct = (std::max)(0.2f, lockup_full_pct);
+        engine.m_lockup_rear_boost = (std::max)(0.0f, lockup_rear_boost);
+        engine.m_lockup_gamma = (std::max)(0.1f, lockup_gamma); // Critical: prevent pow(0, negative) crash
+        engine.m_lockup_prediction_sens = (std::max)(1.0f, lockup_prediction_sens);
+        engine.m_lockup_bump_reject = (std::max)(0.01f, lockup_bump_reject);
+        engine.m_brake_load_cap = (std::max)(1.0f, brake_load_cap);
+        engine.m_texture_load_cap = (std::max)(1.0f, texture_load_cap);
+
         engine.m_abs_pulse_enabled = abs_pulse_enabled;
-        engine.m_abs_gain = abs_gain;
+        engine.m_abs_gain = (std::max)(0.0f, abs_gain);
 
         engine.m_spin_enabled = spin_enabled;
-        engine.m_spin_gain = spin_gain;
+        engine.m_spin_gain = (std::max)(0.0f, spin_gain);
         engine.m_slide_texture_enabled = slide_enabled;
-        engine.m_slide_texture_gain = slide_gain;
-        engine.m_slide_freq_scale = slide_freq;
+        engine.m_slide_texture_gain = (std::max)(0.0f, slide_gain);
+        engine.m_slide_freq_scale = (std::max)(0.1f, slide_freq);
         engine.m_road_texture_enabled = road_enabled;
-        engine.m_road_texture_gain = road_gain;
+        engine.m_road_texture_gain = (std::max)(0.0f, road_gain);
         engine.m_invert_force = invert_force;
-        engine.m_max_torque_ref = max_torque_ref;
-        engine.m_abs_freq_hz = abs_freq;
-        engine.m_lockup_freq_scale = lockup_freq_scale;
-        engine.m_spin_freq_scale = spin_freq_scale;
+        engine.m_max_torque_ref = (std::max)(1.0f, max_torque_ref); // Critical for normalization division
+        engine.m_abs_freq_hz = (std::max)(1.0f, abs_freq);
+        engine.m_lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);
+        engine.m_spin_freq_scale = (std::max)(0.1f, spin_freq_scale);
         engine.m_bottoming_method = bottoming_method;
-        engine.m_scrub_drag_gain = scrub_drag_gain;
-        engine.m_rear_align_effect = rear_align_effect;
-        engine.m_sop_yaw_gain = sop_yaw_gain;
-        engine.m_gyro_gain = gyro_gain;
-        engine.m_steering_shaft_gain = steering_shaft_gain;
+        engine.m_scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);
+        engine.m_rear_align_effect = (std::max)(0.0f, rear_align_effect);
+        engine.m_sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);
+        engine.m_gyro_gain = (std::max)(0.0f, gyro_gain);
+        engine.m_steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);
         engine.m_base_force_mode = base_force_mode;
         engine.m_flatspot_suppression = flatspot_suppression;
-        engine.m_notch_q = notch_q;
-        engine.m_flatspot_strength = flatspot_strength;
+        engine.m_notch_q = (std::max)(0.1f, notch_q); // Critical for biquad division
+        engine.m_flatspot_strength = (std::max)(0.0f, (std::min)(1.0f, flatspot_strength));
         engine.m_static_notch_enabled = static_notch_enabled;
-        engine.m_static_notch_freq = static_notch_freq;
-        engine.m_static_notch_width = static_notch_width;
-        engine.m_yaw_kick_threshold = yaw_kick_threshold;
-        engine.m_speed_gate_lower = speed_gate_lower;
-        engine.m_speed_gate_upper = speed_gate_upper;
+        engine.m_static_notch_freq = (std::max)(1.0f, static_notch_freq);
+        engine.m_static_notch_width = (std::max)(0.1f, static_notch_width);
+        engine.m_yaw_kick_threshold = (std::max)(0.0f, yaw_kick_threshold);
+        engine.m_speed_gate_lower = (std::max)(0.0f, speed_gate_lower);
+        engine.m_speed_gate_upper = (std::max)(0.1f, speed_gate_upper);
         
         // NEW: Grip & Smoothing (v0.5.7/v0.5.8)
-        engine.m_optimal_slip_angle = optimal_slip_angle;
-        engine.m_optimal_slip_ratio = optimal_slip_ratio;
-        engine.m_steering_shaft_smoothing = steering_shaft_smoothing;
-        engine.m_gyro_smoothing = gyro_smoothing;
-        engine.m_yaw_accel_smoothing = yaw_smoothing;
-        engine.m_chassis_inertia_smoothing = chassis_smoothing;
-        engine.m_road_fallback_scale = road_fallback_scale;
+        engine.m_optimal_slip_angle = (std::max)(0.01f, optimal_slip_angle); // Critical for grip division
+        engine.m_optimal_slip_ratio = (std::max)(0.01f, optimal_slip_ratio); // Critical for grip division
+        engine.m_steering_shaft_smoothing = (std::max)(0.0f, steering_shaft_smoothing);
+        engine.m_gyro_smoothing = (std::max)(0.0f, gyro_smoothing);
+        engine.m_yaw_accel_smoothing = (std::max)(0.0f, yaw_smoothing);
+        engine.m_chassis_inertia_smoothing = (std::max)(0.0f, chassis_smoothing);
+        engine.m_road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
         engine.m_understeer_affects_sop = understeer_affects_sop;
         
         // Slope Detection (v0.7.0)
         engine.m_slope_detection_enabled = slope_detection_enabled;
-        engine.m_slope_sg_window = slope_sg_window;
-        engine.m_slope_sensitivity = slope_sensitivity;
+        engine.m_slope_sg_window = (std::max)(5, (std::min)(41, slope_sg_window));
+        if (engine.m_slope_sg_window % 2 == 0) engine.m_slope_sg_window++; // Must be odd for SG
+        engine.m_slope_sensitivity = (std::max)(0.1f, slope_sensitivity);
         engine.m_slope_negative_threshold = slope_negative_threshold;
-        engine.m_slope_smoothing_tau = slope_smoothing_tau;
+        engine.m_slope_smoothing_tau = (std::max)(0.001f, slope_smoothing_tau);
 
         // v0.7.3: Slope stability fixes
-        engine.m_slope_alpha_threshold = slope_alpha_threshold;
-        engine.m_slope_decay_rate = slope_decay_rate;
+        engine.m_slope_alpha_threshold = (std::max)(0.001f, slope_alpha_threshold); // Critical for slope division
+        engine.m_slope_decay_rate = (std::max)(0.1f, slope_decay_rate);
         engine.m_slope_confidence_enabled = slope_confidence_enabled;
 
         // v0.7.11: Min/Max thresholds
         engine.m_slope_min_threshold = slope_min_threshold;
         engine.m_slope_max_threshold = slope_max_threshold;
+    }
+
+    // NEW: Ensure values are within safe ranges (v0.7.16)
+    void Validate() {
+        gain = (std::max)(0.0f, gain);
+        understeer = (std::max)(0.0f, (std::min)(2.0f, understeer));
+        sop = (std::max)(0.0f, (std::min)(2.0f, sop));
+        sop_scale = (std::max)(0.01f, sop_scale);
+        sop_smoothing = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing));
+        slip_smoothing = (std::max)(0.0001f, slip_smoothing);
+        min_force = (std::max)(0.0f, min_force);
+        oversteer_boost = (std::max)(0.0f, oversteer_boost);
+        lockup_gain = (std::max)(0.0f, lockup_gain);
+        lockup_start_pct = (std::max)(0.1f, lockup_start_pct);
+        lockup_full_pct = (std::max)(0.2f, lockup_full_pct);
+        lockup_rear_boost = (std::max)(0.0f, lockup_rear_boost);
+        lockup_gamma = (std::max)(0.1f, lockup_gamma);
+        lockup_prediction_sens = (std::max)(1.0f, lockup_prediction_sens);
+        lockup_bump_reject = (std::max)(0.01f, lockup_bump_reject);
+        brake_load_cap = (std::max)(1.0f, brake_load_cap);
+        texture_load_cap = (std::max)(1.0f, texture_load_cap);
+        abs_gain = (std::max)(0.0f, abs_gain);
+        spin_gain = (std::max)(0.0f, spin_gain);
+        slide_gain = (std::max)(0.0f, slide_gain);
+        slide_freq = (std::max)(0.1f, slide_freq);
+        road_gain = (std::max)(0.0f, road_gain);
+        max_torque_ref = (std::max)(1.0f, max_torque_ref);
+        abs_freq = (std::max)(1.0f, abs_freq);
+        lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);
+        spin_freq_scale = (std::max)(0.1f, spin_freq_scale);
+        scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);
+        rear_align_effect = (std::max)(0.0f, rear_align_effect);
+        sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);
+        gyro_gain = (std::max)(0.0f, gyro_gain);
+        steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);
+        notch_q = (std::max)(0.1f, notch_q);
+        flatspot_strength = (std::max)(0.0f, (std::min)(1.0f, flatspot_strength));
+        static_notch_freq = (std::max)(1.0f, static_notch_freq);
+        static_notch_width = (std::max)(0.1f, static_notch_width);
+        speed_gate_upper = (std::max)(0.1f, speed_gate_upper);
+        optimal_slip_angle = (std::max)(0.01f, optimal_slip_angle);
+        optimal_slip_ratio = (std::max)(0.01f, optimal_slip_ratio);
+        steering_shaft_smoothing = (std::max)(0.0f, steering_shaft_smoothing);
+        gyro_smoothing = (std::max)(0.0f, gyro_smoothing);
+        yaw_smoothing = (std::max)(0.0f, yaw_smoothing);
+        chassis_smoothing = (std::max)(0.0f, chassis_smoothing);
+        road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
+        slope_sg_window = (std::max)(5, (std::min)(41, slope_sg_window));
+        if (slope_sg_window % 2 == 0) slope_sg_window++;
+        slope_sensitivity = (std::max)(0.1f, slope_sensitivity);
+        slope_smoothing_tau = (std::max)(0.001f, slope_smoothing_tau);
+        slope_alpha_threshold = (std::max)(0.001f, slope_alpha_threshold);
+        slope_decay_rate = (std::max)(0.1f, slope_decay_rate);
     }
 
     // NEW: Capture current engine state into this preset

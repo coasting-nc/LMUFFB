@@ -745,6 +745,7 @@ void Config::LoadPresets() {
                     current_preset.app_version = current_preset_version;
                 }
                 
+                current_preset.Validate(); // v0.7.15: Validate before adding
                 presets.push_back(current_preset);
                 preset_pending = false;
             }
@@ -784,6 +785,7 @@ void Config::LoadPresets() {
             current_preset.app_version = current_preset_version;
         }
         
+        current_preset.Validate(); // v0.7.15: Validate before adding
         presets.push_back(current_preset);
     }
 
@@ -957,6 +959,7 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
             }
         }
 
+        current_preset.Validate(); // v0.7.15: Validate before adding
         presets.push_back(current_preset);
         imported = true;
     }
@@ -1380,7 +1383,19 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
         }
     }
     
-    // v0.5.7: Safety Validation - Prevent Division by Zero in Grip Calculation
+    // v0.7.16: Comprehensive Safety Validation & Clamping
+    // These checks ensure that even if config.ini is manually edited with invalid values,
+    // the engine remains stable and doesn't crash or produce NaN.
+
+    engine.m_gain = (std::max)(0.0f, engine.m_gain);
+    engine.m_max_torque_ref = (std::max)(1.0f, engine.m_max_torque_ref);
+    engine.m_min_force = (std::max)(0.0f, engine.m_min_force);
+    engine.m_sop_scale = (std::max)(0.01f, engine.m_sop_scale);
+    engine.m_slip_angle_smoothing = (std::max)(0.0001f, engine.m_slip_angle_smoothing);
+    engine.m_notch_q = (std::max)(0.1f, engine.m_notch_q);
+    engine.m_static_notch_width = (std::max)(0.1f, engine.m_static_notch_width);
+    engine.m_speed_gate_upper = (std::max)(0.1f, engine.m_speed_gate_upper);
+
     if (engine.m_optimal_slip_angle < 0.01f) {
         std::cerr << "[Config] Invalid optimal_slip_angle (" << engine.m_optimal_slip_angle 
                   << "), resetting to default 0.10" << std::endl;
@@ -1392,7 +1407,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
         engine.m_optimal_slip_ratio = 0.12f;
     }
     
-    // Slope Detection Validation (v0.7.0)
+    // Slope Detection Validation
     if (engine.m_slope_sg_window < 5) engine.m_slope_sg_window = 5;
     if (engine.m_slope_sg_window > 41) engine.m_slope_sg_window = 41;
     if (engine.m_slope_sg_window % 2 == 0) engine.m_slope_sg_window++; // Must be odd
@@ -1400,16 +1415,15 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     if (engine.m_slope_sensitivity > 10.0f) engine.m_slope_sensitivity = 10.0f;
     if (engine.m_slope_smoothing_tau < 0.001f) engine.m_slope_smoothing_tau = 0.04f;
     
-    // v0.7.3: Slope stability parameter validation
     if (engine.m_slope_alpha_threshold < 0.001f || engine.m_slope_alpha_threshold > 0.1f) {
         std::cerr << "[Config] Invalid slope_alpha_threshold (" << engine.m_slope_alpha_threshold 
                   << "), resetting to 0.02f" << std::endl;
-        engine.m_slope_alpha_threshold = 0.02f; // Safe default
+        engine.m_slope_alpha_threshold = 0.02f;
     }
-    if (engine.m_slope_decay_rate < 0.5f || engine.m_slope_decay_rate > 20.0f) {
+    if (engine.m_slope_decay_rate < 0.1f || engine.m_slope_decay_rate > 20.0f) {
         std::cerr << "[Config] Invalid slope_decay_rate (" << engine.m_slope_decay_rate 
                   << "), resetting to 5.0f" << std::endl;
-        engine.m_slope_decay_rate = 5.0f; // Safe default
+        engine.m_slope_decay_rate = 5.0f;
     }
 
     // Migration: v0.7.x sensitivity â†’ v0.7.11 thresholds
@@ -1436,11 +1450,11 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
         std::cout << "[Config] Swapped slope thresholds (min should be > max)" << std::endl;
     }
     
-    // v0.6.20: Safety Validation - Clamp Advanced Braking Parameters to Valid Ranges (Expanded)
-    if (engine.m_lockup_gamma < 0.1f || engine.m_lockup_gamma > 3.0f) {
+    // v0.6.20: Safety Validation - Clamp Advanced Braking Parameters to Valid Ranges
+    if (engine.m_lockup_gamma < 0.1f || engine.m_lockup_gamma > 4.0f) {
         std::cerr << "[Config] Invalid lockup_gamma (" << engine.m_lockup_gamma 
-                  << "), clamping to range [0.1, 3.0]" << std::endl;
-        engine.m_lockup_gamma = (std::max)(0.1f, (std::min)(3.0f, engine.m_lockup_gamma));
+                  << "), clamping to range [0.1, 4.0]" << std::endl;
+        engine.m_lockup_gamma = (std::max)(0.1f, (std::min)(4.0f, engine.m_lockup_gamma));
     }
     if (engine.m_lockup_prediction_sens < 10.0f || engine.m_lockup_prediction_sens > 100.0f) {
         std::cerr << "[Config] Invalid lockup_prediction_sens (" << engine.m_lockup_prediction_sens 
