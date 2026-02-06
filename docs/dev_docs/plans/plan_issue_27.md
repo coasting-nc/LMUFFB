@@ -7,6 +7,7 @@ Address two critical stability issues:
 
 ## Reference Documents
 - GitHub Issue #27: https://github.com/coasting-nc/LMUFFB/issues/27
+- Issue Messages: `docs/issue_27_messages.md`
 - FFB Formulas: `docs/dev_docs/references/FFB_formulas.md`
 
 ## Codebase Analysis Summary
@@ -57,6 +58,15 @@ Address two critical stability issues:
 - [x] Modified `CHANGELOG_DEV.md`
 - [x] New test file `tests/test_ffb_stability.cpp`
 - [x] Implementation Plan updated with Implementation Notes.
+
+## Verification of Reported Issues
+
+| Issue Reported | Resolution |
+| :--- | :--- |
+| **FFB remains active after server disconnect** | Addressed by `GameConnector::IsStale()`. If telemetry heartbeat (`mElapsedTime`) stops for >100ms, `FFBThread` in `main.cpp` now explicitly mutes all forces. |
+| **FFB continues after pausing the game** | Addressed by both `in_realtime` check and `IsStale()` watchdog. Pausing stops the physics engine, triggering the watchdog. |
+| **Wheel snaps and stays locked on crash** | Addressed by the 100ms watchdog. The wheel is now released (force 0.0) almost immediately after the game process stops updating shared memory. |
+| **App crashes from manual config edits (negative values)** | Addressed by `Preset::Validate()`. All physical parameters are now rigorously clamped to safe ranges during both startup loading and preset switching, preventing division-by-zero or `pow()` domain errors. |
 
 ## Implementation Notes
 
