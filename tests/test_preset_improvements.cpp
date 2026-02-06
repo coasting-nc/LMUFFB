@@ -61,9 +61,18 @@ TEST_CASE(test_duplicate_preset, "Presets") {
     Config::DuplicatePreset(0, engine); // Duplicate "Default"
 
     ASSERT_TRUE(Config::presets.size() == initial_count + 1);
-    ASSERT_TRUE(Config::presets.back().name.find("Default") != std::string::npos);
-    ASSERT_TRUE(Config::presets.back().name.find("(Copy)") != std::string::npos);
-    ASSERT_TRUE(!Config::presets.back().is_builtin);
+
+    // v0.7.16: User presets are no longer at the back! Find it by name.
+    int found_idx = -1;
+    for (int i = 0; i < (int)Config::presets.size(); i++) {
+        if (Config::presets[i].name.find("Default (Copy)") != std::string::npos) {
+            found_idx = i;
+            break;
+        }
+    }
+
+    ASSERT_TRUE(found_idx != -1);
+    ASSERT_TRUE(!Config::presets[found_idx].is_builtin);
 }
 
 TEST_CASE(test_delete_user_preset, "Presets") {

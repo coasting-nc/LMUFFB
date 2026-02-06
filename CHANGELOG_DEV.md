@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.16] - 2026-02-06
+### Changed
+- **Preset Management**: User presets are now displayed at the top of the dropdown list (immediately after the "Default" preset) for easier access.
+### Fixed
+- **Preset Insertion**: New, duplicated, or imported presets now correctly follow the ordering logic (placed in the user section at the top).
+- **Save Behavior Verification**: Confirmed that "Save Current Config" updates the selected user preset, fulfilling the requirement from issue #59.
+
 ## [0.7.15] - 2026-02-06
 ### Fixed
 - **Build Error**: Resolved compilation error C2513 in `Config.cpp` by renaming the local lambda `near` to `is_near` to avoid collision with legacy MSVC macros.
