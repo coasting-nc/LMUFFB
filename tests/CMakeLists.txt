@@ -34,6 +34,8 @@ set(TEST_SOURCES
     test_preset_improvements.cpp
     test_issue_59.cpp
     test_preset_registry.cpp
+    test_ffb_stability.cpp
+    test_ffb_import_export.cpp
     ../src/Config.cpp
     ../src/PresetRegistry.cpp
 )

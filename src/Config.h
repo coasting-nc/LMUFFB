@@ -3,6 +3,7 @@
 
 #include "FFBEngine.h"
 #include "PresetRegistry.h"
+#include "Version.h"
 #include <string>
 #include <vector>
 #include <chrono>

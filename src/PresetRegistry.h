@@ -205,6 +205,7 @@ struct Preset {
 
     void Apply(FFBEngine& engine) const;
     void UpdateFromEngine(const FFBEngine& engine);
+    void Validate();
 };
 
 class PresetRegistry {

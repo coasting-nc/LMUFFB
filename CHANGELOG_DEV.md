@@ -14,6 +14,25 @@ All notable changes to this project will be documented in this file.
 - **Preset Insertion**: New, duplicated, or imported presets now correctly follow the ordering logic (placed in the user section at the top).
 - **Save Behavior Verification**: Confirmed that "Save Current Config" updates the selected user preset, fulfilling the requirement from issue #59.
 
+## [0.7.17] - 2026-02-07
+### Changed
+- **Test Suite Refactoring (Completion)**:
+  - **Full Auto-Registration Migration**: Completed the transition of the entire test suite to the self-registering `TEST_CASE` macro (it was started with version 0.7.8). Legacy `static void` tests in `test_screenshot.cpp`, `test_windows_platform.cpp`, and persistence files have been fully migrated.
+  - **Infrastructure Consolidation**: Centralized assertion macros (`ASSERT_EQ`, `ASSERT_EQ_STR`, etc.) and global test counters into `test_ffb_common.h` and `test_ffb_common.cpp`.
+  - **Unified Test Runner**: Streamlined `main_test_runner.cpp` to rely solely on the automated registry. Removed redundant manual `Run()` calls and namespace forward declarations, ensuring all 867+ assertions contribute to a single, unified report.
+  - **Code Cleanup**: Removed duplicated logic and redundant headers across the test suite, improving compilation overhead and maintainability.
+
+## [0.7.16] - 2026-02-06
+### Added
+- **Stability and Safety Improvements**:
+  - **FFB Heartbeat Watchdog**: Implemented telemetry staleness detection. If the game crashes or freezes (telemetry stops updating for > 100ms), FFB is automatically muted to prevent the wheel from being "stuck" with high forces.
+  - **Comprehensive Parameter Validation**: Added rigorous safety clamping for all physical parameters in `Preset::Apply` and `Config::Load`. This prevents application crashes or `NaN` outputs caused by manually editing `config.ini` with invalid/negative values (e.g., negative `lockup_gamma`, zero `max_torque_ref`).
+### Testing
+- **New Stability Test Suite**: `tests/test_ffb_stability.cpp`
+  - `test_negative_parameter_safety`: Verifies that invalid inputs are correctly clamped and do not cause crashes.
+  - `test_config_load_validation`: Validates robust loading from malformed `.ini` files.
+  - `test_engine_robustness_to_static_telemetry`: Ensures the engine handles frozen telemetry gracefully.
+
 ## [0.7.15] - 2026-02-06
 ### Fixed
 - **Build Error**: Resolved compilation error C2513 in `Config.cpp` by renaming the local lambda `near` to `is_near` to avoid collision with legacy MSVC macros.

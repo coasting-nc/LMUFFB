@@ -1,4 +1,4 @@
-#include <iostream>
+#include "test_ffb_common.h"
 #include <vector>
 #include <string>
 #include <fstream>
@@ -8,34 +8,10 @@
 #include "src/Version.h"
 #include "src/PresetRegistry.h"
 
-namespace PersistenceTests_v0628 {
+namespace FFBEngineTests {
+// Counters are now extern from test_ffb_common.h
 
-int g_tests_passed = 0;
-int g_tests_failed = 0;
-
-#define ASSERT_TRUE(condition) \
-    if (condition) { \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #condition << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
-        g_tests_failed++; \
-    }
-
-#define ASSERT_NEAR(a, b, epsilon) \
-    if (std::abs((a) - (b)) < (epsilon)) { \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") != " << #b << " (" << (b) << ")" << std::endl; \
-        g_tests_failed++; \
-    }
-
-#define ASSERT_EQ(a, b) \
-    if ((a) == (b)) { \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") != " << #b << " (" << (b) << ")" << std::endl; \
-        g_tests_failed++; \
-    }
+// ASSERT macros are reused or redefined if needed
 
 bool FileContains(const std::string& filename, const std::string pattern) {
     std::ifstream file(filename);
@@ -59,7 +35,10 @@ int GetLineNumber(const std::string& filename, const std::string& pattern) {
     return -1;
 }
 
-void test_load_stops_at_presets() {
+// ----------------------------------------------------------------------------
+// TEST 1: Load Stops At Presets Header
+// ----------------------------------------------------------------------------
+TEST_CASE(test_load_stops_at_presets, "Persistence") {
     std::cout << "Test 1: Load Stops At Presets Header..." << std::endl;
     
     std::string test_file = "test_isolation.ini";
@@ -78,7 +57,10 @@ void test_load_stops_at_presets() {
     std::remove(test_file.c_str());
 }
 
-void test_save_order() {
+// ----------------------------------------------------------------------------
+// TEST 2: Save Follows Defined Order
+// ----------------------------------------------------------------------------
+TEST_CASE(test_save_order, "Persistence") {
     std::cout << "Test 2: Save Follows Defined Order..." << std::endl;
     FFBEngine engine;
     Preset::ApplyDefaultsToEngine(engine);
@@ -106,7 +88,10 @@ void test_save_order() {
     std::remove(test_file.c_str());
 }
 
-void test_legacy_keys() {
+// ----------------------------------------------------------------------------
+// TEST 3: Load Supports Legacy Keys
+// ----------------------------------------------------------------------------
+TEST_CASE(test_legacy_keys, "Persistence") {
     std::cout << "Test 3: Load Supports Legacy Keys..." << std::endl;
     
     std::string test_file = "test_legacy.ini";
@@ -125,7 +110,10 @@ void test_legacy_keys() {
     std::remove(test_file.c_str());
 }
 
-void test_structure_comments() {
+// ----------------------------------------------------------------------------
+// TEST 4: Structure Includes Comments
+// ----------------------------------------------------------------------------
+TEST_CASE(test_structure_comments, "Persistence") {
     std::cout << "Test 4: Structure Includes Comments..." << std::endl;
     FFBEngine engine;
     
@@ -140,17 +128,4 @@ void test_structure_comments() {
     std::remove(test_file.c_str());
 }
 
-void Run() {
-    std::cout << "\n=== Running v0.6.28 Persistence Tests (Reordering) ===" << std::endl;
-    
-    test_load_stops_at_presets();
-    test_save_order();
-    test_legacy_keys();
-    test_structure_comments();
-
-    std::cout << "\n--- Persistence v0.6.28 Test Summary ---" << std::endl;
-    std::cout << "Tests Passed: " << g_tests_passed << std::endl;
-    std::cout << "Tests Failed: " << g_tests_failed << std::endl;
-}
-
-} // namespace PersistenceTests_v0628
+} // namespace FFBEngineTests

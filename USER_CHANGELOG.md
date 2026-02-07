@@ -4,6 +4,38 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]February 7, 2026[/b][/size]
+[b]Version 0.7.19 - Preset Management Overhaul[/b]
+
+[b]New release[/b] (0.7.19): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]New Preset Registry[/b]: Completely refactored the internal preset system into a dedicated registry. This improves the speed and reliability when switching between different FFB configurations.
+[*][b]User Presets at the Top[/b]: Your custom presets are now displayed right at the top of the dropdown list (after "Default"), making it much faster to find and load your favorite settings.
+[*][b]Reliable Saving[/b]: Refined the "Save Current Config" behavior to ensure it always correctly updates your selected user preset and persists all settings across restarts.
+[/list]
+
+[b]Fixed[/b]
+[list]
+[*][b]Physics Safety Clamping[/b]: Hardened the configuration loader to prevent accidental high forces or oscillations if you manually enter extreme values in the .ini file.
+[/list]
+
+---
+
+[size=5][b]February 7, 2026[/b][/size]
+[b]Version 0.7.17 - Test Suite Consolidation[/b]
+
+[b]New release[/b] (0.7.17): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Unified Testing Framework[/b]: Completed the migration of all internal diagnostic tests to a new automated registration system. This ensures that 100% of our physics and platform tests are executed every time we build the app, preventing "silent regressions" in complex FFB effects.
+[*][b]Cleaner Internal Codebase[/b]: Standardized the way we verify FFB integrity across Windows and Linux, removing redundant internal code and simplifying the development workflow.
+[/list]
+
+---
+
 [size=5][b]February 5, 2026[/b][/size]
 [b]Version 0.7.12 - Preset & Telemetry Versioning[/b]
 

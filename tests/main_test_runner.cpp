@@ -13,41 +13,12 @@
 std::atomic<bool> g_running(true);
 std::mutex g_engine_mutex;
 
-// Forward declarations of runners in namespaces
 namespace FFBEngineTests { 
     extern int g_tests_passed; 
     extern int g_tests_failed; 
     void Run();
-    void ParseTagArguments(int argc, char* argv[]); // Tag filtering
+    void ParseTagArguments(int argc, char* argv[]);
 }
-namespace PersistenceTests { 
-    extern int g_tests_passed; 
-    extern int g_tests_failed; 
-    void Run(); 
-}
-namespace PersistenceTests_v0628 { 
-    extern int g_tests_passed; 
-    extern int g_tests_failed; 
-    void Run(); 
-}
-
-#ifdef _WIN32
-namespace WindowsPlatformTests { 
-    extern int g_tests_passed; 
-    extern int g_tests_failed; 
-    void Run(); 
-}
-namespace ScreenshotTests { 
-    extern int g_tests_passed; 
-    extern int g_tests_failed; 
-    void Run(); 
-}
-namespace GuiInteractionTests { 
-    extern int g_tests_passed; 
-    extern int g_tests_failed; 
-    void Run(); 
-}
-#endif
 
 int main(int argc, char* argv[]) {
     // Parse tag filtering arguments
@@ -61,70 +32,19 @@ int main(int argc, char* argv[]) {
     std::remove(Config::m_config_path.c_str());
     std::remove("imgui.ini");
 
-    // --- FFB Engine Tests ---
-    // Always run these as they are platform agnostic (mostly)
+    // --- Unified Test Suite Execution ---
+    // All tests (including Windows-specific ones if compiled) are now auto-registered
     try {
         FFBEngineTests::Run();
-        total_passed += FFBEngineTests::g_tests_passed;
-        total_failed += FFBEngineTests::g_tests_failed;
-    } catch (...) {
-        total_failed++;
-    }
-
-    try {
-        PersistenceTests::Run();
-        total_passed += PersistenceTests::g_tests_passed;
-        total_failed += PersistenceTests::g_tests_failed;
-    } catch (...) {
-        total_failed++;
-    }
-
-    try {
-        PersistenceTests_v0628::Run();
-        total_passed += PersistenceTests_v0628::g_tests_passed;
-        total_failed += PersistenceTests_v0628::g_tests_failed;
-    } catch (...) {
-        total_failed++;
-    }
-
-#ifdef _WIN32
-    std::cout << "\n";
-    // --- Windows Platform Tests ---
-    try {
-        WindowsPlatformTests::Run();
-        total_passed += WindowsPlatformTests::g_tests_passed;
-        total_failed += WindowsPlatformTests::g_tests_failed;
+        total_passed = FFBEngineTests::g_tests_passed;
+        total_failed = FFBEngineTests::g_tests_failed;
     } catch (const std::exception& e) {
-        std::cout << "[FATAL] Windows Platform Tests threw exception: " << e.what() << std::endl;
+        std::cout << "\n[FATAL] Test Runner encountered unhandled exception: " << e.what() << std::endl;
         total_failed++;
     } catch (...) {
-        std::cout << "[FATAL] Windows Platform Tests threw unknown exception" << std::endl;
+        std::cout << "\n[FATAL] Test Runner encountered unknown exception" << std::endl;
         total_failed++;
     }
-
-    std::cout << "\n";
-    // --- Screenshot Tests ---
-    try {
-        ScreenshotTests::Run();
-        total_passed += ScreenshotTests::g_tests_passed;
-        total_failed += ScreenshotTests::g_tests_failed;
-    } catch (const std::exception& e) {
-        std::cout << "[FATAL] Screenshot Tests threw exception: " << e.what() << std::endl;
-        total_failed++;
-    } catch (...) {
-        std::cout << "[FATAL] Screenshot Tests threw unknown exception" << std::endl;
-        total_failed++;
-    }
-    std::cout << "\n";
-    // --- Gui Interaction Tests ---
-    try {
-        GuiInteractionTests::Run();
-        total_passed += GuiInteractionTests::g_tests_passed;
-        total_failed += GuiInteractionTests::g_tests_failed;
-    } catch (...) {
-        total_failed++;
-    }
-#endif
 
     std::cout << "\n==============================================" << std::endl;
     std::cout << "           COMBINED TEST SUMMARY              " << std::endl;

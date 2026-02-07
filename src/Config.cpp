@@ -1,26 +1,27 @@
-#include "Config.h"
-#include "Version.h"
+﻿#include "Config.h"
 #include "PresetRegistry.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
 
+// Global App Settings
 bool Config::m_ignore_vjoy_version_warning = false;
-bool Config::m_enable_vjoy = false;
-bool Config::m_output_ffb_to_vjoy = false;
+bool Config::m_enable_vjoy = true;
+bool Config::m_output_ffb_to_vjoy = true;
 bool Config::m_always_on_top = true;
-std::string Config::m_last_device_guid = "";
-std::string Config::m_config_path = "config.ini";
 bool Config::m_auto_start_logging = false;
-std::string Config::m_log_path = "logs/";
+std::string Config::m_log_path = "logs";
+std::string Config::m_config_path = "config.ini";
+std::string Config::m_last_device_guid = "";
 
-// Window Geometry Defaults (v0.5.5)
+// Window Geometry
 int Config::win_pos_x = 100;
 int Config::win_pos_y = 100;
-int Config::win_w_small = 500;   // Narrow (Config Only)
+int Config::win_w_small = 500;
 int Config::win_h_small = 800;
-int Config::win_w_large = 1400;  // Wide (Config + Graphs)
+int Config::win_w_large = 1400;
 int Config::win_h_large = 800;
 bool Config::show_graphs = false;
 
@@ -183,16 +184,13 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "understeer") {
                         float val = std::stof(value);
                         if (val > 2.0f) val /= 100.0f; // Legacy % support
-                        engine.m_understeer_effect = (std::min)(2.0f, (std::max)(0.0f, val));
+                        engine.m_understeer_effect = val;
                     }
                     else if (key == "sop") engine.m_sop_effect = std::stof(value);
                     else if (key == "min_force") engine.m_min_force = std::stof(value);
                     else if (key == "oversteer_boost") engine.m_oversteer_boost = std::stof(value);
                     else if (key == "lockup_enabled") engine.m_lockup_enabled = std::stoi(value);
-                    else if (key == "lockup_gain") {
-                        float val = std::stof(value);
-                        engine.m_lockup_gain = (std::min)(3.0f, (std::max)(0.0f, val));
-                    }
+                    else if (key == "lockup_gain") engine.m_lockup_gain = std::stof(value);
                     else if (key == "lockup_start_pct") engine.m_lockup_start_pct = std::stof(value);
                     else if (key == "lockup_full_pct") engine.m_lockup_full_pct = std::stof(value);
                     else if (key == "lockup_rear_boost") engine.m_lockup_rear_boost = std::stof(value);
@@ -214,12 +212,12 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "lockup_freq_scale") engine.m_lockup_freq_scale = std::stof(value);
                     else if (key == "spin_freq_scale") engine.m_spin_freq_scale = std::stof(value);
                     else if (key == "bottoming_method") engine.m_bottoming_method = std::stoi(value);
-                    else if (key == "scrub_drag_gain") engine.m_scrub_drag_gain = (std::min)(1.0f, std::stof(value));
+                    else if (key == "scrub_drag_gain") engine.m_scrub_drag_gain = std::stof(value);
                     else if (key == "rear_align_effect") engine.m_rear_align_effect = std::stof(value);
                     else if (key == "sop_yaw_gain") engine.m_sop_yaw_gain = std::stof(value);
                     else if (key == "steering_shaft_gain") engine.m_steering_shaft_gain = std::stof(value);
                     else if (key == "base_force_mode") engine.m_base_force_mode = std::stoi(value);
-                    else if (key == "gyro_gain") engine.m_gyro_gain = (std::min)(1.0f, std::stof(value));
+                    else if (key == "gyro_gain") engine.m_gyro_gain = std::stof(value);
                     else if (key == "flatspot_suppression") engine.m_flatspot_suppression = std::stoi(value);
                     else if (key == "notch_q") engine.m_notch_q = std::stof(value);
                     else if (key == "flatspot_strength") engine.m_flatspot_strength = std::stof(value);
@@ -242,11 +240,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                         engine.m_slope_max_threshold = std::stof(value);
                         has_max_threshold = true;
                     }
-                    else if (key == "slope_alpha_threshold") {
-                        float val = std::stof(value);
-                        if (val < 0.001f || val > 0.1f) val = 0.02f;
-                        engine.m_slope_alpha_threshold = val;
-                    }
+                    else if (key == "slope_alpha_threshold") engine.m_slope_alpha_threshold = std::stof(value);
                     else if (key == "slope_decay_rate") engine.m_slope_decay_rate = std::stof(value);
                     else if (key == "slope_confidence_enabled") engine.m_slope_confidence_enabled = (value == "1");
                     else if (key == "steering_shaft_smoothing") engine.m_steering_shaft_smoothing = std::stof(value);
@@ -261,10 +255,55 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
             }
         }
     }
-    
+
     // v0.7.11 Migration: Calculate max_threshold if missing
     if (!has_max_threshold && sensitivity > 0.1f) {
         engine.m_slope_max_threshold = engine.m_slope_min_threshold - (8.0f / sensitivity);
+    }
+
+    // v0.7.16: Comprehensive Safety Validation & Clamping
+    engine.m_gain = (std::max)(0.0f, engine.m_gain);
+    engine.m_max_torque_ref = (std::max)(1.0f, engine.m_max_torque_ref);
+    engine.m_min_force = (std::max)(0.0f, engine.m_min_force);
+    engine.m_sop_scale = (std::max)(0.01f, engine.m_sop_scale);
+    engine.m_slip_angle_smoothing = (std::max)(0.0001f, engine.m_slip_angle_smoothing);
+    engine.m_notch_q = (std::max)(0.1f, engine.m_notch_q);
+    engine.m_static_notch_width = (std::max)(0.1f, engine.m_static_notch_width);
+    engine.m_speed_gate_upper = (std::max)(0.1f, engine.m_speed_gate_upper);
+    engine.m_lockup_gain = (std::max)(0.0f, (std::min)(3.0f, engine.m_lockup_gain));
+    engine.m_lockup_gamma = (std::max)(0.1f, engine.m_lockup_gamma);
+
+    // v0.7.16: Safety Clamping (v0.4.50 parity)
+    engine.m_slide_texture_gain = (std::min)(2.0f, engine.m_slide_texture_gain);
+    engine.m_road_texture_gain = (std::min)(2.0f, engine.m_road_texture_gain);
+    engine.m_spin_gain = (std::min)(2.0f, engine.m_spin_gain);
+    engine.m_rear_align_effect = (std::min)(2.0f, engine.m_rear_align_effect);
+    engine.m_sop_yaw_gain = (std::min)(1.0f, engine.m_sop_yaw_gain);
+    engine.m_sop_effect = (std::min)(2.0f, engine.m_sop_effect);
+    engine.m_scrub_drag_gain = (std::min)(1.0f, engine.m_scrub_drag_gain);
+    engine.m_gyro_gain = (std::min)(1.0f, engine.m_gyro_gain);
+
+    if (engine.m_optimal_slip_angle < 0.01f) {
+        std::cerr << "[Config] Invalid optimal_slip_angle (" << engine.m_optimal_slip_angle 
+                  << "), resetting to default 0.10" << std::endl;
+        engine.m_optimal_slip_angle = 0.10f;
+    }
+    if (engine.m_optimal_slip_ratio < 0.01f) {
+        std::cerr << "[Config] Invalid optimal_slip_ratio (" << engine.m_optimal_slip_ratio 
+                  << "), resetting to default 0.12" << std::endl;
+        engine.m_optimal_slip_ratio = 0.12f;
+    }
+    
+    // Slope Detection Validation
+    if (engine.m_slope_sg_window < 5) engine.m_slope_sg_window = 5;
+    if (engine.m_slope_sg_window > 41) engine.m_slope_sg_window = 41;
+    if (engine.m_slope_sg_window % 2 == 0) engine.m_slope_sg_window++;
+    if (engine.m_slope_sensitivity < 0.1f) engine.m_slope_sensitivity = 0.1f;
+    if (engine.m_slope_sensitivity > 10.0f) engine.m_slope_sensitivity = 10.0f;
+    if (engine.m_slope_smoothing_tau < 0.001f) engine.m_slope_smoothing_tau = 0.04f;
+    
+    if (engine.m_slope_alpha_threshold < 0.001f || engine.m_slope_alpha_threshold > 0.1f) {
+        engine.m_slope_alpha_threshold = 0.02f;
     }
 
     PresetRegistry::Get().Load(final_path);
