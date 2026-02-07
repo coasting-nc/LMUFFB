@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.18] - 2026-02-08
+### Added
+- **Micro-UX Improvements**:
+  - **Status Message System**: Added a temporary visual feedback system that shows "Saved!", "Exported!", etc., next to the version header when actions are successful.
+  - **Tooltips**: Added informative tooltips to key buttons (Rescan, Unbind, Save Screenshot, Preset management) to improve discoverability.
+  - **Delete Confirmation**: Implemented a modal popup to confirm preset deletion, preventing accidental data loss.
+
 ## [0.7.17] - 2026-02-07
 ### Changed
 - **Test Suite Refactoring (Completion)**:
