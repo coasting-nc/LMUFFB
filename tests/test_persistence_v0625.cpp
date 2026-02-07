@@ -1,4 +1,4 @@
-#include <iostream>
+#include "test_ffb_common.h"
 #include <vector>
 #include <string>
 #include <fstream>
@@ -7,34 +7,10 @@
 #include "src/Config.h"
 #include "src/Version.h"
 
-namespace PersistenceTests {
+namespace FFBEngineTests {
+// Counters are now extern from test_ffb_common.h
 
-int g_tests_passed = 0;
-int g_tests_failed = 0;
-
-#define ASSERT_TRUE(condition) \
-    if (condition) { \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #condition << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
-        g_tests_failed++; \
-    }
-
-#define ASSERT_NEAR(a, b, epsilon) \
-    if (std::abs((a) - (b)) < (epsilon)) { \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") != " << #b << " (" << (b) << ")" << std::endl; \
-        g_tests_failed++; \
-    }
-
-#define ASSERT_EQ(a, b) \
-    if ((a) == (b)) { \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") != " << #b << " (" << (b) << ")" << std::endl; \
-        g_tests_failed++; \
-    }
+// ASSERT macros are reused or redefined if needed, but they use the extern counters
 
 /**
  * Helper to check if a file contains a specific string.
@@ -52,7 +28,7 @@ bool FileContains(const std::string& filename, const std::string& pattern) {
 // ----------------------------------------------------------------------------
 // TEST 1: Texture Load Cap in Presets
 // ----------------------------------------------------------------------------
-void test_texture_load_cap_in_presets() {
+TEST_CASE(test_texture_load_cap_in_presets, "Persistence") {
     std::cout << "Test 1: Texture Load Cap in Presets..." << std::endl;
     std::remove(Config::m_config_path.c_str());
     FFBEngine engine;
@@ -89,7 +65,7 @@ void test_texture_load_cap_in_presets() {
 // ----------------------------------------------------------------------------
 // TEST 2: Main Config - Speed Gate Persistence
 // ----------------------------------------------------------------------------
-void test_speed_gate_persistence() {
+TEST_CASE(test_speed_gate_persistence, "Persistence") {
     std::cout << "Test 2: Main Config - Speed Gate Persistence..." << std::endl;
     Config::presets.clear(); // Clear presets from previous tests
     FFBEngine engine;
@@ -116,7 +92,7 @@ void test_speed_gate_persistence() {
 // ----------------------------------------------------------------------------
 // TEST 3: Main Config - Road Fallback & Understeer SoP
 // ----------------------------------------------------------------------------
-void test_advanced_physics_persistence() {
+TEST_CASE(test_advanced_physics_persistence, "Persistence") {
     std::cout << "Test 3: Main Config - Road Fallback & Understeer SoP..." << std::endl;
     Config::presets.clear(); // Clear presets from previous tests
     FFBEngine engine;
@@ -143,7 +119,7 @@ void test_advanced_physics_persistence() {
 // ----------------------------------------------------------------------------
 // TEST 4: Preset Serialization - All New Fields
 // ----------------------------------------------------------------------------
-void test_preset_all_fields() {
+TEST_CASE(test_preset_all_fields, "Persistence") {
     std::cout << "Test 4: Preset Serialization - All New Fields..." << std::endl;
     std::remove(Config::m_config_path.c_str());
     FFBEngine engine;
@@ -191,7 +167,7 @@ void test_preset_all_fields() {
 // ----------------------------------------------------------------------------
 // TEST 5: Preset Clamping - Brake Load Cap (Regression)
 // ----------------------------------------------------------------------------
-void test_preset_clamping_brake() {
+TEST_CASE(test_preset_clamping_brake, "Persistence") {
     std::cout << "Test 5: Preset Clamping - Brake Load Cap..." << std::endl;
     
     // Manually write to config file
@@ -224,7 +200,7 @@ void test_preset_clamping_brake() {
 // ----------------------------------------------------------------------------
 // TEST 6: Preset Clamping - Lockup Gain (Regression)
 // ----------------------------------------------------------------------------
-void test_preset_clamping_lockup() {
+TEST_CASE(test_preset_clamping_lockup, "Persistence") {
     std::cout << "Test 6: Preset Clamping - Lockup Gain..." << std::endl;
     
     // Manually write to config file
@@ -257,7 +233,7 @@ void test_preset_clamping_lockup() {
 // ----------------------------------------------------------------------------
 // TEST 7: Main Config Clamping - Brake Load Cap (Regression)
 // ----------------------------------------------------------------------------
-void test_main_config_clamping_brake() {
+TEST_CASE(test_main_config_clamping_brake, "Persistence") {
     std::cout << "Test 7: Main Config Clamping - Brake Load Cap..." << std::endl;
     FFBEngine engine;
     
@@ -291,7 +267,7 @@ void test_main_config_clamping_brake() {
 // ----------------------------------------------------------------------------
 // TEST 8: Main Config Clamping - Lockup Gain (Regression)
 // ----------------------------------------------------------------------------
-void test_main_config_clamping_lockup() {
+TEST_CASE(test_main_config_clamping_lockup, "Persistence") {
     std::cout << "Test 8: Main Config Clamping - Lockup Gain..." << std::endl;
     FFBEngine engine;
     
@@ -317,7 +293,7 @@ void test_main_config_clamping_lockup() {
 // ----------------------------------------------------------------------------
 // TEST 9: Configuration Versioning
 // ----------------------------------------------------------------------------
-void test_configuration_versioning() {
+TEST_CASE(test_configuration_versioning, "Persistence") {
     std::cout << "Test 9: Configuration Versioning..." << std::endl;
     Config::presets.clear(); // Clear presets from previous tests
     FFBEngine engine;
@@ -334,7 +310,7 @@ void test_configuration_versioning() {
 // ----------------------------------------------------------------------------
 // TEST 10: Comprehensive Round-Trip Test
 // ----------------------------------------------------------------------------
-void test_comprehensive_roundtrip() {
+TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
     std::cout << "Test 10: Comprehensive Round-Trip Test..." << std::endl;
     std::remove(Config::m_config_path.c_str());
     FFBEngine engine;
@@ -411,7 +387,7 @@ void test_comprehensive_roundtrip() {
 // 
 // If any field is missing from the synchronization methods, this test will fail.
 // ----------------------------------------------------------------------------
-void test_preset_engine_sync_regression() {
+TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     std::cout << "Test 11: Preset-Engine Synchronization (v0.7.0 Regression)..." << std::endl;
     
     // --- Part A: ApplyDefaultsToEngine initializes critical fields ---
@@ -542,24 +518,4 @@ void test_preset_engine_sync_regression() {
     std::cout << "  [PASS] Round-trip Apply->UpdateFromEngine->Apply preserves data" << std::endl;
 }
 
-void Run() {
-    std::cout << "\n=== Running v0.6.25 Persistence Tests ===" << std::endl;
-    
-    test_texture_load_cap_in_presets();
-    test_speed_gate_persistence();
-    test_advanced_physics_persistence();
-    test_preset_all_fields();
-    test_preset_clamping_brake();
-    test_preset_clamping_lockup();
-    test_main_config_clamping_brake();
-    test_main_config_clamping_lockup();
-    test_configuration_versioning();
-    test_comprehensive_roundtrip();
-    test_preset_engine_sync_regression();  // v0.7.0 Regression
-
-    std::cout << "\n--- Persistence & Versioning Test Summary ---" << std::endl;
-    std::cout << "Tests Passed: " << g_tests_passed << std::endl;
-    std::cout << "Tests Failed: " << g_tests_failed << std::endl;
-}
-
-} // namespace PersistenceTests
+} // namespace FFBEngineTests

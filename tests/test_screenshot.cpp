@@ -9,22 +9,16 @@
 // Global externs required by GuiLayer
 
 
+#include "test_ffb_common.h"
+
 // Forward declaration from GuiLayer.cpp
 bool CaptureWindowToBuffer(HWND hwnd, std::vector<unsigned char>& buffer, int& width, int& height);
 
 // --- Simple Test Framework (Same as other test files) ---
-namespace ScreenshotTests {
-int g_tests_passed = 0;
-int g_tests_failed = 0;
+namespace FFBEngineTests {
+// Counters are now extern from test_ffb_common.h
 
-#define ASSERT_TRUE(condition) \
-    if (condition) { \
-        std::cout << "[PASS] " << #condition << std::endl; \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #condition << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
-        g_tests_failed++; \
-    }
+// ASSERT macros are used from test_ffb_common.h
 
 // --- Test Helpers ---
 
@@ -71,7 +65,7 @@ bool IsValidRGBAFormat(const std::vector<unsigned char>& buffer, int width, int 
 // --- TESTS ---
 
 // Test 1: Console Window Capture
-static void test_console_window_capture() {
+TEST_CASE(test_console_window_capture, "Screenshot") {
     std::cout << "\nTest: Console Window Capture\n";
     
     HWND consoleWindow = GetConsoleWindow();
@@ -106,7 +100,7 @@ static void test_console_window_capture() {
 }
 
 // Test 2: Invalid Window Handle
-static void test_invalid_window_handle() {
+TEST_CASE(test_invalid_window_handle, "Screenshot") {
     std::cout << "\nTest: Invalid Window Handle\n";
     
     std::vector<unsigned char> buffer;
@@ -127,7 +121,7 @@ static void test_invalid_window_handle() {
 }
 
 // Test 3: Buffer Size Calculation
-static void test_buffer_size_calculation() {
+TEST_CASE(test_buffer_size_calculation, "Screenshot") {
     std::cout << "\nTest: Buffer Size Calculation\n";
     
     HWND consoleWindow = GetConsoleWindow();
@@ -149,7 +143,7 @@ static void test_buffer_size_calculation() {
 }
 
 // Test 4: Multiple Captures Consistency
-static void test_multiple_captures_consistency() {
+TEST_CASE(test_multiple_captures_consistency, "Screenshot") {
     std::cout << "\nTest: Multiple Captures Consistency\n";
     
     HWND consoleWindow = GetConsoleWindow();
@@ -179,7 +173,7 @@ static void test_multiple_captures_consistency() {
 }
 
 // Test 5: BGRA to RGBA Conversion
-static void test_bgra_to_rgba_conversion() {
+TEST_CASE(test_bgra_to_rgba_conversion, "Screenshot") {
     std::cout << "\nTest: BGRA to RGBA Conversion\n";
     
     HWND consoleWindow = GetConsoleWindow();
@@ -211,7 +205,7 @@ static void test_bgra_to_rgba_conversion() {
 }
 
 // Test 6: Window Dimensions Validation
-static void test_window_dimensions_validation() {
+TEST_CASE(test_window_dimensions_validation, "Screenshot") {
     std::cout << "\nTest: Window Dimensions Validation\n";
     
     HWND consoleWindow = GetConsoleWindow();
@@ -240,7 +234,7 @@ static void test_window_dimensions_validation() {
 }
 
 // Test 7: Regression - Console Window Capture with BitBlt Fallback (v0.6.5)
-static void test_console_capture_bitblt_fallback() {
+TEST_CASE(test_console_capture_bitblt_fallback, "Screenshot") {
     std::cout << "\nTest: Regression - Console Window Capture with BitBlt Fallback (v0.6.5)\n";
     
     // This test verifies the fix for the issue where PrintWindow fails for console windows
@@ -272,7 +266,7 @@ static void test_console_capture_bitblt_fallback() {
 }
 
 // Test 8: Regression - Pseudo-Console Window Detection (v0.6.5)
-static void test_pseudo_console_detection() {
+TEST_CASE(test_pseudo_console_detection, "Screenshot") {
     std::cout << "\nTest: Regression - Pseudo-Console Window Detection (v0.6.5)\n";
     
     // This test verifies that we can handle pseudo-console windows
@@ -318,7 +312,7 @@ static void test_pseudo_console_detection() {
 }
 
 // Test 9: Regression - Console Font Size Fallback (v0.6.5)
-static void test_console_font_size_fallback() {
+TEST_CASE(test_console_font_size_fallback, "Screenshot") {
     std::cout << "\nTest: Regression - Console Font Size Fallback (v0.6.5)\n";
     
     // This test verifies that we use reasonable defaults when GetCurrentConsoleFont
@@ -353,7 +347,7 @@ static void test_console_font_size_fallback() {
 }
 
 // Test 10: Regression - Window Enumeration for Console (v0.6.5)
-static void test_window_enumeration_for_console() {
+TEST_CASE(test_window_enumeration_for_console, "Screenshot") {
     std::cout << "\nTest: Regression - Window Enumeration for Console (v0.6.5)\n";
     
     // This test verifies that we can find the console window by enumerating
@@ -427,27 +421,6 @@ static void test_window_enumeration_for_console() {
 // --- MAIN ---
 
 // --- MAIN ---
-
-void Run() {
-    std::cout << "=== Running Composite Screenshot Tests ===\n";
-    
-    // Run all tests
-    test_console_window_capture();
-    test_invalid_window_handle();
-    test_buffer_size_calculation();
-    test_multiple_captures_consistency();
-    test_bgra_to_rgba_conversion();
-    test_window_dimensions_validation();
-    test_console_capture_bitblt_fallback();  // v0.6.5 regression test
-    test_pseudo_console_detection();         // v0.6.5 regression test
-    test_console_font_size_fallback();       // v0.6.5 regression test
-    test_window_enumeration_for_console();   // v0.6.5 regression test
-    
-    // Report results
-    std::cout << "\n=== Screenshot Test Summary ===\n";
-    std::cout << "Tests Passed: " << g_tests_passed << "\n";
-    std::cout << "Tests Failed: " << g_tests_failed << "\n";
-}
 
 } // namespace ScreenshotTests
 

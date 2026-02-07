@@ -175,7 +175,8 @@ void InitializeEngine(FFBEngine& engine) {
 static const std::vector<std::string> CATEGORY_ORDER = {
     "CorePhysics", "SlopeDetection", "Understeer", "SpeedGate",
     "YawGyro", "Coordinates", "RoadTexture", "Texture",
-    "LockupBraking", "Config", "SlipGrip", "Internal"
+    "LockupBraking", "Config", "SlipGrip", "Internal",
+    "Windows", "Screenshot", "Persistence", "GUI"
 };
 
 static int GetCategoryOrder(const std::string& cat) {

@@ -1,9 +1,11 @@
-#include <iostream>
-#include <string>
-#include <vector>
 #include <windows.h>
 #define DIRECTINPUT_VERSION 0x0800  // DirectInput 8
 #include <dinput.h>
+#include <atomic>
+#include <mutex>
+#include <thread>
+#include <fstream>
+#include <cstdio>
 
 // Include headers to test
 #include "../src/DirectInputFFB.h"
@@ -11,29 +13,12 @@
 #include "../src/GuiLayer.h"
 #include "../src/GameConnector.h"
 #include "imgui.h"
-#include <atomic>
-#include <mutex>
-#include <thread>
-#include <fstream>
-#include <cstdio>
 
-// Global externs required by GuiLayer
+#include "test_ffb_common.h"
 
+namespace FFBEngineTests {
 
-// --- Simple Test Framework (Copy from main test file) ---
-namespace WindowsPlatformTests {
-int g_tests_passed = 0;
-int g_tests_failed = 0;
-
-#define ASSERT_TRUE(condition) \
-    if (condition) { \
-        std::cout << "[PASS] " << #condition << std::endl; \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #condition << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
-        g_tests_failed++; \
-    }
-
+#ifndef ASSERT_EQ_STR
 #define ASSERT_EQ_STR(a, b) \
     if (std::string(a) == std::string(b)) { \
         std::cout << "[PASS] " << #a << " == " << #b << std::endl; \
@@ -42,6 +27,7 @@ int g_tests_failed = 0;
         std::cout << "[FAIL] " << #a << " (" << a << ") != " << #b << " (" << b << ")" << std::endl; \
         g_tests_failed++; \
     }
+#endif
 
 // --- Test Helpers ---
 static void InitializeEngine(FFBEngine& engine) {
@@ -53,7 +39,7 @@ static void InitializeEngine(FFBEngine& engine) {
 
 // --- TESTS ---
 
-static void test_guid_string_conversion() {
+TEST_CASE(test_guid_string_conversion, "Windows") {
     std::cout << "\nTest: GUID <-> String Conversion (Persistence)" << std::endl;
 
     // 1. Create a known GUID (e.g., a standard HID GUID)
@@ -77,7 +63,7 @@ static void test_guid_string_conversion() {
     ASSERT_TRUE(isEmpty);
 }
 
-static void test_window_title_extraction() {
+TEST_CASE(test_window_title_extraction, "Windows") {
     std::cout << "\nTest: Active Window Title (Diagnostics)" << std::endl;
     
     std::string title = DirectInputFFB::GetActiveWindowTitle();
@@ -87,7 +73,7 @@ static void test_window_title_extraction() {
     ASSERT_TRUE(!title.empty());
 }
 
-static void test_config_persistence_guid() {
+TEST_CASE(test_config_persistence_guid, "Windows") {
     std::cout << "\nTest: Config Persistence (Last Device GUID)" << std::endl;
 
     // 1. Setup
@@ -114,7 +100,7 @@ static void test_config_persistence_guid() {
     remove(test_file.c_str());
 }
 
-static void test_config_always_on_top_persistence() {
+TEST_CASE(test_config_always_on_top_persistence, "Windows") {
     std::cout << "\nTest: Config Persistence (Always on Top)" << std::endl;
 
     // 1. Setup
@@ -140,7 +126,7 @@ static void test_config_always_on_top_persistence() {
     remove(test_file.c_str());
 }
 
-static void test_window_always_on_top_behavior() {
+TEST_CASE(test_window_always_on_top_behavior, "Windows") {
     std::cout << "\nTest: Window Always on Top Behavior" << std::endl;
 
     // 1. Create a dummy window for testing
@@ -173,7 +159,7 @@ static void test_window_always_on_top_behavior() {
     DestroyWindow(hwnd);
 }
 
-static void test_preset_management_system() {
+TEST_CASE(test_preset_management_system, "Windows") {
     std::cout << "\nTest: Preset Management System" << std::endl;
 
     // 1. Use a temporary test file to avoid creating artifacts
@@ -211,7 +197,7 @@ static void test_preset_management_system() {
     remove(Config::m_config_path.c_str());
 }
 
-static void test_gui_style_application() {
+TEST_CASE(test_gui_style_application, "Windows") {
     std::cout << "\nTest: GUI Style Application (Headless)" << std::endl;
     
     // 1. Initialize Headless ImGui Context
@@ -249,7 +235,7 @@ static void test_gui_style_application() {
     ImGui::DestroyContext(ctx);
 }
 
-static void test_slider_precision_display() {
+TEST_CASE(test_slider_precision_display, "Windows") {
     std::cout << "\nTest: Slider Precision Display (Arrow Key Visibility)" << std::endl;
     
     // This test verifies that slider format strings have enough decimal places
@@ -341,7 +327,7 @@ static void test_slider_precision_display() {
     }
 }
 
-static void test_slider_precision_regression() {
+TEST_CASE(test_slider_precision_regression, "Windows") {
     std::cout << "\nTest: Slider Precision Regression (v0.5.1 Fixes)" << std::endl;
     
     // This test verifies fixes for sliders that had precision issues
@@ -436,7 +422,7 @@ static void test_slider_precision_regression() {
     }
 }
 
-static void test_latency_display_regression() {
+TEST_CASE(test_latency_display_regression, "Windows") {
     std::cout << "\nTest: Latency Display Regression (v0.4.50 Restoration)" << std::endl;
     
     // This test verifies the latency display feature that was accidentally removed
@@ -571,7 +557,7 @@ static void test_latency_display_regression() {
     }
 }
 
-static void test_window_config_persistence() {
+TEST_CASE(test_window_config_persistence, "Windows") {
     std::cout << "\nTest: Window Config Persistence (Size/Position/State)" << std::endl;
     std::cout << "  RUNNING PERSISTENCE ASSERTIONS" << std::endl;
 
@@ -616,7 +602,7 @@ static void test_window_config_persistence() {
     remove(test_file.c_str());
 }
 
-static void test_single_source_of_truth_t300_defaults() {
+TEST_CASE(test_single_source_of_truth_t300_defaults, "Windows") {
     std::cout << "\nTest: Single Source of Truth - Default Consistency (v0.5.12)" << std::endl;
     
     // This test verifies that the refactoring to use a single source of truth
@@ -770,7 +756,7 @@ static void test_single_source_of_truth_t300_defaults() {
     std::cout << "  [SUMMARY] Single source of truth verified across all initialization paths!" << std::endl;
 }
 
-static void test_config_persistence_braking_group() {
+TEST_CASE(test_config_persistence_braking_group, "Windows") {
     std::cout << "\nTest: Config Persistence (Braking Group)" << std::endl;
     
     std::string test_file = "test_config_brake.ini";
@@ -800,7 +786,7 @@ static void test_config_persistence_braking_group() {
     remove(test_file.c_str());
 }
 
-static void test_legacy_config_migration() {
+TEST_CASE(test_legacy_config_migration, "Windows") {
     std::cout << "\nTest: Legacy Config Migration (Load Cap)" << std::endl;
     
     std::string test_file = "test_config_legacy.ini";
@@ -821,7 +807,7 @@ static void test_legacy_config_migration() {
     remove(test_file.c_str());
 }
 
-static void test_icon_presence() {
+TEST_CASE(test_icon_presence, "Windows") {
     std::cout << "\nTest: Icon Presence (Build Artifact)" << std::endl;
     
     // Robustness Fix: Use the executable's path to find the artifact, 
@@ -882,7 +868,7 @@ static void test_icon_presence() {
     }
 }
 
-static void test_game_connector_lifecycle() {
+TEST_CASE(test_game_connector_lifecycle, "Windows") {
     std::cout << "\nTest: GameConnector Lifecycle (Disconnect/Reconnect)" << std::endl;
 
     // 1. Ensure we start in a known state (likely disconnected since LMU isn't running)
@@ -907,7 +893,7 @@ static void test_game_connector_lifecycle() {
     ASSERT_TRUE(GameConnector::Get().IsConnected() == false);
 }
 
-static void test_game_connector_thread_safety() {
+TEST_CASE(test_game_connector_thread_safety, "Windows") {
     std::cout << "\nTest: GameConnector Thread Safety (Stress Test)" << std::endl;
 
     std::atomic<bool> running{true};
@@ -940,7 +926,7 @@ static void test_game_connector_thread_safety() {
     g_tests_passed++;
 }
 
-static void test_game_connector_staleness() {
+TEST_CASE(test_game_connector_staleness, "Windows") {
     std::cout << "\nTest: GameConnector Staleness (Heartbeat Watchdog)" << std::endl;
 
     // 1. Disconnected state should be stale
@@ -1001,33 +987,4 @@ static void test_game_connector_staleness() {
     GameConnector::Get().Disconnect();
 }
 
-void Run() {
-    std::cout << "=== Running Windows Platform Tests ===" << std::endl;
-
-    test_guid_string_conversion();
-    test_window_title_extraction();
-    test_config_persistence_guid();
-    test_config_always_on_top_persistence();
-    test_window_always_on_top_behavior();
-    test_preset_management_system();
-    test_gui_style_application();
-    test_slider_precision_display();
-    test_slider_precision_regression();
-    test_latency_display_regression();
-    test_window_config_persistence();
-    test_single_source_of_truth_t300_defaults();  // NEW: v0.5.12
-    test_config_persistence_braking_group(); // NEW: v0.5.13
-    test_legacy_config_migration(); // NEW: v0.5.13
-    test_icon_presence(); // NEW: Icon check
-    test_game_connector_lifecycle(); // NEW: TDD for PR #16
-    test_game_connector_thread_safety(); // NEW: Thread safety TDD
-    test_game_connector_staleness(); // NEW: Watchdog verification
-
-    // Report results
-    std::cout << "\n----------------" << std::endl;
-    std::cout << "\n=== Windows Platform Test Summary ===\n";
-    std::cout << "Tests Passed: " << g_tests_passed << std::endl;
-    std::cout << "Tests Failed: " << g_tests_failed << std::endl;
-}
-
-} // namespace WindowsPlatformTests
+} // namespace FFBEngineTests

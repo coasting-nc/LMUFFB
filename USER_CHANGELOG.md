@@ -4,6 +4,19 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]February 7, 2026[/b][/size]
+[b]Version 0.7.17 - Test Suite Consolidation[/b]
+
+[b]New release[/b] (0.7.17): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Unified Testing Framework[/b]: Completed the migration of all internal diagnostic tests to a new automated registration system. This ensures that 100% of our physics and platform tests are executed every time we build the app, preventing "silent regressions" in complex FFB effects.
+[*][b]Cleaner Internal Codebase[/b]: Standardized the way we verify FFB integrity across Windows and Linux, removing redundant internal code and simplifying the development workflow.
+[/list]
+
+---
+
 [size=5][b]February 5, 2026[/b][/size]
 [b]Version 0.7.12 - Preset & Telemetry Versioning[/b]
 
