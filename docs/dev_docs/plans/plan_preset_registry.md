@@ -32,7 +32,7 @@ None. This is a pure refactoring of configuration management. Physics calculatio
 8.  **Update `src/GuiLayer.cpp`** identifying the specific areas (e.g., preset selection combo box and management buttons) to interface with `PresetRegistry::Get()`.
 9.  **Modify the `FFBEngine` constructor** (likely in `src/Config.h` due to circular dependencies) to initialize using the default preset retrieved from `PresetRegistry`.
 10. **Update existing tests** in `tests/test_issue_59.cpp` and `tests/test_preset_improvements.cpp` to use `PresetRegistry`.
-11. **Increment version** in `VERSION` and `src/Version.h` to `0.7.17`.
+11. **Increment version** in `VERSION` and `src/Version.h` to `0.7.19`.
 12. **Update `CHANGELOG_DEV.md`** describing the refactoring.
 13. **Verify the updates** to `VERSION`, `src/Version.h`, and `CHANGELOG_DEV.md` using `read_file`.
 14. **Run the full project test suite** using `cmake` to confirm that all existing and new tests pass after the refactoring.
@@ -62,7 +62,7 @@ None. This is a pure refactoring of configuration management. Physics calculatio
 - [ ] Modified: `src/Config.h`, `src/Config.cpp`, `src/GuiLayer.cpp`.
 - [ ] New test file: `tests/test_preset_registry.cpp`.
 - [ ] Updated existing tests in `tests/test_issue_59.cpp` and `tests/test_preset_improvements.cpp`.
-- [ ] Version bump to `0.7.17`.
+- [ ] Version bump to `0.7.19`.
 - [ ] Entry in `CHANGELOG_DEV.md`.
 - [ ] Implementation Notes (to be updated).
 

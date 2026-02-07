@@ -34,8 +34,8 @@ None. This is a configuration and UI improvement. Physics logic is unaffected.
     - Update `Config::AddUserPreset()`, `Config::DuplicatePreset()`, and `Config::ImportPreset()` to insert at the correct position.
 4. **Verify the modifications to `src/Config.cpp`** using `read_file` to ensure the insertion logic matches the design.
 5. **Update versioning and documentation**:
-    - Increment version in `VERSION` to `0.7.16`.
-    - Update `LMUFFB_VERSION` in `src/Version.h` to `"0.7.16"`.
+    - Increment version in `VERSION` to `0.7.18`.
+    - Update `LMUFFB_VERSION` in `src/Version.h` to `"0.7.18"`.
     - Add entry to `CHANGELOG_DEV.md` describing the changes.
 6. **Verify the updates to version files and changelog** using `read_file`.
 7. **Run the full test suite** using the project's build and test commands (e.g., `cmake -S . -B build -DBUILD_HEADLESS=ON && cmake --build build --config Release`) to ensure all tests pass and no regressions were introduced.
@@ -54,7 +54,7 @@ None. This is a configuration and UI improvement. Physics logic is unaffected.
 ## Deliverables
 - [x] Code changes in `Config.cpp`, `Config.h`, `GuiLayer.cpp`.
 - [x] Created `PresetRegistry.h` and `PresetRegistry.cpp`.
-- [x] Version bump in `VERSION`, `src/Version.h`.
+- [x] Version bump in `VERSION`, `src/Version.h` (to 0.7.18 and then 0.7.19 for refactor).
 - [x] Changelog entry in `CHANGELOG_DEV.md`.
 - [x] New test cases in `tests/test_issue_59.cpp` and `tests/test_preset_registry.cpp`.
 - [x] Updated existing test files to support new architecture.
