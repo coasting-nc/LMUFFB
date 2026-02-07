@@ -6,15 +6,13 @@
 #include "src/FFBEngine.h"
 #include "src/Config.h"
 #include "src/Version.h"
+#include "src/PresetRegistry.h"
 
 namespace FFBEngineTests {
 // Counters are now extern from test_ffb_common.h
 
 // ASSERT macros are reused or redefined if needed
 
-/**
- * Helper to check if a file contains a specific string.
- */
 bool FileContains(const std::string& filename, const std::string pattern) {
     std::ifstream file(filename);
     if (!file.is_open()) return false;
@@ -25,9 +23,6 @@ bool FileContains(const std::string& filename, const std::string pattern) {
     return false;
 }
 
-/**
- * Helper to get the line number of a pattern in a file (1-indexed).
- */
 int GetLineNumber(const std::string& filename, const std::string& pattern) {
     std::ifstream file(filename);
     if (!file.is_open()) return -1;
@@ -45,7 +40,6 @@ int GetLineNumber(const std::string& filename, const std::string& pattern) {
 // ----------------------------------------------------------------------------
 TEST_CASE(test_load_stops_at_presets, "Persistence") {
     std::cout << "Test 1: Load Stops At Presets Header..." << std::endl;
-    Config::presets.clear();
     
     std::string test_file = "test_isolation.ini";
     {
@@ -58,7 +52,6 @@ TEST_CASE(test_load_stops_at_presets, "Persistence") {
     FFBEngine engine;
     Config::Load(engine, test_file);
     
-    // In the buggy version, it would be 2.0
     ASSERT_NEAR(engine.m_gain, 0.5f, 0.001f);
     
     std::remove(test_file.c_str());
@@ -69,7 +62,6 @@ TEST_CASE(test_load_stops_at_presets, "Persistence") {
 // ----------------------------------------------------------------------------
 TEST_CASE(test_save_order, "Persistence") {
     std::cout << "Test 2: Save Follows Defined Order..." << std::endl;
-    Config::presets.clear();
     FFBEngine engine;
     Preset::ApplyDefaultsToEngine(engine);
     
@@ -101,7 +93,6 @@ TEST_CASE(test_save_order, "Persistence") {
 // ----------------------------------------------------------------------------
 TEST_CASE(test_legacy_keys, "Persistence") {
     std::cout << "Test 3: Load Supports Legacy Keys..." << std::endl;
-    Config::presets.clear();
     
     std::string test_file = "test_legacy.ini";
     {
@@ -124,7 +115,6 @@ TEST_CASE(test_legacy_keys, "Persistence") {
 // ----------------------------------------------------------------------------
 TEST_CASE(test_structure_comments, "Persistence") {
     std::cout << "Test 4: Structure Includes Comments..." << std::endl;
-    Config::presets.clear();
     FFBEngine engine;
     
     std::string test_file = "test_comments.ini";

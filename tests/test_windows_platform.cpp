@@ -12,6 +12,7 @@
 #include "../src/Config.h"
 #include "../src/GuiLayer.h"
 #include "../src/GameConnector.h"
+#include "../src/PresetRegistry.h"
 #include "imgui.h"
 
 #include "test_ffb_common.h"
@@ -166,7 +167,7 @@ TEST_CASE(test_preset_management_system, "Windows") {
     std::string test_file = "test_config_preset_temp.ini";
     
     // 2. Clear existing presets for a clean test
-    Config::presets.clear();
+    PresetRegistry::Get().Load("non_existent.ini");
     
     // 3. Setup a dummy engine with specific values
     FFBEngine engine;
@@ -175,13 +176,14 @@ TEST_CASE(test_preset_management_system, "Windows") {
     
     // 4. Add user preset (this will save to config.ini by default)
     // We need to temporarily override the save behavior
-    Config::AddUserPreset("TestPreset_Unique", engine);
+    PresetRegistry::Get().AddUserPreset("TestPreset_Unique", engine);
 
     // 5. Verify it was added to the vector
-    ASSERT_TRUE(!Config::presets.empty());
+    const auto& presets = PresetRegistry::Get().GetPresets();
+    ASSERT_TRUE(!presets.empty());
     
     bool found = false;
-    for (const auto& p : Config::presets) {
+    for (const auto& p : presets) {
         if (p.name == "TestPreset_Unique") {
             found = true;
             // 6. Verify values were captured
@@ -653,17 +655,18 @@ TEST_CASE(test_single_source_of_truth_t300_defaults, "Windows") {
     // Test 3: Verify "Default" preset from LoadPresets() matches
     { 
         std::cout << "  Test 3: Default preset consistency..." << std::endl;
-        Config::LoadPresets();
+        PresetRegistry::Get().Load(Config::m_config_path);
         
         // Verify we have presets
-        ASSERT_TRUE(!Config::presets.empty());
+        const auto& presets = PresetRegistry::Get().GetPresets();
+        ASSERT_TRUE(!presets.empty());
         
         // First preset should be "Default"
-        ASSERT_TRUE(Config::presets[0].name == "Default");
-        ASSERT_TRUE(Config::presets[0].is_builtin == true);
+        ASSERT_TRUE(presets[0].name == "Default");
+        ASSERT_TRUE(presets[0].is_builtin == true);
         
         // Verify it matches the reference
-        const Preset& default_preset = Config::presets[0];
+        const Preset& default_preset = presets[0];
         ASSERT_TRUE(default_preset.understeer == reference_defaults.understeer);
         ASSERT_TRUE(default_preset.sop == reference_defaults.sop);
         ASSERT_TRUE(default_preset.oversteer_boost == reference_defaults.oversteer_boost);
@@ -680,12 +683,13 @@ TEST_CASE(test_single_source_of_truth_t300_defaults, "Windows") {
         // ⚠️ IMPORTANT: T300 preset index depends on Config.cpp LoadPresets() order!
         // Current order: 0=Default, 1=T300, 2=GT3, 3=LMPx/HY, 4=GM, 5=GM+Yaw, 6+=Test presets
         // If presets are added/removed BEFORE T300 in Config.cpp, update this index!
-        ASSERT_TRUE(Config::presets.size() > 1);
-        ASSERT_TRUE(Config::presets[1].name == "T300");
+        const auto& presets = PresetRegistry::Get().GetPresets();
+        ASSERT_TRUE(presets.size() > 1);
+        ASSERT_TRUE(presets[1].name == "T300");
         
         // Verify specialized values for T300
-        const Preset& default_preset = Config::presets[0];
-        const Preset& t300_preset = Config::presets[1];
+        const Preset& default_preset = presets[0];
+        const Preset& t300_preset = presets[1];
         
         // Optimized values from v0.6.30 changelog
         ASSERT_TRUE(t300_preset.understeer == 0.5f);
@@ -710,7 +714,7 @@ TEST_CASE(test_single_source_of_truth_t300_defaults, "Windows") {
         Preset::ApplyDefaultsToEngine(engine1);
         
         // Initialize engine2 via preset application
-        Config::ApplyPreset(0, engine2); // Apply "Default"
+        PresetRegistry::Get().ApplyPreset(0, engine2); // Apply "Default"
         
         // Verify they're identical
         ASSERT_TRUE(engine1.m_understeer_effect == engine2.m_understeer_effect);

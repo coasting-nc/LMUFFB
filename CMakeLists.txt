@@ -58,6 +58,7 @@ add_executable(LMUFFB
                src/Config.cpp src/Config.h
                src/DirectInputFFB.cpp src/DirectInputFFB.h
                src/GameConnector.cpp src/GameConnector.h
+               src/PresetRegistry.cpp src/PresetRegistry.h
                src/DynamicVJoy.h 
                src/FFBEngine.h 
                src/res.rc

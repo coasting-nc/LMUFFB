@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.19] - 2026-02-06
+### Refactored
+- **Preset Registry Class**: Introduced a dedicated `PresetRegistry` class to centralize preset management, ordering logic, and lifecycle.
+- **Improved Robustness**: Centralized preset insertion and ordering [Default, User, Built-ins] into the registry, reducing code duplication in `Config` and `GuiLayer`.
+
+## [0.7.18] - 2026-02-06
+### Changed
+- **Preset Management**: User presets are now displayed at the top of the dropdown list (immediately after the "Default" preset) for easier access.
+### Fixed
+- **Preset Insertion**: New, duplicated, or imported presets now correctly follow the ordering logic (placed in the user section at the top).
+- **Save Behavior Verification**: Confirmed that "Save Current Config" updates the selected user preset, fulfilling the requirement from issue #59.
+
 ## [0.7.17] - 2026-02-07
 ### Changed
 - **Test Suite Refactoring (Completion)**:
