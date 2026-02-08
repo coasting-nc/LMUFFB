@@ -46,6 +46,15 @@ static const int MIN_WINDOW_HEIGHT = 600;        // Minimum window height to kee
 // v0.5.7 Latency Warning Threshold
 static const int LATENCY_WARNING_THRESHOLD_MS = 15; // Green if < 15ms, Red if >= 15ms
 
+// v0.7.18 Status Message System
+static char g_status_msg[64] = "";
+static float g_status_timer = 0.0f;
+
+static void SetStatus(const char* msg) {
+    strncpy_s(g_status_msg, msg, _TRUNCATE);
+    g_status_timer = 3.0f;
+}
+
 // v0.6.5 PrintWindow flag (define if not available in SDK)
 #ifndef PW_RENDERFULLCONTENT
 #define PW_RENDERFULLCONTENT 0x00000002
@@ -723,6 +732,14 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
     // Header Text
     ImGui::TextColored(ImVec4(1, 1, 1, 0.4f), "lmuFFB v%s", LMUFFB_VERSION);
+
+    // Status Message Display
+    if (g_status_timer > 0.0f) {
+        g_status_timer -= ImGui::GetIO().DeltaTime;
+        ImGui::SameLine();
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, g_status_timer > 1.0f ? 1.0f : g_status_timer), "  %s", g_status_msg);
+    }
+
     ImGui::Separator();
 
     // Connection Status
@@ -781,11 +798,14 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         devices = DirectInputFFB::Get().EnumerateDevices();
         selected_device_idx = -1;
     }
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Refresh the list of available FFB devices.");
+
     ImGui::SameLine();
     if (ImGui::Button("Unbind")) {
         DirectInputFFB::Get().ReleaseDevice();
         selected_device_idx = -1;
     }
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Release the current FFB device.");
 
     // Acquisition Mode & Troubleshooting
     if (DirectInputFFB::Get().IsActive()) {
@@ -884,7 +904,9 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         localtime_s(&tstruct, &now);
         strftime(buf, sizeof(buf), "screenshot_%Y-%m-%d_%H-%M-%S.png", &tstruct);
         SaveCompositeScreenshot(buf);
+        SetStatus("Screenshot Saved!");
     }
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Capture both the GUI and console windows side-by-side.");
     
     ImGui::Separator();
 
@@ -994,21 +1016,30 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                     }
                 }
                 new_preset_name[0] = '\0';
+                SetStatus("Preset Created!");
             }
         }
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Create a new user preset with the name entered above.");
         
         if (ImGui::Button("Save Current Config")) {
             if (selected_preset >= 0 && selected_preset < (int)Config::presets.size() && !Config::presets[selected_preset].is_builtin) {
                 Config::AddUserPreset(Config::presets[selected_preset].name, engine);
+                SetStatus("Preset Saved!");
             } else {
                 Config::Save(engine);
+                SetStatus("Config Saved!");
             }
         }
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Save current settings to the active user preset or main config.");
+
         ImGui::SameLine();
         if (ImGui::Button("Reset Defaults")) {
             Config::ApplyPreset(0, engine);
             selected_preset = 0;
+            SetStatus("Defaults Applied");
         }
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Reset all settings to the factory default preset.");
+
         ImGui::SameLine();
         if (ImGui::Button("Duplicate")) {
             if (selected_preset >= 0) {
@@ -1020,15 +1051,35 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                         break;
                     }
                 }
+                SetStatus("Preset Duplicated");
             }
         }
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Create a copy of the currently selected preset.");
         ImGui::SameLine();
         bool can_delete = (selected_preset >= 0 && selected_preset < (int)Config::presets.size() && !Config::presets[selected_preset].is_builtin);
         if (!can_delete) ImGui::BeginDisabled();
         if (ImGui::Button("Delete")) {
-            Config::DeletePreset(selected_preset, engine);
-            selected_preset = 0;
-            Config::ApplyPreset(0, engine);
+            ImGui::OpenPopup("Delete Preset?");
+        }
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Permanently remove this user preset.");
+
+        if (ImGui::BeginPopupModal("Delete Preset?", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::Text("Are you sure you want to delete '%s'?\nThis action cannot be undone.", Config::presets[selected_preset].name.c_str());
+            ImGui::Separator();
+
+            if (ImGui::Button("OK", ImVec2(120, 0))) {
+                Config::DeletePreset(selected_preset, engine);
+                selected_preset = 0;
+                Config::ApplyPreset(0, engine);
+                SetStatus("Preset Deleted");
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SetItemDefaultFocus();
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
         }
         if (!can_delete) ImGui::EndDisabled();
 
@@ -1039,9 +1090,12 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                 if (Config::ImportPreset(path, engine)) {
                     // Success! The new preset is at the end of the list
                     selected_preset = (int)Config::presets.size() - 1;
+                    SetStatus("Preset Imported!");
                 }
             }
         }
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Load a preset from an external .ini file.");
+
         ImGui::SameLine();
         if (ImGui::Button("Export Selected...")) {
             if (selected_preset >= 0 && selected_preset < Config::presets.size()) {
@@ -1049,9 +1103,11 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                 std::string defaultName = Config::presets[selected_preset].name + ".ini";
                 if (SavePresetFileDialog(g_hwnd, path, defaultName)) {
                     Config::ExportPreset(selected_preset, path);
+                    SetStatus("Preset Exported!");
                 }
             }
         }
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Save the selected preset to an external .ini file for sharing.");
 
         ImGui::TreePop();
     }
