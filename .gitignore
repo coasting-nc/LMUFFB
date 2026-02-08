@@ -43,3 +43,4 @@ test_val.ini
 tools/lmuffb_log_analyzer/tests/__pycache__/*
 tools/lmuffb_log_analyzer/__pycache__/* 
 tools/lmuffb_log_analyzer/analyzers/__pycache__/*
+tests/__pycache__/test_create_context_script.cpython-311.pyc
