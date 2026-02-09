@@ -1,4 +1,4 @@
-# Implementation Plan - Comprehensive Unit Test Strategy (Slope Detection v0.7.17)
+# Implementation Plan - Comprehensive Unit Test Strategy (Slope Detection v0.7.20)
 
 ## Context
 Following the analysis of slope detection instability (Task `slope_detection_v0.7.16_analysis`), we need to harden the codebase against instability with a comprehensive suite of unit tests. These tests will prevent regression by verifying correct behavior under boundary conditions, noise, and singularities.
