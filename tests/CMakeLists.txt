@@ -33,6 +33,7 @@ set(TEST_SOURCES
     test_versioned_presets.cpp
     test_preset_improvements.cpp
     test_ffb_stability.cpp
+    test_ffb_reserved_features.cpp
     ../src/Config.cpp
 )
 
