@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.18] - 2026-02-08
+### Added
+- **Linux Port (GLFW + OpenGL)**:
+  - **Cross-Platform GUI**: Refactored the GUI layer to support both Windows (DirectX 11) and Linux (GLFW + OpenGL 3) backends.
+  - **Hardware Mocking**: Implemented Linux-specific mocks for DirectInput FFB, Game Connector (Shared Memory), and vJoy, enabling the application to run and be tested on Linux environments.
+  - **Shared Memory Compatibility**: Updated shared memory interface wrappers and vendor headers to compile on Linux by guarding Windows-specific headers and providing dummy typedefs.
+  - **Build System**: Enhanced `CMakeLists.txt` with conditional logic for platform-specific dependencies and ImGui backends.
+  - **Headless Mode Support**: Improved headless mode robustness by providing stubs for all GUI-related platform calls.
+
 ## [0.7.17] - 2026-02-07
 ### Changed
 - **Test Suite Refactoring (Completion)**:

@@ -8,6 +8,7 @@
 #include <iostream>
 #include <chrono>
 #include <array>
+#include <cstring>
 #include "lmu_sm_interface/InternalsPluginWrapper.h"
 #include "AsyncLogger.h"
 
@@ -969,10 +970,17 @@ public:
         // Update Context strings (for UI/Logging)
         // Only update if first char differs to avoid redundant copies
         if (m_vehicle_name[0] != data->mVehicleName[0] || m_vehicle_name[10] != data->mVehicleName[10]) {
+#ifdef _WIN32
              strncpy_s(m_vehicle_name, data->mVehicleName, 63);
              m_vehicle_name[63] = '\0';
              strncpy_s(m_track_name, data->mTrackName, 63);
              m_track_name[63] = '\0';
+#else
+             strncpy(m_vehicle_name, data->mVehicleName, 63);
+             m_vehicle_name[63] = '\0';
+             strncpy(m_track_name, data->mTrackName, 63);
+             m_track_name[63] = '\0';
+#endif
         }
 
         // --- 2. SIGNAL CONDITIONING (STATE UPDATES) ---

@@ -18,9 +18,8 @@ cmake-build-*/
 *.a
 *.lib
 
-# imgui
-vendor/imgui/**
-!vendor/imgui/README.md
+# vendor
+vendor/
 
 
 python_prototype/LMUFFB/__pycache__/ffb_engine.cpython-312.pyc

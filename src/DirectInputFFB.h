@@ -14,6 +14,7 @@
 #pragma comment(lib, "dxguid.lib")
 #else
 // Mock types for non-Windows build/test
+typedef unsigned long DWORD;
 typedef void* HWND;
 typedef void* LPDIRECTINPUT8;
 typedef void* LPDIRECTINPUTDEVICE8;

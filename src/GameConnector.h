@@ -3,7 +3,22 @@
 
 #include "lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include "lmu_sm_interface/SafeSharedMemoryLock.h"
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include <chrono>
+#include <optional>
+// Mock types for Linux
+typedef void* HANDLE;
+typedef unsigned long DWORD;
+typedef void* HWND;
+#ifndef NULL
+#define NULL 0
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
+#endif
 #include <mutex>
 #include <atomic>
 

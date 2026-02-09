@@ -45,10 +45,17 @@ std::string DirectInputFFB::GetActiveWindowTitle() {
 // NEW: Helper Implementations for GUID
 std::string DirectInputFFB::GuidToString(const GUID& guid) {
     char buf[64];
+#ifdef _WIN32
     sprintf_s(buf, "{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}",
         guid.Data1, guid.Data2, guid.Data3,
         guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
         guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+#else
+    snprintf(buf, sizeof(buf), "{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}",
+        guid.Data1, guid.Data2, guid.Data3,
+        guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
+        guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+#endif
     return std::string(buf);
 }
 
@@ -58,8 +65,13 @@ GUID DirectInputFFB::StringToGuid(const std::string& str) {
     unsigned long p0;
     unsigned short p1, p2;
     unsigned int p3, p4, p5, p6, p7, p8, p9, p10;
+#ifdef _WIN32
     int n = sscanf_s(str.c_str(), "{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}",
         &p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8, &p9, &p10);
+#else
+    int n = sscanf(str.c_str(), "{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+        &p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8, &p9, &p10);
+#endif
     if (n == 11) {
         guid.Data1 = p0;
         guid.Data2 = (unsigned short)p1;
@@ -74,6 +86,7 @@ GUID DirectInputFFB::StringToGuid(const std::string& str) {
 
 
 
+#ifdef _WIN32
 /**
  * @brief Returns the description for a DirectInput return code.
  * 
@@ -176,6 +189,7 @@ const char* GetDirectInputErrorString(HRESULT hr) {
             return "Unknown DirectInput Error";
     }
 }
+#endif
 
 DirectInputFFB::~DirectInputFFB() {
     Shutdown();
@@ -369,17 +383,6 @@ void DirectInputFFB::UpdateForce(double normalizedForce) {
 
     // Sanity Check: If 0.0, stop effect to prevent residual hum
     if (std::abs(normalizedForce) < 0.00001) normalizedForce = 0.0;
-
-    // --- DECLUTTERING: REMOVED CLIPPING WARNING ---
-    /*
-    if (std::abs(normalizedForce) > 0.99) {
-        static int clip_log = 0;
-        if (clip_log++ % 400 == 0) { 
-            std::cout << "[DI] WARNING: FFB Output Saturated..." << std::endl;
-        }
-    }
-    */
-    // ----------------------------------------------
 
     // Clamp
     normalizedForce = (std::max)(-1.0, (std::min)(1.0, normalizedForce));

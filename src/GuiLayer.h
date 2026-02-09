@@ -2,17 +2,15 @@
 #define GUILAYER_H
 
 #include "FFBEngine.h"
-
-// Forward declaration to avoid pulling in ImGui headers here if not needed
-struct GuiContext; 
+#include <string>
 
 class GuiLayer {
 public:
     static bool Init();
     static void Shutdown(FFBEngine& engine);
     
-    static void* GetWindowHandle(); // Returns HWND
-    static void SetupGUIStyle();   // Setup professional "Deep Dark" theme
+    static void* GetWindowHandle(); // Returns HWND on Windows, GLFWwindow* on Linux
+    static void SetupGUIStyle();   // Setup professional theme
 
     // Returns true if the GUI is active/focused (affects lazy rendering)
     static bool Render(FFBEngine& engine);
@@ -20,10 +18,14 @@ public:
 private:
     static void DrawTuningWindow(FFBEngine& engine);
     static void DrawDebugWindow(FFBEngine& engine);
-    
-    // UI State (Persistent state managed via Config::show_graphs)
-    // Note: Removed redundant GuiLayer::m_show_debug_window static variable in v0.5.5
-    // to consolidate state management in Config class for better persistence across sessions
 };
+
+// Platform helper functions (implemented in GuiLayer_Win32.cpp and GuiLayer_Linux.cpp)
+void ResizeWindowPlatform(int x, int y, int w, int h);
+void SaveCurrentWindowGeometryPlatform(bool is_graph_mode);
+void SetWindowAlwaysOnTopPlatform(bool enabled);
+bool OpenPresetFileDialogPlatform(std::string& outPath);
+bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName);
+void SaveCompositeScreenshotPlatform(const char* filename);
 
 #endif // GUILAYER_H
