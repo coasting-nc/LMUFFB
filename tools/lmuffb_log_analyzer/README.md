@@ -62,3 +62,28 @@ Runs `info`, `analyze`, `plots`, and `report` for all `.csv` files in the specif
 # From the project root
 python -m pytest tools/lmuffb_log_analyzer/tests
 ```
+
+## References
+
+Documentation about the log analyzer:
+
+* tools\lmuffb_log_analyzer\README.md
+* docs\dev_docs\implementation_plans\completed\plan_log_analyzer.md
+* docs\dev_docs\implementation_plans\completed\plan_telemetry_logger.md
+* docs\diagnostics\how_to_use_telemetry_logging.md
+* docs\diagnostics\slope_detection_diagnostic_drive.md
+
+Documentation about the slope detection:
+
+* docs\Slope_Detection_Guide.md
+* docs\dev_docs\slope_detection_implementation_plan.md
+* docs\dev_docs\slope_detection_implementation_plan2.md
+* docs\dev_docs\github_issues\issue_25_Implement_Slope_Detection_logic.md
+* docs\dev_docs\implementation plan reviews\plan_review_slope_detection.md
+* docs\dev_docs\implementation_plans\plan_slope_minmax_thresholds.md
+* docs\dev_docs\implementation_plans\completed\plan_slope_detection_fixes_v0.7.1.md
+* docs\dev_docs\implementation_plans\completed\plan_slope_detection_fixes_v0.7.3.md
+* docs\dev_docs\implementation_plans\completed\plan_slope_detection.md
+* docs\dev_docs\investigations\slope_detection_issues_post_v071_investigation.md
+* docs\dev_docs\investigations\slope_detection_issues_v0.7.0.md
+* docs\dev_docs\research\savitzky-golay coefficients deep research report.md
