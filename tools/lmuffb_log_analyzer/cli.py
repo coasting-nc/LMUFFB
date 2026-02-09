@@ -155,5 +155,41 @@ def report(logfile, output):
     except Exception as e:
         console.print(f"[bold red]Error generating report:[/bold red] {e}")
 
+@cli.command()
+@click.argument('logdir', type=click.Path(exists=True, file_okay=False, dir_okay=True))
+@click.option('--output', '-o', default='analyzer_results', help='Output directory for batch results')
+@click.pass_context
+def batch(ctx, logdir, output):
+    """Run all analysis commands for all log files in a directory."""
+    log_path = Path(logdir)
+    output_path = Path(output)
+    output_path.mkdir(parents=True, exist_ok=True)
+    
+    csv_files = sorted(list(log_path.glob("*.csv")))
+    if not csv_files:
+        console.print(f"[yellow]No .csv files found in {logdir}[/yellow]")
+        return
+        
+    console.print(f"[bold green]Found {len(csv_files)} log files. Starting batch processing...[/bold green]")
+    
+    for logfile in csv_files:
+        console.print(f"\n[bold blue]Processing: {logfile.name}[/bold blue]")
+        
+        # Run individual commands
+        # 1. Info
+        ctx.invoke(info, logfile=str(logfile))
+        
+        # 2. Analyze
+        ctx.invoke(analyze, logfile=str(logfile), verbose=False)
+        
+        # 3. Plots (save to output dir)
+        ctx.invoke(plots, logfile=str(logfile), output=str(output_path), plot_all=True)
+        
+        # 4. Report (save to output dir)
+        report_file = output_path / f"{logfile.stem}_report.txt"
+        ctx.invoke(report, logfile=str(logfile), output=str(report_file))
+
+    console.print(f"\n[bold green]Batch processing complete! Results saved to: {output}[/bold green]")
+
 if __name__ == '__main__':
     cli()
