@@ -1103,6 +1103,10 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             "  → First INCREASE 'Optimal Slip Angle' setting in the Physics section.\n"
             "  → Then reduce this slider if still too sensitive.\n\n"
             "Technical: Force = Base * (1.0 - GripLoss * Effect)");
+
+        BoolSetting("  Apply to SoP", &engine.m_understeer_affects_sop,
+            "If checked, the Understeer Effect also reduces Seat of Pants forces.\n"
+            "Use this if strong SoP forces are masking the feeling of grip loss.");
         
         const char* base_modes[] = { "Native (Steering Shaft Torque)", "Synthetic (Constant)", "Muted (Off)" };
         IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, sizeof(base_modes)/sizeof(base_modes[0]), "Debug tool to isolate effects.\nNative: Normal Operation.\nSynthetic: Constant force to test direction.\nMuted: Disables base physics (good for tuning vibrations).");
@@ -1412,6 +1416,16 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         BoolSetting("Road Details", &engine.m_road_texture_enabled, "Vibration derived from high-frequency suspension movement.\nFeels road surface, cracks, and bumps.");
         if (engine.m_road_texture_enabled) {
             FloatSetting("  Road Gain", &engine.m_road_texture_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_road_texture_gain, FFBEngine::BASE_NM_ROAD_TEXTURE), "Intensity of road details.");
+
+            // NEW: Fallback Tuning (v0.7.18)
+            if (ImGui::TreeNode("  Advanced: Encrypted Content Fallback")) {
+                ImGui::NextColumn(); ImGui::NextColumn();
+                ImGui::TextWrapped("Adjusts road texture for cars with blocked telemetry (DLC).");
+                ImGui::NextColumn(); ImGui::NextColumn();
+                FloatSetting("    Fallback Sensitivity", &engine.m_road_fallback_scale, 0.01f, 0.20f, "%.2f",
+                    "Scales vertical G-force to road noise.\nIncrease if road feel is too weak on DLC cars.");
+                ImGui::TreePop();
+            }
         }
 
         BoolSetting("Spin Vibration", &engine.m_spin_enabled, "Vibration when wheels lose traction under acceleration (Wheel Spin).");

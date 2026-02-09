@@ -314,9 +314,7 @@ public:
     float m_speed_gate_lower = 1.0f; 
     float m_speed_gate_upper = 5.0f; 
 
-    // v0.6.23: Additional Advanced Physics (Reserved for future use)
-    // These settings are declared and persist in config/presets but are not yet
-    // implemented in the calculate_force() logic. They will be activated in a future release.
+    // v0.7.18: Additional Advanced Physics
     float m_road_fallback_scale = 0.05f;
     bool m_understeer_affects_sop = false;
     
@@ -1434,6 +1432,13 @@ private:
         m_sop_lat_g_smoothed += alpha * (lat_g - m_sop_lat_g_smoothed);
         
         double sop_base = m_sop_lat_g_smoothed * m_sop_effect * (double)m_sop_scale * ctx.decoupling_scale;
+
+        // v0.7.18: Optional Understeer modulation of SoP
+        // If enabled, grip loss reduces SoP forces too, preventing them from masking the understeer feel.
+        if (m_understeer_affects_sop) {
+            sop_base *= ctx.grip_factor;
+        }
+
         ctx.sop_unboosted_force = sop_base; // Store unboosted for snapshot
         
         // Rear Grip Estimation (v0.4.5 FIX)
@@ -1674,7 +1679,9 @@ private:
             // m_prev_vert_accel is now updated unconditionally in STATE UPDATES section
             double vert_accel = data->mLocalAccel.y;
             double delta_accel = vert_accel - m_prev_vert_accel;
-            road_noise_val = delta_accel * 0.05 * 50.0;
+
+            // v0.7.18: Use configurable fallback sensitivity
+            road_noise_val = delta_accel * (double)m_road_fallback_scale * 50.0;
         }
         
         ctx.road_noise = road_noise_val * m_road_texture_gain * ctx.decoupling_scale * ctx.texture_load_factor;

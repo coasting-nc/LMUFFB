@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.18] - 2026-02-08
+### Added
+- **Implementation of Reserved Physics Features**:
+  - **Understeer Affects SoP**: Added logic to modulate Seat of Pants (SoP) lateral force based on grip loss. When enabled, the SoP force will decrease as front tires lose grip, preventing it from masking the understeer sensation.
+  - **Configurable Road Fallback Scaling**: Replaced the hardcoded road noise fallback sensitivity with a user-adjustable parameter (`road_fallback_scale`). This allows fine-tuning road details for cars with blocked suspension telemetry (DLC/Encrypted content).
+- **GUI Controls for Advanced Physics**:
+  - Added "Apply to SoP" toggle in the Understeer section.
+  - Added "Fallback Sensitivity" slider in the Road Details section for tuning encrypted content behavior.
+### Testing
+- **New Unit Test Suite**: `tests/test_ffb_reserved_features.cpp`
+  - `test_understeer_affects_sop`: Verifies SoP force reduction during grip loss.
+  - `test_road_fallback_scale`: Validates proportional scaling of fallback road noise.
+
 ## [0.7.17] - 2026-02-07
 ### Changed
 - **Test Suite Refactoring (Completion)**:
