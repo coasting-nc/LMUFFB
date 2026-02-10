@@ -106,13 +106,29 @@ void FFBThread() {
                 if (idx < 104) {
                     // Get pointer to specific car data
                     TelemInfoV01* pPlayerTelemetry = &g_localData.telemetry.telemInfo[idx];
-                    
-                    {
-                        // PROTECT SETTINGS: Use mutex because GUI modifies engine parameters
-                        std::lock_guard<std::mutex> lock(g_engine_mutex);
-                        force = g_engine.calculate_force(pPlayerTelemetry);
+
+                    // --- SAFETY CHECK (Issue #79) ---
+                    // Mute FFB if:
+                    // 1. Player is no longer in control (AI took over)
+                    // 2. Player has finished the session (FinishStatus != 0)
+                    // This prevents "FFB Jolts" when crossing the finish line or exiting.
+                    // We assume player is in control if scoring data for their slot is not yet available.
+                    bool is_player_controlled = true;
+                    bool is_not_finished = true;
+
+                    if (idx < g_localData.scoring.scoringInfo.mNumVehicles) {
+                        is_player_controlled = (g_localData.scoring.vehScoringInfo[idx].mControl == 0);
+                        is_not_finished = (g_localData.scoring.vehScoringInfo[idx].mFinishStatus == 0);
                     }
-                    should_output = true;
+
+                    if (is_player_controlled && is_not_finished) {
+                        {
+                            // PROTECT SETTINGS: Use mutex because GUI modifies engine parameters
+                            std::lock_guard<std::mutex> lock(g_engine_mutex);
+                            force = g_engine.calculate_force(pPlayerTelemetry);
+                        }
+                        should_output = true;
+                    }
                 }
             }
             

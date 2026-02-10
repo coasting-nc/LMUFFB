@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.22] - 2026-02-10
+### Fixed
+- **FFB Mute on Session End (Safety Fix)**: Implemented mandatory FFB muting when the player is no longer in control or the session has finished.
+  - **Problem**: Users experienced violent steering jolts after crossing the finish line as the game engine took control (AI) while sending extreme telemetry values.
+  - **Solution**: Added logic to `src/main.cpp` to check `mControl` and `mFinishStatus` from the shared memory scoring data. FFB is now zeroed out if `mControl != 0` (AI/Remote/Replay) or `mFinishStatus != 0` (Finished/DNF/DQ).
+  - **Reliability**: Added array bounds checking for vehicle index and default fallback logic ensuring FFB remains active if scoring data is momentarily unavailable during session transitions (Issue #79).
+### Testing
+- **New Safety Test**: Added `tests/test_issue_79.cpp` to verify FFB muting logic across multiple scenarios (AI takeover, race finish, DNF, out-of-bounds safety).
+- **Verification**: All 788 tests passing.
+
 ## [0.7.21] - 2026-02-10
 ### Changed
 - **Slope Detection Refinement (Full v0.7.17 Plan Compliance)**:
