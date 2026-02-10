@@ -319,7 +319,6 @@ void GuiLayer::Shutdown(FFBEngine& engine) {
 }
 bool GuiLayer::Render(FFBEngine& engine) { return false; }
 void* GuiLayer::GetWindowHandle() { return nullptr; }
-void GuiLayer::SetupGUIStyle() {}
 
 void ResizeWindowPlatform(int x, int y, int w, int h) {}
 void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) {}

@@ -11,6 +11,7 @@ TEST_CASE(test_gui_decorator_execution, "GUI") {
     ImGuiContext* ctx = ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr; // Disable imgui.ini during tests
+    io.DisplaySize = ImVec2(1920, 1080); // Set display size to avoid assertion
     
     // Mock a font to avoid assertion in some ImGui versions
     unsigned char* pixels;

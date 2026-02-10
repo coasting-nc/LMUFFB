@@ -7,7 +7,7 @@
 #include <mutex>
 #include <chrono>
 
-#ifdef ENABLE_IMGUI
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -148,7 +148,7 @@ bool GuiLayer::Render(FFBEngine& engine) {
 }
 
 #else
-// Stub Implementation for Headless Builds
+// Stub Implementation for Headless Builds (or if IMGUI disabled)
 bool GuiLayer::Init() {
     std::cout << "[GUI] Disabled (Headless Mode)" << std::endl;
     return true;
@@ -158,7 +158,6 @@ void GuiLayer::Shutdown(FFBEngine& engine) {
 }
 bool GuiLayer::Render(FFBEngine& engine) { return false; }
 void* GuiLayer::GetWindowHandle() { return nullptr; }
-void GuiLayer::SetupGUIStyle() {}
 
 void ResizeWindowPlatform(int x, int y, int w, int h) {}
 void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) {}

@@ -3,49 +3,53 @@ project(LMUFFB_CPP)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# ImGui Detection
+# ImGui Core Detection (Always enabled for testing)
 set(IMGUI_DIR "vendor/imgui")
+if(EXISTS "${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui.cpp")
+    message(STATUS "ImGui Core found.")
+    add_definitions(-DENABLE_IMGUI)
+
+    set(IMGUI_CORE_SOURCES
+        ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui.cpp
+        ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui_demo.cpp
+        ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui_draw.cpp
+        ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui_tables.cpp
+        ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui_widgets.cpp
+    )
+    include_directories(${IMGUI_DIR})
+    include_directories(${IMGUI_DIR}/backends)
+endif()
+
+# Platform specific Backends
 option(BUILD_HEADLESS "Build without GUI support" OFF)
+if(BUILD_HEADLESS)
+    add_definitions(-DHEADLESS_GUI)
+endif()
+set(IMGUI_BACKEND_SOURCES "")
 
-if(NOT BUILD_HEADLESS)
-    if(EXISTS "${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui.cpp")
-        message(STATUS "ImGui found. Enabling GUI support.")
-        add_definitions(-DENABLE_IMGUI)
+if(NOT BUILD_HEADLESS AND IMGUI_CORE_SOURCES)
+    if(WIN32)
+        list(APPEND IMGUI_BACKEND_SOURCES
+            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/backends/imgui_impl_win32.cpp
+            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/backends/imgui_impl_dx11.cpp
+        )
+        link_libraries(d3d11 d3dcompiler dxguid)
+        add_definitions(-DUNICODE -D_UNICODE -DNOMINMAX)
+    else()
+        # Linux / GLFW + OpenGL
+        find_package(glfw3 REQUIRED)
+        find_package(OpenGL REQUIRED)
 
-        set(IMGUI_SOURCES
-            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui.cpp
-            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui_demo.cpp
-            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui_draw.cpp
-            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui_tables.cpp
-            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/imgui_widgets.cpp
+        list(APPEND IMGUI_BACKEND_SOURCES
+            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+            ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
         )
 
-        if(WIN32)
-            list(APPEND IMGUI_SOURCES
-                ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/backends/imgui_impl_win32.cpp
-                ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/backends/imgui_impl_dx11.cpp
-            )
-            link_libraries(d3d11 d3dcompiler dxguid)
-            add_definitions(-DUNICODE -D_UNICODE -DNOMINMAX)
-        else()
-            # Linux / GLFW + OpenGL
-            find_package(glfw3 REQUIRED)
-            find_package(OpenGL REQUIRED)
-
-            list(APPEND IMGUI_SOURCES
-                ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
-                ${CMAKE_SOURCE_DIR}/${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
-            )
-
-            include_directories(${OPENGL_INCLUDE_DIR})
-        endif()
-
-        include_directories(${IMGUI_DIR})
-        include_directories(${IMGUI_DIR}/backends)
-    else()
-        message(FATAL_ERROR "ImGui not found in vendor/imgui. To build headless, use -DBUILD_HEADLESS=ON.")
+        include_directories(${OPENGL_INCLUDE_DIR})
     endif()
 endif()
+
+set(IMGUI_SOURCES ${IMGUI_CORE_SOURCES} ${IMGUI_BACKEND_SOURCES})
 
 include_directories(src)
 
