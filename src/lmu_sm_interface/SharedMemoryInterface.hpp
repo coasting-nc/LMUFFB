@@ -69,8 +69,10 @@ int main(int argc, char* argv[])
 
 */
 
-#ifndef MAX_PATH
-#define MAX_PATH 260
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include "LinuxMock.h"
 #endif
 
 #define LMU_SHARED_MEMORY_FILE "LMU_Data"
@@ -168,16 +170,16 @@ private:
     SharedMemoryLock() = default;
     bool Init() {
 #ifdef _WIN32
-        mMapHandle = CreateFileMappingA((HANDLE)(UINT_PTR)-1, NULL, 0x04, 0, (DWORD)sizeof(LockData), "LMU_SharedMemoryLockData"); // PAGE_READWRITE
+        mMapHandle = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, (DWORD)sizeof(LockData), "LMU_SharedMemoryLockData");
         if (!mMapHandle) {
             return false;
         }
-        mDataPtr = (LockData*)MapViewOfFile(mMapHandle, 0xF001F, 0, 0, sizeof(LockData)); // FILE_MAP_ALL_ACCESS
+        mDataPtr = (LockData*)MapViewOfFile(mMapHandle, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(LockData));
         if (!mDataPtr) {
             CloseHandle(mMapHandle);
             return false;
         }
-        if (GetLastError() != 183) { // ERROR_ALREADY_EXISTS
+        if (GetLastError() != ERROR_ALREADY_EXISTS) {
             Reset();
         }
         mWaitEventHandle = CreateEventA(NULL, FALSE, FALSE, "LMU_SharedMemoryLockEvent");

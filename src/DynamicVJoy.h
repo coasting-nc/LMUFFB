@@ -4,21 +4,10 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
+#include "lmu_sm_interface/LinuxMock.h"
 // Mock types for Linux
-typedef int BOOL;
-typedef unsigned int UINT;
-typedef long LONG;
-typedef short SHORT;
-typedef void VOID;
-typedef void* PVOID;
 typedef void* HMODULE;
 #define WINAPI
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
 #endif
 #include <iostream>
 

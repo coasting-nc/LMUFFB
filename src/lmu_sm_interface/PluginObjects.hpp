@@ -17,6 +17,9 @@
 #ifndef _PLUGIN_OBJECTS_HPP_
 #define _PLUGIN_OBJECTS_HPP_
 
+#ifndef _WIN32
+#include "LinuxMock.h"
+#endif
 
 // rF currently uses 4-byte packing ... whatever the current packing is will
 // be restored at the end of this include with another #pragma.

@@ -18,6 +18,8 @@
 #include <cmath>                 // for sqrt()
 #ifdef _WIN32
 #include <windows.h>             // for HWND
+#else
+#include "LinuxMock.h"
 #endif
 // rF2 and plugins must agree on structure packing, so set it explicitly here.
 // Whatever the current packing is will be restored at the end of this include

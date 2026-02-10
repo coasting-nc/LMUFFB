@@ -13,13 +13,11 @@
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 #else
+#include "lmu_sm_interface/LinuxMock.h"
 // Mock types for non-Windows build/test
-typedef unsigned long DWORD;
-typedef void* HWND;
 typedef void* LPDIRECTINPUT8;
 typedef void* LPDIRECTINPUTDEVICE8;
 typedef void* LPDIRECTINPUTEFFECT;
-struct GUID { unsigned long Data1; unsigned short Data2; unsigned short Data3; unsigned char Data4[8]; };
 #endif
 
 struct DeviceInfo {
