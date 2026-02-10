@@ -18,11 +18,6 @@
 #include <dinput.h>
 #include <tchar.h>
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#pragma warning(push)
-#pragma warning(disable: 4996)
-#include "stb_image_write.h"
-#pragma warning(pop)
 
 // Global DirectX variables
 static ID3D11Device*            g_pd3dDevice = NULL;
@@ -115,86 +110,6 @@ bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defau
     return false;
 }
 
-bool CaptureWindowToBuffer(HWND hwnd, std::vector<unsigned char>& buffer, int& width, int& height) {
-    if (!hwnd || !IsWindow(hwnd)) return false;
-    RECT rect;
-    if (!GetWindowRect(hwnd, &rect)) return false;
-    width = rect.right - rect.left;
-    height = rect.bottom - rect.top;
-    if (width <= 0 || height <= 0) {
-        RECT clientRect;
-        if (GetClientRect(hwnd, &clientRect)) {
-            width = clientRect.right - clientRect.left;
-            height = clientRect.bottom - clientRect.top;
-            if (width > 0 && height > 0) {
-                POINT topLeft = {0, 0};
-                ClientToScreen(hwnd, &topLeft);
-                rect.left = topLeft.x; rect.top = topLeft.y;
-                rect.right = topLeft.x + width; rect.bottom = topLeft.y + height;
-            }
-        }
-    }
-    if (width <= 0 || height <= 0) return false;
-    HDC hdcScreen = GetDC(NULL);
-    HDC hdcMemDC = CreateCompatibleDC(hdcScreen);
-    HBITMAP hbmScreen = CreateCompatibleBitmap(hdcScreen, width, height);
-    HBITMAP hbmOld = (HBITMAP)SelectObject(hdcMemDC, hbmScreen);
-    bool success = false;
-    if (PrintWindow(hwnd, hdcMemDC, PW_RENDERFULLCONTENT)) success = true;
-    else if (PrintWindow(hwnd, hdcMemDC, 0)) success = true;
-    else if (BitBlt(hdcMemDC, 0, 0, width, height, hdcScreen, rect.left, rect.top, SRCCOPY)) success = true;
-    if (!success) {
-        SelectObject(hdcMemDC, hbmOld); DeleteObject(hbmScreen); DeleteDC(hdcMemDC); ReleaseDC(NULL, hdcScreen);
-        return false;
-    }
-    BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER), width, -height, 1, 32, BI_RGB };
-    buffer.resize(width * height * 4);
-    GetDIBits(hdcMemDC, hbmScreen, 0, height, buffer.data(), (BITMAPINFO*)&bi, DIB_RGB_COLORS);
-    for (int i = 0; i < width * height; ++i) {
-        int idx = i * 4;
-        unsigned char b = buffer[idx + 0];
-        buffer[idx + 0] = buffer[idx + 2];
-        buffer[idx + 2] = b;
-        buffer[idx + 3] = 255;
-    }
-    SelectObject(hdcMemDC, hbmOld); DeleteObject(hbmScreen); DeleteDC(hdcMemDC); ReleaseDC(NULL, hdcScreen);
-    return true;
-}
-
-void SaveCompositeScreenshotPlatform(const char* filename) {
-    HWND guiWindow = g_hwnd;
-    HWND consoleWindow = GetConsoleWindow();
-    std::vector<unsigned char> guiBuffer, consoleBuffer;
-    int guiWidth, guiHeight, consoleWidth, consoleHeight;
-    bool hasGui = CaptureWindowToBuffer(guiWindow, guiBuffer, guiWidth, guiHeight);
-    bool hasConsole = false;
-    if (consoleWindow && IsWindowVisible(consoleWindow)) {
-        hasConsole = CaptureWindowToBuffer(consoleWindow, consoleBuffer, consoleWidth, consoleHeight);
-    }
-    if (!hasGui && !hasConsole) return;
-    if (!hasConsole) {
-        stbi_write_png(filename, guiWidth, guiHeight, 4, guiBuffer.data(), guiWidth * 4);
-        return;
-    }
-    if (!hasGui) {
-        stbi_write_png(filename, consoleWidth, consoleHeight, 4, consoleBuffer.data(), consoleWidth * 4);
-        return;
-    }
-    const int gap = 10;
-    int compositeWidth = guiWidth + gap + consoleWidth;
-    int compositeHeight = (std::max)(guiHeight, consoleHeight);
-    std::vector<unsigned char> compositeBuffer(compositeWidth * compositeHeight * 4, 30);
-    for (int y = 0; y < compositeHeight; ++y) {
-        for (int x = 0; x < compositeWidth; ++x) compositeBuffer[(y * compositeWidth + x) * 4 + 3] = 255;
-    }
-    for (int y = 0; y < guiHeight; ++y) {
-        memcpy(&compositeBuffer[y * compositeWidth * 4], &guiBuffer[y * guiWidth * 4], guiWidth * 4);
-    }
-    for (int y = 0; y < consoleHeight; ++y) {
-        memcpy(&compositeBuffer[(y * compositeWidth + guiWidth + gap) * 4], &consoleBuffer[y * consoleWidth * 4], consoleWidth * 4);
-    }
-    stbi_write_png(filename, compositeWidth, compositeHeight, 4, compositeBuffer.data(), compositeWidth * 4);
-}
 
 bool GuiLayer::Init() {
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"lmuFFB", NULL };
@@ -325,6 +240,5 @@ void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) {}
 void SetWindowAlwaysOnTopPlatform(bool enabled) {}
 bool OpenPresetFileDialogPlatform(std::string& outPath) { return false; }
 bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return false; }
-void SaveCompositeScreenshotPlatform(const char* filename) {}
 
 #endif

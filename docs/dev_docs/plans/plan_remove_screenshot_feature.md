@@ -88,3 +88,6 @@ Since this is a functionality removal, standard TDD (write test, fail, pass) app
 ## Implementation Notes
 *   [ ] Check for any unforeseen build errors if `stb_image_write.h` was implicitly relied upon by other includes (unlikely).
 *   [ ] Ensure `Enable ImGui` path is clean.
+
+## Implementation Notes
+No significant issues encountered. Implementation proceeded as planned.

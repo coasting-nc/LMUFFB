@@ -61,9 +61,6 @@ bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defau
     return false;
 }
 
-void SaveCompositeScreenshotPlatform(const char* filename) {
-    std::cout << "[GUI] Screenshot not implemented on Linux yet." << std::endl;
-}
 
 static void glfw_error_callback(int error, const char* description) {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
@@ -164,6 +161,5 @@ void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) {}
 void SetWindowAlwaysOnTopPlatform(bool enabled) {}
 bool OpenPresetFileDialogPlatform(std::string& outPath) { return false; }
 bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return false; }
-void SaveCompositeScreenshotPlatform(const char* filename) {}
 
 #endif

@@ -207,19 +207,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
          ImGui::TextDisabled("(Diagnostics)");
     }
 
-    ImGui::SameLine();
-    if (ImGui::Button("Save Screenshot")) {
-        time_t now = time(0);
-        struct tm tstruct;
-        char buf[80];
-#ifdef _WIN32
-        localtime_s(&tstruct, &now);
-#else
-        localtime_r(&now, &tstruct);
-#endif
-        strftime(buf, sizeof(buf), "screenshot_%Y-%m-%d_%H-%M-%S.png", &tstruct);
-        SaveCompositeScreenshotPlatform(buf);
-    }
 
     ImGui::Separator();
 

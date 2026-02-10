@@ -4,6 +4,19 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]February 11, 2026[/b][/size]
+[b]Version 0.7.23 - Reputational Safety Update[/b]
+
+[b]New release[/b] (0.7.23): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Removed[/b]
+[list]
+[*][b]Screenshot Feature Removed[/b]: We have removed the "Save Screenshot" feature to prevent false-positive flags from Windows Defender and VirusTotal. The use of certain screen capture APIs (necessary for the multi-window composite screenshot) is a common heuristic for spyware. Since the feature is no longer critical for development, removing it ensures a safer and more reputable experience for all users.
+[*][b]Cleaned Internal Codebase[/b]: Removed all dependencies on the [code]stb_image_write.h[/code] library and deleted the associated platform capture logic.
+[/list]
+
+---
+
 [size=5][b]February 10, 2026[/b][/size]
 [b]Version 0.7.21 - Understeer Math Overhaul[/b]
 

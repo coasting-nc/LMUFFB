@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.23] - 2026-02-11
+### Removed
+- **Screenshot Feature**:
+  - Removed "Save Screenshot" feature to improve application reputation with antivirus software (addressing false positives in Windows Defender and VirusTotal).
+  - Cleaned up `GuiLayer` (Windows/Linux/Common) by removing screen capture logic and dependencies on `stb_image_write.h`.
+  - Removed dedicated screenshot test suite.
+
 ## [0.7.22] - 2026-02-10
 ### Added
 - **Linux Port (GLFW + OpenGL)**:

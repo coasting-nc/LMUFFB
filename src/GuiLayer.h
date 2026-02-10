@@ -26,6 +26,5 @@ void SaveCurrentWindowGeometryPlatform(bool is_graph_mode);
 void SetWindowAlwaysOnTopPlatform(bool enabled);
 bool OpenPresetFileDialogPlatform(std::string& outPath);
 bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName);
-void SaveCompositeScreenshotPlatform(const char* filename);
 
 #endif // GUILAYER_H

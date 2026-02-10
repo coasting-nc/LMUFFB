@@ -56,7 +56,6 @@ endif()
 if(WIN32)
     list(APPEND TEST_SOURCES 
         test_windows_platform.cpp 
-        test_screenshot.cpp
         ../src/GuiLayer_Win32.cpp
         ../src/res.rc
     )
