@@ -3,9 +3,11 @@ project(LMUFFB_Tests)
 
 set(CMAKE_CXX_STANDARD 17)
 
+
 # Include main source dir for headers
 include_directories(..)
 include_directories(../src)
+include_directories(${CMAKE_BINARY_DIR})
 
 if(NOT WIN32)
     include_directories(linux_mock)
@@ -42,10 +44,12 @@ set(TEST_SOURCES
 )
 
 # ImGui Core is now always available if vendor exists
+
 if(IMGUI_CORE_SOURCES)
     list(APPEND TEST_SOURCES
         test_gui_interaction.cpp
         ${IMGUI_CORE_SOURCES}
+        ${IMGUI_BACKEND_SOURCES}
     )
 endif()
 
