@@ -178,9 +178,45 @@ Replies to pull request comments.
 
 ---
 
+## Shell Command Compatibility
+
+In this environment, several standard utility commands are not provided as individual Python tools but are fully accessible via the `run_in_bash_session` tool. This ensures compatibility with common workflows while maintaining a streamlined toolset.
+
+### Standard Utilities via `run_in_bash_session`:
+- **`ls`**: Use `run_in_bash_session` with `ls -F` to list files with directory indicators.
+- **`grep`**: Use `run_in_bash_session` with the standard GNU `grep` command for powerful pattern matching across the codebase.
+- **`find`**: Use `run_in_bash_session` to locate files by name, type, or other attributes.
+- **`cat`, `head`, `tail`**: While `read_file` is the primary tool for reading, these can be used in bash for quick inspections.
+
+---
+
+## Comparison and Discrepancies
+
+This section addresses discrepancies between the environment's actual toolset and alternate tool documentation that may be encountered.
+
+### Naming Differences
+| Alternate Name | Actual Tool Name | Description |
+| :--- | :--- | :--- |
+| `ls` | `list_files` | Lists directory contents. |
+| `create_file_with_block` | `write_file` | Creates a new file. |
+| `overwrite_file_with_block` | `write_file` | Overwrites an existing file. |
+
+### Availability of Advanced Tools
+The following tools are unique to this environment and are critical for high-fidelity tasks:
+- **`knowledgebase_lookup`**: Used for retrieving technical information and troubleshooting environmental issues.
+- **`pre_commit_instructions`**: MUST be called before submission to ensure all quality checks are met.
+- **`request_plan_review`**: Used to get an independent review of a proposed plan before execution.
+- **`initiate_memory_recording`**: Used to persist learnings across sessions.
+- **`start_live_preview_instructions`**: Used for frontend verification.
+
+### Modification Strategy
+While some documentation may suggest using block-based creation tools, `write_file` and `replace_with_git_merge_diff` are the primary and most robust tools for code modification in this repository.
+
+---
+
 ## Deprecated Tools
 
-The following tools are deprecated and should be avoided in favor of modern alternatives:
+The following tools are deprecated in this environment and should be avoided:
 - `grep`: Use `run_in_bash_session` with the standard `grep` command.
 - `create_file_with_block`: Use `write_file` instead.
 - `overwrite_file_with_block`: Use `write_file` instead.
