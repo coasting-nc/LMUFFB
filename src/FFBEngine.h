@@ -957,6 +957,15 @@ public:
     // Refactored calculate_force
     double calculate_force(const TelemInfoV01* data) {
         if (!data) return 0.0;
+
+        // --- 0. SAFETY CHECK (v0.7.28) ---
+        // Catch NaN/Inf in critical telemetry fields to prevent FFB "explosions"
+        // or full-lock spikes caused by invalid game data during transitions.
+        if (std::isnan(data->mSteeringShaftTorque) || std::isinf(data->mSteeringShaftTorque) ||
+            std::isnan(data->mDeltaTime) || data->mDeltaTime > 1.0 ||
+            std::isnan(data->mLocalAccel.x) || std::isinf(data->mLocalAccel.x)) {
+            return 0.0;
+        }
         
         // --- 1. INITIALIZE CONTEXT ---
         FFBCalculationContext ctx;

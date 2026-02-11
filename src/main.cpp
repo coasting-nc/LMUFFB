@@ -71,12 +71,20 @@ void FFBThread() {
             if (in_realtime && !is_stale && g_localData.telemetry.playerHasVehicle) {
                 uint8_t idx = g_localData.telemetry.playerVehicleIdx;
                 if (idx < 104) {
-                    TelemInfoV01* pPlayerTelemetry = &g_localData.telemetry.telemInfo[idx];
-                    {
-                        std::lock_guard<std::mutex> lock(g_engine_mutex);
-                        force = g_engine.calculate_force(pPlayerTelemetry);
+                    // Check if player is actually in control and session is active (Issue #79 / #64)
+                    // mControl: 0 = player, 1 = AI, 2 = Remote.
+                    // mFinishStatus: 0 = None (active), 1 = Finished, 2 = DNF, 3 = DQ.
+                    bool player_in_control = (g_localData.scoring.vehScoringInfo[idx].mControl == 0);
+                    bool session_active = (g_localData.scoring.vehScoringInfo[idx].mFinishStatus == 0);
+
+                    if (player_in_control && session_active) {
+                        TelemInfoV01* pPlayerTelemetry = &g_localData.telemetry.telemInfo[idx];
+                        {
+                            std::lock_guard<std::mutex> lock(g_engine_mutex);
+                            force = g_engine.calculate_force(pPlayerTelemetry);
+                        }
+                        should_output = true;
                     }
-                    should_output = true;
                 }
             }
             

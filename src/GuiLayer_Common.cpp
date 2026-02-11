@@ -110,6 +110,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::BeginCombo("FFB Device", selected_device_idx >= 0 ? devices[selected_device_idx].name.c_str() : "Select Device...")) {
         for (int i = 0; i < (int)devices.size(); i++) {
             bool is_selected = (selected_device_idx == i);
+            ImGui::PushID(i);
             if (ImGui::Selectable(devices[i].name.c_str(), is_selected)) {
                 selected_device_idx = i;
                 DirectInputFFB::Get().SelectDevice(devices[i].guid);
@@ -117,6 +118,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                 Config::Save(engine);
             }
             if (is_selected) ImGui::SetItemDefaultFocus();
+            ImGui::PopID();
         }
         ImGui::EndCombo();
     }
@@ -285,11 +287,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         if (ImGui::BeginCombo("Load Preset", preview_value)) {
             for (int i = 0; i < (int)Config::presets.size(); i++) {
                 bool is_selected = (selected_preset == i);
+                ImGui::PushID(i);
                 if (ImGui::Selectable(Config::presets[i].name.c_str(), is_selected)) {
                     selected_preset = i;
                     Config::ApplyPreset(i, engine);
                 }
                 if (is_selected) ImGui::SetItemDefaultFocus();
+                ImGui::PopID();
             }
             ImGui::EndCombo();
         }

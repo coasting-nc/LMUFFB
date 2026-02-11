@@ -372,6 +372,12 @@ bool DirectInputFFB::CreateEffect() {
 void DirectInputFFB::UpdateForce(double normalizedForce) {
     if (!m_active) return;
 
+    // --- SAFETY CHECK (v0.7.28) ---
+    // If input is NaN or Inf, zero it out to prevent hardware "kick-back"
+    if (std::isnan(normalizedForce) || std::isinf(normalizedForce)) {
+        normalizedForce = 0.0;
+    }
+
     // Sanity Check: If 0.0, stop effect to prevent residual hum
     if (std::abs(normalizedForce) < 0.00001) normalizedForce = 0.0;
 
