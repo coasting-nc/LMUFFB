@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.32] - 2026-02-11
+### Added
+- **AI Agent Tool Documentation**: Added a comprehensive report of all available tools for the AI agent in `docs/available_tools.md` to facilitate more precise user instructions.
+
 ## [0.7.31] - 2026-02-11
 ### Improved
 - **Linux Testing & Reporting Refactor**:
