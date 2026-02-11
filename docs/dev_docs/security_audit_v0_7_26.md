@@ -9,7 +9,7 @@ This report analyzes the `lmuFFB` codebase to identify features and patterns tha
 The previous `src/res.rc` file contained only an icon definition. It lacked the standard `VERSIONINFO` resource block.
 *   **Impact**: Antivirus heuristics often flag binaries without version information, company name, or product description as "generic" or "suspicious" (e.g., specific trojans often lack this).
 *   **Behavior**: The file appears "anonymous" to the OS and security software.
-*   **Status**: Fixed in v0.7.25 (Added `VS_VERSION_INFO`).
+*   **Status**: Fixed in v0.7.26 (Added `VS_VERSION_INFO`).
 
 ### 2. System Information Discovery (Medium Probability Trigger)
 Review of behavioral logs indicates a detection for "System Information Discovery".
@@ -21,7 +21,7 @@ Review of behavioral logs indicates a detection for "System Information Discover
     D3D11CreateDeviceAndSwapChain(..., &sd, &g_pSwapChain, &g_pd3dDevice, ...);
     ```
     Additionally, standard `SystemParametersInfo` calls are made to align the window.
-*   **Analysis**: Malware often queries display properties to detect if it's running in a Sandbox (which often has generic/small displays). `lmuFFB` does this legitimately to render its UI.
+*   **Analysis**: Malware often queries display properties to detect if it's running in a Sandbox (which often has generic/small displays). `lmuFFB` does this legitimate behavior to render its UI.
 *   **Risk**: Medium. This is a common behavior for any graphical application, but when combined with other "suspicious" traits (like missing metadata or process handles), it raises the threat score.
 
 ### 3. Process Handle Usage (`GameConnector.cpp`)
@@ -45,7 +45,7 @@ hr = ((IDirectInputDevice8*)m_pDevice)->SetCooperativeLevel(m_hwnd, DISCL_EXCLUS
 ### Short Term (Code Changes)
 
 1.  **Implement `VERSIONINFO` in Resource File**:
-    *   **Status**: Implemented. `src/res.rc` now includes a full `VS_VERSION_INFO` block with CompanyName ("Mmuffb Community"), ProductVersion ("0.7.25.0"), etc.
+    *   **Status**: Implemented. `src/res.rc` now includes a full `VS_VERSION_INFO` block with CompanyName ("lmuFFB"), ProductVersion ("0.7.26.0"), etc.
 
 2.  **Verify Build Security Flags**:
     *   **Status**: Implemented. `CMakeLists.txt` updated to enforce `/GS` (Buffer Security Check), `/DYNAMICBASE` (ASLR), and `/NXCOMPAT` (DEP) for MSVC builds.
