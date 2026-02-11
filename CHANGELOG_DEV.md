@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.25] - 2026-02-11
+### Removed
+- **vJoy Support**:
+  - Removed vJoy support and dynamic library loading to eliminate security false positives and simplify the codebase.
+  - Deleted `src/DynamicVJoy.h` and associated integration logic in `main.cpp`.
+  - Removed vJoy-related configuration variables from `Config.h` and `Config.cpp`.
+  - Cleaned up `test_config_runner.ini` and updated application version to `0.7.25`.
+
 ## [0.7.24] - 2026-02-11
 ### Security & Privacy
 - **Disabled Clipboard Access**: Added build flag `IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS` to prevent ImGui from accessing the Windows clipboard. This removes a common antivirus heuristic trigger.

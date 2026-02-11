@@ -11,7 +11,6 @@
 #include "GuiLayer.h"
 #include "Config.h"
 #include "DirectInputFFB.h"
-#include "DynamicVJoy.h"
 #include "GameConnector.h"
 #include "Version.h"
 #include <optional>
@@ -19,7 +18,6 @@
 #include <mutex>
 
 // Constants
-const int VJOY_DEVICE_ID = 1;
 
 // Threading Globals
 std::atomic<bool> g_running(true);
@@ -32,18 +30,6 @@ std::mutex g_engine_mutex; // Protects settings access if GUI changes them
 
 // --- FFB Loop (High Priority 400Hz) ---
 void FFBThread() {
-    long axis_min = 1;
-    long axis_max = 32768;
-    
-    // Attempt to load vJoy (silently)
-    bool vJoyDllLoaded = false;
-    if (DynamicVJoy::Get().Load()) {
-        vJoyDllLoaded = true;
-    } else {
-        std::cout << "[vJoy] Not found (optional component, not required)" << std::endl;
-    }
-
-    bool vJoyAcquired = false;
     std::cout << "[FFB] Loop Started." << std::endl;
 
     while (g_running) {
@@ -96,29 +82,11 @@ void FFBThread() {
             
             if (!should_output) force = 0.0;
 
-            if (vJoyDllLoaded && DynamicVJoy::Get().Enabled()) { 
-                if (Config::m_enable_vjoy && !vJoyAcquired) {
-                    VjdStat status = DynamicVJoy::Get().GetStatus(VJOY_DEVICE_ID);
-                    if ((status == VJD_STAT_OWN) || ((status == VJD_STAT_FREE) && DynamicVJoy::Get().Acquire(VJOY_DEVICE_ID))) {
-                        vJoyAcquired = true;
-                        std::cout << "[vJoy] Device " << VJOY_DEVICE_ID << " acquired." << std::endl;
-                    }
-                } else if (!Config::m_enable_vjoy && vJoyAcquired) {
-                    DynamicVJoy::Get().Relinquish(VJOY_DEVICE_ID);
-                    vJoyAcquired = false;
-                    std::cout << "[vJoy] Device " << VJOY_DEVICE_ID << " relinquished." << std::endl;
-                }
-                if (vJoyAcquired && Config::m_output_ffb_to_vjoy) {
-                    long axis_val = (long)((force + 1.0) * 0.5 * (axis_max - axis_min) + axis_min);
-                    DynamicVJoy::Get().SetAxis(axis_val, VJOY_DEVICE_ID, 0x30); 
-                }
-            }
             DirectInputFFB::Get().UpdateForce(force);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 
-    if (vJoyAcquired) DynamicVJoy::Get().Relinquish(VJOY_DEVICE_ID);
     std::cout << "[FFB] Loop Stopped." << std::endl;
 }
 

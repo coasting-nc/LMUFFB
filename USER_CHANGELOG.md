@@ -5,6 +5,19 @@ This document contains all version release posts by ErwinMoss from the [url=http
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
 [size=5][b]February 11, 2026[/b][/size]
+[b]Version 0.7.25 - vJoy Support Removal[/b]
+
+[b]New release[/b] (0.7.25): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Removed[/b]
+[list]
+[*][b]vJoy Support Removed[/b]: We have completely removed vJoy support and its dynamic library loading mechanism. This eliminates a common "runtime library loading" heuristic that some antivirus software flagged as suspicious.
+[*][b]Simplified Setup[/b]: As the app now exclusively uses DirectInput for FFB output, removing the legacy vJoy code simplifies the internal architecture and reduces the application footprint.
+[/list]
+
+---
+
+[size=5][b]February 11, 2026[/b][/size]
 [b]Version 0.7.24 - Privacy & Security Update[/b]
 
 [b]New release[/b] (0.7.24): https://github.com/coasting-nc/LMUFFB/releases

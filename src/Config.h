@@ -476,9 +476,6 @@ public:
     static std::string m_last_device_guid;
 
     // Global App Settings (not part of FFB Physics)
-    static bool m_ignore_vjoy_version_warning;
-    static bool m_enable_vjoy;        // Acquire vJoy device (Driver Enabled)
-    static bool m_output_ffb_to_vjoy; // Output FFB signal to vJoy Axis X (Monitor)
     static bool m_always_on_top;      // NEW: Keep window on top
     static bool m_auto_start_logging; // NEW: Auto-start logging
     static std::string m_log_path;    // NEW: Path to save logs

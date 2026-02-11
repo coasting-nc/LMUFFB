@@ -169,5 +169,4 @@ This document provides the Standard Operating Procedures (SOP), context, and con
 
 ## 🚫 Common Pitfalls
 *   **Do not** use `mElapsedTime` for sine waves (see Math Rule).
-*   **Do not** remove the `vJoyInterface.dll` dynamic loading logic (the app must run even if vJoy is missing).
 *   **Do not** change the struct packing in `rF2Data.h` (it breaks shared memory reading).

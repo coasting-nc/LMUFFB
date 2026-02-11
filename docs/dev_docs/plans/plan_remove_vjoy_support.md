@@ -53,3 +53,14 @@ Delete the following files which are exclusively used for vJoy integration:
 - Verify that the application starts successfully without `vJoyInterface.dll` present.
 - Confirm that the console no longer prints `[vJoy]` messages.
 - Verify that standard FFB output to the physical wheel still works correctly.
+
+## Implementation Notes
+
+- **Unforeseen Issues:** No significant issues encountered. The GUI code (`GuiLayer_Common.cpp`) had already been cleaned of vJoy references in a previous version (v0.4.46), which was not explicitly mentioned in the initial implementation plan.
+- **Plan Deviations:**
+    - Also cleaned up `installer/lmuffb.iss` to remove vJoy installation checks and DLL bundling, ensuring a cleaner deployment.
+    - Deleted `docs/vjoy_compatibility.md` as it became obsolete.
+    - Removed a stale vJoy-related rule from `LEGACY_JULES_ONLY_AGENTS.md`.
+    - Synchronized `CHANGELOG_DEV_utf8.md` with `CHANGELOG_DEV.md`.
+- **Challenges Encountered:** None. The removal was straightforward due to the existing modularity of the FFB loop.
+- **Recommendations for Future Plans:** Ensure that related files like installers and legacy documentation are considered when removing major features.

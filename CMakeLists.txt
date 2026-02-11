@@ -68,7 +68,6 @@ set(APP_SOURCES
     src/Config.cpp src/Config.h
     src/DirectInputFFB.cpp src/DirectInputFFB.h
     src/GameConnector.cpp src/GameConnector.h
-    src/DynamicVJoy.h
     src/FFBEngine.h
 )
 

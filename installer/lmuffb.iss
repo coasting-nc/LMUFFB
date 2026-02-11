@@ -34,8 +34,6 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Files]
 ; The Main Executable (Must be built first)
 Source: "..\build\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-; vJoy Interface DLL (Must be present in build folder)
-Source: "..\build\Release\vJoyInterface.dll"; DestDir: "{app}"; Flags: ignoreversion
 ; The rFactor 2 Plugin (Included in repo or build) - Optional
 Source: "..\\plugins\\rFactor2SharedMemoryMapPlugin64.dll"; DestDir: "{app}\\PluginBackup"; Flags: ignoreversion external skipifsourcedoesntexist
 
@@ -48,14 +46,6 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Code]
-// Helper to check if vJoy is installed
-function IsVJoyInstalled: Boolean;
-begin
-  // Check typical registry key for vJoy (Registry check logic varies by version)
-  // vJoy 2.x usually resides in HKLM
-  Result := RegKeyExists(HKLM, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\vJoy');
-end;
-
 // Function to find LMU Installation
 function FindLMUInstallPath(var Path: String): Boolean;
 begin
@@ -79,16 +69,7 @@ var
 begin
   if CurStep = ssPostInstall then
   begin
-    // 1. Check vJoy
-    if not IsVJoyInstalled then
-    begin
-      if MsgBox('vJoy does not appear to be installed. LMUFFB requires vJoy to function. Do you want to open the download page?', mbConfirmation, MB_YESNO) = IDYES then
-      begin
-        ShellExec('open', 'https://github.com/shauleiz/vJoy/releases', '', '', SW_SHOWNORMAL, ewNoWait, ResultCode);
-      end;
-    end;
-
-    // 2. Auto-Install Plugin
+    // 1. Auto-Install Plugin
     if FindLMUInstallPath(LMUPath) then
     begin
        TargetPluginPath := LMUPath + '\Plugins\rFactor2SharedMemoryMapPlugin64.dll';

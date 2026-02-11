@@ -5,9 +5,6 @@
 #include <iostream>
 #include <algorithm>
 
-bool Config::m_ignore_vjoy_version_warning = false;
-bool Config::m_enable_vjoy = false;
-bool Config::m_output_ffb_to_vjoy = false;
 bool Config::m_always_on_top = true;
 std::string Config::m_last_device_guid = "";
 std::string Config::m_last_preset_name = "Default";
@@ -1147,9 +1144,6 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         // NOTE: Currently migration is threshold-based (e.g., understeer > 2.0 = legacy).
         //       For more complex migrations, consider adding explicit config_format_version field.
         file << "ini_version=" << LMUFFB_VERSION << "\n";
-        file << "ignore_vjoy_version_warning=" << m_ignore_vjoy_version_warning << "\n";
-        file << "enable_vjoy=" << m_enable_vjoy << "\n";
-        file << "output_ffb_to_vjoy=" << m_output_ffb_to_vjoy << "\n";
         file << "always_on_top=" << m_always_on_top << "\n";
         file << "last_device_guid=" << m_last_device_guid << "\n";
         file << "last_preset_name=" << m_last_preset_name << "\n";
@@ -1289,9 +1283,6 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                         std::string config_version = value;
                         std::cout << "[Config] Loading config version: " << config_version << std::endl;
                     }
-                    else if (key == "ignore_vjoy_version_warning") m_ignore_vjoy_version_warning = std::stoi(value);
-                    else if (key == "enable_vjoy") m_enable_vjoy = std::stoi(value);
-                    else if (key == "output_ffb_to_vjoy") m_output_ffb_to_vjoy = std::stoi(value);
                     else if (key == "always_on_top") m_always_on_top = std::stoi(value);
                     else if (key == "last_device_guid") m_last_device_guid = value;
                     else if (key == "last_preset_name") m_last_preset_name = value;

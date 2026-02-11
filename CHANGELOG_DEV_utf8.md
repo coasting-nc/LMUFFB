@@ -1,6 +1,26 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [0.7.25] - 2026-02-11
+### Removed
+- **vJoy Support**:
+  - Removed vJoy support and dynamic library loading to eliminate security false positives and simplify the codebase.
+  - Deleted `src/DynamicVJoy.h` and associated integration logic in `main.cpp`.
+  - Removed vJoy-related configuration variables from `Config.h` and `Config.cpp`.
+  - Cleaned up `test_config_runner.ini` and updated application version to `0.7.25`.
+
+## [0.7.24] - 2026-02-11
+### Security & Privacy
+- **Disabled Clipboard Access**: Added build flag `IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS` to prevent ImGui from accessing the Windows clipboard. This removes a common antivirus heuristic trigger.
+- **Removed Window Title Tracking**: Replaced `GetActiveWindowTitle()` logic (which used `GetForegroundWindow`) with a static string. This eliminates behavior that could be flagged as "spyware-like" activity monitoring.
+
+## [0.7.23] - 2026-02-11
+### Removed
+- **Screenshot Feature**:
+  - Removed "Save Screenshot" feature to improve application reputation with antivirus software (addressing false positives in Windows Defender and VirusTotal).
+  - Cleaned up `GuiLayer` (Windows/Linux/Common) by removing screen capture logic and dependencies on `stb_image_write.h`.
+  - Removed dedicated screenshot test suite.
 
 ## [0.7.22] - 2026-02-10
 ### Added
@@ -233,7 +253,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - **Smoothstep Speed Gating**:
   - Replaced linear interpolation for speed-based FFB gating with a smooth Hermite S-curve (Smoothstep).
-  - Implemented `smoothstep(edge0, edge1, x)` helper function in `FFBEngine` using polynomial `tÂ² * (3 - 2t)`.
+  - Implemented `smoothstep(edge0, edge1, x)` helper function in `FFBEngine` using polynomial `t² * (3 - 2t)`.
   - Provides zero-derivative endpoints for a more natural "fade-in" of FFB forces at low speeds.
   - Improves the pit-lane and stationary-to-moving transition by eliminating the "angular" feel of linear scaling.
 - **v0.7.2 Test Suite**:
@@ -405,7 +425,7 @@ All notable changes to this project will be documented in this file.
   - GM vs GT3/LMPx: Differs in 12+ parameters (20% of total), representing a different FFB paradigm
   - All three presets share 38 identical parameters (63.3% of total)
 - **Key GM Preset Characteristics**:
-  - Combined torque output: ~2.9x stronger than GT3/LMPx (1.454 gain Ã— 1.989 shaft gain)
+  - Combined torque output: ~2.9x stronger than GT3/LMPx (1.454 gain × 1.989 shaft gain)
   - Flatspot suppression enabled (unique among the three)
   - Brake load cap: 81.0 (vs 2.0 for GT3/LMPx) for unrestricted lockup feedback
   - Philosophy: Maximize direct torque, minimize computed effects, zero smoothing
@@ -457,11 +477,11 @@ All notable changes to this project will be documented in this file.
 - **Understeer Effect Improvements**:
   - **BREAKING CHANGE - Rescaled Range**: Changed the "Understeer Effect" slider range from **0-200** to **0.0-2.0** for improved usability and precision.
     - **Why**: The old 0-200 range had 99.5% of its values unusable. Mathematical analysis showed the useful range is 0.0-2.0, where values above 2.0 cause near-instant force elimination.
-    - **Migration**: Automatic migration logic converts legacy values (e.g., 50.0 â†’ 0.5) when loading old config files.
+    - **Migration**: Automatic migration logic converts legacy values (e.g., 50.0 → 0.5) when loading old config files.
     - **New Scale Guide**:
       - `0.0` = Disabled (no understeer effect)
       - `0.5` = Subtle (50% of grip loss reflected)
-      - `1.0` = Normal (force matches grip) â€” **New Default**
+      - `1.0` = Normal (force matches grip) — **New Default**
       - `1.5` = Aggressive (amplified response)
       - `2.0` = Maximum (very light wheel on any slide)
   - **Refined T300 Physics**: Increased default `optimal_slip_angle` from 0.06 to 0.10 rad in the T300 preset. This provides a larger "buffer zone" before grip loss begins, addressing user reports of the wheel feeling too light too early.
@@ -498,7 +518,7 @@ All notable changes to this project will be documented in this file.
 - **Config File Structure Reordering**:
   - Reordered `config.ini` file structure to mirror GUI hierarchy for improved readability.
   - Added comment headers (e.g., `; --- System & Window ---`, `; --- General FFB ---`) to organize settings into logical sections.
-  - Settings now save in this order: System & Window â†’ General FFB â†’ Front Axle â†’ Rear Axle â†’ Physics â†’ Braking & Lockup â†’ Tactile Textures â†’ Advanced Settings.
+  - Settings now save in this order: System & Window → General FFB → Front Axle → Rear Axle → Physics → Braking & Lockup → Tactile Textures → Advanced Settings.
   - Fixed critical bug where `Config::Load` would overwrite main configuration with preset values by stopping parsing at `[Presets]` section.
   - User presets also follow the same reordered structure for consistency.
   - Maintained backward compatibility with legacy config keys (`smoothing`, `max_load_factor`).
@@ -563,7 +583,7 @@ All notable changes to this project will be documented in this file.
   - **Test 5-6**: Preset Clamping Regression Tests - Ensures brake_load_cap and lockup_gain are NOT clamped during preset loading (preserving user intent).
   - **Test 7-8**: Main Config Clamping Regression Tests - Verifies safety clamping (1.0-10.0 for brake_load_cap, 0.0-3.0 for lockup_gain) during main config loading.
   - **Test 9**: Configuration Versioning - Validates ini_version is written and read correctly.
-  - **Test 10**: Comprehensive Round-Trip Test - End-to-end validation of all persistence mechanisms (main config â†’ preset â†’ load â†’ apply).
+  - **Test 10**: Comprehensive Round-Trip Test - End-to-end validation of all persistence mechanisms (main config → preset → load → apply).
 
 ### Fixed
 - **Test Isolation Bug**: Fixed test failures caused by preset pollution between tests.
@@ -574,7 +594,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - **Config.h/Config.cpp**:
   - Added `speed_gate_lower`, `speed_gate_upper`, `road_fallback_scale`, and `understeer_affects_sop` to both main config save/load and preset serialization.
-  - Added backward compatibility for legacy `max_load_factor` â†’ `texture_load_cap` migration.
+  - Added backward compatibility for legacy `max_load_factor` → `texture_load_cap` migration.
   - Ensured all new fields are properly initialized with Preset struct defaults.
 
 ### Technical Details
@@ -669,7 +689,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - **Signal Processing Improvements**:
   - **Dynamic Static Notch Filter**: Replaced the fixed Q-factor notch filter with a variable bandwidth filter. Users can now adjust the "Filter Width" (0.1 to 10.0 Hz) to surgically suppress hardware resonance or floor noise.
-  - **Adjustable Yaw Kick Threshold**: Implemented a user-configurable activation threshold (0.0 to 10.0 rad/sÂ²) for the Yaw Kick effect. This allows users to filter out micro-corrections and road noise while maintaining sharp reaction cues for actual car rotation.
+  - **Adjustable Yaw Kick Threshold**: Implemented a user-configurable activation threshold (0.0 to 10.0 rad/s²) for the Yaw Kick effect. This allows users to filter out micro-corrections and road noise while maintaining sharp reaction cues for actual car rotation.
 - **GUI Enhanced Controls**:
   - Added "Filter Width" slider to the Signal Filtering section.
   - Added "Activation Threshold" slider to the Yaw Kick effect section for better noise immunity tuning.
@@ -755,7 +775,7 @@ All notable changes to this project will be documented in this file.
 - **GUI Indicator Refinement**:
   - Updated Mode indicator labels ("Mode: EXCLUSIVE (Game FFB Blocked)" / "Mode: SHARED (Potential Conflict)").
   - Added detailed troubleshooting tooltips to the Mode indicator to guide users on how to resolve Force Feedback conflicts with the game.
-  - Fixed typo: "reaquiring" â†’ "reacquiring" in tooltip text.
+  - Fixed typo: "reaquiring" → "reacquiring" in tooltip text.
 
 ## [0.6.1] - 2025-12-25
 ### Changed
@@ -1014,10 +1034,10 @@ All notable changes to this project will be documented in this file.
 - **CRITICAL: Understeer Effect Slider Stuck**: Fixed slider being completely unresponsive to mouse and arrow key inputs
     - **Root Cause**: Was using pre-calculated percentage format string that ImGui couldn't properly interpret
     - **Fix**: Simplified to use direct `%.2f` format on the 0-50 range instead of percentage calculation
-    - **Impact**: Slider is now fully functional and responsive, shows values like "25.00" â†’ "25.01" with fine precision
+    - **Impact**: Slider is now fully functional and responsive, shows values like "25.00" → "25.01" with fine precision
 - **Slider Precision Issues**: Fixed additional sliders where arrow key adjustments weren't visible
-    - **Load Cap**: Updated format from `%.1fx` to `%.2fx` (now shows 1.50x â†’ 1.51x instead of 1.5x â†’ 1.5x)
-    - **Target Frequency**: Updated format from `%.0f Hz` to `%.1f Hz` (now shows 50.0 â†’ 50.1 instead of 50 â†’ 50)
+    - **Load Cap**: Updated format from `%.1fx` to `%.2fx` (now shows 1.50x → 1.51x instead of 1.5x → 1.5x)
+    - **Target Frequency**: Updated format from `%.0f Hz` to `%.1f Hz` (now shows 50.0 → 50.1 instead of 50 → 50)
 - **Tooltip Covering Slider During Adjustment**: Fixed tooltip appearing immediately when pressing arrow keys and covering the slider being adjusted
     - **Fix**: Tooltip now only displays when NOT actively adjusting with arrow keys
     - **Benefit**: Users can now see the slider value change in real-time without obstruction
@@ -1152,7 +1172,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - **Yaw Kick Signal Conditioning**: Implemented filters to eliminate constant "physics noise" from the Yaw Kick effect.
     - **Low Speed Cutoff**: Mutes the effect when moving slower than 5 m/s (18 kph) to prevent engine idle vibration and parking lot jitters.
-    - **Noise Gate (Deadzone)**: Filters out micro-rotations below 0.2 rad/sÂ² to ensure the "Kick" only triggers during significant events (like slide initiation).
+    - **Noise Gate (Deadzone)**: Filters out micro-rotations below 0.2 rad/s² to ensure the "Kick" only triggers during significant events (like slide initiation).
     - **Technical Impact**: Resolves the "muddy" FFB feeling caused by constant background noise, making the counter-steering cue much clearer.
 - **Unit Tests**: Added `test_yaw_kick_signal_conditioning` to verify the new filtering logic handling.
 
@@ -1335,17 +1355,17 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - **Oversteer Effect Range Expansion**: Unlocked slider ranges for oversteer-related effects to compensate for high `Max Torque Ref` values on belt-driven wheels:
-    - **SoP (Lateral G)**: 2.0 â†’ **20.0** (10x increase)
-    - **SoP Yaw (Kick)**: 2.0 â†’ **20.0** (10x increase)
-    - **Oversteer Boost**: 1.0 â†’ **20.0** (20x increase)
-    - **Rear Align Torque**: 2.0 â†’ **20.0** (10x increase)
+    - **SoP (Lateral G)**: 2.0 → **20.0** (10x increase)
+    - **SoP Yaw (Kick)**: 2.0 → **20.0** (10x increase)
+    - **Oversteer Boost**: 1.0 → **20.0** (20x increase)
+    - **Rear Align Torque**: 2.0 → **20.0** (10x increase)
     - **Rationale**: With `Max Torque Ref` at 100Nm (for T300), signals are compressed to ~4% of range. Default effect values (0.15-2.0) produce forces of only 0.3-4.0 Nm, which belt friction (~0.2 Nm) masks. The 10-20x multipliers compensate for this compression.
 
 - **T300 Preset Enhancement**: Updated the T300 preset with boosted oversteer values for a complete, balanced FFB experience:
-    - **SoP (Lateral G)**: 0.0 â†’ **5.0** (feel lateral weight transfer)
-    - **Rear Align Torque**: 0.0 â†’ **15.0** (strong counter-steer pull during oversteer)
-    - **Oversteer Boost**: 0.0 â†’ **2.0** (amplification during rear slip)
-    - **SoP Yaw (Kick)**: 0.0 â†’ **5.0** (predictive rotation cue)
+    - **SoP (Lateral G)**: 0.0 → **5.0** (feel lateral weight transfer)
+    - **Rear Align Torque**: 0.0 → **15.0** (strong counter-steer pull during oversteer)
+    - **Oversteer Boost**: 0.0 → **2.0** (amplification during rear slip)
+    - **SoP Yaw (Kick)**: 0.0 → **5.0** (predictive rotation cue)
     - The T300 preset now provides both understeer detection (38.0) and oversteer detection (15.0) with properly scaled forces
 
 ### Technical Details
@@ -1366,8 +1386,8 @@ All notable changes to this project will be documented in this file.
     - **Solution**: Values of 20.0-50.0 create a binary effect where grip loss causes an instant drop to zero force, which is strong enough to overcome belt friction.
     - Updated tooltip to explain: "High values (10-50) create a 'Binary' drop for belt-driven wheels."
 - **Default Values**: Updated default preset values for better out-of-box experience:
-    - `Max Torque Ref`: 40.0 â†’ **60.0 Nm** (lighter default feel, safer for T300/G29 users)
-    - `Understeer Effect`: 1.0 â†’ **2.0** (more pronounced grip drop for better communication)
+    - `Max Torque Ref`: 40.0 → **60.0 Nm** (lighter default feel, safer for T300/G29 users)
+    - `Understeer Effect`: 1.0 → **2.0** (more pronounced grip drop for better communication)
 
 ## [0.4.27] - 2025-12-19
 ### Fixed
@@ -1455,7 +1475,7 @@ All notable changes to this project will be documented in this file.
 - **New Test**: `test_sop_yaw_kick_direction()` to verify that positive yaw acceleration produces negative FFB output (counter-steering).
 
 ### Changed
-- **Updated Test**: `test_coordinate_scrub_drag_direction()` now verifies that the Scrub Drag force provides counter-steering torque (left slide â†’ left pull) instead of the previous incorrect behavior (left slide â†’ right push).
+- **Updated Test**: `test_coordinate_scrub_drag_direction()` now verifies that the Scrub Drag force provides counter-steering torque (left slide → left pull) instead of the previous incorrect behavior (left slide → right push).
 
 ## [0.4.19] - 2025-12-16
 ### Fixed
@@ -1577,7 +1597,7 @@ All notable changes to this project will be documented in this file.
     - **Rear Align Torque**: Increased coefficient 4x (0.00025 -> 0.001) to boost max torque from ~1.5 Nm to ~6.0 Nm.
     - **Scrub Drag**: Increased base multiplier from 2.0 to 5.0.
     - **Road Texture**: Increased base multiplier from 25.0 to 50.0.
-- **GUI Visualization**: "Zoomed in" the Y-axis scale for micro-texture plots (Road, Slide, Vibrations) from Â±20.0 to **Â±10.0** for better visibility of subtle effects.
+- **GUI Visualization**: "Zoomed in" the Y-axis scale for micro-texture plots (Road, Slide, Vibrations) from ±20.0 to **±10.0** for better visibility of subtle effects.
 - **Documentation**: Updated `FFB_formulas.md` with the new coefficients.
 
 ## [0.4.10] - 2025-12-13
@@ -1585,11 +1605,11 @@ All notable changes to this project will be documented in this file.
 - **Rear Physics Workaround**: Implemented a calculation fallback for Rear Aligning Torque to address the LMU 1.2 API issue where `mLateralForce` reports 0.0 for rear tires.
     - **Logic**: Approximates rear load from suspension force (+300N) and calculates lateral force using `RearSlipAngle * CalculatedLoad * Stiffness(15.0)`.
     - **Visualization**: Added `Calc Rear Lat Force` to the Telemetry Inspector graph (Header C) to visualize the workaround output.
-    - **Safety**: Clamped the calculated rear lateral force to Â±6000N to prevent physics explosions.
+    - **Safety**: Clamped the calculated rear lateral force to ±6000N to prevent physics explosions.
 - **GUI Improvements**:
     - **Multi-line Plots**: Updated Header B "Calc Load" graph to show both Front (Cyan) and Rear (Magenta) calculated loads simultaneously.
     - **Slider Fix**: Corrected `SoP Scale` slider range to `0.0 - 200.0` (was 100-5000), allowing proper tuning for the new Nm-based math.
-    - **Plot Scaling**: Updated all FFB Component plots to use a **Â±20.0 Nm** scale (instead of Â±1000N) to match the engine's output units, fixing "flat line" graphs.
+    - **Plot Scaling**: Updated all FFB Component plots to use a **±20.0 Nm** scale (instead of ±1000N) to match the engine's output units, fixing "flat line" graphs.
 
 ### Changed
 - **Defaults**: Increased default `SoP Scale` from 5.0 to **20.0** to provide a perceptible baseline force given the new Nm scaling.
