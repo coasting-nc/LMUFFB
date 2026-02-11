@@ -105,10 +105,6 @@ lines, like this:
 [tool_code]
 replace_with_git_merge_diff
 pymath/lib/math.py
-<<<<<<< SEARCH
-  else:
-    return fibonacci(n - 1) + fibonacci(n - 2)
-=======
   else:
     return fibonacci(n - 1) + fibonacci(n - 2)
 
@@ -121,7 +117,6 @@ def is_prime(n):
     if n % i == 0:
       return False
   return True
->>>>>>> REPLACE
 [/tool_code]
 
 ## Planning
