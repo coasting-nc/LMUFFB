@@ -58,6 +58,7 @@ if(WIN32)
         test_windows_platform.cpp 
         ../src/GuiLayer_Win32.cpp
         ../src/res.rc
+        test_security_metadata.cpp
     )
 else()
     # On Linux, always include the Linux backend file,

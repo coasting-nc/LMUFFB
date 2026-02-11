@@ -42,7 +42,7 @@ private:
     SharedMemoryLayout* m_pSharedMemLayout = nullptr;
     mutable std::optional<SafeSharedMemoryLock> m_smLock;
     HANDLE m_hMapFile = NULL;
-    mutable HANDLE m_hProcess = NULL;
+    mutable HWND m_hwndGame = NULL;
     DWORD m_processId = 0;
 
     std::atomic<bool> m_connected{false};

@@ -1,7 +1,9 @@
-# Security Audit & False Positive Analysis (v0.7.25)
+# Security Audit & False Positive Analysis (v0.7.27)
 
 ## Overview
-This report analyzes the `lmuFFB` codebase to identify features and patterns that may trigger antivirus heuristics or behavioral monitoring warnings. While direct access to the specific VirusTotal report was unavailable, a static analysis of the source code and user-provided detection logs reveals several areas that are common sources of false positives in game utilities.
+This report analyzes the `lmuFFB` codebase to identify features and patterns that may trigger antivirus heuristics or behavioral monitoring warnings. 
+
+**Update (v0.7.27)**: A user reported that Windows Defender flagged the v0.7.25/.26 release as `Trojan:Script/Wacatac.C!ml`. This is a machine-learning based heuristic flag often triggered by unsigned binaries performing "Process Access" or memory inspection. Version 0.7.27 addresses this by removing `OpenProcess` calls.
 
 ## Findings
 
@@ -9,7 +11,7 @@ This report analyzes the `lmuFFB` codebase to identify features and patterns tha
 The previous `src/res.rc` file contained only an icon definition. It lacked the standard `VERSIONINFO` resource block.
 *   **Impact**: Antivirus heuristics often flag binaries without version information, company name, or product description as "generic" or "suspicious" (e.g., specific trojans often lack this).
 *   **Behavior**: The file appears "anonymous" to the OS and security software.
-*   **Status**: Fixed in v0.7.26 (Added `VS_VERSION_INFO`).
+*   **Status**: Fixed in v0.7.27 (Added `VS_VERSION_INFO`).
 
 ### 2. System Information Discovery (Medium Probability Trigger)
 Review of behavioral logs indicates a detection for "System Information Discovery".
@@ -31,6 +33,7 @@ m_hProcess = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE,
 ```
 *   **Analysis**: The usage of `PROCESS_QUERY_LIMITED_INFORMATION` is good practice (least privilege). However, the act of opening a handle to another process is a core behavior of game hacks and injection tools.
 *   **Risk**: Moderate. Some sensitive heuristics might flag this as "Process Access" or "Memory Inspection".
+*   **Status**: Fixed in v0.7.27. Replaced `OpenProcess` with `IsWindow` which uses safe window handle validation instead of opening a process handle.
 
 ### 4. DirectInput Exclusive Mode (`DirectInputFFB.cpp`)
 The application requests `DISCL_EXCLUSIVE` access to the input device.
@@ -45,7 +48,7 @@ hr = ((IDirectInputDevice8*)m_pDevice)->SetCooperativeLevel(m_hwnd, DISCL_EXCLUS
 ### Short Term (Code Changes)
 
 1.  **Implement `VERSIONINFO` in Resource File**:
-    *   **Status**: Implemented. `src/res.rc` now includes a full `VS_VERSION_INFO` block with CompanyName ("lmuFFB"), ProductVersion ("0.7.26.0"), etc.
+    *   **Status**: Implemented. `src/res.rc` now includes a full `VS_VERSION_INFO` block with CompanyName ("lmuFFB"), ProductVersion ("0.7.27.0"), etc.
 
 2.  **Verify Build Security Flags**:
     *   **Status**: Implemented. `CMakeLists.txt` updated to enforce `/GS` (Buffer Security Check), `/DYNAMICBASE` (ASLR), and `/NXCOMPAT` (DEP) for MSVC builds.

@@ -30,10 +30,7 @@ void GameConnector::_DisconnectLocked() {
         CloseHandle(m_hMapFile);
         m_hMapFile = NULL;
     }
-    if (m_hProcess) {
-        CloseHandle(m_hProcess);
-        m_hProcess = NULL;
-    }
+    m_hwndGame = NULL;
 #endif
     m_smLock.reset();
     m_connected = false;
@@ -70,15 +67,9 @@ bool GameConnector::TryConnect() {
 
     HWND hwnd = m_pSharedMemLayout->data.generic.appInfo.mAppWindow;
     if (hwnd) {
-        DWORD pid = 0;
-        GetWindowThreadProcessId(hwnd, &pid);
-        if (pid) {
-            m_processId = pid;
-            m_hProcess = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
-            if (!m_hProcess) {
-                std::cout << "[GameConnector] Note: Failed to open process handle (Error: " << GetLastError() << ")." << std::endl;
-            }
-        }
+        m_hwndGame = hwnd; // Store HWND for liveness check (IsWindow)
+        // Note: multiple threads might access shared memory, but HWND is usually stable during session.
+        // We use IsWindow(m_hwndGame) instead of OpenProcess to avoid AV heuristics flagging "Process Access".
     }
 
     m_connected = true;
@@ -109,9 +100,9 @@ bool GameConnector::IsConnected() const {
   if (!m_connected.load(std::memory_order_relaxed)) return false;
 
 #ifdef _WIN32
-  if (m_hProcess) {
-    DWORD wait = WaitForSingleObject(m_hProcess, 0);
-    if (wait == WAIT_OBJECT_0 || wait == WAIT_FAILED) {
+  if (m_hwndGame) {
+    if (!IsWindow(m_hwndGame)) {
+      // Window is gone, game likely exited
       const_cast<GameConnector*>(this)->_DisconnectLocked();
       return false;
     }

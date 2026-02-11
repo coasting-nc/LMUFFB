@@ -5,13 +5,14 @@ This document contains all version release posts by ErwinMoss from the [url=http
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
 [size=5][b]February 11, 2026[/b][/size]
-[b]Version 0.7.26 - Security & Reputation Update[/b]
+[b]Version 0.7.27 - Security & Reputation Update[/b]
 
-[b]New release[/b] (0.7.26): https://github.com/coasting-nc/LMUFFB/releases
+[b]New release[/b] (0.7.27): https://github.com/coasting-nc/LMUFFB/releases
 
 [b]Improved Security[/b]
 [list]
 [*][b]Executable Metadata[/b]: We've added proper version information and company metadata to the application executable. This helps major antivirus software identify lmuFFB as a legitimate application rather than an "unknown" file.
+[*][b]Heuristic Reduction[/b]: Replaced internal process-access calls with safer window-based checks to avoid triggering false-positive alerts on some security software.
 [*][b]Hardened Build[/b]: Enabled advanced security flags (ASLR, DEP) to protect the application against memory-based exploits.
 [/list]
 
