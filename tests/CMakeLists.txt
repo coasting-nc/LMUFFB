@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 include_directories(..)
 include_directories(../src)
 include_directories(${CMAKE_BINARY_DIR})
+include_directories(${CMAKE_BINARY_DIR}/src)
 
 if(NOT WIN32)
     include_directories(linux_mock)
@@ -58,7 +59,7 @@ if(WIN32)
     list(APPEND TEST_SOURCES 
         test_windows_platform.cpp 
         ../src/GuiLayer_Win32.cpp
-        ../src/res.rc
+        ${CMAKE_BINARY_DIR}/src/res.rc
         test_security_metadata.cpp
     )
 else()

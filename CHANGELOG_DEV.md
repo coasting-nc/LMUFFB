@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.30] - 2026-02-11
+### Improved
+- **Single Source of Truth Versioning**:
+  - Automated the versioning process using CMake. The `VERSION` file is now the single source of truth for the entire project.
+  - Eliminated manual updates for `src/Version.h` and `src/res.rc`. These files are now automatically generated in the build directory during the configuration step.
+  - Keeps the source tree clean and prevents desynchronization between binary metadata and application logic.
+- **AMD Hardware Diagnostics (v0.7.29 Implementation)**:
+  - Finalized the deployment of the persistent `Logger` system to help troubleshoot AMD driver crashes.
+
+## [0.7.29] - 2026-02-11
+### Added
+- **Persistent Debug Logging**:
+  - Implemented a high-reliability `Logger` system that writes critical system events to `lmuffb_debug.log`.
+  - **Crash Resilience**: The log file is flushed to disk after every single line, ensuring diagnostic data is preserved even in the event of a full GPU driver hang or system reset.
+  - **Hardware Instrumentation**: Added detailed logging for D3D11 device creation, swap chain resizing, and Win32 window management to isolate potential conflicts with AMD Adrenalin drivers.
+- **Shared Memory Diagnostics**: Added detailed Windows error code logging for shared memory mapping failures.
+
 ## [0.7.28] - 2026-02-11
 ### Fixed
 - **GUI Tooltip Restoration**:

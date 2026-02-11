@@ -69,6 +69,23 @@ endif()
 
 # Read Version
 file(STRINGS "VERSION" LMUFFB_VERSION)
+
+# Parse version for Resource File (e.g. 0.7.29 -> 0,7,29,0)
+string(REPLACE "." ";" VERSION_LIST ${LMUFFB_VERSION})
+list(GET VERSION_LIST 0 VERSION_MAJOR)
+list(GET VERSION_LIST 1 VERSION_MINOR)
+list(GET VERSION_LIST 2 VERSION_PATCH)
+set(LMUFFB_VERSION_STR "${LMUFFB_VERSION}")
+set(LMUFFB_VERSION_COMMA "${VERSION_MAJOR},${VERSION_MINOR},${VERSION_PATCH},0")
+
+# Auto-generate versioned files in the BUILD directory
+# This keeps the source tree clean and ensures a single source of truth.
+configure_file(src/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/src/Version.h @ONLY)
+if(WIN32)
+    configure_file(src/res.rc.in ${CMAKE_CURRENT_BINARY_DIR}/src/res.rc @ONLY)
+endif()
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/src)
 add_definitions(-DLMUFFB_VERSION="${LMUFFB_VERSION}")
 
 # Tests
@@ -85,7 +102,7 @@ set(APP_SOURCES
 )
 
 if(WIN32)
-    list(APPEND APP_SOURCES src/GuiLayer_Win32.cpp src/res.rc)
+    list(APPEND APP_SOURCES src/GuiLayer_Win32.cpp ${CMAKE_CURRENT_BINARY_DIR}/src/res.rc)
 else()
     list(APPEND APP_SOURCES src/GuiLayer_Linux.cpp)
 endif()

@@ -51,5 +51,26 @@ I have reviewed the codebase with a focus on potential GPU/Driver conflict point
     -   Ask user to disable "Always on Top".
     -   Check `lmuffb_debug.log` after the next crash.
 
-## Proposed Action Plan
-I will implement a new `Logger` class and instrument the codebase to capture the necessary debug information.
+## Actions Implemented (v0.7.29)
+1.  **Added Persistent Logging**:
+    -   Implemented `Logger` class (singleton) in `src/Logger.h`.
+    -   Logs are written to `lmuffb_debug.log` in the application directory.
+    -   **Critical**: Log file is flushed after every line to ensure data is captured even during a hard crash/blue screen.
+
+2.  **Instrumented Codebase**:
+    -   **Main Loop**: Logs startup version, mode (Headless vs GUI), and clean shutdown.
+    -   **DirectX 11**: Logs device creation success/failure, HRESULT error codes, and detected feature level.
+    -   **Window Management**: Logs `CreateWindow` handle and `ResizeBuffers` events.
+    -   **Shared Memory**: Logs `MapViewOfFile` errors (with Windows Error Codes) and connection status.
+
+## Instructions for User Diagnosis
+To diagnose the specific AMD crash, please ask the user to:
+
+1.  **Update to the latest build (v0.7.29+)**.
+2.  **Reproduce the crash**.
+3.  **Send the `lmuffb_debug.log` file** located in the same folder as `LMUFFB.exe`.
+
+### What to look for in the log:
+-   **Last Entry**: If the log ends abruptly during `ResizeBuffers`, it indicates a swap chain issue (common with TDR).
+-   **Error Codes**: Look for non-zero error codes in `D3D11CreateDeviceAndSwapChain`.
+-   **Connection Loop**: If there's a flood of "Connected/Disconnected" messages, it might be a shared memory lock contention issue causing a freeze.
