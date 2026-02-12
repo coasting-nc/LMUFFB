@@ -105,7 +105,8 @@ If `mSuspForce` is missing (encrypted content), tire load is estimated from chas
 1.  **Lateral G Force ($F_{\text{sop-base}}$)**:
     *   **Input**: `mLocalAccel.x` (Clamped to **+/- 5.0 G**).
     *   **Smoothing**: Time-Corrected LPF ($\tau \approx 0.0225 - 0.1\text{s}$ mapped from scalar).
-    *   **Formula**: $G_{\text{smooth}} \times K_{\text{sop}} \times K_{\text{sop-scale}} \times K_{\text{decouple}}$.
+    *   **Formula**: $-G_{\text{smooth}} \times K_{\text{sop}} \times K_{\text{sop-scale}} \times K_{\text{decouple}}$.
+    *   **Note**: Inverted in v0.7.34 to match DirectInput conventions (Right Turn -> Negative Pull).
 
     *   Amplifies the SoP force when the car is oversteering (Front Grip > Rear Grip).
     *   **Condition**: `if (FrontGrip > RearGrip) AND (!SlopeDetectionEnabled)`
@@ -162,12 +163,12 @@ If `mSuspForce` is missing (encrypted content), tire load is estimated from chas
 *   **Scrub Drag (Fade-In)**:
     *   Adds constant resistance when sliding laterally.
     *   **Coordinate Note**:
-        *   Sliding **Left** (+Vel) requires force **Right**.
+        *   Sliding **Left** (+Vel) requires friction force to the **Right**.
         *   LMU reports **+X = Left**.
         *   DirectInput requires **+Force = Right**.
-        *   Therefore: `DragDir = -1.0` (Inverted).
+        *   Therefore: `DragDir = 1.0` (Matching sign).
     *   **Fade-In**: Linear scale 0% to 100% between **0.0 m/s** and **0.5 m/s** lateral velocity.
-    *   **Formula**: `(SideVel > 0 ? -1 : 1) * K_drag * 5.0Nm * Fade * Scale`.
+    *   **Formula**: `(SideVel > 0 ? 1 : -1) * K_drag * 5.0Nm * Fade * Scale`.
 
 **3. Traction Loss (Wheel Spin)**
 *   **Trigger**: Throttle > 5% and SlipRatio > 0.2 (20%).
@@ -217,7 +218,14 @@ Applied at the very end of the pipeline to `F_norm` (before clipping).
     *   $F_{\text{final}} = \text{Sign}(F) \times K_{\text{min-force}}$.
 *   **Purpose**: Ensures small forces are always strong enough to overcome the physical friction/deadzone of gear/belt wheels.
 
-**5. Speed Gate (Low Speed Silence)**
+**5. FFB Safety Gating (Issue #79)**
+Prevents violent jolts when crossing the finish line or losing car control.
+*   **Logic**: FFB is muted (Output = 0.0) if any of the following conditions are met:
+    *   Car is NOT under player control (`mControl != 0`).
+    *   Race session has finished, DNF'd, or DQ'd (`mFinishStatus != 0`).
+    *   Vehicle is not the player's vehicle (`mIsPlayer == false`).
+
+**6. Speed Gate (Low Speed Silence)**
 Prevents violent oscillation at limits/standstill (v0.7.2).
 *   **Algorithm**: Smoothstep (Hermite Interpolation) S-Curve.
 *   **Range**:

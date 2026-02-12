@@ -40,6 +40,7 @@ set(TEST_SOURCES
     test_ffb_stability.cpp
     test_gui_tooltips_presence.cpp
     test_ffb_logic.cpp
+    test_ffb_safety.cpp
 
     # Core Application Logic (Now with Linux Mocks)
     ../src/Config.cpp

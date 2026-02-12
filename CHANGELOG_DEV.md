@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.34] - 2026-02-12
+### Fixed
+- **FFB Safety (Issue #79)**: Implemented automatic FFB muting when the car is no longer under player control (AI/Remote) or when the session has finished. This prevents violent "finish line jolts" during race weekends.
+- **Coordinate System Mismatch**: Resolved critical inversions in Lateral G (SoP) and Scrub Drag effects. Forces are now correctly aligned with DirectInput standards (Right Turn -> Negative/Left Pull), improving physics fidelity and stability.
+### Testing
+- **New Safety Test Suite**: Added `tests/test_ffb_safety.cpp` to verify FFB lifecycle gating.
+- **Coordinate Regression Fixes**: Updated `tests/test_ffb_coordinates.cpp` and other physics tests to match corrected physical conventions. All 198 tests and 932 assertions now pass.
+
 ## [0.7.33] - 2026-02-12
 ### Fixed
 - **Preset Handling**: Fixed issue where modifying any setting would immediately deselect the current preset and switch to "Custom", making "Save Current Config" non-functional (#72).

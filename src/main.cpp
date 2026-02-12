@@ -72,12 +72,14 @@ void FFBThread() {
             if (in_realtime && !is_stale && g_localData.telemetry.playerHasVehicle) {
                 uint8_t idx = g_localData.telemetry.playerVehicleIdx;
                 if (idx < 104) {
+                    auto& scoring = g_localData.scoring.vehScoringInfo[idx];
                     TelemInfoV01* pPlayerTelemetry = &g_localData.telemetry.telemInfo[idx];
-                    {
-                        std::lock_guard<std::mutex> lock(g_engine_mutex);
+
+                    std::lock_guard<std::mutex> lock(g_engine_mutex);
+                    if (g_engine.IsFFBAllowed(scoring)) {
                         force = g_engine.calculate_force(pPlayerTelemetry);
+                        should_output = true;
                     }
-                    should_output = true;
                 }
             }
             
