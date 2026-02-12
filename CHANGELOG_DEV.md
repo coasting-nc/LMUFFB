@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.28] - 2026-02-12
+### Fixed
+- **ImGui ID Conflict**: Fixed "2 visible wheels with conflicting ID" error by using `PushID`/`PopID` in device and preset selection loops. This ensures unique identifier scopes for UI elements even when they share identical names. (#70)
+
+### Testing
+- **GUI Regression Test**: Added automated verification to ensure unique ImGui IDs are generated for identical labels when scoped with `PushID`.
+
 ## [0.7.27] - 2026-02-11
 ### Security & Privacy
 - **Heuristic Reduction**:

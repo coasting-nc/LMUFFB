@@ -4,6 +4,18 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]February 12, 2026[/b][/size]
+[b]Version 0.7.28 - UI Stability Update[/b]
+
+[b]New release[/b] (0.7.28): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]ImGui ID Conflict[/b]: Resolved the error "2 visible wheels with conflicting ID" that occurred when multiple FFB devices or presets had identical names. The app now correctly assigns unique internal identifiers to all selectable items. (#70)
+[/list]
+
+---
+
 [size=5][b]February 11, 2026[/b][/size]
 [b]Version 0.7.27 - Security & Reputation Update[/b]
 
