@@ -12,6 +12,29 @@ git branch -d <branch name>
 And delete it from remote if it exists there:
 git push origin --delete <branch name>
 
+# Other commands
+
+Update your remote references:
+git fetch origin
+
+git merge --abort
+git merge -X theirs <branch name>
+
+# More info
+
+Is "Merging Main into Feature" a good practice?
+
+Yes, it is a very common and recommended way to proceed. It is often called a "back-merge." It allows you to:
+
+* Resolve conflicts in the safety of your feature branch without affecting the stable main.
+* Ensure your new code is compatible with the latest updates from other developers.
+* Run tests against the combined code before the final integration.
+
+The "Better" Way: Git Rebase Many professional teams prefer `git rebase main` while on the feature branch instead of merging.
+
+How it works: It takes your feature commits, "lifts" them up, updates your branch base to the latest main, and then reapplies your commits on top.
+Result: You get a perfectly linear history without "Merge branch 'main' into..." commits cluttering the log.
+
 # Git Commands for Merging a PR into Main
 
 ## 1. Merge into Main
