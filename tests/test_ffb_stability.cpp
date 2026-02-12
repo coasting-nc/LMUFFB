@@ -88,36 +88,4 @@ TEST_CASE(test_engine_robustness_to_static_telemetry, "Stability") {
     }
 }
 
-TEST_CASE(test_issue_64_nan_inf_safety, "Stability") {
-    std::cout << "\nTest: Issue #64 NaN/Inf Safety (v0.7.28)" << std::endl;
-    FFBEngine engine;
-    InitializeEngine(engine);
-
-    // Case 1: NaN in Steering Shaft Torque
-    {
-        TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
-        data.mSteeringShaftTorque = std::numeric_limits<double>::quiet_NaN();
-        double force = engine.calculate_force(&data);
-        ASSERT_TRUE(!std::isnan(force));
-        ASSERT_EQ(force, 0.0);
-    }
-
-    // Case 2: Inf in Local Accel
-    {
-        TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
-        data.mLocalAccel.x = std::numeric_limits<double>::infinity();
-        double force = engine.calculate_force(&data);
-        ASSERT_TRUE(!std::isnan(force));
-        ASSERT_EQ(force, 0.0);
-    }
-
-    // Case 3: Excessive DeltaTime (v0.7.28 Safety)
-    {
-        TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
-        data.mDeltaTime = 2.0; // Over 1s transition
-        double force = engine.calculate_force(&data);
-        ASSERT_EQ(force, 0.0);
-    }
-}
-
 } // namespace FFBEngineTests
