@@ -16,6 +16,9 @@ std::mutex g_engine_mutex;
 namespace FFBEngineTests { 
     extern int g_tests_passed; 
     extern int g_tests_failed; 
+    extern int g_test_cases_run;
+    extern int g_test_cases_passed;
+    extern int g_test_cases_failed;
     void Run();
     void ParseTagArguments(int argc, char* argv[]);
 }
@@ -49,8 +52,8 @@ int main(int argc, char* argv[]) {
     std::cout << "\n==============================================" << std::endl;
     std::cout << "           COMBINED TEST SUMMARY              " << std::endl;
     std::cout << "==============================================" << std::endl;
-    std::cout << "  TOTAL PASSED : " << total_passed << std::endl;
-    std::cout << "  TOTAL FAILED : " << total_failed << std::endl;
+    std::cout << "  TEST CASES   : " << FFBEngineTests::g_test_cases_passed << "/" << FFBEngineTests::g_test_cases_run << std::endl;
+    std::cout << "  ASSERTIONS   : " << total_passed << " passed, " << total_failed << " failed" << std::endl;
     std::cout << "==============================================" << std::endl;
 
     // Cleanup artifacts

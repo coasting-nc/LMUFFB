@@ -1,4 +1,8 @@
 #include "GameConnector.h"
+#include "Logger.h"
+#ifndef _WIN32
+#include "lmu_sm_interface/LinuxMock.h"
+#endif
 #include "lmu_sm_interface/SafeSharedMemoryLock.h"
 #include <iostream>
 
@@ -21,7 +25,7 @@ void GameConnector::Disconnect() {
 }
 
 void GameConnector::_DisconnectLocked() {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(HEADLESS_GUI)
     if (m_pSharedMemLayout) {
         UnmapViewOfFile(m_pSharedMemLayout);
         m_pSharedMemLayout = nullptr;
@@ -44,7 +48,7 @@ bool GameConnector::TryConnect() {
     // Ensure we don't leak handles from a previous partial/failed attempt
     _DisconnectLocked();
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(HEADLESS_GUI)
     m_hMapFile = OpenFileMappingA(FILE_MAP_READ, FALSE, LMU_SHARED_MEMORY_FILE);
     
     if (m_hMapFile == NULL) {
@@ -54,6 +58,7 @@ bool GameConnector::TryConnect() {
     m_pSharedMemLayout = (SharedMemoryLayout*)MapViewOfFile(m_hMapFile, FILE_MAP_READ, 0, 0, sizeof(SharedMemoryLayout));
     if (m_pSharedMemLayout == NULL) {
         std::cerr << "[GameConnector] Could not map view of file." << std::endl;
+        Logger::Get().LogWin32Error("MapViewOfFile", GetLastError());
         _DisconnectLocked();
         return false;
     }
@@ -61,6 +66,7 @@ bool GameConnector::TryConnect() {
     m_smLock = SafeSharedMemoryLock::MakeSafeSharedMemoryLock();
     if (!m_smLock.has_value()) {
         std::cerr << "[GameConnector] Failed to init LMU Shared Memory Lock" << std::endl;
+        Logger::Get().Log("Failed to init SafeSharedMemoryLock.");
         _DisconnectLocked();
         return false;
     }
@@ -75,6 +81,7 @@ bool GameConnector::TryConnect() {
     m_connected = true;
     m_lastUpdateLocalTime = std::chrono::steady_clock::now();
     std::cout << "[GameConnector] Connected to LMU Shared Memory." << std::endl;
+    Logger::Get().Log("Connected to LMU Shared Memory.");
     return true;
 #else
     return false;
@@ -82,7 +89,7 @@ bool GameConnector::TryConnect() {
 }
 
 bool GameConnector::CheckLegacyConflict() {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(HEADLESS_GUI)
     HANDLE hLegacy = OpenFileMappingA(FILE_MAP_READ, FALSE, LEGACY_SHARED_MEMORY_NAME);
     if (hLegacy) {
         std::cout << "[Warning] Legacy rFactor 2 Shared Memory Plugin detected. This may conflict with LMU 1.2 data." << std::endl;
@@ -99,7 +106,7 @@ bool GameConnector::IsConnected() const {
   std::lock_guard<std::mutex> lock(m_mutex);
   if (!m_connected.load(std::memory_order_relaxed)) return false;
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(HEADLESS_GUI)
   if (m_hwndGame) {
     if (!IsWindow(m_hwndGame)) {
       // Window is gone, game likely exited

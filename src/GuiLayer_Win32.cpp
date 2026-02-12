@@ -1,5 +1,7 @@
 #include "GuiLayer.h"
+#include "GuiPlatform.h"
 #include "Version.h"
+#include "Logger.h"
 #include "Config.h"
 #include <windows.h>
 #include <commdlg.h>
@@ -42,73 +44,90 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 extern std::atomic<bool> g_running;
 
-void ResizeWindowPlatform(int x, int y, int w, int h) {
-    if (w < MIN_WINDOW_WIDTH) w = MIN_WINDOW_WIDTH;
-    if (h < MIN_WINDOW_HEIGHT) h = MIN_WINDOW_HEIGHT;
-    ::SetWindowPos(g_hwnd, NULL, x, y, w, h, SWP_NOZORDER | SWP_NOACTIVATE);
-}
+class Win32GuiPlatform : public IGuiPlatform {
+public:
+    void SetAlwaysOnTop(bool enabled) override {
+        if (!g_hwnd) return;
+        HWND insertAfter = enabled ? HWND_TOPMOST : HWND_NOTOPMOST;
+        ::SetWindowPos(g_hwnd, insertAfter, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+    }
 
-void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) {
-    RECT rect;
-    if (::GetWindowRect(g_hwnd, &rect)) {
-        Config::win_pos_x = rect.left;
-        Config::win_pos_y = rect.top;
-        int w = rect.right - rect.left;
-        int h = rect.bottom - rect.top;
+    void ResizeWindow(int x, int y, int w, int h) override {
         if (w < MIN_WINDOW_WIDTH) w = MIN_WINDOW_WIDTH;
         if (h < MIN_WINDOW_HEIGHT) h = MIN_WINDOW_HEIGHT;
-        if (is_graph_mode) {
-            Config::win_w_large = w;
-            Config::win_h_large = h;
-        } else {
-            Config::win_w_small = w;
-            Config::win_h_small = h;
+        ::SetWindowPos(g_hwnd, NULL, x, y, w, h, SWP_NOZORDER | SWP_NOACTIVATE);
+    }
+
+    void SaveWindowGeometry(bool is_graph_mode) override {
+        RECT rect;
+        if (::GetWindowRect(g_hwnd, &rect)) {
+            Config::win_pos_x = rect.left;
+            Config::win_pos_y = rect.top;
+            int w = rect.right - rect.left;
+            int h = rect.bottom - rect.top;
+            if (w < MIN_WINDOW_WIDTH) w = MIN_WINDOW_WIDTH;
+            if (h < MIN_WINDOW_HEIGHT) h = MIN_WINDOW_HEIGHT;
+            if (is_graph_mode) {
+                Config::win_w_large = w;
+                Config::win_h_large = h;
+            } else {
+                Config::win_w_small = w;
+                Config::win_h_small = h;
+            }
         }
     }
-}
 
-void SetWindowAlwaysOnTopPlatform(bool enabled) {
-    if (!g_hwnd) return;
-    HWND insertAfter = enabled ? HWND_TOPMOST : HWND_NOTOPMOST;
-    ::SetWindowPos(g_hwnd, insertAfter, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
-}
-
-bool OpenPresetFileDialogPlatform(std::string& outPath) {
-    char filename[MAX_PATH] = "";
-    OPENFILENAMEA ofn;
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = g_hwnd;
-    ofn.lpstrFilter = "Preset Files (*.ini)\0*.ini\0All Files (*.*)\0*.*\0";
-    ofn.lpstrFile = filename;
-    ofn.nMaxFile = MAX_PATH;
-    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-    ofn.lpstrDefExt = "ini";
-    if (GetOpenFileNameA(&ofn)) {
-        outPath = filename;
-        return true;
+    bool OpenPresetFileDialog(std::string& outPath) override {
+        char filename[MAX_PATH] = "";
+        OPENFILENAMEA ofn;
+        ZeroMemory(&ofn, sizeof(ofn));
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = g_hwnd;
+        ofn.lpstrFilter = "Preset Files (*.ini)\0*.ini\0All Files (*.*)\0*.*\0";
+        ofn.lpstrFile = filename;
+        ofn.nMaxFile = MAX_PATH;
+        ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+        ofn.lpstrDefExt = "ini";
+        if (GetOpenFileNameA(&ofn)) {
+            outPath = filename;
+            return true;
+        }
+        return false;
     }
-    return false;
-}
 
-bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) {
-    char filename[MAX_PATH] = "";
-    strncpy_s(filename, defaultName.c_str(), _TRUNCATE);
-    OPENFILENAMEA ofn;
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = g_hwnd;
-    ofn.lpstrFilter = "Preset Files (*.ini)\0*.ini\0All Files (*.*)\0*.*\0";
-    ofn.lpstrFile = filename;
-    ofn.nMaxFile = MAX_PATH;
-    ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
-    ofn.lpstrDefExt = "ini";
-    if (GetSaveFileNameA(&ofn)) {
-        outPath = filename;
-        return true;
+    bool SavePresetFileDialog(std::string& outPath, const std::string& defaultName) override {
+        char filename[MAX_PATH] = "";
+        strncpy_s(filename, defaultName.c_str(), _TRUNCATE);
+        OPENFILENAMEA ofn;
+        ZeroMemory(&ofn, sizeof(ofn));
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = g_hwnd;
+        ofn.lpstrFilter = "Preset Files (*.ini)\0*.ini\0All Files (*.*)\0*.*\0";
+        ofn.lpstrFile = filename;
+        ofn.nMaxFile = MAX_PATH;
+        ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
+        ofn.lpstrDefExt = "ini";
+        if (GetSaveFileNameA(&ofn)) {
+            outPath = filename;
+            return true;
+        }
+        return false;
     }
-    return false;
-}
+
+    void* GetWindowHandle() override {
+        return (void*)g_hwnd;
+    }
+};
+
+static Win32GuiPlatform g_platform;
+IGuiPlatform& GetGuiPlatform() { return g_platform; }
+
+// Compatibility Helpers
+void ResizeWindowPlatform(int x, int y, int w, int h) { GetGuiPlatform().ResizeWindow(x, y, w, h); }
+void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) { GetGuiPlatform().SaveWindowGeometry(is_graph_mode); }
+void SetWindowAlwaysOnTopPlatform(bool enabled) { GetGuiPlatform().SetAlwaysOnTop(enabled); }
+bool OpenPresetFileDialogPlatform(std::string& outPath) { return GetGuiPlatform().OpenPresetFileDialog(outPath); }
+bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return GetGuiPlatform().SavePresetFileDialog(outPath, defaultName); }
 
 
 bool GuiLayer::Init() {
@@ -127,8 +146,16 @@ bool GuiLayer::Init() {
         pos_x = 100; pos_y = 100;
     }
     g_hwnd = ::CreateWindowW(wc.lpszClassName, title.c_str(), WS_OVERLAPPEDWINDOW, pos_x, pos_y, start_w, start_h, NULL, NULL, wc.hInstance, NULL);
+    if (!g_hwnd) {
+        Logger::Get().LogWin32Error("CreateWindowW", GetLastError());
+        return false;
+    }
+    Logger::Get().Log("Window Created: %p", g_hwnd);
+
     if (!CreateDeviceD3D(g_hwnd)) {
-        CleanupDeviceD3D(); ::UnregisterClassW(wc.lpszClassName, wc.hInstance); return false;
+        CleanupDeviceD3D(); ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
+        Logger::Get().Log("Failed to create D3D Device.");
+        return false;
     }
     ::ShowWindow(g_hwnd, SW_SHOWDEFAULT); ::UpdateWindow(g_hwnd);
     if (Config::m_always_on_top) SetWindowAlwaysOnTopPlatform(true);
@@ -183,6 +210,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_SIZE:
         if (g_pd3dDevice != NULL && wParam != SIZE_MINIMIZED) {
+            Logger::Get().Log("ResizeBuffers: %d x %d", LOWORD(lParam), HIWORD(lParam));
             CleanupRenderTarget();
             g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, 0);
             CreateRenderTarget();
@@ -204,7 +232,12 @@ bool CreateDeviceD3D(HWND hWnd) {
     sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH; sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     sd.OutputWindow = hWnd; sd.SampleDesc.Count = 1; sd.SampleDesc.Quality = 0; sd.Windowed = TRUE; sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
     D3D_FEATURE_LEVEL featureLevel; const D3D_FEATURE_LEVEL featureLevelArray[2] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0, };
-    if (D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext) != S_OK) return false;
+    HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
+    if (hr != S_OK) {
+        Logger::Get().LogWin32Error("D3D11CreateDeviceAndSwapChain", hr);
+        return false;
+    }
+    Logger::Get().Log("D3D11 Device Created. Feature Level: 0x%X", featureLevel);
     CreateRenderTarget(); return true;
 }
 

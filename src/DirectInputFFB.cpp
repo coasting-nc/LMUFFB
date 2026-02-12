@@ -31,7 +31,7 @@ DirectInputFFB::DirectInputFFB() {}
 
 // NEW: Helper to get foreground window title for diagnostics - REMOVED for Security/Privacy
 std::string DirectInputFFB::GetActiveWindowTitle() {
-    return "Window Tracking Disabled"; 
+    return "Window Tracking Disabled";
 }
 
 // NEW: Helper Implementations for GUID

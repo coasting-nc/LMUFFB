@@ -8,9 +8,12 @@ set(CMAKE_CXX_STANDARD 17)
 include_directories(..)
 include_directories(../src)
 include_directories(${CMAKE_BINARY_DIR})
+include_directories(${CMAKE_BINARY_DIR}/src)
 
 if(NOT WIN32)
     include_directories(linux_mock)
+    include_directories(../src/lmu_sm_interface/linux_mock)
+    include_directories(../src/lmu_sm_interface)
 endif()
 
 # Combined Test Executable
@@ -35,6 +38,9 @@ set(TEST_SOURCES
     test_versioned_presets.cpp
     test_preset_improvements.cpp
     test_ffb_stability.cpp
+    test_gui_tooltips_presence.cpp
+    test_ffb_logic.cpp
+    test_ffb_safety.cpp
 
     # Core Application Logic (Now with Linux Mocks)
     ../src/Config.cpp
@@ -57,7 +63,7 @@ if(WIN32)
     list(APPEND TEST_SOURCES 
         test_windows_platform.cpp 
         ../src/GuiLayer_Win32.cpp
-        ../src/res.rc
+        ${CMAKE_BINARY_DIR}/src/res.rc
         test_security_metadata.cpp
     )
 else()
@@ -66,6 +72,8 @@ else()
     list(APPEND TEST_SOURCES ../src/GuiLayer_Linux.cpp)
     if(BUILD_HEADLESS)
         add_definitions(-DHEADLESS_GUI)
+        # Enable some Windows-style tests on Linux using mocks
+        list(APPEND TEST_SOURCES test_windows_platform.cpp)
     endif()
 endif()
 

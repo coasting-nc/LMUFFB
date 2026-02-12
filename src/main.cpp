@@ -13,6 +13,7 @@
 #include "DirectInputFFB.h"
 #include "GameConnector.h"
 #include "Version.h"
+#include "Logger.h"    // Added Logger
 #include <optional>
 #include <atomic>
 #include <mutex>
@@ -71,12 +72,14 @@ void FFBThread() {
             if (in_realtime && !is_stale && g_localData.telemetry.playerHasVehicle) {
                 uint8_t idx = g_localData.telemetry.playerVehicleIdx;
                 if (idx < 104) {
+                    auto& scoring = g_localData.scoring.vehScoringInfo[idx];
                     TelemInfoV01* pPlayerTelemetry = &g_localData.telemetry.telemInfo[idx];
-                    {
-                        std::lock_guard<std::mutex> lock(g_engine_mutex);
+
+                    std::lock_guard<std::mutex> lock(g_engine_mutex);
+                    if (g_engine.IsFFBAllowed(scoring)) {
                         force = g_engine.calculate_force(pPlayerTelemetry);
+                        should_output = true;
                     }
-                    should_output = true;
                 }
             }
             
@@ -101,6 +104,12 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "Starting lmuFFB (C++ Port)..." << std::endl;
+    // Initialize persistent debug logging for crash analysis
+    Logger::Get().Init("lmuffb_debug.log");
+    Logger::Get().Log("Application Started. Version: %s", LMUFFB_VERSION);
+    if (headless) Logger::Get().Log("Mode: HEADLESS");
+    else Logger::Get().Log("Mode: GUI");
+
     Preset::ApplyDefaultsToEngine(g_engine);
     Config::Load(g_engine);
 
@@ -132,9 +141,18 @@ int main(int argc, char* argv[]) {
     }
     
     Config::Save(g_engine);
-    if (!headless) GuiLayer::Shutdown(g_engine);
-    if (ffb_thread.joinable()) ffb_thread.join();
+    if (!headless) {
+        Logger::Get().Log("Shutting down GUI...");
+        GuiLayer::Shutdown(g_engine);
+    }
+    if (ffb_thread.joinable()) {
+        Logger::Get().Log("Stopping FFB Thread...");
+        g_running = false; // Ensure loop breaks
+        ffb_thread.join();
+        Logger::Get().Log("FFB Thread Stopped.");
+    }
     DirectInputFFB::Get().Shutdown();
+    Logger::Get().Log("Main Loop Ended. Clean Exit.");
     
     return 0;
 }

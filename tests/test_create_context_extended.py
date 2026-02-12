@@ -29,7 +29,7 @@ class TestCreateContextExtended(unittest.TestCase):
             DEFAULT_INCLUDE_MAIN_CODE = True
             DEFAULT_INCLUDE_MAKEFILES = True
             DEFAULT_TEST_EXAMPLES_ONLY = False
-            
+
             injected = list(cli_args)
             if "--include-tests" not in injected and "--exclude-tests" not in injected:
                 injected.append("--include-tests" if DEFAULT_INCLUDE_TESTS else "--exclude-tests")

@@ -5,13 +5,64 @@ This document contains all version release posts by ErwinMoss from the [url=http
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
 [size=5][b]February 12, 2026[/b][/size]
-[b]Version 0.7.28 - UI Stability Update[/b]
+[b]Version 0.7.35 - UI Stability Update[/b]
+
+[b]New release[/b] (0.7.35): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]ImGui ID Conflict[/b]: Resolved the error "2 visible wheels with conflicting ID" that occurred when multiple FFB devices or presets had identical names. The app now correctly assigns unique internal identifiers to all selectable items. (#70)
+[/list]
+
+---
+
+[size=5][b]February 12, 2026[/b][/size]
+[b]Version 0.7.34 - FFB Safety Update[/b]
+
+[b]New release[/b] (0.7.34): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]FFB Safety[/b]: Implemented automatic FFB muting when the car is no longer under player control (AI/Remote) or when the session has finished. This prevents violent "finish line jolts" during race weekends. (#79)
+[/list]
+
+---
+
+[size=5][b]February 12, 2026[/b][/size]
+[b]Version 0.7.33 - Preset Handling Fix & Cleanup[/b]
+
+[b]New release[/b] (0.7.33): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]Preset Selection Stability[/b]: Fixed an issue where changing any setting would immediately switch the selected preset to "Custom." This now correctly maintains your current preset selection, making it much easier to fine-tune and update existing profiles.
+[*][b]"Save Current Config" Restoration[/b]: The "Save Current Config" button now correctly updates the active user preset, allowing you to persist your changes with a single click.
+[/list]
+
+[b]Improved[/b]
+[list]
+[*][b]Dirty State Indication[/b]: Added a clearer dirty indicator (*) next to the preset name when settings have been modified from their saved state.
+[*][b]Code Cleanup[/b]: Significantly simplified the internal logic for detecting modified settings, making the app more robust and easier to maintain as we add new FFB parameters.
+[/list]
+
+---
+
+[size=5][b]February 11, 2026[/b][/size]
+[b]Version 0.7.28 - Tooltip Restoration & UX Update[/b]
 
 [b]New release[/b] (0.7.28): https://github.com/coasting-nc/LMUFFB/releases
 
 [b]Fixed[/b]
 [list]
-[*][b]ImGui ID Conflict[/b]: Resolved the error "2 visible wheels with conflicting ID" that occurred when multiple FFB devices or presets had identical names. The app now correctly assigns unique internal identifiers to all selectable items. (#70)
+[*][b]Tooltip Restoration[/b]: We've restored over 40 missing tooltips that were accidentally removed during recent updates. Every setting now has its detailed explanation and tuning guide back where it belongs.
+[*][b]Modern Feature Documentation[/b]: Added new descriptions for newer features like Slope Detection stability, Lockup Prediction, and the dynamic signal filters.
+[*][b]100% Coverage[/b]: Verified that every single button and interactive element in the app now has a helpful tooltip. No more guessing what a button does!
+[/list]
+
+[b]Improved[/b]
+[list]
+[*][b]Easier Discovery[/b]: Tooltips now appear when you hover over the [b]Parameter Label[/b] as well as the slider/checkbox. This makes it much easier to quickly see what a setting does without having to aim precisely for the input field.
+[*][b]Guided Tuning[/b]: Standardized the "Fine Tune" instructions (Arrow Keys / Ctrl+Click) across the entire interface.
 [/list]
 
 ---

@@ -67,6 +67,16 @@ def test_analyze_slope_stability_unstable(unstable_df):
     assert 'binary_residence' in results
     assert 'derivative_energy_ratio' in results
 
+    # New metrics checks
+    assert 'zero_crossing_rate' in results
+    assert 'binary_residence' in results
+    assert 'derivative_energy_ratio' in results
+
+    # New metrics checks
+    assert 'zero_crossing_rate' in results
+    assert 'binary_residence' in results
+    assert 'derivative_energy_ratio' in results
+
 def test_detect_oscillation_events(unstable_df):
     events = detect_oscillation_events(unstable_df, threshold=2.0)
     assert len(events) >= 1

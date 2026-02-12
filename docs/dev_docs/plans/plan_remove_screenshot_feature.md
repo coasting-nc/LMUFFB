@@ -16,7 +16,7 @@ The user has reported that Windows Defender and VirusTotal scans flag the applic
 The screenshot functionality is implemented across the GUI layer with platform-specific backends:
 1.  **UI Trigger (`src/GuiLayer_Common.cpp`)**: A button "Save Screenshot" in the debug/main window triggers the `SaveCompositeScreenshotPlatform` function.
 2.  **Architecture (`src/GuiLayer.h`)**: Declares `SaveCompositeScreenshotPlatform` and `CaptureWindowToBuffer` (implicitly via usage in tests, though effectively private/helper).
-3.  **Windows Implementation (`src/GuiLayer_Win32.cpp`)**: 
+3.  **Windows Implementation (`src/GuiLayer_Win32.cpp`)**:
     *   `CaptureWindowToBuffer`: Captures a specific HWND using `PrintWindow` or `BitBlt`.
     *   `SaveCompositeScreenshotPlatform`: Orchestrates the capture of the GUI and Console windows, composites them, and uses `stb_image_write` to save as PNG.
     *   Dependencies: Includes `stb_image_write.h`.
@@ -39,7 +39,7 @@ The screenshot functionality is implemented across the GUI layer with platform-s
 
 ### 2. Remove Platform Implementation (Windows)
 *   **File:** `src/GuiLayer_Win32.cpp`
-*   **Action:** 
+*   **Action:**
     *   Remove `#include "stb_image_write.h"` and the implementation define `STB_IMAGE_WRITE_IMPLEMENTATION`.
     *   Remove `CaptureWindowToBuffer` function.
     *   Remove `SaveCompositeScreenshotPlatform` function.

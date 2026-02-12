@@ -223,9 +223,8 @@ class FFBEngine {
     // ⚠ IMPORTANT MAINTENANCE WARNING:
     // When adding new FFB parameters to this class, you MUST also update:
     // 1. Preset struct in Config.h
-    // 2. Preset::Apply() and Preset::UpdateFromEngine() in Config.h
+    // 2. Preset::Apply(), UpdateFromEngine(), and Equals() in Config.h
     // 3. Config::Save() and Config::Load() in Config.cpp
-    // 4. Config::IsEngineDirtyRelativeToPreset() in Config.cpp (for the '*' indicator)
 
 public:
     // Settings (GUI Sliders)
@@ -471,6 +470,15 @@ public:
     friend class FFBEngineTests::FFBEngineTestAccess;
 
     FFBEngine();
+
+    // v0.7.34: Safety Check for Issue #79
+    // Determines if FFB should be active based on vehicle scoring state.
+    // Mutes FFB if car is under AI control or session has finished.
+    bool IsFFBAllowed(const VehicleScoringInfoV01& scoring) const {
+        // mControl: 0 = local player, 1 = AI, 2 = Remote, -1 = None
+        // mFinishStatus: 0 = none, 1 = finished, 2 = DNF, 3 = DQ
+        return (scoring.mIsPlayer && scoring.mControl == 0 && scoring.mFinishStatus == 0);
+    }
     
     // Helper to retrieve data (Consumer)
     std::vector<FFBSnapshot> GetDebugBatch() {

@@ -2,12 +2,75 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.7.28] - 2026-02-12
+## [0.7.35] - 2026-02-12
 ### Fixed
 - **ImGui ID Conflict**: Fixed "2 visible wheels with conflicting ID" error by using `PushID`/`PopID` in device and preset selection loops. This ensures unique identifier scopes for UI elements even when they share identical names. (#70)
 
 ### Testing
 - **GUI Regression Test**: Added automated verification to ensure unique ImGui IDs are generated for identical labels when scoped with `PushID`.
+
+## [0.7.34] - 2026-02-12
+### Fixed
+- **FFB Safety (Issue #79)**: Implemented automatic FFB muting when the car is no longer under player control (AI/Remote) or when the session has finished. This prevents violent "finish line jolts" during race weekends.
+### Testing
+- **New Safety Test Suite**: Added `tests/test_ffb_safety.cpp` to verify FFB lifecycle gating.
+
+## [0.7.33] - 2026-02-12
+### Fixed
+- **Preset Handling**: Fixed issue where modifying any setting would immediately deselect the current preset and switch to "Custom", making "Save Current Config" non-functional (#72).
+### Refactored
+- **Dirty Detection**: Centralized preset comparison logic into a new `Preset::Equals` method and simplified `Config::IsEngineDirtyRelativeToPreset` (#71).
+
+## [0.7.32] - 2026-02-11
+### Improved
+- **Linux Build & Test Parity**:
+  - **Automated Dependency Management**: Fixed CMake configuration to automatically download and configure ImGui (v1.91.8) if not found locally using FetchContent. ImGui paths are now absolute, ensuring proper propagation to test subdirectories.
+  - **Platform Abstraction**: Introduced `IGuiPlatform` interface with platform-specific implementations (`Win32GuiPlatform`, `LinuxGuiPlatform`) to separate business logic from windowing APIs (Win32 vs. GLFW/Headless). This improves maintainability and enables comprehensive testing on both platforms.
+  - **Shared Memory Mocking**: Expanded `LinuxMock.h` to provide functional simulation of Windows memory-mapped files using `std::map`, enabling `GameConnector` and `SharedMemoryLock` logic to run and be tested on Linux.
+  - **Build Fix**: Resolved CMake error "Cannot find source file: vendor/imgui/imgui.cpp" by ensuring `IMGUI_DIR` uses absolute paths from `CMAKE_SOURCE_DIR`.
+  - **Test Coverage**: Enabled `test_windows_platform.cpp` on Linux builds with appropriate mocks, and ensured `test_game_connector_lifecycle` passes on both platforms.
+### Testing
+- **Cross-Platform Verification**: All 928 assertions and 197 test cases pass on Windows. Linux test infrastructure is now fully operational with the new mock layer. Correction: on Windows, there are 198 tests and 930 assertions, while on Linux there are 195 tests (3 less) and 928 assertions (2 less).
+
+## [0.7.31] - 2026-02-11
+### Improved
+- **Linux Testing & Reporting Refactor**:
+  - **Cross-Platform Logic Coverage**: Refactored the test suite to move platform-agnostic logic tests (Slider Precision, Config Persistence, Preset Management) from `test_windows_platform.cpp` to a new `test_ffb_logic.cpp`. This significantly increases Linux test coverage (~225 assertions previously skipped).
+  - **Non-Invasive Linux Mocking**: Introduced `src/lmu_sm_interface/linux_mock/windows.h` to allow third-party ISI headers to compile on Linux without modification. Reverted all invasive platform guards in vendor headers.
+  - **Enhanced Test Reporting**: The test runner now reports **Test Case counts** (Passed/Failed) in addition to individual assertions, providing a clearer high-level view of test health.
+  - **Verification**: Confirmed all 197 test cases and 928 assertions pass on Windows, slightly exceeding the previous baseline due to improved depth in logic verification.
+
+## [0.7.30] - 2026-02-11
+### Improved
+- **Single Source of Truth Versioning**:
+  - Automated the versioning process using CMake. The `VERSION` file is now the single source of truth for the entire project.
+  - Eliminated manual updates for `src/Version.h` and `src/res.rc`. These files are now automatically generated in the build directory during the configuration step.
+  - Keeps the source tree clean and prevents desynchronization between binary metadata and application logic.
+- **AMD Hardware Diagnostics (v0.7.29 Implementation)**:
+  - Finalized the deployment of the persistent `Logger` system to help troubleshoot AMD driver crashes.
+
+## [0.7.29] - 2026-02-11
+### Added
+- **Persistent Debug Logging**:
+  - Implemented a high-reliability `Logger` system that writes critical system events to `lmuffb_debug.log`.
+  - **Crash Resilience**: The log file is flushed to disk after every single line, ensuring diagnostic data is preserved even in the event of a full GPU driver hang or system reset.
+  - **Hardware Instrumentation**: Added detailed logging for D3D11 device creation, swap chain resizing, and Win32 window management to isolate potential conflicts with AMD Adrenalin drivers.
+- **Shared Memory Diagnostics**: Added detailed Windows error code logging for shared memory mapping failures.
+
+## [0.7.28] - 2026-02-11
+### Fixed
+- **GUI Tooltip Restoration**:
+  - Restored over 40 missing tooltips that were lost during recent GUI refactoring.
+  - Added new descriptive tooltips for modern features including Slope Detection stability fixes, Lockup Prediction, and advanced signal filters.
+  - **Comprehensive Coverage**: Verified via automated script and manual audit that 100% of interactive widgets (including utility buttons, checkboxes, and system controls) now have descriptive tooltips.
+### Improved
+- **Tooltip UX Enhancement**:
+  - Tooltips now trigger when hovering over a widget's **Label**, not just the input field (slider/checkbox/combo). This makes discovering parameter info much more intuitive.
+  - Standardized "Fine Tune" instructions across all sliders.
+### Testing
+- **GUI Regression Tests**:
+  - Added `test_widgets_have_tooltips` to verify that core widget functions correctly handle and render tooltip strings.
+  - Hardened `GuiWidgets` logic to prevent future regressions.
 
 ## [0.7.27] - 2026-02-11
 ### Security & Privacy

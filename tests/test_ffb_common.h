@@ -23,6 +23,9 @@ namespace FFBEngineTests {
 // --- Test Counters (defined in test_ffb_common.cpp) ---
 extern int g_tests_passed;
 extern int g_tests_failed;
+extern int g_test_cases_run;
+extern int g_test_cases_passed;
+extern int g_test_cases_failed;
 
 // --- Assert Macros ---
 #define ASSERT_TRUE(condition) \

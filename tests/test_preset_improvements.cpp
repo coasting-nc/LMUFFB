@@ -126,4 +126,76 @@ TEST_CASE(test_delete_preset_preserves_global_config, "Presets") {
     Config::m_config_path = "config.ini"; // Reset
 }
 
+TEST_CASE(test_add_user_preset_updates_existing, "Presets") {
+    std::cout << "\nTest: Add User Preset Updates Existing" << std::endl;
+    FFBEngine engine;
+    Config::LoadPresets();
+
+    // 1. Create a user preset
+    Config::AddUserPreset("MyPreset", engine);
+    size_t count_after_add = Config::presets.size();
+
+    // 2. Change engine state
+    engine.m_gain = 0.75f;
+
+    // 3. Add same preset again (simulating Save Current Config)
+    Config::AddUserPreset("MyPreset", engine);
+
+    // 4. Verify count hasn't changed and values ARE updated
+    ASSERT_TRUE(Config::presets.size() == count_after_add);
+
+    int index = -1;
+    for (int i = 0; i < (int)Config::presets.size(); i++) {
+        if (Config::presets[i].name == "MyPreset") {
+            index = i;
+            break;
+        }
+    }
+    ASSERT_TRUE(index != -1);
+    ASSERT_NEAR(Config::presets[index].gain, 0.75f, 0.001);
+}
+
+TEST_CASE(test_global_save_does_not_update_presets, "Presets") {
+    std::cout << "\nTest: Global Save Does Not Update Presets" << std::endl;
+    FFBEngine engine;
+    Config::LoadPresets();
+
+    // 1. Create a user preset
+    Config::AddUserPreset("MyPreset", engine);
+    int index = -1;
+    for (int i = 0; i < (int)Config::presets.size(); i++) {
+        if (Config::presets[i].name == "MyPreset") {
+            index = i;
+            break;
+        }
+    }
+    float original_gain = Config::presets[index].gain;
+
+    // 2. Change engine state
+    engine.m_gain = original_gain + 0.1f;
+
+    // 3. Call global Save (simulating what happens when selected_preset == -1)
+    Config::Save(engine, "test_global_save.ini");
+
+    // 4. Reload presets from file (to be sure)
+    Config::presets.clear();
+    std::string old_path = Config::m_config_path;
+    Config::m_config_path = "test_global_save.ini";
+    Config::LoadPresets();
+
+    // 5. Verify the preset in the file still has original gain
+    int new_index = -1;
+    for (int i = 0; i < (int)Config::presets.size(); i++) {
+        if (Config::presets[i].name == "MyPreset") {
+            new_index = i;
+            break;
+        }
+    }
+    ASSERT_TRUE(new_index != -1);
+    ASSERT_NEAR(Config::presets[new_index].gain, original_gain, 0.001);
+
+    std::remove("test_global_save.ini");
+    Config::m_config_path = old_path;
+}
+
 } // namespace FFBEngineTests

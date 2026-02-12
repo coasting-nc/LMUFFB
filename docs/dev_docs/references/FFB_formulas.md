@@ -217,7 +217,14 @@ Applied at the very end of the pipeline to `F_norm` (before clipping).
     *   $F_{\text{final}} = \text{Sign}(F) \times K_{\text{min-force}}$.
 *   **Purpose**: Ensures small forces are always strong enough to overcome the physical friction/deadzone of gear/belt wheels.
 
-**5. Speed Gate (Low Speed Silence)**
+**5. FFB Safety Gating (Issue #79)**
+Prevents violent jolts when crossing the finish line or losing car control.
+*   **Logic**: FFB is muted (Output = 0.0) if any of the following conditions are met:
+    *   Car is NOT under player control (`mControl != 0`).
+    *   Race session has finished, DNF'd, or DQ'd (`mFinishStatus != 0`).
+    *   Vehicle is not the player's vehicle (`mIsPlayer == false`).
+
+**6. Speed Gate (Low Speed Silence)**
 Prevents violent oscillation at limits/standstill (v0.7.2).
 *   **Algorithm**: Smoothstep (Hermite Interpolation) S-Curve.
 *   **Range**:

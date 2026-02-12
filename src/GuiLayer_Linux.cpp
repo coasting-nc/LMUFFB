@@ -1,4 +1,5 @@
 #include "GuiLayer.h"
+#include "GuiPlatform.h"
 #include "Version.h"
 #include "Config.h"
 #include <iostream>
@@ -19,48 +20,84 @@
 #endif
 
 static GLFWwindow* g_window = nullptr;
+#endif
 
 extern std::atomic<bool> g_running;
 
-void ResizeWindowPlatform(int x, int y, int w, int h) {
-    if (g_window) {
-        glfwSetWindowSize(g_window, w, h);
-    }
-}
-
-void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) {
-    if (g_window) {
-        int x, y, w, h;
-        glfwGetWindowPos(g_window, &x, &y);
-        glfwGetWindowSize(g_window, &w, &h);
-        Config::win_pos_x = x;
-        Config::win_pos_y = y;
-        if (is_graph_mode) {
-            Config::win_w_large = w;
-            Config::win_h_large = h;
-        } else {
-            Config::win_w_small = w;
-            Config::win_h_small = h;
+class LinuxGuiPlatform : public IGuiPlatform {
+public:
+    void SetAlwaysOnTop(bool enabled) override {
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
+        if (g_window) {
+            glfwSetWindowAttrib(g_window, GLFW_FLOATING, enabled ? GLFW_TRUE : GLFW_FALSE);
         }
+#else
+        m_always_on_top_mock = enabled;
+#endif
     }
-}
 
-void SetWindowAlwaysOnTopPlatform(bool enabled) {
-    if (g_window) {
-        glfwSetWindowAttrib(g_window, GLFW_FLOATING, enabled ? GLFW_TRUE : GLFW_FALSE);
+    void ResizeWindow(int x, int y, int w, int h) override {
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
+        if (g_window) {
+            glfwSetWindowSize(g_window, w, h);
+        }
+#endif
     }
-}
 
-bool OpenPresetFileDialogPlatform(std::string& outPath) {
-    std::cout << "[GUI] File Dialog not implemented on Linux yet." << std::endl;
-    return false;
-}
+    void SaveWindowGeometry(bool is_graph_mode) override {
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
+        if (g_window) {
+            int x, y, w, h;
+            glfwGetWindowPos(g_window, &x, &y);
+            glfwGetWindowSize(g_window, &w, &h);
+            Config::win_pos_x = x;
+            Config::win_pos_y = y;
+            if (is_graph_mode) {
+                Config::win_w_large = w;
+                Config::win_h_large = h;
+            } else {
+                Config::win_w_small = w;
+                Config::win_h_small = h;
+            }
+        }
+#endif
+    }
 
-bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) {
-    std::cout << "[GUI] File Dialog not implemented on Linux yet." << std::endl;
-    return false;
-}
+    bool OpenPresetFileDialog(std::string& outPath) override {
+        std::cout << "[GUI] File Dialog not implemented on Linux yet." << std::endl;
+        return false;
+    }
 
+    bool SavePresetFileDialog(std::string& outPath, const std::string& defaultName) override {
+        std::cout << "[GUI] File Dialog not implemented on Linux yet." << std::endl;
+        return false;
+    }
+
+    void* GetWindowHandle() override {
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
+        return (void*)g_window;
+#else
+        return nullptr;
+#endif
+    }
+
+    bool GetAlwaysOnTopMock() override { return m_always_on_top_mock; }
+
+    // Mock access for tests
+    bool m_always_on_top_mock = false;
+};
+
+static LinuxGuiPlatform g_platform;
+IGuiPlatform& GetGuiPlatform() { return g_platform; }
+
+// Compatibility Helpers
+void ResizeWindowPlatform(int x, int y, int w, int h) { GetGuiPlatform().ResizeWindow(x, y, w, h); }
+void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) { GetGuiPlatform().SaveWindowGeometry(is_graph_mode); }
+void SetWindowAlwaysOnTopPlatform(bool enabled) { GetGuiPlatform().SetAlwaysOnTop(enabled); }
+bool OpenPresetFileDialogPlatform(std::string& outPath) { return GetGuiPlatform().OpenPresetFileDialog(outPath); }
+bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return GetGuiPlatform().SavePresetFileDialog(outPath, defaultName); }
+
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 
 static void glfw_error_callback(int error, const char* description) {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
@@ -155,11 +192,5 @@ void GuiLayer::Shutdown(FFBEngine& engine) {
 }
 bool GuiLayer::Render(FFBEngine& engine) { return false; }
 void* GuiLayer::GetWindowHandle() { return nullptr; }
-
-void ResizeWindowPlatform(int x, int y, int w, int h) {}
-void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) {}
-void SetWindowAlwaysOnTopPlatform(bool enabled) {}
-bool OpenPresetFileDialogPlatform(std::string& outPath) { return false; }
-bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return false; }
 
 #endif

@@ -1,94 +1,44 @@
 #ifndef WINDOWS_H_MOCK
 #define WINDOWS_H_MOCK
 
-#include <stdint.h>
-#include <string.h>
-#include <algorithm>
-#include <string>
+#include "../../src/lmu_sm_interface/LinuxMock.h"
 
-typedef void* HWND;
-typedef uint32_t DWORD;
-typedef void* HANDLE;
-typedef void* HINSTANCE;
-typedef void* HMODULE;
-typedef void* HDC;
-typedef void* HBITMAP;
-typedef long LRESULT;
-typedef uintptr_t WPARAM;
-typedef intptr_t LPARAM;
-typedef unsigned int UINT;
-typedef unsigned char BYTE;
-typedef unsigned short WORD;
-typedef float FLOAT;
-typedef int BOOL;
-typedef long LONG;
+// Extra definitions needed specifically for tests that might not be in the core mock
+#ifndef GWL_EXSTYLE
+#define GWL_EXSTYLE (-20)
+#endif
+#ifndef WS_EX_TOPMOST
+#define WS_EX_TOPMOST 0x00000008L
+#endif
+#ifndef WS_OVERLAPPEDWINDOW
+#define WS_OVERLAPPEDWINDOW 0x00CF0000L
+#endif
+#ifndef WS_VISIBLE
+#define WS_VISIBLE 0x10000000L
+#endif
+#ifndef HWND_TOPMOST
+#define HWND_TOPMOST ((HWND)-1)
+#endif
+#ifndef HWND_NOTOPMOST
+#define HWND_NOTOPMOST ((HWND)-2)
+#endif
+#ifndef SWP_NOMOVE
+#define SWP_NOMOVE 0x0002
+#endif
+#ifndef SWP_NOSIZE
+#define SWP_NOSIZE 0x0001
+#endif
+#ifndef SWP_FRAMECHANGED
+#define SWP_FRAMECHANGED 0x0020
+#endif
+#ifndef SWP_NOACTIVATE
+#define SWP_NOACTIVATE 0x0010
+#endif
 
-#define TRUE 1
-#define FALSE 0
-
-#define __cdecl
-#define CALLBACK
-#define WINAPI
-
-struct GUID {
-    uint32_t Data1;
-    uint16_t Data2;
-    uint16_t Data3;
-    uint8_t  Data4[8];
-};
-
-#define _TRUNCATE ((size_t)-1)
-#define MAX_PATH 260
-#define INFINITE 0xFFFFFFFF
-
-inline int strncpy_s(char* dest, size_t dest_size, const char* src, size_t count) {
-    if (src == nullptr || dest == nullptr || dest_size == 0) return 1;
-    size_t to_copy = (count == _TRUNCATE) ? dest_size - 1 : count;
-    to_copy = std::min(to_copy, strlen(src));
-    to_copy = std::min(to_copy, dest_size - 1);
-
-    memcpy(dest, src, to_copy);
-    dest[to_copy] = '\0';
-    return 0;
-}
-
-template <size_t size>
-inline int strncpy_s(char (&dest)[size], const char* src, size_t count) {
-    return strncpy_s(dest, size, src, count);
-}
-
-// Interlocked functions
-inline long InterlockedCompareExchange(long volatile* Destination, long Exchange, long Comparand) {
-    long old = *Destination;
-    if (old == Comparand) *Destination = Exchange;
-    return old;
-}
-inline long InterlockedIncrement(long volatile* Addend) { return ++(*Addend); }
-inline long InterlockedDecrement(long volatile* Addend) { return --(*Addend); }
-inline long InterlockedExchange(long volatile* Target, long Value) {
-    long old = *Target;
-    *Target = Value;
-    return old;
-}
-
-// Events and Wait
-#define WAIT_OBJECT_0 0
-inline DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) { return WAIT_OBJECT_0; }
-inline BOOL SetEvent(HANDLE hEvent) { return TRUE; }
-inline BOOL CloseHandle(HANDLE hObject) { return TRUE; }
-
-// Memory Mapping
-#define PAGE_READWRITE 0x04
-#define FILE_MAP_ALL_ACCESS 0xF001F
-#define INVALID_HANDLE_VALUE ((HANDLE)(intptr_t)-1)
-inline HANDLE CreateFileMappingA(HANDLE hFile, void* lpAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, const char* lpName) { return (HANDLE)1; }
-inline void* MapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, size_t dwNumberOfBytesToMap) { return (void*)1; }
-inline BOOL UnmapViewOfFile(const void* lpBaseAddress) { return TRUE; }
-inline HANDLE CreateEventA(void* lpEventAttributes, BOOL bManualReset, BOOL bInitialState, const char* lpName) { return (HANDLE)1; }
-inline DWORD GetLastError() { return 0; }
-#define ERROR_ALREADY_EXISTS 183L
-
-// Processor
-inline void YieldProcessor() {}
+inline LONG_PTR GetWindowLongPtr(HWND hWnd, int nIndex) { return 0; }
+inline BOOL SetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags) { return TRUE; }
+inline HANDLE GetModuleHandle(const char* lpModuleName) { return (HANDLE)1; }
+inline HWND CreateWindowA(const char* lpClassName, const char* lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, void* hMenu, HANDLE hInstance, void* lpParam) { return (HWND)1; }
+inline BOOL DestroyWindow(HWND hWnd) { return TRUE; }
 
 #endif

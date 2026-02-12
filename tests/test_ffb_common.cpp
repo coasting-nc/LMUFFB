@@ -5,6 +5,9 @@ namespace FFBEngineTests {
 // --- Global Test Counters ---
 int g_tests_passed = 0;
 int g_tests_failed = 0;
+int g_test_cases_run = 0;
+int g_test_cases_passed = 0;
+int g_test_cases_failed = 0;
 
 // --- Tag Filtering Globals ---
 std::vector<std::string> g_tag_filter;
@@ -245,20 +248,32 @@ void Run() {
             if (!ShouldRunTest(test.tags, test.category)) continue;
 
             try {
+                int initial_fails = g_tests_failed;
                 test.func();
+
+                g_test_cases_run++;
+                if (g_tests_failed > initial_fails) {
+                    g_test_cases_failed++;
+                } else {
+                    g_test_cases_passed++;
+                }
             } catch (const std::exception& e) {
                 std::cout << "[FAIL] " << test.name << " threw exception: " << e.what() << std::endl;
                 g_tests_failed++;
+                g_test_cases_run++;
+                g_test_cases_failed++;
             } catch (...) {
                 std::cout << "[FAIL] " << test.name << " threw unknown exception" << std::endl;
                 g_tests_failed++;
+                g_test_cases_run++;
+                g_test_cases_failed++;
             }
         }
     }
 
     std::cout << "\n--- Physics Engine Test Summary ---" << std::endl;
-    std::cout << "Tests Passed: " << g_tests_passed << std::endl;
-    std::cout << "Tests Failed: " << g_tests_failed << std::endl;
+    std::cout << "Test Cases: " << g_test_cases_passed << "/" << g_test_cases_run << " passed" << std::endl;
+    std::cout << "Assertions: " << g_tests_passed << " passed, " << g_tests_failed << " failed" << std::endl;
 }
 
 } // namespace FFBEngineTests

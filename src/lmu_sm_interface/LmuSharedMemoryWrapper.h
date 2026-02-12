@@ -9,6 +9,11 @@
 #include <utility>   // Required for std::exchange, std::swap
 #include <cstdint>   // Required for uint32_t, uint8_t
 #include <cstring>   // Required for memcpy
+
+#ifndef _WIN32
+#include "LinuxMock.h"
+#endif
+
 #include "InternalsPluginWrapper.h"
 
 // Include the official vendor file

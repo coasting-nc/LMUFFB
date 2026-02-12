@@ -24,6 +24,7 @@ namespace GuiWidgets {
     inline Result Float(const char* label, float* v, float min, float max, const char* fmt = "%.2f", const char* tooltip = nullptr, std::function<void()> decorator = nullptr) {
         Result res;
         ImGui::Text("%s", label);
+        bool labelHovered = ImGui::IsItemHovered();
         ImGui::NextColumn();
 
         // Render decorator (e.g., latency indicator) above the slider
@@ -45,7 +46,7 @@ namespace GuiWidgets {
         }
 
         // Unified Interaction Logic (Arrow Keys & Tooltips)
-        if (ImGui::IsItemHovered()) {
+        if (ImGui::IsItemHovered() || labelHovered) {
             float range = max - min;
             // Adaptive step size: finer steps for smaller ranges
             float step = (range > 50.0f) ? 0.5f : (range < 1.0f) ? 0.001f : 0.01f; 
@@ -83,6 +84,7 @@ namespace GuiWidgets {
     inline Result Checkbox(const char* label, bool* v, const char* tooltip = nullptr) {
         Result res;
         ImGui::Text("%s", label);
+        bool labelHovered = ImGui::IsItemHovered();
         ImGui::NextColumn();
         std::string id = "##" + std::string(label);
         
@@ -91,7 +93,7 @@ namespace GuiWidgets {
             res.deactivated = true; // Checkboxes are immediate
         }
 
-        if (tooltip && ImGui::IsItemHovered()) {
+        if (tooltip && (ImGui::IsItemHovered() || labelHovered)) {
             ImGui::SetTooltip("%s", tooltip);
         }
 
@@ -105,6 +107,7 @@ namespace GuiWidgets {
     inline Result Combo(const char* label, int* v, const char* const items[], int items_count, const char* tooltip = nullptr) {
         Result res;
         ImGui::Text("%s", label);
+        bool labelHovered = ImGui::IsItemHovered();
         ImGui::NextColumn();
         ImGui::SetNextItemWidth(-1);
         std::string id = "##" + std::string(label);
@@ -114,7 +117,7 @@ namespace GuiWidgets {
             res.deactivated = true; // Selection changes are immediate
         }
 
-        if (tooltip && ImGui::IsItemHovered()) {
+        if (tooltip && (ImGui::IsItemHovered() || labelHovered)) {
             ImGui::SetTooltip("%s", tooltip);
         }
 

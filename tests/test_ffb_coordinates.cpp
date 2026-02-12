@@ -428,7 +428,7 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     }
     
     // 4. Scrub Drag (Should be Negative)
-    if (snap.ffb_scrub_drag > -0.01) { 
+    if (snap.ffb_scrub_drag > -0.01) {
         std::cout << "[FAIL] Scrub Drag fighting alignment! Val: " << snap.ffb_scrub_drag << std::endl;
         all_aligned = false;
     }
