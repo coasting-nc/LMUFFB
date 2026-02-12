@@ -8,8 +8,8 @@ The primary cause of this gap is the exclusion of the entire `tests/test_windows
 
 ```cmake
 if(WIN32)
-    list(APPEND TEST_SOURCES 
-        test_windows_platform.cpp 
+    list(APPEND TEST_SOURCES
+        test_windows_platform.cpp
         ...
     )
 ```

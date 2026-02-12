@@ -26,16 +26,16 @@ The widget implementation in `GuiWidgets.h` handles tooltips as follows:
 // src/GuiWidgets.h : Line 64
 if (!keyChanged && !ImGui::IsItemActive()) {
     ImGui::BeginTooltip();
-    
+
     // Part A: Specific Description
     if (tooltip && strlen(tooltip) > 0) {
         ImGui::Text("%s", tooltip); // ONLY runs if 'tooltip' arg is provided
         ImGui::Separator();
     }
-    
+
     // Part B: Generic Instructions (Always shown)
     ImGui::Text("Fine Tune: Arrow Keys | Exact: Ctrl+Click");
-    
+
     ImGui::EndTooltip();
 }
 ```

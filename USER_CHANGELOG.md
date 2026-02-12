@@ -4,6 +4,25 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]February 12, 2026[/b][/size]
+[b]Version 0.7.33 - Preset Handling Fix & Cleanup[/b]
+
+[b]New release[/b] (0.7.33): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]Preset Selection Stability[/b]: Fixed an issue where changing any setting would immediately switch the selected preset to "Custom." This now correctly maintains your current preset selection, making it much easier to fine-tune and update existing profiles.
+[*][b]"Save Current Config" Restoration[/b]: The "Save Current Config" button now correctly updates the active user preset, allowing you to persist your changes with a single click.
+[/list]
+
+[b]Improved[/b]
+[list]
+[*][b]Dirty State Indication[/b]: Added a clearer dirty indicator (*) next to the preset name when settings have been modified from their saved state.
+[*][b]Code Cleanup[/b]: Significantly simplified the internal logic for detecting modified settings, making the app more robust and easier to maintain as we add new FFB parameters.
+[/list]
+
+---
+
 [size=5][b]February 11, 2026[/b][/size]
 [b]Version 0.7.28 - Tooltip Restoration & UX Update[/b]
 

@@ -68,14 +68,14 @@ configure_file(${CMAKE_SOURCE_DIR}/icon/lmuffb.ico ${CMAKE_BINARY_DIR}/lmuffb.ic
 # Tests
 add_subdirectory(tests)
 
-add_executable(LMUFFB 
+add_executable(LMUFFB
                src/main.cpp
                src/GuiLayer.cpp src/GuiLayer.h
                src/Config.cpp src/Config.h
                src/DirectInputFFB.cpp src/DirectInputFFB.h
                src/GameConnector.cpp src/GameConnector.h
-               src/DynamicVJoy.h 
-               src/FFBEngine.h 
+               src/DynamicVJoy.h
+               src/FFBEngine.h
                src/res.rc
                ${IMGUI_SOURCES})
 
@@ -124,8 +124,8 @@ if(NOT WIN32)
 endif()
 
 # Combined Test Executable
-set(TEST_SOURCES 
-    main_test_runner.cpp 
+set(TEST_SOURCES
+    main_test_runner.cpp
     test_ffb_common.cpp
     test_ffb_core_physics.cpp
     test_ffb_slope_detection.cpp
@@ -149,11 +149,11 @@ set(TEST_SOURCES
 )
 
 if(WIN32)
-    list(APPEND TEST_SOURCES 
-        test_windows_platform.cpp 
+    list(APPEND TEST_SOURCES
+        test_windows_platform.cpp
         test_screenshot.cpp
         test_gui_interaction.cpp
-        ../src/DirectInputFFB.cpp 
+        ../src/DirectInputFFB.cpp
         ../src/GuiLayer.cpp
         ../src/GameConnector.cpp
         ${IMGUI_SOURCES}
@@ -190,9 +190,9 @@ add_test(NAME CombinedTests COMMAND run_combined_tests)
 std::atomic<bool> g_running(true);
 std::mutex g_engine_mutex;
 
-namespace FFBEngineTests { 
-    extern int g_tests_passed; 
-    extern int g_tests_failed; 
+namespace FFBEngineTests {
+    extern int g_tests_passed;
+    extern int g_tests_failed;
     void Run();
     void ParseTagArguments(int argc, char* argv[]);
 }
@@ -279,7 +279,7 @@ bool g_enable_tag_filtering = false;
 void ParseTagArguments(int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
-        
+
         // --tag=Physics,Math
         if (arg.find("--tag=") == 0) {
             g_enable_tag_filtering = true;
@@ -335,7 +335,7 @@ void ParseTagArguments(int argc, char* argv[]) {
             exit(0);
         }
     }
-    
+
     // Print active filters
     if (g_enable_tag_filtering) {
         std::cout << "\n=== Tag Filtering Active ===\n";
@@ -372,13 +372,13 @@ void ParseTagArguments(int argc, char* argv[]) {
 TelemInfoV01 CreateBasicTestTelemetry(double speed, double slip_angle) {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
-    
+
     // Time
     data.mDeltaTime = 0.01; // 100Hz
-    
+
     // Velocity
     data.mLocalVel.z = -speed; // Game uses -Z for forward
-    
+
     // Wheel setup (all 4 wheels)
     for (int i = 0; i < 4; i++) {
         data.mWheel[i].mGripFract = 0.0; // Trigger approximation mode
@@ -391,7 +391,7 @@ TelemInfoV01 CreateBasicTestTelemetry(double speed, double slip_angle) {
         data.mWheel[i].mSuspForce = 4000.0; // Grounded (v0.6.0)
         data.mWheel[i].mVerticalTireDeflection = 0.001; // Avoid "missing data" warning (v0.6.21)
     }
-    
+
     return data;
 }
 
@@ -401,22 +401,22 @@ void InitializeEngine(FFBEngine& engine) {
     // v0.5.12: Force consistent baseline for legacy tests
     engine.m_max_torque_ref = 20.0f;
     engine.m_invert_force = false;
-    
+
     // v0.6.31: Zero out all auxiliary effects for clean physics testing by default.
     // Individual tests can re-enable what they need.
-    engine.m_steering_shaft_smoothing = 0.0f; 
+    engine.m_steering_shaft_smoothing = 0.0f;
     engine.m_slip_angle_smoothing = 0.0f;
     engine.m_sop_smoothing_factor = 1.0f; // 1.0 = Instant/No smoothing
     engine.m_yaw_accel_smoothing = 0.0f;
     engine.m_gyro_smoothing = 0.0f;
     engine.m_chassis_inertia_smoothing = 0.0f;
-    
+
     engine.m_sop_effect = 0.0f;
     engine.m_sop_yaw_gain = 0.0f;
     engine.m_oversteer_boost = 0.0f;
     engine.m_rear_align_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
-    
+
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = false;
     engine.m_lockup_enabled = false;
@@ -424,7 +424,7 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_abs_pulse_enabled = false;
     engine.m_scrub_drag_gain = 0.0f;
     engine.m_min_force = 0.0f;
-    
+
     // v0.6.25: Disable speed gate by default for legacy tests (avoids muting physics at 0 speed)
     engine.m_speed_gate_lower = -10.0f;
     engine.m_speed_gate_upper = -5.0f;
@@ -455,7 +455,7 @@ TestRegistry& TestRegistry::Instance() {
     return instance;
 }
 
-void TestRegistry::Register(const std::string& name, 
+void TestRegistry::Register(const std::string& name,
                             const std::string& category,
                             const std::vector<std::string>& tags,
                             std::function<void()> func,
@@ -465,7 +465,7 @@ void TestRegistry::Register(const std::string& name,
 
 void TestRegistry::SortByCategory() {
     if (m_sorted) return;
-    std::stable_sort(m_tests.begin(), m_tests.end(), 
+    std::stable_sort(m_tests.begin(), m_tests.end(),
         [](const TestEntry& a, const TestEntry& b) {
             int orderA = GetCategoryOrder(a.category);
             int orderB = GetCategoryOrder(b.category);
@@ -479,8 +479,8 @@ const std::vector<TestEntry>& TestRegistry::GetTests() const {
     return m_tests;
 }
 
-AutoRegister::AutoRegister(const std::string& name, 
-                           const std::string& category, 
+AutoRegister::AutoRegister(const std::string& name,
+                           const std::string& category,
                            const std::vector<std::string>& tags,
                            std::function<void()> func,
                            int order) {
@@ -497,7 +497,7 @@ void Run() {
         auto& tests = registry.GetTests();
         
         std::cout << "\n--- Auto-Registered Tests (" << tests.size() << ") ---" << std::endl;
-        
+
         std::string current_category;
         for (const auto& test : tests) {
             if (test.category != current_category) {
@@ -623,7 +623,7 @@ extern bool g_enable_tag_filtering;
 // Tag checking helper
 inline bool ShouldRunTest(const std::vector<std::string>& test_tags, const std::string& category) {
     if (!g_enable_tag_filtering) return true;
-    
+
     // Category filter (if specified)
     if (!g_category_filter.empty()) {
         bool category_match = false;
@@ -635,7 +635,7 @@ inline bool ShouldRunTest(const std::vector<std::string>& test_tags, const std::
         }
         if (!category_match) return false;
     }
-    
+
     // Tag exclude filter (if specified)
     if (!g_tag_exclude.empty()) {
         for (const auto& exclude_tag : g_tag_exclude) {
@@ -654,7 +654,7 @@ inline bool ShouldRunTest(const std::vector<std::string>& test_tags, const std::
         }
         return false; // No matching tags found
     }
-    
+
     return true; // No filters, run all tests
 }
 
@@ -698,13 +698,13 @@ struct TestEntry {
 class TestRegistry {
 public:
     static TestRegistry& Instance();
-    void Register(const std::string& name, 
-                  const std::string& category, 
+    void Register(const std::string& name,
+                  const std::string& category,
                   const std::vector<std::string>& tags,
                   std::function<void()> func,
                   int order = 0);
     const std::vector<TestEntry>& GetTests() const;
-    void SortByCategory(); 
+    void SortByCategory();
 
 private:
     std::vector<TestEntry> m_tests;
@@ -713,8 +713,8 @@ private:
 
 // Helper class for static registration
 struct AutoRegister {
-    AutoRegister(const std::string& name, 
-                 const std::string& category, 
+    AutoRegister(const std::string& name,
+                 const std::string& category,
                  const std::vector<std::string>& tags,
                  std::function<void()> func,
                  int order = 0);

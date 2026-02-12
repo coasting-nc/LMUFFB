@@ -39,11 +39,11 @@ public:
         va_end(args);
 
         std::string message(buffer);
-        
+
         std::lock_guard<std::mutex> lock(m_mutex);
         _LogNoLock(message);
     }
-    
+
     // Helper for std::string
     void LogStr(const std::string& msg) {
         Log("%s", msg.c_str());
@@ -62,10 +62,10 @@ private:
             m_file.close();
         }
     }
-    
+
     void _LogNoLock(const std::string& message) {
         if (!m_file.is_open()) return;
-        
+
         // Timestamp
         auto now = std::chrono::system_clock::now();
         auto in_time_t = std::chrono::system_clock::to_time_t(now);
@@ -75,10 +75,10 @@ private:
         #else
             localtime_r(&in_time_t, &time_info);
         #endif
-        
+
         m_file << "[" << std::put_time(&time_info, "%H:%M:%S") << "] " << message << "\n";
         m_file.flush(); // Critical for crash debugging
-        
+
         // Also print to console for consistency
         std::cout << "[Log] " << message << std::endl;
     }

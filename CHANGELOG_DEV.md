@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.33] - 2026-02-12
+### Fixed
+- **Preset Handling**: Fixed issue where modifying any setting would immediately deselect the current preset and switch to "Custom", making "Save Current Config" non-functional (#72).
+### Refactored
+- **Dirty Detection**: Centralized preset comparison logic into a new `Preset::Equals` method and simplified `Config::IsEngineDirtyRelativeToPreset` (#71).
+
 ## [0.7.32] - 2026-02-11
 ### Improved
 - **Linux Build & Test Parity**:

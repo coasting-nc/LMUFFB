@@ -20,7 +20,7 @@
 #endif
 
 // Link version.lib for Version Info functions
-#pragma comment(lib, "version.lib") 
+#pragma comment(lib, "version.lib")
 
 namespace FFBEngineTests {
 
@@ -44,7 +44,7 @@ TEST_CASE(test_executable_metadata, "Security") {
         g_tests_failed++;
         return;
     }
-    
+
     // 3. Get Version Info Data
     std::vector<BYTE> versionData(dwSize);
     if (!GetFileVersionInfoA(exePath, dwHandle, dwSize, versionData.data())) {
@@ -106,22 +106,22 @@ TEST_CASE(test_executable_metadata, "Security") {
 
 TEST_CASE(test_is_window_safety, "Security") {
     std::cout << "\nTest: IsWindow Logic Safety (Simulated)" << std::endl;
-    
+
     // This test verifies that checking IsWindow on NULL or invalid handles is safe
     // (doesn't crash) and returns false, which is the expected behavior for disconnect.
-    
+
     // 1. NULL Handle
     HWND nullHwnd = NULL;
     BOOL res1 = IsWindow(nullHwnd);
     ASSERT_TRUE(res1 == 0);
-    
+
     // 2. Invalid Handle (likely)
     // Casting a random pointer to HWND is generally unsafe if dereferenced,
     // but IsWindow is designed to handle this robustly.
-    HWND invalidHwnd = (HWND)(uintptr_t)0x12345678; 
+    HWND invalidHwnd = (HWND)(uintptr_t)0x12345678;
     BOOL res2 = IsWindow(invalidHwnd);
     ASSERT_TRUE(res2 == 0);
-    
+
     // 3. Valid Handle (Console Window)
     HWND consoleHwnd = GetConsoleWindow();
     if (consoleHwnd) {

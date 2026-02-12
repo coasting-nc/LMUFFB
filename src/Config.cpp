@@ -1039,98 +1039,12 @@ void Config::DuplicatePreset(int index, const FFBEngine& engine) {
 }
 
 bool Config::IsEngineDirtyRelativeToPreset(int index, const FFBEngine& engine) {
-    // ⚠ IMPORTANT MAINTENANCE WARNING:
-    // When adding new FFB parameters to the FFBEngine class or Preset struct,
-    // you MUST add a comparison check here to ensure the "dirty" flag (*)
-    // appears correctly in the GUI.
-
     if (index < 0 || index >= (int)presets.size()) return false;
 
-    const Preset& p = presets[index];
-    const float eps = 0.0001f;
+    Preset current_state;
+    current_state.UpdateFromEngine(engine);
 
-    auto is_near = [](float a, float b, float epsilon) { return std::abs(a - b) < epsilon; };
-
-    if (!is_near(p.gain, engine.m_gain, eps)) return true;
-    if (!is_near(p.understeer, engine.m_understeer_effect, eps)) return true;
-    if (!is_near(p.sop, engine.m_sop_effect, eps)) return true;
-    if (!is_near(p.sop_scale, engine.m_sop_scale, eps)) return true;
-    if (!is_near(p.sop_smoothing, engine.m_sop_smoothing_factor, eps)) return true;
-    if (!is_near(p.slip_smoothing, engine.m_slip_angle_smoothing, eps)) return true;
-    if (!is_near(p.min_force, engine.m_min_force, eps)) return true;
-    if (!is_near(p.oversteer_boost, engine.m_oversteer_boost, eps)) return true;
-
-    if (p.lockup_enabled != engine.m_lockup_enabled) return true;
-    if (!is_near(p.lockup_gain, engine.m_lockup_gain, eps)) return true;
-    if (!is_near(p.lockup_start_pct, engine.m_lockup_start_pct, eps)) return true;
-    if (!is_near(p.lockup_full_pct, engine.m_lockup_full_pct, eps)) return true;
-    if (!is_near(p.lockup_rear_boost, engine.m_lockup_rear_boost, eps)) return true;
-    if (!is_near(p.lockup_gamma, engine.m_lockup_gamma, eps)) return true;
-    if (!is_near(p.lockup_prediction_sens, engine.m_lockup_prediction_sens, eps)) return true;
-    if (!is_near(p.lockup_bump_reject, engine.m_lockup_bump_reject, eps)) return true;
-    if (!is_near(p.brake_load_cap, engine.m_brake_load_cap, eps)) return true;
-    if (!is_near(p.texture_load_cap, engine.m_texture_load_cap, eps)) return true;
-
-    if (p.abs_pulse_enabled != engine.m_abs_pulse_enabled) return true;
-    if (!is_near(p.abs_gain, engine.m_abs_gain, eps)) return true;
-    if (!is_near(p.abs_freq, engine.m_abs_freq_hz, eps)) return true;
-
-    if (p.spin_enabled != engine.m_spin_enabled) return true;
-    if (!is_near(p.spin_gain, engine.m_spin_gain, eps)) return true;
-    if (!is_near(p.spin_freq_scale, engine.m_spin_freq_scale, eps)) return true;
-
-    if (p.slide_enabled != engine.m_slide_texture_enabled) return true;
-    if (!is_near(p.slide_gain, engine.m_slide_texture_gain, eps)) return true;
-    if (!is_near(p.slide_freq, engine.m_slide_freq_scale, eps)) return true;
-
-    if (p.road_enabled != engine.m_road_texture_enabled) return true;
-    if (!is_near(p.road_gain, engine.m_road_texture_gain, eps)) return true;
-
-    if (p.invert_force != engine.m_invert_force) return true;
-    if (!is_near(p.max_torque_ref, engine.m_max_torque_ref, eps)) return true;
-    if (!is_near(p.lockup_freq_scale, engine.m_lockup_freq_scale, eps)) return true;
-    if (p.bottoming_method != engine.m_bottoming_method) return true;
-    if (!is_near(p.scrub_drag_gain, engine.m_scrub_drag_gain, eps)) return true;
-    if (!is_near(p.rear_align_effect, engine.m_rear_align_effect, eps)) return true;
-    if (!is_near(p.sop_yaw_gain, engine.m_sop_yaw_gain, eps)) return true;
-    if (!is_near(p.gyro_gain, engine.m_gyro_gain, eps)) return true;
-    if (!is_near(p.steering_shaft_gain, engine.m_steering_shaft_gain, eps)) return true;
-    if (p.base_force_mode != engine.m_base_force_mode) return true;
-
-    if (!is_near(p.optimal_slip_angle, engine.m_optimal_slip_angle, eps)) return true;
-    if (!is_near(p.optimal_slip_ratio, engine.m_optimal_slip_ratio, eps)) return true;
-    if (!is_near(p.steering_shaft_smoothing, engine.m_steering_shaft_smoothing, eps)) return true;
-    if (!is_near(p.gyro_smoothing, engine.m_gyro_smoothing, eps)) return true;
-    if (!is_near(p.yaw_smoothing, engine.m_yaw_accel_smoothing, eps)) return true;
-    if (!is_near(p.chassis_smoothing, engine.m_chassis_inertia_smoothing, eps)) return true;
-
-    if (p.flatspot_suppression != engine.m_flatspot_suppression) return true;
-    if (!is_near(p.notch_q, engine.m_notch_q, eps)) return true;
-    if (!is_near(p.flatspot_strength, engine.m_flatspot_strength, eps)) return true;
-
-    if (p.static_notch_enabled != engine.m_static_notch_enabled) return true;
-    if (!is_near(p.static_notch_freq, engine.m_static_notch_freq, eps)) return true;
-    if (!is_near(p.static_notch_width, engine.m_static_notch_width, eps)) return true;
-    if (!is_near(p.yaw_kick_threshold, engine.m_yaw_kick_threshold, eps)) return true;
-
-    if (!is_near(p.speed_gate_lower, engine.m_speed_gate_lower, eps)) return true;
-    if (!is_near(p.speed_gate_upper, engine.m_speed_gate_upper, eps)) return true;
-
-    if (!is_near(p.road_fallback_scale, engine.m_road_fallback_scale, eps)) return true;
-    if (p.understeer_affects_sop != engine.m_understeer_affects_sop) return true;
-
-    if (p.slope_detection_enabled != engine.m_slope_detection_enabled) return true;
-    if (p.slope_sg_window != engine.m_slope_sg_window) return true;
-    if (!is_near(p.slope_sensitivity, engine.m_slope_sensitivity, eps)) return true;
-    if (!is_near(p.slope_negative_threshold, (float)engine.m_slope_negative_threshold, eps)) return true;
-    if (!is_near(p.slope_smoothing_tau, engine.m_slope_smoothing_tau, eps)) return true;
-    if (!is_near(p.slope_alpha_threshold, engine.m_slope_alpha_threshold, eps)) return true;
-    if (!is_near(p.slope_decay_rate, engine.m_slope_decay_rate, eps)) return true;
-    if (p.slope_confidence_enabled != engine.m_slope_confidence_enabled) return true;
-    if (!is_near(p.slope_min_threshold, engine.m_slope_min_threshold, eps)) return true;
-    if (!is_near(p.slope_max_threshold, engine.m_slope_max_threshold, eps)) return true;
-
-    return false;
+    return !presets[index].Equals(current_state);
 }
 
 void Config::Save(const FFBEngine& engine, const std::string& filename) {

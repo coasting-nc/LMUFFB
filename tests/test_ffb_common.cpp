@@ -250,7 +250,7 @@ void Run() {
             try {
                 int initial_fails = g_tests_failed;
                 test.func();
-                
+
                 g_test_cases_run++;
                 if (g_tests_failed > initial_fails) {
                     g_test_cases_failed++;

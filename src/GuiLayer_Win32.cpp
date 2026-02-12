@@ -153,7 +153,7 @@ bool GuiLayer::Init() {
     Logger::Get().Log("Window Created: %p", g_hwnd);
 
     if (!CreateDeviceD3D(g_hwnd)) {
-        CleanupDeviceD3D(); ::UnregisterClassW(wc.lpszClassName, wc.hInstance); 
+        CleanupDeviceD3D(); ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
         Logger::Get().Log("Failed to create D3D Device.");
         return false;
     }

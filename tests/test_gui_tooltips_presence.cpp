@@ -30,7 +30,7 @@ TEST_CASE(test_gui_tooltips_presence_static, "GUI") {
 
     if (found_path.empty()) {
         std::cout << "[WARN] Could not find src/GuiLayer_Common.cpp for static analysis. Skipping." << std::endl;
-        g_tests_passed++; 
+        g_tests_passed++;
         return;
     }
 
@@ -45,13 +45,13 @@ TEST_CASE(test_gui_tooltips_presence_static, "GUI") {
 
     std::string line;
     std::vector<std::string> missing;
-    
+
     // Using custom delimiter "regex" to avoid collision with )" in the regex pattern
     // We look for calls where the tooltip parameter is nullptr, NULL, or empty ""
     std::regex float_reg(R"regex(FloatSetting\s*\(\s*"([^"]+)"\s*,[^,]+,[^,]+,[^,]+,[^,]+,\s*(nullptr|NULL|""|"")\s*[,|\)])regex");
     std::regex bool_reg(R"regex(BoolSetting\s*\(\s*"([^"]+)"\s*,[^,]+,\s*(nullptr|NULL|""|"")\s*[,|\)])regex");
     std::regex int_reg(R"regex(IntSetting\s*\(\s*"([^"]+)"\s*,[^,]+,[^,]+,[^,]+,\s*(nullptr|NULL|""|"")\s*[,|\)])regex");
-    
+
     std::regex gw_float_reg(R"regex(GuiWidgets::Float\s*\(\s*"([^"]+)"\s*,[^,]+,[^,]+,[^,]+,[^,]+,\s*(nullptr|NULL|""|"")\s*[,|\)])regex");
     std::regex gw_bool_reg(R"regex(GuiWidgets::Checkbox\s*\(\s*"([^"]+)"\s*,[^,]+,\s*(nullptr|NULL|""|"")\s*[,|\)])regex");
     std::regex gw_combo_reg(R"regex(GuiWidgets::Combo\s*\(\s*"([^"]+)"\s*,[^,]+,[^,]+,[^,]+,\s*(nullptr|NULL|""|"")\s*[,|\)])regex");
@@ -60,7 +60,7 @@ TEST_CASE(test_gui_tooltips_presence_static, "GUI") {
     while (std::getline(file, line)) {
         line_num++;
         std::smatch match;
-        
+
         bool fail = false;
         std::string widget_name = "";
         std::string helper_type = "";

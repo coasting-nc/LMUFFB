@@ -1,7 +1,7 @@
 # Security Audit & False Positive Analysis (v0.7.27)
 
 ## Overview
-This report analyzes the `lmuFFB` codebase to identify features and patterns that may trigger antivirus heuristics or behavioral monitoring warnings. 
+This report analyzes the `lmuFFB` codebase to identify features and patterns that may trigger antivirus heuristics or behavioral monitoring warnings.
 
 **Update (v0.7.27)**: A user reported that Windows Defender flagged the v0.7.25/.26 release as `Trojan:Script/Wacatac.C!ml`. This is a machine-learning based heuristic flag often triggered by unsigned binaries performing "Process Access" or memory inspection. Version 0.7.27 addresses this by removing `OpenProcess` calls.
 

@@ -130,12 +130,12 @@ def parse_args(args=None):
     main_group = parser.add_mutually_exclusive_group()
     main_group.add_argument("--include-main-code", action="store_true", dest="include_main_code", help="Include main source code (src/)")
     main_group.add_argument("--exclude-main-code", action="store_false", dest="include_main_code", help="Exclude main source code")
-    
+
     # Makefile options
     make_group = parser.add_mutually_exclusive_group()
     make_group.add_argument("--include-makefiles", action="store_true", dest="include_makefiles", help="Include makefiles (CMakeLists.txt, etc.)")
     make_group.add_argument("--exclude-makefiles", action="store_false", dest="include_makefiles", help="Exclude makefiles")
-    
+
     # Set defaults if not specified by the injection logic in main
     parser.set_defaults(include_tests=True, include_non_code=True, include_main_code=True, include_makefiles=True, test_examples_only=False)
     

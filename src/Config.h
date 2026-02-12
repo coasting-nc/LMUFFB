@@ -446,6 +446,92 @@ struct Preset {
         slope_max_threshold = engine.m_slope_max_threshold;
         app_version = LMUFFB_VERSION;
     }
+
+    bool Equals(const Preset& p) const {
+        const float eps = 0.0001f;
+        auto is_near = [](float a, float b, float epsilon) { return std::abs(a - b) < epsilon; };
+
+        if (!is_near(gain, p.gain, eps)) return false;
+        if (!is_near(understeer, p.understeer, eps)) return false;
+        if (!is_near(sop, p.sop, eps)) return false;
+        if (!is_near(sop_scale, p.sop_scale, eps)) return false;
+        if (!is_near(sop_smoothing, p.sop_smoothing, eps)) return false;
+        if (!is_near(slip_smoothing, p.slip_smoothing, eps)) return false;
+        if (!is_near(min_force, p.min_force, eps)) return false;
+        if (!is_near(oversteer_boost, p.oversteer_boost, eps)) return false;
+
+        if (lockup_enabled != p.lockup_enabled) return false;
+        if (!is_near(lockup_gain, p.lockup_gain, eps)) return false;
+        if (!is_near(lockup_start_pct, p.lockup_start_pct, eps)) return false;
+        if (!is_near(lockup_full_pct, p.lockup_full_pct, eps)) return false;
+        if (!is_near(lockup_rear_boost, p.lockup_rear_boost, eps)) return false;
+        if (!is_near(lockup_gamma, p.lockup_gamma, eps)) return false;
+        if (!is_near(lockup_prediction_sens, p.lockup_prediction_sens, eps)) return false;
+        if (!is_near(lockup_bump_reject, p.lockup_bump_reject, eps)) return false;
+        if (!is_near(brake_load_cap, p.brake_load_cap, eps)) return false;
+        if (!is_near(texture_load_cap, p.texture_load_cap, eps)) return false;
+
+        if (abs_pulse_enabled != p.abs_pulse_enabled) return false;
+        if (!is_near(abs_gain, p.abs_gain, eps)) return false;
+        if (!is_near(abs_freq, p.abs_freq, eps)) return false;
+
+        if (spin_enabled != p.spin_enabled) return false;
+        if (!is_near(spin_gain, p.spin_gain, eps)) return false;
+        if (!is_near(spin_freq_scale, p.spin_freq_scale, eps)) return false;
+
+        if (slide_enabled != p.slide_enabled) return false;
+        if (!is_near(slide_gain, p.slide_gain, eps)) return false;
+        if (!is_near(slide_freq, p.slide_freq, eps)) return false;
+
+        if (road_enabled != p.road_enabled) return false;
+        if (!is_near(road_gain, p.road_gain, eps)) return false;
+
+        if (invert_force != p.invert_force) return false;
+        if (!is_near(max_torque_ref, p.max_torque_ref, eps)) return false;
+        if (!is_near(lockup_freq_scale, p.lockup_freq_scale, eps)) return false;
+        if (bottoming_method != p.bottoming_method) return false;
+        if (!is_near(scrub_drag_gain, p.scrub_drag_gain, eps)) return false;
+        if (!is_near(rear_align_effect, p.rear_align_effect, eps)) return false;
+        if (!is_near(sop_yaw_gain, p.sop_yaw_gain, eps)) return false;
+        if (!is_near(gyro_gain, p.gyro_gain, eps)) return false;
+        if (!is_near(steering_shaft_gain, p.steering_shaft_gain, eps)) return false;
+        if (base_force_mode != p.base_force_mode) return false;
+
+        if (!is_near(optimal_slip_angle, p.optimal_slip_angle, eps)) return false;
+        if (!is_near(optimal_slip_ratio, p.optimal_slip_ratio, eps)) return false;
+        if (!is_near(steering_shaft_smoothing, p.steering_shaft_smoothing, eps)) return false;
+        if (!is_near(gyro_smoothing, p.gyro_smoothing, eps)) return false;
+        if (!is_near(yaw_smoothing, p.yaw_smoothing, eps)) return false;
+        if (!is_near(chassis_smoothing, p.chassis_smoothing, eps)) return false;
+
+        if (flatspot_suppression != p.flatspot_suppression) return false;
+        if (!is_near(notch_q, p.notch_q, eps)) return false;
+        if (!is_near(flatspot_strength, p.flatspot_strength, eps)) return false;
+
+        if (static_notch_enabled != p.static_notch_enabled) return false;
+        if (!is_near(static_notch_freq, p.static_notch_freq, eps)) return false;
+        if (!is_near(static_notch_width, p.static_notch_width, eps)) return false;
+        if (!is_near(yaw_kick_threshold, p.yaw_kick_threshold, eps)) return false;
+
+        if (!is_near(speed_gate_lower, p.speed_gate_lower, eps)) return false;
+        if (!is_near(speed_gate_upper, p.speed_gate_upper, eps)) return false;
+
+        if (!is_near(road_fallback_scale, p.road_fallback_scale, eps)) return false;
+        if (understeer_affects_sop != p.understeer_affects_sop) return false;
+
+        if (slope_detection_enabled != p.slope_detection_enabled) return false;
+        if (slope_sg_window != p.slope_sg_window) return false;
+        if (!is_near(slope_sensitivity, p.slope_sensitivity, eps)) return false;
+        if (!is_near(slope_negative_threshold, p.slope_negative_threshold, eps)) return false;
+        if (!is_near(slope_smoothing_tau, p.slope_smoothing_tau, eps)) return false;
+        if (!is_near(slope_alpha_threshold, p.slope_alpha_threshold, eps)) return false;
+        if (!is_near(slope_decay_rate, p.slope_decay_rate, eps)) return false;
+        if (slope_confidence_enabled != p.slope_confidence_enabled) return false;
+        if (!is_near(slope_min_threshold, p.slope_min_threshold, eps)) return false;
+        if (!is_near(slope_max_threshold, p.slope_max_threshold, eps)) return false;
+
+        return true;
+    }
 };
 
 class Config {

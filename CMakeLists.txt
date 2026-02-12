@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 if(MSVC)
     # Compile flags: Buffer Security Check (/GS) is usually default, but good to ensure.
     add_compile_options(/GS)
-    
+
     # Linker flags: ASLR (/DYNAMICBASE) and DEP (/NXCOMPAT)
     add_link_options(/DYNAMICBASE /NXCOMPAT)
 endif()
