@@ -105,8 +105,7 @@ If `mSuspForce` is missing (encrypted content), tire load is estimated from chas
 1.  **Lateral G Force ($F_{\text{sop-base}}$)**:
     *   **Input**: `mLocalAccel.x` (Clamped to **+/- 5.0 G**).
     *   **Smoothing**: Time-Corrected LPF ($\tau \approx 0.0225 - 0.1\text{s}$ mapped from scalar).
-    *   **Formula**: $-G_{\text{smooth}} \times K_{\text{sop}} \times K_{\text{sop-scale}} \times K_{\text{decouple}}$.
-    *   **Note**: Inverted in v0.7.34 to match DirectInput conventions (Right Turn -> Negative Pull).
+    *   **Formula**: $G_{\text{smooth}} \times K_{\text{sop}} \times K_{\text{sop-scale}} \times K_{\text{decouple}}$.
 
     *   Amplifies the SoP force when the car is oversteering (Front Grip > Rear Grip).
     *   **Condition**: `if (FrontGrip > RearGrip) AND (!SlopeDetectionEnabled)`
@@ -163,12 +162,12 @@ If `mSuspForce` is missing (encrypted content), tire load is estimated from chas
 *   **Scrub Drag (Fade-In)**:
     *   Adds constant resistance when sliding laterally.
     *   **Coordinate Note**:
-        *   Sliding **Left** (+Vel) requires friction force to the **Right**.
+        *   Sliding **Left** (+Vel) requires force **Right**.
         *   LMU reports **+X = Left**.
         *   DirectInput requires **+Force = Right**.
-        *   Therefore: `DragDir = 1.0` (Matching sign).
+        *   Therefore: `DragDir = -1.0` (Inverted).
     *   **Fade-In**: Linear scale 0% to 100% between **0.0 m/s** and **0.5 m/s** lateral velocity.
-    *   **Formula**: `(SideVel > 0 ? 1 : -1) * K_drag * 5.0Nm * Fade * Scale`.
+    *   **Formula**: `(SideVel > 0 ? -1 : 1) * K_drag * 5.0Nm * Fade * Scale`.
 
 **3. Traction Loss (Wheel Spin)**
 *   **Trigger**: Throttle > 5% and SlipRatio > 0.2 (20%).

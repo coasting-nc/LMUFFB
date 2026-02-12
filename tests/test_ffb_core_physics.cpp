@@ -384,9 +384,8 @@ TEST_CASE(test_smoothing_step_response, "CorePhysics") {
     
     double force1 = engine.calculate_force(&data);
     
-    // v0.7.34 Fix: SoP Inverted
-    if (force1 < 0.0 && force1 > -0.005) {
-        std::cout << "[PASS] Smoothing Step 1 correct (" << force1 << ", small negative)." << std::endl;
+    if (force1 > 0.0 && force1 < 0.005) {
+        std::cout << "[PASS] Smoothing Step 1 correct (" << force1 << ", small positive)." << std::endl;
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Smoothing Step 1 mismatch. Got " << force1 << std::endl;
@@ -397,9 +396,8 @@ TEST_CASE(test_smoothing_step_response, "CorePhysics") {
         force1 = engine.calculate_force(&data);
     }
     
-    // v0.7.34 Fix: SoP Inverted
-    if (force1 < -0.02 && force1 > -0.06) {
-        std::cout << "[PASS] Smoothing settled to steady-state (" << force1 << ", near -0.05)." << std::endl;
+    if (force1 > 0.02 && force1 < 0.06) {
+        std::cout << "[PASS] Smoothing settled to steady-state (" << force1 << ", near 0.05)." << std::endl;
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Smoothing did not settle. Value: " << force1 << std::endl;
@@ -501,8 +499,7 @@ TEST_CASE(test_sop_effect, "CorePhysics") {
     data.mLocalAccel.x = 4.905; // 0.5G
     for (int i = 0; i < 60; i++) engine.calculate_force(&data);
     double force = engine.calculate_force(&data);
-    // v0.7.34 Fix: SoP Inverted (+AccelX -> Negative Force)
-    ASSERT_NEAR(force, -0.125, 0.05);
+    ASSERT_NEAR(force, 0.125, 0.05);
 }
 
 TEST_CASE(test_regression_rear_torque_lpf, "CorePhysics") {

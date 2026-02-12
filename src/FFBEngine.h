@@ -1447,8 +1447,7 @@ private:
     void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext& ctx) {
         // Lateral G
         double raw_g = (std::max)(-49.05, (std::min)(49.05, data->mLocalAccel.x));
-        // v0.7.34 FIX: Invert Lateral G to match DirectInput convention (Right Turn -> Negative/Left Pull)
-        double lat_g = -(raw_g / 9.81);
+        double lat_g = (raw_g / 9.81);
         
         // Smoothing
         double smoothness = 1.0 - (double)m_sop_smoothing_factor;
@@ -1679,9 +1678,7 @@ private:
             double abs_lat_vel = std::abs(avg_lat_vel);
             if (abs_lat_vel > 0.001) {
                 double fade = (std::min)(1.0, abs_lat_vel / 0.5);
-                // v0.7.34 FIX: Invert drag_dir to ensure friction opposes motion.
-                // If sliding Left (+), friction pushes Right (+).
-                double drag_dir = (avg_lat_vel > 0.0) ? 1.0 : -1.0;
+                double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
                 ctx.scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade * ctx.decoupling_scale;
             }
         }
