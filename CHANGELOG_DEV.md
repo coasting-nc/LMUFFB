@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.34] - 2026-02-12
+### Fixed
+- **FFB Safety (Issue #79)**: Implemented automatic FFB muting when the car is no longer under player control (AI/Remote) or when the session has finished. This prevents violent "finish line jolts" during race weekends.
+### Testing
+- **New Safety Test Suite**: Added `tests/test_ffb_safety.cpp` to verify FFB lifecycle gating.
+
 ## [0.7.33] - 2026-02-12
 ### Fixed
 - **Preset Handling**: Fixed issue where modifying any setting would immediately deselect the current preset and switch to "Custom", making "Save Current Config" non-functional (#72).

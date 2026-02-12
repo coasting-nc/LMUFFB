@@ -470,6 +470,15 @@ public:
     friend class FFBEngineTests::FFBEngineTestAccess;
 
     FFBEngine();
+
+    // v0.7.34: Safety Check for Issue #79
+    // Determines if FFB should be active based on vehicle scoring state.
+    // Mutes FFB if car is under AI control or session has finished.
+    bool IsFFBAllowed(const VehicleScoringInfoV01& scoring) const {
+        // mControl: 0 = local player, 1 = AI, 2 = Remote, -1 = None
+        // mFinishStatus: 0 = none, 1 = finished, 2 = DNF, 3 = DQ
+        return (scoring.mIsPlayer && scoring.mControl == 0 && scoring.mFinishStatus == 0);
+    }
     
     // Helper to retrieve data (Consumer)
     std::vector<FFBSnapshot> GetDebugBatch() {
