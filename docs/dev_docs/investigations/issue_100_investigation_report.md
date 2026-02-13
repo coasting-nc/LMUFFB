@@ -45,6 +45,11 @@ Version 0.7.26 did not have this aggressive power-saving sleep logic. The refact
 ## Conclusion
 The issue is a confirmed regression caused by the 100ms sleep in the main loop when the window is not focused.
 
+### Originating Commit
+The regression was introduced in commit **`b1eb6e2754bd968c4ba3504df98bd63d4d7723a8`** ("Port GUI to Linux using GLFW and OpenGL 3"), which was part of the **v0.7.32** release.
+
+This commit refactored the GUI layer to support multiple platforms and introduced a power-saving mechanism in `src/main.cpp`. The mechanism was designed to reduce CPU usage when the application window was not active by increasing the sleep duration between loop iterations from 16ms to 100ms. However, it failed to account for DirectInput's dependency on the main thread's message loop frequency for background FFB updates.
+
 ## Recommended Fix
 1. **Eliminate the 100ms sleep**: The main loop should run at a consistent rate (e.g., always 16ms / 60Hz) to ensure the message loop remains healthy for DirectInput.
 2. **Remove focus-based throttling**: A background driver should not throttle itself based on window focus.

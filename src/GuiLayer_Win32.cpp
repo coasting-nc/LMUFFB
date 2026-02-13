@@ -11,7 +11,7 @@
 #include <mutex>
 #include <chrono>
 
-#ifdef ENABLE_IMGUI
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
@@ -265,7 +265,7 @@ bool GuiLayer::Init() {
 void GuiLayer::Shutdown(FFBEngine& engine) {
     Config::Save(engine);
 }
-bool GuiLayer::Render(FFBEngine& engine) { return false; }
+bool GuiLayer::Render(FFBEngine& engine) { return true; }
 void* GuiLayer::GetWindowHandle() { return nullptr; }
 
 void ResizeWindowPlatform(int x, int y, int w, int h) {}
