@@ -94,7 +94,7 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "slope_detection_enabled") current_preset.slope_detection_enabled = (value == "1");
                 else if (key == "slope_sg_window") current_preset.slope_sg_window = std::stoi(value);
                 else if (key == "slope_sensitivity") current_preset.slope_sensitivity = std::stof(value);
-                else if (key == "slope_negative_threshold") current_preset.slope_negative_threshold = std::stof(value);
+                else if (key == "slope_negative_threshold") current_preset.slope_min_threshold = std::stof(value);
                 else if (key == "slope_smoothing_tau") current_preset.slope_smoothing_tau = std::stof(value);
                 else if (key == "slope_min_threshold") current_preset.slope_min_threshold = std::stof(value);
                 else if (key == "slope_max_threshold") current_preset.slope_max_threshold = std::stof(value);
@@ -840,7 +840,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "slope_detection_enabled=" << p.slope_detection_enabled << "\n";
     file << "slope_sg_window=" << p.slope_sg_window << "\n";
     file << "slope_sensitivity=" << p.slope_sensitivity << "\n";
-    file << "slope_negative_threshold=" << p.slope_negative_threshold << "\n";
+
     file << "slope_smoothing_tau=" << p.slope_smoothing_tau << "\n";
     file << "slope_min_threshold=" << p.slope_min_threshold << "\n";
     file << "slope_max_threshold=" << p.slope_max_threshold << "\n";
@@ -1110,7 +1110,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "slope_detection_enabled=" << engine.m_slope_detection_enabled << "\n";
         file << "slope_sg_window=" << engine.m_slope_sg_window << "\n";
         file << "slope_sensitivity=" << engine.m_slope_sensitivity << "\n";
-        file << "slope_negative_threshold=" << engine.m_slope_negative_threshold << "\n";
+
         file << "slope_smoothing_tau=" << engine.m_slope_smoothing_tau << "\n";
         file << "slope_min_threshold=" << engine.m_slope_min_threshold << "\n";
         file << "slope_max_threshold=" << engine.m_slope_max_threshold << "\n";
@@ -1266,7 +1266,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "slope_detection_enabled") engine.m_slope_detection_enabled = (value == "1");
                     else if (key == "slope_sg_window") engine.m_slope_sg_window = std::stoi(value);
                     else if (key == "slope_sensitivity") engine.m_slope_sensitivity = std::stof(value);
-                    else if (key == "slope_negative_threshold") engine.m_slope_negative_threshold = std::stof(value);
+                    else if (key == "slope_negative_threshold") engine.m_slope_min_threshold = std::stof(value);
                     else if (key == "slope_smoothing_tau") engine.m_slope_smoothing_tau = std::stof(value);
                     else if (key == "slope_min_threshold") engine.m_slope_min_threshold = std::stof(value);
                     else if (key == "slope_max_threshold") engine.m_slope_max_threshold = std::stof(value);
