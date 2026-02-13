@@ -6,9 +6,21 @@ A regression was reported in version 0.7.34 where Force Feedback (FFB) becomes "
 ## Findings
 
 ### 1. Regression Origin
-The investigation identified that the regression was introduced in commit **`b1eb6e2754bd968c4ba3504df98bd63d4d7723a8`** ("Port GUI to Linux using GLFW and OpenGL 3"), which was part of the **v0.7.32** release cycle. While the 100ms sleep existed in earlier versions, this commit formalized the `bool active` return logic from the GUI layer across the new platform abstraction, which became the primary trigger for the reported behavior.
+The investigation identified that the aggressive 100ms background sleep was actually introduced much earlier, in commit **`267822c66802e5e40e6c387b3724c3e80f97906d`** (v0.5.14), when the application structure was first organized into the `src/` directory.
 
-### 2. Root Cause Identification
+However, it only became a critical regression in the **v0.7.32** release cycle (around commit **`b1eb6e2754bd968c4ba3504df98bd63d4d7723a8`**).
+
+### 2. Why it became a problem in v0.7.32
+The v0.7.32 refactoring (Linux Port & Platform Abstraction) formalized the `bool active = GuiLayer::Render()` return logic. Before this refactoring, the monolithic `GuiLayer.cpp` was more tightly coupled with the Win32 message pump.
+
+The refactoring made the following changes that exacerbated the issue:
+- **Platform Abstraction**: The `IGuiPlatform` interface now dictates when the main loop should sleep. The Windows implementation specifically uses `ImGui::IsWindowFocused(...)` to determine activity.
+- **Message Loop Formalization**: By moving the `PeekMessage` loop inside `GuiLayer_Win32.cpp` and gating the main loop's frequency based on its return value, the application effectively tied **DirectInput hardware performance** to **ImGui focus state**.
+- **DirectInput Synchronization**: DirectInput devices acquired in `DISCL_BACKGROUND` mode (as LMUFFB does) still rely on the message queue of the window they are associated with. When the main loop sleeps for 100ms, the message queue is only drained at 10Hz. This causes `SetParameters` calls from the FFB thread to be delayed or throttled by the Windows OS to match the message pump's frequency, resulting in the "dull" and "detail-less" feeling reported by the user.
+
+In earlier versions, despite the sleep being present, there was enough "activity noise" or different message handling in the monolithic GUI code that often kept the loop running at 60Hz. The cleaner v0.7.32 implementation made the "Lazy Rendering" optimization too efficient, revealing the underlying architectural flaw.
+
+### 3. Root Cause Identification
 The investigation identified a critical flaw in the main application loop in `src/main.cpp`.
 
 ```cpp

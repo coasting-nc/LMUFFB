@@ -2,6 +2,8 @@
 #include <atomic>
 #include <mutex>
 #include <cstdio>
+#include <thread>
+#include <chrono>
 #include <filesystem>
 #include "src/Config.h"
 
@@ -58,9 +60,7 @@ int main(int argc, char* argv[]) {
 
     // Ensure output is visible on Windows before console closes
     std::cout << std::flush;
-#ifdef _WIN32
-    Sleep(50);
-#endif
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     // Cleanup artifacts
     std::remove(Config::m_config_path.c_str());
@@ -79,6 +79,8 @@ int main(int argc, char* argv[]) {
     std::remove("test_legacy.ini");
     std::remove("test_comments.ini");
     std::remove("imgui.ini");
+    std::remove("config.ini");
+    std::remove("test_config_runner.ini");
     
     try {
         if (std::filesystem::exists("test_logs")) {

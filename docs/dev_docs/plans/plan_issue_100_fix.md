@@ -13,6 +13,6 @@ A regression was identified where FFB becomes "dull" and loses detail when the L
 6. **Update VERSION**: Increment the version in `VERSION` to `0.7.36`.
 
 ## Implementation Notes
-- **Root Cause Confirmed:** The investigation confirmed that commit `b1eb6e27` (v0.7.32) formalized the focus-based throttling which led to Issue #100.
+- **Root Cause Analysis:** The investigation revealed that the 100ms background sleep was introduced as early as v0.5.14 (commit `267822c6`). However, it only became a critical regression in v0.7.32 because the refactoring formalized the focus-based "Lazy Rendering" logic. DirectInput background acquisition relies on the message pump, so throttling the main loop to 10Hz severely degraded FFB update rates and detail.
 - **Slope Detection Bug:** A separate bug was discovered where the "Slope Threshold" GUI slider was disconnected from the physics engine. This has been documented in `docs/dev_docs/investigations/slope_detection_threshold_bug.md` but is NOT fixed in this patch as per user instructions.
-- **Test Infrastructure:** Added mechanisms to prevent console truncation on Windows during test runs.
+- **Test Infrastructure:** Replaced Win32-specific `Sleep()` with idiomatic `std::this_thread::sleep_for()` in the test runner. Added comprehensive cleanup of temporary test artifacts (logs, ini files) to ensure a clean workspace after testing.
