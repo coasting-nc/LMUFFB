@@ -106,6 +106,7 @@ struct Preset {
     bool slope_detection_enabled = false;
     int slope_sg_window = 15;
     float slope_sensitivity = 0.5f;          // Reduced from 1.0 (less aggressive)
+    float slope_negative_threshold = -0.3f;  // Changed from -0.1 (later trigger)
     float slope_smoothing_tau = 0.04f;       // Changed from 0.02 (smoother transitions)
 
     // v0.7.3: Slope detection stability fixes
@@ -300,6 +301,7 @@ struct Preset {
         engine.m_slope_sg_window = (std::max)(5, (std::min)(41, slope_sg_window));
         if (engine.m_slope_sg_window % 2 == 0) engine.m_slope_sg_window++; // Must be odd for SG
         engine.m_slope_sensitivity = (std::max)(0.1f, slope_sensitivity);
+        engine.m_slope_negative_threshold = slope_negative_threshold;
         engine.m_slope_smoothing_tau = (std::max)(0.001f, slope_smoothing_tau);
 
         // v0.7.3: Slope stability fixes
@@ -431,6 +433,7 @@ struct Preset {
         slope_detection_enabled = engine.m_slope_detection_enabled;
         slope_sg_window = engine.m_slope_sg_window;
         slope_sensitivity = engine.m_slope_sensitivity;
+        slope_negative_threshold = engine.m_slope_negative_threshold;
         slope_smoothing_tau = engine.m_slope_smoothing_tau;
 
         // v0.7.3: Slope stability fixes
@@ -519,6 +522,7 @@ struct Preset {
         if (slope_detection_enabled != p.slope_detection_enabled) return false;
         if (slope_sg_window != p.slope_sg_window) return false;
         if (!is_near(slope_sensitivity, p.slope_sensitivity, eps)) return false;
+        if (!is_near(slope_negative_threshold, p.slope_negative_threshold, eps)) return false;
         if (!is_near(slope_smoothing_tau, p.slope_smoothing_tau, eps)) return false;
         if (!is_near(slope_alpha_threshold, p.slope_alpha_threshold, eps)) return false;
         if (!is_near(slope_decay_rate, p.slope_decay_rate, eps)) return false;

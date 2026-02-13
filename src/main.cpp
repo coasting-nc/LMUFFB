@@ -53,7 +53,7 @@ void FFBThread() {
                     info.sop_effect = g_engine.m_sop_effect;
                     info.slope_enabled = g_engine.m_slope_detection_enabled;
                     info.slope_sensitivity = g_engine.m_slope_sensitivity;
-                    info.slope_threshold = (float)g_engine.m_slope_min_threshold;
+                    info.slope_threshold = (float)g_engine.m_slope_negative_threshold;
                     info.slope_alpha_threshold = g_engine.m_slope_alpha_threshold;
                     info.slope_decay_rate = g_engine.m_slope_decay_rate;
                     AsyncLogger::Get().Start(info, Config::m_log_path);

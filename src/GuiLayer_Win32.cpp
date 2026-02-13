@@ -11,7 +11,7 @@
 #include <mutex>
 #include <chrono>
 
-#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
+#ifdef ENABLE_IMGUI
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
@@ -201,7 +201,7 @@ bool GuiLayer::Render(FFBEngine& engine) {
     g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
     g_pSwapChain->Present(1, 0);
-    return true; // Always return true while the app is running to prevent main loop throttling
+    return true; // Always return true to keep the main loop running at full speed
 }
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

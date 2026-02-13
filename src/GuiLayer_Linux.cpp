@@ -178,7 +178,7 @@ bool GuiLayer::Render(FFBEngine& engine) {
 
     glfwSwapBuffers(g_window);
 
-    return true; // Always return true while the app is running to prevent main loop throttling
+    return true; // Always return true to keep the main loop running at full speed
 }
 
 #else
