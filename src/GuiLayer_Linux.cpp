@@ -178,7 +178,7 @@ bool GuiLayer::Render(FFBEngine& engine) {
 
     glfwSwapBuffers(g_window);
 
-    return ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow) || ImGui::IsAnyItemActive();
+    return true; // Always return true while the app is running to prevent main loop throttling
 }
 
 #else
@@ -190,7 +190,7 @@ bool GuiLayer::Init() {
 void GuiLayer::Shutdown(FFBEngine& engine) {
     Config::Save(engine);
 }
-bool GuiLayer::Render(FFBEngine& engine) { return false; }
+bool GuiLayer::Render(FFBEngine& engine) { return true; }
 void* GuiLayer::GetWindowHandle() { return nullptr; }
 
 #endif

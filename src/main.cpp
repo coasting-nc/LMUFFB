@@ -135,9 +135,10 @@ int main(int argc, char* argv[]) {
     std::cout << "[GUI] Main Loop Started." << std::endl;
 
     while (g_running) {
-        bool active = GuiLayer::Render(g_engine);
-        if (active) std::this_thread::sleep_for(std::chrono::milliseconds(16));
-        else std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        GuiLayer::Render(g_engine);
+        // Maintain a consistent 60Hz message loop even when backgrounded
+        // to ensure DirectInput performance and reliability.
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
     
     Config::Save(g_engine);
