@@ -1334,7 +1334,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     // Migration: v0.7.x sensitivity â†’ v0.7.11 thresholds
     // If loading old config with sensitivity but at default thresholds
     if (engine.m_slope_min_threshold == -0.3f && 
-        engine.m_slope_max_threshold == -2.0f &&
+        (engine.m_slope_max_threshold == -2.0f || engine.m_slope_max_threshold == -5.0f) &&
         engine.m_slope_sensitivity != 0.5f) {
         
         // Old formula: factor = 1 - (excess * 0.1 * sens)

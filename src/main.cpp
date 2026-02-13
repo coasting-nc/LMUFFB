@@ -34,6 +34,9 @@ void FFBThread() {
     std::cout << "[FFB] Loop Started." << std::endl;
 
     while (g_running) {
+        double force = 0.0;
+        bool should_output = false;
+
         if (g_ffb_active && GameConnector::Get().IsConnected()) {
             bool in_realtime = GameConnector::Get().CopyTelemetry(g_localData);
             bool is_stale = GameConnector::Get().IsStale(100);
@@ -66,9 +69,6 @@ void FFBThread() {
             }
             was_in_menu = !in_realtime;
             
-            double force = 0.0;
-            bool should_output = false;
-
             if (in_realtime && !is_stale && g_localData.telemetry.playerHasVehicle) {
                 uint8_t idx = g_localData.telemetry.playerVehicleIdx;
                 if (idx < 104) {
@@ -82,11 +82,11 @@ void FFBThread() {
                     }
                 }
             }
-            
-            if (!should_output) force = 0.0;
-
-            DirectInputFFB::Get().UpdateForce(force);
         }
+
+        if (!should_output) force = 0.0;
+        DirectInputFFB::Get().UpdateForce(force);
+
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 

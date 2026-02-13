@@ -116,7 +116,7 @@ struct Preset {
 
     // v0.7.11: Min/Max Threshold System
     float slope_min_threshold = -0.3f;
-    float slope_max_threshold = -2.0f;
+    float slope_max_threshold = -5.0f; // v0.7.36: Reduced sensitivity (was -2.0)
 
     // 2. Constructors
     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin), app_version(LMUFFB_VERSION) {}

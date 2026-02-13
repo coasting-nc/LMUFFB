@@ -879,7 +879,8 @@ public:
         if (std::abs(dAlpha_dt) > (double)m_slope_alpha_threshold) {
             double abs_dAlpha = std::abs(dAlpha_dt);
             double sign_dAlpha = (dAlpha_dt >= 0) ? 1.0 : -1.0;
-            double protected_denom = (std::max)(0.005, abs_dAlpha) * sign_dAlpha;
+            // v0.7.36: Increased protected_denom from 0.005 to 0.01 to reduce noise at low movement
+            double protected_denom = (std::max)(0.01, abs_dAlpha) * sign_dAlpha;
             m_slope_current = dG_dt / protected_denom;
 
             // v0.7.17 FIX: Hard clamp to physically possible range [-20.0, 20.0]
@@ -1657,7 +1658,9 @@ private:
         double rear_slip_avg = (lat_vel_rl + lat_vel_rr) / 2.0;
         double effective_slip_vel = (std::max)(front_slip_avg, rear_slip_avg);
         
-        if (effective_slip_vel > 0.5) {
+        // v0.7.36: Increased threshold from 0.5 to 1.5 to prevent high-speed toe-in/noise
+        // from triggering constant slide vibrations on straights.
+        if (effective_slip_vel > 1.5) {
             double base_freq = 10.0 + (effective_slip_vel * 5.0);
             double freq = base_freq * (double)m_slide_freq_scale;
             if (freq > 250.0) freq = 250.0;
