@@ -55,6 +55,12 @@ int main(int argc, char* argv[]) {
     std::cout << "  TEST CASES   : " << FFBEngineTests::g_test_cases_passed << "/" << FFBEngineTests::g_test_cases_run << std::endl;
     std::cout << "  ASSERTIONS   : " << total_passed << " passed, " << total_failed << " failed" << std::endl;
     std::cout << "==============================================" << std::endl;
+    std::cout << std::flush;
+
+#ifdef _WIN32
+    // Small delay to ensure the summary is visible in all terminal types on Windows
+    Sleep(50);
+#endif
 
     // Cleanup artifacts
     std::remove(Config::m_config_path.c_str());

@@ -22,3 +22,9 @@ A regression was identified where FFB becomes "dull" and loses detail when the L
 - **High-Freq Textures**: Detail will be restored when the window is backgrounded.
 - **FFB Thread Stability**: `SetParameters` calls in the FFB thread will no longer be delayed by a throttled main thread message loop.
 - **Overall Feel**: Consistent FFB performance regardless of window state.
+
+## Implementation Notes
+- **Root Cause Confirmed:** The investigation confirmed that commit `b1eb6e27` (v0.7.32) introduced a `100ms` sleep in the main loop whenever the GUI reported `Render()` as false (i.e., when minimized or obscured). This throttled the Win32 message pump to 10Hz, which is insufficient for smooth DirectInput FFB updates.
+- **Secondary Regression Found:** During implementation, I discovered that `m_slope_negative_threshold` was a "dead" variable in `FFBEngine`, while the intended logic was using `m_slope_min_threshold`. This was corrected across the codebase.
+- **Test Infrastructure:** The `tests/main_test_runner.cpp` was updated with a 50ms delay and `fflush` to fix a known issue where Windows consoles sometimes truncate test summaries.
+- **Headless Compatibility:** GUI tests now use `HEADLESS_GUI` defines in `CMakeLists.txt` to prevent crashes when running in environments without a GPU/Display.

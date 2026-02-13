@@ -324,7 +324,6 @@ public:
     bool m_slope_detection_enabled = false;
     int m_slope_sg_window = 15;
     float m_slope_sensitivity = 0.5f;            // v0.7.1: Reduced from 1.0 (less aggressive)
-    float m_slope_negative_threshold = -0.3f;    // v0.7.1: Changed from -0.1 (later trigger)
     float m_slope_smoothing_tau = 0.04f;         // v0.7.1: Changed from 0.02 (smoother transitions)
 
     // NEW v0.7.3: Stability fixes
