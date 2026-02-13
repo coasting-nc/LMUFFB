@@ -144,7 +144,7 @@ TEST_CASE(test_slope_config_persistence, "SlopeDetection") {
     engine_save.m_slope_detection_enabled = true;
     engine_save.m_slope_sg_window = 21;
     engine_save.m_slope_sensitivity = 2.5f;
-    engine_save.m_slope_negative_threshold = -0.2f;
+    engine_save.m_slope_min_threshold = -0.2f;
     engine_save.m_slope_smoothing_tau = 0.05f;
     
     Config::Save(engine_save, test_file);
@@ -156,7 +156,7 @@ TEST_CASE(test_slope_config_persistence, "SlopeDetection") {
     ASSERT_TRUE(engine_load.m_slope_detection_enabled == true);
     ASSERT_TRUE(engine_load.m_slope_sg_window == 21);
     ASSERT_NEAR(engine_load.m_slope_sensitivity, 2.5f, 0.001);
-    ASSERT_NEAR(engine_load.m_slope_negative_threshold, -0.2f, 0.001);
+    ASSERT_NEAR(engine_load.m_slope_min_threshold, -0.2f, 0.001);
     ASSERT_NEAR(engine_load.m_slope_smoothing_tau, 0.05f, 0.001);
     
     std::remove(test_file.c_str());
@@ -373,7 +373,7 @@ TEST_CASE(test_slope_detection_default_values_v071, "SlopeDetection") {
     InitializeEngine(engine);
     
     ASSERT_NEAR(engine.m_slope_sensitivity, 0.5f, 0.001);
-    ASSERT_NEAR(engine.m_slope_negative_threshold, -0.3f, 0.001);
+    ASSERT_NEAR(engine.m_slope_min_threshold, -0.3f, 0.001);
     ASSERT_NEAR(engine.m_slope_smoothing_tau, 0.04f, 0.001);
 }
 
@@ -407,7 +407,7 @@ TEST_CASE(test_slope_detection_less_aggressive_v071, "SlopeDetection") {
     
     engine.m_slope_detection_enabled = true;
     engine.m_slope_sensitivity = 0.5f;
-    engine.m_slope_negative_threshold = -0.3f;
+    engine.m_slope_min_threshold = -0.3f;
     engine.m_slope_sg_window = 15;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
@@ -520,7 +520,7 @@ TEST_CASE(test_slope_confidence_gate, "SlopeDetection") {
     engine.m_slope_detection_enabled = true;
     engine.m_slope_confidence_enabled = true;
     engine.m_slope_alpha_threshold = 0.01f;
-    engine.m_slope_negative_threshold = -0.3f;
+    engine.m_slope_min_threshold = -0.3f;
     engine.m_slope_sensitivity = 1.0f;
     
     double dAlpha_dt = 0.1;

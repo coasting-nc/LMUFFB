@@ -210,7 +210,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
              info.sop_effect = engine.m_sop_effect;
              info.slope_enabled = engine.m_slope_detection_enabled;
              info.slope_sensitivity = engine.m_slope_sensitivity;
-             info.slope_threshold = (float)engine.m_slope_negative_threshold;
+             info.slope_threshold = (float)engine.m_slope_min_threshold;
              info.slope_alpha_threshold = engine.m_slope_alpha_threshold;
              info.slope_decay_rate = engine.m_slope_decay_rate;
 
@@ -595,7 +595,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
             if (ImGui::TreeNode("Advanced Slope Settings")) {
                 ImGui::NextColumn(); ImGui::NextColumn();
-                FloatSetting("  Slope Threshold", &engine.m_slope_negative_threshold, -1.0f, 0.0f, "%.2f", "Slope value below which grip loss begins.\nMore negative = Later detection (safer).");
+                FloatSetting("  Slope Threshold", &engine.m_slope_min_threshold, -1.0f, 0.0f, "%.2f", "Slope value below which grip loss begins.\nMore negative = Later detection (safer).");
                 FloatSetting("  Output Smoothing", &engine.m_slope_smoothing_tau, 0.005f, 0.100f, "%.3f s", "Time constant for grip factor smoothing.\nPrevents abrupt FFB changes.");
 
                 ImGui::Separator();

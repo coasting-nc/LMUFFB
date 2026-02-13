@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+﻿cmake_minimum_required(VERSION 3.10)
 project(LMUFFB_Tests)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -42,6 +42,7 @@ set(TEST_SOURCES
     test_ffb_logic.cpp
     test_ffb_safety.cpp
     test_issue_100_timing.cpp
+    test_issue_104_slope_disconnect.cpp
 
     # Core Application Logic (Now with Linux Mocks)
     ../src/Config.cpp
@@ -91,3 +92,4 @@ endif()
 
 # Add to CTest
 add_test(NAME CombinedTests COMMAND run_combined_tests)
+

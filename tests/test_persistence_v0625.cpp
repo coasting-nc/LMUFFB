@@ -432,7 +432,7 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     custom_preset.slope_detection_enabled = true;
     custom_preset.slope_sg_window = 21;
     custom_preset.slope_sensitivity = 2.5f;
-    custom_preset.slope_negative_threshold = -0.2f;
+    custom_preset.slope_min_threshold = -0.2f;
     custom_preset.slope_smoothing_tau = 0.05f;
     
     FFBEngine engine_apply;
@@ -455,7 +455,7 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     ASSERT_EQ(engine_apply.m_slope_detection_enabled, true);
     ASSERT_EQ(engine_apply.m_slope_sg_window, 21);
     ASSERT_NEAR(engine_apply.m_slope_sensitivity, 2.5f, 0.001f);
-    ASSERT_NEAR(engine_apply.m_slope_negative_threshold, -0.2f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_slope_min_threshold, -0.2f, 0.001f);
     ASSERT_NEAR(engine_apply.m_slope_smoothing_tau, 0.05f, 0.001f);
     
     std::cout << "  [PASS] Apply() transfers all Preset fields to FFBEngine" << std::endl;
@@ -480,7 +480,7 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     engine_source.m_slope_detection_enabled = true;
     engine_source.m_slope_sg_window = 31;
     engine_source.m_slope_sensitivity = 3.0f;
-    engine_source.m_slope_negative_threshold = -0.3f;
+    engine_source.m_slope_min_threshold = -0.3f;
     engine_source.m_slope_smoothing_tau = 0.08f;
     
     Preset captured_preset;
@@ -502,7 +502,7 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     ASSERT_EQ(captured_preset.slope_detection_enabled, true);
     ASSERT_EQ(captured_preset.slope_sg_window, 31);
     ASSERT_NEAR(captured_preset.slope_sensitivity, 3.0f, 0.001f);
-    ASSERT_NEAR(captured_preset.slope_negative_threshold, -0.3f, 0.001f);
+    ASSERT_NEAR(captured_preset.slope_min_threshold, -0.3f, 0.001f);
     ASSERT_NEAR(captured_preset.slope_smoothing_tau, 0.08f, 0.001f);
     
     std::cout << "  [PASS] UpdateFromEngine() captures all FFBEngine fields" << std::endl;
