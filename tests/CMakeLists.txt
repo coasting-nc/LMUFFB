@@ -41,6 +41,7 @@ set(TEST_SOURCES
     test_gui_tooltips_presence.cpp
     test_ffb_logic.cpp
     test_ffb_safety.cpp
+    test_issue_100_timing.cpp
 
     # Core Application Logic (Now with Linux Mocks)
     ../src/Config.cpp
@@ -79,6 +80,7 @@ endif()
 
 enable_testing()
 add_executable(run_combined_tests ${TEST_SOURCES})
+target_compile_definitions(run_combined_tests PRIVATE HEADLESS_GUI)
 
 if(WIN32)
     target_link_libraries(run_combined_tests dinput8 dxguid version imm32 winmm d3d11 d3dcompiler dxgi)

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.36] - 2026-02-12
+### Fixed
+- **FFB Throttling Regression (Issue #100)**: Removed focus-based throttling in the main loop. The application now maintains a consistent 60Hz message loop even when minimized or backgrounded. This ensures that DirectInput background operations (specifically FFB updates) remain high-frequency and reliable regardless of window state.
+
+### Testing
+- **Timing Regression Test**: Added `tests/test_issue_100_timing.cpp` to verify consistent main loop frequency and GUI layer return values.
+
 ## [0.7.35] - 2026-02-12
 ### Fixed
 - **ImGui ID Conflict**: Fixed "2 visible wheels with conflicting ID" error by using `PushID`/`PopID` in device and preset selection loops. This ensures unique identifier scopes for UI elements even when they share identical names. (#70)
