@@ -5,6 +5,30 @@ This document contains all version release posts by ErwinMoss from the [url=http
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
 [size=5][b]February 12, 2026[/b][/size]
+[b]Version 0.7.35 - UI Stability Update[/b]
+
+[b]New release[/b] (0.7.35): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]ImGui ID Conflict[/b]: Resolved the error "2 visible wheels with conflicting ID" that occurred when multiple FFB devices or presets had identical names. The app now correctly assigns unique internal identifiers to all selectable items. (#70)
+[/list]
+
+---
+
+[size=5][b]February 12, 2026[/b][/size]
+[b]Version 0.7.34 - FFB Safety Update[/b]
+
+[b]New release[/b] (0.7.34): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]FFB Safety[/b]: Implemented automatic FFB muting when the car is no longer under player control (AI/Remote) or when the session has finished. This prevents violent "finish line jolts" during race weekends. (#79)
+[/list]
+
+---
+
+[size=5][b]February 12, 2026[/b][/size]
 [b]Version 0.7.33 - Preset Handling Fix & Cleanup[/b]
 
 [b]New release[/b] (0.7.33): https://github.com/coasting-nc/LMUFFB/releases

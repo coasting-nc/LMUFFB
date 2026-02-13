@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.35] - 2026-02-12
+### Fixed
+- **ImGui ID Conflict**: Fixed "2 visible wheels with conflicting ID" error by using `PushID`/`PopID` in device and preset selection loops. This ensures unique identifier scopes for UI elements even when they share identical names. (#70)
+
+### Testing
+- **GUI Regression Test**: Added automated verification to ensure unique ImGui IDs are generated for identical labels when scoped with `PushID`.
+
 ## [0.7.34] - 2026-02-12
 ### Fixed
 - **FFB Safety (Issue #79)**: Implemented automatic FFB muting when the car is no longer under player control (AI/Remote) or when the session has finished. This prevents violent "finish line jolts" during race weekends.

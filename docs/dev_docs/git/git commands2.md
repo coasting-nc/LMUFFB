@@ -26,7 +26,7 @@ git merge -X theirs <branch name>
 # squash branch and merge into main
 
 ## Option 1
-squash branch commits into one: 
+squash branch commits into one:
 git reset --soft $(git merge-base main HEAD)
 (This moves your branch pointer back to the moment you branched off main, but keeps all your work staged in the index.)
 Commit the single "squashed" result:
@@ -56,7 +56,7 @@ git push origin your-feature-branch --force-with-lease
 
 ## Explanation of the git rebase approach
 
-To use the rebase approach to keep your feature branch up to date with 
+To use the rebase approach to keep your feature branch up to date with
 
 `main`, follow these steps.
 
@@ -70,40 +70,40 @@ This replaces the "back-merge" (
 
 First, ensure you have the latest changes from the server.
 
-powershell  
-`git checkout main`  
+powershell
+`git checkout main`
 `git pull origin main`
 
 #### **2\. Rebase your feature branch**
 
-Move back to your feature branch and "replay" your work on top of the new 
+Move back to your feature branch and "replay" your work on top of the new
 
-`main`.  
-powershell  
-`git checkout your-feature-branch`  
+`main`.
+powershell
+`git checkout your-feature-branch`
 `git rebase main`
 
 #### **3\. Handle Conflicts (If any)**
 
 If Git stops because of a conflict, the process pauses. You then:
 
-1. Open the files and fix the conflicts.  
-2. Stage the fixed files: `git add <file>`  
-3. Continue the rebase:  
-4. powershell  
-5. `git rebase --continue`  
+1. Open the files and fix the conflicts.
+2. Stage the fixed files: `git add <file>`
+3. Continue the rebase:
+4. powershell
+5. `git rebase --continue`
 6. *(Note: You do not run `git commit` during a rebase; `--continue` handles it for you.)*
 
 #### **4\. Update the Remote (The "Force Push")**
 
-Because 
+Because
 
-`rebase` rewrites the history of your branch, if you have already pushed this branch to the remote (GitHub/GitLab), a simple `git push` will be rejected. You must "force" update it:  
-powershell  
-`git push origin your-feature-branch --force-with-lease`  
-*Tip:* 
+`rebase` rewrites the history of your branch, if you have already pushed this branch to the remote (GitHub/GitLab), a simple `git push` will be rejected. You must "force" update it:
+powershell
+`git push origin your-feature-branch --force-with-lease`
+*Tip:*
 
-*`--force-with-lease` is safer than `--force` because it won't overwrite the remote if someone else has added new commits to that branch in the meantime.*  
+*`--force-with-lease` is safer than `--force` because it won't overwrite the remote if someone else has added new commits to that branch in the meantime.*
 ---
 
 ### **Comparison: Rebase vs. Merge**
@@ -117,7 +117,7 @@ powershell
 
 Rule of Thumb:
 
-* Use Rebase for your own private feature branches to keep the project history beautiful.  
+* Use Rebase for your own private feature branches to keep the project history beautiful.
 * Never Rebase a branch that other people are also actively working on (shared branches), as the force push will break their local copies.
 
 

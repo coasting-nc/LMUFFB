@@ -36,6 +36,57 @@ TEST_CASE(test_gui_decorator_execution, "GUI") {
     ImGui::DestroyContext(ctx);
 }
 
+TEST_CASE(test_gui_id_collision_prevention, "GUI") {
+    std::cout << "\nTest: GUI ID Collision Prevention (Issue #70)" << std::endl;
+
+    IMGUI_CHECKVERSION();
+    ImGuiContext* ctx = ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.DisplaySize = ImVec2(800, 600);
+
+    // Mock a font to avoid assertion in some ImGui versions
+    unsigned char* pixels;
+    int width, height;
+    io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+
+    ImGui::NewFrame();
+
+    const char* duplicate_label = "Same Name";
+    ImGuiID id1, id2;
+
+    // Simulation of the fix: Using PushID(i)
+    {
+        ImGui::PushID(0);
+        id1 = ImGui::GetID(duplicate_label);
+        ImGui::PopID();
+
+        ImGui::PushID(1);
+        id2 = ImGui::GetID(duplicate_label);
+        ImGui::PopID();
+
+        if (id1 != id2) {
+            std::cout << "[PASS] Unique IDs generated for identical labels using PushID" << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "[FAIL] Identical IDs generated despite PushID" << std::endl;
+            g_tests_failed++;
+        }
+    }
+
+    // Confirmation of the problem: Without PushID
+    {
+        ImGuiID id_bad1 = ImGui::GetID(duplicate_label);
+        ImGuiID id_bad2 = ImGui::GetID(duplicate_label);
+
+        if (id_bad1 == id_bad2) {
+            std::cout << "[INFO] Verified: Identical labels without PushID cause ID collision" << std::endl;
+        }
+    }
+
+    ImGui::EndFrame();
+    ImGui::DestroyContext(ctx);
+}
+
 TEST_CASE(test_gui_result_defaults, "GUI") {
     std::cout << "\nTest: GUI Result Struct Defaults" << std::endl;
     GuiWidgets::Result res;
