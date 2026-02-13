@@ -11,7 +11,7 @@
 #include <mutex>
 #include <chrono>
 
-#ifdef ENABLE_IMGUI
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
@@ -259,6 +259,20 @@ void CleanupRenderTarget() {
 
 #else
 // Stub Implementation for Headless Builds
+class Win32GuiPlatform : public IGuiPlatform {
+public:
+    void SetAlwaysOnTop(bool enabled) override { m_always_on_top_mock = enabled; }
+    void ResizeWindow(int x, int y, int w, int h) override {}
+    void SaveWindowGeometry(bool is_graph_mode) override {}
+    bool OpenPresetFileDialog(std::string& outPath) override { return false; }
+    bool SavePresetFileDialog(std::string& outPath, const std::string& defaultName) override { return false; }
+    void* GetWindowHandle() override { return nullptr; }
+    bool GetAlwaysOnTopMock() override { return m_always_on_top_mock; }
+    bool m_always_on_top_mock = false;
+};
+static Win32GuiPlatform g_platform;
+IGuiPlatform& GetGuiPlatform() { return g_platform; }
+
 bool GuiLayer::Init() {
     return true;
 }
@@ -268,10 +282,10 @@ void GuiLayer::Shutdown(FFBEngine& engine) {
 bool GuiLayer::Render(FFBEngine& engine) { return true; }
 void* GuiLayer::GetWindowHandle() { return nullptr; }
 
-void ResizeWindowPlatform(int x, int y, int w, int h) {}
-void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) {}
-void SetWindowAlwaysOnTopPlatform(bool enabled) {}
-bool OpenPresetFileDialogPlatform(std::string& outPath) { return false; }
-bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return false; }
+void ResizeWindowPlatform(int x, int y, int w, int h) { GetGuiPlatform().ResizeWindow(x, y, w, h); }
+void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) { GetGuiPlatform().SaveWindowGeometry(is_graph_mode); }
+void SetWindowAlwaysOnTopPlatform(bool enabled) { GetGuiPlatform().SetAlwaysOnTop(enabled); }
+bool OpenPresetFileDialogPlatform(std::string& outPath) { return GetGuiPlatform().OpenPresetFileDialog(outPath); }
+bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return GetGuiPlatform().SavePresetFileDialog(outPath, defaultName); }
 
 #endif

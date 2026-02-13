@@ -38,7 +38,7 @@ This logic, although present in older versions, became a critical failure point 
 
 When the user is playing the game (the primary use case), the LMUFFB window is NOT focused. This causes the main loop to sleep for 100ms between frames, effectively throttling the Win32 message loop to 10Hz.
 
-### 2. Impact on FFB
+### 4. Impact on FFB
 While FFB calculation happens in a separate thread (`FFBThread`), DirectInput operations (specifically `SetParameters` used in `UpdateForce`) depend on the Win32 message pump of the thread that created the device (the main thread).
 
 Throttling the main thread to 10Hz causes:
