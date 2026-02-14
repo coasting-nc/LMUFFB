@@ -19,17 +19,19 @@ This plan implements two advanced FFB features that leverage the availability of
     *   `calculate_grip`: Helper function currently using a simple average `(w1.mGripFract + w2.mGripFract) / 2.0`.
 *   **`src/Config.h`:** Defines the `Preset` struct and default values.
 *   **`src/Config.cpp`:** Handles persistence (Save/Load) of settings.
+*   **`src/GuiLayer_Common.cpp`:** Handles the ImGui interface and sliders.
 
 ### 2.2 Impacted Functionalities
 *   **Grip Calculation:** `calculate_grip` will be mathematically altered to favor loaded tires.
 *   **Force Output:** The final `output_force` will be modulated by a new `dynamic_weight_factor`.
 *   **State Management:** New state variable `m_static_front_load` required to track baseline weight.
+*   **User Interface:** New slider required for "Dynamic Weight".
 
 ## 3. FFB Effect Impact Analysis
 
 | Effect | Technical Impact | User Perspective |
 | :--- | :--- | :--- |
-| **Dynamic Weight** | **New Modifier.** Scales `output_force` based on `ctx.avg_load / m_static_front_load`. <br> **Constraint:** Only active if `!ctx.frame_warn_load` (Real data available). | **Braking Feel:** Steering becomes heavier under hard braking (confidence). <br> **Acceleration:** Steering becomes lighter on exit (understeer cue). <br> **New Setting:** "Dynamic Weight Gain". |
+| **Dynamic Weight** | **New Modifier.** Scales `output_force` based on `ctx.avg_load / m_static_front_load`. <br> **Constraint:** Only active if `!ctx.frame_warn_load` (Real data available). | **Braking Feel:** Steering becomes heavier under hard braking (confidence). <br> **Acceleration:** Steering becomes lighter on exit (understeer cue). <br> **New Setting:** "Dynamic Weight Gain" (0-200%). |
 | **Understeer (Grip)** | **Refinement.** `ctx.avg_grip` becomes a weighted average. <br> **Logic:** `(G1*L1 + G2*L2) / (L1+L2)`. | **Cornering Precision:** FFB will feel more connected to the outside tire. Lifting the inside wheel won't artificially restore "grip feel" to the FFB signal. |
 
 ## 4. Proposed Changes
@@ -122,8 +124,20 @@ if (m_dynamic_weight_gain > 0.0 && !ctx.frame_warn_load) {
 double output_force = (base_input * m_steering_shaft_gain) * dynamic_weight_factor * ctx.grip_factor;
 ```
 
-### 4.3 File: `VERSION` & `src/Version.h`
-*   Increment version (e.g., `0.7.44` -> `0.7.45`).
+### 4.3 File: `src/GuiLayer_Common.cpp`
+
+**A. Add Slider to "Front Axle (Understeer)" Section**
+Add the control for `m_dynamic_weight_gain`.
+```cpp
+// Inside DrawTuningWindow -> Front Axle section
+FloatSetting("Dynamic Weight", &engine.m_dynamic_weight_gain, 0.0f, 2.0f, FormatPct(engine.m_dynamic_weight_gain),
+    "Scales steering weight based on longitudinal load transfer.\n"
+    "Heavier under braking, lighter under acceleration.\n"
+    "Requires valid tire load data (Hypercars).");
+```
+
+### 4.4 File: `VERSION` & `src/Version.h`
+*   Increment version (e.g., `0.7.45` -> `0.7.46`).
 
 ## 5. Test Plan (TDD)
 
@@ -167,5 +181,8 @@ double output_force = (base_input * m_steering_shaft_gain) * dynamic_weight_fact
 
 *   [ ] **Code:** Updated `src/Config.h` & `src/Config.cpp` (New setting).
 *   [ ] **Code:** Updated `src/FFBEngine.h` (Logic implementation).
+*   [ ] **Code:** Updated `src/GuiLayer_Common.cpp` (New slider).
 *   [ ] **Tests:** New `tests/test_ffb_dynamic_weight.cpp`.
 *   [ ] **Implementation Notes:** Update plan with any deviations.
+
+ 
