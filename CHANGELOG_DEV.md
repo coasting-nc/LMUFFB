@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.43] - 2026-02-14
+### Added
+- **Automatic Tire Load Normalization**:
+  - Implemented an adaptive load scaling system that automatically adjusts FFB texture intensity based on vehicle capabilities.
+  - **Class-Based Seeding**: On session start, the engine detects the vehicle class (GT3, GTE, LMP2, Hypercar, etc.) and sets an appropriate baseline (e.g., 9500N for Hypercars vs 4000N for GT3).
+  - **Peak Hold Adaptation**: Continuously monitors tire loads. Actual loads exceeding the baseline trigger a "Fast Attack" update to prevent clipping, while a "Slow Decay" (~100N/s) maintains sensitivity.
+  - **Improved Fidelity**: Prototype and high-downforce cars now maintain rich road texture and haptic detail at high speeds, previously lost to hardcoded 4000N normalization clipping.
+
+### Improved
+- **Telemetry Logging**: Updated `AsyncLogger` to include the `LoadPeakRef` channel, enabling detailed analysis of the dynamic normalization behavior in the Log Analyzer.
+
+### Testing
+- **Load Normalization Suite**: Added `tests/test_ffb_load_normalization.cpp` to verify class seeding, fast attack response, and slow decay stability.
+- **Regression Guard**: Updated existing braking and texture tests to handle dynamic normalization by providing a toggle to freeze the reference during verification.
+
 ## [0.7.42] - 2026-02-14
 ### Fixed
 - **Slope Detection Asymmetry**: Fixed a logic bug in the advanced Torque Slope calculation where left turns (negative torque) would not correctly contribute to grip loss detection. Both directions now behave symmetrically using absolute torque values.

@@ -4,6 +4,26 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]February 14, 2026[/b][/size]
+[b]Version 0.7.43 - Automatic Load Normalization[/b]
+
+[b]New release[/b] (0.7.43): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]Automatic Tire Load Normalization[/b]: This major physics update ensures that all car classes feel rich and detailed. The app now automatically detects which car you are driving and scales the road textures and haptic effects accordingly.
+[*][b]Class-Based Seeding[/b]: Hypercars and Prototypes now immediately feel heavy and textured on session start (using a 9500N reference), while GT3s maintain their optimized 4800N baseline.
+[*][b]Dynamic Peak Adaptation[/b]: The engine continuously monitors your actual tire loads. If your setup or aero creates higher forces than expected, the app instantly adapts to prevent "numb" or clipped feedback.
+[*][b]Improved High-Speed Fidelity[/b]: Hypercars and LMP2s now maintain 100% of their road detail even at extreme speeds on the Mulsanne straight, where previously the forces would have been clipped by the hardcoded 4000N limit.
+[/list]
+
+[b]Improved[/b]
+[list]
+[*][b]Better Log Diagnostics[/b]: The telemetry logger now records the dynamic load reference, making it easier for advanced users to analyze how the normalization is behaving during a stint.
+[/list]
+
+---
+
 [size=5][b]February 12, 2026[/b][/size]
 [b]Version 0.7.35 - UI Stability Update[/b]
 
