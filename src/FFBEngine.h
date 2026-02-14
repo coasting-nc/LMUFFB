@@ -724,9 +724,10 @@ public:
             } else {
                 if (m_slope_detection_enabled && is_front && data) {
                     // Dynamic grip estimation via derivative monitoring
+                    // COORDINATE SYSTEM FIX (v0.4.19): Use inverted G to match SoP alignment.
                     result.value = calculate_slope_grip(
-                        data->mLocalAccel.x / 9.81,  // Lateral G
-                        result.slip_angle,            // Slip angle (radians)
+                        -(data->mLocalAccel.x / 9.81),  // Lateral G
+                        result.slip_angle,              // Slip angle (radians)
                         dt,
                         data
                     );
@@ -1555,8 +1556,15 @@ private:
 
     void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext& ctx) {
         // Lateral G
+        // COORDINATE SYSTEM FIX (v0.4.19):
+        // LMU +X = Left. DirectInput +Force = Right.
+        // For a Right Turn, Accel points Right (-X).
+        // We want a Left Pull (-Force) to simulate weight/aligning torque.
+        // But with "Invert FFB" active (standard for LMU), we need the engine
+        // to produce a Positive value so it flips to Negative at the output.
+        // Result: lat_g = -(raw_g / 9.81) ensures correct weight with Invert FFB ON.
         double raw_g = (std::max)(-49.05, (std::min)(49.05, data->mLocalAccel.x));
-        double lat_g = (raw_g / 9.81);
+        double lat_g = -(raw_g / 9.81);
         
         // Smoothing
         double smoothness = 1.0 - (double)m_sop_smoothing_factor;
@@ -1787,7 +1795,11 @@ private:
             double abs_lat_vel = std::abs(avg_lat_vel);
             if (abs_lat_vel > 0.001) {
                 double fade = (std::min)(1.0, abs_lat_vel / 0.5);
-                double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
+                // COORDINATE SYSTEM FIX (v0.4.20):
+                // Friction opposes motion. If sliding Left (+), force should be Right (+).
+                // If sliding Right (-), force should be Left (-).
+                // Matching sign ensures friction pulls the opposite way of the slide.
+                double drag_dir = (avg_lat_vel > 0.0) ? 1.0 : -1.0;
                 ctx.scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade * ctx.decoupling_scale;
             }
         }
