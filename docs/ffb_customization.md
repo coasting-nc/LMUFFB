@@ -11,29 +11,37 @@ The C++ version of LMUFFB implements the following customizable effects:
     *   **100% (1.0)**: Maximal lightness when understeering.
     *   **0% (0.0)**: Force follows game physics purely (heavy even when sliding).
 
-## 2. Seat of Pants (SoP) / Oversteer
+## 2. Slope Detection (Dynamic Understeer, v0.7.40)
+*   **Description**: An advanced algorithm that detects the tire's physical limit by analyzing the relationship between Lateral G and Slip Angle (and optionally Steering Torque).
+*   **Benefits**: Provides a much more organic and consistent "light wheel" feel than static thresholds.
+*   **Key Settings**:
+    *   **Slope Threshold**: The point where grip loss begins.
+    *   **G-Slew Limiter**: Filters out curb strikes and bumps from the understeer effect.
+    *   **Use Torque Slope**: Enables anticipatory understeer cues by monitoring pneumatic trail drop.
+
+## 3. Seat of Pants (SoP) / Oversteer
 *   **Description**: Simulates the lateral G-forces acting on the driver's body by injecting lateral force into the steering wheel.
 *   **Implementation**: `TotalForce += (LateralAccel / 9.81) * ScalingFactor * SliderValue`
 *   **Tuning**: Higher values help catch oversteer earlier by feeling the "weight" of the car shifting.
 
-## 3. Slide Texture
+## 4. Slide Texture
 *   **Description**: Adds a synthetic vibration or "scrubbing" texture when the tires are sliding laterally.
 *   **Implementation**: Injects high-frequency noise (Sine wave or Random) when `SlipAngle > Threshold` or `GripFract < Threshold`.
 *   **Tuning**:
     *   **Gain**: Amplitude of the vibration.
     *   **Toggle**: On/Off.
 
-## 4. Road Texture
+## 5. Road Texture
 *   **Description**: Amplifies high-frequency vertical suspension movements to enhance the feeling of curbs, bumps, and road surface details.
 *   **Implementation**: Uses a high-pass filter (delta of `mVerticalTireDeflection`) to detect bumps.
 *   **Tuning**:
     *   **Gain**: Strength of the amplification. Useful for damping-heavy wheels.
 
-## 5. Min Force
+## 6. Min Force
 *   **Description**: Boosts small force signals to overcome the internal friction/deadzone of mechanical wheels (Gears/Belts).
 *   **Implementation**: If force is non-zero but below threshold, set it to threshold (preserving sign).
 
-## 6. Preset Management & Sharing
+## 7. Preset Management & Sharing
 LMUFFB allows you to save and share your configurations easily.
 
 ### Saving Custom Presets

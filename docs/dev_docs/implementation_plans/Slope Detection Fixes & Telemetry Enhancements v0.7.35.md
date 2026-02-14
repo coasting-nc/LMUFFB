@@ -134,6 +134,12 @@ Output the new fields to the CSV stream.
 *   [ ] **Docs:** Update `docs/dev_docs/implementation_plans/Slope Detection Fixes & Telemetry Enhancements v0.7.35.md` with implementation notes.
 *   [ ] **Docs:** Create `docs/dev_docs/log_analyzer_spec.md` describing the new CSV columns for the analyzer tool.
 
+## Implementation Notes
+
+- **Mathematical Refinement**: The "Projected Slope" method `(dG * dAlpha) / (dAlpha^2 + e)` proved extremely stable. To further improve robustness, initialization of the smoothing state was added to avoid ramp-up artifacts on the first frame of a session or when re-enabling the feature.
+- **Hold-and-Decay UX**: The 250ms hold time correctly maintains the understeer sensation during long, steady-state cornering where steering movement is minimal. Legacy tests were adjusted from 1.5s to 2.0s to allow for this hold period before verifying decay.
+- **Telemetry Expansion**: Capturing the raw numerator and denominator in the log has already proved useful for identifying why positive slopes occur during recovery (both G and Alpha dropping).
+
 ```json
 {
   "status": "success",

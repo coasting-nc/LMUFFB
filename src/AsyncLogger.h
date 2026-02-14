@@ -52,8 +52,17 @@ struct LogFrame {
     float dG_dt;             // Derivative of lateral G
     float dAlpha_dt;         // Derivative of slip angle
     float slope_current;     // dG/dAlpha ratio
+    float slope_raw_unclamped; // NEW v0.7.38
+    float slope_numerator;     // NEW v0.7.38
+    float slope_denominator;   // NEW v0.7.38
+    float hold_timer;          // NEW v0.7.38
+    float input_slip_smoothed; // NEW v0.7.38
     float slope_smoothed;    // Smoothed grip output
     float confidence;        // Confidence factor (v0.7.3)
+    float surface_type_fl;   // NEW v0.7.39
+    float surface_type_fr;   // NEW v0.7.39
+    float slope_torque;      // NEW v0.7.40
+    float slew_limited_g;    // NEW v0.7.40
     
     // Rear Axle
     float calc_grip_rear;
@@ -279,7 +288,8 @@ private:
         m_file << "Time,DeltaTime,Speed,LatAccel,LongAccel,YawRate,Steering,Throttle,Brake,"
                << "SlipAngleFL,SlipAngleFR,SlipRatioFL,SlipRatioFR,GripFL,GripFR,LoadFL,LoadFR,"
                << "CalcSlipAngle,CalcGripFront,CalcGripRear,GripDelta,"
-               << "dG_dt,dAlpha_dt,SlopeCurrent,SlopeSmoothed,Confidence,"
+               << "dG_dt,dAlpha_dt,SlopeCurrent,SlopeRaw,SlopeNum,SlopeDenom,HoldTimer,InputSlipSmooth,SlopeSmoothed,Confidence,"
+               << "SurfaceFL,SurfaceFR,SlopeTorque,SlewLimitedG,"
                << "FFBTotal,FFBBase,FFBSoP,GripFactor,SpeedGate,Clipping,Marker\n";
     }
 
@@ -296,7 +306,12 @@ private:
                
                << frame.calc_slip_angle_front << "," << frame.calc_grip_front << "," << frame.calc_grip_rear << "," << frame.grip_delta << ","
                
-               << frame.dG_dt << "," << frame.dAlpha_dt << "," << frame.slope_current << "," << frame.slope_smoothed << "," << frame.confidence << ","
+               << frame.dG_dt << "," << frame.dAlpha_dt << "," << frame.slope_current << ","
+               << frame.slope_raw_unclamped << "," << frame.slope_numerator << "," << frame.slope_denominator << ","
+               << frame.hold_timer << "," << frame.input_slip_smoothed << ","
+               << frame.slope_smoothed << "," << frame.confidence << ","
+               << frame.surface_type_fl << "," << frame.surface_type_fr << ","
+               << frame.slope_torque << "," << frame.slew_limited_g << ","
                
                << frame.ffb_total << "," << frame.ffb_base << "," << frame.ffb_sop << "," 
                << frame.ffb_grip_factor << "," << frame.speed_gate << "," 

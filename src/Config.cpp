@@ -109,6 +109,9 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "speed_gate_upper") current_preset.speed_gate_upper = std::stof(value); // NEW v0.6.25
                 else if (key == "road_fallback_scale") current_preset.road_fallback_scale = std::stof(value); // NEW v0.6.25
                 else if (key == "understeer_affects_sop") current_preset.understeer_affects_sop = std::stoi(value); // NEW v0.6.25
+                else if (key == "slope_g_slew_limit") current_preset.slope_g_slew_limit = std::stof(value); // NEW v0.7.40
+                else if (key == "slope_use_torque") current_preset.slope_use_torque = (value == "1"); // NEW v0.7.40
+                else if (key == "slope_torque_sensitivity") current_preset.slope_torque_sensitivity = std::stof(value); // NEW v0.7.40
             } catch (...) {}
         }
     }
@@ -847,6 +850,9 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "slope_alpha_threshold=" << p.slope_alpha_threshold << "\n";
     file << "slope_decay_rate=" << p.slope_decay_rate << "\n";
     file << "slope_confidence_enabled=" << p.slope_confidence_enabled << "\n";
+    file << "slope_g_slew_limit=" << p.slope_g_slew_limit << "\n";
+    file << "slope_use_torque=" << (p.slope_use_torque ? "1" : "0") << "\n";
+    file << "slope_torque_sensitivity=" << p.slope_torque_sensitivity << "\n";
 
     file << "slip_angle_smoothing=" << p.slip_smoothing << "\n";
     file << "chassis_inertia_smoothing=" << p.chassis_smoothing << "\n";
@@ -1117,6 +1123,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "slope_alpha_threshold=" << engine.m_slope_alpha_threshold << "\n";
         file << "slope_decay_rate=" << engine.m_slope_decay_rate << "\n";
         file << "slope_confidence_enabled=" << engine.m_slope_confidence_enabled << "\n";
+        file << "slope_g_slew_limit=" << engine.m_slope_g_slew_limit << "\n";
+        file << "slope_use_torque=" << (engine.m_slope_use_torque ? "1" : "0") << "\n";
+        file << "slope_torque_sensitivity=" << engine.m_slope_torque_sensitivity << "\n";
 
         file << "\n; --- Braking & Lockup ---\n";
         file << "lockup_enabled=" << engine.m_lockup_enabled << "\n";
@@ -1281,6 +1290,9 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "speed_gate_upper") engine.m_speed_gate_upper = std::stof(value); // NEW v0.6.25
                     else if (key == "road_fallback_scale") engine.m_road_fallback_scale = std::stof(value); // NEW v0.6.25
                     else if (key == "understeer_affects_sop") engine.m_understeer_affects_sop = std::stoi(value); // NEW v0.6.25
+                    else if (key == "slope_g_slew_limit") engine.m_slope_g_slew_limit = std::stof(value); // NEW v0.7.40
+                    else if (key == "slope_use_torque") engine.m_slope_use_torque = (value == "1"); // NEW v0.7.40
+                    else if (key == "slope_torque_sensitivity") engine.m_slope_torque_sensitivity = std::stof(value); // NEW v0.7.40
                 } catch (...) {
                     std::cerr << "[Config] Error parsing line: " << line << std::endl;
                 }
@@ -1330,6 +1342,10 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                   << "), resetting to 5.0f" << std::endl;
         engine.m_slope_decay_rate = 5.0f;
     }
+
+    // Advanced Slope Validation (v0.7.40)
+    engine.m_slope_g_slew_limit = (std::max)(1.0f, (std::min)(1000.0f, engine.m_slope_g_slew_limit));
+    engine.m_slope_torque_sensitivity = (std::max)(0.01f, (std::min)(10.0f, engine.m_slope_torque_sensitivity));
 
     // Migration: v0.7.x sensitivity â†’ v0.7.11 thresholds
     // If loading old config with sensitivity but at default thresholds

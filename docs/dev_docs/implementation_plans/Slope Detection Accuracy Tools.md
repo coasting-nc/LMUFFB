@@ -109,6 +109,11 @@ Since the Log Analyzer code is external, create a detailed technical specificati
 *   [ ] **Tests:** New `tests/test_ffb_accuracy_tools.cpp`.
 *   [ ] **Implementation Notes:** Update plan with any CSV formatting issues encountered.
 
+## Implementation Notes
+
+- **Surface Type Integrity**: Surface type data for both front wheels is now correctly extracted and logged. This is critical for filtering out curb strikes from grip analysis.
+- **Log Analyzer v2 Spec**: Created a detailed specification for Cross-Correlation analysis in `docs/dev_docs/log_analyzer_v2.md`. This will allow the external Python tool to measure physical phase lag and recommend optimal window settings.
+
 ```json
 {
   "status": "success",

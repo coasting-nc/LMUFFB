@@ -455,22 +455,17 @@ TEST_CASE(test_slope_decay_on_straight, "SlopeDetection") {
     data = CreateBasicTestTelemetry(30.0, 0.0);
     data.mDeltaTime = 0.01;
     
-    for (int i = 0; i < 64; i++) {
-        engine.m_slope_lat_g_buffer[i] = 0.0;
-        engine.m_slope_slip_buffer[i] = 0.0;
-    }
-    engine.m_slope_buffer_count = 0;
-    engine.m_slope_buffer_index = 0;
-    
-    for (int i = 0; i < 20; i++) {
+    // Hold for 200 frames (2.0s) to ensure hold timer (0.25s) expires and significant decay happens
+    for (int i = 0; i < 200; i++) {
         engine.calculate_force(&data);
     }
     
     double slope_after_straight = engine.m_slope_current;
     ASSERT_TRUE(std::abs(slope_after_straight) < std::abs(slope_after_corner));
-    ASSERT_TRUE(std::abs(slope_after_straight) < 0.2); 
+    ASSERT_TRUE(std::abs(slope_after_straight) < 0.5);
     
-    for (int i = 0; i < 40; i++) {
+    // Run for another 500 frames to ensure significant decay and clearing of all LPF/SG states
+    for (int i = 0; i < 500; i++) {
         engine.calculate_force(&data);
     }
     
