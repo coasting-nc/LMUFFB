@@ -628,6 +628,25 @@ private:
     static constexpr double PREDICTION_BRAKE_THRESHOLD = 0.02;  // 2% brake deadzone
     static constexpr double PREDICTION_LOAD_THRESHOLD = 50.0;   // 50N minimum tire load (not airborne)
 
+    double m_auto_peak_load = 4000.0; // Dynamic reference
+    std::string m_current_class_name = "";
+    bool m_auto_load_normalization_enabled = true; // v0.7.43: Toggle for adaptation
+
+    void InitializeLoadReference(const char* className) {
+        std::string cls = className;
+        if (cls.find("GT3") != std::string::npos) m_auto_peak_load = 4800.0;
+        else if (cls.find("GTE") != std::string::npos) m_auto_peak_load = 5500.0;
+        else if (cls.find("LMP3") != std::string::npos) m_auto_peak_load = 5800.0;
+        else if (cls.find("LMP2 (WEC)") != std::string::npos) m_auto_peak_load = 7500.0;
+        else if (cls.find("LMP2 (ELMS)") != std::string::npos) m_auto_peak_load = 8500.0;
+        else if (cls.find("Hypercar") != std::string::npos ||
+                 cls.find("LMH") != std::string::npos ||
+                 cls.find("LMDh") != std::string::npos) m_auto_peak_load = 9500.0;
+        else m_auto_peak_load = 4000.0;
+
+        std::cout << "[FFB] Vehicle Class Detected: " << cls << " | Seeding Load Ref: " << m_auto_peak_load << "N" << std::endl;
+    }
+
 
 public:
     // Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
@@ -1060,8 +1079,16 @@ public:
     }
 
     // Refactored calculate_force
-    double calculate_force(const TelemInfoV01* data) {
+    double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr) {
         if (!data) return 0.0;
+
+        // Class Seeding
+        bool seeded = false;
+        if (vehicleClass && m_current_class_name != vehicleClass) {
+            m_current_class_name = vehicleClass;
+            InitializeLoadReference(vehicleClass);
+            seeded = true;
+        }
         
         // --- 1. INITIALIZE CONTEXT ---
         FFBCalculationContext ctx;
@@ -1224,8 +1251,18 @@ public:
             m_warned_vert_deflection = true;
         }
         
+        // Peak Hold Logic
+        if (m_auto_load_normalization_enabled && !seeded) {
+            if (ctx.avg_load > m_auto_peak_load) {
+                m_auto_peak_load = ctx.avg_load; // Fast Attack
+            } else {
+                m_auto_peak_load -= (100.0 * ctx.dt); // Slow Decay (~100N/s)
+            }
+        }
+        m_auto_peak_load = (std::max)(3000.0, m_auto_peak_load); // Safety Floor
+
         // Load Factors
-        double raw_load_factor = ctx.avg_load / 4000.0;
+        double raw_load_factor = ctx.avg_load / m_auto_peak_load;
         double texture_safe_max = (std::min)(2.0, (double)m_texture_load_cap);
         ctx.texture_load_factor = (std::min)(texture_safe_max, (std::max)(0.0, raw_load_factor));
 
@@ -1462,6 +1499,7 @@ public:
             frame.ffb_grip_factor = (float)ctx.grip_factor;
             frame.ffb_sop = (float)ctx.sop_base_force;
             frame.speed_gate = (float)ctx.speed_gate;
+            frame.load_peak_ref = (float)m_auto_peak_load;
             frame.clipping = (std::abs(norm_force) > 0.99);
             frame.ffb_base = (float)base_input; // Plan included ffb_base
             

@@ -77,7 +77,7 @@ void FFBThread() {
 
                     std::lock_guard<std::mutex> lock(g_engine_mutex);
                     if (g_engine.IsFFBAllowed(scoring)) {
-                        force = g_engine.calculate_force(pPlayerTelemetry);
+                        force = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass);
                         should_output = true;
                     }
                 }

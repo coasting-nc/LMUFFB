@@ -267,6 +267,12 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
     // Baseline engine with 1.0 cap for comparison
     FFBEngine engine_low;
     InitializeEngine(engine_low);
+    // v0.7.43: Disable auto-normalization adaptation to maintain 4000N reference for test
+    FFBEngineTestAccess::SetAutoNormalizationEnabled(engine, false);
+    FFBEngineTestAccess::SetAutoNormalizationEnabled(engine_low, false);
+    FFBEngineTestAccess::SetAutoPeakLoad(engine, 4000.0);
+    FFBEngineTestAccess::SetAutoPeakLoad(engine_low, 4000.0);
+
     engine_low.m_brake_load_cap = 1.0f;
     engine_low.m_lockup_enabled = true;
     engine_low.m_lockup_gain = 1.0;

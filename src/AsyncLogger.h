@@ -74,6 +74,7 @@ struct LogFrame {
     float ffb_sop;           // Seat of Pants force
     float ffb_grip_factor;   // Applied grip modulation
     float speed_gate;        // Speed gate factor
+    float load_peak_ref;     // NEW: Dynamic normalization reference
     bool clipping;           // Output clipping flag
     
     // User Markers
@@ -290,7 +291,7 @@ private:
                << "CalcSlipAngle,CalcGripFront,CalcGripRear,GripDelta,"
                << "dG_dt,dAlpha_dt,SlopeCurrent,SlopeRaw,SlopeNum,SlopeDenom,HoldTimer,InputSlipSmooth,SlopeSmoothed,Confidence,"
                << "SurfaceFL,SurfaceFR,SlopeTorque,SlewLimitedG,"
-               << "FFBTotal,FFBBase,FFBSoP,GripFactor,SpeedGate,Clipping,Marker\n";
+               << "FFBTotal,FFBBase,FFBSoP,GripFactor,SpeedGate,LoadPeakRef,Clipping,Marker\n";
     }
 
     void WriteFrame(const LogFrame& frame) {
@@ -314,7 +315,7 @@ private:
                << frame.slope_torque << "," << frame.slew_limited_g << ","
                
                << frame.ffb_total << "," << frame.ffb_base << "," << frame.ffb_sop << "," 
-               << frame.ffb_grip_factor << "," << frame.speed_gate << "," 
+               << frame.ffb_grip_factor << "," << frame.speed_gate << "," << frame.load_peak_ref << ","
                << (frame.clipping ? 1 : 0) << "," << (frame.marker ? 1 : 0) << "\n";
         
         // Track file size for monitoring
