@@ -247,6 +247,12 @@ public:
     float m_min_force;
     float m_dynamic_weight_gain; // NEW v0.7.46
     
+    // Smoothing Settings (v0.7.47)
+    float m_dynamic_weight_smoothing;
+    float m_grip_smoothing_steady;
+    float m_grip_smoothing_fast;
+    float m_grip_smoothing_sensitivity;
+
     // Configurable Smoothing & Caps (v0.3.9)
     float m_sop_smoothing_factor;
     float m_texture_load_cap = 1.5f; // Renamed from m_max_load_factor (v0.5.11)
@@ -488,6 +494,9 @@ public:
 
     // Dynamic Weight State (v0.7.46)
     double m_static_front_load = 0.0; // Learned baseline load
+    double m_dynamic_weight_smoothed = 1.0; // v0.7.47
+    double m_front_grip_smoothed_state = 1.0; // v0.7.47
+    double m_rear_grip_smoothed_state = 1.0;  // v0.7.47
 
     // Context for Logging (v0.7.x)
     char m_vehicle_name[64] = "Unknown";
@@ -924,6 +933,13 @@ public:
             }
         }
         
+        // Apply Adaptive Smoothing (v0.7.47)
+        double& state = is_front ? m_front_grip_smoothed_state : m_rear_grip_smoothed_state;
+        result.value = apply_adaptive_smoothing(result.value, state, dt,
+                                                (double)m_grip_smoothing_steady,
+                                                (double)m_grip_smoothing_fast,
+                                                (double)m_grip_smoothing_sensitivity);
+
         result.value = (std::max)(0.0, (std::min)(1.0, result.value));
         return result;
     }
@@ -940,6 +956,22 @@ public:
         // Base: Suspension Force + Est. Unsprung Mass (300N)
         // This captures weight transfer (braking/accel) and aero downforce implicitly via suspension compression
         return w.mSuspForce + 300.0;
+    }
+
+    // Helper: Adaptive Non-Linear Smoothing (v0.7.47)
+    // t=0 (Steady) uses slow_tau, t=1 (Transient) uses fast_tau
+    double apply_adaptive_smoothing(double input, double& prev_out, double dt,
+                                    double slow_tau, double fast_tau, double sensitivity) {
+        double delta = std::abs(input - prev_out);
+        double t = delta / (sensitivity + 0.000001);
+        t = (std::min)(1.0, t);
+
+        double tau = slow_tau + t * (fast_tau - slow_tau);
+        double alpha = dt / (tau + dt + 1e-9);
+        alpha = (std::max)(0.0, (std::min)(1.0, alpha));
+
+        prev_out = prev_out + alpha * (input - prev_out);
+        return prev_out;
     }
 
     // Helper: Calculate Kinematic Load (v0.4.39)
@@ -1460,6 +1492,12 @@ public:
             dynamic_weight_factor = 1.0 + (load_ratio - 1.0) * (double)m_dynamic_weight_gain;
             dynamic_weight_factor = std::clamp(dynamic_weight_factor, 0.5, 2.0);
         }
+
+        // Apply Smoothing to Dynamic Weight (v0.7.47)
+        double dw_alpha = ctx.dt / ((double)m_dynamic_weight_smoothing + ctx.dt + 1e-9);
+        dw_alpha = (std::max)(0.0, (std::min)(1.0, dw_alpha));
+        m_dynamic_weight_smoothed += dw_alpha * (dynamic_weight_factor - m_dynamic_weight_smoothed);
+        dynamic_weight_factor = m_dynamic_weight_smoothed;
         
         double output_force = (base_input * (double)m_steering_shaft_gain) * dynamic_weight_factor * ctx.grip_factor;
         output_force *= ctx.speed_gate;

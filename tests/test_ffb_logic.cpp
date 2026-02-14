@@ -450,6 +450,10 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(engine.m_chassis_inertia_smoothing == reference_defaults.chassis_smoothing);
         ASSERT_TRUE(engine.m_gyro_smoothing == reference_defaults.gyro_smoothing);
         ASSERT_TRUE(engine.m_steering_shaft_smoothing == reference_defaults.steering_shaft_smoothing);
+        ASSERT_TRUE(engine.m_dynamic_weight_smoothing == reference_defaults.dynamic_weight_smoothing);
+        ASSERT_TRUE(engine.m_grip_smoothing_steady == reference_defaults.grip_smoothing_steady);
+        ASSERT_TRUE(engine.m_grip_smoothing_fast == reference_defaults.grip_smoothing_fast);
+        ASSERT_TRUE(engine.m_grip_smoothing_sensitivity == reference_defaults.grip_smoothing_sensitivity);
     }
 
     // Test 3: Default preset from LoadPresets()
@@ -479,6 +483,10 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(default_preset.chassis_smoothing == reference_defaults.chassis_smoothing);
         ASSERT_TRUE(default_preset.gyro_smoothing == reference_defaults.gyro_smoothing);
         ASSERT_TRUE(default_preset.steering_shaft_smoothing == reference_defaults.steering_shaft_smoothing);
+        ASSERT_TRUE(default_preset.dynamic_weight_smoothing == reference_defaults.dynamic_weight_smoothing);
+        ASSERT_TRUE(default_preset.grip_smoothing_steady == reference_defaults.grip_smoothing_steady);
+        ASSERT_TRUE(default_preset.grip_smoothing_fast == reference_defaults.grip_smoothing_fast);
+        ASSERT_TRUE(default_preset.grip_smoothing_sensitivity == reference_defaults.grip_smoothing_sensitivity);
     }
 
     // Test 4: T300 specialized preset
@@ -520,6 +528,10 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(engine1.m_chassis_inertia_smoothing == engine2.m_chassis_inertia_smoothing);
         ASSERT_TRUE(engine1.m_gyro_smoothing == engine2.m_gyro_smoothing);
         ASSERT_TRUE(engine1.m_steering_shaft_smoothing == engine2.m_steering_shaft_smoothing);
+        ASSERT_TRUE(engine1.m_dynamic_weight_smoothing == engine2.m_dynamic_weight_smoothing);
+        ASSERT_TRUE(engine1.m_grip_smoothing_steady == engine2.m_grip_smoothing_steady);
+        ASSERT_TRUE(engine1.m_grip_smoothing_fast == engine2.m_grip_smoothing_fast);
+        ASSERT_TRUE(engine1.m_grip_smoothing_sensitivity == engine2.m_grip_smoothing_sensitivity);
     }
 
     // Test 6: Verify no config file still produces correct defaults

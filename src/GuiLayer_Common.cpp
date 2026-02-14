@@ -422,6 +422,11 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             "Heavier under braking, lighter under acceleration.\n"
             "Requires valid tire load data (Hypercars).");
 
+        FloatSetting("  Weight Smoothing", &engine.m_dynamic_weight_smoothing, 0.000f, 0.500f, "%.3f s",
+            "Filters the Dynamic Weight signal to simulate suspension damping.\n"
+            "Higher = Smoother weight transfer feel, but less instant.\n"
+            "Recommended: 0.100s - 0.200s.");
+
         const char* base_modes[] = { "Native (Steering Shaft Torque)", "Synthetic (Constant)", "Muted (Off)" };
         IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, sizeof(base_modes)/sizeof(base_modes[0]),
             "Debug tool to isolate effects.\nNative: Normal Operation.\nSynthetic: Constant force to test direction.\nMuted: Disables base physics (good for tuning vibrations).");
@@ -495,6 +500,12 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                 ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
                 ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
             });
+
+        FloatSetting("Grip Smoothing", &engine.m_grip_smoothing_steady, 0.000f, 0.100f, "%.3f s",
+            "Filters the final estimated grip value.\n"
+            "Uses an adaptive non-linear filter: smooths steady-state noise\n"
+            "but maintains zero-latency during rapid grip loss events.\n"
+            "Recommended: 0.030s - 0.060s.");
 
         FloatSetting("  SoP Scale", &engine.m_sop_scale, 0.0f, 20.0f, "%.2f", "Multiplies the raw G-force signal before limiting.\nAdjusts the dynamic range of the SoP effect.");
 
