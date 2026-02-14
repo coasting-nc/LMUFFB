@@ -136,6 +136,12 @@ Add `SlopeTorque` and `SlewLimitedG` to the log frame to visualize the new featu
 *   [ ] **Tests:** New `tests/test_ffb_advanced_slope.cpp`.
 *   [ ] **Docs:** Update `docs/dev_docs/implementation_plans/Slope Detection Advanced Features.md`.
 
+## Implementation Notes
+
+- **Initialization Robustness**: The G-Slew limiter state (`m_slope_lat_g_prev`) is now initialized on the first frame to the current telemetry value. This prevents a large positive slope artifact (derivative spike) during the very first frames of a session.
+- **Torque Slope Anticipation**: The pneumatic trail detector works as expected, detecting grip loss when torque drops while lateral force is still rising. This provides a leading indicator of understeer.
+- **Fusion Logic**: The conservative "Max Loss" fusion correctly prioritizes the estimator (G or Torque) that detects grip loss first.
+
 ```json
 {
   "status": "success",

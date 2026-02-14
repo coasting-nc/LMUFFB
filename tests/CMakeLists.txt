@@ -19,9 +19,12 @@ endif()
 # Combined Test Executable
 set(TEST_SOURCES 
     main_test_runner.cpp 
+    test_ffb_accuracy_tools.cpp
+    test_ffb_advanced_slope.cpp
     test_ffb_common.cpp
     test_ffb_core_physics.cpp
     test_ffb_slope_detection.cpp
+    test_ffb_slope_fix.cpp
     test_ffb_understeer.cpp
     test_ffb_smoothstep.cpp
     test_ffb_yaw_gyro.cpp

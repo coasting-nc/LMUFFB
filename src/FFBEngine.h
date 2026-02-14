@@ -336,6 +336,11 @@ public:
     float m_slope_min_threshold = -0.3f;   // Effect starts here (dead zone edge)
     float m_slope_max_threshold = -2.0f;   // Effect saturates here (100%)
 
+    // NEW v0.7.40: Advanced Features
+    float m_slope_g_slew_limit = 50.0f;
+    bool m_slope_use_torque = true;
+    float m_slope_torque_sensitivity = 0.5f;
+
     // Signal Diagnostics
     double m_debug_freq = 0.0; // Estimated frequency for GUI
     double m_theoretical_freq = 0.0; // Theoretical wheel frequency for GUI
@@ -441,7 +446,33 @@ public:
     double m_slope_current = 0.0;
     double m_slope_grip_factor = 1.0;
     double m_slope_smoothed_output = 1.0;
+
+    // NEW v0.7.38: Input Smoothing State
+    double m_slope_lat_g_smoothed = 0.0;
+    double m_slope_slip_smoothed = 0.0;
+
+    // NEW v0.7.38: Steady State Logic
+    double m_slope_hold_timer = 0.0;
+    static constexpr double SLOPE_HOLD_TIME = 0.25; // 250ms hold
+
+    // NEW v0.7.38: Debug members for Logger
+    double m_debug_slope_raw = 0.0;
+    double m_debug_slope_num = 0.0;
+    double m_debug_slope_den = 0.0;
+
+    // NEW v0.7.40: Advanced Slope Detection State
+    double m_slope_lat_g_prev = 0.0;
+    std::array<double, SLOPE_BUFFER_MAX> m_slope_torque_buffer = {};
+    std::array<double, SLOPE_BUFFER_MAX> m_slope_steer_buffer = {};
+    double m_slope_torque_smoothed = 0.0;
+    double m_slope_steer_smoothed = 0.0;
+    double m_slope_torque_current = 0.0;
     
+    // NEW v0.7.40: More Debug members
+    double m_debug_slope_torque_num = 0.0;
+    double m_debug_slope_torque_den = 0.0;
+    double m_debug_lat_g_slew = 0.0;
+
     // Context for Logging (v0.7.x)
     char m_vehicle_name[64] = "Unknown";
     char m_track_name[64] = "Unknown";
@@ -696,7 +727,8 @@ public:
                     result.value = calculate_slope_grip(
                         data->mLocalAccel.x / 9.81,  // Lateral G
                         result.slip_angle,            // Slip angle (radians)
-                        dt
+                        dt,
+                        data
                     );
                 } else {
                     // v0.4.38: Combined Friction Circle (Advanced Reconstruction)
@@ -821,6 +853,16 @@ public:
         return (wheel_vel - car_speed_ms) / denom;
     }
 
+    // Helper: Apply Slew Rate Limiter - v0.7.40
+    // Clamps the rate of change of a signal.
+    double apply_slew_limiter(double input, double& prev_val, double limit, double dt) {
+        double delta = input - prev_val;
+        double max_change = limit * dt;
+        delta = std::clamp(delta, -max_change, max_change);
+        prev_val += delta;
+        return prev_val;
+    }
+
     // Helper: Calculate Savitzky-Golay First Derivative - v0.7.0
     // Uses closed-form coefficient generation for quadratic polynomial fit.
     // Reference: docs/dev_docs/plans/savitzky-golay coefficients deep research report.md
@@ -853,49 +895,103 @@ public:
         return sum / (S2 * dt);
     }
 
-    // Helper: Calculate Grip Factor from Slope - v0.7.0
-    // Main slope detection algorithm entry point
-    double calculate_slope_grip(double lateral_g, double slip_angle, double dt) {
-        // 1. Update Buffers
-        m_slope_lat_g_buffer[m_slope_buffer_index] = lateral_g;
-        m_slope_slip_buffer[m_slope_buffer_index] = std::abs(slip_angle);
+    // Helper: Calculate Grip Factor from Slope - v0.7.40 REWRITE
+    // Robust projected slope estimation with hold-and-decay logic and torque-based anticipation.
+    double calculate_slope_grip(double lateral_g, double slip_angle, double dt, const TelemInfoV01* data = nullptr) {
+        // 1. Signal Hygiene (Slew Limiter & Pre-Smoothing)
+
+        // Initialize slew limiter and smoothing state on first sample to avoid ramp-up transients
+        if (m_slope_buffer_count == 0) {
+            m_slope_lat_g_prev = lateral_g;
+            m_slope_lat_g_smoothed = lateral_g;
+            m_slope_slip_smoothed = std::abs(slip_angle);
+            if (data) {
+                m_slope_torque_smoothed = data->mSteeringShaftTorque;
+                m_slope_steer_smoothed = std::abs(data->mUnfilteredSteering);
+            }
+        }
+
+        double lat_g_slew = apply_slew_limiter(lateral_g, m_slope_lat_g_prev, (double)m_slope_g_slew_limit, dt);
+        m_debug_lat_g_slew = lat_g_slew;
+
+        double alpha_smooth = dt / (0.01 + dt);
+
+        if (m_slope_buffer_count > 0) {
+            m_slope_lat_g_smoothed += alpha_smooth * (lat_g_slew - m_slope_lat_g_smoothed);
+            m_slope_slip_smoothed += alpha_smooth * (std::abs(slip_angle) - m_slope_slip_smoothed);
+            if (data) {
+                m_slope_torque_smoothed += alpha_smooth * (data->mSteeringShaftTorque - m_slope_torque_smoothed);
+                m_slope_steer_smoothed += alpha_smooth * (std::abs(data->mUnfilteredSteering) - m_slope_steer_smoothed);
+            }
+        }
+
+        // 2. Update Buffers with smoothed values
+        m_slope_lat_g_buffer[m_slope_buffer_index] = m_slope_lat_g_smoothed;
+        m_slope_slip_buffer[m_slope_buffer_index] = m_slope_slip_smoothed;
+        if (data) {
+            m_slope_torque_buffer[m_slope_buffer_index] = m_slope_torque_smoothed;
+            m_slope_steer_buffer[m_slope_buffer_index] = m_slope_steer_smoothed;
+        }
+
         m_slope_buffer_index = (m_slope_buffer_index + 1) % SLOPE_BUFFER_MAX;
         if (m_slope_buffer_count < SLOPE_BUFFER_MAX) m_slope_buffer_count++;
 
-        // 2. Calculate Derivatives
-        // We need d(Lateral_G) / d(Slip_Angle)
-        // By chain rule: dG/dAlpha = (dG/dt) / (dAlpha/dt)
+        // 3. Calculate G-based Derivatives (Savitzky-Golay)
         double dG_dt = calculate_sg_derivative(m_slope_lat_g_buffer, m_slope_buffer_count, m_slope_sg_window, dt);
         double dAlpha_dt = calculate_sg_derivative(m_slope_slip_buffer, m_slope_buffer_count, m_slope_sg_window, dt);
 
-        // Store for logging
         m_slope_dG_dt = dG_dt;
         m_slope_dAlpha_dt = dAlpha_dt;
 
-        // 3. Estimate Slope (dG/dAlpha)
-        // v0.7.21 FIX: Denominator protection and gated calculation.
-        // We calculate the physical slope when steering movement is sufficient,
-        // and decay it toward zero otherwise to prevent "sticky" understeer.
+        // 4. Projected Slope Logic (G-based)
         if (std::abs(dAlpha_dt) > (double)m_slope_alpha_threshold) {
-            double abs_dAlpha = std::abs(dAlpha_dt);
-            double sign_dAlpha = (dAlpha_dt >= 0) ? 1.0 : -1.0;
-            double protected_denom = (std::max)(0.005, abs_dAlpha) * sign_dAlpha;
-            m_slope_current = dG_dt / protected_denom;
-
-            // v0.7.17 FIX: Hard clamp to physically possible range [-20.0, 20.0]
-            m_slope_current = std::clamp(m_slope_current, -20.0, 20.0);
+            m_slope_hold_timer = SLOPE_HOLD_TIME;
+            m_debug_slope_num = dG_dt * dAlpha_dt;
+            m_debug_slope_den = (dAlpha_dt * dAlpha_dt) + 0.000001;
+            m_debug_slope_raw = m_debug_slope_num / m_debug_slope_den;
+            m_slope_current = std::clamp(m_debug_slope_raw, -20.0, 20.0);
         } else {
-            // Decay slope toward 0 when not actively cornering
-            m_slope_current += (double)m_slope_decay_rate * dt * (0.0 - m_slope_current);
+            m_slope_hold_timer -= dt;
+            if (m_slope_hold_timer <= 0.0) {
+                m_slope_hold_timer = 0.0;
+                m_slope_current += (double)m_slope_decay_rate * dt * (0.0 - m_slope_current);
+            }
+        }
+
+        // 5. Calculate Torque-based Slope (Pneumatic Trail Anticipation)
+        if (m_slope_use_torque && data) {
+            double dTorque_dt = calculate_sg_derivative(m_slope_torque_buffer, m_slope_buffer_count, m_slope_sg_window, dt);
+            double dSteer_dt = calculate_sg_derivative(m_slope_steer_buffer, m_slope_buffer_count, m_slope_sg_window, dt);
+
+            if (std::abs(dSteer_dt) > 0.01) { // Fixed threshold for steering movement
+                m_debug_slope_torque_num = dTorque_dt * dSteer_dt;
+                m_debug_slope_torque_den = (dSteer_dt * dSteer_dt) + 0.000001;
+                m_slope_torque_current = std::clamp(m_debug_slope_torque_num / m_debug_slope_torque_den, -50.0, 50.0);
+            } else {
+                m_slope_torque_current += (double)m_slope_decay_rate * dt * (0.0 - m_slope_torque_current);
+            }
+        } else {
+            m_slope_torque_current = 20.0; // Positive value means no grip loss detected
         }
 
         double current_grip_factor = 1.0;
         double confidence = calculate_slope_confidence(dAlpha_dt);
 
-        // v0.7.11: InverseLerp based threshold mapping
-        // m_slope_min_threshold: Effect starts (e.g., -0.3)
-        // m_slope_max_threshold: Effect saturates (e.g., -2.0)
-        double loss_percent = inverse_lerp((double)m_slope_min_threshold, (double)m_slope_max_threshold, m_slope_current);
+        // 1. Calculate Grip Loss from G-Slope (Lateral Saturation)
+        double loss_percent_g = inverse_lerp((double)m_slope_min_threshold, (double)m_slope_max_threshold, m_slope_current);
+
+        // 2. Calculate Grip Loss from Torque-Slope (Pneumatic Trail Drop)
+        double loss_percent_torque = 0.0;
+        if (m_slope_use_torque && data) {
+            // If torque slope is negative, it indicates pneumatic trail is dropping (anticipatory)
+            if (m_slope_torque_current < 0.0) {
+                loss_percent_torque = std::abs(m_slope_torque_current) * (double)m_slope_torque_sensitivity;
+                loss_percent_torque = (std::max)(0.0, (std::min)(1.0, loss_percent_torque));
+            }
+        }
+
+        // 3. Fusion Logic (Max of both estimators)
+        double loss_percent = (std::max)(loss_percent_g, loss_percent_torque);
         
         // Scale loss by confidence and apply floor (0.2)
         // 0% loss (loss_percent=0) -> 1.0 factor
@@ -1338,11 +1434,24 @@ public:
             frame.dG_dt = (float)m_slope_dG_dt;
             frame.dAlpha_dt = (float)m_slope_dAlpha_dt;
             frame.slope_current = (float)m_slope_current;
+            frame.slope_raw_unclamped = (float)m_debug_slope_raw;
+            frame.slope_numerator = (float)m_debug_slope_num;
+            frame.slope_denominator = (float)m_debug_slope_den;
+            frame.hold_timer = (float)m_slope_hold_timer;
+            frame.input_slip_smoothed = (float)m_slope_slip_smoothed;
             frame.slope_smoothed = (float)m_slope_smoothed_output;
             
             // Use extracted confidence calculation
             frame.confidence = (float)calculate_slope_confidence(m_slope_dAlpha_dt);
             
+            // Surface types (Accuracy Tools)
+            frame.surface_type_fl = (float)fl.mSurfaceType;
+            frame.surface_type_fr = (float)fr.mSurfaceType;
+
+            // Advanced Slope Detection (v0.7.40)
+            frame.slope_torque = (float)m_slope_torque_current;
+            frame.slew_limited_g = (float)m_debug_lat_g_slew;
+
             // Rear axle
             frame.calc_grip_rear = (float)ctx.avg_rear_grip;
             frame.grip_delta = (float)(ctx.avg_grip - ctx.avg_rear_grip);

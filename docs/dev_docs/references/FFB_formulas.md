@@ -80,16 +80,25 @@ If telemetry grip (`mGripFract`) is missing or invalid (< 0.0001), the engine ap
     *   $\text{ApproxGrip} = (1.0 \text{ if } \text{Combined} < 1.0 \text{ else } 1.0 / (1.0 + (\text{Combined}-1.0) \times 2.0))$
 *   **Safety Clamp**: Approx Grip is usually clamped to min **0.2** to prevent total loss of force.
 
-**3. Slope Detection (Dynamic Limit, v0.7.0)**
+**3. Slope Detection (Dynamic Limit, v0.7.40)**
 An advanced algorithm that estimates grip limit by monitoring the tire's force-response curve ($dG/d\alpha$).
 *   **Principle**: As tires saturate, the rate of Lat G gain per unit of Slip Angle decreases. Past the limit, the slope becomes negative.
-*   **Derivatives**: Calculated using Savitzky-Golay filters (Window: 15 frames) for noise immunity.
-    *   $Slope = \frac{dG_{lat}/dt}{d\alpha/dt}$
-*   **Logic (v0.7.3 Stability)**:
-    *   If $Slope < m_{\text{threshold}}$ (Default: -0.3), grip is reduced.
-    *   **Sensitivity**: $Loss = (\text{Threshold} - Slope) \times 0.1 \times m_{\text{sensitivity}}$.
-    *   **Decay**: If not cornering ($|d\alpha/dt| < 0.02$), slope decays to 0.0 exponentially (Rate: 5.0).
-    *   **Confidence**: Grip reduction is scaled by signal confidence ($\min(1.0, |d\alpha/dt|/0.1)$).
+*   **Signal Hygiene (v0.7.40)**:
+    *   **Slew Limiter**: Lateral G input is rate-limited (Default: 50 G/s) to reject curb strikes and suspension jolts.
+    *   **Pre-Smoothing**: Both Lateral G and Slip Angle are low-pass filtered ($\tau \approx 0.01\text{s}$) before derivative calculation to reduce high-frequency noise.
+*   **Derivatives**: Calculated using Savitzky-Golay filters (Window: 15-41 frames) on smoothed inputs.
+*   **G-based Slope (Projected Math)**:
+    *   $Slope_G = \frac{dG/dt \times d\alpha/dt}{(d\alpha/dt)^2 + \epsilon}$
+    *   The "Projected Slope" method avoids singularities when steering movement ($d\alpha/dt$) is near zero.
+*   **Torque-based Slope (Pneumatic Trail Indicator)**:
+    *   Detects the drop in pneumatic trail *before* lateral saturation.
+    *   $Slope_T = \frac{dT/dt \times d\text{Steer}/dt}{(d\text{Steer}/dt)^2 + \epsilon}$
+    *   Detects SAT peak which occurs at lower slip angles than lateral force peak.
+*   **Logic & Fusion**:
+    *   **Hold-and-Decay**: If steering movement is sufficient, update slope and reset timer (0.25s). If steering stops, hold last slope for the duration of the timer before exponentially decaying to zero.
+    *   **Fusion**: $Loss = \text{Max}(Loss_G, Loss_T)$. Priortizes the estimator that detects grip loss earliest.
+    *   **Threshold Mapping**: Linear mapping between `m_slope_min_threshold` (Default: -0.3) and `m_slope_max_threshold` (Default: -2.0).
+    *   **Confidence**: Resulting loss is scaled by signal confidence ($\min(1.0, |d\alpha/dt|/0.1)$).
 
 **3. Kinematic Load Reconstruction**
 If `mSuspForce` is missing (encrypted content), tire load is estimated from chassis physics:

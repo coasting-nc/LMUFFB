@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.40] - 2026-02-13
+### Added
+- **Leading Indicator (Torque Slope)**: Implemented an anticipatory grip loss estimator based on Steering Torque vs. Steering Angle. This detects the peak of the Self-Aligning Torque (SAT) curve, providing haptic cues *before* the car physically slides.
+- **Signal Hygiene (Slew Rate Limiter)**: Added a configurable slew rate limiter on Lateral G input to reject non-steering artifacts (e.g., curb strikes, suspension jolts) from the slope calculation.
+- **Estimator Fusion**: Implemented a conservative fusion logic that combines G-based and Torque-based estimators, prioritizing the one that detects grip loss earliest.
+
+### Testing
+- **Advanced Slope Verification**: Added `tests/test_ffb_advanced_slope.cpp` to verify curb rejection and pneumatic trail anticipation.
+
+## [0.7.39] - 2026-02-13
+### Added
+- **Surface Type Logging**: Added `SurfaceFL` and `SurfaceFR` channels to the telemetry log. This allows for precise filtering of noisy data (e.g., curb strikes, grass excursions) during offline analysis.
+- **Phase Lag Analysis Spec**: Created technical specification for advanced Cross-Correlation analysis in the Log Analyzer to measure tire relaxation lag and optimize the SG filter window.
+
+### Testing
+- **Accuracy Tools Verification**: Added `tests/test_ffb_accuracy_tools.cpp` to verify surface type extraction and logging.
+
+## [0.7.38] - 2026-02-13
+### Fixed
+- **Slope Detection Mathematical Stability**: Replaced the unstable division-based slope calculation with a robust "Projected Slope" method: `slope = (dG * dAlpha) / (dAlpha^2 + epsilon)`. This eliminates haptic "banging" and singularities when steering movement is near zero.
+- **Steady-State Cornering (Hold-and-Decay)**: Implemented "Hold-and-Decay" logic to maintain understeer feel during long, steady-state corners. The engine now holds the last valid grip loss for 250ms after steering movement stops before gradually decaying.
+- **Signal Hygiene**: Added input pre-smoothing (LPF, tau ~0.01s) for Lateral G and Slip Angle before they enter the derivative buffers, reducing high-frequency noise injection.
+
+### Improved
+- **Telemetry Logging**: Expanded the `AsyncLogger` to capture internal math states, including unclamped raw slope, numerator/denominator values, hold timer state, and smoothed inputs for better offline diagnostic analysis.
+
+### Testing
+- **Slope Fix Verification Suite**: Added `tests/test_ffb_slope_fix.cpp` to verify singularity rejection, hold-timer logic, and input smoothing attenuation.
+
 ## [0.7.37] - 2026-02-13
 ### Fixed
 - **Slope Detection Threshold Disconnect (Issue #104)**: Unified the redundant slope threshold variables. The "Slope Threshold" slider in the GUI now correctly controls the physics engine by binding directly to `m_slope_min_threshold`. Removed the dead `m_slope_negative_threshold` variable.

@@ -38,6 +38,11 @@ Experimental alpha version.
 
 This is an **experimental release**, the FFB formulas may require refinement based on real-world testing.
 
+**V0.7.40 Advanced Features:**
+- **Dynamic Slope Detection**: Automatically detects tire saturation for more organic understeer feel.
+- **Torque-based Anticipation**: Feels understeer earlier by monitoring pneumatic trail drop.
+- **Curb Rejection Filter**: Prevents false understeer cues when hitting bumps or curbs.
+
 **Please help us improve lmuFFB:**
 1. **Test with caution** - Start with low wheel strength settings
 2. **Experiment with settings** - Try different effect combinations and gains
