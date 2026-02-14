@@ -749,17 +749,14 @@ private:
 
     // Helper: Learn static front load reference (v0.7.46)
     void update_static_load_reference(double current_load, double speed, double dt) {
+        // Initial floor/seed
+        if (m_static_front_load < 1000.0) m_static_front_load = 4000.0;
+
         // Update only at low speeds (e.g., 2-15 m/s) where aero is negligible
         if (speed > 2.0 && speed < 15.0) {
-            if (m_static_front_load < 100.0) {
-                 m_static_front_load = current_load; // Quick init
-            } else {
-                 // Slow LPF (5.0s time constant)
-                 m_static_front_load += (dt / 5.0) * (current_load - m_static_front_load);
-            }
+            // Slow LPF (5.0s time constant) to learn baseline weight distribution
+            m_static_front_load += (dt / 5.0) * (current_load - m_static_front_load);
         }
-        // Safety floor
-        if (m_static_front_load < 1000.0) m_static_front_load = 4000.0;
     }
 
     // Initialize the load reference based on vehicle class and name seeding
