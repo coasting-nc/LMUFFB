@@ -839,7 +839,7 @@ public:
                               double dt,
                               const char* vehicleName,
                               const TelemInfoV01* data,
-                              bool is_front = true) {
+                              bool is_front) {
         GripResult result;
 
         // v0.7.46: Load-weighted average for original grip estimation
@@ -1456,7 +1456,7 @@ public:
         // Grip Estimation (v0.4.5 FIX)
         GripResult front_grip_res = calculate_grip(fl, fr, ctx.avg_load, m_warned_grip, 
                                                    m_prev_slip_angle[0], m_prev_slip_angle[1],
-                                                   ctx.car_speed, ctx.dt, data->mVehicleName, data, true);
+                                                   ctx.car_speed, ctx.dt, data->mVehicleName, data, true /* is_front */);
         ctx.avg_grip = front_grip_res.value;
         m_grip_diag.front_original = front_grip_res.original;
         m_grip_diag.front_approximated = front_grip_res.approximated;
@@ -1796,7 +1796,7 @@ private:
         // Rear Grip Estimation (v0.4.5 FIX)
         GripResult rear_grip_res = calculate_grip(data->mWheel[2], data->mWheel[3], ctx.avg_load, m_warned_rear_grip,
                                                   m_prev_slip_angle[2], m_prev_slip_angle[3],
-                                                  ctx.car_speed, ctx.dt, data->mVehicleName, data, false);
+                                                  ctx.car_speed, ctx.dt, data->mVehicleName, data, false /* is_front */);
         ctx.avg_rear_grip = rear_grip_res.value;
         m_grip_diag.rear_original = rear_grip_res.original;
         m_grip_diag.rear_approximated = rear_grip_res.approximated;
