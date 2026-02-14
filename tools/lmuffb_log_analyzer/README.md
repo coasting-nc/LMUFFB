@@ -46,6 +46,7 @@ python -m lmuffb_log_analyzer.cli report path/to/log.csv --output report.txt
 
 ### Batch Process a Directory
 ```bash
+cd tools
 python -m lmuffb_log_analyzer.cli batch path/to/log_directory --output ./results
 ```
 
