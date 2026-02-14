@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.46] - 2026-02-14
+### Added
+- **Dynamic Weight**: Implemented master gain scaling based on front tire load transfer. Steering becomes heavier under braking and lighter under acceleration.
+- **Load-Weighted Grip**: Refined grip estimation by weighting individual wheel grip by vertical load, prioritizing the feel of the loaded tire during cornering.
+
 ## [0.7.45] - 2026-02-14
 ### Refactored
 - **Car Detection Infrastructure**: 

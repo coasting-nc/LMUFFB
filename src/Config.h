@@ -33,6 +33,7 @@ struct Preset {
     float slip_smoothing = 0.002f;
     float min_force = 0.0f;
     float oversteer_boost = 2.52101f;
+    float dynamic_weight_gain = 0.0f; // NEW v0.7.46
     
     bool lockup_enabled = true;
     float lockup_gain = 0.37479f;
@@ -136,6 +137,7 @@ struct Preset {
     Preset& SetSmoothing(float v) { sop_smoothing = v; return *this; }
     Preset& SetMinForce(float v) { min_force = v; return *this; }
     Preset& SetOversteer(float v) { oversteer_boost = v; return *this; }
+    Preset& SetDynamicWeight(float v) { dynamic_weight_gain = v; return *this; }
     Preset& SetSlipSmoothing(float v) { slip_smoothing = v; return *this; }
     
     Preset& SetLockup(bool enabled, float g, float start = 5.0f, float full = 15.0f, float boost = 1.5f) { 
@@ -255,6 +257,7 @@ struct Preset {
         engine.m_slip_angle_smoothing = (std::max)(0.0001f, slip_smoothing);
         engine.m_min_force = (std::max)(0.0f, min_force);
         engine.m_oversteer_boost = (std::max)(0.0f, oversteer_boost);
+        engine.m_dynamic_weight_gain = (std::max)(0.0f, (std::min)(2.0f, dynamic_weight_gain));
 
         engine.m_lockup_enabled = lockup_enabled;
         engine.m_lockup_gain = (std::max)(0.0f, lockup_gain);
@@ -343,6 +346,7 @@ struct Preset {
         slip_smoothing = (std::max)(0.0001f, slip_smoothing);
         min_force = (std::max)(0.0f, min_force);
         oversteer_boost = (std::max)(0.0f, oversteer_boost);
+        dynamic_weight_gain = (std::max)(0.0f, (std::min)(2.0f, dynamic_weight_gain));
         lockup_gain = (std::max)(0.0f, lockup_gain);
         lockup_start_pct = (std::max)(0.1f, lockup_start_pct);
         lockup_full_pct = (std::max)(0.2f, lockup_full_pct);
@@ -399,6 +403,7 @@ struct Preset {
         slip_smoothing = engine.m_slip_angle_smoothing;
         min_force = engine.m_min_force;
         oversteer_boost = engine.m_oversteer_boost;
+        dynamic_weight_gain = engine.m_dynamic_weight_gain;
         lockup_enabled = engine.m_lockup_enabled;
         lockup_gain = engine.m_lockup_gain;
         lockup_start_pct = engine.m_lockup_start_pct;
@@ -487,6 +492,7 @@ struct Preset {
         if (!is_near(slip_smoothing, p.slip_smoothing, eps)) return false;
         if (!is_near(min_force, p.min_force, eps)) return false;
         if (!is_near(oversteer_boost, p.oversteer_boost, eps)) return false;
+        if (!is_near(dynamic_weight_gain, p.dynamic_weight_gain, eps)) return false;
 
         if (lockup_enabled != p.lockup_enabled) return false;
         if (!is_near(lockup_gain, p.lockup_gain, eps)) return false;

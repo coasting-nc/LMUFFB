@@ -245,6 +245,7 @@ public:
     float m_understeer_effect;
     float m_sop_effect;
     float m_min_force;
+    float m_dynamic_weight_gain; // NEW v0.7.46
     
     // Configurable Smoothing & Caps (v0.3.9)
     float m_sop_smoothing_factor;
@@ -484,6 +485,9 @@ public:
     double m_debug_slope_torque_num = 0.0;
     double m_debug_slope_torque_den = 0.0;
     double m_debug_lat_g_slew = 0.0;
+
+    // Dynamic Weight State (v0.7.46)
+    double m_static_front_load = 0.0; // Learned baseline load
 
     // Context for Logging (v0.7.x)
     char m_vehicle_name[64] = "Unknown";
@@ -743,6 +747,21 @@ private:
         }
     }
 
+    // Helper: Learn static front load reference (v0.7.46)
+    void update_static_load_reference(double current_load, double speed, double dt) {
+        // Update only at low speeds (e.g., 2-15 m/s) where aero is negligible
+        if (speed > 2.0 && speed < 15.0) {
+            if (m_static_front_load < 100.0) {
+                 m_static_front_load = current_load; // Quick init
+            } else {
+                 // Slow LPF (5.0s time constant)
+                 m_static_front_load += (dt / 5.0) * (current_load - m_static_front_load);
+            }
+        }
+        // Safety floor
+        if (m_static_front_load < 1000.0) m_static_front_load = 4000.0;
+    }
+
     // Initialize the load reference based on vehicle class and name seeding
     void InitializeLoadReference(const char* className, const char* vehicleName) {
         ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
@@ -813,7 +832,16 @@ public:
                               const TelemInfoV01* data,
                               bool is_front = true) {
         GripResult result;
-        result.original = (w1.mGripFract + w2.mGripFract) / 2.0;
+
+        // v0.7.46: Load-weighted average for original grip estimation
+        double total_load = w1.mTireLoad + w2.mTireLoad;
+        if (total_load > 1.0) {
+            result.original = (w1.mGripFract * w1.mTireLoad + w2.mGripFract * w2.mTireLoad) / total_load;
+        } else {
+            // Fallback for zero load (e.g. jump/missing data)
+            result.original = (w1.mGripFract + w2.mGripFract) / 2.0;
+        }
+
         result.value = result.original;
         result.approximated = false;
         result.slip_angle = 0.0;
@@ -1420,8 +1448,20 @@ public:
         // Apply Grip Modulation
         double grip_loss = (1.0 - ctx.avg_grip) * m_understeer_effect;
         ctx.grip_factor = (std::max)(0.0, 1.0 - grip_loss);
+
+        // v0.7.46: Dynamic Weight logic
+        update_static_load_reference(ctx.avg_load, ctx.car_speed, ctx.dt);
+        double dynamic_weight_factor = 1.0;
+
+        // Only apply if enabled AND we have real load data (no warnings)
+        if (m_dynamic_weight_gain > 0.0 && !ctx.frame_warn_load) {
+            double load_ratio = ctx.avg_load / m_static_front_load;
+            // Blend: 1.0 + (Ratio - 1.0) * Gain
+            dynamic_weight_factor = 1.0 + (load_ratio - 1.0) * (double)m_dynamic_weight_gain;
+            dynamic_weight_factor = std::clamp(dynamic_weight_factor, 0.5, 2.0);
+        }
         
-        double output_force = (base_input * (double)m_steering_shaft_gain) * ctx.grip_factor;
+        double output_force = (base_input * (double)m_steering_shaft_gain) * dynamic_weight_factor * ctx.grip_factor;
         output_force *= ctx.speed_gate;
         
         // B. SoP Lateral (Oversteer)

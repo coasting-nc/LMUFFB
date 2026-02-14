@@ -417,6 +417,11 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 2.0f, FormatPct(engine.m_understeer_effect),
             "Scales how much front grip loss reduces steering force.");
 
+        FloatSetting("Dynamic Weight", &engine.m_dynamic_weight_gain, 0.0f, 2.0f, FormatPct(engine.m_dynamic_weight_gain),
+            "Scales steering weight based on longitudinal load transfer.\n"
+            "Heavier under braking, lighter under acceleration.\n"
+            "Requires valid tire load data (Hypercars).");
+
         const char* base_modes[] = { "Native (Steering Shaft Torque)", "Synthetic (Constant)", "Muted (Off)" };
         IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, sizeof(base_modes)/sizeof(base_modes[0]),
             "Debug tool to isolate effects.\nNative: Normal Operation.\nSynthetic: Constant force to test direction.\nMuted: Disables base physics (good for tuning vibrations).");

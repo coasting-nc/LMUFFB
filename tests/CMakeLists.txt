@@ -48,6 +48,7 @@ set(TEST_SOURCES
     test_ffb_safety.cpp
     test_issue_100_timing.cpp
     test_issue_104_slope_disconnect.cpp
+    test_ffb_dynamic_weight.cpp
 
     # Core Application Logic (Now with Linux Mocks)
     ../src/Config.cpp
