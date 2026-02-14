@@ -12,9 +12,10 @@ The Slope Detection feature, intended to estimate front tire grip loss by analyz
 *   Diagnostic Reports: 
     - `https://github.com/coasting-nc/LMUFFB/issues/25#issuecomment-3899222192`
     - `https://github.com/coasting-nc/LMUFFB/issues/25#issuecomment-3899252429`
-    
+
 *   `docs\dev_docs\investigations\Recommended Additions to Telemetry Logger.md`
 *   `docs\dev_docs\investigations\improve_slope_Detection_v0.7.35+.md`
+*   `docs\dev_docs\investigations\slope_detection_feasibility.md`
 
 ## 2. Codebase Analysis
 
