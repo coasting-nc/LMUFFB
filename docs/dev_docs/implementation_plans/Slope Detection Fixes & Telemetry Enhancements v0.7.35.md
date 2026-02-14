@@ -13,9 +13,9 @@ The Slope Detection feature, intended to estimate front tire grip loss by analyz
     - `https://github.com/coasting-nc/LMUFFB/issues/25#issuecomment-3899222192`
     - `https://github.com/coasting-nc/LMUFFB/issues/25#issuecomment-3899252429`
 
-*   `docs\dev_docs\investigations\Recommended Additions to Telemetry Logger.md`
-*   `docs\dev_docs\investigations\improve_slope_Detection_v0.7.35+.md`
-*   `docs\dev_docs\investigations\slope_detection_feasibility.md`
+*   `docs/dev_docs/investigations/Recommended Additions to Telemetry Logger.md`
+*   `docs/dev_docs/investigations/improve_slope_Detection_v0.7.35+.md`
+*   `docs/dev_docs/investigations/slope_detection_feasibility.md`
 
 ## 2. Codebase Analysis
 
@@ -131,13 +131,13 @@ Output the new fields to the CSV stream.
 *   [ ] **Code:** Updated `src/FFBEngine.h` (Logic fix).
 *   [ ] **Code:** Updated `src/AsyncLogger.h` (Logging enhancement).
 *   [ ] **Tests:** New `tests/test_ffb_slope_fix.cpp`.
-*   [ ] **Docs:** Update `docs/dev_docs/plans/plan_{{TASK_ID}}.md` with implementation notes.
+*   [ ] **Docs:** Update `docs/dev_docs/implementation_plans/Slope Detection Fixes & Telemetry Enhancements v0.7.35.md` with implementation notes.
 *   [ ] **Docs:** Create `docs/dev_docs/log_analyzer_spec.md` describing the new CSV columns for the analyzer tool.
 
 ```json
 {
   "status": "success",
-  "plan_path": "docs/dev_docs/plans/plan_slope_fix.md",
+  "plan_path": "docs/dev_docs/implementation_plans/Slope Detection Fixes & Telemetry Enhancements v0.7.35.md",
   "backlog_items": []
 }
 ```

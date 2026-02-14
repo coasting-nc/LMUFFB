@@ -1,15 +1,15 @@
 # Implementation Plan - Advanced Slope Detection (Torque & Slew)
 
 ## 1. Context
-Following the stabilization (Plan 1) and accuracy tooling (Plan 2) of the Slope Detection feature, this phase implements advanced signal processing techniques derived from deep research into the rFactor 2 / LMU physics engine.
+Following the stabilization ([Plan 1](./Slope%20Detection%20Fixes%20&%20Telemetry%20Enhancements%20v0.7.35.md)) and accuracy tooling ([Plan 2](./Slope%20Detection%20Accuracy%20Tools.md)) of the Slope Detection feature, this phase implements advanced signal processing techniques derived from deep research into the rFactor 2 / LMU physics engine.
 
 **Goal:**
 1.  **Leading Indicator (Pneumatic Trail):** Implement a secondary slope estimator based on `Steering Torque` vs. `Steering Angle`. This detects the drop in pneumatic trail *before* the car physically slides (Lateral G saturation), providing an "anticipatory" understeer cue.
 2.  **Signal Hygiene (Slew Rate Limiter):** Implement a Slew Rate Limiter on the Lateral G input to physically reject non-steering events (curb strikes, suspension jolts) from the slope calculation, preventing false positives without relying on complex surface type logic.
 
 **Reference Documents:**
-*   Deep Research Report: "Advanced Real-Time Estimation of Tire Friction..."
-*   Previous Plans: `plan_slope_fix.md`, `plan_accuracy_tools.md`
+*   Deep Research Report: [`docs/dev_docs/investigations/slope detection advanced features deep research.md`](../investigations/slope%20detection%20advanced%20features%20deep%20research.md)
+*   Previous Plans: [`Slope Detection Fixes & Telemetry Enhancements v0.7.35.md`](./Slope%20Detection%20Fixes%20&%20Telemetry%20Enhancements%20v0.7.35.md), [`Slope Detection Accuracy Tools.md`](./Slope%20Detection%20Accuracy%20Tools.md)
 
 ## 2. Codebase Analysis
 
@@ -134,12 +134,12 @@ Add `SlopeTorque` and `SlewLimitedG` to the log frame to visualize the new featu
 *   [ ] **Code:** Updated `src/Config.h` & `src/Config.cpp` (New settings).
 *   [ ] **Code:** Updated `src/FFBEngine.h` (Slew Limiter & Torque Slope logic).
 *   [ ] **Tests:** New `tests/test_ffb_advanced_slope.cpp`.
-*   [ ] **Docs:** Update `docs/dev_docs/plans/plan_{{TASK_ID}}.md`.
+*   [ ] **Docs:** Update `docs/dev_docs/implementation_plans/Slope Detection Advanced Features.md`.
 
 ```json
 {
   "status": "success",
-  "plan_path": "docs/dev_docs/plans/plan_advanced_slope.md",
+  "plan_path": "docs/dev_docs/implementation_plans/Slope Detection Advanced Features.md",
   "backlog_items": []
 }
 ```
