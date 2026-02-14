@@ -185,4 +185,9 @@ FloatSetting("Dynamic Weight", &engine.m_dynamic_weight_gain, 0.0f, 2.0f, Format
 *   [ ] **Tests:** New `tests/test_ffb_dynamic_weight.cpp`.
 *   [ ] **Implementation Notes:** Update plan with any deviations.
 
- 
+
+## Implementation Notes
+- **Unforeseen Issues:** The default `invert_force = true` in the `Preset` struct caused the initial unit tests to fail due to negative force output. This was resolved by explicitly setting `invert_force = false` in the test cases.
+- **Plan Deviations:** None. The implementation followed the plan exactly.
+- **Challenges Encountered:** Managing the learning of `m_static_front_load` required a few frames of simulation in tests to reach a stable state.
+- **Recommendations for Future Plans:** Explicitly state the expected `invert_force` state for physics-based unit tests to avoid confusion.

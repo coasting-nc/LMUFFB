@@ -49,6 +49,7 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "sop_smoothing_factor") current_preset.sop_smoothing = std::stof(value);
                 else if (key == "min_force") current_preset.min_force = std::stof(value);
                 else if (key == "oversteer_boost") current_preset.oversteer_boost = std::stof(value);
+                else if (key == "dynamic_weight_gain") current_preset.dynamic_weight_gain = std::stof(value);
                 else if (key == "lockup_enabled") current_preset.lockup_enabled = std::stoi(value);
                 else if (key == "lockup_gain") current_preset.lockup_gain = (std::min)(3.0f, std::stof(value));
                 else if (key == "lockup_start_pct") current_preset.lockup_start_pct = std::stof(value);
@@ -831,6 +832,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "static_notch_width=" << p.static_notch_width << "\n";
 
     file << "oversteer_boost=" << p.oversteer_boost << "\n";
+    file << "dynamic_weight_gain=" << p.dynamic_weight_gain << "\n";
     file << "sop=" << p.sop << "\n";
     file << "rear_align_effect=" << p.rear_align_effect << "\n";
     file << "sop_yaw_gain=" << p.sop_yaw_gain << "\n";
@@ -1099,6 +1101,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
 
         file << "\n; --- Rear Axle (Oversteer) ---\n";
         file << "oversteer_boost=" << engine.m_oversteer_boost << "\n";
+        file << "dynamic_weight_gain=" << engine.m_dynamic_weight_gain << "\n";
         file << "sop=" << engine.m_sop_effect << "\n";
         file << "rear_align_effect=" << engine.m_rear_align_effect << "\n";
         file << "sop_yaw_gain=" << engine.m_sop_yaw_gain << "\n";
@@ -1234,6 +1237,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "sop") engine.m_sop_effect = std::stof(value);
                     else if (key == "min_force") engine.m_min_force = std::stof(value);
                     else if (key == "oversteer_boost") engine.m_oversteer_boost = std::stof(value);
+                    else if (key == "dynamic_weight_gain") engine.m_dynamic_weight_gain = std::stof(value);
                     // v0.4.50: SAFETY CLAMPING for Generator Effects (Gain Compensation Migration)
                     // Legacy configs may have high gains (e.g., 5.0) to compensate for lack of auto-scaling.
                     // With new decoupling, these would cause 25x force explosions. Clamp to safe maximums.
