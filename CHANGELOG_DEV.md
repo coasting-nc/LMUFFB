@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.38] - 2026-02-14
+### Added
+- **Log Analyzer Tool Integration in Context Generator**:
+  - Updated `scripts/create_context.py` to include a new `--include-log-analyzer` boolean option.
+  - This allows users to optionally include the Python code for the log analyzer tool (located in `tools/lmuffb_log_analyzer/`) when generating the full project context for LLMs.
+  - Added `--exclude-log-analyzer` for explicit exclusion (default behavior).
+### Testing
+- **Python Unit Tests**: Updated `tests/test_create_context_script.py` and `tests/test_create_context_extended.py` to verify the new flag logic and default behaviors.
+- **Integration Verification**: Confirmed via manual runs and `grep` that files are correctly included/excluded based on the provided flags.
+
 ## [0.7.37] - 2026-02-13
 ### Fixed
 - **Slope Detection Threshold Disconnect (Issue #104)**: Unified the redundant slope threshold variables. The "Slope Threshold" slider in the GUI now correctly controls the physics engine by binding directly to `m_slope_min_threshold`. Removed the dead `m_slope_negative_threshold` variable.
