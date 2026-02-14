@@ -120,26 +120,29 @@ def detect_oscillation_events(
     window = 50  # 0.5 seconds at 100Hz
     rolling_std = pd.Series(signal).rolling(window, center=True).std().values
     
-    # Find periods where std > threshold
-    in_event = False
-    event_start = 0
+    # Vectorized search for events
+    # Find frames where std exceeds threshold
+    std_above = (rolling_std > threshold).astype(int)
+    # Detect starts and ends (1 = starts, -1 = ends)
+    # prepend/append 0 ensures we catch events leading to/from the edges
+    diff = np.diff(std_above, prepend=0, append=0)
+    starts = np.where(diff == 1)[0]
+    ends = np.where(diff == -1)[0]
     
-    for i, std in enumerate(rolling_std):
-        if std > threshold and not in_event:
-            in_event = True
-            event_start = i
-        elif (std <= threshold or np.isnan(std)) and in_event:
-            in_event = False
-            duration = time[i] - time[event_start]
-            if duration >= min_duration:
-                events.append({
-                    'start_time': float(time[event_start]),
-                    'end_time': float(time[i]),
-                    'duration': float(duration),
-                    'amplitude': float(np.abs(signal[event_start:i]).max()),
-                    'frame_start': int(event_start),
-                    'frame_end': int(i)
-                })
+    for s, e in zip(starts, ends):
+        # Index e is the point just after the event, adjust to inclusive range [s, e-1]
+        actual_end = e - 1
+        duration = time[actual_end] - time[s]
+        
+        if duration >= min_duration:
+            events.append({
+                'start_time': float(time[s]),
+                'end_time': float(time[actual_end]),
+                'duration': float(duration),
+                'amplitude': float(np.abs(signal[s:e]).max()),
+                'frame_start': int(s),
+                'frame_end': int(actual_end)
+            })
     
     return events
 
