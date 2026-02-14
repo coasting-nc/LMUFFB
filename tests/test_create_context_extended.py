@@ -22,12 +22,13 @@ class TestCreateContextExtended(unittest.TestCase):
         self.assertFalse(create_context.is_make_file("main.cpp"))
 
     def test_argument_injection(self):
-        # Simulated injection logic
+        # Simulated injection logic from main()
         def get_args(cli_args):
             DEFAULT_INCLUDE_TESTS = True
             DEFAULT_INCLUDE_NON_CODE = True
             DEFAULT_INCLUDE_MAIN_CODE = True
             DEFAULT_INCLUDE_MAKEFILES = True
+            DEFAULT_INCLUDE_LOG_ANALYZER = False
             DEFAULT_TEST_EXAMPLES_ONLY = False
 
             injected = list(cli_args)
@@ -39,6 +40,9 @@ class TestCreateContextExtended(unittest.TestCase):
                 injected.append("--include-main-code" if DEFAULT_INCLUDE_MAIN_CODE else "--exclude-main-code")
             if "--include-makefiles" not in injected and "--exclude-makefiles" not in injected:
                 injected.append("--include-makefiles" if DEFAULT_INCLUDE_MAKEFILES else "--exclude-makefiles")
+            if "--include-log-analyzer" not in injected and "--exclude-log-analyzer" not in injected:
+                injected.append("--include-log-analyzer" if DEFAULT_INCLUDE_LOG_ANALYZER else "--exclude-log-analyzer")
+
             if "--test-examples-only" not in injected:
                 if DEFAULT_TEST_EXAMPLES_ONLY:
                     injected.append("--test-examples-only")
@@ -47,11 +51,14 @@ class TestCreateContextExtended(unittest.TestCase):
         args = get_args([])
         self.assertIn("--include-main-code", args)
         self.assertIn("--include-makefiles", args)
+        self.assertIn("--exclude-log-analyzer", args)
         self.assertNotIn("--test-examples-only", args)
 
-        args_ex = get_args(["--exclude-main-code"])
+        args_ex = get_args(["--exclude-main-code", "--include-log-analyzer"])
         self.assertIn("--exclude-main-code", args_ex)
+        self.assertIn("--include-log-analyzer", args_ex)
         self.assertNotIn("--include-main-code", args_ex)
+        self.assertNotIn("--exclude-log-analyzer", args_ex)
 
     def test_example_tests(self):
         self.assertIn('tests/test_ffb_common.cpp', create_context.EXAMPLE_TEST_FILES)

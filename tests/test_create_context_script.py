@@ -11,10 +11,13 @@ class TestCreateContext(unittest.TestCase):
     def test_file_classification(self):
         # Code files
         self.assertTrue(create_context.is_code_file("main.cpp"))
-        self.assertTrue(create_context.is_code_file("CMakeLists.txt"))
         self.assertTrue(create_context.is_code_file("script.py"))
         self.assertFalse(create_context.is_code_file("README.md"))
         
+        # Make files
+        self.assertTrue(create_context.is_make_file("CMakeLists.txt"))
+        self.assertTrue(create_context.is_make_file("Makefile"))
+
         # Doc files
         self.assertTrue(create_context.is_doc_file("README.md"))
         self.assertTrue(create_context.is_doc_file("notes.txt"))
@@ -34,29 +37,41 @@ class TestCreateContext(unittest.TestCase):
             args = create_context.parse_args([])
             self.assertTrue(args.include_tests)
             self.assertTrue(args.include_non_code)
+            self.assertFalse(args.include_log_analyzer)
 
     def test_argument_parsing_explicit(self):
-        args = create_context.parse_args(['--exclude-tests', '--exclude-non-code'])
+        args = create_context.parse_args([
+            '--exclude-tests',
+            '--exclude-non-code',
+            '--include-log-analyzer'
+        ])
         self.assertFalse(args.include_tests)
         self.assertFalse(args.include_non_code)
+        self.assertTrue(args.include_log_analyzer)
 
     def test_injection_logic(self):
         # Test the injection logic in a simulated way
         def get_injected_args(cli_args):
             DEFAULT_INCLUDE_TESTS = True
             DEFAULT_INCLUDE_NON_CODE = True
+            DEFAULT_INCLUDE_LOG_ANALYZER = False
             
             injected = list(cli_args)
             if "--include-tests" not in injected and "--exclude-tests" not in injected:
                 injected.append("--include-tests" if DEFAULT_INCLUDE_TESTS else "--exclude-tests")
             if "--include-non-code" not in injected and "--exclude-non-code" not in injected:
                 injected.append("--include-non-code" if DEFAULT_INCLUDE_NON_CODE else "--exclude-non-code")
+            if "--include-log-analyzer" not in injected and "--exclude-log-analyzer" not in injected:
+                injected.append("--include-log-analyzer" if DEFAULT_INCLUDE_LOG_ANALYZER else "--exclude-log-analyzer")
             return injected
 
         self.assertIn("--include-tests", get_injected_args([]))
         self.assertIn("--include-non-code", get_injected_args([]))
+        self.assertIn("--exclude-log-analyzer", get_injected_args([]))
+
         self.assertNotIn("--include-tests", get_injected_args(["--exclude-tests"]))
         self.assertIn("--exclude-tests", get_injected_args(["--exclude-tests"]))
+        self.assertIn("--include-log-analyzer", get_injected_args(["--include-log-analyzer"]))
 
     def test_exclusions(self):
         # File exclusions

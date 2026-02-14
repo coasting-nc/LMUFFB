@@ -136,10 +136,89 @@ def parse_args(args=None):
     make_group.add_argument("--include-makefiles", action="store_true", dest="include_makefiles", help="Include makefiles (CMakeLists.txt, etc.)")
     make_group.add_argument("--exclude-makefiles", action="store_false", dest="include_makefiles", help="Exclude makefiles")
 
+    # Log analyzer options
+    log_group = parser.add_mutually_exclusive_group()
+    log_group.add_argument("--include-log-analyzer", action="store_true", dest="include_log_analyzer", help="Include Log Analyzer tool code")
+    log_group.add_argument("--exclude-log-analyzer", action="store_false", dest="include_log_analyzer", help="Exclude Log Analyzer tool code")
+
     # Set defaults if not specified by the injection logic in main
-    parser.set_defaults(include_tests=True, include_non_code=True, include_main_code=True, include_makefiles=True, test_examples_only=False)
+    parser.set_defaults(include_tests=True, include_non_code=True, include_main_code=True, include_makefiles=True,
+                        include_log_analyzer=False, test_examples_only=False)
     
     return parser.parse_args(args)
+
+def should_include_file(relpath, filename, args, root_dir):
+    """Centralized logic to determine if a file should be included in the context."""
+    if filename in EXCLUDE_FILES:
+        return False
+
+    relpath_normalized = relpath.replace('\\', '/')
+
+    # Skip files in excluded relative directory paths, unless explicitly allowed (Log Analyzer)
+    is_log_analyzer = relpath_normalized.startswith('tools/lmuffb_log_analyzer/')
+
+    if not is_log_analyzer:
+        if any(relpath_normalized == ex_path or relpath_normalized.startswith(ex_path + '/') for ex_path in EXCLUDE_DIR_PATHS):
+            return False
+
+    # Categorize file
+    is_code = is_code_file(filename)
+    is_doc = is_doc_file(filename)
+    is_make = is_make_file(filename)
+
+    # Inclusion logic
+    if is_make:
+        if args.include_makefiles and not is_ignored(relpath, root_dir):
+            return True
+    elif is_code:
+        if is_test_file(relpath, filename):
+            if args.test_examples_only:
+                if relpath_normalized in EXAMPLE_TEST_FILES:
+                    return True
+            elif args.include_tests:
+                return True
+        elif is_main_code(relpath_normalized):
+            if args.include_main_code:
+                return True
+        elif is_log_analyzer:
+            if args.include_log_analyzer:
+                return True
+        else:
+            # Other code files (e.g. root scripts if not excluded)
+            return True
+    elif is_doc:
+        if args.include_non_code:
+            # Project specific hardcoded exclusions
+            if 'docs/dev_docs/code_reviews' in relpath_normalized or 'docs/dev_docs/code reviews' in relpath_normalized:
+                return False
+            if 'docs/dev_docs/done_features' in relpath_normalized:
+                return False
+            if 'docs/dev_docs/drafts' in relpath_normalized:
+                return False
+            if 'docs/dev_docs/non project guides' in relpath_normalized:
+                return False
+            if 'docs/dev_docs/prompts' in relpath_normalized:
+                return False
+            if 'docs/dev_docs/pending_todos' in relpath_normalized:
+                return False
+            if 'docs/bug_reports' in relpath_normalized:
+                return False
+            if 'tmp' in relpath_normalized:
+                return False
+            if relpath_normalized == 'src/stb_image_write.h':
+                return False
+
+            # Exclude .txt files in root directory except for allowed ones
+            root_dir_abs = os.path.abspath(root_dir)
+            file_dir_abs = os.path.abspath(os.path.join(root_dir, os.path.dirname(relpath)))
+            if file_dir_abs == root_dir_abs and filename.endswith('.txt') and not is_make:
+                allowed_root_txt = {'README.txt', 'build_commands.txt'}
+                if filename not in allowed_root_txt:
+                    return False
+
+            return True
+
+    return False
 
 def main():
     """
@@ -150,6 +229,7 @@ def main():
     DEFAULT_INCLUDE_NON_CODE = False
     DEFAULT_INCLUDE_MAIN_CODE = True
     DEFAULT_INCLUDE_MAKEFILES = True
+    DEFAULT_INCLUDE_LOG_ANALYZER = False
     DEFAULT_TEST_EXAMPLES_ONLY = True
     
     # Get current CLI args
@@ -168,6 +248,9 @@ def main():
     if "--include-makefiles" not in cli_args and "--exclude-makefiles" not in cli_args:
         cli_args.append("--include-makefiles" if DEFAULT_INCLUDE_MAKEFILES else "--exclude-makefiles")
 
+    if "--include-log-analyzer" not in cli_args and "--exclude-log-analyzer" not in cli_args:
+        cli_args.append("--include-log-analyzer" if DEFAULT_INCLUDE_LOG_ANALYZER else "--exclude-log-analyzer")
+
     if "--test-examples-only" not in cli_args:
         if DEFAULT_TEST_EXAMPLES_ONLY:
             cli_args.append("--test-examples-only")
@@ -184,7 +267,20 @@ def main():
     print(f"  include_non_code: {args.include_non_code}")
     print(f"  include_main_code: {args.include_main_code}")
     print(f"  include_makefiles: {args.include_makefiles}")
+    print(f"  include_log_analyzer: {args.include_log_analyzer}")
 
+    # First pass: collect files for summary
+    included_files = []
+    for dirpath, dirnames, filenames in os.walk(root_dir):
+        dirnames[:] = [d for d in dirnames if d not in EXCLUDE_DIRS]
+        for filename in filenames:
+            relpath = os.path.relpath(os.path.join(dirpath, filename), root_dir)
+            if should_include_file(relpath, filename, args, root_dir):
+                included_files.append(relpath)
+
+    included_files.sort()
+
+    # Second pass: write output
     with open(output_path, 'w', encoding='utf-8') as outfile:
         # AUTO-GENERATED WARNING
         outfile.write("# ⚠️ AUTO-GENERATED FILE - DO NOT EDIT MANUALLY\n\n")
@@ -198,123 +294,55 @@ def main():
         outfile.write("This file contains the full source code and documentation of the project.\n")
         outfile.write("It is generated automatically to provide complete context for LLM queries.\n\n")
 
-        for dirpath, dirnames, filenames in os.walk(root_dir):
-            # Modify dirnames in-place to filter directories by base name
-            dirnames[:] = [d for d in dirnames if d not in EXCLUDE_DIRS]
+        # File Summary
+        outfile.write("## File Summary\n\n")
+        outfile.write(f"Total files included: {len(included_files)}\n\n")
+        for f in included_files:
+            outfile.write(f"- {f}\n")
+        outfile.write("\n---\n\n")
 
-            for filename in filenames:
-                if filename in EXCLUDE_FILES:
-                    continue
-                
-                filepath = os.path.join(dirpath, filename)
-                relpath = os.path.relpath(filepath, root_dir)
-                relpath_normalized = relpath.replace('\\', '/')
+        # Reuse traversal logic but now write contents
+        for relpath in included_files:
+            filepath = os.path.join(root_dir, relpath)
+            filename = os.path.basename(relpath)
 
-                # Skip files in excluded relative directory paths
-                if any(relpath_normalized == ex_path or relpath_normalized.startswith(ex_path + '/') for ex_path in EXCLUDE_DIR_PATHS):
-                    continue
+            print(f"Adding {relpath}...")
 
-                # Categorize file
-                is_code = is_code_file(filename)
-                is_doc = is_doc_file(filename)
-                is_make = is_make_file(filename)
-                
-                should_include = False
-                
-                # Inclusion logic
-                if is_make:
-                    if args.include_makefiles and not is_ignored(relpath, root_dir):
-                        should_include = True
-                elif is_code:
-                    if is_test_file(relpath, filename):
-                        if args.test_examples_only:
-                            if relpath_normalized in EXAMPLE_TEST_FILES:
-                                should_include = True
-                        elif args.include_tests:
-                            should_include = True
-                    elif is_main_code(relpath_normalized):
-                        if args.include_main_code:
-                            should_include = True
-                    else:
-                        # Other code files (e.g. root scripts if not excluded)
-                        should_include = True
-                elif is_doc:
-                    if args.include_non_code:
-                        should_include = True
-                
-                if not should_include:
-                    continue
+            outfile.write(f"\n# File: {relpath}\n")
 
-                # Project specific hardcoded exclusions that were already here
-                if 'docs/dev_docs/code_reviews' in relpath_normalized or 'docs/dev_docs/code reviews' in relpath_normalized:
-                    continue
+            # Determine language for fencing
+            ext = os.path.splitext(filename)[1].lower()
+            lang = ""
+            if ext in ['.cpp', '.h', '.c']: lang = "cpp"
+            elif ext == '.py': lang = "python"
+            elif ext == '.md': lang = "markdown"
+            elif ext == '.cmake' or filename == 'CMakeLists.txt': lang = "cmake"
 
-                if 'docs/dev_docs/done_features' in relpath_normalized:
-                    continue
+            outfile.write(f"```{lang}\n")
 
-                if 'docs/dev_docs/drafts' in relpath_normalized:
-                    continue
+            try:
+                with open(filepath, 'r', encoding='utf-8', errors='ignore') as infile:
+                    content = infile.read()
 
-                if 'docs/dev_docs/non project guides' in relpath_normalized:
-                        continue
+                    # Reformat youtube urls
+                    content = re.sub(r'https?://(?:www\.)?youtube\.com/watch\?v=([\w-]+)(?:&[\w%=+-]*)?', r'youtube: \1', content)
+                    content = re.sub(r'https?://youtu\.be/([\w-]+)(?:\?[\w%=+-]*)?', r'youtube: \1', content)
 
-                if 'docs/dev_docs/prompts' in relpath_normalized:
-                        continue
+                    # General URL unlinking
+                    def general_unlink(match):
+                        url = match.group(0)
+                        url = re.sub(r'^https?://', '', url, flags=re.IGNORECASE)
+                        url = url.replace('.', '_')
+                        return f"unlinked: {url}"
 
-                if 'docs/dev_docs/pending_todos' in relpath_normalized:
-                    continue
+                    url_regex = r'(?:https?://|www\.)[\w\-\.\/\?\=\&\%\#\+\:]+(?<![\.\,\?\!\:\|\)\]\(`])'
+                    content = re.sub(url_regex, general_unlink, content, flags=re.IGNORECASE)
 
-                if 'docs/bug_reports' in relpath_normalized:
-                    continue
+                    outfile.write(content)
+            except Exception as e:
+                outfile.write(f"Error reading file: {e}")
 
-                if 'tmp' in relpath_normalized:
-                    continue
-
-                if relpath_normalized == 'src/stb_image_write.h':
-                    continue
-                
-                # Exclude .txt files in root directory except for allowed ones
-                if dirpath == root_dir and filename.endswith('.txt') and not is_make:
-                    allowed_root_txt = {'README.txt', 'build_commands.txt'}
-                    if filename not in allowed_root_txt:
-                        continue
-                print(f"Adding {relpath}...")
-
-                outfile.write(f"\n# File: {relpath}\n")
-                
-                # Determine language for fencing
-                ext = os.path.splitext(filename)[1].lower()
-                lang = ""
-                if ext in ['.cpp', '.h', '.c']: lang = "cpp"
-                elif ext == '.py': lang = "python"
-                elif ext == '.md': lang = "markdown"
-                elif ext == '.cmake' or filename == 'CMakeLists.txt': lang = "cmake"
-                
-                outfile.write(f"```{lang}\n")
-                
-                try:
-                    with open(filepath, 'r', encoding='utf-8', errors='ignore') as infile:
-                        content = infile.read()
-                        
-                        # Reformat youtube urls
-                        content = re.sub(r'https?://(?:www\.)?youtube\.com/watch\?v=([\w-]+)(?:&[\w%=+-]*)?', r'youtube: \1', content)
-                        content = re.sub(r'https?://youtu\.be/([\w-]+)(?:\?[\w%=+-]*)?', r'youtube: \1', content)
-
-                        # General URL unlinking
-                        def general_unlink(match):
-                            url = match.group(0)
-                            url = re.sub(r'^https?://', '', url, flags=re.IGNORECASE)
-                            url = url.replace('.', '_')
-                            return f"unlinked: {url}"
-
-                        url_regex = r'(?:https?://|www\.)[\w\-\.\/\?\=\&\%\#\+\:]+(?<![\.\,\?\!\:\|\)\]\(`])'
-                        content = re.sub(url_regex, general_unlink, content, flags=re.IGNORECASE)
-                        
-                        outfile.write(content)
-                except Exception as e:
-                    outfile.write(f"Error reading file: {e}")
-                
-                outfile.write("\n```\n")
+            outfile.write("\n```\n")
 
     print(f"\nContext file generated: {output_path}")
 
