@@ -34,6 +34,10 @@ struct Preset {
     float min_force = 0.0f;
     float oversteer_boost = 2.52101f;
     float dynamic_weight_gain = 0.0f; // NEW v0.7.46
+    float dynamic_weight_smoothing = 0.15f; // v0.7.47
+    float grip_smoothing_steady = 0.05f;    // v0.7.47
+    float grip_smoothing_fast = 0.005f;     // v0.7.47
+    float grip_smoothing_sensitivity = 0.1f; // v0.7.47
     
     bool lockup_enabled = true;
     float lockup_gain = 0.37479f;
@@ -138,6 +142,13 @@ struct Preset {
     Preset& SetMinForce(float v) { min_force = v; return *this; }
     Preset& SetOversteer(float v) { oversteer_boost = v; return *this; }
     Preset& SetDynamicWeight(float v) { dynamic_weight_gain = v; return *this; }
+    Preset& SetDynamicWeightSmoothing(float v) { dynamic_weight_smoothing = v; return *this; }
+    Preset& SetGripSmoothing(float steady, float fast, float sens) {
+        grip_smoothing_steady = steady;
+        grip_smoothing_fast = fast;
+        grip_smoothing_sensitivity = sens;
+        return *this;
+    }
     Preset& SetSlipSmoothing(float v) { slip_smoothing = v; return *this; }
     
     Preset& SetLockup(bool enabled, float g, float start = 5.0f, float full = 15.0f, float boost = 1.5f) { 
@@ -258,6 +269,10 @@ struct Preset {
         engine.m_min_force = (std::max)(0.0f, min_force);
         engine.m_oversteer_boost = (std::max)(0.0f, oversteer_boost);
         engine.m_dynamic_weight_gain = (std::max)(0.0f, (std::min)(2.0f, dynamic_weight_gain));
+        engine.m_dynamic_weight_smoothing = (std::max)(0.0f, dynamic_weight_smoothing);
+        engine.m_grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);
+        engine.m_grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);
+        engine.m_grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);
 
         engine.m_lockup_enabled = lockup_enabled;
         engine.m_lockup_gain = (std::max)(0.0f, lockup_gain);
@@ -347,6 +362,10 @@ struct Preset {
         min_force = (std::max)(0.0f, min_force);
         oversteer_boost = (std::max)(0.0f, oversteer_boost);
         dynamic_weight_gain = (std::max)(0.0f, (std::min)(2.0f, dynamic_weight_gain));
+        dynamic_weight_smoothing = (std::max)(0.0f, dynamic_weight_smoothing);
+        grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);
+        grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);
+        grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);
         lockup_gain = (std::max)(0.0f, lockup_gain);
         lockup_start_pct = (std::max)(0.1f, lockup_start_pct);
         lockup_full_pct = (std::max)(0.2f, lockup_full_pct);
@@ -404,6 +423,10 @@ struct Preset {
         min_force = engine.m_min_force;
         oversteer_boost = engine.m_oversteer_boost;
         dynamic_weight_gain = engine.m_dynamic_weight_gain;
+        dynamic_weight_smoothing = engine.m_dynamic_weight_smoothing;
+        grip_smoothing_steady = engine.m_grip_smoothing_steady;
+        grip_smoothing_fast = engine.m_grip_smoothing_fast;
+        grip_smoothing_sensitivity = engine.m_grip_smoothing_sensitivity;
         lockup_enabled = engine.m_lockup_enabled;
         lockup_gain = engine.m_lockup_gain;
         lockup_start_pct = engine.m_lockup_start_pct;
@@ -493,6 +516,10 @@ struct Preset {
         if (!is_near(min_force, p.min_force, eps)) return false;
         if (!is_near(oversteer_boost, p.oversteer_boost, eps)) return false;
         if (!is_near(dynamic_weight_gain, p.dynamic_weight_gain, eps)) return false;
+        if (!is_near(dynamic_weight_smoothing, p.dynamic_weight_smoothing, eps)) return false;
+        if (!is_near(grip_smoothing_steady, p.grip_smoothing_steady, eps)) return false;
+        if (!is_near(grip_smoothing_fast, p.grip_smoothing_fast, eps)) return false;
+        if (!is_near(grip_smoothing_sensitivity, p.grip_smoothing_sensitivity, eps)) return false;
 
         if (lockup_enabled != p.lockup_enabled) return false;
         if (!is_near(lockup_gain, p.lockup_gain, eps)) return false;

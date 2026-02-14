@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.47] - 2026-02-14
+### Added
+- **Dynamic Weight & Grip Smoothing**: Implemented advanced signal processing for tire load and grip telemetry.
+  - **Adaptive Non-Linear Grip Filter**: Introduced an adaptive smoothing filter for estimated grip that provides high stability in steady states ($\tau \approx 50ms$) while maintaining zero-latency response during rapid grip loss transients ($\tau \approx 5ms$).
+  - **Dynamic Weight LPF**: Implemented a standard Low Pass Filter for the steering weight modulation to simulate suspension damping and filter out road noise.
+- **GUI Tuning Controls**: Added new sliders for Weight Smoothing and Grip Smoothing in the Tuning window.
+- **Persistence**: Fully integrated new smoothing parameters into the Preset system and global configuration.
+
+### Testing
+- **Smoothing Verification Suite**: Added `tests/test_ffb_smoothing.cpp` to verify adaptive filter logic, weight LPF characteristics, and end-to-end integration.
+- **Regression Guard**: Updated existing physics tests to handle the new smoothing state.
+
 ## [0.7.46] - 2026-02-14
 ### Added
 - **Dynamic Weight**: Implemented master gain scaling based on front tire load transfer. Steering becomes heavier under braking and lighter under acceleration.

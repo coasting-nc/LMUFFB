@@ -154,6 +154,16 @@ public:
     static double GetAutoPeakLoad(const FFBEngine& e) { return e.m_auto_peak_load; }
     static void SetAutoPeakLoad(FFBEngine& e, double val) { e.m_auto_peak_load = val; }
     static void SetAutoNormalizationEnabled(FFBEngine& e, bool enabled) { e.m_auto_load_normalization_enabled = enabled; }
+
+    // Smoothing Test Access
+    static double GetDynamicWeightSmoothed(const FFBEngine& e) { return e.m_dynamic_weight_smoothed; }
+    static void SetDynamicWeightSmoothed(FFBEngine& e, double val) { e.m_dynamic_weight_smoothed = val; }
+    static double GetFrontGripSmoothedState(const FFBEngine& e) { return e.m_front_grip_smoothed_state; }
+    static void SetFrontGripSmoothedState(FFBEngine& e, double val) { e.m_front_grip_smoothed_state = val; }
+    static void SetStaticFrontLoad(FFBEngine& e, double val) { e.m_static_front_load = val; }
+    static double CallApplyAdaptiveSmoothing(FFBEngine& e, double in, double& prev, double dt, double slow, double fast, double sens) {
+        return e.apply_adaptive_smoothing(in, prev, dt, slow, fast, sens);
+    }
 };
 
 } // namespace FFBEngineTests

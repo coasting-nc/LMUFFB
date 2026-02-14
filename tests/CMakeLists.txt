@@ -28,6 +28,7 @@ set(TEST_SOURCES
     test_ffb_slope_fix.cpp
     test_ffb_understeer.cpp
     test_ffb_smoothstep.cpp
+    test_ffb_smoothing.cpp
     test_ffb_yaw_gyro.cpp
     test_ffb_coordinates.cpp
     test_ffb_features.cpp

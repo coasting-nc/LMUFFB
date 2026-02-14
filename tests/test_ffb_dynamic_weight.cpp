@@ -37,6 +37,7 @@ TEST_CASE(test_dynamic_weight_scaling, "Physics") {
     FFBEngine engine;
     Preset p;
     p.dynamic_weight_gain = 1.0f; // Enable
+    p.dynamic_weight_smoothing = 0.0f; // Disable smoothing for instant test
     p.steering_shaft_gain = 1.0f;
     p.understeer = 0.0f; // Disable understeer drop for pure gain test
     p.invert_force = false; // Easier to test

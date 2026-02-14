@@ -5,6 +5,34 @@ This document contains all version release posts by ErwinMoss from the [url=http
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
 [size=5][b]February 14, 2026[/b][/size]
+[b]Version 0.7.47 - Advanced Physics Smoothing[/b]
+
+[b]New release[/b] (0.7.47): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]Advanced Physics Smoothing[/b]: This update brings high-fidelity signal processing to the Force Feedback engine, removing "grainy" road noise while keeping your reaction times instant.
+[*][b]Adaptive Grip Filter[/b]: Implemented a non-linear filter for tire grip. It provides heavy smoothing when you are driving steadily to remove jitter, but instantly "opens up" during a slide to ensure zero-latency feedback when you lose the car.
+[*][b]Dynamic Weight Damping[/b]: Added a suspension-modeling filter to the steering weight. Steering modulation now feels more organic and weighted, simulating how real-world suspension dampers absorb high-frequency road vibrations.
+[*][b]Precision Tuning[/b]: New sliders for "Weight Smoothing" and "Grip Smoothing" have been added to the Tuning window, allowing you to match the smoothness to your specific wheelbase hardware.
+[/list]
+
+---
+
+[size=5][b]February 14, 2026[/b][/size]
+[b]Version 0.7.46 - Dynamic Weight & Load-Weighted Grip[/b]
+
+[b]New release[/b] (0.7.46): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]Dynamic Steering Weight[/b]: Steering now becomes physically heavier under heavy braking as the weight transfers to the front tires, and lightens under hard acceleration. This provides a critical cue for pitch-based weight transfer.
+[*][b]Load-Weighted Grip[/b]: Refined how the app calculates overall grip. It now prioritizes the feel of the most loaded tire (the outside tire in a corner), giving you a much more accurate sense of when the car is about to wash out.
+[/list]
+
+---
+
+[size=5][b]February 14, 2026[/b][/size]
 [b]Version 0.7.45 - Internal Refactoring & Reliability[/b]
 
 [b]New release[/b] (0.7.45): https://github.com/coasting-nc/LMUFFB/releases
