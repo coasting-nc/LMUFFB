@@ -122,6 +122,7 @@ struct Preset {
     float slope_g_slew_limit = 50.0f;
     bool slope_use_torque = true;
     float slope_torque_sensitivity = 0.5f;
+    float slope_confidence_max_rate = 0.10f;
 
     // 2. Constructors
     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin), app_version(LMUFFB_VERSION) {}
@@ -214,10 +215,11 @@ struct Preset {
         return *this;
     }
 
-    Preset& SetSlopeAdvanced(float slew = 50.0f, bool use_torque = true, float torque_sens = 0.5f) {
+    Preset& SetSlopeAdvanced(float slew = 50.0f, bool use_torque = true, float torque_sens = 0.5f, float conf_max = 0.10f) {
         slope_g_slew_limit = slew;
         slope_use_torque = use_torque;
         slope_torque_sensitivity = torque_sens;
+        slope_confidence_max_rate = conf_max;
         return *this;
     }
 
@@ -329,6 +331,7 @@ struct Preset {
         engine.m_slope_g_slew_limit = (std::max)(1.0f, slope_g_slew_limit);
         engine.m_slope_use_torque = slope_use_torque;
         engine.m_slope_torque_sensitivity = (std::max)(0.01f, slope_torque_sensitivity);
+        engine.m_slope_confidence_max_rate = (std::max)(0.01f, slope_confidence_max_rate);
     }
 
     // NEW: Ensure values are within safe ranges (v0.7.16)
@@ -384,6 +387,7 @@ struct Preset {
         slope_decay_rate = (std::max)(0.1f, slope_decay_rate);
         slope_g_slew_limit = (std::max)(1.0f, slope_g_slew_limit);
         slope_torque_sensitivity = (std::max)(0.01f, slope_torque_sensitivity);
+        slope_confidence_max_rate = (std::max)(0.01f, slope_confidence_max_rate);
     }
 
     // NEW: Capture current engine state into this preset
@@ -468,6 +472,7 @@ struct Preset {
         slope_g_slew_limit = engine.m_slope_g_slew_limit;
         slope_use_torque = engine.m_slope_use_torque;
         slope_torque_sensitivity = engine.m_slope_torque_sensitivity;
+        slope_confidence_max_rate = engine.m_slope_confidence_max_rate;
         app_version = LMUFFB_VERSION;
     }
 
@@ -557,6 +562,7 @@ struct Preset {
         if (!is_near(slope_g_slew_limit, p.slope_g_slew_limit, eps)) return false;
         if (slope_use_torque != p.slope_use_torque) return false;
         if (!is_near(slope_torque_sensitivity, p.slope_torque_sensitivity, eps)) return false;
+        if (!is_near(slope_confidence_max_rate, p.slope_confidence_max_rate, eps)) return false;
 
         return true;
     }

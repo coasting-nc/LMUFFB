@@ -1,0 +1,10 @@
+[Config] Invalid slope_alpha_threshold (0.0001), resetting to 0.02f
+[Config] Invalid slope_alpha_threshold (0.5), resetting to 0.02f
+[Config] Invalid optimal_slip_angle (0), resetting to default 0.10
+[Config] Invalid optimal_slip_ratio (0), resetting to default 0.12
+[Config] Invalid optimal_slip_angle (0.005), resetting to default 0.10
+[Config] Invalid optimal_slip_ratio (0.005), resetting to default 0.12
+  Right Turn: slope_torque=9.999990 grip=1.000000
+  Left Turn: slope_torque=9.999990 grip=0.409715
+[Config] Invalid optimal_slip_angle (0), resetting to default 0.10
+[Config] Invalid lockup_gamma (-2), clamping to range [0.1, 4.0]
