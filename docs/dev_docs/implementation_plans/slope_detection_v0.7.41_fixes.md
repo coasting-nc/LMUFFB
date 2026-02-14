@@ -117,20 +117,14 @@ Persist the new parameter in `config.ini`.
 
 ## 6. Deliverables
 
-*   [ ] **Code:** Updated `src/FFBEngine.h` (Logic fixes).
-*   [ ] **Code:** Updated `src/Config.h` & `src/Config.cpp` (New parameter).
-*   [ ] **Tests:** New `tests/test_ffb_slope_edge_cases.cpp`.
-*   [ ] **Docs:** Update `docs/dev_docs/implementation_plans/Slope Detection Fixes v0.7.41.md` with implementation notes.
+*   [x] **Code:** Updated `src/FFBEngine.h` (Logic fixes).
+*   [x] **Code:** Updated `src/Config.h` & `src/Config.cpp` (New parameter).
+*   [x] **Tests:** New `tests/test_ffb_slope_edge_cases.cpp`.
+*   [x] **Docs:** Update `docs/dev_docs/implementation_plans/Slope Detection Fixes v0.7.41.md` with implementation notes.
 
 ## Implementation Notes
-*   **Parameter Synchronization Checklist:**
-    *   [ ] `FFBEngine.h`: `m_slope_confidence_max_rate`
-    *   [ ] `Config.h`: `Preset::slope_confidence_max_rate`
-    *   [ ] `Config.h`: `Preset::Apply()`
-    *   [ ] `Config.h`: `Preset::UpdateFromEngine()`
-    *   [ ] `Config.h`: `Preset::Validate()`
-    *   [ ] `Config.cpp`: `ParsePresetLine` ("slope_confidence_max_rate")
-    *   [ ] `Config.cpp`: `WritePresetFields`
-    *   [ ] `Config.cpp`: `Config::Save`
-    *   [ ] `Config.cpp`: `Config::Load`
 
+- **Unforeseen Issues:** Changing internal slope detection to use absolute values (`std::abs`) for G-force and Torque required updating existing unit tests in `tests/test_ffb_slope_detection.cpp`. These tests previously relied on signed inputs to produce negative slopes, which no longer worked because the engine now compares magnitudes. Tests were updated to use decreasing magnitudes (with large offsets to avoid zero-crossing) to correctly simulate grip loss symmetrically.
+- **Plan Deviations:** None. All planned features (asymmetry fix, confidence tuning, threshold standardization) were implemented as specified.
+- **Challenges Encountered:** Managing the transition to absolute values while maintaining the "negative slope = grip loss" concept required careful adjustment of test telemetry generation.
+- **Recommendations for Future Plans:** When changing fundamental signal processing (like moving from signed to absolute), always include a step to audit and update dependent regression tests.

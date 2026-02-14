@@ -331,6 +331,7 @@ public:
     float m_slope_alpha_threshold = 0.02f;    // NEW: Minimum dAlpha/dt to calculate slope
     float m_slope_decay_rate = 5.0f;          // NEW: Decay rate toward 0 when not cornering
     bool m_slope_confidence_enabled = true;   // NEW: Enable confidence-based grip scaling
+    float m_slope_confidence_max_rate = 0.10f; // NEW v0.7.42
 
     // NEW v0.7.11: Min/Max Threshold System
     float m_slope_min_threshold = -0.3f;   // Effect starts here (dead zone edge)
@@ -902,16 +903,16 @@ public:
 
         // Initialize slew limiter and smoothing state on first sample to avoid ramp-up transients
         if (m_slope_buffer_count == 0) {
-            m_slope_lat_g_prev = lateral_g;
-            m_slope_lat_g_smoothed = lateral_g;
+            m_slope_lat_g_prev = std::abs(lateral_g);
+            m_slope_lat_g_smoothed = std::abs(lateral_g);
             m_slope_slip_smoothed = std::abs(slip_angle);
             if (data) {
-                m_slope_torque_smoothed = data->mSteeringShaftTorque;
+                m_slope_torque_smoothed = std::abs(data->mSteeringShaftTorque);
                 m_slope_steer_smoothed = std::abs(data->mUnfilteredSteering);
             }
         }
 
-        double lat_g_slew = apply_slew_limiter(lateral_g, m_slope_lat_g_prev, (double)m_slope_g_slew_limit, dt);
+        double lat_g_slew = apply_slew_limiter(std::abs(lateral_g), m_slope_lat_g_prev, (double)m_slope_g_slew_limit, dt);
         m_debug_lat_g_slew = lat_g_slew;
 
         double alpha_smooth = dt / (0.01 + dt);
@@ -920,7 +921,7 @@ public:
             m_slope_lat_g_smoothed += alpha_smooth * (lat_g_slew - m_slope_lat_g_smoothed);
             m_slope_slip_smoothed += alpha_smooth * (std::abs(slip_angle) - m_slope_slip_smoothed);
             if (data) {
-                m_slope_torque_smoothed += alpha_smooth * (data->mSteeringShaftTorque - m_slope_torque_smoothed);
+                m_slope_torque_smoothed += alpha_smooth * (std::abs(data->mSteeringShaftTorque) - m_slope_torque_smoothed);
                 m_slope_steer_smoothed += alpha_smooth * (std::abs(data->mUnfilteredSteering) - m_slope_steer_smoothed);
             }
         }
@@ -963,7 +964,7 @@ public:
             double dTorque_dt = calculate_sg_derivative(m_slope_torque_buffer, m_slope_buffer_count, m_slope_sg_window, dt);
             double dSteer_dt = calculate_sg_derivative(m_slope_steer_buffer, m_slope_buffer_count, m_slope_sg_window, dt);
 
-            if (std::abs(dSteer_dt) > 0.01) { // Fixed threshold for steering movement
+            if (std::abs(dSteer_dt) > (double)m_slope_alpha_threshold) { // Unified threshold for steering movement
                 m_debug_slope_torque_num = dTorque_dt * dSteer_dt;
                 m_debug_slope_torque_den = (dSteer_dt * dSteer_dt) + 0.000001;
                 m_slope_torque_current = std::clamp(m_debug_slope_torque_num / m_debug_slope_torque_den, -50.0, 50.0);
@@ -1014,9 +1015,9 @@ public:
     inline double calculate_slope_confidence(double dAlpha_dt) {
         if (!m_slope_confidence_enabled) return 1.0;
 
-        // v0.7.21 FIX: Use smoothstep confidence ramp [m_slope_alpha_threshold, 0.10] rad/s
+        // v0.7.21 FIX: Use smoothstep confidence ramp [m_slope_alpha_threshold, m_slope_confidence_max_rate] rad/s
         // to reject singularity artifacts near zero.
-        return smoothstep((double)m_slope_alpha_threshold, 0.10, std::abs(dAlpha_dt));
+        return smoothstep((double)m_slope_alpha_threshold, (double)m_slope_confidence_max_rate, std::abs(dAlpha_dt));
     }
 
     // Helper: Inverse linear interpolation - v0.7.11

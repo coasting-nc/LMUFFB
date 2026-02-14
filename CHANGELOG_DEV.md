@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.42] - 2026-02-14
+### Fixed
+- **Slope Detection Asymmetry**: Fixed a logic bug in the advanced Torque Slope calculation where left turns (negative torque) would not correctly contribute to grip loss detection. Both directions now behave symmetrically using absolute torque values.
+- **Unified Thresholding**: Replaced hardcoded steering movement thresholds with the user-configurable `slope_alpha_threshold` for better consistency across different steering racks.
+
+### Added
+- **Configurable Confidence Limit**: Introduced `slope_confidence_max_rate` to allow users to tune the steering speed at which the slope detection effect reaches full strength. This is particularly beneficial for users with slower steering racks or smoother driving styles.
+
+### Testing
+- **Edge Case Verification**: Added `tests/test_ffb_slope_edge_cases.cpp` to verify directional symmetry, confidence tuning, and torque-based anticipation timing.
+
 ## [0.7.41] - 2026-02-14
 ### Added
 - **Log Analyzer Tool Integration in Context Generator**:

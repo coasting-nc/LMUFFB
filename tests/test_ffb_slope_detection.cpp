@@ -667,9 +667,12 @@ TEST_CASE(test_slope_minmax_linear_response, "SlopeDetection") {
     
     auto fill_buffers_for_slope = [&](double target_slope) {
         double dt = 0.01;
-        for (int i = 0; i < 20; i++) {
-            double alpha = (double)i * 0.1;
-            double g = target_slope * alpha;
+        engine.m_slope_buffer_count = 0;
+        engine.m_slope_buffer_index = 0;
+        engine.m_slope_smoothed_output = 1.0;
+        for (int i = 0; i < 40; i++) {
+            double alpha = 0.1 + (double)i * 0.1;
+            double g = 100.0 + target_slope * alpha;
             engine.calculate_slope_grip(g, alpha, dt);
         }
     };
@@ -702,9 +705,12 @@ TEST_CASE(test_slope_minmax_saturation, "SlopeDetection") {
     
     auto fill_buffers_for_slope = [&](double target_slope) {
         double dt = 0.01;
-        for (int i = 0; i < 20; i++) {
-            double alpha = (double)i * 0.1;
-            double g = target_slope * alpha;
+        engine.m_slope_buffer_count = 0;
+        engine.m_slope_buffer_index = 0;
+        engine.m_slope_smoothed_output = 1.0;
+        for (int i = 0; i < 40; i++) {
+            double alpha = 0.1 + (double)i * 0.1;
+            double g = 100.0 + target_slope * alpha;
             engine.calculate_slope_grip(g, alpha, dt);
         }
     };
@@ -959,7 +965,7 @@ TEST_CASE(TestConfidenceRamp_Progressive, "SlopeDetection") {
     for (int i = 0; i < 60; i++) {
         double t = (double)i * dt;
         double alpha = 0.5 * rate * t * t;
-        double g = 1.0 - 2.0 * t;
+        double g = 5.0 - 2.0 * t;
 
         engine.calculate_slope_grip(g, alpha, dt);
 

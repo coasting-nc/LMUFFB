@@ -122,6 +122,7 @@ struct Preset {
     float slope_g_slew_limit = 50.0f;
     bool slope_use_torque = true;
     float slope_torque_sensitivity = 0.5f;
+    float slope_confidence_max_rate = 0.10f;
 
     // 2. Constructors
     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin), app_version(LMUFFB_VERSION) {}
@@ -320,6 +321,7 @@ struct Preset {
         engine.m_slope_alpha_threshold = (std::max)(0.001f, slope_alpha_threshold); // Critical for slope division
         engine.m_slope_decay_rate = (std::max)(0.1f, slope_decay_rate);
         engine.m_slope_confidence_enabled = slope_confidence_enabled;
+        engine.m_slope_confidence_max_rate = (std::max)(engine.m_slope_alpha_threshold + 0.01f, slope_confidence_max_rate);
 
         // v0.7.11: Min/Max thresholds
         engine.m_slope_min_threshold = slope_min_threshold;
@@ -384,6 +386,7 @@ struct Preset {
         slope_decay_rate = (std::max)(0.1f, slope_decay_rate);
         slope_g_slew_limit = (std::max)(1.0f, slope_g_slew_limit);
         slope_torque_sensitivity = (std::max)(0.01f, slope_torque_sensitivity);
+        slope_confidence_max_rate = (std::max)(slope_alpha_threshold + 0.01f, slope_confidence_max_rate);
     }
 
     // NEW: Capture current engine state into this preset
@@ -459,6 +462,7 @@ struct Preset {
         slope_alpha_threshold = engine.m_slope_alpha_threshold;
         slope_decay_rate = engine.m_slope_decay_rate;
         slope_confidence_enabled = engine.m_slope_confidence_enabled;
+        slope_confidence_max_rate = engine.m_slope_confidence_max_rate;
 
         // v0.7.11: Min/Max thresholds
         slope_min_threshold = engine.m_slope_min_threshold;
@@ -557,6 +561,7 @@ struct Preset {
         if (!is_near(slope_g_slew_limit, p.slope_g_slew_limit, eps)) return false;
         if (slope_use_torque != p.slope_use_torque) return false;
         if (!is_near(slope_torque_sensitivity, p.slope_torque_sensitivity, eps)) return false;
+        if (!is_near(slope_confidence_max_rate, p.slope_confidence_max_rate, eps)) return false;
 
         return true;
     }
