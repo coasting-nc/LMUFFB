@@ -136,8 +136,13 @@ def parse_args(args=None):
     make_group.add_argument("--include-makefiles", action="store_true", dest="include_makefiles", help="Include makefiles (CMakeLists.txt, etc.)")
     make_group.add_argument("--exclude-makefiles", action="store_false", dest="include_makefiles", help="Exclude makefiles")
 
+    # Log analyzer options
+    log_group = parser.add_mutually_exclusive_group()
+    log_group.add_argument("--include-log-analyzer", action="store_true", dest="include_log_analyzer", help="Include log analyzer tool code")
+    log_group.add_argument("--exclude-log-analyzer", action="store_false", dest="include_log_analyzer", help="Exclude log analyzer tool code")
+
     # Set defaults if not specified by the injection logic in main
-    parser.set_defaults(include_tests=True, include_non_code=True, include_main_code=True, include_makefiles=True, test_examples_only=False)
+    parser.set_defaults(include_tests=True, include_non_code=True, include_main_code=True, include_makefiles=True, test_examples_only=False, include_log_analyzer=False)
     
     return parser.parse_args(args)
 
@@ -151,11 +156,15 @@ def main():
     DEFAULT_INCLUDE_MAIN_CODE = True
     DEFAULT_INCLUDE_MAKEFILES = True
     DEFAULT_TEST_EXAMPLES_ONLY = True
+    DEFAULT_INCLUDE_LOG_ANALYZER = False
     
     # Get current CLI args
     cli_args = sys.argv[1:]
     
     # Inject defaults if not explicitly provided
+    if "--include-log-analyzer" not in cli_args and "--exclude-log-analyzer" not in cli_args:
+        cli_args.append("--include-log-analyzer" if DEFAULT_INCLUDE_LOG_ANALYZER else "--exclude-log-analyzer")
+
     if "--include-tests" not in cli_args and "--exclude-tests" not in cli_args:
         cli_args.append("--include-tests" if DEFAULT_INCLUDE_TESTS else "--exclude-tests")
         
@@ -184,6 +193,7 @@ def main():
     print(f"  include_non_code: {args.include_non_code}")
     print(f"  include_main_code: {args.include_main_code}")
     print(f"  include_makefiles: {args.include_makefiles}")
+    print(f"  include_log_analyzer: {args.include_log_analyzer}")
 
     with open(output_path, 'w', encoding='utf-8') as outfile:
         # AUTO-GENERATED WARNING
@@ -211,8 +221,14 @@ def main():
                 relpath_normalized = relpath.replace('\\', '/')
 
                 # Skip files in excluded relative directory paths
-                if any(relpath_normalized == ex_path or relpath_normalized.startswith(ex_path + '/') for ex_path in EXCLUDE_DIR_PATHS):
-                    continue
+                in_excluded_path = any(relpath_normalized == ex_path or relpath_normalized.startswith(ex_path + '/') for ex_path in EXCLUDE_DIR_PATHS)
+                
+                if in_excluded_path:
+                    # Exception for log analyzer
+                    if args.include_log_analyzer and relpath_normalized.startswith('tools/lmuffb_log_analyzer/'):
+                        pass
+                    else:
+                        continue
 
                 # Categorize file
                 is_code = is_code_file(filename)
