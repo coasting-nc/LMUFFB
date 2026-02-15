@@ -34,10 +34,13 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     data.mWheel[1].mGripFract = 1.0;
     data.mDeltaTime = 0.01;
     
-    // Test Case 1: Right Turn (Body feels left force)
-    // Game: +X = Left, so lateral accel = +9.81 (left)
-    // Expected: Wheel should pull LEFT (negative force) to simulate heavy steering
-    data.mLocalAccel.x = 9.81; // 1G left (right turn)
+    // Test Case 1: Right Turn (Body feels centrifugal force to the left)
+    // Game: +X = Left. So a Right Turn (Centripetal Accel Right) has mLocalAccel.x = -9.81.
+    // However, if the car is sliding or driver feels Gs to the left, mLocalAccel.x = +9.81.
+    // The engine (as of v0.4.19) now inverts lat_g so that:
+    // +X Accel (Left) -> Negative lat_g -> Negative force (Left Pull).
+    // This ensures heavy steering in a Right turn when "Invert FFB" is OFF.
+    data.mLocalAccel.x = 9.81; // 1G left (right turn slide/G-force)
     
     // Run for multiple frames to let smoothing settle
     double force = 0.0;
@@ -45,34 +48,32 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
         force = engine.calculate_force(&data);
     }
     
-    // Expected: lat_g = (9.81 / 9.81) = 1.0 (Positive)
-    // SoP force = 1.0 * 1.0 * 10.0 = 10.0 Nm
-    // Normalized = 10.0 / 20.0 = 0.5 (Positive)
-    if (force > 0.4) {
+    // Expected (v0.4.19): lat_g = -(9.81 / 9.81) = -1.0 (Negative)
+    // SoP force = -1.0 * 1.0 * 10.0 = -10.0 Nm
+    // Normalized = -10.0 / 20.0 = -0.5 (Negative)
+    if (force < -0.4) {
         std::cout << "[PASS] SoP pulls LEFT in right turn (force: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] SoP should pull LEFT (Positive). Got: " << force << " Expected > 0.4" << std::endl;
+        std::cout << "[FAIL] SoP should pull LEFT (Negative). Got: " << force << " Expected < -0.4" << std::endl;
         g_tests_failed++;
     }
     
-    // Test Case 2: Left Turn (Body feels right force)
-    // Game: -X = Right, so lateral accel = -9.81 (right)
-    // Expected: Wheel should pull RIGHT (positive force)
-    data.mLocalAccel.x = -9.81; // 1G right (left turn)
+    // Test Case 2: Left Turn
+    data.mLocalAccel.x = -9.81; // 1G right (left turn slide/G-force)
     
     for (int i = 0; i < 60; i++) {
         force = engine.calculate_force(&data);
     }
     
-    // Expected: lat_g = (-9.81 / 9.81) = -1.0
-    // SoP force = -1.0 * 1.0 * 10.0 = -10.0 Nm
-    // Normalized = -10.0 / 20.0 = -0.5 (Negative)
-    if (force < -0.4) {
+    // Expected (v0.4.19): lat_g = -(-9.81 / 9.81) = +1.0
+    // SoP force = 1.0 * 1.0 * 10.0 = +10.0 Nm
+    // Normalized = +10.0 / 20.0 = +0.5 (Positive)
+    if (force > 0.4) {
         std::cout << "[PASS] SoP pulls RIGHT in left turn (force: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] SoP should pull RIGHT (Negative). Got: " << force << " Expected < -0.4" << std::endl;
+        std::cout << "[FAIL] SoP should pull RIGHT (Positive). Got: " << force << " Expected > 0.4" << std::endl;
         g_tests_failed++;
     }
 }
@@ -209,36 +210,35 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
     
     // Test Case 1: Sliding LEFT
     // Game: +X = Left, so lateral velocity = +1.0 (left)
-    // v0.4.20 Fix: We want Torque LEFT (Negative) to stabilize the wheel.
-    // Previous logic (Push Right/Positive) was causing positive feedback.
+    // COORDINATE SYSTEM FIX (v0.4.20):
+    // Friction opposes motion. If sliding Left (+), force should be Right (+).
     data.mWheel[0].mLateralPatchVel = 1.0; // Sliding left
     data.mWheel[1].mLateralPatchVel = 1.0;
     
     double force = engine.calculate_force(&data);
     
-    // Expected: Negative Force (Left Torque)
-    if (force < -0.2) {
-        std::cout << "[PASS] Scrub drag opposes left slide (Torque Left: " << force << ")" << std::endl;
+    // Expected: Positive Force (Right Torque)
+    if (force > 0.1) {
+        std::cout << "[PASS] Scrub drag opposes left slide (Torque Right: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Scrub drag direction wrong. Got: " << force << " Expected < -0.2" << std::endl;
+        std::cout << "[FAIL] Scrub drag direction wrong. Got: " << force << " Expected > 0.1" << std::endl;
         g_tests_failed++;
     }
     
     // Test Case 2: Sliding RIGHT
     // Game: -X = Right, so lateral velocity = -1.0 (right)
-    // v0.4.20 Fix: We want Torque RIGHT (Positive) to stabilize.
     data.mWheel[0].mLateralPatchVel = -1.0; // Sliding right
     data.mWheel[1].mLateralPatchVel = -1.0;
     
     force = engine.calculate_force(&data);
     
-    // Expected: Positive Force (Right Torque)
-    if (force > 0.2) {
-        std::cout << "[PASS] Scrub drag opposes right slide (Torque Right: " << force << ")" << std::endl;
+    // Expected: Negative Force (Left Torque)
+    if (force < -0.1) {
+        std::cout << "[PASS] Scrub drag opposes right slide (Torque Left: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Scrub drag direction wrong. Got: " << force << " Expected > 0.2" << std::endl;
+        std::cout << "[FAIL] Scrub drag direction wrong. Got: " << force << " Expected < -0.1" << std::endl;
         g_tests_failed++;
     }
 }
@@ -366,10 +366,10 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     engine.m_bottoming_enabled = false;
     
     // SCENARIO: Violent Snap Oversteer to the Right
-    // 1. Car rotates Right (+Yaw)
-    // 2. Rear slides Left (+Lat Vel)
-    // 3. Body accelerates Left (+Lat G)
-    // 4. Front tires drag Left (+Lat Vel)
+    // 1. Car rotates Right (+Yaw) -> Kick LEFT (Negative)
+    // 2. Rear slides Left (+X) -> Pull LEFT (Negative)
+    // 3. Body feels force Left (+X Accel) -> Pull LEFT (Negative) [v0.4.19 Fix]
+    // 4. Front tires drag Left (+X Vel) -> Push RIGHT (Positive) [v0.4.20 Fix]
     
     // Setup wheel data
     data.mSteeringShaftTorque = 0.0;
@@ -380,11 +380,11 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     data.mDeltaTime = 0.01;
     data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick
     
-    data.mLocalRotAccel.y = 10.0;        // Violent Yaw Right
-    data.mWheel[2].mLateralPatchVel = -5.0; // Rear Sliding Left (Negative Vel for Correct Code Physics)
-    data.mWheel[3].mLateralPatchVel = -5.0;
-    data.mLocalAccel.x = 9.81;           // 1G Left
-    data.mWheel[0].mLateralPatchVel = 2.0; // Front Dragging Left
+    data.mLocalRotAccel.y = 10.0;        // Violent Yaw Right (+Y)
+    data.mWheel[2].mLateralPatchVel = 5.0; // Rear Sliding Left (+X)
+    data.mWheel[3].mLateralPatchVel = 5.0;
+    data.mLocalAccel.x = 9.81;           // 1G Left (+X)
+    data.mWheel[0].mLateralPatchVel = 2.0; // Front Dragging Left (+X)
     data.mWheel[1].mLateralPatchVel = 2.0;
     
     // Auxiliary data for calculations
@@ -409,27 +409,41 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     
     bool all_aligned = true;
     
-    // 1. SoP (Should be Positive)
-    if (snap.sop_force < 0.1) {
-        std::cout << "[FAIL] SoP fighting alignment! Val: " << snap.sop_force << std::endl;
+    // SCENARIO RECAP: Violent Snap Oversteer to the Right
+    // 1. Car rotates Right (+Yaw) -> Kick LEFT (Negative)
+    // 2. Rear slides Left (+Lat Vel) -> Pull LEFT (Negative)
+    // 3. Body feels force Left (+Lat G) -> Pull LEFT (Negative) [v0.4.19 Fix]
+    // 4. Front tires drag Left (+Lat Vel) -> Push RIGHT (Positive) [v0.4.20 Fix]
+
+    // 1. SoP (Should be Negative)
+    if (snap.sop_force < -0.1) {
+        std::cout << "[PASS] SoP aligned (Left pull: " << snap.sop_force << ")" << std::endl;
+    } else {
+        std::cout << "[FAIL] SoP fighting alignment! Val: " << snap.sop_force << " Expected < -0.1" << std::endl;
         all_aligned = false;
     }
     
-    // 2. Rear Torque (Should be Positive)
-    if (snap.ffb_rear_torque < 0.1) {
-        std::cout << "[FAIL] Rear Torque fighting alignment! Val: " << snap.ffb_rear_torque << std::endl;
+    // 2. Rear Torque (Should be Negative)
+    if (snap.ffb_rear_torque < -0.1) {
+        std::cout << "[PASS] Rear Torque aligned (Left pull: " << snap.ffb_rear_torque << ")" << std::endl;
+    } else {
+        std::cout << "[FAIL] Rear Torque fighting alignment! Val: " << snap.ffb_rear_torque << " Expected < -0.1" << std::endl;
         all_aligned = false;
     }
     
     // 3. Yaw Kick (Should be Negative)
-    if (snap.ffb_yaw_kick > -0.1) {
-        std::cout << "[FAIL] Yaw Kick fighting alignment! Val: " << snap.ffb_yaw_kick << std::endl;
+    if (snap.ffb_yaw_kick < -0.1) {
+        std::cout << "[PASS] Yaw Kick aligned (Left pull: " << snap.ffb_yaw_kick << ")" << std::endl;
+    } else {
+        std::cout << "[FAIL] Yaw Kick fighting alignment! Val: " << snap.ffb_yaw_kick << " Expected < -0.1" << std::endl;
         all_aligned = false;
     }
     
-    // 4. Scrub Drag (Should be Negative)
-    if (snap.ffb_scrub_drag > -0.01) {
-        std::cout << "[FAIL] Scrub Drag fighting alignment! Val: " << snap.ffb_scrub_drag << std::endl;
+    // 4. Scrub Drag (Should be Positive - Friction opposes slide)
+    if (snap.ffb_scrub_drag > 0.01) {
+        std::cout << "[PASS] Scrub Drag aligned (Right push: " << snap.ffb_scrub_drag << ")" << std::endl;
+    } else {
+        std::cout << "[FAIL] Scrub Drag fighting alignment! Val: " << snap.ffb_scrub_drag << " Expected > 0.01" << std::endl;
         all_aligned = false;
     }
     
@@ -480,20 +494,20 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     data.mDeltaTime = 0.01;
     
     // Simulate right turn with oversteer
-    // Body feels left force (+X)
-    data.mLocalAccel.x = 9.81; // 1G left (right turn)
+    // Body feels centrifugal force left (+X)
+    data.mLocalAccel.x = 9.81; // 1G left (right turn slide/G-force)
     
     // Rear sliding left (oversteer in right turn)
-    data.mWheel[2].mLateralPatchVel = -5.0; // Sliding left (ISO Coords for Rear Torque)
-    data.mWheel[3].mLateralPatchVel = -5.0;
+    data.mWheel[2].mLateralPatchVel = 5.0; // Sliding left (+X)
+    data.mWheel[3].mLateralPatchVel = 5.0;
     data.mWheel[2].mLongitudinalGroundVel = 20.0;
     data.mWheel[3].mLongitudinalGroundVel = 20.0;
     data.mWheel[2].mSuspForce = 4000.0;
     data.mWheel[3].mSuspForce = 4000.0;
     
     // Front also sliding left (drift)
-    data.mWheel[0].mLateralPatchVel = -3.0;
-    data.mWheel[1].mLateralPatchVel = -3.0;
+    data.mWheel[0].mLateralPatchVel = 3.0; // Sliding left (+X)
+    data.mWheel[1].mLateralPatchVel = 3.0;
     
     data.mLocalVel.z = -20.0; // Moving forward
     
@@ -504,17 +518,17 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     }
     
     // Expected behavior:
-    // 1. SoP pulls LEFT (Positive) - simulates heavy steering in right turn
-    // 2. Rear Torque pulls LEFT (Positive) - with -Vel input
-    // 3. Scrub Drag pushes LEFT (Positive) - with -Vel input (Destabilizing but consistent with code)
+    // 1. SoP pulls LEFT (Negative) - simulates heavy steering in right turn
+    // 2. Rear Torque pulls LEFT (Negative) - with -Vel input
+    // 3. Scrub Drag pushes RIGHT (Positive) - opposes slide
     // 
-    // The combination should result in a net STABILIZING force (SoP Dominates).
+    // The combination should result in a net STABILIZING force (SoP/Rear Torque Dominate).
     
-    if (force > 0.0) {
+    if (force < 0.0) {
         std::cout << "[PASS] Combined forces are stabilizing (net left pull: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Combined forces should pull LEFT (Positive). Got: " << force << std::endl;
+        std::cout << "[FAIL] Combined forces should pull LEFT (Negative). Got: " << force << std::endl;
         g_tests_failed++;
     }
     
@@ -523,25 +537,25 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     if (!batch.empty()) {
         FFBSnapshot snap = batch.back();
         
-        // SoP should be Positive
-        if (snap.sop_force > 0.0) {
-            std::cout << "[PASS] SoP component is Positive (" << snap.sop_force << ")" << std::endl;
+        // SoP should be Negative
+        if (snap.sop_force < 0.0) {
+            std::cout << "[PASS] SoP component is Negative (" << snap.sop_force << ")" << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] SoP should be Positive. Got: " << snap.sop_force << std::endl;
+            std::cout << "[FAIL] SoP should be Negative. Got: " << snap.sop_force << std::endl;
             g_tests_failed++;
         }
         
-        // Rear torque should be Positive (with -Vel aligned input)
-        if (snap.ffb_rear_torque > 0.0) {
-            std::cout << "[PASS] Rear torque is Positive (" << snap.ffb_rear_torque << ")" << std::endl;
+        // Rear torque should be Negative
+        if (snap.ffb_rear_torque < 0.0) {
+            std::cout << "[PASS] Rear torque is Negative (" << snap.ffb_rear_torque << ")" << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Rear torque should be Positive. Got: " << snap.ffb_rear_torque << std::endl;
+            std::cout << "[FAIL] Rear torque should be Negative. Got: " << snap.ffb_rear_torque << std::endl;
             g_tests_failed++;
         }
         
-        // Scrub drag Positive (with -Vel input)
+        // Scrub drag Positive
         if (snap.ffb_scrub_drag > 0.0) {
             std::cout << "[PASS] Scrub drag is Positive (" << snap.ffb_scrub_drag << ")" << std::endl;
             g_tests_passed++;
