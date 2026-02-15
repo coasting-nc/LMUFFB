@@ -419,8 +419,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
         FloatSetting("Dynamic Weight", &engine.m_dynamic_weight_gain, 0.0f, 2.0f, FormatPct(engine.m_dynamic_weight_gain),
             "Scales steering weight based on longitudinal load transfer.\n"
-            "Heavier under braking, lighter under acceleration.\n"
-            "Requires valid tire load data (Hypercars).");
+            "Heavier under braking, lighter under acceleration.");
 
         FloatSetting("  Weight Smoothing", &engine.m_dynamic_weight_smoothing, 0.000f, 0.500f, "%.3f s",
             "Filters the Dynamic Weight signal to simulate suspension damping.\n"
