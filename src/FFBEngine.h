@@ -1430,7 +1430,7 @@ public:
 
         // Load Factors
         double raw_load_factor = ctx.avg_load / m_auto_peak_load;
-        double texture_safe_max = (std::min)(2.0, (double)m_texture_load_cap);
+        double texture_safe_max = (std::min)(10.0, (double)m_texture_load_cap); // v0.7.48: Increased from 2.0 to 10.0
         ctx.texture_load_factor = (std::min)(texture_safe_max, (std::max)(0.0, raw_load_factor));
 
         double brake_safe_max = (std::min)(10.0, (double)m_brake_load_cap);
@@ -1990,7 +1990,8 @@ private:
         double rear_slip_avg = (lat_vel_rl + lat_vel_rr) / 2.0;
         double effective_slip_vel = (std::max)(front_slip_avg, rear_slip_avg);
         
-        if (effective_slip_vel > 0.5) {
+        // v0.7.48: Increased threshold from 0.5 to 1.5 to reduce vibration on straights
+        if (effective_slip_vel > 1.5) {
             double base_freq = 10.0 + (effective_slip_vel * 5.0);
             double freq = base_freq * (double)m_slide_freq_scale;
             if (freq > 250.0) freq = 250.0;
@@ -2003,9 +2004,7 @@ private:
     }
 
     void calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext& ctx) {
-        if (!m_road_texture_enabled) return;
-
-        // Scrub Drag
+        // Scrub Drag - v0.7.48: Moved outside road_texture_enabled check
         if (m_scrub_drag_gain > 0.0) {
             double avg_lat_vel = (data->mWheel[0].mLateralPatchVel + data->mWheel[1].mLateralPatchVel) / 2.0;
             double abs_lat_vel = std::abs(avg_lat_vel);
@@ -2015,6 +2014,8 @@ private:
                 ctx.scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade * ctx.decoupling_scale;
             }
         }
+
+        if (!m_road_texture_enabled) return;
         
         double delta_l = data->mWheel[0].mVerticalTireDeflection - m_prev_vert_deflection[0];
         double delta_r = data->mWheel[1].mVerticalTireDeflection - m_prev_vert_deflection[1];
