@@ -1,0 +1,3 @@
+## 2025-05-15 - [Safe destructive actions and disabled feedback]
+**Learning:** In ImGui, `IsItemHovered()` doesn't work on disabled items by default. Using `ImGuiHoveredFlags_AllowWhenDisabled` allows providing tooltips that explain *why* an action is disabled, which is crucial for accessibility and reduced user frustration. Additionally, a "click-twice" pattern using `ImGui::GetTime()` is an effective, stateless way to implement confirmation for destructive actions like "Reset Defaults".
+**Action:** Always use `ImGuiHoveredFlags_AllowWhenDisabled` for disabled buttons to provide explanatory tooltips. Prefer click-twice confirmations for simple safety gates.
