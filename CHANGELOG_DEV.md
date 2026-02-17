@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.55] - 2026-02-17
+### Fixed
+- **Code Coverage Visibility**:
+  - Resolved an issue where `calculate_gyro_damping` and `calculate_abs_pulse` were reported as uncovered due to aggressive compiler inlining in Release builds.
+  - Applied `__declspec(noinline)` to these methods to ensure correct line attribution in coverage reports.
+- **Physics Test Hardening**:
+  - Refined targeted coverage tests in `test_ffb_coverage_target.cpp` to include full engine integration loops, verifying both unit logic and previous-frame state updates.
+
+## [0.7.54] - 2026-02-17
+### Added
+- **Targeted Coverage for Core Physics**:
+  - Implemented exhaustive unit tests for `calculate_gyro_damping` and `calculate_abs_pulse` to achieve 100% coverage for these critical methods.
+  - Verified all branches, including default steering range fallbacks, minimal smoothing tau, and ABS phase wrapping.
+- **Build Optimization**:
+  - Updated standard build commands to prioritize faster incremental builds while maintaining a clean build option.
+  - Synchronized developer guidelines (`.gemini/GEMINI.md`, `NEW_AGENTS.md`) with the new optimized workflow.
+
 ## [0.7.53] - 2026-02-17
 ### Added
 - **Integrated Coverage & Observability**:

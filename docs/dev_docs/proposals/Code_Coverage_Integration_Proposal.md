@@ -71,10 +71,34 @@ OpenCppCoverage.exe --sources "*LMUFFB\src\*" --excluded_sources "*\tests\*" --e
 
 ---
 
+## AI-Friendly Text Report
+
+For LLM-based coding agents (like Gemini or Antigravity), a visual HTML report is difficult to parse. We have provided a utility script to convert the Cobertura XML into a concise text summary.
+
+### 1. Generate the Summary
+After running the coverage command, run:
+```powershell
+python scripts/coverage_summary.py
+```
+
+### 2. Output Format
+This script generates a `coverage_summary.txt` file that looks like this:
+```text
+File: src/FFBEngine.h
+  Coverage: 85.4%
+  Missing Lines: 450-455, 1202, 1834-1840
+
+File: src/Config.cpp
+  Coverage: 100%
+```
+This allows an AI agent to immediately identify exactly which blocks of code need new test cases without having to "see" the HTML report.
+
+---
+
 ## Benefits
-1.  **In-Editor Visibility**: The **Coverage Gutters** integration eliminates the need to switch to a browser to check coverage.
-2.  **Strict Reports**: By excluding the `tests` folder, the coverage percentage accurately reflects your business logic readiness.
-3.  **No Code Changes**: Works on binary debug symbols without polluting source code.
+1.  **AI Collaboration**: The `coverage_summary.py` provides a machine-readable yet human-friendly list of missing line ranges.
+2.  **In-Editor Visibility**: The **Coverage Gutters** integration eliminates the need to switch to a browser.
+3.  **Strict Reports**: By excluding the `tests` folder, the coverage percentage accurately reflects your business logic readiness.
 
 ## Proposals for Implementation
 1.  **Strict Filtering**: Ensure we exclude `vendor/` and `tests/` to keep reports clean.

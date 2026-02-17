@@ -1,10 +1,12 @@
 # Quick guide
 
 ## Update app version, compile main app, compile all tests (including windows tests), all in one single command:
-& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release --clean-first
 
 ## Faster incremental builds, see docs\dev_docs\build_optimization_report.mddocs\dev_docs\build_optimization_report.md 
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release
+
+## Complete clean new build, slower, only necessary in some cases, like project restructuring
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release --clean-first
 
 ## Run all tests, c++ and python:
 python scripts/run_all_tests.py

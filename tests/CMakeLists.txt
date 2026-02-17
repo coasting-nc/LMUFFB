@@ -55,6 +55,7 @@ set(TEST_SOURCES
     test_perf_stats.cpp
     test_vehicle_utils.cpp
     test_coverage_boost.cpp
+    test_ffb_coverage_target.cpp
 )
 
 # ImGui Core is now always available if vendor exists
@@ -69,6 +70,7 @@ if(WIN32)
     list(APPEND TEST_SOURCES 
         test_windows_platform.cpp 
         test_security_metadata.cpp
+        ${CMAKE_BINARY_DIR}/src/res.rc
     )
 else()
     # On Linux, backend file is in LMUFFB_Core

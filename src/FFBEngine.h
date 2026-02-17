@@ -1914,7 +1914,7 @@ private:
         ctx.yaw_force *= ctx.speed_gate;
     }
 
-    void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+    __declspec(noinline) void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext& ctx) {
         float range = data->mPhysicalSteeringWheelRange;
         if (range <= 0.0f) range = (float)DEFAULT_STEERING_RANGE_RAD;
         double steer_angle = data->mUnfilteredSteering * (range / 2.0);
@@ -1929,7 +1929,7 @@ private:
         ctx.gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE) * ctx.decoupling_scale;
     }
 
-    void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+    __declspec(noinline) void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext& ctx) {
         if (!m_abs_pulse_enabled) return;
         
         bool abs_active = false;

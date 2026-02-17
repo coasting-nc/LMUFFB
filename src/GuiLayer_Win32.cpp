@@ -184,6 +184,8 @@ void* GuiLayer::GetWindowHandle() {
 }
 
 bool GuiLayer::Render(FFBEngine& engine) {
+    if (!g_pd3dDeviceContext) return true; // Safety for uninitialized state (e.g. unit tests)
+
     MSG msg;
     while (::PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE)) {
         ::TranslateMessage(&msg); ::DispatchMessage(&msg);

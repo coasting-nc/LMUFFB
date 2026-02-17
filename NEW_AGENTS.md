@@ -10,7 +10,7 @@
 ### Commands to build and run tests
 
 Update app version, compile main app, compile all tests (including windows tests), all in one single command:
-`& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release --clean-first`
+`& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release`
 
 Run all tests that had already been compiled:
 `.\build\tests\Release\run_combined_tests.exe`
@@ -22,7 +22,7 @@ Run all tests that had already been compiled:
 
     *   *Command (Windows - PowerShell) to update app version, compile main app, compile all tests (including windows tests), all in one single command*:
         ```powershell
-        & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release --clean-first
+        & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release
         ```
     *   Run all tests that had already been compiled:
         ```powershell
