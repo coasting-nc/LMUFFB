@@ -179,6 +179,7 @@ public:
     static double GetFrontGripSmoothedState(const FFBEngine& e) { return e.m_front_grip_smoothed_state; }
     static void SetFrontGripSmoothedState(FFBEngine& e, double val) { e.m_front_grip_smoothed_state = val; }
     static void SetStaticFrontLoad(FFBEngine& e, double val) { e.m_static_front_load = val; }
+    static double GetStaticFrontLoad(const FFBEngine& e) { return e.m_static_front_load; }
     // Wrappers for extracted utilities removed. Tests invoke them directly.
     static void SetSlopeDetectionEnabled(FFBEngine& e, bool val) { e.m_slope_detection_enabled = val; }
     static void SetSlopeBufferIndex(FFBEngine& e, int idx) { e.m_slope_buffer_index = idx; }
@@ -205,6 +206,30 @@ public:
     static void SetABSPulseEnabled(FFBEngine& e, bool val) { e.m_abs_pulse_enabled = val; }
     static void SetLastLogTime(FFBEngine& e, std::chrono::steady_clock::time_point t) { e.last_log_time = t; }
     static ChannelStats& GetTorqueStats(FFBEngine& e) { return e.s_torque; }
+    
+    // Coverage Restoration Accessors
+    static void CallUpdateStaticLoadReference(FFBEngine& e, double load, double speed, double dt) {
+        e.update_static_load_reference(load, speed, dt);
+    }
+    static void CallInitializeLoadReference(FFBEngine& e, const char* vehicleClass, const char* vehicleName) {
+        e.InitializeLoadReference(vehicleClass, vehicleName);
+    }
+    static void CallCalculateWheelSpin(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        e.calculate_wheel_spin(data, ctx);
+    }
+    static void CallCalculateSlideTexture(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        e.calculate_slide_texture(data, ctx);
+    }
+    static void CallCalculateRoadTexture(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        e.calculate_road_texture(data, ctx);
+    }
+    static void CallCalculateSuspensionBottoming(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        e.calculate_suspension_bottoming(data, ctx);
+    }
+    static void SetScrubDragGain(FFBEngine& e, float val) { e.m_scrub_drag_gain = val; }
+    static void SetBottomingEnabled(FFBEngine& e, bool val) { e.m_bottoming_enabled = val; }
+    static void SetBottomingGain(FFBEngine& e, float val) { e.m_bottoming_gain = val; }
+    static void SetBottomingMethod(FFBEngine& e, int val) { e.m_bottoming_method = val; }
 };
 
 } // namespace FFBEngineTests

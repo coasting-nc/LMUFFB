@@ -124,7 +124,7 @@ set(CORE_SOURCES
     src/Config.cpp src/Config.h
     src/DirectInputFFB.cpp src/DirectInputFFB.h
     src/GameConnector.cpp src/GameConnector.h
-    src/FFBEngine.h
+    src/FFBEngine.h src/FFBEngine.cpp
     src/VehicleUtils.cpp
 )
 

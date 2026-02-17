@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.58] - 2026-02-17
+### Refactored
+- **FFB Engine Split**:
+  - Moved the entire implementation of `FFBEngine` from `src/FFBEngine.h` to a dedicated `src/FFBEngine.cpp` source file.
+  - This improves build times, hides implementation details, and prevents namespace pollution.
+  - Updated `CMakeLists.txt` to include the new source file.
+  - Added `tests/test_ffb_coverage_refactor.cpp` to maintain 100% code coverage for the now-private implementation details.
+
 ## [0.7.57] - 2026-02-17
 ### Refactored
 - **Ancillary Code Extraction**:

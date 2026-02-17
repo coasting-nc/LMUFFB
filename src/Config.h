@@ -652,10 +652,7 @@ private:
 };
 
 
-inline FFBEngine::FFBEngine() {
-    last_log_time = std::chrono::steady_clock::now();
-    Preset::ApplyDefaultsToEngine(*this);
-}
+
 
 #endif
 

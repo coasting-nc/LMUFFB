@@ -37,6 +37,7 @@ set(TEST_SOURCES
     test_ffb_config.cpp
     test_ffb_slip_grip.cpp
     test_ffb_internal.cpp
+    test_ffb_coverage_refactor.cpp
     test_persistence_v0625.cpp
     test_persistence_v0628.cpp
     test_async_logger.cpp
