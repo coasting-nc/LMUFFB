@@ -42,6 +42,29 @@ void FFBThread() {
     double lastTorque = -9999.0;
     float lastGenTorque = -9999.0f;
 
+    // Extended monitors for Issue #133
+    struct ChannelMonitor {
+        RateMonitor monitor;
+        double lastValue = -1e18;
+        void Update(double newValue) {
+            if (newValue != lastValue) {
+                monitor.RecordEvent();
+                lastValue = newValue;
+            }
+        }
+    };
+
+    ChannelMonitor mAccX, mAccY, mAccZ;
+    ChannelMonitor mVelX, mVelY, mVelZ;
+    ChannelMonitor mRotX, mRotY, mRotZ;
+    ChannelMonitor mRotAccX, mRotAccY, mRotAccZ;
+    ChannelMonitor mUnfSteer, mFilSteer;
+    ChannelMonitor mRPM;
+    ChannelMonitor mLoadFL, mLoadFR, mLoadRL, mLoadRR;
+    ChannelMonitor mLatFL, mLatFR, mLatRL, mLatRR;
+    ChannelMonitor mPosX, mPosY, mPosZ;
+    ChannelMonitor mDtMon;
+
     // Precise Timing: Target 400Hz (2500 microseconds)
     const std::chrono::microseconds target_period(2500);
     auto next_tick = std::chrono::steady_clock::now();
@@ -111,6 +134,35 @@ void FFBThread() {
                         lastGenTorque = g_localData.generic.FFBTorque;
                     }
 
+                    // Extended monitoring (Issue #133)
+                    mAccX.Update(pPlayerTelemetry->mLocalAccel.x);
+                    mAccY.Update(pPlayerTelemetry->mLocalAccel.y);
+                    mAccZ.Update(pPlayerTelemetry->mLocalAccel.z);
+                    mVelX.Update(pPlayerTelemetry->mLocalVel.x);
+                    mVelY.Update(pPlayerTelemetry->mLocalVel.y);
+                    mVelZ.Update(pPlayerTelemetry->mLocalVel.z);
+                    mRotX.Update(pPlayerTelemetry->mLocalRot.x);
+                    mRotY.Update(pPlayerTelemetry->mLocalRot.y);
+                    mRotZ.Update(pPlayerTelemetry->mLocalRot.z);
+                    mRotAccX.Update(pPlayerTelemetry->mLocalRotAccel.x);
+                    mRotAccY.Update(pPlayerTelemetry->mLocalRotAccel.y);
+                    mRotAccZ.Update(pPlayerTelemetry->mLocalRotAccel.z);
+                    mUnfSteer.Update(pPlayerTelemetry->mUnfilteredSteering);
+                    mFilSteer.Update(pPlayerTelemetry->mFilteredSteering);
+                    mRPM.Update(pPlayerTelemetry->mEngineRPM);
+                    mLoadFL.Update(pPlayerTelemetry->mWheel[0].mTireLoad);
+                    mLoadFR.Update(pPlayerTelemetry->mWheel[1].mTireLoad);
+                    mLoadRL.Update(pPlayerTelemetry->mWheel[2].mTireLoad);
+                    mLoadRR.Update(pPlayerTelemetry->mWheel[3].mTireLoad);
+                    mLatFL.Update(pPlayerTelemetry->mWheel[0].mLateralForce);
+                    mLatFR.Update(pPlayerTelemetry->mWheel[1].mLateralForce);
+                    mLatRL.Update(pPlayerTelemetry->mWheel[2].mLateralForce);
+                    mLatRR.Update(pPlayerTelemetry->mWheel[3].mLateralForce);
+                    mPosX.Update(pPlayerTelemetry->mPos.x);
+                    mPosY.Update(pPlayerTelemetry->mPos.y);
+                    mPosZ.Update(pPlayerTelemetry->mPos.z);
+                    mDtMon.Update(pPlayerTelemetry->mDeltaTime);
+
                     std::lock_guard<std::mutex> lock(g_engine_mutex);
                     if (g_engine.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase)) {
                         force = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque);
@@ -152,6 +204,27 @@ void FFBThread() {
 
         if (DirectInputFFB::Get().UpdateForce(force)) {
             hwMonitor.RecordEvent();
+        }
+
+        // Extended Logging (Issue #133)
+        static auto lastExtLogTime = std::chrono::steady_clock::now();
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::seconds>(now - lastExtLogTime).count() >= 5) {
+            lastExtLogTime = now;
+            if (GameConnector::Get().IsConnected() && g_localData.telemetry.playerHasVehicle) {
+                Logger::Get().Log("--- Telemetry Sample Rates (Hz) ---");
+                Logger::Get().Log("Loop: %.1f, ET: %.1f, HW: %.1f", loopMonitor.GetRate(), telemMonitor.GetRate(), hwMonitor.GetRate());
+                Logger::Get().Log("Torque: Shaft=%.1f, Generic=%.1f", torqueMonitor.GetRate(), genTorqueMonitor.GetRate());
+                Logger::Get().Log("Accel: X=%.1f, Y=%.1f, Z=%.1f", mAccX.monitor.GetRate(), mAccY.monitor.GetRate(), mAccZ.monitor.GetRate());
+                Logger::Get().Log("Vel: X=%.1f, Y=%.1f, Z=%.1f", mVelX.monitor.GetRate(), mVelY.monitor.GetRate(), mVelZ.monitor.GetRate());
+                Logger::Get().Log("Rot: X=%.1f, Y=%.1f, Z=%.1f", mRotX.monitor.GetRate(), mRotY.monitor.GetRate(), mRotZ.monitor.GetRate());
+                Logger::Get().Log("RotAcc: X=%.1f, Y=%.1f, Z=%.1f", mRotAccX.monitor.GetRate(), mRotAccY.monitor.GetRate(), mRotAccZ.monitor.GetRate());
+                Logger::Get().Log("Steering: Unf=%.1f, Fil=%.1f, RPM=%.1f", mUnfSteer.monitor.GetRate(), mFilSteer.monitor.GetRate(), mRPM.monitor.GetRate());
+                Logger::Get().Log("Load: FL=%.1f, FR=%.1f, RL=%.1f, RR=%.1f", mLoadFL.monitor.GetRate(), mLoadFR.monitor.GetRate(), mLoadRL.monitor.GetRate(), mLoadRR.monitor.GetRate());
+                Logger::Get().Log("LatForce: FL=%.1f, FR=%.1f, RL=%.1f, RR=%.1f", mLatFL.monitor.GetRate(), mLatFR.monitor.GetRate(), mLatRL.monitor.GetRate(), mLatRR.monitor.GetRate());
+                Logger::Get().Log("Pos: X=%.1f, Y=%.1f, Z=%.1f, DeltaTime=%.1f", mPosX.monitor.GetRate(), mPosY.monitor.GetRate(), mPosZ.monitor.GetRate(), mDtMon.monitor.GetRate());
+                Logger::Get().Log("-----------------------------------");
+            }
         }
 
         // Precise Timing: Sleep until next tick
