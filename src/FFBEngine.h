@@ -1347,6 +1347,10 @@ public:
         m_prev_vert_accel = data->mLocalAccel.y;
 
         // --- 9. SNAPSHOT ---
+        // This block captures the current state of the FFB Engine (inputs, outputs, intermediate calculations)
+        // into a thread-safe buffer. These snapshots are retrieved by the GUI layer (or other consumers)
+        // to visualize real-time telemetry graphs, FFB clipping, and effect contributions.
+        // It uses a mutex to protect the shared circular buffer.
         {
             std::lock_guard<std::mutex> lock(m_debug_mutex);
             if (m_debug_buffer.size() < 100) {

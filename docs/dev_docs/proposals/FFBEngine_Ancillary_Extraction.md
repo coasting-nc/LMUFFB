@@ -118,7 +118,11 @@ To ensure zero regressions during extraction, we will implement a "100% Coverage
 ---
 
 ## Next Steps
-1.  **Create `MathUtils.h`**: Move constants, interpolators, and `BiquadNotch` (with improved documentation).
-2.  **Create `PerfStats.h`**: Move `ChannelStats`.
-3.  **Create `VehicleUtils.h/.cpp`**: Move vehicle class parsing and lookup tables.
-4.  **Clean up `FFBEngine.h`**: Replace extracted code with includes.
+1.  **[DONE] Create `MathUtils.h`**: Move constants, interpolators, and `BiquadNotch` (with improved documentation).
+2.  **[DONE] Create `PerfStats.h`**: Move `ChannelStats`.
+3.  **[DONE] Create `VehicleUtils.h/.cpp`**: Move vehicle class parsing and lookup tables.
+4.  **[DONE] Clean up `FFBEngine.h`**: Replace extracted code with includes.
+
+## Future Proposals
+To further clean up `FFBEngine.h` without fracturing the core physics logic, see:
+-   [Proposal: Ancillary Diagnosis Codes Extraction](FFBEngine_Ancillary_Diagnosis_Extraction.md) - Discusses moving Snapshots, Logging, and Validation logic.

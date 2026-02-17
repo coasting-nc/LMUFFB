@@ -37,6 +37,9 @@ If the task involves FFB (Force Feedback) logic, you **MUST** analyze and docume
     *   New classes/functions.
     *   Data structures.
     *   Test cases.
+    *   **Refactoring Guidelines (if applicable):**
+        *   **Grep First:** When planning to move or rename functions/types, perform a codebase-wide grep to identify usage in tests and other modules.
+        *   **Alias Bridge:** when extracting types or functions from a monolithic header, consider adding `using` aliases in the original file to maintain backward compatibility and allow for a phased migration.
     *   **User Settings & Presets Impact:**
         *   Does the change affect existing user settings or presets?
         *   Are there new settings that need to be added?
