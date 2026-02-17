@@ -3,13 +3,19 @@ project(LMUFFB_CPP)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Security Flags (MSVC)
+# Security & Debug Flags (MSVC)
 if(MSVC)
     # Compile flags: Buffer Security Check (/GS) is usually default, but good to ensure.
     add_compile_options(/GS)
+    
+    # Always generate PDBs, even in Release mode (required for OpenCppCoverage)
+    add_compile_options(/Zi)
 
     # Linker flags: ASLR (/DYNAMICBASE) and DEP (/NXCOMPAT)
     add_link_options(/DYNAMICBASE /NXCOMPAT)
+    
+    # Force debug info generation in the linker
+    add_link_options(/DEBUG)
 endif()
 
 # ImGui Core Detection & FetchContent
