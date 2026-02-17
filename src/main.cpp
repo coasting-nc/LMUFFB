@@ -68,22 +68,33 @@ void FFBThread() {
             
             double force = 0.0;
             bool should_output = false;
+            double dt = 0.0025; // Default 400Hz
+            bool restricted = true;
 
             if (in_realtime && !is_stale && g_localData.telemetry.playerHasVehicle) {
                 uint8_t idx = g_localData.telemetry.playerVehicleIdx;
                 if (idx < 104) {
                     auto& scoring = g_localData.scoring.vehScoringInfo[idx];
                     TelemInfoV01* pPlayerTelemetry = &g_localData.telemetry.telemInfo[idx];
+                    dt = pPlayerTelemetry->mDeltaTime;
 
                     std::lock_guard<std::mutex> lock(g_engine_mutex);
-                    if (g_engine.IsFFBAllowed(scoring)) {
+                    if (g_engine.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase)) {
                         force = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName);
                         should_output = true;
+                        restricted = (scoring.mFinishStatus != 0);
                     }
                 }
             }
             
             if (!should_output) force = 0.0;
+
+            // Safety Layer (v0.7.49): Slew Rate Limiting and NaN protection
+            {
+                std::lock_guard<std::mutex> lock(g_engine_mutex);
+                if (dt < 0.0001) dt = 0.0025;
+                force = g_engine.ApplySafetySlew(force, dt, restricted);
+            }
 
             DirectInputFFB::Get().UpdateForce(force);
         }

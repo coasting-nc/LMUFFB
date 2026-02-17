@@ -508,6 +508,7 @@ public:
 
     // Frequency Estimator State (v0.4.41)
     double m_last_crossing_time = 0.0;
+    double m_last_output_force = 0.0; // v0.7.49: For safety slew rate limiting
     double m_torque_ac_smoothed = 0.0; // For High-Pass
     double m_prev_ac_torque = 0.0;
 
@@ -529,13 +530,43 @@ public:
 
     // v0.7.34: Safety Check for Issue #79
     // Determines if FFB should be active based on vehicle scoring state.
-    // Mutes FFB if car is under AI control or session has finished.
-    bool IsFFBAllowed(const VehicleScoringInfoV01& scoring) const {
+    // v0.7.49: Modified for #126 to allow cool-down laps after finish.
+    bool IsFFBAllowed(const VehicleScoringInfoV01& scoring, unsigned char gamePhase) const {
         // mControl: 0 = local player, 1 = AI, 2 = Remote, -1 = None
         // mFinishStatus: 0 = none, 1 = finished, 2 = DNF, 3 = DQ
-        return (scoring.mIsPlayer && scoring.mControl == 0 && scoring.mFinishStatus == 0);
+
+        // 1. Core control check
+        if (!scoring.mIsPlayer || scoring.mControl != 0) return false;
+
+        // 2. Session level safety (Game Phases: 7=Stopped, 8=Session Over)
+        if (gamePhase == 7 || gamePhase == 8) return false;
+
+        // 3. Individual status safety
+        // Allow Finished (1) and DNF (2) as long as player is in control.
+        // Mute for Disqualified (3).
+        if (scoring.mFinishStatus == 3) return false;
+
+        return true;
     }
     
+    // v0.7.49: Slew rate limiter for safety (#79)
+    // Clamps the rate of change of the output force to prevent violent jolts.
+    // If restricted is true (e.g. after finish or lost control), limit is tighter.
+    double ApplySafetySlew(double target_force, double dt, bool restricted) {
+        if (!std::isfinite(target_force)) return 0.0;
+
+        // Normal: 1000 units/s (0 to 1.0 in 1ms) - Mostly for NaN/Inf safety
+        // Restricted: 100 units/s (0 to 1.0 in 10ms) - Stops violent snaps
+        double max_slew = restricted ? 100.0 : 1000.0;
+        double max_change = max_slew * dt;
+
+        double delta = target_force - m_last_output_force;
+        delta = std::clamp(delta, -max_change, max_change);
+        m_last_output_force += delta;
+
+        return m_last_output_force;
+    }
+
     // Helper to retrieve data (Consumer)
     std::vector<FFBSnapshot> GetDebugBatch() {
         std::vector<FFBSnapshot> batch;
@@ -1248,6 +1279,9 @@ public:
     // Refactored calculate_force
     double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr) {
         if (!data) return 0.0;
+
+        // RELIABILITY FIX: Sanitize input torque
+        if (!std::isfinite(data->mSteeringShaftTorque)) return 0.0;
 
         // Class Seeding
         bool seeded = false;
