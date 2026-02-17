@@ -14,13 +14,15 @@ TEST_CASE(test_slew_rate_limiter, "AdvancedSlope") {
     data.mDeltaTime = dt;
 
     // 1. Steady state (1.0G)
-    data.mLocalAccel.x = 1.0 * 9.81;
+    // v0.4.19 Fix: Use Negative for Right Turn
+    data.mLocalAccel.x = -1.0 * 9.81;
     for (int i = 0; i < 20; i++) engine.calculate_force(&data);
 
+    // Internal prev_val now stores the INVERTED G (Positive)
     ASSERT_NEAR(engine.m_slope_lat_g_prev, 1.0, 0.02); // Allow small smoothing error
 
-    // 2. Spike to 5.0G
-    data.mLocalAccel.x = 5.0 * 9.81;
+    // 2. Spike to 5.0G (Right Turn)
+    data.mLocalAccel.x = -5.0 * 9.81;
     engine.calculate_force(&data);
 
     // Max change = limit * dt = 10 * 0.01 = 0.1G
@@ -60,7 +62,8 @@ TEST_CASE(test_torque_slope_anticipation, "AdvancedSlope") {
         else torque = 3.0 - (double)(i - 20) * 0.2; // Falling (Anticipation!)
 
         data.mUnfilteredSteering = steer;
-        data.mLocalAccel.x = g * 9.81;
+        // v0.4.19 Fix: Use Negative for Right Turn
+        data.mLocalAccel.x = -g * 9.81;
         data.mSteeringShaftTorque = torque;
         data.mWheel[0].mLateralPatchVel = slip * 20.0;
         data.mWheel[1].mLateralPatchVel = slip * 20.0;

@@ -323,14 +323,15 @@ TEST_CASE(test_refactor_snapshot_sop, "Internal") {
     if (!batch.empty()) {
         FFBSnapshot snap = batch.back();
 
-        bool sop_ok = (std::abs(snap.sop_force - 10.0) < 0.01);
-        bool boost_ok = (std::abs(snap.oversteer_boost - 10.0) < 0.01);
+        // v0.4.19 Fix: Expect Negative due to SoP inversion (+X input)
+        bool sop_ok = (std::abs(snap.sop_force - (-10.0)) < 0.01);
+        bool boost_ok = (std::abs(snap.oversteer_boost - (-10.0)) < 0.01);
 
         if (sop_ok && boost_ok) {
             std::cout << "[PASS] Snapshot values correct (SoP: " << snap.sop_force << ", Boost: " << snap.oversteer_boost << ")" << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Snapshot logic error. SoP: " << snap.sop_force << " (Exp: 10.0) Boost: " << snap.oversteer_boost << " (Exp: 10.0)" << std::endl;
+            std::cout << "[FAIL] Snapshot logic error. SoP: " << snap.sop_force << " (Exp: -10.0) Boost: " << snap.oversteer_boost << " (Exp: -10.0)" << std::endl;
             g_tests_failed++;
         }
     } else {
@@ -358,11 +359,12 @@ void FFBEngineTestAccess::test_unit_sop_lateral() {
 
     engine.calculate_sop_lateral(&data, ctx);
 
-    if (std::abs(ctx.sop_base_force - 10.0) < 0.01) {
+    // v0.4.19 Fix: Expect Negative due to SoP inversion (+X input)
+    if (std::abs(ctx.sop_base_force - (-10.0)) < 0.01) {
         std::cout << "[PASS] calculate_sop_lateral base logic." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] calculate_sop_lateral failed. Got " << ctx.sop_base_force << std::endl;
+        std::cout << "[FAIL] calculate_sop_lateral failed. Got " << ctx.sop_base_force << " Expected: -10.0" << std::endl;
         g_tests_failed++;
     }
 }

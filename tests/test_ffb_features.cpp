@@ -336,6 +336,8 @@ TEST_CASE(test_oversteer_boost, "Texture") {
     data.mWheel[3].mGripFract = 0.5; // RR (sliding)
     
     // Lateral G (cornering)
+    // v0.4.19 Fix: Inverted in engine to produce Positive output for Right Turn (-X).
+    // Here we use +9.81 (Left Turn), so we expect Negative output.
     data.mLocalAccel.x = 9.81; // 1G lateral
     
     // Rear lateral force (resisting slide)
