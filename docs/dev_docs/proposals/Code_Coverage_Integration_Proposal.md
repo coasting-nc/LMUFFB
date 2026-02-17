@@ -53,14 +53,16 @@ To see coverage results directly in your editor instead of a browser, you can us
 - Install the **Coverage Gutters** extension in VS Code.
 - Use the updated command below to generate a `cobertura.xml` file in your root directory.
 
-### 2. Updated Command (Strict Filtering & XML Export)
-Run this command to generate both the HTML report and the XML file needed for VS Code integration:
+### 2. Updated Command (HTML + VS Code XML + Filtering)
+To generate the HTML report folder AND the XML file for VS Code in one go, while excluding the tests:
 ```powershell
-OpenCppCoverage.exe --sources src --excluded_sources tests --export_type=cobertura:cobertura.xml -- .\build\tests\Release\run_combined_tests.exe
+OpenCppCoverage.exe --sources src --excluded_sources tests --modules build\tests\Release --export_type=html --export_type=cobertura:cobertura.xml -- .\build\tests\Release\run_combined_tests.exe
 ```
 - `--sources src`: Only includes files in your source directory.
 - `--excluded_sources tests`: Explicitly prevents test logic from appearing in the report.
-- `--export_type=cobertura:cobertura.xml`: Generates the Cobertura-format XML file in the project root.
+- `--modules build\tests\Release`: Ensures the tool finds the debug symbols for your binary.
+- `--export_type=html`: Generates the interactive browser report.
+- `--export_type=cobertura:cobertura.xml`: Generates the file needed for VS Code's **Coverage Gutters**.
 
 ### 3. Viewing in VS Code
 1. Open any source file (e.g., `src/FFBEngine.h`).
