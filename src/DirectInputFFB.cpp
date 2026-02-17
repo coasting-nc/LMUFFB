@@ -369,8 +369,8 @@ bool DirectInputFFB::CreateEffect() {
 #endif
 }
 
-void DirectInputFFB::UpdateForce(double normalizedForce) {
-    if (!m_active) return;
+bool DirectInputFFB::UpdateForce(double normalizedForce) {
+    if (!m_active) return false;
 
     // Sanity Check: If 0.0, stop effect to prevent residual hum
     if (std::abs(normalizedForce) < 0.00001) normalizedForce = 0.0;
@@ -382,7 +382,7 @@ void DirectInputFFB::UpdateForce(double normalizedForce) {
     long magnitude = static_cast<long>(normalizedForce * 10000.0);
 
     // Optimization: Don't call driver if value hasn't changed
-    if (magnitude == m_last_force) return;
+    if (magnitude == m_last_force) return false;
     m_last_force = magnitude;
 
 #ifdef _WIN32
@@ -484,4 +484,5 @@ void DirectInputFFB::UpdateForce(double normalizedForce) {
         }
     }
 #endif
+    return true;
 }

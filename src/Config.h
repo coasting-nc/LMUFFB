@@ -78,6 +78,7 @@ struct Preset {
     
     float steering_shaft_gain = 1.0f;
     int base_force_mode = 0; // 0=Native
+    int torque_source = 0;   // 0=Shaft, 1=Direct
     
     // NEW: Grip & Smoothing (v0.5.7)
     float optimal_slip_angle = 0.1f;
@@ -185,6 +186,7 @@ struct Preset {
     
     Preset& SetShaftGain(float v) { steering_shaft_gain = v; return *this; }
     Preset& SetBaseMode(int v) { base_force_mode = v; return *this; }
+    Preset& SetTorqueSource(int v) { torque_source = v; return *this; }
     Preset& SetFlatspot(bool enabled, float strength = 1.0f, float q = 2.0f) { 
         flatspot_suppression = enabled; 
         flatspot_strength = strength;
@@ -307,6 +309,7 @@ struct Preset {
         engine.m_gyro_gain = (std::max)(0.0f, gyro_gain);
         engine.m_steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);
         engine.m_base_force_mode = base_force_mode;
+        engine.m_torque_source = torque_source;
         engine.m_flatspot_suppression = flatspot_suppression;
         engine.m_notch_q = (std::max)(0.1f, notch_q); // Critical for biquad division
         engine.m_flatspot_strength = (std::max)(0.0f, (std::min)(1.0f, flatspot_strength));
@@ -389,6 +392,7 @@ struct Preset {
         sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);
         gyro_gain = (std::max)(0.0f, gyro_gain);
         steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);
+        torque_source = (std::max)(0, (std::min)(1, torque_source));
         notch_q = (std::max)(0.1f, notch_q);
         flatspot_strength = (std::max)(0.0f, (std::min)(1.0f, flatspot_strength));
         static_notch_freq = (std::max)(1.0f, static_notch_freq);
@@ -459,6 +463,7 @@ struct Preset {
         gyro_gain = engine.m_gyro_gain;
         steering_shaft_gain = engine.m_steering_shaft_gain;
         base_force_mode = engine.m_base_force_mode;
+        torque_source = engine.m_torque_source;
         flatspot_suppression = engine.m_flatspot_suppression;
         notch_q = engine.m_notch_q;
         flatspot_strength = engine.m_flatspot_strength;
@@ -557,6 +562,7 @@ struct Preset {
         if (!is_near(gyro_gain, p.gyro_gain, eps)) return false;
         if (!is_near(steering_shaft_gain, p.steering_shaft_gain, eps)) return false;
         if (base_force_mode != p.base_force_mode) return false;
+        if (torque_source != p.torque_source) return false;
 
         if (!is_near(optimal_slip_angle, p.optimal_slip_angle, eps)) return false;
         if (!is_near(optimal_slip_ratio, p.optimal_slip_ratio, eps)) return false;

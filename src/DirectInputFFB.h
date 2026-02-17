@@ -42,7 +42,8 @@ public:
     void ReleaseDevice();
 
     // Update the Constant Force effect (-1.0 to 1.0)
-    void UpdateForce(double normalizedForce);
+    // Returns true if the hardware was actually updated (value changed)
+    bool UpdateForce(double normalizedForce);
 
     // NEW: Helpers for Config persistence
     static std::string GuidToString(const GUID& guid);

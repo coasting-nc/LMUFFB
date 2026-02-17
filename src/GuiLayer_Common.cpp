@@ -87,6 +87,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
       }
     } else {
       ImGui::TextColored(ImVec4(0, 1, 0, 1), "Connected to LMU");
+      ImGui::SameLine();
+      ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| FFB: %.0fHz | Tel: %.0fHz", engine.m_ffb_rate, engine.m_telemetry_rate);
     }
 
     static std::vector<DeviceInfo> devices;
@@ -391,6 +393,32 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::TreeNodeEx("General FFB", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
+        if (ImGui::TreeNode("System Health (Hz)")) {
+            ImGui::Columns(3, "RateCols", false);
+            auto DisplayRate = [](const char* label, double rate, double target) {
+                ImGui::Text("%s", label);
+                ImVec4 color = ImVec4(1.0f, 0.4f, 0.4f, 1.0f); // Red
+                if (rate >= target * 0.95) color = ImVec4(0.4f, 1.0f, 0.4f, 1.0f); // Green
+                else if (rate >= target * 0.75) color = ImVec4(1.0f, 1.0f, 0.4f, 1.0f); // Yellow
+                ImGui::TextColored(color, "%.1f Hz", rate);
+            };
+            DisplayRate("FFB Loop", engine.m_ffb_rate, 400.0);
+            ImGui::NextColumn();
+            DisplayRate("Telemetry", engine.m_telemetry_rate, 400.0);
+            ImGui::NextColumn();
+            DisplayRate("Hardware", engine.m_hw_rate, 400.0);
+            ImGui::NextColumn();
+            DisplayRate("S.Torque", engine.m_torque_rate, 400.0);
+            ImGui::NextColumn();
+            DisplayRate("G.Torque", engine.m_gen_torque_rate, 400.0);
+            ImGui::Columns(1);
+            if ((engine.m_telemetry_rate < 380.0 || engine.m_torque_rate < 380.0) && engine.m_telemetry_rate > 1.0 && GameConnector::Get().IsConnected()) {
+                ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Low telemetry/torque rate. Check game FFB settings.");
+            }
+            ImGui::TreePop();
+            ImGui::Separator();
+        }
+
         BoolSetting("Invert FFB Signal", &engine.m_invert_force, "Check this if the wheel pulls away from center instead of aligning.");
         FloatSetting("Master Gain", &engine.m_gain, 0.0f, 2.0f, FormatPct(engine.m_gain), "Global scale factor for all forces.\n100% = No attenuation.\nReduce if experiencing heavy clipping.");
         FloatSetting("Max Torque Ref", &engine.m_max_torque_ref, 1.0f, 200.0f, "%.1f Nm", "The expected PEAK torque of the CAR in the game.");
@@ -429,6 +457,12 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         const char* base_modes[] = { "Native (Steering Shaft Torque)", "Synthetic (Constant)", "Muted (Off)" };
         IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, sizeof(base_modes)/sizeof(base_modes[0]),
             "Debug tool to isolate effects.\nNative: Normal Operation.\nSynthetic: Constant force to test direction.\nMuted: Disables base physics (good for tuning vibrations).");
+
+        const char* torque_sources[] = { "Shaft Torque (100Hz Legacy)", "Direct Torque (400Hz LMU 1.2+)" };
+        IntSetting("Torque Source", &engine.m_torque_source, torque_sources, sizeof(torque_sources)/sizeof(torque_sources[0]),
+            "Select the telemetry channel for base steering torque.\n"
+            "Shaft Torque: Standard rF2 physics channel (typically 100Hz).\n"
+            "Direct Torque: New LMU high-frequency channel (native 400Hz). RECOMMENDED.");
 
         if (ImGui::TreeNodeEx("Signal Filtering", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::NextColumn(); ImGui::NextColumn();

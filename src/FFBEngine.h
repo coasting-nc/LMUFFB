@@ -122,6 +122,13 @@ struct FFBSnapshot {
     float debug_freq; // New v0.4.41: Frequency for diagnostics
     float tire_radius; // New v0.4.41: Tire radius in meters for theoretical freq calculation
     float slope_current; // New v0.7.1: Slope detection derivative value
+
+    // Rate Monitoring (Issue #129)
+    float ffb_rate;
+    float telemetry_rate;
+    float hw_rate;
+    float torque_rate;
+    float gen_torque_rate;
 };
 
 struct BiquadNotch {
@@ -266,6 +273,7 @@ public:
     // Base Force Debugging (v0.4.13)
     float m_steering_shaft_gain;
     int m_base_force_mode;
+    int m_torque_source = 0; // 0=Shaft Torque (Default), 1=Direct Torque (FFBTorque)
 
     // New Effects (v0.2)
     float m_oversteer_boost;
@@ -363,6 +371,13 @@ public:
     // Signal Diagnostics
     double m_debug_freq = 0.0; // Estimated frequency for GUI
     double m_theoretical_freq = 0.0; // Theoretical wheel frequency for GUI
+
+    // Rate Monitoring (Issue #129)
+    double m_ffb_rate = 0.0;
+    double m_telemetry_rate = 0.0;
+    double m_hw_rate = 0.0;
+    double m_torque_rate = 0.0;
+    double m_gen_torque_rate = 0.0;
 
     // Warning States (Console logging)
     bool m_warned_load = false;
@@ -1277,11 +1292,14 @@ public:
     }
 
     // Refactored calculate_force
-    double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr) {
+    double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr, float genFFBTorque = 0.0f) {
         if (!data) return 0.0;
 
+        // Select Torque Source
+        double raw_torque_input = (m_torque_source == 1) ? (double)genFFBTorque : data->mSteeringShaftTorque;
+
         // RELIABILITY FIX: Sanitize input torque
-        if (!std::isfinite(data->mSteeringShaftTorque)) return 0.0;
+        if (!std::isfinite(raw_torque_input)) return 0.0;
 
         // Class Seeding
         bool seeded = false;
@@ -1339,7 +1357,7 @@ public:
         const TelemWheelV01& fr = data->mWheel[1];
 
         // Raw Inputs
-        double raw_torque = data->mSteeringShaftTorque;
+        double raw_torque = raw_torque_input;
         double raw_load = (fl.mTireLoad + fr.mTireLoad) / 2.0;
         double raw_grip = (fl.mGripFract + fr.mGripFract) / 2.0;
 
@@ -1499,7 +1517,7 @@ public:
         if (front_grip_res.approximated) ctx.frame_warn_grip = true;
 
         // 2. Signal Conditioning (Smoothing, Notch Filters)
-        double game_force_proc = apply_signal_conditioning(data->mSteeringShaftTorque, data, ctx);
+        double game_force_proc = apply_signal_conditioning(raw_torque_input, data, ctx);
 
         // Base Force Mode
         double base_input = 0.0;
@@ -1652,6 +1670,12 @@ public:
                 snap.debug_freq = (float)m_debug_freq;
                 snap.tire_radius = (float)fl.mStaticUndeflectedRadius / 100.0f;
                 snap.slope_current = (float)m_slope_current; // v0.7.1: Slope detection diagnostic
+
+                snap.ffb_rate = (float)m_ffb_rate;
+                snap.telemetry_rate = (float)m_telemetry_rate;
+                snap.hw_rate = (float)m_hw_rate;
+                snap.torque_rate = (float)m_torque_rate;
+                snap.gen_torque_rate = (float)m_gen_torque_rate;
 
                 m_debug_buffer.push_back(snap);
             }

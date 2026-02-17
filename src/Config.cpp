@@ -86,6 +86,7 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "steering_shaft_gain") current_preset.steering_shaft_gain = std::stof(value);
                 else if (key == "slip_angle_smoothing") current_preset.slip_smoothing = std::stof(value);
                 else if (key == "base_force_mode") current_preset.base_force_mode = std::stoi(value);
+                else if (key == "torque_source") current_preset.torque_source = std::stoi(value);
                 else if (key == "gyro_gain") current_preset.gyro_gain = (std::min)(1.0f, std::stof(value));
                 else if (key == "flatspot_suppression") current_preset.flatspot_suppression = std::stoi(value);
                 else if (key == "notch_q") current_preset.notch_q = std::stof(value);
@@ -828,6 +829,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "steering_shaft_smoothing=" << p.steering_shaft_smoothing << "\n";
     file << "understeer=" << p.understeer << "\n";
     file << "base_force_mode=" << p.base_force_mode << "\n";
+    file << "torque_source=" << p.torque_source << "\n";
     file << "flatspot_suppression=" << p.flatspot_suppression << "\n";
     file << "notch_q=" << p.notch_q << "\n";
     file << "flatspot_strength=" << p.flatspot_strength << "\n";
@@ -1100,6 +1102,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "steering_shaft_smoothing=" << engine.m_steering_shaft_smoothing << "\n";
         file << "understeer=" << engine.m_understeer_effect << "\n";
         file << "base_force_mode=" << engine.m_base_force_mode << "\n";
+        file << "torque_source=" << engine.m_torque_source << "\n";
         file << "flatspot_suppression=" << engine.m_flatspot_suppression << "\n";
         file << "notch_q=" << engine.m_notch_q << "\n";
         file << "flatspot_strength=" << engine.m_flatspot_strength << "\n";
@@ -1246,6 +1249,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "brake_load_cap") engine.m_brake_load_cap = std::stof(value);
                     else if (key == "smoothing") engine.m_sop_smoothing_factor = std::stof(value); // Legacy support
                     else if (key == "understeer") engine.m_understeer_effect = std::stof(value);
+                    else if (key == "base_force_mode") engine.m_base_force_mode = std::stoi(value);
+                    else if (key == "torque_source") engine.m_torque_source = std::stoi(value);
                     else if (key == "sop") engine.m_sop_effect = std::stof(value);
                     else if (key == "min_force") engine.m_min_force = std::stof(value);
                     else if (key == "oversteer_boost") engine.m_oversteer_boost = std::stof(value);
@@ -1336,6 +1341,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     engine.m_notch_q = (std::max)(0.1f, engine.m_notch_q);
     engine.m_static_notch_width = (std::max)(0.1f, engine.m_static_notch_width);
     engine.m_speed_gate_upper = (std::max)(0.1f, engine.m_speed_gate_upper);
+
+    engine.m_torque_source = (std::max)(0, (std::min)(1, engine.m_torque_source));
 
     if (engine.m_optimal_slip_angle < 0.01f) {
         std::cerr << "[Config] Invalid optimal_slip_angle (" << engine.m_optimal_slip_angle 

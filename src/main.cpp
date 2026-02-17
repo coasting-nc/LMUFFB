@@ -14,6 +14,7 @@
 #include "GameConnector.h"
 #include "Version.h"
 #include "Logger.h"    // Added Logger
+#include "RateMonitor.h"
 #include <optional>
 #include <atomic>
 #include <mutex>
@@ -32,8 +33,23 @@ std::mutex g_engine_mutex; // Protects settings access if GUI changes them
 // --- FFB Loop (High Priority 400Hz) ---
 void FFBThread() {
     std::cout << "[FFB] Loop Started." << std::endl;
+    RateMonitor loopMonitor;
+    RateMonitor telemMonitor;
+    RateMonitor hwMonitor;
+    RateMonitor torqueMonitor;
+    RateMonitor genTorqueMonitor;
+    double lastET = -1.0;
+    double lastTorque = -9999.0;
+    float lastGenTorque = -9999.0f;
+
+    // Precise Timing: Target 400Hz (2500 microseconds)
+    const std::chrono::microseconds target_period(2500);
+    auto next_tick = std::chrono::steady_clock::now();
 
     while (g_running) {
+        loopMonitor.RecordEvent();
+        next_tick += target_period;
+
         double force = 0.0;
         double dt = 0.0025; // Default 400Hz
         bool restricted = true;
@@ -79,9 +95,25 @@ void FFBThread() {
                     TelemInfoV01* pPlayerTelemetry = &g_localData.telemetry.telemInfo[idx];
                     dt = pPlayerTelemetry->mDeltaTime;
 
+                    // Track telemetry update rate
+                    if (pPlayerTelemetry->mElapsedTime != lastET) {
+                        telemMonitor.RecordEvent();
+                        lastET = pPlayerTelemetry->mElapsedTime;
+                    }
+
+                    // Track torque update rates
+                    if (pPlayerTelemetry->mSteeringShaftTorque != lastTorque) {
+                        torqueMonitor.RecordEvent();
+                        lastTorque = pPlayerTelemetry->mSteeringShaftTorque;
+                    }
+                    if (g_localData.generic.FFBTorque != lastGenTorque) {
+                        genTorqueMonitor.RecordEvent();
+                        lastGenTorque = g_localData.generic.FFBTorque;
+                    }
+
                     std::lock_guard<std::mutex> lock(g_engine_mutex);
                     if (g_engine.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase)) {
-                        force = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName);
+                        force = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque);
                         should_output = true;
                         restricted = (scoring.mFinishStatus != 0);
                     }
@@ -89,6 +121,17 @@ void FFBThread() {
             }
             
             if (!should_output) force = 0.0;
+
+            // Warning for low sample rate (Issue #129)
+            static auto lastWarningTime = std::chrono::steady_clock::now();
+            if (in_realtime && (telemMonitor.GetRate() < 380.0 || torqueMonitor.GetRate() < 380.0) && telemMonitor.GetRate() > 1.0) {
+                 auto now = std::chrono::steady_clock::now();
+                 if (std::chrono::duration_cast<std::chrono::seconds>(now - lastWarningTime).count() >= 5) {
+                     std::cout << "[WARNING] Low Sample Rate detected: Telemetry=" << telemMonitor.GetRate() << "Hz, Torque=" << torqueMonitor.GetRate() << "Hz (Target: 400 Hz)" << std::endl;
+                     Logger::Get().Log("Low Sample Rate detected: Telemetry=%.1fHz, Torque=%.1fHz", telemMonitor.GetRate(), torqueMonitor.GetRate());
+                     lastWarningTime = now;
+                 }
+            }
         }
 
         // Safety Layer (v0.7.49): Slew Rate Limiting and NaN protection
@@ -96,12 +139,23 @@ void FFBThread() {
         {
             std::lock_guard<std::mutex> lock(g_engine_mutex);
             if (dt < 0.0001) dt = 0.0025;
+
+            // Push rates to engine for GUI/Snapshot
+            g_engine.m_ffb_rate = loopMonitor.GetRate();
+            g_engine.m_telemetry_rate = telemMonitor.GetRate();
+            g_engine.m_hw_rate = hwMonitor.GetRate();
+            g_engine.m_torque_rate = torqueMonitor.GetRate();
+            g_engine.m_gen_torque_rate = genTorqueMonitor.GetRate();
+
             force = g_engine.ApplySafetySlew(force, dt, restricted);
         }
 
-        DirectInputFFB::Get().UpdateForce(force);
+        if (DirectInputFFB::Get().UpdateForce(force)) {
+            hwMonitor.RecordEvent();
+        }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        // Precise Timing: Sleep until next tick
+        std::this_thread::sleep_until(next_tick);
     }
 
     std::cout << "[FFB] Loop Stopped." << std::endl;

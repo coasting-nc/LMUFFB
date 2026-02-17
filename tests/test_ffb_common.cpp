@@ -112,6 +112,7 @@ void ParseTagArguments(int argc, char* argv[]) {
 TelemInfoV01 CreateBasicTestTelemetry(double speed, double slip_angle) {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
+    data.mDeltaTime = 0.0025;
     
     // Time
     data.mDeltaTime = 0.01; // 100Hz

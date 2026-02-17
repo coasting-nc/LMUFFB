@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.49] - 2026-02-17
+### Added
+- **FFB Rate Monitoring & Verification (Issue #129)**:
+  - Implemented a high-precision `RateMonitor` to track effective frequencies of FFB loop, telemetry updates, and hardware calls.
+  - Added a new **System Health** section in the GUI displaying real-time Hz for all critical channels.
+  - **Torque Source Selection**: Users can now choose between "Shaft Torque" (100Hz Legacy) and "Direct Torque" (400Hz LMU 1.2+). The direct stream provides much higher fidelity and is recommended for modern LMU versions.
+  - **Precise Loop Timing**: Migrated the main FFB loop to a high-resolution `sleep_until` mechanism, stabilizing the update rate at exactly 400Hz regardless of DirectInput driver latency.
+  - **Health Warnings**: The application now outputs console and logger warnings if it detects telemetry or torque rates dropping below the 400Hz target.
+
 ## [0.7.48] - 2026-02-15
 ### Fixed
 - **FFB Persistence After Finish (Issue #126)**: Force Feedback now remains active during cool-down laps and after a DNF, provided the player retains vehicle control and the session is not officially over.
