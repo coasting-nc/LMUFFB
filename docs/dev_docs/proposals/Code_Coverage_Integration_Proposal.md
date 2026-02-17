@@ -54,13 +54,13 @@ To see coverage results directly in your editor instead of a browser, you can us
 - Use the updated command below to generate a `cobertura.xml` file in your root directory.
 
 ### 2. Updated Command (HTML + VS Code XML + Filtering)
-To generate the HTML report folder AND the XML file for VS Code in one go, while excluding the tests:
+To generate the HTML report folder AND the XML file for VS Code in one go, while excluding the tests and unwanted system headers:
 ```powershell
-OpenCppCoverage.exe --sources "*\src\*" --excluded_sources "*\tests\*" --modules "run_combined_tests.exe" --export_type=html --export_type=cobertura:cobertura.xml -- .\build\tests\Release\run_combined_tests.exe
+OpenCppCoverage.exe --sources "*LMUFFB\src\*" --excluded_sources "*\tests\*" --excluded_sources "*vctools*" --excluded_sources "*WindowsSDK*" --export_type=html --export_type=cobertura:cobertura.xml -- .\build\tests\Release\run_combined_tests.exe
 ```
-- `--sources "*\src\*"`: Ensures we match absolute paths in PDBs.
+- `--sources "*LMUFFB\src\*"`: Anchors the search to your local project folder.
 - `--excluded_sources "*\tests\*"`: Ignores coverage for the test suite itself.
-- `--modules "run_combined_tests.exe"`: Targets the specific test binary for analysis.
+- `--excluded_sources "*vctools*"` and `"*WindowsSDK*"`: Filters out internal compiler and system headers.
 - `--export_type=html`: Generates the interactive browser report.
 - `--export_type=cobertura:cobertura.xml`: Generates the file needed for VS Code's **Coverage Gutters**.
 
