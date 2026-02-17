@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.48] - 2026-02-15
+### Fixed
+- **FFB Persistence After Finish (Issue #126)**: Force Feedback now remains active during cool-down laps and after a DNF, provided the player retains vehicle control and the session is not officially over.
+- **Reliability & Safety (Issue #79)**: Implemented a **Safety Slew Rate Limiter** to prevent violent wheel jolts during session transitions or control handovers.
+  - **Dynamic Clamping**: Limits force rate-of-change to 1000 units/s normally, and a stricter 100 units/s during "restricted" phases (cool-down, lost control).
+  - **NaN/Inf Protection**: Added rigorous mathematical sanitization for telemetry inputs and FFB outputs.
+- **Hardware Zeroing**: Moved hardware update calls outside the connection conditional to ensure the wheel is always zeroed out when the game is disconnected or FFB is inactive.
+
+### Improved
+- **Effect Tuning**:
+  - **Slide Texture**: Increased activation threshold from 0.5 m/s to 1.5 m/s to suppress vibration artifacts on straights caused by tire toe-in.
+  - **Texture Load Cap**: Increased `texture_safe_max` from 2.0 to 10.0 to match the brake load cap, providing more headroom for road texture scaling.
+- **Scrub Drag**: Decoupled the Scrub Drag effect from the main Road Texture toggle, allowing it to function independently if its gain is set.
+
+### Testing
+- **New Safety Suite**: Added test cases for the Slew Rate Limiter and updated `IsFFBAllowed` verification.
+- **Issue Reproduction**: Added regression test for Issue #126.
+
 ## [0.7.47] - 2026-02-14
 ### Added
 - **Dynamic Weight & Grip Smoothing**: Implemented advanced signal processing for tire load and grip telemetry.

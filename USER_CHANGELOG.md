@@ -4,6 +4,27 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]February 15, 2026[/b][/size]
+[b]Version 0.7.48 - Safety & Reliability Update[/b]
+
+[b]New release[/b] (0.7.48): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]FFB After Finish Line[/b]: Resolved a major community request where Force Feedback would cut out immediately upon crossing the finish line. FFB now remains active during cool-down laps and after a DNF, provided you are still in control of the car. (#126)
+[*][b]Wheel Jolt Protection[/b]: Implemented a new [b]Safety Slew Rate Limiter[/b]. This feature prevents dangerous, violent steering wheel jolts that could occur during session transitions or when AI takes control of the car. It ensures any sudden force changes are rounded off smoothly. (#79)
+[*][b]Consistent Hardware Zeroing[/b]: Improved safety by ensuring the wheel always returns to center when the game is disconnected or the app is inactive, preventing the wheel from becoming "stuck" at full torque.
+[/list]
+
+[b]Improved[/b]
+[list]
+[*][b]Reduced Straight-Line Jitter[/b]: Increased the activation threshold for Slide Texture from 0.5 to 1.5 m/s. This surgically removes annoying vibration artifacts on straights caused by tire toe-in, without losing actual slide feedback.
+[*][b]Expanded Road Texture Headroom[/b]: Increased the texture load cap to match the brake cap, allowing for much more detailed road feel on high-downforce cars.
+[*][b]Independent Scrub Drag[/b]: The Scrub Drag effect is now decoupled from the main Road Texture toggle, giving users more granular control over their haptic configuration.
+[/list]
+
+---
+
 [size=5][b]February 14, 2026[/b][/size]
 [b]Version 0.7.47 - Advanced Physics Smoothing[/b]
 

@@ -34,6 +34,10 @@ void FFBThread() {
     std::cout << "[FFB] Loop Started." << std::endl;
 
     while (g_running) {
+        double force = 0.0;
+        double dt = 0.0025; // Default 400Hz
+        bool restricted = true;
+
         if (g_ffb_active && GameConnector::Get().IsConnected()) {
             bool in_realtime = GameConnector::Get().CopyTelemetry(g_localData);
             bool is_stale = GameConnector::Get().IsStale(100);
@@ -66,10 +70,7 @@ void FFBThread() {
             }
             was_in_menu = !in_realtime;
             
-            double force = 0.0;
             bool should_output = false;
-            double dt = 0.0025; // Default 400Hz
-            bool restricted = true;
 
             if (in_realtime && !is_stale && g_localData.telemetry.playerHasVehicle) {
                 uint8_t idx = g_localData.telemetry.playerVehicleIdx;
@@ -88,16 +89,18 @@ void FFBThread() {
             }
             
             if (!should_output) force = 0.0;
-
-            // Safety Layer (v0.7.49): Slew Rate Limiting and NaN protection
-            {
-                std::lock_guard<std::mutex> lock(g_engine_mutex);
-                if (dt < 0.0001) dt = 0.0025;
-                force = g_engine.ApplySafetySlew(force, dt, restricted);
-            }
-
-            DirectInputFFB::Get().UpdateForce(force);
         }
+
+        // Safety Layer (v0.7.49): Slew Rate Limiting and NaN protection
+        // v0.7.48: Always update hardware even if disconnected/inactive to ensure zeroing
+        {
+            std::lock_guard<std::mutex> lock(g_engine_mutex);
+            if (dt < 0.0001) dt = 0.0025;
+            force = g_engine.ApplySafetySlew(force, dt, restricted);
+        }
+
+        DirectInputFFB::Get().UpdateForce(force);
+
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 
