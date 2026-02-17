@@ -56,3 +56,33 @@ TEST_CASE(test_rate_monitor_realtime, "Diagnostics") {
     // Set threshold to 30.0 to remain robust across different environments.
     ASSERT_GE(rate, 30.0);
 }
+
+TEST_CASE(test_channel_monitor_logic, "Diagnostics") {
+    struct ChannelMonitor {
+        RateMonitor monitor;
+        double lastValue = -1e18;
+        void Update(double newValue, std::chrono::steady_clock::time_point now) {
+            if (newValue != lastValue) {
+                monitor.RecordEventAt(now);
+                lastValue = newValue;
+            }
+        }
+    };
+
+    ChannelMonitor ch;
+    auto start = std::chrono::steady_clock::now();
+
+    // Force first update to clear constructor-based start time
+    ch.Update(1.0, start);
+    ch.Update(1.1, start + std::chrono::milliseconds(1001));
+
+    // Now m_startTime is start + 1001ms, m_count is 0.
+
+    // Record 3 events over the next second
+    ch.Update(1.2, start + std::chrono::milliseconds(1200)); // count=1
+    ch.Update(1.3, start + std::chrono::milliseconds(1500)); // count=2
+    ch.Update(1.4, start + std::chrono::milliseconds(2001)); // count=3. duration = 1000ms.
+
+    // Should be exactly 3.0 Hz
+    ASSERT_NEAR(ch.monitor.GetRate(), 3.0, 0.1);
+}
