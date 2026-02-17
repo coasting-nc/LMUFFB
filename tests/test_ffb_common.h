@@ -186,12 +186,14 @@ public:
     static void SetSlopeBuffer(FFBEngine& e, const std::array<double, 41>& lat_g) { e.m_slope_lat_g_buffer = lat_g; }
     static void SetSlopeBufferCount(FFBEngine& e, int count) { e.m_slope_buffer_count = count; }
     static void SetSlopeTorqueBuffer(FFBEngine& e, const std::array<double, 41>& torque) { e.m_slope_torque_buffer = torque; }
+    static void SetSlopeSteerBuffer(FFBEngine& e, const std::array<double, 41>& steer) { e.m_slope_steer_buffer = steer; }
+    static void SetSlopeSlipBuffer(FFBEngine& e, const std::array<double, 41>& slip) { e.m_slope_slip_buffer = slip; }
     static void SetSlopeUseTorque(FFBEngine& e, bool val) { e.m_slope_use_torque = val; }
     static double CallCalculateSlopeGrip(FFBEngine& e, double lat_g, double slip, double dt, const TelemInfoV01* data) {
         return e.calculate_slope_grip(lat_g, slip, dt, data);
     }
-    static float CallApplySignalConditioning(FFBEngine& e, float f, const TelemInfoV01* data, FFBCalculationContext& ctx) {
-        return e.apply_signal_conditioning(f, data, ctx);
+    static double CallApplySignalConditioning(FFBEngine& e, double raw_torque, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        return e.apply_signal_conditioning(raw_torque, data, ctx);
     }
     static void CallCalculateGyroDamping(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
         e.calculate_gyro_damping(data, ctx);

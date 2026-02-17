@@ -11,6 +11,8 @@ TEST_CASE(test_vehicle_class_parsing_keywords, "Internal") {
     
     // Explicit requested branches for coverage:
     ASSERT_EQ((int)FFBEngineTestAccess::CallParseVehicleClass(engine, "LMP2 WEC", ""), (int)FFBEngine::ParsedVehicleClass::LMP2_RESTRICTED); // Line 730
+    ASSERT_EQ((int)FFBEngineTestAccess::CallParseVehicleClass(engine, "LMP2", ""), (int)FFBEngine::ParsedVehicleClass::LMP2_UNSPECIFIED); // Line 733
+    ASSERT_EQ((int)FFBEngineTestAccess::CallParseVehicleClass(engine, "HYPERCAR", ""), (int)FFBEngine::ParsedVehicleClass::HYPERCAR);
     ASSERT_EQ((int)FFBEngineTestAccess::CallParseVehicleClass(engine, "", "488 GTE"), (int)FFBEngine::ParsedVehicleClass::GTE); // Line 769
     ASSERT_EQ((int)FFBEngineTestAccess::CallParseVehicleClass(engine, "", "M4 GT3"), (int)FFBEngine::ParsedVehicleClass::GT3); // Line 777
 

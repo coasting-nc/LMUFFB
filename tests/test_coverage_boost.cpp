@@ -16,13 +16,43 @@ TEST_CASE(test_coverage_slope_torque, "Coverage") {
     
     // Fill buffers to allow SG derivative calculation
     std::array<double, 41> torque_buf = {};
-    for(int i=0; i<41; i++) torque_buf[i] = 100.0 - (i * 5.0); // Negative ramp
+    std::array<double, 41> steer_buf = {};
+    std::array<double, 41> slip_buf = {};
+    std::array<double, 41> lat_g_buf = {};
+
+    for(int i=0; i<41; i++) {
+        torque_buf[i] = 100.0 - (i * 2.0); // Negative derivative
+        steer_buf[i] = 0.5 + (i * 0.1);    // Positive derivative
+        slip_buf[i] = 0.1 + (i * 0.01);
+        lat_g_buf[i] = 5.0 + (i * 0.5);
+    }
+    
     FFBEngineTestAccess::SetSlopeTorqueBuffer(engine, torque_buf);
+    FFBEngineTestAccess::SetSlopeSteerBuffer(engine, steer_buf);
+    FFBEngineTestAccess::SetSlopeSlipBuffer(engine, slip_buf);
+    FFBEngineTestAccess::SetSlopeBuffer(engine, lat_g_buf);
     FFBEngineTestAccess::SetSlopeBufferIndex(engine, 0);
     FFBEngineTestAccess::SetSlopeBufferCount(engine, 41);
     
     // Call calculation - this should update m_slope_torque_current and use it
+    // dTorque_dt < 0, dSteer_dt > 0 => num < 0 => m_slope_torque_current < 0
+    // This hits Line 1227: if (m_slope_torque_current < 0.0)
     double output = FFBEngineTestAccess::CallCalculateSlopeGrip(engine, 1.0, 0.1, 0.01, &data);
+    ASSERT_TRUE(std::isfinite(output));
+
+    // Coverage for Line 1210: else branch when dSteer_dt is small
+    for(int i=0; i<41; i++) steer_buf[i] = 0.5; // Zero derivative
+    FFBEngineTestAccess::SetSlopeSteerBuffer(engine, steer_buf);
+    output = FFBEngineTestAccess::CallCalculateSlopeGrip(engine, 1.0, 0.1, 0.01, &data);
+    ASSERT_TRUE(std::isfinite(output));
+
+    // Coverage for Line 1225 area (else branch when torque disabled)
+    FFBEngineTestAccess::SetSlopeUseTorque(engine, false);
+    output = FFBEngineTestAccess::CallCalculateSlopeGrip(engine, 1.0, 0.1, 0.01, &data);
+    ASSERT_TRUE(std::isfinite(output));
+
+    // Coverage for data == nullptr
+    output = FFBEngineTestAccess::CallCalculateSlopeGrip(engine, 1.0, 0.1, 0.01, nullptr);
     ASSERT_TRUE(std::isfinite(output));
 }
 
@@ -57,9 +87,18 @@ TEST_CASE(test_coverage_flatspot, "Coverage") {
     FFBEngineTestAccess::SetFlatspotSuppression(engine, true);
     FFBEngineTestAccess::SetFlatspotStrength(engine, 0.5f);
     
-    float out = FFBEngineTestAccess::CallApplySignalConditioning(engine, 1.0f, &data, ctx);
+    double out = FFBEngineTestAccess::CallApplySignalConditioning(engine, 1.0, &data, ctx);
     // Should be filtered.
-    ASSERT_NEAR(out, 1.0f, 1.0f); // Just ensure it runs and returns something finite
+    ASSERT_TRUE(std::isfinite(out));
+
+    // Coverage for Line 1825: else branch of if (wheel_freq > 1.0)
+    ctx.car_speed = 0.5; // Very low speed -> wheel_freq < 1.0
+    out = FFBEngineTestAccess::CallApplySignalConditioning(engine, 1.0, &data, ctx);
+    ASSERT_TRUE(std::isfinite(out));
+
+    // Coverage for m_flatspot_suppression = false
+    FFBEngineTestAccess::SetFlatspotSuppression(engine, false);
+    out = FFBEngineTestAccess::CallApplySignalConditioning(engine, 1.0, &data, ctx);
     ASSERT_TRUE(std::isfinite(out));
 }
 
@@ -76,6 +115,11 @@ TEST_CASE(test_coverage_gyro_damping, "Coverage") {
     
     FFBEngineTestAccess::CallCalculateGyroDamping(engine, &data, ctx);
     // ctx.gyro_force should be populated
+    ASSERT_TRUE(std::isfinite(ctx.gyro_force));
+
+    // Coverage for range <= 0.0f (Line 1917)
+    data.mPhysicalSteeringWheelRange = 0.0f;
+    FFBEngineTestAccess::CallCalculateGyroDamping(engine, &data, ctx);
     ASSERT_TRUE(std::isfinite(ctx.gyro_force));
 }
 
@@ -97,7 +141,11 @@ TEST_CASE(test_coverage_abs_pulse, "Coverage") {
     
     FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
     ASSERT_TRUE(std::isfinite(ctx.abs_pulse_force));
-    // Since freq > 0, sin(phase) might be non-zero.
+    
+    // Coverage for m_abs_pulse_enabled = false
+    FFBEngineTestAccess::SetABSPulseEnabled(engine, false);
+    FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
+    ASSERT_TRUE(std::isfinite(ctx.abs_pulse_force));
 }
 
 } // namespace FFBEngineTests
