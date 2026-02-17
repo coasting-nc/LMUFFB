@@ -305,22 +305,29 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
         static char new_preset_name[64] = "";
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.4f);
-        ImGui::InputText("##NewPresetName", new_preset_name, 64);
+        ImGui::InputTextWithHint("##NewPresetName", "New Preset Name...", new_preset_name, 64);
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Enter a name for your new user preset.");
         ImGui::SameLine();
+        bool name_empty = (strlen(new_preset_name) == 0);
+        if (name_empty) ImGui::BeginDisabled();
         if (ImGui::Button("Save New")) {
-            if (strlen(new_preset_name) > 0) {
-                Config::AddUserPreset(std::string(new_preset_name), engine);
-                for (int i = 0; i < (int)Config::presets.size(); i++) {
-                    if (Config::presets[i].name == std::string(new_preset_name)) {
-                        selected_preset = i;
-                        break;
-                    }
+            Config::AddUserPreset(std::string(new_preset_name), engine);
+            for (int i = 0; i < (int)Config::presets.size(); i++) {
+                if (Config::presets[i].name == std::string(new_preset_name)) {
+                    selected_preset = i;
+                    break;
                 }
-                new_preset_name[0] = '\0';
             }
+            new_preset_name[0] = '\0';
         }
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Create a new user preset from the current settings.");
+        if (name_empty) {
+            ImGui::EndDisabled();
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+                ImGui::SetTooltip("Please enter a name for the new preset.");
+            }
+        } else {
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Create a new user preset from the current settings.");
+        }
 
         if (ImGui::Button("Save Current Config")) {
             if (selected_preset >= 0 && selected_preset < (int)Config::presets.size() && !Config::presets[selected_preset].is_builtin) {
@@ -331,11 +338,23 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("Save modifications to the selected user preset or global calibration.");
         ImGui::SameLine();
-        if (ImGui::Button("Reset Defaults")) {
-            Config::ApplyPreset(0, engine);
-            selected_preset = 0;
+        static float reset_confirm_time = 0;
+        if (reset_confirm_time > 0 && ImGui::GetTime() - reset_confirm_time > 3.0f) reset_confirm_time = 0;
+
+        const char* reset_label = (reset_confirm_time > 0) ? "CONFIRM RESET?" : "Reset Defaults";
+        if (ImGui::Button(reset_label)) {
+            if (reset_confirm_time > 0) {
+                Config::ApplyPreset(0, engine);
+                selected_preset = 0;
+                reset_confirm_time = 0;
+            } else {
+                reset_confirm_time = (float)ImGui::GetTime();
+            }
         }
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Revert all settings to factory default (T300 baseline).");
+        if (ImGui::IsItemHovered()) {
+            if (reset_confirm_time > 0) ImGui::SetTooltip("Click again to confirm resetting all settings.");
+            else ImGui::SetTooltip("Revert all settings to factory default (T300 baseline).");
+        }
         ImGui::SameLine();
         if (ImGui::Button("Duplicate")) {
             if (selected_preset >= 0) {
@@ -357,7 +376,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             selected_preset = 0;
             Config::ApplyPreset(0, engine);
         }
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Remove the selected user preset (builtin presets are protected).");
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+            if (can_delete) {
+                ImGui::SetTooltip("Remove the selected user preset.");
+            } else {
+                ImGui::SetTooltip("Built-in presets are protected and cannot be deleted.");
+            }
+        }
         if (!can_delete) ImGui::EndDisabled();
 
         ImGui::Separator();
