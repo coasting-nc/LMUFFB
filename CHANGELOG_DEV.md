@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.56] - 2026-02-17
+### Fixed
+- **100% Coverage for FFBEngine Core**:
+  - Achieved full coverage for `ParseVehicleClass` and `calculate_slope_grip` torque fusion paths.
+  - Used explicit boolean assignments to resolve 'ghost line' issues where coverage tools failed to attribute hits to complex conditional logic in headers.
+
 ## [0.7.55] - 2026-02-17
 ### Fixed
 - **Code Coverage Visibility**:

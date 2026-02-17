@@ -20,9 +20,9 @@ TEST_CASE(test_gyro_damping_target_coverage, "Coverage") {
     engine.m_gyro_gain = 1.0f;
     engine.m_gyro_smoothing = 0.1f;
     
-    // Path 1: Default range (range <= 0.0f) - Hits Line 1919
+    // Path 1: Default range (range <= 0.0f)
     data.mPhysicalSteeringWheelRange = 0.0f;
-    data.mUnfilteredSteering = 0.5f; // Positive steering velocity
+    data.mUnfilteredSteering = 0.5f; 
     FFBEngineTestAccess::CallCalculateGyroDamping(engine, &data, ctx);
     ASSERT_TRUE(std::abs(ctx.gyro_force) > 0.001);
     
@@ -31,7 +31,7 @@ TEST_CASE(test_gyro_damping_target_coverage, "Coverage") {
     FFBEngineTestAccess::CallCalculateGyroDamping(engine, &data, ctx);
     ASSERT_TRUE(std::abs(ctx.gyro_force) > 0.001);
     
-    // Path 3: Minimal smoothing (tau < 0.0001) - Hits Line 1925
+    // Path 3: Minimal smoothing (tau < 0.0001)
     engine.m_gyro_smoothing = 0.0f;
     FFBEngineTestAccess::CallCalculateGyroDamping(engine, &data, ctx);
     ASSERT_TRUE(std::abs(ctx.gyro_force) > 0.001);
@@ -47,7 +47,7 @@ TEST_CASE(test_abs_pulse_target_coverage, "Coverage") {
     ctx.decoupling_scale = 1.0;
     ctx.speed_gate = 1.0;
     
-    // Path 1: Disabled (early return) - Hits Line 1933
+    // Path 1: Disabled (early return)
     engine.m_abs_pulse_enabled = false;
     FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
     ASSERT_EQ(ctx.abs_pulse_force, 0.0);
@@ -64,17 +64,15 @@ TEST_CASE(test_abs_pulse_target_coverage, "Coverage") {
     FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
     ASSERT_EQ(ctx.abs_pulse_force, 0.0);
     
-    // Path 4: Enabled and active (hits SIN loop and phase accumulation) - Hits Line 1944-1947
+    // Path 4: Enabled and active
     data.mUnfilteredBrake = 1.0f; 
     for(int i=0; i<4; i++) {
         data.mWheel[i].mBrakePressure = 1.0f; // Create delta of 1.0/0.01 = 100.0 > 2.0
     }
     FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
-    
-    // Verify force is generated (sin(phase) should be non-zero after 1 step)
     ASSERT_TRUE(std::abs(ctx.abs_pulse_force) > 0.001);
     
-    // Path 5: Phase wrapping (fmod) - Hits Line 1946
+    // Path 5: Phase wrapping (fmod)
     for(int i=0; i<1000; i++) {
         FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
     }
@@ -132,6 +130,42 @@ TEST_CASE(test_ffb_engine_full_integration_target, "Coverage") {
     
     ASSERT_TRUE(found_gyro);
     ASSERT_TRUE(found_abs);
+}
+
+TEST_CASE(test_parse_vehicle_class_coverage, "Coverage") {
+    FFBEngine engine;
+    
+    // Line 731: else if (cls.find("WEC") != std::string::npos)
+    ASSERT_EQ((int)FFBEngineTestAccess::CallParseVehicleClass(engine, "LMP2 WEC", "ORECA"), (int)FFBEngine::ParsedVehicleClass::LMP2_RESTRICTED);
+    
+    // Line 733/734: else (LMP2 unspecified)
+    ASSERT_EQ((int)FFBEngineTestAccess::CallParseVehicleClass(engine, "LMP2", "ORECA"), (int)FFBEngine::ParsedVehicleClass::LMP2_UNSPECIFIED);
+
+    // Other branches
+    ASSERT_EQ((int)FFBEngineTestAccess::CallParseVehicleClass(engine, "LMP2 ELMS", "ORECA"), (int)FFBEngine::ParsedVehicleClass::LMP2_UNRESTRICTED);
+    ASSERT_EQ((int)FFBEngineTestAccess::CallParseVehicleClass(engine, "HYPERCAR", ""), (int)FFBEngine::ParsedVehicleClass::HYPERCAR);
+}
+
+TEST_CASE(test_calculate_slope_grip_torque_coverage, "Coverage") {
+    FFBEngine engine;
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    data.mSteeringShaftTorque = 1.0f;
+
+    // Path 1: m_slope_use_torque = true, data != nullptr (Line 1203 and 1226)
+    FFBEngineTestAccess::SetSlopeUseTorque(engine, true);
+    double out = FFBEngineTestAccess::CallCalculateSlopeGrip(engine, 1.0, 0.1, 0.01, &data);
+    ASSERT_TRUE(std::isfinite(out));
+
+    // Path 2: m_slope_use_torque = false (Else of 1203 -> Line 1215)
+    FFBEngineTestAccess::SetSlopeUseTorque(engine, false);
+    out = FFBEngineTestAccess::CallCalculateSlopeGrip(engine, 1.0, 0.1, 0.01, &data);
+    ASSERT_TRUE(std::isfinite(out));
+    
+    // Path 3: data == nullptr
+    FFBEngineTestAccess::SetSlopeUseTorque(engine, true);
+    out = FFBEngineTestAccess::CallCalculateSlopeGrip(engine, 1.0, 0.1, 0.01, nullptr);
+    ASSERT_TRUE(std::isfinite(out));
 }
 
 } // namespace FFBEngineTests

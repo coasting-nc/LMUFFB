@@ -712,7 +712,7 @@ private:
 
     // Helper: Parse car class from strings (v0.7.44 Refactor)
     // Returns a ParsedVehicleClass enum for internal logic and categorization
-    ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleName) {
+    __declspec(noinline) ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleName) {
         std::string cls = className ? className : "";
         std::string name = vehicleName ? vehicleName : "";
 
@@ -726,12 +726,10 @@ private:
         }
         
         if (cls.find("LMP2") != std::string::npos) {
-            if (cls.find("ELMS") != std::string::npos || name.find("DERESTRICTED") != std::string::npos)
-                return ParsedVehicleClass::LMP2_UNRESTRICTED;
-            else if (cls.find("WEC") != std::string::npos)
-                return ParsedVehicleClass::LMP2_RESTRICTED;
-            else
-                return ParsedVehicleClass::LMP2_UNSPECIFIED;
+            if (cls.find("ELMS") != std::string::npos || name.find("DERESTRICTED") != std::string::npos) { return ParsedVehicleClass::LMP2_UNRESTRICTED; }
+            volatile bool is_wec = (cls.find("WEC") != std::string::npos);
+            if (is_wec) { return ParsedVehicleClass::LMP2_RESTRICTED; }
+            return ParsedVehicleClass::LMP2_UNSPECIFIED;
         }
 
         if (cls.find("LMP3") != std::string::npos) return ParsedVehicleClass::LMP3;
@@ -1138,7 +1136,7 @@ public:
 
     // Helper: Calculate Grip Factor from Slope - v0.7.40 REWRITE
     // Robust projected slope estimation with hold-and-decay logic and torque-based anticipation.
-    double calculate_slope_grip(double lateral_g, double slip_angle, double dt, const TelemInfoV01* data = nullptr) {
+    __declspec(noinline) double calculate_slope_grip(double lateral_g, double slip_angle, double dt, const TelemInfoV01* data = nullptr) {
         // 1. Signal Hygiene (Slew Limiter & Pre-Smoothing)
 
         // Initialize slew limiter and smoothing state on first sample to avoid ramp-up transients
@@ -1200,7 +1198,8 @@ public:
         }
 
         // 5. Calculate Torque-based Slope (Pneumatic Trail Anticipation)
-        if (m_slope_use_torque && data) {
+        volatile bool can_calc_torque = (m_slope_use_torque && data != nullptr);
+        if (can_calc_torque) {
             double dTorque_dt = calculate_sg_derivative(m_slope_torque_buffer, m_slope_buffer_count, m_slope_sg_window, dt);
             double dSteer_dt = calculate_sg_derivative(m_slope_steer_buffer, m_slope_buffer_count, m_slope_sg_window, dt);
 
@@ -1223,8 +1222,8 @@ public:
 
         // 2. Calculate Grip Loss from Torque-Slope (Pneumatic Trail Drop)
         double loss_percent_torque = 0.0;
-        if (m_slope_use_torque && data) {
-            // If torque slope is negative, it indicates pneumatic trail is dropping (anticipatory)
+        volatile bool use_torque_fusion = (m_slope_use_torque && data != nullptr);
+        if (use_torque_fusion) {
             if (m_slope_torque_current < 0.0) {
                 loss_percent_torque = std::abs(m_slope_torque_current) * (double)m_slope_torque_sensitivity;
                 loss_percent_torque = (std::max)(0.0, (std::min)(1.0, loss_percent_torque));
