@@ -339,3 +339,95 @@ double upsampled_torque = m_torque_upsampler.Update(data->mSteeringShaftTorque, 
 2.  **Use Holt-Winters** for the main torque to make the 100 Hz signal feel like liquid.
 3.  **Watch your CPU usage.** If 1000 Hz causes stuttering, provide a "High Performance Mode" toggle in the GUI to switch back to 400 Hz.
 
+## Answer 4
+
+Based on the documents and code provided, here is the recommendation regarding 1000Hz upsampling.
+
+### The Short Answer
+**Yes, you should output your FFB at 1000Hz.**
+However, you **should not** upsample your telemetry inputs to 1000Hz.
+
+The optimal architecture for `lmuFFB` is a **Hybrid Pipeline**:
+1.  **Input:** Upsample Telemetry (100Hz) $\to$ **400Hz** (Matching Game Physics).
+2.  **Physics:** Calculate Forces at **400Hz**.
+3.  **Output:** Upsample Final Force (400Hz) $\to$ **1000Hz** (Matching Hardware).
+
+---
+
+### 1. Why Output at 1000Hz? (The Hardware Reality)
+
+The file `docs/dsp_output/simracing_wheelbases_ffb_expanded.md` provides conclusive evidence. Almost every modern Direct Drive wheelbase (Simucube, Fanatec DD, Moza, Simagic, VRS) operates internally at **1000Hz or higher**.
+
+*   **The Problem with 400Hz Output:** If you send 400Hz updates to a 1000Hz wheel, the wheel receives a new command every 2.5ms. The wheel processes updates every 1.0ms.
+    *   *Result:* The wheel sees the same value for 2 ticks, then a jump, then 3 ticks, then a jump. This creates **aliasing artifacts**—a subtle "graininess" or "robotic stepping" feel, especially in smooth corners.
+*   **The Solution (5/2 Resampling):** The provided `UpSampler.cpp` implements a **Polyphase FIR Filter**. This is vastly superior to linear interpolation. It mathematically reconstructs the signal to fill the gaps smoothly, removing the "digital steps" before they reach the hardware.
+
+### 2. Why NOT Upsample Telemetry to 1000Hz?
+
+You asked if you should also upsample telemetry channels to 1000Hz. **I recommend against this.**
+
+*   **Source Limitation:** Your source data is 100Hz.
+    *   Upsampling 100Hz $\to$ 400Hz requires predicting 3 intermediate points (75% prediction).
+    *   Upsampling 100Hz $\to$ 1000Hz requires predicting 9 intermediate points (90% prediction).
+*   **Noise Amplification:** Predicting that far ahead increases the risk of "overshoot" (phantom forces) when the car changes direction suddenly.
+*   **CPU Waste:** The game engine (rFactor 2 / LMU) runs its internal physics at 400Hz. Calculating physics at 1000Hz provides no additional "truth"—you are just calculating high-resolution math on low-resolution guesses.
+
+### 3. The Recommended Architecture
+
+Use the **400Hz Physics Core** with a **1000Hz Output Stage**.
+
+#### Step A: Input Conditioning (100Hz $\to$ 400Hz)
+Use the **Holt-Winters** or **Inter-Frame** upsamplers we discussed previously to bring the 100Hz telemetry up to 400Hz.
+*   *Goal:* Feed the physics engine with a stable 400Hz signal.
+
+#### Step B: Physics Calculation (400Hz)
+Run your `FFBEngine::calculate_force` loop at 400Hz.
+*   *Goal:* Calculate Slope Detection, SoP, and Friction at the native rate of the game engine.
+
+#### Step C: Output Resampling (400Hz $\to$ 1000Hz)
+Integrate the provided `SampleRateConverter` class here.
+
+**Integration Strategy:**
+1.  **Buffer:** You cannot just process one sample at a time because the ratio is 2.5 (5/2). You need to process blocks or use a ring buffer.
+2.  **The Code:** The provided `UpSampler.cpp` is excellent. It uses a windowed sinc filter (Blackman window) which preserves signal phase better than simple interpolation.
+
+**Modified `DirectInputFFB::UpdateForce` Logic:**
+
+```cpp
+// In FFBEngine or Main Loop
+// 1. Calculate 400Hz Force
+double force_400hz = g_engine.calculate_force(...);
+
+// 2. Push to Resampler (Concept)
+// The resampler takes 400Hz input and produces 1000Hz output.
+// Since 1 input != 1 output (ratio 2.5), you need a small buffer.
+static LMUFFB::SampleRateConverter resampler(1, 12); // 1 channel, 12 taps
+float input_buf[1] = { (float)force_400hz };
+float output_buf[1][5]; // Max output for 1 input is roughly 2-3 samples
+
+int samples_generated = resampler.process(&input_buf, output_buf, 1, 5);
+
+// 3. Send to USB (1000Hz)
+for (int i = 0; i < samples_generated; i++) {
+    DirectInputFFB::Get().UpdateForce(output_buf[0][i]);
+    
+    // Critical: You must sleep precisely to maintain 1000Hz pacing
+    // or rely on the DirectInput driver's internal buffer if it supports it.
+    // Ideally, your main loop runs at 1000Hz, but physics runs every 2.5 ticks.
+}
+```
+
+### 4. Implementation Note on the Provided Code
+
+The provided `UpSampler.cpp` is designed for **block processing** (audio style), but FFB is **real-time stream processing**.
+
+*   **Latency Warning:** The `process` function in the provided code might introduce a delay of `taps / 2` samples. With 12 taps at 1000Hz, that is **6ms** of latency.
+*   **Optimization:** For FFB, you might want to reduce `fir_taps` to **8** (4ms latency) to balance smoothness vs. responsiveness. The document mentions "8-16 taps configurable"—start with 8.
+
+### Summary
+1.  **Adopt the 1000Hz Output:** It aligns with the hardware capabilities of your user base (Simucube/Fanatec).
+2.  **Use the Provided Library:** The `5/2 Rational Resampling` algorithm in `UpSampler.cpp` is mathematically correct for converting 400Hz $\to$ 1000Hz.
+3.  **Keep Physics at 400Hz:** Do not upsample telemetry inputs to 1000Hz; it adds noise without adding value.
+
+## Answer 5
+
