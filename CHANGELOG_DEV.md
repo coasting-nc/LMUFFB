@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.59] - 2026-02-19
+### Fixed
+- **FFB Safety Logic Refinement**: Removed the dependency on `gamePhase` from `IsFFBAllowed`. FFB now remains active even if the session is "stopped" or "over" in the game engine, provided the driver is still in control and not disqualified.
+- **Test Integrity**:
+  - Updated `test_ffb_safety.cpp` to align with the new session gating logic.
+  - Fixed a logic error in `test_ffb_coverage_refactor.cpp` where `bottoming_crunch` results were incorrectly cleared right before assertions, causing false failures.
+  - Restored missing method-level and internal comments in `FFBEngine.cpp` for improved maintainability.
+
 ## [0.7.58] - 2026-02-17
 ### Refactored
 - **FFB Engine Split**:

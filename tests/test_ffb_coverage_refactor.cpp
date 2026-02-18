@@ -219,7 +219,6 @@ TEST_CASE(test_coverage_bottoming_rh, "Coverage") {
     ctx.bottoming_crunch = 0.0;
     // Second call should have non-zero sin value
     FFBEngineTestAccess::CallCalculateSuspensionBottoming(engine, &data, ctx);
-    ctx.bottoming_crunch = 0.0;
     
     // After phase advancement, sin should be non-zero
     ASSERT_GT(std::abs(ctx.bottoming_crunch), 0.001);
@@ -246,7 +245,6 @@ TEST_CASE(test_coverage_bottoming_dforce, "Coverage") {
     ctx.bottoming_crunch = 0.0;
     // Second call should have non-zero output
     FFBEngineTestAccess::CallCalculateSuspensionBottoming(engine, &data, ctx);
-    ctx.bottoming_crunch = 0.0;
     
     ASSERT_GT(std::abs(ctx.bottoming_crunch), 0.001);
 }
@@ -275,7 +273,6 @@ TEST_CASE(test_coverage_bottoming_fallback, "Coverage") {
     ctx.bottoming_crunch = 0.0;
     // Second call
     FFBEngineTestAccess::CallCalculateSuspensionBottoming(engine, &data, ctx);
-    ctx.bottoming_crunch = 0.0;
     
     ASSERT_GT(std::abs(ctx.bottoming_crunch), 0.001);
 }
