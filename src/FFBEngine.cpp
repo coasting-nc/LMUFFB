@@ -1001,36 +1001,71 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
 }
 
 void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+    // Explicit reset to prevent persistent forces if not triggered this frame
+    ctx.bottoming_crunch = 0.0;
+
     if (!m_bottoming_enabled) return;
     bool triggered = false;
     double intensity = 0.0;
+
+    // Use best available load for each wheel (per-wheel fallback)
+    double loadL = data->mWheel[0].mTireLoad;
+    double loadR = data->mWheel[1].mTireLoad;
+
+    // Reliability Fix: If mTireLoad is missing (0.0 for DLC cars), use the
+    // kinematic/approximation fallback already calculated in calculate_force.
+    if (loadL < 1.0 && ctx.avg_load > 1.0) loadL = ctx.avg_load;
+    if (loadR < 1.0 && ctx.avg_load > 1.0) loadR = ctx.avg_load;
     
     if (m_bottoming_method == 0) {
+        // Method A: Scraping (Ride Height based)
         double min_rh = (std::min)(data->mWheel[0].mRideHeight, data->mWheel[1].mRideHeight);
-        if (min_rh < 0.002 && min_rh > -1.0) {
+        // Improved Sensitivity: increased threshold from 2mm to 10mm (0.010m)
+        if (min_rh < 0.010 && min_rh > -1.0) {
             triggered = true;
-            intensity = (0.002 - min_rh) / 0.002;
+            intensity = (0.010 - min_rh) / 0.010;
+            intensity = std::clamp(intensity, 0.0, 2.0); // Safety clamp
         }
     } else {
-        double dForceL = (data->mWheel[0].mSuspForce - m_prev_susp_force[0]) / ctx.dt;
-        double dForceR = (data->mWheel[1].mSuspForce - m_prev_susp_force[1]) / ctx.dt;
-        double max_dForce = (std::max)(dForceL, dForceR);
-        if (max_dForce > 100000.0) {
-            triggered = true;
-            intensity = (max_dForce - 100000.0) / 200000.0;
+        // Method B: Susp. Spike (Force rate based)
+        double suspFL = data->mWheel[0].mSuspForce;
+        double suspFR = data->mWheel[1].mSuspForce;
+
+        double dForceL = (suspFL - m_prev_susp_force[0]) / ctx.dt;
+        double dForceR = (suspFR - m_prev_susp_force[1]) / ctx.dt;
+
+        // Reliability Fix: If mSuspForce is missing (0.0 for DLC cars),
+        // fallback to detecting vertical acceleration jolts.
+        if (std::abs(suspFL) < 1.0 && std::abs(suspFR) < 1.0) {
+             double dAccelY = (data->mLocalAccel.y - m_prev_vert_accel) / ctx.dt;
+             if (std::abs(dAccelY) > 500.0) { // arbitrary threshold for jolt (~50G/s change)
+                 triggered = true;
+                 intensity = (std::abs(dAccelY) - 500.0) / 1000.0;
+                 intensity = std::clamp(intensity, 0.0, 2.0); // Safety clamp
+             }
+        } else {
+            double max_dForce = (std::max)(dForceL, dForceR);
+            if (max_dForce > 100000.0) {
+                triggered = true;
+                intensity = (max_dForce - 100000.0) / 200000.0;
+                intensity = std::clamp(intensity, 0.0, 2.0); // Safety clamp
+            }
         }
     }
 
     if (!triggered) {
-        double max_load = (std::max)(data->mWheel[0].mTireLoad, data->mWheel[1].mTireLoad);
+        // Reliability Fix: Uses per-wheel load (including DLC fallback)
+        double max_load = (std::max)(loadL, loadR);
         if (max_load > 8000.0) {
             triggered = true;
             double excess = max_load - 8000.0;
             intensity = std::sqrt(excess) * 0.05;
+            intensity = std::clamp(intensity, 0.0, 2.0); // Safety clamp
         }
     }
 
     if (triggered) {
+        // increased BASE_NM_BOTTOMING (5.0) provides a more substantial "thud"
         double bump_magnitude = intensity * m_bottoming_gain * (double)BASE_NM_BOTTOMING * ctx.decoupling_scale;
         double freq = 50.0;
         m_bottoming_phase += freq * ctx.dt * TWO_PI;

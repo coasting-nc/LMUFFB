@@ -167,6 +167,7 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_abs_pulse_enabled = false;
+    engine.m_bottoming_enabled = false;
     engine.m_scrub_drag_gain = 0.0f;
     engine.m_min_force = 0.0f;
     
