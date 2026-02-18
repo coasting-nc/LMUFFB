@@ -381,7 +381,8 @@ bool DirectInputFFB::UpdateForce(double normalizedForce) {
     // Scale to -10000..10000
     long magnitude = static_cast<long>(normalizedForce * 10000.0);
 
-    // Optimization: Don't call driver if value hasn't changed
+    // DirectInput Overhead Optimization: Don't call driver if value hasn't changed. 
+    // This check prevents the expensive USB call (only talk to the driver when the force actually changes).
     if (magnitude == m_last_force) return false;
     m_last_force = magnitude;
 
