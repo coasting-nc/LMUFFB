@@ -270,6 +270,83 @@ TEST_CASE(test_scrub_drag_fade, "RoadTexture") {
     }
 }
 
+// [Texture][Reliability] Bottoming fix for DLC cars (missing telemetry)
+TEST_CASE(test_bottoming_fix_works_for_dlc_cars, "RoadTexture") {
+    std::cout << "\nTest: Bottoming Fix for DLC Cars (Reliability Verification) [Texture][Reliability]" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
 
+    // Simulate DLC car: missing load and susp force
+    data.mWheel[0].mTireLoad = 0.0;
+    data.mWheel[1].mTireLoad = 0.0;
+    data.mWheel[0].mSuspForce = 0.0;
+    data.mWheel[1].mSuspForce = 0.0;
+
+    // Set high vertical acceleration jolt to trigger Method 1 fallback
+    data.mLocalAccel.y = 10.0; // static
+    engine.calculate_force(&data); // Frame 1: prev_y = 10.0
+
+    data.mLocalAccel.y = 20.0; // Delta = 10.0
+    data.mDeltaTime = 0.005; // dt = 0.005
+    // dAccelY = 10.0 / 0.005 = 2000.0
+    // Trigger threshold is 500.0. So it should trigger!
+
+    engine.m_bottoming_enabled = true;
+    engine.m_bottoming_method = 1; // Susp. Spike (Method B)
+    engine.m_bottoming_gain = 1.0f;
+
+    // Frame 2: Trigger should happen
+    engine.calculate_force(&data);
+
+    // Frame 3: Sine phase should advance to non-zero
+    engine.calculate_force(&data);
+
+    auto batch = engine.GetDebugBatch();
+    bool found_bottoming = false;
+    for (auto& s : batch) {
+        if (std::abs(s.texture_bottoming) > 0.001) found_bottoming = true;
+    }
+
+    if (found_bottoming) {
+        std::cout << "[PASS] Bottoming worked for DLC car via AccelY fallback." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Bottoming still failed for DLC car via AccelY fallback." << std::endl;
+        g_tests_failed++;
+    }
+
+    // Test Fallback Load logic (DLC car)
+    FFBEngine engine2;
+    InitializeEngine(engine2);
+    engine2.m_bottoming_enabled = true;
+    engine2.m_bottoming_gain = 1.0f;
+
+    // Force kinematic load to be high
+    data.mLocalAccel.z = -30.0; // Extreme braking
+    data.mLocalAccel.y = 10.0; // No jolt
+
+    // Wait for missing load hysteresis (20 frames)
+    for(int i=0; i<30; ++i) engine2.calculate_force(&data);
+
+    // Now ctx.avg_load should be high.
+    // Let's check if it triggers bottoming.
+    engine2.calculate_force(&data); // advances phase
+    engine2.calculate_force(&data); // sine non-zero
+
+    batch = engine2.GetDebugBatch();
+    found_bottoming = false;
+    for (auto& s : batch) {
+        if (std::abs(s.texture_bottoming) > 0.001) found_bottoming = true;
+    }
+
+    if (found_bottoming) {
+        std::cout << "[PASS] Bottoming worked for DLC car via Load fallback." << std::endl;
+        g_tests_passed++;
+    } else {
+        std::cout << "[FAIL] Bottoming failed for DLC car via Load fallback." << std::endl;
+        g_tests_failed++;
+    }
+}
 
 } // namespace FFBEngineTests
