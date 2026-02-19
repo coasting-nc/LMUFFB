@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+## [0.7.65] - 2026-02-23
+### Changed
+- **Terminology & UX Overhaul (#145)**:
+  - Renamed "Direct Torque" to "In-Game FFB" throughout the UI and diagnostic plots to clarify that it represents the game's native feedback.
+  - Added a prominent "Use In-Game FFB (400Hz Native)" toggle in the General FFB section for improved discoverability of the recommended feedback source.
+  - Updated tooltips for Torque Source and Pure Passthrough to align with the new terminology.
+
 ## [0.7.64] - 2026-02-19
 ### Fixed
 - **False-Positive Low Sample Rate Warnings (#133)**:

@@ -4,6 +4,20 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]February 23, 2026[/b][/size]
+[b]Version 0.7.65 - Terminology & UX Overhaul[/b]
+
+[b]New release[/b] (0.7.65): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Changed[/b]
+[list]
+[*][b]In-Game FFB Naming[/b]: Renamed "Direct Torque" to "In-Game FFB" throughout the application. This terminology better reflects that this is the actual native force feedback signal from the game engine. (#145)
+[*][b]Improved Discoverability[/b]: Added a prominent "Use In-Game FFB (400Hz Native)" toggle to the General FFB section. This makes it much easier to enable the recommended high-fidelity feedback source without having to search through advanced dropdown menus. (#145)
+[*][b]Context-Sensitive Tooltips[/b]: Updated all related documentation and tooltips to clarify how the In-Game FFB source interacts with LMUFFB's tactile textures and "Pure Passthrough" mode.
+[/list]
+
+---
+
 [size=5][b]February 19, 2026[/b][/size]
 [b]Version 0.7.64 - Improved System Health Monitoring[/b]
 

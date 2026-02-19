@@ -260,7 +260,9 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
     auto IntSetting = [&](const char* label, int* v, const char* const items[], int items_count, const char* tooltip = nullptr) {
         GuiWidgets::Result res = GuiWidgets::Combo(label, v, items, items_count, tooltip);
-        if (res.deactivated) {
+        if (res.changed) {
+            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+            // v is already updated by ImGui, but we lock to ensure visibility and consistency
             Config::Save(engine);
         }
     };
@@ -420,6 +422,15 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             ImGui::Separator();
         }
 
+        bool use_in_game_ffb = (engine.m_torque_source == 1);
+        if (GuiWidgets::Checkbox("Use In-Game FFB (400Hz Native)", &use_in_game_ffb,
+                    "Recommended for LMU 1.2+. Uses the high-frequency FFB channel directly from the game.\n"
+                    "Matches the game's internal physics rate for maximum fidelity.").changed) {
+            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+            engine.m_torque_source = use_in_game_ffb ? 1 : 0;
+            Config::Save(engine);
+        }
+
         BoolSetting("Invert FFB Signal", &engine.m_invert_force, "Check this if the wheel pulls away from center instead of aligning.");
         FloatSetting("Master Gain", &engine.m_gain, 0.0f, 2.0f, FormatPct(engine.m_gain), "Global scale factor for all forces.\n100% = No attenuation.\nReduce if experiencing heavy clipping.");
         FloatSetting("Max Torque Ref", &engine.m_max_torque_ref, 1.0f, 200.0f, "%.1f Nm", "The expected PEAK torque of the CAR in the game.");
@@ -470,15 +481,16 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, sizeof(base_modes)/sizeof(base_modes[0]),
             "Debug tool to isolate effects.\nNative: Normal Operation.\nSynthetic: Constant force to test direction.\nMuted: Disables base physics (good for tuning vibrations).");
 
-        const char* torque_sources[] = { "Shaft Torque (100Hz Legacy)", "Direct Torque (400Hz LMU 1.2+)" };
+        const char* torque_sources[] = { "Shaft Torque (100Hz Legacy)", "In-Game FFB (400Hz LMU 1.2+)" };
         IntSetting("Torque Source", &engine.m_torque_source, torque_sources, sizeof(torque_sources)/sizeof(torque_sources[0]),
             "Select the telemetry channel for base steering torque.\n"
             "Shaft Torque: Standard rF2 physics channel (typically 100Hz).\n"
-            "Direct Torque: New LMU high-frequency channel (native 400Hz). RECOMMENDED.");
+            "In-Game FFB: New LMU high-frequency channel (native 400Hz). RECOMMENDED.\n"
+            "This is the actual FFB signal processed by the game engine.");
 
         BoolSetting("Pure Passthrough", &engine.m_torque_passthrough,
             "Bypasses LMUFFB's internal Understeer and Dynamic Weight modulation for the base steering torque.\n"
-            "Recommended when using Direct Torque (400Hz) if you prefer the game's native FFB modulation.");
+            "Recommended when using In-Game FFB (400Hz) if you prefer the game's native FFB modulation.");
 
         if (ImGui::TreeNodeEx("Signal Filtering", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::NextColumn(); ImGui::NextColumn();
@@ -1022,7 +1034,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Driver Input]");
         PlotWithStats("Selected Torque", plot_raw_steer, -30.0f, 30.0f, ImVec2(0, 40), "The torque value currently being used as the base for FFB calculations.");
         PlotWithStats("Shaft Torque (100Hz)", plot_raw_shaft_torque, -30.0f, 30.0f, ImVec2(0, 40), "Standard rF2 physics channel (typically 100Hz).");
-        PlotWithStats("Direct Torque (400Hz)", plot_raw_gen_torque, -30.0f, 30.0f, ImVec2(0, 40), "New LMU high-frequency channel (native 400Hz).");
+        PlotWithStats("In-Game FFB (400Hz)", plot_raw_gen_torque, -30.0f, 30.0f, ImVec2(0, 40), "New LMU high-frequency channel (native 400Hz).");
         PlotWithStats("Steering Input", plot_raw_input_steering, -1.0f, 1.0f);
         ImGui::Text("Combined Input");
         ImVec2 pos = ImGui::GetCursorScreenPos();
