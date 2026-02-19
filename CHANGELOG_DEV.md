@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.68] - 2026-02-25
+### Added
+- **Hardware Strength Scaling (Stage 2) (#153)**:
+  - Replaced the legacy `m_max_torque_ref` with a explicit **Physical Target Model**.
+  - **Wheelbase Max Torque**: Users now set the actual physical limit of their hardware (e.g., 15 Nm).
+  - **Target Rim Torque**: Users explicitly set the desired peak force they want to feel (e.g., 10 Nm).
+  - **Absolute Tactile Textures**: Textures (Road Details, Slide Rumble, etc.) are now rendered in absolute Newton-meters. A 2 Nm ABS pulse now feels exactly like 2 Nm on ANY wheelbase, preventing violent shaking on high-end DD wheels.
+  - **Migration Logic**: Legacy `max_torque_ref` settings are automatically migrated to the new dual-parameter model on first launch.
+### Changed
+- **UI Redesign**: Replaced the "Max Torque Ref" slider with two dedicated sliders in the General FFB section for better clarity and control.
+### Testing
+- **New Test Suite**: Added `tests/test_ffb_hardware_scaling.cpp` to verify structural force mapping, absolute texture scaling, and config migration.
+- **Test Updates**: Updated over 15 existing test files to align with the new Physical Target scaling model.
+
 ## [0.7.67] - 2026-02-24
 ### Added
 - **Dynamic FFB Normalization (Stage 1) (#152)**:

@@ -81,7 +81,22 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "soft_lock_stiffness") current_preset.soft_lock_stiffness = std::stof(value);
                 else if (key == "soft_lock_damping") current_preset.soft_lock_damping = std::stof(value);
                 else if (key == "invert_force") current_preset.invert_force = std::stoi(value);
-                else if (key == "max_torque_ref") current_preset.max_torque_ref = std::stof(value);
+                else if (key == "wheelbase_max_nm") current_preset.wheelbase_max_nm = std::stof(value);
+                else if (key == "target_rim_nm") current_preset.target_rim_nm = std::stof(value);
+                else if (key == "max_torque_ref") {
+                    // MIGRATION LOGIC (Issue #153)
+                    float old_val = std::stof(value);
+                    if (old_val > 40.0f) {
+                        // Likely the 100Nm clipping hack. Reset to safe DD defaults.
+                        current_preset.wheelbase_max_nm = 15.0f;
+                        current_preset.target_rim_nm = 10.0f;
+                    } else {
+                        // User actually tuned it to their wheelbase (e.g. 20Nm or 4Nm)
+                        current_preset.wheelbase_max_nm = old_val;
+                        current_preset.target_rim_nm = old_val;
+                    }
+                    needs_save = true;
+                }
                 else if (key == "abs_freq") current_preset.abs_freq = std::stof(value);
                 else if (key == "lockup_freq_scale") current_preset.lockup_freq_scale = std::stof(value);
                 else if (key == "spin_freq_scale") current_preset.spin_freq_scale = std::stof(value);
@@ -142,7 +157,8 @@ void Config::LoadPresets() {
         Preset p("T300", true);
         p.invert_force = true;
         p.gain = 1.0f;
-        p.max_torque_ref = 100.1f;
+        p.wheelbase_max_nm = 4.0f;
+        p.target_rim_nm = 4.0f;
         p.min_force = 0.01f;
         p.steering_shaft_gain = 1.0f;
         p.steering_shaft_smoothing = 0.0f;
@@ -203,7 +219,8 @@ void Config::LoadPresets() {
     {
         Preset p("GT3 DD 15 Nm (Simagic Alpha)", true);
         p.gain = 1.0f;
-        p.max_torque_ref = 100.0f;
+        p.wheelbase_max_nm = 15.0f;
+        p.target_rim_nm = 10.0f;
         p.min_force = 0.0f;
         p.steering_shaft_gain = 1.0f;
         p.steering_shaft_smoothing = 0.0f;
@@ -264,7 +281,8 @@ void Config::LoadPresets() {
     {
         Preset p("LMPx/HY DD 15 Nm (Simagic Alpha)", true);
         p.gain = 1.0f;
-        p.max_torque_ref = 100.0f;
+        p.wheelbase_max_nm = 15.0f;
+        p.target_rim_nm = 10.0f;
         p.min_force = 0.0f;
         p.steering_shaft_gain = 1.0f;
         p.steering_shaft_smoothing = 0.0f;
@@ -325,7 +343,8 @@ void Config::LoadPresets() {
     {
         Preset p("GM DD 21 Nm (Moza R21 Ultra)", true);
         p.gain = 1.454f;
-        p.max_torque_ref = 100.1f;
+        p.wheelbase_max_nm = 21.0f;
+        p.target_rim_nm = 12.0f;
         p.min_force = 0.0f;
         p.steering_shaft_gain = 1.989f;
         p.steering_shaft_smoothing = 0.0f;
@@ -387,7 +406,8 @@ void Config::LoadPresets() {
         // Copy GM preset and add yaw kick
         Preset p("GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)", true);
         p.gain = 1.454f;
-        p.max_torque_ref = 100.1f;
+        p.wheelbase_max_nm = 21.0f;
+        p.target_rim_nm = 12.0f;
         p.min_force = 0.0f;
         p.steering_shaft_gain = 1.989f;
         p.steering_shaft_smoothing = 0.0f;
@@ -830,7 +850,8 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "app_version=" << p.app_version << "\n";
     file << "invert_force=" << (p.invert_force ? "1" : "0") << "\n";
     file << "gain=" << p.gain << "\n";
-    file << "max_torque_ref=" << p.max_torque_ref << "\n";
+    file << "wheelbase_max_nm=" << p.wheelbase_max_nm << "\n";
+    file << "target_rim_nm=" << p.target_rim_nm << "\n";
     file << "min_force=" << p.min_force << "\n";
 
     file << "steering_shaft_gain=" << p.steering_shaft_gain << "\n";
@@ -1110,7 +1131,8 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "soft_lock_enabled=" << engine.m_soft_lock_enabled << "\n";
         file << "soft_lock_stiffness=" << engine.m_soft_lock_stiffness << "\n";
         file << "soft_lock_damping=" << engine.m_soft_lock_damping << "\n";
-        file << "max_torque_ref=" << engine.m_max_torque_ref << "\n";
+        file << "wheelbase_max_nm=" << engine.m_wheelbase_max_nm << "\n";
+        file << "target_rim_nm=" << engine.m_target_rim_nm << "\n";
         file << "min_force=" << engine.m_min_force << "\n";
 
         file << "\n; --- Front Axle (Understeer) ---\n";
@@ -1302,7 +1324,19 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "soft_lock_stiffness") engine.m_soft_lock_stiffness = std::stof(value);
                     else if (key == "soft_lock_damping") engine.m_soft_lock_damping = std::stof(value);
                     else if (key == "invert_force") engine.m_invert_force = std::stoi(value);
-                    else if (key == "max_torque_ref") engine.m_max_torque_ref = std::stof(value);
+                    else if (key == "wheelbase_max_nm") engine.m_wheelbase_max_nm = std::stof(value);
+                    else if (key == "target_rim_nm") engine.m_target_rim_nm = std::stof(value);
+                    else if (key == "max_torque_ref") {
+                        // MIGRATION LOGIC (Issue #153)
+                        float old_val = std::stof(value);
+                        if (old_val > 40.0f) {
+                            engine.m_wheelbase_max_nm = 15.0f;
+                            engine.m_target_rim_nm = 10.0f;
+                        } else {
+                            engine.m_wheelbase_max_nm = old_val;
+                            engine.m_target_rim_nm = old_val;
+                        }
+                    }
                     else if (key == "abs_freq") engine.m_abs_freq_hz = std::stof(value);
                     else if (key == "lockup_freq_scale") engine.m_lockup_freq_scale = std::stof(value);
                     else if (key == "spin_freq_scale") engine.m_spin_freq_scale = std::stof(value);
@@ -1356,7 +1390,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     // the engine remains stable and doesn't crash or produce NaN.
 
     engine.m_gain = (std::max)(0.0f, engine.m_gain);
-    engine.m_max_torque_ref = (std::max)(1.0f, engine.m_max_torque_ref);
+    engine.m_wheelbase_max_nm = (std::max)(1.0f, engine.m_wheelbase_max_nm);
+    engine.m_target_rim_nm = (std::max)(1.0f, engine.m_target_rim_nm);
     engine.m_min_force = (std::max)(0.0f, engine.m_min_force);
     engine.m_sop_scale = (std::max)(0.01f, engine.m_sop_scale);
     engine.m_slip_angle_smoothing = (std::max)(0.0001f, engine.m_slip_angle_smoothing);

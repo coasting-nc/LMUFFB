@@ -151,7 +151,7 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
     // Common Setup
     engine.m_lockup_enabled = true;
     engine.m_lockup_gain = 1.0;
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_gain = 1.0f;
     
     data.mUnfilteredBrake = 1.0; // Braking
@@ -361,7 +361,7 @@ TEST_CASE(test_refactor_abs_pulse, "LockupBraking") {
     // Enable ABS
     engine.m_abs_pulse_enabled = true;
     engine.m_abs_gain = 1.0f;
-    engine.m_max_torque_ref = 20.0f; // Scale 1.0
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Scale 1.0
 
     // Trigger condition: High Brake + Pressure Delta
     data.mUnfilteredBrake = 1.0;
@@ -419,7 +419,7 @@ TEST_CASE(test_refactor_torque_drop, "LockupBraking") {
     // Delta = 2.0 / 50.0 = 0.04.
     engine.m_road_texture_enabled = true;
     engine.m_road_texture_gain = 1.0f;
-    engine.m_max_torque_ref = 20.0f; // Scale 1.0
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Scale 1.0
     // Reset deflection state in engine first
     engine.calculate_force(&data);
 

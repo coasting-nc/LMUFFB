@@ -12,7 +12,7 @@ TEST_CASE(test_base_force_modes, "CorePhysics") {
     data.mDeltaTime = 0.0025;
     data.mLocalVel.z = -20.0; 
     
-    engine.m_max_torque_ref = 20.0f; 
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_gain = 1.0f; 
     engine.m_steering_shaft_gain = 0.5f; 
     engine.m_invert_force = false;
@@ -79,7 +79,7 @@ TEST_CASE(test_grip_modulation, "CorePhysics") {
     data.mLocalVel.z = -20.0; 
 
     engine.m_gain = 1.0; 
-    engine.m_max_torque_ref = 20.0f; 
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_invert_force = false;
 
     data.mSteeringShaftTorque = 10.0; 
@@ -119,7 +119,7 @@ TEST_CASE(test_min_force, "CorePhysics") {
     data.mSteeringShaftTorque = 0.05; 
     data.mLocalVel.z = -20.0; 
     engine.m_min_force = 0.10f; 
-    engine.m_max_torque_ref = 20.0f; 
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_invert_force = false;
 
     double force = engine.calculate_force(&data);
@@ -161,7 +161,7 @@ TEST_CASE(test_grip_low_speed, "CorePhysics") {
     engine.m_gain = 1.0;
     engine.m_understeer_effect = 1.0;
     data.mSteeringShaftTorque = 40.0; 
-    engine.m_max_torque_ref = 40.0f;
+    engine.m_wheelbase_max_nm = 40.0f; engine.m_target_rim_nm = 40.0f;
     
     data.mLocalVel.z = 1.0; 
     
@@ -208,14 +208,14 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
         FFBEngine e1;
         e1.m_gain = 1.0; e1.m_invert_force = false; e1.m_understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
         e1.m_rear_align_effect = 1.0;
-        e1.m_max_torque_ref = 20.0f;
+        e1.m_wheelbase_max_nm = 20.0f; e1.m_target_rim_nm = 20.0f;
         ra1 = e1.calculate_force(&data);
     }
     {
         FFBEngine e2;
         e2.m_gain = 1.0; e2.m_invert_force = false; e2.m_understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
         e2.m_rear_align_effect = 1.0;
-        e2.m_max_torque_ref = 60.0f;
+        e2.m_wheelbase_max_nm = 60.0f; e2.m_target_rim_nm = 60.0f;
         ra2 = e2.calculate_force(&data);
     }
 
@@ -233,7 +233,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
         e1.m_gain = 1.0; e1.m_invert_force = false; e1.m_understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
         e1.m_slide_texture_enabled = true;
         e1.m_slide_texture_gain = 1.0;
-        e1.m_max_torque_ref = 20.0f;
+        e1.m_wheelbase_max_nm = 20.0f; e1.m_target_rim_nm = 20.0f;
         e1.m_slide_phase = 0.5;
         s1 = e1.calculate_force(&data);
     }
@@ -242,7 +242,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
         e2.m_gain = 1.0; e2.m_invert_force = false; e2.m_understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
         e2.m_slide_texture_enabled = true;
         e2.m_slide_texture_gain = 1.0;
-        e2.m_max_torque_ref = 100.0f;
+        e2.m_wheelbase_max_nm = 100.0f; e2.m_target_rim_nm = 100.0f;
         e2.m_slide_phase = 0.5;
         s2 = e2.calculate_force(&data);
     }
@@ -261,14 +261,14 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     data.mWheel[0].mGripFract = 0.6; 
     data.mWheel[1].mGripFract = 0.6;
 
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     double u1 = engine.calculate_force(&data);
 
-    engine.m_max_torque_ref = 40.0f;
+    engine.m_wheelbase_max_nm = 40.0f; engine.m_target_rim_nm = 40.0f;
     double u2 = engine.calculate_force(&data);
 
     // v0.7.67 Fix for Issue #152: Understeer is now normalized by session peak,
-    // making it independent of m_max_torque_ref. Expect u1 == u2.
+    // making it independent of m_wheelbase_max_nm. Expect u1 == u2.
     if (std::abs(u1 - u2) < 0.001) {
         std::cout << "[PASS] Understeer Modifier correctly normalized by session peak (" << u1 << " == " << u2 << ")" << std::endl;
         g_tests_passed++;
@@ -378,7 +378,7 @@ TEST_CASE(test_smoothing_step_response, "CorePhysics") {
     engine.m_sop_smoothing_factor = 0.5;
     engine.m_sop_scale = 1.0;  
     engine.m_sop_effect = 1.0;
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_invert_force = false;
     
     data.mLocalAccel.x = 9.81; 
@@ -514,7 +514,7 @@ TEST_CASE(test_regression_rear_torque_lpf, "CorePhysics") {
     engine.m_rear_align_effect = 1.0;
     engine.m_sop_effect = 0.0; // Isolate rear torque
     engine.m_oversteer_boost = 0.0;
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_invert_force = false;
     engine.m_gain = 1.0f; // Explicit gain for clarity
     
@@ -566,7 +566,7 @@ TEST_CASE(test_steering_shaft_smoothing, "CorePhysics") {
 
     engine.m_steering_shaft_smoothing = 0.050f; // 50ms tau
     engine.m_gain = 1.0;
-    engine.m_max_torque_ref = 1.0;
+    engine.m_wheelbase_max_nm = 1.0; engine.m_target_rim_nm = 1.0;
     // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 1.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0);

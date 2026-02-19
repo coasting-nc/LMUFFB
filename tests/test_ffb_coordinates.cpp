@@ -14,7 +14,7 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     engine.m_sop_scale = 10.0f;
     engine.m_sop_smoothing_factor = 1.0f; // Disable smoothing for instant response
     engine.m_gain = 1.0f;
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_understeer_effect = 0.0f;
     engine.m_rear_align_effect = 0.0f;
     engine.m_scrub_drag_gain = 0.0f;
@@ -87,7 +87,7 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     // Setup: Isolate Rear Aligning Torque
     engine.m_rear_align_effect = 1.0f;
     engine.m_gain = 1.0f;
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_sop_effect = 0.0f;
     engine.m_understeer_effect = 0.0f;
     engine.m_scrub_drag_gain = 0.0f;
@@ -188,7 +188,7 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
     engine.m_scrub_drag_gain = 1.0f;
     engine.m_road_texture_enabled = true;
     engine.m_gain = 1.0f;
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_sop_effect = 0.0f;
     engine.m_understeer_effect = 0.0f;
     engine.m_rear_align_effect = 0.0f;
@@ -255,7 +255,7 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
     
     // Setup minimal configuration
     engine.m_gain = 1.0f;
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     data.mSteeringShaftTorque = 0.0;
     data.mWheel[0].mRideHeight = 0.1;
     data.mWheel[1].mRideHeight = 0.1;
@@ -349,7 +349,7 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     
     // Enable ALL lateral effects
     engine.m_gain = 1.0f;
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     
     engine.m_sop_effect = 1.0f;          // Lateral G
     engine.m_rear_align_effect = 1.0f;   // Rear Slip
@@ -460,7 +460,7 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     engine.m_sop_smoothing_factor = 1.0f;
     engine.m_road_texture_enabled = true;
     engine.m_gain = 1.0f;
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_understeer_effect = 0.0f;
     engine.m_slide_texture_enabled = false;
     engine.m_bottoming_enabled = false;

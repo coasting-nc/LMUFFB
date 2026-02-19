@@ -105,7 +105,6 @@ TEST_CASE(test_coverage_textures, "Coverage") {
     ctx.dt = 0.01;
     ctx.car_speed = 20.0;
     ctx.speed_gate = 1.0;
-    ctx.decoupling_scale = 1.0;
     ctx.avg_grip = 1.0;
 
     // 1. Wheel Spin
@@ -204,7 +203,6 @@ TEST_CASE(test_coverage_bottoming_rh, "Coverage") {
     FFBCalculationContext ctx;
     ctx.dt = 0.0025; // Smaller dt for better phase control
     ctx.speed_gate = 1.0;
-    ctx.decoupling_scale = 1.0;
     
     FFBEngineTestAccess::SetBottomingEnabled(engine, true);
     FFBEngineTestAccess::SetBottomingGain(engine, 1.0);
@@ -230,7 +228,6 @@ TEST_CASE(test_coverage_bottoming_dforce, "Coverage") {
     FFBCalculationContext ctx;
     ctx.dt = 0.0025;
     ctx.speed_gate = 1.0;
-    ctx.decoupling_scale = 1.0;
 
     FFBEngineTestAccess::SetBottomingEnabled(engine, true);
     FFBEngineTestAccess::SetBottomingGain(engine, 1.0);
@@ -255,7 +252,6 @@ TEST_CASE(test_coverage_bottoming_fallback, "Coverage") {
     FFBCalculationContext ctx;
     ctx.dt = 0.0025;
     ctx.speed_gate = 1.0;
-    ctx.decoupling_scale = 1.0;
 
     FFBEngineTestAccess::SetBottomingEnabled(engine, true);
     FFBEngineTestAccess::SetBottomingGain(engine, 1.0);

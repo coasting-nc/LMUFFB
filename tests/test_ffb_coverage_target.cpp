@@ -15,7 +15,6 @@ TEST_CASE(test_gyro_damping_target_coverage, "Coverage") {
     FFBCalculationContext ctx;
     ctx.dt = 0.0025;
     ctx.car_speed = 50.0;
-    ctx.decoupling_scale = 1.0;
     
     engine.m_gyro_gain = 1.0f;
     engine.m_gyro_smoothing = 0.1f;
@@ -44,7 +43,6 @@ TEST_CASE(test_abs_pulse_target_coverage, "Coverage") {
     std::memset(&data, 0, sizeof(data));
     FFBCalculationContext ctx;
     ctx.dt = 0.01;
-    ctx.decoupling_scale = 1.0;
     ctx.speed_gate = 1.0;
     
     // Path 1: Disabled (early return)

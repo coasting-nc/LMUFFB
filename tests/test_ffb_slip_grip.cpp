@@ -175,7 +175,7 @@ TEST_CASE(test_rear_force_workaround, "SlipGrip") {
     engine.m_sop_scale = 10.0;        // Moderate SoP scaling
     engine.m_rear_align_effect = 1.0f; // Fix effect gain for test calculation (Default is now 5.0)
     engine.m_invert_force = false;    // Ensure non-inverted for formula check
-    engine.m_max_torque_ref = 100.0f;  // Explicitly use 100 Nm ref for snapshot scaling (v0.4.50)
+    engine.m_wheelbase_max_nm = 100.0f; engine.m_target_rim_nm = 100.0f;  // Explicitly use 100 Nm ref for snapshot scaling (v0.4.50)
     engine.m_slip_angle_smoothing = 0.015f; // v0.4.40 baseline for alpha=0.4
     
     // ========================================
@@ -251,8 +251,11 @@ TEST_CASE(test_rear_force_workaround, "SlipGrip") {
     }
     FFBSnapshot snap = batch.back();
     
-    double expected_torque = -24.25;   // First-frame value with Decoupling (v0.4.50)
-    double torque_tolerance = 1.0;    // Â±1.0 Nm tolerance
+    // Issue #153: Rear torque is now absolute Nm (no decoupling scale).
+    // Previous value was -24.25 (which included 5.0x decoupling scale).
+    // New expected value is -24.25 / 5.0 = -4.85 Nm.
+    double expected_torque = -4.85;
+    double torque_tolerance = 0.5;    // ±0.5 Nm tolerance
     
     // ========================================
     // Assertion
@@ -280,7 +283,7 @@ TEST_CASE(test_rear_align_effect, "SlipGrip") {
     // Decoupled: Boost should be 0.0, but we get torque anyway
     engine.m_oversteer_boost = 0.0f; 
     engine.m_sop_effect = 0.0f; // Disable Base SoP to isolate torque
-    engine.m_max_torque_ref = 100.0f; // Explicitly use 100 Nm ref for snapshot scaling (v0.4.50)
+    engine.m_wheelbase_max_nm = 100.0f; engine.m_target_rim_nm = 100.0f; // Explicitly use 100 Nm ref for snapshot scaling (v0.4.50)
     engine.m_slip_angle_smoothing = 0.015f; // v0.4.40 baseline for alpha=0.142
     
     // Setup Rear Workaround conditions (Slip Angle generation)
@@ -338,9 +341,9 @@ TEST_CASE(test_rear_align_effect, "SlipGrip") {
         
         // Expected ~-2.4 Nm (with LPF smoothing on first frame, tau=0.0225)
         // v0.4.40: Updated to -3.46 Nm (tau=0.015, alpha=0.4, with 2x rear_align_effect)
-        // v0.4.50: Decoupling (Ref=100) scales by 5.0. Expected = -3.46 * 5.0 = -17.3 Nm
-        double expected_torque = -17.3;
-        double torque_tolerance = 1.0; 
+        // Issue #153: Decoupling scale removed. Expected remains -3.46 Nm.
+        double expected_torque = -3.46;
+        double torque_tolerance = 0.5;
         
         if (rear_torque_nm > (expected_torque - torque_tolerance) && 
             rear_torque_nm < (expected_torque + torque_tolerance)) {
@@ -366,7 +369,7 @@ TEST_CASE(test_rear_grip_fallback, "SlipGrip") {
     engine.m_oversteer_boost = 1.0;
     engine.m_gain = 1.0;
     engine.m_sop_scale = 10.0;
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     
     // Set Lat G to generate SoP force
     data.mLocalAccel.x = 9.81; // 1G
@@ -450,7 +453,7 @@ TEST_CASE(test_load_factor_edge_cases, "SlipGrip") {
     data.mWheel[0].mLateralPatchVel = 5.0;
     data.mWheel[1].mLateralPatchVel = 5.0;
     data.mDeltaTime = 0.01;
-    engine.m_max_torque_ref = 20.0f; // Fix Reference for Test (v0.4.4)
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Fix Reference for Test (v0.4.4)
     
     // Case 1: Zero load (airborne)
     data.mWheel[0].mTireLoad = 0.0;
@@ -590,7 +593,7 @@ TEST_CASE(test_sanity_checks, "SlipGrip") {
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     // Set Ref to 20.0 for legacy test expectations
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_invert_force = false;
 
     // 1. Test Missing Load Correction
@@ -609,7 +612,7 @@ TEST_CASE(test_sanity_checks, "SlipGrip") {
     data.mWheel[0].mLateralPatchVel = 5.0; 
     data.mWheel[1].mLateralPatchVel = 5.0;
     data.mDeltaTime = 0.01;
-    engine.m_max_torque_ref = 20.0f; // Fix Reference for Test (v0.4.4)
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Fix Reference for Test (v0.4.4)
 
     // Run enough frames to trigger hysteresis (>20)
     for(int i=0; i<30; i++) {

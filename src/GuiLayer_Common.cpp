@@ -238,9 +238,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     static int selected_preset = 0;
 
     auto FormatDecoupled = [&](float val, float base_nm) {
-        float scale = (engine.m_max_torque_ref / 20.0f);
-        if (scale < 0.1f) scale = 0.1f;
-        float estimated_nm = val * base_nm * scale;
+        float estimated_nm = val * base_nm;
         static char buf[64];
         snprintf(buf, 64, "%.1f%%%% (~%.1f Nm)", val * 100.0f, estimated_nm);
         return (const char*)buf;
@@ -416,7 +414,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
         BoolSetting("Invert FFB Signal", &engine.m_invert_force, "Check this if the wheel pulls away from center instead of aligning.");
         FloatSetting("Master Gain", &engine.m_gain, 0.0f, 2.0f, FormatPct(engine.m_gain), "Global scale factor for all forces.\n100% = No attenuation.\nReduce if experiencing heavy clipping.");
-        FloatSetting("Max Torque Ref", &engine.m_max_torque_ref, 1.0f, 200.0f, "%.1f Nm", "The expected PEAK torque of the CAR in the game.");
+        FloatSetting("Wheelbase Max Torque", &engine.m_wheelbase_max_nm, 1.0f, 50.0f, "%.1f Nm", "The absolute maximum physical torque your wheelbase can produce (e.g., 15.0 for Simagic Alpha, 4.0 for T300).");
+        FloatSetting("Target Rim Torque", &engine.m_target_rim_nm, 1.0f, 50.0f, "%.1f Nm", "The maximum force you want to feel in your hands during heavy cornering.");
         FloatSetting("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f", "Boosts small forces to overcome mechanical friction/deadzone.");
 
         if (ImGui::TreeNodeEx("Soft Lock", ImGuiTreeNodeFlags_DefaultOpen)) {

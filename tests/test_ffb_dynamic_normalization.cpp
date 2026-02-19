@@ -91,7 +91,7 @@ TEST_CASE(test_structural_vs_texture_separation, "StructuralNormalization") {
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 50.0);
     // Bypass smoothing for the multiplier to ensure exact match
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 50.0); // 0.02
-    engine.m_max_torque_ref = 20.0f; // Multiplier 1/20 = 0.05
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Multiplier 1/20 = 0.05
     engine.m_gain = 1.0f;
 
     TelemInfoV01 data = {};

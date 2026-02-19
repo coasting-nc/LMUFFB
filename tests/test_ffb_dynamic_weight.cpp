@@ -41,6 +41,8 @@ TEST_CASE(test_dynamic_weight_scaling, "Physics") {
     p.steering_shaft_gain = 1.0f;
     p.understeer = 0.0f; // Disable understeer drop for pure gain test
     p.invert_force = false; // Easier to test
+    p.wheelbase_max_nm = 100.0f;
+    p.target_rim_nm = 100.0f;
     p.Apply(engine);
 
     // v0.7.67 Fix for Issue #152: Ensure consistent scaling for test
@@ -88,6 +90,8 @@ TEST_CASE(test_dynamic_weight_safety_gate, "Physics") {
     Preset p;
     p.dynamic_weight_gain = 1.0f;
     p.invert_force = false;
+    p.wheelbase_max_nm = 100.0f;
+    p.target_rim_nm = 100.0f;
     p.Apply(engine);
 
     // v0.7.67 Fix for Issue #152: Ensure consistent scaling for test

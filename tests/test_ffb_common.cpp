@@ -140,7 +140,7 @@ TelemInfoV01 CreateBasicTestTelemetry(double speed, double slip_angle) {
 void InitializeEngine(FFBEngine& engine) {
     Preset::ApplyDefaultsToEngine(engine);
     // v0.5.12: Force consistent baseline for legacy tests
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_invert_force = false;
     
     // v0.6.31: Zero out all auxiliary effects for clean physics testing by default.

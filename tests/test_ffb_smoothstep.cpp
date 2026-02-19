@@ -49,7 +49,7 @@ TEST_CASE(test_speed_gate_uses_smoothstep, "SpeedGate") {
     engine.m_speed_gate_upper = 5.0f;
     engine.m_road_texture_enabled = true;
     engine.m_road_texture_gain = 1.0f;
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     TelemInfoV01 data_25 = CreateBasicTestTelemetry(2.0);
     data_25.mWheel[0].mVerticalTireDeflection = 0.002;
     data_25.mWheel[1].mVerticalTireDeflection = 0.002;
@@ -108,7 +108,7 @@ TEST_CASE(test_speed_gate_custom_thresholds, "SpeedGate") {
     TelemInfoV01 data = CreateBasicTestTelemetry(6.0); // Exactly halfway
     engine.m_road_texture_enabled = true;
     engine.m_road_texture_gain = 1.0;
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     data.mWheel[0].mVerticalTireDeflection = 0.001;
     data.mWheel[1].mVerticalTireDeflection = 0.001;
     

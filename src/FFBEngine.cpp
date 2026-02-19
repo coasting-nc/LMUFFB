@@ -534,8 +534,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // Select Torque Source
     // v0.7.63 Fix: genFFBTorque (Direct Torque 400Hz) is normalized [-1.0, 1.0].
-    // It must be scaled by m_max_torque_ref to match the engine's internal Nm-based pipeline.
-    double raw_torque_input = (m_torque_source == 1) ? (double)genFFBTorque * (double)m_max_torque_ref : data->mSteeringShaftTorque;
+    // It must be scaled by m_wheelbase_max_nm to match the engine's internal Nm-based pipeline.
+    double raw_torque_input = (m_torque_source == 1) ? (double)genFFBTorque * (double)m_wheelbase_max_nm : data->mSteeringShaftTorque;
 
     // RELIABILITY FIX: Sanitize input torque
     if (!std::isfinite(raw_torque_input)) return 0.0;
@@ -762,11 +762,9 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double brake_safe_max = (std::min)(10.0, (double)m_brake_load_cap);
     ctx.brake_load_factor = (std::min)(brake_safe_max, (std::max)(0.0, raw_load_factor));
     
-    // Decoupling Scale
-    double max_torque_safe = (double)m_max_torque_ref;
-    if (max_torque_safe < 1.0) max_torque_safe = 1.0;
-    ctx.decoupling_scale = max_torque_safe / 20.0;
-    if (ctx.decoupling_scale < 0.1) ctx.decoupling_scale = 0.1;
+    // Hardware Scaling Safeties
+    double wheelbase_max_safe = (double)m_wheelbase_max_nm;
+    if (wheelbase_max_safe < 1.0) wheelbase_max_safe = 1.0;
 
     // Speed Gate - v0.7.2 Smoothstep S-curve
     ctx.speed_gate = smoothstep(
@@ -799,7 +797,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     } else if (m_base_force_mode == 1) {
         if (std::abs(game_force_proc) > SYNTHETIC_MODE_DEADZONE_NM) {
             double sign = (game_force_proc > 0.0) ? 1.0 : -1.0;
-            base_input = sign * (double)m_max_torque_ref;
+            base_input = sign * (double)m_wheelbase_max_nm;
         }
     }
     
@@ -849,26 +847,28 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     calculate_suspension_bottoming(data, ctx);
     calculate_soft_lock(data, ctx);
     
-    // --- 6. SUMMATION (Issue #152 Split Scaling) ---
-    // Split into Structural (Dynamic Normalization) and Texture (Legacy Scaling) groups
+    // --- 6. SUMMATION (Issue #152 & #153 Split Scaling) ---
+    // Split into Structural (Dynamic Normalization) and Texture (Absolute Nm) groups
     double structural_sum = output_force + ctx.sop_base_force + ctx.rear_torque + ctx.yaw_force + ctx.gyro_force +
                             ctx.scrub_drag_force + ctx.soft_lock_force;
 
     // Apply Torque Drop (from Spin/Traction Loss) only to structural physics
     structural_sum *= ctx.gain_reduction_factor;
     
-    // Apply Dynamic Normalization ONLY to structural forces
+    // Apply Dynamic Normalization to structural forces
     double norm_structural = structural_sum * m_smoothed_structural_mult;
 
-    // Tactile Textures use Legacy Scaling
-    double texture_sum = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble;
-    double norm_texture = texture_sum / max_torque_safe;
+    // Tactile Textures are calculated in absolute Nm
+    double texture_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble;
 
-    double total_sum = norm_structural + norm_texture;
+    // --- 7. OUTPUT SCALING (Physical Target Model) ---
+    // Map structural to the target rim torque, then divide by wheelbase max to get DirectInput %
+    double di_structural = norm_structural * ((double)m_target_rim_nm / wheelbase_max_safe);
 
-    // --- 7. OUTPUT SCALING ---
-    double norm_force = total_sum; // Already normalized by group
-    norm_force *= m_gain;
+    // Map absolute texture Nm directly to the wheelbase max
+    double di_texture = texture_sum_nm / wheelbase_max_safe;
+
+    double norm_force = (di_structural + di_texture) * m_gain;
 
     // Min Force
     if (std::abs(norm_force) > 0.0001 && std::abs(norm_force) < m_min_force) {
@@ -1065,7 +1065,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     m_sop_lat_g_smoothed += alpha * (lat_g - m_sop_lat_g_smoothed);
     
     // Base SoP Force
-    double sop_base = m_sop_lat_g_smoothed * m_sop_effect * (double)m_sop_scale * ctx.decoupling_scale;
+    double sop_base = m_sop_lat_g_smoothed * m_sop_effect * (double)m_sop_scale;
     ctx.sop_unboosted_force = sop_base; // Store for snapshot
     
     // 2. Oversteer Boost (Grip Differential)
@@ -1100,7 +1100,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     
     // Torque = Force * Aligning_Lever
     // Note negative sign: Oversteer (Rear Slide) pushes wheel TOWARDS slip direction
-    ctx.rear_torque = -ctx.calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect * ctx.decoupling_scale;
+    ctx.rear_torque = -ctx.calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect;
     
     // 4. Yaw Kick (Inertial Oversteer)
     double raw_yaw_accel = data->mLocalRotAccel.y;
@@ -1114,7 +1114,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double alpha_yaw = ctx.dt / (tau_yaw + ctx.dt);
     m_yaw_accel_smoothed += alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
     
-    ctx.yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * (double)BASE_NM_YAW_KICK * ctx.decoupling_scale;
+    ctx.yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * (double)BASE_NM_YAW_KICK;
     
     // Apply speed gate to all lateral effects
     ctx.sop_base_force *= ctx.speed_gate;
@@ -1139,7 +1139,7 @@ void FFBEngine::calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationC
     
     // 3. Force = -Vel * Gain * Speed_Scaling
     // Speed scaling: Gyro effect increases with wheel RPM (car speed)
-    ctx.gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE) * ctx.decoupling_scale;
+    ctx.gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE);
 }
 
 // Helper: Calculate ABS Pulse (v0.7.53)
@@ -1160,7 +1160,7 @@ void FFBEngine::calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationCont
         // Generate sine pulse
         m_abs_phase += (double)m_abs_freq_hz * ctx.dt * TWO_PI;
         m_abs_phase = std::fmod(m_abs_phase, TWO_PI);
-        ctx.abs_pulse_force = (double)(std::sin(m_abs_phase) * m_abs_gain * 2.0 * ctx.decoupling_scale * ctx.speed_gate);
+        ctx.abs_pulse_force = (double)(std::sin(m_abs_phase) * m_abs_gain * 2.0 * ctx.speed_gate);
     }
 }
 
@@ -1249,7 +1249,7 @@ void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculat
         m_lockup_phase += final_freq * ctx.dt * TWO_PI;
         m_lockup_phase = std::fmod(m_lockup_phase, TWO_PI);
         
-        double amp = worst_severity * chosen_pressure_factor * m_lockup_gain * (double)BASE_NM_LOCKUP_VIBRATION * ctx.decoupling_scale * ctx.brake_load_factor;
+        double amp = worst_severity * chosen_pressure_factor * m_lockup_gain * (double)BASE_NM_LOCKUP_VIBRATION * ctx.brake_load_factor;
         
         // v0.4.38: Boost rear lockup volume
         if (chosen_freq_multiplier < 1.0) amp *= (double)m_lockup_rear_boost;
@@ -1281,7 +1281,7 @@ void FFBEngine::calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationCon
             m_spin_phase += freq * ctx.dt * TWO_PI;
             m_spin_phase = std::fmod(m_spin_phase, TWO_PI);
             
-            double amp = severity * m_spin_gain * (double)BASE_NM_SPIN_VIBRATION * ctx.decoupling_scale;
+            double amp = severity * m_spin_gain * (double)BASE_NM_SPIN_VIBRATION;
             ctx.spin_rumble = std::sin(m_spin_phase) * amp;
         }
     }
@@ -1320,7 +1320,7 @@ void FFBEngine::calculate_slide_texture(const TelemInfoV01* data, FFBCalculation
         // Intensity scaling (Grip based)
         double grip_scale = (std::max)(0.0, 1.0 - ctx.avg_grip);
         
-        ctx.slide_noise = sawtooth * m_slide_texture_gain * (double)BASE_NM_SLIDE_TEXTURE * ctx.texture_load_factor * grip_scale * ctx.decoupling_scale;
+        ctx.slide_noise = sawtooth * m_slide_texture_gain * (double)BASE_NM_SLIDE_TEXTURE * ctx.texture_load_factor * grip_scale;
     }
 }
 
@@ -1334,7 +1334,7 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
         if (abs_lat_vel > 0.001) {
             double fade = (std::min)(1.0, abs_lat_vel / 0.5); // Fade in over 0.5m/s
             double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
-            ctx.scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade * ctx.decoupling_scale;
+            ctx.scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade;
         }
     }
 
@@ -1364,7 +1364,7 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
         road_noise_val = delta_accel * 0.05 * 50.0; // Blend into similar range
     }
     
-    ctx.road_noise = road_noise_val * m_road_texture_gain * ctx.decoupling_scale * ctx.texture_load_factor;
+    ctx.road_noise = road_noise_val * m_road_texture_gain * ctx.texture_load_factor;
     ctx.road_noise *= ctx.speed_gate;
 }
 
@@ -1394,7 +1394,7 @@ void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationCont
         // Note: damping already has a sign from m_steering_velocity_smoothed.
         // If moving further away from limit, damping should oppose it.
         // If returning to center, damping should also oppose it (slowing down the return).
-        ctx.soft_lock_force = -(spring * sign + damping) * ctx.decoupling_scale;
+        ctx.soft_lock_force = -(spring * sign + damping);
     }
 }
 
@@ -1435,7 +1435,7 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
 
     if (triggered) {
         // Generate high-intensity low-frequency "thump"
-        double bump_magnitude = intensity * m_bottoming_gain * (double)BASE_NM_BOTTOMING * ctx.decoupling_scale;
+        double bump_magnitude = intensity * m_bottoming_gain * (double)BASE_NM_BOTTOMING;
         double freq = 50.0;
         
         m_bottoming_phase += freq * ctx.dt * TWO_PI;

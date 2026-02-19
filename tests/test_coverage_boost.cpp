@@ -108,7 +108,6 @@ TEST_CASE(test_coverage_gyro_damping, "Coverage") {
     FFBCalculationContext ctx;
     ctx.dt = 0.01;
     ctx.car_speed = 20.0;
-    ctx.decoupling_scale = 1.0;
     
     data.mPhysicalSteeringWheelRange = 10.0f; // 10 rad
     data.mUnfilteredSteering = 0.5f; // 0.5 * 5 = 2.5 rad
@@ -128,7 +127,6 @@ TEST_CASE(test_coverage_abs_pulse, "Coverage") {
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0);
     FFBCalculationContext ctx;
     ctx.dt = 0.01;
-    ctx.decoupling_scale = 1.0;
     ctx.speed_gate = 1.0;
     
     FFBEngineTestAccess::SetABSPulseEnabled(engine, true);

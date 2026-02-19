@@ -11,7 +11,7 @@ TEST_CASE(test_negative_parameter_safety, "Stability") {
     // Set some dangerous negative or zero values
     p.lockup_gamma = -1.0f;
     p.notch_q = -5.0f;
-    p.max_torque_ref = -100.0f;
+    p.wheelbase_max_nm = -100.0f;
     p.optimal_slip_angle = -0.1f;
     p.optimal_slip_ratio = 0.0f;
     p.slope_alpha_threshold = -0.01f;
@@ -25,7 +25,7 @@ TEST_CASE(test_negative_parameter_safety, "Stability") {
     // Verify clamping in engine
     ASSERT_GE(engine.m_lockup_gamma, 0.1f);
     ASSERT_GE(engine.m_notch_q, 0.1f);
-    ASSERT_GE(engine.m_max_torque_ref, 1.0f);
+    ASSERT_GE(engine.m_wheelbase_max_nm, 1.0f);
     ASSERT_GE(engine.m_optimal_slip_angle, 0.01f);
     ASSERT_GE(engine.m_optimal_slip_ratio, 0.01f);
     ASSERT_GE(engine.m_slope_alpha_threshold, 0.001f);
@@ -57,7 +57,7 @@ TEST_CASE(test_config_load_validation, "Stability") {
     Config::Load(engine, test_file);
 
     ASSERT_GE(engine.m_gain, 0.0f);
-    ASSERT_GE(engine.m_max_torque_ref, 1.0f);
+    ASSERT_GE(engine.m_wheelbase_max_nm, 1.0f);
     ASSERT_GE(engine.m_lockup_gamma, 0.1f);
     ASSERT_GE(engine.m_optimal_slip_angle, 0.01f);
     ASSERT_TRUE(engine.m_slope_sg_window >= 5);

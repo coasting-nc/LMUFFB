@@ -70,7 +70,8 @@ struct Preset {
     float soft_lock_damping = 0.5f;
     
     bool invert_force = true;
-    float max_torque_ref = 100.0f; // T300 Calibrated
+    float wheelbase_max_nm = 15.0f; // Default DD
+    float target_rim_nm = 10.0f;    // Default target
     
     float lockup_freq_scale = 1.02f;      // New v0.6.20
     int bottoming_method = 0;
@@ -188,7 +189,11 @@ struct Preset {
     }
     
     Preset& SetInvert(bool v) { invert_force = v; return *this; }
-    Preset& SetMaxTorque(float v) { max_torque_ref = v; return *this; }
+    Preset& SetHardwareScaling(float wheelbase, float target) {
+        wheelbase_max_nm = wheelbase;
+        target_rim_nm = target;
+        return *this;
+    }
     
     Preset& SetBottoming(int method) { bottoming_method = method; return *this; }
     Preset& SetScrub(float v) { scrub_drag_gain = v; return *this; }
@@ -315,7 +320,8 @@ struct Preset {
         engine.m_soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
 
         engine.m_invert_force = invert_force;
-        engine.m_max_torque_ref = (std::max)(1.0f, max_torque_ref); // Critical for normalization division
+        engine.m_wheelbase_max_nm = (std::max)(1.0f, wheelbase_max_nm);
+        engine.m_target_rim_nm = (std::max)(1.0f, target_rim_nm);
         engine.m_abs_freq_hz = (std::max)(1.0f, abs_freq);
         engine.m_lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);
         engine.m_spin_freq_scale = (std::max)(0.1f, spin_freq_scale);
@@ -371,10 +377,9 @@ struct Preset {
         engine.m_slope_use_torque = slope_use_torque;
         engine.m_slope_torque_sensitivity = (std::max)(0.01f, slope_torque_sensitivity);
 
-        // Stage 1 Normalization (Issue #152)
-        // Initialize session peak from hardware reference to maintain backward compatibility
-        // and provide a sane starting point for the dynamic learner.
-        engine.m_session_peak_torque = (std::max)(15.0, (double)max_torque_ref);
+        // Stage 1 & 2 Normalization (Issue #152 & #153)
+        // Initialize session peak from target rim torque to provide a sane starting point.
+        engine.m_session_peak_torque = (std::max)(1.0, (double)target_rim_nm);
         engine.m_smoothed_structural_mult = 1.0 / engine.m_session_peak_torque;
     }
 
@@ -409,7 +414,8 @@ struct Preset {
         road_gain = (std::max)(0.0f, road_gain);
         soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
         soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
-        max_torque_ref = (std::max)(1.0f, max_torque_ref);
+        wheelbase_max_nm = (std::max)(1.0f, wheelbase_max_nm);
+        target_rim_nm = (std::max)(1.0f, target_rim_nm);
         abs_freq = (std::max)(1.0f, abs_freq);
         lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);
         spin_freq_scale = (std::max)(0.1f, spin_freq_scale);
@@ -484,7 +490,8 @@ struct Preset {
         soft_lock_damping = engine.m_soft_lock_damping;
 
         invert_force = engine.m_invert_force;
-        max_torque_ref = engine.m_max_torque_ref;
+        wheelbase_max_nm = engine.m_wheelbase_max_nm;
+        target_rim_nm = engine.m_target_rim_nm;
         abs_freq = engine.m_abs_freq_hz;
         lockup_freq_scale = engine.m_lockup_freq_scale;
         spin_freq_scale = engine.m_spin_freq_scale;
@@ -590,7 +597,8 @@ struct Preset {
         if (!is_near(soft_lock_damping, p.soft_lock_damping, eps)) return false;
 
         if (invert_force != p.invert_force) return false;
-        if (!is_near(max_torque_ref, p.max_torque_ref, eps)) return false;
+        if (!is_near(wheelbase_max_nm, p.wheelbase_max_nm, eps)) return false;
+        if (!is_near(target_rim_nm, p.target_rim_nm, eps)) return false;
         if (!is_near(lockup_freq_scale, p.lockup_freq_scale, eps)) return false;
         if (bottoming_method != p.bottoming_method) return false;
         if (!is_near(scrub_drag_gain, p.scrub_drag_gain, eps)) return false;

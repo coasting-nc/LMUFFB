@@ -281,7 +281,7 @@ TEST_CASE(test_slope_detection_no_boost_when_grip_balanced, "SlopeDetection") {
     engine.m_oversteer_boost = 2.0f; // Strong boost setting
     engine.m_sop_effect = 1.0f;
     engine.m_sop_scale = 10.0f;
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mDeltaTime = 0.01;
     
@@ -319,7 +319,7 @@ TEST_CASE(test_slope_detection_no_boost_during_oversteer, "SlopeDetection") {
     engine.m_oversteer_boost = 2.0f; // Strong boost setting
     engine.m_sop_effect = 1.0f;
     engine.m_sop_scale = 10.0f;
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_optimal_slip_angle = 0.05f; // Rear grip will drop past 0.05 slip
     
     // Setup telemetry to create oversteer scenario (front grip > rear grip)
@@ -349,7 +349,7 @@ TEST_CASE(test_lat_g_boost_works_without_slope_detection, "SlopeDetection") {
     engine.m_oversteer_boost = 2.0f;
     engine.m_sop_effect = 1.0f;
     engine.m_sop_scale = 10.0f;
-    engine.m_max_torque_ref = 20.0f;
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_optimal_slip_angle = 0.05f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.06); // Slip 0.06

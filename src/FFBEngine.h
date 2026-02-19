@@ -117,7 +117,6 @@ struct FFBCalculationContext {
     double dt = 0.0025;
     double car_speed = 0.0;       // Absolute m/s
     double car_speed_long = 0.0;  // Longitudinal m/s (Raw)
-    double decoupling_scale = 1.0;
     double speed_gate = 1.0;
     double texture_load_factor = 1.0;
     double brake_load_factor = 1.0;
@@ -178,7 +177,8 @@ public:
     float m_sop_scale;
     
     // v0.4.4 Features
-    float m_max_torque_ref;
+    float m_wheelbase_max_nm;
+    float m_target_rim_nm;
     bool m_invert_force;
     
     // Base Force Debugging (v0.4.13)

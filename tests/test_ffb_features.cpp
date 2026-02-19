@@ -47,7 +47,7 @@ TEST_CASE(test_stationary_gate, "Texture") {
         TelemInfoV01 data = CreateBasicTestTelemetry(5.0);
         engine.m_road_texture_enabled = true;
         engine.m_road_texture_gain = 1.0;
-        engine.m_max_torque_ref = 20.0f;
+        engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
         
         data.mWheel[0].mVerticalTireDeflection = 0.002; 
         data.mWheel[1].mVerticalTireDeflection = 0.002;
@@ -70,7 +70,7 @@ TEST_CASE(test_idle_smoothing, "Texture") {
     // Setup: User wants RAW FFB (0 smoothing)
     engine.m_steering_shaft_smoothing = 0.0f;
     engine.m_gain = 1.0f;
-    engine.m_max_torque_ref = 10.0f; // Allow up to 10 Nm without clipping
+    engine.m_wheelbase_max_nm = 10.0f; engine.m_target_rim_nm = 10.0f; // Allow up to 10 Nm without clipping
     
     // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 10.0);
@@ -193,7 +193,7 @@ TEST_CASE(test_slide_texture, "Texture") {
         // Default RH to avoid scraping
         data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
         
-        engine.m_max_torque_ref = 20.0f; // Standard scale for test
+        engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Standard scale for test
         engine.m_slide_texture_enabled = true;
         engine.m_slide_texture_gain = 1.0;
         
@@ -237,7 +237,7 @@ TEST_CASE(test_slide_texture, "Texture") {
         std::memset(&data, 0, sizeof(data));
         data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
 
-        engine.m_max_torque_ref = 20.0f; 
+        engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
         engine.m_slide_texture_enabled = true;
         engine.m_slide_texture_gain = 1.0;
         engine.m_slide_freq_scale = 1.0f;
@@ -293,7 +293,7 @@ TEST_CASE(test_dynamic_tuning, "Texture") {
     
     // Explicitly set gain 1.0 for this baseline
     engine.m_gain = 1.0;
-    engine.m_max_torque_ref = 20.0f; // Fix Reference for Test (v0.4.4)
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Fix Reference for Test (v0.4.4)
     engine.m_invert_force = false;
 
     double force_initial = engine.calculate_force(&data);
@@ -338,7 +338,7 @@ TEST_CASE(test_oversteer_boost, "Texture") {
     engine.m_sop_scale = 10.0; 
     // Disable smoothing to verify math instantly (v0.4.2 fix) 
     engine.m_sop_smoothing_factor = 1.0; 
-    engine.m_max_torque_ref = 20.0f; // Fix Reference for Test (v0.4.4)
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Fix Reference for Test (v0.4.4)
     engine.m_invert_force = false;
     
     // Scenario: Front has grip, rear is sliding
@@ -383,7 +383,7 @@ TEST_CASE(test_spin_torque_drop_interaction, "Texture") {
     engine.m_sop_effect = 1.0;
     engine.m_gain = 1.0;
     engine.m_sop_scale = 10.0;
-    engine.m_max_torque_ref = 20.0f; // Fix Reference for Test (v0.4.4)
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Fix Reference for Test (v0.4.4)
     
     // High SoP force
     data.mLocalAccel.x = 9.81; // 1G lateral
@@ -451,7 +451,7 @@ TEST_CASE(test_static_notch_integration, "Texture") {
     engine.m_static_notch_freq = 11.0;
     engine.m_static_notch_width = 10.0; // Q = 11/10 = 1.1 (Wide notch for testing)
     engine.m_gain = 1.0;
-    engine.m_max_torque_ref = 1.0; 
+    engine.m_wheelbase_max_nm = 1.0; engine.m_target_rim_nm = 1.0;
     // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 1.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0);

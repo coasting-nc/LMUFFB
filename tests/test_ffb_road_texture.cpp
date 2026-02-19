@@ -46,7 +46,7 @@ TEST_CASE(test_road_texture_teleport, "RoadTexture") {
 
     engine.m_road_texture_enabled = true;
     engine.m_road_texture_gain = 1.0;
-    engine.m_max_torque_ref = 40.0f;
+    engine.m_wheelbase_max_nm = 40.0f; engine.m_target_rim_nm = 40.0f;
     engine.m_gain = 1.0; // Ensure gain is 1.0
     engine.m_invert_force = false;
     
@@ -68,19 +68,17 @@ TEST_CASE(test_road_texture_teleport, "RoadTexture") {
     
     // With Clamp (+/- 0.01):
     // Delta clamped to 0.01. Sum = 0.02.
-    // Force = 0.02 * 50.0 = 1.0.
-    // Norm = 1.0 / 40.0 = 0.025.
+    // Force = 0.02 * 50.0 = 1.0 Nm.
+    // Norm (Physical Target) = 1.0 / wheelbase_max = 1.0 / 40.0 = 0.025.
     
     double force = engine.calculate_force(&data);
     
     // Check if clamped
-    // v0.4.50: Decoupling scales force to 20Nm baseline.
-    // Clamped Force = 1.0 Nm. Normalized = 1.0 / 20.0 = 0.05.
-    if (std::abs(force - 0.05) < 0.001) {
+    if (std::abs(force - 0.025) < 0.001) {
         std::cout << "[PASS] Teleport spike clamped." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Teleport spike unclamped? Got " << force << " Expected 0.05." << std::endl;
+        std::cout << "[FAIL] Teleport spike unclamped? Got " << force << " Expected 0.025." << std::endl;
         g_tests_failed++;
     }
 }
@@ -245,7 +243,7 @@ TEST_CASE(test_scrub_drag_fade, "RoadTexture") {
     data.mWheel[0].mLateralPatchVel = 0.25;
     data.mWheel[1].mLateralPatchVel = 0.25;
     data.mLocalVel.z = -20.0; // Moving fast (v0.6.22)
-    engine.m_max_torque_ref = 40.0f;
+    engine.m_wheelbase_max_nm = 40.0f; engine.m_target_rim_nm = 40.0f;
     engine.m_gain = 1.0;
     
     // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
@@ -257,13 +255,15 @@ TEST_CASE(test_scrub_drag_fade, "RoadTexture") {
     double force = engine.calculate_force(&data);
     
     // Check absolute magnitude
-    // v0.4.50: Decoupling scales force to 20Nm baseline independently of Ref.
-    // Full force = 2.5 Nm. Normalized (by any Ref) = 2.5 / 20.0 = 0.125.
-    if (std::abs(std::abs(force) - 0.125) < 0.001) {
+    // Issue #153: Scrub drag is structural, mapped via target_rim / wheelbase_max.
+    // Full force = 5.0 Nm. Fade at 0.25m/s = 50% -> 2.5 Nm.
+    // session_peak = 40.0 -> norm_structural = 2.5 / 40.0 = 0.0625.
+    // di_structural = 0.0625 * (40/40) = 0.0625.
+    if (std::abs(std::abs(force) - 0.0625) < 0.001) {
         std::cout << "[PASS] Scrub drag faded correctly (50%)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Scrub drag fade incorrect. Got " << force << " Expected 0.125." << std::endl;
+        std::cout << "[FAIL] Scrub drag fade incorrect. Got " << force << " Expected 0.0625." << std::endl;
         g_tests_failed++;
     }
 }
