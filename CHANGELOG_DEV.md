@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.60] - 2026-02-19
+### Fixed
+- **Tire Load Normalization (#120)**:
+  - Replaced hardcoded Newton constants with class-aware dynamic thresholds for suspension bottoming and static load fallbacks.
+  - Fixed false bottoming triggers in high-downforce vehicles (Hypercars, LMP2) by scaling the safety threshold to 1.6x the car's peak load.
+  - Aligned `LMP2_UNSPECIFIED` seed load with header definition (8000N).
+  - Improved `m_static_front_load` handling by resetting it on car class changes to avoid carry-over from previous sessions.
+- **Build & Portability**:
+  - Introduced `NOINLINE` cross-platform macro to fix Linux build errors caused by MSVC-specific `__declspec(noinline)`.
+
 ## [0.7.59] - 2026-02-19
 ### Fixed
 - **FFB Safety Logic Refinement**: Removed the dependency on `gamePhase` from `IsFFBAllowed`. FFB now remains active even if the session is "stopped" or "over" in the game engine, provided the driver is still in control and not disqualified.

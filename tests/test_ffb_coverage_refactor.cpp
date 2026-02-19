@@ -13,8 +13,8 @@ TEST_CASE(test_coverage_load_reference, "Coverage") {
     // Case 1: Active update (Speed > 2 && Speed < 15, Load < 100)
     // dt=0.1, should set immediately? 
     // Logic: if (m_static_front_load < 100.0) m_static_front_load = current_load;
-    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 4000.0, 10.0, 0.1);
-    ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), 4000.0, 1.0);  // Should jump to 4000
+    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 2250.0, 10.0, 0.1);
+    ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), 2250.0, 1.0);  // Should jump to 2250 (4500 * 0.5)
     
     // Case 2: Inertial update (Speed > 2 && Speed < 15, Load >= 100)
     // Logic: m_static_front_load += (dt / 5.0) * (current_load - m_static_front_load);
@@ -39,14 +39,14 @@ TEST_CASE(test_coverage_load_reference, "Coverage") {
     ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), initial, 0.1); // No change
 
     // Case 5: Safety Clamp
-    // if (m_static_front_load < 1000.0) m_static_front_load = 4000.0;
+    // if (m_static_front_load < 1000.0) m_static_front_load = m_auto_peak_load * 0.5;
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 500.0);
     // Call with valid speed but no internal update needed (load already low, but update logic sets it)
     // Wait, the function ends with the clamp check.
     // So if we call it, it should clamp.
     FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 500.0, 10.0, 0.1); 
-    // Logic: if < 100 -> set to current (500). Then at end, if < 1000 -> set to 4000.
-    ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), 4000.0, 1.0);
+    // Logic: if < 100 -> set to current (500). Then at end, if < 1000 -> set to fallback (2250).
+    ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), 2250.0, 1.0);
 }
 
 TEST_CASE(test_coverage_init_load_ref, "Coverage") {
@@ -266,7 +266,7 @@ TEST_CASE(test_coverage_bottoming_fallback, "Coverage") {
     
     // Fallback: Max Load
     data.mWheel[0].mSuspForce = 0.0; // Low force, won't trigger dForce
-    data.mWheel[0].mTireLoad = 9000.0; // > 8000 - triggers fallback
+    data.mWheel[0].mTireLoad = 9000.0; // > threshold (4500 * 1.6 = 7200) - triggers fallback
     
     // First call
     FFBEngineTestAccess::CallCalculateSuspensionBottoming(engine, &data, ctx);

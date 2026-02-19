@@ -15,6 +15,12 @@
 #include "PerfStats.h"
 #include "VehicleUtils.h"
 
+#ifdef _WIN32
+#define NOINLINE __declspec(noinline)
+#else
+#define NOINLINE __attribute__((noinline))
+#endif
+
 // Bring common math into scope
 using namespace ffb_math;
 
@@ -487,7 +493,7 @@ public:
     double approximate_rear_load(const TelemWheelV01& w);
     double calculate_kinematic_load(const TelemInfoV01* data, int wheel_index);
     double calculate_manual_slip_ratio(const TelemWheelV01& w, double car_speed_ms);
-    __declspec(noinline) double calculate_slope_grip(double lateral_g, double slip_angle, double dt, const TelemInfoV01* data = nullptr);
+    NOINLINE double calculate_slope_grip(double lateral_g, double slip_angle, double dt, const TelemInfoV01* data = nullptr);
     double calculate_slope_confidence(double dAlpha_dt);
     double calculate_wheel_slip_ratio(const TelemWheelV01& w);
 
@@ -497,8 +503,8 @@ public:
 
 private:
     void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext& ctx);
-    __declspec(noinline) void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext& ctx);
-    __declspec(noinline) void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext& ctx);
+    NOINLINE void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext& ctx);
+    NOINLINE void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext& ctx);
     void calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculationContext& ctx);
     void calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationContext& ctx);
     void calculate_slide_texture(const TelemInfoV01* data, FFBCalculationContext& ctx);

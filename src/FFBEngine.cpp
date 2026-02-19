@@ -66,13 +66,17 @@ void FFBEngine::update_static_load_reference(double current_load, double speed, 
              m_static_front_load += (dt / 5.0) * (current_load - m_static_front_load);
         }
     }
-    if (m_static_front_load < 1000.0) m_static_front_load = 4000.0;
+    if (m_static_front_load < 1000.0) m_static_front_load = m_auto_peak_load * 0.5;
 }
 
 // Initialize the load reference based on vehicle class and name seeding
 void FFBEngine::InitializeLoadReference(const char* className, const char* vehicleName) {
     ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
     m_auto_peak_load = GetDefaultLoadForClass(vclass);
+
+    // Reset static load reference for new car class
+    m_static_front_load = m_auto_peak_load * 0.5;
+
     std::cout << "[FFB] Vehicle Identification -> Detected Class: " << VehicleClassToString(vclass)
               << " | Seed Load: " << m_auto_peak_load << "N" 
               << " (Raw -> Class: " << (className ? className : "Unknown") 
@@ -1334,9 +1338,10 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
     // Safety Trigger: Raw Load Peak (Catches Method 0/1 failures)
     if (!triggered) {
         double max_load = (std::max)(data->mWheel[0].mTireLoad, data->mWheel[1].mTireLoad);
-        if (max_load > 8000.0) {
+        double bottoming_threshold = m_auto_peak_load * 1.6;
+        if (max_load > bottoming_threshold) {
             triggered = true;
-            double excess = max_load - 8000.0;
+            double excess = max_load - bottoming_threshold;
             intensity = std::sqrt(excess) * 0.05; // Non-linear response
         }
     }

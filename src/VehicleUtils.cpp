@@ -78,7 +78,7 @@ double GetDefaultLoadForClass(ParsedVehicleClass vclass) {
         case ParsedVehicleClass::HYPERCAR:         return 9500.0;
         case ParsedVehicleClass::LMP2_UNRESTRICTED: return 8500.0;
         case ParsedVehicleClass::LMP2_RESTRICTED:   return 7500.0;
-        case ParsedVehicleClass::LMP2_UNSPECIFIED:  return 7500.0;
+        case ParsedVehicleClass::LMP2_UNSPECIFIED:  return 8000.0;
         case ParsedVehicleClass::LMP3:             return 5800.0;
         case ParsedVehicleClass::GTE:              return 5500.0;
         case ParsedVehicleClass::GT3:              return 4800.0;
