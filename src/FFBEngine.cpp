@@ -529,7 +529,9 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     if (!data) return 0.0;
 
     // Select Torque Source
-    double raw_torque_input = (m_torque_source == 1) ? (double)genFFBTorque : data->mSteeringShaftTorque;
+    // v0.7.63 Fix: genFFBTorque (Direct Torque 400Hz) is normalized [-1.0, 1.0].
+    // It must be scaled by m_max_torque_ref to match the engine's internal Nm-based pipeline.
+    double raw_torque_input = (m_torque_source == 1) ? (double)genFFBTorque * (double)m_max_torque_ref : data->mSteeringShaftTorque;
 
     // RELIABILITY FIX: Sanitize input torque
     if (!std::isfinite(raw_torque_input)) return 0.0;
@@ -767,6 +769,9 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double grip_loss = (1.0 - ctx.avg_grip) * m_understeer_effect;
     ctx.grip_factor = (std::max)(0.0, 1.0 - grip_loss);
 
+    // v0.7.63: Passthrough Logic for Direct Torque (TIC mode)
+    double grip_factor_applied = m_torque_passthrough ? 1.0 : ctx.grip_factor;
+
     // v0.7.46: Dynamic Weight logic
     update_static_load_reference(ctx.avg_load, ctx.car_speed, ctx.dt);
     double dynamic_weight_factor = 1.0;
@@ -784,8 +789,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     dw_alpha = (std::max)(0.0, (std::min)(1.0, dw_alpha));
     m_dynamic_weight_smoothed += dw_alpha * (dynamic_weight_factor - m_dynamic_weight_smoothed);
     dynamic_weight_factor = m_dynamic_weight_smoothed;
+
+    // v0.7.63: Final factor application
+    double dw_factor_applied = m_torque_passthrough ? 1.0 : dynamic_weight_factor;
     
-    double output_force = (base_input * (double)m_steering_shaft_gain) * dynamic_weight_factor * ctx.grip_factor;
+    double output_force = (base_input * (double)m_steering_shaft_gain) * dw_factor_applied * grip_factor_applied;
     output_force *= ctx.speed_gate;
     
     // B. SoP Lateral (Oversteer)
@@ -857,7 +865,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.total_output = (float)norm_force;
             snap.base_force = (float)base_input;
             snap.sop_force = (float)ctx.sop_unboosted_force; // Use unboosted for snapshot
-            snap.understeer_drop = (float)((base_input * m_steering_shaft_gain) * (1.0 - ctx.grip_factor));
+            snap.understeer_drop = (float)((base_input * m_steering_shaft_gain) * (1.0 - grip_factor_applied));
             snap.oversteer_boost = (float)(ctx.sop_base_force - ctx.sop_unboosted_force); // Exact boost amount
 
             snap.ffb_rear_torque = (float)ctx.rear_torque;

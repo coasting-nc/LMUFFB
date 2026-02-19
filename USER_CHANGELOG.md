@@ -4,6 +4,23 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]February 19, 2026[/b][/size]
+[b]Version 0.7.63 - Direct Torque Fix & TIC Mode[/b]
+
+[b]New release[/b] (0.7.63): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]Pure Passthrough (TIC Mode)[/b]: Added a new "Pure Passthrough" option for the Direct Torque (400Hz) source. This allows the game's base steering feel to reach the wheel without being modulated by LMUFFB's internal Understeer or Dynamic Weight logic. It provides a "TIC mode" experience similar to high-end wheelbases while still adding LMUFFB's tactile textures on top. (#142)
+[/list]
+
+[b]Fixed[/b]
+[list]
+[*][b]Direct Torque Strength[/b]: Resolved a major issue where the "Direct Torque" (400Hz) source felt extremely weak compared to "Shaft Torque." The 400Hz signal is now correctly scaled to match the physics engine's dynamic range, providing full-strength feedback. (#142)
+[/list]
+
+---
+
 [size=5][b]February 15, 2026[/b][/size]
 [b]Version 0.7.48 - Safety & Reliability Update[/b]
 

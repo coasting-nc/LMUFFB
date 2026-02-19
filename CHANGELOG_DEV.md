@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.63] - 2026-02-19
+### Added
+- **Direct Torque Passthrough (TIC mode) (#142)**:
+  - Added a "Pure Passthrough" toggle for the Direct Torque (400Hz) source.
+  - When enabled, the base steering force bypasses LMUFFB's Understeer and Dynamic Weight modulation.
+  - This allows users to experience the game's native FFB feel while still adding LMUFFB's secondary haptic effects (SoP, Textures, etc.).
+- **Testing**:
+  - Added `tests/test_ffb_issue_142.cpp` to verify Direct Torque scaling and Passthrough logic.
+
+### Fixed
+- **Direct Torque Strength (#142)**:
+  - Corrected the scaling of the "Direct Torque" (400Hz) signal.
+  - Previously, the normalized [-1.0, 1.0] signal from the game was being treated as raw Nm torque, leading to extremely weak FFB.
+  - The signal is now correctly scaled by `m_max_torque_ref` before entering the physics pipeline.
+
 ## [0.7.62] - 2026-02-19
 ### Added
 - **Game FFB (FFBTorque) Visualization (#138)**:
