@@ -26,6 +26,11 @@ void test_soft_lock() {
 
         ASSERT_NEAR(run_step(engine, data, 0.5), 0.0, 0.001);
         ASSERT_NEAR(run_step(engine, data, 1.0), 0.0, 0.001);
+        // stiffness = 20.0
+        // BASE_NM_SOFT_LOCK = 50.0
+        // decoupling_scale = 100.0 / 20.0 = 5.0
+        // force_nm = -(0.1 * 20.0 * 50.0 * 5.0) = -500.0 Nm
+        // norm_force = -500.0 / 100.0 = -5.0 (clamped to -1.0)
         ASSERT_NEAR(run_step(engine, data, 1.1), -1.0, 0.01);
         ASSERT_NEAR(run_step(engine, data, -1.1), 1.0, 0.01);
     }
@@ -52,11 +57,12 @@ void test_soft_lock() {
         engine.m_invert_force = false;
         engine.m_steering_shaft_gain = 0.0f;
 
-        run_step(engine, data, 1.1); // Initial
+        run_step(engine, data, 1.1); // Initial: sets prev_angle
         double force = run_step(engine, data, 1.2);
 
-        // damping_nm = -(188.494 * 0.1 * 10.0 * 5.0) = -942.47 Nm
-        // norm_force = -942.47 / 100 = -9.42 -> clamped to -1.0
+        // steer_vel = (1.2 - 1.1) * (9.4247 / 2) / 0.0025 = 188.494 rad/s
+        // damping_nm = -(188.494 * 0.1 * 50.0 * 5.0) = -4712.35 Nm
+        // norm_force = -4712.35 / 100 = -47.12 -> clamped to -1.0
         ASSERT_NEAR(force, -1.0, 0.01);
 
         engine.m_soft_lock_damping = 0.001f;
