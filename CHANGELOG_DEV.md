@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.62] - 2026-02-19
+### Added
+- **Game FFB (FFBTorque) Visualization (#138)**:
+  - Added "Direct Torque" (400Hz native LMU) and "Shaft Torque" (100Hz legacy) to the diagnostic graphs.
+  - Users can now compare both torque sources side-by-side to diagnose weak or missing FFB issues.
+  - Included both torque channels in the asynchronous telemetry logs (CSV) for offline analysis.
+  - Renamed the primary torque graph to "Selected Torque" to clarify which signal is driving the physics.
+- **Testing**:
+  - Added `tests/test_ffb_diag_updates.cpp` to verify data propagation from shared memory to snapshots and logs.
+
 ## [0.7.61] - 2026-02-19
 ### Added
 - **Soft Lock Feature (#117)**:

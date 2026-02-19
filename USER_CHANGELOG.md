@@ -4,6 +4,20 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]February 19, 2026[/b][/size]
+[b]Version 0.7.62 - Torque Diagnostics Update[/b]
+
+[b]New release[/b] (0.7.62): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]Torque Source Visualization[/b]: You can now visualize both the [b]Direct Torque[/b] (400Hz) and [b]Shaft Torque[/b] (100Hz) signals in the diagnostic graphs. This helps identify if your FFB issues are caused by weak telemetry from the game. (#138)
+[*][b]Enhanced Logging[/b]: Both torque channels are now included in the CSV telemetry logs, allowing for detailed offline comparison of signal quality and update rates.
+[*][b]Improved UI Clarity[/b]: Renamed the main torque plot to "Selected Torque" to clearly show which signal is currently being used for your Force Feedback.
+[/list]
+
+---
+
 [size=5][b]February 15, 2026[/b][/size]
 [b]Version 0.7.48 - Safety & Reliability Update[/b]
 
