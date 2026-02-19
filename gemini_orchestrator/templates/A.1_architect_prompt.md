@@ -94,10 +94,3 @@ Do NOT write the actual source code yet (pseudo-code is fine).
 # Output Format
 You must end your response with a JSON block strictly following this schema:
 
-```json
-{
-  "status": "success",
-  "plan_path": "docs/dev_docs/plans/plan_{{TASK_ID}}.md",
-  "backlog_items": []
-}
-```
