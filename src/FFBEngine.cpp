@@ -819,14 +819,24 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double norm_force = total_sum / max_torque_safe;
     norm_force *= m_gain;
 
+    // Apply Soft Limiter (Issue #140)
+    // Prevents force rectification by compressing the signal as it approaches 1.0
+    // instead of hard clipping.
+    double compressed_force = norm_force;
+    if (m_soft_limiter_enabled && std::isfinite(norm_force)) {
+        compressed_force = apply_soft_limiter(norm_force, (double)m_soft_limiter_knee);
+    } else if (!std::isfinite(norm_force)) {
+        compressed_force = 0.0;
+    }
+
     // Min Force
-    if (std::abs(norm_force) > 0.0001 && std::abs(norm_force) < m_min_force) {
-        double sign = (norm_force > 0.0) ? 1.0 : -1.0;
-        norm_force = sign * m_min_force;
+    if (std::abs(compressed_force) > 0.0001 && std::abs(compressed_force) < m_min_force) {
+        double sign = (compressed_force > 0.0) ? 1.0 : -1.0;
+        compressed_force = sign * m_min_force;
     }
 
     if (m_invert_force) {
-        norm_force *= -1.0;
+        compressed_force *= -1.0;
     }
 
     // --- 8. STATE UPDATES (POST-CALC) ---
@@ -871,7 +881,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.texture_bottoming = (float)ctx.bottoming_crunch;
             snap.ffb_abs_pulse = (float)ctx.abs_pulse_force; 
             snap.ffb_soft_lock = (float)ctx.soft_lock_force;
-            snap.clipping = (std::abs(norm_force) > 0.99f) ? 1.0f : 0.0f;
+            snap.clipping = (std::abs(compressed_force) > 0.99f) ? 1.0f : 0.0f;
+            snap.clipping_soft = (float)(std::abs(norm_force) - std::abs(compressed_force));
 
             // Physics
             snap.calc_front_load = (float)ctx.avg_load;
@@ -990,7 +1001,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         AsyncLogger::Get().Log(frame);
     }
     
-    return (std::max)(-1.0, (std::min)(1.0, norm_force));
+    return (std::max)(-1.0, (std::min)(1.0, compressed_force));
 }
 
 // Helper: Calculate Seat-of-the-Pants (SoP) Lateral & Oversteer Boost

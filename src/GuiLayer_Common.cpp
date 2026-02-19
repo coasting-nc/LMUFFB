@@ -424,6 +424,16 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Max Torque Ref", &engine.m_max_torque_ref, 1.0f, 200.0f, "%.1f Nm", "The expected PEAK torque of the CAR in the game.");
         FloatSetting("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f", "Boosts small forces to overcome mechanical friction/deadzone.");
 
+        if (ImGui::TreeNodeEx("Soft Limiter / Compressor", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::NextColumn(); ImGui::NextColumn();
+            BoolSetting("Enable Soft Limiter", &engine.m_soft_limiter_enabled, "Prevents force rectification by compressing the signal as it approaches 1.0 instead of hard clipping.");
+            if (engine.m_soft_limiter_enabled) {
+                FloatSetting("  Knee", &engine.m_soft_limiter_knee, 0.1f, 0.99f, "%.2f", "The point where compression starts. Lower = softer transitions, but less raw dynamic range.");
+            }
+            ImGui::TreePop();
+            ImGui::Separator();
+        }
+
         if (ImGui::TreeNodeEx("Soft Lock", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::NextColumn(); ImGui::NextColumn();
             BoolSetting("Enable Soft Lock", &engine.m_soft_lock_enabled, "Provides resistance when the steering wheel reaches the car's maximum steering range.");

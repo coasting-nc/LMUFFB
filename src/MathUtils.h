@@ -151,6 +151,30 @@ inline double calculate_sg_derivative(const std::array<double, BufferSize>& buff
     // Divide by dt to get derivative in units/second
     return sum / (S2 * dt);
 }
+
+/**
+ * @brief Apply Soft-Knee Compression (Soft Limiter)
+ *
+ * Gradually reduces gain as signal approaches 1.0 to prevent hard clipping
+ * and force rectification. Uses tanh-based asymptotic compression.
+ *
+ * @param input Raw normalized force (-infinity to +infinity)
+ * @param knee The point [0.1, 1.0] where compression starts
+ * @return Compressed force, asymptotically approaching 1.0
+ */
+inline double apply_soft_limiter(double input, double knee) {
+    double abs_input = std::abs(input);
+    if (abs_input <= knee) return input;
+
+    // Soft-knee compression using tanh
+    // Approaches 1.0 asymptotically
+    double range = 1.0 - knee;
+    if (range < 0.001) return std::clamp(input, -1.0, 1.0); // Fallback to hard clamp
+
+    double compressed = knee + range * std::tanh((abs_input - knee) / range);
+    return (input > 0) ? compressed : -compressed;
+}
+
 } // namespace ffb_math
 
 #endif // MATH_UTILS_H

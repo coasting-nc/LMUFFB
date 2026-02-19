@@ -46,6 +46,7 @@ struct FFBSnapshot {
     float ffb_abs_pulse;    // New v0.7.53
     float ffb_soft_lock;    // New v0.7.61 (Issue #117)
     float clipping;
+    float clipping_soft;    // New v0.7.62: Amount of soft-knee compression applied
 
     // --- Header B: Internal Physics (Calculated) ---
     float calc_front_load;       // New v0.4.7
@@ -210,6 +211,10 @@ public:
     bool m_slide_texture_enabled;
     float m_slide_texture_gain;
     float m_slide_freq_scale;
+
+    // Soft Limiter (Issue #140)
+    bool m_soft_limiter_enabled = false;
+    float m_soft_limiter_knee = 0.8f;
     
     bool m_road_texture_enabled;
     float m_road_texture_gain;

@@ -62,6 +62,9 @@ struct Preset {
     float slide_gain = 0.226562f;
     float slide_freq = 1.0f;
     
+    bool soft_limiter_enabled = false;
+    float soft_limiter_knee = 0.8f;
+
     bool road_enabled = true;
     float road_gain = 0.0f;
 
@@ -176,6 +179,11 @@ struct Preset {
         slide_gain = g; 
         slide_freq = f; 
         return *this; 
+    }
+    Preset& SetSoftLimiter(bool enabled, float knee) {
+        soft_limiter_enabled = enabled;
+        soft_limiter_knee = knee;
+        return *this;
     }
     Preset& SetRoad(bool enabled, float g) { road_enabled = enabled; road_gain = g; return *this; }
 
@@ -313,6 +321,9 @@ struct Preset {
         engine.m_soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
         engine.m_soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
 
+        engine.m_soft_limiter_enabled = soft_limiter_enabled;
+        engine.m_soft_limiter_knee = (std::max)(0.1f, (std::min)(0.99f, soft_limiter_knee));
+
         engine.m_invert_force = invert_force;
         engine.m_max_torque_ref = (std::max)(1.0f, max_torque_ref); // Critical for normalization division
         engine.m_abs_freq_hz = (std::max)(1.0f, abs_freq);
@@ -401,6 +412,7 @@ struct Preset {
         road_gain = (std::max)(0.0f, road_gain);
         soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
         soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
+        soft_limiter_knee = (std::max)(0.1f, (std::min)(0.99f, soft_limiter_knee));
         max_torque_ref = (std::max)(1.0f, max_torque_ref);
         abs_freq = (std::max)(1.0f, abs_freq);
         lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);
@@ -473,6 +485,9 @@ struct Preset {
         soft_lock_enabled = engine.m_soft_lock_enabled;
         soft_lock_stiffness = engine.m_soft_lock_stiffness;
         soft_lock_damping = engine.m_soft_lock_damping;
+
+        soft_limiter_enabled = engine.m_soft_limiter_enabled;
+        soft_limiter_knee = engine.m_soft_limiter_knee;
 
         invert_force = engine.m_invert_force;
         max_torque_ref = engine.m_max_torque_ref;

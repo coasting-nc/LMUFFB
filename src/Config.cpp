@@ -80,6 +80,8 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "soft_lock_enabled") current_preset.soft_lock_enabled = std::stoi(value);
                 else if (key == "soft_lock_stiffness") current_preset.soft_lock_stiffness = std::stof(value);
                 else if (key == "soft_lock_damping") current_preset.soft_lock_damping = std::stof(value);
+                else if (key == "soft_limiter_enabled") current_preset.soft_limiter_enabled = (std::stoi(value) != 0);
+                else if (key == "soft_limiter_knee") current_preset.soft_limiter_knee = std::stof(value);
                 else if (key == "invert_force") current_preset.invert_force = std::stoi(value);
                 else if (key == "max_torque_ref") current_preset.max_torque_ref = std::stof(value);
                 else if (key == "abs_freq") current_preset.abs_freq = std::stof(value);
@@ -816,6 +818,7 @@ void Config::LoadPresets() {
 }
 
 void Config::ApplyPreset(int index, FFBEngine& engine) {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
     if (index >= 0 && index < presets.size()) {
         presets[index].Apply(engine);
         m_last_preset_name = presets[index].name;
@@ -903,6 +906,8 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "soft_lock_enabled=" << (p.soft_lock_enabled ? "1" : "0") << "\n";
     file << "soft_lock_stiffness=" << p.soft_lock_stiffness << "\n";
     file << "soft_lock_damping=" << p.soft_lock_damping << "\n";
+    file << "soft_limiter_enabled=" << (p.soft_limiter_enabled ? "1" : "0") << "\n";
+    file << "soft_limiter_knee=" << p.soft_limiter_knee << "\n";
     file << "spin_enabled=" << (p.spin_enabled ? "1" : "0") << "\n";
     file << "spin_gain=" << p.spin_gain << "\n";
     file << "spin_freq_scale=" << p.spin_freq_scale << "\n";
@@ -1107,6 +1112,8 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "soft_lock_enabled=" << engine.m_soft_lock_enabled << "\n";
         file << "soft_lock_stiffness=" << engine.m_soft_lock_stiffness << "\n";
         file << "soft_lock_damping=" << engine.m_soft_lock_damping << "\n";
+        file << "soft_limiter_enabled=" << engine.m_soft_limiter_enabled << "\n";
+        file << "soft_limiter_knee=" << engine.m_soft_limiter_knee << "\n";
         file << "max_torque_ref=" << engine.m_max_torque_ref << "\n";
         file << "min_force=" << engine.m_min_force << "\n";
 
@@ -1296,6 +1303,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "soft_lock_enabled") engine.m_soft_lock_enabled = std::stoi(value);
                     else if (key == "soft_lock_stiffness") engine.m_soft_lock_stiffness = std::stof(value);
                     else if (key == "soft_lock_damping") engine.m_soft_lock_damping = std::stof(value);
+                    else if (key == "soft_limiter_enabled") engine.m_soft_limiter_enabled = (std::stoi(value) != 0);
+                    else if (key == "soft_limiter_knee") engine.m_soft_limiter_knee = std::stof(value);
                     else if (key == "invert_force") engine.m_invert_force = std::stoi(value);
                     else if (key == "max_torque_ref") engine.m_max_torque_ref = std::stof(value);
                     else if (key == "abs_freq") engine.m_abs_freq_hz = std::stof(value);

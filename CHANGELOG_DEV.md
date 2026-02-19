@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.62] - 2026-02-19
+### Added
+- **Soft Limiter (Compressor)**:
+  - Implemented a tanh-based soft-knee compressor to prevent force rectification during clipping.
+  - Gradually compresses the FFB signal as it approaches 100%, preserving high-frequency details (like Slide Rumble) at the limit.
+  - Added configurable **Knee** slider to the "General FFB" section.
+  - Added `clipping_soft` diagnostic to telemetry snapshots to monitor compression activity.
+- **Testing**:
+  - Added `tests/test_ffb_soft_limiter.cpp` to verify compression math and engine integration.
+
 ## [0.7.61] - 2026-02-19
 ### Added
 - **Soft Lock Feature (#117)**:
