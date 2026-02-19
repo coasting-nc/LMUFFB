@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.64] - 2026-02-19
+### Fixed
+- **False-Positive Low Sample Rate Warnings (#133)**:
+  - Adjusted the system health monitoring to be aware of the selected torque source.
+  - Legacy "Shaft Torque" is now correctly expected at 100Hz, while "Direct Torque" continues to target 400Hz.
+  - Relaxed the standard Telemetry (TelemInfoV01) threshold to 100Hz to align with LMU's default update frequency.
+  - Refactored the warning logic into a new `HealthMonitor` class for better testability and maintenance.
+### Testing
+- **New Test Suite**: Added `tests/test_health_monitor.cpp` to verify rate-aware threshold logic across all monitored channels.
+
 ## [0.7.63] - 2026-02-19
 ### Added
 - **Direct Torque Passthrough (TIC mode) (#142)**:

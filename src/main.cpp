@@ -15,6 +15,7 @@
 #include "Version.h"
 #include "Logger.h"    // Added Logger
 #include "RateMonitor.h"
+#include "HealthMonitor.h"
 #include <optional>
 #include <atomic>
 #include <mutex>
@@ -175,13 +176,26 @@ void FFBThread() {
             
             if (!should_output) force = 0.0;
 
-            // Warning for low sample rate (Issue #129)
+            // Warning for low sample rate (Issue #133)
             static auto lastWarningTime = std::chrono::steady_clock::now();
-            if (in_realtime && (telemMonitor.GetRate() < 380.0 || torqueMonitor.GetRate() < 380.0) && telemMonitor.GetRate() > 1.0) {
+
+            HealthStatus health;
+            {
+                std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+                double t_rate = (g_engine.m_torque_source == 1) ? genTorqueMonitor.GetRate() : torqueMonitor.GetRate();
+                health = HealthMonitor::Check(loopMonitor.GetRate(), telemMonitor.GetRate(), t_rate, g_engine.m_torque_source);
+            }
+
+            if (in_realtime && !health.is_healthy) {
                  auto now = std::chrono::steady_clock::now();
                  if (std::chrono::duration_cast<std::chrono::seconds>(now - lastWarningTime).count() >= 5) {
-                     std::cout << "[WARNING] Low Sample Rate detected: Telemetry=" << telemMonitor.GetRate() << "Hz, Torque=" << torqueMonitor.GetRate() << "Hz (Target: 400 Hz)" << std::endl;
-                     Logger::Get().Log("Low Sample Rate detected: Telemetry=%.1fHz, Torque=%.1fHz", telemMonitor.GetRate(), torqueMonitor.GetRate());
+                     std::string reason = "";
+                     if (health.loop_low) reason += "Loop=" + std::to_string((int)health.loop_rate) + "Hz ";
+                     if (health.telem_low) reason += "Telemetry=" + std::to_string((int)health.telem_rate) + "Hz ";
+                     if (health.torque_low) reason += "Torque=" + std::to_string((int)health.torque_rate) + "Hz (Target " + std::to_string((int)health.expected_torque_rate) + "Hz) ";
+
+                     std::cout << "[WARNING] Low Sample Rate detected: " << reason << std::endl;
+                     Logger::Get().Log("Low Sample Rate detected: %s", reason.c_str());
                      lastWarningTime = now;
                  }
             }

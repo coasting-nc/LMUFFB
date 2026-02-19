@@ -1,27 +1,29 @@
-# Code Review Iteration 1
+# Code Review - Iteration 1
 
-The proposed code change is a high-quality, comprehensive fix for the identified issues with the "Direct Torque" (400Hz) FFB source. It correctly addresses both the scaling issue (weak force) and the requested "Pure Passthrough" (TIC mode) functionality.
+The proposed patch effectively addresses the issue of false-positive "Low Sample Rate" warnings in the LMUFFB C++ codebase. The core problem was that the application previously applied a blanket 400Hz requirement to both telemetry and torque updates, whereas Le Mans Ultimate (LMU) typically provides telemetry and legacy shaft torque at approximately 100Hz.
 
-### User's Goal:
-Correct the scaling of the 400Hz Direct Torque FFB signal and implement a "Pure Passthrough" mode that bypasses LMUFFB's internal physics modulation (Understeer and Dynamic Weight) while retaining secondary tactile effects.
+### User's Goal
+The goal was to eliminate incorrect warnings that claimed 100Hz telemetry/torque was "low" while maintaining health monitoring for high-frequency direct torque and the FFB loop itself.
 
-### Evaluation of the Solution:
+### Evaluation of the Solution
 
-1.  **Core Functionality:**
-    *   **Scaling Fix:** The patch correctly identifies that `genFFBTorque` is a normalized signal ([-1.0, 1.0]). By multiplying it by `m_max_torque_ref` at the input stage, it aligns with the engine's internal Nm-based physics pipeline. Since the pipeline later divides the total sum by `m_max_torque_ref` for output normalization, the net result is a restoration of the signal's full dynamic range.
-    *   **Passthrough Logic:** The implementation of `m_torque_passthrough` effectively bypasses the `grip_factor` (understeer) and `dynamic_weight_factor` multipliers when enabled. This allows the raw game signal to pass through to the final output while still allowing secondary effects (SoP, Textures, etc.) to be summed on top, perfectly matching the "TIC mode" requirement.
-    *   **UI/Config Integration:** The new setting is fully integrated into the configuration system (parsing, saving, loading, presets) and the GUI.
+#### Core Functionality
+The patch correctly implements a source-aware health monitoring system. It introduces a `HealthMonitor` class that distinguishes between the update frequencies expected for different torque sources (Legacy at 100Hz vs. Direct at 400Hz) and sets an appropriate threshold for telemetry updates (100Hz).
+- **Telemetry:** Threshold moved from 380Hz to 90Hz, which is correct for LMU's default behavior.
+- **Torque:** Logic now checks the active `m_torque_source`. If "Direct", it targets 400Hz (warns < 360); if "Legacy", it targets 100Hz (warns < 90).
+- **FFB Loop:** Included a health check for the internal processing loop at 400Hz.
 
-2.  **Safety & Side Effects:**
-    *   **Regressions:** The patch includes updates to existing tests (e.g., `test_ffb_diag_updates.cpp`) to ensure that the change in scaling logic doesn't break baseline diagnostics.
-    *   **Thread Safety:** While the GUI directly modifies engine members, this is consistent with the project's existing architecture for tuning parameters. The FFB thread uses these values in a read-only manner during calculation.
-    *   **Logic Verification:** The logic for `dw_factor_applied` and `grip_factor_applied` is safe and defaults to standard behavior.
+#### Safety & Side Effects
+- **Thread Safety:** The patch correctly locks `g_engine_mutex` when accessing shared state (`g_engine.m_torque_source`).
+- **Initialization Safety:** The use of `val > 1.0` checks ensures that warnings are not triggered during startup or while the game is paused/loading (when sample rates are zero).
+- **Refactoring:** Moving the logic to a separate `HealthMonitor` class improves readability and testability without impacting the hot path significantly.
 
-3.  **Completeness:**
-    *   The patch updates all relevant call-sites, including the `AsyncLogger` for telemetry analysis, the `Preset` system for profile management, and the `main.cpp` FFB thread loop.
-    *   The addition of `tests/test_ffb_issue_142.cpp` provides high confidence in the fix by verifying scaling, passthrough, and snapshot reporting.
+#### Completeness
+- All relevant files were updated, including `main.cpp` and `VERSION`.
+- Documentation was updated in both `CHANGELOG_DEV.md` and `USER_CHANGELOG.md`.
+- Comprehensive unit tests were added in `tests/test_health_monitor.cpp` and integrated into the build system via `CMakeLists.txt`.
 
-### Merge Assessment:
-The patch is complete, follows project standards, and includes robust unit tests. It is ready for merge.
+### Merge Assessment
+The patch is complete, functional, and maintains the project's reliability standards. The logic is sound, the refactoring is clean, and the tests verify the fix across all scenarios.
 
 ### Final Rating: #Correct#

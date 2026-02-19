@@ -5,6 +5,18 @@ This document contains all version release posts by ErwinMoss from the [url=http
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
 [size=5][b]February 19, 2026[/b][/size]
+[b]Version 0.7.64 - Improved System Health Monitoring[/b]
+
+[b]New release[/b] (0.7.64): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]False-Positive Rate Warnings[/b]: Resolved an annoying issue where users would see "[WARNING] Low Sample Rate detected" even when their system was performing correctly. The app is now smarter and recognizes that 100Hz is the standard speed for legacy telemetry and shaft torque, only warning you if the rates drop below their expected targets for your specific configuration. (#133)
+[/list]
+
+---
+
+[size=5][b]February 19, 2026[/b][/size]
 [b]Version 0.7.63 - Direct Torque Fix & TIC Mode[/b]
 
 [b]New release[/b] (0.7.63): https://github.com/coasting-nc/LMUFFB/releases
