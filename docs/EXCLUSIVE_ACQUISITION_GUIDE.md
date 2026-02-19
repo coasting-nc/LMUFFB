@@ -7,27 +7,27 @@ When LMUFFB connects to your steering wheel, it can acquire the device in two mo
 ### 🟢 Exclusive Mode (Recommended)
 - **What it means**: LMUFFB has exclusive control over Force Feedback
 - **Benefits**:
-  - Automatically prevents the game from sending FFB
-  - Eliminates "Double FFB" conflicts
-  - No need to manually disable in-game FFB
+  - Manages priority over the Force Feedback device
+  - Standard mode: In-game FFB can coexist with lmuFFB effects
+  - Allows the new option to transmit in-game FFB through the app
 - **Game compatibility**: The game can still read your steering inputs perfectly
-- **Display**: Green text "Mode: EXCLUSIVE (Game FFB Blocked)"
+- **Display**: Green text "Mode: EXCLUSIVE"
 
 ### 🟡 Shared Mode (Requires Manual Setup)
 - **What it means**: LMUFFB is sharing the device with other applications
 - **When this happens**: 
   - The game already grabbed exclusive access before LMUFFB started
   - Another FFB application is running
-- **Required action**: You MUST disable in-game FFB or set it to 0% strength
-- **Risk**: If you don't disable game FFB, two force signals will fight each other
-- **Display**: Yellow text "Mode: SHARED (Potential Conflict)"
+- **Recommended action**: You can leave in-game FFB enabled. 
+- **Note**: It is necessary to have in-game FFB enabled if you want to use the option to also transmit the in-game FFB through the lmuFFB app.
+- **Display**: Yellow text "Mode: SHARED"
 
 ## How It Works
 
 LMUFFB automatically tries to get exclusive access when you select a device:
 
 1. **First Attempt**: Try to acquire device in Exclusive mode
-2. **Success**: Device locked, game FFB automatically blocked ✅
+2. **Success**: Device locked ✅
 3. **Failure**: Fall back to Shared mode, manual setup required ⚠️
 
 ## Troubleshooting
@@ -45,24 +45,18 @@ LMUFFB automatically tries to get exclusive access when you select a device:
 
 ### I'm in "SHARED" mode and can't change it
 
-**Workaround**: Disable in-game FFB
+**Note**: It is no longer necessary to disable in-game FFB.
 
-1. In the game settings, find Force Feedback options
-2. Set FFB strength to 0% or select "None"
-3. This prevents the double FFB conflict
-4. LMUFFB will still work normally
+1. You can leave in-game FFB enabled in the game settings.
+2. If you want to use the "Transmit in-game FFB" feature, you MUST have it enabled.
+3. LMUFFB will work normally alongside the game's FFB.
 
-### The game FFB is fighting with LMUFFB
+### Using both FFB sources
 
-**Symptoms**:
-- Wheel feels strange or oscillates
-- Forces feel too strong or conflicting
-- Wheel behavior is unpredictable
-
-**Fix**:
-- Check the acquisition mode in LMUFFB
-- If SHARED: Disable in-game FFB completely
-- If EXCLUSIVE: This shouldn't happen - report as a bug
+**Note**: Modern versions of lmuFFB are designed to work together with the game's FFB.
+- You can use the game FFB for baseline forces.
+- LMUFFB adds detailed telemetry-based effects on top.
+- If forces feel too strong, adjust the Master Gain in lmuFFB or the FFB Strength in the game.
 
 ## Best Practices
 
@@ -76,25 +70,23 @@ LMUFFB automatically tries to get exclusive access when you select a device:
 
 ### Why does this matter?
 
-DirectInput allows only ONE application to have exclusive FFB access. When LMUFFB gets exclusive access:
-- The game can still read your steering angle, throttle, brake (inputs work normally)
-- The game CANNOT send FFB commands (its FFB is automatically muted)
-- Only LMUFFB controls the wheel forces
+DirectInput allows applications to share or take exclusive control. 
+- In Shared mode, both the game and lmuFFB can send FFB.
+- In Exclusive mode, lmuFFB takes priority and can manage the signal flow.
+- The game's FFB output can even be captured and re-processed by lmuFFB.
 
 This is the ideal setup because:
 - No manual configuration needed
-- No risk of double FFB
 - Cleaner, more predictable force feedback
 
 ### What if I want both apps to send FFB?
 
-You don't. Trust us. Double FFB creates:
-- Conflicting forces that fight each other
-- Unpredictable wheel behavior  
-- Loss of detail and feel
-- Potential wheel oscillation
+You can! Modern versions of lmuFFB allow you to:
+- Use the game's native FFB as a base.
+- Layer lmuFFB's telemetry-based effects on top.
+- Transmit the in-game FFB through the lmuFFB app for centralized management.
 
-Always use EXCLUSIVE mode when possible, or disable one FFB source completely.
+This is now the recommended way to experience the best of both worlds.
 
 ## FAQ
 
@@ -179,7 +171,7 @@ Want to verify that Dynamic Promotion is working correctly? Follow this test:
 1. **Setup**
    - Start LMUFFB
    - Select your FFB device
-   - ✅ **Verify:** Status shows **"Mode: EXCLUSIVE (Game FFB Blocked)"** in green
+   - ✅ **Verify:** Status shows **"Mode: EXCLUSIVE"** in green
 
 2. **Create Conflict**
    - Start Le Mans Ultimate (LMU)
@@ -205,7 +197,7 @@ Want to verify that Dynamic Promotion is working correctly? Follow this test:
 
 **If It Fails:**
 - Check that you're running LMUFFB v0.6.2 or later
-- Ensure in-game FFB is disabled (set to 0% or "None")
+- If you want the "Transmit" feature, ensure in-game FFB is enabled.
 - Try restarting both LMUFFB and the game
 - Report the issue with console logs
 
