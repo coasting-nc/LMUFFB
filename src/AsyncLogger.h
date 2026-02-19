@@ -71,6 +71,8 @@ struct LogFrame {
     // FFB Output
     float ffb_total;         // Normalized output
     float ffb_base;          // Base steering shaft force
+    float ffb_shaft_torque;  // NEW v0.7.62 (Issue #138)
+    float ffb_gen_torque;    // NEW v0.7.62 (Issue #138)
     float ffb_sop;           // Seat of Pants force
     float ffb_grip_factor;   // Applied grip modulation
     float speed_gate;        // Speed gate factor
@@ -291,7 +293,7 @@ private:
                << "CalcSlipAngle,CalcGripFront,CalcGripRear,GripDelta,"
                << "dG_dt,dAlpha_dt,SlopeCurrent,SlopeRaw,SlopeNum,SlopeDenom,HoldTimer,InputSlipSmooth,SlopeSmoothed,Confidence,"
                << "SurfaceFL,SurfaceFR,SlopeTorque,SlewLimitedG,"
-               << "FFBTotal,FFBBase,FFBSoP,GripFactor,SpeedGate,LoadPeakRef,Clipping,Marker\n";
+               << "FFBTotal,FFBBase,FFBShaftTorque,FFBGenTorque,FFBSoP,GripFactor,SpeedGate,LoadPeakRef,Clipping,Marker\n";
     }
 
     void WriteFrame(const LogFrame& frame) {
@@ -314,7 +316,7 @@ private:
                << frame.surface_type_fl << "," << frame.surface_type_fr << ","
                << frame.slope_torque << "," << frame.slew_limited_g << ","
                
-               << frame.ffb_total << "," << frame.ffb_base << "," << frame.ffb_sop << "," 
+               << frame.ffb_total << "," << frame.ffb_base << "," << frame.ffb_shaft_torque << "," << frame.ffb_gen_torque << "," << frame.ffb_sop << ","
                << frame.ffb_grip_factor << "," << frame.speed_gate << "," << frame.load_peak_ref << ","
                << (frame.clipping ? 1 : 0) << "," << (frame.marker ? 1 : 0) << "\n";
         

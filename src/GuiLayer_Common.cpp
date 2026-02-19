@@ -886,7 +886,7 @@ inline void PlotWithStats(const char* label, const RollingBuffer& buffer,
 // Global Buffers
 static RollingBuffer plot_total, plot_base, plot_sop, plot_yaw_kick, plot_rear_torque, plot_gyro_damping, plot_scrub_drag, plot_soft_lock, plot_oversteer, plot_understeer, plot_clipping, plot_road, plot_slide, plot_lockup, plot_spin, plot_bottoming;
 static RollingBuffer plot_calc_front_load, plot_calc_rear_load, plot_calc_front_grip, plot_calc_rear_grip, plot_calc_slip_ratio, plot_calc_slip_angle_smoothed, plot_calc_rear_slip_angle_smoothed, plot_slope_current, plot_calc_rear_lat_force;
-static RollingBuffer plot_raw_steer, plot_raw_input_steering, plot_raw_throttle, plot_raw_brake, plot_input_accel, plot_raw_car_speed, plot_raw_load, plot_raw_grip, plot_raw_rear_grip, plot_raw_front_slip_ratio, plot_raw_susp_force, plot_raw_ride_height, plot_raw_front_lat_patch_vel, plot_raw_front_long_patch_vel, plot_raw_rear_lat_patch_vel, plot_raw_rear_long_patch_vel, plot_raw_slip_angle, plot_raw_rear_slip_angle, plot_raw_front_deflection;
+static RollingBuffer plot_raw_steer, plot_raw_shaft_torque, plot_raw_gen_torque, plot_raw_input_steering, plot_raw_throttle, plot_raw_brake, plot_input_accel, plot_raw_car_speed, plot_raw_load, plot_raw_grip, plot_raw_rear_grip, plot_raw_front_slip_ratio, plot_raw_susp_force, plot_raw_ride_height, plot_raw_front_lat_patch_vel, plot_raw_front_long_patch_vel, plot_raw_rear_lat_patch_vel, plot_raw_rear_long_patch_vel, plot_raw_slip_angle, plot_raw_rear_slip_angle, plot_raw_front_deflection;
 
 static bool g_warn_dt = false;
 
@@ -928,6 +928,8 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         plot_calc_rear_lat_force.Add(snap.calc_rear_lat_force);
         plot_slope_current.Add(snap.slope_current);
         plot_raw_steer.Add(snap.steer_force);
+        plot_raw_shaft_torque.Add(snap.raw_shaft_torque);
+        plot_raw_gen_torque.Add(snap.raw_gen_torque);
         plot_raw_input_steering.Add(snap.raw_input_steering);
         plot_raw_throttle.Add(snap.raw_input_throttle);
         plot_raw_brake.Add(snap.raw_input_brake);
@@ -1013,7 +1015,9 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
     if (ImGui::CollapsingHeader("C. Raw Game Telemetry (Input)", ImGuiTreeNodeFlags_None)) {
         ImGui::Columns(4, "TelCols", false);
         ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Driver Input]");
-        PlotWithStats("Steering Torque", plot_raw_steer, -30.0f, 30.0f);
+        PlotWithStats("Selected Torque", plot_raw_steer, -30.0f, 30.0f, ImVec2(0, 40), "The torque value currently being used as the base for FFB calculations.");
+        PlotWithStats("Shaft Torque (100Hz)", plot_raw_shaft_torque, -30.0f, 30.0f, ImVec2(0, 40), "Standard rF2 physics channel (typically 100Hz).");
+        PlotWithStats("Direct Torque (400Hz)", plot_raw_gen_torque, -30.0f, 30.0f, ImVec2(0, 40), "New LMU high-frequency channel (native 400Hz).");
         PlotWithStats("Steering Input", plot_raw_input_steering, -1.0f, 1.0f);
         ImGui::Text("Combined Input");
         ImVec2 pos = ImGui::GetCursorScreenPos();
