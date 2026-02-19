@@ -11,7 +11,7 @@ using namespace FFBEngineTests;
 /**
  * @brief Unit tests for the Soft Limiter (Compressor) feature.
  *
- * Verifies that the soft limiter:
+ * Verifies that the soft limiter (Ref: Slide Rumble Report):
  * 1. Passes signals below the knee unchanged.
  * 2. Compresses signals above the knee.
  * 3. Asymptotically approaches 1.0.

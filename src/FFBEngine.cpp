@@ -819,7 +819,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double norm_force = total_sum / max_torque_safe;
     norm_force *= m_gain;
 
-    // Apply Soft Limiter (Issue #140)
+    // Apply Soft Limiter (Ref: Slide Rumble Report)
     // Prevents force rectification by compressing the signal as it approaches 1.0
     // instead of hard clipping.
     double compressed_force = norm_force;

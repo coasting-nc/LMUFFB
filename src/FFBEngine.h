@@ -212,7 +212,7 @@ public:
     float m_slide_texture_gain;
     float m_slide_freq_scale;
 
-    // Soft Limiter (Issue #140)
+    // Soft Limiter (Ref: Slide Rumble Report)
     bool m_soft_limiter_enabled = false;
     float m_soft_limiter_knee = 0.8f;
     

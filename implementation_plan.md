@@ -5,6 +5,9 @@ Implement a Soft Limiter (Compressor) in the FFB Engine to prevent "Force Rectif
 ## Context
 Address the "resistance drop" phenomenon when FFB vibrations (like Slide Rumble) clip against the hardware limit. Hard clipping chops off signal peaks while leaving troughs intact, resulting in a net loss of average resisting force. A soft limiter gradually compresses the signal as it approaches the limit, preserving the average force and vibration detail.
 
+### Choice of Issue
+This feature was selected based on a critical recommendation in the "Slide Rumble" bug report (`docs/bug_reports/slide rumble issue.md`). The report identifies **Clipping-Induced "Force Rectification"** as a primary cause of the wheel suddenly feeling light and "throwing" into turns when textures activate at high loads. Implementing a "Soft Limiter" or "Compressor" was specifically noted as the ideal future fix for this reliability flaw in the physics engine. While it does not have a formal GitHub issue number, it directly resolves a high-severity behavior reported by users.
+
 ## Reference Documents
 - Bug Report: `docs/bug_reports/slide rumble issue.md`
 - FFB Formulas: `docs/dev_docs/references/FFB_formulas.md`
@@ -32,7 +35,7 @@ Address the "resistance drop" phenomenon when FFB vibrations (like Slide Rumble)
 - Add member variables to `FFBEngine`:
     - `bool m_soft_limiter_enabled`
     - `float m_soft_limiter_knee`
-- Update `FFBSnapshot` to include `clipping_soft` for diagnostics.
+- Update `FFBSnapshot` to include `clipping_soft` for diagnostics (Ref: Slide Rumble Report).
 
 ### 3. `src/Config.h` & `src/Config.cpp`
 - Add settings to `Preset` struct.
@@ -48,7 +51,7 @@ Address the "resistance drop" phenomenon when FFB vibrations (like Slide Rumble)
     - [x] Entry in `Config::WritePresetFields()`
 
 ### 4. `src/FFBEngine.cpp`
-- Modify `calculate_force` to apply the limiter before final scaling/clamping.
+- Modify `calculate_force` to apply the limiter before final scaling/clamping (Addressing Force Rectification).
 - Populate `clipping_soft` diagnostic.
 
 ### 5. `src/GuiLayer_Common.cpp`

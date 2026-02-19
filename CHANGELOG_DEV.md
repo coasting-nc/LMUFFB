@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [0.7.62] - 2026-02-19
 ### Added
-- **Soft Limiter (Compressor)**:
+- **Soft Limiter (Compressor)** (Ref: Slide Rumble Report):
   - Implemented a tanh-based soft-knee compressor to prevent force rectification during clipping.
   - Gradually compresses the FFB signal as it approaches 100%, preserving high-frequency details (like Slide Rumble) at the limit.
   - Added configurable **Knee** slider to the "General FFB" section.
