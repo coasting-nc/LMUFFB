@@ -16,6 +16,14 @@
 #ifdef ENABLE_IMGUI
 #include "imgui.h"
 
+static void DisplayRate(const char* label, double rate, double target) {
+    ImGui::Text("%s", label);
+    ImVec4 color = ImVec4(1.0f, 0.4f, 0.4f, 1.0f); // Red
+    if (rate >= target * 0.95) color = ImVec4(0.4f, 1.0f, 0.4f, 1.0f); // Green
+    else if (rate >= target * 0.75) color = ImVec4(1.0f, 1.0f, 0.4f, 1.0f); // Yellow
+    ImGui::TextColored(color, "%.1f Hz", rate);
+}
+
 // External linkage to FFB loop status
 extern std::atomic<bool> g_running;
 extern std::recursive_mutex g_engine_mutex;
@@ -396,32 +404,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::TreeNodeEx("General FFB", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        if (ImGui::TreeNode("System Health (Hz)")) {
-            ImGui::Columns(3, "RateCols", false);
-            auto DisplayRate = [](const char* label, double rate, double target) {
-                ImGui::Text("%s", label);
-                ImVec4 color = ImVec4(1.0f, 0.4f, 0.4f, 1.0f); // Red
-                if (rate >= target * 0.95) color = ImVec4(0.4f, 1.0f, 0.4f, 1.0f); // Green
-                else if (rate >= target * 0.75) color = ImVec4(1.0f, 1.0f, 0.4f, 1.0f); // Yellow
-                ImGui::TextColored(color, "%.1f Hz", rate);
-            };
-            DisplayRate("FFB Loop", engine.m_ffb_rate, 400.0);
-            ImGui::NextColumn();
-            DisplayRate("Telemetry", engine.m_telemetry_rate, 400.0);
-            ImGui::NextColumn();
-            DisplayRate("Hardware", engine.m_hw_rate, 400.0);
-            ImGui::NextColumn();
-            DisplayRate("S.Torque", engine.m_torque_rate, 400.0);
-            ImGui::NextColumn();
-            DisplayRate("G.Torque", engine.m_gen_torque_rate, 400.0);
-            ImGui::Columns(1);
-            if ((engine.m_telemetry_rate < 380.0 || engine.m_torque_rate < 380.0) && engine.m_telemetry_rate > 1.0 && GameConnector::Get().IsConnected()) {
-                ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Low telemetry/torque rate. Check game FFB settings.");
-            }
-            ImGui::TreePop();
-            ImGui::Separator();
-        }
-
+        ImGui::Spacing();
         bool use_in_game_ffb = (engine.m_torque_source == 1);
         if (GuiWidgets::Checkbox("Use In-Game FFB (400Hz Native)", &use_in_game_ffb,
                     "Recommended for LMU 1.2+. Uses the high-frequency FFB channel directly from the game.\n"
@@ -916,6 +899,25 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
     ImGui::Begin("FFB Analysis", nullptr, flags);
+
+    // System Health Diagnostics (Moved from Tuning window - Issue #149)
+    if (ImGui::CollapsingHeader("System Health (Hz)", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Columns(5, "RateCols", false);
+        DisplayRate("FFB Loop", engine.m_ffb_rate, 400.0);
+        ImGui::NextColumn();
+        DisplayRate("Telemetry", engine.m_telemetry_rate, 400.0);
+        ImGui::NextColumn();
+        DisplayRate("Hardware", engine.m_hw_rate, 400.0);
+        ImGui::NextColumn();
+        DisplayRate("S.Torque", engine.m_torque_rate, 400.0);
+        ImGui::NextColumn();
+        DisplayRate("G.Torque", engine.m_gen_torque_rate, 400.0);
+        ImGui::Columns(1);
+        if ((engine.m_telemetry_rate < 380.0 || engine.m_torque_rate < 380.0) && engine.m_telemetry_rate > 1.0 && GameConnector::Get().IsConnected()) {
+            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Low telemetry/torque rate. Check game FFB settings.");
+        }
+        ImGui::Separator();
+    }
 
     auto snapshots = engine.GetDebugBatch();
     for (const auto& snap : snapshots) {

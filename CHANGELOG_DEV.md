@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.66] - 2026-02-23
+### Fixed
+- **UI Obscuration & Alignment (#149)**:
+  - Moved the "System Health (Hz)" diagnostic section from the Tuning window to the FFB Analysis (Graphs) window to reduce clutter and resolve obscuration issues.
+  - Added vertical spacing before the "Use In-Game FFB" toggle in the General FFB section to improve discoverability and alignment.
+  - Reorganized the health diagnostics in the Analysis window into a 5-column layout for better space utilization.
+
 ## [0.7.65] - 2026-02-23
 ### Changed
 - **Terminology & UX Overhaul (#145)**:
