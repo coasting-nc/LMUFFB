@@ -887,6 +887,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
             // Telemetry
             snap.steer_force = (float)raw_torque;
+            snap.raw_shaft_torque = (float)data->mSteeringShaftTorque;
+            snap.raw_gen_torque = (float)genFFBTorque;
             snap.raw_input_steering = (float)data->mUnfilteredSteering;
             snap.raw_front_tire_load = (float)raw_load;
             snap.raw_front_grip_fract = (float)raw_grip;
@@ -980,6 +982,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         
         // FFB output
         frame.ffb_total = (float)norm_force;
+        frame.ffb_shaft_torque = (float)data->mSteeringShaftTorque;
+        frame.ffb_gen_torque = (float)genFFBTorque;
         frame.ffb_grip_factor = (float)ctx.grip_factor;
         frame.ffb_sop = (float)ctx.sop_base_force;
         frame.speed_gate = (float)ctx.speed_gate;

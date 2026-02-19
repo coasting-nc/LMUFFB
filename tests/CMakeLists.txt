@@ -58,6 +58,7 @@ set(TEST_SOURCES
     test_vehicle_utils.cpp
     test_coverage_boost.cpp
     test_ffb_coverage_target.cpp
+    test_ffb_diag_updates.cpp
 )
 
 # ImGui Core is now always available if vendor exists

@@ -61,6 +61,8 @@ struct FFBSnapshot {
 
     // --- Header C: Raw Game Telemetry (Inputs) ---
     float steer_force;
+    float raw_shaft_torque;      // New v0.7.62 (Issue #138)
+    float raw_gen_torque;        // New v0.7.62 (Issue #138)
     float raw_input_steering;    // New v0.4.7 (Unfiltered -1 to 1)
     float raw_front_tire_load;   // New v0.4.7
     float raw_front_grip_fract;  // New v0.4.7
