@@ -64,7 +64,7 @@ void UpdateSettings(float newGain) {
 ## FIXER'S DAILY PROCESS
 
 ### 1. 🔍 TRIAGE & SELECT
-Scan open GitHub issues. Select **ONE** issue based on priority (Physics Math, Logic/State Machine, Config Parsing).
+Scan open GitHub issues. Select **ONE** issue based on priority (Physics Math, Logic/State Machine, Config Parsing). MANDATORY: You must select an open GitHib issue that has not been fixed yet, and mention in the documents you produce (the implementation plan) the number and title of the issue you decide to work on.
 
 ### 2. 📐 ARCHITECT (Plan)
 **Action:** Execute instructions in `gemini_orchestrator\templates\A.1_architect_prompt.md`.
