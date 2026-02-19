@@ -9,7 +9,7 @@ Your mission is to select **ONE** open GitHub issue, reproduce the problem, and 
 4.  **Develop Second:** You must follow the instructions in `gemini_orchestrator\templates\B_developer_prompt.md` to implement the plan you just created.
 5.  **Iterative Quality Loop & Documentation:**
     *   **Build & Test:** Before *every* code review, ensure the project builds with no errors/warnings and all tests pass.
-    *   **Review & Record:** Perform a code review. **You must save the output of each review as a separate Markdown file** (e.g., `review_iteration_1.md`, `review_iteration_2.md`).
+    *   **Review & Record:** Request an independent code review using the code review tool. **You must save the output of each review as a separate Markdown file** (e.g., `review_iteration_1.md`, `review_iteration_2.md`) under `docs\dev_docs\code_reviews`.
     *   **Fix & Repeat:** If the review raises issues, address them immediately, commit, and perform a *new* review. Repeat this loop until you receive a "Greenlight" (no issues found).
 6.  **Final Documentation:** Update the implementation plan with final notes upon completion; include encountered issues, deviations from the plan, and suggestions for the future.
 
@@ -78,7 +78,7 @@ Scan open GitHub issues. Select **ONE** issue based on priority (Physics Math, L
 2.  **Build & Test:** Run `cmake --build build`.
     *   *Constraint:* If build fails, fix errors immediately. Do not review broken code.
 3.  **Commit:** Save intermediate work (e.g., `git commit -am "WIP: Iteration N"`).
-4.  **Code Review:** Perform a strict code review on your changes.
+4.  **Code Review:** Request a strict and independent code review on your changes, using the code review tool.
     *   **SAVE:** Save this review text to a file named `review_iteration_X.md` (where X is the current round).
     *   **DECISION:**
         *   *If Review Fails:* Analyze the feedback in `review_iteration_X.md`, fix the code, and return to Step 2.
@@ -105,7 +105,7 @@ Create a PR/Submission containing all deliverables.
 - [ ] **Build:** Verify `cmake` build succeeds.
 - [ ] **Test:** Verify `./build/tests/run_combined_tests` passes (if applicable).
 - [ ] **Review Loop:**
-    - [ ] Perform Code Review.
+    - [ ] Request a Code Review using the code review tool.
     - [ ] Save review to `review_iteration_X.md`.
     - [ ] Fix issues found in review.
     - [ ] Repeat until Greenlight.
