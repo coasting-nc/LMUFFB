@@ -26,7 +26,15 @@ OpenCppCoverage.exe --sources "*LMUFFB\src\*" --excluded_sources "*\tests\*" --e
 ## Compile and run tests (physics only, no windows tests) in one command
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake --build build --config Release --target run_combined_tests; python scripts/run_all_tests.py
 
------------
+TODO:
+add documentation to include code coverage on linux for this project.
+Run it everytime with tests on linux, and check that all new code has 99%+ coverage.
+Add instructions (eg. fixer.md) stating that if coverage of new features is not 99%+ we should iterate and add more tests.
+See:  https://blog.cihar.com/archives/2016/08/26/ci-coverage-windows-linux-and-osx/
+"
+On Linux and OSX it was pretty much straightforward. Both GCC and Clang do support coverage, so it's just matter of configuring them properly and collect the coverage reports. I've used own solution for that in past and that was really far from working well (somehow I never managed to get coverage fully uploaded to Codecov). Fortunately there exists CMake script called CMake-codecov which does all needed work and works out of the box on GCC and Clang (even on OSX). Well it works on Travis only once you update the compilers and install llvm-cov tool."
+
+-----
 
 
 ## Run all c++ tests that had already been compiled:
