@@ -166,13 +166,13 @@ def main():
     
 
     custom_list_of_documents_to_include = [
-        "docs\dev_docs\implementation_plans\Slope Detection Fixes & Telemetry Enhancements v0.7.35.md",
-        "docs\dev_docs\implementation_plans\Slope Detection Accuracy Tools.md",
-        "docs\dev_docs\implementation_plans\Slope Detection Advanced Features.md", 
-        "docs\dev_docs\investigations\slope detection advanced features deep research.md",
-        "docs\dev_docs\investigations\slope_detection_feasibility.md",
-        "docs\dev_docs\investigations\improve_slope_Detection_v0.7.35+.md",
-        "docs\dev_docs\investigations\Recommended Additions to Telemetry Logger.md",
+        # "docs\dev_docs\implementation_plans\Slope Detection Fixes & Telemetry Enhancements v0.7.35.md",
+        # "docs\dev_docs\implementation_plans\Slope Detection Accuracy Tools.md",
+        # "docs\dev_docs\implementation_plans\Slope Detection Advanced Features.md", 
+        # "docs\dev_docs\investigations\slope detection advanced features deep research.md",
+        # "docs\dev_docs\investigations\slope_detection_feasibility.md",
+        # "docs\dev_docs\investigations\improve_slope_Detection_v0.7.35+.md",
+        # "docs\dev_docs\investigations\Recommended Additions to Telemetry Logger.md",
     ]
 
     # Get current CLI args
