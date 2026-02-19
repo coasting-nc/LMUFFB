@@ -182,6 +182,7 @@ public:
     float m_steering_shaft_gain;
     int m_base_force_mode;
     int m_torque_source = 0; 
+    bool m_torque_passthrough = false;
 
     // New Effects (v0.2)
     float m_oversteer_boost;

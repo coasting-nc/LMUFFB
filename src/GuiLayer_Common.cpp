@@ -215,6 +215,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
              info.slope_threshold = (float)engine.m_slope_min_threshold;
              info.slope_alpha_threshold = engine.m_slope_alpha_threshold;
              info.slope_decay_rate = engine.m_slope_decay_rate;
+             info.torque_passthrough = engine.m_torque_passthrough;
 
              AsyncLogger::Get().Start(info, Config::m_log_path);
          }
@@ -474,6 +475,10 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             "Select the telemetry channel for base steering torque.\n"
             "Shaft Torque: Standard rF2 physics channel (typically 100Hz).\n"
             "Direct Torque: New LMU high-frequency channel (native 400Hz). RECOMMENDED.");
+
+        BoolSetting("Pure Passthrough", &engine.m_torque_passthrough,
+            "Bypasses LMUFFB's internal Understeer and Dynamic Weight modulation for the base steering torque.\n"
+            "Recommended when using Direct Torque (400Hz) if you prefer the game's native FFB modulation.");
 
         if (ImGui::TreeNodeEx("Signal Filtering", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::NextColumn(); ImGui::NextColumn();

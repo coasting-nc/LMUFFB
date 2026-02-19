@@ -93,6 +93,7 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "slip_angle_smoothing") current_preset.slip_smoothing = std::stof(value);
                 else if (key == "base_force_mode") current_preset.base_force_mode = std::stoi(value);
                 else if (key == "torque_source") current_preset.torque_source = std::stoi(value);
+                else if (key == "torque_passthrough") current_preset.torque_passthrough = (value == "1" || value == "true");
                 else if (key == "gyro_gain") current_preset.gyro_gain = (std::min)(1.0f, std::stof(value));
                 else if (key == "flatspot_suppression") current_preset.flatspot_suppression = std::stoi(value);
                 else if (key == "notch_q") current_preset.notch_q = std::stof(value);
@@ -836,6 +837,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "understeer=" << p.understeer << "\n";
     file << "base_force_mode=" << p.base_force_mode << "\n";
     file << "torque_source=" << p.torque_source << "\n";
+    file << "torque_passthrough=" << p.torque_passthrough << "\n";
     file << "flatspot_suppression=" << p.flatspot_suppression << "\n";
     file << "notch_q=" << p.notch_q << "\n";
     file << "flatspot_strength=" << p.flatspot_strength << "\n";
@@ -1116,6 +1118,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "understeer=" << engine.m_understeer_effect << "\n";
         file << "base_force_mode=" << engine.m_base_force_mode << "\n";
         file << "torque_source=" << engine.m_torque_source << "\n";
+        file << "torque_passthrough=" << engine.m_torque_passthrough << "\n";
         file << "flatspot_suppression=" << engine.m_flatspot_suppression << "\n";
         file << "notch_q=" << engine.m_notch_q << "\n";
         file << "flatspot_strength=" << engine.m_flatspot_strength << "\n";
@@ -1265,6 +1268,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "understeer") engine.m_understeer_effect = std::stof(value);
                     else if (key == "base_force_mode") engine.m_base_force_mode = std::stoi(value);
                     else if (key == "torque_source") engine.m_torque_source = std::stoi(value);
+                    else if (key == "torque_passthrough") engine.m_torque_passthrough = (value == "1" || value == "true");
                     else if (key == "sop") engine.m_sop_effect = std::stof(value);
                     else if (key == "min_force") engine.m_min_force = std::stof(value);
                     else if (key == "oversteer_boost") engine.m_oversteer_boost = std::stof(value);

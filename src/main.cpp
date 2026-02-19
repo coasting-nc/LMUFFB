@@ -99,6 +99,7 @@ void FFBThread() {
                     info.slope_threshold = (float)g_engine.m_slope_min_threshold;
                     info.slope_alpha_threshold = g_engine.m_slope_alpha_threshold;
                     info.slope_decay_rate = g_engine.m_slope_decay_rate;
+                    info.torque_passthrough = g_engine.m_torque_passthrough;
                     AsyncLogger::Get().Start(info, Config::m_log_path);
                 }
             } else if (!was_in_menu && !in_realtime) {

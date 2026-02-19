@@ -91,6 +91,15 @@ extern int g_test_cases_failed;
         g_tests_failed++; \
     }
 
+#define ASSERT_LT(a, b) \
+    if ((a) < (b)) { \
+        std::cout << "[PASS] " << #a << " < " << #b << std::endl; \
+        g_tests_passed++; \
+    } else { \
+        std::cout << "[FAIL] " << #a << " (" << (a) << ") >= " << #b << " (" << (b) << ")" << std::endl; \
+        g_tests_failed++; \
+    }
+
 #define ASSERT_EQ_STR(a, b) \
     if (std::string(a) == std::string(b)) { \
         std::cout << "[PASS] " << #a << " == " << #b << std::endl; \
