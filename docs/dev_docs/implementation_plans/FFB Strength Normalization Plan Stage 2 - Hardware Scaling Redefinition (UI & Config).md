@@ -9,6 +9,9 @@ Stage 2 replaces `m_max_torque_ref` with a "Physical Target" model consisting of
 
 * `docs\dev_docs\investigations\FFB Strength and Tire Load Normalization2.md`
 * `docs\dev_docs\investigations\FFB Strength and Tire Load Normalization3.md`
+* Previous stage 1 implementation plan: `docs\dev_docs\implementation_plans\FFB Strength Normalization Plan Stage 1 - Dynamic Normalization for Structural Forces.md`
+* Previous stage 1 implementation plan (modified during development): `docs\dev_docs\implementation_plans\plan_152.md`
+
 
 ## Codebase Analysis Summary
 *   **Current Architecture:** `m_max_torque_ref` is used to calculate `ctx.decoupling_scale` (`max_torque_ref / 20.0`). This scale is multiplied into almost every FFB effect. Finally, the total sum is divided by `max_torque_ref`. This causes textures to scale as a fixed percentage of the wheelbase, meaning a 2 Nm road texture feels like 1 Nm on a 10 Nm wheelbase, but 2.5 Nm on a 25 Nm wheelbase.
