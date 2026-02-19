@@ -1,6 +1,9 @@
 ﻿#include "FFBEngine.h"
 #include "Config.h"
 #include <iostream>
+#include <mutex>
+
+extern std::recursive_mutex g_engine_mutex;
 #include <algorithm>
 #include <cmath>
 
@@ -527,6 +530,7 @@ double FFBEngine::apply_signal_conditioning(double raw_torque, const TelemInfoV0
 // Refactored calculate_force
 double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleClass, const char* vehicleName, float genFFBTorque) {
     if (!data) return 0.0;
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
     // Select Torque Source
     // v0.7.63 Fix: genFFBTorque (Direct Torque 400Hz) is normalized [-1.0, 1.0].
@@ -535,6 +539,40 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // RELIABILITY FIX: Sanitize input torque
     if (!std::isfinite(raw_torque_input)) return 0.0;
+
+    // --- 0. DYNAMIC NORMALIZATION (Issue #152) ---
+    // 1. Contextual Spike Rejection (Lightweight MAD alternative)
+    double current_abs_torque = std::abs(raw_torque_input);
+    double alpha_slow = data->mDeltaTime / (1.0 + data->mDeltaTime); // 1-second rolling average
+    m_rolling_average_torque += alpha_slow * (current_abs_torque - m_rolling_average_torque);
+
+    double lat_g_abs = std::abs(data->mLocalAccel.x / 9.81);
+    double torque_slew = std::abs(raw_torque_input - m_last_raw_torque) / (data->mDeltaTime + 1e-9);
+    m_last_raw_torque = raw_torque_input;
+
+    // Flag as spike if torque jumps > 3x the rolling average (with a 15Nm floor to prevent low-speed false positives)
+    bool is_contextual_spike = (current_abs_torque > (m_rolling_average_torque * 3.0)) && (current_abs_torque > 15.0);
+
+    // Safety check for clean state
+    bool is_clean_state = (lat_g_abs < 8.0) && (torque_slew < 1000.0) && !is_contextual_spike;
+
+    // 2. Leaky Integrator (Exponential Decay + Floor)
+    if (is_clean_state && m_torque_source == 0) {
+        if (current_abs_torque > m_session_peak_torque) {
+            m_session_peak_torque = current_abs_torque; // Fast attack
+        } else {
+            // Exponential decay (0.5% reduction per second)
+            double decay_factor = 1.0 - (0.005 * data->mDeltaTime);
+            m_session_peak_torque *= decay_factor;
+        }
+        // Absolute safety floor and ceiling
+        m_session_peak_torque = std::clamp(m_session_peak_torque, 1.0, 100.0);
+    }
+
+    // 3. EMA Filtering on the Gain Multiplier (Zero-latency physics)
+    double target_structural_mult = (m_torque_source == 1) ? 1.0 : (1.0 / (m_session_peak_torque + 1e-9));
+    double alpha_gain = data->mDeltaTime / (0.25 + data->mDeltaTime); // 250ms smoothing
+    m_smoothed_structural_mult += alpha_gain * (target_structural_mult - m_smoothed_structural_mult);
 
     // Class Seeding
     bool seeded = false;
@@ -811,20 +849,25 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     calculate_suspension_bottoming(data, ctx);
     calculate_soft_lock(data, ctx);
     
-    // --- 6. SUMMATION ---
-    // Split into Structural (Attenuated by Spin) and Texture (Raw) groups
+    // --- 6. SUMMATION (Issue #152 Split Scaling) ---
+    // Split into Structural (Dynamic Normalization) and Texture (Legacy Scaling) groups
     double structural_sum = output_force + ctx.sop_base_force + ctx.rear_torque + ctx.yaw_force + ctx.gyro_force +
-                            ctx.abs_pulse_force + ctx.lockup_rumble + ctx.scrub_drag_force + ctx.soft_lock_force;
+                            ctx.scrub_drag_force + ctx.soft_lock_force;
 
     // Apply Torque Drop (from Spin/Traction Loss) only to structural physics
     structural_sum *= ctx.gain_reduction_factor;
     
-    double texture_sum = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch;
+    // Apply Dynamic Normalization ONLY to structural forces
+    double norm_structural = structural_sum * m_smoothed_structural_mult;
 
-    double total_sum = structural_sum + texture_sum;
+    // Tactile Textures use Legacy Scaling
+    double texture_sum = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble;
+    double norm_texture = texture_sum / max_torque_safe;
+
+    double total_sum = norm_structural + norm_texture;
 
     // --- 7. OUTPUT SCALING ---
-    double norm_force = total_sum / max_torque_safe;
+    double norm_force = total_sum; // Already normalized by group
     norm_force *= m_gain;
 
     // Min Force
@@ -879,6 +922,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.texture_bottoming = (float)ctx.bottoming_crunch;
             snap.ffb_abs_pulse = (float)ctx.abs_pulse_force; 
             snap.ffb_soft_lock = (float)ctx.soft_lock_force;
+            snap.session_peak_torque = (float)m_session_peak_torque;
             snap.clipping = (std::abs(norm_force) > 0.99f) ? 1.0f : 0.0f;
 
             // Physics

@@ -24,6 +24,12 @@ void test_soft_lock() {
         engine.m_invert_force = false;
         engine.m_steering_shaft_gain = 0.0f;
 
+        // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
+        FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
+        FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 100.0);
+        FFBEngineTestAccess::SetRollingAverageTorque(engine, 100.0);
+        FFBEngineTestAccess::SetLastRawTorque(engine, 100.0);
+
         ASSERT_NEAR(run_step(engine, data, 0.5), 0.0, 0.001);
         ASSERT_NEAR(run_step(engine, data, 1.0), 0.0, 0.001);
         // stiffness = 20.0
@@ -56,6 +62,12 @@ void test_soft_lock() {
         engine.m_gain = 1.0f;
         engine.m_invert_force = false;
         engine.m_steering_shaft_gain = 0.0f;
+
+        // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
+        FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
+        FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 100.0);
+        FFBEngineTestAccess::SetRollingAverageTorque(engine, 100.0);
+        FFBEngineTestAccess::SetLastRawTorque(engine, 100.0);
 
         run_step(engine, data, 1.1); // Initial: sets prev_angle
         double force = run_step(engine, data, 1.2);

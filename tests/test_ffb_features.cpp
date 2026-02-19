@@ -72,6 +72,12 @@ TEST_CASE(test_idle_smoothing, "Texture") {
     engine.m_gain = 1.0f;
     engine.m_max_torque_ref = 10.0f; // Allow up to 10 Nm without clipping
     
+    // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
+    FFBEngineTestAccess::SetSessionPeakTorque(engine, 10.0);
+    FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 10.0);
+    FFBEngineTestAccess::SetRollingAverageTorque(engine, 10.0);
+    FFBEngineTestAccess::SetLastRawTorque(engine, 10.0);
+
     // 1. Simulate Engine Vibration at Idle (20Hz sine wave)
     // Amplitude 5.0 Nm. 
     // With 0.1s smoothing (Idle Target), 20Hz should be heavily attenuated.
@@ -98,6 +104,12 @@ TEST_CASE(test_idle_smoothing, "Texture") {
     TelemInfoV01 data_driving = CreateBasicTestTelemetry(20.0);
     data_driving.mDeltaTime = 0.0025;
     
+    // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
+    FFBEngineTestAccess::SetSessionPeakTorque(engine, 10.0);
+    FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 10.0);
+    FFBEngineTestAccess::SetRollingAverageTorque(engine, 10.0);
+    FFBEngineTestAccess::SetLastRawTorque(engine, 10.0);
+
     // Reset smoother
     engine.m_steering_shaft_torque_smoothed = 0.0;
     
@@ -440,6 +452,12 @@ TEST_CASE(test_static_notch_integration, "Texture") {
     engine.m_static_notch_width = 10.0; // Q = 11/10 = 1.1 (Wide notch for testing)
     engine.m_gain = 1.0;
     engine.m_max_torque_ref = 1.0; 
+    // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
+    FFBEngineTestAccess::SetSessionPeakTorque(engine, 1.0);
+    FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0);
+    FFBEngineTestAccess::SetRollingAverageTorque(engine, 1.0);
+    FFBEngineTestAccess::SetLastRawTorque(engine, 1.0);
+
     engine.m_bottoming_enabled = false; // Disable to avoid interference
     engine.m_invert_force = false;      // Disable inversion for clarity
     engine.m_understeer_effect = 0.0;   // Disable grip logic clamping

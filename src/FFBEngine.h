@@ -45,6 +45,7 @@ struct FFBSnapshot {
     float texture_bottoming;
     float ffb_abs_pulse;    // New v0.7.53
     float ffb_soft_lock;    // New v0.7.61 (Issue #117)
+    float session_peak_torque; // New v0.7.67 (Issue #152)
     float clipping;
 
     // --- Header B: Internal Physics (Calculated) ---
@@ -107,6 +108,8 @@ struct GripResult {
     double original;        // Original telemetry value
     double slip_angle;      // Calculated slip angle (if approximated)
 };
+
+struct Preset;
 
 namespace FFBEngineTests { class FFBEngineTestAccess; }
 
@@ -439,6 +442,7 @@ public:
     std::mutex m_debug_mutex;
     
     friend class FFBEngineTests::FFBEngineTestAccess;
+    friend struct Preset;
 
     FFBEngine();
 
@@ -478,6 +482,11 @@ private:
     static constexpr double PREDICTION_LOAD_THRESHOLD = 50.0;   
 
     double m_auto_peak_load = 4500.0; 
+    double m_session_peak_torque = 25.0; // New v0.7.67 (Issue #152)
+    double m_smoothed_structural_mult = 1.0 / 25.0; // New v0.7.67 (Issue #152)
+    double m_rolling_average_torque = 0.0; // New v0.7.67 (Issue #152)
+    double m_last_raw_torque = 0.0; // New v0.7.67 (Issue #152)
+
     std::string m_current_class_name = "";
     bool m_auto_load_normalization_enabled = true; 
 
