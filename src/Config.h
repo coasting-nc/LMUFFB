@@ -64,6 +64,10 @@ struct Preset {
     
     bool road_enabled = true;
     float road_gain = 0.0f;
+
+    bool soft_lock_enabled = true;
+    float soft_lock_stiffness = 20.0f;
+    float soft_lock_damping = 0.5f;
     
     bool invert_force = true;
     float max_torque_ref = 100.0f; // T300 Calibrated
@@ -174,6 +178,13 @@ struct Preset {
         return *this; 
     }
     Preset& SetRoad(bool enabled, float g) { road_enabled = enabled; road_gain = g; return *this; }
+
+    Preset& SetSoftLock(bool enabled, float stiffness, float damping) {
+        soft_lock_enabled = enabled;
+        soft_lock_stiffness = stiffness;
+        soft_lock_damping = damping;
+        return *this;
+    }
     
     Preset& SetInvert(bool v) { invert_force = v; return *this; }
     Preset& SetMaxTorque(float v) { max_torque_ref = v; return *this; }
@@ -297,6 +308,11 @@ struct Preset {
         engine.m_slide_freq_scale = (std::max)(0.1f, slide_freq);
         engine.m_road_texture_enabled = road_enabled;
         engine.m_road_texture_gain = (std::max)(0.0f, road_gain);
+
+        engine.m_soft_lock_enabled = soft_lock_enabled;
+        engine.m_soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
+        engine.m_soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
+
         engine.m_invert_force = invert_force;
         engine.m_max_torque_ref = (std::max)(1.0f, max_torque_ref); // Critical for normalization division
         engine.m_abs_freq_hz = (std::max)(1.0f, abs_freq);
@@ -383,6 +399,8 @@ struct Preset {
         slide_gain = (std::max)(0.0f, slide_gain);
         slide_freq = (std::max)(0.1f, slide_freq);
         road_gain = (std::max)(0.0f, road_gain);
+        soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
+        soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
         max_torque_ref = (std::max)(1.0f, max_torque_ref);
         abs_freq = (std::max)(1.0f, abs_freq);
         lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);
@@ -451,6 +469,11 @@ struct Preset {
         slide_freq = engine.m_slide_freq_scale;
         road_enabled = engine.m_road_texture_enabled;
         road_gain = engine.m_road_texture_gain;
+
+        soft_lock_enabled = engine.m_soft_lock_enabled;
+        soft_lock_stiffness = engine.m_soft_lock_stiffness;
+        soft_lock_damping = engine.m_soft_lock_damping;
+
         invert_force = engine.m_invert_force;
         max_torque_ref = engine.m_max_torque_ref;
         abs_freq = engine.m_abs_freq_hz;
@@ -551,6 +574,10 @@ struct Preset {
 
         if (road_enabled != p.road_enabled) return false;
         if (!is_near(road_gain, p.road_gain, eps)) return false;
+
+        if (soft_lock_enabled != p.soft_lock_enabled) return false;
+        if (!is_near(soft_lock_stiffness, p.soft_lock_stiffness, eps)) return false;
+        if (!is_near(soft_lock_damping, p.soft_lock_damping, eps)) return false;
 
         if (invert_force != p.invert_force) return false;
         if (!is_near(max_torque_ref, p.max_torque_ref, eps)) return false;

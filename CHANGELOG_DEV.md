@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.61] - 2026-02-19
+### Added
+- **Soft Lock Feature (#117)**:
+  - Implemented physical resistance when the steering wheel reaches the car's maximum range.
+  - Combines a progressive spring force with steering velocity damping for a realistic and stable "hard stop" feel.
+  - Added configurable **Stiffness** and **Damping** parameters to the "General FFB" section in the GUI.
+  - Integrated Soft Lock into the telemetry snapshot system and added a real-time diagnostic plot.
+  - Updated all presets and configuration logic to persist new settings.
+- **Improved Thread Safety**:
+  - Migrated `g_engine_mutex` to `std::recursive_mutex` to support nested locking patterns in complex GUI and configuration workflows.
+  - Ensured consistent locking across `Config::Save`, `Config::Load`, and UI settings modifications.
+- **Testing**:
+  - Added `tests/test_ffb_soft_lock.cpp` to verify spring and damping logic across steering limits.
+
 ## [0.7.60] - 2026-02-19
 ### Fixed
 - **Tire Load Normalization (#120)**:

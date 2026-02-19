@@ -44,6 +44,7 @@ struct FFBSnapshot {
     float texture_spin;
     float texture_bottoming;
     float ffb_abs_pulse;    // New v0.7.53
+    float ffb_soft_lock;    // New v0.7.61 (Issue #117)
     float clipping;
 
     // --- Header B: Internal Physics (Calculated) ---
@@ -143,6 +144,7 @@ struct FFBCalculationContext {
     double spin_rumble = 0.0;
     double bottoming_crunch = 0.0;
     double abs_pulse_force = 0.0;
+    double soft_lock_force = 0.0;
     double gain_reduction_factor = 1.0;
 };
     
@@ -215,6 +217,11 @@ public:
     // Bottoming Effect (v0.3.2)
     bool m_bottoming_enabled = true;  
     float m_bottoming_gain = 1.0f;    
+
+    // Soft Lock (Issue #117)
+    bool m_soft_lock_enabled = true;
+    float m_soft_lock_stiffness = 20.0f;
+    float m_soft_lock_damping = 0.5f;
 
     float m_slip_angle_smoothing;
     
@@ -447,6 +454,7 @@ public:
     static constexpr float BASE_NM_SPIN_VIBRATION   = 2.5f;
     static constexpr float BASE_NM_SCRUB_DRAG       = 5.0f;
     static constexpr float BASE_NM_BOTTOMING        = 1.0f;
+    static constexpr float BASE_NM_SOFT_LOCK        = 50.0f;
 
 private:
     static constexpr double MIN_SLIP_ANGLE_VELOCITY = 0.5; // m/s
@@ -510,6 +518,7 @@ private:
     void calculate_slide_texture(const TelemInfoV01* data, FFBCalculationContext& ctx);
     void calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext& ctx);
     void calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext& ctx);
+    void calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext& ctx);
 };
 
 #endif // FFBENGINE_H

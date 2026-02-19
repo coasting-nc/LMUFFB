@@ -13,7 +13,7 @@
 
 // Shared globals required by GuiLayer
 std::atomic<bool> g_running(true);
-std::mutex g_engine_mutex;
+std::recursive_mutex g_engine_mutex;
 
 namespace FFBEngineTests { 
     extern int g_tests_passed; 

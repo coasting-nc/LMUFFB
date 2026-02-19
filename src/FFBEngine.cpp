@@ -801,11 +801,12 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     calculate_slide_texture(data, ctx);
     calculate_road_texture(data, ctx);
     calculate_suspension_bottoming(data, ctx);
+    calculate_soft_lock(data, ctx);
     
     // --- 6. SUMMATION ---
     // Split into Structural (Attenuated by Spin) and Texture (Raw) groups
     double structural_sum = output_force + ctx.sop_base_force + ctx.rear_torque + ctx.yaw_force + ctx.gyro_force +
-                            ctx.abs_pulse_force + ctx.lockup_rumble + ctx.scrub_drag_force;
+                            ctx.abs_pulse_force + ctx.lockup_rumble + ctx.scrub_drag_force + ctx.soft_lock_force;
 
     // Apply Torque Drop (from Spin/Traction Loss) only to structural physics
     structural_sum *= ctx.gain_reduction_factor;
@@ -869,6 +870,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.texture_spin = (float)ctx.spin_rumble;
             snap.texture_bottoming = (float)ctx.bottoming_crunch;
             snap.ffb_abs_pulse = (float)ctx.abs_pulse_force; 
+            snap.ffb_soft_lock = (float)ctx.soft_lock_force;
             snap.clipping = (std::abs(norm_force) > 0.99f) ? 1.0f : 0.0f;
 
             // Physics
@@ -1311,6 +1313,33 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
 }
 
 // Helper: Calculate Suspension Bottoming (v0.6.22)
+void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+    ctx.soft_lock_force = 0.0;
+    if (!m_soft_lock_enabled) return;
+
+    double steer = data->mUnfilteredSteering;
+    if (!std::isfinite(steer)) return;
+
+    double abs_steer = std::abs(steer);
+    if (abs_steer > 1.0) {
+        double excess = abs_steer - 1.0;
+        double sign = (steer > 0.0) ? 1.0 : -1.0;
+
+        // Spring Force: pushes back to 1.0
+        double spring = excess * m_soft_lock_stiffness * (double)BASE_NM_SOFT_LOCK;
+
+        // Damping Force: opposes movement to prevent bouncing
+        // Uses m_steering_velocity_smoothed which is in rad/s
+        double damping = m_steering_velocity_smoothed * m_soft_lock_damping * (double)BASE_NM_SOFT_LOCK;
+
+        // Total Soft Lock force (opposing the steering direction)
+        // Note: damping already has a sign from m_steering_velocity_smoothed.
+        // If moving further away from limit, damping should oppose it.
+        // If returning to center, damping should also oppose it (slowing down the return).
+        ctx.soft_lock_force = -(spring * sign + damping) * ctx.decoupling_scale;
+    }
+}
+
 void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext& ctx) {
     if (!m_bottoming_enabled) return;
     bool triggered = false;

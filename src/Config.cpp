@@ -4,6 +4,9 @@
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include <mutex>
+
+extern std::recursive_mutex g_engine_mutex;
 
 bool Config::m_always_on_top = true;
 std::string Config::m_last_device_guid = "";
@@ -74,6 +77,9 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "slide_freq") current_preset.slide_freq = std::stof(value);
                 else if (key == "road_enabled") current_preset.road_enabled = std::stoi(value);
                 else if (key == "road_gain") current_preset.road_gain = (std::min)(2.0f, std::stof(value));
+                else if (key == "soft_lock_enabled") current_preset.soft_lock_enabled = std::stoi(value);
+                else if (key == "soft_lock_stiffness") current_preset.soft_lock_stiffness = std::stof(value);
+                else if (key == "soft_lock_damping") current_preset.soft_lock_damping = std::stof(value);
                 else if (key == "invert_force") current_preset.invert_force = std::stoi(value);
                 else if (key == "max_torque_ref") current_preset.max_torque_ref = std::stof(value);
                 else if (key == "abs_freq") current_preset.abs_freq = std::stof(value);
@@ -894,6 +900,9 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "road_enabled=" << (p.road_enabled ? "1" : "0") << "\n";
     file << "road_gain=" << p.road_gain << "\n";
     file << "road_fallback_scale=" << p.road_fallback_scale << "\n";
+    file << "soft_lock_enabled=" << (p.soft_lock_enabled ? "1" : "0") << "\n";
+    file << "soft_lock_stiffness=" << p.soft_lock_stiffness << "\n";
+    file << "soft_lock_damping=" << p.soft_lock_damping << "\n";
     file << "spin_enabled=" << (p.spin_enabled ? "1" : "0") << "\n";
     file << "spin_gain=" << p.spin_gain << "\n";
     file << "spin_freq_scale=" << p.spin_freq_scale << "\n";
@@ -1068,6 +1077,7 @@ bool Config::IsEngineDirtyRelativeToPreset(int index, const FFBEngine& engine) {
 }
 
 void Config::Save(const FFBEngine& engine, const std::string& filename) {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
     std::string final_path = filename.empty() ? m_config_path : filename;
     std::ofstream file(final_path);
     if (file.is_open()) {
@@ -1094,6 +1104,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "\n; --- General FFB ---\n";
         file << "invert_force=" << engine.m_invert_force << "\n";
         file << "gain=" << engine.m_gain << "\n";
+        file << "soft_lock_enabled=" << engine.m_soft_lock_enabled << "\n";
+        file << "soft_lock_stiffness=" << engine.m_soft_lock_stiffness << "\n";
+        file << "soft_lock_damping=" << engine.m_soft_lock_damping << "\n";
         file << "max_torque_ref=" << engine.m_max_torque_ref << "\n";
         file << "min_force=" << engine.m_min_force << "\n";
 
@@ -1198,6 +1211,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
 }
 
 void Config::Load(FFBEngine& engine, const std::string& filename) {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
     std::string final_path = filename.empty() ? m_config_path : filename;
     std::ifstream file(final_path);
     if (!file.is_open()) {
@@ -1279,6 +1293,9 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "slide_freq") engine.m_slide_freq_scale = std::stof(value);
                     else if (key == "road_enabled") engine.m_road_texture_enabled = std::stoi(value);
                     else if (key == "road_gain") engine.m_road_texture_gain = std::stof(value);
+                    else if (key == "soft_lock_enabled") engine.m_soft_lock_enabled = std::stoi(value);
+                    else if (key == "soft_lock_stiffness") engine.m_soft_lock_stiffness = std::stof(value);
+                    else if (key == "soft_lock_damping") engine.m_soft_lock_damping = std::stof(value);
                     else if (key == "invert_force") engine.m_invert_force = std::stoi(value);
                     else if (key == "max_torque_ref") engine.m_max_torque_ref = std::stof(value);
                     else if (key == "abs_freq") engine.m_abs_freq_hz = std::stof(value);
@@ -1468,6 +1485,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     if (engine.m_sop_effect < 0.0f || engine.m_sop_effect > 2.0f) {
         engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, engine.m_sop_effect));
     }
+    engine.m_soft_lock_stiffness = (std::max)(0.0f, engine.m_soft_lock_stiffness);
+    engine.m_soft_lock_damping = (std::max)(0.0f, engine.m_soft_lock_damping);
     std::cout << "[Config] Loaded from " << filename << std::endl;
 }
 

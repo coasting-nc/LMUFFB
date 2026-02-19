@@ -18,7 +18,7 @@
 
 // External linkage to FFB loop status
 extern std::atomic<bool> g_running;
-extern std::mutex g_engine_mutex;
+extern std::recursive_mutex g_engine_mutex;
 
 static const float CONFIG_PANEL_WIDTH = 500.0f;
 static const int LATENCY_WARNING_THRESHOLD_MS = 15;
@@ -63,7 +63,7 @@ void GuiLayer::SetupGUIStyle() {
 static constexpr std::chrono::seconds CONNECT_ATTEMPT_INTERVAL(2);
 
 void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
-    std::lock_guard<std::mutex> lock(g_engine_mutex);
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
     ImGuiViewport* viewport = ImGui::GetMainViewport();
     float current_width = Config::show_graphs ? CONFIG_PANEL_WIDTH : viewport->Size.x;
@@ -423,6 +423,17 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Master Gain", &engine.m_gain, 0.0f, 2.0f, FormatPct(engine.m_gain), "Global scale factor for all forces.\n100% = No attenuation.\nReduce if experiencing heavy clipping.");
         FloatSetting("Max Torque Ref", &engine.m_max_torque_ref, 1.0f, 200.0f, "%.1f Nm", "The expected PEAK torque of the CAR in the game.");
         FloatSetting("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f", "Boosts small forces to overcome mechanical friction/deadzone.");
+
+        if (ImGui::TreeNodeEx("Soft Lock", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::NextColumn(); ImGui::NextColumn();
+            BoolSetting("Enable Soft Lock", &engine.m_soft_lock_enabled, "Provides resistance when the steering wheel reaches the car's maximum steering range.");
+            if (engine.m_soft_lock_enabled) {
+                FloatSetting("  Stiffness", &engine.m_soft_lock_stiffness, 0.0f, 100.0f, "%.1f", "Intensity of the spring force pushing back from the limit.");
+                FloatSetting("  Damping", &engine.m_soft_lock_damping, 0.0f, 5.0f, "%.2f", "Prevents bouncing and oscillation at the steering limit.");
+            }
+            ImGui::TreePop();
+            ImGui::Separator();
+        }
 
         ImGui::TreePop();
     } else {
@@ -873,7 +884,7 @@ inline void PlotWithStats(const char* label, const RollingBuffer& buffer,
 }
 
 // Global Buffers
-static RollingBuffer plot_total, plot_base, plot_sop, plot_yaw_kick, plot_rear_torque, plot_gyro_damping, plot_scrub_drag, plot_oversteer, plot_understeer, plot_clipping, plot_road, plot_slide, plot_lockup, plot_spin, plot_bottoming;
+static RollingBuffer plot_total, plot_base, plot_sop, plot_yaw_kick, plot_rear_torque, plot_gyro_damping, plot_scrub_drag, plot_soft_lock, plot_oversteer, plot_understeer, plot_clipping, plot_road, plot_slide, plot_lockup, plot_spin, plot_bottoming;
 static RollingBuffer plot_calc_front_load, plot_calc_rear_load, plot_calc_front_grip, plot_calc_rear_grip, plot_calc_slip_ratio, plot_calc_slip_angle_smoothed, plot_calc_rear_slip_angle_smoothed, plot_slope_current, plot_calc_rear_lat_force;
 static RollingBuffer plot_raw_steer, plot_raw_input_steering, plot_raw_throttle, plot_raw_brake, plot_input_accel, plot_raw_car_speed, plot_raw_load, plot_raw_grip, plot_raw_rear_grip, plot_raw_front_slip_ratio, plot_raw_susp_force, plot_raw_ride_height, plot_raw_front_lat_patch_vel, plot_raw_front_long_patch_vel, plot_raw_rear_lat_patch_vel, plot_raw_rear_long_patch_vel, plot_raw_slip_angle, plot_raw_rear_slip_angle, plot_raw_front_deflection;
 
@@ -898,6 +909,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         plot_rear_torque.Add(snap.ffb_rear_torque);
         plot_gyro_damping.Add(snap.ffb_gyro_damping);
         plot_scrub_drag.Add(snap.ffb_scrub_drag);
+        plot_soft_lock.Add(snap.ffb_soft_lock);
         plot_oversteer.Add(snap.oversteer_boost);
         plot_understeer.Add(snap.understeer_drop);
         plot_clipping.Add(snap.clipping);
@@ -955,6 +967,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         PlotWithStats("Rear Align", plot_rear_torque, -20.0f, 20.0f);
         PlotWithStats("Gyro Damping", plot_gyro_damping, -20.0f, 20.0f);
         PlotWithStats("Scrub Drag", plot_scrub_drag, -20.0f, 20.0f);
+        PlotWithStats("Soft Lock", plot_soft_lock, -50.0f, 50.0f);
         ImGui::NextColumn();
         ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.7f, 1.0f), "[Modifiers]");
         PlotWithStats("Lateral G Boost", plot_oversteer, -20.0f, 20.0f);

@@ -48,6 +48,7 @@ set(TEST_SOURCES
     test_gui_tooltips_presence.cpp
     test_ffb_logic.cpp
     test_ffb_safety.cpp
+    test_ffb_soft_lock.cpp
     test_issue_100_timing.cpp
     test_issue_104_slope_disconnect.cpp
     test_ffb_dynamic_weight.cpp

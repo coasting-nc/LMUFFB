@@ -28,7 +28,7 @@ std::atomic<bool> g_ffb_active(true);
 SharedMemoryObjectOut g_localData; // Local copy of shared memory
 
 FFBEngine g_engine;
-std::mutex g_engine_mutex; // Protects settings access if GUI changes them
+std::recursive_mutex g_engine_mutex; // Protects settings access if GUI changes them
 
 // --- FFB Loop (High Priority 400Hz) ---
 void FFBThread() {
@@ -87,7 +87,7 @@ void FFBThread() {
                 if (Config::m_auto_start_logging && !AsyncLogger::Get().IsLogging()) {
                     SessionInfo info;
                     info.app_version = LMUFFB_VERSION;
-                    std::lock_guard<std::mutex> lock(g_engine_mutex);
+                    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
                     info.vehicle_name = g_engine.m_vehicle_name;
                     info.track_name = g_engine.m_track_name;
                     info.driver_name = "Auto";
@@ -163,7 +163,7 @@ void FFBThread() {
                     mPosZ.Update(pPlayerTelemetry->mPos.z);
                     mDtMon.Update(pPlayerTelemetry->mDeltaTime);
 
-                    std::lock_guard<std::mutex> lock(g_engine_mutex);
+                    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
                     if (g_engine.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase)) {
                         force = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque);
                         should_output = true;
@@ -189,7 +189,7 @@ void FFBThread() {
         // Safety Layer (v0.7.49): Slew Rate Limiting and NaN protection
         // v0.7.48: Always update hardware even if disconnected/inactive to ensure zeroing
         {
-            std::lock_guard<std::mutex> lock(g_engine_mutex);
+            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
             if (dt < 0.0001) dt = 0.0025;
 
             // Push rates to engine for GUI/Snapshot
