@@ -370,6 +370,12 @@ struct Preset {
         engine.m_slope_g_slew_limit = (std::max)(1.0f, slope_g_slew_limit);
         engine.m_slope_use_torque = slope_use_torque;
         engine.m_slope_torque_sensitivity = (std::max)(0.01f, slope_torque_sensitivity);
+
+        // Stage 1 Normalization (Issue #152)
+        // Initialize session peak from hardware reference to maintain backward compatibility
+        // and provide a sane starting point for the dynamic learner.
+        engine.m_session_peak_torque = (std::max)(15.0, (double)max_torque_ref);
+        engine.m_smoothed_structural_mult = 1.0 / engine.m_session_peak_torque;
     }
 
     // NEW: Ensure values are within safe ranges (v0.7.16)

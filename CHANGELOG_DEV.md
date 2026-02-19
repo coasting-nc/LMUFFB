@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.67] - 2026-02-24
+### Added
+- **Dynamic FFB Normalization (Stage 1) (#152)**:
+  - Introduced a Session-Learned Dynamic Normalization system for structural forces.
+  - **Peak Follower**: Continuously tracks peak steering torque with a fast-attack/slow-decay leaky integrator (0.5% reduction per second).
+  - **Contextual Spike Rejection**: Protects the learned peak from telemetry artifacts and wall hits using rolling average comparisons and acceleration-based gating.
+  - **Split Summation**: Structural forces (Steering, SoP, Rear Align, etc.) are now normalized by the learned session peak, while tactile textures (Road noise, Slide rumble) continue to use legacy hardware scaling.
+  - This ensures consistent FFB weight and detail across different car classes (e.g., GT3 vs. Hypercar) without requiring manual `m_max_torque_ref` adjustments.
+### Testing
+- **New Test Suite**: Added `tests/test_ffb_dynamic_normalization.cpp` to verify peak follower attack/decay, spike rejection, and structural/texture scaling separation.
+
 ## [0.7.66] - 2026-02-23
 ### Fixed
 - **UI Obscuration & Alignment (#149)**:

@@ -43,6 +43,12 @@ TEST_CASE(test_dynamic_weight_scaling, "Physics") {
     p.invert_force = false; // Easier to test
     p.Apply(engine);
 
+    // v0.7.67 Fix for Issue #152: Ensure consistent scaling for test
+    FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
+    FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 100.0);
+    FFBEngineTestAccess::SetRollingAverageTorque(engine, 100.0);
+    FFBEngineTestAccess::SetLastRawTorque(engine, 100.0);
+
     // Seed static load
     // Need to call calculate_force multiple times at low speed to learn static load
     TelemInfoV01 data = CreateBasicTestTelemetry(5.0, 0.0);
@@ -83,6 +89,12 @@ TEST_CASE(test_dynamic_weight_safety_gate, "Physics") {
     p.dynamic_weight_gain = 1.0f;
     p.invert_force = false;
     p.Apply(engine);
+
+    // v0.7.67 Fix for Issue #152: Ensure consistent scaling for test
+    FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
+    FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 100.0);
+    FFBEngineTestAccess::SetRollingAverageTorque(engine, 100.0);
+    FFBEngineTestAccess::SetLastRawTorque(engine, 100.0);
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mWheel[0].mTireLoad = 0.0; // Trigger fallback

@@ -174,6 +174,12 @@ void InitializeEngine(FFBEngine& engine) {
     // v0.6.25: Disable speed gate by default for legacy tests (avoids muting physics at 0 speed)
     engine.m_speed_gate_lower = -10.0f;
     engine.m_speed_gate_upper = -5.0f;
+
+    // v0.7.67: Fix for Issue #152 Normalization - Ensure consistent scaling for legacy tests
+    FFBEngineTestAccess::SetSessionPeakTorque(engine, 20.0);
+    FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 20.0);
+    FFBEngineTestAccess::SetRollingAverageTorque(engine, 20.0);
+    FFBEngineTestAccess::SetLastRawTorque(engine, 20.0);
 }
 
 // ============================================================

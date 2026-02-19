@@ -818,6 +818,7 @@ void Config::LoadPresets() {
 
 void Config::ApplyPreset(int index, FFBEngine& engine) {
     if (index >= 0 && index < presets.size()) {
+        std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
         presets[index].Apply(engine);
         m_last_preset_name = presets[index].name;
         std::cout << "[Config] Applied preset: " << presets[index].name << std::endl;

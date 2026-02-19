@@ -239,6 +239,14 @@ public:
     static void SetBottomingEnabled(FFBEngine& e, bool val) { e.m_bottoming_enabled = val; }
     static void SetBottomingGain(FFBEngine& e, float val) { e.m_bottoming_gain = val; }
     static void SetBottomingMethod(FFBEngine& e, int val) { e.m_bottoming_method = val; }
+
+    // Dynamic Normalization Test Access
+    static double GetSessionPeakTorque(const FFBEngine& e) { return e.m_session_peak_torque; }
+    static void SetSessionPeakTorque(FFBEngine& e, double val) { e.m_session_peak_torque = val; }
+    static double GetSmoothedStructuralMult(const FFBEngine& e) { return e.m_smoothed_structural_mult; }
+    static void SetSmoothedStructuralMult(FFBEngine& e, double val) { e.m_smoothed_structural_mult = val; }
+    static void SetRollingAverageTorque(FFBEngine& e, double val) { e.m_rolling_average_torque = val; }
+    static void SetLastRawTorque(FFBEngine& e, double val) { e.m_last_raw_torque = val; }
 };
 
 } // namespace FFBEngineTests

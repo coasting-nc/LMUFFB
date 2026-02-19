@@ -38,6 +38,7 @@ TEST_CASE(test_road_texture_teleport, "RoadTexture") {
     FFBEngineTestAccess::SetAutoPeakLoad(engine, 4000.0);
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
+    data.mDeltaTime = 0.01;
     
     // Disable Bottoming
     engine.m_bottoming_enabled = false;
@@ -241,21 +242,18 @@ TEST_CASE(test_scrub_drag_fade, "RoadTexture") {
     engine.m_road_texture_enabled = true;
     engine.m_scrub_drag_gain = 1.0;
     
-    // Case 1: 0.25 m/s lateral velocity (Midpoint of 0.0 - 0.5 window)
-    // Expected: 50% of force.
-    // Full force calculation: drag_gain * 2.0 = 2.0.
-    // Fade = 0.25 / 0.5 = 0.5.
-    // Expected Force = 5.0 * 0.5 = 2.5.
-    // Normalized by Ref (40.0). Output = 2.5 / 40.0 = 0.0625.
-    // Direction: Positive Vel -> Negative Force.
-    // Norm Force = -0.0625.
-    
     data.mWheel[0].mLateralPatchVel = 0.25;
     data.mWheel[1].mLateralPatchVel = 0.25;
     data.mLocalVel.z = -20.0; // Moving fast (v0.6.22)
     engine.m_max_torque_ref = 40.0f;
     engine.m_gain = 1.0;
     
+    // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
+    FFBEngineTestAccess::SetSessionPeakTorque(engine, 40.0);
+    FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 40.0);
+    FFBEngineTestAccess::SetRollingAverageTorque(engine, 40.0);
+    FFBEngineTestAccess::SetLastRawTorque(engine, 40.0);
+
     double force = engine.calculate_force(&data);
     
     // Check absolute magnitude

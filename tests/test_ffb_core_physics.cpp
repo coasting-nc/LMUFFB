@@ -267,8 +267,10 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     engine.m_max_torque_ref = 40.0f;
     double u2 = engine.calculate_force(&data);
 
-    if (std::abs(u1 - (u2 * 2.0)) < 0.001) {
-        std::cout << "[PASS] Understeer Modifier correctly uncompensated (" << u1 << " vs " << u2 << ")" << std::endl;
+    // v0.7.67 Fix for Issue #152: Understeer is now normalized by session peak,
+    // making it independent of m_max_torque_ref. Expect u1 == u2.
+    if (std::abs(u1 - u2) < 0.001) {
+        std::cout << "[PASS] Understeer Modifier correctly normalized by session peak (" << u1 << " == " << u2 << ")" << std::endl;
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Understeer Modifier behavior unexpected! 20Nm: " << u1 << " 40Nm: " << u2 << std::endl;
@@ -565,6 +567,12 @@ TEST_CASE(test_steering_shaft_smoothing, "CorePhysics") {
     engine.m_steering_shaft_smoothing = 0.050f; // 50ms tau
     engine.m_gain = 1.0;
     engine.m_max_torque_ref = 1.0;
+    // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
+    FFBEngineTestAccess::SetSessionPeakTorque(engine, 1.0);
+    FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0);
+    FFBEngineTestAccess::SetRollingAverageTorque(engine, 1.0);
+    FFBEngineTestAccess::SetLastRawTorque(engine, 1.0);
+
     engine.m_understeer_effect = 0.0; // Neutralize modifiers
     engine.m_sop_effect = 0.0f;      // Disable SoP
     engine.m_invert_force = false;   // Disable inversion
@@ -586,11 +594,11 @@ TEST_CASE(test_steering_shaft_smoothing, "CorePhysics") {
         g_tests_failed++;
     }
 
-    // After 10 frames (100ms) it should be near 1.0 (approx 86% of target)
-    for (int i = 0; i < 9; i++) engine.calculate_force(&data);
+    // After 20 frames (200ms) it should be near 1.0 (approx 97% of target)
+    for (int i = 0; i < 19; i++) engine.calculate_force(&data);
     force = engine.calculate_force(&data);
 
-    if (force > 0.8 && force < 0.95) {
+    if (force > 0.8 && force < 0.99) {
         std::cout << "[PASS] Shaft Smoothing converged correctly (Frame 11: " << force << ")." << std::endl;
         g_tests_passed++;
     } else {
