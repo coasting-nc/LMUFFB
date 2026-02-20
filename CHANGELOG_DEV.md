@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.71] - 2026-02-25
+### Added
+- **Independent In-Game FFB Gain (#160)**:
+  - Introduced a dedicated **In-Game FFB Gain** slider to allow independent control of the 400Hz native torque source.
+  - **Contextual UI**: The slider dynamically switches between "Steering Shaft Gain" (legacy) and "In-Game FFB Gain" (400Hz) based on the active source selection, reducing UI clutter.
+### Fixed
+- **In-Game FFB Strength Normalization (#160)**:
+  - Corrected a mathematical error in the In-Game FFB path where the signal was being scaled by the target rim torque without prior normalization.
+  - The 400Hz signal is now correctly mapped to the wheelbase's maximum physical torque before being scaled to the user's target rim torque.
+### Testing
+- **New Test Suite**: Added `tests/test_ffb_ingame_scaling.cpp` to verify the mathematical fix and independent gain control.
+
 ## [0.7.70] - 2026-02-25
 ### Added
 - **Persistent Storage of Static Load (Stage 4) (#155)**:

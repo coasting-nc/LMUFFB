@@ -603,7 +603,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
 
     // 3. EMA Filtering on the Gain Multiplier (Zero-latency physics)
-    double target_structural_mult = (m_torque_source == 1) ? 1.0 : (1.0 / (m_session_peak_torque + 1e-9));
+    // v0.7.71: For In-Game FFB (1), we normalize against the wheelbase max since the signal is already normalized [-1, 1].
+    double target_structural_mult = (m_torque_source == 1) ? (1.0 / (m_wheelbase_max_nm + 1e-9)) : (1.0 / (m_session_peak_torque + 1e-9));
     double alpha_gain = data->mDeltaTime / (0.25 + data->mDeltaTime); // 250ms smoothing
     m_smoothed_structural_mult += alpha_gain * (target_structural_mult - m_smoothed_structural_mult);
 
@@ -888,7 +889,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // v0.7.63: Final factor application
     double dw_factor_applied = m_torque_passthrough ? 1.0 : dynamic_weight_factor;
     
-    double output_force = (base_input * (double)m_steering_shaft_gain) * dw_factor_applied * grip_factor_applied;
+    double gain_to_apply = (m_torque_source == 1) ? (double)m_ingame_ffb_gain : (double)m_steering_shaft_gain;
+    double output_force = (base_input * gain_to_apply) * dw_factor_applied * grip_factor_applied;
     output_force *= ctx.speed_gate;
     
     // B. SoP Lateral (Oversteer)

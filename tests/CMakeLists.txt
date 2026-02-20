@@ -60,6 +60,7 @@ set(TEST_SOURCES
     test_ffb_coverage_target.cpp
     test_ffb_diag_updates.cpp
     test_ffb_hardware_scaling.cpp
+    test_ffb_ingame_scaling.cpp
     test_ffb_issue_142.cpp
     test_ffb_tactile_normalization.cpp
     test_health_monitor.cpp
