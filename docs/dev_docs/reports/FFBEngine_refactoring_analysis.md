@@ -181,5 +181,5 @@ This would reduce `calculate_force` from ~540 lines to approximately **320 lines
   - Extract the `AsyncLogger` frame population from `calculate_force` into a dedicated `log_telemetry_frame` method.
 - [ ] **Phase 4: Extract Missing Telemetry Detection**
   - Extract the hysteresis-based missing data warnings into a dedicated `detect_missing_telemetry` method or use a unified helper.
-- [ ] **Phase 5: Modularize Ancillary Effects**
-  - Move `calculate_soft_lock` and potentially other non-core FFB effects to a separate utility or ancillary effects file.
+- [x] **Phase 5: Modularize Ancillary Effects**
+  - Moved `calculate_soft_lock` to `SteeringUtils.cpp` as per the TODO in `FFBEngine.cpp`.

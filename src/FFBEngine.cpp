@@ -1017,35 +1017,7 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
 }
 
 // Helper: Calculate Suspension Bottoming (v0.6.22)
-// TODO: move this function to another utils file or other ancillary file, since this (soft lock) can be considered not FFB logic.
-// The purpose is to minimize the code in FFBEngine.cpp to only FFB logic, since it is already a long code files.
-void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext& ctx) {
-    ctx.soft_lock_force = 0.0;
-    if (!m_soft_lock_enabled) return;
-
-    double steer = data->mUnfilteredSteering;
-    if (!std::isfinite(steer)) return;
-
-    double abs_steer = std::abs(steer);
-    if (abs_steer > 1.0) {
-        double excess = abs_steer - 1.0;
-        double sign = (steer > 0.0) ? 1.0 : -1.0;
-
-        // Spring Force: pushes back to 1.0
-        double spring = excess * m_soft_lock_stiffness * (double)BASE_NM_SOFT_LOCK;
-
-        // Damping Force: opposes movement to prevent bouncing
-        // Uses m_steering_velocity_smoothed which is in rad/s
-        double damping = m_steering_velocity_smoothed * m_soft_lock_damping * (double)BASE_NM_SOFT_LOCK;
-
-        // Total Soft Lock force (opposing the steering direction)
-        // Note: damping already has a sign from m_steering_velocity_smoothed.
-        // If moving further away from limit, damping should oppose it.
-        // If returning to center, damping should also oppose it (slowing down the return).
-        ctx.soft_lock_force = -(spring * sign + damping);
-    }
-}
-
+// NOTE: calculate_soft_lock has been moved to SteeringUtils.cpp.
 void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext& ctx) {
     if (!m_bottoming_enabled) return;
     bool triggered = false;
