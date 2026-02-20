@@ -46,7 +46,7 @@ LMUFFB now features **Session-Learned Dynamic Normalization**. Behind the scenes
 
 ### The User Experience
 *   **Leaving the Pits:** When you first leave the garage in a new session, the FFB might feel slightly different as the system hasn't yet learned the peak forces of the car in the current track conditions.
-*   **Stabilization Time:** The dynamic normalizer utilizes a fast-attack, exponential decay algorithm. This means it learns the peak forces very quickly (usually within the first major cornering event) and then stabilizes. You will notice the FFB dial into its intended consistency within the first lap.
+*   **Stabilization Time:** The dynamic normalizer utilizes a fast-attack, exponential decay algorithm. This means it learns the peak forces very quickly—usually stabilizing within the very first major cornering event or heavy braking zone (often taking just a few seconds of high-load driving). The decay is slow and leaky, so it holds onto these learned peaks rather than violently fluctuating, resulting in a stable FFB feel. You will notice the FFB dial into its intended consistency well within your first out-lap.
 *   **Spike Rejection:** Don't worry about crashing or aggressively riding kerbs while the system calibrates! We've implemented "Contextual Spike Rejection," which ignores massive anomalous physics spikes (like hitting a wall or hyper-aggressive bottoming out) so they do not corrupt the normalizer's baseline.
 
 ---
