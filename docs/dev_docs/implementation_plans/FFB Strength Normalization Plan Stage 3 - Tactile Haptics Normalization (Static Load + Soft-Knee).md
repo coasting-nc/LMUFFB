@@ -11,6 +11,8 @@ Stage 3 resolves this by anchoring tactile effects to the vehicle's **Static Mec
 * `docs\dev_docs\investigations\FFB Strength and Tire Load Normalization3.md`
 * Previous stage 1 implementation plan: `docs\dev_docs\implementation_plans\FFB Strength Normalization Plan Stage 1 - Dynamic Normalization for Structural Forces.md`
 * Previous stage 1 implementation plan (modified during development): `docs\dev_docs\implementation_plans\plan_152.md`
+* Previous stage 2 implementation plan: `docs\dev_docs\implementation_plans\FFB Strength Normalization Plan Stage 2 - Hardware Scaling Redefinition (UI & Config).md`
+* Previous stage 2 implementation plan (modified during development): `docs\dev_docs\implementation_plans\plan_153.md`
 
 ## Codebase Analysis Summary
 *   **Current Architecture:** `FFBEngine::update_static_load_reference` calculates `m_static_front_load`, but it is currently only used for the `dynamic_weight_factor`. Tactile scaling (`ctx.texture_load_factor` and `ctx.brake_load_factor`) relies on `m_auto_peak_load`.
