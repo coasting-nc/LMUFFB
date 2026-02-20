@@ -85,6 +85,7 @@ struct Preset {
     
     float steering_shaft_gain = 1.0f;
     float ingame_ffb_gain = 1.0f; // New v0.7.71 (Issue #160)
+    bool dynamic_normalization_enabled = false; // New v0.7.72 (Issue #175)
     int base_force_mode = 0; // 0=Native
     int torque_source = 0;   // 0=Shaft, 1=Direct
     bool torque_passthrough = false; // v0.7.63
@@ -206,6 +207,7 @@ struct Preset {
     
     Preset& SetShaftGain(float v) { steering_shaft_gain = v; return *this; }
     Preset& SetInGameGain(float v) { ingame_ffb_gain = v; return *this; }
+    Preset& SetDynamicNormalization(bool enabled) { dynamic_normalization_enabled = enabled; return *this; }
     Preset& SetBaseMode(int v) { base_force_mode = v; return *this; }
     Preset& SetTorqueSource(int v, bool passthrough = false) { torque_source = v; torque_passthrough = passthrough; return *this; }
     Preset& SetFlatspot(bool enabled, float strength = 1.0f, float q = 2.0f) { 
@@ -336,6 +338,7 @@ struct Preset {
         engine.m_gyro_gain = (std::max)(0.0f, gyro_gain);
         engine.m_steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);
         engine.m_ingame_ffb_gain = (std::max)(0.0f, ingame_ffb_gain);
+        engine.m_dynamic_normalization_enabled = dynamic_normalization_enabled;
         engine.m_base_force_mode = base_force_mode;
         engine.m_torque_source = torque_source;
         engine.m_torque_passthrough = torque_passthrough;
@@ -508,6 +511,7 @@ struct Preset {
         gyro_gain = engine.m_gyro_gain;
         steering_shaft_gain = engine.m_steering_shaft_gain;
         ingame_ffb_gain = engine.m_ingame_ffb_gain;
+        dynamic_normalization_enabled = engine.m_dynamic_normalization_enabled;
         base_force_mode = engine.m_base_force_mode;
         torque_source = engine.m_torque_source;
         torque_passthrough = engine.m_torque_passthrough;
@@ -614,6 +618,7 @@ struct Preset {
         if (!is_near(gyro_gain, p.gyro_gain, eps)) return false;
         if (!is_near(steering_shaft_gain, p.steering_shaft_gain, eps)) return false;
         if (!is_near(ingame_ffb_gain, p.ingame_ffb_gain, eps)) return false;
+        if (dynamic_normalization_enabled != p.dynamic_normalization_enabled) return false;
         if (base_force_mode != p.base_force_mode) return false;
         if (torque_source != p.torque_source) return false;
         if (torque_passthrough != p.torque_passthrough) return false;

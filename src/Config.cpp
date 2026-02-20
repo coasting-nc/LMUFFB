@@ -110,6 +110,7 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "sop_yaw_gain") current_preset.sop_yaw_gain = (std::min)(2.0f, std::stof(value));
                 else if (key == "steering_shaft_gain") current_preset.steering_shaft_gain = std::stof(value);
                 else if (key == "ingame_ffb_gain") current_preset.ingame_ffb_gain = std::stof(value);
+                else if (key == "dynamic_normalization_enabled") current_preset.dynamic_normalization_enabled = (value == "1");
                 else if (key == "slip_angle_smoothing") current_preset.slip_smoothing = std::stof(value);
                 else if (key == "base_force_mode") current_preset.base_force_mode = std::stoi(value);
                 else if (key == "torque_source") current_preset.torque_source = std::stoi(value);
@@ -861,6 +862,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
 
     file << "steering_shaft_gain=" << p.steering_shaft_gain << "\n";
     file << "ingame_ffb_gain=" << p.ingame_ffb_gain << "\n";
+    file << "dynamic_normalization_enabled=" << (p.dynamic_normalization_enabled ? "1" : "0") << "\n";
     file << "steering_shaft_smoothing=" << p.steering_shaft_smoothing << "\n";
     file << "understeer=" << p.understeer << "\n";
     file << "base_force_mode=" << p.base_force_mode << "\n";
@@ -1159,6 +1161,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "\n; --- Front Axle (Understeer) ---\n";
         file << "steering_shaft_gain=" << engine.m_steering_shaft_gain << "\n";
         file << "ingame_ffb_gain=" << engine.m_ingame_ffb_gain << "\n";
+        file << "dynamic_normalization_enabled=" << (engine.m_dynamic_normalization_enabled ? "1" : "0") << "\n";
         file << "steering_shaft_smoothing=" << engine.m_steering_shaft_smoothing << "\n";
         file << "understeer=" << engine.m_understeer_effect << "\n";
         file << "base_force_mode=" << engine.m_base_force_mode << "\n";
@@ -1397,6 +1400,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "sop_yaw_gain") engine.m_sop_yaw_gain = std::stof(value);
                     else if (key == "steering_shaft_gain") engine.m_steering_shaft_gain = std::stof(value);
                     else if (key == "ingame_ffb_gain") engine.m_ingame_ffb_gain = std::stof(value);
+                    else if (key == "dynamic_normalization_enabled") engine.m_dynamic_normalization_enabled = (value == "1");
                     else if (key == "base_force_mode") engine.m_base_force_mode = std::stoi(value);
                     else if (key == "gyro_gain") engine.m_gyro_gain = (std::min)(1.0f, std::stof(value));
                     else if (key == "flatspot_suppression") engine.m_flatspot_suppression = std::stoi(value);

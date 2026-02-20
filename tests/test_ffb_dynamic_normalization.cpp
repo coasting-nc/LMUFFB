@@ -8,6 +8,7 @@ using namespace FFBEngineTests;
 
 TEST_CASE(test_peak_follower_fast_attack, "StructuralNormalization") {
     FFBEngine engine;
+    FFBEngineTestAccess::SetDynamicNormalizationEnabled(engine, true);
     TelemInfoV01 data = {};
     data.mDeltaTime = 0.0025f;
     data.mSteeringShaftTorque = 40.0f;
@@ -33,6 +34,7 @@ TEST_CASE(test_peak_follower_fast_attack, "StructuralNormalization") {
 
 TEST_CASE(test_peak_follower_exponential_decay, "StructuralNormalization") {
     FFBEngine engine;
+    FFBEngineTestAccess::SetDynamicNormalizationEnabled(engine, true);
     TelemInfoV01 data = {};
     data.mDeltaTime = 0.01f; // 100Hz
     data.mSteeringShaftTorque = 40.0f;
@@ -62,6 +64,7 @@ TEST_CASE(test_peak_follower_exponential_decay, "StructuralNormalization") {
 
 TEST_CASE(test_contextual_spike_rejection, "StructuralNormalization") {
     FFBEngine engine;
+    FFBEngineTestAccess::SetDynamicNormalizationEnabled(engine, true);
     TelemInfoV01 data = {};
     data.mDeltaTime = 0.0025f;
     data.mSteeringShaftTorque = 15.0f;
@@ -86,6 +89,7 @@ TEST_CASE(test_contextual_spike_rejection, "StructuralNormalization") {
 TEST_CASE(test_structural_vs_texture_separation, "StructuralNormalization") {
     FFBEngine engine;
     InitializeEngine(engine); // Use standard test initialization (invert_force=false)
+    FFBEngineTestAccess::SetDynamicNormalizationEnabled(engine, true);
 
     // Inject custom values via TestAccess
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 50.0);

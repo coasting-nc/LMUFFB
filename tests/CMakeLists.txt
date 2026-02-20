@@ -65,6 +65,7 @@ set(TEST_SOURCES
     test_ffb_tactile_normalization.cpp
     test_health_monitor.cpp
     test_ffb_persistent_load.cpp
+    test_ffb_normalization_regression.cpp
 )
 
 # ImGui Core is now always available if vendor exists

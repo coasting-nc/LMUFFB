@@ -251,6 +251,7 @@ public:
     static void SetSmoothedStructuralMult(FFBEngine& e, double val) { e.m_smoothed_structural_mult = val; }
     static void SetRollingAverageTorque(FFBEngine& e, double val) { e.m_rolling_average_torque = val; }
     static void SetLastRawTorque(FFBEngine& e, double val) { e.m_last_raw_torque = val; }
+    static void SetDynamicNormalizationEnabled(FFBEngine& e, bool enabled) { e.m_dynamic_normalization_enabled = enabled; }
 };
 
 } // namespace FFBEngineTests

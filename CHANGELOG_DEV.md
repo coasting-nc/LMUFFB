@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.76] - 2026-02-27
+### Fixed
+- **100Hz Steering Normalization Regression (#175)**:
+  - Fixed an issue where the 100Hz legacy steering torque source felt "limp" after high-torque events due to session-peak normalization.
+  - Introduced a **Dynamic Normalization** toggle in the General FFB GUI section.
+  - Defaulted the toggle to **Disabled**, restoring the previous absolute scaling behavior by default while keeping the feature optional.
+  - When disabled, the legacy 100Hz path now correctly uses `m_wheelbase_max_nm` as its reference, matching the predictable behavior of the 400Hz native path.
+### Testing
+- **New Regression Test**: Added `tests/test_ffb_normalization_regression.cpp` which demonstrates the force drop after a peak event and verifies that consistency is restored when the toggle is disabled.
+
 ## [0.7.75] - 2026-02-20
 ### Refactored
 - **FFB Engine Decomposition (Grip & Load Estimation Extraction)**:

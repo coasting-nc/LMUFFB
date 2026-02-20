@@ -257,6 +257,7 @@ public:
     // v0.6.23: Additional Advanced Physics (Reserved for future use)
     float m_road_fallback_scale = 0.05f;
     bool m_understeer_affects_sop = false;
+    bool m_dynamic_normalization_enabled = false; // New v0.7.76 (Issue #175)
     
     // ===== SLOPE DETECTION (v0.7.0 -> v0.7.3 stability fixes) =====
     bool m_slope_detection_enabled = false;
