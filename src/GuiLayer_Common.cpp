@@ -416,6 +416,18 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             Config::Save(engine);
         }
 
+        if (engine.m_torque_source == 0) {
+            bool dynamic_norm = engine.m_dynamic_normalization_enabled;
+            if (GuiWidgets::Checkbox("Enable Dynamic Normalization (100Hz)", &dynamic_norm,
+                        "If enabled, steering weight is normalized relative to the highest torque seen in the session.\n"
+                        "This keeps weight consistent across car classes (GT3 vs Prototype) but can feel 'limp' on straights after a high-torque event.\n"
+                        "If disabled (Recommended), steering uses absolute scaling based on 'Wheelbase Max Torque'.").changed) {
+                std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+                engine.m_dynamic_normalization_enabled = dynamic_norm;
+                Config::Save(engine);
+            }
+        }
+
         BoolSetting("Invert FFB Signal", &engine.m_invert_force, "Check this if the wheel pulls away from center instead of aligning.");
         FloatSetting("Master Gain", &engine.m_gain, 0.0f, 2.0f, FormatPct(engine.m_gain), "Global scale factor for all forces.\n100% = No attenuation.\nReduce if experiencing heavy clipping.");
         FloatSetting("Wheelbase Max Torque", &engine.m_wheelbase_max_nm, 1.0f, 50.0f, "%.1f Nm", "The absolute maximum physical torque your wheelbase can produce (e.g., 15.0 for Simagic Alpha, 4.0 for T300).");

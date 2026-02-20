@@ -262,6 +262,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     data.mWheel[1].mGripFract = 0.6;
 
     engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
+    FFBEngineTestAccess::SetDynamicNormalizationEnabled(engine, true); // Enable for this check
     double u1 = engine.calculate_force(&data);
 
     engine.m_wheelbase_max_nm = 40.0f; engine.m_target_rim_nm = 40.0f;
