@@ -5,6 +5,24 @@ This document contains all version release posts by ErwinMoss from the [url=http
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
 [size=5][b]February 25, 2026[/b][/size]
+[b]Version 0.7.71 - In-Game FFB Fix & Gain Slider[/b]
+
+[b]New release[/b] (0.7.71): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]In-Game FFB Gain Slider[/b]: Added a dedicated slider to independently control the strength of the "In-Game FFB" (400Hz native) source. This allows you to fine-tune the native game signal without affecting the legacy "Shaft Torque" settings. (#160)
+[*][b]Dynamic UI[/b]: The gain slider in the Tuning window now automatically switches between "Steering Shaft Gain" and "In-Game FFB Gain" based on your selected source, keeping the interface clean and relevant.
+[/list]
+
+[b]Fixed[/b]
+[list]
+[*][b]In-Game FFB Strength Fix[/b]: Resolved a mathematical bug that caused the In-Game FFB signal to be significantly too strong (often 10x higher than intended). The 400Hz signal is now correctly normalized to your hardware's maximum torque before being scaled to your Target Rim Torque, providing a consistent and physically accurate experience. (#160)
+[/list]
+
+---
+
+[size=5][b]February 25, 2026[/b][/size]
 [b]Version 0.7.69 - Tactile Haptics Normalization[/b]
 
 [b]New release[/b] (0.7.69): https://github.com/coasting-nc/LMUFFB/releases
