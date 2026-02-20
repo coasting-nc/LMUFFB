@@ -4,6 +4,26 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]February 25, 2026[/b][/size]
+[b]Version 0.7.69 - Tactile Haptics Normalization[/b]
+
+[b]New release[/b] (0.7.69): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]Tactile Normalization (Stage 3)[/b]: We've completely overhauled how road textures and vibrations are scaled. Instead of using a fluctuating "peak load" from the session, these effects are now anchored to your car's [b]Static Mechanical Load[/b]. (#154)
+[*][b]Static Load Latching[/b]: The app now "learns" the weight of your car at low speeds (2-15 m/s) and freezes that reference. This ensures that high-speed aerodynamic downforce doesn't wash out your road feel, keeping textures crisp and consistent from the pit exit to the Mulsanne straight.
+[*][b]Soft-Knee Compression[/b]: To prevent violent shaking at top speed, we've implemented the Giannoulis Soft-Knee algorithm. This smoothly tapers off vibration intensity at extreme loads without sacrificing the fine details you need for catch-slides and lockup detection.
+[*][b]Tactile Smoothing[/b]: Added subtle smoothing to the scaling logic to ensure that your haptic feedback transitions seamlessly across different load conditions.
+[/list]
+
+[b]Changed[/b]
+[list]
+[*][b]Consistent Bottoming[/b]: The suspension bottoming trigger now uses the same static baseline as the other tactile effects, making "thumps" and scrapes much more predictable across different car setups.
+[/list]
+
+---
+
 [size=5][b]February 23, 2026[/b][/size]
 [b]Version 0.7.65 - Terminology & UX Overhaul[/b]
 

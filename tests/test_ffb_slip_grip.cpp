@@ -448,6 +448,9 @@ TEST_CASE(test_load_factor_edge_cases, "SlipGrip") {
     
     engine.m_slide_texture_enabled = true;
     engine.m_slide_texture_gain = 1.0;
+    engine.m_understeer_effect = 0.0f;
+    engine.m_sop_effect = 0.0f;
+    engine.m_bottoming_enabled = false;
     
     // Setup slide condition (>0.5 m/s)
     data.mWheel[0].mLateralPatchVel = 5.0;
@@ -459,7 +462,10 @@ TEST_CASE(test_load_factor_edge_cases, "SlipGrip") {
     data.mWheel[0].mTireLoad = 0.0;
     data.mWheel[1].mTireLoad = 0.0;
     
+    // v0.7.69: Force reset or settle smoothing
+    FFBEngineTestAccess::SetSmoothedTactileMult(engine, 0.0);
     double force_airborne = engine.calculate_force(&data);
+
     // Load factor = 0, slide texture should be silent
     ASSERT_NEAR(force_airborne, 0.0, 0.001);
     

@@ -420,6 +420,11 @@ TEST_CASE(test_refactor_torque_drop, "LockupBraking") {
     engine.m_road_texture_enabled = true;
     engine.m_road_texture_gain = 1.0f;
     engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Scale 1.0
+
+    // v0.7.69: Ensure tactile multiplier is 1.0 for this test
+    FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
+    FFBEngineTestAccess::SetSmoothedTactileMult(engine, 1.0);
+
     // Reset deflection state in engine first
     engine.calculate_force(&data);
 

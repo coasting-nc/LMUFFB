@@ -40,6 +40,7 @@ TEST_CASE(test_coverage_load_reference, "Coverage") {
 
     // Case 5: Safety Clamp
     // if (m_static_front_load < 1000.0) m_static_front_load = m_auto_peak_load * 0.5;
+    FFBEngineTestAccess::SetStaticLoadLatched(engine, false); // Reset latching from previous case
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 500.0);
     // Call with valid speed but no internal update needed (load already low, but update logic sets it)
     // Wait, the function ends with the clamp check.
