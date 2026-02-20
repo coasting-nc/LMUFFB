@@ -104,6 +104,47 @@ TEST_CASE(test_resource_icon_loadable, "Windows") {
         std::cout << "  [FAIL] Failed to load IDI_ICON1 from resources. Error: " << GetLastError() << std::endl;
     }
 }
+
+TEST_CASE(test_main_exe_icon, "Windows") {
+    // How this test works: , we use the Windows API to treat the compiled .exe as a data file and inspect its internal resources.
+    //  It uses LoadLibraryExA(..., LOAD_LIBRARY_AS_DATAFILE) to open the LMUFFB.exe binary for resource inspection
+    //  It uses FindResourceA(..., MAKEINTRESOURCE(IDI_ICON1), RT_GROUP_ICON) to check if the main application literally contains 
+    // the embedded icon data. If it returns null, the test fails, meaning CMake forgot to link the .rc file.
+    std::cout << "\nTest: Main Executable Icon Embedded" << std::endl;
+    char buffer[MAX_PATH];
+    GetModuleFileNameA(NULL, buffer, MAX_PATH);
+    std::string exe_path(buffer);
+    size_t last_slash = exe_path.find_last_of("\\/");
+    std::string exe_dir = (last_slash != std::string::npos) ? exe_path.substr(0, last_slash) : ".";
+    
+    // Determine path to LMUFFB.exe. Usually in build/Release when tests are in build/tests/Release
+    std::string main_exe = exe_dir + "\\..\\..\\Release\\LMUFFB.exe";
+    
+    HMODULE hMod = LoadLibraryExA(main_exe.c_str(), NULL, LOAD_LIBRARY_AS_DATAFILE);
+    if (!hMod) {
+        // Fallback for flat output directory structures
+        main_exe = exe_dir + "\\LMUFFB.exe";
+        hMod = LoadLibraryExA(main_exe.c_str(), NULL, LOAD_LIBRARY_AS_DATAFILE);
+    }
+    
+    if (hMod) {
+        std::cout << "  [PASS] Found main executable: " << main_exe << std::endl;
+        g_tests_passed++; // Found the executable
+        
+        HRSRC hRes = FindResourceA(hMod, MAKEINTRESOURCEA(IDI_ICON1), (LPCSTR)RT_GROUP_ICON);
+        if (hRes) {
+            std::cout << "  [PASS] IDI_ICON1 (" << IDI_ICON1 << ") successfully found inside " << main_exe << std::endl;
+            g_tests_passed++;
+        } else {
+            std::cout << "  [FAIL] IDI_ICON1 missing from " << main_exe << "! CMake did not link res.rc." << std::endl;
+            g_tests_failed++;
+        }
+        FreeLibrary(hMod);
+    } else {
+        std::cout << "  [WARN] Could not find LMUFFB.exe to inspect resources. Skipping test." << std::endl;
+        // Don't fail the build if the main exe isn't built yet, just warn.
+    }
+}
 #endif
 
 TEST_CASE(test_icon_presence, "Windows") {
