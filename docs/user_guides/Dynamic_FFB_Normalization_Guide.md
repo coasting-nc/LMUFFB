@@ -1,10 +1,4 @@
-# LMUFFB Dynamic FFB Normalization & Hardware Scaling Guide
-
-Welcome to the new Force Feedback (FFB) architecture introduced in LMUFFB (v0.7.67 to v0.7.70). This guide explains the massive underlying changes to how structural forces (steering weight) and tactile haptics (road texture, kerbs, braking) are calculated. 
-
-The goal of this update is to provide a consistent, realistic, and highly detailed FFB experience across all car classes and wheelbase hardware, without needing constant manual tuning.
-
----
+# LMUFFB Dynamic FFB Normalization & Wheelbase Scaling Guide
 
 ## 1. The End of "Max Torque Ref"
 
