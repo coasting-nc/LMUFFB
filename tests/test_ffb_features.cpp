@@ -49,6 +49,10 @@ TEST_CASE(test_stationary_gate, "Texture") {
         engine.m_road_texture_gain = 1.0;
         engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
         
+        // v0.7.69: Ensure tactile multiplier is 1.0 for this test
+        FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
+        FFBEngineTestAccess::SetSmoothedTactileMult(engine, 1.0);
+
         data.mWheel[0].mVerticalTireDeflection = 0.002; 
         data.mWheel[1].mVerticalTireDeflection = 0.002;
         

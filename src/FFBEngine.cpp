@@ -62,14 +62,23 @@ std::vector<FFBSnapshot> FFBEngine::GetDebugBatch() {
 
 // Helper: Learn static front load reference (v0.7.46)
 void FFBEngine::update_static_load_reference(double current_load, double speed, double dt) {
+    if (m_static_load_latched) return; // Do not update if latched
+
     if (speed > 2.0 && speed < 15.0) {
         if (m_static_front_load < 100.0) {
              m_static_front_load = current_load;
         } else {
              m_static_front_load += (dt / 5.0) * (current_load - m_static_front_load);
         }
+    } else if (speed >= 15.0 && m_static_front_load > 1000.0) {
+        // Latch the value once we exceed 15 m/s (aero begins to take over)
+        m_static_load_latched = true;
     }
-    if (m_static_front_load < 1000.0) m_static_front_load = m_auto_peak_load * 0.5;
+
+    // Safety fallback: Ensure we have a sane baseline if learning failed
+    if (m_static_front_load < 1000.0) {
+        m_static_front_load = m_auto_peak_load * 0.5;
+    }
 }
 
 // Initialize the load reference based on vehicle class and name seeding
@@ -79,6 +88,8 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
 
     // Reset static load reference for new car class
     m_static_front_load = m_auto_peak_load * 0.5;
+    m_static_load_latched = false;
+    m_smoothed_tactile_mult = 1.0;
 
     std::cout << "[FFB] Vehicle Identification -> Detected Class: " << VehicleClassToString(vclass)
               << " | Seed Load: " << m_auto_peak_load << "N" 
@@ -753,14 +764,40 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
     m_auto_peak_load = (std::max)(3000.0, m_auto_peak_load); // Safety Floor
 
-    // Load Factors
-    double raw_load_factor = ctx.avg_load / m_auto_peak_load;
-    // v0.7.48: Increased texture load cap from 2.0 to 10.0 to match brake load cap
+    // Load Factors (Stage 3: Giannoulis Soft-Knee Compression)
+    // 1. Calculate raw load multiplier based on static weight
+    // Safety clamp: Ensure load factor is non-negative even with telemetry noise
+    double x = (std::max)(0.0, ctx.avg_load / m_static_front_load);
+
+    // 2. Giannoulis Soft-Knee Parameters
+    double T = 1.5;  // Threshold (Start compressing at 1.5x static weight)
+    double W = 0.5;  // Knee Width (Transition from 1.25x to 1.75x)
+    double R = 4.0;  // Compression Ratio (4:1 above the knee)
+
+    double lower_bound = T - (W / 2.0);
+    double upper_bound = T + (W / 2.0);
+    double compressed_load_factor = x;
+
+    // 3. Apply Compression
+    if (x > upper_bound) {
+        // Linear compressed region
+        compressed_load_factor = T + ((x - T) / R);
+    } else if (x > lower_bound) {
+        // Quadratic soft-knee transition
+        double diff = x - lower_bound;
+        compressed_load_factor = x + (((1.0 / R) - 1.0) * (diff * diff)) / (2.0 * W);
+    }
+
+    // 4. EMA Smoothing on the tactile multiplier (100ms time constant)
+    double alpha_tactile = ctx.dt / (0.1 + ctx.dt);
+    m_smoothed_tactile_mult += alpha_tactile * (compressed_load_factor - m_smoothed_tactile_mult);
+
+    // 5. Apply to context with user caps
     double texture_safe_max = (std::min)(10.0, (double)m_texture_load_cap);
-    ctx.texture_load_factor = (std::min)(texture_safe_max, (std::max)(0.0, raw_load_factor));
+    ctx.texture_load_factor = (std::min)(texture_safe_max, m_smoothed_tactile_mult);
 
     double brake_safe_max = (std::min)(10.0, (double)m_brake_load_cap);
-    ctx.brake_load_factor = (std::min)(brake_safe_max, (std::max)(0.0, raw_load_factor));
+    ctx.brake_load_factor = (std::min)(brake_safe_max, m_smoothed_tactile_mult);
     
     // Hardware Scaling Safeties
     double wheelbase_max_safe = (double)m_wheelbase_max_nm;
@@ -1425,7 +1462,7 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
     // Safety Trigger: Raw Load Peak (Catches Method 0/1 failures)
     if (!triggered) {
         double max_load = (std::max)(data->mWheel[0].mTireLoad, data->mWheel[1].mTireLoad);
-        double bottoming_threshold = m_auto_peak_load * 1.6;
+        double bottoming_threshold = m_static_front_load * 2.5;
         if (max_load > bottoming_threshold) {
             triggered = true;
             double excess = max_load - bottoming_threshold;

@@ -412,6 +412,8 @@ public:
 
     // Dynamic Weight State (v0.7.46)
     double m_static_front_load = 0.0; 
+    bool m_static_load_latched = false;
+    double m_smoothed_tactile_mult = 1.0;
     double m_dynamic_weight_smoothed = 1.0; 
     double m_front_grip_smoothed_state = 1.0; 
     double m_rear_grip_smoothed_state = 1.0;  

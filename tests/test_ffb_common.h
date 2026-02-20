@@ -189,6 +189,10 @@ public:
     static void SetFrontGripSmoothedState(FFBEngine& e, double val) { e.m_front_grip_smoothed_state = val; }
     static void SetStaticFrontLoad(FFBEngine& e, double val) { e.m_static_front_load = val; }
     static double GetStaticFrontLoad(const FFBEngine& e) { return e.m_static_front_load; }
+    static bool GetStaticLoadLatched(const FFBEngine& e) { return e.m_static_load_latched; }
+    static void SetStaticLoadLatched(FFBEngine& e, bool val) { e.m_static_load_latched = val; }
+    static double GetSmoothedTactileMult(const FFBEngine& e) { return e.m_smoothed_tactile_mult; }
+    static void SetSmoothedTactileMult(FFBEngine& e, double val) { e.m_smoothed_tactile_mult = val; }
     // Wrappers for extracted utilities removed. Tests invoke them directly.
     static void SetSlopeDetectionEnabled(FFBEngine& e, bool val) { e.m_slope_detection_enabled = val; }
     static void SetSlopeBufferIndex(FFBEngine& e, int idx) { e.m_slope_buffer_index = idx; }

@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.69] - 2026-02-25
+### Added
+- **Tactile Haptics Normalization (Stage 3) (#154)**:
+  - Transitioned tactile effect scaling (Road Texture, Slide Rumble, Lockup Vibration) from a dynamic peak-load baseline to a **Static Mechanical Load** baseline.
+  - **Static Load Latching**: Implemented logic to learn the vehicle's mechanical weight exclusively between 2-15 m/s and "freeze" the reference at higher speeds. This prevents high-speed aerodynamic downforce from polluting the normalization baseline and making low-speed effects feel "dead".
+  - **Giannoulis Soft-Knee Compression**: Implemented a smooth compression algorithm to handle high loads. Tactile effects are uncompressed below 1.25x static load, enter a quadratic transition zone up to 1.75x, and apply a 4:1 compression ratio above that. This ensures rich detail at all speeds without violent vibrations at top speed.
+  - **Tactile Smoothing**: Added a 100ms EMA filter to the tactile multiplier to ensure smooth transitions across load ranges.
+### Changed
+- **Bottoming Trigger**: Updated the suspension bottoming safety threshold to $2.5x$ the static load baseline for consistency with the new normalization model.
+### Testing
+- **New Test Suite**: Added `tests/test_ffb_tactile_normalization.cpp` to verify latching logic and soft-knee compression accuracy.
+- **Regression Guard**: Updated multiple existing test suites to align with the new tactile scaling and smoothing behavior.
+
 ## [0.7.68] - 2026-02-25
 ### Added
 - **Hardware Strength Scaling (Stage 2) (#153)**:

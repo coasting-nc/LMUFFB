@@ -1,26 +1,31 @@
-# Code Review Iteration 1
+### Code Review Iteration 1
 
-The proposed patch is an excellent, comprehensive, and well-engineered solution to the problem described in Issue #153. It successfully implements "Stage 2" of the FFB Strength Normalization project by replacing the legacy and confusing `max_torque_ref` parameter with a physically grounded model.
+The proposed code change implements Stage 3 of the FFB Strength Normalization feature, focusing on tactile haptics. The core logic involves transitioning tactile scaling from a dynamic peak-load baseline to a static mechanical load baseline, which prevents road effects from feeling "dead" when aerodynamic downforce is high but then decreases.
 
-### User's Goal:
-To redefine how FFB strength is scaled by decoupling hardware capabilities (wheelbase maximum torque) from user preferences (target rim torque), and ensuring tactile textures are rendered in absolute Newton-meters across different hardware.
+#### Core Functionality
+- **Latching Logic:** The patch correctly implements speed-based latching in `update_static_load_reference`. Once the vehicle exceeds 15 m/s, the static load reference is frozen, ensuring that high-speed aerodynamic downforce does not inflate the denominator of the tactile scaling ratio.
+- **Soft-Knee Compression:** The implementation of the Giannoulis Soft-Knee algorithm is mathematically accurate according to the provided implementation plan. It handles the linear region (below 1.25x load), the quadratic transition (1.25x to 1.75x), and the compressed linear region (above 1.75x with a 4:1 ratio) correctly.
+- **Smoothing:** The addition of EMA smoothing (`m_smoothed_tactile_mult`) with a 100ms time constant is appropriate for tactile effects, preventing harsh jumps in vibration intensity while maintaining responsiveness.
+- **Safety & Clamping:** The patch maintains and updates safety caps for texture and brake loads, ensuring the output remains within safe ranges even with the new scaling logic.
+- **Bottoming Trigger:** The update to the suspension bottoming threshold (switching to 2.5x static load) aligns with the goal of making the trigger consistent with the new normalization baseline.
 
-### Evaluation of the Solution:
+#### Safety & Side Effects
+- **Regression Management:** The patch includes necessary updates to multiple existing test files. Because the default scaling behavior changed, unit tests that verify road texture or slip rumble would have failed without these updates (e.g., forcing the smoothed multiplier to 1.0 or resetting the latch state).
+- **Initialization:** New state variables are correctly initialized in the header and reset in `InitializeLoadReference`, which is critical for car-swapping scenarios.
+- **Thread Safety:** The changes occur within the main `calculate_force` logic and state variables managed by the engine, adhering to existing patterns in the codebase.
 
-1.  **Core Functionality:**
-    *   **Physical Model Implementation:** The patch correctly refactors the `FFBEngine` to use `m_wheelbase_max_nm` and `m_target_rim_nm`. The logic in `calculate_force` is updated to map structural forces (steering physics) to the user's preferred rim strength while rendering tactile textures (ABS, road noise, etc.) in absolute Nm. This achieves the stated goal perfectly.
-    *   **UI Updates:** The UI is updated to replace the old slider with two intuitive sliders for the new parameters, including updated tooltips and units.
-    *   **Config Migration:** The patch includes robust migration logic in `Config.cpp` that automatically converts legacy `max_torque_ref` settings to the new model on first launch, handling both "default/clipping hack" values (100Nm) and user-calibrated values gracefully.
+#### Completeness
+- All requested architectural changes (header, source, tests, documentation) are present.
+- The patch includes a comprehensive set of new unit tests in `test_ffb_tactile_normalization.cpp` covering the linear, transition, and compression regions, as well as the latching trigger.
 
-2.  **Safety & Side Effects:**
-    *   **Regression Prevention:** The developer performed a massive update to over 15 existing test files. This was necessary because the legacy math (which included a hidden 1/20 attenuation) was removed. By updating the tests to align with the new 1:1 physical model, the developer ensured that the existing physics logic remains verified.
-    *   **Sanitization:** Added a reliability check for `isfinite` on the raw torque input, which is a good defensive coding practice.
-    *   **Thread Safety:** While the patch does not explicitly use `g_engine_mutex` mentioned in the "Fixer" instructions, it follows the existing architectural pattern of the project where `Preset::Apply` and `Config::Load` update engine state. Since the logic remains functionally identical in terms of state access (single float vs. two floats), it does not introduce new safety risks beyond what might already exist in the project's architecture.
+### 3. Merge Assessment (Blocking vs. Non-Blocking)
 
-3.  **Completeness:**
-    *   The patch is very complete. It touches all necessary call-sites: engine logic, config parsing/saving, factory presets, UI, versioning, changelog, and a comprehensive set of unit tests (including a new test suite specifically for hardware scaling).
+**Blocking:**
+- None. The code logic is sound, functional, and safe.
 
-### Merge Assessment:
-The patch is high quality and ready for merge. It follows the architectural plan strictly, addresses edge cases like migration and test baseline shifts, and improves the overall maintainability and user experience of the FFB system.
+**Nitpicks (Non-Blocking):**
+- **Missing Project Metadata:** The patch does not include updates to the `VERSION` file or a `Changelog` entry, which were requested in the task instructions.
+- **Documentation Completion:** The included `plan_154.md` document is missing the final "Implementation Notes" (encountered issues, deviations) that the "Fixer" workflow requires upon completion.
+- **Redundancy:** The safety fallback check at the end of `update_static_load_reference` is unreachable when the state is latched due to the early return. This is safe, but slightly inefficient.
 
-### Final Rating: #Correct#
+### Final Rating: #Mostly Correct#
