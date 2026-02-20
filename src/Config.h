@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <map>
+#include <atomic>
 #include "Version.h"
 
 struct Preset {
@@ -689,6 +691,17 @@ public:
     static int win_w_small, win_h_small; // Dimensions for Config Only
     static int win_w_large, win_h_large; // Dimensions for Config + Graphs
     static bool show_graphs;             // Remember if graphs were open
+
+    // Persistent storage for vehicle static loads (v0.7.70)
+    static std::map<std::string, double> m_saved_static_loads;
+    static std::recursive_mutex m_static_loads_mutex;
+
+    // Flag to request a save from the main thread (avoids File I/O on FFB thread)
+    static std::atomic<bool> m_needs_save;
+
+    // Thread-safe access to static loads map (v0.7.70)
+    static void SetSavedStaticLoad(const std::string& vehicleName, double value);
+    static bool GetSavedStaticLoad(const std::string& vehicleName, double& value);
 
 private:
     // Helper for parsing preset lines (v0.7.12)

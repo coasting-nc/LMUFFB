@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.70] - 2026-02-25
+### Added
+- **Persistent Storage of Static Load (Stage 4) (#155)**:
+  - Implemented persistent storage for vehicle-specific static mechanical loads in `config.ini`.
+  - Added a new `[StaticLoads]` section to the configuration file to store learned values.
+  - **Immediate Consistency**: Upon session start, the application now checks for a saved static load for the current vehicle. If found, it instantly latches the value, bypassing the 2-15 m/s learning phase.
+  - **Background Saving**: Implemented an asynchronous save mechanism where the FFB thread signals the main loop to persist new latched values to disk, avoiding File I/O latency on the high-frequency physics thread.
+### Testing
+- **New Test Suite**: Added `tests/test_ffb_persistent_load.cpp` to verify INI parsing, engine initialization from saved data, and automatic saving upon latching.
+
 ## [0.7.69] - 2026-02-25
 ### Added
 - **Tactile Haptics Normalization (Stage 3) (#154)**:

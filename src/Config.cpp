@@ -24,6 +24,10 @@ int Config::win_w_large = 1400;  // Wide (Config + Graphs)
 int Config::win_h_large = 800;
 bool Config::show_graphs = false;
 
+std::map<std::string, double> Config::m_saved_static_loads;
+std::recursive_mutex Config::m_static_loads_mutex;
+std::atomic<bool> Config::m_needs_save{ false };
+
 std::vector<Preset> Config::presets;
 
 void Config::ParsePresetLine(const std::string& line, Preset& current_preset, std::string& current_preset_version, bool& needs_save) {
@@ -1100,6 +1104,21 @@ bool Config::IsEngineDirtyRelativeToPreset(int index, const FFBEngine& engine) {
     return !presets[index].Equals(current_state);
 }
 
+void Config::SetSavedStaticLoad(const std::string& vehicleName, double value) {
+    std::lock_guard<std::recursive_mutex> lock(m_static_loads_mutex);
+    m_saved_static_loads[vehicleName] = value;
+}
+
+bool Config::GetSavedStaticLoad(const std::string& vehicleName, double& value) {
+    std::lock_guard<std::recursive_mutex> lock(m_static_loads_mutex);
+    auto it = m_saved_static_loads.find(vehicleName);
+    if (it != m_saved_static_loads.end()) {
+        value = it->second;
+        return true;
+    }
+    return false;
+}
+
 void Config::Save(const FFBEngine& engine, const std::string& filename) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
     std::string final_path = filename.empty() ? m_config_path : filename;
@@ -1220,6 +1239,14 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "speed_gate_lower=" << engine.m_speed_gate_lower << "\n";
         file << "speed_gate_upper=" << engine.m_speed_gate_upper << "\n";
 
+        file << "\n[StaticLoads]\n";
+        {
+            std::lock_guard<std::recursive_mutex> static_lock(m_static_loads_mutex);
+            for (const auto& pair : m_saved_static_loads) {
+                file << pair.first << "=" << pair.second << "\n";
+            }
+        }
+
         file << "\n[Presets]\n";
         for (const auto& p : presets) {
             if (!p.is_builtin) {
@@ -1246,11 +1273,27 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     }
 
     std::string line;
+    bool in_static_loads = false;
+    bool in_other_section = false;
     while (std::getline(file, line)) {
         // Strip whitespace and check for section headers
         line.erase(0, line.find_first_not_of(" \t\r\n"));
+        line.erase(line.find_last_not_of(" \t\r\n") + 1);
         if (line.empty() || line[0] == ';') continue;
-        if (line[0] == '[') break; // Top-level settings end here (e.g. [Presets])
+
+        if (line[0] == '[') {
+            if (line == "[StaticLoads]") {
+                in_static_loads = true;
+                in_other_section = false;
+            }
+            else {
+                in_static_loads = false;
+                in_other_section = true;
+            }
+            continue;
+        }
+
+        if (in_other_section) continue;
 
         std::istringstream is_line(line);
         std::string key;
@@ -1258,6 +1301,11 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
             std::string value;
             if (std::getline(is_line, value)) {
                 try {
+                    if (in_static_loads) {
+                        SetSavedStaticLoad(key, std::stod(value));
+                        continue;
+                    }
+
                     if (key == "ini_version") {
                         // Config Version Tracking: This field records the app version that last saved the config.
                         // It serves as an implicit config format version for migration decisions.

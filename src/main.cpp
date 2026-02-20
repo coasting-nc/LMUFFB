@@ -292,6 +292,12 @@ int main(int argc, char* argv[]) {
 
     while (g_running) {
         GuiLayer::Render(g_engine);
+
+        // Process background save requests from the FFB thread (v0.7.70)
+        if (Config::m_needs_save.exchange(false)) {
+            Config::Save(g_engine);
+        }
+
         // Maintain a consistent 60Hz message loop even when backgrounded
         // to ensure DirectInput performance and reliability.
         std::this_thread::sleep_for(std::chrono::milliseconds(16));

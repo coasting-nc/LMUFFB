@@ -62,6 +62,7 @@ std::vector<FFBSnapshot> FFBEngine::GetDebugBatch() {
 
 // Helper: Learn static front load reference (v0.7.46)
 void FFBEngine::update_static_load_reference(double current_load, double speed, double dt) {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
     if (m_static_load_latched) return; // Do not update if latched
 
     if (speed > 2.0 && speed < 15.0) {
@@ -73,6 +74,14 @@ void FFBEngine::update_static_load_reference(double current_load, double speed, 
     } else if (speed >= 15.0 && m_static_front_load > 1000.0) {
         // Latch the value once we exceed 15 m/s (aero begins to take over)
         m_static_load_latched = true;
+
+        // Save to config map (v0.7.70)
+        std::string vName = m_vehicle_name;
+        if (vName != "Unknown" && vName != "") {
+            Config::SetSavedStaticLoad(vName, m_static_front_load);
+            Config::m_needs_save = true; // Flag main thread to write to disk
+            std::cout << "[FFB] Latched and saved static load for " << vName << ": " << m_static_front_load << "N" << std::endl;
+        }
     }
 
     // Safety fallback: Ensure we have a sane baseline if learning failed
@@ -83,18 +92,31 @@ void FFBEngine::update_static_load_reference(double current_load, double speed, 
 
 // Initialize the load reference based on vehicle class and name seeding
 void FFBEngine::InitializeLoadReference(const char* className, const char* vehicleName) {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
     ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
     m_auto_peak_load = GetDefaultLoadForClass(vclass);
 
-    // Reset static load reference for new car class
-    m_static_front_load = m_auto_peak_load * 0.5;
-    m_static_load_latched = false;
+    std::string vName = vehicleName ? vehicleName : "Unknown";
+
+    // Check if we already have a saved static load for this specific car (v0.7.70)
+    double saved_load = 0.0;
+    if (Config::GetSavedStaticLoad(vName, saved_load)) {
+        m_static_front_load = saved_load;
+        m_static_load_latched = true; // Skip the 2-15 m/s learning phase
+        std::cout << "[FFB] Loaded persistent static load for " << vName << ": " << m_static_front_load << "N" << std::endl;
+    } else {
+        // Reset static load reference for new car class
+        m_static_front_load = m_auto_peak_load * 0.5;
+        m_static_load_latched = false;
+        std::cout << "[FFB] No saved load for " << vName << ". Learning required." << std::endl;
+    }
+
     m_smoothed_tactile_mult = 1.0;
 
     std::cout << "[FFB] Vehicle Identification -> Detected Class: " << VehicleClassToString(vclass)
               << " | Seed Load: " << m_auto_peak_load << "N" 
               << " (Raw -> Class: " << (className ? className : "Unknown") 
-              << ", Name: " << (vehicleName ? vehicleName : "Unknown") << ")" << std::endl;
+              << ", Name: " << vName << ")" << std::endl;
 }
 
 // Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)

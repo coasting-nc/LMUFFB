@@ -1,31 +1,20 @@
-### Code Review Iteration 1
+The proposed patch effectively implements the logic for persistent storage of vehicle-specific static loads, which is a significant improvement for user experience (avoiding the "calibration roll"). However, it contains a critical flaw regarding thread safety that prevents it from being commit-ready.
 
-The proposed code change implements Stage 3 of the FFB Strength Normalization feature, focusing on tactile haptics. The core logic involves transitioning tactile scaling from a dynamic peak-load baseline to a static mechanical load baseline, which prevents road effects from feeling "dead" when aerodynamic downforce is high but then decreases.
+### Analysis and Reasoning:
 
-#### Core Functionality
-- **Latching Logic:** The patch correctly implements speed-based latching in `update_static_load_reference`. Once the vehicle exceeds 15 m/s, the static load reference is frozen, ensuring that high-speed aerodynamic downforce does not inflate the denominator of the tactile scaling ratio.
-- **Soft-Knee Compression:** The implementation of the Giannoulis Soft-Knee algorithm is mathematically accurate according to the provided implementation plan. It handles the linear region (below 1.25x load), the quadratic transition (1.25x to 1.75x), and the compressed linear region (above 1.75x with a 4:1 ratio) correctly.
-- **Smoothing:** The addition of EMA smoothing (`m_smoothed_tactile_mult`) with a 100ms time constant is appropriate for tactile effects, preventing harsh jumps in vibration intensity while maintaining responsiveness.
-- **Safety & Clamping:** The patch maintains and updates safety caps for texture and brake loads, ensuring the output remains within safe ranges even with the new scaling logic.
-- **Bottoming Trigger:** The update to the suspension bottoming threshold (switching to 2.5x static load) aligns with the goal of making the trigger consistent with the new normalization baseline.
+1.  **User's Goal:** The objective is to persist learned vehicle static loads in `config.ini` so the FFB system can skip the learning phase in subsequent sessions for the same car.
 
-#### Safety & Side Effects
-- **Regression Management:** The patch includes necessary updates to multiple existing test files. Because the default scaling behavior changed, unit tests that verify road texture or slip rumble would have failed without these updates (e.g., forcing the smoothed multiplier to 1.0 or resetting the latch state).
-- **Initialization:** New state variables are correctly initialized in the header and reset in `InitializeLoadReference`, which is critical for car-swapping scenarios.
-- **Thread Safety:** The changes occur within the main `calculate_force` logic and state variables managed by the engine, adhering to existing patterns in the codebase.
+2.  **Evaluation of the Solution:**
+    *   **Core Functionality:** The patch successfully implements the lifecycle of this feature: it parses saved values from the INI file, utilizes them during engine initialization to bypass the learning phase, updates the in-memory map when new values are latched, and triggers a background save.
+    *   **Safety & Side Effects:**
+        *   **Thread Safety (CRITICAL FAILURE):** The patch introduces a data race. `Config::m_saved_static_loads` (a `std::map`) is accessed for writing inside `FFBEngine::update_static_load_reference` on the high-frequency FFB thread. Simultaneously, the main thread reads this map during `Config::Save`. Since `std::map` is not thread-safe for concurrent read/write operations, this will lead to undefined behavior and likely application crashes when a car latches its load while the config is being saved or accessed by the GUI.
+        *   **Efficiency:** The asynchronous save mechanism using `m_needs_save.exchange(false)` in the main loop is a good approach to avoid disk I/O latency on the physics thread.
+    *   **Completeness:** The patch is architecturally complete, covering configuration, engine logic, main loop integration, documentation, and versioning. It also includes relevant unit tests.
 
-#### Completeness
-- All requested architectural changes (header, source, tests, documentation) are present.
-- The patch includes a comprehensive set of new unit tests in `test_ffb_tactile_normalization.cpp` covering the linear, transition, and compression regions, as well as the latching trigger.
+3.  **Merge Assessment (Blocking vs. Nitpicks):**
+    *   **Blocking:** The lack of synchronization (mutex protection) for the shared `m_saved_static_loads` map is a blocking issue. In a project where reliability is paramount and thread safety is explicitly highlighted in the coding standards (with `g_engine_mutex` specifically mentioned), this oversight is a major regression in stability.
+    *   **Nitpicks:** None. The logic for INI parsing and the separation of concerns are well-handled.
 
-### 3. Merge Assessment (Blocking vs. Non-Blocking)
+### Final Rating: #Partially Correct#
 
-**Blocking:**
-- None. The code logic is sound, functional, and safe.
-
-**Nitpicks (Non-Blocking):**
-- **Missing Project Metadata:** The patch does not include updates to the `VERSION` file or a `Changelog` entry, which were requested in the task instructions.
-- **Documentation Completion:** The included `plan_154.md` document is missing the final "Implementation Notes" (encountered issues, deviations) that the "Fixer" workflow requires upon completion.
-- **Redundancy:** The safety fallback check at the end of `update_static_load_reference` is unreachable when the state is latched due to the early return. This is safe, but slightly inefficient.
-
-### Final Rating: #Mostly Correct#
+The patch is well-structured and addresses the functional requirements, but it introduces a significant stability risk due to thread-safety violations on a core shared resource. It must be updated to use a mutex (such as `g_engine_mutex` or a dedicated config mutex) to protect the map before it can be merged.
