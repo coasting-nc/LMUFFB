@@ -167,3 +167,19 @@ A TODO on line 1431 already acknowledges this:
 | **Total** | **~220** |
 
 This would reduce `calculate_force` from ~540 lines to approximately **320 lines**, making the core FFB signal chain easy to follow from top to bottom.
+
+---
+
+## Implementation Checklist
+
+- [x] **Phase 1: Grip & Load Estimation Extraction (Approach A)**
+  - Moved `calculate_grip`, `calculate_slope_grip`, `calculate_kinematic_load`, etc. to `GripLoadEstimation.cpp`.
+  - Reduced `FFBEngine.cpp` complexity and file size.
+- [ ] **Phase 2: Extract Snapshot Building**
+  - Extract the manual `FFBSnapshot` field assignments from `calculate_force` into a dedicated `build_snapshot` method.
+- [ ] **Phase 3: Extract Telemetry Logging**
+  - Extract the `AsyncLogger` frame population from `calculate_force` into a dedicated `log_telemetry_frame` method.
+- [ ] **Phase 4: Extract Missing Telemetry Detection**
+  - Extract the hysteresis-based missing data warnings into a dedicated `detect_missing_telemetry` method or use a unified helper.
+- [ ] **Phase 5: Modularize Ancillary Effects**
+  - Move `calculate_soft_lock` and potentially other non-core FFB effects to a separate utility or ancillary effects file.
