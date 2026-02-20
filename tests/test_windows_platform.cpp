@@ -19,6 +19,7 @@
 #include "../src/GuiLayer.h"
 #include "../src/GuiPlatform.h"
 #include "../src/GameConnector.h"
+#include "../src/resource.h"
 #include "imgui.h"
 
 #include "test_ffb_common.h"
@@ -88,6 +89,22 @@ TEST_CASE(test_window_always_on_top_behavior, "Windows") {
 
 
 
+
+#ifdef _WIN32
+TEST_CASE(test_resource_icon_loadable, "Windows") {
+    std::cout << "\nTest: Resource Icon Loadable" << std::endl;
+    // Load the icon from the current module's resources
+    HICON hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1));
+    ASSERT_TRUE(hIcon != NULL);
+    if (hIcon) {
+        std::cout << "  [PASS] Successfully loaded IDI_ICON1 (" << IDI_ICON1 << ") from process resources." << std::endl;
+        // In modern Win32 we should not destroy icons loaded with LoadIcon, 
+        // but here it's harmless as it's a shared resource anyway if it's from resources.
+    } else {
+        std::cout << "  [FAIL] Failed to load IDI_ICON1 from resources. Error: " << GetLastError() << std::endl;
+    }
+}
+#endif
 
 TEST_CASE(test_icon_presence, "Windows") {
     std::cout << "\nTest: Icon Presence (Build Artifact)" << std::endl;

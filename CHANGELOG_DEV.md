@@ -2,7 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.7.72] - 2026-02-26
+### Fixed
+- **App Icon Visibility (#165)**:
+  - Restored the application icon in the window title bar and taskbar by explicitly loading and registering it in the Win32 window class.
+  - Improved Explorer visibility by changing the primary icon resource ID to `1`, ensuring Windows correctly identifies it as the main application icon.
+  - Fixed a missing default cursor in the Win32 window initialization.
+### Testing
+- **New Regression Test**: Added `test_resource_icon_loadable` to `tests/test_windows_platform.cpp` to verify that the icon resource is correctly embedded in the binary and loadable by the system.
 
 ## [0.7.71] - 2026-02-25
 ### Added

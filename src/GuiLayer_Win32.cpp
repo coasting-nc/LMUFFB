@@ -35,6 +35,8 @@ static const int MIN_WINDOW_HEIGHT = 600;
 #define PW_RENDERFULLCONTENT 0x00000002
 #endif
 
+#include "resource.h"
+
 // Forward declarations
 bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
@@ -132,6 +134,9 @@ bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defau
 
 bool GuiLayer::Init() {
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"lmuFFB", NULL };
+    wc.hIcon = LoadIcon(wc.hInstance, MAKEINTRESOURCE(IDI_ICON1));
+    wc.hIconSm = LoadIcon(wc.hInstance, MAKEINTRESOURCE(IDI_ICON1));
+    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     ::RegisterClassExW(&wc);
     std::string ver = LMUFFB_VERSION;
     std::wstring wver(ver.begin(), ver.end());
