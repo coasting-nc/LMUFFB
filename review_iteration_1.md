@@ -1,33 +1,18 @@
-The proposed patch addresses the issue where the steering "soft lock" (the physical stop at the steering rack limit) becomes weaker as the driving session progresses and the "session peak torque" increases. This occurred because the soft lock force was being treated as a "structural" force and thus normalized by the dynamic session peak.
+The proposed code change addresses the reported issue by fundamentally changing how the Soft Lock force is scaled within the Force Feedback (FFB) engine. By moving the Soft Lock from the "Structural" group (which is normalized by the dynamic session peak torque) to the "Texture/Absolute Nm" group (which is scaled by the wheelbase's maximum torque), the fix ensures that the physical stop provided by the soft lock is consistent and strong, regardless of how high the steering forces during driving have been.
 
-### User's Goal
-Ensure the steering soft lock provides a consistent, strong physical resistance that is independent of the dynamic force normalization learned during driving.
+### Analysis and Reasoning:
 
-### Evaluation of the Solution
+1.  **User's Goal:** The user wants the Soft Lock force to be significantly stronger and to work consistently, including when the car is stationary.
 
-#### Core Functionality
-The solution is physically and logically sound. By moving the `soft_lock_force` from the `structural_sum` (normalized by session peak) to the `texture_sum_nm` group (scaled by the absolute wheelbase maximum torque), the patch ensures that the resistance felt at the steering limit is always relative to the hardware's maximum capability, not the intensity of the driving. This directly resolves the reported weakness.
+2.  **Evaluation of the Solution:**
+    *   **Core Functionality:** The patch directly solves the "weakness" problem. In the previous implementation, if the session peak torque was high (e.g., due to a high-downforce car or a crash), the soft lock (calculated in Nm) was divided by this peak, often resulting in a very faint force. By moving it to the absolute Nm group, it is now divided by the hardware's maximum torque (`m_wheelbase_max_nm`), ensuring it always hits the intended physical target. The provided regression test confirms this logic.
+    *   **Safety & Side Effects:** The change is safe. The soft lock is now correctly exempted from the `gain_reduction_factor` (Torque Drop), which is intended for tire physics effects (like traction loss) and shouldn't impact a physical steering stop. The final output is still subject to the engine's global clamping logic.
+    *   **Completeness:** The patch updates the summation logic in `FFBEngine.cpp`, increments the project version, and adds a comprehensive regression test that specifically verifies the fix for the reported normalization issue.
 
-#### Safety & Side Effects
-*   **Physics:** The change correctly models the soft lock as an absolute physical limit rather than a relative steering effect.
-*   **Thread Safety:** The changes are contained within the `FFBEngine::calculate_force` method, which operates under the protection of the existing `g_engine_mutex`.
-*   **Regressions:** No regressions are introduced. The summation logic remains mathematically consistent, and the shift in scaling groups is appropriate for this specific force type.
-*   **Security:** No security issues (exposed secrets, etc.) were introduced.
-
-#### Completeness
-The patch is comprehensive and follows the project's specific procedural requirements:
-*   **Verification:** Includes a new regression test (`tests/test_issue_181_soft_lock_weakness.cpp`) that explicitly verifies the force remains constant (and strong) across varying session peak torque levels.
-*   **Process Compliance:** Includes the required `implementation_plan.md` and `review_iteration_1.md` as requested in the user's interaction history.
-*   **Versioning:** Correctly updates the `VERSION` file. It specifically avoids manually editing `src/Version.h`, adhering to the user's constraint despite mentioning it in the documentation files (a minor documentation staleness that does not affect the code).
-*   **Changelog:** Updates both the developer and user-facing changelogs.
-
-### Merge Assessment
-
-**Nitpicks:**
-*   **Documentation Staleness:** The `implementation_plan.md` and `review_iteration_1.md` claim that `src/Version.h` was updated. While the agent correctly omitted this change from the code (following user instructions), the documentation files weren't updated to reflect that omission.
-*   **Plan Duplication:** The implementation plan is provided in two locations (root and `docs/dev_docs/plans/`).
-*   **Changelog Noise:** The `CHANGELOG_DEV.md` includes an entry for an unrelated version (0.7.76).
-
-These nitpicks are non-blocking as the core code change and the provided tests are correct and follow the most critical project constraints.
+3.  **Merge Assessment:**
+    *   **Blocking:** None. The logic is sound and the implementation is clean.
+    *   **Nitpicks:**
+        *   The patch includes the `implementation_plan.md` and `review_iteration_1.md` files. While useful for the agent's workflow, these would typically be excluded from a final pull request to the main repository.
+        *   The `implementation_plan.md` promised an update to `src/Version.h`, which is missing from the patch (only the `VERSION` file was updated). If the project does not auto-generate headers from the version file, the UI version might remain out of sync.
 
 ### Final Rating: #Correct#

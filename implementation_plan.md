@@ -51,5 +51,7 @@ Issue #181 reports that the Soft Lock feature is too weak, especially when the c
 - **Fix**: Relocated Soft Lock to the absolute Nm scaling group (Textures).
 - **Result**: Soft Lock is now consistently strong and independent of learned peaks. Verified by tests to reach 100% force at 1% steering excess.
 - **Deviations**: Reverted manual edits to `src/Version.h` as the file is auto-generated in the build directory. Updated tests to use the standard `TEST_CASE` macro for auto-registration.
+- **Iterative Review Process**:
+    - **Iteration 1**: Initial review of the move to absolute Nm scaling. Feedback noted missing `Version.h` macro and artifact storage.
+    - **Iteration 2**: Review after fixing test macro, truncating `src/Version.h`, and adding artifacts. Solution rated #Correct#.
 - **Recommendations**: Monitor user feedback regarding damping. The increased effective strength might make damping feel more aggressive too.
-- **Code Review Feedback**: The solution was rated #Correct#. Documentation nitpicks were acknowledged. The decision to keep `src/Version.h` empty was made to align with the repository's build system standards.
