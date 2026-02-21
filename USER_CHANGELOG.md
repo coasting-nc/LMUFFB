@@ -4,10 +4,10 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
-[size=5][b]February 26, 2026[/b][/size]
-[b]Version 0.7.77 - Soft Lock Fix[/b]
+[size=5][b]February 21, 2026[/b][/size]
+[b]Version 0.7.76 - Soft Lock Fix[/b]
 
-[b]New release[/b] (0.7.77): https://github.com/coasting-nc/LMUFFB/releases
+[b]New release[/b] (0.7.76): https://github.com/coasting-nc/LMUFFB/releases
 
 [b]Fixed[/b]
 [list]
