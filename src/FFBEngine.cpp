@@ -497,8 +497,9 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     
     // --- 6. SUMMATION (Issue #152 & #153 Split Scaling) ---
     // Split into Structural (Dynamic Normalization) and Texture (Absolute Nm) groups
+    // v0.7.77 FIX: Soft Lock moved to Texture group to maintain absolute Nm scaling (Issue #181)
     double structural_sum = output_force + ctx.sop_base_force + ctx.rear_torque + ctx.yaw_force + ctx.gyro_force +
-                            ctx.scrub_drag_force + ctx.soft_lock_force;
+                            ctx.scrub_drag_force;
 
     // Apply Torque Drop (from Spin/Traction Loss) only to structural physics
     structural_sum *= ctx.gain_reduction_factor;
@@ -507,7 +508,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double norm_structural = structural_sum * m_smoothed_structural_mult;
 
     // Tactile Textures are calculated in absolute Nm
-    double texture_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble;
+    double texture_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble + ctx.soft_lock_force;
 
     // --- 7. OUTPUT SCALING (Physical Target Model) ---
     // Map structural to the target rim torque, then divide by wheelbase max to get DirectInput %

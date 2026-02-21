@@ -65,6 +65,7 @@ set(TEST_SOURCES
     test_ffb_tactile_normalization.cpp
     test_health_monitor.cpp
     test_ffb_persistent_load.cpp
+    test_issue_181_soft_lock_weakness.cpp
 )
 
 # ImGui Core is now always available if vendor exists
@@ -106,4 +107,3 @@ endif()
 
 # Add to CTest
 add_test(NAME CombinedTests COMMAND run_combined_tests)
-
