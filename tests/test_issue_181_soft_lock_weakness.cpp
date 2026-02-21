@@ -4,7 +4,7 @@
 
 namespace FFBEngineTests {
 
-void test_soft_lock_normalization_consistency() {
+TEST_CASE(test_soft_lock_normalization_consistency, "Regression") {
     std::cout << "Test: Soft Lock Normalization Consistency (#181)" << std::endl;
 
     auto get_soft_lock_output = [](FFBEngine& engine, double steer, double peak) {
@@ -49,7 +49,5 @@ void test_soft_lock_normalization_consistency() {
     std::cout << "  Force at 1.01 steer (1% excess): " << force_full << std::endl;
     ASSERT_NEAR(force_full, -1.0, 0.001);
 }
-
-AutoRegister reg_soft_lock_consistency("Soft Lock Consistency", "Regression", {"Physics"}, test_soft_lock_normalization_consistency);
 
 } // namespace

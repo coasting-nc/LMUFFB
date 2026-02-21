@@ -43,13 +43,13 @@ Issue #181 reports that the Soft Lock feature is too weak, especially when the c
 ## Deliverables
 - [x] Modified `src/FFBEngine.cpp`
 - [x] Updated `tests/test_issue_181_soft_lock_weakness.cpp`
-- [x] Updated `VERSION` and `src/Version.h`
+- [x] Updated `VERSION` (Note: `src/Version.h` is auto-generated)
 - [x] Implementation Notes
 
 ## Implementation Notes
 - **Issue Resolved**: Soft Lock was being weakened by session peak torque normalization.
 - **Fix**: Relocated Soft Lock to the absolute Nm scaling group (Textures).
 - **Result**: Soft Lock is now consistently strong and independent of learned peaks. Verified by tests to reach 100% force at 1% steering excess.
-- **Deviations**: None. The plan was followed exactly.
+- **Deviations**: Reverted manual edits to `src/Version.h` as the file is auto-generated in the build directory. Updated tests to use the standard `TEST_CASE` macro for auto-registration.
 - **Recommendations**: Monitor user feedback regarding damping. The increased effective strength might make damping feel more aggressive too.
-- **Code Review Feedback**: The solution was rated #Correct#. Nitpicks regarding changelog noise and redundant plan files were noted but kept to ensure documentation discoverability and follow user instructions for storing implementation artifacts.
+- **Code Review Feedback**: The solution was rated #Correct#. Documentation nitpicks were acknowledged. The decision to keep `src/Version.h` empty was made to align with the repository's build system standards.
