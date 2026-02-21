@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.77] - 2026-02-26
+### Fixed
+- **Soft Lock Weakness (#181)**:
+  - Relocated Soft Lock force from the normalized structural group to the absolute Nm scaling group (Textures).
+  - This ensures the steering rack limit resistance remains consistently strong regardless of learned session peak torque normalization.
+  - Verified with regression tests to provide full force at 1% steering excess.
+
+## [0.7.76] - 2026-02-26
+### Added
+- **Optional Dynamic Normalization (100Hz) (#175)**:
+  - Introduced a toggle to enable/disable dynamic normalization for the 100Hz legacy steering source.
+  - Disabled by default to restore absolute scaling and prevent force drop-off after high-torque spikes.
+  - Added thread-safe GUI control with `g_engine_mutex` protection.
+
 ## [0.7.75] - 2026-02-20
 ### Refactored
 - **FFB Engine Decomposition (Grip & Load Estimation Extraction)**:

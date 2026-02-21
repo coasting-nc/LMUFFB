@@ -4,6 +4,18 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]February 26, 2026[/b][/size]
+[b]Version 0.7.77 - Soft Lock Fix[/b]
+
+[b]New release[/b] (0.7.77): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]Soft Lock Weakness[/b]: Fixed an issue where the steering "soft lock" (the physical stop at the car's steering limit) would become too weak as you drove harder. The resistance is now consistently strong and independent of session peak torque normalization. (#181)
+[/list]
+
+---
+
 [size=5][b]February 25, 2026[/b][/size]
 [b]Version 0.7.71 - In-Game FFB Fix & Gain Slider[/b]
 
