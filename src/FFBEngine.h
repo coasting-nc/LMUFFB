@@ -520,7 +520,7 @@ public:
     double calculate_slope_confidence(double dAlpha_dt);
     double calculate_wheel_slip_ratio(const TelemWheelV01& w);
 
-    double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr, float genFFBTorque = 0.0f);
+    double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr, float genFFBTorque = 0.0f, bool allowed = true);
 
     double apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, FFBCalculationContext& ctx);
 

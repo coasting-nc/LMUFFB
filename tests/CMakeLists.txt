@@ -66,6 +66,7 @@ set(TEST_SOURCES
     test_health_monitor.cpp
     test_ffb_persistent_load.cpp
     test_issue_181_soft_lock_weakness.cpp
+    test_issue_184_repro.cpp
 )
 
 # ImGui Core is now always available if vendor exists

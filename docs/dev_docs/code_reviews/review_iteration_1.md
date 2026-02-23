@@ -1,20 +1,24 @@
-The proposed patch effectively implements the logic for persistent storage of vehicle-specific static loads, which is a significant improvement for user experience (avoiding the "calibration roll"). However, it contains a critical flaw regarding thread safety that prevents it from being commit-ready.
+The proposed code change is a high-quality, professional fix that addresses the requested issue while also resolving a related known bug in the codebase.
 
-### Analysis and Reasoning:
+### **Analysis and Reasoning:**
 
-1.  **User's Goal:** The objective is to persist learned vehicle static loads in `config.ini` so the FFB system can skip the learning phase in subsequent sessions for the same car.
+1.  **User's Goal:** The user wants the Steering Soft Lock (physical resistance at the rack limits) to remain active even when the car is stationary or in the garage, where FFB is normally disabled.
 
 2.  **Evaluation of the Solution:**
-    *   **Core Functionality:** The patch successfully implements the lifecycle of this feature: it parses saved values from the INI file, utilizes them during engine initialization to bypass the learning phase, updates the in-memory map when new values are latched, and triggers a background save.
+    *   **Core Functionality:** The patch correctly identifies that the `FFBThread` loop was gating all FFB output based on the `in_realtime` and `IsFFBAllowed` flags. By decoupling the telemetry processing loop from the "full FFB allowed" state, the patch enables the engine to calculate and output safety effects (Soft Lock) while muting structural and tactile forces (Game FFB, vibrations). This perfectly solves the user's problem.
     *   **Safety & Side Effects:**
-        *   **Thread Safety (CRITICAL FAILURE):** The patch introduces a data race. `Config::m_saved_static_loads` (a `std::map`) is accessed for writing inside `FFBEngine::update_static_load_reference` on the high-frequency FFB thread. Simultaneously, the main thread reads this map during `Config::Save`. Since `std::map` is not thread-safe for concurrent read/write operations, this will lead to undefined behavior and likely application crashes when a car latches its load while the config is being saved or accessed by the GUI.
-        *   **Efficiency:** The asynchronous save mechanism using `m_needs_save.exchange(false)` in the main loop is a good approach to avoid disk I/O latency on the physics thread.
-    *   **Completeness:** The patch is architecturally complete, covering configuration, engine logic, main loop integration, documentation, and versioning. It also includes relevant unit tests.
+        *   **Muting Logic:** The implementation of a "muted" state in `FFBEngine::calculate_force` (via the `allowed` parameter) ensures that no unwanted jolts or vibrations occur when the car is in the garage, which specifically addresses **Issue #185**.
+        *   **Slew Rate Limiting:** In `main.cpp`, the `restricted` flag is set to `true` whenever full FFB is not allowed. This is a critical safety feature that applies aggressive slew rate limiting to the FFB output, preventing violent wheel snaps when transitioning between game states or if telemetry data is discontinuous.
+        *   **Thread Safety:** The patch maintains the use of `g_engine_mutex`, ensuring thread-safe access to the engine state from the FFB thread.
+        *   **Security:** No secrets are exposed, and no common vulnerabilities (like injection) are relevant to this math-heavy C++ logic.
+    *   **Completeness:** The patch updates the engine signature, the engine implementation, the main thread logic, the versioning, the changelog, and includes a comprehensive regression test. It covers all necessary call-sites and configurations.
 
-3.  **Merge Assessment (Blocking vs. Nitpicks):**
-    *   **Blocking:** The lack of synchronization (mutex protection) for the shared `m_saved_static_loads` map is a blocking issue. In a project where reliability is paramount and thread safety is explicitly highlighted in the coding standards (with `g_engine_mutex` specifically mentioned), this oversight is a major regression in stability.
-    *   **Nitpicks:** None. The logic for INI parsing and the separation of concerns are well-handled.
+3.  **Merge Assessment (Blocking vs. Non-Blocking):**
+    *   **Blocking:** None. The logic is sound, safe, and functional.
+    *   **Nitpicks:** The version jump from `0.7.76` to `0.7.78` (skipping `77`) is unusual but harmless. The implementation plan's checkboxes are not ticked, but the plan itself is present and accurate.
 
-### Final Rating: #Partially Correct#
+### **Final Rating:**
 
-The patch is well-structured and addresses the functional requirements, but it introduces a significant stability risk due to thread-safety violations on a core shared resource. It must be updated to use a mutex (such as `g_engine_mutex` or a dedicated config mutex) to protect the map before it can be merged.
+The solution is robust, well-tested, and adheres to the project's reliability standards.
+
+### Final Rating: #Correct#

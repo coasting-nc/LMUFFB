@@ -113,7 +113,10 @@ void FFBThread() {
             
             bool should_output = false;
 
-            if (in_realtime && !is_stale && g_localData.telemetry.playerHasVehicle) {
+            // v0.7.78 FIX: Support stationary/garage soft lock (Issue #184)
+            // We now process FFB even if not in realtime, provided we have a player vehicle.
+            // This allows Soft Lock to function in the garage or when AI is driving.
+            if (!is_stale && g_localData.telemetry.playerHasVehicle) {
                 uint8_t idx = g_localData.telemetry.playerVehicleIdx;
                 if (idx < 104) {
                     auto& scoring = g_localData.scoring.vehScoringInfo[idx];
@@ -166,11 +169,15 @@ void FFBThread() {
                     mDtMon.Update(pPlayerTelemetry->mDeltaTime);
 
                     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-                    if (g_engine.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase)) {
-                        force = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque);
-                        should_output = true;
-                        restricted = (scoring.mFinishStatus != 0);
-                    }
+                    // Determine if full FFB is allowed.
+                    // full_allowed requires: player control, not disqualified, and in realtime.
+                    bool full_allowed = g_engine.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase) && in_realtime;
+
+                    force = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed);
+                    should_output = true;
+
+                    // If not full_allowed, use tighter slew rate limiting
+                    restricted = !full_allowed || (scoring.mFinishStatus != 0);
                 }
             }
             
