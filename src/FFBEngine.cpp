@@ -150,7 +150,7 @@ double FFBEngine::apply_signal_conditioning(double raw_torque, const TelemInfoV0
 }
 
 // Refactored calculate_force
-double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleClass, const char* vehicleName, float genFFBTorque) {
+double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleClass, const char* vehicleName, float genFFBTorque, bool allowed) {
     if (!data) return 0.0;
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
@@ -494,6 +494,27 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     calculate_road_texture(data, ctx);
     calculate_suspension_bottoming(data, ctx);
     calculate_soft_lock(data, ctx);
+
+    // v0.7.78 FIX: Support stationary/garage soft lock (Issue #184)
+    // If not allowed (e.g. in garage or AI driving), mute all forces EXCEPT Soft Lock.
+    if (!allowed) {
+        output_force = 0.0;
+        ctx.sop_base_force = 0.0;
+        ctx.rear_torque = 0.0;
+        ctx.yaw_force = 0.0;
+        ctx.gyro_force = 0.0;
+        ctx.scrub_drag_force = 0.0;
+        ctx.road_noise = 0.0;
+        ctx.slide_noise = 0.0;
+        ctx.spin_rumble = 0.0;
+        ctx.bottoming_crunch = 0.0;
+        ctx.abs_pulse_force = 0.0;
+        ctx.lockup_rumble = 0.0;
+        // NOTE: ctx.soft_lock_force is PRESERVED.
+
+        // Also zero out base_input for snapshot clarity
+        base_input = 0.0;
+    }
     
     // --- 6. SUMMATION (Issue #152 & #153 Split Scaling) ---
     // Split into Structural (Dynamic Normalization) and Texture (Absolute Nm) groups

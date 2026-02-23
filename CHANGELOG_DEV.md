@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.78] - 2026-02-23
+### Fixed
+- **Soft Lock Stationary Support (#184)**:
+  - Enabled Soft Lock processing even when the car is stationary in the garage or when the player is not in control (e.g. AI driving).
+  - Implemented a "muted" FFB mode that allows safety effects (Soft Lock) to remain active while zeroing out all structural and tactile forces when full FFB is not allowed.
+  - This also ensures no unwanted FFB vibrations or jolts occur in the garage while maintaining the safety of rack limits (Issue #185).
+
 ## [0.7.76] - 2026-02-21
 ### Fixed
 - **Soft Lock Weakness (#181)**:
