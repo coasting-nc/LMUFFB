@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.79] - 2026-02-26
+### Added
+- **Tooltip Wrapping Test (#179)**:
+  - Centralized all GUI tooltip strings into a dedicated header `src/Tooltips.h`.
+  - Implemented a new unit test `tests/test_tooltips.cpp` that verifies no tooltip line exceeds 80 characters.
+### Fixed
+- **Tooltip Text Cropping (#179)**:
+  - Manually refactored all long tooltips in `Tooltips.h` using `\n` to ensure they fit within standard window widths and prevent cropping.
+
 ## [0.7.78] - 2026-02-23
 ### Fixed
 - **Soft Lock Stationary Support (#184)**:

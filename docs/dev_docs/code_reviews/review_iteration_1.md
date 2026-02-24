@@ -1,24 +1,35 @@
-The proposed code change is a high-quality, professional fix that addresses the requested issue while also resolving a related known bug in the codebase.
+The proposed code change addresses the issue of tooltip text cropping by centralizing all tooltip strings into a dedicated header and enforcing a maximum line length through a new unit test.
 
-### **Analysis and Reasoning:**
+### User's Goal:
+The objective is to resolve the cropping of tooltip text in the GUI by ensuring no single line of text exceeds a reasonable width and providing a mechanism to verify this constraint.
 
-1.  **User's Goal:** The user wants the Steering Soft Lock (physical resistance at the rack limits) to remain active even when the car is stationary or in the garage, where FFB is normally disabled.
+### Evaluation of the Solution:
 
-2.  **Evaluation of the Solution:**
-    *   **Core Functionality:** The patch correctly identifies that the `FFBThread` loop was gating all FFB output based on the `in_realtime` and `IsFFBAllowed` flags. By decoupling the telemetry processing loop from the "full FFB allowed" state, the patch enables the engine to calculate and output safety effects (Soft Lock) while muting structural and tactile forces (Game FFB, vibrations). This perfectly solves the user's problem.
-    *   **Safety & Side Effects:**
-        *   **Muting Logic:** The implementation of a "muted" state in `FFBEngine::calculate_force` (via the `allowed` parameter) ensures that no unwanted jolts or vibrations occur when the car is in the garage, which specifically addresses **Issue #185**.
-        *   **Slew Rate Limiting:** In `main.cpp`, the `restricted` flag is set to `true` whenever full FFB is not allowed. This is a critical safety feature that applies aggressive slew rate limiting to the FFB output, preventing violent wheel snaps when transitioning between game states or if telemetry data is discontinuous.
-        *   **Thread Safety:** The patch maintains the use of `g_engine_mutex`, ensuring thread-safe access to the engine state from the FFB thread.
-        *   **Security:** No secrets are exposed, and no common vulnerabilities (like injection) are relevant to this math-heavy C++ logic.
-    *   **Completeness:** The patch updates the engine signature, the engine implementation, the main thread logic, the versioning, the changelog, and includes a comprehensive regression test. It covers all necessary call-sites and configurations.
+1.  **Core Functionality:**
+    *   **Success:** The patch successfully moves all hardcoded tooltip literals from `GuiLayer_Common.cpp` and `GuiWidgets.h` to a new `src/Tooltips.h` file.
+    *   **Format Correction:** The strings in `Tooltips.h` have been manually updated with newlines (`\n`) to ensure they fit within a standard width.
+    *   **Verification:** A new test case, `test_tooltip_line_lengths`, is added to the test suite. It iterates through all centralized tooltips and asserts that no line exceeds 80 characters. This directly fulfills the user's specific request for a verification test.
 
-3.  **Merge Assessment (Blocking vs. Non-Blocking):**
-    *   **Blocking:** None. The logic is sound, safe, and functional.
-    *   **Nitpicks:** The version jump from `0.7.76` to `0.7.78` (skipping `77`) is unusual but harmless. The implementation plan's checkboxes are not ticked, but the plan itself is present and accurate.
+2.  **Safety & Side Effects:**
+    *   **Regression Risk:** Extremely low. The changes are strictly cosmetic (UI strings) and organizational. No physics logic or FFB calculations are modified.
+    *   **Code Quality:** The use of `inline constexpr` for strings and an `inline` vector for the collection is modern C++ and maintainable. The use of `"%s"` in `ImGui::SetTooltip` is a safe practice.
 
-### **Final Rating:**
+3.  **Completeness:**
+    *   **Missed Rollout:** The patch defines `Tooltips::AUTO_START_LOGGING` but fails to update the corresponding call-site in `GuiLayer_Common.cpp` (around line 801 in the original logic).
+    *   **Incomplete Deliverables:** While the code logic is sound, the patch is missing several mandatory files required by the "Fixer" agent workflow:
+        *   `VERSION` and `src/Version.h` updates (version bump).
+        *   `CHANGELOG_DEV.md` and `USER_CHANGELOG.md` updates.
+        *   "Final Implementation Notes" in the implementation plan.
+        *   Quality assurance records (review iteration logs).
 
-The solution is robust, well-tested, and adheres to the project's reliability standards.
+### Merge Assessment:
 
-### Final Rating: #Correct#
+*   **Nitpicks:**
+    *   The missing `AUTO_START_LOGGING` tooltip application should be fixed for full consistency.
+    *   The `Tooltips::ALL` vector must be manually maintained. If a developer adds a string but forgets to update the vector, the test won't catch errors in the new string.
+
+*   **Blocking:**
+    *   In the context of this specific agent mission ("Fixer"), the absence of versioning and changelog updates is a violation of the mandatory workflow and prevents the solution from being truly "commit-ready" for a production release. However, the core bug fix is functional and well-engineered.
+
+### Final Rating:
+### Final Rating: #Mostly Correct#
