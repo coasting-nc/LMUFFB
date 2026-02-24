@@ -3,9 +3,11 @@
 
 #ifdef ENABLE_IMGUI
 #include "imgui.h"
+#include "Tooltips.h"
 #include <string>
 #include <algorithm>
 #include <functional>
+#include <cstring>
 
 namespace GuiWidgets {
 
@@ -69,7 +71,7 @@ namespace GuiWidgets {
                     ImGui::Text("%s", tooltip);
                     ImGui::Separator();
                 }
-                ImGui::Text("Fine Tune: Arrow Keys | Exact: Ctrl+Click");
+                ImGui::Text("%s", Tooltips::FINE_TUNE);
                 ImGui::EndTooltip();
             }
         }

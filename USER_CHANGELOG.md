@@ -4,6 +4,23 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]February 26, 2026[/b][/size]
+[b]Version 0.7.79 - Tooltip Text Fix & Wrapping Test[/b]
+
+[b]New release[/b] (0.7.79): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]Tooltip Wrapping Test[/b]: To ensure a high-quality user experience, we've implemented an automated test that verifies all GUI tooltips fit within standard window widths. This prevents helpful tuning information from being cropped or hidden on smaller screens. (#179)
+[/list]
+
+[b]Fixed[/b]
+[list]
+[*][b]Tooltip Text Cropping[/b]: Overhauled all in-app tooltips to ensure they use proper line breaks. Long explanations for advanced features like Slope Detection and Dynamic Weight now wrap correctly and remain fully readable. (#179)
+[/list]
+
+---
+
 [size=5][b]February 21, 2026[/b][/size]
 [b]Version 0.7.76 - Soft Lock Fix[/b]
 
