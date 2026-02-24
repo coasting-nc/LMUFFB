@@ -1,9 +1,10 @@
 #pragma once
 
 // FIX: LMU Plugin Update 2025
+// WARNING: DO NOT MODIFY the vendor file PluginObjects.hpp directly!
 // The official PluginObjects.hpp provided by Studio 397 is missing 
 // windows.h include which is required for some of the types/definitions used.
-// We include it here BEFORE including the vendor file.
+// We include it here BEFORE including the vendor file to keep it untouched.
 
 #ifdef _WIN32
 #include <windows.h>
