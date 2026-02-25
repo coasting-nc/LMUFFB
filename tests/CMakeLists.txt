@@ -89,7 +89,10 @@ else()
     if(BUILD_HEADLESS)
         add_definitions(-DHEADLESS_GUI)
         # Enable some Windows-style tests on Linux using mocks
-        list(APPEND TEST_SOURCES test_windows_platform.cpp)
+        list(APPEND TEST_SOURCES 
+            test_windows_platform.cpp
+            test_security_metadata.cpp
+        )
     endif()
 endif()
 

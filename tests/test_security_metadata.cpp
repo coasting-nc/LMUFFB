@@ -1,4 +1,8 @@
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "windows.h"
+#endif
 #include <iostream>
 #include <string>
 #include <vector>
@@ -19,8 +23,10 @@
     }
 #endif
 
+#ifdef _WIN32
 // Link version.lib for Version Info functions
 #pragma comment(lib, "version.lib")
+#endif
 
 namespace FFBEngineTests {
 

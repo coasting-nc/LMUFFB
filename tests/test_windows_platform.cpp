@@ -46,7 +46,6 @@ namespace FFBEngineTests {
 
 
 
-#ifdef _WIN32
 TEST_CASE(test_window_always_on_top_behavior, "Windows") {
     std::cout << "\nTest: Window Always on Top Behavior" << std::endl;
 
@@ -79,7 +78,6 @@ TEST_CASE(test_window_always_on_top_behavior, "Windows") {
     // Cleanup
     DestroyWindow(hwnd);
 }
-#endif
 
 
 
@@ -90,7 +88,6 @@ TEST_CASE(test_window_always_on_top_behavior, "Windows") {
 
 
 
-#ifdef _WIN32
 TEST_CASE(test_resource_icon_loadable, "Windows") {
     std::cout << "\nTest: Resource Icon Loadable" << std::endl;
     // Load the icon from the current module's resources
@@ -112,18 +109,33 @@ TEST_CASE(test_main_exe_icon, "Windows") {
     // the embedded icon data. If it returns null, the test fails, meaning CMake forgot to link the .rc file.
     std::cout << "\nTest: Main Executable Icon Embedded" << std::endl;
     char buffer[MAX_PATH];
+#ifdef _WIN32
     GetModuleFileNameA(NULL, buffer, MAX_PATH);
+#else
+    ssize_t count = readlink("/proc/self/exe", buffer, MAX_PATH);
+    if (count != -1) buffer[count] = '\0';
+    else strncpy(buffer, ".", MAX_PATH);
+#endif
     std::string exe_path(buffer);
     size_t last_slash = exe_path.find_last_of("\\/");
     std::string exe_dir = (last_slash != std::string::npos) ? exe_path.substr(0, last_slash) : ".";
     
     // Determine path to LMUFFB.exe. Usually in build/Release when tests are in build/tests/Release
     std::string main_exe = exe_dir + "\\..\\..\\Release\\LMUFFB.exe";
+#ifndef _WIN32
+    // Fallback for Linux where exe is named LMUFFB
+    if (!std::ifstream(main_exe).good()) {
+        main_exe = exe_dir + "/../../LMUFFB";
+    }
+#endif
     
     HMODULE hMod = LoadLibraryExA(main_exe.c_str(), NULL, LOAD_LIBRARY_AS_DATAFILE);
     if (!hMod) {
         // Fallback for flat output directory structures
         main_exe = exe_dir + "\\LMUFFB.exe";
+#ifndef _WIN32
+        if (!std::ifstream(main_exe).good()) main_exe = exe_dir + "/LMUFFB";
+#endif
         hMod = LoadLibraryExA(main_exe.c_str(), NULL, LOAD_LIBRARY_AS_DATAFILE);
     }
     
@@ -141,11 +153,10 @@ TEST_CASE(test_main_exe_icon, "Windows") {
         }
         FreeLibrary(hMod);
     } else {
-        std::cout << "  [WARN] Could not find LMUFFB.exe to inspect resources. Skipping test." << std::endl;
+        std::cout << "  [WARN] Could not find LMUFFB executable to inspect resources. Skipping test." << std::endl;
         // Don't fail the build if the main exe isn't built yet, just warn.
     }
 }
-#endif
 
 TEST_CASE(test_icon_presence, "Windows") {
     std::cout << "\nTest: Icon Presence (Build Artifact)" << std::endl;
