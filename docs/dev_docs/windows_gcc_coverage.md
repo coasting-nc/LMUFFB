@@ -4,10 +4,11 @@ This document explains how to build the LMUFFB project on Windows using the GCC 
 
 ## Prerequisites
 
-1.  **MinGW-w64 / MSYS2**: You must have a GCC toolchain for Windows. We recommend the UCRT64 or MINGW64 environment in MSYS2.
-    -   `pacman -S mingw-w64-ucrt-x86_64-gcc cmake ninja gcovr`
-2.  **gcovr**: The project uses `gcovr` to produce the Cobertura XML and HTML reports.
-3.  **CMake**: Standard version 3.10+.
+1.  **MinGW-w64 / MSYS2**: You must have a GCC toolchain for Windows. We recommend the UCRT64 environment (modern MSYS2).
+    -   `pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-python-pip mingw-w64-ucrt-x86_64-python-lxml`
+2.  **gcovr**: Install via pip (requires the break-system-packages flag in modern MSYS2):
+    -   `pip install gcovr --break-system-packages`
+3.  **CMake**: The UCRT64 version is installed in step 1.
 
 ## Build and Coverage Workflow
 
@@ -34,12 +35,15 @@ Running the tests will generate `.gcda` files in the build directory.
 ### 4. Generate the Report
 Use `gcovr` to aggregate the results. This command produces an HTML report and a Cobertura XML file, identical to the Linux artifacts.
 
-```powershell
+```bash
+# Create report directory
+mkdir -p coverage_reports
+
 # Generate HTML report
-gcovr -r . --html --html-details -o coverage_gcc.html --filter src/
+gcovr -r . --html --html-details -o coverage_reports/coverage_gcc.html --filter src/
 
 # Generate Cobertura XML (for CI/CD)
-gcovr -r . --xml -o cobertura_gcc.xml --filter src/
+gcovr -r . --xml -o coverage_reports/cobertura_gcc.xml --filter src/
 ```
 
 ## Troubleshooting GCC on Windows

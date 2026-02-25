@@ -88,98 +88,53 @@ GUID DirectInputFFB::StringToGuid(const std::string& str) {
  * @return const char* The description of the error or status code.
  */
 const char* GetDirectInputErrorString(HRESULT hr) {
-    switch (hr) {
-        // Success Codes
-        case S_OK: // Also DI_OK
-            return "The operation completed successfully (S_OK).";
-        case S_FALSE: // Also DI_BUFFEROVERFLOW, DI_NOEFFECT, DI_NOTATTACHED, DI_PROPNOEFFECT
-            return "Operation technically succeeded but had no effect or hit a warning (S_FALSE). The device buffer overflowed and some input was lost. This value is equal to DI_BUFFEROVERFLOW, DI_NOEFFECT, DI_NOTATTACHED, DI_PROPNOEFFECT.";
-        case DI_DOWNLOADSKIPPED:
-            return "The parameters of the effect were successfully updated, but the effect could not be downloaded because the associated device was not acquired in exclusive mode.";
-        case DI_EFFECTRESTARTED:
-            return "The effect was stopped, the parameters were updated, and the effect was restarted.";
-        case DI_POLLEDDEVICE:
-            return "The device is a polled device.. As a result, device buffering does not collect any data and event notifications is not signaled until the IDirectInputDevice8 Interface method is called.";
-        case DI_SETTINGSNOTSAVED:
-            return "The action map was applied to the device, but the settings could not be saved.";
-        case DI_TRUNCATED:
-            return "The parameters of the effect were successfully updated, but some of them were beyond the capabilities of the device and were truncated to the nearest supported value.";
-        case DI_TRUNCATEDANDRESTARTED:
-            return "Equal to DI_EFFECTRESTARTED | DI_TRUNCATED.";
-        case DI_WRITEPROTECT:
-            return "A SUCCESS code indicating that settings cannot be modified.";
+    // NOTE: Using a series of if-statements instead of a switch/case to avoid 
+    // narrowing conversion errors (-Wnarrowing) in GCC/MinGW, which occurs when 
+    // comparing HRESULT (signed long) with large unsigned hex constants.
+    // Success Codes
+    if (hr == S_OK) return "The operation completed successfully (S_OK).";
+    if (hr == S_FALSE) return "Operation technically succeeded but had no effect or hit a warning (S_FALSE). The device buffer overflowed and some input was lost. This value is equal to DI_BUFFEROVERFLOW, DI_NOEFFECT, DI_NOTATTACHED, DI_PROPNOEFFECT.";
+    if (hr == DI_DOWNLOADSKIPPED) return "The parameters of the effect were successfully updated, but the effect could not be downloaded because the associated device was not acquired in exclusive mode.";
+    if (hr == DI_EFFECTRESTARTED) return "The effect was stopped, the parameters were updated, and the effect was restarted.";
+    if (hr == DI_POLLEDDEVICE) return "The device is a polled device.. As a result, device buffering does not collect any data and event notifications is not signaled until the IDirectInputDevice8 Interface method is called.";
+    if (hr == DI_SETTINGSNOTSAVED) return "The action map was applied to the device, but the settings could not be saved.";
+    if (hr == DI_TRUNCATED) return "The parameters of the effect were successfully updated, but some of them were beyond the capabilities of the device and were truncated to the nearest supported value.";
+    if (hr == DI_TRUNCATEDANDRESTARTED) return "Equal to DI_EFFECTRESTARTED | DI_TRUNCATED.";
+    if (hr == DI_WRITEPROTECT) return "A SUCCESS code indicating that settings cannot be modified.";
 
-        // Error Codes
-        case DIERR_ACQUIRED:
-            return "The operation cannot be performed while the device is acquired.";
-        case DIERR_ALREADYINITIALIZED:
-            return "This object is already initialized.";
-        case DIERR_BADDRIVERVER:
-            return "The object could not be created due to an incompatible driver version or mismatched or incomplete driver components.";
-        case DIERR_BETADIRECTINPUTVERSION:
-            return "The application was written for an unsupported prerelease version of DirectInput.";
-        case DIERR_DEVICEFULL:
-            return "The device is full.";
-        case DIERR_DEVICENOTREG: // Equal to REGDB_E_CLASSNOTREG
-            return "The device or device instance is not registered with DirectInput.";
-        case DIERR_EFFECTPLAYING:
-            return "The parameters were updated in memory but were not downloaded to the device because the device does not support updating an effect while it is still playing.";
-        case DIERR_GENERIC: // Equal to E_FAIL
-            return "An undetermined error occurred inside the DirectInput subsystem.";
-        case DIERR_HANDLEEXISTS: // Equal to E_ACCESSDENIED
-            return "Access denied or handle already exists. Another application may have exclusive access.";
-        case DIERR_HASEFFECTS:
-            return "The device cannot be reinitialized because effects are attached to it.";
-        case DIERR_INCOMPLETEEFFECT:
-            return "The effect could not be downloaded because essential information is missing. For example, no axes have been associated with the effect, or no type-specific information has been supplied.";
-        case DIERR_INPUTLOST:
-            return "Access to the input device has been lost. It must be reacquired.";
-        case DIERR_INVALIDPARAM: // Equal to E_INVALIDARG
-            return "An invalid parameter was passed to the returning function, or the object was not in a state that permitted the function to be called.";
-        case DIERR_MAPFILEFAIL:
-            return "An error has occurred either reading the vendor-supplied action-mapping file for the device or reading or writing the user configuration mapping file for the device.";
-        case DIERR_MOREDATA:
-            return "Not all the requested information fit into the buffer.";
-        case DIERR_NOAGGREGATION:
-            return "This object does not support aggregation.";
-        case DIERR_NOINTERFACE: // Equal to E_NOINTERFACE
-            return "The object does not support the specified interface.";
-        case DIERR_NOTACQUIRED:
-            return "The operation cannot be performed unless the device is acquired.";
-        case DIERR_NOTBUFFERED:
-            return "The device is not buffered. Set the DIPROP_BUFFERSIZE property to enable buffering.";
-        case DIERR_NOTDOWNLOADED:
-            return "The effect is not downloaded.";
-        case DIERR_NOTEXCLUSIVEACQUIRED:
-            return "The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode.";
-        case DIERR_NOTFOUND:
-            return "The requested object does not exist (DIERR_NOTFOUND).";
-        // case DIERR_OBJECTNOTFOUND: // Duplicate of DIERR_NOTFOUND
-        //    return "The requested object does not exist.";
-        case DIERR_OLDDIRECTINPUTVERSION:
-            return "The application requires a newer version of DirectInput.";
-        // case DIERR_OTHERAPPHASPRIO: // Duplicate of DIERR_HANDLEEXISTS (E_ACCESSDENIED)
-        //    return "Another application has a higher priority level, preventing this call from succeeding.";
-        case DIERR_OUTOFMEMORY: // Equal to E_OUTOFMEMORY
-            return "The DirectInput subsystem could not allocate sufficient memory to complete the call.";
-        // case DIERR_READONLY: // Duplicate of DIERR_HANDLEEXISTS (E_ACCESSDENIED)
-        //    return "The specified property cannot be changed.";
-        case DIERR_REPORTFULL:
-            return "More information was requested to be sent than can be sent to the device.";
-        case DIERR_UNPLUGGED:
-            return "The operation could not be completed because the device is not plugged in.";
-        case DIERR_UNSUPPORTED: // Equal to E_NOTIMPL
-            return "The function called is not supported at this time.";
-        case E_HANDLE:
-            return "The HWND parameter is not a valid top-level window that belongs to the process.";
-        case E_PENDING:
-            return "Data is not yet available.";
-        case E_POINTER:
-            return "An invalid pointer, usually NULL, was passed as a parameter.";
-        
-        default:
-            return "Unknown DirectInput Error";
-    }
+    // Error Codes
+    if (hr == DIERR_ACQUIRED) return "The operation cannot be performed while the device is acquired.";
+    if (hr == DIERR_ALREADYINITIALIZED) return "This object is already initialized.";
+    if (hr == DIERR_BADDRIVERVER) return "The object could not be created due to an incompatible driver version or mismatched or incomplete driver components.";
+    if (hr == DIERR_BETADIRECTINPUTVERSION) return "The application was written for an unsupported prerelease version of DirectInput.";
+    if (hr == DIERR_DEVICEFULL) return "The device is full.";
+    if (hr == DIERR_DEVICENOTREG) return "The device or device instance is not registered with DirectInput.";
+    if (hr == DIERR_EFFECTPLAYING) return "The parameters were updated in memory but were not downloaded to the device because the device does not support updating an effect while it is still playing.";
+    if (hr == DIERR_GENERIC) return "An undetermined error occurred inside the DirectInput subsystem.";
+    if (hr == DIERR_HANDLEEXISTS) return "Access denied or handle already exists. Another application may have exclusive access.";
+    if (hr == DIERR_HASEFFECTS) return "The device cannot be reinitialized because effects are attached to it.";
+    if (hr == DIERR_INCOMPLETEEFFECT) return "The effect could not be downloaded because essential information is missing. For example, no axes have been associated with the effect, or no type-specific information has been supplied.";
+    if (hr == DIERR_INPUTLOST) return "Access to the input device has been lost. It must be reacquired.";
+    if (hr == DIERR_INVALIDPARAM) return "An invalid parameter was passed to the returning function, or the object was not in a state that permitted the function to be called.";
+    if (hr == DIERR_MAPFILEFAIL) return "An error has occurred either reading the vendor-supplied action-mapping file for the device or reading or writing the user configuration mapping file for the device.";
+    if (hr == DIERR_MOREDATA) return "Not all the requested information fit into the buffer.";
+    if (hr == DIERR_NOAGGREGATION) return "This object does not support aggregation.";
+    if (hr == DIERR_NOINTERFACE) return "The object does not support the specified interface.";
+    if (hr == DIERR_NOTACQUIRED) return "The operation cannot be performed unless the device is acquired.";
+    if (hr == DIERR_NOTBUFFERED) return "The device is not buffered. Set the DIPROP_BUFFERSIZE property to enable buffering.";
+    if (hr == DIERR_NOTDOWNLOADED) return "The effect is not downloaded.";
+    if (hr == DIERR_NOTEXCLUSIVEACQUIRED) return "The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode.";
+    if (hr == DIERR_NOTFOUND) return "The requested object does not exist (DIERR_NOTFOUND).";
+    if (hr == DIERR_OLDDIRECTINPUTVERSION) return "The application requires a newer version of DirectInput.";
+    if (hr == DIERR_OUTOFMEMORY) return "The DirectInput subsystem could not allocate sufficient memory to complete the call.";
+    if (hr == DIERR_REPORTFULL) return "More information was requested to be sent than can be sent to the device.";
+    if (hr == DIERR_UNPLUGGED) return "The operation could not be completed because the device is not plugged in.";
+    if (hr == DIERR_UNSUPPORTED) return "The function called is not supported at this time.";
+    if (hr == E_HANDLE) return "The HWND parameter is not a valid top-level window that belongs to the process.";
+    if (hr == E_PENDING) return "Data is not yet available.";
+    if (hr == E_POINTER) return "An invalid pointer, usually NULL, was passed as a parameter.";
+    
+    return "Unknown DirectInput Error";
 }
 #endif
 

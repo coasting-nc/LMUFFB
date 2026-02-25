@@ -492,7 +492,7 @@ TEST_CASE(test_slope_alpha_threshold_configurable, "SlopeDetection") {
     ASSERT_TRUE(std::abs(engine.m_slope_current) < 0.5f);
     
     engine.m_slope_current = -0.1f;
-    for (int i = 0; i < 64; i++) {
+    for (int i = 0; i < FFBEngine::SLOPE_BUFFER_MAX; i++) {
         engine.m_slope_lat_g_buffer[i] = 0.0;
         engine.m_slope_slip_buffer[i] = 0.0;
     }

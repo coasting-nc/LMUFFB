@@ -21,6 +21,10 @@ if(MSVC)
     add_link_options(/DEBUG)
 endif()
 
+if(WIN32)
+    add_definitions(-DUNICODE -D_UNICODE -DNOMINMAX)
+endif()
+
 # Coverage Support (Linux/GCC/Clang)
 option(ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
 if(ENABLE_COVERAGE AND NOT MSVC)
@@ -79,7 +83,7 @@ if(NOT BUILD_HEADLESS AND IMGUI_CORE_SOURCES)
             ${IMGUI_DIR}/backends/imgui_impl_dx11.cpp
         )
         link_libraries(d3d11 dxgi d3dcompiler dxguid)
-        add_definitions(-DUNICODE -D_UNICODE -DNOMINMAX -DIMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS)
+        add_definitions(-DIMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS)
     else()
         # Linux / GLFW + OpenGL
         find_package(glfw3 REQUIRED)
