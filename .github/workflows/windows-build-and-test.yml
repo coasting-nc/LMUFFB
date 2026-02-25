@@ -7,7 +7,7 @@ on:
     branches: [ "**" ]
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -57,16 +57,13 @@ jobs:
         New-Item -ItemType Directory -Path "dist" -Force
         Copy-Item "build/Release/LMUFFB.exe" -Destination "dist/"
         Copy-Item "README.txt" -Destination "dist/"
-        # We include the run number to make the file unique in the archive
-        $filename = "lmuffb-${{ env.APP_VERSION }}-n${{ github.run_number }}.zip"
-        Compress-Archive -Path "dist/*" -DestinationPath "$filename"
-        echo "ZIP_FILENAME=$filename" >> $env:GITHUB_ENV
+        Compress-Archive -Path "dist/*" -DestinationPath "lmuffb-${{ env.APP_VERSION }}-nightly.zip"
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.ZIP_FILENAME }}
-        path: ${{ env.ZIP_FILENAME }}
+        name: lmuffb-${{ env.APP_VERSION }}-nightly
+        path: lmuffb-${{ env.APP_VERSION }}-nightly.zip
         retention-days: 90
 
   linux-coverage:
@@ -111,7 +108,7 @@ jobs:
         if [ -f "cobertura.xml" ]; then
           python3 scripts/coverage_summary.py
           summary=$(cat coverage_summary.txt)
-          echo "### Linux Code Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "### Code Coverage Summary" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "$summary" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
@@ -124,108 +121,28 @@ jobs:
         path: coverage_report/
         retention-days: 14
 
-  archive-and-deploy:
-    name: Archive Build & Update Hub
+  deploy-coverage:
+    name: Deploy Coverage to GitHub Pages
     runs-on: ubuntu-latest
-    needs: [windows-release, linux-coverage]
+    needs: linux-coverage
     if: github.ref == 'refs/heads/main'
-    concurrency:
-      group: nightly-archiver
-      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-    - name: Checkout Archive Branch
-      uses: actions/checkout@v4
-      with:
-        ref: nightly-archive
-        path: hub
-    
-    - name: Download New Build
-      uses: actions/download-artifact@v4
-      with:
-        merge-multiple: true
-        path: hub/builds/
-
-    - name: Download Coverage Report
+    - name: Download coverage artifact
       uses: actions/download-artifact@v4
       with:
         name: linux-coverage-report
-        path: hub/report/
-
-    - name: Update Archive and Index
-      run: |
-        cd hub
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        
-        # Determine latest build
-        latest_build=$(ls -t builds/*.zip | head -n 1)
-        latest_filename=$(basename "$latest_build")
-        
-        # Generate Landing Page
-        cat <<EOF > index.html
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>LMUFFB Nightly Hub</title>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 900px; margin: 40px auto; padding: 0 20px; color: #24292f; }
-            h1 { border-bottom: 1px solid #d0d7de; padding-bottom: .3em; }
-            .card { border: 1px solid #d0d7de; border-radius: 6px; padding: 16px; margin: 20px 0; background-color: #f6f8fa; }
-            .btn { display: inline-block; background-color: #238636; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; }
-            .btn:hover { background-color: #2ea043; }
-            .history-list { font-size: 0.9em; max-height: 400px; overflow-y: auto; border: 1px solid #d0d7de; padding: 10px; border-radius: 6px; }
-            li { margin: 5px 0; }
-          </style>
-        </head>
-        <body>
-          <h1>LMUFFB Nightly Hub</h1>
-          <p>Automated builds and reports from the <code>main</code> branch.</p>
-          
-          <div class="card">
-            <h2>🚀 Latest Nightly</h2>
-            <p><strong>File:</strong> <code>$latest_filename</code></p>
-            <a href="builds/$latest_filename" class="btn">Download Latest Build (.zip)</a>
-          </div>
-
-          <div style="display: flex; gap: 20px;">
-            <div style="flex: 1;">
-              <h2>📊 Reports</h2>
-              <ul>
-                <li><a href="report/index.html" style="font-weight: bold;">Latest Code Coverage Report</a></li>
-              </ul>
-            </div>
-            
-            <div style="flex: 1;">
-              <h2>📂 Build History</h2>
-              <div class="history-list">
-                <ul>
-                  $(ls -t builds/*.zip | xargs -I {} basename {} | while read f; do echo "<li><a href='builds/$f'>$f</a></li>"; done)
-                </ul>
-              </div>
-            </div>
-          </div>
-          
-          <footer style="margin-top: 50px; color: #57606a; font-size: 0.8em; border-top: 1px solid #d0d7de; padding-top: 10px;">
-            Last updated: $(date -u) UTC | <a href="https://github.com/${{ github.repository }}">Source Code</a>
-          </footer>
-        </body>
-        </html>
-        EOF
-
-        # Commit changes to history branch
-        git add .
-        git commit -m "Update Nightly Archive: $latest_filename" || echo "No changes to commit"
-        git push origin nightly-archive
-
+        path: coverage_report
+    
     - name: Setup Pages
       uses: actions/configure-pages@v4
     
     - name: Upload pages artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: hub
+        path: coverage_report
     
     - name: Deploy to GitHub Pages
       id: deployment
