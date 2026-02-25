@@ -2,9 +2,9 @@ name: Windows Build and Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "**" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "**" ]
 
 jobs:
   build-and-test:
