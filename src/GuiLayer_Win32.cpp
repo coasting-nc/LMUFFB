@@ -1,5 +1,6 @@
 #include "GuiLayer.h"
 #include "GuiPlatform.h"
+#include "DXGIUtils.h"
 #include "Version.h"
 #include "Logger.h"
 #include "Config.h"
@@ -16,6 +17,7 @@
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
 #include <d3d11.h>
+#include <dxgi1_2.h>
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 #include <tchar.h>
@@ -239,20 +241,75 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 bool CreateDeviceD3D(HWND hWnd) {
-    DXGI_SWAP_CHAIN_DESC sd;
-    ZeroMemory(&sd, sizeof(sd));
-    sd.BufferCount = 2; sd.BufferDesc.Width = 0; sd.BufferDesc.Height = 0;
-    sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; sd.BufferDesc.RefreshRate.Numerator = 60; sd.BufferDesc.RefreshRate.Denominator = 1;
-    sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH; sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    sd.OutputWindow = hWnd; sd.SampleDesc.Count = 1; sd.SampleDesc.Quality = 0; sd.Windowed = TRUE; sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-    D3D_FEATURE_LEVEL featureLevel; const D3D_FEATURE_LEVEL featureLevelArray[2] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0, };
-    HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
-    if (hr != S_OK) {
-        Logger::Get().LogWin32Error("D3D11CreateDeviceAndSwapChain", hr);
+    // Modern DXGI/D3D11 Initialization following Flip Model (Issue #189)
+    D3D_FEATURE_LEVEL featureLevel;
+    const D3D_FEATURE_LEVEL featureLevelArray[2] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0 };
+
+    // 1. Create the D3D11 Device
+    HRESULT hr = D3D11CreateDevice(
+        NULL,                        // pAdapter (NULL = default)
+        D3D_DRIVER_TYPE_HARDWARE,    // DriverType
+        NULL,                        // Software
+        0,                           // Flags
+        featureLevelArray,           // pFeatureLevels
+        2,                           // FeatureLevels
+        D3D11_SDK_VERSION,           // SDKVersion
+        &g_pd3dDevice,               // ppDevice
+        &featureLevel,               // pFeatureLevel
+        &g_pd3dDeviceContext         // ppImmediateContext
+    );
+
+    if (FAILED(hr)) {
+        Logger::Get().LogWin32Error("D3D11CreateDevice", hr);
         return false;
     }
-    Logger::Get().Log("D3D11 Device Created. Feature Level: 0x%X", featureLevel);
-    CreateRenderTarget(); return true;
+
+    // 2. Obtain DXGI Factory to create the swap chain
+    IDXGIDevice* pDXGIDevice = NULL;
+    hr = g_pd3dDevice->QueryInterface(IID_PPV_ARGS(&pDXGIDevice));
+    if (FAILED(hr)) {
+        Logger::Get().LogWin32Error("QueryInterface(IDXGIDevice)", hr);
+        return false;
+    }
+
+    IDXGIAdapter* pDXGIAdapter = NULL;
+    hr = pDXGIDevice->GetAdapter(&pDXGIAdapter);
+    if (FAILED(hr)) {
+        Logger::Get().LogWin32Error("GetAdapter", hr);
+        pDXGIDevice->Release();
+        return false;
+    }
+
+    IDXGIFactory2* pDXGIFactory = NULL;
+    hr = pDXGIAdapter->GetParent(IID_PPV_ARGS(&pDXGIFactory));
+    if (FAILED(hr)) {
+        Logger::Get().LogWin32Error("GetParent(IDXGIFactory2)", hr);
+        pDXGIAdapter->Release();
+        pDXGIDevice->Release();
+        return false;
+    }
+
+    // 3. Create the Swap Chain using DXGI_SWAP_CHAIN_DESC1 for Flip Model support
+    DXGI_SWAP_CHAIN_DESC1 sd;
+    SetupFlipModelSwapChainDesc(sd);
+
+    IDXGISwapChain1* pSwapChain1 = NULL;
+    hr = pDXGIFactory->CreateSwapChainForHwnd(g_pd3dDevice, hWnd, &sd, NULL, NULL, &pSwapChain1);
+    g_pSwapChain = pSwapChain1;
+
+    // Release temporary interfaces
+    if (pDXGIFactory) pDXGIFactory->Release();
+    if (pDXGIAdapter) pDXGIAdapter->Release();
+    if (pDXGIDevice) pDXGIDevice->Release();
+
+    if (FAILED(hr)) {
+        Logger::Get().LogWin32Error("CreateSwapChainForHwnd", hr);
+        return false;
+    }
+
+    Logger::Get().Log("D3D11 Device and Flip-Model Swap Chain Created. Feature Level: 0x%X", featureLevel);
+    CreateRenderTarget();
+    return true;
 }
 
 void CleanupDeviceD3D() {

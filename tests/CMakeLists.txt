@@ -69,6 +69,7 @@ set(TEST_SOURCES
     test_issue_184_repro.cpp
     test_tooltips.cpp
     test_coverage_expansion.cpp
+    test_dxgi_modernization.cpp
 )
 
 # ImGui Core is now always available if vendor exists

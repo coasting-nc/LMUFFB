@@ -119,5 +119,14 @@ inline void sprintf_s(char* buffer, size_t size, const char* format, ...) {
 #define MAKEINTRESOURCEA(i) MAKEINTRESOURCE(i)
 #endif
 
+// Global mock state for tests (Issue #189)
+extern DXGI_SWAP_CHAIN_DESC1 g_captured_swap_chain_desc;
+extern bool g_d3d11_device_created;
+
+inline HRESULT D3D11CreateDevice(void* pAdapter, D3D_DRIVER_TYPE DriverType, HMODULE Software, UINT Flags, const D3D_FEATURE_LEVEL* pFeatureLevels, UINT FeatureLevels, UINT SDKVersion, ID3D11Device** ppDevice, D3D_FEATURE_LEVEL* pFeatureLevel, ID3D11DeviceContext** ppImmediateContext) {
+    g_d3d11_device_created = true;
+    if (pFeatureLevel) *pFeatureLevel = D3D_FEATURE_LEVEL_11_0;
+    return 0; // S_OK
+}
 
 #endif

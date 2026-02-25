@@ -45,6 +45,7 @@ TEST_CASE(test_logger_expansion, "Diagnostics") {
     }
     ASSERT_TRUE(found);
     file.close();
+    std::remove("test_expansion.log"); // Clean up
 }
 
 TEST_CASE(test_vehicle_utils_expansion, "Physics") {
@@ -150,6 +151,7 @@ TEST_CASE(test_config_expansion, "System") {
         ofs << "understeer=2.5\n"; // > 2.0 triggers legacy scaling
         ofs.close();
         Config::Load(engine, "old_version.ini");
+        std::remove("old_version.ini"); // Clean up
     }
 
     // Duplicate Preset name counter (Line 1087)
