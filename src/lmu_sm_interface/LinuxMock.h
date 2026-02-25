@@ -240,7 +240,7 @@ inline BOOL VerQueryValueA(const void* pBlock, const char* lpSubBlock, void** lp
         return TRUE;
     }
     if (strstr(lpSubBlock, "ProductVersion")) {
-        *lplpBuffer = (void*)"0.7.79";
+        *lplpBuffer = (void*)"0.7.80";
         if (puLen) *puLen = 7;
         return TRUE;
     }

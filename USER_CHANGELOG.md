@@ -5,6 +5,20 @@ This document contains all version release posts by ErwinMoss from the [url=http
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
 [size=5][b]February 26, 2026[/b][/size]
+[b]Version 0.7.80 - Stability & Coverage Expansion[/b]
+
+[b]New release[/b] (0.7.80): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Major Stability & Quality Expansion[/b]: We've significantly expanded our internal testing suite to cover 83% of the application's core logic. This includes over 300 automated checks that verify everything from high-speed physics math to the reliability of the shared memory connection.
+[*][b]Headless Testing[/b]: Implemented a new "headless" testing system for the user interface, ensuring that all sliders, buttons, and diagnostic graphs are mathematically sound even when the GUI isn't visible.
+[*][b]Reliable Configuration[/b]: Hardened the configuration system to perfectly handle duplicate preset names and legacy file migrations, ensuring your settings remain safe across updates.
+[/list]
+
+---
+
+[size=5][b]February 26, 2026[/b][/size]
 [b]Version 0.7.79 - Tooltip Text Fix & Wrapping Test[/b]
 
 [b]New release[/b] (0.7.79): https://github.com/coasting-nc/LMUFFB/releases

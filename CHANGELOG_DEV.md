@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.80] - 2026-02-26
+### Added
+- **Major Test Coverage Expansion**:
+  - Increased core source code coverage from 71.6% to 83.3%.
+  - Added `tests/test_coverage_expansion.cpp` with comprehensive tests for previously low-coverage modules.
+  - Achieved 100% coverage for `Logger.h` and `VehicleUtils.cpp`.
+  - Significant coverage improvements for `DirectInputFFB.cpp` (96.8%), `SharedMemoryInterface.hpp` (88.0%), `GameConnector.cpp` (84.8%), and `Config.cpp` (92.4%).
+  - Implemented headless ImGui rendering tests for `GuiLayer`, increasing its coverage to over 53%.
+- **Testing Infrastructure**:
+  - Added `GuiLayerTestAccess` friend class to enable unit testing of private rendering logic.
+  - Implemented mock-based concurrency tests for the shared memory lock mechanism.
+
 ## [0.7.79] - 2026-02-26
 ### Added
 - **Tooltip Wrapping Test (#179)**:
