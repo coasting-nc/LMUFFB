@@ -17,7 +17,7 @@ src/GuiLayer_Linux.cpp                        30        7    23%   39,45,47,64,6
 src/GuiPlatform.h                              2        1    50%   15
 src/GuiWidgets.h                              62       38    61%   42,47,52,54,56,58-59,61-64,68-72,74-75,94-95,99,118-119,123
 src/HealthMonitor.h                           16       16   100%
-src/lmu_sm_interface/LinuxMock.h              46       39    84%   90-91,99-101,131,145
+src/lmu_sm_interface/LinuxMock.h              92       84    91%   120-121,129,144-145,175,201,247
 src/lmu_sm_interface/SafeSharedMemoryLock.h
                                               15       13    86%   14,31
 src/lmu_sm_interface/SharedMemoryInterface.hpp
@@ -30,5 +30,5 @@ src/RateMonitor.h                             17       17   100%
 src/SteeringUtils.cpp                         12       12   100%
 src/VehicleUtils.cpp                          61       60    98%   46
 ------------------------------------------------------------------------------
-TOTAL                                       4082     2911    71%
+TOTAL                                       4128     2956    71%
 ------------------------------------------------------------------------------

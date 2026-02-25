@@ -45,12 +45,6 @@ node_modules/.package-lock.json
 node_modules/**
 package-lock.json
 CoverageReport-*/**
-LastCoverageResults.log
-cobertura.xml
-coverage_report*/
-coverage_summary.txt
-coverage.json
-coverage*.html
 *.gcda
 *.gcno
 *.gcov

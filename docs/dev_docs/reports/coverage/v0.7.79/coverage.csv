@@ -1,5 +1,5 @@
 filename,line_total,line_covered,line_percent,branch_total,branch_covered,branch_percent,function_total,function_covered,function_percent
-src/AsyncLogger.h,148,143,0.966,142,87,0.613,16,15,0.938
+src/AsyncLogger.h,148,143,0.966,142,88,0.62,16,15,0.938
 src/Config.cpp,1254,1147,0.915,2600,1424,0.5479999999999999,14,12,0.857
 src/Config.h,371,371,1.0,176,89,0.506,29,29,1.0
 src/DirectInputFFB.cpp,63,21,0.33299999999999996,32,5,0.156,13,3,0.231
@@ -12,7 +12,7 @@ src/GuiLayer_Linux.cpp,30,7,0.233,4,0,0.0,17,5,0.294
 src/GuiPlatform.h,2,1,0.5,0,0,,2,1,0.5
 src/GuiWidgets.h,62,38,0.613,128,45,0.35200000000000004,3,3,1.0
 src/HealthMonitor.h,16,16,1.0,14,11,0.7859999999999999,1,1,1.0
-src/lmu_sm_interface/LinuxMock.h,46,39,0.848,44,22,0.5,17,11,0.647
+src/lmu_sm_interface/LinuxMock.h,92,84,0.9129999999999999,68,39,0.574,33,28,0.848
 src/lmu_sm_interface/SafeSharedMemoryLock.h,15,13,0.867,8,4,0.5,6,5,0.833
 src/lmu_sm_interface/SharedMemoryInterface.hpp,75,48,0.64,38,22,0.579,9,8,0.889
 src/Logger.h,37,9,0.243,54,7,0.13,7,4,0.5710000000000001

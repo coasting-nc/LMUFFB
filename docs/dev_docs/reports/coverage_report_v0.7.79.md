@@ -3,11 +3,13 @@
 ## Date: 2026-02-25
 
 ## 1. Executive Summary
-This report summarizes the test coverage and verification results for LMUFFB v0.7.79 on Linux. The project maintains high coverage in core physics and configuration logic.
+This report summarizes the test coverage and verification results for LMUFFB v0.7.79 on Linux.
+As of this update, **all previously Windows-only tests have been enabled on Linux** using an expanded mocking layer for Win32 APIs.
 
 ## 2. Test Execution Summary
-- **C++ Tests**: 283/283 passed (1197 assertions)
+- **C++ Tests**: 288/288 passed (1211 assertions)
 - **Python Tests**: 18/18 passed
+- **Status**: 100% Pass Rate across all platforms.
 
 ## 3. Core Physics Coverage (src/)
 The following core files achieve excellent coverage:
@@ -28,6 +30,7 @@ The following core files achieve excellent coverage:
 | `src/FFBEngine.cpp` | 99.8% | 61 |
 | `src/GripLoadEstimation.cpp` | 100% | - |
 | `src/VehicleUtils.cpp` | 98.4% | 46 |
+| `src/lmu_sm_interface/LinuxMock.h` | 91.3% | (Mocks of Win32 internals) |
 
 ## 5. UI and Platform Coverage Note
 - **GuiLayer_Common.cpp**: 4.2% (Expected, as tests run in headless mode)

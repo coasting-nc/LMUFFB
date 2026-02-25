@@ -46,7 +46,6 @@ namespace FFBEngineTests {
 
 
 
-#ifdef _WIN32
 TEST_CASE(test_window_always_on_top_behavior, "Windows") {
     std::cout << "\nTest: Window Always on Top Behavior" << std::endl;
 
@@ -93,9 +92,7 @@ TEST_CASE(test_resource_icon_loadable, "Windows") {
         std::cout << "  [FAIL] Failed to load IDI_ICON1 from resources. Error: " << GetLastError() << std::endl;
     }
 }
-#endif
 
-#ifdef _WIN32
 TEST_CASE(test_main_exe_icon, "Windows") {
     // How this test works: , we use the Windows API to treat the compiled .exe as a data file and inspect its internal resources.
     //  It uses LoadLibraryExA(..., LOAD_LIBRARY_AS_DATAFILE) to open the LMUFFB.exe binary for resource inspection
@@ -136,7 +133,6 @@ TEST_CASE(test_main_exe_icon, "Windows") {
         // Don't fail the build if the main exe isn't built yet, just warn.
     }
 }
-#endif
 
 TEST_CASE(test_icon_presence, "Windows") {
     std::cout << "\nTest: Icon Presence (Build Artifact)" << std::endl;
