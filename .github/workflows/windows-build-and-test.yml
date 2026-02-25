@@ -92,9 +92,9 @@ jobs:
 
     - name: Collect Coverage
       run: |
-        lcov --capture --directory . --output-file coverage.info --rc lcov_branch_coverage=1
-        lcov --extract coverage.info "*/src/*" --output-file coverage_filtered.info --rc lcov_branch_coverage=1
-        genhtml coverage_filtered.info --output-directory coverage_report --rc lcov_branch_coverage=1
+        lcov --capture --directory . --output-file coverage.info --rc branch_coverage=1 --ignore-errors mismatch,gcov,unused
+        lcov --extract coverage.info "*/src/*" --output-file coverage_filtered.info --rc branch_coverage=1 --ignore-errors unused
+        genhtml coverage_filtered.info --output-directory coverage_report --rc branch_coverage=1 --ignore-errors source
         
         # Install tool to convert lcov to cobertura for the summary script
         pip install lcov_cobertura
