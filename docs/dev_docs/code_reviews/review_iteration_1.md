@@ -1,35 +1,18 @@
-The proposed code change addresses the issue of tooltip text cropping by centralizing all tooltip strings into a dedicated header and enforcing a maximum line length through a new unit test.
+The proposed code change addresses the reported issue by fundamentally changing how the Soft Lock force is scaled within the Force Feedback (FFB) engine. By moving the Soft Lock from the "Structural" group (which is normalized by the dynamic session peak torque) to the "Texture/Absolute Nm" group (which is scaled by the wheelbase's maximum torque), the fix ensures that the physical stop provided by the soft lock is consistent and strong, regardless of how high the steering forces during driving have been.
 
-### User's Goal:
-The objective is to resolve the cropping of tooltip text in the GUI by ensuring no single line of text exceeds a reasonable width and providing a mechanism to verify this constraint.
+### Analysis and Reasoning:
 
-### Evaluation of the Solution:
+1.  **User's Goal:** The user wants the Soft Lock force to be significantly stronger and to work consistently, including when the car is stationary.
 
-1.  **Core Functionality:**
-    *   **Success:** The patch successfully moves all hardcoded tooltip literals from `GuiLayer_Common.cpp` and `GuiWidgets.h` to a new `src/Tooltips.h` file.
-    *   **Format Correction:** The strings in `Tooltips.h` have been manually updated with newlines (`\n`) to ensure they fit within a standard width.
-    *   **Verification:** A new test case, `test_tooltip_line_lengths`, is added to the test suite. It iterates through all centralized tooltips and asserts that no line exceeds 80 characters. This directly fulfills the user's specific request for a verification test.
+2.  **Evaluation of the Solution:**
+    *   **Core Functionality:** The patch directly solves the "weakness" problem. In the previous implementation, if the session peak torque was high (e.g., due to a high-downforce car or a crash), the soft lock (calculated in Nm) was divided by this peak, often resulting in a very faint force. By moving it to the absolute Nm group, it is now divided by the hardware's maximum torque (`m_wheelbase_max_nm`), ensuring it always hits the intended physical target. The provided regression test confirms this logic.
+    *   **Safety & Side Effects:** The change is safe. The soft lock is now correctly exempted from the `gain_reduction_factor` (Torque Drop), which is intended for tire physics effects (like traction loss) and shouldn't impact a physical steering stop. The final output is still subject to the engine's global clamping logic.
+    *   **Completeness:** The patch updates the summation logic in `FFBEngine.cpp`, increments the project version, and adds a comprehensive regression test that specifically verifies the fix for the reported normalization issue.
 
-2.  **Safety & Side Effects:**
-    *   **Regression Risk:** Extremely low. The changes are strictly cosmetic (UI strings) and organizational. No physics logic or FFB calculations are modified.
-    *   **Code Quality:** The use of `inline constexpr` for strings and an `inline` vector for the collection is modern C++ and maintainable. The use of `"%s"` in `ImGui::SetTooltip` is a safe practice.
+3.  **Merge Assessment:**
+    *   **Blocking:** None. The logic is sound and the implementation is clean.
+    *   **Nitpicks:**
+        *   The patch includes the `implementation_plan.md` and `review_iteration_1.md` files. While useful for the agent's workflow, these would typically be excluded from a final pull request to the main repository.
+        *   The `implementation_plan.md` promised an update to `src/Version.h`, which is missing from the patch (only the `VERSION` file was updated). If the project does not auto-generate headers from the version file, the UI version might remain out of sync.
 
-3.  **Completeness:**
-    *   **Missed Rollout:** The patch defines `Tooltips::AUTO_START_LOGGING` but fails to update the corresponding call-site in `GuiLayer_Common.cpp` (around line 801 in the original logic).
-    *   **Incomplete Deliverables:** While the code logic is sound, the patch is missing several mandatory files required by the "Fixer" agent workflow:
-        *   `VERSION` and `src/Version.h` updates (version bump).
-        *   `CHANGELOG_DEV.md` and `USER_CHANGELOG.md` updates.
-        *   "Final Implementation Notes" in the implementation plan.
-        *   Quality assurance records (review iteration logs).
-
-### Merge Assessment:
-
-*   **Nitpicks:**
-    *   The missing `AUTO_START_LOGGING` tooltip application should be fixed for full consistency.
-    *   The `Tooltips::ALL` vector must be manually maintained. If a developer adds a string but forgets to update the vector, the test won't catch errors in the new string.
-
-*   **Blocking:**
-    *   In the context of this specific agent mission ("Fixer"), the absence of versioning and changelog updates is a violation of the mandatory workflow and prevents the solution from being truly "commit-ready" for a production release. However, the core bug fix is functional and well-engineered.
-
-### Final Rating:
-### Final Rating: #Mostly Correct#
+### Final Rating: #Correct#

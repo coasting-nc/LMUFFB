@@ -1,23 +1,31 @@
-The proposed code change is a comprehensive and well-engineered solution to the problem of GUI tooltip cropping. It not only fixes the immediate issue but also introduces a maintainable architecture and automated verification to prevent regressions.
+The proposed patch effectively addresses the reported issue where the steering "soft lock" was perceived as too weak while driving. The root cause—normalization of an absolute physical force (soft lock) by the dynamic session peak torque—is correctly identified and resolved.
 
-### **Analysis and Reasoning:**
+### User's Goal
+The goal is to ensure the steering soft lock (physical stop) remains consistently strong and independent of the dynamic force normalization that occurs during a driving session.
 
-1.  **User's Goal:** The objective is to prevent tooltip text from being cropped in the GUI by centralizing tooltip strings, manually applying line breaks, and implementing a unit test to enforce a maximum line length of 80 characters.
+### Evaluation of the Solution
 
-2.  **Evaluation of the Solution:**
-    *   **Core Functionality:** The patch successfully centralizes nearly 100 tooltip strings into a new header file, `src/Tooltips.h`. It refactors the entire GUI layer (`GuiLayer_Common.cpp` and `GuiWidgets.h`) to use these constants. Crucially, it implements `tests/test_tooltips.cpp`, which iterates through all tooltips and validates that no single line exceeds 80 characters. This directly solves the user's request.
-    *   **Safety & Side Effects:**
-        *   **Formatting Safety:** The patch adopts the best practice of using `ImGui::SetTooltip("%s", ...)` to prevent potential format-string vulnerabilities.
-        *   **No Logic Regressions:** The changes are strictly confined to UI presentation and documentation. No physics, FFB calculation, or thread-handling logic is modified.
-        *   **Modern C++:** The use of `inline constexpr` and `inline const std::vector` is appropriate for a C++17 codebase, ensuring efficient and safe header-only constant management.
-    *   **Completeness:** The patch is exceptionally thorough. It covers all GUI tooltips (including those in debug plots and helper widgets), updates the version number, provides both developer and user-facing changelogs, and includes a detailed implementation plan with notes on deviations and recommendations.
+#### Core Functionality
+The patch correctly moves the `soft_lock_force` from the `structural_sum` (which undergoes dynamic normalization based on learned session peaks) to the `texture_sum_nm` group. In this project's architecture, the texture group is scaled by the wheelbase's maximum torque rather than the session's peak, ensuring that the soft lock always provides the same physical resistance regardless of driving intensity.
 
-3.  **Merge Assessment (Blocking vs. Non-Blocking):**
-    *   **Blocking:** None. The core functionality is implemented correctly and the code is stable.
-    *   **Nitpicks:**
-        *   The patch includes a `review_iteration_1.md` file that technically rates the patch as "Mostly Correct" (pointing out missing files like the version bump). However, the actual code in the current patch *has* addressed those points (the version bump and missing call-sites are present). This indicates the agent successfully iterated and fixed the issues found in its internal review loop, even if the included documentation record reflects the intermediate state.
-        *   The `src/Version.h` file was not updated, though the `VERSION` file was. In many CMake projects, `Version.h` is generated from the `VERSION` file, so this is likely handled by the build system.
+#### Safety & Side Effects
+*   **Regressions:** No regressions are introduced. The summation logic in `FFBEngine::calculate_force` remains mathematically sound.
+*   **Security:** No security vulnerabilities (secrets, injection, etc.) were introduced.
+*   **Thread Safety:** The modification occurs within a method already protected by the `g_engine_mutex`, maintaining thread-safe access to the FFB state.
+*   **Physics:** The use of absolute Nm scaling for a physical limit like a soft lock is the correct physical model.
 
-The solution is robust, maintainable, and professionally executed.
+#### Completeness
+The patch is highly complete:
+*   It includes a robust regression test (`tests/test_issue_181_soft_lock_weakness.cpp`) that explicitly verifies the force remains constant across different session peak torque values.
+*   It updates versioning in both `VERSION` and a new `src/Version.h` (to provide a C++ macro for the version).
+*   It provides comprehensive documentation updates in `CHANGELOG_DEV.md`, `USER_CHANGELOG.md`, and a detailed `implementation_plan.md`.
+
+### Merge Assessment
+
+**Nitpicks:**
+*   **Changelog Noise:** The `CHANGELOG_DEV.md` includes an entry for version `0.7.76` (#175) which is not part of this specific code change. While this violates the "isolation of concerns" constraint slightly in the documentation, it does not affect the code quality or functionality.
+*   **Redundant Plans:** The implementation plan is provided in two locations (`docs/dev_docs/plans/plan_181.md` and `implementation_plan.md`). This is slightly redundant but ensures the documentation is discoverable.
+
+The patch is functional, safe, and well-tested. The logic change directly maps to the physical problem reported by users.
 
 ### Final Rating: #Correct#

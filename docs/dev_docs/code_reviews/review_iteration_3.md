@@ -1,21 +1,33 @@
-The proposed code change is a high-quality, comprehensive implementation of the requested feature (**FFB Strength Normalization Stage 4**). It successfully addresses the goal of persisting vehicle-specific static loads to eliminate the need for a "calibration roll" in every session.
+The proposed patch addresses the issue where the steering "soft lock" (the physical stop at the steering rack limit) becomes weaker as the driving session progresses and the "session peak torque" increases. This occurred because the soft lock force was being treated as a "structural" force and thus normalized by the dynamic session peak.
 
-### Analysis and Reasoning:
+### User's Goal
+Ensure the steering soft lock provides a consistent, strong physical resistance that is independent of the dynamic force normalization learned during driving.
 
-1.  **User's Goal:** The objective is to store learned vehicle static loads in `config.ini` so that the FFB engine can immediately apply correct tactile scaling in subsequent sessions with the same car.
+### Evaluation of the Solution
 
-2.  **Evaluation of the Solution:**
-    *   **Core Functionality:** The patch perfectly implements the lifecycle of the feature. It adds vehicle-specific storage in the `Config` class, updates this storage when a value is latched during driving, and restores it upon engine initialization. The bypass logic in `InitializeLoadReference` correctly skips the dynamic learning phase if a saved value exists.
-    *   **Safety & Side Effects:**
-        *   **Thread Safety:** The patch demonstrates excellent awareness of thread safety. It uses a dedicated `m_static_loads_mutex` to protect the shared map of static loads, ensuring safe access between the high-frequency FFB thread and the main/GUI thread. It also utilizes `std::lock_guard` with the global `g_engine_mutex` for engine-state consistency.
-        *   **Performance:** The implementation uses an asynchronous save mechanism (`m_needs_save` atomic flag). This is a critical optimization that prevents the FFB thread (which runs at 1000Hz+) from being blocked by slow disk I/O when saving configuration changes.
-        *   **Robustness:** The INI parser in `Config::Load` was improved to handle sections properly, and the use of `try-catch` around `std::stod` ensures that corrupted or manually edited INI lines won't crash the application.
-    *   **Completeness:** All necessary components are updated, including configuration management, core engine logic, and the main application loop. The inclusion of new unit tests in `test_ffb_persistent_load.cpp` verifies the logic end-to-end.
+#### Core Functionality
+The solution is physically and logically sound. By moving the `soft_lock_force` from the `structural_sum` (normalized by session peak) to the `texture_sum_nm` group (scaled by the absolute wheelbase maximum torque), the patch ensures that the resistance felt at the steering limit is always relative to the hardware's maximum capability, not the intensity of the driving. This directly resolves the reported weakness.
 
-3.  **Merge Assessment:**
-    *   **Blocking:** None. The code is thread-safe, efficient, and well-tested.
-    *   **Nitpicks:** The implementation plan `plan_155.md` is missing the final "Implementation Notes" (post-implementation summary), although it contains the full plan and deliverables list. This is a minor documentation oversight that does not affect code quality or functionality.
+#### Safety & Side Effects
+*   **Physics:** The change correctly models the soft lock as an absolute physical limit rather than a relative steering effect.
+*   **Thread Safety:** The changes are contained within the `FFBEngine::calculate_force` method, which operates under the protection of the existing `g_engine_mutex`.
+*   **Regressions:** No regressions are introduced. The summation logic remains mathematically consistent, and the shift in scaling groups is appropriate for this specific force type.
+*   **Security:** No security issues (exposed secrets, etc.) were introduced.
 
-The patch is highly professional, adheres to the project's reliability standards, and includes the iterative quality assurance records (reviews) requested in the task instructions.
+#### Completeness
+The patch is comprehensive and follows the project's specific procedural requirements:
+*   **Verification:** Includes a new regression test (`tests/test_issue_181_soft_lock_weakness.cpp`) that explicitly verifies the force remains constant (and strong) across varying session peak torque levels.
+*   **Process Compliance:** Includes the required `implementation_plan.md` and `review_iteration_1.md` as requested in the user's interaction history.
+*   **Versioning:** Correctly updates the `VERSION` file. It specifically avoids manually editing `src/Version.h`, adhering to the user's constraint despite mentioning it in the documentation files (a minor documentation staleness that does not affect the code).
+*   **Changelog:** Updates both the developer and user-facing changelogs.
+
+### Merge Assessment
+
+**Nitpicks:**
+*   **Documentation Staleness:** The `implementation_plan.md` and `review_iteration_1.md` claim that `src/Version.h` was updated. While the agent correctly omitted this change from the code (following user instructions), the documentation files weren't updated to reflect that omission.
+*   **Plan Duplication:** The implementation plan is provided in two locations (root and `docs/dev_docs/plans/`).
+*   **Changelog Noise:** The `CHANGELOG_DEV.md` includes an entry for an unrelated version (0.7.76).
+
+These nitpicks are non-blocking as the core code change and the provided tests are correct and follow the most critical project constraints.
 
 ### Final Rating: #Correct#
