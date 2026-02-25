@@ -292,9 +292,13 @@ TEST_CASE(test_gui_platform_expansion, "GUI") {
     SaveCurrentWindowGeometryPlatform(true);
     SaveCurrentWindowGeometryPlatform(false);
 
+#ifndef _WIN32
     std::string path;
     SavePresetFileDialogPlatform(path, "test.ini");
     OpenPresetFileDialogPlatform(path);
+#else
+    std::cout << "  [INFO] Skipping blocking GUI file dialogs on Windows tests." << std::endl;
+#endif
 
     ASSERT_TRUE(GetGuiPlatform().GetWindowHandle() == nullptr);
 
