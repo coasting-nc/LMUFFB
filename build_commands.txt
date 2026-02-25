@@ -17,23 +17,23 @@ python scripts/run_all_tests.py
 # python scripts/run_all_tests.py
 
 
-## Run code Coverage
-## Install OpenCppCoverage (download the installer from their GitHub page)
-## make sure the build made before generates the pdb file (the makefile was updated to do this).
-
-OpenCppCoverage.exe --sources "*LMUFFB\src\*" --excluded_sources "*\tests\*" --excluded_sources "*vctools*" --excluded_sources "*WindowsSDK*" --export_type=html --export_type=cobertura:cobertura.xml -- .\build\tests\Release\run_combined_tests.exe
-
-## Compile and run tests (physics only, no windows tests) in one command
-& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake --build build --config Release --target run_combined_tests; python scripts/run_all_tests.py
+## Run code Coverage (Linux)
+## See documentation: docs/dev_docs/linux_test_coverage.md
+# cmake -S . -B build -DBUILD_HEADLESS=ON -DENABLE_COVERAGE=ON
+# cmake --build build
+# ./build/tests/run_combined_tests
+# lcov --capture --directory . --output-file coverage.info
+# lcov --extract coverage.info "*/src/*" --output-file coverage_filtered.info
+# genhtml coverage_filtered.info --output-directory coverage_report
 
 TODO:
-add documentation to include code coverage on linux for this project.
+Done: add documentation to include code coverage on linux for this project.
 Run it everytime with tests on linux, and check that all new code has 99%+ coverage.
-Add instructions (eg. fixer.md) stating that if coverage of new features is not 99%+ we should iterate and add more tests.
+Done: Add instructions (eg. fixer.md) stating that if coverage of new features is not 99%+ we should iterate and add more tests.
 See:  https://blog.cihar.com/archives/2016/08/26/ci-coverage-windows-linux-and-osx/
 "
 On Linux and OSX it was pretty much straightforward. Both GCC and Clang do support coverage, so it's just matter of configuring them properly and collect the coverage reports. I've used own solution for that in past and that was really far from working well (somehow I never managed to get coverage fully uploaded to Codecov). Fortunately there exists CMake script called CMake-codecov which does all needed work and works out of the box on GCC and Clang (even on OSX). Well it works on Travis only once you update the compilers and install llvm-cov tool."
-See if we can make compilation of test faster by making them less optimized (test run executes in 2 seconds anyway).
+Done: compilation of tests is faster now (less optimized on all platforms).
 
 -----
 

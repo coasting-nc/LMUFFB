@@ -108,6 +108,8 @@ endif()
 # Speed up test compilation by reducing optimizations (Issue #165 follow-up)
 if(MSVC)
     target_compile_options(run_combined_tests PRIVATE /Od)
+else()
+    target_compile_options(run_combined_tests PRIVATE -O0)
 endif()
 
 # Add to CTest

@@ -21,6 +21,14 @@ if(MSVC)
     add_link_options(/DEBUG)
 endif()
 
+# Coverage Support (Linux/GCC/Clang)
+option(ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
+if(ENABLE_COVERAGE AND NOT MSVC)
+    message(STATUS "Enabling code coverage instrumentation...")
+    add_compile_options(--coverage -O0 -g)
+    add_link_options(--coverage)
+endif()
+
 # ImGui Core Detection & FetchContent
 include(FetchContent)
 set(IMGUI_DIR "${CMAKE_SOURCE_DIR}/vendor/imgui")
