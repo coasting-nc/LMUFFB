@@ -134,6 +134,7 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "slope_alpha_threshold") current_preset.slope_alpha_threshold = std::stof(value);
                 else if (key == "slope_decay_rate") current_preset.slope_decay_rate = std::stof(value);
                 else if (key == "slope_confidence_enabled") current_preset.slope_confidence_enabled = (value == "1");
+                else if (key == "dynamic_normalization_enabled") current_preset.dynamic_normalization_enabled = (value == "1");
                 else if (key == "steering_shaft_smoothing") current_preset.steering_shaft_smoothing = std::stof(value);
                 else if (key == "gyro_smoothing_factor") current_preset.gyro_smoothing = std::stof(value);
                 else if (key == "yaw_accel_smoothing") current_preset.yaw_smoothing = std::stof(value);
@@ -889,6 +890,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "sop_smoothing_factor=" << p.sop_smoothing << "\n";
     file << "sop_scale=" << p.sop_scale << "\n";
     file << "understeer_affects_sop=" << p.understeer_affects_sop << "\n";
+    file << "dynamic_normalization_enabled=" << (p.dynamic_normalization_enabled ? "1" : "0") << "\n";
     file << "slope_detection_enabled=" << p.slope_detection_enabled << "\n";
     file << "slope_sg_window=" << p.slope_sg_window << "\n";
     file << "slope_sensitivity=" << p.slope_sensitivity << "\n";
@@ -1155,6 +1157,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "wheelbase_max_nm=" << engine.m_wheelbase_max_nm << "\n";
         file << "target_rim_nm=" << engine.m_target_rim_nm << "\n";
         file << "min_force=" << engine.m_min_force << "\n";
+        file << "dynamic_normalization_enabled=" << engine.m_dynamic_normalization_enabled << "\n";
 
         file << "\n; --- Front Axle (Understeer) ---\n";
         file << "steering_shaft_gain=" << engine.m_steering_shaft_gain << "\n";
@@ -1408,6 +1411,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "yaw_kick_threshold") engine.m_yaw_kick_threshold = std::stof(value);
                     else if (key == "optimal_slip_angle") engine.m_optimal_slip_angle = std::stof(value);
                     else if (key == "optimal_slip_ratio") engine.m_optimal_slip_ratio = std::stof(value);
+                    else if (key == "dynamic_normalization_enabled") engine.m_dynamic_normalization_enabled = (value == "1");
                     else if (key == "slope_detection_enabled") engine.m_slope_detection_enabled = (value == "1");
                     else if (key == "slope_sg_window") engine.m_slope_sg_window = std::stoi(value);
                     else if (key == "slope_sensitivity") engine.m_slope_sensitivity = std::stof(value);

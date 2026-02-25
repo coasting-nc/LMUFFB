@@ -179,7 +179,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     bool is_clean_state = (lat_g_abs < 8.0) && (torque_slew < 1000.0) && !is_contextual_spike;
 
     // 2. Leaky Integrator (Exponential Decay + Floor)
-    if (is_clean_state && m_torque_source == 0) {
+    if (is_clean_state && m_torque_source == 0 && m_dynamic_normalization_enabled) {
         if (current_abs_torque > m_session_peak_torque) {
             m_session_peak_torque = current_abs_torque; // Fast attack
         } else {
@@ -193,7 +193,17 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // 3. EMA Filtering on the Gain Multiplier (Zero-latency physics)
     // v0.7.71: For In-Game FFB (1), we normalize against the wheelbase max since the signal is already normalized [-1, 1].
-    double target_structural_mult = (m_torque_source == 1) ? (1.0 / (m_wheelbase_max_nm + 1e-9)) : (1.0 / (m_session_peak_torque + 1e-9));
+    // v0.7.80: For Shaft Torque (0), if dynamic normalization is disabled, use wheelbase_max_nm as fixed reference (Restore max_torque_ref logic).
+    double target_structural_mult;
+    if (m_torque_source == 1) {
+        target_structural_mult = 1.0 / (m_wheelbase_max_nm + 1e-9);
+    } else {
+        if (m_dynamic_normalization_enabled) {
+            target_structural_mult = 1.0 / (m_session_peak_torque + 1e-9);
+        } else {
+            target_structural_mult = 1.0 / (m_wheelbase_max_nm + 1e-9);
+        }
+    }
     double alpha_gain = data->mDeltaTime / (0.25 + data->mDeltaTime); // 250ms smoothing
     m_smoothed_structural_mult += alpha_gain * (target_structural_mult - m_smoothed_structural_mult);
 

@@ -118,6 +118,7 @@ struct Preset {
     bool understeer_affects_sop = false;     // Planned: Understeer modulation of SoP
 
     // ===== SLOPE DETECTION (v0.7.0 â†’ v0.7.1 defaults) =====
+    bool dynamic_normalization_enabled = true; // New v0.7.80 (Issue #180)
     bool slope_detection_enabled = false;
     int slope_sg_window = 15;
     float slope_sensitivity = 0.5f;          // Reduced from 1.0 (less aggressive)
@@ -360,6 +361,7 @@ struct Preset {
         engine.m_understeer_affects_sop = understeer_affects_sop;
         
         // Slope Detection (v0.7.0)
+        engine.m_dynamic_normalization_enabled = dynamic_normalization_enabled;
         engine.m_slope_detection_enabled = slope_detection_enabled;
         engine.m_slope_sg_window = (std::max)(5, (std::min)(41, slope_sg_window));
         if (engine.m_slope_sg_window % 2 == 0) engine.m_slope_sg_window++; // Must be odd for SG
@@ -444,6 +446,7 @@ struct Preset {
         yaw_smoothing = (std::max)(0.0f, yaw_smoothing);
         chassis_smoothing = (std::max)(0.0f, chassis_smoothing);
         road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
+        dynamic_normalization_enabled = (std::max)(0, (std::min)(1, (int)dynamic_normalization_enabled)) != 0; // bool clamp
         slope_sg_window = (std::max)(5, (std::min)(41, slope_sg_window));
         if (slope_sg_window % 2 == 0) slope_sg_window++;
         slope_sensitivity = (std::max)(0.1f, slope_sensitivity);
@@ -532,6 +535,7 @@ struct Preset {
         understeer_affects_sop = engine.m_understeer_affects_sop;
 
         // Slope Detection (v0.7.0)
+        dynamic_normalization_enabled = engine.m_dynamic_normalization_enabled;
         slope_detection_enabled = engine.m_slope_detection_enabled;
         slope_sg_window = engine.m_slope_sg_window;
         slope_sensitivity = engine.m_slope_sensitivity;
@@ -640,6 +644,7 @@ struct Preset {
         if (!is_near(road_fallback_scale, p.road_fallback_scale, eps)) return false;
         if (understeer_affects_sop != p.understeer_affects_sop) return false;
 
+        if (dynamic_normalization_enabled != p.dynamic_normalization_enabled) return false;
         if (slope_detection_enabled != p.slope_detection_enabled) return false;
         if (slope_sg_window != p.slope_sg_window) return false;
         if (!is_near(slope_sensitivity, p.slope_sensitivity, eps)) return false;

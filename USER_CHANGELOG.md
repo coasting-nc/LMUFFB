@@ -4,6 +4,19 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]February 27, 2026[/b][/size]
+[b]Version 0.7.80 - Manual Torque Scaling for 100Hz[/b]
+
+[b]New release[/b] (0.7.80): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]Manual Torque Scaling (100Hz Legacy)[/b]: Restored the ability to use a fixed torque reference for the 100Hz Steering Shaft source. A new "Enable Dynamic Normalization (100Hz)" toggle has been added to the General FFB section. (#180)
+[*][b]Predictable Force[/b]: When Dynamic Normalization is disabled, the app uses your "Wheelbase Max Torque" as the fixed reference (similar to the legacy [i]max_torque_ref[/i]). This ensures perfectly predictable force scaling and prevents the "limp" steering feel that could occur after high-torque spikes like wall hits. (#175)
+[/list]
+
+---
+
 [size=5][b]February 26, 2026[/b][/size]
 [b]Version 0.7.79 - Tooltip Text Fix & Wrapping Test[/b]
 

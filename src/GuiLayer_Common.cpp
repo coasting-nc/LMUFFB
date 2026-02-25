@@ -419,6 +419,14 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Master Gain", &engine.m_gain, 0.0f, 2.0f, FormatPct(engine.m_gain), Tooltips::MASTER_GAIN);
         FloatSetting("Wheelbase Max Torque", &engine.m_wheelbase_max_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::WHEELBASE_MAX_TORQUE);
         FloatSetting("Target Rim Torque", &engine.m_target_rim_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::TARGET_RIM_TORQUE);
+
+        bool dyn_norm = engine.m_dynamic_normalization_enabled;
+        if (GuiWidgets::Checkbox("Enable Dynamic Normalization (100Hz)", &dyn_norm, Tooltips::DYNAMIC_NORMALIZATION).changed) {
+            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+            engine.m_dynamic_normalization_enabled = dyn_norm;
+            Config::Save(engine);
+        }
+
         FloatSetting("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f", Tooltips::MIN_FORCE);
 
         if (ImGui::TreeNodeEx("Soft Lock", ImGuiTreeNodeFlags_DefaultOpen)) {

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.80] - 2026-02-27
+### Added
+- **Manual Torque Scaling for 100Hz (#180)**:
+  - Introduced a new toggle "Enable Dynamic Normalization (100Hz)" to allow users to disable session-learned peak torque scaling.
+  - When disabled, the 100Hz Steering Shaft Torque source uses "Wheelbase Max Torque" as a fixed reference, restoring the predictable behavior of the legacy `max_torque_ref` parameter.
+  - Added a descriptive tooltip to explain the interaction between dynamic normalization and wheelbase max torque.
+### Fixed
+- **Limp Steering after Spikes (#175)**: Providing the option to disable dynamic normalization prevents the steering from becoming "limp" after high-torque events like wall hits.
+### Testing
+- **New Regression Test**: Added `tests/test_ffb_normalization_toggle.cpp` to verify that the toggle correctly gates the peak learner and switches the structural scaling reference.
+
 ## [0.7.79] - 2026-02-26
 ### Added
 - **Tooltip Wrapping Test (#179)**:

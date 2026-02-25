@@ -259,6 +259,7 @@ public:
     bool m_understeer_affects_sop = false;
     
     // ===== SLOPE DETECTION (v0.7.0 -> v0.7.3 stability fixes) =====
+    bool m_dynamic_normalization_enabled = true; // New v0.7.80 (Issue #180)
     bool m_slope_detection_enabled = false;
     int m_slope_sg_window = 15;
     float m_slope_sensitivity = 0.5f;            
