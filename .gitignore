@@ -53,3 +53,5 @@ tests/__pycache__/**
 coverage_reports/**
 imgui.ini
 test_config_runner.ini
+test_expansion.log
+old_version.ini
