@@ -6,11 +6,6 @@ on:
   pull_request:
     branches: [ "**" ]
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 jobs:
   windows-release:
     name: Windows Release Build
@@ -48,7 +43,7 @@ jobs:
     - name: Get Version
       shell: pwsh
       run: |
-        $version = (Get-Content VERSION).Trim()
+        $version = Get-Content VERSION
         echo "APP_VERSION=$version" >> $env:GITHUB_ENV
 
     - name: Package Artifacts
@@ -59,7 +54,7 @@ jobs:
         Copy-Item "README.txt" -Destination "dist/"
         Compress-Archive -Path "dist/*" -DestinationPath "lmuffb-${{ env.APP_VERSION }}-nightly.zip"
 
-    - name: Upload Artifact
+    - name: Upload Nightly Zip
       uses: actions/upload-artifact@v4
       with:
         name: lmuffb-${{ env.APP_VERSION }}-nightly
@@ -100,6 +95,8 @@ jobs:
         lcov --capture --directory . --output-file coverage.info
         lcov --extract coverage.info "*/src/*" --output-file coverage_filtered.info
         genhtml coverage_filtered.info --output-directory coverage_report
+        
+        # Install tool to convert lcov to cobertura for the summary script
         pip install lcov_cobertura
         lcov_cobertura coverage_filtered.info --output cobertura.xml
 
@@ -108,10 +105,13 @@ jobs:
         if [ -f "cobertura.xml" ]; then
           python3 scripts/coverage_summary.py
           summary=$(cat coverage_summary.txt)
-          echo "### Code Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "### Linux Code Coverage Summary" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "$summary" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+        else
+          echo "cobertura.xml not found!"
+          exit 1
         fi
 
     - name: Upload Coverage Report Artifact
@@ -122,10 +122,14 @@ jobs:
         retention-days: 14
 
   deploy-coverage:
-    name: Deploy Coverage to GitHub Pages
+    name: Deploy Hub to GitHub Pages
     runs-on: ubuntu-latest
-    needs: linux-coverage
+    needs: [windows-release, linux-coverage]
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -134,16 +138,68 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: linux-coverage-report
-        path: coverage_report
-    
+        path: site/report
+
+    - name: Download Windows zip artifact
+      uses: actions/download-artifact@v4
+      with:
+        path: site/download
+        merge-multiple: true
+
+    - name: Generate Landing Page
+      run: |
+        # Find the zip file name (it should be in site/download)
+        ZIP_NAME=$(basename $(ls site/download/*.zip | head -n 1))
+        
+        cat <<EOF > site/index.html
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>LMUFFB Nightly Hub</title>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #24292f; }
+                h1 { border-bottom: 1px solid #d0d7de; padding-bottom: .3em; }
+                .card { border: 1px solid #d0d7de; border-radius: 6px; padding: 16px; margin: 20px 0; background-color: #f6f8fa; }
+                .btn { display: inline-block; background-color: #238636; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; }
+                .btn:hover { background-color: #2ea043; }
+                footer { margin-top: 50px; color: #57606a; font-size: 0.9em; border-top: 1px solid #d0d7de; padding-top: 20px; }
+                code { background: #afb8c133; padding: .2em .4em; border-radius: 6px; }
+            </style>
+        </head>
+        <body>
+            <h1>LMUFFB Nightly Hub</h1>
+            <p>Automated builds and reports from the <code>main</code> branch.</p>
+            
+            <div class="card">
+                <h2>🚀 Latest Nightly Build</h2>
+                <p>Download the latest version of LMUFFB compiled from <code>main</code>.</p>
+                <p><strong>File:</strong> <code>$ZIP_NAME</code></p>
+                <a href="download/$ZIP_NAME" class="btn">Download ZIP</a>
+            </div>
+
+            <h2>📊 Quality Reports</h2>
+            <ul>
+                <li><a href="report/index.html">Latest Code Coverage Report</a> (Linux/GCC/LCOV)</li>
+            </ul>
+
+            <footer>
+                Last updated: $(date -u) UTC | <a href="https://github.com/${{ github.repository }}">Source Code</a>
+            </footer>
+        </body>
+        </html>
+        EOF
+
     - name: Setup Pages
       uses: actions/configure-pages@v4
     
     - name: Upload pages artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: coverage_report
+        path: site
     
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
+
