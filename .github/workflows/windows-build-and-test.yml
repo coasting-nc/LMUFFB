@@ -1,4 +1,4 @@
-name: Windows Build and Test
+name: Build and Test
 
 on:
   push:
@@ -7,9 +7,9 @@ on:
     branches: [ "**" ]
 
 jobs:
-  build-and-test:
+  windows-release:
+    name: Windows Release Build
     runs-on: windows-latest
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -25,48 +25,20 @@ jobs:
         New-Item -ItemType Directory -Path "vendor\imgui" -Force
         Invoke-WebRequest -Uri "https://github.com/ocornut/imgui/archive/refs/heads/master.zip" -OutFile "vendor\imgui-master.zip"
         Expand-Archive -Path "vendor\imgui-master.zip" -DestinationPath "vendor" -Force
-        Copy-Item -Path "vendor\imgui-master\*" -Destination "vendor\imgui\" -Recurse -Force
+        Copy-Item "vendor\imgui-master\*" -Destination "vendor\imgui\" -Recurse -Force
         Test-Path "vendor\imgui\imgui.cpp"
         Remove-Item -Path "vendor\imgui-master.zip", "vendor\imgui-master" -Recurse -Force
 
-    - name: Configure and Build
+    - name: Configure and Build (Release)
       shell: pwsh
       run: |
-        # Using the commands requested by the user, adapted for the GHA runner environment
         cmake -S . -B build
         cmake --build build --config Release --clean-first
 
-    - name: Install OpenCppCoverage
+    - name: Run Tests
       shell: pwsh
       run: |
-        choco install opencppcoverage
-        echo "C:\Program Files\OpenCppCoverage" >> $env:GITHUB_PATH
-
-    - name: Run Tests with Coverage
-      shell: pwsh
-      run: |
-        # Run tests under OpenCppCoverage
-        # We target the src/ directory and exclude tests and system headers
-        & "OpenCppCoverage" --sources "$env:GITHUB_WORKSPACE\src" --excluded_sources "*\tests\*" --excluded_sources "*vctools*" --excluded_sources "*WindowsSDK*" --export_type=html --export_type=cobertura:cobertura.xml -- .\build\tests\Release\run_combined_tests.exe
-        
-    - name: Generate Coverage Summary
-      shell: pwsh
-      run: |
-        if (Test-Path "cobertura.xml") {
-          python scripts/coverage_summary.py
-          $summary = Get-Content coverage_summary.txt
-          echo "### Code Coverage Summary" >> $env:GITHUB_STEP_SUMMARY
-          echo '```' >> $env:GITHUB_STEP_SUMMARY
-          echo "$summary" >> $env:GITHUB_STEP_SUMMARY
-          echo '```' >> $env:GITHUB_STEP_SUMMARY
-        }
-
-    - name: Upload Coverage Report
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report
-        path: CoverageReport/
-        retention-days: 14
+        .\build\tests\Release\run_combined_tests.exe
 
     - name: Get Version
       shell: pwsh
@@ -77,19 +49,66 @@ jobs:
     - name: Package Artifacts
       shell: pwsh
       run: |
-        # Create a staging directory for the nightly build
         New-Item -ItemType Directory -Path "dist" -Force
-        
-        # Copy the executable and README.txt
         Copy-Item "build/Release/LMUFFB.exe" -Destination "dist/"
         Copy-Item "README.txt" -Destination "dist/"
-        
-        # Zip the directory
         Compress-Archive -Path "dist/*" -DestinationPath "lmuffb-${{ env.APP_VERSION }}-nightly.zip"
 
-    - name: Upload Artifact
+    - name: Upload Nightly Zip
       uses: actions/upload-artifact@v4
       with:
         name: lmuffb-${{ env.APP_VERSION }}-nightly
         path: lmuffb-${{ env.APP_VERSION }}-nightly.zip
         retention-days: 90
+
+  linux-coverage:
+    name: Linux Coverage (Debug)
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y lcov libglfw3-dev libopengl-dev
+
+    - name: Install ImGui (Linux)
+      run: |
+        mkdir -p vendor/imgui
+        wget https://github.com/ocornut/imgui/archive/refs/heads/master.zip -O vendor/imgui-master.zip
+        unzip vendor/imgui-master.zip -d vendor/
+        cp -r vendor/imgui-master/* vendor/imgui/
+        rm -rf vendor/imgui-master.zip vendor/imgui-master
+
+    - name: Configure and Build (Debug + Coverage)
+      run: |
+        cmake -S . -B build -DBUILD_HEADLESS=ON -DENABLE_COVERAGE=ON
+        cmake --build build --config Debug
+
+    - name: Run Tests
+      run: |
+        ./build/tests/run_combined_tests
+
+    - name: Collect Coverage
+      run: |
+        lcov --capture --directory . --output-file coverage.info
+        lcov --extract coverage.info "*/src/*" --output-file coverage_filtered.info
+        genhtml coverage_filtered.info --output-directory coverage_report
+
+    - name: Generate Coverage Summary
+      run: |
+        # Use simple grep/awk for summary if script needs python environment
+        python3 scripts/coverage_summary.py
+        summary=$(cat coverage_summary.txt)
+        echo "### Linux Code Coverage Summary" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "$summary" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-coverage-report
+        path: coverage_report/
+        retention-days: 14
