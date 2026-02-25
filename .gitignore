@@ -51,3 +51,5 @@ CoverageReport-*/**
 *.info
 tests/__pycache__/**
 coverage_reports/**
+imgui.ini
+test_config_runner.ini
