@@ -6,6 +6,7 @@
 
 class GuiLayer {
 public:
+    friend class GuiLayerTestAccess;
     static bool Init();
     static void Shutdown(FFBEngine& engine);
     
