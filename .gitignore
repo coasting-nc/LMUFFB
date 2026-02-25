@@ -50,3 +50,4 @@ CoverageReport-*/**
 *.gcov
 *.info
 tests/__pycache__/**
+coverage_reports/**
