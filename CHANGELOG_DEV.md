@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.81] - 2026-03-02
+### Added
+- **DirectX Pipeline Modernization (#189)**:
+  - Transitioned the GUI rendering pipeline from the legacy "BitBlt" model to the modern **Flip Model** (`DXGI_SWAP_EFFECT_FLIP_DISCARD`).
+  - Improved application performance, reduced latency, and ensured compatibility with modern Windows 10/11 features like Variable Refresh Rate (VRR) and independent flip.
+  - Replaced deprecated `D3D11CreateDeviceAndSwapChain` with a granular modernization flow using `D3D11CreateDevice` and `IDXGIFactory2::CreateSwapChainForHwnd`.
+  - Updated build system to link against `dxgi.lib`.
+### Testing
+- **New Regression Tests**: Added `tests/test_dxgi_modernization.cpp` with a new mock-based verification system to ensure Flip Model requirements (BufferCount, SampleDesc, SwapEffect) are strictly enforced in the configuration logic.
+
 ## [0.7.80] - 2026-02-26
 ### Added
 - **Major Test Coverage Expansion**:

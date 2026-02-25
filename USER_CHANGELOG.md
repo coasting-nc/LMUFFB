@@ -4,6 +4,19 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
+[size=5][b]March 2, 2026[/b][/size]
+[b]Version 0.7.81 - DirectX Pipeline Modernization[/b]
+
+[b]New release[/b] (0.7.81): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]DirectX Flip Model[/b]: Modernized the GUI rendering pipeline from the legacy "BitBlt" model to the modern "Flip" model. This improves performance, reduces latency, and ensures compatibility with modern Windows features like Variable Refresh Rate (VRR) and independent flip.
+[*][b]Modern DXGI Initialization[/b]: Replaced deprecated D3D11/DXGI initialization methods with modern granular interfaces, improving application stability and future-proofing the codebase.
+[/list]
+
+---
+
 [size=5][b]February 26, 2026[/b][/size]
 [b]Version 0.7.80 - Stability & Coverage Expansion[/b]
 

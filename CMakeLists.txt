@@ -78,7 +78,7 @@ if(NOT BUILD_HEADLESS AND IMGUI_CORE_SOURCES)
             ${IMGUI_DIR}/backends/imgui_impl_win32.cpp
             ${IMGUI_DIR}/backends/imgui_impl_dx11.cpp
         )
-        link_libraries(d3d11 d3dcompiler dxguid)
+        link_libraries(d3d11 dxgi d3dcompiler dxguid)
         add_definitions(-DUNICODE -D_UNICODE -DNOMINMAX -DIMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS)
     else()
         # Linux / GLFW + OpenGL
@@ -132,6 +132,8 @@ add_definitions(-DLMUFFB_VERSION="${LMUFFB_VERSION}")
 set(CORE_SOURCES
     src/GuiLayer_Common.cpp
     src/GuiLayer.h
+    src/DXGIUtils.cpp
+    src/DXGIUtils.h
     src/Config.cpp src/Config.h
     src/DirectInputFFB.cpp src/DirectInputFFB.h
     src/GameConnector.cpp src/GameConnector.h
@@ -151,7 +153,7 @@ add_library(LMUFFB_Core STATIC ${CORE_SOURCES} ${IMGUI_SOURCES})
 target_include_directories(LMUFFB_Core PUBLIC src ${IMGUI_DIR} ${IMGUI_DIR}/backends ${CMAKE_CURRENT_BINARY_DIR}/src)
 
 if(WIN32)
-    target_link_libraries(LMUFFB_Core PUBLIC dinput8 dxguid winmm)
+    target_link_libraries(LMUFFB_Core PUBLIC dinput8 dxgi dxguid winmm)
 endif()
 
 if(NOT WIN32 AND NOT BUILD_HEADLESS)

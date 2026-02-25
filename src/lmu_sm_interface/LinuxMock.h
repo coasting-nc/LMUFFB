@@ -240,12 +240,83 @@ inline BOOL VerQueryValueA(const void* pBlock, const char* lpSubBlock, void** lp
         return TRUE;
     }
     if (strstr(lpSubBlock, "ProductVersion")) {
-        *lplpBuffer = (void*)"0.7.80";
-        if (puLen) *puLen = 7;
+        *lplpBuffer = (void*)LMUFFB_VERSION;
+        if (puLen) *puLen = (UINT)strlen(LMUFFB_VERSION) + 1;
         return TRUE;
     }
     return FALSE;
 }
+
+// D3D11 & DXGI Mocks for Issue #189
+typedef enum D3D_DRIVER_TYPE { D3D_DRIVER_TYPE_HARDWARE = 0 } D3D_DRIVER_TYPE;
+typedef enum D3D_FEATURE_LEVEL { D3D_FEATURE_LEVEL_10_0 = 0x1000, D3D_FEATURE_LEVEL_11_0 = 0xb000 } D3D_FEATURE_LEVEL;
+#define D3D11_SDK_VERSION (7)
+
+typedef struct DXGI_SAMPLE_DESC { UINT Count; UINT Quality; } DXGI_SAMPLE_DESC;
+typedef enum DXGI_FORMAT { DXGI_FORMAT_R8G8B8A8_UNORM = 28, DXGI_FORMAT_UNKNOWN = 0 } DXGI_FORMAT;
+typedef enum DXGI_USAGE { DXGI_USAGE_RENDER_TARGET_OUTPUT = 1 << 4 } DXGI_USAGE;
+typedef enum DXGI_SWAP_EFFECT { DXGI_SWAP_EFFECT_DISCARD = 0, DXGI_SWAP_EFFECT_FLIP_DISCARD = 4 } DXGI_SWAP_EFFECT;
+typedef enum DXGI_SWAP_CHAIN_FLAG { DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH = 2 } DXGI_SWAP_CHAIN_FLAG;
+typedef enum DXGI_SCALING { DXGI_SCALING_STRETCH = 0 } DXGI_SCALING;
+typedef enum DXGI_ALPHA_MODE { DXGI_ALPHA_MODE_UNSPECIFIED = 0 } DXGI_ALPHA_MODE;
+
+typedef struct DXGI_SWAP_CHAIN_DESC1 {
+    UINT Width; UINT Height; DXGI_FORMAT Format; BOOL Stereo; DXGI_SAMPLE_DESC SampleDesc;
+    DXGI_USAGE BufferUsage; UINT BufferCount; DXGI_SCALING Scaling; DXGI_SWAP_EFFECT SwapEffect;
+    DXGI_ALPHA_MODE AlphaMode; UINT Flags;
+} DXGI_SWAP_CHAIN_DESC1;
+
+typedef struct DXGI_SWAP_CHAIN_FULLSCREEN_DESC {
+    struct { UINT Numerator; UINT Denominator; } RefreshRate;
+    int ScanlineOrdering; int Scaling; BOOL Windowed;
+} DXGI_SWAP_CHAIN_FULLSCREEN_DESC;
+
+// Mock interfaces
+struct IUnknown {
+    virtual HRESULT QueryInterface(const GUID& riid, void** ppvObject) = 0;
+    virtual ULONG_PTR Release() = 0;
+};
+
+struct IDXGIObject : public IUnknown {};
+struct IDXGIDevice : public IDXGIObject {
+    virtual HRESULT GetAdapter(struct IDXGIAdapter** ppAdapter) = 0;
+};
+struct IDXGIAdapter : public IDXGIObject {
+    virtual HRESULT GetParent(const GUID& riid, void** ppParent) = 0;
+};
+struct IDXGIFactory2 : public IDXGIObject {
+    virtual HRESULT CreateSwapChainForHwnd(IUnknown* pDevice, HWND hWnd, const DXGI_SWAP_CHAIN_DESC1* pDesc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC* pFullscreenDesc, struct IDXGIOutput* pRestrictToOutput, struct IDXGISwapChain1** ppSwapChain) = 0;
+};
+
+// Concrete mock for testing
+struct MockDXGIFactory2 : public IDXGIFactory2 {
+    HRESULT QueryInterface(const GUID& riid, void** ppvObject) override { return -1; }
+    ULONG_PTR Release() override { return 0; }
+    HRESULT CreateSwapChainForHwnd(IUnknown* pDevice, HWND hWnd, const DXGI_SWAP_CHAIN_DESC1* pDesc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC* pFullscreenDesc, struct IDXGIOutput* pRestrictToOutput, struct IDXGISwapChain1** ppSwapChain) override {
+        if (pDesc) {
+            extern DXGI_SWAP_CHAIN_DESC1 g_captured_swap_chain_desc;
+            g_captured_swap_chain_desc = *pDesc;
+        }
+        return 0; // S_OK
+    }
+};
+struct IDXGISwapChain : public IDXGIObject {
+    virtual HRESULT GetBuffer(UINT Buffer, const GUID& riid, void** ppSurface) = 0;
+    virtual HRESULT Present(UINT SyncInterval, UINT Flags) = 0;
+    virtual HRESULT ResizeBuffers(UINT BufferCount, UINT Width, UINT Height, DXGI_FORMAT NewFormat, UINT SwapChainFlags) = 0;
+};
+struct IDXGISwapChain1 : public IDXGISwapChain {};
+
+struct ID3D11DeviceChild : public IUnknown {};
+struct ID3D11DeviceContext : public ID3D11DeviceChild {
+    virtual void OMSetRenderTargets(UINT NumViews, struct ID3D11RenderTargetView* const* ppRenderTargetViews, struct ID3D11DepthStencilView* pDepthStencilView) = 0;
+    virtual void ClearRenderTargetView(struct ID3D11RenderTargetView* pRenderTargetView, const float ColorRGBA[4]) = 0;
+};
+struct ID3D11Device : public IUnknown {
+    virtual HRESULT CreateRenderTargetView(struct ID3D11Resource* pResource, const struct D3D11_RENDER_TARGET_VIEW_DESC* pDesc, struct ID3D11RenderTargetView** ppRTView) = 0;
+};
+
+#define IID_PPV_ARGS(ppType) GUID(), (void**)(ppType)
 
 #endif // _WIN32
 
