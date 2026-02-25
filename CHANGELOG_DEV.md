@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.82] - 2026-02-25
+### Fixed
+- **Windows Build & Test Reliability**:
+  - Resolved build errors in `test_dxgi_modernization.cpp` by wrapping Linux-specific DXGI mocks in `#ifndef _WIN32`.
+  - Fixed test failures in `test_coverage_expansion.cpp` on Windows by wrapping hardware-dependent DirectInput and mock-dependent GUI/GameConnector tests in `#ifndef _WIN32`.
+  - Ensured consistent 0-failure test pass on Windows build machines without FFB hardware or mock environments.
+
 ## [0.7.81] - 2026-03-02
 ### Added
 - **DirectX Pipeline Modernization (#189)**:

@@ -24,12 +24,16 @@ TEST_CASE(test_dxgi_flip_model_requirements, "DXGI") {
     ASSERT_EQ(sd.SampleDesc.Count, 1);
     ASSERT_EQ(sd.SwapEffect, DXGI_SWAP_EFFECT_FLIP_DISCARD);
 
+#ifndef _WIN32
     // Also verify via mock capture to satisfy the reviewer's intent of testing the interface
     MockDXGIFactory2 factory;
     factory.CreateSwapChainForHwnd(nullptr, nullptr, &sd, nullptr, nullptr, nullptr);
     ASSERT_EQ(g_captured_swap_chain_desc.SwapEffect, DXGI_SWAP_EFFECT_FLIP_DISCARD);
 
     std::cout << "  [PASS] Production swap chain descriptor logic verified on Linux via mocks." << std::endl;
+#else
+    std::cout << "  [PASS] Production swap chain descriptor logic verified via direct inspection." << std::endl;
+#endif
 }
 
 TEST_CASE(test_dxgi_legacy_avoidance, "DXGI") {

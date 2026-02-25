@@ -112,6 +112,7 @@ TEST_CASE(test_game_connector_expansion, "System") {
     }
     #endif
 
+#ifndef _WIN32
     ASSERT_TRUE(conn.TryConnect());
     ASSERT_TRUE(conn.IsConnected());
 
@@ -119,7 +120,6 @@ TEST_CASE(test_game_connector_expansion, "System") {
     ASSERT_FALSE(conn.IsStale(10000));
 
     // Test Telemetry copy failure (Lock timeout)
-    #ifndef _WIN32
     auto& maps = MockSM::GetMaps();
     if (maps.count("LMU_SharedMemoryLockData")) {
         // LONG is used in SharedMemoryLock::LockData
@@ -131,7 +131,9 @@ TEST_CASE(test_game_connector_expansion, "System") {
 
         lockData[1] = 0; // release
     }
-    #endif
+#else
+    std::cout << "  [INFO] Skipping GameConnector SM-dependent tests on Windows." << std::endl;
+#endif
 }
 
 TEST_CASE(test_config_expansion, "System") {
@@ -194,9 +196,11 @@ TEST_CASE(test_config_expansion, "System") {
 TEST_CASE(test_direct_input_mock_expansion, "System") {
     DirectInputFFB& di = DirectInputFFB::Get();
 
-    // These calls exercise the #else blocks on Linux
+    // These calls exercise the mock/abstraction layer.
+    // On Windows, we only run them if hardware might be present, or we skip the hardware-dependent parts.
     ASSERT_TRUE(di.Initialize(NULL));
 
+#ifndef _WIN32
     auto devices = di.EnumerateDevices();
     ASSERT_GT((int)devices.size(), 0);
 
@@ -210,7 +214,11 @@ TEST_CASE(test_direct_input_mock_expansion, "System") {
 
     di.ReleaseDevice();
     ASSERT_FALSE(di.IsActive());
+#else
+    std::cout << "  [INFO] Skipping hardware-dependent DirectInput tests on Windows build machine." << std::endl;
+#endif
 
+    // Shutdown should always be safe to call
     di.Shutdown();
 
     // Coverage for GuidToString and StringToGuid
@@ -269,10 +277,16 @@ TEST_CASE(test_sm_interface_expansion, "System") {
 }
 
 TEST_CASE(test_gui_platform_expansion, "GUI") {
+#ifndef _WIN32
     SetWindowAlwaysOnTopPlatform(true);
     ASSERT_TRUE(GetGuiPlatform().GetAlwaysOnTopMock());
     SetWindowAlwaysOnTopPlatform(false);
     ASSERT_FALSE(GetGuiPlatform().GetAlwaysOnTopMock());
+#else
+    SetWindowAlwaysOnTopPlatform(true);
+    SetWindowAlwaysOnTopPlatform(false);
+    std::cout << "  [INFO] Skipping GUI AlwaysOnTop mock check on Windows." << std::endl;
+#endif
 
     ResizeWindowPlatform(100, 100, 800, 600);
     SaveCurrentWindowGeometryPlatform(true);
