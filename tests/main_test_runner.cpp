@@ -6,14 +6,18 @@
 #include <chrono>
 #include <filesystem>
 #include "src/Config.h"
+#include "src/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
-// Shared globals required by GuiLayer
+// Shared globals required by GuiLayer and main.cpp
 std::atomic<bool> g_running(true);
+std::atomic<bool> g_ffb_active(true);
 std::recursive_mutex g_engine_mutex;
+FFBEngine g_engine;
+SharedMemoryObjectOut g_localData;
 
 namespace FFBEngineTests { 
     extern int g_tests_passed; 

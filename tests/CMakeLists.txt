@@ -70,6 +70,8 @@ set(TEST_SOURCES
     test_tooltips.cpp
     test_coverage_expansion.cpp
     test_dxgi_modernization.cpp
+    test_main_harness.cpp
+    ../src/main.cpp
 )
 
 # ImGui Core is now always available if vendor exists
@@ -100,7 +102,7 @@ endif()
 
 enable_testing()
 add_executable(run_combined_tests ${TEST_SOURCES})
-target_compile_definitions(run_combined_tests PRIVATE HEADLESS_GUI)
+target_compile_definitions(run_combined_tests PRIVATE HEADLESS_GUI LMUFFB_UNIT_TEST)
 target_link_libraries(run_combined_tests PRIVATE LMUFFB_Core)
 
 if(WIN32)
