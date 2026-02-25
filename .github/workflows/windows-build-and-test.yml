@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ "**" ]
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   windows-release:
     name: Windows Release Build
@@ -44,6 +49,7 @@ jobs:
       shell: pwsh
       run: |
         $version = Get-Content VERSION
+        $version = $version.Trim()
         echo "APP_VERSION=$version" >> $env:GITHUB_ENV
 
     - name: Package Artifacts
@@ -54,12 +60,27 @@ jobs:
         Copy-Item "README.txt" -Destination "dist/"
         Compress-Archive -Path "dist/*" -DestinationPath "lmuffb-${{ env.APP_VERSION }}-nightly.zip"
 
-    - name: Upload Nightly Zip
+    - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: lmuffb-${{ env.APP_VERSION }}-nightly
         path: lmuffb-${{ env.APP_VERSION }}-nightly.zip
         retention-days: 90
+
+    - name: Create GitHub Release
+      if: github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ env.APP_VERSION }}-n${{ github.run_number }}
+        name: Nightly Build v${{ env.APP_VERSION }} (Build ${{ github.run_number }})
+        files: lmuffb-${{ env.APP_VERSION }}-nightly.zip
+        prerelease: true
+        body: |
+          Automated nightly build from branch `${{ github.ref_name }}`.
+          
+          ### Access
+          - **Download**: [lmuffb-${{ env.APP_VERSION }}-nightly.zip](https://github.com/${{ github.repository }}/releases/download/v${{ env.APP_VERSION }}-n${{ github.run_number }}/lmuffb-${{ env.APP_VERSION }}-nightly.zip)
+          - **Report**: [View Coverage Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/)
 
   linux-coverage:
     name: Linux Coverage (Debug)
@@ -122,14 +143,10 @@ jobs:
         retention-days: 14
 
   deploy-coverage:
-    name: Deploy Coverage to GitHub Pages
+    name: Deploy Hub to GitHub Pages
     runs-on: ubuntu-latest
-    needs: linux-coverage
+    needs: [windows-release, linux-coverage]
     if: github.ref == 'refs/heads/main'
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -138,17 +155,63 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: linux-coverage-report
-        path: coverage_report
-    
+        path: coverage_site/report
+
+    - name: Generate Landing Page
+      run: |
+        cat <<EOF > coverage_site/index.html
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>LMUFFB Nightly Hub</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #24292f; }
+            h1 { border-bottom: 1px solid #d0d7de; padding-bottom: .3em; }
+            .card { border: 1px solid #d0d7de; border-radius: 6px; padding: 16px; margin: 20px 0; background-color: #f6f8fa; }
+            .btn { display: inline-block; background-color: #238636; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; }
+            .btn:hover { background-color: #2ea043; }
+            ul { padding-left: 20px; }
+            code { background: #afb8c133; padding: .2em .4em; border-radius: 6px; }
+          </style>
+        </head>
+        <body>
+          <h1>LMUFFB Nightly Hub</h1>
+          
+          <div class="card">
+            <h2>🚀 Latest Nightly Build</h2>
+            <p>Download the latest version of LMUFFB compiled from the <code>main</code> branch.</p>
+            <a href="https://github.com/${{ github.repository }}/releases/latest" class="btn">Download Latest Nightly (.zip)</a>
+          </div>
+
+          <h2>📊 Reports</h2>
+          <ul>
+            <li><a href="report/index.html">Latest Code Coverage Report</a> (Detailed line-by-line analysis)</li>
+          </ul>
+
+          <h2>History & Archive</h2>
+          <p>We keep a history of all nightly builds for 90 days. If you need an older version or want to see the changelog:</p>
+          <ul>
+            <li><a href="https://github.com/${{ github.repository }}/releases">View All Nightly Releases</a></li>
+            <li><a href="https://github.com/${{ github.repository }}/actions">View All Action Runs</a></li>
+          </ul>
+          
+          <footer style="margin-top: 50px; color: #57606a; font-size: 0.9em; border-top: 1px solid #d0d7de; padding-top: 20px;">
+            Last updated: $(date -u) UTC
+          </footer>
+        </body>
+        </html>
+        EOF
+
     - name: Setup Pages
       uses: actions/configure-pages@v4
     
     - name: Upload pages artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: coverage_report
+        path: coverage_site
     
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
-
