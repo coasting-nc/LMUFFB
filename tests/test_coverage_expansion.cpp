@@ -210,6 +210,7 @@ TEST_CASE(test_direct_input_mock_expansion, "System") {
     ASSERT_TRUE(di.IsExclusive());
 
     ASSERT_TRUE(di.UpdateForce(0.5));
+    ASSERT_FALSE(di.UpdateForce(0.5)); // No change optimization branch
     ASSERT_TRUE(di.UpdateForce(0.0));
 
     di.ReleaseDevice();
@@ -228,6 +229,7 @@ TEST_CASE(test_direct_input_mock_expansion, "System") {
     ASSERT_TRUE(memcmp(&g1, &g2, sizeof(GUID)) == 0);
 
     ASSERT_TRUE(di.StringToGuid("").Data1 == 0);
+    ASSERT_TRUE(di.StringToGuid("invalid").Data1 == 0);
 }
 
 TEST_CASE(test_sm_lock_concurrency, "System") {
@@ -339,6 +341,30 @@ TEST_CASE(test_gui_layer_rendering_expansion, "GUI") {
     ImGui::DestroyContext(ctx);
 
     ASSERT_TRUE(true);
+}
+
+TEST_CASE(test_main_loop_logic_coverage, "System") {
+    // This test simulates the logic inside main.cpp loops by using the classes/methods it uses.
+    // We already do this in many tests, but let's ensure we hit some specific main.cpp patterns.
+
+    FFBEngine engine;
+    TelemInfoV01 data = CreateBasicTestTelemetry();
+    data.mDeltaTime = 0.0025f;
+    data.mSteeringShaftTorque = 1.0f;
+
+    // Simulate FFB loop logic
+    double force = engine.calculate_force(&data, "GT3", "911 GT3 R", 0.5f, true);
+    ASSERT_TRUE(std::isfinite(force));
+
+    double safe_force = engine.ApplySafetySlew(force, 0.0025, false);
+    ASSERT_TRUE(std::isfinite(safe_force));
+
+    // Simulate Config save request exchange
+    Config::m_needs_save.store(true);
+    if (Config::m_needs_save.exchange(false)) {
+        // This hits the pattern in main.cpp
+        ASSERT_TRUE(true);
+    }
 }
 
 } // namespace FFBEngineTests

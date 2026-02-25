@@ -1,6 +1,0 @@
-[13:50:28] Logger Initialized. Version: 0.7.81
-[13:50:28] Expansion Test: 42 hello
-[13:50:28] Expansion String Test
-[13:50:28] Error in MockContext: Code 1234
-[13:50:28] Connected to LMU Shared Memory.
-Logger Shutdown.

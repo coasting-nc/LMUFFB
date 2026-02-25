@@ -1,5 +1,7 @@
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <signal.h>
 #endif
 #include <iostream>
 #include <cmath>
@@ -23,6 +25,7 @@
 // Constants
 
 // Threading Globals
+#ifndef LMUFFB_UNIT_TEST
 std::atomic<bool> g_running(true);
 std::atomic<bool> g_ffb_active(true);
 
@@ -30,6 +33,13 @@ SharedMemoryObjectOut g_localData; // Local copy of shared memory
 
 FFBEngine g_engine;
 std::recursive_mutex g_engine_mutex; // Protects settings access if GUI changes them
+#else
+extern std::atomic<bool> g_running;
+extern std::atomic<bool> g_ffb_active;
+extern SharedMemoryObjectOut g_localData;
+extern FFBEngine g_engine;
+extern std::recursive_mutex g_engine_mutex;
+#endif
 
 // --- FFB Loop (High Priority 400Hz) ---
 void FFBThread() {
@@ -256,9 +266,22 @@ void FFBThread() {
     std::cout << "[FFB] Loop Stopped." << std::endl;
 }
 
+#ifndef _WIN32
+void handle_sigterm(int sig) {
+    g_running = false;
+}
+#endif
+
+#ifdef LMUFFB_UNIT_TEST
+int lmuffb_app_main(int argc, char* argv[]) {
+#else
 int main(int argc, char* argv[]) {
+#endif
 #ifdef _WIN32
     timeBeginPeriod(1);
+#else
+    signal(SIGTERM, handle_sigterm);
+    signal(SIGINT, handle_sigterm);
 #endif
 
     bool headless = false;
