@@ -55,3 +55,7 @@ imgui.ini
 test_config_runner.ini
 test_expansion.log
 old_version.ini
+LastCoverageResults.log
+lmuffb_debug.log
+cobertura.xml
+test_gui.csv/**

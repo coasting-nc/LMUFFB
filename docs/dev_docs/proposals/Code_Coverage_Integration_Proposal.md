@@ -56,7 +56,7 @@ To see coverage results directly in your editor instead of a browser, you can us
 ### 2. Updated Command (HTML + VS Code XML + Filtering)
 To generate the HTML report folder AND the XML file for VS Code in one go, while excluding the tests and unwanted system headers:
 ```powershell
-OpenCppCoverage.exe --sources "*LMUFFB\src\*" --excluded_sources "*\tests\*" --excluded_sources "*vctools*" --excluded_sources "*WindowsSDK*" --export_type=html --export_type=cobertura:cobertura.xml -- .\build\tests\Release\run_combined_tests.exe
+& "C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe" --sources "*LMUFFB\src\*" --excluded_sources "*\tests\*" --excluded_sources "*vctools*" --excluded_sources "*WindowsSDK*" --export_type=html --export_type=cobertura:cobertura.xml -- .\build\tests\Release\run_combined_tests.exe
 ```
 - `--sources "*LMUFFB\src\*"`: Anchors the search to your local project folder.
 - `--excluded_sources "*\tests\*"`: Ignores coverage for the test suite itself.
