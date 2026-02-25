@@ -36,11 +36,37 @@ jobs:
         cmake -S . -B build
         cmake --build build --config Release --clean-first
 
-    - name: Run Tests
+    - name: Install OpenCppCoverage
       shell: pwsh
       run: |
-        # Execute the combined tests
-        .\build\tests\Release\run_combined_tests.exe
+        choco install opencppcoverage
+        echo "C:\Program Files\OpenCppCoverage" >> $env:GITHUB_PATH
+
+    - name: Run Tests with Coverage
+      shell: pwsh
+      run: |
+        # Run tests under OpenCppCoverage
+        # We target the src/ directory and exclude tests and system headers
+        & "OpenCppCoverage" --sources "$env:GITHUB_WORKSPACE\src" --excluded_sources "*\tests\*" --excluded_sources "*vctools*" --excluded_sources "*WindowsSDK*" --export_type=html --export_type=cobertura:cobertura.xml -- .\build\tests\Release\run_combined_tests.exe
+        
+    - name: Generate Coverage Summary
+      shell: pwsh
+      run: |
+        if (Test-Path "cobertura.xml") {
+          python scripts/coverage_summary.py
+          $summary = Get-Content coverage_summary.txt
+          echo "### Code Coverage Summary" >> $env:GITHUB_STEP_SUMMARY
+          echo '```' >> $env:GITHUB_STEP_SUMMARY
+          echo "$summary" >> $env:GITHUB_STEP_SUMMARY
+          echo '```' >> $env:GITHUB_STEP_SUMMARY
+        }
+
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: CoverageReport/
+        retention-days: 14
 
     - name: Get Version
       shell: pwsh
