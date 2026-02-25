@@ -41,3 +41,29 @@ jobs:
       run: |
         # Execute the combined tests
         .\build\tests\Release\run_combined_tests.exe
+
+    - name: Get Version
+      shell: pwsh
+      run: |
+        $version = Get-Content VERSION
+        echo "APP_VERSION=$version" >> $env:GITHUB_ENV
+
+    - name: Package Artifacts
+      shell: pwsh
+      run: |
+        # Create a staging directory for the nightly build
+        New-Item -ItemType Directory -Path "dist" -Force
+        
+        # Copy the executable and README.txt
+        Copy-Item "build/Release/LMUFFB.exe" -Destination "dist/"
+        Copy-Item "README.txt" -Destination "dist/"
+        
+        # Zip the directory
+        Compress-Archive -Path "dist/*" -DestinationPath "lmuffb-${{ env.APP_VERSION }}-nightly.zip"
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: lmuffb-${{ env.APP_VERSION }}-nightly
+        path: lmuffb-${{ env.APP_VERSION }}-nightly.zip
+        retention-days: 90
