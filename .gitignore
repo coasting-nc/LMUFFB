@@ -1,7 +1,7 @@
 # C++ Build folders
-build/
-Build/
-BUILD/
+build*/
+Build*/
+BUILD*/
 build_tests/
 
 # VS Code CMake build directories
@@ -45,6 +45,8 @@ node_modules/.package-lock.json
 node_modules/**
 package-lock.json
 CoverageReport-*/**
-LastCoverageResults.log
-cobertura.xml
+*.gcda
+*.gcno
+*.gcov
+*.info
 tests/__pycache__/**

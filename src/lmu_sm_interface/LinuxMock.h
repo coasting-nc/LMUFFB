@@ -10,6 +10,8 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <cstdarg>
+#include <cstdio>
 
 // Dummy typedefs for Linux compatibility
 using DWORD = uint32_t;
@@ -29,6 +31,13 @@ using HRESULT = long;
 using WORD = uint16_t;
 using BYTE = uint8_t;
 using LONG_PTR = intptr_t;
+using ULONG_PTR = uintptr_t;
+using LPDWORD = uint32_t*;
+using HMODULE = void*;
+using HICON = void*;
+using HRSRC = void*;
+using LPVOID = void*;
+using LPCSTR = const char*;
 
 typedef struct _GUID {
     uint32_t Data1;
@@ -57,6 +66,10 @@ typedef struct _GUID {
 #define MAX_PATH 260
 #endif
 
+#ifndef _TRUNCATE
+#define _TRUNCATE ((size_t)-1)
+#endif
+
 // Windows Constants for Mocking
 #define INVALID_HANDLE_VALUE ((HANDLE)(UINT_PTR)-1)
 #define PAGE_READWRITE 0x04
@@ -68,6 +81,23 @@ typedef struct _GUID {
 #define INFINITE 0xFFFFFFFF
 #define SYNCHRONIZE 0x00100000L
 #define PROCESS_QUERY_LIMITED_INFORMATION 0x1000
+
+// Window Styles & Constants
+#define WS_OVERLAPPEDWINDOW 0
+#define WS_VISIBLE 0
+#define GWL_EXSTYLE -20
+#define WS_EX_TOPMOST 0x00000008L
+#define HWND_TOPMOST ((HWND)-1)
+#define HWND_NOTOPMOST ((HWND)-2)
+#define SWP_NOMOVE 0x0002
+#define SWP_NOSIZE 0x0001
+#define SWP_FRAMECHANGED 0x0020
+
+// Resources
+#define RT_GROUP_ICON 14
+#define LOAD_LIBRARY_AS_DATAFILE 0x00000002
+#define MAKEINTRESOURCE(i) ((char*)((ULONG_PTR)((WORD)(i))))
+#define MAKEINTRESOURCEA(i) ((char*)((ULONG_PTR)((WORD)(i))))
 
 // Memory Mapping Mock (Global Storage)
 namespace MockSM {
@@ -97,6 +127,20 @@ inline long InterlockedExchange(long volatile* Target, long Value) {
 
 // Memory and Event mocks
 inline void YieldProcessor() {}
+inline int sprintf_s(char* buf, size_t size, const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    int ret = vsnprintf(buf, size, fmt, args);
+    va_end(args);
+    return ret;
+}
+inline int sprintf_s(char* buf, const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    int ret = vsprintf(buf, fmt, args);
+    va_end(args);
+    return ret;
+}
 inline DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) { return WAIT_OBJECT_0; }
 inline BOOL SetEvent(HANDLE hEvent) { return TRUE; }
 inline BOOL CloseHandle(HANDLE hObject) {
@@ -141,8 +185,67 @@ inline BOOL UnmapViewOfFile(const void* lpBaseAddress) { return TRUE; }
 inline HANDLE CreateEventA(void* lpEventAttributes, BOOL bManualReset, BOOL bInitialState, const char* lpName) { return (HANDLE)1; }
 
 // Window mocks
+namespace MockGUI {
+    inline LONG_PTR& ExStyle() { static LONG_PTR style = 0; return style; }
+}
+
 inline HWND GetConsoleWindow() { return (HWND)1; }
-inline BOOL IsWindow(HWND hWnd) { return hWnd != nullptr; }
+inline BOOL IsWindow(HWND hWnd) {
+    return (hWnd == (HWND)1 || hWnd == (HWND)2); // Accept our mock handles
+}
+inline HWND CreateWindowA(const char* lpClassName, const char* lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, void* hMenu, HMODULE hInstance, void* lpParam) {
+    return (HWND)2;
+}
+inline LONG_PTR GetWindowLongPtr(HWND hWnd, int nIndex) {
+    if (nIndex == GWL_EXSTYLE) return MockGUI::ExStyle();
+    return 0;
+}
+inline BOOL SetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags) {
+    if (hWndInsertAfter == HWND_TOPMOST) MockGUI::ExStyle() |= WS_EX_TOPMOST;
+    if (hWndInsertAfter == HWND_NOTOPMOST) MockGUI::ExStyle() &= ~WS_EX_TOPMOST;
+    return TRUE;
+}
+inline BOOL DestroyWindow(HWND hWnd) { return TRUE; }
+
+// Resource Mocks
+inline HMODULE GetModuleHandle(const char* lpModuleName) { return (HMODULE)1; }
+inline HICON LoadIcon(HMODULE hInstance, const char* lpIconName) { return (HICON)1; }
+inline DWORD GetModuleFileNameA(HMODULE hModule, char* lpFilename, DWORD nSize) {
+    strncpy(lpFilename, "LMUFFB.exe", nSize);
+    return strlen(lpFilename);
+}
+inline HMODULE LoadLibraryExA(const char* lpLibFileName, HANDLE hFile, DWORD dwFlags) { return (HMODULE)1; }
+inline HRSRC FindResourceA(HMODULE hModule, const char* lpName, const char* lpType) { return (HRSRC)1; }
+inline BOOL FreeLibrary(HMODULE hLibModule) { return TRUE; }
+
+// Version Info Mocks
+inline DWORD GetFileVersionInfoSizeA(const char* lptstrFilename, LPDWORD lpdwHandle) {
+    if (lpdwHandle) *lpdwHandle = 0;
+    return 1024;
+}
+inline BOOL GetFileVersionInfoA(const char* lptstrFilename, DWORD dwHandle, DWORD dwLen, void* lpData) {
+    memset(lpData, 0, dwLen);
+    return TRUE;
+}
+inline BOOL VerQueryValueA(const void* pBlock, const char* lpSubBlock, void** lplpBuffer, UINT* puLen) {
+    static uint16_t translation[2] = { 0x0409, 0x04B0 }; // English (US), Unicode
+    if (strstr(lpSubBlock, "Translation")) {
+        *lplpBuffer = &translation;
+        if (puLen) *puLen = sizeof(translation);
+        return TRUE;
+    }
+    if (strstr(lpSubBlock, "CompanyName")) {
+        *lplpBuffer = (void*)"lmuFFB";
+        if (puLen) *puLen = 7;
+        return TRUE;
+    }
+    if (strstr(lpSubBlock, "ProductVersion")) {
+        *lplpBuffer = (void*)"0.7.79";
+        if (puLen) *puLen = 7;
+        return TRUE;
+    }
+    return FALSE;
+}
 
 #endif // _WIN32
 
