@@ -37,6 +37,18 @@ Done: compilation of tests is faster now (less optimized on all platforms).
 
 -----
 
+# Install ImGui
+## Dear ImGui (Optional): Download from GitHub and place in vendor/imgui to enable the GUI.
+
+New-Item -ItemType Directory -Path "vendor\imgui" -Force
+Invoke-WebRequest -Uri "https://github.com/ocornut/imgui/archive/refs/heads/master.zip" -OutFile "vendor\imgui-master.zip"
+Expand-Archive -Path "vendor\imgui-master.zip" -DestinationPath "vendor" -Force
+Copy-Item -Path "vendor\imgui-master\*" -Destination "vendor\imgui\" -Recurse -Force
+Test-Path "vendor\imgui\imgui.cpp"
+Remove-Item -Path "vendor\imgui-master.zip", "vendor\imgui-master" -Recurse -Force
+
+
+----
 
 ## Run all c++ tests that had already been compiled:
 .\build\tests\Release\run_combined_tests.exe
@@ -67,15 +79,6 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 Write build files (windows)
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -B build
 
-# Install ImGui
-## Dear ImGui (Optional): Download from GitHub and place in vendor/imgui to enable the GUI.
-
-New-Item -ItemType Directory -Path "vendor\imgui" -Force
-Invoke-WebRequest -Uri "https://github.com/ocornut/imgui/archive/refs/heads/master.zip" -OutFile "vendor\imgui-master.zip"
-Expand-Archive -Path "vendor\imgui-master.zip" -DestinationPath "vendor" -Force
-Copy-Item -Path "vendor\imgui-master\*" -Destination "vendor\imgui\" -Recurse -Force
-Test-Path "vendor\imgui\imgui.cpp"
-Remove-Item -Path "vendor\imgui-master.zip", "vendor\imgui-master" -Recurse -Force
 
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -B build
 
