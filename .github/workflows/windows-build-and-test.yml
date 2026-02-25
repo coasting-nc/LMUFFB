@@ -95,20 +95,60 @@ jobs:
         lcov --capture --directory . --output-file coverage.info
         lcov --extract coverage.info "*/src/*" --output-file coverage_filtered.info
         genhtml coverage_filtered.info --output-directory coverage_report
+        
+        # Install tool to convert lcov to cobertura for the summary script
+        pip install lcov_cobertura
+        lcov_cobertura coverage_filtered.info --output cobertura.xml
 
     - name: Generate Coverage Summary
       run: |
-        # Use simple grep/awk for summary if script needs python environment
-        python3 scripts/coverage_summary.py
-        summary=$(cat coverage_summary.txt)
-        echo "### Linux Code Coverage Summary" >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY
-        echo "$summary" >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY
+        if [ -f "cobertura.xml" ]; then
+          python3 scripts/coverage_summary.py
+          summary=$(cat coverage_summary.txt)
+          echo "### Linux Code Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$summary" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        else
+          echo "cobertura.xml not found!"
+          exit 1
+        fi
 
-    - name: Upload Coverage Report
+    - name: Upload Coverage Report Artifact
       uses: actions/upload-artifact@v4
       with:
         name: linux-coverage-report
         path: coverage_report/
         retention-days: 14
+
+  deploy-coverage:
+    name: Deploy Coverage to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: linux-coverage
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - name: Download coverage artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: linux-coverage-report
+        path: coverage_report
+    
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+    
+    - name: Upload pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: coverage_report
+    
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+
