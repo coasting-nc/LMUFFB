@@ -100,18 +100,33 @@ TEST_CASE(test_main_exe_icon, "Windows") {
     // the embedded icon data. If it returns null, the test fails, meaning CMake forgot to link the .rc file.
     std::cout << "\nTest: Main Executable Icon Embedded" << std::endl;
     char buffer[MAX_PATH];
+#ifdef _WIN32
     GetModuleFileNameA(NULL, buffer, MAX_PATH);
+#else
+    ssize_t count = readlink("/proc/self/exe", buffer, MAX_PATH);
+    if (count != -1) buffer[count] = '\0';
+    else strncpy(buffer, ".", MAX_PATH);
+#endif
     std::string exe_path(buffer);
     size_t last_slash = exe_path.find_last_of("\\/");
     std::string exe_dir = (last_slash != std::string::npos) ? exe_path.substr(0, last_slash) : ".";
     
     // Determine path to LMUFFB.exe. Usually in build/Release when tests are in build/tests/Release
     std::string main_exe = exe_dir + "\\..\\..\\Release\\LMUFFB.exe";
+#ifndef _WIN32
+    // Fallback for Linux where exe is named LMUFFB
+    if (!std::ifstream(main_exe).good()) {
+        main_exe = exe_dir + "/../../LMUFFB";
+    }
+#endif
     
     HMODULE hMod = LoadLibraryExA(main_exe.c_str(), NULL, LOAD_LIBRARY_AS_DATAFILE);
     if (!hMod) {
         // Fallback for flat output directory structures
         main_exe = exe_dir + "\\LMUFFB.exe";
+#ifndef _WIN32
+        if (!std::ifstream(main_exe).good()) main_exe = exe_dir + "/LMUFFB";
+#endif
         hMod = LoadLibraryExA(main_exe.c_str(), NULL, LOAD_LIBRARY_AS_DATAFILE);
     }
     

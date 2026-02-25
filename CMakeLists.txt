@@ -151,7 +151,7 @@ add_library(LMUFFB_Core STATIC ${CORE_SOURCES} ${IMGUI_SOURCES})
 target_include_directories(LMUFFB_Core PUBLIC src ${IMGUI_DIR} ${IMGUI_DIR}/backends ${CMAKE_CURRENT_BINARY_DIR}/src)
 
 if(WIN32)
-    target_link_libraries(LMUFFB_Core PUBLIC dinput8.lib dxguid.lib winmm.lib)
+    target_link_libraries(LMUFFB_Core PUBLIC dinput8 dxguid winmm)
 endif()
 
 if(NOT WIN32 AND NOT BUILD_HEADLESS)
