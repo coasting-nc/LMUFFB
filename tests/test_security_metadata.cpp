@@ -30,6 +30,7 @@
 
 namespace FFBEngineTests {
 
+#ifdef _WIN32
 TEST_CASE(test_executable_metadata, "Security") {
     std::cout << "\nTest: Executable Metadata & Version Info (Security)" << std::endl;
 
@@ -137,5 +138,6 @@ TEST_CASE(test_is_window_safety, "Security") {
         std::cout << "  [SKIP] No console window to test valid handle" << std::endl;
     }
 }
+#endif
 
 } // namespace
