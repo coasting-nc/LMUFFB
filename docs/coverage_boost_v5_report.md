@@ -56,6 +56,17 @@ This task focused on increasing the code coverage (lines, branches, and function
     *   `GuiWidgets.h`: Reached by simulating interactions with `Float`, `Checkbox`, and `Combo` widgets.
     *   `GameConnector.cpp`: Reached by simulating connection successes and failures using the Mock SM.
 
+## Issues and Challenges
+
+### Windows Test Hangs
+A significant challenge was discovered during Windows CI where tests would get stuck. This was traced to `IGuiPlatform` methods being called on a NULL `g_hwnd` or a zombie window after an incomplete `lmuffb_app_main` execution. Fixes included:
+*   Added `if (!g_hwnd) return;` safety checks to `src/GuiLayer_Win32.cpp`.
+*   Fixed a window leak in `GuiLayer::Init` where the window was not destroyed if D3D initialization failed.
+*   Wrapped the non-headless lifecycle test in `tests/test_main_harness.cpp` with `#ifndef _WIN32` to prevent unwanted GUI creation on build machines.
+
+### CI Deployment Failures
+The `deploy-coverage` job was failing on development branches due to GitHub Environment protection rules on the `github-pages` environment. This was resolved by restricting the deployment job to only run on the `main` branch in `.github/workflows/windows-build-and-test.yml`.
+
 ## Build Artifacts
 During testing, various `.csv` telemetry logs were generated. These have been manually cleared and should not be included in the PR. The `cobertura.xml` and `summary.json` files were used to generate the final reports and have also been excluded from the final patch to keep the repository clean.
 

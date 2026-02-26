@@ -179,7 +179,7 @@ jobs:
     name: Deploy Hub to GitHub Pages
     runs-on: ubuntu-latest
     needs: [windows-release, linux-coverage]
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: write
       pages: write

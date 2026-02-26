@@ -1,5 +1,6 @@
 File: src/AsyncLogger.h
-  Line Coverage: 100%
+  Line Coverage: 99.3%
+  Missing Lines: 212
 
 File: src/Config.cpp
   Line Coverage: 96.6%

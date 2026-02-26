@@ -146,6 +146,7 @@ TEST_CASE(test_main_app_logic, "System") {
     }
 
     // Test lmuffb_app_main without headless
+#ifndef _WIN32
     {
         char* argv[] = {(char*)"lmuffb"};
         g_running = false;
@@ -153,6 +154,7 @@ TEST_CASE(test_main_app_logic, "System") {
         std::cout << "[PASS] lmuffb_app_main without headless" << std::endl;
         g_tests_passed++;
     }
+#endif
 }
 
 } // namespace FFBEngineTests

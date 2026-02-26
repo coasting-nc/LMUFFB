@@ -57,12 +57,14 @@ public:
     }
 
     void ResizeWindow(int x, int y, int w, int h) override {
+        if (!g_hwnd) return;
         if (w < MIN_WINDOW_WIDTH) w = MIN_WINDOW_WIDTH;
         if (h < MIN_WINDOW_HEIGHT) h = MIN_WINDOW_HEIGHT;
         ::SetWindowPos(g_hwnd, NULL, x, y, w, h, SWP_NOZORDER | SWP_NOACTIVATE);
     }
 
     void SaveWindowGeometry(bool is_graph_mode) override {
+        if (!g_hwnd) return;
         RECT rect;
         if (::GetWindowRect(g_hwnd, &rect)) {
             Config::win_pos_x = rect.left;
@@ -167,7 +169,10 @@ bool GuiLayer::Init() {
     Logger::Get().Log("Window Created: %p", g_hwnd);
 
     if (!CreateDeviceD3D(g_hwnd)) {
-        CleanupDeviceD3D(); ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
+        CleanupDeviceD3D();
+        ::DestroyWindow(g_hwnd);
+        g_hwnd = NULL;
+        ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
         Logger::Get().Log("Failed to create D3D Device.");
         return false;
     }
