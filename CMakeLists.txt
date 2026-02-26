@@ -126,6 +126,7 @@ endif()
 
 # Read Version
 file(STRINGS "VERSION" LMUFFB_VERSION)
+message(STATUS ">>> CMake VERSION detected: [${LMUFFB_VERSION}]")
 
 # Parse version for Resource File (e.g. 0.7.29 -> 0,7,29,0)
 string(REPLACE "." ";" VERSION_LIST ${LMUFFB_VERSION})
