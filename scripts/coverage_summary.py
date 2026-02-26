@@ -149,8 +149,7 @@ if __name__ == "__main__":
     
     line_report = parse_cobertura(cobertura_path, "line")
     branch_report = parse_cobertura(cobertura_path, "branch")
-    
-  
+    function_report = parse_json_summary(json_path)
 
     output_dir = "docs/dev_docs/reports/coverage"
     if not os.path.exists(output_dir):
