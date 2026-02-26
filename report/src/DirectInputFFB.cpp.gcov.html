@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-02-26 18:09:32</td>
+            <td class="headerValue">2026-02-26 18:11:47</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">92.3&nbsp;%</td>
@@ -93,10 +93,10 @@
 <span id="L22"><span class="lineNum">      22</span>                 :             : }</span>
 <span id="L23"><span class="lineNum">      23</span>                 :             : </span>
 <span id="L24"><span class="lineNum">      24</span>                 :             : // Keep existing implementations</span>
-<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC tlaBgGNC">        4753 : DirectInputFFB&amp; DirectInputFFB::Get() {</span></span>
-<span id="L26"><span class="lineNum">      26</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 4752 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        4753 :     static DirectInputFFB instance;</span></span>
+<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC tlaBgGNC">        5147 : DirectInputFFB&amp; DirectInputFFB::Get() {</span></span>
+<span id="L26"><span class="lineNum">      26</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 5146 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        5147 :     static DirectInputFFB instance;</span></span>
 <span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaUNC" title="Branch 6 was not taken"> - </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span>]
-<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        4753 :     return instance;</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        5147 :     return instance;</span></span>
 <span id="L28"><span class="lineNum">      28</span>                 :             : }</span>
 <span id="L29"><span class="lineNum">      29</span>                 :             : </span>
 <span id="L30"><span class="lineNum">      30</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 : DirectInputFFB::DirectInputFFB() {}</span></span>
@@ -107,7 +107,7 @@
 <span id="L35"><span class="lineNum">      35</span>                 :             : }</span>
 <span id="L36"><span class="lineNum">      36</span>                 :             : </span>
 <span id="L37"><span class="lineNum">      37</span>                 :             : // NEW: Helper Implementations for GUID</span>
-<span id="L38"><span class="lineNum">      38</span>                 :<span class="tlaGNC">           2 : std::string DirectInputFFB::GuidToString(const GUID&amp; guid) {</span></span>
+<span id="L38"><span class="lineNum">      38</span>                 :<span class="tlaGNC">           3 : std::string DirectInputFFB::GuidToString(const GUID&amp; guid) {</span></span>
 <span id="L39"><span class="lineNum">      39</span>                 :             :     char buf[64];</span>
 <span id="L40"><span class="lineNum">      40</span>                 :             : #ifdef _WIN32</span>
 <span id="L41"><span class="lineNum">      41</span>                 :             :     sprintf_s(buf, &quot;{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}&quot;,</span>
@@ -115,17 +115,17 @@
 <span id="L43"><span class="lineNum">      43</span>                 :             :         guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],</span>
 <span id="L44"><span class="lineNum">      44</span>                 :             :         guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);</span>
 <span id="L45"><span class="lineNum">      45</span>                 :             : #else</span>
-<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">           2 :     snprintf(buf, sizeof(buf), &quot;{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}&quot;,</span></span>
-<span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaGNC">           2 :         (unsigned int)guid.Data1, (unsigned int)guid.Data2, (unsigned int)guid.Data3,</span></span>
-<span id="L48"><span class="lineNum">      48</span>                 :<span class="tlaGNC">           2 :         (unsigned int)guid.Data4[0], (unsigned int)guid.Data4[1], (unsigned int)guid.Data4[2], (unsigned int)guid.Data4[3],</span></span>
-<span id="L49"><span class="lineNum">      49</span>                 :<span class="tlaGNC">           2 :         (unsigned int)guid.Data4[4], (unsigned int)guid.Data4[5], (unsigned int)guid.Data4[6], (unsigned int)guid.Data4[7]);</span></span>
+<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">           3 :     snprintf(buf, sizeof(buf), &quot;{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}&quot;,</span></span>
+<span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaGNC">           3 :         (unsigned int)guid.Data1, (unsigned int)guid.Data2, (unsigned int)guid.Data3,</span></span>
+<span id="L48"><span class="lineNum">      48</span>                 :<span class="tlaGNC">           3 :         (unsigned int)guid.Data4[0], (unsigned int)guid.Data4[1], (unsigned int)guid.Data4[2], (unsigned int)guid.Data4[3],</span></span>
+<span id="L49"><span class="lineNum">      49</span>                 :<span class="tlaGNC">           3 :         (unsigned int)guid.Data4[4], (unsigned int)guid.Data4[5], (unsigned int)guid.Data4[6], (unsigned int)guid.Data4[7]);</span></span>
 <span id="L50"><span class="lineNum">      50</span>                 :             : #endif</span>
-<span id="L51"><span class="lineNum">      51</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           4 :     return std::string(buf);</span></span>
+<span id="L51"><span class="lineNum">      51</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           6 :     return std::string(buf);</span></span>
 <span id="L52"><span class="lineNum">      52</span>                 :             : }</span>
 <span id="L53"><span class="lineNum">      53</span>                 :             : </span>
-<span id="L54"><span class="lineNum">      54</span>                 :<span class="tlaGNC">           9 : GUID DirectInputFFB::StringToGuid(const std::string&amp; str) {</span></span>
-<span id="L55"><span class="lineNum">      55</span>                 :<span class="tlaGNC">           9 :     GUID guid = { 0 };</span></span>
-<span id="L56"><span class="lineNum">      56</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 7 times"> + </span>]:<span class="tlaGNC">           9 :     if (str.empty()) return guid;</span></span>
+<span id="L54"><span class="lineNum">      54</span>                 :<span class="tlaGNC">          11 : GUID DirectInputFFB::StringToGuid(const std::string&amp; str) {</span></span>
+<span id="L55"><span class="lineNum">      55</span>                 :<span class="tlaGNC">          11 :     GUID guid = { 0 };</span></span>
+<span id="L56"><span class="lineNum">      56</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 8 times"> + </span>]:<span class="tlaGNC">          11 :     if (str.empty()) return guid;</span></span>
 <span id="L57"><span class="lineNum">      57</span>                 :             :     unsigned long p0;</span>
 <span id="L58"><span class="lineNum">      58</span>                 :             :     unsigned short p1, p2;</span>
 <span id="L59"><span class="lineNum">      59</span>                 :             :     unsigned int p3, p4, p5, p6, p7, p8, p9, p10;</span>
@@ -133,19 +133,19 @@
 <span id="L61"><span class="lineNum">      61</span>                 :             :     int n = sscanf_s(str.c_str(), &quot;{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}&quot;,</span>
 <span id="L62"><span class="lineNum">      62</span>                 :             :         &amp;p0, &amp;p1, &amp;p2, &amp;p3, &amp;p4, &amp;p5, &amp;p6, &amp;p7, &amp;p8, &amp;p9, &amp;p10);</span>
 <span id="L63"><span class="lineNum">      63</span>                 :             : #else</span>
-<span id="L64"><span class="lineNum">      64</span>                 :<span class="tlaGNC">           7 :     int n = sscanf(str.c_str(), &quot;{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}&quot;,</span></span>
+<span id="L64"><span class="lineNum">      64</span>                 :<span class="tlaGNC">           8 :     int n = sscanf(str.c_str(), &quot;{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}&quot;,</span></span>
 <span id="L65"><span class="lineNum">      65</span>                 :             :         &amp;p0, &amp;p1, &amp;p2, &amp;p3, &amp;p4, &amp;p5, &amp;p6, &amp;p7, &amp;p8, &amp;p9, &amp;p10);</span>
 <span id="L66"><span class="lineNum">      66</span>                 :             : #endif</span>
-<span id="L67"><span class="lineNum">      67</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5 times"> + </span>]:<span class="tlaGNC">           7 :     if (n == 11) {</span></span>
-<span id="L68"><span class="lineNum">      68</span>                 :<span class="tlaGNC">           2 :         guid.Data1 = p0;</span></span>
-<span id="L69"><span class="lineNum">      69</span>                 :<span class="tlaGNC">           2 :         guid.Data2 = (unsigned short)p1;</span></span>
-<span id="L70"><span class="lineNum">      70</span>                 :<span class="tlaGNC">           2 :         guid.Data3 = (unsigned short)p2;</span></span>
-<span id="L71"><span class="lineNum">      71</span>                 :<span class="tlaGNC">           2 :         guid.Data4[0] = (unsigned char)p3; guid.Data4[1] = (unsigned char)p4;</span></span>
-<span id="L72"><span class="lineNum">      72</span>                 :<span class="tlaGNC">           2 :         guid.Data4[2] = (unsigned char)p5; guid.Data4[3] = (unsigned char)p6;</span></span>
-<span id="L73"><span class="lineNum">      73</span>                 :<span class="tlaGNC">           2 :         guid.Data4[4] = (unsigned char)p7; guid.Data4[5] = (unsigned char)p8;</span></span>
-<span id="L74"><span class="lineNum">      74</span>                 :<span class="tlaGNC">           2 :         guid.Data4[6] = (unsigned char)p9; guid.Data4[7] = (unsigned char)p10;</span></span>
+<span id="L67"><span class="lineNum">      67</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5 times"> + </span>]:<span class="tlaGNC">           8 :     if (n == 11) {</span></span>
+<span id="L68"><span class="lineNum">      68</span>                 :<span class="tlaGNC">           3 :         guid.Data1 = p0;</span></span>
+<span id="L69"><span class="lineNum">      69</span>                 :<span class="tlaGNC">           3 :         guid.Data2 = (unsigned short)p1;</span></span>
+<span id="L70"><span class="lineNum">      70</span>                 :<span class="tlaGNC">           3 :         guid.Data3 = (unsigned short)p2;</span></span>
+<span id="L71"><span class="lineNum">      71</span>                 :<span class="tlaGNC">           3 :         guid.Data4[0] = (unsigned char)p3; guid.Data4[1] = (unsigned char)p4;</span></span>
+<span id="L72"><span class="lineNum">      72</span>                 :<span class="tlaGNC">           3 :         guid.Data4[2] = (unsigned char)p5; guid.Data4[3] = (unsigned char)p6;</span></span>
+<span id="L73"><span class="lineNum">      73</span>                 :<span class="tlaGNC">           3 :         guid.Data4[4] = (unsigned char)p7; guid.Data4[5] = (unsigned char)p8;</span></span>
+<span id="L74"><span class="lineNum">      74</span>                 :<span class="tlaGNC">           3 :         guid.Data4[6] = (unsigned char)p9; guid.Data4[7] = (unsigned char)p10;</span></span>
 <span id="L75"><span class="lineNum">      75</span>                 :             :     }</span>
-<span id="L76"><span class="lineNum">      76</span>                 :<span class="tlaGNC">           7 :     return guid;</span></span>
+<span id="L76"><span class="lineNum">      76</span>                 :<span class="tlaGNC">           8 :     return guid;</span></span>
 <span id="L77"><span class="lineNum">      77</span>                 :             : }</span>
 <span id="L78"><span class="lineNum">      78</span>                 :             : </span>
 <span id="L79"><span class="lineNum">      79</span>                 :             : </span>
@@ -214,8 +214,8 @@
 <span id="L142"><span class="lineNum">     142</span>                 :<span class="tlaGNC">           1 :     Shutdown();</span></span>
 <span id="L143"><span class="lineNum">     143</span>                 :<span class="tlaGNC">           1 : }</span></span>
 <span id="L144"><span class="lineNum">     144</span>                 :             : </span>
-<span id="L145"><span class="lineNum">     145</span>                 :<span class="tlaGNC">           4 : bool DirectInputFFB::Initialize(HWND hwnd) {</span></span>
-<span id="L146"><span class="lineNum">     146</span>                 :<span class="tlaGNC">           4 :     m_hwnd = hwnd;</span></span>
+<span id="L145"><span class="lineNum">     145</span>                 :<span class="tlaGNC">           6 : bool DirectInputFFB::Initialize(HWND hwnd) {</span></span>
+<span id="L146"><span class="lineNum">     146</span>                 :<span class="tlaGNC">           6 :     m_hwnd = hwnd;</span></span>
 <span id="L147"><span class="lineNum">     147</span>                 :             : #ifdef _WIN32</span>
 <span id="L148"><span class="lineNum">     148</span>                 :             :     if (FAILED(DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&amp;m_pDI, NULL))) {</span>
 <span id="L149"><span class="lineNum">     149</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Failed to create DirectInput8 interface.&quot; &lt;&lt; std::endl;</span>
@@ -224,20 +224,20 @@
 <span id="L152"><span class="lineNum">     152</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Initialized.&quot; &lt;&lt; std::endl;</span>
 <span id="L153"><span class="lineNum">     153</span>                 :             :     return true;</span>
 <span id="L154"><span class="lineNum">     154</span>                 :             : #else</span>
-<span id="L155"><span class="lineNum">     155</span>                 :<span class="tlaGNC">           4 :     std::cout &lt;&lt; &quot;[DI] Mock Initialized (Non-Windows).&quot; &lt;&lt; std::endl;</span></span>
-<span id="L156"><span class="lineNum">     156</span>                 :<span class="tlaGNC">           4 :     return true;</span></span>
+<span id="L155"><span class="lineNum">     155</span>                 :<span class="tlaGNC">           6 :     std::cout &lt;&lt; &quot;[DI] Mock Initialized (Non-Windows).&quot; &lt;&lt; std::endl;</span></span>
+<span id="L156"><span class="lineNum">     156</span>                 :<span class="tlaGNC">           6 :     return true;</span></span>
 <span id="L157"><span class="lineNum">     157</span>                 :             : #endif</span>
 <span id="L158"><span class="lineNum">     158</span>                 :             : }</span>
 <span id="L159"><span class="lineNum">     159</span>                 :             : </span>
-<span id="L160"><span class="lineNum">     160</span>                 :<span class="tlaGNC">           5 : void DirectInputFFB::Shutdown() {</span></span>
-<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">           5 :     ReleaseDevice(); // Reuse logic</span></span>
+<span id="L160"><span class="lineNum">     160</span>                 :<span class="tlaGNC">           7 : void DirectInputFFB::Shutdown() {</span></span>
+<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">           7 :     ReleaseDevice(); // Reuse logic</span></span>
 <span id="L162"><span class="lineNum">     162</span>                 :             : #ifdef _WIN32</span>
 <span id="L163"><span class="lineNum">     163</span>                 :             :     if (m_pDI) {</span>
 <span id="L164"><span class="lineNum">     164</span>                 :             :         ((IDirectInput8*)m_pDI)-&gt;Release();</span>
 <span id="L165"><span class="lineNum">     165</span>                 :             :         m_pDI = nullptr;</span>
 <span id="L166"><span class="lineNum">     166</span>                 :             :     }</span>
 <span id="L167"><span class="lineNum">     167</span>                 :             : #endif</span>
-<span id="L168"><span class="lineNum">     168</span>                 :<span class="tlaGNC">           5 : }</span></span>
+<span id="L168"><span class="lineNum">     168</span>                 :<span class="tlaGNC">           7 : }</span></span>
 <span id="L169"><span class="lineNum">     169</span>                 :             : </span>
 <span id="L170"><span class="lineNum">     170</span>                 :             : #ifdef _WIN32</span>
 <span id="L171"><span class="lineNum">     171</span>                 :             : BOOL CALLBACK EnumJoysticksCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext) {</span>
@@ -266,7 +266,7 @@
 <span id="L194"><span class="lineNum">     194</span>                 :<span class="tlaGNC">           4 :     return devices;</span></span>
 <span id="L195"><span class="lineNum">     195</span>                 :<span class="tlaGNC">           2 : }</span></span>
 <span id="L196"><span class="lineNum">     196</span>                 :             : </span>
-<span id="L197"><span class="lineNum">     197</span>                 :<span class="tlaGNC">           6 : void DirectInputFFB::ReleaseDevice() {</span></span>
+<span id="L197"><span class="lineNum">     197</span>                 :<span class="tlaGNC">           8 : void DirectInputFFB::ReleaseDevice() {</span></span>
 <span id="L198"><span class="lineNum">     198</span>                 :             : #ifdef _WIN32</span>
 <span id="L199"><span class="lineNum">     199</span>                 :             :     if (m_pEffect) {</span>
 <span id="L200"><span class="lineNum">     200</span>                 :             :         ((IDirectInputEffect*)m_pEffect)-&gt;Stop();</span>
@@ -280,15 +280,15 @@
 <span id="L208"><span class="lineNum">     208</span>                 :             :         m_pDevice = nullptr;</span>
 <span id="L209"><span class="lineNum">     209</span>                 :             :     }</span>
 <span id="L210"><span class="lineNum">     210</span>                 :             : #endif</span>
-<span id="L211"><span class="lineNum">     211</span>                 :<span class="tlaGNC">           6 :     m_active = false;</span></span>
-<span id="L212"><span class="lineNum">     212</span>                 :<span class="tlaGNC">           6 :     m_isExclusive = false;</span></span>
-<span id="L213"><span class="lineNum">     213</span>                 :<span class="tlaGNC">           6 :     m_deviceName = &quot;None&quot;;</span></span>
+<span id="L211"><span class="lineNum">     211</span>                 :<span class="tlaGNC">           8 :     m_active = false;</span></span>
+<span id="L212"><span class="lineNum">     212</span>                 :<span class="tlaGNC">           8 :     m_isExclusive = false;</span></span>
+<span id="L213"><span class="lineNum">     213</span>                 :<span class="tlaGNC">           8 :     m_deviceName = &quot;None&quot;;</span></span>
 <span id="L214"><span class="lineNum">     214</span>                 :             : #ifdef _WIN32</span>
 <span id="L215"><span class="lineNum">     215</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Device released by user.&quot; &lt;&lt; std::endl;</span>
 <span id="L216"><span class="lineNum">     216</span>                 :             : #endif</span>
-<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">           6 : }</span></span>
+<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">           8 : }</span></span>
 <span id="L218"><span class="lineNum">     218</span>                 :             : </span>
-<span id="L219"><span class="lineNum">     219</span>                 :<span class="tlaGNC">           1 : bool DirectInputFFB::SelectDevice(const GUID&amp; guid) {</span></span>
+<span id="L219"><span class="lineNum">     219</span>                 :<span class="tlaGNC">           2 : bool DirectInputFFB::SelectDevice(const GUID&amp; guid) {</span></span>
 <span id="L220"><span class="lineNum">     220</span>                 :             : #ifdef _WIN32</span>
 <span id="L221"><span class="lineNum">     221</span>                 :             :     if (!m_pDI) return false;</span>
 <span id="L222"><span class="lineNum">     222</span>                 :             : </span>
@@ -350,10 +350,10 @@
 <span id="L278"><span class="lineNum">     278</span>                 :             :     }</span>
 <span id="L279"><span class="lineNum">     279</span>                 :             :     return false;</span>
 <span id="L280"><span class="lineNum">     280</span>                 :             : #else</span>
-<span id="L281"><span class="lineNum">     281</span>                 :<span class="tlaGNC">           1 :     m_active = true;</span></span>
-<span id="L282"><span class="lineNum">     282</span>                 :<span class="tlaGNC">           1 :     m_isExclusive = true; // Default to true in mock to verify UI logic</span></span>
-<span id="L283"><span class="lineNum">     283</span>                 :<span class="tlaGNC">           1 :     m_deviceName = &quot;Mock Device Selected&quot;;</span></span>
-<span id="L284"><span class="lineNum">     284</span>                 :<span class="tlaGNC">           1 :     return true;</span></span>
+<span id="L281"><span class="lineNum">     281</span>                 :<span class="tlaGNC">           2 :     m_active = true;</span></span>
+<span id="L282"><span class="lineNum">     282</span>                 :<span class="tlaGNC">           2 :     m_isExclusive = true; // Default to true in mock to verify UI logic</span></span>
+<span id="L283"><span class="lineNum">     283</span>                 :<span class="tlaGNC">           2 :     m_deviceName = &quot;Mock Device Selected&quot;;</span></span>
+<span id="L284"><span class="lineNum">     284</span>                 :<span class="tlaGNC">           2 :     return true;</span></span>
 <span id="L285"><span class="lineNum">     285</span>                 :             : #endif</span>
 <span id="L286"><span class="lineNum">     286</span>                 :             : }</span>
 <span id="L287"><span class="lineNum">     287</span>                 :             : </span>
@@ -396,22 +396,22 @@
 <span id="L324"><span class="lineNum">     324</span>                 :             : #endif</span>
 <span id="L325"><span class="lineNum">     325</span>                 :             : }</span>
 <span id="L326"><span class="lineNum">     326</span>                 :             : </span>
-<span id="L327"><span class="lineNum">     327</span>                 :<span class="tlaGNC tlaBgGNC">        4383 : bool DirectInputFFB::UpdateForce(double normalizedForce) {</span></span>
-<span id="L328"><span class="lineNum">     328</span>         [<span class="tlaGBC" title="Branch 0 was taken 4380 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3 times"> + </span>]:<span class="tlaGNC">        4383 :     if (!m_active) return false;</span></span>
+<span id="L327"><span class="lineNum">     327</span>                 :<span class="tlaGNC tlaBgGNC">        4764 : bool DirectInputFFB::UpdateForce(double normalizedForce) {</span></span>
+<span id="L328"><span class="lineNum">     328</span>         [<span class="tlaGBC" title="Branch 0 was taken 4758 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6 times"> + </span>]:<span class="tlaGNC">        4764 :     if (!m_active) return false;</span></span>
 <span id="L329"><span class="lineNum">     329</span>                 :             : </span>
 <span id="L330"><span class="lineNum">     330</span>                 :             :     // Sanity Check: If 0.0, stop effect to prevent residual hum</span>
-<span id="L331"><span class="lineNum">     331</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 2 times"> + </span>]:<span class="tlaGNC">           3 :     if (std::abs(normalizedForce) &lt; 0.00001) normalizedForce = 0.0;</span></span>
+<span id="L331"><span class="lineNum">     331</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">           6 :     if (std::abs(normalizedForce) &lt; 0.00001) normalizedForce = 0.0;</span></span>
 <span id="L332"><span class="lineNum">     332</span>                 :             : </span>
 <span id="L333"><span class="lineNum">     333</span>                 :             :     // Clamp</span>
-<span id="L334"><span class="lineNum">     334</span>                 :<span class="tlaGNC">           3 :     normalizedForce = (std::max)(-1.0, (std::min)(1.0, normalizedForce));</span></span>
+<span id="L334"><span class="lineNum">     334</span>                 :<span class="tlaGNC">           6 :     normalizedForce = (std::max)(-1.0, (std::min)(1.0, normalizedForce));</span></span>
 <span id="L335"><span class="lineNum">     335</span>                 :             : </span>
 <span id="L336"><span class="lineNum">     336</span>                 :             :     // Scale to -10000..10000</span>
-<span id="L337"><span class="lineNum">     337</span>                 :<span class="tlaGNC">           3 :     long magnitude = static_cast&lt;long&gt;(normalizedForce * 10000.0);</span></span>
+<span id="L337"><span class="lineNum">     337</span>                 :<span class="tlaGNC">           6 :     long magnitude = static_cast&lt;long&gt;(normalizedForce * 10000.0);</span></span>
 <span id="L338"><span class="lineNum">     338</span>                 :             : </span>
 <span id="L339"><span class="lineNum">     339</span>                 :             :     // DirectInput Overhead Optimization: Don't call driver if value hasn't changed. </span>
 <span id="L340"><span class="lineNum">     340</span>                 :             :     // This check prevents the expensive USB call (only talk to the driver when the force actually changes).</span>
-<span id="L341"><span class="lineNum">     341</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 2 times"> + </span>]:<span class="tlaGNC">           3 :     if (magnitude == m_last_force) return false;</span></span>
-<span id="L342"><span class="lineNum">     342</span>                 :<span class="tlaGNC">           2 :     m_last_force = magnitude;</span></span>
+<span id="L341"><span class="lineNum">     341</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">           6 :     if (magnitude == m_last_force) return false;</span></span>
+<span id="L342"><span class="lineNum">     342</span>                 :<span class="tlaGNC">           4 :     m_last_force = magnitude;</span></span>
 <span id="L343"><span class="lineNum">     343</span>                 :             : </span>
 <span id="L344"><span class="lineNum">     344</span>                 :             : #ifdef _WIN32</span>
 <span id="L345"><span class="lineNum">     345</span>                 :             :     if (m_pEffect) {</span>
@@ -512,7 +512,7 @@
 <span id="L440"><span class="lineNum">     440</span>                 :             :         }</span>
 <span id="L441"><span class="lineNum">     441</span>                 :             :     }</span>
 <span id="L442"><span class="lineNum">     442</span>                 :             : #endif</span>
-<span id="L443"><span class="lineNum">     443</span>                 :<span class="tlaGNC">           2 :     return true;</span></span>
+<span id="L443"><span class="lineNum">     443</span>                 :<span class="tlaGNC">           4 :     return true;</span></span>
 <span id="L444"><span class="lineNum">     444</span>                 :             : }</span>
         </pre>
               </td>
