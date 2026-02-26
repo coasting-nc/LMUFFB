@@ -71,6 +71,7 @@ set(TEST_SOURCES
     test_coverage_expansion.cpp
     test_dxgi_modernization.cpp
     test_main_harness.cpp
+    test_coverage_boost_v2.cpp
     ../src/main.cpp
 )
 
