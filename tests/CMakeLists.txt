@@ -111,7 +111,7 @@ endif()
 enable_testing()
 add_executable(run_combined_tests ${TEST_SOURCES})
 target_compile_definitions(run_combined_tests PRIVATE HEADLESS_GUI LMUFFB_UNIT_TEST)
-target_link_libraries(run_combined_tests PRIVATE LMUFFB_Core)
+target_link_libraries(run_combined_tests PRIVATE LMUFFB_Core_Fast)
 
 if(WIN32)
     target_link_libraries(run_combined_tests PRIVATE version imm32 dxgi)

@@ -97,7 +97,7 @@ jobs:
 
     - name: Configure and Build (Debug + Coverage)
       run: |
-        cmake -S . -B build -DBUILD_HEADLESS=ON -DENABLE_COVERAGE=ON
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DENABLE_COVERAGE=ON
         cmake --build build --config Debug
 
     - name: Run Tests
