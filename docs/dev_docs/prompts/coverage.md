@@ -11,6 +11,8 @@ Prioritize trying to increase the following coverages:
 * Branch coverage of GuiLayer_Linux.cpp
 * Branch coverage of main.cpp, GuiLayer_Common.cpp, Config.h, Logger.h, GuiWidgets.h, GameConnector.cpp.
 
+Also include in your patch a detailed .md report with a detailed discussion about why increasing the coverages above is challenging, in case you were not able to do so; in your report, you must include a detailed section for each of those code files and type of coverages (lines, branches, functions).
+
 See which tests are easier to add. If an intended test to address a particular coverage aspect proves to be too difficult, complex, or time consuming to make, you can skip it and don't write it. The overall goal is to increase the general code coverage to a good level, starting from the easiest tests to write.
 
 To see which files, code lines, branches, and functions are not covered by tests, or have the least coverage, you can see these reports:
