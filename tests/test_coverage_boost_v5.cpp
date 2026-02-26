@@ -312,7 +312,6 @@ TEST_CASE(test_preset_equals_branches, "System") {
     TEST_FIELD_NE(soft_lock_enabled, !p2.soft_lock_enabled);
     TEST_FIELD_NE(soft_lock_stiffness, 0.5f);
     TEST_FIELD_NE(soft_lock_damping, 0.5f);
-    TEST_FIELD_NE(invert_force, !p2.invert_force);
     TEST_FIELD_NE(wheelbase_max_nm, 100.0f);
     TEST_FIELD_NE(target_rim_nm, 100.0f);
     TEST_FIELD_NE(lockup_freq_scale, 0.5f);

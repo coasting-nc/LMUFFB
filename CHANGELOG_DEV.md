@@ -2,8 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.7.83] - 2026-03-05
+## [0.7.83] - 2026-02-26
 ### Removed
+## [0.7.84] - 2026-02-26
+### Changed
+- **Global FFB Inversion (#42)**:
+  - Moved the "Invert FFB Signal" setting out of individual tuning presets and into a global application setting.
+  - This ensures that hardware-specific inversion preferences remain constant when switching between different car profiles.
+  - Removed `invert_force` from `Preset` struct and all associated preset management logic.
+  - Updated configuration loading and saving to handle `invert_force` at the application level.
+### Testing
+- **New Regression Test**: Added `tests/test_issue_42_ffb_inversion.cpp` to verify that changing presets does not alter the global inversion setting.
+- Updated multiple existing tests to accommodate the removal of `Preset::invert_force`.
+
 - **Base Force Mode (#178)**:
   - Removed the "Base Force Mode" feature to simplify the FFB signal chain and user interface.
   - The application now always uses the native physics-based torque (Native mode) for the base steering force.

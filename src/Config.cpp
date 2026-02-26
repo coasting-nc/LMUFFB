@@ -84,7 +84,6 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "soft_lock_enabled") current_preset.soft_lock_enabled = std::stoi(value);
                 else if (key == "soft_lock_stiffness") current_preset.soft_lock_stiffness = std::stof(value);
                 else if (key == "soft_lock_damping") current_preset.soft_lock_damping = std::stof(value);
-                else if (key == "invert_force") current_preset.invert_force = std::stoi(value);
                 else if (key == "wheelbase_max_nm") current_preset.wheelbase_max_nm = std::stof(value);
                 else if (key == "target_rim_nm") current_preset.target_rim_nm = std::stof(value);
                 else if (key == "max_torque_ref") {
@@ -159,7 +158,6 @@ void Config::LoadPresets() {
     // 2. T300 (Custom optimized)
     {
         Preset p("T300", true);
-        p.invert_force = true;
         p.gain = 1.0f;
         p.wheelbase_max_nm = 4.0f;
         p.target_rim_nm = 4.0f;
@@ -831,7 +829,6 @@ void Config::ApplyPreset(int index, FFBEngine& engine) {
 
 void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "app_version=" << p.app_version << "\n";
-    file << "invert_force=" << (p.invert_force ? "1" : "0") << "\n";
     file << "gain=" << p.gain << "\n";
     file << "wheelbase_max_nm=" << p.wheelbase_max_nm << "\n";
     file << "target_rim_nm=" << p.target_rim_nm << "\n";
@@ -1307,6 +1304,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "show_graphs") show_graphs = std::stoi(value);
                     else if (key == "auto_start_logging") m_auto_start_logging = std::stoi(value);
                     else if (key == "log_path") m_log_path = value;
+                    else if (key == "invert_force") engine.m_invert_force = std::stoi(value);
                     else if (key == "gain") engine.m_gain = std::stof(value);
                     else if (key == "sop_smoothing_factor") engine.m_sop_smoothing_factor = std::stof(value);
                     else if (key == "sop_scale") engine.m_sop_scale = std::stof(value);
@@ -1349,7 +1347,6 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "soft_lock_enabled") engine.m_soft_lock_enabled = std::stoi(value);
                     else if (key == "soft_lock_stiffness") engine.m_soft_lock_stiffness = std::stof(value);
                     else if (key == "soft_lock_damping") engine.m_soft_lock_damping = std::stof(value);
-                    else if (key == "invert_force") engine.m_invert_force = std::stoi(value);
                     else if (key == "wheelbase_max_nm") engine.m_wheelbase_max_nm = std::stof(value);
                     else if (key == "target_rim_nm") engine.m_target_rim_nm = std::stof(value);
                     else if (key == "max_torque_ref") {

@@ -179,7 +179,7 @@ public:
     // v0.4.4 Features
     float m_wheelbase_max_nm;
     float m_target_rim_nm;
-    bool m_invert_force;
+    bool m_invert_force = true;
     
     // Base Force Debugging (v0.4.13)
     float m_steering_shaft_gain;
