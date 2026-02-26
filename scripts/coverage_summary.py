@@ -61,25 +61,6 @@ def parse_cobertura(xml_path, metric="line"):
                 summary.append(f"File: {filename}\n  {metric.capitalize()} Coverage: {rate*100:.1f}% (No specific missing {metric}s found)\n")
             continue
 
-        # Group into ranges
-        ranges = []
-        if missing:
-            start = missing[0]
-            prev = start
-            for i in range(1, len(missing)):
-                if missing[i] == prev + 1:
-                    prev = missing[i]
-                else:
-                    if start == prev:
-                        ranges.append(f"{start}")
-                    else:
-                        ranges.append(f"{start}-{prev}")
-                    start = missing[i]
-                    prev = start
-            if start == prev:
-                ranges.append(f"{start}")
-            else:
-                ranges.append(f"{start}-{prev}")
 
         label = "Lines" if metric == "line" else "Branches" if metric == "branch" else "Functions"
         
@@ -149,6 +130,7 @@ if __name__ == "__main__":
     line_report = parse_cobertura(cobertura_path, "line")
     branch_report = parse_cobertura(cobertura_path, "branch")
     
+  
     # Try XML function report first, then JSON
     function_report = parse_cobertura(cobertura_path, "function")
     if not function_report:
