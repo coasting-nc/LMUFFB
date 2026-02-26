@@ -113,11 +113,11 @@ endif()
 
 set(IMGUI_SOURCES ${IMGUI_CORE_SOURCES} ${IMGUI_BACKEND_SOURCES})
 
-include_directories(src)
 if(NOT WIN32)
     include_directories(src/lmu_sm_interface/linux_mock)
     include_directories(src/lmu_sm_interface)
 endif()
+include_directories(src)
 
 # Copy icon file into build directory (Windows only)
 if(WIN32)
@@ -142,6 +142,7 @@ if(WIN32)
 endif()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/src)
+include_directories(src)
 add_definitions(-DLMUFFB_VERSION="${LMUFFB_VERSION}")
 
 # Core Library (Shared between App and Tests)
@@ -167,11 +168,11 @@ endif()
 
 # Optimized Core for the Main Application
 add_library(LMUFFB_Core STATIC ${CORE_SOURCES} ${IMGUI_SOURCES})
-target_include_directories(LMUFFB_Core PUBLIC src ${IMGUI_DIR} ${IMGUI_DIR}/backends ${CMAKE_CURRENT_BINARY_DIR}/src)
+target_include_directories(LMUFFB_Core PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/src src ${IMGUI_DIR} ${IMGUI_DIR}/backends)
 
 # Fast-Compile Core for Tests (Reduced Optimization)
 add_library(LMUFFB_Core_Fast STATIC ${CORE_SOURCES} ${IMGUI_SOURCES})
-target_include_directories(LMUFFB_Core_Fast PUBLIC src ${IMGUI_DIR} ${IMGUI_DIR}/backends ${CMAKE_CURRENT_BINARY_DIR}/src)
+target_include_directories(LMUFFB_Core_Fast PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/src src ${IMGUI_DIR} ${IMGUI_DIR}/backends)
 target_compile_definitions(LMUFFB_Core_Fast PRIVATE LMUFFB_UNIT_TEST)
 
 if(MSVC)

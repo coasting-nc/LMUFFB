@@ -2,8 +2,6 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.7.83] - 2026-02-26
-### Removed
 ## [0.7.84] - 2026-02-26
 ### Changed
 - **Global FFB Inversion (#42)**:
@@ -15,6 +13,8 @@ All notable changes to this project will be documented in this file.
 - **New Regression Test**: Added `tests/test_issue_42_ffb_inversion.cpp` to verify that changing presets does not alter the global inversion setting.
 - Updated multiple existing tests to accommodate the removal of `Preset::invert_force`.
 
+## [0.7.83] - 2026-02-26
+### Removed
 - **Base Force Mode (#178)**:
   - Removed the "Base Force Mode" feature to simplify the FFB signal chain and user interface.
   - The application now always uses the native physics-based torque (Native mode) for the base steering force.
