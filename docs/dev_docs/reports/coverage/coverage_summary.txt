@@ -1,6 +1,5 @@
 File: src/AsyncLogger.h
-  Line Coverage: 99.3%
-  Missing Lines: 212
+  Line Coverage: 100%
 
 File: src/Config.cpp
   Line Coverage: 96.6%
@@ -24,8 +23,8 @@ File: src/FFBEngine.cpp
   Missing Lines: 61
 
 File: src/GameConnector.cpp
-  Line Coverage: 89.1%
-  Missing Lines: 55, 60-63, 68-71, 148
+  Line Coverage: 94.6%
+  Missing Lines: 55, 60-63
 
 File: src/GripLoadEstimation.cpp
   Line Coverage: 100%
@@ -66,12 +65,11 @@ File: src/VehicleUtils.cpp
   Line Coverage: 100%
 
 File: src/main.cpp
-  Line Coverage: 49.6%
-  Missing Lines: 60-63, 65, 117-119, 130-134, 137-139, 143-145, 147-149, 153-179, 181, 184, 186-187, 190-191, 207-212, 214-217, 238, 247-258, 278, 283-284, 287-289, 292, 294-297, 299-300, 302-304, 306, 308-309, 312-313, 316-317, 320-321, 323-324, 327-328, 333, 336-339, 341-345, 347-348, 350-351
+  Line Coverage: 50.8%
+  Missing Lines: 60-63, 65, 119, 130-134, 137-139, 143-145, 147-149, 153-179, 181, 184, 186-187, 190-191, 207-212, 214-217, 238, 247-258, 278, 283-284, 287-289, 292, 294-297, 299-300, 302-304, 306, 308-309, 312-313, 316-317, 320-321, 323-324, 327-328, 333, 336-339, 341-345, 347-348, 350-351
 
 File: src/lmu_sm_interface/LinuxMock.h
-  Line Coverage: 99.0%
-  Missing Lines: 209
+  Line Coverage: 100%
 
 File: src/lmu_sm_interface/SafeSharedMemoryLock.h
   Line Coverage: 100%
