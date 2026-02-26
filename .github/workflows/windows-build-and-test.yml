@@ -257,8 +257,8 @@ jobs:
         else
           PAGE_TITLE="lmuFFB Development Preview"
           PAGE_DESC="Automated builds and reports from the experimental <code>${{ github.ref_name }}</code> branch."
-          BRANCH_INFO="<p style='background: #fffbdd; padding: 10px; border: 1px solid #d4a017; border-radius: 6px;'>⚠️ <strong>Notice:</strong> This is a development build. For the latest stable nightly, visit the <a href='../'>Main Hub</a>.</p>"
-          BACK_LINK="<p><a href='../'>&larr; Back to Main Hub</a></p>"
+          BRANCH_INFO="<p style='background: #fffbdd; padding: 10px; border: 1px solid #d4a017; border-radius: 6px;'>⚠️ <strong>Notice:</strong> This is a development build from a feature branch. For the latest nightly build (main branch), visit the <a href='../../'>Main Hub</a>.</p>"
+          BACK_LINK="<p><a href='../../'>&larr; Back to Main Hub</a></p>"
         fi
 
         cat <<EOF > "site/$SUBDIR/index.html"
