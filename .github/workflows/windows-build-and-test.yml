@@ -187,6 +187,9 @@ jobs:
       contents: write
       pages: write
       id-token: write
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'github-pages' || 'branch-previews' }}
+      url: ${{ steps.deployment.outputs.page_url }}${{ steps.target.outputs.subdir == '.' && '' || '/' }}${{ steps.target.outputs.subdir }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
