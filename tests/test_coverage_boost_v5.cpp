@@ -238,9 +238,15 @@ TEST_CASE(test_gui_platform_mock, "GUI") {
     plat.GetAlwaysOnTopMock();
     plat.ResizeWindow(0,0,0,0);
     plat.SaveWindowGeometry(true);
+
+#ifndef _WIN32
     std::string p;
     plat.OpenPresetFileDialog(p);
     plat.SavePresetFileDialog(p, "test");
+#else
+    std::cout << "  [INFO] Skipping blocking GUI file dialogs on Windows tests." << std::endl;
+#endif
+
     plat.GetWindowHandle();
 
     std::cout << "[PASS] GuiPlatform Mock functions called" << std::endl;
