@@ -303,17 +303,30 @@ jobs:
       shell: bash
       run: |
         cd site
-        # If .git doesn't exist (first run), initialize it
+        # If .git doesn't exist (first run or checkout failed), initialize it
         if [ ! -d ".git" ]; then
           git init
-          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          git checkout -b gh-pages
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
         fi
+        
+        # Ensure we are on the gh-pages branch
+        # -M renames the current branch (master/main) to gh-pages if it's a fresh repo
+        git branch -M gh-pages
+        
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
+        
         git add .
-        git commit -m "Update ${{ steps.target.outputs.subdir }} from ${{ github.ref_name }}@${{ github.sha }}" || echo "No changes to commit"
-        git push origin gh-pages
+        
+        # Only commit and push if there are changes
+        if [ -n "$(git status --porcelain)" ]; then
+          git commit -m "Update ${{ steps.target.outputs.subdir }} from ${{ github.ref_name }}@${{ github.sha }}"
+          # Use --force if it's the first time or if the remote has diverged and we want to overwrite 
+          # (though with the checkout-merge strategy we should be fast-forwarding mostly)
+          git push origin gh-pages
+        else
+          echo "No changes to commit"
+        fi
 
     - name: Setup Pages
       uses: actions/configure-pages@v4
