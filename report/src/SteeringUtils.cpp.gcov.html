@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - coverage_filtered.info - src/SteeringUtils.cpp</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - SteeringUtils.cpp<span style="font-size: 80%;"> (source / <a href="SteeringUtils.cpp.func-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">coverage_filtered.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntry">12</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2026-02-26 15:09:41</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">1</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">8</td>
+            <td class="headerCovTableEntry">8</td>
+          </tr>
+                  <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>                 :             : #include &quot;FFBEngine.h&quot;</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : #include &lt;cmath&gt;</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             : #include &lt;algorithm&gt;</span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : </span>
+<span id="L5"><span class="lineNum">       5</span>                 :             : // ---------------------------------------------------------------------------</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : // Steering &amp; Wheel Mechanics methods have been moved from FFBEngine.cpp.</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : // This includes the Soft Lock logic which prevents the wheel from rotating</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : // beyond the car's physical steering rack limits.</span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : // ---------------------------------------------------------------------------</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : </span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : // Helper: Calculate Soft Lock (v0.7.61 - Issue #117)</span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : // Provides a progressive spring-damping force when the wheel exceeds 100% lock.</span>
+<span id="L13"><span class="lineNum">      13</span>                 :<span class="tlaGNC tlaBgGNC">       10142 : void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext&amp; ctx) {</span></span>
+<span id="L14"><span class="lineNum">      14</span>                 :<span class="tlaGNC">       10142 :     ctx.soft_lock_force = 0.0;</span></span>
+<span id="L15"><span class="lineNum">      15</span>         [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 10138 times"> + </span>]:<span class="tlaGNC">       10142 :     if (!m_soft_lock_enabled) return;</span></span>
+<span id="L16"><span class="lineNum">      16</span>                 :             : </span>
+<span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC">       10138 :     double steer = data-&gt;mUnfilteredSteering;</span></span>
+<span id="L18"><span class="lineNum">      18</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 10136 times"> + </span>]:<span class="tlaGNC">       10138 :     if (!std::isfinite(steer)) return;</span></span>
+<span id="L19"><span class="lineNum">      19</span>                 :             : </span>
+<span id="L20"><span class="lineNum">      20</span>                 :<span class="tlaGNC">       10136 :     double abs_steer = std::abs(steer);</span></span>
+<span id="L21"><span class="lineNum">      21</span>         [<span class="tlaGBC" title="Branch 0 was taken 11 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 10125 times"> + </span>]:<span class="tlaGNC">       10136 :     if (abs_steer &gt; 1.0) {</span></span>
+<span id="L22"><span class="lineNum">      22</span>                 :<span class="tlaGNC">          11 :         double excess = abs_steer - 1.0;</span></span>
+<span id="L23"><span class="lineNum">      23</span>         [<span class="tlaGBC" title="Branch 0 was taken 10 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">          11 :         double sign = (steer &gt; 0.0) ? 1.0 : -1.0;</span></span>
+<span id="L24"><span class="lineNum">      24</span>                 :             : </span>
+<span id="L25"><span class="lineNum">      25</span>                 :             :         // Spring Force: pushes back to 1.0</span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">          11 :         double spring = excess * m_soft_lock_stiffness * (double)BASE_NM_SOFT_LOCK;</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :             : </span>
+<span id="L28"><span class="lineNum">      28</span>                 :             :         // Damping Force: opposes movement to prevent bouncing</span>
+<span id="L29"><span class="lineNum">      29</span>                 :             :         // Uses m_steering_velocity_smoothed which is in rad/s</span>
+<span id="L30"><span class="lineNum">      30</span>                 :<span class="tlaGNC">          11 :         double damping = m_steering_velocity_smoothed * m_soft_lock_damping * (double)BASE_NM_SOFT_LOCK;</span></span>
+<span id="L31"><span class="lineNum">      31</span>                 :             : </span>
+<span id="L32"><span class="lineNum">      32</span>                 :             :         // Total Soft Lock force (opposing the steering direction)</span>
+<span id="L33"><span class="lineNum">      33</span>                 :             :         // Note: damping already has a sign from m_steering_velocity_smoothed.</span>
+<span id="L34"><span class="lineNum">      34</span>                 :             :         // If moving further away from limit, damping should oppose it.</span>
+<span id="L35"><span class="lineNum">      35</span>                 :             :         // If returning to center, damping should also oppose it (slowing down the return).</span>
+<span id="L36"><span class="lineNum">      36</span>                 :<span class="tlaGNC">          11 :         ctx.soft_lock_force = -(spring * sign + damping);</span></span>
+<span id="L37"><span class="lineNum">      37</span>                 :             :     }</span>
+<span id="L38"><span class="lineNum">      38</span>                 :             : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.0-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>
