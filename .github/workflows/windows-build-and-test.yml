@@ -240,15 +240,20 @@ jobs:
     - name: Generate Content
       run: |
         SUBDIR="${{ steps.target.outputs.subdir }}"
+        
+        # Clear existing content for this subdir to avoid stale artifacts
+        rm -rf "site/$SUBDIR/report"
+        rm -rf "site/$SUBDIR/download"
         mkdir -p "site/$SUBDIR/report"
         mkdir -p "site/$SUBDIR/download"
         
+        # Find the zip file name from the FRESH download
+        ZIP_NAME=$(basename $(ls temp_download/*.zip | head -n 1))
+        echo "Found new artifact: $ZIP_NAME"
+        
         # Copy current build artifacts to the target subfolder
         cp -r temp_report/* "site/$SUBDIR/report/"
-        cp -r temp_download/*.zip "site/$SUBDIR/download/"
-        
-        # Find the zip file name
-        ZIP_NAME=$(basename $(ls site/$SUBDIR/download/*.zip | head -n 1))
+        cp -f temp_download/*.zip "site/$SUBDIR/download/"
         
         # Generate the landing page for this target
         if [[ "${{ steps.target.outputs.is_main }}" == "true" ]]; then
