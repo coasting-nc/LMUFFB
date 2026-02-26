@@ -230,6 +230,11 @@ public:
     static void CallCalculateWheelSpin(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
         e.calculate_wheel_spin(data, ctx);
     }
+    static void SetTorqueSource(FFBEngine& e, int val) { e.m_torque_source = val; }
+    static void SetInvertForce(FFBEngine& e, bool val) { e.m_invert_force = val; }
+    static void SetMinForce(FFBEngine& e, float val) { e.m_min_force = val; }
+    static void SetSoftLockEnabled(FFBEngine& e, bool val) { e.m_soft_lock_enabled = val; }
+    static void SetLockupEnabled(FFBEngine& e, bool val) { e.m_lockup_enabled = val; }
     static void CallCalculateSlideTexture(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
         e.calculate_slide_texture(data, ctx);
     }
