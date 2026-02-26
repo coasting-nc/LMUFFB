@@ -75,6 +75,7 @@ set(TEST_SOURCES
     test_coverage_boost_v3.cpp
     test_coverage_boost_v4.cpp
     test_coverage_boost_v5.cpp
+    test_coverage_boost_v6.cpp
     test_config_comprehensive.cpp
     ../src/main.cpp
 )
