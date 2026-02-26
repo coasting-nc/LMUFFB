@@ -56,4 +56,32 @@ TEST_CASE(test_issue_42_ffb_inversion_persistence, "Config") {
     ASSERT_FALSE(engine.m_invert_force); // Apply should NOT have changed it to true
 }
 
+TEST_CASE(test_issue_42_ffb_inversion_global_persistence, "Config") {
+    std::cout << "\nTest: Issue #42 - FFB Inversion Global Persistence (Save/Load)" << std::endl;
+
+    FFBEngine engine;
+    InitializeEngine(engine);
+    std::string test_ini = "test_issue_42_persistence.ini";
+
+    // Case 1: Save as True, Load
+    FFBEngineTestAccess::SetInvertForce(engine, true);
+    Config::Save(engine, test_ini);
+
+    FFBEngine engine_load;
+    FFBEngineTestAccess::SetInvertForce(engine_load, false); // Distort
+    Config::Load(engine_load, test_ini);
+    ASSERT_TRUE(engine_load.m_invert_force);
+
+    // Case 2: Save as False, Load
+    FFBEngineTestAccess::SetInvertForce(engine, false);
+    Config::Save(engine, test_ini);
+
+    FFBEngine engine_load2;
+    FFBEngineTestAccess::SetInvertForce(engine_load2, true); // Distort
+    Config::Load(engine_load2, test_ini);
+    ASSERT_FALSE(engine_load2.m_invert_force);
+
+    std::remove(test_ini.c_str());
+}
+
 } // namespace FFBEngineTests
