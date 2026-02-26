@@ -52,7 +52,6 @@ namespace Tooltips {
     inline constexpr const char* UNDERSTEER_EFFECT = "Scales how much front grip loss reduces steering force.";
     inline constexpr const char* DYNAMIC_WEIGHT = "Scales steering weight based on longitudinal load transfer.\nHeavier under braking, lighter under acceleration.";
     inline constexpr const char* WEIGHT_SMOOTHING = "Filters the Dynamic Weight signal to simulate suspension damping.\nHigher = Smoother weight transfer feel, but less instant.\nRecommended: 0.100s - 0.200s.";
-    inline constexpr const char* BASE_FORCE_MODE = "Debug tool to isolate effects.\nNative: Normal Operation.\nSynthetic: Constant force to test direction.\nMuted: Disables base physics (good for tuning vibrations).";
     inline constexpr const char* TORQUE_SOURCE = "Select the telemetry channel for base steering torque.\nShaft Torque: Standard rF2 physics channel (typically 100Hz).\nIn-Game FFB: New LMU high-frequency channel (native 400Hz). RECOMMENDED.\nThis is the actual FFB signal processed by the game engine.";
     inline constexpr const char* PURE_PASSTHROUGH = "Bypasses LMUFFB's internal Understeer and Dynamic Weight modulation\nfor the base steering torque.\nRecommended when using In-Game FFB (400Hz) if you prefer\nthe game's native FFB modulation.";
 
@@ -141,7 +140,7 @@ namespace Tooltips {
         PRESET_NAME, PRESET_SAVE_NEW, PRESET_SAVE_CURRENT, PRESET_RESET, PRESET_DUPLICATE, PRESET_DELETE, PRESET_IMPORT, PRESET_EXPORT,
         USE_INGAME_FFB, INVERT_FFB, MASTER_GAIN, WHEELBASE_MAX_TORQUE, TARGET_RIM_TORQUE, MIN_FORCE,
         SOFT_LOCK_ENABLE, SOFT_LOCK_STIFFNESS, SOFT_LOCK_DAMPING,
-        INGAME_FFB_GAIN, STEERING_SHAFT_GAIN, STEERING_SHAFT_SMOOTHING, UNDERSTEER_EFFECT, DYNAMIC_WEIGHT, WEIGHT_SMOOTHING, BASE_FORCE_MODE, TORQUE_SOURCE, PURE_PASSTHROUGH,
+        INGAME_FFB_GAIN, STEERING_SHAFT_GAIN, STEERING_SHAFT_SMOOTHING, UNDERSTEER_EFFECT, DYNAMIC_WEIGHT, WEIGHT_SMOOTHING, TORQUE_SOURCE, PURE_PASSTHROUGH,
         FLATSPOT_SUPPRESSION, NOTCH_Q, SUPPRESSION_STRENGTH, STATIC_NOISE_FILTER, STATIC_NOTCH_FREQ, STATIC_NOTCH_WIDTH,
         OVERSTEER_BOOST, LATERAL_G, REAR_ALIGN_TORQUE, YAW_KICK, YAW_KICK_THRESHOLD, YAW_KICK_RESPONSE, GYRO_DAMPING, GYRO_SMOOTH, SOP_SMOOTHING, GRIP_SMOOTHING, SOP_SCALE,
         SLIP_ANGLE_SMOOTHING, CHASSIS_INERTIA, OPTIMAL_SLIP_ANGLE, OPTIMAL_SLIP_RATIO,

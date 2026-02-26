@@ -181,7 +181,6 @@ TEST_CASE(test_preset_understeer_only_isolation, "Understeer") {
     // VERIFY: Critical physics parameters are set correctly
     ASSERT_NEAR(p.optimal_slip_angle, 0.10f, 0.001f);    // Optimal slip angle threshold
     ASSERT_NEAR(p.optimal_slip_ratio, 0.12f, 0.001f);    // Optimal slip ratio threshold
-    ASSERT_TRUE(p.base_force_mode == 0);                 // Native physics mode
     
     // VERIFY: Speed gate is disabled (0.0 = no gating)
     ASSERT_NEAR(p.speed_gate_lower, 0.0f, 0.001f);       // Speed gate disabled

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.83] - 2026-03-05
+### Removed
+- **Base Force Mode (#178)**:
+  - Removed the "Base Force Mode" feature to simplify the FFB signal chain and user interface.
+  - The application now always uses the native physics-based torque (Native mode) for the base steering force.
+  - Removed "Synthetic" and "Muted" modes which were redundant or rarely used.
+  - Cleaned up internal `Preset` structure and configuration parsing logic.
+
 ## [0.7.82] - 2026-02-25
 ### Fixed
 - **Windows Build & Test Reliability**:

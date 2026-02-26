@@ -437,16 +437,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // 2. Signal Conditioning (Smoothing, Notch Filters)
     double game_force_proc = apply_signal_conditioning(raw_torque_input, data, ctx);
 
-    // Base Force Mode
-    double base_input = 0.0;
-    if (m_base_force_mode == 0) {
-        base_input = game_force_proc;
-    } else if (m_base_force_mode == 1) {
-        if (std::abs(game_force_proc) > SYNTHETIC_MODE_DEADZONE_NM) {
-            double sign = (game_force_proc > 0.0) ? 1.0 : -1.0;
-            base_input = sign * (double)m_wheelbase_max_nm;
-        }
-    }
+    // Base Steering Force (Issue #178)
+    double base_input = game_force_proc;
     
     // Apply Grip Modulation
     double grip_loss = (1.0 - ctx.avg_grip) * m_understeer_effect;

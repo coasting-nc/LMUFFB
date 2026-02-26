@@ -111,7 +111,6 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "steering_shaft_gain") current_preset.steering_shaft_gain = std::stof(value);
                 else if (key == "ingame_ffb_gain") current_preset.ingame_ffb_gain = std::stof(value);
                 else if (key == "slip_angle_smoothing") current_preset.slip_smoothing = std::stof(value);
-                else if (key == "base_force_mode") current_preset.base_force_mode = std::stoi(value);
                 else if (key == "torque_source") current_preset.torque_source = std::stoi(value);
                 else if (key == "torque_passthrough") current_preset.torque_passthrough = (value == "1" || value == "true");
                 else if (key == "gyro_gain") current_preset.gyro_gain = (std::min)(1.0f, std::stof(value));
@@ -168,7 +167,6 @@ void Config::LoadPresets() {
         p.steering_shaft_gain = 1.0f;
         p.steering_shaft_smoothing = 0.0f;
         p.understeer = 0.5f;
-        p.base_force_mode = 0;
         p.flatspot_suppression = false;
         p.notch_q = 2.0f;
         p.flatspot_strength = 1.0f;
@@ -230,7 +228,6 @@ void Config::LoadPresets() {
         p.steering_shaft_gain = 1.0f;
         p.steering_shaft_smoothing = 0.0f;
         p.understeer = 1.0f;
-        p.base_force_mode = 0;
         p.flatspot_suppression = false;
         p.notch_q = 2.0f;
         p.flatspot_strength = 1.0f;
@@ -292,7 +289,6 @@ void Config::LoadPresets() {
         p.steering_shaft_gain = 1.0f;
         p.steering_shaft_smoothing = 0.0f;
         p.understeer = 1.0f;
-        p.base_force_mode = 0;
         p.flatspot_suppression = false;
         p.notch_q = 2.0f;
         p.flatspot_strength = 1.0f;
@@ -354,7 +350,6 @@ void Config::LoadPresets() {
         p.steering_shaft_gain = 1.989f;
         p.steering_shaft_smoothing = 0.0f;
         p.understeer = 0.638f;
-        p.base_force_mode = 0;
         p.flatspot_suppression = true;
         p.notch_q = 0.57f;
         p.flatspot_strength = 1.0f;
@@ -417,7 +412,6 @@ void Config::LoadPresets() {
         p.steering_shaft_gain = 1.989f;
         p.steering_shaft_smoothing = 0.0f;
         p.understeer = 0.638f;
-        p.base_force_mode = 0;
         p.flatspot_suppression = true;
         p.notch_q = 0.57f;
         p.flatspot_strength = 1.0f;
@@ -490,7 +484,6 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
         .SetSoPYaw(0.0f)
-        .SetBaseMode(2) // Muted
     );
 
     // 10. Test: Understeer Only (Updated v0.6.31 for proper effect isolation)
@@ -520,7 +513,6 @@ void Config::LoadPresets() {
         
         // PHYSICS PARAMETERS (Explicit for clarity and future-proofing)
         .SetOptimalSlip(0.10f, 0.12f)  // Explicit optimal slip thresholds
-        .SetBaseMode(0)                 // Native physics mode (required for understeer)
         .SetSpeedGate(0.0f, 0.0f)      // Disable speed gate (0 = no gating)
     );
 
@@ -550,9 +542,6 @@ void Config::LoadPresets() {
         // SMOOTHING
         .SetSmoothing(0.85f)
         .SetSlipSmoothing(0.015f)
-        
-        // BASE MODE
-        .SetBaseMode(2)  // Muted: Feel only the yaw kick impulse
     );
 
     // 12. Test: Textures Only
@@ -567,7 +556,6 @@ void Config::LoadPresets() {
         .SetSlide(true, 0.39f)
         .SetRoad(true, 1.0f)
         .SetRearAlign(0.0f)
-        .SetBaseMode(2) // Muted
     );
 
     // 13. Test: Rear Align Torque Only
@@ -592,7 +580,6 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
         .SetSoPYaw(0.0f)
-        .SetBaseMode(2) // Muted
     );
 
     // 15. Test: Slide Texture Only
@@ -604,7 +591,6 @@ void Config::LoadPresets() {
         .SetSlipSmoothing(0.015f)
         .SetSlide(true, 0.39f, 1.0f)
         .SetRearAlign(0.0f)
-        .SetBaseMode(2) // Muted
     );
 
     // 16. Test: No Effects
@@ -616,7 +602,6 @@ void Config::LoadPresets() {
         .SetSlipSmoothing(0.015f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
-        .SetBaseMode(2) // Muted
     );
 
     // --- NEW GUIDE PRESETS (v0.4.24) ---
@@ -637,7 +622,6 @@ void Config::LoadPresets() {
         .SetScrub(0.0f)
         .SetSmoothing(0.85f)
         .SetSlipSmoothing(0.015f)
-        .SetBaseMode(0) // Native Physics needed to feel the drop
     );
 
     // 18. Guide: Oversteer (Rear Grip Loss)
@@ -657,7 +641,6 @@ void Config::LoadPresets() {
         .SetScrub(0.0f)
         .SetSmoothing(0.85f)
         .SetSlipSmoothing(0.015f)
-        .SetBaseMode(0) // Native Physics + Boost
     );
 
     // 19. Guide: Slide Texture (Scrubbing)
@@ -674,7 +657,6 @@ void Config::LoadPresets() {
         .SetRoad(false, 0.0f)
         .SetSmoothing(0.85f)
         .SetSlipSmoothing(0.015f)
-        .SetBaseMode(2) // Muted for clear texture feel
     );
 
     // 20. Guide: Braking Lockup
@@ -691,7 +673,6 @@ void Config::LoadPresets() {
         .SetScrub(0.0f)
         .SetSmoothing(0.85f)
         .SetSlipSmoothing(0.015f)
-        .SetBaseMode(2) // Muted
     );
 
     // 21. Guide: Traction Loss (Wheel Spin)
@@ -708,7 +689,6 @@ void Config::LoadPresets() {
         .SetScrub(0.0f)
         .SetSmoothing(0.85f)
         .SetSlipSmoothing(0.015f)
-        .SetBaseMode(2) // Muted
     );
 
      // 22. Guide: SoP Yaw (Kick)
@@ -727,7 +707,6 @@ void Config::LoadPresets() {
         .SetScrub(0.0f)
         .SetSmoothing(0.85f)
         .SetSlipSmoothing(0.015f)
-        .SetBaseMode(2) // Muted: Feel only the rotation impulse
     );
 
     // 23. Guide: Gyroscopic Damping
@@ -746,7 +725,6 @@ void Config::LoadPresets() {
         .SetScrub(0.0f)
         .SetSmoothing(0.85f)
         .SetSlipSmoothing(0.015f)
-        .SetBaseMode(2) // Muted: Feel only the resistance to movement
     );
 
     // --- Parse User Presets from config.ini ---
@@ -863,7 +841,6 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "ingame_ffb_gain=" << p.ingame_ffb_gain << "\n";
     file << "steering_shaft_smoothing=" << p.steering_shaft_smoothing << "\n";
     file << "understeer=" << p.understeer << "\n";
-    file << "base_force_mode=" << p.base_force_mode << "\n";
     file << "torque_source=" << p.torque_source << "\n";
     file << "torque_passthrough=" << p.torque_passthrough << "\n";
     file << "flatspot_suppression=" << p.flatspot_suppression << "\n";
@@ -1161,7 +1138,6 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "ingame_ffb_gain=" << engine.m_ingame_ffb_gain << "\n";
         file << "steering_shaft_smoothing=" << engine.m_steering_shaft_smoothing << "\n";
         file << "understeer=" << engine.m_understeer_effect << "\n";
-        file << "base_force_mode=" << engine.m_base_force_mode << "\n";
         file << "torque_source=" << engine.m_torque_source << "\n";
         file << "torque_passthrough=" << engine.m_torque_passthrough << "\n";
         file << "flatspot_suppression=" << engine.m_flatspot_suppression << "\n";
@@ -1340,7 +1316,6 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "brake_load_cap") engine.m_brake_load_cap = std::stof(value);
                     else if (key == "smoothing") engine.m_sop_smoothing_factor = std::stof(value); // Legacy support
                     else if (key == "understeer") engine.m_understeer_effect = std::stof(value);
-                    else if (key == "base_force_mode") engine.m_base_force_mode = std::stoi(value);
                     else if (key == "torque_source") engine.m_torque_source = std::stoi(value);
                     else if (key == "torque_passthrough") engine.m_torque_passthrough = (value == "1" || value == "true");
                     else if (key == "sop") engine.m_sop_effect = std::stof(value);
@@ -1397,7 +1372,6 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "sop_yaw_gain") engine.m_sop_yaw_gain = std::stof(value);
                     else if (key == "steering_shaft_gain") engine.m_steering_shaft_gain = std::stof(value);
                     else if (key == "ingame_ffb_gain") engine.m_ingame_ffb_gain = std::stof(value);
-                    else if (key == "base_force_mode") engine.m_base_force_mode = std::stoi(value);
                     else if (key == "gyro_gain") engine.m_gyro_gain = (std::min)(1.0f, std::stof(value));
                     else if (key == "flatspot_suppression") engine.m_flatspot_suppression = std::stoi(value);
                     else if (key == "notch_q") engine.m_notch_q = std::stof(value);

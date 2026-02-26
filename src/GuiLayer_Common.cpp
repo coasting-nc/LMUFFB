@@ -463,10 +463,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("  Weight Smoothing", &engine.m_dynamic_weight_smoothing, 0.000f, 0.500f, "%.3f s",
             Tooltips::WEIGHT_SMOOTHING);
 
-        const char* base_modes[] = { "Native (Steering Shaft Torque)", "Synthetic (Constant)", "Muted (Off)" };
-        IntSetting("Base Force Mode", &engine.m_base_force_mode, base_modes, sizeof(base_modes)/sizeof(base_modes[0]),
-            Tooltips::BASE_FORCE_MODE);
-
         const char* torque_sources[] = { "Shaft Torque (100Hz Legacy)", "In-Game FFB (400Hz LMU 1.2+)" };
         IntSetting("Torque Source", &engine.m_torque_source, torque_sources, sizeof(torque_sources)/sizeof(torque_sources[0]),
             Tooltips::TORQUE_SOURCE);
