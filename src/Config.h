@@ -71,7 +71,6 @@ struct Preset {
     float soft_lock_stiffness = 20.0f;
     float soft_lock_damping = 0.5f;
     
-    bool invert_force = true;
     float wheelbase_max_nm = 15.0f; // Default DD
     float target_rim_nm = 10.0f;    // Default target
     
@@ -190,7 +189,6 @@ struct Preset {
         return *this;
     }
     
-    Preset& SetInvert(bool v) { invert_force = v; return *this; }
     Preset& SetHardwareScaling(float wheelbase, float target) {
         wheelbase_max_nm = wheelbase;
         target_rim_nm = target;
@@ -321,7 +319,6 @@ struct Preset {
         engine.m_soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
         engine.m_soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
 
-        engine.m_invert_force = invert_force;
         engine.m_wheelbase_max_nm = (std::max)(1.0f, wheelbase_max_nm);
         engine.m_target_rim_nm = (std::max)(1.0f, target_rim_nm);
         engine.m_abs_freq_hz = (std::max)(1.0f, abs_freq);
@@ -492,7 +489,6 @@ struct Preset {
         soft_lock_stiffness = engine.m_soft_lock_stiffness;
         soft_lock_damping = engine.m_soft_lock_damping;
 
-        invert_force = engine.m_invert_force;
         wheelbase_max_nm = engine.m_wheelbase_max_nm;
         target_rim_nm = engine.m_target_rim_nm;
         abs_freq = engine.m_abs_freq_hz;
@@ -599,7 +595,6 @@ struct Preset {
         if (!is_near(soft_lock_stiffness, p.soft_lock_stiffness, eps)) return false;
         if (!is_near(soft_lock_damping, p.soft_lock_damping, eps)) return false;
 
-        if (invert_force != p.invert_force) return false;
         if (!is_near(wheelbase_max_nm, p.wheelbase_max_nm, eps)) return false;
         if (!is_near(target_rim_nm, p.target_rim_nm, eps)) return false;
         if (!is_near(lockup_freq_scale, p.lockup_freq_scale, eps)) return false;

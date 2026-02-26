@@ -4,7 +4,19 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 [b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
 
-[size=5][b]March 2, 2026[/b][/size]
+[size=5][b]February 26, 2026[/b][/size]
+[b]Version 0.7.84 - Global FFB Inversion[/b]
+
+[b]New release[/b] (0.7.84): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Global Inversion Setting[/b]: Moved the "Invert FFB Signal" setting out of individual tuning presets and into a global application setting. This ensures that your hardware-specific inversion preference remains constant when switching between different car profiles. (#42)
+[/list]
+
+---
+
+[size=5][b]February 26, 2026[/b][/size]
 [b]Version 0.7.81 - DirectX Pipeline Modernization[/b]
 
 [b]New release[/b] (0.7.81): https://github.com/coasting-nc/LMUFFB/releases
