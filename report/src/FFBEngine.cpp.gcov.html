@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-02-26 20:03:13</td>
+            <td class="headerValue">2026-02-26 20:15:22</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -109,14 +109,14 @@
 <span id="L38"><span class="lineNum">      38</span>                 :             : // v0.7.49: Slew rate limiter for safety (#79)</span>
 <span id="L39"><span class="lineNum">      39</span>                 :             : // Clamps the rate of change of the output force to prevent violent jolts.</span>
 <span id="L40"><span class="lineNum">      40</span>                 :             : // If restricted is true (e.g. after finish or lost control), limit is tighter.</span>
-<span id="L41"><span class="lineNum">      41</span>                 :<span class="tlaGNC">        4768 : double FFBEngine::ApplySafetySlew(double target_force, double dt, bool restricted) {</span></span>
-<span id="L42"><span class="lineNum">      42</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4765 times"> + </span>]:<span class="tlaGNC">        4768 :     if (!std::isfinite(target_force)) return 0.0;</span></span>
-<span id="L43"><span class="lineNum">      43</span>         [<span class="tlaGBC" title="Branch 0 was taken 4762 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3 times"> + </span>]:<span class="tlaGNC">        4765 :     double max_slew = restricted ? 100.0 : 1000.0;</span></span>
-<span id="L44"><span class="lineNum">      44</span>                 :<span class="tlaGNC">        4765 :     double max_change = max_slew * dt;</span></span>
-<span id="L45"><span class="lineNum">      45</span>                 :<span class="tlaGNC">        4765 :     double delta = target_force - m_last_output_force;</span></span>
-<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">        4765 :     delta = std::clamp(delta, -max_change, max_change);</span></span>
-<span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaGNC">        4765 :     m_last_output_force += delta;</span></span>
-<span id="L48"><span class="lineNum">      48</span>                 :<span class="tlaGNC">        4765 :     return m_last_output_force;</span></span>
+<span id="L41"><span class="lineNum">      41</span>                 :<span class="tlaGNC">        4767 : double FFBEngine::ApplySafetySlew(double target_force, double dt, bool restricted) {</span></span>
+<span id="L42"><span class="lineNum">      42</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4764 times"> + </span>]:<span class="tlaGNC">        4767 :     if (!std::isfinite(target_force)) return 0.0;</span></span>
+<span id="L43"><span class="lineNum">      43</span>         [<span class="tlaGBC" title="Branch 0 was taken 4761 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3 times"> + </span>]:<span class="tlaGNC">        4764 :     double max_slew = restricted ? 100.0 : 1000.0;</span></span>
+<span id="L44"><span class="lineNum">      44</span>                 :<span class="tlaGNC">        4764 :     double max_change = max_slew * dt;</span></span>
+<span id="L45"><span class="lineNum">      45</span>                 :<span class="tlaGNC">        4764 :     double delta = target_force - m_last_output_force;</span></span>
+<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">        4764 :     delta = std::clamp(delta, -max_change, max_change);</span></span>
+<span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaGNC">        4764 :     m_last_output_force += delta;</span></span>
+<span id="L48"><span class="lineNum">      48</span>                 :<span class="tlaGNC">        4764 :     return m_last_output_force;</span></span>
 <span id="L49"><span class="lineNum">      49</span>                 :             : }</span>
 <span id="L50"><span class="lineNum">      50</span>                 :             : </span>
 <span id="L51"><span class="lineNum">      51</span>                 :             : // Helper to retrieve data (Consumer)</span>
