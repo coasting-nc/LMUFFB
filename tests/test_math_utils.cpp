@@ -5,6 +5,8 @@ namespace FFBEngineTests {
 
 TEST_CASE(test_biquad_notch_stability, "Math") {
     ffb_math::BiquadNotch filter;
+
+    // Normal update
     filter.Update(10.0, 400.0, 2.0); // 10Hz notch at 400Hz
 
     // Impulse
@@ -26,6 +28,18 @@ TEST_CASE(test_biquad_notch_stability, "Math") {
     ASSERT_TRUE(std::isfinite(out));
 }
 
+TEST_CASE(test_biquad_clamping, "Math") {
+    ffb_math::BiquadNotch filter;
+
+    // Low frequency clamping (min 1.0Hz)
+    filter.Update(0.1, 400.0, 1.0);
+    ASSERT_NEAR(filter.b0, 1.0 / (1.0 + std::sin(2.0*ffb_math::PI*1.0/400.0)/(2.0*1.0)), 0.0001);
+
+    // High frequency clamping (max 0.49 * sample_rate)
+    filter.Update(300.0, 400.0, 1.0); // 300Hz > 196Hz (400*0.49)
+    ASSERT_NEAR(filter.b0, 1.0 / (1.0 + std::sin(2.0*ffb_math::PI*196.0/400.0)/(2.0*1.0)), 0.0001);
+}
+
 TEST_CASE(test_inverse_lerp_behavior, "Math") {
     // Normal range
     ASSERT_NEAR(ffb_math::inverse_lerp(0.0, 10.0, 5.0), 0.5, 0.001);
@@ -35,12 +49,17 @@ TEST_CASE(test_inverse_lerp_behavior, "Math") {
     ASSERT_NEAR(ffb_math::inverse_lerp(0.0, 10.0, -5.0), 0.0, 0.001);
     
     // Inverse range (min > max)
-    // Plan says: min=10, max=0, val=5 -> Expected 0.5
     ASSERT_NEAR(ffb_math::inverse_lerp(10.0, 0.0, 5.0), 0.5, 0.001);
     
-    // Degenerate case (zero range)
-    // Plan says: min=5, max=5, val=5 -> Expected 1.0
+    // Degenerate case (zero range): Implementation returns 1.0 if val >= min, else 0.0
     ASSERT_NEAR(ffb_math::inverse_lerp(5.0, 5.0, 5.0), 1.0, 0.001);
+    ASSERT_NEAR(ffb_math::inverse_lerp(5.0, 5.0, 4.0), 0.0, 0.001); // value < min -> 0.0
+    ASSERT_NEAR(ffb_math::inverse_lerp(5.0, 5.0, 6.0), 1.0, 0.001); // value >= min -> 1.0
+
+    // Inverse degenerate case (near-zero range, min > max): Implementation returns 1.0 if val <= min
+    ASSERT_NEAR(ffb_math::inverse_lerp(5.0, 4.999999, 5.0), 1.0, 0.001); // value <= min -> 1.0
+    ASSERT_NEAR(ffb_math::inverse_lerp(5.0, 4.999999, 5.1), 0.0, 0.001); // value > min -> 0.0
+    ASSERT_NEAR(ffb_math::inverse_lerp(5.0, 4.999999, 4.0), 1.0, 0.001); // value <= min -> 1.0
 }
 
 TEST_CASE(test_smoothstep_behavior, "Math") {
@@ -51,6 +70,10 @@ TEST_CASE(test_smoothstep_behavior, "Math") {
     // Clamping
     ASSERT_NEAR(ffb_math::smoothstep(0.0, 10.0, 15.0), 1.0, 0.001);
     ASSERT_NEAR(ffb_math::smoothstep(0.0, 10.0, -5.0), 0.0, 0.001);
+
+    // Degenerate case (zero range): Implementation returns 1.0 if x >= edge0, else 0.0
+    ASSERT_NEAR(ffb_math::smoothstep(5.0, 5.0, 5.0), 1.0, 0.001); // x >= edge0
+    ASSERT_NEAR(ffb_math::smoothstep(5.0, 5.0, 4.0), 0.0, 0.001); // x < edge0
 }
 
 TEST_CASE(test_sg_derivative_ramp, "Math") {
@@ -97,18 +120,17 @@ TEST_CASE(test_adaptive_smoothing, "Math") {
     
     // Test slow smoothing (input near zero)
     double out1 = ffb_math::apply_adaptive_smoothing(0.1, prev_out, dt, 0.05, 0.005, 1.0);
-    // tau_steady = 0.05. alpha = dt / (dt + tau) = 0.0025 / (0.0025 + 0.05) = 0.0025 / 0.0525 approx 0.0476
-    // out = 0.1 * 0.0476 + 0 * (1-0.0476) = 0.00476
     ASSERT_NEAR(out1, 0.00476, 0.001);
     
     // Test fast response (large delta)
     prev_out = 0.0;
     double out2 = ffb_math::apply_adaptive_smoothing(10.0, prev_out, dt, 0.05, 0.005, 1.0);
-    // delta = 10.0. inverse_lerp(0.1, 1.0, 10.0) = 1.0
-    // tau = lerp(0.05, 0.005, 1.0) = 0.005
-    // alpha = 0.0025 / (0.0025 + 0.005) = 0.0025 / 0.0075 = 0.333
-    // out = 10.0 * 0.333 + 0 * 0.666 = 3.333
     ASSERT_NEAR(out2, 3.333, 0.01);
+
+    // Test extreme sensitivity: Implementation handles sensitivity=0 by clamping t to 1.0
+    prev_out = 0.0;
+    double out3 = ffb_math::apply_adaptive_smoothing(0.1, prev_out, dt, 0.05, 0.005, 0.0);
+    ASSERT_NEAR(out3, 0.0333, 0.001);
 }
 
 TEST_CASE(test_slew_limiter, "Math") {

@@ -145,7 +145,7 @@ TEST_CASE(test_preset_initialization, "Config") {
     
     Config::LoadPresets();
     
-    // âš ï¸ IMPORTANT: These expected values MUST match Config.h default member initializers!
+    // âš ï¸  IMPORTANT: These expected values MUST match Config.h default member initializers!
     // When changing the default preset in Config.h, update these values to match.
     // Also update SetAdvancedBraking() default parameters in Config.h.
     // See Config.h line ~12 for the single source of truth.
@@ -167,7 +167,7 @@ TEST_CASE(test_preset_initialization, "Config") {
     const float t300_shaft_smooth = 0.0f;
     const float t300_notch_q = 2.0f;
     
-    // âš ï¸ IMPORTANT: This array MUST match the exact order of presets in Config.cpp LoadPresets()!
+    // âš ï¸  IMPORTANT: This array MUST match the exact order of presets in Config.cpp LoadPresets()!
     // When adding/removing/reordering presets in Config.cpp, update this array AND the loop count below.
     // Current count: 14 presets (v0.6.35: Added 4 DD presets after T300)
     const char* preset_names[] = {
@@ -189,7 +189,7 @@ TEST_CASE(test_preset_initialization, "Config") {
     
     bool all_passed = true;
     
-    // âš ï¸ IMPORTANT: Loop count (14) must match preset_names array size above!
+    // âš ï¸  IMPORTANT: Loop count (14) must match preset_names array size above!
     for (int i = 0; i < 14; i++) {
         if (i >= Config::presets.size()) {
             std::cout << "[FAIL] Preset " << i << " (" << preset_names[i] << ") not found!" << std::endl;
@@ -213,7 +213,7 @@ TEST_CASE(test_preset_initialization, "Config") {
         // Specialized presets have custom-tuned values that differ from Config.h defaults.
         // They should NOT be validated against expected_abs_freq, expected_lockup_freq_scale, etc.
         // 
-        // âš ï¸ IMPORTANT: When adding new specialized presets to Config.cpp, add them to this list!
+        // âš ï¸  IMPORTANT: When adding new specialized presets to Config.cpp, add them to this list!
         // Current specialized presets: Default, T300, GT3, LMPx/HY, GM, GM + Yaw Kick
         bool is_specialized = (preset.name == "Default" || 
                               preset.name == "T300" ||
@@ -427,6 +427,57 @@ TEST_CASE(test_config_dynamic_thresholds, "Config") {
     ASSERT_TRUE(engine.m_lockup_full_pct > engine.m_lockup_start_pct);
 }
 
+TEST_CASE(test_config_migration_logic, "Config") {
+    std::cout << "\nTest: Config Migration Logic" << std::endl;
 
+    FFBEngine engine;
+    InitializeEngine(engine);
+
+    // Case 1: max_torque_ref > 40 (Legacy DD hack)
+    const char* test_file_dd = "tmp_migration_dd.ini";
+    {
+        std::ofstream file(test_file_dd);
+        file << "max_torque_ref=100.0\n";
+        file.close();
+    }
+    Config::Load(engine, test_file_dd);
+    ASSERT_NEAR(engine.m_wheelbase_max_nm, 15.0f, 0.01);
+    ASSERT_NEAR(engine.m_target_rim_nm, 10.0f, 0.01);
+    std::remove(test_file_dd);
+
+    // Case 2: max_torque_ref <= 40 (Actual wheelbase torque)
+    const char* test_file_tuned = "tmp_migration_tuned.ini";
+    {
+        std::ofstream file(test_file_tuned);
+        file << "max_torque_ref=20.0\n";
+        file.close();
+    }
+    Config::Load(engine, test_file_tuned);
+    ASSERT_NEAR(engine.m_wheelbase_max_nm, 20.0f, 0.01);
+    ASSERT_NEAR(engine.m_target_rim_nm, 20.0f, 0.01);
+    std::remove(test_file_tuned);
+
+    // Case 3: max_load_factor legacy key (maps to texture_load_cap)
+    const char* test_file_load = "tmp_migration_load.ini";
+    {
+        std::ofstream file(test_file_load);
+        file << "max_load_factor=1.5\n";
+        file.close();
+    }
+    Config::Load(engine, test_file_load);
+    ASSERT_NEAR(engine.m_texture_load_cap, 1.5f, 0.01);
+    std::remove(test_file_load);
+
+    // Case 4: understeer_effect migration (> 2.0f range)
+    const char* test_file_under = "tmp_migration_under.ini";
+    {
+        std::ofstream file(test_file_under);
+        file << "understeer=50.0\n";
+        file.close();
+    }
+    Config::Load(engine, test_file_under);
+    ASSERT_NEAR(engine.m_understeer_effect, 0.5f, 0.01);
+    std::remove(test_file_under);
+}
 
 } // namespace FFBEngineTests

@@ -72,6 +72,7 @@ set(TEST_SOURCES
     test_dxgi_modernization.cpp
     test_main_harness.cpp
     test_coverage_boost_v2.cpp
+    test_config_comprehensive.cpp
     ../src/main.cpp
 )
 

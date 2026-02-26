@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 import sys
 import os
+import json
 
 def parse_cobertura(xml_path, metric="line"):
     if not os.path.exists(xml_path):
@@ -71,13 +72,43 @@ def parse_cobertura(xml_path, metric="line"):
 
     return "\n".join(summary)
 
+def parse_json_summary(json_path):
+    if not os.path.exists(json_path):
+        print(f"Warning: {json_path} not found. Function coverage will be skipped.")
+        return None
+
+    with open(json_path, "r") as f:
+        data = json.load(f)
+
+    summary = []
+    # Files are in data["files"]
+    for file_data in data.get("files", []):
+        filename = file_data.get("filename")
+
+        # Exclude vendor, dependency, and test code
+        if "vendor" in filename or "_deps" in filename or "tests/" in filename:
+            continue
+
+        rate = file_data.get("function_percent", 0.0)
+        total = file_data.get("function_total", 0)
+        covered = file_data.get("function_covered", 0)
+
+        summary.append(f"File: {filename}\n  Function Coverage: {rate:.1f}% ({covered}/{total})\n")
+
+    return "\n".join(summary)
+
 if __name__ == "__main__":
-    path = "cobertura.xml"
+    cobertura_path = "cobertura.xml"
+    json_path = "summary.json"
+
     if len(sys.argv) > 1:
-        path = sys.argv[1]
+        cobertura_path = sys.argv[1]
+    if len(sys.argv) > 2:
+        json_path = sys.argv[2]
     
-    line_report = parse_cobertura(path, "line")
-    branch_report = parse_cobertura(path, "branch")
+    line_report = parse_cobertura(cobertura_path, "line")
+    branch_report = parse_cobertura(cobertura_path, "branch")
+    function_report = parse_json_summary(json_path)
 
     if line_report:
         print("=== C++ Line Coverage Summary (Excluding Vendor/Tests) ===")
@@ -92,3 +123,10 @@ if __name__ == "__main__":
         with open("coverage_branches_summary.txt", "w") as f:
             f.write(branch_report)
         print(f"Summary saved to coverage_branches_summary.txt")
+
+    if function_report:
+        print("\n=== C++ Function Coverage Summary (Excluding Vendor/Tests) ===")
+        print(function_report)
+        with open("coverage_functions_summary.txt", "w") as f:
+            f.write(function_report)
+        print(f"Summary saved to coverage_functions_summary.txt")
