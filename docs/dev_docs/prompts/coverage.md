@@ -13,3 +13,5 @@ Also save the code reviews you receive as .md files under the docs/dev_docs/code
 I confirm that the code reviews must be saved to .md files and included in your patch. These must be the independent code reviews that you received from the code review tool, you must include them verbatim in the .md files.
 
 The updated txt coverage summaries (for lines, branches, and functions) produced by scripts/coverage_summary.py must be included in your patch, as well as the code reviews .md files. This is to help me review the patch and track progress in the project.
+
+Once you get a code review with a greenlight (correct rating), you can submit the patch (pull request).
