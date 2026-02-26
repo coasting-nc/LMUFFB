@@ -3,8 +3,12 @@ name: Build and Test
 on:
   push:
     branches: [ "**" ]
+    paths-ignore:
+      - '**.md'
   pull_request:
     branches: [ "**" ]
+    paths-ignore:
+      - '**.md'
 
 jobs:
   windows-release:
@@ -116,6 +120,9 @@ jobs:
 
     - name: Generate Coverage Summaries
       run: |
+        # Ensure directory exists
+        mkdir -p docs/dev_docs/reports/coverage/
+
         # C++ Summary
         if [ -f "cobertura.xml" ]; then
           python3 scripts/coverage_summary.py cobertura.xml
@@ -123,17 +130,17 @@ jobs:
           echo "### Linux C++ Code Coverage Summary" >> $GITHUB_STEP_SUMMARY
           echo '#### Line Coverage' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          cat coverage_summary.txt >> $GITHUB_STEP_SUMMARY
+          cat docs/dev_docs/reports/coverage/coverage_summary.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           
           echo '#### Branch Coverage' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          cat coverage_branches_summary.txt >> $GITHUB_STEP_SUMMARY
+          cat docs/dev_docs/reports/coverage/coverage_branches_summary.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
           echo '#### Function Coverage' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          cat coverage_functions_summary.txt >> $GITHUB_STEP_SUMMARY
+          cat docs/dev_docs/reports/coverage/coverage_functions_summary.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
         else
           echo "cobertura.xml not found!"
@@ -147,17 +154,17 @@ jobs:
           echo "### Python Code Coverage Summary" >> $GITHUB_STEP_SUMMARY
           echo '#### Line Coverage' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          cat python_coverage_summary.txt >> $GITHUB_STEP_SUMMARY
+          cat docs/dev_docs/reports/coverage/python_coverage_summary.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
           echo '#### Branch Coverage' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          cat python_coverage_branches_summary.txt >> $GITHUB_STEP_SUMMARY
+          cat docs/dev_docs/reports/coverage/python_coverage_branches_summary.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
           echo '#### Function Coverage' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          cat python_coverage_functions_summary.txt >> $GITHUB_STEP_SUMMARY
+          cat docs/dev_docs/reports/coverage/python_coverage_functions_summary.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
         fi
 
