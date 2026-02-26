@@ -3,8 +3,8 @@
 
 namespace FFBEngineTests {
 
-TEST_CASE(test_base_force_modes, "CorePhysics") {
-    std::cout << "\nTest: Base Force Modes & Gain (v0.4.13)" << std::endl;
+TEST_CASE(test_base_force_passthrough, "CorePhysics") {
+    std::cout << "\nTest: Base Force Passthrough (Issue #178)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); 
     TelemInfoV01 data;
@@ -22,50 +22,15 @@ TEST_CASE(test_base_force_modes, "CorePhysics") {
     data.mWheel[1].mGripFract = 1.0;
     data.mWheel[0].mRideHeight = 0.1; 
     data.mWheel[1].mRideHeight = 0.1;
+
+    // v0.7.67 normalization:
+    // force = (raw_torque * shaft_gain) = 10.0 * 0.5 = 5.0 Nm
+    // session_peak defaults to target_rim_nm = 20.0 Nm
+    // norm_force = 5.0 / 20.0 = 0.25
+    // output = norm_force * (target_rim_nm / wheelbase_max_nm) = 0.25 * (20.0 / 20.0) = 0.25
     
-    engine.m_base_force_mode = 0;
-    double force_native = engine.calculate_force(&data);
-    
-    if (std::abs(force_native - 0.25) < 0.001) {
-        std::cout << "[PASS] Native Mode: Correctly attenuated (0.25)." << std::endl;
-        g_tests_passed++;
-    } else {
-        std::cout << "[FAIL] Native Mode: Got " << force_native << " Expected 0.25." << std::endl;
-        g_tests_failed++;
-    }
-    
-    engine.m_base_force_mode = 1;
-    double force_synthetic = engine.calculate_force(&data);
-    
-    if (std::abs(force_synthetic - 0.5) < 0.001) {
-        std::cout << "[PASS] Synthetic Mode: Constant force applied (0.5)." << std::endl;
-        g_tests_passed++;
-    } else {
-        std::cout << "[FAIL] Synthetic Mode: Got " << force_synthetic << " Expected 0.5." << std::endl;
-        g_tests_failed++;
-    }
-    
-    data.mSteeringShaftTorque = 0.1; 
-    double force_deadzone = engine.calculate_force(&data);
-    if (std::abs(force_deadzone) < 0.001) {
-        std::cout << "[PASS] Synthetic Mode: Deadzone respected." << std::endl;
-        g_tests_passed++;
-    } else {
-        std::cout << "[FAIL] Synthetic Mode: Deadzone failed." << std::endl;
-        g_tests_failed++;
-    }
-    
-    engine.m_base_force_mode = 2;
-    data.mSteeringShaftTorque = 10.0; 
-    double force_muted = engine.calculate_force(&data);
-    
-    if (std::abs(force_muted) < 0.001) {
-        std::cout << "[PASS] Muted Mode: Output is zero." << std::endl;
-        g_tests_passed++;
-    } else {
-        std::cout << "[FAIL] Muted Mode: Got " << force_muted << " Expected 0.0." << std::endl;
-        g_tests_failed++;
-    }
+    double force = engine.calculate_force(&data);
+    ASSERT_NEAR(force, 0.25, 0.001);
 }
 
 TEST_CASE(test_grip_modulation, "CorePhysics") {

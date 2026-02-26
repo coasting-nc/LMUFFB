@@ -103,7 +103,6 @@ TEST_CASE(test_structural_vs_texture_separation, "StructuralNormalization") {
     engine.m_road_texture_gain = 1.0f;
     engine.m_steering_shaft_gain = 1.0f;
     engine.m_dynamic_weight_gain = 0.0f;
-    engine.m_base_force_mode = 0;
     engine.m_steering_shaft_smoothing = 0.0f;
     engine.m_speed_gate_lower = 1.0f;
     engine.m_speed_gate_upper = 5.0f;

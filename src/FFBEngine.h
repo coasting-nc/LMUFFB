@@ -184,7 +184,6 @@ public:
     // Base Force Debugging (v0.4.13)
     float m_steering_shaft_gain;
     float m_ingame_ffb_gain = 1.0f; // New v0.7.71 (Issue #160)
-    int m_base_force_mode;
     int m_torque_source = 0; 
     bool m_torque_passthrough = false;
 
@@ -471,7 +470,6 @@ private:
     static constexpr double REAR_TIRE_STIFFNESS_COEFFICIENT = 15.0; 
     static constexpr double MAX_REAR_LATERAL_FORCE = 6000.0; // N
     static constexpr double REAR_ALIGN_TORQUE_COEFFICIENT = 0.001; // Nm per N
-    static constexpr double SYNTHETIC_MODE_DEADZONE_NM = 0.5; // Nm
     static constexpr double DEFAULT_STEERING_RANGE_RAD = 9.4247; 
     static constexpr double GYRO_SPEED_SCALE = 10.0;
     static constexpr double WEIGHT_TRANSFER_SCALE = 2000.0; // N per G

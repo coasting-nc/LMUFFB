@@ -52,7 +52,6 @@ TEST_CASE(test_config_comprehensive_import, "Config") {
         file << "steering_shaft_gain=0.9\n";
         file << "ingame_ffb_gain=1.05\n";
         file << "slip_angle_smoothing=0.05\n";
-        file << "base_force_mode=1\n";
         file << "torque_source=1\n";
         file << "torque_passthrough=1\n";
         file << "gyro_gain=0.4\n";
@@ -156,7 +155,6 @@ TEST_CASE(test_config_comprehensive_load_v2, "Config") {
         file << "steering_shaft_gain=0.9\n";
         file << "ingame_ffb_gain=1.05\n";
         file << "slip_angle_smoothing=0.05\n";
-        file << "base_force_mode=1\n";
         file << "torque_source=1\n";
         file << "torque_passthrough=1\n";
         file << "gyro_gain=0.4\n";
