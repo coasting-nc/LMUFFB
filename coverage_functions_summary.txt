@@ -1,0 +1,71 @@
+File: src/AsyncLogger.h
+  Function Coverage: 100.0% (16/16)
+
+File: src/Config.cpp
+  Function Coverage: 92.9% (13/14)
+
+File: src/Config.h
+  Function Coverage: 100.0% (29/29)
+
+File: src/DirectInputFFB.cpp
+  Function Coverage: 92.3% (12/13)
+
+File: src/DirectInputFFB.h
+  Function Coverage: 100.0% (2/2)
+
+File: src/DXGIUtils.cpp
+  Function Coverage: 100.0% (1/1)
+
+File: src/FFBEngine.cpp
+  Function Coverage: 100.0% (14/14)
+
+File: src/GameConnector.cpp
+  Function Coverage: 100.0% (10/10)
+
+File: src/GripLoadEstimation.cpp
+  Function Coverage: 100.0% (12/12)
+
+File: src/GuiLayer_Common.cpp
+  Function Coverage: 95.2% (20/21)
+
+File: src/GuiLayer_Linux.cpp
+  Function Coverage: 82.4% (14/17)
+
+File: src/GuiPlatform.h
+  Function Coverage: 50.0% (1/2)
+
+File: src/GuiWidgets.h
+  Function Coverage: 100.0% (3/3)
+
+File: src/HealthMonitor.h
+  Function Coverage: 100.0% (1/1)
+
+File: src/lmu_sm_interface/LinuxMock.h
+  Function Coverage: 91.7% (33/36)
+
+File: src/lmu_sm_interface/SafeSharedMemoryLock.h
+  Function Coverage: 100.0% (6/6)
+
+File: src/lmu_sm_interface/SharedMemoryInterface.hpp
+  Function Coverage: 100.0% (9/9)
+
+File: src/Logger.h
+  Function Coverage: 100.0% (8/8)
+
+File: src/main.cpp
+  Function Coverage: 40.0% (2/5)
+
+File: src/MathUtils.h
+  Function Coverage: 100.0% (8/8)
+
+File: src/PerfStats.h
+  Function Coverage: 100.0% (3/3)
+
+File: src/RateMonitor.h
+  Function Coverage: 100.0% (4/4)
+
+File: src/SteeringUtils.cpp
+  Function Coverage: 100.0% (1/1)
+
+File: src/VehicleUtils.cpp
+  Function Coverage: 100.0% (3/3)
