@@ -1,0 +1,32 @@
+File: convert_chats_to_md.py
+  Branch Coverage: 0.0% (No specific missing branchs found)
+
+File: coverage_summary.py
+  Branch Coverage: 0.0% (No specific missing branchs found)
+
+File: create_context.py
+  Branch Coverage: 0.0% (No specific missing branchs found)
+
+File: python_coverage_summary.py
+  Branch Coverage: 0.0% (No specific missing branchs found)
+
+File: run_all_tests.py
+  Branch Coverage: 0.0% (No specific missing branchs found)
+
+File: lmuffb_log_analyzer/cli.py
+  Branch Coverage: 0.0% (No specific missing branchs found)
+
+File: lmuffb_log_analyzer/loader.py
+  Branch Coverage: 0.0% (No specific missing branchs found)
+
+File: lmuffb_log_analyzer/models.py
+  Branch Coverage: 0.0% (No specific missing branchs found)
+
+File: lmuffb_log_analyzer/plots.py
+  Branch Coverage: 0.0% (No specific missing branchs found)
+
+File: lmuffb_log_analyzer/reports.py
+  Branch Coverage: 0.0% (No specific missing branchs found)
+
+File: lmuffb_log_analyzer/analyzers/slope_analyzer.py
+  Branch Coverage: 0.0% (No specific missing branchs found)

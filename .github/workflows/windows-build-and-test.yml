@@ -40,6 +40,13 @@ jobs:
       run: |
         .\build\tests\Release\run_combined_tests.exe
 
+    - name: Run Python Tests
+      shell: pwsh
+      run: |
+        pip install -r requirements.txt
+        $env:PYTHONPATH = "$(Get-Location)/tools"
+        python -m pytest tests tools/lmuffb_log_analyzer/tests
+
     - name: Get Version
       shell: pwsh
       run: |
@@ -90,6 +97,13 @@ jobs:
       run: |
         ./build/tests/run_combined_tests
 
+    - name: Run Python Tests (with Coverage)
+      run: |
+        pip install -r requirements.txt
+        pip install pytest-cov
+        export PYTHONPATH=$PYTHONPATH:$(pwd)/tools
+        python3 -m pytest --cov=tools --cov=scripts --cov-report=xml:python_cobertura.xml tests tools/lmuffb_log_analyzer/tests
+
     - name: Collect Coverage
       run: |
         lcov --capture --directory . --output-file coverage.info --rc branch_coverage=1 --ignore-errors mismatch,gcov,unused
@@ -100,18 +114,51 @@ jobs:
         pip install lcov_cobertura
         lcov_cobertura coverage_filtered.info --output cobertura.xml
 
-    - name: Generate Coverage Summary
+    - name: Generate Coverage Summaries
       run: |
+        # C++ Summary
         if [ -f "cobertura.xml" ]; then
-          python3 scripts/coverage_summary.py
-          summary=$(cat coverage_summary.txt)
-          echo "### Linux Code Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          python3 scripts/coverage_summary.py cobertura.xml
+          
+          echo "### Linux C++ Code Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo '#### Line Coverage' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "$summary" >> $GITHUB_STEP_SUMMARY
+          cat coverage_summary.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          echo '#### Branch Coverage' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat coverage_branches_summary.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          echo '#### Function Coverage' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat coverage_functions_summary.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
         else
           echo "cobertura.xml not found!"
           exit 1
+        fi
+
+        # Python Summary
+        if [ -f "python_cobertura.xml" ]; then
+          python3 scripts/python_coverage_summary.py python_cobertura.xml
+          
+          echo "### Python Code Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo '#### Line Coverage' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat python_coverage_summary.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          echo '#### Branch Coverage' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat python_coverage_branches_summary.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          echo '#### Function Coverage' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat python_coverage_functions_summary.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
         fi
 
     - name: Upload Coverage Report Artifact
