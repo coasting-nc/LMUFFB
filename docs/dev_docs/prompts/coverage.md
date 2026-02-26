@@ -4,6 +4,8 @@ See which tests are easier to add. If an intended test to address a particular c
 
 The tests you write must be meaningful and test actual functionality, it is not acceptable to add tests that don't actually test anything, for the sake of only inflating the coverage numbers.
 
+Avoid changing main code whenever possible. Prioritize writing tests that do not require chanes to the main code.
+
 Also include in your patch a .md document report about what you did, strategies to increase code branches coverage, issues and challenges you encountered, and anything else worth noting about your task. The .md report must be a new file name (do not overwrite existing reports from past patches).
 
 If the patch is building with no errors, but the code review says the project would not compile, explain in your report why it is compiling. In any case explain in your report if there was any issue building the project, and / or what the code review said about not building.
