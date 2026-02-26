@@ -84,7 +84,9 @@ int main(int argc, char* argv[]) {
             "test_slope_config.ini", "test_slope_minmax.ini", "test_slope_migration.ini",
             "test_config_logic_guid.ini", "test_config_logic_top.ini", "test_config_logic_preset.ini",
             "tmp_unsafe_config_test.ini", "test_export_preset.ini", "collision_test.ini",
-            "test_bad_config.ini", "test_version_presets.ini", "test_legacy_presets.ini"
+            "test_bad_config.ini", "test_version_presets.ini", "test_legacy_presets.ini",
+            "test_comprehensive.ini", "test_save_v6.ini", "test_slope_mig.ini", "test_swap.ini",
+            "test_migrate.ini"
         };
 
         for (const auto& file : to_remove) {
@@ -98,6 +100,24 @@ int main(int argc, char* argv[]) {
         try {
             if (std::filesystem::exists("test_logs")) {
                 std::filesystem::remove_all("test_logs");
+            }
+            if (std::filesystem::exists("test_logs_v6")) {
+                std::filesystem::remove_all("test_logs_v6");
+            }
+            if (std::filesystem::exists("test_gui.csv")) {
+                std::filesystem::remove_all("test_gui.csv");
+            }
+            // Remove any leftover csv logs in current dir and logs/ dir
+            std::vector<std::string> dirs = {".", "logs"};
+            for (const auto& dir : dirs) {
+                if (std::filesystem::exists(dir)) {
+                    for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+                        if (entry.is_regular_file() && entry.path().extension() == ".csv" &&
+                            entry.path().filename().string().find("lmuffb_log_") == 0) {
+                            std::filesystem::remove(entry.path());
+                        }
+                    }
+                }
             }
         } catch (...) {}
     };

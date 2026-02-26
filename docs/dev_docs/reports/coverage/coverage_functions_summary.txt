@@ -41,7 +41,7 @@ File: src/HealthMonitor.h
   Function Coverage: 100.0% (1/1)
 
 File: src/lmu_sm_interface/LinuxMock.h
-  Function Coverage: 100.0% (37/37)
+  Function Coverage: 100.0% (38/38)
 
 File: src/lmu_sm_interface/SafeSharedMemoryLock.h
   Function Coverage: 100.0% (6/6)
