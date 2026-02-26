@@ -191,21 +191,20 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Checkout gh-pages branch
-      uses: actions/checkout@v4
-      with:
-        ref: gh-pages
-        path: site
-      continue-on-error: true
-
     - name: Prepare site directory
+      shell: bash
       run: |
-        if [ ! -d "site" ]; then
-          mkdir site
+        mkdir site
+        cd site
+        git init
+        git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+        # Try to fetch existing content, but don't fail if it's the first time
+        if git fetch origin gh-pages --depth=1; then
+          git checkout gh-pages
+          echo "Checked out existing gh-pages branch"
         else
-          # Keep existing content but remove .git if we are going to re-upload as artifact
-          # Actually we need to keep it if we want to push back
-          echo "Found existing site from gh-pages branch"
+          git checkout -b gh-pages
+          echo "Created new gh-pages branch"
         fi
 
     - name: Download coverage artifact
