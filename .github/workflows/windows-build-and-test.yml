@@ -179,7 +179,7 @@ jobs:
     name: Deploy Hub to GitHub Pages
     runs-on: ubuntu-latest
     needs: [windows-release, linux-coverage]
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push'
     permissions:
       contents: write
       pages: write
@@ -188,30 +188,82 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Checkout gh-pages branch
+      uses: actions/checkout@v4
+      with:
+        ref: gh-pages
+        path: site
+      continue-on-error: true
+
+    - name: Prepare site directory
+      run: |
+        if [ ! -d "site" ]; then
+          mkdir site
+        else
+          # Keep existing content but remove .git if we are going to re-upload as artifact
+          # Actually we need to keep it if we want to push back
+          echo "Found existing site from gh-pages branch"
+        fi
+
     - name: Download coverage artifact
       uses: actions/download-artifact@v4
       with:
         name: linux-coverage-report
-        path: site/report
+        path: temp_report
 
     - name: Download Windows zip artifact
       uses: actions/download-artifact@v4
       with:
-        path: site/download
+        path: temp_download
         merge-multiple: true
 
-    - name: Generate Landing Page
+    - name: Determine Deployment Target
+      id: target
       run: |
-        # Find the zip file name (it should be in site/download)
-        ZIP_NAME=$(basename $(ls site/download/*.zip | head -n 1))
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          echo "subdir=." >> $GITHUB_OUTPUT
+          echo "is_main=true" >> $GITHUB_OUTPUT
+        else
+          echo "subdir=dev" >> $GITHUB_OUTPUT
+          echo "is_main=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Generate Content
+      run: |
+        SUBDIR="${{ steps.target.outputs.subdir }}"
+        mkdir -p "site/$SUBDIR/report"
+        mkdir -p "site/$SUBDIR/download"
         
-        cat <<EOF > site/index.html
+        # Copy current build artifacts to the target subfolder
+        cp -r temp_report/* "site/$SUBDIR/report/"
+        cp -r temp_download/*.zip "site/$SUBDIR/download/"
+        
+        # Find the zip file name
+        ZIP_NAME=$(basename $(ls site/$SUBDIR/download/*.zip | head -n 1))
+        
+        # Generate the landing page for this target
+        if [[ "${{ steps.target.outputs.is_main }}" == "true" ]]; then
+          PAGE_TITLE="lmuFFB Nightly Hub"
+          PAGE_DESC="Automated builds and reports from the <code>main</code> branch."
+          BRANCH_INFO=""
+          BACK_LINK=""
+        else
+          PAGE_TITLE="lmuFFB Development Preview"
+          PAGE_DESC="Automated builds and reports from the experimental <code>${{ github.ref_name }}</code> branch."
+          BRANCH_INFO="<p style='background: #fffbdd; padding: 10px; border: 1px solid #d4a017; border-radius: 6px;'>⚠️ <strong>Notice:</strong> This is a development build. For the latest stable nightly, visit the <a href='../'>Main Hub</a>.</p>"
+          BACK_LINK="<p><a href='../'>&larr; Back to Main Hub</a></p>"
+        fi
+
+        cat <<EOF > "site/$SUBDIR/index.html"
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>lmuFFB Nightly Hub</title>
+            <title>$PAGE_TITLE</title>
             <style>
                 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #24292f; }
                 h1 { border-bottom: 1px solid #d0d7de; padding-bottom: .3em; }
@@ -223,27 +275,45 @@ jobs:
             </style>
         </head>
         <body>
-            <h1>lmuFFB Nightly Hub</h1>
-            <p>Automated builds and reports from the <code>main</code> branch.</p>
+            $BACK_LINK
+            <h1>$PAGE_TITLE</h1>
+            $BRANCH_INFO
+            <p>$PAGE_DESC</p>
             
             <div class="card">
-                <h2>🚀 Latest Nightly Build</h2>
-                <p>Download the latest version of lmuFFB compiled from <code>main</code>.</p>
+                <h2>🚀 Latest Build</h2>
+                <p>Download the latest version of lmuFFB compiled from this branch.</p>
                 <p><strong>File:</strong> <code>$ZIP_NAME</code></p>
                 <a href="download/$ZIP_NAME" class="btn">Download ZIP</a>
             </div>
 
             <h2>📊 Quality Reports</h2>
             <ul>
-                <li><a href="report/index.html">Latest Code Coverage Report</a> (Linux/GCC/LCOV)</li>
+                <li><a href="report/index.html">Code Coverage Report</a> (Linux/GCC/LCOV)</li>
             </ul>
 
             <footer>
-                Last updated: $(date -u) UTC | <a href="https://github.com/${{ github.repository }}">Source Code</a>
+                Last updated: $(date -u) UTC | Branch: <code>${{ github.ref_name }}</code> | Commit: <code>${{ github.sha }}</code> | <a href="https://github.com/${{ github.repository }}">Source Code</a>
             </footer>
         </body>
         </html>
         EOF
+
+    - name: Persist site to gh-pages branch
+      shell: bash
+      run: |
+        cd site
+        # If .git doesn't exist (first run), initialize it
+        if [ ! -d ".git" ]; then
+          git init
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git checkout -b gh-pages
+        fi
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add .
+        git commit -m "Update ${{ steps.target.outputs.subdir }} from ${{ github.ref_name }}@${{ github.sha }}" || echo "No changes to commit"
+        git push origin gh-pages
 
     - name: Setup Pages
       uses: actions/configure-pages@v4
@@ -256,4 +326,5 @@ jobs:
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
+
 
