@@ -182,14 +182,11 @@ jobs:
     name: Deploy Hub to GitHub Pages
     runs-on: ubuntu-latest
     needs: [windows-release, linux-coverage]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push'
     permissions:
       contents: write
       pages: write
       id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -229,7 +226,9 @@ jobs:
           echo "subdir=." >> $GITHUB_OUTPUT
           echo "is_main=true" >> $GITHUB_OUTPUT
         else
-          echo "subdir=dev" >> $GITHUB_OUTPUT
+          # Sanitize branch name for URL (replace / with -)
+          SAFE_NAME=$(echo "${{ github.ref_name }}" | sed 's/\//-/g')
+          echo "subdir=branches/$SAFE_NAME" >> $GITHUB_OUTPUT
           echo "is_main=false" >> $GITHUB_OUTPUT
         fi
 
