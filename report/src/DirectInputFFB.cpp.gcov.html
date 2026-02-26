@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-02-26 16:31:07</td>
+            <td class="headerValue">2026-02-26 16:32:10</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">92.3&nbsp;%</td>
@@ -93,10 +93,10 @@
 <span id="L22"><span class="lineNum">      22</span>                 :             : }</span>
 <span id="L23"><span class="lineNum">      23</span>                 :             : </span>
 <span id="L24"><span class="lineNum">      24</span>                 :             : // Keep existing implementations</span>
-<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC tlaBgGNC">        2464 : DirectInputFFB&amp; DirectInputFFB::Get() {</span></span>
-<span id="L26"><span class="lineNum">      26</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 2463 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        2464 :     static DirectInputFFB instance;</span></span>
+<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC tlaBgGNC">        4755 : DirectInputFFB&amp; DirectInputFFB::Get() {</span></span>
+<span id="L26"><span class="lineNum">      26</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 4754 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        4755 :     static DirectInputFFB instance;</span></span>
 <span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaUNC" title="Branch 6 was not taken"> - </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span>]
-<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        2464 :     return instance;</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        4755 :     return instance;</span></span>
 <span id="L28"><span class="lineNum">      28</span>                 :             : }</span>
 <span id="L29"><span class="lineNum">      29</span>                 :             : </span>
 <span id="L30"><span class="lineNum">      30</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 : DirectInputFFB::DirectInputFFB() {}</span></span>
@@ -214,8 +214,8 @@
 <span id="L142"><span class="lineNum">     142</span>                 :<span class="tlaGNC">           1 :     Shutdown();</span></span>
 <span id="L143"><span class="lineNum">     143</span>                 :<span class="tlaGNC">           1 : }</span></span>
 <span id="L144"><span class="lineNum">     144</span>                 :             : </span>
-<span id="L145"><span class="lineNum">     145</span>                 :<span class="tlaGNC">           2 : bool DirectInputFFB::Initialize(HWND hwnd) {</span></span>
-<span id="L146"><span class="lineNum">     146</span>                 :<span class="tlaGNC">           2 :     m_hwnd = hwnd;</span></span>
+<span id="L145"><span class="lineNum">     145</span>                 :<span class="tlaGNC">           4 : bool DirectInputFFB::Initialize(HWND hwnd) {</span></span>
+<span id="L146"><span class="lineNum">     146</span>                 :<span class="tlaGNC">           4 :     m_hwnd = hwnd;</span></span>
 <span id="L147"><span class="lineNum">     147</span>                 :             : #ifdef _WIN32</span>
 <span id="L148"><span class="lineNum">     148</span>                 :             :     if (FAILED(DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&amp;m_pDI, NULL))) {</span>
 <span id="L149"><span class="lineNum">     149</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Failed to create DirectInput8 interface.&quot; &lt;&lt; std::endl;</span>
@@ -224,20 +224,20 @@
 <span id="L152"><span class="lineNum">     152</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Initialized.&quot; &lt;&lt; std::endl;</span>
 <span id="L153"><span class="lineNum">     153</span>                 :             :     return true;</span>
 <span id="L154"><span class="lineNum">     154</span>                 :             : #else</span>
-<span id="L155"><span class="lineNum">     155</span>                 :<span class="tlaGNC">           2 :     std::cout &lt;&lt; &quot;[DI] Mock Initialized (Non-Windows).&quot; &lt;&lt; std::endl;</span></span>
-<span id="L156"><span class="lineNum">     156</span>                 :<span class="tlaGNC">           2 :     return true;</span></span>
+<span id="L155"><span class="lineNum">     155</span>                 :<span class="tlaGNC">           4 :     std::cout &lt;&lt; &quot;[DI] Mock Initialized (Non-Windows).&quot; &lt;&lt; std::endl;</span></span>
+<span id="L156"><span class="lineNum">     156</span>                 :<span class="tlaGNC">           4 :     return true;</span></span>
 <span id="L157"><span class="lineNum">     157</span>                 :             : #endif</span>
 <span id="L158"><span class="lineNum">     158</span>                 :             : }</span>
 <span id="L159"><span class="lineNum">     159</span>                 :             : </span>
-<span id="L160"><span class="lineNum">     160</span>                 :<span class="tlaGNC">           3 : void DirectInputFFB::Shutdown() {</span></span>
-<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">           3 :     ReleaseDevice(); // Reuse logic</span></span>
+<span id="L160"><span class="lineNum">     160</span>                 :<span class="tlaGNC">           5 : void DirectInputFFB::Shutdown() {</span></span>
+<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">           5 :     ReleaseDevice(); // Reuse logic</span></span>
 <span id="L162"><span class="lineNum">     162</span>                 :             : #ifdef _WIN32</span>
 <span id="L163"><span class="lineNum">     163</span>                 :             :     if (m_pDI) {</span>
 <span id="L164"><span class="lineNum">     164</span>                 :             :         ((IDirectInput8*)m_pDI)-&gt;Release();</span>
 <span id="L165"><span class="lineNum">     165</span>                 :             :         m_pDI = nullptr;</span>
 <span id="L166"><span class="lineNum">     166</span>                 :             :     }</span>
 <span id="L167"><span class="lineNum">     167</span>                 :             : #endif</span>
-<span id="L168"><span class="lineNum">     168</span>                 :<span class="tlaGNC">           3 : }</span></span>
+<span id="L168"><span class="lineNum">     168</span>                 :<span class="tlaGNC">           5 : }</span></span>
 <span id="L169"><span class="lineNum">     169</span>                 :             : </span>
 <span id="L170"><span class="lineNum">     170</span>                 :             : #ifdef _WIN32</span>
 <span id="L171"><span class="lineNum">     171</span>                 :             : BOOL CALLBACK EnumJoysticksCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext) {</span>
@@ -266,7 +266,7 @@
 <span id="L194"><span class="lineNum">     194</span>                 :<span class="tlaGNC">           4 :     return devices;</span></span>
 <span id="L195"><span class="lineNum">     195</span>                 :<span class="tlaGNC">           2 : }</span></span>
 <span id="L196"><span class="lineNum">     196</span>                 :             : </span>
-<span id="L197"><span class="lineNum">     197</span>                 :<span class="tlaGNC">           4 : void DirectInputFFB::ReleaseDevice() {</span></span>
+<span id="L197"><span class="lineNum">     197</span>                 :<span class="tlaGNC">           6 : void DirectInputFFB::ReleaseDevice() {</span></span>
 <span id="L198"><span class="lineNum">     198</span>                 :             : #ifdef _WIN32</span>
 <span id="L199"><span class="lineNum">     199</span>                 :             :     if (m_pEffect) {</span>
 <span id="L200"><span class="lineNum">     200</span>                 :             :         ((IDirectInputEffect*)m_pEffect)-&gt;Stop();</span>
@@ -280,13 +280,13 @@
 <span id="L208"><span class="lineNum">     208</span>                 :             :         m_pDevice = nullptr;</span>
 <span id="L209"><span class="lineNum">     209</span>                 :             :     }</span>
 <span id="L210"><span class="lineNum">     210</span>                 :             : #endif</span>
-<span id="L211"><span class="lineNum">     211</span>                 :<span class="tlaGNC">           4 :     m_active = false;</span></span>
-<span id="L212"><span class="lineNum">     212</span>                 :<span class="tlaGNC">           4 :     m_isExclusive = false;</span></span>
-<span id="L213"><span class="lineNum">     213</span>                 :<span class="tlaGNC">           4 :     m_deviceName = &quot;None&quot;;</span></span>
+<span id="L211"><span class="lineNum">     211</span>                 :<span class="tlaGNC">           6 :     m_active = false;</span></span>
+<span id="L212"><span class="lineNum">     212</span>                 :<span class="tlaGNC">           6 :     m_isExclusive = false;</span></span>
+<span id="L213"><span class="lineNum">     213</span>                 :<span class="tlaGNC">           6 :     m_deviceName = &quot;None&quot;;</span></span>
 <span id="L214"><span class="lineNum">     214</span>                 :             : #ifdef _WIN32</span>
 <span id="L215"><span class="lineNum">     215</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Device released by user.&quot; &lt;&lt; std::endl;</span>
 <span id="L216"><span class="lineNum">     216</span>                 :             : #endif</span>
-<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">           4 : }</span></span>
+<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">           6 : }</span></span>
 <span id="L218"><span class="lineNum">     218</span>                 :             : </span>
 <span id="L219"><span class="lineNum">     219</span>                 :<span class="tlaGNC">           1 : bool DirectInputFFB::SelectDevice(const GUID&amp; guid) {</span></span>
 <span id="L220"><span class="lineNum">     220</span>                 :             : #ifdef _WIN32</span>
@@ -396,8 +396,8 @@
 <span id="L324"><span class="lineNum">     324</span>                 :             : #endif</span>
 <span id="L325"><span class="lineNum">     325</span>                 :             : }</span>
 <span id="L326"><span class="lineNum">     326</span>                 :             : </span>
-<span id="L327"><span class="lineNum">     327</span>                 :<span class="tlaGNC tlaBgGNC">        2298 : bool DirectInputFFB::UpdateForce(double normalizedForce) {</span></span>
-<span id="L328"><span class="lineNum">     328</span>         [<span class="tlaGBC" title="Branch 0 was taken 2295 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3 times"> + </span>]:<span class="tlaGNC">        2298 :     if (!m_active) return false;</span></span>
+<span id="L327"><span class="lineNum">     327</span>                 :<span class="tlaGNC tlaBgGNC">        4385 : bool DirectInputFFB::UpdateForce(double normalizedForce) {</span></span>
+<span id="L328"><span class="lineNum">     328</span>         [<span class="tlaGBC" title="Branch 0 was taken 4382 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3 times"> + </span>]:<span class="tlaGNC">        4385 :     if (!m_active) return false;</span></span>
 <span id="L329"><span class="lineNum">     329</span>                 :             : </span>
 <span id="L330"><span class="lineNum">     330</span>                 :             :     // Sanity Check: If 0.0, stop effect to prevent residual hum</span>
 <span id="L331"><span class="lineNum">     331</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 2 times"> + </span>]:<span class="tlaGNC">           3 :     if (std::abs(normalizedForce) &lt; 0.00001) normalizedForce = 0.0;</span></span>
