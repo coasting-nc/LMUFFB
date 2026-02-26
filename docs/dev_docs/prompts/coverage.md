@@ -1,4 +1,15 @@
-Add more tests to increase the code coverage. Consider coverage both in terms of code lines, branches, and functions. The coverage in terms of branches seems to be the lowest at the moment, with higher margins for increasing coverage.
+Add more tests to increase the code coverage. Consider coverage both in terms of code lines, branches, and functions. 
+
+
+Prioritize trying to increase the following coverages:
+
+* Line coverage of main.cpp, GuiPlatform.h and GuiLayer_Common.cpp.
+* function coverage of GuiPlatform.h, main.cpp, and GuiLayer_Linux.cpp
+* function coverage of LinuxMock.h
+* Line coverage of SharedMemoryInterface.hpp
+* Branch coverage of LinuxMock.h, SafeSharedMemoryLock.h
+* Branch coverage of GuiLayer_Linux.cpp
+* Branch coverage of main.cpp, GuiLayer_Common.cpp, Config.h, Logger.h, GuiWidgets.h, GameConnector.cpp.
 
 See which tests are easier to add. If an intended test to address a particular coverage aspect proves to be too difficult, complex, or time consuming to make, you can skip it and don't write it. The overall goal is to increase the general code coverage to a good level, starting from the easiest tests to write.
 
@@ -12,7 +23,7 @@ The tests you write must be meaningful and test actual functionality, it is not 
 
 Avoid changing main code whenever possible. Prioritize writing tests that do not require chanes to the main code. If you encounter main code that should be changes to improve testability (eg. redundant or unnecessary code causing unreachable branches, changing the order of operators to make branches reachable, etc.), just leave comment in that code as TODO notes for later.
 
-Also include in your patch a .md document report about what you did, strategies to increase code branches coverage, issues and challenges you encountered, and anything else worth noting about your task. The .md report must be a new file name (do not overwrite existing reports from past patches).
+Also include in your patch a .md document report about what you did, strategies to increase code coverage, issues and challenges you encountered, and anything else worth noting about your task. The .md report must be a new file name (do not overwrite existing reports from past patches).
 
 In your report you have to explain any discrepancies between your statements and the statements of the code reviews (eg. code review says patch would not build, but you say it does). If the patch is building with no errors, but the code review says the project would not compile, explain in your report why it is compiling. In any case explain in your report if there was any issue building the project, and / or what the code review said about not building.
 
