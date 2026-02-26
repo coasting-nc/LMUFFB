@@ -4,7 +4,7 @@ See which tests are easier to add. If an intended test to address a particular c
 
 The tests you write must be meaningful and test actual functionality, it is not acceptable to add tests that don't actually test anything, for the sake of only inflating the coverage numbers.
 
-Avoid changing main code whenever possible. Prioritize writing tests that do not require chanes to the main code.
+Avoid changing main code whenever possible. Prioritize writing tests that do not require chanes to the main code. If you encounter main code that should be changes to improve testability (eg. redundant or unnecessary code causing unreachable branches, changing the order of operators to make branches reachable, etc.), just leave comment in that code as TODO notes for later.
 
 Also include in your patch a .md document report about what you did, strategies to increase code branches coverage, issues and challenges you encountered, and anything else worth noting about your task. The .md report must be a new file name (do not overwrite existing reports from past patches).
 
