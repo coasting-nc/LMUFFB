@@ -14,9 +14,9 @@ Avoid changing main code whenever possible. Prioritize writing tests that do not
 
 Also include in your patch a .md document report about what you did, strategies to increase code branches coverage, issues and challenges you encountered, and anything else worth noting about your task. The .md report must be a new file name (do not overwrite existing reports from past patches).
 
-If the patch is building with no errors, but the code review says the project would not compile, explain in your report why it is compiling. In any case explain in your report if there was any issue building the project, and / or what the code review said about not building.
+In your report you have to explain any discrepancies between your statements and the statements of the code reviews (eg. code review says patch would not build, but you say it does). If the patch is building with no errors, but the code review says the project would not compile, explain in your report why it is compiling. In any case explain in your report if there was any issue building the project, and / or what the code review said about not building.
 
-Also save the code reviews you receive as .md files under the docs/dev_docs/code_reviews directory. Use unique filenames with a prefix for this issue / task you are working on, and a suffix with the code review iteration number. You have to iterate repeating code reviews and addressing issues raised until you get a code review with a greenlight (correct rating).
+Also save the code reviews you receive as .md files under the docs/dev_docs/code_reviews directory. Use unique filenames with a prefix for this issue / task you are working on, and a suffix with the code review iteration number. You have to iterate repeating code reviews and addressing issues raised until you get a code review with a greenlight (correct rating). You must include in your patch all the code reviews, those in which you did not receive a correct rating (if any), and the final one with a correct rating. This is to help me review the patch and track progress in the project.
 
 I confirm that the code reviews must be saved to .md files and included in your patch. These must be the independent code reviews that you received from the code review tool, you must include them verbatim in the .md files.
 
