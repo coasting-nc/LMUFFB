@@ -26,6 +26,7 @@ ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleN
 
     if (cls.find("LMP3") != std::string::npos) return ParsedVehicleClass::LMP3;
     if (cls.find("GTE") != std::string::npos) return ParsedVehicleClass::GTE;
+    // NOTE: LMGT3 check is redundant here as GT3 would match it first.
     if (cls.find("GT3") != std::string::npos || cls.find("LMGT3") != std::string::npos) return ParsedVehicleClass::GT3;
 
     // 2. Secondary Identification via Vehicle Name Keywords (Fallback)

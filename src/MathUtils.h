@@ -68,6 +68,7 @@ struct BiquadNotch {
 inline double inverse_lerp(double min_val, double max_val, double value) {
     double range = max_val - min_val;
     if (std::abs(range) >= 0.0001) {
+        // NOTE: The ternary below is redundant but kept for safety.
         double t = (value - min_val) / (std::abs(range) >= 0.0001 ? range : 1.0);
         return (std::max)(0.0, (std::min)(1.0, t));
     }
@@ -84,6 +85,7 @@ inline double inverse_lerp(double min_val, double max_val, double value) {
 inline double smoothstep(double edge0, double edge1, double x) {
     double range = edge1 - edge0;
     if (std::abs(range) >= 0.0001) {
+        // NOTE: The ternary below is redundant but kept for safety.
         double t = (x - edge0) / (std::abs(range) >= 0.0001 ? range : 1.0);
         t = (std::max)(0.0, (std::min)(1.0, t));
         return t * t * (3.0 - 2.0 * t);
