@@ -131,34 +131,34 @@ if __name__ == "__main__":
     branch_report = parse_cobertura(cobertura_path, "branch")
     
   
-    # Try XML function report first, then JSON
-    function_report = parse_cobertura(cobertura_path, "function")
-    if not function_report:
-        function_report = parse_json_summary(json_path)
+
+    output_dir = "docs/dev_docs/reports/coverage"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     print("=== C++ Line Coverage Summary (Excluding Vendor/Tests) ===")
-    with open("coverage_summary.txt", "w") as f:
+    with open(os.path.join(output_dir, "coverage_summary.txt"), "w") as f:
         if line_report:
             print(line_report)
             f.write(line_report)
         else:
             f.write("No line coverage data available.")
-    print(f"\nSummary saved to coverage_summary.txt")
+    print(f"\nSummary saved to {os.path.join(output_dir, 'coverage_summary.txt')}")
 
     print("\n=== C++ Branch Coverage Summary (Excluding Vendor/Tests) ===")
-    with open("coverage_branches_summary.txt", "w") as f:
+    with open(os.path.join(output_dir, "coverage_branches_summary.txt"), "w") as f:
         if branch_report:
             print(branch_report)
             f.write(branch_report)
         else:
             f.write("No branch coverage data available.")
-    print(f"Summary saved to coverage_branches_summary.txt")
+    print(f"Summary saved to {os.path.join(output_dir, 'coverage_branches_summary.txt')}")
 
     print("\n=== C++ Function Coverage Summary (Excluding Vendor/Tests) ===")
-    with open("coverage_functions_summary.txt", "w") as f:
+    with open(os.path.join(output_dir, "coverage_functions_summary.txt"), "w") as f:
         if function_report:
             print(function_report)
             f.write(function_report)
         else:
             f.write("No function coverage data available (check if summary.json exists).")
-    print(f"Summary saved to coverage_functions_summary.txt")
+    print(f"Summary saved to {os.path.join(output_dir, 'coverage_functions_summary.txt')}")

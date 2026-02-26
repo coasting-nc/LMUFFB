@@ -102,8 +102,12 @@ if __name__ == "__main__":
     branch_report = parse_cobertura(path, "branch")
     function_report = parse_cobertura(path, "function")
 
+    output_dir = "docs/dev_docs/reports/coverage"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     print(f"=== Python Line Coverage Summary ===")
-    with open("python_coverage_summary.txt", "w") as f:
+    with open(os.path.join(output_dir, "python_coverage_summary.txt"), "w") as f:
         if line_report:
             print(line_report)
             f.write(line_report)
@@ -111,7 +115,7 @@ if __name__ == "__main__":
             f.write("No line coverage data available.")
     
     print(f"\n=== Python Branch Coverage Summary ===")
-    with open("python_coverage_branches_summary.txt", "w") as f:
+    with open(os.path.join(output_dir, "python_coverage_branches_summary.txt"), "w") as f:
         if branch_report:
             print(branch_report)
             f.write(branch_report)
@@ -119,7 +123,7 @@ if __name__ == "__main__":
             f.write("No branch coverage data available.")
 
     print(f"\n=== Python Function Coverage Summary ===")
-    with open("python_coverage_functions_summary.txt", "w") as f:
+    with open(os.path.join(output_dir, "python_coverage_functions_summary.txt"), "w") as f:
         if function_report:
             print(function_report)
             f.write(function_report)
