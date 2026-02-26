@@ -61,14 +61,33 @@ def parse_cobertura(xml_path, metric="line"):
                 summary.append(f"File: {filename}\n  {metric.capitalize()} Coverage: {rate*100:.1f}% (No specific missing {metric}s found)\n")
             continue
 
+        # Group into ranges
+        ranges = []
+        if missing:
+            start = missing[0]
+            prev = start
+            for i in range(1, len(missing)):
+                if missing[i] == prev + 1:
+                    prev = missing[i]
+                else:
+                    if start == prev:
+                        ranges.append(f"{start}")
+                    else:
+                        ranges.append(f"{start}-{prev}")
+                    start = missing[i]
+                    prev = start
+            if start == prev:
+                ranges.append(f"{start}")
+            else:
+                ranges.append(f"{start}-{prev}")
 
         label = "Lines" if metric == "line" else "Branches" if metric == "branch" else "Functions"
         
         if metric in ["line", "branch"]:
-            # Group into ranges
+            # Group into ranges for numeric metrics
+            missing = sorted(list(set(missing)))
             ranges = []
             if missing:
-                missing = sorted(list(set(missing)))
                 start = missing[0]
                 prev = start
                 for i in range(1, len(missing)):
@@ -87,6 +106,7 @@ def parse_cobertura(xml_path, metric="line"):
                     ranges.append(f"{start}-{prev}")
             missing_str = ', '.join(ranges)
         else:
+            # For non-numeric (functions), just list them
             missing_str = ', '.join(missing)
 
         summary.append(f"File: {filename}\n  {metric.capitalize()} Coverage: {rate*100:.1f}%\n  Missing {label}: {missing_str}\n")

@@ -244,6 +244,9 @@ public:
     static void CallCalculateSuspensionBottoming(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
         e.calculate_suspension_bottoming(data, ctx);
     }
+    static void CallCalculateSoftLock(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        e.calculate_soft_lock(data, ctx);
+    }
     static void SetScrubDragGain(FFBEngine& e, float val) { e.m_scrub_drag_gain = val; }
     static void SetBottomingEnabled(FFBEngine& e, bool val) { e.m_bottoming_enabled = val; }
     static void SetBottomingGain(FFBEngine& e, float val) { e.m_bottoming_gain = val; }

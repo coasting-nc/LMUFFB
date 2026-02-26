@@ -72,6 +72,7 @@ set(TEST_SOURCES
     test_dxgi_modernization.cpp
     test_main_harness.cpp
     test_coverage_boost_v2.cpp
+    test_coverage_boost_v3.cpp
     test_config_comprehensive.cpp
     ../src/main.cpp
 )
@@ -81,6 +82,7 @@ set(TEST_SOURCES
 if(IMGUI_CORE_SOURCES)
     list(APPEND TEST_SOURCES
         test_gui_interaction.cpp
+        test_gui_interaction_v2.cpp
     )
 endif()
 
