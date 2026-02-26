@@ -6,8 +6,6 @@ Prioritize trying to increase the following coverages, in this order:
 * Branch coverage of LinuxMock.h, SafeSharedMemoryLock.h, SharedMemoryInterface.hpp.
 * function coverage of GuiPlatform.h and main.cpp.
 * Line coverage of main.cpp, GuiLayer_Common.cpp., GuiWidgets.h, and GameConnector.cpp.
-
-
 * Branch coverage of main.cpp, GuiLayer_Common.cpp, GuiLayer_Linux.cpp, Logger.h, GameConnector.cpp, Config.cpp, GuiWidgets.h, DirectInputFFB.cpp, RateMonitor.h, AsyncLogger.h, GripLoadEstimation.cpp and FFBEngine.cpp.
 
 Also include in your patch a detailed .md report with a detailed discussion about why increasing the coverages above is challenging, in case you were not able to do so; in your report, you must include a detailed section for each of those code files and type of coverages (lines, branches, functions).
