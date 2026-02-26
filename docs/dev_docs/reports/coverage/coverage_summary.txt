@@ -1,9 +1,10 @@
 File: src/AsyncLogger.h
-  Line Coverage: 100%
+  Line Coverage: 99.3%
+  Missing Lines: 212
 
 File: src/Config.cpp
-  Line Coverage: 96.7%
-  Missing Lines: 46-50, 92-93, 95-96, 99-100, 102, 149, 780-782, 949-955, 957, 959, 1011-1013, 1029, 1481-1483, 1522-1524, 1532-1534, 1545, 1548, 1551, 1563
+  Line Coverage: 96.6%
+  Missing Lines: 46-50, 92-93, 95-96, 99-100, 102, 148, 758-760, 926-932, 934, 936, 988-990, 1006, 1455-1457, 1496-1498, 1506-1508, 1519, 1522, 1525, 1537
 
 File: src/Config.h
   Line Coverage: 100%
@@ -30,20 +31,18 @@ File: src/GripLoadEstimation.cpp
   Line Coverage: 100%
 
 File: src/GuiLayer_Common.cpp
-  Line Coverage: 61.1%
-  Missing Lines: 98-99, 116-118, 126-133, 135-136, 138, 144-145, 150-151, 156-158, 160-161, 169-170, 177-182, 190, 204, 208, 213-216, 218-219, 221, 223-231, 233-234, 261, 268, 275, 277-278, 307-312, 314-315, 317, 326-331, 334, 340-341, 343, 349-350, 355-360, 370-372, 379-382, 385, 389-393, 395, 413-416, 437, 497, 502, 553, 588-591, 595, 607-608, 611, 625-627, 629-634, 636, 649, 690, 722, 726, 728-733, 735-736, 738-742, 744-745, 747, 750-752, 754, 760, 762-764, 766-767, 769-770, 773, 775, 794-797, 844-848, 893-939, 943-946, 977-1000, 1004-1035
+  Line Coverage: 68.7%
+  Missing Lines: 98-99, 116-118, 126-133, 135-136, 138, 144-145, 150-151, 156-158, 160-161, 169-170, 177-182, 190, 204, 208, 213-216, 218-219, 221, 223-231, 233-234, 261, 268, 275, 277-278, 307-312, 314-315, 317, 326-331, 334, 340-341, 343, 349-350, 355-360, 370-372, 379-382, 385, 389-393, 395, 413-416, 437, 493, 498, 549, 584-587, 591, 603-604, 607, 621-623, 625-630, 632, 645, 686, 718, 722, 724-729, 731-732, 734-738, 740-741, 743, 746-748, 750, 756, 758-760, 762-763, 765-766, 769, 771, 840-844, 973-996, 1000-1031
 
 File: src/GuiLayer_Linux.cpp
-  Line Coverage: 76.7%
-  Missing Lines: 186-188, 190-192, 194
+  Line Coverage: 100%
 
 File: src/GuiPlatform.h
-  Line Coverage: 50.0%
-  Missing Lines: 15
+  Line Coverage: 100%
 
 File: src/GuiWidgets.h
-  Line Coverage: 83.9%
-  Missing Lines: 42, 47, 62-64, 94-95, 99, 118-119
+  Line Coverage: 85.5%
+  Missing Lines: 42, 47, 62-64, 94-95, 118-119
 
 File: src/HealthMonitor.h
   Line Coverage: 100%
@@ -67,17 +66,16 @@ File: src/VehicleUtils.cpp
   Line Coverage: 100%
 
 File: src/main.cpp
-  Line Coverage: 47.6%
+  Line Coverage: 49.6%
   Missing Lines: 60-63, 65, 117-119, 130-134, 137-139, 143-145, 147-149, 153-179, 181, 184, 186-187, 190-191, 207-212, 214-217, 238, 247-258, 278, 283-284, 287-289, 292, 294-297, 299-300, 302-304, 306, 308-309, 312-313, 316-317, 320-321, 323-324, 327-328, 333, 336-339, 341-345, 347-348, 350-351
 
 File: src/lmu_sm_interface/LinuxMock.h
-  Line Coverage: 95.9%
-  Missing Lines: 121, 201, 293-294
+  Line Coverage: 99.0%
+  Missing Lines: 209
 
 File: src/lmu_sm_interface/SafeSharedMemoryLock.h
-  Line Coverage: 93.3%
-  Missing Lines: 14
+  Line Coverage: 100%
 
 File: src/lmu_sm_interface/SharedMemoryInterface.hpp
-  Line Coverage: 88.0%
-  Missing Lines: 101, 113-114, 154, 158-159, 166-168
+  Line Coverage: 90.7%
+  Missing Lines: 113-114, 158-159, 166-168

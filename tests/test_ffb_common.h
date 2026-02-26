@@ -259,6 +259,10 @@ public:
     static void SetSmoothedStructuralMult(FFBEngine& e, double val) { e.m_smoothed_structural_mult = val; }
     static void SetRollingAverageTorque(FFBEngine& e, double val) { e.m_rolling_average_torque = val; }
     static void SetLastRawTorque(FFBEngine& e, double val) { e.m_last_raw_torque = val; }
+    static void AddSnapshot(FFBEngine& e, const FFBSnapshot& s) {
+        std::lock_guard<std::mutex> lock(e.m_debug_mutex);
+        e.m_debug_buffer.push_back(s);
+    }
 };
 
 } // namespace FFBEngineTests

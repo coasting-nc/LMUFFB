@@ -109,6 +109,10 @@ namespace MockSM {
         static DWORD err = 0;
         return err;
     }
+    inline bool& FailNext() {
+        static bool fail = false;
+        return fail;
+    }
 }
 
 // Interlocked functions for Linux mocking
@@ -153,6 +157,10 @@ inline DWORD GetLastError() { return MockSM::LastError(); }
 
 // Shared Memory Mocks
 inline HANDLE CreateFileMappingA(HANDLE hFile, void* lpAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, const char* lpName) {
+    if (MockSM::FailNext()) {
+        MockSM::FailNext() = false;
+        return NULL;
+    }
     if (lpName == nullptr) return (HANDLE)1;
     std::string name(lpName);
     auto& maps = MockSM::GetMaps();
