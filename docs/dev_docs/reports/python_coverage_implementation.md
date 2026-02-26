@@ -14,14 +14,12 @@ This report documents the implementation of integrated Python testing and covera
 
 ### 2. Scripting Enhancements
 - **`scripts/coverage_summary.py` (C++)**:
-    - Restored to be C++ specific as requested.
-    - Added **Function Coverage** reporting by parsing `<method>` nodes in the Cobertura XML.
-    - Now outputs three summary files:
-        - `coverage_summary.txt` (Lines)
-        - `coverage_branches_summary.txt` (Branches)
-        - `coverage_functions_summary.txt` (Functions)
-- **`scripts/python_coverage_summary.py` (New)**:
-    - Created a dedicated parser for Python coverage.
+    - Restricted to C++ specific logic.
+    - Added **Function Coverage** reporting by parsing `<method>` nodes in the Cobertura XML as primary source.
+    - Includes a **JSON Fallback** parser (`summary.json`) for enhanced function metrics if available.
+    - Guarantees creation of summary files (`coverage_summary.txt`, etc.) to prevent workflow failures.
+- **`scripts/python_coverage_summary.py` (Python)**:
+    - Dedicated parser for Python-specific coverage.
     - Supports Line, Branch, and Function coverage.
     - Excludes standard Python boilerplate (like `__init__.py`) and tests from the summary.
     - Outputs mirroring the C++ naming convention:
