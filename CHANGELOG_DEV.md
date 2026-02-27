@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.91] - 2026-02-27
+### Changed
+- **Static Analysis Optimization**:
+  - Excluded Linux/GCC specific stylistic warnings for math and casting:
+    - `-performance-type-promotion-in-math-fn`
+    - `-readability-redundant-casting`
+
+
+
 ## [0.7.90] - 2026-02-27
 ### Changed
 - **Static Analysis Optimization**:

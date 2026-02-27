@@ -3,6 +3,19 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]February 27, 2026[/b][/size]
+[b]Version 0.7.91 - CI Code Quality Convergence[/b]
+
+[b]New release[/b] (0.7.91): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Developer Experience[/b]: Silenced Linux-specific compiler warnings across the CI testing environments to match local environments.
+[/list]
+
+---
+
+
+[size=5][b]February 27, 2026[/b][/size]
 [b]Version 0.7.90 - Expanded Build Cleanliness[/b]
 
 [b]New release[/b] (0.7.90): https://github.com/coasting-nc/LMUFFB/releases
