@@ -1,0 +1,36 @@
+name: Lint
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  clang-format:
+    name: C++ Formatting (Clang-Format)
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run Clang-Format Style Check
+      uses: MichaelBoselowitz/clang-format-lint-action@v1
+      continue-on-error: true
+      with:
+        source: './src ./tests'
+        extensions: 'h,hpp,c,cpp'
+        clangFormatVersion: 16
+
+  ruff:
+    name: Python Linting (Ruff)
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run Ruff
+      uses: astral-sh/ruff-action@v3
+      continue-on-error: true
+      with:
+        args: "check --output-format=github ."
