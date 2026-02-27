@@ -159,8 +159,8 @@ inline DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
 }
 inline BOOL SetEvent(HANDLE hEvent) { return TRUE; }
 inline BOOL CloseHandle(HANDLE hObject) {
-    if (hObject != (HANDLE)0 && hObject != (HANDLE)1 && hObject != (HANDLE)(intptr_t)-1) {
-        // We could delete the string* here, but for mocks it's fine to leak a bit in tests
+    if (hObject != (HANDLE)0 && hObject != (HANDLE)1 && hObject != (HANDLE)2 && hObject != (HANDLE)(intptr_t)-1) {
+        delete static_cast<std::string*>(hObject);
     }
     return TRUE;
 }
