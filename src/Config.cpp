@@ -1304,12 +1304,11 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "log_path") m_log_path = value;
                     else if (key == "invert_force") engine.m_invert_force = std::stoi(value);
                     else if (key == "gain") engine.m_gain = std::stof(value);
-                    else if (key == "sop_smoothing_factor") engine.m_sop_smoothing_factor = std::stof(value);
+                    else if (key == "sop_smoothing_factor" || key == "smoothing") engine.m_sop_smoothing_factor = std::stof(value); // "smoothing" is a legacy alias
                     else if (key == "sop_scale") engine.m_sop_scale = std::stof(value);
                     else if (key == "slip_angle_smoothing") engine.m_slip_angle_smoothing = std::stof(value);
                     else if (key == "texture_load_cap" || key == "max_load_factor") engine.m_texture_load_cap = std::stof(value);
                     else if (key == "brake_load_cap") engine.m_brake_load_cap = std::stof(value);
-                    else if (key == "smoothing") engine.m_sop_smoothing_factor = std::stof(value); // Legacy support
                     else if (key == "understeer") engine.m_understeer_effect = std::stof(value);
                     else if (key == "torque_source") engine.m_torque_source = std::stoi(value);
                     else if (key == "torque_passthrough") engine.m_torque_passthrough = (value == "1" || value == "true");
