@@ -42,9 +42,9 @@ Done: compilation of tests is faster now (less optimized on all platforms).
 # 1. Add clang-tidy to your path (adjust if using Pro/Enterprise)
 $env:PATH += ";C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\Llvm\x64\bin"
 
-# 2. Configure CMake with clang-tidy enabled
-# Using the same checks as the CI:
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=-*,performance-*,bugprone-*,readability-*,-readability-magic-numbers,-readability-uppercase-literal-suffix,-readability-implicit-bool-conversion,-readability-avoid-nested-conditional-operator,-readability-braces-around-statements,-performance-avoid-endl"
+# 2. Configure CMake with Ninja to enable clang-tidy
+# MSBuild (the default visual studio generator) ignores CMAKE_CXX_CLANG_TIDY, so we MUST use Ninja:
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=-*,performance-*,bugprone-*,readability-*,-readability-magic-numbers,-readability-uppercase-literal-suffix,-readability-implicit-bool-conversion,-readability-avoid-nested-conditional-operator,-readability-braces-around-statements,-performance-avoid-endl,-readability-function-cognitive-complexity,-bugprone-easily-swappable-parameters;--extra-arg=/EHsc"
 
 # 3. Build to see warnings
 cmake --build build --config Debug
