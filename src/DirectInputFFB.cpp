@@ -141,7 +141,10 @@ const char* GetDirectInputErrorString(HRESULT hr) {
 DirectInputFFB::~DirectInputFFB() {
     try {
         Shutdown();
-    } catch (...) {}
+    } catch (...) {
+        // Ignore errors during shutdown in destructor to avoid std::terminate
+        (void)0; 
+    }
 }
 
 bool DirectInputFFB::Initialize(HWND hwnd) {

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.95] - 2026-02-27
+### Fixed
+- **Static Analysis Fixes**:
+  - Re-enabled and resolved `clang-tidy` warning `-bugprone-empty-catch`. Documented and added no-op markers to catch blocks in destructors and cleanup routines to satisfy static analysis while maintaining required error silencing.
+
+
+
 ## [0.7.94] - 2026-02-27
 ### Fixed
 - **Static Analysis Fixes**:

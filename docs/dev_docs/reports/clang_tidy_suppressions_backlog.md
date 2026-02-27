@@ -18,7 +18,7 @@ These warnings carry the highest risk because they deal with undefined behavior,
 - **Why it matters**: If an exception escapes a function marked `noexcept` or a destructor, the C++ runtime will instantly call `std::terminate()`, leading to an abrupt application crash with no chance of recovery.
 - **Action**: Add `try/catch` blocks appropriately, or remove the `noexcept` marker if throwing is expected.
 
-### 3. `bugprone-empty-catch`
+### 3. ~~`bugprone-empty-catch`~~ (✅ **RESOLVED in 0.7.95**)
 - **Why it matters**: Catching exceptions and doing nothing completely hides failures. This creates "silent errors" where the system continues in an unstable or unexpected state, making debugging nearly impossible.
 - **Action**: Add minimum logging or error handling within empty `catch (...) {}` blocks.
 

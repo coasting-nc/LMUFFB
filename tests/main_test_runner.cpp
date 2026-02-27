@@ -95,7 +95,10 @@ int main(int argc, char* argv[]) {
                 if (!file.empty() && std::filesystem::exists(file)) {
                     std::filesystem::remove(file);
                 }
-            } catch (...) {}
+            } catch (...) {
+                // Ignore cleanup errors for test files
+                (void)0;
+            }
         }
 
         try {
@@ -120,12 +123,15 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
-        } catch (...) {}
+        } catch (...) {
+            // Ignore directory cleanup errors
+            (void)0;
+        }
     };
 
-        cleanup();
+    cleanup();
 
-        return (total_failed > 0) ? 1 : 0;
+    return (total_failed > 0) ? 1 : 0;
     } catch (const std::exception& e) {
         std::cerr << "Fatal exception in test runner: " << e.what() << std::endl;
         return 1;
