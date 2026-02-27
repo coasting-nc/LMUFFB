@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.90] - 2026-02-27
+### Changed
+- **Static Analysis Optimization**:
+  - Excluded multiple stylistic and edge-case compiler rules to silence distracting warnings during testing:
+    - `-bugprone-branch-clone`
+    - `-bugprone-implicit-widening-of-multiplication-result`
+    - `-performance-unnecessary-value-param`
+    - `-bugprone-incorrect-roundings`
+    - `-bugprone-empty-catch`
+    - `-readability-qualified-auto`
+    - `-readability-redundant-string-cstr`
+    - `-readability-static-accessed-through-instance`
+    - `-bugprone-unchecked-optional-access`
+
+
+
 ## [0.7.89] - 2026-02-27
 ### Fixed
 - **Build System**:

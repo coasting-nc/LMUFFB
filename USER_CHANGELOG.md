@@ -3,6 +3,19 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]February 27, 2026[/b][/size]
+[b]Version 0.7.90 - Expanded Build Cleanliness[/b]
+
+[b]New release[/b] (0.7.90): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Developer Experience[/b]: Silenced several more low-priority compiler warnings in testing architectures to keep the console focused purely on high-priority build issues.
+[/list]
+
+---
+
+
+[size=5][b]February 27, 2026[/b][/size]
 [b]Version 0.7.89 - Minor Code Fixes & Build Stability[/b]
 
 [b]New release[/b] (0.7.89): https://github.com/coasting-nc/LMUFFB/releases
