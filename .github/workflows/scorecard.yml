@@ -18,7 +18,7 @@ on:
 permissions: read-all
 
 jobs:
-  analysis:
+  scorecard-analysis:
     name: Scorecard analysis
     runs-on: ubuntu-latest
     # `publish_results: true` only works when run from the default branch. conditional can be removed if disabled.
@@ -56,7 +56,7 @@ jobs:
           # For private repositories:
           #   - `publish_results` will always be set to `false`, regardless
           #     of the value entered here.
-          publish_results: true
+          publish_results: false
 
           # (Optional) Uncomment file_mode if you have a .gitattributes with files marked export-ignore
           # file_mode: git
@@ -76,4 +76,4 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
-          category: scorecard
+          category: ossf-scorecard
