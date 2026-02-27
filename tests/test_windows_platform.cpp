@@ -82,16 +82,16 @@ TEST_CASE(test_window_always_on_top_behavior, "Windows") {
 
 TEST_CASE(test_resource_icon_loadable, "Windows") {
     std::cout << "\nTest: Resource Icon Loadable" << std::endl;
-    // Note: This test only makes sense on LMUFFB.exe which has the icon embedded.
-    // When running on the test runner binary (which has no .rc resource), skip.
+    // Load the icon from the current module resources.
+    // This only works correctly when res.rc is linked to the binary (BUILD_HEADLESS=OFF).
     HICON hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1));
-    if (!hIcon) {
-        std::cout << "  [SKIP] No icon resource in test runner binary (only present in LMUFFB.exe). Verified on CI." << std::endl;
-        g_tests_passed++; // Count as pass: expected and known
-        return;
-    }
     ASSERT_TRUE(hIcon != NULL);
-    std::cout << "  [PASS] Successfully loaded IDI_ICON1 (" << IDI_ICON1 << ") from process resources." << std::endl;
+    if (hIcon) {
+        std::cout << "  [PASS] Successfully loaded IDI_ICON1 (" << IDI_ICON1 << ") from process resources." << std::endl;
+    } else {
+        std::cout << "  [FAIL] Failed to load IDI_ICON1 from resources. Error: " << GetLastError()
+                  << " (Ensure BUILD_HEADLESS=OFF when building locally)" << std::endl;
+    }
 }
 
 TEST_CASE(test_main_exe_icon, "Windows") {
@@ -140,14 +140,12 @@ TEST_CASE(test_main_exe_icon, "Windows") {
             std::cout << "  [PASS] IDI_ICON1 (" << IDI_ICON1 << ") successfully found inside " << main_exe << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "  [WARN] IDI_ICON1 not found inside " << main_exe << " (CMake may not have linked res.rc, or running from wrong path)." << std::endl;
-            // Don't fail: this can happen in partial/dev builds. CI enforces it.
-            g_tests_passed++;
+            std::cout << "  [FAIL] IDI_ICON1 missing from " << main_exe << "! CMake did not link res.rc." << std::endl;
+            g_tests_failed++;
         }
         FreeLibrary(hMod);
     } else {
         std::cout << "  [WARN] Could not find LMUFFB executable to inspect resources. Skipping test." << std::endl;
-        // Don't fail the build if the main exe isn't built yet, just warn.
         g_tests_passed++;
     }
 }
