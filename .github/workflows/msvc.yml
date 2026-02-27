@@ -53,7 +53,10 @@ jobs:
           ruleset: NativeRecommendedRules.ruleset
 
       - name: Install SARIF tool
-        run: dotnet tool install -g Sarif.Multitool
+        run: |
+          dotnet tool install -g Sarif.Multitool
+          echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        shell: pwsh
 
       - name: Merge and Optimize SARIF
         run: |
