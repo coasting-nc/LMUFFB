@@ -121,6 +121,11 @@ TEST_CASE(test_linux_mock_error_branches, "System") {
     #ifndef _WIN32
     // Mock shared memory to ensure connection succeeds even on Linux
     HANDLE hMap = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, (DWORD)sizeof(SharedMemoryLayout), LMU_SHARED_MEMORY_FILE);
+    // Clean up the named mapping handle immediately — CreateFileMappingA returns a
+    // heap-allocated std::string* as the mock handle; forgetting CloseHandle causes
+    // a 32-byte ASan/LeakSanitizer error.
+    CloseHandle(hMap);
+    MockSM::GetMaps().erase(LMU_SHARED_MEMORY_FILE); // restore clean state for other tests
     // Test CreateFileMappingA with null name
     HANDLE h1 = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 1024, nullptr);
     if (h1 == reinterpret_cast<HANDLE>(static_cast<intptr_t>(1))) {

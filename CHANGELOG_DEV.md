@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.105] - 2026-02-27
+### Fixed
+- **CI / ASan**: Resolved a `LeakSanitizer: detected memory leaks` error in the Linux Sanitizers (ASan/UBSan) CI job.
+  - Root cause: `CreateFileMappingA` in `LinuxMock.h` returns a heap-allocated `new std::string*` as the mock `HANDLE`. In `test_linux_mock_error_branches` (`test_coverage_boost_v5.cpp:123`), the handle for the `LMU_SHARED_MEMORY_FILE` mapping was created but never released, leaking exactly 32 bytes per ASan report.
+  - Fix: Added `CloseHandle(hMap)` immediately after use, and `MockSM::GetMaps().erase(LMU_SHARED_MEMORY_FILE)` to restore clean state for subsequent tests that create the same named mapping.
+
+
 ## [0.7.104] - 2026-02-27
 ### Fixed
 - **Static Analysis**: Resolved all `bugprone-narrowing-conversions` warnings across the codebase. All 12 instances involved implicit type narrowing during arithmetic or assignment:

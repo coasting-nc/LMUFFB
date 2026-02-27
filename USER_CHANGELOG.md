@@ -3,6 +3,19 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]February 27, 2026[/b][/size]
+[b]Version 0.7.105 - Linux Build Stability[/b]
+
+[b]New release[/b] (0.7.105): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]Linux/Steam Deck Stability[/b]: Resolved a memory leak in the Linux compatibility layer that caused the automated sanitizer checks to report a false positive. This does not affect functionality on any platform but ensures our CI quality gates remain clean.
+[/list]
+
+---
+
+
+[size=5][b]February 27, 2026[/b][/size]
 [b]Version 0.7.104 - Type Safety & Code Precision[/b]
 
 [b]New release[/b] (0.7.104): https://github.com/coasting-nc/LMUFFB/releases
