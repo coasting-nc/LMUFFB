@@ -1,15 +1,12 @@
 Add more tests to increase the code coverage. Consider coverage both in terms of code lines, branches, and functions. 
 
 
-Prioritize trying to increase the following coverages:
+Prioritize trying to increase the following coverages, in this order:
 
-* Line coverage of main.cpp, GuiPlatform.h and GuiLayer_Common.cpp.
-* function coverage of GuiPlatform.h, main.cpp, and GuiLayer_Linux.cpp
-* function coverage of LinuxMock.h
-* Line coverage of SharedMemoryInterface.hpp
-* Branch coverage of LinuxMock.h, SafeSharedMemoryLock.h
-* Branch coverage of GuiLayer_Linux.cpp
-* Branch coverage of main.cpp, GuiLayer_Common.cpp, Config.h, Logger.h, GuiWidgets.h, GameConnector.cpp.
+* Branch coverage of LinuxMock.h, SafeSharedMemoryLock.h, SharedMemoryInterface.hpp.
+* function coverage of GuiPlatform.h and main.cpp.
+* Line coverage of main.cpp, GuiLayer_Common.cpp., GuiWidgets.h, and GameConnector.cpp.
+* Branch coverage of main.cpp, GuiLayer_Common.cpp, GuiLayer_Linux.cpp, Logger.h, GameConnector.cpp, Config.cpp, GuiWidgets.h, DirectInputFFB.cpp, RateMonitor.h, AsyncLogger.h, GripLoadEstimation.cpp and FFBEngine.cpp.
 
 Also include in your patch a detailed .md report with a detailed discussion about why increasing the coverages above is challenging, in case you were not able to do so; in your report, you must include a detailed section for each of those code files and type of coverages (lines, branches, functions).
 

@@ -109,6 +109,14 @@ namespace MockSM {
         static DWORD err = 0;
         return err;
     }
+    inline bool& FailNext() {
+        static bool fail = false;
+        return fail;
+    }
+    inline DWORD& WaitResult() {
+        static DWORD res = 0; // WAIT_OBJECT_0
+        return res;
+    }
 }
 
 // Interlocked functions for Linux mocking
@@ -141,7 +149,14 @@ inline int sprintf_s(char* buf, const char* fmt, ...) {
     va_end(args);
     return ret;
 }
-inline DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) { return WAIT_OBJECT_0; }
+inline DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
+    if (MockSM::WaitResult() != 0) {
+        DWORD res = MockSM::WaitResult();
+        MockSM::WaitResult() = 0;
+        return res;
+    }
+    return WAIT_OBJECT_0;
+}
 inline BOOL SetEvent(HANDLE hEvent) { return TRUE; }
 inline BOOL CloseHandle(HANDLE hObject) {
     if (hObject != (HANDLE)0 && hObject != (HANDLE)1 && hObject != (HANDLE)(intptr_t)-1) {
@@ -153,6 +168,10 @@ inline DWORD GetLastError() { return MockSM::LastError(); }
 
 // Shared Memory Mocks
 inline HANDLE CreateFileMappingA(HANDLE hFile, void* lpAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, const char* lpName) {
+    if (MockSM::FailNext()) {
+        MockSM::FailNext() = false;
+        return NULL;
+    }
     if (lpName == nullptr) return (HANDLE)1;
     std::string name(lpName);
     auto& maps = MockSM::GetMaps();

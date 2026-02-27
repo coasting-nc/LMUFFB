@@ -4,6 +4,9 @@
 #include "../src/GuiLayer.h"
 #include "../src/Config.h"
 
+static const float CONFIG_PANEL_WIDTH = 500.0f;
+static const int PLOT_BUFFER_SIZE = 4000;
+
 class GuiLayerTestAccess {
 public:
     static void DrawTuningWindow(FFBEngine& engine) { GuiLayer::DrawTuningWindow(engine); }
@@ -74,6 +77,41 @@ TEST_CASE(test_gui_interaction_v2, "GUI") {
         ImGui::NewFrame();
         GuiLayerTestAccess::DrawTuningWindow(engine);
         ImGui::EndFrame();
+    }
+
+
+    // 5. Systematic Fuzzing of Tuning Window
+    {
+        Config::show_graphs = false;
+        for (int y = 0; y < 2000; y += 10) {
+            ImGui::NewFrame();
+            io.MousePos = ImVec2(100, (float)y);
+            io.MouseDown[0] = (y % 20 == 0);
+            GuiLayerTestAccess::DrawTuningWindow(engine);
+            ImGui::EndFrame();
+        }
+        std::cout << "[PASS] Tuning Window systematic fuzzing" << std::endl;
+        g_tests_passed++;
+    }
+
+    // 6. Systematic Fuzzing of Debug Window
+    {
+        Config::show_graphs = true;
+        FFBSnapshot s;
+        memset(&s, 0, sizeof(s));
+        s.total_output = 0.5f;
+        s.warn_dt = true;
+        FFBEngineTestAccess::AddSnapshot(engine, s);
+
+        for (int y = 0; y < 1000; y += 20) {
+            ImGui::NewFrame();
+            io.MousePos = ImVec2(CONFIG_PANEL_WIDTH + 100, (float)y);
+            io.MouseDown[0] = true;
+            GuiLayerTestAccess::DrawDebugWindow(engine);
+            ImGui::EndFrame();
+        }
+        std::cout << "[PASS] Debug Window systematic fuzzing" << std::endl;
+        g_tests_passed++;
     }
 
     ImGui::DestroyContext(ctx);

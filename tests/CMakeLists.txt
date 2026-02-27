@@ -67,6 +67,7 @@ set(TEST_SOURCES
     test_ffb_persistent_load.cpp
     test_issue_181_soft_lock_weakness.cpp
     test_issue_184_repro.cpp
+    test_issue_42_ffb_inversion.cpp
     test_tooltips.cpp
     test_coverage_expansion.cpp
     test_dxgi_modernization.cpp
@@ -74,6 +75,8 @@ set(TEST_SOURCES
     test_coverage_boost_v2.cpp
     test_coverage_boost_v3.cpp
     test_coverage_boost_v4.cpp
+    test_coverage_boost_v5.cpp
+    test_coverage_boost_v6.cpp
     test_config_comprehensive.cpp
     ../src/main.cpp
 )
@@ -108,7 +111,7 @@ endif()
 enable_testing()
 add_executable(run_combined_tests ${TEST_SOURCES})
 target_compile_definitions(run_combined_tests PRIVATE HEADLESS_GUI LMUFFB_UNIT_TEST)
-target_link_libraries(run_combined_tests PRIVATE LMUFFB_Core)
+target_link_libraries(run_combined_tests PRIVATE LMUFFB_Core_Fast)
 
 if(WIN32)
     target_link_libraries(run_combined_tests PRIVATE version imm32 dxgi)

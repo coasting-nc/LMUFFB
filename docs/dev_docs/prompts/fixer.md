@@ -9,7 +9,7 @@ Your mission is to select **ONE** open GitHub issue, reproduce the problem, and 
 4.  **Develop Second:** You must follow the instructions in `gemini_orchestrator\templates\B_developer_prompt.md` to implement the plan you just created.
 5.  **Iterative Quality Loop & Documentation:**
     *   **Build & Test:** Before *every* code review, ensure the project builds with no errors/warnings and all tests pass.
-    *   **Review & Record:** Request an independent code review using the code review tool. **You must save the output of each review as a separate Markdown file** (e.g., `<task_description>_review_iteration_1.md`, `<task_description>_review_iteration_2.md`) under `docs\dev_docs\code_reviews`.
+    *   **Review & Record:** Request an independent code review using the code review tool. **You must save the output of each review as a separate Markdown file** (e.g., `<task_description>_review_iteration_1.md`, `<task_description>_review_iteration_2.md`) under `docs\dev_docs\code_reviews`. In the implementation notes of the implementation plan, also discuss any issues raised by the code reviews and how you addressed them; also discuss there any discrepancies between you and the code reviews (eg. the code review said the patch would not build, but it does).
     *   **Fix & Repeat:** If the review raises issues, address them immediately, commit, and perform a *new* review. Repeat this loop until you receive a "Greenlight" (no issues found).
 6.  **Final Documentation:** Update the implementation plan with final notes upon completion; include encountered issues, deviations from the plan, and suggestions for the future.
 
