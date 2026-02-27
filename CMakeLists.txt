@@ -114,7 +114,7 @@ endif()
 set(IMGUI_SOURCES ${IMGUI_CORE_SOURCES} ${IMGUI_BACKEND_SOURCES})
 
 # Disable clang-tidy for third-party vendor code
-set_source_files_properties(${IMGUI_SOURCES} PROPERTIES CXX_CLANG_TIDY "")
+set_source_files_properties(${IMGUI_SOURCES} PROPERTIES SKIP_LINTING ON)
 
 
 if(NOT WIN32)
