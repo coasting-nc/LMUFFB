@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-02-27 20:03:32</td>
+            <td class="headerValue">2026-02-27 20:09:21</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -77,34 +77,34 @@
 <span id="L6"><span class="lineNum">       6</span>                 :             : class SafeSharedMemoryLock {</span>
 <span id="L7"><span class="lineNum">       7</span>                 :             : public:</span>
 <span id="L8"><span class="lineNum">       8</span>                 :             :     // Factory method that returns a SafeSharedMemoryLock wrapper</span>
-<span id="L9"><span class="lineNum">       9</span>                 :<span class="tlaGNC tlaBgGNC">       12277 :     static std::optional&lt;SafeSharedMemoryLock&gt; MakeSafeSharedMemoryLock() {</span></span>
-<span id="L10"><span class="lineNum">      10</span>         [<span class="tlaGBC" title="Branch 0 was taken 12277 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       12277 :         auto vendorLock = SharedMemoryLock::MakeSharedMemoryLock();</span></span>
-<span id="L11"><span class="lineNum">      11</span>         [<span class="tlaGBC" title="Branch 0 was taken 12274 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3 times"> + </span>]:<span class="tlaGNC">       12277 :         if (vendorLock.has_value()) {</span></span>
-<span id="L12"><span class="lineNum">      12</span>   [<span class="tlaGBC" title="Branch 0 was taken 12274 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 12274 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">       12274 :             return SafeSharedMemoryLock(std::move(vendorLock.value()));</span></span>
+<span id="L9"><span class="lineNum">       9</span>                 :<span class="tlaGNC tlaBgGNC">       19684 :     static std::optional&lt;SafeSharedMemoryLock&gt; MakeSafeSharedMemoryLock() {</span></span>
+<span id="L10"><span class="lineNum">      10</span>         [<span class="tlaGBC" title="Branch 0 was taken 19684 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       19684 :         auto vendorLock = SharedMemoryLock::MakeSharedMemoryLock();</span></span>
+<span id="L11"><span class="lineNum">      11</span>         [<span class="tlaGBC" title="Branch 0 was taken 19681 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3 times"> + </span>]:<span class="tlaGNC">       19684 :         if (vendorLock.has_value()) {</span></span>
+<span id="L12"><span class="lineNum">      12</span>   [<span class="tlaGBC" title="Branch 0 was taken 19681 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 19681 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">       19681 :             return SafeSharedMemoryLock(std::move(vendorLock.value()));</span></span>
 <span id="L13"><span class="lineNum">      13</span>                 :             :         }</span>
 <span id="L14"><span class="lineNum">      14</span>                 :<span class="tlaGNC">           3 :         return std::nullopt;</span></span>
-<span id="L15"><span class="lineNum">      15</span>                 :<span class="tlaGNC">       12277 :     }</span></span>
+<span id="L15"><span class="lineNum">      15</span>                 :<span class="tlaGNC">       19684 :     }</span></span>
 <span id="L16"><span class="lineNum">      16</span>                 :             : </span>
 <span id="L17"><span class="lineNum">      17</span>                 :             :     // Lock with timeout support - wraps the vendor's Lock() method</span>
 <span id="L18"><span class="lineNum">      18</span>                 :             :     // Returns false if timeout expires or lock acquisition fails</span>
-<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC">       10641 :     bool Lock(DWORD timeout_ms = 50) {</span></span>
+<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC">        6449 :     bool Lock(DWORD timeout_ms = 50) {</span></span>
 <span id="L20"><span class="lineNum">      20</span>                 :             :         // The vendor implementation already supports timeout parameter</span>
 <span id="L21"><span class="lineNum">      21</span>                 :             :         // We just expose it through our wrapper</span>
-<span id="L22"><span class="lineNum">      22</span>                 :<span class="tlaGNC">       10641 :         return m_vendorLock.Lock(timeout_ms);</span></span>
+<span id="L22"><span class="lineNum">      22</span>                 :<span class="tlaGNC">        6449 :         return m_vendorLock.Lock(timeout_ms);</span></span>
 <span id="L23"><span class="lineNum">      23</span>                 :             :     }</span>
 <span id="L24"><span class="lineNum">      24</span>                 :             : </span>
-<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC">       10640 :     void Unlock() {</span></span>
-<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">       10640 :         m_vendorLock.Unlock();</span></span>
-<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">       10640 :     }</span></span>
+<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC">        6448 :     void Unlock() {</span></span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">        6448 :         m_vendorLock.Unlock();</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        6448 :     }</span></span>
 <span id="L28"><span class="lineNum">      28</span>                 :             : </span>
 <span id="L29"><span class="lineNum">      29</span>                 :             :     // Move constructor and assignment to allow std::optional usage</span>
-<span id="L30"><span class="lineNum">      30</span>                 :<span class="tlaGNC">       24548 :     SafeSharedMemoryLock(SafeSharedMemoryLock&amp;&amp; other) = default;</span></span>
+<span id="L30"><span class="lineNum">      30</span>                 :<span class="tlaGNC">       39362 :     SafeSharedMemoryLock(SafeSharedMemoryLock&amp;&amp; other) = default;</span></span>
 <span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">           1 :     SafeSharedMemoryLock&amp; operator=(SafeSharedMemoryLock&amp;&amp; other) = default;</span></span>
 <span id="L32"><span class="lineNum">      32</span>                 :             : </span>
 <span id="L33"><span class="lineNum">      33</span>                 :             : private:</span>
 <span id="L34"><span class="lineNum">      34</span>                 :             :     // Private constructor - use factory method</span>
-<span id="L35"><span class="lineNum">      35</span>                 :<span class="tlaGNC">       12274 :     explicit SafeSharedMemoryLock(SharedMemoryLock&amp;&amp; vendorLock) </span></span>
-<span id="L36"><span class="lineNum">      36</span>                 :<span class="tlaGNC">       12274 :         : m_vendorLock(std::move(vendorLock)) {}</span></span>
+<span id="L35"><span class="lineNum">      35</span>                 :<span class="tlaGNC">       19681 :     explicit SafeSharedMemoryLock(SharedMemoryLock&amp;&amp; vendorLock) </span></span>
+<span id="L36"><span class="lineNum">      36</span>                 :<span class="tlaGNC">       19681 :         : m_vendorLock(std::move(vendorLock)) {}</span></span>
 <span id="L37"><span class="lineNum">      37</span>                 :             : </span>
 <span id="L38"><span class="lineNum">      38</span>                 :             :     SharedMemoryLock m_vendorLock;</span>
 <span id="L39"><span class="lineNum">      39</span>                 :             : };</span>

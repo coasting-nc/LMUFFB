@@ -31,13 +31,13 @@
             <td class="headerValue">coverage_filtered.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntryHi">95.3&nbsp;%</td>
-            <td class="headerCovTableEntry">64</td>
+            <td class="headerCovTableEntryHi">93.8&nbsp;%</td>
+            <td class="headerCovTableEntry">65</td>
             <td class="headerCovTableEntry">61</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-02-27 20:03:32</td>
+            <td class="headerValue">2026-02-27 20:09:21</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">92.3&nbsp;%</td>
@@ -93,10 +93,10 @@
 <span id="L22"><span class="lineNum">      22</span>                 :             : }</span>
 <span id="L23"><span class="lineNum">      23</span>                 :             : </span>
 <span id="L24"><span class="lineNum">      24</span>                 :             : // Keep existing implementations</span>
-<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC tlaBgGNC">        5151 : DirectInputFFB&amp; DirectInputFFB::Get() {</span></span>
-<span id="L26"><span class="lineNum">      26</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 5150 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        5151 :     static DirectInputFFB instance;</span></span>
+<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC tlaBgGNC">        5150 : DirectInputFFB&amp; DirectInputFFB::Get() {</span></span>
+<span id="L26"><span class="lineNum">      26</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 5149 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        5150 :     static DirectInputFFB instance;</span></span>
 <span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaUNC" title="Branch 6 was not taken"> - </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span>]
-<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        5151 :     return instance;</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        5150 :     return instance;</span></span>
 <span id="L28"><span class="lineNum">      28</span>                 :             : }</span>
 <span id="L29"><span class="lineNum">      29</span>                 :             : </span>
 <span id="L30"><span class="lineNum">      30</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 : DirectInputFFB::DirectInputFFB() {}</span></span>
@@ -213,309 +213,312 @@
 <span id="L141"><span class="lineNum">     141</span>                 :<span class="tlaGNC">           1 : DirectInputFFB::~DirectInputFFB() {</span></span>
 <span id="L142"><span class="lineNum">     142</span>                 :             :     try {</span>
 <span id="L143"><span class="lineNum">     143</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           1 :         Shutdown();</span></span>
-<span id="L144"><span class="lineNum">     144</span>                 :<span class="tlaUNC tlaBgUNC">           0 :     } catch (...) {}</span></span>
-<span id="L145"><span class="lineNum">     145</span>                 :<span class="tlaGNC tlaBgGNC">           1 : }</span></span>
-<span id="L146"><span class="lineNum">     146</span>                 :             : </span>
-<span id="L147"><span class="lineNum">     147</span>                 :<span class="tlaGNC">           6 : bool DirectInputFFB::Initialize(HWND hwnd) {</span></span>
-<span id="L148"><span class="lineNum">     148</span>                 :<span class="tlaGNC">           6 :     m_hwnd = hwnd;</span></span>
-<span id="L149"><span class="lineNum">     149</span>                 :             : #ifdef _WIN32</span>
-<span id="L150"><span class="lineNum">     150</span>                 :             :     if (FAILED(DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&amp;m_pDI, NULL))) {</span>
-<span id="L151"><span class="lineNum">     151</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Failed to create DirectInput8 interface.&quot; &lt;&lt; std::endl;</span>
-<span id="L152"><span class="lineNum">     152</span>                 :             :         return false;</span>
-<span id="L153"><span class="lineNum">     153</span>                 :             :     }</span>
-<span id="L154"><span class="lineNum">     154</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Initialized.&quot; &lt;&lt; std::endl;</span>
-<span id="L155"><span class="lineNum">     155</span>                 :             :     return true;</span>
-<span id="L156"><span class="lineNum">     156</span>                 :             : #else</span>
-<span id="L157"><span class="lineNum">     157</span>                 :<span class="tlaGNC">           6 :     std::cout &lt;&lt; &quot;[DI] Mock Initialized (Non-Windows).&quot; &lt;&lt; std::endl;</span></span>
-<span id="L158"><span class="lineNum">     158</span>                 :<span class="tlaGNC">           6 :     return true;</span></span>
-<span id="L159"><span class="lineNum">     159</span>                 :             : #endif</span>
-<span id="L160"><span class="lineNum">     160</span>                 :             : }</span>
-<span id="L161"><span class="lineNum">     161</span>                 :             : </span>
-<span id="L162"><span class="lineNum">     162</span>                 :<span class="tlaGNC">           7 : void DirectInputFFB::Shutdown() {</span></span>
-<span id="L163"><span class="lineNum">     163</span>                 :<span class="tlaGNC">           7 :     ReleaseDevice(); // Reuse logic</span></span>
-<span id="L164"><span class="lineNum">     164</span>                 :             : #ifdef _WIN32</span>
-<span id="L165"><span class="lineNum">     165</span>                 :             :     if (m_pDI) {</span>
-<span id="L166"><span class="lineNum">     166</span>                 :             :         ((IDirectInput8*)m_pDI)-&gt;Release();</span>
-<span id="L167"><span class="lineNum">     167</span>                 :             :         m_pDI = nullptr;</span>
-<span id="L168"><span class="lineNum">     168</span>                 :             :     }</span>
-<span id="L169"><span class="lineNum">     169</span>                 :             : #endif</span>
-<span id="L170"><span class="lineNum">     170</span>                 :<span class="tlaGNC">           7 : }</span></span>
-<span id="L171"><span class="lineNum">     171</span>                 :             : </span>
-<span id="L172"><span class="lineNum">     172</span>                 :             : #ifdef _WIN32</span>
-<span id="L173"><span class="lineNum">     173</span>                 :             : BOOL CALLBACK EnumJoysticksCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext) {</span>
-<span id="L174"><span class="lineNum">     174</span>                 :             :     auto* devices = (std::vector&lt;DeviceInfo&gt;*)pContext;</span>
-<span id="L175"><span class="lineNum">     175</span>                 :             :     DeviceInfo info;</span>
-<span id="L176"><span class="lineNum">     176</span>                 :             :     info.guid = pdidInstance-&gt;guidInstance;</span>
-<span id="L177"><span class="lineNum">     177</span>                 :             :     char name[260];</span>
-<span id="L178"><span class="lineNum">     178</span>                 :             :     WideCharToMultiByte(CP_ACP, 0, pdidInstance-&gt;tszProductName, -1, name, 260, NULL, NULL);</span>
-<span id="L179"><span class="lineNum">     179</span>                 :             :     info.name = std::string(name);</span>
-<span id="L180"><span class="lineNum">     180</span>                 :             :     devices-&gt;push_back(info);</span>
-<span id="L181"><span class="lineNum">     181</span>                 :             :     return DIENUM_CONTINUE;</span>
-<span id="L182"><span class="lineNum">     182</span>                 :             : }</span>
-<span id="L183"><span class="lineNum">     183</span>                 :             : #endif</span>
-<span id="L184"><span class="lineNum">     184</span>                 :             : </span>
-<span id="L185"><span class="lineNum">     185</span>                 :<span class="tlaGNC">           2 : std::vector&lt;DeviceInfo&gt; DirectInputFFB::EnumerateDevices() {</span></span>
-<span id="L186"><span class="lineNum">     186</span>                 :<span class="tlaGNC">           2 :     std::vector&lt;DeviceInfo&gt; devices;</span></span>
-<span id="L187"><span class="lineNum">     187</span>                 :             : #ifdef _WIN32</span>
-<span id="L188"><span class="lineNum">     188</span>                 :             :     if (!m_pDI) return devices;</span>
-<span id="L189"><span class="lineNum">     189</span>                 :             :     ((IDirectInput8*)m_pDI)-&gt;EnumDevices(DI8DEVCLASS_GAMECTRL, EnumJoysticksCallback, &amp;devices, DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK);</span>
-<span id="L190"><span class="lineNum">     190</span>                 :             : #else</span>
-<span id="L191"><span class="lineNum">     191</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :     DeviceInfo d1; d1.name = &quot;Simucube 2 Pro (Mock)&quot;;</span></span>
-<span id="L192"><span class="lineNum">     192</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :     DeviceInfo d2; d2.name = &quot;Logitech G29 (Mock)&quot;;</span></span>
-<span id="L193"><span class="lineNum">     193</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :     devices.push_back(d1);</span></span>
-<span id="L194"><span class="lineNum">     194</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :     devices.push_back(d2);</span></span>
-<span id="L195"><span class="lineNum">     195</span>                 :             : #endif</span>
-<span id="L196"><span class="lineNum">     196</span>                 :<span class="tlaGNC">           4 :     return devices;</span></span>
-<span id="L197"><span class="lineNum">     197</span>                 :<span class="tlaGNC">           2 : }</span></span>
-<span id="L198"><span class="lineNum">     198</span>                 :             : </span>
-<span id="L199"><span class="lineNum">     199</span>                 :<span class="tlaGNC">           8 : void DirectInputFFB::ReleaseDevice() {</span></span>
-<span id="L200"><span class="lineNum">     200</span>                 :             : #ifdef _WIN32</span>
-<span id="L201"><span class="lineNum">     201</span>                 :             :     if (m_pEffect) {</span>
-<span id="L202"><span class="lineNum">     202</span>                 :             :         ((IDirectInputEffect*)m_pEffect)-&gt;Stop();</span>
-<span id="L203"><span class="lineNum">     203</span>                 :             :         ((IDirectInputEffect*)m_pEffect)-&gt;Unload();</span>
-<span id="L204"><span class="lineNum">     204</span>                 :             :         ((IDirectInputEffect*)m_pEffect)-&gt;Release();</span>
-<span id="L205"><span class="lineNum">     205</span>                 :             :         m_pEffect = nullptr;</span>
-<span id="L206"><span class="lineNum">     206</span>                 :             :     }</span>
-<span id="L207"><span class="lineNum">     207</span>                 :             :     if (m_pDevice) {</span>
-<span id="L208"><span class="lineNum">     208</span>                 :             :         ((IDirectInputDevice8*)m_pDevice)-&gt;Unacquire();</span>
-<span id="L209"><span class="lineNum">     209</span>                 :             :         ((IDirectInputDevice8*)m_pDevice)-&gt;Release();</span>
-<span id="L210"><span class="lineNum">     210</span>                 :             :         m_pDevice = nullptr;</span>
-<span id="L211"><span class="lineNum">     211</span>                 :             :     }</span>
-<span id="L212"><span class="lineNum">     212</span>                 :             : #endif</span>
-<span id="L213"><span class="lineNum">     213</span>                 :<span class="tlaGNC">           8 :     m_active = false;</span></span>
-<span id="L214"><span class="lineNum">     214</span>                 :<span class="tlaGNC">           8 :     m_isExclusive = false;</span></span>
-<span id="L215"><span class="lineNum">     215</span>                 :<span class="tlaGNC">           8 :     m_deviceName = &quot;None&quot;;</span></span>
-<span id="L216"><span class="lineNum">     216</span>                 :             : #ifdef _WIN32</span>
-<span id="L217"><span class="lineNum">     217</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Device released by user.&quot; &lt;&lt; std::endl;</span>
-<span id="L218"><span class="lineNum">     218</span>                 :             : #endif</span>
-<span id="L219"><span class="lineNum">     219</span>                 :<span class="tlaGNC">           8 : }</span></span>
-<span id="L220"><span class="lineNum">     220</span>                 :             : </span>
-<span id="L221"><span class="lineNum">     221</span>                 :<span class="tlaGNC">           2 : bool DirectInputFFB::SelectDevice(const GUID&amp; guid) {</span></span>
-<span id="L222"><span class="lineNum">     222</span>                 :             : #ifdef _WIN32</span>
-<span id="L223"><span class="lineNum">     223</span>                 :             :     if (!m_pDI) return false;</span>
-<span id="L224"><span class="lineNum">     224</span>                 :             : </span>
-<span id="L225"><span class="lineNum">     225</span>                 :             :     // Cleanup old using new method</span>
-<span id="L226"><span class="lineNum">     226</span>                 :             :     ReleaseDevice();</span>
+<span id="L144"><span class="lineNum">     144</span>                 :<span class="tlaUNC tlaBgUNC">           0 :     } catch (...) {</span></span>
+<span id="L145"><span class="lineNum">     145</span>                 :             :         // Ignore errors during shutdown in destructor to avoid std::terminate</span>
+<span id="L146"><span class="lineNum">     146</span>                 :             :         (void)0; </span>
+<span id="L147"><span class="lineNum">     147</span>                 :<span class="tlaUNC">           0 :     }</span></span>
+<span id="L148"><span class="lineNum">     148</span>                 :<span class="tlaGNC tlaBgGNC">           1 : }</span></span>
+<span id="L149"><span class="lineNum">     149</span>                 :             : </span>
+<span id="L150"><span class="lineNum">     150</span>                 :<span class="tlaGNC">           6 : bool DirectInputFFB::Initialize(HWND hwnd) {</span></span>
+<span id="L151"><span class="lineNum">     151</span>                 :<span class="tlaGNC">           6 :     m_hwnd = hwnd;</span></span>
+<span id="L152"><span class="lineNum">     152</span>                 :             : #ifdef _WIN32</span>
+<span id="L153"><span class="lineNum">     153</span>                 :             :     if (FAILED(DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&amp;m_pDI, NULL))) {</span>
+<span id="L154"><span class="lineNum">     154</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Failed to create DirectInput8 interface.&quot; &lt;&lt; std::endl;</span>
+<span id="L155"><span class="lineNum">     155</span>                 :             :         return false;</span>
+<span id="L156"><span class="lineNum">     156</span>                 :             :     }</span>
+<span id="L157"><span class="lineNum">     157</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Initialized.&quot; &lt;&lt; std::endl;</span>
+<span id="L158"><span class="lineNum">     158</span>                 :             :     return true;</span>
+<span id="L159"><span class="lineNum">     159</span>                 :             : #else</span>
+<span id="L160"><span class="lineNum">     160</span>                 :<span class="tlaGNC">           6 :     std::cout &lt;&lt; &quot;[DI] Mock Initialized (Non-Windows).&quot; &lt;&lt; std::endl;</span></span>
+<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">           6 :     return true;</span></span>
+<span id="L162"><span class="lineNum">     162</span>                 :             : #endif</span>
+<span id="L163"><span class="lineNum">     163</span>                 :             : }</span>
+<span id="L164"><span class="lineNum">     164</span>                 :             : </span>
+<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">           7 : void DirectInputFFB::Shutdown() {</span></span>
+<span id="L166"><span class="lineNum">     166</span>                 :<span class="tlaGNC">           7 :     ReleaseDevice(); // Reuse logic</span></span>
+<span id="L167"><span class="lineNum">     167</span>                 :             : #ifdef _WIN32</span>
+<span id="L168"><span class="lineNum">     168</span>                 :             :     if (m_pDI) {</span>
+<span id="L169"><span class="lineNum">     169</span>                 :             :         ((IDirectInput8*)m_pDI)-&gt;Release();</span>
+<span id="L170"><span class="lineNum">     170</span>                 :             :         m_pDI = nullptr;</span>
+<span id="L171"><span class="lineNum">     171</span>                 :             :     }</span>
+<span id="L172"><span class="lineNum">     172</span>                 :             : #endif</span>
+<span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaGNC">           7 : }</span></span>
+<span id="L174"><span class="lineNum">     174</span>                 :             : </span>
+<span id="L175"><span class="lineNum">     175</span>                 :             : #ifdef _WIN32</span>
+<span id="L176"><span class="lineNum">     176</span>                 :             : BOOL CALLBACK EnumJoysticksCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext) {</span>
+<span id="L177"><span class="lineNum">     177</span>                 :             :     auto* devices = (std::vector&lt;DeviceInfo&gt;*)pContext;</span>
+<span id="L178"><span class="lineNum">     178</span>                 :             :     DeviceInfo info;</span>
+<span id="L179"><span class="lineNum">     179</span>                 :             :     info.guid = pdidInstance-&gt;guidInstance;</span>
+<span id="L180"><span class="lineNum">     180</span>                 :             :     char name[260];</span>
+<span id="L181"><span class="lineNum">     181</span>                 :             :     WideCharToMultiByte(CP_ACP, 0, pdidInstance-&gt;tszProductName, -1, name, 260, NULL, NULL);</span>
+<span id="L182"><span class="lineNum">     182</span>                 :             :     info.name = std::string(name);</span>
+<span id="L183"><span class="lineNum">     183</span>                 :             :     devices-&gt;push_back(info);</span>
+<span id="L184"><span class="lineNum">     184</span>                 :             :     return DIENUM_CONTINUE;</span>
+<span id="L185"><span class="lineNum">     185</span>                 :             : }</span>
+<span id="L186"><span class="lineNum">     186</span>                 :             : #endif</span>
+<span id="L187"><span class="lineNum">     187</span>                 :             : </span>
+<span id="L188"><span class="lineNum">     188</span>                 :<span class="tlaGNC">           2 : std::vector&lt;DeviceInfo&gt; DirectInputFFB::EnumerateDevices() {</span></span>
+<span id="L189"><span class="lineNum">     189</span>                 :<span class="tlaGNC">           2 :     std::vector&lt;DeviceInfo&gt; devices;</span></span>
+<span id="L190"><span class="lineNum">     190</span>                 :             : #ifdef _WIN32</span>
+<span id="L191"><span class="lineNum">     191</span>                 :             :     if (!m_pDI) return devices;</span>
+<span id="L192"><span class="lineNum">     192</span>                 :             :     ((IDirectInput8*)m_pDI)-&gt;EnumDevices(DI8DEVCLASS_GAMECTRL, EnumJoysticksCallback, &amp;devices, DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK);</span>
+<span id="L193"><span class="lineNum">     193</span>                 :             : #else</span>
+<span id="L194"><span class="lineNum">     194</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :     DeviceInfo d1; d1.name = &quot;Simucube 2 Pro (Mock)&quot;;</span></span>
+<span id="L195"><span class="lineNum">     195</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :     DeviceInfo d2; d2.name = &quot;Logitech G29 (Mock)&quot;;</span></span>
+<span id="L196"><span class="lineNum">     196</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :     devices.push_back(d1);</span></span>
+<span id="L197"><span class="lineNum">     197</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :     devices.push_back(d2);</span></span>
+<span id="L198"><span class="lineNum">     198</span>                 :             : #endif</span>
+<span id="L199"><span class="lineNum">     199</span>                 :<span class="tlaGNC">           4 :     return devices;</span></span>
+<span id="L200"><span class="lineNum">     200</span>                 :<span class="tlaGNC">           2 : }</span></span>
+<span id="L201"><span class="lineNum">     201</span>                 :             : </span>
+<span id="L202"><span class="lineNum">     202</span>                 :<span class="tlaGNC">           8 : void DirectInputFFB::ReleaseDevice() {</span></span>
+<span id="L203"><span class="lineNum">     203</span>                 :             : #ifdef _WIN32</span>
+<span id="L204"><span class="lineNum">     204</span>                 :             :     if (m_pEffect) {</span>
+<span id="L205"><span class="lineNum">     205</span>                 :             :         ((IDirectInputEffect*)m_pEffect)-&gt;Stop();</span>
+<span id="L206"><span class="lineNum">     206</span>                 :             :         ((IDirectInputEffect*)m_pEffect)-&gt;Unload();</span>
+<span id="L207"><span class="lineNum">     207</span>                 :             :         ((IDirectInputEffect*)m_pEffect)-&gt;Release();</span>
+<span id="L208"><span class="lineNum">     208</span>                 :             :         m_pEffect = nullptr;</span>
+<span id="L209"><span class="lineNum">     209</span>                 :             :     }</span>
+<span id="L210"><span class="lineNum">     210</span>                 :             :     if (m_pDevice) {</span>
+<span id="L211"><span class="lineNum">     211</span>                 :             :         ((IDirectInputDevice8*)m_pDevice)-&gt;Unacquire();</span>
+<span id="L212"><span class="lineNum">     212</span>                 :             :         ((IDirectInputDevice8*)m_pDevice)-&gt;Release();</span>
+<span id="L213"><span class="lineNum">     213</span>                 :             :         m_pDevice = nullptr;</span>
+<span id="L214"><span class="lineNum">     214</span>                 :             :     }</span>
+<span id="L215"><span class="lineNum">     215</span>                 :             : #endif</span>
+<span id="L216"><span class="lineNum">     216</span>                 :<span class="tlaGNC">           8 :     m_active = false;</span></span>
+<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">           8 :     m_isExclusive = false;</span></span>
+<span id="L218"><span class="lineNum">     218</span>                 :<span class="tlaGNC">           8 :     m_deviceName = &quot;None&quot;;</span></span>
+<span id="L219"><span class="lineNum">     219</span>                 :             : #ifdef _WIN32</span>
+<span id="L220"><span class="lineNum">     220</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Device released by user.&quot; &lt;&lt; std::endl;</span>
+<span id="L221"><span class="lineNum">     221</span>                 :             : #endif</span>
+<span id="L222"><span class="lineNum">     222</span>                 :<span class="tlaGNC">           8 : }</span></span>
+<span id="L223"><span class="lineNum">     223</span>                 :             : </span>
+<span id="L224"><span class="lineNum">     224</span>                 :<span class="tlaGNC">           2 : bool DirectInputFFB::SelectDevice(const GUID&amp; guid) {</span></span>
+<span id="L225"><span class="lineNum">     225</span>                 :             : #ifdef _WIN32</span>
+<span id="L226"><span class="lineNum">     226</span>                 :             :     if (!m_pDI) return false;</span>
 <span id="L227"><span class="lineNum">     227</span>                 :             : </span>
-<span id="L228"><span class="lineNum">     228</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Attempting to create device...&quot; &lt;&lt; std::endl;</span>
-<span id="L229"><span class="lineNum">     229</span>                 :             :     if (FAILED(((IDirectInput8*)m_pDI)-&gt;CreateDevice(guid, (IDirectInputDevice8**)&amp;m_pDevice, NULL))) {</span>
-<span id="L230"><span class="lineNum">     230</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Failed to create device.&quot; &lt;&lt; std::endl;</span>
-<span id="L231"><span class="lineNum">     231</span>                 :             :         return false;</span>
-<span id="L232"><span class="lineNum">     232</span>                 :             :     }</span>
-<span id="L233"><span class="lineNum">     233</span>                 :             : </span>
-<span id="L234"><span class="lineNum">     234</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Setting Data Format...&quot; &lt;&lt; std::endl;</span>
-<span id="L235"><span class="lineNum">     235</span>                 :             :     if (FAILED(((IDirectInputDevice8*)m_pDevice)-&gt;SetDataFormat(&amp;c_dfDIJoystick))) {</span>
-<span id="L236"><span class="lineNum">     236</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Failed to set data format.&quot; &lt;&lt; std::endl;</span>
-<span id="L237"><span class="lineNum">     237</span>                 :             :         return false;</span>
-<span id="L238"><span class="lineNum">     238</span>                 :             :     }</span>
-<span id="L239"><span class="lineNum">     239</span>                 :             : </span>
-<span id="L240"><span class="lineNum">     240</span>                 :             :     // Reset state</span>
-<span id="L241"><span class="lineNum">     241</span>                 :             :     m_isExclusive = false;</span>
+<span id="L228"><span class="lineNum">     228</span>                 :             :     // Cleanup old using new method</span>
+<span id="L229"><span class="lineNum">     229</span>                 :             :     ReleaseDevice();</span>
+<span id="L230"><span class="lineNum">     230</span>                 :             : </span>
+<span id="L231"><span class="lineNum">     231</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Attempting to create device...&quot; &lt;&lt; std::endl;</span>
+<span id="L232"><span class="lineNum">     232</span>                 :             :     if (FAILED(((IDirectInput8*)m_pDI)-&gt;CreateDevice(guid, (IDirectInputDevice8**)&amp;m_pDevice, NULL))) {</span>
+<span id="L233"><span class="lineNum">     233</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Failed to create device.&quot; &lt;&lt; std::endl;</span>
+<span id="L234"><span class="lineNum">     234</span>                 :             :         return false;</span>
+<span id="L235"><span class="lineNum">     235</span>                 :             :     }</span>
+<span id="L236"><span class="lineNum">     236</span>                 :             : </span>
+<span id="L237"><span class="lineNum">     237</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Setting Data Format...&quot; &lt;&lt; std::endl;</span>
+<span id="L238"><span class="lineNum">     238</span>                 :             :     if (FAILED(((IDirectInputDevice8*)m_pDevice)-&gt;SetDataFormat(&amp;c_dfDIJoystick))) {</span>
+<span id="L239"><span class="lineNum">     239</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Failed to set data format.&quot; &lt;&lt; std::endl;</span>
+<span id="L240"><span class="lineNum">     240</span>                 :             :         return false;</span>
+<span id="L241"><span class="lineNum">     241</span>                 :             :     }</span>
 <span id="L242"><span class="lineNum">     242</span>                 :             : </span>
-<span id="L243"><span class="lineNum">     243</span>                 :             :     // Attempt 1: Exclusive/Background (Best for FFB)</span>
-<span id="L244"><span class="lineNum">     244</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Attempting to set Cooperative Level (Exclusive | Background)...&quot; &lt;&lt; std::endl;</span>
-<span id="L245"><span class="lineNum">     245</span>                 :             :     HRESULT hr = ((IDirectInputDevice8*)m_pDevice)-&gt;SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);</span>
-<span id="L246"><span class="lineNum">     246</span>                 :             :     </span>
-<span id="L247"><span class="lineNum">     247</span>                 :             :     if (SUCCEEDED(hr)) {</span>
-<span id="L248"><span class="lineNum">     248</span>                 :             :         m_isExclusive = true;</span>
-<span id="L249"><span class="lineNum">     249</span>                 :             :         std::cout &lt;&lt; &quot;[DI] Cooperative Level set to EXCLUSIVE.&quot; &lt;&lt; std::endl;</span>
-<span id="L250"><span class="lineNum">     250</span>                 :             :     } else {</span>
-<span id="L251"><span class="lineNum">     251</span>                 :             :         // Fallback: Non-Exclusive</span>
-<span id="L252"><span class="lineNum">     252</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Exclusive mode failed (Error: &quot; &lt;&lt; std::hex &lt;&lt; hr &lt;&lt; std::dec &lt;&lt; &quot;). Retrying in Non-Exclusive mode...&quot; &lt;&lt; std::endl;</span>
-<span id="L253"><span class="lineNum">     253</span>                 :             :         hr = ((IDirectInputDevice8*)m_pDevice)-&gt;SetCooperativeLevel(m_hwnd, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);</span>
-<span id="L254"><span class="lineNum">     254</span>                 :             :         </span>
-<span id="L255"><span class="lineNum">     255</span>                 :             :         if (SUCCEEDED(hr)) {</span>
-<span id="L256"><span class="lineNum">     256</span>                 :             :             m_isExclusive = false;</span>
-<span id="L257"><span class="lineNum">     257</span>                 :             :             std::cout &lt;&lt; &quot;[DI] Cooperative Level set to NON-EXCLUSIVE.&quot; &lt;&lt; std::endl;</span>
-<span id="L258"><span class="lineNum">     258</span>                 :             :         }</span>
-<span id="L259"><span class="lineNum">     259</span>                 :             :     }</span>
-<span id="L260"><span class="lineNum">     260</span>                 :             :     </span>
-<span id="L261"><span class="lineNum">     261</span>                 :             :     if (FAILED(hr)) {</span>
-<span id="L262"><span class="lineNum">     262</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Failed to set cooperative level (Non-Exclusive failed too).&quot; &lt;&lt; std::endl;</span>
-<span id="L263"><span class="lineNum">     263</span>                 :             :         return false;</span>
-<span id="L264"><span class="lineNum">     264</span>                 :             :     }</span>
-<span id="L265"><span class="lineNum">     265</span>                 :             : </span>
-<span id="L266"><span class="lineNum">     266</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Acquiring device...&quot; &lt;&lt; std::endl;</span>
-<span id="L267"><span class="lineNum">     267</span>                 :             :     if (FAILED(((IDirectInputDevice8*)m_pDevice)-&gt;Acquire())) {</span>
-<span id="L268"><span class="lineNum">     268</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Failed to acquire device.&quot; &lt;&lt; std::endl;</span>
-<span id="L269"><span class="lineNum">     269</span>                 :             :         // Don't return false yet, might just need focus/retry</span>
-<span id="L270"><span class="lineNum">     270</span>                 :             :     } else {</span>
-<span id="L271"><span class="lineNum">     271</span>                 :             :         std::cout &lt;&lt; &quot;[DI] Device Acquired in &quot; &lt;&lt; (m_isExclusive ? &quot;EXCLUSIVE&quot; : &quot;NON-EXCLUSIVE&quot;) &lt;&lt; &quot; mode.&quot; &lt;&lt; std::endl;</span>
-<span id="L272"><span class="lineNum">     272</span>                 :             :     }</span>
-<span id="L273"><span class="lineNum">     273</span>                 :             : </span>
-<span id="L274"><span class="lineNum">     274</span>                 :             :     // Create Effect</span>
-<span id="L275"><span class="lineNum">     275</span>                 :             :     if (CreateEffect()) {</span>
-<span id="L276"><span class="lineNum">     276</span>                 :             :        m_active = true;</span>
-<span id="L277"><span class="lineNum">     277</span>                 :             :         std::cout &lt;&lt; &quot;[DI] SUCCESS: Physical Device fully initialized and FFB Effect created.&quot; &lt;&lt; std::endl;</span>
-<span id="L278"><span class="lineNum">     278</span>                 :             :  </span>
-<span id="L279"><span class="lineNum">     279</span>                 :             :         return true;</span>
-<span id="L280"><span class="lineNum">     280</span>                 :             :     }</span>
-<span id="L281"><span class="lineNum">     281</span>                 :             :     return false;</span>
-<span id="L282"><span class="lineNum">     282</span>                 :             : #else</span>
-<span id="L283"><span class="lineNum">     283</span>                 :<span class="tlaGNC">           2 :     m_active = true;</span></span>
-<span id="L284"><span class="lineNum">     284</span>                 :<span class="tlaGNC">           2 :     m_isExclusive = true; // Default to true in mock to verify UI logic</span></span>
-<span id="L285"><span class="lineNum">     285</span>                 :<span class="tlaGNC">           2 :     m_deviceName = &quot;Mock Device Selected&quot;;</span></span>
-<span id="L286"><span class="lineNum">     286</span>                 :<span class="tlaGNC">           2 :     return true;</span></span>
-<span id="L287"><span class="lineNum">     287</span>                 :             : #endif</span>
-<span id="L288"><span class="lineNum">     288</span>                 :             : }</span>
-<span id="L289"><span class="lineNum">     289</span>                 :             : </span>
-<span id="L290"><span class="lineNum">     290</span>                 :<span class="tlaUNC tlaBgUNC">           0 : bool DirectInputFFB::CreateEffect() {</span></span>
-<span id="L291"><span class="lineNum">     291</span>                 :             : #ifdef _WIN32</span>
-<span id="L292"><span class="lineNum">     292</span>                 :             :     if (!m_pDevice) return false;</span>
-<span id="L293"><span class="lineNum">     293</span>                 :             : </span>
-<span id="L294"><span class="lineNum">     294</span>                 :             :     DWORD rgdwAxes[1] = { DIJOFS_X };</span>
-<span id="L295"><span class="lineNum">     295</span>                 :             :     LONG rglDirection[1] = { 0 };</span>
-<span id="L296"><span class="lineNum">     296</span>                 :             :     DICONSTANTFORCE cf;</span>
-<span id="L297"><span class="lineNum">     297</span>                 :             :     cf.lMagnitude = 0;</span>
-<span id="L298"><span class="lineNum">     298</span>                 :             : </span>
-<span id="L299"><span class="lineNum">     299</span>                 :             :     DIEFFECT eff;</span>
-<span id="L300"><span class="lineNum">     300</span>                 :             :     ZeroMemory(&amp;eff, sizeof(eff));</span>
-<span id="L301"><span class="lineNum">     301</span>                 :             :     eff.dwSize = sizeof(DIEFFECT);</span>
-<span id="L302"><span class="lineNum">     302</span>                 :             :     eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;</span>
-<span id="L303"><span class="lineNum">     303</span>                 :             :     eff.dwDuration = INFINITE;</span>
-<span id="L304"><span class="lineNum">     304</span>                 :             :     eff.dwSamplePeriod = 0;</span>
-<span id="L305"><span class="lineNum">     305</span>                 :             :     eff.dwGain = DI_FFNOMINALMAX;</span>
-<span id="L306"><span class="lineNum">     306</span>                 :             :     eff.dwTriggerButton = DIEB_NOTRIGGER;</span>
-<span id="L307"><span class="lineNum">     307</span>                 :             :     eff.dwTriggerRepeatInterval = 0;</span>
-<span id="L308"><span class="lineNum">     308</span>                 :             :     eff.cAxes = 1;</span>
-<span id="L309"><span class="lineNum">     309</span>                 :             :     eff.rgdwAxes = rgdwAxes;</span>
-<span id="L310"><span class="lineNum">     310</span>                 :             :     eff.rglDirection = rglDirection;</span>
-<span id="L311"><span class="lineNum">     311</span>                 :             :     eff.lpEnvelope = NULL;</span>
-<span id="L312"><span class="lineNum">     312</span>                 :             :     eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);</span>
-<span id="L313"><span class="lineNum">     313</span>                 :             :     eff.lpvTypeSpecificParams = &amp;cf;</span>
-<span id="L314"><span class="lineNum">     314</span>                 :             :     eff.dwStartDelay = 0;</span>
-<span id="L315"><span class="lineNum">     315</span>                 :             : </span>
-<span id="L316"><span class="lineNum">     316</span>                 :             :     if (FAILED(((IDirectInputDevice8*)m_pDevice)-&gt;CreateEffect(GUID_ConstantForce, &amp;eff, (IDirectInputEffect**)&amp;m_pEffect, NULL))) {</span>
-<span id="L317"><span class="lineNum">     317</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Failed to create Constant Force effect.&quot; &lt;&lt; std::endl;</span>
-<span id="L318"><span class="lineNum">     318</span>                 :             :         return false;</span>
-<span id="L319"><span class="lineNum">     319</span>                 :             :     }</span>
-<span id="L320"><span class="lineNum">     320</span>                 :             :     </span>
-<span id="L321"><span class="lineNum">     321</span>                 :             :     // Start immediately</span>
-<span id="L322"><span class="lineNum">     322</span>                 :             :     ((IDirectInputEffect*)m_pEffect)-&gt;Start(1, 0);</span>
-<span id="L323"><span class="lineNum">     323</span>                 :             :     return true;</span>
-<span id="L324"><span class="lineNum">     324</span>                 :             : #else</span>
-<span id="L325"><span class="lineNum">     325</span>                 :<span class="tlaUNC">           0 :     return true;</span></span>
-<span id="L326"><span class="lineNum">     326</span>                 :             : #endif</span>
-<span id="L327"><span class="lineNum">     327</span>                 :             : }</span>
-<span id="L328"><span class="lineNum">     328</span>                 :             : </span>
-<span id="L329"><span class="lineNum">     329</span>                 :<span class="tlaGNC tlaBgGNC">        4768 : bool DirectInputFFB::UpdateForce(double normalizedForce) {</span></span>
-<span id="L330"><span class="lineNum">     330</span>         [<span class="tlaGBC" title="Branch 0 was taken 4762 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6 times"> + </span>]:<span class="tlaGNC">        4768 :     if (!m_active) return false;</span></span>
+<span id="L243"><span class="lineNum">     243</span>                 :             :     // Reset state</span>
+<span id="L244"><span class="lineNum">     244</span>                 :             :     m_isExclusive = false;</span>
+<span id="L245"><span class="lineNum">     245</span>                 :             : </span>
+<span id="L246"><span class="lineNum">     246</span>                 :             :     // Attempt 1: Exclusive/Background (Best for FFB)</span>
+<span id="L247"><span class="lineNum">     247</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Attempting to set Cooperative Level (Exclusive | Background)...&quot; &lt;&lt; std::endl;</span>
+<span id="L248"><span class="lineNum">     248</span>                 :             :     HRESULT hr = ((IDirectInputDevice8*)m_pDevice)-&gt;SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);</span>
+<span id="L249"><span class="lineNum">     249</span>                 :             :     </span>
+<span id="L250"><span class="lineNum">     250</span>                 :             :     if (SUCCEEDED(hr)) {</span>
+<span id="L251"><span class="lineNum">     251</span>                 :             :         m_isExclusive = true;</span>
+<span id="L252"><span class="lineNum">     252</span>                 :             :         std::cout &lt;&lt; &quot;[DI] Cooperative Level set to EXCLUSIVE.&quot; &lt;&lt; std::endl;</span>
+<span id="L253"><span class="lineNum">     253</span>                 :             :     } else {</span>
+<span id="L254"><span class="lineNum">     254</span>                 :             :         // Fallback: Non-Exclusive</span>
+<span id="L255"><span class="lineNum">     255</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Exclusive mode failed (Error: &quot; &lt;&lt; std::hex &lt;&lt; hr &lt;&lt; std::dec &lt;&lt; &quot;). Retrying in Non-Exclusive mode...&quot; &lt;&lt; std::endl;</span>
+<span id="L256"><span class="lineNum">     256</span>                 :             :         hr = ((IDirectInputDevice8*)m_pDevice)-&gt;SetCooperativeLevel(m_hwnd, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);</span>
+<span id="L257"><span class="lineNum">     257</span>                 :             :         </span>
+<span id="L258"><span class="lineNum">     258</span>                 :             :         if (SUCCEEDED(hr)) {</span>
+<span id="L259"><span class="lineNum">     259</span>                 :             :             m_isExclusive = false;</span>
+<span id="L260"><span class="lineNum">     260</span>                 :             :             std::cout &lt;&lt; &quot;[DI] Cooperative Level set to NON-EXCLUSIVE.&quot; &lt;&lt; std::endl;</span>
+<span id="L261"><span class="lineNum">     261</span>                 :             :         }</span>
+<span id="L262"><span class="lineNum">     262</span>                 :             :     }</span>
+<span id="L263"><span class="lineNum">     263</span>                 :             :     </span>
+<span id="L264"><span class="lineNum">     264</span>                 :             :     if (FAILED(hr)) {</span>
+<span id="L265"><span class="lineNum">     265</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Failed to set cooperative level (Non-Exclusive failed too).&quot; &lt;&lt; std::endl;</span>
+<span id="L266"><span class="lineNum">     266</span>                 :             :         return false;</span>
+<span id="L267"><span class="lineNum">     267</span>                 :             :     }</span>
+<span id="L268"><span class="lineNum">     268</span>                 :             : </span>
+<span id="L269"><span class="lineNum">     269</span>                 :             :     std::cout &lt;&lt; &quot;[DI] Acquiring device...&quot; &lt;&lt; std::endl;</span>
+<span id="L270"><span class="lineNum">     270</span>                 :             :     if (FAILED(((IDirectInputDevice8*)m_pDevice)-&gt;Acquire())) {</span>
+<span id="L271"><span class="lineNum">     271</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Failed to acquire device.&quot; &lt;&lt; std::endl;</span>
+<span id="L272"><span class="lineNum">     272</span>                 :             :         // Don't return false yet, might just need focus/retry</span>
+<span id="L273"><span class="lineNum">     273</span>                 :             :     } else {</span>
+<span id="L274"><span class="lineNum">     274</span>                 :             :         std::cout &lt;&lt; &quot;[DI] Device Acquired in &quot; &lt;&lt; (m_isExclusive ? &quot;EXCLUSIVE&quot; : &quot;NON-EXCLUSIVE&quot;) &lt;&lt; &quot; mode.&quot; &lt;&lt; std::endl;</span>
+<span id="L275"><span class="lineNum">     275</span>                 :             :     }</span>
+<span id="L276"><span class="lineNum">     276</span>                 :             : </span>
+<span id="L277"><span class="lineNum">     277</span>                 :             :     // Create Effect</span>
+<span id="L278"><span class="lineNum">     278</span>                 :             :     if (CreateEffect()) {</span>
+<span id="L279"><span class="lineNum">     279</span>                 :             :        m_active = true;</span>
+<span id="L280"><span class="lineNum">     280</span>                 :             :         std::cout &lt;&lt; &quot;[DI] SUCCESS: Physical Device fully initialized and FFB Effect created.&quot; &lt;&lt; std::endl;</span>
+<span id="L281"><span class="lineNum">     281</span>                 :             :  </span>
+<span id="L282"><span class="lineNum">     282</span>                 :             :         return true;</span>
+<span id="L283"><span class="lineNum">     283</span>                 :             :     }</span>
+<span id="L284"><span class="lineNum">     284</span>                 :             :     return false;</span>
+<span id="L285"><span class="lineNum">     285</span>                 :             : #else</span>
+<span id="L286"><span class="lineNum">     286</span>                 :<span class="tlaGNC">           2 :     m_active = true;</span></span>
+<span id="L287"><span class="lineNum">     287</span>                 :<span class="tlaGNC">           2 :     m_isExclusive = true; // Default to true in mock to verify UI logic</span></span>
+<span id="L288"><span class="lineNum">     288</span>                 :<span class="tlaGNC">           2 :     m_deviceName = &quot;Mock Device Selected&quot;;</span></span>
+<span id="L289"><span class="lineNum">     289</span>                 :<span class="tlaGNC">           2 :     return true;</span></span>
+<span id="L290"><span class="lineNum">     290</span>                 :             : #endif</span>
+<span id="L291"><span class="lineNum">     291</span>                 :             : }</span>
+<span id="L292"><span class="lineNum">     292</span>                 :             : </span>
+<span id="L293"><span class="lineNum">     293</span>                 :<span class="tlaUNC tlaBgUNC">           0 : bool DirectInputFFB::CreateEffect() {</span></span>
+<span id="L294"><span class="lineNum">     294</span>                 :             : #ifdef _WIN32</span>
+<span id="L295"><span class="lineNum">     295</span>                 :             :     if (!m_pDevice) return false;</span>
+<span id="L296"><span class="lineNum">     296</span>                 :             : </span>
+<span id="L297"><span class="lineNum">     297</span>                 :             :     DWORD rgdwAxes[1] = { DIJOFS_X };</span>
+<span id="L298"><span class="lineNum">     298</span>                 :             :     LONG rglDirection[1] = { 0 };</span>
+<span id="L299"><span class="lineNum">     299</span>                 :             :     DICONSTANTFORCE cf;</span>
+<span id="L300"><span class="lineNum">     300</span>                 :             :     cf.lMagnitude = 0;</span>
+<span id="L301"><span class="lineNum">     301</span>                 :             : </span>
+<span id="L302"><span class="lineNum">     302</span>                 :             :     DIEFFECT eff;</span>
+<span id="L303"><span class="lineNum">     303</span>                 :             :     ZeroMemory(&amp;eff, sizeof(eff));</span>
+<span id="L304"><span class="lineNum">     304</span>                 :             :     eff.dwSize = sizeof(DIEFFECT);</span>
+<span id="L305"><span class="lineNum">     305</span>                 :             :     eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;</span>
+<span id="L306"><span class="lineNum">     306</span>                 :             :     eff.dwDuration = INFINITE;</span>
+<span id="L307"><span class="lineNum">     307</span>                 :             :     eff.dwSamplePeriod = 0;</span>
+<span id="L308"><span class="lineNum">     308</span>                 :             :     eff.dwGain = DI_FFNOMINALMAX;</span>
+<span id="L309"><span class="lineNum">     309</span>                 :             :     eff.dwTriggerButton = DIEB_NOTRIGGER;</span>
+<span id="L310"><span class="lineNum">     310</span>                 :             :     eff.dwTriggerRepeatInterval = 0;</span>
+<span id="L311"><span class="lineNum">     311</span>                 :             :     eff.cAxes = 1;</span>
+<span id="L312"><span class="lineNum">     312</span>                 :             :     eff.rgdwAxes = rgdwAxes;</span>
+<span id="L313"><span class="lineNum">     313</span>                 :             :     eff.rglDirection = rglDirection;</span>
+<span id="L314"><span class="lineNum">     314</span>                 :             :     eff.lpEnvelope = NULL;</span>
+<span id="L315"><span class="lineNum">     315</span>                 :             :     eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);</span>
+<span id="L316"><span class="lineNum">     316</span>                 :             :     eff.lpvTypeSpecificParams = &amp;cf;</span>
+<span id="L317"><span class="lineNum">     317</span>                 :             :     eff.dwStartDelay = 0;</span>
+<span id="L318"><span class="lineNum">     318</span>                 :             : </span>
+<span id="L319"><span class="lineNum">     319</span>                 :             :     if (FAILED(((IDirectInputDevice8*)m_pDevice)-&gt;CreateEffect(GUID_ConstantForce, &amp;eff, (IDirectInputEffect**)&amp;m_pEffect, NULL))) {</span>
+<span id="L320"><span class="lineNum">     320</span>                 :             :         std::cerr &lt;&lt; &quot;[DI] Failed to create Constant Force effect.&quot; &lt;&lt; std::endl;</span>
+<span id="L321"><span class="lineNum">     321</span>                 :             :         return false;</span>
+<span id="L322"><span class="lineNum">     322</span>                 :             :     }</span>
+<span id="L323"><span class="lineNum">     323</span>                 :             :     </span>
+<span id="L324"><span class="lineNum">     324</span>                 :             :     // Start immediately</span>
+<span id="L325"><span class="lineNum">     325</span>                 :             :     ((IDirectInputEffect*)m_pEffect)-&gt;Start(1, 0);</span>
+<span id="L326"><span class="lineNum">     326</span>                 :             :     return true;</span>
+<span id="L327"><span class="lineNum">     327</span>                 :             : #else</span>
+<span id="L328"><span class="lineNum">     328</span>                 :<span class="tlaUNC">           0 :     return true;</span></span>
+<span id="L329"><span class="lineNum">     329</span>                 :             : #endif</span>
+<span id="L330"><span class="lineNum">     330</span>                 :             : }</span>
 <span id="L331"><span class="lineNum">     331</span>                 :             : </span>
-<span id="L332"><span class="lineNum">     332</span>                 :             :     // Sanity Check: If 0.0, stop effect to prevent residual hum</span>
-<span id="L333"><span class="lineNum">     333</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">           6 :     if (std::abs(normalizedForce) &lt; 0.00001) normalizedForce = 0.0;</span></span>
+<span id="L332"><span class="lineNum">     332</span>                 :<span class="tlaGNC tlaBgGNC">        4767 : bool DirectInputFFB::UpdateForce(double normalizedForce) {</span></span>
+<span id="L333"><span class="lineNum">     333</span>         [<span class="tlaGBC" title="Branch 0 was taken 4761 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6 times"> + </span>]:<span class="tlaGNC">        4767 :     if (!m_active) return false;</span></span>
 <span id="L334"><span class="lineNum">     334</span>                 :             : </span>
-<span id="L335"><span class="lineNum">     335</span>                 :             :     // Clamp</span>
-<span id="L336"><span class="lineNum">     336</span>                 :<span class="tlaGNC">           6 :     normalizedForce = (std::max)(-1.0, (std::min)(1.0, normalizedForce));</span></span>
+<span id="L335"><span class="lineNum">     335</span>                 :             :     // Sanity Check: If 0.0, stop effect to prevent residual hum</span>
+<span id="L336"><span class="lineNum">     336</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">           6 :     if (std::abs(normalizedForce) &lt; 0.00001) normalizedForce = 0.0;</span></span>
 <span id="L337"><span class="lineNum">     337</span>                 :             : </span>
-<span id="L338"><span class="lineNum">     338</span>                 :             :     // Scale to -10000..10000</span>
-<span id="L339"><span class="lineNum">     339</span>                 :<span class="tlaGNC">           6 :     long magnitude = static_cast&lt;long&gt;(normalizedForce * 10000.0);</span></span>
+<span id="L338"><span class="lineNum">     338</span>                 :             :     // Clamp</span>
+<span id="L339"><span class="lineNum">     339</span>                 :<span class="tlaGNC">           6 :     normalizedForce = (std::max)(-1.0, (std::min)(1.0, normalizedForce));</span></span>
 <span id="L340"><span class="lineNum">     340</span>                 :             : </span>
-<span id="L341"><span class="lineNum">     341</span>                 :             :     // DirectInput Overhead Optimization: Don't call driver if value hasn't changed. </span>
-<span id="L342"><span class="lineNum">     342</span>                 :             :     // This check prevents the expensive USB call (only talk to the driver when the force actually changes).</span>
-<span id="L343"><span class="lineNum">     343</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">           6 :     if (magnitude == m_last_force) return false;</span></span>
-<span id="L344"><span class="lineNum">     344</span>                 :<span class="tlaGNC">           4 :     m_last_force = magnitude;</span></span>
-<span id="L345"><span class="lineNum">     345</span>                 :             : </span>
-<span id="L346"><span class="lineNum">     346</span>                 :             : #ifdef _WIN32</span>
-<span id="L347"><span class="lineNum">     347</span>                 :             :     if (m_pEffect) {</span>
-<span id="L348"><span class="lineNum">     348</span>                 :             :         DICONSTANTFORCE cf;</span>
-<span id="L349"><span class="lineNum">     349</span>                 :             :         cf.lMagnitude = magnitude;</span>
-<span id="L350"><span class="lineNum">     350</span>                 :             :         </span>
-<span id="L351"><span class="lineNum">     351</span>                 :             :         DIEFFECT eff;</span>
-<span id="L352"><span class="lineNum">     352</span>                 :             :         ZeroMemory(&amp;eff, sizeof(eff));</span>
-<span id="L353"><span class="lineNum">     353</span>                 :             :         eff.dwSize = sizeof(DIEFFECT);</span>
-<span id="L354"><span class="lineNum">     354</span>                 :             :         eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);</span>
-<span id="L355"><span class="lineNum">     355</span>                 :             :         eff.lpvTypeSpecificParams = &amp;cf;</span>
-<span id="L356"><span class="lineNum">     356</span>                 :             :         </span>
-<span id="L357"><span class="lineNum">     357</span>                 :             :         // Try to update parameters</span>
-<span id="L358"><span class="lineNum">     358</span>                 :             :         HRESULT hr = ((IDirectInputEffect*)m_pEffect)-&gt;SetParameters(&amp;eff, DIEP_TYPESPECIFICPARAMS);</span>
+<span id="L341"><span class="lineNum">     341</span>                 :             :     // Scale to -10000..10000</span>
+<span id="L342"><span class="lineNum">     342</span>                 :<span class="tlaGNC">           6 :     long magnitude = static_cast&lt;long&gt;(normalizedForce * 10000.0);</span></span>
+<span id="L343"><span class="lineNum">     343</span>                 :             : </span>
+<span id="L344"><span class="lineNum">     344</span>                 :             :     // DirectInput Overhead Optimization: Don't call driver if value hasn't changed. </span>
+<span id="L345"><span class="lineNum">     345</span>                 :             :     // This check prevents the expensive USB call (only talk to the driver when the force actually changes).</span>
+<span id="L346"><span class="lineNum">     346</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">           6 :     if (magnitude == m_last_force) return false;</span></span>
+<span id="L347"><span class="lineNum">     347</span>                 :<span class="tlaGNC">           4 :     m_last_force = magnitude;</span></span>
+<span id="L348"><span class="lineNum">     348</span>                 :             : </span>
+<span id="L349"><span class="lineNum">     349</span>                 :             : #ifdef _WIN32</span>
+<span id="L350"><span class="lineNum">     350</span>                 :             :     if (m_pEffect) {</span>
+<span id="L351"><span class="lineNum">     351</span>                 :             :         DICONSTANTFORCE cf;</span>
+<span id="L352"><span class="lineNum">     352</span>                 :             :         cf.lMagnitude = magnitude;</span>
+<span id="L353"><span class="lineNum">     353</span>                 :             :         </span>
+<span id="L354"><span class="lineNum">     354</span>                 :             :         DIEFFECT eff;</span>
+<span id="L355"><span class="lineNum">     355</span>                 :             :         ZeroMemory(&amp;eff, sizeof(eff));</span>
+<span id="L356"><span class="lineNum">     356</span>                 :             :         eff.dwSize = sizeof(DIEFFECT);</span>
+<span id="L357"><span class="lineNum">     357</span>                 :             :         eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);</span>
+<span id="L358"><span class="lineNum">     358</span>                 :             :         eff.lpvTypeSpecificParams = &amp;cf;</span>
 <span id="L359"><span class="lineNum">     359</span>                 :             :         </span>
-<span id="L360"><span class="lineNum">     360</span>                 :             :         // --- DIAGNOSTIC &amp; RECOVERY LOGIC ---</span>
-<span id="L361"><span class="lineNum">     361</span>                 :             :         if (FAILED(hr)) {</span>
-<span id="L362"><span class="lineNum">     362</span>                 :             :             // 1. Identify the Error</span>
-<span id="L363"><span class="lineNum">     363</span>                 :             :             std::string errorType = GetDirectInputErrorString(hr);</span>
-<span id="L364"><span class="lineNum">     364</span>                 :             : </span>
-<span id="L365"><span class="lineNum">     365</span>                 :             :             // Append Custom Advice for Priority/Exclusive Errors</span>
-<span id="L366"><span class="lineNum">     366</span>                 :             :             if (hr == DIERR_OTHERAPPHASPRIO || hr == DIERR_NOTEXCLUSIVEACQUIRED ) {</span>
-<span id="L367"><span class="lineNum">     367</span>                 :             :                 errorType += &quot; [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB]&quot;;</span>
-<span id="L368"><span class="lineNum">     368</span>                 :             :                 </span>
-<span id="L369"><span class="lineNum">     369</span>                 :             :                 // Update exclusivity state to reflect reality</span>
-<span id="L370"><span class="lineNum">     370</span>                 :             :                 m_isExclusive = false;</span>
-<span id="L371"><span class="lineNum">     371</span>                 :             :             }</span>
-<span id="L372"><span class="lineNum">     372</span>                 :             : </span>
-<span id="L373"><span class="lineNum">     373</span>                 :             :             // FIX: Default to TRUE. If update failed, we must try to reconnect.</span>
-<span id="L374"><span class="lineNum">     374</span>                 :             :             bool recoverable = true; </span>
+<span id="L360"><span class="lineNum">     360</span>                 :             :         // Try to update parameters</span>
+<span id="L361"><span class="lineNum">     361</span>                 :             :         HRESULT hr = ((IDirectInputEffect*)m_pEffect)-&gt;SetParameters(&amp;eff, DIEP_TYPESPECIFICPARAMS);</span>
+<span id="L362"><span class="lineNum">     362</span>                 :             :         </span>
+<span id="L363"><span class="lineNum">     363</span>                 :             :         // --- DIAGNOSTIC &amp; RECOVERY LOGIC ---</span>
+<span id="L364"><span class="lineNum">     364</span>                 :             :         if (FAILED(hr)) {</span>
+<span id="L365"><span class="lineNum">     365</span>                 :             :             // 1. Identify the Error</span>
+<span id="L366"><span class="lineNum">     366</span>                 :             :             std::string errorType = GetDirectInputErrorString(hr);</span>
+<span id="L367"><span class="lineNum">     367</span>                 :             : </span>
+<span id="L368"><span class="lineNum">     368</span>                 :             :             // Append Custom Advice for Priority/Exclusive Errors</span>
+<span id="L369"><span class="lineNum">     369</span>                 :             :             if (hr == DIERR_OTHERAPPHASPRIO || hr == DIERR_NOTEXCLUSIVEACQUIRED ) {</span>
+<span id="L370"><span class="lineNum">     370</span>                 :             :                 errorType += &quot; [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB]&quot;;</span>
+<span id="L371"><span class="lineNum">     371</span>                 :             :                 </span>
+<span id="L372"><span class="lineNum">     372</span>                 :             :                 // Update exclusivity state to reflect reality</span>
+<span id="L373"><span class="lineNum">     373</span>                 :             :                 m_isExclusive = false;</span>
+<span id="L374"><span class="lineNum">     374</span>                 :             :             }</span>
 <span id="L375"><span class="lineNum">     375</span>                 :             : </span>
-<span id="L376"><span class="lineNum">     376</span>                 :             :             // 2. Log the Context (Rate limited)</span>
-<span id="L377"><span class="lineNum">     377</span>                 :             :             static uint32_t lastLogTime = 0;</span>
-<span id="L378"><span class="lineNum">     378</span>                 :             :             if (GetTickCount() - lastLogTime &gt; DIAGNOSTIC_LOG_INTERVAL_MS) {</span>
-<span id="L379"><span class="lineNum">     379</span>                 :             :                 std::cerr &lt;&lt; &quot;[DI ERROR] Failed to update force. Error: &quot; &lt;&lt; errorType </span>
-<span id="L380"><span class="lineNum">     380</span>                 :             :                           &lt;&lt; &quot; (0x&quot; &lt;&lt; std::hex &lt;&lt; hr &lt;&lt; std::dec &lt;&lt; &quot;)&quot; &lt;&lt; std::endl;</span>
-<span id="L381"><span class="lineNum">     381</span>                 :             :                 std::cerr &lt;&lt; &quot;           Active Window: [&quot; &lt;&lt; GetActiveWindowTitle() &lt;&lt; &quot;]&quot; &lt;&lt; std::endl;</span>
-<span id="L382"><span class="lineNum">     382</span>                 :             :                 lastLogTime = GetTickCount();</span>
-<span id="L383"><span class="lineNum">     383</span>                 :             :             }</span>
-<span id="L384"><span class="lineNum">     384</span>                 :             : </span>
-<span id="L385"><span class="lineNum">     385</span>                 :             :             // 3. Attempt Recovery (with Smart Cool-down)</span>
-<span id="L386"><span class="lineNum">     386</span>                 :             :             if (recoverable) {</span>
-<span id="L387"><span class="lineNum">     387</span>                 :             :                 // Throttle recovery attempts to prevent CPU spam when device is locked</span>
-<span id="L388"><span class="lineNum">     388</span>                 :             :                 static uint32_t lastRecoveryAttempt = 0;</span>
-<span id="L389"><span class="lineNum">     389</span>                 :             :                 uint32_t now = GetTickCount();</span>
-<span id="L390"><span class="lineNum">     390</span>                 :             :                 </span>
-<span id="L391"><span class="lineNum">     391</span>                 :             :                 // Only attempt recovery if cooldown period has elapsed</span>
-<span id="L392"><span class="lineNum">     392</span>                 :             :                 if (now - lastRecoveryAttempt &gt; RECOVERY_COOLDOWN_MS) {</span>
-<span id="L393"><span class="lineNum">     393</span>                 :             :                     lastRecoveryAttempt = now; // Mark this attempt</span>
-<span id="L394"><span class="lineNum">     394</span>                 :             :                     </span>
-<span id="L395"><span class="lineNum">     395</span>                 :             :                     // --- DYNAMIC PROMOTION FIX ---</span>
-<span id="L396"><span class="lineNum">     396</span>                 :             :                     // If we are stuck in &quot;Shared Mode&quot; (0x80040205), standard Acquire() </span>
-<span id="L397"><span class="lineNum">     397</span>                 :             :                     // just re-confirms Shared Mode. We must force a mode switch.</span>
-<span id="L398"><span class="lineNum">     398</span>                 :             :                     if (hr == DIERR_NOTEXCLUSIVEACQUIRED) {</span>
-<span id="L399"><span class="lineNum">     399</span>                 :             :                         std::cout &lt;&lt; &quot;[DI] Attempting to promote to Exclusive Mode...&quot; &lt;&lt; std::endl;</span>
-<span id="L400"><span class="lineNum">     400</span>                 :             :                         ((IDirectInputDevice8*)m_pDevice)-&gt;Unacquire();</span>
-<span id="L401"><span class="lineNum">     401</span>                 :             :                         ((IDirectInputDevice8*)m_pDevice)-&gt;SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);</span>
-<span id="L402"><span class="lineNum">     402</span>                 :             :                     }</span>
-<span id="L403"><span class="lineNum">     403</span>                 :             :                     // -----------------------------</span>
-<span id="L404"><span class="lineNum">     404</span>                 :             : </span>
-<span id="L405"><span class="lineNum">     405</span>                 :             :                     HRESULT hrAcq = ((IDirectInputDevice8*)m_pDevice)-&gt;Acquire();</span>
-<span id="L406"><span class="lineNum">     406</span>                 :             :                     </span>
-<span id="L407"><span class="lineNum">     407</span>                 :             :                     if (SUCCEEDED(hrAcq)) {</span>
-<span id="L408"><span class="lineNum">     408</span>                 :             :                         // Log recovery success (rate-limited for diagnostics)</span>
-<span id="L409"><span class="lineNum">     409</span>                 :             :                         static uint32_t lastSuccessLog = 0;</span>
-<span id="L410"><span class="lineNum">     410</span>                 :             :                         if (GetTickCount() - lastSuccessLog &gt; 5000) { // 5 second cooldown</span>
-<span id="L411"><span class="lineNum">     411</span>                 :             :                             std::cout &lt;&lt; &quot;[DI RECOVERY] Device re-acquired successfully. FFB motor restarted.&quot; &lt;&lt; std::endl;</span>
-<span id="L412"><span class="lineNum">     412</span>                 :             :                             lastSuccessLog = GetTickCount();</span>
-<span id="L413"><span class="lineNum">     413</span>                 :             :                         }</span>
-<span id="L414"><span class="lineNum">     414</span>                 :             :                         </span>
-<span id="L415"><span class="lineNum">     415</span>                 :             :                         // Update our internal state if we fixed the exclusivity</span>
-<span id="L416"><span class="lineNum">     416</span>                 :             :                         if (hr == DIERR_NOTEXCLUSIVEACQUIRED) {</span>
-<span id="L417"><span class="lineNum">     417</span>                 :             :                             m_isExclusive = true; </span>
-<span id="L418"><span class="lineNum">     418</span>                 :             :                             </span>
-<span id="L419"><span class="lineNum">     419</span>                 :             :                             // One-time notification when Dynamic Promotion first succeeds</span>
-<span id="L420"><span class="lineNum">     420</span>                 :             :                             static bool firstPromotionSuccess = false;</span>
-<span id="L421"><span class="lineNum">     421</span>                 :             :                             if (!firstPromotionSuccess) {</span>
-<span id="L422"><span class="lineNum">     422</span>                 :             :                                 std::cout &lt;&lt; &quot;\n&quot;</span>
-<span id="L423"><span class="lineNum">     423</span>                 :             :                                           &lt;&lt; &quot;========================================\n&quot;</span>
-<span id="L424"><span class="lineNum">     424</span>                 :             :                                           &lt;&lt; &quot;[SUCCESS] Dynamic Promotion Active!\n&quot;</span>
-<span id="L425"><span class="lineNum">     425</span>                 :             :                                           &lt;&lt; &quot;lmuFFB has successfully recovered exclusive\n&quot;</span>
-<span id="L426"><span class="lineNum">     426</span>                 :             :                                           &lt;&lt; &quot;control after detecting a conflict.\n&quot;</span>
-<span id="L427"><span class="lineNum">     427</span>                 :             :                                           &lt;&lt; &quot;This feature will continue to protect your\n&quot;</span>
-<span id="L428"><span class="lineNum">     428</span>                 :             :                                           &lt;&lt; &quot;FFB experience automatically.\n&quot;</span>
-<span id="L429"><span class="lineNum">     429</span>                 :             :                                           &lt;&lt; &quot;========================================\n&quot; &lt;&lt; std::endl;</span>
-<span id="L430"><span class="lineNum">     430</span>                 :             :                                 firstPromotionSuccess = true;</span>
-<span id="L431"><span class="lineNum">     431</span>                 :             :                             }</span>
-<span id="L432"><span class="lineNum">     432</span>                 :             :                         }</span>
-<span id="L433"><span class="lineNum">     433</span>                 :             : </span>
-<span id="L434"><span class="lineNum">     434</span>                 :             :                         // Restart the effect to ensure motor is active</span>
-<span id="L435"><span class="lineNum">     435</span>                 :             :                         ((IDirectInputEffect*)m_pEffect)-&gt;Start(1, 0);</span>
-<span id="L436"><span class="lineNum">     436</span>                 :             :                         </span>
-<span id="L437"><span class="lineNum">     437</span>                 :             :                         // Retry the update immediately</span>
-<span id="L438"><span class="lineNum">     438</span>                 :             :                         ((IDirectInputEffect*)m_pEffect)-&gt;SetParameters(&amp;eff, DIEP_TYPESPECIFICPARAMS);</span>
-<span id="L439"><span class="lineNum">     439</span>                 :             :                     }</span>
-<span id="L440"><span class="lineNum">     440</span>                 :             :                 }</span>
-<span id="L441"><span class="lineNum">     441</span>                 :             :             }</span>
-<span id="L442"><span class="lineNum">     442</span>                 :             :         }</span>
-<span id="L443"><span class="lineNum">     443</span>                 :             :     }</span>
-<span id="L444"><span class="lineNum">     444</span>                 :             : #endif</span>
-<span id="L445"><span class="lineNum">     445</span>                 :<span class="tlaGNC">           4 :     return true;</span></span>
-<span id="L446"><span class="lineNum">     446</span>                 :             : }</span>
+<span id="L376"><span class="lineNum">     376</span>                 :             :             // FIX: Default to TRUE. If update failed, we must try to reconnect.</span>
+<span id="L377"><span class="lineNum">     377</span>                 :             :             bool recoverable = true; </span>
+<span id="L378"><span class="lineNum">     378</span>                 :             : </span>
+<span id="L379"><span class="lineNum">     379</span>                 :             :             // 2. Log the Context (Rate limited)</span>
+<span id="L380"><span class="lineNum">     380</span>                 :             :             static uint32_t lastLogTime = 0;</span>
+<span id="L381"><span class="lineNum">     381</span>                 :             :             if (GetTickCount() - lastLogTime &gt; DIAGNOSTIC_LOG_INTERVAL_MS) {</span>
+<span id="L382"><span class="lineNum">     382</span>                 :             :                 std::cerr &lt;&lt; &quot;[DI ERROR] Failed to update force. Error: &quot; &lt;&lt; errorType </span>
+<span id="L383"><span class="lineNum">     383</span>                 :             :                           &lt;&lt; &quot; (0x&quot; &lt;&lt; std::hex &lt;&lt; hr &lt;&lt; std::dec &lt;&lt; &quot;)&quot; &lt;&lt; std::endl;</span>
+<span id="L384"><span class="lineNum">     384</span>                 :             :                 std::cerr &lt;&lt; &quot;           Active Window: [&quot; &lt;&lt; GetActiveWindowTitle() &lt;&lt; &quot;]&quot; &lt;&lt; std::endl;</span>
+<span id="L385"><span class="lineNum">     385</span>                 :             :                 lastLogTime = GetTickCount();</span>
+<span id="L386"><span class="lineNum">     386</span>                 :             :             }</span>
+<span id="L387"><span class="lineNum">     387</span>                 :             : </span>
+<span id="L388"><span class="lineNum">     388</span>                 :             :             // 3. Attempt Recovery (with Smart Cool-down)</span>
+<span id="L389"><span class="lineNum">     389</span>                 :             :             if (recoverable) {</span>
+<span id="L390"><span class="lineNum">     390</span>                 :             :                 // Throttle recovery attempts to prevent CPU spam when device is locked</span>
+<span id="L391"><span class="lineNum">     391</span>                 :             :                 static uint32_t lastRecoveryAttempt = 0;</span>
+<span id="L392"><span class="lineNum">     392</span>                 :             :                 uint32_t now = GetTickCount();</span>
+<span id="L393"><span class="lineNum">     393</span>                 :             :                 </span>
+<span id="L394"><span class="lineNum">     394</span>                 :             :                 // Only attempt recovery if cooldown period has elapsed</span>
+<span id="L395"><span class="lineNum">     395</span>                 :             :                 if (now - lastRecoveryAttempt &gt; RECOVERY_COOLDOWN_MS) {</span>
+<span id="L396"><span class="lineNum">     396</span>                 :             :                     lastRecoveryAttempt = now; // Mark this attempt</span>
+<span id="L397"><span class="lineNum">     397</span>                 :             :                     </span>
+<span id="L398"><span class="lineNum">     398</span>                 :             :                     // --- DYNAMIC PROMOTION FIX ---</span>
+<span id="L399"><span class="lineNum">     399</span>                 :             :                     // If we are stuck in &quot;Shared Mode&quot; (0x80040205), standard Acquire() </span>
+<span id="L400"><span class="lineNum">     400</span>                 :             :                     // just re-confirms Shared Mode. We must force a mode switch.</span>
+<span id="L401"><span class="lineNum">     401</span>                 :             :                     if (hr == DIERR_NOTEXCLUSIVEACQUIRED) {</span>
+<span id="L402"><span class="lineNum">     402</span>                 :             :                         std::cout &lt;&lt; &quot;[DI] Attempting to promote to Exclusive Mode...&quot; &lt;&lt; std::endl;</span>
+<span id="L403"><span class="lineNum">     403</span>                 :             :                         ((IDirectInputDevice8*)m_pDevice)-&gt;Unacquire();</span>
+<span id="L404"><span class="lineNum">     404</span>                 :             :                         ((IDirectInputDevice8*)m_pDevice)-&gt;SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);</span>
+<span id="L405"><span class="lineNum">     405</span>                 :             :                     }</span>
+<span id="L406"><span class="lineNum">     406</span>                 :             :                     // -----------------------------</span>
+<span id="L407"><span class="lineNum">     407</span>                 :             : </span>
+<span id="L408"><span class="lineNum">     408</span>                 :             :                     HRESULT hrAcq = ((IDirectInputDevice8*)m_pDevice)-&gt;Acquire();</span>
+<span id="L409"><span class="lineNum">     409</span>                 :             :                     </span>
+<span id="L410"><span class="lineNum">     410</span>                 :             :                     if (SUCCEEDED(hrAcq)) {</span>
+<span id="L411"><span class="lineNum">     411</span>                 :             :                         // Log recovery success (rate-limited for diagnostics)</span>
+<span id="L412"><span class="lineNum">     412</span>                 :             :                         static uint32_t lastSuccessLog = 0;</span>
+<span id="L413"><span class="lineNum">     413</span>                 :             :                         if (GetTickCount() - lastSuccessLog &gt; 5000) { // 5 second cooldown</span>
+<span id="L414"><span class="lineNum">     414</span>                 :             :                             std::cout &lt;&lt; &quot;[DI RECOVERY] Device re-acquired successfully. FFB motor restarted.&quot; &lt;&lt; std::endl;</span>
+<span id="L415"><span class="lineNum">     415</span>                 :             :                             lastSuccessLog = GetTickCount();</span>
+<span id="L416"><span class="lineNum">     416</span>                 :             :                         }</span>
+<span id="L417"><span class="lineNum">     417</span>                 :             :                         </span>
+<span id="L418"><span class="lineNum">     418</span>                 :             :                         // Update our internal state if we fixed the exclusivity</span>
+<span id="L419"><span class="lineNum">     419</span>                 :             :                         if (hr == DIERR_NOTEXCLUSIVEACQUIRED) {</span>
+<span id="L420"><span class="lineNum">     420</span>                 :             :                             m_isExclusive = true; </span>
+<span id="L421"><span class="lineNum">     421</span>                 :             :                             </span>
+<span id="L422"><span class="lineNum">     422</span>                 :             :                             // One-time notification when Dynamic Promotion first succeeds</span>
+<span id="L423"><span class="lineNum">     423</span>                 :             :                             static bool firstPromotionSuccess = false;</span>
+<span id="L424"><span class="lineNum">     424</span>                 :             :                             if (!firstPromotionSuccess) {</span>
+<span id="L425"><span class="lineNum">     425</span>                 :             :                                 std::cout &lt;&lt; &quot;\n&quot;</span>
+<span id="L426"><span class="lineNum">     426</span>                 :             :                                           &lt;&lt; &quot;========================================\n&quot;</span>
+<span id="L427"><span class="lineNum">     427</span>                 :             :                                           &lt;&lt; &quot;[SUCCESS] Dynamic Promotion Active!\n&quot;</span>
+<span id="L428"><span class="lineNum">     428</span>                 :             :                                           &lt;&lt; &quot;lmuFFB has successfully recovered exclusive\n&quot;</span>
+<span id="L429"><span class="lineNum">     429</span>                 :             :                                           &lt;&lt; &quot;control after detecting a conflict.\n&quot;</span>
+<span id="L430"><span class="lineNum">     430</span>                 :             :                                           &lt;&lt; &quot;This feature will continue to protect your\n&quot;</span>
+<span id="L431"><span class="lineNum">     431</span>                 :             :                                           &lt;&lt; &quot;FFB experience automatically.\n&quot;</span>
+<span id="L432"><span class="lineNum">     432</span>                 :             :                                           &lt;&lt; &quot;========================================\n&quot; &lt;&lt; std::endl;</span>
+<span id="L433"><span class="lineNum">     433</span>                 :             :                                 firstPromotionSuccess = true;</span>
+<span id="L434"><span class="lineNum">     434</span>                 :             :                             }</span>
+<span id="L435"><span class="lineNum">     435</span>                 :             :                         }</span>
+<span id="L436"><span class="lineNum">     436</span>                 :             : </span>
+<span id="L437"><span class="lineNum">     437</span>                 :             :                         // Restart the effect to ensure motor is active</span>
+<span id="L438"><span class="lineNum">     438</span>                 :             :                         ((IDirectInputEffect*)m_pEffect)-&gt;Start(1, 0);</span>
+<span id="L439"><span class="lineNum">     439</span>                 :             :                         </span>
+<span id="L440"><span class="lineNum">     440</span>                 :             :                         // Retry the update immediately</span>
+<span id="L441"><span class="lineNum">     441</span>                 :             :                         ((IDirectInputEffect*)m_pEffect)-&gt;SetParameters(&amp;eff, DIEP_TYPESPECIFICPARAMS);</span>
+<span id="L442"><span class="lineNum">     442</span>                 :             :                     }</span>
+<span id="L443"><span class="lineNum">     443</span>                 :             :                 }</span>
+<span id="L444"><span class="lineNum">     444</span>                 :             :             }</span>
+<span id="L445"><span class="lineNum">     445</span>                 :             :         }</span>
+<span id="L446"><span class="lineNum">     446</span>                 :             :     }</span>
+<span id="L447"><span class="lineNum">     447</span>                 :             : #endif</span>
+<span id="L448"><span class="lineNum">     448</span>                 :<span class="tlaGNC">           4 :     return true;</span></span>
+<span id="L449"><span class="lineNum">     449</span>                 :             : }</span>
         </pre>
               </td>
             </tr>
