@@ -44,10 +44,11 @@ $env:PATH += ";C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\
 
 # 2. Configure CMake with Ninja to enable clang-tidy
 # MSBuild (the default visual studio generator) ignores CMAKE_CXX_CLANG_TIDY, so we MUST use Ninja:
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=-*,performance-*,bugprone-*,readability-*,-readability-magic-numbers,-readability-uppercase-literal-suffix,-readability-implicit-bool-conversion,-readability-avoid-nested-conditional-operator,-readability-braces-around-statements,-performance-avoid-endl,-readability-function-cognitive-complexity,-bugprone-easily-swappable-parameters;--extra-arg=/EHsc"
+# Note: We use a separate 'build_ninja' folder to avoid conflicts with your existing Visual Studio build folder
+cmake -S . -B build_ninja -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=-*,performance-*,bugprone-*,readability-*,-readability-magic-numbers,-readability-uppercase-literal-suffix,-readability-implicit-bool-conversion,-readability-avoid-nested-conditional-operator,-readability-braces-around-statements,-performance-avoid-endl,-readability-function-cognitive-complexity,-bugprone-easily-swappable-parameters;--extra-arg=/EHsc"
 
 # 3. Build to see warnings
-cmake --build build --config Debug
+cmake --build build_ninja --config Debug
 
 
 
