@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.102] - 2026-02-27
+### Fixed
+- **Static Analysis & Portability**: 
+  - Exhaustively resolved `performance-no-int-to-ptr` warnings across all unit tests and simulation headers.
+  - Standardized mock Windows handle assignments using `reinterpret_cast` and `intptr_t`.
+  - Migrated `NULL` definition to `nullptr` in Linux mock layers for improved type safety.
+
+
+## [0.7.101] - 2026-02-27
+### Fixed
+- **Static Analysis**: Resolved `bugprone-implicit-widening-of-multiplication-result` in the GUI layer by using explicit 64-bit integer literals for file size calculations.
+
+
 ## [0.7.100] - 2026-02-27
 ### Fixed
 - **Portability & Optimization**:

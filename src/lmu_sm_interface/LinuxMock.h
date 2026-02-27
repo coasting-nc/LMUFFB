@@ -59,7 +59,7 @@ typedef struct _GUID {
 #endif
 
 #ifndef NULL
-#define NULL 0
+#define NULL nullptr
 #endif
 
 #ifndef MAX_PATH
@@ -71,7 +71,7 @@ typedef struct _GUID {
 #endif
 
 // Windows Constants for Mocking
-#define INVALID_HANDLE_VALUE ((HANDLE)(intptr_t)-1)
+#define INVALID_HANDLE_VALUE (reinterpret_cast<HANDLE>(static_cast<intptr_t>(-1)))
 #define PAGE_READWRITE 0x04
 #define FILE_MAP_ALL_ACCESS 0xF001F
 #define FILE_MAP_READ 0x04
@@ -87,17 +87,17 @@ typedef struct _GUID {
 #define WS_VISIBLE 0
 #define GWL_EXSTYLE -20
 #define WS_EX_TOPMOST 0x00000008L
-#define HWND_TOPMOST ((HWND)(intptr_t)-1)
-#define HWND_NOTOPMOST ((HWND)(intptr_t)-2)
+#define HWND_TOPMOST (reinterpret_cast<HWND>(static_cast<intptr_t>(-1)))
+#define HWND_NOTOPMOST (reinterpret_cast<HWND>(static_cast<intptr_t>(-2)))
 #define SWP_NOMOVE 0x0002
 #define SWP_NOSIZE 0x0001
 #define SWP_FRAMECHANGED 0x0020
 
 // Resources
-#define RT_GROUP_ICON 14
+#define RT_GROUP_ICON (reinterpret_cast<LPCSTR>(static_cast<intptr_t>(14)))
 #define LOAD_LIBRARY_AS_DATAFILE 0x00000002
-#define MAKEINTRESOURCE(i) ((char*)(intptr_t)((WORD)(i)))
-#define MAKEINTRESOURCEA(i) ((char*)(intptr_t)((WORD)(i)))
+#define MAKEINTRESOURCE(i) (reinterpret_cast<char*>(static_cast<intptr_t>(static_cast<WORD>(i))))
+#define MAKEINTRESOURCEA(i) (reinterpret_cast<char*>(static_cast<intptr_t>(static_cast<WORD>(i))))
 
 // Memory Mapping Mock (Global Storage)
 namespace MockSM {
@@ -170,9 +170,9 @@ inline DWORD GetLastError() { return MockSM::LastError(); }
 inline HANDLE CreateFileMappingA(HANDLE hFile, void* lpAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, const char* lpName) {
     if (MockSM::FailNext()) {
         MockSM::FailNext() = false;
-        return NULL;
+        return nullptr;
     }
-    if (lpName == nullptr) return (HANDLE)1;
+    if (lpName == nullptr) return reinterpret_cast<HANDLE>(static_cast<intptr_t>(1));
     std::string name(lpName);
     auto& maps = MockSM::GetMaps();
     if (maps.find(name) == maps.end()) {
@@ -201,19 +201,19 @@ inline void* MapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWO
 }
 
 inline BOOL UnmapViewOfFile(const void* lpBaseAddress) { return TRUE; }
-inline HANDLE CreateEventA(void* lpEventAttributes, BOOL bManualReset, BOOL bInitialState, const char* lpName) { return (HANDLE)1; }
+inline HANDLE CreateEventA(void* lpEventAttributes, BOOL bManualReset, BOOL bInitialState, const char* lpName) { return reinterpret_cast<HANDLE>(static_cast<intptr_t>(1)); }
 
 // Window mocks
 namespace MockGUI {
     inline LONG_PTR& ExStyle() { static LONG_PTR style = 0; return style; }
 }
 
-inline HWND GetConsoleWindow() { return (HWND)static_cast<intptr_t>(1); }
+inline HWND GetConsoleWindow() { return reinterpret_cast<HWND>(static_cast<intptr_t>(1)); }
 inline BOOL IsWindow(HWND hWnd) {
-    return (hWnd == (HWND)static_cast<intptr_t>(1) || hWnd == (HWND)static_cast<intptr_t>(2)); // Accept our mock handles
+    return (hWnd == reinterpret_cast<HWND>(static_cast<intptr_t>(1)) || hWnd == reinterpret_cast<HWND>(static_cast<intptr_t>(2))); // Accept our mock handles
 }
 inline HWND CreateWindowA(const char* lpClassName, const char* lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, void* hMenu, HMODULE hInstance, void* lpParam) {
-    return (HWND)static_cast<intptr_t>(2);
+    return reinterpret_cast<HWND>(static_cast<intptr_t>(2));
 }
 inline LONG_PTR GetWindowLongPtr(HWND hWnd, int nIndex) {
     if (nIndex == GWL_EXSTYLE) return MockGUI::ExStyle();
@@ -227,14 +227,14 @@ inline BOOL SetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, 
 inline BOOL DestroyWindow(HWND hWnd) { return TRUE; }
 
 // Resource Mocks
-inline HMODULE GetModuleHandle(const char* lpModuleName) { return (HMODULE)static_cast<intptr_t>(1); }
-inline HICON LoadIcon(HMODULE hInstance, const char* lpIconName) { return (HICON)static_cast<intptr_t>(1); }
+inline HMODULE GetModuleHandle(const char* lpModuleName) { return reinterpret_cast<HMODULE>(static_cast<intptr_t>(1)); }
+inline HICON LoadIcon(HMODULE hInstance, const char* lpIconName) { return reinterpret_cast<HICON>(static_cast<intptr_t>(1)); }
 inline DWORD GetModuleFileNameA(HMODULE hModule, char* lpFilename, DWORD nSize) {
     strncpy(lpFilename, "LMUFFB.exe", nSize);
     return strlen(lpFilename);
 }
-inline HMODULE LoadLibraryExA(const char* lpLibFileName, HANDLE hFile, DWORD dwFlags) { return (HMODULE)static_cast<intptr_t>(1); }
-inline HRSRC FindResourceA(HMODULE hModule, const char* lpName, const char* lpType) { return (HRSRC)static_cast<intptr_t>(1); }
+inline HMODULE LoadLibraryExA(const char* lpLibFileName, HANDLE hFile, DWORD dwFlags) { return reinterpret_cast<HMODULE>(static_cast<intptr_t>(1)); }
+inline HRSRC FindResourceA(HMODULE hModule, const char* lpName, const char* lpType) { return reinterpret_cast<HRSRC>(static_cast<intptr_t>(1)); }
 inline BOOL FreeLibrary(HMODULE hLibModule) { return TRUE; }
 
 // Version Info Mocks

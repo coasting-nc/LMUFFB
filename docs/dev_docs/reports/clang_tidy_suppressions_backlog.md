@@ -34,9 +34,9 @@ These warnings carry the highest risk because they deal with undefined behavior,
 - **Why it matters**: Performing division on integers truncates the decimal portions directly before it gets converted or stored in a float or double variable, unknowingly leading to lost precision (e.g., `float x = 5 / 2; // Sets x to 2.0`).
 - **Action**: Perform calculations using explicit floating-point values (e.g. `5 / 2.0f`).
 
-### 7. `bugprone-implicit-widening-of-multiplication-result`
+### 7. ~~`bugprone-implicit-widening-of-multiplication-result`~~ (✅ **RESOLVED in 0.7.101**)
 - **Why it matters**: When multiplying two integers, the result can wrap around or overflow *before* being cast or widened into a larger type (like `size_t` or `long long`), destroying the value silently.
-- **Action**: Explicitly cast the operands to standard width sizes prior to multiplication.
+- **Action**: Use explicit wider literals (e.g. `1024ULL`) or cast operands prior to multiplication.
 
 ### 8. `bugprone-narrowing-conversions`
 - **Why it matters**: Implicitly casting from a larger type to a smaller type (e.g., `double` into `float`, or `int` into `short`) discards precision. In physics, telemetry or GUI code, this lost data builds up and causes unexpected graphical or logical errors.

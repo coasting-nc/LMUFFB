@@ -210,7 +210,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
          ImGui::SameLine();
          size_t bytes = AsyncLogger::Get().GetFileSizeBytes();
-         if (bytes < 1024 * 1024)
+         if (bytes < 1024ULL * 1024ULL)
              ImGui::Text("%zu f (%.0f KB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / 1024.0f);
          else
              ImGui::Text("%zu f (%.1f MB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / (1024.0f * 1024.0f));

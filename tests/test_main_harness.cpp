@@ -42,7 +42,7 @@ TEST_CASE(test_main_app_logic, "System") {
     layout->data.scoring.vehScoringInfo[0].mControl = 1; // Player control
     layout->data.scoring.scoringInfo.mInRealtime = 1;
     layout->data.scoring.scoringInfo.mGamePhase = 5; // Session running
-    layout->data.generic.appInfo.mAppWindow = (HWND)1;
+    layout->data.generic.appInfo.mAppWindow = reinterpret_cast<HWND>(static_cast<intptr_t>(1));
     #endif
 
     // Run FFBThread for a few iterations with changing telemetry

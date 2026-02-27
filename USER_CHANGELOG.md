@@ -3,6 +3,33 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]February 27, 2026[/b][/size]
+[b]Version 0.7.102 - Linux Support & Code Hygiene Update[/b]
+
+[b]New release[/b] (0.7.102): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Linux/Steam Deck[/b]: Comprehensive update to the bridge layer to resolve modern compiler warnings and improve execution reliability under Proton.
+[*][b]Stability[/b]: Hardened internal memory management and handle tracking across all platform-emulated components.
+[/list]
+
+---
+
+
+[size=5][b]February 27, 2026[/b][/size]
+[b]Version 0.7.101 - Precision and Logging Stability[/b]
+
+[b]New release[/b] (0.7.101): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]GUI[/b]: Fixed a mathematical overflow risk in the logging interface when reporting very large recorded files.
+[/list]
+
+---
+
+
+[size=5][b]February 27, 2026[/b][/size]
 [b]Version 0.7.100 - Cross-Platform Compatibility Patch[/b]
 
 [b]New release[/b] (0.7.100): https://github.com/coasting-nc/LMUFFB/releases
