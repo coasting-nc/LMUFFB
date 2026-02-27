@@ -24,12 +24,12 @@ permissions:
   contents: read
 
 jobs:
-  run-msvc-analysis:
+  msvc-static-check:
     permissions:
       contents: read
       security-events: write
       actions: read
-    name: MSVC Static Analysis
+    name: MSVC Static Check
     runs-on: windows-latest
 
     steps:
@@ -57,7 +57,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ steps.run-analysis.outputs.sarif }}
-          category: MSVC-Analysis/cpp
+          category: MSVC/NativeRules
 
       # Upload SARIF file as an Artifact to download and view
       # - name: Upload SARIF as an Artifact

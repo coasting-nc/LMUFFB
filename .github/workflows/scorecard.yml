@@ -18,7 +18,7 @@ on:
 permissions: read-all
 
 jobs:
-  scorecard-analysis:
+  scorecheck:
     name: Scorecard analysis
     runs-on: ubuntu-latest
     # `publish_results: true` only works when run from the default branch. conditional can be removed if disabled.
@@ -76,4 +76,4 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
-          category: OSSF-Scorecard/supply-chain
+          category: OSSF/SupplyChain
