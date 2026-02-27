@@ -124,8 +124,10 @@ TEST_CASE(test_linux_mock_error_branches, "System") {
     // Clean up the named mapping handle immediately — CreateFileMappingA returns a
     // heap-allocated std::string* as the mock handle; forgetting CloseHandle causes
     // a 32-byte ASan/LeakSanitizer error.
+    // NOTE: do NOT erase the map entry here. GameConnector::TryConnect() stores a raw
+    // pointer to MockSM::GetMaps()["LMU_Data"].data(). Erasing the entry would free
+    // that buffer while a background FFBThread may still be reading from it (heap-use-after-free).
     CloseHandle(hMap);
-    MockSM::GetMaps().erase(LMU_SHARED_MEMORY_FILE); // restore clean state for other tests
     // Test CreateFileMappingA with null name
     HANDLE h1 = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 1024, nullptr);
     if (h1 == reinterpret_cast<HANDLE>(static_cast<intptr_t>(1))) { // NOLINT(performance-no-int-to-ptr)
