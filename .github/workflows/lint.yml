@@ -15,7 +15,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Run Clang-Format Style Check
-      uses: MichaelBoselowitz/clang-format-lint-action@v1
+      uses: DoozyX/clang-format-lint-action@v0.18
       continue-on-error: true
       with:
         source: './src ./tests'
