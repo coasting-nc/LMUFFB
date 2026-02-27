@@ -35,3 +35,18 @@ User reported that while in the garage view, there is a small amount of FFB acti
 
 ### Recommendations
 - Future FFB muting logic should continue to follow the "Safety First" pattern by preserving Soft Lock (rack limits) even when environmental forces are disabled.
+
+## Analysis of "Snap to Center" on "Drive"
+
+The user reported a "very sudden snap turn back to center when going back into the car" (clicking the "Drive" button), which has "almost claimed a few fingers".
+
+### Cause Analysis
+This "snap" is a direct consequence of the wheel having rotated away from center while in the garage stall. The reported "slow rotation" in the garage (caused by telemetry noise being amplified by `min_force`) puts the wheel at an offset (e.g., 180 degrees). When the user clicks "Drive", the FFB is suddenly re-enabled. The game's physics (specifically the Self-Aligning Torque of the stationary tires) immediately sees a large steering offset and generates a massive force to return the wheel to center. Because the transition was instantaneous, the wheel "snaps".
+
+### How this PR addresses it
+1.  **Prevents the Offset**: By muting FFB and bypassing `min_force` while in the garage stall (`mInGarageStall`), the wheel will no longer "slowly rotate" or "grind". It will remain exactly where the user left it (usually center).
+2.  **Eliminates the Jolt**: Since the wheel is no longer offset when the user clicks "Drive", there is no large error for the physics engine to correct, thus no "snap".
+3.  **Safety Buffer**: The preservation of Soft Lock ensures that even if the user manually turns the wheel to the rack limit while in the menu, they will still feel the physical stop, preventing them from unknowingly holding the wheel against a high-tension limit that would release upon clicking "Drive".
+4.  **Existing Slew Protection**: The engine already possesses a `ApplySafetySlew` mechanism (v0.7.49). While this limits the rate of change, a jump from 0% to 100% force can still occur very quickly (one or two frames at 400Hz). By ensuring the target force starts at 0 (due to lack of offset), this slew limiter will only have to handle small adjustments rather than a full-scale correction.
+
+By fixing the root cause (unwanted movement in the garage), the dangerous side effect (the snap-back) is also resolved.
