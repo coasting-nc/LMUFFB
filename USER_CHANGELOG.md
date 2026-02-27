@@ -3,6 +3,20 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]February 27, 2026[/b][/size]
+[b]Version 0.7.100 - Cross-Platform Compatibility Patch[/b]
+
+[b]New release[/b] (0.7.100): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Compatibility[/b]: Refined the internal Windows emulation layer to improve efficiency and stability on non-Windows environments (Linux/Proton).
+[*][b]Optimization[/b]: Streamlined low-level pointer operations to comply with modern compiler optimization standards.
+[/list]
+
+---
+
+
+[size=5][b]February 27, 2026[/b][/size]
 [b]Version 0.7.99 - Internal Code Quality Audit[/b]
 
 [b]New release[/b] (0.7.99): https://github.com/coasting-nc/LMUFFB/releases

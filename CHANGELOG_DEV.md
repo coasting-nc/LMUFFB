@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.100] - 2026-02-27
+### Fixed
+- **Portability & Optimization**:
+  - Resolved `performance-no-int-to-ptr` warnings in Linux build by refactoring `LinuxMock.h` to use safe `intptr_t` casting for Windows API emulations.
+  - Hardened unit tests (`test_ffb_logic`, `test_coverage_boost_v5/v6`, `test_windows_platform`) with explicit pointer casting to satisfy Clang-Tidy's optimization checks.
+
+
+
 ## [0.7.99] - 2026-02-27
 ### Fixed
 - **Static Analysis**: 

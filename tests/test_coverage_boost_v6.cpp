@@ -56,13 +56,13 @@ TEST_CASE(test_linux_mock_branches_v6, "System") {
 
     // CreateFileMappingA branches
     HANDLE h1 = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 1024, nullptr); // null name
-    if (h1 == (HANDLE)1) {
+    if (h1 == (HANDLE)static_cast<intptr_t>(1)) {
         std::cout << "[PASS] CreateFileMappingA null name branch" << std::endl;
         g_tests_passed++;
     }
 
     HANDLE h2 = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 1024, "TestMapV6"); // new name
-    if (h2 != nullptr && h2 != (HANDLE)1) {
+    if (h2 != nullptr && h2 != (HANDLE)static_cast<intptr_t>(1)) {
         std::cout << "[PASS] CreateFileMappingA new name branch" << std::endl;
         g_tests_passed++;
     }
@@ -89,14 +89,14 @@ TEST_CASE(test_linux_mock_branches_v6, "System") {
     }
 
     // IsWindow branches
-    if (IsWindow((HWND)1) && IsWindow((HWND)2) && !IsWindow((HWND)3)) {
+    if (IsWindow((HWND)static_cast<intptr_t>(1)) && IsWindow((HWND)static_cast<intptr_t>(2)) && !IsWindow((HWND)static_cast<intptr_t>(3))) {
         std::cout << "[PASS] IsWindow invalid handle branch" << std::endl;
         g_tests_passed++;
     }
 
     // GetWindowLongPtr branches
-    if (GetWindowLongPtr((HWND)1, GWL_EXSTYLE) == MockGUI::ExStyle() &&
-        GetWindowLongPtr((HWND)1, 0) == 0) {
+    if (GetWindowLongPtr((HWND)static_cast<intptr_t>(1), GWL_EXSTYLE) == MockGUI::ExStyle() &&
+        GetWindowLongPtr((HWND)static_cast<intptr_t>(1), 0) == 0) {
         std::cout << "[PASS] GetWindowLongPtr nIndex != GWL_EXSTYLE branch" << std::endl;
         g_tests_passed++;
     }

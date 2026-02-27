@@ -22,9 +22,9 @@ These warnings carry the highest risk because they deal with undefined behavior,
 - **Why it matters**: Catching exceptions and doing nothing completely hides failures. This creates "silent errors" where the system continues in an unstable or unexpected state, making debugging nearly impossible.
 - **Action**: Add minimum logging or error handling within empty `catch (...) {}` blocks.
 
-### 4. ~~`performance-no-int-to-ptr`~~ (✅ **RESOLVED in 0.7.96**)
+### 4. ~~`performance-no-int-to-ptr`~~ (✅ **RESOLVED in 0.7.100**)
 - **Why it matters**: Direct integer-to-pointer casts can inhibit compiler optimizations because the compiler cannot easily track the lineage and alignment of the resulting pointer. 
-- **Action**: Use `reinterpret_cast` with appropriate intermediate types (like `uintptr_t`) to make the operation explicit and optimization-friendly.
+- **Action**: Use `reinterpret_cast` or `static_cast` with appropriate intermediate types (like `intptr_t` or `uintptr_t`) to make the operation explicit and optimization-friendly. Partially resolved in 0.7.96; fully addressed for Linux/Mock environments in 0.7.100.
 
 ### 5. ~~`bugprone-incorrect-roundings`~~ (✅ **RESOLVED in 0.7.97**)
 - **Why it matters**: Approximating floating-point numbers by adding `0.5` and truncating to an integer (e.g. `(int)(float_val + 0.5f)`) can cause numerical instability resulting in off-by-one errors.

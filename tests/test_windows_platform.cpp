@@ -18,6 +18,7 @@
 #include "../src/Config.h"
 #include "../src/GuiLayer.h"
 #include "../src/GuiPlatform.h"
+#include "../src/lmu_sm_interface/LinuxMock.h"
 #include "../src/GameConnector.h"
 #include "../src/resource.h"
 #include "imgui.h"
