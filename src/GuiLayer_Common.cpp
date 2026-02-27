@@ -8,6 +8,7 @@
 #include "AsyncLogger.h"
 #include <iostream>
 #include <vector>
+#include <cmath>
 #include <algorithm>
 #include <cstring>
 #include <mutex>
@@ -460,7 +461,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Steering Shaft Smoothing", &engine.m_steering_shaft_smoothing, 0.000f, 0.100f, "%.3f s",
             Tooltips::STEERING_SHAFT_SMOOTHING,
             [&]() {
-                int ms = (int)(engine.m_steering_shaft_smoothing * 1000.0f + 0.5f);
+                int ms = (int)std::lround(engine.m_steering_shaft_smoothing * 1000.0f);
                 ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
                 ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
             });
@@ -524,7 +525,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("  Kick Response", &engine.m_yaw_accel_smoothing, 0.000f, 0.050f, "%.3f s",
             Tooltips::YAW_KICK_RESPONSE,
             [&]() {
-                int ms = (int)(engine.m_yaw_accel_smoothing * 1000.0f + 0.5f);
+                int ms = (int)std::lround(engine.m_yaw_accel_smoothing * 1000.0f);
                 ImVec4 color = (ms <= 15) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
                 ImGui::TextColored(color, "Latency: %d ms", ms);
             });
@@ -534,7 +535,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("  Gyro Smooth", &engine.m_gyro_smoothing, 0.000f, 0.050f, "%.3f s",
             Tooltips::GYRO_SMOOTH,
             [&]() {
-                int ms = (int)(engine.m_gyro_smoothing * 1000.0f + 0.5f);
+                int ms = (int)std::lround(engine.m_gyro_smoothing * 1000.0f);
                 ImVec4 color = (ms <= 20) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
                 ImGui::TextColored(color, "Latency: %d ms", ms);
             });
@@ -545,7 +546,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, "%.2f",
             Tooltips::SOP_SMOOTHING,
             [&]() {
-                int ms = (int)((1.0f - engine.m_sop_smoothing_factor) * 100.0f + 0.5f);
+                int ms = (int)std::lround((1.0f - engine.m_sop_smoothing_factor) * 100.0f);
                 ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
                 ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
             });
@@ -566,7 +567,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Slip Angle Smoothing", &engine.m_slip_angle_smoothing, 0.000f, 0.100f, "%.3f s",
             Tooltips::SLIP_ANGLE_SMOOTHING,
             [&]() {
-                int ms = (int)(engine.m_slip_angle_smoothing * 1000.0f + 0.5f);
+                int ms = (int)std::lround(engine.m_slip_angle_smoothing * 1000.0f);
                 ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
                 ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
             });
@@ -574,7 +575,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Chassis Inertia (Load)", &engine.m_chassis_inertia_smoothing, 0.000f, 0.100f, "%.3f s",
             Tooltips::CHASSIS_INERTIA,
             [&]() {
-                int ms = (int)(engine.m_chassis_inertia_smoothing * 1000.0f + 0.5f);
+                int ms = (int)std::lround(engine.m_chassis_inertia_smoothing * 1000.0f);
                 ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "Simulation: %d ms", ms);
             });
 

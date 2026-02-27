@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.97] - 2026-02-27
+### Fixed
+- **Static Analysis Fixes**:
+  - Re-enabled and resolved `clang-tidy` warning `-bugprone-incorrect-roundings`. Replaced manual rounding logic `(int)(val + 0.5f)` with `std::lround` for improved numerical stability and safety across the UI and test suites.
+
+
+
 ## [0.7.96] - 2026-02-27
 ### Fixed
 - **Static Analysis Fixes**:

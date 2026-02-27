@@ -26,9 +26,9 @@ These warnings carry the highest risk because they deal with undefined behavior,
 - **Why it matters**: Direct integer-to-pointer casts can inhibit compiler optimizations because the compiler cannot easily track the lineage and alignment of the resulting pointer. 
 - **Action**: Use `reinterpret_cast` with appropriate intermediate types (like `uintptr_t`) to make the operation explicit and optimization-friendly.
 
-### 5. `bugprone-incorrect-roundings`
+### 5. ~~`bugprone-incorrect-roundings`~~ (✅ **RESOLVED in 0.7.97**)
 - **Why it matters**: Approximating floating-point numbers by adding `0.5` and truncating to an integer (e.g. `(int)(float_val + 0.5f)`) can cause numerical instability resulting in off-by-one errors.
-- **Action**: Replace manual rounding calculations with standard math library functions like `std::lround()` or `std::round()`.
+- **Action**: Replace legacy rounding logic with `std::lround` from `<cmath>`, which provides consistent and mathematically sound rounding to the nearest integer.
 
 ### 6. `bugprone-integer-division`
 - **Why it matters**: Performing division on integers truncates the decimal portions directly before it gets converted or stored in a float or double variable, unknowingly leading to lost precision (e.g., `float x = 5 / 2; // Sets x to 2.0`).

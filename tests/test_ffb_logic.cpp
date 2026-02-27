@@ -312,17 +312,17 @@ TEST_CASE(test_latency_display_regression, "Logic") {
     // Test Case 1: SoP Smoothing Latency Calculation
     {
         float sop_smoothing_low = 0.90f;  // 10ms
-        int lat_ms_low = (int)((1.0f - sop_smoothing_low) * 100.0f + 0.5f);
+        int lat_ms_low = (int)std::lround((1.0f - sop_smoothing_low) * 100.0f);
         ASSERT_TRUE(lat_ms_low == 10);
         ASSERT_TRUE(lat_ms_low < 15);
 
         float sop_smoothing_high = 0.70f;  // 30ms
-        int lat_ms_high = (int)((1.0f - sop_smoothing_high) * 100.0f + 0.5f);
+        int lat_ms_high = (int)std::lround((1.0f - sop_smoothing_high) * 100.0f);
         ASSERT_TRUE(lat_ms_high == 30);
         ASSERT_TRUE(lat_ms_high >= 15);
 
         float sop_smoothing_boundary = 0.85f;  // 15ms
-        int lat_ms_boundary = (int)((1.0f - sop_smoothing_boundary) * 100.0f + 0.5f);
+        int lat_ms_boundary = (int)std::lround((1.0f - sop_smoothing_boundary) * 100.0f);
         ASSERT_TRUE(lat_ms_boundary == 15);
         ASSERT_TRUE(lat_ms_boundary >= 15);
     }
@@ -330,12 +330,12 @@ TEST_CASE(test_latency_display_regression, "Logic") {
     // Test Case 2: Slip Angle Smoothing Latency Calculation
     {
         float slip_smoothing_low = 0.010f;  // 10ms
-        int slip_ms_low = (int)(slip_smoothing_low * 1000.0f + 0.5f);
+        int slip_ms_low = (int)std::lround(slip_smoothing_low * 1000.0f);
         ASSERT_TRUE(slip_ms_low == 10);
         ASSERT_TRUE(slip_ms_low < 15);
 
         float slip_smoothing_high = 0.030f;  // 30ms
-        int slip_ms_high = (int)(slip_smoothing_high * 1000.0f + 0.5f);
+        int slip_ms_high = (int)std::lround(slip_smoothing_high * 1000.0f);
         ASSERT_TRUE(slip_ms_high == 30);
         ASSERT_TRUE(slip_ms_high >= 15);
     }
@@ -366,15 +366,15 @@ TEST_CASE(test_latency_display_regression, "Logic") {
     // Test Case 5: Edge Cases
     {
         float sop_smoothing_zero = 1.0f;
-        int lat_ms_zero = (int)((1.0f - sop_smoothing_zero) * 100.0f + 0.5f);
+        int lat_ms_zero = (int)std::lround((1.0f - sop_smoothing_zero) * 100.0f);
         ASSERT_TRUE(lat_ms_zero == 0);
 
         float sop_smoothing_max = 0.0f;
-        int lat_ms_max = (int)((1.0f - sop_smoothing_max) * 100.0f + 0.5f);
+        int lat_ms_max = (int)std::lround((1.0f - sop_smoothing_max) * 100.0f);
         ASSERT_TRUE(lat_ms_max == 100);
 
         float slip_smoothing_zero = 0.0f;
-        int slip_ms_zero = (int)(slip_smoothing_zero * 1000.0f + 0.5f);
+        int slip_ms_zero = (int)std::lround(slip_smoothing_zero * 1000.0f);
         ASSERT_TRUE(slip_ms_zero == 0);
         g_tests_passed++;
     }
