@@ -124,7 +124,7 @@ TEST_CASE(test_is_window_safety, "Security") {
     // 2. Invalid Handle (likely)
     // Casting a random pointer to HWND is generally unsafe if dereferenced,
     // but IsWindow is designed to handle this robustly.
-    HWND invalidHwnd = (HWND)(uintptr_t)0x12345678;
+    HWND invalidHwnd = (HWND)0x12345678;
     BOOL res2 = IsWindow(invalidHwnd);
     ASSERT_TRUE(res2 == 0);
 

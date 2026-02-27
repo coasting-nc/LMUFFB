@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.96] - 2026-02-27
+### Fixed
+- **Static Analysis Fixes**:
+  - Re-enabled and resolved `clang-tidy` warning `-performance-no-int-to-ptr`. Updated test cases where raw integer-to-pointer casting was used for handle simulation, ensuring better compiler optimization compatibility and explicit intent.
+
+
+
 ## [0.7.95] - 2026-02-27
 ### Fixed
 - **Static Analysis Fixes**:

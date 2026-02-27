@@ -3,6 +3,19 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]February 27, 2026[/b][/size]
+[b]Version 0.7.96 - Internal Optimization[/b]
+
+[b]New release[/b] (0.7.96): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Backend[/b]: Optimized internal pointer handling and architectural compatibility in the test infrastructure.
+[/list]
+
+---
+
+
+[size=5][b]February 27, 2026[/b][/size]
 [b]Version 0.7.95 - Maintenance and Internal Polishing[/b]
 
 [b]New release[/b] (0.7.95): https://github.com/coasting-nc/LMUFFB/releases
