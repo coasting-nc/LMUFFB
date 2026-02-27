@@ -61,7 +61,8 @@ jobs:
       - name: Merge and Optimize SARIF
         run: |
           $sarifFile = "${{ steps.run-analysis.outputs.sarif }}"
-          dotnet sarif merge "$sarifFile" --output-file "$sarifFile" --merge-runs --log "Optimize;Minify"
+          $sarifExe = "$env:USERPROFILE\.dotnet\tools\sarif.exe"
+          & $sarifExe merge "$sarifFile" --output-file "$sarifFile" --merge-runs --log "Optimize;Minify"
         shell: pwsh
 
       # Upload SARIF file to GitHub Code Scanning Alerts
