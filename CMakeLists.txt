@@ -166,7 +166,11 @@ set(CORE_SOURCES
 )
 
 if(WIN32)
-    list(APPEND CORE_SOURCES src/GuiLayer_Win32.cpp ${CMAKE_CURRENT_BINARY_DIR}/src/res.rc)
+    if (NOT BUILD_HEADLESS)
+        list(APPEND CORE_SOURCES src/GuiLayer_Win32.cpp ${CMAKE_CURRENT_BINARY_DIR}/src/res.rc)
+    else()
+        list(APPEND CORE_SOURCES src/GuiLayer_Win32.cpp)
+    endif()
 else()
     list(APPEND CORE_SOURCES src/GuiLayer_Linux.cpp)
 endif()
