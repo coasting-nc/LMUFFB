@@ -128,7 +128,7 @@ TEST_CASE(test_linux_mock_error_branches, "System") {
     MockSM::GetMaps().erase(LMU_SHARED_MEMORY_FILE); // restore clean state for other tests
     // Test CreateFileMappingA with null name
     HANDLE h1 = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 1024, nullptr);
-    if (h1 == reinterpret_cast<HANDLE>(static_cast<intptr_t>(1))) {
+    if (h1 == reinterpret_cast<HANDLE>(static_cast<intptr_t>(1))) { // NOLINT(performance-no-int-to-ptr)
         std::cout << "[PASS] CreateFileMappingA null name" << std::endl;
         g_tests_passed++;
     }
@@ -150,14 +150,14 @@ TEST_CASE(test_linux_mock_error_branches, "System") {
     // Test MapViewOfFile with invalid handles
     if (MapViewOfFile(nullptr, 0, 0, 0, 0) == nullptr &&
         MapViewOfFile(INVALID_HANDLE_VALUE, 0, 0, 0, 0) == nullptr &&
-        MapViewOfFile(reinterpret_cast<HANDLE>(static_cast<intptr_t>(1)), 0, 0, 0, 0) == nullptr) {
+        MapViewOfFile(reinterpret_cast<HANDLE>(static_cast<intptr_t>(1)), 0, 0, 0, 0) == nullptr) { // NOLINT(performance-no-int-to-ptr)
         std::cout << "[PASS] MapViewOfFile invalid handles" << std::endl;
         g_tests_passed++;
     }
 
     // Test CloseHandle special values
-    CloseHandle(reinterpret_cast<HANDLE>(static_cast<intptr_t>(0)));
-    CloseHandle(reinterpret_cast<HANDLE>(static_cast<intptr_t>(1)));
+    CloseHandle(reinterpret_cast<HANDLE>(static_cast<intptr_t>(0))); // NOLINT(performance-no-int-to-ptr)
+    CloseHandle(reinterpret_cast<HANDLE>(static_cast<intptr_t>(1))); // NOLINT(performance-no-int-to-ptr)
     CloseHandle(INVALID_HANDLE_VALUE);
     std::cout << "[PASS] CloseHandle special values" << std::endl;
     g_tests_passed++;
@@ -170,13 +170,13 @@ TEST_CASE(test_linux_mock_error_branches, "System") {
     }
 
     // Test Window Pos TopMost/NoTopMost
-    SetWindowPos(reinterpret_cast<HWND>(static_cast<intptr_t>(1)), HWND_TOPMOST, 0, 0, 0, 0, 0);
-    if (GetWindowLongPtr(reinterpret_cast<HWND>(static_cast<intptr_t>(1)), GWL_EXSTYLE) & WS_EX_TOPMOST) {
+    SetWindowPos(reinterpret_cast<HWND>(static_cast<intptr_t>(1)), HWND_TOPMOST, 0, 0, 0, 0, 0); // NOLINT(performance-no-int-to-ptr)
+    if (GetWindowLongPtr(reinterpret_cast<HWND>(static_cast<intptr_t>(1)), GWL_EXSTYLE) & WS_EX_TOPMOST) { // NOLINT(performance-no-int-to-ptr)
         std::cout << "[PASS] SetWindowPos HWND_TOPMOST" << std::endl;
         g_tests_passed++;
     }
-    SetWindowPos(reinterpret_cast<HWND>(static_cast<intptr_t>(1)), HWND_NOTOPMOST, 0, 0, 0, 0, 0);
-    if (!(GetWindowLongPtr((HWND)static_cast<intptr_t>(1), GWL_EXSTYLE) & WS_EX_TOPMOST)) {
+    SetWindowPos(reinterpret_cast<HWND>(static_cast<intptr_t>(1)), HWND_NOTOPMOST, 0, 0, 0, 0, 0); // NOLINT(performance-no-int-to-ptr)
+    if (!(GetWindowLongPtr((HWND)static_cast<intptr_t>(1), GWL_EXSTYLE) & WS_EX_TOPMOST)) { // NOLINT(performance-no-int-to-ptr)
         std::cout << "[PASS] SetWindowPos HWND_NOTOPMOST" << std::endl;
         g_tests_passed++;
     }

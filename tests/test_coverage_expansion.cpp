@@ -111,7 +111,7 @@ TEST_CASE(test_game_connector_expansion, "System") {
     #ifndef _WIN32
     if (MockSM::GetMaps().count("LMU_Data")) {
         SharedMemoryLayout* layout = (SharedMemoryLayout*)MockSM::GetMaps()["LMU_Data"].data();
-        layout->data.generic.appInfo.mAppWindow = reinterpret_cast<HWND>(static_cast<intptr_t>(1));
+        layout->data.generic.appInfo.mAppWindow = reinterpret_cast<HWND>(static_cast<intptr_t>(1)); // NOLINT(performance-no-int-to-ptr)
     }
     #endif
 
@@ -311,7 +311,7 @@ TEST_CASE(test_gui_platform_expansion, "GUI") {
     // Mock branches
     #ifndef _WIN32
     ASSERT_FALSE(OpenFileMappingA(0, 0, nullptr));
-    ASSERT_TRUE(IsWindow(reinterpret_cast<HWND>(static_cast<intptr_t>(1))));
+    ASSERT_TRUE(IsWindow(reinterpret_cast<HWND>(static_cast<intptr_t>(1)))); // NOLINT(performance-no-int-to-ptr)
     void* buf; UINT len;
     ASSERT_FALSE(VerQueryValueA(nullptr, "Invalid", &buf, &len));
     #endif

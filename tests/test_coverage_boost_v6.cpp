@@ -56,13 +56,13 @@ TEST_CASE(test_linux_mock_branches_v6, "System") {
 
     // CreateFileMappingA branches
     HANDLE h1 = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 1024, nullptr); // null name
-    if (h1 == reinterpret_cast<HANDLE>(static_cast<intptr_t>(1))) {
+    if (h1 == reinterpret_cast<HANDLE>(static_cast<intptr_t>(1))) { // NOLINT(performance-no-int-to-ptr)
         std::cout << "[PASS] CreateFileMappingA null name branch" << std::endl;
         g_tests_passed++;
     }
 
     HANDLE h2 = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 1024, "TestMapV6"); // new name
-    if (h2 != nullptr && h2 != reinterpret_cast<HANDLE>(static_cast<intptr_t>(1))) {
+    if (h2 != nullptr && h2 != reinterpret_cast<HANDLE>(static_cast<intptr_t>(1))) { // NOLINT(performance-no-int-to-ptr)
         std::cout << "[PASS] CreateFileMappingA new name branch" << std::endl;
         g_tests_passed++;
     }
@@ -89,14 +89,14 @@ TEST_CASE(test_linux_mock_branches_v6, "System") {
     }
 
     // IsWindow branches
-    if (IsWindow(reinterpret_cast<HWND>(static_cast<intptr_t>(1))) && IsWindow(reinterpret_cast<HWND>(static_cast<intptr_t>(2))) && !IsWindow(reinterpret_cast<HWND>(static_cast<intptr_t>(3)))) {
+    if (IsWindow(reinterpret_cast<HWND>(static_cast<intptr_t>(1))) && IsWindow(reinterpret_cast<HWND>(static_cast<intptr_t>(2))) && !IsWindow(reinterpret_cast<HWND>(static_cast<intptr_t>(3)))) { // NOLINT(performance-no-int-to-ptr)
         std::cout << "[PASS] IsWindow invalid handle branch" << std::endl;
         g_tests_passed++;
     }
 
     // GetWindowLongPtr branches
-    if (GetWindowLongPtr(reinterpret_cast<HWND>(static_cast<intptr_t>(1)), GWL_EXSTYLE) == MockGUI::ExStyle() &&
-        GetWindowLongPtr(reinterpret_cast<HWND>(static_cast<intptr_t>(1)), 0) == 0) {
+    if (GetWindowLongPtr(reinterpret_cast<HWND>(static_cast<intptr_t>(1)), GWL_EXSTYLE) == MockGUI::ExStyle() && // NOLINT(performance-no-int-to-ptr)
+        GetWindowLongPtr(reinterpret_cast<HWND>(static_cast<intptr_t>(1)), 0) == 0) { // NOLINT(performance-no-int-to-ptr)
         std::cout << "[PASS] GetWindowLongPtr nIndex != GWL_EXSTYLE branch" << std::endl;
         g_tests_passed++;
     }
@@ -508,7 +508,7 @@ TEST_CASE(test_game_connector_branches_v6, "System") {
 
     // 5. IsConnected - HWND gone
     SharedMemoryLayout* layout = (SharedMemoryLayout*)MockSM::GetMaps()["LMU_Data"].data();
-    layout->data.generic.appInfo.mAppWindow = reinterpret_cast<HWND>(static_cast<intptr_t>(1));
+    layout->data.generic.appInfo.mAppWindow = reinterpret_cast<HWND>(static_cast<intptr_t>(1)); // NOLINT(performance-no-int-to-ptr)
     // We need to re-connect to pick up the HWND? No, it's picked up during TryConnect.
     conn.Disconnect();
     conn.TryConnect();

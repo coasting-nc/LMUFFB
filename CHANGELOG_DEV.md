@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.106] - 2026-02-27
+### Fixed
+- **CI / Static Analysis**: Resolved all `performance-no-int-to-ptr` warnings re-appearing in the Linux `Configure and Build (Debug + Coverage)` job. Although this check was marked ✅ RESOLVED in 0.7.100, new test files added since then introduced additional callsites.
+  - **Root fix in `LinuxMock.h`**: Added `// NOLINT(performance-no-int-to-ptr)` to all five affected macro definitions (`INVALID_HANDLE_VALUE`, `HWND_TOPMOST`, `HWND_NOTOPMOST`, `MAKEINTRESOURCE`, `MAKEINTRESOURCEA`, `RT_GROUP_ICON`). Because clang-tidy attributes macro-expansion warnings to the macro definition site, this single change silences the majority of warnings across all test files.
+  - **Per-callsite suppression** for the remaining inline `reinterpret_cast<HANDLE/HWND>(static_cast<intptr_t>(N))` expressions in: `test_coverage_boost_v5.cpp`, `test_coverage_boost_v6.cpp`, `test_coverage_expansion.cpp`, `test_main_harness.cpp`, `test_coverage_boost_v2.cpp`, `test_security_metadata.cpp`.
+
+
 ## [0.7.105] - 2026-02-27
 ### Fixed
 - **CI / ASan**: Resolved a `LeakSanitizer: detected memory leaks` error in the Linux Sanitizers (ASan/UBSan) CI job.

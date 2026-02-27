@@ -216,12 +216,12 @@ TEST_CASE(test_game_connector_branch_boost, "System") {
     #ifndef _WIN32
     MockSM::GetMaps()["LMU_Data"].resize(sizeof(SharedMemoryLayout));
     SharedMemoryLayout* layout = (SharedMemoryLayout*)MockSM::GetMaps()["LMU_Data"].data();
-    layout->data.generic.appInfo.mAppWindow = reinterpret_cast<HWND>(static_cast<intptr_t>(3));
+    layout->data.generic.appInfo.mAppWindow = reinterpret_cast<HWND>(static_cast<intptr_t>(3)); // NOLINT(performance-no-int-to-ptr)
 
     conn.TryConnect();
     ASSERT_FALSE(conn.IsConnected());
 
-    layout->data.generic.appInfo.mAppWindow = reinterpret_cast<HWND>(static_cast<intptr_t>(1));
+    layout->data.generic.appInfo.mAppWindow = reinterpret_cast<HWND>(static_cast<intptr_t>(1)); // NOLINT(performance-no-int-to-ptr)
     conn.TryConnect();
     layout->data.telemetry.playerHasVehicle = false;
     SharedMemoryObjectOut dest;

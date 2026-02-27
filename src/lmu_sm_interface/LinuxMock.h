@@ -71,7 +71,7 @@ typedef struct _GUID {
 #endif
 
 // Windows Constants for Mocking
-#define INVALID_HANDLE_VALUE (reinterpret_cast<HANDLE>(static_cast<intptr_t>(-1)))
+#define INVALID_HANDLE_VALUE (reinterpret_cast<HANDLE>(static_cast<intptr_t>(-1))) // NOLINT(performance-no-int-to-ptr)
 #define PAGE_READWRITE 0x04
 #define FILE_MAP_ALL_ACCESS 0xF001F
 #define FILE_MAP_READ 0x04
@@ -87,17 +87,17 @@ typedef struct _GUID {
 #define WS_VISIBLE 0
 #define GWL_EXSTYLE -20
 #define WS_EX_TOPMOST 0x00000008L
-#define HWND_TOPMOST (reinterpret_cast<HWND>(static_cast<intptr_t>(-1)))
-#define HWND_NOTOPMOST (reinterpret_cast<HWND>(static_cast<intptr_t>(-2)))
+#define HWND_TOPMOST (reinterpret_cast<HWND>(static_cast<intptr_t>(-1))) // NOLINT(performance-no-int-to-ptr)
+#define HWND_NOTOPMOST (reinterpret_cast<HWND>(static_cast<intptr_t>(-2))) // NOLINT(performance-no-int-to-ptr)
 #define SWP_NOMOVE 0x0002
 #define SWP_NOSIZE 0x0001
 #define SWP_FRAMECHANGED 0x0020
 
 // Resources
-#define RT_GROUP_ICON (reinterpret_cast<LPCSTR>(static_cast<intptr_t>(14)))
+#define RT_GROUP_ICON (reinterpret_cast<LPCSTR>(static_cast<intptr_t>(14))) // NOLINT(performance-no-int-to-ptr)
 #define LOAD_LIBRARY_AS_DATAFILE 0x00000002
-#define MAKEINTRESOURCE(i) (reinterpret_cast<char*>(static_cast<intptr_t>(static_cast<WORD>(i))))
-#define MAKEINTRESOURCEA(i) (reinterpret_cast<char*>(static_cast<intptr_t>(static_cast<WORD>(i))))
+#define MAKEINTRESOURCE(i) (reinterpret_cast<char*>(static_cast<intptr_t>(static_cast<WORD>(i)))) // NOLINT(performance-no-int-to-ptr)
+#define MAKEINTRESOURCEA(i) (reinterpret_cast<char*>(static_cast<intptr_t>(static_cast<WORD>(i)))) // NOLINT(performance-no-int-to-ptr)
 
 // Memory Mapping Mock (Global Storage)
 namespace MockSM {
