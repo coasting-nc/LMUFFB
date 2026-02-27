@@ -3,6 +3,20 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]February 27, 2026[/b][/size]
+[b]Version 0.7.99 - Internal Code Quality Audit[/b]
+
+[b]New release[/b] (0.7.99): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Backend[/b]: Completed a targeted audit of mathematical operations to ensure maximum precision in calculation-heavy modules.
+[*][b]Reliability[/b]: Fixed minor logic issues in automated test suites to maintain high development standards.
+[/list]
+
+---
+
+
+[size=5][b]February 27, 2026[/b][/size]
 [b]Version 0.7.98 - Performance and Panic Handling Fixes[/b]
 
 [b]New release[/b] (0.7.98): https://github.com/coasting-nc/LMUFFB/releases
