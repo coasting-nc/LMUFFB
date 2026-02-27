@@ -48,7 +48,7 @@ $env:PATH += ";C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\
 cmake -S . -B build_ninja -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=-*,performance-*,bugprone-*,readability-*,-readability-magic-numbers,-readability-uppercase-literal-suffix,-readability-implicit-bool-conversion,-readability-avoid-nested-conditional-operator,-readability-braces-around-statements,-performance-avoid-endl,-readability-function-cognitive-complexity,-bugprone-easily-swappable-parameters,-readability-identifier-length,-readability-isolate-declaration,-readability-convert-member-functions-to-static,-readability-make-member-function-const,-readability-container-size-empty,-readability-else-after-return,-bugprone-narrowing-conversions,-readability-redundant-string-init;--extra-arg=/EHsc"
 
 # 3. Build to see warnings
-cmake --build build_ninja --config Debug
+cmake --build build_ninja --config Debug --clean-first
 
 
 
