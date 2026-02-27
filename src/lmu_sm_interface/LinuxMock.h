@@ -159,7 +159,10 @@ inline DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
 }
 inline BOOL SetEvent(HANDLE hEvent) { return TRUE; }
 inline BOOL CloseHandle(HANDLE hObject) {
-    if (hObject != (HANDLE)0 && hObject != (HANDLE)1 && hObject != (HANDLE)2 && hObject != (HANDLE)(intptr_t)-1) {
+    if (hObject != reinterpret_cast<HANDLE>(static_cast<intptr_t>(0)) && 
+        hObject != reinterpret_cast<HANDLE>(static_cast<intptr_t>(1)) && 
+        hObject != reinterpret_cast<HANDLE>(static_cast<intptr_t>(2)) && 
+        hObject != INVALID_HANDLE_VALUE) {
         delete static_cast<std::string*>(hObject);
     }
     return TRUE;
@@ -181,7 +184,7 @@ inline HANDLE CreateFileMappingA(HANDLE hFile, void* lpAttributes, DWORD flProte
     } else {
         MockSM::LastError() = ERROR_ALREADY_EXISTS;
     }
-    return (HANDLE)new std::string(name);
+    return reinterpret_cast<HANDLE>(new std::string(name));
 }
 
 inline HANDLE OpenFileMappingA(DWORD dwDesiredAccess, BOOL bInheritHandle, const char* lpName) {
@@ -189,14 +192,14 @@ inline HANDLE OpenFileMappingA(DWORD dwDesiredAccess, BOOL bInheritHandle, const
     std::string name(lpName);
     auto& maps = MockSM::GetMaps();
     if (maps.find(name) != maps.end()) {
-        return (HANDLE)new std::string(name);
+        return reinterpret_cast<HANDLE>(new std::string(name));
     }
     return nullptr;
 }
 
 inline void* MapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, size_t dwNumberOfBytesToMap) {
-    if (hFileMappingObject == (HANDLE)1 || hFileMappingObject == nullptr || hFileMappingObject == INVALID_HANDLE_VALUE) return nullptr;
-    std::string* name = (std::string*)hFileMappingObject;
+    if (hFileMappingObject == reinterpret_cast<HANDLE>(static_cast<intptr_t>(1)) || hFileMappingObject == nullptr || hFileMappingObject == INVALID_HANDLE_VALUE) return nullptr;
+    std::string* name = static_cast<std::string*>(hFileMappingObject);
     return MockSM::GetMaps()[*name].data();
 }
 

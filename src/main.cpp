@@ -304,7 +304,7 @@ int main(int argc, char* argv[]) noexcept {
         if (!GuiLayer::Init()) {
             std::cerr << "Failed to initialize GUI." << std::endl;
         }
-        DirectInputFFB::Get().Initialize((HWND)GuiLayer::GetWindowHandle());
+        DirectInputFFB::Get().Initialize(reinterpret_cast<HWND>(GuiLayer::GetWindowHandle()));
     } else {
         std::cout << "Running in HEADLESS mode." << std::endl;
         DirectInputFFB::Get().Initialize(NULL);

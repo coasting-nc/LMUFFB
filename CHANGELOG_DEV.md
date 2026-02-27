@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.103] - 2026-02-27
+### Fixed
+- **Clean Code & Analysis**: Completed zero-warning sweep for `performance-no-int-to-ptr`.
+  - Hardened all mock return values in `LinuxMock.h`.
+  - Fixed remaining C-style handle casts in `src/main.cpp` and multiple test files.
+  - Verified logic across all coverage boost suites.
+
+
 ## [0.7.102] - 2026-02-27
 ### Fixed
 - **Static Analysis & Portability**: 

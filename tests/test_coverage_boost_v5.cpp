@@ -123,7 +123,7 @@ TEST_CASE(test_linux_mock_error_branches, "System") {
     HANDLE hMap = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, (DWORD)sizeof(SharedMemoryLayout), LMU_SHARED_MEMORY_FILE);
     // Test CreateFileMappingA with null name
     HANDLE h1 = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 1024, nullptr);
-    if (h1 == (HANDLE)static_cast<intptr_t>(1)) {
+    if (h1 == reinterpret_cast<HANDLE>(static_cast<intptr_t>(1))) {
         std::cout << "[PASS] CreateFileMappingA null name" << std::endl;
         g_tests_passed++;
     }

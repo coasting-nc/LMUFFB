@@ -3,6 +3,20 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]February 27, 2026[/b][/size]
+[b]Version 0.7.103 - Final Portability Sweep[/b]
+
+[b]New release[/b] (0.7.103): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]General[/b]: Finalized strict code analysis fixes to ensure maximum compatibility with modern compilers on both Windows and Linux.
+[*][b]Stability[/b]: Resolved potential initialization edge cases in the main application loop.
+[/list]
+
+---
+
+
+[size=5][b]February 27, 2026[/b][/size]
 [b]Version 0.7.102 - Linux Support & Code Hygiene Update[/b]
 
 [b]New release[/b] (0.7.102): https://github.com/coasting-nc/LMUFFB/releases
