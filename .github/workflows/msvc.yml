@@ -52,12 +52,25 @@ jobs:
           # Ruleset file that will determine what checks will be run
           ruleset: NativeRecommendedRules.ruleset
 
+      - name: Patch SARIF with unique category IDs
+        run: |
+          $sarifFile = "${{ steps.run-analysis.outputs.sarif }}"
+          $sarif = Get-Content $sarifFile | ConvertFrom-Json
+          if ($sarif.runs) {
+              for ($i=0; $i -lt $sarif.runs.Count; $i++) {
+                  $id = if ($sarif.runs.Count -eq 1) { "MSVC/NativeRules" } else { "MSVC/NativeRules/$i" }
+                  $sarif.runs[$i].automationDetails = @{ id = $id }
+              }
+              $sarif | ConvertTo-Json -Depth 100 | Out-File $sarifFile -Encoding utf8
+          }
+        shell: pwsh
+
       # Upload SARIF file to GitHub Code Scanning Alerts
+      # We omit the category here because we've injected unique IDs into the SARIF file
       - name: Upload SARIF to GitHub
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ steps.run-analysis.outputs.sarif }}
-          category: MSVC/NativeRules
 
       # Upload SARIF file as an Artifact to download and view
       # - name: Upload SARIF as an Artifact
