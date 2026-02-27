@@ -191,11 +191,11 @@ TEST_CASE(test_coverage_integrated, "Coverage") {
     data.mWheel[1].mTireLoad = 1000.0f;
     
     for(int i=0; i<45; i++) {
-        data.mSteeringShaftTorque = 1.0f - (i * 0.1f); 
-        data.mUnfilteredSteering = 0.1f + (i * 0.01f);
-        data.mLocalAccel.x = 5.0f + (i * 0.5f); // Create G derivative
-        data.mWheel[0].mLateralPatchVel = 1.0f + (i * 0.1f); // Create Slip derivative
-        data.mWheel[1].mLateralPatchVel = 1.0f + (i * 0.1f);
+        data.mSteeringShaftTorque = 1.0f - (static_cast<float>(i) * 0.1f); 
+        data.mUnfilteredSteering = 0.1f + (static_cast<float>(i) * 0.01f);
+        data.mLocalAccel.x = 5.0f + (static_cast<float>(i) * 0.5f); // Create G derivative
+        data.mWheel[0].mLateralPatchVel = 1.0f + (static_cast<float>(i) * 0.1f); // Create Slip derivative
+        data.mWheel[1].mLateralPatchVel = 1.0f + (static_cast<float>(i) * 0.1f);
         engine.calculate_force(&data, "GT3", "M4 GT3"); 
     }
     

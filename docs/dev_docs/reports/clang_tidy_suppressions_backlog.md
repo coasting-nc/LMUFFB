@@ -38,9 +38,9 @@ These warnings carry the highest risk because they deal with undefined behavior,
 - **Why it matters**: When multiplying two integers, the result can wrap around or overflow *before* being cast or widened into a larger type (like `size_t` or `long long`), destroying the value silently.
 - **Action**: Use explicit wider literals (e.g. `1024ULL`) or cast operands prior to multiplication.
 
-### 8. `bugprone-narrowing-conversions`
+### 8. ~~`bugprone-narrowing-conversions`~~ (✅ **RESOLVED in 0.7.104**)
 - **Why it matters**: Implicitly casting from a larger type to a smaller type (e.g., `double` into `float`, or `int` into `short`) discards precision. In physics, telemetry or GUI code, this lost data builds up and causes unexpected graphical or logical errors.
-- **Action**: Refactor logic to match data bounds, or use explicit static casting.
+- **Action**: Added explicit `static_cast<float>` or `static_cast<double>` in all affected locations: Filter Window latency display in `GuiLayer_Common.cpp`, loop-variable arithmetic in `test_coverage_boost.cpp` and `test_gui_interaction.cpp`, `float`→`double` NaN/Inf assignments in `test_coverage_boost_v3.cpp`, the latency calculation in `test_ffb_slope_detection.cpp`, and `size_t`→`double` conversions in the slope noise statistics.
 
 ### 9. `bugprone-branch-clone`
 - **Why it matters**: Having multiple conditionals performing exactly the same branch code often indicates copy-paste errors, creating fragile, confusing logic operations.

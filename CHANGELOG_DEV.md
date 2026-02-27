@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.104] - 2026-02-27
+### Fixed
+- **Static Analysis**: Resolved all `bugprone-narrowing-conversions` warnings across the codebase. All 12 instances involved implicit type narrowing during arithmetic or assignment:
+  - `src/GuiLayer_Common.cpp`: Explicit `static_cast<float>` on `m_slope_sg_window` (an `int`) when computing the Filter Window latency display.
+  - `tests/test_coverage_boost.cpp`: Added `static_cast<float>(i)` for the loop variable `i` in 5 float telemetry assignments inside `test_coverage_integrated`.
+  - `tests/test_coverage_boost_v3.cpp`: Switched `std::numeric_limits<float>::quiet_NaN()` and `::infinity()` to `std::numeric_limits<double>::` to match the `double` type of `mUnfilteredSteering`.
+  - `tests/test_ffb_slope_detection.cpp`: Added `static_cast<float>(window - 1)` in the latency assertion; added `static_cast<double>(slopes.size())` in mean/variance calculations to avoid `size_t`→`double` conversions.
+  - `tests/test_gui_interaction.cpp`: Added `static_cast<float>(step)` for the `int` loop variable used in `ImVec2` y-coordinate arithmetic (2 occurrences).
+
+
 ## [0.7.103] - 2026-02-27
 ### Fixed
 - **Clean Code & Analysis**: Completed zero-warning sweep for `performance-no-int-to-ptr`.

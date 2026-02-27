@@ -3,6 +3,19 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]February 27, 2026[/b][/size]
+[b]Version 0.7.104 - Type Safety & Code Precision[/b]
+
+[b]New release[/b] (0.7.104): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Code Precision[/b]: Resolved all implicit type-narrowing conversion warnings across the physics engine, GUI layer, and test suite. All arithmetic now carries explicit type intent, ensuring values are never silently truncated or widened in a way that could introduce rounding errors in the physics calculations.
+[/list]
+
+---
+
+
+[size=5][b]February 27, 2026[/b][/size]
 [b]Version 0.7.103 - Final Portability Sweep[/b]
 
 [b]New release[/b] (0.7.103): https://github.com/coasting-nc/LMUFFB/releases

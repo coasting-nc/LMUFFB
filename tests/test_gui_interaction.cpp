@@ -298,7 +298,7 @@ TEST_CASE(test_gui_layer_comprehensive, "GUI") {
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
         // Click everywhere in the window
-        io.MousePos = ImVec2(100.0f, 10.0f + step * 20.0f);
+        io.MousePos = ImVec2(100.0f, 10.0f + static_cast<float>(step) * 20.0f);
         io.MouseDown[0] = true;
 
         GuiLayerTestAccess::DrawTuningWindow(engine);
@@ -307,7 +307,7 @@ TEST_CASE(test_gui_layer_comprehensive, "GUI") {
 
         // Re-render with mouse elsewhere to trigger hover states in different branches
         ImGui::NewFrame();
-        io.MousePos = ImVec2(300.0f, 10.0f + step * 20.0f);
+        io.MousePos = ImVec2(300.0f, 10.0f + static_cast<float>(step) * 20.0f);
         GuiLayerTestAccess::DrawTuningWindow(engine);
         ImGui::EndFrame();
     }

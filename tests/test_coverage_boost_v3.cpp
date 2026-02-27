@@ -187,12 +187,12 @@ TEST_CASE(test_steering_utils_nan_inf, "Physics") {
     FFBCalculationContext ctx;
 
     // NaN steering
-    data.mUnfilteredSteering = std::numeric_limits<float>::quiet_NaN();
+    data.mUnfilteredSteering = std::numeric_limits<double>::quiet_NaN();
     FFBEngineTestAccess::CallCalculateSoftLock(engine, &data, ctx);
     ASSERT_NEAR(ctx.soft_lock_force, 0.0, 0.001);
 
     // Inf steering
-    data.mUnfilteredSteering = std::numeric_limits<float>::infinity();
+    data.mUnfilteredSteering = std::numeric_limits<double>::infinity();
     FFBEngineTestAccess::CallCalculateSoftLock(engine, &data, ctx);
     ASSERT_NEAR(ctx.soft_lock_force, 0.0, 0.001);
 }

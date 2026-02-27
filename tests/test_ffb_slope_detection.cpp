@@ -181,7 +181,7 @@ TEST_CASE(test_slope_latency_characteristics, "SlopeDetection") {
     ASSERT_TRUE(engine.m_slope_buffer_count == window);
     
     // Latency is (window-1)/2 * dt (group delay of a symmetric FIR/SG filter)
-    float latency_ms = ((window - 1) / 2.0f) * 2.5f;
+    float latency_ms = (static_cast<float>(window - 1) / 2.0f) * 2.5f;
     std::cout << "  Calculated Latency for Window " << window << " at 400Hz: " << latency_ms << " ms" << std::endl;
     ASSERT_NEAR(latency_ms, 17.5, 0.1);
 }
@@ -928,8 +928,8 @@ TEST_CASE(TestSlope_NoiseImmunity, "SlopeDetection") {
         sum += s;
         sum_sq += s * s;
     }
-    double mean = sum / slopes.size();
-    double variance = (sum_sq / slopes.size()) - (mean * mean);
+    double mean = sum / static_cast<double>(slopes.size());
+    double variance = (sum_sq / static_cast<double>(slopes.size())) - (mean * mean);
     double std_dev = std::sqrt(std::abs(variance));
 
     std::cout << "  Noisy Slope Mean: " << mean << " | StdDev: " << std_dev << std::endl;
