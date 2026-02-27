@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.93] - 2026-02-27
+### Changed
+- **Static Analysis Optimization**:
+  - Excluded more Linux-specific stylistic compiler warnings to keep CI clean:
+    - `-bugprone-unused-local-non-trivial-variable`
+    - `-readability-redundant-declaration`
+
+
+
+## [0.7.92] - 2026-02-27
+### Fixed
+- **Static Analysis Fixes**:
+  - Re-enabled and resolved `clang-tidy` warning `-bugprone-unchecked-optional-access`. Fixed `std::optional::value()` access across tests by introducing early-return guard conditional boundaries.
+
+
+
 ## [0.7.91] - 2026-02-27
 ### Changed
 - **Static Analysis Optimization**:

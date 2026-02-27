@@ -10,7 +10,7 @@ The suppressed rules have been prioritized by severity. We recommend tackling th
 
 These warnings carry the highest risk because they deal with undefined behavior, mathematical or logical inaccuracies, or memory safety issues. 
 
-### 1. `bugprone-unchecked-optional-access`
+### 1. ~~`bugprone-unchecked-optional-access`~~ (✅ **RESOLVED in 0.7.92**)
 - **Why it matters**: Accessing an empty `std::optional` using `.value()` without checking if it contains a value will throw a `std::bad_optional_access` exception, which will crash the application immediately if unhandled.
 - **Action**: Ensure all optionals are verified via `.has_value()` or `if (opt)` before dereferencing.
 
@@ -64,6 +64,7 @@ These primarily pertain to performance bottlenecks or notable readability degrad
 *   `readability-magic-numbers`: Hardcoded numeric constants obscure the intent behind equations and drastically increases long-term maintenance burdens. Extract variables.
 *   `readability-function-cognitive-complexity`: Functions bloated with excessive nesting loops and conditional jumps hinder comprehension exponentially.
 *   `readability-static-accessed-through-instance`: Accessing static variables tied to instance objects masks their static origins.
+*   `bugprone-unused-local-non-trivial-variable`: Variables initialized but never read incur unnecessary performance cost and memory allocations.
 
 ---
 
@@ -85,3 +86,4 @@ These checks flag stylistic non-conformities or C++ semantics that do not influe
 *   `readability-avoid-nested-conditional-operator`
 *   `readability-identifier-length`
 *   `readability-uppercase-literal-suffix`
+*   `readability-redundant-declaration` (Redundant forward declarations clutter the translation unit negatively but silently)

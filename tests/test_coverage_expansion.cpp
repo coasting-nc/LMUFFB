@@ -61,6 +61,7 @@ TEST_CASE(test_vehicle_utils_expansion, "Physics") {
 TEST_CASE(test_shared_memory_lock_expansion, "System") {
     auto lockOpt = SharedMemoryLock::MakeSharedMemoryLock();
     ASSERT_TRUE(lockOpt.has_value());
+    if (!lockOpt) return;
 
     SharedMemoryLock& lock = lockOpt.value();
 
@@ -70,6 +71,7 @@ TEST_CASE(test_shared_memory_lock_expansion, "System") {
     // Move assignment
     auto lock3Opt = SharedMemoryLock::MakeSharedMemoryLock();
     ASSERT_TRUE(lock3Opt.has_value());
+    if (!lock3Opt) return;
     SharedMemoryLock& lock3 = lock3Opt.value();
     lock3 = std::move(lock2);
 
@@ -83,6 +85,7 @@ TEST_CASE(test_shared_memory_lock_expansion, "System") {
     // SafeSharedMemoryLock move assignment (Line 31)
     auto safeOpt = SafeSharedMemoryLock::MakeSafeSharedMemoryLock();
     ASSERT_TRUE(safeOpt.has_value());
+    if (!safeOpt) return;
     SafeSharedMemoryLock safe2 = std::move(safeOpt.value());
     SafeSharedMemoryLock safe3(std::move(safe2)); // Move construct
     safe2 = std::move(safe3); // Move assign
@@ -235,6 +238,7 @@ TEST_CASE(test_direct_input_mock_expansion, "System") {
 TEST_CASE(test_sm_lock_concurrency, "System") {
     auto lockOpt = SharedMemoryLock::MakeSharedMemoryLock();
     ASSERT_TRUE(lockOpt.has_value());
+    if (!lockOpt) return;
     SharedMemoryLock& lock = lockOpt.value();
 
     lock.Lock();

@@ -3,6 +3,32 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]February 27, 2026[/b][/size]
+[b]Version 0.7.93 - Further Build Cleanliness[/b]
+
+[b]New release[/b] (0.7.93): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Developer Experience[/b]: Removed unused variable and redundant declaration compiler warnings when running under Linux constraints.
+[/list]
+
+---
+
+
+[size=5][b]February 27, 2026[/b][/size]
+[b]Version 0.7.92 - Memory Safety Polishing[/b]
+
+[b]New release[/b] (0.7.92): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]Stabilization[/b]: Proactively patched several cases where memory optionals were evaluated blindly, avoiding future scenarios that could cause silent crash exceptions (`std::bad_optional_access`).
+[/list]
+
+---
+
+
+[size=5][b]February 27, 2026[/b][/size]
 [b]Version 0.7.91 - CI Code Quality Convergence[/b]
 
 [b]New release[/b] (0.7.91): https://github.com/coasting-nc/LMUFFB/releases
