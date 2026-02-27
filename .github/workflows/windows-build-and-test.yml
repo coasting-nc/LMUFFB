@@ -10,6 +10,9 @@ on:
     paths-ignore:
       - '**.md'
 
+permissions:
+  contents: read
+
 jobs:
   windows-release:
     name: Windows Release Build
