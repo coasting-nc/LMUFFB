@@ -50,3 +50,11 @@ This "snap" is a direct consequence of the wheel having rotated away from center
 4.  **Existing Slew Protection**: The engine already possesses a `ApplySafetySlew` mechanism (v0.7.49). While this limits the rate of change, a jump from 0% to 100% force can still occur very quickly (one or two frames at 400Hz). By ensuring the target force starts at 0 (due to lack of offset), this slew limiter will only have to handle small adjustments rather than a full-scale correction.
 
 By fixing the root cause (unwanted movement in the garage), the dangerous side effect (the snap-back) is also resolved.
+
+### Behavior when clicking "Drive"
+If a user clicks "Drive" with the wheel at an offset (e.g. 90°), the following safety layers prevent a snap:
+
+1.  **Speed Gating (The Primary Buffer)**: LMUFFB uses a "Speed Gate" (configured by `m_speed_gate_lower` and `m_speed_gate_upper`). At 0 speed, the `speed_gate` multiplier is **exactly 0**. Since the base steering torque, lateral effects, and textures are all multiplied by this gate, the resulting FFB force remains at 0 while the car is stationary in the "Drive" state.
+2.  **Smooth Fade-In**: FFB only begins to "move" the wheel once the car starts rolling. As speed increases (defaulting to 1.0 m/s), the `smoothstep` function gradually ramps the FFB from 0% to 100%. This ensures that even if there is a steering error, the correction is introduced progressively as the car gains momentum, rather than in a single violent frame.
+3.  **No Accelerator dependency**: There is no direct "jolt" when pressing the accelerator; the FFB response is strictly tied to the physical speed of the vehicle and the resulting telemetry.
+4.  **Soft Lock Safety**: If the user has manually turned the wheel to the rack limit while in the menu, the Soft Lock force will already be active (due to the `significant_soft_lock` bypass). Thus, clicking "Drive" does not "suddenly" enable this force; it was already there, providing a consistent physical context.
