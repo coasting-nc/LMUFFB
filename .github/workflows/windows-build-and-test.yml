@@ -90,7 +90,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y lcov libglfw3-dev libopengl-dev
+        sudo apt-get install -y lcov libglfw3-dev libopengl-dev clang-tidy
 
     - name: Install ImGui (Linux)
       run: |
@@ -102,7 +102,7 @@ jobs:
 
     - name: Configure and Build (Debug + Coverage)
       run: |
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DENABLE_COVERAGE=ON
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=-*,readability-*,bugprone-*,performance-*"
         cmake --build build --config Debug
 
     - name: Run Tests
@@ -183,10 +183,42 @@ jobs:
         path: coverage_report/
         retention-days: 14
 
+  linux-sanitizers:
+    name: Linux Sanitizers (ASan/UBSan)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libglfw3-dev libopengl-dev
+
+    - name: Install ImGui (Linux)
+      run: |
+        mkdir -p vendor/imgui
+        wget https://github.com/ocornut/imgui/archive/refs/heads/master.zip -O vendor/imgui-master.zip
+        unzip vendor/imgui-master.zip -d vendor/
+        cp -r vendor/imgui-master/* vendor/imgui/
+        rm -rf vendor/imgui-master.zip vendor/imgui-master
+
+    - name: Configure and Build (ASan + UBSan)
+      run: |
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+        cmake --build build --config Debug
+
+    - name: Run Tests with Sanitizers
+      run: |
+        export ASAN_OPTIONS=detect_leaks=1:symbolize=1
+        export UBSAN_OPTIONS=print_stacktrace=1
+        ./build/tests/run_combined_tests
+
   deploy-coverage:
     name: Deploy Hub to GitHub Pages
     runs-on: ubuntu-latest
-    needs: [windows-release, linux-coverage]
+    needs: [windows-release, linux-coverage, linux-sanitizers]
     if: github.event_name == 'push'
     permissions:
       contents: write
