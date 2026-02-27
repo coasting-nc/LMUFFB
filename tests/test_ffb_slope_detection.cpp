@@ -180,8 +180,8 @@ TEST_CASE(test_slope_latency_characteristics, "SlopeDetection") {
     
     ASSERT_TRUE(engine.m_slope_buffer_count == window);
     
-    // Latency is roughly (window/2) * dt
-    float latency_ms = (window / 2.0f) * 2.5f;
+    // Latency is (window-1)/2 * dt (group delay of a symmetric FIR/SG filter)
+    float latency_ms = ((window - 1) / 2.0f) * 2.5f;
     std::cout << "  Calculated Latency for Window " << window << " at 400Hz: " << latency_ms << " ms" << std::endl;
     ASSERT_NEAR(latency_ms, 17.5, 0.1);
 }

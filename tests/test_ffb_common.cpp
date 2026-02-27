@@ -244,6 +244,8 @@ void Run() {
     
     // Auto-Registered Tests
     auto& registry = TestRegistry::Instance();
+    std::vector<std::string> failed_test_names;
+
     if (!registry.GetTests().empty()) {
         registry.SortByCategory();
         auto& tests = registry.GetTests();
@@ -252,13 +254,13 @@ void Run() {
         
         std::string current_category;
         for (const auto& test : tests) {
+            if (!ShouldRunTest(test.tags, test.category)) continue;
+
             if (test.category != current_category) {
                 current_category = test.category;
                 std::cout << "\n=== " << current_category << " Tests ===" << std::endl;
             }
             
-            if (!ShouldRunTest(test.tags, test.category)) continue;
-
             try {
                 int initial_fails = g_tests_failed;
                 test.func();
@@ -266,19 +268,23 @@ void Run() {
                 g_test_cases_run++;
                 if (g_tests_failed > initial_fails) {
                     g_test_cases_failed++;
+                    failed_test_names.push_back(test.name);
+                    std::cerr << "\n>>> [FAIL] TEST CASE: " << test.name << " (" << (g_tests_failed - initial_fails) << " assertions failed)\n" << std::endl;
                 } else {
                     g_test_cases_passed++;
                 }
             } catch (const std::exception& e) {
-                std::cout << "[FAIL] " << test.name << " threw exception: " << e.what() << std::endl;
+                std::cerr << "\n>>> [FAIL] " << test.name << " threw exception: " << e.what() << "\n" << std::endl;
                 g_tests_failed++;
                 g_test_cases_run++;
                 g_test_cases_failed++;
+                failed_test_names.push_back(test.name);
             } catch (...) {
-                std::cout << "[FAIL] " << test.name << " threw unknown exception" << std::endl;
+                std::cerr << "\n>>> [FAIL] " << test.name << " threw unknown exception\n" << std::endl;
                 g_tests_failed++;
                 g_test_cases_run++;
                 g_test_cases_failed++;
+                failed_test_names.push_back(test.name);
             }
         }
     }
@@ -286,6 +292,14 @@ void Run() {
     std::cout << "\n--- Physics Engine Test Summary ---" << std::endl;
     std::cout << "Test Cases: " << g_test_cases_passed << "/" << g_test_cases_run << " passed" << std::endl;
     std::cout << "Assertions: " << g_tests_passed << " passed, " << g_tests_failed << " failed" << std::endl;
+
+    if (!failed_test_names.empty()) {
+        std::cout << "\n!!! list of FAILED test cases !!!" << std::endl;
+        for (const auto& name : failed_test_names) {
+            std::cout << "  - " << name << std::endl;
+        }
+        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+    }
 }
 
 } // namespace FFBEngineTests
