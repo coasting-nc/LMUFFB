@@ -32,12 +32,12 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
-            <td class="headerCovTableEntry">112</td>
-            <td class="headerCovTableEntry">112</td>
+            <td class="headerCovTableEntry">114</td>
+            <td class="headerCovTableEntry">114</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-02-27 20:58:35</td>
+            <td class="headerValue">2026-02-27 22:20:06</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -130,7 +130,7 @@
 <span id="L59"><span class="lineNum">      59</span>                 :             : #endif</span>
 <span id="L60"><span class="lineNum">      60</span>                 :             : </span>
 <span id="L61"><span class="lineNum">      61</span>                 :             : #ifndef NULL</span>
-<span id="L62"><span class="lineNum">      62</span>                 :             : #define NULL 0</span>
+<span id="L62"><span class="lineNum">      62</span>                 :             : #define NULL nullptr</span>
 <span id="L63"><span class="lineNum">      63</span>                 :             : #endif</span>
 <span id="L64"><span class="lineNum">      64</span>                 :             : </span>
 <span id="L65"><span class="lineNum">      65</span>                 :             : #ifndef MAX_PATH</span>
@@ -142,7 +142,7 @@
 <span id="L71"><span class="lineNum">      71</span>                 :             : #endif</span>
 <span id="L72"><span class="lineNum">      72</span>                 :             : </span>
 <span id="L73"><span class="lineNum">      73</span>                 :             : // Windows Constants for Mocking</span>
-<span id="L74"><span class="lineNum">      74</span>                 :             : #define INVALID_HANDLE_VALUE ((HANDLE)(UINT_PTR)-1)</span>
+<span id="L74"><span class="lineNum">      74</span>                 :             : #define INVALID_HANDLE_VALUE (reinterpret_cast&lt;HANDLE&gt;(static_cast&lt;intptr_t&gt;(-1))) // NOLINT(performance-no-int-to-ptr)</span>
 <span id="L75"><span class="lineNum">      75</span>                 :             : #define PAGE_READWRITE 0x04</span>
 <span id="L76"><span class="lineNum">      76</span>                 :             : #define FILE_MAP_ALL_ACCESS 0xF001F</span>
 <span id="L77"><span class="lineNum">      77</span>                 :             : #define FILE_MAP_READ 0x04</span>
@@ -158,31 +158,31 @@
 <span id="L87"><span class="lineNum">      87</span>                 :             : #define WS_VISIBLE 0</span>
 <span id="L88"><span class="lineNum">      88</span>                 :             : #define GWL_EXSTYLE -20</span>
 <span id="L89"><span class="lineNum">      89</span>                 :             : #define WS_EX_TOPMOST 0x00000008L</span>
-<span id="L90"><span class="lineNum">      90</span>                 :             : #define HWND_TOPMOST ((HWND)-1)</span>
-<span id="L91"><span class="lineNum">      91</span>                 :             : #define HWND_NOTOPMOST ((HWND)-2)</span>
+<span id="L90"><span class="lineNum">      90</span>                 :             : #define HWND_TOPMOST (reinterpret_cast&lt;HWND&gt;(static_cast&lt;intptr_t&gt;(-1))) // NOLINT(performance-no-int-to-ptr)</span>
+<span id="L91"><span class="lineNum">      91</span>                 :             : #define HWND_NOTOPMOST (reinterpret_cast&lt;HWND&gt;(static_cast&lt;intptr_t&gt;(-2))) // NOLINT(performance-no-int-to-ptr)</span>
 <span id="L92"><span class="lineNum">      92</span>                 :             : #define SWP_NOMOVE 0x0002</span>
 <span id="L93"><span class="lineNum">      93</span>                 :             : #define SWP_NOSIZE 0x0001</span>
 <span id="L94"><span class="lineNum">      94</span>                 :             : #define SWP_FRAMECHANGED 0x0020</span>
 <span id="L95"><span class="lineNum">      95</span>                 :             : </span>
 <span id="L96"><span class="lineNum">      96</span>                 :             : // Resources</span>
-<span id="L97"><span class="lineNum">      97</span>                 :             : #define RT_GROUP_ICON 14</span>
+<span id="L97"><span class="lineNum">      97</span>                 :             : #define RT_GROUP_ICON (reinterpret_cast&lt;LPCSTR&gt;(static_cast&lt;intptr_t&gt;(14))) // NOLINT(performance-no-int-to-ptr)</span>
 <span id="L98"><span class="lineNum">      98</span>                 :             : #define LOAD_LIBRARY_AS_DATAFILE 0x00000002</span>
-<span id="L99"><span class="lineNum">      99</span>                 :             : #define MAKEINTRESOURCE(i) ((char*)((ULONG_PTR)((WORD)(i))))</span>
-<span id="L100"><span class="lineNum">     100</span>                 :             : #define MAKEINTRESOURCEA(i) ((char*)((ULONG_PTR)((WORD)(i))))</span>
+<span id="L99"><span class="lineNum">      99</span>                 :             : #define MAKEINTRESOURCE(i) (reinterpret_cast&lt;char*&gt;(static_cast&lt;intptr_t&gt;(static_cast&lt;WORD&gt;(i)))) // NOLINT(performance-no-int-to-ptr)</span>
+<span id="L100"><span class="lineNum">     100</span>                 :             : #define MAKEINTRESOURCEA(i) (reinterpret_cast&lt;char*&gt;(static_cast&lt;intptr_t&gt;(static_cast&lt;WORD&gt;(i)))) // NOLINT(performance-no-int-to-ptr)</span>
 <span id="L101"><span class="lineNum">     101</span>                 :             : </span>
 <span id="L102"><span class="lineNum">     102</span>                 :             : // Memory Mapping Mock (Global Storage)</span>
 <span id="L103"><span class="lineNum">     103</span>                 :             : namespace MockSM {</span>
-<span id="L104"><span class="lineNum">     104</span>                 :<span class="tlaGNC tlaBgGNC">       47379 :     inline std::map&lt;std::string, std::vector&lt;uint8_t&gt;&gt;&amp; GetMaps() {</span></span>
-<span id="L105"><span class="lineNum">     105</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 47378 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">       47379 :         static std::map&lt;std::string, std::vector&lt;uint8_t&gt;&gt; maps;</span></span>
-<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">       47379 :         return maps;</span></span>
+<span id="L104"><span class="lineNum">     104</span>                 :<span class="tlaGNC tlaBgGNC">       51590 :     inline std::map&lt;std::string, std::vector&lt;uint8_t&gt;&gt;&amp; GetMaps() {</span></span>
+<span id="L105"><span class="lineNum">     105</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 51589 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">       51590 :         static std::map&lt;std::string, std::vector&lt;uint8_t&gt;&gt; maps;</span></span>
+<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">       51590 :         return maps;</span></span>
 <span id="L107"><span class="lineNum">     107</span>                 :             :     }</span>
-<span id="L108"><span class="lineNum">     108</span>                 :<span class="tlaGNC">       23365 :     inline DWORD&amp; LastError() {</span></span>
+<span id="L108"><span class="lineNum">     108</span>                 :<span class="tlaGNC">       25470 :     inline DWORD&amp; LastError() {</span></span>
 <span id="L109"><span class="lineNum">     109</span>                 :             :         static DWORD err = 0;</span>
-<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">       23365 :         return err;</span></span>
+<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">       25470 :         return err;</span></span>
 <span id="L111"><span class="lineNum">     111</span>                 :             :     }</span>
-<span id="L112"><span class="lineNum">     112</span>                 :<span class="tlaGNC">       11695 :     inline bool&amp; FailNext() {</span></span>
+<span id="L112"><span class="lineNum">     112</span>                 :<span class="tlaGNC">       12748 :     inline bool&amp; FailNext() {</span></span>
 <span id="L113"><span class="lineNum">     113</span>                 :             :         static bool fail = false;</span>
-<span id="L114"><span class="lineNum">     114</span>                 :<span class="tlaGNC">       11695 :         return fail;</span></span>
+<span id="L114"><span class="lineNum">     114</span>                 :<span class="tlaGNC">       12748 :         return fail;</span></span>
 <span id="L115"><span class="lineNum">     115</span>                 :             :     }</span>
 <span id="L116"><span class="lineNum">     116</span>                 :<span class="tlaGNC">           7 :     inline DWORD&amp; WaitResult() {</span></span>
 <span id="L117"><span class="lineNum">     117</span>                 :             :         static DWORD res = 0; // WAIT_OBJECT_0</span>
@@ -191,17 +191,17 @@
 <span id="L120"><span class="lineNum">     120</span>                 :             : }</span>
 <span id="L121"><span class="lineNum">     121</span>                 :             : </span>
 <span id="L122"><span class="lineNum">     122</span>                 :             : // Interlocked functions for Linux mocking</span>
-<span id="L123"><span class="lineNum">     123</span>                 :<span class="tlaGNC">       28455 : inline long InterlockedCompareExchange(long volatile* Destination, long Exchange, long Comparand) {</span></span>
-<span id="L124"><span class="lineNum">     124</span>                 :<span class="tlaGNC">       28455 :     long old = *Destination;</span></span>
-<span id="L125"><span class="lineNum">     125</span>         [<span class="tlaGBC" title="Branch 0 was taken 12450 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16005 times"> + </span>]:<span class="tlaGNC">       28455 :     if (old == Comparand) *Destination = Exchange;</span></span>
-<span id="L126"><span class="lineNum">     126</span>                 :<span class="tlaGNC">       28455 :     return old;</span></span>
+<span id="L123"><span class="lineNum">     123</span>                 :<span class="tlaGNC">       31468 : inline long InterlockedCompareExchange(long volatile* Destination, long Exchange, long Comparand) {</span></span>
+<span id="L124"><span class="lineNum">     124</span>                 :<span class="tlaGNC">       31468 :     long old = *Destination;</span></span>
+<span id="L125"><span class="lineNum">     125</span>         [<span class="tlaGBC" title="Branch 0 was taken 15463 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16005 times"> + </span>]:<span class="tlaGNC">       31468 :     if (old == Comparand) *Destination = Exchange;</span></span>
+<span id="L126"><span class="lineNum">     126</span>                 :<span class="tlaGNC">       31468 :     return old;</span></span>
 <span id="L127"><span class="lineNum">     127</span>                 :             : }</span>
 <span id="L128"><span class="lineNum">     128</span>                 :<span class="tlaGNC">           4 : inline long InterlockedIncrement(long volatile* Addend) { return ++(*Addend); }</span></span>
 <span id="L129"><span class="lineNum">     129</span>                 :<span class="tlaGNC">           1 : inline long InterlockedDecrement(long volatile* Addend) { return --(*Addend); }</span></span>
-<span id="L130"><span class="lineNum">     130</span>                 :<span class="tlaGNC">       12451 : inline long InterlockedExchange(long volatile* Target, long Value) {</span></span>
-<span id="L131"><span class="lineNum">     131</span>                 :<span class="tlaGNC">       12451 :     long old = *Target;</span></span>
-<span id="L132"><span class="lineNum">     132</span>                 :<span class="tlaGNC">       12451 :     *Target = Value;</span></span>
-<span id="L133"><span class="lineNum">     133</span>                 :<span class="tlaGNC">       12451 :     return old;</span></span>
+<span id="L130"><span class="lineNum">     130</span>                 :<span class="tlaGNC">       15464 : inline long InterlockedExchange(long volatile* Target, long Value) {</span></span>
+<span id="L131"><span class="lineNum">     131</span>                 :<span class="tlaGNC">       15464 :     long old = *Target;</span></span>
+<span id="L132"><span class="lineNum">     132</span>                 :<span class="tlaGNC">       15464 :     *Target = Value;</span></span>
+<span id="L133"><span class="lineNum">     133</span>                 :<span class="tlaGNC">       15464 :     return old;</span></span>
 <span id="L134"><span class="lineNum">     134</span>                 :             : }</span>
 <span id="L135"><span class="lineNum">     135</span>                 :             : </span>
 <span id="L136"><span class="lineNum">     136</span>                 :             : // Memory and Event mocks</span>
@@ -228,193 +228,195 @@
 <span id="L157"><span class="lineNum">     157</span>                 :             :     }</span>
 <span id="L158"><span class="lineNum">     158</span>                 :<span class="tlaGNC">           3 :     return WAIT_OBJECT_0;</span></span>
 <span id="L159"><span class="lineNum">     159</span>                 :             : }</span>
-<span id="L160"><span class="lineNum">     160</span>                 :<span class="tlaGNC">        4772 : inline BOOL SetEvent(HANDLE hEvent) { return TRUE; }</span></span>
-<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">       35038 : inline BOOL CloseHandle(HANDLE hObject) {</span></span>
-<span id="L162"><span class="lineNum">     162</span>   [<span class="tlaGBC" title="Branch 0 was taken 35037 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 23356 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 11681 times"> + </span> :<span class="tlaGNC">       35038 :     if (hObject != (HANDLE)0 &amp;&amp; hObject != (HANDLE)1 &amp;&amp; hObject != (HANDLE)2 &amp;&amp; hObject != (HANDLE)(intptr_t)-1) {</span></span>
-<span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 23356 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaGBC" title="Branch 6 was taken 23355 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 1 time"> + </span>]
-<span id="L163"><span class="lineNum">     163</span>         [<span class="tlaGBC" title="Branch 0 was taken 23355 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       23355 :         delete static_cast&lt;std::string*&gt;(hObject);</span></span>
-<span id="L164"><span class="lineNum">     164</span>                 :             :     }</span>
-<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">       35038 :     return TRUE;</span></span>
-<span id="L166"><span class="lineNum">     166</span>                 :             : }</span>
-<span id="L167"><span class="lineNum">     167</span>                 :<span class="tlaGNC">       11681 : inline DWORD GetLastError() { return MockSM::LastError(); }</span></span>
-<span id="L168"><span class="lineNum">     168</span>                 :             : </span>
-<span id="L169"><span class="lineNum">     169</span>                 :             : // Shared Memory Mocks</span>
-<span id="L170"><span class="lineNum">     170</span>                 :<span class="tlaGNC">       11689 : inline HANDLE CreateFileMappingA(HANDLE hFile, void* lpAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, const char* lpName) {</span></span>
-<span id="L171"><span class="lineNum">     171</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 11686 times"> + </span>]:<span class="tlaGNC">       11689 :     if (MockSM::FailNext()) {</span></span>
-<span id="L172"><span class="lineNum">     172</span>                 :<span class="tlaGNC">           3 :         MockSM::FailNext() = false;</span></span>
-<span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaGNC">           3 :         return NULL;</span></span>
-<span id="L174"><span class="lineNum">     174</span>                 :             :     }</span>
-<span id="L175"><span class="lineNum">     175</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 11684 times"> + </span>]:<span class="tlaGNC">       11686 :     if (lpName == nullptr) return (HANDLE)1;</span></span>
-<span id="L176"><span class="lineNum">     176</span>         [<span class="tlaGBC" title="Branch 0 was taken 11684 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       11684 :     std::string name(lpName);</span></span>
-<span id="L177"><span class="lineNum">     177</span>                 :<span class="tlaGNC">       11684 :     auto&amp; maps = MockSM::GetMaps();</span></span>
-<span id="L178"><span class="lineNum">     178</span>   [<span class="tlaGBC" title="Branch 0 was taken 11684 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 11680 times"> + </span>]:<span class="tlaGNC">       11684 :     if (maps.find(name) == maps.end()) {</span></span>
-<span id="L179"><span class="lineNum">     179</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           4 :         maps[name].resize(dwMaximumSizeLow);</span></span>
-<span id="L180"><span class="lineNum">     180</span>                 :<span class="tlaGNC">           4 :         MockSM::LastError() = 0;</span></span>
-<span id="L181"><span class="lineNum">     181</span>                 :             :     } else {</span>
-<span id="L182"><span class="lineNum">     182</span>                 :<span class="tlaGNC">       11680 :         MockSM::LastError() = ERROR_ALREADY_EXISTS;</span></span>
-<span id="L183"><span class="lineNum">     183</span>                 :             :     }</span>
-<span id="L184"><span class="lineNum">     184</span>   [<span class="tlaGBC" title="Branch 0 was taken 11684 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 11684 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       11684 :     return (HANDLE)new std::string(name);</span></span>
+<span id="L160"><span class="lineNum">     160</span>                 :<span class="tlaGNC">        4771 : inline BOOL SetEvent(HANDLE hEvent) { return TRUE; }</span></span>
+<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">       38195 : inline BOOL CloseHandle(HANDLE hObject) {</span></span>
+<span id="L162"><span class="lineNum">     162</span>   [<span class="tlaGBC" title="Branch 0 was taken 38194 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 25461 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 12733 times"> + </span>]:<span class="tlaGNC">       38195 :     if (hObject != reinterpret_cast&lt;HANDLE&gt;(static_cast&lt;intptr_t&gt;(0)) &amp;&amp; </span></span>
+<span id="L163"><span class="lineNum">     163</span>         [<span class="tlaGBC" title="Branch 0 was taken 25461 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       25461 :         hObject != reinterpret_cast&lt;HANDLE&gt;(static_cast&lt;intptr_t&gt;(1)) &amp;&amp; </span></span>
+<span id="L164"><span class="lineNum">     164</span>         [<span class="tlaGBC" title="Branch 0 was taken 25460 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">       25461 :         hObject != reinterpret_cast&lt;HANDLE&gt;(static_cast&lt;intptr_t&gt;(2)) &amp;&amp; </span></span>
+<span id="L165"><span class="lineNum">     165</span>                 :             :         hObject != INVALID_HANDLE_VALUE) {</span>
+<span id="L166"><span class="lineNum">     166</span>         [<span class="tlaGBC" title="Branch 0 was taken 25460 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       25460 :         delete static_cast&lt;std::string*&gt;(hObject);</span></span>
+<span id="L167"><span class="lineNum">     167</span>                 :             :     }</span>
+<span id="L168"><span class="lineNum">     168</span>                 :<span class="tlaGNC">       38195 :     return TRUE;</span></span>
+<span id="L169"><span class="lineNum">     169</span>                 :             : }</span>
+<span id="L170"><span class="lineNum">     170</span>                 :<span class="tlaGNC">       12733 : inline DWORD GetLastError() { return MockSM::LastError(); }</span></span>
+<span id="L171"><span class="lineNum">     171</span>                 :             : </span>
+<span id="L172"><span class="lineNum">     172</span>                 :             : // Shared Memory Mocks</span>
+<span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaGNC">       12742 : inline HANDLE CreateFileMappingA(HANDLE hFile, void* lpAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, const char* lpName) {</span></span>
+<span id="L174"><span class="lineNum">     174</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 12739 times"> + </span>]:<span class="tlaGNC">       12742 :     if (MockSM::FailNext()) {</span></span>
+<span id="L175"><span class="lineNum">     175</span>                 :<span class="tlaGNC">           3 :         MockSM::FailNext() = false;</span></span>
+<span id="L176"><span class="lineNum">     176</span>                 :<span class="tlaGNC">           3 :         return nullptr;</span></span>
+<span id="L177"><span class="lineNum">     177</span>                 :             :     }</span>
+<span id="L178"><span class="lineNum">     178</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 12737 times"> + </span>]:<span class="tlaGNC">       12739 :     if (lpName == nullptr) return reinterpret_cast&lt;HANDLE&gt;(static_cast&lt;intptr_t&gt;(1));</span></span>
+<span id="L179"><span class="lineNum">     179</span>         [<span class="tlaGBC" title="Branch 0 was taken 12737 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       12737 :     std::string name(lpName);</span></span>
+<span id="L180"><span class="lineNum">     180</span>                 :<span class="tlaGNC">       12737 :     auto&amp; maps = MockSM::GetMaps();</span></span>
+<span id="L181"><span class="lineNum">     181</span>   [<span class="tlaGBC" title="Branch 0 was taken 12737 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 12733 times"> + </span>]:<span class="tlaGNC">       12737 :     if (maps.find(name) == maps.end()) {</span></span>
+<span id="L182"><span class="lineNum">     182</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           4 :         maps[name].resize(dwMaximumSizeLow);</span></span>
+<span id="L183"><span class="lineNum">     183</span>                 :<span class="tlaGNC">           4 :         MockSM::LastError() = 0;</span></span>
+<span id="L184"><span class="lineNum">     184</span>                 :             :     } else {</span>
+<span id="L185"><span class="lineNum">     185</span>                 :<span class="tlaGNC">       12733 :         MockSM::LastError() = ERROR_ALREADY_EXISTS;</span></span>
+<span id="L186"><span class="lineNum">     186</span>                 :             :     }</span>
+<span id="L187"><span class="lineNum">     187</span>   [<span class="tlaGBC" title="Branch 0 was taken 12737 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 12737 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       12737 :     return reinterpret_cast&lt;HANDLE&gt;(new std::string(name));</span></span>
 <span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
-<span id="L185"><span class="lineNum">     185</span>                 :<span class="tlaGNC">       11684 : }</span></span>
-<span id="L186"><span class="lineNum">     186</span>                 :             : </span>
-<span id="L187"><span class="lineNum">     187</span>                 :<span class="tlaGNC">       11681 : inline HANDLE OpenFileMappingA(DWORD dwDesiredAccess, BOOL bInheritHandle, const char* lpName) {</span></span>
-<span id="L188"><span class="lineNum">     188</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 11678 times"> + </span>]:<span class="tlaGNC">       11681 :     if (lpName == nullptr) return nullptr;</span></span>
-<span id="L189"><span class="lineNum">     189</span>         [<span class="tlaGBC" title="Branch 0 was taken 11678 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       11678 :     std::string name(lpName);</span></span>
-<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">       11678 :     auto&amp; maps = MockSM::GetMaps();</span></span>
-<span id="L191"><span class="lineNum">     191</span>   [<span class="tlaGBC" title="Branch 0 was taken 11678 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 11671 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 7 times"> + </span>]:<span class="tlaGNC">       11678 :     if (maps.find(name) != maps.end()) {</span></span>
-<span id="L192"><span class="lineNum">     192</span>   [<span class="tlaGBC" title="Branch 0 was taken 11671 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 11671 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       11671 :         return (HANDLE)new std::string(name);</span></span>
+<span id="L188"><span class="lineNum">     188</span>                 :<span class="tlaGNC">       12737 : }</span></span>
+<span id="L189"><span class="lineNum">     189</span>                 :             : </span>
+<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">       12733 : inline HANDLE OpenFileMappingA(DWORD dwDesiredAccess, BOOL bInheritHandle, const char* lpName) {</span></span>
+<span id="L191"><span class="lineNum">     191</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 12730 times"> + </span>]:<span class="tlaGNC">       12733 :     if (lpName == nullptr) return nullptr;</span></span>
+<span id="L192"><span class="lineNum">     192</span>         [<span class="tlaGBC" title="Branch 0 was taken 12730 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       12730 :     std::string name(lpName);</span></span>
+<span id="L193"><span class="lineNum">     193</span>                 :<span class="tlaGNC">       12730 :     auto&amp; maps = MockSM::GetMaps();</span></span>
+<span id="L194"><span class="lineNum">     194</span>   [<span class="tlaGBC" title="Branch 0 was taken 12730 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 12723 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 7 times"> + </span>]:<span class="tlaGNC">       12730 :     if (maps.find(name) != maps.end()) {</span></span>
+<span id="L195"><span class="lineNum">     195</span>   [<span class="tlaGBC" title="Branch 0 was taken 12723 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 12723 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       12723 :         return reinterpret_cast&lt;HANDLE&gt;(new std::string(name));</span></span>
 <span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
-<span id="L193"><span class="lineNum">     193</span>                 :             :     }</span>
-<span id="L194"><span class="lineNum">     194</span>                 :<span class="tlaGNC">           7 :     return nullptr;</span></span>
-<span id="L195"><span class="lineNum">     195</span>                 :<span class="tlaGNC">       11678 : }</span></span>
-<span id="L196"><span class="lineNum">     196</span>                 :             : </span>
-<span id="L197"><span class="lineNum">     197</span>                 :<span class="tlaGNC">       23353 : inline void* MapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, size_t dwNumberOfBytesToMap) {</span></span>
-<span id="L198"><span class="lineNum">     198</span>   [<span class="tlaGBC" title="Branch 0 was taken 23352 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 23351 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span> :<span class="tlaGNC">       23353 :     if (hFileMappingObject == (HANDLE)1 || hFileMappingObject == nullptr || hFileMappingObject == INVALID_HANDLE_VALUE) return nullptr;</span></span>
-<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 5 was taken 23350 times"> + </span>]
-<span id="L199"><span class="lineNum">     199</span>                 :<span class="tlaGNC">       23350 :     std::string* name = (std::string*)hFileMappingObject;</span></span>
-<span id="L200"><span class="lineNum">     200</span>                 :<span class="tlaGNC">       23350 :     return MockSM::GetMaps()[*name].data();</span></span>
-<span id="L201"><span class="lineNum">     201</span>                 :             : }</span>
-<span id="L202"><span class="lineNum">     202</span>                 :             : </span>
-<span id="L203"><span class="lineNum">     203</span>                 :<span class="tlaGNC">       23350 : inline BOOL UnmapViewOfFile(const void* lpBaseAddress) { return TRUE; }</span></span>
-<span id="L204"><span class="lineNum">     204</span>                 :<span class="tlaGNC">       11680 : inline HANDLE CreateEventA(void* lpEventAttributes, BOOL bManualReset, BOOL bInitialState, const char* lpName) { return (HANDLE)1; }</span></span>
+<span id="L196"><span class="lineNum">     196</span>                 :             :     }</span>
+<span id="L197"><span class="lineNum">     197</span>                 :<span class="tlaGNC">           7 :     return nullptr;</span></span>
+<span id="L198"><span class="lineNum">     198</span>                 :<span class="tlaGNC">       12730 : }</span></span>
+<span id="L199"><span class="lineNum">     199</span>                 :             : </span>
+<span id="L200"><span class="lineNum">     200</span>                 :<span class="tlaGNC">       25457 : inline void* MapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, size_t dwNumberOfBytesToMap) {</span></span>
+<span id="L201"><span class="lineNum">     201</span>   [<span class="tlaGBC" title="Branch 0 was taken 25456 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 25455 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span> :<span class="tlaGNC">       25457 :     if (hFileMappingObject == reinterpret_cast&lt;HANDLE&gt;(static_cast&lt;intptr_t&gt;(1)) || hFileMappingObject == nullptr || hFileMappingObject == INVALID_HANDLE_VALUE) return nullptr;</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 5 was taken 25454 times"> + </span>]
+<span id="L202"><span class="lineNum">     202</span>                 :<span class="tlaGNC">       25454 :     std::string* name = static_cast&lt;std::string*&gt;(hFileMappingObject);</span></span>
+<span id="L203"><span class="lineNum">     203</span>                 :<span class="tlaGNC">       25454 :     return MockSM::GetMaps()[*name].data();</span></span>
+<span id="L204"><span class="lineNum">     204</span>                 :             : }</span>
 <span id="L205"><span class="lineNum">     205</span>                 :             : </span>
-<span id="L206"><span class="lineNum">     206</span>                 :             : // Window mocks</span>
-<span id="L207"><span class="lineNum">     207</span>                 :             : namespace MockGUI {</span>
-<span id="L208"><span class="lineNum">     208</span>                 :<span class="tlaGNC">          11 :     inline LONG_PTR&amp; ExStyle() { static LONG_PTR style = 0; return style; }</span></span>
-<span id="L209"><span class="lineNum">     209</span>                 :             : }</span>
-<span id="L210"><span class="lineNum">     210</span>                 :             : </span>
-<span id="L211"><span class="lineNum">     211</span>                 :<span class="tlaGNC">           1 : inline HWND GetConsoleWindow() { return (HWND)1; }</span></span>
-<span id="L212"><span class="lineNum">     212</span>                 :<span class="tlaGNC">        4776 : inline BOOL IsWindow(HWND hWnd) {</span></span>
-<span id="L213"><span class="lineNum">     213</span>   [<span class="tlaGBC" title="Branch 0 was taken 5 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4771 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 3 was taken 4 times"> + </span>]:<span class="tlaGNC">        4776 :     return (hWnd == (HWND)1 || hWnd == (HWND)2); // Accept our mock handles</span></span>
-<span id="L214"><span class="lineNum">     214</span>                 :             : }</span>
-<span id="L215"><span class="lineNum">     215</span>                 :<span class="tlaGNC">           1 : inline HWND CreateWindowA(const char* lpClassName, const char* lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, void* hMenu, HMODULE hInstance, void* lpParam) {</span></span>
-<span id="L216"><span class="lineNum">     216</span>                 :<span class="tlaGNC">           1 :     return (HWND)2;</span></span>
+<span id="L206"><span class="lineNum">     206</span>                 :<span class="tlaGNC">       25454 : inline BOOL UnmapViewOfFile(const void* lpBaseAddress) { return TRUE; }</span></span>
+<span id="L207"><span class="lineNum">     207</span>                 :<span class="tlaGNC">       12732 : inline HANDLE CreateEventA(void* lpEventAttributes, BOOL bManualReset, BOOL bInitialState, const char* lpName) { return reinterpret_cast&lt;HANDLE&gt;(static_cast&lt;intptr_t&gt;(1)); }</span></span>
+<span id="L208"><span class="lineNum">     208</span>                 :             : </span>
+<span id="L209"><span class="lineNum">     209</span>                 :             : // Window mocks</span>
+<span id="L210"><span class="lineNum">     210</span>                 :             : namespace MockGUI {</span>
+<span id="L211"><span class="lineNum">     211</span>                 :<span class="tlaGNC">          11 :     inline LONG_PTR&amp; ExStyle() { static LONG_PTR style = 0; return style; }</span></span>
+<span id="L212"><span class="lineNum">     212</span>                 :             : }</span>
+<span id="L213"><span class="lineNum">     213</span>                 :             : </span>
+<span id="L214"><span class="lineNum">     214</span>                 :<span class="tlaGNC">           1 : inline HWND GetConsoleWindow() { return reinterpret_cast&lt;HWND&gt;(static_cast&lt;intptr_t&gt;(1)); }</span></span>
+<span id="L215"><span class="lineNum">     215</span>                 :<span class="tlaGNC">        4775 : inline BOOL IsWindow(HWND hWnd) {</span></span>
+<span id="L216"><span class="lineNum">     216</span>   [<span class="tlaGBC" title="Branch 0 was taken 5 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4770 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 3 was taken 4 times"> + </span>]:<span class="tlaGNC">        4775 :     return (hWnd == reinterpret_cast&lt;HWND&gt;(static_cast&lt;intptr_t&gt;(1)) || hWnd == reinterpret_cast&lt;HWND&gt;(static_cast&lt;intptr_t&gt;(2))); // Accept our mock handles</span></span>
 <span id="L217"><span class="lineNum">     217</span>                 :             : }</span>
-<span id="L218"><span class="lineNum">     218</span>                 :<span class="tlaGNC">           7 : inline LONG_PTR GetWindowLongPtr(HWND hWnd, int nIndex) {</span></span>
-<span id="L219"><span class="lineNum">     219</span>         [<span class="tlaGBC" title="Branch 0 was taken 6 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">           7 :     if (nIndex == GWL_EXSTYLE) return MockGUI::ExStyle();</span></span>
-<span id="L220"><span class="lineNum">     220</span>                 :<span class="tlaGNC">           1 :     return 0;</span></span>
-<span id="L221"><span class="lineNum">     221</span>                 :             : }</span>
-<span id="L222"><span class="lineNum">     222</span>                 :<span class="tlaGNC">           4 : inline BOOL SetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags) {</span></span>
-<span id="L223"><span class="lineNum">     223</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2 times"> + </span>]:<span class="tlaGNC">           4 :     if (hWndInsertAfter == HWND_TOPMOST) MockGUI::ExStyle() |= WS_EX_TOPMOST;</span></span>
-<span id="L224"><span class="lineNum">     224</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2 times"> + </span>]:<span class="tlaGNC">           4 :     if (hWndInsertAfter == HWND_NOTOPMOST) MockGUI::ExStyle() &amp;= ~WS_EX_TOPMOST;</span></span>
-<span id="L225"><span class="lineNum">     225</span>                 :<span class="tlaGNC">           4 :     return TRUE;</span></span>
-<span id="L226"><span class="lineNum">     226</span>                 :             : }</span>
-<span id="L227"><span class="lineNum">     227</span>                 :<span class="tlaGNC">           1 : inline BOOL DestroyWindow(HWND hWnd) { return TRUE; }</span></span>
-<span id="L228"><span class="lineNum">     228</span>                 :             : </span>
-<span id="L229"><span class="lineNum">     229</span>                 :             : // Resource Mocks</span>
-<span id="L230"><span class="lineNum">     230</span>                 :<span class="tlaGNC">           2 : inline HMODULE GetModuleHandle(const char* lpModuleName) { return (HMODULE)1; }</span></span>
-<span id="L231"><span class="lineNum">     231</span>                 :<span class="tlaGNC">           1 : inline HICON LoadIcon(HMODULE hInstance, const char* lpIconName) { return (HICON)1; }</span></span>
-<span id="L232"><span class="lineNum">     232</span>                 :<span class="tlaGNC">           1 : inline DWORD GetModuleFileNameA(HMODULE hModule, char* lpFilename, DWORD nSize) {</span></span>
-<span id="L233"><span class="lineNum">     233</span>                 :<span class="tlaGNC">           1 :     strncpy(lpFilename, &quot;LMUFFB.exe&quot;, nSize);</span></span>
-<span id="L234"><span class="lineNum">     234</span>                 :<span class="tlaGNC">           1 :     return strlen(lpFilename);</span></span>
-<span id="L235"><span class="lineNum">     235</span>                 :             : }</span>
-<span id="L236"><span class="lineNum">     236</span>                 :<span class="tlaGNC">           1 : inline HMODULE LoadLibraryExA(const char* lpLibFileName, HANDLE hFile, DWORD dwFlags) { return (HMODULE)1; }</span></span>
-<span id="L237"><span class="lineNum">     237</span>                 :<span class="tlaGNC">           1 : inline HRSRC FindResourceA(HMODULE hModule, const char* lpName, const char* lpType) { return (HRSRC)1; }</span></span>
-<span id="L238"><span class="lineNum">     238</span>                 :<span class="tlaGNC">           1 : inline BOOL FreeLibrary(HMODULE hLibModule) { return TRUE; }</span></span>
-<span id="L239"><span class="lineNum">     239</span>                 :             : </span>
-<span id="L240"><span class="lineNum">     240</span>                 :             : // Version Info Mocks</span>
-<span id="L241"><span class="lineNum">     241</span>                 :<span class="tlaGNC">           1 : inline DWORD GetFileVersionInfoSizeA(const char* lptstrFilename, LPDWORD lpdwHandle) {</span></span>
-<span id="L242"><span class="lineNum">     242</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           1 :     if (lpdwHandle) *lpdwHandle = 0;</span></span>
-<span id="L243"><span class="lineNum">     243</span>                 :<span class="tlaGNC">           1 :     return 1024;</span></span>
-<span id="L244"><span class="lineNum">     244</span>                 :             : }</span>
-<span id="L245"><span class="lineNum">     245</span>                 :<span class="tlaGNC">           1 : inline BOOL GetFileVersionInfoA(const char* lptstrFilename, DWORD dwHandle, DWORD dwLen, void* lpData) {</span></span>
-<span id="L246"><span class="lineNum">     246</span>                 :<span class="tlaGNC">           1 :     memset(lpData, 0, dwLen);</span></span>
-<span id="L247"><span class="lineNum">     247</span>                 :<span class="tlaGNC">           1 :     return TRUE;</span></span>
-<span id="L248"><span class="lineNum">     248</span>                 :             : }</span>
-<span id="L249"><span class="lineNum">     249</span>                 :<span class="tlaGNC">           8 : inline BOOL VerQueryValueA(const void* pBlock, const char* lpSubBlock, void** lplpBuffer, UINT* puLen) {</span></span>
-<span id="L250"><span class="lineNum">     250</span>                 :             :     static uint16_t translation[2] = { 0x0409, 0x04B0 }; // English (US), Unicode</span>
-<span id="L251"><span class="lineNum">     251</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6 times"> + </span>]:<span class="tlaGNC">           8 :     if (strstr(lpSubBlock, &quot;Translation&quot;)) {</span></span>
-<span id="L252"><span class="lineNum">     252</span>                 :<span class="tlaGNC">           2 :         *lplpBuffer = &amp;translation;</span></span>
-<span id="L253"><span class="lineNum">     253</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :         if (puLen) *puLen = sizeof(translation);</span></span>
-<span id="L254"><span class="lineNum">     254</span>                 :<span class="tlaGNC">           2 :         return TRUE;</span></span>
-<span id="L255"><span class="lineNum">     255</span>                 :             :     }</span>
-<span id="L256"><span class="lineNum">     256</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">           6 :     if (strstr(lpSubBlock, &quot;CompanyName&quot;)) {</span></span>
-<span id="L257"><span class="lineNum">     257</span>                 :<span class="tlaGNC">           2 :         *lplpBuffer = (void*)&quot;lmuFFB&quot;;</span></span>
-<span id="L258"><span class="lineNum">     258</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :         if (puLen) *puLen = 7;</span></span>
-<span id="L259"><span class="lineNum">     259</span>                 :<span class="tlaGNC">           2 :         return TRUE;</span></span>
-<span id="L260"><span class="lineNum">     260</span>                 :             :     }</span>
-<span id="L261"><span class="lineNum">     261</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2 times"> + </span>]:<span class="tlaGNC">           4 :     if (strstr(lpSubBlock, &quot;ProductVersion&quot;)) {</span></span>
-<span id="L262"><span class="lineNum">     262</span>                 :<span class="tlaGNC">           2 :         *lplpBuffer = (void*)LMUFFB_VERSION;</span></span>
-<span id="L263"><span class="lineNum">     263</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :         if (puLen) *puLen = (UINT)strlen(LMUFFB_VERSION) + 1;</span></span>
-<span id="L264"><span class="lineNum">     264</span>                 :<span class="tlaGNC">           2 :         return TRUE;</span></span>
-<span id="L265"><span class="lineNum">     265</span>                 :             :     }</span>
-<span id="L266"><span class="lineNum">     266</span>                 :<span class="tlaGNC">           2 :     return FALSE;</span></span>
-<span id="L267"><span class="lineNum">     267</span>                 :             : }</span>
-<span id="L268"><span class="lineNum">     268</span>                 :             : </span>
-<span id="L269"><span class="lineNum">     269</span>                 :             : // D3D11 &amp; DXGI Mocks for Issue #189</span>
-<span id="L270"><span class="lineNum">     270</span>                 :             : typedef enum D3D_DRIVER_TYPE { D3D_DRIVER_TYPE_HARDWARE = 0 } D3D_DRIVER_TYPE;</span>
-<span id="L271"><span class="lineNum">     271</span>                 :             : typedef enum D3D_FEATURE_LEVEL { D3D_FEATURE_LEVEL_10_0 = 0x1000, D3D_FEATURE_LEVEL_11_0 = 0xb000 } D3D_FEATURE_LEVEL;</span>
-<span id="L272"><span class="lineNum">     272</span>                 :             : #define D3D11_SDK_VERSION (7)</span>
-<span id="L273"><span class="lineNum">     273</span>                 :             : </span>
-<span id="L274"><span class="lineNum">     274</span>                 :             : typedef struct DXGI_SAMPLE_DESC { UINT Count; UINT Quality; } DXGI_SAMPLE_DESC;</span>
-<span id="L275"><span class="lineNum">     275</span>                 :             : typedef enum DXGI_FORMAT { DXGI_FORMAT_R8G8B8A8_UNORM = 28, DXGI_FORMAT_UNKNOWN = 0 } DXGI_FORMAT;</span>
-<span id="L276"><span class="lineNum">     276</span>                 :             : typedef enum DXGI_USAGE { DXGI_USAGE_RENDER_TARGET_OUTPUT = 1 &lt;&lt; 4 } DXGI_USAGE;</span>
-<span id="L277"><span class="lineNum">     277</span>                 :             : typedef enum DXGI_SWAP_EFFECT { DXGI_SWAP_EFFECT_DISCARD = 0, DXGI_SWAP_EFFECT_FLIP_DISCARD = 4 } DXGI_SWAP_EFFECT;</span>
-<span id="L278"><span class="lineNum">     278</span>                 :             : typedef enum DXGI_SWAP_CHAIN_FLAG { DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH = 2 } DXGI_SWAP_CHAIN_FLAG;</span>
-<span id="L279"><span class="lineNum">     279</span>                 :             : typedef enum DXGI_SCALING { DXGI_SCALING_STRETCH = 0 } DXGI_SCALING;</span>
-<span id="L280"><span class="lineNum">     280</span>                 :             : typedef enum DXGI_ALPHA_MODE { DXGI_ALPHA_MODE_UNSPECIFIED = 0 } DXGI_ALPHA_MODE;</span>
-<span id="L281"><span class="lineNum">     281</span>                 :             : </span>
-<span id="L282"><span class="lineNum">     282</span>                 :             : typedef struct DXGI_SWAP_CHAIN_DESC1 {</span>
-<span id="L283"><span class="lineNum">     283</span>                 :             :     UINT Width; UINT Height; DXGI_FORMAT Format; BOOL Stereo; DXGI_SAMPLE_DESC SampleDesc;</span>
-<span id="L284"><span class="lineNum">     284</span>                 :             :     DXGI_USAGE BufferUsage; UINT BufferCount; DXGI_SCALING Scaling; DXGI_SWAP_EFFECT SwapEffect;</span>
-<span id="L285"><span class="lineNum">     285</span>                 :             :     DXGI_ALPHA_MODE AlphaMode; UINT Flags;</span>
-<span id="L286"><span class="lineNum">     286</span>                 :             : } DXGI_SWAP_CHAIN_DESC1;</span>
-<span id="L287"><span class="lineNum">     287</span>                 :             : </span>
-<span id="L288"><span class="lineNum">     288</span>                 :             : typedef struct DXGI_SWAP_CHAIN_FULLSCREEN_DESC {</span>
-<span id="L289"><span class="lineNum">     289</span>                 :             :     struct { UINT Numerator; UINT Denominator; } RefreshRate;</span>
-<span id="L290"><span class="lineNum">     290</span>                 :             :     int ScanlineOrdering; int Scaling; BOOL Windowed;</span>
-<span id="L291"><span class="lineNum">     291</span>                 :             : } DXGI_SWAP_CHAIN_FULLSCREEN_DESC;</span>
-<span id="L292"><span class="lineNum">     292</span>                 :             : </span>
-<span id="L293"><span class="lineNum">     293</span>                 :             : // Mock interfaces</span>
-<span id="L294"><span class="lineNum">     294</span>                 :             : struct IUnknown {</span>
-<span id="L295"><span class="lineNum">     295</span>                 :             :     virtual HRESULT QueryInterface(const GUID&amp; riid, void** ppvObject) = 0;</span>
-<span id="L296"><span class="lineNum">     296</span>                 :             :     virtual ULONG_PTR Release() = 0;</span>
-<span id="L297"><span class="lineNum">     297</span>                 :             : };</span>
-<span id="L298"><span class="lineNum">     298</span>                 :             : </span>
-<span id="L299"><span class="lineNum">     299</span>                 :             : struct IDXGIObject : public IUnknown {};</span>
-<span id="L300"><span class="lineNum">     300</span>                 :             : struct IDXGIDevice : public IDXGIObject {</span>
-<span id="L301"><span class="lineNum">     301</span>                 :             :     virtual HRESULT GetAdapter(struct IDXGIAdapter** ppAdapter) = 0;</span>
-<span id="L302"><span class="lineNum">     302</span>                 :             : };</span>
-<span id="L303"><span class="lineNum">     303</span>                 :             : struct IDXGIAdapter : public IDXGIObject {</span>
-<span id="L304"><span class="lineNum">     304</span>                 :             :     virtual HRESULT GetParent(const GUID&amp; riid, void** ppParent) = 0;</span>
+<span id="L218"><span class="lineNum">     218</span>                 :<span class="tlaGNC">           1 : inline HWND CreateWindowA(const char* lpClassName, const char* lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, void* hMenu, HMODULE hInstance, void* lpParam) {</span></span>
+<span id="L219"><span class="lineNum">     219</span>                 :<span class="tlaGNC">           1 :     return reinterpret_cast&lt;HWND&gt;(static_cast&lt;intptr_t&gt;(2));</span></span>
+<span id="L220"><span class="lineNum">     220</span>                 :             : }</span>
+<span id="L221"><span class="lineNum">     221</span>                 :<span class="tlaGNC">           7 : inline LONG_PTR GetWindowLongPtr(HWND hWnd, int nIndex) {</span></span>
+<span id="L222"><span class="lineNum">     222</span>         [<span class="tlaGBC" title="Branch 0 was taken 6 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">           7 :     if (nIndex == GWL_EXSTYLE) return MockGUI::ExStyle();</span></span>
+<span id="L223"><span class="lineNum">     223</span>                 :<span class="tlaGNC">           1 :     return 0;</span></span>
+<span id="L224"><span class="lineNum">     224</span>                 :             : }</span>
+<span id="L225"><span class="lineNum">     225</span>                 :<span class="tlaGNC">           4 : inline BOOL SetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags) {</span></span>
+<span id="L226"><span class="lineNum">     226</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2 times"> + </span>]:<span class="tlaGNC">           4 :     if (hWndInsertAfter == HWND_TOPMOST) MockGUI::ExStyle() |= WS_EX_TOPMOST;</span></span>
+<span id="L227"><span class="lineNum">     227</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2 times"> + </span>]:<span class="tlaGNC">           4 :     if (hWndInsertAfter == HWND_NOTOPMOST) MockGUI::ExStyle() &amp;= ~WS_EX_TOPMOST;</span></span>
+<span id="L228"><span class="lineNum">     228</span>                 :<span class="tlaGNC">           4 :     return TRUE;</span></span>
+<span id="L229"><span class="lineNum">     229</span>                 :             : }</span>
+<span id="L230"><span class="lineNum">     230</span>                 :<span class="tlaGNC">           1 : inline BOOL DestroyWindow(HWND hWnd) { return TRUE; }</span></span>
+<span id="L231"><span class="lineNum">     231</span>                 :             : </span>
+<span id="L232"><span class="lineNum">     232</span>                 :             : // Resource Mocks</span>
+<span id="L233"><span class="lineNum">     233</span>                 :<span class="tlaGNC">           2 : inline HMODULE GetModuleHandle(const char* lpModuleName) { return reinterpret_cast&lt;HMODULE&gt;(static_cast&lt;intptr_t&gt;(1)); }</span></span>
+<span id="L234"><span class="lineNum">     234</span>                 :<span class="tlaGNC">           1 : inline HICON LoadIcon(HMODULE hInstance, const char* lpIconName) { return reinterpret_cast&lt;HICON&gt;(static_cast&lt;intptr_t&gt;(1)); }</span></span>
+<span id="L235"><span class="lineNum">     235</span>                 :<span class="tlaGNC">           1 : inline DWORD GetModuleFileNameA(HMODULE hModule, char* lpFilename, DWORD nSize) {</span></span>
+<span id="L236"><span class="lineNum">     236</span>                 :<span class="tlaGNC">           1 :     strncpy(lpFilename, &quot;LMUFFB.exe&quot;, nSize);</span></span>
+<span id="L237"><span class="lineNum">     237</span>                 :<span class="tlaGNC">           1 :     return strlen(lpFilename);</span></span>
+<span id="L238"><span class="lineNum">     238</span>                 :             : }</span>
+<span id="L239"><span class="lineNum">     239</span>                 :<span class="tlaGNC">           1 : inline HMODULE LoadLibraryExA(const char* lpLibFileName, HANDLE hFile, DWORD dwFlags) { return reinterpret_cast&lt;HMODULE&gt;(static_cast&lt;intptr_t&gt;(1)); }</span></span>
+<span id="L240"><span class="lineNum">     240</span>                 :<span class="tlaGNC">           1 : inline HRSRC FindResourceA(HMODULE hModule, const char* lpName, const char* lpType) { return reinterpret_cast&lt;HRSRC&gt;(static_cast&lt;intptr_t&gt;(1)); }</span></span>
+<span id="L241"><span class="lineNum">     241</span>                 :<span class="tlaGNC">           1 : inline BOOL FreeLibrary(HMODULE hLibModule) { return TRUE; }</span></span>
+<span id="L242"><span class="lineNum">     242</span>                 :             : </span>
+<span id="L243"><span class="lineNum">     243</span>                 :             : // Version Info Mocks</span>
+<span id="L244"><span class="lineNum">     244</span>                 :<span class="tlaGNC">           1 : inline DWORD GetFileVersionInfoSizeA(const char* lptstrFilename, LPDWORD lpdwHandle) {</span></span>
+<span id="L245"><span class="lineNum">     245</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           1 :     if (lpdwHandle) *lpdwHandle = 0;</span></span>
+<span id="L246"><span class="lineNum">     246</span>                 :<span class="tlaGNC">           1 :     return 1024;</span></span>
+<span id="L247"><span class="lineNum">     247</span>                 :             : }</span>
+<span id="L248"><span class="lineNum">     248</span>                 :<span class="tlaGNC">           1 : inline BOOL GetFileVersionInfoA(const char* lptstrFilename, DWORD dwHandle, DWORD dwLen, void* lpData) {</span></span>
+<span id="L249"><span class="lineNum">     249</span>                 :<span class="tlaGNC">           1 :     memset(lpData, 0, dwLen);</span></span>
+<span id="L250"><span class="lineNum">     250</span>                 :<span class="tlaGNC">           1 :     return TRUE;</span></span>
+<span id="L251"><span class="lineNum">     251</span>                 :             : }</span>
+<span id="L252"><span class="lineNum">     252</span>                 :<span class="tlaGNC">           8 : inline BOOL VerQueryValueA(const void* pBlock, const char* lpSubBlock, void** lplpBuffer, UINT* puLen) {</span></span>
+<span id="L253"><span class="lineNum">     253</span>                 :             :     static uint16_t translation[2] = { 0x0409, 0x04B0 }; // English (US), Unicode</span>
+<span id="L254"><span class="lineNum">     254</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6 times"> + </span>]:<span class="tlaGNC">           8 :     if (strstr(lpSubBlock, &quot;Translation&quot;)) {</span></span>
+<span id="L255"><span class="lineNum">     255</span>                 :<span class="tlaGNC">           2 :         *lplpBuffer = &amp;translation;</span></span>
+<span id="L256"><span class="lineNum">     256</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :         if (puLen) *puLen = sizeof(translation);</span></span>
+<span id="L257"><span class="lineNum">     257</span>                 :<span class="tlaGNC">           2 :         return TRUE;</span></span>
+<span id="L258"><span class="lineNum">     258</span>                 :             :     }</span>
+<span id="L259"><span class="lineNum">     259</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">           6 :     if (strstr(lpSubBlock, &quot;CompanyName&quot;)) {</span></span>
+<span id="L260"><span class="lineNum">     260</span>                 :<span class="tlaGNC">           2 :         *lplpBuffer = (void*)&quot;lmuFFB&quot;;</span></span>
+<span id="L261"><span class="lineNum">     261</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :         if (puLen) *puLen = 7;</span></span>
+<span id="L262"><span class="lineNum">     262</span>                 :<span class="tlaGNC">           2 :         return TRUE;</span></span>
+<span id="L263"><span class="lineNum">     263</span>                 :             :     }</span>
+<span id="L264"><span class="lineNum">     264</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2 times"> + </span>]:<span class="tlaGNC">           4 :     if (strstr(lpSubBlock, &quot;ProductVersion&quot;)) {</span></span>
+<span id="L265"><span class="lineNum">     265</span>                 :<span class="tlaGNC">           2 :         *lplpBuffer = (void*)LMUFFB_VERSION;</span></span>
+<span id="L266"><span class="lineNum">     266</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :         if (puLen) *puLen = (UINT)strlen(LMUFFB_VERSION) + 1;</span></span>
+<span id="L267"><span class="lineNum">     267</span>                 :<span class="tlaGNC">           2 :         return TRUE;</span></span>
+<span id="L268"><span class="lineNum">     268</span>                 :             :     }</span>
+<span id="L269"><span class="lineNum">     269</span>                 :<span class="tlaGNC">           2 :     return FALSE;</span></span>
+<span id="L270"><span class="lineNum">     270</span>                 :             : }</span>
+<span id="L271"><span class="lineNum">     271</span>                 :             : </span>
+<span id="L272"><span class="lineNum">     272</span>                 :             : // D3D11 &amp; DXGI Mocks for Issue #189</span>
+<span id="L273"><span class="lineNum">     273</span>                 :             : typedef enum D3D_DRIVER_TYPE { D3D_DRIVER_TYPE_HARDWARE = 0 } D3D_DRIVER_TYPE;</span>
+<span id="L274"><span class="lineNum">     274</span>                 :             : typedef enum D3D_FEATURE_LEVEL { D3D_FEATURE_LEVEL_10_0 = 0x1000, D3D_FEATURE_LEVEL_11_0 = 0xb000 } D3D_FEATURE_LEVEL;</span>
+<span id="L275"><span class="lineNum">     275</span>                 :             : #define D3D11_SDK_VERSION (7)</span>
+<span id="L276"><span class="lineNum">     276</span>                 :             : </span>
+<span id="L277"><span class="lineNum">     277</span>                 :             : typedef struct DXGI_SAMPLE_DESC { UINT Count; UINT Quality; } DXGI_SAMPLE_DESC;</span>
+<span id="L278"><span class="lineNum">     278</span>                 :             : typedef enum DXGI_FORMAT { DXGI_FORMAT_R8G8B8A8_UNORM = 28, DXGI_FORMAT_UNKNOWN = 0 } DXGI_FORMAT;</span>
+<span id="L279"><span class="lineNum">     279</span>                 :             : typedef enum DXGI_USAGE { DXGI_USAGE_RENDER_TARGET_OUTPUT = 1 &lt;&lt; 4 } DXGI_USAGE;</span>
+<span id="L280"><span class="lineNum">     280</span>                 :             : typedef enum DXGI_SWAP_EFFECT { DXGI_SWAP_EFFECT_DISCARD = 0, DXGI_SWAP_EFFECT_FLIP_DISCARD = 4 } DXGI_SWAP_EFFECT;</span>
+<span id="L281"><span class="lineNum">     281</span>                 :             : typedef enum DXGI_SWAP_CHAIN_FLAG { DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH = 2 } DXGI_SWAP_CHAIN_FLAG;</span>
+<span id="L282"><span class="lineNum">     282</span>                 :             : typedef enum DXGI_SCALING { DXGI_SCALING_STRETCH = 0 } DXGI_SCALING;</span>
+<span id="L283"><span class="lineNum">     283</span>                 :             : typedef enum DXGI_ALPHA_MODE { DXGI_ALPHA_MODE_UNSPECIFIED = 0 } DXGI_ALPHA_MODE;</span>
+<span id="L284"><span class="lineNum">     284</span>                 :             : </span>
+<span id="L285"><span class="lineNum">     285</span>                 :             : typedef struct DXGI_SWAP_CHAIN_DESC1 {</span>
+<span id="L286"><span class="lineNum">     286</span>                 :             :     UINT Width; UINT Height; DXGI_FORMAT Format; BOOL Stereo; DXGI_SAMPLE_DESC SampleDesc;</span>
+<span id="L287"><span class="lineNum">     287</span>                 :             :     DXGI_USAGE BufferUsage; UINT BufferCount; DXGI_SCALING Scaling; DXGI_SWAP_EFFECT SwapEffect;</span>
+<span id="L288"><span class="lineNum">     288</span>                 :             :     DXGI_ALPHA_MODE AlphaMode; UINT Flags;</span>
+<span id="L289"><span class="lineNum">     289</span>                 :             : } DXGI_SWAP_CHAIN_DESC1;</span>
+<span id="L290"><span class="lineNum">     290</span>                 :             : </span>
+<span id="L291"><span class="lineNum">     291</span>                 :             : typedef struct DXGI_SWAP_CHAIN_FULLSCREEN_DESC {</span>
+<span id="L292"><span class="lineNum">     292</span>                 :             :     struct { UINT Numerator; UINT Denominator; } RefreshRate;</span>
+<span id="L293"><span class="lineNum">     293</span>                 :             :     int ScanlineOrdering; int Scaling; BOOL Windowed;</span>
+<span id="L294"><span class="lineNum">     294</span>                 :             : } DXGI_SWAP_CHAIN_FULLSCREEN_DESC;</span>
+<span id="L295"><span class="lineNum">     295</span>                 :             : </span>
+<span id="L296"><span class="lineNum">     296</span>                 :             : // Mock interfaces</span>
+<span id="L297"><span class="lineNum">     297</span>                 :             : struct IUnknown {</span>
+<span id="L298"><span class="lineNum">     298</span>                 :             :     virtual HRESULT QueryInterface(const GUID&amp; riid, void** ppvObject) = 0;</span>
+<span id="L299"><span class="lineNum">     299</span>                 :             :     virtual ULONG_PTR Release() = 0;</span>
+<span id="L300"><span class="lineNum">     300</span>                 :             : };</span>
+<span id="L301"><span class="lineNum">     301</span>                 :             : </span>
+<span id="L302"><span class="lineNum">     302</span>                 :             : struct IDXGIObject : public IUnknown {};</span>
+<span id="L303"><span class="lineNum">     303</span>                 :             : struct IDXGIDevice : public IDXGIObject {</span>
+<span id="L304"><span class="lineNum">     304</span>                 :             :     virtual HRESULT GetAdapter(struct IDXGIAdapter** ppAdapter) = 0;</span>
 <span id="L305"><span class="lineNum">     305</span>                 :             : };</span>
-<span id="L306"><span class="lineNum">     306</span>                 :             : struct IDXGIFactory2 : public IDXGIObject {</span>
-<span id="L307"><span class="lineNum">     307</span>                 :             :     virtual HRESULT CreateSwapChainForHwnd(IUnknown* pDevice, HWND hWnd, const DXGI_SWAP_CHAIN_DESC1* pDesc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC* pFullscreenDesc, struct IDXGIOutput* pRestrictToOutput, struct IDXGISwapChain1** ppSwapChain) = 0;</span>
+<span id="L306"><span class="lineNum">     306</span>                 :             : struct IDXGIAdapter : public IDXGIObject {</span>
+<span id="L307"><span class="lineNum">     307</span>                 :             :     virtual HRESULT GetParent(const GUID&amp; riid, void** ppParent) = 0;</span>
 <span id="L308"><span class="lineNum">     308</span>                 :             : };</span>
-<span id="L309"><span class="lineNum">     309</span>                 :             : </span>
-<span id="L310"><span class="lineNum">     310</span>                 :             : // Concrete mock for testing</span>
-<span id="L311"><span class="lineNum">     311</span>                 :             : struct MockDXGIFactory2 : public IDXGIFactory2 {</span>
-<span id="L312"><span class="lineNum">     312</span>                 :<span class="tlaGNC">           1 :     HRESULT QueryInterface(const GUID&amp; riid, void** ppvObject) override { return -1; }</span></span>
-<span id="L313"><span class="lineNum">     313</span>                 :<span class="tlaGNC">           1 :     ULONG_PTR Release() override { return 0; }</span></span>
-<span id="L314"><span class="lineNum">     314</span>                 :<span class="tlaGNC">           3 :     HRESULT CreateSwapChainForHwnd(IUnknown* pDevice, HWND hWnd, const DXGI_SWAP_CHAIN_DESC1* pDesc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC* pFullscreenDesc, struct IDXGIOutput* pRestrictToOutput, struct IDXGISwapChain1** ppSwapChain) override {</span></span>
-<span id="L315"><span class="lineNum">     315</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">           3 :         if (pDesc) {</span></span>
-<span id="L316"><span class="lineNum">     316</span>                 :             :             extern DXGI_SWAP_CHAIN_DESC1 g_captured_swap_chain_desc;</span>
-<span id="L317"><span class="lineNum">     317</span>                 :<span class="tlaGNC">           2 :             g_captured_swap_chain_desc = *pDesc;</span></span>
-<span id="L318"><span class="lineNum">     318</span>                 :             :         }</span>
-<span id="L319"><span class="lineNum">     319</span>                 :<span class="tlaGNC">           3 :         return 0; // S_OK</span></span>
-<span id="L320"><span class="lineNum">     320</span>                 :             :     }</span>
-<span id="L321"><span class="lineNum">     321</span>                 :             : };</span>
-<span id="L322"><span class="lineNum">     322</span>                 :             : struct IDXGISwapChain : public IDXGIObject {</span>
-<span id="L323"><span class="lineNum">     323</span>                 :             :     virtual HRESULT GetBuffer(UINT Buffer, const GUID&amp; riid, void** ppSurface) = 0;</span>
-<span id="L324"><span class="lineNum">     324</span>                 :             :     virtual HRESULT Present(UINT SyncInterval, UINT Flags) = 0;</span>
-<span id="L325"><span class="lineNum">     325</span>                 :             :     virtual HRESULT ResizeBuffers(UINT BufferCount, UINT Width, UINT Height, DXGI_FORMAT NewFormat, UINT SwapChainFlags) = 0;</span>
-<span id="L326"><span class="lineNum">     326</span>                 :             : };</span>
-<span id="L327"><span class="lineNum">     327</span>                 :             : struct IDXGISwapChain1 : public IDXGISwapChain {};</span>
-<span id="L328"><span class="lineNum">     328</span>                 :             : </span>
-<span id="L329"><span class="lineNum">     329</span>                 :             : struct ID3D11DeviceChild : public IUnknown {};</span>
-<span id="L330"><span class="lineNum">     330</span>                 :             : struct ID3D11DeviceContext : public ID3D11DeviceChild {</span>
-<span id="L331"><span class="lineNum">     331</span>                 :             :     virtual void OMSetRenderTargets(UINT NumViews, struct ID3D11RenderTargetView* const* ppRenderTargetViews, struct ID3D11DepthStencilView* pDepthStencilView) = 0;</span>
-<span id="L332"><span class="lineNum">     332</span>                 :             :     virtual void ClearRenderTargetView(struct ID3D11RenderTargetView* pRenderTargetView, const float ColorRGBA[4]) = 0;</span>
-<span id="L333"><span class="lineNum">     333</span>                 :             : };</span>
-<span id="L334"><span class="lineNum">     334</span>                 :             : struct ID3D11Device : public IUnknown {</span>
-<span id="L335"><span class="lineNum">     335</span>                 :             :     virtual HRESULT CreateRenderTargetView(struct ID3D11Resource* pResource, const struct D3D11_RENDER_TARGET_VIEW_DESC* pDesc, struct ID3D11RenderTargetView** ppRTView) = 0;</span>
+<span id="L309"><span class="lineNum">     309</span>                 :             : struct IDXGIFactory2 : public IDXGIObject {</span>
+<span id="L310"><span class="lineNum">     310</span>                 :             :     virtual HRESULT CreateSwapChainForHwnd(IUnknown* pDevice, HWND hWnd, const DXGI_SWAP_CHAIN_DESC1* pDesc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC* pFullscreenDesc, struct IDXGIOutput* pRestrictToOutput, struct IDXGISwapChain1** ppSwapChain) = 0;</span>
+<span id="L311"><span class="lineNum">     311</span>                 :             : };</span>
+<span id="L312"><span class="lineNum">     312</span>                 :             : </span>
+<span id="L313"><span class="lineNum">     313</span>                 :             : // Concrete mock for testing</span>
+<span id="L314"><span class="lineNum">     314</span>                 :             : struct MockDXGIFactory2 : public IDXGIFactory2 {</span>
+<span id="L315"><span class="lineNum">     315</span>                 :<span class="tlaGNC">           1 :     HRESULT QueryInterface(const GUID&amp; riid, void** ppvObject) override { return -1; }</span></span>
+<span id="L316"><span class="lineNum">     316</span>                 :<span class="tlaGNC">           1 :     ULONG_PTR Release() override { return 0; }</span></span>
+<span id="L317"><span class="lineNum">     317</span>                 :<span class="tlaGNC">           3 :     HRESULT CreateSwapChainForHwnd(IUnknown* pDevice, HWND hWnd, const DXGI_SWAP_CHAIN_DESC1* pDesc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC* pFullscreenDesc, struct IDXGIOutput* pRestrictToOutput, struct IDXGISwapChain1** ppSwapChain) override {</span></span>
+<span id="L318"><span class="lineNum">     318</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">           3 :         if (pDesc) {</span></span>
+<span id="L319"><span class="lineNum">     319</span>                 :             :             extern DXGI_SWAP_CHAIN_DESC1 g_captured_swap_chain_desc;</span>
+<span id="L320"><span class="lineNum">     320</span>                 :<span class="tlaGNC">           2 :             g_captured_swap_chain_desc = *pDesc;</span></span>
+<span id="L321"><span class="lineNum">     321</span>                 :             :         }</span>
+<span id="L322"><span class="lineNum">     322</span>                 :<span class="tlaGNC">           3 :         return 0; // S_OK</span></span>
+<span id="L323"><span class="lineNum">     323</span>                 :             :     }</span>
+<span id="L324"><span class="lineNum">     324</span>                 :             : };</span>
+<span id="L325"><span class="lineNum">     325</span>                 :             : struct IDXGISwapChain : public IDXGIObject {</span>
+<span id="L326"><span class="lineNum">     326</span>                 :             :     virtual HRESULT GetBuffer(UINT Buffer, const GUID&amp; riid, void** ppSurface) = 0;</span>
+<span id="L327"><span class="lineNum">     327</span>                 :             :     virtual HRESULT Present(UINT SyncInterval, UINT Flags) = 0;</span>
+<span id="L328"><span class="lineNum">     328</span>                 :             :     virtual HRESULT ResizeBuffers(UINT BufferCount, UINT Width, UINT Height, DXGI_FORMAT NewFormat, UINT SwapChainFlags) = 0;</span>
+<span id="L329"><span class="lineNum">     329</span>                 :             : };</span>
+<span id="L330"><span class="lineNum">     330</span>                 :             : struct IDXGISwapChain1 : public IDXGISwapChain {};</span>
+<span id="L331"><span class="lineNum">     331</span>                 :             : </span>
+<span id="L332"><span class="lineNum">     332</span>                 :             : struct ID3D11DeviceChild : public IUnknown {};</span>
+<span id="L333"><span class="lineNum">     333</span>                 :             : struct ID3D11DeviceContext : public ID3D11DeviceChild {</span>
+<span id="L334"><span class="lineNum">     334</span>                 :             :     virtual void OMSetRenderTargets(UINT NumViews, struct ID3D11RenderTargetView* const* ppRenderTargetViews, struct ID3D11DepthStencilView* pDepthStencilView) = 0;</span>
+<span id="L335"><span class="lineNum">     335</span>                 :             :     virtual void ClearRenderTargetView(struct ID3D11RenderTargetView* pRenderTargetView, const float ColorRGBA[4]) = 0;</span>
 <span id="L336"><span class="lineNum">     336</span>                 :             : };</span>
-<span id="L337"><span class="lineNum">     337</span>                 :             : </span>
-<span id="L338"><span class="lineNum">     338</span>                 :             : #define IID_PPV_ARGS(ppType) GUID(), (void**)(ppType)</span>
-<span id="L339"><span class="lineNum">     339</span>                 :             : </span>
-<span id="L340"><span class="lineNum">     340</span>                 :             : #endif // _WIN32</span>
-<span id="L341"><span class="lineNum">     341</span>                 :             : </span>
-<span id="L342"><span class="lineNum">     342</span>                 :             : #endif // LINUXMOCK_H</span>
+<span id="L337"><span class="lineNum">     337</span>                 :             : struct ID3D11Device : public IUnknown {</span>
+<span id="L338"><span class="lineNum">     338</span>                 :             :     virtual HRESULT CreateRenderTargetView(struct ID3D11Resource* pResource, const struct D3D11_RENDER_TARGET_VIEW_DESC* pDesc, struct ID3D11RenderTargetView** ppRTView) = 0;</span>
+<span id="L339"><span class="lineNum">     339</span>                 :             : };</span>
+<span id="L340"><span class="lineNum">     340</span>                 :             : </span>
+<span id="L341"><span class="lineNum">     341</span>                 :             : #define IID_PPV_ARGS(ppType) GUID(), (void**)(ppType)</span>
+<span id="L342"><span class="lineNum">     342</span>                 :             : </span>
+<span id="L343"><span class="lineNum">     343</span>                 :             : #endif // _WIN32</span>
+<span id="L344"><span class="lineNum">     344</span>                 :             : </span>
+<span id="L345"><span class="lineNum">     345</span>                 :             : #endif // LINUXMOCK_H</span>
         </pre>
               </td>
             </tr>

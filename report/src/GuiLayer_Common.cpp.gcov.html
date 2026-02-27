@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-02-27 20:58:35</td>
+            <td class="headerValue">2026-02-27 22:20:06</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -295,7 +295,7 @@
 <span id="L210"><span class="lineNum">     210</span>                 :             : </span>
 <span id="L211"><span class="lineNum">     211</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 :          ImGui::SameLine();</span></span>
 <span id="L212"><span class="lineNum">     212</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 :          size_t bytes = AsyncLogger::Get().GetFileSizeBytes();</span></span>
-<span id="L213"><span class="lineNum">     213</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 :          if (bytes &lt; 1024 * 1024)</span></span>
+<span id="L213"><span class="lineNum">     213</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 :          if (bytes &lt; 1024ULL * 1024ULL)</span></span>
 <span id="L214"><span class="lineNum">     214</span>   [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           3 :              ImGui::Text(&quot;%zu f (%.0f KB)&quot;, AsyncLogger::Get().GetFrameCount(), (float)bytes / 1024.0f);</span></span>
 <span id="L215"><span class="lineNum">     215</span>                 :             :          else</span>
 <span id="L216"><span class="lineNum">     216</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC tlaBgUNC">           0 :              ImGui::Text(&quot;%zu f (%.1f MB)&quot;, AsyncLogger::Get().GetFrameCount(), (float)bytes / (1024.0f * 1024.0f));</span></span>
@@ -722,7 +722,7 @@
 <span class="lineNum">        </span>    <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaUNC" title="Branch 6 was not taken"> - </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span>]
 <span id="L622"><span class="lineNum">     622</span>                 :             : </span>
 <span id="L623"><span class="lineNum">     623</span>         [<span class="tlaGBC" title="Branch 0 was taken 363 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         363 :             ImGui::SameLine();</span></span>
-<span id="L624"><span class="lineNum">     624</span>                 :<span class="tlaGNC">         363 :             float latency_ms = (engine.m_slope_sg_window / 2.0f) * 2.5f;</span></span>
+<span id="L624"><span class="lineNum">     624</span>                 :<span class="tlaGNC">         363 :             float latency_ms = (static_cast&lt;float&gt;(engine.m_slope_sg_window) / 2.0f) * 2.5f;</span></span>
 <span id="L625"><span class="lineNum">     625</span>         [<span class="tlaGBC" title="Branch 0 was taken 363 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         363 :             ImVec4 color = (latency_ms &lt; 25.0f) ? ImVec4(0,1,0,1) : ImVec4(1,0.5f,0,1);</span></span>
 <span id="L626"><span class="lineNum">     626</span>         [<span class="tlaGBC" title="Branch 0 was taken 363 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         363 :             ImGui::TextColored(color, &quot;~%.0f ms latency&quot;, latency_ms);</span></span>
 <span id="L627"><span class="lineNum">     627</span>   [<span class="tlaGBC" title="Branch 0 was taken 363 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 363 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         363 :             ImGui::NextColumn(); ImGui::NextColumn();</span></span>
