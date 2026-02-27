@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-02-27 17:59:25</td>
+            <td class="headerValue">2026-02-27 19:06:10</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -721,7 +721,7 @@
 <span class="lineNum">        </span>    <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaUNC" title="Branch 6 was not taken"> - </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span>]
 <span id="L621"><span class="lineNum">     621</span>                 :             : </span>
 <span id="L622"><span class="lineNum">     622</span>         [<span class="tlaGBC" title="Branch 0 was taken 363 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         363 :             ImGui::SameLine();</span></span>
-<span id="L623"><span class="lineNum">     623</span>                 :<span class="tlaGNC">         363 :             float latency_ms = (float)(engine.m_slope_sg_window / 2) * 2.5f;</span></span>
+<span id="L623"><span class="lineNum">     623</span>                 :<span class="tlaGNC">         363 :             float latency_ms = (engine.m_slope_sg_window / 2.0f) * 2.5f;</span></span>
 <span id="L624"><span class="lineNum">     624</span>         [<span class="tlaGBC" title="Branch 0 was taken 363 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         363 :             ImVec4 color = (latency_ms &lt; 25.0f) ? ImVec4(0,1,0,1) : ImVec4(1,0.5f,0,1);</span></span>
 <span id="L625"><span class="lineNum">     625</span>         [<span class="tlaGBC" title="Branch 0 was taken 363 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         363 :             ImGui::TextColored(color, &quot;~%.0f ms latency&quot;, latency_ms);</span></span>
 <span id="L626"><span class="lineNum">     626</span>   [<span class="tlaGBC" title="Branch 0 was taken 363 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 363 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         363 :             ImGui::NextColumn(); ImGui::NextColumn();</span></span>
