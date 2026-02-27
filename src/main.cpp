@@ -273,9 +273,9 @@ void handle_sigterm(int sig) {
 #endif
 
 #ifdef LMUFFB_UNIT_TEST
-int lmuffb_app_main(int argc, char* argv[]) {
+int lmuffb_app_main(int argc, char* argv[]) noexcept {
 #else
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) noexcept {
 #endif
     try {
 #ifdef _WIN32
@@ -350,12 +350,13 @@ int main(int argc, char* argv[]) {
     
     return 0;
     } catch (const std::exception& e) {
-        std::cerr << "Fatal exception: " << e.what() << std::endl;
-        Logger::Get().Log("Fatal exception: %s", e.what());
+        fprintf(stderr, "Fatal exception: %s\n", e.what());
+        // Attempt to log if possible, but don't risk more throws
+        try { Logger::Get().Log("Fatal exception: %s", e.what()); } catch(...) { (void)0; }
         return 1;
     } catch (...) {
-        std::cerr << "Fatal unknown exception." << std::endl;
-        Logger::Get().Log("Fatal unknown exception.");
+        fprintf(stderr, "Fatal unknown exception.\n");
+        try { Logger::Get().Log("Fatal unknown exception."); } catch(...) { (void)0; }
         return 1;
     }
 }

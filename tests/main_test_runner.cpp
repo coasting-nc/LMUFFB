@@ -29,7 +29,7 @@ namespace FFBEngineTests {
     void ParseTagArguments(int argc, char* argv[]);
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) noexcept {
     try {
         // Parse tag filtering arguments
         FFBEngineTests::ParseTagArguments(argc, argv);

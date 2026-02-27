@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.98] - 2026-02-27
+### Fixed
+- **Static Analysis & Stability**:
+  - Fully resolved `bugprone-exception-escape` in `main` and test runners by marking them `noexcept` and using C-style I/O (`fprintf`) in panic handlers to prevent secondary exceptions during fatal error reporting.
+  - Eliminated legacy CRT security warnings (C4996) in test suites by replacing `strcpy`/`strncpy` with safer memory-safe alternatives.
+
+
+
 ## [0.7.97] - 2026-02-27
 ### Fixed
 - **Static Analysis Fixes**:

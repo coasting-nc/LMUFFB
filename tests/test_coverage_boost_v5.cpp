@@ -30,7 +30,13 @@ TEST_CASE(test_shared_memory_interface_details, "System") {
     src.generic.events[SME_UPDATE_SCORING] = SME_UPDATE_SCORING;
     src.scoring.scoringInfo.mNumVehicles = 2;
     src.scoring.scoringStreamSize = 10;
-    strcpy(src.scoring.scoringStream, "teststream");
+    {
+        const char* streamName = "teststream";
+        size_t len = strlen(streamName);
+        if (len >= sizeof(src.scoring.scoringStream)) len = sizeof(src.scoring.scoringStream) - 1;
+        memcpy(src.scoring.scoringStream, streamName, len);
+        src.scoring.scoringStream[len] = '\0';
+    }
 
     CopySharedMemoryObj(dst, src);
     if (dst.scoring.scoringStreamSize == 10 && strcmp(dst.scoring.scoringStream, "teststream") == 0) {
@@ -54,7 +60,13 @@ TEST_CASE(test_shared_memory_interface_details, "System") {
     // 3. Path update branch (ENTER/EXIT/SET_ENVIRONMENT)
     memset(&src.generic.events, 0, sizeof(src.generic.events));
     src.generic.events[SME_ENTER] = (SharedMemoryEvent)1; // Non-zero to trigger branch
-    strcpy(src.paths.userData, "userdata");
+    {
+        const char* pathStr = "userdata";
+        size_t len = strlen(pathStr);
+        if (len >= sizeof(src.paths.userData)) len = sizeof(src.paths.userData) - 1;
+        memcpy(src.paths.userData, pathStr, len);
+        src.paths.userData[len] = '\0';
+    }
 
     CopySharedMemoryObj(dst, src);
     if (strcmp(dst.paths.userData, "userdata") == 0) {
