@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.85] - 2026-02-27
+### Fixed
+- **Garage FFB Muting (#185)**:
+  - Added explicit check for `mInGarageStall` in the FFB allowance logic. FFB is now completely muted when the car is in its garage stall.
+  - Guarded the "Minimum Force" logic to prevent tiny telemetry residuals from being amplified when FFB is muted.
+  - Preserved Soft Lock functionality in the garage by allowing it to bypass the muting logic if the force is significant (> 0.1 Nm), ensuring steering rack safety is always active.
+### Testing
+- **New Regression Test**: Added `tests/test_issue_185_fix.cpp` to verify that FFB is zeroed in the garage and that Soft Lock still functions correctly.
+
 ## [0.7.84] - 2026-02-26
 ### Changed
 - **Global FFB Inversion (#42)**:

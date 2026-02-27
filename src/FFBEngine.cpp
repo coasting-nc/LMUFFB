@@ -32,6 +32,9 @@ bool FFBEngine::IsFFBAllowed(const VehicleScoringInfoV01& scoring, unsigned char
     // Mute for Disqualified (3).
     if (scoring.mFinishStatus == 3) return false;
 
+    // 4. Garage Safety: Mute FFB when in garage stall
+    if (scoring.mInGarageStall) return false;
+
     return true;
 }
 
@@ -533,9 +536,14 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double norm_force = (di_structural + di_texture) * m_gain;
 
     // Min Force
-    if (std::abs(norm_force) > 0.0001 && std::abs(norm_force) < m_min_force) {
-        double sign = (norm_force > 0.0) ? 1.0 : -1.0;
-        norm_force = sign * m_min_force;
+    // v0.7.85 FIX: Bypass min_force if NOT allowed (e.g. in garage) unless soft lock is significant.
+    // This prevents the "grinding" feel from tiny residuals when FFB should be muted.
+    bool significant_soft_lock = std::abs(ctx.soft_lock_force) > 0.1; // > 0.1 Nm
+    if (allowed || significant_soft_lock) {
+        if (std::abs(norm_force) > 0.0001 && std::abs(norm_force) < m_min_force) {
+            double sign = (norm_force > 0.0) ? 1.0 : -1.0;
+            norm_force = sign * m_min_force;
+        }
     }
 
     if (m_invert_force) {
