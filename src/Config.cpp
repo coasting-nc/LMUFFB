@@ -125,9 +125,8 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "slope_detection_enabled") current_preset.slope_detection_enabled = (value == "1");
                 else if (key == "slope_sg_window") current_preset.slope_sg_window = std::stoi(value);
                 else if (key == "slope_sensitivity") current_preset.slope_sensitivity = std::stof(value);
-                else if (key == "slope_negative_threshold") current_preset.slope_min_threshold = std::stof(value);
+                else if (key == "slope_negative_threshold" || key == "slope_min_threshold") current_preset.slope_min_threshold = std::stof(value);
                 else if (key == "slope_smoothing_tau") current_preset.slope_smoothing_tau = std::stof(value);
-                else if (key == "slope_min_threshold") current_preset.slope_min_threshold = std::stof(value);
                 else if (key == "slope_max_threshold") current_preset.slope_max_threshold = std::stof(value);
                 else if (key == "slope_alpha_threshold") current_preset.slope_alpha_threshold = std::stof(value);
                 else if (key == "slope_decay_rate") current_preset.slope_decay_rate = std::stof(value);

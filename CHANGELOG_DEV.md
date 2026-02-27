@@ -2,8 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.7.86] - 2026-02-27
+## [0.7.87] - 2026-02-27
+### Fixed
+- **Build Warnings & Static Analysis Hygiene**:
+  - Resolved `bugprone-branch-clone` in `Config.cpp` by consolidating legacy and modern slope threshold key handlers.
 
+### Changed
+- **Static Analysis Optimization**:
+  - Refined `clang-tidy` configuration in `.github/workflows/windows-build-and-test.yml` to suppress more high-noise, low-priority stylistic rules:
+    - `readability-braces-around-statements`
+    - `performance-avoid-endl` (reduces noise in test suite)
+    - `readability-magic-numbers`, `readability-uppercase-literal-suffix`, `readability-implicit-bool-conversion`, `readability-avoid-nested-conditional-operator`.
+
+
+## [0.7.86] - 2026-02-27
 ### Fixed
 - **Build Warnings & Static Analysis Hygiene**:
   - Resolved multiple `readability` warnings in `src/GuiLayer_Common.cpp`.
@@ -18,6 +30,7 @@ All notable changes to this project will be documented in this file.
 
 ### Testing
 - Verified 100% pass rate (1479 assertions) in the combined test suite on Windows.
+
 
 ## [0.7.85] - 2026-02-27
 ### Fixed
