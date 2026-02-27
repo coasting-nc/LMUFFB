@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-02-27 16:29:43</td>
+            <td class="headerValue">2026-02-27 16:44:55</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -172,17 +172,17 @@
 <span id="L101"><span class="lineNum">     101</span>                 :             : </span>
 <span id="L102"><span class="lineNum">     102</span>                 :             : // Memory Mapping Mock (Global Storage)</span>
 <span id="L103"><span class="lineNum">     103</span>                 :             : namespace MockSM {</span>
-<span id="L104"><span class="lineNum">     104</span>                 :<span class="tlaGNC tlaBgGNC">       46585 :     inline std::map&lt;std::string, std::vector&lt;uint8_t&gt;&gt;&amp; GetMaps() {</span></span>
-<span id="L105"><span class="lineNum">     105</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 46584 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">       46585 :         static std::map&lt;std::string, std::vector&lt;uint8_t&gt;&gt; maps;</span></span>
-<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">       46585 :         return maps;</span></span>
+<span id="L104"><span class="lineNum">     104</span>                 :<span class="tlaGNC tlaBgGNC">       43708 :     inline std::map&lt;std::string, std::vector&lt;uint8_t&gt;&gt;&amp; GetMaps() {</span></span>
+<span id="L105"><span class="lineNum">     105</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 43707 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">       43708 :         static std::map&lt;std::string, std::vector&lt;uint8_t&gt;&gt; maps;</span></span>
+<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">       43708 :         return maps;</span></span>
 <span id="L107"><span class="lineNum">     107</span>                 :             :     }</span>
-<span id="L108"><span class="lineNum">     108</span>                 :<span class="tlaGNC">       22967 :     inline DWORD&amp; LastError() {</span></span>
+<span id="L108"><span class="lineNum">     108</span>                 :<span class="tlaGNC">       21529 :     inline DWORD&amp; LastError() {</span></span>
 <span id="L109"><span class="lineNum">     109</span>                 :             :         static DWORD err = 0;</span>
-<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">       22967 :         return err;</span></span>
+<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">       21529 :         return err;</span></span>
 <span id="L111"><span class="lineNum">     111</span>                 :             :     }</span>
-<span id="L112"><span class="lineNum">     112</span>                 :<span class="tlaGNC">       11496 :     inline bool&amp; FailNext() {</span></span>
+<span id="L112"><span class="lineNum">     112</span>                 :<span class="tlaGNC">       10777 :     inline bool&amp; FailNext() {</span></span>
 <span id="L113"><span class="lineNum">     113</span>                 :             :         static bool fail = false;</span>
-<span id="L114"><span class="lineNum">     114</span>                 :<span class="tlaGNC">       11496 :         return fail;</span></span>
+<span id="L114"><span class="lineNum">     114</span>                 :<span class="tlaGNC">       10777 :         return fail;</span></span>
 <span id="L115"><span class="lineNum">     115</span>                 :             :     }</span>
 <span id="L116"><span class="lineNum">     116</span>                 :<span class="tlaGNC">           7 :     inline DWORD&amp; WaitResult() {</span></span>
 <span id="L117"><span class="lineNum">     117</span>                 :             :         static DWORD res = 0; // WAIT_OBJECT_0</span>
@@ -191,17 +191,17 @@
 <span id="L120"><span class="lineNum">     120</span>                 :             : }</span>
 <span id="L121"><span class="lineNum">     121</span>                 :             : </span>
 <span id="L122"><span class="lineNum">     122</span>                 :             : // Interlocked functions for Linux mocking</span>
-<span id="L123"><span class="lineNum">     123</span>                 :<span class="tlaGNC">       26439 : inline long InterlockedCompareExchange(long volatile* Destination, long Exchange, long Comparand) {</span></span>
-<span id="L124"><span class="lineNum">     124</span>                 :<span class="tlaGNC">       26439 :     long old = *Destination;</span></span>
-<span id="L125"><span class="lineNum">     125</span>         [<span class="tlaGBC" title="Branch 0 was taken 10434 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16005 times"> + </span>]:<span class="tlaGNC">       26439 :     if (old == Comparand) *Destination = Exchange;</span></span>
-<span id="L126"><span class="lineNum">     126</span>                 :<span class="tlaGNC">       26439 :     return old;</span></span>
+<span id="L123"><span class="lineNum">     123</span>                 :<span class="tlaGNC">       25412 : inline long InterlockedCompareExchange(long volatile* Destination, long Exchange, long Comparand) {</span></span>
+<span id="L124"><span class="lineNum">     124</span>                 :<span class="tlaGNC">       25412 :     long old = *Destination;</span></span>
+<span id="L125"><span class="lineNum">     125</span>         [<span class="tlaGBC" title="Branch 0 was taken 9407 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16005 times"> + </span>]:<span class="tlaGNC">       25412 :     if (old == Comparand) *Destination = Exchange;</span></span>
+<span id="L126"><span class="lineNum">     126</span>                 :<span class="tlaGNC">       25412 :     return old;</span></span>
 <span id="L127"><span class="lineNum">     127</span>                 :             : }</span>
 <span id="L128"><span class="lineNum">     128</span>                 :<span class="tlaGNC">           4 : inline long InterlockedIncrement(long volatile* Addend) { return ++(*Addend); }</span></span>
 <span id="L129"><span class="lineNum">     129</span>                 :<span class="tlaGNC">           1 : inline long InterlockedDecrement(long volatile* Addend) { return --(*Addend); }</span></span>
-<span id="L130"><span class="lineNum">     130</span>                 :<span class="tlaGNC">       10435 : inline long InterlockedExchange(long volatile* Target, long Value) {</span></span>
-<span id="L131"><span class="lineNum">     131</span>                 :<span class="tlaGNC">       10435 :     long old = *Target;</span></span>
-<span id="L132"><span class="lineNum">     132</span>                 :<span class="tlaGNC">       10435 :     *Target = Value;</span></span>
-<span id="L133"><span class="lineNum">     133</span>                 :<span class="tlaGNC">       10435 :     return old;</span></span>
+<span id="L130"><span class="lineNum">     130</span>                 :<span class="tlaGNC">        9408 : inline long InterlockedExchange(long volatile* Target, long Value) {</span></span>
+<span id="L131"><span class="lineNum">     131</span>                 :<span class="tlaGNC">        9408 :     long old = *Target;</span></span>
+<span id="L132"><span class="lineNum">     132</span>                 :<span class="tlaGNC">        9408 :     *Target = Value;</span></span>
+<span id="L133"><span class="lineNum">     133</span>                 :<span class="tlaGNC">        9408 :     return old;</span></span>
 <span id="L134"><span class="lineNum">     134</span>                 :             : }</span>
 <span id="L135"><span class="lineNum">     135</span>                 :             : </span>
 <span id="L136"><span class="lineNum">     136</span>                 :             : // Memory and Event mocks</span>
@@ -229,54 +229,54 @@
 <span id="L158"><span class="lineNum">     158</span>                 :<span class="tlaGNC">           3 :     return WAIT_OBJECT_0;</span></span>
 <span id="L159"><span class="lineNum">     159</span>                 :             : }</span>
 <span id="L160"><span class="lineNum">     160</span>                 :<span class="tlaGNC">        4769 : inline BOOL SetEvent(HANDLE hEvent) { return TRUE; }</span></span>
-<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">       34441 : inline BOOL CloseHandle(HANDLE hObject) {</span></span>
-<span id="L162"><span class="lineNum">     162</span>   [<span class="tlaGBC" title="Branch 0 was taken 34440 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 22958 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 11482 times"> + </span> :<span class="tlaGNC">       34441 :     if (hObject != (HANDLE)0 &amp;&amp; hObject != (HANDLE)1 &amp;&amp; hObject != (HANDLE)2 &amp;&amp; hObject != (HANDLE)(intptr_t)-1) {</span></span>
-<span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 22958 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaGBC" title="Branch 6 was taken 22957 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 1 time"> + </span>]
-<span id="L163"><span class="lineNum">     163</span>         [<span class="tlaGBC" title="Branch 0 was taken 22957 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       22957 :         delete static_cast&lt;std::string*&gt;(hObject);</span></span>
+<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">       32284 : inline BOOL CloseHandle(HANDLE hObject) {</span></span>
+<span id="L162"><span class="lineNum">     162</span>   [<span class="tlaGBC" title="Branch 0 was taken 32283 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 21520 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 10763 times"> + </span> :<span class="tlaGNC">       32284 :     if (hObject != (HANDLE)0 &amp;&amp; hObject != (HANDLE)1 &amp;&amp; hObject != (HANDLE)2 &amp;&amp; hObject != (HANDLE)(intptr_t)-1) {</span></span>
+<span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 21520 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaGBC" title="Branch 6 was taken 21519 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 1 time"> + </span>]
+<span id="L163"><span class="lineNum">     163</span>         [<span class="tlaGBC" title="Branch 0 was taken 21519 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       21519 :         delete static_cast&lt;std::string*&gt;(hObject);</span></span>
 <span id="L164"><span class="lineNum">     164</span>                 :             :     }</span>
-<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">       34441 :     return TRUE;</span></span>
+<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">       32284 :     return TRUE;</span></span>
 <span id="L166"><span class="lineNum">     166</span>                 :             : }</span>
-<span id="L167"><span class="lineNum">     167</span>                 :<span class="tlaGNC">       11482 : inline DWORD GetLastError() { return MockSM::LastError(); }</span></span>
+<span id="L167"><span class="lineNum">     167</span>                 :<span class="tlaGNC">       10763 : inline DWORD GetLastError() { return MockSM::LastError(); }</span></span>
 <span id="L168"><span class="lineNum">     168</span>                 :             : </span>
 <span id="L169"><span class="lineNum">     169</span>                 :             : // Shared Memory Mocks</span>
-<span id="L170"><span class="lineNum">     170</span>                 :<span class="tlaGNC">       11490 : inline HANDLE CreateFileMappingA(HANDLE hFile, void* lpAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, const char* lpName) {</span></span>
-<span id="L171"><span class="lineNum">     171</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 11487 times"> + </span>]:<span class="tlaGNC">       11490 :     if (MockSM::FailNext()) {</span></span>
+<span id="L170"><span class="lineNum">     170</span>                 :<span class="tlaGNC">       10771 : inline HANDLE CreateFileMappingA(HANDLE hFile, void* lpAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, const char* lpName) {</span></span>
+<span id="L171"><span class="lineNum">     171</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 10768 times"> + </span>]:<span class="tlaGNC">       10771 :     if (MockSM::FailNext()) {</span></span>
 <span id="L172"><span class="lineNum">     172</span>                 :<span class="tlaGNC">           3 :         MockSM::FailNext() = false;</span></span>
 <span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaGNC">           3 :         return NULL;</span></span>
 <span id="L174"><span class="lineNum">     174</span>                 :             :     }</span>
-<span id="L175"><span class="lineNum">     175</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 11485 times"> + </span>]:<span class="tlaGNC">       11487 :     if (lpName == nullptr) return (HANDLE)1;</span></span>
-<span id="L176"><span class="lineNum">     176</span>         [<span class="tlaGBC" title="Branch 0 was taken 11485 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       11485 :     std::string name(lpName);</span></span>
-<span id="L177"><span class="lineNum">     177</span>                 :<span class="tlaGNC">       11485 :     auto&amp; maps = MockSM::GetMaps();</span></span>
-<span id="L178"><span class="lineNum">     178</span>   [<span class="tlaGBC" title="Branch 0 was taken 11485 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 11481 times"> + </span>]:<span class="tlaGNC">       11485 :     if (maps.find(name) == maps.end()) {</span></span>
+<span id="L175"><span class="lineNum">     175</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 10766 times"> + </span>]:<span class="tlaGNC">       10768 :     if (lpName == nullptr) return (HANDLE)1;</span></span>
+<span id="L176"><span class="lineNum">     176</span>         [<span class="tlaGBC" title="Branch 0 was taken 10766 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       10766 :     std::string name(lpName);</span></span>
+<span id="L177"><span class="lineNum">     177</span>                 :<span class="tlaGNC">       10766 :     auto&amp; maps = MockSM::GetMaps();</span></span>
+<span id="L178"><span class="lineNum">     178</span>   [<span class="tlaGBC" title="Branch 0 was taken 10766 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 10762 times"> + </span>]:<span class="tlaGNC">       10766 :     if (maps.find(name) == maps.end()) {</span></span>
 <span id="L179"><span class="lineNum">     179</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           4 :         maps[name].resize(dwMaximumSizeLow);</span></span>
 <span id="L180"><span class="lineNum">     180</span>                 :<span class="tlaGNC">           4 :         MockSM::LastError() = 0;</span></span>
 <span id="L181"><span class="lineNum">     181</span>                 :             :     } else {</span>
-<span id="L182"><span class="lineNum">     182</span>                 :<span class="tlaGNC">       11481 :         MockSM::LastError() = ERROR_ALREADY_EXISTS;</span></span>
+<span id="L182"><span class="lineNum">     182</span>                 :<span class="tlaGNC">       10762 :         MockSM::LastError() = ERROR_ALREADY_EXISTS;</span></span>
 <span id="L183"><span class="lineNum">     183</span>                 :             :     }</span>
-<span id="L184"><span class="lineNum">     184</span>   [<span class="tlaGBC" title="Branch 0 was taken 11485 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 11485 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       11485 :     return (HANDLE)new std::string(name);</span></span>
+<span id="L184"><span class="lineNum">     184</span>   [<span class="tlaGBC" title="Branch 0 was taken 10766 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 10766 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       10766 :     return (HANDLE)new std::string(name);</span></span>
 <span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
-<span id="L185"><span class="lineNum">     185</span>                 :<span class="tlaGNC">       11485 : }</span></span>
+<span id="L185"><span class="lineNum">     185</span>                 :<span class="tlaGNC">       10766 : }</span></span>
 <span id="L186"><span class="lineNum">     186</span>                 :             : </span>
-<span id="L187"><span class="lineNum">     187</span>                 :<span class="tlaGNC">       11482 : inline HANDLE OpenFileMappingA(DWORD dwDesiredAccess, BOOL bInheritHandle, const char* lpName) {</span></span>
-<span id="L188"><span class="lineNum">     188</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 11479 times"> + </span>]:<span class="tlaGNC">       11482 :     if (lpName == nullptr) return nullptr;</span></span>
-<span id="L189"><span class="lineNum">     189</span>         [<span class="tlaGBC" title="Branch 0 was taken 11479 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       11479 :     std::string name(lpName);</span></span>
-<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">       11479 :     auto&amp; maps = MockSM::GetMaps();</span></span>
-<span id="L191"><span class="lineNum">     191</span>   [<span class="tlaGBC" title="Branch 0 was taken 11479 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 11472 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 7 times"> + </span>]:<span class="tlaGNC">       11479 :     if (maps.find(name) != maps.end()) {</span></span>
-<span id="L192"><span class="lineNum">     192</span>   [<span class="tlaGBC" title="Branch 0 was taken 11472 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 11472 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       11472 :         return (HANDLE)new std::string(name);</span></span>
+<span id="L187"><span class="lineNum">     187</span>                 :<span class="tlaGNC">       10763 : inline HANDLE OpenFileMappingA(DWORD dwDesiredAccess, BOOL bInheritHandle, const char* lpName) {</span></span>
+<span id="L188"><span class="lineNum">     188</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 10760 times"> + </span>]:<span class="tlaGNC">       10763 :     if (lpName == nullptr) return nullptr;</span></span>
+<span id="L189"><span class="lineNum">     189</span>         [<span class="tlaGBC" title="Branch 0 was taken 10760 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       10760 :     std::string name(lpName);</span></span>
+<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">       10760 :     auto&amp; maps = MockSM::GetMaps();</span></span>
+<span id="L191"><span class="lineNum">     191</span>   [<span class="tlaGBC" title="Branch 0 was taken 10760 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 10753 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 7 times"> + </span>]:<span class="tlaGNC">       10760 :     if (maps.find(name) != maps.end()) {</span></span>
+<span id="L192"><span class="lineNum">     192</span>   [<span class="tlaGBC" title="Branch 0 was taken 10753 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 10753 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       10753 :         return (HANDLE)new std::string(name);</span></span>
 <span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
 <span id="L193"><span class="lineNum">     193</span>                 :             :     }</span>
 <span id="L194"><span class="lineNum">     194</span>                 :<span class="tlaGNC">           7 :     return nullptr;</span></span>
-<span id="L195"><span class="lineNum">     195</span>                 :<span class="tlaGNC">       11479 : }</span></span>
+<span id="L195"><span class="lineNum">     195</span>                 :<span class="tlaGNC">       10760 : }</span></span>
 <span id="L196"><span class="lineNum">     196</span>                 :             : </span>
-<span id="L197"><span class="lineNum">     197</span>                 :<span class="tlaGNC">       22955 : inline void* MapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, size_t dwNumberOfBytesToMap) {</span></span>
-<span id="L198"><span class="lineNum">     198</span>   [<span class="tlaGBC" title="Branch 0 was taken 22954 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 22953 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span> :<span class="tlaGNC">       22955 :     if (hFileMappingObject == (HANDLE)1 || hFileMappingObject == nullptr || hFileMappingObject == INVALID_HANDLE_VALUE) return nullptr;</span></span>
-<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 5 was taken 22952 times"> + </span>]
-<span id="L199"><span class="lineNum">     199</span>                 :<span class="tlaGNC">       22952 :     std::string* name = (std::string*)hFileMappingObject;</span></span>
-<span id="L200"><span class="lineNum">     200</span>                 :<span class="tlaGNC">       22952 :     return MockSM::GetMaps()[*name].data();</span></span>
+<span id="L197"><span class="lineNum">     197</span>                 :<span class="tlaGNC">       21517 : inline void* MapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, size_t dwNumberOfBytesToMap) {</span></span>
+<span id="L198"><span class="lineNum">     198</span>   [<span class="tlaGBC" title="Branch 0 was taken 21516 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 21515 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span> :<span class="tlaGNC">       21517 :     if (hFileMappingObject == (HANDLE)1 || hFileMappingObject == nullptr || hFileMappingObject == INVALID_HANDLE_VALUE) return nullptr;</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 5 was taken 21514 times"> + </span>]
+<span id="L199"><span class="lineNum">     199</span>                 :<span class="tlaGNC">       21514 :     std::string* name = (std::string*)hFileMappingObject;</span></span>
+<span id="L200"><span class="lineNum">     200</span>                 :<span class="tlaGNC">       21514 :     return MockSM::GetMaps()[*name].data();</span></span>
 <span id="L201"><span class="lineNum">     201</span>                 :             : }</span>
 <span id="L202"><span class="lineNum">     202</span>                 :             : </span>
-<span id="L203"><span class="lineNum">     203</span>                 :<span class="tlaGNC">       22952 : inline BOOL UnmapViewOfFile(const void* lpBaseAddress) { return TRUE; }</span></span>
-<span id="L204"><span class="lineNum">     204</span>                 :<span class="tlaGNC">       11481 : inline HANDLE CreateEventA(void* lpEventAttributes, BOOL bManualReset, BOOL bInitialState, const char* lpName) { return (HANDLE)1; }</span></span>
+<span id="L203"><span class="lineNum">     203</span>                 :<span class="tlaGNC">       21514 : inline BOOL UnmapViewOfFile(const void* lpBaseAddress) { return TRUE; }</span></span>
+<span id="L204"><span class="lineNum">     204</span>                 :<span class="tlaGNC">       10762 : inline HANDLE CreateEventA(void* lpEventAttributes, BOOL bManualReset, BOOL bInitialState, const char* lpName) { return (HANDLE)1; }</span></span>
 <span id="L205"><span class="lineNum">     205</span>                 :             : </span>
 <span id="L206"><span class="lineNum">     206</span>                 :             : // Window mocks</span>
 <span id="L207"><span class="lineNum">     207</span>                 :             : namespace MockGUI {</span>
