@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.89] - 2026-02-27
+### Fixed
+- **Build System**:
+  - Excluded `res.rc` from test executable build in headless CI mode, fixing a Ninja/RC compiler bug on Windows.
+  - Resolved `cmath` missing header errors by incorporating Visual Studio developer environment initialization `Launch-VsDevShell.ps1` within the local `clang-tidy` command flow.
+- **Static Analysis Fixes**: 
+  - Addressed `bugprone-integer-division` issues in GUI layer latency calculations.
+  - Handled `bugprone-branch-clone` by merging duplicating branches in configuration parsing and yaw kick thresholding.
+  - Eliminated `performance-unnecessary-copy-initialization` on config versions.
+  - Handled `bugprone-empty-catch` logging errors rather than swallowing silently.
+- **CI Synchronization**: 
+  - Unified `clang-tidy` exception flags in `windows-build-and-test.yml` to exactly match `build_commands.txt`.
+
+
 ## [0.7.88] - 2026-02-27
 ### Changed
 - **Static Analysis Optimization**:

@@ -775,8 +775,9 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     // 4. Yaw Kick (Inertial Oversteer)
     double raw_yaw_accel = data->mLocalRotAccel.y;
     // v0.4.16: Reject yaw at low speeds and below threshold
-    if (ctx.car_speed < 5.0) raw_yaw_accel = 0.0;
-    else if (std::abs(raw_yaw_accel) < (double)m_yaw_kick_threshold) raw_yaw_accel = 0.0;
+    if (ctx.car_speed < 5.0 || std::abs(raw_yaw_accel) < (double)m_yaw_kick_threshold) {
+        raw_yaw_accel = 0.0;
+    }
     
     // Alpha Smoothing (v0.4.16)
     double tau_yaw = (double)m_yaw_accel_smoothing;

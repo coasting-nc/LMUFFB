@@ -620,7 +620,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
 
             ImGui::SameLine();
-            float latency_ms = (float)(engine.m_slope_sg_window / 2) * 2.5f;
+            float latency_ms = (engine.m_slope_sg_window / 2.0f) * 2.5f;
             ImVec4 color = (latency_ms < 25.0f) ? ImVec4(0,1,0,1) : ImVec4(1,0.5f,0,1);
             ImGui::TextColored(color, "~%.0f ms latency", latency_ms);
             ImGui::NextColumn(); ImGui::NextColumn();

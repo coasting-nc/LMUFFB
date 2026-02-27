@@ -70,8 +70,7 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "lockup_prediction_sens") current_preset.lockup_prediction_sens = std::stof(value);
                 else if (key == "lockup_bump_reject") current_preset.lockup_bump_reject = std::stof(value);
                 else if (key == "brake_load_cap") current_preset.brake_load_cap = (std::min)(10.0f, std::stof(value));
-                else if (key == "texture_load_cap") current_preset.texture_load_cap = std::stof(value); // NEW v0.6.25
-                else if (key == "max_load_factor") current_preset.texture_load_cap = std::stof(value); // Legacy Backward Compatibility
+                else if (key == "texture_load_cap" || key == "max_load_factor") current_preset.texture_load_cap = std::stof(value); // Includes Legacy Backward Compatibility
                 else if (key == "abs_pulse_enabled") current_preset.abs_pulse_enabled = std::stoi(value);
                 else if (key == "abs_gain") current_preset.abs_gain = std::stof(value);
                 else if (key == "spin_enabled") current_preset.spin_enabled = std::stoi(value);
@@ -143,7 +142,7 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "slope_use_torque") current_preset.slope_use_torque = (value == "1"); // NEW v0.7.40
                 else if (key == "slope_torque_sensitivity") current_preset.slope_torque_sensitivity = std::stof(value); // NEW v0.7.40
                 else if (key == "slope_confidence_max_rate") current_preset.slope_confidence_max_rate = std::stof(value); // NEW v0.7.42
-            } catch (...) {}
+            } catch (...) { std::cerr << "[Config] ParsePresetLine Error." << std::endl; }
         }
     }
 }
@@ -1287,7 +1286,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                         // Current approach: Threshold-based detection (e.g., understeer > 2.0 = legacy format).
                         // Future improvement: Add explicit config_format_version field if migrations become
                         // more complex (e.g., structural changes, removed fields, renamed keys).
-                        std::string config_version = value;
+                        const std::string& config_version = value;
                         std::cout << "[Config] Loading config version: " << config_version << std::endl;
                     }
                     else if (key == "always_on_top") m_always_on_top = std::stoi(value);
@@ -1308,8 +1307,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "sop_smoothing_factor") engine.m_sop_smoothing_factor = std::stof(value);
                     else if (key == "sop_scale") engine.m_sop_scale = std::stof(value);
                     else if (key == "slip_angle_smoothing") engine.m_slip_angle_smoothing = std::stof(value);
-                    else if (key == "texture_load_cap") engine.m_texture_load_cap = std::stof(value);
-                    else if (key == "max_load_factor") engine.m_texture_load_cap = std::stof(value); // Legacy Backward Compatibility
+                    else if (key == "texture_load_cap" || key == "max_load_factor") engine.m_texture_load_cap = std::stof(value);
                     else if (key == "brake_load_cap") engine.m_brake_load_cap = std::stof(value);
                     else if (key == "smoothing") engine.m_sop_smoothing_factor = std::stof(value); // Legacy support
                     else if (key == "understeer") engine.m_understeer_effect = std::stof(value);
@@ -1381,9 +1379,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "slope_detection_enabled") engine.m_slope_detection_enabled = (value == "1");
                     else if (key == "slope_sg_window") engine.m_slope_sg_window = std::stoi(value);
                     else if (key == "slope_sensitivity") engine.m_slope_sensitivity = std::stof(value);
-                    else if (key == "slope_negative_threshold") engine.m_slope_min_threshold = std::stof(value);
+                    else if (key == "slope_negative_threshold" || key == "slope_min_threshold") engine.m_slope_min_threshold = std::stof(value);
                     else if (key == "slope_smoothing_tau") engine.m_slope_smoothing_tau = std::stof(value);
-                    else if (key == "slope_min_threshold") engine.m_slope_min_threshold = std::stof(value);
                     else if (key == "slope_max_threshold") engine.m_slope_max_threshold = std::stof(value);
                     else if (key == "slope_alpha_threshold") engine.m_slope_alpha_threshold = std::stof(value);
                     else if (key == "slope_decay_rate") engine.m_slope_decay_rate = std::stof(value);

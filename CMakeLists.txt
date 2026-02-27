@@ -210,7 +210,7 @@ set(APP_SOURCES
     src/main.cpp
 )
 
-if(WIN32)
+if(WIN32 AND NOT BUILD_HEADLESS)
     list(APPEND APP_SOURCES ${CMAKE_BINARY_DIR}/src/res.rc)
 endif()
 

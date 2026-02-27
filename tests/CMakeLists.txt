@@ -95,8 +95,10 @@ if(WIN32)
     list(APPEND TEST_SOURCES 
         test_windows_platform.cpp 
         test_security_metadata.cpp
-        ${CMAKE_BINARY_DIR}/src/res.rc
     )
+    if (NOT BUILD_HEADLESS)
+        list(APPEND TEST_SOURCES ${CMAKE_BINARY_DIR}/src/res.rc)
+    endif()
 else()
     # On Linux, backend file is in LMUFFB_Core
     if(BUILD_HEADLESS)
