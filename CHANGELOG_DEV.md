@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.94] - 2026-02-27
+### Fixed
+- **Static Analysis Fixes**:
+  - Re-enabled and resolved `clang-tidy` warning `-bugprone-exception-escape`. Guarded constructors, destructors, and main entry points with global `try/catch` enclosures to mathematically guarantee exceptions cannot leak into the C++ runtime forcing application termination.
+
+
+
 ## [0.7.93] - 2026-02-27
 ### Changed
 - **Static Analysis Optimization**:

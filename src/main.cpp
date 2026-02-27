@@ -277,11 +277,12 @@ int lmuffb_app_main(int argc, char* argv[]) {
 #else
 int main(int argc, char* argv[]) {
 #endif
+    try {
 #ifdef _WIN32
-    timeBeginPeriod(1);
+        timeBeginPeriod(1);
 #else
-    signal(SIGTERM, handle_sigterm);
-    signal(SIGINT, handle_sigterm);
+        signal(SIGTERM, handle_sigterm);
+        signal(SIGINT, handle_sigterm);
 #endif
 
     bool headless = false;
@@ -348,4 +349,13 @@ int main(int argc, char* argv[]) {
     Logger::Get().Log("Main Loop Ended. Clean Exit.");
     
     return 0;
+    } catch (const std::exception& e) {
+        std::cerr << "Fatal exception: " << e.what() << std::endl;
+        Logger::Get().Log("Fatal exception: %s", e.what());
+        return 1;
+    } catch (...) {
+        std::cerr << "Fatal unknown exception." << std::endl;
+        Logger::Get().Log("Fatal unknown exception.");
+        return 1;
+    }
 }

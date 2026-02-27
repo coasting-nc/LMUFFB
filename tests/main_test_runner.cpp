@@ -30,11 +30,12 @@ namespace FFBEngineTests {
 }
 
 int main(int argc, char* argv[]) {
-    // Parse tag filtering arguments
-    FFBEngineTests::ParseTagArguments(argc, argv);
-    
-    int total_passed = 0;
-    int total_failed = 0;
+    try {
+        // Parse tag filtering arguments
+        FFBEngineTests::ParseTagArguments(argc, argv);
+        
+        int total_passed = 0;
+        int total_failed = 0;
 
     // Redirect config to a test-specific file to avoid overwriting user settings
     Config::m_config_path = "test_config_runner.ini";
@@ -122,7 +123,14 @@ int main(int argc, char* argv[]) {
         } catch (...) {}
     };
 
-    cleanup();
+        cleanup();
 
-    return (total_failed > 0) ? 1 : 0;
+        return (total_failed > 0) ? 1 : 0;
+    } catch (const std::exception& e) {
+        std::cerr << "Fatal exception in test runner: " << e.what() << std::endl;
+        return 1;
+    } catch (...) {
+        std::cerr << "Fatal unknown exception in test runner." << std::endl;
+        return 1;
+    }
 }

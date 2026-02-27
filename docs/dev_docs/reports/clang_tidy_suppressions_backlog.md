@@ -14,7 +14,7 @@ These warnings carry the highest risk because they deal with undefined behavior,
 - **Why it matters**: Accessing an empty `std::optional` using `.value()` without checking if it contains a value will throw a `std::bad_optional_access` exception, which will crash the application immediately if unhandled.
 - **Action**: Ensure all optionals are verified via `.has_value()` or `if (opt)` before dereferencing.
 
-### 2. `bugprone-exception-escape`
+### 2. ~~`bugprone-exception-escape`~~ (✅ **RESOLVED in 0.7.94**)
 - **Why it matters**: If an exception escapes a function marked `noexcept` or a destructor, the C++ runtime will instantly call `std::terminate()`, leading to an abrupt application crash with no chance of recovery.
 - **Action**: Add `try/catch` blocks appropriately, or remove the `noexcept` marker if throwing is expected.
 

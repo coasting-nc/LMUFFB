@@ -139,7 +139,9 @@ const char* GetDirectInputErrorString(HRESULT hr) {
 #endif
 
 DirectInputFFB::~DirectInputFFB() {
-    Shutdown();
+    try {
+        Shutdown();
+    } catch (...) {}
 }
 
 bool DirectInputFFB::Initialize(HWND hwnd) {

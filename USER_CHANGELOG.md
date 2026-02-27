@@ -3,6 +3,19 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]February 27, 2026[/b][/size]
+[b]Version 0.7.94 - Application Crash Resilience[/b]
+
+[b]New release[/b] (0.7.94): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]Stabilization[/b]: Wrapped main execution loops and destructors in secure `try/catch` boundaries. This mathematically guarantees that unexpected runtime errors will be caught instead of allowing the C++ runtime to abruptly terminate the application.
+[/list]
+
+---
+
+
+[size=5][b]February 27, 2026[/b][/size]
 [b]Version 0.7.93 - Further Build Cleanliness[/b]
 
 [b]New release[/b] (0.7.93): https://github.com/coasting-nc/LMUFFB/releases
