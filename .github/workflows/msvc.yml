@@ -52,17 +52,13 @@ jobs:
           # Ruleset file that will determine what checks will be run
           ruleset: NativeRecommendedRules.ruleset
 
-      - name: Patch SARIF with unique category IDs
+      - name: Install SARIF tool
+        run: dotnet tool install -g Sarif.Multitool
+
+      - name: Merge and Optimize SARIF
         run: |
           $sarifFile = "${{ steps.run-analysis.outputs.sarif }}"
-          $sarif = Get-Content $sarifFile | ConvertFrom-Json
-          if ($sarif.runs) {
-              for ($i=0; $i -lt $sarif.runs.Count; $i++) {
-                  $id = if ($sarif.runs.Count -eq 1) { "MSVC/NativeRules" } else { "MSVC/NativeRules/$i" }
-                  $sarif.runs[$i].automationDetails = @{ id = $id }
-              }
-              $sarif | ConvertTo-Json -Depth 100 | Out-File $sarifFile -Encoding utf8
-          }
+          dotnet sarif merge "$sarifFile" --output-file "$sarifFile" --merge-runs --log "Optimize;Minify"
         shell: pwsh
 
       # Upload SARIF file to GitHub Code Scanning Alerts
