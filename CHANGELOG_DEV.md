@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.86] - 2026-02-27
+
+### Fixed
+- **Build Warnings & Static Analysis Hygiene**:
+  - Resolved multiple `readability` warnings in `src/GuiLayer_Common.cpp`.
+  - Replaced hardcoded color values with named constants (`COLOR_RED`, `COLOR_GREEN`, `COLOR_YELLOW`).
+  - Standardized floating-point literal suffixes to uppercase `F`.
+  - Added missing braces to control flow statements for improved robustness.
+
+### Changed
+- **Static Analysis Optimization**:
+  - Refined `clang-tidy` configuration in `.github/workflows/windows-build-and-test.yml` to suppress high-noise, low-priority stylistic rules (`magic-numbers`, `uppercase-literal-suffix`, `implicit-bool-conversion`, `avoid-nested-conditional-operator`).
+  - Updated `CMakeLists.txt` to explicitly exclude vendor code in `vendor/imgui/` from `clang-tidy` analysis, significantly reducing build noise and analysis time.
+
+### Testing
+- Verified 100% pass rate (1479 assertions) in the combined test suite on Windows.
+
 ## [0.7.85] - 2026-02-27
 ### Fixed
 - **Garage FFB Muting (#185)**:

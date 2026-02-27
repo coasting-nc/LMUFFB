@@ -113,6 +113,10 @@ endif()
 
 set(IMGUI_SOURCES ${IMGUI_CORE_SOURCES} ${IMGUI_BACKEND_SOURCES})
 
+# Disable clang-tidy for third-party vendor code
+set_source_files_properties(${IMGUI_SOURCES} PROPERTIES CXX_CLANG_TIDY "")
+
+
 if(NOT WIN32)
     include_directories(src/lmu_sm_interface/linux_mock)
     include_directories(src/lmu_sm_interface)

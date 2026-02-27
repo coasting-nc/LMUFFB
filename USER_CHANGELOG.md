@@ -2,7 +2,18 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
-[b]Note:[/b] This file uses BBCode formatting for easy copy-paste to forums.
+[size=5][b]February 27, 2026[/b][/size]
+[b]Version 0.7.86 - Build Hygiene & Cleanliness[/b]
+
+[b]New release[/b] (0.7.86): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Cleaner Application Build[/b]: Optimized our code analysis systems to focus on critical issues while filtering out irrelevant warnings from third-party libraries like ImGui.
+[*][b]Code Quality Refinement[/b]: Hardened the user interface code with improved formatting and consistent internal standards, ensuring better long-term stability and maintainability.
+[/list]
+
+---
 
 [size=5][b]February 26, 2026[/b][/size]
 [b]Version 0.7.84 - Global FFB Inversion[/b]

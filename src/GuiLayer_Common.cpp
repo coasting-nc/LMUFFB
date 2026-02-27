@@ -19,11 +19,22 @@
 
 static void DisplayRate(const char* label, double rate, double target) {
     ImGui::Text("%s", label);
-    ImVec4 color = ImVec4(1.0f, 0.4f, 0.4f, 1.0f); // Red
-    if (rate >= target * 0.95) color = ImVec4(0.4f, 1.0f, 0.4f, 1.0f); // Green
-    else if (rate >= target * 0.75) color = ImVec4(1.0f, 1.0f, 0.4f, 1.0f); // Yellow
+    
+    // Status colors for performance metrics
+    static const ImVec4 COLOR_RED(1.0F, 0.4F, 0.4F, 1.0F);
+    static const ImVec4 COLOR_GREEN(0.4F, 1.0F, 0.4F, 1.0F);
+    static const ImVec4 COLOR_YELLOW(1.0F, 1.0F, 0.4F, 1.0F);
+
+    ImVec4 color = COLOR_RED;
+    if (rate >= target * 0.95) {
+        color = COLOR_GREEN;
+    } else if (rate >= target * 0.75) {
+        color = COLOR_YELLOW;
+    }
+    
     ImGui::TextColored(color, "%.1f Hz", rate);
 }
+
 
 // External linkage to FFB loop status
 extern std::atomic<bool> g_running;

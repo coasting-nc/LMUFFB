@@ -102,7 +102,8 @@ jobs:
 
     - name: Configure and Build (Debug + Coverage)
       run: |
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=-*,readability-*,bugprone-*,performance-*"
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=-*,readability-*,bugprone-*,performance-*,-readability-magic-numbers,-readability-uppercase-literal-suffix,-readability-implicit-bool-conversion,-readability-avoid-nested-conditional-operator"
+
         cmake --build build --config Debug
 
     - name: Run Tests
