@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.108] - 2026-02-28
+### Fixed
+- **FFB Control (Issue #174)**: Resolved "stuck" FFB forces when entering menus or pausing the game.
+  - Modified the FFB loop to explicitly zero out all forces (including Soft Lock) when the game reports it is no longer in real-time.
+  - Preserved Soft Lock safety features for stationary garage and AI driving states where the game remains in real-time.
+  - Leveraged the safety slew rate limiter to ensure a smooth relaxation of the wheel when entering menus.
+
 ## [0.7.107] - 2026-02-28
 ### Fixed
 - **Static Analysis**: Resolved `readability-magic-numbers` warnings in Batch 1 (Core Physics). 
