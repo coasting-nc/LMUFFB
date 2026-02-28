@@ -69,5 +69,11 @@ N/A - No changes to header dependencies or constructors.
 ### Plan Deviations
 - Added `VERSION` and `CHANGELOG_DEV.md` updates to the implementation loop as requested by standard "Fixer" workflows.
 
+### CI Failure: Deprecated Artifact Actions
+During the PR scan, the `scan-pr / scan-pr` job failed due to the use of a deprecated version of `actions/upload-artifact`.
+- **Cause**: The `.github/workflows/osv-scanner.yml` workflow was using `google/osv-scanner-action` v1.7.1 (via a specific commit hash), which internally depended on `actions/upload-artifact@v3`. GitHub has deprecated v3 and now automatically fails requests using it (see [GitHub Blog](https://github.blog/changelog/2024-04-16-deprecation-notice-v3-of-the-artifact-actions/)).
+- **Resolution**: Updated `.github/workflows/osv-scanner.yml` to use `google/osv-scanner-action@v2.3.3`. This newer version uses `actions/upload-artifact@v4`, which is the current requirement.
+- **Recommendations**: Regularly audit and update GitHub Action versions to their latest stable releases to prevent sudden CI breakage from platform-wide deprecations.
+
 ### Recommendations
 - Future improvements could consider a "Slow Relax" mode for menu entry if the current 1000 units/s slew is still too fast for some users, though it currently matches "Normal" driving safety levels.
