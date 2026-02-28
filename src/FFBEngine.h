@@ -23,11 +23,13 @@
 
 // Bring common math into scope
 using namespace ffb_math;
+// Default FFB calculation timestep. Used by FFBCalculationContext (defined before
+// FFBEngine, so cannot reference FFBEngine::DEFAULT_CALC_DT directly).
+// Note: FFBEngine also has a private member of the same name; this file-scope
+// constant does NOT trigger GCC's -Wchanges-meaning because it is only looked up
+// inside FFBCalculationContext, not inside FFBEngine's own class body.
+static constexpr double DEFAULT_CALC_DT = 0.0025; // 400 Hz (1/400 s)
 
-// Global constants for defaults
-static constexpr double DEFAULT_CALC_DT = 0.0025;
-static constexpr int STR_BUF_64 = 64;
-static constexpr int STR_BUF_MAX = 256;
 
 // ChannelStats moved to PerfStats.h
 
@@ -161,6 +163,9 @@ struct FFBCalculationContext {
 class FFBEngine {
 public:
     using ParsedVehicleClass = ::ParsedVehicleClass;
+
+    // Buffer size constants (declared first so they can be used as array bounds below)
+    static constexpr int STR_BUF_64 = 64;
 
     // Settings (GUI Sliders)
     float m_gain;
@@ -584,7 +589,6 @@ private:
     static constexpr float  DEFAULT_APPROX_WEIGHT_BIAS = 0.55f;
     static constexpr float  DEFAULT_APPROX_ROLL_STIFFNESS = 0.6f;
     static constexpr float  DEFAULT_ABS_FREQ_HZ = 20.0f;
-    static constexpr int    STR_BUF_64 = 64;
     static constexpr double DEFAULT_AUTO_PEAK_LOAD = 4500.0;
     static constexpr double DEFAULT_SESSION_PEAK_TORQUE = 25.0;
     static constexpr double MIN_LFM_ALPHA = 0.001;
