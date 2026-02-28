@@ -78,8 +78,6 @@ if(EXISTS "${IMGUI_DIR}/imgui.cpp")
         ${IMGUI_DIR}/imgui_tables.cpp
         ${IMGUI_DIR}/imgui_widgets.cpp
     )
-    include_directories(SYSTEM ${IMGUI_DIR})
-    include_directories(SYSTEM ${IMGUI_DIR}/backends)
 endif()
 
 # Platform specific Backends
@@ -106,15 +104,25 @@ if(NOT BUILD_HEADLESS AND IMGUI_CORE_SOURCES)
             ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
             ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
         )
-
-        include_directories(${OPENGL_INCLUDE_DIR})
     endif()
 endif()
 
 set(IMGUI_SOURCES ${IMGUI_CORE_SOURCES} ${IMGUI_BACKEND_SOURCES})
 
-# Disable clang-tidy for third-party vendor code
-set_source_files_properties(${IMGUI_SOURCES} PROPERTIES CXX_CLANG_TIDY "")
+# Create a separate target for ImGui to isolate it from linting/warnings
+if(IMGUI_SOURCES)
+    add_library(imgui_vendor STATIC ${IMGUI_SOURCES})
+    # Mark headers as SYSTEM to suppress warnings in files that include them
+    target_include_directories(imgui_vendor SYSTEM PUBLIC ${IMGUI_DIR} ${IMGUI_DIR}/backends)
+    # Disable clang-tidy for this target explicitly
+    set_target_properties(imgui_vendor PROPERTIES CXX_CLANG_TIDY "")
+    # Disable اکثر warnings for vendor code
+    if(MSVC)
+        target_compile_options(imgui_vendor PRIVATE /W0)
+    else()
+        target_compile_options(imgui_vendor PRIVATE -w)
+    endif()
+endif()
 
 
 if(NOT WIN32)
@@ -176,12 +184,18 @@ else()
 endif()
 
 # Optimized Core for the Main Application
-add_library(LMUFFB_Core STATIC ${CORE_SOURCES} ${IMGUI_SOURCES})
-target_include_directories(LMUFFB_Core PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/src src SYSTEM ${IMGUI_DIR} ${IMGUI_DIR}/backends)
+add_library(LMUFFB_Core STATIC ${CORE_SOURCES})
+target_include_directories(LMUFFB_Core PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/src src)
+if(TARGET imgui_vendor)
+    target_link_libraries(LMUFFB_Core PUBLIC imgui_vendor)
+endif()
 
 # Fast-Compile Core for Tests (Reduced Optimization)
-add_library(LMUFFB_Core_Fast STATIC ${CORE_SOURCES} ${IMGUI_SOURCES})
-target_include_directories(LMUFFB_Core_Fast PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/src src SYSTEM ${IMGUI_DIR} ${IMGUI_DIR}/backends)
+add_library(LMUFFB_Core_Fast STATIC ${CORE_SOURCES})
+target_include_directories(LMUFFB_Core_Fast PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/src src)
+if(TARGET imgui_vendor)
+    target_link_libraries(LMUFFB_Core_Fast PUBLIC imgui_vendor)
+endif()
 target_compile_definitions(LMUFFB_Core_Fast PRIVATE LMUFFB_UNIT_TEST)
 
 if(MSVC)
