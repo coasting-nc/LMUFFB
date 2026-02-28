@@ -61,7 +61,7 @@ These primarily pertain to performance bottlenecks or notable readability degrad
 *   `performance-avoid-endl`: Using `std::endl` redundantly flushes the I/O streams during logging, stalling threads. Rely on `\n` character linebreaks instead.
 *   `performance-type-promotion-in-math-fn`: Overloading default C++ math functions with smaller data types accidentally scales types implicitly upwards, burning CPU cycles unnecessarily. 
 *   `readability-container-size-empty`: Explicitly checking `items.size() == 0` is less readable and slightly less efficient than leveraging `items.empty()`.
-*   `readability-magic-numbers`: Hardcoded numeric constants obscure the intent behind equations and drastically increases long-term maintenance burdens. Extract variables.
+*   `readability-magic-numbers`: ✅ **PARTIALLY RESOLVED in 0.7.107 (Batch 1: Core Physics)**. Hardcoded numeric constants obscure the intent behind equations and drastically increases long-term maintenance burdens. Extracted over 60 constants from `FFBEngine.cpp` into `FFBEngine.h`.
 *   `readability-function-cognitive-complexity`: Functions bloated with excessive nesting loops and conditional jumps hinder comprehension exponentially.
 *   `readability-static-accessed-through-instance`: Accessing static variables tied to instance objects masks their static origins.
 *   `bugprone-unused-local-non-trivial-variable`: Variables initialized but never read incur unnecessary performance cost and memory allocations.

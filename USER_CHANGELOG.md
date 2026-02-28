@@ -2,6 +2,20 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]February 28, 2026[/b][/size]
+[b]Version 0.7.107 - Core Physics Refinement (Batch 1)[/b]
+
+[b]New release[/b] (0.7.107): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Physics Code Quality[/b]: In a major internal cleanup effort, we have replaced over 60 hardcoded "magic numbers" in the core physics engine with named, physically-descriptive constants. This transition ensures that every mathematical threshold, smoothing factor, and physics coefficient (from tire radius fallbacks to suspension bottoming impulses) is explicitly documented within the code.
+[*][b]Maintainability[/b]: These changes make the FFB engine significantly easier to tune and audit, while also satisfying strict industry-standard code quality checks (Clang-Tidy). There is zero change to the actual FFB feel, but the underlying "blueprints" are now much more robust.
+[/list]
+
+---
+
+
 [size=5][b]February 27, 2026[/b][/size]
 [b]Version 0.7.106 - Build System Hygiene[/b]
 

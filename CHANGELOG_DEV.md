@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.107] - 2026-02-28
+### Fixed
+- **Static Analysis**: Resolved `readability-magic-numbers` warnings in Batch 1 (Core Physics). 
+  - **FFBEngine Refactoring**: Extracted over 60 literal magic numbers from `FFBEngine.cpp` into named `static constexpr` constants in `FFBEngine.h`. 
+  - **Centralized Constants**: Organized constants into logical groups (Physics, Telemetry, Filtering, Synthesis) in the private section of `FFBEngine`. 
+  - **CI/Build Integration**: Re-enabled the `readability-magic-numbers` check in `build_commands.txt` and `.github/workflows/windows-build-and-test.yml` to prevent future regressions.
+
 ## [0.7.106] - 2026-02-27
 ### Fixed
 - **CI / Static Analysis**: Resolved all `performance-no-int-to-ptr` warnings re-appearing in the Linux `Configure and Build (Debug + Coverage)` job. Although this check was marked ✅ RESOLVED in 0.7.100, new test files added since then introduced additional callsites.
