@@ -69,11 +69,16 @@ N/A - No changes to header dependencies or constructors.
 ### Plan Deviations
 - Added `VERSION` and `CHANGELOG_DEV.md` updates to the implementation loop as requested by standard "Fixer" workflows.
 
-### CI Failure: Deprecated Artifact Actions
-During the PR scan, the `scan-pr / scan-pr` job failed due to the use of a deprecated version of `actions/upload-artifact`.
-- **Cause**: The `.github/workflows/osv-scanner.yml` workflow was using `google/osv-scanner-action` v1.7.1 (via a specific commit hash), which internally depended on `actions/upload-artifact@v3`. GitHub has deprecated v3 and now automatically fails requests using it (see [GitHub Blog](https://github.blog/changelog/2024-04-16-deprecation-notice-v3-of-the-artifact-actions/)).
-- **Resolution**: Updated `.github/workflows/osv-scanner.yml` to use `google/osv-scanner-action@v2.3.3`. This newer version uses `actions/upload-artifact@v4`, which is the current requirement.
-- **Recommendations**: Regularly audit and update GitHub Action versions to their latest stable releases to prevent sudden CI breakage from platform-wide deprecations.
+### CI Failure: Deprecated Artifact Actions & Permissions
+During the PR scan, the `scan-pr / scan-pr` job failed multiple times.
+1.  **Deprecated Version**: Failed because of `actions/upload-artifact@v3` usage.
+    - **Cause**: The `.github/workflows/osv-scanner.yml` workflow used `google/osv-scanner-action` v1.7.1, which internally depended on the deprecated v3 artifact action. GitHub now automatically fails such requests (see [GitHub Blog](https://github.blog/changelog/2024-04-16-deprecation-notice-v3-of-the-artifact-actions/)).
+    - **Resolution**: Updated `.github/workflows/osv-scanner.yml` to use `google/osv-scanner-action@v2.3.3`.
+2.  **Missing Permissions**: Failed after updating to v2.3.3 because of insufficient permissions.
+    - **Cause**: The newer version of the scanner action requires `actions: read` permission to function, which was missing from the workflow's `permissions` block.
+    - **Resolution**: Added `actions: read` to the `permissions` section in `.github/workflows/osv-scanner.yml`.
+
+- **Recommendations**: Regularly audit and update GitHub Action versions to their latest stable releases and ensure the corresponding workflow permissions meet the requirements of the updated actions to prevent sudden CI breakage.
 
 ### Recommendations
 - Future improvements could consider a "Slow Relax" mode for menu entry if the current 1000 units/s slew is still too fast for some users, though it currently matches "Normal" driving safety levels.

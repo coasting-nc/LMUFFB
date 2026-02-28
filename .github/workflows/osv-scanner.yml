@@ -26,6 +26,8 @@ permissions:
   security-events: write
   # Read commit contents
   contents: read
+  # Required by google/osv-scanner-action v2+
+  actions: read
 
 jobs:
   scan-scheduled:
