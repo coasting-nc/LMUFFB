@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-02-27 22:25:36</td>
+            <td class="headerValue">2026-02-28 11:59:10</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -87,31 +87,31 @@
 <span id="L16"><span class="lineNum">      16</span>                 :             :     /**</span>
 <span id="L17"><span class="lineNum">      17</span>                 :             :      * @brief Record a single event occurrence.</span>
 <span id="L18"><span class="lineNum">      18</span>                 :             :      */</span>
-<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC">        5799 :     void RecordEvent() {</span></span>
-<span id="L20"><span class="lineNum">      20</span>                 :<span class="tlaGNC">        5799 :         RecordEventAt(std::chrono::steady_clock::now());</span></span>
-<span id="L21"><span class="lineNum">      21</span>                 :<span class="tlaGNC">        5799 :     }</span></span>
+<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC">        5798 :     void RecordEvent() {</span></span>
+<span id="L20"><span class="lineNum">      20</span>                 :<span class="tlaGNC">        5798 :         RecordEventAt(std::chrono::steady_clock::now());</span></span>
+<span id="L21"><span class="lineNum">      21</span>                 :<span class="tlaGNC">        5798 :     }</span></span>
 <span id="L22"><span class="lineNum">      22</span>                 :             : </span>
 <span id="L23"><span class="lineNum">      23</span>                 :             :     /**</span>
 <span id="L24"><span class="lineNum">      24</span>                 :             :      * @brief Record an event at a specific time (useful for testing).</span>
 <span id="L25"><span class="lineNum">      25</span>                 :             :      */</span>
-<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">        6307 :     void RecordEventAt(std::chrono::steady_clock::time_point now) {</span></span>
-<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        6307 :         m_count++;</span></span>
-<span id="L28"><span class="lineNum">      28</span>   [<span class="tlaGBC" title="Branch 0 was taken 6307 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 6307 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        6307 :         auto duration_ms = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(now - m_startTime).count();</span></span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">        6306 :     void RecordEventAt(std::chrono::steady_clock::time_point now) {</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        6306 :         m_count++;</span></span>
+<span id="L28"><span class="lineNum">      28</span>   [<span class="tlaGBC" title="Branch 0 was taken 6306 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 6306 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        6306 :         auto duration_ms = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(now - m_startTime).count();</span></span>
 <span id="L29"><span class="lineNum">      29</span>                 :             : </span>
 <span id="L30"><span class="lineNum">      30</span>                 :             :         // Update rate every second</span>
-<span id="L31"><span class="lineNum">      31</span>         [<span class="tlaGBC" title="Branch 0 was taken 16 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6291 times"> + </span>]:<span class="tlaGNC">        6307 :         if (duration_ms &gt;= 1000) {</span></span>
+<span id="L31"><span class="lineNum">      31</span>         [<span class="tlaGBC" title="Branch 0 was taken 16 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6290 times"> + </span>]:<span class="tlaGNC">        6306 :         if (duration_ms &gt;= 1000) {</span></span>
 <span id="L32"><span class="lineNum">      32</span>                 :<span class="tlaGNC">          16 :             long count = m_count.exchange(0);</span></span>
 <span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC">          16 :             double rate = (double)count * 1000.0 / (double)duration_ms;</span></span>
 <span id="L34"><span class="lineNum">      34</span>                 :<span class="tlaGNC">          16 :             m_lastRateScaled.store((long)(rate * 100.0));</span></span>
 <span id="L35"><span class="lineNum">      35</span>                 :<span class="tlaGNC">          16 :             m_startTime = now;</span></span>
 <span id="L36"><span class="lineNum">      36</span>                 :             :         }</span>
-<span id="L37"><span class="lineNum">      37</span>                 :<span class="tlaGNC">        6307 :     }</span></span>
+<span id="L37"><span class="lineNum">      37</span>                 :<span class="tlaGNC">        6306 :     }</span></span>
 <span id="L38"><span class="lineNum">      38</span>                 :             : </span>
 <span id="L39"><span class="lineNum">      39</span>                 :             :     /**</span>
 <span id="L40"><span class="lineNum">      40</span>                 :             :      * @brief Get the last calculated rate in Hz.</span>
 <span id="L41"><span class="lineNum">      41</span>                 :             :      */</span>
-<span id="L42"><span class="lineNum">      42</span>                 :<span class="tlaGNC">       38119 :     double GetRate() const {</span></span>
-<span id="L43"><span class="lineNum">      43</span>                 :<span class="tlaGNC">       76238 :         return (double)m_lastRateScaled.load() / 100.0;</span></span>
+<span id="L42"><span class="lineNum">      42</span>                 :<span class="tlaGNC">       38111 :     double GetRate() const {</span></span>
+<span id="L43"><span class="lineNum">      43</span>                 :<span class="tlaGNC">       76222 :         return (double)m_lastRateScaled.load() / 100.0;</span></span>
 <span id="L44"><span class="lineNum">      44</span>                 :             :     }</span>
 <span id="L45"><span class="lineNum">      45</span>                 :             : </span>
 <span id="L46"><span class="lineNum">      46</span>                 :             : private:</span>

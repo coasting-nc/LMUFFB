@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-02-27 22:25:36</td>
+            <td class="headerValue">2026-02-28 11:59:10</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -50,7 +50,7 @@
             <td></td>
             <td class="headerItem">Branches:</td>
             <td class="headerCovTableEntryLo">34.3&nbsp;%</td>
-            <td class="headerCovTableEntry">1442</td>
+            <td class="headerCovTableEntry">1440</td>
             <td class="headerCovTableEntry">494</td>
           </tr>
                   <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
@@ -282,7 +282,7 @@
 <span id="L199"><span class="lineNum">     199</span>         [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         377 :     bool is_logging = AsyncLogger::Get().IsLogging();</span></span>
 <span id="L200"><span class="lineNum">     200</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 374 times"> + </span>]:<span class="tlaGNC">         377 :     if (is_logging) {</span></span>
 <span id="L201"><span class="lineNum">     201</span>   [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 3 times"> + </span>]:<span class="tlaGNC">           3 :          if (ImGui::Button(&quot;STOP LOG&quot;, ImVec2(80, 0))) {</span></span>
-<span id="L202"><span class="lineNum">     202</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC tlaBgUNC">           0 :              AsyncLogger::Get().Stop();</span></span>
+<span id="L202"><span class="lineNum">     202</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC tlaBgUNC">           0 :              AsyncLogger::Get().Stop();</span></span>
 <span id="L203"><span class="lineNum">     203</span>                 :             :          }</span>
 <span id="L204"><span class="lineNum">     204</span>   [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 3 times"> + </span> :<span class="tlaGNC tlaBgGNC">           3 :          if (ImGui::IsItemHovered()) ImGui::SetTooltip(&quot;%s&quot;, Tooltips::LOG_STOP);</span></span>
 <span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
@@ -620,7 +620,7 @@
 <span id="L520"><span class="lineNum">     520</span>                 :             :             Tooltips::REAR_ALIGN_TORQUE);</span>
 <span id="L521"><span class="lineNum">     521</span>         [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         377 :         FloatSetting(&quot;Yaw Kick&quot;, &amp;engine.m_sop_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK),</span></span>
 <span id="L522"><span class="lineNum">     522</span>                 :             :             Tooltips::YAW_KICK);</span>
-<span id="L523"><span class="lineNum">     523</span>         [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         377 :         FloatSetting(&quot;  Activation Threshold&quot;, &amp;engine.m_yaw_kick_threshold, 0.0f, 10.0f, &quot;%.2f rad/s²&quot;, Tooltips::YAW_KICK_THRESHOLD);</span></span>
+<span id="L523"><span class="lineNum">     523</span>         [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         377 :         FloatSetting(&quot;  Activation Threshold&quot;, &amp;engine.m_yaw_kick_threshold, 0.0f, 10.0f, &quot;%.2f rad/sÂ²&quot;, Tooltips::YAW_KICK_THRESHOLD);</span></span>
 <span id="L524"><span class="lineNum">     524</span>                 :             : </span>
 <span id="L525"><span class="lineNum">     525</span>         [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         377 :         FloatSetting(&quot;  Kick Response&quot;, &amp;engine.m_yaw_accel_smoothing, 0.000f, 0.050f, &quot;%.3f s&quot;,</span></span>
 <span id="L526"><span class="lineNum">     526</span>                 :             :             Tooltips::YAW_KICK_RESPONSE,</span>
