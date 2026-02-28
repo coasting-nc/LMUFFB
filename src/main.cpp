@@ -183,7 +183,11 @@ void FFBThread() {
                     // full_allowed requires: player control, not disqualified, and in realtime.
                     bool full_allowed = g_engine.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase) && in_realtime;
 
+                    // v0.7.108: Explicitly zero force if not in realtime (Issue #174).
+                    // We still call calculate_force to keep engine state updated, but override the result.
+                    // This ensures the safety slew limiter can smoothly relax the wheel.
                     force = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed);
+                    if (!in_realtime) force = 0.0;
                     should_output = true;
 
                     // If not full_allowed, use tighter slew rate limiting
