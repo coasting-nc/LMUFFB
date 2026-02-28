@@ -52,6 +52,7 @@ set(TEST_SOURCES
     test_ffb_soft_lock.cpp
     test_issue_100_timing.cpp
     test_issue_104_slope_disconnect.cpp
+    test_issue_174_repro.cpp
     test_ffb_dynamic_weight.cpp
     test_rate_monitor.cpp
     test_math_utils.cpp
