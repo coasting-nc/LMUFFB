@@ -13,6 +13,9 @@ if(MSVC)
 
     # Multi-processor compilation for faster builds (Issue #165 follow-up)
     add_compile_options(/MP)
+    
+    # Enable C++ exceptions explicitly
+    add_compile_options(/EHsc)
 
     # Linker flags: ASLR (/DYNAMICBASE) and DEP (/NXCOMPAT)
     add_link_options(/DYNAMICBASE /NXCOMPAT)
@@ -138,6 +141,11 @@ endif()
 
 # Read Version
 file(STRINGS "VERSION" LMUFFB_VERSION)
+
+# Ensure clang-tidy sees exception support on Windows
+if(CMAKE_CXX_CLANG_TIDY AND MSVC)
+    list(APPEND CMAKE_CXX_CLANG_TIDY "--extra-arg=/EHsc" "--extra-arg=-fexceptions" "--extra-arg=-fcxx-exceptions")
+endif()
 message(STATUS ">>> CMake VERSION detected: [${LMUFFB_VERSION}]")
 
 # Parse version for Resource File (e.g. 0.7.29 -> 0,7,29,0)
