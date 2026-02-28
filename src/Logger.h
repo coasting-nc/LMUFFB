@@ -56,10 +56,14 @@ public:
 
 private:
     Logger() {}
-    ~Logger() {
-        if (m_file.is_open()) {
-            m_file << "Logger Shutdown.\n";
-            m_file.close();
+    ~Logger() noexcept {
+        try {
+            if (m_file.is_open()) {
+                m_file << "Logger Shutdown.\n";
+                m_file.close();
+            }
+        } catch (...) {
+            // Destructor must not throw
         }
     }
 

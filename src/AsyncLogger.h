@@ -165,21 +165,25 @@ public:
     }
     
     // Stop logging and flush
-    void Stop() {
-        {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            if (!m_running) return;
-            m_running = false;
+    void Stop() noexcept {
+        try {
+            {
+                std::lock_guard<std::mutex> lock(m_mutex);
+                if (!m_running) return;
+                m_running = false;
+            }
+            m_cv.notify_one();
+            if (m_worker.joinable()) {
+                m_worker.join();
+            }
+            if (m_file.is_open()) {
+                m_file.close();
+            }
+            m_buffer_active.clear();
+            m_buffer_writing.clear();
+        } catch (...) {
+            // Destructor/Stop should not throw
         }
-        m_cv.notify_one();
-        if (m_worker.joinable()) {
-            m_worker.join();
-        }
-        if (m_file.is_open()) {
-            m_file.close();
-        }
-        m_buffer_active.clear();
-        m_buffer_writing.clear();
     }
     
     // Log a frame - called from FFB thread (must be fast!)
