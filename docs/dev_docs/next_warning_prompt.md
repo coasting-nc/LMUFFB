@@ -1,15 +1,18 @@
 # Prompt: Tackle `bugprone-narrowing-conversions`
 
-I'm working on resolving Clang-Tidy warnings for the project at `c:\dev\personal\LMUFFB`.
+I'm working on resolving Clang-Tidy warnings for the LMUFFB project.
 
 The key files are:
 - **Suppression backlog report**: `docs/dev_docs/reports/clang_tidy_suppressions_backlog.md`
 - **CI workflow**: `.github/workflows/windows-build-and-test.yml`
 - **Local build commands**: `build_commands.txt`
 
-The next item on the **Top 10 High Priority** list is **`bugprone-narrowing-conversions`** (item #8 in the report).
+The next item you have to work on is **`readability-magic-numbers`**.
 
-Please follow this exact workflow:
+
+on the **Top 10 High Priority** list is **`bugprone-narrowing-conversions`** (under the Medium Priority list in the report).
+
+Please follow the workflow below to resolve the warnings. The workflow described below has examples based on based `bugprone-narrowing-conversions`, but you have to replace the examples with the appropriate examples for `readability-magic-numbers`.
 
 ---
 
