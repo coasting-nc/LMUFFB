@@ -121,7 +121,7 @@ TEST_CASE(test_linux_mock_error_branches, "System") {
     #ifndef _WIN32
     // Mock shared memory to ensure connection succeeds even on Linux
     HANDLE hMap = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, (DWORD)sizeof(SharedMemoryLayout), LMU_SHARED_MEMORY_FILE);
-    // Clean up the named mapping handle immediately — CreateFileMappingA returns a
+    // Clean up the named mapping handle immediately â€” CreateFileMappingA returns a
     // heap-allocated std::string* as the mock handle; forgetting CloseHandle causes
     // a 32-byte ASan/LeakSanitizer error.
     // NOTE: do NOT erase the map entry here. GameConnector::TryConnect() stores a raw

@@ -162,9 +162,9 @@ TEST_CASE_TAGGED(test_logger_performance_impact, "Diagnostics", {"Logger"}) {
     AsyncLogger::Get().Stop();
     
     double overhead_per_call = (double)(duration_with_log - duration_no_log) / iterations;
-    std::cout << "  No logging: " << duration_no_log << " μs total" << std::endl;
-    std::cout << "  With logging: " << duration_with_log << " μs total" << std::endl;
-    std::cout << "  Overhead per call: " << overhead_per_call << " μs" << std::endl;
+    std::cout << "  No logging: " << duration_no_log << " Î¼s total" << std::endl;
+    std::cout << "  With logging: " << duration_with_log << " Î¼s total" << std::endl;
+    std::cout << "  Overhead per call: " << overhead_per_call << " Î¼s" << std::endl;
     
     // Verify overhead is less than 10 microseconds per call (as per plan)
     ASSERT_TRUE(overhead_per_call < 10.0);

@@ -1,4 +1,4 @@
-﻿#include "FFBEngine.h"
+#include "FFBEngine.h"
 #include "Config.h"
 #include <iostream>
 #include <mutex>

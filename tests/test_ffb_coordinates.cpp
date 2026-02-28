@@ -126,9 +126,9 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     }
     
     // After LPF settling:
-    // Slip angle ≈ 0.245 rad (smoothed)
+    // Slip angle â‰ˆ 0.245 rad (smoothed)
     // Load = 4300 N (4000 + 300)
-    // Lat force = 0.245 * 4300 * 15.0 ≈ 15817 N (clamped to 6000 N)
+    // Lat force = 0.245 * 4300 * 15.0 â‰ˆ 15817 N (clamped to 6000 N)
     // Torque = -6000 * 0.001 * 1.0 = -6.0 Nm (INVERTED for counter-steer)
     // Normalized = -6.0 / 20.0 = -0.3
     
@@ -158,8 +158,8 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     }
     
     // v0.4.19: With sign preserved in slip angle calculation:
-    // Slip angle = atan2(-5.0, 20.0) ≈ -0.245 rad (NEGATIVE)
-    // Lat force = -0.245 * 4300 * 15.0 ≈ -15817 N (clamped to -6000 N)
+    // Slip angle = atan2(-5.0, 20.0) â‰ˆ -0.245 rad (NEGATIVE)
+    // Lat force = -0.245 * 4300 * 15.0 â‰ˆ -15817 N (clamped to -6000 N)
     // Torque = -(-6000) * 0.001 * 1.0 = +6.0 Nm (POSITIVE for right counter-steer)
     // Normalized = +6.0 / 20.0 = +0.3
     
@@ -286,7 +286,7 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
     
     FFBSnapshot snap = batch.back();
     
-    // Expected: atan2(5.0, 20.0) ≈ 0.245 rad (POSITIVE)
+    // Expected: atan2(5.0, 20.0) â‰ˆ 0.245 rad (POSITIVE)
     if (snap.raw_front_slip_angle > 0.2) {
         std::cout << "[PASS] Front slip angle is POSITIVE for left slide (" << snap.raw_front_slip_angle << " rad)" << std::endl;
         g_tests_passed++;
@@ -320,7 +320,7 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
     if (!batch.empty()) {
         snap = batch.back();
         
-        // Expected: atan2(-5.0, 20.0) ≈ -0.245 rad (NEGATIVE)
+        // Expected: atan2(-5.0, 20.0) â‰ˆ -0.245 rad (NEGATIVE)
         if (snap.raw_front_slip_angle < -0.2) {
             std::cout << "[PASS] Front slip angle is NEGATIVE for right slide (" << snap.raw_front_slip_angle << " rad)" << std::endl;
             g_tests_passed++;

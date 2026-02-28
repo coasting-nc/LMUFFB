@@ -606,7 +606,7 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     engine.m_yaw_accel_smoothed = 0.0; // Reset
     
     // Negative value with magnitude above threshold
-    data.mLocalRotAccel.y = -6.0; // |âˆ’6.0| = 6.0 > 5.0
+    data.mLocalRotAccel.y = -6.0; // |Ã¢Ë†â€™6.0| = 6.0 > 5.0
     engine.calculate_force(&data);
     double force_negative = engine.calculate_force(&data);
     
@@ -614,7 +614,7 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     
     // Negative value with magnitude below threshold
     engine.m_yaw_accel_smoothed = 0.0; // Reset
-    data.mLocalRotAccel.y = -4.0; // |âˆ’4.0| = 4.0 < 5.0
+    data.mLocalRotAccel.y = -4.0; // |Ã¢Ë†â€™4.0| = 4.0 < 5.0
     engine.calculate_force(&data);
     double force_negative_below = engine.calculate_force(&data);
     
@@ -701,7 +701,7 @@ TEST_CASE(test_chassis_inertia_smoothing_convergence, "YawGyro") {
     data.mDeltaTime = 0.0025; // 400Hz
     
     // Chassis tau = 0.035s, alpha = dt / (tau + dt)
-    // At 400Hz: alpha = 0.0025 / (0.035 + 0.0025) â‰ˆ 0.0667
+    // At 400Hz: alpha = 0.0025 / (0.035 + 0.0025) Ã¢â€°Ë† 0.0667
     // After 50 frames (~125ms), should be near steady-state
     
     for (int i = 0; i < 50; i++) {
@@ -714,7 +714,7 @@ TEST_CASE(test_chassis_inertia_smoothing_convergence, "YawGyro") {
     
     // Should be close to input (9.81) after 50 frames
     // Exponential decay: y(t) = target * (1 - e^(-t/tau))
-    // At t = 125ms, tau = 35ms: y = 9.81 * (1 - e^(-3.57)) â‰ˆ 9.81 * 0.972 â‰ˆ 9.53
+    // At t = 125ms, tau = 35ms: y = 9.81 * (1 - e^(-3.57)) Ã¢â€°Ë† 9.81 * 0.972 Ã¢â€°Ë† 9.53
     double expected = 9.81 * 0.95; // Allow 5% error
     
     if (smoothed_x > expected && smoothed_z > expected) {

@@ -547,7 +547,7 @@ TEST_CASE(test_steering_shaft_smoothing, "CorePhysics") {
     data.mSteeringShaftTorque = 1.0;
 
     // After 1 frame (10ms) with 50ms tau:
-    // alpha = dt / (tau + dt) = 10 / (50 + 10) = 1/6 â‰ˆ 0.166
+    // alpha = dt / (tau + dt) = 10 / (50 + 10) = 1/6 Ã¢â€°Ë† 0.166
     // Expected force: 0.166
     double force = engine.calculate_force(&data);
 

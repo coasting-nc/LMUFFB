@@ -80,7 +80,7 @@ inline double inverse_lerp(double min_val, double max_val, double value) {
 
 // Helper: Smoothstep interpolation
 // Returns smooth S-curve interpolation from 0 to 1
-// Uses Hermite polynomial: t² × (3 - 2t)
+// Uses Hermite polynomial: tÂ² Ã— (3 - 2t)
 // Zero derivative at both endpoints for seamless transitions
 inline double smoothstep(double edge0, double edge1, double x) {
     double range = edge1 - edge0;

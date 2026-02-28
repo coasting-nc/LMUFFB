@@ -13,7 +13,7 @@
 namespace FFBEngineTests {
 
 // ============================================================
-// TEST 1 — DT_EPSILON / DEFAULT_DT
+// TEST 1 â€” DT_EPSILON / DEFAULT_DT
 // When mDeltaTime is 0 (or negative), calculate_force() must:
 //   (a) replace dt with DEFAULT_DT (0.0025)
 //   (b) set the m_warned_dt flag exactly once
@@ -38,7 +38,7 @@ TEST_CASE(test_mn_invalid_delta_time_fallback, "CorePhysics") {
 
     double force = engine.calculate_force(&data);
 
-    // Must produce a finite output — not NaN/Inf
+    // Must produce a finite output â€” not NaN/Inf
     ASSERT_TRUE(std::isfinite(force));
     // m_warned_dt must be set after the first call with bad dt
     ASSERT_TRUE(engine.m_warned_dt);
@@ -53,7 +53,7 @@ TEST_CASE(test_mn_invalid_delta_time_fallback, "CorePhysics") {
 }
 
 // ============================================================
-// TEST 2a — MISSING_LOAD_WARN_THRESHOLD (20 frames), SuspForce path
+// TEST 2a â€” MISSING_LOAD_WARN_THRESHOLD (20 frames), SuspForce path
 // ============================================================
 TEST_CASE(test_mn_missing_load_fallback_susp_force, "CorePhysics") {
     std::cout << "\nTest: [MagicNumbers] Missing Load fallback via SuspForce path" << std::endl;
@@ -67,7 +67,7 @@ TEST_CASE(test_mn_missing_load_fallback_susp_force, "CorePhysics") {
 
     for (int i = 0; i < 4; i++) {
         data.mWheel[i].mTireLoad = 0.0;
-        data.mWheel[i].mSuspForce = 500.0; // > MIN_VALID_SUSP_FORCE (10N) → approximate_load path
+        data.mWheel[i].mSuspForce = 500.0; // > MIN_VALID_SUSP_FORCE (10N) â†’ approximate_load path
     }
 
     // Run > 20 frames to surpass MISSING_LOAD_WARN_THRESHOLD
@@ -85,7 +85,7 @@ TEST_CASE(test_mn_missing_load_fallback_susp_force, "CorePhysics") {
 }
 
 // ============================================================
-// TEST 2b — MISSING_LOAD_WARN_THRESHOLD (20 frames), kinematic path
+// TEST 2b â€” MISSING_LOAD_WARN_THRESHOLD (20 frames), kinematic path
 // ============================================================
 TEST_CASE(test_mn_missing_load_fallback_kinematic, "CorePhysics") {
     std::cout << "\nTest: [MagicNumbers] Missing Load fallback via Kinematic path" << std::endl;
@@ -101,7 +101,7 @@ TEST_CASE(test_mn_missing_load_fallback_kinematic, "CorePhysics") {
     // Zero both TireLoad AND SuspForce to force kinematic fallback
     for (int i = 0; i < 4; i++) {
         data.mWheel[i].mTireLoad = 0.0;
-        data.mWheel[i].mSuspForce = 0.0; // < MIN_VALID_SUSP_FORCE → kinematic path
+        data.mWheel[i].mSuspForce = 0.0; // < MIN_VALID_SUSP_FORCE â†’ kinematic path
     }
 
     for (int i = 0; i < 25; i++) {
@@ -116,7 +116,7 @@ TEST_CASE(test_mn_missing_load_fallback_kinematic, "CorePhysics") {
 }
 
 // ============================================================
-// TEST 3 — MISSING_TELEMETRY_WARN_THRESHOLD (50 frames)
+// TEST 3 â€” MISSING_TELEMETRY_WARN_THRESHOLD (50 frames)
 // Four paths: susp force, susp deflection, front lat force, rear lat force.
 // ============================================================
 
@@ -211,19 +211,19 @@ TEST_CASE(test_mn_missing_lat_force_rear_warning, "CorePhysics") {
 }
 
 // ============================================================
-// TEST 4 — BOTTOMING_RH_THRESHOLD_M (0.002m) / BOTTOMING_FREQ_HZ (50.0)
-// Ride height exactly at 2mm → NOT triggered.
-// Ride height at 1mm        → bottoming IS triggered → non-zero force.
+// TEST 4 â€” BOTTOMING_RH_THRESHOLD_M (0.002m) / BOTTOMING_FREQ_HZ (50.0)
+// Ride height exactly at 2mm â†’ NOT triggered.
+// Ride height at 1mm        â†’ bottoming IS triggered â†’ non-zero force.
 // ============================================================
 TEST_CASE(test_mn_bottoming_ride_height_threshold, "Texture") {
     std::cout << "\nTest: [MagicNumbers] Bottoming RH threshold (0.002m)" << std::endl;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    // dt=0.005 → 200Hz. Phase = 50Hz * 0.005 * 2π = π/2 → sin(π/2)=1 → max amplitude
+    // dt=0.005 â†’ 200Hz. Phase = 50Hz * 0.005 * 2Ï€ = Ï€/2 â†’ sin(Ï€/2)=1 â†’ max amplitude
     data.mDeltaTime = 0.005;
     data.mLocalVel.z = -20.0;
 
-    // Case A: exactly at threshold (0.002) — NOT triggered
+    // Case A: exactly at threshold (0.002) â€” NOT triggered
     {
         FFBEngine engine;
         InitializeEngine(engine);
@@ -238,7 +238,7 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold, "Texture") {
         std::cout << "  At threshold (0.002m): force = " << force << std::endl;
     }
 
-    // Case B: below threshold (0.001) — TRIGGERED → non-zero force
+    // Case B: below threshold (0.001) â€” TRIGGERED â†’ non-zero force
     {
         FFBEngine engine;
         InitializeEngine(engine);
@@ -258,11 +258,11 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold, "Texture") {
 }
 
 // ============================================================
-// TEST 5 — SPIN_SLIP_THRESHOLD (0.2), SPIN_THROTTLE_THRESHOLD (0.05),
+// TEST 5 â€” SPIN_SLIP_THRESHOLD (0.2), SPIN_THROTTLE_THRESHOLD (0.05),
 //           SPIN_TORQUE_DROP_FACTOR (0.6), SPIN_SEVERITY_RANGE (0.5)
 // With slip=0.4 and gain=1.0:
 //   severity = (0.4 - 0.2) / 0.5 = 0.4
-//   gain_reduction = 1.0 - (0.4 × 1.0 × 0.6) = 0.76
+//   gain_reduction = 1.0 - (0.4 Ã— 1.0 Ã— 0.6) = 0.76
 // ============================================================
 TEST_CASE(test_mn_spin_detection_torque_drop, "Texture") {
     std::cout << "\nTest: [MagicNumbers] Spin detection SPIN_TORQUE_DROP_FACTOR=0.6" << std::endl;
@@ -312,13 +312,13 @@ TEST_CASE(test_mn_spin_detection_torque_drop, "Texture") {
 }
 
 // ============================================================
-// TEST 6 — SLIDE_VEL_THRESHOLD (1.5 m/s)
-// Below 1.5 m/s → no slide noise. Above → slide noise non-zero.
+// TEST 6 â€” SLIDE_VEL_THRESHOLD (1.5 m/s)
+// Below 1.5 m/s â†’ no slide noise. Above â†’ slide noise non-zero.
 // ============================================================
 TEST_CASE(test_mn_slide_texture_velocity_threshold, "Texture") {
     std::cout << "\nTest: [MagicNumbers] Slide texture SLIDE_VEL_THRESHOLD=1.5m/s" << std::endl;
 
-    // Case A: Below threshold → no noise
+    // Case A: Below threshold â†’ no noise
     {
         FFBEngine engine;
         InitializeEngine(engine);
@@ -345,7 +345,7 @@ TEST_CASE(test_mn_slide_texture_velocity_threshold, "Texture") {
         std::cout << "  Below threshold: slide_noise = " << ctx.slide_noise << std::endl;
     }
 
-    // Case B: Above threshold → phase accumulates, noise or phase non-zero
+    // Case B: Above threshold â†’ phase accumulates, noise or phase non-zero
     {
         FFBEngine engine;
         InitializeEngine(engine);
@@ -361,14 +361,14 @@ TEST_CASE(test_mn_slide_texture_velocity_threshold, "Texture") {
         FFBCalculationContext ctx;
         ctx.dt = 0.01;
         ctx.car_speed = 20.0;
-        ctx.avg_grip = 0.0; // zero grip → maximum slide contribution
+        ctx.avg_grip = 0.0; // zero grip â†’ maximum slide contribution
         ctx.speed_gate = 1.0;
         ctx.texture_load_factor = 1.0;
         ctx.slide_noise = 0.0;
 
         FFBEngineTestAccess::CallCalculateSlideTexture(engine, &data, ctx);
 
-        // Phase should have advanced (freq ≈ 10 + 3*5 = 25Hz; dt=0.01 → phase ≈ 1.57rad)
+        // Phase should have advanced (freq â‰ˆ 10 + 3*5 = 25Hz; dt=0.01 â†’ phase â‰ˆ 1.57rad)
         // slide_noise may be 0 at certain exact phase values, but m_slide_phase will be > 0
         ASSERT_TRUE(engine.m_slide_phase > 0.0 || std::abs(ctx.slide_noise) > 0.0);
         std::cout << "  Above threshold: slide_phase = " << engine.m_slide_phase
@@ -377,10 +377,10 @@ TEST_CASE(test_mn_slide_texture_velocity_threshold, "Texture") {
 }
 
 // ============================================================
-// TEST 7 — ABS_PULSE_MAGNITUDE_SCALER (2.0)
+// TEST 7 â€” ABS_PULSE_MAGNITUDE_SCALER (2.0)
 // With abs_gain=1.0, speed_gate=1.0, and sin(phase)=1.0,
 // the ABS pulse force must equal 2.0 Nm exactly.
-// Phase condition: 20Hz × 0.0125s × 2π = π/2 → sin=1
+// Phase condition: 20Hz Ã— 0.0125s Ã— 2Ï€ = Ï€/2 â†’ sin=1
 // ============================================================
 TEST_CASE(test_mn_abs_pulse_magnitude_scaler, "Texture") {
     std::cout << "\nTest: [MagicNumbers] ABS_PULSE_MAGNITUDE_SCALER=2.0" << std::endl;
@@ -391,11 +391,11 @@ TEST_CASE(test_mn_abs_pulse_magnitude_scaler, "Texture") {
     engine.m_abs_gain = 1.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    // dt = 1/(4 × 20Hz) = 0.0125s → exactly π/2 phase advance → sin=1
+    // dt = 1/(4 Ã— 20Hz) = 0.0125s â†’ exactly Ï€/2 phase advance â†’ sin=1
     data.mDeltaTime = 0.0125;
     data.mUnfilteredBrake = 1.0f;  // > ABS_PEDAL_THRESHOLD (0.5)
 
-    // pressure_delta = (0.5 - 1.0) / 0.0125 = -40.0 → |40| > ABS_PRESSURE_RATE_THRESHOLD (2.0)
+    // pressure_delta = (0.5 - 1.0) / 0.0125 = -40.0 â†’ |40| > ABS_PRESSURE_RATE_THRESHOLD (2.0)
     data.mWheel[0].mBrakePressure = 0.5f;
     engine.m_prev_brake_pressure[0] = 1.0;
 
@@ -411,7 +411,7 @@ TEST_CASE(test_mn_abs_pulse_magnitude_scaler, "Texture") {
     // Exact sin value depends on floating-point phase, so we verify:
     //   (a) Force is non-zero (ABS was triggered)
     //   (b) Force does not exceed 2.0 Nm (scaler is 2, not 3 or more)
-    //   (c) Force is at least 85% of max (phase near π/2)
+    //   (c) Force is at least 85% of max (phase near Ï€/2)
     ASSERT_TRUE(std::abs(ctx.abs_pulse_force) > 0.0);
     ASSERT_LE(std::abs(ctx.abs_pulse_force), 2.001);   // bounded by 2 * abs_gain
     ASSERT_GT(std::abs(ctx.abs_pulse_force), 2.0 * 0.85); // near peak

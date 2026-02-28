@@ -145,7 +145,7 @@ TEST_CASE(test_preset_initialization, "Config") {
     
     Config::LoadPresets();
     
-    // âš ï¸  IMPORTANT: These expected values MUST match Config.h default member initializers!
+    // Ã¢Å¡Â Ã¯Â¸  IMPORTANT: These expected values MUST match Config.h default member initializers!
     // When changing the default preset in Config.h, update these values to match.
     // Also update SetAdvancedBraking() default parameters in Config.h.
     // See Config.h line ~12 for the single source of truth.
@@ -167,7 +167,7 @@ TEST_CASE(test_preset_initialization, "Config") {
     const float t300_shaft_smooth = 0.0f;
     const float t300_notch_q = 2.0f;
     
-    // âš ï¸  IMPORTANT: This array MUST match the exact order of presets in Config.cpp LoadPresets()!
+    // Ã¢Å¡Â Ã¯Â¸  IMPORTANT: This array MUST match the exact order of presets in Config.cpp LoadPresets()!
     // When adding/removing/reordering presets in Config.cpp, update this array AND the loop count below.
     // Current count: 14 presets (v0.6.35: Added 4 DD presets after T300)
     const char* preset_names[] = {
@@ -189,7 +189,7 @@ TEST_CASE(test_preset_initialization, "Config") {
     
     bool all_passed = true;
     
-    // âš ï¸  IMPORTANT: Loop count (14) must match preset_names array size above!
+    // Ã¢Å¡Â Ã¯Â¸  IMPORTANT: Loop count (14) must match preset_names array size above!
     for (int i = 0; i < 14; i++) {
         if (i >= Config::presets.size()) {
             std::cout << "[FAIL] Preset " << i << " (" << preset_names[i] << ") not found!" << std::endl;
@@ -213,7 +213,7 @@ TEST_CASE(test_preset_initialization, "Config") {
         // Specialized presets have custom-tuned values that differ from Config.h defaults.
         // They should NOT be validated against expected_abs_freq, expected_lockup_freq_scale, etc.
         // 
-        // âš ï¸  IMPORTANT: When adding new specialized presets to Config.cpp, add them to this list!
+        // Ã¢Å¡Â Ã¯Â¸  IMPORTANT: When adding new specialized presets to Config.cpp, add them to this list!
         // Current specialized presets: Default, T300, GT3, LMPx/HY, GM, GM + Yaw Kick
         bool is_specialized = (preset.name == "Default" || 
                               preset.name == "T300" ||

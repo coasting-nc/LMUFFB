@@ -72,7 +72,7 @@ TEST_CASE(test_kinematic_load_cornering, "SlipGrip") {
     double load_fl = engine.calculate_kinematic_load(&data, 0); // Front Left
     double load_fr = engine.calculate_kinematic_load(&data, 1); // Front Right
     
-    // Static weight per wheel: 1100 * 9.81 * 0.45 / 2 â‰ˆ 2425N
+    // Static weight per wheel: 1100 * 9.81 * 0.45 / 2 Ã¢â€°Ë† 2425N
     // Lateral transfer: (9.81 / 9.81) * 2000 * 0.6 = 1200N
     // Left wheel: 2425 + 1200 = 3625N
     // Right wheel: 2425 - 1200 = 1225N
@@ -223,7 +223,7 @@ TEST_CASE(test_rear_force_workaround, "SlipGrip") {
     // ========================================
     // Set up wheel velocities to create a measurable slip angle.
     // Slip Angle = atan(Lateral_Vel / Longitudinal_Vel)
-    // With Lat = 5 m/s, Long = 20 m/s: atan(5/20) = atan(0.25) â‰ˆ 0.2449 rad â‰ˆ 14 degrees
+    // With Lat = 5 m/s, Long = 20 m/s: atan(5/20) = atan(0.25) Ã¢â€°Ë† 0.2449 rad Ã¢â€°Ë† 14 degrees
     // This represents a moderate cornering scenario.
     data.mWheel[2].mLateralPatchVel = 5.0;
     data.mWheel[3].mLateralPatchVel = 5.0;
@@ -255,7 +255,7 @@ TEST_CASE(test_rear_force_workaround, "SlipGrip") {
     // Previous value was -24.25 (which included 5.0x decoupling scale).
     // New expected value is -24.25 / 5.0 = -4.85 Nm.
     double expected_torque = -4.85;
-    double torque_tolerance = 0.5;    // ±0.5 Nm tolerance
+    double torque_tolerance = 0.5;    // Â±0.5 Nm tolerance
     
     // ========================================
     // Assertion

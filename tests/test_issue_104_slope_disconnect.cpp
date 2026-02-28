@@ -1,4 +1,4 @@
-﻿#include "test_ffb_common.h"
+#include "test_ffb_common.h"
 #include "src/Config.h"
 #include <fstream>
 

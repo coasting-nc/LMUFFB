@@ -30,8 +30,8 @@ struct LogFrame {
     
     // Vehicle State
     float speed;             // m/s
-    float lat_accel;         // m/s²
-    float long_accel;        // m/s²
+    float lat_accel;         // m/sÂ²
+    float long_accel;        // m/sÂ²
     float yaw_rate;          // rad/s
     
     // Front Axle - Raw Telemetry

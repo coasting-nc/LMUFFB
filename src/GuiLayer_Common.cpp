@@ -520,7 +520,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             Tooltips::REAR_ALIGN_TORQUE);
         FloatSetting("Yaw Kick", &engine.m_sop_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK),
             Tooltips::YAW_KICK);
-        FloatSetting("  Activation Threshold", &engine.m_yaw_kick_threshold, 0.0f, 10.0f, "%.2f rad/s²", Tooltips::YAW_KICK_THRESHOLD);
+        FloatSetting("  Activation Threshold", &engine.m_yaw_kick_threshold, 0.0f, 10.0f, "%.2f rad/sÂ²", Tooltips::YAW_KICK_THRESHOLD);
 
         FloatSetting("  Kick Response", &engine.m_yaw_accel_smoothing, 0.000f, 0.050f, "%.3f s",
             Tooltips::YAW_KICK_RESPONSE,

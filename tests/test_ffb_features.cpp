@@ -672,7 +672,7 @@ TEST_CASE(test_phase_wraparound, "Texture") {
         // Check for wraparound
         if (engine.m_lockup_phase < prev_phase) {
             wrap_count++;
-            // Verify wrap happened near 2Ï€
+            // Verify wrap happened near 2Ãâ‚¬
             // With freq=40Hz, dt=0.01, step is ~2.5 rad.
             // So prev_phase could be as low as 6.28 - 2.5 = 3.78.
             // We check it's at least > 3.0 to ensure it's not resetting randomly at 0.

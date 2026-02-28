@@ -287,11 +287,11 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
     double force_high = engine.calculate_force(&data);
     
     // Verify the 3x ratio more precisely
-    // Expected: force_high ≈ 3.0 * force_low (within tolerance for phase differences)
+    // Expected: force_high â‰ˆ 3.0 * force_low (within tolerance for phase differences)
     double expected_ratio = 3.0;
     double actual_ratio = std::abs(force_high) / (std::abs(force_low) + 0.0001); // Add epsilon to avoid div-by-zero
     
-    // Use a tolerance of ±0.5 to account for phase integration differences
+    // Use a tolerance of Â±0.5 to account for phase integration differences
     if (std::abs(actual_ratio - expected_ratio) < 0.5) {
         std::cout << "[PASS] Brake load cap applies 3x scaling (Ratio: " << actual_ratio << ", High: " << std::abs(force_high) << ", Low: " << std::abs(force_low) << ")" << std::endl;
         g_tests_passed++;

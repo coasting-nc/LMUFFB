@@ -609,7 +609,7 @@ TEST_CASE(test_inverse_lerp_helper, "SlopeDetection") {
     FFBEngine engine;
     
     // Note: For slope thresholds, min is less negative (-0.3), max is more negative (-2.0)
-    // slope=-0.3 → 0%, slope=-2.0 → 100%
+    // slope=-0.3 â†’ 0%, slope=-2.0 â†’ 100%
     
     // At min (start of range)
     double at_min = inverse_lerp(-0.3, -2.0, -0.3);

@@ -5,7 +5,7 @@
 // This file is a source-level split of FFBEngine.cpp (Approach A).
 // All functions here are FFBEngine member methods; FFBEngine.h is unchanged.
 //
-// Rationale: These functions form a self-contained "data preparation" layer —
+// Rationale: These functions form a self-contained "data preparation" layer â€”
 // they take raw (possibly broken/encrypted) telemetry and produce the best
 // available grip and load values. The FFB engine then consumes those values
 // without needing to know how they were estimated.
@@ -100,8 +100,8 @@ double FFBEngine::calculate_slip_angle(const TelemWheelV01& w, double& prev_stat
     if (v_long < MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;
     
     // v0.4.19: PRESERVE SIGN - Do NOT use abs() on lateral velocity
-    // Positive lateral vel (+X = left) → Positive slip angle
-    // Negative lateral vel (-X = right) → Negative slip angle
+    // Positive lateral vel (+X = left) â†’ Positive slip angle
+    // Negative lateral vel (-X = right) â†’ Negative slip angle
     // This sign is critical for directional counter-steering
     double raw_angle = std::atan2(w.mLateralPatchVel, v_long);  // SIGN PRESERVED
     
@@ -264,7 +264,7 @@ double FFBEngine::calculate_kinematic_load(const TelemInfoV01* data, int wheel_i
     // 3. Longitudinal Weight Transfer (Braking/Acceleration)
     // COORDINATE SYSTEM VERIFIED (v0.4.39):
     // - LMU: +Z axis points REARWARD (out the back of the car)
-    // - Braking: Chassis decelerates → Inertial force pushes rearward → +Z acceleration
+    // - Braking: Chassis decelerates â†’ Inertial force pushes rearward â†’ +Z acceleration
     // - Result: Front wheels GAIN load, Rear wheels LOSE load
     // - Source: docs/dev_docs/references/Reference - coordinate_system_reference.md
     // 
@@ -276,7 +276,7 @@ double FFBEngine::calculate_kinematic_load(const TelemInfoV01* data, int wheel_i
     // 4. Lateral Weight Transfer (Cornering)
     // COORDINATE SYSTEM VERIFIED (v0.4.39):
     // - LMU: +X axis points LEFT (out the left side of the car)
-    // - Right Turn: Centrifugal force pushes LEFT → +X acceleration
+    // - Right Turn: Centrifugal force pushes LEFT â†’ +X acceleration
     // - Result: LEFT wheels (outside) GAIN load, RIGHT wheels (inside) LOSE load
     // - Source: docs/dev_docs/references/Reference - coordinate_system_reference.md
     // 
