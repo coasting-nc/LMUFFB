@@ -30,7 +30,34 @@ std::atomic<bool> Config::m_needs_save{ false };
 
 std::vector<Preset> Config::presets;
 
-void Config::ParsePresetLine(const std::string& line, Preset& current_preset, std::string& current_preset_version, bool& needs_save) {
+// Helper to compare semantic version strings (e.g., "0.7.66" <= "0.7.66")
+static bool IsVersionLessEqual(const std::string& v1, const std::string& v2) {
+    if (v1.empty()) return true; // Empty version treated as legacy
+    if (v2.empty()) return false;
+
+    std::stringstream ss1(v1), ss2(v2);
+    std::string segment1, segment2;
+
+    while (true) {
+        bool has1 = (bool)std::getline(ss1, segment1, '.');
+        bool has2 = (bool)std::getline(ss2, segment2, '.');
+
+        if (!has1 && !has2) return true; // Exactly equal
+
+        int val1 = 0;
+        try { if (has1) val1 = std::stoi(segment1); } catch (...) {}
+        int val2 = 0;
+        try { if (has2) val2 = std::stoi(segment2); } catch (...) {}
+
+        if (val1 < val2) return true;
+        if (val1 > val2) return false;
+
+        if (!has1 || !has2) break;
+    }
+    return true;
+}
+
+void Config::ParsePresetLine(const std::string& line, Preset& current_preset, std::string& current_preset_version, bool& needs_save, bool& legacy_torque_hack, float& legacy_torque_val) {
     std::istringstream is_line(line);
     std::string key;
     if (std::getline(is_line, key, '=')) {
@@ -89,12 +116,14 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "wheelbase_max_nm") current_preset.wheelbase_max_nm = std::stof(value);
                 else if (key == "target_rim_nm") current_preset.target_rim_nm = std::stof(value);
                 else if (key == "max_torque_ref") {
-                    // MIGRATION LOGIC (Issue #153)
+                    // MIGRATION LOGIC (Issue #153 & #211)
                     float old_val = std::stof(value);
                     if (old_val > 40.0f) {
                         // Likely the 100Nm clipping hack. Reset to safe DD defaults.
                         current_preset.wheelbase_max_nm = 15.0f;
                         current_preset.target_rim_nm = 10.0f;
+                        legacy_torque_hack = true;
+                        legacy_torque_val = old_val;
                     } else {
                         // User actually tuned it to their wheelbase (e.g. 20Nm or 4Nm)
                         current_preset.wheelbase_max_nm = old_val;
@@ -739,6 +768,8 @@ void Config::LoadPresets() {
     Preset current_preset; // Uses default constructor with default values
     std::string current_preset_version = "";
     bool preset_pending = false;
+    bool legacy_torque_hack = false;
+    float legacy_torque_val = 100.0f;
 
     while (std::getline(file, line)) {
         // Strip whitespace
@@ -752,6 +783,13 @@ void Config::LoadPresets() {
                 current_preset.name = current_preset_name;
                 current_preset.is_builtin = false; // User preset
                 
+                // Issue #211: Legacy 100Nm hack scaling
+                if (legacy_torque_hack && IsVersionLessEqual(current_preset_version, "0.7.66")) {
+                    current_preset.gain *= (15.0f / legacy_torque_val);
+                    std::cout << "[Config] Migrated legacy 100Nm hack for preset '" << current_preset_name << "'. Scaling gain." << std::endl;
+                    needs_save = true;
+                }
+
                 // MIGRATION: If version is missing or old, update it
                 if (current_preset_version.empty()) {
                     current_preset.app_version = LMUFFB_VERSION;
@@ -776,6 +814,8 @@ void Config::LoadPresets() {
                     current_preset = Preset(current_preset_name, false); // Reset to defaults, not builtin
                     preset_pending = true;
                     current_preset_version = "";
+                    legacy_torque_hack = false;
+                    legacy_torque_val = 100.0f;
                 }
             } else {
                 in_presets = false;
@@ -784,7 +824,7 @@ void Config::LoadPresets() {
         }
 
         if (preset_pending) {
-            ParsePresetLine(line, current_preset, current_preset_version, needs_save);
+            ParsePresetLine(line, current_preset, current_preset_version, needs_save, legacy_torque_hack, legacy_torque_val);
         }
     }
     
@@ -792,6 +832,13 @@ void Config::LoadPresets() {
         current_preset.name = current_preset_name;
         current_preset.is_builtin = false;
         
+        // Issue #211: Legacy 100Nm hack scaling
+        if (legacy_torque_hack && IsVersionLessEqual(current_preset_version, "0.7.66")) {
+            current_preset.gain *= (15.0f / legacy_torque_val);
+            std::cout << "[Config] Migrated legacy 100Nm hack for preset '" << current_preset_name << "'. Scaling gain." << std::endl;
+            needs_save = true;
+        }
+
         // MIGRATION: If version is missing or old, update it
         if (current_preset_version.empty()) {
             current_preset.app_version = LMUFFB_VERSION;
@@ -807,14 +854,7 @@ void Config::LoadPresets() {
 
     // Auto-save if migration occurred
     if (needs_save) {
-        FFBEngine temp_engine; // Just to satisfy the Save signature
-        // We might want a version of Save that doesn't overwrite current engine settings
-        // but for now, the plan says "call Config::SaveManualPresetsOnly() (or similar)".
-        // Looking at Save(), it saves everything. 
-        // If we just loaded presets, we haven't applied them to any engine yet.
-        // But Config::Save takes an engine.
-        // Actually, if we just want to update the presets on disk, we should call Save.
-        Save(temp_engine);
+        m_needs_save = true;
     }
 }
 
@@ -946,6 +986,8 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
     std::string current_preset_version = "";
     bool preset_pending = false;
     bool imported = false;
+    bool legacy_torque_hack = false;
+    float legacy_torque_val = 100.0f;
 
     while (std::getline(file, line)) {
         // Strip whitespace
@@ -962,6 +1004,8 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
                     current_preset = Preset(current_preset_name, false);
                     preset_pending = true;
                     current_preset_version = "";
+                    legacy_torque_hack = false;
+                    legacy_torque_val = 100.0f;
                 }
             }
             continue;
@@ -969,13 +1013,20 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
 
         if (preset_pending) {
             bool dummy_needs_save = false;
-            ParsePresetLine(line, current_preset, current_preset_version, dummy_needs_save);
+            ParsePresetLine(line, current_preset, current_preset_version, dummy_needs_save, legacy_torque_hack, legacy_torque_val);
         }
     }
 
     if (preset_pending && !current_preset_name.empty()) {
         current_preset.name = current_preset_name;
         current_preset.is_builtin = false;
+
+        // Issue #211: Legacy 100Nm hack scaling
+        if (legacy_torque_hack && IsVersionLessEqual(current_preset_version, "0.7.66")) {
+            current_preset.gain *= (15.0f / legacy_torque_val);
+            std::cout << "[Config] Migrated legacy 100Nm hack for imported preset '" << current_preset_name << "'. Scaling gain." << std::endl;
+        }
+
         current_preset.app_version = current_preset_version.empty() ? LMUFFB_VERSION : current_preset_version;
 
         // Handle name collision
@@ -1257,7 +1308,11 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
 
     std::string line;
     bool in_static_loads = false;
-    bool in_other_section = false;
+    bool in_presets = false;
+    std::string config_version = "";
+    bool legacy_torque_hack = false;
+    float legacy_torque_val = 100.0f;
+
     while (std::getline(file, line)) {
         // Strip whitespace and check for section headers
         line.erase(0, line.find_first_not_of(" \t\r\n"));
@@ -1267,16 +1322,18 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
         if (line[0] == '[') {
             if (line == "[StaticLoads]") {
                 in_static_loads = true;
-                in_other_section = false;
-            }
-            else {
+                in_presets = false;
+            } else if (line == "[Presets]" || line.rfind("[Preset:", 0) == 0) {
+                in_presets = true;
                 in_static_loads = false;
-                in_other_section = true;
+            } else {
+                in_static_loads = false;
+                in_presets = false;
             }
             continue;
         }
 
-        if (in_other_section) continue;
+        if (in_presets) continue;
 
         std::istringstream is_line(line);
         std::string key;
@@ -1295,7 +1352,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                         // Current approach: Threshold-based detection (e.g., understeer > 2.0 = legacy format).
                         // Future improvement: Add explicit config_format_version field if migrations become
                         // more complex (e.g., structural changes, removed fields, renamed keys).
-                        const std::string& config_version = value;
+                        config_version = value;
                         std::cout << "[Config] Loading config version: " << config_version << std::endl;
                     }
                     else if (key == "always_on_top") m_always_on_top = std::stoi(value);
@@ -1363,6 +1420,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                         if (old_val > 40.0f) {
                             engine.m_wheelbase_max_nm = 15.0f;
                             engine.m_target_rim_nm = 10.0f;
+                            legacy_torque_hack = true;
+                            legacy_torque_val = old_val;
                         } else {
                             engine.m_wheelbase_max_nm = old_val;
                             engine.m_target_rim_nm = old_val;
@@ -1511,6 +1570,13 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                   << "), clamping to range [0.0, 10.0]" << std::endl;
         engine.m_abs_gain = (std::max)(0.0f, (std::min)(10.0f, engine.m_abs_gain));
     }
+    // Issue #211: Legacy 100Nm hack scaling
+    if (legacy_torque_hack && IsVersionLessEqual(config_version, "0.7.66")) {
+        engine.m_gain *= (15.0f / legacy_torque_val);
+        std::cout << "[Config] Migrated legacy 100Nm hack for main config. Scaling gain." << std::endl;
+        m_needs_save = true;
+    }
+
     // Legacy Migration: Convert 0-200 range to 0-2.0 range
     if (engine.m_understeer_effect > 2.0f) {
         float old_val = engine.m_understeer_effect;

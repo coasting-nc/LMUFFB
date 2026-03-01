@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## User-facing Summary of changes from versions v0.7.66 - v0.7.110
+## User-facing Summary of changes from versions v0.7.66 - v0.7.111
 
 ### Added
 - **FFB Scaling by car class**.
@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - **Global Vibration Effects Scaling**: Introduced a "Tactile Strength" slider, allowing you to easily adjust the overall master intensity of all haptic textures (Road Details, Slide Rumble, etc.) without altering the underlying structural physics.
 
 ### QoL & Fixes
+- **Legacy Preset Migration**: Automatically detects and corrects presets created in version 0.7.66 or older that used the "100Nm clipping hack." This ensures consistent FFB strength when upgrading from very old versions without causing "exploding" force levels. (#211)
 - **Invert FFB Signal removed from presets**: "Invert FFB Signal" is now a global, set-and-forget setting. It no longer needs to be saved or loaded within individual car tuning presets.
 - **Streamlined FFB Base Modes**: Removed redundant Base Force Modes (Synthetic/Muted). The application now exclusively relies on the superior Native physics torque.
 - **Garage & Menu Safety**: FFB is now completely and safely muted while sitting in the garage stall. Similarly resolved issues where strong steering forces could become "stuck" when pressing Escape to enter menus.
@@ -119,6 +120,17 @@ Dynamic FFB Normalization changes:
 
 
 ---
+
+## [0.7.111] - 2026-03-03
+### Fixed
+- **Legacy Preset Migration (Issue #211)**:
+  - Implemented automatic detection for presets and main configurations created in version 0.7.66 or older that utilized the legacy "100Nm clipping hack" (`max_torque_ref > 40.0`).
+  - Added proportional scaling for the master `gain` during migration: `gain *= (15.0 / legacy_torque_val)`. This preserves the absolute Nm force levels intended by the user, preventing "unusable" or "exploding" force levels reported after upgrading.
+  - Applied migration logic across `Config::Load`, `Config::LoadPresets`, and `Config::ImportPreset`.
+  - Ensured that migration triggers a configuration save to persist the corrected gain and updated hardware defaults (15Nm wheelbase / 10Nm rim).
+
+### Testing
+- **New Regression Test**: Added `tests/test_issue_211_migration.cpp` which verifies that legacy presets and main configs are correctly scaled and updated during the loading process.
 
 ## [0.7.110] - 2026-03-01
 ### Added
