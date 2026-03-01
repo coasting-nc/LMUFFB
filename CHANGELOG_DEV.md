@@ -59,7 +59,9 @@ Cumulative changes from previous versions v0.7.66 - v0.7.107:
   - Improved application performance, reduced latency, and ensured compatibility with modern Windows 10/11 features like Variable Refresh Rate (VRR) and independent flip.
   - Replaced deprecated `D3D11CreateDeviceAndSwapChain` with a granular modernization flow using `D3D11CreateDevice` and `IDXGIFactory2::CreateSwapChainForHwnd`.
 
-Tactile Haptics Normalization changes:
+
+Dynamic FFB Normalization changes:
+
 
 ### Added
 - **Dynamic FFB Normalization (Stage 1) (#152)**:
