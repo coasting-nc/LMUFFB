@@ -49,29 +49,46 @@ Issue #207 (v0.7.109) disabled Session-Learned Dynamic Normalization by default,
 
 ### 2. FFBEngine.cpp
 - Update `calculate_force()`:
-  - Calculate `tactile_sum_nm` (tactile textures).
-  - Apply `m_tactile_gain` to `tactile_sum_nm`.
-  - Add `soft_lock_force` after the gain stage.
+  - Calculate `texture_sum_nm` (tactile textures).
+  - Apply `m_tactile_gain` to `texture_sum_nm`.
+  - Keep `soft_lock_force` separate or add it back after `m_tactile_gain` is applied.
+  - Current summation logic in `calculate_force()`:
+    ```cpp
+    double texture_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble + ctx.soft_lock_force;
+    ```
+  - Proposed summation logic:
+    ```cpp
+    double tactile_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble;
+    double final_texture_nm = (tactile_sum_nm * m_tactile_gain) + ctx.soft_lock_force;
+    ```
 
-**Design Rationale**: Summation in `double` precision before conversion to `float` DirectInput percentage minimizes rounding errors and maintains the high dynamic range required for absolute Nm calculations on powerful DD bases.
+**Design Rationale**: Summation in `double` precision before conversion to `float` DirectInput percentage minimizes rounding errors and maintains the high dynamic range required for absolute Nm calculations on powerful DD bases. The `calculate_force` function is the core of the signal chain. Introducing the gain stage at the point of summation (before conversion to DI percentage) ensures that the scaling is applied uniformly to all haptic components while they are still in their physical (Nm) representation.
 
 ### 3. Config.h
 - Add `float tactile_gain = 1.0f;` to the `Preset` struct.
 - Add `Preset& SetTactileGain(float v)` fluent setter.
-- Update `Preset::Apply()`, `Preset::UpdateFromEngine()`, and `Preset::Equals()`.
+- Update `Preset::Apply()` to copy `tactile_gain` to `engine.m_tactile_gain` (with clamping `[0.0, 2.0]`).
+- Update `Preset::UpdateFromEngine()` to copy `engine.m_tactile_gain` back to `tactile_gain`.
+- Update `Preset::Equals()` to include `tactile_gain`.
 
 **Design Rationale**: Full integration into the `Preset` system is critical for user experience, allowing different haptic intensities for different car classes (e.g., lower haptics for prototypes vs higher for GT cars).
 
 ### 4. Config.cpp
-- Update `ParsePresetLine()` and `WritePresetFields()` for persistence.
-- Update `Config::Load()` and `Config::Save()` to handle the global parameter.
+- Update `ParsePresetLine()` to handle `tactile_gain`.
+- Update `WritePresetFields()` to include `tactile_gain`.
+- Update `Config::Save()` to write `engine.m_tactile_gain` to `config.ini`.
+- Update `Config::Load()` to read `engine.m_tactile_gain` from `config.ini`.
 
 **Design Rationale**: Persistence ensures that hardware-specific tuning is remembered across application restarts, fulfilling the reliability-focused mission of the "Fixer" role.
 
-### 5. GuiLayer_Common.cpp / Tooltips.h
-- Add the "Tactile Strength" slider and its associated tooltip.
+### 5. GuiLayer_Common.cpp
+- In `DrawTuningWindow()`, inside the "Tactile Textures" section:
+  - Add `FloatSetting("Tactile Strength", &engine.m_tactile_gain, 0.0f, 2.0f, FormatPct(engine.m_tactile_gain), Tooltips::TACTILE_GAIN);`
 
 **Design Rationale**: Positioning the slider in the "Tactile Textures" section groups it logically with the effects it controls, following standard UI/UX patterns.
+
+### 6. Tooltips.h
+- Add `inline constexpr const char* TACTILE_GAIN = "Global multiplier for all haptic textures (Road, Slide, Lockup, etc.). Allows scaling absolute Nm effects to better match your hardware.";`
 
 ## Parameter Synchronization Checklist
 - [x] Declaration in `FFBEngine.h`: `float m_tactile_gain`
