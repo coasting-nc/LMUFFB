@@ -7,6 +7,8 @@ Issue #207 requests that dynamic normalization be disabled by default to ensure 
 
 To provide maximum flexibility and address the inconsistency concerns, both systems will be disabled by default and controllable via separate UI toggles.
 
+Additionally, this update resolves a critical "cross-pollination" issue where peaks learned for one vehicle (e.g., a high-torque Hypercar) could persist when switching to a different vehicle (e.g., a GT3), leading to incorrectly scaled FFB until the new peak was eventually learned. This is now handled by an explicit reset trigger on car change.
+
 ## Reference Documents
 - GitHub Issue #207: [Disable by default the Session-Learned Dynamic Normalization](https://github.com/coasting-nc/LMUFFB/issues/207)
 - GitHub Issue #152: Stage 1 Structural Normalization.
@@ -42,7 +44,7 @@ To provide maximum flexibility and address the inconsistency concerns, both syst
 ### 2. FFBEngine.cpp
 - Implement `ResetNormalization()`: restores peaks to `m_target_rim_nm` and class-default seed loads.
 - Guard peak followers and multiplier updates with their respective enablement flags.
-- Update `InitializeLoadReference` to call `ResetNormalization` on car change.
+- Update `InitializeLoadReference` (in `GripLoadEstimation.cpp`) to call `ResetNormalization` on car change. This ensures that a new session with a different vehicle always starts from a clean baseline, preventing "learned" peaks from one car from polluting another.
 
 ### 3. Config.h / Config.cpp
 - Add both flags to `Preset` struct.
