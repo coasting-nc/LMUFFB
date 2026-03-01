@@ -10,9 +10,9 @@ All notable changes to this project will be documented in this file.
 - **Independent In-Game FFB Gain**: Added a dedicated slider to independently adjust the gain for the native 400Hz telemetry torque.
 - **FFB Scaling by car class**.
 - **Adaptive Normalization (Optional)**: Built completely new Dynamic Normalization systems to automatically keep FFB weight and textures consistent when switching between car classes (e.g., GT3 vs. Hypercar). *Note: These systems are completely optional and disabled by default via new UI toggles.*
-- **Hardware Strength Scaling (Dual-Slider Model)**: Replaced the legacy "Max Torque Ref" with two explicit sliders ("Wheelbase Max Torque" and "Target Rim Torque"). This clearly defines your hardware limits and desired peak forces, ensuring that tactile effects scale perfectly in absolute Newton-meters across any wheelbase. Legacy settings will automatically migrate. *Note: this is experimental and might not yet work as expected; the **FFB might feel stronger** than before, reduce the Gain to compensate.*
+- **Hardware Strength Scaling (Dual-Slider Model)**: Replaced the legacy "Max Torque Ref" with two explicit sliders ("Wheelbase Max Torque" and "Target Rim Torque"). This clearly defines your hardware limits and desired peak forces, ensuring that vibration effects scale perfectly in absolute Newton-meters across any wheelbase. Legacy settings will automatically migrate. *Note: this is experimental and might not yet work as expected; the **FFB might feel stronger** than before, reduce the Gain to compensate.*
 
-- **Global Tactile Scaling**: Introduced a "Tactile Strength" slider, allowing you to easily adjust the overall master intensity of all haptic textures (Road Details, Slide Rumble, etc.) without altering the underlying structural physics.
+- **Global Vibration Effects Scaling**: Introduced a "Tactile Strength" slider, allowing you to easily adjust the overall master intensity of all haptic textures (Road Details, Slide Rumble, etc.) without altering the underlying structural physics.
 
 ### Quality of Life & Fixes
 - **Invert FFB Signal removed from presets**: "Invert FFB Signal" is now a global, set-and-forget setting. It no longer needs to be saved or loaded within individual car tuning presets.
