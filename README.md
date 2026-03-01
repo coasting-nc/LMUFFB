@@ -18,6 +18,9 @@ Experimental alpha version.
 
 ### Step-by-Step Setup
 
+> [!IMPORTANT]
+> **Folder Location**: To avoid write permission issues (unable to save settings or `config.ini` errors), **do NOT** place the lmuFFB folder in `C:\Program Files`. Instead, keep it in a location where the app has full write access, such as a subfolder in your **Downloads** or **Documents** folder.
+
 **B. Configure lmuFFB**
 1.  Run `LMUFFB.exe`.
 2.  **FFB Device**: In the dropdown, select your **Physical Wheel** (e.g., "Simucube 2 Pro", "Fanatec DD1").
