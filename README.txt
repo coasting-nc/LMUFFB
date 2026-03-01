@@ -101,6 +101,11 @@ The app has too many options and it's confusing:
   - Please leave feedback on the forum thread telling us what settings work best for you:
     https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/
 
+Unable to save settings or config.ini errors:
+  - This usually happens if you placed the lmuFFB app or folder in a location 
+    without write permissions (e.g., inside C:\Program Files)
+  - Solution: Keep the entire lmuFFB folder to a location where the app can have full write access, such as a subfolder in your Downloads or Documents folder
+
 Any other issue:
   - PREFERRED: Open a GitHub Issue: https://github.com/coasting-nc/LMUFFB/issues
     This is the best way to ensure your issue is tracked and addressed. 
