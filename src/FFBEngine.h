@@ -53,6 +53,8 @@ struct FFBSnapshot {
     float ffb_abs_pulse;    // New v0.7.53
     float ffb_soft_lock;    // New v0.7.61 (Issue #117)
     float session_peak_torque; // New v0.7.67 (Issue #152)
+    float car_max_torque_nm;   // New v0.7.109 (Issue #180)
+    bool dynamic_normalization_enabled; // New v0.7.109 (Issue #207)
     float clipping;
 
     // --- Header B: Internal Physics (Calculated) ---
@@ -189,6 +191,8 @@ public:
     // v0.4.4 Features
     float m_wheelbase_max_nm;
     float m_target_rim_nm;
+    float m_car_max_torque_nm = 25.0f; // New v0.7.109 (Issue #180)
+    bool m_dynamic_normalization_enabled = false; // New v0.7.109 (Issue #207)
     bool m_invert_force = true;
     
     // Base Force Debugging (v0.4.13)
@@ -436,6 +440,12 @@ public:
     double m_slope_dG_dt = 0.0;       
     double m_slope_dAlpha_dt = 0.0;   
 
+    // Normalization State (Exposed for GUI/Logging)
+    double m_session_peak_torque = 25.0; // New v0.7.67 (Issue #152)
+    double m_smoothed_structural_mult = 1.0 / 25.0; // New v0.7.67 (Issue #152)
+    double m_rolling_average_torque = 0.0; // New v0.7.67 (Issue #152)
+    double m_last_raw_torque = 0.0; // New v0.7.67 (Issue #152)
+
     // Frequency Estimator State (v0.4.41)
     double m_last_crossing_time = 0.0;
     double m_last_output_force = 0.0; 
@@ -629,10 +639,6 @@ private:
     static constexpr double ACCEL_ROAD_TEXTURE_SCALE = 0.05;
     static constexpr double DEBUG_FREQ_SMOOTHING = 0.9;
     static constexpr double GAIN_REDUCTION_MAX = 50.0;
-    double m_session_peak_torque = DEFAULT_SESSION_PEAK_TORQUE; // New v0.7.67 (Issue #152)
-    double m_smoothed_structural_mult = 1.0 / DEFAULT_SESSION_PEAK_TORQUE; // New v0.7.67 (Issue #152)
-    double m_rolling_average_torque = 0.0; // New v0.7.67 (Issue #152)
-    double m_last_raw_torque = 0.0; // New v0.7.67 (Issue #152)
 
     std::string m_current_class_name = "";
     bool m_auto_load_normalization_enabled = true; 

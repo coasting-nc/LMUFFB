@@ -1,21 +1,21 @@
-**User's Goal:** The user wants to stop force feedback (specifically "stuck" forces like the soft lock) from persisting when the game is paused or in a menu (non-real-time state).
+The proposed code change is a high-quality, comprehensive solution that addresses both requested issues (#180 and #207) while significantly improving the architectural consistency of the FFB pipeline. The developer followed the "Fixer" workflow perfectly, including a detailed implementation plan with the requested analysis and documentation feedback.
 
-**Evaluation of the Solution:**
+### User's Goal:
+Restore manual torque scaling control and disable automatic session-based normalization by default to ensure consistent steering weight across racing sessions.
 
-*   **Core Functionality:** The patch is **functionally flawed**. While it correctly identifies that `in_realtime` should gate the force calculation to avoid "stuck" telemetry-based effects, it moves the `should_output = true` assignment inside the `if (in_realtime)` block. In most FFB implementations (including the one inferred here), if `should_output` is false, the application stops sending updates to the hardware. If the wheel was "punching" (applying force) at the moment the menu was entered, and the app stops sending updates, the hardware driver will typically maintain the last received force magnitude. To "relax" the wheel as intended, the application must explicitly send a zero-force command. By skipping the update, the patch likely ensures the force remains "stuck," which is the exact opposite of the desired outcome.
-*   **Safety & Side Effects:** The patch includes the use of `ApplySafetySlew`, which is intended to prevent jolts when the force changes. However, because the update is not sent to the hardware when `in_realtime` is false, this safety mechanism is rendered ineffective for the transition into the menu.
-*   **Completeness:**
-    *   The patch is missing the mandatory updates to the `VERSION` file and the changelog (`CHANGELOG_DEV.md`), despite these being listed as deliverables in the implementation plan and the user's instructions.
-    *   The included test case in `test_issue_174_repro.cpp` is misleading. It includes a line (`if (!should_output) force = 0.0;`) that is not present in the actual `main.cpp` patch, and it fails to verify that a zero-force command is actually dispatched to the hardware.
+### Evaluation of the Solution:
+*   **Core Functionality:** The patch successfully unifies the 100Hz and 400Hz force ingestion paths. By scaling the 400Hz in-game signal by the car's physical peak torque early in the pipeline, the engine now treats all structural forces as Absolute Newton-meters (Nm), resolving the "split pipeline" inconsistency. The introduction of the `m_car_max_torque_nm` slider and the `m_dynamic_normalization_enabled` toggle provides the requested user control.
+*   **Safety & Side Effects:**
+    *   **Thread Safety:** The patch correctly utilizes `g_engine_mutex` when accessing state in `calculate_force`.
+    *   **Input Validation:** The code includes sanitization for `raw_torque_input` (checking for finite values) and applies safety clamping to the car torque reference (minimum 1.0 Nm) to prevent division-by-zero or extreme gain spikes.
+    *   **Regressions:** The developer took the time to update existing unit tests that were broken by the change in default behavior, ensuring that legacy test cases remain valid while new logic is verified.
+*   **Completeness:** The patch includes all necessary updates: configuration parsing/saving, GUI elements, versioning, and changelog. The implementation plan is exemplary, featuring deep analysis of the physics rationale and explicit responses to the user's feedback regarding documentation quality.
 
-**Merge Assessment (Blocking vs. Non-Blocking):**
+### Merge Assessment (Blocking vs. Non-Blocking):
+*   **Nitpick (Non-Blocking):** The variable `m_car_max_torque_nm` is added to `FFBEngine.h` without a default value (e.g., `= 25.0f`), unlike the boolean toggle next to it. While the `Preset` logic and `Config::Load` handle initialization in most cases, a "naked" instance of the engine or a load from an old configuration file that lacks the key would result in `m_car_max_torque_nm` containing a junk value. This could cause erratic FFB behavior on the first launch after an update until the user saves/applies a setting.
+*   **Completeness (Non-Blocking):** The implementation plan is excellent and sets a high bar for future "Fixer" tasks.
 
-*   **Blocking:**
-    *   The logic in `main.cpp` stops FFB updates entirely when in the menu instead of sending a zeroed force. This will likely cause the "stuck" force to persist on most hardware.
-    *   Missing `VERSION` and `CHANGELOG_DEV.md` updates.
-*   **Nitpicks:**
-    *   The test case logic does not accurately match the implementation logic in `main.cpp`.
+### Final Rating:
+The patch is highly functional and professionally documented. The initialization oversight is a minor flaw in an otherwise stellar contribution.
 
-**Final Rating:**
-
-### Final Rating: #Partially Correct#
+### Final Rating: #Mostly Correct#

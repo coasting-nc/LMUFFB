@@ -429,8 +429,25 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
         BoolSetting("Invert FFB Signal", &engine.m_invert_force, Tooltips::INVERT_FFB);
         FloatSetting("Master Gain", &engine.m_gain, 0.0f, 2.0f, FormatPct(engine.m_gain), Tooltips::MASTER_GAIN);
-        FloatSetting("Wheelbase Max Torque", &engine.m_wheelbase_max_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::WHEELBASE_MAX_TORQUE);
-        FloatSetting("Target Rim Torque", &engine.m_target_rim_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::TARGET_RIM_TORQUE);
+
+        if (ImGui::TreeNodeEx("Scaling & Normalization", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::NextColumn(); ImGui::NextColumn();
+
+            FloatSetting("Wheelbase Max Torque", &engine.m_wheelbase_max_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::WHEELBASE_MAX_TORQUE);
+            FloatSetting("Target Rim Torque", &engine.m_target_rim_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::TARGET_RIM_TORQUE);
+            FloatSetting("Car Max Torque (Nm)", &engine.m_car_max_torque_nm, 1.0f, 100.0f, "%.1f Nm", "The peak physical torque produced by the car's steering rack. Used for 1:1 scaling.");
+
+            BoolSetting("Enable Dynamic Normalization", &engine.m_dynamic_normalization_enabled, "Continuously track and normalize the session peak torque (can result in 'limp' steering after spikes).");
+
+            if (engine.m_dynamic_normalization_enabled) {
+                ImGui::Text("  Session Peak: %.1f Nm", engine.m_session_peak_torque);
+                ImGui::NextColumn(); ImGui::NextColumn();
+            }
+
+            ImGui::TreePop();
+            ImGui::Separator();
+        }
+
         FloatSetting("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f", Tooltips::MIN_FORCE);
 
         if (ImGui::TreeNodeEx("Soft Lock", ImGuiTreeNodeFlags_DefaultOpen)) {

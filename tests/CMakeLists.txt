@@ -46,6 +46,7 @@ set(TEST_SOURCES
     test_versioned_presets.cpp
     test_preset_improvements.cpp
     test_ffb_stability.cpp
+    test_ffb_normalization_toggle.cpp
     test_gui_tooltips_presence.cpp
     test_ffb_logic.cpp
     test_ffb_safety.cpp

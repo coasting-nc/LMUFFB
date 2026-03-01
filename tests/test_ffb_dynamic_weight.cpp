@@ -46,6 +46,7 @@ TEST_CASE(test_dynamic_weight_scaling, "Physics") {
     p.Apply(engine);
 
     // v0.7.67 Fix for Issue #152: Ensure consistent scaling for test
+    engine.m_dynamic_normalization_enabled = true;
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 100.0);
     FFBEngineTestAccess::SetRollingAverageTorque(engine, 100.0);
@@ -95,6 +96,7 @@ TEST_CASE(test_dynamic_weight_safety_gate, "Physics") {
     p.Apply(engine);
 
     // v0.7.67 Fix for Issue #152: Ensure consistent scaling for test
+    engine.m_dynamic_normalization_enabled = true;
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 100.0);
     FFBEngineTestAccess::SetRollingAverageTorque(engine, 100.0);

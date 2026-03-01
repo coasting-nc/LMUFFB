@@ -158,9 +158,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
     // Select Torque Source
-    // v0.7.63 Fix: genFFBTorque (Direct Torque 400Hz) is normalized [-1.0, 1.0].
-    // It must be scaled by m_wheelbase_max_nm to match the engine's internal Nm-based pipeline.
-    double raw_torque_input = (m_torque_source == 1) ? (double)genFFBTorque * (double)m_wheelbase_max_nm : data->mSteeringShaftTorque;
+    // v0.7.109: genFFBTorque (In-Game FFB 400Hz) is normalized [-1.0, 1.0].
+    // It is now scaled by m_car_max_torque_nm to convert it to absolute Nm,
+    // unifying it with the 100Hz Shaft Torque path.
+    double raw_torque_input = (m_torque_source == 1) ? (double)genFFBTorque * (double)m_car_max_torque_nm : data->mSteeringShaftTorque;
 
     // RELIABILITY FIX: Sanitize input torque
     if (!std::isfinite(raw_torque_input)) return 0.0;
@@ -195,8 +196,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
 
     // 3. EMA Filtering on the Gain Multiplier (Zero-latency physics)
-    // v0.7.71: For In-Game FFB (1), we normalize against the wheelbase max since the signal is already normalized [-1, 1].
-    double target_structural_mult = (m_torque_source == 1) ? (1.0 / (m_wheelbase_max_nm + EPSILON_DIV)) : (1.0 / (m_session_peak_torque + EPSILON_DIV));
+    // v0.7.109: Select peak reference based on normalization toggle.
+    // If disabled, we use the manual m_car_max_torque_nm for consistent scaling.
+    double active_peak = m_dynamic_normalization_enabled ? m_session_peak_torque : (double)m_car_max_torque_nm;
+    double target_structural_mult = 1.0 / (active_peak + EPSILON_DIV);
+
     double alpha_gain = data->mDeltaTime / (STRUCT_MULT_SMOOTHING_TAU + data->mDeltaTime); // 250ms smoothing
     m_smoothed_structural_mult += alpha_gain * (target_structural_mult - m_smoothed_structural_mult);
 
@@ -593,6 +597,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.ffb_abs_pulse = (float)ctx.abs_pulse_force; 
             snap.ffb_soft_lock = (float)ctx.soft_lock_force;
             snap.session_peak_torque = (float)m_session_peak_torque;
+            snap.car_max_torque_nm = m_car_max_torque_nm;
+            snap.dynamic_normalization_enabled = m_dynamic_normalization_enabled;
             snap.clipping = (std::abs(norm_force) > (double)CLIPPING_THRESHOLD) ? 1.0f : 0.0f;
 
             // Physics

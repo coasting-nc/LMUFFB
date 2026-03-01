@@ -8,6 +8,8 @@ TEST_CASE(test_direct_torque_scaling, "Issue142") {
 
     // Setup for Direct Torque (m_torque_source = 1)
     engine.m_torque_source = 1;
+    engine.m_car_max_torque_nm = 50.0f;
+    engine.m_dynamic_normalization_enabled = false;
     engine.m_wheelbase_max_nm = 50.0f; engine.m_target_rim_nm = 50.0f; // Nm
     engine.m_gain = 1.0f;
     engine.m_steering_shaft_gain = 1.0f;
@@ -35,6 +37,8 @@ TEST_CASE(test_torque_passthrough_enabled, "Issue142") {
     InitializeEngine(engine);
 
     engine.m_torque_source = 1;
+    engine.m_car_max_torque_nm = 20.0f;
+    engine.m_dynamic_normalization_enabled = false;
     engine.m_torque_passthrough = true;
     engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_gain = 1.0f;
@@ -67,6 +71,8 @@ TEST_CASE(test_torque_passthrough_disabled, "Issue142") {
     InitializeEngine(engine);
 
     engine.m_torque_source = 1;
+    engine.m_car_max_torque_nm = 20.0f;
+    engine.m_dynamic_normalization_enabled = false;
     engine.m_torque_passthrough = false;
     engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_gain = 1.0f;
@@ -95,6 +101,8 @@ TEST_CASE(test_dynamic_weight_passthrough, "Issue142") {
     InitializeEngine(engine);
 
     engine.m_torque_source = 1;
+    engine.m_car_max_torque_nm = 20.0f;
+    engine.m_dynamic_normalization_enabled = false;
     engine.m_torque_passthrough = true;
     engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_gain = 1.0f;

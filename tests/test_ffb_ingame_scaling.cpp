@@ -49,10 +49,15 @@ TEST_CASE(test_ingame_ffb_scaling_fix, "InGameFFB") {
     // Force the multiplier to the correct target
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 20.0);
 
+    // v0.7.109: Setting m_car_max_torque_nm = 20.0 to match the 20.0Nm peak
+    engine.m_car_max_torque_nm = 20.0f;
+    engine.m_dynamic_normalization_enabled = false;
+
     double output = engine.calculate_force(&data, "GT3", "911 GT3 R", genFFBTorque);
 
     // Expected:
     // raw_torque_input = 1.0 * 20.0 = 20.0 Nm
+    // active_peak = 20.0 (car max torque)
     // target_structural_mult = 1.0 / 20.0 = 0.05
     // norm_structural = 20.0 * 1.0 (ingame gain) * 0.05 = 1.0
     // di_structural = 1.0 * (10.0 / 20.0) = 0.5

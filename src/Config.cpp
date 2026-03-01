@@ -40,6 +40,8 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 // Map keys to struct members
                 if (key == "app_version") current_preset_version = value;
                 else if (key == "gain") current_preset.gain = std::stof(value);
+                else if (key == "dynamic_normalization_enabled") current_preset.dynamic_normalization_enabled = (value == "1" || value == "true");
+                else if (key == "car_max_torque_nm") current_preset.car_max_torque_nm = std::stof(value);
                 else if (key == "understeer") {
                     float val = std::stof(value);
                     if (val > 2.0f) {
@@ -828,6 +830,8 @@ void Config::ApplyPreset(int index, FFBEngine& engine) {
 void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "app_version=" << p.app_version << "\n";
     file << "gain=" << p.gain << "\n";
+    file << "dynamic_normalization_enabled=" << p.dynamic_normalization_enabled << "\n";
+    file << "car_max_torque_nm=" << p.car_max_torque_nm << "\n";
     file << "wheelbase_max_nm=" << p.wheelbase_max_nm << "\n";
     file << "target_rim_nm=" << p.target_rim_nm << "\n";
     file << "min_force=" << p.min_force << "\n";
@@ -1121,6 +1125,8 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "\n; --- General FFB ---\n";
         file << "invert_force=" << engine.m_invert_force << "\n";
         file << "gain=" << engine.m_gain << "\n";
+        file << "dynamic_normalization_enabled=" << engine.m_dynamic_normalization_enabled << "\n";
+        file << "car_max_torque_nm=" << engine.m_car_max_torque_nm << "\n";
         file << "soft_lock_enabled=" << engine.m_soft_lock_enabled << "\n";
         file << "soft_lock_stiffness=" << engine.m_soft_lock_stiffness << "\n";
         file << "soft_lock_damping=" << engine.m_soft_lock_damping << "\n";
@@ -1304,6 +1310,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "log_path") m_log_path = value;
                     else if (key == "invert_force") engine.m_invert_force = std::stoi(value);
                     else if (key == "gain") engine.m_gain = std::stof(value);
+                    else if (key == "dynamic_normalization_enabled") engine.m_dynamic_normalization_enabled = (value == "1" || value == "true");
+                    else if (key == "car_max_torque_nm") engine.m_car_max_torque_nm = std::stof(value);
                     else if (key == "sop_smoothing_factor" || key == "smoothing") engine.m_sop_smoothing_factor = std::stof(value); // "smoothing" is a legacy alias
                     else if (key == "sop_scale") engine.m_sop_scale = std::stof(value);
                     else if (key == "slip_angle_smoothing") engine.m_slip_angle_smoothing = std::stof(value);

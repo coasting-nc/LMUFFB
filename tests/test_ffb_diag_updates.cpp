@@ -31,8 +31,10 @@ TEST_CASE(TestFFBTorqueSnapshot, "Diagnostics") {
     // Verify steer_force depends on selected source (default is 0: Shaft Torque)
     ASSERT_NEAR(snap.steer_force, 5.67f, 0.001f);
 
-    // Switch source to 1: Direct Torque
+    // Switch source to 1: In-Game FFB
     engine.m_torque_source = 1;
+    // v0.7.109: Scaling is now by car_max_torque_nm
+    engine.m_car_max_torque_nm = 1.0f;
     engine.m_wheelbase_max_nm = 1.0f; engine.m_target_rim_nm = 1.0f; // Scale by 1.0 for easy verification
     engine.calculate_force(&data, "GT3", "Ferrari 296 GT3", genFFBTorque);
 
@@ -42,6 +44,7 @@ TEST_CASE(TestFFBTorqueSnapshot, "Diagnostics") {
 
     ASSERT_NEAR(snap2.raw_shaft_torque, 5.67f, 0.001f);
     ASSERT_NEAR(snap2.raw_gen_torque, 12.34f, 0.001f);
+    // steer_force is the result of ingestion: genFFBTorque * car_max_torque_nm = 12.34 * 1.0 = 12.34
     ASSERT_NEAR(snap2.steer_force, 12.34f, 0.001f);
 }
 

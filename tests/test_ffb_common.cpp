@@ -176,6 +176,10 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_speed_gate_upper = -5.0f;
 
     // v0.7.67: Fix for Issue #152 Normalization - Ensure consistent scaling for legacy tests
+    // v0.7.109: Maintain consistency by enabling normalization for legacy tests that expect it,
+    // and setting a matching manual car torque reference.
+    engine.m_dynamic_normalization_enabled = true;
+    engine.m_car_max_torque_nm = 20.0f;
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 20.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 20.0);
     FFBEngineTestAccess::SetRollingAverageTorque(engine, 20.0);

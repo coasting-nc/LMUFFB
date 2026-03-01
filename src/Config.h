@@ -28,6 +28,8 @@ struct Preset {
     //
     // Current defaults match: GT3 DD 15 Nm (Simagic Alpha) - v0.6.35
    float gain = 1.0f;
+    bool dynamic_normalization_enabled = false; // New v0.7.109 (Issue #207)
+    float car_max_torque_nm = 25.0f; // New v0.7.109 (Issue #180)
     float understeer = 1.0f;  // New scale: 0.0-2.0, where 1.0 = proportional
     float sop = 1.666f;
     float sop_scale = 1.0f;
@@ -280,6 +282,8 @@ struct Preset {
     // v0.7.16: Added comprehensive safety clamping to prevent crashes/NaN from invalid config values
     void Apply(FFBEngine& engine) const {
         engine.m_gain = (std::max)(0.0f, gain);
+        engine.m_dynamic_normalization_enabled = dynamic_normalization_enabled;
+        engine.m_car_max_torque_nm = (std::max)(1.0f, car_max_torque_nm);
         engine.m_understeer_effect = (std::max)(0.0f, (std::min)(2.0f, understeer));
         engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, sop));
         engine.m_sop_scale = (std::max)(0.01f, sop_scale);
@@ -377,14 +381,16 @@ struct Preset {
         engine.m_slope_torque_sensitivity = (std::max)(0.01f, slope_torque_sensitivity);
 
         // Stage 1 & 2 Normalization (Issue #152 & #153)
-        // Initialize session peak from target rim torque to provide a sane starting point.
-        engine.m_session_peak_torque = (std::max)(1.0, (double)target_rim_nm);
-        engine.m_smoothed_structural_mult = 1.0 / engine.m_session_peak_torque;
+        // v0.7.109: Initialize session peak and structural multiplier.
+        engine.m_session_peak_torque = (std::max)(1.0, (double)engine.m_car_max_torque_nm);
+        double active_peak = engine.m_dynamic_normalization_enabled ? engine.m_session_peak_torque : (double)engine.m_car_max_torque_nm;
+        engine.m_smoothed_structural_mult = 1.0 / (active_peak + 1e-9);
     }
 
     // NEW: Ensure values are within safe ranges (v0.7.16)
     void Validate() {
         gain = (std::max)(0.0f, gain);
+        car_max_torque_nm = (std::max)(1.0f, car_max_torque_nm);
         understeer = (std::max)(0.0f, (std::min)(2.0f, understeer));
         sop = (std::max)(0.0f, (std::min)(2.0f, sop));
         sop_scale = (std::max)(0.01f, sop_scale);
@@ -452,6 +458,8 @@ struct Preset {
     // NEW: Capture current engine state into this preset
     void UpdateFromEngine(const FFBEngine& engine) {
         gain = engine.m_gain;
+        dynamic_normalization_enabled = engine.m_dynamic_normalization_enabled;
+        car_max_torque_nm = engine.m_car_max_torque_nm;
         understeer = engine.m_understeer_effect;
         sop = engine.m_sop_effect;
         sop_scale = engine.m_sop_scale;
@@ -552,6 +560,8 @@ struct Preset {
         auto is_near = [](float a, float b, float epsilon) { return std::abs(a - b) < epsilon; };
 
         if (!is_near(gain, p.gain, eps)) return false;
+        if (dynamic_normalization_enabled != p.dynamic_normalization_enabled) return false;
+        if (!is_near(car_max_torque_nm, p.car_max_torque_nm, eps)) return false;
         if (!is_near(understeer, p.understeer, eps)) return false;
         if (!is_near(sop, p.sop, eps)) return false;
         if (!is_near(sop_scale, p.sop_scale, eps)) return false;

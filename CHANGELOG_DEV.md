@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.109] - 2026-03-01
+### Added
+- **Manual Torque Scaling (Issue #180)**:
+  - Introduced a unified **Absolute Newton-Meter (Nm)** scaling pipeline for all car-physics forces.
+  - Replaced the divergent 100Hz/400Hz logic with a single, predictable **Car Max Torque** reference.
+  - **400Hz Interpretive Ingestion**: The game's normalized [-1, 1] signal is now correctly scaled by the car's peak physical torque, ensuring stable and hardware-independent weight.
+  - **User Control**: Added a "Car Max Torque (Nm)" slider to allow per-car manual scaling, restoring predictable FFB weight.
+- **Normalization Control (Issue #207)**:
+  - Disabled **Session-Learned Dynamic Normalization** by default to prevent "limp" steering after high-torque spikes.
+  - Added a global toggle to Enable/Disable dynamic normalization for users who prefer the experimental automatic approach.
+  - Implemented smooth EMA transitions (250ms) when switching between manual and automatic scaling to protect user hardware.
+
+### Changed
+- **Physical Target Model Unification**: All structural forces (Steering, SoP, Yaw, Gyro) now share the same Absolute Nm baseline, significantly improving consistency across different car classes and feedback sources.
+- **Migration Logic**: Configuration files from previous versions now default to Manual Scaling (Normalization OFF) on launch.
+
 ## [0.7.108] - 2026-02-28
 ### Fixed
 - **FFB Control (Issue #174)**: Resolved "stuck" FFB forces when entering menus or pausing the game.
