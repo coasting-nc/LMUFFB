@@ -13,6 +13,11 @@ To fix this, we must detect legacy presets/configs (v0.7.66 or older, or missing
 - **Proportional Scaling:** We must maintain the same output force level after migration. The formula used is `NewGain = OldGain * (15.0 / OldMaxTorqueRef)`. Since the current migration logic resets `wheelbase_max_nm` to `15.0` when the 100Nm hack is detected (> 40Nm), this gain adjustment perfectly compensates for the change in the denominator, ensuring the user feels no sudden jump in force.
 - **Why 15.0 Nm?** This is the project's safe default for Direct Drive wheels. When we move from a virtual `max_torque_ref` to a physical `wheelbase_max_nm`, 15.0 is used as the anchor point for migrated "hacked" configs.
 - **Why Version Check?** Migration should only happen once. We use `app_version` (for presets) and `ini_version` (for main config) to identify legacy sources (<= v0.7.66).
+- **Threshold Rationale (> 40.0 Nm):**
+    - **Mathematical Link:** The migration logic resets the wheelbase denominator to `15.0 Nm` ONLY if the legacy value is above the 40.0 Nm threshold. If the legacy value is realistic (e.g., 20 Nm), it is preserved as the new wheelbase maximum. Since gain scaling is only required when the scaling denominator is forcibly changed, the 40.0 Nm threshold acts as the trigger for both the wheelbase reset and the corresponding gain correction.
+    - **Differentiating Intent:** Legacy users with realistic settings (e.g., 4Nm for T300) already had a physically balanced pipeline. Preserving their 4Nm setting as the new `wheelbase_max_nm` maintains their intended strength without any gain adjustment.
+    - **Targeting the Hack:** The "100Nm hack" was a specific community workaround to weaken FFB by overstating the car's torque. Since no consumer wheelbase actually produces 100Nm, values above 40Nm are a definitive indicator of this hack.
+    - **Buffer:** The 40.0 Nm threshold provides a safe gap between realistic high-end hardware (peaking ~20-32Nm) and the artificial hack, preventing false positives for legitimate legacy configurations.
 - **Why `needs_save`?** Migrated values must be persisted to the user's `config.ini` so the logic doesn't re-run on every launch.
 
 ## 2. Proposed Changes
@@ -21,11 +26,11 @@ To fix this, we must detect legacy presets/configs (v0.7.66 or older, or missing
 - **Helper Function:** Add `bool IsVersionLessEqual(const std::string& v1, const std::string& v2)` to compare semantic version strings.
 - **`Config::ParsePresetLine`:**
     - Detect if `max_torque_ref > 40.0`.
-    - If detected, and `current_preset_version` is empty or `<= 0.7.66`, scale `current_preset.gain` by `0.15f` and set `needs_save = true`.
+    - If detected, and `current_preset_version` is empty or `<= 0.7.66`, scale `current_preset.gain` by the ratio `(15.0f / legacy_torque_val)` and set `needs_save = true`.
 - **`Config::Load`:**
     - Track `ini_version`.
-    - If `max_torque_ref > 40.0` is encountered and `ini_version` is empty or `<= 0.7.66`, scale `engine.m_gain` by `0.15f`.
-    - Call `Config::Save` if any migration occurred.
+    - If `max_torque_ref > 40.0` is encountered and `ini_version` is empty or `<= 0.7.66`, scale `engine.m_gain` by the ratio `(15.0f / legacy_torque_val)`.
+    - Set `m_needs_save = true` if any migration occurred.
 
 ### `VERSION`
 - Increment version to `0.7.111`.
