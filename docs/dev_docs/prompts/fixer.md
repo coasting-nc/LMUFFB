@@ -33,18 +33,21 @@ You are running on **Linux (Ubuntu)**, but this is a **Windows-native** project.
 
 **Good Fixer Code:**
 ```cpp
-// ✅ GOOD: Thread-safe access to shared resources
-void UpdateSettings(float newGain) {
-    std::lock_guard<std::mutex> lock(g_engine_mutex); // Protect against FFB thread
-    m_gain = std::max(0.0f, newGain); // Safety clamp
+// ✅ GOOD: Thread-safe, sanitized, and clamped access
+void FFBEngine::SetGain(float newGain) {
+    if (!std::isfinite(newGain)) return; // Reject NaN/Inf
+    
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); 
+    // Always clamp to safety limits defined in the project
+    m_gain = std::clamp(newGain, 0.0f, 10.0f); 
 }
 ```
 
 **Bad Fixer Code:**
 ```cpp
-// ❌ BAD: Race condition waiting to happen
-void UpdateSettings(float newGain) {
-    m_gain = newGain; // FFB thread might be reading this right now!
+// ❌ BAD: No sanitization, race condition, no safety limits
+void FFBEngine::SetGain(float newGain) {
+    m_gain = newGain; // FFB thread might crash or output garbage (NaN)!
 }
 ```
 
