@@ -170,6 +170,7 @@ public:
     // Settings (GUI Sliders)
     bool m_dynamic_normalization_enabled = false; // Issue #207: Structural force normalization toggle
     bool m_auto_load_normalization_enabled = false; // Stage 3: Tactile Normalization (Load-based)
+    float m_tactile_gain = 1.0f; // Issue #206: Global tactile scaling
     float m_gain;
     float m_understeer_effect;
     float m_sop_effect;

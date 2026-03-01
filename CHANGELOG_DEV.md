@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.110] - 2026-03-02
+### Added
+- **Global Tactile Scaling (Issue #206)**:
+  - Introduced a dedicated "Tactile Strength" slider in the GUI to allow global scaling of all haptic textures (Road Details, Slide Rumble, Lockup Vibration, Spin, etc.).
+  - This allows users on different hardware (from T300 to high-end Direct Drive) to tune the intensity of absolute Nm tactile effects to their preference without affecting structural physics.
+  - **Soft Lock Preservation**: Explicitly excluded the Soft Lock force from the global tactile gain to ensure consistent and physically realistic rack limit resistance remains active for hardware safety.
+  - Fully integrated with the Preset and Persistence system, including safety clamping [0.0, 2.0].
+
 ## [0.7.109] - 2026-02-28
 ### Fixed
 - **Normalization Consistency (Issue #207)**:

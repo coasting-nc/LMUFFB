@@ -533,14 +533,16 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double norm_structural = structural_sum * m_smoothed_structural_mult;
 
     // Tactile Textures are calculated in absolute Nm
-    double texture_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble + ctx.soft_lock_force;
+    // v0.7.110: Apply m_tactile_gain to textures, but NOT to Soft Lock (Issue #206)
+    double tactile_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble;
+    double final_texture_nm = (tactile_sum_nm * (double)m_tactile_gain) + ctx.soft_lock_force;
 
     // --- 7. OUTPUT SCALING (Physical Target Model) ---
     // Map structural to the target rim torque, then divide by wheelbase max to get DirectInput %
     double di_structural = norm_structural * ((double)m_target_rim_nm / wheelbase_max_safe);
 
     // Map absolute texture Nm directly to the wheelbase max
-    double di_texture = texture_sum_nm / wheelbase_max_safe;
+    double di_texture = final_texture_nm / wheelbase_max_safe;
 
     double norm_force = (di_structural + di_texture) * m_gain;
 

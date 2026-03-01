@@ -80,6 +80,7 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "slide_freq") current_preset.slide_freq = std::stof(value);
                 else if (key == "road_enabled") current_preset.road_enabled = std::stoi(value);
                 else if (key == "road_gain") current_preset.road_gain = (std::min)(2.0f, std::stof(value));
+                else if (key == "tactile_gain") current_preset.tactile_gain = (std::min)(2.0f, std::stof(value));
                 else if (key == "dynamic_normalization_enabled") current_preset.dynamic_normalization_enabled = (value == "1" || value == "true");
                 else if (key == "auto_load_normalization_enabled") current_preset.auto_load_normalization_enabled = (value == "1" || value == "true");
                 else if (key == "soft_lock_enabled") current_preset.soft_lock_enabled = std::stoi(value);
@@ -903,6 +904,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "slide_freq=" << p.slide_freq << "\n";
     file << "road_enabled=" << (p.road_enabled ? "1" : "0") << "\n";
     file << "road_gain=" << p.road_gain << "\n";
+    file << "tactile_gain=" << p.tactile_gain << "\n";
     file << "road_fallback_scale=" << p.road_fallback_scale << "\n";
     file << "dynamic_normalization_enabled=" << (p.dynamic_normalization_enabled ? "1" : "0") << "\n";
     file << "auto_load_normalization_enabled=" << (p.auto_load_normalization_enabled ? "1" : "0") << "\n";
@@ -1208,6 +1210,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "slide_freq=" << engine.m_slide_freq_scale << "\n";
         file << "road_enabled=" << engine.m_road_texture_enabled << "\n";
         file << "road_gain=" << engine.m_road_texture_gain << "\n";
+        file << "tactile_gain=" << engine.m_tactile_gain << "\n";
         file << "road_fallback_scale=" << engine.m_road_fallback_scale << "\n";
         file << "spin_enabled=" << engine.m_spin_enabled << "\n";
         file << "spin_gain=" << engine.m_spin_gain << "\n";
@@ -1348,6 +1351,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "slide_freq") engine.m_slide_freq_scale = std::stof(value);
                     else if (key == "road_enabled") engine.m_road_texture_enabled = std::stoi(value);
                     else if (key == "road_gain") engine.m_road_texture_gain = std::stof(value);
+                    else if (key == "tactile_gain") engine.m_tactile_gain = std::stof(value);
                     else if (key == "soft_lock_enabled") engine.m_soft_lock_enabled = std::stoi(value);
                     else if (key == "soft_lock_stiffness") engine.m_soft_lock_stiffness = std::stof(value);
                     else if (key == "soft_lock_damping") engine.m_soft_lock_damping = std::stof(value);

@@ -2,6 +2,19 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 2, 2026[/b][/size]
+[b]Version 0.7.110 - Global Tactile Strength Scaling[/b]
+
+[b]New release[/b] (0.7.110): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]Tactile Strength Slider[/b]: Added a global "Tactile Strength" slider in the "Tactile Textures" section. This allows you to scale the intensity of all haptic vibrations (Road, Slide, Lockup, Spin, etc.) to match your hardware's preference.
+[*][b]Soft Lock Safety[/b]: The slider specifically excludes Soft Lock resistance, ensuring that your steering rack limits remain consistently strong and physically realistic for hardware safety.
+[/list]
+
+---
+
 [size=5][b]March 1, 2026[/b][/size]
 [b]Version 0.7.109 - FFB Consistency & Normalization Toggles[/b]
 
