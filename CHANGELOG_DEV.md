@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ---
 
 
-## Cumulative changes from previous versions v0.7.66 - v0.7.107
+## Cumulative changes from previous versions v0.7.66 - v0.7.110
 
 ### Fixed
 - **Garage FFB Muting (#185)**:
@@ -36,6 +36,9 @@ All notable changes to this project will be documented in this file.
 - **In-Game FFB Strength Normalization (#160)**:
   - Corrected a mathematical error in the In-Game FFB path where the signal was being scaled by the target rim torque without prior normalization.
   - The 400Hz signal is now correctly mapped to the wheelbase's maximum physical torque before being scaled to the user's target rim torque.
+- **Normalization Consistency (#207)**:
+  - Resolved an issue where "learned" peaks from previous cars could pollute the FFB of a newly selected car.
+  - Implemented automatic normalization reset upon car changes or when disabling adaptive learning toggles.
 
 ### Changed
 - **Global FFB Inversion (#42)**:
@@ -59,6 +62,10 @@ All notable changes to this project will be documented in this file.
   - Transitioned the GUI rendering pipeline from the legacy "BitBlt" model to the modern **Flip Model** (`DXGI_SWAP_EFFECT_FLIP_DISCARD`).
   - Improved application performance, reduced latency, and ensured compatibility with modern Windows 10/11 features like Variable Refresh Rate (VRR) and independent flip.
   - Replaced deprecated `D3D11CreateDeviceAndSwapChain` with a granular modernization flow using `D3D11CreateDevice` and `IDXGIFactory2::CreateSwapChainForHwnd`.
+- **Global Tactile Scaling (#206)**:
+  - Introduced a dedicated **Tactile Strength** slider to allow global scaling of all haptic textures (Road Details, Slide Rumble, Lockup Vibration, etc.).
+  - This allows users to tune the intensity of absolute Nm tactile effects to their hardware preference without affecting structural physics.
+  - **Soft Lock Preservation**: Soft Lock force is explicitly excluded from this scaling to maintain consistent and physically realistic rack limit resistance.
 
 
 Dynamic FFB Normalization changes:
@@ -66,11 +73,12 @@ Dynamic FFB Normalization changes:
 
 ### Added
 - **Dynamic FFB Normalization (Stage 1) (#152)**:
-  - Introduced a Session-Learned Dynamic Normalization system for structural forces.
+  - Introduced a Session-Learned Dynamic Normalization system for structural forces (**Disabled by default; optional UI toggle added**).
   - **Peak Follower**: Continuously tracks peak steering torque with a fast-attack/slow-decay leaky integrator (0.5% reduction per second).
   - **Contextual Spike Rejection**: Protects the learned peak from telemetry artifacts and wall hits using rolling average comparisons and acceleration-based gating.
   - **Split Summation**: Structural forces (Steering, SoP, Rear Align, etc.) are now normalized by the learned session peak, while tactile textures (Road noise, Slide rumble) continue to use legacy hardware scaling.
   - This ensures consistent FFB weight and detail across different car classes (e.g., GT3 vs. Hypercar) without requiring manual `m_max_torque_ref` adjustments.
+  - **Reset Logic**: Manual reset and car-change logic ensure learned peaks do not pollute subsequent sessions (#207).
 
 
 ### Added
@@ -85,7 +93,7 @@ Dynamic FFB Normalization changes:
 
 ### Added
 - **Tactile Haptics Normalization (Stage 3) (#154)**:
-  - Transitioned tactile effect scaling (Road Texture, Slide Rumble, Lockup Vibration) from a dynamic peak-load baseline to a **Static Mechanical Load** baseline.
+  - Transitioned tactile effect scaling (Road Texture, Slide Rumble, Lockup Vibration) from a dynamic peak-load baseline to a **Static Mechanical Load** baseline (**Disabled by default; optional UI toggle added**).
   - **Static Load Latching**: Implemented logic to learn the vehicle's mechanical weight exclusively between 2-15 m/s and "freeze" the reference at higher speeds. This prevents high-speed aerodynamic downforce from polluting the normalization baseline and making low-speed effects feel "dead".
   - **Giannoulis Soft-Knee Compression**: Implemented a smooth compression algorithm to handle high loads. Tactile effects are uncompressed below 1.25x static load, enter a quadratic transition zone up to 1.75x, and apply a 4:1 compression ratio above that. This ensures rich detail at all speeds without violent vibrations at top speed.
   - **Tactile Smoothing**: Added a 100ms EMA filter to the tactile multiplier to ensure smooth transitions across load ranges.
