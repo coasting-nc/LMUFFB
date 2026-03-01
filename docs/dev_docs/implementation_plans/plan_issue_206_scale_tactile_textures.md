@@ -5,6 +5,16 @@ Issue #206 requests a separate slider to scale the strength of "Absolute Tactile
 
 **Design Rationale**: The architectural shift to "Absolute Nm" scaling in v0.7.68 was designed to provide hardware-agnostic haptics. However, hardware differences (motor inertia, internal damping, belt vs direct drive) mean that a "physically accurate" 2Nm pulse may feel different to different users. A global gain stage provides the necessary flexibility for hardware compensation without breaking the underlying physical model.
 
+### Relation to Issue #154 (Tactile Haptics Normalization Stage 3)
+Issue #154 transitioned tactile effect scaling (Road Texture, Slide Rumble, Lockup Vibration) from a dynamic peak-load baseline to a **Static Mechanical Load** baseline. The new "Tactile Strength" slider acts as a global multiplier that is applied *after* these physics-based modulations.
+- **Analytical Distinction**: While #154 handles the "physics relative" scaling (ensuring textures remain consistent regardless of aerodynamic load or vehicle speed), #206 handles the "hardware relative" scaling (allowing users to match the total haptic energy to their specific wheelbase's mechanical characteristics).
+- **Compatibility**: The two systems are complementary. #154 ensures the *input* to the haptic synthesis is physically sound, while #206 ensures the *output* of that synthesis is hardware-appropriate.
+
+### Relation to Issue #207 (Disabled Dynamic Normalization)
+Issue #207 (v0.7.109) disabled Session-Learned Dynamic Normalization by default, prioritizing a predictable, manual scaling model for structural forces.
+- **Architectural Synergy**: The introduction of the "Tactile Strength" slider (#206) aligns perfectly with the philosophy of Issue #207. By providing a dedicated manual control for the haptic layer, we complete the transition from "fully automated learning" to "manual calibration with adaptive options."
+- **Independence**: The changes for #206 do not modify the logic of #207; rather, they provide the missing manual control counterpart for the haptic signal chain that was previously dominated by automated normalization. If a user enables dynamic load normalization (Stage 3), the #206 slider still provides a final global trim on the output.
+
 ## Reference Documents
 - GitHub Issue #206: [Scale the strength of Absolute Tactile Textures](https://github.com/coasting-nc/LMUFFB/issues/206)
 - GitHub Issue #153: Stage 2 Hardware Strength Scaling.
