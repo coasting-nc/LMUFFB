@@ -3,6 +3,8 @@
 ## Context
 Issue #206 requests a separate slider to scale the strength of "Absolute Tactile Textures". Currently, tactile effects (Road Details, Slide Rumble, Lockup Vibration, etc.) are calculated in absolute Nm and mapped directly to the wheelbase's maximum torque. On some hardware (especially lower-end wheels), these absolute values can be disproportionately strong or weak. A dedicated "Tactile Strength" slider will allow users to scale these effects globally while maintaining their internal absolute Nm logic.
 
+**Design Rationale**: The architectural shift to "Absolute Nm" scaling in v0.7.68 was designed to provide hardware-agnostic haptics. However, hardware differences (motor inertia, internal damping, belt vs direct drive) mean that a "physically accurate" 2Nm pulse may feel different to different users. A global gain stage provides the necessary flexibility for hardware compensation without breaking the underlying physical model.
+
 ## Reference Documents
 - GitHub Issue #206: [Scale the strength of Absolute Tactile Textures](https://github.com/coasting-nc/LMUFFB/issues/206)
 - GitHub Issue #153: Stage 2 Hardware Strength Scaling.
@@ -14,13 +16,8 @@ Issue #206 requests a separate slider to scale the strength of "Absolute Tactile
 - **FFBEngine.h/cpp**:
   - `calculate_force()`: Sums structural forces and tactile textures. Currently, tactile textures are summed into `texture_sum_nm` and converted to DirectInput percentage using `wheelbase_max_safe`.
   - Soft Lock is currently included in the `texture_sum_nm` (Absolute Nm) group.
-- **Config.h/cpp**:
-  - `Preset` struct: Holds all configurable parameters.
-  - `Config::Load/Save`: Persists settings to `config.ini`.
-- **GuiLayer_Common.cpp**:
-  - Implements the ImGui-based user interface.
-- **Tooltips.h**:
-  - Centralized storage for UI tooltips.
+
+**Design Rationale**: The `calculate_force` function is the core of the signal chain. Introducing the gain stage at the point of summation (before conversion to DI percentage) ensures that the scaling is applied uniformly to all haptic components while they are still in their physical (Nm) representation.
 
 ## FFB Effect Impact Analysis
 | Effect | Technical Changes | Expected User-Facing Change |
@@ -29,48 +26,42 @@ Issue #206 requests a separate slider to scale the strength of "Absolute Tactile
 | **Soft Lock** | **EXCLUDED** from `m_tactile_gain` scaling. | Remains at a consistent absolute Nm level for safety and physical realism. |
 | **Structural Forces** | **No Change**. | Steering weight and SoP feel remain unaffected by the tactile gain. |
 
+**Design Rationale**:
+- **Tactile Scaling**: Using a single global multiplier rather than per-effect multipliers reduces UI clutter and provides a "master volume" for haptics, which is the most common user request for hardware matching.
+- **Soft Lock Exclusion**: Soft Lock is a safety feature representing physical steering rack limits. Scaling it alongside "vibrations" would be dangerous; it must remain anchored to the physical torque limits of the car and wheelbase to prevent hardware damage or unexpected behavior at the steering limit.
+
 ## Proposed Changes
 
 ### 1. FFBEngine.h
 - Add `float m_tactile_gain = 1.0f;` to the `FFBEngine` class.
 
+**Design Rationale**: Storing this as a member of the engine allows the high-frequency FFB thread to access it with zero latency during the calculation loop.
+
 ### 2. FFBEngine.cpp
 - Update `calculate_force()`:
-  - Calculate `texture_sum_nm` (tactile textures).
-  - Apply `m_tactile_gain` to `texture_sum_nm`.
-  - Keep `soft_lock_force` separate or add it back after `m_tactile_gain` is applied.
-  - Current summation logic in `calculate_force()`:
-    ```cpp
-    double texture_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble + ctx.soft_lock_force;
-    ```
-  - Proposed summation logic:
-    ```cpp
-    double tactile_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble;
-    double final_texture_nm = (tactile_sum_nm * m_tactile_gain) + ctx.soft_lock_force;
-    ```
+  - Calculate `tactile_sum_nm` (tactile textures).
+  - Apply `m_tactile_gain` to `tactile_sum_nm`.
+  - Add `soft_lock_force` after the gain stage.
+
+**Design Rationale**: Summation in `double` precision before conversion to `float` DirectInput percentage minimizes rounding errors and maintains the high dynamic range required for absolute Nm calculations on powerful DD bases.
 
 ### 3. Config.h
 - Add `float tactile_gain = 1.0f;` to the `Preset` struct.
 - Add `Preset& SetTactileGain(float v)` fluent setter.
-- Update `Preset::Apply()` to copy `tactile_gain` to `engine.m_tactile_gain` (with clamping `[0.0, 2.0]`).
-- Update `Preset::UpdateFromEngine()` to copy `engine.m_tactile_gain` back to `tactile_gain`.
-- Update `Preset::Equals()` to include `tactile_gain`.
+- Update `Preset::Apply()`, `Preset::UpdateFromEngine()`, and `Preset::Equals()`.
+
+**Design Rationale**: Full integration into the `Preset` system is critical for user experience, allowing different haptic intensities for different car classes (e.g., lower haptics for prototypes vs higher for GT cars).
 
 ### 4. Config.cpp
-- Update `ParsePresetLine()` to handle `tactile_gain`.
-- Update `WritePresetFields()` to include `tactile_gain`.
-- Update `Config::Save()` to write `engine.m_tactile_gain` to `config.ini`.
-- Update `Config::Load()` to read `engine.m_tactile_gain` from `config.ini`.
+- Update `ParsePresetLine()` and `WritePresetFields()` for persistence.
+- Update `Config::Load()` and `Config::Save()` to handle the global parameter.
 
-### 5. GuiLayer_Common.cpp
-- In `DrawTuningWindow()`, inside the "Tactile Textures" section:
-  - Add `FloatSetting("Tactile Strength", &engine.m_tactile_gain, 0.0f, 2.0f, FormatPct(engine.m_tactile_gain), Tooltips::TACTILE_GAIN);`
+**Design Rationale**: Persistence ensures that hardware-specific tuning is remembered across application restarts, fulfilling the reliability-focused mission of the "Fixer" role.
 
-### 6. Tooltips.h
-- Add `inline constexpr const char* TACTILE_GAIN = "Global multiplier for all haptic textures (Road, Slide, Lockup, etc.). Allows scaling absolute Nm effects to better match your hardware.";`
+### 5. GuiLayer_Common.cpp / Tooltips.h
+- Add the "Tactile Strength" slider and its associated tooltip.
 
-### 7. Versioning
-- Increment version to `0.7.110`.
+**Design Rationale**: Positioning the slider in the "Tactile Textures" section groups it logically with the effects it controls, following standard UI/UX patterns.
 
 ## Parameter Synchronization Checklist
 - [x] Declaration in `FFBEngine.h`: `float m_tactile_gain`
@@ -90,12 +81,14 @@ Issue #206 requests a separate slider to scale the strength of "Absolute Tactile
   - **Test case 4**: Verify `m_tactile_gain` does NOT affect structural steering torque.
 - **Persistence Test**: Verify `tactile_gain` is correctly saved to and loaded from `config.ini`.
 
+**Design Rationale**: Unit tests specifically targeting the gain stage separation (Tactile vs structural vs Soft Lock) are mandatory to prevent future regressions where safety effects might accidentally be attenuated by user haptic preferences.
+
 ## Deliverables
 - [x] Modified `src/FFBEngine.h`, `src/FFBEngine.cpp`
 - [x] Modified `src/Config.h`, `src/Config.cpp`
 - [x] Modified `src/GuiLayer_Common.cpp`
 - [x] Modified `src/Tooltips.h`
-- [ ] Modified `VERSION`, `CHANGELOG_DEV.md`, `USER_CHANGELOG.md`
+- [x] Modified `VERSION`, `CHANGELOG_DEV.md`, `USER_CHANGELOG.md`
 - [x] New test file `tests/test_issue_206_tactile_scaling.cpp`.
 - [x] Implementation Notes (to be added at the end).
 
