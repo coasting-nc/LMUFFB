@@ -54,6 +54,7 @@ This project will not be built in a single "Big Bang". Instead, we will build a 
 *   `0.1_researcher_prompt.md`: Instructions for feature research.
 *   `0.2_analyst_gatekeeper_prompt.md`: Instructions for reviewing reports/escalating.
 *   `A.1_architect_prompt.md`: Instructions for planning. **MUST include:**
+    *   **Design Rationale (MANDATORY):** Architect must provide a "Design Rationale" block for every major section (Context, Analysis, FFB Impact, Proposed Changes, Test Plan) documenting the "Why" behind decisions.
     *   **Codebase Analysis:** Architect must review current codebase, identify impacted functionalities, and trace data flows.
     *   **FFB Effect Impact Analysis:** For FFB-related tasks, document affected effects (understeer, oversteer, lockup, etc.) from both technical (files, functions, data changes) and user (FFB feel, UI settings, presets) perspectives.
     *   **User Settings & Presets Impact:** Migration logic considerations.
@@ -61,6 +62,7 @@ This project will not be built in a single "Big Bang". Instead, we will build a 
     *   **Initialization Order Analysis:** For cross-header changes, document circular dependencies and constructor placement.
     *   **Boundary Condition Tests:** For buffer-based algorithms, include empty/partial/full/wraparound tests.
 *   `A.2_plan_reviewer_prompt.md`: Instructions for validating the plan. **MUST verify:**
+    *   **Design Rationale** blocks are present and thorough for all major sections.
     *   Codebase analysis section is complete.
     *   FFB effect impact is documented (if applicable).
     *   Parameter synchronization checklist is complete (if adding settings).

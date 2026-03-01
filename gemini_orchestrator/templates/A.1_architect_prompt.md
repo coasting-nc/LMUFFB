@@ -50,14 +50,18 @@ Create an Implementation Plan file at `docs/dev_docs/plans/plan_{{TASK_ID}}.md`.
 
 The plan **MUST** include:
 *   **Context:** Brief summary of the goal.
+*   **Design Rationale (MANDATORY):** A dedicated section at the beginning of the plan (and optionally within each subsection) that explains the "Why" behind the overall approach, focusing on physics-based reasoning, reliability, safety, and architectural integrity.
 *   **Reference Documents:** Link to the diagnostic/research reports.
 *   **Codebase Analysis Summary:** (From Step 1)
     *   Current architecture overview (relevant parts).
     *   List of impacted functionalities with brief descriptions of how they are affected.
+    *   **Design Rationale:** Explain why these specific modules/functions were identified as the impact zone.
 *   **FFB Effect Impact Analysis:** (From Step 2, if applicable)
     *   Table or list of affected FFB effects.
     *   For each effect: technical changes needed and expected user-facing changes.
+    *   **Design Rationale:** Explain the physics-based reasoning for how these effects should change to maintain or improve realism and "feel".
 *   **Proposed Changes:** Detailed list of files to modify and the logic to implement.
+    *   **Design Rationale:** For each major change, justify the choice of algorithms, data structures, and architectural patterns (e.g., why choice A was selected over choice B).
     *   **Parameter Synchronization Checklist (for new settings):** If adding new configurable parameters, explicitly list for each:
         *   Declaration in FFBEngine.h (member variable)
         *   Declaration in Preset struct (Config.h)
@@ -72,6 +76,7 @@ The plan **MUST** include:
         *   Include order requirements
     *   **Version Increment Rule:** The plan MUST explicitly state that version numbers (in `VERSION` and `src/Version.h`) should be incremented by the **smallest possible increment** (+1 to the rightmost number), unless the user explicitly requested otherwise.
 *   **Test Plan (TDD-Ready):** Specific test cases (unit/integration) that the Developer will write **BEFORE** implementing the code. Include:
+    *   **Design Rationale:** Explain why these tests provide sufficient coverage and how they prove the fix is correct, safe, and handles boundary conditions.
     *   Test function names and descriptions.
     *   Expected inputs and outputs.
     *   Assertions that should fail until the feature is implemented.

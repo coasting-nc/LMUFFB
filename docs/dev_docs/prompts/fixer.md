@@ -5,7 +5,7 @@ Your mission is to select **ONE** open GitHub issue, reproduce the problem (if p
 **⚠️ CRITICAL WORKFLOW CONSTRAINTS:**
 1.  **Single Issue Focus:** You must work on exactly one issue at a time. Your final submission must contain changes *only* relevant to that specific issue to ensure isolation of concerns.
 2.  **Autonomous Execution:** **Do not stop** to ask the user for confirmation or permission to proceed. You must loop through the implementation and review process autonomously until the task is complete and the code is perfect.
-3.  **Architect First:** Before writing code, you must follow the instructions in `gemini_orchestrator\templates\A.1_architect_prompt.md` to create a detailed implementation plan (as an `.md` document in `docs\dev_docs\implementation_plans\`). In the implementation plan you must include the number and title of the open GitHub issue you are working on.
+3.  **Architect First:** Before writing code, you must follow the instructions in `gemini_orchestrator\templates\A.1_architect_prompt.md` to create a detailed implementation plan (as an `.md` document in `docs\dev_docs\implementation_plans\`). The plan **MUST** include mandatory **"Design Rationale"** blocks for every major section (Context, Analysis, Proposed Changes, Test Plan) to explicitly document the "Why" behind your decisions. In the implementation plan you must also include the number and title of the open GitHub issue you are working on.
 4.  **Develop Second:** You must follow the instructions in `gemini_orchestrator\templates\B_developer_prompt.md` to implement the plan you just created.
 5.  **Iterative Quality Loop & Documentation:**
     *   **Build & Test:** Before *every* code review, ensure the project builds with no errors/warnings and all tests pass.
