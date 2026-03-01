@@ -182,7 +182,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     bool is_clean_state = (lat_g_abs < LAT_G_CLEAN_LIMIT) && (torque_slew < TORQUE_SLEW_CLEAN_LIMIT) && !is_contextual_spike;
 
     // 2. Leaky Integrator (Exponential Decay + Floor)
-    if (is_clean_state && m_torque_source == 0) {
+    if (is_clean_state && m_torque_source == 0 && m_dynamic_normalization_enabled) {
         if (current_abs_torque > m_session_peak_torque) {
             m_session_peak_torque = current_abs_torque; // Fast attack
         } else {
@@ -196,7 +196,14 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // 3. EMA Filtering on the Gain Multiplier (Zero-latency physics)
     // v0.7.71: For In-Game FFB (1), we normalize against the wheelbase max since the signal is already normalized [-1, 1].
-    double target_structural_mult = (m_torque_source == 1) ? (1.0 / (m_wheelbase_max_nm + EPSILON_DIV)) : (1.0 / (m_session_peak_torque + EPSILON_DIV));
+    double target_structural_mult;
+    if (m_torque_source == 1) {
+        target_structural_mult = 1.0 / (m_wheelbase_max_nm + EPSILON_DIV);
+    } else if (m_dynamic_normalization_enabled) {
+        target_structural_mult = 1.0 / (m_session_peak_torque + EPSILON_DIV);
+    } else {
+        target_structural_mult = 1.0 / (m_target_rim_nm + EPSILON_DIV);
+    }
     double alpha_gain = data->mDeltaTime / (STRUCT_MULT_SMOOTHING_TAU + data->mDeltaTime); // 250ms smoothing
     m_smoothed_structural_mult += alpha_gain * (target_structural_mult - m_smoothed_structural_mult);
 
@@ -451,7 +458,9 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double grip_factor_applied = m_torque_passthrough ? 1.0 : ctx.grip_factor;
 
     // v0.7.46: Dynamic Weight logic
-    update_static_load_reference(ctx.avg_load, ctx.car_speed, ctx.dt);
+    if (m_auto_load_normalization_enabled) {
+        update_static_load_reference(ctx.avg_load, ctx.car_speed, ctx.dt);
+    }
     double dynamic_weight_factor = 1.0;
 
     // Only apply if enabled AND we have real load data (no warnings)
@@ -1037,6 +1046,38 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
     
     ctx.road_noise = road_noise_val * m_road_texture_gain * ctx.texture_load_factor;
     ctx.road_noise *= ctx.speed_gate;
+}
+
+void FFBEngine::ResetNormalization() {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+
+    // 1. Structural Normalization Reset (Stage 1)
+    // If disabled, we return to the user's manual target.
+    // If enabled, we reset to the target to restart the learning process.
+    m_session_peak_torque = (std::max)(1.0, (double)m_target_rim_nm);
+    m_smoothed_structural_mult = 1.0 / (m_session_peak_torque + EPSILON_DIV);
+    m_rolling_average_torque = m_session_peak_torque;
+
+    // 2. Tactile Normalization Reset (Stage 3)
+    // Always return to the class-default seed load.
+    ParsedVehicleClass vclass = ParseVehicleClass(m_current_class_name.c_str(), m_vehicle_name);
+    m_auto_peak_load = GetDefaultLoadForClass(vclass);
+
+    // Reset static load reference
+    m_static_front_load = m_auto_peak_load * 0.5;
+    m_static_load_latched = false;
+
+    // If we have a saved static load, restore it (v0.7.70 logic)
+    double saved_load = 0.0;
+    if (Config::GetSavedStaticLoad(m_vehicle_name, saved_load)) {
+        m_static_front_load = saved_load;
+        m_static_load_latched = true;
+    }
+
+    m_smoothed_tactile_mult = 1.0;
+
+    std::cout << "[FFB] Normalization state reset. Structural Peak: " << m_session_peak_torque
+              << " Nm | Load Peak: " << m_auto_peak_load << " N" << std::endl;
 }
 
 // Helper: Calculate Suspension Bottoming (v0.6.22)

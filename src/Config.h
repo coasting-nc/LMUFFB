@@ -67,6 +67,9 @@ struct Preset {
     bool road_enabled = true;
     float road_gain = 0.0f;
 
+    bool dynamic_normalization_enabled = false;
+    bool auto_load_normalization_enabled = false;
+
     bool soft_lock_enabled = true;
     float soft_lock_stiffness = 20.0f;
     float soft_lock_damping = 0.5f;
@@ -181,6 +184,7 @@ struct Preset {
         return *this; 
     }
     Preset& SetRoad(bool enabled, float g) { road_enabled = enabled; road_gain = g; return *this; }
+    Preset& SetDynamicNormalization(bool enabled) { dynamic_normalization_enabled = enabled; return *this; }
 
     Preset& SetSoftLock(bool enabled, float stiffness, float damping) {
         soft_lock_enabled = enabled;
@@ -279,6 +283,8 @@ struct Preset {
     // Apply this preset to an engine instance
     // v0.7.16: Added comprehensive safety clamping to prevent crashes/NaN from invalid config values
     void Apply(FFBEngine& engine) const {
+        engine.m_dynamic_normalization_enabled = dynamic_normalization_enabled;
+        engine.m_auto_load_normalization_enabled = auto_load_normalization_enabled;
         engine.m_gain = (std::max)(0.0f, gain);
         engine.m_understeer_effect = (std::max)(0.0f, (std::min)(2.0f, understeer));
         engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, sop));
@@ -451,6 +457,8 @@ struct Preset {
 
     // NEW: Capture current engine state into this preset
     void UpdateFromEngine(const FFBEngine& engine) {
+        dynamic_normalization_enabled = engine.m_dynamic_normalization_enabled;
+        auto_load_normalization_enabled = engine.m_auto_load_normalization_enabled;
         gain = engine.m_gain;
         understeer = engine.m_understeer_effect;
         sop = engine.m_sop_effect;
@@ -590,6 +598,9 @@ struct Preset {
 
         if (road_enabled != p.road_enabled) return false;
         if (!is_near(road_gain, p.road_gain, eps)) return false;
+
+        if (dynamic_normalization_enabled != p.dynamic_normalization_enabled) return false;
+        if (auto_load_normalization_enabled != p.auto_load_normalization_enabled) return false;
 
         if (soft_lock_enabled != p.soft_lock_enabled) return false;
         if (!is_near(soft_lock_stiffness, p.soft_lock_stiffness, eps)) return false;

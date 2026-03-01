@@ -56,7 +56,14 @@ void FFBEngine::update_static_load_reference(double current_load, double speed, 
 // Initialize the load reference based on vehicle class and name seeding
 void FFBEngine::InitializeLoadReference(const char* className, const char* vehicleName) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+
+    // v0.7.109: Perform a full normalization reset on car change
+    // This ensures that session-learned peaks from a previous car don't pollute the new session.
+    ResetNormalization();
+
     ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
+
+    // Stage 3 Reset: Ensure peak load starts at class baseline
     m_auto_peak_load = GetDefaultLoadForClass(vclass);
 
     std::string vName = vehicleName ? vehicleName : "Unknown";

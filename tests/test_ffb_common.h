@@ -181,6 +181,7 @@ public:
     static double GetAutoPeakLoad(const FFBEngine& e) { return e.m_auto_peak_load; }
     static void SetAutoPeakLoad(FFBEngine& e, double val) { e.m_auto_peak_load = val; }
     static void SetAutoNormalizationEnabled(FFBEngine& e, bool enabled) { e.m_auto_load_normalization_enabled = enabled; }
+    static void SetDynamicNormalizationEnabled(FFBEngine& e, bool enabled) { e.m_dynamic_normalization_enabled = enabled; }
 
     // Smoothing Test Access
     static double GetDynamicWeightSmoothed(const FFBEngine& e) { return e.m_dynamic_weight_smoothed; }

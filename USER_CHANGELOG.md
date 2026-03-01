@@ -2,6 +2,20 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 1, 2026[/b][/size]
+[b]Version 0.7.109 - FFB Consistency & Normalization Toggles[/b]
+
+[b]New release[/b] (0.7.109): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Predictable FFB Scaling[/b]: To ensure a consistent and reliable steering feel, we have disabled the "Session-Learned Dynamic Normalization" feature by default. Structural forces (Steering, SoP) now scale strictly to your manual "Target Rim Torque" settings unless you choose to enable the adaptive system. (#207)
+[*][b]Independent Haptic Toggles[/b]: Added separate toggles for Structural (Session Peak) and Tactile (Load Peak) normalization. This gives you granular control over whether road textures and steering weight should adapt to session peaks or remain at fixed class-based defaults.
+[*][b]Instant Reset Logic[/b]: Switching car profiles or disabling normalization now instantly restores your FFB to its baseline state, ensuring that peaks "learned" from a heavy Hypercar session don't make your GT3 feel limp when you switch cars.
+[/list]
+
+---
+
 [size=5][b]February 28, 2026[/b][/size]
 [b]Version 0.7.107 - Core Physics Refinement (Batch 1)[/b]
 

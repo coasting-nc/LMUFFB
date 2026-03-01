@@ -176,10 +176,15 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_speed_gate_upper = -5.0f;
 
     // v0.7.67: Fix for Issue #152 Normalization - Ensure consistent scaling for legacy tests
+    // v0.7.109: Initialize structural peaks to match target
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 20.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 20.0);
     FFBEngineTestAccess::SetRollingAverageTorque(engine, 20.0);
     FFBEngineTestAccess::SetLastRawTorque(engine, 20.0);
+
+    // v0.7.109: Ensure toggles are initialized to FALSE to match global defaults
+    engine.m_dynamic_normalization_enabled = false;
+    engine.m_auto_load_normalization_enabled = false;
 }
 
 // ============================================================

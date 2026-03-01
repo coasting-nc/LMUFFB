@@ -35,6 +35,8 @@ TEST_CASE(test_load_weighted_grip, "Physics") {
 
 TEST_CASE(test_dynamic_weight_scaling, "Physics") {
     FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_auto_load_normalization_enabled = true;
     Preset p;
     p.dynamic_weight_gain = 1.0f; // Enable
     p.dynamic_weight_smoothing = 0.0f; // Disable smoothing for instant test
@@ -87,6 +89,8 @@ TEST_CASE(test_dynamic_weight_scaling, "Physics") {
 
 TEST_CASE(test_dynamic_weight_safety_gate, "Physics") {
     FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_auto_load_normalization_enabled = true;
     engine.m_invert_force = false;
     Preset p;
     p.dynamic_weight_gain = 1.0f;
@@ -106,8 +110,9 @@ TEST_CASE(test_dynamic_weight_safety_gate, "Physics") {
     data.mSteeringShaftTorque = 5.0;
 
     // Run multiple frames to trigger warned_load hysteresis
+    // Need to use a car name so InitializeLoadReference doesn't reset us every frame
     for(int i=0; i<30; ++i) {
-        engine.calculate_force(&data);
+        engine.calculate_force(&data, "GT3", "911");
     }
 
     double output = engine.calculate_force(&data);
@@ -115,7 +120,8 @@ TEST_CASE(test_dynamic_weight_safety_gate, "Physics") {
     // warned_load should be true, dynamic weight should be disabled (factor 1.0)
     // base_input = 5.0
     // factor = 1.0
-    // Total Nm = 5.0
+    // Structural Multiplier = 1/100 = 0.01 (session peak 100)
+    // di_structural = 5.0 * 0.01 * (100 / 100) = 0.05
     // Norm Force = 0.05
 
     std::cout << "[INFO] Safety Gate Output: " << output << " (Expected 0.05)" << std::endl;

@@ -168,6 +168,8 @@ public:
     static constexpr int STR_BUF_64 = 64;
 
     // Settings (GUI Sliders)
+    bool m_dynamic_normalization_enabled = false; // Issue #207: Structural force normalization toggle
+    bool m_auto_load_normalization_enabled = false; // Stage 3: Tactile Normalization (Load-based)
     float m_gain;
     float m_understeer_effect;
     float m_sop_effect;
@@ -635,7 +637,6 @@ private:
     double m_last_raw_torque = 0.0; // New v0.7.67 (Issue #152)
 
     std::string m_current_class_name = "";
-    bool m_auto_load_normalization_enabled = true; 
 
     void update_static_load_reference(double current_load, double speed, double dt);
     void InitializeLoadReference(const char* className, const char* vehicleName);
@@ -667,6 +668,7 @@ public:
     double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr, float genFFBTorque = 0.0f, bool allowed = true);
 
     double apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, FFBCalculationContext& ctx);
+    void ResetNormalization();
 
 private:
     void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext& ctx);

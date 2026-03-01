@@ -80,6 +80,8 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "slide_freq") current_preset.slide_freq = std::stof(value);
                 else if (key == "road_enabled") current_preset.road_enabled = std::stoi(value);
                 else if (key == "road_gain") current_preset.road_gain = (std::min)(2.0f, std::stof(value));
+                else if (key == "dynamic_normalization_enabled") current_preset.dynamic_normalization_enabled = (value == "1" || value == "true");
+                else if (key == "auto_load_normalization_enabled") current_preset.auto_load_normalization_enabled = (value == "1" || value == "true");
                 else if (key == "soft_lock_enabled") current_preset.soft_lock_enabled = std::stoi(value);
                 else if (key == "soft_lock_stiffness") current_preset.soft_lock_stiffness = std::stof(value);
                 else if (key == "soft_lock_damping") current_preset.soft_lock_damping = std::stof(value);
@@ -902,6 +904,8 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "road_enabled=" << (p.road_enabled ? "1" : "0") << "\n";
     file << "road_gain=" << p.road_gain << "\n";
     file << "road_fallback_scale=" << p.road_fallback_scale << "\n";
+    file << "dynamic_normalization_enabled=" << (p.dynamic_normalization_enabled ? "1" : "0") << "\n";
+    file << "auto_load_normalization_enabled=" << (p.auto_load_normalization_enabled ? "1" : "0") << "\n";
     file << "soft_lock_enabled=" << (p.soft_lock_enabled ? "1" : "0") << "\n";
     file << "soft_lock_stiffness=" << p.soft_lock_stiffness << "\n";
     file << "soft_lock_damping=" << p.soft_lock_damping << "\n";
@@ -1121,6 +1125,8 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "\n; --- General FFB ---\n";
         file << "invert_force=" << engine.m_invert_force << "\n";
         file << "gain=" << engine.m_gain << "\n";
+        file << "dynamic_normalization_enabled=" << engine.m_dynamic_normalization_enabled << "\n";
+        file << "auto_load_normalization_enabled=" << engine.m_auto_load_normalization_enabled << "\n";
         file << "soft_lock_enabled=" << engine.m_soft_lock_enabled << "\n";
         file << "soft_lock_stiffness=" << engine.m_soft_lock_stiffness << "\n";
         file << "soft_lock_damping=" << engine.m_soft_lock_damping << "\n";
@@ -1304,6 +1310,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "log_path") m_log_path = value;
                     else if (key == "invert_force") engine.m_invert_force = std::stoi(value);
                     else if (key == "gain") engine.m_gain = std::stof(value);
+                    else if (key == "dynamic_normalization_enabled") engine.m_dynamic_normalization_enabled = (value == "1" || value == "true");
+                    else if (key == "auto_load_normalization_enabled") engine.m_auto_load_normalization_enabled = (value == "1" || value == "true");
                     else if (key == "sop_smoothing_factor" || key == "smoothing") engine.m_sop_smoothing_factor = std::stof(value); // "smoothing" is a legacy alias
                     else if (key == "sop_scale") engine.m_sop_scale = std::stof(value);
                     else if (key == "slip_angle_smoothing") engine.m_slip_angle_smoothing = std::stof(value);

@@ -46,7 +46,10 @@ TEST_CASE(test_ingame_ffb_scaling_fix, "InGameFFB") {
     data.mElapsedTime = 0.0025f;
     data.mLocalVel.z = 10.0f;
 
-    // Force the multiplier to the correct target
+    // Ensure we are seeded so InitializeLoadReference doesn't call ResetNormalization and overwrite our Mult
+    engine.calculate_force(&data, "GT3", "911 GT3 R", genFFBTorque);
+
+    // Force the multiplier to the correct target AFTER seeding
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 20.0);
 
     double output = engine.calculate_force(&data, "GT3", "911 GT3 R", genFFBTorque);

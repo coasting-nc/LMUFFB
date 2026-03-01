@@ -71,6 +71,7 @@ set(TEST_SOURCES
     test_issue_184_repro.cpp
     test_issue_185_fix.cpp
     test_issue_42_ffb_inversion.cpp
+    test_issue_207_dynamic_normalization_toggle.cpp
     test_tooltips.cpp
     test_coverage_expansion.cpp
     test_dxgi_modernization.cpp

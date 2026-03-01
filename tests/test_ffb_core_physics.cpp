@@ -171,6 +171,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     double ra1, ra2;
     {
         FFBEngine e1;
+        InitializeEngine(e1);
         e1.m_gain = 1.0; e1.m_invert_force = false; e1.m_understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
         e1.m_rear_align_effect = 1.0;
         e1.m_wheelbase_max_nm = 20.0f; e1.m_target_rim_nm = 20.0f;
@@ -178,6 +179,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     }
     {
         FFBEngine e2;
+        InitializeEngine(e2);
         e2.m_gain = 1.0; e2.m_invert_force = false; e2.m_understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
         e2.m_rear_align_effect = 1.0;
         e2.m_wheelbase_max_nm = 60.0f; e2.m_target_rim_nm = 60.0f;
@@ -195,6 +197,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     double s1, s2;
     {
         FFBEngine e1;
+        InitializeEngine(e1);
         e1.m_gain = 1.0; e1.m_invert_force = false; e1.m_understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
         e1.m_slide_texture_enabled = true;
         e1.m_slide_texture_gain = 1.0;
@@ -204,6 +207,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     }
     {
         FFBEngine e2;
+        InitializeEngine(e2);
         e2.m_gain = 1.0; e2.m_invert_force = false; e2.m_understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
         e2.m_slide_texture_enabled = true;
         e2.m_slide_texture_gain = 1.0;
@@ -226,14 +230,19 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     data.mWheel[0].mGripFract = 0.6; 
     data.mWheel[1].mGripFract = 0.6;
 
+    // Enable Dynamic Normalization to test its consistent scaling
+    engine.m_dynamic_normalization_enabled = true;
     engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
+    FFBEngineTestAccess::SetSessionPeakTorque(engine, 20.0);
+    FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 20.0);
     double u1 = engine.calculate_force(&data);
 
     engine.m_wheelbase_max_nm = 40.0f; engine.m_target_rim_nm = 40.0f;
+    // Session peak should remain 20.0 because input torque (10.0) < peak (20.0)
     double u2 = engine.calculate_force(&data);
 
     // v0.7.67 Fix for Issue #152: Understeer is now normalized by session peak,
-    // making it independent of m_wheelbase_max_nm. Expect u1 == u2.
+    // making it independent of target_rim_nm when enabled. Expect u1 == u2.
     if (std::abs(u1 - u2) < 0.001) {
         std::cout << "[PASS] Understeer Modifier correctly normalized by session peak (" << u1 << " == " << u2 << ")" << std::endl;
         g_tests_passed++;
@@ -243,6 +252,103 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     }
 
     std::cout << "[SUMMARY] Gain Compensation verified for all effect types." << std::endl;
+}
+
+TEST_CASE(test_gain_compensation_disabled, "CorePhysics") {
+    std::cout << "\nTest: FFB Signal Gain Compensation (Disabled - Issue #207)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_dynamic_normalization_enabled = false;
+
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    data.mDeltaTime = 0.0025;
+    data.mLocalVel.z = 20.0;
+    data.mWheel[0].mRideHeight = 0.1;
+    data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[2].mRideHeight = 0.1;
+    data.mWheel[3].mRideHeight = 0.1;
+    data.mWheel[0].mTireLoad = 4000.0;
+    data.mWheel[1].mTireLoad = 4000.0;
+    engine.m_gain = 1.0;
+    engine.m_invert_force = false;
+    engine.m_understeer_effect = 0.0;
+    engine.m_oversteer_boost = 0.0;
+
+    // With normalization disabled, structural forces scale to target_rim_nm.
+    // If target_rim_nm == wheelbase_max_nm, force should be absolute.
+
+    double ra1, ra2;
+    {
+        FFBEngine e1;
+        InitializeEngine(e1);
+        e1.m_dynamic_normalization_enabled = false;
+        e1.m_rear_align_effect = 1.0;
+        e1.m_wheelbase_max_nm = 20.0f; e1.m_target_rim_nm = 20.0f;
+        ra1 = e1.calculate_force(&data);
+    }
+    {
+        FFBEngine e2;
+        InitializeEngine(e2);
+        e2.m_dynamic_normalization_enabled = false;
+        e2.m_rear_align_effect = 1.0;
+        e2.m_wheelbase_max_nm = 60.0f; e2.m_target_rim_nm = 20.0f; // Target is SAME, wheelbase is larger
+        ra2 = e2.calculate_force(&data);
+    }
+
+    // Force should be SAME because target_rim_nm is same (20.0)
+    // Calc: structural_sum * (target_rim_nm / wheelbase_max_nm) / (target_rim_nm)
+    // Wait: di_structural = structural_sum * mult * (target / max)
+    // mult = 1 / target
+    // di_structural = structural_sum * (1/target) * (target/max) = structural_sum / max.
+    // Wait, the formula is:
+    // target_structural_mult = 1.0 / m_target_rim_nm
+    // di_structural = norm_structural * (m_target_rim_nm / wheelbase_max_safe)
+    // di_structural = (structural_sum / target) * (target / max) = structural_sum / max.
+    // So if wheelbase_max_nm differs, di_structural differs?
+    // No, structural_sum is in Nm.
+    // If I want 10 Nm on a 20 Nm wheel, it's 50%.
+    // If I want 10 Nm on a 40 Nm wheel, it's 25%.
+    // Correct. But RA torque depends on tire stiffness which depends on load.
+    // Let's check ASSERT_NEAR(ra1, ra2 * (60.0/20.0), ...)? No.
+    // Manual scaling means if I have 10 Nm of align torque, it should feel like 10 Nm.
+
+    // In LMUFFB, di_structural is the DirectInput percentage [-1, 1].
+    // So ra1 (20Nm wheel) should be 3x ra2 (60Nm wheel) if structural_sum is the same.
+    ASSERT_NEAR(ra1, ra2 * 3.0, 0.001);
+
+    // Now test Understeer drop when disabled
+    engine.m_dynamic_normalization_enabled = false;
+    engine.m_understeer_effect = 0.5;
+    data.mSteeringShaftTorque = 10.0;
+    data.mWheel[0].mGripFract = 0.6;
+    data.mWheel[1].mGripFract = 0.6;
+
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
+    // v0.7.109: Ensure multiplier matches target before first calc
+    FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 20.0);
+    double u1 = engine.calculate_force(&data);
+
+    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 10.0f; // Target halved
+    // Ensure multiplier matches target before second calc
+    FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 10.0);
+    double u2 = engine.calculate_force(&data);
+
+    // With normalization disabled, reducing target_rim_nm should reduce output force
+    // (u1 uses 1/20, u2 uses 1/10. Wait, if target is halved, force % should double?
+    // di_structural = Nm * (1/target) * (target/max) = Nm/max.
+    // If target halved, and mult = 1/target, then di_structural is same?
+    // Nm = 10, Target = 20, Max = 20 -> di = 10 * (1/20) * (20/20) = 0.5.
+    // Nm = 10, Target = 10, Max = 20 -> di = 10 * (1/10) * (10/20) = 0.5.
+    // Ah, structural normalization (even manual) aims for physical Nm.
+    // BUT! Understeer is a MODIFIER.
+    // force = (base * gain) * dw * grip.
+    // u1 = (10 * 1) * 1 * 0.8 = 8 Nm.
+    // di_u1 = 8 * (1/20) * (20/20) = 0.4.
+    // u2 = (10 * 1) * 1 * 0.8 = 8 Nm.
+    // di_u2 = 8 * (1/10) * (10/20) = 0.4.
+    // So output force stays same for same physics. Correct.
+    ASSERT_NEAR(u1, u2, 0.001);
 }
 
 TEST_CASE(test_high_gain_stability, "CorePhysics") {

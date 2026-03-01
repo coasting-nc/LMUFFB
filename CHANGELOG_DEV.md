@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.109] - 2026-02-28
+### Fixed
+- **Normalization Consistency (Issue #207)**:
+  - Disabled **Session-Learned Dynamic Normalization** by default for both structural forces and tactile haptics.
+  - Implemented independent UI toggles for each normalization stage, allowing users to choose between manual fixed scaling and adaptive learning.
+  - Added `ResetNormalization` logic to restore class-default seeds and manual targets immediately when disabling toggles or changing vehicles.
+  - Resolved an issue where "learned" peaks from previous cars could pollute the FFB of a newly selected car.
+
 ## [0.7.108] - 2026-02-28
 ### Fixed
 - **FFB Control (Issue #174)**: Resolved "stuck" FFB forces when entering menus or pausing the game.

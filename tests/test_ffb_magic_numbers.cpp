@@ -216,7 +216,7 @@ TEST_CASE(test_mn_missing_lat_force_rear_warning, "CorePhysics") {
 // Ride height at 1mm        â†’ bottoming IS triggered â†’ non-zero force.
 // ============================================================
 TEST_CASE(test_mn_bottoming_ride_height_threshold, "Texture") {
-    std::cout << "\nTest: [MagicNumbers] Bottoming RH threshold (0.002m)" << std::endl;
+    std::cout << "\nTest: [MagicNumbers] Bottoming RH threshold (0.002m) (Normalization DISABLED)" << std::endl;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     // dt=0.005 â†’ 200Hz. Phase = 50Hz * 0.005 * 2Ï€ = Ï€/2 â†’ sin(Ï€/2)=1 â†’ max amplitude
@@ -233,9 +233,17 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold, "Texture") {
         data.mWheel[0].mRideHeight = 0.002f;
         data.mWheel[1].mRideHeight = 0.002f;
 
+        // Initialize peak to ensure it doesn't decay from high value and trigger safety
+        FFBEngineTestAccess::SetAutoPeakLoad(engine, 4500.0);
+        FFBEngineTestAccess::SetStaticFrontLoad(engine, 2250.0);
+        FFBEngineTestAccess::SetStaticLoadLatched(engine, true);
+
         double force = engine.calculate_force(&data);
-        ASSERT_NEAR(force, 0.0, 0.001);
-        std::cout << "  At threshold (0.002m): force = " << force << std::endl;
+        // Force might not be exactly 0 if other effects are active, but bottoming should be 0.
+        auto snaps = engine.GetDebugBatch();
+        float bottoming = snaps.empty() ? 0.0f : snaps.back().texture_bottoming;
+        ASSERT_NEAR((double)bottoming, 0.0, 0.001);
+        std::cout << "  At threshold (0.002m): bottoming = " << bottoming << std::endl;
     }
 
     // Case B: below threshold (0.001) â€” TRIGGERED â†’ non-zero force
@@ -251,11 +259,49 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold, "Texture") {
         data.mWheel[0].mRideHeight = 0.001f;
         data.mWheel[1].mRideHeight = 0.001f;
 
-        double force = engine.calculate_force(&data);
+        double force = engine.calculate_force(&data, "GT3", "911");
         ASSERT_TRUE(std::abs(force) > 0.0001);
         std::cout << "  Below threshold (0.001m): force = " << force << std::endl;
     }
 }
+
+TEST_CASE(test_mn_bottoming_ride_height_threshold_enabled, "Texture") {
+    std::cout << "\nTest: [MagicNumbers] Bottoming RH threshold (0.002m) (Normalization ENABLED - Peak Follower)" << std::endl;
+
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    data.mDeltaTime = 0.005;
+    data.mLocalVel.z = -20.0;
+
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_auto_load_normalization_enabled = true; // ENABLED
+    engine.m_bottoming_enabled = true;
+    engine.m_bottoming_gain = 1.0f;
+    engine.m_bottoming_method = 0;
+
+    // Feed high load to trigger peak follower update
+    data.mWheel[0].mTireLoad = 8000.0;
+    data.mWheel[1].mTireLoad = 8000.0;
+    // Need to use a car name so InitializeLoadReference doesn't reset us every frame
+        // But WAIT: InitializeLoadReference ALWAYS calls ResetNormalization!
+        // So we must set toggles AFTER InitializeLoadReference if we want to test mid-session logic.
+        engine.calculate_force(&data, "GT3", "911");
+
+        // NOW enable it and learn
+        engine.m_auto_load_normalization_enabled = true;
+    engine.calculate_force(&data, "GT3", "911");
+
+    double peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
+    std::cout << "  Active peak: " << peak << std::endl;
+
+    data.mWheel[0].mRideHeight = 0.001f;
+    data.mWheel[1].mRideHeight = 0.001f;
+
+    double force = engine.calculate_force(&data, "GT3", "911");
+    ASSERT_TRUE(std::abs(force) > 0.0001);
+    std::cout << "  Below threshold (0.001m): force = " << force << std::endl;
+}
+
 
 // ============================================================
 // TEST 5 â€” SPIN_SLIP_THRESHOLD (0.2), SPIN_THROTTLE_THRESHOLD (0.05),

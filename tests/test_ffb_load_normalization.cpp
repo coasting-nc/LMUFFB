@@ -3,9 +3,10 @@
 namespace FFBEngineTests {
 
 TEST_CASE(test_class_seeding, "Physics") {
-    std::cout << "\nTest: Load Normalization - Class Seeding" << std::endl;
+    std::cout << "\nTest: Load Normalization - Class Seeding (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
+    engine.m_auto_load_normalization_enabled = true; // Enable for testing seeding behavior
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -42,9 +43,10 @@ TEST_CASE(test_class_seeding, "Physics") {
 }
 
 TEST_CASE(test_fallback_seeding, "Physics") {
-    std::cout << "\nTest: Load Normalization - Fallback Seeding (Name Keyword)" << std::endl;
+    std::cout << "\nTest: Load Normalization - Fallback Seeding (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
+    engine.m_auto_load_normalization_enabled = true;
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -76,9 +78,10 @@ TEST_CASE(test_fallback_seeding, "Physics") {
 }
 
 TEST_CASE(test_peak_hold_adaptation, "Physics") {
-    std::cout << "\nTest: Load Normalization - Peak Hold Adaptation (Fast Attack)" << std::endl;
+    std::cout << "\nTest: Load Normalization - Peak Hold Adaptation (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
+    engine.m_auto_load_normalization_enabled = true;
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -101,10 +104,39 @@ TEST_CASE(test_peak_hold_adaptation, "Physics") {
     ASSERT_NEAR(peak, 6000.0, 1.0);
 }
 
-TEST_CASE(test_peak_hold_decay, "Physics") {
-    std::cout << "\nTest: Load Normalization - Peak Hold Decay (Slow Decay)" << std::endl;
+TEST_CASE(test_peak_hold_adaptation_disabled, "Physics") {
+    std::cout << "\nTest: Load Normalization - Peak Hold Adaptation (Disabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
+    engine.m_auto_load_normalization_enabled = false;
+
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    data.mDeltaTime = 0.01;
+    data.mWheel[0].mRideHeight = 0.1;
+    data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[0].mGripFract = 1.0;
+    data.mWheel[1].mGripFract = 1.0;
+
+    // Seed as GT3 (4800N)
+    engine.calculate_force(&data, "GT3");
+
+    // Feed 6000N load
+    data.mWheel[0].mTireLoad = 6000.0;
+    data.mWheel[1].mTireLoad = 6000.0;
+
+    engine.calculate_force(&data, "GT3");
+
+    double peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
+    // Should stay at 4800.0
+    ASSERT_NEAR(peak, 4800.0, 1.0);
+}
+
+TEST_CASE(test_peak_hold_decay, "Physics") {
+    std::cout << "\nTest: Load Normalization - Peak Hold Decay (Enabled)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_auto_load_normalization_enabled = true;
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -131,10 +163,44 @@ TEST_CASE(test_peak_hold_decay, "Physics") {
     ASSERT_NEAR(peak, 7900.0, 5.0);
 }
 
-TEST_CASE(test_lmp2_unspecified_load, "Physics") {
-    std::cout << "\nTest: Load Normalization - LMP2 Unspecified" << std::endl;
+TEST_CASE(test_peak_hold_decay_disabled, "Physics") {
+    std::cout << "\nTest: Load Normalization - Peak Hold Decay (Disabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
+    engine.m_auto_load_normalization_enabled = false;
+
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    data.mDeltaTime = 0.01;
+    data.mWheel[0].mRideHeight = 0.1;
+    data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[0].mGripFract = 1.0;
+    data.mWheel[1].mGripFract = 1.0;
+
+    // Ensure seeded for Hypercar (9500N)
+    engine.calculate_force(&data, "Hypercar");
+
+    // Set peak to 8000N manually
+    FFBEngineTestAccess::SetAutoPeakLoad(engine, 8000.0);
+
+    // Feed 4000N load for 1 second (100 steps of 0.01s)
+    data.mWheel[0].mTireLoad = 4000.0;
+    data.mWheel[1].mTireLoad = 4000.0;
+
+    for (int i = 0; i < 100; i++) {
+        engine.calculate_force(&data, "Hypercar");
+    }
+
+    // Should stay at 8000.0 (no decay)
+    double peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
+    ASSERT_NEAR(peak, 8000.0, 1.0);
+}
+
+TEST_CASE(test_lmp2_unspecified_load, "Physics") {
+    std::cout << "\nTest: Load Normalization - LMP2 Unspecified (Enabled)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_auto_load_normalization_enabled = true;
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -192,9 +258,68 @@ TEST_CASE(test_hypercar_bottoming_threshold, "Physics") {
 }
 
 TEST_CASE(test_static_load_fallback_class_aware, "Physics") {
-    std::cout << "\nTest: Static Load Fallback Class-Aware" << std::endl;
+    std::cout << "\nTest: Static Load Fallback Class-Aware (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
+    engine.m_auto_load_normalization_enabled = true;
+
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    data.mDeltaTime = 0.01;
+    data.mWheel[0].mGripFract = 1.0;
+    data.mWheel[1].mGripFract = 1.0;
+
+    // Seed as Hypercar (9500N)
+    engine.calculate_force(&data, "Hypercar");
+
+    // Static load reference should be 9500 * 0.5 = 4750.0
+    double static_load = FFBEngineTestAccess::GetStaticFrontLoad(engine);
+    ASSERT_NEAR(static_load, 4750.0, 1.0);
+}
+
+TEST_CASE(test_load_normalization_disabled_behavior, "Physics") {
+    std::cout << "\nTest: Load Normalization Disabled Behavior (Disabled)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+
+    // Default should be DISABLED
+    ASSERT_FALSE(engine.m_auto_load_normalization_enabled);
+
+    TelemInfoV01 data;
+    std::memset(&data, 0, sizeof(data));
+    data.mDeltaTime = 0.01;
+    data.mWheel[0].mGripFract = 1.0;
+    data.mWheel[1].mGripFract = 1.0;
+
+    // Seed as GT3 (4800N)
+    engine.calculate_force(&data, "GT3");
+    ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 4800.0, 1.0);
+
+    // Feed massive load
+    data.mWheel[0].mTireLoad = 10000.0;
+    data.mWheel[1].mTireLoad = 10000.0;
+
+    engine.calculate_force(&data, "GT3");
+
+    // Should NOT update peak
+    ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 4800.0, 1.0);
+
+    // Switch to Hypercar
+    engine.calculate_force(&data, "Hypercar");
+    // Should update to Hypercar seed (9500N)
+    ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 9500.0, 1.0);
+
+    // Seed as GT3 (4800N)
+    engine.calculate_force(&data, "GT3");
+    double sl = FFBEngineTestAccess::GetStaticFrontLoad(engine);
+    ASSERT_NEAR(sl, 2400.0, 1.0);
+}
+
+TEST_CASE(test_static_load_fallback_class_aware_disabled, "Physics") {
+    std::cout << "\nTest: Static Load Fallback Class-Aware (Disabled)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_auto_load_normalization_enabled = false;
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));

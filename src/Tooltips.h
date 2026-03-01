@@ -35,6 +35,8 @@ namespace Tooltips {
     // FFB Settings
     inline constexpr const char* USE_INGAME_FFB = "Recommended for LMU 1.2+. Uses the high-frequency FFB channel\ndirectly from the game.\nMatches the game's internal physics rate for maximum fidelity.";
     inline constexpr const char* INVERT_FFB = "Check this if the wheel pulls away from center instead of aligning.";
+    inline constexpr const char* DYNAMIC_NORMALIZATION_ENABLE = "Automatically scales structural FFB forces based on the peak torque\nseen during a session. Ensures consistent weight across different cars.\n(NOT RECOMMENDED: May cause force drop-off after high-torque spikes).";
+    inline constexpr const char* DYNAMIC_LOAD_NORMALIZATION_ENABLE = "Automatically scales tactile haptics (Road, Slide, Lockup) based\non learned peak tire loads. Ensures detailed feel for all car classes.\nWhen disabled, uses fixed class-based defaults.";
     inline constexpr const char* MASTER_GAIN = "Global scale factor for all forces.\n100% = No attenuation.\nReduce if experiencing heavy clipping.";
     inline constexpr const char* WHEELBASE_MAX_TORQUE = "The absolute maximum physical torque your wheelbase can produce\n(e.g., 15.0 for Simagic Alpha, 4.0 for T300).";
     inline constexpr const char* TARGET_RIM_TORQUE = "The maximum force you want to feel in your hands during heavy cornering.";
@@ -138,7 +140,7 @@ namespace Tooltips {
         DEVICE_SELECT, DEVICE_RESCAN, DEVICE_UNBIND, MODE_EXCLUSIVE, MODE_SHARED, NO_DEVICE, ALWAYS_ON_TOP, SHOW_GRAPHS,
         LOG_STOP, LOG_REC, LOG_MARKER, LOG_START,
         PRESET_NAME, PRESET_SAVE_NEW, PRESET_SAVE_CURRENT, PRESET_RESET, PRESET_DUPLICATE, PRESET_DELETE, PRESET_IMPORT, PRESET_EXPORT,
-        USE_INGAME_FFB, INVERT_FFB, MASTER_GAIN, WHEELBASE_MAX_TORQUE, TARGET_RIM_TORQUE, MIN_FORCE,
+        USE_INGAME_FFB, INVERT_FFB, DYNAMIC_NORMALIZATION_ENABLE, DYNAMIC_LOAD_NORMALIZATION_ENABLE, MASTER_GAIN, WHEELBASE_MAX_TORQUE, TARGET_RIM_TORQUE, MIN_FORCE,
         SOFT_LOCK_ENABLE, SOFT_LOCK_STIFFNESS, SOFT_LOCK_DAMPING,
         INGAME_FFB_GAIN, STEERING_SHAFT_GAIN, STEERING_SHAFT_SMOOTHING, UNDERSTEER_EFFECT, DYNAMIC_WEIGHT, WEIGHT_SMOOTHING, TORQUE_SOURCE, PURE_PASSTHROUGH,
         FLATSPOT_SUPPRESSION, NOTCH_Q, SUPPRESSION_STRENGTH, STATIC_NOISE_FILTER, STATIC_NOTCH_FREQ, STATIC_NOTCH_WIDTH,

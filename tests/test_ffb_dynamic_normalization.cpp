@@ -7,7 +7,11 @@
 using namespace FFBEngineTests;
 
 TEST_CASE(test_peak_follower_fast_attack, "StructuralNormalization") {
+    std::cout << "\nTest: Peak Follower Fast Attack (Enabled)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_dynamic_normalization_enabled = true;
+
     TelemInfoV01 data = {};
     data.mDeltaTime = 0.0025f;
     data.mSteeringShaftTorque = 40.0f;
@@ -31,8 +35,38 @@ TEST_CASE(test_peak_follower_fast_attack, "StructuralNormalization") {
     ASSERT_NEAR(peak, 40.0, 0.001);
 }
 
-TEST_CASE(test_peak_follower_exponential_decay, "StructuralNormalization") {
+TEST_CASE(test_peak_follower_fast_attack_disabled, "StructuralNormalization") {
+    std::cout << "\nTest: Peak Follower Fast Attack (Disabled)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_dynamic_normalization_enabled = false;
+
+    TelemInfoV01 data = {};
+    data.mDeltaTime = 0.0025f;
+    data.mSteeringShaftTorque = 40.0f;
+    data.mLocalAccel.x = 2.0f * 9.81f; // 2G (Clean state)
+    data.mElapsedTime = 1.0f;
+    data.mLocalVel.z = -20.0f;
+
+    // Settle rolling average and last torque manually to avoid spike rejection
+    FFBEngineTestAccess::SetRollingAverageTorque(engine, 40.0);
+    FFBEngineTestAccess::SetLastRawTorque(engine, 40.0);
+    FFBEngineTestAccess::SetSessionPeakTorque(engine, 20.0);
+
+    // Run while DISABLED
+    engine.calculate_force(&data);
+
+    // Peak should NOT update
+    double peak = FFBEngineTestAccess::GetSessionPeakTorque(engine);
+    ASSERT_NEAR(peak, 20.0, 0.001);
+}
+
+TEST_CASE(test_peak_follower_exponential_decay, "StructuralNormalization") {
+    std::cout << "\nTest: Peak Follower Exponential Decay (Enabled)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_dynamic_normalization_enabled = true;
+
     TelemInfoV01 data = {};
     data.mDeltaTime = 0.01f; // 100Hz
     data.mSteeringShaftTorque = 40.0f;
@@ -60,8 +94,37 @@ TEST_CASE(test_peak_follower_exponential_decay, "StructuralNormalization") {
     ASSERT_GT(decayed_peak, 39.9);
 }
 
-TEST_CASE(test_contextual_spike_rejection, "StructuralNormalization") {
+TEST_CASE(test_peak_follower_exponential_decay_disabled, "StructuralNormalization") {
+    std::cout << "\nTest: Peak Follower Exponential Decay (Disabled)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_dynamic_normalization_enabled = false;
+
+    TelemInfoV01 data = {};
+    data.mDeltaTime = 0.01f;
+    data.mSteeringShaftTorque = 10.0f;
+    data.mLocalAccel.x = 2.0f * 9.81f;
+    data.mLocalVel.z = -20.0f;
+
+    // Set peak to 40.0 manually
+    FFBEngineTestAccess::SetSessionPeakTorque(engine, 40.0);
+    FFBEngineTestAccess::SetRollingAverageTorque(engine, 10.0);
+    FFBEngineTestAccess::SetLastRawTorque(engine, 10.0);
+
+    // Run while DISABLED
+    engine.calculate_force(&data);
+
+    // Peak should NOT decay (remains at 40.0)
+    double decayed_peak = FFBEngineTestAccess::GetSessionPeakTorque(engine);
+    ASSERT_NEAR(decayed_peak, 40.0, 0.001);
+}
+
+TEST_CASE(test_contextual_spike_rejection, "StructuralNormalization") {
+    std::cout << "\nTest: Contextual Spike Rejection (Enabled)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_dynamic_normalization_enabled = true;
+
     TelemInfoV01 data = {};
     data.mDeltaTime = 0.0025f;
     data.mSteeringShaftTorque = 15.0f;
@@ -83,9 +146,37 @@ TEST_CASE(test_contextual_spike_rejection, "StructuralNormalization") {
     ASSERT_LT(after_spike_peak, 16.0);
 }
 
+TEST_CASE(test_contextual_spike_rejection_disabled, "StructuralNormalization") {
+    std::cout << "\nTest: Contextual Spike Rejection (Disabled)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_dynamic_normalization_enabled = false;
+
+    TelemInfoV01 data = {};
+    data.mDeltaTime = 0.0025f;
+    data.mSteeringShaftTorque = 15.0f;
+    data.mLocalAccel.x = 1.0f * 9.81f;
+    data.mLocalVel.z = -20.0f;
+
+    // Settle rolling average at 15.0 Nm
+    FFBEngineTestAccess::SetRollingAverageTorque(engine, 15.0);
+    FFBEngineTestAccess::SetLastRawTorque(engine, 15.0);
+    FFBEngineTestAccess::SetSessionPeakTorque(engine, 15.0);
+
+    // Massive spike
+    data.mSteeringShaftTorque = 100.0f;
+    engine.calculate_force(&data);
+
+    double after_spike_peak = FFBEngineTestAccess::GetSessionPeakTorque(engine);
+    // Should NOT update peak, stays at 15.0
+    ASSERT_NEAR(after_spike_peak, 15.0, 0.001);
+}
+
 TEST_CASE(test_structural_vs_texture_separation, "StructuralNormalization") {
+    std::cout << "\nTest: Structural vs Texture Separation (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // Use standard test initialization (invert_force=false)
+    engine.m_dynamic_normalization_enabled = true;
 
     // Inject custom values via TestAccess
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 50.0);

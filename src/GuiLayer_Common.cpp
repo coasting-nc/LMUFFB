@@ -428,6 +428,14 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
 
         BoolSetting("Invert FFB Signal", &engine.m_invert_force, Tooltips::INVERT_FFB);
+
+        bool prev_structural = engine.m_dynamic_normalization_enabled;
+        if (GuiWidgets::Checkbox("Enable Dynamic Normalization (Session Peak)", &engine.m_dynamic_normalization_enabled, Tooltips::DYNAMIC_NORMALIZATION_ENABLE).changed) {
+            if (prev_structural && !engine.m_dynamic_normalization_enabled) {
+                engine.ResetNormalization();
+            }
+            Config::Save(engine);
+        }
         FloatSetting("Master Gain", &engine.m_gain, 0.0f, 2.0f, FormatPct(engine.m_gain), Tooltips::MASTER_GAIN);
         FloatSetting("Wheelbase Max Torque", &engine.m_wheelbase_max_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::WHEELBASE_MAX_TORQUE);
         FloatSetting("Target Rim Torque", &engine.m_target_rim_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::TARGET_RIM_TORQUE);
@@ -700,6 +708,14 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
     if (ImGui::TreeNodeEx("Tactile Textures", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
+
+        bool prev_tactile = engine.m_auto_load_normalization_enabled;
+        if (GuiWidgets::Checkbox("Enable Dynamic Load Normalization", &engine.m_auto_load_normalization_enabled, Tooltips::DYNAMIC_LOAD_NORMALIZATION_ENABLE).changed) {
+            if (prev_tactile && !engine.m_auto_load_normalization_enabled) {
+                engine.ResetNormalization();
+            }
+            Config::Save(engine);
+        }
 
         FloatSetting("Texture Load Cap", &engine.m_texture_load_cap, 1.0f, 3.0f, "%.2fx", Tooltips::TEXTURE_LOAD_CAP);
 
