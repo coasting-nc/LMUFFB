@@ -10,7 +10,7 @@ Your mission is to select **ONE** open GitHub issue, reproduce the problem (if p
 5.  **Iterative Quality Loop & Documentation:**
     *   **Build & Test:** Before *every* code review, ensure the project builds with no errors/warnings and all tests pass.
     *   **Review & Record:** Request an independent code review using the code review tool. **You must save the output of each review as a separate Markdown file** (e.g., `<task_description>_review_iteration_1.md`, `<task_description>_review_iteration_2.md`) under `docs\dev_docs\code_reviews`. In the implementation notes of the implementation plan, also discuss any issues raised by the code reviews and how you addressed them; also discuss there any discrepancies between you and the code reviews (eg. the code review said the patch would not build, but it does).
-    *   **Fix & Repeat:** If the review raises issues, address them immediately, commit, and perform a *new* review. Repeat this loop until you receive a "Greenlight" (no issues found).
+    *   **Fix & Repeat:** If the review raises issues, address them immediately, commit, and perform a *new* review. Repeat this loop until you receive a "Greenlight" (no issues found). Your incremental commit serve the purpose of tracking progress, intermediate changes, and allow me to review the changes (at the end I will squash all commits anyway, but I need to review the incremental changes).
 6.  **Final Documentation:** Update the implementation plan with final notes upon completion; include encountered issues, deviations from the plan, and suggestions for the future.
 
 ---
@@ -74,7 +74,7 @@ Scan open GitHub issues. Select **ONE** issue based on priority (Physics Math, L
 **Action:** Execute instructions in `gemini_orchestrator\templates\B_developer_prompt.md`.
 
 **The Autonomous Loop:**
-1.  **Implement:** Write/Update code according to the plan.
+1.  **Implement:** Write/Update code according to the plan. Follow TDD principles: write/update a test first, verify failure, then implement the fix.
 2.  **Build & Test:** Run `cmake --build build`.
     *   *Constraint:* If build fails, fix errors immediately. Do not review broken code.
 3.  **Commit:** Save intermediate work (e.g., `git commit -am "WIP: Iteration N"`).
@@ -128,7 +128,7 @@ Your final submission must include **ALL** of the following:
 4.  **Submission Metadata:**
     *   [ ] PR Title & Description (Issue Link, Fix Explanation, Safety Impact, Linux Verification).
 5.  **Version and changelog:**
-    *   [ ] Update `VERSION` file.
+    *   [ ] Update `VERSION` file (always use the smallest possible increment: +1 to the rightmost number, e.g., 0.7.108 -> 0.7.109).
     *   [ ] Update the changelog.
 6.  **All deliverables required in instruction documents:**
     *   [ ] Deliverables required in `A.1_architect_prompt.md`
