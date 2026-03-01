@@ -718,7 +718,7 @@ public:
 
 private:
     // Helper for parsing preset lines (v0.7.12)
-    static void ParsePresetLine(const std::string& line, Preset& p, std::string& version, bool& needs_save);
+    static void ParsePresetLine(const std::string& line, Preset& p, std::string& version, bool& needs_save, bool& legacy_torque_hack, float& legacy_torque_val);
     // Helper for writing preset fields (v0.7.12)
     static void WritePresetFields(std::ofstream& file, const Preset& p);
 };

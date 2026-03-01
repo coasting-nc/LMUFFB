@@ -2,6 +2,19 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 3, 2026[/b][/size]
+[b]Version 0.7.111 - Legacy Migration & Force Scaling Fix[/b]
+
+[b]New release[/b] (0.7.111): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]Legacy Preset Migration[/b]: Fixed a critical issue where presets created in version 0.7.66 or older (which often used the "100Nm clipping hack") would cause excessive, unusable force levels in newer versions.
+[*][b]Automatic Force Scaling[/b]: The application now detects legacy presets and automatically scales the Master Gain to preserve the absolute Nm force levels intended by the user. This ensures a seamless transition when upgrading from older versions. (#211)
+[/list]
+
+---
+
 [size=5][b]March 2, 2026[/b][/size]
 [b]Version 0.7.110 - Global Tactile Strength Scaling[/b]
 
