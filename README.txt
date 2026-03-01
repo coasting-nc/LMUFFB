@@ -26,7 +26,7 @@ NOTE on Folder Location:
 To avoid write permission issues (unable to save settings or config.ini errors), 
 do NOT place the lmuFFB folder in C:\Program Files. Instead, keep it in a 
 location where the app has full write access, such as a subfolder in your 
-Downloads or Documents folder.
+Downloads folder.
 
 A. Configure lmuFFB
    1. Run LMUFFB.exe
@@ -79,7 +79,7 @@ TROUBLESHOOTING
 Unable to save settings or config.ini errors:
   - This usually happens if you placed the lmuFFB app or folder in a location 
     without write permissions (e.g., inside C:\Program Files)
-  - Solution: Keep the entire lmuFFB folder to a location where the app can have full write access, such as a subfolder in your Downloads or Documents folder
+  - Solution: Keep the entire lmuFFB folder to a location where the app can have full write access, such as a subfolder in your Downloads folder
   
 Inverted FFB (Force pushes away from center):
   - If the FFB feels "backwards" or "inverted" while driving (wheel pushes 
