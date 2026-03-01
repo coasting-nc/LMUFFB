@@ -1,0 +1,109 @@
+name: Manual Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      is_draft:
+        description: 'Create as a draft release?'
+        type: boolean
+        default: false
+      is_prerelease:
+        description: 'Mark as a pre-release?'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Publish Release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Version
+        id: version
+        shell: pwsh
+        run: |
+          $ver = (Get-Content VERSION -Raw).Trim()
+          if (-not $ver) { throw "VERSION file is empty" }
+          "TAG=v$ver" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "VERSION=$ver" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Host "Target Version: $ver (Tag: v$ver)"
+
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+
+      - name: Install ImGui
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path "vendor\imgui" -Force
+          Invoke-WebRequest -Uri "https://github.com/ocornut/imgui/archive/refs/heads/master.zip" -OutFile "vendor\imgui-master.zip"
+          Expand-Archive -Path "vendor\imgui-master.zip" -DestinationPath "vendor" -Force
+          Copy-Item "vendor\imgui-master\*" -Destination "vendor\imgui\" -Recurse -Force
+          Remove-Item -Path "vendor\imgui-master.zip", "vendor\imgui-master" -Recurse -Force
+
+      - name: Configure and Build (Release)
+        shell: pwsh
+        run: |
+          cmake -S . -B build
+          cmake --build build --config Release --clean-first
+
+      - name: Run Tests
+        shell: pwsh
+        run: |
+          .\build\tests\Release\run_combined_tests.exe
+
+      - name: Package Artifacts
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.version.outputs.VERSION }}"
+          New-Item -ItemType Directory -Path "dist" -Force
+          Copy-Item "build/Release/LMUFFB.exe" -Destination "dist/"
+          Copy-Item "README.txt" -Destination "dist/"
+          Compress-Archive -Path "dist/*" -DestinationPath "lmuffb-$ver.zip"
+
+      - name: Extract Latest Changelog Entry
+        id: changelog
+        shell: pwsh
+        run: |
+          $content = Get-Content CHANGELOG_DEV.md -Raw
+          # Split by the header pattern and take the first real section
+          # This looks for "## [x.y.z]" format
+          $pattern = '(?m)^## \['
+          $sections = $content -split $pattern
+          
+          if ($sections.Count -gt 1) {
+              # sections[0] is everything before the first header.
+              # sections[1] is the content of the latest version starting from version number.
+              # We need to prepend the hashes back because -split removes them.
+              $latestEntry = "## [" + $sections[1].Trim()
+              
+              # Optional: Only take until the next header if it's too long, 
+              # but usually we want the whole latest section.
+              # Here we just save it to a file.
+              $latestEntry | Out-File -FilePath "LATEST_RELEASE_NOTES.md" -Encoding utf8
+          } else {
+              Write-Host "Warning: Could not extract changelog entry. Using fallback."
+              "Release of version ${{ steps.version.outputs.VERSION }}" | Out-File -FilePath "LATEST_RELEASE_NOTES.md" -Encoding utf8
+          }
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.TAG }}
+          name: Release ${{ steps.version.outputs.TAG }}
+          body_path: LATEST_RELEASE_NOTES.md
+          files: |
+            lmuffb-${{ steps.version.outputs.VERSION }}.zip
+          draft: ${{ github.event.inputs.is_draft }}
+          prerelease: ${{ github.event.inputs.is_prerelease }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_unmatched_files: true
+          generate_release_notes: false
