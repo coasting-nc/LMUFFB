@@ -447,6 +447,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Target Rim Torque", &engine.m_target_rim_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::TARGET_RIM_TORQUE);
         FloatSetting("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f", Tooltips::MIN_FORCE);
 
+        if (ImGui::TreeNodeEx("REST API Fallback (Issue #221)", ImGuiTreeNodeFlags_None)) {
+            ImGui::NextColumn(); ImGui::NextColumn();
+            BoolSetting("Enable REST Fallback", &engine.m_rest_api_enabled, Tooltips::REST_API_ENABLE);
+            ImGui::TreePop();
+            ImGui::Separator();
+        }
+
         if (ImGui::TreeNodeEx("Soft Lock", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::NextColumn(); ImGui::NextColumn();
             BoolSetting("Enable Soft Lock", &engine.m_soft_lock_enabled, Tooltips::SOFT_LOCK_ENABLE);

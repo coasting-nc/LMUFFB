@@ -220,6 +220,8 @@ public:
     static void SetABSPulseEnabled(FFBEngine& e, bool val) { e.m_abs_pulse_enabled = val; }
     static void SetLastLogTime(FFBEngine& e, std::chrono::steady_clock::time_point t) { e.last_log_time = t; }
     static ChannelStats& GetTorqueStats(FFBEngine& e) { return e.s_torque; }
+    static void SetRestApiEnabled(FFBEngine& e, bool val) { e.m_rest_api_enabled = val; }
+    static void SetRestApiPort(FFBEngine& e, int val) { e.m_rest_api_port = val; }
     
     // Coverage Restoration Accessors
     static void CallUpdateStaticLoadReference(FFBEngine& e, double load, double speed, double dt) {

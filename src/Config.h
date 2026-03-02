@@ -141,6 +141,9 @@ struct Preset {
     float slope_torque_sensitivity = 0.5f;
     float slope_confidence_max_rate = 0.10f;
 
+    bool rest_api_enabled = false;
+    int rest_api_port = 6397;
+
     // 2. Constructors
     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin), app_version(LMUFFB_VERSION) {}
     Preset() : name("Unnamed"), is_builtin(false), app_version(LMUFFB_VERSION) {} // Default constructor for file loading
@@ -257,6 +260,12 @@ struct Preset {
         slope_g_slew_limit = slew;
         slope_use_torque = use_torque;
         slope_torque_sensitivity = torque_sens;
+        return *this;
+    }
+
+    Preset& SetRestApiFallback(bool enabled, int port = 6397) {
+        rest_api_enabled = enabled;
+        rest_api_port = port;
         return *this;
     }
 
@@ -385,6 +394,9 @@ struct Preset {
         engine.m_slope_use_torque = slope_use_torque;
         engine.m_slope_torque_sensitivity = (std::max)(0.01f, slope_torque_sensitivity);
 
+        engine.m_rest_api_enabled = rest_api_enabled;
+        engine.m_rest_api_port = (std::max)(1, rest_api_port);
+
         // Stage 1 & 2 Normalization (Issue #152 & #153)
         // Initialize session peak from target rim torque to provide a sane starting point.
         engine.m_session_peak_torque = (std::max)(1.0, (double)target_rim_nm);
@@ -457,6 +469,7 @@ struct Preset {
         slope_g_slew_limit = (std::max)(1.0f, slope_g_slew_limit);
         slope_torque_sensitivity = (std::max)(0.01f, slope_torque_sensitivity);
         slope_confidence_max_rate = (std::max)(slope_alpha_threshold + 0.01f, slope_confidence_max_rate);
+        rest_api_port = (std::max)(1, rest_api_port);
     }
 
     // NEW: Capture current engine state into this preset
@@ -557,6 +570,10 @@ struct Preset {
         slope_g_slew_limit = engine.m_slope_g_slew_limit;
         slope_use_torque = engine.m_slope_use_torque;
         slope_torque_sensitivity = engine.m_slope_torque_sensitivity;
+
+        rest_api_enabled = engine.m_rest_api_enabled;
+        rest_api_port = engine.m_rest_api_port;
+
         app_version = LMUFFB_VERSION;
     }
 
@@ -662,6 +679,9 @@ struct Preset {
         if (slope_use_torque != p.slope_use_torque) return false;
         if (!is_near(slope_torque_sensitivity, p.slope_torque_sensitivity, eps)) return false;
         if (!is_near(slope_confidence_max_rate, p.slope_confidence_max_rate, eps)) return false;
+
+        if (rest_api_enabled != p.rest_api_enabled) return false;
+        if (rest_api_port != p.rest_api_port) return false;
 
         return true;
     }

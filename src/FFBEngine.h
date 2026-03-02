@@ -269,6 +269,10 @@ public:
     float m_speed_gate_lower = 1.0f; 
     float m_speed_gate_upper = DEFAULT_SPEED_GATE_UPPER_M_S; 
 
+    // REST API Fallback (Issue #221)
+    bool m_rest_api_enabled = false;
+    int m_rest_api_port = 6397;
+
     // v0.6.23: Additional Advanced Physics (Reserved for future use)
     float m_road_fallback_scale = DEFAULT_ROAD_FALLBACK_SCALE;
     bool m_understeer_affects_sop = false;
