@@ -425,6 +425,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::TextDisabled("Steering: %.0f deg (Angle: %.1f deg)", m_latest_steering_range, m_latest_steering_angle);
         ImGui::NextColumn(); ImGui::NextColumn();
 
+        BoolSetting("Steerlock from REST API", &engine.m_rest_api_enabled, Tooltips::REST_API_ENABLE);
+
         ImGui::Spacing();
         bool use_in_game_ffb = (engine.m_torque_source == 1);
         if (GuiWidgets::Checkbox("Use In-Game FFB (400Hz Native)", &use_in_game_ffb, Tooltips::USE_INGAME_FFB).changed) {
@@ -446,13 +448,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Wheelbase Max Torque", &engine.m_wheelbase_max_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::WHEELBASE_MAX_TORQUE);
         FloatSetting("Target Rim Torque", &engine.m_target_rim_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::TARGET_RIM_TORQUE);
         FloatSetting("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f", Tooltips::MIN_FORCE);
-
-        if (ImGui::TreeNodeEx("REST API Fallback (Issue #221)", ImGuiTreeNodeFlags_None)) {
-            ImGui::NextColumn(); ImGui::NextColumn();
-            BoolSetting("Enable REST Fallback", &engine.m_rest_api_enabled, Tooltips::REST_API_ENABLE);
-            ImGui::TreePop();
-            ImGui::Separator();
-        }
 
         if (ImGui::TreeNodeEx("Soft Lock", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::NextColumn(); ImGui::NextColumn();
