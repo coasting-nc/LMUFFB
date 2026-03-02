@@ -2,11 +2,16 @@ name: "CodeQL Advanced"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "**" ]
+    paths-ignore:
+      - '**.md'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
   schedule:
     - cron: '33 13 * * 4'
+  workflow_dispatch:
 
 jobs:
   run-codeql-analysis:

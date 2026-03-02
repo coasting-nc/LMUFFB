@@ -12,14 +12,19 @@
 name: OSV-Scanner
 
 on:
+  push:
+    branches: [ "**" ]
+    paths-ignore:
+      - '**.md'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
   merge_group:
     branches: [ "main" ]
   schedule:
     - cron: '24 2 * * 3'
-  push:
-    branches: [ "main" ]
+  workflow_dispatch:
 
 permissions:
   # Require writing security events to upload SARIF file to security tab
