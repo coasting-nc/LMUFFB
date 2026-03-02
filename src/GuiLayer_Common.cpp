@@ -714,19 +714,19 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::NextColumn(); ImGui::NextColumn();
     }
 
-    if (ImGui::TreeNodeEx("Tactile Textures", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+    if (ImGui::TreeNodeEx("Vibration Effects", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        bool prev_tactile = engine.m_auto_load_normalization_enabled;
+        bool prev_vibration_norm = engine.m_auto_load_normalization_enabled;
         if (GuiWidgets::Checkbox("Enable Dynamic Load Normalization", &engine.m_auto_load_normalization_enabled, Tooltips::DYNAMIC_LOAD_NORMALIZATION_ENABLE).changed) {
-            if (prev_tactile && !engine.m_auto_load_normalization_enabled) {
+            if (prev_vibration_norm && !engine.m_auto_load_normalization_enabled) {
                 engine.ResetNormalization();
             }
             Config::Save(engine);
         }
 
         FloatSetting("Texture Load Cap", &engine.m_texture_load_cap, 1.0f, 3.0f, "%.2fx", Tooltips::TEXTURE_LOAD_CAP);
-        FloatSetting("Tactile Strength", &engine.m_tactile_gain, 0.0f, 2.0f, FormatPct(engine.m_tactile_gain), Tooltips::TACTILE_GAIN);
+        FloatSetting("Vibration Strength", &engine.m_vibration_gain, 0.0f, 2.0f, FormatPct(engine.m_vibration_gain), Tooltips::VIBRATION_GAIN);
 
         BoolSetting("Slide Rumble", &engine.m_slide_texture_enabled, Tooltips::SLIDE_RUMBLE);
         if (engine.m_slide_texture_enabled) {

@@ -81,7 +81,7 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
         std::cout << "[FFB] No saved load for " << vName << ". Learning required." << std::endl;
     }
 
-    m_smoothed_tactile_mult = 1.0;
+    m_smoothed_vibration_mult = 1.0;
 
     std::cout << "[FFB] Vehicle Identification -> Detected Class: " << VehicleClassToString(vclass)
               << " | Seed Load: " << m_auto_peak_load << "N" 

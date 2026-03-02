@@ -35,7 +35,7 @@ TEST_CASE(test_soft_knee_linear_region, "Normalization") {
     InitializeEngine(engine);
 
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
-    FFBEngineTestAccess::SetSmoothedTactileMult(engine, 1.0);
+    FFBEngineTestAccess::SetSmoothedVibrationMult(engine, 1.0);
 
     TelemInfoV01 data = CreateBasicTestTelemetry();
     data.mDeltaTime = 0.0025;
@@ -50,7 +50,7 @@ TEST_CASE(test_soft_knee_linear_region, "Normalization") {
         engine.calculate_force(&data);
     }
 
-    ASSERT_NEAR(FFBEngineTestAccess::GetSmoothedTactileMult(engine), 1.0, 0.01);
+    ASSERT_NEAR(FFBEngineTestAccess::GetSmoothedVibrationMult(engine), 1.0, 0.01);
 }
 
 TEST_CASE(test_soft_knee_compression_region, "Normalization") {
@@ -58,7 +58,7 @@ TEST_CASE(test_soft_knee_compression_region, "Normalization") {
     InitializeEngine(engine);
 
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
-    FFBEngineTestAccess::SetSmoothedTactileMult(engine, 1.0);
+    FFBEngineTestAccess::SetSmoothedVibrationMult(engine, 1.0);
 
     TelemInfoV01 data = CreateBasicTestTelemetry();
     data.mDeltaTime = 0.0025;
@@ -73,7 +73,7 @@ TEST_CASE(test_soft_knee_compression_region, "Normalization") {
         engine.calculate_force(&data);
     }
 
-    ASSERT_NEAR(FFBEngineTestAccess::GetSmoothedTactileMult(engine), 1.75, 0.01);
+    ASSERT_NEAR(FFBEngineTestAccess::GetSmoothedVibrationMult(engine), 1.75, 0.01);
 }
 
 TEST_CASE(test_soft_knee_transition_region, "Normalization") {
@@ -81,7 +81,7 @@ TEST_CASE(test_soft_knee_transition_region, "Normalization") {
     InitializeEngine(engine);
 
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
-    FFBEngineTestAccess::SetSmoothedTactileMult(engine, 1.0);
+    FFBEngineTestAccess::SetSmoothedVibrationMult(engine, 1.0);
 
     TelemInfoV01 data = CreateBasicTestTelemetry();
     data.mDeltaTime = 0.0025;
@@ -101,5 +101,5 @@ TEST_CASE(test_soft_knee_transition_region, "Normalization") {
         engine.calculate_force(&data);
     }
 
-    ASSERT_NEAR(FFBEngineTestAccess::GetSmoothedTactileMult(engine), 1.453125, 0.01);
+    ASSERT_NEAR(FFBEngineTestAccess::GetSmoothedVibrationMult(engine), 1.453125, 0.01);
 }

@@ -8,9 +8,9 @@ Make sure to make as little REST API calls as possible since these can crash the
 
 # Implementation notes
 
-To get the clean brand/manufacturer name for just the player's car, you need to combine data from the **Shared Memory** and the **REST API**. 
+To get the clean brand/manufacturer name for just the player's car, you need to combine data from the **Shared Memory** and the **REST API**.
 
-Here is the catch: **The REST API does not have an endpoint that returns *only* the player's car.** The endpoints `/rest/race/car` (used by both rF2 and LMU) return a JSON array containing *every* car currently loaded in the session. 
+Here is the catch: **The REST API does not have an endpoint that returns *only* the player's car.** The endpoints `/rest/race/car` (used by both rF2 and LMU) return a JSON array containing *every* car currently loaded in the session.
 
 Therefore, to get just the player's info, your app must do the following:
 1. Read the player's "ugly" vehicle name from the Shared Memory.
@@ -52,7 +52,7 @@ rFactor 2 is trickier. The JSON objects contain a `name` field, a `vehFile` fiel
   }
 ]
 ```
-**The Quirk:** The `name` field in the REST API includes the installed mod version number at the end (e.g., `" 1.50"`). However, the `mVehicleName` provided by the Shared Memory **does not** include this version number (it will just be `"#24 Some Car"`). 
+**The Quirk:** The `name` field in the REST API includes the installed mod version number at the end (e.g., `" 1.50"`). However, the `mVehicleName` provided by the Shared Memory **does not** include this version number (it will just be `"#24 Some Car"`).
 
 If you try to match them directly, they will fail. TinyPedal solves this by looking at the `vehFile` path, extracting the version number folder name, and slicing that exact number of characters off the end of the `name` string.
 
@@ -63,7 +63,7 @@ Because the REST API is a "one-off" call that returns a heavy JSON payload of al
 
 ## Car class info
 
-The good news is that **you do not need to use the REST API to get the car class.** 
+The good news is that **you do not need to use the REST API to get the car class.**
 
 The game provides the exact car class directly and reliably through the **Shared Memory API**, and it natively distinguishes between the different LMP2 variations.
 
@@ -71,16 +71,16 @@ The game provides the exact car class directly and reliably through the **Shared
 In the Shared Memory plugin, the scoring data for each vehicle contains a specific variable for the class: `mVehicleClass`.
 
 ### 2. Distinguishing between LMP2 (WEC) and LMP2 (ELMS)
-Because rFactor 2 and Le Mans Ultimate treat these as separate classes for scoring purposes, the `mVehicleClass` string will output them differently. 
+Because rFactor 2 and Le Mans Ultimate treat these as separate classes for scoring purposes, the `mVehicleClass` string will output them differently.
 
 The game outputs:
 *   **`"LMP2"`** for the restricted WEC specification.
 *   **`"LMP2_ELMS"`** for the unrestricted ELMS specification.
 
 ### Is there any point in using the REST API for car class info? No.
-If you are already fetching the `/rest/race/car` JSON array to get the manufacturer (as discussed previously) and want to grab the class from there, you can. 
+If you are already fetching the `/rest/race/car` JSON array to get the manufacturer (as discussed previously) and want to grab the class from there, you can.
 
 The JSON objects returned by that endpoint typically include a `category` string. For an LMP2 car, the category string usually looks something like this:
 `"Oreca, LMP2, LMP2_ELMS"` or `"Le Mans Ultimate, LMP2"`.
 
-However, parsing the `category` string from the REST API is messy because it often contains a comma-separated list of every filter tag applied to the car. 
+However, parsing the `category` string from the REST API is messy because it often contains a comma-separated list of every filter tag applied to the car.

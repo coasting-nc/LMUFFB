@@ -429,16 +429,16 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         compressed_load_factor = x + (((1.0 / R) - 1.0) * (diff * diff)) / (DUAL_DIVISOR * W);
     }
 
-    // 4. EMA Smoothing on the tactile multiplier (100ms time constant)
-    double alpha_tactile = ctx.dt / (TACTILE_EMA_TAU + ctx.dt);
-    m_smoothed_tactile_mult += alpha_tactile * (compressed_load_factor - m_smoothed_tactile_mult);
+    // 4. EMA Smoothing on the vibration multiplier (100ms time constant)
+    double alpha_vibration = ctx.dt / (VIBRATION_EMA_TAU + ctx.dt);
+    m_smoothed_vibration_mult += alpha_vibration * (compressed_load_factor - m_smoothed_vibration_mult);
 
     // 5. Apply to context with user caps
     double texture_safe_max = (std::min)(USER_CAP_MAX, (double)m_texture_load_cap);
-    ctx.texture_load_factor = (std::min)(texture_safe_max, m_smoothed_tactile_mult);
+    ctx.texture_load_factor = (std::min)(texture_safe_max, m_smoothed_vibration_mult);
 
     double brake_safe_max = (std::min)(USER_CAP_MAX, (double)m_brake_load_cap);
-    ctx.brake_load_factor = (std::min)(brake_safe_max, m_smoothed_tactile_mult);
+    ctx.brake_load_factor = (std::min)(brake_safe_max, m_smoothed_vibration_mult);
     
     // Hardware Scaling Safeties
     double wheelbase_max_safe = (double)m_wheelbase_max_nm;
@@ -553,10 +553,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Apply Dynamic Normalization to structural forces
     double norm_structural = structural_sum * m_smoothed_structural_mult;
 
-    // Tactile Textures are calculated in absolute Nm
-    // v0.7.110: Apply m_tactile_gain to textures, but NOT to Soft Lock (Issue #206)
-    double tactile_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble;
-    double final_texture_nm = (tactile_sum_nm * (double)m_tactile_gain) + ctx.soft_lock_force;
+    // Vibration Effects are calculated in absolute Nm
+    // v0.7.110: Apply m_vibration_gain to textures, but NOT to Soft Lock (Issue #206)
+    double vibration_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble;
+    double final_texture_nm = (vibration_sum_nm * (double)m_vibration_gain) + ctx.soft_lock_force;
 
     // --- 7. OUTPUT SCALING (Physical Target Model) ---
     // Map structural to the target rim torque, then divide by wheelbase max to get DirectInput %
@@ -1106,7 +1106,7 @@ void FFBEngine::ResetNormalization() {
     m_smoothed_structural_mult = 1.0 / (m_session_peak_torque + EPSILON_DIV);
     m_rolling_average_torque = m_session_peak_torque;
 
-    // 2. Tactile Normalization Reset (Stage 3)
+    // 2. Vibration Normalization Reset (Stage 3)
     // Always return to the class-default seed load.
     ParsedVehicleClass vclass = ParseVehicleClass(m_current_class_name.c_str(), m_vehicle_name);
     m_auto_peak_load = GetDefaultLoadForClass(vclass);
@@ -1122,7 +1122,7 @@ void FFBEngine::ResetNormalization() {
         m_static_load_latched = true;
     }
 
-    m_smoothed_tactile_mult = 1.0;
+    m_smoothed_vibration_mult = 1.0;
 
     std::cout << "[FFB] Normalization state reset. Structural Peak: " << m_session_peak_torque
               << " Nm | Load Peak: " << m_auto_peak_load << " N" << std::endl;

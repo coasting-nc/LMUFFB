@@ -64,7 +64,7 @@ set(TEST_SOURCES
     test_ffb_hardware_scaling.cpp
     test_ffb_ingame_scaling.cpp
     test_ffb_issue_142.cpp
-    test_ffb_tactile_normalization.cpp
+    test_ffb_vibration_normalization.cpp
     test_health_monitor.cpp
     test_ffb_persistent_load.cpp
     test_issue_181_soft_lock_weakness.cpp
@@ -72,7 +72,7 @@ set(TEST_SOURCES
     test_issue_185_fix.cpp
     test_issue_42_ffb_inversion.cpp
     test_issue_207_dynamic_normalization_toggle.cpp
-    test_issue_206_tactile_scaling.cpp
+    test_issue_206_vibration_scaling.cpp
     test_issue_218_steering.cpp
     test_issue_221_rest_fallback.cpp
     test_tooltips.cpp

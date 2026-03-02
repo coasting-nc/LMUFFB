@@ -31,7 +31,7 @@ TEST_CASE(test_hardware_scaling_structural, "HardwareScaling") {
 }
 
 TEST_CASE(test_hardware_scaling_textures, "HardwareScaling") {
-    std::cout << "\nTest: Hardware Scaling - Tactile Textures (Issue #153)" << std::endl;
+    std::cout << "\nTest: Hardware Scaling - Vibration Textures (Issue #153)" << std::endl;
     FFBEngine engine;
 
     // Setup:
