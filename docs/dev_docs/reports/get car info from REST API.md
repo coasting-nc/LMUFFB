@@ -56,3 +56,6 @@ rFactor 2 is trickier. The JSON objects contain a `name` field, a `vehFile` fiel
 
 If you try to match them directly, they will fail. TinyPedal solves this by looking at the `vehFile` path, extracting the version number folder name, and slicing that exact number of characters off the end of the `name` string.
 
+
+### Summary
+Because the REST API is a "one-off" call that returns a heavy JSON payload of all cars, you should only run this HTTP request **once** when the player enters the track or when the session changes. Save the resulting `manufacturer` string in a variable in your app, and use that variable rather than querying the REST API every frame.
