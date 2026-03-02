@@ -17,7 +17,7 @@ If the Shared Memory returns `<= 0` for `mPhysicalSteeringWheelRange`, make an H
 
 Note that the REST API for LMU is not officially supported or documented, and it is known to cause crashes in the game is queried too frequently. 
 Therefore we must be careful to query it the absolute minimum number of times necessary to get the steering angle.
-For additional safetu, we should add a UI checkbox / toggle to allow the user to disable this feature (getting the steering range from the REST API) if they are experiencing issues. For safety we should disable it by default.
+For additional safety, we should add a UI checkbox / toggle to allow the user to disable this feature (getting the steering range from the REST API) if they are experiencing issues. For safety we should disable it by default.
 
 ### Calculating the Steering Angle
 Note that `temp_rot_range` is the *total* lock-to-lock range (e.g., 540 degrees). However, `steering_raw` goes from `-1.0` to `1.0`. 
