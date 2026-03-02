@@ -16,7 +16,17 @@ public:
     // Returns true if the GUI is active/focused (affects lazy rendering)
     static bool Render(FFBEngine& engine);
 
+    // Pulls latest snapshots from the engine and updates GUI state
+    static void UpdateTelemetry(FFBEngine& engine);
+
+    // Snapshot state for thread-safe UI display
+    static float GetLatestSteeringRange() { return m_latest_steering_range; }
+    static float GetLatestSteeringAngle() { return m_latest_steering_angle; }
+
 private:
+    static float m_latest_steering_range;
+    static float m_latest_steering_angle;
+
     static void DrawTuningWindow(FFBEngine& engine);
     static void DrawDebugWindow(FFBEngine& engine);
 };
