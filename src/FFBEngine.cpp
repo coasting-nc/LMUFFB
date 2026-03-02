@@ -209,9 +209,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // Class Seeding
     bool seeded = false;
-    if (vehicleClass && m_current_class_name != vehicleClass) {
+    if (vehicleClass && (m_current_class_name != vehicleClass || (vehicleName && strcmp(m_vehicle_name, vehicleName) != 0))) {
         m_current_class_name = vehicleClass;
         InitializeLoadReference(vehicleClass, vehicleName);
+        m_warned_invalid_range = false; // Reset warning on car change
         seeded = true;
     }
     
@@ -232,6 +233,14 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     ctx.car_speed_long = data->mLocalVel.z;
     ctx.car_speed = std::abs(ctx.car_speed_long);
     
+    // Steering Range Diagnostic (Issue #218)
+    if (data->mPhysicalSteeringWheelRange <= 0.0f) {
+        if (!m_warned_invalid_range) {
+            std::cout << "[WARNING] Invalid PhysicalSteeringWheelRange (<=0) for " << data->mVehicleName
+                      << ". Soft Lock and Steering UI may be incorrect." << std::endl;
+            m_warned_invalid_range = true;
+        }
+    }
     // Update Context strings (for UI/Logging)
     // Only update if first char differs to avoid redundant copies
     if (m_vehicle_name[0] != data->mVehicleName[0] || m_vehicle_name[VEHICLE_NAME_CHECK_IDX] != data->mVehicleName[VEHICLE_NAME_CHECK_IDX]) {
@@ -638,6 +647,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.raw_front_long_patch_vel = (float)((fl.mLongitudinalPatchVel + fr.mLongitudinalPatchVel) / DUAL_DIVISOR);
             snap.raw_rear_lat_patch_vel = (float)((std::abs(data->mWheel[2].mLateralPatchVel) + std::abs(data->mWheel[3].mLateralPatchVel)) / DUAL_DIVISOR);
             snap.raw_rear_long_patch_vel = (float)((data->mWheel[2].mLongitudinalPatchVel + data->mWheel[3].mLongitudinalPatchVel) / DUAL_DIVISOR);
+
+            float range_deg = data->mPhysicalSteeringWheelRange * (180.0f / (float)PI);
+            snap.steering_range_deg = range_deg;
+            snap.steering_angle_deg = (float)data->mUnfilteredSteering * (range_deg / 2.0f);
 
             snap.warn_load = ctx.frame_warn_load;
             snap.warn_grip = ctx.frame_warn_grip || ctx.frame_warn_rear_grip;
@@ -1052,6 +1065,8 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
 
 void FFBEngine::ResetNormalization() {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+
+    m_warned_invalid_range = false; // Issue #218: Reset warning on manual normalization reset
 
     // 1. Structural Normalization Reset (Stage 1)
     // If disabled, we return to the user's manual target.

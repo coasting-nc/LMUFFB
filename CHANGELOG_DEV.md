@@ -4,7 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## User-facing Summary of changes from versions v0.7.66 - v0.7.111
+## [0.7.112] - 2026-03-05
+### Added
+- **Steering Telemetry Display (Issue #218)**:
+  - Added real-time display of **Steering Range** and **Steering Angle** in degrees to the Tuning Window.
+  - This helps users verify that their wheelbase synchronization and car-specific steering lock are correctly reported by the game.
+- **Steering Diagnostic Warnings**:
+  - Implemented a one-time console warning if the game reports an invalid steering range (<= 0).
+  - This provides immediate feedback for telemetry configuration issues that could affect FFB accuracy.
+
+### Testing
+- **New Test Suite**: Added `tests/test_issue_218_steering.cpp` to verify degree conversions and diagnostic warning logic.
+
+---
+
+## User-facing Summary of changes from versions v0.7.66 - v0.7.112
 
 ### Added
 - **FFB Scaling by car class**.

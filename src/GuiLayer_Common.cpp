@@ -41,6 +41,9 @@ static void DisplayRate(const char* label, double rate, double target) {
 extern std::atomic<bool> g_running;
 extern std::recursive_mutex g_engine_mutex;
 
+float GuiLayer::m_latest_steering_range = 0.0f;
+float GuiLayer::m_latest_steering_angle = 0.0f;
+
 static const float CONFIG_PANEL_WIDTH = 500.0f;
 static const int LATENCY_WARNING_THRESHOLD_MS = 15;
 
@@ -417,6 +420,9 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     ImGui::SetColumnWidth(0, ImGui::GetWindowWidth() * 0.45f);
 
     if (ImGui::TreeNodeEx("General FFB", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+        ImGui::NextColumn(); ImGui::NextColumn();
+
+        ImGui::TextDisabled("Steering: %.0f deg (Angle: %.1f deg)", m_latest_steering_range, m_latest_steering_angle);
         ImGui::NextColumn(); ImGui::NextColumn();
 
         ImGui::Spacing();
@@ -884,37 +890,12 @@ static RollingBuffer plot_raw_steer, plot_raw_shaft_torque, plot_raw_gen_torque,
 
 static bool g_warn_dt = false;
 
-void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
-    if (!Config::show_graphs) return;
-
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x + CONFIG_PANEL_WIDTH, viewport->Pos.y));
-    ImGui::SetNextWindowSize(ImVec2(viewport->Size.x - CONFIG_PANEL_WIDTH, viewport->Size.y));
-
-    ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
-    ImGui::Begin("FFB Analysis", nullptr, flags);
-
-    // System Health Diagnostics (Moved from Tuning window - Issue #149)
-    if (ImGui::CollapsingHeader("System Health (Hz)", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Columns(5, "RateCols", false);
-        DisplayRate("FFB Loop", engine.m_ffb_rate, 400.0);
-        ImGui::NextColumn();
-        DisplayRate("Telemetry", engine.m_telemetry_rate, 400.0);
-        ImGui::NextColumn();
-        DisplayRate("Hardware", engine.m_hw_rate, 400.0);
-        ImGui::NextColumn();
-        DisplayRate("S.Torque", engine.m_torque_rate, 400.0);
-        ImGui::NextColumn();
-        DisplayRate("G.Torque", engine.m_gen_torque_rate, 400.0);
-        ImGui::Columns(1);
-        if ((engine.m_telemetry_rate < 380.0 || engine.m_torque_rate < 380.0) && engine.m_telemetry_rate > 1.0 && GameConnector::Get().IsConnected()) {
-            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Low telemetry/torque rate. Check game FFB settings.");
-        }
-        ImGui::Separator();
-    }
-
+void GuiLayer::UpdateTelemetry(FFBEngine& engine) {
     auto snapshots = engine.GetDebugBatch();
     for (const auto& snap : snapshots) {
+        m_latest_steering_range = snap.steering_range_deg;
+        m_latest_steering_angle = snap.steering_angle_deg;
+
         plot_total.Add(snap.total_output);
         plot_base.Add(snap.base_force);
         plot_sop.Add(snap.sop_force);
@@ -963,6 +944,37 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         plot_raw_front_deflection.Add(snap.raw_front_deflection);
         g_warn_dt = snap.warn_dt;
     }
+}
+
+void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
+    if (!Config::show_graphs) return;
+
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x + CONFIG_PANEL_WIDTH, viewport->Pos.y));
+    ImGui::SetNextWindowSize(ImVec2(viewport->Size.x - CONFIG_PANEL_WIDTH, viewport->Size.y));
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
+    ImGui::Begin("FFB Analysis", nullptr, flags);
+
+    // System Health Diagnostics (Moved from Tuning window - Issue #149)
+    if (ImGui::CollapsingHeader("System Health (Hz)", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Columns(5, "RateCols", false);
+        DisplayRate("FFB Loop", engine.m_ffb_rate, 400.0);
+        ImGui::NextColumn();
+        DisplayRate("Telemetry", engine.m_telemetry_rate, 400.0);
+        ImGui::NextColumn();
+        DisplayRate("Hardware", engine.m_hw_rate, 400.0);
+        ImGui::NextColumn();
+        DisplayRate("S.Torque", engine.m_torque_rate, 400.0);
+        ImGui::NextColumn();
+        DisplayRate("G.Torque", engine.m_gen_torque_rate, 400.0);
+        ImGui::Columns(1);
+        if ((engine.m_telemetry_rate < 380.0 || engine.m_torque_rate < 380.0) && engine.m_telemetry_rate > 1.0 && GameConnector::Get().IsConnected()) {
+            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Low telemetry/torque rate. Check game FFB settings.");
+        }
+        ImGui::Separator();
+    }
+
 
     if (g_warn_dt) {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));

@@ -165,6 +165,8 @@ bool GuiLayer::Render(FFBEngine& engine) {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    GuiLayer::UpdateTelemetry(engine);
+
     DrawTuningWindow(engine);
     if (Config::show_graphs) DrawDebugWindow(engine);
 

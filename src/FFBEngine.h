@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <vector>
 #include <mutex>
+#include <atomic>
 #include <iostream>
 #include <chrono>
 #include <array>
@@ -88,6 +89,8 @@ struct FFBSnapshot {
     float raw_front_long_patch_vel; // New v0.4.9
     float raw_rear_lat_patch_vel;   // New v0.4.9
     float raw_rear_long_patch_vel;  // New v0.4.9
+    float steering_angle_deg;       // New v0.7.112 (Issue #218)
+    float steering_range_deg;       // New v0.7.112 (Issue #218)
 
     // Telemetry Health Flags
     bool warn_load;
@@ -313,6 +316,7 @@ public:
     bool m_warned_susp_force = false;
     bool m_warned_susp_deflection = false;
     bool m_warned_vert_deflection = false; 
+    std::atomic<bool> m_warned_invalid_range = { false }; // New v0.7.112 (Issue #218)
     
     // Diagnostics (v0.4.5 Fix)
     struct GripDiagnostics {
