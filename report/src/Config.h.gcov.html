@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-02 12:57:43</td>
+            <td class="headerValue">2026-03-02 14:15:02</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -137,7 +137,7 @@
 <span id="L66"><span class="lineNum">      66</span>                 :             :     </span>
 <span id="L67"><span class="lineNum">      67</span>                 :             :     bool road_enabled = true;</span>
 <span id="L68"><span class="lineNum">      68</span>                 :             :     float road_gain = 0.0f;</span>
-<span id="L69"><span class="lineNum">      69</span>                 :             :     float tactile_gain = 1.0f; // New v0.7.110 (Issue #206)</span>
+<span id="L69"><span class="lineNum">      69</span>                 :             :     float vibration_gain = 1.0f; // New v0.7.110 (Issue #206)</span>
 <span id="L70"><span class="lineNum">      70</span>                 :             : </span>
 <span id="L71"><span class="lineNum">      71</span>                 :             :     bool dynamic_normalization_enabled = false;</span>
 <span id="L72"><span class="lineNum">      72</span>                 :             :     bool auto_load_normalization_enabled = false;</span>
@@ -259,7 +259,7 @@
 <span id="L188"><span class="lineNum">     188</span>                 :<span class="tlaGNC">         416 :         return *this; </span></span>
 <span id="L189"><span class="lineNum">     189</span>                 :             :     }</span>
 <span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">         260 :     Preset&amp; SetRoad(bool enabled, float g) { road_enabled = enabled; road_gain = g; return *this; }</span></span>
-<span id="L191"><span class="lineNum">     191</span>                 :             :     Preset&amp; SetTactileGain(float v) { tactile_gain = v; return *this; }</span>
+<span id="L191"><span class="lineNum">     191</span>                 :             :     Preset&amp; SetVibrationGain(float v) { vibration_gain = v; return *this; }</span>
 <span id="L192"><span class="lineNum">     192</span>                 :             :     Preset&amp; SetDynamicNormalization(bool enabled) { dynamic_normalization_enabled = enabled; return *this; }</span>
 <span id="L193"><span class="lineNum">     193</span>                 :             : </span>
 <span id="L194"><span class="lineNum">     194</span>                 :             :     Preset&amp; SetSoftLock(bool enabled, float stiffness, float damping) {</span>
@@ -402,7 +402,7 @@
 <span id="L331"><span class="lineNum">     331</span>                 :<span class="tlaGNC">         606 :         engine.m_slide_freq_scale = (std::max)(0.1f, slide_freq);</span></span>
 <span id="L332"><span class="lineNum">     332</span>                 :<span class="tlaGNC">         606 :         engine.m_road_texture_enabled = road_enabled;</span></span>
 <span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaGNC">         606 :         engine.m_road_texture_gain = (std::max)(0.0f, road_gain);</span></span>
-<span id="L334"><span class="lineNum">     334</span>                 :<span class="tlaGNC">         606 :         engine.m_tactile_gain = (std::max)(0.0f, (std::min)(2.0f, tactile_gain));</span></span>
+<span id="L334"><span class="lineNum">     334</span>                 :<span class="tlaGNC">         606 :         engine.m_vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));</span></span>
 <span id="L335"><span class="lineNum">     335</span>                 :             : </span>
 <span id="L336"><span class="lineNum">     336</span>                 :<span class="tlaGNC">         606 :         engine.m_soft_lock_enabled = soft_lock_enabled;</span></span>
 <span id="L337"><span class="lineNum">     337</span>                 :<span class="tlaGNC">         606 :         engine.m_soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);</span></span>
@@ -503,7 +503,7 @@
 <span id="L432"><span class="lineNum">     432</span>                 :<span class="tlaGNC">          24 :         slide_gain = (std::max)(0.0f, slide_gain);</span></span>
 <span id="L433"><span class="lineNum">     433</span>                 :<span class="tlaGNC">          24 :         slide_freq = (std::max)(0.1f, slide_freq);</span></span>
 <span id="L434"><span class="lineNum">     434</span>                 :<span class="tlaGNC">          24 :         road_gain = (std::max)(0.0f, road_gain);</span></span>
-<span id="L435"><span class="lineNum">     435</span>                 :<span class="tlaGNC">          24 :         tactile_gain = (std::max)(0.0f, (std::min)(2.0f, tactile_gain));</span></span>
+<span id="L435"><span class="lineNum">     435</span>                 :<span class="tlaGNC">          24 :         vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));</span></span>
 <span id="L436"><span class="lineNum">     436</span>                 :<span class="tlaGNC">          24 :         soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);</span></span>
 <span id="L437"><span class="lineNum">     437</span>                 :<span class="tlaGNC">          24 :         soft_lock_damping = (std::max)(0.0f, soft_lock_damping);</span></span>
 <span id="L438"><span class="lineNum">     438</span>                 :<span class="tlaGNC">          24 :         wheelbase_max_nm = (std::max)(1.0f, wheelbase_max_nm);</span></span>
@@ -580,7 +580,7 @@
 <span id="L509"><span class="lineNum">     509</span>                 :<span class="tlaGNC">         393 :         slide_freq = engine.m_slide_freq_scale;</span></span>
 <span id="L510"><span class="lineNum">     510</span>                 :<span class="tlaGNC">         393 :         road_enabled = engine.m_road_texture_enabled;</span></span>
 <span id="L511"><span class="lineNum">     511</span>                 :<span class="tlaGNC">         393 :         road_gain = engine.m_road_texture_gain;</span></span>
-<span id="L512"><span class="lineNum">     512</span>                 :<span class="tlaGNC">         393 :         tactile_gain = engine.m_tactile_gain;</span></span>
+<span id="L512"><span class="lineNum">     512</span>                 :<span class="tlaGNC">         393 :         vibration_gain = engine.m_vibration_gain;</span></span>
 <span id="L513"><span class="lineNum">     513</span>                 :             : </span>
 <span id="L514"><span class="lineNum">     514</span>                 :<span class="tlaGNC">         393 :         soft_lock_enabled = engine.m_soft_lock_enabled;</span></span>
 <span id="L515"><span class="lineNum">     515</span>                 :<span class="tlaGNC">         393 :         soft_lock_stiffness = engine.m_soft_lock_stiffness;</span></span>
@@ -691,7 +691,7 @@
 <span id="L620"><span class="lineNum">     620</span>                 :             : </span>
 <span id="L621"><span class="lineNum">     621</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 60 times"> + </span>]:<span class="tlaGNC">          61 :         if (road_enabled != p.road_enabled) return false;</span></span>
 <span id="L622"><span class="lineNum">     622</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 59 times"> + </span>]:<span class="tlaGNC">          60 :         if (!is_near(road_gain, p.road_gain, eps)) return false;</span></span>
-<span id="L623"><span class="lineNum">     623</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 59 times"> + </span>]:<span class="tlaGNC">          59 :         if (!is_near(tactile_gain, p.tactile_gain, eps)) return false;</span></span>
+<span id="L623"><span class="lineNum">     623</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 59 times"> + </span>]:<span class="tlaGNC">          59 :         if (!is_near(vibration_gain, p.vibration_gain, eps)) return false;</span></span>
 <span id="L624"><span class="lineNum">     624</span>                 :             : </span>
 <span id="L625"><span class="lineNum">     625</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 59 times"> + </span>]:<span class="tlaGNC">          59 :         if (dynamic_normalization_enabled != p.dynamic_normalization_enabled) return false;</span></span>
 <span id="L626"><span class="lineNum">     626</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 59 times"> + </span>]:<span class="tlaGNC">          59 :         if (auto_load_normalization_enabled != p.auto_load_normalization_enabled) return false;</span></span>
