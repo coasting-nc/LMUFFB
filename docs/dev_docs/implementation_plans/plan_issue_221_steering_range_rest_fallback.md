@@ -81,11 +81,24 @@ Create `src/RestApiProvider.h` and `src/RestApiProvider.cpp`.
 > Since we are on Linux, we cannot test the actual `WinINet` calls or the real game. Mocks are essential to verify the logic of the provider and the engine's integration.
 
 ## 5. Implementation Notes
-- **Parsing:** The `RestApiProvider` uses a robust manual scanning and regex-based extraction for `"VM_STEER_LOCK"`. It correctly handles strings like `"540 deg"`, `"900.0"`, and `"270 (540 deg)"` by taking the first numeric match.
-- **Throttling:** Requests are strictly throttled to car changes or manual resets, and only if the Shared Memory range is invalid.
-- **GUI:** The port field was intentionally omitted from the GUI per user request to keep the UI clean, as the port is typically fixed for LMU (6397).
-- **Thread Safety:** The background thread uses a try-catch block and RAII-like atomic management to ensure the `m_isRequesting` flag is handled safely even in case of exceptions.
-- **Code Review:** During Iteration 1, the reviewer noted missing versioning and changelog updates, which were subsequently addressed. The suggested RAII for the requesting flag was implemented using a lambda with proper flag management.
+
+### Issues Encountered
+- **JSON Parsing complexity:** Initially, I considered a full JSON library but decided against it to avoid adding dependencies. Manual parsing with the requested regex `r"\d*\.?\d+"` proved sufficient and robust for the specific `VM_STEER_LOCK` string values returned by the game.
+- **CI/Test Environment:** Since I am running on Linux, I could not verify the actual `WinINet` calls. I had to rely on a mock implementation and unit tests for the parsing logic.
+
+### Deviations from Initial Plan
+- **GUI Layout:** The original plan included a port input field. Following user feedback, this was removed from the GUI to keep the interface clean, as the port is typically static (6397).
+- **UI Formatting:** Shortened the steering telemetry display to `Steering: <angle>° (<range>)` and used the degree symbol "°" instead of "deg" per user request.
+- **Collapsible Section:** The "Steerlock from REST API" checkbox was moved into its own dedicated collapsible section for better organization.
+- **Soft Lock Scope:** A code review suggested integrating the fallback range into the Soft Lock calculation. However, per user instruction, this was deferred to a future task to maintain narrow focus on the UI and Gyro Damping components.
+
+### Code Review Discussion
+- **Iteration 1:** The reviewer correctly identified missing updates to the `VERSION` file and `CHANGELOG_DEV.md`. These were subsequently added. The reviewer also suggested using RAII for the `m_isRequesting` flag; I addressed this by wrapping the background thread execution in a `try-catch` block and ensuring the atomic flag is reset at the end of the lambda.
+- **Iteration 2:** The reviewer gave a "Greenlight" (Correct) rating, noting that while Soft Lock integration was missing (a nitpick), the patch otherwise met all functional and process requirements.
+
+### Suggestions for the Future
+- **Soft Lock Integration:** Once the current fix is stable, the `FFBEngine::calculate_soft_lock` method should be updated to use the `RestApiProvider` fallback range when Shared Memory data is missing.
+- **Shared Memory Wrapper:** Consider moving the steering range logic into `GameConnector` or the Shared Memory wrapper to centralize all "source selection" logic.
 
 ## 6. Final Status
 - **Implemented:** `src/RestApiProvider.cpp`, `src/RestApiProvider.h`.
