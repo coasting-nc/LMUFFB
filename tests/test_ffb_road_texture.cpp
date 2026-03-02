@@ -56,9 +56,9 @@ TEST_CASE(test_road_texture_teleport, "RoadTexture") {
     data.mWheel[0].mTireLoad = 4000.0; // Load Factor 1.0
     data.mWheel[1].mTireLoad = 4000.0;
 
-    // v0.7.69: Ensure tactile multiplier is 1.0 for this test
+    // v0.7.69: Ensure vibration multiplier is 1.0 for this test
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
-    FFBEngineTestAccess::SetSmoothedTactileMult(engine, 1.0);
+    FFBEngineTestAccess::SetSmoothedVibrationMult(engine, 1.0);
 
     engine.calculate_force(&data);
     

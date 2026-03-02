@@ -2,11 +2,11 @@
 
 namespace FFBEngineTests {
 
-TEST_CASE(test_issue_206_tactile_scaling, "Functional") {
+TEST_CASE(test_issue_206_vibration_scaling, "Functional") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    // 1. Setup baseline: All tactile effects enabled
+    // 1. Setup baseline: All vibration effects enabled
     engine.m_road_texture_enabled = true;
     engine.m_road_texture_gain = 1.0f;
     engine.m_slide_texture_enabled = true;
@@ -43,20 +43,20 @@ TEST_CASE(test_issue_206_tactile_scaling, "Functional") {
     // Trigger Bottoming (ride height)
     tel.mWheel[0].mRideHeight = 0.001f; // < 2mm
 
-    // Case 1: Tactile Gain = 1.0 (Baseline)
-    engine.m_tactile_gain = 1.0f;
+    // Case 1: Vibration Gain = 1.0 (Baseline)
+    engine.m_vibration_gain = 1.0f;
     double force_100 = engine.calculate_force(&tel);
 
-    // Case 2: Tactile Gain = 0.5 (Half)
-    engine.m_tactile_gain = 0.5f;
+    // Case 2: Vibration Gain = 0.5 (Half)
+    engine.m_vibration_gain = 0.5f;
     double force_50 = engine.calculate_force(&tel);
 
-    // Case 3: Tactile Gain = 2.0 (Double)
-    engine.m_tactile_gain = 2.0f;
+    // Case 3: Vibration Gain = 2.0 (Double)
+    engine.m_vibration_gain = 2.0f;
     double force_200 = engine.calculate_force(&tel);
 
-    // Case 4: Tactile Gain = 0.0 (Off)
-    engine.m_tactile_gain = 0.0f;
+    // Case 4: Vibration Gain = 0.0 (Off)
+    engine.m_vibration_gain = 0.0f;
     double force_0 = engine.calculate_force(&tel);
 
     // Increase wheelbase max Nm to avoid clipping for scaling verification
@@ -78,25 +78,25 @@ TEST_CASE(test_issue_206_tactile_scaling, "Functional") {
     const auto& s200 = batch[2];
     const auto& s0 = batch[3];
 
-    // Total tactile sum in NM should scale perfectly
-    float tactile_100 = s100.texture_road + s100.texture_slide + s100.texture_lockup + s100.texture_spin + s100.texture_bottoming + s100.ffb_abs_pulse;
-    float tactile_50 = s50.texture_road + s50.texture_slide + s50.texture_lockup + s50.texture_spin + s50.texture_bottoming + s50.ffb_abs_pulse;
-    float tactile_200 = s200.texture_road + s200.texture_slide + s200.texture_lockup + s200.texture_spin + s200.texture_bottoming + s200.ffb_abs_pulse;
-    float tactile_0 = s0.texture_road + s0.texture_slide + s0.texture_lockup + s0.texture_spin + s0.texture_bottoming + s0.ffb_abs_pulse;
+    // Total vibration sum in NM should scale perfectly
+    float vibration_100 = s100.texture_road + s100.texture_slide + s100.texture_lockup + s100.texture_spin + s100.texture_bottoming + s100.ffb_abs_pulse;
+    float vibration_50 = s50.texture_road + s50.texture_slide + s50.texture_lockup + s50.texture_spin + s50.texture_bottoming + s50.ffb_abs_pulse;
+    float vibration_200 = s200.texture_road + s200.texture_slide + s200.texture_lockup + s200.texture_spin + s200.texture_bottoming + s200.ffb_abs_pulse;
+    float vibration_0 = s0.texture_road + s0.texture_slide + s0.texture_lockup + s0.texture_spin + s0.texture_bottoming + s0.ffb_abs_pulse;
 
     // NOTE: The textures themselves in the snapshot represent the internal absolute NM value
     // calculated in calculate_road_texture() etc.
-    // BUT calculate_force() summates them and applies m_tactile_gain.
+    // BUT calculate_force() summates them and applies m_vibration_gain.
     // Wait, let me check FFBEngine.cpp logic again.
 
     /*
-    double tactile_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble;
-    double final_texture_nm = (tactile_sum_nm * (double)m_tactile_gain) + ctx.soft_lock_force;
+    double vibration_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble;
+    double final_texture_nm = (vibration_sum_nm * (double)m_vibration_gain) + ctx.soft_lock_force;
     double di_texture = final_texture_nm / wheelbase_max_safe;
     double norm_force = (di_structural + di_texture) * m_gain;
     */
 
-    // The individual texture_road, texture_slide etc in FFBSnapshot are BEFORE scaling by m_tactile_gain.
+    // The individual texture_road, texture_slide etc in FFBSnapshot are BEFORE scaling by m_vibration_gain.
     // They are raw absolute NM values.
     // To verify scaling, we must look at total output or introduce scaled values to snapshot.
     // Actually, I didn't change the snapshot members.
@@ -112,11 +112,11 @@ TEST_CASE(test_issue_206_tactile_scaling, "Functional") {
     engine.m_scrub_drag_gain = 0.0f;
 
     // Run again with zero structural
-    engine.m_tactile_gain = 1.0f;
+    engine.m_vibration_gain = 1.0f;
     double f100 = engine.calculate_force(&tel);
-    engine.m_tactile_gain = 0.5f;
+    engine.m_vibration_gain = 0.5f;
     double f50 = engine.calculate_force(&tel);
-    engine.m_tactile_gain = 0.0f;
+    engine.m_vibration_gain = 0.0f;
     double f0 = engine.calculate_force(&tel);
 
     batch = engine.GetDebugBatch();

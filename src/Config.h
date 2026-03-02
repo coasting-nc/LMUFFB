@@ -66,7 +66,7 @@ struct Preset {
     
     bool road_enabled = true;
     float road_gain = 0.0f;
-    float tactile_gain = 1.0f; // New v0.7.110 (Issue #206)
+    float vibration_gain = 1.0f; // New v0.7.110 (Issue #206)
 
     bool dynamic_normalization_enabled = false;
     bool auto_load_normalization_enabled = false;
@@ -185,7 +185,7 @@ struct Preset {
         return *this; 
     }
     Preset& SetRoad(bool enabled, float g) { road_enabled = enabled; road_gain = g; return *this; }
-    Preset& SetTactileGain(float v) { tactile_gain = v; return *this; }
+    Preset& SetVibrationGain(float v) { vibration_gain = v; return *this; }
     Preset& SetDynamicNormalization(bool enabled) { dynamic_normalization_enabled = enabled; return *this; }
 
     Preset& SetSoftLock(bool enabled, float stiffness, float damping) {
@@ -322,7 +322,7 @@ struct Preset {
         engine.m_slide_freq_scale = (std::max)(0.1f, slide_freq);
         engine.m_road_texture_enabled = road_enabled;
         engine.m_road_texture_gain = (std::max)(0.0f, road_gain);
-        engine.m_tactile_gain = (std::max)(0.0f, (std::min)(2.0f, tactile_gain));
+        engine.m_vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));
 
         engine.m_soft_lock_enabled = soft_lock_enabled;
         engine.m_soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
@@ -420,7 +420,7 @@ struct Preset {
         slide_gain = (std::max)(0.0f, slide_gain);
         slide_freq = (std::max)(0.1f, slide_freq);
         road_gain = (std::max)(0.0f, road_gain);
-        tactile_gain = (std::max)(0.0f, (std::min)(2.0f, tactile_gain));
+        vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));
         soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
         soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
         wheelbase_max_nm = (std::max)(1.0f, wheelbase_max_nm);
@@ -496,7 +496,7 @@ struct Preset {
         slide_freq = engine.m_slide_freq_scale;
         road_enabled = engine.m_road_texture_enabled;
         road_gain = engine.m_road_texture_gain;
-        tactile_gain = engine.m_tactile_gain;
+        vibration_gain = engine.m_vibration_gain;
 
         soft_lock_enabled = engine.m_soft_lock_enabled;
         soft_lock_stiffness = engine.m_soft_lock_stiffness;
@@ -603,7 +603,7 @@ struct Preset {
 
         if (road_enabled != p.road_enabled) return false;
         if (!is_near(road_gain, p.road_gain, eps)) return false;
-        if (!is_near(tactile_gain, p.tactile_gain, eps)) return false;
+        if (!is_near(vibration_gain, p.vibration_gain, eps)) return false;
 
         if (dynamic_normalization_enabled != p.dynamic_normalization_enabled) return false;
         if (auto_load_normalization_enabled != p.auto_load_normalization_enabled) return false;

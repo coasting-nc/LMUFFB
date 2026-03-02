@@ -192,8 +192,8 @@ public:
     static double GetStaticFrontLoad(const FFBEngine& e) { return e.m_static_front_load; }
     static bool GetStaticLoadLatched(const FFBEngine& e) { return e.m_static_load_latched; }
     static void SetStaticLoadLatched(FFBEngine& e, bool val) { e.m_static_load_latched = val; }
-    static double GetSmoothedTactileMult(const FFBEngine& e) { return e.m_smoothed_tactile_mult; }
-    static void SetSmoothedTactileMult(FFBEngine& e, double val) { e.m_smoothed_tactile_mult = val; }
+    static double GetSmoothedVibrationMult(const FFBEngine& e) { return e.m_smoothed_vibration_mult; }
+    static void SetSmoothedVibrationMult(FFBEngine& e, double val) { e.m_smoothed_vibration_mult = val; }
     // Wrappers for extracted utilities removed. Tests invoke them directly.
     static void SetSlopeDetectionEnabled(FFBEngine& e, bool val) { e.m_slope_detection_enabled = val; }
     static void SetSlopeBufferIndex(FFBEngine& e, int idx) { e.m_slope_buffer_index = idx; }

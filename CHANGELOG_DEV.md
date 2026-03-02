@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.113] - 2026-03-06
+### Changed
+- **Vibration Terminology Overhaul (Issue #214)**:
+  - Renamed "Tactile Textures" to **"Vibration Effects"** throughout the User Interface and documentation to improve clarity and align with user expectations.
+  - Renamed "Tactile Strength" slider to **"Vibration Strength"**.
+  - Updated internal code terminology, renaming `m_tactile_gain` to `m_vibration_gain` and `m_smoothed_tactile_mult` to `m_smoothed_vibration_mult`.
+  - Updated all tooltips and diagnostic messages to use the new "Vibration" naming convention.
+- **Backward Compatibility**:
+  - Ensured that existing `config.ini` files and user presets using the `tactile_gain` key are correctly migrated to the new `vibration_gain` format on load.
+
+### Testing
+- **Test Suite Modernization**: Renamed and updated all haptic-related tests to match the new vibration terminology (e.g., `test_ffb_vibration_normalization.cpp`).
+
+---
+
 ## [0.7.112] - 2026-03-05
 ### Added
 - **Steering Telemetry Display (Issue #218)**:

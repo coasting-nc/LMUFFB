@@ -36,7 +36,7 @@ namespace Tooltips {
     inline constexpr const char* USE_INGAME_FFB = "Recommended for LMU 1.2+. Uses the high-frequency FFB channel\ndirectly from the game.\nMatches the game's internal physics rate for maximum fidelity.";
     inline constexpr const char* INVERT_FFB = "Check this if the wheel pulls away from center instead of aligning.";
     inline constexpr const char* DYNAMIC_NORMALIZATION_ENABLE = "Automatically scales structural FFB forces based on the peak torque\nseen during a session. Ensures consistent weight across different cars.\n(NOT RECOMMENDED: May cause force drop-off after high-torque spikes).";
-    inline constexpr const char* DYNAMIC_LOAD_NORMALIZATION_ENABLE = "Automatically scales tactile haptics (Road, Slide, Lockup) based\non learned peak tire loads. Ensures detailed feel for all car classes.\nWhen disabled, uses fixed class-based defaults.";
+    inline constexpr const char* DYNAMIC_LOAD_NORMALIZATION_ENABLE = "Automatically scales vibration effects (Road, Slide, Lockup) based\non learned peak tire loads. Ensures detailed feel for all car classes.\nWhen disabled, uses fixed class-based defaults.";
     inline constexpr const char* MASTER_GAIN = "Global scale factor for all forces.\n100% = No attenuation.\nReduce if experiencing heavy clipping.";
     inline constexpr const char* WHEELBASE_MAX_TORQUE = "The absolute maximum physical torque your wheelbase can produce\n(e.g., 15.0 for Simagic Alpha, 4.0 for T300).";
     inline constexpr const char* TARGET_RIM_TORQUE = "The maximum force you want to feel in your hands during heavy cornering.";
@@ -109,9 +109,9 @@ namespace Tooltips {
     inline constexpr const char* ABS_PULSE_GAIN = "Intensity of the ABS pulse.";
     inline constexpr const char* ABS_PULSE_FREQ = "Rate of the ABS pulse oscillation.";
 
-    // Tactile Textures
-    inline constexpr const char* TEXTURE_LOAD_CAP = "Safety Limiter specific to Road and Slide textures.\nPrevents violent shaking when under high downforce or compression.\nONLY affects Road Details and Slide Rumble.";
-    inline constexpr const char* TACTILE_GAIN = "Global multiplier for all haptic textures (Road, Slide, Lockup, etc.).\nAllows scaling absolute Nm effects to better match your hardware.";
+    // Vibration Effects
+    inline constexpr const char* TEXTURE_LOAD_CAP = "Safety Limiter specific to Road and Slide effects.\nPrevents violent shaking when under high downforce or compression.\nONLY affects Road Details and Slide Rumble.";
+    inline constexpr const char* VIBRATION_GAIN = "Global multiplier for all vibration effects (Road, Slide, Lockup, etc.).\nAllows scaling absolute Nm effects to better match your hardware.";
     inline constexpr const char* SLIDE_RUMBLE = "Vibration proportional to tire sliding/scrubbing velocity.";
     inline constexpr const char* SLIDE_GAIN = "Intensity of the scrubbing vibration.";
     inline constexpr const char* SLIDE_PITCH = "Frequency multiplier for the scrubbing sound/feel.\nHigher = Screeching.\nLower = Grinding.";
@@ -124,8 +124,8 @@ namespace Tooltips {
     inline constexpr const char* BOTTOMING_LOGIC = "Algorithm for detecting suspension bottoming.\nScraping = Ride height based.\nSusp Spike = Force rate based.";
 
     // Advanced
-    inline constexpr const char* MUTE_BELOW = "The speed below which all haptic vibrations (Road, Slide, Lockup, Spin)\nare completely muted to prevent idle shaking.";
-    inline constexpr const char* FULL_ABOVE = "The speed above which all haptic vibrations reach\ntheir full configured strength.";
+    inline constexpr const char* MUTE_BELOW = "The speed below which all vibration effects (Road, Slide, Lockup, Spin)\nare completely muted to prevent idle shaking.";
+    inline constexpr const char* FULL_ABOVE = "The speed above which all vibration effects reach\ntheir full configured strength.";
     inline constexpr const char* AUTO_START_LOGGING = "Automatically start telemetry logging when entering a driving session.";
     inline constexpr const char* LOG_PATH = "Directory where .csv telemetry logs will be saved.";
 
@@ -149,7 +149,7 @@ namespace Tooltips {
         SLIP_ANGLE_SMOOTHING, CHASSIS_INERTIA, OPTIMAL_SLIP_ANGLE, OPTIMAL_SLIP_RATIO,
         SLOPE_DETECTION_ENABLE, SLOPE_FILTER_WINDOW, SLOPE_SENSITIVITY, SLOPE_THRESHOLD, SLOPE_OUTPUT_SMOOTHING, SLOPE_ALPHA_THRESHOLD, SLOPE_DECAY_RATE, SLOPE_CONFIDENCE_GATE,
         LOCKUP_VIBRATION, LOCKUP_STRENGTH, BRAKE_LOAD_CAP, VIBRATION_PITCH, LOCKUP_GAMMA, LOCKUP_START_PCT, LOCKUP_FULL_PCT, LOCKUP_PREDICTION_SENS, LOCKUP_BUMP_REJECT, LOCKUP_REAR_BOOST, ABS_PULSE, ABS_PULSE_GAIN, ABS_PULSE_FREQ,
-        TEXTURE_LOAD_CAP, TACTILE_GAIN, SLIDE_RUMBLE, SLIDE_GAIN, SLIDE_PITCH, ROAD_DETAILS, ROAD_GAIN, SPIN_VIBRATION, SPIN_STRENGTH, SPIN_PITCH, SCRUB_DRAG, BOTTOMING_LOGIC,
+        TEXTURE_LOAD_CAP, VIBRATION_GAIN, SLIDE_RUMBLE, SLIDE_GAIN, SLIDE_PITCH, ROAD_DETAILS, ROAD_GAIN, SPIN_VIBRATION, SPIN_STRENGTH, SPIN_PITCH, SCRUB_DRAG, BOTTOMING_LOGIC,
         MUTE_BELOW, FULL_ABOVE, AUTO_START_LOGGING, LOG_PATH,
         PLOT_SELECTED_TORQUE, PLOT_SHAFT_TORQUE, PLOT_INGAME_FFB,
         FINE_TUNE

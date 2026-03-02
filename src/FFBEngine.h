@@ -172,8 +172,8 @@ public:
 
     // Settings (GUI Sliders)
     bool m_dynamic_normalization_enabled = false; // Issue #207: Structural force normalization toggle
-    bool m_auto_load_normalization_enabled = false; // Stage 3: Tactile Normalization (Load-based)
-    float m_tactile_gain = 1.0f; // Issue #206: Global tactile scaling
+    bool m_auto_load_normalization_enabled = false; // Stage 3: Vibration Normalization (Load-based)
+    float m_vibration_gain = 1.0f; // Issue #206: Global vibration scaling
     float m_gain;
     float m_understeer_effect;
     float m_sop_effect;
@@ -430,7 +430,7 @@ public:
     // Dynamic Weight State (v0.7.46)
     double m_static_front_load = 0.0; 
     bool m_static_load_latched = false;
-    double m_smoothed_tactile_mult = 1.0;
+    double m_smoothed_vibration_mult = 1.0;
     double m_dynamic_weight_smoothed = 1.0; 
     double m_front_grip_smoothed_state = 1.0; 
     double m_rear_grip_smoothed_state = 1.0;  
@@ -539,7 +539,7 @@ private:
     static constexpr double COMPRESSION_KNEE_THRESHOLD = 1.5;
     static constexpr double COMPRESSION_KNEE_WIDTH = 0.5;
     static constexpr double COMPRESSION_RATIO = 4.0;
-    static constexpr double TACTILE_EMA_TAU = 0.1;
+    static constexpr double VIBRATION_EMA_TAU = 0.1;
     static constexpr double USER_CAP_MAX = 10.0;
     static constexpr double CLIPPING_THRESHOLD = 0.99;
     static constexpr int    STR_MAX_64 = 63;
