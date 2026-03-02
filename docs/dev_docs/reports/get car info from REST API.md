@@ -59,3 +59,28 @@ If you try to match them directly, they will fail. TinyPedal solves this by look
 
 ### Summary
 Because the REST API is a "one-off" call that returns a heavy JSON payload of all cars, you should only run this HTTP request **once** when the player enters the track or when the session changes. Save the resulting `manufacturer` string in a variable in your app, and use that variable rather than querying the REST API every frame.
+
+
+## Car class info
+
+The good news is that **you do not need to use the REST API to get the car class.** 
+
+The game provides the exact car class directly and reliably through the **Shared Memory API**, and it natively distinguishes between the different LMP2 variations.
+
+### 1. Getting the Car Class from Shared Memory
+In the Shared Memory plugin, the scoring data for each vehicle contains a specific variable for the class: `mVehicleClass`.
+
+### 2. Distinguishing between LMP2 (WEC) and LMP2 (ELMS)
+Because rFactor 2 and Le Mans Ultimate treat these as separate classes for scoring purposes, the `mVehicleClass` string will output them differently. 
+
+The game outputs:
+*   **`"LMP2"`** for the restricted WEC specification.
+*   **`"LMP2_ELMS"`** for the unrestricted ELMS specification.
+
+### Is there any point in using the REST API for car class info? No.
+If you are already fetching the `/rest/race/car` JSON array to get the manufacturer (as discussed previously) and want to grab the class from there, you can. 
+
+The JSON objects returned by that endpoint typically include a `category` string. For an LMP2 car, the category string usually looks something like this:
+`"Oreca, LMP2, LMP2_ELMS"` or `"Le Mans Ultimate, LMP2"`.
+
+However, parsing the `category` string from the REST API is messy because it often contains a comma-separated list of every filter tag applied to the car. 
