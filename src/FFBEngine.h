@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <vector>
 #include <mutex>
+#include <atomic>
 #include <iostream>
 #include <chrono>
 #include <array>
@@ -305,7 +306,6 @@ public:
     double m_torque_rate = 0.0;
     double m_gen_torque_rate = 0.0;
 
-
     // Warning States (Console logging)
     bool m_warned_load = false;
     bool m_warned_grip = false;
@@ -316,7 +316,7 @@ public:
     bool m_warned_susp_force = false;
     bool m_warned_susp_deflection = false;
     bool m_warned_vert_deflection = false; 
-    bool m_warned_invalid_range = false; // New v0.7.112 (Issue #218)
+    std::atomic<bool> m_warned_invalid_range = { false }; // New v0.7.112 (Issue #218)
     
     // Diagnostics (v0.4.5 Fix)
     struct GripDiagnostics {
