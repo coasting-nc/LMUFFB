@@ -1,5 +1,6 @@
 #include "FFBEngine.h"
 #include "Config.h"
+#include "RestApiProvider.h"
 #include <iostream>
 #include <mutex>
 
@@ -214,6 +215,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         InitializeLoadReference(vehicleClass, vehicleName);
         m_warned_invalid_range = false; // Reset warning on car change
         seeded = true;
+
+        // Trigger REST API Fallback if enabled and range is invalid (Issue #221)
+        if (m_rest_api_enabled && data->mPhysicalSteeringWheelRange <= 0.0f) {
+            RestApiProvider::Get().RequestSteeringRange(m_rest_api_port);
+        }
     }
     
     // --- 1. INITIALIZE CONTEXT ---
@@ -236,8 +242,14 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Steering Range Diagnostic (Issue #218)
     if (data->mPhysicalSteeringWheelRange <= 0.0f) {
         if (!m_warned_invalid_range) {
-            std::cout << "[WARNING] Invalid PhysicalSteeringWheelRange (<=0) for " << data->mVehicleName
-                      << ". Soft Lock and Steering UI may be incorrect." << std::endl;
+            float fallback = RestApiProvider::Get().GetFallbackRangeDeg();
+            if (m_rest_api_enabled && fallback > 0.0f) {
+                std::cout << "[FFB] Invalid Shared Memory Steering Range. Using REST API fallback: "
+                          << fallback << " deg" << std::endl;
+            } else {
+                std::cout << "[WARNING] Invalid PhysicalSteeringWheelRange (<=0) for " << data->mVehicleName
+                          << ". Soft Lock and Steering UI may be incorrect." << std::endl;
+            }
             m_warned_invalid_range = true;
         }
     }
@@ -648,7 +660,17 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.raw_rear_lat_patch_vel = (float)((std::abs(data->mWheel[2].mLateralPatchVel) + std::abs(data->mWheel[3].mLateralPatchVel)) / DUAL_DIVISOR);
             snap.raw_rear_long_patch_vel = (float)((data->mWheel[2].mLongitudinalPatchVel + data->mWheel[3].mLongitudinalPatchVel) / DUAL_DIVISOR);
 
-            float range_deg = data->mPhysicalSteeringWheelRange * (180.0f / (float)PI);
+            float sm_range_rad = data->mPhysicalSteeringWheelRange;
+            float range_deg = sm_range_rad * (180.0f / (float)PI);
+
+            // Fallback to REST API if enabled and SM range is invalid (Issue #221)
+            if (m_rest_api_enabled && sm_range_rad <= 0.0f) {
+                float fallback = RestApiProvider::Get().GetFallbackRangeDeg();
+                if (fallback > 0.0f) {
+                    range_deg = fallback;
+                }
+            }
+
             snap.steering_range_deg = range_deg;
             snap.steering_angle_deg = (float)data->mUnfilteredSteering * (range_deg / 2.0f);
 
@@ -821,6 +843,15 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
 void FFBEngine::calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext& ctx) {
     // 1. Calculate Steering Velocity (rad/s)
     float range = data->mPhysicalSteeringWheelRange;
+
+    // Fallback to REST API if enabled and SM range is invalid (Issue #221)
+    if (m_rest_api_enabled && range <= 0.0f) {
+        float fallback_deg = RestApiProvider::Get().GetFallbackRangeDeg();
+        if (fallback_deg > 0.0f) {
+            range = fallback_deg * ((float)PI / 180.0f);
+        }
+    }
+
     if (range <= 0.0f) range = (float)DEFAULT_STEERING_RANGE_RAD;
     double steer_angle = data->mUnfilteredSteering * (range / DUAL_DIVISOR);
     double steer_vel = (steer_angle - m_prev_steering_angle) / ctx.dt;

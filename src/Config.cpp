@@ -174,6 +174,8 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "slope_use_torque") current_preset.slope_use_torque = (value == "1"); // NEW v0.7.40
                 else if (key == "slope_torque_sensitivity") current_preset.slope_torque_sensitivity = std::stof(value); // NEW v0.7.40
                 else if (key == "slope_confidence_max_rate") current_preset.slope_confidence_max_rate = std::stof(value); // NEW v0.7.42
+                else if (key == "rest_api_fallback_enabled") current_preset.rest_api_enabled = (value == "1" || value == "true"); // NEW v0.7.113
+                else if (key == "rest_api_port") current_preset.rest_api_port = std::stoi(value); // NEW v0.7.113
             } catch (...) { std::cerr << "[Config] ParsePresetLine Error." << std::endl; }
         }
     }
@@ -956,6 +958,8 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "spin_freq_scale=" << p.spin_freq_scale << "\n";
     file << "scrub_drag_gain=" << p.scrub_drag_gain << "\n";
     file << "bottoming_method=" << p.bottoming_method << "\n";
+    file << "rest_api_fallback_enabled=" << (p.rest_api_enabled ? "1" : "0") << "\n";
+    file << "rest_api_port=" << p.rest_api_port << "\n";
 
     file << "speed_gate_lower=" << p.speed_gate_lower << "\n";
     file << "speed_gate_upper=" << p.speed_gate_upper << "\n";
@@ -1268,6 +1272,8 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "spin_freq_scale=" << engine.m_spin_freq_scale << "\n";
         file << "scrub_drag_gain=" << engine.m_scrub_drag_gain << "\n";
         file << "bottoming_method=" << engine.m_bottoming_method << "\n";
+        file << "rest_api_fallback_enabled=" << engine.m_rest_api_enabled << "\n";
+        file << "rest_api_port=" << engine.m_rest_api_port << "\n";
 
         file << "\n; --- Advanced Settings ---\n";
         file << "speed_gate_lower=" << engine.m_speed_gate_lower << "\n";
@@ -1467,6 +1473,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "slope_use_torque") engine.m_slope_use_torque = (value == "1"); // NEW v0.7.40
                     else if (key == "slope_torque_sensitivity") engine.m_slope_torque_sensitivity = std::stof(value); // NEW v0.7.40
                     else if (key == "slope_confidence_max_rate") engine.m_slope_confidence_max_rate = std::stof(value); // NEW v0.7.42
+                    else if (key == "rest_api_fallback_enabled") engine.m_rest_api_enabled = (value == "1" || value == "true");
+                    else if (key == "rest_api_port") engine.m_rest_api_port = std::stoi(value);
                 } catch (...) {
                     std::cerr << "[Config] Error parsing line: " << line << std::endl;
                 }
@@ -1626,6 +1634,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     }
     engine.m_soft_lock_stiffness = (std::max)(0.0f, engine.m_soft_lock_stiffness);
     engine.m_soft_lock_damping = (std::max)(0.0f, engine.m_soft_lock_damping);
+    engine.m_rest_api_port = (std::max)(1, engine.m_rest_api_port);
     std::cout << "[Config] Loaded from " << filename << std::endl;
 }
 

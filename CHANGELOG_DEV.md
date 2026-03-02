@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.113] - 2026-03-06
+### Added
+- **REST API Steering Range Fallback (Issue #221)**:
+  - Implemented an asynchronous REST API fallback to retrieve the correct steering wheel range when the Shared Memory API reports 0 or invalid data.
+  - Uses the built-in Windows `WinINet` library to query car garage data (`VM_STEER_LOCK`) without adding external dependencies.
+  - Implemented a background query mechanism that only triggers on car changes or manual resets, minimizing network traffic to prevent game instability.
+  - Added a "REST API Fallback" toggle in the GUI (disabled by default) to give users full control over the feature.
+  - Integrated the fallback range into the FFB physics pipeline (Gyro Damping) and the real-time steering telemetry UI.
+
+### Testing
+- **New Test Suite**: Added `tests/test_issue_221_rest_fallback.cpp` to verify JSON parsing robustness and engine integration.
+- **Cross-Platform Mocks**: Implemented Linux mocks for the REST provider to ensure continued build stability and testability in the Ubuntu environment.
+
 ## [0.7.112] - 2026-03-05
 ### Added
 - **Steering Telemetry Display (Issue #218)**:
