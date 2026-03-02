@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-01 22:52:09</td>
+            <td class="headerValue">2026-03-02 10:19:29</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -236,35 +236,37 @@
 <span id="L165"><span class="lineNum">     165</span>                 :             :     ImGui_ImplGlfw_NewFrame();</span>
 <span id="L166"><span class="lineNum">     166</span>                 :             :     ImGui::NewFrame();</span>
 <span id="L167"><span class="lineNum">     167</span>                 :             : </span>
-<span id="L168"><span class="lineNum">     168</span>                 :             :     DrawTuningWindow(engine);</span>
-<span id="L169"><span class="lineNum">     169</span>                 :             :     if (Config::show_graphs) DrawDebugWindow(engine);</span>
-<span id="L170"><span class="lineNum">     170</span>                 :             : </span>
-<span id="L171"><span class="lineNum">     171</span>                 :             :     ImGui::Render();</span>
-<span id="L172"><span class="lineNum">     172</span>                 :             :     int display_w, display_h;</span>
-<span id="L173"><span class="lineNum">     173</span>                 :             :     glfwGetFramebufferSize(g_window, &amp;display_w, &amp;display_h);</span>
-<span id="L174"><span class="lineNum">     174</span>                 :             :     glViewport(0, 0, display_w, display_h);</span>
-<span id="L175"><span class="lineNum">     175</span>                 :             :     glClearColor(0.45f, 0.55f, 0.60f, 1.00f);</span>
-<span id="L176"><span class="lineNum">     176</span>                 :             :     glClear(GL_COLOR_BUFFER_BIT);</span>
-<span id="L177"><span class="lineNum">     177</span>                 :             :     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());</span>
-<span id="L178"><span class="lineNum">     178</span>                 :             : </span>
-<span id="L179"><span class="lineNum">     179</span>                 :             :     glfwSwapBuffers(g_window);</span>
+<span id="L168"><span class="lineNum">     168</span>                 :             :     GuiLayer::UpdateTelemetry(engine);</span>
+<span id="L169"><span class="lineNum">     169</span>                 :             : </span>
+<span id="L170"><span class="lineNum">     170</span>                 :             :     DrawTuningWindow(engine);</span>
+<span id="L171"><span class="lineNum">     171</span>                 :             :     if (Config::show_graphs) DrawDebugWindow(engine);</span>
+<span id="L172"><span class="lineNum">     172</span>                 :             : </span>
+<span id="L173"><span class="lineNum">     173</span>                 :             :     ImGui::Render();</span>
+<span id="L174"><span class="lineNum">     174</span>                 :             :     int display_w, display_h;</span>
+<span id="L175"><span class="lineNum">     175</span>                 :             :     glfwGetFramebufferSize(g_window, &amp;display_w, &amp;display_h);</span>
+<span id="L176"><span class="lineNum">     176</span>                 :             :     glViewport(0, 0, display_w, display_h);</span>
+<span id="L177"><span class="lineNum">     177</span>                 :             :     glClearColor(0.45f, 0.55f, 0.60f, 1.00f);</span>
+<span id="L178"><span class="lineNum">     178</span>                 :             :     glClear(GL_COLOR_BUFFER_BIT);</span>
+<span id="L179"><span class="lineNum">     179</span>                 :             :     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());</span>
 <span id="L180"><span class="lineNum">     180</span>                 :             : </span>
-<span id="L181"><span class="lineNum">     181</span>                 :             :     return true; // Always return true to keep the main loop running at full speed</span>
-<span id="L182"><span class="lineNum">     182</span>                 :             : }</span>
-<span id="L183"><span class="lineNum">     183</span>                 :             : </span>
-<span id="L184"><span class="lineNum">     184</span>                 :             : #else</span>
-<span id="L185"><span class="lineNum">     185</span>                 :             : // Stub Implementation for Headless Builds (or if IMGUI disabled)</span>
-<span id="L186"><span class="lineNum">     186</span>                 :<span class="tlaGNC">           1 : bool GuiLayer::Init() {</span></span>
-<span id="L187"><span class="lineNum">     187</span>                 :<span class="tlaGNC">           1 :     std::cout &lt;&lt; &quot;[GUI] Disabled (Headless Mode)&quot; &lt;&lt; std::endl;</span></span>
-<span id="L188"><span class="lineNum">     188</span>                 :<span class="tlaGNC">           1 :     return true;</span></span>
-<span id="L189"><span class="lineNum">     189</span>                 :             : }</span>
-<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">           1 : void GuiLayer::Shutdown(FFBEngine&amp; engine) {</span></span>
-<span id="L191"><span class="lineNum">     191</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           1 :     Config::Save(engine);</span></span>
-<span id="L192"><span class="lineNum">     192</span>                 :<span class="tlaGNC">           1 : }</span></span>
-<span id="L193"><span class="lineNum">     193</span>                 :<span class="tlaGNC">          27 : bool GuiLayer::Render(FFBEngine&amp; engine) { return true; }</span></span>
-<span id="L194"><span class="lineNum">     194</span>                 :<span class="tlaGNC">           1 : void* GuiLayer::GetWindowHandle() { return nullptr; }</span></span>
-<span id="L195"><span class="lineNum">     195</span>                 :             : </span>
-<span id="L196"><span class="lineNum">     196</span>                 :             : #endif</span>
+<span id="L181"><span class="lineNum">     181</span>                 :             :     glfwSwapBuffers(g_window);</span>
+<span id="L182"><span class="lineNum">     182</span>                 :             : </span>
+<span id="L183"><span class="lineNum">     183</span>                 :             :     return true; // Always return true to keep the main loop running at full speed</span>
+<span id="L184"><span class="lineNum">     184</span>                 :             : }</span>
+<span id="L185"><span class="lineNum">     185</span>                 :             : </span>
+<span id="L186"><span class="lineNum">     186</span>                 :             : #else</span>
+<span id="L187"><span class="lineNum">     187</span>                 :             : // Stub Implementation for Headless Builds (or if IMGUI disabled)</span>
+<span id="L188"><span class="lineNum">     188</span>                 :<span class="tlaGNC">           1 : bool GuiLayer::Init() {</span></span>
+<span id="L189"><span class="lineNum">     189</span>                 :<span class="tlaGNC">           1 :     std::cout &lt;&lt; &quot;[GUI] Disabled (Headless Mode)&quot; &lt;&lt; std::endl;</span></span>
+<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">           1 :     return true;</span></span>
+<span id="L191"><span class="lineNum">     191</span>                 :             : }</span>
+<span id="L192"><span class="lineNum">     192</span>                 :<span class="tlaGNC">           1 : void GuiLayer::Shutdown(FFBEngine&amp; engine) {</span></span>
+<span id="L193"><span class="lineNum">     193</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           1 :     Config::Save(engine);</span></span>
+<span id="L194"><span class="lineNum">     194</span>                 :<span class="tlaGNC">           1 : }</span></span>
+<span id="L195"><span class="lineNum">     195</span>                 :<span class="tlaGNC">          27 : bool GuiLayer::Render(FFBEngine&amp; engine) { return true; }</span></span>
+<span id="L196"><span class="lineNum">     196</span>                 :<span class="tlaGNC">           1 : void* GuiLayer::GetWindowHandle() { return nullptr; }</span></span>
+<span id="L197"><span class="lineNum">     197</span>                 :             : </span>
+<span id="L198"><span class="lineNum">     198</span>                 :             : #endif</span>
         </pre>
               </td>
             </tr>
