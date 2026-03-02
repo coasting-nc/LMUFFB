@@ -242,8 +242,14 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Steering Range Diagnostic (Issue #218)
     if (data->mPhysicalSteeringWheelRange <= 0.0f) {
         if (!m_warned_invalid_range) {
-            std::cout << "[WARNING] Invalid PhysicalSteeringWheelRange (<=0) for " << data->mVehicleName
-                      << ". Soft Lock and Steering UI may be incorrect." << std::endl;
+            float fallback = RestApiProvider::Get().GetFallbackRangeDeg();
+            if (m_rest_api_enabled && fallback > 0.0f) {
+                std::cout << "[FFB] Invalid Shared Memory Steering Range. Using REST API fallback: "
+                          << fallback << " deg" << std::endl;
+            } else {
+                std::cout << "[WARNING] Invalid PhysicalSteeringWheelRange (<=0) for " << data->mVehicleName
+                          << ". Soft Lock and Steering UI may be incorrect." << std::endl;
+            }
             m_warned_invalid_range = true;
         }
     }
