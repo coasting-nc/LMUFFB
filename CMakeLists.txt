@@ -179,6 +179,8 @@ set(CORE_SOURCES
     src/GripLoadEstimation.cpp
     src/SteeringUtils.cpp
     src/VehicleUtils.cpp
+    src/RestApiProvider.cpp
+    src/RestApiProvider.h
 )
 
 if(WIN32)
@@ -218,8 +220,8 @@ else()
 endif()
 
 if(WIN32)
-    target_link_libraries(LMUFFB_Core PUBLIC dinput8 dxgi dxguid winmm)
-    target_link_libraries(LMUFFB_Core_Fast PUBLIC dinput8 dxgi dxguid winmm)
+    target_link_libraries(LMUFFB_Core PUBLIC dinput8 dxgi dxguid winmm wininet)
+    target_link_libraries(LMUFFB_Core_Fast PUBLIC dinput8 dxgi dxguid winmm wininet)
 endif()
 
 if(NOT WIN32 AND NOT BUILD_HEADLESS)

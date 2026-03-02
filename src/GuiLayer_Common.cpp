@@ -422,8 +422,10 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::TreeNodeEx("General FFB", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        ImGui::TextDisabled("Steering: %.0f deg (Angle: %.1f deg)", m_latest_steering_range, m_latest_steering_angle);
+        ImGui::TextDisabled("Steering: %.1f° (%.0f)", m_latest_steering_angle, m_latest_steering_range);
         ImGui::NextColumn(); ImGui::NextColumn();
+
+        BoolSetting("Steerlock from REST API", &engine.m_rest_api_enabled, Tooltips::REST_API_ENABLE);
 
         ImGui::Spacing();
         bool use_in_game_ffb = (engine.m_torque_source == 1);
