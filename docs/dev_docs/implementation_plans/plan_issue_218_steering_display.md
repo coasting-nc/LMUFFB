@@ -65,6 +65,22 @@ An invalid steering range (<= 0) is a critical telemetry failure. Logging it to 
 - **GUI Refactoring:** Deviated from the initial plan of direct engine access to use a more robust "central telemetry consumer" pattern in `GuiLayer_Common.cpp`. This involved moving snapshot processing out of the Debug window and into a dedicated `UpdateTelemetry` helper used by all GUI windows.
 - **Test Stability:** Encountered an issue where `test_ingame_ffb_scaling_fix` failed due to the car change reset logic being triggered mid-test. Fixed by ensuring vehicle names are consistent in the mock telemetry used by the tests.
 
+## Code Review Feedback & Resolution
+
+### Iteration 1
+- **Issue:** Thread safety violation. New engine members (`m_steering_range_deg`, etc.) were accessed without mutex protection.
+- **Issue:** Snapshot system bypass. The GUI read directly from the engine instead of utilizing the thread-safe `FFBSnapshot` buffer.
+- **Issue:** Redundant calculations in the high-frequency FFB loop.
+- **Issue:** Missing `VERSION` and `CHANGELOG` updates.
+- **Resolution:** Removed direct engine members. Implemented `GuiLayer::UpdateTelemetry` to pull data from snapshots once per GUI frame. Centralized calculations to occur only once per frame. Synchronized metadata.
+
+### Iteration 2
+- **Issue:** Corrupted GUI refactoring. A truncated diff accidentally deleted most of `DrawDebugWindow` and left the file with syntax errors.
+- **Issue:** Redundant access specifiers in `FFBEngine.h`.
+- **Issue:** Version inconsistency in `test_normalization.ini`.
+- **Resolution:** Restored `DrawDebugWindow` to its full functionality. Cleaned up redundant `private:` tags. Synchronized all version strings to `0.7.112`.
+- **Discrepancy Discussion:** The code review correctly identified build failures in `GuiLayer_Common.cpp` caused by truncated diffs during the refactoring process. While my internal build checks eventually caught these errors, the iterative feedback ensured that the final design of the `UpdateTelemetry` helper was robust and met the project's safety standards.
+
 ## Final Notes
 - **Verification:** Feature successfully implemented and verified on Linux using mocks.
 - **Testing:** Added 2 new unit test cases in `tests/test_issue_218_steering.cpp` covering degree calculations, warning issuance, and reset logic.
