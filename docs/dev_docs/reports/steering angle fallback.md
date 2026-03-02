@@ -15,7 +15,7 @@ If the Shared Memory returns `<= 0` for `mPhysicalSteeringWheelRange`, make an H
 
 #### Safety
 
-Note that the REST API for LMU is not officially supported or documented, and it is known to cause crashes in the game if queried too frequently. 
+Note that the REST API for LMU is not officially supported or documented, and it is known to cause crashes in the game is queried too frequently. 
 Therefore we must be careful to query it the absolute minimum number of times necessary to get the steering angle.
 For additional safetu, we should add a UI checkbox / toggle to allow the user to disable this feature (getting the steering range from the REST API) if they are experiencing issues. For safety we should disable it by default.
 
