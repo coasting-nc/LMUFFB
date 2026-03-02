@@ -89,12 +89,13 @@ Create `src/RestApiProvider.h` and `src/RestApiProvider.cpp`.
 ### Deviations from Initial Plan
 - **GUI Layout:** The original plan included a port input field. Following user feedback, this was removed from the GUI to keep the interface clean, as the port is typically static (6397).
 - **UI Formatting:** Shortened the steering telemetry display to `Steering: <angle>° (<range>)` and used the degree symbol "°" instead of "deg" per user request.
-- **Collapsible Section:** The "Steerlock from REST API" checkbox was moved into its own dedicated collapsible section for better organization.
+- Collapsible Section: Initially, the checkbox was placed in a dedicated section, but this was removed in the final iteration to avoid UI clutter. The checkbox is now placed directly under the steering telemetry display.
 - **Soft Lock Scope:** A code review suggested integrating the fallback range into the Soft Lock calculation. However, per user instruction, this was deferred to a future task to maintain narrow focus on the UI and Gyro Damping components.
 
 ### Code Review Discussion
 - **Iteration 1:** The reviewer correctly identified missing updates to the `VERSION` file and `CHANGELOG_DEV.md`. These were subsequently added. The reviewer also suggested using RAII for the `m_isRequesting` flag; I addressed this by wrapping the background thread execution in a `try-catch` block and ensuring the atomic flag is reset at the end of the lambda.
 - **Iteration 2:** The reviewer gave a "Greenlight" (Correct) rating, noting that while Soft Lock integration was missing (a nitpick), the patch otherwise met all functional and process requirements.
+- **Iteration 4:** Received final "Greenlight" (#Correct#) confirming that the UI layout and formatting perfectly match the user's specific requirements.
 
 ### Suggestions for the Future
 - **Soft Lock Integration:** Once the current fix is stable, the `FFBEngine::calculate_soft_lock` method should be updated to use the `RestApiProvider` fallback range when Shared Memory data is missing.
