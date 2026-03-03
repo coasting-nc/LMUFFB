@@ -1,15 +1,18 @@
-# Implementation Plan: Up-sample FFB Part 2 (1000Hz Output)
 
 
-Here is the implementation plan for Part 2 of the FFB upsampling feature.
+# Implementation Plan: Up-sample FFB Part 2 (400Hz to 1000Hz)
 
-### Design Rationale (Overall)
-While Part 1 focused on fixing the mathematical derivatives of the 100Hz input telemetry for the physics engine, Part 2 focuses entirely on the **hardware output stage**. Modern Direct Drive wheelbases (Simucube, Fanatec, Moza) operate internally at 1000Hz or higher. Sending them a 400Hz signal forces the wheelbase to perform its own interpolation (often poorly) or results in a "stepped" signal that feels grainy or robotic. 
+## Context
+The goal of this task is to up-sample the final Force Feedback output from the internal 400Hz physics loop to a 1000Hz output loop. This is Part 2 of the upsampling initiative, focusing strictly on **Output Conditioning** to match the native USB polling rates of modern Direct Drive wheelbases.
 
-By up-sampling the final calculated force from 400Hz to 1000Hz using a **5/2 Polyphase FIR Filter**, we mathematically reconstruct the continuous analog signal. This eliminates aliasing and digital stepping artifacts, providing a buttery-smooth, high-fidelity force feedback experience that matches the native resolution of high-end hardware.
+## Design Rationale (Overall)
+Modern Direct Drive wheelbases (Simucube, Fanatec, Moza) operate internally at 1000Hz or higher. Sending them a 400Hz signal forces the wheelbase to perform its own interpolation (often poorly) or results in a "stepped" signal that feels grainy or robotic. 
+
+By decoupling the main thread (running at 1000Hz) from the physics engine (running at 400Hz) and up-sampling the final calculated force using a **5/2 Polyphase FIR Filter**, we mathematically reconstruct the continuous analog signal. This eliminates aliasing and digital stepping artifacts, providing a buttery-smooth, high-fidelity force feedback experience without increasing the CPU burden of the core physics engine.
 
 ## Reference Documents
-*   [Upsampling Research Report](docs/dev_docs/reports/upsampling.md)
+*[Upsampling Research Report](docs/dev_docs/reports/upsampling.md)
+*   Issue #216 (Part 2)
 *   Implementation plan for Part 1: `docs\dev_docs\implementation_plans\plan_upsample_ffb_part1.md`
 ---
 
@@ -23,17 +26,16 @@ While the core mathematical concept of Part 2 (the 5/2 Polyphase FIR filter) rem
 2. **The `dt` Parameter:** Part 1 hardcoded the physics `dt` to `0.0025` (400Hz) inside `calculate_force` to ensure DSP stability. Part 2 must ensure that the main loop's new 1000Hz delta-time (`0.001s`) is **not** accidentally passed into the physics engine, which would break all the filters Part 1 just fixed.
 3. **Diagnostic Rates (`RateMonitor`):** Part 1 heavily integrated `m_ffb_rate`, `m_telemetry_rate`, etc., into the GUI and Logger. By decoupling the USB output (1000Hz) from the Physics (400Hz), Part 2 needs to add a new `m_physics_rate` variable to `FFBEngine.h` and `FFBSnapshot` so the user can verify both loops are running at their correct, independent speeds.
 
-
 ## Codebase Analysis Summary
 
 ### Current Architecture Overview
-*   **`src/main.cpp`**: The `FFBThread` runs at a fixed 400Hz (`target_period(2500)` microseconds). It polls telemetry, runs `calculate_force`, and immediately sends the result to `DirectInputFFB`.
-*   **`src/HealthMonitor.h`**: Monitors the loop rate, expecting 400Hz.
-*   **`src/DirectInputFFB.cpp`**: Contains an optimization (`if (magnitude == m_last_force) return false;`) which is already perfectly suited for higher polling rates, as it prevents unnecessary USB spam.
+*   **`src/main.cpp`**: The `FFBThread` runs at a fixed 400Hz (`target_period(2500)` microseconds). It polls telemetry via `GameConnector`, runs `calculate_force`, and immediately sends the result to `DirectInputFFB`.
+*   **`src/FFBEngine.h` / `src/GuiLayer.cpp`**: Tracks system health via `m_ffb_rate`, `m_telemetry_rate`, etc.
+*   **`src/DirectInputFFB.cpp`**: Contains an optimization (`if (magnitude == m_last_force) return false;`) which prevents unnecessary USB spam if the force hasn't changed.
 
 ### Impacted Functionalities
-1.  **`FFBThread` (Main Loop)**: Must be promoted to run at 1000Hz (1ms period). It needs a phase accumulator to decouple the 1000Hz output rate from the 400Hz physics rate.
-2.  **`HealthMonitor` & `RateMonitor`**: Must be updated to track and validate the new 1000Hz loop rate alongside the 400Hz physics rate.
+1.  **`FFBThread` (Main Loop)**: Must be promoted to run at 1000Hz (1000 microsecond period). It needs a phase accumulator to trigger the 400Hz physics rate exactly 2 times for every 5 loop iterations.
+2.  **`HealthMonitor` & `RateMonitor`**: Must be updated to track the new 1000Hz loop rate alongside the 400Hz physics rate.
 3.  **New DSP Module**: A new `PolyphaseResampler` class is required to handle the 5/2 rational resampling.
 
 ### Design Rationale
@@ -54,7 +56,6 @@ Instead of running the entire physics engine at 1000Hz (which would waste CPU an
 
 ### 1. Create `src/UpSampler.h` and `src/UpSampler.cpp`
 Implement a `PolyphaseResampler` class specifically designed for a 5/2 ratio (400Hz -> 1000Hz).
-
 *   **Design Rationale:** A polyphase filter is vastly superior to linear interpolation. It acts as a low-pass filter (cutoff at 200Hz) to remove the "images" (aliasing) created by upsampling, perfectly reconstructing the original curve.
 *   **Implementation Details:**
     *   Ratio: L=5 (Upsample), M=2 (Downsample).
@@ -65,13 +66,13 @@ Implement a `PolyphaseResampler` class specifically designed for a 5/2 ratio (40
 
 ### 2. Modify `src/main.cpp` (`FFBThread`)
 Decouple the 1000Hz USB output loop from the 400Hz physics loop.
-
 *   **Timing Update:** Change `target_period(2500)` to `target_period(1000)`.
 *   **Phase Logic:**
     ```cpp
     PolyphaseResampler resampler;
     int phase_accumulator = 0;
     double current_physics_force = 0.0;
+    RateMonitor physicsMonitor; // New monitor for the 400Hz loop
 
     while (g_running) {
         // ... timing logic ...
@@ -85,16 +86,21 @@ Decouple the 1000Hz USB output loop from the 400Hz physics loop.
         }
 
         if (run_physics) {
-            // 1. Poll Telemetry
-            // 2. Call g_engine.calculate_force()
-            // 3. Store result in current_physics_force
-            physicsMonitor.RecordEvent();
+            // CRITICAL: Move Telemetry Polling INSIDE this block
+            if (g_ffb_active && GameConnector::Get().IsConnected()) {
+                bool in_realtime = GameConnector::Get().CopyTelemetry(g_localData);
+                // ... existing telemetry extraction ...
+                
+                // Call calculate_force (it will default to dt=0.0025 internally)
+                current_physics_force = g_engine.calculate_force(...);
+                physicsMonitor.RecordEvent();
+            }
         }
 
-        // 4. Always process the resampler at 1000Hz
+        // Always process the resampler at 1000Hz
         double output_force = resampler.Process(current_physics_force, run_physics);
 
-        // 5. Send to wheel
+        // Send to wheel
         DirectInputFFB::Get().UpdateForce(output_force);
         loopMonitor.RecordEvent();
         
@@ -102,10 +108,10 @@ Decouple the 1000Hz USB output loop from the 400Hz physics loop.
     }
     ```
 
-### 3. Update `src/HealthMonitor.h` and `main.cpp` Diagnostics
-*   Update `HealthStatus` to expect a `loop_rate` of 1000Hz (warn below 950Hz).
-*   Add a new parameter to `HealthMonitor::Check` for `physics_rate` (expect 400Hz, warn below 380Hz).
-*   Update the console logging in `main.cpp` to print both the 1000Hz Loop rate and the 400Hz Physics rate.
+### 3. Update Diagnostics (`FFBEngine.h`, `HealthMonitor.h`, `GuiLayer.cpp`)
+*   **`FFBEngine.h` & `FFBSnapshot`**: Add `double m_physics_rate = 0.0;` and `float physics_rate;` to track the 400Hz loop separately from the 1000Hz `m_ffb_rate`.
+*   **`HealthMonitor.h`**: Update `HealthStatus` to expect a `loop_rate` of 1000Hz (warn below 950Hz) and add a `physics_rate` check (expect 400Hz, warn below 380Hz).
+*   **`GuiLayer_Common.cpp`**: Update the "System Health" UI panel to display both "USB Loop (1000Hz)" and "Physics (400Hz)".
 
 ### Parameter Synchronization Checklist
 *No new user-facing settings are required. This is a core pipeline upgrade.*
@@ -114,7 +120,7 @@ Decouple the 1000Hz USB output loop from the 400Hz physics loop.
 The `PolyphaseResampler` has no external dependencies and can be instantiated directly inside the `FFBThread` function in `main.cpp` before the `while(g_running)` loop begins.
 
 ### Version Increment Rule
-Increment the version number in `VERSION` and `src/Version.h` by the **smallest possible increment** (e.g., `0.7.108` -> `0.7.109`).
+Increment the version number in `VERSION` and `src/Version.h` by the **smallest possible increment** (e.g., `0.7.116` -> `0.7.117`).
 
 ---
 
@@ -147,9 +153,8 @@ The tests must prove that the polyphase resampler correctly outputs 5 samples fo
 
 ## Deliverables
 - [ ] Create `src/UpSampler.h` and `src/UpSampler.cpp` with the `PolyphaseResampler` class.
-- [ ] Modify `src/main.cpp` to implement the 1000Hz loop and phase accumulator.
-- [ ] Update `src/HealthMonitor.h` thresholds.
+- [ ] Modify `src/main.cpp` to implement the 1000Hz loop, phase accumulator, and nested telemetry polling.
+- [ ] Update `src/FFBEngine.h`, `src/HealthMonitor.h`, and `src/GuiLayer_Common.cpp` to track and display the new `physics_rate`.
 - [ ] Create `tests/test_upsampler.cpp` with the specified TDD tests.
 - [ ] Increment version in `VERSION` and `src/Version.h`.
 - [ ] Update this plan document with "Implementation Notes" (Unforeseen Issues, Plan Deviations, Challenges, Recommendations) upon completion.
-
