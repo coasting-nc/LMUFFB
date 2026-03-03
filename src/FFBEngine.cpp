@@ -154,14 +154,54 @@ double FFBEngine::apply_signal_conditioning(double raw_torque, const TelemInfoV0
 }
 
 // Refactored calculate_force
-double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleClass, const char* vehicleName, float genFFBTorque, bool allowed) {
+double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleClass, const char* vehicleName, float genFFBTorque, bool allowed, double override_dt) {
     if (!data) return 0.0;
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+
+    // --- 0. UP-SAMPLING (Issue #216) ---
+    // If override_dt is provided (e.g. from main.cpp), we are in 400Hz upsampling mode.
+    // Otherwise (override_dt <= 0), we are in legacy/test mode: every call is a new frame.
+    bool upsampling_active = (override_dt > 0.0);
+    bool is_new_frame = !upsampling_active || (data->mElapsedTime != m_last_telemetry_time);
+
+    if (is_new_frame) m_last_telemetry_time = data->mElapsedTime;
+
+    double ffb_dt = upsampling_active ? override_dt : (double)data->mDeltaTime;
+    if (ffb_dt < 0.0001) ffb_dt = 0.0025;
+
+    // Synchronize persistent working copy
+    m_working_info = *data;
+
+    // Upsample Steering Shaft Torque (Holt-Winters)
+    double shaft_torque = m_upsample_shaft_torque.Process(data->mSteeringShaftTorque, ffb_dt, is_new_frame);
+    m_working_info.mSteeringShaftTorque = shaft_torque;
+
+    // Update wheels in working_info (Channels used for derivatives)
+    for (int i = 0; i < 4; i++) {
+        m_working_info.mWheel[i].mLateralPatchVel = m_upsample_lat_patch_vel[i].Process(data->mWheel[i].mLateralPatchVel, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mLongitudinalPatchVel = m_upsample_long_patch_vel[i].Process(data->mWheel[i].mLongitudinalPatchVel, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mVerticalTireDeflection = m_upsample_vert_deflection[i].Process(data->mWheel[i].mVerticalTireDeflection, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mSuspForce = m_upsample_susp_force[i].Process(data->mWheel[i].mSuspForce, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mBrakePressure = m_upsample_brake_pressure[i].Process(data->mWheel[i].mBrakePressure, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mRotation = m_upsample_rotation[i].Process(data->mWheel[i].mRotation, ffb_dt, is_new_frame);
+    }
+
+    // Upsample other derivative sources
+    m_working_info.mUnfilteredSteering = m_upsample_steering.Process(data->mUnfilteredSteering, ffb_dt, is_new_frame);
+    m_working_info.mUnfilteredThrottle = m_upsample_throttle.Process(data->mUnfilteredThrottle, ffb_dt, is_new_frame);
+    m_working_info.mUnfilteredBrake = m_upsample_brake.Process(data->mUnfilteredBrake, ffb_dt, is_new_frame);
+    m_working_info.mLocalAccel.x = m_upsample_local_accel_x.Process(data->mLocalAccel.x, ffb_dt, is_new_frame);
+    m_working_info.mLocalAccel.y = m_upsample_local_accel_y.Process(data->mLocalAccel.y, ffb_dt, is_new_frame);
+    m_working_info.mLocalAccel.z = m_upsample_local_accel_z.Process(data->mLocalAccel.z, ffb_dt, is_new_frame);
+    m_working_info.mLocalRotAccel.y = m_upsample_local_rot_accel_y.Process(data->mLocalRotAccel.y, ffb_dt, is_new_frame);
+
+    // Use upsampled data pointer for all calculations
+    const TelemInfoV01* upsampled_data = &m_working_info;
 
     // Select Torque Source
     // v0.7.63 Fix: genFFBTorque (Direct Torque 400Hz) is normalized [-1.0, 1.0].
     // It must be scaled by m_wheelbase_max_nm to match the engine's internal Nm-based pipeline.
-    double raw_torque_input = (m_torque_source == 1) ? (double)genFFBTorque * (double)m_wheelbase_max_nm : data->mSteeringShaftTorque;
+    double raw_torque_input = (m_torque_source == 1) ? (double)genFFBTorque * (double)m_wheelbase_max_nm : shaft_torque;
 
     // RELIABILITY FIX: Sanitize input torque
     if (!std::isfinite(raw_torque_input)) return 0.0;
@@ -169,11 +209,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // --- 0. DYNAMIC NORMALIZATION (Issue #152) ---
     // 1. Contextual Spike Rejection (Lightweight MAD alternative)
     double current_abs_torque = std::abs(raw_torque_input);
-    double alpha_slow = data->mDeltaTime / (TORQUE_ROLL_AVG_TAU + data->mDeltaTime); // 1-second rolling average
+    double alpha_slow = ffb_dt / (TORQUE_ROLL_AVG_TAU + ffb_dt); // 1-second rolling average
     m_rolling_average_torque += alpha_slow * (current_abs_torque - m_rolling_average_torque);
 
-    double lat_g_abs = std::abs(data->mLocalAccel.x / GRAVITY_MS2);
-    double torque_slew = std::abs(raw_torque_input - m_last_raw_torque) / (data->mDeltaTime + EPSILON_DIV);
+    double lat_g_abs = std::abs(upsampled_data->mLocalAccel.x / (double)GRAVITY_MS2);
+    double torque_slew = std::abs(raw_torque_input - m_last_raw_torque) / (ffb_dt + (double)EPSILON_DIV);
     m_last_raw_torque = raw_torque_input;
 
     // Flag as spike if torque jumps > 3x the rolling average (with a 15Nm floor to prevent low-speed false positives)
@@ -188,7 +228,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             m_session_peak_torque = current_abs_torque; // Fast attack
         } else {
             // Exponential decay (0.5% reduction per second)
-            double decay_factor = 1.0 - (SESSION_PEAK_DECAY_RATE * data->mDeltaTime);
+            double decay_factor = 1.0 - ((double)SESSION_PEAK_DECAY_RATE * ffb_dt);
             m_session_peak_torque *= decay_factor;
         }
         // Absolute safety floor and ceiling
@@ -199,13 +239,13 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // v0.7.71: For In-Game FFB (1), we normalize against the wheelbase max since the signal is already normalized [-1, 1].
     double target_structural_mult;
     if (m_torque_source == 1) {
-        target_structural_mult = 1.0 / (m_wheelbase_max_nm + EPSILON_DIV);
+        target_structural_mult = 1.0 / ((double)m_wheelbase_max_nm + (double)EPSILON_DIV);
     } else if (m_dynamic_normalization_enabled) {
-        target_structural_mult = 1.0 / (m_session_peak_torque + EPSILON_DIV);
+        target_structural_mult = 1.0 / (m_session_peak_torque + (double)EPSILON_DIV);
     } else {
-        target_structural_mult = 1.0 / (m_target_rim_nm + EPSILON_DIV);
+        target_structural_mult = 1.0 / ((double)m_target_rim_nm + (double)EPSILON_DIV);
     }
-    double alpha_gain = data->mDeltaTime / (STRUCT_MULT_SMOOTHING_TAU + data->mDeltaTime); // 250ms smoothing
+    double alpha_gain = ffb_dt / ((double)STRUCT_MULT_SMOOTHING_TAU + ffb_dt); // 250ms smoothing
     m_smoothed_structural_mult += alpha_gain * (target_structural_mult - m_smoothed_structural_mult);
 
     // Class Seeding
@@ -224,11 +264,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     
     // --- 1. INITIALIZE CONTEXT ---
     FFBCalculationContext ctx;
-    ctx.dt = data->mDeltaTime;
+    ctx.dt = ffb_dt; // Use our constant FFB loop time for all internal physics
 
-    // Sanity Check: Delta Time
-    if (ctx.dt <= DT_EPSILON) {
-        ctx.dt = DEFAULT_DT; // Default to 400Hz
+    // Sanity Check: Delta Time (Keep legacy warning if raw dt is broken)
+    if (data->mDeltaTime <= DT_EPSILON) {
         if (!m_warned_dt) {
             std::cout << "[WARNING] Invalid DeltaTime (<=0). Using default " << DEFAULT_DT << "s." << std::endl;
             m_warned_dt = true;
@@ -236,18 +275,18 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         ctx.frame_warn_dt = true;
     }
     
-    ctx.car_speed_long = data->mLocalVel.z;
+    ctx.car_speed_long = upsampled_data->mLocalVel.z;
     ctx.car_speed = std::abs(ctx.car_speed_long);
     
     // Steering Range Diagnostic (Issue #218)
-    if (data->mPhysicalSteeringWheelRange <= 0.0f) {
+    if (upsampled_data->mPhysicalSteeringWheelRange <= 0.0f) {
         if (!m_warned_invalid_range) {
             float fallback = RestApiProvider::Get().GetFallbackRangeDeg();
             if (m_rest_api_enabled && fallback > 0.0f) {
                 std::cout << "[FFB] Invalid Shared Memory Steering Range. Using REST API fallback: "
                           << fallback << " deg" << std::endl;
             } else {
-                std::cout << "[WARNING] Invalid PhysicalSteeringWheelRange (<=0) for " << data->mVehicleName
+                std::cout << "[WARNING] Invalid PhysicalSteeringWheelRange (<=0) for " << upsampled_data->mVehicleName
                           << ". Soft Lock and Steering UI may be incorrect." << std::endl;
             }
             m_warned_invalid_range = true;
@@ -255,14 +294,14 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
     // Update Context strings (for UI/Logging)
     // Only update if first char differs to avoid redundant copies
-    if (m_vehicle_name[0] != data->mVehicleName[0] || m_vehicle_name[VEHICLE_NAME_CHECK_IDX] != data->mVehicleName[VEHICLE_NAME_CHECK_IDX]) {
+    if (m_vehicle_name[0] != upsampled_data->mVehicleName[0] || m_vehicle_name[VEHICLE_NAME_CHECK_IDX] != upsampled_data->mVehicleName[VEHICLE_NAME_CHECK_IDX]) {
 #ifdef _WIN32
-         strncpy_s(m_vehicle_name, sizeof(m_vehicle_name), data->mVehicleName, _TRUNCATE);
-         strncpy_s(m_track_name, sizeof(m_track_name), data->mTrackName, _TRUNCATE);
+         strncpy_s(m_vehicle_name, sizeof(m_vehicle_name), upsampled_data->mVehicleName, _TRUNCATE);
+         strncpy_s(m_track_name, sizeof(m_track_name), upsampled_data->mTrackName, _TRUNCATE);
 #else
-         strncpy(m_vehicle_name, data->mVehicleName, STR_MAX_64);
+         strncpy(m_vehicle_name, upsampled_data->mVehicleName, STR_MAX_64);
          m_vehicle_name[STR_MAX_64] = '\0';
-         strncpy(m_track_name, data->mTrackName, STR_MAX_64);
+         strncpy(m_track_name, upsampled_data->mTrackName, STR_MAX_64);
          m_track_name[STR_MAX_64] = '\0';
 #endif
     }
@@ -273,13 +312,13 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double chassis_tau = (double)m_chassis_inertia_smoothing;
     if (chassis_tau < MIN_TAU_S) chassis_tau = MIN_TAU_S;
     double alpha_chassis = ctx.dt / (chassis_tau + ctx.dt);
-    m_accel_x_smoothed += alpha_chassis * (data->mLocalAccel.x - m_accel_x_smoothed);
-    m_accel_z_smoothed += alpha_chassis * (data->mLocalAccel.z - m_accel_z_smoothed);
+    m_accel_x_smoothed += alpha_chassis * (upsampled_data->mLocalAccel.x - m_accel_x_smoothed);
+    m_accel_z_smoothed += alpha_chassis * (upsampled_data->mLocalAccel.z - m_accel_z_smoothed);
 
     // --- 3. TELEMETRY PROCESSING ---
     // Front Wheels
-    const TelemWheelV01& fl = data->mWheel[0];
-    const TelemWheelV01& fr = data->mWheel[1];
+    const TelemWheelV01& fl = upsampled_data->mWheel[0];
+    const TelemWheelV01& fr = upsampled_data->mWheel[1];
 
     // Raw Inputs
     double raw_torque = raw_torque_input;
@@ -290,7 +329,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     s_torque.Update(raw_torque);
     s_load.Update(raw_load);
     s_grip.Update(raw_grip);
-    s_lat_g.Update(data->mLocalAccel.x);
+    s_lat_g.Update(upsampled_data->mLocalAccel.x);
     
     // Stats Latching
     auto now = std::chrono::steady_clock::now();
@@ -466,7 +505,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     if (front_grip_res.approximated) ctx.frame_warn_grip = true;
 
     // 2. Signal Conditioning (Smoothing, Notch Filters)
-    double game_force_proc = apply_signal_conditioning(raw_torque_input, data, ctx);
+    double game_force_proc = apply_signal_conditioning(raw_torque_input, upsampled_data, ctx);
 
     // Base Steering Force (Issue #178)
     double base_input = game_force_proc;
@@ -506,19 +545,19 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     output_force *= ctx.speed_gate;
     
     // B. SoP Lateral (Oversteer)
-    calculate_sop_lateral(data, ctx);
+    calculate_sop_lateral(upsampled_data, ctx);
     
     // C. Gyro Damping
-    calculate_gyro_damping(data, ctx);
+    calculate_gyro_damping(upsampled_data, ctx);
     
     // D. Effects
-    calculate_abs_pulse(data, ctx);
-    calculate_lockup_vibration(data, ctx);
-    calculate_wheel_spin(data, ctx);
-    calculate_slide_texture(data, ctx);
-    calculate_road_texture(data, ctx);
-    calculate_suspension_bottoming(data, ctx);
-    calculate_soft_lock(data, ctx);
+    calculate_abs_pulse(upsampled_data, ctx);
+    calculate_lockup_vibration(upsampled_data, ctx);
+    calculate_wheel_spin(upsampled_data, ctx);
+    calculate_slide_texture(upsampled_data, ctx);
+    calculate_road_texture(upsampled_data, ctx);
+    calculate_suspension_bottoming(upsampled_data, ctx);
+    calculate_soft_lock(upsampled_data, ctx);
 
     // v0.7.78 FIX: Support stationary/garage soft lock (Issue #184)
     // If not allowed (e.g. in garage or AI driving), mute all forces EXCEPT Soft Lock.
@@ -585,13 +624,15 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // --- 8. STATE UPDATES (POST-CALC) ---
     // CRITICAL: These updates must run UNCONDITIONALLY every frame to prevent
     // stale state issues when effects are toggled on/off.
+    // v0.7.116: Use upsampled_data to ensure derivatives (current - prev) / dt
+    // are calculated correctly over the 400Hz 2.5ms interval.
     for (int i = 0; i < 4; i++) {
-        m_prev_vert_deflection[i] = data->mWheel[i].mVerticalTireDeflection;
-        m_prev_rotation[i] = data->mWheel[i].mRotation;
-        m_prev_brake_pressure[i] = data->mWheel[i].mBrakePressure;
+        m_prev_vert_deflection[i] = upsampled_data->mWheel[i].mVerticalTireDeflection;
+        m_prev_rotation[i] = upsampled_data->mWheel[i].mRotation;
+        m_prev_brake_pressure[i] = upsampled_data->mWheel[i].mBrakePressure;
     }
-    m_prev_susp_force[0] = fl.mSuspForce;
-    m_prev_susp_force[1] = fr.mSuspForce;
+    m_prev_susp_force[0] = upsampled_data->mWheel[0].mSuspForce;
+    m_prev_susp_force[1] = upsampled_data->mWheel[1].mSuspForce;
     
     // v0.6.36 FIX: Move m_prev_vert_accel to unconditional section
     // Previously only updated inside calculate_road_texture when enabled.
