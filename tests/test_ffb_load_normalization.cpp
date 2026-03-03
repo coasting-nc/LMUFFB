@@ -31,10 +31,10 @@ TEST_CASE(test_class_seeding, "Physics") {
     peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
     ASSERT_NEAR(peak, 4800.0, 1.0);
 
-    // 4. Test LMP2 (WEC) - Partial match
+    // 4. Test LMP2 (WEC) - Partial match (Issue #225: Now 7500N)
     engine.calculate_force(&data, "LMP2 2023", "Oreca 07");
     peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
-    ASSERT_NEAR(peak, 8000.0, 1.0);
+    ASSERT_NEAR(peak, 7500.0, 1.0);
 
     // 5. Test LMP2 (ELMS) - Keyword match
     engine.calculate_force(&data, "LMP2", "Oreca 07 (derestricted)");
@@ -196,8 +196,8 @@ TEST_CASE(test_peak_hold_decay_disabled, "Physics") {
     ASSERT_NEAR(peak, 8000.0, 1.0);
 }
 
-TEST_CASE(test_lmp2_unspecified_load, "Physics") {
-    std::cout << "\nTest: Load Normalization - LMP2 Unspecified (Enabled)" << std::endl;
+TEST_CASE(test_lmp2_restricted_load, "Physics") {
+    std::cout << "\nTest: Load Normalization - LMP2 Restricted (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_auto_load_normalization_enabled = true;
@@ -208,10 +208,10 @@ TEST_CASE(test_lmp2_unspecified_load, "Physics") {
     data.mWheel[0].mGripFract = 1.0;
     data.mWheel[1].mGripFract = 1.0;
 
-    // Test LMP2 Unspecified (Should be 8000N now)
+    // Test LMP2 Restricted (Issue #225: Should be 7500N)
     engine.calculate_force(&data, "LMP2", "Generic ORECA");
     double peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
-    ASSERT_NEAR(peak, 8000.0, 1.0);
+    ASSERT_NEAR(peak, 7500.0, 1.0);
 }
 
 TEST_CASE(test_hypercar_bottoming_threshold, "Physics") {

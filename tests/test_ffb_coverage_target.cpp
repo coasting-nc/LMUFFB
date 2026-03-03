@@ -136,8 +136,8 @@ TEST_CASE(test_parse_vehicle_class_coverage, "Coverage") {
     // Line 731: else if (cls.find("WEC") != std::string::npos)
     ASSERT_EQ((int)ParseVehicleClass("LMP2 WEC", "ORECA"), (int)ParsedVehicleClass::LMP2_RESTRICTED);
     
-    // Line 733/734: else (LMP2 unspecified)
-    ASSERT_EQ((int)ParseVehicleClass("LMP2", "ORECA"), (int)ParsedVehicleClass::LMP2_UNSPECIFIED);
+    // Issue #225: Default LMP2 is now RESTRICTED
+    ASSERT_EQ((int)ParseVehicleClass("LMP2", "ORECA"), (int)ParsedVehicleClass::LMP2_RESTRICTED);
 
     // Other branches
     ASSERT_EQ((int)ParseVehicleClass("LMP2 ELMS", "ORECA"), (int)ParsedVehicleClass::LMP2_UNRESTRICTED);

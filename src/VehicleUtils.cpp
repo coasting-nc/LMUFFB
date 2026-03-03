@@ -19,9 +19,8 @@ ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleN
     
     if (cls.find("LMP2") != std::string::npos) {
         if (cls.find("ELMS") != std::string::npos || name.find("DERESTRICTED") != std::string::npos) { return ParsedVehicleClass::LMP2_UNRESTRICTED; }
-        volatile bool is_wec = (cls.find("WEC") != std::string::npos);
-        if (is_wec) { return ParsedVehicleClass::LMP2_RESTRICTED; }
-        return ParsedVehicleClass::LMP2_UNSPECIFIED;
+        // Issue #225: "LMP2" in LMU refers to the restricted WEC spec.
+        return ParsedVehicleClass::LMP2_RESTRICTED;
     }
 
     if (cls.find("LMP3") != std::string::npos) return ParsedVehicleClass::LMP3;
