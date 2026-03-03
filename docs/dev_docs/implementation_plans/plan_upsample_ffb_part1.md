@@ -1,15 +1,3 @@
-
-
-
-```json
-{
-  "task_id": "upsample_ffb_part1",
-  "plan_file": "docs/dev_docs/plans/plan_upsample_ffb_part1.md"
-}
-```
-
----
-
 # Implementation Plan: Up-sample FFB Part 1 (100Hz to 400Hz)
 
 ## Context
