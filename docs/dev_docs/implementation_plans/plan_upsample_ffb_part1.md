@@ -72,6 +72,9 @@ Implement frame detection and upsampling logic. Crucially, use `upsampled_data` 
 ### 4. Synchronize Loop Timing in `main.cpp`
 Force the physics `dt` to 0.0025s in the `calculate_force` call to ensure consistent internal physics regardless of game engine jitter.
 
+### Design Rationale
+The upsampling filters and internal physics (like Savitzky-Golay derivatives) are mathematically tuned for a specific frequency. By forcing a constant `dt` of 2.5ms, we decouple the physics stability from game-side frame-time jitter, ensuring that the extrapolated values remain numerically sound even if the game's telemetry delivery is slightly irregular.
+
 ---
 
 ## Test Plan (TDD-Ready)
