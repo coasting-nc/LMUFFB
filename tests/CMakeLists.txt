@@ -75,6 +75,7 @@ set(TEST_SOURCES
     test_issue_206_vibration_scaling.cpp
     test_issue_218_steering.cpp
     test_issue_221_rest_fallback.cpp
+    test_upsampling.cpp
     test_tooltips.cpp
     test_coverage_expansion.cpp
     test_dxgi_modernization.cpp

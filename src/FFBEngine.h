@@ -341,6 +341,24 @@ public:
     int m_missing_vert_deflection_frames = 0; 
 
     // Internal state
+    TelemInfoV01 m_working_info; // Persistent storage for upsampled telemetry
+    double m_last_telemetry_time = -1.0;
+
+    ffb_math::LinearExtrapolator m_upsample_lat_patch_vel[4];
+    ffb_math::LinearExtrapolator m_upsample_long_patch_vel[4];
+    ffb_math::LinearExtrapolator m_upsample_vert_deflection[4];
+    ffb_math::LinearExtrapolator m_upsample_susp_force[4];
+    ffb_math::LinearExtrapolator m_upsample_brake_pressure[4];
+    ffb_math::LinearExtrapolator m_upsample_rotation[4];
+    ffb_math::LinearExtrapolator m_upsample_steering;
+    ffb_math::LinearExtrapolator m_upsample_throttle;
+    ffb_math::LinearExtrapolator m_upsample_brake;
+    ffb_math::LinearExtrapolator m_upsample_local_accel_x;
+    ffb_math::LinearExtrapolator m_upsample_local_accel_y;
+    ffb_math::LinearExtrapolator m_upsample_local_accel_z;
+    ffb_math::LinearExtrapolator m_upsample_local_rot_accel_y;
+    ffb_math::HoltWintersFilter  m_upsample_shaft_torque;
+
     double m_prev_vert_deflection[4] = {0.0, 0.0, 0.0, 0.0}; 
     double m_prev_vert_accel = 0.0; 
     double m_prev_slip_angle[4] = {0.0, 0.0, 0.0, 0.0}; 
@@ -674,7 +692,7 @@ public:
     double calculate_slope_confidence(double dAlpha_dt);
     double calculate_wheel_slip_ratio(const TelemWheelV01& w);
 
-    double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr, float genFFBTorque = 0.0f, bool allowed = true);
+    double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr, float genFFBTorque = 0.0f, bool allowed = true, double override_dt = -1.0);
 
     double apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, FFBCalculationContext& ctx);
     void ResetNormalization();

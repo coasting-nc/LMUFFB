@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.116] - 2026-03-07
+### Added
+- **High-Fidelity Telemetry Up-sampling (Issue #216)**:
+  - Implemented real-time up-sampling of LMU telemetry channels from 100Hz to 400Hz to match the FFB hardware loop.
+  - Introduced **Linear Extrapolator** for derivative-critical channels (Lateral/Longitudinal Patch Velocity, Vertical Deflection, Rotation, Suspension Force, Brake Pressure) to eliminate "staircase" artifacts in ABS and slide effects.
+  - Introduced **Second-Order Holt-Winters Filter** for organic steering torque reconstruction, providing smooth transitions between 10ms game frames while maintaining phase accuracy.
+  - Synchronized the internal physics loop to a fixed 400Hz delta-time (0.0025s) to ensure consistent integration regardless of game engine jitter.
+  - Optimized memory performance by using a persistent member-based working copy of telemetry, avoiding 2KB stack allocations per FFB tick.
+
+### Testing
+- **New Test Suite**: Added `tests/test_upsampling.cpp` to verify interpolation, extrapolation, and constant-input stability of the up-sampling logic.
+- **Regression Guard**: Verified that all 396 existing physics and logic tests pass with the new high-frequency pipeline.
+
+---
+
 ## [0.7.115] - 2026-03-06
 ### Fixed
 - **LMP2 Restricted Detection (Issue #225)**:
