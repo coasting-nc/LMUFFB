@@ -39,6 +39,11 @@ void GameConnector::_DisconnectLocked() {
     m_smLock.reset();
     m_connected = false;
     m_processId = 0;
+
+    // Reset heartbeat state
+    m_lastElapsedTime = -1.0;
+    m_lastSteer = 0.0;
+    m_lastUpdateLocalTime = std::chrono::steady_clock::time_point();
 }
 
 bool GameConnector::TryConnect() {

@@ -65,16 +65,18 @@ void test_issue_184_softlock_stationary() {
 void test_issue_184_gameconnector_heartbeat() {
     std::cout << "\nTest: Issue #184 GameConnector Heartbeat" << std::endl;
 
-    // Use private access for testing if needed, or rely on GameConnector singleton.
-    // Since GameConnector is a singleton with static state, we must be careful.
-    // For unit testing purposes on Linux, TryConnect() and CopyTelemetry() are mocked.
-
     GameConnector& conn = GameConnector::Get();
+    conn.Disconnect(); // Start clean
 
     // 1. Setup shared memory mock state
-    // (SharedMemoryObjectOut is the structure copied from mock)
     SharedMemoryObjectOut mockSM;
     std::memset(&mockSM, 0, sizeof(mockSM));
+
+    // Crucial for CopySharedMemoryObj and IsConnected
+    mockSM.generic.events[SME_UPDATE_TELEMETRY] = SME_UPDATE_TELEMETRY; // Non-zero
+    mockSM.generic.appInfo.mAppWindow = reinterpret_cast<HWND>(static_cast<intptr_t>(1));
+
+    mockSM.telemetry.activeVehicles = 1;
     mockSM.telemetry.playerHasVehicle = true;
     mockSM.telemetry.playerVehicleIdx = 0;
     mockSM.telemetry.telemInfo[0].mElapsedTime = 100.0;
@@ -87,14 +89,17 @@ void test_issue_184_gameconnector_heartbeat() {
 
     // Connect
     ASSERT_TRUE(conn.TryConnect());
+    ASSERT_TRUE(conn.IsConnected());
 
-    // Initial Copy
-    ASSERT_FALSE(conn.IsStale(100));
+    // Initial Copy - should refresh heartbeat
     conn.CopyTelemetry(mockSM);
 
+    // Check not stale (use 200ms for safety in CI)
+    ASSERT_FALSE(conn.IsStale(200));
+
     // Wait for timeout
-    std::this_thread::sleep_for(std::chrono::milliseconds(150));
-    ASSERT_TRUE(conn.IsStale(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    ASSERT_TRUE(conn.IsStale(200));
 
     // 2. Test input-only heartbeat (Time frozen, steering changed)
     mockSM.telemetry.telemInfo[0].mElapsedTime = 100.0; // Same time
@@ -102,7 +107,7 @@ void test_issue_184_gameconnector_heartbeat() {
     pBuf->data = mockSM;
 
     conn.CopyTelemetry(mockSM);
-    ASSERT_FALSE(conn.IsStale(100)); // Heartbeat should have refreshed the timer
+    ASSERT_FALSE(conn.IsStale(200)); // Heartbeat should have refreshed the timer
 
     // 3. Cleanup
     UnmapViewOfFile(pBuf);
