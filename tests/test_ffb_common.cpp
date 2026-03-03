@@ -119,6 +119,8 @@ TelemInfoV01 CreateBasicTestTelemetry(double speed, double slip_angle) {
     
     // Velocity
     data.mLocalVel.z = -speed; // Game uses -Z for forward
+    data.mDeltaTime = 0.01f;
+    data.mElapsedTime = 1.0f;
     
     // Wheel setup (all 4 wheels)
     for (int i = 0; i < 4; i++) {

@@ -186,7 +186,8 @@ void FFBThread() {
                     // v0.7.108: Explicitly zero force if not in realtime (Issue #174).
                     // We still call calculate_force to keep engine state updated, but override the result.
                     // This ensures the safety slew limiter can smoothly relax the wheel.
-                    force = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed);
+                    // v0.7.116: Force dt to 0.0025 to ensure consistent internal physics regardless of game jitter.
+                    force = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025);
                     if (!in_realtime) force = 0.0;
                     should_output = true;
 
