@@ -198,6 +198,34 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Use upsampled data pointer for all calculations
     const TelemInfoV01* upsampled_data = &m_working_info;
 
+    // Transition Logic: Reset filters when entering "Muted" state (e.g. Garage/AI)
+    // to clear out high-frequency residuals from the driving session.
+    if (m_was_allowed && !allowed) {
+        m_upsample_shaft_torque.Reset();
+        m_upsample_steering.Reset();
+        m_upsample_throttle.Reset();
+        m_upsample_brake.Reset();
+        m_upsample_local_accel_x.Reset();
+        m_upsample_local_accel_y.Reset();
+        m_upsample_local_accel_z.Reset();
+        m_upsample_local_rot_accel_y.Reset();
+        for (int i = 0; i < 4; i++) {
+            m_upsample_lat_patch_vel[i].Reset();
+            m_upsample_long_patch_vel[i].Reset();
+            m_upsample_vert_deflection[i].Reset();
+            m_upsample_susp_force[i].Reset();
+            m_upsample_brake_pressure[i].Reset();
+            m_upsample_rotation[i].Reset();
+        }
+        m_steering_velocity_smoothed = 0.0;
+        m_steering_shaft_torque_smoothed = 0.0;
+        m_accel_x_smoothed = 0.0;
+        m_accel_z_smoothed = 0.0;
+        m_sop_lat_g_smoothed = 0.0;
+        m_yaw_accel_smoothed = 0.0;
+    }
+    m_was_allowed = allowed;
+
     // Select Torque Source
     // v0.7.63 Fix: genFFBTorque (Direct Torque 400Hz) is normalized [-1.0, 1.0].
     // It must be scaled by m_wheelbase_max_nm to match the engine's internal Nm-based pipeline.
@@ -609,7 +637,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Min Force
     // v0.7.85 FIX: Bypass min_force if NOT allowed (e.g. in garage) unless soft lock is significant.
     // This prevents the "grinding" feel from tiny residuals when FFB should be muted.
-    bool significant_soft_lock = std::abs(ctx.soft_lock_force) > SOFT_LOCK_MUTE_THRESHOLD_NM; // > 0.1 Nm
+    // v0.7.118: Tighten gate to require BOTH steering beyond limit AND significant force.
+    bool significant_soft_lock = (std::abs(upsampled_data->mUnfilteredSteering) > 1.0) &&
+                                 (std::abs(ctx.soft_lock_force) > 0.5); // > 0.5 Nm
+
     if (allowed || significant_soft_lock) {
         if (std::abs(norm_force) > FFB_EPSILON && std::abs(norm_force) < m_min_force) {
             double sign = (norm_force > 0.0) ? 1.0 : -1.0;

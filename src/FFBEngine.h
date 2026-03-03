@@ -664,6 +664,7 @@ private:
     double m_smoothed_structural_mult = 1.0 / DEFAULT_SESSION_PEAK_TORQUE; // New v0.7.67 (Issue #152)
     double m_rolling_average_torque = 0.0; // New v0.7.67 (Issue #152)
     double m_last_raw_torque = 0.0; // New v0.7.67 (Issue #152)
+    bool m_was_allowed = true; // Track transition for filter reset
 
     std::string m_current_class_name = "";
 

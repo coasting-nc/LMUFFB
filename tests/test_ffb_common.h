@@ -115,13 +115,39 @@ const int FILTER_SETTLING_FRAMES = 40;
 // --- Test Tagging System ---
 // Global tag filter (set via command line arguments)
 extern std::vector<std::string> g_tag_filter;
+extern std::vector<std::string> g_name_filter; // New: for --filter
 extern std::vector<std::string> g_tag_exclude;
 extern std::vector<std::string> g_category_filter;
 extern bool g_enable_tag_filtering;
 
 // Tag checking helper
-inline bool ShouldRunTest(const std::vector<std::string>& test_tags, const std::string& category) {
+inline bool ShouldRunTest(const std::string& test_name, const std::vector<std::string>& test_tags, const std::string& category) {
     if (!g_enable_tag_filtering) return true;
+
+    // Name or Tag Filter check (Substring match on test name or exact tag match)
+    if (!g_name_filter.empty() || !g_tag_filter.empty()) {
+        bool match = false;
+        if (!g_name_filter.empty()) {
+            for (const auto& filter : g_name_filter) {
+                if (test_name.find(filter) != std::string::npos) {
+                    match = true;
+                    break;
+                }
+            }
+        }
+        if (!match && !g_tag_filter.empty()) {
+            for (const auto& filter_tag : g_tag_filter) {
+                for (const auto& test_tag : test_tags) {
+                    if (test_tag == filter_tag) {
+                        match = true;
+                        break;
+                    }
+                }
+                if (match) break;
+            }
+        }
+        if (!match) return false;
+    }
     
     // Category filter (if specified)
     if (!g_category_filter.empty()) {
@@ -262,6 +288,7 @@ public:
     static void SetSmoothedStructuralMult(FFBEngine& e, double val) { e.m_smoothed_structural_mult = val; }
     static void SetRollingAverageTorque(FFBEngine& e, double val) { e.m_rolling_average_torque = val; }
     static void SetLastRawTorque(FFBEngine& e, double val) { e.m_last_raw_torque = val; }
+    static double GetSteeringVelocitySmoothed(const FFBEngine& e) { return e.m_steering_velocity_smoothed; }
     static void AddSnapshot(FFBEngine& e, const FFBSnapshot& s) {
         std::lock_guard<std::mutex> lock(e.m_debug_mutex);
         e.m_debug_buffer.push_back(s);

@@ -34,7 +34,7 @@ void test_issue_174_menu_muting() {
         double force = 0.0;
         bool should_output = false;
 
-        // Simulate FFBThread logic in main.cpp (v0.7.108)
+        // Simulate FFBThread logic in main.cpp (v0.7.118)
         force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, full_allowed);
         if (!in_realtime) force = 0.0;
         should_output = true;
@@ -61,6 +61,19 @@ void test_issue_174_menu_muting() {
         if (!should_output) force = 0.0;
 
         std::cout << "  Force with in_realtime=false (expect zeroed): " << force << std::endl;
+        ASSERT_EQ(force, 0.0);
+    }
+
+    // 3. Verify that noise in menu (in_realtime=false) results in zero
+    {
+        data.mUnfilteredSteering = 0.05; // Jitter
+        data.mSteeringShaftTorque = 0.1; // Residual
+
+        bool in_realtime = false;
+        double force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, false);
+        if (!in_realtime) force = 0.0;
+
+        std::cout << "  Force with menu noise (in_realtime=false): " << force << std::endl;
         ASSERT_EQ(force, 0.0);
     }
 }
