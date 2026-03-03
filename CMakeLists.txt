@@ -181,6 +181,8 @@ set(CORE_SOURCES
     src/VehicleUtils.cpp
     src/RestApiProvider.cpp
     src/RestApiProvider.h
+    src/UpSampler.cpp
+    src/UpSampler.h
 )
 
 if(WIN32)

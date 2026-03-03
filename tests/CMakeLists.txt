@@ -87,6 +87,7 @@ set(TEST_SOURCES
     test_coverage_boost_v6.cpp
     test_config_comprehensive.cpp
     test_issue_211_migration.cpp
+    test_upsampler_part2.cpp
     ../src/main.cpp
 )
 

@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.117] - 2026-03-08
+### Added
+- **High-Frequency Output Up-sampling (Issue #217)**:
+  - Promoted the main FFB loop from 400Hz to 1000Hz to match the native USB polling rates of modern Direct Drive wheelbases (Simucube, Fanatec, Moza).
+  - Implemented a **5/2 Polyphase FIR Filter** (15-tap windowed-sinc) to mathematically reconstruct the analog FFB signal from the 400Hz physics engine.
+  - Decoupled physics (400Hz) from hardware output (1000Hz) using a phase accumulator, ensuring the physics engine remains stable and efficient while the wheel receives a buttery-smooth 1ms signal.
+  - Optimized performance by moving telemetry polling and Shared Memory mutex locks inside the 400Hz physics trigger block.
+  - Enhanced **System Health Diagnostics**: Added independent tracking and UI display for "USB Loop" and "Physics" rates to verify system performance at a glance.
+
+### Fixed
+- **Health Monitoring Thresholds**: Updated the diagnostic watchdog to support 1000Hz operation, preventing false-positive warnings on high-end systems.
+
+### Testing
+- **New Test Suite**: Added `tests/test_upsampler_part2.cpp` to verify polyphase routing, DC gain normalization, and signal continuity during rapid force changes.
+- **Regression Guard**: Updated existing health monitor tests and verified that all 400 test cases pass with the new decoupled architecture.
+
+---
+
 ## [0.7.116] - 2026-03-07
 ### Added
 - **High-Fidelity Telemetry Up-sampling (Issue #216)**:

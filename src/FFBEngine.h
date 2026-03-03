@@ -107,6 +107,7 @@ struct FFBSnapshot {
     float hw_rate;
     float torque_rate;
     float gen_torque_rate;
+    float physics_rate; // New v0.7.117 (Issue #217)
 };
 
 // BiquadNotch moved to MathUtils.h
@@ -309,6 +310,7 @@ public:
     double m_hw_rate = 0.0;
     double m_torque_rate = 0.0;
     double m_gen_torque_rate = 0.0;
+    double m_physics_rate = 0.0; // New v0.7.117 (Issue #217)
 
     // Warning States (Console logging)
     bool m_warned_load = false;

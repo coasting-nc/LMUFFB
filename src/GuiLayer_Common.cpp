@@ -116,7 +116,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     } else {
       ImGui::TextColored(ImVec4(0, 1, 0, 1), "Connected to LMU");
       ImGui::SameLine();
-      ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| FFB: %.0fHz | Tel: %.0fHz", engine.m_ffb_rate, engine.m_telemetry_rate);
+      ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Loop: %.0fHz | Phys: %.0fHz | Tel: %.0fHz", engine.m_ffb_rate, engine.m_physics_rate, engine.m_telemetry_rate);
     }
 
     static std::vector<DeviceInfo> devices;
@@ -960,18 +960,20 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
 
     // System Health Diagnostics (Moved from Tuning window - Issue #149)
     if (ImGui::CollapsingHeader("System Health (Hz)", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Columns(5, "RateCols", false);
-        DisplayRate("FFB Loop", engine.m_ffb_rate, 400.0);
+        ImGui::Columns(6, "RateCols", false);
+        DisplayRate("USB Loop", engine.m_ffb_rate, 1000.0);
         ImGui::NextColumn();
-        DisplayRate("Telemetry", engine.m_telemetry_rate, 400.0);
+        DisplayRate("Physics", engine.m_physics_rate, 400.0);
         ImGui::NextColumn();
-        DisplayRate("Hardware", engine.m_hw_rate, 400.0);
+        DisplayRate("Telemetry", engine.m_telemetry_rate, 100.0); // Standard LMU is 100Hz
         ImGui::NextColumn();
-        DisplayRate("S.Torque", engine.m_torque_rate, 400.0);
+        DisplayRate("Hardware", engine.m_hw_rate, 1000.0);
+        ImGui::NextColumn();
+        DisplayRate("S.Torque", engine.m_torque_rate, 100.0);
         ImGui::NextColumn();
         DisplayRate("G.Torque", engine.m_gen_torque_rate, 400.0);
         ImGui::Columns(1);
-        if ((engine.m_telemetry_rate < 380.0 || engine.m_torque_rate < 380.0) && engine.m_telemetry_rate > 1.0 && GameConnector::Get().IsConnected()) {
+        if ((engine.m_telemetry_rate < 90.0 || (engine.m_torque_source == 1 && engine.m_gen_torque_rate < 380.0)) && engine.m_telemetry_rate > 1.0 && GameConnector::Get().IsConnected()) {
             ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Low telemetry/torque rate. Check game FFB settings.");
         }
         ImGui::Separator();

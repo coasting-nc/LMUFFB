@@ -727,6 +727,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.hw_rate = (float)m_hw_rate;
             snap.torque_rate = (float)m_torque_rate;
             snap.gen_torque_rate = (float)m_gen_torque_rate;
+            snap.physics_rate = (float)m_physics_rate;
 
             m_debug_buffer.push_back(snap);
         }
