@@ -10,8 +10,19 @@ By up-sampling the final calculated force from 400Hz to 1000Hz using a **5/2 Pol
 
 ## Reference Documents
 *   [Upsampling Research Report](docs/dev_docs/reports/upsampling.md)
-*   docs\dev_docs\implementation_plans\plan_upsample_ffb_part1.md
+*   Implementation plan for Part 1: `docs\dev_docs\implementation_plans\plan_upsample_ffb_part1.md`
 ---
+
+## Notes on updates to this plan after Part 1 was implemented
+
+While the core mathematical concept of Part 2 (the 5/2 Polyphase FIR filter) remains the same, Part 1 introduced specific structural changes to `main.cpp`, `FFBEngine.h`, and the diagnostic monitors that Part 2 must now carefully navigate.
+
+### Why Part 2 needs updating based on Part 1:
+
+1. **Telemetry Polling Location:** In Part 1, `GameConnector::Get().CopyTelemetry()` is called every tick of the 400Hz loop. If Part 2 blindly increases the main loop to 1000Hz, it will poll the shared memory at 1000Hz. Since the physics engine will only run at 400Hz, polling at 1000Hz wastes CPU and mutex locks. The plan must explicitly state to move the telemetry polling *inside* the 400Hz phase-accumulator block.
+2. **The `dt` Parameter:** Part 1 hardcoded the physics `dt` to `0.0025` (400Hz) inside `calculate_force` to ensure DSP stability. Part 2 must ensure that the main loop's new 1000Hz delta-time (`0.001s`) is **not** accidentally passed into the physics engine, which would break all the filters Part 1 just fixed.
+3. **Diagnostic Rates (`RateMonitor`):** Part 1 heavily integrated `m_ffb_rate`, `m_telemetry_rate`, etc., into the GUI and Logger. By decoupling the USB output (1000Hz) from the Physics (400Hz), Part 2 needs to add a new `m_physics_rate` variable to `FFBEngine.h` and `FFBSnapshot` so the user can verify both loops are running at their correct, independent speeds.
+
 
 ## Codebase Analysis Summary
 
