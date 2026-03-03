@@ -624,7 +624,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // --- 8. STATE UPDATES (POST-CALC) ---
     // CRITICAL: These updates must run UNCONDITIONALLY every frame to prevent
     // stale state issues when effects are toggled on/off.
-    // v0.7.116: Use upsampled_data to ensure derivatives (current - prev) / dt
+    // Use upsampled_data to ensure derivatives (current - prev) / dt
     // are calculated correctly over the 400Hz 2.5ms interval.
     for (int i = 0; i < 4; i++) {
         m_prev_vert_deflection[i] = upsampled_data->mWheel[i].mVerticalTireDeflection;

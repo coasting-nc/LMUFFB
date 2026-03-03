@@ -69,6 +69,7 @@ set(TEST_SOURCES
     test_ffb_persistent_load.cpp
     test_issue_181_soft_lock_weakness.cpp
     test_issue_184_repro.cpp
+    test_issue_184_softlock.cpp
     test_issue_185_fix.cpp
     test_issue_42_ffb_inversion.cpp
     test_issue_207_dynamic_normalization_toggle.cpp

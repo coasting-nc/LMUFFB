@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.118] - 2026-03-08
+### Fixed
+- **Soft Lock in Menus and Stationary (Issue #184)**:
+  - Removed explicit force zeroing in the FFB loop when the game is not in realtime (e.g., paused or in Esc menu).
+  - This allows the `FFBEngine` to process Soft Lock resistance in menus while still muting non-safety physics effects via the `full_allowed` flag.
+  - Improved immersion and safety by ensuring the steering rack limits are physically enforced whenever the user is in the car.
+
+### Added
+- **Telemetry Heartbeat Refinement (Issue #184)**:
+  - Enhanced `GameConnector` staleness detection to include user steering input as a "heartbeat".
+  - Telemetry is no longer marked as "stale" when the game is paused as long as the user is moving the steering wheel.
+  - This ensures consistent FFB response and Soft Lock protection in menus even when simulation time is frozen.
+
+### Testing
+- **New Test Suite**: Added `tests/test_issue_184_softlock.cpp` to verify Soft Lock preservation and telemetry heartbeat logic in non-realtime states.
+
+---
+
 ## [0.7.116] - 2026-03-07
 ### Added
 - **High-Fidelity Telemetry Up-sampling (Issue #216)**:
