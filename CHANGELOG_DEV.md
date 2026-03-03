@@ -11,6 +11,31 @@ All notable changes to this project will be documented in this file.
   - The "LMP2" class string is now correctly identified as `LMP2_RESTRICTED` (7500N seed load), reflecting the WEC specification.
   - This ensures consistent FFB load normalization across different LMP2 variants (WEC vs. ELMS).
 
+---
+
+## [0.7.114]
+
+## Cumulative changes from versions v0.7.66 - v0.7.114
+
+### Added
+- **FFB Scaling by car class**.
+- **Independent In-Game FFB Gain**: Added a dedicated slider to independently adjust the gain for the native 400Hz telemetry torque.
+- **Adaptive Normalization (Optional)**: Built completely new Dynamic Normalization systems to automatically keep FFB weight and textures consistent when switching between car classes (e.g., GT3 vs. Hypercar). *Note: These systems are completely optional and disabled by default via new UI toggles.*
+- **Hardware Strength Scaling (Dual-Slider Model)**: Replaced the legacy "Max Torque Ref" with two explicit sliders ("Wheelbase Max Torque" and "Target Rim Torque"). This clearly defines your hardware limits and desired peak forces, ensuring that vibration effects scale perfectly in absolute Newton-meters across any wheelbase. Legacy settings will automatically migrate. *Note: this is experimental and might not yet work as expected; the **FFB might feel stronger** than before, reduce the Gain to compensate.*
+- **Global Vibration Effects Scaling**: Introduced a "Tactile Strength" slider, allowing you to easily adjust the overall master intensity of all haptic textures (Road Details, Slide Rumble, etc.) without altering the underlying structural physics.
+- Real-time display of **Steering Range** and **Steering Angle** in degrees. Must be enabled by checking "Steerlock from REST API".
+
+### QoL & Fixes
+- **Legacy Preset Migration**: Automatically detects and corrects presets created in version 0.7.66 or older that used the "100Nm clipping hack." This ensures consistent FFB strength when upgrading from very old versions without causing "exploding" force levels. (#211)
+- **Invert FFB Signal removed from presets**: "Invert FFB Signal" is now a global, set-and-forget setting. It no longer needs to be saved or loaded within individual car tuning presets.
+- **Streamlined FFB Base Modes**: Removed redundant Base Force Modes (Synthetic/Muted). The application now exclusively relies on the superior Native physics torque.
+- **Garage & Menu Safety**: FFB is now completely and safely muted while sitting in the garage stall. Similarly resolved issues where strong steering forces could become "stuck" when pressing Escape to enter menus.
+- **Robust Soft Lock**: The Soft Lock stopping resistance should now be consistently strong and safely functional at all times, including when stationary in the garage or when AI is driving.
+- Renamed section for Vibration Effects in the UI.
+- **Performance & UI Improvements**: Upgraded the GUI rendering back-end for lower latency and uncompromised VRR (G-Sync/FreeSync) compatibility. Fixed cropped text in long tooltips and restored the missing Windows taskbar icon.
+
+---
+
 ## [0.7.114] - 2026-03-06
 ### Changed
 - **Vibration Terminology Overhaul (Issue #214)**:
@@ -56,24 +81,6 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## User-facing Summary of changes from versions v0.7.66 - v0.7.112
-
-### Added
-- **FFB Scaling by car class**.
-- **Independent In-Game FFB Gain**: Added a dedicated slider to independently adjust the gain for the native 400Hz telemetry torque.
-- **Adaptive Normalization (Optional)**: Built completely new Dynamic Normalization systems to automatically keep FFB weight and textures consistent when switching between car classes (e.g., GT3 vs. Hypercar). *Note: These systems are completely optional and disabled by default via new UI toggles.*
-- **Hardware Strength Scaling (Dual-Slider Model)**: Replaced the legacy "Max Torque Ref" with two explicit sliders ("Wheelbase Max Torque" and "Target Rim Torque"). This clearly defines your hardware limits and desired peak forces, ensuring that vibration effects scale perfectly in absolute Newton-meters across any wheelbase. Legacy settings will automatically migrate. *Note: this is experimental and might not yet work as expected; the **FFB might feel stronger** than before, reduce the Gain to compensate.*
-- **Global Vibration Effects Scaling**: Introduced a "Tactile Strength" slider, allowing you to easily adjust the overall master intensity of all haptic textures (Road Details, Slide Rumble, etc.) without altering the underlying structural physics.
-
-### QoL & Fixes
-- **Legacy Preset Migration**: Automatically detects and corrects presets created in version 0.7.66 or older that used the "100Nm clipping hack." This ensures consistent FFB strength when upgrading from very old versions without causing "exploding" force levels. (#211)
-- **Invert FFB Signal removed from presets**: "Invert FFB Signal" is now a global, set-and-forget setting. It no longer needs to be saved or loaded within individual car tuning presets.
-- **Streamlined FFB Base Modes**: Removed redundant Base Force Modes (Synthetic/Muted). The application now exclusively relies on the superior Native physics torque.
-- **Garage & Menu Safety**: FFB is now completely and safely muted while sitting in the garage stall. Similarly resolved issues where strong steering forces could become "stuck" when pressing Escape to enter menus.
-- **Robust Soft Lock**: The Soft Lock stopping resistance should now be consistently strong and safely functional at all times, including when stationary in the garage or when AI is driving.
-- **Performance & UI Improvements**: Upgraded the GUI rendering back-end for lower latency and uncompromised VRR (G-Sync/FreeSync) compatibility. Fixed cropped text in long tooltips and restored the missing Windows taskbar icon.
-
----
 
 ## Cumulative changes from previous versions v0.7.66 - v0.7.110
 
