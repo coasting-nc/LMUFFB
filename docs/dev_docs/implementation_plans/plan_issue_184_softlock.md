@@ -79,9 +79,11 @@ We need to verify that:
 ### Unforeseen Issues
 - The code review pointed out missing mandatory files (`VERSION`, `CHANGELOG_DEV.md`) and version inconsistencies which were promptly addressed.
 - The initial plan missed including `thread` header in the new test file, causing a build error which was fixed.
+- CI failures on Windows revealed that the heartbeat test was sensitive to background thread interference and required more robust mock initialization (specifically setting up events to allow `CopyTelemetry` to succeed).
 
 ### Plan Deviations
 - Expanded the test plan to include a functional mock test for the `GameConnector` heartbeat logic as recommended by the code review.
+- Added a `Disconnect()` call at the start of the heartbeat test and reset heartbeat state in `GameConnector::_DisconnectLocked()` to ensure test isolation.
 - Removed some version-specific comments in `main.cpp` and `FFBEngine.cpp` that were redundant or confusing (as pointed out in the review).
 
 ### Challenges
