@@ -2,6 +2,18 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 6, 2026[/b][/size]
+[b]Version 0.7.115 - LMP2 Restricted Detection Fix[/b]
+
+[b]New release[/b] (0.7.115): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]LMP2 Restricted Detection[/b]: Corrected the vehicle classification for LMP2 cars. The "LMP2" class string is now correctly identified as the restricted WEC specification (7500N seed load). This ensures consistent FFB weight and normalization for all LMP2 variants. (#225)
+[/list]
+
+---
+
 [size=5][b]March 3, 2026[/b][/size]
 [b]Version 0.7.111 - Legacy Migration & Force Scaling Fix[/b]
 

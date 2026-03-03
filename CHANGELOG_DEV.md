@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.115] - 2026-03-06
+### Fixed
+- **LMP2 Restricted Detection (Issue #225)**:
+  - Corrected the vehicle classification for LMP2 cars in LMU.
+  - The "LMP2" class string is now correctly identified as `LMP2_RESTRICTED` (7500N seed load), reflecting the WEC specification.
+  - This ensures consistent FFB load normalization across different LMP2 variants (WEC vs. ELMS).
+
 ## [0.7.114] - 2026-03-06
 ### Changed
 - **Vibration Terminology Overhaul (Issue #214)**:

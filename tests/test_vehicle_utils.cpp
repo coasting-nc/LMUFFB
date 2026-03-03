@@ -14,7 +14,8 @@ TEST_CASE(test_vehicle_class_parsing_keywords, "Internal") {
     ASSERT_EQ((int)ParseVehicleClass("LMP2 ELMS", ""), (int)ParsedVehicleClass::LMP2_UNRESTRICTED);
     ASSERT_EQ((int)ParseVehicleClass("LMP2", "DERESTRICTED"), (int)ParsedVehicleClass::LMP2_UNRESTRICTED);
     ASSERT_EQ((int)ParseVehicleClass("LMP2 WEC", ""), (int)ParsedVehicleClass::LMP2_RESTRICTED);
-    ASSERT_EQ((int)ParseVehicleClass("LMP2", ""), (int)ParsedVehicleClass::LMP2_UNSPECIFIED);
+    // Issue #225: "LMP2" without suffix in LMU refers to the restricted WEC spec
+    ASSERT_EQ((int)ParseVehicleClass("LMP2", ""), (int)ParsedVehicleClass::LMP2_RESTRICTED);
 
     ASSERT_EQ((int)ParseVehicleClass("LMP3", ""), (int)ParsedVehicleClass::LMP3);
     ASSERT_EQ((int)ParseVehicleClass("GTE", ""), (int)ParsedVehicleClass::GTE);
