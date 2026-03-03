@@ -5,13 +5,17 @@ Your mission is to select **ONE** open GitHub issue, reproduce the problem (if p
 **⚠️ CRITICAL WORKFLOW CONSTRAINTS:**
 1.  **Single Issue Focus:** You must work on exactly one issue at a time. Your final submission must contain changes *only* relevant to that specific issue to ensure isolation of concerns.
 2.  **Autonomous Execution:** **Do not stop** to ask the user for confirmation or permission to proceed. You must loop through the implementation and review process autonomously until the task is complete and the code is perfect.
-3.  **Architect First:** Before writing code, you must follow the instructions in `gemini_orchestrator\templates\A.1_architect_prompt.md` to create a detailed implementation plan (as an `.md` document in `docs\dev_docs\implementation_plans\`). The plan **MUST** include mandatory **"Design Rationale"** blocks for every major section (Context, Analysis, Proposed Changes, Test Plan) to explicitly document the "Why" behind your decisions. In the implementation plan you must also include the number and title of the open GitHub issue you are working on.
+3.  **Architect First:** Before writing code, you must follow the instructions in `gemini_orchestrator\templates\A.1_architect_prompt.md` to create (or update) a detailed implementation plan (as an `.md` document in `docs\dev_docs\implementation_plans\`). 
+    *   **Reuse Policy:** If an implementation plan for the issue already exists, **do not write a new one**. Update the existing one instead. Any deletions or modifications of the original content must be explained and justified in subsections where the changes happened.
+    *   **Additional Questions:** If the plan (new or existing) lacks necessary answers for implementation, add a new section titled **"Additional Questions"** to the plan to document these gaps.
+    *   **Requirements:** The plan **MUST** include mandatory **"Design Rationale"** blocks for every major section (Context, Analysis, Proposed Changes, Test Plan) to explicitly document the "Why" behind your decisions. In the implementation plan you must also include the number and title of the open GitHub issue you are working on.
 4.  **Develop Second:** You must follow the instructions in `gemini_orchestrator\templates\B_developer_prompt.md` to implement the plan you just created.
 5.  **Iterative Quality Loop & Documentation:**
     *   **Build & Test:** Before *every* code review, ensure the project builds with no errors/warnings and all tests pass.
     *   **Review & Record:** Request an independent code review using the code review tool. **You must save the output of each review as a separate Markdown file** (e.g., `<task_description>_review_iteration_1.md`, `<task_description>_review_iteration_2.md`) under `docs\dev_docs\code_reviews`. In the implementation notes of the implementation plan, also discuss any issues raised by the code reviews and how you addressed them; also discuss there any discrepancies between you and the code reviews (eg. the code review said the patch would not build, but it does).
     *   **Fix & Repeat:** If the review raises issues, address them immediately, commit, and perform a *new* review. Repeat this loop until you receive a "Greenlight" (no issues found). Your incremental commit serve the purpose of tracking progress, intermediate changes, and allow me to review the changes (at the end I will squash all commits anyway, but I need to review the incremental changes).
 6.  **Final Documentation:** Update the implementation plan with final notes upon completion; include encountered issues, deviations from the plan, and suggestions for the future.
+7.  **Preserve Progress:** Before any operation that might delete or overwrite files (e.g., `git checkout`, `git reset`, or switching versions), you **MUST** perform a `git commit` on your current branch to save intermediate progress. This ensures that even incomplete work is preserved before potentially destructive operations. This assumes you are working on a feature-specific branch where intermediate commits are expected; they will be squashed before merging.
 
 ---
 
@@ -71,7 +75,9 @@ Scan open GitHub issues. Select **ONE** issue based on priority (Physics Math, L
 
 ### 2. 📐 ARCHITECT (Plan)
 **Action:** Execute instructions in `gemini_orchestrator\templates\A.1_architect_prompt.md`.
-*   Create the implementation plan as an `.md` document in `docs\dev_docs\implementation_plans\`.
+*   **Reuse Existing Plan:** If an implementation plan is already present in the repository, do not create a new one. Update the existing one. Explain and justify any deletions or modifications in dedicated subsections.
+*   **Create/Update Plan:** Maintain the implementation plan in `docs\dev_docs\implementation_plans\`.
+*   **Gaps:** Add an **"Additional Questions"** section if the plan fails to answer necessary implementational questions.
 
 ### 3. 🔧 DEVELOP & ITERATE (The Loop)
 **Action:** Execute instructions in `gemini_orchestrator\templates\B_developer_prompt.md`.
@@ -103,7 +109,7 @@ Create a PR/Submission containing all deliverables.
 
 - [ ] **Select Issue:** Identify one specific issue to fix.
 - [ ] **Architect:** Run `A.1_architect_prompt.md` instructions.
-- [ ] **Plan:** Create the implementation plan.
+- [ ] **Plan:** Create or update the implementation plan (Reuse existing if possible).
 - [ ] **Develop:** Run `B_developer_prompt.md` instructions.
 - [ ] **Build:** Verify `cmake` build succeeds.
 - [ ] **Test:** Verify `./build/tests/run_combined_tests` passes (if applicable).
