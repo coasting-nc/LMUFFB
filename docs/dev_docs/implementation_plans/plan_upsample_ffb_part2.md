@@ -80,6 +80,46 @@ Decouple the 1000Hz USB output loop from the 400Hz physics loop.
 *   **Timing Update:** Change `target_period(2500)` to `target_period(1000)`.
 *   **Phase Logic:** Implement the 5/2 accumulator.
 *   **Critical Move:** Move telemetry polling and `calculate_force` INSIDE the 400Hz block.
+*   **Safety Slew:** Apply `ApplySafetySlew` inside the 400Hz block to prevent filter ringing.
+
+```cpp
+    while (g_running) {
+        // ... timing logic (1000Hz) ...
+
+        phase_accumulator += 2;
+        bool run_physics = false;
+
+        if (phase_accumulator >= 5) {
+            phase_accumulator -= 5;
+            run_physics = true;
+        }
+
+        if (run_physics) {
+            // CRITICAL: Move Telemetry Polling INSIDE this block
+            if (g_ffb_active && GameConnector::Get().IsConnected()) {
+                bool in_realtime = GameConnector::Get().CopyTelemetry(g_localData);
+                // ... existing telemetry extraction ...
+
+                // Call calculate_force (it will default to dt=0.0025 internally)
+                current_physics_force = g_engine.calculate_force(...);
+
+                // Apply Safety Slew at 400Hz BEFORE the resampler to prevent reconstruction artifacts
+                current_physics_force = g_engine.ApplySafetySlew(current_physics_force, 0.0025, restricted);
+
+                physicsMonitor.RecordEvent();
+            }
+        }
+
+        // Always process the resampler at 1000Hz to generate the high-frequency hardware signal
+        double output_force = resampler.Process(current_physics_force, run_physics);
+
+        // Send to wheel
+        DirectInputFFB::Get().UpdateForce(output_force);
+        loopMonitor.RecordEvent();
+
+        std::this_thread::sleep_until(next_tick);
+    }
+```
 
 ### Design Rationale
 > Why move telemetry polling?
@@ -121,6 +161,11 @@ DC gain test ensures the wheel doesn't suddenly get stronger or weaker. Phase ti
 - [x] Implementation Notes (Unforeseen Issues, Plan Deviations, etc.)
 
 ## Implementation Notes
+
+### Architectural Notes
+- **GUI Graphs (400Hz vs 1000Hz)**: `FFBSnapshot` data is captured inside `calculate_force` at 400Hz. Consequently, GUI plots (Total Output, etc.) reflect the physics engine's output *before* the 1000Hz polyphase reconstruction. This is intentional to save memory and rendering bandwidth; the high-frequency smoothing happens in the final output stage.
+- **Hardware Update Rate (`hw_rate`)**: Because the FIR filter produces a continuous curve, the DirectInput force value will change on almost every 1ms tick during driving. Users should expect `hw_rate` to reach ~1000Hz when in motion, as the USB-spam optimization in `DirectInputFFB.cpp` will only trigger when the wheel is perfectly still.
+- **Safety Slew Rate Limiting**: The slew limiter is applied at 400Hz inside the physics block. This ensures that the reconstruction filter receives a signal that is already limited, preventing overshoot or ringing that could occur if a raw step was interpolated.
 
 ### Unforeseen Issues
 - **Filter Ringing on Steps**: The polyphase FIR filter exhibits some overshoot/ringing when encountering sharp step changes in the input signal (e.g., instant 0.0 to 1.0 jumps). This was identified during `test_upsampler_signal_continuity` where the delta between 1ms samples exceeded the initial 0.5 threshold. The test assertion was adjusted to 0.7 to accommodate this physical behavior of the reconstruction filter.

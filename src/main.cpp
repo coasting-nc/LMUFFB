@@ -55,7 +55,6 @@ void FFBThread() {
     PolyphaseResampler resampler;
     int phase_accumulator = 0;
     double current_physics_force = 0.0;
-    bool restricted_physics = true;
 
     double lastET = -1.0;
     double lastTorque = -9999.0;
@@ -196,13 +195,21 @@ void FFBThread() {
 
                         force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025);
                         if (!in_realtime_phys) force_physics = 0.0;
+
+                        // Safety Layer (v0.7.49): Slew Rate Limiting (400Hz)
+                        // Applied before up-sampling to prevent reconstruction artifacts on spikes.
+                        bool restricted = !full_allowed || (scoring.mFinishStatus != 0);
+                        force_physics = g_engine.ApplySafetySlew(force_physics, 0.0025, restricted);
+
                         should_output = true;
-                        restricted_physics = !full_allowed || (scoring.mFinishStatus != 0);
                     }
                 }
             }
             
-            if (!should_output) force_physics = 0.0;
+            if (!should_output) {
+                std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+                force_physics = g_engine.ApplySafetySlew(0.0, 0.0025, true);
+            }
             current_physics_force = force_physics;
 
             // Warning for low sample rate (Issue #133)
@@ -235,18 +242,15 @@ void FFBThread() {
         // Pass physics output through Polyphase Resampler
         double force = resampler.Process(current_physics_force, run_physics);
 
-        // Safety Layer (v0.7.49): Slew Rate Limiting
+        // Push rates to engine for GUI/Snapshot (1000Hz)
         {
             std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-            // Push rates to engine for GUI/Snapshot
             g_engine.m_ffb_rate = loopMonitor.GetRate();
             g_engine.m_physics_rate = physicsMonitor.GetRate();
             g_engine.m_telemetry_rate = telemMonitor.GetRate();
             g_engine.m_hw_rate = hwMonitor.GetRate();
             g_engine.m_torque_rate = torqueMonitor.GetRate();
             g_engine.m_gen_torque_rate = genTorqueMonitor.GetRate();
-
-            force = g_engine.ApplySafetySlew(force, 0.001, restricted_physics);
         }
 
         if (DirectInputFFB::Get().UpdateForce(force)) {
