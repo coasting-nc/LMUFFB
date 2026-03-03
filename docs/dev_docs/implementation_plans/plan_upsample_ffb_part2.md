@@ -41,6 +41,7 @@ Instead of running the entire physics engine at 1000Hz (which would waste CPU an
 | :--- | :--- | :--- |
 | **All FFB Output** | The final `norm_force` is passed through a 15-tap Polyphase FIR filter before being sent to DirectInput. | **Silky smooth FFB.** The wheel will feel significantly more organic and less "digital". High-frequency effects (like ABS and Road Texture) will feel like pure tones rather than jagged buzzes. |
 | **Latency** | The FIR filter introduces a deterministic group delay of exactly 1.5ms (at 1000Hz). | Imperceptible to the user, but the trade-off yields a massive increase in signal quality. |
+| **USB Efficiency** | The integer magnitude changes almost every 1ms due to reconstruction smoothing. | **Expected `hw_rate` jump.** The DirectInput optimization for redundant updates will only trigger when the car is perfectly still; users should see `hw_rate` reach ~1000Hz during active driving. |
 
 ### Design Rationale
 > Why a Polyphase FIR filter?
@@ -80,8 +81,9 @@ Decouple the 1000Hz USB output loop from the 400Hz physics loop.
 *   **Timing Update:** Change `target_period(2500)` to `target_period(1000)`.
 *   **Phase Logic:** Implement the 5/2 accumulator.
 *   **Critical Move:** Move telemetry polling and `calculate_force` INSIDE the 400Hz block.
-*   **Safety Slew:** Apply `ApplySafetySlew` inside the 400Hz block to prevent filter ringing.
+*   **Safety Slew:** Apply `ApplySafetySlew` inside the 400Hz block (using `dt=0.0025`) before the resampler.
 
+**Implementation Logic:**
 ```cpp
     while (g_running) {
         // ... timing logic (1000Hz) ...
@@ -103,7 +105,8 @@ Decouple the 1000Hz USB output loop from the 400Hz physics loop.
                 // Call calculate_force (it will default to dt=0.0025 internally)
                 current_physics_force = g_engine.calculate_force(...);
 
-                // Apply Safety Slew at 400Hz BEFORE the resampler to prevent reconstruction artifacts
+                // Apply Safety Slew at 400Hz BEFORE the resampler to prevent reconstruction ringing
+                // Uses the physics dt (0.0025)
                 current_physics_force = g_engine.ApplySafetySlew(current_physics_force, 0.0025, restricted);
 
                 physicsMonitor.RecordEvent();
@@ -113,7 +116,7 @@ Decouple the 1000Hz USB output loop from the 400Hz physics loop.
         // Always process the resampler at 1000Hz to generate the high-frequency hardware signal
         double output_force = resampler.Process(current_physics_force, run_physics);
 
-        // Send to wheel
+        // Send to wheel at 1000Hz
         DirectInputFFB::Get().UpdateForce(output_force);
         loopMonitor.RecordEvent();
 
@@ -183,3 +186,9 @@ DC gain test ensures the wheel doesn't suddenly get stronger or weaker. Phase ti
 ### Recommendations
 - **Dynamic Filter Selection**: In the future, the polyphase filter kernel could be swapped based on wheelbase brand (e.g., steeper cutoff for Simucube vs. more damping for Logitech) if users report specific preferences.
 - **Higher Output Rates**: If 2000Hz or 4000Hz wheelbases become common, the resampler can be extended with a higher L ratio.
+
+## Plan Review Response
+The following points were addressed following the architectural review of this plan:
+1. **ApplySafetySlew Location**: The pseudo-code and implementation were updated to move `ApplySafetySlew` inside the 400Hz physics block. This ensures the reconstruction filter receives a slew-limited signal, preventing numerical ringing/overshoot on raw telemetry steps.
+2. **GUI Graph Frequency**: A note was added to the Architectural Notes section clarifying that `FFBSnapshot` capture remains at 400Hz to conserve system resources.
+3. **Hardware Update Rate**: Clarified that `hw_rate` is expected to reach ~1000Hz during motion due to the continuous output of the FIR filter.
