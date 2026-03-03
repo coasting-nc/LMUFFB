@@ -1,108 +1,144 @@
 # Implementation Plan: Up-sample FFB Part 2 (1000Hz Output)
 
-## Context
-Following the successful implementation of Part 1 (which up-sampled the 100Hz LMU telemetry to a continuous signal using Holt-Winters extrapolation), Part 2 focuses on the output stage. Currently, the `lmuFFB` physics loop and USB output run at a hardcoded 400Hz. High-end Direct Drive wheelbases (Simucube, Asetek, Moza, etc.) operate internally at 1000Hz or higher. 
 
-By increasing the `lmuFFB` main loop to 1000Hz, we can feed these wheelbases a much higher resolution signal. This minimizes interpolation artifacts on the wheelbase side and raises the Nyquist frequency of our synthetic effects (Road Texture, ABS, Slide Rumble) from 200Hz to 500Hz, allowing for vastly richer and finer tactile details.
+Here is the implementation plan for Part 2 of the FFB upsampling feature.
 
-## Design Rationale
-*   **Single-Threaded 1000Hz Loop:** Instead of creating a complex multi-threaded architecture (e.g., a 400Hz physics thread and a 1000Hz output thread communicating via lock-free queues), we will simply increase the frequency of the existing `FFBThread` to 1000Hz. Because Part 1 introduced a zero-latency Holt-Winters extrapolator, querying this extrapolator at 1000Hz will naturally yield a perfectly smooth 1000Hz signal from the underlying 100Hz/400Hz game data.
-*   **Configurable Output Rate:** Not all wheelbases can handle a 1000Hz USB polling rate. Older belt/gear-driven wheels (e.g., Logitech G29, Thrustmaster T300) may drop packets, overheat their USB controllers, or crash if fed data too quickly. Therefore, the output rate must be a user-configurable global setting (e.g., 400Hz, 500Hz, 1000Hz), defaulting to 400Hz for maximum compatibility.
-*   **Dynamic `dt` Integration:** All physics filters (Biquad, LPF) and oscillators (ABS, Spin, Slide) in `FFBEngine` already use `ctx.dt`. By passing `dt = 0.001` (at 1000Hz), the math will automatically scale, requiring no changes to the core effect algorithms.
+### Design Rationale (Overall)
+While Part 1 focused on fixing the mathematical derivatives of the 100Hz input telemetry for the physics engine, Part 2 focuses entirely on the **hardware output stage**. Modern Direct Drive wheelbases (Simucube, Fanatec, Moza) operate internally at 1000Hz or higher. Sending them a 400Hz signal forces the wheelbase to perform its own interpolation (often poorly) or results in a "stepped" signal that feels grainy or robotic. 
+
+By up-sampling the final calculated force from 400Hz to 1000Hz using a **5/2 Polyphase FIR Filter**, we mathematically reconstruct the continuous analog signal. This eliminates aliasing and digital stepping artifacts, providing a buttery-smooth, high-fidelity force feedback experience that matches the native resolution of high-end hardware.
 
 ## Reference Documents
-*   [Upsampling Research Report](https://github.com/coasting-nc/LMUFFB/blob/main/docs/dev_docs/reports/upsampling.md)
-*   Issue #216: FFB Up-sampling
+*   [Upsampling Research Report](docs/dev_docs/reports/upsampling.md)
+*   docs\dev_docs\implementation_plans\plan_upsample_ffb_part1.md
+---
 
 ## Codebase Analysis Summary
-*   **`src/main.cpp` (`FFBThread`)**: Currently uses a hardcoded `const std::chrono::microseconds target_period(2500);` to achieve 400Hz. This needs to be dynamic.
-*   **`src/HealthMonitor.h`**: Hardcodes the expected loop rate to 400Hz (`loop < 360.0` triggers a warning). This must be updated to respect the configured output rate.
-*   **`src/Config.h` / `src/Config.cpp`**: Needs a new global setting for the output rate.
-*   **`src/GuiLayer_Common.cpp`**: Needs UI controls to allow the user to select their desired output rate.
-*   **Design Rationale**: Modifying the core loop timing is the most direct and robust way to achieve 1000Hz output, provided the telemetry upsampler (Part 1) is already in place to feed it smooth data.
+
+### Current Architecture Overview
+*   **`src/main.cpp`**: The `FFBThread` runs at a fixed 400Hz (`target_period(2500)` microseconds). It polls telemetry, runs `calculate_force`, and immediately sends the result to `DirectInputFFB`.
+*   **`src/HealthMonitor.h`**: Monitors the loop rate, expecting 400Hz.
+*   **`src/DirectInputFFB.cpp`**: Contains an optimization (`if (magnitude == m_last_force) return false;`) which is already perfectly suited for higher polling rates, as it prevents unnecessary USB spam.
+
+### Impacted Functionalities
+1.  **`FFBThread` (Main Loop)**: Must be promoted to run at 1000Hz (1ms period). It needs a phase accumulator to decouple the 1000Hz output rate from the 400Hz physics rate.
+2.  **`HealthMonitor` & `RateMonitor`**: Must be updated to track and validate the new 1000Hz loop rate alongside the 400Hz physics rate.
+3.  **New DSP Module**: A new `PolyphaseResampler` class is required to handle the 5/2 rational resampling.
+
+### Design Rationale
+Instead of running the entire physics engine at 1000Hz (which would waste CPU and amplify noise since the source data is only 100Hz), we decouple the loop. The main thread ticks at 1000Hz, pushing interpolated samples to the wheel. Every 2.5 ticks (on average), it triggers the 400Hz physics engine to calculate a new base sample. This "Stream Processing" approach ensures zero buffer bloat and absolute minimum latency (< 2ms).
+
+---
 
 ## FFB Effect Impact Analysis
 
-| Effect | Technical Change | User Perspective |
+| Effect | Technical Changes | User-Facing Changes |
 | :--- | :--- | :--- |
-| **High-Frequency Textures (ABS, Slide, Road, Spin)** | The Nyquist limit increases from 200Hz to 500Hz. Oscillators will step at `dt = 0.001s`. | Textures will feel significantly sharper and more detailed on high-end wheelbases. ABS pulses can be felt with distinct mechanical clarity rather than a blur. |
-| **Base FFB (Understeer, SoP)** | The signal sent to the wheelbase will have 2.5x more data points per second. | Smoother gradients during rapid weight transfer or snap oversteer. Less "grain" in the wheel. |
-| **Filters (Notch, LPF)** | `dt` changes from `0.0025` to `0.001`. | No perceived change; the math automatically compensates to maintain the same time constants. |
+| **All FFB Output** | The final `norm_force` is passed through a 15-tap Polyphase FIR filter before being sent to DirectInput. | **Silky smooth FFB.** The wheel will feel significantly more organic and less "digital". High-frequency effects (like ABS and Road Texture) will feel like pure tones rather than jagged buzzes. |
+| **Latency** | The FIR filter introduces a deterministic group delay of exactly 1.5ms (at 1000Hz). | Imperceptible to the user, but the trade-off yields a massive increase in signal quality. |
+
+---
 
 ## Proposed Changes
 
-### 1. Update `src/Config.h` and `src/Config.cpp`
-*   Add a global static variable: `static int m_output_rate_hz;`
-*   Set the default value to `400` in `Config.cpp`.
-*   **Parameter Synchronization Checklist**:
-    *   [x] Declaration in `Config.h` (Global static, NOT in `Preset`).
-    *   [x] Initialization in `Config.cpp`.
-    *   [x] Entry in `Config::Save()` (under `[System & Window]`).
-    *   [x] Entry in `Config::Load()`.
-    *   [x] Validation logic in `Config::Load()`: `m_output_rate_hz = std::clamp(m_output_rate_hz, 100, 1000);`
+### 1. Create `src/UpSampler.h` and `src/UpSampler.cpp`
+Implement a `PolyphaseResampler` class specifically designed for a 5/2 ratio (400Hz -> 1000Hz).
 
-### 2. Update `src/main.cpp` (`FFBThread`)
-*   Remove the hardcoded `target_period`.
-*   Inside the `while (g_running)` loop, dynamically calculate the target period based on the config:
-    ```cpp
-    int current_rate = std::clamp(Config::m_output_rate_hz, 100, 1000);
-    std::chrono::microseconds target_period(1000000 / current_rate);
-    next_tick += target_period;
-    ```
-*   Ensure the `actual_dt` passed to the Part 1 extrapolator and `calculate_force` accurately reflects the time since the last loop iteration (or use the ideal `1.0 / current_rate` if actual `dt` is too noisy, though actual `dt` is preferred for real-time sync).
+*   **Design Rationale:** A polyphase filter is vastly superior to linear interpolation. It acts as a low-pass filter (cutoff at 200Hz) to remove the "images" (aliasing) created by upsampling, perfectly reconstructing the original curve.
+*   **Implementation Details:**
+    *   Ratio: L=5 (Upsample), M=2 (Downsample).
+    *   Phase Accumulator: `m_phase` (0 to 4).
+    *   History Buffer: `std::array<double, 3> m_history` (stores the last 3 outputs from the 400Hz physics engine).
+    *   Filter Kernel: A 15-tap windowed-sinc FIR filter (cutoff 0.2 * Nyquist), multiplied by 5 (DC gain), split into 5 branches of 3 taps each.
+    *   *Method:* `double Process(double latest_physics_sample, bool is_new_physics_tick)`
 
-### 3. Update `src/HealthMonitor.h`
-*   Modify `HealthMonitor::Check` to accept the expected loop rate as a parameter.
+### 2. Modify `src/main.cpp` (`FFBThread`)
+Decouple the 1000Hz USB output loop from the 400Hz physics loop.
+
+*   **Timing Update:** Change `target_period(2500)` to `target_period(1000)`.
+*   **Phase Logic:**
     ```cpp
-    static HealthStatus Check(double loop, double telem, double torque, int torqueSource, double expected_loop_rate)
-    ```
-*   Update the warning threshold:
-    ```cpp
-    if (loop > 1.0 && loop < (expected_loop_rate * 0.90)) { // Warn if dropping >10% frames
-        status.loop_low = true;
-        status.is_healthy = false;
+    PolyphaseResampler resampler;
+    int phase_accumulator = 0;
+    double current_physics_force = 0.0;
+
+    while (g_running) {
+        // ... timing logic ...
+
+        phase_accumulator += 2; // M = 2
+        bool run_physics = false;
+
+        if (phase_accumulator >= 5) { // L = 5
+            phase_accumulator -= 5;
+            run_physics = true;
+        }
+
+        if (run_physics) {
+            // 1. Poll Telemetry
+            // 2. Call g_engine.calculate_force()
+            // 3. Store result in current_physics_force
+            physicsMonitor.RecordEvent();
+        }
+
+        // 4. Always process the resampler at 1000Hz
+        double output_force = resampler.Process(current_physics_force, run_physics);
+
+        // 5. Send to wheel
+        DirectInputFFB::Get().UpdateForce(output_force);
+        loopMonitor.RecordEvent();
+        
+        std::this_thread::sleep_until(next_tick);
     }
     ```
-*   Update the call site in `main.cpp` to pass `Config::m_output_rate_hz`.
 
-### 4. Update `src/GuiLayer_Common.cpp`
-*   In the "System Health (Hz)" header, update the target display for the FFB Loop to show the configured rate instead of the hardcoded `400.0`.
-    ```cpp
-    DisplayRate("FFB Loop", engine.m_ffb_rate, (double)Config::m_output_rate_hz);
-    ```
-*   In the "General FFB" or "Advanced Settings" section, add a Combo box for "FFB Output Rate":
-    ```cpp
-    const char* rates[] = { "400 Hz (Default/Safe)", "500 Hz", "1000 Hz (High-End DD Only)" };
-    int rate_idx = (Config::m_output_rate_hz == 1000) ? 2 : (Config::m_output_rate_hz == 500) ? 1 : 0;
-    if (ImGui::Combo("FFB Output Rate", &rate_idx, rates, 3)) {
-        Config::m_output_rate_hz = (rate_idx == 2) ? 1000 : (rate_idx == 1) ? 500 : 400;
-        Config::Save(engine);
-    }
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Sets the USB polling rate to the wheelbase.\n1000Hz provides maximum fidelity but may crash older wheels.");
-    ```
+### 3. Update `src/HealthMonitor.h` and `main.cpp` Diagnostics
+*   Update `HealthStatus` to expect a `loop_rate` of 1000Hz (warn below 950Hz).
+*   Add a new parameter to `HealthMonitor::Check` for `physics_rate` (expect 400Hz, warn below 380Hz).
+*   Update the console logging in `main.cpp` to print both the 1000Hz Loop rate and the 400Hz Physics rate.
 
-### 5. Version Increment
-*   Increment `VERSION` file and `src/Version.h` to the next patch version (e.g., `0.7.109`).
+### Parameter Synchronization Checklist
+*No new user-facing settings are required. This is a core pipeline upgrade.*
+
+### Initialization Order Analysis
+The `PolyphaseResampler` has no external dependencies and can be instantiated directly inside the `FFBThread` function in `main.cpp` before the `while(g_running)` loop begins.
+
+### Version Increment Rule
+Increment the version number in `VERSION` and `src/Version.h` by the **smallest possible increment** (e.g., `0.7.108` -> `0.7.109`).
+
+---
 
 ## Test Plan (TDD-Ready)
 
-### 1. `test_ffb_output_rate.cpp`
-*   **Design Rationale**: Ensures that the dynamic loop timing and health monitoring correctly adapt to the user's configured output rate.
-*   **`test_health_monitor_dynamic_rate`**:
-    *   Call `HealthMonitor::Check` with `loop = 950.0`, `expected_loop_rate = 1000.0`. Assert `is_healthy == true`.
-    *   Call `HealthMonitor::Check` with `loop = 800.0`, `expected_loop_rate = 1000.0`. Assert `is_healthy == false` and `loop_low == true`.
-    *   Call `HealthMonitor::Check` with `loop = 380.0`, `expected_loop_rate = 400.0`. Assert `is_healthy == true`.
-*   **`test_oscillator_frequency_scaling`**:
-    *   Initialize `FFBEngine` with ABS pulse enabled (e.g., 50Hz pulse).
-    *   Simulate 1 second of execution at `dt = 0.0025` (400Hz). Count the number of zero-crossings in `ctx.abs_pulse_force`. Assert it matches ~50Hz.
-    *   Simulate 1 second of execution at `dt = 0.001` (1000Hz). Count the number of zero-crossings. Assert it still matches ~50Hz, proving the oscillators are frame-rate independent.
+### Design Rationale
+The tests must prove that the polyphase resampler correctly outputs 5 samples for every 2 input samples, maintains a DC gain of 1.0 (so FFB strength doesn't change), and that the main loop phase accumulator correctly triggers the physics engine at exactly 40% of the loop rate.
+
+### 1. `test_upsampler_dc_gain`
+*   **Description:** Verifies the FIR filter coefficients are correctly normalized.
+*   **Inputs:** Feed a constant `1.0` into the resampler for 20 ticks (simulating a steady cornering force).
+*   **Expected Output:** After the initial filter delay (3 ticks), the output should be exactly `1.0` across all 5 phases.
+*   **Assertion:** `ASSERT_NEAR(output, 1.0, 0.001)`
+
+### 2. `test_upsampler_polyphase_routing`
+*   **Description:** Verifies the phase accumulator logic correctly routes inputs to outputs.
+*   **Inputs:** Manually drive the `phase_accumulator` logic from `main.cpp` in a test loop for 10 iterations.
+*   **Expected Output:** `run_physics` should be `true` on iterations: 0, 3, 5, 8, 10. (Exactly 2 physics ticks for every 5 loop ticks).
+
+### 3. `test_health_monitor_1000hz`
+*   **Description:** Verifies the updated `HealthMonitor` correctly identifies healthy vs. degraded states at the new rates.
+*   **Inputs:** 
+    *   Loop: 990Hz, Physics: 395Hz -> Expected: Healthy
+    *   Loop: 800Hz, Physics: 395Hz -> Expected: Degraded (Loop Low)
+    *   Loop: 990Hz, Physics: 300Hz -> Expected: Degraded (Physics Low)
+
+**Test Count Specification:** Baseline + 3 new test cases.
+
+---
 
 ## Deliverables
-- [ ] Update `src/Config.h` and `src/Config.cpp` with `m_output_rate_hz`.
-- [ ] Update `src/main.cpp` to use dynamic `target_period`.
-- [ ] Update `src/HealthMonitor.h` to use dynamic expected loop rate.
-- [ ] Update `src/GuiLayer_Common.cpp` with UI controls and dynamic health targets.
-- [ ] Create `tests/test_ffb_output_rate.cpp`.
-- [ ] Update `tests/CMakeLists.txt` to include the new test file.
+- [ ] Create `src/UpSampler.h` and `src/UpSampler.cpp` with the `PolyphaseResampler` class.
+- [ ] Modify `src/main.cpp` to implement the 1000Hz loop and phase accumulator.
+- [ ] Update `src/HealthMonitor.h` thresholds.
+- [ ] Create `tests/test_upsampler.cpp` with the specified TDD tests.
 - [ ] Increment version in `VERSION` and `src/Version.h`.
 - [ ] Update this plan document with "Implementation Notes" (Unforeseen Issues, Plan Deviations, Challenges, Recommendations) upon completion.
+
