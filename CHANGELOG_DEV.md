@@ -12,11 +12,12 @@ All notable changes to this project will be documented in this file.
   - The new effect is derived from normalized front-axle load transfer: `(Left_Load - Right_Load) / (Left_Load + Right_Load)`.
   - This ensures consistent steering weight and "lean" feel across all car classes (GT3, LMP2, Hypercar) regardless of their aerodynamic downforce capabilities.
   - Implemented **Kinematic Fallback**: Automatically estimates lateral load transfer from chassis physics when direct tire load telemetry is missing or encrypted, ensuring the effect remains functional for all DLC content.
-  - Renamed all user-facing references from "Lateral G" to **"Lateral Load"** in the GUI and diagnostic plots.
+  - Added a new **Lateral Load** slider in the GUI, while preserving the original **Lateral G** setting for maximum tuning flexibility.
   - Updated all relevant tooltips in `Tooltips.h` to reflect the new load-based logic.
 
 ### Testing
-- **New Test Suite**: Added `tests/test_issue_213_lateral_load.cpp` to verify load transfer math, kinematic fallback, and directional sign consistency.
+- **New Test Suite**: Added `tests/test_issue_213_lateral_load.cpp` to verify additive logic, effect isolation, and kinematic fallback.
+- **Orientation Matrix Helper**: Introduced `VerifyOrientation` helper to standardized directional verification for all haptic effects.
 - **Regression Guard**: Updated existing core physics and coordinate tests to provide valid load data, ensuring the full suite of 406 tests remains green.
 
 ## [0.7.120] - 2026-03-11
