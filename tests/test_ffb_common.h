@@ -190,6 +190,17 @@ void ParseTagArguments(int argc, char* argv[]);
 TelemInfoV01 CreateBasicTestTelemetry(double speed = 20.0, double slip_angle = 0.0);
 void InitializeEngine(FFBEngine& engine);
 
+// Orientation Matrix Helper (v0.7.121)
+// Verifies that a physical scenario (e.g. Right Turn) produces the correct
+// internal signal signs and final FFB output direction.
+struct OrientationScenario {
+    double lat_accel_x; // Game coords (+X = Left)
+    double fl_load;
+    double fr_load;
+    const char* description;
+};
+
+void VerifyOrientation(FFBEngine& engine, const OrientationScenario& scenario, float expected_sop_sign, float expected_total_ffb_sign);
 
 void Run(); // Main runner
 

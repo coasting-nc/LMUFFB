@@ -178,6 +178,7 @@ public:
     float m_gain;
     float m_understeer_effect;
     float m_sop_effect;
+    float m_lat_load_effect = 0.0f; // New v0.7.121 (Issue #213 add, not replace)
     float m_min_force;
     float m_dynamic_weight_gain; 
     
@@ -408,6 +409,7 @@ public:
 
     // Smoothing State
     double m_sop_lat_g_smoothed = 0.0;
+    double m_sop_load_smoothed = 0.0; // New v0.7.121
     
     // Filter Instances (v0.4.41)
     BiquadNotch m_notch_filter;
