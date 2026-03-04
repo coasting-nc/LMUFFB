@@ -86,7 +86,23 @@ TEST_CASE_TAGGED(test_transition_logging_logic, "Functional", (std::vector<std::
     GameConnectorTestAccessor::CallCheckTransitions(gc, data);
     ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] Vehicle: '' -> 'Ferrari 488'"));
 
-    // 5. No Duplicate Logs & No Console Output
+    // 5. SME Events (Issue #244)
+    std::cout << "Testing SME Events..." << std::endl;
+    data.generic.events[SME_STARTUP] = (SharedMemoryEvent)1;
+    GameConnectorTestAccessor::CallCheckTransitions(gc, data);
+    ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] Event: SME_STARTUP (1)"));
+
+    data.generic.events[SME_LOAD] = (SharedMemoryEvent)2;
+    GameConnectorTestAccessor::CallCheckTransitions(gc, data);
+    ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] Event: SME_LOAD (2)"));
+
+    // 6. Steering Range (Issue #244)
+    std::cout << "Testing Steering Range Transition..." << std::endl;
+    data.telemetry.telemInfo[0].mPhysicalSteeringWheelRange = 900.0f;
+    GameConnectorTestAccessor::CallCheckTransitions(gc, data);
+    ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] SteeringRange:"));
+
+    // 7. No Duplicate Logs & No Console Output
     std::cout << "Testing No Duplicate Logs & No Console Output..." << std::endl;
     data.generic.appInfo.mOptionsLocation = 0; // Main UI
 

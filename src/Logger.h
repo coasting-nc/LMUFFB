@@ -33,9 +33,7 @@ public:
     }
 
     void Log(const char* fmt, ...) {
-        if (!m_initialized) return;
-
-        char buffer[2048]; // Increased buffer for complex transition logs
+        char buffer[2048];
         va_list args;
         va_start(args, fmt);
         vsnprintf(buffer, sizeof(buffer), fmt, args);
@@ -49,8 +47,6 @@ public:
 
     // Log to file only, not to console
     void LogFile(const char* fmt, ...) {
-        if (!m_initialized) return;
-
         char buffer[2048];
         va_list args;
         va_start(args, fmt);
@@ -92,20 +88,20 @@ private:
     }
 
     void _LogNoLock(const std::string& message, bool toConsole) {
-        if (!m_file.is_open()) return;
+        if (m_file.is_open()) {
+            // Timestamp
+            auto now = std::chrono::system_clock::now();
+            auto in_time_t = std::chrono::system_clock::to_time_t(now);
+            std::tm time_info;
+            #ifdef _WIN32
+                localtime_s(&time_info, &in_time_t);
+            #else
+                localtime_r(&in_time_t, &time_info);
+            #endif
 
-        // Timestamp
-        auto now = std::chrono::system_clock::now();
-        auto in_time_t = std::chrono::system_clock::to_time_t(now);
-        std::tm time_info;
-        #ifdef _WIN32
-            localtime_s(&time_info, &in_time_t);
-        #else
-            localtime_r(&in_time_t, &time_info);
-        #endif
-
-        m_file << "[" << std::put_time(&time_info, "%H:%M:%S") << "] " << message << "\n";
-        m_file.flush(); // Critical for crash debugging
+            m_file << "[" << std::put_time(&time_info, "%H:%M:%S") << "] " << message << "\n";
+            m_file.flush(); // Critical for crash debugging
+        }
 
         if (toConsole) {
             // Also print to console for consistency

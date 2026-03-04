@@ -6,6 +6,7 @@
 #include <chrono>
 #include <filesystem>
 #include "src/Config.h"
+#include "src/Logger.h"
 #include "src/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 
 #ifdef _WIN32
@@ -36,6 +37,9 @@ int main(int argc, char* argv[]) noexcept {
         
         int total_passed = 0;
         int total_failed = 0;
+
+    // Initialize logger for unit tests
+    Logger::Get().Init("test_runner_debug.log");
 
     // Redirect config to a test-specific file to avoid overwriting user settings
     Config::m_config_path = "test_config_runner.ini";

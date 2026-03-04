@@ -57,5 +57,8 @@ test_expansion.log
 old_version.ini
 LastCoverageResults.log
 lmuffb_debug.log
+test_runner_debug.log
+test_transitions.log
+test_debug.log
 cobertura.xml
 test_gui.csv/**

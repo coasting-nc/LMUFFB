@@ -1,4 +1,5 @@
 #include "DirectInputFFB.h"
+#include "Logger.h"
 
 // Standard Library Headers
 #include <iostream>
@@ -151,13 +152,13 @@ bool DirectInputFFB::Initialize(HWND hwnd) {
     m_hwnd = hwnd;
 #ifdef _WIN32
     if (FAILED(DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&m_pDI, NULL))) {
-        std::cerr << "[DI] Failed to create DirectInput8 interface." << std::endl;
+        Logger::Get().Log("[DI] Failed to create DirectInput8 interface.");
         return false;
     }
-    std::cout << "[DI] Initialized." << std::endl;
+    Logger::Get().Log("[DI] Initialized.");
     return true;
 #else
-    std::cout << "[DI] Mock Initialized (Non-Windows)." << std::endl;
+    Logger::Get().Log("[DI] Mock Initialized (Non-Windows).");
     return true;
 #endif
 }
@@ -217,7 +218,7 @@ void DirectInputFFB::ReleaseDevice() {
     m_isExclusive = false;
     m_deviceName = "None";
 #ifdef _WIN32
-    std::cout << "[DI] Device released by user." << std::endl;
+    Logger::Get().Log("[DI] Device released by user.");
 #endif
 }
 
@@ -228,15 +229,15 @@ bool DirectInputFFB::SelectDevice(const GUID& guid) {
     // Cleanup old using new method
     ReleaseDevice();
 
-    std::cout << "[DI] Attempting to create device..." << std::endl;
+    Logger::Get().Log("[DI] Attempting to create device...");
     if (FAILED(((IDirectInput8*)m_pDI)->CreateDevice(guid, (IDirectInputDevice8**)&m_pDevice, NULL))) {
-        std::cerr << "[DI] Failed to create device." << std::endl;
+        Logger::Get().Log("[DI] Failed to create device.");
         return false;
     }
 
-    std::cout << "[DI] Setting Data Format..." << std::endl;
+    Logger::Get().Log("[DI] Setting Data Format...");
     if (FAILED(((IDirectInputDevice8*)m_pDevice)->SetDataFormat(&c_dfDIJoystick))) {
-        std::cerr << "[DI] Failed to set data format." << std::endl;
+        Logger::Get().Log("[DI] Failed to set data format.");
         return false;
     }
 
@@ -244,40 +245,40 @@ bool DirectInputFFB::SelectDevice(const GUID& guid) {
     m_isExclusive = false;
 
     // Attempt 1: Exclusive/Background (Best for FFB)
-    std::cout << "[DI] Attempting to set Cooperative Level (Exclusive | Background)..." << std::endl;
+    Logger::Get().Log("[DI] Attempting to set Cooperative Level (Exclusive | Background)...");
     HRESULT hr = ((IDirectInputDevice8*)m_pDevice)->SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);
     
     if (SUCCEEDED(hr)) {
         m_isExclusive = true;
-        std::cout << "[DI] Cooperative Level set to EXCLUSIVE." << std::endl;
+        Logger::Get().Log("[DI] Cooperative Level set to EXCLUSIVE.");
     } else {
         // Fallback: Non-Exclusive
-        std::cerr << "[DI] Exclusive mode failed (Error: " << std::hex << hr << std::dec << "). Retrying in Non-Exclusive mode..." << std::endl;
+        Logger::Get().Log("[DI] Exclusive mode failed (Error: 0x%08X). Retrying in Non-Exclusive mode...", hr);
         hr = ((IDirectInputDevice8*)m_pDevice)->SetCooperativeLevel(m_hwnd, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
         
         if (SUCCEEDED(hr)) {
             m_isExclusive = false;
-            std::cout << "[DI] Cooperative Level set to NON-EXCLUSIVE." << std::endl;
+            Logger::Get().Log("[DI] Cooperative Level set to NON-EXCLUSIVE.");
         }
     }
     
     if (FAILED(hr)) {
-        std::cerr << "[DI] Failed to set cooperative level (Non-Exclusive failed too)." << std::endl;
+        Logger::Get().Log("[DI] Failed to set cooperative level (Non-Exclusive failed too).");
         return false;
     }
 
-    std::cout << "[DI] Acquiring device..." << std::endl;
+    Logger::Get().Log("[DI] Acquiring device...");
     if (FAILED(((IDirectInputDevice8*)m_pDevice)->Acquire())) {
-        std::cerr << "[DI] Failed to acquire device." << std::endl;
+        Logger::Get().Log("[DI] Failed to acquire device.");
         // Don't return false yet, might just need focus/retry
     } else {
-        std::cout << "[DI] Device Acquired in " << (m_isExclusive ? "EXCLUSIVE" : "NON-EXCLUSIVE") << " mode." << std::endl;
+        Logger::Get().Log("[DI] Device Acquired in %s mode.", (m_isExclusive ? "EXCLUSIVE" : "NON-EXCLUSIVE"));
     }
 
     // Create Effect
     if (CreateEffect()) {
        m_active = true;
-        std::cout << "[DI] SUCCESS: Physical Device fully initialized and FFB Effect created." << std::endl;
+        Logger::Get().Log("[DI] SUCCESS: Physical Device fully initialized and FFB Effect created.");
  
         return true;
     }
@@ -317,7 +318,7 @@ bool DirectInputFFB::CreateEffect() {
     eff.dwStartDelay = 0;
 
     if (FAILED(((IDirectInputDevice8*)m_pDevice)->CreateEffect(GUID_ConstantForce, &eff, (IDirectInputEffect**)&m_pEffect, NULL))) {
-        std::cerr << "[DI] Failed to create Constant Force effect." << std::endl;
+        Logger::Get().Log("[DI] Failed to create Constant Force effect.");
         return false;
     }
     
@@ -379,9 +380,8 @@ bool DirectInputFFB::UpdateForce(double normalizedForce) {
             // 2. Log the Context (Rate limited)
             static uint32_t lastLogTime = 0;
             if (GetTickCount() - lastLogTime > DIAGNOSTIC_LOG_INTERVAL_MS) {
-                std::cerr << "[DI ERROR] Failed to update force. Error: " << errorType 
-                          << " (0x" << std::hex << hr << std::dec << ")" << std::endl;
-                std::cerr << "           Active Window: [" << GetActiveWindowTitle() << "]" << std::endl;
+                Logger::Get().Log("[DI ERROR] Failed to update force. Error: %s (0x%08X)", errorType.c_str(), hr);
+                Logger::Get().Log("           Active Window: [%s]", GetActiveWindowTitle().c_str());
                 lastLogTime = GetTickCount();
             }
 
@@ -399,7 +399,7 @@ bool DirectInputFFB::UpdateForce(double normalizedForce) {
                     // If we are stuck in "Shared Mode" (0x80040205), standard Acquire() 
                     // just re-confirms Shared Mode. We must force a mode switch.
                     if (hr == DIERR_NOTEXCLUSIVEACQUIRED) {
-                        std::cout << "[DI] Attempting to promote to Exclusive Mode..." << std::endl;
+                        Logger::Get().Log("[DI] Attempting to promote to Exclusive Mode...");
                         ((IDirectInputDevice8*)m_pDevice)->Unacquire();
                         ((IDirectInputDevice8*)m_pDevice)->SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);
                     }
@@ -411,7 +411,7 @@ bool DirectInputFFB::UpdateForce(double normalizedForce) {
                         // Log recovery success (rate-limited for diagnostics)
                         static uint32_t lastSuccessLog = 0;
                         if (GetTickCount() - lastSuccessLog > 5000) { // 5 second cooldown
-                            std::cout << "[DI RECOVERY] Device re-acquired successfully. FFB motor restarted." << std::endl;
+                            Logger::Get().Log("[DI RECOVERY] Device re-acquired successfully. FFB motor restarted.");
                             lastSuccessLog = GetTickCount();
                         }
                         
@@ -422,14 +422,14 @@ bool DirectInputFFB::UpdateForce(double normalizedForce) {
                             // One-time notification when Dynamic Promotion first succeeds
                             static bool firstPromotionSuccess = false;
                             if (!firstPromotionSuccess) {
-                                std::cout << "\n"
-                                          << "========================================\n"
-                                          << "[SUCCESS] Dynamic Promotion Active!\n"
-                                          << "lmuFFB has successfully recovered exclusive\n"
-                                          << "control after detecting a conflict.\n"
-                                          << "This feature will continue to protect your\n"
-                                          << "FFB experience automatically.\n"
-                                          << "========================================\n" << std::endl;
+                                Logger::Get().Log("\n"
+                                          "========================================\n"
+                                          "[SUCCESS] Dynamic Promotion Active!\n"
+                                          "lmuFFB has successfully recovered exclusive\n"
+                                          "control after detecting a conflict.\n"
+                                          "This feature will continue to protect your\n"
+                                          "FFB experience automatically.\n"
+                                          "========================================\n");
                                 firstPromotionSuccess = true;
                             }
                         }
