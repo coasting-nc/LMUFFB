@@ -2,6 +2,30 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 11, 2026[/b][/size]
+[b]Version 0.7.120 - Console Spam Reduction & Health Monitoring Update[/b]
+
+[b]New release[/b] (0.7.120): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Reduced Console Noise[/b]: Removed non-essential "ResizeBuffers" logs and periodic telemetry rate dumps from the console. These details remain available in the GUI diagnostics but no longer clutter your session logs.
+[*][b]Smarter Health Warnings[/b]: Improved the "Low Sample Rate detected" system. Warnings now appear every 60 seconds instead of every 5 seconds, and duplicate console messages have been removed, ensuring you are informed of performance issues without being spammed. (#238)
+[/list]
+
+---
+
+[size=5][b]March 10, 2026[/b][/size]
+[b]Version 0.7.119 - Console Message Spam Fix[/b]
+
+[b]New release[/b] (0.7.119): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]Console Message Spam[/b]: Resolved an issue where vehicle identification and normalization reset messages were printed to the console every frame during session transitions. This makes the console much cleaner and easier to read during gameplay. (#238)
+[/list]
+
+---
+
 [size=5][b]March 6, 2026[/b][/size]
 [b]Version 0.7.115 - LMP2 Restricted Detection Fix[/b]
 

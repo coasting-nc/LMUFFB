@@ -278,7 +278,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // Class Seeding
     bool seeded = false;
-    if (vehicleClass && (m_current_class_name != vehicleClass || (vehicleName && strcmp(m_vehicle_name, vehicleName) != 0))) {
+    if (vehicleClass && (m_current_class_name != vehicleClass || (vehicleName && m_last_handled_vehicle_name != vehicleName))) {
         m_current_class_name = vehicleClass;
         InitializeLoadReference(vehicleClass, vehicleName);
         m_warned_invalid_range = false; // Reset warning on car change
@@ -321,8 +321,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         }
     }
     // Update Context strings (for UI/Logging)
-    // Only update if first char differs to avoid redundant copies
-    if (m_vehicle_name[0] != upsampled_data->mVehicleName[0] || m_vehicle_name[VEHICLE_NAME_CHECK_IDX] != upsampled_data->mVehicleName[VEHICLE_NAME_CHECK_IDX]) {
+    // v0.7.119: Use robust strcmp instead of fragile index check (Issue #238)
+    if (strcmp(m_vehicle_name, upsampled_data->mVehicleName) != 0 || strcmp(m_track_name, upsampled_data->mTrackName) != 0) {
 #ifdef _WIN32
          strncpy_s(m_vehicle_name, sizeof(m_vehicle_name), upsampled_data->mVehicleName, _TRUNCATE);
          strncpy_s(m_track_name, sizeof(m_track_name), upsampled_data->mTrackName, _TRUNCATE);
