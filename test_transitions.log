@@ -1,0 +1,11 @@
+[13:09:57] Logger Initialized. Version: 0.7.120
+[13:09:57] [Transition] OptionsLocation: 0 -> 3 (On Track)
+[13:09:57] [Transition] OptionsLocation: 3 -> 2 (Monitor (Garage))
+[13:09:57] [Transition] GamePhase: 0 -> 5 (Green Flag)
+[13:09:57] [Transition] GamePhase: 5 -> 9 (Paused)
+[13:09:57] [Transition] Control: 0 -> 1 (AI)
+[13:09:57] [Transition] Control: 1 -> 0 (Player)
+[13:09:57] [Transition] Track: '' -> 'Spa'
+[13:09:57] [Transition] Vehicle: '' -> 'Ferrari 488'
+[13:09:57] [Transition] OptionsLocation: 2 -> 0 (Main UI)
+Logger Shutdown.

@@ -12,6 +12,8 @@
 #include <mutex>
 #include <atomic>
 
+namespace FFBEngineTests { class GameConnectorTestAccessor; }
+
 class GameConnector {
 public:
     static GameConnector& Get();
@@ -36,6 +38,21 @@ public:
     bool IsStale(long timeoutMs = 100) const;
 
 private:
+    struct TransitionState {
+        unsigned char optionsLocation = 255;
+        bool inRealtime = false;
+        unsigned char gamePhase = 255;
+        long session = -1;
+        signed char control = -2;
+        unsigned char pitState = 255;
+        char vehicleName[64] = { 0 };
+        char trackName[64] = { 0 };
+    } m_prevState;
+
+    void CheckTransitions(const SharedMemoryObjectOut& current);
+
+    friend class FFBEngineTests::GameConnectorTestAccessor;
+
     GameConnector();
     ~GameConnector();
     

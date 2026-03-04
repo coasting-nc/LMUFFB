@@ -2,6 +2,19 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 12, 2026[/b][/size]
+[b]Version 0.7.121 - Transition Trace Logging & Logger Enhancements[/b]
+
+[b]New release[/b] (0.7.121): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Discrete Transition Logging[/b]: Implemented a "Transition Trace" system that records key game state changes (e.g., entering driving, pausing, returning to pits, AI taking control) to the debug log file. This provides high-fidelity diagnostic data for troubleshooting FFB anomalies without cluttering the console during gameplay. (#245)
+[*][b]Background Diagnostics[/b]: Transition logs are written exclusively to the `lmuffb_debug.log` file. This ensures that the history of your session is preserved for analysis if you encounter a bug or crash.
+[*][b]Logger Improvements[/b]: Enhanced the internal logging system with larger buffers and improved file handling, ensuring that complex state snapshots are recorded reliably and clearly.
+[/list]
+
+---
+
 [size=5][b]March 11, 2026[/b][/size]
 [b]Version 0.7.120 - Console Spam Reduction & Health Monitoring Update[/b]
 

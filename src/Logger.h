@@ -21,18 +21,21 @@ public:
 
     void Init(const std::string& filename) {
         std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_file.is_open()) {
+            m_file.close();
+        }
         m_filename = filename;
         m_file.open(m_filename, std::ios::out | std::ios::trunc);
         if (m_file.is_open()) {
             m_initialized = true;
-            _LogNoLock("Logger Initialized. Version: " + std::string(LMUFFB_VERSION));
+            _LogNoLock("Logger Initialized. Version: " + std::string(LMUFFB_VERSION), true);
         }
     }
 
     void Log(const char* fmt, ...) {
         if (!m_initialized) return;
 
-        char buffer[1024];
+        char buffer[2048]; // Increased buffer for complex transition logs
         va_list args;
         va_start(args, fmt);
         vsnprintf(buffer, sizeof(buffer), fmt, args);
@@ -41,12 +44,33 @@ public:
         std::string message(buffer);
 
         std::lock_guard<std::mutex> lock(m_mutex);
-        _LogNoLock(message);
+        _LogNoLock(message, true);
+    }
+
+    // Log to file only, not to console
+    void LogFile(const char* fmt, ...) {
+        if (!m_initialized) return;
+
+        char buffer[2048];
+        va_list args;
+        va_start(args, fmt);
+        vsnprintf(buffer, sizeof(buffer), fmt, args);
+        va_end(args);
+
+        std::string message(buffer);
+
+        std::lock_guard<std::mutex> lock(m_mutex);
+        _LogNoLock(message, false);
     }
 
     // Helper for std::string
     void LogStr(const std::string& msg) {
         Log("%s", msg.c_str());
+    }
+
+    // Helper for std::string (file only)
+    void LogFileStr(const std::string& msg) {
+        LogFile("%s", msg.c_str());
     }
 
     // Helper for error logging with GetLastError()
@@ -67,7 +91,7 @@ private:
         }
     }
 
-    void _LogNoLock(const std::string& message) {
+    void _LogNoLock(const std::string& message, bool toConsole) {
         if (!m_file.is_open()) return;
 
         // Timestamp
@@ -83,8 +107,10 @@ private:
         m_file << "[" << std::put_time(&time_info, "%H:%M:%S") << "] " << message << "\n";
         m_file.flush(); // Critical for crash debugging
 
-        // Also print to console for consistency
-        std::cout << "[Log] " << message << std::endl;
+        if (toConsole) {
+            // Also print to console for consistency
+            std::cout << "[Log] " << message << std::endl;
+        }
     }
 
     std::string m_filename;
