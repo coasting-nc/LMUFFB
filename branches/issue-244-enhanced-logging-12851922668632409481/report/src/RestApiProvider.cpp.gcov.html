@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-04 19:41:59</td>
+            <td class="headerValue">2026-03-04 21:13:53</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryMed">87.5&nbsp;%</td>
@@ -105,7 +105,7 @@
 <span id="L34"><span class="lineNum">      34</span>                 :             :         try {</span>
 <span id="L35"><span class="lineNum">      35</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :             this-&gt;PerformRequest(port);</span></span>
 <span id="L36"><span class="lineNum">      36</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         } catch (...) {</span></span>
-<span id="L37"><span class="lineNum">      37</span>   [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaUNC">           0 :             Logger::Get().Log(&quot;RestApiProvider: Unexpected exception in request thread&quot;);</span></span>
+<span id="L37"><span class="lineNum">      37</span>   [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaUNC">           0 :             Logger::Get().LogFile(&quot;RestApiProvider: Unexpected exception in request thread&quot;);</span></span>
 <span id="L38"><span class="lineNum">      38</span>                 :<span class="tlaUNC">           0 :         }</span></span>
 <span id="L39"><span class="lineNum">      39</span>                 :<span class="tlaGNC tlaBgGNC">           2 :         this-&gt;m_isRequesting = false;</span></span>
 <span id="L40"><span class="lineNum">      40</span>                 :<span class="tlaGNC">           4 :     });</span></span>
@@ -137,16 +137,16 @@
 <span id="L66"><span class="lineNum">      66</span>                 :             :             InternetCloseHandle(hConnect);</span>
 <span id="L67"><span class="lineNum">      67</span>                 :             :             success = true;</span>
 <span id="L68"><span class="lineNum">      68</span>                 :             :         } else {</span>
-<span id="L69"><span class="lineNum">      69</span>                 :             :             Logger::Get().Log(&quot;RestApiProvider: Failed to open URL (Port %d)&quot;, port);</span>
+<span id="L69"><span class="lineNum">      69</span>                 :             :             Logger::Get().LogFile(&quot;RestApiProvider: Failed to open URL (Port %d)&quot;, port);</span>
 <span id="L70"><span class="lineNum">      70</span>                 :             :         }</span>
 <span id="L71"><span class="lineNum">      71</span>                 :             :         InternetCloseHandle(hInternet);</span>
 <span id="L72"><span class="lineNum">      72</span>                 :             :     } else {</span>
-<span id="L73"><span class="lineNum">      73</span>                 :             :         Logger::Get().Log(&quot;RestApiProvider: Failed to initialize WinINet&quot;);</span>
+<span id="L73"><span class="lineNum">      73</span>                 :             :         Logger::Get().LogFile(&quot;RestApiProvider: Failed to initialize WinINet&quot;);</span>
 <span id="L74"><span class="lineNum">      74</span>                 :             :     }</span>
 <span id="L75"><span class="lineNum">      75</span>                 :             : #else</span>
 <span id="L76"><span class="lineNum">      76</span>                 :             :     // Mock for Linux/Testing</span>
 <span id="L77"><span class="lineNum">      77</span>                 :             :     // In real tests, we might want to inject this mock behavior</span>
-<span id="L78"><span class="lineNum">      78</span>   [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           2 :     Logger::Get().Log(&quot;RestApiProvider: Mock request on Linux (Port %d)&quot;, port);</span></span>
+<span id="L78"><span class="lineNum">      78</span>   [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           2 :     Logger::Get().LogFile(&quot;RestApiProvider: Mock request on Linux (Port %d)&quot;, port);</span></span>
 <span id="L79"><span class="lineNum">      79</span>                 :             :     // For now, do nothing, we will mock ParseSteeringLock in tests</span>
 <span id="L80"><span class="lineNum">      80</span>                 :             : #endif</span>
 <span id="L81"><span class="lineNum">      81</span>                 :             : </span>
@@ -155,9 +155,9 @@
 <span id="L83"><span class="lineNum">      83</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC tlaBgUNC">           0 :         float range = ParseSteeringLock(response);</span></span>
 <span id="L84"><span class="lineNum">      84</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :         if (range &gt; 0.0f) {</span></span>
 <span id="L85"><span class="lineNum">      85</span>                 :<span class="tlaUNC">           0 :             m_fallbackRangeDeg = range;</span></span>
-<span id="L86"><span class="lineNum">      86</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC">           0 :             Logger::Get().Log(&quot;RestApiProvider: Retrieved steering range: %.1f deg&quot;, range);</span></span>
+<span id="L86"><span class="lineNum">      86</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC">           0 :             Logger::Get().LogFile(&quot;RestApiProvider: Retrieved steering range: %.1f deg&quot;, range);</span></span>
 <span id="L87"><span class="lineNum">      87</span>                 :             :         } else {</span>
-<span id="L88"><span class="lineNum">      88</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC">           0 :             Logger::Get().Log(&quot;RestApiProvider: Could not parse VM_STEER_LOCK from response&quot;);</span></span>
+<span id="L88"><span class="lineNum">      88</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC">           0 :             Logger::Get().LogFile(&quot;RestApiProvider: Could not parse VM_STEER_LOCK from response&quot;);</span></span>
 <span id="L89"><span class="lineNum">      89</span>                 :             :         }</span>
 <span id="L90"><span class="lineNum">      90</span>                 :             :     }</span>
 <span id="L91"><span class="lineNum">      91</span>                 :<span class="tlaGNC tlaBgGNC">           2 : }</span></span>

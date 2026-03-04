@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-04 19:41:59</td>
+            <td class="headerValue">2026-03-04 21:13:53</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -136,12 +136,12 @@
 <span id="L65"><span class="lineNum">      65</span>                 :<span class="tlaGNC">           3 :     }</span></span>
 <span id="L66"><span class="lineNum">      66</span>                 :             : </span>
 <span id="L67"><span class="lineNum">      67</span>                 :<span class="tlaGNC">           2 :     bool OpenPresetFileDialog(std::string&amp; outPath) override {</span></span>
-<span id="L68"><span class="lineNum">      68</span>                 :<span class="tlaGNC">           2 :         Logger::Get().Log(&quot;[GUI] File Dialog not implemented on Linux yet.&quot;);</span></span>
+<span id="L68"><span class="lineNum">      68</span>                 :<span class="tlaGNC">           2 :         Logger::Get().LogFile(&quot;[GUI] File Dialog not implemented on Linux yet.&quot;);</span></span>
 <span id="L69"><span class="lineNum">      69</span>                 :<span class="tlaGNC">           2 :         return false;</span></span>
 <span id="L70"><span class="lineNum">      70</span>                 :             :     }</span>
 <span id="L71"><span class="lineNum">      71</span>                 :             : </span>
 <span id="L72"><span class="lineNum">      72</span>                 :<span class="tlaGNC">           2 :     bool SavePresetFileDialog(std::string&amp; outPath, const std::string&amp; defaultName) override {</span></span>
-<span id="L73"><span class="lineNum">      73</span>                 :<span class="tlaGNC">           2 :         Logger::Get().Log(&quot;[GUI] File Dialog not implemented on Linux yet.&quot;);</span></span>
+<span id="L73"><span class="lineNum">      73</span>                 :<span class="tlaGNC">           2 :         Logger::Get().LogFile(&quot;[GUI] File Dialog not implemented on Linux yet.&quot;);</span></span>
 <span id="L74"><span class="lineNum">      74</span>                 :<span class="tlaGNC">           2 :         return false;</span></span>
 <span id="L75"><span class="lineNum">      75</span>                 :             :     }</span>
 <span id="L76"><span class="lineNum">      76</span>                 :             : </span>
@@ -172,7 +172,7 @@
 <span id="L101"><span class="lineNum">     101</span>                 :             : #if defined(ENABLE_IMGUI) &amp;&amp; !defined(HEADLESS_GUI)</span>
 <span id="L102"><span class="lineNum">     102</span>                 :             : </span>
 <span id="L103"><span class="lineNum">     103</span>                 :             : static void glfw_error_callback(int error, const char* description) {</span>
-<span id="L104"><span class="lineNum">     104</span>                 :             :     Logger::Get().Log(&quot;Glfw Error %d: %s&quot;, error, description);</span>
+<span id="L104"><span class="lineNum">     104</span>                 :             :     Logger::Get().LogFile(&quot;Glfw Error %d: %s&quot;, error, description);</span>
 <span id="L105"><span class="lineNum">     105</span>                 :             : }</span>
 <span id="L106"><span class="lineNum">     106</span>                 :             : </span>
 <span id="L107"><span class="lineNum">     107</span>                 :             : bool GuiLayer::Init() {</span>
@@ -258,7 +258,7 @@
 <span id="L187"><span class="lineNum">     187</span>                 :             : #else</span>
 <span id="L188"><span class="lineNum">     188</span>                 :             : // Stub Implementation for Headless Builds (or if IMGUI disabled)</span>
 <span id="L189"><span class="lineNum">     189</span>                 :<span class="tlaGNC">           1 : bool GuiLayer::Init() {</span></span>
-<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">           1 :     Logger::Get().Log(&quot;[GUI] Disabled (Headless Mode)&quot;);</span></span>
+<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">           1 :     Logger::Get().LogFile(&quot;[GUI] Disabled (Headless Mode)&quot;);</span></span>
 <span id="L191"><span class="lineNum">     191</span>                 :<span class="tlaGNC">           1 :     return true;</span></span>
 <span id="L192"><span class="lineNum">     192</span>                 :             : }</span>
 <span id="L193"><span class="lineNum">     193</span>                 :<span class="tlaGNC">           1 : void GuiLayer::Shutdown(FFBEngine&amp; engine) {</span></span>

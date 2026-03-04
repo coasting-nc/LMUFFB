@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-04 19:41:59</td>
+            <td class="headerValue">2026-03-04 21:13:53</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">92.3&nbsp;%</td>
@@ -94,10 +94,10 @@
 <span id="L23"><span class="lineNum">      23</span>                 :             : }</span>
 <span id="L24"><span class="lineNum">      24</span>                 :             : </span>
 <span id="L25"><span class="lineNum">      25</span>                 :             : // Keep existing implementations</span>
-<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC tlaBgGNC">       12291 : DirectInputFFB&amp; DirectInputFFB::Get() {</span></span>
-<span id="L27"><span class="lineNum">      27</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 12290 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       12291 :     static DirectInputFFB instance;</span></span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC tlaBgGNC">       12288 : DirectInputFFB&amp; DirectInputFFB::Get() {</span></span>
+<span id="L27"><span class="lineNum">      27</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 12287 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       12288 :     static DirectInputFFB instance;</span></span>
 <span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaUNC" title="Branch 6 was not taken"> - </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span>]
-<span id="L28"><span class="lineNum">      28</span>                 :<span class="tlaGNC">       12291 :     return instance;</span></span>
+<span id="L28"><span class="lineNum">      28</span>                 :<span class="tlaGNC">       12288 :     return instance;</span></span>
 <span id="L29"><span class="lineNum">      29</span>                 :             : }</span>
 <span id="L30"><span class="lineNum">      30</span>                 :             : </span>
 <span id="L31"><span class="lineNum">      31</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 : DirectInputFFB::DirectInputFFB() {}</span></span>
@@ -224,13 +224,13 @@
 <span id="L152"><span class="lineNum">     152</span>                 :<span class="tlaGNC">           6 :     m_hwnd = hwnd;</span></span>
 <span id="L153"><span class="lineNum">     153</span>                 :             : #ifdef _WIN32</span>
 <span id="L154"><span class="lineNum">     154</span>                 :             :     if (FAILED(DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&amp;m_pDI, NULL))) {</span>
-<span id="L155"><span class="lineNum">     155</span>                 :             :         Logger::Get().Log(&quot;[DI] Failed to create DirectInput8 interface.&quot;);</span>
+<span id="L155"><span class="lineNum">     155</span>                 :             :         Logger::Get().LogFile(&quot;[DI] Failed to create DirectInput8 interface.&quot;);</span>
 <span id="L156"><span class="lineNum">     156</span>                 :             :         return false;</span>
 <span id="L157"><span class="lineNum">     157</span>                 :             :     }</span>
-<span id="L158"><span class="lineNum">     158</span>                 :             :     Logger::Get().Log(&quot;[DI] Initialized.&quot;);</span>
+<span id="L158"><span class="lineNum">     158</span>                 :             :     Logger::Get().LogFile(&quot;[DI] Initialized.&quot;);</span>
 <span id="L159"><span class="lineNum">     159</span>                 :             :     return true;</span>
 <span id="L160"><span class="lineNum">     160</span>                 :             : #else</span>
-<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">           6 :     Logger::Get().Log(&quot;[DI] Mock Initialized (Non-Windows).&quot;);</span></span>
+<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">           6 :     Logger::Get().LogFile(&quot;[DI] Mock Initialized (Non-Windows).&quot;);</span></span>
 <span id="L162"><span class="lineNum">     162</span>                 :<span class="tlaGNC">           6 :     return true;</span></span>
 <span id="L163"><span class="lineNum">     163</span>                 :             : #endif</span>
 <span id="L164"><span class="lineNum">     164</span>                 :             : }</span>
@@ -290,7 +290,7 @@
 <span id="L218"><span class="lineNum">     218</span>                 :<span class="tlaGNC">           8 :     m_isExclusive = false;</span></span>
 <span id="L219"><span class="lineNum">     219</span>                 :<span class="tlaGNC">           8 :     m_deviceName = &quot;None&quot;;</span></span>
 <span id="L220"><span class="lineNum">     220</span>                 :             : #ifdef _WIN32</span>
-<span id="L221"><span class="lineNum">     221</span>                 :             :     Logger::Get().Log(&quot;[DI] Device released by user.&quot;);</span>
+<span id="L221"><span class="lineNum">     221</span>                 :             :     Logger::Get().LogFile(&quot;[DI] Device released by user.&quot;);</span>
 <span id="L222"><span class="lineNum">     222</span>                 :             : #endif</span>
 <span id="L223"><span class="lineNum">     223</span>                 :<span class="tlaGNC">           8 : }</span></span>
 <span id="L224"><span class="lineNum">     224</span>                 :             : </span>
@@ -301,15 +301,15 @@
 <span id="L229"><span class="lineNum">     229</span>                 :             :     // Cleanup old using new method</span>
 <span id="L230"><span class="lineNum">     230</span>                 :             :     ReleaseDevice();</span>
 <span id="L231"><span class="lineNum">     231</span>                 :             : </span>
-<span id="L232"><span class="lineNum">     232</span>                 :             :     Logger::Get().Log(&quot;[DI] Attempting to create device...&quot;);</span>
+<span id="L232"><span class="lineNum">     232</span>                 :             :     Logger::Get().LogFile(&quot;[DI] Attempting to create device...&quot;);</span>
 <span id="L233"><span class="lineNum">     233</span>                 :             :     if (FAILED(((IDirectInput8*)m_pDI)-&gt;CreateDevice(guid, (IDirectInputDevice8**)&amp;m_pDevice, NULL))) {</span>
-<span id="L234"><span class="lineNum">     234</span>                 :             :         Logger::Get().Log(&quot;[DI] Failed to create device.&quot;);</span>
+<span id="L234"><span class="lineNum">     234</span>                 :             :         Logger::Get().LogFile(&quot;[DI] Failed to create device.&quot;);</span>
 <span id="L235"><span class="lineNum">     235</span>                 :             :         return false;</span>
 <span id="L236"><span class="lineNum">     236</span>                 :             :     }</span>
 <span id="L237"><span class="lineNum">     237</span>                 :             : </span>
-<span id="L238"><span class="lineNum">     238</span>                 :             :     Logger::Get().Log(&quot;[DI] Setting Data Format...&quot;);</span>
+<span id="L238"><span class="lineNum">     238</span>                 :             :     Logger::Get().LogFile(&quot;[DI] Setting Data Format...&quot;);</span>
 <span id="L239"><span class="lineNum">     239</span>                 :             :     if (FAILED(((IDirectInputDevice8*)m_pDevice)-&gt;SetDataFormat(&amp;c_dfDIJoystick))) {</span>
-<span id="L240"><span class="lineNum">     240</span>                 :             :         Logger::Get().Log(&quot;[DI] Failed to set data format.&quot;);</span>
+<span id="L240"><span class="lineNum">     240</span>                 :             :         Logger::Get().LogFile(&quot;[DI] Failed to set data format.&quot;);</span>
 <span id="L241"><span class="lineNum">     241</span>                 :             :         return false;</span>
 <span id="L242"><span class="lineNum">     242</span>                 :             :     }</span>
 <span id="L243"><span class="lineNum">     243</span>                 :             : </span>
@@ -317,40 +317,40 @@
 <span id="L245"><span class="lineNum">     245</span>                 :             :     m_isExclusive = false;</span>
 <span id="L246"><span class="lineNum">     246</span>                 :             : </span>
 <span id="L247"><span class="lineNum">     247</span>                 :             :     // Attempt 1: Exclusive/Background (Best for FFB)</span>
-<span id="L248"><span class="lineNum">     248</span>                 :             :     Logger::Get().Log(&quot;[DI] Attempting to set Cooperative Level (Exclusive | Background)...&quot;);</span>
+<span id="L248"><span class="lineNum">     248</span>                 :             :     Logger::Get().LogFile(&quot;[DI] Attempting to set Cooperative Level (Exclusive | Background)...&quot;);</span>
 <span id="L249"><span class="lineNum">     249</span>                 :             :     HRESULT hr = ((IDirectInputDevice8*)m_pDevice)-&gt;SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);</span>
 <span id="L250"><span class="lineNum">     250</span>                 :             :     </span>
 <span id="L251"><span class="lineNum">     251</span>                 :             :     if (SUCCEEDED(hr)) {</span>
 <span id="L252"><span class="lineNum">     252</span>                 :             :         m_isExclusive = true;</span>
-<span id="L253"><span class="lineNum">     253</span>                 :             :         Logger::Get().Log(&quot;[DI] Cooperative Level set to EXCLUSIVE.&quot;);</span>
+<span id="L253"><span class="lineNum">     253</span>                 :             :         Logger::Get().LogFile(&quot;[DI] Cooperative Level set to EXCLUSIVE.&quot;);</span>
 <span id="L254"><span class="lineNum">     254</span>                 :             :     } else {</span>
 <span id="L255"><span class="lineNum">     255</span>                 :             :         // Fallback: Non-Exclusive</span>
-<span id="L256"><span class="lineNum">     256</span>                 :             :         Logger::Get().Log(&quot;[DI] Exclusive mode failed (Error: 0x%08X). Retrying in Non-Exclusive mode...&quot;, hr);</span>
+<span id="L256"><span class="lineNum">     256</span>                 :             :         Logger::Get().LogFile(&quot;[DI] Exclusive mode failed (Error: 0x%08X). Retrying in Non-Exclusive mode...&quot;, hr);</span>
 <span id="L257"><span class="lineNum">     257</span>                 :             :         hr = ((IDirectInputDevice8*)m_pDevice)-&gt;SetCooperativeLevel(m_hwnd, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);</span>
 <span id="L258"><span class="lineNum">     258</span>                 :             :         </span>
 <span id="L259"><span class="lineNum">     259</span>                 :             :         if (SUCCEEDED(hr)) {</span>
 <span id="L260"><span class="lineNum">     260</span>                 :             :             m_isExclusive = false;</span>
-<span id="L261"><span class="lineNum">     261</span>                 :             :             Logger::Get().Log(&quot;[DI] Cooperative Level set to NON-EXCLUSIVE.&quot;);</span>
+<span id="L261"><span class="lineNum">     261</span>                 :             :             Logger::Get().LogFile(&quot;[DI] Cooperative Level set to NON-EXCLUSIVE.&quot;);</span>
 <span id="L262"><span class="lineNum">     262</span>                 :             :         }</span>
 <span id="L263"><span class="lineNum">     263</span>                 :             :     }</span>
 <span id="L264"><span class="lineNum">     264</span>                 :             :     </span>
 <span id="L265"><span class="lineNum">     265</span>                 :             :     if (FAILED(hr)) {</span>
-<span id="L266"><span class="lineNum">     266</span>                 :             :         Logger::Get().Log(&quot;[DI] Failed to set cooperative level (Non-Exclusive failed too).&quot;);</span>
+<span id="L266"><span class="lineNum">     266</span>                 :             :         Logger::Get().LogFile(&quot;[DI] Failed to set cooperative level (Non-Exclusive failed too).&quot;);</span>
 <span id="L267"><span class="lineNum">     267</span>                 :             :         return false;</span>
 <span id="L268"><span class="lineNum">     268</span>                 :             :     }</span>
 <span id="L269"><span class="lineNum">     269</span>                 :             : </span>
-<span id="L270"><span class="lineNum">     270</span>                 :             :     Logger::Get().Log(&quot;[DI] Acquiring device...&quot;);</span>
+<span id="L270"><span class="lineNum">     270</span>                 :             :     Logger::Get().LogFile(&quot;[DI] Acquiring device...&quot;);</span>
 <span id="L271"><span class="lineNum">     271</span>                 :             :     if (FAILED(((IDirectInputDevice8*)m_pDevice)-&gt;Acquire())) {</span>
-<span id="L272"><span class="lineNum">     272</span>                 :             :         Logger::Get().Log(&quot;[DI] Failed to acquire device.&quot;);</span>
+<span id="L272"><span class="lineNum">     272</span>                 :             :         Logger::Get().LogFile(&quot;[DI] Failed to acquire device.&quot;);</span>
 <span id="L273"><span class="lineNum">     273</span>                 :             :         // Don't return false yet, might just need focus/retry</span>
 <span id="L274"><span class="lineNum">     274</span>                 :             :     } else {</span>
-<span id="L275"><span class="lineNum">     275</span>                 :             :         Logger::Get().Log(&quot;[DI] Device Acquired in %s mode.&quot;, (m_isExclusive ? &quot;EXCLUSIVE&quot; : &quot;NON-EXCLUSIVE&quot;));</span>
+<span id="L275"><span class="lineNum">     275</span>                 :             :         Logger::Get().LogFile(&quot;[DI] Device Acquired in %s mode.&quot;, (m_isExclusive ? &quot;EXCLUSIVE&quot; : &quot;NON-EXCLUSIVE&quot;));</span>
 <span id="L276"><span class="lineNum">     276</span>                 :             :     }</span>
 <span id="L277"><span class="lineNum">     277</span>                 :             : </span>
 <span id="L278"><span class="lineNum">     278</span>                 :             :     // Create Effect</span>
 <span id="L279"><span class="lineNum">     279</span>                 :             :     if (CreateEffect()) {</span>
 <span id="L280"><span class="lineNum">     280</span>                 :             :        m_active = true;</span>
-<span id="L281"><span class="lineNum">     281</span>                 :             :         Logger::Get().Log(&quot;[DI] SUCCESS: Physical Device fully initialized and FFB Effect created.&quot;);</span>
+<span id="L281"><span class="lineNum">     281</span>                 :             :         Logger::Get().LogFile(&quot;[DI] SUCCESS: Physical Device fully initialized and FFB Effect created.&quot;);</span>
 <span id="L282"><span class="lineNum">     282</span>                 :             :  </span>
 <span id="L283"><span class="lineNum">     283</span>                 :             :         return true;</span>
 <span id="L284"><span class="lineNum">     284</span>                 :             :     }</span>
@@ -390,7 +390,7 @@
 <span id="L318"><span class="lineNum">     318</span>                 :             :     eff.dwStartDelay = 0;</span>
 <span id="L319"><span class="lineNum">     319</span>                 :             : </span>
 <span id="L320"><span class="lineNum">     320</span>                 :             :     if (FAILED(((IDirectInputDevice8*)m_pDevice)-&gt;CreateEffect(GUID_ConstantForce, &amp;eff, (IDirectInputEffect**)&amp;m_pEffect, NULL))) {</span>
-<span id="L321"><span class="lineNum">     321</span>                 :             :         Logger::Get().Log(&quot;[DI] Failed to create Constant Force effect.&quot;);</span>
+<span id="L321"><span class="lineNum">     321</span>                 :             :         Logger::Get().LogFile(&quot;[DI] Failed to create Constant Force effect.&quot;);</span>
 <span id="L322"><span class="lineNum">     322</span>                 :             :         return false;</span>
 <span id="L323"><span class="lineNum">     323</span>                 :             :     }</span>
 <span id="L324"><span class="lineNum">     324</span>                 :             :     </span>
@@ -402,8 +402,8 @@
 <span id="L330"><span class="lineNum">     330</span>                 :             : #endif</span>
 <span id="L331"><span class="lineNum">     331</span>                 :             : }</span>
 <span id="L332"><span class="lineNum">     332</span>                 :             : </span>
-<span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaGNC tlaBgGNC">       11908 : bool DirectInputFFB::UpdateForce(double normalizedForce) {</span></span>
-<span id="L334"><span class="lineNum">     334</span>         [<span class="tlaGBC" title="Branch 0 was taken 11902 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6 times"> + </span>]:<span class="tlaGNC">       11908 :     if (!m_active) return false;</span></span>
+<span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaGNC tlaBgGNC">       11905 : bool DirectInputFFB::UpdateForce(double normalizedForce) {</span></span>
+<span id="L334"><span class="lineNum">     334</span>         [<span class="tlaGBC" title="Branch 0 was taken 11899 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6 times"> + </span>]:<span class="tlaGNC">       11905 :     if (!m_active) return false;</span></span>
 <span id="L335"><span class="lineNum">     335</span>                 :             : </span>
 <span id="L336"><span class="lineNum">     336</span>                 :             :     // Sanity Check: If 0.0, stop effect to prevent residual hum</span>
 <span id="L337"><span class="lineNum">     337</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">           6 :     if (std::abs(normalizedForce) &lt; 0.00001) normalizedForce = 0.0;</span></span>
@@ -452,8 +452,8 @@
 <span id="L380"><span class="lineNum">     380</span>                 :             :             // 2. Log the Context (Rate limited)</span>
 <span id="L381"><span class="lineNum">     381</span>                 :             :             static uint32_t lastLogTime = 0;</span>
 <span id="L382"><span class="lineNum">     382</span>                 :             :             if (GetTickCount() - lastLogTime &gt; DIAGNOSTIC_LOG_INTERVAL_MS) {</span>
-<span id="L383"><span class="lineNum">     383</span>                 :             :                 Logger::Get().Log(&quot;[DI ERROR] Failed to update force. Error: %s (0x%08X)&quot;, errorType.c_str(), hr);</span>
-<span id="L384"><span class="lineNum">     384</span>                 :             :                 Logger::Get().Log(&quot;           Active Window: [%s]&quot;, GetActiveWindowTitle().c_str());</span>
+<span id="L383"><span class="lineNum">     383</span>                 :             :                 Logger::Get().LogFile(&quot;[DI ERROR] Failed to update force. Error: %s (0x%08X)&quot;, errorType.c_str(), hr);</span>
+<span id="L384"><span class="lineNum">     384</span>                 :             :                 Logger::Get().LogFile(&quot;           Active Window: [%s]&quot;, GetActiveWindowTitle().c_str());</span>
 <span id="L385"><span class="lineNum">     385</span>                 :             :                 lastLogTime = GetTickCount();</span>
 <span id="L386"><span class="lineNum">     386</span>                 :             :             }</span>
 <span id="L387"><span class="lineNum">     387</span>                 :             : </span>
@@ -471,7 +471,7 @@
 <span id="L399"><span class="lineNum">     399</span>                 :             :                     // If we are stuck in &quot;Shared Mode&quot; (0x80040205), standard Acquire() </span>
 <span id="L400"><span class="lineNum">     400</span>                 :             :                     // just re-confirms Shared Mode. We must force a mode switch.</span>
 <span id="L401"><span class="lineNum">     401</span>                 :             :                     if (hr == DIERR_NOTEXCLUSIVEACQUIRED) {</span>
-<span id="L402"><span class="lineNum">     402</span>                 :             :                         Logger::Get().Log(&quot;[DI] Attempting to promote to Exclusive Mode...&quot;);</span>
+<span id="L402"><span class="lineNum">     402</span>                 :             :                         Logger::Get().LogFile(&quot;[DI] Attempting to promote to Exclusive Mode...&quot;);</span>
 <span id="L403"><span class="lineNum">     403</span>                 :             :                         ((IDirectInputDevice8*)m_pDevice)-&gt;Unacquire();</span>
 <span id="L404"><span class="lineNum">     404</span>                 :             :                         ((IDirectInputDevice8*)m_pDevice)-&gt;SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);</span>
 <span id="L405"><span class="lineNum">     405</span>                 :             :                     }</span>
@@ -483,7 +483,7 @@
 <span id="L411"><span class="lineNum">     411</span>                 :             :                         // Log recovery success (rate-limited for diagnostics)</span>
 <span id="L412"><span class="lineNum">     412</span>                 :             :                         static uint32_t lastSuccessLog = 0;</span>
 <span id="L413"><span class="lineNum">     413</span>                 :             :                         if (GetTickCount() - lastSuccessLog &gt; 5000) { // 5 second cooldown</span>
-<span id="L414"><span class="lineNum">     414</span>                 :             :                             Logger::Get().Log(&quot;[DI RECOVERY] Device re-acquired successfully. FFB motor restarted.&quot;);</span>
+<span id="L414"><span class="lineNum">     414</span>                 :             :                             Logger::Get().LogFile(&quot;[DI RECOVERY] Device re-acquired successfully. FFB motor restarted.&quot;);</span>
 <span id="L415"><span class="lineNum">     415</span>                 :             :                             lastSuccessLog = GetTickCount();</span>
 <span id="L416"><span class="lineNum">     416</span>                 :             :                         }</span>
 <span id="L417"><span class="lineNum">     417</span>                 :             :                         </span>
@@ -494,7 +494,7 @@
 <span id="L422"><span class="lineNum">     422</span>                 :             :                             // One-time notification when Dynamic Promotion first succeeds</span>
 <span id="L423"><span class="lineNum">     423</span>                 :             :                             static bool firstPromotionSuccess = false;</span>
 <span id="L424"><span class="lineNum">     424</span>                 :             :                             if (!firstPromotionSuccess) {</span>
-<span id="L425"><span class="lineNum">     425</span>                 :             :                                 Logger::Get().Log(&quot;\n&quot;</span>
+<span id="L425"><span class="lineNum">     425</span>                 :             :                                 Logger::Get().LogFile(&quot;\n&quot;</span>
 <span id="L426"><span class="lineNum">     426</span>                 :             :                                           &quot;========================================\n&quot;</span>
 <span id="L427"><span class="lineNum">     427</span>                 :             :                                           &quot;[SUCCESS] Dynamic Promotion Active!\n&quot;</span>
 <span id="L428"><span class="lineNum">     428</span>                 :             :                                           &quot;lmuFFB has successfully recovered exclusive\n&quot;</span>
