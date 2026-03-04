@@ -132,8 +132,13 @@ bool GameConnector::CopyTelemetry(SharedMemoryObjectOut& dest) {
             uint8_t idx = dest.telemetry.playerVehicleIdx;
             if (idx < 104) {
                 double currentET = dest.telemetry.telemInfo[idx].mElapsedTime;
-                if (currentET != m_lastElapsedTime) {
+                double currentSteer = dest.telemetry.telemInfo[idx].mUnfilteredSteering;
+
+                // Heartbeat: Update timer if game is running (ET changes)
+                // OR if user is moving the wheel (Steering changes) - Issue #184
+                if (currentET != m_lastElapsedTime || std::abs(currentSteer - m_lastSteering) > 0.0001) {
                     m_lastElapsedTime = currentET;
+                    m_lastSteering = currentSteer;
                     m_lastUpdateLocalTime = std::chrono::steady_clock::now();
                 }
             }

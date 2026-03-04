@@ -11,6 +11,7 @@ int g_test_cases_failed = 0;
 
 // --- Tag Filtering Globals ---
 std::vector<std::string> g_tag_filter;
+std::vector<std::string> g_name_filter;
 std::vector<std::string> g_tag_exclude;
 std::vector<std::string> g_category_filter;
 bool g_enable_tag_filtering = false;
@@ -20,8 +21,14 @@ void ParseTagArguments(int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         
+        // --filter=test_name
+        if (arg.find("--filter=") == 0) {
+            g_enable_tag_filtering = true;
+            std::string filter = arg.substr(9);
+            g_name_filter.push_back(filter);
+        }
         // --tag=Physics,Math
-        if (arg.find("--tag=") == 0) {
+        else if (arg.find("--tag=") == 0) {
             g_enable_tag_filtering = true;
             std::string tags_str = arg.substr(6);
             std::stringstream ss(tags_str);
@@ -261,7 +268,7 @@ void Run() {
         
         std::string current_category;
         for (const auto& test : tests) {
-            if (!ShouldRunTest(test.tags, test.category)) continue;
+            if (!ShouldRunTest(test.name, test.tags, test.category)) continue;
 
             if (test.category != current_category) {
                 current_category = test.category;

@@ -50,6 +50,7 @@ private:
 
     // Heartbeat for staleness detection (v0.7.15)
     double m_lastElapsedTime = -1.0;
+    double m_lastSteering = 0.0; // Issue #184: Steering heartbeat
     mutable std::chrono::steady_clock::time_point m_lastUpdateLocalTime;
 
     void _DisconnectLocked();

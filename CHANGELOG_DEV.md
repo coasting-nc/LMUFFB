@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.118] - 2026-03-09
+### Fixed
+- **Garage & Menu FFB Noise (Issue #235)**:
+  - Resolved "grinding" and persistent vibrations reported in the garage and main menus.
+  - Implemented automatic **Filter Reset on Transition**: All high-frequency up-samplers (Holt-Winters, Extrapolators) and smoothing states are now unconditionally reset when FFB is muted (e.g., entering garage or AI driving), eliminating session residuals.
+  - Tightened the **Soft Lock Safety Gate**: Muted FFB now only permits rack-limit forces if the steering is physically beyond the normalized limit (> 1.0) AND the generated force is significant (> 0.5 Nm), rejecting telemetry jitter and small residuals.
+  - Enhanced **Game Heartbeat**: Added steering movement tracking to the `GameConnector`. The application now remains active if the user moves the wheel while the game is paused (preserving Soft Lock safety), but correctly times out and silences when everything is static.
+
+### Testing
+- **New Regression Test**: Added `test_issue_235_garage_noise` in `tests/test_issue_185_fix.cpp` to verify noise rejection and filter resets.
+- **Test Infrastructure**: Improved the test runner's `--filter` and `--tag` logic to use OR relationship for better usability.
+
 ## [0.7.117] - 2026-03-08
 ### Added
 - **High-Frequency Output Up-sampling (Issue #217)**:
