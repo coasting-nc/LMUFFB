@@ -667,6 +667,7 @@ private:
     bool m_was_allowed = true; // Track transition for filter reset
 
     std::string m_current_class_name = "";
+    std::string m_last_handled_vehicle_name = ""; // For car change detection (Issue #238)
 
     void update_static_load_reference(double current_load, double speed, double dt);
     void InitializeLoadReference(const char* className, const char* vehicleName);

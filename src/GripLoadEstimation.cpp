@@ -83,6 +83,9 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
 
     m_smoothed_vibration_mult = 1.0;
 
+    // v0.7.119: Update engine's car name immediately to prevent seeding loop (Issue #238)
+    m_last_handled_vehicle_name = vName;
+
     std::cout << "[FFB] Vehicle Identification -> Detected Class: " << VehicleClassToString(vclass)
               << " | Seed Load: " << m_auto_peak_load << "N" 
               << " (Raw -> Class: " << (className ? className : "Unknown") 
