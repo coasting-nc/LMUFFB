@@ -88,6 +88,7 @@ set(TEST_SOURCES
     test_config_comprehensive.cpp
     test_issue_211_migration.cpp
     test_upsampler_part2.cpp
+    test_issue_238_spam.cpp
     ../src/main.cpp
 )
 

@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.119] - 2026-03-10
+### Fixed
+- **Console Message Spam (Issue #238)**:
+  - Resolved an issue where vehicle identification and normalization reset messages were printed to the console every frame during session transitions.
+  - Implemented immediate synchronization of the engine's internal vehicle identity in the seeding path, preventing redundant initialization calls.
+  - Hardened context string update logic in `FFBEngine::calculate_force` using robust string comparison (`strcmp`) instead of fragile partial-index checks.
+
+### Testing
+- **New Regression Test**: Added `tests/test_issue_238_spam.cpp` to verify that initialization messages and diagnostic warnings are printed exactly once per car change.
+
 ## [0.7.118] - 2026-03-09
 ### Fixed
 - **Garage & Menu FFB Noise (Issue #235)**:
