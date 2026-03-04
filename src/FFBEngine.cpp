@@ -298,7 +298,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Sanity Check: Delta Time (Keep legacy warning if raw dt is broken)
     if (data->mDeltaTime <= DT_EPSILON) {
         if (!m_warned_dt) {
-            Logger::Get().Log("[WARNING] Invalid DeltaTime (<=0). Using default %.4fs.", DEFAULT_DT);
+            Logger::Get().LogFile("[WARNING] Invalid DeltaTime (<=0). Using default %.4fs.", DEFAULT_DT);
             m_warned_dt = true;
         }
         ctx.frame_warn_dt = true;
@@ -312,9 +312,9 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         if (!m_warned_invalid_range) {
             float fallback = RestApiProvider::Get().GetFallbackRangeDeg();
             if (m_rest_api_enabled && fallback > 0.0f) {
-                Logger::Get().Log("[FFB] Invalid Shared Memory Steering Range. Using REST API fallback: %.1f deg", fallback);
+                Logger::Get().LogFile("[FFB] Invalid Shared Memory Steering Range. Using REST API fallback: %.1f deg", fallback);
             } else {
-                Logger::Get().Log("[WARNING] Invalid PhysicalSteeringWheelRange (<=0) for %s. Soft Lock and Steering UI may be incorrect.", upsampled_data->mVehicleName);
+                Logger::Get().LogFile("[WARNING] Invalid PhysicalSteeringWheelRange (<=0) for %s. Soft Lock and Steering UI may be incorrect.", upsampled_data->mVehicleName);
             }
             m_warned_invalid_range = true;
         }
@@ -392,7 +392,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             ctx.avg_load = (kin_load_fl + kin_load_fr) / DUAL_DIVISOR;
         }
         if (!m_warned_load) {
-            Logger::Get().Log("Warning: Data for mTireLoad from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). Using Kinematic Fallback.", data->mVehicleName);
+            Logger::Get().LogFile("Warning: Data for mTireLoad from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). Using Kinematic Fallback.", data->mVehicleName);
             m_warned_load = true;
         }
         ctx.frame_warn_load = true;
@@ -408,7 +408,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
          m_missing_susp_force_frames = (std::max)(0, m_missing_susp_force_frames - 1);
     }
     if (m_missing_susp_force_frames > MISSING_TELEMETRY_WARN_THRESHOLD && !m_warned_susp_force) {
-         Logger::Get().Log("Warning: Data for mSuspForce from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.", data->mVehicleName);
+         Logger::Get().LogFile("Warning: Data for mSuspForce from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.", data->mVehicleName);
          m_warned_susp_force = true;
     }
 
@@ -420,7 +420,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_missing_susp_deflection_frames = (std::max)(0, m_missing_susp_deflection_frames - 1);
     }
     if (m_missing_susp_deflection_frames > MISSING_TELEMETRY_WARN_THRESHOLD && !m_warned_susp_deflection) {
-        Logger::Get().Log("Warning: Data for mSuspensionDeflection from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.", data->mVehicleName);
+        Logger::Get().LogFile("Warning: Data for mSuspensionDeflection from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.", data->mVehicleName);
         m_warned_susp_deflection = true;
     }
 
@@ -432,7 +432,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_missing_lat_force_front_frames = (std::max)(0, m_missing_lat_force_front_frames - 1);
     }
     if (m_missing_lat_force_front_frames > MISSING_TELEMETRY_WARN_THRESHOLD && !m_warned_lat_force_front) {
-         Logger::Get().Log("Warning: Data for mLateralForce (Front) from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.", data->mVehicleName);
+         Logger::Get().LogFile("Warning: Data for mLateralForce (Front) from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.", data->mVehicleName);
          m_warned_lat_force_front = true;
     }
 
@@ -444,7 +444,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_missing_lat_force_rear_frames = (std::max)(0, m_missing_lat_force_rear_frames - 1);
     }
     if (m_missing_lat_force_rear_frames > MISSING_TELEMETRY_WARN_THRESHOLD && !m_warned_lat_force_rear) {
-         Logger::Get().Log("Warning: Data for mLateralForce (Rear) from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.", data->mVehicleName);
+         Logger::Get().LogFile("Warning: Data for mLateralForce (Rear) from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.", data->mVehicleName);
          m_warned_lat_force_rear = true;
     }
 
@@ -456,7 +456,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_missing_vert_deflection_frames = (std::max)(0, m_missing_vert_deflection_frames - 1);
     }
     if (m_missing_vert_deflection_frames > MISSING_TELEMETRY_WARN_THRESHOLD && !m_warned_vert_deflection) {
-        Logger::Get().Log("[WARNING] mVerticalTireDeflection is missing for car: %s. (Likely Encrypted/DLC Content). Road Texture fallback active.", data->mVehicleName);
+        Logger::Get().LogFile("[WARNING] mVerticalTireDeflection is missing for car: %s. (Likely Encrypted/DLC Content). Road Texture fallback active.", data->mVehicleName);
         m_warned_vert_deflection = true;
     }
     
@@ -1207,7 +1207,7 @@ void FFBEngine::ResetNormalization() {
 
     m_smoothed_vibration_mult = 1.0;
 
-    Logger::Get().Log("[FFB] Normalization state reset. Structural Peak: %.2f Nm | Load Peak: %.2f N",
+    Logger::Get().LogFile("[FFB] Normalization state reset. Structural Peak: %.2f Nm | Load Peak: %.2f N",
         m_session_peak_torque, m_auto_peak_load);
 }
 

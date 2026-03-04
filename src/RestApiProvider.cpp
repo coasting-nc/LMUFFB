@@ -34,7 +34,7 @@ void RestApiProvider::RequestSteeringRange(int port) {
         try {
             this->PerformRequest(port);
         } catch (...) {
-            Logger::Get().Log("RestApiProvider: Unexpected exception in request thread");
+            Logger::Get().LogFile("RestApiProvider: Unexpected exception in request thread");
         }
         this->m_isRequesting = false;
     });
@@ -66,16 +66,16 @@ void RestApiProvider::PerformRequest(int port) {
             InternetCloseHandle(hConnect);
             success = true;
         } else {
-            Logger::Get().Log("RestApiProvider: Failed to open URL (Port %d)", port);
+            Logger::Get().LogFile("RestApiProvider: Failed to open URL (Port %d)", port);
         }
         InternetCloseHandle(hInternet);
     } else {
-        Logger::Get().Log("RestApiProvider: Failed to initialize WinINet");
+        Logger::Get().LogFile("RestApiProvider: Failed to initialize WinINet");
     }
 #else
     // Mock for Linux/Testing
     // In real tests, we might want to inject this mock behavior
-    Logger::Get().Log("RestApiProvider: Mock request on Linux (Port %d)", port);
+    Logger::Get().LogFile("RestApiProvider: Mock request on Linux (Port %d)", port);
     // For now, do nothing, we will mock ParseSteeringLock in tests
 #endif
 
@@ -83,9 +83,9 @@ void RestApiProvider::PerformRequest(int port) {
         float range = ParseSteeringLock(response);
         if (range > 0.0f) {
             m_fallbackRangeDeg = range;
-            Logger::Get().Log("RestApiProvider: Retrieved steering range: %.1f deg", range);
+            Logger::Get().LogFile("RestApiProvider: Retrieved steering range: %.1f deg", range);
         } else {
-            Logger::Get().Log("RestApiProvider: Could not parse VM_STEER_LOCK from response");
+            Logger::Get().LogFile("RestApiProvider: Could not parse VM_STEER_LOCK from response");
         }
     }
 }

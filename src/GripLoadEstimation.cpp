@@ -44,7 +44,7 @@ void FFBEngine::update_static_load_reference(double current_load, double speed, 
         if (vName != "Unknown" && vName != "") {
             Config::SetSavedStaticLoad(vName, m_static_front_load);
             Config::m_needs_save = true; // Flag main thread to write to disk
-            Logger::Get().Log("[FFB] Latched and saved static load for %s: %.2fN", vName.c_str(), m_static_front_load);
+            Logger::Get().LogFile("[FFB] Latched and saved static load for %s: %.2fN", vName.c_str(), m_static_front_load);
         }
     }
 
@@ -74,12 +74,12 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     if (Config::GetSavedStaticLoad(vName, saved_load)) {
         m_static_front_load = saved_load;
         m_static_load_latched = true; // Skip the 2-15 m/s learning phase
-        Logger::Get().Log("[FFB] Loaded persistent static load for %s: %.2fN", vName.c_str(), m_static_front_load);
+        Logger::Get().LogFile("[FFB] Loaded persistent static load for %s: %.2fN", vName.c_str(), m_static_front_load);
     } else {
         // Reset static load reference for new car class
         m_static_front_load = m_auto_peak_load * 0.5;
         m_static_load_latched = false;
-        Logger::Get().Log("[FFB] No saved load for %s. Learning required.", vName.c_str());
+        Logger::Get().LogFile("[FFB] No saved load for %s. Learning required.", vName.c_str());
     }
 
     m_smoothed_vibration_mult = 1.0;
@@ -87,7 +87,7 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     // v0.7.119: Update engine's car name immediately to prevent seeding loop (Issue #238)
     m_last_handled_vehicle_name = vName;
 
-    Logger::Get().Log("[FFB] Vehicle Identification -> Detected Class: %s | Seed Load: %.2fN (Raw -> Class: %s, Name: %s)",
+    Logger::Get().LogFile("[FFB] Vehicle Identification -> Detected Class: %s | Seed Load: %.2fN (Raw -> Class: %s, Name: %s)",
         VehicleClassToString(vclass), m_auto_peak_load, (className ? className : "Unknown"), vName.c_str());
 }
 
@@ -226,7 +226,7 @@ GripResult FFBEngine::calculate_grip(const TelemWheelV01& w1,
         result.value = (std::max)(0.2, result.value);
         
         if (!warned_flag) {
-            Logger::Get().Log("Warning: Data for mGripFract from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.", vehicleName);
+            Logger::Get().LogFile("Warning: Data for mGripFract from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.", vehicleName);
             warned_flag = true;
         }
     }

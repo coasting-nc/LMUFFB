@@ -9,18 +9,6 @@
 
 namespace FFBEngineTests {
 
-// Helper to check if a string is in the log file
-bool IsInLog(const std::string& filename, const std::string& pattern) {
-    std::ifstream file(filename);
-    std::string line;
-    while (std::getline(file, line)) {
-        if (line.find(pattern) != std::string::npos) {
-            return true;
-        }
-    }
-    return false;
-}
-
 class GameConnectorTestAccessor {
 public:
     static void CallCheckTransitions(GameConnector& gc, const SharedMemoryObjectOut& data) {

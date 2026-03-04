@@ -176,22 +176,37 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
 
         if (generic.events[i] != m_prevState.eventState[i]) {
             if (generic.events[i] != 0) {
-                const char* eventStr = "Unknown";
-                switch (i) {
-                case SME_ENTER: eventStr = "SME_ENTER"; break;
-                case SME_EXIT: eventStr = "SME_EXIT"; break;
-                case SME_STARTUP: eventStr = "SME_STARTUP"; break;
-                case SME_SHUTDOWN: eventStr = "SME_SHUTDOWN"; break;
-                case SME_LOAD: eventStr = "SME_LOAD"; break;
-                case SME_UNLOAD: eventStr = "SME_UNLOAD"; break;
-                case SME_START_SESSION: eventStr = "SME_START_SESSION"; break;
-                case SME_END_SESSION: eventStr = "SME_END_SESSION"; break;
-                case SME_ENTER_REALTIME: eventStr = "SME_ENTER_REALTIME"; break;
-                case SME_EXIT_REALTIME: eventStr = "SME_EXIT_REALTIME"; break;
-                case SME_INIT_APPLICATION: eventStr = "SME_INIT_APPLICATION"; break;
-                case SME_UNINIT_APPLICATION: eventStr = "SME_UNINIT_APPLICATION"; break;
+                bool shouldLog = true;
+
+                // SME_STARTUP is known to spam values (e.g. 10, 16) in menus. Apply a 5-second cooldown.
+                if (i == SME_STARTUP) {
+                    auto now = std::chrono::steady_clock::now();
+                    auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - m_prevState.lastEventLogTime[i]).count();
+                    if (diff < 5) {
+                        shouldLog = false;
+                    } else {
+                        m_prevState.lastEventLogTime[i] = now;
+                    }
                 }
-                Logger::Get().LogFile("[Transition] Event: %s (%u)", eventStr, generic.events[i]);
+
+                if (shouldLog) {
+                    const char* eventStr = "Unknown";
+                    switch (i) {
+                    case SME_ENTER: eventStr = "SME_ENTER"; break;
+                    case SME_EXIT: eventStr = "SME_EXIT"; break;
+                    case SME_STARTUP: eventStr = "SME_STARTUP"; break;
+                    case SME_SHUTDOWN: eventStr = "SME_SHUTDOWN"; break;
+                    case SME_LOAD: eventStr = "SME_LOAD"; break;
+                    case SME_UNLOAD: eventStr = "SME_UNLOAD"; break;
+                    case SME_START_SESSION: eventStr = "SME_START_SESSION"; break;
+                    case SME_END_SESSION: eventStr = "SME_END_SESSION"; break;
+                    case SME_ENTER_REALTIME: eventStr = "SME_ENTER_REALTIME"; break;
+                    case SME_EXIT_REALTIME: eventStr = "SME_EXIT_REALTIME"; break;
+                    case SME_INIT_APPLICATION: eventStr = "SME_INIT_APPLICATION"; break;
+                    case SME_UNINIT_APPLICATION: eventStr = "SME_UNINIT_APPLICATION"; break;
+                    }
+                    Logger::Get().LogFile("[Transition] Event: %s (%u)", eventStr, generic.events[i]);
+                }
             }
             m_prevState.eventState[i] = generic.events[i];
         }
@@ -209,6 +224,13 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
         Logger::Get().LogFile("[Transition] OptionsLocation: %d -> %d (%s)",
             m_prevState.optionsLocation, generic.appInfo.mOptionsLocation, locStr);
         m_prevState.optionsLocation = generic.appInfo.mOptionsLocation;
+    }
+
+    // 1.1 Options Page
+    if (strncmp(generic.appInfo.mOptionsPage, m_prevState.optionsPage, 31) != 0) {
+        Logger::Get().LogFile("[Transition] OptionsPage: '%s' -> '%s'", m_prevState.optionsPage, generic.appInfo.mOptionsPage);
+        strncpy(m_prevState.optionsPage, generic.appInfo.mOptionsPage, 31);
+        m_prevState.optionsPage[31] = '\0';
     }
 
     // 2. InRealtime (Driving vs Menu)

@@ -74,6 +74,14 @@ public:
         Log("Error in %s: Code %lu", context, errorCode);
     }
 
+    const std::string& GetFilename() const { return m_filename; }
+
+    // For testing
+    void SetTestStream(std::ostream* os) {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_testStream = os;
+    }
+
 private:
     Logger() {}
     ~Logger() noexcept {
@@ -88,6 +96,10 @@ private:
     }
 
     void _LogNoLock(const std::string& message, bool toConsole) {
+        if (m_testStream) {
+            *m_testStream << message << "\n";
+        }
+
         if (m_file.is_open()) {
             // Timestamp
             auto now = std::chrono::system_clock::now();
@@ -105,7 +117,17 @@ private:
 
         if (toConsole) {
             // Also print to console for consistency
-            std::cout << "[Log] " << message << std::endl;
+            // Re-calculate timestamp if not already done (file logging also calculates it)
+            auto now = std::chrono::system_clock::now();
+            auto in_time_t = std::chrono::system_clock::to_time_t(now);
+            std::tm time_info;
+            #ifdef _WIN32
+                localtime_s(&time_info, &in_time_t);
+            #else
+                localtime_r(&in_time_t, &time_info);
+            #endif
+
+            std::cout << "[" << std::put_time(&time_info, "%H:%M:%S") << "] [Log] " << message << std::endl;
         }
     }
 
@@ -113,6 +135,7 @@ private:
     std::ofstream m_file;
     std::mutex m_mutex;
     bool m_initialized = false;
+    std::ostream* m_testStream = nullptr;
 };
 
 #endif // LOGGER_H

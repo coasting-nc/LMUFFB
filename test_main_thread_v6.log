@@ -1,8 +1,8 @@
-[19:25:01] Logger Initialized. Version: 0.7.122
-[19:25:01] [FFB] Loop Started.
-[19:25:01] [Transition] GamePhase: 136 -> 0 (Before Session)
-[19:25:01] [Game] User exited to menu (FFB Muted).
-[19:25:01] [Game] User entered driving session.
-[19:25:02] [FFB] Loop Stopped.
-[19:25:02] [FFB] Loop Started.
-[19:25:02] [FFB] Loop Stopped.
+[20:57:24] Logger Initialized. Version: 0.7.122
+[20:57:24] [FFB] Loop Started.
+[20:57:24] [Transition] GamePhase: 152 -> 0 (Before Session)
+[20:57:24] [Game] User exited to menu (FFB Muted).
+[20:57:24] [Game] User entered driving session.
+[20:57:24] [FFB] Loop Stopped.
+[20:57:24] [FFB] Loop Started.
+[20:57:25] [FFB] Loop Stopped.

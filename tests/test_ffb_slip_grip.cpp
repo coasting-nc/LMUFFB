@@ -507,34 +507,28 @@ TEST_CASE(test_missing_telemetry_warnings, "SlipGrip") {
     data.mVehicleName[sizeof(data.mVehicleName) - 1] = '\0';
 #endif
 
-    // Capture stdout
-    std::stringstream buffer;
-    std::streambuf* prev_cout_buf = std::cout.rdbuf(buffer.rdbuf());
+    std::stringstream logBuffer;
+    Logger::Get().SetTestStream(&logBuffer);
 
     // --- Case 1: Missing Grip ---
     // Trigger missing grip: grip < 0.0001 AND load > 100.
     // CreateBasicTestTelemetry sets grip=0, load=4000. So this should trigger.
     engine.calculate_force(&data);
     
-    std::string output = buffer.str();
-    bool grip_warn = output.find("Warning: Data for mGripFract from the game seems to be missing for this car (TestCar_GT3). (Likely Encrypted/DLC Content)") != std::string::npos;
+    bool grip_warn = logBuffer.str().find("Warning: Data for mGripFract from the game seems to be missing for this car (TestCar_GT3). (Likely Encrypted/DLC Content)") != std::string::npos;
     
     if (grip_warn) {
-        std::cout.rdbuf(prev_cout_buf); // Restore cout
         std::cout << "[PASS] Grip warning triggered with car name." << std::endl;
         g_tests_passed++;
-        std::cout.rdbuf(buffer.rdbuf()); // Redirect again
     } else {
-        std::cout.rdbuf(prev_cout_buf);
         std::cout << "[FAIL] Grip warning missing or format incorrect." << std::endl;
         g_tests_failed++;
-        std::cout.rdbuf(buffer.rdbuf());
     }
 
     // --- Case 2: Missing Suspension Force ---
     // Condition: SuspForce < 10N AND Velocity > 1.0 m/s AND 50 frames persistence
-    // Reset output buffer
-    buffer.str("");
+    logBuffer.str("");
+    logBuffer.clear();
     
     // Set susp force to 0 (missing)
     for(int i=0; i<4; i++) data.mWheel[i].mSuspForce = 0.0;
@@ -544,24 +538,19 @@ TEST_CASE(test_missing_telemetry_warnings, "SlipGrip") {
         engine.calculate_force(&data);
     }
     
-    output = buffer.str();
-    bool susp_warn = output.find("Warning: Data for mSuspForce from the game seems to be missing for this car (TestCar_GT3). (Likely Encrypted/DLC Content)") != std::string::npos;
+    bool susp_warn = logBuffer.str().find("Warning: Data for mSuspForce from the game seems to be missing for this car (TestCar_GT3). (Likely Encrypted/DLC Content)") != std::string::npos;
     
      if (susp_warn) {
-        std::cout.rdbuf(prev_cout_buf);
         std::cout << "[PASS] SuspForce warning triggered with car name." << std::endl;
         g_tests_passed++;
-        std::cout.rdbuf(buffer.rdbuf());
     } else {
-        std::cout.rdbuf(prev_cout_buf);
         std::cout << "[FAIL] SuspForce warning missing or format incorrect." << std::endl;
         g_tests_failed++;
-        std::cout.rdbuf(buffer.rdbuf());
     }
 
     // --- Case 3: Missing Vertical Tire Deflection (NEW) ---
-    // Reset output buffer
-    buffer.str("");
+    logBuffer.str("");
+    logBuffer.clear();
     
     // Set Vertical Deflection to 0.0 (Missing)
     for(int i=0; i<4; i++) data.mWheel[i].mVerticalTireDeflection = 0.0;
@@ -574,23 +563,17 @@ TEST_CASE(test_missing_telemetry_warnings, "SlipGrip") {
         engine.calculate_force(&data);
     }
     
-    output = buffer.str();
-    bool vert_warn = output.find("[WARNING] mVerticalTireDeflection is missing") != std::string::npos;
+    bool vert_warn = logBuffer.str().find("[WARNING] mVerticalTireDeflection is missing") != std::string::npos;
     
     if (vert_warn) {
-        std::cout.rdbuf(prev_cout_buf);
         std::cout << "[PASS] Vertical Deflection warning triggered." << std::endl;
         g_tests_passed++;
-        std::cout.rdbuf(buffer.rdbuf());
     } else {
-        std::cout.rdbuf(prev_cout_buf);
         std::cout << "[FAIL] Vertical Deflection warning missing." << std::endl;
         g_tests_failed++;
-        std::cout.rdbuf(buffer.rdbuf());
     }
 
-    // Restore cout
-    std::cout.rdbuf(prev_cout_buf);
+    Logger::Get().SetTestStream(nullptr);
 }
 
 TEST_CASE(test_sanity_checks, "SlipGrip") {

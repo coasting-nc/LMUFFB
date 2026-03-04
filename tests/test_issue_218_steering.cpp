@@ -32,9 +32,8 @@ TEST_CASE(test_issue_218_invalid_range_warning, "Issue_218") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    // Redirect stdout to a stringstream to capture the warning
-    std::stringstream buffer;
-    std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
+    std::stringstream logBuffer;
+    Logger::Get().SetTestStream(&logBuffer);
 
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0, 0.0);
     strncpy(data.mVehicleName, "Ferrari 296 GT3", 63);
@@ -42,29 +41,23 @@ TEST_CASE(test_issue_218_invalid_range_warning, "Issue_218") {
 
     // Frame 1: Should issue warning
     engine.calculate_force(&data, "GT3", "Ferrari 296 GT3");
-    std::string output1 = buffer.str();
-    ASSERT_TRUE(output1.find("[WARNING] Invalid PhysicalSteeringWheelRange") != std::string::npos);
+    ASSERT_TRUE(logBuffer.str().find("[WARNING] Invalid PhysicalSteeringWheelRange") != std::string::npos);
 
     // Clear buffer
-    buffer.str("");
-    buffer.clear();
+    logBuffer.str("");
+    logBuffer.clear();
 
     // Frame 2: Should NOT issue warning again
     engine.calculate_force(&data, "GT3", "Ferrari 296 GT3");
-    std::string output2 = buffer.str();
-    ASSERT_TRUE(output2.empty());
+    ASSERT_TRUE(logBuffer.str().empty());
 
     // Reset warning via car change (using different class to trigger seeding)
-    buffer.str("");
-    buffer.clear();
     // 1st call with new class: detects car change, resets m_warned_invalid_range, then checks range and warns.
     strncpy(data.mVehicleName, "Porsche 911 RSR GTE", 63);
     engine.calculate_force(&data, "GTE", "Porsche 911 RSR GTE");
-    std::string output3 = buffer.str();
-    ASSERT_TRUE(output3.find("[WARNING] Invalid PhysicalSteeringWheelRange") != std::string::npos);
+    ASSERT_TRUE(logBuffer.str().find("[WARNING] Invalid PhysicalSteeringWheelRange") != std::string::npos);
 
-    // Restore stdout
-    std::cout.rdbuf(old);
+    Logger::Get().SetTestStream(nullptr);
 }
 
 } // namespace FFBEngineTests

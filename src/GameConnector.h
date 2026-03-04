@@ -48,8 +48,10 @@ private:
         unsigned char pitState = 255;
         char vehicleName[64] = { 0 };
         char trackName[64] = { 0 };
+        char optionsPage[32] = { 0 };
         float steeringRange = -1.0f;
         uint32_t eventState[SME_MAX] = { 0 };
+        std::chrono::steady_clock::time_point lastEventLogTime[SME_MAX];
     } m_prevState;
 
     void CheckTransitions(const SharedMemoryObjectOut& current);

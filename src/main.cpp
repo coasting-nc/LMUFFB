@@ -44,7 +44,7 @@ extern std::recursive_mutex g_engine_mutex;
 
 // --- FFB Loop (High Priority 1000Hz) ---
 void FFBThread() {
-    Logger::Get().Log("[FFB] Loop Started.");
+    Logger::Get().LogFile("[FFB] Loop Started.");
     RateMonitor loopMonitor;
     RateMonitor telemMonitor;
     RateMonitor hwMonitor;
@@ -112,7 +112,7 @@ void FFBThread() {
 
                 static bool was_in_menu = true;
                 if (was_in_menu && in_realtime_phys) {
-                    Logger::Get().Log("[Game] User entered driving session.");
+                    Logger::Get().LogFile("[Game] User entered driving session.");
                     if (Config::m_auto_start_logging && !AsyncLogger::Get().IsLogging()) {
                         SessionInfo info;
                         info.app_version = LMUFFB_VERSION;
@@ -132,7 +132,7 @@ void FFBThread() {
                         AsyncLogger::Get().Start(info, Config::m_log_path);
                     }
                 } else if (!was_in_menu && !in_realtime_phys) {
-                    Logger::Get().Log("[Game] User exited to menu (FFB Muted).");
+                    Logger::Get().LogFile("[Game] User exited to menu (FFB Muted).");
                     if (Config::m_auto_start_logging && AsyncLogger::Get().IsLogging()) {
                         AsyncLogger::Get().Stop();
                     }
@@ -230,7 +230,7 @@ void FFBThread() {
                      if (health.telem_low) reason += "Telemetry=" + std::to_string((int)health.telem_rate) + "Hz ";
                      if (health.torque_low) reason += "Torque=" + std::to_string((int)health.torque_rate) + "Hz (Target " + std::to_string((int)health.expected_torque_rate) + "Hz) ";
 
-                     Logger::Get().Log("Low Sample Rate detected: %s", reason.c_str());
+                     Logger::Get().LogFile("Low Sample Rate detected: %s", reason.c_str());
                      lastWarningTime = now;
                  }
             }
@@ -260,7 +260,7 @@ void FFBThread() {
         std::this_thread::sleep_until(next_tick);
     }
 
-    Logger::Get().Log("[FFB] Loop Stopped.");
+    Logger::Get().LogFile("[FFB] Loop Stopped.");
 }
 
 #ifndef _WIN32
@@ -290,9 +290,9 @@ int main(int argc, char* argv[]) noexcept {
     // Initialize persistent debug logging for crash analysis
     Logger::Get().Init("lmuffb_debug.log");
     Logger::Get().Log("Starting lmuFFB (C++ Port)...");
-    Logger::Get().Log("Application Started. Version: %s", LMUFFB_VERSION);
-    if (headless) Logger::Get().Log("Mode: HEADLESS");
-    else Logger::Get().Log("Mode: GUI");
+    Logger::Get().LogFile("Application Started. Version: %s", LMUFFB_VERSION);
+    if (headless) Logger::Get().LogFile("Mode: HEADLESS");
+    else Logger::Get().LogFile("Mode: GUI");
 
     Preset::ApplyDefaultsToEngine(g_engine);
     Config::Load(g_engine);
@@ -308,15 +308,15 @@ int main(int argc, char* argv[]) noexcept {
     }
 
     if (GameConnector::Get().CheckLegacyConflict()) {
-        Logger::Get().Log("[Info] Legacy rF2 plugin detected (not a problem for LMU 1.2+)");
+        Logger::Get().LogFile("[Info] Legacy rF2 plugin detected (not a problem for LMU 1.2+)");
     }
 
     if (!GameConnector::Get().TryConnect()) {
-        Logger::Get().Log("Game not running or Shared Memory not ready. Waiting...");
+        Logger::Get().LogFile("Game not running or Shared Memory not ready. Waiting...");
     }
 
     std::thread ffb_thread(FFBThread);
-    Logger::Get().Log("[GUI] Main Loop Started.");
+    Logger::Get().LogFile("[GUI] Main Loop Started.");
 
     while (g_running) {
         GuiLayer::Render(g_engine);
@@ -333,24 +333,24 @@ int main(int argc, char* argv[]) noexcept {
     
     Config::Save(g_engine);
     if (!headless) {
-        Logger::Get().Log("Shutting down GUI...");
+        Logger::Get().LogFile("Shutting down GUI...");
         GuiLayer::Shutdown(g_engine);
     }
     if (ffb_thread.joinable()) {
-        Logger::Get().Log("Stopping FFB Thread...");
+        Logger::Get().LogFile("Stopping FFB Thread...");
         g_running = false; // Ensure loop breaks
         ffb_thread.join();
-        Logger::Get().Log("FFB Thread Stopped.");
+        Logger::Get().LogFile("FFB Thread Stopped.");
     }
     DirectInputFFB::Get().Shutdown();
     Logger::Get().Log("Main Loop Ended. Clean Exit.");
     
     return 0;
     } catch (const std::exception& e) {
-        Logger::Get().Log("Fatal exception: %s", e.what());
+        Logger::Get().LogFile("Fatal exception: %s", e.what());
         return 1;
     } catch (...) {
-        Logger::Get().Log("Fatal unknown exception.");
+        Logger::Get().LogFile("Fatal unknown exception.");
         return 1;
     }
 }

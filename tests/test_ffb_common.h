@@ -17,6 +17,7 @@
 #include "../src/lmu_sm_interface/InternalsPlugin.hpp"
 #include "../src/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include "../src/Config.h"
+#include "../src/Logger.h"
 
 namespace FFBEngineTests {
 
@@ -201,6 +202,9 @@ struct OrientationScenario {
 };
 
 void VerifyOrientation(FFBEngine& engine, const OrientationScenario& scenario, float expected_sop_sign, float expected_total_ffb_sign);
+
+bool IsInLog(const std::string& filename, const std::string& pattern);
+int CountInLog(const std::string& filename, const std::string& pattern);
 
 void Run(); // Main runner
 

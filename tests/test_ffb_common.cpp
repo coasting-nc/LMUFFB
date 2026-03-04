@@ -184,6 +184,31 @@ void VerifyOrientation(FFBEngine& engine, const OrientationScenario& scenario, f
     if (total_ok) g_tests_passed++; else g_tests_failed++;
 }
 
+bool IsInLog(const std::string& filename, const std::string& pattern) {
+    std::ifstream file(filename);
+    if (!file.is_open()) return false;
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.find(pattern) != std::string::npos) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int CountInLog(const std::string& filename, const std::string& pattern) {
+    std::ifstream file(filename);
+    if (!file.is_open()) return 0;
+    std::string line;
+    int count = 0;
+    while (std::getline(file, line)) {
+        if (line.find(pattern) != std::string::npos) {
+            count++;
+        }
+    }
+    return count;
+}
+
 // ============================================================
 // Auto-Registration Implementation
 // ============================================================

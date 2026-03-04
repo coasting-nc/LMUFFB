@@ -152,13 +152,13 @@ bool DirectInputFFB::Initialize(HWND hwnd) {
     m_hwnd = hwnd;
 #ifdef _WIN32
     if (FAILED(DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&m_pDI, NULL))) {
-        Logger::Get().Log("[DI] Failed to create DirectInput8 interface.");
+        Logger::Get().LogFile("[DI] Failed to create DirectInput8 interface.");
         return false;
     }
-    Logger::Get().Log("[DI] Initialized.");
+    Logger::Get().LogFile("[DI] Initialized.");
     return true;
 #else
-    Logger::Get().Log("[DI] Mock Initialized (Non-Windows).");
+    Logger::Get().LogFile("[DI] Mock Initialized (Non-Windows).");
     return true;
 #endif
 }
@@ -218,7 +218,7 @@ void DirectInputFFB::ReleaseDevice() {
     m_isExclusive = false;
     m_deviceName = "None";
 #ifdef _WIN32
-    Logger::Get().Log("[DI] Device released by user.");
+    Logger::Get().LogFile("[DI] Device released by user.");
 #endif
 }
 
@@ -229,15 +229,15 @@ bool DirectInputFFB::SelectDevice(const GUID& guid) {
     // Cleanup old using new method
     ReleaseDevice();
 
-    Logger::Get().Log("[DI] Attempting to create device...");
+    Logger::Get().LogFile("[DI] Attempting to create device...");
     if (FAILED(((IDirectInput8*)m_pDI)->CreateDevice(guid, (IDirectInputDevice8**)&m_pDevice, NULL))) {
-        Logger::Get().Log("[DI] Failed to create device.");
+        Logger::Get().LogFile("[DI] Failed to create device.");
         return false;
     }
 
-    Logger::Get().Log("[DI] Setting Data Format...");
+    Logger::Get().LogFile("[DI] Setting Data Format...");
     if (FAILED(((IDirectInputDevice8*)m_pDevice)->SetDataFormat(&c_dfDIJoystick))) {
-        Logger::Get().Log("[DI] Failed to set data format.");
+        Logger::Get().LogFile("[DI] Failed to set data format.");
         return false;
     }
 
@@ -245,40 +245,40 @@ bool DirectInputFFB::SelectDevice(const GUID& guid) {
     m_isExclusive = false;
 
     // Attempt 1: Exclusive/Background (Best for FFB)
-    Logger::Get().Log("[DI] Attempting to set Cooperative Level (Exclusive | Background)...");
+    Logger::Get().LogFile("[DI] Attempting to set Cooperative Level (Exclusive | Background)...");
     HRESULT hr = ((IDirectInputDevice8*)m_pDevice)->SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);
     
     if (SUCCEEDED(hr)) {
         m_isExclusive = true;
-        Logger::Get().Log("[DI] Cooperative Level set to EXCLUSIVE.");
+        Logger::Get().LogFile("[DI] Cooperative Level set to EXCLUSIVE.");
     } else {
         // Fallback: Non-Exclusive
-        Logger::Get().Log("[DI] Exclusive mode failed (Error: 0x%08X). Retrying in Non-Exclusive mode...", hr);
+        Logger::Get().LogFile("[DI] Exclusive mode failed (Error: 0x%08X). Retrying in Non-Exclusive mode...", hr);
         hr = ((IDirectInputDevice8*)m_pDevice)->SetCooperativeLevel(m_hwnd, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
         
         if (SUCCEEDED(hr)) {
             m_isExclusive = false;
-            Logger::Get().Log("[DI] Cooperative Level set to NON-EXCLUSIVE.");
+            Logger::Get().LogFile("[DI] Cooperative Level set to NON-EXCLUSIVE.");
         }
     }
     
     if (FAILED(hr)) {
-        Logger::Get().Log("[DI] Failed to set cooperative level (Non-Exclusive failed too).");
+        Logger::Get().LogFile("[DI] Failed to set cooperative level (Non-Exclusive failed too).");
         return false;
     }
 
-    Logger::Get().Log("[DI] Acquiring device...");
+    Logger::Get().LogFile("[DI] Acquiring device...");
     if (FAILED(((IDirectInputDevice8*)m_pDevice)->Acquire())) {
-        Logger::Get().Log("[DI] Failed to acquire device.");
+        Logger::Get().LogFile("[DI] Failed to acquire device.");
         // Don't return false yet, might just need focus/retry
     } else {
-        Logger::Get().Log("[DI] Device Acquired in %s mode.", (m_isExclusive ? "EXCLUSIVE" : "NON-EXCLUSIVE"));
+        Logger::Get().LogFile("[DI] Device Acquired in %s mode.", (m_isExclusive ? "EXCLUSIVE" : "NON-EXCLUSIVE"));
     }
 
     // Create Effect
     if (CreateEffect()) {
        m_active = true;
-        Logger::Get().Log("[DI] SUCCESS: Physical Device fully initialized and FFB Effect created.");
+        Logger::Get().LogFile("[DI] SUCCESS: Physical Device fully initialized and FFB Effect created.");
  
         return true;
     }
@@ -318,7 +318,7 @@ bool DirectInputFFB::CreateEffect() {
     eff.dwStartDelay = 0;
 
     if (FAILED(((IDirectInputDevice8*)m_pDevice)->CreateEffect(GUID_ConstantForce, &eff, (IDirectInputEffect**)&m_pEffect, NULL))) {
-        Logger::Get().Log("[DI] Failed to create Constant Force effect.");
+        Logger::Get().LogFile("[DI] Failed to create Constant Force effect.");
         return false;
     }
     
@@ -380,8 +380,8 @@ bool DirectInputFFB::UpdateForce(double normalizedForce) {
             // 2. Log the Context (Rate limited)
             static uint32_t lastLogTime = 0;
             if (GetTickCount() - lastLogTime > DIAGNOSTIC_LOG_INTERVAL_MS) {
-                Logger::Get().Log("[DI ERROR] Failed to update force. Error: %s (0x%08X)", errorType.c_str(), hr);
-                Logger::Get().Log("           Active Window: [%s]", GetActiveWindowTitle().c_str());
+                Logger::Get().LogFile("[DI ERROR] Failed to update force. Error: %s (0x%08X)", errorType.c_str(), hr);
+                Logger::Get().LogFile("           Active Window: [%s]", GetActiveWindowTitle().c_str());
                 lastLogTime = GetTickCount();
             }
 
@@ -399,7 +399,7 @@ bool DirectInputFFB::UpdateForce(double normalizedForce) {
                     // If we are stuck in "Shared Mode" (0x80040205), standard Acquire() 
                     // just re-confirms Shared Mode. We must force a mode switch.
                     if (hr == DIERR_NOTEXCLUSIVEACQUIRED) {
-                        Logger::Get().Log("[DI] Attempting to promote to Exclusive Mode...");
+                        Logger::Get().LogFile("[DI] Attempting to promote to Exclusive Mode...");
                         ((IDirectInputDevice8*)m_pDevice)->Unacquire();
                         ((IDirectInputDevice8*)m_pDevice)->SetCooperativeLevel(m_hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);
                     }
@@ -411,7 +411,7 @@ bool DirectInputFFB::UpdateForce(double normalizedForce) {
                         // Log recovery success (rate-limited for diagnostics)
                         static uint32_t lastSuccessLog = 0;
                         if (GetTickCount() - lastSuccessLog > 5000) { // 5 second cooldown
-                            Logger::Get().Log("[DI RECOVERY] Device re-acquired successfully. FFB motor restarted.");
+                            Logger::Get().LogFile("[DI RECOVERY] Device re-acquired successfully. FFB motor restarted.");
                             lastSuccessLog = GetTickCount();
                         }
                         
@@ -422,7 +422,7 @@ bool DirectInputFFB::UpdateForce(double normalizedForce) {
                             // One-time notification when Dynamic Promotion first succeeds
                             static bool firstPromotionSuccess = false;
                             if (!firstPromotionSuccess) {
-                                Logger::Get().Log("\n"
+                                Logger::Get().LogFile("\n"
                                           "========================================\n"
                                           "[SUCCESS] Dynamic Promotion Active!\n"
                                           "lmuFFB has successfully recovered exclusive\n"

@@ -73,7 +73,7 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                     if (val > 2.0f) {
                         float old_val = val;
                         val = val / 100.0f; // Migrating 0-200 range to 0-2
-                        Logger::Get().Log("[Preset] Migrated legacy understeer: %.2f -> %.2f", old_val, val);
+                        Logger::Get().LogFile("[Preset] Migrated legacy understeer: %.2f -> %.2f", old_val, val);
                         needs_save = true;
                     }
                     current_preset.understeer = (std::min)(2.0f, (std::max)(0.0f, val));
@@ -789,7 +789,7 @@ void Config::LoadPresets() {
                 // Issue #211: Legacy 100Nm hack scaling
                 if (legacy_torque_hack && IsVersionLessEqual(current_preset_version, "0.7.66")) {
                     current_preset.gain *= (15.0f / legacy_torque_val);
-                    Logger::Get().Log("[Config] Migrated legacy 100Nm hack for preset '%s'. Scaling gain.", current_preset_name.c_str());
+                    Logger::Get().LogFile("[Config] Migrated legacy 100Nm hack for preset '%s'. Scaling gain.", current_preset_name.c_str());
                     needs_save = true;
                 }
 
@@ -797,7 +797,7 @@ void Config::LoadPresets() {
                 if (current_preset_version.empty()) {
                     current_preset.app_version = LMUFFB_VERSION;
                     needs_save = true;
-                    Logger::Get().Log("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
+                    Logger::Get().LogFile("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
                 } else {
                     current_preset.app_version = current_preset_version;
                 }
@@ -838,7 +838,7 @@ void Config::LoadPresets() {
         // Issue #211: Legacy 100Nm hack scaling
         if (legacy_torque_hack && IsVersionLessEqual(current_preset_version, "0.7.66")) {
             current_preset.gain *= (15.0f / legacy_torque_val);
-            Logger::Get().Log("[Config] Migrated legacy 100Nm hack for preset '%s'. Scaling gain.", current_preset_name.c_str());
+            Logger::Get().LogFile("[Config] Migrated legacy 100Nm hack for preset '%s'. Scaling gain.", current_preset_name.c_str());
             needs_save = true;
         }
 
@@ -846,7 +846,7 @@ void Config::LoadPresets() {
         if (current_preset_version.empty()) {
             current_preset.app_version = LMUFFB_VERSION;
             needs_save = true;
-            Logger::Get().Log("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
+            Logger::Get().LogFile("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
         } else {
             current_preset.app_version = current_preset_version;
         }
@@ -866,7 +866,7 @@ void Config::ApplyPreset(int index, FFBEngine& engine) {
         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
         presets[index].Apply(engine);
         m_last_preset_name = presets[index].name;
-        Logger::Get().Log("[Config] Applied preset: %s", presets[index].name.c_str());
+        Logger::Get().LogFile("[Config] Applied preset: %s", presets[index].name.c_str());
         Save(engine); // Integrated Auto-Save (v0.6.27)
     }
 }
@@ -976,9 +976,9 @@ void Config::ExportPreset(int index, const std::string& filename) {
         file << "[Preset:" << p.name << "]\n";
         WritePresetFields(file, p);
         file.close();
-        Logger::Get().Log("[Config] Exported preset '%s' to %s", p.name.c_str(), filename.c_str());
+        Logger::Get().LogFile("[Config] Exported preset '%s' to %s", p.name.c_str(), filename.c_str());
     } else {
-        Logger::Get().Log("[Config] Failed to export preset to %s", filename.c_str());
+        Logger::Get().LogFile("[Config] Failed to export preset to %s", filename.c_str());
     }
 }
 
@@ -1030,7 +1030,7 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
         // Issue #211: Legacy 100Nm hack scaling
         if (legacy_torque_hack && IsVersionLessEqual(current_preset_version, "0.7.66")) {
             current_preset.gain *= (15.0f / legacy_torque_val);
-            Logger::Get().Log("[Config] Migrated legacy 100Nm hack for imported preset '%s'. Scaling gain.", current_preset_name.c_str());
+            Logger::Get().LogFile("[Config] Migrated legacy 100Nm hack for imported preset '%s'. Scaling gain.", current_preset_name.c_str());
         }
 
         current_preset.app_version = current_preset_version.empty() ? LMUFFB_VERSION : current_preset_version;
@@ -1057,7 +1057,7 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
 
     if (imported) {
         Save(engine);
-        Logger::Get().Log("[Config] Imported preset '%s' from %s", current_preset.name.c_str(), filename.c_str());
+        Logger::Get().LogFile("[Config] Imported preset '%s' from %s", current_preset.name.c_str(), filename.c_str());
         return true;
     }
 
@@ -1093,7 +1093,7 @@ void Config::DeletePreset(int index, const FFBEngine& engine) {
 
     std::string name = presets[index].name;
     presets.erase(presets.begin() + index);
-    Logger::Get().Log("[Config] Deleted preset: %s", name.c_str());
+    Logger::Get().LogFile("[Config] Deleted preset: %s", name.c_str());
 
     // If the deleted preset was the last used one, reset it
     if (m_last_preset_name == name) {
@@ -1128,7 +1128,7 @@ void Config::DuplicatePreset(int index, const FFBEngine& engine) {
 
     presets.push_back(p);
     m_last_preset_name = p.name;
-    Logger::Get().Log("[Config] Duplicated preset to: %s", p.name.c_str());
+    Logger::Get().LogFile("[Config] Duplicated preset to: %s", p.name.c_str());
     Save(engine);
 }
 
@@ -1302,7 +1302,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file.close();
 
     } else {
-        Logger::Get().Log("[Config] Failed to save to %s", final_path.c_str());
+        Logger::Get().LogFile("[Config] Failed to save to %s", final_path.c_str());
     }
 }
 
@@ -1311,7 +1311,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     std::string final_path = filename.empty() ? m_config_path : filename;
     std::ifstream file(final_path);
     if (!file.is_open()) {
-        Logger::Get().Log("[Config] No config found, using defaults.");
+        Logger::Get().LogFile("[Config] No config found, using defaults.");
         return;
     }
 
@@ -1362,7 +1362,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                         // Future improvement: Add explicit config_format_version field if migrations become
                         // more complex (e.g., structural changes, removed fields, renamed keys).
                         config_version = value;
-                        Logger::Get().Log("[Config] Loading config version: %s", config_version.c_str());
+                        Logger::Get().LogFile("[Config] Loading config version: %s", config_version.c_str());
                     }
                     else if (key == "always_on_top") m_always_on_top = std::stoi(value);
                     else if (key == "last_device_guid") m_last_device_guid = value;
@@ -1629,7 +1629,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     engine.m_soft_lock_stiffness = (std::max)(0.0f, engine.m_soft_lock_stiffness);
     engine.m_soft_lock_damping = (std::max)(0.0f, engine.m_soft_lock_damping);
     engine.m_rest_api_port = (std::max)(1, engine.m_rest_api_port);
-    Logger::Get().Log("[Config] Loaded from %s", final_path.c_str());
+    Logger::Get().LogFile("[Config] Loaded from %s", final_path.c_str());
 }
 
 
