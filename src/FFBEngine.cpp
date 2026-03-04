@@ -843,7 +843,17 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     // 1. Raw Lateral G (Chassis-relative X)
     // Clamp to 5G to prevent numeric instability in crashes
     double raw_g = (std::max)(-G_LIMIT_5G * GRAVITY_MS2, (std::min)(G_LIMIT_5G * GRAVITY_MS2, data->mLocalAccel.x));
-    double lat_g = (raw_g / GRAVITY_MS2);
+    double lat_g_accel = (raw_g / GRAVITY_MS2);
+
+    // 2. Normalized Lateral Load Transfer (Issue #213)
+    double fl_load = data->mWheel[0].mTireLoad;
+    double fr_load = data->mWheel[1].mTireLoad;
+    if (ctx.frame_warn_load) {
+        fl_load = calculate_kinematic_load(data, 0);
+        fr_load = calculate_kinematic_load(data, 1);
+    }
+    double total_load = fl_load + fr_load;
+    double lat_load_norm = (total_load > 1.0) ? (fl_load - fr_load) / total_load : 0.0;
     
     // Smoothing: Map 0.0-1.0 slider to 0.1-0.0001s tau
     double smoothness = 1.0 - (double)m_sop_smoothing_factor;
@@ -851,10 +861,12 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double tau = smoothness * SOP_SMOOTHING_MAX_TAU;
     double alpha = ctx.dt / (tau + ctx.dt);
     alpha = (std::max)(MIN_LFM_ALPHA, (std::min)(1.0, alpha));
-    m_sop_lat_g_smoothed += alpha * (lat_g - m_sop_lat_g_smoothed);
     
-    // Base SoP Force
-    double sop_base = m_sop_lat_g_smoothed * m_sop_effect * (double)m_sop_scale;
+    m_sop_lat_g_smoothed += alpha * (lat_g_accel - m_sop_lat_g_smoothed);
+    m_sop_load_smoothed += alpha * (lat_load_norm - m_sop_load_smoothed);
+
+    // Base SoP Force (Combined)
+    double sop_base = (m_sop_lat_g_smoothed * (double)m_sop_effect + m_sop_load_smoothed * (double)m_lat_load_effect) * (double)m_sop_scale;
     ctx.sop_unboosted_force = sop_base; // Store for snapshot
     
     // 2. Oversteer Boost (Grip Differential)

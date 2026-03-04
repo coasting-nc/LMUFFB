@@ -8,7 +8,7 @@ This document contains all version release posts by ErwinMoss from the [url=http
 [b]New release[/b] (0.7.121): https://github.com/coasting-nc/LMUFFB/releases
 
 [list]
-[*][b]Physical Normalization[/b]: Replaced the old acceleration-based "Lateral G" with a physically-normalized [b]Lateral Load[/b] effect. By using the ratio of load transfer between tires instead of raw G-force, the steering "weight" and "lean" feel now remain perfectly consistent across all car classes—whether you're in a high-downforce Hypercar or a GT3.
+[*][b]Physical Normalization[/b]: Added a new physically-normalized [b]Lateral Load[/b] effect alongside the existing "Lateral G" setting. By using the ratio of load transfer between tires instead of raw G-force, you can now feel the car's mechanical "lean" in a way that remains perfectly consistent across all car classes—whether you're in a high-downforce Hypercar or a GT3.
 [*][b]Smart Fallback[/b]: Implemented a new [b]Kinematic Fallback[/b] system. If you're driving a car with encrypted telemetry (where tire loads are hidden), the app now automatically estimates the load transfer from chassis physics, ensuring you never lose that critical "Seat-of-the-Pants" feel. (#213)
 [*][b]UI Refinement[/b]: Updated all labels and tooltips in the GUI to reflect the new "Lateral Load" logic, providing better clarity on how the car's weight is being communicated through your wheel.
 [/list]

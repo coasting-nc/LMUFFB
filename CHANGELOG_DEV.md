@@ -5,10 +5,11 @@ All notable changes to this project will be documented in this file.
 ---
 
 ## [0.7.121] - 2026-03-12
-### Changed
+### Added
 - **Physical SoP Normalization (Issue #213)**:
-  - Replaced the acceleration-based "Lateral G" effect with a physically-normalized **Lateral Load** effect.
-  - The Seat-of-the-Pants (SoP) lateral force is now derived from normalized front-axle load transfer: `(Left_Load - Right_Load) / (Left_Load + Right_Load)`.
+  - Added a physically-normalized **Lateral Load** effect alongside the existing "Lateral G" effect.
+  - Users can now blend acceleration-based feel (raw Gs) with load-based feel (chassis lean) for more nuanced Seat-of-the-Pants (SoP) feedback.
+  - The new effect is derived from normalized front-axle load transfer: `(Left_Load - Right_Load) / (Left_Load + Right_Load)`.
   - This ensures consistent steering weight and "lean" feel across all car classes (GT3, LMP2, Hypercar) regardless of their aerodynamic downforce capabilities.
   - Implemented **Kinematic Fallback**: Automatically estimates lateral load transfer from chassis physics when direct tire load telemetry is missing or encrypted, ensuring the effect remains functional for all DLC content.
   - Renamed all user-facing references from "Lateral G" to **"Lateral Load"** in the GUI and diagnostic plots.

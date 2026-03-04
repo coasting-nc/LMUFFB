@@ -89,6 +89,7 @@ set(TEST_SOURCES
     test_issue_211_migration.cpp
     test_upsampler_part2.cpp
     test_issue_238_spam.cpp
+    test_issue_213_lateral_load.cpp
     ../src/main.cpp
 )
 

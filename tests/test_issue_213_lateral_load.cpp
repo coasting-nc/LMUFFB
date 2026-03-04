@@ -1,0 +1,103 @@
+#include "test_ffb_common.h"
+#include <vector>
+#include <string>
+
+using namespace FFBEngineTests;
+
+TEST_CASE_TAGGED(test_issue_213_lateral_load_additive, "CorePhysics", (std::vector<std::string>{"Physics", "Issue213"})) {
+    FFBEngine engine;
+    InitializeEngine(engine);
+
+    // Setup both effects
+    engine.m_sop_effect = 1.0f;       // Lateral G
+    engine.m_lat_load_effect = 1.0f;  // Lateral Load
+    engine.m_sop_scale = 1.0f;
+    engine.m_wheelbase_max_nm = 20.0f;
+    engine.m_target_rim_nm = 20.0f;
+
+    // Force a car class to initialize load reference
+    engine.calculate_force(nullptr, "GT3", "Test Car");
+
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+
+    // Simulate Right Turn
+    data.mLocalAccel.x = 9.81; // 1G Left (Right Turn)
+    data.mWheel[0].mTireLoad = 6000.0; // FL
+    data.mWheel[1].mTireLoad = 2000.0; // FR
+
+    // Run several frames to overcome smoothing
+    for (int i = 0; i < 50; i++) {
+        engine.calculate_force(&data);
+    }
+
+    auto snapshots = engine.GetDebugBatch();
+    ASSERT_FALSE(snapshots.empty());
+    if (!snapshots.empty()) {
+        // lat_g_accel = 1.0
+        // lat_load_norm = (6000-2000)/8000 = 0.5
+        // sop_base = (1.0 * 1.0 + 0.5 * 1.0) * 1.0 = 1.5 Nm
+        // Normalized = 1.5 / 20.0 = 0.075
+        std::cout << "[INFO] SoP Force (Combined): " << snapshots.back().sop_force << std::endl;
+        ASSERT_NEAR(snapshots.back().sop_force, 1.5f, 0.1f);
+    }
+}
+
+TEST_CASE_TAGGED(test_issue_213_lateral_load_isolation, "CorePhysics", (std::vector<std::string>{"Physics", "Issue213"})) {
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.calculate_force(nullptr, "GT3", "Test Car");
+
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+    data.mLocalAccel.x = 9.81;
+    data.mWheel[0].mTireLoad = 6000.0;
+    data.mWheel[1].mTireLoad = 2000.0;
+
+    // Case 1: ONLY Lateral G
+    engine.m_sop_effect = 1.0f;
+    engine.m_lat_load_effect = 0.0f;
+    for (int i = 0; i < 50; i++) engine.calculate_force(&data);
+    float force_g = engine.GetDebugBatch().back().sop_force;
+
+    // Case 2: ONLY Lateral Load
+    engine.m_sop_effect = 0.0f;
+    engine.m_lat_load_effect = 1.0f;
+    for (int i = 0; i < 50; i++) engine.calculate_force(&data);
+    float force_load = engine.GetDebugBatch().back().sop_force;
+
+    std::cout << "[INFO] Force G: " << force_g << " | Force Load: " << force_load << std::endl;
+
+    ASSERT_NEAR(force_g, 1.0f, 0.1f);
+    ASSERT_NEAR(force_load, 0.5f, 0.1f);
+}
+
+TEST_CASE_TAGGED(test_issue_213_lateral_load_kinematic, "CorePhysics", (std::vector<std::string>{"Physics", "Issue213"})) {
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_sop_effect = 0.0f;
+    engine.m_lat_load_effect = 1.0f;
+    engine.m_sop_scale = 1.0f;
+    engine.calculate_force(nullptr, "GT3", "Test Car");
+
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+
+    // Set direct load to zero to trigger fallback
+    data.mWheel[0].mTireLoad = 0.0;
+    data.mWheel[1].mTireLoad = 0.0;
+
+    // Set 1G Left acceleration (Right Turn)
+    data.mLocalAccel.x = 9.81;
+
+    // Run enough frames to trigger MISSING_LOAD_WARN_THRESHOLD (20) and overcome smoothing
+    for (int i = 0; i < 60; i++) {
+        engine.calculate_force(&data);
+    }
+
+    auto snapshots = engine.GetDebugBatch();
+    ASSERT_FALSE(snapshots.empty());
+    if (!snapshots.empty()) {
+        // With 1G Left acceleration, kinematic load should show FL > FR
+        // SoP force should be positive
+        std::cout << "[INFO] SoP Force (Kinematic Fallback): " << snapshots.back().sop_force << std::endl;
+        ASSERT_GT(snapshots.back().sop_force, 0.01f);
+    }
+}
