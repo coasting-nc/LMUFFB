@@ -3,6 +3,19 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 12, 2026[/b][/size]
+[b]Version 0.7.123 - Enhanced Transition Monitoring & Unified Logging[/b]
+
+[b]New release[/b] (0.7.123): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Enhanced Transition Monitoring[/b]: Expanded the diagnostic transition trace to include all high-level engine events from the game. This provides a complete picture of session lifecycle events (Startup, Load, Session Start/End, Realtime transitions). (#244)
+[*][b]Unified Logging Architecture[/b]: Every single diagnostic message printed to the console is now automatically captured in the `lmuffb_debug.log` file. This ensures no critical info is lost if the app window is closed or backgrounded.
+[*][b]Improved Robustness[/b]: Hardened the internal logging system to ensure console output remains functional even in restricted environments, improving overall application reliability and making troubleshooting easier for users.
+[/list]
+
+---
+
+[size=5][b]March 12, 2026[/b][/size]
 [b]Version 0.7.122 - Transition Trace Logging & Logger Enhancements[/b]
 
 [b]New release[/b] (0.7.122): https://github.com/coasting-nc/LMUFFB/releases

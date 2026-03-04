@@ -44,7 +44,7 @@ extern std::recursive_mutex g_engine_mutex;
 
 // --- FFB Loop (High Priority 1000Hz) ---
 void FFBThread() {
-    std::cout << "[FFB] Loop Started." << std::endl;
+    Logger::Get().Log("[FFB] Loop Started.");
     RateMonitor loopMonitor;
     RateMonitor telemMonitor;
     RateMonitor hwMonitor;
@@ -112,7 +112,7 @@ void FFBThread() {
 
                 static bool was_in_menu = true;
                 if (was_in_menu && in_realtime_phys) {
-                    std::cout << "[Game] User entered driving session." << std::endl;
+                    Logger::Get().Log("[Game] User entered driving session.");
                     if (Config::m_auto_start_logging && !AsyncLogger::Get().IsLogging()) {
                         SessionInfo info;
                         info.app_version = LMUFFB_VERSION;
@@ -132,7 +132,7 @@ void FFBThread() {
                         AsyncLogger::Get().Start(info, Config::m_log_path);
                     }
                 } else if (!was_in_menu && !in_realtime_phys) {
-                    std::cout << "[Game] User exited to menu (FFB Muted)." << std::endl;
+                    Logger::Get().Log("[Game] User exited to menu (FFB Muted).");
                     if (Config::m_auto_start_logging && AsyncLogger::Get().IsLogging()) {
                         AsyncLogger::Get().Stop();
                     }
@@ -260,7 +260,7 @@ void FFBThread() {
         std::this_thread::sleep_until(next_tick);
     }
 
-    std::cout << "[FFB] Loop Stopped." << std::endl;
+    Logger::Get().Log("[FFB] Loop Stopped.");
 }
 
 #ifndef _WIN32
@@ -287,9 +287,9 @@ int main(int argc, char* argv[]) noexcept {
         if (std::string(argv[i]) == "--headless") headless = true;
     }
 
-    std::cout << "Starting lmuFFB (C++ Port)..." << std::endl;
     // Initialize persistent debug logging for crash analysis
     Logger::Get().Init("lmuffb_debug.log");
+    Logger::Get().Log("Starting lmuFFB (C++ Port)...");
     Logger::Get().Log("Application Started. Version: %s", LMUFFB_VERSION);
     if (headless) Logger::Get().Log("Mode: HEADLESS");
     else Logger::Get().Log("Mode: GUI");
@@ -299,24 +299,24 @@ int main(int argc, char* argv[]) noexcept {
 
     if (!headless) {
         if (!GuiLayer::Init()) {
-            std::cerr << "Failed to initialize GUI." << std::endl;
+            Logger::Get().Log("Failed to initialize GUI.");
         }
         DirectInputFFB::Get().Initialize(reinterpret_cast<HWND>(GuiLayer::GetWindowHandle()));
     } else {
-        std::cout << "Running in HEADLESS mode." << std::endl;
+        Logger::Get().Log("Running in HEADLESS mode.");
         DirectInputFFB::Get().Initialize(NULL);
     }
 
     if (GameConnector::Get().CheckLegacyConflict()) {
-        std::cout << "[Info] Legacy rF2 plugin detected (not a problem for LMU 1.2+)" << std::endl;
+        Logger::Get().Log("[Info] Legacy rF2 plugin detected (not a problem for LMU 1.2+)");
     }
 
     if (!GameConnector::Get().TryConnect()) {
-        std::cout << "Game not running or Shared Memory not ready. Waiting..." << std::endl;
+        Logger::Get().Log("Game not running or Shared Memory not ready. Waiting...");
     }
 
     std::thread ffb_thread(FFBThread);
-    std::cout << "[GUI] Main Loop Started." << std::endl;
+    Logger::Get().Log("[GUI] Main Loop Started.");
 
     while (g_running) {
         GuiLayer::Render(g_engine);
@@ -347,13 +347,10 @@ int main(int argc, char* argv[]) noexcept {
     
     return 0;
     } catch (const std::exception& e) {
-        fprintf(stderr, "Fatal exception: %s\n", e.what());
-        // Attempt to log if possible, but don't risk more throws
-        try { Logger::Get().Log("Fatal exception: %s", e.what()); } catch(...) { (void)0; }
+        Logger::Get().Log("Fatal exception: %s", e.what());
         return 1;
     } catch (...) {
-        fprintf(stderr, "Fatal unknown exception.\n");
-        try { Logger::Get().Log("Fatal unknown exception."); } catch(...) { (void)0; }
+        Logger::Get().Log("Fatal unknown exception.");
         return 1;
     }
 }

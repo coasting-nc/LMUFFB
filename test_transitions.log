@@ -1,0 +1,14 @@
+[19:25:02] Logger Initialized. Version: 0.7.122
+[19:25:02] [Transition] OptionsLocation: 0 -> 3 (On Track)
+[19:25:02] [Transition] OptionsLocation: 3 -> 2 (Monitor (Garage))
+[19:25:02] [Transition] GamePhase: 0 -> 5 (Green Flag)
+[19:25:02] [Transition] GamePhase: 5 -> 9 (Paused)
+[19:25:02] [Transition] Control: 0 -> 1 (AI)
+[19:25:02] [Transition] Control: 1 -> 0 (Player)
+[19:25:02] [Transition] Track: '' -> 'Spa'
+[19:25:02] [Transition] Vehicle: '' -> 'Ferrari 488'
+[19:25:02] [Transition] Event: SME_STARTUP (1)
+[19:25:02] [Transition] Event: SME_LOAD (2)
+[19:25:02] [Transition] SteeringRange: 0.00 -> 900.00
+[19:25:02] [Transition] OptionsLocation: 2 -> 0 (Main UI)
+Logger Shutdown.

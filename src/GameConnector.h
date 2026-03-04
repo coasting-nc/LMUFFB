@@ -48,6 +48,8 @@ private:
         unsigned char pitState = 255;
         char vehicleName[64] = { 0 };
         char trackName[64] = { 0 };
+        float steeringRange = -1.0f;
+        uint32_t eventState[SME_MAX] = { 0 };
     } m_prevState;
 
     void CheckTransitions(const SharedMemoryObjectOut& current);

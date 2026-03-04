@@ -58,7 +58,7 @@ bool GameConnector::TryConnect() {
 
     m_pSharedMemLayout = (SharedMemoryLayout*)MapViewOfFile(m_hMapFile, FILE_MAP_READ, 0, 0, sizeof(SharedMemoryLayout));
     if (m_pSharedMemLayout == NULL) {
-        std::cerr << "[GameConnector] Could not map view of file." << std::endl;
+        Logger::Get().Log("[GameConnector] Could not map view of file.");
         Logger::Get().LogWin32Error("MapViewOfFile", GetLastError());
         _DisconnectLocked();
         return false;
@@ -66,8 +66,7 @@ bool GameConnector::TryConnect() {
 
     m_smLock = SafeSharedMemoryLock::MakeSafeSharedMemoryLock();
     if (!m_smLock.has_value()) {
-        std::cerr << "[GameConnector] Failed to init LMU Shared Memory Lock" << std::endl;
-        Logger::Get().Log("Failed to init SafeSharedMemoryLock.");
+        Logger::Get().Log("[GameConnector] Failed to init LMU Shared Memory Lock");
         _DisconnectLocked();
         return false;
     }
@@ -81,8 +80,7 @@ bool GameConnector::TryConnect() {
 
     m_connected = true;
     m_lastUpdateLocalTime = std::chrono::steady_clock::now();
-    std::cout << "[GameConnector] Connected to LMU Shared Memory." << std::endl;
-    Logger::Get().Log("Connected to LMU Shared Memory.");
+    Logger::Get().Log("[GameConnector] Connected to LMU Shared Memory.");
     return true;
 #else
     return false;
@@ -93,7 +91,7 @@ bool GameConnector::CheckLegacyConflict() {
 #if defined(_WIN32) || defined(HEADLESS_GUI)
     HANDLE hLegacy = OpenFileMappingA(FILE_MAP_READ, FALSE, LEGACY_SHARED_MEMORY_NAME);
     if (hLegacy) {
-        std::cout << "[Warning] Legacy rFactor 2 Shared Memory Plugin detected. This may conflict with LMU 1.2 data." << std::endl;
+        Logger::Get().Log("[Warning] Legacy rFactor 2 Shared Memory Plugin detected. This may conflict with LMU 1.2 data.");
         CloseHandle(hLegacy);
         return true;
     }
@@ -170,6 +168,34 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
     auto& scoring = current.scoring.scoringInfo;
     auto& generic = current.generic;
+
+    // 0. Shared Memory Events (Issue #244)
+    for (int i = 0; i < SME_MAX; ++i) {
+        // Skip high-frequency events
+        if (i == SME_UPDATE_SCORING || i == SME_UPDATE_TELEMETRY || i == SME_FFB || i == SME_SET_ENVIRONMENT) continue;
+
+        if (generic.events[i] != m_prevState.eventState[i]) {
+            if (generic.events[i] != 0) {
+                const char* eventStr = "Unknown";
+                switch (i) {
+                case SME_ENTER: eventStr = "SME_ENTER"; break;
+                case SME_EXIT: eventStr = "SME_EXIT"; break;
+                case SME_STARTUP: eventStr = "SME_STARTUP"; break;
+                case SME_SHUTDOWN: eventStr = "SME_SHUTDOWN"; break;
+                case SME_LOAD: eventStr = "SME_LOAD"; break;
+                case SME_UNLOAD: eventStr = "SME_UNLOAD"; break;
+                case SME_START_SESSION: eventStr = "SME_START_SESSION"; break;
+                case SME_END_SESSION: eventStr = "SME_END_SESSION"; break;
+                case SME_ENTER_REALTIME: eventStr = "SME_ENTER_REALTIME"; break;
+                case SME_EXIT_REALTIME: eventStr = "SME_EXIT_REALTIME"; break;
+                case SME_INIT_APPLICATION: eventStr = "SME_INIT_APPLICATION"; break;
+                case SME_UNINIT_APPLICATION: eventStr = "SME_UNINIT_APPLICATION"; break;
+                }
+                Logger::Get().LogFile("[Transition] Event: %s (%u)", eventStr, generic.events[i]);
+            }
+            m_prevState.eventState[i] = generic.events[i];
+        }
+    }
 
     // 1. Options Location (UI Menu)
     if (generic.appInfo.mOptionsLocation != m_prevState.optionsLocation) {
@@ -270,6 +296,13 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
             if (strcmp(vehScoring.mVehicleName, m_prevState.vehicleName) != 0) {
                 Logger::Get().LogFile("[Transition] Vehicle: '%s' -> '%s'", m_prevState.vehicleName, vehScoring.mVehicleName);
                 strncpy(m_prevState.vehicleName, vehScoring.mVehicleName, 63);
+            }
+
+            // 7. Steering Range
+            float currentRange = current.telemetry.telemInfo[idx].mPhysicalSteeringWheelRange;
+            if (std::abs(currentRange - m_prevState.steeringRange) > 0.001f) {
+                Logger::Get().LogFile("[Transition] SteeringRange: %.2f -> %.2f", m_prevState.steeringRange, currentRange);
+                m_prevState.steeringRange = currentRange;
             }
         }
     }

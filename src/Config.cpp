@@ -1,5 +1,6 @@
 #include "Config.h"
 #include "Version.h"
+#include "Logger.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -72,8 +73,7 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                     if (val > 2.0f) {
                         float old_val = val;
                         val = val / 100.0f; // Migrating 0-200 range to 0-2
-                        std::cout << "[Preset] Migrated legacy understeer: " << old_val
-                                    << " -> " << val << std::endl;
+                        Logger::Get().Log("[Preset] Migrated legacy understeer: %.2f -> %.2f", old_val, val);
                         needs_save = true;
                     }
                     current_preset.understeer = (std::min)(2.0f, (std::max)(0.0f, val));
@@ -177,7 +177,7 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "slope_confidence_max_rate") current_preset.slope_confidence_max_rate = std::stof(value); // NEW v0.7.42
                 else if (key == "rest_api_fallback_enabled") current_preset.rest_api_enabled = (value == "1" || value == "true"); // NEW v0.7.113
                 else if (key == "rest_api_port") current_preset.rest_api_port = std::stoi(value); // NEW v0.7.113
-            } catch (...) { std::cerr << "[Config] ParsePresetLine Error." << std::endl; }
+            } catch (...) { Logger::Get().Log("[Config] ParsePresetLine Error."); }
         }
     }
 }
@@ -789,7 +789,7 @@ void Config::LoadPresets() {
                 // Issue #211: Legacy 100Nm hack scaling
                 if (legacy_torque_hack && IsVersionLessEqual(current_preset_version, "0.7.66")) {
                     current_preset.gain *= (15.0f / legacy_torque_val);
-                    std::cout << "[Config] Migrated legacy 100Nm hack for preset '" << current_preset_name << "'. Scaling gain." << std::endl;
+                    Logger::Get().Log("[Config] Migrated legacy 100Nm hack for preset '%s'. Scaling gain.", current_preset_name.c_str());
                     needs_save = true;
                 }
 
@@ -797,7 +797,7 @@ void Config::LoadPresets() {
                 if (current_preset_version.empty()) {
                     current_preset.app_version = LMUFFB_VERSION;
                     needs_save = true;
-                    std::cout << "[Config] Migrated legacy preset '" << current_preset_name << "' to version " << LMUFFB_VERSION << std::endl;
+                    Logger::Get().Log("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
                 } else {
                     current_preset.app_version = current_preset_version;
                 }
@@ -838,7 +838,7 @@ void Config::LoadPresets() {
         // Issue #211: Legacy 100Nm hack scaling
         if (legacy_torque_hack && IsVersionLessEqual(current_preset_version, "0.7.66")) {
             current_preset.gain *= (15.0f / legacy_torque_val);
-            std::cout << "[Config] Migrated legacy 100Nm hack for preset '" << current_preset_name << "'. Scaling gain." << std::endl;
+            Logger::Get().Log("[Config] Migrated legacy 100Nm hack for preset '%s'. Scaling gain.", current_preset_name.c_str());
             needs_save = true;
         }
 
@@ -846,7 +846,7 @@ void Config::LoadPresets() {
         if (current_preset_version.empty()) {
             current_preset.app_version = LMUFFB_VERSION;
             needs_save = true;
-            std::cout << "[Config] Migrated legacy preset '" << current_preset_name << "' to version " << LMUFFB_VERSION << std::endl;
+            Logger::Get().Log("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
         } else {
             current_preset.app_version = current_preset_version;
         }
@@ -866,7 +866,7 @@ void Config::ApplyPreset(int index, FFBEngine& engine) {
         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
         presets[index].Apply(engine);
         m_last_preset_name = presets[index].name;
-        std::cout << "[Config] Applied preset: " << presets[index].name << std::endl;
+        Logger::Get().Log("[Config] Applied preset: %s", presets[index].name.c_str());
         Save(engine); // Integrated Auto-Save (v0.6.27)
     }
 }
@@ -976,9 +976,9 @@ void Config::ExportPreset(int index, const std::string& filename) {
         file << "[Preset:" << p.name << "]\n";
         WritePresetFields(file, p);
         file.close();
-        std::cout << "[Config] Exported preset '" << p.name << "' to " << filename << std::endl;
+        Logger::Get().Log("[Config] Exported preset '%s' to %s", p.name.c_str(), filename.c_str());
     } else {
-        std::cerr << "[Config] Failed to export preset to " << filename << std::endl;
+        Logger::Get().Log("[Config] Failed to export preset to %s", filename.c_str());
     }
 }
 
@@ -1030,7 +1030,7 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
         // Issue #211: Legacy 100Nm hack scaling
         if (legacy_torque_hack && IsVersionLessEqual(current_preset_version, "0.7.66")) {
             current_preset.gain *= (15.0f / legacy_torque_val);
-            std::cout << "[Config] Migrated legacy 100Nm hack for imported preset '" << current_preset_name << "'. Scaling gain." << std::endl;
+            Logger::Get().Log("[Config] Migrated legacy 100Nm hack for imported preset '%s'. Scaling gain.", current_preset_name.c_str());
         }
 
         current_preset.app_version = current_preset_version.empty() ? LMUFFB_VERSION : current_preset_version;
@@ -1057,7 +1057,7 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
 
     if (imported) {
         Save(engine);
-        std::cout << "[Config] Imported preset '" << current_preset.name << "' from " << filename << std::endl;
+        Logger::Get().Log("[Config] Imported preset '%s' from %s", current_preset.name.c_str(), filename.c_str());
         return true;
     }
 
@@ -1093,7 +1093,7 @@ void Config::DeletePreset(int index, const FFBEngine& engine) {
 
     std::string name = presets[index].name;
     presets.erase(presets.begin() + index);
-    std::cout << "[Config] Deleted preset: " << name << std::endl;
+    Logger::Get().Log("[Config] Deleted preset: %s", name.c_str());
 
     // If the deleted preset was the last used one, reset it
     if (m_last_preset_name == name) {
@@ -1128,7 +1128,7 @@ void Config::DuplicatePreset(int index, const FFBEngine& engine) {
 
     presets.push_back(p);
     m_last_preset_name = p.name;
-    std::cout << "[Config] Duplicated preset to: " << p.name << std::endl;
+    Logger::Get().Log("[Config] Duplicated preset to: %s", p.name.c_str());
     Save(engine);
 }
 
@@ -1302,7 +1302,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file.close();
 
     } else {
-        std::cerr << "[Config] Failed to save to " << final_path << std::endl;
+        Logger::Get().Log("[Config] Failed to save to %s", final_path.c_str());
     }
 }
 
@@ -1311,7 +1311,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     std::string final_path = filename.empty() ? m_config_path : filename;
     std::ifstream file(final_path);
     if (!file.is_open()) {
-        std::cout << "[Config] No config found, using defaults." << std::endl;
+        Logger::Get().Log("[Config] No config found, using defaults.");
         return;
     }
 
@@ -1362,7 +1362,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                         // Future improvement: Add explicit config_format_version field if migrations become
                         // more complex (e.g., structural changes, removed fields, renamed keys).
                         config_version = value;
-                        std::cout << "[Config] Loading config version: " << config_version << std::endl;
+                        Logger::Get().Log("[Config] Loading config version: %s", config_version.c_str());
                     }
                     else if (key == "always_on_top") m_always_on_top = std::stoi(value);
                     else if (key == "last_device_guid") m_last_device_guid = value;
@@ -1480,7 +1480,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "rest_api_fallback_enabled") engine.m_rest_api_enabled = (value == "1" || value == "true");
                     else if (key == "rest_api_port") engine.m_rest_api_port = std::stoi(value);
                 } catch (...) {
-                    std::cerr << "[Config] Error parsing line: " << line << std::endl;
+                    Logger::Get().Log("[Config] Error parsing line: %s", line.c_str());
                 }
             }
         }
@@ -1503,13 +1503,11 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     engine.m_torque_source = (std::max)(0, (std::min)(1, engine.m_torque_source));
 
     if (engine.m_optimal_slip_angle < 0.01f) {
-        std::cerr << "[Config] Invalid optimal_slip_angle (" << engine.m_optimal_slip_angle 
-                  << "), resetting to default 0.10" << std::endl;
+        Logger::Get().Log("[Config] Invalid optimal_slip_angle (%.2f), resetting to default 0.10", engine.m_optimal_slip_angle);
         engine.m_optimal_slip_angle = 0.10f;
     }
     if (engine.m_optimal_slip_ratio < 0.01f) {
-        std::cerr << "[Config] Invalid optimal_slip_ratio (" << engine.m_optimal_slip_ratio 
-                  << "), resetting to default 0.12" << std::endl;
+        Logger::Get().Log("[Config] Invalid optimal_slip_ratio (%.2f), resetting to default 0.12", engine.m_optimal_slip_ratio);
         engine.m_optimal_slip_ratio = 0.12f;
     }
     
@@ -1522,13 +1520,11 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     if (engine.m_slope_smoothing_tau < 0.001f) engine.m_slope_smoothing_tau = 0.04f;
     
     if (engine.m_slope_alpha_threshold < 0.001f || engine.m_slope_alpha_threshold > 0.1f) {
-        std::cerr << "[Config] Invalid slope_alpha_threshold (" << engine.m_slope_alpha_threshold 
-                  << "), resetting to 0.02f" << std::endl;
+        Logger::Get().Log("[Config] Invalid slope_alpha_threshold (%.3f), resetting to 0.02f", engine.m_slope_alpha_threshold);
         engine.m_slope_alpha_threshold = 0.02f;
     }
     if (engine.m_slope_decay_rate < 0.1f || engine.m_slope_decay_rate > 20.0f) {
-        std::cerr << "[Config] Invalid slope_decay_rate (" << engine.m_slope_decay_rate 
-                  << "), resetting to 5.0f" << std::endl;
+        Logger::Get().Log("[Config] Invalid slope_decay_rate (%.2f), resetting to 5.0f", engine.m_slope_decay_rate);
         engine.m_slope_decay_rate = 5.0f;
     }
 
@@ -1550,42 +1546,37 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
         double sens = (double)engine.m_slope_sensitivity;
         if (sens > 0.01) {
             engine.m_slope_max_threshold = (float)(engine.m_slope_min_threshold - (8.0 / sens));
-            std::cout << "[Config] Migrated slope_sensitivity " << sens 
-                      << " to max_threshold " << engine.m_slope_max_threshold << std::endl;
+            Logger::Get().Log("[Config] Migrated slope_sensitivity %.2f to max_threshold %.2f", sens, engine.m_slope_max_threshold);
         }
     }
 
     // Validation: max should be more negative than min
     if (engine.m_slope_max_threshold > engine.m_slope_min_threshold) {
         std::swap(engine.m_slope_min_threshold, engine.m_slope_max_threshold);
-        std::cout << "[Config] Swapped slope thresholds (min should be > max)" << std::endl;
+        Logger::Get().Log("[Config] Swapped slope thresholds (min should be > max)");
     }
     
     // v0.6.20: Safety Validation - Clamp Advanced Braking Parameters to Valid Ranges
     if (engine.m_lockup_gamma < 0.1f || engine.m_lockup_gamma > 4.0f) {
-        std::cerr << "[Config] Invalid lockup_gamma (" << engine.m_lockup_gamma 
-                  << "), clamping to range [0.1, 4.0]" << std::endl;
+        Logger::Get().Log("[Config] Invalid lockup_gamma (%.2f), clamping to range [0.1, 4.0]", engine.m_lockup_gamma);
         engine.m_lockup_gamma = (std::max)(0.1f, (std::min)(4.0f, engine.m_lockup_gamma));
     }
     if (engine.m_lockup_prediction_sens < 10.0f || engine.m_lockup_prediction_sens > 100.0f) {
-        std::cerr << "[Config] Invalid lockup_prediction_sens (" << engine.m_lockup_prediction_sens 
-                  << "), clamping to range [10.0, 100.0]" << std::endl;
+        Logger::Get().Log("[Config] Invalid lockup_prediction_sens (%.2f), clamping to range [10.0, 100.0]", engine.m_lockup_prediction_sens);
         engine.m_lockup_prediction_sens = (std::max)(10.0f, (std::min)(100.0f, engine.m_lockup_prediction_sens));
     }
     if (engine.m_lockup_bump_reject < 0.1f || engine.m_lockup_bump_reject > 5.0f) {
-        std::cerr << "[Config] Invalid lockup_bump_reject (" << engine.m_lockup_bump_reject 
-                  << "), clamping to range [0.1, 5.0]" << std::endl;
+        Logger::Get().Log("[Config] Invalid lockup_bump_reject (%.2f), clamping to range [0.1, 5.0]", engine.m_lockup_bump_reject);
         engine.m_lockup_bump_reject = (std::max)(0.1f, (std::min)(5.0f, engine.m_lockup_bump_reject));
     }
     if (engine.m_abs_gain < 0.0f || engine.m_abs_gain > 10.0f) {
-        std::cerr << "[Config] Invalid abs_gain (" << engine.m_abs_gain 
-                  << "), clamping to range [0.0, 10.0]" << std::endl;
+        Logger::Get().Log("[Config] Invalid abs_gain (%.2f), clamping to range [0.0, 10.0]", engine.m_abs_gain);
         engine.m_abs_gain = (std::max)(0.0f, (std::min)(10.0f, engine.m_abs_gain));
     }
     // Issue #211: Legacy 100Nm hack scaling
     if (legacy_torque_hack && IsVersionLessEqual(config_version, "0.7.66")) {
         engine.m_gain *= (15.0f / legacy_torque_val);
-        std::cout << "[Config] Migrated legacy 100Nm hack for main config. Scaling gain." << std::endl;
+        Logger::Get().Log("[Config] Migrated legacy 100Nm hack for main config. Scaling gain.");
         m_needs_save = true;
     }
 
@@ -1593,8 +1584,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     if (engine.m_understeer_effect > 2.0f) {
         float old_val = engine.m_understeer_effect;
         engine.m_understeer_effect = engine.m_understeer_effect / 100.0f;
-        std::cout << "[Config] Migrated legacy understeer_effect: " << old_val 
-                  << " -> " << engine.m_understeer_effect << std::endl;
+        Logger::Get().Log("[Config] Migrated legacy understeer_effect: %.2f -> %.2f", old_val, engine.m_understeer_effect);
     }
     // Clamp to new valid range [0.0, 2.0]
     if (engine.m_understeer_effect < 0.0f || engine.m_understeer_effect > 2.0f) {
@@ -1639,7 +1629,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     engine.m_soft_lock_stiffness = (std::max)(0.0f, engine.m_soft_lock_stiffness);
     engine.m_soft_lock_damping = (std::max)(0.0f, engine.m_soft_lock_damping);
     engine.m_rest_api_port = (std::max)(1, engine.m_rest_api_port);
-    std::cout << "[Config] Loaded from " << filename << std::endl;
+    Logger::Get().Log("[Config] Loaded from %s", final_path.c_str());
 }
 
 

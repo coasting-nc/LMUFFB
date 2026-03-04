@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.123] - 2026-03-12
+### Added
+- **Enhanced Transition Monitoring (Issue #244)**:
+  - Expanded the state transition tracking system to include all high-level engine events (`SME_*`) from Shared Memory.
+  - Added tracking for physical steering wheel range changes to help diagnose configuration drifts.
+  - Improved menu navigation logging with more robust state detection.
+
+### Improved
+- **Unified Logging Architecture**:
+  - Systematically replaced all direct console outputs (`std::cout`, `std::cerr`, `fprintf`) with central `Logger` calls. This ensures that every meaningful diagnostic message is preserved in the debug log file while remaining visible in the console.
+  - **Logger Robustness**: Modified the `Logger` to ensure console output is always functional even if the log file cannot be opened (critical for unit testing and restricted environments).
+  - Centralized logger initialization in the test runner to ensure consistent diagnostic output during automated testing.
+
 ## [0.7.122] - 2026-03-12
 ### Added
 - **Transition Trace Logging (Issue #245)**:
