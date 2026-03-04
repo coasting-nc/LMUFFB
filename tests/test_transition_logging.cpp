@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <filesystem>
 
 namespace FFBEngineTests {
 
@@ -37,14 +36,8 @@ TEST_CASE_TAGGED(test_transition_logging_logic, "Functional", (std::vector<std::
 
     // 1. Options Location Transition
     std::cout << "Testing Options Location Transition..." << std::endl;
-    // Reset previous state to avoid cross-test interference since it's a singleton
-    // But since we can't easily reset GameConnector, let's adapt to its current state.
-    // The previous test run showed OptionsLocation starting at 0 if we are lucky,
-    // but here it says 255 because it's a fresh run? No, it's a singleton.
-
     data.generic.appInfo.mOptionsLocation = 3; // On Track
     GameConnectorTestAccessor::CallCheckTransitions(gc, data);
-    // Use a more flexible check or just ensure SOME transition was logged
     ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] OptionsLocation:"));
 
     data.generic.appInfo.mOptionsLocation = 2; // Monitor
@@ -110,7 +103,7 @@ TEST_CASE_TAGGED(test_transition_logging_logic, "Functional", (std::vector<std::
     }
     ASSERT_GE(count, 1);
 
-    // Verify it didn't print to console (excluding our DEBUG trace if it's there)
+    // Verify it didn't print to console
     std::string cout_output = buffer.str();
     bool found_unexpected = false;
     std::stringstream ss(cout_output);

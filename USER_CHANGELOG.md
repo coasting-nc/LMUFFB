@@ -16,14 +16,14 @@ This document contains all version release posts by ErwinMoss from the [url=http
 ---
 
 [size=5][b]March 12, 2026[/b][/size]
-[b]Version 0.7.121 - Physical SoP Normalization & DLC Support[/b]
+[b]Version 0.7.121 - Physical SoP Normalization & Lateral Load Update[/b]
 
 [b]New release[/b] (0.7.121): https://github.com/coasting-nc/LMUFFB/releases
 
 [list]
-[*][b]Physical SoP Normalization[/b]: Introduced a new [b]Lateral Load[/b] effect that uses real front-axle load transfer to drive Seat-of-the-Pants (SoP) feedback. This ensures a consistent "lean" feel across all car classes regardless of their aerodynamic downforce. (#213)
-[*][b]Improved DLC Support[/b]: Implemented a [b]Kinematic Fallback[/b] system. For cars with encrypted telemetry (like some DLC content), the app now automatically estimates load transfer from chassis physics, ensuring high-quality FFB for all cars.
-[*][b]Granular Tuning[/b]: Added a dedicated "Lateral Load" slider in the GUI, allowing you to blend Acceleration-based and Load-based feedback to your exact preference.
+[*][b]Physical Normalization[/b]: Added a new physically-normalized [b]Lateral Load[/b] effect alongside the existing "Lateral G" setting. By using the ratio of load transfer between tires instead of raw G-force, you can now feel the car's mechanical "lean" in a way that remains perfectly consistent across all car classes—whether you're in a high-downforce Hypercar or a GT3.
+[*][b]Smart Fallback[/b]: Implemented a new [b]Kinematic Fallback[/b] system. If you're driving a car with encrypted telemetry (where tire loads are hidden), the app now automatically estimates the load transfer from chassis physics, ensuring you never lose that critical "Seat-of-the-Pants" feel. (#213)
+[*][b]UI Refinement[/b]: Added a new "Lateral Load" slider in the Tuning window, allowing you to blend the new load-based feel with the traditional G-force feedback.
 [/list]
 
 ---
@@ -882,14 +882,14 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 ---
  
-[size=5][b]February 4, 2026[/b][/size]
-[b]Version 0.7.8 - Test Suite Refactoring[/b]
+[size=5][b]February 3, 2026[/b][/size]
+[b]Version 0.7.5 - Test Infrastructure Refactoring[/b]
 
-[b]New release[/b] (0.7.8): https://github.com/coasting-nc/LMUFFB/releases
+[b]New release[/b] (0.7.5): https://github.com/coasting-nc/LMUFFB/releases
 
 [b]Internal Changes[/b]
 [list]
-[*][b]Codebase Modularization[/b]: Refactored the internal test suite, splitting the monolithic `test_ffb_engine.cpp` into 12 files. This improves maintainability and development speed for future updates. No user-facing changes to FFB logic or physics.
+[*][b]Codebase Modularization[/b]: Refactored the internal test suite, splitting the monolithic `test_ffb_engine.cpp` into 9 modular files. This improves maintainability and development speed for future updates. No user-facing changes to FFB logic or physics.
 [/list]
 
 ---
@@ -1109,7 +1109,7 @@ Fixed inverted SoP (Lateral G) effect, and added a new T300 preset that has work
 [size=5][b]December 20, 2025[/b][/size]
 [b]Version v0.4.37 - Slide Texture Overhaul[/b]
 
-[b]New release[/b] (0.4.37) https://github.com/coasting-nc/LMUFFB/releases
+[b]New release[/b] (v0.4.37) https://github.com/coasting-nc/LMUFFB/releases
 
 Fixed Slide Rumble bug (due to "phase explosion" issue that caused massive constant force pulls during frame stutters).
 
