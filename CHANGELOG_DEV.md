@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.122] - 2026-03-12
+### Added
+- **Transition Trace Logging (Issue #245)**:
+  - Implemented discrete state transition logging to the debug log file (`lmuffb_debug.log`).
+  - Tracks and records key simulation events including menu navigation, session changes, AI control handover, pit stop progression, and car/track changes.
+  - **File-Only Mode**: Transition logs are written exclusively to the debug file to provide high-fidelity diagnostic data for post-mortem analysis without cluttering the user's console during gameplay.
+  - **Automatic Mapping**: Integrated readable string mappings for internal simulation states (e.g., "Main UI", "Green Flag", "Paused") to improve log clarity.
+
+### Improved
+- **Logger Fidelity**:
+  - Enhanced the `Logger` system with a dedicated `LogFile` method that supports asynchronous file-only recording.
+  - Increased internal log buffer sizes to handle complex multi-parameter transition snapshots.
+  - Improved file handling in `Logger::Init` to ensure clean session starts and correct resource management during unit tests.
+
+### Testing
+- **New Test Suite**: Added `tests/test_transition_logging.cpp` to verify edge detection logic, console silence, and file persistence for all tracked simulation variables.
+
 ## [0.7.121] - 2026-03-12
 ### Added
 - **Physical SoP Normalization (Issue #213)**:

@@ -90,6 +90,7 @@ set(TEST_SOURCES
     test_upsampler_part2.cpp
     test_issue_238_spam.cpp
     test_issue_213_lateral_load.cpp
+    test_transition_logging.cpp
     ../src/main.cpp
 )
 
