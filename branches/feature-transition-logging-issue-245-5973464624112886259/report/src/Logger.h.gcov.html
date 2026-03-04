@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-04 14:28:24</td>
+            <td class="headerValue">2026-03-04 14:58:20</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -85,10 +85,10 @@
 <span id="L14"><span class="lineNum">      14</span>                 :             : // Simple synchronous logger that flushes every line for crash debugging</span>
 <span id="L15"><span class="lineNum">      15</span>                 :             : class Logger {</span>
 <span id="L16"><span class="lineNum">      16</span>                 :             : public:</span>
-<span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC tlaBgGNC">       11107 :     static Logger&amp; Get() {</span></span>
-<span id="L18"><span class="lineNum">      18</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 11106 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       11107 :         static Logger instance;</span></span>
+<span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC tlaBgGNC">       10614 :     static Logger&amp; Get() {</span></span>
+<span id="L18"><span class="lineNum">      18</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 10613 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       10614 :         static Logger instance;</span></span>
 <span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaUNC" title="Branch 6 was not taken"> - </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span>]
-<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC">       11107 :         return instance;</span></span>
+<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC">       10614 :         return instance;</span></span>
 <span id="L20"><span class="lineNum">      20</span>                 :             :     }</span>
 <span id="L21"><span class="lineNum">      21</span>                 :             : </span>
 <span id="L22"><span class="lineNum">      22</span>                 :<span class="tlaGNC">          10 :     void Init(const std::string&amp; filename) {</span></span>
@@ -105,8 +105,8 @@
 <span id="L32"><span class="lineNum">      32</span>                 :             :         }</span>
 <span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC">          10 :     }</span></span>
 <span id="L34"><span class="lineNum">      34</span>                 :             : </span>
-<span id="L35"><span class="lineNum">      35</span>                 :<span class="tlaGNC">       11081 :     void Log(const char* fmt, ...) {</span></span>
-<span id="L36"><span class="lineNum">      36</span>         [<span class="tlaGBC" title="Branch 0 was taken 11047 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 34 times"> + </span>]:<span class="tlaGNC">       11081 :         if (!m_initialized) return;</span></span>
+<span id="L35"><span class="lineNum">      35</span>                 :<span class="tlaGNC">       10588 :     void Log(const char* fmt, ...) {</span></span>
+<span id="L36"><span class="lineNum">      36</span>         [<span class="tlaGBC" title="Branch 0 was taken 10554 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 34 times"> + </span>]:<span class="tlaGNC">       10588 :         if (!m_initialized) return;</span></span>
 <span id="L37"><span class="lineNum">      37</span>                 :             : </span>
 <span id="L38"><span class="lineNum">      38</span>                 :             :         char buffer[2048]; // Increased buffer for complex transition logs</span>
 <span id="L39"><span class="lineNum">      39</span>                 :             :         va_list args;</span>

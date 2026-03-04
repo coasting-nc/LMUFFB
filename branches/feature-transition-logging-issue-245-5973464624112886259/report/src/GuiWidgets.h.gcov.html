@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-04 14:28:24</td>
+            <td class="headerValue">2026-03-04 14:58:20</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -94,33 +94,33 @@
 <span id="L23"><span class="lineNum">      23</span>                 :             :     /**</span>
 <span id="L24"><span class="lineNum">      24</span>                 :             :      * A standardized float slider with label, adaptive arrow-key support, and decorators.</span>
 <span id="L25"><span class="lineNum">      25</span>                 :             :      */</span>
-<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC tlaBgGNC">       18671 :     inline Result Float(const char* label, float* v, float min, float max, const char* fmt = &quot;%.2f&quot;, const char* tooltip = nullptr, std::function&lt;void()&gt; decorator = nullptr) {</span></span>
-<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">       18671 :         Result res;</span></span>
-<span id="L28"><span class="lineNum">      28</span>         [<span class="tlaGBC" title="Branch 0 was taken 18671 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       18671 :         ImGui::Text(&quot;%s&quot;, label);</span></span>
-<span id="L29"><span class="lineNum">      29</span>         [<span class="tlaGBC" title="Branch 0 was taken 18671 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       18671 :         bool labelHovered = ImGui::IsItemHovered();</span></span>
-<span id="L30"><span class="lineNum">      30</span>         [<span class="tlaGBC" title="Branch 0 was taken 18671 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       18671 :         ImGui::NextColumn();</span></span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC tlaBgGNC">       19048 :     inline Result Float(const char* label, float* v, float min, float max, const char* fmt = &quot;%.2f&quot;, const char* tooltip = nullptr, std::function&lt;void()&gt; decorator = nullptr) {</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">       19048 :         Result res;</span></span>
+<span id="L28"><span class="lineNum">      28</span>         [<span class="tlaGBC" title="Branch 0 was taken 19048 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       19048 :         ImGui::Text(&quot;%s&quot;, label);</span></span>
+<span id="L29"><span class="lineNum">      29</span>         [<span class="tlaGBC" title="Branch 0 was taken 19048 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       19048 :         bool labelHovered = ImGui::IsItemHovered();</span></span>
+<span id="L30"><span class="lineNum">      30</span>         [<span class="tlaGBC" title="Branch 0 was taken 19048 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       19048 :         ImGui::NextColumn();</span></span>
 <span id="L31"><span class="lineNum">      31</span>                 :             : </span>
 <span id="L32"><span class="lineNum">      32</span>                 :             :         // Render decorator (e.g., latency indicator) above the slider</span>
-<span id="L33"><span class="lineNum">      33</span>         [<span class="tlaGBC" title="Branch 0 was taken 2263 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16408 times"> + </span>]:<span class="tlaGNC">       18671 :         if (decorator) {</span></span>
+<span id="L33"><span class="lineNum">      33</span>         [<span class="tlaGBC" title="Branch 0 was taken 2263 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16785 times"> + </span>]:<span class="tlaGNC">       19048 :         if (decorator) {</span></span>
 <span id="L34"><span class="lineNum">      34</span>         [<span class="tlaGBC" title="Branch 0 was taken 2263 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        2263 :             decorator();</span></span>
 <span id="L35"><span class="lineNum">      35</span>                 :             :         }</span>
 <span id="L36"><span class="lineNum">      36</span>                 :             : </span>
-<span id="L37"><span class="lineNum">      37</span>         [<span class="tlaGBC" title="Branch 0 was taken 18671 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       18671 :         ImGui::SetNextItemWidth(-1);</span></span>
-<span id="L38"><span class="lineNum">      38</span>   [<span class="tlaGBC" title="Branch 0 was taken 18671 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 18671 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">       18671 :         std::string id = &quot;##&quot; + std::string(label);</span></span>
+<span id="L37"><span class="lineNum">      37</span>         [<span class="tlaGBC" title="Branch 0 was taken 19048 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       19048 :         ImGui::SetNextItemWidth(-1);</span></span>
+<span id="L38"><span class="lineNum">      38</span>   [<span class="tlaGBC" title="Branch 0 was taken 19048 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 19048 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">       19048 :         std::string id = &quot;##&quot; + std::string(label);</span></span>
 <span id="L39"><span class="lineNum">      39</span>                 :             : </span>
 <span id="L40"><span class="lineNum">      40</span>                 :             :         // Core Slider</span>
-<span id="L41"><span class="lineNum">      41</span>   [<span class="tlaGBC" title="Branch 0 was taken 18671 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 18671 times"> + </span>]:<span class="tlaGNC">       18671 :         if (ImGui::SliderFloat(id.c_str(), v, min, max, fmt)) {</span></span>
+<span id="L41"><span class="lineNum">      41</span>   [<span class="tlaGBC" title="Branch 0 was taken 19048 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 19048 times"> + </span>]:<span class="tlaGNC">       19048 :         if (ImGui::SliderFloat(id.c_str(), v, min, max, fmt)) {</span></span>
 <span id="L42"><span class="lineNum">      42</span>                 :<span class="tlaUNC tlaBgUNC">           0 :             res.changed = true;</span></span>
 <span id="L43"><span class="lineNum">      43</span>                 :             :         }</span>
 <span id="L44"><span class="lineNum">      44</span>                 :             : </span>
 <span id="L45"><span class="lineNum">      45</span>                 :             :         // Detect mouse release or Enter key after a series of edits</span>
-<span id="L46"><span class="lineNum">      46</span>   [<span class="tlaGBC" title="Branch 0 was taken 18671 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 18671 times"> + </span>]:<span class="tlaGNC tlaBgGNC">       18671 :         if (ImGui::IsItemDeactivatedAfterEdit()) {</span></span>
+<span id="L46"><span class="lineNum">      46</span>   [<span class="tlaGBC" title="Branch 0 was taken 19048 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 19048 times"> + </span>]:<span class="tlaGNC tlaBgGNC">       19048 :         if (ImGui::IsItemDeactivatedAfterEdit()) {</span></span>
 <span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaUNC tlaBgUNC">           0 :             res.deactivated = true;</span></span>
 <span id="L48"><span class="lineNum">      48</span>                 :             :         }</span>
 <span id="L49"><span class="lineNum">      49</span>                 :             : </span>
 <span id="L50"><span class="lineNum">      50</span>                 :             :         // Unified Interaction Logic (Arrow Keys &amp; Tooltips)</span>
-<span id="L51"><span class="lineNum">      51</span>   [<span class="tlaGBC" title="Branch 0 was taken 18671 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 18640 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 31 times"> + </span> :<span class="tlaGNC tlaBgGNC">       18671 :         if (ImGui::IsItemHovered() || labelHovered) {</span></span>
-<span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 22 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 18618 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 53 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 18618 times"> + </span>]
+<span id="L51"><span class="lineNum">      51</span>   [<span class="tlaGBC" title="Branch 0 was taken 19048 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 19017 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 31 times"> + </span> :<span class="tlaGNC tlaBgGNC">       19048 :         if (ImGui::IsItemHovered() || labelHovered) {</span></span>
+<span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 22 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 18995 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 53 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 18995 times"> + </span>]
 <span id="L52"><span class="lineNum">      52</span>                 :<span class="tlaGNC">          53 :             float range = max - min;</span></span>
 <span id="L53"><span class="lineNum">      53</span>                 :             :             // Adaptive step size: finer steps for smaller ranges</span>
 <span id="L54"><span class="lineNum">      54</span>   [<span class="tlaGBC" title="Branch 0 was taken 5 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 48 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 9 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 39 times"> + </span>]:<span class="tlaGNC">          53 :             float step = (range &gt; 50.0f) ? 0.5f : (range &lt; 1.0f) ? 0.001f : 0.01f; </span></span>
@@ -149,9 +149,9 @@
 <span id="L76"><span class="lineNum">      76</span>                 :             :             }</span>
 <span id="L77"><span class="lineNum">      77</span>                 :             :         }</span>
 <span id="L78"><span class="lineNum">      78</span>                 :             : </span>
-<span id="L79"><span class="lineNum">      79</span>         [<span class="tlaGBC" title="Branch 0 was taken 18671 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       18671 :         ImGui::NextColumn();</span></span>
-<span id="L80"><span class="lineNum">      80</span>                 :<span class="tlaGNC">       18671 :         return res;</span></span>
-<span id="L81"><span class="lineNum">      81</span>                 :<span class="tlaGNC">       18671 :     }</span></span>
+<span id="L79"><span class="lineNum">      79</span>         [<span class="tlaGBC" title="Branch 0 was taken 19048 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       19048 :         ImGui::NextColumn();</span></span>
+<span id="L80"><span class="lineNum">      80</span>                 :<span class="tlaGNC">       19048 :         return res;</span></span>
+<span id="L81"><span class="lineNum">      81</span>                 :<span class="tlaGNC">       19048 :     }</span></span>
 <span id="L82"><span class="lineNum">      82</span>                 :             : </span>
 <span id="L83"><span class="lineNum">      83</span>                 :             :     /**</span>
 <span id="L84"><span class="lineNum">      84</span>                 :             :      * A standardized checkbox with label and tooltip.</span>
