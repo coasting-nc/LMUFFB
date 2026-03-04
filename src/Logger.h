@@ -34,7 +34,6 @@ public:
 
     void Log(const char* fmt, ...) {
         char buffer[2048];
-        char buffer[2048];
         va_list args;
         va_start(args, fmt);
         vsnprintf(buffer, sizeof(buffer), fmt, args);
@@ -112,9 +111,6 @@ private:
                 localtime_r(&in_time_t, &time_info);
             #endif
 
-            m_file << "[" << std::put_time(&time_info, "%H:%M:%S") << "] " << message << "\n";
-            m_file.flush(); // Critical for crash debugging
-        }
             m_file << "[" << std::put_time(&time_info, "%H:%M:%S") << "] " << message << "\n";
             m_file.flush(); // Critical for crash debugging
         }

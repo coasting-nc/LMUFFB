@@ -179,7 +179,6 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "rest_api_fallback_enabled") current_preset.rest_api_enabled = (value == "1" || value == "true"); // NEW v0.7.113
                 else if (key == "rest_api_port") current_preset.rest_api_port = std::stoi(value); // NEW v0.7.113
             } catch (...) { Logger::Get().Log("[Config] ParsePresetLine Error."); }
-            } catch (...) { Logger::Get().Log("[Config] ParsePresetLine Error."); }
         }
     }
 }

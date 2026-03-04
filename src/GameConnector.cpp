@@ -330,13 +330,6 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
                 Logger::Get().LogFile("[Transition] SteeringRange: %.2f -> %.2f", m_prevState.steeringRange, currentRange);
                 m_prevState.steeringRange = currentRange;
             }
-
-            // 7. Steering Range
-            float currentRange = current.telemetry.telemInfo[idx].mPhysicalSteeringWheelRange;
-            if (std::abs(currentRange - m_prevState.steeringRange) > 0.001f) {
-                Logger::Get().LogFile("[Transition] SteeringRange: %.2f -> %.2f", m_prevState.steeringRange, currentRange);
-                m_prevState.steeringRange = currentRange;
-            }
         }
     }
 }
