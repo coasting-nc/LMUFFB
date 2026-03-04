@@ -1,6 +1,7 @@
 #include "Config.h"
 #include "Version.h"
 #include "Logger.h"
+#include "Logger.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -177,6 +178,7 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "slope_confidence_max_rate") current_preset.slope_confidence_max_rate = std::stof(value); // NEW v0.7.42
                 else if (key == "rest_api_fallback_enabled") current_preset.rest_api_enabled = (value == "1" || value == "true"); // NEW v0.7.113
                 else if (key == "rest_api_port") current_preset.rest_api_port = std::stoi(value); // NEW v0.7.113
+            } catch (...) { Logger::Get().Log("[Config] ParsePresetLine Error."); }
             } catch (...) { Logger::Get().Log("[Config] ParsePresetLine Error."); }
         }
     }
@@ -1481,6 +1483,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "rest_api_port") engine.m_rest_api_port = std::stoi(value);
                 } catch (...) {
                     Logger::Get().Log("[Config] Error parsing line: %s", line.c_str());
+                    Logger::Get().Log("[Config] Error parsing line: %s", line.c_str());
                 }
             }
         }
@@ -1504,9 +1507,11 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
 
     if (engine.m_optimal_slip_angle < 0.01f) {
         Logger::Get().Log("[Config] Invalid optimal_slip_angle (%.2f), resetting to default 0.10", engine.m_optimal_slip_angle);
+        Logger::Get().Log("[Config] Invalid optimal_slip_angle (%.2f), resetting to default 0.10", engine.m_optimal_slip_angle);
         engine.m_optimal_slip_angle = 0.10f;
     }
     if (engine.m_optimal_slip_ratio < 0.01f) {
+        Logger::Get().Log("[Config] Invalid optimal_slip_ratio (%.2f), resetting to default 0.12", engine.m_optimal_slip_ratio);
         Logger::Get().Log("[Config] Invalid optimal_slip_ratio (%.2f), resetting to default 0.12", engine.m_optimal_slip_ratio);
         engine.m_optimal_slip_ratio = 0.12f;
     }
@@ -1521,9 +1526,11 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     
     if (engine.m_slope_alpha_threshold < 0.001f || engine.m_slope_alpha_threshold > 0.1f) {
         Logger::Get().Log("[Config] Invalid slope_alpha_threshold (%.3f), resetting to 0.02f", engine.m_slope_alpha_threshold);
+        Logger::Get().Log("[Config] Invalid slope_alpha_threshold (%.3f), resetting to 0.02f", engine.m_slope_alpha_threshold);
         engine.m_slope_alpha_threshold = 0.02f;
     }
     if (engine.m_slope_decay_rate < 0.1f || engine.m_slope_decay_rate > 20.0f) {
+        Logger::Get().Log("[Config] Invalid slope_decay_rate (%.2f), resetting to 5.0f", engine.m_slope_decay_rate);
         Logger::Get().Log("[Config] Invalid slope_decay_rate (%.2f), resetting to 5.0f", engine.m_slope_decay_rate);
         engine.m_slope_decay_rate = 5.0f;
     }
@@ -1547,6 +1554,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
         if (sens > 0.01) {
             engine.m_slope_max_threshold = (float)(engine.m_slope_min_threshold - (8.0 / sens));
             Logger::Get().Log("[Config] Migrated slope_sensitivity %.2f to max_threshold %.2f", sens, engine.m_slope_max_threshold);
+            Logger::Get().Log("[Config] Migrated slope_sensitivity %.2f to max_threshold %.2f", sens, engine.m_slope_max_threshold);
         }
     }
 
@@ -1554,28 +1562,34 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     if (engine.m_slope_max_threshold > engine.m_slope_min_threshold) {
         std::swap(engine.m_slope_min_threshold, engine.m_slope_max_threshold);
         Logger::Get().Log("[Config] Swapped slope thresholds (min should be > max)");
+        Logger::Get().Log("[Config] Swapped slope thresholds (min should be > max)");
     }
     
     // v0.6.20: Safety Validation - Clamp Advanced Braking Parameters to Valid Ranges
     if (engine.m_lockup_gamma < 0.1f || engine.m_lockup_gamma > 4.0f) {
         Logger::Get().Log("[Config] Invalid lockup_gamma (%.2f), clamping to range [0.1, 4.0]", engine.m_lockup_gamma);
+        Logger::Get().Log("[Config] Invalid lockup_gamma (%.2f), clamping to range [0.1, 4.0]", engine.m_lockup_gamma);
         engine.m_lockup_gamma = (std::max)(0.1f, (std::min)(4.0f, engine.m_lockup_gamma));
     }
     if (engine.m_lockup_prediction_sens < 10.0f || engine.m_lockup_prediction_sens > 100.0f) {
+        Logger::Get().Log("[Config] Invalid lockup_prediction_sens (%.2f), clamping to range [10.0, 100.0]", engine.m_lockup_prediction_sens);
         Logger::Get().Log("[Config] Invalid lockup_prediction_sens (%.2f), clamping to range [10.0, 100.0]", engine.m_lockup_prediction_sens);
         engine.m_lockup_prediction_sens = (std::max)(10.0f, (std::min)(100.0f, engine.m_lockup_prediction_sens));
     }
     if (engine.m_lockup_bump_reject < 0.1f || engine.m_lockup_bump_reject > 5.0f) {
         Logger::Get().Log("[Config] Invalid lockup_bump_reject (%.2f), clamping to range [0.1, 5.0]", engine.m_lockup_bump_reject);
+        Logger::Get().Log("[Config] Invalid lockup_bump_reject (%.2f), clamping to range [0.1, 5.0]", engine.m_lockup_bump_reject);
         engine.m_lockup_bump_reject = (std::max)(0.1f, (std::min)(5.0f, engine.m_lockup_bump_reject));
     }
     if (engine.m_abs_gain < 0.0f || engine.m_abs_gain > 10.0f) {
+        Logger::Get().Log("[Config] Invalid abs_gain (%.2f), clamping to range [0.0, 10.0]", engine.m_abs_gain);
         Logger::Get().Log("[Config] Invalid abs_gain (%.2f), clamping to range [0.0, 10.0]", engine.m_abs_gain);
         engine.m_abs_gain = (std::max)(0.0f, (std::min)(10.0f, engine.m_abs_gain));
     }
     // Issue #211: Legacy 100Nm hack scaling
     if (legacy_torque_hack && IsVersionLessEqual(config_version, "0.7.66")) {
         engine.m_gain *= (15.0f / legacy_torque_val);
+        Logger::Get().Log("[Config] Migrated legacy 100Nm hack for main config. Scaling gain.");
         Logger::Get().Log("[Config] Migrated legacy 100Nm hack for main config. Scaling gain.");
         m_needs_save = true;
     }
@@ -1584,6 +1598,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     if (engine.m_understeer_effect > 2.0f) {
         float old_val = engine.m_understeer_effect;
         engine.m_understeer_effect = engine.m_understeer_effect / 100.0f;
+        Logger::Get().Log("[Config] Migrated legacy understeer_effect: %.2f -> %.2f", old_val, engine.m_understeer_effect);
         Logger::Get().Log("[Config] Migrated legacy understeer_effect: %.2f -> %.2f", old_val, engine.m_understeer_effect);
     }
     // Clamp to new valid range [0.0, 2.0]

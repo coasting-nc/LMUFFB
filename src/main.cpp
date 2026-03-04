@@ -300,9 +300,11 @@ int main(int argc, char* argv[]) noexcept {
     if (!headless) {
         if (!GuiLayer::Init()) {
             Logger::Get().Log("Failed to initialize GUI.");
+            Logger::Get().Log("Failed to initialize GUI.");
         }
         DirectInputFFB::Get().Initialize(reinterpret_cast<HWND>(GuiLayer::GetWindowHandle()));
     } else {
+        Logger::Get().Log("Running in HEADLESS mode.");
         Logger::Get().Log("Running in HEADLESS mode.");
         DirectInputFFB::Get().Initialize(NULL);
     }

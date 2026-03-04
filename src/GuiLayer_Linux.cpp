@@ -3,6 +3,7 @@
 #include "Version.h"
 #include "Config.h"
 #include "Logger.h"
+#include "Logger.h"
 #include <iostream>
 #include <vector>
 #include <algorithm>

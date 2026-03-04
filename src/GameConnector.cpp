@@ -59,6 +59,7 @@ bool GameConnector::TryConnect() {
     m_pSharedMemLayout = (SharedMemoryLayout*)MapViewOfFile(m_hMapFile, FILE_MAP_READ, 0, 0, sizeof(SharedMemoryLayout));
     if (m_pSharedMemLayout == NULL) {
         Logger::Get().Log("[GameConnector] Could not map view of file.");
+        Logger::Get().Log("[GameConnector] Could not map view of file.");
         Logger::Get().LogWin32Error("MapViewOfFile", GetLastError());
         _DisconnectLocked();
         return false;
@@ -66,6 +67,7 @@ bool GameConnector::TryConnect() {
 
     m_smLock = SafeSharedMemoryLock::MakeSafeSharedMemoryLock();
     if (!m_smLock.has_value()) {
+        Logger::Get().Log("[GameConnector] Failed to init LMU Shared Memory Lock");
         Logger::Get().Log("[GameConnector] Failed to init LMU Shared Memory Lock");
         _DisconnectLocked();
         return false;
@@ -81,6 +83,7 @@ bool GameConnector::TryConnect() {
     m_connected = true;
     m_lastUpdateLocalTime = std::chrono::steady_clock::now();
     Logger::Get().Log("[GameConnector] Connected to LMU Shared Memory.");
+    Logger::Get().Log("[GameConnector] Connected to LMU Shared Memory.");
     return true;
 #else
     return false;
@@ -91,6 +94,7 @@ bool GameConnector::CheckLegacyConflict() {
 #if defined(_WIN32) || defined(HEADLESS_GUI)
     HANDLE hLegacy = OpenFileMappingA(FILE_MAP_READ, FALSE, LEGACY_SHARED_MEMORY_NAME);
     if (hLegacy) {
+        Logger::Get().Log("[Warning] Legacy rFactor 2 Shared Memory Plugin detected. This may conflict with LMU 1.2 data.");
         Logger::Get().Log("[Warning] Legacy rFactor 2 Shared Memory Plugin detected. This may conflict with LMU 1.2 data.");
         CloseHandle(hLegacy);
         return true;
@@ -318,6 +322,13 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
             if (strcmp(vehScoring.mVehicleName, m_prevState.vehicleName) != 0) {
                 Logger::Get().LogFile("[Transition] Vehicle: '%s' -> '%s'", m_prevState.vehicleName, vehScoring.mVehicleName);
                 strncpy(m_prevState.vehicleName, vehScoring.mVehicleName, 63);
+            }
+
+            // 7. Steering Range
+            float currentRange = current.telemetry.telemInfo[idx].mPhysicalSteeringWheelRange;
+            if (std::abs(currentRange - m_prevState.steeringRange) > 0.001f) {
+                Logger::Get().LogFile("[Transition] SteeringRange: %.2f -> %.2f", m_prevState.steeringRange, currentRange);
+                m_prevState.steeringRange = currentRange;
             }
 
             // 7. Steering Range

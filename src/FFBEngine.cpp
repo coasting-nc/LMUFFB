@@ -2,6 +2,7 @@
 #include "Config.h"
 #include "RestApiProvider.h"
 #include "Logger.h"
+#include "Logger.h"
 #include <iostream>
 #include <mutex>
 

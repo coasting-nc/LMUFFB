@@ -16,6 +16,7 @@
 #include "FFBEngine.h"
 #include "Config.h"
 #include "Logger.h"
+#include "Logger.h"
 #include <iostream>
 #include <mutex>
 

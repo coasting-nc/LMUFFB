@@ -1,5 +1,6 @@
 #include "DirectInputFFB.h"
 #include "Logger.h"
+#include "Logger.h"
 
 // Standard Library Headers
 #include <iostream>
