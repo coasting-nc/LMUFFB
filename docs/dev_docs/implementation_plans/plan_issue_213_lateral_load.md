@@ -42,11 +42,12 @@ The addition of load-based SoP alongside acceleration-based SoP offers maximum f
 5. **Update GUI**: Add the new "Lateral Load" slider in `src/GuiLayer_Common.cpp`.
 6. **Verify GUI Change**: Use `read_file` to confirm the new slider implementation.
 7. **Update Tooltips**: Add `LATERAL_LOAD` in `src/Tooltips.h`.
-8. **Update Versioning**: Increment `VERSION` from `0.7.120` to `0.7.121`.
-9. **Run Unit Tests**: Execute the new unit test and verify success.
-10. **Full Regression Test**: Run `./build/tests/run_combined_tests` to ensure no other effects are broken.
-11. **Final Quality Assurance**: Complete pre-commit steps to ensure proper testing, verification, review, and reflection are done.
-12. **Submit**: Use the `submit` tool to push the changes.
+8. **Orientation Matrix Helper**: Implement `VerifyOrientation` helper in `test_ffb_common` to standardize directional verification for haptic effects.
+9. **Update Versioning**: Increment `VERSION` from `0.7.120` to `0.7.121`.
+10. **Run Unit Tests**: Execute the new unit test and verify success.
+11. **Full Regression Test**: Run `./build/tests/run_combined_tests` to ensure no other effects are broken.
+12. **Final Quality Assurance**: Complete pre-commit steps to ensure proper testing, verification, review, and reflection are done.
+13. **Submit**: Use the `submit` tool to push the changes.
 
 ## Deliverables
 - [x] Modified `src/FFBEngine.cpp`

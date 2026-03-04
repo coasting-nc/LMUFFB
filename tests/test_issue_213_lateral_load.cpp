@@ -101,3 +101,30 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_kinematic, "CorePhysics", (std::vec
         ASSERT_GT(snapshots.back().sop_force, 0.01f);
     }
 }
+
+TEST_CASE_TAGGED(test_issue_213_orientation_matrix, "CorePhysics", (std::vector<std::string>{"Physics", "Issue213", "Matrix"})) {
+    std::cout << "\nTest: Orientation Matrix - Lateral Load & G-Force (Issue #213)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+
+    // Enable both effects to ensure they pull together
+    engine.m_sop_effect = 1.0f;
+    engine.m_lat_load_effect = 1.0f;
+    engine.m_sop_scale = 1.0f;
+    engine.m_gain = 1.0f;
+    engine.m_invert_force = true; // Match app default (Pull away from centripetal)
+
+    // Scenario 1: Right Turn (Centrifugal force LEFT, Load shift LEFT)
+    // Game: +X = Left (Centrifugal), FL > FR (Load)
+    // Expected SoP: Positive (Internal)
+    // Expected FFB: Negative (Pull LEFT)
+    OrientationScenario right_turn = { 9.81, 6000.0, 2000.0, "Right Turn (1G Left Body Force)" };
+    VerifyOrientation(engine, right_turn, 1.0f, -1.0f);
+
+    // Scenario 2: Left Turn (Centrifugal force RIGHT, Load shift RIGHT)
+    // Game: -X = Right (Centrifugal), FR > FL (Load)
+    // Expected SoP: Negative (Internal)
+    // Expected FFB: Positive (Pull RIGHT)
+    OrientationScenario left_turn = { -9.81, 2000.0, 6000.0, "Left Turn (1G Right Body Force)" };
+    VerifyOrientation(engine, left_turn, -1.0f, 1.0f);
+}

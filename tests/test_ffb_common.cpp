@@ -82,36 +82,6 @@ void ParseTagArguments(int argc, char* argv[]) {
             exit(0);
         }
     }
-    
-    // Print active filters
-    if (g_enable_tag_filtering) {
-        std::cout << "\n=== Tag Filtering Active ===\n";
-        if (!g_tag_filter.empty()) {
-            std::cout << "Include Tags: ";
-            for (size_t i = 0; i < g_tag_filter.size(); i++) {
-                std::cout << g_tag_filter[i];
-                if (i < g_tag_filter.size() - 1) std::cout << ", ";
-            }
-            std::cout << "\n";
-        }
-        if (!g_tag_exclude.empty()) {
-            std::cout << "Exclude Tags: ";
-            for (size_t i = 0; i < g_tag_exclude.size(); i++) {
-                std::cout << g_tag_exclude[i];
-                if (i < g_tag_exclude.size() - 1) std::cout << ", ";
-            }
-            std::cout << "\n";
-        }
-        if (!g_category_filter.empty()) {
-            std::cout << "Categories: ";
-            for (size_t i = 0; i < g_category_filter.size(); i++) {
-                std::cout << g_category_filter[i];
-                if (i < g_category_filter.size() - 1) std::cout << ", ";
-            }
-            std::cout << "\n";
-        }
-        std::cout << "============================\n";
-    }
 }
 
 
@@ -166,6 +136,7 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_grip_smoothing_sensitivity = 1.0f;
     
     engine.m_sop_effect = 0.0f;
+    engine.m_lat_load_effect = 0.0f; // New v0.7.121
     engine.m_sop_yaw_gain = 0.0f;
     engine.m_oversteer_boost = 0.0f;
     engine.m_rear_align_effect = 0.0f;
@@ -194,6 +165,23 @@ void InitializeEngine(FFBEngine& engine) {
     // v0.7.109: Ensure toggles are initialized to FALSE to match global defaults
     engine.m_dynamic_normalization_enabled = false;
     engine.m_auto_load_normalization_enabled = false;
+}
+
+// Orientation Matrix Helper Implementation
+void VerifyOrientation(FFBEngine& engine, const OrientationScenario& scenario, float expected_sop_sign, float expected_total_ffb_sign) {
+    std::cout << "  [Matrix] Testing Orientation: " << scenario.description << std::endl;
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+    data.mLocalAccel.x = scenario.lat_accel_x;
+    data.mWheel[0].mTireLoad = scenario.fl_load;
+    data.mWheel[1].mTireLoad = scenario.fr_load;
+    for (int i = 0; i < 60; i++) engine.calculate_force(&data);
+    auto snapshots = engine.GetDebugBatch();
+    if (snapshots.empty()) { g_tests_failed++; return; }
+    const auto& snap = snapshots.back();
+    bool sop_ok = (expected_sop_sign > 0) ? (snap.sop_force > 0.001f) : (snap.sop_force < -0.001f);
+    if (sop_ok) g_tests_passed++; else g_tests_failed++;
+    bool total_ok = (expected_total_ffb_sign > 0) ? (snap.total_output > 0.001f) : (snap.total_output < -0.001f);
+    if (total_ok) g_tests_passed++; else g_tests_failed++;
 }
 
 // ============================================================
