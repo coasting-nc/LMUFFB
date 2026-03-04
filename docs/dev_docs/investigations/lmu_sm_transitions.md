@@ -63,9 +63,45 @@ By interpreting combinations of the variables above:
 - **Pausing While Driving (ESC):** `mOptionsLocation` usually remains `3`, but `mGamePhase` changes to `9`. Alternatively, the physics thread completely stops, which means `mDeltaTime` and `mCurrentET` stagnate.
 - **Changing Settings While Paused:** Monitored while the game is paused (`mGamePhase == 9`). If the user clicks out to the Monitor, `mOptionsLocation` will jump to `2`.
 
+## 3. Transition Logging Requirements
+
+To facilitate robust debugging, the application should maintain a **transition trace** within the debug log file (output to file, but omitted from the standard console to prevent clutter). 
+
+This debug trace helps identify the exact state of the game immediately prior to a bug or crash occurring. 
+
+**Implementation Desiderata:**
+1. **Event Tracing:** Every time a discrete transition is detected (e.g., entering driving, pausing, returning to pits, AI taking control), a timestamped entry should be written to the log file.
+2. **State Snapshot:** The log entry must include a brief snapshot of the relevant variables (e.g., `[Transition] Unpaused: mOptionsLocation=3, mGamePhase=5, mInRealtime=true, mControl=0`).
+3. **Throttling Considerations:** Frequent or continuous variables (like `mDeltaTime` tracking, or `SME_UPDATE_TELEMETRY`) MUST NOT be logged here. Only atomic state changes should generate a log entry to avoid spamming the file and causing performance hits from disk I/O.
+
 ---
 
-## 3. Suggestions for Robust Transition Detection
+## 4. Update Frequency Analysis of State Variables
+
+To ensure the debug logs do not become spammed, it is critical to classify variables based on how frequently they change:
+
+### A. Occasional / Discrete Changes (Safe to Log on Change)
+These variables only change based on direct user input, deliberate game state progression, or menu navigation. They are ideal triggers for logging:
+- **`SharedMemoryGeneric::events` (High-Level Only):** `SME_ENTER`, `SME_EXIT`, `SME_STARTUP`, `SME_SHUTDOWN`, `SME_LOAD`, `SME_UNLOAD`, `SME_START_SESSION`, `SME_END_SESSION`, `SME_ENTER_REALTIME`, `SME_EXIT_REALTIME`, `SME_INIT_APPLICATION`, `SME_UNINIT_APPLICATION`. (Fires exactly once per corresponding transition).
+- **`ApplicationStateV01::mOptionsLocation`**: Changes only when navigating between major menus (Main UI, Loading, Garage, Driving).
+- **`ScoringInfoV01::mInRealtime`**: Changes only when jumping in/out of the car.
+- **`ScoringInfoV01::mSession`**: Changes only between phases of a race weekend (Practice -> Quali -> Race).
+- **`ScoringInfoV01::mGamePhase`**: Progresses through distinct race phases. The `9` (Paused) state turns on/off explicitly upon pressing the pause button.
+- **`VehicleScoringInfoV01::mControl`**: Changes only if the player gives/takes control to/from the AI or remote server.
+- **`VehicleScoringInfoV01::mPitState`**: Iterates through 5 steps sequentially during a pit stop event.
+- **`TelemInfoV01::mPhysicalSteeringWheelRange`**: Changes occasionally if a setup or specific option adjustment occurs.
+
+### B. Frequent / Continuous Changes (DO NOT Log on Change)
+These variables are updated continuously by the simulation logic or physics engine (e.g., hundreds of times per second). Logging these raw events directly will immediately spam the log file:
+- **`SharedMemoryGeneric::events` (Continuous):**
+  - **`SME_UPDATE_TELEMETRY`**: Extremely frequent. Fires every physics frame. **Do not log this event.**
+  - **`SME_UPDATE_SCORING`**: Extremely frequent. Fires every scoring update (many times a second). **Do not log this event.**
+  - **`SME_SET_ENVIRONMENT`**: Usually occasional, but can potentially fire rapidly if weather conditions interpolate.
+- **`TelemInfoV01::mElapsedTime`**, **`TelemInfoV01::mDeltaTime`**: Changing literally every frame. These should be *polled* silently to detect "freezes", but the raw numbers should never be logged sequentially.
+
+---
+
+## 5. Suggestions for Robust Transition Detection
 
 Relying entirely on a single boolean or event array isn't always reliable (e.g., dropped frames or decoupled physics/UI threads). You should use a **Compound State Machine** to determine transitions safely. 
 
