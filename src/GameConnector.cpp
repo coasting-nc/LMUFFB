@@ -5,6 +5,7 @@
 #endif
 #include "lmu_sm_interface/SafeSharedMemoryLock.h"
 #include <iostream>
+#include <cstring>
 
 #define LEGACY_SHARED_MEMORY_NAME "$rFactor2SMMP_Telemetry$"
 
@@ -20,7 +21,7 @@ GameConnector::~GameConnector() {
 }
 
 void GameConnector::Disconnect() {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
     _DisconnectLocked();
 }
 
@@ -42,7 +43,7 @@ void GameConnector::_DisconnectLocked() {
 }
 
 bool GameConnector::TryConnect() {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
     if (m_connected) return true;
 
     // Ensure we don't leak handles from a previous partial/failed attempt
@@ -103,7 +104,7 @@ bool GameConnector::CheckLegacyConflict() {
 bool GameConnector::IsConnected() const {
   if (!m_connected.load(std::memory_order_acquire)) return false;
 
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard<std::recursive_mutex> lock(m_mutex);
   if (!m_connected.load(std::memory_order_relaxed)) return false;
 
 #if defined(_WIN32) || defined(HEADLESS_GUI)
@@ -122,7 +123,7 @@ bool GameConnector::IsConnected() const {
 bool GameConnector::CopyTelemetry(SharedMemoryObjectOut& dest) {
     if (!m_connected.load(std::memory_order_acquire)) return false;
 
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
     if (!m_connected.load(std::memory_order_relaxed) || !m_pSharedMemLayout || !m_smLock.has_value()) return false;
 
     if (m_smLock->Lock(50)) {
@@ -147,10 +148,10 @@ bool GameConnector::CopyTelemetry(SharedMemoryObjectOut& dest) {
         }
 
         bool isRealtime = (m_pSharedMemLayout->data.scoring.scoringInfo.mInRealtime != 0);
+        m_smLock->Unlock();
 
         CheckTransitions(dest);
 
-        m_smLock->Unlock();
         return isRealtime;
     } else {
         return false;
@@ -166,6 +167,7 @@ bool GameConnector::IsStale(long timeoutMs) const {
 }
 
 void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
     auto& scoring = current.scoring.scoringInfo;
     auto& generic = current.generic;
 

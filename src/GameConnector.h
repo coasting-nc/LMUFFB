@@ -11,6 +11,7 @@
 #include "lmu_sm_interface/SafeSharedMemoryLock.h"
 #include <mutex>
 #include <atomic>
+#include <cstring>
 
 namespace FFBEngineTests { class GameConnectorTestAccessor; }
 
@@ -63,7 +64,7 @@ private:
     DWORD m_processId = 0;
 
     std::atomic<bool> m_connected{false};
-    mutable std::mutex m_mutex;
+    mutable std::recursive_mutex m_mutex;
 
     // Heartbeat for staleness detection (v0.7.15)
     double m_lastElapsedTime = -1.0;

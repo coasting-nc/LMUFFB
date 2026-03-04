@@ -30,8 +30,8 @@ The application currently logs certain events to both the file and console. High
     - **Do NOT Log:** `mElapsedTime`, `mDeltaTime`, `mCurrentET`, or any per-frame telemetry like `mSteeringShaftTorque`.
 
 ### 3. Integration Point (`src/GameConnector.cpp`)
-- **Change:** Call `CheckTransitions` inside `CopyTelemetry` after successfully locking and copying data.
-- **Rationale:** Ensures we only check for transitions when we have a valid, fresh copy of the shared memory.
+- **Change:** Call `CheckTransitions` inside `CopyTelemetry` after successfully unlocking the shared memory.
+- **Rationale:** Ensures we only check for transitions when we have a valid, fresh copy of the shared memory, and avoids performing file I/O while holding the inter-process lock.
 
 ### 4. Version and Changelog
 - Increment version to `0.7.121`.
@@ -53,11 +53,24 @@ The application currently logs certain events to both the file and console. High
 - Run `./build/tests/run_combined_tests` to ensure no impact on existing FFB or telemetry logic.
 
 ## Deliverables
-- [ ] Modified `src/Logger.h`
-- [ ] Modified `src/GameConnector.h`
-- [ ] Modified `src/GameConnector.cpp`
-- [ ] New `tests/test_transition_logging.cpp`
-- [ ] Updated `VERSION`
-- [ ] Updated `CHANGELOG_DEV.md`
-- [ ] Updated `USER_CHANGELOG.md`
-- [ ] Implementation Notes in this plan.
+- [x] Modified `src/Logger.h`
+- [x] Modified `src/GameConnector.h`
+- [x] Modified `src/GameConnector.cpp`
+- [x] New `tests/test_transition_logging.cpp`
+- [x] Updated `VERSION`
+- [x] Updated `CHANGELOG_DEV.md`
+- [x] Updated `USER_CHANGELOG.md`
+- [x] Implementation Notes in this plan.
+
+## Implementation Notes
+- **Encountered Issues:**
+    - The singleton nature of `GameConnector` made unit testing state transitions tricky. Created `GameConnectorTestAccessor` as a friend class to allow tests to call `CheckTransitions` directly with mock data.
+    - `Logger::Init` needed improvement to close existing files to support multiple test cases re-initializing the logger.
+- **Code Review Feedback:**
+    - **Iteration 1:** Identified catastrophic changelog truncation and unintended log artifacts in the commit. Corrected by restoring changelogs and manually deleting artifacts.
+    - **Iteration 2:** Highlighted log artifacts still present. Noted that `CheckTransitions` was called while holding the shared memory lock, which could theoretically cause stalls. Corrected by moving the call outside the lock.
+    - **Iteration 3:** Noted lack of mutex protection for `m_prevState` in `GameConnector` and missing `<cstring>` include. Corrected by adding `lock_guard` and explicit include.
+- **Deviations from Plan:**
+    - Moved `CheckTransitions` outside the lock block for better inter-process performance.
+- **Future Recommendations:**
+    - Consider implementing a dedicated thread for diagnostic logging if transition frequency or snapshot complexity increases, further decoupling I/O from the telemetry path.
