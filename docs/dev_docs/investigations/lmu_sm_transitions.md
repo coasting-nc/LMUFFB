@@ -101,7 +101,35 @@ These variables are updated continuously by the simulation logic or physics engi
 
 ---
 
-## 5. Suggestions for Robust Transition Detection
+## 5. Logging Strategies for High-Frequency Variables
+
+While high-frequency/continuous variables must not be logged every time they change, they can still provide critical context for debugging when specific, meaningful events occur. For these variables, the application loop must read them continuously, but we should implement conditional logging filters (throttling and anomaly detection).
+
+Here is how to extract useful debug logs from continuous variables without spamming the file:
+
+### A. Threshold-Triggered Logging (Anomalies)
+Only log high-frequency values when they cross a specific threshold that indicates a rare or unexpected condition:
+- **`TelemInfoV01::mDeltaTime` Spikes:** Instead of logging `mDeltaTime` constantly, log a warning **only** if `mDeltaTime > 0.05` (e.g., >50ms, indicative of a physics thread stutter or drop).
+  - *Example Log:* `[Warning] Physics stutter detected: mDeltaTime = 0.082s`
+  
+### B. State Change Derivation (Edge Detection)
+Some continuous variables represent a physical state that should only be logged when entering or exiting a specific condition:
+- **Elapsed Time Stalling (Hard Freeze Detection):** Track `ScoringInfoV01::mCurrentET`. If it stops advancing for a set number of loops (e.g., `prevCurrentET == currentET` for 10 consecutive frames) while *not* intentionally paused (`mGamePhase != 9`), log that a freeze started. Once `mCurrentET` resumes updating, log that the freeze ended.
+  - *Example Log:* `[Transition] Physics freeze detected (mCurrentET stalled at 14502.3s)`
+  - *Example Log:* `[Transition] Physics resumed after freeze.`
+
+### C. Gating by Higher-Level Transitions
+High-frequency events can be "gated" so that they are only logged once upon entry or exit of a specific phase:
+- **`SME_UPDATE_TELEMETRY` / `SME_UPDATE_SCORING` Presence:** The fact that these events start or *stop* firing is meaningful. You can log when telemetry updates start arriving after a loading screen, or when they suddenly cease unexpectedly.
+  - *Implementation:* Use a boolean flag `isReceivingTelemetry`. Set to `true` when `SME_UPDATE_TELEMETRY` fires, and log `[Transition] Telemetry stream started.`. If no telemetry is received for 1000ms, set to `false` and log `[Transition] Telemetry stream stopped.`
+  
+### D. Cooldown / Rate-Limited Diagnostics
+If you need to log continuous physics parameters for diagnostic tracking (e.g., tracking a bug where torque randomly jumps), use a rate-limiter or condition it heavily.
+- Only log output torque if it exceeds a maximum safety threshold (e.g., `mSteeringShaftTorque > 25.0`), restricted to at most once per second.
+
+---
+
+## 6. Suggestions for Robust Transition Detection
 
 Relying entirely on a single boolean or event array isn't always reliable (e.g., dropped frames or decoupled physics/UI threads). You should use a **Compound State Machine** to determine transitions safely. 
 
