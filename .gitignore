@@ -62,3 +62,9 @@ test_transitions.log
 test_debug.log
 cobertura.xml
 test_gui.csv/**
+test_coverage.log
+test_main_thread_v6.log
+test_normalization.ini
+test_runner_debug.log
+test_transitions.log
+test_v6_sync.log
