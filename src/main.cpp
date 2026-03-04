@@ -223,14 +223,13 @@ void FFBThread() {
 
             if (in_realtime_phys && !health.is_healthy) {
                  auto now = std::chrono::steady_clock::now();
-                 if (std::chrono::duration_cast<std::chrono::seconds>(now - lastWarningTime).count() >= 5) {
+                 if (std::chrono::duration_cast<std::chrono::seconds>(now - lastWarningTime).count() >= 60) {
                      std::string reason = "";
                      if (health.loop_low) reason += "Loop=" + std::to_string((int)health.loop_rate) + "Hz ";
                      if (health.physics_low) reason += "Physics=" + std::to_string((int)health.physics_rate) + "Hz ";
                      if (health.telem_low) reason += "Telemetry=" + std::to_string((int)health.telem_rate) + "Hz ";
                      if (health.torque_low) reason += "Torque=" + std::to_string((int)health.torque_rate) + "Hz (Target " + std::to_string((int)health.expected_torque_rate) + "Hz) ";
 
-                     std::cout << "[WARNING] Low Sample Rate detected: " << reason << std::endl;
                      Logger::Get().Log("Low Sample Rate detected: %s", reason.c_str());
                      lastWarningTime = now;
                  }
@@ -255,27 +254,6 @@ void FFBThread() {
 
         if (DirectInputFFB::Get().UpdateForce(force)) {
             hwMonitor.RecordEvent();
-        }
-
-        // Extended Logging (Issue #133)
-        static auto lastExtLogTime = std::chrono::steady_clock::now();
-        auto now = std::chrono::steady_clock::now();
-        if (std::chrono::duration_cast<std::chrono::seconds>(now - lastExtLogTime).count() >= 5) {
-            lastExtLogTime = now;
-            if (GameConnector::Get().IsConnected() && g_localData.telemetry.playerHasVehicle) {
-                Logger::Get().Log("--- Telemetry Sample Rates (Hz) ---");
-                Logger::Get().Log("Loop: %.1f, ET: %.1f, HW: %.1f", loopMonitor.GetRate(), telemMonitor.GetRate(), hwMonitor.GetRate());
-                Logger::Get().Log("Torque: Shaft=%.1f, Generic=%.1f", torqueMonitor.GetRate(), genTorqueMonitor.GetRate());
-                Logger::Get().Log("Accel: X=%.1f, Y=%.1f, Z=%.1f", mAccX.monitor.GetRate(), mAccY.monitor.GetRate(), mAccZ.monitor.GetRate());
-                Logger::Get().Log("Vel: X=%.1f, Y=%.1f, Z=%.1f", mVelX.monitor.GetRate(), mVelY.monitor.GetRate(), mVelZ.monitor.GetRate());
-                Logger::Get().Log("Rot: X=%.1f, Y=%.1f, Z=%.1f", mRotX.monitor.GetRate(), mRotY.monitor.GetRate(), mRotZ.monitor.GetRate());
-                Logger::Get().Log("RotAcc: X=%.1f, Y=%.1f, Z=%.1f", mRotAccX.monitor.GetRate(), mRotAccY.monitor.GetRate(), mRotAccZ.monitor.GetRate());
-                Logger::Get().Log("Steering: Unf=%.1f, Fil=%.1f, RPM=%.1f", mUnfSteer.monitor.GetRate(), mFilSteer.monitor.GetRate(), mRPM.monitor.GetRate());
-                Logger::Get().Log("Load: FL=%.1f, FR=%.1f, RL=%.1f, RR=%.1f", mLoadFL.monitor.GetRate(), mLoadFR.monitor.GetRate(), mLoadRL.monitor.GetRate(), mLoadRR.monitor.GetRate());
-                Logger::Get().Log("LatForce: FL=%.1f, FR=%.1f, RL=%.1f, RR=%.1f", mLatFL.monitor.GetRate(), mLatFR.monitor.GetRate(), mLatRL.monitor.GetRate(), mLatRR.monitor.GetRate());
-                Logger::Get().Log("Pos: X=%.1f, Y=%.1f, Z=%.1f, DeltaTime=%.1f", mPosX.monitor.GetRate(), mPosY.monitor.GetRate(), mPosZ.monitor.GetRate(), mDtMon.monitor.GetRate());
-                Logger::Get().Log("-----------------------------------");
-            }
         }
 
         // Precise Timing: Sleep until next tick

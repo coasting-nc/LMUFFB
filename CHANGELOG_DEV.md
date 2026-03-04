@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.120] - 2026-03-11
+### Fixed
+- **Console Message Spam (Issue #238)**:
+  - Removed "ResizeBuffers" logging in `src/GuiLayer_Win32.cpp`.
+  - Removed periodic telemetry sample rate logging in `src/main.cpp`.
+  - Refined "Low Sample Rate detected" warnings: increased interval to 60s and removed redundant `std::cout` print.
+
 ## [0.7.119] - 2026-03-10
 ### Fixed
 - **Console Message Spam (Issue #238)**:
