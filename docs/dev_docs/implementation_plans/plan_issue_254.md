@@ -73,7 +73,7 @@ Issue #254 reports that CSV telemetry logs grow too quickly in size and consume 
     - **Description**: Verify binary logging integrity.
     - **Assertions**:
         - File extension is `.bin`.
-        - `sizeof(LogFrame)` is exactly 238 bytes (packed).
+        - `sizeof(LogFrame)` is exactly 262 bytes (packed).
         - Binary data matches the input values when read back from the file.
 - **Updated Tests**:
     - `tests/test_async_logger.cpp`: Updated to reflect 400Hz frame counts.
@@ -94,5 +94,6 @@ Issue #254 reports that CSV telemetry logs grow too quickly in size and consume 
 - **Deviations**: Re-aligned the C++ `LogFrame` struct fields to match the legacy CSV column order. This ensures that the binary layout is logically consistent with historical logs and simplifies the Python mapping.
 - **Iterative Review Process**:
     - **Iteration 1**: Rated #Partially Correct#. Feedback noted potential counter overflow, broken Python reading due to buffering, and field alignment mismatch.
-    - **Iteration 2**: Rated #Correct#. All blocking issues addressed, including counter reset, robust binary header skipping, and re-aligned struct layout.
+    - **Iteration 2**: Rated #Mostly Correct#. Production code was correct but Python tests were not updated for the final 61-field (262-byte) augmented struct.
+    - **Iteration 3**: Rated #Correct#. Updated Python tests and implementation plan to reflect the final 262-byte struct layout. Verified all tests pass.
 - **Recommendations**: Monitor user feedback regarding the loss of direct Excel compatibility. The added `--export-csv` flag in the Python analyzer provides a workaround.
