@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.124] - 2026-03-12
+### Fixed
+- **Yaw Kick Signal Rectification (Issue #241)**:
+  - Fixed a mathematical flaw where a hard threshold was applied before smoothing in the Yaw Kick effect. This "rectified" high-frequency symmetric noise (from stiff dampers) into a DC offset, perceived as a constant directional pull.
+  - Implemented **Smoothing-Before-Thresholding**: The 400Hz low-pass filter is now applied to the raw yaw acceleration first, correctly averaging out chassis chatter before any gating occurs.
+  - Introduced **Continuous Deadzone**: Replaced the hard binary gate with a smooth subtraction deadzone. Force now ramps up naturally from zero once the threshold is exceeded, eliminating the "step function" feel of the legacy implementation.
+
+### Added
+- **Yaw Kick Telemetry Channels**:
+  - Added `RawYawAccel` and `FFBYawKick` to the asynchronous telemetry logs (CSV) to facilitate diagnosis of signal processing artifacts.
+  - Updated the Python Log Analyzer with a dedicated **Yaw Kick Analysis** diagnostic plot to visualize raw vs. processed signals.
+
+### Testing
+- **New Regression Test Suite**: Added `tests/test_issue_241_yaw_kick_rectification.cpp` to verify noise rejection, zero-DC offset under asymmetric chatter, and continuous deadzone accuracy.
+- **Suite Update**: Hardened existing yaw/gyro tests to align with the new continuous force model.
+
 ## [0.7.123] - 2026-03-12
 ### Added
 - **Enhanced Transition Monitoring (Issue #244)**:

@@ -43,6 +43,18 @@ struct LogFrame {
     float grip_fr;
     float load_fl;
     float load_fr;
+    float load_rl;
+    float load_rr;
+
+    // Suspension & Ride Height
+    float ride_height_fl;
+    float ride_height_fr;
+    float ride_height_rl;
+    float ride_height_rr;
+    float susp_deflection_fl;
+    float susp_deflection_fr;
+    float susp_deflection_rl;
+    float susp_deflection_rr;
     
     // Front Axle - Calculated
     float calc_slip_angle_front;
@@ -67,6 +79,12 @@ struct LogFrame {
     // Rear Axle
     float calc_grip_rear;
     float grip_delta;        // Front - Rear
+
+    // Yaw Kick Analysis (Issue #241)
+    float raw_yaw_accel;
+    float smoothed_yaw_accel;
+    float ffb_yaw_kick;
+    float lat_load_norm;
     
     // FFB Output
     float ffb_total;         // Normalized output
@@ -295,8 +313,12 @@ private:
         
         // CSV Header
         m_file << "Time,DeltaTime,Speed,LatAccel,LongAccel,YawRate,Steering,Throttle,Brake,"
-               << "SlipAngleFL,SlipAngleFR,SlipRatioFL,SlipRatioFR,GripFL,GripFR,LoadFL,LoadFR,"
+               << "SlipAngleFL,SlipAngleFR,SlipRatioFL,SlipRatioFR,GripFL,GripFR,"
+               << "LoadFL,LoadFR,LoadRL,LoadRR,"
+               << "RideHeightFL,RideHeightFR,RideHeightRL,RideHeightRR,"
+               << "SuspDeflectionFL,SuspDeflectionFR,SuspDeflectionRL,SuspDeflectionRR,"
                << "CalcSlipAngle,CalcGripFront,CalcGripRear,GripDelta,"
+               << "RawYawAccel,SmoothedYawAccel,FFBYawKick,LatLoadNorm,"
                << "dG_dt,dAlpha_dt,SlopeCurrent,SlopeRaw,SlopeNum,SlopeDenom,HoldTimer,InputSlipSmooth,SlopeSmoothed,Confidence,"
                << "SurfaceFL,SurfaceFR,SlopeTorque,SlewLimitedG,"
                << "FFBTotal,FFBBase,FFBShaftTorque,FFBGenTorque,FFBSoP,GripFactor,SpeedGate,LoadPeakRef,Clipping,Marker\n";
@@ -311,10 +333,13 @@ private:
                << frame.slip_angle_fl << "," << frame.slip_angle_fr << "," 
                << frame.slip_ratio_fl << "," << frame.slip_ratio_fr << ","
                << frame.grip_fl << "," << frame.grip_fr << ","
-               << frame.load_fl << "," << frame.load_fr << ","
+               << frame.load_fl << "," << frame.load_fr << "," << frame.load_rl << "," << frame.load_rr << ","
+               << frame.ride_height_fl << "," << frame.ride_height_fr << "," << frame.ride_height_rl << "," << frame.ride_height_rr << ","
+               << frame.susp_deflection_fl << "," << frame.susp_deflection_fr << "," << frame.susp_deflection_rl << "," << frame.susp_deflection_rr << ","
                
                << frame.calc_slip_angle_front << "," << frame.calc_grip_front << "," << frame.calc_grip_rear << "," << frame.grip_delta << ","
-               
+               << frame.raw_yaw_accel << "," << frame.smoothed_yaw_accel << "," << frame.ffb_yaw_kick << "," << frame.lat_load_norm << ","
+
                << frame.dG_dt << "," << frame.dAlpha_dt << "," << frame.slope_current << ","
                << frame.slope_raw_unclamped << "," << frame.slope_numerator << "," << frame.slope_denominator << ","
                << frame.hold_timer << "," << frame.input_slip_smoothed << ","
