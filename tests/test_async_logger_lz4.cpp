@@ -45,8 +45,11 @@ TEST_CASE_TAGGED(test_logger_lz4_compression, "Diagnostics", (std::vector<std::s
     ASSERT_TRUE(std::filesystem::exists(filename));
 
     // Read the file and check for LZ4 blocks
-    std::ifstream file(filename, std::ios::binary);
-    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    std::string content;
+    {
+        std::ifstream file(filename, std::ios::binary);
+        content = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    } // file is closed here — Windows locks open files, preventing remove_all later
 
     size_t marker_pos = content.find("[DATA_START]\n");
     ASSERT_TRUE(marker_pos != std::string::npos);
@@ -79,8 +82,12 @@ TEST_CASE_TAGGED(test_logger_lz4_compression, "Diagnostics", (std::vector<std::s
 
     ASSERT_EQ(total_uncompressed_size, (uint32_t)(frame_count * sizeof(LogFrame)));
 
-    // Cleanup
-    std::filesystem::remove_all(test_dir);
+    // Cleanup — wrap in try/catch so a cleanup failure is diagnostic, not fatal
+    try {
+        std::filesystem::remove_all(test_dir);
+    } catch (const std::exception& e) {
+        std::cout << "  [WARNING] Could not clean up test dir '" << test_dir << "': " << e.what() << std::endl;
+    }
 
     // Disable compression for subsequent tests
     logger.EnableCompression(false);
