@@ -545,7 +545,7 @@ TEST_CASE(test_yaw_kick_threshold, "YawGyro") {
     
     engine.m_sop_yaw_gain = 1.0f;
     engine.m_yaw_kick_threshold = 5.0f;
-    engine.m_yaw_accel_smoothing = 1.0f; // Fast response for test
+    engine.m_yaw_accel_smoothing = 0.0001f; // Fast response for test
     
     // Case 1: Yaw Accel below threshold (2.0 < 5.0)
     data.mLocalRotAccel.y = 2.0;
@@ -559,7 +559,10 @@ TEST_CASE(test_yaw_kick_threshold, "YawGyro") {
     engine.calculate_force(&data); 
     double force_high = engine.calculate_force(&data);
     
-    ASSERT_TRUE(std::abs(force_high) > 0.01);
+    // v0.4.18 (Issue #241): Continuous deadzone means force is based on (6.0 - 5.0) = 1.0
+    // formula: force = -1.0 * processed * gain * 5.0 / wheelbase_max
+    // force = -1.0 * 1.0 * 1.0 * 5.0 / 20.0 = -0.25
+    ASSERT_NEAR(force_high, -0.25, 0.01);
 }
 
 TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
@@ -569,7 +572,7 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
     engine.m_sop_yaw_gain = 1.0f;
-    engine.m_yaw_accel_smoothing = 1.0f; // Fast response for testing
+    engine.m_yaw_accel_smoothing = 0.0001f; // Fast response for testing
     
     // Edge Case 1: Zero Threshold (0.0) - All signals pass through
     engine.m_yaw_kick_threshold = 0.0f;
@@ -599,18 +602,22 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     engine.calculate_force(&data);
     double force_above_max = engine.calculate_force(&data);
     
-    ASSERT_TRUE(std::abs(force_above_max) > 0.01); // Above max threshold = passes
+    // v0.4.18 (Issue #241): Continuous deadzone means force is based on (11.0 - 10.0) = 1.0
+    // force = -1.0 * 1.0 * 1.0 * 5.0 / 20.0 = -0.25
+    ASSERT_NEAR(force_above_max, -0.25, 0.01);
     
     // Edge Case 3: Negative yaw acceleration (should use absolute value)
     engine.m_yaw_kick_threshold = 5.0f;
     engine.m_yaw_accel_smoothed = 0.0; // Reset
     
     // Negative value with magnitude above threshold
-    data.mLocalRotAccel.y = -6.0; // |Ã¢Ë†â€™6.0| = 6.0 > 5.0
+    data.mLocalRotAccel.y = -6.0; // |-6.0| = 6.0 > 5.0
     engine.calculate_force(&data);
     double force_negative = engine.calculate_force(&data);
     
-    ASSERT_TRUE(std::abs(force_negative) > 0.01); // Absolute value check works
+    // v0.4.18: Continuous deadzone means force is based on (-6.0 + 5.0) = -1.0
+    // force = -1.0 * (-1.0) * 1.0 * 5.0 / 20.0 = 0.25
+    ASSERT_NEAR(force_negative, 0.25, 0.01);
     
     // Negative value with magnitude below threshold
     engine.m_yaw_accel_smoothed = 0.0; // Reset

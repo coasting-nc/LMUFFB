@@ -819,6 +819,24 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         // Rear axle
         frame.calc_grip_rear = (float)ctx.avg_rear_grip;
         frame.grip_delta = (float)(ctx.avg_grip - ctx.avg_rear_grip);
+
+        // Yaw Kick Analysis (Issue #241)
+        frame.raw_yaw_accel = (float)data->mLocalRotAccel.y;
+        frame.smoothed_yaw_accel = (float)m_yaw_accel_smoothed;
+        frame.ffb_yaw_kick = (float)ctx.yaw_force;
+        frame.lat_load_norm = (float)m_sop_load_smoothed;
+
+        // Additional channels for diagnostic investigation
+        frame.load_rl = (float)data->mWheel[2].mTireLoad;
+        frame.load_rr = (float)data->mWheel[3].mTireLoad;
+        frame.ride_height_fl = (float)data->mWheel[0].mRideHeight;
+        frame.ride_height_fr = (float)data->mWheel[1].mRideHeight;
+        frame.ride_height_rl = (float)data->mWheel[2].mRideHeight;
+        frame.ride_height_rr = (float)data->mWheel[3].mRideHeight;
+        frame.susp_deflection_fl = (float)data->mWheel[0].mSuspensionDeflection;
+        frame.susp_deflection_fr = (float)data->mWheel[1].mSuspensionDeflection;
+        frame.susp_deflection_rl = (float)data->mWheel[2].mSuspensionDeflection;
+        frame.susp_deflection_rr = (float)data->mWheel[3].mSuspensionDeflection;
         
         // FFB output
         frame.ffb_total = (float)norm_force;
@@ -904,18 +922,26 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     
     // 4. Yaw Kick (Inertial Oversteer)
     double raw_yaw_accel = data->mLocalRotAccel.y;
-    // v0.4.16: Reject yaw at low speeds and below threshold
-    if (ctx.car_speed < MIN_YAW_KICK_SPEED_MS || std::abs(raw_yaw_accel) < (double)m_yaw_kick_threshold) {
-        raw_yaw_accel = 0.0;
-    }
-    
-    // Alpha Smoothing (v0.4.16)
+
+    // v0.4.18: Apply Smoothing FIRST to extract macroscopic movement and cancel chatter.
+    // This prevents "signal rectification" where a threshold applied to raw noise
+    // creates an artificial DC offset (Issue #241).
     double tau_yaw = (double)m_yaw_accel_smoothing;
     if (tau_yaw < MIN_TAU_S) tau_yaw = MIN_TAU_S;
     double alpha_yaw = ctx.dt / (tau_yaw + ctx.dt);
     m_yaw_accel_smoothed += alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
+
+    double processed_yaw = 0.0;
+    // Reject yaw at low speeds
+    if (ctx.car_speed >= MIN_YAW_KICK_SPEED_MS) {
+        // Continuous Deadzone (Issue #241):
+        // Subtract the threshold from the smoothed signal to ensure force starts from 0.0.
+        if (std::abs(m_yaw_accel_smoothed) > (double)m_yaw_kick_threshold) {
+            processed_yaw = m_yaw_accel_smoothed - std::copysign((double)m_yaw_kick_threshold, m_yaw_accel_smoothed);
+        }
+    }
     
-    ctx.yaw_force = -1.0 * m_yaw_accel_smoothed * m_sop_yaw_gain * (double)BASE_NM_YAW_KICK;
+    ctx.yaw_force = -1.0 * processed_yaw * m_sop_yaw_gain * (double)BASE_NM_YAW_KICK;
     
     // Apply speed gate to all lateral effects
     ctx.sop_base_force *= ctx.speed_gate;

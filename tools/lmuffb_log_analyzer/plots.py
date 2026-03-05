@@ -125,6 +125,64 @@ def plot_slope_timeseries(
     
     return ""
 
+def plot_yaw_kick_analysis(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Diagnostic plot for Yaw Kick signal rectification (Issue #241).
+    Shows Raw vs Smoothed Yaw Acceleration and resulting FFB.
+    """
+    if 'RawYawAccel' not in df.columns or 'FFBYawKick' not in df.columns:
+        return ""
+
+    if status_callback: status_callback("Initializing Yaw Kick analysis plot...")
+    fig, axes = plt.subplots(2, 1, figsize=(14, 10), sharex=True)
+    fig.suptitle('Yaw Kick Analysis (Signal Rectification Check)', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time'] if 'Time' in plot_df.columns else np.arange(len(plot_df)) * 0.01
+
+    # Panel 1: Yaw Acceleration
+    ax1 = axes[0]
+    ax1.plot(time, plot_df['RawYawAccel'], label='Raw Yaw Accel', color='#9E9E9E', alpha=0.5, linewidth=0.5)
+
+    # We don't have smoothed_yaw_accel in the CSV, but we can see the effect in FFBYawKick.
+    # Actually, we could estimate what smoothed was, but let's just plot what we have.
+    # In v0.7.124+ logs, we have RawYawAccel and FFBYawKick.
+
+    ax1.set_ylabel('Yaw Accel (rad/s²)')
+    ax1.set_title('Raw Yaw Acceleration')
+    ax1.grid(True, alpha=0.3)
+    _safe_legend(ax1)
+
+    # Panel 2: Yaw Kick FFB
+    ax2 = axes[1]
+    ax2.plot(time, plot_df['FFBYawKick'], label='Yaw Kick FFB (Nm)', color='#F44336', linewidth=1.0)
+    ax2.set_ylabel('Force (Nm)')
+    ax2.set_xlabel('Time (s)')
+    ax2.set_title('Yaw Kick FFB Contribution')
+    ax2.grid(True, alpha=0.3)
+
+    # Add a horizontal line at 0 to easily see DC offsets (rectification)
+    ax2.axhline(0, color='black', linestyle='-', alpha=0.5)
+    _safe_legend(ax2)
+
+    plt.tight_layout()
+
+    if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+
+    if show:
+        plt.show()
+
+    return ""
+
 def plot_slip_vs_latg(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
