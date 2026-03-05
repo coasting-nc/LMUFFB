@@ -135,30 +135,40 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
             console.print(f"  [OK] Created: {corr_path}")
 
 @click.group()
-@click.version_option(version='1.1.0')
+@click.version_option(version='1.2.0')
 def cli():
     """lmuFFB Log Analyzer - Analyze FFB telemetry logs for diagnostics."""
     pass
 
 @cli.command()
 @click.argument('logfile', type=click.Path(exists=True))
-def info(logfile):
+@click.option('--export-csv', is_flag=True, help='Export data to CSV')
+def info(logfile, export_csv):
     """Display session info from a log file."""
     try:
         metadata, df = load_log(logfile)
         _show_info(metadata, df)
+        if export_csv:
+            csv_path = Path(logfile).with_suffix('.csv')
+            df.to_csv(csv_path, index=False)
+            console.print(f"[bold green]Exported to:[/bold green] {csv_path}")
     except Exception as e:
         console.print(f"[bold red]Error loading log:[/bold red] {e}")
 
 @cli.command()
 @click.argument('logfile', type=click.Path(exists=True))
 @click.option('--verbose', '-v', is_flag=True, help='Show detailed output')
-def analyze(logfile, verbose):
+@click.option('--export-csv', is_flag=True, help='Export data to CSV')
+def analyze(logfile, verbose, export_csv):
     """Analyze a log file and show summary."""
     console.print(f"[bold]Analyzing:[/bold] {logfile}")
     try:
         metadata, df = load_log(logfile)
         _run_analyze(metadata, df, verbose)
+        if export_csv:
+            csv_path = Path(logfile).with_suffix('.csv')
+            df.to_csv(csv_path, index=False)
+            console.print(f"[bold green]Exported to:[/bold green] {csv_path}")
     except Exception as e:
         console.print(f"[bold red]Error analyzing log:[/bold red] {e}")
 
@@ -203,18 +213,24 @@ def batch(logdir, output):
     output_path = Path(output)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    csv_files = sorted(list(log_path.glob("*.csv")))
-    if not csv_files:
-        # Try finding in subdirectories if direct search fails (sometimes happens on Windows with deep paths)
-        csv_files = sorted(list(log_path.rglob("*.csv")))
+    log_files = []
+    for ext in ['*.bin', '*.csv']:
+        log_files.extend(list(log_path.glob(ext)))
 
-    if not csv_files:
-        console.print(f"[yellow]No .csv files found in {logdir}[/yellow]")
+    if not log_files:
+        # Try finding in subdirectories
+        for ext in ['*.bin', '*.csv']:
+            log_files.extend(list(log_path.rglob(ext)))
+
+    log_files = sorted(log_files)
+
+    if not log_files:
+        console.print(f"[yellow]No .bin or .csv files found in {logdir}[/yellow]")
         return
 
-    console.print(f"[bold green]Found {len(csv_files)} log files. Starting batch processing...[/bold green]")
+    console.print(f"[bold green]Found {len(log_files)} log files. Starting batch processing...[/bold green]")
 
-    for logfile in csv_files:
+    for logfile in log_files:
         console.print(f"\n[bold blue]Processing: {logfile.name}[/bold blue]")
         try:
             # Load ONCE for all operations

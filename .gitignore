@@ -57,6 +57,8 @@ test_expansion.log
 old_version.ini
 LastCoverageResults.log
 lmuffb_debug.log
+lmuffb_log_*.csv
+lmuffb_log_*.bin
 test_runner_debug.log
 test_transitions.log
 test_debug.log

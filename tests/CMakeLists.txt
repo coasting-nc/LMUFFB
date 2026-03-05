@@ -42,6 +42,7 @@ set(TEST_SOURCES
     test_persistence_v0625.cpp
     test_persistence_v0628.cpp
     test_async_logger.cpp
+    test_async_logger_binary.cpp
     test_ffb_load_normalization.cpp
     test_versioned_presets.cpp
     test_preset_improvements.cpp

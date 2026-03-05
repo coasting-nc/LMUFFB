@@ -43,7 +43,7 @@ TEST_CASE_TAGGED(test_logger_frame_logging, "Diagnostics", {"Logger"}) {
     AsyncLogger::Get().Start(info, "test_logs");
     
     LogFrame frame = {};
-    // Decimation is 4. So we need 40 ticks to get 10 frames.
+    // v0.7.126: Decimation removed. 40 ticks = 40 frames.
     for (int i = 0; i < 40; i++) {
         frame.timestamp = i * 0.01;
         AsyncLogger::Get().Log(frame);
@@ -52,9 +52,9 @@ TEST_CASE_TAGGED(test_logger_frame_logging, "Diagnostics", {"Logger"}) {
     std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Allow worker some time
     AsyncLogger::Get().Stop();
     
-    // Expected: 10 frames.
+    // Expected: 40 frames.
     std::cout << "Logged Frames: " << AsyncLogger::Get().GetFrameCount() << std::endl;
-    ASSERT_NEAR((double)AsyncLogger::Get().GetFrameCount(), 10.0, 0.1); 
+    ASSERT_NEAR((double)AsyncLogger::Get().GetFrameCount(), 40.0, 0.1);
 }
 
 TEST_CASE_TAGGED(test_logger_marker, "Diagnostics", {"Logger"}) {
@@ -69,24 +69,21 @@ TEST_CASE_TAGGED(test_logger_marker, "Diagnostics", {"Logger"}) {
     
     AsyncLogger::Get().Start(info, "test_logs");
     
-    // Tick 1 (decimation counter 1): Not logged
+    // Tick 1: Logged!
     LogFrame frame = {};
     AsyncLogger::Get().Log(frame); 
     
     // Set Marker
     AsyncLogger::Get().SetMarker();
     
-    // Tick 2 (decimation counter 2): normally skipped, but marker -> Logged!
+    // Tick 2: Logged!
     AsyncLogger::Get().Log(frame);
     
     AsyncLogger::Get().Stop();
     
-    // Start + 1 frame logged. Frame count should be 1.
-    // Wait, decimation counter init is 0.
-    // Tick 1: ++c = 1. Return.
-    // Tick 2: ++c = 2. PendingMarker=true. Log! c=0.
+    // v0.7.126: Decimation removed. Every tick logs.
     std::cout << "Logged Frames (Marker): " << AsyncLogger::Get().GetFrameCount() << std::endl;
-    ASSERT_GE(AsyncLogger::Get().GetFrameCount(), 1);
+    ASSERT_EQ(AsyncLogger::Get().GetFrameCount(), 2);
 }
 
 TEST_CASE_TAGGED(test_logger_filename_sanitization, "Diagnostics", {"Logger"}) {
@@ -189,7 +186,7 @@ TEST_CASE_TAGGED(test_logger_header_version_check, "Diagnostics", {"Logger"}) {
     ASSERT_TRUE(file.is_open());
     
     std::string line;
-    std::getline(file, line); // # Telemetry Log Header
+    std::getline(file, line); // # LMUFFB Telemetry Log v1.0
     std::getline(file, line); // # App Version: ...
     
     std::cout << "Header line 2: " << line << std::endl;

@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.126] - 2026-03-12
+### Added
+- **Optimized Binary Telemetry Logging (Issue #254)**:
+  - Switched from CSV string formatting to raw binary struct logging, reducing file size by ~60% and eliminating CPU-intensive string operations in the background thread.
+  - Implemented **400Hz Native Sampling**: Removed the 100Hz decimation to capture telemetry at the full physics engine rate, enabling accurate analysis of high-frequency FFB textures (ABS, road noise, suspension bottoming).
+  - Updated **AsyncLogger** with efficient block-write operations, minimizing mutex contention and disk I/O overhead.
+  - Added a `[DATA_START]` text marker to the plain-text header to allow parsers to identify the start of the binary stream.
+
+### Changed
+- **Python Log Analyzer Update**:
+  - Updated the Python loader to support both `.bin` (binary) and `.csv` (legacy) formats.
+  - Implemented efficient binary parsing using `numpy.frombuffer` for 10x-50x faster data loading into Pandas.
+  - Added an `--export-csv` flag to the analyzer CLI to allow users to generate human-readable CSV files from binary logs when needed.
+
+### Testing
+- **New Regression Test**: Added `tests/test_async_logger_binary.cpp` to verify binary integrity, memory packing (`#pragma pack(1)`), and block-write reliability.
+- **Suite Update**: Updated existing logging and accuracy tool tests to align with the 400Hz non-decimated rate and binary format.
+
+---
+
 ## [0.7.125] - 2026-03-12
 ### Fixed
 - **Robust Soft Lock "Wall" Implementation (Issue #248)**:
