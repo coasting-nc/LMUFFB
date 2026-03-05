@@ -242,6 +242,9 @@ public:
     
     // Trigger a user marker
     void SetMarker() { m_pending_marker = true; }
+
+    // Toggle compression
+    void EnableCompression(bool enable) { m_lz4_enabled = enable; }
     
     // Status getters
     bool IsLogging() const { return m_running; }
@@ -289,12 +292,12 @@ private:
                     int compressed_size = LZ4_compress_default(src_ptr, compressed_buffer.data(), (int)src_size, max_dst_size);
 
                     if (compressed_size > 0) {
-                        // Write block size header
-                        uint32_t header = (uint32_t)compressed_size;
-                        m_file.write(reinterpret_cast<const char*>(&header), 4);
+                        // Write block size header (compressed, then uncompressed)
+                        uint32_t header[2] = { (uint32_t)compressed_size, (uint32_t)src_size };
+                        m_file.write(reinterpret_cast<const char*>(header), 8);
                         // Write payload
                         m_file.write(compressed_buffer.data(), compressed_size);
-                        m_file_size_bytes += (4 + compressed_size);
+                        m_file_size_bytes += (8 + compressed_size);
                     }
                 } else {
                     m_file.write(src_ptr, src_size);
@@ -311,7 +314,6 @@ private:
                 m_last_flush_time = now;
             }
             
-            if (!m_running) break;
         }
     }
 

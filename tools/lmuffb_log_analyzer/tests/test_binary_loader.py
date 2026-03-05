@@ -66,6 +66,47 @@ def create_mock_bin(path: Path):
         f.write(frame_1)
         f.write(frame_2)
 
+def create_mock_lz4_bin(path: Path):
+    """Create a mock compressed binary log file for testing"""
+    header = (
+        "# LMUFFB Telemetry Log v1.0\n"
+        "# App Version: 0.7.126\n"
+        "# Compression: LZ4\n"
+        "# Driver: LZ4 Test\n"
+        "# Vehicle: Mock Car\n"
+        "# Track: Mock Track\n"
+        "# [DATA_START]\n"
+    )
+
+    floats = [0.0] * 61
+    floats[0] = 60.0 # speed
+
+    # Create two blocks of data
+    frames_block1 = struct.pack("<dd" + "f"*61 + "BB",
+        200.0, 0.0025, # timestamp, dt
+        *floats,
+        0, 0 # clipping, marker
+    ) * 10 # 10 frames in block 1
+
+    frames_block2 = struct.pack("<dd" + "f"*61 + "BB",
+        201.0, 0.0025, # timestamp, dt
+        *floats,
+        0, 0 # clipping, marker
+    ) * 5 # 5 frames in block 2
+
+    import lz4.block
+    compressed1 = lz4.block.compress(frames_block1, store_size=False)
+    compressed2 = lz4.block.compress(frames_block2, store_size=False)
+
+    with open(path, 'wb') as f:
+        f.write(header.encode('utf-8'))
+        # Write block 1: 8-byte header [compressed, uncompressed]
+        f.write(struct.pack("<II", len(compressed1), len(frames_block1)))
+        f.write(compressed1)
+        # Write block 2: 8-byte header
+        f.write(struct.pack("<II", len(compressed2), len(frames_block2)))
+        f.write(compressed2)
+
 def test_load_bin_log(tmp_path):
     bin_path = tmp_path / "test_log.bin"
     create_mock_bin(bin_path)
@@ -138,3 +179,18 @@ def test_load_bin_alignment(tmp_path):
     assert df.iloc[0]["Speed"] == 88.0
     assert df.iloc[0]["SurfaceFL"] == 5.0
     assert df.iloc[0]["Marker"] == 1
+
+def test_load_lz4_bin_log(tmp_path):
+    bin_path = tmp_path / "test_lz4_log.bin"
+    create_mock_lz4_bin(bin_path)
+
+    metadata, df = load_log(str(bin_path))
+
+    # Check metadata
+    assert metadata.driver_name == "LZ4 Test"
+
+    # Check dataframe
+    assert len(df) == 15 # 10 + 5 frames
+    assert df.iloc[0]["Time"] == 200.0
+    assert df.iloc[0]["Speed"] == 60.0
+    assert df.iloc[10]["Time"] == 201.0

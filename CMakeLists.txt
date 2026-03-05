@@ -49,8 +49,10 @@ endif()
 
 
 
-# ImGui Core Detection & FetchContent
+# FetchContent for External Dependencies
 include(FetchContent)
+
+# ImGui Core Detection & FetchContent
 set(IMGUI_DIR "${CMAKE_SOURCE_DIR}/vendor/imgui")
 
 if(EXISTS "${IMGUI_DIR}/imgui.cpp")
@@ -133,6 +135,7 @@ if(NOT WIN32)
     include_directories(src/lmu_sm_interface)
 endif()
 include_directories(src)
+include_directories(vendor/lz4)
 
 # Copy icon file into build directory (Windows only)
 if(WIN32)
@@ -168,6 +171,7 @@ add_definitions(-DLMUFFB_VERSION="${LMUFFB_VERSION}")
 
 # Core Library (Shared between App and Tests)
 set(CORE_SOURCES
+    vendor/lz4/lz4.c
     src/GuiLayer_Common.cpp
     src/GuiLayer.h
     src/DXGIUtils.cpp
@@ -227,12 +231,11 @@ if(WIN32)
 endif()
 
 if(NOT WIN32 AND NOT BUILD_HEADLESS)
-    target_link_libraries(LMUFFB_Core PUBLIC glfw OpenGL::GL dl pthread lz4)
-    target_link_libraries(LMUFFB_Core_Fast PUBLIC glfw OpenGL::GL dl pthread lz4)
+    target_link_libraries(LMUFFB_Core PUBLIC glfw OpenGL::GL dl pthread)
+    target_link_libraries(LMUFFB_Core_Fast PUBLIC glfw OpenGL::GL dl pthread)
 else()
-    # On headless or windows, we still need lz4 for the logger
-    target_link_libraries(LMUFFB_Core PUBLIC lz4)
-    target_link_libraries(LMUFFB_Core_Fast PUBLIC lz4)
+    # On headless or windows
+    # target_link_libraries(LMUFFB_Core PUBLIC ...)
 endif()
 
 # Main Application

@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.127] - 2026-03-12
+### Added
+- **LZ4 Compression & Raw Telemetry (Issue #254)**:
+  - Augmented the binary log format to include raw 100Hz game data alongside 400Hz processed telemetry.
+  - Implemented **LZ4 Block Compression** for telemetry logs, reducing file size by up to 80% with minimal CPU overhead.
+  - Updated the Python Log Analyzer with a robust binary loader supporting on-the-fly LZ4 decompression and 8-byte block headers.
+  - Integrated LZ4 into the build system and CI workflows using manual vendor downloads for cross-platform reliability.
+
+### Testing
+- **LZ4 Verification**: Added `tests/test_async_logger_lz4.cpp` to verify block integrity and compression ratios.
+- **Python Integration**: Expanded binary loader tests to cover both compressed and uncompressed streams.
+
+---
+
 ## [0.7.126] - 2026-03-12
 ### Added
 - **Optimized Binary Telemetry Logging (Issue #254)**:

@@ -97,3 +97,12 @@ Issue #254 reports that CSV telemetry logs grow too quickly in size and consume 
     - **Iteration 2**: Rated #Mostly Correct#. Production code was correct but Python tests were not updated for the final 61-field (262-byte) augmented struct.
     - **Iteration 3**: Rated #Correct#. Updated Python tests and implementation plan to reflect the final 262-byte struct layout. Verified all tests pass.
 - **Recommendations**: Monitor user feedback regarding the loss of direct Excel compatibility. The added `--export-csv` flag in the Python analyzer provides a workaround.
+
+## Final Implementation Notes
+- **LZ4 Integration**: Switched from `FetchContent` to manual vendor downloads in CI (`vendor/lz4/`) to resolve build issues on Windows and ensure predictable header discovery.
+- **Robust LZ4 Block Format**: Implemented an 8-byte block header `[compressed_size, uncompressed_size]` to allow the Python `lz4` package to decompress without ambiguity, resolving `LZ4BlockError` encountered during development.
+- **Comprehensive Verification**:
+    - Added `tests/test_async_logger_lz4.cpp` to verify C++ block compression and flushing.
+    - Updated `test_binary_loader.py` to verify Python-side decompression of the new 8-byte header format.
+    - Verified all 413 C++ tests and 20 Python tests pass on Linux.
+- **License Compliance**: Updated `LICENSE` to include the BSD 2-Clause license text for the linked LZ4 library components.

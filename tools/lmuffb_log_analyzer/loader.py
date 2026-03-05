@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import lz4.block
+import struct
 from pathlib import Path
 from typing import Tuple, Optional
 from datetime import datetime
@@ -168,14 +169,14 @@ def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
         if is_lz4:
             all_data = []
             while True:
-                size_bytes = f.read(4)
-                if not size_bytes:
+                size_bytes = f.read(8)
+                if not size_bytes or len(size_bytes) < 8:
                     break
-                compressed_size = int.from_bytes(size_bytes, byteorder='little')
+                compressed_size, uncompressed_size = struct.unpack("<II", size_bytes)
                 compressed_data = f.read(compressed_size)
                 if len(compressed_data) < compressed_size:
                     break
-                uncompressed_data = lz4.block.decompress(compressed_data)
+                uncompressed_data = lz4.block.decompress(compressed_data, uncompressed_size=uncompressed_size)
                 all_data.append(np.frombuffer(uncompressed_data, dtype=LOG_FRAME_DTYPE))
             data = np.concatenate(all_data) if all_data else np.array([], dtype=LOG_FRAME_DTYPE)
         else:
@@ -240,6 +241,12 @@ def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
         'ffb_grip_factor': 'GripFactor',
         'speed_gate': 'SpeedGate',
         'load_peak_ref': 'LoadPeakRef',
+        'raw_steering': 'RawSteering',
+        'raw_lat_accel': 'RawLatAccel',
+        'raw_load_fl': 'RawLoadFL',
+        'raw_load_fr': 'RawLoadFR',
+        'raw_slip_vel_fl': 'RawSlipVelFL',
+        'raw_slip_vel_fr': 'RawSlipVelFR',
         'clipping': 'Clipping',
         'marker': 'Marker'
     }
