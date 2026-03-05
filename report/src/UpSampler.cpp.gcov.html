@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-05 23:55:38</td>
+            <td class="headerValue">2026-03-05 23:56:51</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -84,11 +84,11 @@
 <span id="L13"><span class="lineNum">      13</span>                 :<span class="tlaGNC">          11 : }</span></span>
 <span id="L14"><span class="lineNum">      14</span>                 :             : </span>
 <span id="L15"><span class="lineNum">      15</span>                 :<span class="tlaGNC">       11976 : double PolyphaseResampler::Process(double latest_physics_sample, bool is_new_physics_tick) {</span></span>
-<span id="L16"><span class="lineNum">      16</span>         [<span class="tlaGBC" title="Branch 0 was taken 4789 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 7187 times"> + </span>]:<span class="tlaGNC">       11976 :     if (is_new_physics_tick) {</span></span>
+<span id="L16"><span class="lineNum">      16</span>         [<span class="tlaGBC" title="Branch 0 was taken 4790 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 7186 times"> + </span>]:<span class="tlaGNC">       11976 :     if (is_new_physics_tick) {</span></span>
 <span id="L17"><span class="lineNum">      17</span>                 :             :         // Shift history and add new sample</span>
-<span id="L18"><span class="lineNum">      18</span>                 :<span class="tlaGNC">        4789 :         m_history[0] = m_history[1];</span></span>
-<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC">        4789 :         m_history[1] = m_history[2];</span></span>
-<span id="L20"><span class="lineNum">      20</span>                 :<span class="tlaGNC">        4789 :         m_history[2] = latest_physics_sample;</span></span>
+<span id="L18"><span class="lineNum">      18</span>                 :<span class="tlaGNC">        4790 :         m_history[0] = m_history[1];</span></span>
+<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC">        4790 :         m_history[1] = m_history[2];</span></span>
+<span id="L20"><span class="lineNum">      20</span>                 :<span class="tlaGNC">        4790 :         m_history[2] = latest_physics_sample;</span></span>
 <span id="L21"><span class="lineNum">      21</span>                 :             :     }</span>
 <span id="L22"><span class="lineNum">      22</span>                 :             : </span>
 <span id="L23"><span class="lineNum">      23</span>                 :             :     // Apply the 3-tap FIR filter for the current phase</span>
