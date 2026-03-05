@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.129] - 2026-03-12
+### Added
+- **Complete Telemetry Export (Issue #249)**:
+  - Expanded the binary telemetry log to include **all channels** used in FFB calculations, increasing the field count to 118.
+  - Added full-fidelity raw 100Hz telemetry: long/lat patch velocities, rotation, suspension forces, brake pressures for all 4 wheels.
+  - Added intermediate physics states: Slip angles and ratios for all axles, manual grip calculations, and internal gain multipliers (Structural/Vibration).
+  - Included all discrete FFB component outputs (SoP, Rear Torque, Yaw Kick, Gyro, and all 6 haptic textures) side-by-side for perfect offline reproduction of the FFB signal.
+  - Implemented `warn_bits` diagnostic field to track real-time telemetry health (load loss, grip approximation, dt jitter) in the log.
+
+### Changed
+- **Binary Log Format v1.1**:
+  - Updated the binary schema to 511 bytes per frame.
+  - Augmented the Python Log Analyzer loader to support the new schema with full CamelCase mapping for all 118 fields.
+  - Improved the plain-text header with a comprehensive field list for human-readability.
+
+### Testing
+- **Schema Validation**: Updated `test_async_logger_binary.cpp` to verify the new 511-byte struct packing.
+- **Python Integration**: Updated `test_binary_loader.py` to verify full field alignment and cross-axle telemetry ingestion.
+
+---
+
 ## [0.7.128] - 2026-03-12
 ### Added
 - **Final Binary Schema Augmentation (Issue #254)**:

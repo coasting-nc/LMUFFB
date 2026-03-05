@@ -38,79 +38,149 @@ struct LogFrame {
     
     // --- RAW 100Hz GAME DATA (Step-function) ---
     float raw_steering;
+    float raw_throttle;
+    float raw_brake;
     float raw_lat_accel;
+    float raw_long_accel;
+    float raw_game_yaw_accel;
+    float raw_game_shaft_torque;
+    float raw_game_gen_torque;
+
     float raw_load_fl;
     float raw_load_fr;
-    float raw_slip_vel_fl;
-    float raw_slip_vel_fr;
+    float raw_load_rl;
+    float raw_load_rr;
+
+    float raw_slip_vel_lat_fl;
+    float raw_slip_vel_lat_fr;
+    float raw_slip_vel_lat_rl;
+    float raw_slip_vel_lat_rr;
+
+    float raw_slip_vel_long_fl;
+    float raw_slip_vel_long_fr;
+    float raw_slip_vel_long_rl;
+    float raw_slip_vel_long_rr;
+
     float raw_ride_height_fl;
     float raw_ride_height_fr;
     float raw_ride_height_rl;
     float raw_ride_height_rr;
+
     float raw_susp_deflection_fl;
     float raw_susp_deflection_fr;
     float raw_susp_deflection_rl;
     float raw_susp_deflection_rr;
 
+    float raw_susp_force_fl;
+    float raw_susp_force_fr;
+    float raw_susp_force_rl;
+    float raw_susp_force_rr;
+
+    float raw_brake_pressure_fl;
+    float raw_brake_pressure_fr;
+    float raw_brake_pressure_rl;
+    float raw_brake_pressure_rr;
+
+    float raw_rotation_fl;
+    float raw_rotation_fr;
+    float raw_rotation_rl;
+    float raw_rotation_rr;
+
     // --- ALGORITHM STATE (400Hz) ---
-    float slip_angle_fl;     // SlipAngleFL
-    float slip_angle_fr;     // SlipAngleFR
-    float slip_ratio_fl;     // SlipRatioFL
-    float slip_ratio_fr;     // SlipRatioFR
-    float grip_fl;           // GripFL
-    float grip_fr;           // GripFR
-    float load_fl;           // LoadFL
-    float load_fr;           // LoadFR
-    float load_rl;           // LoadRL
-    float load_rr;           // LoadRR
+    float slip_angle_fl;
+    float slip_angle_fr;
+    float slip_angle_rl;
+    float slip_angle_rr;
 
-    float ride_height_fl;    // RideHeightFL
-    float ride_height_fr;    // RideHeightFR
-    float ride_height_rl;    // RideHeightRL
-    float ride_height_rr;    // RideHeightRR
-    float susp_deflection_fl;// SuspDeflectionFL
-    float susp_deflection_fr;// SuspDeflectionFR
-    float susp_deflection_rl;// SuspDeflectionRL
-    float susp_deflection_rr;// SuspDeflectionRR
-    
-    float calc_slip_angle_front; // CalcSlipAngle
-    float calc_grip_front;       // CalcGripFront
-    float calc_grip_rear;        // CalcGripRear
-    float grip_delta;            // GripDelta
+    float slip_ratio_fl;
+    float slip_ratio_fr;
+    float slip_ratio_rl;
+    float slip_ratio_rr;
 
-    float raw_yaw_accel;         // RawYawAccel
-    float smoothed_yaw_accel;    // SmoothedYawAccel
-    float ffb_yaw_kick;          // FFBYawKick
-    float lat_load_norm;         // LatLoadNorm
+    float grip_fl;
+    float grip_fr;
+    float grip_rl;
+    float grip_rr;
+
+    float load_fl;
+    float load_fr;
+    float load_rl;
+    float load_rr;
+
+    float ride_height_fl;
+    float ride_height_fr;
+    float ride_height_rl;
+    float ride_height_rr;
+
+    float susp_deflection_fl;
+    float susp_deflection_fr;
+    float susp_deflection_rl;
+    float susp_deflection_rr;
     
-    float dG_dt;                 // dG_dt
-    float dAlpha_dt;             // dAlpha_dt
-    float slope_current;         // SlopeCurrent
-    float slope_raw_unclamped;   // SlopeRaw
-    float slope_numerator;       // SlopeNum
-    float slope_denominator;     // SlopeDenom
-    float hold_timer;            // HoldTimer
-    float input_slip_smoothed;   // InputSlipSmooth
-    float slope_smoothed;        // SlopeSmoothed
-    float confidence;            // Confidence
+    float calc_slip_angle_front;
+    float calc_slip_angle_rear;
+    float calc_grip_front;
+    float calc_grip_rear;
+    float grip_delta;
+    float calc_rear_lat_force;
+
+    float smoothed_yaw_accel;
+    float lat_load_norm;
     
-    float surface_type_fl;       // SurfaceFL
-    float surface_type_fr;       // SurfaceFR
-    float slope_torque;          // SlopeTorque
-    float slew_limited_g;        // SlewLimitedG
+    float dG_dt;
+    float dAlpha_dt;
+    float slope_current;
+    float slope_raw_unclamped;
+    float slope_numerator;
+    float slope_denominator;
+    float hold_timer;
+    float input_slip_smoothed;
+    float slope_smoothed;
+    float confidence;
     
-    // --- FINAL OUTPUTS (400Hz) ---
-    float ffb_total;             // FFBTotal
-    float ffb_base;              // FFBBase
-    float ffb_shaft_torque;      // FFBShaftTorque
-    float ffb_gen_torque;        // FFBGenTorque
-    float ffb_sop;               // FFBSoP
-    float ffb_grip_factor;       // GripFactor
-    float speed_gate;            // SpeedGate
-    float load_peak_ref;         // LoadPeakRef
+    float surface_type_fl;
+    float surface_type_fr;
+    float slope_torque;
+    float slew_limited_g;
+
+    float session_peak_torque;
+    float dynamic_weight_factor;
+    float structural_mult;
+    float vibration_mult;
+    float steering_angle_deg;
+    float steering_range_deg;
+    float debug_freq;
+    float tire_radius;
     
-    uint8_t clipping;            // Clipping
-    uint8_t marker;              // Marker
+    // --- FFB COMPONENTS (400Hz) ---
+    float ffb_total;
+    float ffb_base;
+    float ffb_understeer_drop;
+    float ffb_oversteer_boost;
+    float ffb_sop;
+    float ffb_rear_torque;
+    float ffb_scrub_drag;
+    float ffb_yaw_kick;
+    float ffb_gyro_damping;
+    float ffb_road_texture;
+    float ffb_slide_texture;
+    float ffb_lockup_vibration;
+    float ffb_spin_vibration;
+    float ffb_bottoming_crunch;
+    float ffb_abs_pulse;
+    float ffb_soft_lock;
+
+    float ffb_shaft_torque;
+    float ffb_gen_torque;
+    float ffb_grip_factor;
+    float speed_gate;
+    float load_peak_ref;
+
+    // --- SYSTEM (400Hz) ---
+    float physics_rate;
+    uint8_t clipping;
+    uint8_t warn_bits;
+    uint8_t marker;
 };
 #pragma pack(pop)
 
@@ -322,7 +392,7 @@ private:
     }
 
     void WriteHeader(const SessionInfo& info) {
-        m_file << "# LMUFFB Telemetry Log v1.0\n";
+        m_file << "# LMUFFB Telemetry Log v1.1\n";
         m_file << "# App Version: " << info.app_version << "\n";
         m_file << "# Compression: " << (m_lz4_enabled ? "LZ4" : "None") << "\n";
         m_file << "# ========================\n";
@@ -345,18 +415,30 @@ private:
         m_file << "# Torque Passthrough: " << (info.torque_passthrough ? "Enabled" : "Disabled") << "\n";
         m_file << "# ========================\n";
         
-        // CSV Header for human readability and test compatibility
+        // CSV Header for human readability
         m_file << "# Fields: Time,DeltaTime,Speed,LatAccel,LongAccel,YawRate,Steering,Throttle,Brake,"
-               << "RawSteering,RawLatAccel,RawLoadFL,RawLoadFR,RawSlipVelFL,RawSlipVelFR,"
-               << "SlipAngleFL,SlipAngleFR,SlipRatioFL,SlipRatioFR,GripFL,GripFR,"
+               << "RawSteering,RawThrottle,RawBrake,RawLatAccel,RawLongAccel,RawGameYawAccel,RawGameShaftTorque,RawGameGenTorque,"
+               << "RawLoadFL,RawLoadFR,RawLoadRL,RawLoadRR,"
+               << "RawSlipVelLatFL,RawSlipVelLatFR,RawSlipVelLatRL,RawSlipVelLatRR,"
+               << "RawSlipVelLongFL,RawSlipVelLongFR,RawSlipVelLongRL,RawSlipVelLongRR,"
+               << "RawRideHeightFL,RawRideHeightFR,RawRideHeightRL,RawRideHeightRR,"
+               << "RawSuspDeflectionFL,RawSuspDeflectionFR,RawSuspDeflectionRL,RawSuspDeflectionRR,"
+               << "RawSuspForceFL,RawSuspForceFR,RawSuspForceRL,RawSuspForceRR,"
+               << "RawBrakePressureFL,RawBrakePressureFR,RawBrakePressureRL,RawBrakePressureRR,"
+               << "RawRotationFL,RawRotationFR,RawRotationRL,RawRotationRR,"
+               << "SlipAngleFL,SlipAngleFR,SlipAngleRL,SlipAngleRR,"
+               << "SlipRatioFL,SlipRatioFR,SlipRatioRL,SlipRatioRR,"
+               << "GripFL,GripFR,GripRL,GripRR,"
                << "LoadFL,LoadFR,LoadRL,LoadRR,"
                << "RideHeightFL,RideHeightFR,RideHeightRL,RideHeightRR,"
                << "SuspDeflectionFL,SuspDeflectionFR,SuspDeflectionRL,SuspDeflectionRR,"
-               << "CalcSlipAngle,CalcGripFront,CalcGripRear,GripDelta,"
-               << "RawYawAccel,SmoothedYawAccel,FFBYawKick,LatLoadNorm,"
+               << "CalcSlipAngleFront,CalcSlipAngleRear,CalcGripFront,CalcGripRear,GripDelta,CalcRearLatForce,"
+               << "SmoothedYawAccel,LatLoadNorm,"
                << "dG_dt,dAlpha_dt,SlopeCurrent,SlopeRaw,SlopeNum,SlopeDenom,HoldTimer,InputSlipSmooth,SlopeSmoothed,Confidence,"
                << "SurfaceFL,SurfaceFR,SlopeTorque,SlewLimitedG,"
-               << "FFBTotal,FFBBase,FFBShaftTorque,FFBGenTorque,FFBSoP,GripFactor,SpeedGate,LoadPeakRef,Clipping,Marker\n";
+               << "SessionPeakTorque,DynamicWeight,StructuralMult,VibrationMult,SteeringAngleDeg,SteeringRangeDeg,DebugFreq,TireRadius,"
+               << "FFBTotal,FFBBase,FFBUndersteerDrop,FFBOversteerBoost,FFBSoP,FFBRearTorque,FFBScrubDrag,FFBYawKick,FFBGyroDamping,FFBRoadTexture,FFBSlideTexture,FFBLockupVibration,FFBSpinVibration,FFBBottomingCrunch,FFBABSPulse,FFBSoftLock,"
+               << "FFBShaftTorque,FFBGenTorque,GripFactor,SpeedGate,LoadPeakRef,PhysicsRate,Clipping,WarnBits,Marker\n";
         m_file << "[DATA_START]\n";
     }
 

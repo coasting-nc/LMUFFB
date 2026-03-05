@@ -101,23 +101,26 @@ TEST_CASE(test_async_logger_binary_integrity, "Logging") {
 }
 
 TEST_CASE(test_log_frame_packing, "Logging") {
-    // v0.7.128 re-aligned augmented struct
-    // double(8)*2 + float(4)*69 + uint8(1)*2 = 16 + 276 + 2 = 294 bytes
+    // v0.7.129 Expanded augmented struct
+    // double(8)*2 + float(4)*123 + uint8(1)*3 = 16 + 492 + 3 = 511 bytes
     // timestamp(8), dt(8) = 16
     // PROCESSED: speed, lat, long, yaw, steer, throttle, brake (7) = 28
-    // RAW: steer, lat, load_fl/fr, slip_vel_fl/fr, ride_fl/fr/rl/rr, susp_fl/fr/rl/rr (14) = 56
-    // ALGO: slip_angle_fl/fr, slip_ratio_fl/fr, grip_fl/fr, load_fl/fr/rl/rr (10) = 40
-    // ride_fl/fr/rl/rr, susp_fl/fr/rl/rr (8) = 32
-    // calc_slip_angle, calc_grip_front/rear, grip_delta (4) = 16
-    // raw_yaw, smoothed_yaw, ffb_yaw, lat_load_norm (4) = 16
-    // dG_dt, dAlpha_dt, slope_current, slope_raw, slope_num, slope_denom, hold, input_slip, slope_smooth, confidence (10) = 40
-    // surface_fl/fr, slope_torque, slew_lat_g (4) = 16
-    // OUTPUTS: ffb_total, ffb_base, ffb_shaft, ffb_gen, ffb_sop, ffb_grip, speed_gate, load_peak (8) = 32
-    // clipping(1), marker(1) = 2
-    // Total = 16 + 28 + 56 + 40 + 32 + 16 + 16 + 40 + 16 + 32 + 2 = 294 bytes
+    // RAW: steer, throttle, brake, lat, long, game_yaw, game_shaft, game_gen (8) = 32
+    // RAW WHEELS: load(4), slip_lat(4), slip_long(4), ride(4), susp_def(4), susp_force(4), brake_pres(4), rot(4) (32) = 128
+    // ALGO: slip_angle(4), slip_ratio(4), grip(4), load(4), ride(4), susp_def(4) (24) = 96
+    // ALGO CALC: calc_slip_angle(2), calc_grip(2), grip_delta(1), calc_rear_lat_force(1) (6) = 24
+    // ALGO MISC: smoothed_yaw, lat_load_norm (2) = 8
+    // SLOPE: dG_dt, dAlpha_dt, slope_current, slope_raw, slope_num, slope_denom, hold, input_slip, slope_smooth, confidence (10) = 40
+    // SLOPE MISC: surface_fl/fr, slope_torque, slew_lat_g (4) = 16
+    // SETTINGS: session_peak, dynamic_weight, structural_mult, vibration_mult, steer_angle, steer_range, debug_freq, tire_radius (8) = 32
+    // FFB COMPONENTS: total, base, us_drop, os_boost, sop, rear_torque, scrub, yaw_kick, gyro, road, slide, lockup, spin, bottoming, abs, soft_lock (16) = 64
+    // FFB MISC: shaft, gen, grip_factor, speed_gate, load_peak (5) = 20
+    // SYSTEM: physics_rate (1) = 4
+    // SYSTEM PACKED: clipping(1), warn_bits(1), marker(1) = 3
+    // Total = 16 + 28 + 32 + 128 + 96 + 24 + 8 + 40 + 16 + 32 + 64 + 20 + 4 + 3 = 511 bytes
 
     std::cout << "sizeof(LogFrame): " << sizeof(LogFrame) << std::endl;
-    ASSERT_EQ(sizeof(LogFrame), (size_t)294);
+    ASSERT_EQ(sizeof(LogFrame), (size_t)511);
 }
 
 } // namespace FFBEngineTests
