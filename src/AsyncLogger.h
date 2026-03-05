@@ -14,18 +14,19 @@
 #include <algorithm> // For std::max
 #include <filesystem>
 #include <cstdint>   // For uint8_t
+#include <lz4.h>     // For LZ4 compression
 
 // Forward declaration
 struct TelemInfoV01;
 class FFBEngine;
 
 // Log frame structure - captures one physics tick
-// Order re-aligned in v0.7.126 to match legacy CSV column order exactly for consistency.
 #pragma pack(push, 1)
 struct LogFrame {
     double timestamp;        // Time
     double delta_time;       // DeltaTime
     
+    // --- PROCESSED 400Hz DATA (Smooth) ---
     float speed;             // Speed
     float lat_accel;         // LatAccel
     float long_accel;        // LongAccel
@@ -35,6 +36,15 @@ struct LogFrame {
     float throttle;          // Throttle
     float brake;             // Brake
     
+    // --- RAW 100Hz GAME DATA (Step-function) ---
+    float raw_steering;
+    float raw_lat_accel;
+    float raw_load_fl;
+    float raw_load_fr;
+    float raw_slip_vel_fl;
+    float raw_slip_vel_fr;
+
+    // --- ALGORITHM STATE (400Hz) ---
     float slip_angle_fl;     // SlipAngleFL
     float slip_angle_fr;     // SlipAngleFR
     float slip_ratio_fl;     // SlipRatioFL
@@ -81,6 +91,7 @@ struct LogFrame {
     float slope_torque;          // SlopeTorque
     float slew_limited_g;        // SlewLimitedG
     
+    // --- FINAL OUTPUTS (400Hz) ---
     float ffb_total;             // FFBTotal
     float ffb_base;              // FFBBase
     float ffb_shaft_torque;      // FFBShaftTorque
@@ -240,7 +251,8 @@ public:
 
 private:
     AsyncLogger() : m_running(false), m_pending_marker(false), m_frame_count(0), m_decimation_counter(0), 
-                    m_file_size_bytes(0), m_last_flush_time(std::chrono::steady_clock::now()) {}
+                    m_file_size_bytes(0), m_last_flush_time(std::chrono::steady_clock::now()),
+                    m_lz4_enabled(false) {}
     ~AsyncLogger() { Stop(); }
     
     // No copy
@@ -248,6 +260,7 @@ private:
     AsyncLogger& operator=(const AsyncLogger&) = delete;
     
     void WorkerThread() {
+        std::vector<char> compressed_buffer;
         while (true) {
             std::unique_lock<std::mutex> lock(m_mutex);
             m_cv.wait(lock, [this] { return !m_running || !m_buffer_active.empty(); });
@@ -264,11 +277,29 @@ private:
             
             lock.unlock();
             
-            // Write buffer to disk (Optimized for binary block write)
+            // Write buffer to disk
             if (!m_buffer_writing.empty()) {
-                m_file.write(reinterpret_cast<const char*>(m_buffer_writing.data()),
-                             m_buffer_writing.size() * sizeof(LogFrame));
-                m_file_size_bytes += m_buffer_writing.size() * sizeof(LogFrame);
+                size_t src_size = m_buffer_writing.size() * sizeof(LogFrame);
+                const char* src_ptr = reinterpret_cast<const char*>(m_buffer_writing.data());
+
+                if (m_lz4_enabled) {
+                    int max_dst_size = LZ4_compressBound((int)src_size);
+                    compressed_buffer.resize(max_dst_size);
+
+                    int compressed_size = LZ4_compress_default(src_ptr, compressed_buffer.data(), (int)src_size, max_dst_size);
+
+                    if (compressed_size > 0) {
+                        // Write block size header
+                        uint32_t header = (uint32_t)compressed_size;
+                        m_file.write(reinterpret_cast<const char*>(&header), 4);
+                        // Write payload
+                        m_file.write(compressed_buffer.data(), compressed_size);
+                        m_file_size_bytes += (4 + compressed_size);
+                    }
+                } else {
+                    m_file.write(src_ptr, src_size);
+                    m_file_size_bytes += src_size;
+                }
                 m_buffer_writing.clear();
             }
             
@@ -287,6 +318,7 @@ private:
     void WriteHeader(const SessionInfo& info) {
         m_file << "# LMUFFB Telemetry Log v1.0\n";
         m_file << "# App Version: " << info.app_version << "\n";
+        m_file << "# Compression: " << (m_lz4_enabled ? "LZ4" : "None") << "\n";
         m_file << "# ========================\n";
         m_file << "# Session Info\n";
         m_file << "# ========================\n";
@@ -309,6 +341,7 @@ private:
         
         // CSV Header for human readability and test compatibility
         m_file << "# Fields: Time,DeltaTime,Speed,LatAccel,LongAccel,YawRate,Steering,Throttle,Brake,"
+               << "RawSteering,RawLatAccel,RawLoadFL,RawLoadFR,RawSlipVelFL,RawSlipVelFR,"
                << "SlipAngleFL,SlipAngleFR,SlipRatioFL,SlipRatioFR,GripFL,GripFR,"
                << "LoadFL,LoadFR,LoadRL,LoadRR,"
                << "RideHeightFL,RideHeightFR,RideHeightRL,RideHeightRR,"
@@ -354,6 +387,8 @@ private:
     std::atomic<size_t> m_file_size_bytes;
     std::chrono::steady_clock::time_point m_last_flush_time;
     
+    bool m_lz4_enabled; // Internal compression toggle
+
     static const int DECIMATION_FACTOR = 1; // 400Hz -> 400Hz
     static const size_t BUFFER_THRESHOLD = 200; // ~0.5s of data
     static const int FLUSH_INTERVAL_SECONDS = 5; // Flush every 5 seconds

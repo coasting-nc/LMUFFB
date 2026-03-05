@@ -227,8 +227,12 @@ if(WIN32)
 endif()
 
 if(NOT WIN32 AND NOT BUILD_HEADLESS)
-    target_link_libraries(LMUFFB_Core PUBLIC glfw OpenGL::GL dl pthread)
-    target_link_libraries(LMUFFB_Core_Fast PUBLIC glfw OpenGL::GL dl pthread)
+    target_link_libraries(LMUFFB_Core PUBLIC glfw OpenGL::GL dl pthread lz4)
+    target_link_libraries(LMUFFB_Core_Fast PUBLIC glfw OpenGL::GL dl pthread lz4)
+else()
+    # On headless or windows, we still need lz4 for the logger
+    target_link_libraries(LMUFFB_Core PUBLIC lz4)
+    target_link_libraries(LMUFFB_Core_Fast PUBLIC lz4)
 endif()
 
 # Main Application

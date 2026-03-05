@@ -6,6 +6,8 @@ Issue #254 reports that CSV telemetry logs grow too quickly in size and consume 
 ## Design Rationale
 - **Binary Format:** Reduces file size by ~60% compared to CSV and eliminates expensive `std::stringstream` formatting in the logger thread. Binary storage is also much faster for both writing (C++) and reading (Python/Pandas).
 - **400Hz Sampling:** Provides enough resolution to analyze high-frequency FFB effects (ABS, road textures, suspension bottoming) without aliasing, which was lost with 100Hz decimation.
+- **Raw vs. Processed Data:** Logging both raw 100Hz telemetry and 400Hz upsampled data side-by-side allows for precise debugging of the signal processing chain (prediction accuracy, filter lag).
+- **LZ4 Compression:** Telemetry data at 400Hz contains many repeating patterns (especially the 100Hz raw "staircase"). LZ4 provides 80-90% compression with near-zero CPU overhead, keeping log sizes manageable (tens of MBs instead of hundreds).
 - **Memory Packing:** Using `#pragma pack(push, 1)` ensures that the C++ struct layout is predictable and lacks compiler-inserted padding, making it directly compatible with a Python `numpy.dtype`.
 - **Header Metadata:** Keeping the metadata as plain text at the top of the file allows for easy human inspection of session settings without needing a full binary parser, while the `[DATA_START]\n` marker provides a clean delimiter for the binary stream.
 - **Counter Safety:** Re-implemented the decimation counter reset to prevent eventual integer overflow, even when `DECIMATION_FACTOR` is 1.
@@ -34,9 +36,10 @@ Issue #254 reports that CSV telemetry logs grow too quickly in size and consume 
 
 ### 1. `src/AsyncLogger.h`
 - **Modify `LogFrame` struct**:
-    - Re-aligned field order to match the legacy CSV column order exactly. This simplifies the mapping and ensures that any partial reads or inspections find fields where expected.
+    - Group fields into "Raw Telemetry (100Hz)", "Upsampled Telemetry (400Hz)", "Algorithm State", and "Outputs".
+    - Include raw 100Hz equivalents for critical channels (steering, load, patch velocities, accelerations).
     - Wrap with `#pragma pack(push, 1)` and `#pragma pack(pop)`.
-    - Change `bool clipping` and `bool marker` to `uint8_t` for consistent sizing across compilers.
+    - Change `bool clipping` and `bool marker` to `uint8_t`.
 - **Update `AsyncLogger::Start`**:
     - Change default filename extension to `.bin`.
     - Open `m_file` with `std::ios::binary`.
@@ -44,20 +47,19 @@ Issue #254 reports that CSV telemetry logs grow too quickly in size and consume 
     - Append `[DATA_START]\n` as the final line.
 - **Update `AsyncLogger::Log`**:
     - Set `DECIMATION_FACTOR = 1` to log every frame.
-    - Ensure `m_decimation_counter` is reset to 0 after logging to prevent overflow.
-- **Update `AsyncLogger::WorkerThread`**:
-    - Optimized by writing the entire `m_buffer_writing` vector in a single `m_file.write` call.
-- **Cleanup**:
-    - Removed the unused `WriteFrame` method.
+    - Ensure `m_decimation_counter` is reset to 0 after logging.
+- **Implement LZ4 Compression**:
+    - Add `m_lz4_enabled` (bool, default false).
+    - In `WorkerThread`, if enabled, compress the `m_buffer_writing` block using `LZ4_compress_default` before writing.
+    - Prepend each compressed block with a 4-byte size header.
 
 ### 2. `tools/lmuffb_log_analyzer/loader.py`
-- Define `LOG_FRAME_DTYPE` using `numpy.dtype` that matches the re-aligned `LogFrame` exactly.
+- Define `LOG_FRAME_DTYPE` matching the new augmented `LogFrame`.
 - Implement `load_bin(filepath)`:
-    - Open in binary mode.
-    - Read header lines as bytes to extract metadata.
+    - Handle both uncompressed and LZ4-compressed streams.
+    - If LZ4 is used, decompress blocks using the `lz4` Python package.
     - Locate `[DATA_START]\n` marker robustly using `seek()`.
-    - Use `np.fromfile` to read the binary payload into a structured array.
-- Update `load_log` to check the file extension and use either `load_bin` or the existing CSV loader.
+    - Use `np.frombuffer` to read the binary payload into a structured array.
 
 ### 3. `tools/lmuffb_log_analyzer/cli.py`
 - Update `batch` command to include `*.bin` in the file search.

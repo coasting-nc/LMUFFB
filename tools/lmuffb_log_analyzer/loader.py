@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import lz4.block
 from pathlib import Path
 from typing import Tuple, Optional
 from datetime import datetime
@@ -10,7 +11,7 @@ LOG_FRAME_DTYPE = np.dtype([
     ('timestamp', np.float64),
     ('delta_time', np.float64),
 
-    # Vehicle State
+    # Vehicle State (Grouped as in C++ struct)
     ('speed', np.float32),
     ('lat_accel', np.float32),
     ('long_accel', np.float32),
@@ -21,7 +22,15 @@ LOG_FRAME_DTYPE = np.dtype([
     ('throttle', np.float32),
     ('brake', np.float32),
 
-    # Front Axle - Raw Telemetry
+    # Front Axle - Raw Telemetry (100Hz)
+    ('raw_steering', np.float32),
+    ('raw_lat_accel', np.float32),
+    ('raw_load_fl', np.float32),
+    ('raw_load_fr', np.float32),
+    ('raw_slip_vel_fl', np.float32),
+    ('raw_slip_vel_fr', np.float32),
+
+    # Front Axle - Processed (400Hz)
     ('slip_angle_fl', np.float32),
     ('slip_angle_fr', np.float32),
     ('slip_ratio_fl', np.float32),
@@ -130,7 +139,7 @@ def load_csv(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
     return metadata, df
 
 def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
-    """Load binary telemetry log file"""
+    """Load binary telemetry log file (supports LZ4 and uncompressed)"""
     path = Path(filepath)
     metadata = _parse_header(path)
 
@@ -145,10 +154,33 @@ def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
             raise ValueError("Binary log file missing [DATA_START] marker in first 8KB")
 
         # Jump to start of data
-        f.seek(offset + len(marker))
+        data_pos = offset + len(marker)
+        f.seek(data_pos)
 
-        # Read the rest of the file into a numpy array
-        data = np.fromfile(f, dtype=LOG_FRAME_DTYPE)
+        # Check for LZ4 compression (indicated by metadata or checking first 4 bytes for magic/size)
+        is_lz4 = False
+        with open(path, 'r', errors='ignore') as f_meta:
+            for line in f_meta:
+                if "Compression: LZ4" in line:
+                    is_lz4 = True
+                    break
+
+        if is_lz4:
+            all_data = []
+            while True:
+                size_bytes = f.read(4)
+                if not size_bytes:
+                    break
+                compressed_size = int.from_bytes(size_bytes, byteorder='little')
+                compressed_data = f.read(compressed_size)
+                if len(compressed_data) < compressed_size:
+                    break
+                uncompressed_data = lz4.block.decompress(compressed_data)
+                all_data.append(np.frombuffer(uncompressed_data, dtype=LOG_FRAME_DTYPE))
+            data = np.concatenate(all_data) if all_data else np.array([], dtype=LOG_FRAME_DTYPE)
+        else:
+            # Read the rest of the file into a numpy array
+            data = np.fromfile(f, dtype=LOG_FRAME_DTYPE)
 
     df = pd.DataFrame(data)
 

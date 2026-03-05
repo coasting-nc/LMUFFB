@@ -762,24 +762,32 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         }
     }
     
-    // Telemetry Logging (v0.7.x)
+    // Telemetry Logging (v0.7.126: Optimized Binary & 400Hz)
     if (AsyncLogger::Get().IsLogging()) {
         LogFrame frame;
-        frame.timestamp = data->mElapsedTime;
-        frame.delta_time = data->mDeltaTime;
+        frame.timestamp = upsampled_data->mElapsedTime;
+        frame.delta_time = ctx.dt;
         
-        // Inputs
-        frame.steering = (float)data->mUnfilteredSteering;
-        frame.throttle = (float)data->mUnfilteredThrottle;
-        frame.brake = (float)data->mUnfilteredBrake;
-        
-        // Vehicle state
+        // --- PROCESSED 400Hz DATA (Smooth) ---
         frame.speed = (float)ctx.car_speed;
-        frame.lat_accel = (float)data->mLocalAccel.x;
-        frame.long_accel = (float)data->mLocalAccel.z;
-        frame.yaw_rate = (float)data->mLocalRot.y;
+        frame.lat_accel = (float)upsampled_data->mLocalAccel.x;
+        frame.long_accel = (float)upsampled_data->mLocalAccel.z;
+        frame.yaw_rate = (float)upsampled_data->mLocalRot.y;
+
+        frame.steering = (float)upsampled_data->mUnfilteredSteering;
+        frame.throttle = (float)upsampled_data->mUnfilteredThrottle;
+        frame.brake = (float)upsampled_data->mUnfilteredBrake;
+
+        // --- RAW 100Hz GAME DATA (Step-function) ---
+        frame.raw_steering = (float)data->mUnfilteredSteering;
+        frame.raw_lat_accel = (float)data->mLocalAccel.x;
+        frame.raw_load_fl = (float)data->mWheel[0].mTireLoad;
+        frame.raw_load_fr = (float)data->mWheel[1].mTireLoad;
+        frame.raw_slip_vel_fl = (float)data->mWheel[0].mLateralPatchVel;
+        frame.raw_slip_vel_fr = (float)data->mWheel[1].mLateralPatchVel;
         
-        // Front Axle raw
+        // --- ALGORITHM STATE (400Hz) ---
+        // Front Axle upsampled
         frame.slip_angle_fl = (float)fl.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
         frame.slip_angle_fr = (float)fr.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
         frame.slip_ratio_fl = (float)calculate_wheel_slip_ratio(fl);
@@ -788,10 +796,28 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         frame.grip_fr = (float)fr.mGripFract;
         frame.load_fl = (float)fl.mTireLoad;
         frame.load_fr = (float)fr.mTireLoad;
+        frame.load_rl = (float)upsampled_data->mWheel[2].mTireLoad;
+        frame.load_rr = (float)upsampled_data->mWheel[3].mTireLoad;
+
+        frame.ride_height_fl = (float)fl.mRideHeight;
+        frame.ride_height_fr = (float)fr.mRideHeight;
+        frame.ride_height_rl = (float)upsampled_data->mWheel[2].mRideHeight;
+        frame.ride_height_rr = (float)upsampled_data->mWheel[3].mRideHeight;
+        frame.susp_deflection_fl = (float)fl.mSuspensionDeflection;
+        frame.susp_deflection_fr = (float)fr.mSuspensionDeflection;
+        frame.susp_deflection_rl = (float)upsampled_data->mWheel[2].mSuspensionDeflection;
+        frame.susp_deflection_rr = (float)upsampled_data->mWheel[3].mSuspensionDeflection;
         
-        // Calculated values
         frame.calc_slip_angle_front = (float)m_grip_diag.front_slip_angle;
         frame.calc_grip_front = (float)ctx.avg_grip;
+        frame.calc_grip_rear = (float)ctx.avg_rear_grip;
+        frame.grip_delta = (float)(ctx.avg_grip - ctx.avg_rear_grip);
+
+        // Yaw Kick Analysis
+        frame.raw_yaw_accel = (float)upsampled_data->mLocalRotAccel.y;
+        frame.smoothed_yaw_accel = (float)m_yaw_accel_smoothed;
+        frame.ffb_yaw_kick = (float)ctx.yaw_force;
+        frame.lat_load_norm = (float)m_sop_load_smoothed;
         
         // Slope detection
         frame.dG_dt = (float)m_slope_dG_dt;
@@ -803,50 +829,25 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         frame.hold_timer = (float)m_slope_hold_timer;
         frame.input_slip_smoothed = (float)m_slope_slip_smoothed;
         frame.slope_smoothed = (float)m_slope_smoothed_output;
-        
-        // Use extracted confidence calculation
         frame.confidence = (float)calculate_slope_confidence(m_slope_dAlpha_dt);
         
-        // Surface types (Accuracy Tools)
         frame.surface_type_fl = (float)fl.mSurfaceType;
         frame.surface_type_fr = (float)fr.mSurfaceType;
-
-        // Advanced Slope Detection (v0.7.40)
         frame.slope_torque = (float)m_slope_torque_current;
         frame.slew_limited_g = (float)m_debug_lat_g_slew;
-
-        // Rear axle
-        frame.calc_grip_rear = (float)ctx.avg_rear_grip;
-        frame.grip_delta = (float)(ctx.avg_grip - ctx.avg_rear_grip);
-
-        // Yaw Kick Analysis (Issue #241)
-        frame.raw_yaw_accel = (float)data->mLocalRotAccel.y;
-        frame.smoothed_yaw_accel = (float)m_yaw_accel_smoothed;
-        frame.ffb_yaw_kick = (float)ctx.yaw_force;
-        frame.lat_load_norm = (float)m_sop_load_smoothed;
-
-        // Additional channels for diagnostic investigation
-        frame.load_rl = (float)data->mWheel[2].mTireLoad;
-        frame.load_rr = (float)data->mWheel[3].mTireLoad;
-        frame.ride_height_fl = (float)data->mWheel[0].mRideHeight;
-        frame.ride_height_fr = (float)data->mWheel[1].mRideHeight;
-        frame.ride_height_rl = (float)data->mWheel[2].mRideHeight;
-        frame.ride_height_rr = (float)data->mWheel[3].mRideHeight;
-        frame.susp_deflection_fl = (float)data->mWheel[0].mSuspensionDeflection;
-        frame.susp_deflection_fr = (float)data->mWheel[1].mSuspensionDeflection;
-        frame.susp_deflection_rl = (float)data->mWheel[2].mSuspensionDeflection;
-        frame.susp_deflection_rr = (float)data->mWheel[3].mSuspensionDeflection;
         
-        // FFB output
+        // --- FINAL OUTPUTS (400Hz) ---
         frame.ffb_total = (float)norm_force;
-        frame.ffb_shaft_torque = (float)data->mSteeringShaftTorque;
+        frame.ffb_base = (float)base_input;
+        frame.ffb_shaft_torque = (float)upsampled_data->mSteeringShaftTorque;
         frame.ffb_gen_torque = (float)genFFBTorque;
-        frame.ffb_grip_factor = (float)ctx.grip_factor;
         frame.ffb_sop = (float)ctx.sop_base_force;
+        frame.ffb_grip_factor = (float)ctx.grip_factor;
         frame.speed_gate = (float)ctx.speed_gate;
         frame.load_peak_ref = (float)m_auto_peak_load;
-        frame.clipping = (std::abs(norm_force) > CLIPPING_THRESHOLD);
-        frame.ffb_base = (float)base_input; // Plan included ffb_base
+
+        frame.clipping = (uint8_t)(std::abs(norm_force) > CLIPPING_THRESHOLD);
+        frame.marker = 0; // Handled inside Log()
         
         AsyncLogger::Get().Log(frame);
     }

@@ -5,3 +5,4 @@ pydantic>=2.4.0
 rich>=13.0.0
 click>=8.1.0
 pytest>=7.0.0
+lz4>=4.3.0
