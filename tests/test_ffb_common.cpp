@@ -8,6 +8,7 @@ int g_tests_failed = 0;
 int g_test_cases_run = 0;
 int g_test_cases_passed = 0;
 int g_test_cases_failed = 0;
+std::string g_current_test_name; // Tracks the currently-running test for assertion messages
 
 // --- Tag Filtering Globals ---
 std::vector<std::string> g_tag_filter;
@@ -290,13 +291,15 @@ void Run() {
             
             try {
                 int initial_fails = g_tests_failed;
+                g_current_test_name = test.name; // Make test name available to ASSERT macros
                 test.func();
 
                 g_test_cases_run++;
                 if (g_tests_failed > initial_fails) {
                     g_test_cases_failed++;
                     failed_test_names.push_back(test.name);
-                    std::cerr << "\n>>> [FAIL] TEST CASE: " << test.name << " (" << (g_tests_failed - initial_fails) << " assertions failed)\n" << std::endl;
+                    std::cout << "\n[FAIL] " << test.name << " ("
+                              << (g_tests_failed - initial_fails) << " assertion(s) failed)" << std::endl;
                 } else {
                     g_test_cases_passed++;
                 }
