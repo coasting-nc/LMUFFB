@@ -211,7 +211,7 @@ Also having the 400Hz might necessary because if we change the code of the up-sa
 
 # Answer 3
 
-You are 100% correct, and your reasoning is spot on for professional telemetry and control systems. 
+You are 100% correct, and your reasoning is spot on for professional telemetry and control systems.
 
 Trying to perfectly replicate C++ signal processing (Holt-Winters upsampling, Savitzky-Golay derivatives, Biquad filters) in a Python analyzer is a maintenance nightmare. If you tweak a filter coefficient in C++, your Python analyzer instantly breaks unless you update it simultaneously. Furthermore, as you pointed out, you lose the ability to accurately analyze historical logs if the algorithms change.
 
@@ -220,9 +220,9 @@ Trying to perfectly replicate C++ signal processing (Holt-Winters upsampling, Sa
 Here is how you should structure this to get the best of both worlds (raw 100Hz data + processed 400Hz data) without blowing up your file sizes.
 
 ### 1. How to handle 100Hz vs 400Hz in the same log
-You should run the logger at **400Hz** (remove the `DECIMATION_FACTOR`). 
+You should run the logger at **400Hz** (remove the `DECIMATION_FACTOR`).
 
-For the raw 100Hz variables, you simply log the *latest received value* from the game. Because the game only updates every 4th tick, the raw values in your log will naturally form a "staircase" (step function) when plotted. 
+For the raw 100Hz variables, you simply log the *latest received value* from the game. Because the game only updates every 4th tick, the raw values in your log will naturally form a "staircase" (step function) when plotted.
 
 This is actually **perfect for debugging**. When you plot the raw 100Hz "staircase" overlaid with your 400Hz up-sampled Holt-Winters curve, you will visually see exactly how well your up-sampler is predicting the gaps between the game's ticks.
 
@@ -234,29 +234,29 @@ You already have a great separation in your code between `data` (the raw 100Hz i
 struct LogFrame {
     double timestamp;
     double delta_time;
-    
+
     // --- RAW 100Hz GAME DATA (Step-function) ---
     float raw_steering;
     float raw_lat_accel;
     float raw_load_fl;
     float raw_load_fr;
-    
+
     // --- PROCESSED 400Hz DATA (Smooth) ---
     float upsampled_steering;
     float upsampled_lat_accel;
     float upsampled_load_fl;
     float upsampled_load_fr;
-    
+
     // --- ALGORITHM STATE (400Hz) ---
     float slope_current;
     float dynamic_weight_factor;
     float grip_fl;
-    
+
     // --- FINAL OUTPUTS (400Hz) ---
     float ffb_base;
     float ffb_textures;
     float ffb_total;
-    
+
     uint8_t clipping;
     uint8_t marker;
 };
@@ -273,14 +273,14 @@ If you log both raw and processed data, your struct might grow to around **100 f
 Half a gigabyte for an hour-long race is noticeable. This is the exact tipping point where **adding LZ4 compression becomes highly recommended.**
 
 ### 4. Why LZ4 is perfect for this
-Because you are logging at 400Hz, the delta between frame $N$ and frame $N+1$ is incredibly small. Furthermore, the 100Hz raw data repeats exactly the same numbers 4 times in a row. 
+Because you are logging at 400Hz, the delta between frame $N$ and frame $N+1$ is incredibly small. Furthermore, the 100Hz raw data repeats exactly the same numbers 4 times in a row.
 
 LZ4 thrives on repeating byte patterns. If you pass this 400Hz binary stream through LZ4, it will likely compress by **80% to 90%**.
 * Uncompressed 1-hour log: **576 MB**
 * LZ4 Compressed 1-hour log: **~50 to 80 MB**
 
 **Performance impact of LZ4:**
-LZ4 compresses at over **500 MB/s**. Your app generates data at **0.16 MB/s**. 
+LZ4 compresses at over **500 MB/s**. Your app generates data at **0.16 MB/s**.
 Compressing a chunk of telemetry in your `WorkerThread` will take a fraction of a millisecond. It will have absolutely zero impact on your real-time FFB thread.
 
 ### Summary of the Ideal Architecture
@@ -289,6 +289,6 @@ Compressing a chunk of telemetry in your `WorkerThread` will take a fraction of 
 2. **Rate:** 400Hz (Log every single physics tick).
 3. **Content:** Log both `data->...` (Raw 100Hz) and `m_working_info->...` (Upsampled 400Hz) side-by-side.
 4. **Compression:** Implement LZ4 in the `WorkerThread`. Instead of writing `m_buffer_writing` directly to disk, compress the buffer array in memory first, then write the compressed block to disk.
-5. **Python Side:** Use the `lz4` python package to decompress the file, and `numpy.frombuffer` to instantly load it into a Pandas DataFrame for your analyzer. 
+5. **Python Side:** Use the `lz4` python package to decompress the file, and `numpy.frombuffer` to instantly load it into a Pandas DataFrame for your analyzer.
 
 This architecture gives you absolute perfect historical reproducibility, beautiful high-resolution graphs for debugging your filters, and tiny file sizes, all while keeping the C++ CPU overhead lower than your current CSV implementation.
