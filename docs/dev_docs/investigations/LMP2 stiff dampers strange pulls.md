@@ -1,4 +1,15 @@
+# Question 1
 
+Here is the full codebase of a force feedback (FFB) app. Your task is to help me investigate an issue.
+The issue is that when driving the LMP2 car, and using a car setup with stiff dampers, strange pulls in the FFB happen, which seems coming from the Yaw Kick effect (from yaw acceleration).
+I need to investigate why this is happening. Is there an issue in our formula for yaw kick, or there might be an issue with the game physics when the dampers are stiff?
+Can we already identify if something is wrong in our code in relation for this issue?
+In case the code looks ok, can you propose a series of diagnostics / investigations I could do to investigate the issue?
+For instance, I could look at the telemetry of the car physics, to inspect all that is happening in the car physics-wise (I would use Motec after exporting the telemetry); could you suggest which plot of the Motec telemetry I could look at to investigate the issue?
+Could you suggest particular setup changes that I could try on the LMP2 car to further investigate the issue? For instance, variations of the setup that causes the issue (stiff damper), setups that do not cause is (soft dampers), and combinations of other setting that might help in more precisely identify when the issue is triggered.
+
+
+# Answer 1
 
 
 Based on a review of the codebase and vehicle dynamics principles, I can provide insights into both the code and the physics side of this issue. 
@@ -89,9 +100,13 @@ To isolate the issue in the game, try these specific setup A/B tests:
 **Immediate Workaround:**
 While investigating, you can mitigate this in the app by increasing the `Yaw Kick Response` (Smoothing) slider in the UI to something like `0.020s` or `0.030s`. This will act as a low-pass filter and absorb the high-frequency chassis chatter caused by the stiff dampers before it reaches your wheel.
 
+
+# Question 2
+
+Note that my FFB app also can exports some csv logs of the telemetry. However, currently some data might not be exported. And we also have a python log analyser that analyses the csv logs, calculates stats and produces plots.
+Would you suggest exporting additional data channels to csv to investigate this issue, and to perform particular analysis on those (stats, plots, etc.)?
+
 # Answer 2
-
-
 
 
 Yes, absolutely. Looking at your `AsyncLogger.h` and `LogFrame` struct, you are currently exporting `YawRate` (`data->mLocalRot.y`), but you are **missing the exact channels needed to debug this specific issue**. 
@@ -154,10 +169,13 @@ Add these automated metrics to your Python script to quickly evaluate different 
 
 If the stiff setup shows a massive increase in 15Hz yaw noise and threshold crossings, you know exactly why the wheel is pulling, and you can confidently implement the continuous deadzone fix in the C++ code.
 
+
+# Question 3
+
+If it is of any help, note that the pulls are "constant" (not vibrations or frequent oscillations), like forces pulling strong in one direction that seems off, in part similar to when the car has suspension damage. 
+
+
 # Answer 3
-
-
-
 
 This is a **massive** clue, and it actually perfectly explains *why* the code flaw I pointed out earlier is causing this exact symptom. 
 
