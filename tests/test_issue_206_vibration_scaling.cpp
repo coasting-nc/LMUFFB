@@ -123,7 +123,7 @@ TEST_CASE(test_issue_206_vibration_scaling, "Functional") {
     const auto& s_sl = batch.back();
     double sl_nm = (double)s_sl.ffb_soft_lock;
     double sl_di = sl_nm / (double)engine.m_wheelbase_max_nm;
-    double sl_total = sl_di * (double)engine.m_gain;
+    double sl_total = std::clamp(sl_di * (double)engine.m_gain, -1.0, 1.0);
     if (engine.m_invert_force) sl_total *= -1.0;
 
     std::cout << "[INFO] f100: " << f100 << ", f50: " << f50 << ", f0: " << f0 << ", sl_total: " << sl_total << std::endl;
