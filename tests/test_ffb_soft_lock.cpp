@@ -33,12 +33,39 @@ void test_soft_lock() {
         ASSERT_NEAR(run_step(engine, data, 0.5), 0.0, 0.001);
         ASSERT_NEAR(run_step(engine, data, 1.0), 0.0, 0.001);
         // stiffness = 20.0
-        // BASE_NM_SOFT_LOCK = 50.0
-        // Issue #153: decoupling_scale removed.
-        // force_nm = -(0.1 * 20.0 * 50.0) = -100.0 Nm
-        // norm_force = -100.0 / 100.0 = -1.0
+        // excess_for_max = 5.0 / (20.0 * 100.0) = 0.0025
+        // At 0.1% excess (1.001):
+        // spring_nm = (0.001 / 0.0025) * 100.0 * 2.0 = 0.4 * 200.0 = 80.0 Nm
+        // di_texture = 80.0 / 100.0 = 0.8
+        ASSERT_NEAR(run_step(engine, data, 1.001), -0.8, 0.01);
+
+        // At 0.25% excess (1.0025) it should hit the wall
+        ASSERT_NEAR(run_step(engine, data, 1.0025), -1.0, 0.01);
+
+        // At 10% excess (1.1) it's definitely -1.0
         ASSERT_NEAR(run_step(engine, data, 1.1), -1.0, 0.01);
         ASSERT_NEAR(run_step(engine, data, -1.1), 1.0, 0.01);
+    }
+
+    {
+        std::cout << "  Sub-test: Soft Lock Wall Persistence (Zero Velocity)" << std::endl;
+        FFBEngine engine;
+        InitializeEngine(engine);
+        TelemInfoV01 data = CreateBasicTestTelemetry();
+        engine.m_soft_lock_enabled = true;
+        engine.m_soft_lock_stiffness = 20.0f;
+        engine.m_soft_lock_damping = 1.0f; // High damping
+        engine.m_wheelbase_max_nm = 15.0f; engine.m_target_rim_nm = 10.0f;
+        engine.m_gain = 1.0f;
+        engine.m_invert_force = false;
+        engine.m_steering_shaft_gain = 0.0f;
+
+        // Force zero velocity
+        FFBEngineTestAccess::SetSteeringVelocitySmoothed(engine, 0.0);
+
+        // Even with high damping, if velocity is zero, only spring remains.
+        // At 0.5% excess (1.005), spring reaches full wheelbase torque.
+        ASSERT_NEAR(run_step(engine, data, 1.005), -1.0, 0.01);
     }
 
     {
@@ -72,16 +99,22 @@ void test_soft_lock() {
         run_step(engine, data, 1.1); // Initial: sets prev_angle
         double force = run_step(engine, data, 1.2);
 
+        // stiffness = 1.0 (clamped) -> excess_for_max = 0.05
+        // spring_nm = (0.1 / 0.05) * 100 * 2 = 400 Nm (clamped to 200 via min(1, ...)*2*max)
+
         // steer_vel = (1.2 - 1.1) * (9.4247 / 2) / 0.0025 = 188.494 rad/s
-        // damping_nm = -(188.494 * 0.1 * 50.0) = -942.47 Nm
-        // norm_force = -942.47 / 100 = -9.42 -> clamped to -1.0
+        // damping_nm = 188.494 * 0.1 * 100 * 0.1 = 188.494 Nm
+
+        // total_nm = -(200 + 188.494) = -388.494
+        // di_texture = -388.494 / 100 = -3.88 -> -1.0
         ASSERT_NEAR(force, -1.0, 0.01);
 
-        engine.m_soft_lock_damping = 0.001f;
-        // damping_nm = -(188.494 * 0.001 * 50.0) = -9.4247 Nm
-        // norm_force = -9.4247 / 100 = -0.0942
+        engine.m_soft_lock_damping = 0.0001f;
+        // damping_nm = 188.494 * 0.0001 * 100 * 0.1 = 0.188494 Nm
+        // total_nm = -(200 + 0.188) = -200.188
+        // di_texture = -2.00 -> -1.0
         force = run_step(engine, data, 1.3);
-        ASSERT_NEAR(force, -0.0942, 0.01);
+        ASSERT_NEAR(force, -1.0, 0.01);
     }
 
     std::cout << "  [PASS] Soft Lock logic verified." << std::endl;

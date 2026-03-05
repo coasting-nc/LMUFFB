@@ -22,17 +22,21 @@ void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationCont
         double excess = abs_steer - 1.0;
         double sign = (steer > 0.0) ? 1.0 : -1.0;
 
-        // Spring Force: pushes back to 1.0
-        double spring = excess * m_soft_lock_stiffness * (double)BASE_NM_SOFT_LOCK;
+        // NEW: Steep Spring Ramp reaching hardware max torque quickly.
+        // This ensures the soft lock feels like a solid wall that doesn't "give"
+        // under pressure, even at zero velocity.
+        // At stiffness 20 (default), reaches 100% force at 0.25% excess.
+        // At stiffness 100 (max), reaches 100% force at 0.05% excess.
+        double stiffness = (double)(std::max)(1.0f, m_soft_lock_stiffness);
+        double excess_for_max = 5.0 / (stiffness * 100.0);
+        double spring_nm = (std::min)(1.0, excess / excess_for_max) * (double)m_wheelbase_max_nm * 2.0;
 
-        // Damping Force: opposes movement to prevent bouncing
-        // Uses m_steering_velocity_smoothed which is in rad/s
-        double damping = m_steering_velocity_smoothed * m_soft_lock_damping * (double)BASE_NM_SOFT_LOCK;
+        // Damping Force: opposes movement to prevent bouncing.
+        // Scaled by hardware torque to remain relevant across all wheelbases.
+        double damping_nm = m_steering_velocity_smoothed * m_soft_lock_damping * (double)m_wheelbase_max_nm * 0.1;
+        damping_nm = std::clamp(damping_nm, -(double)m_wheelbase_max_nm * 0.5, (double)m_wheelbase_max_nm * 0.5);
 
         // Total Soft Lock force (opposing the steering direction)
-        // Note: damping already has a sign from m_steering_velocity_smoothed.
-        // If moving further away from limit, damping should oppose it.
-        // If returning to center, damping should also oppose it (slowing down the return).
-        ctx.soft_lock_force = -(spring * sign + damping);
+        ctx.soft_lock_force = -(spring_nm * sign + damping_nm);
     }
 }

@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.125] - 2026-03-12
+### Fixed
+- **Robust Soft Lock "Wall" Implementation (Issue #248)**:
+  - Redesigned the Soft Lock formula to act as a solid physical stop rather than a temporary bump.
+  - Implemented **Steep Spring Ramp**: The static resistance now reaches 100% of the wheelbase's maximum torque within a very small steering excess (0.25% at default stiffness, 0.05% at max stiffness).
+  - Introduced **Torque-Scaled Damping**: Damping is now relative to the hardware's maximum capability, providing consistent stability across all wheelbase models without overpowering the static "wall" feel.
+  - **Zero-Velocity Persistence**: The new static spring ramp ensures that the rack limit resistance is maintained even when the wheel is stationary, preventing the feel from "disappearing" under pressure.
+
+### Testing
+- **Test Suite Alignment**: Updated `tests/test_ffb_soft_lock.cpp`, `tests/test_issue_184_repro.cpp`, and `tests/test_issue_181_soft_lock_weakness.cpp` to verify high-force clipping at small excesses and persistent resistance at zero velocity.
+- **Regression Guard**: Hardened vibration scaling tests to handle the new high-strength safety forces.
+
 ## [0.7.124] - 2026-03-12
 ### Fixed
 - **Yaw Kick Signal Rectification (Issue #241)**:

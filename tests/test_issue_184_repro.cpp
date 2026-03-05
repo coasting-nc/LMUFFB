@@ -37,8 +37,9 @@ void test_soft_lock_stationary_not_allowed() {
     std::cout << "  Stationary (Speed=0) Force at 1.1 steer (allowed=false): " << force << std::endl;
 
     // We expect soft lock to work even if not allowed.
-    // force_nm = -(0.1 * 20.0 * 50.0) = -100.0 Nm
-    // norm_force = -100.0 / 100.0 = -1.0
+    // At stiffness 20, excess 0.1 reaches 200% of wheelbase torque.
+    // force_nm = -200.0 Nm
+    // norm_force = -200.0 / 100.0 = -2.0 -> clamped to -1.0
     ASSERT_NEAR(force, -1.0, 0.01);
 
     // Verify that other forces are muted (e.g. if we add some steering shaft torque)
@@ -52,9 +53,14 @@ void test_soft_lock_stationary_not_allowed() {
     auto batch = engine.GetDebugBatch();
     if (!batch.empty()) {
         auto& snap = batch.back();
-        // snap.ffb_soft_lock is in Nm
-        ASSERT_NEAR(snap.ffb_soft_lock, -100.0, 0.1);
-        ASSERT_NEAR(snap.total_output, -1.0, 0.01);
+        // snap.ffb_soft_lock is in Nm. 1.1 steer is well beyond 0.25% excess for max.
+        // spring_nm = 1.0 * 100 * 2 = 200.0 Nm
+        ASSERT_NEAR(snap.ffb_soft_lock, -200.0, 0.1);
+        // snap.total_output is before final [-1, 1] clamp in calculate_force's return,
+        // but let's check FFBEngine.cpp.
+        // snap.total_output = (float)norm_force;
+        // norm_force is di_structural + di_texture, which can exceed 1.0 before return clamp.
+        ASSERT_NEAR(snap.total_output, -2.0, 0.01);
         ASSERT_NEAR(snap.base_force, 0.0, 0.01); // base_input should be 0 because !allowed
     } else {
         std::cout << "[FAIL] No snapshot captured" << std::endl;

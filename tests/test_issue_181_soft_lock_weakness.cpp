@@ -39,9 +39,11 @@ TEST_CASE(test_soft_lock_normalization_consistency, "Regression") {
     std::cout << "  Force at 1.001 steer, 50.0Nm peak: " << force_high_peak << std::endl;
 
     // After fix, these should be identical because soft lock is scaled by wheelbase_max_nm only.
-    // SoftLockNm = 0.001 * 100 * 50 = 5 Nm.
-    // di_texture = 5 / 15 = 0.333333
-    ASSERT_NEAR(force_low_peak, -0.333333, 0.001);
+    // Stiffness 100 -> excess_for_max = 5 / 10000 = 0.0005
+    // SoftLockNm at 1.001 (0.001 excess):
+    // spring_nm = min(1, 0.001 / 0.0005) * 15 * 2 = 1.0 * 30 = 30 Nm.
+    // di_texture = 30 / 15 = 2.0 -> clamped to -1.0
+    ASSERT_NEAR(force_low_peak, -1.0, 0.001);
     ASSERT_NEAR(force_high_peak, force_low_peak, 0.000001);
 
     // Verify it reaches full force at 1% excess
