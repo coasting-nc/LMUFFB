@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-05 23:18:11</td>
+            <td class="headerValue">2026-03-05 23:55:38</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -526,10 +526,10 @@
 <span id="L451"><span class="lineNum">     451</span>                 :             : // Helper: Calculate Slip Ratio from wheel (v0.6.36 - Extracted from lambdas)</span>
 <span id="L452"><span class="lineNum">     452</span>                 :             : // Unified slip ratio calculation for lockup and spin detection.</span>
 <span id="L453"><span class="lineNum">     453</span>                 :             : // Returns the ratio of longitudinal slip: (PatchVel - GroundVel) / GroundVel</span>
-<span id="L454"><span class="lineNum">     454</span>                 :<span class="tlaGNC">       10248 : double FFBEngine::calculate_wheel_slip_ratio(const TelemWheelV01&amp; w) {</span></span>
-<span id="L455"><span class="lineNum">     455</span>                 :<span class="tlaGNC">       10248 :     double v_long = std::abs(w.mLongitudinalGroundVel);</span></span>
-<span id="L456"><span class="lineNum">     456</span>         [<span class="tlaGBC" title="Branch 0 was taken 271 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 9977 times"> + </span>]:<span class="tlaGNC">       10248 :     if (v_long &lt; MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;</span></span>
-<span id="L457"><span class="lineNum">     457</span>                 :<span class="tlaGNC">       10248 :     return w.mLongitudinalPatchVel / v_long;</span></span>
+<span id="L454"><span class="lineNum">     454</span>                 :<span class="tlaGNC">       10860 : double FFBEngine::calculate_wheel_slip_ratio(const TelemWheelV01&amp; w) {</span></span>
+<span id="L455"><span class="lineNum">     455</span>                 :<span class="tlaGNC">       10860 :     double v_long = std::abs(w.mLongitudinalGroundVel);</span></span>
+<span id="L456"><span class="lineNum">     456</span>         [<span class="tlaGBC" title="Branch 0 was taken 271 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 10589 times"> + </span>]:<span class="tlaGNC">       10860 :     if (v_long &lt; MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;</span></span>
+<span id="L457"><span class="lineNum">     457</span>                 :<span class="tlaGNC">       10860 :     return w.mLongitudinalPatchVel / v_long;</span></span>
 <span id="L458"><span class="lineNum">     458</span>                 :             : }</span>
         </pre>
               </td>
