@@ -43,6 +43,14 @@ struct LogFrame {
     float raw_load_fr;
     float raw_slip_vel_fl;
     float raw_slip_vel_fr;
+    float raw_ride_height_fl;
+    float raw_ride_height_fr;
+    float raw_ride_height_rl;
+    float raw_ride_height_rr;
+    float raw_susp_deflection_fl;
+    float raw_susp_deflection_fr;
+    float raw_susp_deflection_rl;
+    float raw_susp_deflection_rr;
 
     // --- ALGORITHM STATE (400Hz) ---
     float slip_angle_fl;     // SlipAngleFL
@@ -264,23 +272,23 @@ private:
     
     void WorkerThread() {
         std::vector<char> compressed_buffer;
+        std::vector<LogFrame> local_buffer;
         while (true) {
             {
                 std::unique_lock<std::mutex> lock(m_mutex);
                 m_cv.wait(lock, [this] { return !m_running || !m_buffer_active.empty(); });
 
                 if (!m_buffer_active.empty()) {
-                    m_buffer_writing.swap(m_buffer_active);
+                    local_buffer.swap(m_buffer_active);
                 } else if (!m_running) {
-                    // Final check: if we are stopping and both buffers are empty, we are done.
-                    if (m_buffer_writing.empty()) break;
+                    break;
                 }
             }
             
             // Write buffer to disk
-            if (!m_buffer_writing.empty()) {
-                size_t src_size = m_buffer_writing.size() * sizeof(LogFrame);
-                const char* src_ptr = reinterpret_cast<const char*>(m_buffer_writing.data());
+            if (!local_buffer.empty()) {
+                size_t src_size = local_buffer.size() * sizeof(LogFrame);
+                const char* src_ptr = reinterpret_cast<const char*>(local_buffer.data());
 
                 if (m_lz4_enabled) {
                     int max_dst_size = LZ4_compressBound((int)src_size);
@@ -294,13 +302,13 @@ private:
                         m_file.write(reinterpret_cast<const char*>(header), 8);
                         // Write payload
                         m_file.write(compressed_buffer.data(), compressed_size);
-                        m_file_size_bytes += (8 + compressed_size);
+                        m_file_size_bytes += (8 + (size_t)compressed_size);
                     }
                 } else {
                     m_file.write(src_ptr, src_size);
                     m_file_size_bytes += src_size;
                 }
-                m_buffer_writing.clear();
+                local_buffer.clear();
             }
             
             // Periodic flush to minimize data loss on crash

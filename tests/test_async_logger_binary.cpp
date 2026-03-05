@@ -101,11 +101,11 @@ TEST_CASE(test_async_logger_binary_integrity, "Logging") {
 }
 
 TEST_CASE(test_log_frame_packing, "Logging") {
-    // v0.7.126 re-aligned augmented struct
-    // double(8)*2 + float(4)*61 + uint8(1)*2 = 16 + 244 + 2 = 262 bytes
+    // v0.7.128 re-aligned augmented struct
+    // double(8)*2 + float(4)*69 + uint8(1)*2 = 16 + 276 + 2 = 294 bytes
     // timestamp(8), dt(8) = 16
     // PROCESSED: speed, lat, long, yaw, steer, throttle, brake (7) = 28
-    // RAW: steer, lat, load_fl/fr, slip_vel_fl/fr (6) = 24
+    // RAW: steer, lat, load_fl/fr, slip_vel_fl/fr, ride_fl/fr/rl/rr, susp_fl/fr/rl/rr (14) = 56
     // ALGO: slip_angle_fl/fr, slip_ratio_fl/fr, grip_fl/fr, load_fl/fr/rl/rr (10) = 40
     // ride_fl/fr/rl/rr, susp_fl/fr/rl/rr (8) = 32
     // calc_slip_angle, calc_grip_front/rear, grip_delta (4) = 16
@@ -114,10 +114,10 @@ TEST_CASE(test_log_frame_packing, "Logging") {
     // surface_fl/fr, slope_torque, slew_lat_g (4) = 16
     // OUTPUTS: ffb_total, ffb_base, ffb_shaft, ffb_gen, ffb_sop, ffb_grip, speed_gate, load_peak (8) = 32
     // clipping(1), marker(1) = 2
-    // Total = 16 + 28 + 24 + 40 + 32 + 16 + 16 + 40 + 16 + 32 + 2 = 262 bytes
+    // Total = 16 + 28 + 56 + 40 + 32 + 16 + 16 + 40 + 16 + 32 + 2 = 294 bytes
 
     std::cout << "sizeof(LogFrame): " << sizeof(LogFrame) << std::endl;
-    ASSERT_EQ(sizeof(LogFrame), (size_t)262);
+    ASSERT_EQ(sizeof(LogFrame), (size_t)294);
 }
 
 } // namespace FFBEngineTests

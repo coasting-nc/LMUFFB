@@ -785,6 +785,14 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         frame.raw_load_fr = (float)data->mWheel[1].mTireLoad;
         frame.raw_slip_vel_fl = (float)data->mWheel[0].mLateralPatchVel;
         frame.raw_slip_vel_fr = (float)data->mWheel[1].mLateralPatchVel;
+        frame.raw_ride_height_fl = (float)data->mWheel[0].mRideHeight;
+        frame.raw_ride_height_fr = (float)data->mWheel[1].mRideHeight;
+        frame.raw_ride_height_rl = (float)data->mWheel[2].mRideHeight;
+        frame.raw_ride_height_rr = (float)data->mWheel[3].mRideHeight;
+        frame.raw_susp_deflection_fl = (float)data->mWheel[0].mSuspensionDeflection;
+        frame.raw_susp_deflection_fr = (float)data->mWheel[1].mSuspensionDeflection;
+        frame.raw_susp_deflection_rl = (float)data->mWheel[2].mSuspensionDeflection;
+        frame.raw_susp_deflection_rr = (float)data->mWheel[3].mSuspensionDeflection;
         
         // --- ALGORITHM STATE (400Hz) ---
         // Front Axle upsampled

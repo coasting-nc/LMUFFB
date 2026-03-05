@@ -7,31 +7,39 @@ from typing import Tuple, Optional
 from datetime import datetime
 from .models import SessionMetadata
 
-# Define the LogFrame dtype matching C++ LogFrame struct exactly (v0.7.126)
+# Define the LogFrame dtype matching C++ LogFrame struct exactly (v0.7.128)
+# 2 doubles (16) + 69 floats (276) + 2 uint8 (2) = 294 bytes
 LOG_FRAME_DTYPE = np.dtype([
     ('timestamp', np.float64),
     ('delta_time', np.float64),
 
-    # Vehicle State (Grouped as in C++ struct)
+    # --- PROCESSED 400Hz DATA (Smooth) ---
     ('speed', np.float32),
     ('lat_accel', np.float32),
     ('long_accel', np.float32),
     ('yaw_rate', np.float32),
 
-    # Driver Inputs
     ('steering', np.float32),
     ('throttle', np.float32),
     ('brake', np.float32),
 
-    # Front Axle - Raw Telemetry (100Hz)
+    # --- RAW 100Hz GAME DATA (Step-function) ---
     ('raw_steering', np.float32),
     ('raw_lat_accel', np.float32),
     ('raw_load_fl', np.float32),
     ('raw_load_fr', np.float32),
     ('raw_slip_vel_fl', np.float32),
     ('raw_slip_vel_fr', np.float32),
+    ('raw_ride_height_fl', np.float32),
+    ('raw_ride_height_fr', np.float32),
+    ('raw_ride_height_rl', np.float32),
+    ('raw_ride_height_rr', np.float32),
+    ('raw_susp_deflection_fl', np.float32),
+    ('raw_susp_deflection_fr', np.float32),
+    ('raw_susp_deflection_rl', np.float32),
+    ('raw_susp_deflection_rr', np.float32),
 
-    # Front Axle - Processed (400Hz)
+    # --- ALGORITHM STATE (400Hz) ---
     ('slip_angle_fl', np.float32),
     ('slip_angle_fr', np.float32),
     ('slip_ratio_fl', np.float32),
@@ -43,7 +51,6 @@ LOG_FRAME_DTYPE = np.dtype([
     ('load_rl', np.float32),
     ('load_rr', np.float32),
 
-    # Suspension & Ride Height
     ('ride_height_fl', np.float32),
     ('ride_height_fr', np.float32),
     ('ride_height_rl', np.float32),
@@ -53,19 +60,16 @@ LOG_FRAME_DTYPE = np.dtype([
     ('susp_deflection_rl', np.float32),
     ('susp_deflection_rr', np.float32),
 
-    # Calculated values
     ('calc_slip_angle_front', np.float32),
     ('calc_grip_front', np.float32),
     ('calc_grip_rear', np.float32),
     ('grip_delta', np.float32),
 
-    # Yaw Kick Analysis (Issue #241)
     ('raw_yaw_accel', np.float32),
     ('smoothed_yaw_accel', np.float32),
     ('ffb_yaw_kick', np.float32),
     ('lat_load_norm', np.float32),
 
-    # Slope Detection Specific
     ('dG_dt', np.float32),
     ('dAlpha_dt', np.float32),
     ('slope_current', np.float32),
@@ -77,13 +81,12 @@ LOG_FRAME_DTYPE = np.dtype([
     ('slope_smoothed', np.float32),
     ('confidence', np.float32),
 
-    # Accuracy Tools / Advanced Slope
     ('surface_type_fl', np.float32),
     ('surface_type_fr', np.float32),
     ('slope_torque', np.float32),
     ('slew_limited_g', np.float32),
 
-    # FFB Output
+    # --- FINAL OUTPUTS (400Hz) ---
     ('ffb_total', np.float32),
     ('ffb_base', np.float32),
     ('ffb_shaft_torque', np.float32),
@@ -145,20 +148,23 @@ def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
     metadata = _parse_header(path)
 
     with open(path, 'rb') as f:
-        # Robustly find [DATA_START]\n marker
-        # We read a chunk that should contain the entire header
+        # Robustly find [DATA_START] marker
         chunk = f.read(8192)
-        marker = b'[DATA_START]\n'
+        marker = b'[DATA_START]'
         offset = chunk.find(marker)
 
         if offset == -1:
             raise ValueError("Binary log file missing [DATA_START] marker in first 8KB")
 
-        # Jump to start of data
-        data_pos = offset + len(marker)
+        # Jump to start of data (skip marker and the following newline)
+        newline_pos = chunk.find(b'\n', offset)
+        if newline_pos == -1:
+            raise ValueError("Binary log file missing newline after [DATA_START] marker")
+
+        data_pos = newline_pos + 1
         f.seek(data_pos)
 
-        # Check for LZ4 compression (indicated by metadata or checking first 4 bytes for magic/size)
+        # Check for LZ4 compression (indicated by metadata)
         is_lz4 = False
         with open(path, 'r', errors='ignore') as f_meta:
             for line in f_meta:
@@ -185,7 +191,7 @@ def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
 
     df = pd.DataFrame(data)
 
-    # Rename columns to match CSV for consistency (CamelCase)
+    # Rename columns to match legacy CSV for consistency (CamelCase)
     mapping = {
         'timestamp': 'Time',
         'delta_time': 'DeltaTime',
@@ -196,6 +202,20 @@ def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
         'steering': 'Steering',
         'throttle': 'Throttle',
         'brake': 'Brake',
+        'raw_steering': 'RawSteering',
+        'raw_lat_accel': 'RawLatAccel',
+        'raw_load_fl': 'RawLoadFL',
+        'raw_load_fr': 'RawLoadFR',
+        'raw_slip_vel_fl': 'RawSlipVelFL',
+        'raw_slip_vel_fr': 'RawSlipVelFR',
+        'raw_ride_height_fl': 'RawRideHeightFL',
+        'raw_ride_height_fr': 'RawRideHeightFR',
+        'raw_ride_height_rl': 'RawRideHeightRL',
+        'raw_ride_height_rr': 'RawRideHeightRR',
+        'raw_susp_deflection_fl': 'RawSuspDeflectionFL',
+        'raw_susp_deflection_fr': 'RawSuspDeflectionFR',
+        'raw_susp_deflection_rl': 'RawSuspDeflectionRL',
+        'raw_susp_deflection_rr': 'RawSuspDeflectionRR',
         'slip_angle_fl': 'SlipAngleFL',
         'slip_angle_fr': 'SlipAngleFR',
         'slip_ratio_fl': 'SlipRatioFL',
@@ -244,12 +264,6 @@ def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
         'ffb_grip_factor': 'GripFactor',
         'speed_gate': 'SpeedGate',
         'load_peak_ref': 'LoadPeakRef',
-        'raw_steering': 'RawSteering',
-        'raw_lat_accel': 'RawLatAccel',
-        'raw_load_fl': 'RawLoadFL',
-        'raw_load_fr': 'RawLoadFR',
-        'raw_slip_vel_fl': 'RawSlipVelFL',
-        'raw_slip_vel_fr': 'RawSlipVelFR',
         'clipping': 'Clipping',
         'marker': 'Marker'
     }

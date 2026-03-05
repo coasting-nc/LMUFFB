@@ -10,7 +10,7 @@ def create_mock_bin(path: Path):
     """Create a mock binary log file for testing"""
     header = (
         "# LMUFFB Telemetry Log v1.0\n"
-        "# App Version: 0.7.126\n"
+        "# App Version: 0.7.128\n"
         "# Driver: Binary Test\n"
         "# Vehicle: Mock Car\n"
         "# Track: Mock Track\n"
@@ -21,41 +21,37 @@ def create_mock_bin(path: Path):
         "# [DATA_START]\n"
     )
 
-    # Matching LOG_FRAME_DTYPE exactly (v0.7.126 re-aligned)
-    # double(8)*2 + float(4)*61 + uint8(1)*2 = 16 + 244 + 2 = 262 bytes
-
-    # We'll use struct to pack a single frame
-    # d d f...f B B
-    # Total floats = 61.
+    # Matching LOG_FRAME_DTYPE exactly (v0.7.128 re-aligned)
+    # 2 doubles (16) + 69 floats (276) + 2 uint8 (2) = 294 bytes
 
     # Frame 1: recognizable values
     # speed is index 0 in float block (3rd field)
-    # surface_type_fl is index 45 in float block (48th field: 2d + 7proc + 6raw + 10algo + 8susp + 4calc + 4yaw + 10slope + 1surf = 61-11-2 = 48th float?)
-    # Let's be precise:
-    # doubles: 0, 1
-    # speed: 2 (float index 0)
-    # ...
-    # raw_steering: 9 (float index 7)
-    # ...
-    # slip_angle_fl: 15 (float index 13)
-    # ...
-    # surface_type_fl: 50 (float index 48)
-
-    floats_1 = [0.0] * 61
+    # Total floats = 69.
+    floats_1 = [0.0] * 69
     floats_1[0] = 50.0 # speed
-    floats_1[48] = 5.0 # surface_type_fl
+    # surface_type_fl is index 58 in float block (2d + 7proc + 14raw + 10algo + 8susp + 4calc + 4yaw + 10slope + 1surf = 69-11 = 58th float?)
+    # Doubles: 0, 1
+    # PROCESSED: 2, 3, 4, 5, 6, 7, 8 (7 floats) -> speed is 2 (float index 0)
+    # RAW: 9...22 (14 floats)
+    # ALGO: 23...32 (10 floats)
+    # RIDE/SUSP: 33...40 (8 floats)
+    # CALC: 41...44 (4 floats)
+    # YAW: 45...48 (4 floats)
+    # SLOPE: 49...58 (10 floats)
+    # SURF: 59, 60 (2 floats) -> surface_type_fl is 59 (float index 57)
+    floats_1[57] = 5.0 # surface_type_fl
 
-    frame_1 = struct.pack("<dd" + "f"*61 + "BB",
+    frame_1 = struct.pack("<dd" + "f"*69 + "BB",
         100.0, 0.0025, # timestamp, dt
         *floats_1,
         1, 0 # clipping, marker
     )
 
     # Frame 2: marker set
-    floats_2 = [0.0] * 61
+    floats_2 = [0.0] * 69
     floats_2[0] = 51.0 # speed
 
-    frame_2 = struct.pack("<dd" + "f"*61 + "BB",
+    frame_2 = struct.pack("<dd" + "f"*69 + "BB",
         100.0025, 0.0025, # timestamp, dt
         *floats_2,
         0, 1 # clipping, marker
@@ -70,7 +66,7 @@ def create_mock_lz4_bin(path: Path):
     """Create a mock compressed binary log file for testing"""
     header = (
         "# LMUFFB Telemetry Log v1.0\n"
-        "# App Version: 0.7.126\n"
+        "# App Version: 0.7.128\n"
         "# Compression: LZ4\n"
         "# Driver: LZ4 Test\n"
         "# Vehicle: Mock Car\n"
@@ -78,17 +74,17 @@ def create_mock_lz4_bin(path: Path):
         "# [DATA_START]\n"
     )
 
-    floats = [0.0] * 61
+    floats = [0.0] * 69
     floats[0] = 60.0 # speed
 
     # Create two blocks of data
-    frames_block1 = struct.pack("<dd" + "f"*61 + "BB",
+    frames_block1 = struct.pack("<dd" + "f"*69 + "BB",
         200.0, 0.0025, # timestamp, dt
         *floats,
         0, 0 # clipping, marker
     ) * 10 # 10 frames in block 1
 
-    frames_block2 = struct.pack("<dd" + "f"*61 + "BB",
+    frames_block2 = struct.pack("<dd" + "f"*69 + "BB",
         201.0, 0.0025, # timestamp, dt
         *floats,
         0, 0 # clipping, marker
@@ -140,13 +136,15 @@ def test_load_bin_alignment(tmp_path):
 
     header = "# [DATA_START]\n"
 
-    # Mapping based on v0.7.126 re-aligned order (61 floats)
+    # Mapping based on v0.7.128 re-aligned order (69 floats)
     dtype_list = [
         ('timestamp', 'f8'), ('delta_time', 'f8'),
         ('speed', 'f4'), ('lat_accel', 'f4'), ('long_accel', 'f4'), ('yaw_rate', 'f4'),
         ('steering', 'f4'), ('throttle', 'f4'), ('brake', 'f4'),
         ('raw_steering', 'f4'), ('raw_lat_accel', 'f4'), ('raw_load_fl', 'f4'), ('raw_load_fr', 'f4'),
         ('raw_slip_vel_fl', 'f4'), ('raw_slip_vel_fr', 'f4'),
+        ('raw_ride_height_fl', 'f4'), ('raw_ride_height_fr', 'f4'), ('raw_ride_height_rl', 'f4'), ('raw_ride_height_rr', 'f4'),
+        ('raw_susp_deflection_fl', 'f4'), ('raw_susp_deflection_fr', 'f4'), ('raw_susp_deflection_rl', 'f4'), ('raw_susp_deflection_rr', 'f4'),
         ('slip_angle_fl', 'f4'), ('slip_angle_fr', 'f4'), ('slip_ratio_fl', 'f4'), ('slip_ratio_fr', 'f4'),
         ('grip_fl', 'f4'), ('grip_fr', 'f4'), ('load_fl', 'f4'), ('load_fr', 'f4'), ('load_rl', 'f4'), ('load_rr', 'f4'),
         ('ride_height_fl', 'f4'), ('ride_height_fr', 'f4'), ('ride_height_rl', 'f4'), ('ride_height_rr', 'f4'),

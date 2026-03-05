@@ -4,17 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [0.7.127] - 2026-03-12
+## [0.7.128] - 2026-03-12
 ### Added
-- **LZ4 Compression & Raw Telemetry (Issue #254)**:
-  - Augmented the binary log format to include raw 100Hz game data alongside 400Hz processed telemetry.
-  - Implemented **LZ4 Block Compression** for telemetry logs, reducing file size by up to 80% with minimal CPU overhead.
-  - Updated the Python Log Analyzer with a robust binary loader supporting on-the-fly LZ4 decompression and 8-byte block headers.
-  - Integrated LZ4 into the build system and CI workflows using manual vendor downloads for cross-platform reliability.
+- **Final Binary Schema Augmentation (Issue #254)**:
+  - Finalized the 294-byte packed binary schema for telemetry logs.
+  - Augmented `LogFrame` with full-fidelity raw 100Hz telemetry: Corner Ride Heights, Suspension Deflections, and more detailed Slip/Load metrics.
+  - Optimized the **LZ4 Block Compression** with a reliable 8-byte header `[compressed_size, uncompressed_size]`, enabling efficient random-access decompression in the Python analyzer.
+  - Fixed a race condition in `AsyncLogger` shutdown where the final data buffer could be truncated during high-frequency logging.
+
+### Changed
+- **Log Analyzer Polish**:
+  - Completed CamelCase mapping for all 61+ binary fields in the Python loader.
+  - Optimized ingestion speed, achieving ~50x faster load times compared to legacy CSV.
+  - Refined the binary marker detection (`[DATA_START]`) for better robustness with mixed-encoding files.
 
 ### Testing
-- **LZ4 Verification**: Added `tests/test_async_logger_lz4.cpp` to verify block integrity and compression ratios.
-- **Python Integration**: Expanded binary loader tests to cover both compressed and uncompressed streams.
+- **Schema Validation**: Updated `test_async_logger_binary.cpp` and `test_binary_loader.py` to strictly verify the 294-byte re-aligned struct packing.
+- **Shutdown Resilience**: Verified that the logger correctly drains all buffers during application exit.
 
 ---
 
