@@ -105,4 +105,7 @@ Issue #254 reports that CSV telemetry logs grow too quickly in size and consume 
     - Added `tests/test_async_logger_lz4.cpp` to verify C++ block compression and flushing.
     - Updated `test_binary_loader.py` to verify Python-side decompression of the new 8-byte header format.
     - Verified all 413 C++ tests and 20 Python tests pass on Linux.
+- **Windows Test Resilience**: 
+    - Fixed a regression in `test_logger_lz4_compression` that caused failures on Windows. The issue was an unclosed `std::ifstream` handle that held an exclusive lock on the log file, preventing `std::filesystem::remove_all` from cleaning up the test directory. 
+    - Resolved by scoping the file handle within a `{}` block to ensure deterministic closure before cleanup.
 - **License Compliance**: Updated `LICENSE` to include the BSD 2-Clause license text for the linked LZ4 library components.
