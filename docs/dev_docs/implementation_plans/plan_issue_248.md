@@ -58,7 +58,23 @@ The current soft lock implementation provides a "bump" of resistance when hittin
 - **Update existing tests**: Align `test_ffb_soft_lock.cpp` with new scaling.
 
 ## Deliverables
-- [ ] Code changes in `src/SteeringUtils.cpp` and `src/FFBEngine.h`.
-- [ ] Updated unit tests.
-- [ ] Updated `VERSION` and `CHANGELOG_DEV.md`.
-- [ ] Implementation Notes in this plan.
+- [x] Code changes in `src/SteeringUtils.cpp`.
+- [x] Updated unit tests in `tests/test_ffb_soft_lock.cpp`, `tests/test_issue_184_repro.cpp`, and `tests/test_issue_181_soft_lock_weakness.cpp`.
+- [x] Updated `VERSION` and `CHANGELOG_DEV.md`.
+- [x] Implementation Notes in this plan.
+
+## Implementation Notes
+### Unforeseen Issues
+- The initial formula in the design rationale was slightly modified during implementation to ensure even higher saturation at very small excesses (using 2.0x wheelbase max torque as the target for the spring component).
+- Multiple existing tests (`test_issue_184_repro.cpp`, `test_issue_206_vibration_scaling.cpp`) needed adjustments because the new soft lock is significantly stronger than the legacy version, which tripped up some precise assertions.
+
+### Plan Deviations
+- Added `SetSteeringVelocitySmoothed` to `FFBEngineTestAccess` to allow explicit testing of the zero-velocity persistence requirement.
+- Cleaned up root directory pollution (test logs) that were accidentally generated during the build/test loop.
+
+### Challenges Encountered
+- Balancing damping and spring force: At high stiffness, the spring ramp is extremely steep. Without proper clamping of damping, the return-to-center feel could have been too abrupt or oscillated. The 50% max torque clamp on damping provides a good safety margin.
+
+### Recommendations for Future Plans
+- Always check transitive dependencies or explicit includes for `std::clamp` (`<algorithm>`) even if it builds, to ensure standard compliance across compilers.
+- Ensure that "force NM" targets in physics calculations always consider the hardware scaling group they belong to (Structural vs Texture).
