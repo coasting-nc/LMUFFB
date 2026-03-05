@@ -1,5 +1,22 @@
 
 
+# Question 1
+
+Here is the full codebase of a force feedback (FFB) app. Your task is to help me investigate an issue.
+The issue is that when driving the LMP2 car, and using a car setup with stiff dampers, strange pulls in the FFB happen, which seems coming from the Yaw Kick effect (from yaw acceleration).
+I need to investigate why this is happening. Is there an issue in our formula for yaw kick, or there might be an issue with the game physics when the dampers are stiff?
+Can we already identify if something is wrong in our code in relation for this issue?
+In case the code looks ok, can you propose a series of diagnostics / investigations I could do to investigate the issue?
+For instance, I could look at the telemetry of the car physics, to inspect all that is happening in the car physics-wise (I would use Motec after exporting the telemetry); could you suggest which plot of the Motec telemetry I could look at to investigate the issue?
+Could you suggest particular setup changes that I could try on the LMP2 car to further investigate the issue? For instance, variations of the setup that causes the issue (stiff damper), setups that do not cause is (soft dampers), and combinations of other setting that might help in more precisely identify when the issue is triggered.
+
+Note that my FFB app also can exports some csv logs of the telemetry. However, currently some data might not be exported. And we also have a python log analyser that analyses the csv logs, calculates stats and produces plots.
+Would you suggest exporting additional data channels to csv to investigate this issue, and to perform particular analysis on those (stats, plots, etc.)?
+
+If it is of any help, note that the pulls are "constant" (not vibrations or frequent oscillations), like forces pulling strong in one direction that seems off, in part similar to when the car has suspension damage. It also has some similarity to the feeling when FFB is inverted (wrong minus sign on the whole formula).
+
+
+# Answer 1
 
 Yes, we can absolutely identify what is wrong in the code. You have hit a classic digital signal processing bug known as **Signal Rectification via Hard Thresholding**. 
 
