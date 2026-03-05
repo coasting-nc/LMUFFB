@@ -22,31 +22,40 @@ def create_mock_bin(path: Path):
     )
 
     # Matching LOG_FRAME_DTYPE exactly (v0.7.126 re-aligned)
-    # double(8)*2 + float(4)*55 + uint8(1)*2 = 16 + 220 + 2 = 238 bytes
+    # double(8)*2 + float(4)*61 + uint8(1)*2 = 16 + 244 + 2 = 262 bytes
 
     # We'll use struct to pack a single frame
     # d d f...f B B
-    # Total floats = 55.
+    # Total floats = 61.
 
-    frame_data = bytearray()
     # Frame 1: recognizable values
     # speed is index 0 in float block (3rd field)
-    # surface_type_fl is index 44 in float block (47th field)
-    floats_1 = [0.0] * 55
-    floats_1[0] = 50.0 # speed
-    floats_1[44] = 5.0 # surface_type_fl
+    # surface_type_fl is index 45 in float block (48th field: 2d + 7proc + 6raw + 10algo + 8susp + 4calc + 4yaw + 10slope + 1surf = 61-11-2 = 48th float?)
+    # Let's be precise:
+    # doubles: 0, 1
+    # speed: 2 (float index 0)
+    # ...
+    # raw_steering: 9 (float index 7)
+    # ...
+    # slip_angle_fl: 15 (float index 13)
+    # ...
+    # surface_type_fl: 50 (float index 48)
 
-    frame_1 = struct.pack("<dd" + "f"*55 + "BB",
+    floats_1 = [0.0] * 61
+    floats_1[0] = 50.0 # speed
+    floats_1[48] = 5.0 # surface_type_fl
+
+    frame_1 = struct.pack("<dd" + "f"*61 + "BB",
         100.0, 0.0025, # timestamp, dt
         *floats_1,
         1, 0 # clipping, marker
     )
 
     # Frame 2: marker set
-    floats_2 = [0.0] * 55
+    floats_2 = [0.0] * 61
     floats_2[0] = 51.0 # speed
 
-    frame_2 = struct.pack("<dd" + "f"*55 + "BB",
+    frame_2 = struct.pack("<dd" + "f"*61 + "BB",
         100.0025, 0.0025, # timestamp, dt
         *floats_2,
         0, 1 # clipping, marker
@@ -90,11 +99,13 @@ def test_load_bin_alignment(tmp_path):
 
     header = "# [DATA_START]\n"
 
-    # Mapping based on v0.7.126 re-aligned order
+    # Mapping based on v0.7.126 re-aligned order (61 floats)
     dtype_list = [
         ('timestamp', 'f8'), ('delta_time', 'f8'),
         ('speed', 'f4'), ('lat_accel', 'f4'), ('long_accel', 'f4'), ('yaw_rate', 'f4'),
         ('steering', 'f4'), ('throttle', 'f4'), ('brake', 'f4'),
+        ('raw_steering', 'f4'), ('raw_lat_accel', 'f4'), ('raw_load_fl', 'f4'), ('raw_load_fr', 'f4'),
+        ('raw_slip_vel_fl', 'f4'), ('raw_slip_vel_fr', 'f4'),
         ('slip_angle_fl', 'f4'), ('slip_angle_fr', 'f4'), ('slip_ratio_fl', 'f4'), ('slip_ratio_fr', 'f4'),
         ('grip_fl', 'f4'), ('grip_fr', 'f4'), ('load_fl', 'f4'), ('load_fr', 'f4'), ('load_rl', 'f4'), ('load_rr', 'f4'),
         ('ride_height_fl', 'f4'), ('ride_height_fr', 'f4'), ('ride_height_rl', 'f4'), ('ride_height_rr', 'f4'),
