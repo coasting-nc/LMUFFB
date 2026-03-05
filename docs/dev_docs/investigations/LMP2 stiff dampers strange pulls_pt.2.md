@@ -18,27 +18,12 @@ If it is of any help, note that the pulls are "constant" (not vibrations or freq
 
 
 
-
-
 It looks like you forgot to attach or paste the codebase! Please provide the code so I can review the exact formula you are using for the Yaw Kick effect. 
 
 However, even without seeing the code, the symptoms you described provide excellent clues. I can already give you a comprehensive breakdown of what might be happening, along with the diagnostics, Motec investigations, setup changes, and logging strategies you requested.
 
 Here is a deep dive into investigating this issue.
 
----
-
-### 1. Initial Hypotheses (Physics vs. Code)
-
-The biggest clue you provided is that the pull is **"constant"** and feels like **suspension damage or inverted FFB**. 
-
-By definition, **Yaw Acceleration** is a *transient* force. It only happens when the car is *changing* its rate of rotation (e.g., corner entry, corner exit, or snapping loose). In a steady-state corner, Yaw Rate is constant, meaning **Yaw Acceleration should be zero**. 
-If you are feeling a *constant* pull, it strongly points to one of the following issues in the code or physics:
-
-*   **Bug in the Math (Using Yaw Rate instead of Acceleration):** The code might accidentally be using Yaw Rate (which is constant during a corner) instead of calculating its derivative (Yaw Acceleration).
-*   **Derivative `dt` Spikes / NaN Propagation:** Yaw acceleration is usually calculated as `(YawRate - PreviousYawRate) / dt`. If the game engine stutters and `dt` becomes extremely small or zero, the resulting Yaw Acceleration approaches infinity. If your code doesn't clamp this, it might output a `NaN` (Not a Number) or an extreme value that gets "stuck" in the FFB buffer, causing a constant pull.
-*   **Low-Pass Filter "Hanging":** If you apply a smoothing filter to the Yaw Kick, a massive physics spike (caused by stiff dampers) might saturate the filter. If the filter's time constant is too long, it will take seconds to decay, feeling like a "constant" pull.
-*   **Physics Engine Aliasing (The Stiff Damper link):** Stiff dampers cause the tires to skip over micro-bumps. This causes high-frequency micro-fluctuations in the car's Yaw Rate. When you calculate the derivative of a noisy Yaw Rate, the noise is amplified massively. This can create a sustained "wall" of high-frequency yaw acceleration noise that pushes the FFB to its maximum limit constantly.
 
 ---
 
