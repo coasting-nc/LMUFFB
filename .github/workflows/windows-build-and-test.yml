@@ -38,7 +38,7 @@ jobs:
         Test-Path "vendor\imgui\imgui.cpp"
         Remove-Item -Path "vendor\imgui-master.zip", "vendor\imgui-master" -Recurse -Force
 
-    - name: Install LZ4 (Windows)
+    - name: Configure and Build (Release)
       shell: pwsh
       run: |
         New-Item -ItemType Directory -Path "vendor\lz4" -Force
@@ -46,10 +46,6 @@ jobs:
         Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lz4/lz4/v1.10.0/lib/lz4.c" -OutFile "vendor\lz4\lz4.c"
         Test-Path "vendor\lz4\lz4.h"
         Test-Path "vendor\lz4\lz4.c"
-
-    - name: Configure and Build (Release)
-      shell: pwsh
-      run: |
         cmake -S . -B build
         cmake --build build --config Release --clean-first
 
@@ -109,14 +105,11 @@ jobs:
         cp -r vendor/imgui-master/* vendor/imgui/
         rm -rf vendor/imgui-master.zip vendor/imgui-master
 
-    - name: Install LZ4 (Linux)
+    - name: Configure and Build (Debug + Coverage)
       run: |
         mkdir -p vendor/lz4
         wget https://raw.githubusercontent.com/lz4/lz4/v1.10.0/lib/lz4.h -O vendor/lz4/lz4.h
         wget https://raw.githubusercontent.com/lz4/lz4/v1.10.0/lib/lz4.c -O vendor/lz4/lz4.c
-
-    - name: Configure and Build (Debug + Coverage)
-      run: |
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_CLANG_TIDY="clang-tidy"
 
         cmake --build build --config Debug
@@ -220,14 +213,11 @@ jobs:
         cp -r vendor/imgui-master/* vendor/imgui/
         rm -rf vendor/imgui-master.zip vendor/imgui-master
 
-    - name: Install LZ4 (Linux)
+    - name: Configure and Build (ASan + UBSan)
       run: |
         mkdir -p vendor/lz4
         wget https://raw.githubusercontent.com/lz4/lz4/v1.10.0/lib/lz4.h -O vendor/lz4/lz4.h
         wget https://raw.githubusercontent.com/lz4/lz4/v1.10.0/lib/lz4.c -O vendor/lz4/lz4.c
-
-    - name: Configure and Build (ASan + UBSan)
-      run: |
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
         cmake --build build --config Debug
 

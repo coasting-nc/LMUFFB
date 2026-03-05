@@ -265,20 +265,17 @@ private:
     void WorkerThread() {
         std::vector<char> compressed_buffer;
         while (true) {
-            std::unique_lock<std::mutex> lock(m_mutex);
-            m_cv.wait(lock, [this] { return !m_running || !m_buffer_active.empty(); });
-            
-            // Swap buffers
-            if (!m_buffer_active.empty()) {
-                std::swap(m_buffer_active, m_buffer_writing);
+            {
+                std::unique_lock<std::mutex> lock(m_mutex);
+                m_cv.wait(lock, [this] { return !m_running || !m_buffer_active.empty(); });
+
+                if (!m_buffer_active.empty()) {
+                    m_buffer_writing.swap(m_buffer_active);
+                } else if (!m_running) {
+                    // Final check: if we are stopping and both buffers are empty, we are done.
+                    if (m_buffer_writing.empty()) break;
+                }
             }
-            
-            // If stopped and empty, exit
-            if (!m_running && m_buffer_writing.empty()) {
-                 break;
-            }
-            
-            lock.unlock();
             
             // Write buffer to disk
             if (!m_buffer_writing.empty()) {
@@ -313,7 +310,6 @@ private:
                 m_file.flush();
                 m_last_flush_time = now;
             }
-            
         }
     }
 
