@@ -27,86 +27,96 @@ extern int g_tests_failed;
 extern int g_test_cases_run;
 extern int g_test_cases_passed;
 extern int g_test_cases_failed;
+extern std::string g_current_test_name; // Set by Run() before each test
 
 // --- Assert Macros ---
+// Passing assertions are silent. Failing assertions print [FAIL] with the
+// current test name, condition details, and source location.
 #define ASSERT_TRUE(condition) \
     if (condition) { \
-        std::cout << "[PASS] " << #condition << std::endl; \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << #condition << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+        std::cout << "[FAIL] " << g_current_test_name << ": " << #condition << " is false" \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
         g_tests_failed++; \
     }
 
 #define ASSERT_FALSE(condition) \
     if (!(condition)) { \
-        std::cout << "[PASS] !" << #condition << std::endl; \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] !" << #condition << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+        std::cout << "[FAIL] " << g_current_test_name << ": " << #condition << " is true (expected false)" \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
         g_tests_failed++; \
     }
 
 #define ASSERT_NEAR(a, b, epsilon) \
     if (std::abs((a) - (b)) < (epsilon)) { \
-        std::cout << "[PASS] " << #a << " approx " << #b << std::endl; \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") != " << #b << " (" << (b) << ")" << std::endl; \
+        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") not near " \
+                  << #b << " (" << (b) << ") within " << (epsilon) \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
         g_tests_failed++; \
     }
 
 #define ASSERT_GT(a, b) \
     if ((a) > (b)) { \
-        std::cout << "[PASS] " << #a << " > " << #b << std::endl; \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") <= " << #b << " (" << (b) << ")" << std::endl; \
+        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") <= " \
+                  << #b << " (" << (b) << ")" \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
         g_tests_failed++; \
     }
 
 #define ASSERT_EQ(a, b) \
     if ((a) == (b)) { \
-        std::cout << "[PASS] " << #a << " == " << #b << std::endl; \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") != " << #b << " (" << (b) << ")" << std::endl; \
+        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") != " \
+                  << #b << " (" << (b) << ")" \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
         g_tests_failed++; \
     }
 
 #define ASSERT_GE(a, b) \
     if ((a) >= (b)) { \
-        std::cout << "[PASS] " << #a << " >= " << #b << std::endl; \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") < " << #b << " (" << (b) << ")" << std::endl; \
+        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") < " \
+                  << #b << " (" << (b) << ")" \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
         g_tests_failed++; \
     }
 
 #define ASSERT_LE(a, b) \
     if ((a) <= (b)) { \
-        std::cout << "[PASS] " << #a << " <= " << #b << std::endl; \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") > " << #b << " (" << (b) << ")" << std::endl; \
+        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") > " \
+                  << #b << " (" << (b) << ")" \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
         g_tests_failed++; \
     }
 
 #define ASSERT_LT(a, b) \
     if ((a) < (b)) { \
-        std::cout << "[PASS] " << #a << " < " << #b << std::endl; \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") >= " << #b << " (" << (b) << ")" << std::endl; \
+        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") >= " \
+                  << #b << " (" << (b) << ")" \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
         g_tests_failed++; \
     }
 
 #define ASSERT_EQ_STR(a, b) \
     if (std::string(a) == std::string(b)) { \
-        std::cout << "[PASS] " << #a << " == " << #b << std::endl; \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << #a << " (" << a << ") != " << #b << " (" << b << ")" << std::endl; \
+        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (\"" << (a) << "\") != " \
+                  << #b << " (\"" << (b) << "\")" \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
         g_tests_failed++; \
     }
 
