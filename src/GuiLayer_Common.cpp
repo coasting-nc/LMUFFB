@@ -7,6 +7,7 @@
 #include "GuiWidgets.h"
 #include "AsyncLogger.h"
 #include "VehicleUtils.h"
+#include "HealthMonitor.h"
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -181,41 +182,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
       }
     } else {
       ImGui::TextColored(ImVec4(0, 1, 0, 1), "Connected to LMU");
-      ImGui::SameLine();
-      ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Loop: %.0fHz | Phys: %.0fHz | Tel: %.0fHz", engine.m_ffb_rate, engine.m_physics_rate, engine.m_telemetry_rate);
-
-      // Robust State Machine (#269)
-      bool active = GameConnector::Get().IsSessionActive();
-      ImGui::TextColored(active ? ImVec4(0.4f, 1.0f, 0.4f, 1.0f) : ImVec4(0.7f, 0.7f, 0.7f, 1.0f),
-          "Sim: %s", active ? "Track Loaded" : "Main Menu");
-
-      if (active) {
-          ImGui::SameLine();
-          const char* sessionStr = "Unknown";
-          long stype = GameConnector::Get().GetSessionType();
-          if (stype == 0) sessionStr = "Test Day";
-          else if (stype >= 1 && stype <= 4) sessionStr = "Practice";
-          else if (stype >= 5 && stype <= 8) sessionStr = "Qualifying";
-          else if (stype == 9) sessionStr = "Warmup";
-          else if (stype >= 10 && stype <= 13) sessionStr = "Race";
-          ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Session: %s", sessionStr);
-
-          bool driving = GameConnector::Get().IsInRealtime();
-          ImGui::TextColored(driving ? ImVec4(0.4f, 1.0f, 0.4f, 1.0f) : ImVec4(1.0f, 1.0f, 0.4f, 1.0f),
-              "State: %s", driving ? "Driving" : "In Menu");
-
-          ImGui::SameLine();
-          const char* ctrlStr = "Unknown";
-          signed char ctrl = GameConnector::Get().GetPlayerControl();
-          switch (ctrl) {
-              case -1: ctrlStr = "Nobody"; break;
-              case 0: ctrlStr = "Player"; break;
-              case 1: ctrlStr = "AI"; break;
-              case 2: ctrlStr = "Remote"; break;
-              case 3: ctrlStr = "Replay"; break;
-          }
-          ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Control: %s", ctrlStr);
-      }
     }
 
     static std::vector<DeviceInfo> devices;
@@ -1047,7 +1013,10 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
     ImGui::Begin("FFB Analysis", nullptr, flags);
 
     // System Health Diagnostics (Moved from Tuning window - Issue #149)
-    if (ImGui::CollapsingHeader("System Health (Hz)", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGui::CollapsingHeader("System Health", ImGuiTreeNodeFlags_DefaultOpen)) {
+        HealthStatus hs = HealthMonitor::Check(engine.m_ffb_rate, engine.m_telemetry_rate, engine.m_gen_torque_rate, engine.m_torque_source, engine.m_physics_rate,
+                                              GameConnector::Get().IsSessionActive(), GameConnector::Get().GetSessionType(), GameConnector::Get().IsInRealtime(), GameConnector::Get().GetPlayerControl());
+
         ImGui::Columns(6, "RateCols", false);
         DisplayRate("USB Loop", engine.m_ffb_rate, 1000.0);
         ImGui::NextColumn();
@@ -1061,8 +1030,44 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         ImGui::NextColumn();
         DisplayRate("G.Torque", engine.m_gen_torque_rate, 400.0);
         ImGui::Columns(1);
-        if ((engine.m_telemetry_rate < 90.0 || (engine.m_torque_source == 1 && engine.m_gen_torque_rate < 380.0)) && engine.m_telemetry_rate > 1.0 && GameConnector::Get().IsConnected()) {
-            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Low telemetry/torque rate. Check game FFB settings.");
+        
+        ImGui::Separator();
+
+        // Robust State Machine (#269)
+        bool active = hs.session_active;
+        ImGui::TextColored(active ? ImVec4(0.4f, 1.0f, 0.4f, 1.0f) : ImVec4(0.7f, 0.7f, 0.7f, 1.0f),
+            "Sim: %s", active ? "Track Loaded" : "Main Menu");
+
+        if (active) {
+            ImGui::SameLine();
+            const char* sessionStr = "Unknown";
+            long stype = hs.session_type;
+            if (stype == 0) sessionStr = "Test Day";
+            else if (stype >= 1 && stype <= 4) sessionStr = "Practice";
+            else if (stype >= 5 && stype <= 8) sessionStr = "Qualifying";
+            else if (stype == 9) sessionStr = "Warmup";
+            else if (stype >= 10 && stype <= 13) sessionStr = "Race";
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Session: %s", sessionStr);
+
+            bool driving = hs.is_realtime;
+            ImGui::TextColored(driving ? ImVec4(0.4f, 1.0f, 0.4f, 1.0f) : ImVec4(1.0f, 1.0f, 0.4f, 1.0f),
+                "State: %s", driving ? "Driving" : "In Menu");
+
+            ImGui::SameLine();
+            const char* ctrlStr = "Unknown";
+            signed char ctrl = hs.player_control;
+            switch (ctrl) {
+                case -1: ctrlStr = "Nobody"; break;
+                case 0: ctrlStr = "Player"; break;
+                case 1: ctrlStr = "AI"; break;
+                case 2: ctrlStr = "Remote"; break;
+                case 3: ctrlStr = "Replay"; break;
+            }
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Control: %s", ctrlStr);
+        }
+
+        if (!hs.is_healthy && engine.m_telemetry_rate > 1.0 && GameConnector::Get().IsConnected()) {
+            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Sub-optimal sample rates detected. Check game settings.");
         }
         ImGui::Separator();
     }

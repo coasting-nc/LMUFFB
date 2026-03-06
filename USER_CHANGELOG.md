@@ -3,6 +3,45 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 6, 2026[/b][/size]
+[b]Version 0.7.138 - Unified Health & Session Diagnostics[/b]
+
+[b]New release[/b] (0.7.138): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]Unified Health Dashboard[/b]: Relocated Sim Status, Session Type, and Player Control information to the [b]System Health[/b] section of the Graphs/Analysis window.
+[*][b]Cleaned Main Window[/b]: Simplified the "Connected to LMU" status in the main window to prioritize tuning settings, while keeping advanced diagnostics grouped together in the analysis view.
+[*][b]Centralized Monitoring[/b]: Refactored the internal health monitoring system to provide a unified "source of truth" for both your PC's performance (sample rates) and the game's current simulation state. (#269)
+[/list]
+
+---
+
+[size=5][b]March 6, 2026[/b][/size]
+[b]Version 0.7.137 - Robust State Detection[/b]
+
+[b]New release[/b] (0.7.137): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Robust Session Detection[/b]: Leveraged robust session state detection (#269) to improve telemetry logging triggers and FFB gating.
+[*][b]Health Monitor Display[/b]: Added Sim Status, Session Type, Player State, and Control to the GUI.
+[*][b]Improved FFB Gating[/b]: Primary physics is now muted during AI control or in menus, but Soft Lock is preserved.
+[/list]
+
+---
+
+[size=5][b]March 6, 2026[/b][/size]
+[b]Version 0.7.136 - Robust State Tracking[/b]
+
+[b]New release[/b] (0.7.136): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]State Machine Integration[/b]: Implemented a formal state machine to accurately track simulation status, providing thread-safe "source of truth" for the entire app. (#267)
+[*][b]Log Integrity[/b]: Telemetry logs now precisely start and stop based on the robust realtime state.
+[/list]
+
+---
+
+[size=5][b]March 6, 2026[/b][/size]
 [b]Version 0.7.135 - Robust Logger Metadata[/b]
 
 [b]New release[/b] (0.7.135): https://github.com/coasting-nc/LMUFFB/releases

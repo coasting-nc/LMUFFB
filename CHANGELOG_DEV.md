@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.138] - 2026-03-06
+- **Unified Health & Session Diagnostics (Issue #269)**:
+  - Relocated Sim Status, Session Type, State, and Control displays from the main window to the **System Health** section of the Analysis window.
+  - Refactored `HealthMonitor` and `HealthStatus` to centralize session state awareness alongside sample rate diagnostics.
+  - Improved health warning logic to provide a single "source of truth" for both performance and simulation state.
+  - Added new unit test `test_health_monitor_logic` scenario to verify robust state capture.
+
 ## [0.7.137] - 2026-03-06
 - Leveraged robust session state detection (#269) to improve telemetry logging triggers.
 - Updated GUI Health Monitor to display Sim Status, Session Type, Player State, and Control.
