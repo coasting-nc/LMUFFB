@@ -307,23 +307,28 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
          }
          if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_STOP);
          ImGui::SameLine();
-         float time = (float)ImGui::GetTime();
-         bool blink = (fmod(time, 1.0f) < 0.5f);
-         ImGui::TextColored(blink ? ImVec4(1,0,0,1) : ImVec4(0.6f,0,0,1), "REC");
-         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_REC);
+         if (AsyncLogger::Get().IsLogging()) {
+             float time = (float)ImGui::GetTime();
+             bool blink = (fmod(time, 1.0f) < 0.5f);
+             ImGui::TextColored(blink ? ImVec4(1, 0, 0, 1) : ImVec4(0.6f, 0, 0, 1), "REC");
+             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_REC);
 
-         ImGui::SameLine();
-         size_t bytes = AsyncLogger::Get().GetFileSizeBytes();
-         if (bytes < 1024ULL * 1024ULL)
-             ImGui::Text("%zu f (%.0f KB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / 1024.0f);
-         else
-             ImGui::Text("%zu f (%.1f MB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / (1024.0f * 1024.0f));
+             ImGui::SameLine();
+             size_t bytes = AsyncLogger::Get().GetFileSizeBytes();
+             if (bytes < 1024ULL * 1024ULL)
+                 ImGui::Text("%zu f (%.0f KB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / 1024.0f);
+             else
+                 ImGui::Text("%zu f (%.1f MB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / (1024.0f * 1024.0f));
 
-         ImGui::SameLine();
-         if (ImGui::Button("MARKER")) {
-             AsyncLogger::Get().SetMarker();
+             ImGui::SameLine();
+             if (ImGui::Button("MARKER")) {
+                 AsyncLogger::Get().SetMarker();
+             }
+             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_MARKER);
+         } else {
+             ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "ARMED");
+             if (ImGui::IsItemHovered()) ImGui::SetTooltip("Waiting for driving to start...");
          }
-         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_MARKER);
     } else {
          if (ImGui::Button("START LOGGING", ImVec2(120, 0))) {
              Config::m_auto_start_logging = true;
@@ -331,11 +336,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
          }
          if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_START);
          ImGui::SameLine();
-         if (AsyncLogger::Get().IsLogging()) {
-             ImGui::TextColored(ImVec4(1, 0, 0, 1), "WAITING");
-         } else {
-             ImGui::TextDisabled("(Diagnostics)");
-         }
+         ImGui::TextDisabled("(Diagnostics)");
     }
 
 
