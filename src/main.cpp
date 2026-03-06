@@ -106,14 +106,31 @@ void FFBThread() {
             double force_physics = 0.0;
 
             bool in_realtime_phys = false;
+            bool is_session_active = false;
             if (g_ffb_active && GameConnector::Get().IsConnected()) {
-                in_realtime_phys = GameConnector::Get().CopyTelemetry(g_localData);
+                GameConnector::Get().CopyTelemetry(g_localData);
                 g_engine.UpdateMetadata(g_localData); // Update names/classes immediately
+
+                in_realtime_phys = GameConnector::Get().IsInRealtime();
+                is_session_active = GameConnector::Get().IsSessionActive();
+                long current_session = GameConnector::Get().GetSessionType();
 
                 bool is_stale = GameConnector::Get().IsStale(100);
 
-                static bool was_in_menu = true;
-                if (was_in_menu && in_realtime_phys) {
+                static bool was_driving = false;
+                static long last_session = -1;
+
+                bool should_start_log = (in_realtime_phys && !was_driving);
+                bool should_stop_log = (!in_realtime_phys && was_driving) || (!is_session_active && was_driving);
+                bool session_changed = (in_realtime_phys && was_driving && last_session != -1 && current_session != last_session);
+
+                if (session_changed) {
+                    Logger::Get().LogFile("[Game] Session Type Changed (%ld -> %ld). Restarting log.", last_session, current_session);
+                    AsyncLogger::Get().Stop();
+                    should_start_log = true;
+                }
+
+                if (should_start_log) {
                     Logger::Get().LogFile("[Game] User entered driving session.");
                     if (Config::m_auto_start_logging && !AsyncLogger::Get().IsLogging()) {
                         uint8_t idx = g_localData.telemetry.playerVehicleIdx;
@@ -122,32 +139,33 @@ void FFBThread() {
                             const char* tName = g_localData.scoring.scoringInfo.mTrackName;
 
                             SessionInfo info;
-                        info.app_version = LMUFFB_VERSION;
-                        std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-                        info.vehicle_name = scoring.mVehicleName;
-                        info.vehicle_class = VehicleClassToString(ParseVehicleClass(scoring.mVehicleClass, scoring.mVehicleName));
-                        info.vehicle_brand = ParseVehicleBrand(scoring.mVehicleClass, scoring.mVehicleName);
-                        info.track_name = tName;
-                        info.driver_name = "Auto";
-                        info.gain = g_engine.m_gain;
-                        info.understeer_effect = g_engine.m_understeer_effect;
-                        info.sop_effect = g_engine.m_sop_effect;
-                        info.slope_enabled = g_engine.m_slope_detection_enabled;
-                        info.slope_sensitivity = g_engine.m_slope_sensitivity;
-                        info.slope_threshold = (float)g_engine.m_slope_min_threshold;
-                        info.slope_alpha_threshold = g_engine.m_slope_alpha_threshold;
-                        info.slope_decay_rate = g_engine.m_slope_decay_rate;
-                        info.torque_passthrough = g_engine.m_torque_passthrough;
+                            info.app_version = LMUFFB_VERSION;
+                            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+                            info.vehicle_name = scoring.mVehicleName;
+                            info.vehicle_class = VehicleClassToString(ParseVehicleClass(scoring.mVehicleClass, scoring.mVehicleName));
+                            info.vehicle_brand = ParseVehicleBrand(scoring.mVehicleClass, scoring.mVehicleName);
+                            info.track_name = tName;
+                            info.driver_name = "Auto";
+                            info.gain = g_engine.m_gain;
+                            info.understeer_effect = g_engine.m_understeer_effect;
+                            info.sop_effect = g_engine.m_sop_effect;
+                            info.slope_enabled = g_engine.m_slope_detection_enabled;
+                            info.slope_sensitivity = g_engine.m_slope_sensitivity;
+                            info.slope_threshold = (float)g_engine.m_slope_min_threshold;
+                            info.slope_alpha_threshold = g_engine.m_slope_alpha_threshold;
+                            info.slope_decay_rate = g_engine.m_slope_decay_rate;
+                            info.torque_passthrough = g_engine.m_torque_passthrough;
                             AsyncLogger::Get().Start(info, Config::m_log_path);
                         }
                     }
-                } else if (!was_in_menu && !in_realtime_phys) {
-                    Logger::Get().LogFile("[Game] User exited to menu (FFB Muted).");
+                } else if (should_stop_log) {
+                    Logger::Get().LogFile("[Game] User exited driving session (FFB Muted).");
                     if (Config::m_auto_start_logging && AsyncLogger::Get().IsLogging()) {
                         AsyncLogger::Get().Stop();
                     }
                 }
-                was_in_menu = !in_realtime_phys;
+                was_driving = in_realtime_phys;
+                last_session = current_session;
 
                 if (!is_stale && g_localData.telemetry.playerHasVehicle) {
                     uint8_t idx = g_localData.telemetry.playerVehicleIdx;

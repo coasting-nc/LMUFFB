@@ -81,8 +81,16 @@ bool GameConnector::TryConnect() {
     }
 
     m_connected = true;
+
+    // Initialize Robust State Machine (#267)
+    if (m_pSharedMemLayout) {
+        m_sessionActive = (m_pSharedMemLayout->data.scoring.scoringInfo.mTrackName[0] != '\0');
+        m_inRealtime = (m_pSharedMemLayout->data.scoring.scoringInfo.mInRealtime != 0);
+        m_currentSessionType = m_pSharedMemLayout->data.scoring.scoringInfo.mSession;
+        m_currentGamePhase = m_pSharedMemLayout->data.scoring.scoringInfo.mGamePhase;
+    }
+
     m_lastUpdateLocalTime = std::chrono::steady_clock::now();
-    Logger::Get().Log("[GameConnector] Connected to LMU Shared Memory.");
     Logger::Get().Log("[GameConnector] Connected to LMU Shared Memory.");
     return true;
 #else
@@ -149,12 +157,11 @@ bool GameConnector::CopyTelemetry(SharedMemoryObjectOut& dest) {
             m_lastUpdateLocalTime = std::chrono::steady_clock::now();
         }
 
-        bool isRealtime = (m_pSharedMemLayout->data.scoring.scoringInfo.mInRealtime != 0);
         m_smLock->Unlock();
 
         CheckTransitions(dest);
 
-        return isRealtime;
+        return m_inRealtime.load(std::memory_order_relaxed);
     } else {
         return false;
     }
@@ -210,6 +217,15 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
                     case SME_UNINIT_APPLICATION: eventStr = "SME_UNINIT_APPLICATION"; break;
                     }
                     Logger::Get().LogFile("[Transition] Event: %s (%u)", eventStr, generic.events[i]);
+
+                    // Update Robust State Machine based on Events (#267)
+                    if (i == SME_START_SESSION) m_sessionActive = true;
+                    if (i == SME_END_SESSION || i == SME_UNLOAD) {
+                        m_sessionActive = false;
+                        m_inRealtime = false;
+                    }
+                    if (i == SME_ENTER_REALTIME) m_inRealtime = true;
+                    if (i == SME_EXIT_REALTIME) m_inRealtime = false;
                 }
             }
             m_prevState.eventState[i] = generic.events[i];
@@ -247,6 +263,7 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
 
     // 3. Game Phase (Session state / Pause)
     if (scoring.mGamePhase != m_prevState.gamePhase) {
+        m_currentGamePhase = scoring.mGamePhase; // Update Robust State Machine (#267)
         const char* phaseStr = "Unknown";
         switch (scoring.mGamePhase) {
             case 0: phaseStr = "Before Session"; break;
@@ -267,6 +284,7 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
 
     // 4. Session Type
     if (scoring.mSession != m_prevState.session) {
+        m_currentSessionType = scoring.mSession; // Update Robust State Machine (#267)
         const char* sessionStr = "Unknown";
         if (scoring.mSession == 0) sessionStr = "Test Day";
         else if (scoring.mSession >= 1 && scoring.mSession <= 4) sessionStr = "Practice";
