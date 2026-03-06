@@ -57,10 +57,12 @@ TEST_CASE(test_health_monitor_logic, "Diagnostics") {
         ASSERT_TRUE(status.is_healthy);
     }
 
-    // 8. Session and Player State (#269)
+    // 8. Session and Player State (#269, #274)
     {
-        HealthStatus status = HealthMonitor::Check(1000.0, 100.0, 400.0, 1, 400.0, true, 10, true, 0);
+        // loop, telem, torque, source, physics, isConnected, sessionActive, sessionType, isRealtime, playerControl
+        HealthStatus status = HealthMonitor::Check(1000.0, 100.0, 400.0, 1, 400.0, true, true, 10, true, 0);
         ASSERT_TRUE(status.is_healthy);
+        ASSERT_TRUE(status.is_connected);
         ASSERT_TRUE(status.session_active);
         ASSERT_EQ((int)status.session_type, 10);
         ASSERT_TRUE(status.is_realtime);

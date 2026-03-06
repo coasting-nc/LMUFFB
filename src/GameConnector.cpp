@@ -187,6 +187,11 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
     auto& scoring = current.scoring.scoringInfo;
     auto& generic = current.generic;
 
+    // Robust Fallback: Synchronize state flags with current buffer data (#274)
+    // This ensures correct state even if SME events are missed during rapid transitions.
+    m_sessionActive = (scoring.mTrackName[0] != '\0');
+    m_inRealtime = (scoring.mInRealtime != 0);
+
     // 0. Shared Memory Events (Issue #244)
     for (int i = 0; i < SME_MAX; ++i) {
         // Skip high-frequency events
@@ -225,7 +230,8 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
                     }
                     Logger::Get().LogFile("[Transition] Event: %s (%u)", eventStr, generic.events[i]);
 
-                    // Update Robust State Machine based on Events (#267)
+                    // Update Robust State Machine based on Events (#267, #274)
+                    // This provides "instantaneous" updates while polling ensures long-term consistency.
                     if (i == SME_START_SESSION) m_sessionActive = true;
                     if (i == SME_END_SESSION || i == SME_UNLOAD) {
                         m_sessionActive = false;

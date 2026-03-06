@@ -18,7 +18,8 @@ struct HealthStatus {
     double physics_rate = 0.0; // New v0.7.117 (Issue #217)
     double expected_torque_rate = 0.0;
 
-    // Session and Player State (#269)
+    // Session and Player State (#269, #274)
+    bool is_connected = false;
     bool session_active = false;
     long session_type = -1;
     bool is_realtime = false;
@@ -34,13 +35,14 @@ public:
      * @param torque Current torque update rate (Hz).
      * @param torqueSource Active torque source (0=Legacy, 1=Direct).
      * @param physics Current physics update rate (Hz).
+     * @param isConnected True if connected to LMU Shared Memory.
      * @param sessionActive True if a session is loaded.
      * @param sessionType Current session type (0=Test Day, 1=Practice, 5=Qualifying, 10=Race).
      * @param isRealtime True if in realtime (driving).
      * @param playerControl Current player control state (0=Player, 1=AI, etc).
      */
     static HealthStatus Check(double loop, double telem, double torque, int torqueSource, double physics = 0.0,
-                              bool sessionActive = false, long sessionType = -1, bool isRealtime = false, signed char playerControl = -2) {
+                              bool isConnected = false, bool sessionActive = false, long sessionType = -1, bool isRealtime = false, signed char playerControl = -2) {
         HealthStatus status;
         status.loop_rate = loop;
         status.telem_rate = telem;
@@ -48,6 +50,7 @@ public:
         status.physics_rate = physics;
         status.expected_torque_rate = (torqueSource == 1) ? 400.0 : 100.0;
         
+        status.is_connected = isConnected;
         status.session_active = sessionActive;
         status.session_type = sessionType;
         status.is_realtime = isRealtime;

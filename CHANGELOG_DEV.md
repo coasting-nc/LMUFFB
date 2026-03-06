@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.140] - 2026-03-06
+- **Robust Session & Connection Detection (Issue #274)**:
+  - Improved UI feedback by explicitly displaying "Sim: Disconnected from LMU" when the Shared Memory interface is inactive.
+  - Implemented hybrid state detection in `GameConnector` that combines Shared Memory Events with robust polling of the telemetry buffer (`mTrackName`, `mInRealtime`).
+  - This ensures the application remains in sync with the simulation state even if rapid transitions cause specific SME events to be missed.
+  - Added a connection status flag to `HealthStatus` and updated the System Health display logic to prioritize connection health.
+
 ## [0.7.139] - 2026-03-06
 - **Unified Health & Session Diagnostics (Issue #269)**:
   - Relocated Sim Status, Session Type, State, and Control displays from the main window to the **System Health** section of the Analysis window.

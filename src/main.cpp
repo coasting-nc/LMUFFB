@@ -253,7 +253,8 @@ void FFBThread() {
             {
                 std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
                 double t_rate = (g_engine.m_torque_source == 1) ? genTorqueMonitor.GetRate() : torqueMonitor.GetRate();
-                health = HealthMonitor::Check(loopMonitor.GetRate(), telemMonitor.GetRate(), t_rate, g_engine.m_torque_source, physicsMonitor.GetRate());
+                health = HealthMonitor::Check(loopMonitor.GetRate(), telemMonitor.GetRate(), t_rate, g_engine.m_torque_source, physicsMonitor.GetRate(),
+                                              GameConnector::Get().IsConnected(), GameConnector::Get().IsSessionActive(), GameConnector::Get().GetSessionType(), GameConnector::Get().IsInRealtime(), GameConnector::Get().GetPlayerControl());
             }
 
             if (in_realtime_phys && !health.is_healthy) {

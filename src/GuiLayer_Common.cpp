@@ -1015,7 +1015,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
     // System Health Diagnostics (Moved from Tuning window - Issue #149)
     if (ImGui::CollapsingHeader("System Health", ImGuiTreeNodeFlags_DefaultOpen)) {
         HealthStatus hs = HealthMonitor::Check(engine.m_ffb_rate, engine.m_telemetry_rate, engine.m_gen_torque_rate, engine.m_torque_source, engine.m_physics_rate,
-                                              GameConnector::Get().IsSessionActive(), GameConnector::Get().GetSessionType(), GameConnector::Get().IsInRealtime(), GameConnector::Get().GetPlayerControl());
+                                              GameConnector::Get().IsConnected(), GameConnector::Get().IsSessionActive(), GameConnector::Get().GetSessionType(), GameConnector::Get().IsInRealtime(), GameConnector::Get().GetPlayerControl());
 
         ImGui::Columns(6, "RateCols", false);
         DisplayRate("USB Loop", engine.m_ffb_rate, 1000.0);
@@ -1033,12 +1033,16 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         
         ImGui::Separator();
 
-        // Robust State Machine (#269)
-        bool active = hs.session_active;
-        ImGui::TextColored(active ? ImVec4(0.4f, 1.0f, 0.4f, 1.0f) : ImVec4(0.7f, 0.7f, 0.7f, 1.0f),
-            "Sim: %s", active ? "Track Loaded" : "Main Menu");
+        // Robust State Machine (#269, #274)
+        if (!hs.is_connected) {
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Sim: Disconnected from LMU");
+        } else {
+            bool active = hs.session_active;
+            ImGui::TextColored(active ? ImVec4(0.4f, 1.0f, 0.4f, 1.0f) : ImVec4(0.7f, 0.7f, 0.7f, 1.0f),
+                "Sim: %s", active ? "Track Loaded" : "Main Menu");
+        }
 
-        if (active) {
+        if (hs.is_connected && hs.session_active) {
             ImGui::SameLine();
             const char* sessionStr = "Unknown";
             long stype = hs.session_type;
