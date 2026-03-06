@@ -5,6 +5,10 @@ from .analyzers.slope_analyzer import (
     detect_oscillation_events,
     detect_singularities
 )
+from .analyzers.yaw_analyzer import (
+    analyze_yaw_dynamics,
+    analyze_clipping
+)
 
 def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     """
@@ -13,6 +17,8 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     slope_results = analyze_slope_stability(df)
     oscillations = detect_oscillation_events(df)
     singularity_count, worst_slope = detect_singularities(df)
+    yaw_results = analyze_yaw_dynamics(df)
+    clipping_results = analyze_clipping(df)
     
     report = []
     report.append("=" * 60)
@@ -65,14 +71,53 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
         report.append(f"D-Energy Ratio:     {slope_results['derivative_energy_ratio']:.2f}")
     report.append("")
     
-    if slope_results['issues']:
+    report.append("YAW KICK & STABILITY")
+    report.append("-" * 20)
+    if yaw_results.get('threshold_crossing_rate') is not None:
+        report.append(f"Threshold Crossing Rate: {yaw_results['threshold_crossing_rate']:.2f} Hz")
+    if yaw_results.get('yaw_kick_contribution_pct') is not None:
+        report.append(f"Yaw Kick Contribution:  {yaw_results['yaw_kick_contribution_pct']:.1f}%")
+    if yaw_results.get('straightaway_yaw_kick_mean') is not None:
+        report.append(f"Straightaway Yaw Mean:   {yaw_results['straightaway_yaw_kick_mean']:.3f} Nm")
+    if yaw_results.get('yaw_accel_nan_count', 0) > 0:
+        report.append(f"NaN Yaw Accel frames:    {yaw_results['yaw_accel_nan_count']}")
+    report.append("")
+
+    report.append("CLIPPING ANALYSIS")
+    report.append("-" * 20)
+    if clipping_results.get('total_clipping_pct') is not None:
+        report.append(f"Total Clipping Time: {clipping_results['total_clipping_pct']:.1f}%")
+        if clipping_results.get('clipping_component_means'):
+            report.append("Top Contributors during clipping:")
+            sorted_comps = sorted(clipping_results['clipping_component_means'].items(),
+                                key=lambda x: x[1], reverse=True)[:3]
+            for comp, val in sorted_comps:
+                report.append(f"  - {comp}: {val:.2f} Nm")
+    report.append("")
+
+    # Overall Issues
+    all_issues = slope_results['issues'].copy()
+
+    threshold_crossing_rate = yaw_results.get('threshold_crossing_rate')
+    if threshold_crossing_rate is not None and threshold_crossing_rate > 5.0:
+        all_issues.append(f"HIGH YAW THRASHING ({threshold_crossing_rate:.1f} Hz) - Threshold may be too low or signal too noisy")
+
+    yaw_kick_contribution = yaw_results.get('yaw_kick_contribution_pct')
+    if yaw_kick_contribution is not None and yaw_kick_contribution > 30.0:
+        all_issues.append(f"EXCESSIVE YAW KICK ({yaw_kick_contribution:.1f}%) - Yaw kick is dominating FFB")
+
+    total_clipping = clipping_results.get('total_clipping_pct')
+    if total_clipping is not None and total_clipping > 10.0:
+        all_issues.append(f"HIGH CLIPPING ({total_clipping:.1f}%) - Reduce Gain or increase Max Torque Ref")
+
+    if all_issues:
         report.append("ISSUES DETECTED")
         report.append("-" * 20)
-        for issue in slope_results['issues']:
+        for issue in all_issues:
             report.append(f"  [!] {issue}")
         report.append("")
     else:
-        report.append("No significant issues detected in slope analysis.")
+        report.append("No significant issues detected.")
         report.append("")
         
     report.append("=" * 60)

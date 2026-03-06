@@ -10,11 +10,22 @@ from .analyzers.slope_analyzer import (
     detect_oscillation_events,
     detect_singularities
 )
+from .analyzers.yaw_analyzer import (
+    analyze_yaw_dynamics,
+    analyze_clipping
+)
 from .plots import (
     plot_slope_timeseries,
     plot_slip_vs_latg,
     plot_dalpha_histogram,
-    plot_slope_correlation
+    plot_slope_correlation,
+    plot_yaw_diagnostic,
+    plot_system_health,
+    plot_threshold_thrashing,
+    plot_suspension_yaw_correlation,
+    plot_bottoming_diagnostic,
+    plot_yaw_fft,
+    plot_clipping_components
 )
 from .reports import generate_text_report
 
@@ -33,12 +44,14 @@ def _show_info(metadata, df):
     ))
 
 def _run_analyze(metadata, df, verbose=False):
-    # Run slope analysis
+    # Run analyses
     slope_results = analyze_slope_stability(df)
     oscillations = detect_oscillation_events(df)
     singularity_count, worst_slope = detect_singularities(df)
+    yaw_results = analyze_yaw_dynamics(df)
+    clipping_results = analyze_clipping(df)
     
-    # Display results
+    # Display results - Slope
     table = Table(title="Slope Detection Analysis")
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="green")
@@ -88,13 +101,50 @@ def _run_analyze(metadata, df, verbose=False):
     
     console.print(table)
     
+    # Display results - Yaw & Clipping
+    table2 = Table(title="Yaw & Clipping Analysis")
+    table2.add_column("Metric", style="cyan")
+    table2.add_column("Value", style="green")
+    table2.add_column("Status", style="yellow")
+
+    if yaw_results.get('threshold_crossing_rate') is not None:
+        table2.add_row(
+            "Threshold Crossing Rate",
+            f"{yaw_results['threshold_crossing_rate']:.2f} Hz",
+            "HIGH" if yaw_results['threshold_crossing_rate'] > 5.0 else "OK"
+        )
+    if yaw_results.get('yaw_kick_contribution_pct') is not None:
+        table2.add_row(
+            "Yaw Kick Contribution",
+            f"{yaw_results['yaw_kick_contribution_pct']:.1f}%",
+            "HIGH" if yaw_results['yaw_kick_contribution_pct'] > 30.0 else "OK"
+        )
+    if clipping_results.get('total_clipping_pct') is not None:
+        table2.add_row(
+            "Total Clipping",
+            f"{clipping_results['total_clipping_pct']:.1f}%",
+            "HIGH" if clipping_results['total_clipping_pct'] > 10.0 else "OK"
+        )
+
+    console.print(table2)
+
     # Show issues
-    if slope_results['issues']:
+    all_issues = slope_results['issues'].copy()
+
+    threshold_crossing_rate = yaw_results.get('threshold_crossing_rate')
+    if threshold_crossing_rate is not None and threshold_crossing_rate > 5.0:
+        all_issues.append(f"HIGH YAW THRASHING ({threshold_crossing_rate:.1f} Hz)")
+
+    total_clipping = clipping_results.get('total_clipping_pct')
+    if total_clipping is not None and total_clipping > 10.0:
+        all_issues.append(f"HIGH CLIPPING ({total_clipping:.1f}%)")
+
+    if all_issues:
         console.print("\n[bold red]Issues Detected:[/bold red]")
-        for issue in slope_results['issues']:
+        for issue in all_issues:
             console.print(f"  • {issue}")
     else:
-        console.print("\n[bold green]No issues detected in slope analysis.[/bold green]")
+        console.print("\n[bold green]No significant issues detected.[/bold green]")
 
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
@@ -133,6 +183,41 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
             corr_path = output_path / f"{logfile_stem}_slope_corr.png"
             plot_slope_correlation(df, str(corr_path), show=False, status_callback=update_status)
             console.print(f"  [OK] Created: {corr_path}")
+
+            # Yaw Diagnostic
+            yaw_path = output_path / f"{logfile_stem}_yaw_diag.png"
+            plot_yaw_diagnostic(df, output_path=str(yaw_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {yaw_path}")
+
+            # System Health
+            health_path = output_path / f"{logfile_stem}_health.png"
+            plot_system_health(df, str(health_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {health_path}")
+
+            # FFT
+            fft_path = output_path / f"{logfile_stem}_yaw_fft.png"
+            plot_yaw_fft(df, str(fft_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {fft_path}")
+
+            # Thrashing
+            thrash_path = output_path / f"{logfile_stem}_yaw_thrashing.png"
+            plot_threshold_thrashing(df, output_path=str(thrash_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {thrash_path}")
+
+            # Suspension Correlation
+            susp_path = output_path / f"{logfile_stem}_susp_corr.png"
+            plot_suspension_yaw_correlation(df, str(susp_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {susp_path}")
+
+            # Bottoming
+            bottom_path = output_path / f"{logfile_stem}_bottoming.png"
+            plot_bottoming_diagnostic(df, str(bottom_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {bottom_path}")
+
+            # Clipping
+            clip_path = output_path / f"{logfile_stem}_clipping.png"
+            plot_clipping_components(df, str(clip_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {clip_path}")
 
 @click.group()
 @click.version_option(version='1.2.0')
