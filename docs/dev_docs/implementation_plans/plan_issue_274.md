@@ -109,8 +109,13 @@ Run: `./build/tests/run_combined_tests --filter=state_machine`
 - [ ] New/Updated tests in `tests/test_issue_274_state_reliability.cpp` (or added to `test_issue_267_state_detection.cpp`)
 
 ## Implementation Notes
-(To be filled after implementation)
-- Unforeseen Issues:
-- Plan Deviations:
-- Challenges:
-- Recommendations:
+- **Unforeseen Issues:**
+    - Encountered a UBSan error in CI due to uninitialized `bool` members in the `SessionInfo` struct used in coverage tests. Fixed by value-initializing the struct.
+    - `test_game_connector_expansion` failed in CI because the simulated lock failure was incomplete without explicitly setting the `WaitResult` to a timeout code.
+- **Plan Deviations:**
+    - Updated `test_health_monitor.cpp` to verify the new `is_connected` field.
+    - Updated `test_coverage_boost_v6.cpp` and `test_coverage_expansion.cpp` to address the CI failures discovered during the process.
+- **Challenges:**
+    - Simulating rapid state transitions in unit tests required careful coordination of the shared memory mock and the `GameConnector` state accessors.
+- **Recommendations:**
+    - Future state machine enhancements should continue to prioritize "Ground Truth" polling over transient events to ensure long-term synchronization reliability.

@@ -552,7 +552,7 @@ TEST_CASE(test_async_logger_branches_v6, "System") {
     AsyncLogger& logger = AsyncLogger::Get();
     logger.Stop(); // Ensure it's stopped
 
-    SessionInfo info;
+    SessionInfo info = {};
     info.app_version = LMUFFB_VERSION;
     info.vehicle_name = "Car/With\\Chars:And*More";
     info.track_name = "Track?Name";
