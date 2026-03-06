@@ -3,9 +3,9 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 6, 2026[/b][/size]
-[b]Version 0.7.133 - Integrated Menu Bar & One-Click Analysis[/b]
+[b]Version 0.7.134 - Integrated Menu Bar & One-Click Analysis[/b]
 
-[b]New release[/b] (0.7.133): https://github.com/coasting-nc/LMUFFB/releases
+[b]New release[/b] (0.7.134): https://github.com/coasting-nc/LMUFFB/releases
 
 [b]Added[/b]
 [list]
@@ -24,7 +24,19 @@ This document contains all version release posts by ErwinMoss from the [url=http
 
 ---
 
-[size=5][b]March 7, 2026[/b][/size]
+[size=5][b]March 6, 2026[/b][/size]
+[b]Version 0.7.133 - Smarter Log Organization[/b]
+
+[b]New release[/b] (0.7.133): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Improved Log Filenames[/b]: Telemetry logs are now named by [b]Car Brand[/b] and [b]Class[/b] instead of the generic internal vehicle name. Example: [i]lmuffb_log_..._Ferrari_Hypercar_LeMans.bin[/i]. This makes it significantly easier to find and organize your logs. (#257)
+[*][b]Fixed Manual Logging[/b]: Ensured that car brand and class information is correctly captured even when you start recording manually from the app interface.
+[/list]
+
+---
+
+[size=5][b]March 6, 2026[/b][/size]
 [b]Version 0.7.132 - Vehicle Class & Brand Identification[/b]
 
 [b]New release[/b] (0.7.132): https://github.com/coasting-nc/LMUFFB/releases

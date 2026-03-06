@@ -94,6 +94,7 @@ set(TEST_SOURCES
     test_issue_213_lateral_load.cpp
     test_transition_logging.cpp
     test_issue_241_yaw_kick_rectification.cpp
+    test_issue_257_filenames.cpp
     ../src/main.cpp
 )
 

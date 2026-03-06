@@ -464,6 +464,7 @@ public:
     // Context for Logging (v0.7.x)
     char m_vehicle_name[STR_BUF_64] = "Unknown";
     char m_track_name[STR_BUF_64] = "Unknown";
+    std::string m_current_class_name = "";
 
     // Logging intermediate values (exposed for AsyncLogger)
     double m_slope_dG_dt = 0.0;       
@@ -668,7 +669,6 @@ private:
     double m_last_raw_torque = 0.0; // New v0.7.67 (Issue #152)
     bool m_was_allowed = true; // Track transition for filter reset
 
-    std::string m_current_class_name = "";
     std::string m_last_handled_vehicle_name = ""; // For car change detection (Issue #238)
 
     void update_static_load_reference(double current_load, double speed, double dt);
