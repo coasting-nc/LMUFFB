@@ -2,6 +2,80 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 6, 2026[/b][/size]
+[b]Version 0.7.134 - Integrated Menu Bar & One-Click Analysis[/b]
+
+[b]New release[/b] (0.7.134): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]Integrated Menu Bar[/b]: Added a professional Menu Bar at the top of the application for quick access to advanced tools and logs.
+[*][b]One-Click Log Analysis[/b]: You can now analyze your latest driving session directly from the app! Just click [b]Logs > Analyze last log[/b] to launch the full diagnostic suite (Session Info, Slopes, and Detailed Plots) in a dedicated window.
+[*][b]Included Analysis Tools[/b]: The app now automatically ships with the [b]LMUFFB Log Analyzer[/b]. No separate download is required to diagnostic your telemetry logs.
+[*][b]Automated Bundling[/b]: Updated build and release pipelines to ensure all nightly and official releases come bundled with the latest analysis tools.
+[/list]
+
+[b]Improved[/b]
+[list]
+[*][b]Modern UI Styling[/b]: Refined the menu visuals with rounded corners and consistent spacing to match the rest of the application's aesthetic.
+[*][b]Clean User Interface[/b]: Removed the redundant app name and version bar from the main window. This information is already visible in the Windows title bar, giving you a cleaner, more focused view of your tuning settings.
+[*][b]Intelligent Layout[/b]: Updated the workspace alignment to perfectly accommodate the new menu bar, ensuring no overlapping buttons or text.
+[/list]
+
+---
+
+[size=5][b]March 6, 2026[/b][/size]
+[b]Version 0.7.133 - Smarter Log Organization[/b]
+
+[b]New release[/b] (0.7.133): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Improved Log Filenames[/b]: Telemetry logs are now named by [b]Car Brand[/b] and [b]Class[/b] instead of the generic internal vehicle name. Example: [i]lmuffb_log_..._Ferrari_Hypercar_LeMans.bin[/i]. This makes it significantly easier to find and organize your logs. (#257)
+[*][b]Fixed Manual Logging[/b]: Ensured that car brand and class information is correctly captured even when you start recording manually from the app interface.
+[/list]
+
+---
+
+[size=5][b]March 6, 2026[/b][/size]
+[b]Version 0.7.132 - Vehicle Class & Brand Identification[/b]
+
+[b]New release[/b] (0.7.132): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Vehicle Identification Enhancement[/b]: The log file header now includes structured fields for the [b]Car Class[/b] and [b]Car Brand[/b]. Instead of showing only the livery name (like "Iron Lynx #9"), the log analyzer can now tell you it's a "Ferrari" within the "Hypercar" class. (#255)
+[*][b]Improved Log Analyzer Reports[/b]: Updated the terminal output and Markdown reports to display this new vehicle information, along with the [b]Session Duration[/b], making it easier to categorize and search your telemetry logs.
+[*][b]Auto-Start Fix[/b]: Fixed a regression where the logger would fail to gather correct car info when auto-start was triggered on-track.
+[/list]
+
+---
+
+[size=5][b]March 6, 2026[/b][/size]
+[b]Version 0.7.131 - LZ4 Block Compression for Telemetry Logs[/b]
+
+[b]New release[/b] (0.7.131): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]LZ4 Block Compression enabled by default[/b]: Telemetry logs are now automatically compressed using the high-performance LZ4 algorithm. This reduces log file sizes by as much as 80-90% (e.g., a 12MB log now takes ~1.5MB) with virtually zero impact on your PC's performance. (#254)
+[*][b]Faster Data Handling[/b]: The new compressed format allows the Log Analyzer to load long sessions significantly faster while using much less disk space for your telemetry history.
+[*][b]Improved Testing & Reliability[/b]: Updated our internal verification suite to ensure that log integrity is maintained across both compressed and uncompressed modes, providing a more robust diagnostic experience.
+[/list]
+
+---
+
+[size=5][b]March 13, 2026[/b][/size]
+[b]Version 0.7.130 - Advanced Log Analyzer Diagnostics[/b]
+
+[b]New release[/b] (0.7.130): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Advanced Log Analyzer Diagnostics[/b]: Significantly expanded the Log Analyzer tool with new stats and plots to help diagnose complex physics issues. (#253)
+[*][b]Spectral Analysis (FFT)[/b]: Added frequency-domain analysis for yaw acceleration, allowing you to identify suspension chatter and physics aliasing that cause FFB "fuzzy" noise.
+[*][b]7 New Diagnostic Plots[/b]: Introduced a comprehensive suite of plots including System Health (DeltaTime/Clipping), Threshold Thrashing, Suspension Velocity Correlation, and Ride Height overlays.
+[*][b]Improved Reporting[/b]: The automated diagnostic reports now include detailed sections for Yaw Kick stability and FFB component clipping analysis.
+[/list]
+
+---
+
 [size=5][b]March 12, 2026[/b][/size]
 [b]Version 0.7.123 - Enhanced Transition Monitoring & Unified Logging[/b]
 

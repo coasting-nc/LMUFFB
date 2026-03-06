@@ -37,7 +37,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
@@ -56,10 +56,13 @@ jobs:
     - name: Manual Build (C++)
       if: matrix.language == 'c-cpp'
       run: |
+        mkdir -p vendor/lz4
+        wget https://raw.githubusercontent.com/lz4/lz4/v1.10.0/lib/lz4.h -O vendor/lz4/lz4.h
+        wget https://raw.githubusercontent.com/lz4/lz4/v1.10.0/lib/lz4.c -O vendor/lz4/lz4.c
         cmake -S . -B build -DBUILD_HEADLESS=ON
         cmake --build build --config Debug
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@v4
       with:
         category: "/language:${{matrix.language}}"

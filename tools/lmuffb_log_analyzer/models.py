@@ -9,6 +9,8 @@ class SessionMetadata(BaseModel):
     app_version: str
     driver_name: str
     vehicle_name: str
+    car_class: str = "Unknown" # v1.2.1
+    car_brand: str = "Unknown" # v1.2.1
     track_name: str
     
     # Settings snapshot

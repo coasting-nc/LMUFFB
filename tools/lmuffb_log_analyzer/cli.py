@@ -10,11 +10,22 @@ from .analyzers.slope_analyzer import (
     detect_oscillation_events,
     detect_singularities
 )
+from .analyzers.yaw_analyzer import (
+    analyze_yaw_dynamics,
+    analyze_clipping
+)
 from .plots import (
     plot_slope_timeseries,
     plot_slip_vs_latg,
     plot_dalpha_histogram,
-    plot_slope_correlation
+    plot_slope_correlation,
+    plot_yaw_diagnostic,
+    plot_system_health,
+    plot_threshold_thrashing,
+    plot_suspension_yaw_correlation,
+    plot_bottoming_diagnostic,
+    plot_yaw_fft,
+    plot_clipping_components
 )
 from .reports import generate_text_report
 
@@ -24,7 +35,7 @@ def _show_info(metadata, df):
     console.print(Panel.fit(
         f"[bold blue]Session Information[/bold blue]\n\n"
         f"Driver: {metadata.driver_name}\n"
-        f"Vehicle: {metadata.vehicle_name}\n"
+        f"Vehicle: {metadata.vehicle_name} ({metadata.car_brand} {metadata.car_class})\n"
         f"Track: {metadata.track_name}\n"
         f"Duration: {df['Time'].max():.1f} seconds\n"
         f"Frames: {len(df)}\n"
@@ -33,12 +44,14 @@ def _show_info(metadata, df):
     ))
 
 def _run_analyze(metadata, df, verbose=False):
-    # Run slope analysis
+    # Run analyses
     slope_results = analyze_slope_stability(df)
     oscillations = detect_oscillation_events(df)
     singularity_count, worst_slope = detect_singularities(df)
+    yaw_results = analyze_yaw_dynamics(df)
+    clipping_results = analyze_clipping(df)
     
-    # Display results
+    # Display results - Slope
     table = Table(title="Slope Detection Analysis")
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="green")
@@ -88,13 +101,50 @@ def _run_analyze(metadata, df, verbose=False):
     
     console.print(table)
     
+    # Display results - Yaw & Clipping
+    table2 = Table(title="Yaw & Clipping Analysis")
+    table2.add_column("Metric", style="cyan")
+    table2.add_column("Value", style="green")
+    table2.add_column("Status", style="yellow")
+
+    if yaw_results.get('threshold_crossing_rate') is not None:
+        table2.add_row(
+            "Threshold Crossing Rate",
+            f"{yaw_results['threshold_crossing_rate']:.2f} Hz",
+            "HIGH" if yaw_results['threshold_crossing_rate'] > 5.0 else "OK"
+        )
+    if yaw_results.get('yaw_kick_contribution_pct') is not None:
+        table2.add_row(
+            "Yaw Kick Contribution",
+            f"{yaw_results['yaw_kick_contribution_pct']:.1f}%",
+            "HIGH" if yaw_results['yaw_kick_contribution_pct'] > 30.0 else "OK"
+        )
+    if clipping_results.get('total_clipping_pct') is not None:
+        table2.add_row(
+            "Total Clipping",
+            f"{clipping_results['total_clipping_pct']:.1f}%",
+            "HIGH" if clipping_results['total_clipping_pct'] > 10.0 else "OK"
+        )
+
+    console.print(table2)
+
     # Show issues
-    if slope_results['issues']:
+    all_issues = slope_results['issues'].copy()
+
+    threshold_crossing_rate = yaw_results.get('threshold_crossing_rate')
+    if threshold_crossing_rate is not None and threshold_crossing_rate > 5.0:
+        all_issues.append(f"HIGH YAW THRASHING ({threshold_crossing_rate:.1f} Hz)")
+
+    total_clipping = clipping_results.get('total_clipping_pct')
+    if total_clipping is not None and total_clipping > 10.0:
+        all_issues.append(f"HIGH CLIPPING ({total_clipping:.1f}%)")
+
+    if all_issues:
         console.print("\n[bold red]Issues Detected:[/bold red]")
-        for issue in slope_results['issues']:
+        for issue in all_issues:
             console.print(f"  • {issue}")
     else:
-        console.print("\n[bold green]No issues detected in slope analysis.[/bold green]")
+        console.print("\n[bold green]No significant issues detected.[/bold green]")
 
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
@@ -134,31 +184,76 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
             plot_slope_correlation(df, str(corr_path), show=False, status_callback=update_status)
             console.print(f"  [OK] Created: {corr_path}")
 
+            # Yaw Diagnostic
+            yaw_path = output_path / f"{logfile_stem}_yaw_diag.png"
+            plot_yaw_diagnostic(df, output_path=str(yaw_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {yaw_path}")
+
+            # System Health
+            health_path = output_path / f"{logfile_stem}_health.png"
+            plot_system_health(df, str(health_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {health_path}")
+
+            # FFT
+            fft_path = output_path / f"{logfile_stem}_yaw_fft.png"
+            plot_yaw_fft(df, str(fft_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {fft_path}")
+
+            # Thrashing
+            thrash_path = output_path / f"{logfile_stem}_yaw_thrashing.png"
+            plot_threshold_thrashing(df, output_path=str(thrash_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {thrash_path}")
+
+            # Suspension Correlation
+            susp_path = output_path / f"{logfile_stem}_susp_corr.png"
+            plot_suspension_yaw_correlation(df, str(susp_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {susp_path}")
+
+            # Bottoming
+            bottom_path = output_path / f"{logfile_stem}_bottoming.png"
+            plot_bottoming_diagnostic(df, str(bottom_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {bottom_path}")
+
+            # Clipping
+            clip_path = output_path / f"{logfile_stem}_clipping.png"
+            plot_clipping_components(df, str(clip_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {clip_path}")
+
 @click.group()
-@click.version_option(version='1.1.0')
+@click.version_option(version='1.2.0')
 def cli():
     """lmuFFB Log Analyzer - Analyze FFB telemetry logs for diagnostics."""
     pass
 
 @cli.command()
 @click.argument('logfile', type=click.Path(exists=True))
-def info(logfile):
+@click.option('--export-csv', is_flag=True, help='Export data to CSV')
+def info(logfile, export_csv):
     """Display session info from a log file."""
     try:
         metadata, df = load_log(logfile)
         _show_info(metadata, df)
+        if export_csv:
+            csv_path = Path(logfile).with_suffix('.csv')
+            df.to_csv(csv_path, index=False)
+            console.print(f"[bold green]Exported to:[/bold green] {csv_path}")
     except Exception as e:
         console.print(f"[bold red]Error loading log:[/bold red] {e}")
 
 @cli.command()
 @click.argument('logfile', type=click.Path(exists=True))
 @click.option('--verbose', '-v', is_flag=True, help='Show detailed output')
-def analyze(logfile, verbose):
+@click.option('--export-csv', is_flag=True, help='Export data to CSV')
+def analyze(logfile, verbose, export_csv):
     """Analyze a log file and show summary."""
     console.print(f"[bold]Analyzing:[/bold] {logfile}")
     try:
         metadata, df = load_log(logfile)
         _run_analyze(metadata, df, verbose)
+        if export_csv:
+            csv_path = Path(logfile).with_suffix('.csv')
+            df.to_csv(csv_path, index=False)
+            console.print(f"[bold green]Exported to:[/bold green] {csv_path}")
     except Exception as e:
         console.print(f"[bold red]Error analyzing log:[/bold red] {e}")
 
@@ -203,18 +298,24 @@ def batch(logdir, output):
     output_path = Path(output)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    csv_files = sorted(list(log_path.glob("*.csv")))
-    if not csv_files:
-        # Try finding in subdirectories if direct search fails (sometimes happens on Windows with deep paths)
-        csv_files = sorted(list(log_path.rglob("*.csv")))
+    log_files = []
+    for ext in ['*.bin', '*.csv']:
+        log_files.extend(list(log_path.glob(ext)))
 
-    if not csv_files:
-        console.print(f"[yellow]No .csv files found in {logdir}[/yellow]")
+    if not log_files:
+        # Try finding in subdirectories
+        for ext in ['*.bin', '*.csv']:
+            log_files.extend(list(log_path.rglob(ext)))
+
+    log_files = sorted(log_files)
+
+    if not log_files:
+        console.print(f"[yellow]No .bin or .csv files found in {logdir}[/yellow]")
         return
 
-    console.print(f"[bold green]Found {len(csv_files)} log files. Starting batch processing...[/bold green]")
+    console.print(f"[bold green]Found {len(log_files)} log files. Starting batch processing...[/bold green]")
 
-    for logfile in csv_files:
+    for logfile in log_files:
         console.print(f"\n[bold blue]Processing: {logfile.name}[/bold blue]")
         try:
             # Load ONCE for all operations
@@ -240,6 +341,43 @@ def batch(logdir, output):
             console.print(f"[bold red]Error processing {logfile.name}:[/bold red] {e}")
 
     console.print(f"\n[bold green]Batch processing complete! Results saved to: {output}[/bold green]")
+@cli.command()
+@click.argument('logfile', type=click.Path(exists=True))
+@click.option('--output', '-o', help='Output directory for results')
+def analyze_full(logfile, output):
+    """Run all analysis steps for a single log file (info, analyze, plots, report)."""
+    log_path = Path(logfile)
+    if not output:
+        output = str(log_path.parent / f"analysis {log_path.stem}")
+    
+    output_path = Path(output)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    console.print(f"[bold blue]Processing: {log_path.name}[/bold blue]")
+    try:
+        # Load ONCE for all operations
+        metadata, df = load_log(str(log_path))
+        
+        # 1. Info
+        _show_info(metadata, df)
+        
+        # 2. Analyze
+        _run_analyze(metadata, df)
+        
+        # 3. Plots
+        _run_plots(metadata, df, output_path, log_path.stem, plot_all=True)
+        
+        # 4. Report
+        report_file = output_path / f"{log_path.stem}_report.txt"
+        report_text = generate_text_report(metadata, df)
+        with open(report_file, 'w') as f:
+            f.write(report_text)
+        console.print(f"  [OK] Created: {report_file}")
+        
+        console.print(f"\n[bold green]Analysis complete! Results saved to: {output}[/bold green]")
+
+    except Exception as e:
+        console.print(f"[bold red]Error processing {log_path.name}:[/bold red] {e}")
 
 if __name__ == '__main__':
     cli()

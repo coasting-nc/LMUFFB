@@ -114,10 +114,15 @@ void FFBThread() {
                 if (was_in_menu && in_realtime_phys) {
                     Logger::Get().LogFile("[Game] User entered driving session.");
                     if (Config::m_auto_start_logging && !AsyncLogger::Get().IsLogging()) {
+                        uint8_t idx = g_localData.telemetry.playerVehicleIdx;
+                        auto& scoring = g_localData.scoring.vehScoringInfo[idx];
+
                         SessionInfo info;
                         info.app_version = LMUFFB_VERSION;
                         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
                         info.vehicle_name = g_engine.m_vehicle_name;
+                        info.vehicle_class = VehicleClassToString(ParseVehicleClass(scoring.mVehicleClass, scoring.mVehicleName));
+                        info.vehicle_brand = ParseVehicleBrand(scoring.mVehicleClass, scoring.mVehicleName);
                         info.track_name = g_engine.m_track_name;
                         info.driver_name = "Auto";
                         info.gain = g_engine.m_gain;

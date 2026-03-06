@@ -13,98 +13,183 @@
 #include <sstream>
 #include <algorithm> // For std::max
 #include <filesystem>
+#include <cstdint>   // For uint8_t
+#include <lz4.h>     // For LZ4 compression
 
 // Forward declaration
 struct TelemInfoV01;
 class FFBEngine;
 
 // Log frame structure - captures one physics tick
+#pragma pack(push, 1)
 struct LogFrame {
-    double timestamp;
-    double delta_time;
+    double timestamp;        // Time
+    double delta_time;       // DeltaTime
     
-    // Driver Inputs
-    float steering;
-    float throttle;
-    float brake;
+    // --- PROCESSED 400Hz DATA (Smooth) ---
+    float speed;             // Speed
+    float lat_accel;         // LatAccel
+    float long_accel;        // LongAccel
+    float yaw_rate;          // YawRate
     
-    // Vehicle State
-    float speed;             // m/s
-    float lat_accel;         // m/sÂ²
-    float long_accel;        // m/sÂ²
-    float yaw_rate;          // rad/s
+    float steering;          // Steering
+    float throttle;          // Throttle
+    float brake;             // Brake
     
-    // Front Axle - Raw Telemetry
+    // --- RAW 100Hz GAME DATA (Step-function) ---
+    float raw_steering;
+    float raw_throttle;
+    float raw_brake;
+    float raw_lat_accel;
+    float raw_long_accel;
+    float raw_game_yaw_accel;
+    float raw_game_shaft_torque;
+    float raw_game_gen_torque;
+
+    float raw_load_fl;
+    float raw_load_fr;
+    float raw_load_rl;
+    float raw_load_rr;
+
+    float raw_slip_vel_lat_fl;
+    float raw_slip_vel_lat_fr;
+    float raw_slip_vel_lat_rl;
+    float raw_slip_vel_lat_rr;
+
+    float raw_slip_vel_long_fl;
+    float raw_slip_vel_long_fr;
+    float raw_slip_vel_long_rl;
+    float raw_slip_vel_long_rr;
+
+    float raw_ride_height_fl;
+    float raw_ride_height_fr;
+    float raw_ride_height_rl;
+    float raw_ride_height_rr;
+
+    float raw_susp_deflection_fl;
+    float raw_susp_deflection_fr;
+    float raw_susp_deflection_rl;
+    float raw_susp_deflection_rr;
+
+    float raw_susp_force_fl;
+    float raw_susp_force_fr;
+    float raw_susp_force_rl;
+    float raw_susp_force_rr;
+
+    float raw_brake_pressure_fl;
+    float raw_brake_pressure_fr;
+    float raw_brake_pressure_rl;
+    float raw_brake_pressure_rr;
+
+    float raw_rotation_fl;
+    float raw_rotation_fr;
+    float raw_rotation_rl;
+    float raw_rotation_rr;
+
+    // --- ALGORITHM STATE (400Hz) ---
     float slip_angle_fl;
     float slip_angle_fr;
+    float slip_angle_rl;
+    float slip_angle_rr;
+
     float slip_ratio_fl;
     float slip_ratio_fr;
+    float slip_ratio_rl;
+    float slip_ratio_rr;
+
     float grip_fl;
     float grip_fr;
+    float grip_rl;
+    float grip_rr;
+
     float load_fl;
     float load_fr;
     float load_rl;
     float load_rr;
 
-    // Suspension & Ride Height
     float ride_height_fl;
     float ride_height_fr;
     float ride_height_rl;
     float ride_height_rr;
+
     float susp_deflection_fl;
     float susp_deflection_fr;
     float susp_deflection_rl;
     float susp_deflection_rr;
     
-    // Front Axle - Calculated
     float calc_slip_angle_front;
+    float calc_slip_angle_rear;
     float calc_grip_front;
-    
-    // Slope Detection Specific
-    float dG_dt;             // Derivative of lateral G
-    float dAlpha_dt;         // Derivative of slip angle
-    float slope_current;     // dG/dAlpha ratio
-    float slope_raw_unclamped; // NEW v0.7.38
-    float slope_numerator;     // NEW v0.7.38
-    float slope_denominator;   // NEW v0.7.38
-    float hold_timer;          // NEW v0.7.38
-    float input_slip_smoothed; // NEW v0.7.38
-    float slope_smoothed;    // Smoothed grip output
-    float confidence;        // Confidence factor (v0.7.3)
-    float surface_type_fl;   // NEW v0.7.39
-    float surface_type_fr;   // NEW v0.7.39
-    float slope_torque;      // NEW v0.7.40
-    float slew_limited_g;    // NEW v0.7.40
-    
-    // Rear Axle
     float calc_grip_rear;
-    float grip_delta;        // Front - Rear
+    float grip_delta;
+    float calc_rear_lat_force;
 
-    // Yaw Kick Analysis (Issue #241)
-    float raw_yaw_accel;
     float smoothed_yaw_accel;
-    float ffb_yaw_kick;
     float lat_load_norm;
     
-    // FFB Output
-    float ffb_total;         // Normalized output
-    float ffb_base;          // Base steering shaft force
-    float ffb_shaft_torque;  // NEW v0.7.62 (Issue #138)
-    float ffb_gen_torque;    // NEW v0.7.62 (Issue #138)
-    float ffb_sop;           // Seat of Pants force
-    float ffb_grip_factor;   // Applied grip modulation
-    float speed_gate;        // Speed gate factor
-    float load_peak_ref;     // NEW: Dynamic normalization reference
-    bool clipping;           // Output clipping flag
+    float dG_dt;
+    float dAlpha_dt;
+    float slope_current;
+    float slope_raw_unclamped;
+    float slope_numerator;
+    float slope_denominator;
+    float hold_timer;
+    float input_slip_smoothed;
+    float slope_smoothed;
+    float confidence;
     
-    // User Markers
-    bool marker;             // User-triggered marker
+    float surface_type_fl;
+    float surface_type_fr;
+    float slope_torque;
+    float slew_limited_g;
+
+    float session_peak_torque;
+    float dynamic_weight_factor;
+    float structural_mult;
+    float vibration_mult;
+    float steering_angle_deg;
+    float steering_range_deg;
+    float debug_freq;
+    float tire_radius;
+    
+    // --- FFB COMPONENTS (400Hz) ---
+    float ffb_total;
+    float ffb_base;
+    float ffb_understeer_drop;
+    float ffb_oversteer_boost;
+    float ffb_sop;
+    float ffb_rear_torque;
+    float ffb_scrub_drag;
+    float ffb_yaw_kick;
+    float ffb_gyro_damping;
+    float ffb_road_texture;
+    float ffb_slide_texture;
+    float ffb_lockup_vibration;
+    float ffb_spin_vibration;
+    float ffb_bottoming_crunch;
+    float ffb_abs_pulse;
+    float ffb_soft_lock;
+
+    float ffb_shaft_torque;
+    float ffb_gen_torque;
+    float ffb_grip_factor;
+    float speed_gate;
+    float load_peak_ref;
+
+    // --- SYSTEM (400Hz) ---
+    float physics_rate;
+    uint8_t clipping;
+    uint8_t warn_bits;
+    uint8_t marker;
 };
+#pragma pack(pop)
 
 // Session metadata for header
 struct SessionInfo {
     std::string driver_name;
     std::string vehicle_name;
+    std::string vehicle_class; // v0.7.132
+    std::string vehicle_brand; // v0.7.132
     std::string track_name;
     std::string app_version;
     
@@ -154,7 +239,8 @@ public:
         ss << std::put_time(&time_info, "%Y-%m-%d_%H-%M-%S");
         std::string timestamp_str = ss.str();
         
-        std::string car = SanitizeFilename(info.vehicle_name);
+        std::string brand = SanitizeFilename(info.vehicle_brand);
+        std::string vclass = SanitizeFilename(info.vehicle_class);
         std::string track = SanitizeFilename(info.track_name);
         
         std::string path_prefix = base_path;
@@ -171,10 +257,10 @@ public:
             }
         }
 
-        m_filename = path_prefix + "lmuffb_log_" + timestamp_str + "_" + car + "_" + track + ".csv";
+        m_filename = path_prefix + "lmuffb_log_" + timestamp_str + "_" + brand + "_" + vclass + "_" + track + ".bin";
 
-        // Open file
-        m_file.open(m_filename);
+        // Open file in binary mode
+        m_file.open(m_filename, std::ios::out | std::ios::binary);
         if (m_file.is_open()) {
             WriteHeader(info);
             m_running = true;
@@ -208,15 +294,15 @@ public:
     void Log(const LogFrame& frame) {
         if (!m_running) return;
         
-        // Decimation: 400Hz -> 100Hz
+        // Decimation: 400Hz -> 400Hz (v0.7.126: decimation removed, DECIMATION_FACTOR=1)
         if (++m_decimation_counter < DECIMATION_FACTOR && !frame.marker && !m_pending_marker) {
             return;
         }
-        m_decimation_counter = 0;
+        m_decimation_counter = 0; // Reset counter to prevent overflow (Review fix)
 
         LogFrame f = frame;
         if (m_pending_marker) {
-            f.marker = true;
+            f.marker = 1;
             m_pending_marker = false;
         }
 
@@ -237,6 +323,9 @@ public:
     
     // Trigger a user marker
     void SetMarker() { m_pending_marker = true; }
+
+    // Toggle compression
+    void EnableCompression(bool enable) { m_lz4_enabled = enable; }
     
     // Status getters
     bool IsLogging() const { return m_running; }
@@ -246,7 +335,8 @@ public:
 
 private:
     AsyncLogger() : m_running(false), m_pending_marker(false), m_frame_count(0), m_decimation_counter(0), 
-                    m_file_size_bytes(0), m_last_flush_time(std::chrono::steady_clock::now()) {}
+                    m_file_size_bytes(0), m_last_flush_time(std::chrono::steady_clock::now()),
+                    m_lz4_enabled(true) {}
     ~AsyncLogger() { Stop(); }
     
     // No copy
@@ -254,27 +344,45 @@ private:
     AsyncLogger& operator=(const AsyncLogger&) = delete;
     
     void WorkerThread() {
+        std::vector<char> compressed_buffer;
+        std::vector<LogFrame> local_buffer;
         while (true) {
-            std::unique_lock<std::mutex> lock(m_mutex);
-            m_cv.wait(lock, [this] { return !m_running || !m_buffer_active.empty(); });
-            
-            // Swap buffers
-            if (!m_buffer_active.empty()) {
-                std::swap(m_buffer_active, m_buffer_writing);
+            {
+                std::unique_lock<std::mutex> lock(m_mutex);
+                m_cv.wait(lock, [this] { return !m_running || !m_buffer_active.empty(); });
+
+                if (!m_buffer_active.empty()) {
+                    local_buffer.swap(m_buffer_active);
+                } else if (!m_running) {
+                    break;
+                }
             }
-            
-            // If stopped and empty, exit
-            if (!m_running && m_buffer_writing.empty()) {
-                 break;
-            }
-            
-            lock.unlock();
             
             // Write buffer to disk
-            for (const auto& frame : m_buffer_writing) {
-                WriteFrame(frame);
+            if (!local_buffer.empty()) {
+                size_t src_size = local_buffer.size() * sizeof(LogFrame);
+                const char* src_ptr = reinterpret_cast<const char*>(local_buffer.data());
+
+                if (m_lz4_enabled) {
+                    int max_dst_size = LZ4_compressBound((int)src_size);
+                    compressed_buffer.resize(max_dst_size);
+
+                    int compressed_size = LZ4_compress_default(src_ptr, compressed_buffer.data(), (int)src_size, max_dst_size);
+
+                    if (compressed_size > 0) {
+                        // Write block size header (compressed, then uncompressed)
+                        uint32_t header[2] = { (uint32_t)compressed_size, (uint32_t)src_size };
+                        m_file.write(reinterpret_cast<const char*>(header), 8);
+                        // Write payload
+                        m_file.write(compressed_buffer.data(), compressed_size);
+                        m_file_size_bytes += (8 + (size_t)compressed_size);
+                    }
+                } else {
+                    m_file.write(src_ptr, src_size);
+                    m_file_size_bytes += src_size;
+                }
+                local_buffer.clear();
             }
-            m_buffer_writing.clear();
             
             // Periodic flush to minimize data loss on crash
             auto now = std::chrono::steady_clock::now();
@@ -283,19 +391,20 @@ private:
                 m_file.flush();
                 m_last_flush_time = now;
             }
-            
-            if (!m_running) break;
         }
     }
 
     void WriteHeader(const SessionInfo& info) {
-        m_file << "# LMUFFB Telemetry Log v1.0\n";
+        m_file << "# LMUFFB Telemetry Log v1.1\n";
         m_file << "# App Version: " << info.app_version << "\n";
+        m_file << "# Compression: " << (m_lz4_enabled ? "LZ4" : "None") << "\n";
         m_file << "# ========================\n";
         m_file << "# Session Info\n";
         m_file << "# ========================\n";
         m_file << "# Driver: " << info.driver_name << "\n";
         m_file << "# Vehicle: " << info.vehicle_name << "\n";
+        m_file << "# Car Class: " << info.vehicle_class << "\n";
+        m_file << "# Car Brand: " << info.vehicle_brand << "\n";
         m_file << "# Track: " << info.track_name << "\n";
         m_file << "# ========================\n";
         m_file << "# FFB Settings\n";
@@ -311,48 +420,31 @@ private:
         m_file << "# Torque Passthrough: " << (info.torque_passthrough ? "Enabled" : "Disabled") << "\n";
         m_file << "# ========================\n";
         
-        // CSV Header
-        m_file << "Time,DeltaTime,Speed,LatAccel,LongAccel,YawRate,Steering,Throttle,Brake,"
-               << "SlipAngleFL,SlipAngleFR,SlipRatioFL,SlipRatioFR,GripFL,GripFR,"
+        // CSV Header for human readability
+        m_file << "# Fields: Time,DeltaTime,Speed,LatAccel,LongAccel,YawRate,Steering,Throttle,Brake,"
+               << "RawSteering,RawThrottle,RawBrake,RawLatAccel,RawLongAccel,RawGameYawAccel,RawGameShaftTorque,RawGameGenTorque,"
+               << "RawLoadFL,RawLoadFR,RawLoadRL,RawLoadRR,"
+               << "RawSlipVelLatFL,RawSlipVelLatFR,RawSlipVelLatRL,RawSlipVelLatRR,"
+               << "RawSlipVelLongFL,RawSlipVelLongFR,RawSlipVelLongRL,RawSlipVelLongRR,"
+               << "RawRideHeightFL,RawRideHeightFR,RawRideHeightRL,RawRideHeightRR,"
+               << "RawSuspDeflectionFL,RawSuspDeflectionFR,RawSuspDeflectionRL,RawSuspDeflectionRR,"
+               << "RawSuspForceFL,RawSuspForceFR,RawSuspForceRL,RawSuspForceRR,"
+               << "RawBrakePressureFL,RawBrakePressureFR,RawBrakePressureRL,RawBrakePressureRR,"
+               << "RawRotationFL,RawRotationFR,RawRotationRL,RawRotationRR,"
+               << "SlipAngleFL,SlipAngleFR,SlipAngleRL,SlipAngleRR,"
+               << "SlipRatioFL,SlipRatioFR,SlipRatioRL,SlipRatioRR,"
+               << "GripFL,GripFR,GripRL,GripRR,"
                << "LoadFL,LoadFR,LoadRL,LoadRR,"
                << "RideHeightFL,RideHeightFR,RideHeightRL,RideHeightRR,"
                << "SuspDeflectionFL,SuspDeflectionFR,SuspDeflectionRL,SuspDeflectionRR,"
-               << "CalcSlipAngle,CalcGripFront,CalcGripRear,GripDelta,"
-               << "RawYawAccel,SmoothedYawAccel,FFBYawKick,LatLoadNorm,"
+               << "CalcSlipAngleFront,CalcSlipAngleRear,CalcGripFront,CalcGripRear,GripDelta,CalcRearLatForce,"
+               << "SmoothedYawAccel,LatLoadNorm,"
                << "dG_dt,dAlpha_dt,SlopeCurrent,SlopeRaw,SlopeNum,SlopeDenom,HoldTimer,InputSlipSmooth,SlopeSmoothed,Confidence,"
                << "SurfaceFL,SurfaceFR,SlopeTorque,SlewLimitedG,"
-               << "FFBTotal,FFBBase,FFBShaftTorque,FFBGenTorque,FFBSoP,GripFactor,SpeedGate,LoadPeakRef,Clipping,Marker\n";
-    }
-
-    void WriteFrame(const LogFrame& frame) {
-        m_file << std::fixed << std::setprecision(4)
-               << frame.timestamp << "," << frame.delta_time << "," 
-               << frame.speed << "," << frame.lat_accel << "," << frame.long_accel << "," << frame.yaw_rate << ","
-               << frame.steering << "," << frame.throttle << "," << frame.brake << ","
-               
-               << frame.slip_angle_fl << "," << frame.slip_angle_fr << "," 
-               << frame.slip_ratio_fl << "," << frame.slip_ratio_fr << ","
-               << frame.grip_fl << "," << frame.grip_fr << ","
-               << frame.load_fl << "," << frame.load_fr << "," << frame.load_rl << "," << frame.load_rr << ","
-               << frame.ride_height_fl << "," << frame.ride_height_fr << "," << frame.ride_height_rl << "," << frame.ride_height_rr << ","
-               << frame.susp_deflection_fl << "," << frame.susp_deflection_fr << "," << frame.susp_deflection_rl << "," << frame.susp_deflection_rr << ","
-               
-               << frame.calc_slip_angle_front << "," << frame.calc_grip_front << "," << frame.calc_grip_rear << "," << frame.grip_delta << ","
-               << frame.raw_yaw_accel << "," << frame.smoothed_yaw_accel << "," << frame.ffb_yaw_kick << "," << frame.lat_load_norm << ","
-
-               << frame.dG_dt << "," << frame.dAlpha_dt << "," << frame.slope_current << ","
-               << frame.slope_raw_unclamped << "," << frame.slope_numerator << "," << frame.slope_denominator << ","
-               << frame.hold_timer << "," << frame.input_slip_smoothed << ","
-               << frame.slope_smoothed << "," << frame.confidence << ","
-               << frame.surface_type_fl << "," << frame.surface_type_fr << ","
-               << frame.slope_torque << "," << frame.slew_limited_g << ","
-               
-               << frame.ffb_total << "," << frame.ffb_base << "," << frame.ffb_shaft_torque << "," << frame.ffb_gen_torque << "," << frame.ffb_sop << ","
-               << frame.ffb_grip_factor << "," << frame.speed_gate << "," << frame.load_peak_ref << ","
-               << (frame.clipping ? 1 : 0) << "," << (frame.marker ? 1 : 0) << "\n";
-        
-        // Track file size for monitoring
-        m_file_size_bytes += 200; // Approximate bytes per line
+               << "SessionPeakTorque,DynamicWeight,StructuralMult,VibrationMult,SteeringAngleDeg,SteeringRangeDeg,DebugFreq,TireRadius,"
+               << "FFBTotal,FFBBase,FFBUndersteerDrop,FFBOversteerBoost,FFBSoP,FFBRearTorque,FFBScrubDrag,FFBYawKick,FFBGyroDamping,FFBRoadTexture,FFBSlideTexture,FFBLockupVibration,FFBSpinVibration,FFBBottomingCrunch,FFBABSPulse,FFBSoftLock,"
+               << "FFBShaftTorque,FFBGenTorque,GripFactor,SpeedGate,LoadPeakRef,PhysicsRate,Clipping,WarnBits,Marker\n";
+        m_file << "[DATA_START]\n";
     }
 
     std::string SanitizeFilename(const std::string& input) {
@@ -388,7 +480,9 @@ private:
     std::atomic<size_t> m_file_size_bytes;
     std::chrono::steady_clock::time_point m_last_flush_time;
     
-    static const int DECIMATION_FACTOR = 4; // 400Hz -> 100Hz
+    bool m_lz4_enabled; // Internal compression toggle
+
+    static const int DECIMATION_FACTOR = 1; // 400Hz -> 400Hz
     static const size_t BUFFER_THRESHOLD = 200; // ~0.5s of data
     static const int FLUSH_INTERVAL_SECONDS = 5; // Flush every 5 seconds
 };

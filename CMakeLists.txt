@@ -49,8 +49,10 @@ endif()
 
 
 
-# ImGui Core Detection & FetchContent
+# FetchContent for External Dependencies
 include(FetchContent)
+
+# ImGui Core Detection & FetchContent
 set(IMGUI_DIR "${CMAKE_SOURCE_DIR}/vendor/imgui")
 
 if(EXISTS "${IMGUI_DIR}/imgui.cpp")
@@ -133,6 +135,7 @@ if(NOT WIN32)
     include_directories(src/lmu_sm_interface)
 endif()
 include_directories(src)
+include_directories(vendor/lz4)
 
 # Copy icon file into build directory (Windows only)
 if(WIN32)
@@ -168,6 +171,7 @@ add_definitions(-DLMUFFB_VERSION="${LMUFFB_VERSION}")
 
 # Core Library (Shared between App and Tests)
 set(CORE_SOURCES
+    vendor/lz4/lz4.c
     src/GuiLayer_Common.cpp
     src/GuiLayer.h
     src/DXGIUtils.cpp
@@ -229,6 +233,9 @@ endif()
 if(NOT WIN32 AND NOT BUILD_HEADLESS)
     target_link_libraries(LMUFFB_Core PUBLIC glfw OpenGL::GL dl pthread)
     target_link_libraries(LMUFFB_Core_Fast PUBLIC glfw OpenGL::GL dl pthread)
+else()
+    # On headless or windows
+    # target_link_libraries(LMUFFB_Core PUBLIC ...)
 endif()
 
 # Main Application
@@ -246,9 +253,25 @@ target_link_libraries(LMUFFB PRIVATE LMUFFB_Core)
 # Tests
 add_subdirectory(tests)
 
-# Copy Distribution Files
+# Copy Distribution Files & Tools
 add_custom_command(TARGET LMUFFB POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-            "${CMAKE_SOURCE_DIR}/README.txt"
-            "$<TARGET_FILE_DIR:LMUFFB>/README.txt")
+    # README
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/README.txt" "$<TARGET_FILE_DIR:LMUFFB>/README.txt"
+    # Tools folder - Clear and create subfolders
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "$<TARGET_FILE_DIR:LMUFFB>/tools"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/analyzers"
+    # Root level .py files
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/__init__.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/cli.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/loader.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/models.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/plots.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/reports.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/requirements.txt" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/README.md" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    # Analyzers
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/analyzers/__init__.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/analyzers/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/analyzers/slope_analyzer.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/analyzers/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/analyzers/yaw_analyzer.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/analyzers/"
+)
 

@@ -2,7 +2,6 @@
 #include "Config.h"
 #include "RestApiProvider.h"
 #include "Logger.h"
-#include "Logger.h"
 #include <iostream>
 #include <mutex>
 
@@ -669,7 +668,23 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Now always updated to prevent stale data if other effects use it.
     m_prev_vert_accel = data->mLocalAccel.y;
 
-    // --- 9. SNAPSHOT ---
+    // --- 9. DERIVE LOGGABLE DIAGNOSTICS ---
+    float sm_range_rad = data->mPhysicalSteeringWheelRange;
+    float range_deg = sm_range_rad * (180.0f / (float)PI);
+
+    // Fallback to REST API if enabled and SM range is invalid (Issue #221)
+    if (m_rest_api_enabled && sm_range_rad <= 0.0f) {
+        float fallback = RestApiProvider::Get().GetFallbackRangeDeg();
+        if (fallback > 0.0f) {
+            range_deg = fallback;
+        }
+    }
+
+    float steering_angle_deg = (float)data->mUnfilteredSteering * (range_deg / 2.0f);
+    float understeer_drop = (float)((base_input * m_steering_shaft_gain) * (1.0 - grip_factor_applied));
+    float oversteer_boost = (float)(ctx.sop_base_force - ctx.sop_unboosted_force); // Exact boost amount
+
+    // --- 10. SNAPSHOT ---
     // This block captures the current state of the FFB Engine (inputs, outputs, intermediate calculations)
     // into a thread-safe buffer. These snapshots are retrieved by the GUI layer (or other consumers)
     // to visualize real-time telemetry graphs, FFB clipping, and effect contributions.
@@ -681,8 +696,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.total_output = (float)norm_force;
             snap.base_force = (float)base_input;
             snap.sop_force = (float)ctx.sop_unboosted_force; // Use unboosted for snapshot
-            snap.understeer_drop = (float)((base_input * m_steering_shaft_gain) * (1.0 - grip_factor_applied));
-            snap.oversteer_boost = (float)(ctx.sop_base_force - ctx.sop_unboosted_force); // Exact boost amount
+            snap.understeer_drop = understeer_drop;
+            snap.oversteer_boost = oversteer_boost;
 
             snap.ffb_rear_torque = (float)ctx.rear_torque;
             snap.ffb_scrub_drag = (float)ctx.scrub_drag_force;
@@ -731,19 +746,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.raw_rear_lat_patch_vel = (float)((std::abs(data->mWheel[2].mLateralPatchVel) + std::abs(data->mWheel[3].mLateralPatchVel)) / DUAL_DIVISOR);
             snap.raw_rear_long_patch_vel = (float)((data->mWheel[2].mLongitudinalPatchVel + data->mWheel[3].mLongitudinalPatchVel) / DUAL_DIVISOR);
 
-            float sm_range_rad = data->mPhysicalSteeringWheelRange;
-            float range_deg = sm_range_rad * (180.0f / (float)PI);
-
-            // Fallback to REST API if enabled and SM range is invalid (Issue #221)
-            if (m_rest_api_enabled && sm_range_rad <= 0.0f) {
-                float fallback = RestApiProvider::Get().GetFallbackRangeDeg();
-                if (fallback > 0.0f) {
-                    range_deg = fallback;
-                }
-            }
-
             snap.steering_range_deg = range_deg;
-            snap.steering_angle_deg = (float)data->mUnfilteredSteering * (range_deg / 2.0f);
+            snap.steering_angle_deg = steering_angle_deg;
 
             snap.warn_load = ctx.frame_warn_load;
             snap.warn_grip = ctx.frame_warn_grip || ctx.frame_warn_rear_grip;
@@ -763,38 +767,113 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         }
     }
     
-    // Telemetry Logging (v0.7.x)
+    // Telemetry Logging (v0.7.129: Augmented Binary & 400Hz)
     if (AsyncLogger::Get().IsLogging()) {
         LogFrame frame;
-        frame.timestamp = data->mElapsedTime;
-        frame.delta_time = data->mDeltaTime;
+        frame.timestamp = upsampled_data->mElapsedTime;
+        frame.delta_time = ctx.dt;
         
-        // Inputs
-        frame.steering = (float)data->mUnfilteredSteering;
-        frame.throttle = (float)data->mUnfilteredThrottle;
-        frame.brake = (float)data->mUnfilteredBrake;
-        
-        // Vehicle state
+        // --- PROCESSED 400Hz DATA (Smooth) ---
         frame.speed = (float)ctx.car_speed;
-        frame.lat_accel = (float)data->mLocalAccel.x;
-        frame.long_accel = (float)data->mLocalAccel.z;
-        frame.yaw_rate = (float)data->mLocalRot.y;
-        
-        // Front Axle raw
+        frame.lat_accel = (float)upsampled_data->mLocalAccel.x;
+        frame.long_accel = (float)upsampled_data->mLocalAccel.z;
+        frame.yaw_rate = (float)upsampled_data->mLocalRot.y;
+
+        frame.steering = (float)upsampled_data->mUnfilteredSteering;
+        frame.throttle = (float)upsampled_data->mUnfilteredThrottle;
+        frame.brake = (float)upsampled_data->mUnfilteredBrake;
+
+        // --- RAW 100Hz GAME DATA (Step-function) ---
+        frame.raw_steering = (float)data->mUnfilteredSteering;
+        frame.raw_throttle = (float)data->mUnfilteredThrottle;
+        frame.raw_brake = (float)data->mUnfilteredBrake;
+        frame.raw_lat_accel = (float)data->mLocalAccel.x;
+        frame.raw_long_accel = (float)data->mLocalAccel.z;
+        frame.raw_game_yaw_accel = (float)data->mLocalRotAccel.y;
+        frame.raw_game_shaft_torque = (float)data->mSteeringShaftTorque;
+        frame.raw_game_gen_torque = (float)genFFBTorque;
+
+        frame.raw_load_fl = (float)data->mWheel[0].mTireLoad;
+        frame.raw_load_fr = (float)data->mWheel[1].mTireLoad;
+        frame.raw_load_rl = (float)data->mWheel[2].mTireLoad;
+        frame.raw_load_rr = (float)data->mWheel[3].mTireLoad;
+
+        frame.raw_slip_vel_lat_fl = (float)data->mWheel[0].mLateralPatchVel;
+        frame.raw_slip_vel_lat_fr = (float)data->mWheel[1].mLateralPatchVel;
+        frame.raw_slip_vel_lat_rl = (float)data->mWheel[2].mLateralPatchVel;
+        frame.raw_slip_vel_lat_rr = (float)data->mWheel[3].mLateralPatchVel;
+
+        frame.raw_slip_vel_long_fl = (float)data->mWheel[0].mLongitudinalPatchVel;
+        frame.raw_slip_vel_long_fr = (float)data->mWheel[1].mLongitudinalPatchVel;
+        frame.raw_slip_vel_long_rl = (float)data->mWheel[2].mLongitudinalPatchVel;
+        frame.raw_slip_vel_long_rr = (float)data->mWheel[3].mLongitudinalPatchVel;
+
+        frame.raw_ride_height_fl = (float)data->mWheel[0].mRideHeight;
+        frame.raw_ride_height_fr = (float)data->mWheel[1].mRideHeight;
+        frame.raw_ride_height_rl = (float)data->mWheel[2].mRideHeight;
+        frame.raw_ride_height_rr = (float)data->mWheel[3].mRideHeight;
+
+        frame.raw_susp_deflection_fl = (float)data->mWheel[0].mSuspensionDeflection;
+        frame.raw_susp_deflection_fr = (float)data->mWheel[1].mSuspensionDeflection;
+        frame.raw_susp_deflection_rl = (float)data->mWheel[2].mSuspensionDeflection;
+        frame.raw_susp_deflection_rr = (float)data->mWheel[3].mSuspensionDeflection;
+
+        frame.raw_susp_force_fl = (float)data->mWheel[0].mSuspForce;
+        frame.raw_susp_force_fr = (float)data->mWheel[1].mSuspForce;
+        frame.raw_susp_force_rl = (float)data->mWheel[2].mSuspForce;
+        frame.raw_susp_force_rr = (float)data->mWheel[3].mSuspForce;
+
+        frame.raw_brake_pressure_fl = (float)data->mWheel[0].mBrakePressure;
+        frame.raw_brake_pressure_fr = (float)data->mWheel[1].mBrakePressure;
+        frame.raw_brake_pressure_rl = (float)data->mWheel[2].mBrakePressure;
+        frame.raw_brake_pressure_rr = (float)data->mWheel[3].mBrakePressure;
+
+        frame.raw_rotation_fl = (float)data->mWheel[0].mRotation;
+        frame.raw_rotation_fr = (float)data->mWheel[1].mRotation;
+        frame.raw_rotation_rl = (float)data->mWheel[2].mRotation;
+        frame.raw_rotation_rr = (float)data->mWheel[3].mRotation;
+
+        // --- ALGORITHM STATE (400Hz) ---
         frame.slip_angle_fl = (float)fl.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
         frame.slip_angle_fr = (float)fr.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
+        frame.slip_angle_rl = (float)upsampled_data->mWheel[2].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
+        frame.slip_angle_rr = (float)upsampled_data->mWheel[3].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
+
         frame.slip_ratio_fl = (float)calculate_wheel_slip_ratio(fl);
         frame.slip_ratio_fr = (float)calculate_wheel_slip_ratio(fr);
+        frame.slip_ratio_rl = (float)calculate_wheel_slip_ratio(upsampled_data->mWheel[2]);
+        frame.slip_ratio_rr = (float)calculate_wheel_slip_ratio(upsampled_data->mWheel[3]);
+
         frame.grip_fl = (float)fl.mGripFract;
         frame.grip_fr = (float)fr.mGripFract;
+        frame.grip_rl = (float)upsampled_data->mWheel[2].mGripFract;
+        frame.grip_rr = (float)upsampled_data->mWheel[3].mGripFract;
+
         frame.load_fl = (float)fl.mTireLoad;
         frame.load_fr = (float)fr.mTireLoad;
+        frame.load_rl = (float)upsampled_data->mWheel[2].mTireLoad;
+        frame.load_rr = (float)upsampled_data->mWheel[3].mTireLoad;
+
+        frame.ride_height_fl = (float)fl.mRideHeight;
+        frame.ride_height_fr = (float)fr.mRideHeight;
+        frame.ride_height_rl = (float)upsampled_data->mWheel[2].mRideHeight;
+        frame.ride_height_rr = (float)upsampled_data->mWheel[3].mRideHeight;
+
+        frame.susp_deflection_fl = (float)fl.mSuspensionDeflection;
+        frame.susp_deflection_fr = (float)fr.mSuspensionDeflection;
+        frame.susp_deflection_rl = (float)upsampled_data->mWheel[2].mSuspensionDeflection;
+        frame.susp_deflection_rr = (float)upsampled_data->mWheel[3].mSuspensionDeflection;
         
-        // Calculated values
         frame.calc_slip_angle_front = (float)m_grip_diag.front_slip_angle;
+        frame.calc_slip_angle_rear = (float)m_grip_diag.rear_slip_angle;
         frame.calc_grip_front = (float)ctx.avg_grip;
+        frame.calc_grip_rear = (float)ctx.avg_rear_grip;
+        frame.grip_delta = (float)(ctx.avg_grip - ctx.avg_rear_grip);
+        frame.calc_rear_lat_force = (float)ctx.calc_rear_lat_force;
+
+        frame.smoothed_yaw_accel = (float)m_yaw_accel_smoothed;
+        frame.lat_load_norm = (float)m_sop_load_smoothed;
         
-        // Slope detection
         frame.dG_dt = (float)m_slope_dG_dt;
         frame.dAlpha_dt = (float)m_slope_dAlpha_dt;
         frame.slope_current = (float)m_slope_current;
@@ -804,50 +883,54 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         frame.hold_timer = (float)m_slope_hold_timer;
         frame.input_slip_smoothed = (float)m_slope_slip_smoothed;
         frame.slope_smoothed = (float)m_slope_smoothed_output;
-        
-        // Use extracted confidence calculation
         frame.confidence = (float)calculate_slope_confidence(m_slope_dAlpha_dt);
         
-        // Surface types (Accuracy Tools)
         frame.surface_type_fl = (float)fl.mSurfaceType;
         frame.surface_type_fr = (float)fr.mSurfaceType;
-
-        // Advanced Slope Detection (v0.7.40)
         frame.slope_torque = (float)m_slope_torque_current;
         frame.slew_limited_g = (float)m_debug_lat_g_slew;
 
-        // Rear axle
-        frame.calc_grip_rear = (float)ctx.avg_rear_grip;
-        frame.grip_delta = (float)(ctx.avg_grip - ctx.avg_rear_grip);
-
-        // Yaw Kick Analysis (Issue #241)
-        frame.raw_yaw_accel = (float)data->mLocalRotAccel.y;
-        frame.smoothed_yaw_accel = (float)m_yaw_accel_smoothed;
-        frame.ffb_yaw_kick = (float)ctx.yaw_force;
-        frame.lat_load_norm = (float)m_sop_load_smoothed;
-
-        // Additional channels for diagnostic investigation
-        frame.load_rl = (float)data->mWheel[2].mTireLoad;
-        frame.load_rr = (float)data->mWheel[3].mTireLoad;
-        frame.ride_height_fl = (float)data->mWheel[0].mRideHeight;
-        frame.ride_height_fr = (float)data->mWheel[1].mRideHeight;
-        frame.ride_height_rl = (float)data->mWheel[2].mRideHeight;
-        frame.ride_height_rr = (float)data->mWheel[3].mRideHeight;
-        frame.susp_deflection_fl = (float)data->mWheel[0].mSuspensionDeflection;
-        frame.susp_deflection_fr = (float)data->mWheel[1].mSuspensionDeflection;
-        frame.susp_deflection_rl = (float)data->mWheel[2].mSuspensionDeflection;
-        frame.susp_deflection_rr = (float)data->mWheel[3].mSuspensionDeflection;
+        frame.session_peak_torque = (float)m_session_peak_torque;
+        frame.dynamic_weight_factor = (float)dynamic_weight_factor;
+        frame.structural_mult = (float)m_smoothed_structural_mult;
+        frame.vibration_mult = (float)m_smoothed_vibration_mult;
+        frame.steering_angle_deg = steering_angle_deg;
+        frame.steering_range_deg = range_deg;
+        frame.debug_freq = (float)m_debug_freq;
+        frame.tire_radius = (float)fl.mStaticUndeflectedRadius / 100.0f;
         
-        // FFB output
+        // --- FFB COMPONENTS (400Hz) ---
         frame.ffb_total = (float)norm_force;
-        frame.ffb_shaft_torque = (float)data->mSteeringShaftTorque;
+        frame.ffb_base = (float)base_input;
+        frame.ffb_understeer_drop = understeer_drop;
+        frame.ffb_oversteer_boost = oversteer_boost;
+        frame.ffb_sop = (float)ctx.sop_base_force;
+        frame.ffb_rear_torque = (float)ctx.rear_torque;
+        frame.ffb_scrub_drag = (float)ctx.scrub_drag_force;
+        frame.ffb_yaw_kick = (float)ctx.yaw_force;
+        frame.ffb_gyro_damping = (float)ctx.gyro_force;
+        frame.ffb_road_texture = (float)ctx.road_noise;
+        frame.ffb_slide_texture = (float)ctx.slide_noise;
+        frame.ffb_lockup_vibration = (float)ctx.lockup_rumble;
+        frame.ffb_spin_vibration = (float)ctx.spin_rumble;
+        frame.ffb_bottoming_crunch = (float)ctx.bottoming_crunch;
+        frame.ffb_abs_pulse = (float)ctx.abs_pulse_force;
+        frame.ffb_soft_lock = (float)ctx.soft_lock_force;
+
+        frame.ffb_shaft_torque = (float)upsampled_data->mSteeringShaftTorque;
         frame.ffb_gen_torque = (float)genFFBTorque;
         frame.ffb_grip_factor = (float)ctx.grip_factor;
-        frame.ffb_sop = (float)ctx.sop_base_force;
         frame.speed_gate = (float)ctx.speed_gate;
         frame.load_peak_ref = (float)m_auto_peak_load;
-        frame.clipping = (std::abs(norm_force) > CLIPPING_THRESHOLD);
-        frame.ffb_base = (float)base_input; // Plan included ffb_base
+
+        // --- SYSTEM (400Hz) ---
+        frame.physics_rate = (float)m_physics_rate;
+        frame.clipping = (uint8_t)(std::abs(norm_force) > CLIPPING_THRESHOLD);
+        frame.warn_bits = 0;
+        if (ctx.frame_warn_load) frame.warn_bits |= 0x01;
+        if (ctx.frame_warn_grip || ctx.frame_warn_rear_grip) frame.warn_bits |= 0x02;
+        if (ctx.frame_warn_dt) frame.warn_bits |= 0x04;
+        frame.marker = 0; // Handled inside Log()
         
         AsyncLogger::Get().Log(frame);
     }

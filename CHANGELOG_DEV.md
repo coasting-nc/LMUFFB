@@ -4,6 +4,159 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.134] - 2026-03-06
+
+### Added
+- **Integrated Menu Bar**:
+  - Replaced the redundant version info bar with a modern, high-contrast ImGui Menu Bar at the top of the application.
+  - Added a **Logs** menu with a one-click **Analyze last log** feature.
+  - Implemented **Popup Rounding** and refined spacing to ensure the new menu components match the application's professional aesthetic.
+- **Automated Log Analysis**:
+  - Implemented a smart lookup in the GUI to automatically identify the most recent vehicle telemetry log (`.bin` or `.csv`).
+  - Integrated the Python Log Analyzer directly into the GUI; selecting "Analyze last log" now launches a dedicated console window performing a full diagnostic pass.
+- **Tools Distribution Workflow**:
+  - Updated CMake build system to automatically package the `tools/lmuffb_log_analyzer` Python source into the distribution directory.
+  - Implemented automated cleanup and directory mirroring to ensure only production-ready Python code and dependencies (`requirements.txt`) are shipped.
+  - Updated GitHub CI workflows (`manual-release.yml` and `windows-build-and-test.yml`) to include the `tools` directory and standardized artifact packaging from the build output directory.
+
+### Changed
+- **UI Layout Optimization**:
+  - Removed the redundant "lmuFFB" and version text from the main window, as this information is already provided in the Windows title bar.
+  - Updated the main UI windows to be "Work Area Aware," ensuring they align perfectly below the new Menu Bar without overlapping.
+- **Analysis Naming Convention**:
+  - Refined the auto-generated output folder name for log analysis to use only the log file's stem, removing the redundant `.bin` or `.csv` extensions.
+
+### Fixed
+- **Robust Path Resolution**:
+  - Updated the application's Python lookup logic to use `GetModuleFileNameA`, ensuring the `tools` directory is resolved correctly relative to the executable path regardless of the Current Working Directory.
+  - Maintained backward compatibility with development environments via CWD-relative fallbacks.
+
+---
+
+## [0.7.133] - 2026-03-06
+### Changed
+- **Log Filename Convention (Issue #257)**:
+  - Updated the telemetry log filename format to use car brand and class instead of the livery-specific vehicle name.
+  - New format: `lmuffb_log_<timestamp>_<brand>_<class>_<track>.bin`.
+  - This improves log organization and searchability by grouping sessions by car model/class.
+
+### Fixed
+- **Manual Logging Metadata**: Ensured `vehicle_class` and `vehicle_brand` are correctly populated when starting logs manually from the GUI.
+
+### Testing
+- **New Regression Test**: Added `tests/test_issue_257_filenames.cpp` to verify the new filename construction logic.
+
+---
+
+## [0.7.132] - 2026-03-06
+### Added
+- **Vehicle Information Logging**:
+  - Enhanced binary log header to include structured `Car Class` and `Car Brand` fields.
+  - Implemented `ParseVehicleBrand` utility to identify car brands (e.g., Ferrari, Toyota) from livery names.
+- **Log Analyzer Enhancements**:
+  - Updated Python log analyzer to parse and display car class and brand in the terminal output and Markdown reports.
+  - Added session duration field to the generated text reports.
+
+### Fixed
+- **Logger Initialization**: Corrected scope issues in `main.cpp` when populating session metadata from telemetry scoring info during auto-start.
+
+---
+
+## [0.7.131] - 2026-03-06
+### Added
+- **LZ4 Block Compression enabled by default (Issue #254)**:
+  - Telemetry logs are now compressed using LZ4, reducing file size by ~80-90% with minimal CPU overhead.
+
+### Fixed
+- **Testing Integrity**: Updated `test_async_logger_binary.cpp` and `test_ffb_accuracy_tools.cpp` to handle default compression states, ensuring raw binary signal verification remains functional.
+
+---
+
+## [0.7.130] - 2026-03-13
+### Added
+- **Advanced Log Analyzer Diagnostics (Issue #253)**:
+  - Implemented `yaw_analyzer.py` for complex dynamics analysis, including rolling means, straightaway constant pull detection, and threshold crossing rates.
+  - Added **Spectral Analysis (FFT)**: Integrated magnitude spectrum calculation for yaw acceleration to identify physics aliasing and suspension-induced chatter.
+  - Introduced **7 New Diagnostic Plots**:
+    - `Yaw Diagnostic`: Comprehensive multi-panel view of raw vs. smoothed signals and derivation overlays.
+    - `System Health`: Precise tracking of `DeltaTime` frame drops and global clipping status.
+    - `Threshold Thrashing`: Focused visualization of binary gate oscillations.
+    - `Suspension Correlation`: Scatter plots linking suspension velocity to yaw impulses.
+    - `Bottoming Diagnostic`: Ride height vs. Yaw Kick FFB overlays.
+    - `Yaw FFT`: Frequency domain analysis with driver/suspension/noise band annotations.
+    - `Clipping Components`: Quantitative breakdown of force contributions during saturation.
+  - Expanded **Text Reports & CLI**: Integrated all new metrics into the automated diagnostic summary and batch processing workflow.
+
+### Fixed
+- **Reporting Robustness**: Resolved `TypeError` in the reporting layer when comparing `None` values (from missing telemetry) with float thresholds.
+
+### Testing
+- **New Unit Tests**: Added `test_yaw_analyzer.py` verifying FFT accuracy, rolling mean math, and suspension velocity derivation.
+- **Verification**: All 15 tests in the analyzer suite pass.
+
+---
+
+## [0.7.129] - 2026-03-12
+### Added
+- **Complete Telemetry Export (Issue #249)**:
+  - Expanded the binary telemetry log to include **all channels** used in FFB calculations, increasing the field count to 118.
+  - Added full-fidelity raw 100Hz telemetry: long/lat patch velocities, rotation, suspension forces, brake pressures for all 4 wheels.
+  - Added intermediate physics states: Slip angles and ratios for all axles, manual grip calculations, and internal gain multipliers (Structural/Vibration).
+  - Included all discrete FFB component outputs (SoP, Rear Torque, Yaw Kick, Gyro, and all 6 haptic textures) side-by-side for perfect offline reproduction of the FFB signal.
+  - Implemented `warn_bits` diagnostic field to track real-time telemetry health (load loss, grip approximation, dt jitter) in the log.
+
+### Changed
+- **Binary Log Format v1.1**:
+  - Updated the binary schema to 511 bytes per frame.
+  - Augmented the Python Log Analyzer loader to support the new schema with full CamelCase mapping for all 118 fields.
+  - Improved the plain-text header with a comprehensive field list for human-readability.
+
+### Testing
+- **Schema Validation**: Updated `test_async_logger_binary.cpp` to verify the new 511-byte struct packing.
+- **Python Integration**: Updated `test_binary_loader.py` to verify full field alignment and cross-axle telemetry ingestion.
+
+---
+
+## [0.7.128] - 2026-03-12
+### Added
+- **Final Binary Schema Augmentation (Issue #254)**:
+  - Finalized the 294-byte packed binary schema for telemetry logs.
+  - Augmented `LogFrame` with full-fidelity raw 100Hz telemetry: Corner Ride Heights, Suspension Deflections, and more detailed Slip/Load metrics.
+  - Optimized the **LZ4 Block Compression** with a reliable 8-byte header `[compressed_size, uncompressed_size]`, enabling efficient random-access decompression in the Python analyzer.
+  - Fixed a race condition in `AsyncLogger` shutdown where the final data buffer could be truncated during high-frequency logging.
+
+### Changed
+- **Log Analyzer Polish**:
+  - Completed CamelCase mapping for all 61+ binary fields in the Python loader.
+  - Optimized ingestion speed, achieving ~50x faster load times compared to legacy CSV.
+  - Refined the binary marker detection (`[DATA_START]`) for better robustness with mixed-encoding files.
+
+### Testing
+- **Schema Validation**: Updated `test_async_logger_binary.cpp` and `test_binary_loader.py` to strictly verify the 294-byte re-aligned struct packing.
+- **Shutdown Resilience**: Verified that the logger correctly drains all buffers during application exit.
+
+---
+
+## [0.7.126] - 2026-03-12
+### Added
+- **Optimized Binary Telemetry Logging (Issue #254)**:
+  - Switched from CSV string formatting to raw binary struct logging, reducing file size by ~60% and eliminating CPU-intensive string operations in the background thread.
+  - Implemented **400Hz Native Sampling**: Removed the 100Hz decimation to capture telemetry at the full physics engine rate, enabling accurate analysis of high-frequency FFB textures (ABS, road noise, suspension bottoming).
+  - Updated **AsyncLogger** with efficient block-write operations, minimizing mutex contention and disk I/O overhead.
+  - Added a `[DATA_START]` text marker to the plain-text header to allow parsers to identify the start of the binary stream.
+
+### Changed
+- **Python Log Analyzer Update**:
+  - Updated the Python loader to support both `.bin` (binary) and `.csv` (legacy) formats.
+  - Implemented efficient binary parsing using `numpy.frombuffer` for 10x-50x faster data loading into Pandas.
+  - Added an `--export-csv` flag to the analyzer CLI to allow users to generate human-readable CSV files from binary logs when needed.
+
+### Testing
+- **New Regression Test**: Added `tests/test_async_logger_binary.cpp` to verify binary integrity, memory packing (`#pragma pack(1)`), and block-write reliability.
+- **Suite Update**: Updated existing logging and accuracy tool tests to align with the 400Hz non-decimated rate and binary format.
+
+---
+
 ## [0.7.125] - 2026-03-12
 ### Fixed
 - **Robust Soft Lock "Wall" Implementation (Issue #248)**:

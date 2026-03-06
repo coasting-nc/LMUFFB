@@ -214,6 +214,7 @@ bool GuiLayer::Render(FFBEngine& engine) {
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
+    DrawMenuBar(engine);
     GuiLayer::UpdateTelemetry(engine);
     DrawTuningWindow(engine);
     if (Config::show_graphs) DrawDebugWindow(engine);

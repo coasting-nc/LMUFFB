@@ -6,6 +6,7 @@
 #include "GameConnector.h"
 #include "GuiWidgets.h"
 #include "AsyncLogger.h"
+#include "VehicleUtils.h"
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -14,9 +15,15 @@
 #include <mutex>
 #include <chrono>
 #include <ctime>
+#include <filesystem>
 
 #ifdef ENABLE_IMGUI
 #include "imgui.h"
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
 static void DisplayRate(const char* label, double rate, double target) {
     ImGui::Text("%s", label);
@@ -52,8 +59,11 @@ void GuiLayer::SetupGUIStyle() {
     ImGuiStyle& style = ImGui::GetStyle();
 
     style.WindowRounding = 5.0f;
+    style.ChildRounding = 5.0f;
+    style.PopupRounding = 5.0f;
     style.FrameRounding = 4.0f;
     style.GrabRounding = 4.0f;
+    style.WindowPadding = ImVec2(10, 10);
     style.FramePadding = ImVec2(8, 4);
     style.ItemSpacing = ImVec2(8, 6);
 
@@ -81,6 +91,69 @@ void GuiLayer::SetupGUIStyle() {
 
     colors[ImGuiCol_Text]           = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
     colors[ImGuiCol_TextDisabled]   = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+    colors[ImGuiCol_MenuBarBg]      = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
+}
+
+void GuiLayer::DrawMenuBar(FFBEngine& engine) {
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("Logs")) {
+            if (ImGui::MenuItem("Analyze last log")) {
+                namespace fs = std::filesystem;
+                fs::path latest_path;
+                fs::file_time_type latest_time;
+                bool found = false;
+
+                fs::path search_path = Config::m_log_path.empty() ? "." : Config::m_log_path;
+
+                try {
+                    if (fs::exists(search_path)) {
+                        for (const auto& entry : fs::directory_iterator(search_path)) {
+                            if (entry.is_regular_file()) {
+                                std::string filename = entry.path().filename().string();
+                                bool looks_like_log = filename.find("lmuffb_log_") == 0;
+                                bool has_ext = (filename.length() >= 4 && (filename.substr(filename.length() - 4) == ".bin" || filename.substr(filename.length() - 4) == ".csv"));
+                                if (looks_like_log && has_ext) {
+                                    auto ftime = fs::last_write_time(entry);
+                                    if (!found || ftime > latest_time) {
+                                        latest_time = ftime;
+                                        latest_path = entry.path();
+                                        found = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (...) {}
+
+                if (found) {
+                    std::string log_file = latest_path.string();
+                    
+                    // Get executable directory to find tools/ relative to the binary
+                    fs::path exe_dir = fs::current_path();
+#ifdef _WIN32
+                    char buffer[MAX_PATH];
+                    if (GetModuleFileNameA(NULL, buffer, MAX_PATH)) {
+                        exe_dir = fs::path(buffer).parent_path();
+                    }
+#endif
+                    
+                    // Robust PYTHONPATH lookup
+                    std::string python_path = (exe_dir / "tools").string();
+                    if (!fs::exists(exe_dir / "tools/lmuffb_log_analyzer")) {
+                        // Dev environment fallbacks from CWD
+                        if (fs::exists("tools/lmuffb_log_analyzer")) python_path = "tools";
+                        else if (fs::exists("../tools/lmuffb_log_analyzer")) python_path = "../tools";
+                        else if (fs::exists("../../tools/lmuffb_log_analyzer")) python_path = "../../tools";
+                    }
+
+                    std::string cmd = "start cmd /c \"set PYTHONPATH=" + python_path + " && python -m lmuffb_log_analyzer.cli analyze-full \"" + log_file + "\" & pause\"";
+                    system(cmd.c_str());
+                }
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
 }
 
 
@@ -90,20 +163,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
     ImGuiViewport* viewport = ImGui::GetMainViewport();
-    float current_width = Config::show_graphs ? CONFIG_PANEL_WIDTH : viewport->Size.x;
+    float current_width = Config::show_graphs ? CONFIG_PANEL_WIDTH : viewport->WorkSize.x;
 
-    ImGui::SetNextWindowPos(viewport->Pos);
-    ImGui::SetNextWindowSize(ImVec2(current_width, viewport->Size.y));
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(ImVec2(current_width, viewport->WorkSize.y));
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
     ImGui::Begin("MainUI", nullptr, flags);
-
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.00f, 0.60f, 0.85f, 1.00f));
-    ImGui::Text("lmuFFB");
-    ImGui::PopStyleColor();
-    ImGui::SameLine();
-    ImGui::TextDisabled("v%s", LMUFFB_VERSION);
-    ImGui::Separator();
 
     static std::chrono::steady_clock::time_point last_check_time = std::chrono::steady_clock::now();
 
@@ -227,8 +293,16 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
          if (ImGui::Button("START LOGGING", ImVec2(120, 0))) {
              SessionInfo info;
              info.app_version = LMUFFB_VERSION;
-             if (engine.m_vehicle_name[0] != '\0') info.vehicle_name = engine.m_vehicle_name;
-             else info.vehicle_name = "UnknownCar";
+             if (engine.m_vehicle_name[0] != '\0') {
+                 info.vehicle_name = engine.m_vehicle_name;
+                 ParsedVehicleClass vclass = ParseVehicleClass(engine.m_current_class_name.c_str(), engine.m_vehicle_name);
+                 info.vehicle_class = VehicleClassToString(vclass);
+                 info.vehicle_brand = ParseVehicleBrand(engine.m_current_class_name.c_str(), engine.m_vehicle_name);
+             } else {
+                 info.vehicle_name = "UnknownCar";
+                 info.vehicle_class = "UnknownClass";
+                 info.vehicle_brand = "UnknownBrand";
+             }
 
              if (engine.m_track_name[0] != '\0') info.track_name = engine.m_track_name;
              else info.track_name = "UnknownTrack";
@@ -953,8 +1027,8 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
     if (!Config::show_graphs) return;
 
     ImGuiViewport* viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x + CONFIG_PANEL_WIDTH, viewport->Pos.y));
-    ImGui::SetNextWindowSize(ImVec2(viewport->Size.x - CONFIG_PANEL_WIDTH, viewport->Size.y));
+    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x + CONFIG_PANEL_WIDTH, viewport->WorkPos.y));
+    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x - CONFIG_PANEL_WIDTH, viewport->WorkSize.y));
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
     ImGui::Begin("FFB Analysis", nullptr, flags);
@@ -1079,4 +1153,8 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
 
     ImGui::End();
 }
+#endif
+
+#ifndef ENABLE_IMGUI
+void GuiLayer::DrawMenuBar(FFBEngine& engine) {}
 #endif

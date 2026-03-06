@@ -42,6 +42,8 @@ set(TEST_SOURCES
     test_persistence_v0625.cpp
     test_persistence_v0628.cpp
     test_async_logger.cpp
+    test_async_logger_binary.cpp
+    test_async_logger_lz4.cpp
     test_ffb_load_normalization.cpp
     test_versioned_presets.cpp
     test_preset_improvements.cpp
@@ -92,6 +94,7 @@ set(TEST_SOURCES
     test_issue_213_lateral_load.cpp
     test_transition_logging.cpp
     test_issue_241_yaw_kick_rectification.cpp
+    test_issue_257_filenames.cpp
     ../src/main.cpp
 )
 
@@ -101,6 +104,7 @@ if(IMGUI_CORE_SOURCES)
     list(APPEND TEST_SOURCES
         test_gui_interaction.cpp
         test_gui_interaction_v2.cpp
+        test_gui_menu_bar.cpp
     )
 endif()
 
