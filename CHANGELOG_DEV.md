@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.135] - 2026-03-06
+
+### Fixed
+- **Logger Car Information (Issue #265)**:
+  - Resolved an issue where telemetry logs would record "Unknown" car and track information if logging started before the first physics frame was processed.
+  - Implemented immediate metadata synchronization in the main FFB loop, ensuring car brand, class, and track info are updated as soon as telemetry is received.
+  - Centralized metadata handling in `FFBEngine` to guarantee consistency across GUI, Logging, and Physics modules.
+  - Refactored auto-start logging to pull metadata directly from the latest scoring update, ensuring absolute freshness on session entry.
+
+### Testing
+- **New Functional Test**: Added `tests/test_issue_265_metadata.cpp` to verify multi-component metadata synchronization and car-change detection logic.
+
 ## [0.7.134] - 2026-03-06
 
 ### Added

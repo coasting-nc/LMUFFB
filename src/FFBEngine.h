@@ -700,10 +700,12 @@ public:
 
     double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr, float genFFBTorque = 0.0f, bool allowed = true, double override_dt = -1.0);
 
+    void UpdateMetadata(const struct SharedMemoryObjectOut& data);
     double apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, FFBCalculationContext& ctx);
     void ResetNormalization();
 
 private:
+    bool UpdateMetadataInternal(const char* vehicleClass, const char* vehicleName, const char* trackName);
     void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext& ctx);
     NOINLINE void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext& ctx);
     NOINLINE void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext& ctx);

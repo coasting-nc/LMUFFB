@@ -3,6 +3,19 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 6, 2026[/b][/size]
+[b]Version 0.7.135 - Robust Logger Metadata[/b]
+
+[b]New release[/b] (0.7.135): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Fixed[/b]
+[list]
+[*][b]Logger Car Info Fix[/b]: Resolved an issue where telemetry logs would sometimes start with "Unknown" car or track information if recorded exactly at the start of a session.
+[*][b]Immediate Synchronization[/b]: Car brand, class, and track information are now updated the instant the app receives telemetry, ensuring that both the GUI and the logger always have the most up-to-date data even before the first physics frame is calculated. (#265)
+[/list]
+
+---
+
+[size=5][b]March 6, 2026[/b][/size]
 [b]Version 0.7.134 - Integrated Menu Bar & One-Click Analysis[/b]
 
 [b]New release[/b] (0.7.134): https://github.com/coasting-nc/LMUFFB/releases
