@@ -170,6 +170,9 @@ struct LogFrame {
     float ffb_abs_pulse;
     float ffb_soft_lock;
 
+    float extrapolated_yaw_accel;
+    float derived_yaw_accel;
+
     float ffb_shaft_torque;
     float ffb_gen_torque;
     float ffb_grip_factor;
@@ -444,6 +447,7 @@ private:
                << "SurfaceFL,SurfaceFR,SlopeTorque,SlewLimitedG,"
                << "SessionPeakTorque,DynamicWeight,StructuralMult,VibrationMult,SteeringAngleDeg,SteeringRangeDeg,DebugFreq,TireRadius,"
                << "FFBTotal,FFBBase,FFBUndersteerDrop,FFBOversteerBoost,FFBSoP,FFBRearTorque,FFBScrubDrag,FFBYawKick,FFBGyroDamping,FFBRoadTexture,FFBSlideTexture,FFBLockupVibration,FFBSpinVibration,FFBBottomingCrunch,FFBABSPulse,FFBSoftLock,"
+               << "ExtrapolatedYawAccel,DerivedYawAccel,"
                << "FFBShaftTorque,FFBGenTorque,GripFactor,SpeedGate,LoadPeakRef,PhysicsRate,Clipping,WarnBits,Marker\n";
         m_file << "[DATA_START]\n";
     }

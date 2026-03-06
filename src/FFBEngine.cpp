@@ -899,6 +899,18 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         frame.ffb_abs_pulse = (float)ctx.abs_pulse_force;
         frame.ffb_soft_lock = (float)ctx.soft_lock_force;
 
+        frame.extrapolated_yaw_accel = (float)upsampled_data->mLocalRotAccel.y;
+
+        // Passive test: calculate yaw accel from velocity derivative
+        // Note: mLocalRot.y is angular velocity (rad/s), so its derivative is angular acceleration (rad/s^2).
+        double current_yaw_rate = upsampled_data->mLocalRot.y;
+        if (!m_yaw_rate_log_seeded) {
+            m_prev_yaw_rate_log = current_yaw_rate;
+            m_yaw_rate_log_seeded = true;
+        }
+        frame.derived_yaw_accel = (ctx.dt > 1e-6) ? (float)((current_yaw_rate - m_prev_yaw_rate_log) / ctx.dt) : 0.0f;
+        m_prev_yaw_rate_log = current_yaw_rate;
+
         frame.ffb_shaft_torque = (float)upsampled_data->mSteeringShaftTorque;
         frame.ffb_gen_torque = (float)genFFBTorque;
         frame.ffb_grip_factor = (float)ctx.grip_factor;

@@ -115,13 +115,14 @@ TEST_CASE(test_log_frame_packing, "Logging") {
     // SLOPE MISC: surface_fl/fr, slope_torque, slew_lat_g (4) = 16
     // SETTINGS: session_peak, dynamic_weight, structural_mult, vibration_mult, steer_angle, steer_range, debug_freq, tire_radius (8) = 32
     // FFB COMPONENTS: total, base, us_drop, os_boost, sop, rear_torque, scrub, yaw_kick, gyro, road, slide, lockup, spin, bottoming, abs, soft_lock (16) = 64
+    // NEW CHANNELS: extrapolated_yaw_accel, derived_yaw_accel (2) = 8
     // FFB MISC: shaft, gen, grip_factor, speed_gate, load_peak (5) = 20
     // SYSTEM: physics_rate (1) = 4
     // SYSTEM PACKED: clipping(1), warn_bits(1), marker(1) = 3
-    // Total = 16 + 28 + 32 + 128 + 96 + 24 + 8 + 40 + 16 + 32 + 64 + 20 + 4 + 3 = 511 bytes
+    // Total = 16 + 28 + 32 + 128 + 96 + 24 + 8 + 40 + 16 + 32 + 64 + 8 + 20 + 4 + 3 = 519 bytes
 
     std::cout << "sizeof(LogFrame): " << sizeof(LogFrame) << std::endl;
-    ASSERT_EQ(sizeof(LogFrame), (size_t)511);
+    ASSERT_EQ(sizeof(LogFrame), (size_t)519);
 }
 
 } // namespace FFBEngineTests

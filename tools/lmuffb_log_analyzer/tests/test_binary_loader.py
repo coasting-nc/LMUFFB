@@ -6,8 +6,8 @@ from pathlib import Path
 from lmuffb_log_analyzer.loader import load_log, load_bin
 from lmuffb_log_analyzer.models import SessionMetadata
 
-# v0.7.129: 123 floats
-NUM_FLOATS = 123
+# v0.7.138: 125 floats (added extrapolated_yaw_accel, derived_yaw_accel)
+NUM_FLOATS = 125
 
 def create_mock_bin(path: Path):
     """Create a mock binary log file for testing"""
@@ -126,7 +126,7 @@ def test_load_bin_alignment(tmp_path):
 
     header = "# [DATA_START]\n"
 
-    # Mapping based on v0.7.129 order
+    # Mapping based on v0.7.138 order
     dtype_list = [
         ('timestamp', 'f8'), ('delta_time', 'f8'),
         ('speed', 'f4'), ('lat_accel', 'f4'), ('long_accel', 'f4'), ('yaw_rate', 'f4'),
@@ -161,6 +161,7 @@ def test_load_bin_alignment(tmp_path):
         ('ffb_sop', 'f4'), ('ffb_rear_torque', 'f4'), ('ffb_scrub_drag', 'f4'), ('ffb_yaw_kick', 'f4'),
         ('ffb_gyro_damping', 'f4'), ('ffb_road_texture', 'f4'), ('ffb_slide_texture', 'f4'), ('ffb_lockup_vibration', 'f4'),
         ('ffb_spin_vibration', 'f4'), ('ffb_bottoming_crunch', 'f4'), ('ffb_abs_pulse', 'f4'), ('ffb_soft_lock', 'f4'),
+        ('extrapolated_yaw_accel', 'f4'), ('derived_yaw_accel', 'f4'),
         ('ffb_shaft_torque', 'f4'), ('ffb_gen_torque', 'f4'), ('ffb_grip_factor', 'f4'), ('speed_gate', 'f4'),
         ('load_peak_ref', 'f4'),
         ('physics_rate', 'f4'),

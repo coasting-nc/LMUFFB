@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.138] - 2026-03-06
+- Added `ExtrapolatedYawAccel` and `DerivedYawAccel` channels to telemetry logging (#271).
+- Improved Python Log Analyzer with two new diagnostic plots:
+    - **Pull Detector**: 0.5s rolling average of yaw signals to identify low-frequency sustained forces.
+    - **Unopposed Force Overlay**: Overlays Grip Factor and Yaw Kick FFB to visualize correlation during slides.
+- Enhanced Yaw Diagnostic plot with overlays for extrapolated and velocity-derived acceleration.
+
 ## [0.7.137] - 2026-03-06
 - Leveraged robust session state detection (#269) to improve telemetry logging triggers.
 - Updated GUI Health Monitor to display Sim Status, Session Type, Player State, and Control.

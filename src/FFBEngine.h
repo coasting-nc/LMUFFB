@@ -374,6 +374,8 @@ public:
     
     // Yaw Acceleration Smoothing State (v0.4.18)
     double m_yaw_accel_smoothed = 0.0;
+    double m_prev_yaw_rate_log = 0.0;
+    bool m_yaw_rate_log_seeded = false;
 
     // Internal state for Steering Shaft Smoothing (v0.5.7)
     double m_steering_shaft_torque_smoothed = 0.0;
