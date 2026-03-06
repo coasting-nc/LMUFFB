@@ -98,6 +98,7 @@ set(TEST_SOURCES
     test_issue_265_metadata.cpp
     test_issue_267_state_detection.cpp
     test_issue_269_state_detection.cpp
+    test_issue_274_state_reliability.cpp
     ../src/main.cpp
 )
 

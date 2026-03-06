@@ -128,6 +128,7 @@ TEST_CASE(test_game_connector_expansion, "System") {
         // LONG is used in SharedMemoryLock::LockData
         LONG* lockData = (LONG*)maps["LMU_SharedMemoryLockData"].data();
         lockData[1] = 1; // busy = 1
+        MockSM::WaitResult() = 0x00000102L; // WAIT_TIMEOUT (#274 FIX)
 
         SharedMemoryObjectOut dest;
         ASSERT_FALSE(conn.CopyTelemetry(dest));
