@@ -114,15 +114,19 @@ void FFBThread() {
                 in_realtime_phys = GameConnector::Get().IsInRealtime();
                 is_session_active = GameConnector::Get().IsSessionActive();
                 long current_session = GameConnector::Get().GetSessionType();
+                signed char playerControl = GameConnector::Get().GetPlayerControl();
 
                 bool is_stale = GameConnector::Get().IsStale(100);
 
                 static bool was_driving = false;
                 static long last_session = -1;
 
-                bool should_start_log = (in_realtime_phys && !was_driving);
-                bool should_stop_log = (!in_realtime_phys && was_driving) || (!is_session_active && was_driving);
-                bool session_changed = (in_realtime_phys && was_driving && last_session != -1 && current_session != last_session);
+                // Driving means in realtime AND player has control (#269)
+                bool is_driving = in_realtime_phys && (playerControl == 0);
+
+                bool should_start_log = (is_driving && !was_driving);
+                bool should_stop_log = (!is_driving && was_driving) || (!is_session_active && was_driving);
+                bool session_changed = (is_driving && was_driving && last_session != -1 && current_session != last_session);
 
                 if (session_changed) {
                     Logger::Get().LogFile("[Game] Session Type Changed (%ld -> %ld). Restarting log.", last_session, current_session);
@@ -130,8 +134,12 @@ void FFBThread() {
                     should_start_log = true;
                 }
 
-                if (should_start_log) {
-                    Logger::Get().LogFile("[Game] User entered driving session.");
+                bool manual_start_requested = Config::m_auto_start_logging && !AsyncLogger::Get().IsLogging() && is_driving;
+
+                if (should_start_log || manual_start_requested) {
+                    if (should_start_log) Logger::Get().LogFile("[Game] User entered driving session (Control: Player).");
+                    else Logger::Get().LogFile("[Game] Logging manually enabled while driving.");
+
                     if (Config::m_auto_start_logging && !AsyncLogger::Get().IsLogging()) {
                         uint8_t idx = g_localData.telemetry.playerVehicleIdx;
                         if (idx < 104) {
@@ -159,12 +167,12 @@ void FFBThread() {
                         }
                     }
                 } else if (should_stop_log) {
-                    Logger::Get().LogFile("[Game] User exited driving session (FFB Muted).");
-                    if (Config::m_auto_start_logging && AsyncLogger::Get().IsLogging()) {
+                    Logger::Get().LogFile("[Game] User exited driving session.");
+                    if (AsyncLogger::Get().IsLogging()) {
                         AsyncLogger::Get().Stop();
                     }
                 }
-                was_driving = in_realtime_phys;
+                was_driving = is_driving;
                 last_session = current_session;
 
                 if (!is_stale && g_localData.telemetry.playerHasVehicle) {
@@ -219,10 +227,9 @@ void FFBThread() {
                         mDtMon.Update(pPlayerTelemetry->mDeltaTime);
 
                         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-                        bool full_allowed = g_engine.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase) && in_realtime_phys;
+                        bool full_allowed = g_engine.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase) && is_driving;
 
                         force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025);
-                        if (!in_realtime_phys) force_physics = 0.0;
 
                         // Safety Layer (v0.7.49): Slew Rate Limiting (400Hz)
                         // Applied before up-sampling to prevent reconstruction artifacts on spikes.

@@ -220,6 +220,7 @@ public:
         m_buffer_active.reserve(BUFFER_THRESHOLD * 2);
         m_buffer_writing.reserve(BUFFER_THRESHOLD * 2);
         m_frame_count = 0;
+        m_file_size_bytes = 0; // Reset for new file (#269)
         m_pending_marker = false;
         m_decimation_counter = 0;
 

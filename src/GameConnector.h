@@ -43,6 +43,7 @@ public:
     bool IsInRealtime() const { return m_inRealtime.load(std::memory_order_relaxed); }
     long GetSessionType() const { return m_currentSessionType.load(std::memory_order_relaxed); }
     unsigned char GetGamePhase() const { return m_currentGamePhase.load(std::memory_order_relaxed); }
+    signed char GetPlayerControl() const { return m_playerControl.load(std::memory_order_relaxed); }
 
 private:
     struct TransitionState {
@@ -81,6 +82,7 @@ private:
     std::atomic<bool> m_inRealtime{ false };
     std::atomic<long> m_currentSessionType{ -1 };
     std::atomic<unsigned char> m_currentGamePhase{ 255 };
+    std::atomic<signed char> m_playerControl{ -2 };
 
     // Heartbeat for staleness detection (v0.7.15)
     double m_lastElapsedTime = -1.0;

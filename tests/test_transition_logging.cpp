@@ -9,13 +9,6 @@
 
 namespace FFBEngineTests {
 
-class GameConnectorTestAccessor {
-public:
-    static void CallCheckTransitions(GameConnector& gc, const SharedMemoryObjectOut& data) {
-        gc.CheckTransitions(data);
-    }
-};
-
 TEST_CASE_TAGGED(test_transition_logging_logic, "Functional", (std::vector<std::string>{"logging", "transitions"})) {
     Logger::Get().Init("test_transitions.log");
     GameConnector& gc = GameConnector::Get();
@@ -31,22 +24,22 @@ TEST_CASE_TAGGED(test_transition_logging_logic, "Functional", (std::vector<std::
     // but here it says 255 because it's a fresh run? No, it's a singleton.
 
     data.generic.appInfo.mOptionsLocation = 3; // On Track
-    GameConnectorTestAccessor::CallCheckTransitions(gc, data);
+    GameConnectorTestAccessor::InjectTransitions(gc, data);
     // Use a more flexible check or just ensure SOME transition was logged
     ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] OptionsLocation:"));
 
     data.generic.appInfo.mOptionsLocation = 2; // Monitor
-    GameConnectorTestAccessor::CallCheckTransitions(gc, data);
+    GameConnectorTestAccessor::InjectTransitions(gc, data);
     ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] OptionsLocation: 3 -> 2 (Monitor (Garage))"));
 
     // 2. Game Phase Transition
     std::cout << "Testing Game Phase Transition..." << std::endl;
     data.scoring.scoringInfo.mGamePhase = 5; // Green Flag
-    GameConnectorTestAccessor::CallCheckTransitions(gc, data);
+    GameConnectorTestAccessor::InjectTransitions(gc, data);
     ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] GamePhase:"));
 
     data.scoring.scoringInfo.mGamePhase = 9; // Paused
-    GameConnectorTestAccessor::CallCheckTransitions(gc, data);
+    GameConnectorTestAccessor::InjectTransitions(gc, data);
     ASSERT_TRUE(IsInLog("test_transitions.log", "(Paused)"));
 
     // 3. Control Transition
@@ -55,39 +48,39 @@ TEST_CASE_TAGGED(test_transition_logging_logic, "Functional", (std::vector<std::
     data.telemetry.playerVehicleIdx = 0;
     data.scoring.vehScoringInfo[0].mControl = 1; // AI
 
-    GameConnectorTestAccessor::CallCheckTransitions(gc, data);
+    GameConnectorTestAccessor::InjectTransitions(gc, data);
     ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] Control:"));
 
     data.scoring.vehScoringInfo[0].mControl = 0; // Player
-    GameConnectorTestAccessor::CallCheckTransitions(gc, data);
+    GameConnectorTestAccessor::InjectTransitions(gc, data);
     ASSERT_TRUE(IsInLog("test_transitions.log", "(Player)"));
 
     // 4. Context Transitions (Track/Vehicle)
     std::cout << "Testing Context Transitions..." << std::endl;
     strncpy(data.scoring.scoringInfo.mTrackName, "Spa", 63);
-    GameConnectorTestAccessor::CallCheckTransitions(gc, data);
+    GameConnectorTestAccessor::InjectTransitions(gc, data);
     ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] Track: '' -> 'Spa'"));
 
     data.telemetry.playerHasVehicle = true;
     data.telemetry.playerVehicleIdx = 0;
     strncpy(data.scoring.vehScoringInfo[0].mVehicleName, "Ferrari 488", 63);
-    GameConnectorTestAccessor::CallCheckTransitions(gc, data);
+    GameConnectorTestAccessor::InjectTransitions(gc, data);
     ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] Vehicle: '' -> 'Ferrari 488'"));
 
     // 5. SME Events (Issue #244)
     std::cout << "Testing SME Events..." << std::endl;
     data.generic.events[SME_STARTUP] = (SharedMemoryEvent)1;
-    GameConnectorTestAccessor::CallCheckTransitions(gc, data);
+    GameConnectorTestAccessor::InjectTransitions(gc, data);
     ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] Event: SME_STARTUP (1)"));
 
     data.generic.events[SME_LOAD] = (SharedMemoryEvent)2;
-    GameConnectorTestAccessor::CallCheckTransitions(gc, data);
+    GameConnectorTestAccessor::InjectTransitions(gc, data);
     ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] Event: SME_LOAD (2)"));
 
     // 6. Steering Range (Issue #244)
     std::cout << "Testing Steering Range Transition..." << std::endl;
     data.telemetry.telemInfo[0].mPhysicalSteeringWheelRange = 900.0f;
-    GameConnectorTestAccessor::CallCheckTransitions(gc, data);
+    GameConnectorTestAccessor::InjectTransitions(gc, data);
     ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] SteeringRange:"));
 
     // 7. No Duplicate Logs & No Console Output
@@ -98,8 +91,8 @@ TEST_CASE_TAGGED(test_transition_logging_logic, "Functional", (std::vector<std::
     std::stringstream buffer;
     std::streambuf* old_cout = std::cout.rdbuf(buffer.rdbuf());
 
-    GameConnectorTestAccessor::CallCheckTransitions(gc, data);
-    GameConnectorTestAccessor::CallCheckTransitions(gc, data); // Duplicate call
+    GameConnectorTestAccessor::InjectTransitions(gc, data);
+    GameConnectorTestAccessor::InjectTransitions(gc, data); // Duplicate call
 
     std::cout.rdbuf(old_cout);
 
