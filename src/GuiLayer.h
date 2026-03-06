@@ -27,6 +27,7 @@ private:
     static float m_latest_steering_range;
     static float m_latest_steering_angle;
 
+    static void DrawMenuBar(FFBEngine& engine);
     static void DrawTuningWindow(FFBEngine& engine);
     static void DrawDebugWindow(FFBEngine& engine);
 };

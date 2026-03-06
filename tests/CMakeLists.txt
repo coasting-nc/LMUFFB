@@ -103,6 +103,7 @@ if(IMGUI_CORE_SOURCES)
     list(APPEND TEST_SOURCES
         test_gui_interaction.cpp
         test_gui_interaction_v2.cpp
+        test_gui_menu_bar.cpp
     )
 endif()
 

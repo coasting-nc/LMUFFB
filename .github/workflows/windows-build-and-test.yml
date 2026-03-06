@@ -74,7 +74,8 @@ jobs:
       run: |
         New-Item -ItemType Directory -Path "dist" -Force
         Copy-Item "build/Release/LMUFFB.exe" -Destination "dist/"
-        Copy-Item "README.txt" -Destination "dist/"
+        Copy-Item "build/Release/README.txt" -Destination "dist/"
+        Copy-Item "build/Release/tools" -Destination "dist/" -Recurse
         Compress-Archive -Path "dist/*" -DestinationPath "lmuffb-${{ env.APP_VERSION }}-nightly.zip"
 
     - name: Upload Nightly Zip

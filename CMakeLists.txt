@@ -253,9 +253,25 @@ target_link_libraries(LMUFFB PRIVATE LMUFFB_Core)
 # Tests
 add_subdirectory(tests)
 
-# Copy Distribution Files
+# Copy Distribution Files & Tools
 add_custom_command(TARGET LMUFFB POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-            "${CMAKE_SOURCE_DIR}/README.txt"
-            "$<TARGET_FILE_DIR:LMUFFB>/README.txt")
+    # README
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/README.txt" "$<TARGET_FILE_DIR:LMUFFB>/README.txt"
+    # Tools folder - Clear and create subfolders
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "$<TARGET_FILE_DIR:LMUFFB>/tools"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/analyzers"
+    # Root level .py files
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/__init__.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/cli.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/loader.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/models.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/plots.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/reports.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/requirements.txt" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/README.md" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
+    # Analyzers
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/analyzers/__init__.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/analyzers/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/analyzers/slope_analyzer.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/analyzers/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/analyzers/yaw_analyzer.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/analyzers/"
+)
 

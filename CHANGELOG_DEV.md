@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.133] - 2026-03-06
+
+### Added
+- **Integrated Menu Bar**:
+  - Replaced the redundant version info bar with a modern, high-contrast ImGui Menu Bar at the top of the application.
+  - Added a **Logs** menu with a one-click **Analyze last log** feature.
+  - Implemented **Popup Rounding** and refined spacing to ensure the new menu components match the application's professional aesthetic.
+- **Automated Log Analysis**:
+  - Implemented a smart lookup in the GUI to automatically identify the most recent vehicle telemetry log (`.bin` or `.csv`).
+  - Integrated the Python Log Analyzer directly into the GUI; selecting "Analyze last log" now launches a dedicated console window performing a full diagnostic pass.
+- **Tools Distribution Workflow**:
+  - Updated CMake build system to automatically package the `tools/lmuffb_log_analyzer` Python source into the distribution directory.
+  - Implemented automated cleanup and directory mirroring to ensure only production-ready Python code and dependencies (`requirements.txt`) are shipped.
+  - Updated GitHub CI workflows (`manual-release.yml` and `windows-build-and-test.yml`) to include the `tools` directory and standardized artifact packaging from the build output directory.
+
+### Changed
+- **UI Layout Optimization**:
+  - Removed the redundant "lmuFFB" and version text from the main window, as this information is already provided in the Windows title bar.
+  - Updated the main UI windows to be "Work Area Aware," ensuring they align perfectly below the new Menu Bar without overlapping.
+- **Analysis Naming Convention**:
+  - Refined the auto-generated output folder name for log analysis to use only the log file's stem, removing the redundant `.bin` or `.csv` extensions.
+
+### Fixed
+- **Robust Path Resolution**:
+  - Updated the application's Python lookup logic to use `GetModuleFileNameA`, ensuring the `tools` directory is resolved correctly relative to the executable path regardless of the Current Working Directory.
+  - Maintained backward compatibility with development environments via CWD-relative fallbacks.
+
+---
+
 ## [0.7.132] - 2026-03-07
 ### Added
 - **Vehicle Information Logging**:

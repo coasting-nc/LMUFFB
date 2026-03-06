@@ -2,6 +2,28 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 6, 2026[/b][/size]
+[b]Version 0.7.133 - Integrated Menu Bar & One-Click Analysis[/b]
+
+[b]New release[/b] (0.7.133): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]Integrated Menu Bar[/b]: Added a professional Menu Bar at the top of the application for quick access to advanced tools and logs.
+[*][b]One-Click Log Analysis[/b]: You can now analyze your latest driving session directly from the app! Just click [b]Logs > Analyze last log[/b] to launch the full diagnostic suite (Session Info, Slopes, and Detailed Plots) in a dedicated window.
+[*][b]Included Analysis Tools[/b]: The app now automatically ships with the [b]LMUFFB Log Analyzer[/b]. No separate download is required to diagnostic your telemetry logs.
+[*][b]Automated Bundling[/b]: Updated build and release pipelines to ensure all nightly and official releases come bundled with the latest analysis tools.
+[/list]
+
+[b]Improved[/b]
+[list]
+[*][b]Modern UI Styling[/b]: Refined the menu visuals with rounded corners and consistent spacing to match the rest of the application's aesthetic.
+[*][b]Clean User Interface[/b]: Removed the redundant app name and version bar from the main window. This information is already visible in the Windows title bar, giving you a cleaner, more focused view of your tuning settings.
+[*][b]Intelligent Layout[/b]: Updated the workspace alignment to perfectly accommodate the new menu bar, ensuring no overlapping buttons or text.
+[/list]
+
+---
+
 [size=5][b]March 7, 2026[/b][/size]
 [b]Version 0.7.132 - Vehicle Class & Brand Identification[/b]
 

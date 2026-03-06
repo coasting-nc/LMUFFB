@@ -341,6 +341,43 @@ def batch(logdir, output):
             console.print(f"[bold red]Error processing {logfile.name}:[/bold red] {e}")
 
     console.print(f"\n[bold green]Batch processing complete! Results saved to: {output}[/bold green]")
+@cli.command()
+@click.argument('logfile', type=click.Path(exists=True))
+@click.option('--output', '-o', help='Output directory for results')
+def analyze_full(logfile, output):
+    """Run all analysis steps for a single log file (info, analyze, plots, report)."""
+    log_path = Path(logfile)
+    if not output:
+        output = str(log_path.parent / f"analysis {log_path.stem}")
+    
+    output_path = Path(output)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    console.print(f"[bold blue]Processing: {log_path.name}[/bold blue]")
+    try:
+        # Load ONCE for all operations
+        metadata, df = load_log(str(log_path))
+        
+        # 1. Info
+        _show_info(metadata, df)
+        
+        # 2. Analyze
+        _run_analyze(metadata, df)
+        
+        # 3. Plots
+        _run_plots(metadata, df, output_path, log_path.stem, plot_all=True)
+        
+        # 4. Report
+        report_file = output_path / f"{log_path.stem}_report.txt"
+        report_text = generate_text_report(metadata, df)
+        with open(report_file, 'w') as f:
+            f.write(report_text)
+        console.print(f"  [OK] Created: {report_file}")
+        
+        console.print(f"\n[bold green]Analysis complete! Results saved to: {output}[/bold green]")
+
+    except Exception as e:
+        console.print(f"[bold red]Error processing {log_path.name}:[/bold red] {e}")
 
 if __name__ == '__main__':
     cli()
