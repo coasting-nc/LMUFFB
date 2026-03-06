@@ -2,6 +2,19 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 6, 2026[/b][/size]
+[b]Version 0.7.131 - LZ4 Block Compression for Telemetry Logs[/b]
+
+[b]New release[/b] (0.7.131): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]LZ4 Block Compression enabled by default[/b]: Telemetry logs are now automatically compressed using the high-performance LZ4 algorithm. This reduces log file sizes by as much as 80-90% (e.g., a 12MB log now takes ~1.5MB) with virtually zero impact on your PC's performance. (#254)
+[*][b]Faster Data Handling[/b]: The new compressed format allows the Log Analyzer to load long sessions significantly faster while using much less disk space for your telemetry history.
+[*][b]Improved Testing & Reliability[/b]: Updated our internal verification suite to ensure that log integrity is maintained across both compressed and uncompressed modes, providing a more robust diagnostic experience.
+[/list]
+
+---
+
 [size=5][b]March 13, 2026[/b][/size]
 [b]Version 0.7.130 - Advanced Log Analyzer Diagnostics[/b]
 

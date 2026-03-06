@@ -333,7 +333,7 @@ public:
 private:
     AsyncLogger() : m_running(false), m_pending_marker(false), m_frame_count(0), m_decimation_counter(0), 
                     m_file_size_bytes(0), m_last_flush_time(std::chrono::steady_clock::now()),
-                    m_lz4_enabled(false) {}
+                    m_lz4_enabled(true) {}
     ~AsyncLogger() { Stop(); }
     
     // No copy

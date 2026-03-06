@@ -31,6 +31,7 @@ TEST_CASE(test_async_logger_binary_integrity, "Logging") {
     info.slope_decay_rate = 0.1f;
     info.torque_passthrough = false;
 
+    logger.EnableCompression(false);
     logger.Start(info, test_dir);
     std::string filename = logger.GetFilename();
     ASSERT_TRUE(filename.find(".bin") != std::string::npos);

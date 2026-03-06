@@ -21,6 +21,7 @@ TEST_CASE(test_surface_type_logging, "AccuracyTools") {
     info.app_version = "0.7.39-test";
 
     // Start logging
+    AsyncLogger::Get().EnableCompression(false);
     AsyncLogger::Get().Start(info, "test_logs_accuracy");
     std::string filename = AsyncLogger::Get().GetFilename();
 

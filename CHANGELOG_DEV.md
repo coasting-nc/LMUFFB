@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.131] - 2026-03-06
+### Added
+- **LZ4 Block Compression enabled by default (Issue #254)**:
+  - Telemetry logs are now compressed using LZ4, reducing file size by ~80-90% with minimal CPU overhead.
+
+### Fixed
+- **Testing Integrity**: Updated `test_async_logger_binary.cpp` and `test_ffb_accuracy_tools.cpp` to handle default compression states, ensuring raw binary signal verification remains functional.
+
+---
+
 ## [0.7.130] - 2026-03-13
 ### Added
 - **Advanced Log Analyzer Diagnostics (Issue #253)**:
