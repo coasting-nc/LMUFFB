@@ -25,7 +25,9 @@ from .plots import (
     plot_suspension_yaw_correlation,
     plot_bottoming_diagnostic,
     plot_yaw_fft,
-    plot_clipping_components
+    plot_clipping_components,
+    plot_pull_detector,
+    plot_unopposed_force
 )
 from .reports import generate_text_report
 
@@ -218,6 +220,16 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
             clip_path = output_path / f"{logfile_stem}_clipping.png"
             plot_clipping_components(df, str(clip_path), show=False, status_callback=update_status)
             console.print(f"  [OK] Created: {clip_path}")
+
+            # Pull Detector
+            pull_path = output_path / f"{logfile_stem}_pull_detector.png"
+            plot_pull_detector(df, str(pull_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {pull_path}")
+
+            # Unopposed Force
+            unopposed_path = output_path / f"{logfile_stem}_unopposed.png"
+            plot_unopposed_force(df, str(unopposed_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {unopposed_path}")
 
 @click.group()
 @click.version_option(version='1.2.0')
