@@ -62,11 +62,29 @@ Automated tests for math ensure reliability, while visual inspection is necessar
 - What is the preferred window size for rolling means? (Issue states window=100 for 400Hz data, which is 0.25s).
 
 ## Implementation Notes
-- **Yaw Dynamics Analyzer:** Implemented `yaw_analyzer.py` with 400Hz logic for threshold crossing rates, rolling means, and FFB contribution percentages.
-- **Spectral Analysis:** Integrated `numpy.fft` for yaw acceleration spectral analysis, highlighting driver (1-3Hz) vs suspension (10-25Hz) frequency bands.
-- **Plotting Suite:** Added 7 new diagnostic plots to `plots.py`, including system health (dt/clipping), bottoming diagnostics, and thrashing analysis.
-- **CLI & Reporting:** Fully integrated into `cli.py` and `reports.py`. High thrashing/clipping issues are now automatically flagged in the text report.
-- **Review Feedback:** Addressed `TypeError` where `None` values from analyzers were compared with floats in the reporting layer.
-- **Version Increment:** Bumped to v0.7.130.
-- **Tests:** Added `test_yaw_analyzer.py`. All 15 unit tests pass.
-- **Challenges:** Mapping `RawGameYawAccel` to the correct derivation overlay required careful handling of twin axes in `matplotlib`.
+
+### Summary of Work Done
+- Implemented a complete diagnostic expansion of the Python Log Analyser.
+- Created `yaw_analyzer.py` with 400Hz logic for yaw dynamics, FFT spectral analysis, suspension velocity derivation, and clipping breakdowns.
+- Added 7 new diagnostic plots to `plots.py`, integrated into the CLI `--all` and `batch` workflows.
+- Overhauled the automated text report and CLI tables to include yaw and clipping metrics.
+- Added 15 unit tests verifying all new mathematical logic.
+- Synchronized version to v0.7.130.
+
+### Encountered Issues
+- **NoneType Comparisons in Reporting:** During initial integration, missing telemetry fields caused analyzers to return `None`, which triggered `TypeError` when compared against numeric thresholds in `reports.py` and `cli.py`. Added explicit `None` checks to ensure robustness for older or encrypted logs.
+- **Twin Axis Legend Collisions:** Matplotlib's default legend handling for twin axes created overlapping legends. Implemented combined legend logic for the Yaw Rate vs. Accel overlay to improve readability.
+- **Python Environment Mismatch:** The sandbox initially lacked `pytest`. Resolved by installing requirements via `pip install -r tools/lmuffb_log_analyzer/requirements.txt`.
+
+### Deviations from Initial Plan
+- **Straightaway Constant Pull Analysis:** Added a specialized analysis block in `analyze_yaw_dynamics` that specifically filters for high-speed straight-line driving to quantify directional pull Nm levels, which was a specific sub-requirement from the Silverstone investigation mentioned in the issue.
+- **Clipping Contribution Sorting:** Added automated sorting of FFB components in the report so the top 3 contributors to clipping are highlighted, rather than just listing all components.
+
+### Build & Test Loop Observations
+- **Fast Execution:** Python unit tests are extremely fast compared to C++ tests, enabling rapid TDD.
+- **Matplotlib Agg Backend:** Used `matplotlib.use('Agg')` to ensure headless plot generation in CI/Linux environments.
+
+### Suggestions for the Future
+- **Correlation Heatmaps:** For very large logs, a correlation heatmap between all FFB components could reveal hidden phase-coupling issues.
+- **Interactive Web Dashboards:** Consider exporting analysis to Plotly/Dash for interactive zooming and data inspection, as Matplotlib static pngs are limited for 400Hz telemetry.
+- **Physics Regression Baseline:** Use the FFT output to create a "Signature" for car classes. A Hypercar setup should have a known frequency profile; deviations could indicate physics engine regressions.
