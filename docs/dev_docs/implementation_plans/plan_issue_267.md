@@ -110,12 +110,30 @@ Since we cannot run the game on Linux, we will rely on a comprehensive mock of t
     5.  `TestSessionTypeChange`: Verify `m_currentSessionType` updates and can be detected for log restarts.
 
 ## Deliverables
-- [ ] Modified `src/GameConnector.h`
-- [ ] Modified `src/GameConnector.cpp`
-- [ ] Modified `src/main.cpp`
-- [ ] New `tests/test_issue_267_state_detection.cpp`
-- [ ] Updated `VERSION` & `CHANGELOG_DEV.md`
-- [ ] Updated `src/Version.h`
+- [x] Modified `src/GameConnector.h`
+- [x] Modified `src/GameConnector.cpp`
+- [x] Modified `src/main.cpp`
+- [x] New `tests/test_issue_267_state_detection.cpp`
+- [x] Updated `VERSION` & `CHANGELOG_DEV.md`
+- [x] Updated `src/Version.h`
+
+## Implementation Notes
+
+### Unforeseen Issues
+- **Missing Vendor Source**: The Linux build environment was missing the `lz4.c` and `lz4.h` files in `vendor/lz4/`, which are required for the telemetry compression introduced in v0.7.129. These were manually downloaded via `curl` to enable compilation of the test runner.
+- **Private Member Access**: Testing internal atomic states required access to private members of `GameConnector`. While a friend class was already declared, the accessor implementation had to be carefully constructed to handle atomic stores and complex state resets.
+
+### Plan Deviations
+- **Test Accessor Scope**: Instead of adding accessors to `test_ffb_common.h`, I implemented `GameConnectorTestAccessor` directly within `tests/test_issue_267_state_detection.cpp` to keep the testing logic contained and avoid polluting global test headers.
+- **Log Message Cleanup**: During code review, a duplicated log message in `GameConnector::TryConnect` was identified and removed. This was not in the original plan but improved code quality.
+
+### Challenges
+- **Mocking Shared Memory Events**: Simulating the asynchronous nature of LMU's shared memory events in a synchronous unit test required careful sequencing of buffer writes and transition checks.
+- **Filtering System**: Discovered that the test runner's `--filter` flag requires an equals sign (`--filter=name`) for some versions/platforms, which initially led to "zero tests run" during verification.
+
+### Recommendations
+- **Formal Mocking Layer**: As the state machine grows more complex, a dedicated `MockGameConnector` or an interface-based `IGameConnector` should be considered to further decouple the application from the ISI/Studio 397 shared memory layout.
+- **State Machine Visualization**: In a future update, adding the internal state machine status (Session Active, Realtime) to the GUI's Health Monitor would provide better transparency for end-users.
 
 ## Additional Questions
 - **Q: Does `SME_START_SESSION` fire immediately upon loading completion, or when the player enters the garage?**
