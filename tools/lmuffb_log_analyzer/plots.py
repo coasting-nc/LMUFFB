@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
+from .analyzers.yaw_analyzer import get_fft, calculate_suspension_velocity
 
 def _safe_legend(ax, loc='upper right'):
     """Only show legend if there are labeled artists."""
@@ -125,50 +126,67 @@ def plot_slope_timeseries(
     
     return ""
 
-def plot_yaw_kick_analysis(
+def plot_yaw_diagnostic(
     df: pd.DataFrame,
+    threshold: float = 1.68,
     output_path: Optional[str] = None,
     show: bool = True,
     status_callback = None
 ) -> str:
     """
-    Diagnostic plot for Yaw Kick signal rectification (Issue #241).
-    Shows Raw vs Smoothed Yaw Acceleration and resulting FFB.
+    Comprehensive Yaw Kick diagnostic plot (Issue #253).
+    Panels: Yaw Accel (Raw/Smoothed/Threshold), Yaw Rate vs Accel, Yaw Kick FFB.
     """
-    if 'RawYawAccel' not in df.columns or 'FFBYawKick' not in df.columns:
+    cols = ['RawGameYawAccel', 'SmoothedYawAccel', 'FFBYawKick', 'YawRate']
+    if not all(c in df.columns for c in cols):
         return ""
 
-    if status_callback: status_callback("Initializing Yaw Kick analysis plot...")
-    fig, axes = plt.subplots(2, 1, figsize=(14, 10), sharex=True)
-    fig.suptitle('Yaw Kick Analysis (Signal Rectification Check)', fontsize=14, fontweight='bold')
+    if status_callback: status_callback("Initializing Yaw diagnostic plot...")
+    fig, axes = plt.subplots(3, 1, figsize=(14, 15), sharex=True)
+    fig.suptitle('Yaw Kick Dynamics Diagnostic', fontsize=14, fontweight='bold')
 
     plot_df = _downsample_df(df)
-    time = plot_df['Time'] if 'Time' in plot_df.columns else np.arange(len(plot_df)) * 0.01
+    time = plot_df['Time']
 
-    # Panel 1: Yaw Acceleration
+    # Panel 1: Yaw Acceleration & Threshold
     ax1 = axes[0]
-    ax1.plot(time, plot_df['RawYawAccel'], label='Raw Yaw Accel', color='#9E9E9E', alpha=0.5, linewidth=0.5)
-
-    # We don't have smoothed_yaw_accel in the CSV, but we can see the effect in FFBYawKick.
-    # Actually, we could estimate what smoothed was, but let's just plot what we have.
-    # In v0.7.124+ logs, we have RawYawAccel and FFBYawKick.
-
-    ax1.set_ylabel('Yaw Accel (rad/s²)')
-    ax1.set_title('Raw Yaw Acceleration')
+    ax1.plot(time, plot_df['RawGameYawAccel'], label='Raw Yaw Accel', color='#9E9E9E', alpha=0.4, linewidth=0.5)
+    ax1.plot(time, plot_df['SmoothedYawAccel'], label='Smoothed Yaw Accel', color='#F44336', linewidth=1.0)
+    ax1.axhline(threshold, color='black', linestyle='--', alpha=0.6, label=f'Threshold ({threshold})')
+    ax1.axhline(-threshold, color='black', linestyle='--', alpha=0.6)
+    ax1.set_ylabel('Accel (rad/s²)')
+    ax1.set_title('Yaw Acceleration & Binary Threshold')
     ax1.grid(True, alpha=0.3)
     _safe_legend(ax1)
 
-    # Panel 2: Yaw Kick FFB
+    # Panel 2: Yaw Rate vs Accel Overlay
     ax2 = axes[1]
-    ax2.plot(time, plot_df['FFBYawKick'], label='Yaw Kick FFB (Nm)', color='#F44336', linewidth=1.0)
-    ax2.set_ylabel('Force (Nm)')
-    ax2.set_xlabel('Time (s)')
-    ax2.set_title('Yaw Kick FFB Contribution')
+    ax2.plot(time, plot_df['YawRate'], label='Yaw Rate', color='#2196F3', linewidth=1.0)
+    ax2.set_ylabel('Rate (rad/s)', color='#2196F3')
+    ax2.tick_params(axis='y', labelcolor='#2196F3')
+
+    ax2_twin = ax2.twinx()
+    ax2_twin.plot(time, plot_df['SmoothedYawAccel'], label='Smoothed Yaw Accel', color='#F44336', alpha=0.5, linewidth=0.8)
+    ax2_twin.set_ylabel('Accel (rad/s²)', color='#F44336')
+    ax2_twin.tick_params(axis='y', labelcolor='#F44336')
+
+    ax2.set_title('Overlay: Yaw Rate vs Smoothed Yaw Accel')
     ax2.grid(True, alpha=0.3)
 
-    # Add a horizontal line at 0 to easily see DC offsets (rectification)
-    ax2.axhline(0, color='black', linestyle='-', alpha=0.5)
-    _safe_legend(ax2)
+    # Combined legend for twin axes
+    lines, labels = ax2.get_legend_handles_labels()
+    lines2, labels2 = ax2_twin.get_legend_handles_labels()
+    ax2.legend(lines + lines2, labels + labels2, loc='upper right')
+
+    # Panel 3: Yaw Kick FFB
+    ax3 = axes[2]
+    ax3.plot(time, plot_df['FFBYawKick'], label='Yaw Kick FFB', color='#4CAF50', linewidth=1.0)
+    ax3.axhline(0, color='black', linestyle='-', alpha=0.3)
+    ax3.set_ylabel('Force (Nm)')
+    ax3.set_xlabel('Time (s)')
+    ax3.set_title('Yaw Kick FFB Contribution')
+    ax3.grid(True, alpha=0.3)
+    _safe_legend(ax3)
 
     plt.tight_layout()
 
@@ -177,10 +195,280 @@ def plot_yaw_kick_analysis(
         plt.savefig(output_path, dpi=150, bbox_inches='tight')
         plt.close(fig)
         return output_path
+    if show: plt.show()
+    return ""
 
-    if show:
-        plt.show()
+def plot_system_health(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Plot DeltaTime and Clipping indicators to detect frame drops and saturation.
+    """
+    if 'DeltaTime' not in df.columns:
+        return ""
 
+    if status_callback: status_callback("Initializing System Health plot...")
+    fig, axes = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
+    fig.suptitle('System Health: Timing & Clipping', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    # Panel 1: DeltaTime
+    ax1 = axes[0]
+    ax1.plot(time, plot_df['DeltaTime'], color='#673AB7', linewidth=0.8)
+    ax1.axhline(0.0025, color='#4CAF50', linestyle='--', alpha=0.6, label='Target (400Hz)')
+    ax1.set_ylabel('DeltaTime (s)')
+    ax1.set_title('Time Consistency (Look for spikes/drops)')
+    ax1.grid(True, alpha=0.3)
+    _safe_legend(ax1)
+
+    # Panel 2: Clipping
+    ax2 = axes[1]
+    if 'Clipping' in plot_df.columns:
+        ax2.fill_between(time, 0, plot_df['Clipping'], color='#F44336', alpha=0.3, label='Clipping Active')
+
+    # Overlay total FFB to see context
+    if 'FFBTotal' in plot_df.columns:
+        ax2_twin = ax2.twinx()
+        ax2_twin.plot(time, plot_df['FFBTotal'], color='black', alpha=0.5, linewidth=0.5, label='Total FFB')
+        ax2_twin.set_ylabel('Total FFB (Nm)')
+        _safe_legend(ax2_twin, loc='upper right')
+
+    ax2.set_ylabel('Status (Binary)')
+    ax2.set_ylim(-0.1, 1.1)
+    ax2.set_xlabel('Time (s)')
+    ax2.set_title('FFB Clipping Events')
+    ax2.grid(True, alpha=0.3)
+    _safe_legend(ax2, loc='upper left')
+
+    plt.tight_layout()
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_threshold_thrashing(
+    df: pd.DataFrame,
+    threshold: float = 1.68,
+    window_sec: float = 3.0,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Zoomed-in plot showing Raw Yaw vs Smoothed Yaw vs Threshold (Issue #253).
+    Finds the period with highest threshold crossing rate.
+    """
+    cols = ['RawGameYawAccel', 'SmoothedYawAccel', 'Time']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Detecting thrashing window...")
+
+    # Calculate crossings in rolling window to find "noisiest" part
+    fs = 400.0
+    window_samples = int(window_sec * fs)
+
+    raw_yaw = df['RawGameYawAccel'].values
+    above = (np.abs(raw_yaw) > threshold).astype(int)
+    crossings = np.abs(np.diff(above))
+
+    crossing_counts = pd.Series(crossings).rolling(window=window_samples).sum()
+    max_idx = crossing_counts.idxmax()
+
+    if pd.isna(max_idx):
+        start_idx, end_idx = 0, min(window_samples, len(df)-1)
+    else:
+        start_idx = max(0, max_idx - window_samples)
+        end_idx = min(len(df)-1, max_idx)
+
+    plot_df = df.iloc[start_idx:end_idx]
+    time = plot_df['Time']
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(time, plot_df['RawGameYawAccel'], label='Raw Yaw Accel', color='#9E9E9E', alpha=0.4, linewidth=0.7)
+    ax.plot(time, plot_df['SmoothedYawAccel'], label='Smoothed Yaw Accel', color='#F44336', linewidth=1.5)
+    ax.axhline(threshold, color='black', linestyle='--', alpha=0.8, label=f'Threshold ({threshold})')
+    ax.axhline(-threshold, color='black', linestyle='--')
+
+    ax.set_title(f'Threshold Thrashing Analysis (Zoomed {window_sec}s)')
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('Yaw Accel (rad/s²)')
+    ax.grid(True, alpha=0.3)
+    _safe_legend(ax)
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_suspension_yaw_correlation(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Scatter plot of Suspension Velocity vs Raw Yaw Acceleration.
+    """
+    df_vel = calculate_suspension_velocity(df)
+    vel_cols = [c for c in df_vel.columns if 'Velocity' in c]
+    if not vel_cols or 'RawGameYawAccel' not in df.columns:
+        return ""
+
+    if status_callback: status_callback("Rendering suspension correlation...")
+
+    plot_df = _downsample_df(df_vel, max_points=10000)
+
+    fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+    fig.suptitle('Correlation: Suspension Velocity vs Raw Yaw Acceleration', fontsize=14, fontweight='bold')
+
+    axes = axes.flatten()
+    for i, col in enumerate(vel_cols):
+        ax = axes[i]
+        scatter = ax.scatter(plot_df[col], plot_df['RawGameYawAccel'].abs(),
+                            alpha=0.2, s=5, c=plot_df['Speed'], cmap='plasma')
+        ax.set_title(col.replace('RawSuspVelocity', ''))
+        ax.set_xlabel('Susp Velocity (m/s)')
+        ax.set_ylabel('abs(Raw Yaw Accel)')
+        ax.grid(True, alpha=0.3)
+
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_bottoming_diagnostic(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Overlay plot of Ride Height vs Yaw Kick FFB.
+    """
+    rh_cols = ['RawRideHeightFL', 'RawRideHeightFR', 'RawRideHeightRL', 'RawRideHeightRR']
+    if not any(c in df.columns for c in rh_cols) or 'FFBYawKick' not in df.columns:
+        return ""
+
+    if status_callback: status_callback("Rendering bottoming diagnostic...")
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    fig, ax1 = plt.subplots(figsize=(14, 8))
+    for col in rh_cols:
+        if col in plot_df.columns:
+            ax1.plot(time, plot_df[col], label=col.replace('RawRideHeight', ''), alpha=0.7, linewidth=0.8)
+
+    ax1.set_ylabel('Ride Height (m)')
+    ax1.set_title('Bottoming Out vs Yaw Kick FFB')
+    ax1.grid(True, alpha=0.3)
+    _safe_legend(ax1, loc='upper left')
+
+    ax2 = ax1.twinx()
+    ax2.plot(time, plot_df['FFBYawKick'], color='black', linewidth=1.2, label='Yaw Kick FFB')
+    ax2.set_ylabel('Yaw Kick FFB (Nm)')
+    _safe_legend(ax2, loc='upper right')
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_yaw_fft(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Plot Frequency Spectrum (FFT) of Yaw Acceleration.
+    """
+    if 'RawGameYawAccel' not in df.columns:
+        return ""
+
+    if status_callback: status_callback("Calculating FFT...")
+    signal = df['RawGameYawAccel'].values
+    fft_res = get_fft(signal, fs=400.0)
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.semilogy(fft_res['freqs'], fft_res['magnitude'], color='#E91E63', linewidth=0.8)
+    ax.set_title('Frequency Spectrum of Raw Yaw Acceleration')
+    ax.set_xlabel('Frequency (Hz)')
+    ax.set_ylabel('Magnitude (Log Scale)')
+    ax.grid(True, alpha=0.3, which='both')
+
+    # Highlight regions of interest
+    ax.axvspan(1, 3, color='green', alpha=0.1, label='Driver/Handling (1-3Hz)')
+    ax.axvspan(10, 25, color='orange', alpha=0.1, label='Suspension (10-25Hz)')
+    ax.axvspan(50, 100, color='red', alpha=0.1, label='Aliasing/Noise (50Hz+)')
+
+    _safe_legend(ax)
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_clipping_components(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Bar chart showing which components contribute most during clipping events.
+    """
+    if 'Clipping' not in df.columns or not df['Clipping'].any():
+        return ""
+
+    components = [
+        'FFBBase', 'FFBUndersteerDrop', 'FFBOversteerBoost', 'FFBSoP',
+        'FFBRearTorque', 'FFBScrubDrag', 'FFBYawKick', 'FFBGyroDamping',
+        'FFBRoadTexture', 'FFBSlideTexture', 'FFBLockupVibration',
+        'FFBSpinVibration', 'FFBBottomingCrunch', 'FFBABSPulse', 'FFBSoftLock'
+    ]
+
+    if status_callback: status_callback("Analyzing clipping contribution...")
+
+    clipping_df = df[df['Clipping'] == 1]
+    means = {}
+    for comp in components:
+        if comp in df.columns:
+            means[comp.replace('FFB', '')] = clipping_df[comp].abs().mean()
+
+    # Sort by mean contribution
+    sorted_means = dict(sorted(means.items(), key=lambda x: x[1], reverse=True))
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    bars = ax.bar(sorted_means.keys(), sorted_means.values(), color='#FF5722')
+    ax.set_title('Mean Component Magnitude during Clipping Events')
+    ax.set_ylabel('Mean Absolute Force (Nm)')
+    plt.xticks(rotation=45, ha='right')
+    ax.grid(True, alpha=0.3, axis='y')
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
     return ""
 
 def plot_slip_vs_latg(

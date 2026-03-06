@@ -2,6 +2,20 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 13, 2026[/b][/size]
+[b]Version 0.7.130 - Advanced Log Analyzer Diagnostics[/b]
+
+[b]New release[/b] (0.7.130): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Advanced Log Analyzer Diagnostics[/b]: Significantly expanded the Log Analyzer tool with new stats and plots to help diagnose complex physics issues. (#253)
+[*][b]Spectral Analysis (FFT)[/b]: Added frequency-domain analysis for yaw acceleration, allowing you to identify suspension chatter and physics aliasing that cause FFB "fuzzy" noise.
+[*][b]7 New Diagnostic Plots[/b]: Introduced a comprehensive suite of plots including System Health (DeltaTime/Clipping), Threshold Thrashing, Suspension Velocity Correlation, and Ride Height overlays.
+[*][b]Improved Reporting[/b]: The automated diagnostic reports now include detailed sections for Yaw Kick stability and FFB component clipping analysis.
+[/list]
+
+---
+
 [size=5][b]March 12, 2026[/b][/size]
 [b]Version 0.7.123 - Enhanced Transition Monitoring & Unified Logging[/b]
 

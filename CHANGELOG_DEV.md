@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.130] - 2026-03-13
+### Added
+- **Advanced Log Analyzer Diagnostics (Issue #253)**:
+  - Implemented `yaw_analyzer.py` for complex dynamics analysis, including rolling means, straightaway constant pull detection, and threshold crossing rates.
+  - Added **Spectral Analysis (FFT)**: Integrated magnitude spectrum calculation for yaw acceleration to identify physics aliasing and suspension-induced chatter.
+  - Introduced **7 New Diagnostic Plots**:
+    - `Yaw Diagnostic`: Comprehensive multi-panel view of raw vs. smoothed signals and derivation overlays.
+    - `System Health`: Precise tracking of `DeltaTime` frame drops and global clipping status.
+    - `Threshold Thrashing`: Focused visualization of binary gate oscillations.
+    - `Suspension Correlation`: Scatter plots linking suspension velocity to yaw impulses.
+    - `Bottoming Diagnostic`: Ride height vs. Yaw Kick FFB overlays.
+    - `Yaw FFT`: Frequency domain analysis with driver/suspension/noise band annotations.
+    - `Clipping Components`: Quantitative breakdown of force contributions during saturation.
+  - Expanded **Text Reports & CLI**: Integrated all new metrics into the automated diagnostic summary and batch processing workflow.
+
+### Fixed
+- **Reporting Robustness**: Resolved `TypeError` in the reporting layer when comparing `None` values (from missing telemetry) with float thresholds.
+
+### Testing
+- **New Unit Tests**: Added `test_yaw_analyzer.py` verifying FFT accuracy, rolling mean math, and suspension velocity derivation.
+- **Verification**: All 15 tests in the analyzer suite pass.
+
+---
+
 ## [0.7.129] - 2026-03-12
 ### Added
 - **Complete Telemetry Export (Issue #249)**:
