@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-06 20:29:13</td>
+            <td class="headerValue">2026-03-06 22:20:43</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -1358,15 +1358,15 @@
 <span id="L1147"><span class="lineNum">    1147</span>         [<span class="tlaGBC" title="Branch 0 was taken 61 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          61 :     m_saved_static_loads[vehicleName] = value;</span></span>
 <span id="L1148"><span class="lineNum">    1148</span>                 :<span class="tlaGNC">          61 : }</span></span>
 <span id="L1149"><span class="lineNum">    1149</span>                 :             : </span>
-<span id="L1150"><span class="lineNum">    1150</span>                 :<span class="tlaGNC">         134 : bool Config::GetSavedStaticLoad(const std::string&amp; vehicleName, double&amp; value) {</span></span>
-<span id="L1151"><span class="lineNum">    1151</span>         [<span class="tlaGBC" title="Branch 0 was taken 134 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         134 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(m_static_loads_mutex);</span></span>
-<span id="L1152"><span class="lineNum">    1152</span>         [<span class="tlaGBC" title="Branch 0 was taken 134 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         134 :     auto it = m_saved_static_loads.find(vehicleName);</span></span>
-<span id="L1153"><span class="lineNum">    1153</span>         [<span class="tlaGBC" title="Branch 0 was taken 8 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 126 times"> + </span>]:<span class="tlaGNC">         134 :     if (it != m_saved_static_loads.end()) {</span></span>
+<span id="L1150"><span class="lineNum">    1150</span>                 :<span class="tlaGNC">         136 : bool Config::GetSavedStaticLoad(const std::string&amp; vehicleName, double&amp; value) {</span></span>
+<span id="L1151"><span class="lineNum">    1151</span>         [<span class="tlaGBC" title="Branch 0 was taken 136 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         136 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(m_static_loads_mutex);</span></span>
+<span id="L1152"><span class="lineNum">    1152</span>         [<span class="tlaGBC" title="Branch 0 was taken 136 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         136 :     auto it = m_saved_static_loads.find(vehicleName);</span></span>
+<span id="L1153"><span class="lineNum">    1153</span>         [<span class="tlaGBC" title="Branch 0 was taken 8 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 128 times"> + </span>]:<span class="tlaGNC">         136 :     if (it != m_saved_static_loads.end()) {</span></span>
 <span id="L1154"><span class="lineNum">    1154</span>                 :<span class="tlaGNC">           8 :         value = it-&gt;second;</span></span>
 <span id="L1155"><span class="lineNum">    1155</span>                 :<span class="tlaGNC">           8 :         return true;</span></span>
 <span id="L1156"><span class="lineNum">    1156</span>                 :             :     }</span>
-<span id="L1157"><span class="lineNum">    1157</span>                 :<span class="tlaGNC">         126 :     return false;</span></span>
-<span id="L1158"><span class="lineNum">    1158</span>                 :<span class="tlaGNC">         134 : }</span></span>
+<span id="L1157"><span class="lineNum">    1157</span>                 :<span class="tlaGNC">         128 :     return false;</span></span>
+<span id="L1158"><span class="lineNum">    1158</span>                 :<span class="tlaGNC">         136 : }</span></span>
 <span id="L1159"><span class="lineNum">    1159</span>                 :             : </span>
 <span id="L1160"><span class="lineNum">    1160</span>                 :<span class="tlaGNC">          67 : void Config::Save(const FFBEngine&amp; engine, const std::string&amp; filename) {</span></span>
 <span id="L1161"><span class="lineNum">    1161</span>         [<span class="tlaGBC" title="Branch 0 was taken 67 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          67 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
