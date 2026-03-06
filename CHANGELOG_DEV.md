@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.133] - 2026-03-07
+### Changed
+- **Log Filename Convention (Issue #257)**:
+  - Updated the telemetry log filename format to use car brand and class instead of the livery-specific vehicle name.
+  - New format: `lmuffb_log_<timestamp>_<brand>_<class>_<track>.bin`.
+  - This improves log organization and searchability by grouping sessions by car model/class.
+
+### Fixed
+- **Manual Logging Metadata**: Ensured `vehicle_class` and `vehicle_brand` are correctly populated when starting logs manually from the GUI.
+
+### Testing
+- **New Regression Test**: Added `tests/test_issue_257_filenames.cpp` to verify the new filename construction logic.
+
+---
+
 ## [0.7.132] - 2026-03-07
 ### Added
 - **Vehicle Information Logging**:
