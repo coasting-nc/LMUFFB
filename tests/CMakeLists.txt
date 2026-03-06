@@ -96,6 +96,7 @@ set(TEST_SOURCES
     test_issue_241_yaw_kick_rectification.cpp
     test_issue_257_filenames.cpp
     test_issue_265_metadata.cpp
+    test_issue_267_state_detection.cpp
     ../src/main.cpp
 )
 

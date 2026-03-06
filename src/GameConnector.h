@@ -38,6 +38,12 @@ public:
     // Returns true if telemetry data hasn't changed for more than timeout (v0.7.15)
     bool IsStale(long timeoutMs = 100) const;
 
+    // Robust State Accessors (#267)
+    bool IsSessionActive() const { return m_sessionActive.load(std::memory_order_relaxed); }
+    bool IsInRealtime() const { return m_inRealtime.load(std::memory_order_relaxed); }
+    long GetSessionType() const { return m_currentSessionType.load(std::memory_order_relaxed); }
+    unsigned char GetGamePhase() const { return m_currentGamePhase.load(std::memory_order_relaxed); }
+
 private:
     struct TransitionState {
         unsigned char optionsLocation = 255;
@@ -69,6 +75,12 @@ private:
 
     std::atomic<bool> m_connected{false};
     mutable std::recursive_mutex m_mutex;
+
+    // Robust State Machine (#267)
+    std::atomic<bool> m_sessionActive{ false };
+    std::atomic<bool> m_inRealtime{ false };
+    std::atomic<long> m_currentSessionType{ -1 };
+    std::atomic<unsigned char> m_currentGamePhase{ 255 };
 
     // Heartbeat for staleness detection (v0.7.15)
     double m_lastElapsedTime = -1.0;

@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.136] - 2026-03-06
+
+### Added
+- **Robust Session and State Detection (Issue #267)**:
+  - Implemented a formal state machine within `GameConnector` to accurately track the simulation's operational status.
+  - Introduced atomic state variables for `m_sessionActive`, `m_inRealtime`, `m_currentSessionType`, and `m_currentGamePhase`, providing a thread-safe "source of truth" for the entire application.
+  - Enhanced `CheckTransitions` to leverage event-driven triggers (`SME_START_SESSION`, `SME_END_SESSION`, `SME_UNLOAD`, `SME_ENTER_REALTIME`, `SME_EXIT_REALTIME`) for instantaneous state updates, bypassing polling delays.
+  - **FFB Gating Reliability**: Refactored the main FFB loop to use the robust `IsInRealtime()` state, ensuring FFB is strictly muted when the player is not in the cockpit.
+  - **Telemetry Log Integrity**: Updated auto-logging to precisely start/stop based on the robust realtime state.
+  - **Log Session Restarts**: Implemented automatic log rotation when the session type changes (e.g., transitioning from Qualifying to Race) while driving, ensuring logs have correct metadata for each session segment.
+
+### Testing
+- **New Test Suite**: Added `tests/test_issue_267_state_detection.cpp` with comprehensive functional tests for state initialization, event-based transitions, and session type monitoring.
+
 ## [0.7.135] - 2026-03-06
 
 ### Fixed
