@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-06 09:11:33</td>
+            <td class="headerValue">2026-03-06 09:25:35</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -87,15 +87,15 @@
 <span id="L16"><span class="lineNum">      16</span>                 :             : </span>
 <span id="L17"><span class="lineNum">      17</span>                 :             :     // Lock with timeout support - wraps the vendor's Lock() method</span>
 <span id="L18"><span class="lineNum">      18</span>                 :             :     // Returns false if timeout expires or lock acquisition fails</span>
-<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC">        5314 :     bool Lock(DWORD timeout_ms = 50) {</span></span>
+<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC">        5285 :     bool Lock(DWORD timeout_ms = 50) {</span></span>
 <span id="L20"><span class="lineNum">      20</span>                 :             :         // The vendor implementation already supports timeout parameter</span>
 <span id="L21"><span class="lineNum">      21</span>                 :             :         // We just expose it through our wrapper</span>
-<span id="L22"><span class="lineNum">      22</span>                 :<span class="tlaGNC">        5314 :         return m_vendorLock.Lock(timeout_ms);</span></span>
+<span id="L22"><span class="lineNum">      22</span>                 :<span class="tlaGNC">        5285 :         return m_vendorLock.Lock(timeout_ms);</span></span>
 <span id="L23"><span class="lineNum">      23</span>                 :             :     }</span>
 <span id="L24"><span class="lineNum">      24</span>                 :             : </span>
-<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC">        5313 :     void Unlock() {</span></span>
-<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">        5313 :         m_vendorLock.Unlock();</span></span>
-<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        5313 :     }</span></span>
+<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC">        5284 :     void Unlock() {</span></span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">        5284 :         m_vendorLock.Unlock();</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        5284 :     }</span></span>
 <span id="L28"><span class="lineNum">      28</span>                 :             : </span>
 <span id="L29"><span class="lineNum">      29</span>                 :             :     // Move constructor and assignment to allow std::optional usage</span>
 <span id="L30"><span class="lineNum">      30</span>                 :<span class="tlaGNC">       10282 :     SafeSharedMemoryLock(SafeSharedMemoryLock&amp;&amp; other) = default;</span></span>
