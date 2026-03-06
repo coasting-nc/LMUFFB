@@ -6,6 +6,7 @@
 #include "GameConnector.h"
 #include "GuiWidgets.h"
 #include "AsyncLogger.h"
+#include "VehicleUtils.h"
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -227,8 +228,16 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
          if (ImGui::Button("START LOGGING", ImVec2(120, 0))) {
              SessionInfo info;
              info.app_version = LMUFFB_VERSION;
-             if (engine.m_vehicle_name[0] != '\0') info.vehicle_name = engine.m_vehicle_name;
-             else info.vehicle_name = "UnknownCar";
+             if (engine.m_vehicle_name[0] != '\0') {
+                 info.vehicle_name = engine.m_vehicle_name;
+                 ParsedVehicleClass vclass = ParseVehicleClass(engine.m_current_class_name.c_str(), engine.m_vehicle_name);
+                 info.vehicle_class = VehicleClassToString(vclass);
+                 info.vehicle_brand = ParseVehicleBrand(engine.m_current_class_name.c_str(), engine.m_vehicle_name);
+             } else {
+                 info.vehicle_name = "UnknownCar";
+                 info.vehicle_class = "UnknownClass";
+                 info.vehicle_brand = "UnknownBrand";
+             }
 
              if (engine.m_track_name[0] != '\0') info.track_name = engine.m_track_name;
              else info.track_name = "UnknownTrack";

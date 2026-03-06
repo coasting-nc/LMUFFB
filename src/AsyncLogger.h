@@ -239,7 +239,8 @@ public:
         ss << std::put_time(&time_info, "%Y-%m-%d_%H-%M-%S");
         std::string timestamp_str = ss.str();
         
-        std::string car = SanitizeFilename(info.vehicle_name);
+        std::string brand = SanitizeFilename(info.vehicle_brand);
+        std::string vclass = SanitizeFilename(info.vehicle_class);
         std::string track = SanitizeFilename(info.track_name);
         
         std::string path_prefix = base_path;
@@ -256,7 +257,7 @@ public:
             }
         }
 
-        m_filename = path_prefix + "lmuffb_log_" + timestamp_str + "_" + car + "_" + track + ".bin";
+        m_filename = path_prefix + "lmuffb_log_" + timestamp_str + "_" + brand + "_" + vclass + "_" + track + ".bin";
 
         // Open file in binary mode
         m_file.open(m_filename, std::ios::out | std::ios::binary);
