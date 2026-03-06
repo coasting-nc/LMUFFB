@@ -99,3 +99,44 @@ const char* VehicleClassToString(ParsedVehicleClass vclass) {
         default:                                   return "Unknown";
     }
 }
+
+// Helper: Parse vehicle brand from strings (v0.7.132)
+const char* ParseVehicleBrand(const char* className, const char* vehicleName) {
+    if (!vehicleName) return "Unknown";
+    
+    std::string name = vehicleName;
+    // Normalize for case-insensitive matching
+    std::transform(name.begin(), name.end(), name.begin(), ::toupper);
+
+    if (name.find("FERRARI") != std::string::npos || name.find("499P") != std::string::npos || name.find("488") != std::string::npos || name.find("296") != std::string::npos) return "Ferrari";
+    if (name.find("TOYOTA") != std::string::npos || name.find("GR010") != std::string::npos) return "Toyota";
+    if (name.find("PORSCHE") != std::string::npos || name.find("963") != std::string::npos || name.find("911") != std::string::npos || name.find("RSR") != std::string::npos) return "Porsche";
+    if (name.find("PEUGEOT") != std::string::npos || name.find("9X8") != std::string::npos) return "Peugeot";
+    if (name.find("CADILLAC") != std::string::npos || name.find("V-SERIES") != std::string::npos) return "Cadillac";
+    if (name.find("LAMBORGHINI") != std::string::npos || name.find("SC63") != std::string::npos || name.find("HURACAN") != std::string::npos) return "Lamborghini";
+    if (name.find("BMW") != std::string::npos || name.find("M HYBRID") != std::string::npos || name.find("M4") != std::string::npos) return "BMW";
+    if (name.find("ALPINE") != std::string::npos || name.find("A424") != std::string::npos) return "Alpine";
+    if (name.find("ISOTTA") != std::string::npos || name.find("TIPO 6") != std::string::npos) return "Isotta Fraschini";
+    if (name.find("GLICKENHAUS") != std::string::npos || name.find("SCG") != std::string::npos) return "Glickenhaus";
+    if (name.find("VANWALL") != std::string::npos || name.find("680") != std::string::npos) return "Vanwall";
+    if (name.find("ORECA") != std::string::npos || name.find("07") != std::string::npos) return "Oreca";
+    if (name.find("ASTON") != std::string::npos || name.find("VANTAGE") != std::string::npos) return "Aston Martin";
+    if (name.find("CORVETTE") != std::string::npos || name.find("C8.R") != std::string::npos || name.find("Z06") != std::string::npos) return "Corvette";
+    if (name.find("FORD") != std::string::npos || name.find("MUSTANG") != std::string::npos) return "Ford";
+    if (name.find("MCLAREN") != std::string::npos || name.find("720S") != std::string::npos) return "McLaren";
+    if (name.find("LEXUS") != std::string::npos || name.find("RC F") != std::string::npos) return "Lexus";
+    if (name.find("LIGIER") != std::string::npos || name.find("JS P320") != std::string::npos) return "Ligier";
+    if (name.find("DUQUEINE") != std::string::npos || name.find("D08") != std::string::npos) return "Duqueine";
+    if (name.find("GINETTA") != std::string::npos || name.find("G61") != std::string::npos) return "Ginetta";
+
+    // Backup: Check Class Name if vehicle name is ambiguous
+    if (className) {
+        std::string cls = className;
+        std::transform(cls.begin(), cls.end(), cls.begin(), ::toupper);
+        if (cls.find("FERRARI") != std::string::npos) return "Ferrari";
+        if (cls.find("PORSCHE") != std::string::npos) return "Porsche";
+        // ... more can be added if needed
+    }
+
+    return "Unknown";
+}

@@ -35,7 +35,7 @@ def _show_info(metadata, df):
     console.print(Panel.fit(
         f"[bold blue]Session Information[/bold blue]\n\n"
         f"Driver: {metadata.driver_name}\n"
-        f"Vehicle: {metadata.vehicle_name}\n"
+        f"Vehicle: {metadata.vehicle_name} ({metadata.car_brand} {metadata.car_class})\n"
         f"Track: {metadata.track_name}\n"
         f"Duration: {df['Time'].max():.1f} seconds\n"
         f"Frames: {len(df)}\n"

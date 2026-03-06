@@ -2,6 +2,19 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 7, 2026[/b][/size]
+[b]Version 0.7.132 - Vehicle Class & Brand Identification[/b]
+
+[b]New release[/b] (0.7.132): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Vehicle Identification Enhancement[/b]: The log file header now includes structured fields for the [b]Car Class[/b] and [b]Car Brand[/b]. Instead of showing only the livery name (like "Iron Lynx #9"), the log analyzer can now tell you it's a "Ferrari" within the "Hypercar" class. (#255)
+[*][b]Improved Log Analyzer Reports[/b]: Updated the terminal output and Markdown reports to display this new vehicle information, along with the [b]Session Duration[/b], making it easier to categorize and search your telemetry logs.
+[*][b]Auto-Start Fix[/b]: Fixed a regression where the logger would fail to gather correct car info when auto-start was triggered on-track.
+[/list]
+
+---
+
 [size=5][b]March 6, 2026[/b][/size]
 [b]Version 0.7.131 - LZ4 Block Compression for Telemetry Logs[/b]
 

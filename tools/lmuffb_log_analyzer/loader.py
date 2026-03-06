@@ -444,6 +444,8 @@ def _parse_header(path: Path) -> SessionMetadata:
         app_version=header_data.get('app_version', 'unknown'),
         driver_name=header_data.get('driver', 'Unknown'),
         vehicle_name=header_data.get('vehicle', 'Unknown'),
+        car_class=header_data.get('car_class', 'Unknown'),
+        car_brand=header_data.get('car_brand', 'Unknown'),
         track_name=header_data.get('track', 'Unknown'),
         gain=float(header_data.get('gain', 1.0)),
         understeer_effect=float(header_data.get('understeer_effect', 1.0)),

@@ -23,4 +23,7 @@ double GetDefaultLoadForClass(ParsedVehicleClass vclass);
 // Helper: String representation of parsed class for logging and UI
 const char* VehicleClassToString(ParsedVehicleClass vclass);
 
+// Helper: Parse vehicle brand from strings (v0.7.132)
+const char* ParseVehicleBrand(const char* className, const char* vehicleName);
+
 #endif // VEHICLE_UTILS_H

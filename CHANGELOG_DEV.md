@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.132] - 2026-03-07
+### Added
+- **Vehicle Information Logging**:
+  - Enhanced binary log header to include structured `Car Class` and `Car Brand` fields.
+  - Implemented `ParseVehicleBrand` utility to identify car brands (e.g., Ferrari, Toyota) from livery names.
+- **Log Analyzer Enhancements**:
+  - Updated Python log analyzer to parse and display car class and brand in the terminal output and Markdown reports.
+  - Added session duration field to the generated text reports.
+
+### Fixed
+- **Logger Initialization**: Corrected scope issues in `main.cpp` when populating session metadata from telemetry scoring info during auto-start.
+
+---
+
 ## [0.7.131] - 2026-03-06
 ### Added
 - **LZ4 Block Compression enabled by default (Issue #254)**:

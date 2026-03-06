@@ -188,6 +188,8 @@ struct LogFrame {
 struct SessionInfo {
     std::string driver_name;
     std::string vehicle_name;
+    std::string vehicle_class; // v0.7.132
+    std::string vehicle_brand; // v0.7.132
     std::string track_name;
     std::string app_version;
     
@@ -400,6 +402,8 @@ private:
         m_file << "# ========================\n";
         m_file << "# Driver: " << info.driver_name << "\n";
         m_file << "# Vehicle: " << info.vehicle_name << "\n";
+        m_file << "# Car Class: " << info.vehicle_class << "\n";
+        m_file << "# Car Brand: " << info.vehicle_brand << "\n";
         m_file << "# Track: " << info.track_name << "\n";
         m_file << "# ========================\n";
         m_file << "# FFB Settings\n";

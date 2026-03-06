@@ -30,9 +30,12 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     report.append("-" * 20)
     report.append(f"Driver:       {metadata.driver_name}")
     report.append(f"Vehicle:      {metadata.vehicle_name}")
+    report.append(f"Car Class:    {metadata.car_class}")
+    report.append(f"Car Brand:    {metadata.car_brand}")
     report.append(f"Track:        {metadata.track_name}")
     report.append(f"Date:         {metadata.timestamp}")
     report.append(f"App Version:  {metadata.app_version}")
+    report.append(f"Duration:     {df['Time'].max():.1f} seconds")
     report.append("")
     
     report.append("SETTINGS")
