@@ -7,41 +7,6 @@
 
 namespace FFBEngineTests {
 
-// Accessor to reach private members of GameConnector
-class GameConnectorTestAccessor {
-public:
-    static void Reset(GameConnector& gc) {
-        std::lock_guard<std::recursive_mutex> lock(gc.m_mutex);
-        gc._DisconnectLocked();
-        gc.m_sessionActive.store(false);
-        gc.m_inRealtime.store(false);
-        gc.m_currentSessionType.store(-1);
-        gc.m_currentGamePhase.store(255);
-        memset(&gc.m_prevState, 0, sizeof(gc.m_prevState));
-        gc.m_prevState.optionsLocation = 255;
-        gc.m_prevState.gamePhase = 255;
-        gc.m_prevState.session = -1;
-        gc.m_prevState.control = -2;
-        gc.m_prevState.pitState = 255;
-        gc.m_prevState.steeringRange = -1.0f;
-    }
-
-    static void SetSharedMem(GameConnector& gc, SharedMemoryLayout* layout) {
-        std::lock_guard<std::recursive_mutex> lock(gc.m_mutex);
-        gc.m_pSharedMemLayout = layout;
-        gc.m_connected = true;
-    }
-
-    static void SetSessionActive(GameConnector& gc, bool val) { gc.m_sessionActive.store(val); }
-    static void SetInRealtime(GameConnector& gc, bool val) { gc.m_inRealtime.store(val); }
-    static void SetSessionType(GameConnector& gc, long val) { gc.m_currentSessionType.store(val); }
-    static void SetGamePhase(GameConnector& gc, unsigned char val) { gc.m_currentGamePhase.store(val); }
-
-    static void InjectTransitions(GameConnector& gc, const SharedMemoryObjectOut& data) {
-        gc.CheckTransitions(data);
-    }
-};
-
 TEST_CASE_TAGGED(test_issue_267_initial_connection_menu, "Functional", (std::vector<std::string>{"state_machine"})) {
     GameConnector& gc = GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);

@@ -183,6 +183,39 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
       ImGui::TextColored(ImVec4(0, 1, 0, 1), "Connected to LMU");
       ImGui::SameLine();
       ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Loop: %.0fHz | Phys: %.0fHz | Tel: %.0fHz", engine.m_ffb_rate, engine.m_physics_rate, engine.m_telemetry_rate);
+
+      // Robust State Machine (#269)
+      bool active = GameConnector::Get().IsSessionActive();
+      ImGui::TextColored(active ? ImVec4(0.4f, 1.0f, 0.4f, 1.0f) : ImVec4(0.7f, 0.7f, 0.7f, 1.0f),
+          "Sim: %s", active ? "Track Loaded" : "Main Menu");
+
+      if (active) {
+          ImGui::SameLine();
+          const char* sessionStr = "Unknown";
+          long stype = GameConnector::Get().GetSessionType();
+          if (stype == 0) sessionStr = "Test Day";
+          else if (stype >= 1 && stype <= 4) sessionStr = "Practice";
+          else if (stype >= 5 && stype <= 8) sessionStr = "Qualifying";
+          else if (stype == 9) sessionStr = "Warmup";
+          else if (stype >= 10 && stype <= 13) sessionStr = "Race";
+          ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Session: %s", sessionStr);
+
+          bool driving = GameConnector::Get().IsInRealtime();
+          ImGui::TextColored(driving ? ImVec4(0.4f, 1.0f, 0.4f, 1.0f) : ImVec4(1.0f, 1.0f, 0.4f, 1.0f),
+              "State: %s", driving ? "Driving" : "In Menu");
+
+          ImGui::SameLine();
+          const char* ctrlStr = "Unknown";
+          signed char ctrl = GameConnector::Get().GetPlayerControl();
+          switch (ctrl) {
+              case -1: ctrlStr = "Nobody"; break;
+              case 0: ctrlStr = "Player"; break;
+              case 1: ctrlStr = "AI"; break;
+              case 2: ctrlStr = "Remote"; break;
+              case 3: ctrlStr = "Replay"; break;
+          }
+          ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Control: %s", ctrlStr);
+      }
     }
 
     static std::vector<DeviceInfo> devices;
@@ -265,61 +298,41 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::SHOW_GRAPHS);
 
     ImGui::Separator();
-    bool is_logging = AsyncLogger::Get().IsLogging();
+    bool is_logging = Config::m_auto_start_logging;
     if (is_logging) {
          if (ImGui::Button("STOP LOG", ImVec2(80, 0))) {
+             Config::m_auto_start_logging = false;
              AsyncLogger::Get().Stop();
+             Config::Save(engine);
          }
          if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_STOP);
          ImGui::SameLine();
-         float time = (float)ImGui::GetTime();
-         bool blink = (fmod(time, 1.0f) < 0.5f);
-         ImGui::TextColored(blink ? ImVec4(1,0,0,1) : ImVec4(0.6f,0,0,1), "REC");
-         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_REC);
+         if (AsyncLogger::Get().IsLogging()) {
+             float time = (float)ImGui::GetTime();
+             bool blink = (fmod(time, 1.0f) < 0.5f);
+             ImGui::TextColored(blink ? ImVec4(1, 0, 0, 1) : ImVec4(0.6f, 0, 0, 1), "REC");
+             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_REC);
 
-         ImGui::SameLine();
-         size_t bytes = AsyncLogger::Get().GetFileSizeBytes();
-         if (bytes < 1024ULL * 1024ULL)
-             ImGui::Text("%zu f (%.0f KB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / 1024.0f);
-         else
-             ImGui::Text("%zu f (%.1f MB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / (1024.0f * 1024.0f));
+             ImGui::SameLine();
+             size_t bytes = AsyncLogger::Get().GetFileSizeBytes();
+             if (bytes < 1024ULL * 1024ULL)
+                 ImGui::Text("%zu f (%.0f KB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / 1024.0f);
+             else
+                 ImGui::Text("%zu f (%.1f MB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / (1024.0f * 1024.0f));
 
-         ImGui::SameLine();
-         if (ImGui::Button("MARKER")) {
-             AsyncLogger::Get().SetMarker();
+             ImGui::SameLine();
+             if (ImGui::Button("MARKER")) {
+                 AsyncLogger::Get().SetMarker();
+             }
+             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_MARKER);
+         } else {
+             ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "ARMED");
+             if (ImGui::IsItemHovered()) ImGui::SetTooltip("Waiting for driving to start...");
          }
-         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_MARKER);
     } else {
          if (ImGui::Button("START LOGGING", ImVec2(120, 0))) {
-             SessionInfo info;
-             info.app_version = LMUFFB_VERSION;
-             if (engine.m_vehicle_name[0] != '\0') {
-                 info.vehicle_name = engine.m_vehicle_name;
-                 ParsedVehicleClass vclass = ParseVehicleClass(engine.m_current_class_name.c_str(), engine.m_vehicle_name);
-                 info.vehicle_class = VehicleClassToString(vclass);
-                 info.vehicle_brand = ParseVehicleBrand(engine.m_current_class_name.c_str(), engine.m_vehicle_name);
-             } else {
-                 info.vehicle_name = "UnknownCar";
-                 info.vehicle_class = "UnknownClass";
-                 info.vehicle_brand = "UnknownBrand";
-             }
-
-             if (engine.m_track_name[0] != '\0') info.track_name = engine.m_track_name;
-             else info.track_name = "UnknownTrack";
-
-             info.driver_name = "Auto";
-
-             info.gain = engine.m_gain;
-             info.understeer_effect = engine.m_understeer_effect;
-             info.sop_effect = engine.m_sop_effect;
-             info.slope_enabled = engine.m_slope_detection_enabled;
-             info.slope_sensitivity = engine.m_slope_sensitivity;
-             info.slope_threshold = (float)engine.m_slope_min_threshold;
-             info.slope_alpha_threshold = engine.m_slope_alpha_threshold;
-             info.slope_decay_rate = engine.m_slope_decay_rate;
-             info.torque_passthrough = engine.m_torque_passthrough;
-
-             AsyncLogger::Get().Start(info, Config::m_log_path);
+             Config::m_auto_start_logging = true;
+             Config::Save(engine);
          }
          if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_START);
          ImGui::SameLine();
@@ -856,7 +869,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
 
         if (ImGui::TreeNode("Telemetry Logger")) {
-            if (ImGui::Checkbox("Auto-Start on Session", &Config::m_auto_start_logging)) {
+            if (ImGui::Checkbox("Enable Logging Logic", &Config::m_auto_start_logging)) {
                 Config::Save(engine);
             }
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::AUTO_START_LOGGING);

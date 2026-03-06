@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.137] - 2026-03-06
+- Leveraged robust session state detection (#269) to improve telemetry logging triggers.
+- Updated GUI Health Monitor to display Sim Status, Session Type, Player State, and Control.
+- Improved FFB gating: primary physics is now muted during AI control or in menus, but Soft Lock is preserved.
+
 ## [0.7.136] - 2026-03-06
 
 ### Added

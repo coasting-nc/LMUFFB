@@ -97,6 +97,7 @@ set(TEST_SOURCES
     test_issue_257_filenames.cpp
     test_issue_265_metadata.cpp
     test_issue_267_state_detection.cpp
+    test_issue_269_state_detection.cpp
     ../src/main.cpp
 )
 

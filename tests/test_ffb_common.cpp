@@ -1,4 +1,5 @@
 #include "test_ffb_common.h"
+#include "../src/GameConnector.h"
 
 namespace FFBEngineTests {
 
@@ -166,6 +167,40 @@ void InitializeEngine(FFBEngine& engine) {
     // v0.7.109: Ensure toggles are initialized to FALSE to match global defaults
     engine.m_dynamic_normalization_enabled = false;
     engine.m_auto_load_normalization_enabled = false;
+}
+
+// --- Friend Access for Testing ---
+void GameConnectorTestAccessor::Reset(::GameConnector& gc) {
+    std::lock_guard<std::recursive_mutex> lock(gc.m_mutex);
+    gc._DisconnectLocked();
+    gc.m_sessionActive.store(false);
+    gc.m_inRealtime.store(false);
+    gc.m_currentSessionType.store(-1);
+    gc.m_currentGamePhase.store(255);
+    gc.m_playerControl.store(-2);
+    memset(&gc.m_prevState, 0, sizeof(gc.m_prevState));
+    gc.m_prevState.optionsLocation = 255;
+    gc.m_prevState.gamePhase = 255;
+    gc.m_prevState.session = -1;
+    gc.m_prevState.control = -2;
+    gc.m_prevState.pitState = 255;
+    gc.m_prevState.steeringRange = -1.0f;
+}
+
+void GameConnectorTestAccessor::SetSharedMem(::GameConnector& gc, SharedMemoryLayout* layout) {
+    std::lock_guard<std::recursive_mutex> lock(gc.m_mutex);
+    gc.m_pSharedMemLayout = layout;
+    gc.m_connected = true;
+}
+
+void GameConnectorTestAccessor::SetSessionActive(::GameConnector& gc, bool val) { gc.m_sessionActive.store(val); }
+void GameConnectorTestAccessor::SetInRealtime(::GameConnector& gc, bool val) { gc.m_inRealtime.store(val); }
+void GameConnectorTestAccessor::SetSessionType(::GameConnector& gc, long val) { gc.m_currentSessionType.store(val); }
+void GameConnectorTestAccessor::SetGamePhase(::GameConnector& gc, unsigned char val) { gc.m_currentGamePhase.store(val); }
+void GameConnectorTestAccessor::SetPlayerControl(::GameConnector& gc, signed char val) { gc.m_playerControl.store(val); }
+
+void GameConnectorTestAccessor::InjectTransitions(::GameConnector& gc, const SharedMemoryObjectOut& data) {
+    gc.CheckTransitions(data);
 }
 
 // Orientation Matrix Helper Implementation

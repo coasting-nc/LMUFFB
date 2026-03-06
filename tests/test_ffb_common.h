@@ -18,6 +18,7 @@
 #include "../src/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include "../src/Config.h"
 #include "../src/Logger.h"
+#include "../src/GameConnector.h"
 
 namespace FFBEngineTests {
 
@@ -116,6 +117,16 @@ extern std::string g_current_test_name; // Set by Run() before each test
     } else { \
         std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (\"" << (a) << "\") != " \
                   << #b << " (\"" << (b) << "\")" \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+        g_tests_failed++; \
+    }
+
+#define ASSERT_NE(a, b) \
+    if ((a) != (b)) { \
+        g_tests_passed++; \
+    } else { \
+        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") == " \
+                  << #b << " (" << (b) << ")" \
                   << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
         g_tests_failed++; \
     }
@@ -219,6 +230,18 @@ int CountInLog(const std::string& filename, const std::string& pattern);
 void Run(); // Main runner
 
 // --- Friend Access for Testing ---
+class GameConnectorTestAccessor {
+public:
+    static void Reset(::GameConnector& gc);
+    static void SetSharedMem(::GameConnector& gc, struct SharedMemoryLayout* layout);
+    static void SetSessionActive(::GameConnector& gc, bool val);
+    static void SetInRealtime(::GameConnector& gc, bool val);
+    static void SetSessionType(::GameConnector& gc, long val);
+    static void SetGamePhase(::GameConnector& gc, unsigned char val);
+    static void SetPlayerControl(::GameConnector& gc, signed char val);
+    static void InjectTransitions(::GameConnector& gc, const struct SharedMemoryObjectOut& data);
+};
+
 class FFBEngineTestAccess {
 public:
     static bool HasWarnings(const FFBEngine& engine) {

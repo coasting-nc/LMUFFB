@@ -88,6 +88,13 @@ bool GameConnector::TryConnect() {
         m_inRealtime = (m_pSharedMemLayout->data.scoring.scoringInfo.mInRealtime != 0);
         m_currentSessionType = m_pSharedMemLayout->data.scoring.scoringInfo.mSession;
         m_currentGamePhase = m_pSharedMemLayout->data.scoring.scoringInfo.mGamePhase;
+
+        if (m_pSharedMemLayout->data.telemetry.playerHasVehicle) {
+            uint8_t idx = m_pSharedMemLayout->data.telemetry.playerVehicleIdx;
+            if (idx < 104) {
+                m_playerControl = m_pSharedMemLayout->data.scoring.vehScoringInfo[idx].mControl;
+            }
+        }
     }
 
     m_lastUpdateLocalTime = std::chrono::steady_clock::now();
@@ -321,6 +328,7 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
                 Logger::Get().LogFile("[Transition] Control: %d -> %d (%s)",
                     m_prevState.control, vehScoring.mControl, ctrlStr);
                 m_prevState.control = vehScoring.mControl;
+                m_playerControl = vehScoring.mControl;
             }
 
             if (vehScoring.mPitState != m_prevState.pitState) {
