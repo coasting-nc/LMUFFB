@@ -96,3 +96,10 @@ Verify the state transitions and FFB gating logic using mocks since the actual g
 
 ### Recommendations
 - The state machine in `GameConnector` is now quite robust. Future improvements could involve adding more SME events (like pit requests) to the GUI for even better transparency.
+
+### Metadata Population and Regression Analysis
+During code review, it was identified that moving the logging start logic to the `FFBThread` required re-populating `SessionInfo` metadata (vehicle class, brand, and track name) to avoid regressions where logs were created with incomplete header information.
+
+- **Fix**: The `main.cpp` FFB loop now correctly initializes `SessionInfo` by performing vehicle class and brand parsing immediately before starting the `AsyncLogger`.
+- **Verification**: Verified that `.bin` filenames generated in `main.cpp` correctly include the brand and class (e.g., `_Ferrari_Hypercar_`), matching the behavior of manual GUI-triggered logging. The `test_issue_257_log_filename_format` confirms that the filename format remains consistent.
+- **Review 2/3 Alignment**: Review 2 identified the metadata omission as a "nitpick" regression. Review 3 confirmed that the re-population logic in `main.cpp` correctly addressed this, ensuring 100% metadata parity between manual and automated logging paths.
