@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-06 19:47:14</td>
+            <td class="headerValue">2026-03-06 20:29:13</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -49,9 +49,9 @@
             <td></td>
             <td></td>
             <td class="headerItem">Branches:</td>
-            <td class="headerCovTableEntryMed">81.0&nbsp;%</td>
+            <td class="headerCovTableEntryMed">80.3&nbsp;%</td>
             <td class="headerCovTableEntry">564</td>
-            <td class="headerCovTableEntry">457</td>
+            <td class="headerCovTableEntry">453</td>
           </tr>
                   <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
                 </table>
@@ -834,171 +834,171 @@
 <span id="L750"><span class="lineNum">     750</span>                 :<span class="tlaGNC">       12845 :     }</span></span>
 <span id="L751"><span class="lineNum">     751</span>                 :             :     </span>
 <span id="L752"><span class="lineNum">     752</span>                 :             :     // Telemetry Logging (v0.7.129: Augmented Binary &amp; 400Hz)</span>
-<span id="L753"><span class="lineNum">     753</span>   [<span class="tlaGBC" title="Branch 0 was taken 12845 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 306 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 12539 times"> + </span>]:<span class="tlaGNC">       12845 :     if (AsyncLogger::Get().IsLogging()) {</span></span>
+<span id="L753"><span class="lineNum">     753</span>   [<span class="tlaGBC" title="Branch 0 was taken 12845 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 41 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 12804 times"> + </span>]:<span class="tlaGNC">       12845 :     if (AsyncLogger::Get().IsLogging()) {</span></span>
 <span id="L754"><span class="lineNum">     754</span>                 :             :         LogFrame frame;</span>
-<span id="L755"><span class="lineNum">     755</span>                 :<span class="tlaGNC">         306 :         frame.timestamp = upsampled_data-&gt;mElapsedTime;</span></span>
-<span id="L756"><span class="lineNum">     756</span>                 :<span class="tlaGNC">         306 :         frame.delta_time = ctx.dt;</span></span>
+<span id="L755"><span class="lineNum">     755</span>                 :<span class="tlaGNC">          41 :         frame.timestamp = upsampled_data-&gt;mElapsedTime;</span></span>
+<span id="L756"><span class="lineNum">     756</span>                 :<span class="tlaGNC">          41 :         frame.delta_time = ctx.dt;</span></span>
 <span id="L757"><span class="lineNum">     757</span>                 :             :         </span>
 <span id="L758"><span class="lineNum">     758</span>                 :             :         // --- PROCESSED 400Hz DATA (Smooth) ---</span>
-<span id="L759"><span class="lineNum">     759</span>                 :<span class="tlaGNC">         306 :         frame.speed = (float)ctx.car_speed;</span></span>
-<span id="L760"><span class="lineNum">     760</span>                 :<span class="tlaGNC">         306 :         frame.lat_accel = (float)upsampled_data-&gt;mLocalAccel.x;</span></span>
-<span id="L761"><span class="lineNum">     761</span>                 :<span class="tlaGNC">         306 :         frame.long_accel = (float)upsampled_data-&gt;mLocalAccel.z;</span></span>
-<span id="L762"><span class="lineNum">     762</span>                 :<span class="tlaGNC">         306 :         frame.yaw_rate = (float)upsampled_data-&gt;mLocalRot.y;</span></span>
+<span id="L759"><span class="lineNum">     759</span>                 :<span class="tlaGNC">          41 :         frame.speed = (float)ctx.car_speed;</span></span>
+<span id="L760"><span class="lineNum">     760</span>                 :<span class="tlaGNC">          41 :         frame.lat_accel = (float)upsampled_data-&gt;mLocalAccel.x;</span></span>
+<span id="L761"><span class="lineNum">     761</span>                 :<span class="tlaGNC">          41 :         frame.long_accel = (float)upsampled_data-&gt;mLocalAccel.z;</span></span>
+<span id="L762"><span class="lineNum">     762</span>                 :<span class="tlaGNC">          41 :         frame.yaw_rate = (float)upsampled_data-&gt;mLocalRot.y;</span></span>
 <span id="L763"><span class="lineNum">     763</span>                 :             : </span>
-<span id="L764"><span class="lineNum">     764</span>                 :<span class="tlaGNC">         306 :         frame.steering = (float)upsampled_data-&gt;mUnfilteredSteering;</span></span>
-<span id="L765"><span class="lineNum">     765</span>                 :<span class="tlaGNC">         306 :         frame.throttle = (float)upsampled_data-&gt;mUnfilteredThrottle;</span></span>
-<span id="L766"><span class="lineNum">     766</span>                 :<span class="tlaGNC">         306 :         frame.brake = (float)upsampled_data-&gt;mUnfilteredBrake;</span></span>
+<span id="L764"><span class="lineNum">     764</span>                 :<span class="tlaGNC">          41 :         frame.steering = (float)upsampled_data-&gt;mUnfilteredSteering;</span></span>
+<span id="L765"><span class="lineNum">     765</span>                 :<span class="tlaGNC">          41 :         frame.throttle = (float)upsampled_data-&gt;mUnfilteredThrottle;</span></span>
+<span id="L766"><span class="lineNum">     766</span>                 :<span class="tlaGNC">          41 :         frame.brake = (float)upsampled_data-&gt;mUnfilteredBrake;</span></span>
 <span id="L767"><span class="lineNum">     767</span>                 :             : </span>
 <span id="L768"><span class="lineNum">     768</span>                 :             :         // --- RAW 100Hz GAME DATA (Step-function) ---</span>
-<span id="L769"><span class="lineNum">     769</span>                 :<span class="tlaGNC">         306 :         frame.raw_steering = (float)data-&gt;mUnfilteredSteering;</span></span>
-<span id="L770"><span class="lineNum">     770</span>                 :<span class="tlaGNC">         306 :         frame.raw_throttle = (float)data-&gt;mUnfilteredThrottle;</span></span>
-<span id="L771"><span class="lineNum">     771</span>                 :<span class="tlaGNC">         306 :         frame.raw_brake = (float)data-&gt;mUnfilteredBrake;</span></span>
-<span id="L772"><span class="lineNum">     772</span>                 :<span class="tlaGNC">         306 :         frame.raw_lat_accel = (float)data-&gt;mLocalAccel.x;</span></span>
-<span id="L773"><span class="lineNum">     773</span>                 :<span class="tlaGNC">         306 :         frame.raw_long_accel = (float)data-&gt;mLocalAccel.z;</span></span>
-<span id="L774"><span class="lineNum">     774</span>                 :<span class="tlaGNC">         306 :         frame.raw_game_yaw_accel = (float)data-&gt;mLocalRotAccel.y;</span></span>
-<span id="L775"><span class="lineNum">     775</span>                 :<span class="tlaGNC">         306 :         frame.raw_game_shaft_torque = (float)data-&gt;mSteeringShaftTorque;</span></span>
-<span id="L776"><span class="lineNum">     776</span>                 :<span class="tlaGNC">         306 :         frame.raw_game_gen_torque = (float)genFFBTorque;</span></span>
+<span id="L769"><span class="lineNum">     769</span>                 :<span class="tlaGNC">          41 :         frame.raw_steering = (float)data-&gt;mUnfilteredSteering;</span></span>
+<span id="L770"><span class="lineNum">     770</span>                 :<span class="tlaGNC">          41 :         frame.raw_throttle = (float)data-&gt;mUnfilteredThrottle;</span></span>
+<span id="L771"><span class="lineNum">     771</span>                 :<span class="tlaGNC">          41 :         frame.raw_brake = (float)data-&gt;mUnfilteredBrake;</span></span>
+<span id="L772"><span class="lineNum">     772</span>                 :<span class="tlaGNC">          41 :         frame.raw_lat_accel = (float)data-&gt;mLocalAccel.x;</span></span>
+<span id="L773"><span class="lineNum">     773</span>                 :<span class="tlaGNC">          41 :         frame.raw_long_accel = (float)data-&gt;mLocalAccel.z;</span></span>
+<span id="L774"><span class="lineNum">     774</span>                 :<span class="tlaGNC">          41 :         frame.raw_game_yaw_accel = (float)data-&gt;mLocalRotAccel.y;</span></span>
+<span id="L775"><span class="lineNum">     775</span>                 :<span class="tlaGNC">          41 :         frame.raw_game_shaft_torque = (float)data-&gt;mSteeringShaftTorque;</span></span>
+<span id="L776"><span class="lineNum">     776</span>                 :<span class="tlaGNC">          41 :         frame.raw_game_gen_torque = (float)genFFBTorque;</span></span>
 <span id="L777"><span class="lineNum">     777</span>                 :             : </span>
-<span id="L778"><span class="lineNum">     778</span>                 :<span class="tlaGNC">         306 :         frame.raw_load_fl = (float)data-&gt;mWheel[0].mTireLoad;</span></span>
-<span id="L779"><span class="lineNum">     779</span>                 :<span class="tlaGNC">         306 :         frame.raw_load_fr = (float)data-&gt;mWheel[1].mTireLoad;</span></span>
-<span id="L780"><span class="lineNum">     780</span>                 :<span class="tlaGNC">         306 :         frame.raw_load_rl = (float)data-&gt;mWheel[2].mTireLoad;</span></span>
-<span id="L781"><span class="lineNum">     781</span>                 :<span class="tlaGNC">         306 :         frame.raw_load_rr = (float)data-&gt;mWheel[3].mTireLoad;</span></span>
+<span id="L778"><span class="lineNum">     778</span>                 :<span class="tlaGNC">          41 :         frame.raw_load_fl = (float)data-&gt;mWheel[0].mTireLoad;</span></span>
+<span id="L779"><span class="lineNum">     779</span>                 :<span class="tlaGNC">          41 :         frame.raw_load_fr = (float)data-&gt;mWheel[1].mTireLoad;</span></span>
+<span id="L780"><span class="lineNum">     780</span>                 :<span class="tlaGNC">          41 :         frame.raw_load_rl = (float)data-&gt;mWheel[2].mTireLoad;</span></span>
+<span id="L781"><span class="lineNum">     781</span>                 :<span class="tlaGNC">          41 :         frame.raw_load_rr = (float)data-&gt;mWheel[3].mTireLoad;</span></span>
 <span id="L782"><span class="lineNum">     782</span>                 :             : </span>
-<span id="L783"><span class="lineNum">     783</span>                 :<span class="tlaGNC">         306 :         frame.raw_slip_vel_lat_fl = (float)data-&gt;mWheel[0].mLateralPatchVel;</span></span>
-<span id="L784"><span class="lineNum">     784</span>                 :<span class="tlaGNC">         306 :         frame.raw_slip_vel_lat_fr = (float)data-&gt;mWheel[1].mLateralPatchVel;</span></span>
-<span id="L785"><span class="lineNum">     785</span>                 :<span class="tlaGNC">         306 :         frame.raw_slip_vel_lat_rl = (float)data-&gt;mWheel[2].mLateralPatchVel;</span></span>
-<span id="L786"><span class="lineNum">     786</span>                 :<span class="tlaGNC">         306 :         frame.raw_slip_vel_lat_rr = (float)data-&gt;mWheel[3].mLateralPatchVel;</span></span>
+<span id="L783"><span class="lineNum">     783</span>                 :<span class="tlaGNC">          41 :         frame.raw_slip_vel_lat_fl = (float)data-&gt;mWheel[0].mLateralPatchVel;</span></span>
+<span id="L784"><span class="lineNum">     784</span>                 :<span class="tlaGNC">          41 :         frame.raw_slip_vel_lat_fr = (float)data-&gt;mWheel[1].mLateralPatchVel;</span></span>
+<span id="L785"><span class="lineNum">     785</span>                 :<span class="tlaGNC">          41 :         frame.raw_slip_vel_lat_rl = (float)data-&gt;mWheel[2].mLateralPatchVel;</span></span>
+<span id="L786"><span class="lineNum">     786</span>                 :<span class="tlaGNC">          41 :         frame.raw_slip_vel_lat_rr = (float)data-&gt;mWheel[3].mLateralPatchVel;</span></span>
 <span id="L787"><span class="lineNum">     787</span>                 :             : </span>
-<span id="L788"><span class="lineNum">     788</span>                 :<span class="tlaGNC">         306 :         frame.raw_slip_vel_long_fl = (float)data-&gt;mWheel[0].mLongitudinalPatchVel;</span></span>
-<span id="L789"><span class="lineNum">     789</span>                 :<span class="tlaGNC">         306 :         frame.raw_slip_vel_long_fr = (float)data-&gt;mWheel[1].mLongitudinalPatchVel;</span></span>
-<span id="L790"><span class="lineNum">     790</span>                 :<span class="tlaGNC">         306 :         frame.raw_slip_vel_long_rl = (float)data-&gt;mWheel[2].mLongitudinalPatchVel;</span></span>
-<span id="L791"><span class="lineNum">     791</span>                 :<span class="tlaGNC">         306 :         frame.raw_slip_vel_long_rr = (float)data-&gt;mWheel[3].mLongitudinalPatchVel;</span></span>
+<span id="L788"><span class="lineNum">     788</span>                 :<span class="tlaGNC">          41 :         frame.raw_slip_vel_long_fl = (float)data-&gt;mWheel[0].mLongitudinalPatchVel;</span></span>
+<span id="L789"><span class="lineNum">     789</span>                 :<span class="tlaGNC">          41 :         frame.raw_slip_vel_long_fr = (float)data-&gt;mWheel[1].mLongitudinalPatchVel;</span></span>
+<span id="L790"><span class="lineNum">     790</span>                 :<span class="tlaGNC">          41 :         frame.raw_slip_vel_long_rl = (float)data-&gt;mWheel[2].mLongitudinalPatchVel;</span></span>
+<span id="L791"><span class="lineNum">     791</span>                 :<span class="tlaGNC">          41 :         frame.raw_slip_vel_long_rr = (float)data-&gt;mWheel[3].mLongitudinalPatchVel;</span></span>
 <span id="L792"><span class="lineNum">     792</span>                 :             : </span>
-<span id="L793"><span class="lineNum">     793</span>                 :<span class="tlaGNC">         306 :         frame.raw_ride_height_fl = (float)data-&gt;mWheel[0].mRideHeight;</span></span>
-<span id="L794"><span class="lineNum">     794</span>                 :<span class="tlaGNC">         306 :         frame.raw_ride_height_fr = (float)data-&gt;mWheel[1].mRideHeight;</span></span>
-<span id="L795"><span class="lineNum">     795</span>                 :<span class="tlaGNC">         306 :         frame.raw_ride_height_rl = (float)data-&gt;mWheel[2].mRideHeight;</span></span>
-<span id="L796"><span class="lineNum">     796</span>                 :<span class="tlaGNC">         306 :         frame.raw_ride_height_rr = (float)data-&gt;mWheel[3].mRideHeight;</span></span>
+<span id="L793"><span class="lineNum">     793</span>                 :<span class="tlaGNC">          41 :         frame.raw_ride_height_fl = (float)data-&gt;mWheel[0].mRideHeight;</span></span>
+<span id="L794"><span class="lineNum">     794</span>                 :<span class="tlaGNC">          41 :         frame.raw_ride_height_fr = (float)data-&gt;mWheel[1].mRideHeight;</span></span>
+<span id="L795"><span class="lineNum">     795</span>                 :<span class="tlaGNC">          41 :         frame.raw_ride_height_rl = (float)data-&gt;mWheel[2].mRideHeight;</span></span>
+<span id="L796"><span class="lineNum">     796</span>                 :<span class="tlaGNC">          41 :         frame.raw_ride_height_rr = (float)data-&gt;mWheel[3].mRideHeight;</span></span>
 <span id="L797"><span class="lineNum">     797</span>                 :             : </span>
-<span id="L798"><span class="lineNum">     798</span>                 :<span class="tlaGNC">         306 :         frame.raw_susp_deflection_fl = (float)data-&gt;mWheel[0].mSuspensionDeflection;</span></span>
-<span id="L799"><span class="lineNum">     799</span>                 :<span class="tlaGNC">         306 :         frame.raw_susp_deflection_fr = (float)data-&gt;mWheel[1].mSuspensionDeflection;</span></span>
-<span id="L800"><span class="lineNum">     800</span>                 :<span class="tlaGNC">         306 :         frame.raw_susp_deflection_rl = (float)data-&gt;mWheel[2].mSuspensionDeflection;</span></span>
-<span id="L801"><span class="lineNum">     801</span>                 :<span class="tlaGNC">         306 :         frame.raw_susp_deflection_rr = (float)data-&gt;mWheel[3].mSuspensionDeflection;</span></span>
+<span id="L798"><span class="lineNum">     798</span>                 :<span class="tlaGNC">          41 :         frame.raw_susp_deflection_fl = (float)data-&gt;mWheel[0].mSuspensionDeflection;</span></span>
+<span id="L799"><span class="lineNum">     799</span>                 :<span class="tlaGNC">          41 :         frame.raw_susp_deflection_fr = (float)data-&gt;mWheel[1].mSuspensionDeflection;</span></span>
+<span id="L800"><span class="lineNum">     800</span>                 :<span class="tlaGNC">          41 :         frame.raw_susp_deflection_rl = (float)data-&gt;mWheel[2].mSuspensionDeflection;</span></span>
+<span id="L801"><span class="lineNum">     801</span>                 :<span class="tlaGNC">          41 :         frame.raw_susp_deflection_rr = (float)data-&gt;mWheel[3].mSuspensionDeflection;</span></span>
 <span id="L802"><span class="lineNum">     802</span>                 :             : </span>
-<span id="L803"><span class="lineNum">     803</span>                 :<span class="tlaGNC">         306 :         frame.raw_susp_force_fl = (float)data-&gt;mWheel[0].mSuspForce;</span></span>
-<span id="L804"><span class="lineNum">     804</span>                 :<span class="tlaGNC">         306 :         frame.raw_susp_force_fr = (float)data-&gt;mWheel[1].mSuspForce;</span></span>
-<span id="L805"><span class="lineNum">     805</span>                 :<span class="tlaGNC">         306 :         frame.raw_susp_force_rl = (float)data-&gt;mWheel[2].mSuspForce;</span></span>
-<span id="L806"><span class="lineNum">     806</span>                 :<span class="tlaGNC">         306 :         frame.raw_susp_force_rr = (float)data-&gt;mWheel[3].mSuspForce;</span></span>
+<span id="L803"><span class="lineNum">     803</span>                 :<span class="tlaGNC">          41 :         frame.raw_susp_force_fl = (float)data-&gt;mWheel[0].mSuspForce;</span></span>
+<span id="L804"><span class="lineNum">     804</span>                 :<span class="tlaGNC">          41 :         frame.raw_susp_force_fr = (float)data-&gt;mWheel[1].mSuspForce;</span></span>
+<span id="L805"><span class="lineNum">     805</span>                 :<span class="tlaGNC">          41 :         frame.raw_susp_force_rl = (float)data-&gt;mWheel[2].mSuspForce;</span></span>
+<span id="L806"><span class="lineNum">     806</span>                 :<span class="tlaGNC">          41 :         frame.raw_susp_force_rr = (float)data-&gt;mWheel[3].mSuspForce;</span></span>
 <span id="L807"><span class="lineNum">     807</span>                 :             : </span>
-<span id="L808"><span class="lineNum">     808</span>                 :<span class="tlaGNC">         306 :         frame.raw_brake_pressure_fl = (float)data-&gt;mWheel[0].mBrakePressure;</span></span>
-<span id="L809"><span class="lineNum">     809</span>                 :<span class="tlaGNC">         306 :         frame.raw_brake_pressure_fr = (float)data-&gt;mWheel[1].mBrakePressure;</span></span>
-<span id="L810"><span class="lineNum">     810</span>                 :<span class="tlaGNC">         306 :         frame.raw_brake_pressure_rl = (float)data-&gt;mWheel[2].mBrakePressure;</span></span>
-<span id="L811"><span class="lineNum">     811</span>                 :<span class="tlaGNC">         306 :         frame.raw_brake_pressure_rr = (float)data-&gt;mWheel[3].mBrakePressure;</span></span>
+<span id="L808"><span class="lineNum">     808</span>                 :<span class="tlaGNC">          41 :         frame.raw_brake_pressure_fl = (float)data-&gt;mWheel[0].mBrakePressure;</span></span>
+<span id="L809"><span class="lineNum">     809</span>                 :<span class="tlaGNC">          41 :         frame.raw_brake_pressure_fr = (float)data-&gt;mWheel[1].mBrakePressure;</span></span>
+<span id="L810"><span class="lineNum">     810</span>                 :<span class="tlaGNC">          41 :         frame.raw_brake_pressure_rl = (float)data-&gt;mWheel[2].mBrakePressure;</span></span>
+<span id="L811"><span class="lineNum">     811</span>                 :<span class="tlaGNC">          41 :         frame.raw_brake_pressure_rr = (float)data-&gt;mWheel[3].mBrakePressure;</span></span>
 <span id="L812"><span class="lineNum">     812</span>                 :             : </span>
-<span id="L813"><span class="lineNum">     813</span>                 :<span class="tlaGNC">         306 :         frame.raw_rotation_fl = (float)data-&gt;mWheel[0].mRotation;</span></span>
-<span id="L814"><span class="lineNum">     814</span>                 :<span class="tlaGNC">         306 :         frame.raw_rotation_fr = (float)data-&gt;mWheel[1].mRotation;</span></span>
-<span id="L815"><span class="lineNum">     815</span>                 :<span class="tlaGNC">         306 :         frame.raw_rotation_rl = (float)data-&gt;mWheel[2].mRotation;</span></span>
-<span id="L816"><span class="lineNum">     816</span>                 :<span class="tlaGNC">         306 :         frame.raw_rotation_rr = (float)data-&gt;mWheel[3].mRotation;</span></span>
+<span id="L813"><span class="lineNum">     813</span>                 :<span class="tlaGNC">          41 :         frame.raw_rotation_fl = (float)data-&gt;mWheel[0].mRotation;</span></span>
+<span id="L814"><span class="lineNum">     814</span>                 :<span class="tlaGNC">          41 :         frame.raw_rotation_fr = (float)data-&gt;mWheel[1].mRotation;</span></span>
+<span id="L815"><span class="lineNum">     815</span>                 :<span class="tlaGNC">          41 :         frame.raw_rotation_rl = (float)data-&gt;mWheel[2].mRotation;</span></span>
+<span id="L816"><span class="lineNum">     816</span>                 :<span class="tlaGNC">          41 :         frame.raw_rotation_rr = (float)data-&gt;mWheel[3].mRotation;</span></span>
 <span id="L817"><span class="lineNum">     817</span>                 :             : </span>
 <span id="L818"><span class="lineNum">     818</span>                 :             :         // --- ALGORITHM STATE (400Hz) ---</span>
-<span id="L819"><span class="lineNum">     819</span>                 :<span class="tlaGNC">         306 :         frame.slip_angle_fl = (float)fl.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);</span></span>
-<span id="L820"><span class="lineNum">     820</span>                 :<span class="tlaGNC">         306 :         frame.slip_angle_fr = (float)fr.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);</span></span>
-<span id="L821"><span class="lineNum">     821</span>                 :<span class="tlaGNC">         306 :         frame.slip_angle_rl = (float)upsampled_data-&gt;mWheel[2].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);</span></span>
-<span id="L822"><span class="lineNum">     822</span>                 :<span class="tlaGNC">         306 :         frame.slip_angle_rr = (float)upsampled_data-&gt;mWheel[3].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);</span></span>
+<span id="L819"><span class="lineNum">     819</span>                 :<span class="tlaGNC">          41 :         frame.slip_angle_fl = (float)fl.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);</span></span>
+<span id="L820"><span class="lineNum">     820</span>                 :<span class="tlaGNC">          41 :         frame.slip_angle_fr = (float)fr.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);</span></span>
+<span id="L821"><span class="lineNum">     821</span>                 :<span class="tlaGNC">          41 :         frame.slip_angle_rl = (float)upsampled_data-&gt;mWheel[2].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);</span></span>
+<span id="L822"><span class="lineNum">     822</span>                 :<span class="tlaGNC">          41 :         frame.slip_angle_rr = (float)upsampled_data-&gt;mWheel[3].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);</span></span>
 <span id="L823"><span class="lineNum">     823</span>                 :             : </span>
-<span id="L824"><span class="lineNum">     824</span>         [<span class="tlaGBC" title="Branch 0 was taken 306 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         306 :         frame.slip_ratio_fl = (float)calculate_wheel_slip_ratio(fl);</span></span>
-<span id="L825"><span class="lineNum">     825</span>         [<span class="tlaGBC" title="Branch 0 was taken 306 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         306 :         frame.slip_ratio_fr = (float)calculate_wheel_slip_ratio(fr);</span></span>
-<span id="L826"><span class="lineNum">     826</span>         [<span class="tlaGBC" title="Branch 0 was taken 306 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         306 :         frame.slip_ratio_rl = (float)calculate_wheel_slip_ratio(upsampled_data-&gt;mWheel[2]);</span></span>
-<span id="L827"><span class="lineNum">     827</span>         [<span class="tlaGBC" title="Branch 0 was taken 306 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         306 :         frame.slip_ratio_rr = (float)calculate_wheel_slip_ratio(upsampled_data-&gt;mWheel[3]);</span></span>
+<span id="L824"><span class="lineNum">     824</span>         [<span class="tlaGBC" title="Branch 0 was taken 41 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          41 :         frame.slip_ratio_fl = (float)calculate_wheel_slip_ratio(fl);</span></span>
+<span id="L825"><span class="lineNum">     825</span>         [<span class="tlaGBC" title="Branch 0 was taken 41 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          41 :         frame.slip_ratio_fr = (float)calculate_wheel_slip_ratio(fr);</span></span>
+<span id="L826"><span class="lineNum">     826</span>         [<span class="tlaGBC" title="Branch 0 was taken 41 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          41 :         frame.slip_ratio_rl = (float)calculate_wheel_slip_ratio(upsampled_data-&gt;mWheel[2]);</span></span>
+<span id="L827"><span class="lineNum">     827</span>         [<span class="tlaGBC" title="Branch 0 was taken 41 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          41 :         frame.slip_ratio_rr = (float)calculate_wheel_slip_ratio(upsampled_data-&gt;mWheel[3]);</span></span>
 <span id="L828"><span class="lineNum">     828</span>                 :             : </span>
-<span id="L829"><span class="lineNum">     829</span>                 :<span class="tlaGNC">         306 :         frame.grip_fl = (float)fl.mGripFract;</span></span>
-<span id="L830"><span class="lineNum">     830</span>                 :<span class="tlaGNC">         306 :         frame.grip_fr = (float)fr.mGripFract;</span></span>
-<span id="L831"><span class="lineNum">     831</span>                 :<span class="tlaGNC">         306 :         frame.grip_rl = (float)upsampled_data-&gt;mWheel[2].mGripFract;</span></span>
-<span id="L832"><span class="lineNum">     832</span>                 :<span class="tlaGNC">         306 :         frame.grip_rr = (float)upsampled_data-&gt;mWheel[3].mGripFract;</span></span>
+<span id="L829"><span class="lineNum">     829</span>                 :<span class="tlaGNC">          41 :         frame.grip_fl = (float)fl.mGripFract;</span></span>
+<span id="L830"><span class="lineNum">     830</span>                 :<span class="tlaGNC">          41 :         frame.grip_fr = (float)fr.mGripFract;</span></span>
+<span id="L831"><span class="lineNum">     831</span>                 :<span class="tlaGNC">          41 :         frame.grip_rl = (float)upsampled_data-&gt;mWheel[2].mGripFract;</span></span>
+<span id="L832"><span class="lineNum">     832</span>                 :<span class="tlaGNC">          41 :         frame.grip_rr = (float)upsampled_data-&gt;mWheel[3].mGripFract;</span></span>
 <span id="L833"><span class="lineNum">     833</span>                 :             : </span>
-<span id="L834"><span class="lineNum">     834</span>                 :<span class="tlaGNC">         306 :         frame.load_fl = (float)fl.mTireLoad;</span></span>
-<span id="L835"><span class="lineNum">     835</span>                 :<span class="tlaGNC">         306 :         frame.load_fr = (float)fr.mTireLoad;</span></span>
-<span id="L836"><span class="lineNum">     836</span>                 :<span class="tlaGNC">         306 :         frame.load_rl = (float)upsampled_data-&gt;mWheel[2].mTireLoad;</span></span>
-<span id="L837"><span class="lineNum">     837</span>                 :<span class="tlaGNC">         306 :         frame.load_rr = (float)upsampled_data-&gt;mWheel[3].mTireLoad;</span></span>
+<span id="L834"><span class="lineNum">     834</span>                 :<span class="tlaGNC">          41 :         frame.load_fl = (float)fl.mTireLoad;</span></span>
+<span id="L835"><span class="lineNum">     835</span>                 :<span class="tlaGNC">          41 :         frame.load_fr = (float)fr.mTireLoad;</span></span>
+<span id="L836"><span class="lineNum">     836</span>                 :<span class="tlaGNC">          41 :         frame.load_rl = (float)upsampled_data-&gt;mWheel[2].mTireLoad;</span></span>
+<span id="L837"><span class="lineNum">     837</span>                 :<span class="tlaGNC">          41 :         frame.load_rr = (float)upsampled_data-&gt;mWheel[3].mTireLoad;</span></span>
 <span id="L838"><span class="lineNum">     838</span>                 :             : </span>
-<span id="L839"><span class="lineNum">     839</span>                 :<span class="tlaGNC">         306 :         frame.ride_height_fl = (float)fl.mRideHeight;</span></span>
-<span id="L840"><span class="lineNum">     840</span>                 :<span class="tlaGNC">         306 :         frame.ride_height_fr = (float)fr.mRideHeight;</span></span>
-<span id="L841"><span class="lineNum">     841</span>                 :<span class="tlaGNC">         306 :         frame.ride_height_rl = (float)upsampled_data-&gt;mWheel[2].mRideHeight;</span></span>
-<span id="L842"><span class="lineNum">     842</span>                 :<span class="tlaGNC">         306 :         frame.ride_height_rr = (float)upsampled_data-&gt;mWheel[3].mRideHeight;</span></span>
+<span id="L839"><span class="lineNum">     839</span>                 :<span class="tlaGNC">          41 :         frame.ride_height_fl = (float)fl.mRideHeight;</span></span>
+<span id="L840"><span class="lineNum">     840</span>                 :<span class="tlaGNC">          41 :         frame.ride_height_fr = (float)fr.mRideHeight;</span></span>
+<span id="L841"><span class="lineNum">     841</span>                 :<span class="tlaGNC">          41 :         frame.ride_height_rl = (float)upsampled_data-&gt;mWheel[2].mRideHeight;</span></span>
+<span id="L842"><span class="lineNum">     842</span>                 :<span class="tlaGNC">          41 :         frame.ride_height_rr = (float)upsampled_data-&gt;mWheel[3].mRideHeight;</span></span>
 <span id="L843"><span class="lineNum">     843</span>                 :             : </span>
-<span id="L844"><span class="lineNum">     844</span>                 :<span class="tlaGNC">         306 :         frame.susp_deflection_fl = (float)fl.mSuspensionDeflection;</span></span>
-<span id="L845"><span class="lineNum">     845</span>                 :<span class="tlaGNC">         306 :         frame.susp_deflection_fr = (float)fr.mSuspensionDeflection;</span></span>
-<span id="L846"><span class="lineNum">     846</span>                 :<span class="tlaGNC">         306 :         frame.susp_deflection_rl = (float)upsampled_data-&gt;mWheel[2].mSuspensionDeflection;</span></span>
-<span id="L847"><span class="lineNum">     847</span>                 :<span class="tlaGNC">         306 :         frame.susp_deflection_rr = (float)upsampled_data-&gt;mWheel[3].mSuspensionDeflection;</span></span>
+<span id="L844"><span class="lineNum">     844</span>                 :<span class="tlaGNC">          41 :         frame.susp_deflection_fl = (float)fl.mSuspensionDeflection;</span></span>
+<span id="L845"><span class="lineNum">     845</span>                 :<span class="tlaGNC">          41 :         frame.susp_deflection_fr = (float)fr.mSuspensionDeflection;</span></span>
+<span id="L846"><span class="lineNum">     846</span>                 :<span class="tlaGNC">          41 :         frame.susp_deflection_rl = (float)upsampled_data-&gt;mWheel[2].mSuspensionDeflection;</span></span>
+<span id="L847"><span class="lineNum">     847</span>                 :<span class="tlaGNC">          41 :         frame.susp_deflection_rr = (float)upsampled_data-&gt;mWheel[3].mSuspensionDeflection;</span></span>
 <span id="L848"><span class="lineNum">     848</span>                 :             :         </span>
-<span id="L849"><span class="lineNum">     849</span>                 :<span class="tlaGNC">         306 :         frame.calc_slip_angle_front = (float)m_grip_diag.front_slip_angle;</span></span>
-<span id="L850"><span class="lineNum">     850</span>                 :<span class="tlaGNC">         306 :         frame.calc_slip_angle_rear = (float)m_grip_diag.rear_slip_angle;</span></span>
-<span id="L851"><span class="lineNum">     851</span>                 :<span class="tlaGNC">         306 :         frame.calc_grip_front = (float)ctx.avg_grip;</span></span>
-<span id="L852"><span class="lineNum">     852</span>                 :<span class="tlaGNC">         306 :         frame.calc_grip_rear = (float)ctx.avg_rear_grip;</span></span>
-<span id="L853"><span class="lineNum">     853</span>                 :<span class="tlaGNC">         306 :         frame.grip_delta = (float)(ctx.avg_grip - ctx.avg_rear_grip);</span></span>
-<span id="L854"><span class="lineNum">     854</span>                 :<span class="tlaGNC">         306 :         frame.calc_rear_lat_force = (float)ctx.calc_rear_lat_force;</span></span>
+<span id="L849"><span class="lineNum">     849</span>                 :<span class="tlaGNC">          41 :         frame.calc_slip_angle_front = (float)m_grip_diag.front_slip_angle;</span></span>
+<span id="L850"><span class="lineNum">     850</span>                 :<span class="tlaGNC">          41 :         frame.calc_slip_angle_rear = (float)m_grip_diag.rear_slip_angle;</span></span>
+<span id="L851"><span class="lineNum">     851</span>                 :<span class="tlaGNC">          41 :         frame.calc_grip_front = (float)ctx.avg_grip;</span></span>
+<span id="L852"><span class="lineNum">     852</span>                 :<span class="tlaGNC">          41 :         frame.calc_grip_rear = (float)ctx.avg_rear_grip;</span></span>
+<span id="L853"><span class="lineNum">     853</span>                 :<span class="tlaGNC">          41 :         frame.grip_delta = (float)(ctx.avg_grip - ctx.avg_rear_grip);</span></span>
+<span id="L854"><span class="lineNum">     854</span>                 :<span class="tlaGNC">          41 :         frame.calc_rear_lat_force = (float)ctx.calc_rear_lat_force;</span></span>
 <span id="L855"><span class="lineNum">     855</span>                 :             : </span>
-<span id="L856"><span class="lineNum">     856</span>                 :<span class="tlaGNC">         306 :         frame.smoothed_yaw_accel = (float)m_yaw_accel_smoothed;</span></span>
-<span id="L857"><span class="lineNum">     857</span>                 :<span class="tlaGNC">         306 :         frame.lat_load_norm = (float)m_sop_load_smoothed;</span></span>
+<span id="L856"><span class="lineNum">     856</span>                 :<span class="tlaGNC">          41 :         frame.smoothed_yaw_accel = (float)m_yaw_accel_smoothed;</span></span>
+<span id="L857"><span class="lineNum">     857</span>                 :<span class="tlaGNC">          41 :         frame.lat_load_norm = (float)m_sop_load_smoothed;</span></span>
 <span id="L858"><span class="lineNum">     858</span>                 :             :         </span>
-<span id="L859"><span class="lineNum">     859</span>                 :<span class="tlaGNC">         306 :         frame.dG_dt = (float)m_slope_dG_dt;</span></span>
-<span id="L860"><span class="lineNum">     860</span>                 :<span class="tlaGNC">         306 :         frame.dAlpha_dt = (float)m_slope_dAlpha_dt;</span></span>
-<span id="L861"><span class="lineNum">     861</span>                 :<span class="tlaGNC">         306 :         frame.slope_current = (float)m_slope_current;</span></span>
-<span id="L862"><span class="lineNum">     862</span>                 :<span class="tlaGNC">         306 :         frame.slope_raw_unclamped = (float)m_debug_slope_raw;</span></span>
-<span id="L863"><span class="lineNum">     863</span>                 :<span class="tlaGNC">         306 :         frame.slope_numerator = (float)m_debug_slope_num;</span></span>
-<span id="L864"><span class="lineNum">     864</span>                 :<span class="tlaGNC">         306 :         frame.slope_denominator = (float)m_debug_slope_den;</span></span>
-<span id="L865"><span class="lineNum">     865</span>                 :<span class="tlaGNC">         306 :         frame.hold_timer = (float)m_slope_hold_timer;</span></span>
-<span id="L866"><span class="lineNum">     866</span>                 :<span class="tlaGNC">         306 :         frame.input_slip_smoothed = (float)m_slope_slip_smoothed;</span></span>
-<span id="L867"><span class="lineNum">     867</span>                 :<span class="tlaGNC">         306 :         frame.slope_smoothed = (float)m_slope_smoothed_output;</span></span>
-<span id="L868"><span class="lineNum">     868</span>         [<span class="tlaGBC" title="Branch 0 was taken 306 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         306 :         frame.confidence = (float)calculate_slope_confidence(m_slope_dAlpha_dt);</span></span>
+<span id="L859"><span class="lineNum">     859</span>                 :<span class="tlaGNC">          41 :         frame.dG_dt = (float)m_slope_dG_dt;</span></span>
+<span id="L860"><span class="lineNum">     860</span>                 :<span class="tlaGNC">          41 :         frame.dAlpha_dt = (float)m_slope_dAlpha_dt;</span></span>
+<span id="L861"><span class="lineNum">     861</span>                 :<span class="tlaGNC">          41 :         frame.slope_current = (float)m_slope_current;</span></span>
+<span id="L862"><span class="lineNum">     862</span>                 :<span class="tlaGNC">          41 :         frame.slope_raw_unclamped = (float)m_debug_slope_raw;</span></span>
+<span id="L863"><span class="lineNum">     863</span>                 :<span class="tlaGNC">          41 :         frame.slope_numerator = (float)m_debug_slope_num;</span></span>
+<span id="L864"><span class="lineNum">     864</span>                 :<span class="tlaGNC">          41 :         frame.slope_denominator = (float)m_debug_slope_den;</span></span>
+<span id="L865"><span class="lineNum">     865</span>                 :<span class="tlaGNC">          41 :         frame.hold_timer = (float)m_slope_hold_timer;</span></span>
+<span id="L866"><span class="lineNum">     866</span>                 :<span class="tlaGNC">          41 :         frame.input_slip_smoothed = (float)m_slope_slip_smoothed;</span></span>
+<span id="L867"><span class="lineNum">     867</span>                 :<span class="tlaGNC">          41 :         frame.slope_smoothed = (float)m_slope_smoothed_output;</span></span>
+<span id="L868"><span class="lineNum">     868</span>         [<span class="tlaGBC" title="Branch 0 was taken 41 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          41 :         frame.confidence = (float)calculate_slope_confidence(m_slope_dAlpha_dt);</span></span>
 <span id="L869"><span class="lineNum">     869</span>                 :             :         </span>
-<span id="L870"><span class="lineNum">     870</span>                 :<span class="tlaGNC">         306 :         frame.surface_type_fl = (float)fl.mSurfaceType;</span></span>
-<span id="L871"><span class="lineNum">     871</span>                 :<span class="tlaGNC">         306 :         frame.surface_type_fr = (float)fr.mSurfaceType;</span></span>
-<span id="L872"><span class="lineNum">     872</span>                 :<span class="tlaGNC">         306 :         frame.slope_torque = (float)m_slope_torque_current;</span></span>
-<span id="L873"><span class="lineNum">     873</span>                 :<span class="tlaGNC">         306 :         frame.slew_limited_g = (float)m_debug_lat_g_slew;</span></span>
+<span id="L870"><span class="lineNum">     870</span>                 :<span class="tlaGNC">          41 :         frame.surface_type_fl = (float)fl.mSurfaceType;</span></span>
+<span id="L871"><span class="lineNum">     871</span>                 :<span class="tlaGNC">          41 :         frame.surface_type_fr = (float)fr.mSurfaceType;</span></span>
+<span id="L872"><span class="lineNum">     872</span>                 :<span class="tlaGNC">          41 :         frame.slope_torque = (float)m_slope_torque_current;</span></span>
+<span id="L873"><span class="lineNum">     873</span>                 :<span class="tlaGNC">          41 :         frame.slew_limited_g = (float)m_debug_lat_g_slew;</span></span>
 <span id="L874"><span class="lineNum">     874</span>                 :             : </span>
-<span id="L875"><span class="lineNum">     875</span>                 :<span class="tlaGNC">         306 :         frame.session_peak_torque = (float)m_session_peak_torque;</span></span>
-<span id="L876"><span class="lineNum">     876</span>                 :<span class="tlaGNC">         306 :         frame.dynamic_weight_factor = (float)dynamic_weight_factor;</span></span>
-<span id="L877"><span class="lineNum">     877</span>                 :<span class="tlaGNC">         306 :         frame.structural_mult = (float)m_smoothed_structural_mult;</span></span>
-<span id="L878"><span class="lineNum">     878</span>                 :<span class="tlaGNC">         306 :         frame.vibration_mult = (float)m_smoothed_vibration_mult;</span></span>
-<span id="L879"><span class="lineNum">     879</span>                 :<span class="tlaGNC">         306 :         frame.steering_angle_deg = steering_angle_deg;</span></span>
-<span id="L880"><span class="lineNum">     880</span>                 :<span class="tlaGNC">         306 :         frame.steering_range_deg = range_deg;</span></span>
-<span id="L881"><span class="lineNum">     881</span>                 :<span class="tlaGNC">         306 :         frame.debug_freq = (float)m_debug_freq;</span></span>
-<span id="L882"><span class="lineNum">     882</span>                 :<span class="tlaGNC">         306 :         frame.tire_radius = (float)fl.mStaticUndeflectedRadius / 100.0f;</span></span>
+<span id="L875"><span class="lineNum">     875</span>                 :<span class="tlaGNC">          41 :         frame.session_peak_torque = (float)m_session_peak_torque;</span></span>
+<span id="L876"><span class="lineNum">     876</span>                 :<span class="tlaGNC">          41 :         frame.dynamic_weight_factor = (float)dynamic_weight_factor;</span></span>
+<span id="L877"><span class="lineNum">     877</span>                 :<span class="tlaGNC">          41 :         frame.structural_mult = (float)m_smoothed_structural_mult;</span></span>
+<span id="L878"><span class="lineNum">     878</span>                 :<span class="tlaGNC">          41 :         frame.vibration_mult = (float)m_smoothed_vibration_mult;</span></span>
+<span id="L879"><span class="lineNum">     879</span>                 :<span class="tlaGNC">          41 :         frame.steering_angle_deg = steering_angle_deg;</span></span>
+<span id="L880"><span class="lineNum">     880</span>                 :<span class="tlaGNC">          41 :         frame.steering_range_deg = range_deg;</span></span>
+<span id="L881"><span class="lineNum">     881</span>                 :<span class="tlaGNC">          41 :         frame.debug_freq = (float)m_debug_freq;</span></span>
+<span id="L882"><span class="lineNum">     882</span>                 :<span class="tlaGNC">          41 :         frame.tire_radius = (float)fl.mStaticUndeflectedRadius / 100.0f;</span></span>
 <span id="L883"><span class="lineNum">     883</span>                 :             :         </span>
 <span id="L884"><span class="lineNum">     884</span>                 :             :         // --- FFB COMPONENTS (400Hz) ---</span>
-<span id="L885"><span class="lineNum">     885</span>                 :<span class="tlaGNC">         306 :         frame.ffb_total = (float)norm_force;</span></span>
-<span id="L886"><span class="lineNum">     886</span>                 :<span class="tlaGNC">         306 :         frame.ffb_base = (float)base_input;</span></span>
-<span id="L887"><span class="lineNum">     887</span>                 :<span class="tlaGNC">         306 :         frame.ffb_understeer_drop = understeer_drop;</span></span>
-<span id="L888"><span class="lineNum">     888</span>                 :<span class="tlaGNC">         306 :         frame.ffb_oversteer_boost = oversteer_boost;</span></span>
-<span id="L889"><span class="lineNum">     889</span>                 :<span class="tlaGNC">         306 :         frame.ffb_sop = (float)ctx.sop_base_force;</span></span>
-<span id="L890"><span class="lineNum">     890</span>                 :<span class="tlaGNC">         306 :         frame.ffb_rear_torque = (float)ctx.rear_torque;</span></span>
-<span id="L891"><span class="lineNum">     891</span>                 :<span class="tlaGNC">         306 :         frame.ffb_scrub_drag = (float)ctx.scrub_drag_force;</span></span>
-<span id="L892"><span class="lineNum">     892</span>                 :<span class="tlaGNC">         306 :         frame.ffb_yaw_kick = (float)ctx.yaw_force;</span></span>
-<span id="L893"><span class="lineNum">     893</span>                 :<span class="tlaGNC">         306 :         frame.ffb_gyro_damping = (float)ctx.gyro_force;</span></span>
-<span id="L894"><span class="lineNum">     894</span>                 :<span class="tlaGNC">         306 :         frame.ffb_road_texture = (float)ctx.road_noise;</span></span>
-<span id="L895"><span class="lineNum">     895</span>                 :<span class="tlaGNC">         306 :         frame.ffb_slide_texture = (float)ctx.slide_noise;</span></span>
-<span id="L896"><span class="lineNum">     896</span>                 :<span class="tlaGNC">         306 :         frame.ffb_lockup_vibration = (float)ctx.lockup_rumble;</span></span>
-<span id="L897"><span class="lineNum">     897</span>                 :<span class="tlaGNC">         306 :         frame.ffb_spin_vibration = (float)ctx.spin_rumble;</span></span>
-<span id="L898"><span class="lineNum">     898</span>                 :<span class="tlaGNC">         306 :         frame.ffb_bottoming_crunch = (float)ctx.bottoming_crunch;</span></span>
-<span id="L899"><span class="lineNum">     899</span>                 :<span class="tlaGNC">         306 :         frame.ffb_abs_pulse = (float)ctx.abs_pulse_force;</span></span>
-<span id="L900"><span class="lineNum">     900</span>                 :<span class="tlaGNC">         306 :         frame.ffb_soft_lock = (float)ctx.soft_lock_force;</span></span>
+<span id="L885"><span class="lineNum">     885</span>                 :<span class="tlaGNC">          41 :         frame.ffb_total = (float)norm_force;</span></span>
+<span id="L886"><span class="lineNum">     886</span>                 :<span class="tlaGNC">          41 :         frame.ffb_base = (float)base_input;</span></span>
+<span id="L887"><span class="lineNum">     887</span>                 :<span class="tlaGNC">          41 :         frame.ffb_understeer_drop = understeer_drop;</span></span>
+<span id="L888"><span class="lineNum">     888</span>                 :<span class="tlaGNC">          41 :         frame.ffb_oversteer_boost = oversteer_boost;</span></span>
+<span id="L889"><span class="lineNum">     889</span>                 :<span class="tlaGNC">          41 :         frame.ffb_sop = (float)ctx.sop_base_force;</span></span>
+<span id="L890"><span class="lineNum">     890</span>                 :<span class="tlaGNC">          41 :         frame.ffb_rear_torque = (float)ctx.rear_torque;</span></span>
+<span id="L891"><span class="lineNum">     891</span>                 :<span class="tlaGNC">          41 :         frame.ffb_scrub_drag = (float)ctx.scrub_drag_force;</span></span>
+<span id="L892"><span class="lineNum">     892</span>                 :<span class="tlaGNC">          41 :         frame.ffb_yaw_kick = (float)ctx.yaw_force;</span></span>
+<span id="L893"><span class="lineNum">     893</span>                 :<span class="tlaGNC">          41 :         frame.ffb_gyro_damping = (float)ctx.gyro_force;</span></span>
+<span id="L894"><span class="lineNum">     894</span>                 :<span class="tlaGNC">          41 :         frame.ffb_road_texture = (float)ctx.road_noise;</span></span>
+<span id="L895"><span class="lineNum">     895</span>                 :<span class="tlaGNC">          41 :         frame.ffb_slide_texture = (float)ctx.slide_noise;</span></span>
+<span id="L896"><span class="lineNum">     896</span>                 :<span class="tlaGNC">          41 :         frame.ffb_lockup_vibration = (float)ctx.lockup_rumble;</span></span>
+<span id="L897"><span class="lineNum">     897</span>                 :<span class="tlaGNC">          41 :         frame.ffb_spin_vibration = (float)ctx.spin_rumble;</span></span>
+<span id="L898"><span class="lineNum">     898</span>                 :<span class="tlaGNC">          41 :         frame.ffb_bottoming_crunch = (float)ctx.bottoming_crunch;</span></span>
+<span id="L899"><span class="lineNum">     899</span>                 :<span class="tlaGNC">          41 :         frame.ffb_abs_pulse = (float)ctx.abs_pulse_force;</span></span>
+<span id="L900"><span class="lineNum">     900</span>                 :<span class="tlaGNC">          41 :         frame.ffb_soft_lock = (float)ctx.soft_lock_force;</span></span>
 <span id="L901"><span class="lineNum">     901</span>                 :             : </span>
-<span id="L902"><span class="lineNum">     902</span>                 :<span class="tlaGNC">         306 :         frame.ffb_shaft_torque = (float)upsampled_data-&gt;mSteeringShaftTorque;</span></span>
-<span id="L903"><span class="lineNum">     903</span>                 :<span class="tlaGNC">         306 :         frame.ffb_gen_torque = (float)genFFBTorque;</span></span>
-<span id="L904"><span class="lineNum">     904</span>                 :<span class="tlaGNC">         306 :         frame.ffb_grip_factor = (float)ctx.grip_factor;</span></span>
-<span id="L905"><span class="lineNum">     905</span>                 :<span class="tlaGNC">         306 :         frame.speed_gate = (float)ctx.speed_gate;</span></span>
-<span id="L906"><span class="lineNum">     906</span>                 :<span class="tlaGNC">         306 :         frame.load_peak_ref = (float)m_auto_peak_load;</span></span>
+<span id="L902"><span class="lineNum">     902</span>                 :<span class="tlaGNC">          41 :         frame.ffb_shaft_torque = (float)upsampled_data-&gt;mSteeringShaftTorque;</span></span>
+<span id="L903"><span class="lineNum">     903</span>                 :<span class="tlaGNC">          41 :         frame.ffb_gen_torque = (float)genFFBTorque;</span></span>
+<span id="L904"><span class="lineNum">     904</span>                 :<span class="tlaGNC">          41 :         frame.ffb_grip_factor = (float)ctx.grip_factor;</span></span>
+<span id="L905"><span class="lineNum">     905</span>                 :<span class="tlaGNC">          41 :         frame.speed_gate = (float)ctx.speed_gate;</span></span>
+<span id="L906"><span class="lineNum">     906</span>                 :<span class="tlaGNC">          41 :         frame.load_peak_ref = (float)m_auto_peak_load;</span></span>
 <span id="L907"><span class="lineNum">     907</span>                 :             : </span>
 <span id="L908"><span class="lineNum">     908</span>                 :             :         // --- SYSTEM (400Hz) ---</span>
-<span id="L909"><span class="lineNum">     909</span>                 :<span class="tlaGNC">         306 :         frame.physics_rate = (float)m_physics_rate;</span></span>
-<span id="L910"><span class="lineNum">     910</span>                 :<span class="tlaGNC">         306 :         frame.clipping = (uint8_t)(std::abs(norm_force) &gt; CLIPPING_THRESHOLD);</span></span>
-<span id="L911"><span class="lineNum">     911</span>                 :<span class="tlaGNC">         306 :         frame.warn_bits = 0;</span></span>
-<span id="L912"><span class="lineNum">     912</span>         [<span class="tlaGBC" title="Branch 0 was taken 230 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 76 times"> + </span>]:<span class="tlaGNC">         306 :         if (ctx.frame_warn_load) frame.warn_bits |= 0x01;</span></span>
-<span id="L913"><span class="lineNum">     913</span>   [<span class="tlaGBC" title="Branch 0 was taken 20 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 286 times"> + </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 20 times"> + </span>]:<span class="tlaGNC">         306 :         if (ctx.frame_warn_grip || ctx.frame_warn_rear_grip) frame.warn_bits |= 0x02;</span></span>
-<span id="L914"><span class="lineNum">     914</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 305 times"> + </span>]:<span class="tlaGNC">         306 :         if (ctx.frame_warn_dt) frame.warn_bits |= 0x04;</span></span>
-<span id="L915"><span class="lineNum">     915</span>                 :<span class="tlaGNC">         306 :         frame.marker = 0; // Handled inside Log()</span></span>
+<span id="L909"><span class="lineNum">     909</span>                 :<span class="tlaGNC">          41 :         frame.physics_rate = (float)m_physics_rate;</span></span>
+<span id="L910"><span class="lineNum">     910</span>                 :<span class="tlaGNC">          41 :         frame.clipping = (uint8_t)(std::abs(norm_force) &gt; CLIPPING_THRESHOLD);</span></span>
+<span id="L911"><span class="lineNum">     911</span>                 :<span class="tlaGNC">          41 :         frame.warn_bits = 0;</span></span>
+<span id="L912"><span class="lineNum">     912</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 41 times"> + </span>]:<span class="tlaGNC">          41 :         if (ctx.frame_warn_load) frame.warn_bits |= 0x01;</span></span>
+<span id="L913"><span class="lineNum">     913</span>   [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 41 times"> + </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          41 :         if (ctx.frame_warn_grip || ctx.frame_warn_rear_grip) frame.warn_bits |= 0x02;</span></span>
+<span id="L914"><span class="lineNum">     914</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 41 times"> + </span>]:<span class="tlaGNC">          41 :         if (ctx.frame_warn_dt) frame.warn_bits |= 0x04;</span></span>
+<span id="L915"><span class="lineNum">     915</span>                 :<span class="tlaGNC">          41 :         frame.marker = 0; // Handled inside Log()</span></span>
 <span id="L916"><span class="lineNum">     916</span>                 :             :         </span>
-<span id="L917"><span class="lineNum">     917</span>   [<span class="tlaGBC" title="Branch 0 was taken 306 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 306 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         306 :         AsyncLogger::Get().Log(frame);</span></span>
+<span id="L917"><span class="lineNum">     917</span>   [<span class="tlaGBC" title="Branch 0 was taken 41 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 41 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          41 :         AsyncLogger::Get().Log(frame);</span></span>
 <span id="L918"><span class="lineNum">     918</span>                 :             :     }</span>
 <span id="L919"><span class="lineNum">     919</span>                 :             :     </span>
 <span id="L920"><span class="lineNum">     920</span>                 :<span class="tlaGNC">       12845 :     return (std::max)(-1.0, (std::min)(1.0, norm_force));</span></span>
