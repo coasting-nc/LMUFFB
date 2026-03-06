@@ -151,6 +151,11 @@ def plot_yaw_diagnostic(
     # Panel 1: Yaw Acceleration & Threshold
     ax1 = axes[0]
     ax1.plot(time, plot_df['RawGameYawAccel'], label='Raw Yaw Accel', color='#9E9E9E', alpha=0.4, linewidth=0.5)
+    if 'ExtrapolatedYawAccel' in plot_df.columns:
+        ax1.plot(time, plot_df['ExtrapolatedYawAccel'], label='Extrapolated Yaw Accel', color='#2196F3', alpha=0.4, linewidth=0.5)
+    if 'DerivedYawAccel' in plot_df.columns:
+        ax1.plot(time, plot_df['DerivedYawAccel'], label='Derived Yaw Accel', color='#9C27B0', alpha=0.4, linewidth=0.5)
+
     ax1.plot(time, plot_df['SmoothedYawAccel'], label='Smoothed Yaw Accel', color='#F44336', linewidth=1.0)
     ax1.axhline(threshold, color='black', linestyle='--', alpha=0.6, label=f'Threshold ({threshold})')
     ax1.axhline(-threshold, color='black', linestyle='--', alpha=0.6)
@@ -421,6 +426,118 @@ def plot_yaw_fft(
     _safe_legend(ax)
 
     if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_pull_detector(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Generate DC Offset / Pull Detector plot (Issue #271).
+    Calculates a 0.5s rolling average of Smoothed Yaw Accel and Yaw Kick FFB.
+    """
+    cols = ['SmoothedYawAccel', 'FFBYawKick']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Calculating rolling averages for Pull Detector...")
+
+    # 0.5s window at 400Hz = 200 samples
+    window = 200
+
+    # Use full dataframe for rolling average to avoid edge artifacts from downsampling
+    # then downsample the result
+    plot_df = df.copy()
+    plot_df['YawAccel_RA'] = plot_df['SmoothedYawAccel'].rolling(window=window, center=True).mean()
+    plot_df['YawKick_RA'] = plot_df['FFBYawKick'].rolling(window=window, center=True).mean()
+
+    if status_callback: status_callback("Downsampling for plot...")
+    plot_df = _downsample_df(plot_df)
+    time = plot_df['Time']
+
+    fig, ax1 = plt.subplots(figsize=(14, 8))
+    fig.suptitle('DC Offset / Pull Detector (0.5s Rolling Average)', fontsize=14, fontweight='bold')
+
+    ax1.plot(time, plot_df['YawAccel_RA'], label='Smoothed Yaw Accel (Rolling Avg)', color='#F44336', linewidth=1.5)
+    ax1.axhline(0, color='black', linestyle='-', alpha=0.3)
+    ax1.set_ylabel('Yaw Accel (rad/s²)', color='#F44336')
+    ax1.tick_params(axis='y', labelcolor='#F44336')
+    ax1.grid(True, alpha=0.3)
+
+    ax2 = ax1.twinx()
+    ax2.plot(time, plot_df['YawKick_RA'], label='Yaw Kick FFB (Rolling Avg)', color='#4CAF50', linewidth=1.5)
+    ax2.set_ylabel('Force (Nm)', color='#4CAF50')
+    ax2.tick_params(axis='y', labelcolor='#4CAF50')
+
+    ax1.set_xlabel('Time (s)')
+
+    # Combined legend
+    lines, labels = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines + lines2, labels + labels2, loc='upper right')
+
+    plt.tight_layout()
+
+    if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_unopposed_force(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Generate Unopposed Force Overlay plot (Issue #271).
+    Overlays GripFactor and FFBYawKick.
+    """
+    cols = ['GripFactor', 'FFBYawKick']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Rendering Unopposed Force plot...")
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    fig, ax1 = plt.subplots(figsize=(14, 8))
+    fig.suptitle('Unopposed Force Analysis: Grip Factor vs Yaw Kick', fontsize=14, fontweight='bold')
+
+    # Panel 1: Grip Factor (Background fill)
+    ax1.fill_between(time, 0, plot_df['GripFactor'], color='#2196F3', alpha=0.2, label='Grip Factor')
+    ax1.plot(time, plot_df['GripFactor'], color='#2196F3', linewidth=0.8, alpha=0.5)
+    ax1.set_ylabel('Grip Factor (0.0 - 1.0)', color='#2196F3')
+    ax1.set_ylim(0, 1.1)
+    ax1.tick_params(axis='y', labelcolor='#2196F3')
+    ax1.grid(True, alpha=0.3)
+
+    # Panel 2: Yaw Kick (Foreground)
+    ax2 = ax1.twinx()
+    ax2.plot(time, plot_df['FFBYawKick'], label='Yaw Kick FFB', color='#F44336', linewidth=1.0)
+    ax2.set_ylabel('Yaw Kick Force (Nm)', color='#F44336')
+    ax2.tick_params(axis='y', labelcolor='#F44336')
+
+    ax1.set_xlabel('Time (s)')
+
+    # Combined legend
+    lines, labels = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines + lines2, labels + labels2, loc='upper right')
+
+    plt.tight_layout()
+
+    if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
         plt.savefig(output_path, dpi=150, bbox_inches='tight')
         plt.close(fig)
         return output_path

@@ -3,15 +3,32 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 6, 2026[/b][/size]
-[b]Version 0.7.138 - Unified Health & Session Diagnostics[/b]
+[b]Version 0.7.139 - Unified Health & Session Diagnostics[/b]
 
-[b]New release[/b] (0.7.138): https://github.com/coasting-nc/LMUFFB/releases
+[b]New release[/b] (0.7.139): https://github.com/coasting-nc/LMUFFB/releases
 
 [b]Added[/b]
 [list]
 [*][b]Unified Health Dashboard[/b]: Relocated Sim Status, Session Type, and Player Control information to the [b]System Health[/b] section of the Graphs/Analysis window.
 [*][b]Cleaned Main Window[/b]: Simplified the "Connected to LMU" status in the main window to prioritize tuning settings, while keeping advanced diagnostics grouped together in the analysis view.
 [*][b]Centralized Monitoring[/b]: Refactored the internal health monitoring system to provide a unified "source of truth" for both your PC's performance (sample rates) and the game's current simulation state. (#269)
+[/list]
+
+---
+
+[size=5][b]March 6, 2026[/b][/size]
+[b]Version 0.7.138 - Advanced Pull Detection Plots[/b]
+
+[b]New release[/b] (0.7.138): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Added[/b]
+[list]
+[*][b]New Diagnostic Plots[/b]: Added two powerful new plots to the Log Analyzer:
+    [list]
+    [*][b]Pull Detector[/b]: Uses a 0.5s rolling average to filter out high-frequency noise and reveal sustained "pull" forces felt through the wheel.
+    [*][b]Unopposed Force[/b]: Overlays Grip Factor and Yaw Kick FFB to help visualize if grip loss is making the wheel vulnerable to force spikes.
+    [/list]
+[*][b]Passive Acceleration Test[/b]: Added new telemetry channels to compare game-provided yaw acceleration with high-fidelity acceleration derived from 400Hz upsampled velocity. This provides the mathematical proof needed for future FFB signal improvements. (#271)
 [/list]
 
 ---

@@ -157,6 +157,9 @@ LOG_FRAME_DTYPE = np.dtype([
     ('ffb_abs_pulse', np.float32),
     ('ffb_soft_lock', np.float32),
 
+    ('extrapolated_yaw_accel', np.float32),
+    ('derived_yaw_accel', np.float32),
+
     ('ffb_shaft_torque', np.float32),
     ('ffb_gen_torque', np.float32),
     ('ffb_grip_factor', np.float32),
@@ -382,6 +385,8 @@ def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
         'ffb_bottoming_crunch': 'FFBBottomingCrunch',
         'ffb_abs_pulse': 'FFBABSPulse',
         'ffb_soft_lock': 'FFBSoftLock',
+        'extrapolated_yaw_accel': 'ExtrapolatedYawAccel',
+        'derived_yaw_accel': 'DerivedYawAccel',
         'ffb_shaft_torque': 'FFBShaftTorque',
         'ffb_gen_torque': 'FFBGenTorque',
         'ffb_grip_factor': 'GripFactor',
