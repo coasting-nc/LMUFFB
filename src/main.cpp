@@ -108,6 +108,8 @@ void FFBThread() {
             bool in_realtime_phys = false;
             if (g_ffb_active && GameConnector::Get().IsConnected()) {
                 in_realtime_phys = GameConnector::Get().CopyTelemetry(g_localData);
+                g_engine.UpdateMetadata(g_localData); // Update names/classes immediately
+
                 bool is_stale = GameConnector::Get().IsStale(100);
 
                 static bool was_in_menu = true;
@@ -115,15 +117,17 @@ void FFBThread() {
                     Logger::Get().LogFile("[Game] User entered driving session.");
                     if (Config::m_auto_start_logging && !AsyncLogger::Get().IsLogging()) {
                         uint8_t idx = g_localData.telemetry.playerVehicleIdx;
-                        auto& scoring = g_localData.scoring.vehScoringInfo[idx];
+                        if (idx < 104) {
+                            auto& scoring = g_localData.scoring.vehScoringInfo[idx];
+                            const char* tName = g_localData.scoring.scoringInfo.mTrackName;
 
-                        SessionInfo info;
+                            SessionInfo info;
                         info.app_version = LMUFFB_VERSION;
                         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-                        info.vehicle_name = g_engine.m_vehicle_name;
+                        info.vehicle_name = scoring.mVehicleName;
                         info.vehicle_class = VehicleClassToString(ParseVehicleClass(scoring.mVehicleClass, scoring.mVehicleName));
                         info.vehicle_brand = ParseVehicleBrand(scoring.mVehicleClass, scoring.mVehicleName);
-                        info.track_name = g_engine.m_track_name;
+                        info.track_name = tName;
                         info.driver_name = "Auto";
                         info.gain = g_engine.m_gain;
                         info.understeer_effect = g_engine.m_understeer_effect;
@@ -134,7 +138,8 @@ void FFBThread() {
                         info.slope_alpha_threshold = g_engine.m_slope_alpha_threshold;
                         info.slope_decay_rate = g_engine.m_slope_decay_rate;
                         info.torque_passthrough = g_engine.m_torque_passthrough;
-                        AsyncLogger::Get().Start(info, Config::m_log_path);
+                            AsyncLogger::Get().Start(info, Config::m_log_path);
+                        }
                     }
                 } else if (!was_in_menu && !in_realtime_phys) {
                     Logger::Get().LogFile("[Game] User exited to menu (FFB Muted).");

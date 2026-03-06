@@ -2,6 +2,7 @@
 #include "Config.h"
 #include "RestApiProvider.h"
 #include "Logger.h"
+#include "lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include <iostream>
 #include <mutex>
 
@@ -278,17 +279,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     m_smoothed_structural_mult += alpha_gain * (target_structural_mult - m_smoothed_structural_mult);
 
     // Class Seeding
-    bool seeded = false;
-    if (vehicleClass && (m_current_class_name != vehicleClass || (vehicleName && m_last_handled_vehicle_name != vehicleName))) {
-        m_current_class_name = vehicleClass;
-        InitializeLoadReference(vehicleClass, vehicleName);
-        m_warned_invalid_range = false; // Reset warning on car change
-        seeded = true;
+    bool seeded = UpdateMetadataInternal(vehicleClass, vehicleName, data->mTrackName);
 
-        // Trigger REST API Fallback if enabled and range is invalid (Issue #221)
-        if (m_rest_api_enabled && data->mPhysicalSteeringWheelRange <= 0.0f) {
-            RestApiProvider::Get().RequestSteeringRange(m_rest_api_port);
-        }
+    // Trigger REST API Fallback if enabled and range is invalid (Issue #221)
+    if (seeded && m_rest_api_enabled && data->mPhysicalSteeringWheelRange <= 0.0f) {
+        RestApiProvider::Get().RequestSteeringRange(m_rest_api_port);
     }
     
     // --- 1. INITIALIZE CONTEXT ---
@@ -318,19 +313,6 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             }
             m_warned_invalid_range = true;
         }
-    }
-    // Update Context strings (for UI/Logging)
-    // v0.7.119: Use robust strcmp instead of fragile index check (Issue #238)
-    if (strcmp(m_vehicle_name, upsampled_data->mVehicleName) != 0 || strcmp(m_track_name, upsampled_data->mTrackName) != 0) {
-#ifdef _WIN32
-         strncpy_s(m_vehicle_name, sizeof(m_vehicle_name), upsampled_data->mVehicleName, _TRUNCATE);
-         strncpy_s(m_track_name, sizeof(m_track_name), upsampled_data->mTrackName, _TRUNCATE);
-#else
-         strncpy(m_vehicle_name, upsampled_data->mVehicleName, STR_MAX_64);
-         m_vehicle_name[STR_MAX_64] = '\0';
-         strncpy(m_track_name, upsampled_data->mTrackName, STR_MAX_64);
-         m_track_name[STR_MAX_64] = '\0';
-#endif
     }
 
     // --- 2. SIGNAL CONDITIONING (STATE UPDATES) ---
@@ -1285,6 +1267,57 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
     
     ctx.road_noise = road_noise_val * m_road_texture_gain * ctx.texture_load_factor;
     ctx.road_noise *= ctx.speed_gate;
+}
+
+void FFBEngine::UpdateMetadata(const SharedMemoryObjectOut& data) {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+    const char* vClass = nullptr;
+    const char* vName = nullptr;
+    const char* tName = data.scoring.scoringInfo.mTrackName;
+
+    if (data.telemetry.playerHasVehicle) {
+        uint8_t idx = data.telemetry.playerVehicleIdx;
+        if (idx < 104) {
+            vClass = data.scoring.vehScoringInfo[idx].mVehicleClass;
+            vName = data.scoring.vehScoringInfo[idx].mVehicleName;
+        }
+    }
+
+    UpdateMetadataInternal(vClass, vName, tName);
+}
+
+bool FFBEngine::UpdateMetadataInternal(const char* vehicleClass, const char* vehicleName, const char* trackName) {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+    bool seeded = false;
+
+    // 1. Handle Vehicle/Class Change
+    if (vehicleClass && (m_current_class_name != vehicleClass || (vehicleName && m_last_handled_vehicle_name != vehicleName))) {
+        m_current_class_name = vehicleClass;
+        InitializeLoadReference(vehicleClass, vehicleName);
+        m_warned_invalid_range = false; // Reset warning on car change
+        seeded = true;
+    }
+
+    // 2. Update Context strings (for UI/Logging)
+    if (vehicleName && strcmp(m_vehicle_name, vehicleName) != 0) {
+#ifdef _WIN32
+        strncpy_s(m_vehicle_name, sizeof(m_vehicle_name), vehicleName, _TRUNCATE);
+#else
+        strncpy(m_vehicle_name, vehicleName, STR_MAX_64);
+        m_vehicle_name[STR_MAX_64] = '\0';
+#endif
+    }
+
+    if (trackName && strcmp(m_track_name, trackName) != 0) {
+#ifdef _WIN32
+        strncpy_s(m_track_name, sizeof(m_track_name), trackName, _TRUNCATE);
+#else
+        strncpy(m_track_name, trackName, STR_MAX_64);
+        m_track_name[STR_MAX_64] = '\0';
+#endif
+    }
+
+    return seeded;
 }
 
 void FFBEngine::ResetNormalization() {
