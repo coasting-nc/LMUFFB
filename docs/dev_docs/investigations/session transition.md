@@ -96,5 +96,11 @@ To build a bulletproof update loop in your app, follow this hierarchy on every t
 
 # Additional notes
 
+## Scope
 The report above also includes tips on things like preserving race results, which are not relevant for our FFB app.
 We only want to detect session transitions and start / finish to decide when to disable FFB and when to start and close a telemetry log with physics data.
+
+## Edge cases
+
+One edge case that might still not covered by the current implementation of state detection might be this:
+the player is on track driving, presses ESC to show the menu with some settings (like controls, and others). At this time the car is still on track, the player has not returned to the garage. However, we want to disable FFB while user is in these menu, and then re-enable it when the user returns to the car. One possibility is that the info about control (player or AI) might help us differentiate between when we are in these menus. Note that there is a difference between offline (single player race weekend) and online: when we press ESC and go into these menus, the game is paused when offline, while game time keeps progressing while online; however this latter distinction might not be relevant for the purpose of disabling FFB.
