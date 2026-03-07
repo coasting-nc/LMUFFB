@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-07 03:24:38</td>
+            <td class="headerValue">2026-03-07 12:54:17</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -177,43 +177,43 @@
 <span id="L103"><span class="lineNum">     103</span>                 :             : // Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)</span>
 <span id="L104"><span class="lineNum">     104</span>                 :             : // Returns the average slip angle of two wheels using atan2(lateral_vel, longitudinal_vel)</span>
 <span id="L105"><span class="lineNum">     105</span>                 :             : // v0.4.19: Removed abs() from lateral velocity to preserve sign for debug visualization</span>
-<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">       11465 : double FFBEngine::calculate_raw_slip_angle_pair(const TelemWheelV01&amp; w1, const TelemWheelV01&amp; w2) {</span></span>
-<span id="L107"><span class="lineNum">     107</span>                 :<span class="tlaGNC">       11465 :     double v_long_1 = std::abs(w1.mLongitudinalGroundVel);</span></span>
-<span id="L108"><span class="lineNum">     108</span>                 :<span class="tlaGNC">       11465 :     double v_long_2 = std::abs(w2.mLongitudinalGroundVel);</span></span>
-<span id="L109"><span class="lineNum">     109</span>         [<span class="tlaGBC" title="Branch 0 was taken 3369 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 8096 times"> + </span>]:<span class="tlaGNC">       11465 :     if (v_long_1 &lt; MIN_SLIP_ANGLE_VELOCITY) v_long_1 = MIN_SLIP_ANGLE_VELOCITY;</span></span>
-<span id="L110"><span class="lineNum">     110</span>         [<span class="tlaGBC" title="Branch 0 was taken 3389 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 8076 times"> + </span>]:<span class="tlaGNC">       11465 :     if (v_long_2 &lt; MIN_SLIP_ANGLE_VELOCITY) v_long_2 = MIN_SLIP_ANGLE_VELOCITY;</span></span>
-<span id="L111"><span class="lineNum">     111</span>                 :<span class="tlaGNC">       11465 :     double raw_angle_1 = std::atan2(w1.mLateralPatchVel, v_long_1);</span></span>
-<span id="L112"><span class="lineNum">     112</span>                 :<span class="tlaGNC">       11465 :     double raw_angle_2 = std::atan2(w2.mLateralPatchVel, v_long_2);</span></span>
-<span id="L113"><span class="lineNum">     113</span>                 :<span class="tlaGNC">       11465 :     return (raw_angle_1 + raw_angle_2) / 2.0;</span></span>
+<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">       11899 : double FFBEngine::calculate_raw_slip_angle_pair(const TelemWheelV01&amp; w1, const TelemWheelV01&amp; w2) {</span></span>
+<span id="L107"><span class="lineNum">     107</span>                 :<span class="tlaGNC">       11899 :     double v_long_1 = std::abs(w1.mLongitudinalGroundVel);</span></span>
+<span id="L108"><span class="lineNum">     108</span>                 :<span class="tlaGNC">       11899 :     double v_long_2 = std::abs(w2.mLongitudinalGroundVel);</span></span>
+<span id="L109"><span class="lineNum">     109</span>         [<span class="tlaGBC" title="Branch 0 was taken 3319 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 8580 times"> + </span>]:<span class="tlaGNC">       11899 :     if (v_long_1 &lt; MIN_SLIP_ANGLE_VELOCITY) v_long_1 = MIN_SLIP_ANGLE_VELOCITY;</span></span>
+<span id="L110"><span class="lineNum">     110</span>         [<span class="tlaGBC" title="Branch 0 was taken 3339 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 8560 times"> + </span>]:<span class="tlaGNC">       11899 :     if (v_long_2 &lt; MIN_SLIP_ANGLE_VELOCITY) v_long_2 = MIN_SLIP_ANGLE_VELOCITY;</span></span>
+<span id="L111"><span class="lineNum">     111</span>                 :<span class="tlaGNC">       11899 :     double raw_angle_1 = std::atan2(w1.mLateralPatchVel, v_long_1);</span></span>
+<span id="L112"><span class="lineNum">     112</span>                 :<span class="tlaGNC">       11899 :     double raw_angle_2 = std::atan2(w2.mLateralPatchVel, v_long_2);</span></span>
+<span id="L113"><span class="lineNum">     113</span>                 :<span class="tlaGNC">       11899 :     return (raw_angle_1 + raw_angle_2) / 2.0;</span></span>
 <span id="L114"><span class="lineNum">     114</span>                 :             : }</span>
 <span id="L115"><span class="lineNum">     115</span>                 :             : </span>
-<span id="L116"><span class="lineNum">     116</span>                 :<span class="tlaGNC">       51399 : double FFBEngine::calculate_slip_angle(const TelemWheelV01&amp; w, double&amp; prev_state, double dt) {</span></span>
-<span id="L117"><span class="lineNum">     117</span>                 :<span class="tlaGNC">       51399 :     double v_long = std::abs(w.mLongitudinalGroundVel);</span></span>
-<span id="L118"><span class="lineNum">     118</span>         [<span class="tlaGBC" title="Branch 0 was taken 10860 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 40539 times"> + </span>]:<span class="tlaGNC">       51399 :     if (v_long &lt; MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;</span></span>
+<span id="L116"><span class="lineNum">     116</span>                 :<span class="tlaGNC">       52723 : double FFBEngine::calculate_slip_angle(const TelemWheelV01&amp; w, double&amp; prev_state, double dt) {</span></span>
+<span id="L117"><span class="lineNum">     117</span>                 :<span class="tlaGNC">       52723 :     double v_long = std::abs(w.mLongitudinalGroundVel);</span></span>
+<span id="L118"><span class="lineNum">     118</span>         [<span class="tlaGBC" title="Branch 0 was taken 10760 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 41963 times"> + </span>]:<span class="tlaGNC">       52723 :     if (v_long &lt; MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;</span></span>
 <span id="L119"><span class="lineNum">     119</span>                 :             :     </span>
 <span id="L120"><span class="lineNum">     120</span>                 :             :     // v0.4.19: PRESERVE SIGN - Do NOT use abs() on lateral velocity</span>
 <span id="L121"><span class="lineNum">     121</span>                 :             :     // Positive lateral vel (+X = left) â†’ Positive slip angle</span>
 <span id="L122"><span class="lineNum">     122</span>                 :             :     // Negative lateral vel (-X = right) â†’ Negative slip angle</span>
 <span id="L123"><span class="lineNum">     123</span>                 :             :     // This sign is critical for directional counter-steering</span>
-<span id="L124"><span class="lineNum">     124</span>                 :<span class="tlaGNC">       51399 :     double raw_angle = std::atan2(w.mLateralPatchVel, v_long);  // SIGN PRESERVED</span></span>
+<span id="L124"><span class="lineNum">     124</span>                 :<span class="tlaGNC">       52723 :     double raw_angle = std::atan2(w.mLateralPatchVel, v_long);  // SIGN PRESERVED</span></span>
 <span id="L125"><span class="lineNum">     125</span>                 :             :     </span>
 <span id="L126"><span class="lineNum">     126</span>                 :             :     // LPF: Time Corrected Alpha (v0.4.37)</span>
 <span id="L127"><span class="lineNum">     127</span>                 :             :     // Target: Alpha 0.1 at 400Hz (dt = 0.0025)</span>
 <span id="L128"><span class="lineNum">     128</span>                 :             :     // Formula: alpha = dt / (tau + dt) -&gt; 0.1 = 0.0025 / (tau + 0.0025) -&gt; tau approx 0.0225s</span>
 <span id="L129"><span class="lineNum">     129</span>                 :             :     // v0.4.40: Using configurable m_slip_angle_smoothing</span>
-<span id="L130"><span class="lineNum">     130</span>                 :<span class="tlaGNC">       51399 :     double tau = (double)m_slip_angle_smoothing;</span></span>
-<span id="L131"><span class="lineNum">     131</span>         [<span class="tlaGBC" title="Branch 0 was taken 45550 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5849 times"> + </span>]:<span class="tlaGNC">       51399 :     if (tau &lt; 0.0001) tau = 0.0001; // Safety clamp </span></span>
+<span id="L130"><span class="lineNum">     130</span>                 :<span class="tlaGNC">       52723 :     double tau = (double)m_slip_angle_smoothing;</span></span>
+<span id="L131"><span class="lineNum">     131</span>         [<span class="tlaGBC" title="Branch 0 was taken 46874 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5849 times"> + </span>]:<span class="tlaGNC">       52723 :     if (tau &lt; 0.0001) tau = 0.0001; // Safety clamp </span></span>
 <span id="L132"><span class="lineNum">     132</span>                 :             :     </span>
-<span id="L133"><span class="lineNum">     133</span>                 :<span class="tlaGNC">       51399 :     double alpha = dt / (tau + dt);</span></span>
+<span id="L133"><span class="lineNum">     133</span>                 :<span class="tlaGNC">       52723 :     double alpha = dt / (tau + dt);</span></span>
 <span id="L134"><span class="lineNum">     134</span>                 :             :     </span>
 <span id="L135"><span class="lineNum">     135</span>                 :             :     // Safety clamp</span>
-<span id="L136"><span class="lineNum">     136</span>                 :<span class="tlaGNC">       51399 :     alpha = (std::min)(1.0, (std::max)(0.001, alpha));</span></span>
-<span id="L137"><span class="lineNum">     137</span>                 :<span class="tlaGNC">       51399 :     prev_state = prev_state + alpha * (raw_angle - prev_state);</span></span>
-<span id="L138"><span class="lineNum">     138</span>                 :<span class="tlaGNC">       51399 :     return prev_state;</span></span>
+<span id="L136"><span class="lineNum">     136</span>                 :<span class="tlaGNC">       52723 :     alpha = (std::min)(1.0, (std::max)(0.001, alpha));</span></span>
+<span id="L137"><span class="lineNum">     137</span>                 :<span class="tlaGNC">       52723 :     prev_state = prev_state + alpha * (raw_angle - prev_state);</span></span>
+<span id="L138"><span class="lineNum">     138</span>                 :<span class="tlaGNC">       52723 :     return prev_state;</span></span>
 <span id="L139"><span class="lineNum">     139</span>                 :             : }</span>
 <span id="L140"><span class="lineNum">     140</span>                 :             : </span>
 <span id="L141"><span class="lineNum">     141</span>                 :             : // Helper: Calculate Grip with Fallback (v0.4.6 Hardening)</span>
-<span id="L142"><span class="lineNum">     142</span>                 :<span class="tlaGNC">       25699 : GripResult FFBEngine::calculate_grip(const TelemWheelV01&amp; w1, </span></span>
+<span id="L142"><span class="lineNum">     142</span>                 :<span class="tlaGNC">       26361 : GripResult FFBEngine::calculate_grip(const TelemWheelV01&amp; w1, </span></span>
 <span id="L143"><span class="lineNum">     143</span>                 :             :                           const TelemWheelV01&amp; w2,</span>
 <span id="L144"><span class="lineNum">     144</span>                 :             :                           double avg_load,</span>
 <span id="L145"><span class="lineNum">     145</span>                 :             :                           bool&amp; warned_flag,</span>
@@ -225,17 +225,17 @@
 <span id="L151"><span class="lineNum">     151</span>                 :             :                           const TelemInfoV01* data,</span>
 <span id="L152"><span class="lineNum">     152</span>                 :             :                           bool is_front) {</span>
 <span id="L153"><span class="lineNum">     153</span>                 :             :     GripResult result;</span>
-<span id="L154"><span class="lineNum">     154</span>                 :<span class="tlaGNC">       25699 :     double total_load = w1.mTireLoad + w2.mTireLoad;</span></span>
-<span id="L155"><span class="lineNum">     155</span>         [<span class="tlaGBC" title="Branch 0 was taken 19676 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6023 times"> + </span>]:<span class="tlaGNC">       25699 :     if (total_load &gt; 1.0) {</span></span>
-<span id="L156"><span class="lineNum">     156</span>                 :<span class="tlaGNC">       19676 :         result.original = (w1.mGripFract * w1.mTireLoad + w2.mGripFract * w2.mTireLoad) / total_load;</span></span>
+<span id="L154"><span class="lineNum">     154</span>                 :<span class="tlaGNC">       26361 :     double total_load = w1.mTireLoad + w2.mTireLoad;</span></span>
+<span id="L155"><span class="lineNum">     155</span>         [<span class="tlaGBC" title="Branch 0 was taken 20369 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5992 times"> + </span>]:<span class="tlaGNC">       26361 :     if (total_load &gt; 1.0) {</span></span>
+<span id="L156"><span class="lineNum">     156</span>                 :<span class="tlaGNC">       20369 :         result.original = (w1.mGripFract * w1.mTireLoad + w2.mGripFract * w2.mTireLoad) / total_load;</span></span>
 <span id="L157"><span class="lineNum">     157</span>                 :             :     } else {</span>
 <span id="L158"><span class="lineNum">     158</span>                 :             :         // Fallback for zero load (e.g. jump/missing data)</span>
-<span id="L159"><span class="lineNum">     159</span>                 :<span class="tlaGNC">        6023 :         result.original = (w1.mGripFract + w2.mGripFract) / 2.0;</span></span>
+<span id="L159"><span class="lineNum">     159</span>                 :<span class="tlaGNC">        5992 :         result.original = (w1.mGripFract + w2.mGripFract) / 2.0;</span></span>
 <span id="L160"><span class="lineNum">     160</span>                 :             :     }</span>
 <span id="L161"><span class="lineNum">     161</span>                 :             : </span>
-<span id="L162"><span class="lineNum">     162</span>                 :<span class="tlaGNC">       25699 :     result.value = result.original;</span></span>
-<span id="L163"><span class="lineNum">     163</span>                 :<span class="tlaGNC">       25699 :     result.approximated = false;</span></span>
-<span id="L164"><span class="lineNum">     164</span>                 :<span class="tlaGNC">       25699 :     result.slip_angle = 0.0;</span></span>
+<span id="L162"><span class="lineNum">     162</span>                 :<span class="tlaGNC">       26361 :     result.value = result.original;</span></span>
+<span id="L163"><span class="lineNum">     163</span>                 :<span class="tlaGNC">       26361 :     result.approximated = false;</span></span>
+<span id="L164"><span class="lineNum">     164</span>                 :<span class="tlaGNC">       26361 :     result.slip_angle = 0.0;</span></span>
 <span id="L165"><span class="lineNum">     165</span>                 :             :     </span>
 <span id="L166"><span class="lineNum">     166</span>                 :             :     // ==================================================================================</span>
 <span id="L167"><span class="lineNum">     167</span>                 :             :     // CRITICAL LOGIC FIX (v0.4.14) - DO NOT MOVE INSIDE CONDITIONAL BLOCK</span>
@@ -253,20 +253,20 @@
 <span id="L179"><span class="lineNum">     179</span>                 :             :     //           missing, the Rear Torque effect will toggle ON/OFF randomly based on </span>
 <span id="L180"><span class="lineNum">     180</span>                 :             :     //           telemetry health, causing violent kicks and &quot;reverse FFB&quot; sensations.</span>
 <span id="L181"><span class="lineNum">     181</span>                 :             :     // ==================================================================================</span>
-<span id="L182"><span class="lineNum">     182</span>                 :<span class="tlaGNC">       25699 :     double slip1 = calculate_slip_angle(w1, prev_slip1, dt);</span></span>
-<span id="L183"><span class="lineNum">     183</span>                 :<span class="tlaGNC">       25699 :     double slip2 = calculate_slip_angle(w2, prev_slip2, dt);</span></span>
-<span id="L184"><span class="lineNum">     184</span>                 :<span class="tlaGNC">       25699 :     result.slip_angle = (slip1 + slip2) / 2.0;</span></span>
+<span id="L182"><span class="lineNum">     182</span>                 :<span class="tlaGNC">       26361 :     double slip1 = calculate_slip_angle(w1, prev_slip1, dt);</span></span>
+<span id="L183"><span class="lineNum">     183</span>                 :<span class="tlaGNC">       26361 :     double slip2 = calculate_slip_angle(w2, prev_slip2, dt);</span></span>
+<span id="L184"><span class="lineNum">     184</span>                 :<span class="tlaGNC">       26361 :     result.slip_angle = (slip1 + slip2) / 2.0;</span></span>
 <span id="L185"><span class="lineNum">     185</span>                 :             : </span>
 <span id="L186"><span class="lineNum">     186</span>                 :             :     // Fallback condition: Grip is essentially zero BUT car has significant load</span>
-<span id="L187"><span class="lineNum">     187</span>   [<span class="tlaGBC" title="Branch 0 was taken 23872 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1827 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 21832 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 2040 times"> + </span>]:<span class="tlaGNC">       25699 :     if (result.value &lt; 0.0001 &amp;&amp; avg_load &gt; 100.0) {</span></span>
-<span id="L188"><span class="lineNum">     188</span>                 :<span class="tlaGNC">       21832 :         result.approximated = true;</span></span>
+<span id="L187"><span class="lineNum">     187</span>   [<span class="tlaGBC" title="Branch 0 was taken 24513 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1848 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 22509 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 2004 times"> + </span>]:<span class="tlaGNC">       26361 :     if (result.value &lt; 0.0001 &amp;&amp; avg_load &gt; 100.0) {</span></span>
+<span id="L188"><span class="lineNum">     188</span>                 :<span class="tlaGNC">       22509 :         result.approximated = true;</span></span>
 <span id="L189"><span class="lineNum">     189</span>                 :             :         </span>
-<span id="L190"><span class="lineNum">     190</span>         [<span class="tlaGBC" title="Branch 0 was taken 576 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 21256 times"> + </span>]:<span class="tlaGNC">       21832 :         if (car_speed &lt; 5.0) {</span></span>
+<span id="L190"><span class="lineNum">     190</span>         [<span class="tlaGBC" title="Branch 0 was taken 580 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 21929 times"> + </span>]:<span class="tlaGNC">       22509 :         if (car_speed &lt; 5.0) {</span></span>
 <span id="L191"><span class="lineNum">     191</span>                 :             :             // Note: We still keep the calculated slip_angle in result.slip_angle</span>
 <span id="L192"><span class="lineNum">     192</span>                 :             :             // for visualization/rear torque, even if we force grip to 1.0 here.</span>
-<span id="L193"><span class="lineNum">     193</span>                 :<span class="tlaGNC">         576 :             result.value = 1.0; </span></span>
+<span id="L193"><span class="lineNum">     193</span>                 :<span class="tlaGNC">         580 :             result.value = 1.0; </span></span>
 <span id="L194"><span class="lineNum">     194</span>                 :             :         } else {</span>
-<span id="L195"><span class="lineNum">     195</span>   [<span class="tlaGBC" title="Branch 0 was taken 4083 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 17173 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 2042 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 2041 times"> + </span> :<span class="tlaGNC">       21256 :             if (m_slope_detection_enabled &amp;&amp; is_front &amp;&amp; data) {</span></span>
+<span id="L195"><span class="lineNum">     195</span>   [<span class="tlaGBC" title="Branch 0 was taken 4083 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 17846 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 2042 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 2041 times"> + </span> :<span class="tlaGNC">       21929 :             if (m_slope_detection_enabled &amp;&amp; is_front &amp;&amp; data) {</span></span>
 <span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 2042 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
 <span id="L196"><span class="lineNum">     196</span>                 :             :                 // Dynamic grip estimation via derivative monitoring</span>
 <span id="L197"><span class="lineNum">     197</span>                 :<span class="tlaGNC">        2042 :                 result.value = calculate_slope_grip(</span></span>
@@ -280,50 +280,50 @@
 <span id="L205"><span class="lineNum">     205</span>                 :             :                 </span>
 <span id="L206"><span class="lineNum">     206</span>                 :             :                 // 1. Lateral Component (Alpha)</span>
 <span id="L207"><span class="lineNum">     207</span>                 :             :                 // USE CONFIGURABLE THRESHOLD (v0.5.7)</span>
-<span id="L208"><span class="lineNum">     208</span>                 :<span class="tlaGNC">       19214 :                 double lat_metric = std::abs(result.slip_angle) / (double)m_optimal_slip_angle;</span></span>
+<span id="L208"><span class="lineNum">     208</span>                 :<span class="tlaGNC">       19887 :                 double lat_metric = std::abs(result.slip_angle) / (double)m_optimal_slip_angle;</span></span>
 <span id="L209"><span class="lineNum">     209</span>                 :             : </span>
 <span id="L210"><span class="lineNum">     210</span>                 :             :                 // 2. Longitudinal Component (Kappa)</span>
 <span id="L211"><span class="lineNum">     211</span>                 :             :                 // Calculate manual slip for both wheels and average the magnitude</span>
-<span id="L212"><span class="lineNum">     212</span>                 :<span class="tlaGNC">       19214 :                 double ratio1 = calculate_manual_slip_ratio(w1, car_speed);</span></span>
-<span id="L213"><span class="lineNum">     213</span>                 :<span class="tlaGNC">       19214 :                 double ratio2 = calculate_manual_slip_ratio(w2, car_speed);</span></span>
-<span id="L214"><span class="lineNum">     214</span>                 :<span class="tlaGNC">       19214 :                 double avg_ratio = (std::abs(ratio1) + std::abs(ratio2)) / 2.0;</span></span>
+<span id="L212"><span class="lineNum">     212</span>                 :<span class="tlaGNC">       19887 :                 double ratio1 = calculate_manual_slip_ratio(w1, car_speed);</span></span>
+<span id="L213"><span class="lineNum">     213</span>                 :<span class="tlaGNC">       19887 :                 double ratio2 = calculate_manual_slip_ratio(w2, car_speed);</span></span>
+<span id="L214"><span class="lineNum">     214</span>                 :<span class="tlaGNC">       19887 :                 double avg_ratio = (std::abs(ratio1) + std::abs(ratio2)) / 2.0;</span></span>
 <span id="L215"><span class="lineNum">     215</span>                 :             : </span>
 <span id="L216"><span class="lineNum">     216</span>                 :             :                 // USE CONFIGURABLE THRESHOLD (v0.5.7)</span>
-<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">       19214 :                 double long_metric = avg_ratio / (double)m_optimal_slip_ratio;</span></span>
+<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">       19887 :                 double long_metric = avg_ratio / (double)m_optimal_slip_ratio;</span></span>
 <span id="L218"><span class="lineNum">     218</span>                 :             : </span>
 <span id="L219"><span class="lineNum">     219</span>                 :             :                 // 3. Combined Vector (Friction Circle)</span>
-<span id="L220"><span class="lineNum">     220</span>                 :<span class="tlaGNC">       19214 :                 double combined_slip = std::sqrt((lat_metric * lat_metric) + (long_metric * long_metric));</span></span>
+<span id="L220"><span class="lineNum">     220</span>                 :<span class="tlaGNC">       19887 :                 double combined_slip = std::sqrt((lat_metric * lat_metric) + (long_metric * long_metric));</span></span>
 <span id="L221"><span class="lineNum">     221</span>                 :             : </span>
 <span id="L222"><span class="lineNum">     222</span>                 :             :                 // 4. Map to Grip Fraction</span>
 <span id="L223"><span class="lineNum">     223</span>                 :             : </span>
-<span id="L224"><span class="lineNum">     224</span>         [<span class="tlaGBC" title="Branch 0 was taken 7212 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 12002 times"> + </span>]:<span class="tlaGNC">       19214 :                 if (combined_slip &gt; 1.0) {</span></span>
-<span id="L225"><span class="lineNum">     225</span>                 :<span class="tlaGNC">        7212 :                     double excess = combined_slip - 1.0;</span></span>
-<span id="L226"><span class="lineNum">     226</span>                 :<span class="tlaGNC">        7212 :                     result.value = 1.0 / (1.0 + excess * 2.0);</span></span>
+<span id="L224"><span class="lineNum">     224</span>         [<span class="tlaGBC" title="Branch 0 was taken 7195 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 12692 times"> + </span>]:<span class="tlaGNC">       19887 :                 if (combined_slip &gt; 1.0) {</span></span>
+<span id="L225"><span class="lineNum">     225</span>                 :<span class="tlaGNC">        7195 :                     double excess = combined_slip - 1.0;</span></span>
+<span id="L226"><span class="lineNum">     226</span>                 :<span class="tlaGNC">        7195 :                     result.value = 1.0 / (1.0 + excess * 2.0);</span></span>
 <span id="L227"><span class="lineNum">     227</span>                 :             :                 } else {</span>
-<span id="L228"><span class="lineNum">     228</span>                 :<span class="tlaGNC">       12002 :                     result.value = 1.0;</span></span>
+<span id="L228"><span class="lineNum">     228</span>                 :<span class="tlaGNC">       12692 :                     result.value = 1.0;</span></span>
 <span id="L229"><span class="lineNum">     229</span>                 :             :                 }</span>
 <span id="L230"><span class="lineNum">     230</span>                 :             :             }</span>
 <span id="L231"><span class="lineNum">     231</span>                 :             :         }</span>
 <span id="L232"><span class="lineNum">     232</span>                 :             :         </span>
 <span id="L233"><span class="lineNum">     233</span>                 :             :         </span>
 <span id="L234"><span class="lineNum">     234</span>                 :             :         // Safety Clamp (v0.4.6): Never drop below 0.2 in approximation</span>
-<span id="L235"><span class="lineNum">     235</span>                 :<span class="tlaGNC">       21832 :         result.value = (std::max)(0.2, result.value);</span></span>
+<span id="L235"><span class="lineNum">     235</span>                 :<span class="tlaGNC">       22509 :         result.value = (std::max)(0.2, result.value);</span></span>
 <span id="L236"><span class="lineNum">     236</span>                 :             :         </span>
-<span id="L237"><span class="lineNum">     237</span>         [<span class="tlaGBC" title="Branch 0 was taken 314 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 21518 times"> + </span>]:<span class="tlaGNC">       21832 :         if (!warned_flag) {</span></span>
-<span id="L238"><span class="lineNum">     238</span>                 :<span class="tlaGNC">         314 :             Logger::Get().LogFile(&quot;Warning: Data for mGripFract from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.&quot;, vehicleName);</span></span>
-<span id="L239"><span class="lineNum">     239</span>                 :<span class="tlaGNC">         314 :             warned_flag = true;</span></span>
+<span id="L237"><span class="lineNum">     237</span>         [<span class="tlaGBC" title="Branch 0 was taken 317 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 22192 times"> + </span>]:<span class="tlaGNC">       22509 :         if (!warned_flag) {</span></span>
+<span id="L238"><span class="lineNum">     238</span>                 :<span class="tlaGNC">         317 :             Logger::Get().LogFile(&quot;Warning: Data for mGripFract from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.&quot;, vehicleName);</span></span>
+<span id="L239"><span class="lineNum">     239</span>                 :<span class="tlaGNC">         317 :             warned_flag = true;</span></span>
 <span id="L240"><span class="lineNum">     240</span>                 :             :         }</span>
 <span id="L241"><span class="lineNum">     241</span>                 :             :     }</span>
 <span id="L242"><span class="lineNum">     242</span>                 :             :     </span>
 <span id="L243"><span class="lineNum">     243</span>                 :             :     // Apply Adaptive Smoothing (v0.7.47)</span>
-<span id="L244"><span class="lineNum">     244</span>         [<span class="tlaGBC" title="Branch 0 was taken 12851 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 12848 times"> + </span>]:<span class="tlaGNC">       25699 :     double&amp; state = is_front ? m_front_grip_smoothed_state : m_rear_grip_smoothed_state;</span></span>
-<span id="L245"><span class="lineNum">     245</span>                 :<span class="tlaGNC">       51398 :     result.value = apply_adaptive_smoothing(result.value, state, dt,</span></span>
-<span id="L246"><span class="lineNum">     246</span>                 :<span class="tlaGNC">       25699 :                                             (double)m_grip_smoothing_steady,</span></span>
-<span id="L247"><span class="lineNum">     247</span>                 :<span class="tlaGNC">       25699 :                                             (double)m_grip_smoothing_fast,</span></span>
-<span id="L248"><span class="lineNum">     248</span>                 :<span class="tlaGNC">       25699 :                                             (double)m_grip_smoothing_sensitivity);</span></span>
+<span id="L244"><span class="lineNum">     244</span>         [<span class="tlaGBC" title="Branch 0 was taken 13182 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 13179 times"> + </span>]:<span class="tlaGNC">       26361 :     double&amp; state = is_front ? m_front_grip_smoothed_state : m_rear_grip_smoothed_state;</span></span>
+<span id="L245"><span class="lineNum">     245</span>                 :<span class="tlaGNC">       52722 :     result.value = apply_adaptive_smoothing(result.value, state, dt,</span></span>
+<span id="L246"><span class="lineNum">     246</span>                 :<span class="tlaGNC">       26361 :                                             (double)m_grip_smoothing_steady,</span></span>
+<span id="L247"><span class="lineNum">     247</span>                 :<span class="tlaGNC">       26361 :                                             (double)m_grip_smoothing_fast,</span></span>
+<span id="L248"><span class="lineNum">     248</span>                 :<span class="tlaGNC">       26361 :                                             (double)m_grip_smoothing_sensitivity);</span></span>
 <span id="L249"><span class="lineNum">     249</span>                 :             : </span>
-<span id="L250"><span class="lineNum">     250</span>                 :<span class="tlaGNC">       25699 :     result.value = (std::max)(0.0, (std::min)(1.0, result.value));</span></span>
-<span id="L251"><span class="lineNum">     251</span>                 :<span class="tlaGNC">       25699 :     return result;</span></span>
+<span id="L250"><span class="lineNum">     250</span>                 :<span class="tlaGNC">       26361 :     result.value = (std::max)(0.0, (std::min)(1.0, result.value));</span></span>
+<span id="L251"><span class="lineNum">     251</span>                 :<span class="tlaGNC">       26361 :     return result;</span></span>
 <span id="L252"><span class="lineNum">     252</span>                 :             : }</span>
 <span id="L253"><span class="lineNum">     253</span>                 :             : </span>
 <span id="L254"><span class="lineNum">     254</span>                 :             : // Helper: Approximate Load (v0.4.5)</span>
@@ -334,25 +334,25 @@
 <span id="L259"><span class="lineNum">     259</span>                 :             : }</span>
 <span id="L260"><span class="lineNum">     260</span>                 :             : </span>
 <span id="L261"><span class="lineNum">     261</span>                 :             : // Helper: Approximate Rear Load (v0.4.10)</span>
-<span id="L262"><span class="lineNum">     262</span>                 :<span class="tlaGNC">       25697 : double FFBEngine::approximate_rear_load(const TelemWheelV01&amp; w) {</span></span>
+<span id="L262"><span class="lineNum">     262</span>                 :<span class="tlaGNC">       26359 : double FFBEngine::approximate_rear_load(const TelemWheelV01&amp; w) {</span></span>
 <span id="L263"><span class="lineNum">     263</span>                 :             :     // Base: Suspension Force + Est. Unsprung Mass (300N)</span>
 <span id="L264"><span class="lineNum">     264</span>                 :             :     // This captures weight transfer (braking/accel) and aero downforce implicitly via suspension compression</span>
-<span id="L265"><span class="lineNum">     265</span>                 :<span class="tlaGNC">       25697 :     return w.mSuspForce + 300.0;</span></span>
+<span id="L265"><span class="lineNum">     265</span>                 :<span class="tlaGNC">       26359 :     return w.mSuspForce + 300.0;</span></span>
 <span id="L266"><span class="lineNum">     266</span>                 :             : }</span>
 <span id="L267"><span class="lineNum">     267</span>                 :             : </span>
 <span id="L268"><span class="lineNum">     268</span>                 :             : // Helper: Calculate Kinematic Load (v0.4.39)</span>
 <span id="L269"><span class="lineNum">     269</span>                 :             : // Estimates tire load from chassis physics when telemetry (mSuspForce) is missing.</span>
 <span id="L270"><span class="lineNum">     270</span>                 :             : // This is critical for encrypted DLC content where suspension sensors are blocked.</span>
-<span id="L271"><span class="lineNum">     271</span>                 :<span class="tlaGNC">        5058 : double FFBEngine::calculate_kinematic_load(const TelemInfoV01* data, int wheel_index) {</span></span>
+<span id="L271"><span class="lineNum">     271</span>                 :<span class="tlaGNC">        5066 : double FFBEngine::calculate_kinematic_load(const TelemInfoV01* data, int wheel_index) {</span></span>
 <span id="L272"><span class="lineNum">     272</span>                 :             :     // 1. Static Weight Distribution</span>
-<span id="L273"><span class="lineNum">     273</span>                 :<span class="tlaGNC">        5058 :     bool is_rear = (wheel_index &gt;= 2);</span></span>
-<span id="L274"><span class="lineNum">     274</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5056 times"> + </span>]:<span class="tlaGNC">        5058 :     double bias = is_rear ? m_approx_weight_bias : (1.0 - m_approx_weight_bias);</span></span>
-<span id="L275"><span class="lineNum">     275</span>                 :<span class="tlaGNC">        5058 :     double static_weight = (m_approx_mass_kg * 9.81 * bias) / 2.0;</span></span>
+<span id="L273"><span class="lineNum">     273</span>                 :<span class="tlaGNC">        5066 :     bool is_rear = (wheel_index &gt;= 2);</span></span>
+<span id="L274"><span class="lineNum">     274</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5064 times"> + </span>]:<span class="tlaGNC">        5066 :     double bias = is_rear ? m_approx_weight_bias : (1.0 - m_approx_weight_bias);</span></span>
+<span id="L275"><span class="lineNum">     275</span>                 :<span class="tlaGNC">        5066 :     double static_weight = (m_approx_mass_kg * 9.81 * bias) / 2.0;</span></span>
 <span id="L276"><span class="lineNum">     276</span>                 :             : </span>
 <span id="L277"><span class="lineNum">     277</span>                 :             :     // 2. Aerodynamic Load (Velocity Squared)</span>
-<span id="L278"><span class="lineNum">     278</span>                 :<span class="tlaGNC">        5058 :     double speed = std::abs(data-&gt;mLocalVel.z);</span></span>
-<span id="L279"><span class="lineNum">     279</span>                 :<span class="tlaGNC">        5058 :     double aero_load = m_approx_aero_coeff * (speed * speed);</span></span>
-<span id="L280"><span class="lineNum">     280</span>                 :<span class="tlaGNC">        5058 :     double wheel_aero = aero_load / 4.0; </span></span>
+<span id="L278"><span class="lineNum">     278</span>                 :<span class="tlaGNC">        5066 :     double speed = std::abs(data-&gt;mLocalVel.z);</span></span>
+<span id="L279"><span class="lineNum">     279</span>                 :<span class="tlaGNC">        5066 :     double aero_load = m_approx_aero_coeff * (speed * speed);</span></span>
+<span id="L280"><span class="lineNum">     280</span>                 :<span class="tlaGNC">        5066 :     double wheel_aero = aero_load / 4.0; </span></span>
 <span id="L281"><span class="lineNum">     281</span>                 :             : </span>
 <span id="L282"><span class="lineNum">     282</span>                 :             :     // 3. Longitudinal Weight Transfer (Braking/Acceleration)</span>
 <span id="L283"><span class="lineNum">     283</span>                 :             :     // COORDINATE SYSTEM VERIFIED (v0.4.39):</span>
@@ -363,8 +363,8 @@
 <span id="L288"><span class="lineNum">     288</span>                 :             :     // </span>
 <span id="L289"><span class="lineNum">     289</span>                 :             :     // Formula: (Accel / g) * WEIGHT_TRANSFER_SCALE</span>
 <span id="L290"><span class="lineNum">     290</span>                 :             :     // We use SMOOTHED acceleration to simulate chassis pitch inertia (~35ms lag)</span>
-<span id="L291"><span class="lineNum">     291</span>                 :<span class="tlaGNC">        5058 :     double long_transfer = (m_accel_z_smoothed / 9.81) * WEIGHT_TRANSFER_SCALE; </span></span>
-<span id="L292"><span class="lineNum">     292</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5056 times"> + </span>]:<span class="tlaGNC">        5058 :     if (is_rear) long_transfer *= -1.0; // Subtract from Rear during Braking</span></span>
+<span id="L291"><span class="lineNum">     291</span>                 :<span class="tlaGNC">        5066 :     double long_transfer = (m_accel_z_smoothed / 9.81) * WEIGHT_TRANSFER_SCALE; </span></span>
+<span id="L292"><span class="lineNum">     292</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5064 times"> + </span>]:<span class="tlaGNC">        5066 :     if (is_rear) long_transfer *= -1.0; // Subtract from Rear during Braking</span></span>
 <span id="L293"><span class="lineNum">     293</span>                 :             : </span>
 <span id="L294"><span class="lineNum">     294</span>                 :             :     // 4. Lateral Weight Transfer (Cornering)</span>
 <span id="L295"><span class="lineNum">     295</span>                 :             :     // COORDINATE SYSTEM VERIFIED (v0.4.39):</span>
@@ -375,35 +375,35 @@
 <span id="L300"><span class="lineNum">     300</span>                 :             :     // </span>
 <span id="L301"><span class="lineNum">     301</span>                 :             :     // Formula: (Accel / g) * WEIGHT_TRANSFER_SCALE * Roll_Stiffness</span>
 <span id="L302"><span class="lineNum">     302</span>                 :             :     // We use SMOOTHED acceleration to simulate chassis roll inertia (~35ms lag)</span>
-<span id="L303"><span class="lineNum">     303</span>                 :<span class="tlaGNC">        5058 :     double lat_transfer = (m_accel_x_smoothed / 9.81) * WEIGHT_TRANSFER_SCALE * m_approx_roll_stiffness;</span></span>
-<span id="L304"><span class="lineNum">     304</span>   [<span class="tlaGBC" title="Branch 0 was taken 2530 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2528 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 3 was taken 2529 times"> + </span>]:<span class="tlaGNC">        5058 :     bool is_left = (wheel_index == 0 || wheel_index == 2);</span></span>
-<span id="L305"><span class="lineNum">     305</span>         [<span class="tlaGBC" title="Branch 0 was taken 2529 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2529 times"> + </span>]:<span class="tlaGNC">        5058 :     if (!is_left) lat_transfer *= -1.0; // Subtract from Right wheels</span></span>
+<span id="L303"><span class="lineNum">     303</span>                 :<span class="tlaGNC">        5066 :     double lat_transfer = (m_accel_x_smoothed / 9.81) * WEIGHT_TRANSFER_SCALE * m_approx_roll_stiffness;</span></span>
+<span id="L304"><span class="lineNum">     304</span>   [<span class="tlaGBC" title="Branch 0 was taken 2534 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2532 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 3 was taken 2533 times"> + </span>]:<span class="tlaGNC">        5066 :     bool is_left = (wheel_index == 0 || wheel_index == 2);</span></span>
+<span id="L305"><span class="lineNum">     305</span>         [<span class="tlaGBC" title="Branch 0 was taken 2533 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2533 times"> + </span>]:<span class="tlaGNC">        5066 :     if (!is_left) lat_transfer *= -1.0; // Subtract from Right wheels</span></span>
 <span id="L306"><span class="lineNum">     306</span>                 :             : </span>
 <span id="L307"><span class="lineNum">     307</span>                 :             :     // Sum and Clamp</span>
-<span id="L308"><span class="lineNum">     308</span>                 :<span class="tlaGNC">        5058 :     double total_load = static_weight + wheel_aero + long_transfer + lat_transfer;</span></span>
-<span id="L309"><span class="lineNum">     309</span>                 :<span class="tlaGNC">        5058 :     return (std::max)(0.0, total_load);</span></span>
+<span id="L308"><span class="lineNum">     308</span>                 :<span class="tlaGNC">        5066 :     double total_load = static_weight + wheel_aero + long_transfer + lat_transfer;</span></span>
+<span id="L309"><span class="lineNum">     309</span>                 :<span class="tlaGNC">        5066 :     return (std::max)(0.0, total_load);</span></span>
 <span id="L310"><span class="lineNum">     310</span>                 :             : }</span>
 <span id="L311"><span class="lineNum">     311</span>                 :             : </span>
 <span id="L312"><span class="lineNum">     312</span>                 :             : // Helper: Calculate Manual Slip Ratio (v0.4.6)</span>
-<span id="L313"><span class="lineNum">     313</span>                 :<span class="tlaGNC">       38433 : double FFBEngine::calculate_manual_slip_ratio(const TelemWheelV01&amp; w, double car_speed_ms) {</span></span>
+<span id="L313"><span class="lineNum">     313</span>                 :<span class="tlaGNC">       39779 : double FFBEngine::calculate_manual_slip_ratio(const TelemWheelV01&amp; w, double car_speed_ms) {</span></span>
 <span id="L314"><span class="lineNum">     314</span>                 :             :     // Safety Trap: Force 0 slip at very low speeds (v0.4.6)</span>
-<span id="L315"><span class="lineNum">     315</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 38430 times"> + </span>]:<span class="tlaGNC">       38433 :     if (std::abs(car_speed_ms) &lt; 2.0) return 0.0;</span></span>
+<span id="L315"><span class="lineNum">     315</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 39776 times"> + </span>]:<span class="tlaGNC">       39779 :     if (std::abs(car_speed_ms) &lt; 2.0) return 0.0;</span></span>
 <span id="L316"><span class="lineNum">     316</span>                 :             : </span>
 <span id="L317"><span class="lineNum">     317</span>                 :             :     // Radius in meters (stored as cm unsigned char)</span>
 <span id="L318"><span class="lineNum">     318</span>                 :             :     // Explicit cast to double before division (v0.4.6)</span>
-<span id="L319"><span class="lineNum">     319</span>                 :<span class="tlaGNC">       38430 :     double radius_m = (double)w.mStaticUndeflectedRadius / 100.0;</span></span>
-<span id="L320"><span class="lineNum">     320</span>         [<span class="tlaGBC" title="Branch 0 was taken 7285 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 31145 times"> + </span>]:<span class="tlaGNC">       38430 :     if (radius_m &lt; 0.1) radius_m = 0.33; // Fallback if 0 or invalid</span></span>
+<span id="L319"><span class="lineNum">     319</span>                 :<span class="tlaGNC">       39776 :     double radius_m = (double)w.mStaticUndeflectedRadius / 100.0;</span></span>
+<span id="L320"><span class="lineNum">     320</span>         [<span class="tlaGBC" title="Branch 0 was taken 7291 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 32485 times"> + </span>]:<span class="tlaGNC">       39776 :     if (radius_m &lt; 0.1) radius_m = 0.33; // Fallback if 0 or invalid</span></span>
 <span id="L321"><span class="lineNum">     321</span>                 :             :     </span>
-<span id="L322"><span class="lineNum">     322</span>                 :<span class="tlaGNC">       38430 :     double wheel_vel = w.mRotation * radius_m;</span></span>
+<span id="L322"><span class="lineNum">     322</span>                 :<span class="tlaGNC">       39776 :     double wheel_vel = w.mRotation * radius_m;</span></span>
 <span id="L323"><span class="lineNum">     323</span>                 :             :     </span>
 <span id="L324"><span class="lineNum">     324</span>                 :             :     // Avoid div-by-zero at standstill</span>
-<span id="L325"><span class="lineNum">     325</span>                 :<span class="tlaGNC">       38430 :     double denom = std::abs(car_speed_ms);</span></span>
-<span id="L326"><span class="lineNum">     326</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 38430 times"> + </span>]:<span class="tlaGNC">       38430 :     if (denom &lt; 1.0) denom = 1.0;</span></span>
+<span id="L325"><span class="lineNum">     325</span>                 :<span class="tlaGNC">       39776 :     double denom = std::abs(car_speed_ms);</span></span>
+<span id="L326"><span class="lineNum">     326</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 39776 times"> + </span>]:<span class="tlaGNC">       39776 :     if (denom &lt; 1.0) denom = 1.0;</span></span>
 <span id="L327"><span class="lineNum">     327</span>                 :             :     </span>
 <span id="L328"><span class="lineNum">     328</span>                 :             :     // Ratio = (V_wheel - V_car) / V_car</span>
 <span id="L329"><span class="lineNum">     329</span>                 :             :     // Lockup: V_wheel &lt; V_car -&gt; Ratio &lt; 0</span>
 <span id="L330"><span class="lineNum">     330</span>                 :             :     // Spin: V_wheel &gt; V_car -&gt; Ratio &gt; 0</span>
-<span id="L331"><span class="lineNum">     331</span>                 :<span class="tlaGNC">       38430 :     return (wheel_vel - car_speed_ms) / denom;</span></span>
+<span id="L331"><span class="lineNum">     331</span>                 :<span class="tlaGNC">       39776 :     return (wheel_vel - car_speed_ms) / denom;</span></span>
 <span id="L332"><span class="lineNum">     332</span>                 :             : }</span>
 <span id="L333"><span class="lineNum">     333</span>                 :             : </span>
 <span id="L334"><span class="lineNum">     334</span>                 :             : // Helper: Calculate Grip Factor from Slope - v0.7.40 REWRITE</span>
