@@ -125,8 +125,8 @@ const char* ParseVehicleBrand(const char* className, const char* vehicleName) {
     if (name.find("FORD") != std::string::npos || name.find("MUSTANG") != std::string::npos) return "Ford";
     if (name.find("MCLAREN") != std::string::npos || name.find("720S") != std::string::npos) return "McLaren";
     if (name.find("LEXUS") != std::string::npos || name.find("RC F") != std::string::npos) return "Lexus";
-    if (name.find("LIGIER") != std::string::npos || name.find("JS P320") != std::string::npos) return "Ligier";
-    if (name.find("DUQUEINE") != std::string::npos || name.find("D08") != std::string::npos) return "Duqueine";
+    if (name.find("LIGIER") != std::string::npos || name.find("JS P320") != std::string::npos || name.find("P325") != std::string::npos) return "Ligier";
+    if (name.find("DUQUEINE") != std::string::npos || name.find("D08") != std::string::npos || name.find("D09") != std::string::npos) return "Duqueine";
     if (name.find("GINETTA") != std::string::npos || name.find("G61") != std::string::npos) return "Ginetta";
 
     // Backup: Check Class Name if vehicle name is ambiguous
@@ -135,7 +135,14 @@ const char* ParseVehicleBrand(const char* className, const char* vehicleName) {
         std::transform(cls.begin(), cls.end(), cls.begin(), ::toupper);
         if (cls.find("FERRARI") != std::string::npos) return "Ferrari";
         if (cls.find("PORSCHE") != std::string::npos) return "Porsche";
-        // ... more can be added if needed
+        
+        // Issue #270: LMP2 fallback (almost always Oreca)
+        if (cls.find("LMP2") != std::string::npos) return "Oreca";
+        
+        // LMP3 fallbacks
+        if (cls.find("GINETTA") != std::string::npos) return "Ginetta";
+        if (cls.find("LIGIER") != std::string::npos) return "Ligier";
+        if (cls.find("DUQUEINE") != std::string::npos) return "Duqueine";
     }
 
     return "Unknown";
