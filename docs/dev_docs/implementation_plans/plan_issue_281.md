@@ -55,3 +55,17 @@ Issue #281 reports FFB spikes when switching from `IsPlayerActivelyDriving() == 
 - **Plan Deviations**: None. The implementation followed the proposed logic exactly.
 - **Challenges**: Ensuring that Soft Lock still works in the garage stall while being muted in menus required careful checking of the `is_driving` predicate vs `full_allowed`.
 - **Recommendations**: The current `restricted` slew rate of 100 units/s provides a 10ms relaxation time at 1000Hz. If users still find this too sudden, a separate `MENU_TRANSITION_SLEW` could be introduced, but 10ms is generally considered safe and smooth.
+
+## Alternative Solutions Discussion
+During the design phase, the following alternative or complementary approaches were considered:
+
+### 1. Multi-Stage Gating using `mControl`
+A possible solution is to use the `mControl` field from `VehicleScoringInfoV01`. When the game indicates the player is no longer in control (`mControl != 0`, e.g., AI takes over or car is remote), a significant cap could be placed on FFB strength and slew rates.
+- **Pros**: Provides an earlier warning/safety layer before the full driving state (`IsPlayerActivelyDriving`) transitions to false.
+- **Cons**: Adds complexity to the gating logic. The current implementation already targets zero force when driving is inactive, which is the most definitive safety state.
+
+### 2. Immediate Suppression on `mControl != 0`
+An alternative is to immediately suppress all FFB as soon as `mControl != 0`.
+- **Pros**: Fastest possible approach to silence the wheel during control handovers.
+- **Cons**: High risk of false positives. If the game telemetry momentarily reports a non-player control state due to internal race conditions or lag, the user would experience a jarring "FFB dropout" while driving.
+- **Conclusion**: Relying on the composite `IsPlayerActivelyDriving()` predicate (which includes `inRealtime` and `gamePhase`) is more robust for general FFB suppression, while the current fix ensures that the transition to that suppressed state is always smooth.
