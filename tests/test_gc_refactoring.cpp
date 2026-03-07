@@ -292,6 +292,39 @@ TEST_CASE_TAGGED(test_gc_actively_driving_false_when_not_realtime,
     ASSERT_FALSE(gc.IsPlayerActivelyDriving());
 }
 
+TEST_CASE_TAGGED(test_gc_logging_gate_independent_of_session_active,
+    "Functional", (std::vector<std::string>{"state_machine", "refactoring"}))
+{
+    // This confirms the change in main.cpp where `(!is_session_active && was_driving)`
+    // was removed. FFB and logging rely exclusively on `IsPlayerActivelyDriving()`.
+    // Returning to the garage keeps IsSessionActive() = true, but must still safely
+    // stop FFB/logging by turning IsPlayerActivelyDriving() = false.
+    GameConnector& gc = GameConnector::Get();
+    GameConnectorTestAccessor::Reset(gc);
+
+    // 1. Actively driving
+    SharedMemoryObjectOut snap = MakeEmptySnapshot();
+    strncpy(snap.scoring.scoringInfo.mTrackName, "Le Mans", 63);
+    snap.scoring.scoringInfo.mInRealtime  = 1;
+    snap.scoring.scoringInfo.mGamePhase   = 5;
+    snap.telemetry.playerHasVehicle       = true;
+    snap.telemetry.playerVehicleIdx       = 0;
+    snap.scoring.vehScoringInfo[0].mControl = 0;
+
+    GameConnectorTestAccessor::InjectTransitions(gc, snap);
+    ASSERT_TRUE(gc.IsSessionActive());
+    ASSERT_TRUE(gc.IsPlayerActivelyDriving());
+
+    // 2. Return to garage (de-realtime)
+    snap.scoring.scoringInfo.mInRealtime  = 0;
+    GameConnectorTestAccessor::InjectTransitions(gc, snap);
+
+    // Session is still active (track loaded, sitting in garage UI)
+    ASSERT_TRUE(gc.IsSessionActive());
+    // But driving check flips to false immediately, correctly gating FFB and logging.
+    ASSERT_FALSE(gc.IsPlayerActivelyDriving());
+}
+
 // ---------------------------------------------------------------------------
 // 5.5b  Quit-to-main-menu detection via SME_ENTER after de-realtime
 // ---------------------------------------------------------------------------

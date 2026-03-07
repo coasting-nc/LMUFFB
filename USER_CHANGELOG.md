@@ -3,6 +3,18 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 7, 2026[/b][/size]
+[b]Version 0.7.143 - Robust FFB & Logging Control[/b]
+
+[b]New release[/b] (0.7.143): https://github.com/coasting-nc/LMUFFB/releases
+
+[b]Improved[/b]
+[list]
+[*][b]Faster Transitions[/b]: Optimized the logic controlling force feedback and telemetry logging. The app now perfectly tracks when you are actively driving your vehicle, exiting logs and FFB duties instantly the moment you return to the garage monitor instead of waiting for the session state to sync.
+[/list]
+
+---
+
+[size=5][b]March 7, 2026[/b][/size]
 [b]Version 0.7.142 - Main Menu Detection & Session Fix[/b]
 
 [b]New release[/b] (0.7.142): https://github.com/coasting-nc/LMUFFB/releases

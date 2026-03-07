@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.143] - 2026-03-07
+- **Strict Gating for FFB and Logging**:
+  - Centralized FFB and log file enable/disable logic to strictly depend on `GameConnector::Get().IsPlayerActivelyDriving()`.
+  - Removed outdated redundant checks linked to `IsSessionActive()` for determining when to safely stop logs or mute FFB.
+  - Ensures accurate handling of driving state independent of session-active UI diagnostics.
+- **Testing**:
+  - Added new test `test_gc_logging_gate_independent_of_session_active` to confirm logging exits immediately when the player leaves the cockpit without waiting for the session to clear.
+
 ## [0.7.142] - 2026-03-07
 - **Fixed Session End for Quit-to-Main-Menu**:
   - Implemented a heuristic detection for when the user quits directly from a session to the main menu. This path does not fire standard session-end events and leaves the track name stale in the shared memory buffer.

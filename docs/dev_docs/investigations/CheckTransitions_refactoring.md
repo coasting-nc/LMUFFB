@@ -458,3 +458,16 @@ Keep the session state detection and the quit-to-menu fix (it makes the GUI accu
 > **If a heuristic fix for session state is "good enough" (occasionally stale for a few seconds), that is acceptable because `IsPlayerActivelyDriving()` is the actual gate for every FFB and logging decision.** Session state being briefly wrong never causes incorrect FFB output or corrupt log files — it only affects the status line in the GUI.
 
 This means: do not over-invest in making `IsSessionActive()` pixel-perfect. The robustness budget is better spent on `IsPlayerActivelyDriving()` and `m_inRealtime` reliability, which directly affect user experience.
+
+### 8.4 Code Audit Verification
+
+To align the application with the considerations above, an audit and refactoring of `main.cpp` was carried out:
+- A local, incomplete `is_driving` check that lacked the `gamePhase != 9` (paused) constraint was removed and completely delegated to `GameConnector::Get().IsPlayerActivelyDriving()`.
+- A redundant short-circuit `(!is_session_active && was_driving)` in the logging exit logic was removed.
+
+As of v0.7.142, both **FFB Output Authorization** and **Log File Lifecycles** are perfectly locked to the exact same predicate:
+1. `should_start_log` happens exclusively when `IsPlayerActivelyDriving()` transitions `false → true`.
+2. `should_stop_log` happens exclusively when `IsPlayerActivelyDriving()` transitions `true → false`.
+3. `full_allowed` for physics calculation requires `IsPlayerActivelyDriving()` to be true.
+
+`IsSessionActive()` is now completely decoupled from application logic and only serves as an indicator for the diagnostic Health Monitor / GUI display.

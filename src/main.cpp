@@ -106,27 +106,25 @@ void FFBThread() {
             double force_physics = 0.0;
 
             bool in_realtime_phys = false;
-            bool is_session_active = false;
             if (g_ffb_active && GameConnector::Get().IsConnected()) {
                 GameConnector::Get().CopyTelemetry(g_localData);
                 g_engine.UpdateMetadata(g_localData); // Update names/classes immediately
 
                 in_realtime_phys = GameConnector::Get().IsInRealtime();
-                is_session_active = GameConnector::Get().IsSessionActive();
                 long current_session = GameConnector::Get().GetSessionType();
-                signed char playerControl = GameConnector::Get().GetPlayerControl();
 
                 bool is_stale = GameConnector::Get().IsStale(100);
 
                 static bool was_driving = false;
                 static long last_session = -1;
 
-                // Driving means in realtime AND player has control (#269)
-                bool is_driving = in_realtime_phys && (playerControl == 0);
+                // is_driving uses IsPlayerActivelyDriving() which correctly gates on
+                // inRealtime AND playerControl==0 AND gamePhase!=9 (paused).
+                bool is_driving = GameConnector::Get().IsPlayerActivelyDriving();
 
                 bool should_start_log = (is_driving && !was_driving);
-                bool should_stop_log = (!is_driving && was_driving) || (!is_session_active && was_driving);
-                bool session_changed = (is_driving && was_driving && last_session != -1 && current_session != last_session);
+                bool should_stop_log  = (!is_driving && was_driving);
+                bool session_changed  = (is_driving && was_driving && last_session != -1 && current_session != last_session);
 
                 if (session_changed) {
                     Logger::Get().LogFile("[Game] Session Type Changed (%ld -> %ld). Restarting log.", last_session, current_session);
