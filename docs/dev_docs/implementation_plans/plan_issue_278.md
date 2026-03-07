@@ -83,10 +83,13 @@ Lateral Acceleration (`mLocalAccel.x`) is considered low risk due to existing EM
 14. **Submit**: Finalize the task with a descriptive commit message.
 
 ## 6. Implementation Notes
-- Initial implementation successfully derived Y and Z axes (Vertical and Longitudinal).
-- Lateral axis (X) remains using raw acceleration with heavy EMA smoothing, as it represents bulk chassis state and has low risk of aliasing artifacts.
-- The use of upsampled derived acceleration for `m_prev_vert_accel` (Jerk calculation) significantly improved the smoothness of Road Texture fallback.
-- All existing regression tests were updated to provide consistent velocity changes to satisfy the new derivation logic.
+
+### Challenges
+- **Test Fragility**: Several existing regression tests (e.g., `test_chassis_inertia_smoothing_convergence`, `test_kinematic_load_braking`) were failing initially. These tests manually set `mLocalAccel` without providing matching `mLocalVel` changes. Because the engine now derives acceleration from velocity, these tests produced 0 acceleration. They were updated to provide consistent velocity deltas and increment `mElapsedTime` to trigger the 100Hz frame logic.
+- **Seeding Sensitivity**: Ensuring the derivative doesn't spike on the very first frame required careful placement of the `m_local_vel_seeded` logic to capture the initial velocity before any subtraction occurs.
+
+### Deviations from Plan
+- **State Management**: Instead of using static variables for 100Hz derived values, I added `m_derived_accel_y_100hz` and `m_derived_accel_z_100hz` as class members. This allows them to be properly reset in the transition logic, preventing "carry-over" acceleration when moving between different car types or from garage to track.
 
 ### Code Review Iteration 1
 - **Issue:** Junk log files included in commit.
