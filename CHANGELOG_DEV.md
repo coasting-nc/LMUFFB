@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.148] - 2026-03-07
+- **Fixed FFB Spikes on Driving State Transition (Issue #281)**:
+  - Implemented explicit zero-force targeting in `src/main.cpp` when `IsPlayerActivelyDriving()` is false.
+  - This ensures that persistent safety forces like **Soft Lock** are correctly slewed to zero when the game is paused or when AI takes control, preventing sudden torque "punches" or "clunks".
+  - Maintained Soft Lock functionality in the garage stall, where `IsPlayerActivelyDriving()` remains true but primary physics are muted.
+  - Leveraged the existing safety slew rate limiter to ensure a smooth relaxation of the steering wheel during transitions.
+- **Testing**:
+  - Added `tests/test_issue_281_spikes.cpp` to verify that FFB slews to zero when pausing even if the wheel is beyond the steering lock limit.
+  - Verified 100% pass rate for the new test and ensured no regressions in existing soft lock or state detection tests.
+
 ## [0.7.147] - 2026-03-07
 - **Fixed SoP Smoothing Inversion & Reset (Issue #37)**:
   - Corrected the inverted mapping of `m_sop_smoothing_factor` in `FFBEngine::calculate_sop_lateral`; `0.0` now correctly represents 0ms added latency (Raw).

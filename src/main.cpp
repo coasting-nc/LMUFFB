@@ -229,6 +229,11 @@ void FFBThread() {
 
                         force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025);
 
+                        // v0.7.148: Explicitly target zero force when driving is not active (Issue #281).
+                        // This ensures that persistent forces like Soft Lock are correctly slewed
+                        // to zero when pausing or in menus, preventing sudden torque "punches".
+                        if (!is_driving) force_physics = 0.0;
+
                         // Safety Layer (v0.7.49): Slew Rate Limiting (400Hz)
                         // Applied before up-sampling to prevent reconstruction artifacts on spikes.
                         bool restricted = !full_allowed || (scoring.mFinishStatus != 0);
