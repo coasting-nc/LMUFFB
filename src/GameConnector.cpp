@@ -259,12 +259,37 @@ bool GameConnector::IsStale(long timeoutMs) const {
 
 void GameConnector::_UpdateStateFromSnapshot(const SharedMemoryObjectOut& current) {
     auto& scoring = current.scoring.scoringInfo;
+    auto  now     = std::chrono::steady_clock::now();
 
     // --- Ground truth (polling) ---
+    // Save previous inRealtime before overwriting, so we can detect transitions.
+    bool prevInRealtime = m_inRealtime.load(std::memory_order_relaxed);
+
     m_sessionActive      = (scoring.mTrackName[0] != '\0');
     m_inRealtime         = (scoring.mInRealtime != 0);
     m_currentGamePhase   = scoring.mGamePhase;
     m_currentSessionType = scoring.mSession;
+
+    bool currentInRealtime = m_inRealtime.load(std::memory_order_relaxed);
+
+    // --- Quit-to-menu detection (#7.5) ---
+    // When mInRealtime goes true→false while a session is active, arm a
+    // pending check. If SME_ENTER fires within the deadline window, the user
+    // quit to the main menu (LMU doesn't fire SME_END_SESSION for this path).
+    // If mInRealtime goes back to true first, the user is driving again —
+    // cancel the check. Debug logs confirm SME_ENTER fires within 0-1 seconds
+    // on quit-to-menu and does NOT fire on a normal return to the garage monitor.
+    if (prevInRealtime && !currentInRealtime &&
+        m_sessionActive.load(std::memory_order_relaxed)) {
+        m_pendingMenuCheck  = true;
+        m_menuCheckDeadline = now + std::chrono::seconds(3);
+    }
+    if (currentInRealtime) {
+        m_pendingMenuCheck = false; // user clicked Drive — cancel
+    }
+    if (m_pendingMenuCheck && now > m_menuCheckDeadline) {
+        m_pendingMenuCheck = false; // deadline expired — no SME_ENTER came, must be garage
+    }
 
 
     if (current.telemetry.playerHasVehicle) {
@@ -285,6 +310,14 @@ void GameConnector::_UpdateStateFromSnapshot(const SharedMemoryObjectOut& curren
             if (i == SME_END_SESSION || i == SME_UNLOAD) { m_sessionActive = false; m_inRealtime = false; }
             if (i == SME_ENTER_REALTIME)                    m_inRealtime = true;
             if (i == SME_EXIT_REALTIME)                     m_inRealtime = false;
+
+            // Quit-to-menu detection (#7.5): SME_ENTER fires within ~1 second of
+            // de-realtime when the user quits to the main menu. It does NOT fire
+            // when the user returns to the garage monitor. (Confirmed via debug logs.)
+            if (i == SME_ENTER && m_pendingMenuCheck) {
+                m_sessionActive    = false;
+                m_pendingMenuCheck = false;
+            }
         }
     }
 }

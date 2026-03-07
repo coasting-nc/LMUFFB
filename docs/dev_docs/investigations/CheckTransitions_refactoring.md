@@ -383,3 +383,78 @@ If `playerHasVehicle = false` only at main menu, that's an alternative signal.
 
 If `SME_EXIT_REALTIME` appears in the garage-return log but NOT in the quit-to-menu log, that confirms it as a differentiator and a sticky-flag approach becomes viable.
 
+### 7.7 Test results (2026-03-07)
+
+Both tests were run with the diagnostic logging described in 7.4. The two `[Diag] De-realtime snapshot:` lines were:
+
+**Test A — Return to garage (03:37:17):**
+```
+[Diag] De-realtime snapshot: track='Silverstone Grand Prix Circuit - ELMS' optionsLoc=0 numVehicles=1 playerHasVehicle=true smUpdateScoring=16
+```
+
+**Test A — Quit to main menu (03:38:04) / Test B (03:40:26):**
+```
+[Diag] De-realtime snapshot: track='Silverstone Grand Prix Circuit - ELMS' optionsLoc=0 numVehicles=1 playerHasVehicle=true smUpdateScoring=16
+```
+
+**Every single hypothesis was wrong.** The two snapshots are byte-for-byte identical. LMU leaves all scoring data completely stale when quitting to the main menu:
+
+| Field | Hypothesis | Actual result |
+|---|---|---|
+| `numVehicles` | 0 at main menu | **1 (stale) in both cases** |
+| `playerHasVehicle` | false at main menu | **true (stale) in both cases** |
+| `smUpdateScoring` | 0 or stops | **16 in both cases** |
+| `SME_EXIT_REALTIME` | fires for garage only | **does NOT fire in either case** |
+
+The only observable difference is in the events that follow **after** the de-realtime snapshot:
+
+- **Garage return:** only `SME_STARTUP` events appear (every 5 seconds), no `SME_ENTER`.
+- **Quit to main menu:** `SME_ENTER` fires within **0–1 seconds** of the de-realtime transition, confirmed in both logs.
+
+GUI state at main menu (Test B, confirmed by user): `Sim: Track Loaded | Session: Practice / State: In Menu | Control: AI`.
+
+### 7.8 Fix implemented
+
+A `m_pendingMenuCheck` flag was added to the state machine. The logic:
+
+1. **Arm**: when polling detects `mInRealtime: true → false` while a session is active.
+2. **Trigger** (→ `m_sessionActive = false`): if `SME_ENTER` fires while the flag is armed (within a 3-second deadline).
+3. **Cancel**: if `mInRealtime` goes back to `true` before the deadline (user clicked Drive — still in a session).
+4. **Expire**: if neither happens within 3 seconds — user is in the garage monitor; session stays active.
+
+Two new tests were added in `tests/test_gc_refactoring.cpp`:
+- `test_gc_main_menu_ends_session_via_sme_enter` — verifies the fix.
+- `test_gc_garage_return_keeps_session_active` — verifies no regression on the working path.
+
+**Status: ✅ Implemented. All 440 tests pass (1818/1818 assertions).**
+
+---
+
+## 8. Design consideration — Is session state actually needed?
+
+### 8.1 The core question
+
+The investigation revealed that accurately tracking `IsSessionActive()` is surprisingly hard: LMU's API has gaps (missing events, stale buffers), and fixing them requires heuristics with timing windows. This raises the question: **is session state actually necessary for the app's core function?**
+
+The app has two primary jobs:
+1. **Enable/disable FFB** — apply force-feedback when the player is actively driving, suppress it otherwise.
+2. **Start/close the telemetry log file** — begin recording physics data when driving starts, close it gracefully when driving ends.
+
+Both of these are already driven by `IsPlayerActivelyDriving()`, which depends on:
+- `m_inRealtime` — is the player physically in the car?
+- `m_playerControl == 0` — is the player (not AI/replay) in control?
+- `m_currentGamePhase != 9` — is the game not in the ESC-menu paused state?
+
+None of these check `m_sessionActive`.
+
+### 8.2 What session state is currently used for
+
+`IsSessionActive()` is primarily used for **GUI display** — showing "Sim: Track Loaded" vs "Sim: Disconnected" or "Sim: Main Menu". It is a UX convenience, not a functional requirement for FFB or logging.
+
+### 8.3 Recommendation
+
+Keep the session state detection and the quit-to-menu fix (it makes the GUI accurate and the state machine easier to reason about). But when evaluating the complexity of future edge cases, keep in mind:
+
+> **If a heuristic fix for session state is "good enough" (occasionally stale for a few seconds), that is acceptable because `IsPlayerActivelyDriving()` is the actual gate for every FFB and logging decision.** Session state being briefly wrong never causes incorrect FFB output or corrupt log files — it only affects the status line in the GUI.
+
+This means: do not over-invest in making `IsSessionActive()` pixel-perfect. The robustness budget is better spent on `IsPlayerActivelyDriving()` and `m_inRealtime` reliability, which directly affect user experience.

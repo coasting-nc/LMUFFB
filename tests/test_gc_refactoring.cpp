@@ -293,24 +293,74 @@ TEST_CASE_TAGGED(test_gc_actively_driving_false_when_not_realtime,
 }
 
 // ---------------------------------------------------------------------------
-// 5.5b  Known limitation: "quit to main menu" detection
+// 5.5b  Quit-to-main-menu detection via SME_ENTER after de-realtime
 // ---------------------------------------------------------------------------
 //
-// When the user quits directly to the main menu (without returning to garage
-// first), LMU does NOT fire SME_END_SESSION or SME_UNLOAD, and does NOT zero
-// out mTrackName in the shared memory buffer. mOptionsLocation was investigated
-// as a possible signal but proved unreliable: it is 0 ("Main UI") during normal
-// gameplay too, not just at the main menu.
+// Root cause (confirmed via debug log analysis, 2026-03-07):
+//   - LMU does NOT fire SME_END_SESSION or SME_UNLOAD when quitting to menu.
+//   - LMU does NOT clear mTrackName in the buffer (it stays stale).
+//   - SME_ENTER IS fired within 0-1 seconds of de-realtime on quit-to-menu.
+//   - SME_ENTER is NOT fired when the user returns to the garage monitor.
 //
-// As a result, IsSessionActive() returns true after a direct quit-to-menu. This
-// is a known LMU API limitation that requires additional telemetry data to solve
-// (e.g. confirming that SME_UPDATE_SCORING stops firing for several seconds).
-// A dedicated investigation and targeted debug log capture is needed before a
-// fix can be safely implemented.
-//
-// TODO: Investigate mNumVehicles, mTimeIntoLap, and SME_UPDATE_SCORING staleness
-//       as potential signals. Add targeted debug logging to capture the complete
-//       shared memory state during the quit-to-menu transition.
+// Fix: arm m_pendingMenuCheck when mInRealtime goes true→false. If SME_ENTER
+// fires within the 3-second window, end the session. If mInRealtime goes back
+// to true first (user clicked Drive), cancel.
+
+TEST_CASE_TAGGED(test_gc_main_menu_ends_session_via_sme_enter,
+    "Functional", (std::vector<std::string>{"state_machine", "refactoring"}))
+{
+    GameConnector& gc = GameConnector::Get();
+    GameConnectorTestAccessor::Reset(gc);
+
+    // Step 1: actively driving
+    SharedMemoryObjectOut snap = MakeEmptySnapshot();
+    strncpy(snap.scoring.scoringInfo.mTrackName, "Le Mans", 63);
+    snap.scoring.scoringInfo.mInRealtime = 1;
+    snap.scoring.scoringInfo.mGamePhase  = 5;
+    GameConnectorTestAccessor::InjectTransitions(gc, snap);
+    ASSERT_TRUE(gc.IsSessionActive());
+    ASSERT_TRUE(gc.IsInRealtime());
+
+    // Step 2: quit to main menu — LMU fires SME_ENTER but NOT SME_END_SESSION.
+    // mTrackName is NOT cleared (stale buffer reflects last track).
+    snap.scoring.scoringInfo.mInRealtime = 0;
+    snap.generic.events[SME_ENTER] = (SharedMemoryEvent)1; // counter changed
+    GameConnectorTestAccessor::InjectTransitions(gc, snap);
+
+    // The pending check + SME_ENTER must have ended the session.
+    ASSERT_FALSE(gc.IsSessionActive());
+    ASSERT_FALSE(gc.IsInRealtime());
+}
+
+TEST_CASE_TAGGED(test_gc_garage_return_keeps_session_active,
+    "Functional", (std::vector<std::string>{"state_machine", "refactoring"}))
+{
+    GameConnector& gc = GameConnector::Get();
+    GameConnectorTestAccessor::Reset(gc);
+
+    // Step 1: actively driving
+    SharedMemoryObjectOut snap = MakeEmptySnapshot();
+    strncpy(snap.scoring.scoringInfo.mTrackName, "Le Mans", 63);
+    snap.scoring.scoringInfo.mInRealtime = 1;
+    snap.scoring.scoringInfo.mGamePhase  = 5;
+    GameConnectorTestAccessor::InjectTransitions(gc, snap);
+    ASSERT_TRUE(gc.IsSessionActive());
+
+    // Step 2: return to garage — mInRealtime=0, but SME_ENTER does NOT fire.
+    snap.scoring.scoringInfo.mInRealtime = 0;
+    // (SME_ENTER counter stays 0 — not fired)
+    GameConnectorTestAccessor::InjectTransitions(gc, snap);
+
+    // Session must stay active — the track is still loaded, user is in garage.
+    ASSERT_TRUE(gc.IsSessionActive());
+    ASSERT_FALSE(gc.IsInRealtime());
+
+    // Step 3: user clicks Drive — inRealtime comes back
+    snap.scoring.scoringInfo.mInRealtime = 1;
+    GameConnectorTestAccessor::InjectTransitions(gc, snap);
+    ASSERT_TRUE(gc.IsSessionActive());
+    ASSERT_TRUE(gc.IsInRealtime());
+}
 
 // ---------------------------------------------------------------------------
 // 5.6  No duplicate log entries on identical ticks

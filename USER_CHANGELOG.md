@@ -3,6 +3,19 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 7, 2026[/b][/size]
+[b]Version 0.7.142 - Main Menu Detection & Session Fix[/b]
+
+[b]New release[/b] (0.7.142): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Fixed Session End when Quitting to Menu[/b]: Resolved an issue where quitting directly from a track to the main menu would leave the app's status as "Track Loaded". The app now correctly identifies this transition, ensuring the UI and logging accurately reflect that you've returned to the main game menu.
+[*][b]New Diagnostic Tracking[/b]: Added deeper tracking for vehicle presence and session vehicle counts. This helps in pinpointing quirks in the game's shared memory data and ensures state transitions are more robust.
+[*][b]Improved Stability during Transitions[/b]: Refined the internal timing for detecting when you have left the cockpit, ensuring that returning to the garage vs. quitting to the menu are distinguished correctly every time.
+[/list]
+
+---
+
+[size=5][b]March 7, 2026[/b][/size]
 [b]Version 0.7.141 - Refactored Game Connector & Robust Gating[/b]
 
 [b]New release[/b] (0.7.141): https://github.com/coasting-nc/LMUFFB/releases

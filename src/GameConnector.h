@@ -112,6 +112,12 @@ private:
     double m_lastSteering = 0.0; // Issue #184: Steering heartbeat
     mutable std::chrono::steady_clock::time_point m_lastUpdateLocalTime;
 
+    // Quit-to-menu detection (#7.5): armed when mInRealtime goes true→false.
+    // If SME_ENTER fires within the deadline window, we know the user quit to
+    // the main menu (not just returned to the garage monitor).
+    bool m_pendingMenuCheck = false;
+    std::chrono::steady_clock::time_point m_menuCheckDeadline;
+
     void _DisconnectLocked();
 };
 #endif // GAMECONNECTOR_H

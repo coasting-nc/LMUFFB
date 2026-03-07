@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.142] - 2026-03-07
+- **Fixed Session End for Quit-to-Main-Menu**:
+  - Implemented a heuristic detection for when the user quits directly from a session to the main menu. This path does not fire standard session-end events and leaves the track name stale in the shared memory buffer.
+  - Added `m_pendingMenuCheck` tracking: when leaving the car (de-realtime), the app now arms a 3-second window. If an `SME_ENTER` event fires within this window, the session is accurately identified as ended.
+- **Diagnostics & Logging Enhancements**:
+  - Added transition logging for `playerHasVehicle` and `mNumVehicles` changes to improve session lifecycle troubleshooting.
+  - Implemented a one-shot diagnostic snapshot (`[Diag] De-realtime snapshot`) that captures all relevant session signals (`trackName`, `optionsLoc`, `numVehicles`, `playerHasVehicle`, `smUpdateScoring`) the moment the player exits the cockpit.
+- **Testing & Documentation**:
+  - Added two new regression tests to `tests/test_gc_refactoring.cpp` covering the quit-to-menu detection and verifying it does not trigger incorrectly during a normal return to the garage monitor.
+  - Documented the investigation, test findings, and final implementation details in `docs/dev_docs/investigations/CheckTransitions_refactoring.md`.
+- **Refactoring**:
+  - Updated `TransitionState` and the test `Reset` helper to include the new diagnostic and heuristic tracking fields.
+
 ## [0.7.141] - 2026-03-07
 - **Refactored GameConnector (Issue #267)**:
   - Redesigned `CheckTransitions` to separate state machine updates from transition logging.

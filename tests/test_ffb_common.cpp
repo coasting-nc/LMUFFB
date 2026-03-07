@@ -178,6 +178,7 @@ void GameConnectorTestAccessor::Reset(::GameConnector& gc) {
     gc.m_currentSessionType.store(-1);
     gc.m_currentGamePhase.store(255);
     gc.m_playerControl.store(-2);
+    gc.m_pendingMenuCheck = false;
     memset(&gc.m_prevState, 0, sizeof(gc.m_prevState));
     gc.m_prevState.optionsLocation = 255;
     gc.m_prevState.gamePhase = 255;
@@ -185,6 +186,7 @@ void GameConnectorTestAccessor::Reset(::GameConnector& gc) {
     gc.m_prevState.control = -2;
     gc.m_prevState.pitState = 255;
     gc.m_prevState.steeringRange = -1.0f;
+    gc.m_prevState.numVehicles = -1;
 }
 
 void GameConnectorTestAccessor::SetSharedMem(::GameConnector& gc, SharedMemoryLayout* layout) {
