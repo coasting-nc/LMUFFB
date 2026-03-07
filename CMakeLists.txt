@@ -75,6 +75,27 @@ else()
     set(IMGUI_FETCHED TRUE)
 endif()
 
+# LZ4 Detection & FetchContent
+set(LZ4_DIR "${CMAKE_SOURCE_DIR}/vendor/lz4")
+
+if(EXISTS "${LZ4_DIR}/lz4.c")
+    message(STATUS "LZ4 found locally.")
+    set(LZ4_LOCAL_FOUND TRUE)
+else()
+    message(STATUS "LZ4 not found locally. Using FetchContent...")
+    FetchContent_Declare(
+      lz4
+      GIT_REPOSITORY https://github.com/lz4/lz4.git
+      GIT_TAG        v1.10.0
+    )
+    FetchContent_GetProperties(lz4)
+    if(NOT lz4_POPULATED)
+        FetchContent_Populate(lz4)
+    endif()
+    set(LZ4_DIR "${lz4_SOURCE_DIR}/lib")
+    set(LZ4_FETCHED TRUE)
+endif()
+
 if(EXISTS "${IMGUI_DIR}/imgui.cpp")
     add_definitions(-DENABLE_IMGUI)
 
@@ -137,7 +158,7 @@ if(NOT WIN32)
     include_directories(src/lmu_sm_interface)
 endif()
 include_directories(src)
-include_directories(vendor/lz4)
+include_directories(${LZ4_DIR})
 
 # Copy icon file into build directory (Windows only)
 if(WIN32)
@@ -173,7 +194,7 @@ add_definitions(-DLMUFFB_VERSION="${LMUFFB_VERSION}")
 
 # Core Library (Shared between App and Tests)
 set(CORE_SOURCES
-    vendor/lz4/lz4.c
+    ${LZ4_DIR}/lz4.c
     src/GuiLayer_Common.cpp
     src/GuiLayer.h
     src/DXGIUtils.cpp

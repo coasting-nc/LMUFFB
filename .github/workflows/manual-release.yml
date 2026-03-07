@@ -52,11 +52,6 @@ jobs:
       - name: Configure and Build (Release)
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Path "vendor\lz4" -Force
-          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lz4/lz4/v1.10.0/lib/lz4.h" -OutFile "vendor\lz4\lz4.h"
-          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lz4/lz4/v1.10.0/lib/lz4.c" -OutFile "vendor\lz4\lz4.c"
-          Test-Path "vendor\lz4\lz4.h"
-          Test-Path "vendor\lz4\lz4.c"
           cmake -S . -B build
           cmake --build build --config Release --clean-first
 
