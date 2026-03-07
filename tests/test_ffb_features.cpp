@@ -341,7 +341,7 @@ TEST_CASE(test_oversteer_boost, "Texture") {
     // Lower Scale to match new Nm range
     engine.m_sop_scale = 10.0; 
     // Disable smoothing to verify math instantly (v0.4.2 fix) 
-    engine.m_sop_smoothing_factor = 1.0; 
+    engine.m_sop_smoothing_factor = 0.0;
     engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Fix Reference for Test (v0.4.4)
     engine.m_invert_force = false;
     

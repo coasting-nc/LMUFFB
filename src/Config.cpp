@@ -213,7 +213,7 @@ void Config::LoadPresets() {
         p.yaw_smoothing = 0.005f;
         p.gyro_gain = 0.0336134f;
         p.gyro_smoothing = 0.0f;
-        p.sop_smoothing = 1.0f;
+        p.sop_smoothing = 0.0f;
         p.sop_scale = 1.0f;
         p.understeer_affects_sop = false;
         p.slip_smoothing = 0.0f;
@@ -274,7 +274,7 @@ void Config::LoadPresets() {
         p.yaw_smoothing = 0.001f;
         p.gyro_gain = 0.0f;
         p.gyro_smoothing = 0.0f;
-        p.sop_smoothing = 0.99f;
+        p.sop_smoothing = 0.0f;
         p.sop_scale = 1.98f;
         p.understeer_affects_sop = false;
         p.slip_smoothing = 0.002f;
@@ -335,7 +335,7 @@ void Config::LoadPresets() {
         p.yaw_smoothing = 0.003f;
         p.gyro_gain = 0.0f;
         p.gyro_smoothing = 0.003f;
-        p.sop_smoothing = 0.97f;
+        p.sop_smoothing = 0.0f;
         p.sop_scale = 1.59f;
         p.understeer_affects_sop = false;
         p.slip_smoothing = 0.003f;
@@ -500,7 +500,7 @@ void Config::LoadPresets() {
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
         .SetSoPScale(1.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
@@ -511,7 +511,7 @@ void Config::LoadPresets() {
         .SetUndersteer(0.0f)
         .SetSoP(0.08f)
         .SetSoPScale(1.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
@@ -540,7 +540,7 @@ void Config::LoadPresets() {
         .SetScrub(0.0f)
         
         // SMOOTHING
-        .SetSmoothing(0.85f)         // SoP smoothing (doesn't affect test since SoP=0)
+        .SetSmoothing(0.0f)         // SoP smoothing (doesn't affect test since SoP=0)
         .SetSlipSmoothing(0.015f)    // Slip angle smoothing (important for grip calculation)
         
         // PHYSICS PARAMETERS (Explicit for clarity and future-proofing)
@@ -572,7 +572,7 @@ void Config::LoadPresets() {
         .SetScrub(0.0f)
         
         // SMOOTHING
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -581,7 +581,7 @@ void Config::LoadPresets() {
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
         .SetSoPScale(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
         .SetLockup(true, 1.0f)
         .SetSpin(true, 1.0f)
@@ -595,7 +595,7 @@ void Config::LoadPresets() {
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.90f)
@@ -607,7 +607,7 @@ void Config::LoadPresets() {
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
         .SetSoP(0.08f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
@@ -619,7 +619,7 @@ void Config::LoadPresets() {
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
         .SetSlide(true, 0.39f, 1.0f)
         .SetRearAlign(0.0f)
@@ -630,7 +630,7 @@ void Config::LoadPresets() {
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
@@ -652,7 +652,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -671,7 +671,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -687,7 +687,7 @@ void Config::LoadPresets() {
         .SetLockup(false, 0.0f)
         .SetSpin(false, 0.0f)
         .SetRoad(false, 0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -703,7 +703,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -719,7 +719,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -737,7 +737,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -755,7 +755,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -795,10 +795,16 @@ void Config::LoadPresets() {
                 }
 
                 // MIGRATION: If version is missing or old, update it
-                if (current_preset_version.empty()) {
-                    current_preset.app_version = LMUFFB_VERSION;
+                if (current_preset_version.empty() || IsVersionLessEqual(current_preset_version, "0.7.146")) {
+                    current_preset.sop_smoothing = 0.0f; // Issue #37: Reset to Raw for migration
                     needs_save = true;
-                    Logger::Get().LogFile("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
+                    if (current_preset_version.empty()) {
+                        current_preset.app_version = LMUFFB_VERSION;
+                        Logger::Get().LogFile("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
+                    } else {
+                        Logger::Get().LogFile("[Config] Reset SoP Smoothing for migrated preset '%s' (v%s)", current_preset_name.c_str(), current_preset_version.c_str());
+                        current_preset.app_version = LMUFFB_VERSION;
+                    }
                 } else {
                     current_preset.app_version = current_preset_version;
                 }
@@ -844,10 +850,16 @@ void Config::LoadPresets() {
         }
 
         // MIGRATION: If version is missing or old, update it
-        if (current_preset_version.empty()) {
-            current_preset.app_version = LMUFFB_VERSION;
+        if (current_preset_version.empty() || IsVersionLessEqual(current_preset_version, "0.7.146")) {
+            current_preset.sop_smoothing = 0.0f; // Issue #37: Reset to Raw for migration
             needs_save = true;
-            Logger::Get().LogFile("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
+            if (current_preset_version.empty()) {
+                current_preset.app_version = LMUFFB_VERSION;
+                Logger::Get().LogFile("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
+            } else {
+                Logger::Get().LogFile("[Config] Reset SoP Smoothing for migrated preset '%s' (v%s)", current_preset_name.c_str(), current_preset_version.c_str());
+                current_preset.app_version = LMUFFB_VERSION;
+            }
         } else {
             current_preset.app_version = current_preset_version;
         }
@@ -1035,6 +1047,13 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
         }
 
         current_preset.app_version = current_preset_version.empty() ? LMUFFB_VERSION : current_preset_version;
+
+        // Migration for imported preset (Issue #37)
+        if (current_preset_version.empty() || IsVersionLessEqual(current_preset_version, "0.7.146")) {
+            current_preset.sop_smoothing = 0.0f;
+            current_preset.app_version = LMUFFB_VERSION;
+            Logger::Get().LogFile("[Config] Reset SoP Smoothing for imported legacy preset '%s'", current_preset.name.c_str());
+        }
 
         // Handle name collision
         std::string base_name = current_preset.name;
@@ -1382,7 +1401,14 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "gain") engine.m_gain = std::stof(value);
                     else if (key == "dynamic_normalization_enabled") engine.m_dynamic_normalization_enabled = (value == "1" || value == "true");
                     else if (key == "auto_load_normalization_enabled") engine.m_auto_load_normalization_enabled = (value == "1" || value == "true");
-                    else if (key == "sop_smoothing_factor" || key == "smoothing") engine.m_sop_smoothing_factor = std::stof(value); // "smoothing" is a legacy alias
+                    else if (key == "sop_smoothing_factor" || key == "smoothing") {
+                        float val = std::stof(value);
+                        if (IsVersionLessEqual(config_version, "0.7.146")) {
+                            val = 0.0f; // Issue #37: Reset to Raw for migration
+                            m_needs_save = true;
+                        }
+                        engine.m_sop_smoothing_factor = val;
+                    }
                     else if (key == "sop_scale") engine.m_sop_scale = std::stof(value);
                     else if (key == "slip_angle_smoothing") engine.m_slip_angle_smoothing = std::stof(value);
                     else if (key == "texture_load_cap" || key == "max_load_factor") engine.m_texture_load_cap = std::stof(value);

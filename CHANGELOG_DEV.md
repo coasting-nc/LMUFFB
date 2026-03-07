@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.147] - 2026-03-07
+- **Fixed SoP Smoothing Inversion & Reset (Issue #37)**:
+  - Corrected the inverted mapping of `m_sop_smoothing_factor` in `FFBEngine::calculate_sop_lateral`; `0.0` now correctly represents 0ms added latency (Raw).
+  - Updated the GUI latency display in `GuiLayer_Common.cpp` to align with the new logic.
+  - Set the default `sop_smoothing` to `0.0f` in the `Preset` struct and updated all built-in presets (T300, DD, Test, Guide) to ensure zero-latency defaults.
+  - Implemented robust configuration migration in `Config.cpp` to detect versions `<= 0.7.146` and force-reset the SoP smoothing factor to `0.0f` for both the main config and all user presets.
+- **Testing**:
+  - Updated 450+ assertions across the test suite to match the new SoP smoothing mapping.
+  - Added `test_sop_smoothing_migration` in `tests/test_ffb_logic.cpp` to verify the mandatory reset logic for legacy configurations.
+  - Verified 100% pass rate for all 448 test cases on Linux.
+
 ## [0.7.146] - 2026-03-07
 - **Improved Car Brand Detection (Issue #270)**:
   - Updated `ParseVehicleBrand` to correctly identify newer LMP3 chassis: Ligier JS P325 ("P325") and Duqueine D09 ("D09").

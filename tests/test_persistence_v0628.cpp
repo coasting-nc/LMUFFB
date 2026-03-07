@@ -111,6 +111,14 @@ TEST_CASE(test_legacy_keys, "Persistence") {
     }
     
     FFBEngine engine;
+    // Set current version to avoid migration reset
+    {
+        std::ofstream file(test_file);
+        file << "ini_version=" << LMUFFB_VERSION << "\n";
+        file << "smoothing=0.1\n";
+        file << "max_load_factor=2.0\n";
+        file.close();
+    }
     Config::Load(engine, test_file);
     
     ASSERT_NEAR(engine.m_sop_smoothing_factor, 0.1f, 0.001f);

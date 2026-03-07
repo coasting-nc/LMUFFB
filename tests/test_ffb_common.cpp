@@ -129,7 +129,7 @@ void InitializeEngine(FFBEngine& engine) {
     // Individual tests can re-enable what they need.
     engine.m_steering_shaft_smoothing = 0.0f; 
     engine.m_slip_angle_smoothing = 0.0f;
-    engine.m_sop_smoothing_factor = 1.0f; // 1.0 = Instant/No smoothing
+    engine.m_sop_smoothing_factor = 0.0f; // 0.0 = Instant/No smoothing (v0.7.147)
     engine.m_yaw_accel_smoothing = 0.0f;
     engine.m_gyro_smoothing = 0.0f;
     engine.m_chassis_inertia_smoothing = 0.0f;

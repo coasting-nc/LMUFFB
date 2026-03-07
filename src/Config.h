@@ -32,7 +32,7 @@ struct Preset {
     float sop = 1.666f;
     float lateral_load = 0.0f; // New v0.7.121
     float sop_scale = 1.0f;
-    float sop_smoothing = 1.0f;
+    float sop_smoothing = 0.0f;
     float slip_smoothing = 0.002f;
     float min_force = 0.0f;
     float oversteer_boost = 2.52101f;

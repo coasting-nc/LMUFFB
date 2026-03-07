@@ -972,7 +972,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double lat_load_norm = (total_load > 1.0) ? (fl_load - fr_load) / total_load : 0.0;
     
     // Smoothing: Map 0.0-1.0 slider to 0.1-0.0001s tau
-    double smoothness = 1.0 - (double)m_sop_smoothing_factor;
+    double smoothness = (double)m_sop_smoothing_factor;
     smoothness = (std::max)(0.0, (std::min)(SMOOTHNESS_LIMIT_0999, smoothness));
     double tau = smoothness * SOP_SMOOTHING_MAX_TAU;
     double alpha = ctx.dt / (tau + ctx.dt);

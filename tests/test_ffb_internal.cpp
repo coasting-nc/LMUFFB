@@ -299,7 +299,7 @@ TEST_CASE(test_refactor_snapshot_sop, "Internal") {
     // Setup SoP + Boost
     engine.m_sop_effect = 1.0f;
     engine.m_oversteer_boost = 1.0f;
-    engine.m_sop_smoothing_factor = 1.0f; // Instant
+    engine.m_sop_smoothing_factor = 0.0f; // Instant
     engine.m_sop_scale = 10.0f; // 1G -> 1.0 unboosted (normalized 20Nm)
 
     data.mLocalAccel.x = 9.81; // 1G Lat
@@ -354,7 +354,7 @@ void FFBEngineTestAccess::test_unit_sop_lateral() {
     data.mLocalAccel.x = 9.81; // 1G
     engine.m_sop_effect = 1.0;
     engine.m_sop_scale = 10.0;
-    engine.m_sop_smoothing_factor = 1.0; // Instant
+    engine.m_sop_smoothing_factor = 0.0; // Instant
 
     engine.calculate_sop_lateral(&data, ctx);
 

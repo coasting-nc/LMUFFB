@@ -12,7 +12,7 @@ TEST_CASE(test_preset_version_persistence, "Config") {
     // 1. Create a user preset
     Preset p;
     p.name = "VersionTestPreset";
-    p.app_version = "0.7.12"; 
+    p.app_version = "0.7.147"; // Use the fixed version to avoid migration
     
     // 2. Save it to a temporary INI
     const char* test_file = "test_version_presets.ini";
@@ -34,7 +34,7 @@ TEST_CASE(test_preset_version_persistence, "Config") {
     for (const auto& preset : Config::presets) {
         if (preset.name == "VersionTestPreset") {
             found = true;
-            if (preset.app_version == "0.7.12") {
+            if (preset.app_version == "0.7.147") {
                 std::cout << "[PASS] Preset app_version loaded correctly." << std::endl;
                 g_tests_passed++;
             } else {

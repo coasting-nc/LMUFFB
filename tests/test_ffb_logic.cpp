@@ -309,20 +309,20 @@ TEST_CASE(test_slider_precision_regression, "Logic") {
 TEST_CASE(test_latency_display_regression, "Logic") {
     std::cout << "\nTest: Latency Display Regression (v0.4.50 Restoration)" << std::endl;
 
-    // Test Case 1: SoP Smoothing Latency Calculation
+    // Test Case 1: SoP Smoothing Latency Calculation (Updated for Issue #37 inversion)
     {
-        float sop_smoothing_low = 0.90f;  // 10ms
-        int lat_ms_low = (int)std::lround((1.0f - sop_smoothing_low) * 100.0f);
+        float sop_smoothing_low = 0.10f;  // 10ms
+        int lat_ms_low = (int)std::lround(sop_smoothing_low * 100.0f);
         ASSERT_TRUE(lat_ms_low == 10);
         ASSERT_TRUE(lat_ms_low < 15);
 
-        float sop_smoothing_high = 0.70f;  // 30ms
-        int lat_ms_high = (int)std::lround((1.0f - sop_smoothing_high) * 100.0f);
+        float sop_smoothing_high = 0.30f;  // 30ms
+        int lat_ms_high = (int)std::lround(sop_smoothing_high * 100.0f);
         ASSERT_TRUE(lat_ms_high == 30);
         ASSERT_TRUE(lat_ms_high >= 15);
 
-        float sop_smoothing_boundary = 0.85f;  // 15ms
-        int lat_ms_boundary = (int)std::lround((1.0f - sop_smoothing_boundary) * 100.0f);
+        float sop_smoothing_boundary = 0.15f;  // 15ms
+        int lat_ms_boundary = (int)std::lround(sop_smoothing_boundary * 100.0f);
         ASSERT_TRUE(lat_ms_boundary == 15);
         ASSERT_TRUE(lat_ms_boundary >= 15);
     }
@@ -363,14 +363,14 @@ TEST_CASE(test_latency_display_regression, "Logic") {
         ASSERT_TRUE(std::string(buf) == "Latency: 20 ms - High");
     }
 
-    // Test Case 5: Edge Cases
+    // Test Case 5: Edge Cases (Updated for Issue #37 inversion)
     {
-        float sop_smoothing_zero = 1.0f;
-        int lat_ms_zero = (int)std::lround((1.0f - sop_smoothing_zero) * 100.0f);
+        float sop_smoothing_zero = 0.0f;
+        int lat_ms_zero = (int)std::lround(sop_smoothing_zero * 100.0f);
         ASSERT_TRUE(lat_ms_zero == 0);
 
-        float sop_smoothing_max = 0.0f;
-        int lat_ms_max = (int)std::lround((1.0f - sop_smoothing_max) * 100.0f);
+        float sop_smoothing_max = 1.0f;
+        int lat_ms_max = (int)std::lround(sop_smoothing_max * 100.0f);
         ASSERT_TRUE(lat_ms_max == 100);
 
         float slip_smoothing_zero = 0.0f;
@@ -588,6 +588,52 @@ TEST_CASE(test_legacy_config_migration, "Logic") {
     Config::Load(engine, test_file);
 
     ASSERT_TRUE(engine.m_texture_load_cap == 1.8f);
+    remove(test_file.c_str());
+}
+
+TEST_CASE(test_sop_smoothing_migration, "Logic") {
+    std::cout << "\nTest: SoP Smoothing Migration (Issue #37 Reset)" << std::endl;
+
+    std::string test_file = "test_config_sop_migration.ini";
+    std::string original_path = Config::m_config_path;
+    Config::m_config_path = test_file;
+
+    // 1. Create a legacy config (v0.7.146) with smoothing enabled (old mapping: 1.0 = raw, 0.85 = 15ms)
+    {
+        std::ofstream file(test_file);
+        file << "ini_version=0.7.146\n";
+        file << "sop_smoothing_factor=0.85\n";
+        file << "\n[Presets]\n";
+        file << "[Preset:UserPreset]\n";
+        file << "app_version=0.7.146\n";
+        file << "sop_smoothing_factor=0.85\n";
+        file.close();
+    }
+
+    FFBEngine engine;
+    // Initial state check (should be default 0.0)
+    ASSERT_TRUE(engine.m_sop_smoothing_factor == 0.0f);
+
+    // 2. Load the legacy config
+    Config::presets.clear();
+    Config::Load(engine, test_file);     // Loads main config
+    Config::LoadPresets();               // Loads presets from Config::m_config_path
+
+    // 3. Verify that main config was reset to 0.0
+    ASSERT_TRUE(engine.m_sop_smoothing_factor == 0.0f);
+
+    // 4. Verify that the user preset was reset to 0.0
+    bool found = false;
+    for (const auto& p : Config::presets) {
+        if (p.name == "UserPreset") {
+            found = true;
+            ASSERT_TRUE(p.sop_smoothing == 0.0f);
+            break;
+        }
+    }
+    ASSERT_TRUE(found);
+
+    Config::m_config_path = original_path;
     remove(test_file.c_str());
 }
 

@@ -616,7 +616,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, "%.2f",
             Tooltips::SOP_SMOOTHING,
             [&]() {
-                int ms = (int)std::lround((1.0f - engine.m_sop_smoothing_factor) * 100.0f);
+                int ms = (int)std::lround(engine.m_sop_smoothing_factor * 100.0f);
                 ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
                 ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
             });
