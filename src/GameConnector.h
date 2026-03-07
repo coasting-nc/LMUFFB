@@ -66,6 +66,8 @@ private:
         char trackName[64] = { 0 };
         char optionsPage[32] = { 0 };
         float steeringRange = -1.0f;
+        bool playerHasVehicle = false;  // investigation: quit-to-menu detection (#7.4a)
+        int  numVehicles = -1;          // investigation: quit-to-menu detection (#7.4b)
         uint32_t eventState[SME_MAX] = { 0 };
         std::chrono::steady_clock::time_point lastEventLogTime[SME_MAX];
     } m_prevState;

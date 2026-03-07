@@ -266,6 +266,7 @@ void GameConnector::_UpdateStateFromSnapshot(const SharedMemoryObjectOut& curren
     m_currentGamePhase   = scoring.mGamePhase;
     m_currentSessionType = scoring.mSession;
 
+
     if (current.telemetry.playerHasVehicle) {
         uint8_t idx = current.telemetry.playerVehicleIdx;
         if (idx < 104) {
@@ -351,6 +352,20 @@ void GameConnector::_LogTransitions(const SharedMemoryObjectOut& current) {
     if (currentInRealtime != m_prevState.inRealtime) {
         Logger::Get().LogFile("[Transition] InRealtime: %s -> %s",
             m_prevState.inRealtime ? "true" : "false", currentInRealtime ? "true" : "false");
+
+        // Investigation dump (#7.4c): fires on every de-realtime event (garage return OR
+        // quit-to-menu). Captures signals needed to distinguish the two paths.
+        if (!currentInRealtime && m_prevState.inRealtime) {
+            Logger::Get().LogFile(
+                "[Diag] De-realtime snapshot: track='%s' optionsLoc=%d "
+                "numVehicles=%d playerHasVehicle=%s smUpdateScoring=%u",
+                scoring.mTrackName,
+                (int)generic.appInfo.mOptionsLocation,
+                (int)scoring.mNumVehicles,
+                current.telemetry.playerHasVehicle ? "true" : "false",
+                (unsigned)generic.events[SME_UPDATE_SCORING]);
+        }
+
         m_prevState.inRealtime = currentInRealtime;
     }
 
@@ -404,6 +419,23 @@ void GameConnector::_LogTransitions(const SharedMemoryObjectOut& current) {
                 m_prevState.steeringRange = currentRange;
             }
         }
+    }
+
+    // 7. PlayerHasVehicle changes — investigation: quit-to-menu detection (#7.4a)
+    bool currentHasVehicle = current.telemetry.playerHasVehicle;
+    if (currentHasVehicle != m_prevState.playerHasVehicle) {
+        Logger::Get().LogFile("[Transition] PlayerHasVehicle: %s -> %s",
+            m_prevState.playerHasVehicle ? "true" : "false",
+            currentHasVehicle ? "true" : "false");
+        m_prevState.playerHasVehicle = currentHasVehicle;
+    }
+
+    // 8. NumVehicles changes — investigation: quit-to-menu detection (#7.4b)
+    int currentNumVehicles = (int)scoring.mNumVehicles;
+    if (currentNumVehicles != m_prevState.numVehicles) {
+        Logger::Get().LogFile("[Transition] NumVehicles: %d -> %d",
+            m_prevState.numVehicles, currentNumVehicles);
+        m_prevState.numVehicles = currentNumVehicles;
     }
 }
 

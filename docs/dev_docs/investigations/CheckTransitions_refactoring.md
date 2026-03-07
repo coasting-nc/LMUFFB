@@ -218,3 +218,168 @@ All tests are in `tests/test_gc_refactoring.cpp`, registered with the `refactori
 - The **`TransitionState` shadow struct** (`m_prevState`) is kept as-is. It correctly captures "previous values for logging purposes" and the separation between it and the state machine atomics is now much more visible.
 - The **mutex usage** is unchanged. `CheckTransitions` acquires `m_mutex` at its entry. `_UpdateStateFromSnapshot` and `_LogTransitions` are private helpers called under the already-held lock.
 - The **`GameState` struct consolidation** is deferred — it is a valid future improvement but is the highest-risk change and provides no correctness benefit over the current structure.
+
+---
+
+## 7. Known Limitation — "Quit to Main Menu" Detection
+
+**Status: ⚠️ Bug confirmed, root cause partially understood, fix deferred pending more data.**
+
+### 7.1 Problem statement
+
+When the user quits **directly to the main menu** (without returning to the garage first), the session state indicator remains `true` ("Track loaded") even though no session is actually active. The app shows that a track is loaded when it should show the main menu / disconnected state.
+
+This was discovered in the course of the refactoring work. The refactoring did not introduce the bug — it pre-existed — but the investigation made it visible.
+
+**Does not occur when** returning to garage and then quitting. In that case the session state is correct.
+
+### 7.2 What we know about the signals
+
+#### `mTrackName` (current ground-truth for `m_sessionActive`)
+When quitting to the main menu, LMU **does not zero** `mTrackName` in the shared memory buffer. Our local copy retains the last valid track name indefinitely. This makes `mTrackName` alone **insufficient** for detecting a main-menu return.
+
+Note: `mTrackName` is only re-copied into our local snapshot when `SME_UPDATE_SCORING` is non-zero (see `CopySharedMemoryObj`). If LMU stops sending scoring updates, our copy is already stale. The open question is whether LMU *does* stop sending scoring updates at the main menu.
+
+#### `SME_END_SESSION` / `SME_UNLOAD` (intended session-end signals)
+These events are **not fired** when the user quits directly to the main menu. They work correctly for the normal return-to-garage → session-end path (multiplayer track change, end of session, etc.), but fail for direct quit-to-menu.
+
+This is a confirmed LMU shared memory API gap.
+
+#### `mOptionsLocation` (investigated, abandoned)
+Candidate values:
+- `0` = "Main UI"
+- `1` = Track Loading
+- `2` = Monitor / Garage
+- `3` = On Track
+
+**Outcome**: Although `mOptionsLocation = 0` is associated with "Main UI", it is also **0 during normal gameplay**. In testing, the field appeared to only be set to non-zero values transiently (during loading screen transitions) and returns to 0 during all stable game states including active driving. Using it as a continuous session indicator caused a catastrophic regression: `m_sessionActive` became false every tick while driving, causing "[Game] User exited driving session." to spam the log hundreds of times per session.
+
+`mOptionsLocation` cannot be used as a reliable continuous indicator of game state. It may be valid only at the precise moment an `SME_ENTER` / `SME_EXIT` event fires.
+
+#### `SME_EXIT` / `SME_ENTER` (generic UI events)
+These fire during the quit-to-menu transition, but they **also fire** during many other transitions (loading screens, garage entry, etc.). They cannot distinguish "going to main menu" from "returning to garage".
+
+Observed at quit-to-menu:
+```
+[Transition] Event: SME_EXIT (N)
+[Transition] Event: SME_ENTER (N+7)
+[Transition] Event: SME_EXIT (N+9)
+[Transition] Event: SME_ENTER (N+5)
+```
+These are just incrementing counters on indices 0 (ENTER) and 1 (EXIT). No qualitative meaning.
+
+#### `SME_EXIT_REALTIME` (potentially important)
+**Key observation**: When returning to the *garage*, `SME_EXIT_REALTIME` fires. When quitting to the *main menu*, **`SME_EXIT_REALTIME` does NOT fire** — `mInRealtime` goes to `0` via polling only.
+
+This is a potential distinguisher, but requires more data to confirm it holds in all cases. See open questions below.
+
+### 7.3 Open questions
+
+| # | Question | Why it matters |
+|---|---|---|
+| Q1 | Does `SME_UPDATE_SCORING` stop incrementing after quitting to the main menu? | If yes, scoring data (including `mTrackName`) becomes detectably stale via a timeout |
+| Q2 | Does `mNumVehicles` drop to 0 after quitting to main menu? | Could be used as a reliable session-end indicator if it does |
+| Q3 | Does `playerHasVehicle` → `false` after quitting to main menu? | Same — telemetry is no longer updated when there's no player car |
+| Q4 | Does `SME_EXIT_REALTIME` reliably fire for garage return but NOT for quit-to-menu? | Would be a clean distinguisher with zero false positives |
+| Q5 | Does `mOptionsLocation` change when the loading screen appears? What is its value at that moment? | Would help understand if it can be used transiently |
+
+### 7.4 Additional debug logging to add
+
+Before the next test session, add the following entries to `_LogTransitions` in `GameConnector.cpp`. These are permanent additions (not temporary), as they provide useful diagnostic information for all session transitions:
+
+**a) Log `playerHasVehicle` changes:**
+```cpp
+// After the existing control/pit block, outside the vehicle presence guard:
+bool currentHasVehicle = current.telemetry.playerHasVehicle;
+if (currentHasVehicle != m_prevState.playerHasVehicle) {
+    Logger::Get().LogFile("[Transition] PlayerHasVehicle: %s -> %s",
+        m_prevState.playerHasVehicle ? "true" : "false",
+        currentHasVehicle ? "true" : "false");
+    m_prevState.playerHasVehicle = currentHasVehicle;
+}
+```
+
+**b) Log `mNumVehicles` changes:**
+```cpp
+int currentNumVehicles = (int)scoring.mNumVehicles;
+if (currentNumVehicles != m_prevState.numVehicles) {
+    Logger::Get().LogFile("[Transition] NumVehicles: %d -> %d",
+        m_prevState.numVehicles, currentNumVehicles);
+    m_prevState.numVehicles = currentNumVehicles;
+}
+```
+
+**c) Log a comprehensive snapshot when `mInRealtime` goes from `true` to `false`.**
+This fires at every de-realtime event (return to garage OR quit to menu), and will capture all the signals we need to compare the two paths:
+```cpp
+// Inside the mInRealtime transition block, after the existing log line:
+if (!currentInRealtime && m_prevState.inRealtime) {
+    Logger::Get().LogFile(
+        "[Transition] De-realtime snapshot: trackName='%s' optionsLoc=%d "
+        "numVehicles=%d playerHasVehicle=%s smUpdateScoring=%u",
+        scoring.mTrackName,
+        (int)current.generic.appInfo.mOptionsLocation,
+        (int)scoring.mNumVehicles,
+        current.telemetry.playerHasVehicle ? "true" : "false",
+        (unsigned)current.generic.events[SME_UPDATE_SCORING]);
+}
+```
+
+> [!NOTE]
+> Items (a) and (b) need corresponding fields added to `TransitionState m_prevState` in `GameConnector.h`: `bool playerHasVehicle = false;` and `int numVehicles = -1;`.
+
+### 7.5 Manual test protocol
+
+Add the debug logging above, build, and run two specific test sessions:
+
+---
+
+**Test A — Baseline (return to garage)**
+
+1. Launch lmuFFB, launch LMU
+2. Load any track → enter session → click **Drive** and go on track for ~10 seconds
+3. Press **Escape** → select **Return to Monitor** (back to garage UI)
+4. Wait 5 seconds in the garage monitor
+5. Click **Drive** again → drive for ~5 seconds → press Escape → **Quit to Main Menu**
+6. Wait 5 seconds at the main menu
+7. Quit the app
+
+**What to capture**: The complete `lmuffb_debug.log`. Pay particular attention to the two `[Transition] De-realtime snapshot:` lines — one for step 3 (return to garage) and one for step 5 (quit to menu).
+
+---
+
+**Test B — Minimum repro for the bug**
+
+1. Launch lmuFFB, launch LMU
+2. Load any track → enter session → click **Drive** and go on track for ~10 seconds
+3. Press **Escape** → select **Quit to Main Menu** directly (skipping Return to Garage)
+4. Wait 10 seconds at the main menu *without loading another track*
+5. Quit the app
+6. Also note what the lmuFFB **GUI shows** as the session state during step 4
+
+**What to capture**: The complete `lmuffb_debug.log` AND a screenshot/description of the GUI state at step 4 (does it say "Track loaded"? What does the session status show?).
+
+---
+
+### 7.6 Expected analysis
+
+After receiving the two logs, compare the `[Transition] De-realtime snapshot:` lines for **return-to-garage** (Test A, step 3) vs **quit-to-menu** (Test B / Test A step 5):
+
+| Field | Hypothesis: garage | Hypothesis: main menu |
+|---|---|---|
+| `trackName` | non-empty | non-empty (stale) |
+| `optionsLoc` | 0 (transient, probably) | 0 (same, unreliable) |
+| `numVehicles` | > 0 (cars still in session) | **0** (no session) |
+| `playerHasVehicle` | true (car still spawned) | **false** (car removed) |
+| `smUpdateScoring` | > 0 (scoring still arriving) | **0 or stops** (no more updates) |
+
+If `numVehicles = 0` **only** at the main menu (not at garage return), that becomes the reliable fix:
+```cpp
+// In _UpdateStateFromSnapshot:
+m_sessionActive = (scoring.mTrackName[0] != '\0') && (scoring.mNumVehicles > 0);
+```
+
+If `playerHasVehicle = false` only at main menu, that's an alternative signal.
+
+If `SME_EXIT_REALTIME` appears in the garage-return log but NOT in the quit-to-menu log, that confirms it as a differentiator and a sticky-flag approach becomes viable.
+

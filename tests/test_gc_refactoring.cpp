@@ -293,6 +293,26 @@ TEST_CASE_TAGGED(test_gc_actively_driving_false_when_not_realtime,
 }
 
 // ---------------------------------------------------------------------------
+// 5.5b  Known limitation: "quit to main menu" detection
+// ---------------------------------------------------------------------------
+//
+// When the user quits directly to the main menu (without returning to garage
+// first), LMU does NOT fire SME_END_SESSION or SME_UNLOAD, and does NOT zero
+// out mTrackName in the shared memory buffer. mOptionsLocation was investigated
+// as a possible signal but proved unreliable: it is 0 ("Main UI") during normal
+// gameplay too, not just at the main menu.
+//
+// As a result, IsSessionActive() returns true after a direct quit-to-menu. This
+// is a known LMU API limitation that requires additional telemetry data to solve
+// (e.g. confirming that SME_UPDATE_SCORING stops firing for several seconds).
+// A dedicated investigation and targeted debug log capture is needed before a
+// fix can be safely implemented.
+//
+// TODO: Investigate mNumVehicles, mTimeIntoLap, and SME_UPDATE_SCORING staleness
+//       as potential signals. Add targeted debug logging to capture the complete
+//       shared memory state during the quit-to-menu transition.
+
+// ---------------------------------------------------------------------------
 // 5.6  No duplicate log entries on identical ticks
 // ---------------------------------------------------------------------------
 
