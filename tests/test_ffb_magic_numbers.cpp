@@ -339,7 +339,7 @@ TEST_CASE(test_mn_spin_detection_torque_drop, "Texture") {
     FFBCalculationContext ctx;
     ctx.dt = 0.01;
     ctx.car_speed = 20.0;
-    ctx.avg_grip = 0.8;
+    ctx.avg_grip_front = 0.8;
     ctx.speed_gate = 1.0;
     ctx.gain_reduction_factor = 1.0;
 
@@ -380,7 +380,7 @@ TEST_CASE(test_mn_slide_texture_velocity_threshold, "Texture") {
         FFBCalculationContext ctx;
         ctx.dt = 0.01;
         ctx.car_speed = 20.0;
-        ctx.avg_grip = 1.0;
+        ctx.avg_grip_front = 1.0;
         ctx.speed_gate = 1.0;
         ctx.texture_load_factor = 1.0;
         ctx.slide_noise = 0.0;
@@ -407,7 +407,7 @@ TEST_CASE(test_mn_slide_texture_velocity_threshold, "Texture") {
         FFBCalculationContext ctx;
         ctx.dt = 0.01;
         ctx.car_speed = 20.0;
-        ctx.avg_grip = 0.0; // zero grip â†’ maximum slide contribution
+        ctx.avg_grip_front = 0.0; // zero grip â†’ maximum slide contribution
         ctx.speed_gate = 1.0;
         ctx.texture_load_factor = 1.0;
         ctx.slide_noise = 0.0;

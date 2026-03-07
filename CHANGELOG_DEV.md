@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.150] - 2026-03-07
+- **Enhanced Lateral Load Effect (Issue #282)**:
+  - Fixed "Aero-Fade" where the Lateral Load signal would shrink at high speeds due to dynamic total load normalization.
+  - Switched to **Fixed Static Normalization**: The effect now uses a fixed, class-based static front axle load as the normalization basis, ensuring consistent "lean" feel at all speeds.
+  - Implemented **Magnitude Parity**: Added a 2.0x internal multiplier to the Lateral Load contribution to bring it into numerical parity with the Lateral G effect.
+  - Optimized **Kinematic Fallback Onset**: Reduced the missing-load hysteresis from 20 to 5 frames and added immediate pivot for zero-load telemetry at high speed.
+  - **Naming Clarity**: Systematically renamed variables (e.g., `avg_load` to `avg_load_front`) to clarify that the effect and its fallbacks rely on front-axle dynamics.
+- **Diagnostics & Tooling**:
+  - Enhanced the Log Analyzer with a new `plot_lateral_diagnostic` command to visualize load transfer dynamics and aero-fade resistance.
+  - Expanded telemetry metadata to include `lat_load_effect` and `sop_scale` for accurate offline signal reconstruction.
+- **Performance**:
+  - Optimized the physics loop by caching vehicle class and fixed load values, reducing redundant string parsing.
+- **Testing**:
+  - Added `tests/test_issue_282_magnitude.cpp` to verify aero-fade resistance, magnitude parity, and fast fallback onset.
+  - Verified 100% pass rate across the updated regression suite.
+
 ## [0.7.149] - 2026-03-07
 - **Automated LZ4 Dependency Download (Issue #284)**:
   - Updated `CMakeLists.txt` to automatically download the required `lz4.c` and `lz4.h` vendor files using `FetchContent`.

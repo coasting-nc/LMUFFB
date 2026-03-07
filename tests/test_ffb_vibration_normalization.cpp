@@ -40,7 +40,7 @@ TEST_CASE(test_soft_knee_linear_region, "Normalization") {
     TelemInfoV01 data = CreateBasicTestTelemetry();
     data.mDeltaTime = 0.0025;
     data.mWheel[0].mTireLoad = 4000.0;
-    data.mWheel[1].mTireLoad = 4000.0; // avg_load = 4000
+    data.mWheel[1].mTireLoad = 4000.0; // avg_load_front = 4000
 
     // Ratio x = 1.0. T=1.5, W=0.5 -> lower_bound = 1.25.
     // x < lower_bound, so compressed_load_factor = 1.0.
@@ -63,7 +63,7 @@ TEST_CASE(test_soft_knee_compression_region, "Normalization") {
     TelemInfoV01 data = CreateBasicTestTelemetry();
     data.mDeltaTime = 0.0025;
     data.mWheel[0].mTireLoad = 10000.0;
-    data.mWheel[1].mTireLoad = 10000.0; // avg_load = 10000
+    data.mWheel[1].mTireLoad = 10000.0; // avg_load_front = 10000
 
     // Ratio x = 2.5.
     // T = 1.5, R = 4.0, upper_bound = 1.75.
@@ -86,7 +86,7 @@ TEST_CASE(test_soft_knee_transition_region, "Normalization") {
     TelemInfoV01 data = CreateBasicTestTelemetry();
     data.mDeltaTime = 0.0025;
     data.mWheel[0].mTireLoad = 6000.0;
-    data.mWheel[1].mTireLoad = 6000.0; // avg_load = 6000
+    data.mWheel[1].mTireLoad = 6000.0; // avg_load_front = 6000
 
     // Ratio x = 1.5.
     // T = 1.5, W = 0.5, R = 4.0.

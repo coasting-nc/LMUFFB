@@ -155,6 +155,8 @@ void FFBThread() {
                             info.gain = g_engine.m_gain;
                             info.understeer_effect = g_engine.m_understeer_effect;
                             info.sop_effect = g_engine.m_sop_effect;
+                            info.lat_load_effect = g_engine.m_lat_load_effect; // New v0.7.150
+                            info.sop_scale = g_engine.m_sop_scale;             // New v0.7.150
                             info.slope_enabled = g_engine.m_slope_detection_enabled;
                             info.slope_sensitivity = g_engine.m_slope_sensitivity;
                             info.slope_threshold = (float)g_engine.m_slope_min_threshold;

@@ -139,7 +139,7 @@ TEST_CASE(test_engine_calculate_force_fallbacks, "Physics") {
     TelemInfoV01 data = CreateBasicTestTelemetry();
     InitializeEngine(engine);
 
-    // 1. Trigger missing load fallback (m_missing_load_frames > 20)
+    // 1. Trigger missing load fallback (m_missing_load_front_frames > 20)
     data.mWheel[0].mTireLoad = 0.0;
     data.mWheel[1].mTireLoad = 0.0;
     data.mLocalVel.z = 10.0; // speed > 1.0

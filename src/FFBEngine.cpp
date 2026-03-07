@@ -373,26 +373,32 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // --- 4. PRE-CALCULATIONS ---
 
-    // Average Load & Fallback Logic
-    ctx.avg_load = raw_load;
+    // Average Front Axle Load & Fallback Logic
+    ctx.avg_load_front = raw_load;
 
-    // Hysteresis for missing load
-    if (ctx.avg_load < 1.0 && ctx.car_speed > SPEED_EPSILON) {
-        m_missing_load_frames++;
+    // Hysteresis for missing front load
+    // v0.7.150: Reduce threshold and add aggressive zero-check for high speed (Issue #282)
+    bool is_load_missing = (ctx.avg_load_front < 1.0);
+    if (is_load_missing && ctx.car_speed > SPEED_EPSILON) {
+        m_missing_load_front_frames++;
+        // Immediate pivot if we are moving fast and load is exactly 0
+        if (ctx.car_speed > SPEED_HIGH_THRESHOLD && ctx.avg_load_front < 0.001) {
+            m_missing_load_front_frames = MISSING_LOAD_WARN_THRESHOLD + 1;
+        }
     } else {
-        m_missing_load_frames = (std::max)(0, m_missing_load_frames - 1);
+        m_missing_load_front_frames = (std::max)(0, m_missing_load_front_frames - 1);
     }
 
-    if (m_missing_load_frames > MISSING_LOAD_WARN_THRESHOLD) {
+    if (m_missing_load_front_frames > MISSING_LOAD_WARN_THRESHOLD) {
         // Fallback Logic
         if (fl.mSuspForce > MIN_VALID_SUSP_FORCE) {
             double calc_load_fl = approximate_load(fl);
             double calc_load_fr = approximate_load(fr);
-            ctx.avg_load = (calc_load_fl + calc_load_fr) / DUAL_DIVISOR;
+            ctx.avg_load_front = (calc_load_fl + calc_load_fr) / DUAL_DIVISOR;
         } else {
             double kin_load_fl = calculate_kinematic_load(data, 0);
             double kin_load_fr = calculate_kinematic_load(data, 1);
-            ctx.avg_load = (kin_load_fl + kin_load_fr) / DUAL_DIVISOR;
+            ctx.avg_load_front = (kin_load_fl + kin_load_fr) / DUAL_DIVISOR;
         }
         if (!m_warned_load) {
             Logger::Get().LogFile("Warning: Data for mTireLoad from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). Using Kinematic Fallback.", data->mVehicleName);
@@ -463,10 +469,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_warned_vert_deflection = true;
     }
     
-    // Peak Hold Logic
+    // Peak Hold Logic (Front Axle)
     if (m_auto_load_normalization_enabled && !seeded) {
-        if (ctx.avg_load > m_auto_peak_load) {
-            m_auto_peak_load = ctx.avg_load; // Fast Attack
+        if (ctx.avg_load_front > m_auto_peak_load) {
+            m_auto_peak_load = ctx.avg_load_front; // Fast Attack
         } else {
             m_auto_peak_load -= (LOAD_DECAY_RATE * ctx.dt); // Slow Decay (~100N/s)
         }
@@ -474,9 +480,9 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     m_auto_peak_load = (std::max)(LOAD_SAFETY_FLOOR, m_auto_peak_load); // Safety Floor
 
     // Load Factors (Stage 3: Giannoulis Soft-Knee Compression)
-    // 1. Calculate raw load multiplier based on static weight
+    // 1. Calculate raw load multiplier based on static front weight
     // Safety clamp: Ensure load factor is non-negative even with telemetry noise
-    double x = (std::max)(0.0, ctx.avg_load / m_static_front_load);
+    double x = (std::max)(0.0, ctx.avg_load_front / m_static_front_load);
 
     // 2. Giannoulis Soft-Knee Parameters
     double T = COMPRESSION_KNEE_THRESHOLD;  // Threshold (Start compressing at 1.5x static weight)
@@ -523,11 +529,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // A. Understeer (Base Torque + Grip Loss)
 
-    // Grip Estimation (v0.4.5 FIX)
-    GripResult front_grip_res = calculate_grip(fl, fr, ctx.avg_load, m_warned_grip, 
+    // Front Grip Estimation (v0.4.5 FIX)
+    GripResult front_grip_res = calculate_grip(fl, fr, ctx.avg_load_front, m_warned_grip,
                                                 m_prev_slip_angle[0], m_prev_slip_angle[1],
                                                 ctx.car_speed, ctx.dt, data->mVehicleName, data, true /* is_front */);
-    ctx.avg_grip = front_grip_res.value;
+    ctx.avg_grip_front = front_grip_res.value;
     m_grip_diag.front_original = front_grip_res.original;
     m_grip_diag.front_approximated = front_grip_res.approximated;
     m_grip_diag.front_slip_angle = front_grip_res.slip_angle;
@@ -539,22 +545,22 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Base Steering Force (Issue #178)
     double base_input = game_force_proc;
     
-    // Apply Grip Modulation
-    double grip_loss = (1.0 - ctx.avg_grip) * m_understeer_effect;
+    // Apply Front Grip Modulation
+    double grip_loss = (1.0 - ctx.avg_grip_front) * m_understeer_effect;
     ctx.grip_factor = (std::max)(0.0, 1.0 - grip_loss);
 
     // v0.7.63: Passthrough Logic for Direct Torque (TIC mode)
     double grip_factor_applied = m_torque_passthrough ? 1.0 : ctx.grip_factor;
 
-    // v0.7.46: Dynamic Weight logic
+    // v0.7.46: Dynamic Weight logic (Front Axle)
     if (m_auto_load_normalization_enabled) {
-        update_static_load_reference(ctx.avg_load, ctx.car_speed, ctx.dt);
+        update_static_load_reference(ctx.avg_load_front, ctx.car_speed, ctx.dt);
     }
     double dynamic_weight_factor = 1.0;
 
-    // Only apply if enabled AND we have real load data (no warnings)
+    // Only apply if enabled AND we have real front load data (no warnings)
     if (m_dynamic_weight_gain > 0.0 && !ctx.frame_warn_load) {
-        double load_ratio = ctx.avg_load / m_static_front_load;
+        double load_ratio = ctx.avg_load_front / m_static_front_load;
         // Blend: 1.0 + (Ratio - 1.0) * Gain
         dynamic_weight_factor = 1.0 + (load_ratio - 1.0) * (double)m_dynamic_weight_gain;
         dynamic_weight_factor = std::clamp(dynamic_weight_factor, DYNAMIC_WEIGHT_MIN, DYNAMIC_WEIGHT_MAX);
@@ -718,10 +724,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.clipping = (std::abs(norm_force) > (double)CLIPPING_THRESHOLD) ? 1.0f : 0.0f;
 
             // Physics
-            snap.calc_front_load = (float)ctx.avg_load;
+            snap.calc_front_load = (float)ctx.avg_load_front;
             snap.calc_rear_load = (float)ctx.avg_rear_load;
             snap.calc_rear_lat_force = (float)ctx.calc_rear_lat_force;
-            snap.calc_front_grip = (float)ctx.avg_grip;
+            snap.calc_front_grip = (float)ctx.avg_grip_front;
             snap.calc_rear_grip = (float)ctx.avg_rear_grip;
             snap.calc_front_slip_angle_smoothed = (float)m_grip_diag.front_slip_angle;
             snap.calc_rear_slip_angle_smoothed = (float)m_grip_diag.rear_slip_angle;
@@ -870,9 +876,9 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         
         frame.calc_slip_angle_front = (float)m_grip_diag.front_slip_angle;
         frame.calc_slip_angle_rear = (float)m_grip_diag.rear_slip_angle;
-        frame.calc_grip_front = (float)ctx.avg_grip;
+        frame.calc_grip_front = (float)ctx.avg_grip_front;
         frame.calc_grip_rear = (float)ctx.avg_rear_grip;
-        frame.grip_delta = (float)(ctx.avg_grip - ctx.avg_rear_grip);
+        frame.grip_delta = (float)(ctx.avg_grip_front - ctx.avg_rear_grip);
         frame.calc_rear_lat_force = (float)ctx.calc_rear_lat_force;
 
         frame.smoothed_yaw_accel = (float)m_yaw_accel_smoothed;
@@ -961,15 +967,16 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double raw_g = (std::max)(-G_LIMIT_5G * GRAVITY_MS2, (std::min)(G_LIMIT_5G * GRAVITY_MS2, data->mLocalAccel.x));
     double lat_g_accel = (raw_g / GRAVITY_MS2);
 
-    // 2. Normalized Lateral Load Transfer (Issue #213)
-    double fl_load = data->mWheel[0].mTireLoad;
-    double fr_load = data->mWheel[1].mTireLoad;
+    // 2. Normalized Lateral Load Transfer (Issue #213) - Front Axle Only
+    double fl_load_front = data->mWheel[0].mTireLoad;
+    double fr_load_front = data->mWheel[1].mTireLoad;
     if (ctx.frame_warn_load) {
-        fl_load = calculate_kinematic_load(data, 0);
-        fr_load = calculate_kinematic_load(data, 1);
+        fl_load_front = calculate_kinematic_load(data, 0);
+        fr_load_front = calculate_kinematic_load(data, 1);
     }
-    double total_load = fl_load + fr_load;
-    double lat_load_norm = (total_load > 1.0) ? (fl_load - fr_load) / total_load : 0.0;
+    // v0.7.150: Normalize by FIXED static front weight to prevent aero-fade (Issue #282)
+    // We use the class-based default load (axle total) as the fixed normalization basis.
+    double lat_load_norm = (m_fixed_static_axle_load_front > 100.0) ? (fl_load_front - fr_load_front) / m_fixed_static_axle_load_front : 0.0;
     
     // Smoothing: Map 0.0-1.0 slider to 0.1-0.0001s tau
     double smoothness = (double)m_sop_smoothing_factor;
@@ -982,12 +989,15 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     m_sop_load_smoothed += alpha * (lat_load_norm - m_sop_load_smoothed);
 
     // Base SoP Force (Combined)
-    double sop_base = (m_sop_lat_g_smoothed * (double)m_sop_effect + m_sop_load_smoothed * (double)m_lat_load_effect) * (double)m_sop_scale;
+    // v0.7.150: Applied 2.0x boost to Lateral Load to match Lateral G magnitude (Issue #282)
+    double sop_base = (m_sop_lat_g_smoothed * (double)m_sop_effect + m_sop_load_smoothed * (double)m_lat_load_effect * 2.0) * (double)m_sop_scale;
     ctx.sop_unboosted_force = sop_base; // Store for snapshot
     
     // 2. Oversteer Boost (Grip Differential)
     // Calculate Rear Grip
-    GripResult rear_grip_res = calculate_grip(data->mWheel[2], data->mWheel[3], ctx.avg_load, m_warned_rear_grip,
+    // Note: Rear grip estimation still uses average FRONT load for capacity scaling consistency
+    // in the simplified grip model.
+    GripResult rear_grip_res = calculate_grip(data->mWheel[2], data->mWheel[3], ctx.avg_load_front, m_warned_rear_grip,
                                                 m_prev_slip_angle[2], m_prev_slip_angle[3],
                                                 ctx.car_speed, ctx.dt, data->mVehicleName, data, false /* is_front */);
     ctx.avg_rear_grip = rear_grip_res.value;
@@ -997,7 +1007,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     if (rear_grip_res.approximated) ctx.frame_warn_rear_grip = true;
     
     if (!m_slope_detection_enabled) {
-        double grip_delta = ctx.avg_grip - ctx.avg_rear_grip;
+        double grip_delta = ctx.avg_grip_front - ctx.avg_rear_grip;
         if (grip_delta > 0.0) {
             sop_base *= (1.0 + (grip_delta * m_oversteer_boost * OVERSTEER_BOOST_MULT));
         }
@@ -1261,7 +1271,7 @@ void FFBEngine::calculate_slide_texture(const TelemInfoV01* data, FFBCalculation
         double sawtooth = (m_slide_phase / TWO_PI) * SAWTOOTH_SCALE - SAWTOOTH_OFFSET;
         
         // Intensity scaling (Grip based)
-        double grip_scale = (std::max)(0.0, 1.0 - ctx.avg_grip);
+        double grip_scale = (std::max)(0.0, 1.0 - ctx.avg_grip_front);
         
         ctx.slide_noise = sawtooth * m_slide_texture_gain * (double)BASE_NM_SLIDE_TEXTURE * ctx.texture_load_factor * grip_scale;
     }

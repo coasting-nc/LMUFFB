@@ -17,6 +17,8 @@ class SessionMetadata(BaseModel):
     gain: float
     understeer_effect: float
     sop_effect: float
+    lat_load_effect: float = 0.0 # New v1.2.2
+    sop_scale: float = 1.0       # New v1.2.2
     slope_enabled: bool
     slope_sensitivity: float
     slope_threshold: float

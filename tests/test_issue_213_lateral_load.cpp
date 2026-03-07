@@ -16,7 +16,10 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_additive, "CorePhysics", (std::vect
     engine.m_target_rim_nm = 20.0f;
 
     // Force a car class to initialize load reference
-    engine.calculate_force(nullptr, "GT3", "Test Car");
+    TelemInfoV01 init_data = CreateBasicTestTelemetry(10.0, 0.0);
+    engine.calculate_force(&init_data, "GT3", "Test Car");
+    // GT3 default load is 4800N. Static front load (per axle) is ~2400N.
+    // Static basis denominator = 2400 * 2 = 4800N.
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
 
@@ -33,19 +36,20 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_additive, "CorePhysics", (std::vect
     auto snapshots = engine.GetDebugBatch();
     ASSERT_FALSE(snapshots.empty());
     if (!snapshots.empty()) {
+        // v0.7.150 Math (Issue #282):
         // lat_g_accel = 1.0
-        // lat_load_norm = (6000-2000)/8000 = 0.5
-        // sop_base = (1.0 * 1.0 + 0.5 * 1.0) * 1.0 = 1.5 Nm
-        // Normalized = 1.5 / 20.0 = 0.075
+        // lat_load_norm = (6000-2000) / 4800 = 0.8333
+        // sop_base = (1.0 * 1.0 + 0.8333 * 1.0 * 2.0) * 1.0 = 2.666 Nm
         std::cout << "[INFO] SoP Force (Combined): " << snapshots.back().sop_force << std::endl;
-        ASSERT_NEAR(snapshots.back().sop_force, 1.5f, 0.1f);
+        ASSERT_NEAR(snapshots.back().sop_force, 2.666f, 0.1f);
     }
 }
 
 TEST_CASE_TAGGED(test_issue_213_lateral_load_isolation, "CorePhysics", (std::vector<std::string>{"Physics", "Issue213"})) {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.calculate_force(nullptr, "GT3", "Test Car");
+    TelemInfoV01 init_data = CreateBasicTestTelemetry(10.0, 0.0);
+    engine.calculate_force(&init_data, "GT3", "Test Car");
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mLocalAccel.x = 9.81;
@@ -67,7 +71,7 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_isolation, "CorePhysics", (std::vec
     std::cout << "[INFO] Force G: " << force_g << " | Force Load: " << force_load << std::endl;
 
     ASSERT_NEAR(force_g, 1.0f, 0.1f);
-    ASSERT_NEAR(force_load, 0.5f, 0.1f);
+    ASSERT_NEAR(force_load, 1.666f, 0.1f);
 }
 
 TEST_CASE_TAGGED(test_issue_213_lateral_load_kinematic, "CorePhysics", (std::vector<std::string>{"Physics", "Issue213"})) {
@@ -76,7 +80,8 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_kinematic, "CorePhysics", (std::vec
     engine.m_sop_effect = 0.0f;
     engine.m_lat_load_effect = 1.0f;
     engine.m_sop_scale = 1.0f;
-    engine.calculate_force(nullptr, "GT3", "Test Car");
+    TelemInfoV01 init_data = CreateBasicTestTelemetry(10.0, 0.0);
+    engine.calculate_force(&init_data, "GT3", "Test Car");
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
 
@@ -106,6 +111,8 @@ TEST_CASE_TAGGED(test_issue_213_orientation_matrix, "CorePhysics", (std::vector<
     std::cout << "\nTest: Orientation Matrix - Lateral Load & G-Force (Issue #213)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
+    TelemInfoV01 init_data = CreateBasicTestTelemetry(10.0, 0.0);
+    engine.calculate_force(&init_data, "GT3", "Test Car");
 
     // Enable both effects to ensure they pull together
     engine.m_sop_effect = 1.0f;
