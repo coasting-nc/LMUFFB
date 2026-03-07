@@ -19,7 +19,7 @@ The project depends on `lz4.c` and `lz4.h` from the LZ4 library, which are expec
     - CI workflows (`.github/workflows/*.yml`) use `wget` to download these files manually.
 - **Impacted Functionalities**:
     - Build System: The configuration step will now include a download phase for LZ4.
-    - CI Workflows: Manual download steps in YAML files can eventually be removed or will become redundant.
+    - CI Workflows: Manual download steps in `.github/workflows/windows-build-and-test.yml`, `.github/workflows/manual-release.yml`, and `.github/workflows/codeql.yml` will be removed as they are now handled by CMake.
 
 ## FFB Effect Impact Analysis
 - N/A. This is a build system improvement and does not affect FFB logic or feel.
@@ -34,7 +34,10 @@ The project depends on `lz4.c` and `lz4.h` from the LZ4 library, which are expec
 - **Update include and source paths**:
     - Replace hardcoded `vendor/lz4` paths with `${LZ4_DIR}`.
 
-### 2. Versioning
+### 2. `.github/workflows/*.yml`
+- **Cleanup**: Remove manual `wget`/`Invoke-WebRequest` steps for `lz4.h` and `lz4.c` as CMake now handles this automatically.
+
+### 3. Versioning
 - Increment version in `VERSION` file.
 
 ## Test Plan
@@ -58,4 +61,7 @@ The project depends on `lz4.c` and `lz4.h` from the LZ4 library, which are expec
 - **Iterative Review Process**:
     - **Iteration 1**: Rated #Partially Correct#. Feedback highlighted unrelated log files in the root directory and missing documentation (review records and implementation notes).
     - **Resolution**: Removed artifact log files, added `docs/dev_docs/code_reviews/issue_284_review_iteration_1.md`, and updated this implementation plan with final notes.
-    - Iteration 2: Rated #Correct#. Greenlight received.
+    - Iteration 2: Rated #Correct#. Greenlight received. (Note: CI cleanup was requested after this and implemented).
+    - Iteration 3: Rated #Partially Correct#. Feedback noted that artifact log files were still present in the submission despite being marked as resolved.
+    - Resolution: Explicitly deleted all `.log` and `.ini` artifacts from the root directory and re-verified repository cleanliness. Added CI workflow updates to the plan and implementation.
+    - Iteration 4: Rated #Correct#. Final greenlight.
