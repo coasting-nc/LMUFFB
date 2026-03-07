@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.149] - 2026-03-07
+- **Automated LZ4 Dependency Download (Issue #284)**:
+  - Updated `CMakeLists.txt` to automatically download the required `lz4.c` and `lz4.h` vendor files using `FetchContent`.
+  - This eliminates the need for manual `wget` or `curl` commands in CI workflows and simplifies the initial setup for new developers.
+  - Implemented a local fallback check: if `vendor/lz4/lz4.c` already exists, the build system uses it instead of downloading.
+  - Updated `CORE_SOURCES` and include directories to dynamically use the correct LZ4 path regardless of whether it was fetched or provided locally.
+
 ## [0.7.148] - 2026-03-07
 - **Fixed FFB Spikes on Driving State Transition (Issue #281)**:
   - Implemented explicit zero-force targeting in `src/main.cpp` when `IsPlayerActivelyDriving()` is false.
