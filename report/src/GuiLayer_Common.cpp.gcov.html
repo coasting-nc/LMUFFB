@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-07 14:13:49</td>
+            <td class="headerValue">2026-03-07 15:31:34</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">91.3&nbsp;%</td>
@@ -731,7 +731,7 @@
 <span id="L616"><span class="lineNum">     616</span>         [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         377 :         FloatSetting(&quot;SoP Smoothing&quot;, &amp;engine.m_sop_smoothing_factor, 0.0f, 1.0f, &quot;%.2f&quot;,</span></span>
 <span id="L617"><span class="lineNum">     617</span>                 :             :             Tooltips::SOP_SMOOTHING,</span>
 <span id="L618"><span class="lineNum">     618</span>                 :<span class="tlaGNC">         377 :             [&amp;]() {</span></span>
-<span id="L619"><span class="lineNum">     619</span>                 :<span class="tlaGNC">         377 :                 int ms = (int)std::lround((1.0f - engine.m_sop_smoothing_factor) * 100.0f);</span></span>
+<span id="L619"><span class="lineNum">     619</span>                 :<span class="tlaGNC">         377 :                 int ms = (int)std::lround(engine.m_sop_smoothing_factor * 100.0f);</span></span>
 <span id="L620"><span class="lineNum">     620</span>         [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         377 :                 ImVec4 color = (ms &lt; LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);</span></span>
 <span id="L621"><span class="lineNum">     621</span>   [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         377 :                 ImGui::TextColored(color, &quot;Latency: %d ms - %s&quot;, ms, (ms &lt; LATENCY_WARNING_THRESHOLD_MS) ? &quot;OK&quot; : &quot;High&quot;);</span></span>
 <span id="L622"><span class="lineNum">     622</span>                 :<span class="tlaGNC">         377 :             });</span></span>
