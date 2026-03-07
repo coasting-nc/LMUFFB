@@ -92,10 +92,14 @@ Lateral Acceleration (`mLocalAccel.x`) is considered low risk due to existing EM
 - **State Management**: Instead of using static variables for 100Hz derived values, I added `m_derived_accel_y_100hz` and `m_derived_accel_z_100hz` as class members. This allows them to be properly reset in the transition logic, preventing "carry-over" acceleration when moving between different car types or from garage to track.
 
 ### Difference with the Yaw Acceleration Fix
-The implementation for vertical (Y) and longitudinal (Z) acceleration differs from the existing Yaw acceleration derivation (Issue #241) in three key ways:
-1.  **Derivation Point**: Yaw acceleration is derived from *upsampled* yaw rate at 400Hz within the effect logic. Vertical and longitudinal accelerations are derived from *raw* 100Hz velocity at the telemetry ingestion point.
-2.  **Upsampling Architecture**: For Y and Z, we derive 100Hz acceleration and then pass it through a `LinearExtrapolator` to reach 400Hz. This preserves signal continuity and phase for high-frequency effects like Road Texture fallback. Yaw acceleration uses a simpler delta at 400Hz followed by heavy EMA smoothing.
-3.  **Pipeline Position**: By deriving Y and Z acceleration at the source and overwriting `m_working_info`, the clean signals are automatically propagated to all downstream effects (Road Texture, Predictive Lockup, and Kinematic Load) without modifying their internal logic. The Yaw fix was local to the Yaw Kick effect.
+The implementation for vertical (Y) and longitudinal (Z) acceleration differs from the existing Yaw acceleration derivation (Issue #241) in three key ways, necessitated by the specific requirements of haptic fidelity and physical consistency:
+
+1.  **Derivation Point (Ground-Truth Accuracy)**: Yaw acceleration is derived from *upsampled* yaw rate at 400Hz. In contrast, vertical and longitudinal accelerations are derived from *raw* 100Hz velocity at the telemetry ingestion point.
+    - *Why:* Deriving from raw velocity ensures we use the game engine's primary integrated ground-truth. Deriving from upsampled data would effectively calculate the derivative of an extrapolation, which risks amplifying interpolation artifacts or introducing phase lag.
+2.  **Upsampling Architecture (Signal Bite vs. Smoothness)**: For Y and Z, we derive 100Hz acceleration and then pass it through a `LinearExtrapolator` to reach 400Hz. The Yaw fix uses a simpler 400Hz delta followed by heavy EMA smoothing.
+    - *Why:* Effects like Road Texture and Lockup require high-frequency "bite" and precise timing. EMA smoothing, while effective for bulk chassis sensations like Yaw Kick, would dull the sharp transients needed for haptic textures. The `LinearExtrapolator` reconstructs the signal between 100Hz ticks while preserving the intensity of the physics events.
+3.  **Pipeline Position (Engine-Wide Consistency)**: By deriving Y and Z acceleration at the source and overwriting `m_working_info`, the clean signals are automatically propagated to all downstream modules.
+    - *Why:* Unlike Yaw Kick which is a standalone effect, Y/Z accelerations are shared by Road Texture, Predictive Lockup, and Kinematic Load calculations. Centralizing the derivation ensures that the load transfer and brake-pulse logic are based on identical, physically consistent acceleration values, simplifying the engine's architectural complexity.
 
 ### Code Review Iteration 1
 - **Issue:** Junk log files included in commit.
@@ -108,6 +112,10 @@ The implementation for vertical (Y) and longitudinal (Z) acceleration differs fr
 ### Code Review Iteration 2
 - **Result:** Greenlight (#Correct#).
 - **Status:** All identified issues resolved. Documentation and versioning complete.
+
+### Code Review Iteration 3
+- **Result:** Greenlight (#Correct#).
+- **Status:** Verified the rationale for implementation differences with Yaw acceleration. Confirmed architectural soundness and physical fidelity.
 
 ## 7. Additional Questions
 - None at this stage.
