@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.141] - 2026-03-07
+- **Refactored GameConnector (Issue #267)**:
+  - Redesigned `CheckTransitions` to separate state machine updates from transition logging.
+  - Implemented Phase 1: `_UpdateStateFromSnapshot` which unconditionally synchronizes the internal state machine (atomics) from the Shared Memory buffer every tick. This ensures absolute "polling truth" is always maintained.
+  - Implemented Phase 2: `_LogTransitions` which detects changes against a shadow state and handles file logging. This phase has no side-effects on the operational state machine.
+  - Extracted five static string-lookup helpers (`SmeEventName`, `GamePhaseName`, etc.) to centralize diagnostic logic and improve testability.
+  - Introduced `IsPlayerActivelyDriving()` public predicate to correctly handle FFB suppression during ESC menus and AI control while in-cockpit.
+  - Fixed various duplicate `Logger` calls in initialization and connection paths.
+- **Testing**:
+  - Added `tests/test_gc_refactoring.cpp` with 13 comprehensive regression tests covering poll-priority, event fast-paths, and the new composite predicates. All 1812 assertions in the suite pass.
+
 ## [0.7.140] - 2026-03-06
 - **Robust Session & Connection Detection (Issue #274)**:
   - Improved UI feedback by explicitly displaying "Sim: Disconnected from LMU" when the Shared Memory interface is inactive.

@@ -59,7 +59,6 @@ bool GameConnector::TryConnect() {
     m_pSharedMemLayout = (SharedMemoryLayout*)MapViewOfFile(m_hMapFile, FILE_MAP_READ, 0, 0, sizeof(SharedMemoryLayout));
     if (m_pSharedMemLayout == NULL) {
         Logger::Get().Log("[GameConnector] Could not map view of file.");
-        Logger::Get().Log("[GameConnector] Could not map view of file.");
         Logger::Get().LogWin32Error("MapViewOfFile", GetLastError());
         _DisconnectLocked();
         return false;
@@ -67,7 +66,6 @@ bool GameConnector::TryConnect() {
 
     m_smLock = SafeSharedMemoryLock::MakeSafeSharedMemoryLock();
     if (!m_smLock.has_value()) {
-        Logger::Get().Log("[GameConnector] Failed to init LMU Shared Memory Lock");
         Logger::Get().Log("[GameConnector] Failed to init LMU Shared Memory Lock");
         _DisconnectLocked();
         return false;
@@ -109,7 +107,6 @@ bool GameConnector::CheckLegacyConflict() {
 #if defined(_WIN32) || defined(HEADLESS_GUI)
     HANDLE hLegacy = OpenFileMappingA(FILE_MAP_READ, FALSE, LEGACY_SHARED_MEMORY_NAME);
     if (hLegacy) {
-        Logger::Get().Log("[Warning] Legacy rFactor 2 Shared Memory Plugin detected. This may conflict with LMU 1.2 data.");
         Logger::Get().Log("[Warning] Legacy rFactor 2 Shared Memory Plugin detected. This may conflict with LMU 1.2 data.");
         CloseHandle(hLegacy);
         return true;
@@ -182,20 +179,128 @@ bool GameConnector::IsStale(long timeoutMs) const {
     return (diff > timeoutMs);
 }
 
-void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+// ---------------------------------------------------------------------------
+// Static string-lookup helpers
+// ---------------------------------------------------------------------------
+
+/*static*/ const char* GameConnector::SmeEventName(int i) {
+    switch (i) {
+        case SME_ENTER:              return "SME_ENTER";
+        case SME_EXIT:               return "SME_EXIT";
+        case SME_STARTUP:            return "SME_STARTUP";
+        case SME_SHUTDOWN:           return "SME_SHUTDOWN";
+        case SME_LOAD:               return "SME_LOAD";
+        case SME_UNLOAD:             return "SME_UNLOAD";
+        case SME_START_SESSION:      return "SME_START_SESSION";
+        case SME_END_SESSION:        return "SME_END_SESSION";
+        case SME_ENTER_REALTIME:     return "SME_ENTER_REALTIME";
+        case SME_EXIT_REALTIME:      return "SME_EXIT_REALTIME";
+        case SME_INIT_APPLICATION:   return "SME_INIT_APPLICATION";
+        case SME_UNINIT_APPLICATION: return "SME_UNINIT_APPLICATION";
+        default:                     return "Unknown";
+    }
+}
+
+/*static*/ const char* GameConnector::GamePhaseName(unsigned char phase) {
+    switch (phase) {
+        case 0: return "Before Session";
+        case 1: return "Reconnaissance";
+        case 2: return "Grid Walk";
+        case 3: return "Formation";
+        case 4: return "Countdown";
+        case 5: return "Green Flag";
+        case 6: return "Full Course Yellow";
+        case 7: return "Stopped";
+        case 8: return "Over";
+        case 9: return "Paused";
+        default: return "Unknown";
+    }
+}
+
+/*static*/ const char* GameConnector::SessionTypeName(long session) {
+    if (session == 0)                   return "Test Day";
+    if (session >= 1 && session <= 4)   return "Practice";
+    if (session >= 5 && session <= 8)   return "Qualifying";
+    if (session == 9)                   return "Warmup";
+    if (session >= 10 && session <= 13) return "Race";
+    return "Unknown";
+}
+
+/*static*/ const char* GameConnector::ControlModeName(signed char control) {
+    switch (control) {
+        case -1: return "Nobody";
+        case  0: return "Player";
+        case  1: return "AI";
+        case  2: return "Remote";
+        case  3: return "Replay";
+        default: return "Unknown";
+    }
+}
+
+/*static*/ const char* GameConnector::PitStateName(unsigned char pitState) {
+    switch (pitState) {
+        case 0: return "None";
+        case 1: return "Request";
+        case 2: return "Entering";
+        case 3: return "Stopped";
+        case 4: return "Exiting";
+        default: return "Unknown";
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 1: Update state machine atomics unconditionally from the SM snapshot.
+//
+// "Ground truth polling": what the shared memory says right now is the truth.
+// SME events (applied at the end) are a fast-path that can override the polled
+// values within the same tick — they handle rapid transitions before the next
+// poll tick arrives.
+// ---------------------------------------------------------------------------
+
+void GameConnector::_UpdateStateFromSnapshot(const SharedMemoryObjectOut& current) {
+    auto& scoring = current.scoring.scoringInfo;
+
+    // --- Ground truth (polling) ---
+    m_sessionActive      = (scoring.mTrackName[0] != '\0');
+    m_inRealtime         = (scoring.mInRealtime != 0);
+    m_currentGamePhase   = scoring.mGamePhase;
+    m_currentSessionType = scoring.mSession;
+
+    if (current.telemetry.playerHasVehicle) {
+        uint8_t idx = current.telemetry.playerVehicleIdx;
+        if (idx < 104) {
+            m_playerControl = current.scoring.vehScoringInfo[idx].mControl;
+        }
+    }
+
+    // --- Fast-path: apply SME event overrides on top of polled truth (#267, #274) ---
+    // This provides "instantaneous" updates while polling ensures long-term consistency.
+    auto& generic = current.generic;
+    for (int i = 0; i < SME_MAX; ++i) {
+        if (i == SME_UPDATE_SCORING || i == SME_UPDATE_TELEMETRY || i == SME_FFB || i == SME_SET_ENVIRONMENT)
+            continue;
+        if (generic.events[i] != m_prevState.eventState[i] && generic.events[i] != 0) {
+            if (i == SME_START_SESSION)                     m_sessionActive = true;
+            if (i == SME_END_SESSION || i == SME_UNLOAD) { m_sessionActive = false; m_inRealtime = false; }
+            if (i == SME_ENTER_REALTIME)                    m_inRealtime = true;
+            if (i == SME_EXIT_REALTIME)                     m_inRealtime = false;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2: Detect changes vs m_prevState and emit log lines.
+//   This phase has no side-effects on the state machine atomics.
+// ---------------------------------------------------------------------------
+
+void GameConnector::_LogTransitions(const SharedMemoryObjectOut& current) {
     auto& scoring = current.scoring.scoringInfo;
     auto& generic = current.generic;
 
-    // Robust Fallback: Synchronize state flags with current buffer data (#274)
-    // This ensures correct state even if SME events are missed during rapid transitions.
-    m_sessionActive = (scoring.mTrackName[0] != '\0');
-    m_inRealtime = (scoring.mInRealtime != 0);
-
     // 0. Shared Memory Events (Issue #244)
     for (int i = 0; i < SME_MAX; ++i) {
-        // Skip high-frequency events
-        if (i == SME_UPDATE_SCORING || i == SME_UPDATE_TELEMETRY || i == SME_FFB || i == SME_SET_ENVIRONMENT) continue;
+        if (i == SME_UPDATE_SCORING || i == SME_UPDATE_TELEMETRY || i == SME_FFB || i == SME_SET_ENVIRONMENT)
+            continue;
 
         if (generic.events[i] != m_prevState.eventState[i]) {
             if (generic.events[i] != 0) {
@@ -203,7 +308,7 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
 
                 // SME_STARTUP is known to spam values (e.g. 10, 16) in menus. Apply a 5-second cooldown.
                 if (i == SME_STARTUP) {
-                    auto now = std::chrono::steady_clock::now();
+                    auto now  = std::chrono::steady_clock::now();
                     auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - m_prevState.lastEventLogTime[i]).count();
                     if (diff < 5) {
                         shouldLog = false;
@@ -213,32 +318,7 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
                 }
 
                 if (shouldLog) {
-                    const char* eventStr = "Unknown";
-                    switch (i) {
-                    case SME_ENTER: eventStr = "SME_ENTER"; break;
-                    case SME_EXIT: eventStr = "SME_EXIT"; break;
-                    case SME_STARTUP: eventStr = "SME_STARTUP"; break;
-                    case SME_SHUTDOWN: eventStr = "SME_SHUTDOWN"; break;
-                    case SME_LOAD: eventStr = "SME_LOAD"; break;
-                    case SME_UNLOAD: eventStr = "SME_UNLOAD"; break;
-                    case SME_START_SESSION: eventStr = "SME_START_SESSION"; break;
-                    case SME_END_SESSION: eventStr = "SME_END_SESSION"; break;
-                    case SME_ENTER_REALTIME: eventStr = "SME_ENTER_REALTIME"; break;
-                    case SME_EXIT_REALTIME: eventStr = "SME_EXIT_REALTIME"; break;
-                    case SME_INIT_APPLICATION: eventStr = "SME_INIT_APPLICATION"; break;
-                    case SME_UNINIT_APPLICATION: eventStr = "SME_UNINIT_APPLICATION"; break;
-                    }
-                    Logger::Get().LogFile("[Transition] Event: %s (%u)", eventStr, generic.events[i]);
-
-                    // Update Robust State Machine based on Events (#267, #274)
-                    // This provides "instantaneous" updates while polling ensures long-term consistency.
-                    if (i == SME_START_SESSION) m_sessionActive = true;
-                    if (i == SME_END_SESSION || i == SME_UNLOAD) {
-                        m_sessionActive = false;
-                        m_inRealtime = false;
-                    }
-                    if (i == SME_ENTER_REALTIME) m_inRealtime = true;
-                    if (i == SME_EXIT_REALTIME) m_inRealtime = false;
+                    Logger::Get().LogFile("[Transition] Event: %s (%u)", SmeEventName(i), generic.events[i]);
                 }
             }
             m_prevState.eventState[i] = generic.events[i];
@@ -276,41 +356,19 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
 
     // 3. Game Phase (Session state / Pause)
     if (scoring.mGamePhase != m_prevState.gamePhase) {
-        m_currentGamePhase = scoring.mGamePhase; // Update Robust State Machine (#267)
-        const char* phaseStr = "Unknown";
-        switch (scoring.mGamePhase) {
-            case 0: phaseStr = "Before Session"; break;
-            case 1: phaseStr = "Reconnaissance"; break;
-            case 2: phaseStr = "Grid Walk"; break;
-            case 3: phaseStr = "Formation"; break;
-            case 4: phaseStr = "Countdown"; break;
-            case 5: phaseStr = "Green Flag"; break;
-            case 6: phaseStr = "Full Course Yellow"; break;
-            case 7: phaseStr = "Stopped"; break;
-            case 8: phaseStr = "Over"; break;
-            case 9: phaseStr = "Paused"; break;
-        }
         Logger::Get().LogFile("[Transition] GamePhase: %d -> %d (%s)",
-            m_prevState.gamePhase, scoring.mGamePhase, phaseStr);
+            m_prevState.gamePhase, scoring.mGamePhase, GamePhaseName(scoring.mGamePhase));
         m_prevState.gamePhase = scoring.mGamePhase;
     }
 
     // 4. Session Type
     if (scoring.mSession != m_prevState.session) {
-        m_currentSessionType = scoring.mSession; // Update Robust State Machine (#267)
-        const char* sessionStr = "Unknown";
-        if (scoring.mSession == 0) sessionStr = "Test Day";
-        else if (scoring.mSession >= 1 && scoring.mSession <= 4) sessionStr = "Practice";
-        else if (scoring.mSession >= 5 && scoring.mSession <= 8) sessionStr = "Qualifying";
-        else if (scoring.mSession == 9) sessionStr = "Warmup";
-        else if (scoring.mSession >= 10 && scoring.mSession <= 13) sessionStr = "Race";
-
         Logger::Get().LogFile("[Transition] Session: %ld -> %ld (%s)",
-            m_prevState.session, scoring.mSession, sessionStr);
+            m_prevState.session, scoring.mSession, SessionTypeName(scoring.mSession));
         m_prevState.session = scoring.mSession;
     }
 
-    // 5. Track/Vehicle Names (Context Changes)
+    // 5. Track Name (Context Change)
     if (strcmp(scoring.mTrackName, m_prevState.trackName) != 0) {
         Logger::Get().LogFile("[Transition] Track: '%s' -> '%s'", m_prevState.trackName, scoring.mTrackName);
         strncpy(m_prevState.trackName, scoring.mTrackName, 63);
@@ -323,31 +381,14 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
             auto& vehScoring = current.scoring.vehScoringInfo[idx];
 
             if (vehScoring.mControl != m_prevState.control) {
-                const char* ctrlStr = "Unknown";
-                switch (vehScoring.mControl) {
-                    case -1: ctrlStr = "Nobody"; break;
-                    case 0: ctrlStr = "Player"; break;
-                    case 1: ctrlStr = "AI"; break;
-                    case 2: ctrlStr = "Remote"; break;
-                    case 3: ctrlStr = "Replay"; break;
-                }
                 Logger::Get().LogFile("[Transition] Control: %d -> %d (%s)",
-                    m_prevState.control, vehScoring.mControl, ctrlStr);
+                    m_prevState.control, vehScoring.mControl, ControlModeName(vehScoring.mControl));
                 m_prevState.control = vehScoring.mControl;
-                m_playerControl = vehScoring.mControl;
             }
 
             if (vehScoring.mPitState != m_prevState.pitState) {
-                const char* pitStr = "None";
-                switch (vehScoring.mPitState) {
-                    case 0: pitStr = "None"; break;
-                    case 1: pitStr = "Request"; break;
-                    case 2: pitStr = "Entering"; break;
-                    case 3: pitStr = "Stopped"; break;
-                    case 4: pitStr = "Exiting"; break;
-                }
                 Logger::Get().LogFile("[Transition] PitState: %d -> %d (%s)",
-                    m_prevState.pitState, vehScoring.mPitState, pitStr);
+                    m_prevState.pitState, vehScoring.mPitState, PitStateName(vehScoring.mPitState));
                 m_prevState.pitState = vehScoring.mPitState;
             }
 
@@ -364,4 +405,14 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
             }
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// CheckTransitions: orchestrator (lock, then run both phases in order)
+// ---------------------------------------------------------------------------
+
+void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    _UpdateStateFromSnapshot(current);  // Phase 1: sync state machine atomics
+    _LogTransitions(current);           // Phase 2: log any changes
 }

@@ -2,6 +2,20 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 7, 2026[/b][/size]
+[b]Version 0.7.141 - Refactored Game Connector & Robust Gating[/b]
+
+[b]New release[/b] (0.7.141): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Clean Logic Separation[/b]: Completely rebuilt the internal game communication module to separate state tracking from logging. This ensures that the app's understanding of the game's state (whether you're driving, in a menu, or paused) is always logically separated from the status reports written to your log file.
+[*][b]Robust State Machine[/b]: Improved the reliability of the "poll-then-override" pattern. The app now prioritizes raw game data every single tick, ensuring that your FFB settings never get "stuck" even if a single game event is missed during a rapid session transition.
+[*][b]Improved FFB Gating[/b]: Added a new [b]IsPlayerActivelyDriving[/b] check. This specifically targets cases like pressing the ESC menu while on track; the car is still physically there, but the app now correctly identifies you're in a menu and suppresses FFB to prevent unwanted wheel torque.
+[*][b]Cleaned Up Diagnostics[/b]: Removed several redundant and duplicate messages from the debug logs, making troubleshooting session entries and car changes much clearer.
+[/list]
+
+---
+
 [size=5][b]March 6, 2026[/b][/size]
 [b]Version 0.7.139 - Unified Health & Session Diagnostics[/b]
 

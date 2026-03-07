@@ -99,6 +99,7 @@ set(TEST_SOURCES
     test_issue_267_state_detection.cpp
     test_issue_269_state_detection.cpp
     test_issue_274_state_reliability.cpp
+    test_gc_refactoring.cpp
     ../src/main.cpp
 )
 

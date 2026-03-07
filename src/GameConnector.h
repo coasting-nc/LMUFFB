@@ -45,6 +45,15 @@ public:
     unsigned char GetGamePhase() const { return m_currentGamePhase.load(std::memory_order_relaxed); }
     signed char GetPlayerControl() const { return m_playerControl.load(std::memory_order_relaxed); }
 
+    // Composite predicate: true only when the player is physically behind the wheel
+    // and actively in control (not paused, not in garage UI, not AI-controlled).
+    // Addresses the ESC-menu-while-on-track edge case (session transition.md).
+    bool IsPlayerActivelyDriving() const {
+        return m_inRealtime.load(std::memory_order_relaxed)
+            && m_playerControl.load(std::memory_order_relaxed) == 0  // Player (not AI/replay/nobody)
+            && m_currentGamePhase.load(std::memory_order_relaxed) != 9; // 9 == Paused
+    }
+
 private:
     struct TransitionState {
         unsigned char optionsLocation = 255;
@@ -61,7 +70,19 @@ private:
         std::chrono::steady_clock::time_point lastEventLogTime[SME_MAX];
     } m_prevState;
 
+    // CheckTransitions orchestrates the two-phase update:
+    //   1. _UpdateStateFromSnapshot  — unconditionally syncs atomics from the SM buffer
+    //   2. _LogTransitions           — detects changes vs m_prevState and emits log lines
     void CheckTransitions(const SharedMemoryObjectOut& current);
+    void _UpdateStateFromSnapshot(const SharedMemoryObjectOut& current);
+    void _LogTransitions(const SharedMemoryObjectOut& current);
+
+    // String-lookup helpers (extracted for reuse and testability)
+    static const char* SmeEventName(int eventIndex);
+    static const char* GamePhaseName(unsigned char phase);
+    static const char* SessionTypeName(long session);
+    static const char* ControlModeName(signed char control);
+    static const char* PitStateName(unsigned char pitState);
 
     friend class FFBEngineTests::GameConnectorTestAccessor;
 

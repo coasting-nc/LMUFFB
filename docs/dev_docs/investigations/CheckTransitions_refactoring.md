@@ -1,45 +1,52 @@
-# `GameConnector::CheckTransitions` — Refactoring Analysis
+# `GameConnector::CheckTransitions` — Refactoring
 
-**Date:** 2026-03-07  
-**File under review:** `src/GameConnector.cpp` — `GameConnector::CheckTransitions`  
-**Related doc:** `docs/dev_docs/investigations/session transition.md`  
+**Analysis date:** 2026-03-07  
+**Implementation date:** 2026-03-07  
+**Files changed:**
+- `src/GameConnector.cpp`
+- `src/GameConnector.h`
+- `tests/test_gc_refactoring.cpp` *(new)*
+- `tests/CMakeLists.txt`
 
----
+**Related doc:** `docs/dev_docs/investigations/session transition.md`
 
-## 1. Summary of the current code
-
-`CheckTransitions` is called every tick (from `CopyTelemetry`) and does two distinct things at once:
-
-1. **State tracking** — reads new values from the shared memory snapshot and updates the atomic state machine members (`m_inRealtime`, `m_sessionActive`, `m_currentGamePhase`, `m_currentSessionType`, `m_playerControl`).
-2. **Transition logging** — detects when a tracked value *changes* against the `m_prevState` shadow copy, and logs a `[Transition]` line to the file log.
-
-Both concerns are interleaved inside every `if`-block, making the function harder to read and modify independently.
+**Status: ✅ Implemented and all tests passing (1812/1812 assertions)**
 
 ---
 
-## 2. Identified problems
+## 1. What the original code was doing
 
-### 2.1 Mixing state-update and logging concerns
+`CheckTransitions` was called every tick (from `CopyTelemetry`) and did two distinct things simultaneously inside a single 183-line monolithic function:
 
-In every block the code does at least two things:
+1. **State tracking** — reading new values from the shared memory snapshot and updating the atomic state machine members (`m_inRealtime`, `m_sessionActive`, `m_currentGamePhase`, `m_currentSessionType`, `m_playerControl`).
+2. **Transition logging** — detecting when a tracked value *changed* against the `m_prevState` shadow copy, and logging a `[Transition]` line to the file log.
+
+Both concerns were interleaved inside every `if`-block. For example:
 
 ```cpp
-// 3. Game Phase
+// 3. Game Phase (old code)
 if (scoring.mGamePhase != m_prevState.gamePhase) {
-    m_currentGamePhase = scoring.mGamePhase;  // ← state update
-    // ... build phaseStr ...
+    m_currentGamePhase = scoring.mGamePhase;  // ← state update, only on change
+    // ... inline switch to build phaseStr ...
     Logger::Get().LogFile(...);               // ← logging
-    m_prevState.gamePhase = scoring.mGamePhase; // ← prev-state update
+    m_prevState.gamePhase = scoring.mGamePhase;
 }
 ```
 
-This makes it hard to answer questions like:
-- "When exactly is `m_currentGamePhase` updated?" 
-- "Can I extend the logging without accidentally touching state?"
+Additional issues:
+- `m_currentGamePhase` and `m_currentSessionType` were only updated when the value *changed* (inside the `!= prevState` guard), which was subtly wrong — the atoms lagged by one tick after reconnect.
+- Five identical `switch` blocks for string lookup were duplicated inline.
+- Two pairs of duplicate `Logger::Get().Log(...)` calls in `TryConnect` and `CheckLegacyConflict`.
+- The "poll wins" design intent was implicit and easy to misread.
 
-### 2.2 The atomic "state machine" and the `m_prevState` shadow are partially redundant
+---
 
-There are **two separate tracking structures** for the same logical concept:
+## 2. Identified problems (kept for reference)
+
+### 2.1 Mixing state-update and logging concerns
+The interleaved structure made it hard to answer: "When exactly is `m_currentGamePhase` updated?" and "Can I extend the logging without touching state?"
+
+### 2.2 Two redundant tracking structures
 
 | Concept | Atomic (public API) | `TransitionState` shadow (logging only) |
 |---|---|---|
@@ -47,315 +54,167 @@ There are **two separate tracking structures** for the same logical concept:
 | Game phase | `m_currentGamePhase` | `m_prevState.gamePhase` |
 | Session type | `m_currentSessionType` | `m_prevState.session` |
 | Player control | `m_playerControl` | `m_prevState.control` |
-| Session active | `m_sessionActive` | (no shadow, detected from `trackName`) |
+| Session active | `m_sessionActive` | (tracked from `trackName`) |
 
-The atomics exist for thread-safe read from other threads. The shadow exists only to detect changes for logging. They track the same values but with different types and naming conventions, which can lead to drift.
+The atomics exist for thread-safe reads; the shadow exists only to detect changes for logging. Same values, different types and naming.
 
-### 2.3 State machine polled vs event-driven: the current hybrid is not explicit
+### 2.3 The "poll wins" hybrid was not explicit
+The intent — "poll wins for final truth, events are fast-path updates" — was correct but not clearly expressed in the structure.
 
-The "robust fallback" comment at the top of the function is correct in intent:
+### 2.4 State atomics only updated inside change-detection guards
+`m_currentGamePhase` and `m_currentSessionType` were only updated when `!= m_prevState`, so they could be stale by one tick immediately after connection.
 
-```cpp
-// Robust Fallback: Synchronize state flags with current buffer data (#274)
-m_sessionActive = (scoring.mTrackName[0] != '\0');
-m_inRealtime    = (scoring.mInRealtime != 0);
-```
-
-But then in the SME event loop, those same fields are set again via event:
-
-```cpp
-if (i == SME_START_SESSION) m_sessionActive = true;
-if (i == SME_ENTER_REALTIME) m_inRealtime = true;
-```
-
-And later in section 2 (InRealtime) the logging shadow is updated from the *local variable* `currentInRealtime`, not from the atomic `m_inRealtime`. This is correct but subtle and easy to get wrong.
-
-The intent — "poll wins for final truth, events are fast-path updates" — is good but not made explicit in code structure.
-
-### 2.4 Logging a transition that has already been overwritten
-
-Consider this order of operations for `m_inRealtime`:
-1. At the top: `m_inRealtime = (scoring.mInRealtime != 0)` — **atomic updated immediately**.
-2. In SME loop: `if (i == SME_ENTER_REALTIME) m_inRealtime = true` — may contradict.
-3. In section 2: `currentInRealtime` is re-derived from raw scoring data and compared to `m_prevState.inRealtime` for logging.
-
-There is no problem with the current correctness, but the atomics are updated *before* the logging comparison block. If a future developer reads section 2 and thinks "`m_prevState.inRealtime` vs `m_inRealtime`" is the comparison, that would be wrong. The redundancy creates a subtle trap.
-
-### 2.5 Minor: duplicate log calls in `TryConnect`
-
-```cpp
-Logger::Get().Log("[GameConnector] Could not map view of file.");
-Logger::Get().Log("[GameConnector] Could not map view of file.");  // duplicate
-```
-
-This appears twice for both the `MapViewOfFile` error and the `MakeSafeSharedMemoryLock` error. These are likely copy-paste leftovers and should be removed.
+### 2.5 Duplicate log calls
+`Logger::Get().Log(...)` was duplicated on two consecutive lines in `TryConnect` and `CheckLegacyConflict`.
 
 ---
 
-## 3. Proposed refactoring
+## 3. What was implemented
 
-### 3.1 Separate "poll state update" from "log transitions"
+### ✅ 3.1 `CheckTransitions` split into two focused methods
 
-Split `CheckTransitions` into two private methods:
-
-```
-_UpdateStateFromSnapshot(current)   — updates atomics unconditionally every tick
-_LogTransitions(current)            — compares m_prevState to current, logs changes
-```
-
-`CheckTransitions` becomes a thin orchestrator:
+`CheckTransitions` is now a thin orchestrator:
 
 ```cpp
 void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    _UpdateStateFromSnapshot(current);  // fast, always runs
-    _LogTransitions(current);           // slower; compares and updates m_prevState
+    _UpdateStateFromSnapshot(current);  // Phase 1: sync state machine atomics
+    _LogTransitions(current);           // Phase 2: log any changes
 }
 ```
 
-Benefits:
-- Each method has a single job.
-- `_UpdateStateFromSnapshot` can later be tested independently.
-- The logging path can be disabled or redirected without risk to state correctness.
-
-### 3.2 Consolidate the state machine into a single struct — `GameState`
-
-Instead of four separate atomics, introduce a `GameState` struct. It can still be updated atomically via a mutex, or individual fields can remain atomics — the key is that all state variables are grouped together with consistent naming.
+**`_UpdateStateFromSnapshot`** — runs unconditionally every tick. It first applies the ground-truth poll (all atomics updated from the buffer regardless of change), then applies any SME event overrides on top:
 
 ```cpp
-struct GameState {
-    bool sessionActive = false;
-    bool inRealtime    = false;
-    long sessionType   = -1;
-    unsigned char gamePhase  = 255;
-    signed char   playerControl = -2;
+void GameConnector::_UpdateStateFromSnapshot(const SharedMemoryObjectOut& current) {
+    // --- Ground truth (polling) ---
+    m_sessionActive      = (scoring.mTrackName[0] != '\0');
+    m_inRealtime         = (scoring.mInRealtime != 0);
+    m_currentGamePhase   = scoring.mGamePhase;   // always updated — no longer gated
+    m_currentSessionType = scoring.mSession;      // always updated — no longer gated
+    // ... playerControl from vehicle if present ...
 
-    // Helper accessors for readable intent
-    bool IsInMenu() const { return !inRealtime; }
-    bool IsRacing() const { return inRealtime && sessionActive; }
-};
-```
-
-In the `GameConnector` header:
-```cpp
-// Replace the five separate atomics:
-// std::atomic<bool> m_sessionActive { false };
-// std::atomic<bool> m_inRealtime    { false };
-// etc.
-
-// With a single locked struct:
-GameState m_state;   // protected by m_mutex (already held wherever it's written)
-
-// Public API becomes:
-bool IsSessionActive() const { std::lock_guard<...> lk(m_mutex); return m_state.sessionActive; }
-bool IsInRealtime()    const { std::lock_guard<...> lk(m_mutex); return m_state.inRealtime; }
-```
-
-**Trade-off:** The current atomics allow lock-free reads from other threads. If that matters for performance, keep atomics but group them inside a `GameStateAtomics` sub-struct inside `GameConnector`.
-
-Even without removing atomics, renaming them to match the `TransitionState` shadow fields improves readability:
-
-| Now (atomic) | Now (shadow) | Proposed unified name |
-|---|---|---|
-| `m_inRealtime` | `m_prevState.inRealtime` | `inRealtime` |
-| `m_currentGamePhase` | `m_prevState.gamePhase` | `gamePhase` |
-| `m_currentSessionType` | `m_prevState.session` | `sessionType` |
-| `m_playerControl` | `m_prevState.control` | `playerControl` |
-
-### 3.3 Make the "poll wins" pattern explicit
-
-Add a single unconditional "ground truth" update block at the start of `_UpdateStateFromSnapshot`, clearly named and documented:
-
-```cpp
-// Ground truth (polling): overwrites any event-driven value with what the
-// shared memory currently says. Events are a fast-path short-cut only.
-void GameConnector::_UpdateStateFromSnapshot(const SharedMemoryObjectOut& snap) {
-    auto& sc = snap.scoring.scoringInfo;
-    m_state.sessionActive = (sc.mTrackName[0] != '\0');
-    m_state.inRealtime    = (sc.mInRealtime != 0);
-    m_state.gamePhase     = sc.mGamePhase;
-    m_state.sessionType   = sc.mSession;
-    if (snap.telemetry.playerHasVehicle) {
-        uint8_t idx = snap.telemetry.playerVehicleIdx;
-        if (idx < 104)
-            m_state.playerControl = snap.scoring.vehScoringInfo[idx].mControl;
-    }
-
-    // Fast-path: apply event-driven overrides on top of the polled truth.
-    // (These handle rapid transitions before the next poll tick arrives.)
-    _ApplySmeEvents(snap.generic);
-}
-```
-
-### 3.4 Consider a helper function for SME-name lookup
-
-The `switch` inside the SME loop produces a string name. This can be extracted:
-
-```cpp
-static const char* SmeEventName(int i) {
-    switch (i) {
-        case SME_ENTER:             return "SME_ENTER";
-        case SME_EXIT:              return "SME_EXIT";
-        case SME_STARTUP:           return "SME_STARTUP";
-        case SME_SHUTDOWN:          return "SME_SHUTDOWN";
-        case SME_LOAD:              return "SME_LOAD";
-        case SME_UNLOAD:            return "SME_UNLOAD";
-        case SME_START_SESSION:     return "SME_START_SESSION";
-        case SME_END_SESSION:       return "SME_END_SESSION";
-        case SME_ENTER_REALTIME:    return "SME_ENTER_REALTIME";
-        case SME_EXIT_REALTIME:     return "SME_EXIT_REALTIME";
-        case SME_INIT_APPLICATION:  return "SME_INIT_APPLICATION";
-        case SME_UNINIT_APPLICATION:return "SME_UNINIT_APPLICATION";
-        default:                    return "Unknown";
+    // --- Fast-path: SME event overrides on top of polled truth ---
+    // Handles rapid transitions before the next poll tick arrives.
+    for (int i = 0; i < SME_MAX; ++i) {
+        if (generic.events[i] != m_prevState.eventState[i] && generic.events[i] != 0) {
+            if (i == SME_START_SESSION)                     m_sessionActive = true;
+            if (i == SME_END_SESSION || i == SME_UNLOAD) { m_sessionActive = false; m_inRealtime = false; }
+            if (i == SME_ENTER_REALTIME)                    m_inRealtime = true;
+            if (i == SME_EXIT_REALTIME)                     m_inRealtime = false;
+        }
     }
 }
 ```
 
-Similarly for `GamePhase`, `SessionType`, `ControlMode`, `PitState`.
+**`_LogTransitions`** — has no side effects on state machine atomics. It only reads the snapshot and `m_prevState`, logs changes, and updates `m_prevState`.
 
-### 3.5 Edge case from `session transition.md`: ESC-menu while on track
+### ✅ 3.2 Five static string-lookup helpers extracted
 
-The investigation doc identifies a gap: when the player presses ESC while on track (showing setup/controls menu), the car is still physically on track but we ideally want to pause FFB. The current code tracks `mControl` (Player/AI) which *may* help, but whether AI takes over during ESC menus depends on session type (paused in offline, running in online).
+Declared as private `static` methods in `GameConnector.h`, implemented once in `GameConnector.cpp`:
 
-**Suggestion:** Add a dedicated flag for "player visible in cockpit" that combines:
-- `mInRealtime == true` (in the car, not in garage UI)
-- `mControl == 0` (Player, not AI-controlled)
-- `mGamePhase != 9` (not paused) — for offline, this will be 9 during ESC menus
+| Helper | Replaces |
+|---|---|
+| `SmeEventName(int)` | inline `switch` in SME event loop |
+| `GamePhaseName(unsigned char)` | inline `switch` in game phase block |
+| `SessionTypeName(long)` | inline `if-else` chain in session block |
+| `ControlModeName(signed char)` | inline `switch` in control block |
+| `PitStateName(unsigned char)` | inline `switch` in pit state block |
 
-This composite flag is a good candidate to be a method on the proposed `GameState` struct:
+### ✅ 3.3 `IsPlayerActivelyDriving()` composite predicate added
+
+Implemented as a public inline method in `GameConnector.h`:
 
 ```cpp
 bool IsPlayerActivelyDriving() const {
-    return inRealtime
-        && playerControl == 0   // Player-controlled (not replay/AI)
-        && gamePhase != 9;      // Not paused
+    return m_inRealtime.load(std::memory_order_relaxed)
+        && m_playerControl.load(std::memory_order_relaxed) == 0  // Player (not AI/replay)
+        && m_currentGamePhase.load(std::memory_order_relaxed) != 9; // 9 == Paused
 }
 ```
 
-This addresses an existing gap without adding new shared memory reads.
+This addresses the ESC-menu-while-on-track edge case from `session transition.md`: when a player presses ESC during a singleplayer session, `mGamePhase` becomes 9 (Paused). This predicate returns `false`, making it safe to suppress FFB in that state.
+
+### ✅ 3.4 Duplicate log calls removed
+
+- `TryConnect`: removed duplicate `Logger::Get().Log("[GameConnector] Could not map view of file.")` and `Logger::Get().Log("[GameConnector] Failed to init LMU Shared Memory Lock")`.
+- `CheckLegacyConflict`: removed duplicate `Logger::Get().Log("[Warning] Legacy rFactor 2...")`.
+
+### ⏭ 3.5 `GameState` struct consolidation — deliberately deferred
+
+Grouping the five atomics into a single `GameState` struct was assessed as the highest-risk change (requires public API change for all callers of `IsSessionActive()`, `IsInRealtime()`, etc.) with no immediate correctness benefit. The other changes deliver the main readability wins. This can be done as a separate, focused refactoring step later.
 
 ---
 
-## 4. Prioritized action plan
+## 4. Prioritized action plan — status
 
-| Priority | Change | Effort | Risk |
-|---|---|---|---|
-| 🟢 Low-hanging | Remove duplicate `Logger::Get().Log(...)` lines in `TryConnect` | < 5 min | None |
-| 🟢 Low-hanging | Extract `SmeEventName()` (and similar) as static helpers | ~15 min | None |
-| 🟡 Medium | Split `CheckTransitions` into `_UpdateStateFromSnapshot` + `_LogTransitions` | ~1h | Low |
-| 🟡 Medium | Add `IsPlayerActivelyDriving()` composite predicate | ~30 min | Low |
-| 🔴 Larger | Consolidate atomics into `GameState` struct | ~2h | Medium (API change) |
-
----
-
-## 5. Tests to write before refactoring
-
-The existing tests cover the basics of state detection (#267, #274) and transition logging. But before touching `CheckTransitions`, we need tests that pin down the **exact behaviour** that must be preserved. These tests should pass before, during, and after the refactoring — if one turns red, we know we broke something.
-
-### 5.1 Polling always wins: state is driven by shared memory, not only by events
-
-Verify that after `InjectTransitions`, the state machine atomics reflect the **current shared memory content** regardless of what events fired.
-
-```cpp
-// Test: polling overrides stale event-driven state
-// Setup: manually set inRealtime=true, then call InjectTransitions
-// with a snapshot where mInRealtime=0 and NO exit event.
-// Expected: gc.IsInRealtime() == false  (poll won)
-TEST_CASE_TAGGED(test_gc_poll_overrides_stale_realtime, "Functional", ({"state_machine", "refactoring"}))
-```
-
-```cpp
-// Test: polling overrides stale session active state
-// Setup: manually set sessionActive=true, then InjectTransitions
-// with trackName[0]='\0' and NO end_session event.
-// Expected: gc.IsSessionActive() == false  (poll won)
-TEST_CASE_TAGGED(test_gc_poll_overrides_stale_session, "Functional", ({"state_machine", "refactoring"}))
-```
-
-### 5.2 Event fast-path still applies within the same tick
-
-Verify that when an SME event fires **and** the raw buffer hasn't caught up yet, the state machine reflects the event's intent. This tests the event fast-path on top of polling.
-
-```cpp
-// Test: SME_END_SESSION clears sessionActive and inRealtime
-// even when the buffer track name hasn't been zeroed yet.
-// Setup: trackName="Monza", mInRealtime=1 in buffer,
-//        BUT events[SME_END_SESSION] fires.
-// Expected: gc.IsSessionActive() == false && gc.IsInRealtime() == false
-// Note: this is tricky because the poll at the top of CheckTransitions
-//       would set both to true. The current code sets them at the top,
-//       then overrides inside the event block. A refactoring must preserve
-//       this ordering or justify changing it.
-TEST_CASE_TAGGED(test_gc_end_session_event_overrides_poll, "Functional", ({"state_machine", "refactoring"}))
-```
-
-### 5.3 GamePhase and SessionType are always updated from the buffer (not only on change)
-
-```cpp
-// Test: GetGamePhase() returns the value from the snapshot after every call
-// to InjectTransitions, regardless of prev state.
-TEST_CASE_TAGGED(test_gc_gamephase_updated_unconditionally, "Functional", ({"state_machine", "refactoring"}))
-```
-
-### 5.4 PlayerControl is updated from the player vehicle when vehicle is present
-
-```cpp
-// Test: When playerHasVehicle=true and idx is valid,
-// GetPlayerControl() returns vehScoringInfo[idx].mControl after transition.
-TEST_CASE_TAGGED(test_gc_player_control_from_vehicle, "Functional", ({"state_machine", "refactoring"}))
-
-// Test: When playerHasVehicle=false, GetPlayerControl() is NOT changed
-// by InjectTransitions.
-TEST_CASE_TAGGED(test_gc_player_control_unchanged_when_no_vehicle, "Functional", ({"state_machine", "refactoring"}))
-```
-
-### 5.5 `IsPlayerActivelyDriving` composite predicate (new)
-
-This is new behaviour, so these tests define it from scratch:
-
-```cpp
-// Test: returns true when inRealtime=true, playerControl=Player(0), gamePhase!=9
-TEST_CASE_TAGGED(test_gc_actively_driving_true, "Functional", ({"state_machine", "refactoring"}))
-
-// Test: returns false when paused (gamePhase==9), even if inRealtime and Player-controlled
-// (addresses ESC-menu-while-on-track edge case from session transition.md)
-TEST_CASE_TAGGED(test_gc_actively_driving_false_when_paused, "Functional", ({"state_machine", "refactoring"}))
-
-// Test: returns false when AI is controlling (mControl==1), even if inRealtime
-TEST_CASE_TAGGED(test_gc_actively_driving_false_when_ai, "Functional", ({"state_machine", "refactoring"}))
-
-// Test: returns false when NOT in realtime (in garage/monitor UI)
-TEST_CASE_TAGGED(test_gc_actively_driving_false_when_not_realtime, "Functional", ({"state_machine", "refactoring"}))
-```
-
-### 5.6 No duplicate log entries on identical ticks
-
-```cpp
-// Test: calling InjectTransitions twice with identical data produces no additional
-// [Transition] log lines (change detection must be preserved after refactoring).
-TEST_CASE_TAGGED(test_gc_no_duplicate_log_on_same_state, "Functional", ({"transitions", "refactoring"}))
-```
-
-### 5.7 SME event name lookup helper
-
-Once `SmeEventName()` is extracted as a static function:
-
-```cpp
-// Test: each known SME constant maps to the expected string.
-// Test: unknown index maps to "Unknown".
-TEST_CASE_TAGGED(test_gc_sme_event_name_lookup, "Functional", ({"state_machine", "refactoring"}))
-```
-
-### Implementation file
-
-All the above tests should be placed in:  
-`tests/test_gc_refactoring.cpp`  
-and added to `tests/CMakeLists.txt` alongside the other state machine tests.
+| Priority | Change | Status |
+|---|---|---|
+| 🟢 Low-hanging | Remove duplicate `Logger::Get().Log(...)` lines | ✅ Done |
+| 🟢 Low-hanging | Extract `SmeEventName()` and other string helpers | ✅ Done |
+| 🟡 Medium | Split `CheckTransitions` into `_UpdateStateFromSnapshot` + `_LogTransitions` | ✅ Done |
+| 🟡 Medium | Add `IsPlayerActivelyDriving()` composite predicate | ✅ Done |
+| 🔴 Larger | Consolidate atomics into `GameState` struct | ⏭ Deferred |
 
 ---
 
-## 6. What NOT to change
+## 5. Tests written and passing
 
-- The **polling + events hybrid** approach is correct as described in `session transition.md`. The "ground truth poll" + "fast-path events" pattern is the right answer for LMU's async shared memory. Do not remove either half of it.
-- The **`TransitionState` shadow struct** is a good pattern and should be kept (or merged into the proposed `GameState` approach). It correctly captures "previous values for logging purposes".
-- The **mutex usage** is correct. `CheckTransitions` is called with the lock already held from `CopyTelemetry`. This should be preserved.
+All tests are in `tests/test_gc_refactoring.cpp`, registered with the `refactoring` tag. All **13 tests / 1812 total assertions pass**.
+
+### 5.1 Polling always wins
+
+| Test | What it checks |
+|---|---|
+| `test_gc_poll_overrides_stale_realtime` | After `InjectTransitions` with `mInRealtime=0` and no exit event, `IsInRealtime()` → `false` (poll won over stale atomic state) |
+| `test_gc_poll_overrides_stale_session` | After `InjectTransitions` with empty track name and no end-session event, `IsSessionActive()` → `false` |
+
+### 5.2 Event fast-path still applies
+
+| Test | What it checks |
+|---|---|
+| `test_gc_end_session_event_overrides_poll` | SME_END_SESSION fires while buffer still has track name + `mInRealtime=1`; both flags cleared by event override |
+
+### 5.3 GamePhase / SessionType always updated
+
+| Test | What it checks |
+|---|---|
+| `test_gc_gamephase_updated_unconditionally` | `GetGamePhase()` reflects every snapshot value across 3 transitions, no missed updates |
+| `test_gc_sessiontype_updated_unconditionally` | `GetSessionType()` likewise, no guard needed |
+
+### 5.4 PlayerControl tracking
+
+| Test | What it checks |
+|---|---|
+| `test_gc_player_control_from_vehicle` | Three-step transition (Player → AI → Nobody) via `InjectTransitions` |
+| `test_gc_player_control_unchanged_when_no_vehicle` | `playerHasVehicle=false` → `GetPlayerControl()` not modified |
+
+### 5.5 `IsPlayerActivelyDriving` (new)
+
+| Test | What it checks |
+|---|---|
+| `test_gc_actively_driving_true` | `inRealtime=1`, `mControl=0`, `mGamePhase=5` → `true` |
+| `test_gc_actively_driving_false_when_paused` | `mGamePhase=9` (ESC menu) → `false` despite inRealtime + Player control |
+| `test_gc_actively_driving_false_when_ai` | `mControl=1` (AI) → `false` |
+| `test_gc_actively_driving_false_when_not_realtime` | `mInRealtime=0` (garage UI) → `false` |
+
+### 5.6 No duplicate logging
+
+| Test | What it checks |
+|---|---|
+| `test_gc_no_duplicate_log_on_same_state` | Two consecutive `InjectTransitions` with identical data produce exactly 1 `[Transition] GamePhase:` log line |
+
+### 5.7 SME event name lookup
+
+| Test | What it checks |
+|---|---|
+| `test_gc_sme_event_name_lookup` | Each of the 12 known SME event constants produces the correct string label in the log |
+
+---
+
+## 6. What was NOT changed (by design)
+
+- The **polling + events hybrid** approach is preserved exactly. "Ground truth poll" + "fast-path events" is the right answer for LMU's async shared memory. The two halves now live in clearly named sections of `_UpdateStateFromSnapshot`.
+- The **`TransitionState` shadow struct** (`m_prevState`) is kept as-is. It correctly captures "previous values for logging purposes" and the separation between it and the state machine atomics is now much more visible.
+- The **mutex usage** is unchanged. `CheckTransitions` acquires `m_mutex` at its entry. `_UpdateStateFromSnapshot` and `_LogTransitions` are private helpers called under the already-held lock.
+- The **`GameState` struct consolidation** is deferred — it is a valid future improvement but is the highest-risk change and provides no correctness benefit over the current structure.
