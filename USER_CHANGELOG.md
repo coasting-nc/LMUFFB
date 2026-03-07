@@ -3,6 +3,20 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 7, 2026[/b][/size]
+[b]Version 0.7.150 - Enhanced Lateral Load & Aero-Fade Fix[/b]
+
+[b]New release[/b] (0.7.150): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Fixed SoP "Aero-Fade"[/b]: Resolved an issue where the Lateral Load effect would become imperceptible at high speeds. By switching to a fixed class-based static load normalization, the "lean" sensation now remains consistent across all speeds regardless of aerodynamic downforce.
+[*][b]Improved Magnitude Parity[/b]: Implemented a 2.0x internal boost for the Lateral Load signal. This ensures that the physical load-based feel has numerical parity with the G-force-based feel, allowing for more intuitive tuning between the two components.
+[*][b]Instant Feedback for Encrypted Cars[/b]: Optimized the kinematic fallback system used for cars with encrypted telemetry (like LMP2). The onset delay has been reduced by 75%, and the app now pivots to estimated data instantly if you start driving at speed.
+[*][b]New Diagnostic Plot[/b]: Added a dedicated "Lateral SoP Dynamics" plot to the Log Analyzer, allowing you to visualize exactly how your car's weight transfer is contributing to the steering feel.
+[/list]
+
+---
+
+[size=5][b]March 7, 2026[/b][/size]
 [b]Version 0.7.147 - SoP Smoothing Latency Fix & Reset[/b]
 
 [b]New release[/b] (0.7.147): https://github.com/coasting-nc/LMUFFB/releases

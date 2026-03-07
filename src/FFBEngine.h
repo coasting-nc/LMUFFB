@@ -131,8 +131,8 @@ struct FFBCalculationContext {
     double speed_gate = 1.0;
     double texture_load_factor = 1.0;
     double brake_load_factor = 1.0;
-    double avg_load = 0.0;
-    double avg_grip = 0.0;
+    double avg_load_front = 0.0;
+    double avg_grip_front = 0.0;
 
     // Diagnostics
     bool frame_warn_load = false;
@@ -336,7 +336,7 @@ public:
     } m_grip_diag;
     
     // Hysteresis for missing load
-    int m_missing_load_frames = 0;
+    int m_missing_load_front_frames = 0;
     int m_missing_lat_force_front_frames = 0;
     int m_missing_lat_force_rear_frames = 0;
     int m_missing_susp_force_frames = 0;
@@ -476,6 +476,8 @@ public:
     char m_vehicle_name[STR_BUF_64] = "Unknown";
     char m_track_name[STR_BUF_64] = "Unknown";
     std::string m_current_class_name = "";
+    ParsedVehicleClass m_current_class_enum = ParsedVehicleClass::UNKNOWN; // Cached v0.7.150
+    double m_fixed_static_axle_load_front = 4500.0; // Cached v0.7.150
 
     // Logging intermediate values (exposed for AsyncLogger)
     double m_slope_dG_dt = 0.0;       
@@ -582,7 +584,7 @@ private:
     static constexpr double CLIPPING_THRESHOLD = 0.99;
     static constexpr int    STR_MAX_64 = 63;
     static constexpr int    STR_MAX_256 = 255;
-    static constexpr int    MISSING_LOAD_WARN_THRESHOLD = 20;
+    static constexpr int    MISSING_LOAD_WARN_THRESHOLD = 5;
     static constexpr double DYNAMIC_WEIGHT_MIN = 0.5;
     static constexpr double DYNAMIC_WEIGHT_MAX = 2.0;
     static constexpr double MIN_TAU_S = 0.0001;
@@ -691,7 +693,7 @@ public:
     
     GripResult calculate_grip(const TelemWheelV01& w1, 
                               const TelemWheelV01& w2,
-                              double avg_load,
+                              double avg_load_front,
                               bool& warned_flag,
                               double& prev_slip1,
                               double& prev_slip2,

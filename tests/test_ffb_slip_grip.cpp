@@ -713,7 +713,7 @@ TEST_CASE(test_hysteresis_logic, "SlipGrip") {
 
     engine.calculate_force(&data);
     // Expect load_factor = 1.0, missing frames = 0
-    ASSERT_TRUE(engine.m_missing_load_frames == 0);
+    ASSERT_TRUE(engine.m_missing_load_front_frames == 0);
 
     // 2. Drop Load to 0 for 5 frames (Glitch)
     data.mWheel[0].mTireLoad = 0.0;
@@ -724,11 +724,11 @@ TEST_CASE(test_hysteresis_logic, "SlipGrip") {
     }
     // Missing frames should be 5.
     // Fallback (>20) should NOT trigger. 
-    if (engine.m_missing_load_frames == 5) {
+    if (engine.m_missing_load_front_frames == 5) {
         std::cout << "[PASS] Hysteresis counter incrementing (5)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Hysteresis counter not 5: " << engine.m_missing_load_frames << std::endl;
+        std::cout << "[FAIL] Hysteresis counter not 5: " << engine.m_missing_load_front_frames << std::endl;
         g_tests_failed++;
     }
 
@@ -737,7 +737,7 @@ TEST_CASE(test_hysteresis_logic, "SlipGrip") {
         engine.calculate_force(&data);
     }
     // Missing frames > 20. Fallback should trigger.
-    if (engine.m_missing_load_frames >= 25) {
+    if (engine.m_missing_load_front_frames >= 25) {
          std::cout << "[PASS] Hysteresis counter incrementing (25)." << std::endl;
          g_tests_passed++;
     }
@@ -758,7 +758,7 @@ TEST_CASE(test_hysteresis_logic, "SlipGrip") {
         engine.calculate_force(&data);
     }
     // Counter should decrement
-    if (engine.m_missing_load_frames < 25) {
+    if (engine.m_missing_load_front_frames < 25) {
         std::cout << "[PASS] Hysteresis counter decrementing on recovery." << std::endl;
         g_tests_passed++;
     }

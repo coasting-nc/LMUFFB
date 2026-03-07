@@ -106,7 +106,7 @@ TEST_CASE(test_coverage_textures, "Coverage") {
     ctx.dt = 0.01;
     ctx.car_speed = 20.0;
     ctx.speed_gate = 1.0;
-    ctx.avg_grip = 1.0;
+    ctx.avg_grip_front = 1.0;
 
     // 1. Wheel Spin
     // Requirements: m_spin_enabled, Throttle > 0.05, Rear Slip > 0.2

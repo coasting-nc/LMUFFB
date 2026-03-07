@@ -126,6 +126,104 @@ def plot_slope_timeseries(
     
     return ""
 
+def plot_lateral_diagnostic(
+    df: pd.DataFrame,
+    metadata: Optional[SessionMetadata] = None,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Diagnostic for Lateral Load vs Lateral G (Issue #282).
+    Panels:
+    1. Lateral G vs Normalized Load Transfer
+    2. Estimated FFB Contributions (G-based vs Load-based)
+    3. Vehicle Speed & Total Tire Load (Aero effect)
+    """
+    cols = ['LatAccel', 'LatLoadNorm', 'FFBSoP', 'Speed']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Initializing Lateral diagnostic plot...")
+    fig, axes = plt.subplots(3, 1, figsize=(14, 15), sharex=True)
+    fig.suptitle('Lateral SoP Dynamics Analysis (Issue #282)', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    # Panel 1: G-Force vs Load Transfer
+    ax1 = axes[0]
+    ax1.plot(time, plot_df['LatAccel'] / 9.81, label='Lateral G', color='#2196F3', alpha=0.8)
+    ax1.set_ylabel('Lateral G', color='#2196F3')
+    ax1.tick_params(axis='y', labelcolor='#2196F3')
+
+    ax1_twin = ax1.twinx()
+    ax1_twin.plot(time, plot_df['LatLoadNorm'], label='Load Transfer (Norm)', color='#FF9800', alpha=0.8)
+    ax1_twin.set_ylabel('Normalized Load Transfer', color='#FF9800')
+    ax1_twin.tick_params(axis='y', labelcolor='#FF9800')
+
+    ax1.set_title('Lateral G vs Normalized Load Transfer (Look for Aero-Fade)')
+    ax1.grid(True, alpha=0.3)
+
+    # Combined legend
+    lines, labels = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax1_twin.get_legend_handles_labels()
+    ax1.legend(lines + lines2, labels + labels2, loc='upper right')
+
+    # Panel 2: FFB Contributions
+    ax2 = axes[1]
+    ax2.plot(time, plot_df['FFBSoP'], label='Total SoP FFB', color='black', linewidth=1.5, alpha=0.7)
+
+    if metadata:
+        # Reconstruct contributions
+        # ffb_sop = (smoothed_g * sop_effect + lat_load_norm * lat_load_effect) * sop_scale
+        # Since we only have the final ffb_sop (with possible oversteer boost),
+        # the reconstruction is an estimate of the base component.
+        # v1.2.2: Account for 2.0x internal boost (Issue #282)
+        load_contrib = plot_df['LatLoadNorm'] * metadata.lat_load_effect * metadata.sop_scale * 2.0
+        ax2.plot(time, load_contrib, label='Load Contribution (Est)', color='#FF9800', linewidth=1.0)
+
+        # Approximate G contribution by subtraction (might include boost)
+        g_contrib = plot_df['FFBSoP'] - load_contrib
+        ax2.plot(time, g_contrib, label='G Contribution + Boost (Est)', color='#2196F3', linewidth=1.0, alpha=0.6)
+
+    ax2.set_ylabel('Force (Nm)')
+    ax2.set_title('SoP FFB Components')
+    ax2.grid(True, alpha=0.3)
+    _safe_legend(ax2)
+
+    # Panel 3: Environment Factors
+    ax3 = axes[2]
+    ax3.plot(time, plot_df['Speed'] * 3.6, label='Speed (km/h)', color='#9E9E9E', alpha=0.8)
+    ax3.set_ylabel('Speed (km/h)')
+
+    if all(c in plot_df.columns for c in ['LoadFL', 'LoadFR']):
+        ax3_twin = ax3.twinx()
+        total_front_load = plot_df['LoadFL'] + plot_df['LoadFR']
+        ax3_twin.plot(time, total_front_load, label='Total Front Load (N)', color='#F44336', alpha=0.5)
+        ax3_twin.set_ylabel('Total Front Load (N)', color='#F44336')
+        ax3_twin.tick_params(axis='y', labelcolor='#F44336')
+
+        lines, labels = ax3.get_legend_handles_labels()
+        lines2, labels2 = ax3_twin.get_legend_handles_labels()
+        ax3.legend(lines + lines2, labels + labels2, loc='upper right')
+    else:
+        _safe_legend(ax3)
+
+    ax3.set_xlabel('Time (s)')
+    ax3.set_title('Speed vs Tire Load (Aero Downforce)')
+    ax3.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+
+    if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
 def plot_yaw_diagnostic(
     df: pd.DataFrame,
     threshold: float = 1.68,

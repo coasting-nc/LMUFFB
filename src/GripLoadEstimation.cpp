@@ -63,10 +63,11 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     // This ensures that session-learned peaks from a previous car don't pollute the new session.
     ResetNormalization();
 
-    ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
+    m_current_class_enum = ParseVehicleClass(className, vehicleName);
+    m_fixed_static_axle_load_front = GetDefaultLoadForClass(m_current_class_enum);
 
     // Stage 3 Reset: Ensure peak load starts at class baseline
-    m_auto_peak_load = GetDefaultLoadForClass(vclass);
+    m_auto_peak_load = m_fixed_static_axle_load_front;
 
     std::string vName = vehicleName ? vehicleName : "Unknown";
 
@@ -97,7 +98,7 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     m_last_handled_vehicle_name = vName;
 
     Logger::Get().LogFile("[FFB] Vehicle Identification -> Detected Class: %s | Seed Load: %.2fN (Raw -> Class: %s, Name: %s)",
-        VehicleClassToString(vclass), m_auto_peak_load, (className ? className : "Unknown"), vName.c_str());
+        VehicleClassToString(m_current_class_enum), m_auto_peak_load, (className ? className : "Unknown"), vName.c_str());
 }
 
 // Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
@@ -141,7 +142,7 @@ double FFBEngine::calculate_slip_angle(const TelemWheelV01& w, double& prev_stat
 // Helper: Calculate Grip with Fallback (v0.4.6 Hardening)
 GripResult FFBEngine::calculate_grip(const TelemWheelV01& w1, 
                           const TelemWheelV01& w2,
-                          double avg_load,
+                          double avg_load_front,
                           bool& warned_flag,
                           double& prev_slip1,
                           double& prev_slip2,
@@ -184,7 +185,7 @@ GripResult FFBEngine::calculate_grip(const TelemWheelV01& w1,
     result.slip_angle = (slip1 + slip2) / 2.0;
 
     // Fallback condition: Grip is essentially zero BUT car has significant load
-    if (result.value < 0.0001 && avg_load > 100.0) {
+    if (result.value < 0.0001 && avg_load_front > 100.0) {
         result.approximated = true;
         
         if (car_speed < 5.0) {
