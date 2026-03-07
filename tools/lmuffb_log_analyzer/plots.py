@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from typing import Optional, List
+from .models import SessionMetadata
 from .analyzers.yaw_analyzer import get_fft, calculate_suspension_velocity
 
 def _safe_legend(ax, loc='upper right'):
