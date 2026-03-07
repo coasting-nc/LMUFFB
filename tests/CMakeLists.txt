@@ -101,6 +101,7 @@ set(TEST_SOURCES
     test_issue_274_state_reliability.cpp
     test_gc_refactoring.cpp
     test_yaw_kick_derived.cpp
+    test_issue_278_derived_acceleration.cpp
     ../src/main.cpp
 )
 

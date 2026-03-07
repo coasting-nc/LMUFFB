@@ -193,8 +193,23 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     m_working_info.mUnfilteredThrottle = m_upsample_throttle.Process(data->mUnfilteredThrottle, ffb_dt, is_new_frame);
     m_working_info.mUnfilteredBrake = m_upsample_brake.Process(data->mUnfilteredBrake, ffb_dt, is_new_frame);
     m_working_info.mLocalAccel.x = m_upsample_local_accel_x.Process(data->mLocalAccel.x, ffb_dt, is_new_frame);
-    m_working_info.mLocalAccel.y = m_upsample_local_accel_y.Process(data->mLocalAccel.y, ffb_dt, is_new_frame);
-    m_working_info.mLocalAccel.z = m_upsample_local_accel_z.Process(data->mLocalAccel.z, ffb_dt, is_new_frame);
+
+    // --- DERIVED ACCELERATION (Issue #278) ---
+    // Recalculate acceleration from velocity at 100Hz ticks to avoid raw sensor spikes.
+    if (is_new_frame) {
+        if (!m_local_vel_seeded) {
+            m_prev_local_vel = data->mLocalVel;
+            m_local_vel_seeded = true;
+        }
+
+        double game_dt = (data->mDeltaTime > 1e-6) ? data->mDeltaTime : 0.01;
+        m_derived_accel_y_100hz = (data->mLocalVel.y - m_prev_local_vel.y) / game_dt;
+        m_derived_accel_z_100hz = (data->mLocalVel.z - m_prev_local_vel.z) / game_dt;
+        m_prev_local_vel = data->mLocalVel;
+    }
+
+    m_working_info.mLocalAccel.y = m_upsample_local_accel_y.Process(m_derived_accel_y_100hz, ffb_dt, is_new_frame);
+    m_working_info.mLocalAccel.z = m_upsample_local_accel_z.Process(m_derived_accel_z_100hz, ffb_dt, is_new_frame);
     m_working_info.mLocalRotAccel.y = m_upsample_local_rot_accel_y.Process(data->mLocalRotAccel.y, ffb_dt, is_new_frame);
     m_working_info.mLocalRot.y = m_upsample_local_rot_y.Process(data->mLocalRot.y, ffb_dt, is_new_frame);
 
@@ -229,6 +244,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_yaw_accel_smoothed = 0.0;
         m_prev_yaw_rate = 0.0;
         m_yaw_rate_seeded = false;
+        m_prev_local_vel = {};
+        m_local_vel_seeded = false;
     }
     m_was_allowed = allowed;
 
@@ -652,7 +669,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // v0.6.36 FIX: Move m_prev_vert_accel to unconditional section
     // Previously only updated inside calculate_road_texture when enabled.
     // Now always updated to prevent stale data if other effects use it.
-    m_prev_vert_accel = data->mLocalAccel.y;
+    // v0.7.145 (Issue #278): Use upsampled derived acceleration for smoother Jerk calculation.
+    m_prev_vert_accel = upsampled_data->mLocalAccel.y;
 
     // --- 9. DERIVE LOGGABLE DIAGNOSTICS ---
     float sm_range_rad = data->mPhysicalSteeringWheelRange;
