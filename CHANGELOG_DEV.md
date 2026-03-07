@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.145] - 2026-03-07
+- **Implemented Derived Vertical and Longitudinal Acceleration (Issue #278)**:
+  - Switched from using noisy game-provided raw acceleration channels (`mLocalAccel.y`, `mLocalAccel.z`) to smoother velocity-derived acceleration.
+  - Implemented manual derivative calculation from `mLocalVel` (Local Velocity) within the 100Hz telemetry update block.
+  - This eliminates high-frequency noise spikes and "metallic clacks" in FFB effects like Road Texture (fallback mode) and ensures more consistent predictive lockup detection.
+  - Integrated the derived signals with the existing 400Hz upsampling extrapolators for seamless, high-resolution FFB reconstruction.
+  - **New**: Added `m_derived_accel_y_100hz` and `m_derived_accel_z_100hz` state variables to the `FFBEngine` for reliable multi-frame derivation.
+- **Testing**:
+  - Added a comprehensive new test suite `tests/test_issue_278_derived_acceleration.cpp` to verify massive spike rejection in Road Texture and signal continuity in Lockup detection.
+  - Updated existing regression tests (`test_ffb_road_texture.cpp`, `test_ffb_internal.cpp`, `test_ffb_slip_grip.cpp`, `test_ffb_yaw_gyro.cpp`) to align with velocity-based derivation requirements.
+
 ## [0.7.144] - 2026-03-07
 - **Fixed Yaw Kick "Constant Pull" Analysis (Issue #241)**:
   - Switched from using the game's noisy raw `mLocalRotAccel.y` to a velocity-derived yaw acceleration for smoother and more reliable signal conditioning.

@@ -33,7 +33,9 @@ option(ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
 if(ENABLE_COVERAGE)
     if(NOT MSVC)
         message(STATUS "Enabling code coverage instrumentation...")
-        add_compile_options(--coverage -O0 -g)
+        # v0.7.145: Add -fprofile-update=atomic to prevent 'Unexpected negative count' in geninfo
+        # during multi-threaded test execution on Linux.
+        add_compile_options(--coverage -O0 -g -fprofile-update=atomic)
         add_link_options(--coverage)
     else()
         # On Windows/MSVC, OpenCppCoverage is used. 

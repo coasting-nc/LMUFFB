@@ -378,6 +378,12 @@ public:
     double m_prev_yaw_rate = 0.0;     // New v0.7.144 (Solution 2)
     bool m_yaw_rate_seeded = false;   // New v0.7.144 (Solution 2)
     double m_prev_yaw_rate_log = 0.0;
+
+    // Derived Acceleration State (Issue #278)
+    TelemVect3 m_prev_local_vel = {};
+    bool m_local_vel_seeded = false;
+    double m_derived_accel_y_100hz = 0.0;
+    double m_derived_accel_z_100hz = 0.0;
     bool m_yaw_rate_log_seeded = false;
 
     // Internal state for Steering Shaft Smoothing (v0.5.7)

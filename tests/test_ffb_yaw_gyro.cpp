@@ -793,9 +793,11 @@ TEST_CASE(test_chassis_inertia_smoothing_convergence, "YawGyro") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
-    // Setup: Apply constant acceleration
-    data.mLocalAccel.x = 9.81; // 1G lateral (right turn)
-    data.mLocalAccel.z = 9.81; // 1G longitudinal (braking)
+    // Setup: Apply constant acceleration via velocity changes for Issue #278
+    // To get 1G (9.81 m/s^2) at 400Hz (dt=0.0025): dv = 9.81 * 0.0025 = 0.024525
+    data.mLocalVel.y = 0.0;
+    data.mLocalVel.z = 0.0;
+    data.mLocalAccel.x = 9.81; // Lateral still raw
     data.mDeltaTime = 0.0025; // 400Hz
     
     // Chassis tau = 0.035s, alpha = dt / (tau + dt)
@@ -803,7 +805,10 @@ TEST_CASE(test_chassis_inertia_smoothing_convergence, "YawGyro") {
     // After 50 frames (~125ms), should be near steady-state
     
     for (int i = 0; i < 50; i++) {
-        engine.calculate_force(&data);
+        data.mLocalVel.y += 0.0; // Y is 0
+        data.mLocalVel.z += 9.81 * 0.0025;
+        data.mElapsedTime += 0.0025; // Update time to ensure is_new_frame works
+        engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
     }
     
     // Check convergence
@@ -825,10 +830,11 @@ TEST_CASE(test_chassis_inertia_smoothing_convergence, "YawGyro") {
     
     // Test decay
     data.mLocalAccel.x = 0.0;
-    data.mLocalAccel.z = 0.0;
+    // To maintain 0 acceleration, velocity must stop changing
     
     for (int i = 0; i < 50; i++) {
-        engine.calculate_force(&data);
+        data.mElapsedTime += 0.0025;
+        engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
     }
     
     smoothed_x = engine.m_accel_x_smoothed;

@@ -17,11 +17,14 @@ TEST_CASE(test_kinematic_load_braking, "SlipGrip") {
     data.mLocalVel.z = -10.0; // Moving Forward (game: -Z)
     data.mDeltaTime = 0.01;
     
+    // v0.7.145 (Issue #278): We now derive accel from velocity
+    engine.calculate_force(&data); // Seed
+
     // Braking: +Z Accel (Rearwards force)
-    data.mLocalAccel.z = 10.0; // ~1G
-    
+    // To get ~10 m/s^2 over 0.01s, dv = 0.1
     // Run multiple frames to settle Smoothing (alpha ~ 0.2)
     for (int i=0; i<50; i++) {
+        data.mLocalVel.z += 0.1;
         engine.calculate_force(&data);
     }
     

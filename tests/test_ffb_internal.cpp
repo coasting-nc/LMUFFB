@@ -455,12 +455,17 @@ TEST_CASE(test_unconditional_vert_accel_update, "Internal") {
     InitializeEngine(engine);
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    data.mDeltaTime = 0.01;
     
     // Disable road texture effect
     engine.m_road_texture_enabled = false;
     
-    // Set a known vertical acceleration
-    data.mLocalAccel.y = 5.5;
+    // v0.7.145 (Issue #278): We now derive accel from velocity
+    data.mLocalVel.y = 0.0;
+    engine.calculate_force(&data); // Seed
+
+    // Set a known vertical acceleration via velocity change
+    data.mLocalVel.y = 5.5 * 0.01;
     
     // Reset the engine state
     engine.m_prev_vert_accel = 0.0;
@@ -478,7 +483,7 @@ TEST_CASE(test_unconditional_vert_accel_update, "Internal") {
     }
     
     // Verify the value changes on next frame
-    data.mLocalAccel.y = -3.2;
+    data.mLocalVel.y += -3.2 * 0.01;
     engine.calculate_force(&data);
     
     if (std::abs(engine.m_prev_vert_accel - (-3.2)) < 0.01) {
