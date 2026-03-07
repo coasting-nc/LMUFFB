@@ -3,6 +3,19 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 7, 2026[/b][/size]
+[b]Version 0.7.147 - SoP Smoothing Latency Fix & Reset[/b]
+
+[b]New release[/b] (0.7.147): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Fixed SoP Smoothing Logic[/b]: Corrected the inverted behavior of the SoP Smoothing slider. [b]0.0[/b] now correctly corresponds to "Raw" (0ms added latency), while [b]1.0[/b] corresponds to maximum smoothing (100ms).
+[*][b]Mandatory Smoothing Reset[/b]: To ensure all users benefit from the lowest possible latency after this fix, [b]SoP Smoothing has been reset to 0.0 (Raw)[/b] for all built-in presets and existing user profiles.
+[*][b]Improved Defaults[/b]: All default profiles (T300, DD, etc.) are now optimized for zero-latency SoP feedback out of the box.
+[/list]
+
+---
+
+[size=5][b]March 7, 2026[/b][/size]
 [b]Version 0.7.143 - Robust FFB & Logging Control[/b]
 
 [b]New release[/b] (0.7.143): https://github.com/coasting-nc/LMUFFB/releases

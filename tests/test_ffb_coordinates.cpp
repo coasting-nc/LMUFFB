@@ -12,7 +12,7 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     // Setup: Isolate SoP effect
     engine.m_sop_effect = 1.0f;
     engine.m_sop_scale = 10.0f;
-    engine.m_sop_smoothing_factor = 1.0f; // Disable smoothing for instant response
+    engine.m_sop_smoothing_factor = 0.0f; // Disable smoothing for instant response (v0.7.147)
     engine.m_gain = 1.0f;
     engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
     engine.m_understeer_effect = 0.0f;
@@ -355,6 +355,7 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     engine.m_rear_align_effect = 1.0f;   // Rear Slip
     engine.m_sop_yaw_gain = 1.0f;        // Yaw Accel
     engine.m_scrub_drag_gain = 1.0f;     // Front Slip
+    engine.m_sop_smoothing_factor = 0.0f; // Instant response (v0.7.147)
     engine.m_invert_force = false;
     
     // Disable others to isolate lateral logic
@@ -469,7 +470,7 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     engine.m_scrub_drag_gain = 1.0f;
     engine.m_sop_effect = 1.0f;
     engine.m_sop_scale = 10.0f;
-    engine.m_sop_smoothing_factor = 1.0f;
+    engine.m_sop_smoothing_factor = 0.0f; // Instant response (v0.7.147)
     engine.m_road_texture_enabled = true;
     engine.m_gain = 1.0f;
     engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;

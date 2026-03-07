@@ -438,7 +438,7 @@ TEST_CASE(test_stress_stability, "CorePhysics") {
 }
 
 TEST_CASE(test_smoothing_step_response, "CorePhysics") {
-    std::cout << "\nTest: SoP Smoothing Step Response" << std::endl;
+    std::cout << "\nTest: SoP Smoothing Step Response (Updated for v0.7.147 mapping)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); 
     TelemInfoV01 data;
@@ -446,6 +446,8 @@ TEST_CASE(test_smoothing_step_response, "CorePhysics") {
     
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
 
+    // v0.7.147 Mapping: 0.5 factor means 50ms Tau.
+    // Frame 1 (2.5ms) response: alpha = 2.5 / (50 + 2.5) = 2.5/52.5 approx 0.0476
     engine.m_sop_smoothing_factor = 0.5;
     engine.m_sop_scale = 1.0;  
     engine.m_sop_effect = 1.0;
@@ -457,11 +459,16 @@ TEST_CASE(test_smoothing_step_response, "CorePhysics") {
     
     double force1 = engine.calculate_force(&data);
     
-    if (force1 > 0.0 && force1 < 0.005) {
+    // Expected: lat_g (1.0) * effect (1.0) * scale (1.0) * alpha (0.0476) approx 0.0476
+    // v0.7.67 Normalization: structurally peak = 20.0 Nm.
+    // Structural force = 0.0476 Nm.
+    // norm = 0.0476 / 20.0 = 0.00238.
+    // output = 0.00238 * (20/20) = 0.00238
+    if (force1 > 0.001 && force1 < 0.005) {
         std::cout << "[PASS] Smoothing Step 1 correct (" << force1 << ", small positive)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Smoothing Step 1 mismatch. Got " << force1 << std::endl;
+        std::cout << "[FAIL] Smoothing Step 1 mismatch. Got " << force1 << " Expected ~0.0024" << std::endl;
         g_tests_failed++;
     }
     
@@ -568,7 +575,7 @@ TEST_CASE(test_sop_effect, "CorePhysics") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     engine.m_sop_effect = 0.5f;
     engine.m_sop_scale = 10.0f;
-    engine.m_sop_smoothing_factor = 1.0f;
+    engine.m_sop_smoothing_factor = 0.0f; // Instant response (v0.7.147)
     data.mLocalAccel.x = 4.905; // 0.5G
     for (int i = 0; i < 60; i++) engine.calculate_force(&data);
     double force = engine.calculate_force(&data);
