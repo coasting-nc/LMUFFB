@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.144] - 2026-03-07
+- **Improved Car Brand Detection (Issue #270)**:
+  - Updated `ParseVehicleBrand` to correctly identify newer LMP3 chassis: Ligier JS P325 ("P325") and Duqueine D09 ("D09").
+  - Implemented a robust fallback for the LMP2 class; if the brand is not explicitly identified from the vehicle name, it now defaults to "Oreca" (the dominant chassis in the category).
+  - Added additional class-based brand fallbacks for Ginetta, Ligier, and Duqueine when the information is present in the class name but missing from the vehicle name.
+- **Testing**:
+  - Added `tests/test_issue_270_brand_detection.cpp` with 11 functional test cases verifying brand identification across LMP2 and LMP3 categories, including fallback logic.
+
 ## [0.7.143] - 2026-03-07
 - **Strict Gating for FFB and Logging**:
   - Centralized FFB and log file enable/disable logic to strictly depend on `GameConnector::Get().IsPlayerActivelyDriving()`.
