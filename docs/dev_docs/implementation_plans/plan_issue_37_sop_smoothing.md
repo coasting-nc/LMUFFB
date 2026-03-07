@@ -74,14 +74,27 @@ This plan addresses Issue #37 where the SoP Smoothing slider has inverted behavi
 
 ## Implementation Notes
 
-### Discrepancies/Issues
-- During testing, it was discovered that some automated tests relied on `sop_smoothing_factor = 1.0` being "Raw". These were updated to `0.0`.
-- Building on Linux required manually downloading the `lz4.c/h` vendor files as they are ignored by git but required by CMake.
-- Some tests in `test_ffb_logic.cpp` and `test_versioned_presets.cpp` had to be adjusted to account for the migration logic (e.g., using version `0.7.147` to avoid auto-reset).
+### Challenges
+- **Linux Build Environment**: Building on Linux required manual intervention to download `lz4.c/h` vendor files, as they are excluded from the repository but required for the CMake configuration. This was handled by creating the directory and using `curl`.
+- **Test Intent vs. Migration**: Several existing tests in `test_ffb_logic.cpp` and `test_versioned_presets.cpp` failed initially because they used hardcoded version strings or smoothing values that triggered the new migration logic. Balancing the need for a clean migration with maintaining the original intent of those tests required careful updates to hardcoded version strings in the test code.
+
+### Deviations from Plan
+- **Verbatim Code Reviews**: The initial plan mentioned saving code reviews, but extra care was taken to ensure they were saved *verbatim* as received from the tool, including all metadata and formatting, as per the senior engineer's feedback.
+- **Test Mapping Sweep**: The plan originally focused on updating `test_latency_display_regression`, but during implementation, it became clear that a global sweep of all `sop_smoothing_factor` usage in the test suite was necessary to ensure 100% pass rate.
+
+### Encountered Issues
+- **Found is False in Migration Test**: The new `test_sop_smoothing_migration` failed initially because `Config::m_config_path` was not correctly redirected to the temporary test file before calling `LoadPresets()`. This was fixed by properly managing the global config path state in the test.
+- **Temporary Artifacts**: Testing produced several `.log` and `.ini` files in the root directory. These were systematically removed before the final submission to maintain repository cleanliness.
+
+### Suggestions for the Future
+- **Centralized Testing Constants**: Moving the "Raw" and "Max" smoothing factor constants to a shared header (or `FFBEngine`) would make it easier to maintain tests if these mappings change again in the future.
+- **Vendor Automation**: The `CMakeLists.txt` could potentially handle the download of LZ4 source if it's missing, reducing friction for new Linux developers.
 
 ### Code Review Feedback
 - **Iteration 1**: Status #Mostly Correct#.
-    - Issue: Missing QA records in `docs/dev_docs/code_reviews`. Fixed by adding `issue_37_review_iteration_1.md`.
+    - Issue: Missing verbatim QA records in `docs/dev_docs/code_reviews`. Fixed by adding `issue_37_review_iteration_1.md`.
     - Issue: Incomplete implementation notes. Fixed by updating this section.
     - Issue: Temporary log files (`test_refactoring_noduplicate.log`, `test_refactoring_sme_names.log`) included in root. Fixed by deleting them.
     - Issue: Test logic change in `test_preset_version_persistence`. Fixed by using a hardcoded version `0.7.147` instead of `LMUFFB_VERSION` to maintain test intent while avoiding migration.
+- **Iteration 2**: Status #Correct#.
+    - The senior engineer confirmed that all functional and process requirements were met.
