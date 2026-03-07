@@ -248,7 +248,113 @@ This addresses an existing gap without adding new shared memory reads.
 
 ---
 
-## 5. What NOT to change
+## 5. Tests to write before refactoring
+
+The existing tests cover the basics of state detection (#267, #274) and transition logging. But before touching `CheckTransitions`, we need tests that pin down the **exact behaviour** that must be preserved. These tests should pass before, during, and after the refactoring — if one turns red, we know we broke something.
+
+### 5.1 Polling always wins: state is driven by shared memory, not only by events
+
+Verify that after `InjectTransitions`, the state machine atomics reflect the **current shared memory content** regardless of what events fired.
+
+```cpp
+// Test: polling overrides stale event-driven state
+// Setup: manually set inRealtime=true, then call InjectTransitions
+// with a snapshot where mInRealtime=0 and NO exit event.
+// Expected: gc.IsInRealtime() == false  (poll won)
+TEST_CASE_TAGGED(test_gc_poll_overrides_stale_realtime, "Functional", ({"state_machine", "refactoring"}))
+```
+
+```cpp
+// Test: polling overrides stale session active state
+// Setup: manually set sessionActive=true, then InjectTransitions
+// with trackName[0]='\0' and NO end_session event.
+// Expected: gc.IsSessionActive() == false  (poll won)
+TEST_CASE_TAGGED(test_gc_poll_overrides_stale_session, "Functional", ({"state_machine", "refactoring"}))
+```
+
+### 5.2 Event fast-path still applies within the same tick
+
+Verify that when an SME event fires **and** the raw buffer hasn't caught up yet, the state machine reflects the event's intent. This tests the event fast-path on top of polling.
+
+```cpp
+// Test: SME_END_SESSION clears sessionActive and inRealtime
+// even when the buffer track name hasn't been zeroed yet.
+// Setup: trackName="Monza", mInRealtime=1 in buffer,
+//        BUT events[SME_END_SESSION] fires.
+// Expected: gc.IsSessionActive() == false && gc.IsInRealtime() == false
+// Note: this is tricky because the poll at the top of CheckTransitions
+//       would set both to true. The current code sets them at the top,
+//       then overrides inside the event block. A refactoring must preserve
+//       this ordering or justify changing it.
+TEST_CASE_TAGGED(test_gc_end_session_event_overrides_poll, "Functional", ({"state_machine", "refactoring"}))
+```
+
+### 5.3 GamePhase and SessionType are always updated from the buffer (not only on change)
+
+```cpp
+// Test: GetGamePhase() returns the value from the snapshot after every call
+// to InjectTransitions, regardless of prev state.
+TEST_CASE_TAGGED(test_gc_gamephase_updated_unconditionally, "Functional", ({"state_machine", "refactoring"}))
+```
+
+### 5.4 PlayerControl is updated from the player vehicle when vehicle is present
+
+```cpp
+// Test: When playerHasVehicle=true and idx is valid,
+// GetPlayerControl() returns vehScoringInfo[idx].mControl after transition.
+TEST_CASE_TAGGED(test_gc_player_control_from_vehicle, "Functional", ({"state_machine", "refactoring"}))
+
+// Test: When playerHasVehicle=false, GetPlayerControl() is NOT changed
+// by InjectTransitions.
+TEST_CASE_TAGGED(test_gc_player_control_unchanged_when_no_vehicle, "Functional", ({"state_machine", "refactoring"}))
+```
+
+### 5.5 `IsPlayerActivelyDriving` composite predicate (new)
+
+This is new behaviour, so these tests define it from scratch:
+
+```cpp
+// Test: returns true when inRealtime=true, playerControl=Player(0), gamePhase!=9
+TEST_CASE_TAGGED(test_gc_actively_driving_true, "Functional", ({"state_machine", "refactoring"}))
+
+// Test: returns false when paused (gamePhase==9), even if inRealtime and Player-controlled
+// (addresses ESC-menu-while-on-track edge case from session transition.md)
+TEST_CASE_TAGGED(test_gc_actively_driving_false_when_paused, "Functional", ({"state_machine", "refactoring"}))
+
+// Test: returns false when AI is controlling (mControl==1), even if inRealtime
+TEST_CASE_TAGGED(test_gc_actively_driving_false_when_ai, "Functional", ({"state_machine", "refactoring"}))
+
+// Test: returns false when NOT in realtime (in garage/monitor UI)
+TEST_CASE_TAGGED(test_gc_actively_driving_false_when_not_realtime, "Functional", ({"state_machine", "refactoring"}))
+```
+
+### 5.6 No duplicate log entries on identical ticks
+
+```cpp
+// Test: calling InjectTransitions twice with identical data produces no additional
+// [Transition] log lines (change detection must be preserved after refactoring).
+TEST_CASE_TAGGED(test_gc_no_duplicate_log_on_same_state, "Functional", ({"transitions", "refactoring"}))
+```
+
+### 5.7 SME event name lookup helper
+
+Once `SmeEventName()` is extracted as a static function:
+
+```cpp
+// Test: each known SME constant maps to the expected string.
+// Test: unknown index maps to "Unknown".
+TEST_CASE_TAGGED(test_gc_sme_event_name_lookup, "Functional", ({"state_machine", "refactoring"}))
+```
+
+### Implementation file
+
+All the above tests should be placed in:  
+`tests/test_gc_refactoring.cpp`  
+and added to `tests/CMakeLists.txt` alongside the other state machine tests.
+
+---
+
+## 6. What NOT to change
 
 - The **polling + events hybrid** approach is correct as described in `session transition.md`. The "ground truth poll" + "fast-path events" pattern is the right answer for LMU's async shared memory. Do not remove either half of it.
 - The **`TransitionState` shadow struct** is a good pattern and should be kept (or merged into the proposed `GameState` approach). It correctly captures "previous values for logging purposes".
