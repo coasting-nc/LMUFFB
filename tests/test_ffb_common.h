@@ -342,6 +342,12 @@ public:
         std::lock_guard<std::mutex> lock(e.m_debug_mutex);
         e.m_debug_buffer.push_back(s);
     }
+    static void ResetYawDerivedState(FFBEngine& e) {
+        e.m_yaw_rate_seeded = false;
+        e.m_prev_yaw_rate = 0.0;
+        e.m_yaw_accel_smoothed = 0.0;
+    }
+    static double GetYawAccelSmoothed(const FFBEngine& e) { return e.m_yaw_accel_smoothed; }
 };
 
 } // namespace FFBEngineTests

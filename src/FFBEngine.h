@@ -360,6 +360,7 @@ public:
     ffb_math::LinearExtrapolator m_upsample_local_accel_y;
     ffb_math::LinearExtrapolator m_upsample_local_accel_z;
     ffb_math::LinearExtrapolator m_upsample_local_rot_accel_y;
+    ffb_math::LinearExtrapolator m_upsample_local_rot_y;
     ffb_math::HoltWintersFilter  m_upsample_shaft_torque;
 
     double m_prev_vert_deflection[4] = {0.0, 0.0, 0.0, 0.0}; 
@@ -374,6 +375,8 @@ public:
     
     // Yaw Acceleration Smoothing State (v0.4.18)
     double m_yaw_accel_smoothed = 0.0;
+    double m_prev_yaw_rate = 0.0;     // New v0.7.144 (Solution 2)
+    bool m_yaw_rate_seeded = false;   // New v0.7.144 (Solution 2)
     double m_prev_yaw_rate_log = 0.0;
     bool m_yaw_rate_log_seeded = false;
 

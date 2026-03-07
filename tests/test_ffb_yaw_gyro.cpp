@@ -32,8 +32,13 @@ TEST_CASE(test_sop_yaw_kick, "YawGyro") {
     // First frame: 0.1 * 1.0 * 5.0 = 0.5 Nm
     // Norm: 0.5 / 20.0 = 0.025
     
-    // Input: 1.0 rad/s^2 Yaw Accel
-    data.mLocalRotAccel.y = 1.0;
+    // Input: 1.0 rad/s^2 Yaw Accel (Derived from rate)
+    // Seeding frame
+    data.mLocalRot.y = 0.0;
+    engine.calculate_force(&data);
+    
+    // Test frame: rate moves to 1.0 * dt
+    data.mLocalRot.y = 1.0 * 0.0025; 
     
     // Ensure no other inputs
     data.mSteeringShaftTorque = 0.0;
@@ -205,10 +210,12 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     
     // Test 1: Verify smoothing reduces first-frame response
     // Raw input: 10.0 rad/s^2 (large spike)
-    // Expected smoothed (first frame): 0.0 + 0.1 * (10.0 - 0.0) = 1.0
-    // Force: 1.0 * 1.0 * 5.0 = 5.0 Nm
-    // Normalized: 5.0 / 20.0 = 0.25
-    data.mLocalRotAccel.y = 10.0;
+    // Seeding
+    data.mLocalRot.y = 0.0;
+    engine.calculate_force(&data);
+    
+    // Spike: rate moves to 10.0 * dt
+    data.mLocalRot.y = 10.0 * 0.0025;
     
     double force_frame1 = engine.calculate_force(&data);
     
@@ -227,6 +234,7 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     // Smoothed (frame 2): -1.0 + 0.1 * (-10.0 - (-1.0)) = -1.0 + 0.1 * (-9.0) = -1.9
     // Force: -1.9 * 1.0 * 5.0 = -9.5 Nm
     // Normalized: -9.5 / 20.0 = -0.475
+    data.mLocalRot.y += 10.0 * 0.0025;
     double force_frame2 = engine.calculate_force(&data);
     
     if (std::abs(force_frame2 - (-0.475)) < 0.02) {
@@ -264,8 +272,14 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     
     // Run 20 frames of alternating noise
     double max_force = 0.0;
+    data2.mDeltaTime = 0.0025;
+    data2.mLocalRot.y = 0.0;
+    engine2.calculate_force(&data2); // Seed
+    
     for (int i = 0; i < 20; i++) {
-        data2.mLocalRotAccel.y = (i % 2 == 0) ? 5.0 : -5.0;
+        double accel = (i % 2 == 0) ? 5.0 : -5.0;
+        data2.mLocalRot.y += accel * 0.0025;
+        data2.mElapsedTime += 0.0025;
         double force = engine2.calculate_force(&data2);
         max_force = (std::max)(max_force, std::abs(force));
     }
@@ -313,11 +327,14 @@ TEST_CASE(test_yaw_accel_convergence, "YawGyro") {
     // Test: Verify convergence to steady-state value
     // Constant input: 1.0 rad/s^2
     // Expected steady-state: 1.0 * 1.0 * 5.0 / 20.0 = 0.25
-    data.mLocalRotAccel.y = 1.0;
+    data.mLocalRot.y = 0.0;
+    engine.calculate_force(&data); // Seed
     
     // Run for 50 frames (should converge with alpha=0.1)
     double force = 0.0;
     for (int i = 0; i < 50; i++) {
+        data.mLocalRot.y += 1.0 * 0.0025;
+        data.mElapsedTime += 0.0025;
         force = engine.calculate_force(&data);
     }
     
@@ -336,8 +353,9 @@ TEST_CASE(test_yaw_accel_convergence, "YawGyro") {
     }
     
     // Test: Verify response to step change
-    // Change input from 1.0 to 0.0 (rotation stops)
-    data.mLocalRotAccel.y = 0.0;
+    // Change input from 1.0 to 0.0 (rotation stops accelerating, remains at current rate)
+    // No change in mLocalRot.y means 0 acceleration.
+    // data.mLocalRot.y stays at last value.
     
     // First frame after change
     double force_after_change = engine.calculate_force(&data);
@@ -401,9 +419,14 @@ TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
     double sum_force = 0.0;
     int frames = 50;
     
+    data.mLocalRot.y = 0.0;
+    engine.calculate_force(&data); // Seed
+    
     for (int i = 0; i < frames; i++) {
         // Simulate noise that would come from vibrations
-        data.mLocalRotAccel.y = (i % 2 == 0) ? 10.0 : -10.0;
+        double accel = (i % 2 == 0) ? 10.0 : -10.0;
+        data.mLocalRot.y += accel * 0.0025;
+        data.mElapsedTime += 0.0025;
         
         double force = engine.calculate_force(&data);
         max_force = (std::max)(max_force, std::abs(force));
@@ -434,11 +457,12 @@ TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
     
     // Verify that the smoothing state doesn't explode
     // Check internal state by running a few more frames with zero input
-    data.mLocalRotAccel.y = 0.0;
+    // Stop increasing rate
     data.mWheel[0].mLateralPatchVel = 0.0;
     data.mWheel[1].mLateralPatchVel = 0.0;
     
     for (int i = 0; i < 10; i++) {
+        data.mElapsedTime += 0.0025;
         engine.calculate_force(&data);
     }
     
@@ -457,8 +481,8 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     std::cout << "\nTest: Yaw Kick Signal Conditioning (v0.4.42)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
-    TelemInfoV01 data;
-    std::memset(&data, 0, sizeof(data));
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    data.mDeltaTime = 0.0025;
     
     // Setup: Isolate Yaw Kick effect
     engine.m_sop_yaw_gain = 1.0f;
@@ -474,20 +498,19 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     engine.m_rear_align_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
     engine.m_invert_force = false;
-    engine.m_yaw_kick_threshold = 0.2f;  // Explicitly set threshold for this test (v0.6.35: Don't rely on defaults) 
-    
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mStaticUndeflectedRadius = 33; // 33cm
-    data.mWheel[1].mStaticUndeflectedRadius = 33;
-    data.mSteeringShaftTorque = 0.0;
-    data.mDeltaTime = 0.0025f; // 400Hz
-    data.mElapsedTime = 0.0;
+    engine.m_yaw_kick_threshold = 0.2f;
+    engine.m_yaw_accel_smoothing = 0.0f; // Fast response
     
     // Test Case 1: Idle Noise - Below Deadzone Threshold (0.2 rad/s^2)
     std::cout << "  Case 1: Idle Noise (YawAccel = 0.1, below threshold)" << std::endl;
-    data.mLocalRotAccel.y = 0.1; // Below 0.2 threshold
-    data.mLocalVel.z = 20.0; // High speed (above 5 m/s cutoff)
+    data.mLocalRot.y = 0.0;
+    engine.calculate_force(&data); // Seed
+    data.mLocalRot.y = 0.1 * 0.0025; // Below 0.2 threshold
+    
+    // Ensure all effects that could mask are off
+    engine.m_sop_effect = 0.0f;
+    engine.m_understeer_effect = 0.0f;
+    engine.m_min_force = 0.0f;
     
     double force_idle = engine.calculate_force(&data);
     
@@ -502,8 +525,10 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     
     // Test Case 2: Low Speed Cutoff
     std::cout << "  Case 2: Low Speed (YawAccel = 5.0, Speed = 1.0 m/s)" << std::endl;
-    engine.m_yaw_accel_smoothed = 0.0; // Reset smoothed state
-    data.mLocalRotAccel.y = 5.0; // High yaw accel
+    FFBEngineTestAccess::ResetYawDerivedState(engine);
+    data.mLocalRot.y = 0.0;
+    engine.calculate_force(&data); // Seed
+    data.mLocalRot.y = 5.0 * 0.0025; // High yaw accel
     data.mLocalVel.z = 1.0; // Below 5 m/s cutoff
     
     double force_low_speed = engine.calculate_force(&data);
@@ -519,13 +544,18 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     
     // Test Case 3: Valid Kick - High Speed + High Yaw Accel
     std::cout << "  Case 3: Valid Kick (YawAccel = 5.0, Speed = 20.0 m/s)" << std::endl;
-    engine.m_yaw_accel_smoothed = 0.0; // Reset smoothed state
-    data.mLocalRotAccel.y = 5.0; // High yaw accel (above 0.2 threshold)
-    data.mLocalVel.z = 20.0; // High speed (above 5 m/s cutoff)
+    FFBEngineTestAccess::ResetYawDerivedState(engine);
+    data.mLocalRot.y = 0.0;
+    data.mLocalVel.z = 20.0; // Ensure speed is above cutoff
+    engine.calculate_force(&data); // Seed
     
     // Run for multiple frames to let smoothing settle
     double force_valid = 0.0;
-    for (int i = 0; i < 40; i++) force_valid = engine.calculate_force(&data);
+    for (int i = 0; i < 100; i++) {
+        data.mLocalRot.y += 5.0 * 0.0025;
+        data.mElapsedTime += 0.0025;
+        force_valid = engine.calculate_force(&data);
+    }
     
     // Should be non-zero and negative (due to inversion)
     if (force_valid < -0.1) {
@@ -533,6 +563,16 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
         g_tests_passed++;
     } else {
         std::cout << "[FAIL] Valid kick not detected correctly. Got " << force_valid << "." << std::endl;
+        std::cout << "DEBUG: m_yaw_accel_smoothed (via TestAccess): " << FFBEngineTestAccess::GetYawAccelSmoothed(engine) << std::endl;
+        std::cout << "DEBUG: m_yaw_kick_threshold: " << engine.m_yaw_kick_threshold << std::endl;
+        std::cout << "DEBUG: m_sop_yaw_gain: " << engine.m_sop_yaw_gain << std::endl;
+        
+        auto batch = engine.GetDebugBatch();
+        if (!batch.empty()) {
+            std::cout << "DEBUG: Snapshot ffb_yaw_kick: " << batch.back().ffb_yaw_kick << std::endl;
+        } else {
+            std::cout << "DEBUG: Snapshot batch is EMPTY!" << std::endl;
+        }
         g_tests_failed++;
     }
 }
@@ -548,16 +588,28 @@ TEST_CASE(test_yaw_kick_threshold, "YawGyro") {
     engine.m_yaw_accel_smoothing = 0.0001f; // Fast response for test
     
     // Case 1: Yaw Accel below threshold (2.0 < 5.0)
-    data.mLocalRotAccel.y = 2.0;
+    data.mDeltaTime = 0.0025;
+    data.mLocalRot.y = 0.0;
+    engine.calculate_force(&data); // Seed
+    data.mLocalRot.y = 2.0 * 0.0025;
     engine.calculate_force(&data); // 1st frame smoothing
+    data.mLocalRot.y += 2.0 * 0.0025;
     double force_low = engine.calculate_force(&data);
     
     ASSERT_NEAR(force_low, 0.0, 0.001);
 
     // Case 2: Yaw Accel above threshold (6.0 > 5.0)
-    data.mLocalRotAccel.y = 6.0;
-    engine.calculate_force(&data); 
-    double force_high = engine.calculate_force(&data);
+    data.mLocalRot.y = 0.0;
+    FFBEngineTestAccess::ResetYawDerivedState(engine);
+    engine.calculate_force(&data); // Seed
+    
+    // Run for 40 frames to ensure convergence
+    double force_high = 0.0;
+    for (int i = 0; i < 40; i++) {
+        data.mLocalRot.y += 6.0 * 0.0025;
+        data.mElapsedTime += 0.0025;
+        force_high = engine.calculate_force(&data);
+    }
     
     // v0.4.18 (Issue #241): Continuous deadzone means force is based on (6.0 - 5.0) = 1.0
     // formula: force = -1.0 * processed * gain * 5.0 / wheelbase_max
@@ -578,9 +630,16 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     engine.m_yaw_kick_threshold = 0.0f;
     
     // Use a reasonable signal (not tiny) to test threshold behavior
-    data.mLocalRotAccel.y = 1.0; // Reasonable signal
-    engine.calculate_force(&data); // Smoothing frame
-    double force_tiny = engine.calculate_force(&data);
+    data.mDeltaTime = 0.0025;
+    data.mLocalRot.y = 0.0;
+    FFBEngineTestAccess::ResetYawDerivedState(engine);
+    engine.calculate_force(&data); // Seed
+    double force_tiny = 0.0;
+    for (int i = 0; i < 40; i++) {
+        data.mLocalRot.y += 1.0 * 0.0025;
+        data.mElapsedTime += 0.0025;
+        force_tiny = engine.calculate_force(&data);
+    }
     
     ASSERT_TRUE(std::abs(force_tiny) > 0.001); // With zero threshold, signals pass
     
@@ -588,19 +647,32 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     engine.m_yaw_kick_threshold = 10.0f;
     
     // Reset smoothing state
-    engine.m_yaw_accel_smoothed = 0.0;
+    FFBEngineTestAccess::ResetYawDerivedState(engine);
     
     // Large but below threshold (9.0 < 10.0)
-    data.mLocalRotAccel.y = 9.0;
-    engine.calculate_force(&data);
-    double force_below_max = engine.calculate_force(&data);
+    data.mLocalRot.y = 0.0;
+    data.mElapsedTime = 0.0;
+    engine.calculate_force(&data); // Seed
+    double force_below_max = 0.0;
+    for (int i = 0; i < 40; i++) {
+        data.mLocalRot.y += 9.0 * 0.0025;
+        data.mElapsedTime += 0.0025;
+        force_below_max = engine.calculate_force(&data);
+    }
     
     ASSERT_NEAR(force_below_max, 0.0, 0.001); // Below max threshold = gated
     
     // Above maximum threshold (11.0 > 10.0)
-    data.mLocalRotAccel.y = 11.0;
-    engine.calculate_force(&data);
-    double force_above_max = engine.calculate_force(&data);
+    data.mLocalRot.y = 0.0;
+    data.mElapsedTime = 0.0;
+    FFBEngineTestAccess::ResetYawDerivedState(engine);
+    engine.calculate_force(&data); // Seed
+    double force_above_max = 0.0;
+    for (int i = 0; i < 40; i++) {
+        data.mLocalRot.y += 11.0 * 0.0025;
+        data.mElapsedTime += 0.0025;
+        force_above_max = engine.calculate_force(&data);
+    }
     
     // v0.4.18 (Issue #241): Continuous deadzone means force is based on (11.0 - 10.0) = 1.0
     // force = -1.0 * 1.0 * 1.0 * 5.0 / 20.0 = -0.25
@@ -611,30 +683,46 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     engine.m_yaw_accel_smoothed = 0.0; // Reset
     
     // Negative value with magnitude above threshold
-    data.mLocalRotAccel.y = -6.0; // |-6.0| = 6.0 > 5.0
-    engine.calculate_force(&data);
-    double force_negative = engine.calculate_force(&data);
+    data.mLocalRot.y = 0.0;
+    data.mElapsedTime = 0.0;
+    FFBEngineTestAccess::ResetYawDerivedState(engine);
+    engine.calculate_force(&data); // Seed
+    double force_negative = 0.0;
+    for (int i = 0; i < 40; i++) {
+        data.mLocalRot.y -= 6.0 * 0.0025;
+        data.mElapsedTime += 0.0025;
+        force_negative = engine.calculate_force(&data);
+    }
     
     // v0.4.18: Continuous deadzone means force is based on (-6.0 + 5.0) = -1.0
     // force = -1.0 * (-1.0) * 1.0 * 5.0 / 20.0 = 0.25
     ASSERT_NEAR(force_negative, 0.25, 0.01);
     
     // Negative value with magnitude below threshold
-    engine.m_yaw_accel_smoothed = 0.0; // Reset
-    data.mLocalRotAccel.y = -4.0; // |Ã¢Ë†â€™4.0| = 4.0 < 5.0
-    engine.calculate_force(&data);
-    double force_negative_below = engine.calculate_force(&data);
+    FFBEngineTestAccess::ResetYawDerivedState(engine); // Reset
+    data.mLocalRot.y = 0.0;
+    data.mElapsedTime = 0.0;
+    engine.calculate_force(&data); // Seed
+    double force_negative_below = 0.0;
+    for (int i = 0; i < 40; i++) {
+        data.mLocalRot.y -= 4.0 * 0.0025;
+        data.mElapsedTime += 0.0025;
+        force_negative_below = engine.calculate_force(&data);
+    }
     
     ASSERT_NEAR(force_negative_below, 0.0, 0.001); // Below threshold = gated
     
     // Edge Case 4: Interaction with low-speed cutoff
     // Low speed cutoff (< 5.0 m/s) should override threshold
     engine.m_yaw_kick_threshold = 0.0f; // Zero threshold (all pass)
-    engine.m_yaw_accel_smoothed = 0.0; // Reset
-    data.mLocalRotAccel.y = 10.0; // Large acceleration
+    FFBEngineTestAccess::ResetYawDerivedState(engine); // Reset
+    data.mLocalRot.y = 0.0;
+    engine.calculate_force(&data); // Seed
+    data.mLocalRot.y = 10.0 * 0.0025; // Large acceleration
     data.mLocalVel.z = 3.0; // Below 5.0 m/s cutoff
     
     engine.calculate_force(&data);
+    data.mLocalRot.y += 10.0 * 0.0025;
     double force_low_speed = engine.calculate_force(&data);
     
     ASSERT_NEAR(force_low_speed, 0.0, 0.001); // Low speed cutoff takes precedence
@@ -681,7 +769,10 @@ TEST_CASE(test_sop_yaw_kick_direction, "YawGyro") {
     // Case: Car rotates Right (+Yaw Accel)
     // This implies rear is sliding Left.
     // We want Counter-Steer Left (Negative Torque).
-    data.mLocalRotAccel.y = 5.0; 
+    data.mDeltaTime = 0.0025;
+    data.mLocalRot.y = 0.0;
+    engine.calculate_force(&data); // Seed
+    data.mLocalRot.y = 5.0 * 0.0025; 
     data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick 
     
     double force = engine.calculate_force(&data);

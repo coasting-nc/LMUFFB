@@ -196,6 +196,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     m_working_info.mLocalAccel.y = m_upsample_local_accel_y.Process(data->mLocalAccel.y, ffb_dt, is_new_frame);
     m_working_info.mLocalAccel.z = m_upsample_local_accel_z.Process(data->mLocalAccel.z, ffb_dt, is_new_frame);
     m_working_info.mLocalRotAccel.y = m_upsample_local_rot_accel_y.Process(data->mLocalRotAccel.y, ffb_dt, is_new_frame);
+    m_working_info.mLocalRot.y = m_upsample_local_rot_y.Process(data->mLocalRot.y, ffb_dt, is_new_frame);
 
     // Use upsampled data pointer for all calculations
     const TelemInfoV01* upsampled_data = &m_working_info;
@@ -211,6 +212,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_upsample_local_accel_y.Reset();
         m_upsample_local_accel_z.Reset();
         m_upsample_local_rot_accel_y.Reset();
+        m_upsample_local_rot_y.Reset();
         for (int i = 0; i < 4; i++) {
             m_upsample_lat_patch_vel[i].Reset();
             m_upsample_long_patch_vel[i].Reset();
@@ -225,6 +227,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_accel_z_smoothed = 0.0;
         m_sop_lat_g_smoothed = 0.0;
         m_yaw_accel_smoothed = 0.0;
+        m_prev_yaw_rate = 0.0;
+        m_yaw_rate_seeded = false;
     }
     m_was_allowed = allowed;
 
@@ -998,7 +1002,15 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     ctx.rear_torque = -ctx.calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect;
     
     // 4. Yaw Kick (Inertial Oversteer)
-    double raw_yaw_accel = data->mLocalRotAccel.y;
+    // v0.7.144 (Solution 2): Derive Yaw Acceleration from Yaw Rate (mLocalRot.y) 
+    // instead of using noisy game-provided mLocalRotAccel.y.
+    double current_yaw_rate = data->mLocalRot.y;
+    if (!m_yaw_rate_seeded) {
+        m_prev_yaw_rate = current_yaw_rate;
+        m_yaw_rate_seeded = true;
+    }
+    double derived_yaw_accel = (ctx.dt > 1e-6) ? (current_yaw_rate - m_prev_yaw_rate) / ctx.dt : 0.0;
+    m_prev_yaw_rate = current_yaw_rate;
 
     // v0.4.18: Apply Smoothing FIRST to extract macroscopic movement and cancel chatter.
     // This prevents "signal rectification" where a threshold applied to raw noise
@@ -1006,7 +1018,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double tau_yaw = (double)m_yaw_accel_smoothing;
     if (tau_yaw < MIN_TAU_S) tau_yaw = MIN_TAU_S;
     double alpha_yaw = ctx.dt / (tau_yaw + ctx.dt);
-    m_yaw_accel_smoothed += alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
+    m_yaw_accel_smoothed += alpha_yaw * (derived_yaw_accel - m_yaw_accel_smoothed);
 
     double processed_yaw = 0.0;
     // Reject yaw at low speeds

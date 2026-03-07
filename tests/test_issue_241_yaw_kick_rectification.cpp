@@ -40,8 +40,12 @@ TEST_CASE(test_issue_241_rectification_fix, "YawGyro") {
 
     double sum_force = 0.0;
     int frames = 100;
+    data.mLocalRot.y = 0.0;
+    engine.calculate_force(&data); // Seed
+    
     for (int i = 0; i < frames; i++) {
-        data.mLocalRotAccel.y = (i % 2 == 0) ? 2.0 : -1.5;
+        double accel = (i % 2 == 0) ? 2.0 : -1.5;
+        data.mLocalRot.y += accel * 0.0025;
         sum_force += engine.calculate_force(&data);
     }
 
@@ -72,9 +76,12 @@ TEST_CASE(test_issue_241_continuous_deadzone, "YawGyro") {
     // Case 1: Just above threshold (1.1)
     // Old code (gate): input = 1.1 -> force = -1.1 * 1.0 * 5.0 = -5.5 Nm -> norm = -0.275
     // New code (deadzone): input = 1.1 - 1.0 = 0.1 -> force = -0.1 * 1.0 * 5.0 = -0.5 Nm -> norm = -0.025
-    data.mLocalRotAccel.y = 1.1;
-    engine.m_yaw_accel_smoothed = 0.0;
+    data.mLocalRot.y = 0.0;
+    FFBEngineTestAccess::ResetYawDerivedState(engine);
+    engine.calculate_force(&data); // Seed
+    data.mLocalRot.y = 1.1 * 0.0025;
     engine.calculate_force(&data); // smoothing frame 1: smoothed = 0.0 + (1.1 - 0.0) = 1.1
+    data.mLocalRot.y += 1.1 * 0.0025;
     double force_low = engine.calculate_force(&data); // frame 2: smoothed = 1.1 + (1.1 - 1.1) = 1.1
 
     // We expect -0.025
@@ -82,9 +89,12 @@ TEST_CASE(test_issue_241_continuous_deadzone, "YawGyro") {
     std::cout << "[PASS] Continuous deadzone correctly subtracts threshold (force: " << force_low << " ~= -0.025)" << std::endl;
 
     // Case 2: Negative yaw accel (-1.1)
-    data.mLocalRotAccel.y = -1.1;
-    engine.m_yaw_accel_smoothed = 0.0; // reset
+    data.mLocalRot.y = 0.0;
+    FFBEngineTestAccess::ResetYawDerivedState(engine); // reset
+    engine.calculate_force(&data); // Seed
+    data.mLocalRot.y = -1.1 * 0.0025;
     engine.calculate_force(&data); // frame 1
+    data.mLocalRot.y += -1.1 * 0.0025;
     double force_neg = engine.calculate_force(&data); // frame 2
 
     ASSERT_NEAR(force_neg, 0.025, 0.005);

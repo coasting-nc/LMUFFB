@@ -379,8 +379,16 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     data.mWheel[1].mGripFract = 1.0;
     data.mDeltaTime = 0.01;
     data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick
+    data.mLocalRot.y = 0.0;
+    data.mElapsedTime = 0.0;
+    engine.calculate_force(&data); // Seed
     
-    data.mLocalRotAccel.y = 10.0;        // Violent Yaw Right
+    data.mLocalRot.y = 0.0; // Reset for loop
+    // No, seeding frame already set m_prev_yaw_rate to 0.0.
+    
+    // We want 10.0 rad/s^2 Yaw Accel
+    // data.mLocalRotAccel.y = 10.0; // Replaced by derived logic below
+    
     data.mWheel[2].mLateralPatchVel = -5.0; // Rear Sliding Left (Negative Vel for Correct Code Physics)
     data.mWheel[3].mLateralPatchVel = -5.0;
     data.mLocalAccel.x = 9.81;           // 1G Left
@@ -396,7 +404,11 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     data.mWheel[3].mLongitudinalGroundVel = 20.0;
     
     // Run to settle LPFs
-    for(int i=0; i<20; i++) engine.calculate_force(&data);
+    for(int i=0; i<40; i++) {
+        data.mLocalRot.y += 10.0 * 0.01;
+        data.mElapsedTime += 0.01;
+        engine.calculate_force(&data);
+    }
     
     // Capture Snapshot to verify individual components
     auto batch = engine.GetDebugBatch();

@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.144] - 2026-03-07
+- **Fixed Yaw Kick "Constant Pull" Analysis (Issue #241)**:
+  - Switched from using the game's noisy raw `mLocalRotAccel.y` to a velocity-derived yaw acceleration for smoother and more reliable signal conditioning.
+  - Implemented manual derivative calculation from `mLocalRot.y` (Yaw Rate) within the 400Hz physics loop.
+  - This eliminates directional "pull" artifacts caused by high-frequency physics aliasing when using stiff damper setups while maintaining ultra-low (~5ms) latency. The added 5ms latency is due to the calculation of the derivative and is imperceptible for the user (it is significantly lower than typical human perception thresholds of ~15-20ms).
+  - **New**: Added `LinearExtrapolator` for Yaw Rate (upsampling)to provide smooth, high-resolution derivation at 400Hz.
+- **Documentation**:
+  - Added a "Final Implementation" summary to `docs/dev_docs/investigations/yaw kick pulls.md` documenting the transition to derived yaw acceleration.
+- **Testing**:
+  - Hardened `test_yaw_kick_signal_conditioning` in `test_ffb_yaw_gyro.cpp` to correctly verify the derived signal under high-speed conditions.
+
 ## [0.7.143] - 2026-03-07
 - **Strict Gating for FFB and Logging**:
   - Centralized FFB and log file enable/disable logic to strictly depend on `GameConnector::Get().IsPlayerActivelyDriving()`.

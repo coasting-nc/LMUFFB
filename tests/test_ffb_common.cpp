@@ -119,6 +119,7 @@ TelemInfoV01 CreateBasicTestTelemetry(double speed, double slip_angle) {
 
 // --- Helper: Initialize Engine with Test Defaults ---
 void InitializeEngine(FFBEngine& engine) {
+    std::cout << "--- InitializeEngine Called ---" << std::endl;
     Preset::ApplyDefaultsToEngine(engine);
     // v0.5.12: Force consistent baseline for legacy tests
     engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;

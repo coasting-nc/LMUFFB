@@ -494,4 +494,52 @@ m_yaw_accel_smoothed += alpha_yaw * (derived_yaw_accel - m_yaw_accel_smoothed);
 
 If you are compiling the app yourself, I highly recommend trying **Solution 2** first. It often completely bypasses the game's internal physics engine artifacts!
 
+---
 
+# Final Implementation (v0.7.144)
+
+After extensive testing, **Solution 2: Derive from Yaw Rate** was chosen as the primary fix for the "constant pull" issue. 
+
+### Implementation Details
+1.  **Manual Derivation**: In `FFBEngine.cpp`, we now manually calculate yaw acceleration by taking the derivative of the vehicle's local yaw rate (`mLocalRot.y`). 
+    ```cpp
+    double current_yaw_rate = data->mLocalRot.y;
+    double derived_yaw_accel = (ctx.dt > 1e-6) ? (current_yaw_rate - m_prev_yaw_rate) / ctx.dt : 0.0;
+    m_prev_yaw_rate = current_yaw_rate;
+    ```
+
+    **Mathematical Rationale:**
+    - **Derivative Formula**: Acceleration is the rate of change of velocity ($a = \frac{dv}{dt}$). By using the change in Yaw Rate over time, we bypass the game's pre-calculated $mLocalRotAccel.y$, which is prone to high-frequency aliasing in stiff-suspension scenarios.
+    - **Temporal Guard (`ctx.dt > 1e-6`)**: A safety epsilon is used to prevent division-by-zero or "infinite" acceleration spikes during simulation stutters where $dt$ might be near zero.
+    - **Zero Fallback**: If $dt$ is invalid (near zero), the acceleration is set to 0.0. This prevents "exploding" forces and ensures FFB remains silent until the simulation clock resumes valid movement.
+
+2.  **Smoothing**: This derived signal is fed into the existing Exponential Moving Average (EMA) filter. Because the yaw rate is naturally integrated (it's the first derivative of rotation), it is much less prone to the high-frequency "aliasing" spikes that plagued the game's raw `mLocalRotAccel.y`.
+3.  **Continuous Deadzone**: The fix works in conjunction with the previously implemented continuous deadzone (Issue #241), ensuring a smooth ramp-up of force once the derived acceleration exceeds the user-defined threshold.
+
+### Verification
+- **Regression Suite**: Updated the `test_yaw_kick_signal_conditioning` and `test_ffb_yaw_gyro.cpp` suites to use derived math.
+- **Physics Stability**: Tests confirm that even with noise-injected yaw rates, the smoothed output remains stable and free of DC offsets (rectification).
+- **Performance**: The computational overhead of the manual derivative is negligible (one subtraction and one division per 2.5ms tick).
+
+This change allows users to run stiff damper setups (like the LMP2 "Silverstone" setup) without the physics engine's internal chattering being amplified into directional pulls.
+
+## Latency and Upsampling Analysis (v0.7.144)
+
+While the transition to derived acceleration solves the "constant pull" issue, it introduces specific timing characteristics that are important for high-end force feedback:
+
+### 1. Analytical Latency (~5ms)
+By switching to a numerical derivative ($a = \Delta v / \Delta t$), we introduce a "half-sample" delay. 
+- Since game telemetry is sampled at 100Hz (10ms steps), the average acceleration over that window is mathematically centered at the 5ms mark.
+- Even with GUI smoothing set to 0.000s, this **~5ms delay** is inherent to the derived math. 
+- **User Experience**: This latency is significantly lower than typical human perception thresholds (~15-20ms) and is comparable to the internal processing delays of high-end Direct Drive wheel bases. It feels much "sharper" than the raw acceleration with heavy software smoothing.
+
+### 2. Yaw Rate Upsampling (400Hz Loop)
+To minimize the perception of this 5ms delay and ensure the smoothness of the 400Hz FFB loop, we implemented **Yaw Rate Upsampling** using a `LinearExtrapolator`.
+- **How it works**: Instead of the 400Hz loop seeing the same yaw rate value for four consecutive ticks, the extrapolator projects the velocity gradient between 100Hz frames.
+- **Benefit**: This provides a continuous, high-resolution signal to the FFB engine. It eliminates the "notchy" or "steppy" feeling often associated with raw 100Hz telemetry, making the counter-steer forces feel more fluid and responsive despite the slight theoretical delay.
+
+### 3. Summary of Responsiveness
+- **Input Sampling**: 100Hz (raw telemetry)
+- **Processing Frequency**: 400Hz (upsampled data)
+- **Inherent Delay**: ~5ms (analytical derivative)
+- **Result**: A stable, high-fidelity signal that rejects physics engine artifacts while maintaining ultra-low latency for competitive driving.
