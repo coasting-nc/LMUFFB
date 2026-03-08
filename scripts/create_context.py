@@ -49,7 +49,7 @@ DOC_EXTENSIONS = {
 
 # Directories to exclude (by base name)
 EXCLUDE_DIRS = {
-    'build', 'build_test', 'build_tests', 'build-tests', '.git', 'python_prototype', 'vendor', '__pycache__', '.vscode', '.specstory', '.pytest_cache'
+    'build', 'build_test', 'build_tests', 'build-tests', 'build_ninja', 'build_ninja_test', 'build_ninja_test_with_ex', 'build_ninja_user_exact', 'build_ninja_verify', 'build_ninja_verify_final', 'build_repro', 'build_repro_fixed', 'build_verification', '.git', 'python_prototype', 'vendor', '__pycache__', '.vscode', '.specstory', '.pytest_cache'
 }
 
 # Full relative paths to exclude (normalized with forward slashes)

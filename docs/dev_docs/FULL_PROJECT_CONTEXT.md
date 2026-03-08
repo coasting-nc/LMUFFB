@@ -12,7483 +12,6 @@ This file contains the full source code and documentation of the project.
 It is generated automatically to provide complete context for LLM queries.
 
 
-# File: build_gcc\CMakeFiles\4.2.3\CompilerIdC\CMakeCCompilerId.c
-```cpp
-#ifdef __cplusplus
-# error "A C++ compiler has been selected for C."
-#endif
-
-#if defined(__18CXX)
-# define ID_VOID_MAIN
-#endif
-#if defined(__CLASSIC_C__)
-/* cv-qualifiers did not exist in K&R C */
-# define const
-# define volatile
-#endif
-
-#if !defined(__has_include)
-/* If the compiler does not have __has_include, pretend the answer is
-   always no.  */
-#  define __has_include(x) 0
-#endif
-
-
-/* Version number components: V=Version, R=Revision, P=Patch
-   Version date components:   YYYY=Year, MM=Month,   DD=Day  */
-
-#if defined(__INTEL_COMPILER) || defined(__ICC)
-# define COMPILER_ID "Intel"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_ID "GNU"
-# endif
-  /* __INTEL_COMPILER = VRP prior to 2021, and then VVVV for 2021 and later,
-     except that a few beta releases use the old format with V=2021.  */
-# if __INTEL_COMPILER < 2021 || __INTEL_COMPILER == 202110 || __INTEL_COMPILER == 202111
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER/100)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER/10 % 10)
-#  if defined(__INTEL_COMPILER_UPDATE)
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER_UPDATE)
-#  else
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER   % 10)
-#  endif
-# else
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER_UPDATE)
-   /* The third version component from --version is an update index,
-      but no macro is provided for it.  */
-#  define COMPILER_VERSION_PATCH DEC(0)
-# endif
-# if defined(__INTEL_COMPILER_BUILD_DATE)
-   /* __INTEL_COMPILER_BUILD_DATE = YYYYMMDD */
-#  define COMPILER_VERSION_TWEAK DEC(__INTEL_COMPILER_BUILD_DATE)
-# endif
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-# elif defined(__GNUG__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-# endif
-# if defined(__GNUC_MINOR__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif (defined(__clang__) && defined(__INTEL_CLANG_COMPILER)) || defined(__INTEL_LLVM_COMPILER)
-# define COMPILER_ID "IntelLLVM"
-#if defined(_MSC_VER)
-# define SIMULATE_ID "MSVC"
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_ID "GNU"
-#endif
-/* __INTEL_LLVM_COMPILER = VVVVRP prior to 2021.2.0, VVVVRRPP for 2021.2.0 and
- * later.  Look for 6 digit vs. 8 digit version number to decide encoding.
- * VVVV is no smaller than the current year when a version is released.
- */
-#if __INTEL_LLVM_COMPILER < 1000000L
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/100)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER    % 10)
-#else
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/10000)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER     % 100)
-#endif
-#if defined(_MSC_VER)
-  /* _MSC_VER = VVRR */
-# define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#elif defined(__GNUG__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-#endif
-#if defined(__GNUC_MINOR__)
-# define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#endif
-#if defined(__GNUC_PATCHLEVEL__)
-# define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#endif
-
-#elif defined(__PATHCC__)
-# define COMPILER_ID "PathScale"
-# define COMPILER_VERSION_MAJOR DEC(__PATHCC__)
-# define COMPILER_VERSION_MINOR DEC(__PATHCC_MINOR__)
-# if defined(__PATHCC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PATHCC_PATCHLEVEL__)
-# endif
-
-#elif defined(__BORLANDC__) && defined(__CODEGEARC_VERSION__)
-# define COMPILER_ID "Embarcadero"
-# define COMPILER_VERSION_MAJOR HEX(__CODEGEARC_VERSION__>>24 & 0x00FF)
-# define COMPILER_VERSION_MINOR HEX(__CODEGEARC_VERSION__>>16 & 0x00FF)
-# define COMPILER_VERSION_PATCH DEC(__CODEGEARC_VERSION__     & 0xFFFF)
-
-#elif defined(__BORLANDC__)
-# define COMPILER_ID "Borland"
-  /* __BORLANDC__ = 0xVRR */
-# define COMPILER_VERSION_MAJOR HEX(__BORLANDC__>>8)
-# define COMPILER_VERSION_MINOR HEX(__BORLANDC__ & 0xFF)
-
-#elif defined(__WATCOMC__) && __WATCOMC__ < 1200
-# define COMPILER_ID "Watcom"
-   /* __WATCOMC__ = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(__WATCOMC__ / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__WATCOMC__)
-# define COMPILER_ID "OpenWatcom"
-   /* __WATCOMC__ = VVRP + 1100 */
-# define COMPILER_VERSION_MAJOR DEC((__WATCOMC__ - 1100) / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__SUNPRO_C)
-# define COMPILER_ID "SunPro"
-# if __SUNPRO_C >= 0x5100
-   /* __SUNPRO_C = 0xVRRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_C>>12)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_C>>4 & 0xFF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_C    & 0xF)
-# else
-   /* __SUNPRO_CC = 0xVRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_C>>8)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_C>>4 & 0xF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_C    & 0xF)
-# endif
-
-#elif defined(__HP_cc)
-# define COMPILER_ID "HP"
-  /* __HP_cc = VVRRPP */
-# define COMPILER_VERSION_MAJOR DEC(__HP_cc/10000)
-# define COMPILER_VERSION_MINOR DEC(__HP_cc/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__HP_cc     % 100)
-
-#elif defined(__DECC)
-# define COMPILER_ID "Compaq"
-  /* __DECC_VER = VVRRTPPPP */
-# define COMPILER_VERSION_MAJOR DEC(__DECC_VER/10000000)
-# define COMPILER_VERSION_MINOR DEC(__DECC_VER/100000  % 100)
-# define COMPILER_VERSION_PATCH DEC(__DECC_VER         % 10000)
-
-#elif defined(__IBMC__) && defined(__COMPILER_VER__)
-# define COMPILER_ID "zOS"
-  /* __IBMC__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMC__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMC__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMC__    % 10)
-
-#elif defined(__open_xl__) && defined(__clang__)
-# define COMPILER_ID "IBMClang"
-# define COMPILER_VERSION_MAJOR DEC(__open_xl_version__)
-# define COMPILER_VERSION_MINOR DEC(__open_xl_release__)
-# define COMPILER_VERSION_PATCH DEC(__open_xl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__open_xl_ptf_fix_level__)
-# define COMPILER_VERSION_INTERNAL_STR  __clang_version__
-
-
-#elif defined(__ibmxl__) && defined(__clang__)
-# define COMPILER_ID "XLClang"
-# define COMPILER_VERSION_MAJOR DEC(__ibmxl_version__)
-# define COMPILER_VERSION_MINOR DEC(__ibmxl_release__)
-# define COMPILER_VERSION_PATCH DEC(__ibmxl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__ibmxl_ptf_fix_level__)
-
-
-#elif defined(__IBMC__) && !defined(__COMPILER_VER__) && __IBMC__ >= 800
-# define COMPILER_ID "XL"
-  /* __IBMC__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMC__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMC__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMC__    % 10)
-
-#elif defined(__IBMC__) && !defined(__COMPILER_VER__) && __IBMC__ < 800
-# define COMPILER_ID "VisualAge"
-  /* __IBMC__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMC__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMC__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMC__    % 10)
-
-#elif defined(__NVCOMPILER)
-# define COMPILER_ID "NVHPC"
-# define COMPILER_VERSION_MAJOR DEC(__NVCOMPILER_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__NVCOMPILER_MINOR__)
-# if defined(__NVCOMPILER_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__NVCOMPILER_PATCHLEVEL__)
-# endif
-
-#elif defined(__PGI)
-# define COMPILER_ID "PGI"
-# define COMPILER_VERSION_MAJOR DEC(__PGIC__)
-# define COMPILER_VERSION_MINOR DEC(__PGIC_MINOR__)
-# if defined(__PGIC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PGIC_PATCHLEVEL__)
-# endif
-
-#elif defined(__clang__) && defined(__cray__)
-# define COMPILER_ID "CrayClang"
-# define COMPILER_VERSION_MAJOR DEC(__cray_major__)
-# define COMPILER_VERSION_MINOR DEC(__cray_minor__)
-# define COMPILER_VERSION_PATCH DEC(__cray_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(_CRAYC)
-# define COMPILER_ID "Cray"
-# define COMPILER_VERSION_MAJOR DEC(_RELEASE_MAJOR)
-# define COMPILER_VERSION_MINOR DEC(_RELEASE_MINOR)
-
-#elif defined(__TI_COMPILER_VERSION__)
-# define COMPILER_ID "TI"
-  /* __TI_COMPILER_VERSION__ = VVVRRRPPP */
-# define COMPILER_VERSION_MAJOR DEC(__TI_COMPILER_VERSION__/1000000)
-# define COMPILER_VERSION_MINOR DEC(__TI_COMPILER_VERSION__/1000   % 1000)
-# define COMPILER_VERSION_PATCH DEC(__TI_COMPILER_VERSION__        % 1000)
-
-#elif defined(__CLANG_FUJITSU)
-# define COMPILER_ID "FujitsuClang"
-# define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-# define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-# define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(__FUJITSU)
-# define COMPILER_ID "Fujitsu"
-# if defined(__FCC_version__)
-#   define COMPILER_VERSION __FCC_version__
-# elif defined(__FCC_major__)
-#   define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-#   define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-#   define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# endif
-# if defined(__fcc_version)
-#   define COMPILER_VERSION_INTERNAL DEC(__fcc_version)
-# elif defined(__FCC_VERSION)
-#   define COMPILER_VERSION_INTERNAL DEC(__FCC_VERSION)
-# endif
-
-
-#elif defined(__ghs__)
-# define COMPILER_ID "GHS"
-/* __GHS_VERSION_NUMBER = VVVVRP */
-# ifdef __GHS_VERSION_NUMBER
-# define COMPILER_VERSION_MAJOR DEC(__GHS_VERSION_NUMBER / 100)
-# define COMPILER_VERSION_MINOR DEC(__GHS_VERSION_NUMBER / 10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__GHS_VERSION_NUMBER      % 10)
-# endif
-
-#elif defined(__TASKING__)
-# define COMPILER_ID "Tasking"
-  # define COMPILER_VERSION_MAJOR DEC(__VERSION__/1000)
-  # define COMPILER_VERSION_MINOR DEC(__VERSION__ % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__VERSION__)
-
-#elif defined(__ORANGEC__)
-# define COMPILER_ID "OrangeC"
-# define COMPILER_VERSION_MAJOR DEC(__ORANGEC_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__ORANGEC_MINOR__)
-# define COMPILER_VERSION_PATCH DEC(__ORANGEC_PATCHLEVEL__)
-
-#elif defined(__RENESAS__)
-# define COMPILER_ID "Renesas"
-/* __RENESAS_VERSION__ = 0xVVRRPP00 */
-# define COMPILER_VERSION_MAJOR HEX(__RENESAS_VERSION__ >> 24 & 0xFF)
-# define COMPILER_VERSION_MINOR HEX(__RENESAS_VERSION__ >> 16 & 0xFF)
-# define COMPILER_VERSION_PATCH HEX(__RENESAS_VERSION__ >> 8  & 0xFF)
-
-#elif defined(__TINYC__)
-# define COMPILER_ID "TinyCC"
-
-#elif defined(__BCC__)
-# define COMPILER_ID "Bruce"
-
-#elif defined(__SCO_VERSION__)
-# define COMPILER_ID "SCO"
-
-#elif defined(__ARMCC_VERSION) && !defined(__clang__)
-# define COMPILER_ID "ARMCC"
-#if __ARMCC_VERSION >= 1000000
-  /* __ARMCC_VERSION = VRRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION     % 10000)
-#else
-  /* __ARMCC_VERSION = VRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/100000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 10)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION    % 10000)
-#endif
-
-
-#elif defined(__clang__) && defined(__apple_build_version__)
-# define COMPILER_ID "AppleClang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# define COMPILER_VERSION_TWEAK DEC(__apple_build_version__)
-
-#elif defined(__clang__) && defined(__ARMCOMPILER_VERSION)
-# define COMPILER_ID "ARMClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCOMPILER_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCOMPILER_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCOMPILER_VERSION/100   % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__ARMCOMPILER_VERSION)
-
-#elif defined(__clang__) && defined(__ti__)
-# define COMPILER_ID "TIClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ti_major__)
-  # define COMPILER_VERSION_MINOR DEC(__ti_minor__)
-  # define COMPILER_VERSION_PATCH DEC(__ti_patchlevel__)
-# define COMPILER_VERSION_INTERNAL DEC(__ti_version__)
-
-#elif defined(__clang__)
-# define COMPILER_ID "Clang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-
-#elif defined(__LCC__) && (defined(__GNUC__) || defined(__GNUG__) || defined(__MCST__))
-# define COMPILER_ID "LCC"
-# define COMPILER_VERSION_MAJOR DEC(__LCC__ / 100)
-# define COMPILER_VERSION_MINOR DEC(__LCC__ % 100)
-# if defined(__LCC_MINOR__)
-#  define COMPILER_VERSION_PATCH DEC(__LCC_MINOR__)
-# endif
-# if defined(__GNUC__) && defined(__GNUC_MINOR__)
-#  define SIMULATE_ID "GNU"
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#  if defined(__GNUC_PATCHLEVEL__)
-#   define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#  endif
-# endif
-
-#elif defined(__GNUC__)
-# define COMPILER_ID "GNU"
-# define COMPILER_VERSION_MAJOR DEC(__GNUC__)
-# if defined(__GNUC_MINOR__)
-#  define COMPILER_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif defined(_MSC_VER)
-# define COMPILER_ID "MSVC"
-  /* _MSC_VER = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define COMPILER_VERSION_MINOR DEC(_MSC_VER % 100)
-# if defined(_MSC_FULL_VER)
-#  if _MSC_VER >= 1400
-    /* _MSC_FULL_VER = VVRRPPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 100000)
-#  else
-    /* _MSC_FULL_VER = VVRRPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 10000)
-#  endif
-# endif
-# if defined(_MSC_BUILD)
-#  define COMPILER_VERSION_TWEAK DEC(_MSC_BUILD)
-# endif
-
-#elif defined(_ADI_COMPILER)
-# define COMPILER_ID "ADSP"
-#if defined(__VERSIONNUM__)
-  /* __VERSIONNUM__ = 0xVVRRPPTT */
-#  define COMPILER_VERSION_MAJOR DEC(__VERSIONNUM__ >> 24 & 0xFF)
-#  define COMPILER_VERSION_MINOR DEC(__VERSIONNUM__ >> 16 & 0xFF)
-#  define COMPILER_VERSION_PATCH DEC(__VERSIONNUM__ >> 8 & 0xFF)
-#  define COMPILER_VERSION_TWEAK DEC(__VERSIONNUM__ & 0xFF)
-#endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# define COMPILER_ID "IAR"
-# if defined(__VER__) && defined(__ICCARM__)
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 1000000)
-#  define COMPILER_VERSION_MINOR DEC(((__VER__) / 1000) % 1000)
-#  define COMPILER_VERSION_PATCH DEC((__VER__) % 1000)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# elif defined(__VER__) && (defined(__ICCAVR__) || defined(__ICCRX__) || defined(__ICCRH850__) || defined(__ICCRL78__) || defined(__ICC430__) || defined(__ICCRISCV__) || defined(__ICCV850__) || defined(__ICC8051__) || defined(__ICCSTM8__))
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 100)
-#  define COMPILER_VERSION_MINOR DEC((__VER__) - (((__VER__) / 100)*100))
-#  define COMPILER_VERSION_PATCH DEC(__SUBVERSION__)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# endif
-
-#elif defined(__DCC__) && defined(_DIAB_TOOL)
-# define COMPILER_ID "Diab"
-  # define COMPILER_VERSION_MAJOR DEC(__VERSION_MAJOR_NUMBER__)
-  # define COMPILER_VERSION_MINOR DEC(__VERSION_MINOR_NUMBER__)
-  # define COMPILER_VERSION_PATCH DEC(__VERSION_ARCH_FEATURE_NUMBER__)
-  # define COMPILER_VERSION_TWEAK DEC(__VERSION_BUG_FIX_NUMBER__)
-
-
-#elif defined(__SDCC_VERSION_MAJOR) || defined(SDCC)
-# define COMPILER_ID "SDCC"
-# if defined(__SDCC_VERSION_MAJOR)
-#  define COMPILER_VERSION_MAJOR DEC(__SDCC_VERSION_MAJOR)
-#  define COMPILER_VERSION_MINOR DEC(__SDCC_VERSION_MINOR)
-#  define COMPILER_VERSION_PATCH DEC(__SDCC_VERSION_PATCH)
-# else
-  /* SDCC = VRP */
-#  define COMPILER_VERSION_MAJOR DEC(SDCC/100)
-#  define COMPILER_VERSION_MINOR DEC(SDCC/10 % 10)
-#  define COMPILER_VERSION_PATCH DEC(SDCC    % 10)
-# endif
-
-
-/* These compilers are either not known or too old to define an
-  identification macro.  Try to identify the platform and guess that
-  it is the native compiler.  */
-#elif defined(__hpux) || defined(__hpua)
-# define COMPILER_ID "HP"
-
-#else /* unknown compiler */
-# define COMPILER_ID ""
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_compiler = "INFO" ":" "compiler[" COMPILER_ID "]";
-#ifdef SIMULATE_ID
-char const* info_simulate = "INFO" ":" "simulate[" SIMULATE_ID "]";
-#endif
-
-#ifdef __QNXNTO__
-char const* qnxnto = "INFO" ":" "qnxnto[]";
-#endif
-
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-char const *info_cray = "INFO" ":" "compiler_wrapper[CrayPrgEnv]";
-#endif
-
-#define STRINGIFY_HELPER(X) #X
-#define STRINGIFY(X) STRINGIFY_HELPER(X)
-
-/* Identify known platforms by name.  */
-#if defined(__linux) || defined(__linux__) || defined(linux)
-# define PLATFORM_ID "Linux"
-
-#elif defined(__MSYS__)
-# define PLATFORM_ID "MSYS"
-
-#elif defined(__CYGWIN__)
-# define PLATFORM_ID "Cygwin"
-
-#elif defined(__MINGW32__)
-# define PLATFORM_ID "MinGW"
-
-#elif defined(__APPLE__)
-# define PLATFORM_ID "Darwin"
-
-#elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-# define PLATFORM_ID "Windows"
-
-#elif defined(__FreeBSD__) || defined(__FreeBSD)
-# define PLATFORM_ID "FreeBSD"
-
-#elif defined(__NetBSD__) || defined(__NetBSD)
-# define PLATFORM_ID "NetBSD"
-
-#elif defined(__OpenBSD__) || defined(__OPENBSD)
-# define PLATFORM_ID "OpenBSD"
-
-#elif defined(__sun) || defined(sun)
-# define PLATFORM_ID "SunOS"
-
-#elif defined(_AIX) || defined(__AIX) || defined(__AIX__) || defined(__aix) || defined(__aix__)
-# define PLATFORM_ID "AIX"
-
-#elif defined(__hpux) || defined(__hpux__)
-# define PLATFORM_ID "HP-UX"
-
-#elif defined(__HAIKU__)
-# define PLATFORM_ID "Haiku"
-
-#elif defined(__BeOS) || defined(__BEOS__) || defined(_BEOS)
-# define PLATFORM_ID "BeOS"
-
-#elif defined(__QNX__) || defined(__QNXNTO__)
-# define PLATFORM_ID "QNX"
-
-#elif defined(__tru64) || defined(_tru64) || defined(__TRU64__)
-# define PLATFORM_ID "Tru64"
-
-#elif defined(__riscos) || defined(__riscos__)
-# define PLATFORM_ID "RISCos"
-
-#elif defined(__sinix) || defined(__sinix__) || defined(__SINIX__)
-# define PLATFORM_ID "SINIX"
-
-#elif defined(__UNIX_SV__)
-# define PLATFORM_ID "UNIX_SV"
-
-#elif defined(__bsdos__)
-# define PLATFORM_ID "BSDOS"
-
-#elif defined(_MPRAS) || defined(MPRAS)
-# define PLATFORM_ID "MP-RAS"
-
-#elif defined(__osf) || defined(__osf__)
-# define PLATFORM_ID "OSF1"
-
-#elif defined(_SCO_SV) || defined(SCO_SV) || defined(sco_sv)
-# define PLATFORM_ID "SCO_SV"
-
-#elif defined(__ultrix) || defined(__ultrix__) || defined(_ULTRIX)
-# define PLATFORM_ID "ULTRIX"
-
-#elif defined(__XENIX__) || defined(_XENIX) || defined(XENIX)
-# define PLATFORM_ID "Xenix"
-
-#elif defined(__WATCOMC__)
-# if defined(__LINUX__)
-#  define PLATFORM_ID "Linux"
-
-# elif defined(__DOS__)
-#  define PLATFORM_ID "DOS"
-
-# elif defined(__OS2__)
-#  define PLATFORM_ID "OS2"
-
-# elif defined(__WINDOWS__)
-#  define PLATFORM_ID "Windows3x"
-
-# elif defined(__VXWORKS__)
-#  define PLATFORM_ID "VxWorks"
-
-# else /* unknown platform */
-#  define PLATFORM_ID
-# endif
-
-#elif defined(__INTEGRITY)
-# if defined(INT_178B)
-#  define PLATFORM_ID "Integrity178"
-
-# else /* regular Integrity */
-#  define PLATFORM_ID "Integrity"
-# endif
-
-# elif defined(_ADI_COMPILER)
-#  define PLATFORM_ID "ADSP"
-
-#else /* unknown platform */
-# define PLATFORM_ID
-
-#endif
-
-/* For windows compilers MSVC and Intel we can determine
-   the architecture of the compiler being used.  This is because
-   the compilers do not have flags that can change the architecture,
-   but rather depend on which compiler is being used
-*/
-#if defined(_WIN32) && defined(_MSC_VER)
-# if defined(_M_IA64)
-#  define ARCHITECTURE_ID "IA64"
-
-# elif defined(_M_ARM64EC)
-#  define ARCHITECTURE_ID "ARM64EC"
-
-# elif defined(_M_X64) || defined(_M_AMD64)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# elif defined(_M_ARM64)
-#  define ARCHITECTURE_ID "ARM64"
-
-# elif defined(_M_ARM)
-#  if _M_ARM == 4
-#   define ARCHITECTURE_ID "ARMV4I"
-#  elif _M_ARM == 5
-#   define ARCHITECTURE_ID "ARMV5I"
-#  else
-#   define ARCHITECTURE_ID "ARMV" STRINGIFY(_M_ARM)
-#  endif
-
-# elif defined(_M_MIPS)
-#  define ARCHITECTURE_ID "MIPS"
-
-# elif defined(_M_SH)
-#  define ARCHITECTURE_ID "SHx"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__WATCOMC__)
-# if defined(_M_I86)
-#  define ARCHITECTURE_ID "I86"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# if defined(__ICCARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__ICCRX__)
-#  define ARCHITECTURE_ID "RX"
-
-# elif defined(__ICCRH850__)
-#  define ARCHITECTURE_ID "RH850"
-
-# elif defined(__ICCRL78__)
-#  define ARCHITECTURE_ID "RL78"
-
-# elif defined(__ICCRISCV__)
-#  define ARCHITECTURE_ID "RISCV"
-
-# elif defined(__ICCAVR__)
-#  define ARCHITECTURE_ID "AVR"
-
-# elif defined(__ICC430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__ICCV850__)
-#  define ARCHITECTURE_ID "V850"
-
-# elif defined(__ICC8051__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__ICCSTM8__)
-#  define ARCHITECTURE_ID "STM8"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__ghs__)
-# if defined(__PPC64__)
-#  define ARCHITECTURE_ID "PPC64"
-
-# elif defined(__ppc__)
-#  define ARCHITECTURE_ID "PPC"
-
-# elif defined(__ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__x86_64__)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(__i386__)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__clang__) && defined(__ti__)
-# if defined(__ARM_ARCH)
-#  define ARCHITECTURE_ID "ARM"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__TI_COMPILER_VERSION__)
-# if defined(__TI_ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__MSP430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__TMS320C28XX__)
-#  define ARCHITECTURE_ID "TMS320C28x"
-
-# elif defined(__TMS320C6X__) || defined(_TMS320C6X)
-#  define ARCHITECTURE_ID "TMS320C6x"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-# elif defined(__ADSPSHARC__)
-#  define ARCHITECTURE_ID "SHARC"
-
-# elif defined(__ADSPBLACKFIN__)
-#  define ARCHITECTURE_ID "Blackfin"
-
-#elif defined(__TASKING__)
-
-# if defined(__CTC__) || defined(__CPTC__)
-#  define ARCHITECTURE_ID "TriCore"
-
-# elif defined(__CMCS__)
-#  define ARCHITECTURE_ID "MCS"
-
-# elif defined(__CARM__) || defined(__CPARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__CARC__)
-#  define ARCHITECTURE_ID "ARC"
-
-# elif defined(__C51__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__CPCP__)
-#  define ARCHITECTURE_ID "PCP"
-
-# else
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__RENESAS__)
-# if defined(__CCRX__)
-#  define ARCHITECTURE_ID "RX"
-
-# elif defined(__CCRL__)
-#  define ARCHITECTURE_ID "RL78"
-
-# elif defined(__CCRH__)
-#  define ARCHITECTURE_ID "RH850"
-
-# else
-#  define ARCHITECTURE_ID ""
-# endif
-
-#else
-#  define ARCHITECTURE_ID
-#endif
-
-/* Convert integer to decimal digit literals.  */
-#define DEC(n)                   \
-  ('0' + (((n) / 10000000)%10)), \
-  ('0' + (((n) / 1000000)%10)),  \
-  ('0' + (((n) / 100000)%10)),   \
-  ('0' + (((n) / 10000)%10)),    \
-  ('0' + (((n) / 1000)%10)),     \
-  ('0' + (((n) / 100)%10)),      \
-  ('0' + (((n) / 10)%10)),       \
-  ('0' +  ((n) % 10))
-
-/* Convert integer to hex digit literals.  */
-#define HEX(n)             \
-  ('0' + ((n)>>28 & 0xF)), \
-  ('0' + ((n)>>24 & 0xF)), \
-  ('0' + ((n)>>20 & 0xF)), \
-  ('0' + ((n)>>16 & 0xF)), \
-  ('0' + ((n)>>12 & 0xF)), \
-  ('0' + ((n)>>8  & 0xF)), \
-  ('0' + ((n)>>4  & 0xF)), \
-  ('0' + ((n)     & 0xF))
-
-/* Construct a string literal encoding the version number. */
-#ifdef COMPILER_VERSION
-char const* info_version = "INFO" ":" "compiler_version[" COMPILER_VERSION "]";
-
-/* Construct a string literal encoding the version number components. */
-#elif defined(COMPILER_VERSION_MAJOR)
-char const info_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','[',
-  COMPILER_VERSION_MAJOR,
-# ifdef COMPILER_VERSION_MINOR
-  '.', COMPILER_VERSION_MINOR,
-#  ifdef COMPILER_VERSION_PATCH
-   '.', COMPILER_VERSION_PATCH,
-#   ifdef COMPILER_VERSION_TWEAK
-    '.', COMPILER_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct a string literal encoding the internal version number. */
-#ifdef COMPILER_VERSION_INTERNAL
-char const info_version_internal[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','_',
-  'i','n','t','e','r','n','a','l','[',
-  COMPILER_VERSION_INTERNAL,']','\0'};
-#elif defined(COMPILER_VERSION_INTERNAL_STR)
-char const* info_version_internal = "INFO" ":" "compiler_version_internal[" COMPILER_VERSION_INTERNAL_STR "]";
-#endif
-
-/* Construct a string literal encoding the version number components. */
-#ifdef SIMULATE_VERSION_MAJOR
-char const info_simulate_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  's','i','m','u','l','a','t','e','_','v','e','r','s','i','o','n','[',
-  SIMULATE_VERSION_MAJOR,
-# ifdef SIMULATE_VERSION_MINOR
-  '.', SIMULATE_VERSION_MINOR,
-#  ifdef SIMULATE_VERSION_PATCH
-   '.', SIMULATE_VERSION_PATCH,
-#   ifdef SIMULATE_VERSION_TWEAK
-    '.', SIMULATE_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_platform = "INFO" ":" "platform[" PLATFORM_ID "]";
-char const* info_arch = "INFO" ":" "arch[" ARCHITECTURE_ID "]";
-
-
-
-#define C_STD_99 199901L
-#define C_STD_11 201112L
-#define C_STD_17 201710L
-#define C_STD_23 202311L
-
-#ifdef __STDC_VERSION__
-#  define C_STD __STDC_VERSION__
-#endif
-
-#if !defined(__STDC__) && !defined(__clang__) && !defined(__RENESAS__)
-# if defined(_MSC_VER) || defined(__ibmxl__) || defined(__IBMC__)
-#  define C_VERSION "90"
-# else
-#  define C_VERSION
-# endif
-#elif C_STD > C_STD_17
-# define C_VERSION "23"
-#elif C_STD > C_STD_11
-# define C_VERSION "17"
-#elif C_STD > C_STD_99
-# define C_VERSION "11"
-#elif C_STD >= C_STD_99
-# define C_VERSION "99"
-#else
-# define C_VERSION "90"
-#endif
-const char* info_language_standard_default =
-  "INFO" ":" "standard_default[" C_VERSION "]";
-
-const char* info_language_extensions_default = "INFO" ":" "extensions_default["
-#if (defined(__clang__) || defined(__GNUC__) || defined(__xlC__) ||           \
-     defined(__TI_COMPILER_VERSION__) || defined(__RENESAS__)) &&             \
-  !defined(__STRICT_ANSI__)
-  "ON"
-#else
-  "OFF"
-#endif
-"]";
-
-/*--------------------------------------------------------------------------*/
-
-#ifdef ID_VOID_MAIN
-void main() {}
-#else
-# if defined(__CLASSIC_C__)
-int main(argc, argv) int argc; char *argv[];
-# else
-int main(int argc, char* argv[])
-# endif
-{
-  int require = 0;
-  require += info_compiler[argc];
-  require += info_platform[argc];
-  require += info_arch[argc];
-#ifdef COMPILER_VERSION_MAJOR
-  require += info_version[argc];
-#endif
-#if defined(COMPILER_VERSION_INTERNAL) || defined(COMPILER_VERSION_INTERNAL_STR)
-  require += info_version_internal[argc];
-#endif
-#ifdef SIMULATE_ID
-  require += info_simulate[argc];
-#endif
-#ifdef SIMULATE_VERSION_MAJOR
-  require += info_simulate_version[argc];
-#endif
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-  require += info_cray[argc];
-#endif
-  require += info_language_standard_default[argc];
-  require += info_language_extensions_default[argc];
-  (void)argv;
-  return require;
-}
-#endif
-
-```
-
-# File: build_gcc\CMakeFiles\4.2.3\CompilerIdCXX\CMakeCXXCompilerId.cpp
-```cpp
-/* This source file must have a .cpp extension so that all C++ compilers
-   recognize the extension without flags.  Borland does not know .cxx for
-   example.  */
-#ifndef __cplusplus
-# error "A C compiler has been selected for C++."
-#endif
-
-#if !defined(__has_include)
-/* If the compiler does not have __has_include, pretend the answer is
-   always no.  */
-#  define __has_include(x) 0
-#endif
-
-
-/* Version number components: V=Version, R=Revision, P=Patch
-   Version date components:   YYYY=Year, MM=Month,   DD=Day  */
-
-#if defined(__INTEL_COMPILER) || defined(__ICC)
-# define COMPILER_ID "Intel"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_ID "GNU"
-# endif
-  /* __INTEL_COMPILER = VRP prior to 2021, and then VVVV for 2021 and later,
-     except that a few beta releases use the old format with V=2021.  */
-# if __INTEL_COMPILER < 2021 || __INTEL_COMPILER == 202110 || __INTEL_COMPILER == 202111
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER/100)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER/10 % 10)
-#  if defined(__INTEL_COMPILER_UPDATE)
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER_UPDATE)
-#  else
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER   % 10)
-#  endif
-# else
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER_UPDATE)
-   /* The third version component from --version is an update index,
-      but no macro is provided for it.  */
-#  define COMPILER_VERSION_PATCH DEC(0)
-# endif
-# if defined(__INTEL_COMPILER_BUILD_DATE)
-   /* __INTEL_COMPILER_BUILD_DATE = YYYYMMDD */
-#  define COMPILER_VERSION_TWEAK DEC(__INTEL_COMPILER_BUILD_DATE)
-# endif
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-# elif defined(__GNUG__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-# endif
-# if defined(__GNUC_MINOR__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif (defined(__clang__) && defined(__INTEL_CLANG_COMPILER)) || defined(__INTEL_LLVM_COMPILER)
-# define COMPILER_ID "IntelLLVM"
-#if defined(_MSC_VER)
-# define SIMULATE_ID "MSVC"
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_ID "GNU"
-#endif
-/* __INTEL_LLVM_COMPILER = VVVVRP prior to 2021.2.0, VVVVRRPP for 2021.2.0 and
- * later.  Look for 6 digit vs. 8 digit version number to decide encoding.
- * VVVV is no smaller than the current year when a version is released.
- */
-#if __INTEL_LLVM_COMPILER < 1000000L
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/100)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER    % 10)
-#else
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/10000)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER     % 100)
-#endif
-#if defined(_MSC_VER)
-  /* _MSC_VER = VVRR */
-# define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#elif defined(__GNUG__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-#endif
-#if defined(__GNUC_MINOR__)
-# define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#endif
-#if defined(__GNUC_PATCHLEVEL__)
-# define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#endif
-
-#elif defined(__PATHCC__)
-# define COMPILER_ID "PathScale"
-# define COMPILER_VERSION_MAJOR DEC(__PATHCC__)
-# define COMPILER_VERSION_MINOR DEC(__PATHCC_MINOR__)
-# if defined(__PATHCC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PATHCC_PATCHLEVEL__)
-# endif
-
-#elif defined(__BORLANDC__) && defined(__CODEGEARC_VERSION__)
-# define COMPILER_ID "Embarcadero"
-# define COMPILER_VERSION_MAJOR HEX(__CODEGEARC_VERSION__>>24 & 0x00FF)
-# define COMPILER_VERSION_MINOR HEX(__CODEGEARC_VERSION__>>16 & 0x00FF)
-# define COMPILER_VERSION_PATCH DEC(__CODEGEARC_VERSION__     & 0xFFFF)
-
-#elif defined(__BORLANDC__)
-# define COMPILER_ID "Borland"
-  /* __BORLANDC__ = 0xVRR */
-# define COMPILER_VERSION_MAJOR HEX(__BORLANDC__>>8)
-# define COMPILER_VERSION_MINOR HEX(__BORLANDC__ & 0xFF)
-
-#elif defined(__WATCOMC__) && __WATCOMC__ < 1200
-# define COMPILER_ID "Watcom"
-   /* __WATCOMC__ = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(__WATCOMC__ / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__WATCOMC__)
-# define COMPILER_ID "OpenWatcom"
-   /* __WATCOMC__ = VVRP + 1100 */
-# define COMPILER_VERSION_MAJOR DEC((__WATCOMC__ - 1100) / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__SUNPRO_CC)
-# define COMPILER_ID "SunPro"
-# if __SUNPRO_CC >= 0x5100
-   /* __SUNPRO_CC = 0xVRRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_CC>>12)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_CC>>4 & 0xFF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_CC    & 0xF)
-# else
-   /* __SUNPRO_CC = 0xVRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_CC>>8)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_CC>>4 & 0xF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_CC    & 0xF)
-# endif
-
-#elif defined(__HP_aCC)
-# define COMPILER_ID "HP"
-  /* __HP_aCC = VVRRPP */
-# define COMPILER_VERSION_MAJOR DEC(__HP_aCC/10000)
-# define COMPILER_VERSION_MINOR DEC(__HP_aCC/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__HP_aCC     % 100)
-
-#elif defined(__DECCXX)
-# define COMPILER_ID "Compaq"
-  /* __DECCXX_VER = VVRRTPPPP */
-# define COMPILER_VERSION_MAJOR DEC(__DECCXX_VER/10000000)
-# define COMPILER_VERSION_MINOR DEC(__DECCXX_VER/100000  % 100)
-# define COMPILER_VERSION_PATCH DEC(__DECCXX_VER         % 10000)
-
-#elif defined(__IBMCPP__) && defined(__COMPILER_VER__)
-# define COMPILER_ID "zOS"
-  /* __IBMCPP__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
-
-#elif defined(__open_xl__) && defined(__clang__)
-# define COMPILER_ID "IBMClang"
-# define COMPILER_VERSION_MAJOR DEC(__open_xl_version__)
-# define COMPILER_VERSION_MINOR DEC(__open_xl_release__)
-# define COMPILER_VERSION_PATCH DEC(__open_xl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__open_xl_ptf_fix_level__)
-# define COMPILER_VERSION_INTERNAL_STR  __clang_version__
-
-
-#elif defined(__ibmxl__) && defined(__clang__)
-# define COMPILER_ID "XLClang"
-# define COMPILER_VERSION_MAJOR DEC(__ibmxl_version__)
-# define COMPILER_VERSION_MINOR DEC(__ibmxl_release__)
-# define COMPILER_VERSION_PATCH DEC(__ibmxl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__ibmxl_ptf_fix_level__)
-
-
-#elif defined(__IBMCPP__) && !defined(__COMPILER_VER__) && __IBMCPP__ >= 800
-# define COMPILER_ID "XL"
-  /* __IBMCPP__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
-
-#elif defined(__IBMCPP__) && !defined(__COMPILER_VER__) && __IBMCPP__ < 800
-# define COMPILER_ID "VisualAge"
-  /* __IBMCPP__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
-
-#elif defined(__NVCOMPILER)
-# define COMPILER_ID "NVHPC"
-# define COMPILER_VERSION_MAJOR DEC(__NVCOMPILER_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__NVCOMPILER_MINOR__)
-# if defined(__NVCOMPILER_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__NVCOMPILER_PATCHLEVEL__)
-# endif
-
-#elif defined(__PGI)
-# define COMPILER_ID "PGI"
-# define COMPILER_VERSION_MAJOR DEC(__PGIC__)
-# define COMPILER_VERSION_MINOR DEC(__PGIC_MINOR__)
-# if defined(__PGIC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PGIC_PATCHLEVEL__)
-# endif
-
-#elif defined(__clang__) && defined(__cray__)
-# define COMPILER_ID "CrayClang"
-# define COMPILER_VERSION_MAJOR DEC(__cray_major__)
-# define COMPILER_VERSION_MINOR DEC(__cray_minor__)
-# define COMPILER_VERSION_PATCH DEC(__cray_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(_CRAYC)
-# define COMPILER_ID "Cray"
-# define COMPILER_VERSION_MAJOR DEC(_RELEASE_MAJOR)
-# define COMPILER_VERSION_MINOR DEC(_RELEASE_MINOR)
-
-#elif defined(__TI_COMPILER_VERSION__)
-# define COMPILER_ID "TI"
-  /* __TI_COMPILER_VERSION__ = VVVRRRPPP */
-# define COMPILER_VERSION_MAJOR DEC(__TI_COMPILER_VERSION__/1000000)
-# define COMPILER_VERSION_MINOR DEC(__TI_COMPILER_VERSION__/1000   % 1000)
-# define COMPILER_VERSION_PATCH DEC(__TI_COMPILER_VERSION__        % 1000)
-
-#elif defined(__CLANG_FUJITSU)
-# define COMPILER_ID "FujitsuClang"
-# define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-# define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-# define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(__FUJITSU)
-# define COMPILER_ID "Fujitsu"
-# if defined(__FCC_version__)
-#   define COMPILER_VERSION __FCC_version__
-# elif defined(__FCC_major__)
-#   define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-#   define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-#   define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# endif
-# if defined(__fcc_version)
-#   define COMPILER_VERSION_INTERNAL DEC(__fcc_version)
-# elif defined(__FCC_VERSION)
-#   define COMPILER_VERSION_INTERNAL DEC(__FCC_VERSION)
-# endif
-
-
-#elif defined(__ghs__)
-# define COMPILER_ID "GHS"
-/* __GHS_VERSION_NUMBER = VVVVRP */
-# ifdef __GHS_VERSION_NUMBER
-# define COMPILER_VERSION_MAJOR DEC(__GHS_VERSION_NUMBER / 100)
-# define COMPILER_VERSION_MINOR DEC(__GHS_VERSION_NUMBER / 10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__GHS_VERSION_NUMBER      % 10)
-# endif
-
-#elif defined(__TASKING__)
-# define COMPILER_ID "Tasking"
-  # define COMPILER_VERSION_MAJOR DEC(__VERSION__/1000)
-  # define COMPILER_VERSION_MINOR DEC(__VERSION__ % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__VERSION__)
-
-#elif defined(__ORANGEC__)
-# define COMPILER_ID "OrangeC"
-# define COMPILER_VERSION_MAJOR DEC(__ORANGEC_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__ORANGEC_MINOR__)
-# define COMPILER_VERSION_PATCH DEC(__ORANGEC_PATCHLEVEL__)
-
-#elif defined(__RENESAS__)
-# define COMPILER_ID "Renesas"
-/* __RENESAS_VERSION__ = 0xVVRRPP00 */
-# define COMPILER_VERSION_MAJOR HEX(__RENESAS_VERSION__ >> 24 & 0xFF)
-# define COMPILER_VERSION_MINOR HEX(__RENESAS_VERSION__ >> 16 & 0xFF)
-# define COMPILER_VERSION_PATCH HEX(__RENESAS_VERSION__ >> 8  & 0xFF)
-
-#elif defined(__SCO_VERSION__)
-# define COMPILER_ID "SCO"
-
-#elif defined(__ARMCC_VERSION) && !defined(__clang__)
-# define COMPILER_ID "ARMCC"
-#if __ARMCC_VERSION >= 1000000
-  /* __ARMCC_VERSION = VRRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION     % 10000)
-#else
-  /* __ARMCC_VERSION = VRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/100000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 10)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION    % 10000)
-#endif
-
-
-#elif defined(__clang__) && defined(__apple_build_version__)
-# define COMPILER_ID "AppleClang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# define COMPILER_VERSION_TWEAK DEC(__apple_build_version__)
-
-#elif defined(__clang__) && defined(__ARMCOMPILER_VERSION)
-# define COMPILER_ID "ARMClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCOMPILER_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCOMPILER_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCOMPILER_VERSION/100   % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__ARMCOMPILER_VERSION)
-
-#elif defined(__clang__) && defined(__ti__)
-# define COMPILER_ID "TIClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ti_major__)
-  # define COMPILER_VERSION_MINOR DEC(__ti_minor__)
-  # define COMPILER_VERSION_PATCH DEC(__ti_patchlevel__)
-# define COMPILER_VERSION_INTERNAL DEC(__ti_version__)
-
-#elif defined(__clang__)
-# define COMPILER_ID "Clang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-
-#elif defined(__LCC__) && (defined(__GNUC__) || defined(__GNUG__) || defined(__MCST__))
-# define COMPILER_ID "LCC"
-# define COMPILER_VERSION_MAJOR DEC(__LCC__ / 100)
-# define COMPILER_VERSION_MINOR DEC(__LCC__ % 100)
-# if defined(__LCC_MINOR__)
-#  define COMPILER_VERSION_PATCH DEC(__LCC_MINOR__)
-# endif
-# if defined(__GNUC__) && defined(__GNUC_MINOR__)
-#  define SIMULATE_ID "GNU"
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#  if defined(__GNUC_PATCHLEVEL__)
-#   define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#  endif
-# endif
-
-#elif defined(__GNUC__) || defined(__GNUG__)
-# define COMPILER_ID "GNU"
-# if defined(__GNUC__)
-#  define COMPILER_VERSION_MAJOR DEC(__GNUC__)
-# else
-#  define COMPILER_VERSION_MAJOR DEC(__GNUG__)
-# endif
-# if defined(__GNUC_MINOR__)
-#  define COMPILER_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif defined(_MSC_VER)
-# define COMPILER_ID "MSVC"
-  /* _MSC_VER = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define COMPILER_VERSION_MINOR DEC(_MSC_VER % 100)
-# if defined(_MSC_FULL_VER)
-#  if _MSC_VER >= 1400
-    /* _MSC_FULL_VER = VVRRPPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 100000)
-#  else
-    /* _MSC_FULL_VER = VVRRPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 10000)
-#  endif
-# endif
-# if defined(_MSC_BUILD)
-#  define COMPILER_VERSION_TWEAK DEC(_MSC_BUILD)
-# endif
-
-#elif defined(_ADI_COMPILER)
-# define COMPILER_ID "ADSP"
-#if defined(__VERSIONNUM__)
-  /* __VERSIONNUM__ = 0xVVRRPPTT */
-#  define COMPILER_VERSION_MAJOR DEC(__VERSIONNUM__ >> 24 & 0xFF)
-#  define COMPILER_VERSION_MINOR DEC(__VERSIONNUM__ >> 16 & 0xFF)
-#  define COMPILER_VERSION_PATCH DEC(__VERSIONNUM__ >> 8 & 0xFF)
-#  define COMPILER_VERSION_TWEAK DEC(__VERSIONNUM__ & 0xFF)
-#endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# define COMPILER_ID "IAR"
-# if defined(__VER__) && defined(__ICCARM__)
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 1000000)
-#  define COMPILER_VERSION_MINOR DEC(((__VER__) / 1000) % 1000)
-#  define COMPILER_VERSION_PATCH DEC((__VER__) % 1000)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# elif defined(__VER__) && (defined(__ICCAVR__) || defined(__ICCRX__) || defined(__ICCRH850__) || defined(__ICCRL78__) || defined(__ICC430__) || defined(__ICCRISCV__) || defined(__ICCV850__) || defined(__ICC8051__) || defined(__ICCSTM8__))
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 100)
-#  define COMPILER_VERSION_MINOR DEC((__VER__) - (((__VER__) / 100)*100))
-#  define COMPILER_VERSION_PATCH DEC(__SUBVERSION__)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# endif
-
-#elif defined(__DCC__) && defined(_DIAB_TOOL)
-# define COMPILER_ID "Diab"
-  # define COMPILER_VERSION_MAJOR DEC(__VERSION_MAJOR_NUMBER__)
-  # define COMPILER_VERSION_MINOR DEC(__VERSION_MINOR_NUMBER__)
-  # define COMPILER_VERSION_PATCH DEC(__VERSION_ARCH_FEATURE_NUMBER__)
-  # define COMPILER_VERSION_TWEAK DEC(__VERSION_BUG_FIX_NUMBER__)
-
-
-
-/* These compilers are either not known or too old to define an
-  identification macro.  Try to identify the platform and guess that
-  it is the native compiler.  */
-#elif defined(__hpux) || defined(__hpua)
-# define COMPILER_ID "HP"
-
-#else /* unknown compiler */
-# define COMPILER_ID ""
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_compiler = "INFO" ":" "compiler[" COMPILER_ID "]";
-#ifdef SIMULATE_ID
-char const* info_simulate = "INFO" ":" "simulate[" SIMULATE_ID "]";
-#endif
-
-#ifdef __QNXNTO__
-char const* qnxnto = "INFO" ":" "qnxnto[]";
-#endif
-
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-char const *info_cray = "INFO" ":" "compiler_wrapper[CrayPrgEnv]";
-#endif
-
-#define STRINGIFY_HELPER(X) #X
-#define STRINGIFY(X) STRINGIFY_HELPER(X)
-
-/* Identify known platforms by name.  */
-#if defined(__linux) || defined(__linux__) || defined(linux)
-# define PLATFORM_ID "Linux"
-
-#elif defined(__MSYS__)
-# define PLATFORM_ID "MSYS"
-
-#elif defined(__CYGWIN__)
-# define PLATFORM_ID "Cygwin"
-
-#elif defined(__MINGW32__)
-# define PLATFORM_ID "MinGW"
-
-#elif defined(__APPLE__)
-# define PLATFORM_ID "Darwin"
-
-#elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-# define PLATFORM_ID "Windows"
-
-#elif defined(__FreeBSD__) || defined(__FreeBSD)
-# define PLATFORM_ID "FreeBSD"
-
-#elif defined(__NetBSD__) || defined(__NetBSD)
-# define PLATFORM_ID "NetBSD"
-
-#elif defined(__OpenBSD__) || defined(__OPENBSD)
-# define PLATFORM_ID "OpenBSD"
-
-#elif defined(__sun) || defined(sun)
-# define PLATFORM_ID "SunOS"
-
-#elif defined(_AIX) || defined(__AIX) || defined(__AIX__) || defined(__aix) || defined(__aix__)
-# define PLATFORM_ID "AIX"
-
-#elif defined(__hpux) || defined(__hpux__)
-# define PLATFORM_ID "HP-UX"
-
-#elif defined(__HAIKU__)
-# define PLATFORM_ID "Haiku"
-
-#elif defined(__BeOS) || defined(__BEOS__) || defined(_BEOS)
-# define PLATFORM_ID "BeOS"
-
-#elif defined(__QNX__) || defined(__QNXNTO__)
-# define PLATFORM_ID "QNX"
-
-#elif defined(__tru64) || defined(_tru64) || defined(__TRU64__)
-# define PLATFORM_ID "Tru64"
-
-#elif defined(__riscos) || defined(__riscos__)
-# define PLATFORM_ID "RISCos"
-
-#elif defined(__sinix) || defined(__sinix__) || defined(__SINIX__)
-# define PLATFORM_ID "SINIX"
-
-#elif defined(__UNIX_SV__)
-# define PLATFORM_ID "UNIX_SV"
-
-#elif defined(__bsdos__)
-# define PLATFORM_ID "BSDOS"
-
-#elif defined(_MPRAS) || defined(MPRAS)
-# define PLATFORM_ID "MP-RAS"
-
-#elif defined(__osf) || defined(__osf__)
-# define PLATFORM_ID "OSF1"
-
-#elif defined(_SCO_SV) || defined(SCO_SV) || defined(sco_sv)
-# define PLATFORM_ID "SCO_SV"
-
-#elif defined(__ultrix) || defined(__ultrix__) || defined(_ULTRIX)
-# define PLATFORM_ID "ULTRIX"
-
-#elif defined(__XENIX__) || defined(_XENIX) || defined(XENIX)
-# define PLATFORM_ID "Xenix"
-
-#elif defined(__WATCOMC__)
-# if defined(__LINUX__)
-#  define PLATFORM_ID "Linux"
-
-# elif defined(__DOS__)
-#  define PLATFORM_ID "DOS"
-
-# elif defined(__OS2__)
-#  define PLATFORM_ID "OS2"
-
-# elif defined(__WINDOWS__)
-#  define PLATFORM_ID "Windows3x"
-
-# elif defined(__VXWORKS__)
-#  define PLATFORM_ID "VxWorks"
-
-# else /* unknown platform */
-#  define PLATFORM_ID
-# endif
-
-#elif defined(__INTEGRITY)
-# if defined(INT_178B)
-#  define PLATFORM_ID "Integrity178"
-
-# else /* regular Integrity */
-#  define PLATFORM_ID "Integrity"
-# endif
-
-# elif defined(_ADI_COMPILER)
-#  define PLATFORM_ID "ADSP"
-
-#else /* unknown platform */
-# define PLATFORM_ID
-
-#endif
-
-/* For windows compilers MSVC and Intel we can determine
-   the architecture of the compiler being used.  This is because
-   the compilers do not have flags that can change the architecture,
-   but rather depend on which compiler is being used
-*/
-#if defined(_WIN32) && defined(_MSC_VER)
-# if defined(_M_IA64)
-#  define ARCHITECTURE_ID "IA64"
-
-# elif defined(_M_ARM64EC)
-#  define ARCHITECTURE_ID "ARM64EC"
-
-# elif defined(_M_X64) || defined(_M_AMD64)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# elif defined(_M_ARM64)
-#  define ARCHITECTURE_ID "ARM64"
-
-# elif defined(_M_ARM)
-#  if _M_ARM == 4
-#   define ARCHITECTURE_ID "ARMV4I"
-#  elif _M_ARM == 5
-#   define ARCHITECTURE_ID "ARMV5I"
-#  else
-#   define ARCHITECTURE_ID "ARMV" STRINGIFY(_M_ARM)
-#  endif
-
-# elif defined(_M_MIPS)
-#  define ARCHITECTURE_ID "MIPS"
-
-# elif defined(_M_SH)
-#  define ARCHITECTURE_ID "SHx"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__WATCOMC__)
-# if defined(_M_I86)
-#  define ARCHITECTURE_ID "I86"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# if defined(__ICCARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__ICCRX__)
-#  define ARCHITECTURE_ID "RX"
-
-# elif defined(__ICCRH850__)
-#  define ARCHITECTURE_ID "RH850"
-
-# elif defined(__ICCRL78__)
-#  define ARCHITECTURE_ID "RL78"
-
-# elif defined(__ICCRISCV__)
-#  define ARCHITECTURE_ID "RISCV"
-
-# elif defined(__ICCAVR__)
-#  define ARCHITECTURE_ID "AVR"
-
-# elif defined(__ICC430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__ICCV850__)
-#  define ARCHITECTURE_ID "V850"
-
-# elif defined(__ICC8051__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__ICCSTM8__)
-#  define ARCHITECTURE_ID "STM8"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__ghs__)
-# if defined(__PPC64__)
-#  define ARCHITECTURE_ID "PPC64"
-
-# elif defined(__ppc__)
-#  define ARCHITECTURE_ID "PPC"
-
-# elif defined(__ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__x86_64__)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(__i386__)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__clang__) && defined(__ti__)
-# if defined(__ARM_ARCH)
-#  define ARCHITECTURE_ID "ARM"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__TI_COMPILER_VERSION__)
-# if defined(__TI_ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__MSP430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__TMS320C28XX__)
-#  define ARCHITECTURE_ID "TMS320C28x"
-
-# elif defined(__TMS320C6X__) || defined(_TMS320C6X)
-#  define ARCHITECTURE_ID "TMS320C6x"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-# elif defined(__ADSPSHARC__)
-#  define ARCHITECTURE_ID "SHARC"
-
-# elif defined(__ADSPBLACKFIN__)
-#  define ARCHITECTURE_ID "Blackfin"
-
-#elif defined(__TASKING__)
-
-# if defined(__CTC__) || defined(__CPTC__)
-#  define ARCHITECTURE_ID "TriCore"
-
-# elif defined(__CMCS__)
-#  define ARCHITECTURE_ID "MCS"
-
-# elif defined(__CARM__) || defined(__CPARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__CARC__)
-#  define ARCHITECTURE_ID "ARC"
-
-# elif defined(__C51__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__CPCP__)
-#  define ARCHITECTURE_ID "PCP"
-
-# else
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__RENESAS__)
-# if defined(__CCRX__)
-#  define ARCHITECTURE_ID "RX"
-
-# elif defined(__CCRL__)
-#  define ARCHITECTURE_ID "RL78"
-
-# elif defined(__CCRH__)
-#  define ARCHITECTURE_ID "RH850"
-
-# else
-#  define ARCHITECTURE_ID ""
-# endif
-
-#else
-#  define ARCHITECTURE_ID
-#endif
-
-/* Convert integer to decimal digit literals.  */
-#define DEC(n)                   \
-  ('0' + (((n) / 10000000)%10)), \
-  ('0' + (((n) / 1000000)%10)),  \
-  ('0' + (((n) / 100000)%10)),   \
-  ('0' + (((n) / 10000)%10)),    \
-  ('0' + (((n) / 1000)%10)),     \
-  ('0' + (((n) / 100)%10)),      \
-  ('0' + (((n) / 10)%10)),       \
-  ('0' +  ((n) % 10))
-
-/* Convert integer to hex digit literals.  */
-#define HEX(n)             \
-  ('0' + ((n)>>28 & 0xF)), \
-  ('0' + ((n)>>24 & 0xF)), \
-  ('0' + ((n)>>20 & 0xF)), \
-  ('0' + ((n)>>16 & 0xF)), \
-  ('0' + ((n)>>12 & 0xF)), \
-  ('0' + ((n)>>8  & 0xF)), \
-  ('0' + ((n)>>4  & 0xF)), \
-  ('0' + ((n)     & 0xF))
-
-/* Construct a string literal encoding the version number. */
-#ifdef COMPILER_VERSION
-char const* info_version = "INFO" ":" "compiler_version[" COMPILER_VERSION "]";
-
-/* Construct a string literal encoding the version number components. */
-#elif defined(COMPILER_VERSION_MAJOR)
-char const info_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','[',
-  COMPILER_VERSION_MAJOR,
-# ifdef COMPILER_VERSION_MINOR
-  '.', COMPILER_VERSION_MINOR,
-#  ifdef COMPILER_VERSION_PATCH
-   '.', COMPILER_VERSION_PATCH,
-#   ifdef COMPILER_VERSION_TWEAK
-    '.', COMPILER_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct a string literal encoding the internal version number. */
-#ifdef COMPILER_VERSION_INTERNAL
-char const info_version_internal[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','_',
-  'i','n','t','e','r','n','a','l','[',
-  COMPILER_VERSION_INTERNAL,']','\0'};
-#elif defined(COMPILER_VERSION_INTERNAL_STR)
-char const* info_version_internal = "INFO" ":" "compiler_version_internal[" COMPILER_VERSION_INTERNAL_STR "]";
-#endif
-
-/* Construct a string literal encoding the version number components. */
-#ifdef SIMULATE_VERSION_MAJOR
-char const info_simulate_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  's','i','m','u','l','a','t','e','_','v','e','r','s','i','o','n','[',
-  SIMULATE_VERSION_MAJOR,
-# ifdef SIMULATE_VERSION_MINOR
-  '.', SIMULATE_VERSION_MINOR,
-#  ifdef SIMULATE_VERSION_PATCH
-   '.', SIMULATE_VERSION_PATCH,
-#   ifdef SIMULATE_VERSION_TWEAK
-    '.', SIMULATE_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_platform = "INFO" ":" "platform[" PLATFORM_ID "]";
-char const* info_arch = "INFO" ":" "arch[" ARCHITECTURE_ID "]";
-
-
-
-#define CXX_STD_98 199711L
-#define CXX_STD_11 201103L
-#define CXX_STD_14 201402L
-#define CXX_STD_17 201703L
-#define CXX_STD_20 202002L
-#define CXX_STD_23 202302L
-
-#if defined(__INTEL_COMPILER) && defined(_MSVC_LANG)
-#  if _MSVC_LANG > CXX_STD_17
-#    define CXX_STD _MSVC_LANG
-#  elif _MSVC_LANG == CXX_STD_17 && defined(__cpp_aggregate_paren_init)
-#    define CXX_STD CXX_STD_20
-#  elif _MSVC_LANG > CXX_STD_14 && __cplusplus > CXX_STD_17
-#    define CXX_STD CXX_STD_20
-#  elif _MSVC_LANG > CXX_STD_14
-#    define CXX_STD CXX_STD_17
-#  elif defined(__INTEL_CXX11_MODE__) && defined(__cpp_aggregate_nsdmi)
-#    define CXX_STD CXX_STD_14
-#  elif defined(__INTEL_CXX11_MODE__)
-#    define CXX_STD CXX_STD_11
-#  else
-#    define CXX_STD CXX_STD_98
-#  endif
-#elif defined(_MSC_VER) && defined(_MSVC_LANG)
-#  if _MSVC_LANG > __cplusplus
-#    define CXX_STD _MSVC_LANG
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif defined(__NVCOMPILER)
-#  if __cplusplus == CXX_STD_17 && defined(__cpp_aggregate_paren_init)
-#    define CXX_STD CXX_STD_20
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif defined(__INTEL_COMPILER) || defined(__PGI)
-#  if __cplusplus == CXX_STD_11 && defined(__cpp_namespace_attributes)
-#    define CXX_STD CXX_STD_17
-#  elif __cplusplus == CXX_STD_11 && defined(__cpp_aggregate_nsdmi)
-#    define CXX_STD CXX_STD_14
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif (defined(__IBMCPP__) || defined(__ibmxl__)) && defined(__linux__)
-#  if __cplusplus == CXX_STD_11 && defined(__cpp_aggregate_nsdmi)
-#    define CXX_STD CXX_STD_14
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif __cplusplus == 1 && defined(__GXX_EXPERIMENTAL_CXX0X__)
-#  define CXX_STD CXX_STD_11
-#else
-#  define CXX_STD __cplusplus
-#endif
-
-const char* info_language_standard_default = "INFO" ":" "standard_default["
-#if CXX_STD > CXX_STD_23
-  "26"
-#elif CXX_STD > CXX_STD_20
-  "23"
-#elif CXX_STD > CXX_STD_17
-  "20"
-#elif CXX_STD > CXX_STD_14
-  "17"
-#elif CXX_STD > CXX_STD_11
-  "14"
-#elif CXX_STD >= CXX_STD_11
-  "11"
-#else
-  "98"
-#endif
-"]";
-
-const char* info_language_extensions_default = "INFO" ":" "extensions_default["
-#if (defined(__clang__) || defined(__GNUC__) || defined(__xlC__) ||           \
-     defined(__TI_COMPILER_VERSION__) || defined(__RENESAS__)) &&             \
-  !defined(__STRICT_ANSI__)
-  "ON"
-#else
-  "OFF"
-#endif
-"]";
-
-/*--------------------------------------------------------------------------*/
-
-int main(int argc, char* argv[])
-{
-  int require = 0;
-  require += info_compiler[argc];
-  require += info_platform[argc];
-  require += info_arch[argc];
-#ifdef COMPILER_VERSION_MAJOR
-  require += info_version[argc];
-#endif
-#if defined(COMPILER_VERSION_INTERNAL) || defined(COMPILER_VERSION_INTERNAL_STR)
-  require += info_version_internal[argc];
-#endif
-#ifdef SIMULATE_ID
-  require += info_simulate[argc];
-#endif
-#ifdef SIMULATE_VERSION_MAJOR
-  require += info_simulate_version[argc];
-#endif
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-  require += info_cray[argc];
-#endif
-  require += info_language_standard_default[argc];
-  require += info_language_extensions_default[argc];
-  (void)argv;
-  return require;
-}
-
-```
-
-# File: build_gcc\src\Version.h
-```cpp
-#ifndef VERSION_H
-#define VERSION_H
-
-#ifndef LMUFFB_VERSION
-#define LMUFFB_VERSION "0.7.82"
-#endif
-
-#endif
-
-```
-
-# File: build_mingw\CMakeFiles\4.2.3\CompilerIdC\CMakeCCompilerId.c
-```cpp
-#ifdef __cplusplus
-# error "A C++ compiler has been selected for C."
-#endif
-
-#if defined(__18CXX)
-# define ID_VOID_MAIN
-#endif
-#if defined(__CLASSIC_C__)
-/* cv-qualifiers did not exist in K&R C */
-# define const
-# define volatile
-#endif
-
-#if !defined(__has_include)
-/* If the compiler does not have __has_include, pretend the answer is
-   always no.  */
-#  define __has_include(x) 0
-#endif
-
-
-/* Version number components: V=Version, R=Revision, P=Patch
-   Version date components:   YYYY=Year, MM=Month,   DD=Day  */
-
-#if defined(__INTEL_COMPILER) || defined(__ICC)
-# define COMPILER_ID "Intel"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_ID "GNU"
-# endif
-  /* __INTEL_COMPILER = VRP prior to 2021, and then VVVV for 2021 and later,
-     except that a few beta releases use the old format with V=2021.  */
-# if __INTEL_COMPILER < 2021 || __INTEL_COMPILER == 202110 || __INTEL_COMPILER == 202111
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER/100)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER/10 % 10)
-#  if defined(__INTEL_COMPILER_UPDATE)
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER_UPDATE)
-#  else
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER   % 10)
-#  endif
-# else
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER_UPDATE)
-   /* The third version component from --version is an update index,
-      but no macro is provided for it.  */
-#  define COMPILER_VERSION_PATCH DEC(0)
-# endif
-# if defined(__INTEL_COMPILER_BUILD_DATE)
-   /* __INTEL_COMPILER_BUILD_DATE = YYYYMMDD */
-#  define COMPILER_VERSION_TWEAK DEC(__INTEL_COMPILER_BUILD_DATE)
-# endif
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-# elif defined(__GNUG__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-# endif
-# if defined(__GNUC_MINOR__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif (defined(__clang__) && defined(__INTEL_CLANG_COMPILER)) || defined(__INTEL_LLVM_COMPILER)
-# define COMPILER_ID "IntelLLVM"
-#if defined(_MSC_VER)
-# define SIMULATE_ID "MSVC"
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_ID "GNU"
-#endif
-/* __INTEL_LLVM_COMPILER = VVVVRP prior to 2021.2.0, VVVVRRPP for 2021.2.0 and
- * later.  Look for 6 digit vs. 8 digit version number to decide encoding.
- * VVVV is no smaller than the current year when a version is released.
- */
-#if __INTEL_LLVM_COMPILER < 1000000L
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/100)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER    % 10)
-#else
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/10000)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER     % 100)
-#endif
-#if defined(_MSC_VER)
-  /* _MSC_VER = VVRR */
-# define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#elif defined(__GNUG__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-#endif
-#if defined(__GNUC_MINOR__)
-# define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#endif
-#if defined(__GNUC_PATCHLEVEL__)
-# define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#endif
-
-#elif defined(__PATHCC__)
-# define COMPILER_ID "PathScale"
-# define COMPILER_VERSION_MAJOR DEC(__PATHCC__)
-# define COMPILER_VERSION_MINOR DEC(__PATHCC_MINOR__)
-# if defined(__PATHCC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PATHCC_PATCHLEVEL__)
-# endif
-
-#elif defined(__BORLANDC__) && defined(__CODEGEARC_VERSION__)
-# define COMPILER_ID "Embarcadero"
-# define COMPILER_VERSION_MAJOR HEX(__CODEGEARC_VERSION__>>24 & 0x00FF)
-# define COMPILER_VERSION_MINOR HEX(__CODEGEARC_VERSION__>>16 & 0x00FF)
-# define COMPILER_VERSION_PATCH DEC(__CODEGEARC_VERSION__     & 0xFFFF)
-
-#elif defined(__BORLANDC__)
-# define COMPILER_ID "Borland"
-  /* __BORLANDC__ = 0xVRR */
-# define COMPILER_VERSION_MAJOR HEX(__BORLANDC__>>8)
-# define COMPILER_VERSION_MINOR HEX(__BORLANDC__ & 0xFF)
-
-#elif defined(__WATCOMC__) && __WATCOMC__ < 1200
-# define COMPILER_ID "Watcom"
-   /* __WATCOMC__ = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(__WATCOMC__ / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__WATCOMC__)
-# define COMPILER_ID "OpenWatcom"
-   /* __WATCOMC__ = VVRP + 1100 */
-# define COMPILER_VERSION_MAJOR DEC((__WATCOMC__ - 1100) / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__SUNPRO_C)
-# define COMPILER_ID "SunPro"
-# if __SUNPRO_C >= 0x5100
-   /* __SUNPRO_C = 0xVRRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_C>>12)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_C>>4 & 0xFF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_C    & 0xF)
-# else
-   /* __SUNPRO_CC = 0xVRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_C>>8)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_C>>4 & 0xF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_C    & 0xF)
-# endif
-
-#elif defined(__HP_cc)
-# define COMPILER_ID "HP"
-  /* __HP_cc = VVRRPP */
-# define COMPILER_VERSION_MAJOR DEC(__HP_cc/10000)
-# define COMPILER_VERSION_MINOR DEC(__HP_cc/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__HP_cc     % 100)
-
-#elif defined(__DECC)
-# define COMPILER_ID "Compaq"
-  /* __DECC_VER = VVRRTPPPP */
-# define COMPILER_VERSION_MAJOR DEC(__DECC_VER/10000000)
-# define COMPILER_VERSION_MINOR DEC(__DECC_VER/100000  % 100)
-# define COMPILER_VERSION_PATCH DEC(__DECC_VER         % 10000)
-
-#elif defined(__IBMC__) && defined(__COMPILER_VER__)
-# define COMPILER_ID "zOS"
-  /* __IBMC__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMC__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMC__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMC__    % 10)
-
-#elif defined(__open_xl__) && defined(__clang__)
-# define COMPILER_ID "IBMClang"
-# define COMPILER_VERSION_MAJOR DEC(__open_xl_version__)
-# define COMPILER_VERSION_MINOR DEC(__open_xl_release__)
-# define COMPILER_VERSION_PATCH DEC(__open_xl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__open_xl_ptf_fix_level__)
-# define COMPILER_VERSION_INTERNAL_STR  __clang_version__
-
-
-#elif defined(__ibmxl__) && defined(__clang__)
-# define COMPILER_ID "XLClang"
-# define COMPILER_VERSION_MAJOR DEC(__ibmxl_version__)
-# define COMPILER_VERSION_MINOR DEC(__ibmxl_release__)
-# define COMPILER_VERSION_PATCH DEC(__ibmxl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__ibmxl_ptf_fix_level__)
-
-
-#elif defined(__IBMC__) && !defined(__COMPILER_VER__) && __IBMC__ >= 800
-# define COMPILER_ID "XL"
-  /* __IBMC__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMC__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMC__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMC__    % 10)
-
-#elif defined(__IBMC__) && !defined(__COMPILER_VER__) && __IBMC__ < 800
-# define COMPILER_ID "VisualAge"
-  /* __IBMC__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMC__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMC__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMC__    % 10)
-
-#elif defined(__NVCOMPILER)
-# define COMPILER_ID "NVHPC"
-# define COMPILER_VERSION_MAJOR DEC(__NVCOMPILER_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__NVCOMPILER_MINOR__)
-# if defined(__NVCOMPILER_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__NVCOMPILER_PATCHLEVEL__)
-# endif
-
-#elif defined(__PGI)
-# define COMPILER_ID "PGI"
-# define COMPILER_VERSION_MAJOR DEC(__PGIC__)
-# define COMPILER_VERSION_MINOR DEC(__PGIC_MINOR__)
-# if defined(__PGIC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PGIC_PATCHLEVEL__)
-# endif
-
-#elif defined(__clang__) && defined(__cray__)
-# define COMPILER_ID "CrayClang"
-# define COMPILER_VERSION_MAJOR DEC(__cray_major__)
-# define COMPILER_VERSION_MINOR DEC(__cray_minor__)
-# define COMPILER_VERSION_PATCH DEC(__cray_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(_CRAYC)
-# define COMPILER_ID "Cray"
-# define COMPILER_VERSION_MAJOR DEC(_RELEASE_MAJOR)
-# define COMPILER_VERSION_MINOR DEC(_RELEASE_MINOR)
-
-#elif defined(__TI_COMPILER_VERSION__)
-# define COMPILER_ID "TI"
-  /* __TI_COMPILER_VERSION__ = VVVRRRPPP */
-# define COMPILER_VERSION_MAJOR DEC(__TI_COMPILER_VERSION__/1000000)
-# define COMPILER_VERSION_MINOR DEC(__TI_COMPILER_VERSION__/1000   % 1000)
-# define COMPILER_VERSION_PATCH DEC(__TI_COMPILER_VERSION__        % 1000)
-
-#elif defined(__CLANG_FUJITSU)
-# define COMPILER_ID "FujitsuClang"
-# define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-# define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-# define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(__FUJITSU)
-# define COMPILER_ID "Fujitsu"
-# if defined(__FCC_version__)
-#   define COMPILER_VERSION __FCC_version__
-# elif defined(__FCC_major__)
-#   define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-#   define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-#   define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# endif
-# if defined(__fcc_version)
-#   define COMPILER_VERSION_INTERNAL DEC(__fcc_version)
-# elif defined(__FCC_VERSION)
-#   define COMPILER_VERSION_INTERNAL DEC(__FCC_VERSION)
-# endif
-
-
-#elif defined(__ghs__)
-# define COMPILER_ID "GHS"
-/* __GHS_VERSION_NUMBER = VVVVRP */
-# ifdef __GHS_VERSION_NUMBER
-# define COMPILER_VERSION_MAJOR DEC(__GHS_VERSION_NUMBER / 100)
-# define COMPILER_VERSION_MINOR DEC(__GHS_VERSION_NUMBER / 10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__GHS_VERSION_NUMBER      % 10)
-# endif
-
-#elif defined(__TASKING__)
-# define COMPILER_ID "Tasking"
-  # define COMPILER_VERSION_MAJOR DEC(__VERSION__/1000)
-  # define COMPILER_VERSION_MINOR DEC(__VERSION__ % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__VERSION__)
-
-#elif defined(__ORANGEC__)
-# define COMPILER_ID "OrangeC"
-# define COMPILER_VERSION_MAJOR DEC(__ORANGEC_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__ORANGEC_MINOR__)
-# define COMPILER_VERSION_PATCH DEC(__ORANGEC_PATCHLEVEL__)
-
-#elif defined(__RENESAS__)
-# define COMPILER_ID "Renesas"
-/* __RENESAS_VERSION__ = 0xVVRRPP00 */
-# define COMPILER_VERSION_MAJOR HEX(__RENESAS_VERSION__ >> 24 & 0xFF)
-# define COMPILER_VERSION_MINOR HEX(__RENESAS_VERSION__ >> 16 & 0xFF)
-# define COMPILER_VERSION_PATCH HEX(__RENESAS_VERSION__ >> 8  & 0xFF)
-
-#elif defined(__TINYC__)
-# define COMPILER_ID "TinyCC"
-
-#elif defined(__BCC__)
-# define COMPILER_ID "Bruce"
-
-#elif defined(__SCO_VERSION__)
-# define COMPILER_ID "SCO"
-
-#elif defined(__ARMCC_VERSION) && !defined(__clang__)
-# define COMPILER_ID "ARMCC"
-#if __ARMCC_VERSION >= 1000000
-  /* __ARMCC_VERSION = VRRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION     % 10000)
-#else
-  /* __ARMCC_VERSION = VRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/100000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 10)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION    % 10000)
-#endif
-
-
-#elif defined(__clang__) && defined(__apple_build_version__)
-# define COMPILER_ID "AppleClang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# define COMPILER_VERSION_TWEAK DEC(__apple_build_version__)
-
-#elif defined(__clang__) && defined(__ARMCOMPILER_VERSION)
-# define COMPILER_ID "ARMClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCOMPILER_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCOMPILER_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCOMPILER_VERSION/100   % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__ARMCOMPILER_VERSION)
-
-#elif defined(__clang__) && defined(__ti__)
-# define COMPILER_ID "TIClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ti_major__)
-  # define COMPILER_VERSION_MINOR DEC(__ti_minor__)
-  # define COMPILER_VERSION_PATCH DEC(__ti_patchlevel__)
-# define COMPILER_VERSION_INTERNAL DEC(__ti_version__)
-
-#elif defined(__clang__)
-# define COMPILER_ID "Clang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-
-#elif defined(__LCC__) && (defined(__GNUC__) || defined(__GNUG__) || defined(__MCST__))
-# define COMPILER_ID "LCC"
-# define COMPILER_VERSION_MAJOR DEC(__LCC__ / 100)
-# define COMPILER_VERSION_MINOR DEC(__LCC__ % 100)
-# if defined(__LCC_MINOR__)
-#  define COMPILER_VERSION_PATCH DEC(__LCC_MINOR__)
-# endif
-# if defined(__GNUC__) && defined(__GNUC_MINOR__)
-#  define SIMULATE_ID "GNU"
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#  if defined(__GNUC_PATCHLEVEL__)
-#   define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#  endif
-# endif
-
-#elif defined(__GNUC__)
-# define COMPILER_ID "GNU"
-# define COMPILER_VERSION_MAJOR DEC(__GNUC__)
-# if defined(__GNUC_MINOR__)
-#  define COMPILER_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif defined(_MSC_VER)
-# define COMPILER_ID "MSVC"
-  /* _MSC_VER = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define COMPILER_VERSION_MINOR DEC(_MSC_VER % 100)
-# if defined(_MSC_FULL_VER)
-#  if _MSC_VER >= 1400
-    /* _MSC_FULL_VER = VVRRPPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 100000)
-#  else
-    /* _MSC_FULL_VER = VVRRPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 10000)
-#  endif
-# endif
-# if defined(_MSC_BUILD)
-#  define COMPILER_VERSION_TWEAK DEC(_MSC_BUILD)
-# endif
-
-#elif defined(_ADI_COMPILER)
-# define COMPILER_ID "ADSP"
-#if defined(__VERSIONNUM__)
-  /* __VERSIONNUM__ = 0xVVRRPPTT */
-#  define COMPILER_VERSION_MAJOR DEC(__VERSIONNUM__ >> 24 & 0xFF)
-#  define COMPILER_VERSION_MINOR DEC(__VERSIONNUM__ >> 16 & 0xFF)
-#  define COMPILER_VERSION_PATCH DEC(__VERSIONNUM__ >> 8 & 0xFF)
-#  define COMPILER_VERSION_TWEAK DEC(__VERSIONNUM__ & 0xFF)
-#endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# define COMPILER_ID "IAR"
-# if defined(__VER__) && defined(__ICCARM__)
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 1000000)
-#  define COMPILER_VERSION_MINOR DEC(((__VER__) / 1000) % 1000)
-#  define COMPILER_VERSION_PATCH DEC((__VER__) % 1000)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# elif defined(__VER__) && (defined(__ICCAVR__) || defined(__ICCRX__) || defined(__ICCRH850__) || defined(__ICCRL78__) || defined(__ICC430__) || defined(__ICCRISCV__) || defined(__ICCV850__) || defined(__ICC8051__) || defined(__ICCSTM8__))
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 100)
-#  define COMPILER_VERSION_MINOR DEC((__VER__) - (((__VER__) / 100)*100))
-#  define COMPILER_VERSION_PATCH DEC(__SUBVERSION__)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# endif
-
-#elif defined(__DCC__) && defined(_DIAB_TOOL)
-# define COMPILER_ID "Diab"
-  # define COMPILER_VERSION_MAJOR DEC(__VERSION_MAJOR_NUMBER__)
-  # define COMPILER_VERSION_MINOR DEC(__VERSION_MINOR_NUMBER__)
-  # define COMPILER_VERSION_PATCH DEC(__VERSION_ARCH_FEATURE_NUMBER__)
-  # define COMPILER_VERSION_TWEAK DEC(__VERSION_BUG_FIX_NUMBER__)
-
-
-#elif defined(__SDCC_VERSION_MAJOR) || defined(SDCC)
-# define COMPILER_ID "SDCC"
-# if defined(__SDCC_VERSION_MAJOR)
-#  define COMPILER_VERSION_MAJOR DEC(__SDCC_VERSION_MAJOR)
-#  define COMPILER_VERSION_MINOR DEC(__SDCC_VERSION_MINOR)
-#  define COMPILER_VERSION_PATCH DEC(__SDCC_VERSION_PATCH)
-# else
-  /* SDCC = VRP */
-#  define COMPILER_VERSION_MAJOR DEC(SDCC/100)
-#  define COMPILER_VERSION_MINOR DEC(SDCC/10 % 10)
-#  define COMPILER_VERSION_PATCH DEC(SDCC    % 10)
-# endif
-
-
-/* These compilers are either not known or too old to define an
-  identification macro.  Try to identify the platform and guess that
-  it is the native compiler.  */
-#elif defined(__hpux) || defined(__hpua)
-# define COMPILER_ID "HP"
-
-#else /* unknown compiler */
-# define COMPILER_ID ""
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_compiler = "INFO" ":" "compiler[" COMPILER_ID "]";
-#ifdef SIMULATE_ID
-char const* info_simulate = "INFO" ":" "simulate[" SIMULATE_ID "]";
-#endif
-
-#ifdef __QNXNTO__
-char const* qnxnto = "INFO" ":" "qnxnto[]";
-#endif
-
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-char const *info_cray = "INFO" ":" "compiler_wrapper[CrayPrgEnv]";
-#endif
-
-#define STRINGIFY_HELPER(X) #X
-#define STRINGIFY(X) STRINGIFY_HELPER(X)
-
-/* Identify known platforms by name.  */
-#if defined(__linux) || defined(__linux__) || defined(linux)
-# define PLATFORM_ID "Linux"
-
-#elif defined(__MSYS__)
-# define PLATFORM_ID "MSYS"
-
-#elif defined(__CYGWIN__)
-# define PLATFORM_ID "Cygwin"
-
-#elif defined(__MINGW32__)
-# define PLATFORM_ID "MinGW"
-
-#elif defined(__APPLE__)
-# define PLATFORM_ID "Darwin"
-
-#elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-# define PLATFORM_ID "Windows"
-
-#elif defined(__FreeBSD__) || defined(__FreeBSD)
-# define PLATFORM_ID "FreeBSD"
-
-#elif defined(__NetBSD__) || defined(__NetBSD)
-# define PLATFORM_ID "NetBSD"
-
-#elif defined(__OpenBSD__) || defined(__OPENBSD)
-# define PLATFORM_ID "OpenBSD"
-
-#elif defined(__sun) || defined(sun)
-# define PLATFORM_ID "SunOS"
-
-#elif defined(_AIX) || defined(__AIX) || defined(__AIX__) || defined(__aix) || defined(__aix__)
-# define PLATFORM_ID "AIX"
-
-#elif defined(__hpux) || defined(__hpux__)
-# define PLATFORM_ID "HP-UX"
-
-#elif defined(__HAIKU__)
-# define PLATFORM_ID "Haiku"
-
-#elif defined(__BeOS) || defined(__BEOS__) || defined(_BEOS)
-# define PLATFORM_ID "BeOS"
-
-#elif defined(__QNX__) || defined(__QNXNTO__)
-# define PLATFORM_ID "QNX"
-
-#elif defined(__tru64) || defined(_tru64) || defined(__TRU64__)
-# define PLATFORM_ID "Tru64"
-
-#elif defined(__riscos) || defined(__riscos__)
-# define PLATFORM_ID "RISCos"
-
-#elif defined(__sinix) || defined(__sinix__) || defined(__SINIX__)
-# define PLATFORM_ID "SINIX"
-
-#elif defined(__UNIX_SV__)
-# define PLATFORM_ID "UNIX_SV"
-
-#elif defined(__bsdos__)
-# define PLATFORM_ID "BSDOS"
-
-#elif defined(_MPRAS) || defined(MPRAS)
-# define PLATFORM_ID "MP-RAS"
-
-#elif defined(__osf) || defined(__osf__)
-# define PLATFORM_ID "OSF1"
-
-#elif defined(_SCO_SV) || defined(SCO_SV) || defined(sco_sv)
-# define PLATFORM_ID "SCO_SV"
-
-#elif defined(__ultrix) || defined(__ultrix__) || defined(_ULTRIX)
-# define PLATFORM_ID "ULTRIX"
-
-#elif defined(__XENIX__) || defined(_XENIX) || defined(XENIX)
-# define PLATFORM_ID "Xenix"
-
-#elif defined(__WATCOMC__)
-# if defined(__LINUX__)
-#  define PLATFORM_ID "Linux"
-
-# elif defined(__DOS__)
-#  define PLATFORM_ID "DOS"
-
-# elif defined(__OS2__)
-#  define PLATFORM_ID "OS2"
-
-# elif defined(__WINDOWS__)
-#  define PLATFORM_ID "Windows3x"
-
-# elif defined(__VXWORKS__)
-#  define PLATFORM_ID "VxWorks"
-
-# else /* unknown platform */
-#  define PLATFORM_ID
-# endif
-
-#elif defined(__INTEGRITY)
-# if defined(INT_178B)
-#  define PLATFORM_ID "Integrity178"
-
-# else /* regular Integrity */
-#  define PLATFORM_ID "Integrity"
-# endif
-
-# elif defined(_ADI_COMPILER)
-#  define PLATFORM_ID "ADSP"
-
-#else /* unknown platform */
-# define PLATFORM_ID
-
-#endif
-
-/* For windows compilers MSVC and Intel we can determine
-   the architecture of the compiler being used.  This is because
-   the compilers do not have flags that can change the architecture,
-   but rather depend on which compiler is being used
-*/
-#if defined(_WIN32) && defined(_MSC_VER)
-# if defined(_M_IA64)
-#  define ARCHITECTURE_ID "IA64"
-
-# elif defined(_M_ARM64EC)
-#  define ARCHITECTURE_ID "ARM64EC"
-
-# elif defined(_M_X64) || defined(_M_AMD64)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# elif defined(_M_ARM64)
-#  define ARCHITECTURE_ID "ARM64"
-
-# elif defined(_M_ARM)
-#  if _M_ARM == 4
-#   define ARCHITECTURE_ID "ARMV4I"
-#  elif _M_ARM == 5
-#   define ARCHITECTURE_ID "ARMV5I"
-#  else
-#   define ARCHITECTURE_ID "ARMV" STRINGIFY(_M_ARM)
-#  endif
-
-# elif defined(_M_MIPS)
-#  define ARCHITECTURE_ID "MIPS"
-
-# elif defined(_M_SH)
-#  define ARCHITECTURE_ID "SHx"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__WATCOMC__)
-# if defined(_M_I86)
-#  define ARCHITECTURE_ID "I86"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# if defined(__ICCARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__ICCRX__)
-#  define ARCHITECTURE_ID "RX"
-
-# elif defined(__ICCRH850__)
-#  define ARCHITECTURE_ID "RH850"
-
-# elif defined(__ICCRL78__)
-#  define ARCHITECTURE_ID "RL78"
-
-# elif defined(__ICCRISCV__)
-#  define ARCHITECTURE_ID "RISCV"
-
-# elif defined(__ICCAVR__)
-#  define ARCHITECTURE_ID "AVR"
-
-# elif defined(__ICC430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__ICCV850__)
-#  define ARCHITECTURE_ID "V850"
-
-# elif defined(__ICC8051__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__ICCSTM8__)
-#  define ARCHITECTURE_ID "STM8"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__ghs__)
-# if defined(__PPC64__)
-#  define ARCHITECTURE_ID "PPC64"
-
-# elif defined(__ppc__)
-#  define ARCHITECTURE_ID "PPC"
-
-# elif defined(__ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__x86_64__)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(__i386__)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__clang__) && defined(__ti__)
-# if defined(__ARM_ARCH)
-#  define ARCHITECTURE_ID "ARM"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__TI_COMPILER_VERSION__)
-# if defined(__TI_ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__MSP430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__TMS320C28XX__)
-#  define ARCHITECTURE_ID "TMS320C28x"
-
-# elif defined(__TMS320C6X__) || defined(_TMS320C6X)
-#  define ARCHITECTURE_ID "TMS320C6x"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-# elif defined(__ADSPSHARC__)
-#  define ARCHITECTURE_ID "SHARC"
-
-# elif defined(__ADSPBLACKFIN__)
-#  define ARCHITECTURE_ID "Blackfin"
-
-#elif defined(__TASKING__)
-
-# if defined(__CTC__) || defined(__CPTC__)
-#  define ARCHITECTURE_ID "TriCore"
-
-# elif defined(__CMCS__)
-#  define ARCHITECTURE_ID "MCS"
-
-# elif defined(__CARM__) || defined(__CPARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__CARC__)
-#  define ARCHITECTURE_ID "ARC"
-
-# elif defined(__C51__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__CPCP__)
-#  define ARCHITECTURE_ID "PCP"
-
-# else
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__RENESAS__)
-# if defined(__CCRX__)
-#  define ARCHITECTURE_ID "RX"
-
-# elif defined(__CCRL__)
-#  define ARCHITECTURE_ID "RL78"
-
-# elif defined(__CCRH__)
-#  define ARCHITECTURE_ID "RH850"
-
-# else
-#  define ARCHITECTURE_ID ""
-# endif
-
-#else
-#  define ARCHITECTURE_ID
-#endif
-
-/* Convert integer to decimal digit literals.  */
-#define DEC(n)                   \
-  ('0' + (((n) / 10000000)%10)), \
-  ('0' + (((n) / 1000000)%10)),  \
-  ('0' + (((n) / 100000)%10)),   \
-  ('0' + (((n) / 10000)%10)),    \
-  ('0' + (((n) / 1000)%10)),     \
-  ('0' + (((n) / 100)%10)),      \
-  ('0' + (((n) / 10)%10)),       \
-  ('0' +  ((n) % 10))
-
-/* Convert integer to hex digit literals.  */
-#define HEX(n)             \
-  ('0' + ((n)>>28 & 0xF)), \
-  ('0' + ((n)>>24 & 0xF)), \
-  ('0' + ((n)>>20 & 0xF)), \
-  ('0' + ((n)>>16 & 0xF)), \
-  ('0' + ((n)>>12 & 0xF)), \
-  ('0' + ((n)>>8  & 0xF)), \
-  ('0' + ((n)>>4  & 0xF)), \
-  ('0' + ((n)     & 0xF))
-
-/* Construct a string literal encoding the version number. */
-#ifdef COMPILER_VERSION
-char const* info_version = "INFO" ":" "compiler_version[" COMPILER_VERSION "]";
-
-/* Construct a string literal encoding the version number components. */
-#elif defined(COMPILER_VERSION_MAJOR)
-char const info_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','[',
-  COMPILER_VERSION_MAJOR,
-# ifdef COMPILER_VERSION_MINOR
-  '.', COMPILER_VERSION_MINOR,
-#  ifdef COMPILER_VERSION_PATCH
-   '.', COMPILER_VERSION_PATCH,
-#   ifdef COMPILER_VERSION_TWEAK
-    '.', COMPILER_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct a string literal encoding the internal version number. */
-#ifdef COMPILER_VERSION_INTERNAL
-char const info_version_internal[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','_',
-  'i','n','t','e','r','n','a','l','[',
-  COMPILER_VERSION_INTERNAL,']','\0'};
-#elif defined(COMPILER_VERSION_INTERNAL_STR)
-char const* info_version_internal = "INFO" ":" "compiler_version_internal[" COMPILER_VERSION_INTERNAL_STR "]";
-#endif
-
-/* Construct a string literal encoding the version number components. */
-#ifdef SIMULATE_VERSION_MAJOR
-char const info_simulate_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  's','i','m','u','l','a','t','e','_','v','e','r','s','i','o','n','[',
-  SIMULATE_VERSION_MAJOR,
-# ifdef SIMULATE_VERSION_MINOR
-  '.', SIMULATE_VERSION_MINOR,
-#  ifdef SIMULATE_VERSION_PATCH
-   '.', SIMULATE_VERSION_PATCH,
-#   ifdef SIMULATE_VERSION_TWEAK
-    '.', SIMULATE_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_platform = "INFO" ":" "platform[" PLATFORM_ID "]";
-char const* info_arch = "INFO" ":" "arch[" ARCHITECTURE_ID "]";
-
-
-
-#define C_STD_99 199901L
-#define C_STD_11 201112L
-#define C_STD_17 201710L
-#define C_STD_23 202311L
-
-#ifdef __STDC_VERSION__
-#  define C_STD __STDC_VERSION__
-#endif
-
-#if !defined(__STDC__) && !defined(__clang__) && !defined(__RENESAS__)
-# if defined(_MSC_VER) || defined(__ibmxl__) || defined(__IBMC__)
-#  define C_VERSION "90"
-# else
-#  define C_VERSION
-# endif
-#elif C_STD > C_STD_17
-# define C_VERSION "23"
-#elif C_STD > C_STD_11
-# define C_VERSION "17"
-#elif C_STD > C_STD_99
-# define C_VERSION "11"
-#elif C_STD >= C_STD_99
-# define C_VERSION "99"
-#else
-# define C_VERSION "90"
-#endif
-const char* info_language_standard_default =
-  "INFO" ":" "standard_default[" C_VERSION "]";
-
-const char* info_language_extensions_default = "INFO" ":" "extensions_default["
-#if (defined(__clang__) || defined(__GNUC__) || defined(__xlC__) ||           \
-     defined(__TI_COMPILER_VERSION__) || defined(__RENESAS__)) &&             \
-  !defined(__STRICT_ANSI__)
-  "ON"
-#else
-  "OFF"
-#endif
-"]";
-
-/*--------------------------------------------------------------------------*/
-
-#ifdef ID_VOID_MAIN
-void main() {}
-#else
-# if defined(__CLASSIC_C__)
-int main(argc, argv) int argc; char *argv[];
-# else
-int main(int argc, char* argv[])
-# endif
-{
-  int require = 0;
-  require += info_compiler[argc];
-  require += info_platform[argc];
-  require += info_arch[argc];
-#ifdef COMPILER_VERSION_MAJOR
-  require += info_version[argc];
-#endif
-#if defined(COMPILER_VERSION_INTERNAL) || defined(COMPILER_VERSION_INTERNAL_STR)
-  require += info_version_internal[argc];
-#endif
-#ifdef SIMULATE_ID
-  require += info_simulate[argc];
-#endif
-#ifdef SIMULATE_VERSION_MAJOR
-  require += info_simulate_version[argc];
-#endif
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-  require += info_cray[argc];
-#endif
-  require += info_language_standard_default[argc];
-  require += info_language_extensions_default[argc];
-  (void)argv;
-  return require;
-}
-#endif
-
-```
-
-# File: build_mingw\CMakeFiles\4.2.3\CompilerIdCXX\CMakeCXXCompilerId.cpp
-```cpp
-/* This source file must have a .cpp extension so that all C++ compilers
-   recognize the extension without flags.  Borland does not know .cxx for
-   example.  */
-#ifndef __cplusplus
-# error "A C compiler has been selected for C++."
-#endif
-
-#if !defined(__has_include)
-/* If the compiler does not have __has_include, pretend the answer is
-   always no.  */
-#  define __has_include(x) 0
-#endif
-
-
-/* Version number components: V=Version, R=Revision, P=Patch
-   Version date components:   YYYY=Year, MM=Month,   DD=Day  */
-
-#if defined(__INTEL_COMPILER) || defined(__ICC)
-# define COMPILER_ID "Intel"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_ID "GNU"
-# endif
-  /* __INTEL_COMPILER = VRP prior to 2021, and then VVVV for 2021 and later,
-     except that a few beta releases use the old format with V=2021.  */
-# if __INTEL_COMPILER < 2021 || __INTEL_COMPILER == 202110 || __INTEL_COMPILER == 202111
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER/100)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER/10 % 10)
-#  if defined(__INTEL_COMPILER_UPDATE)
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER_UPDATE)
-#  else
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER   % 10)
-#  endif
-# else
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER_UPDATE)
-   /* The third version component from --version is an update index,
-      but no macro is provided for it.  */
-#  define COMPILER_VERSION_PATCH DEC(0)
-# endif
-# if defined(__INTEL_COMPILER_BUILD_DATE)
-   /* __INTEL_COMPILER_BUILD_DATE = YYYYMMDD */
-#  define COMPILER_VERSION_TWEAK DEC(__INTEL_COMPILER_BUILD_DATE)
-# endif
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-# elif defined(__GNUG__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-# endif
-# if defined(__GNUC_MINOR__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif (defined(__clang__) && defined(__INTEL_CLANG_COMPILER)) || defined(__INTEL_LLVM_COMPILER)
-# define COMPILER_ID "IntelLLVM"
-#if defined(_MSC_VER)
-# define SIMULATE_ID "MSVC"
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_ID "GNU"
-#endif
-/* __INTEL_LLVM_COMPILER = VVVVRP prior to 2021.2.0, VVVVRRPP for 2021.2.0 and
- * later.  Look for 6 digit vs. 8 digit version number to decide encoding.
- * VVVV is no smaller than the current year when a version is released.
- */
-#if __INTEL_LLVM_COMPILER < 1000000L
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/100)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER    % 10)
-#else
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/10000)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER     % 100)
-#endif
-#if defined(_MSC_VER)
-  /* _MSC_VER = VVRR */
-# define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#elif defined(__GNUG__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-#endif
-#if defined(__GNUC_MINOR__)
-# define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#endif
-#if defined(__GNUC_PATCHLEVEL__)
-# define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#endif
-
-#elif defined(__PATHCC__)
-# define COMPILER_ID "PathScale"
-# define COMPILER_VERSION_MAJOR DEC(__PATHCC__)
-# define COMPILER_VERSION_MINOR DEC(__PATHCC_MINOR__)
-# if defined(__PATHCC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PATHCC_PATCHLEVEL__)
-# endif
-
-#elif defined(__BORLANDC__) && defined(__CODEGEARC_VERSION__)
-# define COMPILER_ID "Embarcadero"
-# define COMPILER_VERSION_MAJOR HEX(__CODEGEARC_VERSION__>>24 & 0x00FF)
-# define COMPILER_VERSION_MINOR HEX(__CODEGEARC_VERSION__>>16 & 0x00FF)
-# define COMPILER_VERSION_PATCH DEC(__CODEGEARC_VERSION__     & 0xFFFF)
-
-#elif defined(__BORLANDC__)
-# define COMPILER_ID "Borland"
-  /* __BORLANDC__ = 0xVRR */
-# define COMPILER_VERSION_MAJOR HEX(__BORLANDC__>>8)
-# define COMPILER_VERSION_MINOR HEX(__BORLANDC__ & 0xFF)
-
-#elif defined(__WATCOMC__) && __WATCOMC__ < 1200
-# define COMPILER_ID "Watcom"
-   /* __WATCOMC__ = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(__WATCOMC__ / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__WATCOMC__)
-# define COMPILER_ID "OpenWatcom"
-   /* __WATCOMC__ = VVRP + 1100 */
-# define COMPILER_VERSION_MAJOR DEC((__WATCOMC__ - 1100) / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__SUNPRO_CC)
-# define COMPILER_ID "SunPro"
-# if __SUNPRO_CC >= 0x5100
-   /* __SUNPRO_CC = 0xVRRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_CC>>12)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_CC>>4 & 0xFF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_CC    & 0xF)
-# else
-   /* __SUNPRO_CC = 0xVRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_CC>>8)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_CC>>4 & 0xF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_CC    & 0xF)
-# endif
-
-#elif defined(__HP_aCC)
-# define COMPILER_ID "HP"
-  /* __HP_aCC = VVRRPP */
-# define COMPILER_VERSION_MAJOR DEC(__HP_aCC/10000)
-# define COMPILER_VERSION_MINOR DEC(__HP_aCC/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__HP_aCC     % 100)
-
-#elif defined(__DECCXX)
-# define COMPILER_ID "Compaq"
-  /* __DECCXX_VER = VVRRTPPPP */
-# define COMPILER_VERSION_MAJOR DEC(__DECCXX_VER/10000000)
-# define COMPILER_VERSION_MINOR DEC(__DECCXX_VER/100000  % 100)
-# define COMPILER_VERSION_PATCH DEC(__DECCXX_VER         % 10000)
-
-#elif defined(__IBMCPP__) && defined(__COMPILER_VER__)
-# define COMPILER_ID "zOS"
-  /* __IBMCPP__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
-
-#elif defined(__open_xl__) && defined(__clang__)
-# define COMPILER_ID "IBMClang"
-# define COMPILER_VERSION_MAJOR DEC(__open_xl_version__)
-# define COMPILER_VERSION_MINOR DEC(__open_xl_release__)
-# define COMPILER_VERSION_PATCH DEC(__open_xl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__open_xl_ptf_fix_level__)
-# define COMPILER_VERSION_INTERNAL_STR  __clang_version__
-
-
-#elif defined(__ibmxl__) && defined(__clang__)
-# define COMPILER_ID "XLClang"
-# define COMPILER_VERSION_MAJOR DEC(__ibmxl_version__)
-# define COMPILER_VERSION_MINOR DEC(__ibmxl_release__)
-# define COMPILER_VERSION_PATCH DEC(__ibmxl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__ibmxl_ptf_fix_level__)
-
-
-#elif defined(__IBMCPP__) && !defined(__COMPILER_VER__) && __IBMCPP__ >= 800
-# define COMPILER_ID "XL"
-  /* __IBMCPP__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
-
-#elif defined(__IBMCPP__) && !defined(__COMPILER_VER__) && __IBMCPP__ < 800
-# define COMPILER_ID "VisualAge"
-  /* __IBMCPP__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
-
-#elif defined(__NVCOMPILER)
-# define COMPILER_ID "NVHPC"
-# define COMPILER_VERSION_MAJOR DEC(__NVCOMPILER_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__NVCOMPILER_MINOR__)
-# if defined(__NVCOMPILER_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__NVCOMPILER_PATCHLEVEL__)
-# endif
-
-#elif defined(__PGI)
-# define COMPILER_ID "PGI"
-# define COMPILER_VERSION_MAJOR DEC(__PGIC__)
-# define COMPILER_VERSION_MINOR DEC(__PGIC_MINOR__)
-# if defined(__PGIC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PGIC_PATCHLEVEL__)
-# endif
-
-#elif defined(__clang__) && defined(__cray__)
-# define COMPILER_ID "CrayClang"
-# define COMPILER_VERSION_MAJOR DEC(__cray_major__)
-# define COMPILER_VERSION_MINOR DEC(__cray_minor__)
-# define COMPILER_VERSION_PATCH DEC(__cray_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(_CRAYC)
-# define COMPILER_ID "Cray"
-# define COMPILER_VERSION_MAJOR DEC(_RELEASE_MAJOR)
-# define COMPILER_VERSION_MINOR DEC(_RELEASE_MINOR)
-
-#elif defined(__TI_COMPILER_VERSION__)
-# define COMPILER_ID "TI"
-  /* __TI_COMPILER_VERSION__ = VVVRRRPPP */
-# define COMPILER_VERSION_MAJOR DEC(__TI_COMPILER_VERSION__/1000000)
-# define COMPILER_VERSION_MINOR DEC(__TI_COMPILER_VERSION__/1000   % 1000)
-# define COMPILER_VERSION_PATCH DEC(__TI_COMPILER_VERSION__        % 1000)
-
-#elif defined(__CLANG_FUJITSU)
-# define COMPILER_ID "FujitsuClang"
-# define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-# define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-# define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(__FUJITSU)
-# define COMPILER_ID "Fujitsu"
-# if defined(__FCC_version__)
-#   define COMPILER_VERSION __FCC_version__
-# elif defined(__FCC_major__)
-#   define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-#   define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-#   define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# endif
-# if defined(__fcc_version)
-#   define COMPILER_VERSION_INTERNAL DEC(__fcc_version)
-# elif defined(__FCC_VERSION)
-#   define COMPILER_VERSION_INTERNAL DEC(__FCC_VERSION)
-# endif
-
-
-#elif defined(__ghs__)
-# define COMPILER_ID "GHS"
-/* __GHS_VERSION_NUMBER = VVVVRP */
-# ifdef __GHS_VERSION_NUMBER
-# define COMPILER_VERSION_MAJOR DEC(__GHS_VERSION_NUMBER / 100)
-# define COMPILER_VERSION_MINOR DEC(__GHS_VERSION_NUMBER / 10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__GHS_VERSION_NUMBER      % 10)
-# endif
-
-#elif defined(__TASKING__)
-# define COMPILER_ID "Tasking"
-  # define COMPILER_VERSION_MAJOR DEC(__VERSION__/1000)
-  # define COMPILER_VERSION_MINOR DEC(__VERSION__ % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__VERSION__)
-
-#elif defined(__ORANGEC__)
-# define COMPILER_ID "OrangeC"
-# define COMPILER_VERSION_MAJOR DEC(__ORANGEC_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__ORANGEC_MINOR__)
-# define COMPILER_VERSION_PATCH DEC(__ORANGEC_PATCHLEVEL__)
-
-#elif defined(__RENESAS__)
-# define COMPILER_ID "Renesas"
-/* __RENESAS_VERSION__ = 0xVVRRPP00 */
-# define COMPILER_VERSION_MAJOR HEX(__RENESAS_VERSION__ >> 24 & 0xFF)
-# define COMPILER_VERSION_MINOR HEX(__RENESAS_VERSION__ >> 16 & 0xFF)
-# define COMPILER_VERSION_PATCH HEX(__RENESAS_VERSION__ >> 8  & 0xFF)
-
-#elif defined(__SCO_VERSION__)
-# define COMPILER_ID "SCO"
-
-#elif defined(__ARMCC_VERSION) && !defined(__clang__)
-# define COMPILER_ID "ARMCC"
-#if __ARMCC_VERSION >= 1000000
-  /* __ARMCC_VERSION = VRRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION     % 10000)
-#else
-  /* __ARMCC_VERSION = VRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/100000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 10)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION    % 10000)
-#endif
-
-
-#elif defined(__clang__) && defined(__apple_build_version__)
-# define COMPILER_ID "AppleClang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# define COMPILER_VERSION_TWEAK DEC(__apple_build_version__)
-
-#elif defined(__clang__) && defined(__ARMCOMPILER_VERSION)
-# define COMPILER_ID "ARMClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCOMPILER_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCOMPILER_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCOMPILER_VERSION/100   % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__ARMCOMPILER_VERSION)
-
-#elif defined(__clang__) && defined(__ti__)
-# define COMPILER_ID "TIClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ti_major__)
-  # define COMPILER_VERSION_MINOR DEC(__ti_minor__)
-  # define COMPILER_VERSION_PATCH DEC(__ti_patchlevel__)
-# define COMPILER_VERSION_INTERNAL DEC(__ti_version__)
-
-#elif defined(__clang__)
-# define COMPILER_ID "Clang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-
-#elif defined(__LCC__) && (defined(__GNUC__) || defined(__GNUG__) || defined(__MCST__))
-# define COMPILER_ID "LCC"
-# define COMPILER_VERSION_MAJOR DEC(__LCC__ / 100)
-# define COMPILER_VERSION_MINOR DEC(__LCC__ % 100)
-# if defined(__LCC_MINOR__)
-#  define COMPILER_VERSION_PATCH DEC(__LCC_MINOR__)
-# endif
-# if defined(__GNUC__) && defined(__GNUC_MINOR__)
-#  define SIMULATE_ID "GNU"
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#  if defined(__GNUC_PATCHLEVEL__)
-#   define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#  endif
-# endif
-
-#elif defined(__GNUC__) || defined(__GNUG__)
-# define COMPILER_ID "GNU"
-# if defined(__GNUC__)
-#  define COMPILER_VERSION_MAJOR DEC(__GNUC__)
-# else
-#  define COMPILER_VERSION_MAJOR DEC(__GNUG__)
-# endif
-# if defined(__GNUC_MINOR__)
-#  define COMPILER_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif defined(_MSC_VER)
-# define COMPILER_ID "MSVC"
-  /* _MSC_VER = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define COMPILER_VERSION_MINOR DEC(_MSC_VER % 100)
-# if defined(_MSC_FULL_VER)
-#  if _MSC_VER >= 1400
-    /* _MSC_FULL_VER = VVRRPPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 100000)
-#  else
-    /* _MSC_FULL_VER = VVRRPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 10000)
-#  endif
-# endif
-# if defined(_MSC_BUILD)
-#  define COMPILER_VERSION_TWEAK DEC(_MSC_BUILD)
-# endif
-
-#elif defined(_ADI_COMPILER)
-# define COMPILER_ID "ADSP"
-#if defined(__VERSIONNUM__)
-  /* __VERSIONNUM__ = 0xVVRRPPTT */
-#  define COMPILER_VERSION_MAJOR DEC(__VERSIONNUM__ >> 24 & 0xFF)
-#  define COMPILER_VERSION_MINOR DEC(__VERSIONNUM__ >> 16 & 0xFF)
-#  define COMPILER_VERSION_PATCH DEC(__VERSIONNUM__ >> 8 & 0xFF)
-#  define COMPILER_VERSION_TWEAK DEC(__VERSIONNUM__ & 0xFF)
-#endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# define COMPILER_ID "IAR"
-# if defined(__VER__) && defined(__ICCARM__)
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 1000000)
-#  define COMPILER_VERSION_MINOR DEC(((__VER__) / 1000) % 1000)
-#  define COMPILER_VERSION_PATCH DEC((__VER__) % 1000)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# elif defined(__VER__) && (defined(__ICCAVR__) || defined(__ICCRX__) || defined(__ICCRH850__) || defined(__ICCRL78__) || defined(__ICC430__) || defined(__ICCRISCV__) || defined(__ICCV850__) || defined(__ICC8051__) || defined(__ICCSTM8__))
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 100)
-#  define COMPILER_VERSION_MINOR DEC((__VER__) - (((__VER__) / 100)*100))
-#  define COMPILER_VERSION_PATCH DEC(__SUBVERSION__)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# endif
-
-#elif defined(__DCC__) && defined(_DIAB_TOOL)
-# define COMPILER_ID "Diab"
-  # define COMPILER_VERSION_MAJOR DEC(__VERSION_MAJOR_NUMBER__)
-  # define COMPILER_VERSION_MINOR DEC(__VERSION_MINOR_NUMBER__)
-  # define COMPILER_VERSION_PATCH DEC(__VERSION_ARCH_FEATURE_NUMBER__)
-  # define COMPILER_VERSION_TWEAK DEC(__VERSION_BUG_FIX_NUMBER__)
-
-
-
-/* These compilers are either not known or too old to define an
-  identification macro.  Try to identify the platform and guess that
-  it is the native compiler.  */
-#elif defined(__hpux) || defined(__hpua)
-# define COMPILER_ID "HP"
-
-#else /* unknown compiler */
-# define COMPILER_ID ""
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_compiler = "INFO" ":" "compiler[" COMPILER_ID "]";
-#ifdef SIMULATE_ID
-char const* info_simulate = "INFO" ":" "simulate[" SIMULATE_ID "]";
-#endif
-
-#ifdef __QNXNTO__
-char const* qnxnto = "INFO" ":" "qnxnto[]";
-#endif
-
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-char const *info_cray = "INFO" ":" "compiler_wrapper[CrayPrgEnv]";
-#endif
-
-#define STRINGIFY_HELPER(X) #X
-#define STRINGIFY(X) STRINGIFY_HELPER(X)
-
-/* Identify known platforms by name.  */
-#if defined(__linux) || defined(__linux__) || defined(linux)
-# define PLATFORM_ID "Linux"
-
-#elif defined(__MSYS__)
-# define PLATFORM_ID "MSYS"
-
-#elif defined(__CYGWIN__)
-# define PLATFORM_ID "Cygwin"
-
-#elif defined(__MINGW32__)
-# define PLATFORM_ID "MinGW"
-
-#elif defined(__APPLE__)
-# define PLATFORM_ID "Darwin"
-
-#elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-# define PLATFORM_ID "Windows"
-
-#elif defined(__FreeBSD__) || defined(__FreeBSD)
-# define PLATFORM_ID "FreeBSD"
-
-#elif defined(__NetBSD__) || defined(__NetBSD)
-# define PLATFORM_ID "NetBSD"
-
-#elif defined(__OpenBSD__) || defined(__OPENBSD)
-# define PLATFORM_ID "OpenBSD"
-
-#elif defined(__sun) || defined(sun)
-# define PLATFORM_ID "SunOS"
-
-#elif defined(_AIX) || defined(__AIX) || defined(__AIX__) || defined(__aix) || defined(__aix__)
-# define PLATFORM_ID "AIX"
-
-#elif defined(__hpux) || defined(__hpux__)
-# define PLATFORM_ID "HP-UX"
-
-#elif defined(__HAIKU__)
-# define PLATFORM_ID "Haiku"
-
-#elif defined(__BeOS) || defined(__BEOS__) || defined(_BEOS)
-# define PLATFORM_ID "BeOS"
-
-#elif defined(__QNX__) || defined(__QNXNTO__)
-# define PLATFORM_ID "QNX"
-
-#elif defined(__tru64) || defined(_tru64) || defined(__TRU64__)
-# define PLATFORM_ID "Tru64"
-
-#elif defined(__riscos) || defined(__riscos__)
-# define PLATFORM_ID "RISCos"
-
-#elif defined(__sinix) || defined(__sinix__) || defined(__SINIX__)
-# define PLATFORM_ID "SINIX"
-
-#elif defined(__UNIX_SV__)
-# define PLATFORM_ID "UNIX_SV"
-
-#elif defined(__bsdos__)
-# define PLATFORM_ID "BSDOS"
-
-#elif defined(_MPRAS) || defined(MPRAS)
-# define PLATFORM_ID "MP-RAS"
-
-#elif defined(__osf) || defined(__osf__)
-# define PLATFORM_ID "OSF1"
-
-#elif defined(_SCO_SV) || defined(SCO_SV) || defined(sco_sv)
-# define PLATFORM_ID "SCO_SV"
-
-#elif defined(__ultrix) || defined(__ultrix__) || defined(_ULTRIX)
-# define PLATFORM_ID "ULTRIX"
-
-#elif defined(__XENIX__) || defined(_XENIX) || defined(XENIX)
-# define PLATFORM_ID "Xenix"
-
-#elif defined(__WATCOMC__)
-# if defined(__LINUX__)
-#  define PLATFORM_ID "Linux"
-
-# elif defined(__DOS__)
-#  define PLATFORM_ID "DOS"
-
-# elif defined(__OS2__)
-#  define PLATFORM_ID "OS2"
-
-# elif defined(__WINDOWS__)
-#  define PLATFORM_ID "Windows3x"
-
-# elif defined(__VXWORKS__)
-#  define PLATFORM_ID "VxWorks"
-
-# else /* unknown platform */
-#  define PLATFORM_ID
-# endif
-
-#elif defined(__INTEGRITY)
-# if defined(INT_178B)
-#  define PLATFORM_ID "Integrity178"
-
-# else /* regular Integrity */
-#  define PLATFORM_ID "Integrity"
-# endif
-
-# elif defined(_ADI_COMPILER)
-#  define PLATFORM_ID "ADSP"
-
-#else /* unknown platform */
-# define PLATFORM_ID
-
-#endif
-
-/* For windows compilers MSVC and Intel we can determine
-   the architecture of the compiler being used.  This is because
-   the compilers do not have flags that can change the architecture,
-   but rather depend on which compiler is being used
-*/
-#if defined(_WIN32) && defined(_MSC_VER)
-# if defined(_M_IA64)
-#  define ARCHITECTURE_ID "IA64"
-
-# elif defined(_M_ARM64EC)
-#  define ARCHITECTURE_ID "ARM64EC"
-
-# elif defined(_M_X64) || defined(_M_AMD64)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# elif defined(_M_ARM64)
-#  define ARCHITECTURE_ID "ARM64"
-
-# elif defined(_M_ARM)
-#  if _M_ARM == 4
-#   define ARCHITECTURE_ID "ARMV4I"
-#  elif _M_ARM == 5
-#   define ARCHITECTURE_ID "ARMV5I"
-#  else
-#   define ARCHITECTURE_ID "ARMV" STRINGIFY(_M_ARM)
-#  endif
-
-# elif defined(_M_MIPS)
-#  define ARCHITECTURE_ID "MIPS"
-
-# elif defined(_M_SH)
-#  define ARCHITECTURE_ID "SHx"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__WATCOMC__)
-# if defined(_M_I86)
-#  define ARCHITECTURE_ID "I86"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# if defined(__ICCARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__ICCRX__)
-#  define ARCHITECTURE_ID "RX"
-
-# elif defined(__ICCRH850__)
-#  define ARCHITECTURE_ID "RH850"
-
-# elif defined(__ICCRL78__)
-#  define ARCHITECTURE_ID "RL78"
-
-# elif defined(__ICCRISCV__)
-#  define ARCHITECTURE_ID "RISCV"
-
-# elif defined(__ICCAVR__)
-#  define ARCHITECTURE_ID "AVR"
-
-# elif defined(__ICC430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__ICCV850__)
-#  define ARCHITECTURE_ID "V850"
-
-# elif defined(__ICC8051__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__ICCSTM8__)
-#  define ARCHITECTURE_ID "STM8"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__ghs__)
-# if defined(__PPC64__)
-#  define ARCHITECTURE_ID "PPC64"
-
-# elif defined(__ppc__)
-#  define ARCHITECTURE_ID "PPC"
-
-# elif defined(__ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__x86_64__)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(__i386__)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__clang__) && defined(__ti__)
-# if defined(__ARM_ARCH)
-#  define ARCHITECTURE_ID "ARM"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__TI_COMPILER_VERSION__)
-# if defined(__TI_ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__MSP430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__TMS320C28XX__)
-#  define ARCHITECTURE_ID "TMS320C28x"
-
-# elif defined(__TMS320C6X__) || defined(_TMS320C6X)
-#  define ARCHITECTURE_ID "TMS320C6x"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-# elif defined(__ADSPSHARC__)
-#  define ARCHITECTURE_ID "SHARC"
-
-# elif defined(__ADSPBLACKFIN__)
-#  define ARCHITECTURE_ID "Blackfin"
-
-#elif defined(__TASKING__)
-
-# if defined(__CTC__) || defined(__CPTC__)
-#  define ARCHITECTURE_ID "TriCore"
-
-# elif defined(__CMCS__)
-#  define ARCHITECTURE_ID "MCS"
-
-# elif defined(__CARM__) || defined(__CPARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__CARC__)
-#  define ARCHITECTURE_ID "ARC"
-
-# elif defined(__C51__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__CPCP__)
-#  define ARCHITECTURE_ID "PCP"
-
-# else
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__RENESAS__)
-# if defined(__CCRX__)
-#  define ARCHITECTURE_ID "RX"
-
-# elif defined(__CCRL__)
-#  define ARCHITECTURE_ID "RL78"
-
-# elif defined(__CCRH__)
-#  define ARCHITECTURE_ID "RH850"
-
-# else
-#  define ARCHITECTURE_ID ""
-# endif
-
-#else
-#  define ARCHITECTURE_ID
-#endif
-
-/* Convert integer to decimal digit literals.  */
-#define DEC(n)                   \
-  ('0' + (((n) / 10000000)%10)), \
-  ('0' + (((n) / 1000000)%10)),  \
-  ('0' + (((n) / 100000)%10)),   \
-  ('0' + (((n) / 10000)%10)),    \
-  ('0' + (((n) / 1000)%10)),     \
-  ('0' + (((n) / 100)%10)),      \
-  ('0' + (((n) / 10)%10)),       \
-  ('0' +  ((n) % 10))
-
-/* Convert integer to hex digit literals.  */
-#define HEX(n)             \
-  ('0' + ((n)>>28 & 0xF)), \
-  ('0' + ((n)>>24 & 0xF)), \
-  ('0' + ((n)>>20 & 0xF)), \
-  ('0' + ((n)>>16 & 0xF)), \
-  ('0' + ((n)>>12 & 0xF)), \
-  ('0' + ((n)>>8  & 0xF)), \
-  ('0' + ((n)>>4  & 0xF)), \
-  ('0' + ((n)     & 0xF))
-
-/* Construct a string literal encoding the version number. */
-#ifdef COMPILER_VERSION
-char const* info_version = "INFO" ":" "compiler_version[" COMPILER_VERSION "]";
-
-/* Construct a string literal encoding the version number components. */
-#elif defined(COMPILER_VERSION_MAJOR)
-char const info_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','[',
-  COMPILER_VERSION_MAJOR,
-# ifdef COMPILER_VERSION_MINOR
-  '.', COMPILER_VERSION_MINOR,
-#  ifdef COMPILER_VERSION_PATCH
-   '.', COMPILER_VERSION_PATCH,
-#   ifdef COMPILER_VERSION_TWEAK
-    '.', COMPILER_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct a string literal encoding the internal version number. */
-#ifdef COMPILER_VERSION_INTERNAL
-char const info_version_internal[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','_',
-  'i','n','t','e','r','n','a','l','[',
-  COMPILER_VERSION_INTERNAL,']','\0'};
-#elif defined(COMPILER_VERSION_INTERNAL_STR)
-char const* info_version_internal = "INFO" ":" "compiler_version_internal[" COMPILER_VERSION_INTERNAL_STR "]";
-#endif
-
-/* Construct a string literal encoding the version number components. */
-#ifdef SIMULATE_VERSION_MAJOR
-char const info_simulate_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  's','i','m','u','l','a','t','e','_','v','e','r','s','i','o','n','[',
-  SIMULATE_VERSION_MAJOR,
-# ifdef SIMULATE_VERSION_MINOR
-  '.', SIMULATE_VERSION_MINOR,
-#  ifdef SIMULATE_VERSION_PATCH
-   '.', SIMULATE_VERSION_PATCH,
-#   ifdef SIMULATE_VERSION_TWEAK
-    '.', SIMULATE_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_platform = "INFO" ":" "platform[" PLATFORM_ID "]";
-char const* info_arch = "INFO" ":" "arch[" ARCHITECTURE_ID "]";
-
-
-
-#define CXX_STD_98 199711L
-#define CXX_STD_11 201103L
-#define CXX_STD_14 201402L
-#define CXX_STD_17 201703L
-#define CXX_STD_20 202002L
-#define CXX_STD_23 202302L
-
-#if defined(__INTEL_COMPILER) && defined(_MSVC_LANG)
-#  if _MSVC_LANG > CXX_STD_17
-#    define CXX_STD _MSVC_LANG
-#  elif _MSVC_LANG == CXX_STD_17 && defined(__cpp_aggregate_paren_init)
-#    define CXX_STD CXX_STD_20
-#  elif _MSVC_LANG > CXX_STD_14 && __cplusplus > CXX_STD_17
-#    define CXX_STD CXX_STD_20
-#  elif _MSVC_LANG > CXX_STD_14
-#    define CXX_STD CXX_STD_17
-#  elif defined(__INTEL_CXX11_MODE__) && defined(__cpp_aggregate_nsdmi)
-#    define CXX_STD CXX_STD_14
-#  elif defined(__INTEL_CXX11_MODE__)
-#    define CXX_STD CXX_STD_11
-#  else
-#    define CXX_STD CXX_STD_98
-#  endif
-#elif defined(_MSC_VER) && defined(_MSVC_LANG)
-#  if _MSVC_LANG > __cplusplus
-#    define CXX_STD _MSVC_LANG
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif defined(__NVCOMPILER)
-#  if __cplusplus == CXX_STD_17 && defined(__cpp_aggregate_paren_init)
-#    define CXX_STD CXX_STD_20
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif defined(__INTEL_COMPILER) || defined(__PGI)
-#  if __cplusplus == CXX_STD_11 && defined(__cpp_namespace_attributes)
-#    define CXX_STD CXX_STD_17
-#  elif __cplusplus == CXX_STD_11 && defined(__cpp_aggregate_nsdmi)
-#    define CXX_STD CXX_STD_14
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif (defined(__IBMCPP__) || defined(__ibmxl__)) && defined(__linux__)
-#  if __cplusplus == CXX_STD_11 && defined(__cpp_aggregate_nsdmi)
-#    define CXX_STD CXX_STD_14
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif __cplusplus == 1 && defined(__GXX_EXPERIMENTAL_CXX0X__)
-#  define CXX_STD CXX_STD_11
-#else
-#  define CXX_STD __cplusplus
-#endif
-
-const char* info_language_standard_default = "INFO" ":" "standard_default["
-#if CXX_STD > CXX_STD_23
-  "26"
-#elif CXX_STD > CXX_STD_20
-  "23"
-#elif CXX_STD > CXX_STD_17
-  "20"
-#elif CXX_STD > CXX_STD_14
-  "17"
-#elif CXX_STD > CXX_STD_11
-  "14"
-#elif CXX_STD >= CXX_STD_11
-  "11"
-#else
-  "98"
-#endif
-"]";
-
-const char* info_language_extensions_default = "INFO" ":" "extensions_default["
-#if (defined(__clang__) || defined(__GNUC__) || defined(__xlC__) ||           \
-     defined(__TI_COMPILER_VERSION__) || defined(__RENESAS__)) &&             \
-  !defined(__STRICT_ANSI__)
-  "ON"
-#else
-  "OFF"
-#endif
-"]";
-
-/*--------------------------------------------------------------------------*/
-
-int main(int argc, char* argv[])
-{
-  int require = 0;
-  require += info_compiler[argc];
-  require += info_platform[argc];
-  require += info_arch[argc];
-#ifdef COMPILER_VERSION_MAJOR
-  require += info_version[argc];
-#endif
-#if defined(COMPILER_VERSION_INTERNAL) || defined(COMPILER_VERSION_INTERNAL_STR)
-  require += info_version_internal[argc];
-#endif
-#ifdef SIMULATE_ID
-  require += info_simulate[argc];
-#endif
-#ifdef SIMULATE_VERSION_MAJOR
-  require += info_simulate_version[argc];
-#endif
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-  require += info_cray[argc];
-#endif
-  require += info_language_standard_default[argc];
-  require += info_language_extensions_default[argc];
-  (void)argv;
-  return require;
-}
-
-```
-
-# File: build_ninja\CMakeFiles\3.28.0-msvc1\CompilerIdC\CMakeCCompilerId.c
-```cpp
-#ifdef __cplusplus
-# error "A C++ compiler has been selected for C."
-#endif
-
-#if defined(__18CXX)
-# define ID_VOID_MAIN
-#endif
-#if defined(__CLASSIC_C__)
-/* cv-qualifiers did not exist in K&R C */
-# define const
-# define volatile
-#endif
-
-#if !defined(__has_include)
-/* If the compiler does not have __has_include, pretend the answer is
-   always no.  */
-#  define __has_include(x) 0
-#endif
-
-
-/* Version number components: V=Version, R=Revision, P=Patch
-   Version date components:   YYYY=Year, MM=Month,   DD=Day  */
-
-#if defined(__INTEL_COMPILER) || defined(__ICC)
-# define COMPILER_ID "Intel"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_ID "GNU"
-# endif
-  /* __INTEL_COMPILER = VRP prior to 2021, and then VVVV for 2021 and later,
-     except that a few beta releases use the old format with V=2021.  */
-# if __INTEL_COMPILER < 2021 || __INTEL_COMPILER == 202110 || __INTEL_COMPILER == 202111
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER/100)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER/10 % 10)
-#  if defined(__INTEL_COMPILER_UPDATE)
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER_UPDATE)
-#  else
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER   % 10)
-#  endif
-# else
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER_UPDATE)
-   /* The third version component from --version is an update index,
-      but no macro is provided for it.  */
-#  define COMPILER_VERSION_PATCH DEC(0)
-# endif
-# if defined(__INTEL_COMPILER_BUILD_DATE)
-   /* __INTEL_COMPILER_BUILD_DATE = YYYYMMDD */
-#  define COMPILER_VERSION_TWEAK DEC(__INTEL_COMPILER_BUILD_DATE)
-# endif
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-# elif defined(__GNUG__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-# endif
-# if defined(__GNUC_MINOR__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif (defined(__clang__) && defined(__INTEL_CLANG_COMPILER)) || defined(__INTEL_LLVM_COMPILER)
-# define COMPILER_ID "IntelLLVM"
-#if defined(_MSC_VER)
-# define SIMULATE_ID "MSVC"
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_ID "GNU"
-#endif
-/* __INTEL_LLVM_COMPILER = VVVVRP prior to 2021.2.0, VVVVRRPP for 2021.2.0 and
- * later.  Look for 6 digit vs. 8 digit version number to decide encoding.
- * VVVV is no smaller than the current year when a version is released.
- */
-#if __INTEL_LLVM_COMPILER < 1000000L
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/100)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER    % 10)
-#else
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/10000)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER     % 100)
-#endif
-#if defined(_MSC_VER)
-  /* _MSC_VER = VVRR */
-# define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#elif defined(__GNUG__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-#endif
-#if defined(__GNUC_MINOR__)
-# define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#endif
-#if defined(__GNUC_PATCHLEVEL__)
-# define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#endif
-
-#elif defined(__PATHCC__)
-# define COMPILER_ID "PathScale"
-# define COMPILER_VERSION_MAJOR DEC(__PATHCC__)
-# define COMPILER_VERSION_MINOR DEC(__PATHCC_MINOR__)
-# if defined(__PATHCC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PATHCC_PATCHLEVEL__)
-# endif
-
-#elif defined(__BORLANDC__) && defined(__CODEGEARC_VERSION__)
-# define COMPILER_ID "Embarcadero"
-# define COMPILER_VERSION_MAJOR HEX(__CODEGEARC_VERSION__>>24 & 0x00FF)
-# define COMPILER_VERSION_MINOR HEX(__CODEGEARC_VERSION__>>16 & 0x00FF)
-# define COMPILER_VERSION_PATCH DEC(__CODEGEARC_VERSION__     & 0xFFFF)
-
-#elif defined(__BORLANDC__)
-# define COMPILER_ID "Borland"
-  /* __BORLANDC__ = 0xVRR */
-# define COMPILER_VERSION_MAJOR HEX(__BORLANDC__>>8)
-# define COMPILER_VERSION_MINOR HEX(__BORLANDC__ & 0xFF)
-
-#elif defined(__WATCOMC__) && __WATCOMC__ < 1200
-# define COMPILER_ID "Watcom"
-   /* __WATCOMC__ = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(__WATCOMC__ / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__WATCOMC__)
-# define COMPILER_ID "OpenWatcom"
-   /* __WATCOMC__ = VVRP + 1100 */
-# define COMPILER_VERSION_MAJOR DEC((__WATCOMC__ - 1100) / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__SUNPRO_C)
-# define COMPILER_ID "SunPro"
-# if __SUNPRO_C >= 0x5100
-   /* __SUNPRO_C = 0xVRRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_C>>12)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_C>>4 & 0xFF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_C    & 0xF)
-# else
-   /* __SUNPRO_CC = 0xVRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_C>>8)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_C>>4 & 0xF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_C    & 0xF)
-# endif
-
-#elif defined(__HP_cc)
-# define COMPILER_ID "HP"
-  /* __HP_cc = VVRRPP */
-# define COMPILER_VERSION_MAJOR DEC(__HP_cc/10000)
-# define COMPILER_VERSION_MINOR DEC(__HP_cc/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__HP_cc     % 100)
-
-#elif defined(__DECC)
-# define COMPILER_ID "Compaq"
-  /* __DECC_VER = VVRRTPPPP */
-# define COMPILER_VERSION_MAJOR DEC(__DECC_VER/10000000)
-# define COMPILER_VERSION_MINOR DEC(__DECC_VER/100000  % 100)
-# define COMPILER_VERSION_PATCH DEC(__DECC_VER         % 10000)
-
-#elif defined(__IBMC__) && defined(__COMPILER_VER__)
-# define COMPILER_ID "zOS"
-  /* __IBMC__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMC__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMC__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMC__    % 10)
-
-#elif defined(__open_xl__) && defined(__clang__)
-# define COMPILER_ID "IBMClang"
-# define COMPILER_VERSION_MAJOR DEC(__open_xl_version__)
-# define COMPILER_VERSION_MINOR DEC(__open_xl_release__)
-# define COMPILER_VERSION_PATCH DEC(__open_xl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__open_xl_ptf_fix_level__)
-
-
-#elif defined(__ibmxl__) && defined(__clang__)
-# define COMPILER_ID "XLClang"
-# define COMPILER_VERSION_MAJOR DEC(__ibmxl_version__)
-# define COMPILER_VERSION_MINOR DEC(__ibmxl_release__)
-# define COMPILER_VERSION_PATCH DEC(__ibmxl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__ibmxl_ptf_fix_level__)
-
-
-#elif defined(__IBMC__) && !defined(__COMPILER_VER__) && __IBMC__ >= 800
-# define COMPILER_ID "XL"
-  /* __IBMC__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMC__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMC__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMC__    % 10)
-
-#elif defined(__IBMC__) && !defined(__COMPILER_VER__) && __IBMC__ < 800
-# define COMPILER_ID "VisualAge"
-  /* __IBMC__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMC__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMC__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMC__    % 10)
-
-#elif defined(__NVCOMPILER)
-# define COMPILER_ID "NVHPC"
-# define COMPILER_VERSION_MAJOR DEC(__NVCOMPILER_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__NVCOMPILER_MINOR__)
-# if defined(__NVCOMPILER_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__NVCOMPILER_PATCHLEVEL__)
-# endif
-
-#elif defined(__PGI)
-# define COMPILER_ID "PGI"
-# define COMPILER_VERSION_MAJOR DEC(__PGIC__)
-# define COMPILER_VERSION_MINOR DEC(__PGIC_MINOR__)
-# if defined(__PGIC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PGIC_PATCHLEVEL__)
-# endif
-
-#elif defined(__clang__) && defined(__cray__)
-# define COMPILER_ID "CrayClang"
-# define COMPILER_VERSION_MAJOR DEC(__cray_major__)
-# define COMPILER_VERSION_MINOR DEC(__cray_minor__)
-# define COMPILER_VERSION_PATCH DEC(__cray_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(_CRAYC)
-# define COMPILER_ID "Cray"
-# define COMPILER_VERSION_MAJOR DEC(_RELEASE_MAJOR)
-# define COMPILER_VERSION_MINOR DEC(_RELEASE_MINOR)
-
-#elif defined(__TI_COMPILER_VERSION__)
-# define COMPILER_ID "TI"
-  /* __TI_COMPILER_VERSION__ = VVVRRRPPP */
-# define COMPILER_VERSION_MAJOR DEC(__TI_COMPILER_VERSION__/1000000)
-# define COMPILER_VERSION_MINOR DEC(__TI_COMPILER_VERSION__/1000   % 1000)
-# define COMPILER_VERSION_PATCH DEC(__TI_COMPILER_VERSION__        % 1000)
-
-#elif defined(__CLANG_FUJITSU)
-# define COMPILER_ID "FujitsuClang"
-# define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-# define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-# define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(__FUJITSU)
-# define COMPILER_ID "Fujitsu"
-# if defined(__FCC_version__)
-#   define COMPILER_VERSION __FCC_version__
-# elif defined(__FCC_major__)
-#   define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-#   define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-#   define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# endif
-# if defined(__fcc_version)
-#   define COMPILER_VERSION_INTERNAL DEC(__fcc_version)
-# elif defined(__FCC_VERSION)
-#   define COMPILER_VERSION_INTERNAL DEC(__FCC_VERSION)
-# endif
-
-
-#elif defined(__ghs__)
-# define COMPILER_ID "GHS"
-/* __GHS_VERSION_NUMBER = VVVVRP */
-# ifdef __GHS_VERSION_NUMBER
-# define COMPILER_VERSION_MAJOR DEC(__GHS_VERSION_NUMBER / 100)
-# define COMPILER_VERSION_MINOR DEC(__GHS_VERSION_NUMBER / 10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__GHS_VERSION_NUMBER      % 10)
-# endif
-
-#elif defined(__TASKING__)
-# define COMPILER_ID "Tasking"
-  # define COMPILER_VERSION_MAJOR DEC(__VERSION__/1000)
-  # define COMPILER_VERSION_MINOR DEC(__VERSION__ % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__VERSION__)
-
-#elif defined(__ORANGEC__)
-# define COMPILER_ID "OrangeC"
-# define COMPILER_VERSION_MAJOR DEC(__ORANGEC_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__ORANGEC_MINOR__)
-# define COMPILER_VERSION_PATCH DEC(__ORANGEC_PATCHLEVEL__)
-
-#elif defined(__TINYC__)
-# define COMPILER_ID "TinyCC"
-
-#elif defined(__BCC__)
-# define COMPILER_ID "Bruce"
-
-#elif defined(__SCO_VERSION__)
-# define COMPILER_ID "SCO"
-
-#elif defined(__ARMCC_VERSION) && !defined(__clang__)
-# define COMPILER_ID "ARMCC"
-#if __ARMCC_VERSION >= 1000000
-  /* __ARMCC_VERSION = VRRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION     % 10000)
-#else
-  /* __ARMCC_VERSION = VRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/100000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 10)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION    % 10000)
-#endif
-
-
-#elif defined(__clang__) && defined(__apple_build_version__)
-# define COMPILER_ID "AppleClang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# define COMPILER_VERSION_TWEAK DEC(__apple_build_version__)
-
-#elif defined(__clang__) && defined(__ARMCOMPILER_VERSION)
-# define COMPILER_ID "ARMClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCOMPILER_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCOMPILER_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCOMPILER_VERSION/100   % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__ARMCOMPILER_VERSION)
-
-#elif defined(__clang__)
-# define COMPILER_ID "Clang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-
-#elif defined(__LCC__) && (defined(__GNUC__) || defined(__GNUG__) || defined(__MCST__))
-# define COMPILER_ID "LCC"
-# define COMPILER_VERSION_MAJOR DEC(__LCC__ / 100)
-# define COMPILER_VERSION_MINOR DEC(__LCC__ % 100)
-# if defined(__LCC_MINOR__)
-#  define COMPILER_VERSION_PATCH DEC(__LCC_MINOR__)
-# endif
-# if defined(__GNUC__) && defined(__GNUC_MINOR__)
-#  define SIMULATE_ID "GNU"
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#  if defined(__GNUC_PATCHLEVEL__)
-#   define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#  endif
-# endif
-
-#elif defined(__GNUC__)
-# define COMPILER_ID "GNU"
-# define COMPILER_VERSION_MAJOR DEC(__GNUC__)
-# if defined(__GNUC_MINOR__)
-#  define COMPILER_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif defined(_MSC_VER)
-# define COMPILER_ID "MSVC"
-  /* _MSC_VER = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define COMPILER_VERSION_MINOR DEC(_MSC_VER % 100)
-# if defined(_MSC_FULL_VER)
-#  if _MSC_VER >= 1400
-    /* _MSC_FULL_VER = VVRRPPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 100000)
-#  else
-    /* _MSC_FULL_VER = VVRRPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 10000)
-#  endif
-# endif
-# if defined(_MSC_BUILD)
-#  define COMPILER_VERSION_TWEAK DEC(_MSC_BUILD)
-# endif
-
-#elif defined(_ADI_COMPILER)
-# define COMPILER_ID "ADSP"
-#if defined(__VERSIONNUM__)
-  /* __VERSIONNUM__ = 0xVVRRPPTT */
-#  define COMPILER_VERSION_MAJOR DEC(__VERSIONNUM__ >> 24 & 0xFF)
-#  define COMPILER_VERSION_MINOR DEC(__VERSIONNUM__ >> 16 & 0xFF)
-#  define COMPILER_VERSION_PATCH DEC(__VERSIONNUM__ >> 8 & 0xFF)
-#  define COMPILER_VERSION_TWEAK DEC(__VERSIONNUM__ & 0xFF)
-#endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# define COMPILER_ID "IAR"
-# if defined(__VER__) && defined(__ICCARM__)
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 1000000)
-#  define COMPILER_VERSION_MINOR DEC(((__VER__) / 1000) % 1000)
-#  define COMPILER_VERSION_PATCH DEC((__VER__) % 1000)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# elif defined(__VER__) && (defined(__ICCAVR__) || defined(__ICCRX__) || defined(__ICCRH850__) || defined(__ICCRL78__) || defined(__ICC430__) || defined(__ICCRISCV__) || defined(__ICCV850__) || defined(__ICC8051__) || defined(__ICCSTM8__))
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 100)
-#  define COMPILER_VERSION_MINOR DEC((__VER__) - (((__VER__) / 100)*100))
-#  define COMPILER_VERSION_PATCH DEC(__SUBVERSION__)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# endif
-
-#elif defined(__SDCC_VERSION_MAJOR) || defined(SDCC)
-# define COMPILER_ID "SDCC"
-# if defined(__SDCC_VERSION_MAJOR)
-#  define COMPILER_VERSION_MAJOR DEC(__SDCC_VERSION_MAJOR)
-#  define COMPILER_VERSION_MINOR DEC(__SDCC_VERSION_MINOR)
-#  define COMPILER_VERSION_PATCH DEC(__SDCC_VERSION_PATCH)
-# else
-  /* SDCC = VRP */
-#  define COMPILER_VERSION_MAJOR DEC(SDCC/100)
-#  define COMPILER_VERSION_MINOR DEC(SDCC/10 % 10)
-#  define COMPILER_VERSION_PATCH DEC(SDCC    % 10)
-# endif
-
-
-/* These compilers are either not known or too old to define an
-  identification macro.  Try to identify the platform and guess that
-  it is the native compiler.  */
-#elif defined(__hpux) || defined(__hpua)
-# define COMPILER_ID "HP"
-
-#else /* unknown compiler */
-# define COMPILER_ID ""
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_compiler = "INFO" ":" "compiler[" COMPILER_ID "]";
-#ifdef SIMULATE_ID
-char const* info_simulate = "INFO" ":" "simulate[" SIMULATE_ID "]";
-#endif
-
-#ifdef __QNXNTO__
-char const* qnxnto = "INFO" ":" "qnxnto[]";
-#endif
-
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-char const *info_cray = "INFO" ":" "compiler_wrapper[CrayPrgEnv]";
-#endif
-
-#define STRINGIFY_HELPER(X) #X
-#define STRINGIFY(X) STRINGIFY_HELPER(X)
-
-/* Identify known platforms by name.  */
-#if defined(__linux) || defined(__linux__) || defined(linux)
-# define PLATFORM_ID "Linux"
-
-#elif defined(__MSYS__)
-# define PLATFORM_ID "MSYS"
-
-#elif defined(__CYGWIN__)
-# define PLATFORM_ID "Cygwin"
-
-#elif defined(__MINGW32__)
-# define PLATFORM_ID "MinGW"
-
-#elif defined(__APPLE__)
-# define PLATFORM_ID "Darwin"
-
-#elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-# define PLATFORM_ID "Windows"
-
-#elif defined(__FreeBSD__) || defined(__FreeBSD)
-# define PLATFORM_ID "FreeBSD"
-
-#elif defined(__NetBSD__) || defined(__NetBSD)
-# define PLATFORM_ID "NetBSD"
-
-#elif defined(__OpenBSD__) || defined(__OPENBSD)
-# define PLATFORM_ID "OpenBSD"
-
-#elif defined(__sun) || defined(sun)
-# define PLATFORM_ID "SunOS"
-
-#elif defined(_AIX) || defined(__AIX) || defined(__AIX__) || defined(__aix) || defined(__aix__)
-# define PLATFORM_ID "AIX"
-
-#elif defined(__hpux) || defined(__hpux__)
-# define PLATFORM_ID "HP-UX"
-
-#elif defined(__HAIKU__)
-# define PLATFORM_ID "Haiku"
-
-#elif defined(__BeOS) || defined(__BEOS__) || defined(_BEOS)
-# define PLATFORM_ID "BeOS"
-
-#elif defined(__QNX__) || defined(__QNXNTO__)
-# define PLATFORM_ID "QNX"
-
-#elif defined(__tru64) || defined(_tru64) || defined(__TRU64__)
-# define PLATFORM_ID "Tru64"
-
-#elif defined(__riscos) || defined(__riscos__)
-# define PLATFORM_ID "RISCos"
-
-#elif defined(__sinix) || defined(__sinix__) || defined(__SINIX__)
-# define PLATFORM_ID "SINIX"
-
-#elif defined(__UNIX_SV__)
-# define PLATFORM_ID "UNIX_SV"
-
-#elif defined(__bsdos__)
-# define PLATFORM_ID "BSDOS"
-
-#elif defined(_MPRAS) || defined(MPRAS)
-# define PLATFORM_ID "MP-RAS"
-
-#elif defined(__osf) || defined(__osf__)
-# define PLATFORM_ID "OSF1"
-
-#elif defined(_SCO_SV) || defined(SCO_SV) || defined(sco_sv)
-# define PLATFORM_ID "SCO_SV"
-
-#elif defined(__ultrix) || defined(__ultrix__) || defined(_ULTRIX)
-# define PLATFORM_ID "ULTRIX"
-
-#elif defined(__XENIX__) || defined(_XENIX) || defined(XENIX)
-# define PLATFORM_ID "Xenix"
-
-#elif defined(__WATCOMC__)
-# if defined(__LINUX__)
-#  define PLATFORM_ID "Linux"
-
-# elif defined(__DOS__)
-#  define PLATFORM_ID "DOS"
-
-# elif defined(__OS2__)
-#  define PLATFORM_ID "OS2"
-
-# elif defined(__WINDOWS__)
-#  define PLATFORM_ID "Windows3x"
-
-# elif defined(__VXWORKS__)
-#  define PLATFORM_ID "VxWorks"
-
-# else /* unknown platform */
-#  define PLATFORM_ID
-# endif
-
-#elif defined(__INTEGRITY)
-# if defined(INT_178B)
-#  define PLATFORM_ID "Integrity178"
-
-# else /* regular Integrity */
-#  define PLATFORM_ID "Integrity"
-# endif
-
-# elif defined(_ADI_COMPILER)
-#  define PLATFORM_ID "ADSP"
-
-#else /* unknown platform */
-# define PLATFORM_ID
-
-#endif
-
-/* For windows compilers MSVC and Intel we can determine
-   the architecture of the compiler being used.  This is because
-   the compilers do not have flags that can change the architecture,
-   but rather depend on which compiler is being used
-*/
-#if defined(_WIN32) && defined(_MSC_VER)
-# if defined(_M_IA64)
-#  define ARCHITECTURE_ID "IA64"
-
-# elif defined(_M_ARM64EC)
-#  define ARCHITECTURE_ID "ARM64EC"
-
-# elif defined(_M_X64) || defined(_M_AMD64)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# elif defined(_M_ARM64)
-#  define ARCHITECTURE_ID "ARM64"
-
-# elif defined(_M_ARM)
-#  if _M_ARM == 4
-#   define ARCHITECTURE_ID "ARMV4I"
-#  elif _M_ARM == 5
-#   define ARCHITECTURE_ID "ARMV5I"
-#  else
-#   define ARCHITECTURE_ID "ARMV" STRINGIFY(_M_ARM)
-#  endif
-
-# elif defined(_M_MIPS)
-#  define ARCHITECTURE_ID "MIPS"
-
-# elif defined(_M_SH)
-#  define ARCHITECTURE_ID "SHx"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__WATCOMC__)
-# if defined(_M_I86)
-#  define ARCHITECTURE_ID "I86"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# if defined(__ICCARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__ICCRX__)
-#  define ARCHITECTURE_ID "RX"
-
-# elif defined(__ICCRH850__)
-#  define ARCHITECTURE_ID "RH850"
-
-# elif defined(__ICCRL78__)
-#  define ARCHITECTURE_ID "RL78"
-
-# elif defined(__ICCRISCV__)
-#  define ARCHITECTURE_ID "RISCV"
-
-# elif defined(__ICCAVR__)
-#  define ARCHITECTURE_ID "AVR"
-
-# elif defined(__ICC430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__ICCV850__)
-#  define ARCHITECTURE_ID "V850"
-
-# elif defined(__ICC8051__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__ICCSTM8__)
-#  define ARCHITECTURE_ID "STM8"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__ghs__)
-# if defined(__PPC64__)
-#  define ARCHITECTURE_ID "PPC64"
-
-# elif defined(__ppc__)
-#  define ARCHITECTURE_ID "PPC"
-
-# elif defined(__ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__x86_64__)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(__i386__)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__TI_COMPILER_VERSION__)
-# if defined(__TI_ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__MSP430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__TMS320C28XX__)
-#  define ARCHITECTURE_ID "TMS320C28x"
-
-# elif defined(__TMS320C6X__) || defined(_TMS320C6X)
-#  define ARCHITECTURE_ID "TMS320C6x"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-# elif defined(__ADSPSHARC__)
-#  define ARCHITECTURE_ID "SHARC"
-
-# elif defined(__ADSPBLACKFIN__)
-#  define ARCHITECTURE_ID "Blackfin"
-
-#elif defined(__TASKING__)
-
-# if defined(__CTC__) || defined(__CPTC__)
-#  define ARCHITECTURE_ID "TriCore"
-
-# elif defined(__CMCS__)
-#  define ARCHITECTURE_ID "MCS"
-
-# elif defined(__CARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__CARC__)
-#  define ARCHITECTURE_ID "ARC"
-
-# elif defined(__C51__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__CPCP__)
-#  define ARCHITECTURE_ID "PCP"
-
-# else
-#  define ARCHITECTURE_ID ""
-# endif
-
-#else
-#  define ARCHITECTURE_ID
-#endif
-
-/* Convert integer to decimal digit literals.  */
-#define DEC(n)                   \
-  ('0' + (((n) / 10000000)%10)), \
-  ('0' + (((n) / 1000000)%10)),  \
-  ('0' + (((n) / 100000)%10)),   \
-  ('0' + (((n) / 10000)%10)),    \
-  ('0' + (((n) / 1000)%10)),     \
-  ('0' + (((n) / 100)%10)),      \
-  ('0' + (((n) / 10)%10)),       \
-  ('0' +  ((n) % 10))
-
-/* Convert integer to hex digit literals.  */
-#define HEX(n)             \
-  ('0' + ((n)>>28 & 0xF)), \
-  ('0' + ((n)>>24 & 0xF)), \
-  ('0' + ((n)>>20 & 0xF)), \
-  ('0' + ((n)>>16 & 0xF)), \
-  ('0' + ((n)>>12 & 0xF)), \
-  ('0' + ((n)>>8  & 0xF)), \
-  ('0' + ((n)>>4  & 0xF)), \
-  ('0' + ((n)     & 0xF))
-
-/* Construct a string literal encoding the version number. */
-#ifdef COMPILER_VERSION
-char const* info_version = "INFO" ":" "compiler_version[" COMPILER_VERSION "]";
-
-/* Construct a string literal encoding the version number components. */
-#elif defined(COMPILER_VERSION_MAJOR)
-char const info_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','[',
-  COMPILER_VERSION_MAJOR,
-# ifdef COMPILER_VERSION_MINOR
-  '.', COMPILER_VERSION_MINOR,
-#  ifdef COMPILER_VERSION_PATCH
-   '.', COMPILER_VERSION_PATCH,
-#   ifdef COMPILER_VERSION_TWEAK
-    '.', COMPILER_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct a string literal encoding the internal version number. */
-#ifdef COMPILER_VERSION_INTERNAL
-char const info_version_internal[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','_',
-  'i','n','t','e','r','n','a','l','[',
-  COMPILER_VERSION_INTERNAL,']','\0'};
-#elif defined(COMPILER_VERSION_INTERNAL_STR)
-char const* info_version_internal = "INFO" ":" "compiler_version_internal[" COMPILER_VERSION_INTERNAL_STR "]";
-#endif
-
-/* Construct a string literal encoding the version number components. */
-#ifdef SIMULATE_VERSION_MAJOR
-char const info_simulate_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  's','i','m','u','l','a','t','e','_','v','e','r','s','i','o','n','[',
-  SIMULATE_VERSION_MAJOR,
-# ifdef SIMULATE_VERSION_MINOR
-  '.', SIMULATE_VERSION_MINOR,
-#  ifdef SIMULATE_VERSION_PATCH
-   '.', SIMULATE_VERSION_PATCH,
-#   ifdef SIMULATE_VERSION_TWEAK
-    '.', SIMULATE_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_platform = "INFO" ":" "platform[" PLATFORM_ID "]";
-char const* info_arch = "INFO" ":" "arch[" ARCHITECTURE_ID "]";
-
-
-
-#if !defined(__STDC__) && !defined(__clang__)
-# if defined(_MSC_VER) || defined(__ibmxl__) || defined(__IBMC__)
-#  define C_VERSION "90"
-# else
-#  define C_VERSION
-# endif
-#elif __STDC_VERSION__ > 201710L
-# define C_VERSION "23"
-#elif __STDC_VERSION__ >= 201710L
-# define C_VERSION "17"
-#elif __STDC_VERSION__ >= 201000L
-# define C_VERSION "11"
-#elif __STDC_VERSION__ >= 199901L
-# define C_VERSION "99"
-#else
-# define C_VERSION "90"
-#endif
-const char* info_language_standard_default =
-  "INFO" ":" "standard_default[" C_VERSION "]";
-
-const char* info_language_extensions_default = "INFO" ":" "extensions_default["
-#if (defined(__clang__) || defined(__GNUC__) || defined(__xlC__) ||           \
-     defined(__TI_COMPILER_VERSION__)) &&                                     \
-  !defined(__STRICT_ANSI__)
-  "ON"
-#else
-  "OFF"
-#endif
-"]";
-
-/*--------------------------------------------------------------------------*/
-
-#ifdef ID_VOID_MAIN
-void main() {}
-#else
-# if defined(__CLASSIC_C__)
-int main(argc, argv) int argc; char *argv[];
-# else
-int main(int argc, char* argv[])
-# endif
-{
-  int require = 0;
-  require += info_compiler[argc];
-  require += info_platform[argc];
-  require += info_arch[argc];
-#ifdef COMPILER_VERSION_MAJOR
-  require += info_version[argc];
-#endif
-#ifdef COMPILER_VERSION_INTERNAL
-  require += info_version_internal[argc];
-#endif
-#ifdef SIMULATE_ID
-  require += info_simulate[argc];
-#endif
-#ifdef SIMULATE_VERSION_MAJOR
-  require += info_simulate_version[argc];
-#endif
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-  require += info_cray[argc];
-#endif
-  require += info_language_standard_default[argc];
-  require += info_language_extensions_default[argc];
-  (void)argv;
-  return require;
-}
-#endif
-
-```
-
-# File: build_ninja\CMakeFiles\3.28.0-msvc1\CompilerIdCXX\CMakeCXXCompilerId.cpp
-```cpp
-/* This source file must have a .cpp extension so that all C++ compilers
-   recognize the extension without flags.  Borland does not know .cxx for
-   example.  */
-#ifndef __cplusplus
-# error "A C compiler has been selected for C++."
-#endif
-
-#if !defined(__has_include)
-/* If the compiler does not have __has_include, pretend the answer is
-   always no.  */
-#  define __has_include(x) 0
-#endif
-
-
-/* Version number components: V=Version, R=Revision, P=Patch
-   Version date components:   YYYY=Year, MM=Month,   DD=Day  */
-
-#if defined(__COMO__)
-# define COMPILER_ID "Comeau"
-  /* __COMO_VERSION__ = VRR */
-# define COMPILER_VERSION_MAJOR DEC(__COMO_VERSION__ / 100)
-# define COMPILER_VERSION_MINOR DEC(__COMO_VERSION__ % 100)
-
-#elif defined(__INTEL_COMPILER) || defined(__ICC)
-# define COMPILER_ID "Intel"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_ID "GNU"
-# endif
-  /* __INTEL_COMPILER = VRP prior to 2021, and then VVVV for 2021 and later,
-     except that a few beta releases use the old format with V=2021.  */
-# if __INTEL_COMPILER < 2021 || __INTEL_COMPILER == 202110 || __INTEL_COMPILER == 202111
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER/100)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER/10 % 10)
-#  if defined(__INTEL_COMPILER_UPDATE)
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER_UPDATE)
-#  else
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER   % 10)
-#  endif
-# else
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER_UPDATE)
-   /* The third version component from --version is an update index,
-      but no macro is provided for it.  */
-#  define COMPILER_VERSION_PATCH DEC(0)
-# endif
-# if defined(__INTEL_COMPILER_BUILD_DATE)
-   /* __INTEL_COMPILER_BUILD_DATE = YYYYMMDD */
-#  define COMPILER_VERSION_TWEAK DEC(__INTEL_COMPILER_BUILD_DATE)
-# endif
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-# elif defined(__GNUG__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-# endif
-# if defined(__GNUC_MINOR__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif (defined(__clang__) && defined(__INTEL_CLANG_COMPILER)) || defined(__INTEL_LLVM_COMPILER)
-# define COMPILER_ID "IntelLLVM"
-#if defined(_MSC_VER)
-# define SIMULATE_ID "MSVC"
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_ID "GNU"
-#endif
-/* __INTEL_LLVM_COMPILER = VVVVRP prior to 2021.2.0, VVVVRRPP for 2021.2.0 and
- * later.  Look for 6 digit vs. 8 digit version number to decide encoding.
- * VVVV is no smaller than the current year when a version is released.
- */
-#if __INTEL_LLVM_COMPILER < 1000000L
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/100)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER    % 10)
-#else
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/10000)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER     % 100)
-#endif
-#if defined(_MSC_VER)
-  /* _MSC_VER = VVRR */
-# define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#elif defined(__GNUG__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-#endif
-#if defined(__GNUC_MINOR__)
-# define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#endif
-#if defined(__GNUC_PATCHLEVEL__)
-# define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#endif
-
-#elif defined(__PATHCC__)
-# define COMPILER_ID "PathScale"
-# define COMPILER_VERSION_MAJOR DEC(__PATHCC__)
-# define COMPILER_VERSION_MINOR DEC(__PATHCC_MINOR__)
-# if defined(__PATHCC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PATHCC_PATCHLEVEL__)
-# endif
-
-#elif defined(__BORLANDC__) && defined(__CODEGEARC_VERSION__)
-# define COMPILER_ID "Embarcadero"
-# define COMPILER_VERSION_MAJOR HEX(__CODEGEARC_VERSION__>>24 & 0x00FF)
-# define COMPILER_VERSION_MINOR HEX(__CODEGEARC_VERSION__>>16 & 0x00FF)
-# define COMPILER_VERSION_PATCH DEC(__CODEGEARC_VERSION__     & 0xFFFF)
-
-#elif defined(__BORLANDC__)
-# define COMPILER_ID "Borland"
-  /* __BORLANDC__ = 0xVRR */
-# define COMPILER_VERSION_MAJOR HEX(__BORLANDC__>>8)
-# define COMPILER_VERSION_MINOR HEX(__BORLANDC__ & 0xFF)
-
-#elif defined(__WATCOMC__) && __WATCOMC__ < 1200
-# define COMPILER_ID "Watcom"
-   /* __WATCOMC__ = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(__WATCOMC__ / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__WATCOMC__)
-# define COMPILER_ID "OpenWatcom"
-   /* __WATCOMC__ = VVRP + 1100 */
-# define COMPILER_VERSION_MAJOR DEC((__WATCOMC__ - 1100) / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__SUNPRO_CC)
-# define COMPILER_ID "SunPro"
-# if __SUNPRO_CC >= 0x5100
-   /* __SUNPRO_CC = 0xVRRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_CC>>12)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_CC>>4 & 0xFF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_CC    & 0xF)
-# else
-   /* __SUNPRO_CC = 0xVRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_CC>>8)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_CC>>4 & 0xF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_CC    & 0xF)
-# endif
-
-#elif defined(__HP_aCC)
-# define COMPILER_ID "HP"
-  /* __HP_aCC = VVRRPP */
-# define COMPILER_VERSION_MAJOR DEC(__HP_aCC/10000)
-# define COMPILER_VERSION_MINOR DEC(__HP_aCC/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__HP_aCC     % 100)
-
-#elif defined(__DECCXX)
-# define COMPILER_ID "Compaq"
-  /* __DECCXX_VER = VVRRTPPPP */
-# define COMPILER_VERSION_MAJOR DEC(__DECCXX_VER/10000000)
-# define COMPILER_VERSION_MINOR DEC(__DECCXX_VER/100000  % 100)
-# define COMPILER_VERSION_PATCH DEC(__DECCXX_VER         % 10000)
-
-#elif defined(__IBMCPP__) && defined(__COMPILER_VER__)
-# define COMPILER_ID "zOS"
-  /* __IBMCPP__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
-
-#elif defined(__open_xl__) && defined(__clang__)
-# define COMPILER_ID "IBMClang"
-# define COMPILER_VERSION_MAJOR DEC(__open_xl_version__)
-# define COMPILER_VERSION_MINOR DEC(__open_xl_release__)
-# define COMPILER_VERSION_PATCH DEC(__open_xl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__open_xl_ptf_fix_level__)
-
-
-#elif defined(__ibmxl__) && defined(__clang__)
-# define COMPILER_ID "XLClang"
-# define COMPILER_VERSION_MAJOR DEC(__ibmxl_version__)
-# define COMPILER_VERSION_MINOR DEC(__ibmxl_release__)
-# define COMPILER_VERSION_PATCH DEC(__ibmxl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__ibmxl_ptf_fix_level__)
-
-
-#elif defined(__IBMCPP__) && !defined(__COMPILER_VER__) && __IBMCPP__ >= 800
-# define COMPILER_ID "XL"
-  /* __IBMCPP__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
-
-#elif defined(__IBMCPP__) && !defined(__COMPILER_VER__) && __IBMCPP__ < 800
-# define COMPILER_ID "VisualAge"
-  /* __IBMCPP__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
-
-#elif defined(__NVCOMPILER)
-# define COMPILER_ID "NVHPC"
-# define COMPILER_VERSION_MAJOR DEC(__NVCOMPILER_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__NVCOMPILER_MINOR__)
-# if defined(__NVCOMPILER_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__NVCOMPILER_PATCHLEVEL__)
-# endif
-
-#elif defined(__PGI)
-# define COMPILER_ID "PGI"
-# define COMPILER_VERSION_MAJOR DEC(__PGIC__)
-# define COMPILER_VERSION_MINOR DEC(__PGIC_MINOR__)
-# if defined(__PGIC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PGIC_PATCHLEVEL__)
-# endif
-
-#elif defined(__clang__) && defined(__cray__)
-# define COMPILER_ID "CrayClang"
-# define COMPILER_VERSION_MAJOR DEC(__cray_major__)
-# define COMPILER_VERSION_MINOR DEC(__cray_minor__)
-# define COMPILER_VERSION_PATCH DEC(__cray_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(_CRAYC)
-# define COMPILER_ID "Cray"
-# define COMPILER_VERSION_MAJOR DEC(_RELEASE_MAJOR)
-# define COMPILER_VERSION_MINOR DEC(_RELEASE_MINOR)
-
-#elif defined(__TI_COMPILER_VERSION__)
-# define COMPILER_ID "TI"
-  /* __TI_COMPILER_VERSION__ = VVVRRRPPP */
-# define COMPILER_VERSION_MAJOR DEC(__TI_COMPILER_VERSION__/1000000)
-# define COMPILER_VERSION_MINOR DEC(__TI_COMPILER_VERSION__/1000   % 1000)
-# define COMPILER_VERSION_PATCH DEC(__TI_COMPILER_VERSION__        % 1000)
-
-#elif defined(__CLANG_FUJITSU)
-# define COMPILER_ID "FujitsuClang"
-# define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-# define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-# define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(__FUJITSU)
-# define COMPILER_ID "Fujitsu"
-# if defined(__FCC_version__)
-#   define COMPILER_VERSION __FCC_version__
-# elif defined(__FCC_major__)
-#   define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-#   define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-#   define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# endif
-# if defined(__fcc_version)
-#   define COMPILER_VERSION_INTERNAL DEC(__fcc_version)
-# elif defined(__FCC_VERSION)
-#   define COMPILER_VERSION_INTERNAL DEC(__FCC_VERSION)
-# endif
-
-
-#elif defined(__ghs__)
-# define COMPILER_ID "GHS"
-/* __GHS_VERSION_NUMBER = VVVVRP */
-# ifdef __GHS_VERSION_NUMBER
-# define COMPILER_VERSION_MAJOR DEC(__GHS_VERSION_NUMBER / 100)
-# define COMPILER_VERSION_MINOR DEC(__GHS_VERSION_NUMBER / 10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__GHS_VERSION_NUMBER      % 10)
-# endif
-
-#elif defined(__TASKING__)
-# define COMPILER_ID "Tasking"
-  # define COMPILER_VERSION_MAJOR DEC(__VERSION__/1000)
-  # define COMPILER_VERSION_MINOR DEC(__VERSION__ % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__VERSION__)
-
-#elif defined(__ORANGEC__)
-# define COMPILER_ID "OrangeC"
-# define COMPILER_VERSION_MAJOR DEC(__ORANGEC_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__ORANGEC_MINOR__)
-# define COMPILER_VERSION_PATCH DEC(__ORANGEC_PATCHLEVEL__)
-
-#elif defined(__SCO_VERSION__)
-# define COMPILER_ID "SCO"
-
-#elif defined(__ARMCC_VERSION) && !defined(__clang__)
-# define COMPILER_ID "ARMCC"
-#if __ARMCC_VERSION >= 1000000
-  /* __ARMCC_VERSION = VRRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION     % 10000)
-#else
-  /* __ARMCC_VERSION = VRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/100000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 10)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION    % 10000)
-#endif
-
-
-#elif defined(__clang__) && defined(__apple_build_version__)
-# define COMPILER_ID "AppleClang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# define COMPILER_VERSION_TWEAK DEC(__apple_build_version__)
-
-#elif defined(__clang__) && defined(__ARMCOMPILER_VERSION)
-# define COMPILER_ID "ARMClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCOMPILER_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCOMPILER_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCOMPILER_VERSION/100   % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__ARMCOMPILER_VERSION)
-
-#elif defined(__clang__)
-# define COMPILER_ID "Clang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-
-#elif defined(__LCC__) && (defined(__GNUC__) || defined(__GNUG__) || defined(__MCST__))
-# define COMPILER_ID "LCC"
-# define COMPILER_VERSION_MAJOR DEC(__LCC__ / 100)
-# define COMPILER_VERSION_MINOR DEC(__LCC__ % 100)
-# if defined(__LCC_MINOR__)
-#  define COMPILER_VERSION_PATCH DEC(__LCC_MINOR__)
-# endif
-# if defined(__GNUC__) && defined(__GNUC_MINOR__)
-#  define SIMULATE_ID "GNU"
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#  if defined(__GNUC_PATCHLEVEL__)
-#   define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#  endif
-# endif
-
-#elif defined(__GNUC__) || defined(__GNUG__)
-# define COMPILER_ID "GNU"
-# if defined(__GNUC__)
-#  define COMPILER_VERSION_MAJOR DEC(__GNUC__)
-# else
-#  define COMPILER_VERSION_MAJOR DEC(__GNUG__)
-# endif
-# if defined(__GNUC_MINOR__)
-#  define COMPILER_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif defined(_MSC_VER)
-# define COMPILER_ID "MSVC"
-  /* _MSC_VER = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define COMPILER_VERSION_MINOR DEC(_MSC_VER % 100)
-# if defined(_MSC_FULL_VER)
-#  if _MSC_VER >= 1400
-    /* _MSC_FULL_VER = VVRRPPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 100000)
-#  else
-    /* _MSC_FULL_VER = VVRRPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 10000)
-#  endif
-# endif
-# if defined(_MSC_BUILD)
-#  define COMPILER_VERSION_TWEAK DEC(_MSC_BUILD)
-# endif
-
-#elif defined(_ADI_COMPILER)
-# define COMPILER_ID "ADSP"
-#if defined(__VERSIONNUM__)
-  /* __VERSIONNUM__ = 0xVVRRPPTT */
-#  define COMPILER_VERSION_MAJOR DEC(__VERSIONNUM__ >> 24 & 0xFF)
-#  define COMPILER_VERSION_MINOR DEC(__VERSIONNUM__ >> 16 & 0xFF)
-#  define COMPILER_VERSION_PATCH DEC(__VERSIONNUM__ >> 8 & 0xFF)
-#  define COMPILER_VERSION_TWEAK DEC(__VERSIONNUM__ & 0xFF)
-#endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# define COMPILER_ID "IAR"
-# if defined(__VER__) && defined(__ICCARM__)
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 1000000)
-#  define COMPILER_VERSION_MINOR DEC(((__VER__) / 1000) % 1000)
-#  define COMPILER_VERSION_PATCH DEC((__VER__) % 1000)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# elif defined(__VER__) && (defined(__ICCAVR__) || defined(__ICCRX__) || defined(__ICCRH850__) || defined(__ICCRL78__) || defined(__ICC430__) || defined(__ICCRISCV__) || defined(__ICCV850__) || defined(__ICC8051__) || defined(__ICCSTM8__))
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 100)
-#  define COMPILER_VERSION_MINOR DEC((__VER__) - (((__VER__) / 100)*100))
-#  define COMPILER_VERSION_PATCH DEC(__SUBVERSION__)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# endif
-
-
-/* These compilers are either not known or too old to define an
-  identification macro.  Try to identify the platform and guess that
-  it is the native compiler.  */
-#elif defined(__hpux) || defined(__hpua)
-# define COMPILER_ID "HP"
-
-#else /* unknown compiler */
-# define COMPILER_ID ""
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_compiler = "INFO" ":" "compiler[" COMPILER_ID "]";
-#ifdef SIMULATE_ID
-char const* info_simulate = "INFO" ":" "simulate[" SIMULATE_ID "]";
-#endif
-
-#ifdef __QNXNTO__
-char const* qnxnto = "INFO" ":" "qnxnto[]";
-#endif
-
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-char const *info_cray = "INFO" ":" "compiler_wrapper[CrayPrgEnv]";
-#endif
-
-#define STRINGIFY_HELPER(X) #X
-#define STRINGIFY(X) STRINGIFY_HELPER(X)
-
-/* Identify known platforms by name.  */
-#if defined(__linux) || defined(__linux__) || defined(linux)
-# define PLATFORM_ID "Linux"
-
-#elif defined(__MSYS__)
-# define PLATFORM_ID "MSYS"
-
-#elif defined(__CYGWIN__)
-# define PLATFORM_ID "Cygwin"
-
-#elif defined(__MINGW32__)
-# define PLATFORM_ID "MinGW"
-
-#elif defined(__APPLE__)
-# define PLATFORM_ID "Darwin"
-
-#elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-# define PLATFORM_ID "Windows"
-
-#elif defined(__FreeBSD__) || defined(__FreeBSD)
-# define PLATFORM_ID "FreeBSD"
-
-#elif defined(__NetBSD__) || defined(__NetBSD)
-# define PLATFORM_ID "NetBSD"
-
-#elif defined(__OpenBSD__) || defined(__OPENBSD)
-# define PLATFORM_ID "OpenBSD"
-
-#elif defined(__sun) || defined(sun)
-# define PLATFORM_ID "SunOS"
-
-#elif defined(_AIX) || defined(__AIX) || defined(__AIX__) || defined(__aix) || defined(__aix__)
-# define PLATFORM_ID "AIX"
-
-#elif defined(__hpux) || defined(__hpux__)
-# define PLATFORM_ID "HP-UX"
-
-#elif defined(__HAIKU__)
-# define PLATFORM_ID "Haiku"
-
-#elif defined(__BeOS) || defined(__BEOS__) || defined(_BEOS)
-# define PLATFORM_ID "BeOS"
-
-#elif defined(__QNX__) || defined(__QNXNTO__)
-# define PLATFORM_ID "QNX"
-
-#elif defined(__tru64) || defined(_tru64) || defined(__TRU64__)
-# define PLATFORM_ID "Tru64"
-
-#elif defined(__riscos) || defined(__riscos__)
-# define PLATFORM_ID "RISCos"
-
-#elif defined(__sinix) || defined(__sinix__) || defined(__SINIX__)
-# define PLATFORM_ID "SINIX"
-
-#elif defined(__UNIX_SV__)
-# define PLATFORM_ID "UNIX_SV"
-
-#elif defined(__bsdos__)
-# define PLATFORM_ID "BSDOS"
-
-#elif defined(_MPRAS) || defined(MPRAS)
-# define PLATFORM_ID "MP-RAS"
-
-#elif defined(__osf) || defined(__osf__)
-# define PLATFORM_ID "OSF1"
-
-#elif defined(_SCO_SV) || defined(SCO_SV) || defined(sco_sv)
-# define PLATFORM_ID "SCO_SV"
-
-#elif defined(__ultrix) || defined(__ultrix__) || defined(_ULTRIX)
-# define PLATFORM_ID "ULTRIX"
-
-#elif defined(__XENIX__) || defined(_XENIX) || defined(XENIX)
-# define PLATFORM_ID "Xenix"
-
-#elif defined(__WATCOMC__)
-# if defined(__LINUX__)
-#  define PLATFORM_ID "Linux"
-
-# elif defined(__DOS__)
-#  define PLATFORM_ID "DOS"
-
-# elif defined(__OS2__)
-#  define PLATFORM_ID "OS2"
-
-# elif defined(__WINDOWS__)
-#  define PLATFORM_ID "Windows3x"
-
-# elif defined(__VXWORKS__)
-#  define PLATFORM_ID "VxWorks"
-
-# else /* unknown platform */
-#  define PLATFORM_ID
-# endif
-
-#elif defined(__INTEGRITY)
-# if defined(INT_178B)
-#  define PLATFORM_ID "Integrity178"
-
-# else /* regular Integrity */
-#  define PLATFORM_ID "Integrity"
-# endif
-
-# elif defined(_ADI_COMPILER)
-#  define PLATFORM_ID "ADSP"
-
-#else /* unknown platform */
-# define PLATFORM_ID
-
-#endif
-
-/* For windows compilers MSVC and Intel we can determine
-   the architecture of the compiler being used.  This is because
-   the compilers do not have flags that can change the architecture,
-   but rather depend on which compiler is being used
-*/
-#if defined(_WIN32) && defined(_MSC_VER)
-# if defined(_M_IA64)
-#  define ARCHITECTURE_ID "IA64"
-
-# elif defined(_M_ARM64EC)
-#  define ARCHITECTURE_ID "ARM64EC"
-
-# elif defined(_M_X64) || defined(_M_AMD64)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# elif defined(_M_ARM64)
-#  define ARCHITECTURE_ID "ARM64"
-
-# elif defined(_M_ARM)
-#  if _M_ARM == 4
-#   define ARCHITECTURE_ID "ARMV4I"
-#  elif _M_ARM == 5
-#   define ARCHITECTURE_ID "ARMV5I"
-#  else
-#   define ARCHITECTURE_ID "ARMV" STRINGIFY(_M_ARM)
-#  endif
-
-# elif defined(_M_MIPS)
-#  define ARCHITECTURE_ID "MIPS"
-
-# elif defined(_M_SH)
-#  define ARCHITECTURE_ID "SHx"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__WATCOMC__)
-# if defined(_M_I86)
-#  define ARCHITECTURE_ID "I86"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# if defined(__ICCARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__ICCRX__)
-#  define ARCHITECTURE_ID "RX"
-
-# elif defined(__ICCRH850__)
-#  define ARCHITECTURE_ID "RH850"
-
-# elif defined(__ICCRL78__)
-#  define ARCHITECTURE_ID "RL78"
-
-# elif defined(__ICCRISCV__)
-#  define ARCHITECTURE_ID "RISCV"
-
-# elif defined(__ICCAVR__)
-#  define ARCHITECTURE_ID "AVR"
-
-# elif defined(__ICC430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__ICCV850__)
-#  define ARCHITECTURE_ID "V850"
-
-# elif defined(__ICC8051__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__ICCSTM8__)
-#  define ARCHITECTURE_ID "STM8"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__ghs__)
-# if defined(__PPC64__)
-#  define ARCHITECTURE_ID "PPC64"
-
-# elif defined(__ppc__)
-#  define ARCHITECTURE_ID "PPC"
-
-# elif defined(__ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__x86_64__)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(__i386__)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__TI_COMPILER_VERSION__)
-# if defined(__TI_ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__MSP430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__TMS320C28XX__)
-#  define ARCHITECTURE_ID "TMS320C28x"
-
-# elif defined(__TMS320C6X__) || defined(_TMS320C6X)
-#  define ARCHITECTURE_ID "TMS320C6x"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-# elif defined(__ADSPSHARC__)
-#  define ARCHITECTURE_ID "SHARC"
-
-# elif defined(__ADSPBLACKFIN__)
-#  define ARCHITECTURE_ID "Blackfin"
-
-#elif defined(__TASKING__)
-
-# if defined(__CTC__) || defined(__CPTC__)
-#  define ARCHITECTURE_ID "TriCore"
-
-# elif defined(__CMCS__)
-#  define ARCHITECTURE_ID "MCS"
-
-# elif defined(__CARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__CARC__)
-#  define ARCHITECTURE_ID "ARC"
-
-# elif defined(__C51__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__CPCP__)
-#  define ARCHITECTURE_ID "PCP"
-
-# else
-#  define ARCHITECTURE_ID ""
-# endif
-
-#else
-#  define ARCHITECTURE_ID
-#endif
-
-/* Convert integer to decimal digit literals.  */
-#define DEC(n)                   \
-  ('0' + (((n) / 10000000)%10)), \
-  ('0' + (((n) / 1000000)%10)),  \
-  ('0' + (((n) / 100000)%10)),   \
-  ('0' + (((n) / 10000)%10)),    \
-  ('0' + (((n) / 1000)%10)),     \
-  ('0' + (((n) / 100)%10)),      \
-  ('0' + (((n) / 10)%10)),       \
-  ('0' +  ((n) % 10))
-
-/* Convert integer to hex digit literals.  */
-#define HEX(n)             \
-  ('0' + ((n)>>28 & 0xF)), \
-  ('0' + ((n)>>24 & 0xF)), \
-  ('0' + ((n)>>20 & 0xF)), \
-  ('0' + ((n)>>16 & 0xF)), \
-  ('0' + ((n)>>12 & 0xF)), \
-  ('0' + ((n)>>8  & 0xF)), \
-  ('0' + ((n)>>4  & 0xF)), \
-  ('0' + ((n)     & 0xF))
-
-/* Construct a string literal encoding the version number. */
-#ifdef COMPILER_VERSION
-char const* info_version = "INFO" ":" "compiler_version[" COMPILER_VERSION "]";
-
-/* Construct a string literal encoding the version number components. */
-#elif defined(COMPILER_VERSION_MAJOR)
-char const info_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','[',
-  COMPILER_VERSION_MAJOR,
-# ifdef COMPILER_VERSION_MINOR
-  '.', COMPILER_VERSION_MINOR,
-#  ifdef COMPILER_VERSION_PATCH
-   '.', COMPILER_VERSION_PATCH,
-#   ifdef COMPILER_VERSION_TWEAK
-    '.', COMPILER_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct a string literal encoding the internal version number. */
-#ifdef COMPILER_VERSION_INTERNAL
-char const info_version_internal[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','_',
-  'i','n','t','e','r','n','a','l','[',
-  COMPILER_VERSION_INTERNAL,']','\0'};
-#elif defined(COMPILER_VERSION_INTERNAL_STR)
-char const* info_version_internal = "INFO" ":" "compiler_version_internal[" COMPILER_VERSION_INTERNAL_STR "]";
-#endif
-
-/* Construct a string literal encoding the version number components. */
-#ifdef SIMULATE_VERSION_MAJOR
-char const info_simulate_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  's','i','m','u','l','a','t','e','_','v','e','r','s','i','o','n','[',
-  SIMULATE_VERSION_MAJOR,
-# ifdef SIMULATE_VERSION_MINOR
-  '.', SIMULATE_VERSION_MINOR,
-#  ifdef SIMULATE_VERSION_PATCH
-   '.', SIMULATE_VERSION_PATCH,
-#   ifdef SIMULATE_VERSION_TWEAK
-    '.', SIMULATE_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_platform = "INFO" ":" "platform[" PLATFORM_ID "]";
-char const* info_arch = "INFO" ":" "arch[" ARCHITECTURE_ID "]";
-
-
-
-#if defined(__INTEL_COMPILER) && defined(_MSVC_LANG) && _MSVC_LANG < 201403L
-#  if defined(__INTEL_CXX11_MODE__)
-#    if defined(__cpp_aggregate_nsdmi)
-#      define CXX_STD 201402L
-#    else
-#      define CXX_STD 201103L
-#    endif
-#  else
-#    define CXX_STD 199711L
-#  endif
-#elif defined(_MSC_VER) && defined(_MSVC_LANG)
-#  define CXX_STD _MSVC_LANG
-#else
-#  define CXX_STD __cplusplus
-#endif
-
-const char* info_language_standard_default = "INFO" ":" "standard_default["
-#if CXX_STD > 202002L
-  "23"
-#elif CXX_STD > 201703L
-  "20"
-#elif CXX_STD >= 201703L
-  "17"
-#elif CXX_STD >= 201402L
-  "14"
-#elif CXX_STD >= 201103L
-  "11"
-#else
-  "98"
-#endif
-"]";
-
-const char* info_language_extensions_default = "INFO" ":" "extensions_default["
-#if (defined(__clang__) || defined(__GNUC__) || defined(__xlC__) ||           \
-     defined(__TI_COMPILER_VERSION__)) &&                                     \
-  !defined(__STRICT_ANSI__)
-  "ON"
-#else
-  "OFF"
-#endif
-"]";
-
-/*--------------------------------------------------------------------------*/
-
-int main(int argc, char* argv[])
-{
-  int require = 0;
-  require += info_compiler[argc];
-  require += info_platform[argc];
-  require += info_arch[argc];
-#ifdef COMPILER_VERSION_MAJOR
-  require += info_version[argc];
-#endif
-#ifdef COMPILER_VERSION_INTERNAL
-  require += info_version_internal[argc];
-#endif
-#ifdef SIMULATE_ID
-  require += info_simulate[argc];
-#endif
-#ifdef SIMULATE_VERSION_MAJOR
-  require += info_simulate_version[argc];
-#endif
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-  require += info_cray[argc];
-#endif
-  require += info_language_standard_default[argc];
-  require += info_language_extensions_default[argc];
-  (void)argv;
-  return require;
-}
-
-```
-
-# File: build_ninja\CMakeFiles\4.2.3\CompilerIdC\CMakeCCompilerId.c
-```cpp
-#ifdef __cplusplus
-# error "A C++ compiler has been selected for C."
-#endif
-
-#if defined(__18CXX)
-# define ID_VOID_MAIN
-#endif
-#if defined(__CLASSIC_C__)
-/* cv-qualifiers did not exist in K&R C */
-# define const
-# define volatile
-#endif
-
-#if !defined(__has_include)
-/* If the compiler does not have __has_include, pretend the answer is
-   always no.  */
-#  define __has_include(x) 0
-#endif
-
-
-/* Version number components: V=Version, R=Revision, P=Patch
-   Version date components:   YYYY=Year, MM=Month,   DD=Day  */
-
-#if defined(__INTEL_COMPILER) || defined(__ICC)
-# define COMPILER_ID "Intel"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_ID "GNU"
-# endif
-  /* __INTEL_COMPILER = VRP prior to 2021, and then VVVV for 2021 and later,
-     except that a few beta releases use the old format with V=2021.  */
-# if __INTEL_COMPILER < 2021 || __INTEL_COMPILER == 202110 || __INTEL_COMPILER == 202111
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER/100)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER/10 % 10)
-#  if defined(__INTEL_COMPILER_UPDATE)
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER_UPDATE)
-#  else
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER   % 10)
-#  endif
-# else
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER_UPDATE)
-   /* The third version component from --version is an update index,
-      but no macro is provided for it.  */
-#  define COMPILER_VERSION_PATCH DEC(0)
-# endif
-# if defined(__INTEL_COMPILER_BUILD_DATE)
-   /* __INTEL_COMPILER_BUILD_DATE = YYYYMMDD */
-#  define COMPILER_VERSION_TWEAK DEC(__INTEL_COMPILER_BUILD_DATE)
-# endif
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-# elif defined(__GNUG__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-# endif
-# if defined(__GNUC_MINOR__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif (defined(__clang__) && defined(__INTEL_CLANG_COMPILER)) || defined(__INTEL_LLVM_COMPILER)
-# define COMPILER_ID "IntelLLVM"
-#if defined(_MSC_VER)
-# define SIMULATE_ID "MSVC"
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_ID "GNU"
-#endif
-/* __INTEL_LLVM_COMPILER = VVVVRP prior to 2021.2.0, VVVVRRPP for 2021.2.0 and
- * later.  Look for 6 digit vs. 8 digit version number to decide encoding.
- * VVVV is no smaller than the current year when a version is released.
- */
-#if __INTEL_LLVM_COMPILER < 1000000L
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/100)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER    % 10)
-#else
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/10000)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER     % 100)
-#endif
-#if defined(_MSC_VER)
-  /* _MSC_VER = VVRR */
-# define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#elif defined(__GNUG__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-#endif
-#if defined(__GNUC_MINOR__)
-# define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#endif
-#if defined(__GNUC_PATCHLEVEL__)
-# define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#endif
-
-#elif defined(__PATHCC__)
-# define COMPILER_ID "PathScale"
-# define COMPILER_VERSION_MAJOR DEC(__PATHCC__)
-# define COMPILER_VERSION_MINOR DEC(__PATHCC_MINOR__)
-# if defined(__PATHCC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PATHCC_PATCHLEVEL__)
-# endif
-
-#elif defined(__BORLANDC__) && defined(__CODEGEARC_VERSION__)
-# define COMPILER_ID "Embarcadero"
-# define COMPILER_VERSION_MAJOR HEX(__CODEGEARC_VERSION__>>24 & 0x00FF)
-# define COMPILER_VERSION_MINOR HEX(__CODEGEARC_VERSION__>>16 & 0x00FF)
-# define COMPILER_VERSION_PATCH DEC(__CODEGEARC_VERSION__     & 0xFFFF)
-
-#elif defined(__BORLANDC__)
-# define COMPILER_ID "Borland"
-  /* __BORLANDC__ = 0xVRR */
-# define COMPILER_VERSION_MAJOR HEX(__BORLANDC__>>8)
-# define COMPILER_VERSION_MINOR HEX(__BORLANDC__ & 0xFF)
-
-#elif defined(__WATCOMC__) && __WATCOMC__ < 1200
-# define COMPILER_ID "Watcom"
-   /* __WATCOMC__ = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(__WATCOMC__ / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__WATCOMC__)
-# define COMPILER_ID "OpenWatcom"
-   /* __WATCOMC__ = VVRP + 1100 */
-# define COMPILER_VERSION_MAJOR DEC((__WATCOMC__ - 1100) / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__SUNPRO_C)
-# define COMPILER_ID "SunPro"
-# if __SUNPRO_C >= 0x5100
-   /* __SUNPRO_C = 0xVRRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_C>>12)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_C>>4 & 0xFF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_C    & 0xF)
-# else
-   /* __SUNPRO_CC = 0xVRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_C>>8)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_C>>4 & 0xF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_C    & 0xF)
-# endif
-
-#elif defined(__HP_cc)
-# define COMPILER_ID "HP"
-  /* __HP_cc = VVRRPP */
-# define COMPILER_VERSION_MAJOR DEC(__HP_cc/10000)
-# define COMPILER_VERSION_MINOR DEC(__HP_cc/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__HP_cc     % 100)
-
-#elif defined(__DECC)
-# define COMPILER_ID "Compaq"
-  /* __DECC_VER = VVRRTPPPP */
-# define COMPILER_VERSION_MAJOR DEC(__DECC_VER/10000000)
-# define COMPILER_VERSION_MINOR DEC(__DECC_VER/100000  % 100)
-# define COMPILER_VERSION_PATCH DEC(__DECC_VER         % 10000)
-
-#elif defined(__IBMC__) && defined(__COMPILER_VER__)
-# define COMPILER_ID "zOS"
-  /* __IBMC__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMC__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMC__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMC__    % 10)
-
-#elif defined(__open_xl__) && defined(__clang__)
-# define COMPILER_ID "IBMClang"
-# define COMPILER_VERSION_MAJOR DEC(__open_xl_version__)
-# define COMPILER_VERSION_MINOR DEC(__open_xl_release__)
-# define COMPILER_VERSION_PATCH DEC(__open_xl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__open_xl_ptf_fix_level__)
-# define COMPILER_VERSION_INTERNAL_STR  __clang_version__
-
-
-#elif defined(__ibmxl__) && defined(__clang__)
-# define COMPILER_ID "XLClang"
-# define COMPILER_VERSION_MAJOR DEC(__ibmxl_version__)
-# define COMPILER_VERSION_MINOR DEC(__ibmxl_release__)
-# define COMPILER_VERSION_PATCH DEC(__ibmxl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__ibmxl_ptf_fix_level__)
-
-
-#elif defined(__IBMC__) && !defined(__COMPILER_VER__) && __IBMC__ >= 800
-# define COMPILER_ID "XL"
-  /* __IBMC__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMC__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMC__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMC__    % 10)
-
-#elif defined(__IBMC__) && !defined(__COMPILER_VER__) && __IBMC__ < 800
-# define COMPILER_ID "VisualAge"
-  /* __IBMC__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMC__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMC__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMC__    % 10)
-
-#elif defined(__NVCOMPILER)
-# define COMPILER_ID "NVHPC"
-# define COMPILER_VERSION_MAJOR DEC(__NVCOMPILER_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__NVCOMPILER_MINOR__)
-# if defined(__NVCOMPILER_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__NVCOMPILER_PATCHLEVEL__)
-# endif
-
-#elif defined(__PGI)
-# define COMPILER_ID "PGI"
-# define COMPILER_VERSION_MAJOR DEC(__PGIC__)
-# define COMPILER_VERSION_MINOR DEC(__PGIC_MINOR__)
-# if defined(__PGIC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PGIC_PATCHLEVEL__)
-# endif
-
-#elif defined(__clang__) && defined(__cray__)
-# define COMPILER_ID "CrayClang"
-# define COMPILER_VERSION_MAJOR DEC(__cray_major__)
-# define COMPILER_VERSION_MINOR DEC(__cray_minor__)
-# define COMPILER_VERSION_PATCH DEC(__cray_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(_CRAYC)
-# define COMPILER_ID "Cray"
-# define COMPILER_VERSION_MAJOR DEC(_RELEASE_MAJOR)
-# define COMPILER_VERSION_MINOR DEC(_RELEASE_MINOR)
-
-#elif defined(__TI_COMPILER_VERSION__)
-# define COMPILER_ID "TI"
-  /* __TI_COMPILER_VERSION__ = VVVRRRPPP */
-# define COMPILER_VERSION_MAJOR DEC(__TI_COMPILER_VERSION__/1000000)
-# define COMPILER_VERSION_MINOR DEC(__TI_COMPILER_VERSION__/1000   % 1000)
-# define COMPILER_VERSION_PATCH DEC(__TI_COMPILER_VERSION__        % 1000)
-
-#elif defined(__CLANG_FUJITSU)
-# define COMPILER_ID "FujitsuClang"
-# define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-# define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-# define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(__FUJITSU)
-# define COMPILER_ID "Fujitsu"
-# if defined(__FCC_version__)
-#   define COMPILER_VERSION __FCC_version__
-# elif defined(__FCC_major__)
-#   define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-#   define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-#   define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# endif
-# if defined(__fcc_version)
-#   define COMPILER_VERSION_INTERNAL DEC(__fcc_version)
-# elif defined(__FCC_VERSION)
-#   define COMPILER_VERSION_INTERNAL DEC(__FCC_VERSION)
-# endif
-
-
-#elif defined(__ghs__)
-# define COMPILER_ID "GHS"
-/* __GHS_VERSION_NUMBER = VVVVRP */
-# ifdef __GHS_VERSION_NUMBER
-# define COMPILER_VERSION_MAJOR DEC(__GHS_VERSION_NUMBER / 100)
-# define COMPILER_VERSION_MINOR DEC(__GHS_VERSION_NUMBER / 10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__GHS_VERSION_NUMBER      % 10)
-# endif
-
-#elif defined(__TASKING__)
-# define COMPILER_ID "Tasking"
-  # define COMPILER_VERSION_MAJOR DEC(__VERSION__/1000)
-  # define COMPILER_VERSION_MINOR DEC(__VERSION__ % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__VERSION__)
-
-#elif defined(__ORANGEC__)
-# define COMPILER_ID "OrangeC"
-# define COMPILER_VERSION_MAJOR DEC(__ORANGEC_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__ORANGEC_MINOR__)
-# define COMPILER_VERSION_PATCH DEC(__ORANGEC_PATCHLEVEL__)
-
-#elif defined(__RENESAS__)
-# define COMPILER_ID "Renesas"
-/* __RENESAS_VERSION__ = 0xVVRRPP00 */
-# define COMPILER_VERSION_MAJOR HEX(__RENESAS_VERSION__ >> 24 & 0xFF)
-# define COMPILER_VERSION_MINOR HEX(__RENESAS_VERSION__ >> 16 & 0xFF)
-# define COMPILER_VERSION_PATCH HEX(__RENESAS_VERSION__ >> 8  & 0xFF)
-
-#elif defined(__TINYC__)
-# define COMPILER_ID "TinyCC"
-
-#elif defined(__BCC__)
-# define COMPILER_ID "Bruce"
-
-#elif defined(__SCO_VERSION__)
-# define COMPILER_ID "SCO"
-
-#elif defined(__ARMCC_VERSION) && !defined(__clang__)
-# define COMPILER_ID "ARMCC"
-#if __ARMCC_VERSION >= 1000000
-  /* __ARMCC_VERSION = VRRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION     % 10000)
-#else
-  /* __ARMCC_VERSION = VRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/100000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 10)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION    % 10000)
-#endif
-
-
-#elif defined(__clang__) && defined(__apple_build_version__)
-# define COMPILER_ID "AppleClang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# define COMPILER_VERSION_TWEAK DEC(__apple_build_version__)
-
-#elif defined(__clang__) && defined(__ARMCOMPILER_VERSION)
-# define COMPILER_ID "ARMClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCOMPILER_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCOMPILER_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCOMPILER_VERSION/100   % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__ARMCOMPILER_VERSION)
-
-#elif defined(__clang__) && defined(__ti__)
-# define COMPILER_ID "TIClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ti_major__)
-  # define COMPILER_VERSION_MINOR DEC(__ti_minor__)
-  # define COMPILER_VERSION_PATCH DEC(__ti_patchlevel__)
-# define COMPILER_VERSION_INTERNAL DEC(__ti_version__)
-
-#elif defined(__clang__)
-# define COMPILER_ID "Clang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-
-#elif defined(__LCC__) && (defined(__GNUC__) || defined(__GNUG__) || defined(__MCST__))
-# define COMPILER_ID "LCC"
-# define COMPILER_VERSION_MAJOR DEC(__LCC__ / 100)
-# define COMPILER_VERSION_MINOR DEC(__LCC__ % 100)
-# if defined(__LCC_MINOR__)
-#  define COMPILER_VERSION_PATCH DEC(__LCC_MINOR__)
-# endif
-# if defined(__GNUC__) && defined(__GNUC_MINOR__)
-#  define SIMULATE_ID "GNU"
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#  if defined(__GNUC_PATCHLEVEL__)
-#   define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#  endif
-# endif
-
-#elif defined(__GNUC__)
-# define COMPILER_ID "GNU"
-# define COMPILER_VERSION_MAJOR DEC(__GNUC__)
-# if defined(__GNUC_MINOR__)
-#  define COMPILER_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif defined(_MSC_VER)
-# define COMPILER_ID "MSVC"
-  /* _MSC_VER = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define COMPILER_VERSION_MINOR DEC(_MSC_VER % 100)
-# if defined(_MSC_FULL_VER)
-#  if _MSC_VER >= 1400
-    /* _MSC_FULL_VER = VVRRPPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 100000)
-#  else
-    /* _MSC_FULL_VER = VVRRPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 10000)
-#  endif
-# endif
-# if defined(_MSC_BUILD)
-#  define COMPILER_VERSION_TWEAK DEC(_MSC_BUILD)
-# endif
-
-#elif defined(_ADI_COMPILER)
-# define COMPILER_ID "ADSP"
-#if defined(__VERSIONNUM__)
-  /* __VERSIONNUM__ = 0xVVRRPPTT */
-#  define COMPILER_VERSION_MAJOR DEC(__VERSIONNUM__ >> 24 & 0xFF)
-#  define COMPILER_VERSION_MINOR DEC(__VERSIONNUM__ >> 16 & 0xFF)
-#  define COMPILER_VERSION_PATCH DEC(__VERSIONNUM__ >> 8 & 0xFF)
-#  define COMPILER_VERSION_TWEAK DEC(__VERSIONNUM__ & 0xFF)
-#endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# define COMPILER_ID "IAR"
-# if defined(__VER__) && defined(__ICCARM__)
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 1000000)
-#  define COMPILER_VERSION_MINOR DEC(((__VER__) / 1000) % 1000)
-#  define COMPILER_VERSION_PATCH DEC((__VER__) % 1000)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# elif defined(__VER__) && (defined(__ICCAVR__) || defined(__ICCRX__) || defined(__ICCRH850__) || defined(__ICCRL78__) || defined(__ICC430__) || defined(__ICCRISCV__) || defined(__ICCV850__) || defined(__ICC8051__) || defined(__ICCSTM8__))
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 100)
-#  define COMPILER_VERSION_MINOR DEC((__VER__) - (((__VER__) / 100)*100))
-#  define COMPILER_VERSION_PATCH DEC(__SUBVERSION__)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# endif
-
-#elif defined(__DCC__) && defined(_DIAB_TOOL)
-# define COMPILER_ID "Diab"
-  # define COMPILER_VERSION_MAJOR DEC(__VERSION_MAJOR_NUMBER__)
-  # define COMPILER_VERSION_MINOR DEC(__VERSION_MINOR_NUMBER__)
-  # define COMPILER_VERSION_PATCH DEC(__VERSION_ARCH_FEATURE_NUMBER__)
-  # define COMPILER_VERSION_TWEAK DEC(__VERSION_BUG_FIX_NUMBER__)
-
-
-#elif defined(__SDCC_VERSION_MAJOR) || defined(SDCC)
-# define COMPILER_ID "SDCC"
-# if defined(__SDCC_VERSION_MAJOR)
-#  define COMPILER_VERSION_MAJOR DEC(__SDCC_VERSION_MAJOR)
-#  define COMPILER_VERSION_MINOR DEC(__SDCC_VERSION_MINOR)
-#  define COMPILER_VERSION_PATCH DEC(__SDCC_VERSION_PATCH)
-# else
-  /* SDCC = VRP */
-#  define COMPILER_VERSION_MAJOR DEC(SDCC/100)
-#  define COMPILER_VERSION_MINOR DEC(SDCC/10 % 10)
-#  define COMPILER_VERSION_PATCH DEC(SDCC    % 10)
-# endif
-
-
-/* These compilers are either not known or too old to define an
-  identification macro.  Try to identify the platform and guess that
-  it is the native compiler.  */
-#elif defined(__hpux) || defined(__hpua)
-# define COMPILER_ID "HP"
-
-#else /* unknown compiler */
-# define COMPILER_ID ""
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_compiler = "INFO" ":" "compiler[" COMPILER_ID "]";
-#ifdef SIMULATE_ID
-char const* info_simulate = "INFO" ":" "simulate[" SIMULATE_ID "]";
-#endif
-
-#ifdef __QNXNTO__
-char const* qnxnto = "INFO" ":" "qnxnto[]";
-#endif
-
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-char const *info_cray = "INFO" ":" "compiler_wrapper[CrayPrgEnv]";
-#endif
-
-#define STRINGIFY_HELPER(X) #X
-#define STRINGIFY(X) STRINGIFY_HELPER(X)
-
-/* Identify known platforms by name.  */
-#if defined(__linux) || defined(__linux__) || defined(linux)
-# define PLATFORM_ID "Linux"
-
-#elif defined(__MSYS__)
-# define PLATFORM_ID "MSYS"
-
-#elif defined(__CYGWIN__)
-# define PLATFORM_ID "Cygwin"
-
-#elif defined(__MINGW32__)
-# define PLATFORM_ID "MinGW"
-
-#elif defined(__APPLE__)
-# define PLATFORM_ID "Darwin"
-
-#elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-# define PLATFORM_ID "Windows"
-
-#elif defined(__FreeBSD__) || defined(__FreeBSD)
-# define PLATFORM_ID "FreeBSD"
-
-#elif defined(__NetBSD__) || defined(__NetBSD)
-# define PLATFORM_ID "NetBSD"
-
-#elif defined(__OpenBSD__) || defined(__OPENBSD)
-# define PLATFORM_ID "OpenBSD"
-
-#elif defined(__sun) || defined(sun)
-# define PLATFORM_ID "SunOS"
-
-#elif defined(_AIX) || defined(__AIX) || defined(__AIX__) || defined(__aix) || defined(__aix__)
-# define PLATFORM_ID "AIX"
-
-#elif defined(__hpux) || defined(__hpux__)
-# define PLATFORM_ID "HP-UX"
-
-#elif defined(__HAIKU__)
-# define PLATFORM_ID "Haiku"
-
-#elif defined(__BeOS) || defined(__BEOS__) || defined(_BEOS)
-# define PLATFORM_ID "BeOS"
-
-#elif defined(__QNX__) || defined(__QNXNTO__)
-# define PLATFORM_ID "QNX"
-
-#elif defined(__tru64) || defined(_tru64) || defined(__TRU64__)
-# define PLATFORM_ID "Tru64"
-
-#elif defined(__riscos) || defined(__riscos__)
-# define PLATFORM_ID "RISCos"
-
-#elif defined(__sinix) || defined(__sinix__) || defined(__SINIX__)
-# define PLATFORM_ID "SINIX"
-
-#elif defined(__UNIX_SV__)
-# define PLATFORM_ID "UNIX_SV"
-
-#elif defined(__bsdos__)
-# define PLATFORM_ID "BSDOS"
-
-#elif defined(_MPRAS) || defined(MPRAS)
-# define PLATFORM_ID "MP-RAS"
-
-#elif defined(__osf) || defined(__osf__)
-# define PLATFORM_ID "OSF1"
-
-#elif defined(_SCO_SV) || defined(SCO_SV) || defined(sco_sv)
-# define PLATFORM_ID "SCO_SV"
-
-#elif defined(__ultrix) || defined(__ultrix__) || defined(_ULTRIX)
-# define PLATFORM_ID "ULTRIX"
-
-#elif defined(__XENIX__) || defined(_XENIX) || defined(XENIX)
-# define PLATFORM_ID "Xenix"
-
-#elif defined(__WATCOMC__)
-# if defined(__LINUX__)
-#  define PLATFORM_ID "Linux"
-
-# elif defined(__DOS__)
-#  define PLATFORM_ID "DOS"
-
-# elif defined(__OS2__)
-#  define PLATFORM_ID "OS2"
-
-# elif defined(__WINDOWS__)
-#  define PLATFORM_ID "Windows3x"
-
-# elif defined(__VXWORKS__)
-#  define PLATFORM_ID "VxWorks"
-
-# else /* unknown platform */
-#  define PLATFORM_ID
-# endif
-
-#elif defined(__INTEGRITY)
-# if defined(INT_178B)
-#  define PLATFORM_ID "Integrity178"
-
-# else /* regular Integrity */
-#  define PLATFORM_ID "Integrity"
-# endif
-
-# elif defined(_ADI_COMPILER)
-#  define PLATFORM_ID "ADSP"
-
-#else /* unknown platform */
-# define PLATFORM_ID
-
-#endif
-
-/* For windows compilers MSVC and Intel we can determine
-   the architecture of the compiler being used.  This is because
-   the compilers do not have flags that can change the architecture,
-   but rather depend on which compiler is being used
-*/
-#if defined(_WIN32) && defined(_MSC_VER)
-# if defined(_M_IA64)
-#  define ARCHITECTURE_ID "IA64"
-
-# elif defined(_M_ARM64EC)
-#  define ARCHITECTURE_ID "ARM64EC"
-
-# elif defined(_M_X64) || defined(_M_AMD64)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# elif defined(_M_ARM64)
-#  define ARCHITECTURE_ID "ARM64"
-
-# elif defined(_M_ARM)
-#  if _M_ARM == 4
-#   define ARCHITECTURE_ID "ARMV4I"
-#  elif _M_ARM == 5
-#   define ARCHITECTURE_ID "ARMV5I"
-#  else
-#   define ARCHITECTURE_ID "ARMV" STRINGIFY(_M_ARM)
-#  endif
-
-# elif defined(_M_MIPS)
-#  define ARCHITECTURE_ID "MIPS"
-
-# elif defined(_M_SH)
-#  define ARCHITECTURE_ID "SHx"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__WATCOMC__)
-# if defined(_M_I86)
-#  define ARCHITECTURE_ID "I86"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# if defined(__ICCARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__ICCRX__)
-#  define ARCHITECTURE_ID "RX"
-
-# elif defined(__ICCRH850__)
-#  define ARCHITECTURE_ID "RH850"
-
-# elif defined(__ICCRL78__)
-#  define ARCHITECTURE_ID "RL78"
-
-# elif defined(__ICCRISCV__)
-#  define ARCHITECTURE_ID "RISCV"
-
-# elif defined(__ICCAVR__)
-#  define ARCHITECTURE_ID "AVR"
-
-# elif defined(__ICC430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__ICCV850__)
-#  define ARCHITECTURE_ID "V850"
-
-# elif defined(__ICC8051__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__ICCSTM8__)
-#  define ARCHITECTURE_ID "STM8"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__ghs__)
-# if defined(__PPC64__)
-#  define ARCHITECTURE_ID "PPC64"
-
-# elif defined(__ppc__)
-#  define ARCHITECTURE_ID "PPC"
-
-# elif defined(__ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__x86_64__)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(__i386__)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__clang__) && defined(__ti__)
-# if defined(__ARM_ARCH)
-#  define ARCHITECTURE_ID "ARM"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__TI_COMPILER_VERSION__)
-# if defined(__TI_ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__MSP430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__TMS320C28XX__)
-#  define ARCHITECTURE_ID "TMS320C28x"
-
-# elif defined(__TMS320C6X__) || defined(_TMS320C6X)
-#  define ARCHITECTURE_ID "TMS320C6x"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-# elif defined(__ADSPSHARC__)
-#  define ARCHITECTURE_ID "SHARC"
-
-# elif defined(__ADSPBLACKFIN__)
-#  define ARCHITECTURE_ID "Blackfin"
-
-#elif defined(__TASKING__)
-
-# if defined(__CTC__) || defined(__CPTC__)
-#  define ARCHITECTURE_ID "TriCore"
-
-# elif defined(__CMCS__)
-#  define ARCHITECTURE_ID "MCS"
-
-# elif defined(__CARM__) || defined(__CPARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__CARC__)
-#  define ARCHITECTURE_ID "ARC"
-
-# elif defined(__C51__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__CPCP__)
-#  define ARCHITECTURE_ID "PCP"
-
-# else
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__RENESAS__)
-# if defined(__CCRX__)
-#  define ARCHITECTURE_ID "RX"
-
-# elif defined(__CCRL__)
-#  define ARCHITECTURE_ID "RL78"
-
-# elif defined(__CCRH__)
-#  define ARCHITECTURE_ID "RH850"
-
-# else
-#  define ARCHITECTURE_ID ""
-# endif
-
-#else
-#  define ARCHITECTURE_ID
-#endif
-
-/* Convert integer to decimal digit literals.  */
-#define DEC(n)                   \
-  ('0' + (((n) / 10000000)%10)), \
-  ('0' + (((n) / 1000000)%10)),  \
-  ('0' + (((n) / 100000)%10)),   \
-  ('0' + (((n) / 10000)%10)),    \
-  ('0' + (((n) / 1000)%10)),     \
-  ('0' + (((n) / 100)%10)),      \
-  ('0' + (((n) / 10)%10)),       \
-  ('0' +  ((n) % 10))
-
-/* Convert integer to hex digit literals.  */
-#define HEX(n)             \
-  ('0' + ((n)>>28 & 0xF)), \
-  ('0' + ((n)>>24 & 0xF)), \
-  ('0' + ((n)>>20 & 0xF)), \
-  ('0' + ((n)>>16 & 0xF)), \
-  ('0' + ((n)>>12 & 0xF)), \
-  ('0' + ((n)>>8  & 0xF)), \
-  ('0' + ((n)>>4  & 0xF)), \
-  ('0' + ((n)     & 0xF))
-
-/* Construct a string literal encoding the version number. */
-#ifdef COMPILER_VERSION
-char const* info_version = "INFO" ":" "compiler_version[" COMPILER_VERSION "]";
-
-/* Construct a string literal encoding the version number components. */
-#elif defined(COMPILER_VERSION_MAJOR)
-char const info_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','[',
-  COMPILER_VERSION_MAJOR,
-# ifdef COMPILER_VERSION_MINOR
-  '.', COMPILER_VERSION_MINOR,
-#  ifdef COMPILER_VERSION_PATCH
-   '.', COMPILER_VERSION_PATCH,
-#   ifdef COMPILER_VERSION_TWEAK
-    '.', COMPILER_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct a string literal encoding the internal version number. */
-#ifdef COMPILER_VERSION_INTERNAL
-char const info_version_internal[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','_',
-  'i','n','t','e','r','n','a','l','[',
-  COMPILER_VERSION_INTERNAL,']','\0'};
-#elif defined(COMPILER_VERSION_INTERNAL_STR)
-char const* info_version_internal = "INFO" ":" "compiler_version_internal[" COMPILER_VERSION_INTERNAL_STR "]";
-#endif
-
-/* Construct a string literal encoding the version number components. */
-#ifdef SIMULATE_VERSION_MAJOR
-char const info_simulate_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  's','i','m','u','l','a','t','e','_','v','e','r','s','i','o','n','[',
-  SIMULATE_VERSION_MAJOR,
-# ifdef SIMULATE_VERSION_MINOR
-  '.', SIMULATE_VERSION_MINOR,
-#  ifdef SIMULATE_VERSION_PATCH
-   '.', SIMULATE_VERSION_PATCH,
-#   ifdef SIMULATE_VERSION_TWEAK
-    '.', SIMULATE_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_platform = "INFO" ":" "platform[" PLATFORM_ID "]";
-char const* info_arch = "INFO" ":" "arch[" ARCHITECTURE_ID "]";
-
-
-
-#define C_STD_99 199901L
-#define C_STD_11 201112L
-#define C_STD_17 201710L
-#define C_STD_23 202311L
-
-#ifdef __STDC_VERSION__
-#  define C_STD __STDC_VERSION__
-#endif
-
-#if !defined(__STDC__) && !defined(__clang__) && !defined(__RENESAS__)
-# if defined(_MSC_VER) || defined(__ibmxl__) || defined(__IBMC__)
-#  define C_VERSION "90"
-# else
-#  define C_VERSION
-# endif
-#elif C_STD > C_STD_17
-# define C_VERSION "23"
-#elif C_STD > C_STD_11
-# define C_VERSION "17"
-#elif C_STD > C_STD_99
-# define C_VERSION "11"
-#elif C_STD >= C_STD_99
-# define C_VERSION "99"
-#else
-# define C_VERSION "90"
-#endif
-const char* info_language_standard_default =
-  "INFO" ":" "standard_default[" C_VERSION "]";
-
-const char* info_language_extensions_default = "INFO" ":" "extensions_default["
-#if (defined(__clang__) || defined(__GNUC__) || defined(__xlC__) ||           \
-     defined(__TI_COMPILER_VERSION__) || defined(__RENESAS__)) &&             \
-  !defined(__STRICT_ANSI__)
-  "ON"
-#else
-  "OFF"
-#endif
-"]";
-
-/*--------------------------------------------------------------------------*/
-
-#ifdef ID_VOID_MAIN
-void main() {}
-#else
-# if defined(__CLASSIC_C__)
-int main(argc, argv) int argc; char *argv[];
-# else
-int main(int argc, char* argv[])
-# endif
-{
-  int require = 0;
-  require += info_compiler[argc];
-  require += info_platform[argc];
-  require += info_arch[argc];
-#ifdef COMPILER_VERSION_MAJOR
-  require += info_version[argc];
-#endif
-#if defined(COMPILER_VERSION_INTERNAL) || defined(COMPILER_VERSION_INTERNAL_STR)
-  require += info_version_internal[argc];
-#endif
-#ifdef SIMULATE_ID
-  require += info_simulate[argc];
-#endif
-#ifdef SIMULATE_VERSION_MAJOR
-  require += info_simulate_version[argc];
-#endif
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-  require += info_cray[argc];
-#endif
-  require += info_language_standard_default[argc];
-  require += info_language_extensions_default[argc];
-  (void)argv;
-  return require;
-}
-#endif
-
-```
-
-# File: build_ninja\CMakeFiles\4.2.3\CompilerIdCXX\CMakeCXXCompilerId.cpp
-```cpp
-/* This source file must have a .cpp extension so that all C++ compilers
-   recognize the extension without flags.  Borland does not know .cxx for
-   example.  */
-#ifndef __cplusplus
-# error "A C compiler has been selected for C++."
-#endif
-
-#if !defined(__has_include)
-/* If the compiler does not have __has_include, pretend the answer is
-   always no.  */
-#  define __has_include(x) 0
-#endif
-
-
-/* Version number components: V=Version, R=Revision, P=Patch
-   Version date components:   YYYY=Year, MM=Month,   DD=Day  */
-
-#if defined(__INTEL_COMPILER) || defined(__ICC)
-# define COMPILER_ID "Intel"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_ID "GNU"
-# endif
-  /* __INTEL_COMPILER = VRP prior to 2021, and then VVVV for 2021 and later,
-     except that a few beta releases use the old format with V=2021.  */
-# if __INTEL_COMPILER < 2021 || __INTEL_COMPILER == 202110 || __INTEL_COMPILER == 202111
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER/100)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER/10 % 10)
-#  if defined(__INTEL_COMPILER_UPDATE)
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER_UPDATE)
-#  else
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER   % 10)
-#  endif
-# else
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER_UPDATE)
-   /* The third version component from --version is an update index,
-      but no macro is provided for it.  */
-#  define COMPILER_VERSION_PATCH DEC(0)
-# endif
-# if defined(__INTEL_COMPILER_BUILD_DATE)
-   /* __INTEL_COMPILER_BUILD_DATE = YYYYMMDD */
-#  define COMPILER_VERSION_TWEAK DEC(__INTEL_COMPILER_BUILD_DATE)
-# endif
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-# elif defined(__GNUG__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-# endif
-# if defined(__GNUC_MINOR__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif (defined(__clang__) && defined(__INTEL_CLANG_COMPILER)) || defined(__INTEL_LLVM_COMPILER)
-# define COMPILER_ID "IntelLLVM"
-#if defined(_MSC_VER)
-# define SIMULATE_ID "MSVC"
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_ID "GNU"
-#endif
-/* __INTEL_LLVM_COMPILER = VVVVRP prior to 2021.2.0, VVVVRRPP for 2021.2.0 and
- * later.  Look for 6 digit vs. 8 digit version number to decide encoding.
- * VVVV is no smaller than the current year when a version is released.
- */
-#if __INTEL_LLVM_COMPILER < 1000000L
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/100)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER    % 10)
-#else
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/10000)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER     % 100)
-#endif
-#if defined(_MSC_VER)
-  /* _MSC_VER = VVRR */
-# define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#elif defined(__GNUG__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-#endif
-#if defined(__GNUC_MINOR__)
-# define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#endif
-#if defined(__GNUC_PATCHLEVEL__)
-# define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#endif
-
-#elif defined(__PATHCC__)
-# define COMPILER_ID "PathScale"
-# define COMPILER_VERSION_MAJOR DEC(__PATHCC__)
-# define COMPILER_VERSION_MINOR DEC(__PATHCC_MINOR__)
-# if defined(__PATHCC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PATHCC_PATCHLEVEL__)
-# endif
-
-#elif defined(__BORLANDC__) && defined(__CODEGEARC_VERSION__)
-# define COMPILER_ID "Embarcadero"
-# define COMPILER_VERSION_MAJOR HEX(__CODEGEARC_VERSION__>>24 & 0x00FF)
-# define COMPILER_VERSION_MINOR HEX(__CODEGEARC_VERSION__>>16 & 0x00FF)
-# define COMPILER_VERSION_PATCH DEC(__CODEGEARC_VERSION__     & 0xFFFF)
-
-#elif defined(__BORLANDC__)
-# define COMPILER_ID "Borland"
-  /* __BORLANDC__ = 0xVRR */
-# define COMPILER_VERSION_MAJOR HEX(__BORLANDC__>>8)
-# define COMPILER_VERSION_MINOR HEX(__BORLANDC__ & 0xFF)
-
-#elif defined(__WATCOMC__) && __WATCOMC__ < 1200
-# define COMPILER_ID "Watcom"
-   /* __WATCOMC__ = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(__WATCOMC__ / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__WATCOMC__)
-# define COMPILER_ID "OpenWatcom"
-   /* __WATCOMC__ = VVRP + 1100 */
-# define COMPILER_VERSION_MAJOR DEC((__WATCOMC__ - 1100) / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__SUNPRO_CC)
-# define COMPILER_ID "SunPro"
-# if __SUNPRO_CC >= 0x5100
-   /* __SUNPRO_CC = 0xVRRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_CC>>12)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_CC>>4 & 0xFF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_CC    & 0xF)
-# else
-   /* __SUNPRO_CC = 0xVRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_CC>>8)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_CC>>4 & 0xF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_CC    & 0xF)
-# endif
-
-#elif defined(__HP_aCC)
-# define COMPILER_ID "HP"
-  /* __HP_aCC = VVRRPP */
-# define COMPILER_VERSION_MAJOR DEC(__HP_aCC/10000)
-# define COMPILER_VERSION_MINOR DEC(__HP_aCC/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__HP_aCC     % 100)
-
-#elif defined(__DECCXX)
-# define COMPILER_ID "Compaq"
-  /* __DECCXX_VER = VVRRTPPPP */
-# define COMPILER_VERSION_MAJOR DEC(__DECCXX_VER/10000000)
-# define COMPILER_VERSION_MINOR DEC(__DECCXX_VER/100000  % 100)
-# define COMPILER_VERSION_PATCH DEC(__DECCXX_VER         % 10000)
-
-#elif defined(__IBMCPP__) && defined(__COMPILER_VER__)
-# define COMPILER_ID "zOS"
-  /* __IBMCPP__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
-
-#elif defined(__open_xl__) && defined(__clang__)
-# define COMPILER_ID "IBMClang"
-# define COMPILER_VERSION_MAJOR DEC(__open_xl_version__)
-# define COMPILER_VERSION_MINOR DEC(__open_xl_release__)
-# define COMPILER_VERSION_PATCH DEC(__open_xl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__open_xl_ptf_fix_level__)
-# define COMPILER_VERSION_INTERNAL_STR  __clang_version__
-
-
-#elif defined(__ibmxl__) && defined(__clang__)
-# define COMPILER_ID "XLClang"
-# define COMPILER_VERSION_MAJOR DEC(__ibmxl_version__)
-# define COMPILER_VERSION_MINOR DEC(__ibmxl_release__)
-# define COMPILER_VERSION_PATCH DEC(__ibmxl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__ibmxl_ptf_fix_level__)
-
-
-#elif defined(__IBMCPP__) && !defined(__COMPILER_VER__) && __IBMCPP__ >= 800
-# define COMPILER_ID "XL"
-  /* __IBMCPP__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
-
-#elif defined(__IBMCPP__) && !defined(__COMPILER_VER__) && __IBMCPP__ < 800
-# define COMPILER_ID "VisualAge"
-  /* __IBMCPP__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
-
-#elif defined(__NVCOMPILER)
-# define COMPILER_ID "NVHPC"
-# define COMPILER_VERSION_MAJOR DEC(__NVCOMPILER_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__NVCOMPILER_MINOR__)
-# if defined(__NVCOMPILER_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__NVCOMPILER_PATCHLEVEL__)
-# endif
-
-#elif defined(__PGI)
-# define COMPILER_ID "PGI"
-# define COMPILER_VERSION_MAJOR DEC(__PGIC__)
-# define COMPILER_VERSION_MINOR DEC(__PGIC_MINOR__)
-# if defined(__PGIC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PGIC_PATCHLEVEL__)
-# endif
-
-#elif defined(__clang__) && defined(__cray__)
-# define COMPILER_ID "CrayClang"
-# define COMPILER_VERSION_MAJOR DEC(__cray_major__)
-# define COMPILER_VERSION_MINOR DEC(__cray_minor__)
-# define COMPILER_VERSION_PATCH DEC(__cray_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(_CRAYC)
-# define COMPILER_ID "Cray"
-# define COMPILER_VERSION_MAJOR DEC(_RELEASE_MAJOR)
-# define COMPILER_VERSION_MINOR DEC(_RELEASE_MINOR)
-
-#elif defined(__TI_COMPILER_VERSION__)
-# define COMPILER_ID "TI"
-  /* __TI_COMPILER_VERSION__ = VVVRRRPPP */
-# define COMPILER_VERSION_MAJOR DEC(__TI_COMPILER_VERSION__/1000000)
-# define COMPILER_VERSION_MINOR DEC(__TI_COMPILER_VERSION__/1000   % 1000)
-# define COMPILER_VERSION_PATCH DEC(__TI_COMPILER_VERSION__        % 1000)
-
-#elif defined(__CLANG_FUJITSU)
-# define COMPILER_ID "FujitsuClang"
-# define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-# define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-# define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(__FUJITSU)
-# define COMPILER_ID "Fujitsu"
-# if defined(__FCC_version__)
-#   define COMPILER_VERSION __FCC_version__
-# elif defined(__FCC_major__)
-#   define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-#   define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-#   define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# endif
-# if defined(__fcc_version)
-#   define COMPILER_VERSION_INTERNAL DEC(__fcc_version)
-# elif defined(__FCC_VERSION)
-#   define COMPILER_VERSION_INTERNAL DEC(__FCC_VERSION)
-# endif
-
-
-#elif defined(__ghs__)
-# define COMPILER_ID "GHS"
-/* __GHS_VERSION_NUMBER = VVVVRP */
-# ifdef __GHS_VERSION_NUMBER
-# define COMPILER_VERSION_MAJOR DEC(__GHS_VERSION_NUMBER / 100)
-# define COMPILER_VERSION_MINOR DEC(__GHS_VERSION_NUMBER / 10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__GHS_VERSION_NUMBER      % 10)
-# endif
-
-#elif defined(__TASKING__)
-# define COMPILER_ID "Tasking"
-  # define COMPILER_VERSION_MAJOR DEC(__VERSION__/1000)
-  # define COMPILER_VERSION_MINOR DEC(__VERSION__ % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__VERSION__)
-
-#elif defined(__ORANGEC__)
-# define COMPILER_ID "OrangeC"
-# define COMPILER_VERSION_MAJOR DEC(__ORANGEC_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__ORANGEC_MINOR__)
-# define COMPILER_VERSION_PATCH DEC(__ORANGEC_PATCHLEVEL__)
-
-#elif defined(__RENESAS__)
-# define COMPILER_ID "Renesas"
-/* __RENESAS_VERSION__ = 0xVVRRPP00 */
-# define COMPILER_VERSION_MAJOR HEX(__RENESAS_VERSION__ >> 24 & 0xFF)
-# define COMPILER_VERSION_MINOR HEX(__RENESAS_VERSION__ >> 16 & 0xFF)
-# define COMPILER_VERSION_PATCH HEX(__RENESAS_VERSION__ >> 8  & 0xFF)
-
-#elif defined(__SCO_VERSION__)
-# define COMPILER_ID "SCO"
-
-#elif defined(__ARMCC_VERSION) && !defined(__clang__)
-# define COMPILER_ID "ARMCC"
-#if __ARMCC_VERSION >= 1000000
-  /* __ARMCC_VERSION = VRRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION     % 10000)
-#else
-  /* __ARMCC_VERSION = VRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/100000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 10)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION    % 10000)
-#endif
-
-
-#elif defined(__clang__) && defined(__apple_build_version__)
-# define COMPILER_ID "AppleClang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# define COMPILER_VERSION_TWEAK DEC(__apple_build_version__)
-
-#elif defined(__clang__) && defined(__ARMCOMPILER_VERSION)
-# define COMPILER_ID "ARMClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCOMPILER_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCOMPILER_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCOMPILER_VERSION/100   % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__ARMCOMPILER_VERSION)
-
-#elif defined(__clang__) && defined(__ti__)
-# define COMPILER_ID "TIClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ti_major__)
-  # define COMPILER_VERSION_MINOR DEC(__ti_minor__)
-  # define COMPILER_VERSION_PATCH DEC(__ti_patchlevel__)
-# define COMPILER_VERSION_INTERNAL DEC(__ti_version__)
-
-#elif defined(__clang__)
-# define COMPILER_ID "Clang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-
-#elif defined(__LCC__) && (defined(__GNUC__) || defined(__GNUG__) || defined(__MCST__))
-# define COMPILER_ID "LCC"
-# define COMPILER_VERSION_MAJOR DEC(__LCC__ / 100)
-# define COMPILER_VERSION_MINOR DEC(__LCC__ % 100)
-# if defined(__LCC_MINOR__)
-#  define COMPILER_VERSION_PATCH DEC(__LCC_MINOR__)
-# endif
-# if defined(__GNUC__) && defined(__GNUC_MINOR__)
-#  define SIMULATE_ID "GNU"
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#  if defined(__GNUC_PATCHLEVEL__)
-#   define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#  endif
-# endif
-
-#elif defined(__GNUC__) || defined(__GNUG__)
-# define COMPILER_ID "GNU"
-# if defined(__GNUC__)
-#  define COMPILER_VERSION_MAJOR DEC(__GNUC__)
-# else
-#  define COMPILER_VERSION_MAJOR DEC(__GNUG__)
-# endif
-# if defined(__GNUC_MINOR__)
-#  define COMPILER_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif defined(_MSC_VER)
-# define COMPILER_ID "MSVC"
-  /* _MSC_VER = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define COMPILER_VERSION_MINOR DEC(_MSC_VER % 100)
-# if defined(_MSC_FULL_VER)
-#  if _MSC_VER >= 1400
-    /* _MSC_FULL_VER = VVRRPPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 100000)
-#  else
-    /* _MSC_FULL_VER = VVRRPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 10000)
-#  endif
-# endif
-# if defined(_MSC_BUILD)
-#  define COMPILER_VERSION_TWEAK DEC(_MSC_BUILD)
-# endif
-
-#elif defined(_ADI_COMPILER)
-# define COMPILER_ID "ADSP"
-#if defined(__VERSIONNUM__)
-  /* __VERSIONNUM__ = 0xVVRRPPTT */
-#  define COMPILER_VERSION_MAJOR DEC(__VERSIONNUM__ >> 24 & 0xFF)
-#  define COMPILER_VERSION_MINOR DEC(__VERSIONNUM__ >> 16 & 0xFF)
-#  define COMPILER_VERSION_PATCH DEC(__VERSIONNUM__ >> 8 & 0xFF)
-#  define COMPILER_VERSION_TWEAK DEC(__VERSIONNUM__ & 0xFF)
-#endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# define COMPILER_ID "IAR"
-# if defined(__VER__) && defined(__ICCARM__)
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 1000000)
-#  define COMPILER_VERSION_MINOR DEC(((__VER__) / 1000) % 1000)
-#  define COMPILER_VERSION_PATCH DEC((__VER__) % 1000)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# elif defined(__VER__) && (defined(__ICCAVR__) || defined(__ICCRX__) || defined(__ICCRH850__) || defined(__ICCRL78__) || defined(__ICC430__) || defined(__ICCRISCV__) || defined(__ICCV850__) || defined(__ICC8051__) || defined(__ICCSTM8__))
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 100)
-#  define COMPILER_VERSION_MINOR DEC((__VER__) - (((__VER__) / 100)*100))
-#  define COMPILER_VERSION_PATCH DEC(__SUBVERSION__)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# endif
-
-#elif defined(__DCC__) && defined(_DIAB_TOOL)
-# define COMPILER_ID "Diab"
-  # define COMPILER_VERSION_MAJOR DEC(__VERSION_MAJOR_NUMBER__)
-  # define COMPILER_VERSION_MINOR DEC(__VERSION_MINOR_NUMBER__)
-  # define COMPILER_VERSION_PATCH DEC(__VERSION_ARCH_FEATURE_NUMBER__)
-  # define COMPILER_VERSION_TWEAK DEC(__VERSION_BUG_FIX_NUMBER__)
-
-
-
-/* These compilers are either not known or too old to define an
-  identification macro.  Try to identify the platform and guess that
-  it is the native compiler.  */
-#elif defined(__hpux) || defined(__hpua)
-# define COMPILER_ID "HP"
-
-#else /* unknown compiler */
-# define COMPILER_ID ""
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_compiler = "INFO" ":" "compiler[" COMPILER_ID "]";
-#ifdef SIMULATE_ID
-char const* info_simulate = "INFO" ":" "simulate[" SIMULATE_ID "]";
-#endif
-
-#ifdef __QNXNTO__
-char const* qnxnto = "INFO" ":" "qnxnto[]";
-#endif
-
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-char const *info_cray = "INFO" ":" "compiler_wrapper[CrayPrgEnv]";
-#endif
-
-#define STRINGIFY_HELPER(X) #X
-#define STRINGIFY(X) STRINGIFY_HELPER(X)
-
-/* Identify known platforms by name.  */
-#if defined(__linux) || defined(__linux__) || defined(linux)
-# define PLATFORM_ID "Linux"
-
-#elif defined(__MSYS__)
-# define PLATFORM_ID "MSYS"
-
-#elif defined(__CYGWIN__)
-# define PLATFORM_ID "Cygwin"
-
-#elif defined(__MINGW32__)
-# define PLATFORM_ID "MinGW"
-
-#elif defined(__APPLE__)
-# define PLATFORM_ID "Darwin"
-
-#elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-# define PLATFORM_ID "Windows"
-
-#elif defined(__FreeBSD__) || defined(__FreeBSD)
-# define PLATFORM_ID "FreeBSD"
-
-#elif defined(__NetBSD__) || defined(__NetBSD)
-# define PLATFORM_ID "NetBSD"
-
-#elif defined(__OpenBSD__) || defined(__OPENBSD)
-# define PLATFORM_ID "OpenBSD"
-
-#elif defined(__sun) || defined(sun)
-# define PLATFORM_ID "SunOS"
-
-#elif defined(_AIX) || defined(__AIX) || defined(__AIX__) || defined(__aix) || defined(__aix__)
-# define PLATFORM_ID "AIX"
-
-#elif defined(__hpux) || defined(__hpux__)
-# define PLATFORM_ID "HP-UX"
-
-#elif defined(__HAIKU__)
-# define PLATFORM_ID "Haiku"
-
-#elif defined(__BeOS) || defined(__BEOS__) || defined(_BEOS)
-# define PLATFORM_ID "BeOS"
-
-#elif defined(__QNX__) || defined(__QNXNTO__)
-# define PLATFORM_ID "QNX"
-
-#elif defined(__tru64) || defined(_tru64) || defined(__TRU64__)
-# define PLATFORM_ID "Tru64"
-
-#elif defined(__riscos) || defined(__riscos__)
-# define PLATFORM_ID "RISCos"
-
-#elif defined(__sinix) || defined(__sinix__) || defined(__SINIX__)
-# define PLATFORM_ID "SINIX"
-
-#elif defined(__UNIX_SV__)
-# define PLATFORM_ID "UNIX_SV"
-
-#elif defined(__bsdos__)
-# define PLATFORM_ID "BSDOS"
-
-#elif defined(_MPRAS) || defined(MPRAS)
-# define PLATFORM_ID "MP-RAS"
-
-#elif defined(__osf) || defined(__osf__)
-# define PLATFORM_ID "OSF1"
-
-#elif defined(_SCO_SV) || defined(SCO_SV) || defined(sco_sv)
-# define PLATFORM_ID "SCO_SV"
-
-#elif defined(__ultrix) || defined(__ultrix__) || defined(_ULTRIX)
-# define PLATFORM_ID "ULTRIX"
-
-#elif defined(__XENIX__) || defined(_XENIX) || defined(XENIX)
-# define PLATFORM_ID "Xenix"
-
-#elif defined(__WATCOMC__)
-# if defined(__LINUX__)
-#  define PLATFORM_ID "Linux"
-
-# elif defined(__DOS__)
-#  define PLATFORM_ID "DOS"
-
-# elif defined(__OS2__)
-#  define PLATFORM_ID "OS2"
-
-# elif defined(__WINDOWS__)
-#  define PLATFORM_ID "Windows3x"
-
-# elif defined(__VXWORKS__)
-#  define PLATFORM_ID "VxWorks"
-
-# else /* unknown platform */
-#  define PLATFORM_ID
-# endif
-
-#elif defined(__INTEGRITY)
-# if defined(INT_178B)
-#  define PLATFORM_ID "Integrity178"
-
-# else /* regular Integrity */
-#  define PLATFORM_ID "Integrity"
-# endif
-
-# elif defined(_ADI_COMPILER)
-#  define PLATFORM_ID "ADSP"
-
-#else /* unknown platform */
-# define PLATFORM_ID
-
-#endif
-
-/* For windows compilers MSVC and Intel we can determine
-   the architecture of the compiler being used.  This is because
-   the compilers do not have flags that can change the architecture,
-   but rather depend on which compiler is being used
-*/
-#if defined(_WIN32) && defined(_MSC_VER)
-# if defined(_M_IA64)
-#  define ARCHITECTURE_ID "IA64"
-
-# elif defined(_M_ARM64EC)
-#  define ARCHITECTURE_ID "ARM64EC"
-
-# elif defined(_M_X64) || defined(_M_AMD64)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# elif defined(_M_ARM64)
-#  define ARCHITECTURE_ID "ARM64"
-
-# elif defined(_M_ARM)
-#  if _M_ARM == 4
-#   define ARCHITECTURE_ID "ARMV4I"
-#  elif _M_ARM == 5
-#   define ARCHITECTURE_ID "ARMV5I"
-#  else
-#   define ARCHITECTURE_ID "ARMV" STRINGIFY(_M_ARM)
-#  endif
-
-# elif defined(_M_MIPS)
-#  define ARCHITECTURE_ID "MIPS"
-
-# elif defined(_M_SH)
-#  define ARCHITECTURE_ID "SHx"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__WATCOMC__)
-# if defined(_M_I86)
-#  define ARCHITECTURE_ID "I86"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# if defined(__ICCARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__ICCRX__)
-#  define ARCHITECTURE_ID "RX"
-
-# elif defined(__ICCRH850__)
-#  define ARCHITECTURE_ID "RH850"
-
-# elif defined(__ICCRL78__)
-#  define ARCHITECTURE_ID "RL78"
-
-# elif defined(__ICCRISCV__)
-#  define ARCHITECTURE_ID "RISCV"
-
-# elif defined(__ICCAVR__)
-#  define ARCHITECTURE_ID "AVR"
-
-# elif defined(__ICC430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__ICCV850__)
-#  define ARCHITECTURE_ID "V850"
-
-# elif defined(__ICC8051__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__ICCSTM8__)
-#  define ARCHITECTURE_ID "STM8"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__ghs__)
-# if defined(__PPC64__)
-#  define ARCHITECTURE_ID "PPC64"
-
-# elif defined(__ppc__)
-#  define ARCHITECTURE_ID "PPC"
-
-# elif defined(__ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__x86_64__)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(__i386__)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__clang__) && defined(__ti__)
-# if defined(__ARM_ARCH)
-#  define ARCHITECTURE_ID "ARM"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__TI_COMPILER_VERSION__)
-# if defined(__TI_ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__MSP430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__TMS320C28XX__)
-#  define ARCHITECTURE_ID "TMS320C28x"
-
-# elif defined(__TMS320C6X__) || defined(_TMS320C6X)
-#  define ARCHITECTURE_ID "TMS320C6x"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-# elif defined(__ADSPSHARC__)
-#  define ARCHITECTURE_ID "SHARC"
-
-# elif defined(__ADSPBLACKFIN__)
-#  define ARCHITECTURE_ID "Blackfin"
-
-#elif defined(__TASKING__)
-
-# if defined(__CTC__) || defined(__CPTC__)
-#  define ARCHITECTURE_ID "TriCore"
-
-# elif defined(__CMCS__)
-#  define ARCHITECTURE_ID "MCS"
-
-# elif defined(__CARM__) || defined(__CPARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__CARC__)
-#  define ARCHITECTURE_ID "ARC"
-
-# elif defined(__C51__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__CPCP__)
-#  define ARCHITECTURE_ID "PCP"
-
-# else
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__RENESAS__)
-# if defined(__CCRX__)
-#  define ARCHITECTURE_ID "RX"
-
-# elif defined(__CCRL__)
-#  define ARCHITECTURE_ID "RL78"
-
-# elif defined(__CCRH__)
-#  define ARCHITECTURE_ID "RH850"
-
-# else
-#  define ARCHITECTURE_ID ""
-# endif
-
-#else
-#  define ARCHITECTURE_ID
-#endif
-
-/* Convert integer to decimal digit literals.  */
-#define DEC(n)                   \
-  ('0' + (((n) / 10000000)%10)), \
-  ('0' + (((n) / 1000000)%10)),  \
-  ('0' + (((n) / 100000)%10)),   \
-  ('0' + (((n) / 10000)%10)),    \
-  ('0' + (((n) / 1000)%10)),     \
-  ('0' + (((n) / 100)%10)),      \
-  ('0' + (((n) / 10)%10)),       \
-  ('0' +  ((n) % 10))
-
-/* Convert integer to hex digit literals.  */
-#define HEX(n)             \
-  ('0' + ((n)>>28 & 0xF)), \
-  ('0' + ((n)>>24 & 0xF)), \
-  ('0' + ((n)>>20 & 0xF)), \
-  ('0' + ((n)>>16 & 0xF)), \
-  ('0' + ((n)>>12 & 0xF)), \
-  ('0' + ((n)>>8  & 0xF)), \
-  ('0' + ((n)>>4  & 0xF)), \
-  ('0' + ((n)     & 0xF))
-
-/* Construct a string literal encoding the version number. */
-#ifdef COMPILER_VERSION
-char const* info_version = "INFO" ":" "compiler_version[" COMPILER_VERSION "]";
-
-/* Construct a string literal encoding the version number components. */
-#elif defined(COMPILER_VERSION_MAJOR)
-char const info_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','[',
-  COMPILER_VERSION_MAJOR,
-# ifdef COMPILER_VERSION_MINOR
-  '.', COMPILER_VERSION_MINOR,
-#  ifdef COMPILER_VERSION_PATCH
-   '.', COMPILER_VERSION_PATCH,
-#   ifdef COMPILER_VERSION_TWEAK
-    '.', COMPILER_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct a string literal encoding the internal version number. */
-#ifdef COMPILER_VERSION_INTERNAL
-char const info_version_internal[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','_',
-  'i','n','t','e','r','n','a','l','[',
-  COMPILER_VERSION_INTERNAL,']','\0'};
-#elif defined(COMPILER_VERSION_INTERNAL_STR)
-char const* info_version_internal = "INFO" ":" "compiler_version_internal[" COMPILER_VERSION_INTERNAL_STR "]";
-#endif
-
-/* Construct a string literal encoding the version number components. */
-#ifdef SIMULATE_VERSION_MAJOR
-char const info_simulate_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  's','i','m','u','l','a','t','e','_','v','e','r','s','i','o','n','[',
-  SIMULATE_VERSION_MAJOR,
-# ifdef SIMULATE_VERSION_MINOR
-  '.', SIMULATE_VERSION_MINOR,
-#  ifdef SIMULATE_VERSION_PATCH
-   '.', SIMULATE_VERSION_PATCH,
-#   ifdef SIMULATE_VERSION_TWEAK
-    '.', SIMULATE_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_platform = "INFO" ":" "platform[" PLATFORM_ID "]";
-char const* info_arch = "INFO" ":" "arch[" ARCHITECTURE_ID "]";
-
-
-
-#define CXX_STD_98 199711L
-#define CXX_STD_11 201103L
-#define CXX_STD_14 201402L
-#define CXX_STD_17 201703L
-#define CXX_STD_20 202002L
-#define CXX_STD_23 202302L
-
-#if defined(__INTEL_COMPILER) && defined(_MSVC_LANG)
-#  if _MSVC_LANG > CXX_STD_17
-#    define CXX_STD _MSVC_LANG
-#  elif _MSVC_LANG == CXX_STD_17 && defined(__cpp_aggregate_paren_init)
-#    define CXX_STD CXX_STD_20
-#  elif _MSVC_LANG > CXX_STD_14 && __cplusplus > CXX_STD_17
-#    define CXX_STD CXX_STD_20
-#  elif _MSVC_LANG > CXX_STD_14
-#    define CXX_STD CXX_STD_17
-#  elif defined(__INTEL_CXX11_MODE__) && defined(__cpp_aggregate_nsdmi)
-#    define CXX_STD CXX_STD_14
-#  elif defined(__INTEL_CXX11_MODE__)
-#    define CXX_STD CXX_STD_11
-#  else
-#    define CXX_STD CXX_STD_98
-#  endif
-#elif defined(_MSC_VER) && defined(_MSVC_LANG)
-#  if _MSVC_LANG > __cplusplus
-#    define CXX_STD _MSVC_LANG
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif defined(__NVCOMPILER)
-#  if __cplusplus == CXX_STD_17 && defined(__cpp_aggregate_paren_init)
-#    define CXX_STD CXX_STD_20
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif defined(__INTEL_COMPILER) || defined(__PGI)
-#  if __cplusplus == CXX_STD_11 && defined(__cpp_namespace_attributes)
-#    define CXX_STD CXX_STD_17
-#  elif __cplusplus == CXX_STD_11 && defined(__cpp_aggregate_nsdmi)
-#    define CXX_STD CXX_STD_14
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif (defined(__IBMCPP__) || defined(__ibmxl__)) && defined(__linux__)
-#  if __cplusplus == CXX_STD_11 && defined(__cpp_aggregate_nsdmi)
-#    define CXX_STD CXX_STD_14
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif __cplusplus == 1 && defined(__GXX_EXPERIMENTAL_CXX0X__)
-#  define CXX_STD CXX_STD_11
-#else
-#  define CXX_STD __cplusplus
-#endif
-
-const char* info_language_standard_default = "INFO" ":" "standard_default["
-#if CXX_STD > CXX_STD_23
-  "26"
-#elif CXX_STD > CXX_STD_20
-  "23"
-#elif CXX_STD > CXX_STD_17
-  "20"
-#elif CXX_STD > CXX_STD_14
-  "17"
-#elif CXX_STD > CXX_STD_11
-  "14"
-#elif CXX_STD >= CXX_STD_11
-  "11"
-#else
-  "98"
-#endif
-"]";
-
-const char* info_language_extensions_default = "INFO" ":" "extensions_default["
-#if (defined(__clang__) || defined(__GNUC__) || defined(__xlC__) ||           \
-     defined(__TI_COMPILER_VERSION__) || defined(__RENESAS__)) &&             \
-  !defined(__STRICT_ANSI__)
-  "ON"
-#else
-  "OFF"
-#endif
-"]";
-
-/*--------------------------------------------------------------------------*/
-
-int main(int argc, char* argv[])
-{
-  int require = 0;
-  require += info_compiler[argc];
-  require += info_platform[argc];
-  require += info_arch[argc];
-#ifdef COMPILER_VERSION_MAJOR
-  require += info_version[argc];
-#endif
-#if defined(COMPILER_VERSION_INTERNAL) || defined(COMPILER_VERSION_INTERNAL_STR)
-  require += info_version_internal[argc];
-#endif
-#ifdef SIMULATE_ID
-  require += info_simulate[argc];
-#endif
-#ifdef SIMULATE_VERSION_MAJOR
-  require += info_simulate_version[argc];
-#endif
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-  require += info_cray[argc];
-#endif
-  require += info_language_standard_default[argc];
-  require += info_language_extensions_default[argc];
-  (void)argv;
-  return require;
-}
-
-```
-
-# File: build_ninja\CMakeFiles\ShowIncludes\foo.h
-```cpp
-
-
-```
-
-# File: build_ninja\CMakeFiles\ShowIncludes\main.c
-```cpp
-#include "foo.h" 
-int main(){}
-
-```
-
-# File: build_ninja\src\Version.h
-```cpp
-#ifndef VERSION_H
-#define VERSION_H
-
-#ifndef LMUFFB_VERSION
-#define LMUFFB_VERSION "0.7.106"
-#endif
-
-#endif
-
-```
-
 # File: src\AsyncLogger.h
 ```cpp
 #ifndef ASYNCLOGGER_H
@@ -7506,98 +29,186 @@ int main(){}
 #include <sstream>
 #include <algorithm> // For std::max
 #include <filesystem>
+#include <cstdint>   // For uint8_t
+#include <lz4.h>     // For LZ4 compression
 
 // Forward declaration
 struct TelemInfoV01;
 class FFBEngine;
 
 // Log frame structure - captures one physics tick
+#pragma pack(push, 1)
 struct LogFrame {
-    double timestamp;
-    double delta_time;
+    double timestamp;        // Time
+    double delta_time;       // DeltaTime
     
-    // Driver Inputs
-    float steering;
-    float throttle;
-    float brake;
+    // --- PROCESSED 400Hz DATA (Smooth) ---
+    float speed;             // Speed
+    float lat_accel;         // LatAccel
+    float long_accel;        // LongAccel
+    float yaw_rate;          // YawRate
     
-    // Vehicle State
-    float speed;             // m/s
-    float lat_accel;         // m/sÂ²
-    float long_accel;        // m/sÂ²
-    float yaw_rate;          // rad/s
+    float steering;          // Steering
+    float throttle;          // Throttle
+    float brake;             // Brake
     
-    // Front Axle - Raw Telemetry
+    // --- RAW 100Hz GAME DATA (Step-function) ---
+    float raw_steering;
+    float raw_throttle;
+    float raw_brake;
+    float raw_lat_accel;
+    float raw_long_accel;
+    float raw_game_yaw_accel;
+    float raw_game_shaft_torque;
+    float raw_game_gen_torque;
+
+    float raw_load_fl;
+    float raw_load_fr;
+    float raw_load_rl;
+    float raw_load_rr;
+
+    float raw_slip_vel_lat_fl;
+    float raw_slip_vel_lat_fr;
+    float raw_slip_vel_lat_rl;
+    float raw_slip_vel_lat_rr;
+
+    float raw_slip_vel_long_fl;
+    float raw_slip_vel_long_fr;
+    float raw_slip_vel_long_rl;
+    float raw_slip_vel_long_rr;
+
+    float raw_ride_height_fl;
+    float raw_ride_height_fr;
+    float raw_ride_height_rl;
+    float raw_ride_height_rr;
+
+    float raw_susp_deflection_fl;
+    float raw_susp_deflection_fr;
+    float raw_susp_deflection_rl;
+    float raw_susp_deflection_rr;
+
+    float raw_susp_force_fl;
+    float raw_susp_force_fr;
+    float raw_susp_force_rl;
+    float raw_susp_force_rr;
+
+    float raw_brake_pressure_fl;
+    float raw_brake_pressure_fr;
+    float raw_brake_pressure_rl;
+    float raw_brake_pressure_rr;
+
+    float raw_rotation_fl;
+    float raw_rotation_fr;
+    float raw_rotation_rl;
+    float raw_rotation_rr;
+
+    // --- ALGORITHM STATE (400Hz) ---
     float slip_angle_fl;
     float slip_angle_fr;
+    float slip_angle_rl;
+    float slip_angle_rr;
+
     float slip_ratio_fl;
     float slip_ratio_fr;
+    float slip_ratio_rl;
+    float slip_ratio_rr;
+
     float grip_fl;
     float grip_fr;
+    float grip_rl;
+    float grip_rr;
+
     float load_fl;
     float load_fr;
     float load_rl;
     float load_rr;
 
-    // Suspension & Ride Height
     float ride_height_fl;
     float ride_height_fr;
     float ride_height_rl;
     float ride_height_rr;
+
     float susp_deflection_fl;
     float susp_deflection_fr;
     float susp_deflection_rl;
     float susp_deflection_rr;
     
-    // Front Axle - Calculated
     float calc_slip_angle_front;
+    float calc_slip_angle_rear;
     float calc_grip_front;
-    
-    // Slope Detection Specific
-    float dG_dt;             // Derivative of lateral G
-    float dAlpha_dt;         // Derivative of slip angle
-    float slope_current;     // dG/dAlpha ratio
-    float slope_raw_unclamped; // NEW v0.7.38
-    float slope_numerator;     // NEW v0.7.38
-    float slope_denominator;   // NEW v0.7.38
-    float hold_timer;          // NEW v0.7.38
-    float input_slip_smoothed; // NEW v0.7.38
-    float slope_smoothed;    // Smoothed grip output
-    float confidence;        // Confidence factor (v0.7.3)
-    float surface_type_fl;   // NEW v0.7.39
-    float surface_type_fr;   // NEW v0.7.39
-    float slope_torque;      // NEW v0.7.40
-    float slew_limited_g;    // NEW v0.7.40
-    
-    // Rear Axle
     float calc_grip_rear;
-    float grip_delta;        // Front - Rear
+    float grip_delta;
+    float calc_rear_lat_force;
 
-    // Yaw Kick Analysis (Issue #241)
-    float raw_yaw_accel;
     float smoothed_yaw_accel;
-    float ffb_yaw_kick;
     float lat_load_norm;
     
-    // FFB Output
-    float ffb_total;         // Normalized output
-    float ffb_base;          // Base steering shaft force
-    float ffb_shaft_torque;  // NEW v0.7.62 (Issue #138)
-    float ffb_gen_torque;    // NEW v0.7.62 (Issue #138)
-    float ffb_sop;           // Seat of Pants force
-    float ffb_grip_factor;   // Applied grip modulation
-    float speed_gate;        // Speed gate factor
-    float load_peak_ref;     // NEW: Dynamic normalization reference
-    bool clipping;           // Output clipping flag
+    float dG_dt;
+    float dAlpha_dt;
+    float slope_current;
+    float slope_raw_unclamped;
+    float slope_numerator;
+    float slope_denominator;
+    float hold_timer;
+    float input_slip_smoothed;
+    float slope_smoothed;
+    float confidence;
     
-    // User Markers
-    bool marker;             // User-triggered marker
+    float surface_type_fl;
+    float surface_type_fr;
+    float slope_torque;
+    float slew_limited_g;
+
+    float session_peak_torque;
+    float dynamic_weight_factor;
+    float structural_mult;
+    float vibration_mult;
+    float steering_angle_deg;
+    float steering_range_deg;
+    float debug_freq;
+    float tire_radius;
+    
+    // --- FFB COMPONENTS (400Hz) ---
+    float ffb_total;
+    float ffb_base;
+    float ffb_understeer_drop;
+    float ffb_oversteer_boost;
+    float ffb_sop;
+    float ffb_rear_torque;
+    float ffb_scrub_drag;
+    float ffb_yaw_kick;
+    float ffb_gyro_damping;
+    float ffb_road_texture;
+    float ffb_slide_texture;
+    float ffb_lockup_vibration;
+    float ffb_spin_vibration;
+    float ffb_bottoming_crunch;
+    float ffb_abs_pulse;
+    float ffb_soft_lock;
+
+    float extrapolated_yaw_accel;
+    float derived_yaw_accel;
+
+    float ffb_shaft_torque;
+    float ffb_gen_torque;
+    float ffb_grip_factor;
+    float speed_gate;
+    float front_load_peak_ref;
+
+    // --- SYSTEM (400Hz) ---
+    float physics_rate;
+    uint8_t clipping;
+    uint8_t warn_bits;
+    uint8_t marker;
 };
+#pragma pack(pop)
 
 // Session metadata for header
 struct SessionInfo {
     std::string driver_name;
     std::string vehicle_name;
+    std::string vehicle_class; // v0.7.132
+    std::string vehicle_brand; // v0.7.132
     std::string track_name;
     std::string app_version;
     
@@ -7605,6 +216,9 @@ struct SessionInfo {
     float gain;
     float understeer_effect;
     float sop_effect;
+    float lat_load_effect; // v0.7.152
+    float sop_scale;       // v0.7.152
+    float sop_smoothing;   // v0.7.152
     bool slope_enabled;
     float slope_sensitivity;
     float slope_threshold;
@@ -7628,6 +242,7 @@ public:
         m_buffer_active.reserve(BUFFER_THRESHOLD * 2);
         m_buffer_writing.reserve(BUFFER_THRESHOLD * 2);
         m_frame_count = 0;
+        m_file_size_bytes = 0; // Reset for new file (#269)
         m_pending_marker = false;
         m_decimation_counter = 0;
 
@@ -7647,7 +262,8 @@ public:
         ss << std::put_time(&time_info, "%Y-%m-%d_%H-%M-%S");
         std::string timestamp_str = ss.str();
         
-        std::string car = SanitizeFilename(info.vehicle_name);
+        std::string brand = SanitizeFilename(info.vehicle_brand);
+        std::string vclass = SanitizeFilename(info.vehicle_class);
         std::string track = SanitizeFilename(info.track_name);
         
         std::string path_prefix = base_path;
@@ -7664,10 +280,10 @@ public:
             }
         }
 
-        m_filename = path_prefix + "lmuffb_log_" + timestamp_str + "_" + car + "_" + track + ".csv";
+        m_filename = path_prefix + "lmuffb_log_" + timestamp_str + "_" + brand + "_" + vclass + "_" + track + ".bin";
 
-        // Open file
-        m_file.open(m_filename);
+        // Open file in binary mode
+        m_file.open(m_filename, std::ios::out | std::ios::binary);
         if (m_file.is_open()) {
             WriteHeader(info);
             m_running = true;
@@ -7701,15 +317,15 @@ public:
     void Log(const LogFrame& frame) {
         if (!m_running) return;
         
-        // Decimation: 400Hz -> 100Hz
+        // Decimation: 400Hz -> 400Hz (v0.7.126: decimation removed, DECIMATION_FACTOR=1)
         if (++m_decimation_counter < DECIMATION_FACTOR && !frame.marker && !m_pending_marker) {
             return;
         }
-        m_decimation_counter = 0;
+        m_decimation_counter = 0; // Reset counter to prevent overflow (Review fix)
 
         LogFrame f = frame;
         if (m_pending_marker) {
-            f.marker = true;
+            f.marker = 1;
             m_pending_marker = false;
         }
 
@@ -7730,6 +346,9 @@ public:
     
     // Trigger a user marker
     void SetMarker() { m_pending_marker = true; }
+
+    // Toggle compression
+    void EnableCompression(bool enable) { m_lz4_enabled = enable; }
     
     // Status getters
     bool IsLogging() const { return m_running; }
@@ -7739,7 +358,8 @@ public:
 
 private:
     AsyncLogger() : m_running(false), m_pending_marker(false), m_frame_count(0), m_decimation_counter(0), 
-                    m_file_size_bytes(0), m_last_flush_time(std::chrono::steady_clock::now()) {}
+                    m_file_size_bytes(0), m_last_flush_time(std::chrono::steady_clock::now()),
+                    m_lz4_enabled(true) {}
     ~AsyncLogger() { Stop(); }
     
     // No copy
@@ -7747,27 +367,45 @@ private:
     AsyncLogger& operator=(const AsyncLogger&) = delete;
     
     void WorkerThread() {
+        std::vector<char> compressed_buffer;
+        std::vector<LogFrame> local_buffer;
         while (true) {
-            std::unique_lock<std::mutex> lock(m_mutex);
-            m_cv.wait(lock, [this] { return !m_running || !m_buffer_active.empty(); });
-            
-            // Swap buffers
-            if (!m_buffer_active.empty()) {
-                std::swap(m_buffer_active, m_buffer_writing);
+            {
+                std::unique_lock<std::mutex> lock(m_mutex);
+                m_cv.wait(lock, [this] { return !m_running || !m_buffer_active.empty(); });
+
+                if (!m_buffer_active.empty()) {
+                    local_buffer.swap(m_buffer_active);
+                } else if (!m_running) {
+                    break;
+                }
             }
-            
-            // If stopped and empty, exit
-            if (!m_running && m_buffer_writing.empty()) {
-                 break;
-            }
-            
-            lock.unlock();
             
             // Write buffer to disk
-            for (const auto& frame : m_buffer_writing) {
-                WriteFrame(frame);
+            if (!local_buffer.empty()) {
+                size_t src_size = local_buffer.size() * sizeof(LogFrame);
+                const char* src_ptr = reinterpret_cast<const char*>(local_buffer.data());
+
+                if (m_lz4_enabled) {
+                    int max_dst_size = LZ4_compressBound((int)src_size);
+                    compressed_buffer.resize(max_dst_size);
+
+                    int compressed_size = LZ4_compress_default(src_ptr, compressed_buffer.data(), (int)src_size, max_dst_size);
+
+                    if (compressed_size > 0) {
+                        // Write block size header (compressed, then uncompressed)
+                        uint32_t header[2] = { (uint32_t)compressed_size, (uint32_t)src_size };
+                        m_file.write(reinterpret_cast<const char*>(header), 8);
+                        // Write payload
+                        m_file.write(compressed_buffer.data(), compressed_size);
+                        m_file_size_bytes += (8 + (size_t)compressed_size);
+                    }
+                } else {
+                    m_file.write(src_ptr, src_size);
+                    m_file_size_bytes += src_size;
+                }
+                local_buffer.clear();
             }
-            m_buffer_writing.clear();
             
             // Periodic flush to minimize data loss on crash
             auto now = std::chrono::steady_clock::now();
@@ -7776,19 +414,20 @@ private:
                 m_file.flush();
                 m_last_flush_time = now;
             }
-            
-            if (!m_running) break;
         }
     }
 
     void WriteHeader(const SessionInfo& info) {
-        m_file << "# LMUFFB Telemetry Log v1.0\n";
+        m_file << "# LMUFFB Telemetry Log v1.1\n";
         m_file << "# App Version: " << info.app_version << "\n";
+        m_file << "# Compression: " << (m_lz4_enabled ? "LZ4" : "None") << "\n";
         m_file << "# ========================\n";
         m_file << "# Session Info\n";
         m_file << "# ========================\n";
         m_file << "# Driver: " << info.driver_name << "\n";
         m_file << "# Vehicle: " << info.vehicle_name << "\n";
+        m_file << "# Car Class: " << info.vehicle_class << "\n";
+        m_file << "# Car Brand: " << info.vehicle_brand << "\n";
         m_file << "# Track: " << info.track_name << "\n";
         m_file << "# ========================\n";
         m_file << "# FFB Settings\n";
@@ -7796,6 +435,9 @@ private:
         m_file << "# Gain: " << info.gain << "\n";
         m_file << "# Understeer Effect: " << info.understeer_effect << "\n";
         m_file << "# SoP Effect: " << info.sop_effect << "\n";
+        m_file << "# Lateral Load Effect: " << info.lat_load_effect << "\n";
+        m_file << "# SoP Scale: " << info.sop_scale << "\n";
+        m_file << "# SoP Smoothing: " << info.sop_smoothing << "\n";
         m_file << "# Slope Detection: " << (info.slope_enabled ? "Enabled" : "Disabled") << "\n";
         m_file << "# Slope Sensitivity: " << info.slope_sensitivity << "\n";
         m_file << "# Slope Threshold: " << info.slope_threshold << "\n";
@@ -7804,48 +446,32 @@ private:
         m_file << "# Torque Passthrough: " << (info.torque_passthrough ? "Enabled" : "Disabled") << "\n";
         m_file << "# ========================\n";
         
-        // CSV Header
-        m_file << "Time,DeltaTime,Speed,LatAccel,LongAccel,YawRate,Steering,Throttle,Brake,"
-               << "SlipAngleFL,SlipAngleFR,SlipRatioFL,SlipRatioFR,GripFL,GripFR,"
+        // CSV Header for human readability
+        m_file << "# Fields: Time,DeltaTime,Speed,LatAccel,LongAccel,YawRate,Steering,Throttle,Brake,"
+               << "RawSteering,RawThrottle,RawBrake,RawLatAccel,RawLongAccel,RawGameYawAccel,RawGameShaftTorque,RawGameGenTorque,"
+               << "RawLoadFL,RawLoadFR,RawLoadRL,RawLoadRR,"
+               << "RawSlipVelLatFL,RawSlipVelLatFR,RawSlipVelLatRL,RawSlipVelLatRR,"
+               << "RawSlipVelLongFL,RawSlipVelLongFR,RawSlipVelLongRL,RawSlipVelLongRR,"
+               << "RawRideHeightFL,RawRideHeightFR,RawRideHeightRL,RawRideHeightRR,"
+               << "RawSuspDeflectionFL,RawSuspDeflectionFR,RawSuspDeflectionRL,RawSuspDeflectionRR,"
+               << "RawSuspForceFL,RawSuspForceFR,RawSuspForceRL,RawSuspForceRR,"
+               << "RawBrakePressureFL,RawBrakePressureFR,RawBrakePressureRL,RawBrakePressureRR,"
+               << "RawRotationFL,RawRotationFR,RawRotationRL,RawRotationRR,"
+               << "SlipAngleFL,SlipAngleFR,SlipAngleRL,SlipAngleRR,"
+               << "SlipRatioFL,SlipRatioFR,SlipRatioRL,SlipRatioRR,"
+               << "GripFL,GripFR,GripRL,GripRR,"
                << "LoadFL,LoadFR,LoadRL,LoadRR,"
                << "RideHeightFL,RideHeightFR,RideHeightRL,RideHeightRR,"
                << "SuspDeflectionFL,SuspDeflectionFR,SuspDeflectionRL,SuspDeflectionRR,"
-               << "CalcSlipAngle,CalcGripFront,CalcGripRear,GripDelta,"
-               << "RawYawAccel,SmoothedYawAccel,FFBYawKick,LatLoadNorm,"
+               << "CalcSlipAngleFront,CalcSlipAngleRear,CalcGripFront,CalcGripRear,GripDelta,CalcRearLatForce,"
+               << "SmoothedYawAccel,LatLoadNorm,"
                << "dG_dt,dAlpha_dt,SlopeCurrent,SlopeRaw,SlopeNum,SlopeDenom,HoldTimer,InputSlipSmooth,SlopeSmoothed,Confidence,"
                << "SurfaceFL,SurfaceFR,SlopeTorque,SlewLimitedG,"
-               << "FFBTotal,FFBBase,FFBShaftTorque,FFBGenTorque,FFBSoP,GripFactor,SpeedGate,LoadPeakRef,Clipping,Marker\n";
-    }
-
-    void WriteFrame(const LogFrame& frame) {
-        m_file << std::fixed << std::setprecision(4)
-               << frame.timestamp << "," << frame.delta_time << "," 
-               << frame.speed << "," << frame.lat_accel << "," << frame.long_accel << "," << frame.yaw_rate << ","
-               << frame.steering << "," << frame.throttle << "," << frame.brake << ","
-               
-               << frame.slip_angle_fl << "," << frame.slip_angle_fr << "," 
-               << frame.slip_ratio_fl << "," << frame.slip_ratio_fr << ","
-               << frame.grip_fl << "," << frame.grip_fr << ","
-               << frame.load_fl << "," << frame.load_fr << "," << frame.load_rl << "," << frame.load_rr << ","
-               << frame.ride_height_fl << "," << frame.ride_height_fr << "," << frame.ride_height_rl << "," << frame.ride_height_rr << ","
-               << frame.susp_deflection_fl << "," << frame.susp_deflection_fr << "," << frame.susp_deflection_rl << "," << frame.susp_deflection_rr << ","
-               
-               << frame.calc_slip_angle_front << "," << frame.calc_grip_front << "," << frame.calc_grip_rear << "," << frame.grip_delta << ","
-               << frame.raw_yaw_accel << "," << frame.smoothed_yaw_accel << "," << frame.ffb_yaw_kick << "," << frame.lat_load_norm << ","
-
-               << frame.dG_dt << "," << frame.dAlpha_dt << "," << frame.slope_current << ","
-               << frame.slope_raw_unclamped << "," << frame.slope_numerator << "," << frame.slope_denominator << ","
-               << frame.hold_timer << "," << frame.input_slip_smoothed << ","
-               << frame.slope_smoothed << "," << frame.confidence << ","
-               << frame.surface_type_fl << "," << frame.surface_type_fr << ","
-               << frame.slope_torque << "," << frame.slew_limited_g << ","
-               
-               << frame.ffb_total << "," << frame.ffb_base << "," << frame.ffb_shaft_torque << "," << frame.ffb_gen_torque << "," << frame.ffb_sop << ","
-               << frame.ffb_grip_factor << "," << frame.speed_gate << "," << frame.load_peak_ref << ","
-               << (frame.clipping ? 1 : 0) << "," << (frame.marker ? 1 : 0) << "\n";
-        
-        // Track file size for monitoring
-        m_file_size_bytes += 200; // Approximate bytes per line
+               << "SessionPeakTorque,DynamicWeight,StructuralMult,VibrationMult,SteeringAngleDeg,SteeringRangeDeg,DebugFreq,TireRadius,"
+               << "FFBTotal,FFBBase,FFBUndersteerDrop,FFBOversteerBoost,FFBSoP,FFBRearTorque,FFBScrubDrag,FFBYawKick,FFBGyroDamping,FFBRoadTexture,FFBSlideTexture,FFBLockupVibration,FFBSpinVibration,FFBBottomingCrunch,FFBABSPulse,FFBSoftLock,"
+               << "ExtrapolatedYawAccel,DerivedYawAccel,"
+               << "FFBShaftTorque,FFBGenTorque,GripFactor,SpeedGate,FrontLoadPeakRef,PhysicsRate,Clipping,WarnBits,Marker\n";
+        m_file << "[DATA_START]\n";
     }
 
     std::string SanitizeFilename(const std::string& input) {
@@ -7881,7 +507,9 @@ private:
     std::atomic<size_t> m_file_size_bytes;
     std::chrono::steady_clock::time_point m_last_flush_time;
     
-    static const int DECIMATION_FACTOR = 4; // 400Hz -> 100Hz
+    bool m_lz4_enabled; // Internal compression toggle
+
+    static const int DECIMATION_FACTOR = 1; // 400Hz -> 400Hz
     static const size_t BUFFER_THRESHOLD = 200; // ~0.5s of data
     static const int FLUSH_INTERVAL_SECONDS = 5; // Flush every 5 seconds
 };
@@ -8107,7 +735,7 @@ void Config::LoadPresets() {
         p.yaw_smoothing = 0.005f;
         p.gyro_gain = 0.0336134f;
         p.gyro_smoothing = 0.0f;
-        p.sop_smoothing = 1.0f;
+        p.sop_smoothing = 0.0f;
         p.sop_scale = 1.0f;
         p.understeer_affects_sop = false;
         p.slip_smoothing = 0.0f;
@@ -8168,7 +796,7 @@ void Config::LoadPresets() {
         p.yaw_smoothing = 0.001f;
         p.gyro_gain = 0.0f;
         p.gyro_smoothing = 0.0f;
-        p.sop_smoothing = 0.99f;
+        p.sop_smoothing = 0.0f;
         p.sop_scale = 1.98f;
         p.understeer_affects_sop = false;
         p.slip_smoothing = 0.002f;
@@ -8229,7 +857,7 @@ void Config::LoadPresets() {
         p.yaw_smoothing = 0.003f;
         p.gyro_gain = 0.0f;
         p.gyro_smoothing = 0.003f;
-        p.sop_smoothing = 0.97f;
+        p.sop_smoothing = 0.0f;
         p.sop_scale = 1.59f;
         p.understeer_affects_sop = false;
         p.slip_smoothing = 0.003f;
@@ -8394,7 +1022,7 @@ void Config::LoadPresets() {
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
         .SetSoPScale(1.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
@@ -8405,7 +1033,7 @@ void Config::LoadPresets() {
         .SetUndersteer(0.0f)
         .SetSoP(0.08f)
         .SetSoPScale(1.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
@@ -8434,7 +1062,7 @@ void Config::LoadPresets() {
         .SetScrub(0.0f)
         
         // SMOOTHING
-        .SetSmoothing(0.85f)         // SoP smoothing (doesn't affect test since SoP=0)
+        .SetSmoothing(0.0f)         // SoP smoothing (doesn't affect test since SoP=0)
         .SetSlipSmoothing(0.015f)    // Slip angle smoothing (important for grip calculation)
         
         // PHYSICS PARAMETERS (Explicit for clarity and future-proofing)
@@ -8466,7 +1094,7 @@ void Config::LoadPresets() {
         .SetScrub(0.0f)
         
         // SMOOTHING
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -8475,7 +1103,7 @@ void Config::LoadPresets() {
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
         .SetSoPScale(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
         .SetLockup(true, 1.0f)
         .SetSpin(true, 1.0f)
@@ -8489,7 +1117,7 @@ void Config::LoadPresets() {
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.90f)
@@ -8501,7 +1129,7 @@ void Config::LoadPresets() {
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
         .SetSoP(0.08f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
@@ -8513,7 +1141,7 @@ void Config::LoadPresets() {
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
         .SetSlide(true, 0.39f, 1.0f)
         .SetRearAlign(0.0f)
@@ -8524,7 +1152,7 @@ void Config::LoadPresets() {
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
         .SetSoP(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
@@ -8546,7 +1174,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -8565,7 +1193,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -8581,7 +1209,7 @@ void Config::LoadPresets() {
         .SetLockup(false, 0.0f)
         .SetSpin(false, 0.0f)
         .SetRoad(false, 0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -8597,7 +1225,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -8613,7 +1241,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -8631,7 +1259,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -8649,7 +1277,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
-        .SetSmoothing(0.85f)
+        .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
 
@@ -8689,10 +1317,16 @@ void Config::LoadPresets() {
                 }
 
                 // MIGRATION: If version is missing or old, update it
-                if (current_preset_version.empty()) {
-                    current_preset.app_version = LMUFFB_VERSION;
+                if (current_preset_version.empty() || IsVersionLessEqual(current_preset_version, "0.7.146")) {
+                    current_preset.sop_smoothing = 0.0f; // Issue #37: Reset to Raw for migration
                     needs_save = true;
-                    Logger::Get().LogFile("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
+                    if (current_preset_version.empty()) {
+                        current_preset.app_version = LMUFFB_VERSION;
+                        Logger::Get().LogFile("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
+                    } else {
+                        Logger::Get().LogFile("[Config] Reset SoP Smoothing for migrated preset '%s' (v%s)", current_preset_name.c_str(), current_preset_version.c_str());
+                        current_preset.app_version = LMUFFB_VERSION;
+                    }
                 } else {
                     current_preset.app_version = current_preset_version;
                 }
@@ -8738,10 +1372,16 @@ void Config::LoadPresets() {
         }
 
         // MIGRATION: If version is missing or old, update it
-        if (current_preset_version.empty()) {
-            current_preset.app_version = LMUFFB_VERSION;
+        if (current_preset_version.empty() || IsVersionLessEqual(current_preset_version, "0.7.146")) {
+            current_preset.sop_smoothing = 0.0f; // Issue #37: Reset to Raw for migration
             needs_save = true;
-            Logger::Get().LogFile("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
+            if (current_preset_version.empty()) {
+                current_preset.app_version = LMUFFB_VERSION;
+                Logger::Get().LogFile("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
+            } else {
+                Logger::Get().LogFile("[Config] Reset SoP Smoothing for migrated preset '%s' (v%s)", current_preset_name.c_str(), current_preset_version.c_str());
+                current_preset.app_version = LMUFFB_VERSION;
+            }
         } else {
             current_preset.app_version = current_preset_version;
         }
@@ -8929,6 +1569,13 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
         }
 
         current_preset.app_version = current_preset_version.empty() ? LMUFFB_VERSION : current_preset_version;
+
+        // Migration for imported preset (Issue #37)
+        if (current_preset_version.empty() || IsVersionLessEqual(current_preset_version, "0.7.146")) {
+            current_preset.sop_smoothing = 0.0f;
+            current_preset.app_version = LMUFFB_VERSION;
+            Logger::Get().LogFile("[Config] Reset SoP Smoothing for imported legacy preset '%s'", current_preset.name.c_str());
+        }
 
         // Handle name collision
         std::string base_name = current_preset.name;
@@ -9276,7 +1923,14 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "gain") engine.m_gain = std::stof(value);
                     else if (key == "dynamic_normalization_enabled") engine.m_dynamic_normalization_enabled = (value == "1" || value == "true");
                     else if (key == "auto_load_normalization_enabled") engine.m_auto_load_normalization_enabled = (value == "1" || value == "true");
-                    else if (key == "sop_smoothing_factor" || key == "smoothing") engine.m_sop_smoothing_factor = std::stof(value); // "smoothing" is a legacy alias
+                    else if (key == "sop_smoothing_factor" || key == "smoothing") {
+                        float val = std::stof(value);
+                        if (IsVersionLessEqual(config_version, "0.7.146")) {
+                            val = 0.0f; // Issue #37: Reset to Raw for migration
+                            m_needs_save = true;
+                        }
+                        engine.m_sop_smoothing_factor = val;
+                    }
                     else if (key == "sop_scale") engine.m_sop_scale = std::stof(value);
                     else if (key == "slip_angle_smoothing") engine.m_slip_angle_smoothing = std::stof(value);
                     else if (key == "texture_load_cap" || key == "max_load_factor") engine.m_texture_load_cap = std::stof(value);
@@ -9587,7 +2241,7 @@ struct Preset {
     float sop = 1.666f;
     float lateral_load = 0.0f; // New v0.7.121
     float sop_scale = 1.0f;
-    float sop_smoothing = 1.0f;
+    float sop_smoothing = 0.0f;
     float slip_smoothing = 0.002f;
     float min_force = 0.0f;
     float oversteer_boost = 2.52101f;
@@ -10319,13 +2973,11 @@ private:
 ```cpp
 #include "DirectInputFFB.h"
 #include "Logger.h"
-#include "Logger.h"
+#include "StringUtils.h"
 
 // Standard Library Headers
-#include <iostream>
-#include <cmath>
-#include <cstdio> // For sscanf, sprintf
 #include <algorithm> // For std::max, std::min
+#include <mutex>
 
 // Platform-Specific Headers
 #ifdef _WIN32
@@ -10358,41 +3010,36 @@ std::string DirectInputFFB::GetActiveWindowTitle() {
 // NEW: Helper Implementations for GUID
 std::string DirectInputFFB::GuidToString(const GUID& guid) {
     char buf[64];
+    StringUtils::SafeFormat(buf, sizeof(buf), 
 #ifdef _WIN32
-    sprintf_s(buf, "{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}",
+        "{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}",
         guid.Data1, guid.Data2, guid.Data3,
         guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
-        guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+        guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]
 #else
-    snprintf(buf, sizeof(buf), "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+        "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
         (unsigned int)guid.Data1, (unsigned int)guid.Data2, (unsigned int)guid.Data3,
         (unsigned int)guid.Data4[0], (unsigned int)guid.Data4[1], (unsigned int)guid.Data4[2], (unsigned int)guid.Data4[3],
-        (unsigned int)guid.Data4[4], (unsigned int)guid.Data4[5], (unsigned int)guid.Data4[6], (unsigned int)guid.Data4[7]);
+        (unsigned int)guid.Data4[4], (unsigned int)guid.Data4[5], (unsigned int)guid.Data4[6], (unsigned int)guid.Data4[7]
 #endif
+    );
     return std::string(buf);
 }
 
 GUID DirectInputFFB::StringToGuid(const std::string& str) {
     GUID guid = { 0 };
     if (str.empty()) return guid;
-    unsigned long p0;
-    unsigned short p1, p2;
-    unsigned int p3, p4, p5, p6, p7, p8, p9, p10;
-#ifdef _WIN32
-    int n = sscanf_s(str.c_str(), "{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+    unsigned int p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10;
+    int n = StringUtils::SafeScan(str.c_str(), "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
         &p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8, &p9, &p10);
-#else
-    int n = sscanf(str.c_str(), "{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-        &p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8, &p9, &p10);
-#endif
     if (n == 11) {
-        guid.Data1 = p0;
-        guid.Data2 = (unsigned short)p1;
-        guid.Data3 = (unsigned short)p2;
-        guid.Data4[0] = (unsigned char)p3; guid.Data4[1] = (unsigned char)p4;
-        guid.Data4[2] = (unsigned char)p5; guid.Data4[3] = (unsigned char)p6;
-        guid.Data4[4] = (unsigned char)p7; guid.Data4[5] = (unsigned char)p8;
-        guid.Data4[6] = (unsigned char)p9; guid.Data4[7] = (unsigned char)p10;
+        guid.Data1 = (uint32_t)p0;
+        guid.Data2 = (uint16_t)p1;
+        guid.Data3 = (uint16_t)p2;
+        guid.Data4[0] = (uint8_t)p3; guid.Data4[1] = (uint8_t)p4;
+        guid.Data4[2] = (uint8_t)p5; guid.Data4[3] = (uint8_t)p6;
+        guid.Data4[4] = (uint8_t)p7; guid.Data4[5] = (uint8_t)p8;
+        guid.Data4[6] = (uint8_t)p9; guid.Data4[7] = (uint8_t)p10;
     }
     return guid;
 }
@@ -10512,8 +3159,8 @@ std::vector<DeviceInfo> DirectInputFFB::EnumerateDevices() {
     if (!m_pDI) return devices;
     ((IDirectInput8*)m_pDI)->EnumDevices(DI8DEVCLASS_GAMECTRL, EnumJoysticksCallback, &devices, DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK);
 #else
-    DeviceInfo d1; d1.name = "Simucube 2 Pro (Mock)";
-    DeviceInfo d2; d2.name = "Logitech G29 (Mock)";
+    DeviceInfo d1; d1.guid = { 0 }; d1.name = "Simucube 2 Pro (Mock)";
+    DeviceInfo d2; d2.guid = { 0 }; d2.name = "Logitech G29 (Mock)";
     devices.push_back(d1);
     devices.push_back(d2);
 #endif
@@ -10898,9 +3545,10 @@ void SetupFlipModelSwapChainDesc(DXGI_SWAP_CHAIN_DESC1& sd);
 ```cpp
 #include "FFBEngine.h"
 #include "Config.h"
+#include "StringUtils.h"
 #include "RestApiProvider.h"
 #include "Logger.h"
-#include "Logger.h"
+#include "lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include <iostream>
 #include <mutex>
 
@@ -10923,7 +3571,7 @@ bool FFBEngine::IsFFBAllowed(const VehicleScoringInfoV01& scoring, unsigned char
     // mFinishStatus: 0 = none, 1 = finished, 2 = DNF, 3 = DQ
 
     // 1. Core control check
-    if (!scoring.mIsPlayer || scoring.mControl != 0) return false;
+    if (!scoring.mIsPlayer || scoring.mControl != static_cast<signed char>(ControlMode::PLAYER)) return false;
 
     // 2. DO NOT use gamePhase to determine if IsFFBAllowed (eg. session over would cause no FFB after finish line, or time up)
     // (gamePhase, Game Phases: 7=Stopped, 8=Session Over)
@@ -10970,7 +3618,7 @@ std::vector<FFBSnapshot> FFBEngine::GetDebugBatch() {
 // Functions moved:
 //   update_static_load_reference, InitializeLoadReference,
 //   calculate_raw_slip_angle_pair, calculate_slip_angle,
-//   calculate_grip, approximate_load, approximate_rear_load,
+//   calculate_axle_grip, approximate_load, approximate_rear_load,
 //   calculate_kinematic_load, calculate_manual_slip_ratio,
 //   calculate_slope_grip, calculate_slope_confidence,
 //   calculate_wheel_slip_ratio
@@ -11091,9 +3739,25 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     m_working_info.mUnfilteredThrottle = m_upsample_throttle.Process(data->mUnfilteredThrottle, ffb_dt, is_new_frame);
     m_working_info.mUnfilteredBrake = m_upsample_brake.Process(data->mUnfilteredBrake, ffb_dt, is_new_frame);
     m_working_info.mLocalAccel.x = m_upsample_local_accel_x.Process(data->mLocalAccel.x, ffb_dt, is_new_frame);
-    m_working_info.mLocalAccel.y = m_upsample_local_accel_y.Process(data->mLocalAccel.y, ffb_dt, is_new_frame);
-    m_working_info.mLocalAccel.z = m_upsample_local_accel_z.Process(data->mLocalAccel.z, ffb_dt, is_new_frame);
+
+    // --- DERIVED ACCELERATION (Issue #278) ---
+    // Recalculate acceleration from velocity at 100Hz ticks to avoid raw sensor spikes.
+    if (is_new_frame) {
+        if (!m_local_vel_seeded) {
+            m_prev_local_vel = data->mLocalVel;
+            m_local_vel_seeded = true;
+        }
+
+        double game_dt = (data->mDeltaTime > 1e-6) ? data->mDeltaTime : 0.01;
+        m_derived_accel_y_100hz = (data->mLocalVel.y - m_prev_local_vel.y) / game_dt;
+        m_derived_accel_z_100hz = (data->mLocalVel.z - m_prev_local_vel.z) / game_dt;
+        m_prev_local_vel = data->mLocalVel;
+    }
+
+    m_working_info.mLocalAccel.y = m_upsample_local_accel_y.Process(m_derived_accel_y_100hz, ffb_dt, is_new_frame);
+    m_working_info.mLocalAccel.z = m_upsample_local_accel_z.Process(m_derived_accel_z_100hz, ffb_dt, is_new_frame);
     m_working_info.mLocalRotAccel.y = m_upsample_local_rot_accel_y.Process(data->mLocalRotAccel.y, ffb_dt, is_new_frame);
+    m_working_info.mLocalRot.y = m_upsample_local_rot_y.Process(data->mLocalRot.y, ffb_dt, is_new_frame);
 
     // Use upsampled data pointer for all calculations
     const TelemInfoV01* upsampled_data = &m_working_info;
@@ -11109,6 +3773,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_upsample_local_accel_y.Reset();
         m_upsample_local_accel_z.Reset();
         m_upsample_local_rot_accel_y.Reset();
+        m_upsample_local_rot_y.Reset();
         for (int i = 0; i < 4; i++) {
             m_upsample_lat_patch_vel[i].Reset();
             m_upsample_long_patch_vel[i].Reset();
@@ -11123,6 +3788,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_accel_z_smoothed = 0.0;
         m_sop_lat_g_smoothed = 0.0;
         m_yaw_accel_smoothed = 0.0;
+        m_prev_yaw_rate = 0.0;
+        m_yaw_rate_seeded = false;
+        m_prev_local_vel = {};
+        m_local_vel_seeded = false;
     }
     m_was_allowed = allowed;
 
@@ -11177,17 +3846,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     m_smoothed_structural_mult += alpha_gain * (target_structural_mult - m_smoothed_structural_mult);
 
     // Class Seeding
-    bool seeded = false;
-    if (vehicleClass && (m_current_class_name != vehicleClass || (vehicleName && m_last_handled_vehicle_name != vehicleName))) {
-        m_current_class_name = vehicleClass;
-        InitializeLoadReference(vehicleClass, vehicleName);
-        m_warned_invalid_range = false; // Reset warning on car change
-        seeded = true;
+    bool seeded = UpdateMetadataInternal(vehicleClass, vehicleName, data->mTrackName);
 
-        // Trigger REST API Fallback if enabled and range is invalid (Issue #221)
-        if (m_rest_api_enabled && data->mPhysicalSteeringWheelRange <= 0.0f) {
-            RestApiProvider::Get().RequestSteeringRange(m_rest_api_port);
-        }
+    // Trigger REST API Fallback if enabled and range is invalid (Issue #221)
+    if (seeded && m_rest_api_enabled && data->mPhysicalSteeringWheelRange <= 0.0f) {
+        RestApiProvider::Get().RequestSteeringRange(m_rest_api_port);
     }
     
     // --- 1. INITIALIZE CONTEXT ---
@@ -11218,19 +3881,6 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             m_warned_invalid_range = true;
         }
     }
-    // Update Context strings (for UI/Logging)
-    // v0.7.119: Use robust strcmp instead of fragile index check (Issue #238)
-    if (strcmp(m_vehicle_name, upsampled_data->mVehicleName) != 0 || strcmp(m_track_name, upsampled_data->mTrackName) != 0) {
-#ifdef _WIN32
-         strncpy_s(m_vehicle_name, sizeof(m_vehicle_name), upsampled_data->mVehicleName, _TRUNCATE);
-         strncpy_s(m_track_name, sizeof(m_track_name), upsampled_data->mTrackName, _TRUNCATE);
-#else
-         strncpy(m_vehicle_name, upsampled_data->mVehicleName, STR_MAX_64);
-         m_vehicle_name[STR_MAX_64] = '\0';
-         strncpy(m_track_name, upsampled_data->mTrackName, STR_MAX_64);
-         m_track_name[STR_MAX_64] = '\0';
-#endif
-    }
 
     // --- 2. SIGNAL CONDITIONING (STATE UPDATES) ---
     
@@ -11248,21 +3898,21 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // Raw Inputs
     double raw_torque = raw_torque_input;
-    double raw_load = (fl.mTireLoad + fr.mTireLoad) / DUAL_DIVISOR;
-    double raw_grip = (fl.mGripFract + fr.mGripFract) / DUAL_DIVISOR;
+    double raw_front_load = (fl.mTireLoad + fr.mTireLoad) / DUAL_DIVISOR;
+    double raw_front_grip = (fl.mGripFract + fr.mGripFract) / DUAL_DIVISOR;
 
     // Update Stats
     s_torque.Update(raw_torque);
-    s_load.Update(raw_load);
-    s_grip.Update(raw_grip);
+    s_front_load.Update(raw_front_load);
+    s_front_grip.Update(raw_front_grip);
     s_lat_g.Update(upsampled_data->mLocalAccel.x);
     
     // Stats Latching
     auto now = std::chrono::steady_clock::now();
     if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1) {
         s_torque.ResetInterval(); 
-        s_load.ResetInterval(); 
-        s_grip.ResetInterval(); 
+        s_front_load.ResetInterval();
+        s_front_grip.ResetInterval();
         s_lat_g.ResetInterval();
         last_log_time = now;
     }
@@ -11270,10 +3920,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // --- 4. PRE-CALCULATIONS ---
 
     // Average Load & Fallback Logic
-    ctx.avg_load = raw_load;
+    ctx.avg_front_load = raw_front_load;
 
     // Hysteresis for missing load
-    if (ctx.avg_load < 1.0 && ctx.car_speed > SPEED_EPSILON) {
+    if (ctx.avg_front_load < 1.0 && ctx.car_speed > SPEED_EPSILON) {
         m_missing_load_frames++;
     } else {
         m_missing_load_frames = (std::max)(0, m_missing_load_frames - 1);
@@ -11284,11 +3934,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         if (fl.mSuspForce > MIN_VALID_SUSP_FORCE) {
             double calc_load_fl = approximate_load(fl);
             double calc_load_fr = approximate_load(fr);
-            ctx.avg_load = (calc_load_fl + calc_load_fr) / DUAL_DIVISOR;
+            ctx.avg_front_load = (calc_load_fl + calc_load_fr) / DUAL_DIVISOR;
         } else {
             double kin_load_fl = calculate_kinematic_load(data, 0);
             double kin_load_fr = calculate_kinematic_load(data, 1);
-            ctx.avg_load = (kin_load_fl + kin_load_fr) / DUAL_DIVISOR;
+            ctx.avg_front_load = (kin_load_fl + kin_load_fr) / DUAL_DIVISOR;
         }
         if (!m_warned_load) {
             Logger::Get().LogFile("Warning: Data for mTireLoad from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). Using Kinematic Fallback.", data->mVehicleName);
@@ -11361,18 +4011,18 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     
     // Peak Hold Logic
     if (m_auto_load_normalization_enabled && !seeded) {
-        if (ctx.avg_load > m_auto_peak_load) {
-            m_auto_peak_load = ctx.avg_load; // Fast Attack
+        if (ctx.avg_front_load > m_auto_peak_front_load) {
+            m_auto_peak_front_load = ctx.avg_front_load; // Fast Attack
         } else {
-            m_auto_peak_load -= (LOAD_DECAY_RATE * ctx.dt); // Slow Decay (~100N/s)
+            m_auto_peak_front_load -= (LOAD_DECAY_RATE * ctx.dt); // Slow Decay (~100N/s)
         }
     }
-    m_auto_peak_load = (std::max)(LOAD_SAFETY_FLOOR, m_auto_peak_load); // Safety Floor
+    m_auto_peak_front_load = (std::max)(LOAD_SAFETY_FLOOR, m_auto_peak_front_load); // Safety Floor
 
     // Load Factors (Stage 3: Giannoulis Soft-Knee Compression)
     // 1. Calculate raw load multiplier based on static weight
     // Safety clamp: Ensure load factor is non-negative even with telemetry noise
-    double x = (std::max)(0.0, ctx.avg_load / m_static_front_load);
+    double x = (std::max)(0.0, ctx.avg_front_load / m_static_front_load);
 
     // 2. Giannoulis Soft-Knee Parameters
     double T = COMPRESSION_KNEE_THRESHOLD;  // Threshold (Start compressing at 1.5x static weight)
@@ -11420,10 +4070,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // A. Understeer (Base Torque + Grip Loss)
 
     // Grip Estimation (v0.4.5 FIX)
-    GripResult front_grip_res = calculate_grip(fl, fr, ctx.avg_load, m_warned_grip, 
+    GripResult front_grip_res = calculate_axle_grip(fl, fr, ctx.avg_front_load, m_warned_grip,
                                                 m_prev_slip_angle[0], m_prev_slip_angle[1],
                                                 ctx.car_speed, ctx.dt, data->mVehicleName, data, true /* is_front */);
-    ctx.avg_grip = front_grip_res.value;
+    ctx.avg_front_grip = front_grip_res.value;
     m_grip_diag.front_original = front_grip_res.original;
     m_grip_diag.front_approximated = front_grip_res.approximated;
     m_grip_diag.front_slip_angle = front_grip_res.slip_angle;
@@ -11436,7 +4086,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double base_input = game_force_proc;
     
     // Apply Grip Modulation
-    double grip_loss = (1.0 - ctx.avg_grip) * m_understeer_effect;
+    double grip_loss = (1.0 - ctx.avg_front_grip) * m_understeer_effect;
     ctx.grip_factor = (std::max)(0.0, 1.0 - grip_loss);
 
     // v0.7.63: Passthrough Logic for Direct Torque (TIC mode)
@@ -11444,13 +4094,13 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // v0.7.46: Dynamic Weight logic
     if (m_auto_load_normalization_enabled) {
-        update_static_load_reference(ctx.avg_load, ctx.car_speed, ctx.dt);
+        update_static_load_reference(ctx.avg_front_load, ctx.car_speed, ctx.dt);
     }
     double dynamic_weight_factor = 1.0;
 
     // Only apply if enabled AND we have real load data (no warnings)
     if (m_dynamic_weight_gain > 0.0 && !ctx.frame_warn_load) {
-        double load_ratio = ctx.avg_load / m_static_front_load;
+        double load_ratio = ctx.avg_front_load / m_static_front_load;
         // Blend: 1.0 + (Ratio - 1.0) * Gain
         dynamic_weight_factor = 1.0 + (load_ratio - 1.0) * (double)m_dynamic_weight_gain;
         dynamic_weight_factor = std::clamp(dynamic_weight_factor, DYNAMIC_WEIGHT_MIN, DYNAMIC_WEIGHT_MAX);
@@ -11519,8 +4169,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // Vibration Effects are calculated in absolute Nm
     // v0.7.110: Apply m_vibration_gain to textures, but NOT to Soft Lock (Issue #206)
-    double vibration_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble;
-    double final_texture_nm = (vibration_sum_nm * (double)m_vibration_gain) + ctx.soft_lock_force;
+    // v0.7.150: Decouple ABS and Lockup from global vibration gain (Issue #290)
+    double surface_vibs_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch;
+    double critical_vibs_nm = ctx.abs_pulse_force + ctx.lockup_rumble;
+    double final_texture_nm = (surface_vibs_nm * (double)m_vibration_gain) + critical_vibs_nm + ctx.soft_lock_force;
 
     // --- 7. OUTPUT SCALING (Physical Target Model) ---
     // Map structural to the target rim torque, then divide by wheelbase max to get DirectInput %
@@ -11565,9 +4217,26 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // v0.6.36 FIX: Move m_prev_vert_accel to unconditional section
     // Previously only updated inside calculate_road_texture when enabled.
     // Now always updated to prevent stale data if other effects use it.
-    m_prev_vert_accel = data->mLocalAccel.y;
+    // v0.7.145 (Issue #278): Use upsampled derived acceleration for smoother Jerk calculation.
+    m_prev_vert_accel = upsampled_data->mLocalAccel.y;
 
-    // --- 9. SNAPSHOT ---
+    // --- 9. DERIVE LOGGABLE DIAGNOSTICS ---
+    float sm_range_rad = data->mPhysicalSteeringWheelRange;
+    float range_deg = sm_range_rad * (180.0f / (float)PI);
+
+    // Fallback to REST API if enabled and SM range is invalid (Issue #221)
+    if (m_rest_api_enabled && sm_range_rad <= 0.0f) {
+        float fallback = RestApiProvider::Get().GetFallbackRangeDeg();
+        if (fallback > 0.0f) {
+            range_deg = fallback;
+        }
+    }
+
+    float steering_angle_deg = (float)data->mUnfilteredSteering * (range_deg / 2.0f);
+    float understeer_drop = (float)((base_input * m_steering_shaft_gain) * (1.0 - grip_factor_applied));
+    float oversteer_boost = (float)(ctx.sop_base_force - ctx.sop_unboosted_force); // Exact boost amount
+
+    // --- 10. SNAPSHOT ---
     // This block captures the current state of the FFB Engine (inputs, outputs, intermediate calculations)
     // into a thread-safe buffer. These snapshots are retrieved by the GUI layer (or other consumers)
     // to visualize real-time telemetry graphs, FFB clipping, and effect contributions.
@@ -11579,8 +4248,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.total_output = (float)norm_force;
             snap.base_force = (float)base_input;
             snap.sop_force = (float)ctx.sop_unboosted_force; // Use unboosted for snapshot
-            snap.understeer_drop = (float)((base_input * m_steering_shaft_gain) * (1.0 - grip_factor_applied));
-            snap.oversteer_boost = (float)(ctx.sop_base_force - ctx.sop_unboosted_force); // Exact boost amount
+            snap.understeer_drop = understeer_drop;
+            snap.oversteer_boost = oversteer_boost;
 
             snap.ffb_rear_torque = (float)ctx.rear_torque;
             snap.ffb_scrub_drag = (float)ctx.scrub_drag_force;
@@ -11597,10 +4266,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.clipping = (std::abs(norm_force) > (double)CLIPPING_THRESHOLD) ? 1.0f : 0.0f;
 
             // Physics
-            snap.calc_front_load = (float)ctx.avg_load;
+            snap.calc_front_load = (float)ctx.avg_front_load;
             snap.calc_rear_load = (float)ctx.avg_rear_load;
             snap.calc_rear_lat_force = (float)ctx.calc_rear_lat_force;
-            snap.calc_front_grip = (float)ctx.avg_grip;
+            snap.calc_front_grip = (float)ctx.avg_front_grip;
             snap.calc_rear_grip = (float)ctx.avg_rear_grip;
             snap.calc_front_slip_angle_smoothed = (float)m_grip_diag.front_slip_angle;
             snap.calc_rear_slip_angle_smoothed = (float)m_grip_diag.rear_slip_angle;
@@ -11613,8 +4282,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.raw_shaft_torque = (float)data->mSteeringShaftTorque;
             snap.raw_gen_torque = (float)genFFBTorque;
             snap.raw_input_steering = (float)data->mUnfilteredSteering;
-            snap.raw_front_tire_load = (float)raw_load;
-            snap.raw_front_grip_fract = (float)raw_grip;
+            snap.raw_front_tire_load = (float)raw_front_load;
+            snap.raw_front_grip_fract = (float)raw_front_grip;
             snap.raw_rear_grip = (float)((data->mWheel[2].mGripFract + data->mWheel[3].mGripFract) / DUAL_DIVISOR);
             snap.raw_front_susp_force = (float)((fl.mSuspForce + fr.mSuspForce) / DUAL_DIVISOR);
             snap.raw_front_ride_height = (float)((std::min)(fl.mRideHeight, fr.mRideHeight));
@@ -11629,19 +4298,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.raw_rear_lat_patch_vel = (float)((std::abs(data->mWheel[2].mLateralPatchVel) + std::abs(data->mWheel[3].mLateralPatchVel)) / DUAL_DIVISOR);
             snap.raw_rear_long_patch_vel = (float)((data->mWheel[2].mLongitudinalPatchVel + data->mWheel[3].mLongitudinalPatchVel) / DUAL_DIVISOR);
 
-            float sm_range_rad = data->mPhysicalSteeringWheelRange;
-            float range_deg = sm_range_rad * (180.0f / (float)PI);
-
-            // Fallback to REST API if enabled and SM range is invalid (Issue #221)
-            if (m_rest_api_enabled && sm_range_rad <= 0.0f) {
-                float fallback = RestApiProvider::Get().GetFallbackRangeDeg();
-                if (fallback > 0.0f) {
-                    range_deg = fallback;
-                }
-            }
-
             snap.steering_range_deg = range_deg;
-            snap.steering_angle_deg = (float)data->mUnfilteredSteering * (range_deg / 2.0f);
+            snap.steering_angle_deg = steering_angle_deg;
 
             snap.warn_load = ctx.frame_warn_load;
             snap.warn_grip = ctx.frame_warn_grip || ctx.frame_warn_rear_grip;
@@ -11661,38 +4319,113 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         }
     }
     
-    // Telemetry Logging (v0.7.x)
+    // Telemetry Logging (v0.7.129: Augmented Binary & 400Hz)
     if (AsyncLogger::Get().IsLogging()) {
         LogFrame frame;
-        frame.timestamp = data->mElapsedTime;
-        frame.delta_time = data->mDeltaTime;
+        frame.timestamp = upsampled_data->mElapsedTime;
+        frame.delta_time = ctx.dt;
         
-        // Inputs
-        frame.steering = (float)data->mUnfilteredSteering;
-        frame.throttle = (float)data->mUnfilteredThrottle;
-        frame.brake = (float)data->mUnfilteredBrake;
-        
-        // Vehicle state
+        // --- PROCESSED 400Hz DATA (Smooth) ---
         frame.speed = (float)ctx.car_speed;
-        frame.lat_accel = (float)data->mLocalAccel.x;
-        frame.long_accel = (float)data->mLocalAccel.z;
-        frame.yaw_rate = (float)data->mLocalRot.y;
-        
-        // Front Axle raw
+        frame.lat_accel = (float)upsampled_data->mLocalAccel.x;
+        frame.long_accel = (float)upsampled_data->mLocalAccel.z;
+        frame.yaw_rate = (float)upsampled_data->mLocalRot.y;
+
+        frame.steering = (float)upsampled_data->mUnfilteredSteering;
+        frame.throttle = (float)upsampled_data->mUnfilteredThrottle;
+        frame.brake = (float)upsampled_data->mUnfilteredBrake;
+
+        // --- RAW 100Hz GAME DATA (Step-function) ---
+        frame.raw_steering = (float)data->mUnfilteredSteering;
+        frame.raw_throttle = (float)data->mUnfilteredThrottle;
+        frame.raw_brake = (float)data->mUnfilteredBrake;
+        frame.raw_lat_accel = (float)data->mLocalAccel.x;
+        frame.raw_long_accel = (float)data->mLocalAccel.z;
+        frame.raw_game_yaw_accel = (float)data->mLocalRotAccel.y;
+        frame.raw_game_shaft_torque = (float)data->mSteeringShaftTorque;
+        frame.raw_game_gen_torque = (float)genFFBTorque;
+
+        frame.raw_load_fl = (float)data->mWheel[0].mTireLoad;
+        frame.raw_load_fr = (float)data->mWheel[1].mTireLoad;
+        frame.raw_load_rl = (float)data->mWheel[2].mTireLoad;
+        frame.raw_load_rr = (float)data->mWheel[3].mTireLoad;
+
+        frame.raw_slip_vel_lat_fl = (float)data->mWheel[0].mLateralPatchVel;
+        frame.raw_slip_vel_lat_fr = (float)data->mWheel[1].mLateralPatchVel;
+        frame.raw_slip_vel_lat_rl = (float)data->mWheel[2].mLateralPatchVel;
+        frame.raw_slip_vel_lat_rr = (float)data->mWheel[3].mLateralPatchVel;
+
+        frame.raw_slip_vel_long_fl = (float)data->mWheel[0].mLongitudinalPatchVel;
+        frame.raw_slip_vel_long_fr = (float)data->mWheel[1].mLongitudinalPatchVel;
+        frame.raw_slip_vel_long_rl = (float)data->mWheel[2].mLongitudinalPatchVel;
+        frame.raw_slip_vel_long_rr = (float)data->mWheel[3].mLongitudinalPatchVel;
+
+        frame.raw_ride_height_fl = (float)data->mWheel[0].mRideHeight;
+        frame.raw_ride_height_fr = (float)data->mWheel[1].mRideHeight;
+        frame.raw_ride_height_rl = (float)data->mWheel[2].mRideHeight;
+        frame.raw_ride_height_rr = (float)data->mWheel[3].mRideHeight;
+
+        frame.raw_susp_deflection_fl = (float)data->mWheel[0].mSuspensionDeflection;
+        frame.raw_susp_deflection_fr = (float)data->mWheel[1].mSuspensionDeflection;
+        frame.raw_susp_deflection_rl = (float)data->mWheel[2].mSuspensionDeflection;
+        frame.raw_susp_deflection_rr = (float)data->mWheel[3].mSuspensionDeflection;
+
+        frame.raw_susp_force_fl = (float)data->mWheel[0].mSuspForce;
+        frame.raw_susp_force_fr = (float)data->mWheel[1].mSuspForce;
+        frame.raw_susp_force_rl = (float)data->mWheel[2].mSuspForce;
+        frame.raw_susp_force_rr = (float)data->mWheel[3].mSuspForce;
+
+        frame.raw_brake_pressure_fl = (float)data->mWheel[0].mBrakePressure;
+        frame.raw_brake_pressure_fr = (float)data->mWheel[1].mBrakePressure;
+        frame.raw_brake_pressure_rl = (float)data->mWheel[2].mBrakePressure;
+        frame.raw_brake_pressure_rr = (float)data->mWheel[3].mBrakePressure;
+
+        frame.raw_rotation_fl = (float)data->mWheel[0].mRotation;
+        frame.raw_rotation_fr = (float)data->mWheel[1].mRotation;
+        frame.raw_rotation_rl = (float)data->mWheel[2].mRotation;
+        frame.raw_rotation_rr = (float)data->mWheel[3].mRotation;
+
+        // --- ALGORITHM STATE (400Hz) ---
         frame.slip_angle_fl = (float)fl.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
         frame.slip_angle_fr = (float)fr.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
+        frame.slip_angle_rl = (float)upsampled_data->mWheel[2].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
+        frame.slip_angle_rr = (float)upsampled_data->mWheel[3].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
+
         frame.slip_ratio_fl = (float)calculate_wheel_slip_ratio(fl);
         frame.slip_ratio_fr = (float)calculate_wheel_slip_ratio(fr);
+        frame.slip_ratio_rl = (float)calculate_wheel_slip_ratio(upsampled_data->mWheel[2]);
+        frame.slip_ratio_rr = (float)calculate_wheel_slip_ratio(upsampled_data->mWheel[3]);
+
         frame.grip_fl = (float)fl.mGripFract;
         frame.grip_fr = (float)fr.mGripFract;
+        frame.grip_rl = (float)upsampled_data->mWheel[2].mGripFract;
+        frame.grip_rr = (float)upsampled_data->mWheel[3].mGripFract;
+
         frame.load_fl = (float)fl.mTireLoad;
         frame.load_fr = (float)fr.mTireLoad;
+        frame.load_rl = (float)upsampled_data->mWheel[2].mTireLoad;
+        frame.load_rr = (float)upsampled_data->mWheel[3].mTireLoad;
+
+        frame.ride_height_fl = (float)fl.mRideHeight;
+        frame.ride_height_fr = (float)fr.mRideHeight;
+        frame.ride_height_rl = (float)upsampled_data->mWheel[2].mRideHeight;
+        frame.ride_height_rr = (float)upsampled_data->mWheel[3].mRideHeight;
+
+        frame.susp_deflection_fl = (float)fl.mSuspensionDeflection;
+        frame.susp_deflection_fr = (float)fr.mSuspensionDeflection;
+        frame.susp_deflection_rl = (float)upsampled_data->mWheel[2].mSuspensionDeflection;
+        frame.susp_deflection_rr = (float)upsampled_data->mWheel[3].mSuspensionDeflection;
         
-        // Calculated values
         frame.calc_slip_angle_front = (float)m_grip_diag.front_slip_angle;
-        frame.calc_grip_front = (float)ctx.avg_grip;
+        frame.calc_slip_angle_rear = (float)m_grip_diag.rear_slip_angle;
+        frame.calc_grip_front = (float)ctx.avg_front_grip;
+        frame.calc_grip_rear = (float)ctx.avg_rear_grip;
+        frame.grip_delta = (float)(ctx.avg_front_grip - ctx.avg_rear_grip);
+        frame.calc_rear_lat_force = (float)ctx.calc_rear_lat_force;
+
+        frame.smoothed_yaw_accel = (float)m_yaw_accel_smoothed;
+        frame.lat_load_norm = (float)m_sop_load_smoothed;
         
-        // Slope detection
         frame.dG_dt = (float)m_slope_dG_dt;
         frame.dAlpha_dt = (float)m_slope_dAlpha_dt;
         frame.slope_current = (float)m_slope_current;
@@ -11702,50 +4435,66 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         frame.hold_timer = (float)m_slope_hold_timer;
         frame.input_slip_smoothed = (float)m_slope_slip_smoothed;
         frame.slope_smoothed = (float)m_slope_smoothed_output;
-        
-        // Use extracted confidence calculation
         frame.confidence = (float)calculate_slope_confidence(m_slope_dAlpha_dt);
         
-        // Surface types (Accuracy Tools)
         frame.surface_type_fl = (float)fl.mSurfaceType;
         frame.surface_type_fr = (float)fr.mSurfaceType;
-
-        // Advanced Slope Detection (v0.7.40)
         frame.slope_torque = (float)m_slope_torque_current;
         frame.slew_limited_g = (float)m_debug_lat_g_slew;
 
-        // Rear axle
-        frame.calc_grip_rear = (float)ctx.avg_rear_grip;
-        frame.grip_delta = (float)(ctx.avg_grip - ctx.avg_rear_grip);
-
-        // Yaw Kick Analysis (Issue #241)
-        frame.raw_yaw_accel = (float)data->mLocalRotAccel.y;
-        frame.smoothed_yaw_accel = (float)m_yaw_accel_smoothed;
-        frame.ffb_yaw_kick = (float)ctx.yaw_force;
-        frame.lat_load_norm = (float)m_sop_load_smoothed;
-
-        // Additional channels for diagnostic investigation
-        frame.load_rl = (float)data->mWheel[2].mTireLoad;
-        frame.load_rr = (float)data->mWheel[3].mTireLoad;
-        frame.ride_height_fl = (float)data->mWheel[0].mRideHeight;
-        frame.ride_height_fr = (float)data->mWheel[1].mRideHeight;
-        frame.ride_height_rl = (float)data->mWheel[2].mRideHeight;
-        frame.ride_height_rr = (float)data->mWheel[3].mRideHeight;
-        frame.susp_deflection_fl = (float)data->mWheel[0].mSuspensionDeflection;
-        frame.susp_deflection_fr = (float)data->mWheel[1].mSuspensionDeflection;
-        frame.susp_deflection_rl = (float)data->mWheel[2].mSuspensionDeflection;
-        frame.susp_deflection_rr = (float)data->mWheel[3].mSuspensionDeflection;
+        frame.session_peak_torque = (float)m_session_peak_torque;
+        frame.dynamic_weight_factor = (float)dynamic_weight_factor;
+        frame.structural_mult = (float)m_smoothed_structural_mult;
+        frame.vibration_mult = (float)m_smoothed_vibration_mult;
+        frame.steering_angle_deg = steering_angle_deg;
+        frame.steering_range_deg = range_deg;
+        frame.debug_freq = (float)m_debug_freq;
+        frame.tire_radius = (float)fl.mStaticUndeflectedRadius / 100.0f;
         
-        // FFB output
+        // --- FFB COMPONENTS (400Hz) ---
         frame.ffb_total = (float)norm_force;
-        frame.ffb_shaft_torque = (float)data->mSteeringShaftTorque;
+        frame.ffb_base = (float)base_input;
+        frame.ffb_understeer_drop = understeer_drop;
+        frame.ffb_oversteer_boost = oversteer_boost;
+        frame.ffb_sop = (float)ctx.sop_base_force;
+        frame.ffb_rear_torque = (float)ctx.rear_torque;
+        frame.ffb_scrub_drag = (float)ctx.scrub_drag_force;
+        frame.ffb_yaw_kick = (float)ctx.yaw_force;
+        frame.ffb_gyro_damping = (float)ctx.gyro_force;
+        frame.ffb_road_texture = (float)ctx.road_noise;
+        frame.ffb_slide_texture = (float)ctx.slide_noise;
+        frame.ffb_lockup_vibration = (float)ctx.lockup_rumble;
+        frame.ffb_spin_vibration = (float)ctx.spin_rumble;
+        frame.ffb_bottoming_crunch = (float)ctx.bottoming_crunch;
+        frame.ffb_abs_pulse = (float)ctx.abs_pulse_force;
+        frame.ffb_soft_lock = (float)ctx.soft_lock_force;
+
+        frame.extrapolated_yaw_accel = (float)upsampled_data->mLocalRotAccel.y;
+
+        // Passive test: calculate yaw accel from velocity derivative
+        // Note: mLocalRot.y is angular velocity (rad/s), so its derivative is angular acceleration (rad/s^2).
+        double current_yaw_rate = upsampled_data->mLocalRot.y;
+        if (!m_yaw_rate_log_seeded) {
+            m_prev_yaw_rate_log = current_yaw_rate;
+            m_yaw_rate_log_seeded = true;
+        }
+        frame.derived_yaw_accel = (ctx.dt > 1e-6) ? (float)((current_yaw_rate - m_prev_yaw_rate_log) / ctx.dt) : 0.0f;
+        m_prev_yaw_rate_log = current_yaw_rate;
+
+        frame.ffb_shaft_torque = (float)upsampled_data->mSteeringShaftTorque;
         frame.ffb_gen_torque = (float)genFFBTorque;
         frame.ffb_grip_factor = (float)ctx.grip_factor;
-        frame.ffb_sop = (float)ctx.sop_base_force;
         frame.speed_gate = (float)ctx.speed_gate;
-        frame.load_peak_ref = (float)m_auto_peak_load;
-        frame.clipping = (std::abs(norm_force) > CLIPPING_THRESHOLD);
-        frame.ffb_base = (float)base_input; // Plan included ffb_base
+        frame.front_load_peak_ref = (float)m_auto_peak_front_load;
+
+        // --- SYSTEM (400Hz) ---
+        frame.physics_rate = (float)m_physics_rate;
+        frame.clipping = (uint8_t)(std::abs(norm_force) > CLIPPING_THRESHOLD);
+        frame.warn_bits = 0;
+        if (ctx.frame_warn_load) frame.warn_bits |= 0x01;
+        if (ctx.frame_warn_grip || ctx.frame_warn_rear_grip) frame.warn_bits |= 0x02;
+        if (ctx.frame_warn_dt) frame.warn_bits |= 0x04;
+        frame.marker = 0; // Handled inside Log()
         
         AsyncLogger::Get().Log(frame);
     }
@@ -11771,7 +4520,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double lat_load_norm = (total_load > 1.0) ? (fl_load - fr_load) / total_load : 0.0;
     
     // Smoothing: Map 0.0-1.0 slider to 0.1-0.0001s tau
-    double smoothness = 1.0 - (double)m_sop_smoothing_factor;
+    double smoothness = (double)m_sop_smoothing_factor;
     smoothness = (std::max)(0.0, (std::min)(SMOOTHNESS_LIMIT_0999, smoothness));
     double tau = smoothness * SOP_SMOOTHING_MAX_TAU;
     double alpha = ctx.dt / (tau + ctx.dt);
@@ -11786,7 +4535,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     
     // 2. Oversteer Boost (Grip Differential)
     // Calculate Rear Grip
-    GripResult rear_grip_res = calculate_grip(data->mWheel[2], data->mWheel[3], ctx.avg_load, m_warned_rear_grip,
+    GripResult rear_grip_res = calculate_axle_grip(data->mWheel[2], data->mWheel[3], ctx.avg_front_load, m_warned_rear_grip,
                                                 m_prev_slip_angle[2], m_prev_slip_angle[3],
                                                 ctx.car_speed, ctx.dt, data->mVehicleName, data, false /* is_front */);
     ctx.avg_rear_grip = rear_grip_res.value;
@@ -11796,7 +4545,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     if (rear_grip_res.approximated) ctx.frame_warn_rear_grip = true;
     
     if (!m_slope_detection_enabled) {
-        double grip_delta = ctx.avg_grip - ctx.avg_rear_grip;
+        double grip_delta = ctx.avg_front_grip - ctx.avg_rear_grip;
         if (grip_delta > 0.0) {
             sop_base *= (1.0 + (grip_delta * m_oversteer_boost * OVERSTEER_BOOST_MULT));
         }
@@ -11819,7 +4568,15 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     ctx.rear_torque = -ctx.calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect;
     
     // 4. Yaw Kick (Inertial Oversteer)
-    double raw_yaw_accel = data->mLocalRotAccel.y;
+    // v0.7.144 (Solution 2): Derive Yaw Acceleration from Yaw Rate (mLocalRot.y) 
+    // instead of using noisy game-provided mLocalRotAccel.y.
+    double current_yaw_rate = data->mLocalRot.y;
+    if (!m_yaw_rate_seeded) {
+        m_prev_yaw_rate = current_yaw_rate;
+        m_yaw_rate_seeded = true;
+    }
+    double derived_yaw_accel = (ctx.dt > 1e-6) ? (current_yaw_rate - m_prev_yaw_rate) / ctx.dt : 0.0;
+    m_prev_yaw_rate = current_yaw_rate;
 
     // v0.4.18: Apply Smoothing FIRST to extract macroscopic movement and cancel chatter.
     // This prevents "signal rectification" where a threshold applied to raw noise
@@ -11827,7 +4584,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double tau_yaw = (double)m_yaw_accel_smoothing;
     if (tau_yaw < MIN_TAU_S) tau_yaw = MIN_TAU_S;
     double alpha_yaw = ctx.dt / (tau_yaw + ctx.dt);
-    m_yaw_accel_smoothed += alpha_yaw * (raw_yaw_accel - m_yaw_accel_smoothed);
+    m_yaw_accel_smoothed += alpha_yaw * (derived_yaw_accel - m_yaw_accel_smoothed);
 
     double processed_yaw = 0.0;
     // Reject yaw at low speeds
@@ -12052,7 +4809,7 @@ void FFBEngine::calculate_slide_texture(const TelemInfoV01* data, FFBCalculation
         double sawtooth = (m_slide_phase / TWO_PI) * SAWTOOTH_SCALE - SAWTOOTH_OFFSET;
         
         // Intensity scaling (Grip based)
-        double grip_scale = (std::max)(0.0, 1.0 - ctx.avg_grip);
+        double grip_scale = (std::max)(0.0, 1.0 - ctx.avg_front_grip);
         
         ctx.slide_noise = sawtooth * m_slide_texture_gain * (double)BASE_NM_SLIDE_TEXTURE * ctx.texture_load_factor * grip_scale;
     }
@@ -12102,6 +4859,47 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
     ctx.road_noise *= ctx.speed_gate;
 }
 
+void FFBEngine::UpdateMetadata(const SharedMemoryObjectOut& data) {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+    const char* vClass = nullptr;
+    const char* vName = nullptr;
+    const char* tName = data.scoring.scoringInfo.mTrackName;
+
+    if (data.telemetry.playerHasVehicle) {
+        uint8_t idx = data.telemetry.playerVehicleIdx;
+        if (idx < 104) {
+            vClass = data.scoring.vehScoringInfo[idx].mVehicleClass;
+            vName = data.scoring.vehScoringInfo[idx].mVehicleName;
+        }
+    }
+
+    UpdateMetadataInternal(vClass, vName, tName);
+}
+
+bool FFBEngine::UpdateMetadataInternal(const char* vehicleClass, const char* vehicleName, const char* trackName) {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+    bool seeded = false;
+
+    // 1. Handle Vehicle/Class Change
+    if (vehicleClass && (m_current_class_name != vehicleClass || (vehicleName && m_last_handled_vehicle_name != vehicleName))) {
+        m_current_class_name = vehicleClass;
+        InitializeLoadReference(vehicleClass, vehicleName);
+        m_warned_invalid_range = false; // Reset warning on car change
+        seeded = true;
+    }
+
+    // 2. Update Context strings (for UI/Logging)
+    if (vehicleName && strcmp(m_vehicle_name, vehicleName) != 0) {
+        StringUtils::SafeCopy(m_vehicle_name, sizeof(m_vehicle_name), vehicleName);
+    }
+
+    if (trackName && strcmp(m_track_name, trackName) != 0) {
+        StringUtils::SafeCopy(m_track_name, sizeof(m_track_name), trackName);
+    }
+
+    return seeded;
+}
+
 void FFBEngine::ResetNormalization() {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
@@ -12117,10 +4915,10 @@ void FFBEngine::ResetNormalization() {
     // 2. Vibration Normalization Reset (Stage 3)
     // Always return to the class-default seed load.
     ParsedVehicleClass vclass = ParseVehicleClass(m_current_class_name.c_str(), m_vehicle_name);
-    m_auto_peak_load = GetDefaultLoadForClass(vclass);
+    m_auto_peak_front_load = GetDefaultLoadForClass(vclass);
 
     // Reset static load reference
-    m_static_front_load = m_auto_peak_load * 0.5;
+    m_static_front_load = m_auto_peak_front_load * 0.5;
     m_static_load_latched = false;
 
     // If we have a saved static load, restore it (v0.7.70 logic)
@@ -12133,7 +4931,7 @@ void FFBEngine::ResetNormalization() {
     m_smoothed_vibration_mult = 1.0;
 
     Logger::Get().LogFile("[FFB] Normalization state reset. Structural Peak: %.2f Nm | Load Peak: %.2f N",
-        m_session_peak_torque, m_auto_peak_load);
+        m_session_peak_torque, m_auto_peak_front_load);
 }
 
 // Helper: Calculate Suspension Bottoming (v0.6.22)
@@ -12303,7 +5101,7 @@ struct FFBSnapshot {
 
 // BiquadNotch moved to MathUtils.h
 
-// Helper Result Struct for calculate_grip
+// Helper Result Struct for calculate_axle_grip
 struct GripResult {
     double value;           // Final grip value
     bool approximated;      // Was approximation used?
@@ -12322,8 +5120,8 @@ struct FFBCalculationContext {
     double speed_gate = 1.0;
     double texture_load_factor = 1.0;
     double brake_load_factor = 1.0;
-    double avg_load = 0.0;
-    double avg_grip = 0.0;
+    double avg_front_load = 0.0;
+    double avg_front_grip = 0.0;
 
     // Diagnostics
     bool frame_warn_load = false;
@@ -12551,6 +5349,7 @@ public:
     ffb_math::LinearExtrapolator m_upsample_local_accel_y;
     ffb_math::LinearExtrapolator m_upsample_local_accel_z;
     ffb_math::LinearExtrapolator m_upsample_local_rot_accel_y;
+    ffb_math::LinearExtrapolator m_upsample_local_rot_y;
     ffb_math::HoltWintersFilter  m_upsample_shaft_torque;
 
     double m_prev_vert_deflection[4] = {0.0, 0.0, 0.0, 0.0}; 
@@ -12565,6 +5364,16 @@ public:
     
     // Yaw Acceleration Smoothing State (v0.4.18)
     double m_yaw_accel_smoothed = 0.0;
+    double m_prev_yaw_rate = 0.0;     // New v0.7.144 (Solution 2)
+    bool m_yaw_rate_seeded = false;   // New v0.7.144 (Solution 2)
+    double m_prev_yaw_rate_log = 0.0;
+
+    // Derived Acceleration State (Issue #278)
+    TelemVect3 m_prev_local_vel = {};
+    bool m_local_vel_seeded = false;
+    double m_derived_accel_y_100hz = 0.0;
+    double m_derived_accel_z_100hz = 0.0;
+    bool m_yaw_rate_log_seeded = false;
 
     // Internal state for Steering Shaft Smoothing (v0.5.7)
     double m_steering_shaft_torque_smoothed = 0.0;
@@ -12655,6 +5464,7 @@ public:
     // Context for Logging (v0.7.x)
     char m_vehicle_name[STR_BUF_64] = "Unknown";
     char m_track_name[STR_BUF_64] = "Unknown";
+    std::string m_current_class_name = "";
 
     // Logging intermediate values (exposed for AsyncLogger)
     double m_slope_dG_dt = 0.0;       
@@ -12668,8 +5478,8 @@ public:
 
     // Telemetry Stats
     ChannelStats s_torque;
-    ChannelStats s_load;
-    ChannelStats s_grip;
+    ChannelStats s_front_load;
+    ChannelStats s_front_grip;
     ChannelStats s_lat_g;
     std::chrono::steady_clock::time_point last_log_time;
 
@@ -12716,7 +5526,7 @@ private:
     static constexpr double PREDICTION_BRAKE_THRESHOLD = 0.02;  
     static constexpr double PREDICTION_LOAD_THRESHOLD = 50.0;
 
-    double m_auto_peak_load = DEFAULT_AUTO_PEAK_LOAD;
+    double m_auto_peak_front_load = DEFAULT_AUTO_PEAK_LOAD;
 
     static constexpr double HPF_TIME_CONSTANT_S = 0.1;
     static constexpr double ZERO_CROSSING_EPSILON = 0.05;
@@ -12859,7 +5669,6 @@ private:
     double m_last_raw_torque = 0.0; // New v0.7.67 (Issue #152)
     bool m_was_allowed = true; // Track transition for filter reset
 
-    std::string m_current_class_name = "";
     std::string m_last_handled_vehicle_name = ""; // For car change detection (Issue #238)
 
     void update_static_load_reference(double current_load, double speed, double dt);
@@ -12869,9 +5678,9 @@ public:
     double calculate_raw_slip_angle_pair(const TelemWheelV01& w1, const TelemWheelV01& w2);
     double calculate_slip_angle(const TelemWheelV01& w, double& prev_state, double dt);
     
-    GripResult calculate_grip(const TelemWheelV01& w1, 
+    GripResult calculate_axle_grip(const TelemWheelV01& w1,
                               const TelemWheelV01& w2,
-                              double avg_load,
+                              double avg_axle_load,
                               bool& warned_flag,
                               double& prev_slip1,
                               double& prev_slip2,
@@ -12891,10 +5700,12 @@ public:
 
     double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr, float genFFBTorque = 0.0f, bool allowed = true, double override_dt = -1.0);
 
+    void UpdateMetadata(const struct SharedMemoryObjectOut& data);
     double apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, FFBCalculationContext& ctx);
     void ResetNormalization();
 
 private:
+    bool UpdateMetadataInternal(const char* vehicleClass, const char* vehicleName, const char* trackName);
     void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext& ctx);
     NOINLINE void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext& ctx);
     NOINLINE void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext& ctx);
@@ -12921,6 +5732,7 @@ private:
 #include "lmu_sm_interface/SafeSharedMemoryLock.h"
 #include <iostream>
 #include <cstring>
+#include "StringUtils.h"
 
 #define LEGACY_SHARED_MEMORY_NAME "$rFactor2SMMP_Telemetry$"
 
@@ -12974,7 +5786,6 @@ bool GameConnector::TryConnect() {
     m_pSharedMemLayout = (SharedMemoryLayout*)MapViewOfFile(m_hMapFile, FILE_MAP_READ, 0, 0, sizeof(SharedMemoryLayout));
     if (m_pSharedMemLayout == NULL) {
         Logger::Get().Log("[GameConnector] Could not map view of file.");
-        Logger::Get().Log("[GameConnector] Could not map view of file.");
         Logger::Get().LogWin32Error("MapViewOfFile", GetLastError());
         _DisconnectLocked();
         return false;
@@ -12982,7 +5793,6 @@ bool GameConnector::TryConnect() {
 
     m_smLock = SafeSharedMemoryLock::MakeSafeSharedMemoryLock();
     if (!m_smLock.has_value()) {
-        Logger::Get().Log("[GameConnector] Failed to init LMU Shared Memory Lock");
         Logger::Get().Log("[GameConnector] Failed to init LMU Shared Memory Lock");
         _DisconnectLocked();
         return false;
@@ -12996,8 +5806,23 @@ bool GameConnector::TryConnect() {
     }
 
     m_connected = true;
+
+    // Initialize Robust State Machine (#267)
+    if (m_pSharedMemLayout) {
+        m_sessionActive = (m_pSharedMemLayout->data.scoring.scoringInfo.mTrackName[0] != '\0');
+        m_inRealtime = (m_pSharedMemLayout->data.scoring.scoringInfo.mInRealtime != 0);
+        m_currentSessionType = m_pSharedMemLayout->data.scoring.scoringInfo.mSession;
+        m_currentGamePhase = m_pSharedMemLayout->data.scoring.scoringInfo.mGamePhase;
+
+        if (m_pSharedMemLayout->data.telemetry.playerHasVehicle) {
+            uint8_t idx = m_pSharedMemLayout->data.telemetry.playerVehicleIdx;
+            if (idx < 104) {
+                m_playerControl = m_pSharedMemLayout->data.scoring.vehScoringInfo[idx].mControl;
+            }
+        }
+    }
+
     m_lastUpdateLocalTime = std::chrono::steady_clock::now();
-    Logger::Get().Log("[GameConnector] Connected to LMU Shared Memory.");
     Logger::Get().Log("[GameConnector] Connected to LMU Shared Memory.");
     return true;
 #else
@@ -13009,7 +5834,6 @@ bool GameConnector::CheckLegacyConflict() {
 #if defined(_WIN32) || defined(HEADLESS_GUI)
     HANDLE hLegacy = OpenFileMappingA(FILE_MAP_READ, FALSE, LEGACY_SHARED_MEMORY_NAME);
     if (hLegacy) {
-        Logger::Get().Log("[Warning] Legacy rFactor 2 Shared Memory Plugin detected. This may conflict with LMU 1.2 data.");
         Logger::Get().Log("[Warning] Legacy rFactor 2 Shared Memory Plugin detected. This may conflict with LMU 1.2 data.");
         CloseHandle(hLegacy);
         return true;
@@ -13064,12 +5888,11 @@ bool GameConnector::CopyTelemetry(SharedMemoryObjectOut& dest) {
             m_lastUpdateLocalTime = std::chrono::steady_clock::now();
         }
 
-        bool isRealtime = (m_pSharedMemLayout->data.scoring.scoringInfo.mInRealtime != 0);
         m_smLock->Unlock();
 
         CheckTransitions(dest);
 
-        return isRealtime;
+        return m_inRealtime.load(std::memory_order_relaxed);
     } else {
         return false;
     }
@@ -13083,15 +5906,162 @@ bool GameConnector::IsStale(long timeoutMs) const {
     return (diff > timeoutMs);
 }
 
-void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+// ---------------------------------------------------------------------------
+// Static string-lookup helpers
+// ---------------------------------------------------------------------------
+
+/*static*/ const char* GameConnector::SmeEventName(int i) {
+    switch (i) {
+        case SME_ENTER:              return "SME_ENTER";
+        case SME_EXIT:               return "SME_EXIT";
+        case SME_STARTUP:            return "SME_STARTUP";
+        case SME_SHUTDOWN:           return "SME_SHUTDOWN";
+        case SME_LOAD:               return "SME_LOAD";
+        case SME_UNLOAD:             return "SME_UNLOAD";
+        case SME_START_SESSION:      return "SME_START_SESSION";
+        case SME_END_SESSION:        return "SME_END_SESSION";
+        case SME_ENTER_REALTIME:     return "SME_ENTER_REALTIME";
+        case SME_EXIT_REALTIME:      return "SME_EXIT_REALTIME";
+        case SME_INIT_APPLICATION:   return "SME_INIT_APPLICATION";
+        case SME_UNINIT_APPLICATION: return "SME_UNINIT_APPLICATION";
+        default:                     return "Unknown";
+    }
+}
+
+/*static*/ const char* GameConnector::GamePhaseName(unsigned char phase) {
+    switch (phase) {
+        case 0: return "Before Session";
+        case 1: return "Reconnaissance";
+        case 2: return "Grid Walk";
+        case 3: return "Formation";
+        case 4: return "Countdown";
+        case 5: return "Green Flag";
+        case 6: return "Full Course Yellow";
+        case 7: return "Stopped";
+        case 8: return "Over";
+        case 9: return "Paused";
+        default: return "Unknown";
+    }
+}
+
+/*static*/ const char* GameConnector::SessionTypeName(long session) {
+    if (session == 0)                   return "Test Day";
+    if (session >= 1 && session <= 4)   return "Practice";
+    if (session >= 5 && session <= 8)   return "Qualifying";
+    if (session == 9)                   return "Warmup";
+    if (session >= 10 && session <= 13) return "Race";
+    return "Unknown";
+}
+
+/*static*/ const char* GameConnector::ControlModeName(signed char control) {
+    switch (static_cast<ControlMode>(control)) {
+        case ControlMode::NONE:   return "Nobody";
+        case ControlMode::PLAYER: return "Player";
+        case ControlMode::AI:     return "AI";
+        case ControlMode::REMOTE: return "Remote";
+        case ControlMode::REPLAY: return "Replay";
+        default:                  return "Unknown";
+    }
+}
+
+/*static*/ const char* GameConnector::PitStateName(unsigned char pitState) {
+    switch (pitState) {
+        case 0: return "None";
+        case 1: return "Request";
+        case 2: return "Entering";
+        case 3: return "Stopped";
+        case 4: return "Exiting";
+        default: return "Unknown";
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 1: Update state machine atomics unconditionally from the SM snapshot.
+//
+// "Ground truth polling": what the shared memory says right now is the truth.
+// SME events (applied at the end) are a fast-path that can override the polled
+// values within the same tick — they handle rapid transitions before the next
+// poll tick arrives.
+// ---------------------------------------------------------------------------
+
+void GameConnector::_UpdateStateFromSnapshot(const SharedMemoryObjectOut& current) {
+    auto& scoring = current.scoring.scoringInfo;
+    auto  now     = std::chrono::steady_clock::now();
+
+    // --- Ground truth (polling) ---
+    // Save previous inRealtime before overwriting, so we can detect transitions.
+    bool prevInRealtime = m_inRealtime.load(std::memory_order_relaxed);
+
+    m_sessionActive      = (scoring.mTrackName[0] != '\0');
+    m_inRealtime         = (scoring.mInRealtime != 0);
+    m_currentGamePhase   = scoring.mGamePhase;
+    m_currentSessionType = scoring.mSession;
+
+    bool currentInRealtime = m_inRealtime.load(std::memory_order_relaxed);
+
+    // --- Quit-to-menu detection (#7.5) ---
+    // When mInRealtime goes true→false while a session is active, arm a
+    // pending check. If SME_ENTER fires within the deadline window, the user
+    // quit to the main menu (LMU doesn't fire SME_END_SESSION for this path).
+    // If mInRealtime goes back to true first, the user is driving again —
+    // cancel the check. Debug logs confirm SME_ENTER fires within 0-1 seconds
+    // on quit-to-menu and does NOT fire on a normal return to the garage monitor.
+    if (prevInRealtime && !currentInRealtime &&
+        m_sessionActive.load(std::memory_order_relaxed)) {
+        m_pendingMenuCheck  = true;
+        m_menuCheckDeadline = now + std::chrono::seconds(3);
+    }
+    if (currentInRealtime) {
+        m_pendingMenuCheck = false; // user clicked Drive — cancel
+    }
+    if (m_pendingMenuCheck && now > m_menuCheckDeadline) {
+        m_pendingMenuCheck = false; // deadline expired — no SME_ENTER came, must be garage
+    }
+
+
+    if (current.telemetry.playerHasVehicle) {
+        uint8_t idx = current.telemetry.playerVehicleIdx;
+        if (idx < 104) {
+            m_playerControl = current.scoring.vehScoringInfo[idx].mControl;
+        }
+    }
+
+    // --- Fast-path: apply SME event overrides on top of polled truth (#267, #274) ---
+    // This provides "instantaneous" updates while polling ensures long-term consistency.
+    auto& generic = current.generic;
+    for (int i = 0; i < SME_MAX; ++i) {
+        if (i == SME_UPDATE_SCORING || i == SME_UPDATE_TELEMETRY || i == SME_FFB || i == SME_SET_ENVIRONMENT)
+            continue;
+        if (generic.events[i] != m_prevState.eventState[i] && generic.events[i] != 0) {
+            if (i == SME_START_SESSION)                     m_sessionActive = true;
+            if (i == SME_END_SESSION || i == SME_UNLOAD) { m_sessionActive = false; m_inRealtime = false; }
+            if (i == SME_ENTER_REALTIME)                    m_inRealtime = true;
+            if (i == SME_EXIT_REALTIME)                     m_inRealtime = false;
+
+            // Quit-to-menu detection (#7.5): SME_ENTER fires within ~1 second of
+            // de-realtime when the user quits to the main menu. It does NOT fire
+            // when the user returns to the garage monitor. (Confirmed via debug logs.)
+            if (i == SME_ENTER && m_pendingMenuCheck) {
+                m_sessionActive    = false;
+                m_pendingMenuCheck = false;
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2: Detect changes vs m_prevState and emit log lines.
+//   This phase has no side-effects on the state machine atomics.
+// ---------------------------------------------------------------------------
+
+void GameConnector::_LogTransitions(const SharedMemoryObjectOut& current) {
     auto& scoring = current.scoring.scoringInfo;
     auto& generic = current.generic;
 
     // 0. Shared Memory Events (Issue #244)
     for (int i = 0; i < SME_MAX; ++i) {
-        // Skip high-frequency events
-        if (i == SME_UPDATE_SCORING || i == SME_UPDATE_TELEMETRY || i == SME_FFB || i == SME_SET_ENVIRONMENT) continue;
+        if (i == SME_UPDATE_SCORING || i == SME_UPDATE_TELEMETRY || i == SME_FFB || i == SME_SET_ENVIRONMENT)
+            continue;
 
         if (generic.events[i] != m_prevState.eventState[i]) {
             if (generic.events[i] != 0) {
@@ -13099,7 +6069,7 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
 
                 // SME_STARTUP is known to spam values (e.g. 10, 16) in menus. Apply a 5-second cooldown.
                 if (i == SME_STARTUP) {
-                    auto now = std::chrono::steady_clock::now();
+                    auto now  = std::chrono::steady_clock::now();
                     auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - m_prevState.lastEventLogTime[i]).count();
                     if (diff < 5) {
                         shouldLog = false;
@@ -13109,22 +6079,7 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
                 }
 
                 if (shouldLog) {
-                    const char* eventStr = "Unknown";
-                    switch (i) {
-                    case SME_ENTER: eventStr = "SME_ENTER"; break;
-                    case SME_EXIT: eventStr = "SME_EXIT"; break;
-                    case SME_STARTUP: eventStr = "SME_STARTUP"; break;
-                    case SME_SHUTDOWN: eventStr = "SME_SHUTDOWN"; break;
-                    case SME_LOAD: eventStr = "SME_LOAD"; break;
-                    case SME_UNLOAD: eventStr = "SME_UNLOAD"; break;
-                    case SME_START_SESSION: eventStr = "SME_START_SESSION"; break;
-                    case SME_END_SESSION: eventStr = "SME_END_SESSION"; break;
-                    case SME_ENTER_REALTIME: eventStr = "SME_ENTER_REALTIME"; break;
-                    case SME_EXIT_REALTIME: eventStr = "SME_EXIT_REALTIME"; break;
-                    case SME_INIT_APPLICATION: eventStr = "SME_INIT_APPLICATION"; break;
-                    case SME_UNINIT_APPLICATION: eventStr = "SME_UNINIT_APPLICATION"; break;
-                    }
-                    Logger::Get().LogFile("[Transition] Event: %s (%u)", eventStr, generic.events[i]);
+                    Logger::Get().LogFile("[Transition] Event: %s (%u)", SmeEventName(i), generic.events[i]);
                 }
             }
             m_prevState.eventState[i] = generic.events[i];
@@ -13148,8 +6103,7 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
     // 1.1 Options Page
     if (strncmp(generic.appInfo.mOptionsPage, m_prevState.optionsPage, 31) != 0) {
         Logger::Get().LogFile("[Transition] OptionsPage: '%s' -> '%s'", m_prevState.optionsPage, generic.appInfo.mOptionsPage);
-        strncpy(m_prevState.optionsPage, generic.appInfo.mOptionsPage, 31);
-        m_prevState.optionsPage[31] = '\0';
+        StringUtils::SafeCopy(m_prevState.optionsPage, sizeof(m_prevState.optionsPage), generic.appInfo.mOptionsPage);
     }
 
     // 2. InRealtime (Driving vs Menu)
@@ -13157,47 +6111,41 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
     if (currentInRealtime != m_prevState.inRealtime) {
         Logger::Get().LogFile("[Transition] InRealtime: %s -> %s",
             m_prevState.inRealtime ? "true" : "false", currentInRealtime ? "true" : "false");
+
+        // Investigation dump (#7.4c): fires on every de-realtime event (garage return OR
+        // quit-to-menu). Captures signals needed to distinguish the two paths.
+        if (!currentInRealtime && m_prevState.inRealtime) {
+            Logger::Get().LogFile(
+                "[Diag] De-realtime snapshot: track='%s' optionsLoc=%d "
+                "numVehicles=%d playerHasVehicle=%s smUpdateScoring=%u",
+                scoring.mTrackName,
+                (int)generic.appInfo.mOptionsLocation,
+                (int)scoring.mNumVehicles,
+                current.telemetry.playerHasVehicle ? "true" : "false",
+                (unsigned)generic.events[SME_UPDATE_SCORING]);
+        }
+
         m_prevState.inRealtime = currentInRealtime;
     }
 
     // 3. Game Phase (Session state / Pause)
     if (scoring.mGamePhase != m_prevState.gamePhase) {
-        const char* phaseStr = "Unknown";
-        switch (scoring.mGamePhase) {
-            case 0: phaseStr = "Before Session"; break;
-            case 1: phaseStr = "Reconnaissance"; break;
-            case 2: phaseStr = "Grid Walk"; break;
-            case 3: phaseStr = "Formation"; break;
-            case 4: phaseStr = "Countdown"; break;
-            case 5: phaseStr = "Green Flag"; break;
-            case 6: phaseStr = "Full Course Yellow"; break;
-            case 7: phaseStr = "Stopped"; break;
-            case 8: phaseStr = "Over"; break;
-            case 9: phaseStr = "Paused"; break;
-        }
         Logger::Get().LogFile("[Transition] GamePhase: %d -> %d (%s)",
-            m_prevState.gamePhase, scoring.mGamePhase, phaseStr);
+            m_prevState.gamePhase, scoring.mGamePhase, GamePhaseName(scoring.mGamePhase));
         m_prevState.gamePhase = scoring.mGamePhase;
     }
 
     // 4. Session Type
     if (scoring.mSession != m_prevState.session) {
-        const char* sessionStr = "Unknown";
-        if (scoring.mSession == 0) sessionStr = "Test Day";
-        else if (scoring.mSession >= 1 && scoring.mSession <= 4) sessionStr = "Practice";
-        else if (scoring.mSession >= 5 && scoring.mSession <= 8) sessionStr = "Qualifying";
-        else if (scoring.mSession == 9) sessionStr = "Warmup";
-        else if (scoring.mSession >= 10 && scoring.mSession <= 13) sessionStr = "Race";
-
         Logger::Get().LogFile("[Transition] Session: %ld -> %ld (%s)",
-            m_prevState.session, scoring.mSession, sessionStr);
+            m_prevState.session, scoring.mSession, SessionTypeName(scoring.mSession));
         m_prevState.session = scoring.mSession;
     }
 
-    // 5. Track/Vehicle Names (Context Changes)
+    // 5. Track Name (Context Change)
     if (strcmp(scoring.mTrackName, m_prevState.trackName) != 0) {
         Logger::Get().LogFile("[Transition] Track: '%s' -> '%s'", m_prevState.trackName, scoring.mTrackName);
-        strncpy(m_prevState.trackName, scoring.mTrackName, 63);
+        StringUtils::SafeCopy(m_prevState.trackName, sizeof(m_prevState.trackName), scoring.mTrackName);
     }
 
     // 6. Player Control & Pit State
@@ -13207,36 +6155,20 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
             auto& vehScoring = current.scoring.vehScoringInfo[idx];
 
             if (vehScoring.mControl != m_prevState.control) {
-                const char* ctrlStr = "Unknown";
-                switch (vehScoring.mControl) {
-                    case -1: ctrlStr = "Nobody"; break;
-                    case 0: ctrlStr = "Player"; break;
-                    case 1: ctrlStr = "AI"; break;
-                    case 2: ctrlStr = "Remote"; break;
-                    case 3: ctrlStr = "Replay"; break;
-                }
                 Logger::Get().LogFile("[Transition] Control: %d -> %d (%s)",
-                    m_prevState.control, vehScoring.mControl, ctrlStr);
+                    m_prevState.control, vehScoring.mControl, ControlModeName(vehScoring.mControl));
                 m_prevState.control = vehScoring.mControl;
             }
 
             if (vehScoring.mPitState != m_prevState.pitState) {
-                const char* pitStr = "None";
-                switch (vehScoring.mPitState) {
-                    case 0: pitStr = "None"; break;
-                    case 1: pitStr = "Request"; break;
-                    case 2: pitStr = "Entering"; break;
-                    case 3: pitStr = "Stopped"; break;
-                    case 4: pitStr = "Exiting"; break;
-                }
                 Logger::Get().LogFile("[Transition] PitState: %d -> %d (%s)",
-                    m_prevState.pitState, vehScoring.mPitState, pitStr);
+                    m_prevState.pitState, vehScoring.mPitState, PitStateName(vehScoring.mPitState));
                 m_prevState.pitState = vehScoring.mPitState;
             }
 
             if (strcmp(vehScoring.mVehicleName, m_prevState.vehicleName) != 0) {
                 Logger::Get().LogFile("[Transition] Vehicle: '%s' -> '%s'", m_prevState.vehicleName, vehScoring.mVehicleName);
-                strncpy(m_prevState.vehicleName, vehScoring.mVehicleName, 63);
+                StringUtils::SafeCopy(m_prevState.vehicleName, sizeof(m_prevState.vehicleName), vehScoring.mVehicleName);
             }
 
             // 7. Steering Range
@@ -13247,6 +6179,33 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
             }
         }
     }
+
+    // 7. PlayerHasVehicle changes — investigation: quit-to-menu detection (#7.4a)
+    bool currentHasVehicle = current.telemetry.playerHasVehicle;
+    if (currentHasVehicle != m_prevState.playerHasVehicle) {
+        Logger::Get().LogFile("[Transition] PlayerHasVehicle: %s -> %s",
+            m_prevState.playerHasVehicle ? "true" : "false",
+            currentHasVehicle ? "true" : "false");
+        m_prevState.playerHasVehicle = currentHasVehicle;
+    }
+
+    // 8. NumVehicles changes — investigation: quit-to-menu detection (#7.4b)
+    int currentNumVehicles = (int)scoring.mNumVehicles;
+    if (currentNumVehicles != m_prevState.numVehicles) {
+        Logger::Get().LogFile("[Transition] NumVehicles: %d -> %d",
+            m_prevState.numVehicles, currentNumVehicles);
+        m_prevState.numVehicles = currentNumVehicles;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// CheckTransitions: orchestrator (lock, then run both phases in order)
+// ---------------------------------------------------------------------------
+
+void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    _UpdateStateFromSnapshot(current);  // Phase 1: sync state machine atomics
+    _LogTransitions(current);           // Phase 2: log any changes
 }
 
 ```
@@ -13293,6 +6252,22 @@ public:
     // Returns true if telemetry data hasn't changed for more than timeout (v0.7.15)
     bool IsStale(long timeoutMs = 100) const;
 
+    // Robust State Accessors (#267)
+    bool IsSessionActive() const { return m_sessionActive.load(std::memory_order_relaxed); }
+    bool IsInRealtime() const { return m_inRealtime.load(std::memory_order_relaxed); }
+    long GetSessionType() const { return m_currentSessionType.load(std::memory_order_relaxed); }
+    unsigned char GetGamePhase() const { return m_currentGamePhase.load(std::memory_order_relaxed); }
+    signed char GetPlayerControl() const { return m_playerControl.load(std::memory_order_relaxed); }
+
+    // Composite predicate: true only when the player is physically behind the wheel
+    // and actively in control (not paused, not in garage UI, not AI-controlled).
+    // Addresses the ESC-menu-while-on-track edge case (session transition.md).
+    bool IsPlayerActivelyDriving() const {
+        return m_inRealtime.load(std::memory_order_relaxed)
+            && m_playerControl.load(std::memory_order_relaxed) == 0  // Player (not AI/replay/nobody)
+            && m_currentGamePhase.load(std::memory_order_relaxed) != 9; // 9 == Paused
+    }
+
 private:
     struct TransitionState {
         unsigned char optionsLocation = 255;
@@ -13305,11 +6280,25 @@ private:
         char trackName[64] = { 0 };
         char optionsPage[32] = { 0 };
         float steeringRange = -1.0f;
+        bool playerHasVehicle = false;  // investigation: quit-to-menu detection (#7.4a)
+        int  numVehicles = -1;          // investigation: quit-to-menu detection (#7.4b)
         uint32_t eventState[SME_MAX] = { 0 };
         std::chrono::steady_clock::time_point lastEventLogTime[SME_MAX];
     } m_prevState;
 
+    // CheckTransitions orchestrates the two-phase update:
+    //   1. _UpdateStateFromSnapshot  — unconditionally syncs atomics from the SM buffer
+    //   2. _LogTransitions           — detects changes vs m_prevState and emits log lines
     void CheckTransitions(const SharedMemoryObjectOut& current);
+    void _UpdateStateFromSnapshot(const SharedMemoryObjectOut& current);
+    void _LogTransitions(const SharedMemoryObjectOut& current);
+
+    // String-lookup helpers (extracted for reuse and testability)
+    static const char* SmeEventName(int eventIndex);
+    static const char* GamePhaseName(unsigned char phase);
+    static const char* SessionTypeName(long session);
+    static const char* ControlModeName(signed char control);
+    static const char* PitStateName(unsigned char pitState);
 
     friend class FFBEngineTests::GameConnectorTestAccessor;
 
@@ -13325,10 +6314,23 @@ private:
     std::atomic<bool> m_connected{false};
     mutable std::recursive_mutex m_mutex;
 
+    // Robust State Machine (#267)
+    std::atomic<bool> m_sessionActive{ false };
+    std::atomic<bool> m_inRealtime{ false };
+    std::atomic<long> m_currentSessionType{ -1 };
+    std::atomic<unsigned char> m_currentGamePhase{ 255 };
+    std::atomic<signed char> m_playerControl{ -2 };
+
     // Heartbeat for staleness detection (v0.7.15)
     double m_lastElapsedTime = -1.0;
     double m_lastSteering = 0.0; // Issue #184: Steering heartbeat
     mutable std::chrono::steady_clock::time_point m_lastUpdateLocalTime;
+
+    // Quit-to-menu detection (#7.5): armed when mInRealtime goes true→false.
+    // If SME_ENTER fires within the deadline window, we know the user quit to
+    // the main menu (not just returned to the garage monitor).
+    bool m_pendingMenuCheck = false;
+    std::chrono::steady_clock::time_point m_menuCheckDeadline;
 
     void _DisconnectLocked();
 };
@@ -13362,6 +6364,7 @@ private:
 
 extern std::recursive_mutex g_engine_mutex;
 #include <cmath>
+#include "StringUtils.h"
 
 using namespace ffb_math;
 
@@ -13391,7 +6394,7 @@ void FFBEngine::update_static_load_reference(double current_load, double speed, 
 
     // Safety fallback: Ensure we have a sane baseline if learning failed
     if (m_static_front_load < 1000.0) {
-        m_static_front_load = m_auto_peak_load * 0.5;
+        m_static_front_load = m_auto_peak_front_load * 0.5;
     }
 }
 
@@ -13406,9 +6409,12 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
 
     // Stage 3 Reset: Ensure peak load starts at class baseline
-    m_auto_peak_load = GetDefaultLoadForClass(vclass);
+    m_auto_peak_front_load = GetDefaultLoadForClass(vclass);
 
     std::string vName = vehicleName ? vehicleName : "Unknown";
+
+    // v0.7.134: Ensure m_vehicle_name is also updated immediately for consistency
+    StringUtils::SafeCopy(m_vehicle_name, sizeof(m_vehicle_name), vName.c_str());
 
     // Check if we already have a saved static load for this specific car (v0.7.70)
     double saved_load = 0.0;
@@ -13418,7 +6424,7 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
         Logger::Get().LogFile("[FFB] Loaded persistent static load for %s: %.2fN", vName.c_str(), m_static_front_load);
     } else {
         // Reset static load reference for new car class
-        m_static_front_load = m_auto_peak_load * 0.5;
+        m_static_front_load = m_auto_peak_front_load * 0.5;
         m_static_load_latched = false;
         Logger::Get().LogFile("[FFB] No saved load for %s. Learning required.", vName.c_str());
     }
@@ -13429,7 +6435,7 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     m_last_handled_vehicle_name = vName;
 
     Logger::Get().LogFile("[FFB] Vehicle Identification -> Detected Class: %s | Seed Load: %.2fN (Raw -> Class: %s, Name: %s)",
-        VehicleClassToString(vclass), m_auto_peak_load, (className ? className : "Unknown"), vName.c_str());
+        VehicleClassToString(vclass), m_auto_peak_front_load, (className ? className : "Unknown"), vName.c_str());
 }
 
 // Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
@@ -13470,10 +6476,13 @@ double FFBEngine::calculate_slip_angle(const TelemWheelV01& w, double& prev_stat
     return prev_state;
 }
 
-// Helper: Calculate Grip with Fallback (v0.4.6 Hardening)
-GripResult FFBEngine::calculate_grip(const TelemWheelV01& w1, 
+// Helper: Calculate Axle Grip with Fallback (v0.4.6 Hardening)
+// This function calculates the average grip for a pair of wheels (axle).
+// If the primary telemetry grip is missing, it reconstructs it from slip angle and ratio.
+// The avg_axle_load parameter is used as a threshold for triggering the reconstruction fallback.
+GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                           const TelemWheelV01& w2,
-                          double avg_load,
+                          double avg_axle_load,
                           bool& warned_flag,
                           double& prev_slip1,
                           double& prev_slip2,
@@ -13516,7 +6525,7 @@ GripResult FFBEngine::calculate_grip(const TelemWheelV01& w1,
     result.slip_angle = (slip1 + slip2) / 2.0;
 
     // Fallback condition: Grip is essentially zero BUT car has significant load
-    if (result.value < 0.0001 && avg_load > 100.0) {
+    if (result.value < 0.0001 && avg_axle_load > 100.0) {
         result.approximated = true;
         
         if (car_speed < 5.0) {
@@ -13830,6 +6839,7 @@ private:
     static float m_latest_steering_range;
     static float m_latest_steering_angle;
 
+    static void DrawMenuBar(FFBEngine& engine);
     static void DrawTuningWindow(FFBEngine& engine);
     static void DrawDebugWindow(FFBEngine& engine);
 };
@@ -13851,21 +6861,29 @@ bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defau
 #include "Version.h"
 #include "Config.h"
 #include "Tooltips.h"
+#include "StringUtils.h" // Added StringUtils.h
 #include "DirectInputFFB.h"
 #include "GameConnector.h"
 #include "GuiWidgets.h"
 #include "AsyncLogger.h"
+#include "VehicleUtils.h"
+#include "HealthMonitor.h"
 #include <iostream>
 #include <vector>
 #include <cmath>
 #include <algorithm>
-#include <cstring>
 #include <mutex>
 #include <chrono>
 #include <ctime>
+#include <filesystem>
 
 #ifdef ENABLE_IMGUI
 #include "imgui.h"
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
 static void DisplayRate(const char* label, double rate, double target) {
     ImGui::Text("%s", label);
@@ -13901,8 +6919,11 @@ void GuiLayer::SetupGUIStyle() {
     ImGuiStyle& style = ImGui::GetStyle();
 
     style.WindowRounding = 5.0f;
+    style.ChildRounding = 5.0f;
+    style.PopupRounding = 5.0f;
     style.FrameRounding = 4.0f;
     style.GrabRounding = 4.0f;
+    style.WindowPadding = ImVec2(10, 10);
     style.FramePadding = ImVec2(8, 4);
     style.ItemSpacing = ImVec2(8, 6);
 
@@ -13930,6 +6951,69 @@ void GuiLayer::SetupGUIStyle() {
 
     colors[ImGuiCol_Text]           = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
     colors[ImGuiCol_TextDisabled]   = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+    colors[ImGuiCol_MenuBarBg]      = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
+}
+
+void GuiLayer::DrawMenuBar(FFBEngine& engine) {
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("Logs")) {
+            if (ImGui::MenuItem("Analyze last log")) {
+                namespace fs = std::filesystem;
+                fs::path latest_path;
+                fs::file_time_type latest_time;
+                bool found = false;
+
+                fs::path search_path = Config::m_log_path.empty() ? "." : Config::m_log_path;
+
+                try {
+                    if (fs::exists(search_path)) {
+                        for (const auto& entry : fs::directory_iterator(search_path)) {
+                            if (entry.is_regular_file()) {
+                                std::string filename = entry.path().filename().string();
+                                bool looks_like_log = filename.find("lmuffb_log_") == 0;
+                                bool has_ext = (filename.length() >= 4 && (filename.substr(filename.length() - 4) == ".bin" || filename.substr(filename.length() - 4) == ".csv"));
+                                if (looks_like_log && has_ext) {
+                                    auto ftime = fs::last_write_time(entry);
+                                    if (!found || ftime > latest_time) {
+                                        latest_time = ftime;
+                                        latest_path = entry.path();
+                                        found = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (...) {}
+
+                if (found) {
+                    std::string log_file = latest_path.string();
+                    
+                    // Get executable directory to find tools/ relative to the binary
+                    fs::path exe_dir = fs::current_path();
+#ifdef _WIN32
+                    char buffer[MAX_PATH];
+                    if (GetModuleFileNameA(NULL, buffer, MAX_PATH)) {
+                        exe_dir = fs::path(buffer).parent_path();
+                    }
+#endif
+                    
+                    // Robust PYTHONPATH lookup
+                    std::string python_path = (exe_dir / "tools").string();
+                    if (!fs::exists(exe_dir / "tools/lmuffb_log_analyzer")) {
+                        // Dev environment fallbacks from CWD
+                        if (fs::exists("tools/lmuffb_log_analyzer")) python_path = "tools";
+                        else if (fs::exists("../tools/lmuffb_log_analyzer")) python_path = "../tools";
+                        else if (fs::exists("../../tools/lmuffb_log_analyzer")) python_path = "../../tools";
+                    }
+
+                    std::string cmd = "start cmd /c \"set PYTHONPATH=" + python_path + " && python -m lmuffb_log_analyzer.cli analyze-full \"" + log_file + "\" & pause\"";
+                    system(cmd.c_str());
+                }
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
 }
 
 
@@ -13939,20 +7023,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
     ImGuiViewport* viewport = ImGui::GetMainViewport();
-    float current_width = Config::show_graphs ? CONFIG_PANEL_WIDTH : viewport->Size.x;
+    float current_width = Config::show_graphs ? CONFIG_PANEL_WIDTH : viewport->WorkSize.x;
 
-    ImGui::SetNextWindowPos(viewport->Pos);
-    ImGui::SetNextWindowSize(ImVec2(current_width, viewport->Size.y));
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(ImVec2(current_width, viewport->WorkSize.y));
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
     ImGui::Begin("MainUI", nullptr, flags);
-
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.00f, 0.60f, 0.85f, 1.00f));
-    ImGui::Text("lmuFFB");
-    ImGui::PopStyleColor();
-    ImGui::SameLine();
-    ImGui::TextDisabled("v%s", LMUFFB_VERSION);
-    ImGui::Separator();
 
     static std::chrono::steady_clock::time_point last_check_time = std::chrono::steady_clock::now();
 
@@ -13964,8 +7041,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
       }
     } else {
       ImGui::TextColored(ImVec4(0, 1, 0, 1), "Connected to LMU");
-      ImGui::SameLine();
-      ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Loop: %.0fHz | Phys: %.0fHz | Tel: %.0fHz", engine.m_ffb_rate, engine.m_physics_rate, engine.m_telemetry_rate);
     }
 
     static std::vector<DeviceInfo> devices;
@@ -14048,53 +7123,41 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::SHOW_GRAPHS);
 
     ImGui::Separator();
-    bool is_logging = AsyncLogger::Get().IsLogging();
+    bool is_logging = Config::m_auto_start_logging;
     if (is_logging) {
          if (ImGui::Button("STOP LOG", ImVec2(80, 0))) {
+             Config::m_auto_start_logging = false;
              AsyncLogger::Get().Stop();
+             Config::Save(engine);
          }
          if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_STOP);
          ImGui::SameLine();
-         float time = (float)ImGui::GetTime();
-         bool blink = (fmod(time, 1.0f) < 0.5f);
-         ImGui::TextColored(blink ? ImVec4(1,0,0,1) : ImVec4(0.6f,0,0,1), "REC");
-         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_REC);
+         if (AsyncLogger::Get().IsLogging()) {
+             float time = (float)ImGui::GetTime();
+             bool blink = (fmod(time, 1.0f) < 0.5f);
+             ImGui::TextColored(blink ? ImVec4(1, 0, 0, 1) : ImVec4(0.6f, 0, 0, 1), "REC");
+             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_REC);
 
-         ImGui::SameLine();
-         size_t bytes = AsyncLogger::Get().GetFileSizeBytes();
-         if (bytes < 1024ULL * 1024ULL)
-             ImGui::Text("%zu f (%.0f KB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / 1024.0f);
-         else
-             ImGui::Text("%zu f (%.1f MB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / (1024.0f * 1024.0f));
+             ImGui::SameLine();
+             size_t bytes = AsyncLogger::Get().GetFileSizeBytes();
+             if (bytes < 1024ULL * 1024ULL)
+                 ImGui::Text("%zu f (%.0f KB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / 1024.0f);
+             else
+                 ImGui::Text("%zu f (%.1f MB)", AsyncLogger::Get().GetFrameCount(), (float)bytes / (1024.0f * 1024.0f));
 
-         ImGui::SameLine();
-         if (ImGui::Button("MARKER")) {
-             AsyncLogger::Get().SetMarker();
+             ImGui::SameLine();
+             if (ImGui::Button("MARKER")) {
+                 AsyncLogger::Get().SetMarker();
+             }
+             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_MARKER);
+         } else {
+             ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "ARMED");
+             if (ImGui::IsItemHovered()) ImGui::SetTooltip("Waiting for driving to start...");
          }
-         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_MARKER);
     } else {
          if (ImGui::Button("START LOGGING", ImVec2(120, 0))) {
-             SessionInfo info;
-             info.app_version = LMUFFB_VERSION;
-             if (engine.m_vehicle_name[0] != '\0') info.vehicle_name = engine.m_vehicle_name;
-             else info.vehicle_name = "UnknownCar";
-
-             if (engine.m_track_name[0] != '\0') info.track_name = engine.m_track_name;
-             else info.track_name = "UnknownTrack";
-
-             info.driver_name = "Auto";
-
-             info.gain = engine.m_gain;
-             info.understeer_effect = engine.m_understeer_effect;
-             info.sop_effect = engine.m_sop_effect;
-             info.slope_enabled = engine.m_slope_detection_enabled;
-             info.slope_sensitivity = engine.m_slope_sensitivity;
-             info.slope_threshold = (float)engine.m_slope_min_threshold;
-             info.slope_alpha_threshold = engine.m_slope_alpha_threshold;
-             info.slope_decay_rate = engine.m_slope_decay_rate;
-             info.torque_passthrough = engine.m_torque_passthrough;
-
-             AsyncLogger::Get().Start(info, Config::m_log_path);
+             Config::m_auto_start_logging = true;
+             Config::Save(engine);
          }
          if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_START);
          ImGui::SameLine();
@@ -14109,13 +7172,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     auto FormatDecoupled = [&](float val, float base_nm) {
         float estimated_nm = val * base_nm;
         static char buf[64];
-        snprintf(buf, 64, "%.1f%%%% (~%.1f Nm)", val * 100.0f, estimated_nm);
+        StringUtils::SafeFormat(buf, sizeof(buf), "%.1f%%%% (~%.1f Nm)", val * 100.0f, estimated_nm);
         return (const char*)buf;
     };
 
     auto FormatPct = [&](float val) {
         static char buf[32];
-        snprintf(buf, 32, "%.1f%%%%", val * 100.0f);
+        StringUtils::SafeFormat(buf, sizeof(buf), "%.1f%%%%", val * 100.0f);
         return (const char*)buf;
     };
 
@@ -14412,7 +7475,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, "%.2f",
             Tooltips::SOP_SMOOTHING,
             [&]() {
-                int ms = (int)std::lround((1.0f - engine.m_sop_smoothing_factor) * 100.0f);
+                int ms = (int)std::lround(engine.m_sop_smoothing_factor * 100.0f);
                 ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
                 ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
             });
@@ -14631,18 +7694,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
 
         if (ImGui::TreeNode("Telemetry Logger")) {
-            if (ImGui::Checkbox("Auto-Start on Session", &Config::m_auto_start_logging)) {
+            if (ImGui::Checkbox("Enable Logging Logic", &Config::m_auto_start_logging)) {
                 Config::Save(engine);
             }
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::AUTO_START_LOGGING);
 
             char log_path_buf[256];
-#ifdef _WIN32
-            strncpy_s(log_path_buf, sizeof(log_path_buf), Config::m_log_path.c_str(), _TRUNCATE);
-#else
-            strncpy(log_path_buf, Config::m_log_path.c_str(), 255);
-#endif
-            log_path_buf[255] = '\0';
+            StringUtils::SafeCopy(log_path_buf, sizeof(log_path_buf), Config::m_log_path.c_str());
             if (ImGui::InputText("Log Path", log_path_buf, 255)) {
                 Config::m_log_path = log_path_buf;
             }
@@ -14702,7 +7760,7 @@ inline void PlotWithStats(const char* label, const RollingBuffer& buffer,
                           const char* tooltip = nullptr) {
     ImGui::Text("%s", label);
     char hidden_label[256];
-    snprintf(hidden_label, sizeof(hidden_label), "##%s", label);
+    StringUtils::SafeFormat(hidden_label, sizeof(hidden_label), "##%s", label);
     ImGui::PlotLines(hidden_label, buffer.data.data(), (int)buffer.data.size(),
                      buffer.offset, NULL, scale_min, scale_max, size);
     if (tooltip && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", tooltip);
@@ -14711,7 +7769,7 @@ inline void PlotWithStats(const char* label, const RollingBuffer& buffer,
     float min_val = buffer.GetMin();
     float max_val = buffer.GetMax();
     char stats_overlay[128];
-    snprintf(stats_overlay, sizeof(stats_overlay), "Cur:%.4f Min:%.3f Max:%.3f", current, min_val, max_val);
+    StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Cur:%.4f Min:%.3f Max:%.3f", current, min_val, max_val);
 
     ImVec2 p_min = ImGui::GetItemRectMin();
     ImVec2 p_max = ImGui::GetItemRectMax();
@@ -14724,10 +7782,10 @@ inline void PlotWithStats(const char* label, const RollingBuffer& buffer,
     ImVec2 text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay);
 
     if (text_size.x > plot_width - 4) {
-         snprintf(stats_overlay, sizeof(stats_overlay), "%.4f [%.3f, %.3f]", current, min_val, max_val);
+         StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "%.4f [%.3f, %.3f]", current, min_val, max_val);
          text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay);
          if (text_size.x > plot_width - 4) {
-             snprintf(stats_overlay, sizeof(stats_overlay), "Val: %.4f", current);
+             StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Val: %.4f", current);
              text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay);
          }
     }
@@ -14802,14 +7860,17 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
     if (!Config::show_graphs) return;
 
     ImGuiViewport* viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x + CONFIG_PANEL_WIDTH, viewport->Pos.y));
-    ImGui::SetNextWindowSize(ImVec2(viewport->Size.x - CONFIG_PANEL_WIDTH, viewport->Size.y));
+    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x + CONFIG_PANEL_WIDTH, viewport->WorkPos.y));
+    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x - CONFIG_PANEL_WIDTH, viewport->WorkSize.y));
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
     ImGui::Begin("FFB Analysis", nullptr, flags);
 
     // System Health Diagnostics (Moved from Tuning window - Issue #149)
-    if (ImGui::CollapsingHeader("System Health (Hz)", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGui::CollapsingHeader("System Health", ImGuiTreeNodeFlags_DefaultOpen)) {
+        HealthStatus hs = HealthMonitor::Check(engine.m_ffb_rate, engine.m_telemetry_rate, engine.m_gen_torque_rate, engine.m_torque_source, engine.m_physics_rate,
+                                              GameConnector::Get().IsConnected(), GameConnector::Get().IsSessionActive(), GameConnector::Get().GetSessionType(), GameConnector::Get().IsInRealtime(), GameConnector::Get().GetPlayerControl());
+
         ImGui::Columns(6, "RateCols", false);
         DisplayRate("USB Loop", engine.m_ffb_rate, 1000.0);
         ImGui::NextColumn();
@@ -14823,8 +7884,48 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         ImGui::NextColumn();
         DisplayRate("G.Torque", engine.m_gen_torque_rate, 400.0);
         ImGui::Columns(1);
-        if ((engine.m_telemetry_rate < 90.0 || (engine.m_torque_source == 1 && engine.m_gen_torque_rate < 380.0)) && engine.m_telemetry_rate > 1.0 && GameConnector::Get().IsConnected()) {
-            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Low telemetry/torque rate. Check game FFB settings.");
+        
+        ImGui::Separator();
+
+        // Robust State Machine (#269, #274)
+        if (!hs.is_connected) {
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Sim: Disconnected from LMU");
+        } else {
+            bool active = hs.session_active;
+            ImGui::TextColored(active ? ImVec4(0.4f, 1.0f, 0.4f, 1.0f) : ImVec4(0.7f, 0.7f, 0.7f, 1.0f),
+                "Sim: %s", active ? "Track Loaded" : "Main Menu");
+        }
+
+        if (hs.is_connected && hs.session_active) {
+            ImGui::SameLine();
+            const char* sessionStr = "Unknown";
+            long stype = hs.session_type;
+            if (stype == 0) sessionStr = "Test Day";
+            else if (stype >= 1 && stype <= 4) sessionStr = "Practice";
+            else if (stype >= 5 && stype <= 8) sessionStr = "Qualifying";
+            else if (stype == 9) sessionStr = "Warmup";
+            else if (stype >= 10 && stype <= 13) sessionStr = "Race";
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Session: %s", sessionStr);
+
+            bool driving = hs.is_realtime;
+            ImGui::TextColored(driving ? ImVec4(0.4f, 1.0f, 0.4f, 1.0f) : ImVec4(1.0f, 1.0f, 0.4f, 1.0f),
+                "State: %s", driving ? "Driving" : "In Menu");
+
+            ImGui::SameLine();
+            const char* ctrlStr = "Unknown";
+            signed char ctrl = hs.player_control;
+            switch (ctrl) {
+                case -1: ctrlStr = "Nobody"; break;
+                case 0: ctrlStr = "Player"; break;
+                case 1: ctrlStr = "AI"; break;
+                case 2: ctrlStr = "Remote"; break;
+                case 3: ctrlStr = "Replay"; break;
+            }
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Control: %s", ctrlStr);
+        }
+
+        if (!hs.is_healthy && engine.m_telemetry_rate > 1.0 && GameConnector::Get().IsConnected()) {
+            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Sub-optimal sample rates detected. Check game settings.");
         }
         ImGui::Separator();
     }
@@ -14928,6 +8029,10 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
 
     ImGui::End();
 }
+#endif
+
+#ifndef ENABLE_IMGUI
+void GuiLayer::DrawMenuBar(FFBEngine& engine) {}
 #endif
 
 ```
@@ -15145,6 +8250,7 @@ void* GuiLayer::GetWindowHandle() { return nullptr; }
 #include "Version.h"
 #include "Logger.h"
 #include "Config.h"
+#include "StringUtils.h"
 #include <windows.h>
 #include <commdlg.h>
 #include <iostream>
@@ -15244,7 +8350,7 @@ public:
 
     bool SavePresetFileDialog(std::string& outPath, const std::string& defaultName) override {
         char filename[MAX_PATH] = "";
-        strncpy_s(filename, sizeof(filename), defaultName.c_str(), _TRUNCATE);
+        StringUtils::SafeCopy(filename, sizeof(filename), defaultName.c_str());
         OPENFILENAMEA ofn;
         ZeroMemory(&ofn, sizeof(ofn));
         ofn.lStructSize = sizeof(ofn);
@@ -15355,6 +8461,7 @@ bool GuiLayer::Render(FFBEngine& engine) {
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
+    DrawMenuBar(engine);
     GuiLayer::UpdateTelemetry(engine);
     DrawTuningWindow(engine);
     if (Config::show_graphs) DrawDebugWindow(engine);
@@ -15695,6 +8802,13 @@ struct HealthStatus {
     double torque_rate = 0.0;
     double physics_rate = 0.0; // New v0.7.117 (Issue #217)
     double expected_torque_rate = 0.0;
+
+    // Session and Player State (#269, #274)
+    bool is_connected = false;
+    bool session_active = false;
+    long session_type = -1;
+    bool is_realtime = false;
+    signed char player_control = -2;
 };
 
 class HealthMonitor {
@@ -15705,14 +8819,27 @@ public:
      * @param telem Current telemetry update rate (Hz).
      * @param torque Current torque update rate (Hz).
      * @param torqueSource Active torque source (0=Legacy, 1=Direct).
+     * @param physics Current physics update rate (Hz).
+     * @param isConnected True if connected to LMU Shared Memory.
+     * @param sessionActive True if a session is loaded.
+     * @param sessionType Current session type (0=Test Day, 1=Practice, 5=Qualifying, 10=Race).
+     * @param isRealtime True if in realtime (driving).
+     * @param playerControl Current player control state (0=Player, 1=AI, etc).
      */
-    static HealthStatus Check(double loop, double telem, double torque, int torqueSource, double physics = 0.0) {
+    static HealthStatus Check(double loop, double telem, double torque, int torqueSource, double physics = 0.0,
+                              bool isConnected = false, bool sessionActive = false, long sessionType = -1, bool isRealtime = false, signed char playerControl = -2) {
         HealthStatus status;
         status.loop_rate = loop;
         status.telem_rate = telem;
         status.torque_rate = torque;
         status.physics_rate = physics;
         status.expected_torque_rate = (torqueSource == 1) ? 400.0 : 100.0;
+        
+        status.is_connected = isConnected;
+        status.session_active = sessionActive;
+        status.session_type = sessionType;
+        status.is_realtime = isRealtime;
+        status.player_control = playerControl;
 
         // Loop: Target 1000Hz (USB). Warn below 950Hz.
         if (loop > 1.0 && loop < 950.0) {
@@ -15760,6 +8887,8 @@ public:
 #include <iomanip>
 #include <chrono>
 #include <cstdarg>
+#include <algorithm> // For std::max, std::min
+#include "StringUtils.h" // Include StringUtils.h
 
 // Simple synchronous logger that flushes every line for crash debugging
 class Logger {
@@ -15782,11 +8911,20 @@ public:
         }
     }
 
+    void Close() {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_file.is_open()) {
+            m_file << "Logger Closed Explicitly.\n";
+            m_file.close();
+        }
+        m_initialized = false;
+    }
+
     void Log(const char* fmt, ...) {
         char buffer[2048];
         va_list args;
         va_start(args, fmt);
-        vsnprintf(buffer, sizeof(buffer), fmt, args);
+        StringUtils::vSafeFormat(buffer, sizeof(buffer), fmt, args);
         va_end(args);
 
         std::string message(buffer);
@@ -15800,7 +8938,7 @@ public:
         char buffer[2048];
         va_list args;
         va_start(args, fmt);
-        vsnprintf(buffer, sizeof(buffer), fmt, args);
+        StringUtils::vSafeFormat(buffer, sizeof(buffer), fmt, args);
         va_end(args);
 
         std::string message(buffer);
@@ -16003,37 +9141,74 @@ void FFBThread() {
 
             bool in_realtime_phys = false;
             if (g_ffb_active && GameConnector::Get().IsConnected()) {
-                in_realtime_phys = GameConnector::Get().CopyTelemetry(g_localData);
+                GameConnector::Get().CopyTelemetry(g_localData);
+                g_engine.UpdateMetadata(g_localData); // Update names/classes immediately
+
+                in_realtime_phys = GameConnector::Get().IsInRealtime();
+                long current_session = GameConnector::Get().GetSessionType();
+
                 bool is_stale = GameConnector::Get().IsStale(100);
 
-                static bool was_in_menu = true;
-                if (was_in_menu && in_realtime_phys) {
-                    Logger::Get().LogFile("[Game] User entered driving session.");
+                static bool was_driving = false;
+                static long last_session = -1;
+
+                // is_driving uses IsPlayerActivelyDriving() which correctly gates on
+                // inRealtime AND playerControl==0 AND gamePhase!=9 (paused).
+                bool is_driving = GameConnector::Get().IsPlayerActivelyDriving();
+
+                bool should_start_log = (is_driving && !was_driving);
+                bool should_stop_log  = (!is_driving && was_driving);
+                bool session_changed  = (is_driving && was_driving && last_session != -1 && current_session != last_session);
+
+                if (session_changed) {
+                    Logger::Get().LogFile("[Game] Session Type Changed (%ld -> %ld). Restarting log.", last_session, current_session);
+                    AsyncLogger::Get().Stop();
+                    should_start_log = true;
+                }
+
+                bool manual_start_requested = Config::m_auto_start_logging && !AsyncLogger::Get().IsLogging() && is_driving;
+
+                if (should_start_log || manual_start_requested) {
+                    if (should_start_log) Logger::Get().LogFile("[Game] User entered driving session (Control: Player).");
+                    else Logger::Get().LogFile("[Game] Logging manually enabled while driving.");
+
                     if (Config::m_auto_start_logging && !AsyncLogger::Get().IsLogging()) {
-                        SessionInfo info;
-                        info.app_version = LMUFFB_VERSION;
-                        std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-                        info.vehicle_name = g_engine.m_vehicle_name;
-                        info.track_name = g_engine.m_track_name;
-                        info.driver_name = "Auto";
-                        info.gain = g_engine.m_gain;
-                        info.understeer_effect = g_engine.m_understeer_effect;
-                        info.sop_effect = g_engine.m_sop_effect;
-                        info.slope_enabled = g_engine.m_slope_detection_enabled;
-                        info.slope_sensitivity = g_engine.m_slope_sensitivity;
-                        info.slope_threshold = (float)g_engine.m_slope_min_threshold;
-                        info.slope_alpha_threshold = g_engine.m_slope_alpha_threshold;
-                        info.slope_decay_rate = g_engine.m_slope_decay_rate;
-                        info.torque_passthrough = g_engine.m_torque_passthrough;
-                        AsyncLogger::Get().Start(info, Config::m_log_path);
+                        uint8_t idx = g_localData.telemetry.playerVehicleIdx;
+                        if (idx < 104) {
+                            auto& scoring = g_localData.scoring.vehScoringInfo[idx];
+                            const char* tName = g_localData.scoring.scoringInfo.mTrackName;
+
+                            SessionInfo info;
+                            info.app_version = LMUFFB_VERSION;
+                            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+                            info.vehicle_name = scoring.mVehicleName;
+                            info.vehicle_class = VehicleClassToString(ParseVehicleClass(scoring.mVehicleClass, scoring.mVehicleName));
+                            info.vehicle_brand = ParseVehicleBrand(scoring.mVehicleClass, scoring.mVehicleName);
+                            info.track_name = tName;
+                            info.driver_name = "Auto";
+                            info.gain = g_engine.m_gain;
+                            info.understeer_effect = g_engine.m_understeer_effect;
+                            info.sop_effect = g_engine.m_sop_effect;
+                            info.lat_load_effect = g_engine.m_lat_load_effect;
+                            info.sop_scale = g_engine.m_sop_scale;
+                            info.sop_smoothing = g_engine.m_sop_smoothing_factor;
+                            info.slope_enabled = g_engine.m_slope_detection_enabled;
+                            info.slope_sensitivity = g_engine.m_slope_sensitivity;
+                            info.slope_threshold = (float)g_engine.m_slope_min_threshold;
+                            info.slope_alpha_threshold = g_engine.m_slope_alpha_threshold;
+                            info.slope_decay_rate = g_engine.m_slope_decay_rate;
+                            info.torque_passthrough = g_engine.m_torque_passthrough;
+                            AsyncLogger::Get().Start(info, Config::m_log_path);
+                        }
                     }
-                } else if (!was_in_menu && !in_realtime_phys) {
-                    Logger::Get().LogFile("[Game] User exited to menu (FFB Muted).");
-                    if (Config::m_auto_start_logging && AsyncLogger::Get().IsLogging()) {
+                } else if (should_stop_log) {
+                    Logger::Get().LogFile("[Game] User exited driving session.");
+                    if (AsyncLogger::Get().IsLogging()) {
                         AsyncLogger::Get().Stop();
                     }
                 }
-                was_in_menu = !in_realtime_phys;
+                was_driving = is_driving;
+                last_session = current_session;
 
                 if (!is_stale && g_localData.telemetry.playerHasVehicle) {
                     uint8_t idx = g_localData.telemetry.playerVehicleIdx;
@@ -16087,10 +9262,14 @@ void FFBThread() {
                         mDtMon.Update(pPlayerTelemetry->mDeltaTime);
 
                         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-                        bool full_allowed = g_engine.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase) && in_realtime_phys;
+                        bool full_allowed = g_engine.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase) && is_driving;
 
                         force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025);
-                        if (!in_realtime_phys) force_physics = 0.0;
+
+                        // v0.7.153: Explicitly target zero force only when player is not in control (Issue #281).
+                        // This allows Soft Lock to remain active in the garage and during pause (ControlMode::PLAYER),
+                        // while ensuring that AI takeover or other non-player states slew to zero.
+                        if (scoring.mControl != static_cast<signed char>(ControlMode::PLAYER)) force_physics = 0.0;
 
                         // Safety Layer (v0.7.49): Slew Rate Limiting (400Hz)
                         // Applied before up-sampling to prevent reconstruction artifacts on spikes.
@@ -16114,7 +9293,8 @@ void FFBThread() {
             {
                 std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
                 double t_rate = (g_engine.m_torque_source == 1) ? genTorqueMonitor.GetRate() : torqueMonitor.GetRate();
-                health = HealthMonitor::Check(loopMonitor.GetRate(), telemMonitor.GetRate(), t_rate, g_engine.m_torque_source, physicsMonitor.GetRate());
+                health = HealthMonitor::Check(loopMonitor.GetRate(), telemMonitor.GetRate(), t_rate, g_engine.m_torque_source, physicsMonitor.GetRate(),
+                                              GameConnector::Get().IsConnected(), GameConnector::Get().IsSessionActive(), GameConnector::Get().GetSessionType(), GameConnector::Get().IsInRealtime(), GameConnector::Get().GetPlayerControl());
             }
 
             if (in_realtime_phys && !health.is_healthy) {
@@ -16899,6 +10079,74 @@ void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationCont
 
 ```
 
+# File: src\StringUtils.h
+```cpp
+#ifndef STRINGUTILS_H
+#define STRINGUTILS_H
+
+#include <cstring>
+#include <cstdio>
+#include <cstdarg>
+
+namespace StringUtils {
+
+// Safe string copy method compatible with Windows and Linux.
+// It will always null terminate the destination buffer.
+// The dest_size is the total size of the destination buffer including the null terminator.
+inline void SafeCopy(char* dest, size_t dest_size, const char* src) {
+    if (!dest || dest_size == 0) return;
+    if (!src) {
+        dest[0] = '\0';
+        return;
+    }
+#ifdef _WIN32
+    strncpy_s(dest, dest_size, src, _TRUNCATE);
+#else
+    strncpy(dest, src, dest_size - 1);
+    dest[dest_size - 1] = '\0';
+#endif
+}
+
+// Internal helper for variadic formatting
+inline int vSafeFormat(char* dest, size_t dest_size, const char* format, va_list args) {
+    if (!dest || dest_size == 0) return -1;
+#ifdef _WIN32
+    return vsnprintf_s(dest, dest_size, _TRUNCATE, format, args);
+#else
+    int result = vsnprintf(dest, dest_size, format, args);
+    if (result >= (int)dest_size || result < 0) {
+        dest[dest_size - 1] = '\0';
+    }
+    return result;
+#endif
+}
+
+// Safe formatted print method compatible with Windows and Linux.
+// It will always null terminate the destination buffer.
+inline int SafeFormat(char* dest, size_t dest_size, const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    int result = vSafeFormat(dest, dest_size, format, args);
+    va_end(args);
+    return result;
+}
+
+// Safe formatted scan method compatible with Windows and Linux.
+inline int SafeScan(const char* src, const char* format, ...) {
+    if (!src || !format) return -1;
+    va_list args;
+    va_start(args, format);
+    int result = vsscanf(src, format, args);
+    va_end(args);
+    return result;
+}
+
+} // namespace StringUtils
+
+#endif // STRINGUTILS_H
+
+```
+
 # File: src\Tooltips.h
 ```cpp
 #ifndef TOOLTIPS_H
@@ -17264,6 +10512,54 @@ const char* VehicleClassToString(ParsedVehicleClass vclass) {
     }
 }
 
+// Helper: Parse vehicle brand from strings (v0.7.132)
+const char* ParseVehicleBrand(const char* className, const char* vehicleName) {
+    if (!vehicleName) return "Unknown";
+    
+    std::string name = vehicleName;
+    // Normalize for case-insensitive matching
+    std::transform(name.begin(), name.end(), name.begin(), ::toupper);
+
+    if (name.find("FERRARI") != std::string::npos || name.find("499P") != std::string::npos || name.find("488") != std::string::npos || name.find("296") != std::string::npos) return "Ferrari";
+    if (name.find("TOYOTA") != std::string::npos || name.find("GR010") != std::string::npos) return "Toyota";
+    if (name.find("PORSCHE") != std::string::npos || name.find("963") != std::string::npos || name.find("911") != std::string::npos || name.find("RSR") != std::string::npos) return "Porsche";
+    if (name.find("PEUGEOT") != std::string::npos || name.find("9X8") != std::string::npos) return "Peugeot";
+    if (name.find("CADILLAC") != std::string::npos || name.find("V-SERIES") != std::string::npos) return "Cadillac";
+    if (name.find("LAMBORGHINI") != std::string::npos || name.find("SC63") != std::string::npos || name.find("HURACAN") != std::string::npos) return "Lamborghini";
+    if (name.find("BMW") != std::string::npos || name.find("M HYBRID") != std::string::npos || name.find("M4") != std::string::npos) return "BMW";
+    if (name.find("ALPINE") != std::string::npos || name.find("A424") != std::string::npos) return "Alpine";
+    if (name.find("ISOTTA") != std::string::npos || name.find("TIPO 6") != std::string::npos) return "Isotta Fraschini";
+    if (name.find("GLICKENHAUS") != std::string::npos || name.find("SCG") != std::string::npos) return "Glickenhaus";
+    if (name.find("VANWALL") != std::string::npos || name.find("680") != std::string::npos) return "Vanwall";
+    if (name.find("ORECA") != std::string::npos || name.find("07") != std::string::npos) return "Oreca";
+    if (name.find("ASTON") != std::string::npos || name.find("VANTAGE") != std::string::npos) return "Aston Martin";
+    if (name.find("CORVETTE") != std::string::npos || name.find("C8.R") != std::string::npos || name.find("Z06") != std::string::npos) return "Corvette";
+    if (name.find("FORD") != std::string::npos || name.find("MUSTANG") != std::string::npos) return "Ford";
+    if (name.find("MCLAREN") != std::string::npos || name.find("720S") != std::string::npos) return "McLaren";
+    if (name.find("LEXUS") != std::string::npos || name.find("RC F") != std::string::npos) return "Lexus";
+    if (name.find("LIGIER") != std::string::npos || name.find("JS P320") != std::string::npos || name.find("P325") != std::string::npos) return "Ligier";
+    if (name.find("DUQUEINE") != std::string::npos || name.find("D08") != std::string::npos || name.find("D09") != std::string::npos) return "Duqueine";
+    if (name.find("GINETTA") != std::string::npos || name.find("G61") != std::string::npos) return "Ginetta";
+
+    // Backup: Check Class Name if vehicle name is ambiguous
+    if (className) {
+        std::string cls = className;
+        std::transform(cls.begin(), cls.end(), cls.begin(), ::toupper);
+        if (cls.find("FERRARI") != std::string::npos) return "Ferrari";
+        if (cls.find("PORSCHE") != std::string::npos) return "Porsche";
+        
+        // Issue #270: LMP2 fallback (almost always Oreca)
+        if (cls.find("LMP2") != std::string::npos) return "Oreca";
+        
+        // LMP3 fallbacks
+        if (cls.find("GINETTA") != std::string::npos) return "Ginetta";
+        if (cls.find("LIGIER") != std::string::npos) return "Ligier";
+        if (cls.find("DUQUEINE") != std::string::npos) return "Duqueine";
+    }
+
+    return "Unknown";
+}
+
 ```
 
 # File: src\VehicleUtils.h
@@ -17292,6 +10588,9 @@ double GetDefaultLoadForClass(ParsedVehicleClass vclass);
 
 // Helper: String representation of parsed class for logging and UI
 const char* VehicleClassToString(ParsedVehicleClass vclass);
+
+// Helper: Parse vehicle brand from strings (v0.7.132)
+const char* ParseVehicleBrand(const char* className, const char* vehicleName);
 
 #endif // VEHICLE_UTILS_H
 
@@ -18388,7 +11687,7 @@ public:
 #include <vector>
 #include <string>
 #include <cstdarg>
-#include <cstdio>
+#include "../StringUtils.h"
 
 // Dummy typedefs for Linux compatibility
 using DWORD = uint32_t;
@@ -18512,20 +11811,6 @@ inline long InterlockedExchange(long volatile* Target, long Value) {
 
 // Memory and Event mocks
 inline void YieldProcessor() {}
-inline int sprintf_s(char* buf, size_t size, const char* fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    int ret = vsnprintf(buf, size, fmt, args);
-    va_end(args);
-    return ret;
-}
-inline int sprintf_s(char* buf, const char* fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    int ret = vsprintf(buf, fmt, args);
-    va_end(args);
-    return ret;
-}
 inline DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
     if (MockSM::WaitResult() != 0) {
         DWORD res = MockSM::WaitResult();
@@ -18610,8 +11895,8 @@ inline BOOL DestroyWindow(HWND hWnd) { return TRUE; }
 inline HMODULE GetModuleHandle(const char* lpModuleName) { return reinterpret_cast<HMODULE>(static_cast<intptr_t>(1)); }
 inline HICON LoadIcon(HMODULE hInstance, const char* lpIconName) { return reinterpret_cast<HICON>(static_cast<intptr_t>(1)); }
 inline DWORD GetModuleFileNameA(HMODULE hModule, char* lpFilename, DWORD nSize) {
-    strncpy(lpFilename, "LMUFFB.exe", nSize);
-    return strlen(lpFilename);
+    StringUtils::SafeCopy(lpFilename, nSize, "LMUFFB.exe");
+    return (DWORD)strlen(lpFilename);
 }
 inline HMODULE LoadLibraryExA(const char* lpLibFileName, HANDLE hFile, DWORD dwFlags) { return reinterpret_cast<HMODULE>(static_cast<intptr_t>(1)); }
 inline HRSRC FindResourceA(HMODULE hModule, const char* lpName, const char* lpType) { return reinterpret_cast<HRSRC>(static_cast<intptr_t>(1)); }
@@ -18743,6 +12028,15 @@ struct ID3D11Device : public IUnknown {
 #endif
 
 #include "InternalsPluginWrapper.h"
+
+// Control Mode enumeration for VehicleScoringInfoV01::mControl
+enum class ControlMode : signed char {
+    NONE    = -1,
+    PLAYER  =  0,
+    AI      =  1,
+    REMOTE  =  2,
+    REPLAY  =  3
+};
 
 // Include the official vendor file
 #include "SharedMemoryInterface.hpp"
@@ -19283,7 +12577,6 @@ struct rF2Telemetry {
 #include <iostream>
 #include <atomic>
 #include <mutex>
-#include <cstdio>
 #include <thread>
 #include <chrono>
 #include <filesystem>
@@ -19304,7 +12597,7 @@ SharedMemoryObjectOut g_localData;
 
 namespace FFBEngineTests { 
     extern int g_tests_passed; 
-    extern int g_tests_failed; 
+    extern int g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO; 
     extern int g_test_cases_run;
     extern int g_test_cases_passed;
     extern int g_test_cases_failed;
@@ -19325,15 +12618,15 @@ int main(int argc, char* argv[]) noexcept {
 
     // Redirect config to a test-specific file to avoid overwriting user settings
     Config::m_config_path = "test_config_runner.ini";
-    std::remove(Config::m_config_path.c_str());
-    std::remove("imgui.ini");
+    if (std::filesystem::exists(Config::m_config_path)) std::filesystem::remove(Config::m_config_path);
+    if (std::filesystem::exists("imgui.ini")) std::filesystem::remove("imgui.ini");
 
     // --- Unified Test Suite Execution ---
     // All tests (including Windows-specific ones if compiled) are now auto-registered
     try {
         FFBEngineTests::Run();
         total_passed = FFBEngineTests::g_tests_passed;
-        total_failed = FFBEngineTests::g_tests_failed;
+        total_failed = FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO;
     } catch (const std::exception& e) {
         std::cout << "\n[FATAL] Test Runner encountered unhandled exception: " << e.what() << std::endl;
         total_failed++;
@@ -19388,22 +12681,36 @@ int main(int argc, char* argv[]) noexcept {
         }
 
         try {
-            if (std::filesystem::exists("test_logs")) {
-                std::filesystem::remove_all("test_logs");
+            // Clean up all directories starting with "test_logs"
+            for (const auto& entry : std::filesystem::directory_iterator(".")) {
+                if (entry.is_directory()) {
+                    std::string dirname = entry.path().filename().string();
+                    if (dirname.find("test_logs") == 0) {
+                        try {
+                            std::filesystem::remove_all(entry.path());
+                        } catch (...) {}
+                    }
+                }
             }
-            if (std::filesystem::exists("test_logs_v6")) {
-                std::filesystem::remove_all("test_logs_v6");
-            }
+            
             if (std::filesystem::exists("test_gui.csv")) {
                 std::filesystem::remove_all("test_gui.csv");
             }
-            // Remove any leftover csv logs in current dir and logs/ dir
+            // Remove any leftover csv, log, and ini artifacts in current dir and logs/ dir
             std::vector<std::string> dirs = {".", "logs"};
             for (const auto& dir : dirs) {
                 if (std::filesystem::exists(dir)) {
                     for (const auto& entry : std::filesystem::directory_iterator(dir)) {
-                        if (entry.is_regular_file() && entry.path().extension() == ".csv" &&
-                            entry.path().filename().string().find("lmuffb_log_") == 0) {
+                        if (!entry.is_regular_file()) continue;
+
+                        std::string filename = entry.path().filename().string();
+                        std::string ext = entry.path().extension().string();
+
+                        bool is_lmuffb_log = ((ext == ".csv" || ext == ".bin" || ext == ".log") && filename.find("lmuffb_") == 0);
+                        bool is_test_log = (ext == ".log" && filename.find("test_") == 0);
+                        bool is_test_ini = (ext == ".ini" && (filename.find("test_") == 0 || filename.find("tmp_") == 0));
+
+                        if (is_lmuffb_log || is_test_log || is_test_ini) {
                             std::filesystem::remove(entry.path());
                         }
                     }
@@ -19415,6 +12722,9 @@ int main(int argc, char* argv[]) noexcept {
         }
     };
 
+    // Ensure log file is closed before cleanup
+    Logger::Get().Close();
+    
     cleanup();
 
     return (total_failed > 0) ? 1 : 0;
@@ -19432,15 +12742,18 @@ int main(int argc, char* argv[]) noexcept {
 # File: tests\test_ffb_common.cpp
 ```cpp
 #include "test_ffb_common.h"
+#include "../src/GameConnector.h"
 
 namespace FFBEngineTests {
 
 // --- Global Test Counters ---
 int g_tests_passed = 0;
-int g_tests_failed = 0;
+int g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO = 0;
 int g_test_cases_run = 0;
 int g_test_cases_passed = 0;
 int g_test_cases_failed = 0;
+std::vector<std::string> g_failure_log; // New: collect failure messages
+std::string g_current_test_name; // Tracks the currently-running test for assertion messages
 
 // --- Tag Filtering Globals ---
 std::vector<std::string> g_tag_filter;
@@ -19550,6 +12863,7 @@ TelemInfoV01 CreateBasicTestTelemetry(double speed, double slip_angle) {
 
 // --- Helper: Initialize Engine with Test Defaults ---
 void InitializeEngine(FFBEngine& engine) {
+    std::cout << "--- InitializeEngine Called ---" << std::endl;
     Preset::ApplyDefaultsToEngine(engine);
     // v0.5.12: Force consistent baseline for legacy tests
     engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
@@ -19559,7 +12873,7 @@ void InitializeEngine(FFBEngine& engine) {
     // Individual tests can re-enable what they need.
     engine.m_steering_shaft_smoothing = 0.0f; 
     engine.m_slip_angle_smoothing = 0.0f;
-    engine.m_sop_smoothing_factor = 1.0f; // 1.0 = Instant/No smoothing
+    engine.m_sop_smoothing_factor = 0.0f; // 0.0 = Instant/No smoothing (v0.7.147)
     engine.m_yaw_accel_smoothing = 0.0f;
     engine.m_gyro_smoothing = 0.0f;
     engine.m_chassis_inertia_smoothing = 0.0f;
@@ -19600,6 +12914,42 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_auto_load_normalization_enabled = false;
 }
 
+// --- Friend Access for Testing ---
+void GameConnectorTestAccessor::Reset(::GameConnector& gc) {
+    std::lock_guard<std::recursive_mutex> lock(gc.m_mutex);
+    gc._DisconnectLocked();
+    gc.m_sessionActive.store(false);
+    gc.m_inRealtime.store(false);
+    gc.m_currentSessionType.store(-1);
+    gc.m_currentGamePhase.store(255);
+    gc.m_playerControl.store(-2);
+    gc.m_pendingMenuCheck = false;
+    memset(&gc.m_prevState, 0, sizeof(gc.m_prevState));
+    gc.m_prevState.optionsLocation = 255;
+    gc.m_prevState.gamePhase = 255;
+    gc.m_prevState.session = -1;
+    gc.m_prevState.control = -2;
+    gc.m_prevState.pitState = 255;
+    gc.m_prevState.steeringRange = -1.0f;
+    gc.m_prevState.numVehicles = -1;
+}
+
+void GameConnectorTestAccessor::SetSharedMem(::GameConnector& gc, SharedMemoryLayout* layout) {
+    std::lock_guard<std::recursive_mutex> lock(gc.m_mutex);
+    gc.m_pSharedMemLayout = layout;
+    gc.m_connected = true;
+}
+
+void GameConnectorTestAccessor::SetSessionActive(::GameConnector& gc, bool val) { gc.m_sessionActive.store(val); }
+void GameConnectorTestAccessor::SetInRealtime(::GameConnector& gc, bool val) { gc.m_inRealtime.store(val); }
+void GameConnectorTestAccessor::SetSessionType(::GameConnector& gc, long val) { gc.m_currentSessionType.store(val); }
+void GameConnectorTestAccessor::SetGamePhase(::GameConnector& gc, unsigned char val) { gc.m_currentGamePhase.store(val); }
+void GameConnectorTestAccessor::SetPlayerControl(::GameConnector& gc, signed char val) { gc.m_playerControl.store(val); }
+
+void GameConnectorTestAccessor::InjectTransitions(::GameConnector& gc, const SharedMemoryObjectOut& data) {
+    gc.CheckTransitions(data);
+}
+
 // Orientation Matrix Helper Implementation
 void VerifyOrientation(FFBEngine& engine, const OrientationScenario& scenario, float expected_sop_sign, float expected_total_ffb_sign) {
     std::cout << "  [Matrix] Testing Orientation: " << scenario.description << std::endl;
@@ -19609,12 +12959,12 @@ void VerifyOrientation(FFBEngine& engine, const OrientationScenario& scenario, f
     data.mWheel[1].mTireLoad = scenario.fr_load;
     for (int i = 0; i < 60; i++) engine.calculate_force(&data);
     auto snapshots = engine.GetDebugBatch();
-    if (snapshots.empty()) { g_tests_failed++; return; }
+    if (snapshots.empty()) { FAIL_TEST("No snapshots available in VerifyOrientation"); return; }
     const auto& snap = snapshots.back();
     bool sop_ok = (expected_sop_sign > 0) ? (snap.sop_force > 0.001f) : (snap.sop_force < -0.001f);
-    if (sop_ok) g_tests_passed++; else g_tests_failed++;
+    if (sop_ok) g_tests_passed++; else { FAIL_TEST("SoP orientation mismatch in scenario: " << scenario.description); }
     bool total_ok = (expected_total_ffb_sign > 0) ? (snap.total_output > 0.001f) : (snap.total_output < -0.001f);
-    if (total_ok) g_tests_passed++; else g_tests_failed++;
+    if (total_ok) g_tests_passed++; else { FAIL_TEST("Total FFB orientation mismatch in scenario: " << scenario.description); }
 }
 
 bool IsInLog(const std::string& filename, const std::string& pattern) {
@@ -19722,26 +13072,26 @@ void Run() {
             }
             
             try {
-                int initial_fails = g_tests_failed;
+                int initial_fails = g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO;
+                g_current_test_name = test.name; // Make test name available to ASSERT macros
                 test.func();
 
                 g_test_cases_run++;
-                if (g_tests_failed > initial_fails) {
+                if (g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO > initial_fails) {
                     g_test_cases_failed++;
                     failed_test_names.push_back(test.name);
-                    std::cerr << "\n>>> [FAIL] TEST CASE: " << test.name << " (" << (g_tests_failed - initial_fails) << " assertions failed)\n" << std::endl;
+                    FAIL_TEST(test.name << " ("
+                              << (g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO - initial_fails) << " assertion(s) failed)");
                 } else {
                     g_test_cases_passed++;
                 }
             } catch (const std::exception& e) {
-                std::cerr << "\n>>> [FAIL] " << test.name << " threw exception: " << e.what() << "\n" << std::endl;
-                g_tests_failed++;
+                FAIL_TEST(test.name << " threw exception: " << e.what());
                 g_test_cases_run++;
                 g_test_cases_failed++;
                 failed_test_names.push_back(test.name);
             } catch (...) {
-                std::cerr << "\n>>> [FAIL] " << test.name << " threw unknown exception\n" << std::endl;
-                g_tests_failed++;
+                FAIL_TEST(test.name << " threw unknown exception");
                 g_test_cases_run++;
                 g_test_cases_failed++;
                 failed_test_names.push_back(test.name);
@@ -19751,7 +13101,7 @@ void Run() {
 
     std::cout << "\n--- Physics Engine Test Summary ---" << std::endl;
     std::cout << "Test Cases: " << g_test_cases_passed << "/" << g_test_cases_run << " passed" << std::endl;
-    std::cout << "Assertions: " << g_tests_passed << " passed, " << g_tests_failed << " failed" << std::endl;
+    std::cout << "Assertions: " << g_tests_passed << " passed, " << g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO << " failed" << std::endl;
 
     if (!failed_test_names.empty()) {
         std::cout << "\n!!! list of FAILED test cases !!!" << std::endl;
@@ -19759,6 +13109,14 @@ void Run() {
             std::cout << "  - " << name << std::endl;
         }
         std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+
+        if (!g_failure_log.empty()) {
+            std::cout << "\n=== DETAILED FAILURE LOG ===" << std::endl;
+            for (const auto& log : g_failure_log) {
+                std::cout << log << std::endl;
+            }
+            std::cout << "============================" << std::endl;
+        }
     }
 }
 
@@ -19778,7 +13136,6 @@ void Run() {
 #include <cstring>
 #include <algorithm>
 #include <fstream>
-#include <cstdio>
 #include <random>
 #include <sstream>
 #include <functional>
@@ -19788,97 +13145,179 @@ void Run() {
 #include "../src/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include "../src/Config.h"
 #include "../src/Logger.h"
+#include "../src/GameConnector.h"
+#include "../src/StringUtils.h"
 
 namespace FFBEngineTests {
 
 // --- Test Counters (defined in test_ffb_common.cpp) ---
 extern int g_tests_passed;
-extern int g_tests_failed;
+extern int g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO;
 extern int g_test_cases_run;
 extern int g_test_cases_passed;
 extern int g_test_cases_failed;
+extern std::vector<std::string> g_failure_log; // New
+extern std::string g_current_test_name; // Set by Run() before each test
 
 // --- Assert Macros ---
+
+#define FAIL_TEST(msg) do { \
+    std::stringstream ss_fail; \
+    ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << msg << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+    std::cout << ss_fail.str() << std::endl; \
+    FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+    FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+} while(0)
+
+// Passing assertions are silent. Failing assertions print [FAIL] with the
+// current test name, condition details, and source location.
 #define ASSERT_TRUE(condition) \
-    if (condition) { \
-        std::cout << "[PASS] " << #condition << std::endl; \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #condition << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
-        g_tests_failed++; \
-    }
+do { \
+        if (condition) { \
+            FFBEngineTests::g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #condition << " is false" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_FALSE(condition) \
-    if (!(condition)) { \
-        std::cout << "[PASS] !" << #condition << std::endl; \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] !" << #condition << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
-        g_tests_failed++; \
-    }
+do { \
+        if (!(condition)) { \
+            FFBEngineTests::g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #condition << " is true (expected false)" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_NEAR(a, b, epsilon) \
-    if (std::abs((a) - (b)) < (epsilon)) { \
-        std::cout << "[PASS] " << #a << " approx " << #b << std::endl; \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") != " << #b << " (" << (b) << ")" << std::endl; \
-        g_tests_failed++; \
-    }
+do { \
+        if (std::abs((a) - (b)) < (epsilon)) { \
+            FFBEngineTests::g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (" << (a) << ") not near " \
+                      << #b << " (" << (b) << ") within " << (epsilon) \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_GT(a, b) \
-    if ((a) > (b)) { \
-        std::cout << "[PASS] " << #a << " > " << #b << std::endl; \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") <= " << #b << " (" << (b) << ")" << std::endl; \
-        g_tests_failed++; \
-    }
+do { \
+        if ((a) > (b)) { \
+            FFBEngineTests::g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (" << (a) << ") <= " \
+                      << #b << " (" << (b) << ")" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_EQ(a, b) \
-    if ((a) == (b)) { \
-        std::cout << "[PASS] " << #a << " == " << #b << std::endl; \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") != " << #b << " (" << (b) << ")" << std::endl; \
-        g_tests_failed++; \
-    }
+do { \
+        if ((a) == (b)) { \
+            FFBEngineTests::g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (" << (a) << ") != " \
+                      << #b << " (" << (b) << ")" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_GE(a, b) \
-    if ((a) >= (b)) { \
-        std::cout << "[PASS] " << #a << " >= " << #b << std::endl; \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") < " << #b << " (" << (b) << ")" << std::endl; \
-        g_tests_failed++; \
-    }
+do { \
+        if ((a) >= (b)) { \
+            FFBEngineTests::g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (" << (a) << ") < " \
+                      << #b << " (" << (b) << ")" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_LE(a, b) \
-    if ((a) <= (b)) { \
-        std::cout << "[PASS] " << #a << " <= " << #b << std::endl; \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") > " << #b << " (" << (b) << ")" << std::endl; \
-        g_tests_failed++; \
-    }
+do { \
+        if ((a) <= (b)) { \
+            FFBEngineTests::g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (" << (a) << ") > " \
+                      << #b << " (" << (b) << ")" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_LT(a, b) \
-    if ((a) < (b)) { \
-        std::cout << "[PASS] " << #a << " < " << #b << std::endl; \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #a << " (" << (a) << ") >= " << #b << " (" << (b) << ")" << std::endl; \
-        g_tests_failed++; \
-    }
+do { \
+        if ((a) < (b)) { \
+            FFBEngineTests::g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (" << (a) << ") >= " \
+                      << #b << " (" << (b) << ")" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_EQ_STR(a, b) \
-    if (std::string(a) == std::string(b)) { \
-        std::cout << "[PASS] " << #a << " == " << #b << std::endl; \
-        g_tests_passed++; \
-    } else { \
-        std::cout << "[FAIL] " << #a << " (" << a << ") != " << #b << " (" << b << ")" << std::endl; \
-        g_tests_failed++; \
-    }
+do { \
+        if (std::string(a) == std::string(b)) { \
+            FFBEngineTests::g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (\"" << (a) << "\") != " \
+                      << #b << " (\"" << (b) << "\")" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
+
+#define ASSERT_NE(a, b) \
+do { \
+        if ((a) != (b)) { \
+            FFBEngineTests::g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (" << (a) << ") == " \
+                      << #b << " (" << (b) << ")" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 // --- Test Constants ---
 const int FILTER_SETTLING_FRAMES = 40;
@@ -19979,6 +13418,18 @@ int CountInLog(const std::string& filename, const std::string& pattern);
 void Run(); // Main runner
 
 // --- Friend Access for Testing ---
+class GameConnectorTestAccessor {
+public:
+    static void Reset(::GameConnector& gc);
+    static void SetSharedMem(::GameConnector& gc, struct SharedMemoryLayout* layout);
+    static void SetSessionActive(::GameConnector& gc, bool val);
+    static void SetInRealtime(::GameConnector& gc, bool val);
+    static void SetSessionType(::GameConnector& gc, long val);
+    static void SetGamePhase(::GameConnector& gc, unsigned char val);
+    static void SetPlayerControl(::GameConnector& gc, signed char val);
+    static void InjectTransitions(::GameConnector& gc, const struct SharedMemoryObjectOut& data);
+};
+
 class FFBEngineTestAccess {
 public:
     static bool HasWarnings(const FFBEngine& engine) {
@@ -19989,8 +13440,8 @@ public:
     static void test_unit_abs_pulse();
 
     // Load Normalization Test Access
-    static double GetAutoPeakLoad(const FFBEngine& e) { return e.m_auto_peak_load; }
-    static void SetAutoPeakLoad(FFBEngine& e, double val) { e.m_auto_peak_load = val; }
+    static double GetAutoPeakLoad(const FFBEngine& e) { return e.m_auto_peak_front_load; }
+    static void SetAutoPeakLoad(FFBEngine& e, double val) { e.m_auto_peak_front_load = val; }
     static void SetAutoNormalizationEnabled(FFBEngine& e, bool enabled) { e.m_auto_load_normalization_enabled = enabled; }
     static void SetDynamicNormalizationEnabled(FFBEngine& e, bool enabled) { e.m_dynamic_normalization_enabled = enabled; }
 
@@ -20079,6 +13530,13 @@ public:
         std::lock_guard<std::mutex> lock(e.m_debug_mutex);
         e.m_debug_buffer.push_back(s);
     }
+    static void ResetYawDerivedState(FFBEngine& e) {
+        e.m_yaw_rate_seeded = false;
+        e.m_prev_yaw_rate = 0.0;
+        e.m_yaw_accel_smoothed = 0.0;
+    }
+    static double GetYawAccelSmoothed(const FFBEngine& e) { return e.m_yaw_accel_smoothed; }
+    static void SetLastOutputForce(FFBEngine& e, double val) { e.m_last_output_force = val; }
 };
 
 } // namespace FFBEngineTests
