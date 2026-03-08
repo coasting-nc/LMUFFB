@@ -373,7 +373,7 @@ TEST_CASE(test_gui_layer_common_branches_v6, "GUI") {
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
         // Test "Logging" branch
-        SessionInfo info;
+        SessionInfo info = {};
         AsyncLogger::Get().Start(info, ".");
         GuiLayerTestAccess::DrawTuningWindow(engine);
         AsyncLogger::Get().Stop();

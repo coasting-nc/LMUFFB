@@ -15,7 +15,7 @@ TEST_CASE(test_surface_type_logging, "AccuracyTools") {
     AsyncLogger::Get().Stop();
 
     // Setup session info
-    SessionInfo info;
+    SessionInfo info = {};
     info.vehicle_name = "SurfaceTestCar";
     info.track_name = "SurfaceTestTrack";
     info.app_version = "0.7.39-test";

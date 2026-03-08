@@ -16,7 +16,7 @@ TEST_CASE(test_async_logger_binary_integrity, "Logging") {
     if (fs::exists(test_dir)) fs::remove_all(test_dir);
     fs::create_directories(test_dir);
 
-    SessionInfo info;
+    SessionInfo info = {};
     info.driver_name = "Test Driver";
     info.vehicle_name = "Test Car";
     info.track_name = "Test Track";

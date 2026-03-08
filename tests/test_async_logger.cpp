@@ -13,7 +13,7 @@ TEST_CASE_TAGGED(test_logger_start_stop, "Diagnostics", {"Logger"}) {
     ASSERT_TRUE(AsyncLogger::Get().IsLogging() == false);
 
     // Setup session info
-    SessionInfo info;
+    SessionInfo info = {};
     info.driver_name = "TestDriver";
     info.vehicle_name = "TestCar";
     info.track_name = "TestTrack";
@@ -34,7 +34,7 @@ TEST_CASE_TAGGED(test_logger_frame_logging, "Diagnostics", {"Logger"}) {
     std::cout << "\nTest: AsyncLogger Frame Logging & Decimation" << std::endl;
     AsyncLogger::Get().Stop();
     
-    SessionInfo info;
+    SessionInfo info = {};
     info.driver_name = "TestDriver";
     info.vehicle_name = "TestCarFrame";
     info.track_name = "TestTrack";
@@ -61,7 +61,7 @@ TEST_CASE_TAGGED(test_logger_marker, "Diagnostics", {"Logger"}) {
     std::cout << "\nTest: AsyncLogger Marker Bypass" << std::endl;
     AsyncLogger::Get().Stop();
     
-    SessionInfo info;
+    SessionInfo info = {};
     info.driver_name = "TestDriver";
     info.vehicle_name = "TestCarMarker";
     info.track_name = "TestTrack";
@@ -90,7 +90,7 @@ TEST_CASE_TAGGED(test_logger_filename_sanitization, "Diagnostics", {"Logger"}) {
     std::cout << "\nTest: AsyncLogger Filename Sanitization" << std::endl;
     AsyncLogger::Get().Stop();
     
-    SessionInfo info;
+    SessionInfo info = {};
     info.driver_name = "TestDriver";
     info.vehicle_name = "Porsche 911 GT3*R?";  // Contains invalid chars
     info.track_name = "Spa/Belgium<Test>";     // Contains invalid chars
@@ -124,7 +124,7 @@ TEST_CASE_TAGGED(test_logger_performance_impact, "Diagnostics", {"Logger"}) {
     std::cout << "\nTest: AsyncLogger Performance Impact" << std::endl;
     AsyncLogger::Get().Stop();
     
-    SessionInfo info;
+    SessionInfo info = {};
     info.driver_name = "PerfTest";
     info.vehicle_name = "TestCar";
     info.track_name = "TestTrack";
@@ -171,7 +171,7 @@ TEST_CASE_TAGGED(test_logger_header_version_check, "Diagnostics", {"Logger"}) {
     std::cout << "\nTest: AsyncLogger Header Version Check" << std::endl;
     AsyncLogger::Get().Stop();
     
-    SessionInfo info;
+    SessionInfo info = {};
     info.driver_name = "VersionTest";
     info.vehicle_name = "TestCar";
     info.track_name = "TestTrack";

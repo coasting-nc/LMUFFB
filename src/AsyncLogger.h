@@ -189,26 +189,26 @@ struct LogFrame {
 
 // Session metadata for header
 struct SessionInfo {
-    std::string driver_name;
-    std::string vehicle_name;
-    std::string vehicle_class; // v0.7.132
-    std::string vehicle_brand; // v0.7.132
-    std::string track_name;
-    std::string app_version;
+    std::string driver_name = "";
+    std::string vehicle_name = "";
+    std::string vehicle_class = ""; // v0.7.132
+    std::string vehicle_brand = ""; // v0.7.132
+    std::string track_name = "";
+    std::string app_version = "";
     
     // Key settings snapshot
-    float gain;
-    float understeer_effect;
-    float sop_effect;
-    float lat_load_effect; // v0.7.152
-    float sop_scale;       // v0.7.152
-    float sop_smoothing;   // v0.7.152
-    bool slope_enabled;
-    float slope_sensitivity;
-    float slope_threshold;
-    float slope_alpha_threshold;
-    float slope_decay_rate;
-    bool torque_passthrough; // v0.7.63
+    float gain = 0.0f;
+    float understeer_effect = 0.0f;
+    float sop_effect = 0.0f;
+    float lat_load_effect = 0.0f; // v0.7.152
+    float sop_scale = 0.0f;       // v0.7.152
+    float sop_smoothing = 0.0f;   // v0.7.152
+    bool slope_enabled = false;
+    float slope_sensitivity = 0.0f;
+    float slope_threshold = 0.0f;
+    float slope_alpha_threshold = 0.0f;
+    float slope_decay_rate = 0.0f;
+    bool torque_passthrough = false; // v0.7.63
 };
 
 class AsyncLogger {

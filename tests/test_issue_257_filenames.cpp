@@ -10,7 +10,7 @@ TEST_CASE_TAGGED(test_issue_257_log_filename_format, "Issue_257", (std::vector<s
     AsyncLogger::Get().Stop(); // Ensure clean slate
 
     // Setup session info
-    SessionInfo info;
+    SessionInfo info = {};
     info.driver_name = "TestDriver";
     info.vehicle_name = "Ferrari 499P - #51 AF Corse";
     info.vehicle_class = "Hypercar";

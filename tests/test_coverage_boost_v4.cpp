@@ -226,7 +226,7 @@ TEST_CASE(test_engine_extra_branches, "Physics") {
     engine.calculate_force(&data, "GT3", "911", 0.1f);
 
     // 5. Logging branch in calculate_force
-    SessionInfo info;
+    SessionInfo info = {};
     info.vehicle_name = "LogCar";
     AsyncLogger::Get().Start(info, "tmp_log_extra");
     engine.calculate_force(&data, "GT3", "911", 0.1f);
@@ -244,7 +244,7 @@ TEST_CASE(test_engine_extra_branches, "Physics") {
 }
 
 TEST_CASE(test_async_logger_api_boost, "Diagnostics") {
-    SessionInfo info;
+    SessionInfo info = {};
     info.vehicle_name = "BoostCar";
     info.track_name = "BoostTrack";
     const char* log_dir = "tmp_boost_logs/"; // Test trailing slash
@@ -309,7 +309,7 @@ TEST_CASE(test_gui_diverse_engine_states, "GUI") {
     GuiLayerTestAccess::DrawTuningWindow(engine);
 
     // Logging active
-    SessionInfo info;
+    SessionInfo info = {};
     info.vehicle_name = "GUICar";
     const char* log_dir = "tmp_gui_logs";
     AsyncLogger::Get().Start(info, log_dir);

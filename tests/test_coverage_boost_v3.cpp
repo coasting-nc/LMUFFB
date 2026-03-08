@@ -200,7 +200,7 @@ TEST_CASE(test_steering_utils_nan_inf, "Physics") {
 TEST_CASE(test_async_logger_errors, "Diagnostics") {
     AsyncLogger::Get().Stop();
 
-    SessionInfo info;
+    SessionInfo info = {};
     info.vehicle_name = "TestCar";
 
     // Directory creation failure (using an invalid path or a file that already exists as a directory)

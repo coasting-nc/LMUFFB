@@ -11,7 +11,7 @@ namespace FFBEngineTests {
 TEST_CASE_TAGGED(test_logger_lz4_compression, "Diagnostics", (std::vector<std::string>{"Logger", "LZ4"})) {
     std::cout << "\nTest: AsyncLogger LZ4 Compression Verification" << std::endl;
 
-    SessionInfo info;
+    SessionInfo info = {};
     info.driver_name = "TestDriver";
     info.vehicle_name = "TestCar";
     info.track_name = "TestTrack";

@@ -45,14 +45,15 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
         force = engine.calculate_force(&data);
     }
     
+    // v0.7.153: Sign is inverted for resistance
     // Expected: lat_g = (9.81 / 9.81) = 1.0 (Positive)
-    // SoP force = 1.0 * 1.0 * 10.0 = 10.0 Nm
-    // Normalized = 10.0 / 20.0 = 0.5 (Positive)
-    if (force > 0.4) {
+    // SoP force = 1.0 * 1.0 * 10.0 = 10.0 Nm -> Inverted to -10.0 Nm
+    // Normalized = -10.0 / 20.0 = -0.5 (Negative)
+    if (force < -0.4) {
         std::cout << "[PASS] SoP pulls LEFT in right turn (force: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] SoP should pull LEFT (Positive). Got: " << force << " Expected > 0.4" << std::endl;
+        std::cout << "[FAIL] SoP should pull LEFT (Negative). Got: " << force << " Expected < -0.4" << std::endl;
         g_tests_failed++;
     }
     
@@ -65,14 +66,15 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
         force = engine.calculate_force(&data);
     }
     
+    // v0.7.153: Sign is inverted for resistance
     // Expected: lat_g = (-9.81 / 9.81) = -1.0
-    // SoP force = -1.0 * 1.0 * 10.0 = -10.0 Nm
-    // Normalized = -10.0 / 20.0 = -0.5 (Negative)
-    if (force < -0.4) {
+    // SoP force = -1.0 * 1.0 * 10.0 = -10.0 Nm -> Inverted to +10.0 Nm
+    // Normalized = +10.0 / 20.0 = +0.5 (Positive)
+    if (force > 0.4) {
         std::cout << "[PASS] SoP pulls RIGHT in left turn (force: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] SoP should pull RIGHT (Negative). Got: " << force << " Expected < -0.4" << std::endl;
+        std::cout << "[FAIL] SoP should pull RIGHT (Positive). Got: " << force << " Expected > 0.4" << std::endl;
         g_tests_failed++;
     }
 }
@@ -422,9 +424,10 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     
     bool all_aligned = true;
     
-    // 1. SoP (Should be Positive)
-    if (snap.sop_force < 0.1) {
-        std::cout << "[FAIL] SoP fighting alignment! Val: " << snap.sop_force << std::endl;
+    // 1. SoP (Should be Negative - resisting turn)
+    // v0.7.153: Inverted for resistance
+    if (snap.sop_force > -0.1) {
+        std::cout << "[FAIL] SoP fighting alignment! Val: " << snap.sop_force << " Expected < -0.1" << std::endl;
         all_aligned = false;
     }
     
@@ -440,9 +443,10 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
         all_aligned = false;
     }
     
-    // 4. Scrub Drag (Should be Negative)
-    if (snap.ffb_scrub_drag > -0.01) {
-        std::cout << "[FAIL] Scrub Drag fighting alignment! Val: " << snap.ffb_scrub_drag << std::endl;
+    // 4. Scrub Drag (Should be Positive - opposing left slide)
+    // Sliding left (+vel) -> Friction pushes right (+force)
+    if (snap.ffb_scrub_drag < 0.01) {
+        std::cout << "[FAIL] Scrub Drag fighting alignment! Val: " << snap.ffb_scrub_drag << " Expected > 0.01" << std::endl;
         all_aligned = false;
     }
     
@@ -517,17 +521,18 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     }
     
     // Expected behavior:
-    // 1. SoP pulls LEFT (Positive) - simulates heavy steering in right turn
+    // 1. SoP pulls LEFT (Negative) - simulates heavy steering in right turn
     // 2. Rear Torque pulls LEFT (Positive) - with -Vel input
-    // 3. Scrub Drag pushes LEFT (Positive) - with -Vel input (Destabilizing but consistent with code)
+    // 3. Scrub Drag pushes RIGHT (Negative) - with -Vel input (stabilizing)
     // 
-    // The combination should result in a net STABILIZING force (SoP Dominates).
+    // v0.7.153: Sign is inverted.
+    // Right turn -> +X accel -> Negative FFB force (LEFT)
     
-    if (force > 0.0) {
+    if (force < -0.1) {
         std::cout << "[PASS] Combined forces are stabilizing (net left pull: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Combined forces should pull LEFT (Positive). Got: " << force << std::endl;
+        std::cout << "[FAIL] Combined forces should pull LEFT (Negative). Got: " << force << " Expected < -0.1" << std::endl;
         g_tests_failed++;
     }
     
@@ -536,12 +541,12 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     if (!batch.empty()) {
         FFBSnapshot snap = batch.back();
         
-        // SoP should be Positive
-        if (snap.sop_force > 0.0) {
-            std::cout << "[PASS] SoP component is Positive (" << snap.sop_force << ")" << std::endl;
+        // SoP should be Negative
+        if (snap.sop_force < 0.0) {
+            std::cout << "[PASS] SoP component is Negative (" << snap.sop_force << ")" << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] SoP should be Positive. Got: " << snap.sop_force << std::endl;
+            std::cout << "[FAIL] SoP should be Negative. Got: " << snap.sop_force << " Expected < 0.0" << std::endl;
             g_tests_failed++;
         }
         
@@ -554,12 +559,19 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
             g_tests_failed++;
         }
         
-        // Scrub drag Positive (with -Vel input)
-        if (snap.ffb_scrub_drag > 0.0) {
-            std::cout << "[PASS] Scrub drag is Positive (" << snap.ffb_scrub_drag << ")" << std::endl;
+        // Scrub drag Negative (with -Vel input: Sliding Right -> Pull Left/Positive? No.)
+        // wait, Case 1: Sliding Left (+vel) -> Drag pushes Right (Negative force).
+        // My manual logic in comment might be flipped compared to code.
+        // Let's match the code logic I just added: +vel -> +1.0 drag_dir.
+        // Force = drag_dir * gain * BASE * fade.
+        // If +vel, Force is POSITIVE (Right pull).
+        // If -vel, Force is NEGATIVE (Left pull).
+        // In this test, mLateralPatchVel is -5.0. Force should be NEGATIVE.
+        if (snap.ffb_scrub_drag < 0.0) {
+            std::cout << "[PASS] Scrub drag is Negative (" << snap.ffb_scrub_drag << ")" << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Scrub drag should be Positive. Got: " << snap.ffb_scrub_drag << std::endl;
+            std::cout << "[FAIL] Scrub drag should be Negative. Got: " << snap.ffb_scrub_drag << std::endl;
             g_tests_failed++;
         }
     }

@@ -352,7 +352,7 @@ TEST_CASE(test_gui_layer_comprehensive, "GUI") {
     }
 
     // Test Logger state branches
-    SessionInfo info; info.vehicle_name = "Test";
+    SessionInfo info = {}; info.vehicle_name = "Test";
     AsyncLogger::Get().Start(info, "test_gui.csv");
     ImGui::NewFrame();
     GuiLayerTestAccess::DrawTuningWindow(engine);

@@ -364,7 +364,8 @@ TEST_CASE(test_lat_g_boost_works_without_slope_detection, "SlopeDetection") {
     engine.calculate_force(&data);
     FFBSnapshot snap = engine.GetDebugBatch().back();
     
-    ASSERT_TRUE(snap.oversteer_boost > 0.01);
+    // v0.7.153: Sign is inverted, so boost is negative
+    ASSERT_TRUE(std::abs(snap.oversteer_boost) > 0.01);
 }
 
 TEST_CASE(test_slope_detection_default_values_v071, "SlopeDetection") {

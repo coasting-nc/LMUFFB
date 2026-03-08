@@ -1292,7 +1292,9 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
         
         if (abs_lat_vel > SCRUB_VEL_THRESHOLD) {
             double fade = (std::min)(1.0, abs_lat_vel / SCRUB_FADE_RANGE); // Fade in over 0.5m/s
-            double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
+            // v0.4.19 FIX: Friction opposes motion. +X is Left.
+            // If sliding Left (+vel), friction pushes Right (+force).
+            double drag_dir = (avg_lat_vel > 0.0) ? 1.0 : -1.0;
             ctx.scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade;
         }
     }
