@@ -106,22 +106,36 @@ int main(int argc, char* argv[]) noexcept {
         }
 
         try {
-            if (std::filesystem::exists("test_logs")) {
-                std::filesystem::remove_all("test_logs");
+            // Clean up all directories starting with "test_logs"
+            for (const auto& entry : std::filesystem::directory_iterator(".")) {
+                if (entry.is_directory()) {
+                    std::string dirname = entry.path().filename().string();
+                    if (dirname.find("test_logs") == 0) {
+                        try {
+                            std::filesystem::remove_all(entry.path());
+                        } catch (...) {}
+                    }
+                }
             }
-            if (std::filesystem::exists("test_logs_v6")) {
-                std::filesystem::remove_all("test_logs_v6");
-            }
+            
             if (std::filesystem::exists("test_gui.csv")) {
                 std::filesystem::remove_all("test_gui.csv");
             }
-            // Remove any leftover csv logs in current dir and logs/ dir
+            // Remove any leftover csv, log, and ini artifacts in current dir and logs/ dir
             std::vector<std::string> dirs = {".", "logs"};
             for (const auto& dir : dirs) {
                 if (std::filesystem::exists(dir)) {
                     for (const auto& entry : std::filesystem::directory_iterator(dir)) {
-                        if (entry.is_regular_file() && entry.path().extension() == ".csv" &&
-                            entry.path().filename().string().find("lmuffb_log_") == 0) {
+                        if (!entry.is_regular_file()) continue;
+
+                        std::string filename = entry.path().filename().string();
+                        std::string ext = entry.path().extension().string();
+
+                        bool is_lmuffb_log = ((ext == ".csv" || ext == ".bin" || ext == ".log") && filename.find("lmuffb_") == 0);
+                        bool is_test_log = (ext == ".log" && filename.find("test_") == 0);
+                        bool is_test_ini = (ext == ".ini" && (filename.find("test_") == 0 || filename.find("tmp_") == 0));
+
+                        if (is_lmuffb_log || is_test_log || is_test_ini) {
                             std::filesystem::remove(entry.path());
                         }
                     }
@@ -133,6 +147,9 @@ int main(int argc, char* argv[]) noexcept {
         }
     };
 
+    // Ensure log file is closed before cleanup
+    Logger::Get().Close();
+    
     cleanup();
 
     return (total_failed > 0) ? 1 : 0;

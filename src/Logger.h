@@ -32,6 +32,15 @@ public:
         }
     }
 
+    void Close() {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_file.is_open()) {
+            m_file << "Logger Closed Explicitly.\n";
+            m_file.close();
+        }
+        m_initialized = false;
+    }
+
     void Log(const char* fmt, ...) {
         char buffer[2048];
         va_list args;
