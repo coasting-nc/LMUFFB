@@ -36,12 +36,26 @@ TEST_CASE(test_guid_string_conversion, "Logic") {
     // 2. Convert to String
     std::string str = DirectInputFFB::GuidToString(original);
     std::cout << "  Serialized: " << str << std::endl;
+    if (str.length() != 38) {
+        std::cout << "  [WARNING] Serialized string length mismatch: " << str.length() << " (expected 38)" << std::endl;
+    }
 
     // 3. Convert back to GUID
     GUID result = DirectInputFFB::StringToGuid(str);
 
     // 4. Verify Integrity
     bool match = (memcmp(&original, &result, sizeof(GUID)) == 0);
+    if (!match) {
+        std::cout << "  [FAIL] GUID Mismatch!" << std::endl;
+        std::cout << "  Original Data1: " << std::hex << original.Data1 << ", Result Data1: " << result.Data1 << std::dec << std::endl;
+        std::cout << "  Original Data2: " << std::hex << original.Data2 << ", Result Data2: " << result.Data2 << std::dec << std::endl;
+        std::cout << "  Original Data3: " << std::hex << original.Data3 << ", Result Data3: " << result.Data3 << std::dec << std::endl;
+        std::cout << "  Original Data4: ";
+        for(int i=0; i<8; i++) std::cout << std::hex << (int)original.Data4[i] << " ";
+        std::cout << "\n  Result Data4:   ";
+        for(int i=0; i<8; i++) std::cout << std::hex << (int)result.Data4[i] << " ";
+        std::cout << std::dec << std::endl;
+    }
     ASSERT_TRUE(match);
 
     // 5. Test Empty/Invalid

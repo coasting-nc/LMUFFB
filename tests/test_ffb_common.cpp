@@ -9,6 +9,7 @@ int g_tests_failed = 0;
 int g_test_cases_run = 0;
 int g_test_cases_passed = 0;
 int g_test_cases_failed = 0;
+std::vector<std::string> g_failure_log; // New: collect failure messages
 std::string g_current_test_name; // Tracks the currently-running test for assertion messages
 
 // --- Tag Filtering Globals ---
@@ -367,6 +368,14 @@ void Run() {
             std::cout << "  - " << name << std::endl;
         }
         std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+
+        if (!g_failure_log.empty()) {
+            std::cout << "\n=== DETAILED FAILURE LOG ===" << std::endl;
+            for (const auto& log : g_failure_log) {
+                std::cout << log << std::endl;
+            }
+            std::cout << "============================" << std::endl;
+        }
     }
 }
 

@@ -44,7 +44,7 @@ std::string DirectInputFFB::GuidToString(const GUID& guid) {
         guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
         guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]
 #else
-        "{%08X-%04X-%04X-%02X%02X-%02X%02X-%02X%02X-%02X%02X}",
+        "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
         (unsigned int)guid.Data1, (unsigned int)guid.Data2, (unsigned int)guid.Data3,
         (unsigned int)guid.Data4[0], (unsigned int)guid.Data4[1], (unsigned int)guid.Data4[2], (unsigned int)guid.Data4[3],
         (unsigned int)guid.Data4[4], (unsigned int)guid.Data4[5], (unsigned int)guid.Data4[6], (unsigned int)guid.Data4[7]
@@ -56,19 +56,17 @@ std::string DirectInputFFB::GuidToString(const GUID& guid) {
 GUID DirectInputFFB::StringToGuid(const std::string& str) {
     GUID guid = { 0 };
     if (str.empty()) return guid;
-    unsigned long p0;
-    unsigned short p1, p2;
-    unsigned int p3, p4, p5, p6, p7, p8, p9, p10;
-    int n = StringUtils::SafeScan(str.c_str(), "{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+    unsigned int p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10;
+    int n = StringUtils::SafeScan(str.c_str(), "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
         &p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8, &p9, &p10);
     if (n == 11) {
-        guid.Data1 = p0;
-        guid.Data2 = (unsigned short)p1;
-        guid.Data3 = (unsigned short)p2;
-        guid.Data4[0] = (unsigned char)p3; guid.Data4[1] = (unsigned char)p4;
-        guid.Data4[2] = (unsigned char)p5; guid.Data4[3] = (unsigned char)p6;
-        guid.Data4[4] = (unsigned char)p7; guid.Data4[5] = (unsigned char)p8;
-        guid.Data4[6] = (unsigned char)p9; guid.Data4[7] = (unsigned char)p10;
+        guid.Data1 = (uint32_t)p0;
+        guid.Data2 = (uint16_t)p1;
+        guid.Data3 = (uint16_t)p2;
+        guid.Data4[0] = (uint8_t)p3; guid.Data4[1] = (uint8_t)p4;
+        guid.Data4[2] = (uint8_t)p5; guid.Data4[3] = (uint8_t)p6;
+        guid.Data4[4] = (uint8_t)p7; guid.Data4[5] = (uint8_t)p8;
+        guid.Data4[6] = (uint8_t)p9; guid.Data4[7] = (uint8_t)p10;
     }
     return guid;
 }
@@ -188,8 +186,8 @@ std::vector<DeviceInfo> DirectInputFFB::EnumerateDevices() {
     if (!m_pDI) return devices;
     ((IDirectInput8*)m_pDI)->EnumDevices(DI8DEVCLASS_GAMECTRL, EnumJoysticksCallback, &devices, DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK);
 #else
-    DeviceInfo d1; d1.name = "Simucube 2 Pro (Mock)";
-    DeviceInfo d2; d2.name = "Logitech G29 (Mock)";
+    DeviceInfo d1; d1.guid = { 0 }; d1.name = "Simucube 2 Pro (Mock)";
+    DeviceInfo d2; d2.guid = { 0 }; d2.name = "Logitech G29 (Mock)";
     devices.push_back(d1);
     devices.push_back(d2);
 #endif

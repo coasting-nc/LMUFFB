@@ -28,6 +28,7 @@ extern int g_tests_failed;
 extern int g_test_cases_run;
 extern int g_test_cases_passed;
 extern int g_test_cases_failed;
+extern std::vector<std::string> g_failure_log; // New
 extern std::string g_current_test_name; // Set by Run() before each test
 
 // --- Assert Macros ---
@@ -37,8 +38,11 @@ extern std::string g_current_test_name; // Set by Run() before each test
     if (condition) { \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << g_current_test_name << ": " << #condition << " is false" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+        std::stringstream ss_fail; \
+        ss_fail << "[FAIL] " << g_current_test_name << ": " << #condition << " is false" \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+        std::cout << ss_fail.str() << std::endl; \
+        g_failure_log.push_back(ss_fail.str()); \
         g_tests_failed++; \
     }
 
@@ -46,8 +50,11 @@ extern std::string g_current_test_name; // Set by Run() before each test
     if (!(condition)) { \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << g_current_test_name << ": " << #condition << " is true (expected false)" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+        std::stringstream ss_fail; \
+        ss_fail << "[FAIL] " << g_current_test_name << ": " << #condition << " is true (expected false)" \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+        std::cout << ss_fail.str() << std::endl; \
+        g_failure_log.push_back(ss_fail.str()); \
         g_tests_failed++; \
     }
 
@@ -55,9 +62,12 @@ extern std::string g_current_test_name; // Set by Run() before each test
     if (std::abs((a) - (b)) < (epsilon)) { \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") not near " \
+        std::stringstream ss_fail; \
+        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") not near " \
                   << #b << " (" << (b) << ") within " << (epsilon) \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+        std::cout << ss_fail.str() << std::endl; \
+        g_failure_log.push_back(ss_fail.str()); \
         g_tests_failed++; \
     }
 
@@ -65,9 +75,12 @@ extern std::string g_current_test_name; // Set by Run() before each test
     if ((a) > (b)) { \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") <= " \
+        std::stringstream ss_fail; \
+        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") <= " \
                   << #b << " (" << (b) << ")" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+        std::cout << ss_fail.str() << std::endl; \
+        g_failure_log.push_back(ss_fail.str()); \
         g_tests_failed++; \
     }
 
@@ -75,9 +88,12 @@ extern std::string g_current_test_name; // Set by Run() before each test
     if ((a) == (b)) { \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") != " \
+        std::stringstream ss_fail; \
+        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") != " \
                   << #b << " (" << (b) << ")" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+        std::cout << ss_fail.str() << std::endl; \
+        g_failure_log.push_back(ss_fail.str()); \
         g_tests_failed++; \
     }
 
@@ -85,9 +101,12 @@ extern std::string g_current_test_name; // Set by Run() before each test
     if ((a) >= (b)) { \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") < " \
+        std::stringstream ss_fail; \
+        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") < " \
                   << #b << " (" << (b) << ")" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+        std::cout << ss_fail.str() << std::endl; \
+        g_failure_log.push_back(ss_fail.str()); \
         g_tests_failed++; \
     }
 
@@ -95,9 +114,12 @@ extern std::string g_current_test_name; // Set by Run() before each test
     if ((a) <= (b)) { \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") > " \
+        std::stringstream ss_fail; \
+        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") > " \
                   << #b << " (" << (b) << ")" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+        std::cout << ss_fail.str() << std::endl; \
+        g_failure_log.push_back(ss_fail.str()); \
         g_tests_failed++; \
     }
 
@@ -105,9 +127,12 @@ extern std::string g_current_test_name; // Set by Run() before each test
     if ((a) < (b)) { \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") >= " \
+        std::stringstream ss_fail; \
+        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") >= " \
                   << #b << " (" << (b) << ")" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+        std::cout << ss_fail.str() << std::endl; \
+        g_failure_log.push_back(ss_fail.str()); \
         g_tests_failed++; \
     }
 
@@ -115,9 +140,12 @@ extern std::string g_current_test_name; // Set by Run() before each test
     if (std::string(a) == std::string(b)) { \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (\"" << (a) << "\") != " \
+        std::stringstream ss_fail; \
+        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (\"" << (a) << "\") != " \
                   << #b << " (\"" << (b) << "\")" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+        std::cout << ss_fail.str() << std::endl; \
+        g_failure_log.push_back(ss_fail.str()); \
         g_tests_failed++; \
     }
 
@@ -125,9 +153,12 @@ extern std::string g_current_test_name; // Set by Run() before each test
     if ((a) != (b)) { \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") == " \
+        std::stringstream ss_fail; \
+        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") == " \
                   << #b << " (" << (b) << ")" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+        std::cout << ss_fail.str() << std::endl; \
+        g_failure_log.push_back(ss_fail.str()); \
         g_tests_failed++; \
     }
 
