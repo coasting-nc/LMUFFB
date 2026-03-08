@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.153] - 2026-03-08
+- **Refined FFB Gating for Safety & Utility (Issue #281)**:
+  - Modified the final FFB force suppression in `src/main.cpp` to gate based on `mControl != 0` (Non-player control) instead of `!IsPlayerActivelyDriving()`.
+  - This refinement allows **Soft Lock** to remain active and functional during **Pause** and in the **Garage**, ensuring steering rack safety even when not driving.
+  - Maintains the fix for FFB "punches" by ensuring all force is target-zeroed and smoothly slewed when the player is truly no longer in control (AI takeover, Replay, or Main Menu).
+- **Testing**:
+  - Updated `tests/test_issue_281_spikes.cpp` to verify that Soft Lock persists during pause/garage but is correctly suppressed during AI takeover.
+
 ## [0.7.152] - 2026-03-08
 - **Lateral Load Analysis in Log Analyser (Issue #293)**:
   - Augmented telemetry log header to include `Lateral Load Effect`, `SoP Scale`, and `SoP Smoothing` metadata for accurate offline signal decomposition.

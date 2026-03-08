@@ -6,8 +6,8 @@ namespace FFBEngineTests {
 /**
  * Test for Issue #281: Fix FFB Spikes on Driving State Transition
  *
- * Verifies that when IsPlayerActivelyDriving() is false (e.g., Paused),
- * any persistent forces (like Soft Lock) are correctly slewed to zero.
+ * Verifies that when player is not in control (mControl != 0),
+ * all FFB is zeroed, while Soft Lock remains active in the garage and pause.
  */
 void test_issue_281_transition_smoothing() {
     std::cout << "\nTest: Issue #281 Transition Smoothing" << std::endl;
@@ -34,50 +34,51 @@ void test_issue_281_transition_smoothing() {
     // is_driving = GameConnector::Get().IsPlayerActivelyDriving();
     // full_allowed = g_engine.IsFFBAllowed(...) && is_driving;
     // force = g_engine.calculate_force(..., full_allowed);
-    // [FIX] if (!is_driving) force = 0.0;
+    // [FIX] if (scoring.mControl != 0) force = 0.0;
     // force = g_engine.ApplySafetySlew(force, 0.0025, !full_allowed);
 
-    // Scenario 1: Active Driving (is_driving = true), but AI/Stationary (full_allowed = false)
+    // Scenario 1: Stationary in Garage / Paused (is_driving = false, mControl = ControlMode::PLAYER)
     // Soft Lock SHOULD be active.
     {
-        bool is_driving = true;
-        bool full_allowed = false; // e.g., AI driving or in garage stall
+        bool is_driving = false;
+        signed char mControl = static_cast<signed char>(ControlMode::PLAYER);
+        bool full_allowed = false; // Muted physics because we are in garage or paused
 
         double slewed_force = 0.0;
-        // Run for 10 frames to let the slew rate limiter reach the target
-        for (int i = 0; i < 10; i++) {
+        // Run for frames to let the slew rate limiter reach the target
+        for (int i = 0; i < 50; i++) {
             double force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, full_allowed);
-            if (!is_driving) force = 0.0;
+            if (mControl != static_cast<signed char>(ControlMode::PLAYER)) force = 0.0;
             slewed_force = engine.ApplySafetySlew(force, 0.0025, !full_allowed);
         }
 
-        std::cout << "  Active Driving, Muted Physics (Garage/AI) - Force (expect Soft Lock): " << slewed_force << std::endl;
-        // Soft Lock at 1.1 with stiffness 20 and 20Nm base should be significant.
-        // It's capped by -1.0 to 1.0. At 1.1 steer, it should be -1.0.
+        std::cout << "  Garage/Paused (mControl=PLAYER) - Force (expect Soft Lock): " << slewed_force << std::endl;
+        // Soft Lock should be active (~ -1.0)
         ASSERT_LT(slewed_force, -0.9);
     }
 
-    // Scenario 2: Paused (is_driving = false) - WITH FIX IN main.cpp
-    // This test simulates the actual logic now present in main.cpp.
+    // Scenario 2: AI Takeover / Transition to Menu (mControl != PLAYER) - WITH IMPROVED FIX
     {
-        bool is_driving = false; // Paused
+        bool is_driving = false;
+        signed char mControl = static_cast<signed char>(ControlMode::AI);
         bool full_allowed = false;
 
-        // Run many frames of "Paused" logic WITH the fix
-        double slewed_force = 0.0;
+        // Run many frames to verify it slews to zero
+        double slewed_force = -1.0; // Start with high force from previous state
+        FFBEngineTestAccess::SetLastOutputForce(engine, -1.0);
+
         for (int i = 0; i < 50; i++) {
             double force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, full_allowed);
             // Fix logic as in main.cpp:
-            if (!is_driving) force = 0.0;
+            if (mControl != static_cast<signed char>(ControlMode::PLAYER)) force = 0.0;
             slewed_force = engine.ApplySafetySlew(force, 0.0025, true);
         }
 
-        std::cout << "  Paused (With Fix) - Final Slewed Force: " << slewed_force << std::endl;
+        std::cout << "  AI Takeover (mControl=AI) - Final Slewed Force: " << slewed_force << std::endl;
 
-        // With the fix, the force reaches zero.
+        // With the fix, the force reaches zero despite Soft Lock wanting to push.
         ASSERT_NEAR(slewed_force, 0.0, 0.01);
     }
-
 }
 
 AutoRegister reg_issue_281_spikes("Issue #281 Transition Spikes", "Issue281", {"Physics", "Regression"}, test_issue_281_transition_smoothing);

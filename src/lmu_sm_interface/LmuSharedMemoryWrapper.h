@@ -17,5 +17,14 @@
 
 #include "InternalsPluginWrapper.h"
 
+// Control Mode enumeration for VehicleScoringInfoV01::mControl
+enum class ControlMode : signed char {
+    NONE    = -1,
+    PLAYER  =  0,
+    AI      =  1,
+    REMOTE  =  2,
+    REPLAY  =  3
+};
+
 // Include the official vendor file
 #include "SharedMemoryInterface.hpp"
