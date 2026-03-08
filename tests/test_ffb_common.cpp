@@ -5,7 +5,7 @@ namespace FFBEngineTests {
 
 // --- Global Test Counters ---
 int g_tests_passed = 0;
-int g_tests_failed = 0;
+int g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO = 0;
 int g_test_cases_run = 0;
 int g_test_cases_passed = 0;
 int g_test_cases_failed = 0;
@@ -216,12 +216,12 @@ void VerifyOrientation(FFBEngine& engine, const OrientationScenario& scenario, f
     data.mWheel[1].mTireLoad = scenario.fr_load;
     for (int i = 0; i < 60; i++) engine.calculate_force(&data);
     auto snapshots = engine.GetDebugBatch();
-    if (snapshots.empty()) { g_tests_failed++; return; }
+    if (snapshots.empty()) { FAIL_TEST("No snapshots available in VerifyOrientation"); return; }
     const auto& snap = snapshots.back();
     bool sop_ok = (expected_sop_sign > 0) ? (snap.sop_force > 0.001f) : (snap.sop_force < -0.001f);
-    if (sop_ok) g_tests_passed++; else g_tests_failed++;
+    if (sop_ok) g_tests_passed++; else { FAIL_TEST("SoP orientation mismatch in scenario: " << scenario.description); }
     bool total_ok = (expected_total_ffb_sign > 0) ? (snap.total_output > 0.001f) : (snap.total_output < -0.001f);
-    if (total_ok) g_tests_passed++; else g_tests_failed++;
+    if (total_ok) g_tests_passed++; else { FAIL_TEST("Total FFB orientation mismatch in scenario: " << scenario.description); }
 }
 
 bool IsInLog(const std::string& filename, const std::string& pattern) {
@@ -329,27 +329,26 @@ void Run() {
             }
             
             try {
-                int initial_fails = g_tests_failed;
+                int initial_fails = g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO;
                 g_current_test_name = test.name; // Make test name available to ASSERT macros
                 test.func();
 
                 g_test_cases_run++;
-                if (g_tests_failed > initial_fails) {
+                if (g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO > initial_fails) {
                     g_test_cases_failed++;
                     failed_test_names.push_back(test.name);
-                    FAIL_TEST("" << test.name << " ("
-                              << (g_tests_failed - initial_fails) << " assertion(s) failed)" << std::endl;
+                    FAIL_TEST(test.name << " ("
+                              << (g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO - initial_fails) << " assertion(s) failed)");
                 } else {
                     g_test_cases_passed++;
                 }
             } catch (const std::exception& e) {
-                std::cerr << "\n>>> [FAIL] " << test.name << " threw exception: " << e.what() << "\n");
+                FAIL_TEST(test.name << " threw exception: " << e.what());
                 g_test_cases_run++;
                 g_test_cases_failed++;
                 failed_test_names.push_back(test.name);
             } catch (...) {
-                std::cerr << "\n>>> [FAIL] " << test.name << " threw unknown exception\n" << std::endl;
-                g_tests_failed++;
+                FAIL_TEST(test.name << " threw unknown exception");
                 g_test_cases_run++;
                 g_test_cases_failed++;
                 failed_test_names.push_back(test.name);
@@ -359,7 +358,7 @@ void Run() {
 
     std::cout << "\n--- Physics Engine Test Summary ---" << std::endl;
     std::cout << "Test Cases: " << g_test_cases_passed << "/" << g_test_cases_run << " passed" << std::endl;
-    std::cout << "Assertions: " << g_tests_passed << " passed, " << g_tests_failed << " failed" << std::endl;
+    std::cout << "Assertions: " << g_tests_passed << " passed, " << g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO << " failed" << std::endl;
 
     if (!failed_test_names.empty()) {
         std::cout << "\n!!! list of FAILED test cases !!!" << std::endl;

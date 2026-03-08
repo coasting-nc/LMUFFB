@@ -187,7 +187,7 @@ TEST_CASE(test_preset_initialization, "Config") {
     // Ã¢Å¡Â Ã¯Â¸  IMPORTANT: Loop count (14) must match preset_names array size above!
     for (int i = 0; i < 14; i++) {
         if (i >= Config::presets.size()) {
-            FAIL_TEST("Preset " << i << " (" << preset_names[i] << ") not found!" << std::endl;
+            FAIL_TEST("Preset " << i << " (" << preset_names[i] << ") not found!");
             all_passed = false;
             continue;
         }
@@ -282,7 +282,7 @@ TEST_CASE(test_preset_initialization, "Config") {
             std::cout << "[PASS] " << preset.name << ": fields verified correctly" << (is_specialized_t300 ? " (Including v0.6.30 optimizations)" : "") << std::endl;
             g_tests_passed++;
         } else {
-            all_passed = false);
+            all_passed = false;
         }
     }
     
@@ -403,7 +403,7 @@ TEST_CASE(test_config_safety_clamping, "Config") {
         std::cout << "[PASS] All legacy high-gain values correctly clamped to safe maximums." << std::endl;
         g_tests_passed++;
     } else {
-        g_tests_failed++;
+        FAIL_TEST("Some legacy high-gain values not correctly clamped.");
     }
     
     // Clean up test file

@@ -69,7 +69,7 @@ TEST_CASE(test_speed_gate_uses_smoothstep, "SpeedGate") {
     } else {
         std::string err = "[FAIL] test_speed_gate_uses_smoothstep: Force at 50% is zero.";
         std::cout << err << std::endl; g_failure_log.push_back(err);
-        g_tests_failed++;
+        FAIL_TEST("Manual failure increment");
     }
 }
 
@@ -98,9 +98,7 @@ TEST_CASE(test_speed_gate_custom_thresholds, "SpeedGate") {
         std::cout << "[PASS] Default upper threshold is 5.0 m/s (18 km/h)." << std::endl;
         g_tests_passed++;
     } else {
-        std::stringstream ss; ss << "[FAIL] test_speed_gate_custom_thresholds: Default upper threshold is " << engine.m_speed_gate_upper;
-        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
-        g_tests_failed++;
+        FAIL_TEST("Default upper threshold is " << engine.m_speed_gate_upper);
     }
 
     // Try custom thresholds

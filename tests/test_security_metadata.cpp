@@ -12,17 +12,8 @@
 #include "../src/Version.h"
 #include "test_ffb_common.h"
 
-// Define helper macro for assertions
-#ifndef ASSERT_TRUE
-#define ASSERT_TRUE(condition) \
-    if ((condition)) { \
-        std::cout << "[PASS] " << #condition << std::endl; \
-        g_tests_passed++; \
-    } else { \
-        FAIL_TEST("" << #condition << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
-        g_tests_failed++; \
-    }
-#endif
+// Use common macros from test_ffb_common.h
+
 
 #ifdef _WIN32
 // Link version.lib for Version Info functions
@@ -37,7 +28,7 @@ TEST_CASE(test_executable_metadata, "Security") {
     // 1. Get current executable path
     char exePath[MAX_PATH];
     if (GetModuleFileNameA(NULL, exePath, MAX_PATH) == 0) {
-        std::cout << "[FAIL] GetModuleFileNameA failed: " << GetLastError());
+        FAIL_TEST("GetModuleFileNameA failed: " << GetLastError());
         return;
     }
     std::cout << "  Analyzing: " << exePath << std::endl;

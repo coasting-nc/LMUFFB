@@ -545,20 +545,12 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     if (force_valid < -0.1) {
         std::cout << "[PASS] Valid kick detected (force = " << force_valid << ")." << std::endl;
         g_tests_passed++;
-    } else {
-        FAIL_TEST("Valid kick not detected correctly. Got " << force_valid << "." << std::endl;
-        std::cout << "DEBUG: m_yaw_accel_smoothed (via TestAccess): " << FFBEngineTestAccess::GetYawAccelSmoothed(engine) << std::endl;
-        std::cout << "DEBUG: m_yaw_kick_threshold: " << engine.m_yaw_kick_threshold << std::endl;
-        std::cout << "DEBUG: m_sop_yaw_gain: " << engine.m_sop_yaw_gain << std::endl;
-        
-        auto batch = engine.GetDebugBatch();
-        if (!batch.empty()) {
-            std::cout << "DEBUG: Snapshot ffb_yaw_kick: " << batch.back().ffb_yaw_kick << std::endl;
         } else {
-            std::cout << "DEBUG: Snapshot batch is EMPTY!" << std::endl;
+            FAIL_TEST("Valid kick not detected correctly. Got " << force_valid << "." << std::endl
+                << "DEBUG: m_yaw_accel_smoothed: " << FFBEngineTestAccess::GetYawAccelSmoothed(engine) << std::endl
+                << "DEBUG: m_yaw_kick_threshold: " << engine.m_yaw_kick_threshold << std::endl
+                << "DEBUG: m_sop_yaw_gain: " << engine.m_sop_yaw_gain);
         }
-        g_tests_failed++;
-    }
 }
 
 TEST_CASE(test_yaw_kick_threshold, "YawGyro") {
@@ -733,7 +725,7 @@ TEST_CASE(test_gyro_stability, "YawGyro") {
          std::cout << "[PASS] Gyro stable with negative smoothing." << std::endl;
          g_tests_passed++;
     } else {
-         std::cout << "[FAIL] Gyro exploded!");
+         FAIL_TEST("Gyro exploded!");
     }
 }
 

@@ -190,7 +190,7 @@ TEST_CASE(test_zero_effects_leakage, "Internal") {
         std::cout << "[PASS] Zero leakage verified (Force = 0.0)." << std::endl;
         g_tests_passed++;
     } else {
-        FAIL_TEST("Ghost Force detected! Output: " << force << std::endl;
+        FAIL_TEST("Ghost Force detected! Output: " << force);
         // Debug components
         auto batch = engine.GetDebugBatch();
         if (!batch.empty()) {
@@ -200,7 +200,7 @@ TEST_CASE(test_zero_effects_leakage, "Internal") {
                       << " Slide=" << s.texture_slide 
                       << " Bot=" << s.texture_bottoming << std::endl;
         }
-        g_tests_failed++;
+        FAIL_TEST("Manual failure increment");
     }
 }
 
@@ -233,7 +233,7 @@ TEST_CASE(test_snapshot_data_v049, "Internal") {
     // Verify Snapshot
     auto batch = engine.GetDebugBatch();
     if (batch.empty()) {
-        std::cout << "[FAIL] No snapshot.");
+        FAIL_TEST("No snapshot.");
         return;
     }
     
@@ -317,14 +317,10 @@ TEST_CASE(test_refactor_snapshot_sop, "Internal") {
             std::cout << "[PASS] Snapshot values correct (SoP: " << snap.sop_force << ", Boost: " << snap.oversteer_boost << ")" << std::endl;
             g_tests_passed++;
         } else {
-            std::stringstream ss; ss << "[FAIL] test_refactor_snapshot_sop: Snapshot logic error. SoP: " << snap.sop_force << " (Exp: 10.0) Boost: " << snap.oversteer_boost << " (Exp: 10.0)";
-            std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
-            g_tests_failed++;
+            FAIL_TEST("Snapshot logic error. SoP: " << snap.sop_force << " (Exp: 10.0) Boost: " << snap.oversteer_boost << " (Exp: 10.0)");
         }
     } else {
-        std::string err = "[FAIL] test_refactor_snapshot_sop: No snapshot.";
-        std::cout << err << std::endl; g_failure_log.push_back(err);
-        g_tests_failed++;
+        FAIL_TEST("No snapshot.");
     }
 }
 
@@ -351,9 +347,7 @@ void FFBEngineTestAccess::test_unit_sop_lateral() {
         std::cout << "[PASS] calculate_sop_lateral base logic." << std::endl;
         g_tests_passed++;
     } else {
-        std::stringstream ss; ss << "[FAIL] test_unit_sop_lateral: calculate_sop_lateral failed. Got " << ctx.sop_base_force;
-        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
-        g_tests_failed++;
+        FAIL_TEST("calculate_sop_lateral failed. Got " << ctx.sop_base_force);
     }
 }
 
@@ -378,9 +372,7 @@ void FFBEngineTestAccess::test_unit_gyro_damping() {
         std::cout << "[PASS] calculate_gyro_damping logic." << std::endl;
         g_tests_passed++;
     } else {
-        std::stringstream ss; ss << "[FAIL] test_unit_gyro_damping: calculate_gyro_damping failed. Got " << ctx.gyro_force;
-        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
-        g_tests_failed++;
+        FAIL_TEST("calculate_gyro_damping failed. Got " << ctx.gyro_force);
     }
 }
 
@@ -407,7 +399,7 @@ void FFBEngineTestAccess::test_unit_abs_pulse() {
     } else {
         std::string err = "[FAIL] test_unit_abs_pulse: calculate_abs_pulse failed.";
         std::cout << err << std::endl; g_failure_log.push_back(err);
-        g_tests_failed++;
+        FAIL_TEST("Manual failure increment");
     }
 }
 

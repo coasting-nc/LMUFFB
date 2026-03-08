@@ -53,7 +53,7 @@ TEST_CASE(test_progressive_lockup, "LockupBraking") {
          // Freq = 10 + (20 * 1.5) = 40.
          // Dt = 0.01.
          // Accumulator += 40 * 0.01 * 6.28 = 2.5.
-         FAIL_TEST("Phase stuck at 0. Check data inputs." << std::endl;
+         FAIL_TEST("Phase stuck at 0. Check data inputs.");
     }
 
     ASSERT_TRUE(std::abs(force_low) > 0.00001);
@@ -105,7 +105,7 @@ TEST_CASE(test_predictive_lockup_v060, "LockupBraking") {
         std::cout << "[PASS] Predictive trigger activated at 10% slip (Phase: " << engine.m_lockup_phase << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Predictive trigger failed. Phase: " << engine.m_lockup_phase << " Accel: " << (data.mWheel[0].mRotation - prev_rot)/0.01);
+        FAIL_TEST("Predictive trigger failed. Phase: " << engine.m_lockup_phase << " Accel: " << (data.mWheel[0].mRotation - prev_rot)/0.01);
     }
 }
 

@@ -80,11 +80,10 @@ TEST_CASE(test_gui_tooltips_presence_static, "GUI") {
         std::cout << "[PASS] All identified widgets have non-empty tooltips." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Missing tooltips found in source code:" << std::endl;
-        for (const auto& m : missing) {
-            std::cout << "  - " << m << std::endl;
-        }
-        g_tests_failed++;
+        std::stringstream ss_missing;
+        ss_missing << "Missing tooltips found in source code:";
+        for (const auto& m : missing) ss_missing << "\n  - " << m;
+        FAIL_TEST(ss_missing.str());
     }
 }
 

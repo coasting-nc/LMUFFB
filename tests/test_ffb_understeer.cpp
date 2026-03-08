@@ -153,9 +153,7 @@ TEST_CASE(test_preset_understeer_only_isolation, "Understeer") {
     }
     
     if (preset_idx == -1) {
-        std::stringstream ss; ss << "[FAIL] test_preset_understeer_only_isolation: 'Test: Understeer Only' preset not found";
-        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
-        g_tests_failed++;
+        FAIL_TEST("'Test: Understeer Only' preset not found");
         return;
     }
     
@@ -205,21 +203,21 @@ TEST_CASE(test_all_presets_non_negative_speed_gate, "Understeer") {
         // Check lower threshold
         if (p.speed_gate_lower < 0.0f) {
             FAIL_TEST("Preset '" << p.name << "' has negative speed_gate_lower: " 
-                      << p.speed_gate_lower << " m/s (" << (p.speed_gate_lower * 3.6f) << " km/h)" << std::endl;
+                      << p.speed_gate_lower << " m/s (" << (p.speed_gate_lower * 3.6f) << " km/h)");
             all_valid = false;
         }
         
         // Check upper threshold
         if (p.speed_gate_upper < 0.0f) {
-            std::cout << "[FAIL] Preset '" << p.name << "' has negative speed_gate_upper: " 
-                      << p.speed_gate_upper << " m/s (" << (p.speed_gate_upper * 3.6f) << " km/h)" << std::endl;
+            FAIL_TEST("Preset '" << p.name << "' has negative speed_gate_upper: " 
+                      << p.speed_gate_upper << " m/s (" << (p.speed_gate_upper * 3.6f) << " km/h)");
             all_valid = false;
         }
         
         // Verify upper >= lower (sanity check)
         if (p.speed_gate_upper < p.speed_gate_lower) {
-            std::cout << "[FAIL] Preset '" << p.name << "' has speed_gate_upper < speed_gate_lower: " 
-                      << p.speed_gate_upper << " < " << p.speed_gate_lower << std::endl;
+            FAIL_TEST("Preset '" << p.name << "' has speed_gate_upper < speed_gate_lower: " 
+                      << p.speed_gate_upper << " < " << p.speed_gate_lower);
             all_valid = false;
         }
     }
@@ -228,8 +226,7 @@ TEST_CASE(test_all_presets_non_negative_speed_gate, "Understeer") {
         std::cout << "[PASS] All " << Config::presets.size() << " presets have valid non-negative speed gate values" << std::endl;
         g_tests_passed++;
     } else {
-        std::string err = "[FAIL] test_all_presets_non_negative_speed_gate: One or more presets have invalid speed gate values";
-        std::cout << err << std::endl; g_failure_log.push_back(err));
+        FAIL_TEST("One or more presets have invalid speed gate values");
     }
 }
 

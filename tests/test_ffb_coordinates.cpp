@@ -52,9 +52,7 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
         std::cout << "[PASS] SoP pulls LEFT in right turn (force: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::stringstream ss; ss << "[FAIL] test_coordinate_sop_inversion: SoP should pull LEFT (Positive). Got: " << force << " Expected > 0.4";
-        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
-        g_tests_failed++;
+        FAIL_TEST("SoP should pull LEFT (Positive). Got: " << force << " Expected > 0.4");
     }
     
     // Test Case 2: Left Turn (Body feels right force)
@@ -73,9 +71,7 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
         std::cout << "[PASS] SoP pulls RIGHT in left turn (force: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::stringstream ss; ss << "[FAIL] test_coordinate_sop_inversion: SoP should pull RIGHT (Negative). Got: " << force << " Expected < -0.4";
-        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
-        g_tests_failed++;
+        FAIL_TEST("SoP should pull RIGHT (Negative). Got: " << force << " Expected < -0.4");
     }
 }
 
@@ -138,13 +134,12 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
         std::cout << "[PASS] Rear torque provides counter-steer LEFT (force: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        FAIL_TEST("Rear torque should counter-steer LEFT. Got: " << force << " Expected < -0.2" << std::endl;
-        auto batch = engine.GetDebugBatch();
-        if(!batch.empty()) {
-             std::cout << "DEBUG: Raw Slip Angle: " << batch.back().raw_rear_slip_angle << std::endl;
-             std::cout << "DEBUG: Rear Torque: " << batch.back().ffb_rear_torque << std::endl;
+        FAIL_TEST("Rear torque should counter-steer LEFT. Got: " << force << " Expected < -0.2");
+        auto debug = engine.GetDebugBatch();
+        if (!debug.empty()) {
+            std::cout << "     Raw Slip Angle: " << debug.back().raw_rear_slip_angle << std::endl;
+            std::cout << "     Rear Torque: " << debug.back().ffb_rear_torque << std::endl;
         }
-        g_tests_failed++;
     }
     
     // Test Case 2: Rear sliding RIGHT
@@ -175,7 +170,7 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
              std::cout << "DEBUG: Raw Slip Angle: " << batch.back().raw_rear_slip_angle << std::endl;
              std::cout << "DEBUG: Rear Torque: " << batch.back().ffb_rear_torque << std::endl;
         }
-        g_tests_failed++;
+        FAIL_TEST("Manual failure increment");
     }
 }
 
@@ -223,7 +218,7 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
         std::cout << "[PASS] Scrub drag opposes left slide (Torque Left: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Scrub drag direction wrong. Got: " << force << " Expected < -0.2");
+        FAIL_TEST("Scrub drag direction wrong. Got: " << force << " Expected < -0.2");
     }
     
     // Test Case 2: Sliding RIGHT
@@ -418,29 +413,25 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     
     // 1. SoP (Should be Positive)
     if (snap.sop_force < 0.1) {
-        std::stringstream ss; ss << "[FAIL] test_coordinate_all_effects_alignment: SoP fighting alignment! Val: " << snap.sop_force;
-        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
+        FAIL_TEST("SoP fighting alignment! Val: " << snap.sop_force);
         all_aligned = false;
     }
     
     // 2. Rear Torque (Should be Positive)
     if (snap.ffb_rear_torque < 0.1) {
-        std::stringstream ss; ss << "[FAIL] test_coordinate_all_effects_alignment: Rear Torque fighting alignment! Val: " << snap.ffb_rear_torque;
-        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
+        FAIL_TEST("Rear Torque fighting alignment! Val: " << snap.ffb_rear_torque);
         all_aligned = false;
     }
     
     // 3. Yaw Kick (Should be Negative)
     if (snap.ffb_yaw_kick > -0.1) {
-        std::stringstream ss; ss << "[FAIL] test_coordinate_all_effects_alignment: Yaw Kick fighting alignment! Val: " << snap.ffb_yaw_kick;
-        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
+        FAIL_TEST("Yaw Kick fighting alignment! Val: " << snap.ffb_yaw_kick);
         all_aligned = false;
     }
     
     // 4. Scrub Drag (Should be Negative)
     if (snap.ffb_scrub_drag > -0.01) {
-        std::stringstream ss; ss << "[FAIL] test_coordinate_all_effects_alignment: Scrub Drag fighting alignment! Val: " << snap.ffb_scrub_drag;
-        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
+        FAIL_TEST("Scrub Drag fighting alignment! Val: " << snap.ffb_scrub_drag);
         all_aligned = false;
     }
     
@@ -448,7 +439,7 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
         std::cout << "[PASS] Effects Component Check Passed." << std::endl;
         g_tests_passed++;
     } else {
-        g_tests_failed++;
+        FAIL_TEST("Manual failure increment");
     }
 }
 
@@ -525,9 +516,7 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
         std::cout << "[PASS] Combined forces are stabilizing (net left pull: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::stringstream ss; ss << "[FAIL] test_regression_no_positive_feedback: Combined forces should pull LEFT (Positive). Got: " << force;
-        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
-        g_tests_failed++;
+        FAIL_TEST("Combined forces should pull LEFT (Positive). Got: " << force);
     }
     
     // Verify individual components via snapshot
@@ -540,9 +529,7 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
             std::cout << "[PASS] SoP component is Positive (" << snap.sop_force << ")" << std::endl;
             g_tests_passed++;
         } else {
-            std::stringstream ss; ss << "[FAIL] test_regression_no_positive_feedback: SoP should be Positive. Got: " << snap.sop_force;
-            std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
-            g_tests_failed++;
+            FAIL_TEST("SoP should be Positive. Got: " << snap.sop_force);
         }
         
         // Rear torque should be Positive (with -Vel aligned input)
@@ -550,9 +537,7 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
             std::cout << "[PASS] Rear torque is Positive (" << snap.ffb_rear_torque << ")" << std::endl;
             g_tests_passed++;
         } else {
-            std::stringstream ss; ss << "[FAIL] test_regression_no_positive_feedback: Rear torque should be Positive. Got: " << snap.ffb_rear_torque;
-            std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
-            g_tests_failed++;
+            FAIL_TEST("Rear torque should be Positive. Got: " << snap.ffb_rear_torque);
         }
         
         // Scrub drag Positive (with -Vel input)
@@ -560,9 +545,7 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
             std::cout << "[PASS] Scrub drag is Positive (" << snap.ffb_scrub_drag << ")" << std::endl;
             g_tests_passed++;
         } else {
-            std::stringstream ss; ss << "[FAIL] test_regression_no_positive_feedback: Scrub drag should be Positive. Got: " << snap.ffb_scrub_drag;
-            std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
-            g_tests_failed++;
+            FAIL_TEST("Scrub drag should be Positive. Got: " << snap.ffb_scrub_drag);
         }
     }
 }
@@ -632,7 +615,7 @@ TEST_CASE(test_regression_phase_explosion, "Coordinates") {
         std::cout << "[PASS] All oscillator phases wrapped correctly during stutter." << std::endl;
         g_tests_passed++;
     } else {
-        g_tests_failed++;
+        FAIL_TEST("Manual failure increment");
     }
 }
 

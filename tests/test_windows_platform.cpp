@@ -32,8 +32,7 @@ namespace FFBEngineTests {
         std::cout << "[PASS] " << #a << " == " << #b << std::endl; \
         g_tests_passed++; \
     } else { \
-        FAIL_TEST("" << #a << " (" << a << ") != " << #b << " (" << b << ")" << std::endl; \
-        g_tests_failed++; \
+        FAIL_TEST("" << #a << " (" << a << ") != " << #b << " (" << b << ")"); \
     }
 #endif
 
@@ -139,7 +138,7 @@ TEST_CASE(test_main_exe_icon, "Windows") {
             std::cout << "  [PASS] IDI_ICON1 (" << IDI_ICON1 << ") successfully found inside " << main_exe << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "  [FAIL] IDI_ICON1 missing from " << main_exe << "! CMake did not link res.rc.");
+            FAIL_TEST("IDI_ICON1 missing from " << main_exe << "! CMake did not link res.rc.");
         }
         FreeLibrary(hMod);
     } else {
@@ -198,7 +197,7 @@ TEST_CASE(test_icon_presence, "Windows") {
                 } else {
                     FAIL_TEST("Invalid ICO header: " 
                               << std::hex << (int)header[0] << " " << (int)header[1] << " " 
-                              << (int)header[2] << " " << (int)header[3] << std::dec << std::endl;
+                              << (int)header[2] << " " << (int)header[3] << std::dec);
                     found = false; // Invalidate match if header is wrong
                 }
             } else {
@@ -212,9 +211,10 @@ TEST_CASE(test_icon_presence, "Windows") {
     if (found) {
         g_tests_passed++;
     } else {
-        std::cout << "  [FAIL] lmuffb.ico NOT found in build artifacts." << std::endl;
-        std::cout << "         Checked paths relative to executable:" << std::endl;
-        for (const auto& path : candidates) std::cout << "         - " << path);
+        std::stringstream ss_paths;
+        ss_paths << "lmuffb.ico NOT found in build artifacts. Checked paths relative to executable:";
+        for (const auto& path : candidates) ss_paths << "\n - " << path;
+        FAIL_TEST(ss_paths.str());
     }
 }
 

@@ -83,9 +83,7 @@ TEST_CASE(test_road_texture_teleport, "RoadTexture") {
         std::cout << "[PASS] Teleport spike clamped." << std::endl;
         g_tests_passed++;
     } else {
-        std::stringstream ss; ss << "[FAIL] test_road_texture_teleport: Teleport spike unclamped? Got " << force << " Expected 0.025.";
-        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
-        g_tests_failed++;
+        FAIL_TEST("Teleport spike unclamped? Got " << force << " Expected 0.025.");
     }
 }
 
@@ -148,7 +146,7 @@ TEST_CASE(test_suspension_bottoming, "RoadTexture") {
     } else {
         std::string err = "[FAIL] test_suspension_bottoming: Bottoming effect zero. Phase alignment?";
         std::cout << err << std::endl; g_failure_log.push_back(err);
-        g_tests_failed++;
+        FAIL_TEST("Manual failure increment");
     }
 }
 
@@ -191,7 +189,7 @@ TEST_CASE(test_universal_bottoming, "RoadTexture") {
     } else {
         std::string err = "[FAIL] test_universal_bottoming: Bottoming Method A (Scrape) Silent.";
         std::cout << err << std::endl; g_failure_log.push_back(err);
-        g_tests_failed++;
+        FAIL_TEST("Manual failure increment");
     }
     
     // Method B: Suspension Deflection (Spike) - Using 10000N logic from other test
@@ -216,7 +214,7 @@ TEST_CASE(test_universal_bottoming, "RoadTexture") {
     } else {
         std::string err = "[FAIL] test_universal_bottoming: Bottoming Method B (Spike) Silent.";
         std::cout << err << std::endl; g_failure_log.push_back(err);
-        g_tests_failed++;
+        FAIL_TEST("Manual failure increment");
     }
 }
 
@@ -278,9 +276,7 @@ TEST_CASE(test_scrub_drag_fade, "RoadTexture") {
         std::cout << "[PASS] Scrub drag faded correctly (50%)." << std::endl;
         g_tests_passed++;
     } else {
-        std::stringstream ss; ss << "[FAIL] test_scrub_drag_fade: Scrub drag fade incorrect. Got " << force << " Expected 0.0625.";
-        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
-        g_tests_failed++;
+        FAIL_TEST("Scrub drag fade incorrect. Got " << force << " Expected 0.0625.");
     }
 }
 

@@ -412,7 +412,7 @@ TEST_CASE(test_stress_stability, "CorePhysics") {
         double force = engine.calculate_force(&data);
         
         if (std::isnan(force) || std::isinf(force)) {
-            FAIL_TEST("Iteration " << i << " produced NaN/Inf!" << std::endl;
+            FAIL_TEST("Iteration " << i << " produced NaN/Inf!");
             failed = true;
             break;
         }
@@ -428,7 +428,7 @@ TEST_CASE(test_stress_stability, "CorePhysics") {
         std::cout << "[PASS] Survived 1000 iterations of random input." << std::endl;
         g_tests_passed++;
     } else {
-        g_tests_failed++;
+        FAIL_TEST("Manual failure increment");
     }
 }
 
@@ -463,9 +463,7 @@ TEST_CASE(test_smoothing_step_response, "CorePhysics") {
         std::cout << "[PASS] Smoothing Step 1 correct (" << force1 << ", small positive)." << std::endl;
         g_tests_passed++;
     } else {
-        std::stringstream ss; ss << "[FAIL] test_smoothing_step_response: Smoothing Step 1 mismatch. Got " << force1 << " Expected ~0.0024";
-        std::cout << ss.str() << std::endl;
-        g_failure_log.push_back(ss.str()));
+        FAIL_TEST("Smoothing Step 1 mismatch. Got " << force1 << " Expected ~0.0024");
     }
     
     for (int i = 0; i < 100; i++) {
@@ -476,10 +474,7 @@ TEST_CASE(test_smoothing_step_response, "CorePhysics") {
         std::cout << "[PASS] Smoothing settled to steady-state (" << force1 << ", near 0.05)." << std::endl;
         g_tests_passed++;
     } else {
-        std::stringstream ss; ss << "[FAIL] test_smoothing_step_response: Smoothing did not settle. Value: " << force1;
-        std::cout << ss.str() << std::endl;
-        g_failure_log.push_back(ss.str());
-        g_tests_failed++;
+        FAIL_TEST("Smoothing did not settle. Value: " << force1);
     }
 }
 

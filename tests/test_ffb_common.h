@@ -24,7 +24,7 @@ namespace FFBEngineTests {
 
 // --- Test Counters (defined in test_ffb_common.cpp) ---
 extern int g_tests_passed;
-extern int g_tests_failed;
+extern int g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO;
 extern int g_test_cases_run;
 extern int g_test_cases_passed;
 extern int g_test_cases_failed;
@@ -38,138 +38,158 @@ extern std::string g_current_test_name; // Set by Run() before each test
     ss_fail << "[FAIL] " << g_current_test_name << ": " << msg; \
     std::cout << ss_fail.str() << std::endl; \
     g_failure_log.push_back(ss_fail.str()); \
-    g_tests_failed++; \
+    g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
 } while(0)
 
 // Passing assertions are silent. Failing assertions print [FAIL] with the
 // current test name, condition details, and source location.
 #define ASSERT_TRUE(condition) \
-    if (condition) { \
-        g_tests_passed++; \
-    } else { \
-        std::stringstream ss_fail; \
-        ss_fail << "[FAIL] " << g_current_test_name << ": " << #condition << " is false" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
-        std::cout << ss_fail.str() << std::endl; \
-        g_failure_log.push_back(ss_fail.str()); \
-        g_tests_failed++; \
-    }
+do { \
+        if (condition) { \
+            g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << g_current_test_name << ": " << #condition << " is false" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            g_failure_log.push_back(ss_fail.str()); \
+            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_FALSE(condition) \
-    if (!(condition)) { \
-        g_tests_passed++; \
-    } else { \
-        std::stringstream ss_fail; \
-        ss_fail << "[FAIL] " << g_current_test_name << ": " << #condition << " is true (expected false)" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
-        std::cout << ss_fail.str() << std::endl; \
-        g_failure_log.push_back(ss_fail.str()); \
-        g_tests_failed++; \
-    }
+do { \
+        if (!(condition)) { \
+            g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << g_current_test_name << ": " << #condition << " is true (expected false)" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            g_failure_log.push_back(ss_fail.str()); \
+            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_NEAR(a, b, epsilon) \
-    if (std::abs((a) - (b)) < (epsilon)) { \
-        g_tests_passed++; \
-    } else { \
-        std::stringstream ss_fail; \
-        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") not near " \
-                  << #b << " (" << (b) << ") within " << (epsilon) \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
-        std::cout << ss_fail.str() << std::endl; \
-        g_failure_log.push_back(ss_fail.str()); \
-        g_tests_failed++; \
-    }
+do { \
+        if (std::abs((a) - (b)) < (epsilon)) { \
+            g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") not near " \
+                      << #b << " (" << (b) << ") within " << (epsilon) \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            g_failure_log.push_back(ss_fail.str()); \
+            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_GT(a, b) \
-    if ((a) > (b)) { \
-        g_tests_passed++; \
-    } else { \
-        std::stringstream ss_fail; \
-        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") <= " \
-                  << #b << " (" << (b) << ")" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
-        std::cout << ss_fail.str() << std::endl; \
-        g_failure_log.push_back(ss_fail.str()); \
-        g_tests_failed++; \
-    }
+do { \
+        if ((a) > (b)) { \
+            g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") <= " \
+                      << #b << " (" << (b) << ")" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            g_failure_log.push_back(ss_fail.str()); \
+            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_EQ(a, b) \
-    if ((a) == (b)) { \
-        g_tests_passed++; \
-    } else { \
-        std::stringstream ss_fail; \
-        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") != " \
-                  << #b << " (" << (b) << ")" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
-        std::cout << ss_fail.str() << std::endl; \
-        g_failure_log.push_back(ss_fail.str()); \
-        g_tests_failed++; \
-    }
+do { \
+        if ((a) == (b)) { \
+            g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") != " \
+                      << #b << " (" << (b) << ")" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            g_failure_log.push_back(ss_fail.str()); \
+            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_GE(a, b) \
-    if ((a) >= (b)) { \
-        g_tests_passed++; \
-    } else { \
-        std::stringstream ss_fail; \
-        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") < " \
-                  << #b << " (" << (b) << ")" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
-        std::cout << ss_fail.str() << std::endl; \
-        g_failure_log.push_back(ss_fail.str()); \
-        g_tests_failed++; \
-    }
+do { \
+        if ((a) >= (b)) { \
+            g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") < " \
+                      << #b << " (" << (b) << ")" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            g_failure_log.push_back(ss_fail.str()); \
+            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_LE(a, b) \
-    if ((a) <= (b)) { \
-        g_tests_passed++; \
-    } else { \
-        std::stringstream ss_fail; \
-        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") > " \
-                  << #b << " (" << (b) << ")" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
-        std::cout << ss_fail.str() << std::endl; \
-        g_failure_log.push_back(ss_fail.str()); \
-        g_tests_failed++; \
-    }
+do { \
+        if ((a) <= (b)) { \
+            g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") > " \
+                      << #b << " (" << (b) << ")" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            g_failure_log.push_back(ss_fail.str()); \
+            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_LT(a, b) \
-    if ((a) < (b)) { \
-        g_tests_passed++; \
-    } else { \
-        std::stringstream ss_fail; \
-        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") >= " \
-                  << #b << " (" << (b) << ")" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
-        std::cout << ss_fail.str() << std::endl; \
-        g_failure_log.push_back(ss_fail.str()); \
-        g_tests_failed++; \
-    }
+do { \
+        if ((a) < (b)) { \
+            g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") >= " \
+                      << #b << " (" << (b) << ")" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            g_failure_log.push_back(ss_fail.str()); \
+            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_EQ_STR(a, b) \
-    if (std::string(a) == std::string(b)) { \
-        g_tests_passed++; \
-    } else { \
-        std::stringstream ss_fail; \
-        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (\"" << (a) << "\") != " \
-                  << #b << " (\"" << (b) << "\")" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
-        std::cout << ss_fail.str() << std::endl; \
-        g_failure_log.push_back(ss_fail.str()); \
-        g_tests_failed++; \
-    }
+do { \
+        if (std::string(a) == std::string(b)) { \
+            g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (\"" << (a) << "\") != " \
+                      << #b << " (\"" << (b) << "\")" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            g_failure_log.push_back(ss_fail.str()); \
+            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 #define ASSERT_NE(a, b) \
-    if ((a) != (b)) { \
-        g_tests_passed++; \
-    } else { \
-        std::stringstream ss_fail; \
-        ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") == " \
-                  << #b << " (" << (b) << ")" \
-                  << " (" << __FILE__ << ":" << __LINE__ << ")"; \
-        std::cout << ss_fail.str() << std::endl; \
-        g_failure_log.push_back(ss_fail.str()); \
-        g_tests_failed++; \
-    }
+do { \
+        if ((a) != (b)) { \
+            g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") == " \
+                      << #b << " (" << (b) << ")" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            g_failure_log.push_back(ss_fail.str()); \
+            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
 
 // --- Test Constants ---
 const int FILTER_SETTLING_FRAMES = 40;

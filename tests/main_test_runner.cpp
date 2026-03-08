@@ -21,7 +21,7 @@ SharedMemoryObjectOut g_localData;
 
 namespace FFBEngineTests { 
     extern int g_tests_passed; 
-    extern int g_tests_failed; 
+    extern int g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO; 
     extern int g_test_cases_run;
     extern int g_test_cases_passed;
     extern int g_test_cases_failed;
@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) noexcept {
     try {
         FFBEngineTests::Run();
         total_passed = FFBEngineTests::g_tests_passed;
-        total_failed = FFBEngineTests::g_tests_failed;
+        total_failed = FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO;
     } catch (const std::exception& e) {
         std::cout << "\n[FATAL] Test Runner encountered unhandled exception: " << e.what() << std::endl;
         total_failed++;
