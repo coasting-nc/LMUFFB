@@ -607,8 +607,119 @@ def plot_interactive_locked_center_spline():
 
     plt.show()
 
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+
+def plot_interactive_locked_center_spline2():
+    
+    # ==========================================
+    # 1. The Math Function
+    # ==========================================
+    def locked_center_spline(x, k):
+        """
+        Calculates the Locked-Center Hermite Spline.
+        k = Rolloff parameter (0.0 = Linear/Sharp, 1.0 = Smooth/Flat Peak)
+        """
+        abs_x = np.abs(x)
+        # f(x) = x * (1 + k*|x| - k*x^2)
+        y = x * (1.0 + k * abs_x - k * (abs_x * abs_x))
+        
+        # Simulate the C++ std::clamp to prevent mathematical overshoots
+        return np.clip(y, -1.0, 1.0)
+
+    # ==========================================
+    # 2. Setup Data & Figure
+    # ==========================================
+    # X-axis data
+    x_trans = np.linspace(0.0, 1.0, 500)                     # For Transfer Function
+    x_steer = np.linspace(0.0, 2.5, 500)                     # For Bell Curve
+    raw_load = x_steer * np.exp(1 - x_steer)                 # Simulated tire slip
+
+    # Create figure and leave space at the bottom for the slider
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7))
+    plt.subplots_adjust(bottom=0.25) # Make room for slider
+
+    # ==========================================
+    # 3. Plot Fixed Reference Curves
+    # ==========================================
+    # Ref 1: Linear (No smoothing, k=0.0)
+    ax1.plot(x_trans, x_trans, color='gray', linestyle='--', alpha=0.6, label='Ref: Linear (k=0.0)')
+    ax2.plot(x_steer, raw_load, color='gray', linestyle='--', alpha=0.6, label='Ref: Linear (Sharp Peak)')
+
+    # Ref 2: Fully Smoothed (k=1.0)
+    y_smooth_t = locked_center_spline(x_trans, k=1.0)
+    y_smooth_s = locked_center_spline(raw_load, k=1.0)
+    ax1.plot(x_trans, y_smooth_t, color='dodgerblue', linestyle=':', lw=2, alpha=0.7, label='Ref: Fully Smoothed (k=1.0)')
+    ax2.plot(x_steer, y_smooth_s, color='dodgerblue', linestyle=':', lw=2, alpha=0.7, label='Ref: Fully Smoothed')
+
+    # ==========================================
+    # 4. Plot the Interactive Line
+    # ==========================================
+    # Initial value
+    init_k = 0.5
+
+    # Draw the initial interactive lines
+    line_trans, = ax1.plot(x_trans, locked_center_spline(x_trans, init_k), 
+                        color='red', lw=3.5, label=f'Interactive Curve (k={init_k:.2f})')
+    line_steer, = ax2.plot(x_steer, locked_center_spline(raw_load, init_k), 
+                        color='red', lw=3.5, label=f'Interactive Curve (k={init_k:.2f})')
+
+    # Formatting Plot 1
+    ax1.set_title('1. Transfer Function (Math)', fontsize=14, fontweight='bold')
+    ax1.set_xlabel('Raw Normalized Load Transfer (Input)', fontsize=12)
+    ax1.set_ylabel('Transformed FFB Output', fontsize=12)
+    ax1.grid(True, linestyle=':', alpha=0.7)
+    ax1.legend(fontsize=10, loc='lower right')
+    ax1.set_xlim(0, 1.05)
+    ax1.set_ylim(0, 1.05)
+
+    # Formatting Plot 2
+    ax2.set_title('2. FFB Force vs. Steering Angle (Physics)', fontsize=14, fontweight='bold')
+    ax2.set_xlabel('Steering Angle / Slip Angle (1.0 = Limit of Grip)', fontsize=12)
+    ax2.set_ylabel('Final FFB Output Force', fontsize=12)
+    ax2.grid(True, linestyle=':', alpha=0.7)
+    ax2.legend(fontsize=10, loc='lower right')
+    ax2.set_xlim(0, 2.5)
+    ax2.set_ylim(0, 1.05)
+
+    # ==========================================
+    # 5. Setup Slider
+    # ==========================================
+    # Define axis for slider[left, bottom, width, height]
+    ax_k = plt.axes([0.15, 0.10, 0.7, 0.03], facecolor='lightgoldenrodyellow')
+
+    # Create slider
+    slider_k = Slider(ax_k, 'k (Rolloff)', 0.0, 1.0, valinit=init_k, valstep=0.01)
+
+    # Update function called when slider moves
+    def update(val):
+        k = slider_k.val
+        
+        # Update Y data for both plots
+        line_trans.set_ydata(locked_center_spline(x_trans, k))
+        line_steer.set_ydata(locked_center_spline(raw_load, k))
+        
+        # Update labels to show current k value
+        line_trans.set_label(f'Interactive Curve (k={k:.2f})')
+        line_steer.set_label(f'Interactive Curve (k={k:.2f})')
+        ax1.legend(fontsize=10, loc='lower right')
+        ax2.legend(fontsize=10, loc='lower right')
+        
+        # Redraw the canvas
+        fig.canvas.draw_idle()
+
+    # Attach the update function to the slider
+    slider_k.on_changed(update)
+
+    # ==========================================
+    # 6. Show Plot
+    # ==========================================
+    plt.show()
+
+
 def main():
-    plot_interactive_plot_interactive()
+    plot_interactive_locked_center_spline2()
 
 if __name__ == "__main__":
     main()
