@@ -25,6 +25,22 @@ Use this skill to ensure all code changes are verified through a robust Test-Dri
    - Compile and run the tests again.
    - Ensure the new test passes AND no regressions were introduced in existing tests.
 
+## Meaningful Tests
+- **Actual Functionality**: Tests must verify actual behavior, not just "hit" lines to inflate coverage numbers.
+- **Fail First**: Ensure the test fails before implementation to avoid false positives.
+- **Boundary Conditions**: Test empty buffers, full buffers, and wraparound behavior for stateful algorithms.
+
+## Iterative Quality Loop
+1. **Build & Test**: Run the full suite (`run_combined_tests`).
+2. **Commit**: Save intermediate progress (e.g., `git commit -am "WIP: Iteration N"`).
+3. **Independent Review**: Request a code review and save it to `docs/dev_docs/code_reviews/review_iteration_X.md`.
+4. **Fix & Repeat**: Address feedback and loop until a "Greenlight" is received.
+
+## Linux/Windows Hybrid Testing
+- The project is Windows-native but developed on Linux using **mocks** (e.g., `LinuxMock.h`).
+- Ensure new tests are runnable on Linux via mocks.
+- You **cannot** run the full GUI or drivers on Linux; rely on unit tests for logic verification.
+
 ## Commands
 
 ### Build everything (Main App + Tests)

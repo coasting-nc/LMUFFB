@@ -33,11 +33,19 @@ Use this skill when modifying `FFBEngine.h` or any physics calculation logic.
 - **Reason**: Stopping updates when telemetry is "unhealthy" makes filter states stale. Resuming later causes massive force spikes.
 - **Implementation**: Ensure filters are updated outside of conditional blocks.
 
-### 5. Safety Clamping
-- All physics inputs, especially those involving `mTireLoad`, must be clamped to prevent hardware damage from spikes.
-- Example: `load_factor = std::min(1.5f, load_factor);`
+### 5. Reliability Standards
+- **Validate Inputs**: Check telemetry inputs for `NaN` or `Inf` using `std::isfinite()`.
+- **Clamp Outputs**: Ensure final FFB force output is always in the range **[-1.0, 1.0]** before sending to drivers.
+- **Thread Safety**: Access any shared state (like gains/settings) under `g_engine_mutex`.
+- **Safe Gains**: Use `std::clamp()` to keep gain multipliers within safe predefined limits (e.g., [0.0, 10.0]).
 
-## Pattern for New Effects
+## Planning for FFB Effects
+Before modifying FFB logic, analyze:
+1. **Affected Effects**: List all impacted physics behaviors (e.g., ABS, Understeer).
+2. **User Impact**: How will the FFB "feel" change? Do preset values need tuning?
+3. **Data Flow**: Trace how new telemetry fields or derived values reach the final force calculation.
+
+## Implementation Pattern for New Effects
 1. Add toggle and gain float to `FFBEngine`.
 2. Add phase accumulator variable if needed.
 3. Implement logic in `calculate_force`.
