@@ -330,11 +330,13 @@ TEST_CASE(test_refactor_snapshot_sop, "Internal") {
             std::cout << "[PASS] Snapshot values correct (SoP: " << snap.sop_force << ", Boost: " << snap.oversteer_boost << ")" << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Snapshot logic error. SoP: " << snap.sop_force << " (Exp: 10.0) Boost: " << snap.oversteer_boost << " (Exp: 10.0)" << std::endl;
+            std::stringstream ss; ss << "[FAIL] test_refactor_snapshot_sop: Snapshot logic error. SoP: " << snap.sop_force << " (Exp: 10.0) Boost: " << snap.oversteer_boost << " (Exp: 10.0)";
+            std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
             g_tests_failed++;
         }
     } else {
-        std::cout << "[FAIL] No snapshot." << std::endl;
+        std::string err = "[FAIL] test_refactor_snapshot_sop: No snapshot.";
+        std::cout << err << std::endl; g_failure_log.push_back(err);
         g_tests_failed++;
     }
 }
@@ -362,7 +364,8 @@ void FFBEngineTestAccess::test_unit_sop_lateral() {
         std::cout << "[PASS] calculate_sop_lateral base logic." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] calculate_sop_lateral failed. Got " << ctx.sop_base_force << std::endl;
+        std::stringstream ss; ss << "[FAIL] test_unit_sop_lateral: calculate_sop_lateral failed. Got " << ctx.sop_base_force;
+        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
         g_tests_failed++;
     }
 }
@@ -388,7 +391,8 @@ void FFBEngineTestAccess::test_unit_gyro_damping() {
         std::cout << "[PASS] calculate_gyro_damping logic." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] calculate_gyro_damping failed. Got " << ctx.gyro_force << std::endl;
+        std::stringstream ss; ss << "[FAIL] test_unit_gyro_damping: calculate_gyro_damping failed. Got " << ctx.gyro_force;
+        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
         g_tests_failed++;
     }
 }
@@ -414,7 +418,8 @@ void FFBEngineTestAccess::test_unit_abs_pulse() {
         std::cout << "[PASS] calculate_abs_pulse triggered." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] calculate_abs_pulse failed." << std::endl;
+        std::string err = "[FAIL] test_unit_abs_pulse: calculate_abs_pulse failed.";
+        std::cout << err << std::endl; g_failure_log.push_back(err);
         g_tests_failed++;
     }
 }

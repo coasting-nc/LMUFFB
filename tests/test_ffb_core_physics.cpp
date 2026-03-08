@@ -468,7 +468,9 @@ TEST_CASE(test_smoothing_step_response, "CorePhysics") {
         std::cout << "[PASS] Smoothing Step 1 correct (" << force1 << ", small positive)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Smoothing Step 1 mismatch. Got " << force1 << " Expected ~0.0024" << std::endl;
+        std::stringstream ss; ss << "[FAIL] test_smoothing_step_response: Smoothing Step 1 mismatch. Got " << force1 << " Expected ~0.0024";
+        std::cout << ss.str() << std::endl;
+        g_failure_log.push_back(ss.str());
         g_tests_failed++;
     }
     
@@ -480,7 +482,9 @@ TEST_CASE(test_smoothing_step_response, "CorePhysics") {
         std::cout << "[PASS] Smoothing settled to steady-state (" << force1 << ", near 0.05)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Smoothing did not settle. Value: " << force1 << std::endl;
+        std::stringstream ss; ss << "[FAIL] test_smoothing_step_response: Smoothing did not settle. Value: " << force1;
+        std::cout << ss.str() << std::endl;
+        g_failure_log.push_back(ss.str());
         g_tests_failed++;
     }
 }
