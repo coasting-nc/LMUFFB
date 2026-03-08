@@ -282,8 +282,75 @@ def plot_lateral_load_2():
     plt.tight_layout()
     plt.show()
 
+
+def plot_lateral_load_Cubic_Hermite_Spline():
+
+    # The Cubic Hermite Spline Function
+    def custom_curve(x, S0, S1):
+        # S0 = Center Slope (Steepness at x=0)
+        # S1 = Peak Slope (Steepness at x=1)
+        
+        # Calculate polynomial coefficients
+        a = S0 + S1 - 2.0
+        b = 3.0 - 2.0 * S0 - S1
+        c = S0
+        
+        # f(x) = ax^3 + bx^2 + cx
+        return a * (x**3) + b * (x**2) + c * x
+
+    # Setup subplots
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+    # Scenarios to plot: (Center Slope, Peak Slope, Color, Label)
+    scenarios =[
+        (1.0, 1.0, 'gray', 'Linear (Standard)'),
+        (0.5, 0.0, 'dodgerblue', 'Gentle Center + Broad/Flat Peak'),
+        (0.5, 1.0, 'mediumseagreen', 'Gentle Center + Sharp/Notchy Peak'),
+        (1.5, 0.0, 'darkviolet', 'Aggressive Center + Broad/Flat Peak')
+    ]
+
+    # ==========================================
+    # PLOT 1: The Transfer Function (Left)
+    # ==========================================
+    x_transfer = np.linspace(0.0, 1.0, 500) # Only plotting positive side for clarity
+
+    for S0, S1, color, label in scenarios:
+        y = custom_curve(x_transfer, S0, S1)
+        linestyle = '--' if S0==1.0 and S1==1.0 else '-'
+        ax1.plot(x_transfer, y, label=f'{label}\n(S0={S0}, S1={S1})', color=color, linestyle=linestyle, linewidth=2.5)
+
+    ax1.grid(True, linestyle=':', alpha=0.7)
+    ax1.set_title('1. Transfer Function (Math)', fontsize=14, fontweight='bold')
+    ax1.set_xlabel('Raw Normalized Load Transfer (Input)', fontsize=12)
+    ax1.set_ylabel('Transformed FFB Output', fontsize=12)
+    ax1.legend(fontsize=10, loc='upper left')
+    ax1.set_xlim(0, 1.05)
+    ax1.set_ylim(0, 1.05)
+
+    # ==========================================
+    # PLOT 2: The "Bell Curve" (Right)
+    # ==========================================
+    x_steer = np.linspace(0, 2.5, 500)
+    raw_load = x_steer * np.exp(1 - x_steer) # Simulated tire slip curve
+
+    for S0, S1, color, label in scenarios:
+        y = custom_curve(raw_load, S0, S1)
+        linestyle = '--' if S0==1.0 and S1==1.0 else '-'
+        ax2.plot(x_steer, y, label=f'S0={S0}, S1={S1}', color=color, linestyle=linestyle, linewidth=2.5)
+
+    ax2.grid(True, linestyle=':', alpha=0.7)
+    ax2.set_title('2. FFB Force vs. Steering Angle (Physics)', fontsize=14, fontweight='bold')
+    ax2.set_xlabel('Steering Angle / Slip Angle (1.0 = Limit of Grip)', fontsize=12)
+    ax2.set_ylabel('Final FFB Output Force', fontsize=12)
+    ax2.legend(fontsize=11, loc='lower right')
+    ax2.set_xlim(0, 2.5)
+    ax2.set_ylim(0, 1.05)
+
+    plt.tight_layout()
+    plt.show()
+
 def main():
-    plot_lateral_load_Cubic_vs_Quadratic()
+    plot_lateral_load_Cubic_Hermite_Spline()
 
 if __name__ == "__main__":
     main()

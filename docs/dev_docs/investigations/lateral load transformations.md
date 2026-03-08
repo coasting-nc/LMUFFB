@@ -169,3 +169,81 @@ lat_load_norm = (1.0 + k) * lat_load_norm - k * lat_load_norm * std::abs(lat_loa
 * **Can you just set $k > 1$ on the old formula?** No, it causes a mathematical overshoot.
 * **Do you need a different formula?** Yes.
 * **What is the formula?** You lower the exponent to 2, resulting in the Signed Quadratic formula: `(1 + k)x - k * x * |x|`. This gives you the widest, softest peak possible without using heavy trigonometry or square roots.
+
+## Cubic Hermite Spline
+
+To control the beginning of the curve (center steepness) and the end of the curve (peak broadness) completely independently, we use a mathematical concept called a **Cubic Hermite Spline**. 
+
+This allows us to define exactly what the slope (steepness) should be at `x = 0` (driving straight) and what the slope should be at `x = 1` (the limit of grip), and the math smoothly connects them.
+
+### The Two Parameters
+We will introduce two new GUI sliders:
+1. **`center_slope` ($S_0$)**: Controls the steepness from 0.0 to 0.5. 
+   * `1.0` = Linear.
+   * `0.5` = Gentle/Soft center (builds up slowly).
+   * `1.5` = Aggressive center (heavy wheel immediately upon turning).
+2. **`peak_slope` ($S_1$)**: Controls the broadness/notchiness at the top (0.7 to 1.0).
+   * `1.0` = Sharp peak (Notchy, sudden drop-off).
+   * `0.0` = Perfectly flat peak (Broad, wide dome).
+   * `0.5` = A nice middle ground (Rounded, but not overly wide).
+
+*(Fun fact: If you set $S_0 = 1.5$ and $S_1 = 0.0$, the math perfectly recreates the $1.5x - 0.5x^3$ formula from my first response!)*
+
+### How to implement this in your C++ Codebase
+
+Because this is just a cubic polynomial, it is incredibly fast to compute in C++ and perfectly safe for your 400Hz/1000Hz FFB loop.
+
+**1. Add the variables to `src/FFBEngine.h`**
+```cpp
+float m_lat_load_effect = 0.0f; 
+float m_lat_load_center_slope = 1.0f; // 0.5 = Gentle, 1.0 = Linear, 1.5 = Aggressive
+float m_lat_load_peak_slope = 1.0f;   // 0.0 = Broad/Flat, 1.0 = Sharp/Notchy
+```
+
+**2. Update the physics in `src/FFBEngine.cpp`**
+Inside `calculate_sop_lateral`:
+```cpp
+double total_load = fl_load + fr_load;
+double lat_load_norm = (total_load > 1.0) ? (fl_load - fr_load) / total_load : 0.0;
+
+// --- NEW: Independent Hermite Spline Shaping ---
+// 1. Safety clamp
+lat_load_norm = std::clamp(lat_load_norm, -1.0, 1.0);
+
+// 2. Extract sign and absolute value (since the curve must mirror for left/right turns)
+double abs_x = std::abs(lat_load_norm);
+double sign_x = (lat_load_norm > 0.0) ? 1.0 : -1.0;
+
+// 3. Get GUI Parameters
+double S0 = (double)m_lat_load_center_slope;
+double S1 = (double)m_lat_load_peak_slope;
+
+// 4. Calculate Polynomial Coefficients
+double a = S0 + S1 - 2.0;
+double b = 3.0 - 2.0 * S0 - S1;
+double c = S0;
+
+// 5. Apply the curve: f(x) = ax^3 + bx^2 + cx
+double shaped_abs_x = (a * abs_x * abs_x * abs_x) + (b * abs_x * abs_x) + (c * abs_x);
+
+// 6. Restore the sign
+lat_load_norm = shaped_abs_x * sign_x;
+// -----------------------------------------------
+
+// (Existing smoothing logic follows...)
+double smoothness = (double)m_sop_smoothing_factor;
+```
+
+**3. Add the GUI Sliders in `src/GuiLayer_Common.cpp`**
+```cpp
+FloatSetting("Lateral Load", &engine.m_lat_load_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_lat_load_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_LOAD);
+
+// NEW SLIDERS
+FloatSetting("  Center Steepness", &engine.m_lat_load_center_slope, 0.1f, 2.0f, "%.2f", "0.5 = Gentle build-up\n1.0 = Linear\n1.5 = Aggressive build-up");
+FloatSetting("  Peak Notchiness", &engine.m_lat_load_peak_slope, 0.0f, 1.0f, "%.2f", "0.0 = Broad, flat peak\n1.0 = Sharp, notchy peak");
+```
+
+*(Remember to add these two new variables to `Config.h` and `Config.cpp` so they save to the `.ini` file).*
+
+### Summary
+By using a **Cubic Hermite Spline**, you get exactly what you asked for: two independent parameters. You can make the initial turn-in as gentle as you want, while independently tuning the exact width and sharpness of the grip limit!
