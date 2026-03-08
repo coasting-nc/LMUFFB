@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-08 22:37:45</td>
+            <td class="headerValue">2026-03-08 23:31:25</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -81,15 +81,15 @@
 <span id="L10"><span class="lineNum">      10</span>                 :             : </span>
 <span id="L11"><span class="lineNum">      11</span>                 :             : // Helper: Calculate Soft Lock (v0.7.61 - Issue #117)</span>
 <span id="L12"><span class="lineNum">      12</span>                 :             : // Provides a progressive spring-damping force when the wheel exceeds 100% lock.</span>
-<span id="L13"><span class="lineNum">      13</span>                 :<span class="tlaGNC tlaBgGNC">       13295 : void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext&amp; ctx) {</span></span>
-<span id="L14"><span class="lineNum">      14</span>                 :<span class="tlaGNC">       13295 :     ctx.soft_lock_force = 0.0;</span></span>
-<span id="L15"><span class="lineNum">      15</span>         [<span class="tlaGBC" title="Branch 0 was taken 8 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 13287 times"> + </span>]:<span class="tlaGNC">       13295 :     if (!m_soft_lock_enabled) return;</span></span>
+<span id="L13"><span class="lineNum">      13</span>                 :<span class="tlaGNC tlaBgGNC">       13310 : void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext&amp; ctx) {</span></span>
+<span id="L14"><span class="lineNum">      14</span>                 :<span class="tlaGNC">       13310 :     ctx.soft_lock_force = 0.0;</span></span>
+<span id="L15"><span class="lineNum">      15</span>         [<span class="tlaGBC" title="Branch 0 was taken 8 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 13302 times"> + </span>]:<span class="tlaGNC">       13310 :     if (!m_soft_lock_enabled) return;</span></span>
 <span id="L16"><span class="lineNum">      16</span>                 :             : </span>
-<span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC">       13287 :     double steer = data-&gt;mUnfilteredSteering;</span></span>
-<span id="L18"><span class="lineNum">      18</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 13285 times"> + </span>]:<span class="tlaGNC">       13287 :     if (!std::isfinite(steer)) return;</span></span>
+<span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC">       13302 :     double steer = data-&gt;mUnfilteredSteering;</span></span>
+<span id="L18"><span class="lineNum">      18</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 13300 times"> + </span>]:<span class="tlaGNC">       13302 :     if (!std::isfinite(steer)) return;</span></span>
 <span id="L19"><span class="lineNum">      19</span>                 :             : </span>
-<span id="L20"><span class="lineNum">      20</span>                 :<span class="tlaGNC">       13285 :     double abs_steer = std::abs(steer);</span></span>
-<span id="L21"><span class="lineNum">      21</span>         [<span class="tlaGBC" title="Branch 0 was taken 129 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 13156 times"> + </span>]:<span class="tlaGNC">       13285 :     if (abs_steer &gt; 1.0) {</span></span>
+<span id="L20"><span class="lineNum">      20</span>                 :<span class="tlaGNC">       13300 :     double abs_steer = std::abs(steer);</span></span>
+<span id="L21"><span class="lineNum">      21</span>         [<span class="tlaGBC" title="Branch 0 was taken 129 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 13171 times"> + </span>]:<span class="tlaGNC">       13300 :     if (abs_steer &gt; 1.0) {</span></span>
 <span id="L22"><span class="lineNum">      22</span>                 :<span class="tlaGNC">         129 :         double excess = abs_steer - 1.0;</span></span>
 <span id="L23"><span class="lineNum">      23</span>         [<span class="tlaGBC" title="Branch 0 was taken 128 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         129 :         double sign = (steer &gt; 0.0) ? 1.0 : -1.0;</span></span>
 <span id="L24"><span class="lineNum">      24</span>                 :             : </span>
