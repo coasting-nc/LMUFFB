@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.150] - 2026-03-08
+- **Decoupled ABS and Lockup from Vibration Strength (Issue #290)**:
+  - Separated the tactile effects into "Surface/Environmental" and "Vehicle State" groups.
+  - ABS Pulse and Lockup Vibration are now added to the final FFB signal independently of the "Vibration Strength" slider (`m_vibration_gain`).
+  - This ensures users who prefer clean steering (0% vibration) still receive critical braking feedback.
+  - Road Texture, Slide Texture, Spin Vibration, and Bottoming Crunch remain governed by the "Vibration Strength" slider.
+- **Testing**:
+  - Added `tests/repro_issue_290.cpp` to verify that ABS and Lockup effects persist even when Vibration Strength is set to 0%, while confirming that road textures are correctly muted.
+
 ## [0.7.149] - 2026-03-07
 - **Automated LZ4 Dependency Download (Issue #284)**:
   - Updated `CMakeLists.txt` to automatically download the required `lz4.c` and `lz4.h` vendor files using `FetchContent`.

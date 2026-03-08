@@ -2,6 +2,18 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 8, 2026[/b][/size]
+[b]Version 0.7.150 - Braking Feedback Decoupling[/b]
+
+[b]New release[/b] (0.7.150): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Decoupled Braking Feedback[/b]: [b]ABS Pulse[/b] and [b]Lockup Vibration[/b] are now independent of the "Vibration Strength" slider. This allows you to receive critical tactile signals about your braking limits even if you choose to mute general road and surface "chatter" (0% vibration). (#290)
+[*][b]Better Control[/b]: Environmental effects (Road Details, Slide Rumble, Spin Vibration) remain governed by the master Vibration Strength slider, ensuring you can still tune out high-frequency noise without losing essential vehicle state signals.
+[/list]
+
+---
+
 [size=5][b]March 7, 2026[/b][/size]
 [b]Version 0.7.147 - SoP Smoothing Latency Fix & Reset[/b]
 

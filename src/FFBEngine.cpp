@@ -623,8 +623,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // Vibration Effects are calculated in absolute Nm
     // v0.7.110: Apply m_vibration_gain to textures, but NOT to Soft Lock (Issue #206)
-    double vibration_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble;
-    double final_texture_nm = (vibration_sum_nm * (double)m_vibration_gain) + ctx.soft_lock_force;
+    // v0.7.150: Decouple ABS and Lockup from global vibration gain (Issue #290)
+    double surface_vibs_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch;
+    double critical_vibs_nm = ctx.abs_pulse_force + ctx.lockup_rumble;
+    double final_texture_nm = (surface_vibs_nm * (double)m_vibration_gain) + critical_vibs_nm + ctx.soft_lock_force;
 
     // --- 7. OUTPUT SCALING (Physical Target Model) ---
     // Map structural to the target rim torque, then divide by wheelbase max to get DirectInput %
