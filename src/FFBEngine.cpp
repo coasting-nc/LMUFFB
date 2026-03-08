@@ -613,7 +613,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // --- 6. SUMMATION (Issue #152 & #153 Split Scaling) ---
     // Split into Structural (Dynamic Normalization) and Texture (Absolute Nm) groups
     // v0.7.77 FIX: Soft Lock moved to Texture group to maintain absolute Nm scaling (Issue #181)
-    double structural_sum = output_force + ctx.sop_base_force + ctx.rear_torque + ctx.yaw_force + ctx.gyro_force +
+    double structural_sum = output_force + ctx.sop_base_force + ctx.lat_load_force + ctx.rear_torque + ctx.yaw_force + ctx.gyro_force +
                             ctx.scrub_drag_force;
 
     // Apply Torque Drop (from Spin/Traction Loss) only to structural physics
@@ -703,6 +703,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.total_output = (float)norm_force;
             snap.base_force = (float)base_input;
             snap.sop_force = (float)ctx.sop_unboosted_force; // Use unboosted for snapshot
+            snap.lat_load_force = (float)ctx.lat_load_force;
             snap.understeer_drop = understeer_drop;
             snap.oversteer_boost = oversteer_boost;
 
@@ -972,8 +973,29 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
         fr_load = calculate_kinematic_load(data, 1);
     }
     double total_load = fl_load + fr_load;
-    double lat_load_norm = (total_load > 1.0) ? (fl_load - fr_load) / total_load : 0.0;
+
+    // Issue #282: Invert sign for perceived correctness (fr - fl instead of fl - fr)
+    double lat_load_norm = (total_load > 1.0) ? (fr_load - fl_load) / total_load : 0.0;
     
+    // Safety clamp before transformation
+    lat_load_norm = std::clamp(lat_load_norm, -1.0, 1.0);
+
+    // Apply Transformation (Issue #282)
+    switch (m_lat_load_transform) {
+        case LatLoadTransform::CUBIC:
+            lat_load_norm = apply_lat_load_cubic(lat_load_norm);
+            break;
+        case LatLoadTransform::QUADRATIC:
+            lat_load_norm = apply_lat_load_quadratic(lat_load_norm);
+            break;
+        case LatLoadTransform::HERMITE:
+            lat_load_norm = apply_lat_load_hermite(lat_load_norm);
+            break;
+        case LatLoadTransform::LINEAR:
+        default:
+            break;
+    }
+
     // Smoothing: Map 0.0-1.0 slider to 0.1-0.0001s tau
     double smoothness = (double)m_sop_smoothing_factor;
     smoothness = (std::max)(0.0, (std::min)(SMOOTHNESS_LIMIT_0999, smoothness));
@@ -984,9 +1006,12 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     m_sop_lat_g_smoothed += alpha * (lat_g_accel - m_sop_lat_g_smoothed);
     m_sop_load_smoothed += alpha * (lat_load_norm - m_sop_load_smoothed);
 
-    // Base SoP Force (Combined)
-    double sop_base = (m_sop_lat_g_smoothed * (double)m_sop_effect + m_sop_load_smoothed * (double)m_lat_load_effect) * (double)m_sop_scale;
+    // Base SoP Force (G-based only - Issue #282)
+    double sop_base = (m_sop_lat_g_smoothed * (double)m_sop_effect) * (double)m_sop_scale;
     ctx.sop_unboosted_force = sop_base; // Store for snapshot
+
+    // Independent Lateral Load Force (Issue #282)
+    ctx.lat_load_force = (m_sop_load_smoothed * (double)m_lat_load_effect) * (double)m_sop_scale;
     
     // 2. Oversteer Boost (Grip Differential)
     // Calculate Rear Grip
@@ -1055,6 +1080,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     
     // Apply speed gate to all lateral effects
     ctx.sop_base_force *= ctx.speed_gate;
+    ctx.lat_load_force *= ctx.speed_gate;
     ctx.rear_torque *= ctx.speed_gate;
     ctx.yaw_force *= ctx.speed_gate;
 }

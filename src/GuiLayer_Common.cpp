@@ -586,6 +586,15 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             Tooltips::OVERSTEER_BOOST);
         FloatSetting("Lateral G", &engine.m_sop_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_sop_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_G);
         FloatSetting("Lateral Load", &engine.m_lat_load_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_lat_load_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_LOAD);
+
+        const char* lat_load_transforms[] = { "Linear (Raw)", "Cubic (Smooth)", "Quadratic (Broad)", "Hermite (Locked Center)" };
+        int current_transform = static_cast<int>(engine.m_lat_load_transform);
+        if (GuiWidgets::Combo("  Load Transform", &current_transform, lat_load_transforms, 4, "Mathematical transformation to soften the lateral load limits and remove 'notchiness'.").changed) {
+            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+            engine.m_lat_load_transform = static_cast<LatLoadTransform>(current_transform);
+            Config::Save(engine);
+        }
+
         FloatSetting("SoP Self-Aligning Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN),
             Tooltips::REAR_ALIGN_TORQUE);
         FloatSetting("Yaw Kick", &engine.m_sop_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK),

@@ -81,6 +81,7 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 }
                 else if (key == "sop") current_preset.sop = (std::min)(2.0f, std::stof(value));
                 else if (key == "lateral_load_effect") current_preset.lateral_load = (std::min)(2.0f, std::stof(value));
+                else if (key == "lat_load_transform") current_preset.lat_load_transform = std::clamp(std::stoi(value), 0, 3);
                 else if (key == "sop_scale") current_preset.sop_scale = std::stof(value);
                 else if (key == "sop_smoothing_factor") current_preset.sop_smoothing = std::stof(value);
                 else if (key == "min_force") current_preset.min_force = std::stof(value);
@@ -912,6 +913,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "grip_smoothing_sensitivity=" << p.grip_smoothing_sensitivity << "\n";
     file << "sop=" << p.sop << "\n";
     file << "lateral_load_effect=" << p.lateral_load << "\n";
+    file << "lat_load_transform=" << p.lat_load_transform << "\n";
     file << "rear_align_effect=" << p.rear_align_effect << "\n";
     file << "sop_yaw_gain=" << p.sop_yaw_gain << "\n";
     file << "yaw_kick_threshold=" << p.yaw_kick_threshold << "\n";
@@ -1236,6 +1238,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "grip_smoothing_sensitivity=" << engine.m_grip_smoothing_sensitivity << "\n";
         file << "sop=" << engine.m_sop_effect << "\n";
         file << "lateral_load_effect=" << engine.m_lat_load_effect << "\n";
+        file << "lat_load_transform=" << static_cast<int>(engine.m_lat_load_transform) << "\n";
         file << "rear_align_effect=" << engine.m_rear_align_effect << "\n";
         file << "sop_yaw_gain=" << engine.m_sop_yaw_gain << "\n";
         file << "yaw_kick_threshold=" << engine.m_yaw_kick_threshold << "\n";
@@ -1418,6 +1421,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "torque_passthrough") engine.m_torque_passthrough = (value == "1" || value == "true");
                     else if (key == "sop") engine.m_sop_effect = std::stof(value);
                     else if (key == "lateral_load_effect") engine.m_lat_load_effect = std::stof(value);
+                    else if (key == "lat_load_transform") engine.m_lat_load_transform = static_cast<LatLoadTransform>(std::clamp(std::stoi(value), 0, 3));
                     else if (key == "min_force") engine.m_min_force = std::stof(value);
                     else if (key == "oversteer_boost") engine.m_oversteer_boost = std::stof(value);
                     else if (key == "dynamic_weight_gain") engine.m_dynamic_weight_gain = std::stof(value);

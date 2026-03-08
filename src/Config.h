@@ -31,6 +31,7 @@ struct Preset {
     float understeer = 1.0f;  // New scale: 0.0-2.0, where 1.0 = proportional
     float sop = 1.666f;
     float lateral_load = 0.0f; // New v0.7.121
+    int lat_load_transform = 0; // New v0.7.154 (Issue #282)
     float sop_scale = 1.0f;
     float sop_smoothing = 0.0f;
     float slip_smoothing = 0.002f;
@@ -301,6 +302,7 @@ struct Preset {
         engine.m_understeer_effect = (std::max)(0.0f, (std::min)(2.0f, understeer));
         engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, sop));
         engine.m_lat_load_effect = (std::max)(0.0f, (std::min)(2.0f, lateral_load));
+        engine.m_lat_load_transform = static_cast<LatLoadTransform>(std::clamp(lat_load_transform, 0, 3));
         engine.m_sop_scale = (std::max)(0.01f, sop_scale);
         engine.m_sop_smoothing_factor = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing));
         engine.m_slip_angle_smoothing = (std::max)(0.0001f, slip_smoothing);
@@ -411,6 +413,7 @@ struct Preset {
         understeer = (std::max)(0.0f, (std::min)(2.0f, understeer));
         sop = (std::max)(0.0f, (std::min)(2.0f, sop));
         lateral_load = (std::max)(0.0f, (std::min)(2.0f, lateral_load));
+        lat_load_transform = std::clamp(lat_load_transform, 0, 3);
         sop_scale = (std::max)(0.01f, sop_scale);
         sop_smoothing = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing));
         slip_smoothing = (std::max)(0.0001f, slip_smoothing);
@@ -483,6 +486,7 @@ struct Preset {
         understeer = engine.m_understeer_effect;
         sop = engine.m_sop_effect;
         lateral_load = engine.m_lat_load_effect;
+        lat_load_transform = static_cast<int>(engine.m_lat_load_transform);
         sop_scale = engine.m_sop_scale;
         sop_smoothing = engine.m_sop_smoothing_factor;
         slip_smoothing = engine.m_slip_angle_smoothing;
@@ -589,6 +593,7 @@ struct Preset {
         if (!is_near(understeer, p.understeer, eps)) return false;
         if (!is_near(sop, p.sop, eps)) return false;
         if (!is_near(lateral_load, p.lateral_load, eps)) return false;
+        if (lat_load_transform != p.lat_load_transform) return false;
         if (!is_near(sop_scale, p.sop_scale, eps)) return false;
         if (!is_near(sop_smoothing, p.sop_smoothing, eps)) return false;
         if (!is_near(slip_smoothing, p.slip_smoothing, eps)) return false;
