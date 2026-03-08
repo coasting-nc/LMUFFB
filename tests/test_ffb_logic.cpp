@@ -8,10 +8,10 @@
 #include <cmath>
 #include <cstring>
 #include <fstream>
-#include <cstdio>
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include <filesystem>
 
 // Include headers to test
 #include "../src/DirectInputFFB.h"
@@ -64,7 +64,7 @@ TEST_CASE(test_config_persistence_guid, "Logic") {
     Config::Load(engine, test_file);
 
     ASSERT_EQ_STR(Config::m_last_device_guid, fake_guid);
-    remove(test_file.c_str());
+    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
 TEST_CASE(test_config_always_on_top_persistence, "Logic") {
@@ -79,7 +79,7 @@ TEST_CASE(test_config_always_on_top_persistence, "Logic") {
     Config::Load(engine, test_file);
 
     ASSERT_TRUE(Config::m_always_on_top == true);
-    remove(test_file.c_str());
+    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
 TEST_CASE(test_preset_management_system, "Logic") {
@@ -107,7 +107,7 @@ TEST_CASE(test_preset_management_system, "Logic") {
         }
     }
     ASSERT_TRUE(found);
-    remove(Config::m_config_path.c_str());
+    if (std::filesystem::exists(Config::m_config_path)) std::filesystem::remove(Config::m_config_path);
 }
 
 TEST_CASE(test_window_title_extraction, "Logic") {
@@ -209,10 +209,10 @@ TEST_CASE(test_slider_precision_display, "Logic") {
     {
         float value = 2.50f;
         char buf[64];
-        snprintf(buf, 64, "Q: %.2f", value);
+        StringUtils::SafeFormat(buf, 64, "Q: %.2f", value);
         std::string result1(buf);
         value += 0.01f;
-        snprintf(buf, 64, "Q: %.2f", value);
+        StringUtils::SafeFormat(buf, 64, "Q: %.2f", value);
         std::string result2(buf);
         ASSERT_TRUE(result1 != result2);
     }
@@ -221,10 +221,10 @@ TEST_CASE(test_slider_precision_display, "Logic") {
     {
         float value = 1.00f;
         char buf[64];
-        snprintf(buf, 64, "%.1f%%%%", value * 100.0f);
+        StringUtils::SafeFormat(buf, 64, "%.1f%%%%", value * 100.0f);
         std::string result1(buf);
         value += 0.01f;
-        snprintf(buf, 64, "%.1f%%%%", value * 100.0f);
+        StringUtils::SafeFormat(buf, 64, "%.1f%%%%", value * 100.0f);
         std::string result2(buf);
         ASSERT_TRUE(result1 != result2);
     }
@@ -233,10 +233,10 @@ TEST_CASE(test_slider_precision_display, "Logic") {
     {
         float value = 25.0f;
         char buf[64];
-        snprintf(buf, 64, "%.1f%%%%", (value / 50.0f) * 100.0f);
+        StringUtils::SafeFormat(buf, 64, "%.1f%%%%", (value / 50.0f) * 100.0f);
         std::string result1(buf);
         value += 0.5f;
-        snprintf(buf, 64, "%.1f%%%%", (value / 50.0f) * 100.0f);
+        StringUtils::SafeFormat(buf, 64, "%.1f%%%%", (value / 50.0f) * 100.0f);
         std::string result2(buf);
         ASSERT_TRUE(result1 != result2);
     }
@@ -245,10 +245,10 @@ TEST_CASE(test_slider_precision_display, "Logic") {
     {
         float value = 0.050f;
         char buf[64];
-        snprintf(buf, 64, "%.3f s", value);
+        StringUtils::SafeFormat(buf, 64, "%.3f s", value);
         std::string result1(buf);
         value += 0.001f;
-        snprintf(buf, 64, "%.3f s", value);
+        StringUtils::SafeFormat(buf, 64, "%.3f s", value);
         std::string result2(buf);
         ASSERT_TRUE(result1 != result2);
     }
@@ -261,10 +261,10 @@ TEST_CASE(test_slider_precision_regression, "Logic") {
     {
         float value = 1.50f;
         char buf[64];
-        snprintf(buf, 64, "%.2fx", value);
+        StringUtils::SafeFormat(buf, 64, "%.2fx", value);
         std::string result1(buf);
         value += 0.01f;
-        snprintf(buf, 64, "%.2fx", value);
+        StringUtils::SafeFormat(buf, 64, "%.2fx", value);
         std::string result2(buf);
         ASSERT_TRUE(result1 != result2);
     }
@@ -273,10 +273,10 @@ TEST_CASE(test_slider_precision_regression, "Logic") {
     {
         float value = 50.0f;
         char buf[64];
-        snprintf(buf, 64, "%.1f Hz", value);
+        StringUtils::SafeFormat(buf, 64, "%.1f Hz", value);
         std::string result1(buf);
         value += 0.1f;
-        snprintf(buf, 64, "%.1f Hz", value);
+        StringUtils::SafeFormat(buf, 64, "%.1f Hz", value);
         std::string result2(buf);
         ASSERT_TRUE(result1 != result2);
     }
@@ -285,10 +285,10 @@ TEST_CASE(test_slider_precision_regression, "Logic") {
     {
         float value = 1.00f;
         char buf[64];
-        snprintf(buf, 64, "%.3f", value);
+        StringUtils::SafeFormat(buf, 64, "%.3f", value);
         std::string result1(buf);
         value -= 0.001f;
-        snprintf(buf, 64, "%.3f", value);
+        StringUtils::SafeFormat(buf, 64, "%.3f", value);
         std::string result2(buf);
         ASSERT_TRUE(result1 != result2);
     }
@@ -297,9 +297,9 @@ TEST_CASE(test_slider_precision_regression, "Logic") {
     {
         float small_step = 0.001f;
         char buf[64];
-        snprintf(buf, 64, "%.3f", 0.050f);
+        StringUtils::SafeFormat(buf, 64, "%.3f", 0.050f);
         std::string before(buf);
-        snprintf(buf, 64, "%.3f", 0.050f + small_step);
+        StringUtils::SafeFormat(buf, 64, "%.3f", 0.050f + small_step);
         std::string after(buf);
         ASSERT_TRUE(before != after);
         g_tests_passed++;
@@ -355,11 +355,11 @@ TEST_CASE(test_latency_display_regression, "Logic") {
     {
         int lat_ms = 14;
         char buf[64];
-        snprintf(buf, 64, "Latency: %d ms - %s", lat_ms, (lat_ms < 15) ? "OK" : "High");
+        StringUtils::SafeFormat(buf, 64, "Latency: %d ms - %s", lat_ms, (lat_ms < 15) ? "OK" : "High");
         ASSERT_TRUE(std::string(buf) == "Latency: 14 ms - OK");
 
         lat_ms = 20;
-        snprintf(buf, 64, "Latency: %d ms - %s", lat_ms, (lat_ms < 15) ? "OK" : "High");
+        StringUtils::SafeFormat(buf, 64, "Latency: %d ms - %s", lat_ms, (lat_ms < 15) ? "OK" : "High");
         ASSERT_TRUE(std::string(buf) == "Latency: 20 ms - High");
     }
 
@@ -414,7 +414,7 @@ TEST_CASE(test_window_config_persistence_logic, "Logic") {
     ASSERT_TRUE(Config::win_h_large == 950);
     ASSERT_TRUE(Config::show_graphs == true);
 
-    remove(test_file.c_str());
+    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
 TEST_CASE(test_defaults_consistency, "Logic") {
@@ -570,7 +570,7 @@ TEST_CASE(test_config_persistence_braking_group, "Logic") {
     ASSERT_TRUE(engine_load.m_lockup_full_pct == 20.0f);
     ASSERT_TRUE(engine_load.m_lockup_rear_boost == 2.0f);
 
-    remove(test_file.c_str());
+    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
 TEST_CASE(test_legacy_config_migration, "Logic") {
@@ -588,7 +588,7 @@ TEST_CASE(test_legacy_config_migration, "Logic") {
     Config::Load(engine, test_file);
 
     ASSERT_TRUE(engine.m_texture_load_cap == 1.8f);
-    remove(test_file.c_str());
+    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
 TEST_CASE(test_sop_smoothing_migration, "Logic") {
@@ -634,7 +634,7 @@ TEST_CASE(test_sop_smoothing_migration, "Logic") {
     ASSERT_TRUE(found);
 
     Config::m_config_path = original_path;
-    remove(test_file.c_str());
+    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
 } // namespace FFBEngineTests
