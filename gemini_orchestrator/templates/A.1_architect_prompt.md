@@ -46,7 +46,7 @@ If the task involves FFB (Force Feedback) logic, you **MUST** analyze and docume
         *   Is migration logic required for existing user configurations?
 
 ## Step 4: Create Implementation Plan
-Create an Implementation Plan file at `docs/dev_docs/plans/plan_{{TASK_ID}}.md`.
+Create an Implementation Plan file at `docs/dev_docs/implementation_plans/plan_{{TASK_ID}}.md`.
 
 The plan **MUST** include:
 *   **Context:** Brief summary of the goal.
