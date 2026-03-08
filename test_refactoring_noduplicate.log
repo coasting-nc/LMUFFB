@@ -1,6 +1,0 @@
-[14:27:21] Logger Initialized. Version: 0.7.150
-[14:27:21] [Transition] OptionsLocation: 255 -> 0 (Main UI)
-[14:27:21] [Transition] GamePhase: 255 -> 5 (Green Flag)
-[14:27:21] [Transition] Session: -1 -> 10 (Race)
-[14:27:21] [Transition] Track: '' -> 'Imola'
-[14:27:21] [Transition] NumVehicles: -1 -> 0
