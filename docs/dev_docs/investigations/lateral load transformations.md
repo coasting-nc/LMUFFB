@@ -1,5 +1,5 @@
 
-
+# lateral load transformations report
 
 Yes, applying a mathematical transformation to the shape of the curve is a highly effective and standard way to solve this exact problem in Force Feedback and joystick response tuning. 
 
