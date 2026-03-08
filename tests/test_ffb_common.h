@@ -35,10 +35,10 @@ extern std::string g_current_test_name; // Set by Run() before each test
 
 #define FAIL_TEST(msg) do { \
     std::stringstream ss_fail; \
-    ss_fail << "[FAIL] " << g_current_test_name << ": " << msg; \
+    ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << msg << " (" << __FILE__ << ":" << __LINE__ << ")"; \
     std::cout << ss_fail.str() << std::endl; \
-    g_failure_log.push_back(ss_fail.str()); \
-    g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+    FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+    FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
 } while(0)
 
 // Passing assertions are silent. Failing assertions print [FAIL] with the
@@ -46,148 +46,148 @@ extern std::string g_current_test_name; // Set by Run() before each test
 #define ASSERT_TRUE(condition) \
 do { \
         if (condition) { \
-            g_tests_passed++; \
+            FFBEngineTests::g_tests_passed++; \
         } else { \
             std::stringstream ss_fail; \
-            ss_fail << "[FAIL] " << g_current_test_name << ": " << #condition << " is false" \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #condition << " is false" \
                       << " (" << __FILE__ << ":" << __LINE__ << ")"; \
             std::cout << ss_fail.str() << std::endl; \
-            g_failure_log.push_back(ss_fail.str()); \
-            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
         } \
 } while(0)
 
 #define ASSERT_FALSE(condition) \
 do { \
         if (!(condition)) { \
-            g_tests_passed++; \
+            FFBEngineTests::g_tests_passed++; \
         } else { \
             std::stringstream ss_fail; \
-            ss_fail << "[FAIL] " << g_current_test_name << ": " << #condition << " is true (expected false)" \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #condition << " is true (expected false)" \
                       << " (" << __FILE__ << ":" << __LINE__ << ")"; \
             std::cout << ss_fail.str() << std::endl; \
-            g_failure_log.push_back(ss_fail.str()); \
-            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
         } \
 } while(0)
 
 #define ASSERT_NEAR(a, b, epsilon) \
 do { \
         if (std::abs((a) - (b)) < (epsilon)) { \
-            g_tests_passed++; \
+            FFBEngineTests::g_tests_passed++; \
         } else { \
             std::stringstream ss_fail; \
-            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") not near " \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (" << (a) << ") not near " \
                       << #b << " (" << (b) << ") within " << (epsilon) \
                       << " (" << __FILE__ << ":" << __LINE__ << ")"; \
             std::cout << ss_fail.str() << std::endl; \
-            g_failure_log.push_back(ss_fail.str()); \
-            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
         } \
 } while(0)
 
 #define ASSERT_GT(a, b) \
 do { \
         if ((a) > (b)) { \
-            g_tests_passed++; \
+            FFBEngineTests::g_tests_passed++; \
         } else { \
             std::stringstream ss_fail; \
-            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") <= " \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (" << (a) << ") <= " \
                       << #b << " (" << (b) << ")" \
                       << " (" << __FILE__ << ":" << __LINE__ << ")"; \
             std::cout << ss_fail.str() << std::endl; \
-            g_failure_log.push_back(ss_fail.str()); \
-            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
         } \
 } while(0)
 
 #define ASSERT_EQ(a, b) \
 do { \
         if ((a) == (b)) { \
-            g_tests_passed++; \
+            FFBEngineTests::g_tests_passed++; \
         } else { \
             std::stringstream ss_fail; \
-            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") != " \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (" << (a) << ") != " \
                       << #b << " (" << (b) << ")" \
                       << " (" << __FILE__ << ":" << __LINE__ << ")"; \
             std::cout << ss_fail.str() << std::endl; \
-            g_failure_log.push_back(ss_fail.str()); \
-            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
         } \
 } while(0)
 
 #define ASSERT_GE(a, b) \
 do { \
         if ((a) >= (b)) { \
-            g_tests_passed++; \
+            FFBEngineTests::g_tests_passed++; \
         } else { \
             std::stringstream ss_fail; \
-            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") < " \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (" << (a) << ") < " \
                       << #b << " (" << (b) << ")" \
                       << " (" << __FILE__ << ":" << __LINE__ << ")"; \
             std::cout << ss_fail.str() << std::endl; \
-            g_failure_log.push_back(ss_fail.str()); \
-            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
         } \
 } while(0)
 
 #define ASSERT_LE(a, b) \
 do { \
         if ((a) <= (b)) { \
-            g_tests_passed++; \
+            FFBEngineTests::g_tests_passed++; \
         } else { \
             std::stringstream ss_fail; \
-            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") > " \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (" << (a) << ") > " \
                       << #b << " (" << (b) << ")" \
                       << " (" << __FILE__ << ":" << __LINE__ << ")"; \
             std::cout << ss_fail.str() << std::endl; \
-            g_failure_log.push_back(ss_fail.str()); \
-            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
         } \
 } while(0)
 
 #define ASSERT_LT(a, b) \
 do { \
         if ((a) < (b)) { \
-            g_tests_passed++; \
+            FFBEngineTests::g_tests_passed++; \
         } else { \
             std::stringstream ss_fail; \
-            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") >= " \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (" << (a) << ") >= " \
                       << #b << " (" << (b) << ")" \
                       << " (" << __FILE__ << ":" << __LINE__ << ")"; \
             std::cout << ss_fail.str() << std::endl; \
-            g_failure_log.push_back(ss_fail.str()); \
-            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
         } \
 } while(0)
 
 #define ASSERT_EQ_STR(a, b) \
 do { \
         if (std::string(a) == std::string(b)) { \
-            g_tests_passed++; \
+            FFBEngineTests::g_tests_passed++; \
         } else { \
             std::stringstream ss_fail; \
-            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (\"" << (a) << "\") != " \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (\"" << (a) << "\") != " \
                       << #b << " (\"" << (b) << "\")" \
                       << " (" << __FILE__ << ":" << __LINE__ << ")"; \
             std::cout << ss_fail.str() << std::endl; \
-            g_failure_log.push_back(ss_fail.str()); \
-            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
         } \
 } while(0)
 
 #define ASSERT_NE(a, b) \
 do { \
         if ((a) != (b)) { \
-            g_tests_passed++; \
+            FFBEngineTests::g_tests_passed++; \
         } else { \
             std::stringstream ss_fail; \
-            ss_fail << "[FAIL] " << g_current_test_name << ": " << #a << " (" << (a) << ") == " \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " (" << (a) << ") == " \
                       << #b << " (" << (b) << ")" \
                       << " (" << __FILE__ << ":" << __LINE__ << ")"; \
             std::cout << ss_fail.str() << std::endl; \
-            g_failure_log.push_back(ss_fail.str()); \
-            g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
         } \
 } while(0)
 
