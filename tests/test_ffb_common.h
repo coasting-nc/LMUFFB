@@ -379,6 +379,7 @@ public:
         e.m_yaw_accel_smoothed = 0.0;
     }
     static double GetYawAccelSmoothed(const FFBEngine& e) { return e.m_yaw_accel_smoothed; }
+    static void SetLastOutputForce(FFBEngine& e, double val) { e.m_last_output_force = val; }
 };
 
 } // namespace FFBEngineTests
