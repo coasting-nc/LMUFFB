@@ -83,7 +83,8 @@ TEST_CASE(test_road_texture_teleport, "RoadTexture") {
         std::cout << "[PASS] Teleport spike clamped." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Teleport spike unclamped? Got " << force << " Expected 0.025." << std::endl;
+        std::stringstream ss; ss << "[FAIL] test_road_texture_teleport: Teleport spike unclamped? Got " << force << " Expected 0.025.";
+        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
         g_tests_failed++;
     }
 }
@@ -145,7 +146,8 @@ TEST_CASE(test_suspension_bottoming, "RoadTexture") {
         std::cout << "[PASS] Bottoming effect active. Force: " << force_f1 << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Bottoming effect zero. Phase alignment?" << std::endl;
+        std::string err = "[FAIL] test_suspension_bottoming: Bottoming effect zero. Phase alignment?";
+        std::cout << err << std::endl; g_failure_log.push_back(err);
         g_tests_failed++;
     }
 }
@@ -187,7 +189,8 @@ TEST_CASE(test_universal_bottoming, "RoadTexture") {
         std::cout << "[PASS] Bottoming Method A (Scrape) Triggered. Force: " << f1 << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Bottoming Method A (Scrape) Silent." << std::endl;
+        std::string err = "[FAIL] test_universal_bottoming: Bottoming Method A (Scrape) Silent.";
+        std::cout << err << std::endl; g_failure_log.push_back(err);
         g_tests_failed++;
     }
     
@@ -211,7 +214,8 @@ TEST_CASE(test_universal_bottoming, "RoadTexture") {
         std::cout << "[PASS] Bottoming Method B (Spike) Triggered. Force: " << f2 << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Bottoming Method B (Spike) Silent." << std::endl;
+        std::string err = "[FAIL] test_universal_bottoming: Bottoming Method B (Spike) Silent.";
+        std::cout << err << std::endl; g_failure_log.push_back(err);
         g_tests_failed++;
     }
 }
@@ -274,7 +278,8 @@ TEST_CASE(test_scrub_drag_fade, "RoadTexture") {
         std::cout << "[PASS] Scrub drag faded correctly (50%)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Scrub drag fade incorrect. Got " << force << " Expected 0.0625." << std::endl;
+        std::stringstream ss; ss << "[FAIL] test_scrub_drag_fade: Scrub drag fade incorrect. Got " << force << " Expected 0.0625.";
+        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
         g_tests_failed++;
     }
 }

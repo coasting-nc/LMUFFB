@@ -153,7 +153,8 @@ TEST_CASE(test_preset_understeer_only_isolation, "Understeer") {
     }
     
     if (preset_idx == -1) {
-        std::cout << "[FAIL] 'Test: Understeer Only' preset not found" << std::endl;
+        std::stringstream ss; ss << "[FAIL] test_preset_understeer_only_isolation: 'Test: Understeer Only' preset not found";
+        std::cout << ss.str() << std::endl; g_failure_log.push_back(ss.str());
         g_tests_failed++;
         return;
     }
@@ -227,7 +228,8 @@ TEST_CASE(test_all_presets_non_negative_speed_gate, "Understeer") {
         std::cout << "[PASS] All " << Config::presets.size() << " presets have valid non-negative speed gate values" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] One or more presets have invalid speed gate values" << std::endl;
+        std::string err = "[FAIL] test_all_presets_non_negative_speed_gate: One or more presets have invalid speed gate values";
+        std::cout << err << std::endl; g_failure_log.push_back(err);
         g_tests_failed++;
     }
 }
