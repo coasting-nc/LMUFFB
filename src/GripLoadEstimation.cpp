@@ -22,6 +22,7 @@
 
 extern std::recursive_mutex g_engine_mutex;
 #include <cmath>
+#include "StringUtils.h"
 
 using namespace ffb_math;
 
@@ -71,12 +72,7 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     std::string vName = vehicleName ? vehicleName : "Unknown";
 
     // v0.7.134: Ensure m_vehicle_name is also updated immediately for consistency
-#ifdef _WIN32
-    strncpy_s(m_vehicle_name, sizeof(m_vehicle_name), vName.c_str(), _TRUNCATE);
-#else
-    strncpy(m_vehicle_name, vName.c_str(), STR_MAX_64);
-    m_vehicle_name[STR_MAX_64] = '\0';
-#endif
+    StringUtils::SafeCopy(m_vehicle_name, sizeof(m_vehicle_name), vName.c_str());
 
     // Check if we already have a saved static load for this specific car (v0.7.70)
     double saved_load = 0.0;

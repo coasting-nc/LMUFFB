@@ -36,7 +36,7 @@ TEST_CASE(test_issue_218_invalid_range_warning, "Issue_218") {
     Logger::Get().SetTestStream(&logBuffer);
 
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0, 0.0);
-    strncpy(data.mVehicleName, "Ferrari 296 GT3", 63);
+    StringUtils::SafeCopy(data.mVehicleName, sizeof(data.mVehicleName), "Ferrari 296 GT3");
     data.mPhysicalSteeringWheelRange = 0.0f; // Invalid
 
     // Frame 1: Should issue warning
@@ -53,7 +53,7 @@ TEST_CASE(test_issue_218_invalid_range_warning, "Issue_218") {
 
     // Reset warning via car change (using different class to trigger seeding)
     // 1st call with new class: detects car change, resets m_warned_invalid_range, then checks range and warns.
-    strncpy(data.mVehicleName, "Porsche 911 RSR GTE", 63);
+    StringUtils::SafeCopy(data.mVehicleName, sizeof(data.mVehicleName), "Porsche 911 RSR GTE");
     engine.calculate_force(&data, "GTE", "Porsche 911 RSR GTE");
     ASSERT_TRUE(logBuffer.str().find("[WARNING] Invalid PhysicalSteeringWheelRange") != std::string::npos);
 

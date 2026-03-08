@@ -6,6 +6,7 @@
 #include "lmu_sm_interface/SafeSharedMemoryLock.h"
 #include <iostream>
 #include <cstring>
+#include "StringUtils.h"
 
 #define LEGACY_SHARED_MEMORY_NAME "$rFactor2SMMP_Telemetry$"
 
@@ -376,12 +377,7 @@ void GameConnector::_LogTransitions(const SharedMemoryObjectOut& current) {
     // 1.1 Options Page
     if (strncmp(generic.appInfo.mOptionsPage, m_prevState.optionsPage, 31) != 0) {
         Logger::Get().LogFile("[Transition] OptionsPage: '%s' -> '%s'", m_prevState.optionsPage, generic.appInfo.mOptionsPage);
-#ifdef _WIN32
-        strncpy_s(m_prevState.optionsPage, sizeof(m_prevState.optionsPage), generic.appInfo.mOptionsPage, _TRUNCATE);
-#else
-        strncpy(m_prevState.optionsPage, generic.appInfo.mOptionsPage, 31);
-        m_prevState.optionsPage[31] = '\0';
-#endif
+        StringUtils::SafeCopy(m_prevState.optionsPage, sizeof(m_prevState.optionsPage), generic.appInfo.mOptionsPage);
     }
 
     // 2. InRealtime (Driving vs Menu)
@@ -423,12 +419,7 @@ void GameConnector::_LogTransitions(const SharedMemoryObjectOut& current) {
     // 5. Track Name (Context Change)
     if (strcmp(scoring.mTrackName, m_prevState.trackName) != 0) {
         Logger::Get().LogFile("[Transition] Track: '%s' -> '%s'", m_prevState.trackName, scoring.mTrackName);
-#ifdef _WIN32
-        strncpy_s(m_prevState.trackName, sizeof(m_prevState.trackName), scoring.mTrackName, _TRUNCATE);
-#else
-        strncpy(m_prevState.trackName, scoring.mTrackName, 63);
-        m_prevState.trackName[63] = '\0';
-#endif
+        StringUtils::SafeCopy(m_prevState.trackName, sizeof(m_prevState.trackName), scoring.mTrackName);
     }
 
     // 6. Player Control & Pit State
@@ -451,12 +442,7 @@ void GameConnector::_LogTransitions(const SharedMemoryObjectOut& current) {
 
             if (strcmp(vehScoring.mVehicleName, m_prevState.vehicleName) != 0) {
                 Logger::Get().LogFile("[Transition] Vehicle: '%s' -> '%s'", m_prevState.vehicleName, vehScoring.mVehicleName);
-#ifdef _WIN32
-                strncpy_s(m_prevState.vehicleName, sizeof(m_prevState.vehicleName), vehScoring.mVehicleName, _TRUNCATE);
-#else
-                strncpy(m_prevState.vehicleName, vehScoring.mVehicleName, 63);
-                m_prevState.vehicleName[63] = '\0';
-#endif
+                StringUtils::SafeCopy(m_prevState.vehicleName, sizeof(m_prevState.vehicleName), vehScoring.mVehicleName);
             }
 
             // 7. Steering Range

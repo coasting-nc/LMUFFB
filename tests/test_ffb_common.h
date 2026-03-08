@@ -19,6 +19,7 @@
 #include "../src/Config.h"
 #include "../src/Logger.h"
 #include "../src/GameConnector.h"
+#include "../src/StringUtils.h"
 
 namespace FFBEngineTests {
 

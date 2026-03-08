@@ -14,9 +14,9 @@ TEST_CASE_TAGGED(test_issue_265_metadata_sync, "Functional", (std::vector<std::s
     // Setup initial state: Player has a vehicle
     data.telemetry.playerHasVehicle = true;
     data.telemetry.playerVehicleIdx = 0;
-    strncpy(data.scoring.vehScoringInfo[0].mVehicleName, "Ferrari 499P", 63);
-    strncpy(data.scoring.vehScoringInfo[0].mVehicleClass, "Hypercar", 31);
-    strncpy(data.scoring.scoringInfo.mTrackName, "Le Mans", 63);
+    StringUtils::SafeCopy(data.scoring.vehScoringInfo[0].mVehicleName, sizeof(data.scoring.vehScoringInfo[0].mVehicleName), "Ferrari 499P");
+    StringUtils::SafeCopy(data.scoring.vehScoringInfo[0].mVehicleClass, sizeof(data.scoring.vehScoringInfo[0].mVehicleClass), "Hypercar");
+    StringUtils::SafeCopy(data.scoring.scoringInfo.mTrackName, sizeof(data.scoring.scoringInfo.mTrackName), "Le Mans");
 
     // Call UpdateMetadata
     engine.UpdateMetadata(data);
@@ -27,9 +27,9 @@ TEST_CASE_TAGGED(test_issue_265_metadata_sync, "Functional", (std::vector<std::s
     ASSERT_EQ_STR(engine.m_current_class_name, "Hypercar");
 
     // Change vehicle
-    strncpy(data.scoring.vehScoringInfo[0].mVehicleName, "Porsche 963", 63);
-    strncpy(data.scoring.vehScoringInfo[0].mVehicleClass, "Hypercar", 31);
-    strncpy(data.scoring.scoringInfo.mTrackName, "Spa", 63);
+    StringUtils::SafeCopy(data.scoring.vehScoringInfo[0].mVehicleName, sizeof(data.scoring.vehScoringInfo[0].mVehicleName), "Porsche 963");
+    StringUtils::SafeCopy(data.scoring.vehScoringInfo[0].mVehicleClass, sizeof(data.scoring.vehScoringInfo[0].mVehicleClass), "Hypercar");
+    StringUtils::SafeCopy(data.scoring.scoringInfo.mTrackName, sizeof(data.scoring.scoringInfo.mTrackName), "Spa");
 
     engine.UpdateMetadata(data);
 
@@ -39,7 +39,7 @@ TEST_CASE_TAGGED(test_issue_265_metadata_sync, "Functional", (std::vector<std::s
 
     // Test case where player doesn't have a vehicle yet (e.g. joining session)
     data.telemetry.playerHasVehicle = false;
-    strncpy(data.scoring.scoringInfo.mTrackName, "Monza", 63);
+    StringUtils::SafeCopy(data.scoring.scoringInfo.mTrackName, sizeof(data.scoring.scoringInfo.mTrackName), "Monza");
 
     engine.UpdateMetadata(data);
 

@@ -13,7 +13,7 @@ TEST_CASE_TAGGED(test_issue_274_robust_session_fallback, "Functional", (std::vec
     memset(&layout, 0, sizeof(layout));
 
     // Scenario: No SME events, but track name is present in buffer.
-    strncpy(layout.data.scoring.scoringInfo.mTrackName, "Monza", 63);
+    StringUtils::SafeCopy(layout.data.scoring.scoringInfo.mTrackName, sizeof(layout.data.scoring.scoringInfo.mTrackName), "Monza");
     layout.data.scoring.scoringInfo.mInRealtime = 0;
 
     GameConnectorTestAccessor::SetSharedMem(gc, &layout);
@@ -31,7 +31,7 @@ TEST_CASE_TAGGED(test_issue_274_robust_realtime_fallback, "Functional", (std::ve
     memset(&layout, 0, sizeof(layout));
 
     // Scenario: No SME events, but mInRealtime is true in buffer.
-    strncpy(layout.data.scoring.scoringInfo.mTrackName, "Spa", 63);
+    StringUtils::SafeCopy(layout.data.scoring.scoringInfo.mTrackName, sizeof(layout.data.scoring.scoringInfo.mTrackName), "Spa");
     layout.data.scoring.scoringInfo.mInRealtime = 1;
 
     GameConnectorTestAccessor::SetSharedMem(gc, &layout);

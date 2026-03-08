@@ -17,7 +17,7 @@ TEST_CASE_TAGGED(test_issue_238_repro_spam, "BugFix", (std::vector<std::string>{
     const char* scoringVehicleName = "Iron Lynx - Proton #9:ELMS25";
     const char* telemetryVehicleName = "Iron Lynx - Proton #9"; // Slightly different
 
-    strncpy(data.mVehicleName, telemetryVehicleName, sizeof(data.mVehicleName) - 1);
+    StringUtils::SafeCopy(data.mVehicleName, sizeof(data.mVehicleName), telemetryVehicleName);
     const char* vehicleClass = "LMP2_ELMS";
 
     // Call calculate_force multiple times
@@ -56,7 +56,7 @@ TEST_CASE_TAGGED(test_issue_238_steering_range_warning_spam, "BugFix", (std::vec
     const char* vehicleName = "Test Car";
     const char* vehicleClass = "GT3";
 
-    strncpy(data.mVehicleName, vehicleName, sizeof(data.mVehicleName) - 1);
+    StringUtils::SafeCopy(data.mVehicleName, sizeof(data.mVehicleName), vehicleName);
 
     // Call calculate_force multiple times
     for (int i = 0; i < 5; ++i) {

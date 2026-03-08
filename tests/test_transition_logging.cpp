@@ -57,13 +57,13 @@ TEST_CASE_TAGGED(test_transition_logging_logic, "Functional", (std::vector<std::
 
     // 4. Context Transitions (Track/Vehicle)
     std::cout << "Testing Context Transitions..." << std::endl;
-    strncpy(data.scoring.scoringInfo.mTrackName, "Spa", 63);
+    StringUtils::SafeCopy(data.scoring.scoringInfo.mTrackName, sizeof(data.scoring.scoringInfo.mTrackName), "Spa");
     GameConnectorTestAccessor::InjectTransitions(gc, data);
     ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] Track: '' -> 'Spa'"));
 
     data.telemetry.playerHasVehicle = true;
     data.telemetry.playerVehicleIdx = 0;
-    strncpy(data.scoring.vehScoringInfo[0].mVehicleName, "Ferrari 488", 63);
+    StringUtils::SafeCopy(data.scoring.vehScoringInfo[0].mVehicleName, sizeof(data.scoring.vehScoringInfo[0].mVehicleName), "Ferrari 488");
     GameConnectorTestAccessor::InjectTransitions(gc, data);
     ASSERT_TRUE(IsInLog("test_transitions.log", "[Transition] Vehicle: '' -> 'Ferrari 488'"));
 

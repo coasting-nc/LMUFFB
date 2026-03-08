@@ -101,7 +101,7 @@ TEST_CASE_TAGGED(test_gc_end_session_event_overrides_poll,
     // Snapshot: buffer still claims "track loaded + in realtime" (hasn't been zeroed yet)
     // but SME_END_SESSION fires simultaneously.
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
-    strncpy(snap.scoring.scoringInfo.mTrackName, "Monza", 63);
+    StringUtils::SafeCopy(snap.scoring.scoringInfo.mTrackName, sizeof(snap.scoring.scoringInfo.mTrackName), "Monza");
     snap.scoring.scoringInfo.mInRealtime = 1;
     snap.generic.events[SME_END_SESSION] = (SharedMemoryEvent)1;
 
@@ -217,7 +217,7 @@ TEST_CASE_TAGGED(test_gc_actively_driving_true,
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
-    strncpy(snap.scoring.scoringInfo.mTrackName, "Le Mans", 63);
+    StringUtils::SafeCopy(snap.scoring.scoringInfo.mTrackName, sizeof(snap.scoring.scoringInfo.mTrackName), "Le Mans");
     snap.scoring.scoringInfo.mInRealtime  = 1;
     snap.scoring.scoringInfo.mGamePhase   = 5; // Green Flag — not paused
     snap.scoring.scoringInfo.mSession     = 10;
@@ -239,7 +239,7 @@ TEST_CASE_TAGGED(test_gc_actively_driving_false_when_paused,
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
-    strncpy(snap.scoring.scoringInfo.mTrackName, "Spa", 63);
+    StringUtils::SafeCopy(snap.scoring.scoringInfo.mTrackName, sizeof(snap.scoring.scoringInfo.mTrackName), "Spa");
     snap.scoring.scoringInfo.mInRealtime  = 1;
     snap.scoring.scoringInfo.mGamePhase   = 9; // Paused
     snap.scoring.scoringInfo.mSession     = 5;
@@ -260,7 +260,7 @@ TEST_CASE_TAGGED(test_gc_actively_driving_false_when_ai,
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
-    strncpy(snap.scoring.scoringInfo.mTrackName, "Silverstone", 63);
+    StringUtils::SafeCopy(snap.scoring.scoringInfo.mTrackName, sizeof(snap.scoring.scoringInfo.mTrackName), "Silverstone");
     snap.scoring.scoringInfo.mInRealtime  = 1;
     snap.scoring.scoringInfo.mGamePhase   = 5; // Green Flag
     snap.telemetry.playerHasVehicle       = true;
@@ -280,7 +280,7 @@ TEST_CASE_TAGGED(test_gc_actively_driving_false_when_not_realtime,
 
     // Player is in Garage/Monitor UI — not in realtime
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
-    strncpy(snap.scoring.scoringInfo.mTrackName, "Monza", 63);
+    StringUtils::SafeCopy(snap.scoring.scoringInfo.mTrackName, sizeof(snap.scoring.scoringInfo.mTrackName), "Monza");
     snap.scoring.scoringInfo.mInRealtime  = 0; // NOT in cockpit
     snap.scoring.scoringInfo.mGamePhase   = 0; // Before Session (Garage)
     snap.telemetry.playerHasVehicle       = true;
@@ -304,7 +304,7 @@ TEST_CASE_TAGGED(test_gc_logging_gate_independent_of_session_active,
 
     // 1. Actively driving
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
-    strncpy(snap.scoring.scoringInfo.mTrackName, "Le Mans", 63);
+    StringUtils::SafeCopy(snap.scoring.scoringInfo.mTrackName, sizeof(snap.scoring.scoringInfo.mTrackName), "Le Mans");
     snap.scoring.scoringInfo.mInRealtime  = 1;
     snap.scoring.scoringInfo.mGamePhase   = 5;
     snap.telemetry.playerHasVehicle       = true;
@@ -347,7 +347,7 @@ TEST_CASE_TAGGED(test_gc_main_menu_ends_session_via_sme_enter,
 
     // Step 1: actively driving
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
-    strncpy(snap.scoring.scoringInfo.mTrackName, "Le Mans", 63);
+    StringUtils::SafeCopy(snap.scoring.scoringInfo.mTrackName, sizeof(snap.scoring.scoringInfo.mTrackName), "Le Mans");
     snap.scoring.scoringInfo.mInRealtime = 1;
     snap.scoring.scoringInfo.mGamePhase  = 5;
     GameConnectorTestAccessor::InjectTransitions(gc, snap);
@@ -373,7 +373,7 @@ TEST_CASE_TAGGED(test_gc_garage_return_keeps_session_active,
 
     // Step 1: actively driving
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
-    strncpy(snap.scoring.scoringInfo.mTrackName, "Le Mans", 63);
+    StringUtils::SafeCopy(snap.scoring.scoringInfo.mTrackName, sizeof(snap.scoring.scoringInfo.mTrackName), "Le Mans");
     snap.scoring.scoringInfo.mInRealtime = 1;
     snap.scoring.scoringInfo.mGamePhase  = 5;
     GameConnectorTestAccessor::InjectTransitions(gc, snap);
@@ -409,7 +409,7 @@ TEST_CASE_TAGGED(test_gc_no_duplicate_log_on_same_state,
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
     snap.scoring.scoringInfo.mGamePhase   = 5;
     snap.scoring.scoringInfo.mSession     = 10;
-    strncpy(snap.scoring.scoringInfo.mTrackName, "Imola", 63);
+    StringUtils::SafeCopy(snap.scoring.scoringInfo.mTrackName, sizeof(snap.scoring.scoringInfo.mTrackName), "Imola");
 
     // First call: this should log the transitions (phase, session, track)
     GameConnectorTestAccessor::InjectTransitions(gc, snap);

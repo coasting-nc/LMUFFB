@@ -4,6 +4,7 @@
 #include "Version.h"
 #include "Logger.h"
 #include "Config.h"
+#include "StringUtils.h"
 #include <windows.h>
 #include <commdlg.h>
 #include <iostream>
@@ -103,7 +104,7 @@ public:
 
     bool SavePresetFileDialog(std::string& outPath, const std::string& defaultName) override {
         char filename[MAX_PATH] = "";
-        strncpy_s(filename, sizeof(filename), defaultName.c_str(), _TRUNCATE);
+        StringUtils::SafeCopy(filename, sizeof(filename), defaultName.c_str());
         OPENFILENAMEA ofn;
         ZeroMemory(&ofn, sizeof(ofn));
         ofn.lStructSize = sizeof(ofn);

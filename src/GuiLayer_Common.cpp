@@ -2,6 +2,7 @@
 #include "Version.h"
 #include "Config.h"
 #include "Tooltips.h"
+#include "StringUtils.h" // Added StringUtils.h
 #include "DirectInputFFB.h"
 #include "GameConnector.h"
 #include "GuiWidgets.h"
@@ -841,12 +842,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::AUTO_START_LOGGING);
 
             char log_path_buf[256];
-#ifdef _WIN32
-            strncpy_s(log_path_buf, sizeof(log_path_buf), Config::m_log_path.c_str(), _TRUNCATE);
-#else
-            strncpy(log_path_buf, Config::m_log_path.c_str(), 255);
-#endif
-            log_path_buf[255] = '\0';
+            StringUtils::SafeCopy(log_path_buf, sizeof(log_path_buf), Config::m_log_path.c_str());
             if (ImGui::InputText("Log Path", log_path_buf, 255)) {
                 Config::m_log_path = log_path_buf;
             }

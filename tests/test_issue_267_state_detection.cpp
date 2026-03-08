@@ -42,7 +42,7 @@ TEST_CASE_TAGGED(test_issue_267_initial_connection_cockpit, "Functional", (std::
     memset(&layout, 0, sizeof(layout));
 
     // In cockpit: track name present, in realtime
-    strncpy(layout.data.scoring.scoringInfo.mTrackName, "Le Mans", 63);
+    StringUtils::SafeCopy(layout.data.scoring.scoringInfo.mTrackName, sizeof(layout.data.scoring.scoringInfo.mTrackName), "Le Mans");
     layout.data.scoring.scoringInfo.mInRealtime = 1;
     layout.data.scoring.scoringInfo.mSession = 10; // Race
     layout.data.scoring.scoringInfo.mGamePhase = 5; // Green Flag

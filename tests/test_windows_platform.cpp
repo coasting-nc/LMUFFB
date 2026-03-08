@@ -106,7 +106,7 @@ TEST_CASE(test_main_exe_icon, "Windows") {
 #else
     ssize_t count = readlink("/proc/self/exe", buffer, MAX_PATH);
     if (count != -1) buffer[count] = '\0';
-    else strncpy(buffer, ".", MAX_PATH);
+    else StringUtils::SafeCopy(buffer, MAX_PATH, ".");
 #endif
     std::string exe_path(buffer);
     size_t last_slash = exe_path.find_last_of("\\/");
@@ -162,7 +162,7 @@ TEST_CASE(test_icon_presence, "Windows") {
     // Linux equivalent for getting executable path
     ssize_t count = readlink("/proc/self/exe", buffer, MAX_PATH);
     if (count != -1) buffer[count] = '\0';
-    else strncpy(buffer, ".", MAX_PATH);
+    else StringUtils::SafeCopy(buffer, MAX_PATH, ".");
 #endif
     std::string exe_path(buffer);
     

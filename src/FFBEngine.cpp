@@ -1,5 +1,6 @@
 #include "FFBEngine.h"
 #include "Config.h"
+#include "StringUtils.h"
 #include "RestApiProvider.h"
 #include "Logger.h"
 #include "lmu_sm_interface/LmuSharedMemoryWrapper.h"
@@ -1344,21 +1345,11 @@ bool FFBEngine::UpdateMetadataInternal(const char* vehicleClass, const char* veh
 
     // 2. Update Context strings (for UI/Logging)
     if (vehicleName && strcmp(m_vehicle_name, vehicleName) != 0) {
-#ifdef _WIN32
-        strncpy_s(m_vehicle_name, sizeof(m_vehicle_name), vehicleName, _TRUNCATE);
-#else
-        strncpy(m_vehicle_name, vehicleName, STR_MAX_64);
-        m_vehicle_name[STR_MAX_64] = '\0';
-#endif
+        StringUtils::SafeCopy(m_vehicle_name, sizeof(m_vehicle_name), vehicleName);
     }
 
     if (trackName && strcmp(m_track_name, trackName) != 0) {
-#ifdef _WIN32
-        strncpy_s(m_track_name, sizeof(m_track_name), trackName, _TRUNCATE);
-#else
-        strncpy(m_track_name, trackName, STR_MAX_64);
-        m_track_name[STR_MAX_64] = '\0';
-#endif
+        StringUtils::SafeCopy(m_track_name, sizeof(m_track_name), trackName);
     }
 
     return seeded;

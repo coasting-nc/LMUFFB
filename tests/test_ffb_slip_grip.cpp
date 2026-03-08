@@ -503,12 +503,8 @@ TEST_CASE(test_missing_telemetry_warnings, "SlipGrip") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
     // Set Vehicle Name (use platform-specific safe copy)
-#ifdef _MSC_VER
-    strncpy_s(data.mVehicleName, sizeof(data.mVehicleName), "TestCar_GT3", _TRUNCATE);
-#else
-    strncpy(data.mVehicleName, "TestCar_GT3", sizeof(data.mVehicleName) - 1);
+    StringUtils::SafeCopy(data.mVehicleName, sizeof(data.mVehicleName), "TestCar_GT3");
     data.mVehicleName[sizeof(data.mVehicleName) - 1] = '\0';
-#endif
 
     std::stringstream logBuffer;
     Logger::Get().SetTestStream(&logBuffer);

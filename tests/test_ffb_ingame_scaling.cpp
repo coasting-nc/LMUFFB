@@ -45,7 +45,7 @@ TEST_CASE(test_ingame_ffb_scaling_fix, "InGameFFB") {
     data.mDeltaTime = 0.0025f;
     data.mElapsedTime = 0.0025f;
     data.mLocalVel.z = 10.0f;
-    strncpy(data.mVehicleName, "911 GT3 R", 63);
+    StringUtils::SafeCopy(data.mVehicleName, sizeof(data.mVehicleName), "911 GT3 R");
 
     // Ensure we are seeded so InitializeLoadReference doesn't call ResetNormalization and overwrite our Mult
     engine.calculate_force(&data, "GT3", "911 GT3 R", genFFBTorque);
