@@ -252,8 +252,8 @@ public:
     static void test_unit_abs_pulse();
 
     // Load Normalization Test Access
-    static double GetAutoPeakLoad(const FFBEngine& e) { return e.m_auto_peak_load; }
-    static void SetAutoPeakLoad(FFBEngine& e, double val) { e.m_auto_peak_load = val; }
+    static double GetAutoPeakLoad(const FFBEngine& e) { return e.m_auto_peak_front_load; }
+    static void SetAutoPeakLoad(FFBEngine& e, double val) { e.m_auto_peak_front_load = val; }
     static void SetAutoNormalizationEnabled(FFBEngine& e, bool enabled) { e.m_auto_load_normalization_enabled = enabled; }
     static void SetDynamicNormalizationEnabled(FFBEngine& e, bool enabled) { e.m_dynamic_normalization_enabled = enabled; }
 

@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.151] - 2026-03-08
+- **Renamed Load and Grip Variables for Clarity (Issue #294)**:
+  - Updated Ambiguous variable names in `FFBEngine` and `FFBCalculationContext` to explicitly specify front-axle context.
+  - Renames include: `avg_load` -> `avg_front_load`, `avg_grip` -> `avg_front_grip`, `s_load` -> `s_front_load`, `s_grip` -> `s_front_grip`, and `m_auto_peak_load` -> `m_auto_peak_front_load`.
+  - Renamed `load_peak_ref` to `front_load_peak_ref` in `LogFrame` (AsyncLogger) for better telemetry clarity.
+  - Improved `calculate_grip` signature by renaming it to `calculate_axle_grip` and its load parameter to `avg_axle_load`, correctly reflecting its generic nature for both axles.
+- **Testing**:
+  - Updated all unit tests and test accessors to match the new naming convention.
+- **Tools**:
+  - Updated the Python Log Analyzer (`loader.py`) and its tests to support the renamed `front_load_peak_ref` binary field.
+
+## [0.7.150] - 2026-03-08
+- **Decoupled ABS and Lockup from Vibration Strength (Issue #290)**:
+  - Separated the tactile effects into "Surface/Environmental" and "Vehicle State" groups.
+  - ABS Pulse and Lockup Vibration are now added to the final FFB signal independently of the "Vibration Strength" slider (`m_vibration_gain`).
+  - This ensures users who prefer clean steering (0% vibration) still receive critical braking feedback.
+  - Road Texture, Slide Texture, Spin Vibration, and Bottoming Crunch remain governed by the "Vibration Strength" slider.
+- **Testing**:
+  - Added `tests/repro_issue_290.cpp` to verify that ABS and Lockup effects persist even when Vibration Strength is set to 0%, while confirming that road textures are correctly muted.
+
 ## [0.7.149] - 2026-03-07
 - **Automated LZ4 Dependency Download (Issue #284)**:
   - Updated `CMakeLists.txt` to automatically download the required `lz4.c` and `lz4.h` vendor files using `FetchContent`.
