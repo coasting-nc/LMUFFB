@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-08 22:02:39</td>
+            <td class="headerValue">2026-03-08 22:16:23</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -400,8 +400,8 @@
 <span id="L323"><span class="lineNum">     323</span>                 :             :         </span>
 <span id="L324"><span class="lineNum">     324</span>                 :<span class="tlaGNC">        2966 :         m_frame_count++;</span></span>
 <span id="L325"><span class="lineNum">     325</span>                 :             :         </span>
-<span id="L326"><span class="lineNum">     326</span>         [<span class="tlaGBC" title="Branch 0 was taken 726 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2240 times"> + </span>]:<span class="tlaGNC">        2966 :         if (should_notify) {</span></span>
-<span id="L327"><span class="lineNum">     327</span>                 :<span class="tlaGNC">         726 :              m_cv.notify_one();</span></span>
+<span id="L326"><span class="lineNum">     326</span>         [<span class="tlaGBC" title="Branch 0 was taken 618 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2348 times"> + </span>]:<span class="tlaGNC">        2966 :         if (should_notify) {</span></span>
+<span id="L327"><span class="lineNum">     327</span>                 :<span class="tlaGNC">         618 :              m_cv.notify_one();</span></span>
 <span id="L328"><span class="lineNum">     328</span>                 :             :         }</span>
 <span id="L329"><span class="lineNum">     329</span>                 :             :     }</span>
 <span id="L330"><span class="lineNum">     330</span>                 :             :     </span>
@@ -433,8 +433,8 @@
 <span id="L356"><span class="lineNum">     356</span>                 :             :         while (true) {</span>
 <span id="L357"><span class="lineNum">     357</span>                 :             :             {</span>
 <span id="L358"><span class="lineNum">     358</span>         [<span class="tlaGBC" title="Branch 0 was taken 42 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          42 :                 std::unique_lock&lt;std::mutex&gt; lock(m_mutex);</span></span>
-<span id="L359"><span class="lineNum">     359</span>   [<span class="tlaGBC" title="Branch 0 was taken 42 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 26 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 23 times"> + </span> :<span class="tlaGNC">          91 :                 m_cv.wait(lock, [this] { return !m_running || !m_buffer_active.empty(); });</span></span>
-<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 19 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 7 times"> + </span>]
+<span id="L359"><span class="lineNum">     359</span>   [<span class="tlaGBC" title="Branch 0 was taken 42 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 27 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 22 times"> + </span> :<span class="tlaGNC">          91 :                 m_cv.wait(lock, [this] { return !m_running || !m_buffer_active.empty(); });</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 20 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 7 times"> + </span>]
 <span id="L360"><span class="lineNum">     360</span>                 :             : </span>
 <span id="L361"><span class="lineNum">     361</span>         [<span class="tlaGBC" title="Branch 0 was taken 26 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16 times"> + </span>]:<span class="tlaGNC">          42 :                 if (!m_buffer_active.empty()) {</span></span>
 <span id="L362"><span class="lineNum">     362</span>                 :<span class="tlaGNC">          26 :                     local_buffer.swap(m_buffer_active);</span></span>
