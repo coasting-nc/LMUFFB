@@ -106,13 +106,6 @@ inline BOOL VerQueryValueA(const void* pBlock, const char* lpSubBlock, void** lp
     return FALSE;
 }
 
-inline void sprintf_s(char* buffer, size_t size, const char* format, ...) {
-    va_list args;
-    va_start(args, format);
-    StringUtils::vSafeFormat(buffer, size, format, args);
-    va_end(args);
-}
-
 #ifndef MAKEINTRESOURCE
 #define MAKEINTRESOURCE(i) ((const char*)(uintptr_t)((WORD)(i)))
 #endif

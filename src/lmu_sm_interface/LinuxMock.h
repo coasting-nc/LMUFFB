@@ -135,13 +135,6 @@ inline long InterlockedExchange(long volatile* Target, long Value) {
 
 // Memory and Event mocks
 inline void YieldProcessor() {}
-inline int sprintf_s(char* buf, size_t size, const char* fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    int ret = StringUtils::vSafeFormat(buf, size, fmt, args);
-    va_end(args);
-    return ret;
-}
 inline DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
     if (MockSM::WaitResult() != 0) {
         DWORD res = MockSM::WaitResult();
