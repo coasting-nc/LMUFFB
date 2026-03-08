@@ -65,9 +65,10 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     ResetNormalization();
 
     ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
+    m_fixed_static_load_front = GetDefaultLoadForClass(vclass);
 
     // Stage 3 Reset: Ensure peak load starts at class baseline
-    m_auto_peak_front_load = GetDefaultLoadForClass(vclass);
+    m_auto_peak_front_load = m_fixed_static_load_front;
 
     std::string vName = vehicleName ? vehicleName : "Unknown";
 

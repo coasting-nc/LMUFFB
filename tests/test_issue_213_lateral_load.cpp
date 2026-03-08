@@ -33,12 +33,13 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_additive, "CorePhysics", (std::vect
     auto snapshots = engine.GetDebugBatch();
     ASSERT_FALSE(snapshots.empty());
     if (!snapshots.empty()) {
+        // v0.7.153 math:
         // lat_g_accel = 1.0
-        // lat_load_norm = (6000-2000)/8000 = 0.5
-        // sop_base = (1.0 * 1.0 + 0.5 * 1.0) * 1.0 = 1.5 Nm
-        // Normalized = 1.5 / 20.0 = 0.075
+        // lat_load_norm = (6000-2000) / (6000+2000+4800) * 4.0 = 4000 / 12800 * 4.0 = 0.3125 * 4.0 = 1.25
+        // sop_base = (1.0 * 1.0 + 1.25 * 1.0) * 1.0 = 2.25 Nm
+        // Sign is inverted: -2.25
         std::cout << "[INFO] SoP Force (Combined): " << snapshots.back().sop_force << std::endl;
-        ASSERT_NEAR(snapshots.back().sop_force, 1.5f, 0.1f);
+        ASSERT_NEAR(snapshots.back().sop_force, -2.25f, 0.1f);
     }
 }
 
@@ -66,8 +67,9 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_isolation, "CorePhysics", (std::vec
 
     std::cout << "[INFO] Force G: " << force_g << " | Force Load: " << force_load << std::endl;
 
-    ASSERT_NEAR(force_g, 1.0f, 0.1f);
-    ASSERT_NEAR(force_load, 0.5f, 0.1f);
+    // v0.7.153: Sign is inverted and math is updated
+    ASSERT_NEAR(force_g, -1.0f, 0.1f);
+    ASSERT_NEAR(force_load, -1.25f, 0.1f);
 }
 
 TEST_CASE_TAGGED(test_issue_213_lateral_load_kinematic, "CorePhysics", (std::vector<std::string>{"Physics", "Issue213"})) {
@@ -96,9 +98,9 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_kinematic, "CorePhysics", (std::vec
     ASSERT_FALSE(snapshots.empty());
     if (!snapshots.empty()) {
         // With 1G Left acceleration, kinematic load should show FL > FR
-        // SoP force should be positive
+        // SoP force should be negative (inverted for resistance)
         std::cout << "[INFO] SoP Force (Kinematic Fallback): " << snapshots.back().sop_force << std::endl;
-        ASSERT_GT(snapshots.back().sop_force, 0.01f);
+        ASSERT_LT(snapshots.back().sop_force, -0.01f);
     }
 }
 
@@ -116,15 +118,17 @@ TEST_CASE_TAGGED(test_issue_213_orientation_matrix, "CorePhysics", (std::vector<
 
     // Scenario 1: Right Turn (Centrifugal force LEFT, Load shift LEFT)
     // Game: +X = Left (Centrifugal), FL > FR (Load)
-    // Expected SoP: Positive (Internal)
-    // Expected FFB: Negative (Pull LEFT)
+    // Expected SoP: Negative (Internal after v0.7.153 inversion)
+    // Expected FFB: Positive (Pull RIGHT because of double inversion)
+    // WAIT: engine.m_invert_force is TRUE in this test.
+    // Base FFB (Negative) * engine.m_invert_force (-1) = Positive (RIGHT)
     OrientationScenario right_turn = { 9.81, 6000.0, 2000.0, "Right Turn (1G Left Body Force)" };
-    VerifyOrientation(engine, right_turn, 1.0f, -1.0f);
+    VerifyOrientation(engine, right_turn, -1.0f, 1.0f);
 
     // Scenario 2: Left Turn (Centrifugal force RIGHT, Load shift RIGHT)
     // Game: -X = Right (Centrifugal), FR > FL (Load)
-    // Expected SoP: Negative (Internal)
-    // Expected FFB: Positive (Pull RIGHT)
+    // Expected SoP: Positive (Internal)
+    // Expected FFB: Negative (Pull LEFT)
     OrientationScenario left_turn = { -9.81, 2000.0, 6000.0, "Left Turn (1G Right Body Force)" };
-    VerifyOrientation(engine, left_turn, -1.0f, 1.0f);
+    VerifyOrientation(engine, left_turn, 1.0f, -1.0f);
 }

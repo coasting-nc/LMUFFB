@@ -585,7 +585,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Lateral G Boost (Slide)", &engine.m_oversteer_boost, 0.0f, 4.0f, FormatPct(engine.m_oversteer_boost),
             Tooltips::OVERSTEER_BOOST);
         FloatSetting("Lateral G", &engine.m_sop_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_sop_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_G);
-        FloatSetting("Lateral Load", &engine.m_lat_load_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_lat_load_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_LOAD);
+        FloatSetting("Lateral Load", &engine.m_lat_load_effect, 0.0f, 10.0f, FormatDecoupled(engine.m_lat_load_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_LOAD);
         FloatSetting("SoP Self-Aligning Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN),
             Tooltips::REAR_ALIGN_TORQUE);
         FloatSetting("Yaw Kick", &engine.m_sop_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK),

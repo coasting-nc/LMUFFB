@@ -80,7 +80,7 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                     current_preset.understeer = (std::min)(2.0f, (std::max)(0.0f, val));
                 }
                 else if (key == "sop") current_preset.sop = (std::min)(2.0f, std::stof(value));
-                else if (key == "lateral_load_effect") current_preset.lateral_load = (std::min)(2.0f, std::stof(value));
+                else if (key == "lateral_load_effect") current_preset.lateral_load = (std::min)(10.0f, std::stof(value));
                 else if (key == "sop_scale") current_preset.sop_scale = std::stof(value);
                 else if (key == "sop_smoothing_factor") current_preset.sop_smoothing = std::stof(value);
                 else if (key == "min_force") current_preset.min_force = std::stof(value);
@@ -1665,6 +1665,9 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     }
     if (engine.m_sop_effect < 0.0f || engine.m_sop_effect > 2.0f) {
         engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, engine.m_sop_effect));
+    }
+    if (engine.m_lat_load_effect < 0.0f || engine.m_lat_load_effect > 10.0f) {
+        engine.m_lat_load_effect = (std::max)(0.0f, (std::min)(10.0f, engine.m_lat_load_effect));
     }
     engine.m_soft_lock_stiffness = (std::max)(0.0f, engine.m_soft_lock_stiffness);
     engine.m_soft_lock_damping = (std::max)(0.0f, engine.m_soft_lock_damping);

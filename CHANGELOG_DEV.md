@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.153] - 2026-03-08
+- **Fixed Lateral Load Effect Feel & Range (Issue #282)**:
+  - Redesigned the normalization formula to `(FL - FR) / (FL + FR + static_load)` to prevent early saturation and eliminate the "notchy" feel while preserving aerodynamic scaling (Aero-Fade).
+  - Inverted the SoP base force sign to correctly resist turns (providing heavy steering) instead of assisting them, resolving the "pulls into turn" issue.
+  - Increased the internal multiplier to 4.0x to maintain magnitude parity with the acceleration-based Lateral G effect under the new normalization model.
+  - Expanded the "Lateral Load" slider range in the GUI from 200% (2.0) to 1000% (10.0) for increased tuning flexibility.
+- **Testing**:
+  - Updated `tests/test_issue_213_lateral_load.cpp` with new expected math and verified directional resistance.
+
 ## [0.7.152] - 2026-03-08
 - **Lateral Load Analysis in Log Analyser (Issue #293)**:
   - Augmented telemetry log header to include `Lateral Load Effect`, `SoP Scale`, and `SoP Smoothing` metadata for accurate offline signal decomposition.

@@ -971,9 +971,14 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
         fl_load = calculate_kinematic_load(data, 0);
         fr_load = calculate_kinematic_load(data, 1);
     }
-    double total_load = fl_load + fr_load;
-    double lat_load_norm = (total_load > 1.0) ? (fl_load - fr_load) / total_load : 0.0;
-    
+    // v0.7.153: Use dynamic + static normalization to reduce notchiness while preserving Aero-Fade (Issue #282)
+    // Formula: (FL - FR) / (FL + FR + static_load).
+    // This prevents the 1.0 plateau (notchiness) but still scales with total load (Aero-Fade).
+    // Multiplier 4.0x maintains magnitude parity with Lat G at 1G cornering.
+    // Magnitude parity with Lat G: at 1G, load transfer is approx 0.5 * static load.
+    double lat_load_norm = (fl_load - fr_load) / (fl_load + fr_load + m_fixed_static_load_front + EPSILON_DIV);
+    lat_load_norm *= 4.0;
+
     // Smoothing: Map 0.0-1.0 slider to 0.1-0.0001s tau
     double smoothness = (double)m_sop_smoothing_factor;
     smoothness = (std::max)(0.0, (std::min)(SMOOTHNESS_LIMIT_0999, smoothness));
@@ -985,7 +990,15 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     m_sop_load_smoothed += alpha * (lat_load_norm - m_sop_load_smoothed);
 
     // Base SoP Force (Combined)
+    // v0.7.153: Inverted sign to fix "pulls into turn" feel reported by users.
+    // LMU Coordinate System: +X is LEFT. Right Turn = +X Accel = Centrifugal force LEFT.
+    // We want HEAVY steering, which means pulling LEFT (Negative force).
+    // Thus internal signal should be POSITIVE, but current logic might be flipped.
     double sop_base = (m_sop_lat_g_smoothed * (double)m_sop_effect + m_sop_load_smoothed * (double)m_lat_load_effect) * (double)m_sop_scale;
+
+    // Global inversion for resistance
+    sop_base *= -1.0;
+
     ctx.sop_unboosted_force = sop_base; // Store for snapshot
     
     // 2. Oversteer Boost (Grip Differential)

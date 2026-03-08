@@ -476,6 +476,7 @@ public:
     char m_vehicle_name[STR_BUF_64] = "Unknown";
     char m_track_name[STR_BUF_64] = "Unknown";
     std::string m_current_class_name = "";
+    double m_fixed_static_load_front = 4500.0;
 
     // Logging intermediate values (exposed for AsyncLogger)
     double m_slope_dG_dt = 0.0;       
