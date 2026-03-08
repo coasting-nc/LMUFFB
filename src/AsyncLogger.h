@@ -177,7 +177,7 @@ struct LogFrame {
     float ffb_gen_torque;
     float ffb_grip_factor;
     float speed_gate;
-    float load_peak_ref;
+    float front_load_peak_ref;
 
     // --- SYSTEM (400Hz) ---
     float physics_rate;
@@ -448,7 +448,7 @@ private:
                << "SessionPeakTorque,DynamicWeight,StructuralMult,VibrationMult,SteeringAngleDeg,SteeringRangeDeg,DebugFreq,TireRadius,"
                << "FFBTotal,FFBBase,FFBUndersteerDrop,FFBOversteerBoost,FFBSoP,FFBRearTorque,FFBScrubDrag,FFBYawKick,FFBGyroDamping,FFBRoadTexture,FFBSlideTexture,FFBLockupVibration,FFBSpinVibration,FFBBottomingCrunch,FFBABSPulse,FFBSoftLock,"
                << "ExtrapolatedYawAccel,DerivedYawAccel,"
-               << "FFBShaftTorque,FFBGenTorque,GripFactor,SpeedGate,LoadPeakRef,PhysicsRate,Clipping,WarnBits,Marker\n";
+               << "FFBShaftTorque,FFBGenTorque,GripFactor,SpeedGate,FrontLoadPeakRef,PhysicsRate,Clipping,WarnBits,Marker\n";
         m_file << "[DATA_START]\n";
     }
 

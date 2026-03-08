@@ -39,7 +39,7 @@ TEST_CASE(test_coverage_load_reference, "Coverage") {
     ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), initial, 0.1); // No change
 
     // Case 5: Safety Clamp
-    // if (m_static_front_load < 1000.0) m_static_front_load = m_auto_peak_load * 0.5;
+    // if (m_static_front_load < 1000.0) m_static_front_load = m_auto_peak_front_load * 0.5;
     FFBEngineTestAccess::SetStaticLoadLatched(engine, false); // Reset latching from previous case
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 500.0);
     // Call with valid speed but no internal update needed (load already low, but update logic sets it)
@@ -54,7 +54,7 @@ TEST_CASE(test_coverage_init_load_ref, "Coverage") {
     FFBEngine engine;
     
     // Just call it to trigger the logic and cout
-    // We can verify m_auto_peak_load changes
+    // We can verify m_auto_peak_front_load changes
     FFBEngineTestAccess::SetAutoPeakLoad(engine, 1000.0);
     FFBEngineTestAccess::CallInitializeLoadReference(engine, "GTE", "Ferrari 488 GTE");
     
@@ -106,7 +106,7 @@ TEST_CASE(test_coverage_textures, "Coverage") {
     ctx.dt = 0.01;
     ctx.car_speed = 20.0;
     ctx.speed_gate = 1.0;
-    ctx.avg_grip = 1.0;
+    ctx.avg_front_grip = 1.0;
 
     // 1. Wheel Spin
     // Requirements: m_spin_enabled, Throttle > 0.05, Rear Slip > 0.2

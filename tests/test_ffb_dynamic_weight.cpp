@@ -20,7 +20,7 @@ TEST_CASE(test_load_weighted_grip, "Physics") {
     double prev_slip2 = 0.0;
     bool warned = false;
 
-    GripResult result = engine.calculate_grip(
+    GripResult result = engine.calculate_axle_grip(
         data.mWheel[0], data.mWheel[1], 5250.0, warned,
         prev_slip1, prev_slip2, 20.0, 0.0025, "TestCar", &data, true
     );

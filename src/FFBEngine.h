@@ -112,7 +112,7 @@ struct FFBSnapshot {
 
 // BiquadNotch moved to MathUtils.h
 
-// Helper Result Struct for calculate_grip
+// Helper Result Struct for calculate_axle_grip
 struct GripResult {
     double value;           // Final grip value
     bool approximated;      // Was approximation used?
@@ -131,8 +131,8 @@ struct FFBCalculationContext {
     double speed_gate = 1.0;
     double texture_load_factor = 1.0;
     double brake_load_factor = 1.0;
-    double avg_load = 0.0;
-    double avg_grip = 0.0;
+    double avg_front_load = 0.0;
+    double avg_front_grip = 0.0;
 
     // Diagnostics
     bool frame_warn_load = false;
@@ -489,8 +489,8 @@ public:
 
     // Telemetry Stats
     ChannelStats s_torque;
-    ChannelStats s_load;
-    ChannelStats s_grip;
+    ChannelStats s_front_load;
+    ChannelStats s_front_grip;
     ChannelStats s_lat_g;
     std::chrono::steady_clock::time_point last_log_time;
 
@@ -537,7 +537,7 @@ private:
     static constexpr double PREDICTION_BRAKE_THRESHOLD = 0.02;  
     static constexpr double PREDICTION_LOAD_THRESHOLD = 50.0;
 
-    double m_auto_peak_load = DEFAULT_AUTO_PEAK_LOAD;
+    double m_auto_peak_front_load = DEFAULT_AUTO_PEAK_LOAD;
 
     static constexpr double HPF_TIME_CONSTANT_S = 0.1;
     static constexpr double ZERO_CROSSING_EPSILON = 0.05;
@@ -689,9 +689,9 @@ public:
     double calculate_raw_slip_angle_pair(const TelemWheelV01& w1, const TelemWheelV01& w2);
     double calculate_slip_angle(const TelemWheelV01& w, double& prev_state, double dt);
     
-    GripResult calculate_grip(const TelemWheelV01& w1, 
+    GripResult calculate_axle_grip(const TelemWheelV01& w1,
                               const TelemWheelV01& w2,
-                              double avg_load,
+                              double avg_axle_load,
                               bool& warned_flag,
                               double& prev_slip1,
                               double& prev_slip2,

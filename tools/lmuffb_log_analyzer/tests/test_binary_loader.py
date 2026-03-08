@@ -163,7 +163,7 @@ def test_load_bin_alignment(tmp_path):
         ('ffb_spin_vibration', 'f4'), ('ffb_bottoming_crunch', 'f4'), ('ffb_abs_pulse', 'f4'), ('ffb_soft_lock', 'f4'),
         ('extrapolated_yaw_accel', 'f4'), ('derived_yaw_accel', 'f4'),
         ('ffb_shaft_torque', 'f4'), ('ffb_gen_torque', 'f4'), ('ffb_grip_factor', 'f4'), ('speed_gate', 'f4'),
-        ('load_peak_ref', 'f4'),
+        ('front_load_peak_ref', 'f4'),
         ('physics_rate', 'f4'),
         ('clipping', 'u1'), ('warn_bits', 'u1'), ('marker', 'u1')
     ]
