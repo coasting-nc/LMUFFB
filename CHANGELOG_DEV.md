@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.152] - 2026-03-08
+- **Lateral Load Analysis in Log Analyser (Issue #293)**:
+  - Augmented telemetry log header to include `Lateral Load Effect`, `SoP Scale`, and `SoP Smoothing` metadata for accurate offline signal decomposition.
+  - Implemented `lateral_analyzer.py` in the Log Analyser tool to calculate raw load transfer and decompose the `FFBSoP` force into its G-based and Load-based components.
+  - Added `plot_lateral_diagnostic` to the Python Log Analyser, providing time-series decomposition, scatter plots of Lateral G vs. Load Transfer, and distribution histograms.
+  - Integrated lateral analysis results into the CLI output (as a dedicated table) and the automated diagnostic reports.
+- **Logging**:
+  - Updated `AsyncLogger` and `main.cpp` to populate the new SoP metadata fields during session startup.
+
 ## [0.7.151] - 2026-03-08
 - **Renamed Load and Grip Variables for Clarity (Issue #294)**:
   - Updated Ambiguous variable names in `FFBEngine` and `FFBCalculationContext` to explicitly specify front-axle context.

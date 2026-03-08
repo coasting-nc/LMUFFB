@@ -200,6 +200,9 @@ struct SessionInfo {
     float gain;
     float understeer_effect;
     float sop_effect;
+    float lat_load_effect; // v0.7.152
+    float sop_scale;       // v0.7.152
+    float sop_smoothing;   // v0.7.152
     bool slope_enabled;
     float slope_sensitivity;
     float slope_threshold;
@@ -416,6 +419,9 @@ private:
         m_file << "# Gain: " << info.gain << "\n";
         m_file << "# Understeer Effect: " << info.understeer_effect << "\n";
         m_file << "# SoP Effect: " << info.sop_effect << "\n";
+        m_file << "# Lateral Load Effect: " << info.lat_load_effect << "\n";
+        m_file << "# SoP Scale: " << info.sop_scale << "\n";
+        m_file << "# SoP Smoothing: " << info.sop_smoothing << "\n";
         m_file << "# Slope Detection: " << (info.slope_enabled ? "Enabled" : "Disabled") << "\n";
         m_file << "# Slope Sensitivity: " << info.slope_sensitivity << "\n";
         m_file << "# Slope Threshold: " << info.slope_threshold << "\n";

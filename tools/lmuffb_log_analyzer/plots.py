@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from typing import Optional, List
+from .models import SessionMetadata
 from .analyzers.yaw_analyzer import get_fft, calculate_suspension_velocity
 
 def _safe_legend(ax, loc='upper right'):
@@ -124,6 +125,102 @@ def plot_slope_timeseries(
     if show:
         plt.show()
     
+    return ""
+
+def plot_lateral_diagnostic(
+    df: pd.DataFrame,
+    metadata: SessionMetadata,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Diagnostic plot for Lateral Load effect.
+    Panels: Input (G vs Load), Force Decomposition, G vs Load scatter.
+    """
+    cols = ['LatAccel', 'LatLoadNorm', 'FFBSoP']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Initializing Lateral diagnostic plot...")
+    fig = plt.figure(figsize=(14, 12))
+    gs = fig.add_gridspec(3, 2)
+    fig.suptitle('SoP Lateral & Load Transfer Diagnostic', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    # Panel 1: Inputs (Time Series)
+    if status_callback: status_callback("Rendering Panel 1 (Inputs)...")
+    ax1 = fig.add_subplot(gs[0, :])
+    ax1.plot(time, plot_df['LatAccel'] / 9.81, label='Lateral G', color='#2196F3', alpha=0.6)
+    ax1.set_ylabel('Lateral G', color='#2196F3')
+    ax1.tick_params(axis='y', labelcolor='#2196F3')
+    ax1.grid(True, alpha=0.3)
+
+    ax1_twin = ax1.twinx()
+    ax1_twin.plot(time, plot_df['LatLoadNorm'], label='Smoothed Load Transfer', color='#FF9800', alpha=0.8)
+    if 'RawLoadFL' in df.columns and 'RawLoadFR' in df.columns:
+        total_load = plot_df['RawLoadFL'] + plot_df['RawLoadFR']
+        raw_lt = (plot_df['RawLoadFL'] - plot_df['RawLoadFR']) / (total_load + 1e-6)
+        ax1_twin.plot(time, raw_lt, label='Raw Load Transfer', color='#9E9E9E', alpha=0.3, linewidth=0.5)
+
+    ax1_twin.set_ylabel('Norm. Load Transfer [-1, 1]', color='#FF9800')
+    ax1_twin.tick_params(axis='y', labelcolor='#FF9800')
+    ax1.set_title('Inputs: Lateral Acceleration vs. Tire Load Transfer')
+
+    # Combine legends
+    lines, labels = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax1_twin.get_legend_handles_labels()
+    ax1.legend(lines + lines2, labels + labels2, loc='upper right')
+
+    # Panel 2: Force Decomposition (Time Series)
+    if status_callback: status_callback("Rendering Panel 2 (Decomposition)...")
+    ax2 = fig.add_subplot(gs[1, :], sharex=ax1)
+
+    load_part = plot_df['LatLoadNorm'] * metadata.lat_load_effect * metadata.sop_scale
+    g_part = plot_df['FFBSoP'] - load_part
+
+    ax2.fill_between(time, 0, g_part, color='#2196F3', alpha=0.3, label='G-Force Component')
+    ax2.fill_between(time, g_part, plot_df['FFBSoP'], color='#FF9800', alpha=0.3, label='Lateral Load Component')
+    ax2.plot(time, plot_df['FFBSoP'], color='black', linewidth=1.0, label='Total SoP Force')
+
+    ax2.set_ylabel('Force (Nm)')
+    ax2.set_xlabel('Time (s)')
+    ax2.set_title('SoP Force Decomposition')
+    ax2.grid(True, alpha=0.3)
+    ax2.legend(loc='upper right')
+
+    # Panel 3: Scatter Plot (G vs Load)
+    if status_callback: status_callback("Rendering Panel 3 (Balance)...")
+    ax3 = fig.add_subplot(gs[2, 0])
+    ax3.scatter(plot_df['LatAccel'] / 9.81, plot_df['LatLoadNorm'],
+                c=plot_df['Speed'], cmap='viridis', alpha=0.2, s=5)
+    ax3.set_xlabel('Lateral G')
+    ax3.set_ylabel('Norm. Load Transfer')
+    ax3.set_title('Correlation: Lat G vs Load Transfer')
+    ax3.grid(True, alpha=0.3)
+
+    # Panel 4: Distribution
+    if status_callback: status_callback("Rendering Panel 4 (Distribution)...")
+    ax4 = fig.add_subplot(gs[2, 1])
+    ax4.hist(df['LatLoadNorm'], bins=50, color='#FF9800', alpha=0.7)
+    ax4.set_xlabel('Norm. Load Transfer')
+    ax4.set_ylabel('Frequency')
+    ax4.set_title('Load Transfer Distribution')
+    ax4.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+
+    if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+
+    if show:
+        plt.show()
+
     return ""
 
 def plot_yaw_diagnostic(
