@@ -37,8 +37,8 @@ TEST_CASE(test_main_app_logic, "System") {
     layout->data.telemetry.telemInfo[0].mElapsedTime = 1.0f;
     layout->data.telemetry.telemInfo[0].mSteeringShaftTorque = 1.0f;
     layout->data.telemetry.activeVehicles = 1;
-    strcpy(layout->data.scoring.vehScoringInfo[0].mVehicleClass, "GT3");
-    strcpy(layout->data.scoring.vehScoringInfo[0].mVehicleName, "911 GT3");
+    StringUtils::SafeCopy(layout->data.scoring.vehScoringInfo[0].mVehicleClass, sizeof(layout->data.scoring.vehScoringInfo[0].mVehicleClass), "GT3");
+    StringUtils::SafeCopy(layout->data.scoring.vehScoringInfo[0].mVehicleName, sizeof(layout->data.scoring.vehScoringInfo[0].mVehicleName), "911 GT3");
     layout->data.scoring.vehScoringInfo[0].mControl = 1; // Player control
     layout->data.scoring.scoringInfo.mInRealtime = 1;
     layout->data.scoring.scoringInfo.mGamePhase = 5; // Session running
