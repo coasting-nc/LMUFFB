@@ -56,3 +56,9 @@ Issue #281 reports FFB spikes when switching from `IsPlayerActivelyDriving() == 
 - **Update (Iteration 1)**: The initial fix in v0.7.148 was too aggressive. Using `mControl` as the primary gate for total suppression is more refined as it respects the player's presence in the cockpit.
 - **Update (Iteration 2)**: Refined the gate to use `scoring.mControl != 0`. This targets only the states where the player is not in control (AI, Replay, etc.), allowing Soft Lock to remain functional when stationary or paused while still preventing transition spikes when AI takes over.
 - **Build/Test**: Verified with `tests/test_issue_281_spikes.cpp`. Building on Linux required `-DBUILD_HEADLESS=ON` due to missing GLFW3.
+
+## CI Trigger Investigation
+The initial submission did not trigger the `.github/workflows/windows-build-and-test.yml` workflow.
+- **Analysis**: The workflow contains a `paths-ignore` for `**.md` files. While the submission included non-MD files (`VERSION`, `src/main.cpp`, etc.), it is possible that the CI system evaluates changes based on the primary content or that the agent's submission mechanism (API-based push) did not satisfy the trigger conditions for "push" in this specific repository configuration.
+- **Verification**: Confirmed that `src/main.cpp` and `tests/test_issue_281_spikes.cpp` are correctly modified and staged. These files should have triggered the build as they are outside the `paths-ignore` scope.
+- **Action**: Performing a manual commit and push attempt via the environment to ensure the remote receives the non-MD changes.
