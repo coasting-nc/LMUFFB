@@ -44,7 +44,7 @@ TEST_CASE(test_torque_passthrough_enabled, "Issue142") {
 
     // Create telemetry with high slip angle (0.5 rad) to trigger grip loss
     TelemInfoV01 telem = CreateBasicTestTelemetry(20.0, 0.5);
-    // Force grip to 0.5 manually if needed, but calculate_grip should do it based on slip
+    // Force grip to 0.5 manually if needed, but calculate_axle_grip should do it based on slip
     // With 0.5 rad slip and default optimal_slip_angle=0.1, combined_slip=5.0
     // grip_factor = 1.0 / (1.0 + 4.0 * 2.0) = 1.0 / 9.0 approx 0.11
 

@@ -829,15 +829,15 @@ TEST_CASE(test_grip_load_estimation_v6, "Physics") {
     // 5. InitializeLoadReference with null className
     FFBEngineTestAccess::CallInitializeLoadReference(engine, nullptr, "TestCar");
 
-    // 6. calculate_grip branches
+    // 6. calculate_axle_grip branches
     bool warned = false;
     double prev_slip1 = 0, prev_slip2 = 0;
     engine.m_slope_detection_enabled = true;
-    engine.calculate_grip(w, w, 5000.0, warned, prev_slip1, prev_slip2, 20.0, 0.0025, "Test", &data, true);
+    engine.calculate_axle_grip(w, w, 5000.0, warned, prev_slip1, prev_slip2, 20.0, 0.0025, "Test", &data, true);
 
-    // 7. calculate_grip zero load branch
+    // 7. calculate_axle_grip zero load branch
     w.mTireLoad = 0.0;
-    engine.calculate_grip(w, w, 0.0, warned, prev_slip1, prev_slip2, 20.0, 0.0025, "Test", &data, true);
+    engine.calculate_axle_grip(w, w, 0.0, warned, prev_slip1, prev_slip2, 20.0, 0.0025, "Test", &data, true);
 
     // 8. update_static_load_reference latched branch
     FFBEngineTestAccess::SetStaticLoadLatched(engine, true);

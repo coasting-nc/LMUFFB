@@ -77,8 +77,8 @@ TEST_CASE(test_grip_smoothing_integration, "Physics") {
     double prev_slip1 = 0.0, prev_slip2 = 0.0;
     bool warned = false;
 
-    // Action: Run calculate_grip
-    auto res = engine.calculate_grip(w1, w2, 2000.0, warned, prev_slip1, prev_slip2, 20.0, 0.01, "Test", nullptr, true);
+    // Action: Run calculate_axle_grip
+    auto res = engine.calculate_axle_grip(w1, w2, 2000.0, warned, prev_slip1, prev_slip2, 20.0, 0.01, "Test", nullptr, true);
 
     // Expected: result.value should be close to 1.0, not 0.5, due to 1.0s smoothing
     // Alpha = 0.01 / (1.0 + 0.01) approx 0.01

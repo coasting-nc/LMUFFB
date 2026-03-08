@@ -348,7 +348,7 @@ void FFBEngineTestAccess::test_unit_sop_lateral() {
     FFBCalculationContext ctx;
     ctx.dt = 0.01;
     ctx.car_speed = 20.0;
-    ctx.avg_load = 4000.0;
+    ctx.avg_front_load = 4000.0;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mLocalAccel.x = 9.81; // 1G

@@ -51,7 +51,7 @@ void FFBEngine::update_static_load_reference(double current_load, double speed, 
 
     // Safety fallback: Ensure we have a sane baseline if learning failed
     if (m_static_front_load < 1000.0) {
-        m_static_front_load = m_auto_peak_load * 0.5;
+        m_static_front_load = m_auto_peak_front_load * 0.5;
     }
 }
 
@@ -66,7 +66,7 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
 
     // Stage 3 Reset: Ensure peak load starts at class baseline
-    m_auto_peak_load = GetDefaultLoadForClass(vclass);
+    m_auto_peak_front_load = GetDefaultLoadForClass(vclass);
 
     std::string vName = vehicleName ? vehicleName : "Unknown";
 
@@ -86,7 +86,7 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
         Logger::Get().LogFile("[FFB] Loaded persistent static load for %s: %.2fN", vName.c_str(), m_static_front_load);
     } else {
         // Reset static load reference for new car class
-        m_static_front_load = m_auto_peak_load * 0.5;
+        m_static_front_load = m_auto_peak_front_load * 0.5;
         m_static_load_latched = false;
         Logger::Get().LogFile("[FFB] No saved load for %s. Learning required.", vName.c_str());
     }
@@ -97,7 +97,7 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     m_last_handled_vehicle_name = vName;
 
     Logger::Get().LogFile("[FFB] Vehicle Identification -> Detected Class: %s | Seed Load: %.2fN (Raw -> Class: %s, Name: %s)",
-        VehicleClassToString(vclass), m_auto_peak_load, (className ? className : "Unknown"), vName.c_str());
+        VehicleClassToString(vclass), m_auto_peak_front_load, (className ? className : "Unknown"), vName.c_str());
 }
 
 // Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
@@ -138,10 +138,13 @@ double FFBEngine::calculate_slip_angle(const TelemWheelV01& w, double& prev_stat
     return prev_state;
 }
 
-// Helper: Calculate Grip with Fallback (v0.4.6 Hardening)
-GripResult FFBEngine::calculate_grip(const TelemWheelV01& w1, 
+// Helper: Calculate Axle Grip with Fallback (v0.4.6 Hardening)
+// This function calculates the average grip for a pair of wheels (axle).
+// If the primary telemetry grip is missing, it reconstructs it from slip angle and ratio.
+// The avg_axle_load parameter is used as a threshold for triggering the reconstruction fallback.
+GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                           const TelemWheelV01& w2,
-                          double avg_load,
+                          double avg_axle_load,
                           bool& warned_flag,
                           double& prev_slip1,
                           double& prev_slip2,
@@ -184,7 +187,7 @@ GripResult FFBEngine::calculate_grip(const TelemWheelV01& w1,
     result.slip_angle = (slip1 + slip2) / 2.0;
 
     // Fallback condition: Grip is essentially zero BUT car has significant load
-    if (result.value < 0.0001 && avg_load > 100.0) {
+    if (result.value < 0.0001 && avg_axle_load > 100.0) {
         result.approximated = true;
         
         if (car_speed < 5.0) {
