@@ -104,6 +104,7 @@ set(TEST_SOURCES
     test_yaw_kick_derived.cpp
     test_issue_278_derived_acceleration.cpp
     test_issue_281_spikes.cpp
+    repro_issue_290.cpp
     ../src/main.cpp
 )
 
