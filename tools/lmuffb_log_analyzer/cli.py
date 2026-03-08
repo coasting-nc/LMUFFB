@@ -14,6 +14,7 @@ from .analyzers.yaw_analyzer import (
     analyze_yaw_dynamics,
     analyze_clipping
 )
+from .analyzers.lateral_analyzer import analyze_lateral_dynamics
 from .plots import (
     plot_slope_timeseries,
     plot_slip_vs_latg,
@@ -27,7 +28,8 @@ from .plots import (
     plot_yaw_fft,
     plot_clipping_components,
     plot_pull_detector,
-    plot_unopposed_force
+    plot_unopposed_force,
+    plot_lateral_diagnostic
 )
 from .reports import generate_text_report
 
@@ -52,6 +54,7 @@ def _run_analyze(metadata, df, verbose=False):
     singularity_count, worst_slope = detect_singularities(df)
     yaw_results = analyze_yaw_dynamics(df)
     clipping_results = analyze_clipping(df)
+    lateral_results = analyze_lateral_dynamics(df, metadata)
     
     # Display results - Slope
     table = Table(title="Slope Detection Analysis")
@@ -129,6 +132,33 @@ def _run_analyze(metadata, df, verbose=False):
         )
 
     console.print(table2)
+
+    # Display results - Lateral Load
+    table3 = Table(title="Lateral Load Analysis")
+    table3.add_column("Metric", style="cyan")
+    table3.add_column("Value", style="green")
+    table3.add_column("Status", style="yellow")
+
+    if lateral_results.get('load_transfer_correlation') is not None:
+        table3.add_row(
+            "Load Transfer Corr",
+            f"{lateral_results['load_transfer_correlation']:.3f}",
+            "LOW" if lateral_results['load_transfer_correlation'] < 0.8 else "OK"
+        )
+    if lateral_results.get('load_contribution_pct') is not None:
+        table3.add_row(
+            "Load Contribution",
+            f"{lateral_results['load_contribution_pct']:.1f}%",
+            "INFO"
+        )
+    if lateral_results.get('g_contribution_pct') is not None:
+        table3.add_row(
+            "G-Force Contribution",
+            f"{lateral_results['g_contribution_pct']:.1f}%",
+            "INFO"
+        )
+
+    console.print(table3)
 
     # Show issues
     all_issues = slope_results['issues'].copy()
@@ -230,6 +260,11 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
             unopposed_path = output_path / f"{logfile_stem}_unopposed.png"
             plot_unopposed_force(df, str(unopposed_path), show=False, status_callback=update_status)
             console.print(f"  [OK] Created: {unopposed_path}")
+
+            # Lateral Diagnostic
+            lat_path = output_path / f"{logfile_stem}_lateral_diag.png"
+            plot_lateral_diagnostic(df, metadata, str(lat_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {lat_path}")
 
 @click.group()
 @click.version_option(version='1.2.0')

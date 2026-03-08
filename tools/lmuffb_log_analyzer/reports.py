@@ -9,6 +9,7 @@ from .analyzers.yaw_analyzer import (
     analyze_yaw_dynamics,
     analyze_clipping
 )
+from .analyzers.lateral_analyzer import analyze_lateral_dynamics
 
 def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     """
@@ -19,6 +20,7 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     singularity_count, worst_slope = detect_singularities(df)
     yaw_results = analyze_yaw_dynamics(df)
     clipping_results = analyze_clipping(df)
+    lateral_results = analyze_lateral_dynamics(df, metadata)
     
     report = []
     report.append("=" * 60)
@@ -43,6 +45,9 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     report.append(f"Gain:               {metadata.gain:.2f}")
     report.append(f"Understeer Effect:  {metadata.understeer_effect:.2f}")
     report.append(f"SOP Effect:          {metadata.sop_effect:.2f}")
+    report.append(f"Lateral Load Effect: {metadata.lat_load_effect:.2f}")
+    report.append(f"SOP Scale:           {metadata.sop_scale:.2f}")
+    report.append(f"SOP Smoothing:       {metadata.sop_smoothing:.3f}")
     report.append(f"Slope Detection:    {'Enabled' if metadata.slope_enabled else 'Disabled'}")
     report.append(f"Slope Sensitivity:  {metadata.slope_sensitivity:.2f}")
     report.append(f"Slope Threshold:    {metadata.slope_threshold:.2f}")
@@ -62,6 +67,17 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
         
     report.append(f"Oscillations:      {len(oscillations)} events detected")
     report.append(f"Singularities:     {singularity_count} events detected (Worst: {worst_slope:.1f})")
+    report.append("")
+
+    report.append("LATERAL LOAD ANALYSIS")
+    report.append("-" * 20)
+    if lateral_results.get('load_transfer_correlation') is not None:
+        report.append(f"Load Transfer Corr:  {lateral_results['load_transfer_correlation']:.3f}")
+    if lateral_results.get('lat_g_vs_load_correlation') is not None:
+        report.append(f"LatG vs Load Corr:   {lateral_results['lat_g_vs_load_correlation']:.3f}")
+    if lateral_results.get('load_contribution_pct') is not None:
+        report.append(f"Load Contribution:   {lateral_results['load_contribution_pct']:.1f}%")
+        report.append(f"G-Force Contribution: {lateral_results['g_contribution_pct']:.1f}%")
     report.append("")
 
     report.append("SIGNAL QUALITY & STABILITY")
