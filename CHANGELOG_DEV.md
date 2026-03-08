@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.154] - 2026-03-08
+- **Enhanced Lateral Load with Mathematical Transformations (Issue #282)**:
+  - Implemented mathematical transformations (Cubic, Quadratic, and Locked-Center Hermite Spline) to the Lateral Load effect to eliminate "notchiness" at the limits of load transfer.
+  - These transformations ensure a zero-slope derivative at 100% load transfer, providing a smooth, progressive feel as the tire approaches its physical limit.
+  - Fixed the perceived sign inversion of the Lateral Load effect by flipping its directional calculation.
+  - Decoupled the Lateral Load effect from the oversteer-boosted `sop_base` formula, moving it to an independent addendum in the main FFB summation. This ensures a consistent weight transfer reference regardless of rear grip status.
+- **GUI & Configuration**:
+  - Added a dropdown menu in the "Rear Axle (Oversteer)" section to allow users to select their preferred transformation type.
+  - Fully integrated the new `lat_load_transform` setting into the Preset and Persistence system.
+  - Ensured thread-safe GUI updates using `g_engine_mutex`.
+- **Testing**:
+  - Added `tests/test_issue_282_lateral_load_fix.cpp` to verify transformation accuracy, symmetry, sign inversion, and decoupling logic.
+  - Updated existing tests in `tests/test_issue_213_lateral_load.cpp` to align with the new architectural and sign changes.
+
 ## [0.7.153] - 2026-03-08
 - **Refined FFB Gating for Safety & Utility (Issue #281)**:
   - Modified the final FFB force suppression in `src/main.cpp` to gate based on `mControl != 0` (Non-player control) instead of `!IsPlayerActivelyDriving()`.

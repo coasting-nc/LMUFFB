@@ -34,12 +34,20 @@ static constexpr double DEFAULT_CALC_DT = 0.0025; // 400 Hz (1/400 s)
 
 // ChannelStats moved to PerfStats.h
 
+enum class LatLoadTransform {
+    LINEAR = 0,
+    CUBIC = 1,
+    QUADRATIC = 2,
+    HERMITE = 3
+};
+
 // 1. Define the Snapshot Struct (Unified FFB + Telemetry)
 struct FFBSnapshot {
     // --- Header A: FFB Components (Outputs) ---
     float total_output;
     float base_force;
     float sop_force;
+    float lat_load_force;   // New v0.7.154 (Issue #282)
     float understeer_drop;
     float oversteer_boost;
     float ffb_rear_torque;  // New v0.4.7
@@ -144,6 +152,7 @@ struct FFBCalculationContext {
     double grip_factor = 1.0;     // 1.0 = full grip, 0.0 = no grip
     double sop_base_force = 0.0;
     double sop_unboosted_force = 0.0; // For snapshot compatibility
+    double lat_load_force = 0.0;  // New v0.7.154 (Issue #282)
     double rear_torque = 0.0;
     double yaw_force = 0.0;
     double scrub_drag_force = 0.0;
@@ -179,6 +188,7 @@ public:
     float m_understeer_effect;
     float m_sop_effect;
     float m_lat_load_effect = 0.0f; // New v0.7.121 (Issue #213 add, not replace)
+    LatLoadTransform m_lat_load_transform = LatLoadTransform::LINEAR; // New v0.7.154 (Issue #282)
     float m_min_force;
     float m_dynamic_weight_gain; 
     
