@@ -415,7 +415,7 @@ def plot_lateral_load_Generalized_Power_Spline():
     plt.show()
 
 
-def plot_interactive():
+def plot_interactive_generalized_spline():
     
     # ==========================================
     # 1. The Math Function
@@ -536,8 +536,79 @@ def plot_interactive():
     # ==========================================
     plt.show()
 
+
+        
+def plot_interactive_locked_center_spline():
+
+    # The proposed Locked-Center Hermite Spline formula
+    def locked_center_spline(x, k):
+        """
+        x: Raw lateral load normalized [-1.0, 1.0]
+        k: Rolloff parameter [0.0, 1.0]
+        0.0 = Pure linear (sharp peak)
+        1.0 = Maximum smoothing (flat peak, zero slope at extremes)
+        """
+        abs_x = np.abs(x)
+        return x * (1.0 + k * abs_x - k * (abs_x * abs_x))
+
+    # Generate x values from -1.0 to 1.0
+    x = np.linspace(-1.0, 1.0, 500)
+
+    # Initial parameter value
+    k_init = 1.0
+
+    # Create the figure and the line that we will manipulate
+    fig, ax = plt.subplots(figsize=(9, 7))
+    plt.subplots_adjust(bottom=0.25) # Make room for the slider
+
+    # Plot a reference line (pure linear, k=0)
+    ax.plot(x, x, 'r--', alpha=0.5, label='Linear Reference (k=0.0)')
+
+    # Plot the initial transformed curve
+    y = locked_center_spline(x, k_init)
+    line, = ax.plot(x, y, 'b-', linewidth=2.5, label=f'Locked-Center Spline (k={k_init:.2f})')
+
+    # Formatting the plot
+    ax.set_xlim(-1.1, 1.1)
+    ax.set_ylim(-1.1, 1.1)
+    ax.set_title('Lateral Load Transformation: Locked-Center Hermite Spline', fontsize=14)
+    ax.set_xlabel('Raw Lateral Load Input (x)', fontsize=12)
+    ax.set_ylabel('Transformed FFB Output (y)', fontsize=12)
+    ax.axhline(0, color='black', linewidth=1)
+    ax.axvline(0, color='black', linewidth=1)
+    ax.grid(True, linestyle=':', alpha=0.7)
+    ax.legend(loc='upper left')
+
+    # Define the slider axis and create the slider
+    ax_k = plt.axes([0.15, 0.1, 0.7, 0.03])
+    slider_k = Slider(
+        ax=ax_k,
+        label='Rolloff (k)',
+        valmin=0.0,
+        valmax=1.0,
+        valinit=k_init,
+        valstep=0.01,
+        color='#0099ff'
+    )
+
+    # The function to be called anytime a slider's value changes
+    def update(val):
+        k = slider_k.val
+        # Update the y-data of the plot
+        line.set_ydata(locked_center_spline(x, k))
+        # Update the legend to reflect the new k value
+        line.set_label(f'Locked-Center Spline (k={k:.2f})')
+        ax.legend(loc='upper left')
+        # Redraw the canvas
+        fig.canvas.draw_idle()
+
+    # Register the update function with the slider
+    slider_k.on_changed(update)
+
+    plt.show()
+
 def main():
-    plot_interactive()
+    plot_interactive_plot_interactive()
 
 if __name__ == "__main__":
     main()

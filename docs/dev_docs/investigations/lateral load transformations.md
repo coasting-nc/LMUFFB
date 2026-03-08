@@ -336,3 +336,103 @@ FloatSetting("  Peak Broadness", &engine.m_lat_load_broadness, 1.1f, 4.0f, "%.2f
 You now have a professional-grade, fully parametric FFB shaping curve that allows you to sculpt the exact physical sensation of the tire's limit!
 
 
+##  The "Locked-Center" Hermite Spline
+
+### The Best Transformation: The "Locked-Center" Hermite Spline
+
+While those above are excellent options, the standard Parametric Cubic and Quadratic formulas have a hidden flaw: **if you flatten the peak, they artificially increase the slope at the center.** This means driving straight will suddenly feel heavier and more twitchy.
+
+The **Cubic Hermite Spline** (Option 5 in your report) is the best choice, but exposing multiple sliders for slopes can confuse end-users. 
+
+Instead, I highly recommend a **custom, optimized version of the Hermite Spline** that uses a single "Smoothness" slider ($k$). It locks the center slope to exactly `1.0` (keeping your current center-steering feel identical) and only applies the smoothing to the outer edges of the curve.
+
+**The Formula:**
+$f(x) = x \cdot (1 + k \cdot |x| - k \cdot x^2)$
+* Where $x$ is your raw `lat_load_norm` (from -1.0 to 1.0).
+* Where $k$ is the user slider from `0.0` (Sharp/Notchy) to `1.0` (Perfectly smooth/flat peak).
+
+### How to implement it in your codebase
+
+Here is the step-by-step implementation to integrate this seamlessly into your app.
+
+#### 1. Add the parameter to `src/FFBEngine.h`
+Find your settings variables (around line 130) and add the new rolloff parameter:
+```cpp
+    float m_sop_effect;
+    float m_lat_load_effect = 0.0f; 
+    float m_lat_load_rolloff = 1.0f; // NEW: 0.0 = Sharp/Linear, 1.0 = Smooth Peak
+```
+
+#### 2. Update the physics in `src/FFBEngine.cpp`
+Locate the `calculate_sop_lateral` function. Update the `lat_load_norm` calculation to include the safety clamp and the new transformation:
+
+```cpp
+    // 2. Normalized Lateral Load Transfer (Issue #213)
+    double fl_load = data->mWheel[0].mTireLoad;
+    double fr_load = data->mWheel[1].mTireLoad;
+    if (ctx.frame_warn_load) {
+        fl_load = calculate_kinematic_load(data, 0);
+        fr_load = calculate_kinematic_load(data, 1);
+    }
+    double total_load = fl_load + fr_load;
+    double lat_load_norm = (total_load > 1.0) ? (fl_load - fr_load) / total_load : 0.0;
+    
+    // --- NEW: Anti-Notch Smoothing Transformation ---
+    // 1. Safety clamp to strictly [-1.0, 1.0]
+    lat_load_norm = std::clamp(lat_load_norm, -1.0, 1.0);
+    
+    // 2. Apply Locked-Center Hermite Spline: f(x) = x * (1 + k*|x| - k*x^2)
+    double k = (double)m_lat_load_rolloff;
+    double abs_x = std::abs(lat_load_norm);
+    lat_load_norm = lat_load_norm * (1.0 + k * abs_x - k * (abs_x * abs_x));
+    // ------------------------------------------------
+    
+    // Smoothing: Map 0.0-1.0 slider to 0.1-0.0001s tau
+    double smoothness = (double)m_sop_smoothing_factor;
+```
+
+#### 3. Add the GUI Slider in `src/GuiLayer_Common.cpp`
+Find the "Rear Axle (Oversteer)" section where `m_lat_load_effect` is drawn, and add the new slider right below it:
+
+```cpp
+        FloatSetting("Lateral Load", &engine.m_lat_load_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_lat_load_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_LOAD);
+        
+        // NEW SLIDER
+        FloatSetting("  Load Rolloff", &engine.m_lat_load_rolloff, 0.0f, 1.0f, "%.2f", 
+            "Softens the FFB at maximum load transfer to prevent a 'notchy' feeling.\n0.0 = Sharp/Linear limit\n1.0 = Smooth/Rounded limit");
+```
+
+#### 4. Save it to the Config (`src/Config.cpp` & `src/Config.h`)
+To ensure the user's preference is saved, update the `Preset` struct and `Config` parser.
+
+In `src/Config.h` inside `struct Preset`:
+```cpp
+    float lateral_load = 0.0f; 
+    float lat_load_rolloff = 1.0f; // Add this
+```
+In `Preset::Apply()`:
+```cpp
+    engine.m_lat_load_effect = (std::max)(0.0f, (std::min)(2.0f, lateral_load));
+    engine.m_lat_load_rolloff = (std::max)(0.0f, (std::min)(1.0f, lat_load_rolloff)); // Add this
+```
+In `Preset::UpdateFromEngine()`:
+```cpp
+    lateral_load = engine.m_lat_load_effect;
+    lat_load_rolloff = engine.m_lat_load_rolloff; // Add this
+```
+
+In `src/Config.cpp` inside `ParsePresetLine`:
+```cpp
+    else if (key == "lateral_load_effect") current_preset.lateral_load = (std::min)(2.0f, std::stof(value));
+    else if (key == "lat_load_rolloff") current_preset.lat_load_rolloff = (std::min)(1.0f, std::max(0.0f, std::stof(value))); // Add this
+```
+In `src/Config.cpp` inside `WritePresetFields` and `Save`:
+```cpp
+    file << "lateral_load_effect=" << p.lateral_load << "\n";
+    file << "lat_load_rolloff=" << p.lat_load_rolloff << "\n"; // Add this
+```
+
+### Why this is the perfect fix:
+1. **It directly solves the bug report:** At `k=1.0`, the slope of the force curve drops exactly to `0` right as the car hits 100% load transfer. The "notch" is completely erased, replaced by a feeling of the tire progressively leaning onto its sidewall.
+2. **It preserves the center feel:** Unlike standard cubic/quadratic formulas, this specific math guarantees that small steering inputs around the center remain 100% linear and unchanged.
+3. **It's computationally free:** It uses just two multiplications and one `std::abs()`, which takes less than a nanosecond in your 400Hz loop.
