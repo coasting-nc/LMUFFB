@@ -1,7 +1,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+from matplotlib.widgets import Slider
 
 def plot_lateral_load():
     # Create a figure with 2 subplots side-by-side
@@ -349,8 +349,195 @@ def plot_lateral_load_Cubic_Hermite_Spline():
     plt.tight_layout()
     plt.show()
 
+def plot_lateral_load_Generalized_Power_Spline():
+
+    # The Generalized Power Spline Function
+    def generalized_spline(x, S0, S1, E):
+        # Calculate dynamic coefficients
+        B = E + 1.0 - (E * S0) - S1
+        C = S1 - E + (E - 1.0) * S0
+        
+        # f(x) = S0*x + B*x^E + C*x^(E+1)
+        return S0 * x + B * (x ** E) + C * (x ** (E + 1.0))
+
+    # Setup subplots
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+    # We will lock the slopes to show ONLY the effect of the Exponent (E)
+    # S0 = 1.0 (Linear center), S1 = 0.0 (Perfectly flat peak)
+    S0_fixed = 1.0
+    S1_fixed = 0.0
+
+    # Scenarios to plot: (Exponent E, Color, Label)
+    scenarios =[
+        (3.0, 'gray', 'E = 3.0 (Narrow / Late turn)'),
+        (2.0, 'dodgerblue', 'E = 2.0 (Standard Cubic Spline)'),
+        (1.5, 'mediumseagreen', 'E = 1.5 (Broader than Quadratic)'),
+        (1.1, 'darkviolet', 'E = 1.1 (Ultra-Broad / Very Gentle)')
+    ]
+
+    # ==========================================
+    # PLOT 1: The Transfer Function (Left)
+    # ==========================================
+    x_transfer = np.linspace(0.0, 1.0, 500)
+
+    for E, color, label in scenarios:
+        y = generalized_spline(x_transfer, S0_fixed, S1_fixed, E)
+        ax1.plot(x_transfer, y, label=label, color=color, linewidth=2.5)
+
+    ax1.grid(True, linestyle=':', alpha=0.7)
+    ax1.set_title(f'1. Transfer Function (S0={S0_fixed}, S1={S1_fixed})', fontsize=14, fontweight='bold')
+    ax1.set_xlabel('Raw Normalized Load Transfer (Input)', fontsize=12)
+    ax1.set_ylabel('Transformed FFB Output', fontsize=12)
+    ax1.legend(fontsize=11, loc='lower right')
+    ax1.set_xlim(0, 1.05)
+    ax1.set_ylim(0, 1.05)
+
+    # ==========================================
+    # PLOT 2: The "Bell Curve" (Right)
+    # ==========================================
+    x_steer = np.linspace(0, 2.5, 500)
+    raw_load = x_steer * np.exp(1 - x_steer) # Simulated tire slip curve
+
+    for E, color, label in scenarios:
+        y = generalized_spline(raw_load, S0_fixed, S1_fixed, E)
+        ax2.plot(x_steer, y, label=label, color=color, linewidth=2.5)
+
+    ax2.grid(True, linestyle=':', alpha=0.7)
+    ax2.set_title('2. FFB Force vs. Steering Angle (Physics)', fontsize=14, fontweight='bold')
+    ax2.set_xlabel('Steering Angle / Slip Angle (1.0 = Limit of Grip)', fontsize=12)
+    ax2.set_ylabel('Final FFB Output Force', fontsize=12)
+    ax2.legend(fontsize=11, loc='lower right')
+    ax2.set_xlim(0, 2.5)
+    ax2.set_ylim(0, 1.05)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_interactive():
+    
+    # ==========================================
+    # 1. The Math Function
+    # ==========================================
+    def generalized_spline(x, S0, S1, E):
+        """
+        Calculates the Generalized Power Spline.
+        S0 = Center Steepness
+        S1 = Peak Notchiness (Slope at x=1)
+        E  = Broadness (Exponent)
+        """
+        # Calculate dynamic coefficients
+        B = E + 1.0 - (E * S0) - S1
+        C = S1 - E + (E - 1.0) * S0
+        
+        # f(x) = S0*x + B*x^E + C*x^(E+1)
+        y = S0 * x + B * (x ** E) + C * (x ** (E + 1.0))
+        
+        # Simulate the C++ std::clamp to prevent mathematical overshoots
+        return np.clip(y, 0.0, 1.0)
+
+    # ==========================================
+    # 2. Setup Data & Figure
+    # ==========================================
+    # X-axis data
+    x_trans = np.linspace(0.0, 1.0, 500)                     # For Transfer Function
+    x_steer = np.linspace(0.0, 2.5, 500)                     # For Bell Curve
+    raw_load = x_steer * np.exp(1 - x_steer)                 # Simulated tire slip
+
+    # Create figure and leave space at the bottom for sliders
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7))
+    plt.subplots_adjust(bottom=0.35) # Make room for sliders
+
+    # ==========================================
+    # 3. Plot Fixed Reference Curves
+    # ==========================================
+    # Ref 1: Linear (No smoothing)
+    ax1.plot(x_trans, x_trans, color='gray', linestyle='--', alpha=0.6, label='Ref: Linear (S0=1, S1=1)')
+    ax2.plot(x_steer, raw_load, color='gray', linestyle='--', alpha=0.6, label='Ref: Linear (Sharp Peak)')
+
+    # Ref 2: Standard Cubic (The original 1.5x - 0.5x^3)
+    y_cub_t = generalized_spline(x_trans, S0=1.5, S1=0.0, E=2.0)
+    y_cub_s = generalized_spline(raw_load, S0=1.5, S1=0.0, E=2.0)
+    ax1.plot(x_trans, y_cub_t, color='dodgerblue', linestyle=':', lw=2, alpha=0.7, label='Ref: Standard Cubic (S0=1.5, S1=0, E=2)')
+    ax2.plot(x_steer, y_cub_s, color='dodgerblue', linestyle=':', lw=2, alpha=0.7, label='Ref: Standard Cubic')
+
+    # Ref 3: Ultra-Broad (Very gentle peak)
+    y_brd_t = generalized_spline(x_trans, S0=1.0, S1=0.0, E=1.1)
+    y_brd_s = generalized_spline(raw_load, S0=1.0, S1=0.0, E=1.1)
+    ax1.plot(x_trans, y_brd_t, color='mediumseagreen', linestyle='-.', lw=2, alpha=0.7, label='Ref: Ultra-Broad (S0=1, S1=0, E=1.1)')
+    ax2.plot(x_steer, y_brd_s, color='mediumseagreen', linestyle='-.', lw=2, alpha=0.7, label='Ref: Ultra-Broad')
+
+    # ==========================================
+    # 4. Plot the Interactive Line
+    # ==========================================
+    # Initial values
+    init_S0 = 1.0
+    init_S1 = 0.0
+    init_E  = 2.0
+
+    # Draw the initial interactive lines
+    line_trans, = ax1.plot(x_trans, generalized_spline(x_trans, init_S0, init_S1, init_E), 
+                        color='red', lw=3.5, label='Interactive Custom Curve')
+    line_steer, = ax2.plot(x_steer, generalized_spline(raw_load, init_S0, init_S1, init_E), 
+                        color='red', lw=3.5, label='Interactive Custom Curve')
+
+    # Formatting Plot 1
+    ax1.set_title('1. Transfer Function (Math)', fontsize=14, fontweight='bold')
+    ax1.set_xlabel('Raw Normalized Load Transfer (Input)', fontsize=12)
+    ax1.set_ylabel('Transformed FFB Output', fontsize=12)
+    ax1.grid(True, linestyle=':', alpha=0.7)
+    ax1.legend(fontsize=10, loc='lower right')
+    ax1.set_xlim(0, 1.05)
+    ax1.set_ylim(0, 1.05)
+
+    # Formatting Plot 2
+    ax2.set_title('2. FFB Force vs. Steering Angle (Physics)', fontsize=14, fontweight='bold')
+    ax2.set_xlabel('Steering Angle / Slip Angle (1.0 = Limit of Grip)', fontsize=12)
+    ax2.set_ylabel('Final FFB Output Force', fontsize=12)
+    ax2.grid(True, linestyle=':', alpha=0.7)
+    ax2.legend(fontsize=10, loc='lower right')
+    ax2.set_xlim(0, 2.5)
+    ax2.set_ylim(0, 1.05)
+
+    # ==========================================
+    # 5. Setup Sliders
+    # ==========================================
+    # Define axes for sliders[left, bottom, width, height]
+    ax_S0 = plt.axes([0.15, 0.20, 0.7, 0.03], facecolor='lightgoldenrodyellow')
+    ax_S1 = plt.axes([0.15, 0.13, 0.7, 0.03], facecolor='lightgoldenrodyellow')
+    ax_E  = plt.axes([0.15, 0.06, 0.7, 0.03], facecolor='lightgoldenrodyellow')
+
+    # Create sliders
+    slider_S0 = Slider(ax_S0, 'S0 (Center Steepness)', 0.1, 3.0, valinit=init_S0, valstep=0.05)
+    slider_S1 = Slider(ax_S1, 'S1 (Peak Notchiness)', 0.0, 1.0, valinit=init_S1, valstep=0.05)
+    slider_E  = Slider(ax_E,  'E (Peak Broadness)', 1.01, 4.0, valinit=init_E, valstep=0.05)
+
+    # Update function called when sliders move
+    def update(val):
+        S0 = slider_S0.val
+        S1 = slider_S1.val
+        E  = slider_E.val
+        
+        # Update Y data for both plots
+        line_trans.set_ydata(generalized_spline(x_trans, S0, S1, E))
+        line_steer.set_ydata(generalized_spline(raw_load, S0, S1, E))
+        
+        # Redraw the canvas
+        fig.canvas.draw_idle()
+
+    # Attach the update function to the sliders
+    slider_S0.on_changed(update)
+    slider_S1.on_changed(update)
+    slider_E.on_changed(update)
+
+    # ==========================================
+    # 6. Show Plot
+    # ==========================================
+    plt.show()
+
 def main():
-    plot_lateral_load_Cubic_Hermite_Spline()
+    plot_interactive()
 
 if __name__ == "__main__":
     main()

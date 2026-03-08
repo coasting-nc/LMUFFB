@@ -247,3 +247,92 @@ FloatSetting("  Peak Notchiness", &engine.m_lat_load_peak_slope, 0.0f, 1.0f, "%.
 
 ### Summary
 By using a **Cubic Hermite Spline**, you get exactly what you asked for: two independent parameters. You can make the initial turn-in as gentle as you want, while independently tuning the exact width and sharpness of the grip limit!
+
+
+## Generalized Power Spline (Fractional Polynomial Spline)
+
+By replacing the fixed $x^2$ and $x^3$ terms with a variable exponent $E$, we can create a single, unified formula that gives you **three completely independent controls**:
+1. **Center Steepness ($S_0$)**: How fast the force builds up from the center.
+2. **Peak Notchiness ($S_1$)**: The exact slope at the limit of grip (sharp vs. flat).
+3. **Peak Broadness ($E$)**: How "fat" or "gentle" the curve is between the center and the peak. 
+
+Setting $E=2.0$ perfectly recreates the Cubic Spline. Setting $E$ lower (e.g., $1.5$ or $1.2$) makes the curve **even more gentle and broader than a quadratic**, while perfectly respecting your chosen start and end slopes!
+
+### The Generalized Formula
+The math to achieve this while maintaining perfect boundary conditions at $x=0$ and $x=1$ is:
+
+$$f(x) = S_0 x + B x^E + C x^{E+1}$$
+
+Where the coefficients $B$ and $C$ are calculated dynamically based on your parameters:
+* $B = E + 1 - (E \cdot S_0) - S_1$
+* $C = S_1 - E + (E - 1) \cdot S_0$
+
+*(Note: $E$ must be strictly greater than $1.0$. A safe range for the GUI slider is `1.1` to `3.0`)*.
+
+### How to implement this in your C++ Codebase
+
+Because we are using fractional exponents, we have to use `std::pow()`. While slightly slower than simple multiplication, modern CPUs can execute `std::pow` in nanoseconds. Running this once per wheel at 400Hz/1000Hz will have absolutely zero measurable impact on your performance budget.
+
+**1. Add the variables to `src/FFBEngine.h`**
+```cpp
+float m_lat_load_effect = 0.0f; 
+float m_lat_load_center_slope = 1.0f; // S0
+float m_lat_load_peak_slope = 0.0f;   // S1
+float m_lat_load_broadness = 2.0f;    // E (Exponent)
+```
+
+**2. Update the physics in `src/FFBEngine.cpp`**
+Inside `calculate_sop_lateral`:
+```cpp
+double total_load = fl_load + fr_load;
+double lat_load_norm = (total_load > 1.0) ? (fl_load - fr_load) / total_load : 0.0;
+
+// --- NEW: Generalized Power Spline ---
+// 1. Safety clamp input
+lat_load_norm = std::clamp(lat_load_norm, -1.0, 1.0);
+
+// 2. Extract sign and absolute value
+double abs_x = std::abs(lat_load_norm);
+double sign_x = (lat_load_norm > 0.0) ? 1.0 : -1.0;
+
+// 3. Get GUI Parameters
+double S0 = (double)m_lat_load_center_slope;
+double S1 = (double)m_lat_load_peak_slope;
+double E  = (double)m_lat_load_broadness;
+
+// Safety clamp E to prevent math errors (must be > 1.0)
+E = std::max(1.01, E);
+
+// 4. Calculate Dynamic Coefficients
+double B = E + 1.0 - (E * S0) - S1;
+double C = S1 - E + (E - 1.0) * S0;
+
+// 5. Apply the curve: f(x) = S0*x + B*x^E + C*x^(E+1)
+double shaped_abs_x = (S0 * abs_x) + (B * std::pow(abs_x, E)) + (C * std::pow(abs_x, E + 1.0));
+
+// 6. Safety clamp output (prevents overshoot if user sets crazy S0/S1 combos)
+shaped_abs_x = std::clamp(shaped_abs_x, 0.0, 1.0);
+
+// 7. Restore the sign
+lat_load_norm = shaped_abs_x * sign_x;
+// -------------------------------------
+
+// (Existing smoothing logic follows...)
+double smoothness = (double)m_sop_smoothing_factor;
+```
+
+**3. Add the GUI Sliders in `src/GuiLayer_Common.cpp`**
+```cpp
+FloatSetting("Lateral Load", &engine.m_lat_load_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_lat_load_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_LOAD);
+
+// NEW SLIDERS
+FloatSetting("  Center Steepness", &engine.m_lat_load_center_slope, 0.1f, 3.0f, "%.2f", "0.5 = Gentle\n1.0 = Linear\n2.0 = Aggressive");
+FloatSetting("  Peak Notchiness", &engine.m_lat_load_peak_slope, 0.0f, 1.0f, "%.2f", "0.0 = Flat peak\n1.0 = Sharp peak");
+FloatSetting("  Peak Broadness", &engine.m_lat_load_broadness, 1.1f, 4.0f, "%.2f", "1.1 = Ultra-broad/Gentle\n2.0 = Standard Cubic\n3.0 = Narrow/Late");
+```
+
+*(Don't forget to add the new variables to `Config.h` and `Config.cpp` for saving/loading).*
+
+You now have a professional-grade, fully parametric FFB shaping curve that allows you to sculpt the exact physical sensation of the tire's limit!
+
+
