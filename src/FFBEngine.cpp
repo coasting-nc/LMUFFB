@@ -26,7 +26,7 @@ bool FFBEngine::IsFFBAllowed(const VehicleScoringInfoV01& scoring, unsigned char
     // mFinishStatus: 0 = none, 1 = finished, 2 = DNF, 3 = DQ
 
     // 1. Core control check
-    if (!scoring.mIsPlayer || scoring.mControl != 0) return false;
+    if (!scoring.mIsPlayer || scoring.mControl != static_cast<signed char>(ControlMode::PLAYER)) return false;
 
     // 2. DO NOT use gamePhase to determine if IsFFBAllowed (eg. session over would cause no FFB after finish line, or time up)
     // (gamePhase, Game Phases: 7=Stopped, 8=Session Over)

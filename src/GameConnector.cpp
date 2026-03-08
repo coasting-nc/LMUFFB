@@ -228,13 +228,13 @@ bool GameConnector::IsStale(long timeoutMs) const {
 }
 
 /*static*/ const char* GameConnector::ControlModeName(signed char control) {
-    switch (control) {
-        case -1: return "Nobody";
-        case  0: return "Player";
-        case  1: return "AI";
-        case  2: return "Remote";
-        case  3: return "Replay";
-        default: return "Unknown";
+    switch (static_cast<ControlMode>(control)) {
+        case ControlMode::NONE:   return "Nobody";
+        case ControlMode::PLAYER: return "Player";
+        case ControlMode::AI:     return "AI";
+        case ControlMode::REMOTE: return "Remote";
+        case ControlMode::REPLAY: return "Replay";
+        default:                  return "Unknown";
     }
 }
 

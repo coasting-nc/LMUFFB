@@ -233,9 +233,9 @@ void FFBThread() {
                         force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025);
 
                         // v0.7.153: Explicitly target zero force only when player is not in control (Issue #281).
-                        // This allows Soft Lock to remain active in the garage and during pause (mControl == 0),
+                        // This allows Soft Lock to remain active in the garage and during pause (ControlMode::PLAYER),
                         // while ensuring that AI takeover or other non-player states slew to zero.
-                        if (scoring.mControl != 0) force_physics = 0.0;
+                        if (scoring.mControl != static_cast<signed char>(ControlMode::PLAYER)) force_physics = 0.0;
 
                         // Safety Layer (v0.7.49): Slew Rate Limiting (400Hz)
                         // Applied before up-sampling to prevent reconstruction artifacts on spikes.

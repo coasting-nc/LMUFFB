@@ -37,30 +37,30 @@ void test_issue_281_transition_smoothing() {
     // [FIX] if (scoring.mControl != 0) force = 0.0;
     // force = g_engine.ApplySafetySlew(force, 0.0025, !full_allowed);
 
-    // Scenario 1: Stationary in Garage / Paused (is_driving = false, mControl = 0)
+    // Scenario 1: Stationary in Garage / Paused (is_driving = false, mControl = ControlMode::PLAYER)
     // Soft Lock SHOULD be active.
     {
         bool is_driving = false;
-        bool mControl = 0;
+        signed char mControl = static_cast<signed char>(ControlMode::PLAYER);
         bool full_allowed = false; // Muted physics because we are in garage or paused
 
         double slewed_force = 0.0;
         // Run for frames to let the slew rate limiter reach the target
         for (int i = 0; i < 50; i++) {
             double force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, full_allowed);
-            if (mControl != 0) force = 0.0;
+            if (mControl != static_cast<signed char>(ControlMode::PLAYER)) force = 0.0;
             slewed_force = engine.ApplySafetySlew(force, 0.0025, !full_allowed);
         }
 
-        std::cout << "  Garage/Paused (mControl=0) - Force (expect Soft Lock): " << slewed_force << std::endl;
+        std::cout << "  Garage/Paused (mControl=PLAYER) - Force (expect Soft Lock): " << slewed_force << std::endl;
         // Soft Lock should be active (~ -1.0)
         ASSERT_LT(slewed_force, -0.9);
     }
 
-    // Scenario 2: AI Takeover / Transition to Menu (mControl != 0) - WITH IMPROVED FIX
+    // Scenario 2: AI Takeover / Transition to Menu (mControl != PLAYER) - WITH IMPROVED FIX
     {
         bool is_driving = false;
-        signed char mControl = 1; // AI took control
+        signed char mControl = static_cast<signed char>(ControlMode::AI);
         bool full_allowed = false;
 
         // Run many frames to verify it slews to zero
@@ -70,11 +70,11 @@ void test_issue_281_transition_smoothing() {
         for (int i = 0; i < 50; i++) {
             double force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, full_allowed);
             // Fix logic as in main.cpp:
-            if (mControl != 0) force = 0.0;
+            if (mControl != static_cast<signed char>(ControlMode::PLAYER)) force = 0.0;
             slewed_force = engine.ApplySafetySlew(force, 0.0025, true);
         }
 
-        std::cout << "  AI Takeover (mControl=1) - Final Slewed Force: " << slewed_force << std::endl;
+        std::cout << "  AI Takeover (mControl=AI) - Final Slewed Force: " << slewed_force << std::endl;
 
         // With the fix, the force reaches zero despite Soft Lock wanting to push.
         ASSERT_NEAR(slewed_force, 0.0, 0.01);

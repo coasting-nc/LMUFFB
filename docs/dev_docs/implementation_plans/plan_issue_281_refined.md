@@ -18,8 +18,9 @@ This refined implementation (Iteration 2) targets zero force specifically when `
   // From:
   if (!is_driving) force_physics = 0.0;
   // To:
-  if (scoring.mControl != 0) force_physics = 0.0;
+  if (scoring.mControl != static_cast<signed char>(ControlMode::PLAYER)) force_physics = 0.0;
   ```
+- **Removal of Magic Numbers**: Defined `ControlMode` enum in `LmuSharedMemoryWrapper.h` to explicitly document the `mControl` states.
 
 ### Metadata & Documentation
 - Increment version to `0.7.153` in `VERSION`.
