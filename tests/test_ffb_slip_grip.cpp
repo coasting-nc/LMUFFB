@@ -41,8 +41,7 @@ TEST_CASE(test_kinematic_load_braking, "SlipGrip") {
         std::cout << "[PASS] Front Load Increased under Braking (Approx " << load << " N)" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Front Load did not increase significantly. Value: " << load << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Front Load did not increase significantly. Value: " << load);
     }
 }
 
@@ -84,8 +83,7 @@ TEST_CASE(test_kinematic_load_cornering, "SlipGrip") {
         std::cout << "[PASS] Left wheel has more load in right turn (FL: " << load_fl << "N, FR: " << load_fr << "N)" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Lateral transfer incorrect. FL: " << load_fl << " FR: " << load_fr << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Lateral transfer incorrect. FL: " << load_fl << " FR: " << load_fr);
     }
     
     // Verify magnitude is reasonable (difference should be ~2400N)
@@ -94,8 +92,7 @@ TEST_CASE(test_kinematic_load_cornering, "SlipGrip") {
         std::cout << "[PASS] Lateral transfer magnitude reasonable (" << diff << "N)" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Lateral transfer magnitude unexpected: " << diff << "N (expected ~2400N)" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Lateral transfer magnitude unexpected: " << diff << "N (expected ~2400N)");
     }
     
     // Test Left Turn (opposite direction)
@@ -113,8 +110,7 @@ TEST_CASE(test_kinematic_load_cornering, "SlipGrip") {
         std::cout << "[PASS] Right wheel has more load in left turn (FR: " << load_fr << "N, FL: " << load_fl << "N)" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Lateral transfer reversed incorrectly. FL: " << load_fl << " FR: " << load_fr << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Lateral transfer reversed incorrectly. FL: " << load_fl << " FR: " << load_fr);
     }
 }
 
@@ -157,8 +153,7 @@ TEST_CASE(test_combined_grip_loss, "SlipGrip") {
         std::cout << "[PASS] Grip dropped due to Longitudinal Slip (" << grip << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Grip remained high despite lockup. Value: " << grip << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Grip remained high despite lockup. Value: " << grip);
     }
 }
 
@@ -248,8 +243,7 @@ TEST_CASE(test_rear_force_workaround, "SlipGrip") {
     // ========================================
     auto batch = engine.GetDebugBatch();
     if (batch.empty()) {
-        std::cout << "[FAIL] No snapshot." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("No snapshot.");
         return;
     }
     FFBSnapshot snap = batch.back();
@@ -269,8 +263,7 @@ TEST_CASE(test_rear_force_workaround, "SlipGrip") {
         std::cout << "[PASS] Rear torque snapshot correct (" << rear_torque_nm << " Nm, counter-steering)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Rear torque outside expected range. Value: " << rear_torque_nm << " Nm (expected ~" << expected_torque << " Nm +/-" << torque_tolerance << ")" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Rear torque outside expected range. Value: " << rear_torque_nm << " Nm (expected ~" << expected_torque << " Nm +/-" << torque_tolerance << ")");
     }
 }
 
@@ -323,8 +316,7 @@ TEST_CASE(test_rear_align_effect, "SlipGrip") {
              std::cout << "[PASS] Rear Force Workaround active. Calc Force: " << rear_lat_force_n << " N" << std::endl;
              g_tests_passed++;
         } else {
-             std::cout << "[FAIL] Rear Force Workaround failed. Calc Force: " << rear_lat_force_n << " N" << std::endl;
-             g_tests_failed++;
+             FAIL_TEST("Rear Force Workaround failed. Calc Force: " << rear_lat_force_n << " N");
         }
         // Actually, looking at the log, it seems to be checking a specific intermediate value. 
         // Ideally I would copy the exact code, but I don't have it in front of me right now.
@@ -353,8 +345,7 @@ TEST_CASE(test_rear_align_effect, "SlipGrip") {
             std::cout << "[PASS] Rear Align Effect active and decoupled (Boost 0.0). Value: " << rear_torque_nm << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Rear Align Effect failed. Value: " << rear_torque_nm << " (Expected ~" << expected_torque << ")" << std::endl;
-            g_tests_failed++;
+            FAIL_TEST("Rear Align Effect failed. Value: " << rear_torque_nm << " (Expected ~" << expected_torque << ")");
         }
     }
 }
@@ -411,8 +402,7 @@ TEST_CASE(test_rear_grip_fallback, "SlipGrip") {
         std::cout << "[PASS] Rear grip approximation triggered." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Rear grip approximation NOT triggered." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Rear grip approximation NOT triggered.");
     }
     
     // Verify calculated rear grip was high (restored)
@@ -429,8 +419,7 @@ TEST_CASE(test_rear_grip_fallback, "SlipGrip") {
              std::cout << "[PASS] Lateral G Boost (Slide) correctly suppressed (Rear Grip restored)." << std::endl;
              g_tests_passed++;
         } else {
-             std::cout << "[FAIL] False Lateral G Boost (Slide) detected: " << boost << std::endl;
-             g_tests_failed++;
+             FAIL_TEST("False Lateral G Boost (Slide) detected: " << boost);
         }
     } else {
         // Fallback if snapshot not captured (requires lock)
@@ -491,8 +480,7 @@ TEST_CASE(test_load_factor_edge_cases, "SlipGrip") {
         std::cout << "[PASS] Load factor clamped correctly." << std::endl;
         g_tests_passed++;
     } else {
-         std::cout << "[FAIL] Load factor not clamped? Force: " << force_extreme << std::endl;
-         g_tests_failed++;
+         FAIL_TEST("Load factor not clamped? Force: " << force_extreme);
     }
 }
 
@@ -520,8 +508,7 @@ TEST_CASE(test_missing_telemetry_warnings, "SlipGrip") {
         std::cout << "[PASS] Grip warning triggered with car name." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Grip warning missing or format incorrect." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Grip warning missing or format incorrect.");
     }
 
     // --- Case 2: Missing Suspension Force ---
@@ -543,8 +530,7 @@ TEST_CASE(test_missing_telemetry_warnings, "SlipGrip") {
         std::cout << "[PASS] SuspForce warning triggered with car name." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] SuspForce warning missing or format incorrect." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("SuspForce warning missing or format incorrect.");
     }
 
     // --- Case 3: Missing Vertical Tire Deflection (NEW) ---
@@ -568,8 +554,7 @@ TEST_CASE(test_missing_telemetry_warnings, "SlipGrip") {
         std::cout << "[PASS] Vertical Deflection warning triggered." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Vertical Deflection warning missing." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Vertical Deflection warning missing.");
     }
 
     Logger::Get().SetTestStream(nullptr);
@@ -612,8 +597,7 @@ TEST_CASE(test_sanity_checks, "SlipGrip") {
         std::cout << "[PASS] Detected missing load warning." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Failed to detect missing load." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Failed to detect missing load.");
     }
 
     double force_corrected = engine.calculate_force(&data);
@@ -622,8 +606,7 @@ TEST_CASE(test_sanity_checks, "SlipGrip") {
         std::cout << "[PASS] Load fallback applied (Force generated: " << force_corrected << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Load fallback failed (Force is 0)" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Load fallback failed (Force is 0)");
     }
 
     // 2. Test Missing Grip Correction
@@ -650,8 +633,7 @@ TEST_CASE(test_sanity_checks, "SlipGrip") {
         std::cout << "[PASS] Detected missing grip warning." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Failed to detect missing grip." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Failed to detect missing grip.");
     }
     
     // Verify output force matches expected value
@@ -663,8 +645,7 @@ TEST_CASE(test_sanity_checks, "SlipGrip") {
         std::cout << "[PASS] Diagnostics confirm front approximation." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Diagnostics missing front approximation." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Diagnostics missing front approximation.");
     }
     
     ASSERT_NEAR(engine.m_grip_diag.front_original, 0.0, 0.0001);
@@ -680,8 +661,7 @@ TEST_CASE(test_sanity_checks, "SlipGrip") {
          std::cout << "[PASS] Detected bad DeltaTime warning." << std::endl;
          g_tests_passed++;
     } else {
-         std::cout << "[FAIL] Failed to detect bad DeltaTime." << std::endl;
-         g_tests_failed++;
+         FAIL_TEST("Failed to detect bad DeltaTime.");
     }
 }
 
@@ -724,8 +704,7 @@ TEST_CASE(test_hysteresis_logic, "SlipGrip") {
         std::cout << "[PASS] Hysteresis counter incrementing (5)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Hysteresis counter not 5: " << engine.m_missing_load_frames << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Hysteresis counter not 5: " << engine.m_missing_load_frames);
     }
 
     // 3. Drop Load for 20 more frames (Total 25)
@@ -743,8 +722,7 @@ TEST_CASE(test_hysteresis_logic, "SlipGrip") {
         std::cout << "[PASS] Hysteresis triggered fallback (Warning set)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Hysteresis did not trigger fallback." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Hysteresis did not trigger fallback.");
     }
     
     // 4. Recovery
@@ -795,8 +773,7 @@ TEST_CASE(test_grip_threshold_sensitivity, "SlipGrip") {
         std::cout << "[PASS] Sensitive car (0.06) lost more grip at 0.07 slip than GT3 car (0.12)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Sensitivity threshold not working. S: " << grip_sensitive_post << " G: " << grip_gt3 << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Sensitivity threshold not working. S: " << grip_sensitive_post << " G: " << grip_gt3);
     }
 }
 

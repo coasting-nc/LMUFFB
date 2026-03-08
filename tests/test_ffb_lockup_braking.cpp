@@ -53,7 +53,7 @@ TEST_CASE(test_progressive_lockup, "LockupBraking") {
          // Freq = 10 + (20 * 1.5) = 40.
          // Dt = 0.01.
          // Accumulator += 40 * 0.01 * 6.28 = 2.5.
-         std::cout << "[FAIL] Phase stuck at 0. Check data inputs." << std::endl;
+         FAIL_TEST("Phase stuck at 0. Check data inputs." << std::endl;
     }
 
     ASSERT_TRUE(std::abs(force_low) > 0.00001);
@@ -105,8 +105,7 @@ TEST_CASE(test_predictive_lockup_v060, "LockupBraking") {
         std::cout << "[PASS] Predictive trigger activated at 10% slip (Phase: " << engine.m_lockup_phase << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Predictive trigger failed. Phase: " << engine.m_lockup_phase << " Accel: " << (data.mWheel[0].mRotation - prev_rot)/0.01 << std::endl;
-        g_tests_failed++;
+        std::cout << "[FAIL] Predictive trigger failed. Phase: " << engine.m_lockup_phase << " Accel: " << (data.mWheel[0].mRotation - prev_rot)/0.01);
     }
 }
 
@@ -135,8 +134,7 @@ TEST_CASE(test_abs_pulse_v060, "LockupBraking") {
         std::cout << "[PASS] ABS Pulse triggered (Force: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] ABS Pulse silent. Force: " << force << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("ABS Pulse silent. Force: " << force);
     }
 }
 
@@ -176,8 +174,7 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
         std::cout << "[PASS] Front lockup triggered. Phase delta: " << phase_delta_front << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Front lockup silent." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Front lockup silent.");
     }
 
     // --- PASS 2: Rear Lockup Only ---
@@ -198,8 +195,7 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
         std::cout << "[PASS] Rear lockup triggered. Phase delta: " << phase_delta_rear << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Rear lockup silent (Bug not fixed)." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Rear lockup silent (Bug not fixed).");
     }
 
     // Rear frequency is lower (Ratio 0.3 per FFBEngine.h)
@@ -209,8 +205,7 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
         std::cout << "[PASS] Rear frequency is lower (Ratio: " << ratio << " vs expected 0.3)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Frequency differentiation failed. Ratio: " << ratio << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Frequency differentiation failed. Ratio: " << ratio);
     }
 }
 
@@ -249,8 +244,7 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
         std::cout << "[PASS] Road texture correctly clamped to 1.0x (Force: " << force_road << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Road texture clamping failed. Expected 0.05, got " << force_road << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Road texture clamping failed. Expected 0.05, got " << force_road);
         return; // Early exit if first part fails
     }
 
@@ -296,8 +290,7 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
         std::cout << "[PASS] Brake load cap applies 3x scaling (Ratio: " << actual_ratio << ", High: " << std::abs(force_high) << ", Low: " << std::abs(force_low) << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Expected ~3x ratio, got " << actual_ratio << " (High: " << std::abs(force_high) << ", Low: " << std::abs(force_low) << ")" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Expected ~3x ratio, got " << actual_ratio << " (High: " << std::abs(force_high) << ", Low: " << std::abs(force_low) << ")");
     }
 }
 
@@ -324,8 +317,7 @@ TEST_CASE(test_dynamic_thresholds, "LockupBraking") {
         std::cout << "[PASS] No trigger below 5% start." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Triggered below start threshold." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Triggered below start threshold.");
     }
 
     // Case B: 20% Slip (Saturated/Manual Trigger)
@@ -346,8 +338,7 @@ TEST_CASE(test_dynamic_thresholds, "LockupBraking") {
         std::cout << "[PASS] Force increases with slip depth." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Force saturation/ramp failed." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Force saturation/ramp failed.");
     }
 }
 
@@ -376,8 +367,7 @@ TEST_CASE(test_refactor_abs_pulse, "LockupBraking") {
         std::cout << "[PASS] ABS Pulse generated force: " << force << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] ABS Pulse silent (force=0). Refactor regression?" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("ABS Pulse silent (force=0). Refactor regression?");
     }
 }
 
@@ -447,8 +437,7 @@ TEST_CASE(test_refactor_torque_drop, "LockupBraking") {
         std::cout << "[PASS] Torque Drop correctly isolated from Textures (Force: " << force << " Expected: 0.37)" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Torque Drop logic error. Got: " << force << " Expected: 0.37 (Broken: 0.352)" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Torque Drop logic error. Got: " << force << " Expected: 0.37 (Broken: 0.352)");
     }
 }
 

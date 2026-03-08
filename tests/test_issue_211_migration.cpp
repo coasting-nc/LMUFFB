@@ -37,20 +37,17 @@ TEST_CASE(test_issue_211_preset_gain_migration, "Config") {
                     std::cout << "[PASS] Legacy preset gain migrated correctly: " << preset.gain << std::endl;
                     g_tests_passed++;
                 } else {
-                    std::cout << "[FAIL] Legacy preset gain NOT migrated. Got: " << preset.gain << " (Expected ~0.15)" << std::endl;
-                    g_tests_failed++;
+                    FAIL_TEST("Legacy preset gain NOT migrated. Got: " << preset.gain << " (Expected ~0.15)");
                 }
             } else {
-                std::cout << "[FAIL] Legacy preset wheelbase_max_nm NOT reset. Got: " << preset.wheelbase_max_nm << std::endl;
-                g_tests_failed++;
+                FAIL_TEST("Legacy preset wheelbase_max_nm NOT reset. Got: " << preset.wheelbase_max_nm);
             }
             break;
         }
     }
 
     if (!found) {
-        std::cout << "[FAIL] Legacy100Nm preset not found." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Legacy100Nm preset not found.");
     }
 
     Config::m_config_path = original_path;
@@ -80,8 +77,7 @@ TEST_CASE(test_issue_211_config_gain_migration, "Config") {
         std::cout << "[PASS] Legacy config gain migrated correctly: " << engine.m_gain << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Legacy config gain NOT migrated. Got: " << engine.m_gain << " (Expected ~0.12)" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Legacy config gain NOT migrated. Got: " << engine.m_gain << " (Expected ~0.12)");
     }
 
     if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);

@@ -143,8 +143,7 @@ TEST_CASE(test_grip_low_speed, "CorePhysics") {
         std::cout << "[PASS] Low speed grip forced to 1.0." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Low speed grip not forced. Got " << force << " Expected 1.0." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Low speed grip not forced. Got " << force << " Expected 1.0.");
     }
 }
 
@@ -190,8 +189,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
         std::cout << "[PASS] Rear Align Torque correctly compensated (" << ra1 << " == " << ra2 << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Rear Align Torque compensation failed! 20Nm: " << ra1 << " 60Nm: " << ra2 << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Rear Align Torque compensation failed! 20Nm: " << ra1 << " 60Nm: " << ra2);
     }
 
     double s1, s2;
@@ -220,8 +218,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
         std::cout << "[PASS] Slide Texture correctly compensated (" << s1 << " == " << s2 << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Slide Texture compensation failed! 20Nm: " << s1 << " 100Nm: " << s2 << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Slide Texture compensation failed! 20Nm: " << s1 << " 100Nm: " << s2);
     }
 
     engine.m_slide_texture_enabled = false;
@@ -247,8 +244,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
         std::cout << "[PASS] Understeer Modifier correctly normalized by session peak (" << u1 << " == " << u2 << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Understeer Modifier behavior unexpected! 20Nm: " << u1 << " 40Nm: " << u2 << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Understeer Modifier behavior unexpected! 20Nm: " << u1 << " 40Nm: " << u2);
     }
 
     std::cout << "[SUMMARY] Gain Compensation verified for all effect types." << std::endl;
@@ -370,8 +366,7 @@ TEST_CASE(test_high_gain_stability, "CorePhysics") {
     for(int i=0; i<1000; i++) {
         double force = engine.calculate_force(&data);
         if (std::isnan(force) || std::isinf(force)) {
-            std::cout << "[FAIL] Stability failure at iteration " << i << std::endl;
-            g_tests_failed++;
+            FAIL_TEST("Stability failure at iteration " << i);
             return;
         }
     }
@@ -417,7 +412,7 @@ TEST_CASE(test_stress_stability, "CorePhysics") {
         double force = engine.calculate_force(&data);
         
         if (std::isnan(force) || std::isinf(force)) {
-            std::cout << "[FAIL] Iteration " << i << " produced NaN/Inf!" << std::endl;
+            FAIL_TEST("Iteration " << i << " produced NaN/Inf!" << std::endl;
             failed = true;
             break;
         }
@@ -470,8 +465,7 @@ TEST_CASE(test_smoothing_step_response, "CorePhysics") {
     } else {
         std::stringstream ss; ss << "[FAIL] test_smoothing_step_response: Smoothing Step 1 mismatch. Got " << force1 << " Expected ~0.0024";
         std::cout << ss.str() << std::endl;
-        g_failure_log.push_back(ss.str());
-        g_tests_failed++;
+        g_failure_log.push_back(ss.str()));
     }
     
     for (int i = 0; i < 100; i++) {
@@ -515,8 +509,7 @@ TEST_CASE(test_time_corrected_smoothing, "CorePhysics") {
         std::cout << "[PASS] Smoothing is consistent across frame rates." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Smoothing diverges! Time correction failed." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Smoothing diverges! Time correction failed.");
     }
 }
 
@@ -632,8 +625,7 @@ TEST_CASE(test_regression_rear_torque_lpf, "CorePhysics") {
         std::cout << "[PASS] LPF was running in background. Force: " << force << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] LPF was idle! Cold start lag detected. Force: " << force << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("LPF was idle! Cold start lag detected. Force: " << force);
     }
 }
 
@@ -672,8 +664,7 @@ TEST_CASE(test_steering_shaft_smoothing, "CorePhysics") {
         std::cout << "[PASS] Shaft Smoothing delayed the step input (Frame 1: " << force << ")." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Shaft Smoothing mismatch. Got " << force << " Expected ~0.166." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Shaft Smoothing mismatch. Got " << force << " Expected ~0.166.");
     }
 
     // After 20 frames (200ms) it should be near 1.0 (approx 97% of target)
@@ -684,8 +675,7 @@ TEST_CASE(test_steering_shaft_smoothing, "CorePhysics") {
         std::cout << "[PASS] Shaft Smoothing converged correctly (Frame 11: " << force << ")." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Shaft Smoothing convergence failure. Got " << force << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Shaft Smoothing convergence failure. Got " << force);
     }
 }
 

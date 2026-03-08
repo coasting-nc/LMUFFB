@@ -42,8 +42,7 @@ TEST_CASE(test_snapshot_data_integrity, "Internal") {
             std::cout << "[PASS] Raw Front Tire Load captured as 0.0." << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Raw Front Tire Load incorrect: " << snap_load.raw_front_tire_load << std::endl;
-            g_tests_failed++;
+            FAIL_TEST("Raw Front Tire Load incorrect: " << snap_load.raw_front_tire_load);
         }
         
         // Test 2: Calculated Load should be approx 1300 (SuspForce 1000 + 300 offset)
@@ -51,8 +50,7 @@ TEST_CASE(test_snapshot_data_integrity, "Internal") {
             std::cout << "[PASS] Calculated Front Load is 1300.0." << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Calculated Front Load incorrect: " << snap_load.calc_front_load << std::endl;
-            g_tests_failed++;
+            FAIL_TEST("Calculated Front Load incorrect: " << snap_load.calc_front_load);
         }
         
         // Test 3: Raw Throttle Input (from initial setup: data.mUnfilteredThrottle = 0.8)
@@ -60,8 +58,7 @@ TEST_CASE(test_snapshot_data_integrity, "Internal") {
             std::cout << "[PASS] Raw Throttle captured." << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Raw Throttle incorrect: " << snap_load.raw_input_throttle << std::endl;
-            g_tests_failed++;
+            FAIL_TEST("Raw Throttle incorrect: " << snap_load.raw_input_throttle);
         }
         
         // Test 4: Raw Ride Height (Min of 0.03 and 0.04 -> 0.03)
@@ -69,8 +66,7 @@ TEST_CASE(test_snapshot_data_integrity, "Internal") {
             std::cout << "[PASS] Raw Ride Height captured (Min)." << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Raw Ride Height incorrect: " << snap_load.raw_front_ride_height << std::endl;
-            g_tests_failed++;
+            FAIL_TEST("Raw Ride Height incorrect: " << snap_load.raw_front_ride_height);
         }
     }
 
@@ -100,8 +96,7 @@ TEST_CASE(test_snapshot_data_integrity, "Internal") {
     // Get Snapshot
     auto batch = engine.GetDebugBatch();
     if (batch.empty()) {
-        std::cout << "[FAIL] No snapshot generated." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("No snapshot generated.");
         return;
     }
     
@@ -114,8 +109,7 @@ TEST_CASE(test_snapshot_data_integrity, "Internal") {
         std::cout << "[PASS] Calc Front Grip is 1.0." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Calc Front Grip incorrect: " << snap.calc_front_grip << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Calc Front Grip incorrect: " << snap.calc_front_grip);
     }
     
     // 2. Check Rear Grip (0.5)
@@ -123,8 +117,7 @@ TEST_CASE(test_snapshot_data_integrity, "Internal") {
         std::cout << "[PASS] Calc Rear Grip is 0.5." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Calc Rear Grip incorrect: " << snap.calc_rear_grip << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Calc Rear Grip incorrect: " << snap.calc_rear_grip);
     }
     
     // 3. Check Renamed Field (raw_front_deflection)
@@ -132,8 +125,7 @@ TEST_CASE(test_snapshot_data_integrity, "Internal") {
         std::cout << "[PASS] raw_front_deflection captured (Renamed field)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] raw_front_deflection incorrect: " << snap.raw_front_deflection << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("raw_front_deflection incorrect: " << snap.raw_front_deflection);
     }
 }
 
@@ -198,7 +190,7 @@ TEST_CASE(test_zero_effects_leakage, "Internal") {
         std::cout << "[PASS] Zero leakage verified (Force = 0.0)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Ghost Force detected! Output: " << force << std::endl;
+        FAIL_TEST("Ghost Force detected! Output: " << force << std::endl;
         // Debug components
         auto batch = engine.GetDebugBatch();
         if (!batch.empty()) {
@@ -241,8 +233,7 @@ TEST_CASE(test_snapshot_data_v049, "Internal") {
     // Verify Snapshot
     auto batch = engine.GetDebugBatch();
     if (batch.empty()) {
-        std::cout << "[FAIL] No snapshot." << std::endl;
-        g_tests_failed++;
+        std::cout << "[FAIL] No snapshot.");
         return;
     }
     
@@ -254,8 +245,7 @@ TEST_CASE(test_snapshot_data_v049, "Internal") {
         std::cout << "[PASS] raw_front_long_patch_vel correct." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] raw_front_long_patch_vel: " << snap.raw_front_long_patch_vel << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("raw_front_long_patch_vel: " << snap.raw_front_long_patch_vel);
     }
     
     // Check Rear Lat Patch Vel
@@ -264,8 +254,7 @@ TEST_CASE(test_snapshot_data_v049, "Internal") {
         std::cout << "[PASS] raw_rear_lat_patch_vel correct." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] raw_rear_lat_patch_vel: " << snap.raw_rear_lat_patch_vel << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("raw_rear_lat_patch_vel: " << snap.raw_rear_lat_patch_vel);
     }
     
     // Check Rear Long Patch Vel
@@ -274,8 +263,7 @@ TEST_CASE(test_snapshot_data_v049, "Internal") {
         std::cout << "[PASS] raw_rear_long_patch_vel correct." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] raw_rear_long_patch_vel: " << snap.raw_rear_long_patch_vel << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("raw_rear_long_patch_vel: " << snap.raw_rear_long_patch_vel);
     }
     
     // Check Rear Slip Angle Raw
@@ -285,8 +273,7 @@ TEST_CASE(test_snapshot_data_v049, "Internal") {
         std::cout << "[PASS] raw_rear_slip_angle correct." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] raw_rear_slip_angle: " << snap.raw_rear_slip_angle << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("raw_rear_slip_angle: " << snap.raw_rear_slip_angle);
     }
 }
 
@@ -483,8 +470,7 @@ TEST_CASE(test_unconditional_vert_accel_update, "Internal") {
         std::cout << "[PASS] m_prev_vert_accel updated unconditionally: " << engine.m_prev_vert_accel << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] m_prev_vert_accel not updated. Got: " << engine.m_prev_vert_accel << " Expected: 5.5" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("m_prev_vert_accel not updated. Got: " << engine.m_prev_vert_accel << " Expected: 5.5");
     }
     
     // Verify the value changes on next frame
@@ -495,8 +481,7 @@ TEST_CASE(test_unconditional_vert_accel_update, "Internal") {
         std::cout << "[PASS] m_prev_vert_accel tracks changes: " << engine.m_prev_vert_accel << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] m_prev_vert_accel not tracking. Got: " << engine.m_prev_vert_accel << " Expected: -3.2" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("m_prev_vert_accel not tracking. Got: " << engine.m_prev_vert_accel << " Expected: -3.2");
     }
 }
 

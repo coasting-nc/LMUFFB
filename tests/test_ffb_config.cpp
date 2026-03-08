@@ -41,8 +41,7 @@ TEST_CASE(test_channel_stats, "Config") {
         std::cout << "[PASS] Interval Stats Reset." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Interval Reset failed." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Interval Reset failed.");
     }
     
     // Min/Max should still be valid
@@ -72,8 +71,7 @@ TEST_CASE(test_game_state_logic, "Config") {
          std::cout << "[PASS] Player missing -> False." << std::endl;
          g_tests_passed++;
     } else {
-         std::cout << "[FAIL] Player missing -> True?" << std::endl;
-         g_tests_failed++;
+         FAIL_TEST("Player missing -> True?");
     }
     
     // Case 2: Player found, InRealtime = 0 (Menu)
@@ -91,8 +89,7 @@ TEST_CASE(test_game_state_logic, "Config") {
         std::cout << "[PASS] InRealtime=False -> False." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] InRealtime=False -> True?" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("InRealtime=False -> True?");
     }
     
     // Case 3: Player found, InRealtime = 1 (Driving)
@@ -108,8 +105,7 @@ TEST_CASE(test_game_state_logic, "Config") {
         std::cout << "[PASS] InRealtime=True -> True." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] InRealtime=True -> False?" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("InRealtime=True -> False?");
     }
 }
 
@@ -132,8 +128,7 @@ TEST_CASE(test_presets, "Config") {
         ASSERT_NEAR(engine.m_gain, 1.0f, 0.01);
         ASSERT_NEAR(engine.m_sop_effect, 0.08f, 0.01);
     } else {
-        std::cout << "[FAIL] Preset 'Test: SoP Only' not found" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Preset 'Test: SoP Only' not found");
     }
 }
 
@@ -192,7 +187,7 @@ TEST_CASE(test_preset_initialization, "Config") {
     // Ã¢Å¡Â Ã¯Â¸  IMPORTANT: Loop count (14) must match preset_names array size above!
     for (int i = 0; i < 14; i++) {
         if (i >= Config::presets.size()) {
-            std::cout << "[FAIL] Preset " << i << " (" << preset_names[i] << ") not found!" << std::endl;
+            FAIL_TEST("Preset " << i << " (" << preset_names[i] << ") not found!" << std::endl;
             all_passed = false;
             continue;
         }
@@ -287,8 +282,7 @@ TEST_CASE(test_preset_initialization, "Config") {
             std::cout << "[PASS] " << preset.name << ": fields verified correctly" << (is_specialized_t300 ? " (Including v0.6.30 optimizations)" : "") << std::endl;
             g_tests_passed++;
         } else {
-            all_passed = false;
-            g_tests_failed++;
+            all_passed = false);
         }
     }
     
@@ -296,8 +290,7 @@ TEST_CASE(test_preset_initialization, "Config") {
         std::cout << "[PASS] All 14 built-in presets have correct field initialization" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Some presets have incorrect specialization or defaults" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Some presets have incorrect specialization or defaults");
     }
 }
 
@@ -341,8 +334,7 @@ TEST_CASE(test_config_safety_clamping, "Config") {
     {
         std::ofstream file(test_file);
         if (!file.is_open()) {
-            std::cout << "[FAIL] Could not create test config file." << std::endl;
-            g_tests_failed++;
+            FAIL_TEST("Could not create test config file.");
             return;
         }
         

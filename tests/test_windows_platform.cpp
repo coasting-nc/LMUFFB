@@ -32,7 +32,7 @@ namespace FFBEngineTests {
         std::cout << "[PASS] " << #a << " == " << #b << std::endl; \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << #a << " (" << a << ") != " << #b << " (" << b << ")" << std::endl; \
+        FAIL_TEST("" << #a << " (" << a << ") != " << #b << " (" << b << ")" << std::endl; \
         g_tests_failed++; \
     }
 #endif
@@ -139,8 +139,7 @@ TEST_CASE(test_main_exe_icon, "Windows") {
             std::cout << "  [PASS] IDI_ICON1 (" << IDI_ICON1 << ") successfully found inside " << main_exe << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "  [FAIL] IDI_ICON1 missing from " << main_exe << "! CMake did not link res.rc." << std::endl;
-            g_tests_failed++;
+            std::cout << "  [FAIL] IDI_ICON1 missing from " << main_exe << "! CMake did not link res.rc.");
         }
         FreeLibrary(hMod);
     } else {
@@ -197,7 +196,7 @@ TEST_CASE(test_icon_presence, "Windows") {
                 if (header[0] == 0x00 && header[1] == 0x00 && header[2] == 0x01 && header[3] == 0x00) {
                     std::cout << "  [PASS] Valid ICO header detected (00 00 01 00)" << std::endl;
                 } else {
-                    std::cout << "  [FAIL] Invalid ICO header: " 
+                    FAIL_TEST("Invalid ICO header: " 
                               << std::hex << (int)header[0] << " " << (int)header[1] << " " 
                               << (int)header[2] << " " << (int)header[3] << std::dec << std::endl;
                     found = false; // Invalidate match if header is wrong
@@ -215,8 +214,7 @@ TEST_CASE(test_icon_presence, "Windows") {
     } else {
         std::cout << "  [FAIL] lmuffb.ico NOT found in build artifacts." << std::endl;
         std::cout << "         Checked paths relative to executable:" << std::endl;
-        for (const auto& path : candidates) std::cout << "         - " << path << std::endl;
-        g_tests_failed++;
+        for (const auto& path : candidates) std::cout << "         - " << path);
     }
 }
 

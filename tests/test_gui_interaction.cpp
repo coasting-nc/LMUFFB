@@ -43,8 +43,7 @@ TEST_CASE(test_gui_decorator_execution, "GUI") {
         std::cout << "[PASS] Float Decorator Execution" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Float Decorator NOT executed" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Float Decorator NOT executed");
     }
 
     ImGui::DestroyContext(ctx);
@@ -82,8 +81,7 @@ TEST_CASE(test_gui_id_collision_prevention, "GUI") {
             std::cout << "[PASS] Unique IDs generated for identical labels using PushID" << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Identical IDs generated despite PushID" << std::endl;
-            g_tests_failed++;
+            FAIL_TEST("Identical IDs generated despite PushID");
         }
     }
 
@@ -108,8 +106,7 @@ TEST_CASE(test_gui_result_defaults, "GUI") {
         std::cout << "[PASS] Result default values" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Result default values incorrect" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Result default values incorrect");
     }
 }
 

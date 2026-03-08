@@ -19,7 +19,7 @@
         std::cout << "[PASS] " << #condition << std::endl; \
         g_tests_passed++; \
     } else { \
-        std::cout << "[FAIL] " << #condition << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+        FAIL_TEST("" << #condition << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
         g_tests_failed++; \
     }
 #endif
@@ -37,8 +37,7 @@ TEST_CASE(test_executable_metadata, "Security") {
     // 1. Get current executable path
     char exePath[MAX_PATH];
     if (GetModuleFileNameA(NULL, exePath, MAX_PATH) == 0) {
-        std::cout << "[FAIL] GetModuleFileNameA failed: " << GetLastError() << std::endl;
-        g_tests_failed++;
+        std::cout << "[FAIL] GetModuleFileNameA failed: " << GetLastError());
         return;
     }
     std::cout << "  Analyzing: " << exePath << std::endl;
@@ -47,17 +46,15 @@ TEST_CASE(test_executable_metadata, "Security") {
     DWORD dwHandle;
     DWORD dwSize = GetFileVersionInfoSizeA(exePath, &dwHandle);
     if (dwSize == 0) {
-        std::cout << "[FAIL] GetFileVersionInfoSizeA failed (No Version Resource found): " << GetLastError()
-                  << " (Ensure BUILD_HEADLESS=OFF when building locally)" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("GetFileVersionInfoSizeA failed (No Version Resource found): " << GetLastError()
+                  << " (Ensure BUILD_HEADLESS=OFF when building locally)");
         return;
     }
 
     // 3. Get Version Info Data
     std::vector<BYTE> versionData(dwSize);
     if (!GetFileVersionInfoA(exePath, dwHandle, dwSize, versionData.data())) {
-        std::cout << "[FAIL] GetFileVersionInfoA failed: " << GetLastError() << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("GetFileVersionInfoA failed: " << GetLastError());
         return;
     }
 
@@ -70,8 +67,7 @@ TEST_CASE(test_executable_metadata, "Security") {
 
     // Read the list of languages and code pages.
     if (!VerQueryValueA(versionData.data(), "\\VarFileInfo\\Translation", (LPVOID*)&lpTranslate, &cbTranslate)) {
-        std::cout << "[FAIL] VerQueryValueA (Translation) failed" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("VerQueryValueA (Translation) failed");
         return;
     }
 
@@ -88,8 +84,7 @@ TEST_CASE(test_executable_metadata, "Security") {
         std::cout << "  CompanyName: " << company << std::endl;
         ASSERT_TRUE(company == "lmuFFB");
     } else {
-        std::cout << "[FAIL] Could not query CompanyName" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Could not query CompanyName");
     }
 
     // verify ProductVersion
@@ -107,8 +102,7 @@ TEST_CASE(test_executable_metadata, "Security") {
         }
         ASSERT_TRUE(match);
     } else {
-        std::cout << "[FAIL] Could not query ProductVersion" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Could not query ProductVersion");
     }
 }
 

@@ -337,14 +337,13 @@ void Run() {
                 if (g_tests_failed > initial_fails) {
                     g_test_cases_failed++;
                     failed_test_names.push_back(test.name);
-                    std::cout << "\n[FAIL] " << test.name << " ("
+                    FAIL_TEST("" << test.name << " ("
                               << (g_tests_failed - initial_fails) << " assertion(s) failed)" << std::endl;
                 } else {
                     g_test_cases_passed++;
                 }
             } catch (const std::exception& e) {
-                std::cerr << "\n>>> [FAIL] " << test.name << " threw exception: " << e.what() << "\n" << std::endl;
-                g_tests_failed++;
+                std::cerr << "\n>>> [FAIL] " << test.name << " threw exception: " << e.what() << "\n");
                 g_test_cases_run++;
                 g_test_cases_failed++;
                 failed_test_names.push_back(test.name);

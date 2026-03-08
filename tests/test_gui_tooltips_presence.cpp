@@ -38,8 +38,7 @@ TEST_CASE(test_gui_tooltips_presence_static, "GUI") {
 
     std::ifstream file(found_path);
     if (!file.is_open()) {
-        std::cout << "[FAIL] Failed to open " << found_path << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Failed to open " << found_path);
         return;
     }
 

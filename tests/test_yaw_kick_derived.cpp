@@ -40,8 +40,7 @@ TEST_CASE(test_yaw_kick_derived_from_rate, "YawKick") {
         std::cout << "[PASS] Yaw Kick active from derived acceleration (Force: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Yaw Kick inactive or too weak. Derived acceleration ignored? Got: " << force << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Yaw Kick inactive or too weak. Derived acceleration ignored? Got: " << force);
     }
 }
 

@@ -204,7 +204,7 @@ TEST_CASE(test_all_presets_non_negative_speed_gate, "Understeer") {
         
         // Check lower threshold
         if (p.speed_gate_lower < 0.0f) {
-            std::cout << "[FAIL] Preset '" << p.name << "' has negative speed_gate_lower: " 
+            FAIL_TEST("Preset '" << p.name << "' has negative speed_gate_lower: " 
                       << p.speed_gate_lower << " m/s (" << (p.speed_gate_lower * 3.6f) << " km/h)" << std::endl;
             all_valid = false;
         }
@@ -229,8 +229,7 @@ TEST_CASE(test_all_presets_non_negative_speed_gate, "Understeer") {
         g_tests_passed++;
     } else {
         std::string err = "[FAIL] test_all_presets_non_negative_speed_gate: One or more presets have invalid speed gate values";
-        std::cout << err << std::endl; g_failure_log.push_back(err);
-        g_tests_failed++;
+        std::cout << err << std::endl; g_failure_log.push_back(err));
     }
 }
 

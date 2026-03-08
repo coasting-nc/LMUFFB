@@ -32,6 +32,15 @@ extern std::vector<std::string> g_failure_log; // New
 extern std::string g_current_test_name; // Set by Run() before each test
 
 // --- Assert Macros ---
+
+#define FAIL_TEST(msg) do { \
+    std::stringstream ss_fail; \
+    ss_fail << "[FAIL] " << g_current_test_name << ": " << msg; \
+    std::cout << ss_fail.str() << std::endl; \
+    g_failure_log.push_back(ss_fail.str()); \
+    g_tests_failed++; \
+} while(0)
+
 // Passing assertions are silent. Failing assertions print [FAIL] with the
 // current test name, condition details, and source location.
 #define ASSERT_TRUE(condition) \

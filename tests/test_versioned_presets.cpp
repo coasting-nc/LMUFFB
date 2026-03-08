@@ -38,16 +38,14 @@ TEST_CASE(test_preset_version_persistence, "Config") {
                 std::cout << "[PASS] Preset app_version loaded correctly." << std::endl;
                 g_tests_passed++;
             } else {
-                std::cout << "[FAIL] Preset app_version mismatch. Got: " << preset.app_version << std::endl;
-                g_tests_failed++;
+                FAIL_TEST("Preset app_version mismatch. Got: " << preset.app_version);
             }
             break;
         }
     }
     
     if (!found) {
-        std::cout << "[FAIL] VersionTestPreset not found after loading." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("VersionTestPreset not found after loading.");
     }
 
     Config::m_config_path = original_path;
@@ -79,16 +77,14 @@ TEST_CASE(test_legacy_preset_migration, "Config") {
                 std::cout << "[PASS] Legacy preset migrated to current version: " << LMUFFB_VERSION << std::endl;
                 g_tests_passed++;
             } else {
-                std::cout << "[FAIL] Legacy preset NOT migrated. Version: " << preset.app_version << std::endl;
-                g_tests_failed++;
+                FAIL_TEST("Legacy preset NOT migrated. Version: " << preset.app_version);
             }
             break;
         }
     }
     
     if (!found) {
-        std::cout << "[FAIL] LegacyPreset not found." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("LegacyPreset not found.");
     }
 
     Config::m_config_path = original_path;

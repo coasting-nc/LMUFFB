@@ -54,8 +54,7 @@ TEST_CASE(test_sop_yaw_kick, "YawGyro") {
         std::cout << "[PASS] Yaw Kick first frame smoothed correctly (" << force << " ~= -0.025)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Yaw Kick first frame mismatch. Got " << force << " Expected ~-0.025." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Yaw Kick first frame mismatch. Got " << force << " Expected ~-0.025.");
     }
 }
 
@@ -106,8 +105,7 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
     // Get the snapshot to check gyro force
     auto batch = engine.GetDebugBatch();
     if (batch.empty()) {
-        std::cout << "[FAIL] No snapshot." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("No snapshot.");
         return;
     }
     FFBSnapshot snap = batch.back();
@@ -120,8 +118,7 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
         std::cout << "[PASS] Gyro force opposes steering movement (negative: " << gyro_force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Gyro force should be negative. Got: " << gyro_force << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Gyro force should be negative. Got: " << gyro_force);
     }
     
     // Assert 2: Force is non-zero (significant)
@@ -129,8 +126,7 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
         std::cout << "[PASS] Gyro force is non-zero (magnitude: " << std::abs(gyro_force) << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Gyro force is too small. Got: " << gyro_force << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Gyro force is too small. Got: " << gyro_force);
     }
     
     // Test opposite direction
@@ -148,8 +144,7 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
             std::cout << "[PASS] Gyro force reverses with steering direction (positive: " << gyro_force_reverse << ")" << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Gyro force should be positive for reverse movement. Got: " << gyro_force_reverse << std::endl;
-            g_tests_failed++;
+            FAIL_TEST("Gyro force should be positive for reverse movement. Got: " << gyro_force_reverse);
         }
     }
     
@@ -174,8 +169,7 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
             std::cout << "[PASS] Gyro force scales with speed (slow: " << gyro_force_slow << " vs fast: " << gyro_force << ")" << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Gyro force should be weaker at low speed. Slow: " << gyro_force_slow << " Fast: " << gyro_force << std::endl;
-            g_tests_failed++;
+            FAIL_TEST("Gyro force should be weaker at low speed. Slow: " << gyro_force_slow << " Fast: " << gyro_force);
         }
     }
 }
@@ -226,8 +220,7 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
         std::cout << "[PASS] First frame smoothed to 10% of raw input (" << force_frame1 << " ~= -0.25)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] First frame smoothing incorrect. Got " << force_frame1 << " Expected ~-0.25." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("First frame smoothing incorrect. Got " << force_frame1 << " Expected ~-0.25.");
     }
     
     // v0.4.20 UPDATE: With force inversion, values are negative
@@ -241,8 +234,7 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
         std::cout << "[PASS] Second frame accumulated correctly (" << force_frame2 << " ~= -0.475)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Second frame accumulation incorrect. Got " << force_frame2 << " Expected ~-0.475." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Second frame accumulation incorrect. Got " << force_frame2 << " Expected ~-0.475.");
     }
     
     // Test 3: Verify high-frequency noise rejection
@@ -291,8 +283,7 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
         std::cout << "[PASS] High-frequency noise rejected (max force " << max_force << " < 0.5)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] High-frequency noise not rejected. Max force: " << max_force << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("High-frequency noise not rejected. Max force: " << max_force);
     }
 }
 
@@ -348,8 +339,7 @@ TEST_CASE(test_yaw_accel_convergence, "YawGyro") {
         std::cout << "[PASS] Converged to steady-state after 50 frames (" << force << " ~= -0.25)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Did not converge. Got " << force << " Expected ~-0.25." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Did not converge. Got " << force << " Expected ~-0.25.");
     }
     
     // Test: Verify response to step change
@@ -368,8 +358,7 @@ TEST_CASE(test_yaw_accel_convergence, "YawGyro") {
         std::cout << "[PASS] Smoothly decaying after step change (" << force_after_change << ")." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Decay behavior incorrect. Got " << force_after_change << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Decay behavior incorrect. Got " << force_after_change);
     }
 }
 
@@ -442,8 +431,7 @@ TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
         std::cout << "[PASS] No feedback loop detected (max force " << max_force << " < 1.0)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Potential feedback loop! Max force: " << max_force << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Potential feedback loop! Max force: " << max_force);
     }
     
     // Additional check: Average force should be low (noise should cancel out)
@@ -451,8 +439,7 @@ TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
         std::cout << "[PASS] Average force remains low (avg " << avg_force << " < 0.5)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Average force too high: " << avg_force << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Average force too high: " << avg_force);
     }
     
     // Verify that the smoothing state doesn't explode
@@ -472,8 +459,7 @@ TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
         std::cout << "[PASS] System settled after noise removed (final force " << final_force << ")." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] System did not settle. Final force: " << final_force << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("System did not settle. Final force: " << final_force);
     }
 }
 
@@ -519,8 +505,7 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
         std::cout << "[PASS] Idle noise filtered (force = " << force_idle << " ~= 0.0)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Idle noise not filtered. Got " << force_idle << " Expected ~0.0." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Idle noise not filtered. Got " << force_idle << " Expected ~0.0.");
     }
     
     // Test Case 2: Low Speed Cutoff
@@ -538,8 +523,7 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
         std::cout << "[PASS] Low speed cutoff active (force = " << force_low_speed << " ~= 0.0)." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Low speed cutoff failed. Got " << force_low_speed << " Expected ~0.0." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Low speed cutoff failed. Got " << force_low_speed << " Expected ~0.0.");
     }
     
     // Test Case 3: Valid Kick - High Speed + High Yaw Accel
@@ -562,7 +546,7 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
         std::cout << "[PASS] Valid kick detected (force = " << force_valid << ")." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Valid kick not detected correctly. Got " << force_valid << "." << std::endl;
+        FAIL_TEST("Valid kick not detected correctly. Got " << force_valid << "." << std::endl;
         std::cout << "DEBUG: m_yaw_accel_smoothed (via TestAccess): " << FFBEngineTestAccess::GetYawAccelSmoothed(engine) << std::endl;
         std::cout << "DEBUG: m_yaw_kick_threshold: " << engine.m_yaw_kick_threshold << std::endl;
         std::cout << "DEBUG: m_sop_yaw_gain: " << engine.m_sop_yaw_gain << std::endl;
@@ -749,8 +733,7 @@ TEST_CASE(test_gyro_stability, "YawGyro") {
          std::cout << "[PASS] Gyro stable with negative smoothing." << std::endl;
          g_tests_passed++;
     } else {
-         std::cout << "[FAIL] Gyro exploded!" << std::endl;
-         g_tests_failed++;
+         std::cout << "[FAIL] Gyro exploded!");
     }
 }
 
@@ -781,8 +764,7 @@ TEST_CASE(test_sop_yaw_kick_direction, "YawGyro") {
         std::cout << "[PASS] Yaw Kick provides counter-steer (Negative Force: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Yaw Kick direction wrong. Got: " << force << " Expected Negative." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Yaw Kick direction wrong. Got: " << force << " Expected Negative.");
     }
 }
 
@@ -824,8 +806,7 @@ TEST_CASE(test_chassis_inertia_smoothing_convergence, "YawGyro") {
         std::cout << "[PASS] Smoothing converged (X: " << smoothed_x << ", Z: " << smoothed_z << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Smoothing did not converge. X: " << smoothed_x << " Z: " << smoothed_z << " Expected > " << expected << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Smoothing did not converge. X: " << smoothed_x << " Z: " << smoothed_z << " Expected > " << expected);
     }
     
     // Test decay
@@ -845,8 +826,7 @@ TEST_CASE(test_chassis_inertia_smoothing_convergence, "YawGyro") {
         std::cout << "[PASS] Smoothing decayed correctly (X: " << smoothed_x << ", Z: " << smoothed_z << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Smoothing did not decay. X: " << smoothed_x << " Z: " << smoothed_z << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Smoothing did not decay. X: " << smoothed_x << " Z: " << smoothed_z);
     }
 }
 

@@ -63,8 +63,7 @@ void test_soft_lock_stationary_not_allowed() {
         ASSERT_NEAR(snap.total_output, -2.0, 0.01);
         ASSERT_NEAR(snap.base_force, 0.0, 0.01); // base_input should be 0 because !allowed
     } else {
-        std::cout << "[FAIL] No snapshot captured" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("No snapshot captured");
     }
 }
 

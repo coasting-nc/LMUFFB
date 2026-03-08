@@ -100,8 +100,7 @@ TEST_CASE(test_idle_smoothing, "Texture") {
         std::cout << "[PASS] Idle vibration attenuated (Max: " << max_force_idle << " < 0.15)" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Idle vibration too strong! Max: " << max_force_idle << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Idle vibration too strong! Max: " << max_force_idle);
     }
     
     // 2. Simulate Driving (High Speed)
@@ -130,8 +129,7 @@ TEST_CASE(test_idle_smoothing, "Texture") {
         std::cout << "[PASS] Driving vibration passed through (Max: " << max_force_driving << " > 0.4)" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Driving vibration over-smoothed. Max: " << max_force_driving << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Driving vibration over-smoothed. Max: " << max_force_driving);
     }
 }
 
@@ -228,8 +226,7 @@ TEST_CASE(test_slide_texture, "Texture") {
              std::cout << "[PASS] Front slip triggers Slide Texture (Force: " << force << ")" << std::endl;
              g_tests_passed++;
         } else {
-             std::cout << "[FAIL] Front slip failed to trigger Slide Texture." << std::endl;
-             g_tests_failed++;
+             FAIL_TEST("Front slip failed to trigger Slide Texture.");
         }
     }
 
@@ -268,8 +265,7 @@ TEST_CASE(test_slide_texture, "Texture") {
              std::cout << "[PASS] Rear slip triggers Slide Texture (Force: " << force << ")" << std::endl;
              g_tests_passed++;
         } else {
-             std::cout << "[FAIL] Rear slip failed to trigger Slide Texture." << std::endl;
-             g_tests_failed++;
+             FAIL_TEST("Rear slip failed to trigger Slide Texture.");
         }
     }
 }
@@ -436,8 +432,7 @@ TEST_CASE(test_spin_torque_drop_interaction, "Texture") {
         std::cout << "[PASS] Spin torque drop modifies total force." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Torque drop ineffective. Spin: " << force_with_spin << " NoSpin: " << force_no_spin << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Torque drop ineffective. Spin: " << force_with_spin << " NoSpin: " << force_no_spin);
     }
 }
 
@@ -492,8 +487,7 @@ TEST_CASE(test_static_notch_integration, "Texture") {
         std::cout << "[PASS] Static Notch attenuated 11Hz signal (Max Amp: " << max_amp_target << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Static Notch failed to attenuate 11Hz. Max Amp: " << max_amp_target << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Static Notch failed to attenuate 11Hz. Max Amp: " << max_amp_target);
     }
 
     // 2. Off-Target Frequency (20Hz) - Should pass
@@ -517,8 +511,7 @@ TEST_CASE(test_static_notch_integration, "Texture") {
         std::cout << "[PASS] Static Notch passed 20Hz signal (Max Amp: " << max_amp_pass << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Static Notch attenuated 20Hz signal. Max Amp: " << max_amp_pass << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Static Notch attenuated 20Hz signal. Max Amp: " << max_amp_pass);
     }
 }
 
@@ -677,8 +670,7 @@ TEST_CASE(test_phase_wraparound, "Texture") {
             // So prev_phase could be as low as 6.28 - 2.5 = 3.78.
             // We check it's at least > 3.0 to ensure it's not resetting randomly at 0.
             if (!(prev_phase > 3.0)) {
-                 std::cout << "[FAIL] Wrapped phase too early: " << prev_phase << std::endl;
-                 g_tests_failed++;
+                 FAIL_TEST("Wrapped phase too early: " << prev_phase);
             }
         }
         prev_phase = engine.m_lockup_phase;
@@ -689,8 +681,7 @@ TEST_CASE(test_phase_wraparound, "Texture") {
         std::cout << "[PASS] Phase wrapped " << wrap_count << " times without discontinuity." << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Phase did not wrap" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Phase did not wrap");
     }
 }
 
@@ -762,12 +753,10 @@ TEST_CASE(test_multi_effect_interaction, "Texture") {
              std::cout << "[PASS] Multiple effects coexist without interference." << std::endl;
              g_tests_passed++;
         } else {
-             std::cout << "[FAIL] Phases are identical?" << std::endl;
-             g_tests_failed++;
+             FAIL_TEST("Phases are identical?");
         }
     } else {
-        std::cout << "[FAIL] Effects did not trigger. lockup_phase=" << engine.m_lockup_phase << ", spin_phase=" << engine.m_spin_phase << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Effects did not trigger. lockup_phase=" << engine.m_lockup_phase << ", spin_phase=" << engine.m_spin_phase);
     }
 }
 
@@ -792,8 +781,7 @@ TEST_CASE(test_notch_filter_attenuation, "Texture") {
         std::cout << "[PASS] Notch Filter attenuated target frequency (Max Amp: " << max_amp_target << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Notch Filter did not attenuate target frequency. Max Amp: " << max_amp_target << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Notch Filter did not attenuate target frequency. Max Amp: " << max_amp_target);
     }
 
     // 2. Off-Target Frequency: Should pass
@@ -811,8 +799,7 @@ TEST_CASE(test_notch_filter_attenuation, "Texture") {
         std::cout << "[PASS] Notch Filter passed off-target frequency (Max Amp: " << max_amp_pass << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Notch Filter attenuated off-target frequency. Max Amp: " << max_amp_pass << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Notch Filter attenuated off-target frequency. Max Amp: " << max_amp_pass);
     }
 }
 
@@ -845,8 +832,7 @@ TEST_CASE(test_frequency_estimator, "Texture") {
         std::cout << "[PASS] Frequency Estimator converged to " << estimated << " Hz (Target: " << target_freq << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Frequency Estimator mismatch. Got " << estimated << " Hz, Expected ~" << target_freq << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Frequency Estimator mismatch. Got " << estimated << " Hz, Expected ~" << target_freq);
     }
 }
 

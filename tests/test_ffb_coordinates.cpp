@@ -138,7 +138,7 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
         std::cout << "[PASS] Rear torque provides counter-steer LEFT (force: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Rear torque should counter-steer LEFT. Got: " << force << " Expected < -0.2" << std::endl;
+        FAIL_TEST("Rear torque should counter-steer LEFT. Got: " << force << " Expected < -0.2" << std::endl;
         auto batch = engine.GetDebugBatch();
         if(!batch.empty()) {
              std::cout << "DEBUG: Raw Slip Angle: " << batch.back().raw_rear_slip_angle << std::endl;
@@ -223,8 +223,7 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
         std::cout << "[PASS] Scrub drag opposes left slide (Torque Left: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Scrub drag direction wrong. Got: " << force << " Expected < -0.2" << std::endl;
-        g_tests_failed++;
+        std::cout << "[FAIL] Scrub drag direction wrong. Got: " << force << " Expected < -0.2");
     }
     
     // Test Case 2: Sliding RIGHT
@@ -240,8 +239,7 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
         std::cout << "[PASS] Scrub drag opposes right slide (Torque Right: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Scrub drag direction wrong. Got: " << force << " Expected > 0.2" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Scrub drag direction wrong. Got: " << force << " Expected > 0.2");
     }
 }
 
@@ -281,8 +279,7 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
     
     auto batch = engine.GetDebugBatch();
     if (batch.empty()) {
-        std::cout << "[FAIL] No debug snapshot available" << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("No debug snapshot available");
         return;
     }
     
@@ -293,8 +290,7 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
         std::cout << "[PASS] Front slip angle is POSITIVE for left slide (" << snap.raw_front_slip_angle << " rad)" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Front slip angle should be POSITIVE. Got: " << snap.raw_front_slip_angle << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Front slip angle should be POSITIVE. Got: " << snap.raw_front_slip_angle);
     }
     
 
@@ -304,8 +300,7 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
         std::cout << "[PASS] Rear slip angle is POSITIVE (" << snap.raw_rear_slip_angle << " rad)" << std::endl;
         g_tests_passed++;
     } else {
-        std::cout << "[FAIL] Rear slip angle should be POSITIVE. Got: " << snap.raw_rear_slip_angle << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("Rear slip angle should be POSITIVE. Got: " << snap.raw_rear_slip_angle);
     }
 
     // Test Case 2: Front wheels sliding RIGHT
@@ -327,8 +322,7 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
             std::cout << "[PASS] Front slip angle is NEGATIVE for right slide (" << snap.raw_front_slip_angle << " rad)" << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Front slip angle should be NEGATIVE. Got: " << snap.raw_front_slip_angle << std::endl;
-            g_tests_failed++;
+            FAIL_TEST("Front slip angle should be NEGATIVE. Got: " << snap.raw_front_slip_angle);
         }
 
         // Check Rear Slip Angle (Negative)
@@ -336,8 +330,7 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
             std::cout << "[PASS] Rear slip angle is NEGATIVE (" << snap.raw_rear_slip_angle << " rad)" << std::endl;
             g_tests_passed++;
         } else {
-            std::cout << "[FAIL] Rear slip angle should be NEGATIVE. Got: " << snap.raw_rear_slip_angle << std::endl;
-            g_tests_failed++;
+            FAIL_TEST("Rear slip angle should be NEGATIVE. Got: " << snap.raw_rear_slip_angle);
         }
     }
 }
@@ -416,8 +409,7 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     // Capture Snapshot to verify individual components
     auto batch = engine.GetDebugBatch();
     if (batch.empty()) {
-        std::cout << "[FAIL] No snapshot." << std::endl;
-        g_tests_failed++;
+        FAIL_TEST("No snapshot.");
         return;
     }
     FFBSnapshot snap = batch.back();
