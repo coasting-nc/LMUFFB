@@ -3,6 +3,7 @@
 
 #include <cstdarg>
 #include "../../src/lmu_sm_interface/LinuxMock.h"
+#include "../../src/StringUtils.h"
 
 // Extra definitions needed specifically for tests that might not be in the core mock
 #ifndef GWL_EXSTYLE
@@ -108,7 +109,7 @@ inline BOOL VerQueryValueA(const void* pBlock, const char* lpSubBlock, void** lp
 inline void sprintf_s(char* buffer, size_t size, const char* format, ...) {
     va_list args;
     va_start(args, format);
-    vsnprintf(buffer, size, format, args);
+    StringUtils::vSafeFormat(buffer, size, format, args);
     va_end(args);
 }
 

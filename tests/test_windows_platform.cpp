@@ -7,7 +7,6 @@
 #include <mutex>
 #include <thread>
 #include <fstream>
-#include <cstdio>
 #ifndef _WIN32
 #include <unistd.h>
 #include <cstring>

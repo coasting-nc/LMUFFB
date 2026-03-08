@@ -8,6 +8,7 @@
 #include <vector>
 #include <fstream>
 #include <filesystem>
+#include "../src/StringUtils.h"
 #include "../src/Version.h"
 #include "test_ffb_common.h"
 
@@ -76,7 +77,7 @@ TEST_CASE(test_executable_metadata, "Security") {
 
     // Use the first language/codepage available
     char subBlock[50];
-    sprintf_s(subBlock, "\\StringFileInfo\\%04x%04x\\CompanyName", lpTranslate[0].wLanguage, lpTranslate[0].wCodePage);
+    StringUtils::SafeFormat(subBlock, sizeof(subBlock), "\\StringFileInfo\\%04x%04x\\CompanyName", lpTranslate[0].wLanguage, lpTranslate[0].wCodePage);
 
     char* companyName = nullptr;
     UINT len = 0;
@@ -92,7 +93,7 @@ TEST_CASE(test_executable_metadata, "Security") {
     }
 
     // verify ProductVersion
-    sprintf_s(subBlock, "\\StringFileInfo\\%04x%04x\\ProductVersion", lpTranslate[0].wLanguage, lpTranslate[0].wCodePage);
+    StringUtils::SafeFormat(subBlock, sizeof(subBlock), "\\StringFileInfo\\%04x%04x\\ProductVersion", lpTranslate[0].wLanguage, lpTranslate[0].wCodePage);
     char* productVersion = nullptr;
     if (VerQueryValueA(versionData.data(), subBlock, (LPVOID*)&productVersion, &len)) {
         std::string version(productVersion);

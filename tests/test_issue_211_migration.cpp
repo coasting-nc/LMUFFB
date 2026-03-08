@@ -1,6 +1,6 @@
 #include "test_ffb_common.h"
 #include <fstream>
-#include <cstdio>
+#include <filesystem>
 #include "../src/Config.h"
 #include "../src/Version.h"
 
@@ -54,7 +54,7 @@ TEST_CASE(test_issue_211_preset_gain_migration, "Config") {
     }
 
     Config::m_config_path = original_path;
-    std::remove(test_file);
+    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
 TEST_CASE(test_issue_211_config_gain_migration, "Config") {
@@ -84,7 +84,7 @@ TEST_CASE(test_issue_211_config_gain_migration, "Config") {
         g_tests_failed++;
     }
 
-    std::remove(test_file);
+    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
 } // namespace FFBEngineTests

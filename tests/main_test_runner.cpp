@@ -1,7 +1,6 @@
 #include <iostream>
 #include <atomic>
 #include <mutex>
-#include <cstdio>
 #include <thread>
 #include <chrono>
 #include <filesystem>
@@ -43,8 +42,8 @@ int main(int argc, char* argv[]) noexcept {
 
     // Redirect config to a test-specific file to avoid overwriting user settings
     Config::m_config_path = "test_config_runner.ini";
-    std::remove(Config::m_config_path.c_str());
-    std::remove("imgui.ini");
+    if (std::filesystem::exists(Config::m_config_path)) std::filesystem::remove(Config::m_config_path);
+    if (std::filesystem::exists("imgui.ini")) std::filesystem::remove("imgui.ini");
 
     // --- Unified Test Suite Execution ---
     // All tests (including Windows-specific ones if compiled) are now auto-registered

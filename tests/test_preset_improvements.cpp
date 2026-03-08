@@ -1,6 +1,6 @@
 #include "test_ffb_common.h"
 #include <fstream>
-#include <cstdio>
+#include <filesystem>
 
 namespace FFBEngineTests {
 
@@ -27,7 +27,7 @@ TEST_CASE(test_last_preset_persistence, "Presets") {
 
     ASSERT_TRUE(Config::m_last_preset_name == applied_name);
 
-    std::remove("test_preset_persistence.ini");
+    if (std::filesystem::exists("test_preset_persistence.ini")) std::filesystem::remove("test_preset_persistence.ini");
 }
 
 TEST_CASE(test_engine_dirty_detection, "Presets") {
@@ -122,7 +122,7 @@ TEST_CASE(test_delete_preset_preserves_global_config, "Presets") {
 
     ASSERT_NEAR(engine2.m_gain, 0.55f, 0.001);
 
-    std::remove("test_preservation.ini");
+    if (std::filesystem::exists("test_preservation.ini")) std::filesystem::remove("test_preservation.ini");
     Config::m_config_path = "config.ini"; // Reset
 }
 
@@ -194,7 +194,7 @@ TEST_CASE(test_global_save_does_not_update_presets, "Presets") {
     ASSERT_TRUE(new_index != -1);
     ASSERT_NEAR(Config::presets[new_index].gain, original_gain, 0.001);
 
-    std::remove("test_global_save.ini");
+    if (std::filesystem::exists("test_global_save.ini")) std::filesystem::remove("test_global_save.ini");
     Config::m_config_path = old_path;
 }
 

@@ -2,7 +2,6 @@
 #include "Config.h"
 #include "FFBEngine.h"
 #include <fstream>
-#include <cstdio>
 
 using namespace FFBEngineTests;
 

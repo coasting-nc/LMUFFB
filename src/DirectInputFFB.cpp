@@ -1,12 +1,10 @@
 #include "DirectInputFFB.h"
 #include "Logger.h"
-#include "Logger.h"
+#include "StringUtils.h"
 
 // Standard Library Headers
-#include <iostream>
-#include <cmath>
-#include <cstdio> // For sscanf, sprintf
 #include <algorithm> // For std::max, std::min
+#include <mutex>
 
 // Platform-Specific Headers
 #ifdef _WIN32
@@ -39,17 +37,19 @@ std::string DirectInputFFB::GetActiveWindowTitle() {
 // NEW: Helper Implementations for GUID
 std::string DirectInputFFB::GuidToString(const GUID& guid) {
     char buf[64];
+    StringUtils::SafeFormat(buf, sizeof(buf), 
 #ifdef _WIN32
-    sprintf_s(buf, "{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}",
+        "{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}",
         guid.Data1, guid.Data2, guid.Data3,
         guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
-        guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+        guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]
 #else
-    snprintf(buf, sizeof(buf), "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+        "{%08X-%04X-%04X-%02X%02X-%02X%02X-%02X%02X-%02X%02X}",
         (unsigned int)guid.Data1, (unsigned int)guid.Data2, (unsigned int)guid.Data3,
         (unsigned int)guid.Data4[0], (unsigned int)guid.Data4[1], (unsigned int)guid.Data4[2], (unsigned int)guid.Data4[3],
-        (unsigned int)guid.Data4[4], (unsigned int)guid.Data4[5], (unsigned int)guid.Data4[6], (unsigned int)guid.Data4[7]);
+        (unsigned int)guid.Data4[4], (unsigned int)guid.Data4[5], (unsigned int)guid.Data4[6], (unsigned int)guid.Data4[7]
 #endif
+    );
     return std::string(buf);
 }
 
@@ -59,13 +59,8 @@ GUID DirectInputFFB::StringToGuid(const std::string& str) {
     unsigned long p0;
     unsigned short p1, p2;
     unsigned int p3, p4, p5, p6, p7, p8, p9, p10;
-#ifdef _WIN32
-    int n = sscanf_s(str.c_str(), "{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+    int n = StringUtils::SafeScan(str.c_str(), "{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}",
         &p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8, &p9, &p10);
-#else
-    int n = sscanf(str.c_str(), "{%08lX-%04hX-%04hX-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-        &p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8, &p9, &p10);
-#endif
     if (n == 11) {
         guid.Data1 = p0;
         guid.Data2 = (unsigned short)p1;

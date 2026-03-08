@@ -10,6 +10,8 @@
 #include <iomanip>
 #include <chrono>
 #include <cstdarg>
+#include <algorithm> // For std::max, std::min
+#include "StringUtils.h" // Include StringUtils.h
 
 // Simple synchronous logger that flushes every line for crash debugging
 class Logger {
@@ -45,7 +47,7 @@ public:
         char buffer[2048];
         va_list args;
         va_start(args, fmt);
-        vsnprintf(buffer, sizeof(buffer), fmt, args);
+        StringUtils::vSafeFormat(buffer, sizeof(buffer), fmt, args);
         va_end(args);
 
         std::string message(buffer);
@@ -59,7 +61,7 @@ public:
         char buffer[2048];
         va_list args;
         va_start(args, fmt);
-        vsnprintf(buffer, sizeof(buffer), fmt, args);
+        StringUtils::vSafeFormat(buffer, sizeof(buffer), fmt, args);
         va_end(args);
 
         std::string message(buffer);

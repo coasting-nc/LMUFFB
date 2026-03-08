@@ -1,6 +1,6 @@
 #include "test_ffb_common.h"
 #include <fstream>
-#include <cstdio>
+#include <filesystem>
 
 namespace FFBEngineTests {
 
@@ -60,7 +60,7 @@ TEST_CASE(test_preset_export_import, "Config") {
     ASSERT_NEAR(imported_p.road_gain, 0.5f, 0.001f);
 
     // Clean up
-    std::remove(export_filename.c_str());
+    if (std::filesystem::exists(export_filename)) std::filesystem::remove(export_filename);
     std::cout << "[PASS] Preset Export/Import verified." << std::endl;
 }
 
@@ -90,7 +90,7 @@ TEST_CASE(test_import_name_collision, "Config") {
     ASSERT_NEAR(imported_p.gain, 0.5f, 0.001f);
 
     // Clean up
-    std::remove(filename.c_str());
+    if (std::filesystem::exists(filename)) std::filesystem::remove(filename);
     std::cout << "[PASS] Name collision handled correctly." << std::endl;
 }
 

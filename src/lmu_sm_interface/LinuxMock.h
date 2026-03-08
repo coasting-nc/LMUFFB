@@ -11,7 +11,7 @@
 #include <vector>
 #include <string>
 #include <cstdarg>
-#include <cstdio>
+#include "../StringUtils.h"
 
 // Dummy typedefs for Linux compatibility
 using DWORD = uint32_t;
@@ -138,14 +138,7 @@ inline void YieldProcessor() {}
 inline int sprintf_s(char* buf, size_t size, const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    int ret = vsnprintf(buf, size, fmt, args);
-    va_end(args);
-    return ret;
-}
-inline int sprintf_s(char* buf, const char* fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    int ret = vsprintf(buf, fmt, args);
+    int ret = StringUtils::vSafeFormat(buf, size, fmt, args);
     va_end(args);
     return ret;
 }

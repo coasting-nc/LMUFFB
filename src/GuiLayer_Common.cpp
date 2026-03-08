@@ -13,7 +13,6 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
-#include <cstring>
 #include <mutex>
 #include <chrono>
 #include <ctime>
@@ -314,13 +313,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     auto FormatDecoupled = [&](float val, float base_nm) {
         float estimated_nm = val * base_nm;
         static char buf[64];
-        snprintf(buf, 64, "%.1f%%%% (~%.1f Nm)", val * 100.0f, estimated_nm);
+        StringUtils::SafeFormat(buf, sizeof(buf), "%.1f%%%% (~%.1f Nm)", val * 100.0f, estimated_nm);
         return (const char*)buf;
     };
 
     auto FormatPct = [&](float val) {
         static char buf[32];
-        snprintf(buf, 32, "%.1f%%%%", val * 100.0f);
+        StringUtils::SafeFormat(buf, sizeof(buf), "%.1f%%%%", val * 100.0f);
         return (const char*)buf;
     };
 
@@ -902,7 +901,7 @@ inline void PlotWithStats(const char* label, const RollingBuffer& buffer,
                           const char* tooltip = nullptr) {
     ImGui::Text("%s", label);
     char hidden_label[256];
-    snprintf(hidden_label, sizeof(hidden_label), "##%s", label);
+    StringUtils::SafeFormat(hidden_label, sizeof(hidden_label), "##%s", label);
     ImGui::PlotLines(hidden_label, buffer.data.data(), (int)buffer.data.size(),
                      buffer.offset, NULL, scale_min, scale_max, size);
     if (tooltip && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", tooltip);
@@ -911,7 +910,7 @@ inline void PlotWithStats(const char* label, const RollingBuffer& buffer,
     float min_val = buffer.GetMin();
     float max_val = buffer.GetMax();
     char stats_overlay[128];
-    snprintf(stats_overlay, sizeof(stats_overlay), "Cur:%.4f Min:%.3f Max:%.3f", current, min_val, max_val);
+    StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Cur:%.4f Min:%.3f Max:%.3f", current, min_val, max_val);
 
     ImVec2 p_min = ImGui::GetItemRectMin();
     ImVec2 p_max = ImGui::GetItemRectMax();
@@ -924,10 +923,10 @@ inline void PlotWithStats(const char* label, const RollingBuffer& buffer,
     ImVec2 text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay);
 
     if (text_size.x > plot_width - 4) {
-         snprintf(stats_overlay, sizeof(stats_overlay), "%.4f [%.3f, %.3f]", current, min_val, max_val);
+         StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "%.4f [%.3f, %.3f]", current, min_val, max_val);
          text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay);
          if (text_size.x > plot_width - 4) {
-             snprintf(stats_overlay, sizeof(stats_overlay), "Val: %.4f", current);
+             StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Val: %.4f", current);
              text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay);
          }
     }
