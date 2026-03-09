@@ -55,6 +55,7 @@ TEST_CASE(test_engine_branch_boost, "Physics") {
     engine.m_steering_shaft_gain = 1.0f;
     data.mSteeringShaftTorque = 0.001f;
     data.mDeltaTime = 0.0025f;
+    FFBEngineTestAccess::ResetSafety(engine);
     double res = engine.calculate_force(&data, "GT3", "911", 0.0f);
     ASSERT_NEAR(std::abs(res), 0.1, 0.05);
 

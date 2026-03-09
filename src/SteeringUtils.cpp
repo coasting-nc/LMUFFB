@@ -1,4 +1,5 @@
 #include "FFBEngine.h"
+#include "Logger.h"
 #include <cmath>
 #include <algorithm>
 
@@ -19,6 +20,11 @@ void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationCont
 
     double abs_steer = std::abs(steer);
     if (abs_steer > 1.0) {
+        if (!m_safety.was_soft_locked) {
+            Logger::Get().LogFile("[Safety] Soft Lock Engaged: Steering %.1f%%", steer * 100.0);
+            m_safety.was_soft_locked = true;
+        }
+
         double excess = abs_steer - 1.0;
         double sign = (steer > 0.0) ? 1.0 : -1.0;
 
@@ -38,5 +44,18 @@ void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationCont
 
         // Total Soft Lock force (opposing the steering direction)
         ctx.soft_lock_force = -(spring_nm * sign + damping_nm);
+
+        if (std::abs(ctx.soft_lock_force) > 5.0 && !m_safety.soft_lock_significant) {
+            Logger::Get().LogFile("[Safety] Soft Lock Significant Influence: %.1f Nm", ctx.soft_lock_force);
+            m_safety.soft_lock_significant = true;
+        } else if (std::abs(ctx.soft_lock_force) < 4.0) {
+            m_safety.soft_lock_significant = false;
+        }
+    } else {
+        if (m_safety.was_soft_locked) {
+            Logger::Get().LogFile("[Safety] Soft Lock Disengaged");
+            m_safety.was_soft_locked = false;
+        }
+        m_safety.soft_lock_significant = false;
     }
 }

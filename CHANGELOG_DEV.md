@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.157] - 2026-03-09
+- **Safety Fixes for FFB Spikes (#303)**:
+  - Implemented a **Safety Window** mechanism that activates for 2 seconds during untrusted states (lost frames or control transitions).
+  - **Mitigation during Safety Window**: Reduced master gain by 50% and applied an extra 100ms EMA smoothing pass to blunt any potential jolts.
+  - **Tighter Slew Limiting**: Force rate-of-change is capped at a strict 200 units/s (down from 1000) during the safety window.
+  - **Lost Frame Detection**: The application now monitors telemetry timestamps; gaps larger than 1.5x the expected delta-time trigger an immediate safety window.
+  - **Control Transition Handling**: Any change in `mControl` (e.g., player taking over from AI or vice-versa) triggers the safety window to ensure a smooth torque handover.
+  - **High-Slew Spike Detection**: Implemented active monitoring for sustained high slew rates. Requested jumps exceeding 500 units/s for more than 5 frames are logged and trigger a safety window.
+  - **Full Tock Detection**: Added logic to detect and log if the wheel is pinned near full lock (>95%) with high force (>80%) for more than 1 second, helping diagnose "runaway" wheel behaviors.
+- **Enhanced Safety Logging**:
+  - Added detailed diagnostic logs for FFB muting/unmuting, control transitions, safety window activation, and detected spikes.
+  - **Soft Lock Diagnostics**: Implemented logging for Soft Lock engagement/disengagement and alerts when the effect provides significant resistance (>5 Nm).
+- **Testing**:
+  - Added `tests/test_issue_303_safety.cpp` with comprehensive verification for transition windows, mitigation effects, spike detection, and full-tock timers.
+
 ## [0.7.156] - 2026-03-09
 - **Global Lateral Load Transfer (#306)**:
   - Updated the Lateral Load calculation to include all four tires (`Left - Right`), providing a more comprehensive "Seat of the Pants" (SoP) feel that represents global chassis roll.
