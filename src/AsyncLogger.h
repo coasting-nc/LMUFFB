@@ -144,7 +144,7 @@ struct LogFrame {
     float slew_limited_g;
 
     float session_peak_torque;
-    float dynamic_weight_factor;
+    float long_load_factor;
     float structural_mult;
     float vibration_mult;
     float steering_angle_deg;
@@ -451,7 +451,7 @@ private:
                << "SmoothedYawAccel,LatLoadNorm,"
                << "dG_dt,dAlpha_dt,SlopeCurrent,SlopeRaw,SlopeNum,SlopeDenom,HoldTimer,InputSlipSmooth,SlopeSmoothed,Confidence,"
                << "SurfaceFL,SurfaceFR,SlopeTorque,SlewLimitedG,"
-               << "SessionPeakTorque,DynamicWeight,StructuralMult,VibrationMult,SteeringAngleDeg,SteeringRangeDeg,DebugFreq,TireRadius,"
+               << "SessionPeakTorque,LongitudinalLoadFactor,StructuralMult,VibrationMult,SteeringAngleDeg,SteeringRangeDeg,DebugFreq,TireRadius,"
                << "FFBTotal,FFBBase,FFBUndersteerDrop,FFBOversteerBoost,FFBSoP,FFBRearTorque,FFBScrubDrag,FFBYawKick,FFBGyroDamping,FFBRoadTexture,FFBSlideTexture,FFBLockupVibration,FFBSpinVibration,FFBBottomingCrunch,FFBABSPulse,FFBSoftLock,"
                << "ExtrapolatedYawAccel,DerivedYawAccel,"
                << "FFBShaftTorque,FFBGenTorque,GripFactor,SpeedGate,FrontLoadPeakRef,PhysicsRate,Clipping,WarnBits,Marker\n";

@@ -34,7 +34,7 @@ static constexpr double DEFAULT_CALC_DT = 0.0025; // 400 Hz (1/400 s)
 
 // ChannelStats moved to PerfStats.h
 
-enum class LatLoadTransform {
+enum class LoadTransform {
     LINEAR = 0,
     CUBIC = 1,
     QUADRATIC = 2,
@@ -60,6 +60,7 @@ struct FFBSnapshot {
     float texture_spin;
     float texture_bottoming;
     float ffb_abs_pulse;    // New v0.7.53
+    float long_load_force;  // New #301
     float ffb_soft_lock;    // New v0.7.61 (Issue #117)
     float session_peak_torque; // New v0.7.67 (Issue #152)
     float clipping;
@@ -160,6 +161,7 @@ struct FFBCalculationContext {
     double avg_rear_grip = 0.0;
     double calc_rear_lat_force = 0.0;
     double avg_rear_load = 0.0;
+    double long_load_force = 0.0; // New #301
 
     // Effect outputs
     double road_noise = 0.0;
@@ -188,12 +190,13 @@ public:
     float m_understeer_effect;
     float m_sop_effect;
     float m_lat_load_effect = 0.0f; // New v0.7.121 (Issue #213 add, not replace)
-    LatLoadTransform m_lat_load_transform = LatLoadTransform::LINEAR; // New v0.7.154 (Issue #282)
+    LoadTransform m_lat_load_transform = LoadTransform::LINEAR; // New v0.7.154 (Issue #282)
+    float m_long_load_effect = 0.0f; // Renamed from dynamic_weight_gain (#301)
+    LoadTransform m_long_load_transform = LoadTransform::LINEAR; // New #301
     float m_min_force;
-    float m_dynamic_weight_gain; 
     
     // Smoothing Settings (v0.7.47)
-    float m_dynamic_weight_smoothing;
+    float m_long_load_smoothing; // Renamed from dynamic_weight_smoothing (#301)
     float m_grip_smoothing_steady;
     float m_grip_smoothing_fast;
     float m_grip_smoothing_sensitivity;
@@ -478,7 +481,7 @@ public:
     double m_static_front_load = 0.0; 
     bool m_static_load_latched = false;
     double m_smoothed_vibration_mult = 1.0;
-    double m_dynamic_weight_smoothed = 1.0; 
+    double m_long_load_smoothed = 1.0; // Renamed from dynamic_weight_smoothed (#301)
     double m_front_grip_smoothed_state = 1.0; 
     double m_rear_grip_smoothed_state = 1.0;  
 
@@ -593,8 +596,8 @@ private:
     static constexpr int    STR_MAX_64 = 63;
     static constexpr int    STR_MAX_256 = 255;
     static constexpr int    MISSING_LOAD_WARN_THRESHOLD = 20;
-    static constexpr double DYNAMIC_WEIGHT_MIN = 0.5;
-    static constexpr double DYNAMIC_WEIGHT_MAX = 2.0;
+    static constexpr double LONG_LOAD_MIN = 0.0; // Relaxed #301
+    static constexpr double LONG_LOAD_MAX = 10.0; // Increased #301
     static constexpr double MIN_TAU_S = 0.0001;
     static constexpr double ALPHA_MIN = 0.001;
     static constexpr double ALPHA_MAX = 1.0;

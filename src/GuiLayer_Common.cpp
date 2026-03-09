@@ -538,12 +538,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 2.0f, FormatPct(engine.m_understeer_effect),
             Tooltips::UNDERSTEER_EFFECT);
 
-        FloatSetting("Dynamic Weight", &engine.m_dynamic_weight_gain, 0.0f, 2.0f, FormatPct(engine.m_dynamic_weight_gain),
-            Tooltips::DYNAMIC_WEIGHT);
-
-        FloatSetting("  Weight Smoothing", &engine.m_dynamic_weight_smoothing, 0.000f, 0.500f, "%.3f s",
-            Tooltips::WEIGHT_SMOOTHING);
-
         const char* torque_sources[] = { "Shaft Torque (100Hz Legacy)", "In-Game FFB (400Hz LMU 1.2+)" };
         IntSetting("Torque Source", &engine.m_torque_source, torque_sources, sizeof(torque_sources)/sizeof(torque_sources[0]),
             Tooltips::TORQUE_SOURCE);
@@ -579,21 +573,42 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::NextColumn(); ImGui::NextColumn();
     }
 
+    if (ImGui::TreeNodeEx("Load Forces", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+        ImGui::NextColumn(); ImGui::NextColumn();
+
+        FloatSetting("Lateral Load", &engine.m_lat_load_effect, 0.0f, 10.0f, FormatDecoupled(engine.m_lat_load_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_LOAD);
+
+        const char* load_transforms[] = { "Linear (Raw)", "Cubic (Smooth)", "Quadratic (Broad)", "Hermite (Locked Center)" };
+        int lat_transform = static_cast<int>(engine.m_lat_load_transform);
+        if (GuiWidgets::Combo("  Lateral Transform", &lat_transform, load_transforms, 4, "Mathematical transformation to soften the lateral load limits and remove 'notchiness'.").changed) {
+            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+            engine.m_lat_load_transform = static_cast<LoadTransform>(lat_transform);
+            Config::Save(engine);
+        }
+
+        ImGui::Spacing();
+
+        FloatSetting("Longitudinal Load", &engine.m_long_load_effect, 0.0f, 10.0f, FormatPct(engine.m_long_load_effect), Tooltips::DYNAMIC_WEIGHT);
+        FloatSetting("  Long. Smoothing", &engine.m_long_load_smoothing, 0.000f, 0.500f, "%.3f s", Tooltips::WEIGHT_SMOOTHING);
+
+        int long_transform = static_cast<int>(engine.m_long_load_transform);
+        if (GuiWidgets::Combo("  Long. Transform", &long_transform, load_transforms, 4, "Mathematical transformation to soften the longitudinal load limits and remove 'notchiness'.").changed) {
+            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+            engine.m_long_load_transform = static_cast<LoadTransform>(long_transform);
+            Config::Save(engine);
+        }
+
+        ImGui::TreePop();
+    } else {
+        ImGui::NextColumn(); ImGui::NextColumn();
+    }
+
     if (ImGui::TreeNodeEx("Rear Axle (Oversteer)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
         FloatSetting("Lateral G Boost (Slide)", &engine.m_oversteer_boost, 0.0f, 4.0f, FormatPct(engine.m_oversteer_boost),
             Tooltips::OVERSTEER_BOOST);
         FloatSetting("Lateral G", &engine.m_sop_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_sop_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_G);
-        FloatSetting("Lateral Load", &engine.m_lat_load_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_lat_load_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_LOAD);
-
-        const char* lat_load_transforms[] = { "Linear (Raw)", "Cubic (Smooth)", "Quadratic (Broad)", "Hermite (Locked Center)" };
-        int current_transform = static_cast<int>(engine.m_lat_load_transform);
-        if (GuiWidgets::Combo("  Load Transform", &current_transform, lat_load_transforms, 4, "Mathematical transformation to soften the lateral load limits and remove 'notchiness'.").changed) {
-            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-            engine.m_lat_load_transform = static_cast<LatLoadTransform>(current_transform);
-            Config::Save(engine);
-        }
 
         FloatSetting("SoP Self-Aligning Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN),
             Tooltips::REAR_ALIGN_TORQUE);

@@ -242,6 +242,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_accel_x_smoothed = 0.0;
         m_accel_z_smoothed = 0.0;
         m_sop_lat_g_smoothed = 0.0;
+        m_long_load_smoothed = 1.0;
         m_yaw_accel_smoothed = 0.0;
         m_prev_yaw_rate = 0.0;
         m_yaw_rate_seeded = false;
@@ -547,33 +548,60 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // v0.7.63: Passthrough Logic for Direct Torque (TIC mode)
     double grip_factor_applied = m_torque_passthrough ? 1.0 : ctx.grip_factor;
 
-    // v0.7.46: Dynamic Weight logic
+    // v0.7.46: Longitudinal Load logic (#301)
     if (m_auto_load_normalization_enabled) {
         update_static_load_reference(ctx.avg_front_load, ctx.car_speed, ctx.dt);
     }
-    double dynamic_weight_factor = 1.0;
+    double long_load_factor = 1.0;
 
     // Only apply if enabled AND we have real load data (no warnings)
-    if (m_dynamic_weight_gain > 0.0 && !ctx.frame_warn_load) {
-        double load_ratio = ctx.avg_front_load / m_static_front_load;
+    if (m_long_load_effect > 0.0 && !ctx.frame_warn_load) {
+        double long_load_norm = (ctx.avg_front_load / m_static_front_load) - 1.0;
+        long_load_norm = std::clamp(long_load_norm, -1.0, 1.0);
+
+        // Apply Transformation (#301)
+        switch (m_long_load_transform) {
+            case LoadTransform::CUBIC:
+                long_load_norm = apply_load_transform_cubic(long_load_norm);
+                break;
+            case LoadTransform::QUADRATIC:
+                long_load_norm = apply_load_transform_quadratic(long_load_norm);
+                break;
+            case LoadTransform::HERMITE:
+                long_load_norm = apply_load_transform_hermite(long_load_norm);
+                break;
+            case LoadTransform::LINEAR:
+            default:
+                break;
+        }
+
         // Blend: 1.0 + (Ratio - 1.0) * Gain
-        dynamic_weight_factor = 1.0 + (load_ratio - 1.0) * (double)m_dynamic_weight_gain;
-        dynamic_weight_factor = std::clamp(dynamic_weight_factor, DYNAMIC_WEIGHT_MIN, DYNAMIC_WEIGHT_MAX);
+        long_load_factor = 1.0 + long_load_norm * (double)m_long_load_effect;
+        long_load_factor = std::clamp(long_load_factor, LONG_LOAD_MIN, LONG_LOAD_MAX);
     }
 
-    // Apply Smoothing to Dynamic Weight (v0.7.47)
-    double dw_alpha = ctx.dt / ((double)m_dynamic_weight_smoothing + ctx.dt + EPSILON_DIV);
+    // Apply Smoothing to Longitudinal Load (v0.7.47)
+    double dw_alpha = ctx.dt / ((double)m_long_load_smoothing + ctx.dt + EPSILON_DIV);
     dw_alpha = (std::max)(0.0, (std::min)(1.0, dw_alpha));
-    m_dynamic_weight_smoothed += dw_alpha * (dynamic_weight_factor - m_dynamic_weight_smoothed);
-    dynamic_weight_factor = m_dynamic_weight_smoothed;
+    m_long_load_smoothed += dw_alpha * (long_load_factor - m_long_load_smoothed);
+    long_load_factor = m_long_load_smoothed;
 
     // v0.7.63: Final factor application
-    double dw_factor_applied = m_torque_passthrough ? 1.0 : dynamic_weight_factor;
+    double dw_factor_applied = m_torque_passthrough ? 1.0 : long_load_factor;
     
     double gain_to_apply = (m_torque_source == 1) ? (double)m_ingame_ffb_gain : (double)m_steering_shaft_gain;
-    double output_force = (base_input * gain_to_apply) * dw_factor_applied * grip_factor_applied;
+
+    // Formula Refactor (#301): Longitudinal Load MUST remain a multiplier to maintain
+    // physical aligning torque correctness (zero torque in straight line despite weight shift).
+    double base_steer_force = (base_input * gain_to_apply) * grip_factor_applied;
+    double output_force = base_steer_force * dw_factor_applied;
+
+    // Capture isolated force component for diagnostics ONLY
+    ctx.long_load_force = base_steer_force * (dw_factor_applied - 1.0);
+
     output_force *= ctx.speed_gate;
-    
+    ctx.long_load_force *= ctx.speed_gate;
+
     // B. SoP Lateral (Oversteer)
     calculate_sop_lateral(upsampled_data, ctx);
     
@@ -613,6 +641,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // --- 6. SUMMATION (Issue #152 & #153 Split Scaling) ---
     // Split into Structural (Dynamic Normalization) and Texture (Absolute Nm) groups
     // v0.7.77 FIX: Soft Lock moved to Texture group to maintain absolute Nm scaling (Issue #181)
+    // Note: long_load_force is ALREADY included in output_force as a multiplier.
     double structural_sum = output_force + ctx.sop_base_force + ctx.lat_load_force + ctx.rear_torque + ctx.yaw_force + ctx.gyro_force +
                             ctx.scrub_drag_force;
 
@@ -704,6 +733,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.base_force = (float)base_input;
             snap.sop_force = (float)ctx.sop_unboosted_force; // Use unboosted for snapshot
             snap.lat_load_force = (float)ctx.lat_load_force;
+            snap.long_load_force = (float)ctx.long_load_force;
             snap.understeer_drop = understeer_drop;
             snap.oversteer_boost = oversteer_boost;
 
@@ -899,7 +929,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         frame.slew_limited_g = (float)m_debug_lat_g_slew;
 
         frame.session_peak_torque = (float)m_session_peak_torque;
-        frame.dynamic_weight_factor = (float)dynamic_weight_factor;
+        frame.long_load_factor = (float)long_load_factor;
         frame.structural_mult = (float)m_smoothed_structural_mult;
         frame.vibration_mult = (float)m_smoothed_vibration_mult;
         frame.steering_angle_deg = steering_angle_deg;
@@ -982,16 +1012,16 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
 
     // Apply Transformation (Issue #282)
     switch (m_lat_load_transform) {
-        case LatLoadTransform::CUBIC:
-            lat_load_norm = apply_lat_load_cubic(lat_load_norm);
+        case LoadTransform::CUBIC:
+            lat_load_norm = apply_load_transform_cubic(lat_load_norm);
             break;
-        case LatLoadTransform::QUADRATIC:
-            lat_load_norm = apply_lat_load_quadratic(lat_load_norm);
+        case LoadTransform::QUADRATIC:
+            lat_load_norm = apply_load_transform_quadratic(lat_load_norm);
             break;
-        case LatLoadTransform::HERMITE:
-            lat_load_norm = apply_lat_load_hermite(lat_load_norm);
+        case LoadTransform::HERMITE:
+            lat_load_norm = apply_load_transform_hermite(lat_load_norm);
             break;
-        case LatLoadTransform::LINEAR:
+        case LoadTransform::LINEAR:
         default:
             break;
     }

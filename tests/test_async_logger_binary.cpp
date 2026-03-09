@@ -113,7 +113,7 @@ TEST_CASE(test_log_frame_packing, "Logging") {
     // ALGO MISC: smoothed_yaw, lat_load_norm (2) = 8
     // SLOPE: dG_dt, dAlpha_dt, slope_current, slope_raw, slope_num, slope_denom, hold, input_slip, slope_smooth, confidence (10) = 40
     // SLOPE MISC: surface_fl/fr, slope_torque, slew_lat_g (4) = 16
-    // SETTINGS: session_peak, dynamic_weight, structural_mult, vibration_mult, steer_angle, steer_range, debug_freq, tire_radius (8) = 32
+    // SETTINGS: session_peak, long_load, structural_mult, vibration_mult, steer_angle, steer_range, debug_freq, tire_radius (8) = 32
     // FFB COMPONENTS: total, base, us_drop, os_boost, sop, rear_torque, scrub, yaw_kick, gyro, road, slide, lockup, spin, bottoming, abs, soft_lock (16) = 64
     // NEW CHANNELS: extrapolated_yaw_accel, derived_yaw_accel (2) = 8
     // FFB MISC: shaft, gen, grip_factor, speed_gate, load_peak (5) = 20

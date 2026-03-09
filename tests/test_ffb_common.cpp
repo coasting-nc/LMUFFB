@@ -134,7 +134,7 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_yaw_accel_smoothing = 0.0f;
     engine.m_gyro_smoothing = 0.0f;
     engine.m_chassis_inertia_smoothing = 0.0f;
-    engine.m_dynamic_weight_smoothing = 0.0f;
+    engine.m_long_load_smoothing = 0.0f;
     engine.m_grip_smoothing_steady = 0.0f;
     engine.m_grip_smoothing_fast = 0.0f;
     engine.m_grip_smoothing_sensitivity = 1.0f;

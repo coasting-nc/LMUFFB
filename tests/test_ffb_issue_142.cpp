@@ -12,7 +12,7 @@ TEST_CASE(test_direct_torque_scaling, "Issue142") {
     engine.m_gain = 1.0f;
     engine.m_steering_shaft_gain = 1.0f;
     engine.m_understeer_effect = 0.0f; // Disable modulation for scaling test
-    engine.m_dynamic_weight_gain = 0.0f;
+    engine.m_long_load_effect = 0.0f;
     engine.m_sop_effect = 0.0f; // Disable other effects
     engine.m_road_texture_enabled = false;
 
@@ -90,7 +90,7 @@ TEST_CASE(test_torque_passthrough_disabled, "Issue142") {
     }
 }
 
-TEST_CASE(test_dynamic_weight_passthrough, "Issue142") {
+TEST_CASE(test_long_load_passthrough, "Issue142") {
     FFBEngine engine;
     InitializeEngine(engine);
 
@@ -100,7 +100,7 @@ TEST_CASE(test_dynamic_weight_passthrough, "Issue142") {
     engine.m_gain = 1.0f;
 
     // Enable strong dynamic weight
-    engine.m_dynamic_weight_gain = 1.0f;
+    engine.m_long_load_effect = 1.0f;
 
     // Create telemetry with high load to trigger weight gain
     TelemInfoV01 telem = CreateBasicTestTelemetry(20.0, 0.0);
@@ -109,7 +109,7 @@ TEST_CASE(test_dynamic_weight_passthrough, "Issue142") {
 
     // We need to settle the static load reference first
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
-    FFBEngineTestAccess::SetDynamicWeightSmoothed(engine, 1.0);
+    FFBEngineTestAccess::SetLongitudinalLoadSmoothed(engine, 1.0);
 
     float genFFBTorque = 1.0f;
 

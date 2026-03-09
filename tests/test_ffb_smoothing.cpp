@@ -34,12 +34,12 @@ TEST_CASE(test_adaptive_smoothing_logic, "Physics") {
     ASSERT_NEAR(out2, 10.0, 0.0001);
 }
 
-TEST_CASE(test_dynamic_weight_lpf, "Physics") {
+TEST_CASE(test_long_load_lpf, "Physics") {
     std::cout << "\nTest: Dynamic Weight LPF (v0.7.47)" << std::endl;
     FFBEngine engine;
-    engine.m_dynamic_weight_gain = 1.0f;
-    engine.m_dynamic_weight_smoothing = 1.0f; // Very slow
-    FFBEngineTestAccess::SetDynamicWeightSmoothed(engine, 1.0);
+    engine.m_long_load_effect = 1.0f;
+    engine.m_long_load_smoothing = 1.0f; // Very slow
+    FFBEngineTestAccess::SetLongitudinalLoadSmoothed(engine, 1.0);
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
 
     // Setup telemetry with higher load
@@ -52,11 +52,11 @@ TEST_CASE(test_dynamic_weight_lpf, "Physics") {
     engine.calculate_force(&data);
 
     // Load Ratio = 8000 / 4000 = 2.0
-    // dynamic_weight_factor (target) = 1.0 + (2.0 - 1.0) * 1.0 = 2.0
+    // long_load_factor (target) = 1.0 + (2.0 - 1.0) * 1.0 = 2.0
     // Alpha = 0.01 / (1.0 + 0.01) approx 0.01
     // smoothed = 1.0 + 0.01 * (2.0 - 1.0) = 1.01
 
-    double smoothed = FFBEngineTestAccess::GetDynamicWeightSmoothed(engine);
+    double smoothed = FFBEngineTestAccess::GetLongitudinalLoadSmoothed(engine);
     ASSERT_NEAR(smoothed, 1.01, 0.001);
 }
 
