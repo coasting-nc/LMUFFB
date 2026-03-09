@@ -1,20 +1,20 @@
-# Code Review Iteration 1 - Issue #314
+The proposed code change addresses the core requirements of Issue #314 by increasing FFB safety restrictiveness, implementing immediate massive spike detection, and improving the lifecycle logging of the safety window. However, the patch contains a significant logic flaw in its smoothing mechanism and fails to adhere to mandatory thread-safety standards specified in the instructions.
 
-The code review raised the following points:
-1.  **Logic Bug (Memory Effect):** `m_safety.safety_smoothed_force` is not reset when a new safety window starts, leading to stale EMA values.
-2.  **Thread Safety:** `m_safety.safety_timer` is modified without holding `g_engine_mutex` in `TriggerSafetyWindow`.
-3.  **Fragile Sentinel:** Using `0.0` as a sentinel for "not seeded" is fragile.
+### Analysis and Reasoning:
 
-## Addressing the Feedback
+1.  **User's Goal:** The objective is to further harden the FFB safety system against violent jolts by tightening parameters, ensuring persistence during overlapping events, and improving diagnostic logging.
 
-### 1. Fix Memory Effect and Sentinel
-- Add `safety_is_seeded` boolean to `SafetyMonitor` struct.
-- In `TriggerSafetyWindow`, set `safety_is_seeded = false`.
-- In `calculate_force`, check `safety_is_seeded` instead of checking if `safety_smoothed_force == 0.0`.
+2.  **Evaluation of the Solution:**
+    *   **Core Functionality:** The patch successfully implements the requested constants (0.3x gain, 100 slew rate, 200ms smoothing) and the immediate trigger for spikes exceeding 1500 units/s. The timer reset logic ensures the safety window is sustained during continuous instability.
+    *   **Safety & Side Effects:**
+        *   **Logic Bug (Memory Effect):** The smoothing logic in `calculate_force` seeds the EMA only if `m_safety.safety_smoothed_force == 0.0`. However, this variable is never reset when the safety window ends or when a new window begins. If a safety event occurs, expires, and then another occurs later, the EMA will resume from the force value of the *previous* event (possibly from seconds or minutes ago). This will cause a sudden, violent jump in FFB as the output snaps back to a stale value—the exact behavior the safety system is meant to prevent.
+        *   **Thread Safety:** The "Reliability Coding Standards" explicitly state that `g_engine_mutex` must be used when modifying shared state. The patch modifies `m_safety.safety_timer` in both `TriggerSafetyWindow` and `calculate_force` without acquiring this lock. Since these functions are often called from different threads (e.g., a watchdog/telemetry thread vs. the FFB update thread), this introduces a race condition.
+    *   **Completeness:** While the patch includes a new test file and updates existing tests, the tests do not cover the "re-entry" scenario where the smoothing memory bug would manifest.
 
-### 2. Fix Thread Safety
-- Add `std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);` to `FFBEngine::TriggerSafetyWindow`.
-- Verified that all other modifications to `m_safety` occur within functions already holding `g_engine_mutex` (`calculate_force`, `calculate_soft_lock`, `ApplySafetySlew` when called from `main.cpp`).
+3.  **Merge Assessment (Blocking vs. Non-Blocking):**
+    *   **Blocking:** The smoothing "memory" bug is a regression that could cause hardware-damaging jolts. The violation of the thread-safety requirement is a failure to meet mandatory project reliability standards.
+    *   **Nitpicks:** The use of `0.0` as a "not seeded" sentinel for smoothing is fragile; a dedicated boolean flag would be more robust.
 
-### 3. Verification
-- Add a new test case `test_safety_reentry_smoothing` to `tests/test_issue_314_safety_v2.cpp` to specifically verify that smoothing is reset upon re-entering safety mode.
+**Final Rating:** The patch is functional in its primary goals but introduces a dangerous logic bug and ignores critical safety constraints. It is not ready for production.
+
+### Final Rating: #Partially Correct#

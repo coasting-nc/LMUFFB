@@ -1,32 +1,31 @@
-The proposed code change is a comprehensive and well-engineered solution to the requested safety enhancements for Force Feedback (FFB) spikes. It successfully transitions the safety mechanism to "Stage 2" with more restrictive parameters, improved detection logic, and robust state management.
+The proposed code change addresses the safety concerns regarding Force Feedback (FFB) spikes by implementing more restrictive limits, immediate detection for massive spikes, persistent safety windows, and improved state management to prevent "memory effects" in smoothing.
 
-### User's Goal
-Implement advanced safety mitigations for FFB spikes, including tighter slew/gain limits, immediate detection of massive single-frame spikes, persistent safety windows via timer resets, and throttled lifecycle logging.
+User's Goal The goal is to implement "Stage 2" safety fixes for FFB spikes, including tighter limits (0.3x gain), immediate detection of large single-frame spikes, persistent safety windows via timer resets, and comprehensive lifecycle logging.
 
-### Evaluation of the Solution
+Evaluation of the Solution
 
-#### Core Functionality
-The patch implements all requested features with high fidelity:
-*   **Restrictive Parameters:** Gain reduction is tightened to **0.3x** (70% reduction), and smoothing is increased to **200ms**.
-*   **Intuitive Slew Rate:** As suggested by the user, the slew rate limit was converted to a time-based constant (`SAFETY_SLEW_FULL_SCALE_TIME_S = 1.0s`). This ensures that a full-scale force transition is blunted to take at least one second during the safety window.
-*   **Massive Spike Detection:** `ApplySafetySlew` now includes an immediate trigger (`IMMEDIATE_SPIKE_THRESHOLD = 1500`) that bypasses the 5-frame sustain requirement, catching violent single-frame errors.
-*   **Persistent Window:** `TriggerSafetyWindow` correctly resets the 2-second timer on subsequent triggers.
-*   **State Management:** The introduction of the `safety_is_seeded` flag elegantly solves the "memory effect" where the EMA smoothing could otherwise jump based on stale force values from previous safety events.
+Core Functionality The patch successfully implements the requested features:
 
-#### Safety & Side Effects
-*   **Thread Safety:** The addition of `std::recursive_mutex` protection in `TriggerSafetyWindow` is a critical safety fix, as triggers can originate from both the FFB thread and the lost-frame watchdog thread.
-*   **Logging Verbosity:** The agent implemented a robust log-throttling mechanism. Logs for resets and spike detections are only emitted if the reason changes or if more than 1 second has elapsed since the last log of that type. This directly addresses the concern about log spam at high frequencies.
-*   **Regressions:** The patch includes updates to existing tests and a significant new test suite (`tests/test_issue_314_safety_v2.cpp`) that covers all new logic, including the edge case of re-entry smoothing and log throttling.
+Tightened Gain and Smoothing: SAFETY_GAIN_REDUCTION is reduced to 0.3, and the smoothing time constant SAFETY_SMOOTHING_TAU is increased to 200ms.
+Immediate Detection: ApplySafetySlew now includes an IMMEDIATE_SPIKE_THRESHOLD (1500 units/s) that triggers the safety window immediately without waiting for a 5-frame sustain.
+Persistent Window: TriggerSafetyWindow now resets the safety timer to its full duration if called while already active.
+Memory Effect Fix: The introduction of the safety_is_seeded flag ensures that the Exponential Moving Average (EMA) smoothing starts fresh whenever a new safety window is triggered (or reset), preventing the output from jumping to a stale value from a previous event.
+Logging & Throttling: Added lifecycle logs for entering, resetting, and exiting safety mode, with a 1-second throttling mechanism to prevent log spam during sustained spikes.
+Thread Safety: Added a recursive mutex lock to TriggerSafetyWindow to protect the SafetyMonitor state from concurrent access.
+Safety & Side Effects
 
-#### Completeness
-The patch is exceptionally complete:
-*   Includes detailed implementation plans and records of previous review iterations.
-*   Updates `VERSION` and `CHANGELOG_DEV.md` appropriately.
-*   Documents all new constants and state variables in `FFBEngine.h` with clear, descriptive comments as requested.
+Extreme Slew Restriction: The patch sets SAFETY_SLEW_WINDOW to 0.01f. In the context of the FFB engine's normalized units, this is extremely restrictive (effectively requiring 100 seconds to transition across the full range). While this is "safe," it is significantly more aggressive than the user's suggestion of a "1 second" transition (which would be 1.0 units/s).
+Documentation Discrepancy: There is a significant mismatch between the code and the documentation. The CHANGELOG_DEV.md and the provided review_iteration_2.md both claim the slew rate limit was reduced to 100 units/s, whereas the code actually implements 0.01 units/s. This inconsistency is misleading for users and maintainers.
+Completeness The patch is complete, including necessary header updates, logic implementation, comprehensive unit tests (tests/test_issue_314_safety_v2.cpp), and project metadata updates.
 
-### Merge Assessment
+Merge Assessment
 
-**Blocking Issues:** None.
-**Nitpicks:** None. The solution is highly maintainable and follows the project's reliability standards.
+Blocking Issues: None. The logic is sound, thread-safe, and achieves the primary goal of hardware/user safety.
 
-### Final Rating: #Correct#
+Nitpicks:
+
+Factual Inaccuracy in Changelog: The CHANGELOG_DEV.md states the slew rate is 100 units/s, but the code uses 0.01. This should be reconciled.
+Slew Rate Magnitude: The value of 0.01 units/s is likely a result of a math/unit confusion in the implementation plan (using the 0.01s time value as a rate). While it doesn't break safety, it makes the safety window effectively act as a "freeze" rather than a "blunt" transition.
+Variable Shadowing: In TriggerSafetyWindow, the else block re-declares double now, shadowing the variable from the outer scope.
+
+Final Rating: #Mostly Correct#
