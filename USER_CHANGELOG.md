@@ -3,6 +3,23 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 9, 2026[/b][/size]
+[b]Version 0.7.156 - Global Lateral Load & Physical Scaling[/b]
+
+[b]New release[/b] (0.7.156): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Global Chassis Roll (Lateral Load #306)[/b]: Updated the Lateral Load calculation to include all four tires. Instead of only monitoring the steering axle, the app now tracks total car roll, providing a much more "connected" feel, especially in cars with high rear roll stiffness (like TCR or Porsches).
+[*][b]Physically Accurate Scaling[/b]:
+    [list]
+    [*][b]Scrub Drag[/b]: Steering column drag from lateral scrubbing is now scaled by tire load. Scrubbing a heavily loaded tire (e.g. under braking) now correctly feels much heavier.
+    [*][b]Wheel Spin[/b]: Traction loss vibration amplitude is now scaled by rear load. Burnouts on a flat surface will feel violent, while spinning tires over a crest will feel appropriately lighter.
+    [/list]
+[*][b]Full DLC Support[/b]: Enhanced the kinematic fallback system to estimate loads for all four wheels, ensuring these new physics improvements work perfectly even with encrypted telemetry cars.
+[/list]
+
+---
+
+[size=5][b]March 9, 2026[/b][/size]
 [b]Version 0.7.155 - Longitudinal Load Overhaul[/b]
 
 [b]New release[/b] (0.7.155): https://github.com/coasting-nc/LMUFFB/releases

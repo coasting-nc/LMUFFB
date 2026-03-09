@@ -995,17 +995,25 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double raw_g = (std::max)(-G_LIMIT_5G * GRAVITY_MS2, (std::min)(G_LIMIT_5G * GRAVITY_MS2, data->mLocalAccel.x));
     double lat_g_accel = (raw_g / GRAVITY_MS2);
 
-    // 2. Normalized Lateral Load Transfer (Issue #213)
+    // 2. Global Normalized Lateral Load Transfer (Chassis Roll) - Issue #306
     double fl_load = data->mWheel[0].mTireLoad;
     double fr_load = data->mWheel[1].mTireLoad;
+    double rl_load = data->mWheel[2].mTireLoad;
+    double rr_load = data->mWheel[3].mTireLoad;
+
     if (ctx.frame_warn_load) {
         fl_load = calculate_kinematic_load(data, 0);
         fr_load = calculate_kinematic_load(data, 1);
+        rl_load = calculate_kinematic_load(data, 2);
+        rr_load = calculate_kinematic_load(data, 3);
     }
-    double total_load = fl_load + fr_load;
 
-    // Issue #282: Invert sign for perceived correctness (fr - fl instead of fl - fr)
-    double lat_load_norm = (total_load > 1.0) ? (fr_load - fl_load) / total_load : 0.0;
+    double left_load = fl_load + rl_load;
+    double right_load = fr_load + rr_load;
+    double total_load = left_load + right_load;
+
+    // Issue #306: Use (Left - Right) for global roll feel
+    double lat_load_norm = (total_load > 1.0) ? (left_load - right_load) / total_load : 0.0;
     
     // Safety clamp before transformation
     lat_load_norm = std::clamp(lat_load_norm, -1.0, 1.0);
@@ -1283,7 +1291,11 @@ void FFBEngine::calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationCon
             m_spin_phase += freq * ctx.dt * TWO_PI;
             m_spin_phase = std::fmod(m_spin_phase, TWO_PI);
             
-            double amp = severity * m_spin_gain * (double)BASE_NM_SPIN_VIBRATION;
+            // Issue #306: Scale vibration amplitude by rear load factor
+            double current_rear_load = (data->mWheel[2].mTireLoad + data->mWheel[3].mTireLoad) / DUAL_DIVISOR;
+            double rear_load_factor = std::clamp(current_rear_load / (m_static_front_load + 1.0), 0.2, 2.0);
+
+            double amp = severity * m_spin_gain * (double)BASE_NM_SPIN_VIBRATION * rear_load_factor;
             ctx.spin_rumble = std::sin(m_spin_phase) * amp;
         }
     }
@@ -1336,7 +1348,8 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
         if (abs_lat_vel > SCRUB_VEL_THRESHOLD) {
             double fade = (std::min)(1.0, abs_lat_vel / SCRUB_FADE_RANGE); // Fade in over 0.5m/s
             double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
-            ctx.scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade;
+            // Issue #306: Scale by load factor
+            ctx.scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade * ctx.texture_load_factor;
         }
     }
 
