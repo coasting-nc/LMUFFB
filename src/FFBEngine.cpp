@@ -16,6 +16,14 @@ using namespace ffb_math;
 FFBEngine::FFBEngine() {
     last_log_time = std::chrono::steady_clock::now();
     Preset::ApplyDefaultsToEngine(*this);
+    m_safety = {}; // Ensure all defaults are applied
+}
+
+void FFBEngine::TriggerSafetyWindow(const char* reason) {
+    if (m_safety.safety_timer <= 0.0) {
+        Logger::Get().LogFile("[Safety] Entered Safety Mode (Reason: %s)", reason);
+    }
+    m_safety.safety_timer = SAFETY_WINDOW_DURATION;
 }
 
 // v0.7.34: Safety Check for Issue #79
@@ -47,9 +55,33 @@ bool FFBEngine::IsFFBAllowed(const VehicleScoringInfoV01& scoring, unsigned char
 // If restricted is true (e.g. after finish or lost control), limit is tighter.
 double FFBEngine::ApplySafetySlew(double target_force, double dt, bool restricted) {
     if (!std::isfinite(target_force)) return 0.0;
+
     double max_slew = restricted ? (double)SAFETY_SLEW_RESTRICTED : (double)SAFETY_SLEW_NORMAL;
+
+    // Tighten slew limit during safety window (Issue #303)
+    if (m_safety.safety_timer > 0.0) {
+        max_slew = (std::min)(max_slew, (double)SAFETY_SLEW_WINDOW);
+    }
+
     double max_change = max_slew * dt;
     double delta = target_force - m_last_output_force;
+
+    // SPIKE DETECTION (Issue #303)
+    // If the physics engine wants a jump larger than our current limit,
+    // monitor for sustained high-slew rates.
+    double requested_rate = std::abs(delta) / (dt + EPSILON_DIV);
+    if (requested_rate > SPIKE_DETECTION_THRESHOLD) {
+        m_safety.spike_counter++;
+        if (m_safety.spike_counter >= 5) { // Sustained for 5 frames
+            Logger::Get().LogFile("[Safety] High Spike Detected: Requested Rate=%.1f (Capped at %.1f)",
+                requested_rate, max_slew);
+            m_safety.spike_counter = 0;
+            TriggerSafetyWindow("High Spike");
+        }
+    } else {
+        m_safety.spike_counter = (std::max)(0, m_safety.spike_counter - 1);
+    }
+
     delta = std::clamp(delta, -max_change, max_change);
     m_last_output_force += delta;
     return m_last_output_force;
@@ -157,7 +189,7 @@ double FFBEngine::apply_signal_conditioning(double raw_torque, const TelemInfoV0
 }
 
 // Refactored calculate_force
-double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleClass, const char* vehicleName, float genFFBTorque, bool allowed, double override_dt) {
+double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleClass, const char* vehicleName, float genFFBTorque, bool allowed, double override_dt, signed char mControl) {
     if (!data) return 0.0;
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
@@ -217,6 +249,23 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Use upsampled data pointer for all calculations
     const TelemInfoV01* upsampled_data = &m_working_info;
 
+    // --- SAFETY & TRANSITION LOGIC ---
+    if (m_safety.last_allowed && !allowed) {
+        Logger::Get().LogFile("[Safety] FFB Muted (Reason: %s)", upsampled_data->mElapsedTime > 0 ? "Game/State Mute" : "Initialization");
+    } else if (!m_safety.last_allowed && allowed) {
+        Logger::Get().LogFile("[Safety] FFB Unmuted");
+        TriggerSafetyWindow("FFB Unmuted");
+    }
+    m_safety.last_allowed = allowed;
+
+    if (mControl != m_safety.last_mControl) {
+        if (m_safety.last_mControl != -2) { // Skip first frame
+            Logger::Get().LogFile("[Safety] mControl Transition: %d -> %d", (int)m_safety.last_mControl, (int)mControl);
+            TriggerSafetyWindow("Control Transition");
+        }
+        m_safety.last_mControl = mControl;
+    }
+
     // Transition Logic: Reset filters when entering "Muted" state (e.g. Garage/AI)
     // to clear out high-frequency residuals from the driving session.
     if (m_was_allowed && !allowed) {
@@ -258,6 +307,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // RELIABILITY FIX: Sanitize input torque
     if (!std::isfinite(raw_torque_input)) return 0.0;
+
+    // Reset safety smoothed force if timer is zero to avoid carry-over
+    if (m_safety.safety_timer <= 0.0) {
+        m_safety.safety_smoothed_force = 0.0;
+    }
 
     // --- 0. DYNAMIC NORMALIZATION (Issue #152) ---
     // 1. Contextual Spike Rejection (Lightweight MAD alternative)
@@ -667,6 +721,26 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     double norm_force = (di_structural + di_texture) * m_gain;
 
+    // --- SAFETY MITIGATION (Stage 2) ---
+    if (m_safety.safety_timer > 0.0) {
+        // Apply extra gain reduction
+        norm_force *= (double)SAFETY_GAIN_REDUCTION;
+
+        // Apply extra smoothing to the final output to blunt any jitter
+        // Using a 100ms EMA
+        // On first frame of safety window, seed the smoothed force
+        if (m_safety.safety_smoothed_force == 0.0) {
+            m_safety.safety_smoothed_force = norm_force;
+        } else {
+            double safety_alpha = ctx.dt / (0.1 + ctx.dt);
+            m_safety.safety_smoothed_force += safety_alpha * (norm_force - m_safety.safety_smoothed_force);
+        }
+        norm_force = m_safety.safety_smoothed_force;
+
+        m_safety.safety_timer -= ctx.dt;
+        if (m_safety.safety_timer < 0.0) m_safety.safety_timer = 0.0;
+    }
+
     // Min Force
     // v0.7.85 FIX: Bypass min_force if NOT allowed (e.g. in garage) unless soft lock is significant.
     // This prevents the "grinding" feel from tiny residuals when FFB should be muted.
@@ -683,6 +757,21 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     if (m_invert_force) {
         norm_force *= -1.0;
+    }
+
+    // --- FULL TOCK DETECTION (Issue #303) ---
+    if (std::abs(upsampled_data->mUnfilteredSteering) > 0.95 && std::abs(norm_force) > 0.8) {
+        m_safety.tock_timer += ctx.dt;
+        if (m_safety.tock_timer > 1.0) { // Pinned for 1 second
+            if (upsampled_data->mElapsedTime > (m_safety.last_tock_log_time + 5.0)) {
+                Logger::Get().LogFile("[Safety] Full Tock Detected: Force %.2f at %.1f%% lock",
+                    norm_force, upsampled_data->mUnfilteredSteering * 100.0);
+                m_safety.last_tock_log_time = upsampled_data->mElapsedTime;
+            }
+            m_safety.tock_timer = 0.0;
+        }
+    } else {
+        m_safety.tock_timer = (std::max)(0.0, m_safety.tock_timer - ctx.dt);
     }
 
     // --- 8. STATE UPDATES (POST-CALC) ---

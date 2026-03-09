@@ -178,6 +178,15 @@ void FFBThread() {
 
                 if (!is_stale && g_localData.telemetry.playerHasVehicle) {
                     uint8_t idx = g_localData.telemetry.playerVehicleIdx;
+
+                    // --- LOST FRAME DETECTION (Issue #303) ---
+                    static double last_telem_et = -1.0;
+                    if (last_telem_et > 0.0 && (g_localData.telemetry.telemInfo[idx].mElapsedTime - last_telem_et) > (g_localData.telemetry.telemInfo[idx].mDeltaTime * 1.5)) {
+                        std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+                        g_engine.TriggerSafetyWindow("Lost Frames");
+                    }
+                    last_telem_et = g_localData.telemetry.telemInfo[idx].mElapsedTime;
+
                     if (idx < 104) {
                         auto& scoring = g_localData.scoring.vehScoringInfo[idx];
                         TelemInfoV01* pPlayerTelemetry = &g_localData.telemetry.telemInfo[idx];
@@ -230,7 +239,7 @@ void FFBThread() {
                         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
                         bool full_allowed = g_engine.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase) && is_driving;
 
-                        force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025);
+                        force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025, scoring.mControl);
 
                         // v0.7.153: Explicitly target zero force only when player is not in control (Issue #281).
                         // This allows Soft Lock to remain active in the garage and during pause (ControlMode::PLAYER),
