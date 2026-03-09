@@ -8,7 +8,7 @@ This document contains all version release posts by ErwinMoss from the [url=http
 [b]New release[/b] (0.7.155): https://github.com/coasting-nc/LMUFFB/releases
 
 [list]
-[*][b]Longitudinal Load Fixes[/b]: Renamed "Dynamic Weight" to [b]Longitudinal Load[/b] for clarity. The effect has been completely refactored as a separate force addendum, providing more consistent feel and better diagnostic visibility. (#301)
+[*][b]Longitudinal Load Fixes[/b]: Renamed "Dynamic Weight" to [b]Longitudinal Load[/b] for clarity. The effect has been refactored to ensure physical correctness (acting as a multiplier to steering torque), while now providing dedicated diagnostic visibility for its contribution. (#301)
 [*][b]Increased Gain[/b]: Following user feedback, the gain range for Longitudinal Load has been increased 5x (up to 1000%).
 [*][b]Mathematical Transformations[/b]: Added selection for Cubic, Quadratic, and Hermite transformations to Longitudinal Load (similar to Lateral Load), allowing you to soften the effects at the limits for a smoother, less "notchy" feel.
 [*][b]GUI Reorganization[/b]: Introduced a new [b]"Load Forces"[/b] section in the GUI to centralize all load-related settings (Lateral and Longitudinal).
