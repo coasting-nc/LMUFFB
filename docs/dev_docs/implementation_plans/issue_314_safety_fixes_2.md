@@ -114,3 +114,8 @@ The slew rate limits in this project were previously expressed in **normalized f
 - **Intuitive Slew Rate**: Replaced the hard-to-interpret `units/s` slew rate with a time-based constant `SAFETY_SLEW_FULL_SCALE_TIME_S = 1.0`. This makes the safety mechanism significantly easier to reason about (e.g., "it takes at least 1 second to reach full force during an event").
 - **Variable Shadowing**: Cleaned up code in `TriggerSafetyWindow` where the local variable `now` was unnecessarily re-declared in a nested scope.
 - **Improved Documentation**: Added comprehensive comments to `FFBEngine.h` explaining the meaning and units of every safety monitor member and constant.
+
+## Code Review & Refinement (Iteration 4)
+- **Log Fidelity**: Confirmed that the 1Hz throttling mechanism correctly balances the need for a "full audit trail" with the requirement for readable, non-spammed log files.
+- **Slew Rate Measure**: Finalized the use of `SAFETY_SLEW_FULL_SCALE_TIME_S` to provide a hardware-agnostic, intuitive measure of safety restrictiveness.
+- **State Reset Consistency**: Verified through extensive unit testing that re-seeding the EMA on every safety trigger (Entry and Reset) ensures the highest level of FFB stability during erratic telemetry events.
