@@ -14,6 +14,27 @@ Additionally, the investigation report `docs/dev_docs/investigations/load forces
 > [!IMPORTANT]
 > SoP (Seat of the Pants) effects are intended to represent what the driver's body feels—the global movement of the chassis. By incorporating all four wheels into the lateral load calculation, we capture the total roll state of the vehicle, which is physically more accurate for a "body-feel" effect than just monitoring the steering axle.
 
+## Sign Analysis and Justification
+The sign of the lateral load effect has been flipped to `(Left - Right)` to align with the rF2/LMU coordinate system and ensure the effect adds constructively to the Lateral G-force sensation.
+
+### 1. Coordinate System Mapping (rF2 / LMU)
+- **Local Acceleration X**: `+X` points to the **LEFT** side of the chassis.
+- **Right Turn Physics**:
+    - Centrifugal force pushes the body to the **LEFT** (`+X` acceleration).
+    - Centripetal force (grip) pulls the tires to the **RIGHT** (`-X`).
+    - The steering rack's self-aligning torque naturally pulls the wheel towards the center (resisting the turn).
+- **Load Transfer**: In a Right Turn, weight shifts to the **Outside** tires (the LEFT tires in LMU's coordinate system).
+    - `Left_Load > Right_Load`.
+
+### 2. Sign Comparison
+| Scenario | Accel X (+X=Left) | Load Transfer (Left-Right) | SoP G Sign | SoP Load Sign (New) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Right Turn** | Positive (Left) | Positive (Left > Right) | Positive | Positive |
+| **Left Turn** | Negative (Right) | Negative (Right > Left) | Negative | Negative |
+
+### 3. Conclusion
+The previous implementation (v0.7.154) used `(fr_load - fl_load)`, which resulted in a `Negative` value during a `Right Turn`. This caused the Load-based force to subtract from the G-based force. By switching to `(Left_Total - Right_Total)`, both components now share the same sign, creating a unified "leaning" sensation that scales correctly with both acceleration and actual roll state.
+
 ## Reference Documents
 - `docs/dev_docs/investigations/load forces improvements.md`
 - `docs/dev_docs/investigations/lateral load transformations.md`
@@ -55,7 +76,6 @@ Additionally, the investigation report `docs/dev_docs/investigations/load forces
     - Calculate `left_load = fl_load + rl_load` and `right_load = fr_load + rr_load`.
     - Handle kinematic fallback for all 4 wheels if `ctx.frame_warn_load` is true.
     - Calculate `lat_load_norm = (total_load > 1.0) ? (left_load - right_load) / total_load : 0.0`.
-    - **Sign Note**: The previous implementation used `Right - Left`. Issue #306 explicitly requests `Left - Right`. Since `LatAccel` is positive for right turns (chassis pushed left), `Left - Right` will also be positive, making the effects additive in sign.
 
 ### 2. Update Scrub Drag Scaling (`src/FFBEngine.cpp`)
 - Modify `FFBEngine::calculate_road_texture`:
@@ -63,7 +83,7 @@ Additionally, the investigation report `docs/dev_docs/investigations/load forces
 
 ### 3. Update Wheel Spin Scaling (`src/FFBEngine.cpp`)
 - Modify `FFBEngine::calculate_wheel_spin`:
-    - Calculate `current_rear_load = (data->mWheel[2].mTireLoad + data->mWheel[3].mTireLoad) / 2.0`.
+    - Calculate `current_rear_load = (data->mWheel[2].mTireLoad + data->mWheel[3].mTireLoad) / DUAL_DIVISOR`.
     - Calculate `rear_load_factor = std::clamp(current_rear_load / (m_static_front_load + 1.0), 0.2, 2.0)`.
     - Multiply `amp` by `rear_load_factor`.
 
@@ -96,11 +116,11 @@ Additionally, the investigation report `docs/dev_docs/investigations/load forces
 - **Assertion**: `spin_rumble` amplitude should scale with the calculated `rear_load_factor`.
 
 ## Deliverables
-- [ ] Modified `src/FFBEngine.cpp`.
-- [ ] New test file `tests/test_issue_306_lateral_load.cpp`.
-- [ ] Updated `VERSION`.
-- [ ] Updated `CHANGELOG_DEV.md` and `USER_CHANGELOG.md`.
-- [ ] Finalized Implementation Plan with notes.
+- [x] Modified `src/FFBEngine.cpp`.
+- [x] New test file `tests/test_issue_306_lateral_load.cpp`.
+- [x] Updated `VERSION`.
+- [x] Updated `CHANGELOG_DEV.md` and `USER_CHANGELOG.md`.
+- [x] Finalized Implementation Plan with notes.
 
 ## Implementation Notes
 - **4-Wheel Lateral Load**: Implemented global car load transfer `(left_load - right_load) / total_load` in `calculate_sop_lateral`. This correctly captures rear-end movement and stiff rear anti-roll bar behavior.
