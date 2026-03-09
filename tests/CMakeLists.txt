@@ -108,6 +108,7 @@ set(TEST_SOURCES
     test_issue_282_lateral_load_fix.cpp
     test_issue_306_lateral_load.cpp
     test_issue_303_safety.cpp
+    test_issue_314_safety_v2.cpp
     ../src/main.cpp
 )
 

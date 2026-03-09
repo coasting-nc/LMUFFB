@@ -501,15 +501,20 @@ public:
     double m_prev_ac_torque = 0.0;
 
     struct SafetyMonitor {
-        signed char last_mControl = -2;
-        double safety_timer = 0.0;
-        double safety_smoothed_force = 0.0;
-        int spike_counter = 0;
-        double tock_timer = 0.0;
-        double last_tock_log_time = -999.0;
-        bool was_soft_locked = false;
-        bool soft_lock_significant = false;
-        bool last_allowed = true;
+        signed char last_mControl = -2;  // Track changes in player control (AI vs PLAYER)
+        double safety_timer = 0.0;      // Remaining duration of the safety window (seconds)
+        double safety_smoothed_force = 0.0; // Current state of the extra smoothing EMA
+        bool safety_is_seeded = false;  // Ensures smoothing EMA starts fresh on each safety trigger
+        int spike_counter = 0;          // Frame counter for sustained high-slew spikes
+        double tock_timer = 0.0;        // Timer for detecting 'Full Tock' (pinned wheel)
+        double last_tock_log_time = -999.0; // Throttling for Tock warning logs
+        double last_reset_log_time = -999.0; // Throttling for Safety Reset logs
+        char last_reset_reason[64] = "";     // Last logged reset reason to detect changes
+        double last_massive_spike_log_time = -999.0; // Throttling for Massive Spike logs
+        double last_high_spike_log_time = -999.0;    // Throttling for High Spike logs
+        bool was_soft_locked = false;       // Track Soft Lock engagement state
+        bool soft_lock_significant = false; // Track when Soft Lock provides high resistance
+        bool last_allowed = true;           // Track FFB mute/unmute transitions
     } m_safety;
 
     // Telemetry Stats
@@ -583,10 +588,17 @@ private:
     static constexpr double TORQUE_ROLL_AVG_TAU = 1.0;
     static constexpr float  SAFETY_SLEW_NORMAL = 1000.0f;
     static constexpr float  SAFETY_SLEW_RESTRICTED = 100.0f;
-    static constexpr float  SAFETY_SLEW_WINDOW = 200.0f;
-    static constexpr double SAFETY_WINDOW_DURATION = 2.0;
-    static constexpr double SAFETY_GAIN_REDUCTION = 0.5;
-    static constexpr double SPIKE_DETECTION_THRESHOLD = 500.0;
+    // --- FFB Safety Constants (Issue #314) ---
+    // SAFETY_SLEW_FULL_SCALE_TIME_S represents the time (in seconds) it would take to slew across 100%
+    // of the DirectInput force range (0.0 to 1.0) during safety mode.
+    // A value of 1.0s means a full-scale jump is blunted to take at least 1 second.
+    static constexpr float  SAFETY_SLEW_FULL_SCALE_TIME_S = 1.0f;
+
+    static constexpr double SAFETY_WINDOW_DURATION = 2.0; // Time to remain in safety mode after a trigger (seconds)
+    static constexpr double SAFETY_GAIN_REDUCTION = 0.3; // Multiplier applied to master gain during safety (0.3 = 70% reduction)
+    static constexpr double SAFETY_SMOOTHING_TAU = 0.2; // Extra smoothing EMA time constant during safety (seconds)
+    static constexpr double SPIKE_DETECTION_THRESHOLD = 500.0; // Rate above which spike counter increments (Units/s)
+    static constexpr double IMMEDIATE_SPIKE_THRESHOLD = 1500.0; // Rate above which safety triggers immediately (Units/s)
     static constexpr float  PEAK_TORQUE_DECAY = 0.005f;
     static constexpr float  PEAK_TORQUE_FLOOR = 1.0f;
     static constexpr float  PEAK_TORQUE_CEILING = 100.0f;
