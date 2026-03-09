@@ -3,6 +3,17 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 9, 2026[/b][/size]
+[b]Version 0.7.159 - Disabled Console Window[/b]
+
+[b]New release[/b] (0.7.159): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Disabled Console Window on Windows[/b]: The black console window that previously appeared when the application started has been removed. The app now starts as a clean GUI. All diagnostic logs remain available in [i]lmuffb_debug.log[/i] for troubleshooting.
+[/list]
+
+---
+
+[size=5][b]March 9, 2026[/b][/size]
 [b]Version 0.7.156 - Global Lateral Load & Physical Scaling[/b]
 
 [b]New release[/b] (0.7.156): https://github.com/coasting-nc/LMUFFB/releases

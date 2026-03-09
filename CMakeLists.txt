@@ -271,6 +271,12 @@ if(WIN32 AND NOT BUILD_HEADLESS)
 endif()
 
 add_executable(LMUFFB ${APP_SOURCES})
+if(WIN32)
+    set_target_properties(LMUFFB PROPERTIES WIN32_EXECUTABLE TRUE)
+    if(MSVC)
+        set_target_properties(LMUFFB PROPERTIES LINK_FLAGS "/ENTRY:mainCRTStartup")
+    endif()
+endif()
 target_link_libraries(LMUFFB PRIVATE LMUFFB_Core)
 
 # Tests

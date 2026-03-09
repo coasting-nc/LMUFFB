@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.159] - 2026-03-09
+- **Disabled Console Window on Windows**:
+  - Reconfigured the main application's build target on Windows to use the `WIN32_EXECUTABLE` property.
+  - Implemented the `/ENTRY:mainCRTStartup` linker flag for MSVC, allowing the app to keep its standard `main` entry point while hiding the black console window on startup.
+  - Ensured that the automated test suite (`run_combined_tests.exe`) still uses the `CONSOLE` subsystem for visible output.
+
 ## [0.7.158] - 2026-03-09
 - **Safety fixes for FFB Spikes (2) (#314)**:
   - **Increased Safety Restrictiveness**: Tightened the safety window parameters to further blunt violent jolts:
