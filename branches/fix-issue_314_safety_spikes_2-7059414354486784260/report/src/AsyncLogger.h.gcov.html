@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-09 15:46:37</td>
+            <td class="headerValue">2026-03-09 16:24:06</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -400,8 +400,8 @@
 <span id="L323"><span class="lineNum">     323</span>                 :             :         </span>
 <span id="L324"><span class="lineNum">     324</span>                 :<span class="tlaGNC">        2966 :         m_frame_count++;</span></span>
 <span id="L325"><span class="lineNum">     325</span>                 :             :         </span>
-<span id="L326"><span class="lineNum">     326</span>         [<span class="tlaGBC" title="Branch 0 was taken 782 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2184 times"> + </span>]:<span class="tlaGNC">        2966 :         if (should_notify) {</span></span>
-<span id="L327"><span class="lineNum">     327</span>                 :<span class="tlaGNC">         782 :              m_cv.notify_one();</span></span>
+<span id="L326"><span class="lineNum">     326</span>         [<span class="tlaGBC" title="Branch 0 was taken 687 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2279 times"> + </span>]:<span class="tlaGNC">        2966 :         if (should_notify) {</span></span>
+<span id="L327"><span class="lineNum">     327</span>                 :<span class="tlaGNC">         687 :              m_cv.notify_one();</span></span>
 <span id="L328"><span class="lineNum">     328</span>                 :             :         }</span>
 <span id="L329"><span class="lineNum">     329</span>                 :             :     }</span>
 <span id="L330"><span class="lineNum">     330</span>                 :             :     </span>
@@ -432,23 +432,23 @@
 <span id="L355"><span class="lineNum">     355</span>                 :<span class="tlaGNC">          16 :         std::vector&lt;LogFrame&gt; local_buffer;</span></span>
 <span id="L356"><span class="lineNum">     356</span>                 :             :         while (true) {</span>
 <span id="L357"><span class="lineNum">     357</span>                 :             :             {</span>
-<span id="L358"><span class="lineNum">     358</span>         [<span class="tlaGBC" title="Branch 0 was taken 43 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          43 :                 std::unique_lock&lt;std::mutex&gt; lock(m_mutex);</span></span>
-<span id="L359"><span class="lineNum">     359</span>   [<span class="tlaGBC" title="Branch 0 was taken 43 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 28 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 23 times"> + </span> :<span class="tlaGNC">          94 :                 m_cv.wait(lock, [this] { return !m_running || !m_buffer_active.empty(); });</span></span>
-<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 20 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 8 times"> + </span>]
+<span id="L358"><span class="lineNum">     358</span>         [<span class="tlaGBC" title="Branch 0 was taken 41 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          41 :                 std::unique_lock&lt;std::mutex&gt; lock(m_mutex);</span></span>
+<span id="L359"><span class="lineNum">     359</span>   [<span class="tlaGBC" title="Branch 0 was taken 41 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 26 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 23 times"> + </span> :<span class="tlaGNC">          90 :                 m_cv.wait(lock, [this] { return !m_running || !m_buffer_active.empty(); });</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 18 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 8 times"> + </span>]
 <span id="L360"><span class="lineNum">     360</span>                 :             : </span>
-<span id="L361"><span class="lineNum">     361</span>         [<span class="tlaGBC" title="Branch 0 was taken 27 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16 times"> + </span>]:<span class="tlaGNC">          43 :                 if (!m_buffer_active.empty()) {</span></span>
-<span id="L362"><span class="lineNum">     362</span>                 :<span class="tlaGNC">          27 :                     local_buffer.swap(m_buffer_active);</span></span>
+<span id="L361"><span class="lineNum">     361</span>         [<span class="tlaGBC" title="Branch 0 was taken 25 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16 times"> + </span>]:<span class="tlaGNC">          41 :                 if (!m_buffer_active.empty()) {</span></span>
+<span id="L362"><span class="lineNum">     362</span>                 :<span class="tlaGNC">          25 :                     local_buffer.swap(m_buffer_active);</span></span>
 <span id="L363"><span class="lineNum">     363</span>         [<span class="tlaGBC" title="Branch 0 was taken 16 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          16 :                 } else if (!m_running) {</span></span>
 <span id="L364"><span class="lineNum">     364</span>                 :<span class="tlaGNC">          16 :                     break;</span></span>
 <span id="L365"><span class="lineNum">     365</span>                 :             :                 }</span>
-<span id="L366"><span class="lineNum">     366</span>         [<span class="tlaGBC" title="Branch 0 was taken 27 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16 times"> + </span>]:<span class="tlaGNC">          43 :             }</span></span>
+<span id="L366"><span class="lineNum">     366</span>         [<span class="tlaGBC" title="Branch 0 was taken 25 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16 times"> + </span>]:<span class="tlaGNC">          41 :             }</span></span>
 <span id="L367"><span class="lineNum">     367</span>                 :             :             </span>
 <span id="L368"><span class="lineNum">     368</span>                 :             :             // Write buffer to disk</span>
-<span id="L369"><span class="lineNum">     369</span>         [<span class="tlaGBC" title="Branch 0 was taken 27 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          27 :             if (!local_buffer.empty()) {</span></span>
-<span id="L370"><span class="lineNum">     370</span>                 :<span class="tlaGNC">          27 :                 size_t src_size = local_buffer.size() * sizeof(LogFrame);</span></span>
-<span id="L371"><span class="lineNum">     371</span>                 :<span class="tlaGNC">          27 :                 const char* src_ptr = reinterpret_cast&lt;const char*&gt;(local_buffer.data());</span></span>
+<span id="L369"><span class="lineNum">     369</span>         [<span class="tlaGBC" title="Branch 0 was taken 25 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          25 :             if (!local_buffer.empty()) {</span></span>
+<span id="L370"><span class="lineNum">     370</span>                 :<span class="tlaGNC">          25 :                 size_t src_size = local_buffer.size() * sizeof(LogFrame);</span></span>
+<span id="L371"><span class="lineNum">     371</span>                 :<span class="tlaGNC">          25 :                 const char* src_ptr = reinterpret_cast&lt;const char*&gt;(local_buffer.data());</span></span>
 <span id="L372"><span class="lineNum">     372</span>                 :             : </span>
-<span id="L373"><span class="lineNum">     373</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 24 times"> + </span>]:<span class="tlaGNC">          27 :                 if (m_lz4_enabled) {</span></span>
+<span id="L373"><span class="lineNum">     373</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 22 times"> + </span>]:<span class="tlaGNC">          25 :                 if (m_lz4_enabled) {</span></span>
 <span id="L374"><span class="lineNum">     374</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 :                     int max_dst_size = LZ4_compressBound((int)src_size);</span></span>
 <span id="L375"><span class="lineNum">     375</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 :                     compressed_buffer.resize(max_dst_size);</span></span>
 <span id="L376"><span class="lineNum">     376</span>                 :             : </span>
@@ -463,20 +463,20 @@
 <span id="L385"><span class="lineNum">     385</span>                 :<span class="tlaGNC">           3 :                         m_file_size_bytes += (8 + (size_t)compressed_size);</span></span>
 <span id="L386"><span class="lineNum">     386</span>                 :             :                     }</span>
 <span id="L387"><span class="lineNum">     387</span>                 :             :                 } else {</span>
-<span id="L388"><span class="lineNum">     388</span>         [<span class="tlaGBC" title="Branch 0 was taken 24 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          24 :                     m_file.write(src_ptr, src_size);</span></span>
-<span id="L389"><span class="lineNum">     389</span>                 :<span class="tlaGNC">          24 :                     m_file_size_bytes += src_size;</span></span>
+<span id="L388"><span class="lineNum">     388</span>         [<span class="tlaGBC" title="Branch 0 was taken 22 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          22 :                     m_file.write(src_ptr, src_size);</span></span>
+<span id="L389"><span class="lineNum">     389</span>                 :<span class="tlaGNC">          22 :                     m_file_size_bytes += src_size;</span></span>
 <span id="L390"><span class="lineNum">     390</span>                 :             :                 }</span>
-<span id="L391"><span class="lineNum">     391</span>                 :<span class="tlaGNC">          27 :                 local_buffer.clear();</span></span>
+<span id="L391"><span class="lineNum">     391</span>                 :<span class="tlaGNC">          25 :                 local_buffer.clear();</span></span>
 <span id="L392"><span class="lineNum">     392</span>                 :             :             }</span>
 <span id="L393"><span class="lineNum">     393</span>                 :             :             </span>
 <span id="L394"><span class="lineNum">     394</span>                 :             :             // Periodic flush to minimize data loss on crash</span>
-<span id="L395"><span class="lineNum">     395</span>                 :<span class="tlaGNC">          27 :             auto now = std::chrono::steady_clock::now();</span></span>
-<span id="L396"><span class="lineNum">     396</span>   [<span class="tlaGBC" title="Branch 0 was taken 27 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 27 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          27 :             auto elapsed = std::chrono::duration_cast&lt;std::chrono::seconds&gt;(now - m_last_flush_time).count();</span></span>
-<span id="L397"><span class="lineNum">     397</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 26 times"> + </span>]:<span class="tlaGNC">          27 :             if (elapsed &gt;= FLUSH_INTERVAL_SECONDS) {</span></span>
+<span id="L395"><span class="lineNum">     395</span>                 :<span class="tlaGNC">          25 :             auto now = std::chrono::steady_clock::now();</span></span>
+<span id="L396"><span class="lineNum">     396</span>   [<span class="tlaGBC" title="Branch 0 was taken 25 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 25 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          25 :             auto elapsed = std::chrono::duration_cast&lt;std::chrono::seconds&gt;(now - m_last_flush_time).count();</span></span>
+<span id="L397"><span class="lineNum">     397</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 24 times"> + </span>]:<span class="tlaGNC">          25 :             if (elapsed &gt;= FLUSH_INTERVAL_SECONDS) {</span></span>
 <span id="L398"><span class="lineNum">     398</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           1 :                 m_file.flush();</span></span>
 <span id="L399"><span class="lineNum">     399</span>                 :<span class="tlaGNC">           1 :                 m_last_flush_time = now;</span></span>
 <span id="L400"><span class="lineNum">     400</span>                 :             :             }</span>
-<span id="L401"><span class="lineNum">     401</span>                 :<span class="tlaGNC">          27 :         }</span></span>
+<span id="L401"><span class="lineNum">     401</span>                 :<span class="tlaGNC">          25 :         }</span></span>
 <span id="L402"><span class="lineNum">     402</span>                 :<span class="tlaGNC">          16 :     }</span></span>
 <span id="L403"><span class="lineNum">     403</span>                 :             : </span>
 <span id="L404"><span class="lineNum">     404</span>                 :<span class="tlaGNC">          16 :     void WriteHeader(const SessionInfo&amp; info) {</span></span>
