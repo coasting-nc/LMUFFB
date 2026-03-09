@@ -177,4 +177,52 @@ TEST_CASE(test_long_load_transformations, "Physics") {
     ASSERT_NEAR(get_long_load_force(LoadTransform::HERMITE, 6000.0), 6.25f, 0.1f);
 }
 
+TEST_CASE(test_long_load_multiplier_behavior, "Physics") {
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_long_load_effect = 1.0f;
+    engine.m_long_load_smoothing = 0.0f;
+    engine.m_invert_force = false;
+
+    // Use high scaling to see Nm directly
+    FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
+    FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 100.0);
+    engine.m_wheelbase_max_nm = 100.0f;
+    engine.m_target_rim_nm = 100.0f;
+
+    // Seed static load at 4000N
+    FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
+    FFBEngineTestAccess::SetStaticLoadLatched(engine, true);
+
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+
+    // Case 1: Straight line (zero steering torque)
+    data.mSteeringShaftTorque = 0.0;
+    data.mWheel[0].mTireLoad = 8000.0; // High load transfer
+    data.mWheel[1].mTireLoad = 8000.0;
+
+    engine.calculate_force(&data);
+    auto snap1 = engine.GetDebugBatch().back();
+
+    // Physical Requirement: output and isolated component MUST be zero in straight line
+    ASSERT_NEAR(snap1.total_output, 0.0f, 0.001f);
+    ASSERT_NEAR(snap1.long_load_force, 0.0f, 0.001f);
+
+    // Case 2: Cornering (non-zero steering torque)
+    data.mSteeringShaftTorque = 10.0;
+    engine.calculate_force(&data);
+    auto snap2 = engine.GetDebugBatch().back();
+
+    // factor = 1.0 + (8000/4000 - 1) * 1.0 = 2.0
+    // isolated = 10.0 * (2.0 - 1.0) = 10.0 Nm
+    // total Nm = 10.0 * 2.0 = 20.0 Nm
+    // output = 20 / 100 = 0.2
+
+    ASSERT_GT(snap2.long_load_force, 0.001f);
+    ASSERT_NEAR(snap2.long_load_force, 10.0f, 0.1f);
+    ASSERT_NEAR(snap2.total_output, 0.2f, 0.01f);
+}
+
 } // namespace FFBEngineTests
+
+
