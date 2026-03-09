@@ -160,7 +160,7 @@ struct LogFrame {
     float slew_limited_g;
 
     float session_peak_torque;
-    float dynamic_weight_factor;
+    float long_load_factor;
     float structural_mult;
     float vibration_mult;
     float steering_angle_deg;
@@ -467,7 +467,7 @@ private:
                << "SmoothedYawAccel,LatLoadNorm,"
                << "dG_dt,dAlpha_dt,SlopeCurrent,SlopeRaw,SlopeNum,SlopeDenom,HoldTimer,InputSlipSmooth,SlopeSmoothed,Confidence,"
                << "SurfaceFL,SurfaceFR,SlopeTorque,SlewLimitedG,"
-               << "SessionPeakTorque,DynamicWeight,StructuralMult,VibrationMult,SteeringAngleDeg,SteeringRangeDeg,DebugFreq,TireRadius,"
+               << "SessionPeakTorque,LongitudinalLoadFactor,StructuralMult,VibrationMult,SteeringAngleDeg,SteeringRangeDeg,DebugFreq,TireRadius,"
                << "FFBTotal,FFBBase,FFBUndersteerDrop,FFBOversteerBoost,FFBSoP,FFBRearTorque,FFBScrubDrag,FFBYawKick,FFBGyroDamping,FFBRoadTexture,FFBSlideTexture,FFBLockupVibration,FFBSpinVibration,FFBBottomingCrunch,FFBABSPulse,FFBSoftLock,"
                << "ExtrapolatedYawAccel,DerivedYawAccel,"
                << "FFBShaftTorque,FFBGenTorque,GripFactor,SpeedGate,FrontLoadPeakRef,PhysicsRate,Clipping,WarnBits,Marker\n";
@@ -603,12 +603,14 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 }
                 else if (key == "sop") current_preset.sop = (std::min)(2.0f, std::stof(value));
                 else if (key == "lateral_load_effect") current_preset.lateral_load = (std::min)(2.0f, std::stof(value));
+                else if (key == "lat_load_transform") current_preset.lat_load_transform = std::clamp(std::stoi(value), 0, 3);
                 else if (key == "sop_scale") current_preset.sop_scale = std::stof(value);
                 else if (key == "sop_smoothing_factor") current_preset.sop_smoothing = std::stof(value);
                 else if (key == "min_force") current_preset.min_force = std::stof(value);
                 else if (key == "oversteer_boost") current_preset.oversteer_boost = std::stof(value);
-                else if (key == "dynamic_weight_gain") current_preset.dynamic_weight_gain = std::stof(value);
-                else if (key == "dynamic_weight_smoothing") current_preset.dynamic_weight_smoothing = std::stof(value);
+                else if (key == "long_load_effect" || key == "dynamic_weight_gain") current_preset.long_load_effect = std::stof(value);
+                else if (key == "long_load_smoothing" || key == "dynamic_weight_smoothing") current_preset.long_load_smoothing = std::stof(value);
+                else if (key == "long_load_transform") current_preset.long_load_transform = std::clamp(std::stoi(value), 0, 3);
                 else if (key == "grip_smoothing_steady") current_preset.grip_smoothing_steady = std::stof(value);
                 else if (key == "grip_smoothing_fast") current_preset.grip_smoothing_fast = std::stof(value);
                 else if (key == "grip_smoothing_sensitivity") current_preset.grip_smoothing_sensitivity = std::stof(value);
@@ -1427,13 +1429,15 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "static_notch_width=" << p.static_notch_width << "\n";
 
     file << "oversteer_boost=" << p.oversteer_boost << "\n";
-    file << "dynamic_weight_gain=" << p.dynamic_weight_gain << "\n";
-    file << "dynamic_weight_smoothing=" << p.dynamic_weight_smoothing << "\n";
+    file << "long_load_effect=" << p.long_load_effect << "\n";
+    file << "long_load_smoothing=" << p.long_load_smoothing << "\n";
+    file << "long_load_transform=" << p.long_load_transform << "\n";
     file << "grip_smoothing_steady=" << p.grip_smoothing_steady << "\n";
     file << "grip_smoothing_fast=" << p.grip_smoothing_fast << "\n";
     file << "grip_smoothing_sensitivity=" << p.grip_smoothing_sensitivity << "\n";
     file << "sop=" << p.sop << "\n";
     file << "lateral_load_effect=" << p.lateral_load << "\n";
+    file << "lat_load_transform=" << p.lat_load_transform << "\n";
     file << "rear_align_effect=" << p.rear_align_effect << "\n";
     file << "sop_yaw_gain=" << p.sop_yaw_gain << "\n";
     file << "yaw_kick_threshold=" << p.yaw_kick_threshold << "\n";
@@ -1751,13 +1755,15 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
 
         file << "\n; --- Rear Axle (Oversteer) ---\n";
         file << "oversteer_boost=" << engine.m_oversteer_boost << "\n";
-        file << "dynamic_weight_gain=" << engine.m_dynamic_weight_gain << "\n";
-        file << "dynamic_weight_smoothing=" << engine.m_dynamic_weight_smoothing << "\n";
+        file << "long_load_effect=" << engine.m_long_load_effect << "\n";
+        file << "long_load_smoothing=" << engine.m_long_load_smoothing << "\n";
+        file << "long_load_transform=" << static_cast<int>(engine.m_long_load_transform) << "\n";
         file << "grip_smoothing_steady=" << engine.m_grip_smoothing_steady << "\n";
         file << "grip_smoothing_fast=" << engine.m_grip_smoothing_fast << "\n";
         file << "grip_smoothing_sensitivity=" << engine.m_grip_smoothing_sensitivity << "\n";
         file << "sop=" << engine.m_sop_effect << "\n";
         file << "lateral_load_effect=" << engine.m_lat_load_effect << "\n";
+        file << "lat_load_transform=" << static_cast<int>(engine.m_lat_load_transform) << "\n";
         file << "rear_align_effect=" << engine.m_rear_align_effect << "\n";
         file << "sop_yaw_gain=" << engine.m_sop_yaw_gain << "\n";
         file << "yaw_kick_threshold=" << engine.m_yaw_kick_threshold << "\n";
@@ -1940,10 +1946,12 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "torque_passthrough") engine.m_torque_passthrough = (value == "1" || value == "true");
                     else if (key == "sop") engine.m_sop_effect = std::stof(value);
                     else if (key == "lateral_load_effect") engine.m_lat_load_effect = std::stof(value);
+                    else if (key == "lat_load_transform") engine.m_lat_load_transform = static_cast<LoadTransform>(std::clamp(std::stoi(value), 0, 3));
                     else if (key == "min_force") engine.m_min_force = std::stof(value);
                     else if (key == "oversteer_boost") engine.m_oversteer_boost = std::stof(value);
-                    else if (key == "dynamic_weight_gain") engine.m_dynamic_weight_gain = std::stof(value);
-                    else if (key == "dynamic_weight_smoothing") engine.m_dynamic_weight_smoothing = std::stof(value);
+                    else if (key == "long_load_effect" || key == "dynamic_weight_gain") engine.m_long_load_effect = std::stof(value);
+                    else if (key == "long_load_smoothing" || key == "dynamic_weight_smoothing") engine.m_long_load_smoothing = std::stof(value);
+                    else if (key == "long_load_transform") engine.m_long_load_transform = static_cast<LoadTransform>(std::clamp(std::stoi(value), 0, 3));
                     else if (key == "grip_smoothing_steady") engine.m_grip_smoothing_steady = std::stof(value);
                     else if (key == "grip_smoothing_fast") engine.m_grip_smoothing_fast = std::stof(value);
                     else if (key == "grip_smoothing_sensitivity") engine.m_grip_smoothing_sensitivity = std::stof(value);
@@ -2240,13 +2248,15 @@ struct Preset {
     float understeer = 1.0f;  // New scale: 0.0-2.0, where 1.0 = proportional
     float sop = 1.666f;
     float lateral_load = 0.0f; // New v0.7.121
+    int lat_load_transform = 0; // New v0.7.154 (Issue #282)
     float sop_scale = 1.0f;
     float sop_smoothing = 0.0f;
     float slip_smoothing = 0.002f;
     float min_force = 0.0f;
     float oversteer_boost = 2.52101f;
-    float dynamic_weight_gain = 0.0f; // NEW v0.7.46
-    float dynamic_weight_smoothing = 0.15f; // v0.7.47
+    float long_load_effect = 0.0f; // Renamed from dynamic_weight_gain (#301)
+    float long_load_smoothing = 0.15f; // Renamed from dynamic_weight_smoothing (#301)
+    int long_load_transform = 0; // New #301
     float grip_smoothing_steady = 0.05f;    // v0.7.47
     float grip_smoothing_fast = 0.005f;     // v0.7.47
     float grip_smoothing_sensitivity = 0.1f; // v0.7.47
@@ -2366,8 +2376,9 @@ struct Preset {
     Preset& SetSmoothing(float v) { sop_smoothing = v; return *this; }
     Preset& SetMinForce(float v) { min_force = v; return *this; }
     Preset& SetOversteer(float v) { oversteer_boost = v; return *this; }
-    Preset& SetDynamicWeight(float v) { dynamic_weight_gain = v; return *this; }
-    Preset& SetDynamicWeightSmoothing(float v) { dynamic_weight_smoothing = v; return *this; }
+    Preset& SetLongitudinalLoad(float v) { long_load_effect = v; return *this; }
+    Preset& SetLongitudinalLoadSmoothing(float v) { long_load_smoothing = v; return *this; }
+    Preset& SetLongitudinalLoadTransform(int v) { long_load_transform = v; return *this; }
     Preset& SetGripSmoothing(float steady, float fast, float sens) {
         grip_smoothing_steady = steady;
         grip_smoothing_fast = fast;
@@ -2510,13 +2521,15 @@ struct Preset {
         engine.m_understeer_effect = (std::max)(0.0f, (std::min)(2.0f, understeer));
         engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, sop));
         engine.m_lat_load_effect = (std::max)(0.0f, (std::min)(2.0f, lateral_load));
+        engine.m_lat_load_transform = static_cast<LoadTransform>(std::clamp(lat_load_transform, 0, 3));
         engine.m_sop_scale = (std::max)(0.01f, sop_scale);
         engine.m_sop_smoothing_factor = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing));
         engine.m_slip_angle_smoothing = (std::max)(0.0001f, slip_smoothing);
         engine.m_min_force = (std::max)(0.0f, min_force);
         engine.m_oversteer_boost = (std::max)(0.0f, oversteer_boost);
-        engine.m_dynamic_weight_gain = (std::max)(0.0f, (std::min)(2.0f, dynamic_weight_gain));
-        engine.m_dynamic_weight_smoothing = (std::max)(0.0f, dynamic_weight_smoothing);
+        engine.m_long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));
+        engine.m_long_load_smoothing = (std::max)(0.0f, long_load_smoothing);
+        engine.m_long_load_transform = static_cast<LoadTransform>(std::clamp(long_load_transform, 0, 3));
         engine.m_grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);
         engine.m_grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);
         engine.m_grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);
@@ -2620,13 +2633,15 @@ struct Preset {
         understeer = (std::max)(0.0f, (std::min)(2.0f, understeer));
         sop = (std::max)(0.0f, (std::min)(2.0f, sop));
         lateral_load = (std::max)(0.0f, (std::min)(2.0f, lateral_load));
+        lat_load_transform = std::clamp(lat_load_transform, 0, 3);
         sop_scale = (std::max)(0.01f, sop_scale);
         sop_smoothing = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing));
         slip_smoothing = (std::max)(0.0001f, slip_smoothing);
         min_force = (std::max)(0.0f, min_force);
         oversteer_boost = (std::max)(0.0f, oversteer_boost);
-        dynamic_weight_gain = (std::max)(0.0f, (std::min)(2.0f, dynamic_weight_gain));
-        dynamic_weight_smoothing = (std::max)(0.0f, dynamic_weight_smoothing);
+        long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));
+        long_load_smoothing = (std::max)(0.0f, long_load_smoothing);
+        long_load_transform = std::clamp(long_load_transform, 0, 3);
         grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);
         grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);
         grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);
@@ -2692,13 +2707,15 @@ struct Preset {
         understeer = engine.m_understeer_effect;
         sop = engine.m_sop_effect;
         lateral_load = engine.m_lat_load_effect;
+        lat_load_transform = static_cast<int>(engine.m_lat_load_transform);
         sop_scale = engine.m_sop_scale;
         sop_smoothing = engine.m_sop_smoothing_factor;
         slip_smoothing = engine.m_slip_angle_smoothing;
         min_force = engine.m_min_force;
         oversteer_boost = engine.m_oversteer_boost;
-        dynamic_weight_gain = engine.m_dynamic_weight_gain;
-        dynamic_weight_smoothing = engine.m_dynamic_weight_smoothing;
+        long_load_effect = engine.m_long_load_effect;
+        long_load_smoothing = engine.m_long_load_smoothing;
+        long_load_transform = static_cast<int>(engine.m_long_load_transform);
         grip_smoothing_steady = engine.m_grip_smoothing_steady;
         grip_smoothing_fast = engine.m_grip_smoothing_fast;
         grip_smoothing_sensitivity = engine.m_grip_smoothing_sensitivity;
@@ -2798,13 +2815,15 @@ struct Preset {
         if (!is_near(understeer, p.understeer, eps)) return false;
         if (!is_near(sop, p.sop, eps)) return false;
         if (!is_near(lateral_load, p.lateral_load, eps)) return false;
+        if (lat_load_transform != p.lat_load_transform) return false;
         if (!is_near(sop_scale, p.sop_scale, eps)) return false;
         if (!is_near(sop_smoothing, p.sop_smoothing, eps)) return false;
         if (!is_near(slip_smoothing, p.slip_smoothing, eps)) return false;
         if (!is_near(min_force, p.min_force, eps)) return false;
         if (!is_near(oversteer_boost, p.oversteer_boost, eps)) return false;
-        if (!is_near(dynamic_weight_gain, p.dynamic_weight_gain, eps)) return false;
-        if (!is_near(dynamic_weight_smoothing, p.dynamic_weight_smoothing, eps)) return false;
+        if (!is_near(long_load_effect, p.long_load_effect, eps)) return false;
+        if (!is_near(long_load_smoothing, p.long_load_smoothing, eps)) return false;
+        if (long_load_transform != p.long_load_transform) return false;
         if (!is_near(grip_smoothing_steady, p.grip_smoothing_steady, eps)) return false;
         if (!is_near(grip_smoothing_fast, p.grip_smoothing_fast, eps)) return false;
         if (!is_near(grip_smoothing_sensitivity, p.grip_smoothing_sensitivity, eps)) return false;
@@ -3561,6 +3580,26 @@ using namespace ffb_math;
 FFBEngine::FFBEngine() {
     last_log_time = std::chrono::steady_clock::now();
     Preset::ApplyDefaultsToEngine(*this);
+    m_safety = {}; // Ensure all defaults are applied
+}
+
+void FFBEngine::TriggerSafetyWindow(const char* reason) {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+    double now = m_working_info.mElapsedTime;
+    if (m_safety.safety_timer <= 0.0) {
+        Logger::Get().LogFile("[Safety] Entered Safety Mode (Reason: %s)", reason);
+        StringUtils::SafeCopy(m_safety.last_reset_reason, sizeof(m_safety.last_reset_reason), reason);
+        m_safety.last_reset_log_time = now;
+    } else {
+        // Log reset only if reason changed or significant time passed to avoid spam (Issue #314)
+        if (std::strcmp(m_safety.last_reset_reason, reason) != 0 || now > (m_safety.last_reset_log_time + 1.0)) {
+            Logger::Get().LogFile("[Safety] Reset Safety Mode Timer (Reason: %s)", reason);
+            StringUtils::SafeCopy(m_safety.last_reset_reason, sizeof(m_safety.last_reset_reason), reason);
+            m_safety.last_reset_log_time = now;
+        }
+    }
+    m_safety.safety_timer = SAFETY_WINDOW_DURATION;
+    m_safety.safety_is_seeded = false;
 }
 
 // v0.7.34: Safety Check for Issue #79
@@ -3592,9 +3631,47 @@ bool FFBEngine::IsFFBAllowed(const VehicleScoringInfoV01& scoring, unsigned char
 // If restricted is true (e.g. after finish or lost control), limit is tighter.
 double FFBEngine::ApplySafetySlew(double target_force, double dt, bool restricted) {
     if (!std::isfinite(target_force)) return 0.0;
+
     double max_slew = restricted ? (double)SAFETY_SLEW_RESTRICTED : (double)SAFETY_SLEW_NORMAL;
+
+    // Tighten slew limit during safety window (Issue #303)
+    if (m_safety.safety_timer > 0.0) {
+        double safety_slew = 1.0 / (double)SAFETY_SLEW_FULL_SCALE_TIME_S;
+        max_slew = (std::min)(max_slew, safety_slew);
+    }
+
     double max_change = max_slew * dt;
     double delta = target_force - m_last_output_force;
+
+    // SPIKE DETECTION (Issue #303)
+    // If the physics engine wants a jump larger than our current limit,
+    // monitor for sustained high-slew rates.
+    double requested_rate = std::abs(delta) / (dt + EPSILON_DIV);
+    double now = m_working_info.mElapsedTime;
+
+    if (requested_rate > IMMEDIATE_SPIKE_THRESHOLD) {
+        if (now > (m_safety.last_massive_spike_log_time + 1.0)) {
+            Logger::Get().LogFile("[Safety] Massive Spike Detected: Requested Rate=%.1f (Capped at %.1f)",
+                requested_rate, max_slew);
+            m_safety.last_massive_spike_log_time = now;
+        }
+        m_safety.spike_counter = 0;
+        TriggerSafetyWindow("Massive Spike");
+    } else if (requested_rate > SPIKE_DETECTION_THRESHOLD) {
+        m_safety.spike_counter++;
+        if (m_safety.spike_counter >= 5) { // Sustained for 5 frames
+            if (now > (m_safety.last_high_spike_log_time + 1.0)) {
+                Logger::Get().LogFile("[Safety] High Spike Detected: Requested Rate=%.1f (Capped at %.1f)",
+                    requested_rate, max_slew);
+                m_safety.last_high_spike_log_time = now;
+            }
+            m_safety.spike_counter = 0;
+            TriggerSafetyWindow("High Spike");
+        }
+    } else {
+        m_safety.spike_counter = (std::max)(0, m_safety.spike_counter - 1);
+    }
+
     delta = std::clamp(delta, -max_change, max_change);
     m_last_output_force += delta;
     return m_last_output_force;
@@ -3702,7 +3779,7 @@ double FFBEngine::apply_signal_conditioning(double raw_torque, const TelemInfoV0
 }
 
 // Refactored calculate_force
-double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleClass, const char* vehicleName, float genFFBTorque, bool allowed, double override_dt) {
+double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleClass, const char* vehicleName, float genFFBTorque, bool allowed, double override_dt, signed char mControl) {
     if (!data) return 0.0;
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
@@ -3762,6 +3839,23 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Use upsampled data pointer for all calculations
     const TelemInfoV01* upsampled_data = &m_working_info;
 
+    // --- SAFETY & TRANSITION LOGIC ---
+    if (m_safety.last_allowed && !allowed) {
+        Logger::Get().LogFile("[Safety] FFB Muted (Reason: %s)", upsampled_data->mElapsedTime > 0 ? "Game/State Mute" : "Initialization");
+    } else if (!m_safety.last_allowed && allowed) {
+        Logger::Get().LogFile("[Safety] FFB Unmuted");
+        TriggerSafetyWindow("FFB Unmuted");
+    }
+    m_safety.last_allowed = allowed;
+
+    if (mControl != m_safety.last_mControl) {
+        if (m_safety.last_mControl != -2) { // Skip first frame
+            Logger::Get().LogFile("[Safety] mControl Transition: %d -> %d", (int)m_safety.last_mControl, (int)mControl);
+            TriggerSafetyWindow("Control Transition");
+        }
+        m_safety.last_mControl = mControl;
+    }
+
     // Transition Logic: Reset filters when entering "Muted" state (e.g. Garage/AI)
     // to clear out high-frequency residuals from the driving session.
     if (m_was_allowed && !allowed) {
@@ -3787,6 +3881,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_accel_x_smoothed = 0.0;
         m_accel_z_smoothed = 0.0;
         m_sop_lat_g_smoothed = 0.0;
+        m_long_load_smoothed = 1.0;
         m_yaw_accel_smoothed = 0.0;
         m_prev_yaw_rate = 0.0;
         m_yaw_rate_seeded = false;
@@ -3802,6 +3897,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // RELIABILITY FIX: Sanitize input torque
     if (!std::isfinite(raw_torque_input)) return 0.0;
+
+    // Reset safety smoothed force if timer is zero to avoid carry-over
+    if (m_safety.safety_timer <= 0.0) {
+        m_safety.safety_smoothed_force = 0.0;
+    }
 
     // --- 0. DYNAMIC NORMALIZATION (Issue #152) ---
     // 1. Contextual Spike Rejection (Lightweight MAD alternative)
@@ -4092,33 +4192,60 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // v0.7.63: Passthrough Logic for Direct Torque (TIC mode)
     double grip_factor_applied = m_torque_passthrough ? 1.0 : ctx.grip_factor;
 
-    // v0.7.46: Dynamic Weight logic
+    // v0.7.46: Longitudinal Load logic (#301)
     if (m_auto_load_normalization_enabled) {
         update_static_load_reference(ctx.avg_front_load, ctx.car_speed, ctx.dt);
     }
-    double dynamic_weight_factor = 1.0;
+    double long_load_factor = 1.0;
 
     // Only apply if enabled AND we have real load data (no warnings)
-    if (m_dynamic_weight_gain > 0.0 && !ctx.frame_warn_load) {
-        double load_ratio = ctx.avg_front_load / m_static_front_load;
+    if (m_long_load_effect > 0.0 && !ctx.frame_warn_load) {
+        double long_load_norm = (ctx.avg_front_load / m_static_front_load) - 1.0;
+        long_load_norm = std::clamp(long_load_norm, -1.0, 1.0);
+
+        // Apply Transformation (#301)
+        switch (m_long_load_transform) {
+            case LoadTransform::CUBIC:
+                long_load_norm = apply_load_transform_cubic(long_load_norm);
+                break;
+            case LoadTransform::QUADRATIC:
+                long_load_norm = apply_load_transform_quadratic(long_load_norm);
+                break;
+            case LoadTransform::HERMITE:
+                long_load_norm = apply_load_transform_hermite(long_load_norm);
+                break;
+            case LoadTransform::LINEAR:
+            default:
+                break;
+        }
+
         // Blend: 1.0 + (Ratio - 1.0) * Gain
-        dynamic_weight_factor = 1.0 + (load_ratio - 1.0) * (double)m_dynamic_weight_gain;
-        dynamic_weight_factor = std::clamp(dynamic_weight_factor, DYNAMIC_WEIGHT_MIN, DYNAMIC_WEIGHT_MAX);
+        long_load_factor = 1.0 + long_load_norm * (double)m_long_load_effect;
+        long_load_factor = std::clamp(long_load_factor, LONG_LOAD_MIN, LONG_LOAD_MAX);
     }
 
-    // Apply Smoothing to Dynamic Weight (v0.7.47)
-    double dw_alpha = ctx.dt / ((double)m_dynamic_weight_smoothing + ctx.dt + EPSILON_DIV);
+    // Apply Smoothing to Longitudinal Load (v0.7.47)
+    double dw_alpha = ctx.dt / ((double)m_long_load_smoothing + ctx.dt + EPSILON_DIV);
     dw_alpha = (std::max)(0.0, (std::min)(1.0, dw_alpha));
-    m_dynamic_weight_smoothed += dw_alpha * (dynamic_weight_factor - m_dynamic_weight_smoothed);
-    dynamic_weight_factor = m_dynamic_weight_smoothed;
+    m_long_load_smoothed += dw_alpha * (long_load_factor - m_long_load_smoothed);
+    long_load_factor = m_long_load_smoothed;
 
     // v0.7.63: Final factor application
-    double dw_factor_applied = m_torque_passthrough ? 1.0 : dynamic_weight_factor;
+    double dw_factor_applied = m_torque_passthrough ? 1.0 : long_load_factor;
     
     double gain_to_apply = (m_torque_source == 1) ? (double)m_ingame_ffb_gain : (double)m_steering_shaft_gain;
-    double output_force = (base_input * gain_to_apply) * dw_factor_applied * grip_factor_applied;
+
+    // Formula Refactor (#301): Longitudinal Load MUST remain a multiplier to maintain
+    // physical aligning torque correctness (zero torque in straight line despite weight shift).
+    double base_steer_force = (base_input * gain_to_apply) * grip_factor_applied;
+    double output_force = base_steer_force * dw_factor_applied;
+
+    // Capture isolated force component for diagnostics ONLY
+    ctx.long_load_force = base_steer_force * (dw_factor_applied - 1.0);
+
     output_force *= ctx.speed_gate;
-    
+    ctx.long_load_force *= ctx.speed_gate;
+
     // B. SoP Lateral (Oversteer)
     calculate_sop_lateral(upsampled_data, ctx);
     
@@ -4158,7 +4285,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // --- 6. SUMMATION (Issue #152 & #153 Split Scaling) ---
     // Split into Structural (Dynamic Normalization) and Texture (Absolute Nm) groups
     // v0.7.77 FIX: Soft Lock moved to Texture group to maintain absolute Nm scaling (Issue #181)
-    double structural_sum = output_force + ctx.sop_base_force + ctx.rear_torque + ctx.yaw_force + ctx.gyro_force +
+    // Note: long_load_force is ALREADY included in output_force as a multiplier.
+    double structural_sum = output_force + ctx.sop_base_force + ctx.lat_load_force + ctx.rear_torque + ctx.yaw_force + ctx.gyro_force +
                             ctx.scrub_drag_force;
 
     // Apply Torque Drop (from Spin/Traction Loss) only to structural physics
@@ -4183,6 +4311,30 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     double norm_force = (di_structural + di_texture) * m_gain;
 
+    // --- SAFETY MITIGATION (Stage 2) ---
+    if (m_safety.safety_timer > 0.0) {
+        // Apply extra gain reduction
+        norm_force *= (double)SAFETY_GAIN_REDUCTION;
+
+        // Apply extra smoothing to the final output to blunt any jitter
+        // Using a 200ms EMA (Issue #314)
+        // On first frame of safety window, seed the smoothed force
+        if (!m_safety.safety_is_seeded) {
+            m_safety.safety_smoothed_force = norm_force;
+            m_safety.safety_is_seeded = true;
+        } else {
+            double safety_alpha = ctx.dt / (SAFETY_SMOOTHING_TAU + ctx.dt);
+            m_safety.safety_smoothed_force += safety_alpha * (norm_force - m_safety.safety_smoothed_force);
+        }
+        norm_force = m_safety.safety_smoothed_force;
+
+        m_safety.safety_timer -= ctx.dt;
+        if (m_safety.safety_timer <= 0.0) {
+            m_safety.safety_timer = 0.0;
+            Logger::Get().LogFile("[Safety] Exited Safety Mode");
+        }
+    }
+
     // Min Force
     // v0.7.85 FIX: Bypass min_force if NOT allowed (e.g. in garage) unless soft lock is significant.
     // This prevents the "grinding" feel from tiny residuals when FFB should be muted.
@@ -4199,6 +4351,21 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     if (m_invert_force) {
         norm_force *= -1.0;
+    }
+
+    // --- FULL TOCK DETECTION (Issue #303) ---
+    if (std::abs(upsampled_data->mUnfilteredSteering) > 0.95 && std::abs(norm_force) > 0.8) {
+        m_safety.tock_timer += ctx.dt;
+        if (m_safety.tock_timer > 1.0) { // Pinned for 1 second
+            if (upsampled_data->mElapsedTime > (m_safety.last_tock_log_time + 5.0)) {
+                Logger::Get().LogFile("[Safety] Full Tock Detected: Force %.2f at %.1f%% lock",
+                    norm_force, upsampled_data->mUnfilteredSteering * 100.0);
+                m_safety.last_tock_log_time = upsampled_data->mElapsedTime;
+            }
+            m_safety.tock_timer = 0.0;
+        }
+    } else {
+        m_safety.tock_timer = (std::max)(0.0, m_safety.tock_timer - ctx.dt);
     }
 
     // --- 8. STATE UPDATES (POST-CALC) ---
@@ -4248,6 +4415,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.total_output = (float)norm_force;
             snap.base_force = (float)base_input;
             snap.sop_force = (float)ctx.sop_unboosted_force; // Use unboosted for snapshot
+            snap.lat_load_force = (float)ctx.lat_load_force;
+            snap.long_load_force = (float)ctx.long_load_force;
             snap.understeer_drop = understeer_drop;
             snap.oversteer_boost = oversteer_boost;
 
@@ -4443,7 +4612,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         frame.slew_limited_g = (float)m_debug_lat_g_slew;
 
         frame.session_peak_torque = (float)m_session_peak_torque;
-        frame.dynamic_weight_factor = (float)dynamic_weight_factor;
+        frame.long_load_factor = (float)long_load_factor;
         frame.structural_mult = (float)m_smoothed_structural_mult;
         frame.vibration_mult = (float)m_smoothed_vibration_mult;
         frame.steering_angle_deg = steering_angle_deg;
@@ -4509,16 +4678,45 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double raw_g = (std::max)(-G_LIMIT_5G * GRAVITY_MS2, (std::min)(G_LIMIT_5G * GRAVITY_MS2, data->mLocalAccel.x));
     double lat_g_accel = (raw_g / GRAVITY_MS2);
 
-    // 2. Normalized Lateral Load Transfer (Issue #213)
+    // 2. Global Normalized Lateral Load Transfer (Chassis Roll) - Issue #306
     double fl_load = data->mWheel[0].mTireLoad;
     double fr_load = data->mWheel[1].mTireLoad;
+    double rl_load = data->mWheel[2].mTireLoad;
+    double rr_load = data->mWheel[3].mTireLoad;
+
     if (ctx.frame_warn_load) {
         fl_load = calculate_kinematic_load(data, 0);
         fr_load = calculate_kinematic_load(data, 1);
+        rl_load = calculate_kinematic_load(data, 2);
+        rr_load = calculate_kinematic_load(data, 3);
     }
-    double total_load = fl_load + fr_load;
-    double lat_load_norm = (total_load > 1.0) ? (fl_load - fr_load) / total_load : 0.0;
+
+    double left_load = fl_load + rl_load;
+    double right_load = fr_load + rr_load;
+    double total_load = left_load + right_load;
+
+    // Issue #321: Use (Right - Left) for global roll feel to avoid inverted sensation and notchiness
+    double lat_load_norm = (total_load > 1.0) ? (right_load - left_load) / total_load : 0.0;
     
+    // Safety clamp before transformation
+    lat_load_norm = std::clamp(lat_load_norm, -1.0, 1.0);
+
+    // Apply Transformation (Issue #282)
+    switch (m_lat_load_transform) {
+        case LoadTransform::CUBIC:
+            lat_load_norm = apply_load_transform_cubic(lat_load_norm);
+            break;
+        case LoadTransform::QUADRATIC:
+            lat_load_norm = apply_load_transform_quadratic(lat_load_norm);
+            break;
+        case LoadTransform::HERMITE:
+            lat_load_norm = apply_load_transform_hermite(lat_load_norm);
+            break;
+        case LoadTransform::LINEAR:
+        default:
+            break;
+    }
+
     // Smoothing: Map 0.0-1.0 slider to 0.1-0.0001s tau
     double smoothness = (double)m_sop_smoothing_factor;
     smoothness = (std::max)(0.0, (std::min)(SMOOTHNESS_LIMIT_0999, smoothness));
@@ -4529,9 +4727,12 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     m_sop_lat_g_smoothed += alpha * (lat_g_accel - m_sop_lat_g_smoothed);
     m_sop_load_smoothed += alpha * (lat_load_norm - m_sop_load_smoothed);
 
-    // Base SoP Force (Combined)
-    double sop_base = (m_sop_lat_g_smoothed * (double)m_sop_effect + m_sop_load_smoothed * (double)m_lat_load_effect) * (double)m_sop_scale;
+    // Base SoP Force (G-based only - Issue #282)
+    double sop_base = (m_sop_lat_g_smoothed * (double)m_sop_effect) * (double)m_sop_scale;
     ctx.sop_unboosted_force = sop_base; // Store for snapshot
+
+    // Independent Lateral Load Force (Issue #282)
+    ctx.lat_load_force = (m_sop_load_smoothed * (double)m_lat_load_effect) * (double)m_sop_scale;
     
     // 2. Oversteer Boost (Grip Differential)
     // Calculate Rear Grip
@@ -4600,6 +4801,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     
     // Apply speed gate to all lateral effects
     ctx.sop_base_force *= ctx.speed_gate;
+    ctx.lat_load_force *= ctx.speed_gate;
     ctx.rear_torque *= ctx.speed_gate;
     ctx.yaw_force *= ctx.speed_gate;
 }
@@ -4772,7 +4974,11 @@ void FFBEngine::calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationCon
             m_spin_phase += freq * ctx.dt * TWO_PI;
             m_spin_phase = std::fmod(m_spin_phase, TWO_PI);
             
-            double amp = severity * m_spin_gain * (double)BASE_NM_SPIN_VIBRATION;
+            // Issue #306: Scale vibration amplitude by rear load factor
+            double current_rear_load = (data->mWheel[2].mTireLoad + data->mWheel[3].mTireLoad) / DUAL_DIVISOR;
+            double rear_load_factor = std::clamp(current_rear_load / (m_static_front_load + 1.0), 0.2, 2.0);
+
+            double amp = severity * m_spin_gain * (double)BASE_NM_SPIN_VIBRATION * rear_load_factor;
             ctx.spin_rumble = std::sin(m_spin_phase) * amp;
         }
     }
@@ -4825,7 +5031,8 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
         if (abs_lat_vel > SCRUB_VEL_THRESHOLD) {
             double fade = (std::min)(1.0, abs_lat_vel / SCRUB_FADE_RANGE); // Fade in over 0.5m/s
             double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
-            ctx.scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade;
+            // Issue #306: Scale by load factor
+            ctx.scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade * ctx.texture_load_factor;
         }
     }
 
@@ -5023,12 +5230,20 @@ static constexpr double DEFAULT_CALC_DT = 0.0025; // 400 Hz (1/400 s)
 
 // ChannelStats moved to PerfStats.h
 
+enum class LoadTransform {
+    LINEAR = 0,
+    CUBIC = 1,
+    QUADRATIC = 2,
+    HERMITE = 3
+};
+
 // 1. Define the Snapshot Struct (Unified FFB + Telemetry)
 struct FFBSnapshot {
     // --- Header A: FFB Components (Outputs) ---
     float total_output;
     float base_force;
     float sop_force;
+    float lat_load_force;   // New v0.7.154 (Issue #282)
     float understeer_drop;
     float oversteer_boost;
     float ffb_rear_torque;  // New v0.4.7
@@ -5041,6 +5256,7 @@ struct FFBSnapshot {
     float texture_spin;
     float texture_bottoming;
     float ffb_abs_pulse;    // New v0.7.53
+    float long_load_force;  // New #301
     float ffb_soft_lock;    // New v0.7.61 (Issue #117)
     float session_peak_torque; // New v0.7.67 (Issue #152)
     float clipping;
@@ -5133,6 +5349,7 @@ struct FFBCalculationContext {
     double grip_factor = 1.0;     // 1.0 = full grip, 0.0 = no grip
     double sop_base_force = 0.0;
     double sop_unboosted_force = 0.0; // For snapshot compatibility
+    double lat_load_force = 0.0;  // New v0.7.154 (Issue #282)
     double rear_torque = 0.0;
     double yaw_force = 0.0;
     double scrub_drag_force = 0.0;
@@ -5140,6 +5357,7 @@ struct FFBCalculationContext {
     double avg_rear_grip = 0.0;
     double calc_rear_lat_force = 0.0;
     double avg_rear_load = 0.0;
+    double long_load_force = 0.0; // New #301
 
     // Effect outputs
     double road_noise = 0.0;
@@ -5168,11 +5386,13 @@ public:
     float m_understeer_effect;
     float m_sop_effect;
     float m_lat_load_effect = 0.0f; // New v0.7.121 (Issue #213 add, not replace)
+    LoadTransform m_lat_load_transform = LoadTransform::LINEAR; // New v0.7.154 (Issue #282)
+    float m_long_load_effect = 0.0f; // Renamed from dynamic_weight_gain (#301)
+    LoadTransform m_long_load_transform = LoadTransform::LINEAR; // New #301
     float m_min_force;
-    float m_dynamic_weight_gain; 
     
     // Smoothing Settings (v0.7.47)
-    float m_dynamic_weight_smoothing;
+    float m_long_load_smoothing; // Renamed from dynamic_weight_smoothing (#301)
     float m_grip_smoothing_steady;
     float m_grip_smoothing_fast;
     float m_grip_smoothing_sensitivity;
@@ -5457,7 +5677,7 @@ public:
     double m_static_front_load = 0.0; 
     bool m_static_load_latched = false;
     double m_smoothed_vibration_mult = 1.0;
-    double m_dynamic_weight_smoothed = 1.0; 
+    double m_long_load_smoothed = 1.0; // Renamed from dynamic_weight_smoothed (#301)
     double m_front_grip_smoothed_state = 1.0; 
     double m_rear_grip_smoothed_state = 1.0;  
 
@@ -5476,6 +5696,23 @@ public:
     double m_torque_ac_smoothed = 0.0; 
     double m_prev_ac_torque = 0.0;
 
+    struct SafetyMonitor {
+        signed char last_mControl = -2;  // Track changes in player control (AI vs PLAYER)
+        double safety_timer = 0.0;      // Remaining duration of the safety window (seconds)
+        double safety_smoothed_force = 0.0; // Current state of the extra smoothing EMA
+        bool safety_is_seeded = false;  // Ensures smoothing EMA starts fresh on each safety trigger
+        int spike_counter = 0;          // Frame counter for sustained high-slew spikes
+        double tock_timer = 0.0;        // Timer for detecting 'Full Tock' (pinned wheel)
+        double last_tock_log_time = -999.0; // Throttling for Tock warning logs
+        double last_reset_log_time = -999.0; // Throttling for Safety Reset logs
+        char last_reset_reason[64] = "";     // Last logged reset reason to detect changes
+        double last_massive_spike_log_time = -999.0; // Throttling for Massive Spike logs
+        double last_high_spike_log_time = -999.0;    // Throttling for High Spike logs
+        bool was_soft_locked = false;       // Track Soft Lock engagement state
+        bool soft_lock_significant = false; // Track when Soft Lock provides high resistance
+        bool last_allowed = true;           // Track FFB mute/unmute transitions
+    } m_safety;
+
     // Telemetry Stats
     ChannelStats s_torque;
     ChannelStats s_front_load;
@@ -5493,6 +5730,7 @@ public:
     FFBEngine();
 
     bool IsFFBAllowed(const VehicleScoringInfoV01& scoring, unsigned char gamePhase) const;
+    void TriggerSafetyWindow(const char* reason);
     double ApplySafetySlew(double target_force, double dt, bool restricted);
     std::vector<FFBSnapshot> GetDebugBatch();
 
@@ -5546,6 +5784,17 @@ private:
     static constexpr double TORQUE_ROLL_AVG_TAU = 1.0;
     static constexpr float  SAFETY_SLEW_NORMAL = 1000.0f;
     static constexpr float  SAFETY_SLEW_RESTRICTED = 100.0f;
+    // --- FFB Safety Constants (Issue #314) ---
+    // SAFETY_SLEW_FULL_SCALE_TIME_S represents the time (in seconds) it would take to slew across 100%
+    // of the DirectInput force range (0.0 to 1.0) during safety mode.
+    // A value of 1.0s means a full-scale jump is blunted to take at least 1 second.
+    static constexpr float  SAFETY_SLEW_FULL_SCALE_TIME_S = 1.0f;
+
+    static constexpr double SAFETY_WINDOW_DURATION = 2.0; // Time to remain in safety mode after a trigger (seconds)
+    static constexpr double SAFETY_GAIN_REDUCTION = 0.3; // Multiplier applied to master gain during safety (0.3 = 70% reduction)
+    static constexpr double SAFETY_SMOOTHING_TAU = 0.2; // Extra smoothing EMA time constant during safety (seconds)
+    static constexpr double SPIKE_DETECTION_THRESHOLD = 500.0; // Rate above which spike counter increments (Units/s)
+    static constexpr double IMMEDIATE_SPIKE_THRESHOLD = 1500.0; // Rate above which safety triggers immediately (Units/s)
     static constexpr float  PEAK_TORQUE_DECAY = 0.005f;
     static constexpr float  PEAK_TORQUE_FLOOR = 1.0f;
     static constexpr float  PEAK_TORQUE_CEILING = 100.0f;
@@ -5572,8 +5821,8 @@ private:
     static constexpr int    STR_MAX_64 = 63;
     static constexpr int    STR_MAX_256 = 255;
     static constexpr int    MISSING_LOAD_WARN_THRESHOLD = 20;
-    static constexpr double DYNAMIC_WEIGHT_MIN = 0.5;
-    static constexpr double DYNAMIC_WEIGHT_MAX = 2.0;
+    static constexpr double LONG_LOAD_MIN = 0.0; // Relaxed #301
+    static constexpr double LONG_LOAD_MAX = 10.0; // Increased #301
     static constexpr double MIN_TAU_S = 0.0001;
     static constexpr double ALPHA_MIN = 0.001;
     static constexpr double ALPHA_MAX = 1.0;
@@ -5698,7 +5947,7 @@ public:
     double calculate_slope_confidence(double dAlpha_dt);
     double calculate_wheel_slip_ratio(const TelemWheelV01& w);
 
-    double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr, float genFFBTorque = 0.0f, bool allowed = true, double override_dt = -1.0);
+    double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr, float genFFBTorque = 0.0f, bool allowed = true, double override_dt = -1.0, signed char mControl = 0);
 
     void UpdateMetadata(const struct SharedMemoryObjectOut& data);
     double apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, FFBCalculationContext& ctx);
@@ -7397,12 +7646,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 2.0f, FormatPct(engine.m_understeer_effect),
             Tooltips::UNDERSTEER_EFFECT);
 
-        FloatSetting("Dynamic Weight", &engine.m_dynamic_weight_gain, 0.0f, 2.0f, FormatPct(engine.m_dynamic_weight_gain),
-            Tooltips::DYNAMIC_WEIGHT);
-
-        FloatSetting("  Weight Smoothing", &engine.m_dynamic_weight_smoothing, 0.000f, 0.500f, "%.3f s",
-            Tooltips::WEIGHT_SMOOTHING);
-
         const char* torque_sources[] = { "Shaft Torque (100Hz Legacy)", "In-Game FFB (400Hz LMU 1.2+)" };
         IntSetting("Torque Source", &engine.m_torque_source, torque_sources, sizeof(torque_sources)/sizeof(torque_sources[0]),
             Tooltips::TORQUE_SOURCE);
@@ -7438,13 +7681,43 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::NextColumn(); ImGui::NextColumn();
     }
 
+    if (ImGui::TreeNodeEx("Load Forces", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
+        ImGui::NextColumn(); ImGui::NextColumn();
+
+        FloatSetting("Lateral Load", &engine.m_lat_load_effect, 0.0f, 10.0f, FormatDecoupled(engine.m_lat_load_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_LOAD);
+
+        const char* load_transforms[] = { "Linear (Raw)", "Cubic (Smooth)", "Quadratic (Broad)", "Hermite (Locked Center)" };
+        int lat_transform = static_cast<int>(engine.m_lat_load_transform);
+        if (GuiWidgets::Combo("  Lateral Transform", &lat_transform, load_transforms, 4, "Mathematical transformation to soften the lateral load limits and remove 'notchiness'.").changed) {
+            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+            engine.m_lat_load_transform = static_cast<LoadTransform>(lat_transform);
+            Config::Save(engine);
+        }
+
+        ImGui::Spacing();
+
+        FloatSetting("Longitudinal Load", &engine.m_long_load_effect, 0.0f, 10.0f, FormatPct(engine.m_long_load_effect), Tooltips::DYNAMIC_WEIGHT);
+        FloatSetting("  Long. Smoothing", &engine.m_long_load_smoothing, 0.000f, 0.500f, "%.3f s", Tooltips::WEIGHT_SMOOTHING);
+
+        int long_transform = static_cast<int>(engine.m_long_load_transform);
+        if (GuiWidgets::Combo("  Long. Transform", &long_transform, load_transforms, 4, "Mathematical transformation to soften the longitudinal load limits and remove 'notchiness'.").changed) {
+            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+            engine.m_long_load_transform = static_cast<LoadTransform>(long_transform);
+            Config::Save(engine);
+        }
+
+        ImGui::TreePop();
+    } else {
+        ImGui::NextColumn(); ImGui::NextColumn();
+    }
+
     if (ImGui::TreeNodeEx("Rear Axle (Oversteer)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
         FloatSetting("Lateral G Boost (Slide)", &engine.m_oversteer_boost, 0.0f, 4.0f, FormatPct(engine.m_oversteer_boost),
             Tooltips::OVERSTEER_BOOST);
         FloatSetting("Lateral G", &engine.m_sop_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_sop_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_G);
-        FloatSetting("Lateral Load", &engine.m_lat_load_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_lat_load_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_LOAD);
+
         FloatSetting("SoP Self-Aligning Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN),
             Tooltips::REAR_ALIGN_TORQUE);
         FloatSetting("Yaw Kick", &engine.m_sop_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK),
@@ -9212,6 +9485,15 @@ void FFBThread() {
 
                 if (!is_stale && g_localData.telemetry.playerHasVehicle) {
                     uint8_t idx = g_localData.telemetry.playerVehicleIdx;
+
+                    // --- LOST FRAME DETECTION (Issue #303) ---
+                    static double last_telem_et = -1.0;
+                    if (last_telem_et > 0.0 && (g_localData.telemetry.telemInfo[idx].mElapsedTime - last_telem_et) > (g_localData.telemetry.telemInfo[idx].mDeltaTime * 1.5)) {
+                        std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+                        g_engine.TriggerSafetyWindow("Lost Frames");
+                    }
+                    last_telem_et = g_localData.telemetry.telemInfo[idx].mElapsedTime;
+
                     if (idx < 104) {
                         auto& scoring = g_localData.scoring.vehScoringInfo[idx];
                         TelemInfoV01* pPlayerTelemetry = &g_localData.telemetry.telemInfo[idx];
@@ -9264,7 +9546,7 @@ void FFBThread() {
                         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
                         bool full_allowed = g_engine.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase) && is_driving;
 
-                        force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025);
+                        force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025, scoring.mControl);
 
                         // v0.7.153: Explicitly target zero force only when player is not in control (Issue #281).
                         // This allows Soft Lock to remain active in the garage and during pause (ControlMode::PLAYER),
@@ -9556,6 +9838,31 @@ inline double apply_adaptive_smoothing(double input, double& prev_out, double dt
 
     prev_out = prev_out + alpha * (input - prev_out);
     return prev_out;
+}
+
+/**
+ * @brief Cubic S-Curve transformation for Load (Lateral or Longitudinal)
+ * f(x) = 1.5x - 0.5x^3
+ */
+inline double apply_load_transform_cubic(double x) {
+    return 1.5 * x - 0.5 * (x * x * x);
+}
+
+/**
+ * @brief Quadratic (Signed) transformation for Load (Lateral or Longitudinal)
+ * f(x) = 2x - x|x|
+ */
+inline double apply_load_transform_quadratic(double x) {
+    return 2.0 * x - x * std::abs(x);
+}
+
+/**
+ * @brief Locked-Center Hermite Spline transformation for Load (Lateral or Longitudinal)
+ * f(x) = x * (1 + |x| - x^2)
+ */
+inline double apply_load_transform_hermite(double x) {
+    double abs_x = std::abs(x);
+    return x * (1.0 + abs_x - (abs_x * abs_x));
 }
 
 // Helper: Calculate Savitzky-Golay First Derivative
@@ -10035,6 +10342,7 @@ private:
 # File: src\SteeringUtils.cpp
 ```cpp
 #include "FFBEngine.h"
+#include "Logger.h"
 #include <cmath>
 #include <algorithm>
 
@@ -10055,6 +10363,11 @@ void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationCont
 
     double abs_steer = std::abs(steer);
     if (abs_steer > 1.0) {
+        if (!m_safety.was_soft_locked) {
+            Logger::Get().LogFile("[Safety] Soft Lock Engaged: Steering %.1f%%", steer * 100.0);
+            m_safety.was_soft_locked = true;
+        }
+
         double excess = abs_steer - 1.0;
         double sign = (steer > 0.0) ? 1.0 : -1.0;
 
@@ -10074,6 +10387,19 @@ void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationCont
 
         // Total Soft Lock force (opposing the steering direction)
         ctx.soft_lock_force = -(spring_nm * sign + damping_nm);
+
+        if (std::abs(ctx.soft_lock_force) > 5.0 && !m_safety.soft_lock_significant) {
+            Logger::Get().LogFile("[Safety] Soft Lock Significant Influence: %.1f Nm", ctx.soft_lock_force);
+            m_safety.soft_lock_significant = true;
+        } else if (std::abs(ctx.soft_lock_force) < 4.0) {
+            m_safety.soft_lock_significant = false;
+        }
+    } else {
+        if (m_safety.was_soft_locked) {
+            Logger::Get().LogFile("[Safety] Soft Lock Disengaged");
+            m_safety.was_soft_locked = false;
+        }
+        m_safety.soft_lock_significant = false;
     }
 }
 
@@ -10206,9 +10532,9 @@ namespace Tooltips {
     inline constexpr const char* STEERING_SHAFT_SMOOTHING = "Low Pass Filter applied ONLY to the raw game force.";
     inline constexpr const char* UNDERSTEER_EFFECT = "Scales how much front grip loss reduces steering force.";
     inline constexpr const char* DYNAMIC_WEIGHT = "Scales steering weight based on longitudinal load transfer.\nHeavier under braking, lighter under acceleration.";
-    inline constexpr const char* WEIGHT_SMOOTHING = "Filters the Dynamic Weight signal to simulate suspension damping.\nHigher = Smoother weight transfer feel, but less instant.\nRecommended: 0.100s - 0.200s.";
+    inline constexpr const char* WEIGHT_SMOOTHING = "Filters the Longitudinal Load signal to simulate suspension damping.\nHigher = Smoother weight transfer feel, but less instant.\nRecommended: 0.100s - 0.200s.";
     inline constexpr const char* TORQUE_SOURCE = "Select the telemetry channel for base steering torque.\nShaft Torque: Standard rF2 physics channel (typically 100Hz).\nIn-Game FFB: New LMU high-frequency channel (native 400Hz). RECOMMENDED.\nThis is the actual FFB signal processed by the game engine.";
-    inline constexpr const char* PURE_PASSTHROUGH = "Bypasses LMUFFB's internal Understeer and Dynamic Weight modulation\nfor the base steering torque.\nRecommended when using In-Game FFB (400Hz) if you prefer\nthe game's native FFB modulation.";
+    inline constexpr const char* PURE_PASSTHROUGH = "Bypasses LMUFFB's internal Understeer and Longitudinal Load modulation\nfor the base steering torque.\nRecommended when using In-Game FFB (400Hz) if you prefer\nthe game's native FFB modulation.";
 
     // Signal Filtering
     inline constexpr const char* FLATSPOT_SUPPRESSION = "Dynamic Notch Filter that targets wheel rotation frequency.\nSuppresses vibrations caused by tire flatspots.";
@@ -12877,7 +13203,7 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_yaw_accel_smoothing = 0.0f;
     engine.m_gyro_smoothing = 0.0f;
     engine.m_chassis_inertia_smoothing = 0.0f;
-    engine.m_dynamic_weight_smoothing = 0.0f;
+    engine.m_long_load_smoothing = 0.0f;
     engine.m_grip_smoothing_steady = 0.0f;
     engine.m_grip_smoothing_fast = 0.0f;
     engine.m_grip_smoothing_sensitivity = 1.0f;
@@ -13446,8 +13772,8 @@ public:
     static void SetDynamicNormalizationEnabled(FFBEngine& e, bool enabled) { e.m_dynamic_normalization_enabled = enabled; }
 
     // Smoothing Test Access
-    static double GetDynamicWeightSmoothed(const FFBEngine& e) { return e.m_dynamic_weight_smoothed; }
-    static void SetDynamicWeightSmoothed(FFBEngine& e, double val) { e.m_dynamic_weight_smoothed = val; }
+    static double GetLongitudinalLoadSmoothed(const FFBEngine& e) { return e.m_long_load_smoothed; }
+    static void SetLongitudinalLoadSmoothed(FFBEngine& e, double val) { e.m_long_load_smoothed = val; }
     static double GetFrontGripSmoothedState(const FFBEngine& e) { return e.m_front_grip_smoothed_state; }
     static void SetFrontGripSmoothedState(FFBEngine& e, double val) { e.m_front_grip_smoothed_state = val; }
     static void SetStaticFrontLoad(FFBEngine& e, double val) { e.m_static_front_load = val; }
@@ -13537,6 +13863,11 @@ public:
     }
     static double GetYawAccelSmoothed(const FFBEngine& e) { return e.m_yaw_accel_smoothed; }
     static void SetLastOutputForce(FFBEngine& e, double val) { e.m_last_output_force = val; }
+
+    static void ResetSafety(FFBEngine& engine) {
+        engine.m_safety = {};
+        engine.m_safety.last_mControl = -2;
+    }
 };
 
 } // namespace FFBEngineTests
