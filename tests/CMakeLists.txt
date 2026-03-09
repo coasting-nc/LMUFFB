@@ -109,6 +109,7 @@ set(TEST_SOURCES
     test_issue_306_lateral_load.cpp
     test_issue_303_safety.cpp
     test_issue_314_safety_v2.cpp
+    test_distribution_bundle.cpp
     ../src/main.cpp
 )
 
@@ -144,7 +145,12 @@ endif()
 
 enable_testing()
 add_executable(run_combined_tests ${TEST_SOURCES})
-target_compile_definitions(run_combined_tests PRIVATE HEADLESS_GUI LMUFFB_UNIT_TEST)
+target_compile_definitions(run_combined_tests PRIVATE 
+    HEADLESS_GUI 
+    LMUFFB_UNIT_TEST 
+    LMU_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+    LMU_BINARY_DIR="${CMAKE_BINARY_DIR}"
+)
 target_link_libraries(run_combined_tests PRIVATE LMUFFB_Core_Fast)
 
 if(WIN32)

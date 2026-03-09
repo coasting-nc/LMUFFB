@@ -282,6 +282,24 @@ target_link_libraries(LMUFFB PRIVATE LMUFFB_Core)
 # Tests
 add_subdirectory(tests)
 
+# Tools Distribution - Automatic Globbing (Issue #317 follow-up)
+file(GLOB TOOL_ROOT_FILES CONFIGURE_DEPENDS 
+    "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/*.py"
+    "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/*.txt"
+    "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/*.md"
+)
+file(GLOB ANALYZER_FILES CONFIGURE_DEPENDS 
+    "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/analyzers/*.py"
+)
+
+set(TOOL_COPY_COMMANDS "")
+foreach(F ${TOOL_ROOT_FILES})
+    list(APPEND TOOL_COPY_COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different "${F}" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/")
+endforeach()
+foreach(F ${ANALYZER_FILES})
+    list(APPEND TOOL_COPY_COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different "${F}" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/analyzers/")
+endforeach()
+
 # Copy Distribution Files & Tools
 add_custom_command(TARGET LMUFFB POST_BUILD
     # README
@@ -289,18 +307,7 @@ add_custom_command(TARGET LMUFFB POST_BUILD
     # Tools folder - Clear and create subfolders
     COMMAND ${CMAKE_COMMAND} -E remove_directory "$<TARGET_FILE_DIR:LMUFFB>/tools"
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/analyzers"
-    # Root level .py files
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/__init__.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/cli.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/loader.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/models.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/plots.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/reports.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/requirements.txt" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/README.md" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/"
-    # Analyzers
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/analyzers/__init__.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/analyzers/"
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/analyzers/slope_analyzer.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/analyzers/"
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/analyzers/yaw_analyzer.py" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/analyzers/"
+    # Execute automatic copy commands
+    ${TOOL_COPY_COMMANDS}
 )
 

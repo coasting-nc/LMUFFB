@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.161] - 2026-03-09
+- **Fixed Log Analyzer Bundling (#317)**:
+  - Added `lateral_analyzer.py` to the application distribution.
+  - Automized the Python tool bundling process in CMake using globbing to ensure all future analyzers are included automatically.
+  - Added a distribution integrity regression test (`tests/test_distribution_bundle.cpp`) to verify build artifacts.
+
 ## [0.7.160] - 2026-03-09
 - **Fixed Inverted Lateral Load (#321)**:
   - Corrected the lateral load sign convention from `Left - Right` to `Right - Left` to fix inverted feel.
