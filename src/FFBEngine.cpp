@@ -20,10 +20,14 @@ FFBEngine::FFBEngine() {
 }
 
 void FFBEngine::TriggerSafetyWindow(const char* reason) {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
     if (m_safety.safety_timer <= 0.0) {
         Logger::Get().LogFile("[Safety] Entered Safety Mode (Reason: %s)", reason);
+    } else {
+        Logger::Get().LogFile("[Safety] Reset Safety Mode Timer (Reason: %s)", reason);
     }
     m_safety.safety_timer = SAFETY_WINDOW_DURATION;
+    m_safety.safety_is_seeded = false;
 }
 
 // v0.7.34: Safety Check for Issue #79
@@ -70,7 +74,12 @@ double FFBEngine::ApplySafetySlew(double target_force, double dt, bool restricte
     // If the physics engine wants a jump larger than our current limit,
     // monitor for sustained high-slew rates.
     double requested_rate = std::abs(delta) / (dt + EPSILON_DIV);
-    if (requested_rate > SPIKE_DETECTION_THRESHOLD) {
+    if (requested_rate > IMMEDIATE_SPIKE_THRESHOLD) {
+        Logger::Get().LogFile("[Safety] Massive Spike Detected: Requested Rate=%.1f (Capped at %.1f)",
+            requested_rate, max_slew);
+        m_safety.spike_counter = 0;
+        TriggerSafetyWindow("Massive Spike");
+    } else if (requested_rate > SPIKE_DETECTION_THRESHOLD) {
         m_safety.spike_counter++;
         if (m_safety.spike_counter >= 5) { // Sustained for 5 frames
             Logger::Get().LogFile("[Safety] High Spike Detected: Requested Rate=%.1f (Capped at %.1f)",
@@ -727,18 +736,22 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         norm_force *= (double)SAFETY_GAIN_REDUCTION;
 
         // Apply extra smoothing to the final output to blunt any jitter
-        // Using a 100ms EMA
+        // Using a 200ms EMA (Issue #314)
         // On first frame of safety window, seed the smoothed force
-        if (m_safety.safety_smoothed_force == 0.0) {
+        if (!m_safety.safety_is_seeded) {
             m_safety.safety_smoothed_force = norm_force;
+            m_safety.safety_is_seeded = true;
         } else {
-            double safety_alpha = ctx.dt / (0.1 + ctx.dt);
+            double safety_alpha = ctx.dt / (SAFETY_SMOOTHING_TAU + ctx.dt);
             m_safety.safety_smoothed_force += safety_alpha * (norm_force - m_safety.safety_smoothed_force);
         }
         norm_force = m_safety.safety_smoothed_force;
 
         m_safety.safety_timer -= ctx.dt;
-        if (m_safety.safety_timer < 0.0) m_safety.safety_timer = 0.0;
+        if (m_safety.safety_timer <= 0.0) {
+            m_safety.safety_timer = 0.0;
+            Logger::Get().LogFile("[Safety] Exited Safety Mode");
+        }
     }
 
     // Min Force

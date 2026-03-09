@@ -58,16 +58,16 @@ void test_issue_303_safety_mitigation() {
 
     std::cout << "  Normal Force: " << normal_force << " | Safety Force: " << safety_force << std::endl;
 
-    // Should be significantly lower (Gain reduction 0.5x)
+    // Should be significantly lower (Gain reduction 0.3x)
     // On first frame of safety window, smoothing is seeded with reduced gain force.
-    ASSERT_NEAR(std::abs(safety_force), std::abs(normal_force) * 0.5, 0.01);
+    ASSERT_NEAR(std::abs(safety_force), std::abs(normal_force) * 0.3, 0.01);
 
     // Test Slew Rate Limitation during safety
     FFBEngineTestAccess::SetLastOutputForce(engine, 0.0);
     // Request a large jump (from 0 to 1.0)
     double slewed = engine.ApplySafetySlew(1.0, 0.0025, false);
-    // Max slew in safety window is 200 units/s. In 2.5ms, max change is 200 * 0.0025 = 0.5
-    ASSERT_NEAR(slewed, 0.5, 0.01);
+    // Max slew in safety window is 100 units/s. In 2.5ms, max change is 100 * 0.0025 = 0.25
+    ASSERT_NEAR(slewed, 0.25, 0.01);
 }
 
 void test_issue_303_spike_detection() {

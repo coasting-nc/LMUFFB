@@ -504,6 +504,7 @@ public:
         signed char last_mControl = -2;
         double safety_timer = 0.0;
         double safety_smoothed_force = 0.0;
+        bool safety_is_seeded = false;
         int spike_counter = 0;
         double tock_timer = 0.0;
         double last_tock_log_time = -999.0;
@@ -583,10 +584,12 @@ private:
     static constexpr double TORQUE_ROLL_AVG_TAU = 1.0;
     static constexpr float  SAFETY_SLEW_NORMAL = 1000.0f;
     static constexpr float  SAFETY_SLEW_RESTRICTED = 100.0f;
-    static constexpr float  SAFETY_SLEW_WINDOW = 200.0f;
+    static constexpr float  SAFETY_SLEW_WINDOW = 100.0f;
     static constexpr double SAFETY_WINDOW_DURATION = 2.0;
-    static constexpr double SAFETY_GAIN_REDUCTION = 0.5;
+    static constexpr double SAFETY_GAIN_REDUCTION = 0.3;
+    static constexpr double SAFETY_SMOOTHING_TAU = 0.2;
     static constexpr double SPIKE_DETECTION_THRESHOLD = 500.0;
+    static constexpr double IMMEDIATE_SPIKE_THRESHOLD = 1500.0;
     static constexpr float  PEAK_TORQUE_DECAY = 0.005f;
     static constexpr float  PEAK_TORQUE_FLOOR = 1.0f;
     static constexpr float  PEAK_TORQUE_CEILING = 100.0f;
