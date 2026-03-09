@@ -38,17 +38,19 @@ The increased restrictiveness is a direct response to user reports of jolts stil
 
 ## Proposed Changes
 
-1.  **Modify `src/FFBEngine.h` to update constants.**
-    - `SAFETY_SLEW_WINDOW`: Reduce from 200.0 to 100.0.
-    - `SAFETY_GAIN_REDUCTION`: Reduce from 0.5 to 0.3.
-    - Add `SAFETY_SMOOTHING_TAU`: Set to 0.2 (200ms).
-    - Add `IMMEDIATE_SPIKE_THRESHOLD`: Set to 1500.0.
-    - **Design Rationale:** Tighter limits are needed because previous limits (200 slew, 0.5 gain) were still allowing felt jolts.
+1.  **Modify `src/FFBEngine.h` to update constants and track state.**
+    - `SAFETY_SLEW_FULL_SCALE_TIME_S`: Set to **1.0**. (Units: Seconds for 100% force transition).
+    - `SAFETY_GAIN_REDUCTION`: Reduce from 0.5 to **0.3**.
+    - Add `SAFETY_SMOOTHING_TAU`: Set to **0.2** (200ms).
+    - Add `IMMEDIATE_SPIKE_THRESHOLD`: Set to **1500.0**.
+    - Add `safety_is_seeded` (bool) and log throttling timestamps to `SafetyMonitor`.
+    - **Design Rationale:** Aggressive blunting (1.0s for full scale slew) is applied to ensure user safety during unstable periods. Mutex protection and re-seeding ensure reliability.
 
 2.  **Update `FFBEngine::TriggerSafetyWindow` in `src/FFBEngine.cpp`.**
-    - If `m_safety.safety_timer > 0.0`, log "[Safety] Reset Safety Mode Timer (Reason: %s)".
-    - Always set `m_safety.safety_timer = SAFETY_WINDOW_DURATION`.
-    - **Design Rationale:** Ensures safety mode persists if multiple events happen (e.g., lost frames followed by a control transition).
+    - Add `std::lock_guard` for thread safety.
+    - If `m_safety.safety_timer > 0.0`, log "[Safety] Reset Safety Mode Timer (Reason: %s)" (Throttled to 1s).
+    - Always set `m_safety.safety_timer = SAFETY_WINDOW_DURATION` and `safety_is_seeded = false`.
+    - **Design Rationale:** Re-seeding on every trigger prevents "smoothing memory" artifacts where the wheel could jump to a stale force value.
 
 3.  **Enhance `FFBEngine::ApplySafetySlew` in `src/FFBEngine.cpp`.**
     - Add an immediate trigger: if `requested_rate > IMMEDIATE_SPIKE_THRESHOLD`, call `TriggerSafetyWindow("Massive Spike")` immediately (no 5-frame wait).
@@ -75,13 +77,12 @@ The increased restrictiveness is a direct response to user reports of jolts stil
 - **Exit Logging:** Completes the lifecycle visibility of safety events.
 
 ## Slew Rate Units of Measure
-The slew rate limits in this project (e.g., `SAFETY_SLEW_WINDOW = 100.0`) are expressed in **normalized force units per second**.
-- In the FFB pipeline, force is normalized to the range `[-1.0, 1.0]`.
-- A limit of 100 units/s means that a full-scale transition (e.g., from 0.0 to 1.0, which is 100% of DirectInput range) is constrained to take at least **10ms** ($1.0 / 100 = 0.01s$).
-- A full-range swing (from -1.0 to 1.0, i.e., 2.0 units) is constrained to **20ms**.
-- This unit of measure differs from hardware drivers (like Simucube or Fanatec) which typically use **Nm/ms**. However, since LMUFFB operates on a normalized signal before it is scaled to the specific wheelbase's peak torque, the "units per second" approach ensures that the safety blunting remains consistent regardless of whether the user has a 5Nm or 25Nm wheel.
-- A 100 units/s cap on a 20Nm wheel corresponds to a slew rate of **2000 Nm/s** (or 2.0 Nm/ms).
-- These limits will be validated through user feedback to ensure they effectively prevent "clacks" and jolts without feeling overly sluggish during recovery.
+The slew rate limits in this project were previously expressed in **normalized force units per second**. To improve intuition, these have been converted to a **Full-Scale Transition Time** constant: `SAFETY_SLEW_FULL_SCALE_TIME_S = 1.0`.
+
+- **Intuition**: This constant represents the minimum time (in seconds) required to complete a 100% full-scale force transition (e.g., from 0.0 to 1.0, or 100% DirectInput range).
+- **Aggressive Blunting**: Setting this to 1.0s means that any violent digital jump (which normally takes 0ms) is blunted to take at least 1 second.
+- **Normalized Context**: In the FFB pipeline, force is normalized to `[-1.0, 1.0]`. A Full-Scale Swing (from -1.0 to 1.0, i.e., 200% range) would take at least **2 seconds**.
+- **Hardware Agnostic**: This time-based approach ensures that safety blunting remains consistent across all wheelbase models. A 1-second transition on a 5Nm wheel and a 25Nm wheel will feel equally "heavy" and safe, preventing "clacks" and jolts during unstable telemetry periods.
 
 ## Test Plan (TDD-Ready)
 1.  `test_safety_timer_reset`: Trigger safety, wait 1s, trigger again, verify timer is back to 2s.
@@ -100,9 +101,16 @@ The slew rate limits in this project (e.g., `SAFETY_SLEW_WINDOW = 100.0`) are ex
 - **Immediate Detection**: The massive spike threshold (1500 units/s) provides a "safety net" for single-frame errors that don't satisfy the 5-frame sustain logic but are large enough to be felt.
 - **Timer Persistence**: Resetting the timer on subsequent safety events ensures that complex transitions (e.g., lost frames immediately followed by AI takeover) are handled as a single continuous safety window.
 - **Logging Lifecycle**: The addition of reset and exit logs provides a complete audit trail for safety window activation, which is invaluable for analyzing user-reported jolts from log files.
-- **Test Alignment**: Updated existing `test_issue_303_safety.cpp` assertions to match the new 0.3x/100 restrictiveness levels. All unit tests pass.
+- **Test Alignment**: Updated existing `test_issue_303_safety.cpp` assertions to match the new 0.3x/0.01 restrictiveness levels. All unit tests pass.
 
-## Code Review & Refinement (Iteration 1)
+## Code Review & Refinement (Iteration 1 & 2)
 - **Smoothing Memory Bug**: Fixed a critical bug where the safety EMA smoothing would resume from a stale force value from a previous session. Introduced `safety_is_seeded` flag to ensure EMA is always seeded from the current force upon entering safety mode.
 - **Thread Safety**: Added `std::recursive_mutex` protection to `TriggerSafetyWindow` to ensure safe access to the `SafetyMonitor` state from different threads (e.g. lost frame watchdog vs FFB thread).
-- **Improved Test Coverage**: Added `test_safety_reentry_smoothing` to verify that the smoothing state is correctly reset upon re-entering safety mode after expiry.
+- **Log Throttling**: Implemented a mechanism to prevent log spam during sustained spikes. "Reset Safety Mode Timer" and "Massive/High Spike Detected" logs are now throttled to a maximum frequency of 1Hz per unique reason.
+- **Intuitive Slew Restriction**: Following user guidance, the safety slew rate was converted to a time-based constant `SAFETY_SLEW_FULL_SCALE_TIME_S = 1.0`. This provides aggressive blunting, effectively requiring 1.0 second to transition across the full normalized force range, ensuring that any spikes are rendered completely imperceptible during the 2-second safety window.
+- **Improved Test Coverage**: Added `test_safety_reentry_smoothing` and `test_safety_log_throttling` to verify these refined behaviors.
+
+## Code Review & Refinement (Iteration 3)
+- **Intuitive Slew Rate**: Replaced the hard-to-interpret `units/s` slew rate with a time-based constant `SAFETY_SLEW_FULL_SCALE_TIME_S = 1.0`. This makes the safety mechanism significantly easier to reason about (e.g., "it takes at least 1 second to reach full force during an event").
+- **Variable Shadowing**: Cleaned up code in `TriggerSafetyWindow` where the local variable `now` was unnecessarily re-declared in a nested scope.
+- **Improved Documentation**: Added comprehensive comments to `FFBEngine.h` explaining the meaning and units of every safety monitor member and constant.

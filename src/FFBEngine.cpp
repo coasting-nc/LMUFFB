@@ -21,10 +21,18 @@ FFBEngine::FFBEngine() {
 
 void FFBEngine::TriggerSafetyWindow(const char* reason) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+    double now = m_working_info.mElapsedTime;
     if (m_safety.safety_timer <= 0.0) {
         Logger::Get().LogFile("[Safety] Entered Safety Mode (Reason: %s)", reason);
+        StringUtils::SafeCopy(m_safety.last_reset_reason, sizeof(m_safety.last_reset_reason), reason);
+        m_safety.last_reset_log_time = now;
     } else {
-        Logger::Get().LogFile("[Safety] Reset Safety Mode Timer (Reason: %s)", reason);
+        // Log reset only if reason changed or significant time passed to avoid spam (Issue #314)
+        if (std::strcmp(m_safety.last_reset_reason, reason) != 0 || now > (m_safety.last_reset_log_time + 1.0)) {
+            Logger::Get().LogFile("[Safety] Reset Safety Mode Timer (Reason: %s)", reason);
+            StringUtils::SafeCopy(m_safety.last_reset_reason, sizeof(m_safety.last_reset_reason), reason);
+            m_safety.last_reset_log_time = now;
+        }
     }
     m_safety.safety_timer = SAFETY_WINDOW_DURATION;
     m_safety.safety_is_seeded = false;
@@ -64,7 +72,8 @@ double FFBEngine::ApplySafetySlew(double target_force, double dt, bool restricte
 
     // Tighten slew limit during safety window (Issue #303)
     if (m_safety.safety_timer > 0.0) {
-        max_slew = (std::min)(max_slew, (double)SAFETY_SLEW_WINDOW);
+        double safety_slew = 1.0 / (double)SAFETY_SLEW_FULL_SCALE_TIME_S;
+        max_slew = (std::min)(max_slew, safety_slew);
     }
 
     double max_change = max_slew * dt;
@@ -74,16 +83,24 @@ double FFBEngine::ApplySafetySlew(double target_force, double dt, bool restricte
     // If the physics engine wants a jump larger than our current limit,
     // monitor for sustained high-slew rates.
     double requested_rate = std::abs(delta) / (dt + EPSILON_DIV);
+    double now = m_working_info.mElapsedTime;
+
     if (requested_rate > IMMEDIATE_SPIKE_THRESHOLD) {
-        Logger::Get().LogFile("[Safety] Massive Spike Detected: Requested Rate=%.1f (Capped at %.1f)",
-            requested_rate, max_slew);
+        if (now > (m_safety.last_massive_spike_log_time + 1.0)) {
+            Logger::Get().LogFile("[Safety] Massive Spike Detected: Requested Rate=%.1f (Capped at %.1f)",
+                requested_rate, max_slew);
+            m_safety.last_massive_spike_log_time = now;
+        }
         m_safety.spike_counter = 0;
         TriggerSafetyWindow("Massive Spike");
     } else if (requested_rate > SPIKE_DETECTION_THRESHOLD) {
         m_safety.spike_counter++;
         if (m_safety.spike_counter >= 5) { // Sustained for 5 frames
-            Logger::Get().LogFile("[Safety] High Spike Detected: Requested Rate=%.1f (Capped at %.1f)",
-                requested_rate, max_slew);
+            if (now > (m_safety.last_high_spike_log_time + 1.0)) {
+                Logger::Get().LogFile("[Safety] High Spike Detected: Requested Rate=%.1f (Capped at %.1f)",
+                    requested_rate, max_slew);
+                m_safety.last_high_spike_log_time = now;
+            }
             m_safety.spike_counter = 0;
             TriggerSafetyWindow("High Spike");
         }

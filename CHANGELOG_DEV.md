@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - **Safety fixes for FFB Spikes (2) (#314)**:
   - **Increased Safety Restrictiveness**: Tightened the safety window parameters to further blunt violent jolts:
     - Reduced safety gain factor to **0.3x** (from 0.5x).
-    - Reduced safety slew rate cap to **100 units/s** (from 200 units/s).
+    - **Intuitive Slew Rate**: Converted safety slew rate to a time-based constant. Jumps are now blunted to take at least **1.0 second** for a full-scale (0 to 100%) transition.
     - Increased safety smoothing EMA time constant to **200ms** (from 100ms).
   - **Immediate Massive Spike Detection**: Added a high-priority trigger that activates the safety window immediately if a single frame requested rate exceeds **1500 units/s**, bypassing the 5-frame sustain requirement for smaller spikes.
   - **Persistent Safety Window**: Implemented timer reset logic. If a new safety event (lost frames, control transition, or spike) occurs while the safety window is already active, the 2-second timer is reset to full duration.

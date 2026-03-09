@@ -66,8 +66,8 @@ void test_issue_303_safety_mitigation() {
     FFBEngineTestAccess::SetLastOutputForce(engine, 0.0);
     // Request a large jump (from 0 to 1.0)
     double slewed = engine.ApplySafetySlew(1.0, 0.0025, false);
-    // Max slew in safety window is 100 units/s. In 2.5ms, max change is 100 * 0.0025 = 0.25
-    ASSERT_NEAR(slewed, 0.25, 0.01);
+    // Max slew in safety window is 1.0 units/s. In 2.5ms, max change is 1.0 * 0.0025 = 0.0025
+    ASSERT_NEAR(slewed, 0.0025, 0.001);
 }
 
 void test_issue_303_spike_detection() {

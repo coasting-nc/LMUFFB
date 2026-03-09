@@ -93,12 +93,42 @@ void test_safety_restrictiveness() {
     // Should be near 0.15 (0.5 * 0.3)
     ASSERT_NEAR(std::abs(safety_force), 0.15, 0.01);
 
-    // Test Slew Rate Limitation during safety (capped at 100)
+    // Test Slew Rate Limitation during safety (capped at 1.0)
     FFBEngineTestAccess::SetLastOutputForce(engine, 0.0);
     // Request a large jump (from 0 to 1.0)
     double slewed = engine.ApplySafetySlew(1.0, 0.0025, false);
-    // Max slew in safety window is 100 units/s. In 2.5ms, max change is 100 * 0.0025 = 0.25
-    ASSERT_NEAR(slewed, 0.25, 0.01);
+    // Max slew in safety window is 1.0 unit/s. In 2.5ms, max change is 1.0 * 0.0025 = 0.0025
+    ASSERT_NEAR(slewed, 0.0025, 0.001);
+}
+
+void test_safety_log_throttling() {
+    std::cout << "\nTest: Issue #314 Safety Log Throttling" << std::endl;
+
+    FFBEngine engine;
+    InitializeEngine(engine);
+    FFBEngineTestAccess::ResetSafety(engine);
+
+    // Initial trigger at t=0
+    engine.m_working_info.mElapsedTime = 100.0;
+    engine.TriggerSafetyWindow("Test Reason");
+    ASSERT_EQ(engine.m_safety.last_reset_log_time, 100.0); // Updated on first entry now
+    ASSERT_EQ(std::string(engine.m_safety.last_reset_reason), std::string("Test Reason"));
+
+    // Reset with SAME reason at t=100.1
+    engine.m_working_info.mElapsedTime = 100.1;
+    engine.TriggerSafetyWindow("Test Reason");
+    ASSERT_EQ(engine.m_safety.last_reset_log_time, 100.0); // Should NOT have logged (throttled)
+
+    // Reset with DIFFERENT reason at t=0.2
+    engine.m_working_info.mElapsedTime = 100.2;
+    engine.TriggerSafetyWindow("New Reason");
+    ASSERT_EQ(engine.m_safety.last_reset_log_time, 100.2); // Should HAVE logged (reason changed)
+    ASSERT_EQ(std::string(engine.m_safety.last_reset_reason), std::string("New Reason"));
+
+    // Reset with SAME reason at t=1.3 (>1s later)
+    engine.m_working_info.mElapsedTime = 101.3;
+    engine.TriggerSafetyWindow("New Reason");
+    ASSERT_EQ(engine.m_safety.last_reset_log_time, 101.3); // Should HAVE logged (time passed)
 }
 
 void test_safety_reentry_smoothing() {
@@ -152,6 +182,7 @@ AutoRegister reg_issue_314_safety_v2("Issue #314 Safety Fixes V2", "Issue314", {
     test_safety_timer_reset();
     test_safety_exit_state();
     test_safety_restrictiveness();
+    test_safety_log_throttling();
     test_safety_reentry_smoothing();
 });
 
