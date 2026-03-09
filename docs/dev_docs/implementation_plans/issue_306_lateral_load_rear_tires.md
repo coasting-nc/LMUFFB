@@ -15,7 +15,7 @@ Additionally, the investigation report `docs/dev_docs/investigations/load forces
 > SoP (Seat of the Pants) effects are intended to represent what the driver's body feels—the global movement of the chassis. By incorporating all four wheels into the lateral load calculation, we capture the total roll state of the vehicle, which is physically more accurate for a "body-feel" effect than just monitoring the steering axle.
 
 ## Sign Analysis and Justification
-The sign of the lateral load effect has been flipped to `(Left - Right)` to align with the rF2/LMU coordinate system and ensure the effect adds constructively to the Lateral G-force sensation.
+The sign of the lateral load effect should be set to `(Right - Left)` to ensure it provides a resistive, natural roll sensation that avoids the "notchiness" caused by the inverted `(Left - Right)` convention.
 
 ### 1. Coordinate System Mapping (rF2 / LMU)
 - **Local Acceleration X**: `+X` points to the **LEFT** side of the chassis.

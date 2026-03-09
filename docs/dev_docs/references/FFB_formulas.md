@@ -116,7 +116,13 @@ If `mSuspForce` is missing (encrypted content), tire load is estimated from chas
     *   **Smoothing**: Time-Corrected LPF ($\tau \approx 0.0225 - 0.1\text{s}$ mapped from scalar).
     *   **Formula**: $G_{\text{smooth}} \times K_{\text{sop}} \times K_{\text{sop-scale}} \times K_{\text{decouple}}$.
 
-    *   Amplifies the SoP force when the car is oversteering (Front Grip > Rear Grip).
+2.  **Lateral Load Force ($F_{\text{lat-load}}$)**:
+    *   **Input**: Normalized load difference `(Right - Left) / Total`.
+    *   **Sign**: Negative for Right turns (Load is Left), Positive for Left turns (Load is Right).
+    *   **Formula**: $L_{\text{smooth}} \times K_{\text{lat-load}} \times K_{\text{sop-scale}} \times K_{\text{decouple}}$.
+    *   *Note: This acts as a balancing component to the Lateral G effect.*
+
+3.  **Oversteer Boost**:
     *   **Condition**: `if (FrontGrip > RearGrip) AND (!SlopeDetectionEnabled)`
         *   *Note: Automatically disabled if Slope Detection is active to prevent feedback loops.*
     *   **Formula**: `SoP_Total *= (1.0 + ((FrontGrip - RearGrip) * K_oversteer_boost * 2.0))`

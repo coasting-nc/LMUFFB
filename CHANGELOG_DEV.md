@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.160] - 2026-03-09
+- **Fixed Inverted Lateral Load (#321)**:
+  - Corrected the lateral load sign convention from `Left - Right` to `Right - Left` to fix inverted feel.
+  - This fix also eliminates the "notchiness" sensation which was caused by the incorrect signal feedback direction.
+  - Updated unit tests across the suite (including Issue #306, #282, and #213 regression tests) to align with the new sign convention and orientation matrix.
+- **Updated Documentation** about Lateral Load sign convention.
+
 ## [0.7.159] - 2026-03-09
 - **Disabled Console Window on Windows**:
   - Reconfigured the main application's build target on Windows to use the `WIN32_EXECUTABLE` property.

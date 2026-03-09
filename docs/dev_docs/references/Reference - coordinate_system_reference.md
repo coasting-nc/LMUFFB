@@ -143,6 +143,26 @@ double drag_dir = (avg_lat_vel > 0.0) ? 1.0 : -1.0;  // If left, push right (opp
 
 ---
 
+### 4. Lateral Load Transfer (Body Roll)
+
+**Location**: `FFBEngine.cpp` line ~1135
+
+**Physics**: As the car turns, weight transfers to the outside tires. For a "body feel" effect, we want to simulate the chassis leaning or the wheel weighting up/down accordingly.
+
+**Code**:
+```cpp
+// CORRECT (v0.7.160+):
+double lat_load_norm = (right_load - left_load) / total_load;
+```
+
+**Why**: 
+- **Right Turn**: Weight transfers to the LEFT tires (`left_load > right_load`).
+- **Calculation**: `(Small - Large) / Total` = **Negative** internal value.
+- **Result**: Since it is added to the Positive SoP force, it naturally modulates the total force. If `m_invert_force` is active, this Negative internal value results in a **Positive (Right)** force component, which physically opposes the extreme "pull" of the Lateral G, providing a more balanced and "smooth" feel. 
+- **Historical Note**: Using `(Left - Right)` caused an additive doubling effect that led to "notchiness" and an inverted sensation reported by users in Issue #321.
+
+---
+
 ## Code Examples
 
 ### Example 1: Adding a New Lateral Effect

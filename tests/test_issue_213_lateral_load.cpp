@@ -37,12 +37,12 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_additive, "CorePhysics", (std::vect
     if (!snapshots.empty()) {
         // lat_g_accel = 1.0
         // total_load = 16000. left_load = 6000+4000 = 10000. right_load = 2000+4000 = 6000.
-        // lat_load_norm = (10000-6000)/16000 = 0.25 (Issue #306: Left - Right)
+        // lat_load_norm = (right_load - left_load)/total_load = (6000-10000)/16000 = -0.25 (Issue #306: Right - Left)
         // sop_force (G-only) = 1.0 * 1.0 * 1.0 = 1.0 Nm
-        // lat_load_force = 0.25 * 1.0 * 1.0 = 0.25 Nm
+        // lat_load_force = -0.25 * 1.0 * 1.0 = -0.25 Nm
         std::cout << "[INFO] SoP Force (G): " << snapshots.back().sop_force << " | Lat Load: " << snapshots.back().lat_load_force << std::endl;
         ASSERT_NEAR(snapshots.back().sop_force, 1.0f, 0.1f);
-        ASSERT_NEAR(snapshots.back().lat_load_force, 0.25f, 0.1f);
+        ASSERT_NEAR(snapshots.back().lat_load_force, -0.25f, 0.1f);
     }
 }
 
@@ -76,7 +76,7 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_isolation, "CorePhysics", (std::vec
 
     ASSERT_NEAR(force_g, 1.0f, 0.1f);
     ASSERT_NEAR(force_g_none, 0.0f, 0.1f);
-    ASSERT_NEAR(force_load, 0.25f, 0.1f); // Issue #306: (10000-6000)/16000 = 0.25
+    ASSERT_NEAR(force_load, -0.25f, 0.1f); // Issue #306: (6000-10000)/16000 = -0.25
 }
 
 TEST_CASE_TAGGED(test_issue_213_lateral_load_kinematic, "CorePhysics", (std::vector<std::string>{"Physics", "Issue213"})) {
@@ -107,7 +107,7 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_kinematic, "CorePhysics", (std::vec
         // With 1G Left acceleration, kinematic load should show Left side GAIN load
         // lat_load_norm = (Left - Right) / total -> should be positive
         std::cout << "[INFO] Lat Load Force (Kinematic Fallback): " << snapshots.back().lat_load_force << std::endl;
-        ASSERT_GT(snapshots.back().lat_load_force, 0.01f);
+        ASSERT_LT(snapshots.back().lat_load_force, -0.01f);
     }
 }
 
@@ -126,7 +126,7 @@ TEST_CASE_TAGGED(test_issue_213_orientation_matrix, "CorePhysics", (std::vector<
     // Scenario 1: Right Turn (Centrifugal force LEFT, Load shift LEFT)
     // Game: +X = Left (Centrifugal), Left side > Right side (Load)
     // Expected SoP (G): Positive (Internal)
-    // Expected Lat Load: Positive (Internal, Issue #306: Left - Right)
+    // Expected Lat Load: Negative (Internal, Issue #306: Right - Left)
     // Total FFB: With m_invert_force=true, positive structural sum becomes NEGATIVE output.
     OrientationScenario right_turn = { 9.81, 6000.0, 2000.0, "Right Turn (1G Left Body Force)" };
     VerifyOrientation(engine, right_turn, 1.0f, -1.0f);
@@ -134,7 +134,7 @@ TEST_CASE_TAGGED(test_issue_213_orientation_matrix, "CorePhysics", (std::vector<
     // Scenario 2: Left Turn (Centrifugal force RIGHT, Load shift RIGHT)
     // Game: -X = Right (Centrifugal), Right side > Left side (Load)
     // Expected SoP (G): Negative (Internal)
-    // Expected Lat Load: Negative (Internal)
+    // Expected Lat Load: Positive (Internal)
     // Total FFB: With m_invert_force=true, negative structural sum becomes POSITIVE output.
     OrientationScenario left_turn = { -9.81, 2000.0, 6000.0, "Left Turn (1G Right Body Force)" };
     VerifyOrientation(engine, left_turn, -1.0f, 1.0f);

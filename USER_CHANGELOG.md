@@ -3,6 +3,18 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 9, 2026[/b][/size]
+[b]Version 0.7.160 - Lateral Load Inversion Fix[/b]
+
+[b]New release[/b] (0.7.160): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Fixed Inverted Lateral Load (#321)[/b]: Corrected a logic error where the lateral load effect was pulling the wheel in the wrong direction. The force now correctly correlates with physical load transfer, providing a natural and progressive resistance.
+[*][b]Smooth Feel[/b]: Fixing the inversion also resolved the reported "notchiness" at high loads. The transition across center and through maximum load is now buttery smooth.
+[/list]
+
+---
+
+[size=5][b]March 9, 2026[/b][/size]
 [b]Version 0.7.159 - Disabled Console Window[/b]
 
 [b]New release[/b] (0.7.159): https://github.com/coasting-nc/LMUFFB/releases

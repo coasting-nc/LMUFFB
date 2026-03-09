@@ -1131,8 +1131,8 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double right_load = fr_load + rr_load;
     double total_load = left_load + right_load;
 
-    // Issue #306: Use (Left - Right) for global roll feel
-    double lat_load_norm = (total_load > 1.0) ? (left_load - right_load) / total_load : 0.0;
+    // Issue #321: Use (Right - Left) for global roll feel to avoid inverted sensation and notchiness
+    double lat_load_norm = (total_load > 1.0) ? (right_load - left_load) / total_load : 0.0;
     
     // Safety clamp before transformation
     lat_load_norm = std::clamp(lat_load_norm, -1.0, 1.0);

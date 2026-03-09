@@ -26,7 +26,7 @@ TEST_CASE_TAGGED(test_issue_306_4_wheel_lateral_load, "CorePhysics", (std::vecto
     // Test 1: Only front wheels asymmetric
     // Left = 3000 (FL), Right = 1000 (FR). Rears = 2000.
     // Total = 8000. Left = 3000 + 2000 = 5000. Right = 1000 + 2000 = 3000.
-    // lat_load_norm = (5000 - 3000) / 8000 = 0.25
+    // lat_load_norm = (3000 - 5000) / 8000 = -0.25
     data.mWheel[0].mTireLoad = 3000.0; // FL
     data.mWheel[1].mTireLoad = 1000.0; // FR
     data.mWheel[2].mTireLoad = 2000.0; // RL
@@ -34,11 +34,11 @@ TEST_CASE_TAGGED(test_issue_306_4_wheel_lateral_load, "CorePhysics", (std::vecto
 
     engine.calculate_force(&data);
     snap = engine.GetDebugBatch().back();
-    ASSERT_NEAR(snap.lat_load_force, 0.25f, 0.01f);
+    ASSERT_NEAR(snap.lat_load_force, -0.25f, 0.01f);
 
     // Test 2: Only rear wheels asymmetric (Proves Issue #306 fix)
     // Fronts = 2000. Left = 2000 + 3000 = 5000. Right = 2000 + 1000 = 3000.
-    // lat_load_norm = (5000 - 3000) / 8000 = 0.25
+    // lat_load_norm = (3000 - 5000) / 8000 = -0.25
     data.mWheel[0].mTireLoad = 2000.0;
     data.mWheel[1].mTireLoad = 2000.0;
     data.mWheel[2].mTireLoad = 3000.0; // RL
@@ -46,11 +46,11 @@ TEST_CASE_TAGGED(test_issue_306_4_wheel_lateral_load, "CorePhysics", (std::vecto
 
     engine.calculate_force(&data);
     snap = engine.GetDebugBatch().back();
-    ASSERT_NEAR(snap.lat_load_force, 0.25f, 0.01f);
+    ASSERT_NEAR(snap.lat_load_force, -0.25f, 0.01f);
 
     // Test 3: All wheels asymmetric
     // Left = 3000 + 3000 = 6000. Right = 1000 + 1000 = 2000. Total = 8000.
-    // lat_load_norm = (6000 - 2000) / 8000 = 0.5
+    // lat_load_norm = (2000 - 6000) / 8000 = -0.5
     data.mWheel[0].mTireLoad = 3000.0;
     data.mWheel[1].mTireLoad = 1000.0;
     data.mWheel[2].mTireLoad = 3000.0;
@@ -58,7 +58,7 @@ TEST_CASE_TAGGED(test_issue_306_4_wheel_lateral_load, "CorePhysics", (std::vecto
 
     engine.calculate_force(&data);
     snap = engine.GetDebugBatch().back();
-    ASSERT_NEAR(snap.lat_load_force, 0.5f, 0.01f);
+    ASSERT_NEAR(snap.lat_load_force, -0.5f, 0.01f);
 }
 
 TEST_CASE_TAGGED(test_issue_306_sign_convention, "CorePhysics", (std::vector<std::string>{"Physics", "Issue306"})) {
@@ -82,11 +82,11 @@ TEST_CASE_TAGGED(test_issue_306_sign_convention, "CorePhysics", (std::vector<std
     auto snap = engine.GetDebugBatch().back();
 
     // Lat G accel = 1.0 -> sop_force (G-based) = 1.0
-    // Lat Load norm = (6000 - 2000) / 8000 = 0.5 -> lat_load_force = 0.5
-    // They should now have the SAME sign (Issue #306 fix).
+    // Lat Load norm = (2000 - 6000) / 8000 = -0.5 -> lat_load_force = -0.5
+    // They should now have OPPOSITE signs (Issue #306: fixed inverted feel).
     std::cout << "[INFO] SoP Force (G): " << snap.sop_force << " | Lat Load Force: " << snap.lat_load_force << std::endl;
     ASSERT_GT(snap.sop_force, 0.0f);
-    ASSERT_GT(snap.lat_load_force, 0.0f);
+    ASSERT_LT(snap.lat_load_force, 0.0f);
 }
 
 TEST_CASE_TAGGED(test_issue_306_scrub_drag_scaling, "CorePhysics", (std::vector<std::string>{"Physics", "Issue306"})) {
@@ -189,5 +189,5 @@ TEST_CASE_TAGGED(test_issue_306_kinematic_fallback_4_wheel, "CorePhysics", (std:
     // With 0.5G Lat accel, we expect load transfer.
     // Check if it's positive (Left - Right).
     // centrifugal left -> left gain load -> positive.
-    ASSERT_GT(snap.lat_load_force, 0.0f);
+    ASSERT_LT(snap.lat_load_force, 0.0f);
 }

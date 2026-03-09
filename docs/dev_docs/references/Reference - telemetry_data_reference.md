@@ -160,7 +160,12 @@ The SDK explicitly warns:
     *   **Right Turn**: Car accelerates LEFT (+X).
     *   **Desired Force**: Aligning torque should pull LEFT (+).
     *   **Implementation**: **No Inversion**. Use `+mLocalAccel.x`.
-2.  **Yaw Acceleration (Kick)**:
+2.  **Lateral Load Transfer (Roll)**:
+    *   **Source**: `mTireLoad` (Sum of FR+RR - Sum of FL+RL).
+    *   **Right Turn**: Weight shifts LEFT (`FL+RL` is high).
+    *   **Desired Behavior**: Should provide a resistive/balancing component to the Lateral G.
+    *   **Implementation**: **(Right - Left)**. `norm = (right_load - left_load) / total_load`. Result is **Negative** for Right turns.
+3.  **Yaw Acceleration (Kick)**:
     *   **Source**: `mLocalRotAccel.y` (Rotational Acceleration).
     *   **Right Oversteer**: Car rotates RIGHT (+Y).
     *   **Desired Force**: Counter-steer kick should pull RIGHT (-).
