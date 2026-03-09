@@ -2,6 +2,21 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 9, 2026[/b][/size]
+[b]Version 0.7.155 - Longitudinal Load Overhaul[/b]
+
+[b]New release[/b] (0.7.155): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Longitudinal Load Fixes[/b]: Renamed "Dynamic Weight" to [b]Longitudinal Load[/b] for clarity. The effect has been completely refactored as a separate force addendum, providing more consistent feel and better diagnostic visibility. (#301)
+[*][b]Increased Gain[/b]: Following user feedback, the gain range for Longitudinal Load has been increased 5x (up to 1000%).
+[*][b]Mathematical Transformations[/b]: Added selection for Cubic, Quadratic, and Hermite transformations to Longitudinal Load (similar to Lateral Load), allowing you to soften the effects at the limits for a smoother, less "notchy" feel.
+[*][b]GUI Reorganization[/b]: Introduced a new [b]"Load Forces"[/b] section in the GUI to centralize all load-related settings (Lateral and Longitudinal).
+[*][b]Improved Diagnostics[/b]: Telemetry logs now include dedicated tracking for Longitudinal Load Factor and Force components.
+[/list]
+
+---
+
 [size=5][b]March 8, 2026[/b][/size]
 [b]Version 0.7.150 - Braking Feedback Decoupling[/b]
 

@@ -131,7 +131,7 @@ LOG_FRAME_DTYPE = np.dtype([
     ('slew_limited_g', np.float32),
 
     ('session_peak_torque', np.float32),
-    ('dynamic_weight_factor', np.float32),
+    ('long_load_factor', np.float32),
     ('structural_mult', np.float32),
     ('vibration_mult', np.float32),
     ('steering_angle_deg', np.float32),
@@ -362,7 +362,7 @@ def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
         'slope_torque': 'SlopeTorque',
         'slew_limited_g': 'SlewLimitedG',
         'session_peak_torque': 'SessionPeakTorque',
-        'dynamic_weight_factor': 'DynamicWeight',
+        'long_load_factor': 'LongitudinalLoadFactor',
         'structural_mult': 'StructuralMult',
         'vibration_mult': 'VibrationMult',
         'steering_angle_deg': 'SteeringAngleDeg',

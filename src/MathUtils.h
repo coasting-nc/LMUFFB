@@ -120,26 +120,26 @@ inline double apply_adaptive_smoothing(double input, double& prev_out, double dt
 }
 
 /**
- * @brief Cubic S-Curve transformation for Lateral Load
+ * @brief Cubic S-Curve transformation for Load (Lateral or Longitudinal)
  * f(x) = 1.5x - 0.5x^3
  */
-inline double apply_lat_load_cubic(double x) {
+inline double apply_load_transform_cubic(double x) {
     return 1.5 * x - 0.5 * (x * x * x);
 }
 
 /**
- * @brief Quadratic (Signed) transformation for Lateral Load
+ * @brief Quadratic (Signed) transformation for Load (Lateral or Longitudinal)
  * f(x) = 2x - x|x|
  */
-inline double apply_lat_load_quadratic(double x) {
+inline double apply_load_transform_quadratic(double x) {
     return 2.0 * x - x * std::abs(x);
 }
 
 /**
- * @brief Locked-Center Hermite Spline transformation for Lateral Load
+ * @brief Locked-Center Hermite Spline transformation for Load (Lateral or Longitudinal)
  * f(x) = x * (1 + |x| - x^2)
  */
-inline double apply_lat_load_hermite(double x) {
+inline double apply_load_transform_hermite(double x) {
     double abs_x = std::abs(x);
     return x * (1.0 + abs_x - (abs_x * abs_x));
 }

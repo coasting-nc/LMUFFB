@@ -155,7 +155,7 @@ def test_load_bin_alignment(tmp_path):
         ('slope_numerator', 'f4'), ('slope_denominator', 'f4'), ('hold_timer', 'f4'), ('input_slip_smoothed', 'f4'),
         ('slope_smoothed', 'f4'), ('confidence', 'f4'),
         ('surface_type_fl', 'f4'), ('surface_type_fr', 'f4'), ('slope_torque', 'f4'), ('slew_limited_g', 'f4'),
-        ('session_peak_torque', 'f4'), ('dynamic_weight_factor', 'f4'), ('structural_mult', 'f4'), ('vibration_mult', 'f4'),
+        ('session_peak_torque', 'f4'), ('long_load_factor', 'f4'), ('structural_mult', 'f4'), ('vibration_mult', 'f4'),
         ('steering_angle_deg', 'f4'), ('steering_range_deg', 'f4'), ('debug_freq', 'f4'), ('tire_radius', 'f4'),
         ('ffb_total', 'f4'), ('ffb_base', 'f4'), ('ffb_understeer_drop', 'f4'), ('ffb_oversteer_boost', 'f4'),
         ('ffb_sop', 'f4'), ('ffb_rear_torque', 'f4'), ('ffb_scrub_drag', 'f4'), ('ffb_yaw_kick', 'f4'),

@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.155] - 2026-03-09
+- **Longitudinal Load Overhaul (#301)**:
+  - Renamed "Dynamic Weight" to "Longitudinal Load" throughout the codebase and GUI for clarity and consistency with Lateral Load.
+  - Implemented mathematical transformations (Cubic, Quadratic, and Hermite) for Longitudinal Load to soften limits and provide a smoother feel.
+  - Increased the Longitudinal Load gain range from 2.0 (200%) to 10.0 (1000%) to match user requests for stronger effects.
+  - Decoupled Longitudinal Load from the base steering torque multiplier, moving it to an independent addendum in the structural force summation. This allows for better diagnostic tracking and clearer physical behavior.
+- **GUI Reorganization**:
+  - Introduced a new "Load Forces" section in the GUI, centralizing both Lateral and Longitudinal load settings.
+  - Added transform selection dropdowns for both load types.
+- **Diagnostics and Logging**:
+  - Renamed `dynamic_weight_factor` to `long_load_factor` in telemetry logs.
+  - Added `long_load_force` to FFB snapshots and logging for detailed analysis.
+  - Updated Python Log Analyzer tools to support the new telemetry field names.
+- **Testing**:
+  - Added comprehensive test cases in `tests/test_ffb_long_load.cpp` to verify scaling, transformations, and safety gating.
+  - Updated existing tests to reflect variable renaming.
+
 ## [0.7.154] - 2026-03-08
 - **Enhanced Lateral Load with Mathematical Transformations (Issue #282)**:
   - Implemented mathematical transformations (Cubic, Quadratic, and Locked-Center Hermite Spline) to the Lateral Load effect to eliminate "notchiness" at the limits of load transfer.

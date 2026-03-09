@@ -55,9 +55,9 @@ namespace Tooltips {
     inline constexpr const char* STEERING_SHAFT_SMOOTHING = "Low Pass Filter applied ONLY to the raw game force.";
     inline constexpr const char* UNDERSTEER_EFFECT = "Scales how much front grip loss reduces steering force.";
     inline constexpr const char* DYNAMIC_WEIGHT = "Scales steering weight based on longitudinal load transfer.\nHeavier under braking, lighter under acceleration.";
-    inline constexpr const char* WEIGHT_SMOOTHING = "Filters the Dynamic Weight signal to simulate suspension damping.\nHigher = Smoother weight transfer feel, but less instant.\nRecommended: 0.100s - 0.200s.";
+    inline constexpr const char* WEIGHT_SMOOTHING = "Filters the Longitudinal Load signal to simulate suspension damping.\nHigher = Smoother weight transfer feel, but less instant.\nRecommended: 0.100s - 0.200s.";
     inline constexpr const char* TORQUE_SOURCE = "Select the telemetry channel for base steering torque.\nShaft Torque: Standard rF2 physics channel (typically 100Hz).\nIn-Game FFB: New LMU high-frequency channel (native 400Hz). RECOMMENDED.\nThis is the actual FFB signal processed by the game engine.";
-    inline constexpr const char* PURE_PASSTHROUGH = "Bypasses LMUFFB's internal Understeer and Dynamic Weight modulation\nfor the base steering torque.\nRecommended when using In-Game FFB (400Hz) if you prefer\nthe game's native FFB modulation.";
+    inline constexpr const char* PURE_PASSTHROUGH = "Bypasses LMUFFB's internal Understeer and Longitudinal Load modulation\nfor the base steering torque.\nRecommended when using In-Game FFB (400Hz) if you prefer\nthe game's native FFB modulation.";
 
     // Signal Filtering
     inline constexpr const char* FLATSPOT_SUPPRESSION = "Dynamic Notch Filter that targets wheel rotation frequency.\nSuppresses vibrations caused by tire flatspots.";

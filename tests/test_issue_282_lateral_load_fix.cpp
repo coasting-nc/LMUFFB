@@ -16,7 +16,7 @@ TEST_CASE_TAGGED(test_issue_282_transformations, "CorePhysics", (std::vector<std
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mLocalAccel.x = 0.0;
 
-    auto get_lat_load_force = [&](LatLoadTransform transform, double fl_load, double fr_load) {
+    auto get_lat_load_force = [&](LoadTransform transform, double fl_load, double fr_load) {
         engine.m_lat_load_transform = transform;
         data.mWheel[0].mTireLoad = fl_load;
         data.mWheel[1].mTireLoad = fr_load;
@@ -31,33 +31,33 @@ TEST_CASE_TAGGED(test_issue_282_transformations, "CorePhysics", (std::vector<std
     double x = 0.5;
 
     // Linear: f(x) = x = 0.5
-    ASSERT_NEAR(get_lat_load_force(LatLoadTransform::LINEAR, fl, fr), 0.5f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(LoadTransform::LINEAR, fl, fr), 0.5f, 0.01f);
 
     // Cubic: f(x) = 1.5x - 0.5x^3 = 1.5(0.5) - 0.5(0.5^3) = 0.75 - 0.5(0.125) = 0.75 - 0.0625 = 0.6875
-    ASSERT_NEAR(get_lat_load_force(LatLoadTransform::CUBIC, fl, fr), 0.6875f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(LoadTransform::CUBIC, fl, fr), 0.6875f, 0.01f);
 
     // Quadratic: f(x) = 2x - x|x| = 2(0.5) - 0.5(0.5) = 1.0 - 0.25 = 0.75
-    ASSERT_NEAR(get_lat_load_force(LatLoadTransform::QUADRATIC, fl, fr), 0.75f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(LoadTransform::QUADRATIC, fl, fr), 0.75f, 0.01f);
 
     // Hermite: f(x) = x * (1 + |x| - x^2) = 0.5 * (1 + 0.5 - 0.25) = 0.5 * (1.25) = 0.625
-    ASSERT_NEAR(get_lat_load_force(LatLoadTransform::HERMITE, fl, fr), 0.625f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(LoadTransform::HERMITE, fl, fr), 0.625f, 0.01f);
 
     // Verify symmetry (Negative x)
     // x = (2000 - 6000) / 8000 = -0.5
     fl = 6000.0;
     fr = 2000.0;
-    ASSERT_NEAR(get_lat_load_force(LatLoadTransform::LINEAR, fl, fr), -0.5f, 0.01f);
-    ASSERT_NEAR(get_lat_load_force(LatLoadTransform::CUBIC, fl, fr), -0.6875f, 0.01f);
-    ASSERT_NEAR(get_lat_load_force(LatLoadTransform::QUADRATIC, fl, fr), -0.75f, 0.01f);
-    ASSERT_NEAR(get_lat_load_force(LatLoadTransform::HERMITE, fl, fr), -0.625f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(LoadTransform::LINEAR, fl, fr), -0.5f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(LoadTransform::CUBIC, fl, fr), -0.6875f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(LoadTransform::QUADRATIC, fl, fr), -0.75f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(LoadTransform::HERMITE, fl, fr), -0.625f, 0.01f);
 
     // Verify limit (x = 1.0)
     fl = 0.0;
     fr = 8000.0;
-    ASSERT_NEAR(get_lat_load_force(LatLoadTransform::LINEAR, fl, fr), 1.0f, 0.01f);
-    ASSERT_NEAR(get_lat_load_force(LatLoadTransform::CUBIC, fl, fr), 1.0f, 0.01f);
-    ASSERT_NEAR(get_lat_load_force(LatLoadTransform::QUADRATIC, fl, fr), 1.0f, 0.01f);
-    ASSERT_NEAR(get_lat_load_force(LatLoadTransform::HERMITE, fl, fr), 1.0f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(LoadTransform::LINEAR, fl, fr), 1.0f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(LoadTransform::CUBIC, fl, fr), 1.0f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(LoadTransform::QUADRATIC, fl, fr), 1.0f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(LoadTransform::HERMITE, fl, fr), 1.0f, 0.01f);
 }
 
 TEST_CASE_TAGGED(test_issue_282_sign_inversion, "CorePhysics", (std::vector<std::string>{"Physics", "Issue282"})) {

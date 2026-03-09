@@ -653,8 +653,8 @@ TEST_CASE(test_config_branches_v6, "System") {
         f << "smoothing=0.1\n"; // Legacy support
         f << "min_force=0.01\n";
         f << "oversteer_boost=1.5\n";
-        f << "dynamic_weight_gain=1.2\n";
-        f << "dynamic_weight_smoothing=0.1\n";
+        f << "long_load_effect=1.2\n";
+        f << "long_load_smoothing=0.1\n";
         f << "grip_smoothing_steady=0.01\n";
         f << "grip_smoothing_fast=0.01\n";
         f << "grip_smoothing_sensitivity=0.1\n";

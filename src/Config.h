@@ -37,8 +37,9 @@ struct Preset {
     float slip_smoothing = 0.002f;
     float min_force = 0.0f;
     float oversteer_boost = 2.52101f;
-    float dynamic_weight_gain = 0.0f; // NEW v0.7.46
-    float dynamic_weight_smoothing = 0.15f; // v0.7.47
+    float long_load_effect = 0.0f; // Renamed from dynamic_weight_gain (#301)
+    float long_load_smoothing = 0.15f; // Renamed from dynamic_weight_smoothing (#301)
+    int long_load_transform = 0; // New #301
     float grip_smoothing_steady = 0.05f;    // v0.7.47
     float grip_smoothing_fast = 0.005f;     // v0.7.47
     float grip_smoothing_sensitivity = 0.1f; // v0.7.47
@@ -158,8 +159,9 @@ struct Preset {
     Preset& SetSmoothing(float v) { sop_smoothing = v; return *this; }
     Preset& SetMinForce(float v) { min_force = v; return *this; }
     Preset& SetOversteer(float v) { oversteer_boost = v; return *this; }
-    Preset& SetDynamicWeight(float v) { dynamic_weight_gain = v; return *this; }
-    Preset& SetDynamicWeightSmoothing(float v) { dynamic_weight_smoothing = v; return *this; }
+    Preset& SetLongitudinalLoad(float v) { long_load_effect = v; return *this; }
+    Preset& SetLongitudinalLoadSmoothing(float v) { long_load_smoothing = v; return *this; }
+    Preset& SetLongitudinalLoadTransform(int v) { long_load_transform = v; return *this; }
     Preset& SetGripSmoothing(float steady, float fast, float sens) {
         grip_smoothing_steady = steady;
         grip_smoothing_fast = fast;
@@ -302,14 +304,15 @@ struct Preset {
         engine.m_understeer_effect = (std::max)(0.0f, (std::min)(2.0f, understeer));
         engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, sop));
         engine.m_lat_load_effect = (std::max)(0.0f, (std::min)(2.0f, lateral_load));
-        engine.m_lat_load_transform = static_cast<LatLoadTransform>(std::clamp(lat_load_transform, 0, 3));
+        engine.m_lat_load_transform = static_cast<LoadTransform>(std::clamp(lat_load_transform, 0, 3));
         engine.m_sop_scale = (std::max)(0.01f, sop_scale);
         engine.m_sop_smoothing_factor = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing));
         engine.m_slip_angle_smoothing = (std::max)(0.0001f, slip_smoothing);
         engine.m_min_force = (std::max)(0.0f, min_force);
         engine.m_oversteer_boost = (std::max)(0.0f, oversteer_boost);
-        engine.m_dynamic_weight_gain = (std::max)(0.0f, (std::min)(2.0f, dynamic_weight_gain));
-        engine.m_dynamic_weight_smoothing = (std::max)(0.0f, dynamic_weight_smoothing);
+        engine.m_long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));
+        engine.m_long_load_smoothing = (std::max)(0.0f, long_load_smoothing);
+        engine.m_long_load_transform = static_cast<LoadTransform>(std::clamp(long_load_transform, 0, 3));
         engine.m_grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);
         engine.m_grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);
         engine.m_grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);
@@ -419,8 +422,9 @@ struct Preset {
         slip_smoothing = (std::max)(0.0001f, slip_smoothing);
         min_force = (std::max)(0.0f, min_force);
         oversteer_boost = (std::max)(0.0f, oversteer_boost);
-        dynamic_weight_gain = (std::max)(0.0f, (std::min)(2.0f, dynamic_weight_gain));
-        dynamic_weight_smoothing = (std::max)(0.0f, dynamic_weight_smoothing);
+        long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));
+        long_load_smoothing = (std::max)(0.0f, long_load_smoothing);
+        long_load_transform = std::clamp(long_load_transform, 0, 3);
         grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);
         grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);
         grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);
@@ -492,8 +496,9 @@ struct Preset {
         slip_smoothing = engine.m_slip_angle_smoothing;
         min_force = engine.m_min_force;
         oversteer_boost = engine.m_oversteer_boost;
-        dynamic_weight_gain = engine.m_dynamic_weight_gain;
-        dynamic_weight_smoothing = engine.m_dynamic_weight_smoothing;
+        long_load_effect = engine.m_long_load_effect;
+        long_load_smoothing = engine.m_long_load_smoothing;
+        long_load_transform = static_cast<int>(engine.m_long_load_transform);
         grip_smoothing_steady = engine.m_grip_smoothing_steady;
         grip_smoothing_fast = engine.m_grip_smoothing_fast;
         grip_smoothing_sensitivity = engine.m_grip_smoothing_sensitivity;
@@ -599,8 +604,9 @@ struct Preset {
         if (!is_near(slip_smoothing, p.slip_smoothing, eps)) return false;
         if (!is_near(min_force, p.min_force, eps)) return false;
         if (!is_near(oversteer_boost, p.oversteer_boost, eps)) return false;
-        if (!is_near(dynamic_weight_gain, p.dynamic_weight_gain, eps)) return false;
-        if (!is_near(dynamic_weight_smoothing, p.dynamic_weight_smoothing, eps)) return false;
+        if (!is_near(long_load_effect, p.long_load_effect, eps)) return false;
+        if (!is_near(long_load_smoothing, p.long_load_smoothing, eps)) return false;
+        if (long_load_transform != p.long_load_transform) return false;
         if (!is_near(grip_smoothing_steady, p.grip_smoothing_steady, eps)) return false;
         if (!is_near(grip_smoothing_fast, p.grip_smoothing_fast, eps)) return false;
         if (!is_near(grip_smoothing_sensitivity, p.grip_smoothing_sensitivity, eps)) return false;

@@ -139,8 +139,8 @@ TEST_CASE(test_config_branch_boost, "Config") {
         ofs << "last_device_guid={12345678-1234-1234-1234-1234567890AB}\n";
         ofs << "auto_start_logging=1\nlog_path=./logs\n";
         ofs << "[Tuning]\ngain=1.0\nundersteer=0.5\nsop=1.0\nsop_scale=1.0\n";
-        ofs << "min_force=0.01\noversteer_boost=2.0\ndynamic_weight_gain=0.1\n";
-        ofs << "dynamic_weight_smoothing=0.1\ngrip_smoothing_steady=0.02\n";
+        ofs << "min_force=0.01\noversteer_boost=2.0\nlong_load_effect=0.1\n";
+        ofs << "long_load_smoothing=0.1\ngrip_smoothing_steady=0.02\n";
         ofs << "grip_smoothing_fast=0.001\ngrip_smoothing_sensitivity=0.05\n";
         ofs << "lockup_enabled=1\nlockup_gain=0.5\nlockup_start_pct=5.0\n";
         ofs << "lockup_full_pct=15.0\nlockup_rear_boost=1.5\nlockup_gamma=2.0\n";

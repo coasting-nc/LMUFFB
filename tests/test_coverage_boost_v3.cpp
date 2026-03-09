@@ -149,8 +149,8 @@ TEST_CASE(test_config_exhaustive_keys, "Config") {
         ofs << "slip_angle_smoothing=0.01\ntexture_load_cap=2.0\nmax_load_factor=2.0\n";
         ofs << "brake_load_cap=2.0\nsmoothing=0.5\nundersteer=0.5\n";
         ofs << "base_force_mode=0\ntorque_source=0\ntorque_passthrough=true\n";
-        ofs << "sop=0.5\nmin_force=0.01\noversteer_boost=1.0\ndynamic_weight_gain=0.5\n";
-        ofs << "dynamic_weight_smoothing=0.1\ngrip_smoothing_steady=0.01\n";
+        ofs << "sop=0.5\nmin_force=0.01\noversteer_boost=1.0\nlong_load_effect=0.5\n";
+        ofs << "long_load_smoothing=0.1\ngrip_smoothing_steady=0.01\n";
         ofs << "grip_smoothing_fast=0.01\ngrip_smoothing_sensitivity=0.1\n";
         ofs << "lockup_enabled=1\nlockup_gain=1.0\nlockup_start_pct=5.0\n";
         ofs << "lockup_full_pct=15.0\nlockup_rear_boost=2.0\nlockup_gamma=1.0\n";
