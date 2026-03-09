@@ -3,6 +3,19 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 9, 2026[/b][/size]
+[b]Version 0.7.156 - Refined Lateral Load & Fallbacks[/b]
+
+[b]New release[/b] (0.7.156): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Improved Lateral Load Fallback[/b]: Resolved an issue where the Seat-of-the-Pants lateral load effect would bypass the most accurate fallback data when primary telemetry was missing. The app now prioritizes simulation-derived suspension forces before resorting to kinematic estimation, ensuring higher fidelity feedback for all car classes (including encrypted DLC). (#309)
+[*][b]4-Wheel Load Model[/b]: The Lateral Load transfer calculation has been expanded to use all four wheels. This provides a more comprehensive "global chassis" feel, accurately representing how weight shifts across the entire vehicle. (#306)
+[*][b]Additive Sign Convention[/b]: Corrected the directional calculation for lateral load transfer to a "Left - Right" convention. This ensures that the haptic load force adds to the aligning torque (G-force) sensation, resulting in a more intuitive and physically consistent Seat-of-the-Pants experience.
+[/list]
+
+---
+
+[size=5][b]March 9, 2026[/b][/size]
 [b]Version 0.7.155 - Longitudinal Load Overhaul[/b]
 
 [b]New release[/b] (0.7.155): https://github.com/coasting-nc/LMUFFB/releases

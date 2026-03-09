@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.156] - 2026-03-09
+- **Refined Lateral Load with 4-Wheel Model and Better Fallbacks (Issue #309 & #306)**:
+  - Expanded the Lateral Load transfer calculation in `calculate_sop_lateral` to use all four wheels (FL, FR, RL, RR) for a more comprehensive global chassis representation.
+  - Corrected the load fallback hierarchy in `calculate_sop_lateral`: the engine now attempts to use `approximate_load` (derived from suspension force) before falling back to pure kinematic estimation, ensuring higher fidelity for encrypted DLC content.
+  - Adopted a `Left - Right` sign convention for lateral load transfer. This ensures the effect is additive to the G-force sensation (aligning torque), providing more intuitive Seat-of-the-Pants feedback.
+- **Testing**:
+  - Added `tests/test_issue_309_fallback.cpp` to verify the new fallback hierarchy, 4-wheel contribution, and additive sign convention.
+  - Updated `tests/test_issue_213_lateral_load.cpp` and `tests/test_issue_282_lateral_load_fix.cpp` to reflect the sign convention and architectural changes.
+
 ## [0.7.155] - 2026-03-09
 - **Longitudinal Load Overhaul (#301)**:
   - Renamed "Dynamic Weight" to "Longitudinal Load" throughout the codebase and GUI for clarity and consistency with Lateral Load.

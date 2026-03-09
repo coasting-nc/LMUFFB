@@ -214,6 +214,10 @@ void VerifyOrientation(FFBEngine& engine, const OrientationScenario& scenario, f
     data.mLocalAccel.x = scenario.lat_accel_x;
     data.mWheel[0].mTireLoad = scenario.fl_load;
     data.mWheel[1].mTireLoad = scenario.fr_load;
+    // v0.7.156: Also set rear wheels for 4-wheel load model consistency
+    data.mWheel[2].mTireLoad = scenario.fl_load;
+    data.mWheel[3].mTireLoad = scenario.fr_load;
+
     for (int i = 0; i < 60; i++) engine.calculate_force(&data);
     auto snapshots = engine.GetDebugBatch();
     if (snapshots.empty()) { FAIL_TEST("No snapshots available in VerifyOrientation"); return; }

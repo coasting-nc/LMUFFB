@@ -996,16 +996,26 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double lat_g_accel = (raw_g / GRAVITY_MS2);
 
     // 2. Normalized Lateral Load Transfer (Issue #213)
-    double fl_load = data->mWheel[0].mTireLoad;
-    double fr_load = data->mWheel[1].mTireLoad;
-    if (ctx.frame_warn_load) {
-        fl_load = calculate_kinematic_load(data, 0);
-        fr_load = calculate_kinematic_load(data, 1);
+    // v0.7.156: Extended to all four wheels and corrected fallback hierarchy (Issue #309 & #306)
+    double loads[4];
+    for (int i = 0; i < 4; i++) {
+        loads[i] = data->mWheel[i].mTireLoad;
+        if (ctx.frame_warn_load) {
+            // Priority 1: Approximate from suspension force (if available)
+            if (data->mWheel[i].mSuspForce > MIN_VALID_SUSP_FORCE) {
+                loads[i] = approximate_load(data->mWheel[i]);
+            } else {
+                // Priority 2: Pure kinematic estimation
+                loads[i] = calculate_kinematic_load(data, i);
+            }
+        }
     }
-    double total_load = fl_load + fr_load;
 
-    // Issue #282: Invert sign for perceived correctness (fr - fl instead of fl - fr)
-    double lat_load_norm = (total_load > 1.0) ? (fr_load - fl_load) / total_load : 0.0;
+    double total_load = loads[0] + loads[1] + loads[2] + loads[3];
+
+    // Issue #306: Use Left - Right convention to ensure the effect adds to the G-force sensation.
+    // LMU: +X = Left. Right Turn -> +X G-force (Centripetal pushes Left), Left wheels gain load.
+    double lat_load_norm = (total_load > 1.0) ? ((loads[0] + loads[2]) - (loads[1] + loads[3])) / total_load : 0.0;
     
     // Safety clamp before transformation
     lat_load_norm = std::clamp(lat_load_norm, -1.0, 1.0);
