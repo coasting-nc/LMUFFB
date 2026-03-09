@@ -90,6 +90,7 @@ TEST_CASE(test_long_load_scaling, "Physics") {
 TEST_CASE(test_long_load_safety_gate, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
+    engine.m_understeer_effect = 0.0f; // Disable understeer for pure gate test
     engine.m_auto_load_normalization_enabled = true;
     engine.m_invert_force = false;
     Preset p;

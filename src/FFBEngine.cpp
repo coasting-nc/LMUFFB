@@ -591,12 +591,17 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     
     double gain_to_apply = (m_torque_source == 1) ? (double)m_ingame_ffb_gain : (double)m_steering_shaft_gain;
 
-    // Formula Refactor (#301): Longitudinal Load as separate addendum
-    double output_force = (base_input * gain_to_apply) * grip_factor_applied;
-    ctx.long_load_force = output_force * (dw_factor_applied - 1.0) * ctx.speed_gate;
+    // Formula Refactor (#301): Longitudinal Load MUST remain a multiplier to maintain
+    // physical aligning torque correctness (zero torque in straight line despite weight shift).
+    double base_steer_force = (base_input * gain_to_apply) * grip_factor_applied;
+    double output_force = base_steer_force * dw_factor_applied;
+
+    // Capture isolated force component for diagnostics ONLY
+    ctx.long_load_force = base_steer_force * (dw_factor_applied - 1.0);
 
     output_force *= ctx.speed_gate;
-    
+    ctx.long_load_force *= ctx.speed_gate;
+
     // B. SoP Lateral (Oversteer)
     calculate_sop_lateral(upsampled_data, ctx);
     
@@ -636,7 +641,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // --- 6. SUMMATION (Issue #152 & #153 Split Scaling) ---
     // Split into Structural (Dynamic Normalization) and Texture (Absolute Nm) groups
     // v0.7.77 FIX: Soft Lock moved to Texture group to maintain absolute Nm scaling (Issue #181)
-    double structural_sum = output_force + ctx.sop_base_force + ctx.lat_load_force + ctx.long_load_force + ctx.rear_torque + ctx.yaw_force + ctx.gyro_force +
+    // Note: long_load_force is ALREADY included in output_force as a multiplier.
+    double structural_sum = output_force + ctx.sop_base_force + ctx.lat_load_force + ctx.rear_torque + ctx.yaw_force + ctx.gyro_force +
                             ctx.scrub_drag_force;
 
     // Apply Torque Drop (from Spin/Traction Loss) only to structural physics
