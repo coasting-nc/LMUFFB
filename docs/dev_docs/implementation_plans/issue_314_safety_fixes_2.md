@@ -74,6 +74,15 @@ The increased restrictiveness is a direct response to user reports of jolts stil
 - **Immediate Trigger:** Necessary for spikes that are so large they don't need "confirmation" over multiple frames.
 - **Exit Logging:** Completes the lifecycle visibility of safety events.
 
+## Slew Rate Units of Measure
+The slew rate limits in this project (e.g., `SAFETY_SLEW_WINDOW = 100.0`) are expressed in **normalized force units per second**.
+- In the FFB pipeline, force is normalized to the range `[-1.0, 1.0]`.
+- A limit of 100 units/s means that a full-scale transition (e.g., from 0.0 to 1.0, which is 100% of DirectInput range) is constrained to take at least **10ms** ($1.0 / 100 = 0.01s$).
+- A full-range swing (from -1.0 to 1.0, i.e., 2.0 units) is constrained to **20ms**.
+- This unit of measure differs from hardware drivers (like Simucube or Fanatec) which typically use **Nm/ms**. However, since LMUFFB operates on a normalized signal before it is scaled to the specific wheelbase's peak torque, the "units per second" approach ensures that the safety blunting remains consistent regardless of whether the user has a 5Nm or 25Nm wheel.
+- A 100 units/s cap on a 20Nm wheel corresponds to a slew rate of **2000 Nm/s** (or 2.0 Nm/ms).
+- These limits will be validated through user feedback to ensure they effectively prevent "clacks" and jolts without feeling overly sluggish during recovery.
+
 ## Test Plan (TDD-Ready)
 1.  `test_safety_timer_reset`: Trigger safety, wait 1s, trigger again, verify timer is back to 2s.
 2.  `test_immediate_spike_detection`: Feed a single frame with rate > 1500, verify safety mode active.
