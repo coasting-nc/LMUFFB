@@ -6,8 +6,8 @@ from pathlib import Path
 from lmuffb_log_analyzer.loader import load_log, load_bin
 from lmuffb_log_analyzer.models import SessionMetadata
 
-# v0.7.138: 125 floats (added extrapolated_yaw_accel, derived_yaw_accel)
-NUM_FLOATS = 125
+# v0.7.155: 126 floats (added long_load_force)
+NUM_FLOATS = 126
 
 def create_mock_bin(path: Path):
     """Create a mock binary log file for testing"""
@@ -158,7 +158,7 @@ def test_load_bin_alignment(tmp_path):
         ('session_peak_torque', 'f4'), ('long_load_factor', 'f4'), ('structural_mult', 'f4'), ('vibration_mult', 'f4'),
         ('steering_angle_deg', 'f4'), ('steering_range_deg', 'f4'), ('debug_freq', 'f4'), ('tire_radius', 'f4'),
         ('ffb_total', 'f4'), ('ffb_base', 'f4'), ('ffb_understeer_drop', 'f4'), ('ffb_oversteer_boost', 'f4'),
-        ('ffb_sop', 'f4'), ('ffb_rear_torque', 'f4'), ('ffb_scrub_drag', 'f4'), ('ffb_yaw_kick', 'f4'),
+        ('ffb_sop', 'f4'), ('long_load_force', 'f4'), ('ffb_rear_torque', 'f4'), ('ffb_scrub_drag', 'f4'), ('ffb_yaw_kick', 'f4'),
         ('ffb_gyro_damping', 'f4'), ('ffb_road_texture', 'f4'), ('ffb_slide_texture', 'f4'), ('ffb_lockup_vibration', 'f4'),
         ('ffb_spin_vibration', 'f4'), ('ffb_bottoming_crunch', 'f4'), ('ffb_abs_pulse', 'f4'), ('ffb_soft_lock', 'f4'),
         ('extrapolated_yaw_accel', 'f4'), ('derived_yaw_accel', 'f4'),

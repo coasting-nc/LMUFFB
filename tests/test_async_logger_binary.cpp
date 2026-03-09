@@ -119,10 +119,10 @@ TEST_CASE(test_log_frame_packing, "Logging") {
     // FFB MISC: shaft, gen, grip_factor, speed_gate, load_peak (5) = 20
     // SYSTEM: physics_rate (1) = 4
     // SYSTEM PACKED: clipping(1), warn_bits(1), marker(1) = 3
-    // Total = 16 + 28 + 32 + 128 + 96 + 24 + 8 + 40 + 16 + 32 + 64 + 8 + 20 + 4 + 3 = 519 bytes
+    // Total = 16 + 28 + 32 + 128 + 96 + 24 + 8 + 40 + 16 + 32 + 64 + 8 + 20 + 4 + 3 = 523 bytes
 
     std::cout << "sizeof(LogFrame): " << sizeof(LogFrame) << std::endl;
-    ASSERT_EQ(sizeof(LogFrame), (size_t)519);
+    ASSERT_EQ(sizeof(LogFrame), (size_t)523);
 }
 
 } // namespace FFBEngineTests
