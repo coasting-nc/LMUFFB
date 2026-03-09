@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-09 01:41:13</td>
+            <td class="headerValue">2026-03-09 01:50:38</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryMed">87.5&nbsp;%</td>
@@ -80,9 +80,9 @@
 <span id="L9"><span class="lineNum">       9</span>                 :             : #pragma comment(lib, &quot;wininet.lib&quot;)</span>
 <span id="L10"><span class="lineNum">      10</span>                 :             : #endif</span>
 <span id="L11"><span class="lineNum">      11</span>                 :             : </span>
-<span id="L12"><span class="lineNum">      12</span>                 :<span class="tlaGNC tlaBgGNC">         227 : RestApiProvider&amp; RestApiProvider::Get() {</span></span>
-<span id="L13"><span class="lineNum">      13</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 226 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         227 :     static RestApiProvider instance;</span></span>
-<span id="L14"><span class="lineNum">      14</span>                 :<span class="tlaGNC">         227 :     return instance;</span></span>
+<span id="L12"><span class="lineNum">      12</span>                 :<span class="tlaGNC tlaBgGNC">         228 : RestApiProvider&amp; RestApiProvider::Get() {</span></span>
+<span id="L13"><span class="lineNum">      13</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 227 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         228 :     static RestApiProvider instance;</span></span>
+<span id="L14"><span class="lineNum">      14</span>                 :<span class="tlaGNC">         228 :     return instance;</span></span>
 <span id="L15"><span class="lineNum">      15</span>                 :             : }</span>
 <span id="L16"><span class="lineNum">      16</span>                 :             : </span>
 <span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC">           1 : RestApiProvider::~RestApiProvider() {</span></span>
@@ -111,8 +111,8 @@
 <span id="L40"><span class="lineNum">      40</span>                 :<span class="tlaGNC">           2 :     });</span></span>
 <span id="L41"><span class="lineNum">      41</span>                 :<span class="tlaGNC">           1 : }</span></span>
 <span id="L42"><span class="lineNum">      42</span>                 :             : </span>
-<span id="L43"><span class="lineNum">      43</span>                 :<span class="tlaGNC">         224 : float RestApiProvider::GetFallbackRangeDeg() const {</span></span>
-<span id="L44"><span class="lineNum">      44</span>                 :<span class="tlaGNC">         224 :     return m_fallbackRangeDeg.load();</span></span>
+<span id="L43"><span class="lineNum">      43</span>                 :<span class="tlaGNC">         225 : float RestApiProvider::GetFallbackRangeDeg() const {</span></span>
+<span id="L44"><span class="lineNum">      44</span>                 :<span class="tlaGNC">         225 :     return m_fallbackRangeDeg.load();</span></span>
 <span id="L45"><span class="lineNum">      45</span>                 :             : }</span>
 <span id="L46"><span class="lineNum">      46</span>                 :             : </span>
 <span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaUNC tlaBgUNC">           0 : bool RestApiProvider::IsRequesting() const {</span></span>
