@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.156] - 2026-03-09
+- **Global Lateral Load Transfer (#306)**:
+  - Updated the Lateral Load calculation to include all four tires (`Left - Right`), providing a more comprehensive "Seat of the Pants" (SoP) feel that represents global chassis roll.
+  - Implemented kinematic fallback for all four wheels to ensure consistent FFB feel for cars with encrypted tire load telemetry (DLC).
+  - Adopted the `Left - Right` sign convention to ensure the load-based force adds to the aligning torque sensation.
+- **Physical Realism Enhancements**:
+  - **Scrub Drag Scaling**: Multiplied Scrub Drag resistive force by the tire load factor. This ensures that scrubbing a heavily loaded tire (e.g., understeer under braking) correctly creates more steering column drag.
+  - **Wheel Spin Scaling**: Multiplied Wheel Spin vibration amplitude by a calculated rear load factor. Vibrations are now more violent when spinning loaded tires and lighter when the car is light over a crest.
+- **Testing**:
+  - Added `tests/test_issue_306_lateral_load.cpp` with comprehensive verification for 4-wheel logic, sign convention, and load-based scaling.
+  - Updated legacy tests (`Issue #213`, `Issue #282`) to align with the new global car physics and sign convention.
+
 ## [0.7.155] - 2026-03-09
 - **Longitudinal Load Overhaul (#301)**:
   - Renamed "Dynamic Weight" to "Longitudinal Load" throughout the codebase and GUI for clarity and consistency with Lateral Load.
