@@ -194,6 +194,17 @@ public:
     float m_long_load_effect = 0.0f; // Renamed from dynamic_weight_gain (#301)
     LoadTransform m_long_load_transform = LoadTransform::LINEAR; // New #301
     float m_min_force;
+
+    // FFB Safety Settings (Issue #316)
+    float m_safety_window_duration = DEFAULT_SAFETY_WINDOW_DURATION;
+    float m_safety_gain_reduction = DEFAULT_SAFETY_GAIN_REDUCTION;
+    float m_safety_smoothing_tau = DEFAULT_SAFETY_SMOOTHING_TAU;
+    float m_spike_detection_threshold = DEFAULT_SPIKE_DETECTION_THRESHOLD;
+    float m_immediate_spike_threshold = DEFAULT_IMMEDIATE_SPIKE_THRESHOLD;
+    float m_safety_slew_full_scale_time_s = DEFAULT_SAFETY_SLEW_FULL_SCALE_TIME_S;
+
+    bool  m_stutter_safety_enabled = DEFAULT_STUTTER_SAFETY_ENABLED;
+    float m_stutter_threshold = DEFAULT_STUTTER_THRESHOLD;
     
     // Smoothing Settings (v0.7.47)
     float m_long_load_smoothing; // Renamed from dynamic_weight_smoothing (#301)
@@ -605,17 +616,7 @@ private:
     static constexpr double TORQUE_ROLL_AVG_TAU = 1.0;
     static constexpr float  SAFETY_SLEW_NORMAL = 1000.0f;
     static constexpr float  SAFETY_SLEW_RESTRICTED = 100.0f;
-    // --- FFB Safety Constants (Issue #314) ---
-    // SAFETY_SLEW_FULL_SCALE_TIME_S represents the time (in seconds) it would take to slew across 100%
-    // of the DirectInput force range (0.0 to 1.0) during safety mode.
-    // A value of 1.0s means a full-scale jump is blunted to take at least 1 second.
-    static constexpr float  SAFETY_SLEW_FULL_SCALE_TIME_S = 1.0f;
 
-    static constexpr double SAFETY_WINDOW_DURATION = 2.0; // Time to remain in safety mode after a trigger (seconds)
-    static constexpr double SAFETY_GAIN_REDUCTION = 0.3; // Multiplier applied to master gain during safety (0.3 = 70% reduction)
-    static constexpr double SAFETY_SMOOTHING_TAU = 0.2; // Extra smoothing EMA time constant during safety (seconds)
-    static constexpr double SPIKE_DETECTION_THRESHOLD = 500.0; // Rate above which spike counter increments (Units/s)
-    static constexpr double IMMEDIATE_SPIKE_THRESHOLD = 1500.0; // Rate above which safety triggers immediately (Units/s)
     static constexpr float  PEAK_TORQUE_DECAY = 0.005f;
     static constexpr float  PEAK_TORQUE_FLOOR = 1.0f;
     static constexpr float  PEAK_TORQUE_CEILING = 100.0f;
@@ -662,6 +663,16 @@ private:
     static constexpr double SOP_SMOOTHING_MAX_TAU = 0.1;
 
     // Default Values
+    static constexpr float  DEFAULT_SAFETY_SLEW_FULL_SCALE_TIME_S = 1.0f;
+    static constexpr float  DEFAULT_SAFETY_WINDOW_DURATION = 2.0f;
+    static constexpr float  DEFAULT_SAFETY_GAIN_REDUCTION = 0.3f;
+    static constexpr float  DEFAULT_SAFETY_SMOOTHING_TAU = 0.2f;
+    static constexpr float  DEFAULT_SPIKE_DETECTION_THRESHOLD = 500.0f;
+    static constexpr float  DEFAULT_IMMEDIATE_SPIKE_THRESHOLD = 1500.0f;
+
+    static constexpr bool   DEFAULT_STUTTER_SAFETY_ENABLED = true;
+    static constexpr float  DEFAULT_STUTTER_THRESHOLD = 1.5f;
+
     static constexpr double DEFAULT_CALC_DT = 0.0025;
     static constexpr float  DEFAULT_TEXTURE_LOAD_CAP = 1.5f;
     static constexpr float  DEFAULT_BRAKE_LOAD_CAP = 1.5f;

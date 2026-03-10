@@ -190,6 +190,14 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
                 else if (key == "slope_confidence_max_rate") current_preset.slope_confidence_max_rate = std::stof(value); // NEW v0.7.42
                 else if (key == "rest_api_fallback_enabled") current_preset.rest_api_enabled = (value == "1" || value == "true"); // NEW v0.7.113
                 else if (key == "rest_api_port") current_preset.rest_api_port = std::stoi(value); // NEW v0.7.113
+                else if (key == "safety_window_duration") current_preset.safety_window_duration = std::stof(value);
+                else if (key == "safety_gain_reduction") current_preset.safety_gain_reduction = std::stof(value);
+                else if (key == "safety_smoothing_tau") current_preset.safety_smoothing_tau = std::stof(value);
+                else if (key == "spike_detection_threshold") current_preset.spike_detection_threshold = std::stof(value);
+                else if (key == "immediate_spike_threshold") current_preset.immediate_spike_threshold = std::stof(value);
+                else if (key == "safety_slew_full_scale_time_s") current_preset.safety_slew_full_scale_time_s = std::stof(value);
+                else if (key == "stutter_safety_enabled") current_preset.stutter_safety_enabled = (value == "1" || value == "true");
+                else if (key == "stutter_threshold") current_preset.stutter_threshold = std::stof(value);
             } catch (...) { Logger::Get().Log("[Config] ParsePresetLine Error."); }
         }
     }
@@ -1000,6 +1008,15 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "rest_api_fallback_enabled=" << (p.rest_api_enabled ? "1" : "0") << "\n";
     file << "rest_api_port=" << p.rest_api_port << "\n";
 
+    file << "safety_window_duration=" << p.safety_window_duration << "\n";
+    file << "safety_gain_reduction=" << p.safety_gain_reduction << "\n";
+    file << "safety_smoothing_tau=" << p.safety_smoothing_tau << "\n";
+    file << "spike_detection_threshold=" << p.spike_detection_threshold << "\n";
+    file << "immediate_spike_threshold=" << p.immediate_spike_threshold << "\n";
+    file << "safety_slew_full_scale_time_s=" << p.safety_slew_full_scale_time_s << "\n";
+    file << "stutter_safety_enabled=" << (p.stutter_safety_enabled ? "1" : "0") << "\n";
+    file << "stutter_threshold=" << p.stutter_threshold << "\n";
+
     file << "speed_gate_lower=" << p.speed_gate_lower << "\n";
     file << "speed_gate_upper=" << p.speed_gate_upper << "\n";
 }
@@ -1334,6 +1351,15 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "rest_api_fallback_enabled=" << engine.m_rest_api_enabled << "\n";
         file << "rest_api_port=" << engine.m_rest_api_port << "\n";
 
+        file << "safety_window_duration=" << engine.m_safety_window_duration << "\n";
+        file << "safety_gain_reduction=" << engine.m_safety_gain_reduction << "\n";
+        file << "safety_smoothing_tau=" << engine.m_safety_smoothing_tau << "\n";
+        file << "spike_detection_threshold=" << engine.m_spike_detection_threshold << "\n";
+        file << "immediate_spike_threshold=" << engine.m_immediate_spike_threshold << "\n";
+        file << "safety_slew_full_scale_time_s=" << engine.m_safety_slew_full_scale_time_s << "\n";
+        file << "stutter_safety_enabled=" << engine.m_stutter_safety_enabled << "\n";
+        file << "stutter_threshold=" << engine.m_stutter_threshold << "\n";
+
         file << "\n; --- Advanced Settings ---\n";
         file << "speed_gate_lower=" << engine.m_speed_gate_lower << "\n";
         file << "speed_gate_upper=" << engine.m_speed_gate_upper << "\n";
@@ -1554,8 +1580,15 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                     else if (key == "slope_confidence_max_rate") engine.m_slope_confidence_max_rate = std::stof(value); // NEW v0.7.42
                     else if (key == "rest_api_fallback_enabled") engine.m_rest_api_enabled = (value == "1" || value == "true");
                     else if (key == "rest_api_port") engine.m_rest_api_port = std::stoi(value);
+                    else if (key == "safety_window_duration") engine.m_safety_window_duration = std::stof(value);
+                    else if (key == "safety_gain_reduction") engine.m_safety_gain_reduction = std::stof(value);
+                    else if (key == "safety_smoothing_tau") engine.m_safety_smoothing_tau = std::stof(value);
+                    else if (key == "spike_detection_threshold") engine.m_spike_detection_threshold = std::stof(value);
+                    else if (key == "immediate_spike_threshold") engine.m_immediate_spike_threshold = std::stof(value);
+                    else if (key == "safety_slew_full_scale_time_s") engine.m_safety_slew_full_scale_time_s = std::stof(value);
+                    else if (key == "stutter_safety_enabled") engine.m_stutter_safety_enabled = (value == "1" || value == "true");
+                    else if (key == "stutter_threshold") engine.m_stutter_threshold = std::stof(value);
                 } catch (...) {
-                    Logger::Get().Log("[Config] Error parsing line: %s", line.c_str());
                     Logger::Get().Log("[Config] Error parsing line: %s", line.c_str());
                 }
             }
@@ -1717,6 +1750,16 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     engine.m_soft_lock_stiffness = (std::max)(0.0f, engine.m_soft_lock_stiffness);
     engine.m_soft_lock_damping = (std::max)(0.0f, engine.m_soft_lock_damping);
     engine.m_rest_api_port = (std::max)(1, engine.m_rest_api_port);
+
+    // FFB Safety Validation
+    engine.m_safety_window_duration = (std::max)(0.0f, engine.m_safety_window_duration);
+    engine.m_safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, engine.m_safety_gain_reduction));
+    engine.m_safety_smoothing_tau = (std::max)(0.001f, engine.m_safety_smoothing_tau);
+    engine.m_spike_detection_threshold = (std::max)(1.0f, engine.m_spike_detection_threshold);
+    engine.m_immediate_spike_threshold = (std::max)(1.0f, engine.m_immediate_spike_threshold);
+    engine.m_safety_slew_full_scale_time_s = (std::max)(0.01f, engine.m_safety_slew_full_scale_time_s);
+    engine.m_stutter_threshold = (std::max)(1.01f, engine.m_stutter_threshold);
+
     Logger::Get().LogFile("[Config] Loaded from %s", final_path.c_str());
 }
 

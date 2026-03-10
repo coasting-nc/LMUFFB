@@ -147,6 +147,16 @@ namespace Tooltips {
     inline constexpr const char* AUTO_START_LOGGING = "Automatically start telemetry logging when entering a driving session.";
     inline constexpr const char* LOG_PATH = "Directory where .csv telemetry logs will be saved.";
 
+    // FFB Safety
+    inline constexpr const char* SAFETY_WINDOW_DURATION = "How long to remain in safety mode after a trigger (seconds).\nRecommended: 2.0s.";
+    inline constexpr const char* SAFETY_GAIN_REDUCTION = "Force multiplier applied during safety mode.\n0.3 = 70% reduction.";
+    inline constexpr const char* SAFETY_SMOOTHING_TAU = "Extra smoothing time constant applied during safety mode.\nHigher = Duller/Safer response to spikes.\nRecommended: 0.100s - 0.200s.";
+    inline constexpr const char* SPIKE_DETECTION_THRESHOLD = "The rate of force change (units/s) that increments the spike counter.\nIf sustained for 5 frames, safety mode triggers.\nRecommended: 500.0.";
+    inline constexpr const char* IMMEDIATE_SPIKE_THRESHOLD = "The rate of force change (units/s) that triggers safety mode IMMEDIATELY.\nRecommended: 1500.0.";
+    inline constexpr const char* SAFETY_SLEW_FULL_SCALE_TIME_S = "The minimum time (seconds) to complete a 100% force transition during safety.\n1.0s = A full-scale digital jump takes at least 1 second.\nPrevents violent 'clacks' and jolts.";
+    inline constexpr const char* STUTTER_SAFETY_ENABLE = "Enables FFB reduction when stuttering (lost frames) is detected.\nHelps prevent hardware jolts during game freezes.";
+    inline constexpr const char* STUTTER_THRESHOLD = "Sensitivity to stuttering.\n1.5 = Trigger if frame time > 1.5x expected.\nHigher = Less sensitive.";
+
     // Debug Plots
     inline constexpr const char* PLOT_SELECTED_TORQUE = "The torque value currently being used as the base for FFB calculations.";
     inline constexpr const char* PLOT_SHAFT_TORQUE = "Standard rF2 physics channel (typically 100Hz).";
@@ -173,6 +183,8 @@ namespace Tooltips {
         LOCKUP_VIBRATION, LOCKUP_STRENGTH, BRAKE_LOAD_CAP, VIBRATION_PITCH, LOCKUP_GAMMA, LOCKUP_START_PCT, LOCKUP_FULL_PCT, LOCKUP_PREDICTION_SENS, LOCKUP_BUMP_REJECT, LOCKUP_REAR_BOOST, ABS_PULSE, ABS_PULSE_GAIN, ABS_PULSE_FREQ,
         TEXTURE_LOAD_CAP, VIBRATION_GAIN, SLIDE_RUMBLE, SLIDE_GAIN, SLIDE_PITCH, ROAD_DETAILS, ROAD_GAIN, SPIN_VIBRATION, SPIN_STRENGTH, SPIN_PITCH, SCRUB_DRAG, BOTTOMING_LOGIC,
         MUTE_BELOW, FULL_ABOVE, AUTO_START_LOGGING, LOG_PATH,
+        SAFETY_WINDOW_DURATION, SAFETY_GAIN_REDUCTION, SAFETY_SMOOTHING_TAU, SPIKE_DETECTION_THRESHOLD, IMMEDIATE_SPIKE_THRESHOLD, SAFETY_SLEW_FULL_SCALE_TIME_S,
+        STUTTER_SAFETY_ENABLE, STUTTER_THRESHOLD,
         PLOT_SELECTED_TORQUE, PLOT_SHAFT_TORQUE, PLOT_INGAME_FFB,
         FINE_TUNE
     };
