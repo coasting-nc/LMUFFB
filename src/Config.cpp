@@ -59,6 +59,316 @@ static bool IsVersionLessEqual(const std::string& v1, const std::string& v2) {
     return true;
 }
 
+bool Config::ParseSystemLine(const std::string& key, const std::string& value, Preset& current_preset, std::string& current_preset_version, bool& needs_save, bool& legacy_torque_hack, float& legacy_torque_val) {
+    if (key == "app_version") { current_preset_version = value; return true; }
+    if (key == "gain") { current_preset.gain = std::stof(value); return true; }
+    if (key == "wheelbase_max_nm") { current_preset.wheelbase_max_nm = std::stof(value); return true; }
+    if (key == "target_rim_nm") { current_preset.target_rim_nm = std::stof(value); return true; }
+    if (key == "min_force") { current_preset.min_force = std::stof(value); return true; }
+    if (key == "max_torque_ref") {
+        float old_val = std::stof(value);
+        if (old_val > 40.0f) {
+            current_preset.wheelbase_max_nm = 15.0f;
+            current_preset.target_rim_nm = 10.0f;
+            legacy_torque_hack = true;
+            legacy_torque_val = old_val;
+        } else {
+            current_preset.wheelbase_max_nm = old_val;
+            current_preset.target_rim_nm = old_val;
+        }
+        needs_save = true;
+        return true;
+    }
+    if (key == "rest_api_fallback_enabled") { current_preset.rest_api_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "rest_api_port") { current_preset.rest_api_port = std::stoi(value); return true; }
+    return false;
+}
+
+bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, Preset& current_preset) {
+    if (key == "understeer") {
+        float val = std::stof(value);
+        if (val > 2.0f) val /= 100.0f;
+        current_preset.understeer = (std::min)(2.0f, (std::max)(0.0f, val));
+        return true;
+    }
+    if (key == "steering_shaft_gain") { current_preset.steering_shaft_gain = std::stof(value); return true; }
+    if (key == "ingame_ffb_gain") { current_preset.ingame_ffb_gain = std::stof(value); return true; }
+    if (key == "steering_shaft_smoothing") { current_preset.steering_shaft_smoothing = std::stof(value); return true; }
+    if (key == "torque_source") { current_preset.torque_source = std::stoi(value); return true; }
+    if (key == "torque_passthrough") { current_preset.torque_passthrough = (value == "1" || value == "true"); return true; }
+    if (key == "sop") { current_preset.sop = std::stof(value); return true; }
+    if (key == "lateral_load_effect") { current_preset.lateral_load = std::stof(value); return true; }
+    if (key == "lat_load_transform") { current_preset.lat_load_transform = std::clamp(std::stoi(value), 0, 3); return true; }
+    if (key == "sop_scale") { current_preset.sop_scale = std::stof(value); return true; }
+    if (key == "sop_smoothing_factor") { current_preset.sop_smoothing = std::stof(value); return true; }
+    if (key == "oversteer_boost") { current_preset.oversteer_boost = std::stof(value); return true; }
+    if (key == "long_load_effect" || key == "dynamic_weight_gain") { current_preset.long_load_effect = std::stof(value); return true; }
+    if (key == "long_load_smoothing" || key == "dynamic_weight_smoothing") { current_preset.long_load_smoothing = std::stof(value); return true; }
+    if (key == "long_load_transform") { current_preset.long_load_transform = std::clamp(std::stoi(value), 0, 3); return true; }
+    if (key == "grip_smoothing_steady") { current_preset.grip_smoothing_steady = std::stof(value); return true; }
+    if (key == "grip_smoothing_fast") { current_preset.grip_smoothing_fast = std::stof(value); return true; }
+    if (key == "grip_smoothing_sensitivity") { current_preset.grip_smoothing_sensitivity = std::stof(value); return true; }
+    if (key == "rear_align_effect") { current_preset.rear_align_effect = std::stof(value); return true; }
+    if (key == "sop_yaw_gain") { current_preset.sop_yaw_gain = std::stof(value); return true; }
+    if (key == "yaw_kick_threshold") { current_preset.yaw_kick_threshold = std::stof(value); return true; }
+    if (key == "unloaded_yaw_gain") { current_preset.unloaded_yaw_gain = std::stof(value); return true; }
+    if (key == "unloaded_yaw_threshold") { current_preset.unloaded_yaw_threshold = std::stof(value); return true; }
+    if (key == "unloaded_yaw_sens") { current_preset.unloaded_yaw_sens = std::stof(value); return true; }
+    if (key == "unloaded_yaw_gamma") { current_preset.unloaded_yaw_gamma = std::stof(value); return true; }
+    if (key == "unloaded_yaw_punch") { current_preset.unloaded_yaw_punch = std::stof(value); return true; }
+    if (key == "power_yaw_gain") { current_preset.power_yaw_gain = std::stof(value); return true; }
+    if (key == "power_yaw_threshold") { current_preset.power_yaw_threshold = std::stof(value); return true; }
+    if (key == "power_slip_threshold") { current_preset.power_slip_threshold = std::stof(value); return true; }
+    if (key == "power_yaw_gamma") { current_preset.power_yaw_gamma = std::stof(value); return true; }
+    if (key == "power_yaw_punch") { current_preset.power_yaw_punch = std::stof(value); return true; }
+    if (key == "yaw_accel_smoothing") { current_preset.yaw_smoothing = std::stof(value); return true; }
+    if (key == "gyro_gain") { current_preset.gyro_gain = (std::min)(1.0f, std::stof(value)); return true; }
+    if (key == "gyro_smoothing_factor") { current_preset.gyro_smoothing = std::stof(value); return true; }
+    if (key == "optimal_slip_angle") { current_preset.optimal_slip_angle = std::stof(value); return true; }
+    if (key == "optimal_slip_ratio") { current_preset.optimal_slip_ratio = std::stof(value); return true; }
+    if (key == "slope_detection_enabled") { current_preset.slope_detection_enabled = (value == "1"); return true; }
+    if (key == "slope_sg_window") { current_preset.slope_sg_window = std::stoi(value); return true; }
+    if (key == "slope_sensitivity") { current_preset.slope_sensitivity = std::stof(value); return true; }
+    if (key == "slope_negative_threshold" || key == "slope_min_threshold") { current_preset.slope_min_threshold = std::stof(value); return true; }
+    if (key == "slope_smoothing_tau") { current_preset.slope_smoothing_tau = std::stof(value); return true; }
+    if (key == "slope_max_threshold") { current_preset.slope_max_threshold = std::stof(value); return true; }
+    if (key == "slope_alpha_threshold") { current_preset.slope_alpha_threshold = std::stof(value); return true; }
+    if (key == "slope_decay_rate") { current_preset.slope_decay_rate = std::stof(value); return true; }
+    if (key == "slope_confidence_enabled") { current_preset.slope_confidence_enabled = (value == "1"); return true; }
+    if (key == "slope_g_slew_limit") { current_preset.slope_g_slew_limit = std::stof(value); return true; }
+    if (key == "slope_use_torque") { current_preset.slope_use_torque = (value == "1"); return true; }
+    if (key == "slope_torque_sensitivity") { current_preset.slope_torque_sensitivity = std::stof(value); return true; }
+    if (key == "slope_confidence_max_rate") { current_preset.slope_confidence_max_rate = std::stof(value); return true; }
+    if (key == "slip_angle_smoothing") { current_preset.slip_smoothing = std::stof(value); return true; }
+    if (key == "chassis_inertia_smoothing") { current_preset.chassis_smoothing = std::stof(value); return true; }
+    return false;
+}
+
+bool Config::ParseBrakingLine(const std::string& key, const std::string& value, Preset& current_preset) {
+    if (key == "lockup_enabled") { current_preset.lockup_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "lockup_gain") { current_preset.lockup_gain = std::stof(value); return true; }
+    if (key == "lockup_start_pct") { current_preset.lockup_start_pct = std::stof(value); return true; }
+    if (key == "lockup_full_pct") { current_preset.lockup_full_pct = std::stof(value); return true; }
+    if (key == "lockup_rear_boost") { current_preset.lockup_rear_boost = std::stof(value); return true; }
+    if (key == "lockup_gamma") { current_preset.lockup_gamma = std::stof(value); return true; }
+    if (key == "lockup_prediction_sens") { current_preset.lockup_prediction_sens = std::stof(value); return true; }
+    if (key == "lockup_bump_reject") { current_preset.lockup_bump_reject = std::stof(value); return true; }
+    if (key == "brake_load_cap") { current_preset.brake_load_cap = (std::min)(10.0f, std::stof(value)); return true; }
+    if (key == "abs_pulse_enabled") { current_preset.abs_pulse_enabled = std::stoi(value); return true; }
+    if (key == "abs_gain") { current_preset.abs_gain = std::stof(value); return true; }
+    if (key == "abs_freq") { current_preset.abs_freq = std::stof(value); return true; }
+    if (key == "lockup_freq_scale") { current_preset.lockup_freq_scale = std::stof(value); return true; }
+    return false;
+}
+
+bool Config::ParseVibrationLine(const std::string& key, const std::string& value, Preset& current_preset) {
+    if (key == "texture_load_cap" || key == "max_load_factor") { current_preset.texture_load_cap = std::stof(value); return true; }
+    if (key == "spin_enabled") { current_preset.spin_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "spin_gain") { current_preset.spin_gain = std::stof(value); return true; }
+    if (key == "spin_freq_scale") { current_preset.spin_freq_scale = std::stof(value); return true; }
+    if (key == "slide_enabled") { current_preset.slide_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "slide_gain") { current_preset.slide_gain = std::stof(value); return true; }
+    if (key == "slide_freq") { current_preset.slide_freq = std::stof(value); return true; }
+    if (key == "road_enabled") { current_preset.road_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "road_gain") { current_preset.road_gain = std::stof(value); return true; }
+    if (key == "vibration_gain" || key == "tactile_gain") { current_preset.vibration_gain = std::stof(value); return true; }
+    if (key == "scrub_drag_gain") { current_preset.scrub_drag_gain = std::stof(value); return true; }
+    if (key == "bottoming_method") { current_preset.bottoming_method = std::stoi(value); return true; }
+    if (key == "dynamic_normalization_enabled") { current_preset.dynamic_normalization_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "auto_load_normalization_enabled") { current_preset.auto_load_normalization_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "soft_lock_enabled") { current_preset.soft_lock_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "soft_lock_stiffness") { current_preset.soft_lock_stiffness = std::stof(value); return true; }
+    if (key == "soft_lock_damping") { current_preset.soft_lock_damping = std::stof(value); return true; }
+    if (key == "flatspot_suppression") { current_preset.flatspot_suppression = (value == "1" || value == "true"); return true; }
+    if (key == "notch_q") { current_preset.notch_q = std::stof(value); return true; }
+    if (key == "flatspot_strength") { current_preset.flatspot_strength = std::stof(value); return true; }
+    if (key == "static_notch_enabled") { current_preset.static_notch_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "static_notch_freq") { current_preset.static_notch_freq = std::stof(value); return true; }
+    if (key == "static_notch_width") { current_preset.static_notch_width = std::stof(value); return true; }
+    if (key == "speed_gate_lower") { current_preset.speed_gate_lower = std::stof(value); return true; }
+    if (key == "speed_gate_upper") { current_preset.speed_gate_upper = std::stof(value); return true; }
+    if (key == "road_fallback_scale") { current_preset.road_fallback_scale = std::stof(value); return true; }
+    if (key == "understeer_affects_sop") { current_preset.understeer_affects_sop = std::stoi(value); return true; }
+    return false;
+}
+
+bool Config::ParseSafetyLine(const std::string& key, const std::string& value, Preset& current_preset) {
+    if (key == "safety_window_duration") { current_preset.safety_window_duration = std::stof(value); return true; }
+    if (key == "safety_gain_reduction") { current_preset.safety_gain_reduction = std::stof(value); return true; }
+    if (key == "safety_smoothing_tau") { current_preset.safety_smoothing_tau = std::stof(value); return true; }
+    if (key == "spike_detection_threshold") { current_preset.spike_detection_threshold = std::stof(value); return true; }
+    if (key == "immediate_spike_threshold") { current_preset.immediate_spike_threshold = std::stof(value); return true; }
+    if (key == "safety_slew_full_scale_time_s") { current_preset.safety_slew_full_scale_time_s = std::stof(value); return true; }
+    if (key == "stutter_safety_enabled") { current_preset.stutter_safety_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "stutter_threshold") { current_preset.stutter_threshold = std::stof(value); return true; }
+    return false;
+}
+
+bool Config::SyncSystemLine(const std::string& key, const std::string& value, FFBEngine& engine, std::string& config_version, bool& legacy_torque_hack, float& legacy_torque_val, bool& needs_save) {
+    if (key == "always_on_top") { m_always_on_top = (value == "1" || value == "true"); return true; }
+    if (key == "last_device_guid") { m_last_device_guid = value; return true; }
+    if (key == "last_preset_name") { m_last_preset_name = value; return true; }
+    if (key == "win_pos_x") { win_pos_x = std::stoi(value); return true; }
+    if (key == "win_pos_y") { win_pos_y = std::stoi(value); return true; }
+    if (key == "win_w_small") { win_w_small = std::stoi(value); return true; }
+    if (key == "win_h_small") { win_h_small = std::stoi(value); return true; }
+    if (key == "win_w_large") { win_w_large = std::stoi(value); return true; }
+    if (key == "win_h_large") { win_h_large = std::stoi(value); return true; }
+    if (key == "show_graphs") { show_graphs = (value == "1" || value == "true"); return true; }
+    if (key == "auto_start_logging") { m_auto_start_logging = (value == "1" || value == "true"); return true; }
+    if (key == "log_path") { m_log_path = value; return true; }
+    if (key == "invert_force") { engine.m_invert_force = std::stoi(value); return true; }
+    if (key == "gain") { engine.m_gain = std::stof(value); return true; }
+    if (key == "wheelbase_max_nm") { engine.m_wheelbase_max_nm = std::stof(value); return true; }
+    if (key == "target_rim_nm") { engine.m_target_rim_nm = std::stof(value); return true; }
+    if (key == "min_force") { engine.m_min_force = std::stof(value); return true; }
+    if (key == "max_torque_ref") {
+        float old_val = std::stof(value);
+        if (old_val > 40.0f) {
+            engine.m_wheelbase_max_nm = 15.0f;
+            engine.m_target_rim_nm = 10.0f;
+            legacy_torque_hack = true;
+            legacy_torque_val = old_val;
+        } else {
+            engine.m_wheelbase_max_nm = old_val;
+            engine.m_target_rim_nm = old_val;
+        }
+        needs_save = true;
+        return true;
+    }
+    if (key == "rest_api_fallback_enabled") { engine.m_rest_api_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "rest_api_port") { engine.m_rest_api_port = std::stoi(value); return true; }
+    return false;
+}
+
+bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, FFBEngine& engine, std::string& config_version, bool& needs_save) {
+    if (key == "understeer") {
+        float val = std::stof(value);
+        if (val > 2.0f) val /= 100.0f;
+        engine.m_understeer_effect = (std::min)(2.0f, (std::max)(0.0f, val));
+        return true;
+    }
+    if (key == "steering_shaft_gain") { engine.m_steering_shaft_gain = std::stof(value); return true; }
+    if (key == "ingame_ffb_gain") { engine.m_ingame_ffb_gain = std::stof(value); return true; }
+    if (key == "steering_shaft_smoothing") { engine.m_steering_shaft_smoothing = std::stof(value); return true; }
+    if (key == "torque_source") { engine.m_torque_source = std::stoi(value); return true; }
+    if (key == "torque_passthrough") { engine.m_torque_passthrough = (value == "1" || value == "true"); return true; }
+    if (key == "sop") { engine.m_sop_effect = std::stof(value); return true; }
+    if (key == "lateral_load_effect") { engine.m_lat_load_effect = std::stof(value); return true; }
+    if (key == "lat_load_transform") { engine.m_lat_load_transform = static_cast<LoadTransform>(std::clamp(std::stoi(value), 0, 3)); return true; }
+    if (key == "sop_scale") { engine.m_sop_scale = std::stof(value); return true; }
+    if (key == "sop_smoothing_factor" || key == "smoothing") {
+        float val = std::stof(value);
+        if (IsVersionLessEqual(config_version, "0.7.146")) {
+            val = 0.0f;
+            needs_save = true;
+        }
+        engine.m_sop_smoothing_factor = val;
+        return true;
+    }
+    if (key == "oversteer_boost") { engine.m_oversteer_boost = std::stof(value); return true; }
+    if (key == "long_load_effect" || key == "dynamic_weight_gain") { engine.m_long_load_effect = std::stof(value); return true; }
+    if (key == "long_load_smoothing" || key == "dynamic_weight_smoothing") { engine.m_long_load_smoothing = std::stof(value); return true; }
+    if (key == "long_load_transform") { engine.m_long_load_transform = static_cast<LoadTransform>(std::clamp(std::stoi(value), 0, 3)); return true; }
+    if (key == "grip_smoothing_steady") { engine.m_grip_smoothing_steady = std::stof(value); return true; }
+    if (key == "grip_smoothing_fast") { engine.m_grip_smoothing_fast = std::stof(value); return true; }
+    if (key == "grip_smoothing_sensitivity") { engine.m_grip_smoothing_sensitivity = std::stof(value); return true; }
+    if (key == "rear_align_effect") { engine.m_rear_align_effect = std::stof(value); return true; }
+    if (key == "sop_yaw_gain") { engine.m_sop_yaw_gain = std::stof(value); return true; }
+    if (key == "yaw_kick_threshold") { engine.m_yaw_kick_threshold = std::stof(value); return true; }
+    if (key == "unloaded_yaw_gain") { engine.m_unloaded_yaw_gain = std::stof(value); return true; }
+    if (key == "unloaded_yaw_threshold") { engine.m_unloaded_yaw_threshold = std::stof(value); return true; }
+    if (key == "unloaded_yaw_sens") { engine.m_unloaded_yaw_sens = std::stof(value); return true; }
+    if (key == "unloaded_yaw_gamma") { engine.m_unloaded_yaw_gamma = std::stof(value); return true; }
+    if (key == "unloaded_yaw_punch") { engine.m_unloaded_yaw_punch = std::stof(value); return true; }
+    if (key == "power_yaw_gain") { engine.m_power_yaw_gain = std::stof(value); return true; }
+    if (key == "power_yaw_threshold") { engine.m_power_yaw_threshold = std::stof(value); return true; }
+    if (key == "power_slip_threshold") { engine.m_power_slip_threshold = std::stof(value); return true; }
+    if (key == "power_yaw_gamma") { engine.m_power_yaw_gamma = std::stof(value); return true; }
+    if (key == "power_yaw_punch") { engine.m_power_yaw_punch = std::stof(value); return true; }
+    if (key == "yaw_accel_smoothing") { engine.m_yaw_accel_smoothing = std::stof(value); return true; }
+    if (key == "gyro_gain") { engine.m_gyro_gain = (std::min)(1.0f, std::stof(value)); return true; }
+    if (key == "gyro_smoothing_factor") { engine.m_gyro_smoothing = std::stof(value); return true; }
+    if (key == "optimal_slip_angle") { engine.m_optimal_slip_angle = std::stof(value); return true; }
+    if (key == "optimal_slip_ratio") { engine.m_optimal_slip_ratio = std::stof(value); return true; }
+    if (key == "slope_detection_enabled") { engine.m_slope_detection_enabled = (value == "1"); return true; }
+    if (key == "slope_sg_window") { engine.m_slope_sg_window = std::stoi(value); return true; }
+    if (key == "slope_sensitivity") { engine.m_slope_sensitivity = std::stof(value); return true; }
+    if (key == "slope_negative_threshold" || key == "slope_min_threshold") { engine.m_slope_min_threshold = std::stof(value); return true; }
+    if (key == "slope_smoothing_tau") { engine.m_slope_smoothing_tau = std::stof(value); return true; }
+    if (key == "slope_max_threshold") { engine.m_slope_max_threshold = std::stof(value); return true; }
+    if (key == "slope_alpha_threshold") { engine.m_slope_alpha_threshold = std::stof(value); return true; }
+    if (key == "slope_decay_rate") { engine.m_slope_decay_rate = std::stof(value); return true; }
+    if (key == "slope_confidence_enabled") { engine.m_slope_confidence_enabled = (value == "1"); return true; }
+    if (key == "slope_g_slew_limit") { engine.m_slope_g_slew_limit = std::stof(value); return true; }
+    if (key == "slope_use_torque") { engine.m_slope_use_torque = (value == "1"); return true; }
+    if (key == "slope_torque_sensitivity") { engine.m_slope_torque_sensitivity = std::stof(value); return true; }
+    if (key == "slope_confidence_max_rate") { engine.m_slope_confidence_max_rate = std::stof(value); return true; }
+    if (key == "slip_angle_smoothing") { engine.m_slip_angle_smoothing = std::stof(value); return true; }
+    if (key == "chassis_inertia_smoothing") { engine.m_chassis_inertia_smoothing = std::stof(value); return true; }
+    if (key == "speed_gate_lower") { engine.m_speed_gate_lower = std::stof(value); return true; }
+    if (key == "speed_gate_upper") { engine.m_speed_gate_upper = std::stof(value); return true; }
+    if (key == "road_fallback_scale") { engine.m_road_fallback_scale = std::stof(value); return true; }
+    if (key == "understeer_affects_sop") { engine.m_understeer_affects_sop = std::stoi(value); return true; }
+    return false;
+}
+
+bool Config::SyncBrakingLine(const std::string& key, const std::string& value, FFBEngine& engine) {
+    if (key == "lockup_enabled") { engine.m_lockup_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "lockup_gain") { engine.m_lockup_gain = std::stof(value); return true; }
+    if (key == "lockup_start_pct") { engine.m_lockup_start_pct = std::stof(value); return true; }
+    if (key == "lockup_full_pct") { engine.m_lockup_full_pct = std::stof(value); return true; }
+    if (key == "lockup_rear_boost") { engine.m_lockup_rear_boost = std::stof(value); return true; }
+    if (key == "lockup_gamma") { engine.m_lockup_gamma = std::stof(value); return true; }
+    if (key == "lockup_prediction_sens") { engine.m_lockup_prediction_sens = std::stof(value); return true; }
+    if (key == "lockup_bump_reject") { engine.m_lockup_bump_reject = std::stof(value); return true; }
+    if (key == "brake_load_cap") { engine.m_brake_load_cap = std::stof(value); return true; }
+    if (key == "abs_pulse_enabled") { engine.m_abs_pulse_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "abs_gain") { engine.m_abs_gain = std::stof(value); return true; }
+    if (key == "abs_freq") { engine.m_abs_freq_hz = std::stof(value); return true; }
+    if (key == "lockup_freq_scale") { engine.m_lockup_freq_scale = std::stof(value); return true; }
+    return false;
+}
+
+bool Config::SyncVibrationLine(const std::string& key, const std::string& value, FFBEngine& engine) {
+    if (key == "texture_load_cap" || key == "max_load_factor") { engine.m_texture_load_cap = std::stof(value); return true; }
+    if (key == "spin_enabled") { engine.m_spin_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "spin_gain") { engine.m_spin_gain = std::stof(value); return true; }
+    if (key == "spin_freq_scale") { engine.m_spin_freq_scale = std::stof(value); return true; }
+    if (key == "slide_enabled") { engine.m_slide_texture_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "slide_gain") { engine.m_slide_texture_gain = std::stof(value); return true; }
+    if (key == "slide_freq") { engine.m_slide_freq_scale = std::stof(value); return true; }
+    if (key == "road_enabled") { engine.m_road_texture_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "road_gain") { engine.m_road_texture_gain = std::stof(value); return true; }
+    if (key == "vibration_gain" || key == "tactile_gain") { engine.m_vibration_gain = std::stof(value); return true; }
+    if (key == "dynamic_normalization_enabled") { engine.m_dynamic_normalization_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "auto_load_normalization_enabled") { engine.m_auto_load_normalization_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "soft_lock_enabled") { engine.m_soft_lock_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "soft_lock_stiffness") { engine.m_soft_lock_stiffness = std::stof(value); return true; }
+    if (key == "soft_lock_damping") { engine.m_soft_lock_damping = std::stof(value); return true; }
+    if (key == "flatspot_suppression") { engine.m_flatspot_suppression = (value == "1" || value == "true"); return true; }
+    if (key == "notch_q") { engine.m_notch_q = std::stof(value); return true; }
+    if (key == "flatspot_strength") { engine.m_flatspot_strength = std::stof(value); return true; }
+    if (key == "static_notch_enabled") { engine.m_static_notch_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "static_notch_freq") { engine.m_static_notch_freq = std::stof(value); return true; }
+    if (key == "static_notch_width") { engine.m_static_notch_width = std::stof(value); return true; }
+    if (key == "scrub_drag_gain") { engine.m_scrub_drag_gain = std::stof(value); return true; }
+    if (key == "bottoming_method") { engine.m_bottoming_method = std::stoi(value); return true; }
+    return false;
+}
+
+bool Config::SyncSafetyLine(const std::string& key, const std::string& value, FFBEngine& engine) {
+    if (key == "safety_window_duration") { engine.m_safety_window_duration = std::stof(value); return true; }
+    if (key == "safety_gain_reduction") { engine.m_safety_gain_reduction = std::stof(value); return true; }
+    if (key == "safety_smoothing_tau") { engine.m_safety_smoothing_tau = std::stof(value); return true; }
+    if (key == "spike_detection_threshold") { engine.m_spike_detection_threshold = std::stof(value); return true; }
+    if (key == "immediate_spike_threshold") { engine.m_immediate_spike_threshold = std::stof(value); return true; }
+    if (key == "safety_slew_full_scale_time_s") { engine.m_safety_slew_full_scale_time_s = std::stof(value); return true; }
+    if (key == "stutter_safety_enabled") { engine.m_stutter_safety_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "stutter_threshold") { engine.m_stutter_threshold = std::stof(value); return true; }
+    return false;
+}
+
 void Config::ParsePresetLine(const std::string& line, Preset& current_preset, std::string& current_preset_version, bool& needs_save, bool& legacy_torque_hack, float& legacy_torque_val) {
     std::istringstream is_line(line);
     std::string key;
@@ -66,138 +376,11 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
         std::string value;
         if (std::getline(is_line, value)) {
             try {
-                // Map keys to struct members
-                if (key == "app_version") current_preset_version = value;
-                else if (key == "gain") current_preset.gain = std::stof(value);
-                else if (key == "understeer") {
-                    float val = std::stof(value);
-                    if (val > 2.0f) {
-                        float old_val = val;
-                        val = val / 100.0f; // Migrating 0-200 range to 0-2
-                        Logger::Get().LogFile("[Preset] Migrated legacy understeer: %.2f -> %.2f", old_val, val);
-                        needs_save = true;
-                    }
-                    current_preset.understeer = (std::min)(2.0f, (std::max)(0.0f, val));
-                }
-                else if (key == "sop") current_preset.sop = (std::min)(2.0f, std::stof(value));
-                else if (key == "lateral_load_effect") current_preset.lateral_load = (std::min)(2.0f, std::stof(value));
-                else if (key == "lat_load_transform") current_preset.lat_load_transform = std::clamp(std::stoi(value), 0, 3);
-                else if (key == "sop_scale") current_preset.sop_scale = std::stof(value);
-                else if (key == "sop_smoothing_factor") current_preset.sop_smoothing = std::stof(value);
-                else if (key == "min_force") current_preset.min_force = std::stof(value);
-                else if (key == "oversteer_boost") current_preset.oversteer_boost = std::stof(value);
-                else if (key == "long_load_effect" || key == "dynamic_weight_gain") current_preset.long_load_effect = std::stof(value);
-                else if (key == "long_load_smoothing" || key == "dynamic_weight_smoothing") current_preset.long_load_smoothing = std::stof(value);
-                else if (key == "long_load_transform") current_preset.long_load_transform = std::clamp(std::stoi(value), 0, 3);
-                else if (key == "grip_smoothing_steady") current_preset.grip_smoothing_steady = std::stof(value);
-                else if (key == "grip_smoothing_fast") current_preset.grip_smoothing_fast = std::stof(value);
-                else if (key == "grip_smoothing_sensitivity") current_preset.grip_smoothing_sensitivity = std::stof(value);
-                else if (key == "lockup_enabled") current_preset.lockup_enabled = std::stoi(value);
-                else if (key == "lockup_gain") current_preset.lockup_gain = (std::min)(3.0f, std::stof(value));
-                else if (key == "lockup_start_pct") current_preset.lockup_start_pct = std::stof(value);
-                else if (key == "lockup_full_pct") current_preset.lockup_full_pct = std::stof(value);
-                else if (key == "lockup_rear_boost") current_preset.lockup_rear_boost = std::stof(value);
-                else if (key == "lockup_gamma") current_preset.lockup_gamma = std::stof(value);
-                else if (key == "lockup_prediction_sens") current_preset.lockup_prediction_sens = std::stof(value);
-                else if (key == "lockup_bump_reject") current_preset.lockup_bump_reject = std::stof(value);
-                else if (key == "brake_load_cap") current_preset.brake_load_cap = (std::min)(10.0f, std::stof(value));
-                else if (key == "texture_load_cap" || key == "max_load_factor") current_preset.texture_load_cap = std::stof(value); // Includes Legacy Backward Compatibility
-                else if (key == "abs_pulse_enabled") current_preset.abs_pulse_enabled = std::stoi(value);
-                else if (key == "abs_gain") current_preset.abs_gain = std::stof(value);
-                else if (key == "spin_enabled") current_preset.spin_enabled = std::stoi(value);
-                else if (key == "spin_gain") current_preset.spin_gain = (std::min)(2.0f, std::stof(value));
-                else if (key == "slide_enabled") current_preset.slide_enabled = std::stoi(value);
-                else if (key == "slide_gain") current_preset.slide_gain = (std::min)(2.0f, std::stof(value));
-                else if (key == "slide_freq") current_preset.slide_freq = std::stof(value);
-                else if (key == "road_enabled") current_preset.road_enabled = std::stoi(value);
-                else if (key == "road_gain") current_preset.road_gain = (std::min)(2.0f, std::stof(value));
-                else if (key == "vibration_gain" || key == "tactile_gain") current_preset.vibration_gain = (std::min)(2.0f, std::stof(value));
-                else if (key == "dynamic_normalization_enabled") current_preset.dynamic_normalization_enabled = (value == "1" || value == "true");
-                else if (key == "auto_load_normalization_enabled") current_preset.auto_load_normalization_enabled = (value == "1" || value == "true");
-                else if (key == "soft_lock_enabled") current_preset.soft_lock_enabled = std::stoi(value);
-                else if (key == "soft_lock_stiffness") current_preset.soft_lock_stiffness = std::stof(value);
-                else if (key == "soft_lock_damping") current_preset.soft_lock_damping = std::stof(value);
-                else if (key == "wheelbase_max_nm") current_preset.wheelbase_max_nm = std::stof(value);
-                else if (key == "target_rim_nm") current_preset.target_rim_nm = std::stof(value);
-                else if (key == "max_torque_ref") {
-                    // MIGRATION LOGIC (Issue #153 & #211)
-                    float old_val = std::stof(value);
-                    if (old_val > 40.0f) {
-                        // Likely the 100Nm clipping hack. Reset to safe DD defaults.
-                        current_preset.wheelbase_max_nm = 15.0f;
-                        current_preset.target_rim_nm = 10.0f;
-                        legacy_torque_hack = true;
-                        legacy_torque_val = old_val;
-                    } else {
-                        // User actually tuned it to their wheelbase (e.g. 20Nm or 4Nm)
-                        current_preset.wheelbase_max_nm = old_val;
-                        current_preset.target_rim_nm = old_val;
-                    }
-                    needs_save = true;
-                }
-                else if (key == "abs_freq") current_preset.abs_freq = std::stof(value);
-                else if (key == "lockup_freq_scale") current_preset.lockup_freq_scale = std::stof(value);
-                else if (key == "spin_freq_scale") current_preset.spin_freq_scale = std::stof(value);
-                else if (key == "bottoming_method") current_preset.bottoming_method = std::stoi(value);
-                else if (key == "scrub_drag_gain") current_preset.scrub_drag_gain = (std::min)(1.0f, std::stof(value));
-                else if (key == "rear_align_effect") current_preset.rear_align_effect = (std::min)(2.0f, std::stof(value));
-                else if (key == "sop_yaw_gain") current_preset.sop_yaw_gain = (std::min)(2.0f, std::stof(value));
-                else if (key == "steering_shaft_gain") current_preset.steering_shaft_gain = std::stof(value);
-                else if (key == "ingame_ffb_gain") current_preset.ingame_ffb_gain = std::stof(value);
-                else if (key == "slip_angle_smoothing") current_preset.slip_smoothing = std::stof(value);
-                else if (key == "torque_source") current_preset.torque_source = std::stoi(value);
-                else if (key == "torque_passthrough") current_preset.torque_passthrough = (value == "1" || value == "true");
-                else if (key == "gyro_gain") current_preset.gyro_gain = (std::min)(1.0f, std::stof(value));
-                else if (key == "flatspot_suppression") current_preset.flatspot_suppression = std::stoi(value);
-                else if (key == "notch_q") current_preset.notch_q = std::stof(value);
-                else if (key == "flatspot_strength") current_preset.flatspot_strength = std::stof(value);
-                else if (key == "static_notch_enabled") current_preset.static_notch_enabled = std::stoi(value);
-                else if (key == "static_notch_freq") current_preset.static_notch_freq = std::stof(value);
-                else if (key == "static_notch_width") current_preset.static_notch_width = std::stof(value);
-                else if (key == "yaw_kick_threshold") current_preset.yaw_kick_threshold = std::stof(value);
-                else if (key == "unloaded_yaw_gain") current_preset.unloaded_yaw_gain = std::stof(value);
-                else if (key == "unloaded_yaw_threshold") current_preset.unloaded_yaw_threshold = std::stof(value);
-                else if (key == "unloaded_yaw_sens") current_preset.unloaded_yaw_sens = std::stof(value);
-                else if (key == "unloaded_yaw_gamma") current_preset.unloaded_yaw_gamma = std::stof(value);
-                else if (key == "unloaded_yaw_punch") current_preset.unloaded_yaw_punch = std::stof(value);
-                else if (key == "power_yaw_gain") current_preset.power_yaw_gain = std::stof(value);
-                else if (key == "power_yaw_threshold") current_preset.power_yaw_threshold = std::stof(value);
-                else if (key == "power_slip_threshold") current_preset.power_slip_threshold = std::stof(value);
-                else if (key == "power_yaw_gamma") current_preset.power_yaw_gamma = std::stof(value);
-                else if (key == "power_yaw_punch") current_preset.power_yaw_punch = std::stof(value);
-                else if (key == "optimal_slip_angle") current_preset.optimal_slip_angle = std::stof(value);
-                else if (key == "optimal_slip_ratio") current_preset.optimal_slip_ratio = std::stof(value);
-                else if (key == "slope_detection_enabled") current_preset.slope_detection_enabled = (value == "1");
-                else if (key == "slope_sg_window") current_preset.slope_sg_window = std::stoi(value);
-                else if (key == "slope_sensitivity") current_preset.slope_sensitivity = std::stof(value);
-                else if (key == "slope_negative_threshold" || key == "slope_min_threshold") current_preset.slope_min_threshold = std::stof(value);
-                else if (key == "slope_smoothing_tau") current_preset.slope_smoothing_tau = std::stof(value);
-                else if (key == "slope_max_threshold") current_preset.slope_max_threshold = std::stof(value);
-                else if (key == "slope_alpha_threshold") current_preset.slope_alpha_threshold = std::stof(value);
-                else if (key == "slope_decay_rate") current_preset.slope_decay_rate = std::stof(value);
-                else if (key == "slope_confidence_enabled") current_preset.slope_confidence_enabled = (value == "1");
-                else if (key == "steering_shaft_smoothing") current_preset.steering_shaft_smoothing = std::stof(value);
-                else if (key == "gyro_smoothing_factor") current_preset.gyro_smoothing = std::stof(value);
-                else if (key == "yaw_accel_smoothing") current_preset.yaw_smoothing = std::stof(value);
-                else if (key == "chassis_inertia_smoothing") current_preset.chassis_smoothing = std::stof(value);
-                else if (key == "speed_gate_lower") current_preset.speed_gate_lower = std::stof(value); // NEW v0.6.25
-                else if (key == "speed_gate_upper") current_preset.speed_gate_upper = std::stof(value); // NEW v0.6.25
-                else if (key == "road_fallback_scale") current_preset.road_fallback_scale = std::stof(value); // NEW v0.6.25
-                else if (key == "understeer_affects_sop") current_preset.understeer_affects_sop = std::stoi(value); // NEW v0.6.25
-                else if (key == "slope_g_slew_limit") current_preset.slope_g_slew_limit = std::stof(value); // NEW v0.7.40
-                else if (key == "slope_use_torque") current_preset.slope_use_torque = (value == "1"); // NEW v0.7.40
-                else if (key == "slope_torque_sensitivity") current_preset.slope_torque_sensitivity = std::stof(value); // NEW v0.7.40
-                else if (key == "slope_confidence_max_rate") current_preset.slope_confidence_max_rate = std::stof(value); // NEW v0.7.42
-                else if (key == "rest_api_fallback_enabled") current_preset.rest_api_enabled = (value == "1" || value == "true"); // NEW v0.7.113
-                else if (key == "rest_api_port") current_preset.rest_api_port = std::stoi(value); // NEW v0.7.113
-                else if (key == "safety_window_duration") current_preset.safety_window_duration = std::stof(value);
-                else if (key == "safety_gain_reduction") current_preset.safety_gain_reduction = std::stof(value);
-                else if (key == "safety_smoothing_tau") current_preset.safety_smoothing_tau = std::stof(value);
-                else if (key == "spike_detection_threshold") current_preset.spike_detection_threshold = std::stof(value);
-                else if (key == "immediate_spike_threshold") current_preset.immediate_spike_threshold = std::stof(value);
-                else if (key == "safety_slew_full_scale_time_s") current_preset.safety_slew_full_scale_time_s = std::stof(value);
-                else if (key == "stutter_safety_enabled") current_preset.stutter_safety_enabled = (value == "1" || value == "true");
-                else if (key == "stutter_threshold") current_preset.stutter_threshold = std::stof(value);
+                if (ParseSystemLine(key, value, current_preset, current_preset_version, needs_save, legacy_torque_hack, legacy_torque_val)) return;
+                if (ParsePhysicsLine(key, value, current_preset)) return;
+                if (ParseBrakingLine(key, value, current_preset)) return;
+                if (ParseVibrationLine(key, value, current_preset)) return;
+                if (ParseSafetyLine(key, value, current_preset)) return;
             } catch (...) { Logger::Get().Log("[Config] ParsePresetLine Error."); }
         }
     }
@@ -1434,160 +1617,17 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                 try {
                     if (in_static_loads) {
                         SetSavedStaticLoad(key, std::stod(value));
-                        continue;
                     }
-
-                    if (key == "ini_version") {
-                        // Config Version Tracking: This field records the app version that last saved the config.
-                        // It serves as an implicit config format version for migration decisions.
-                        // Current approach: Threshold-based detection (e.g., understeer > 2.0 = legacy format).
-                        // Future improvement: Add explicit config_format_version field if migrations become
-                        // more complex (e.g., structural changes, removed fields, renamed keys).
+                    else if (key == "ini_version") {
                         config_version = value;
                         Logger::Get().LogFile("[Config] Loading config version: %s", config_version.c_str());
                     }
-                    else if (key == "always_on_top") m_always_on_top = std::stoi(value);
-                    else if (key == "last_device_guid") m_last_device_guid = value;
-                    else if (key == "last_preset_name") m_last_preset_name = value;
-                    // Window Geometry (v0.5.5)
-                    else if (key == "win_pos_x") win_pos_x = std::stoi(value);
-                    else if (key == "win_pos_y") win_pos_y = std::stoi(value);
-                    else if (key == "win_w_small") win_w_small = std::stoi(value);
-                    else if (key == "win_h_small") win_h_small = std::stoi(value);
-                    else if (key == "win_w_large") win_w_large = std::stoi(value);
-                    else if (key == "win_h_large") win_h_large = std::stoi(value);
-                    else if (key == "show_graphs") show_graphs = std::stoi(value);
-                    else if (key == "auto_start_logging") m_auto_start_logging = std::stoi(value);
-                    else if (key == "log_path") m_log_path = value;
-                    else if (key == "invert_force") engine.m_invert_force = std::stoi(value);
-                    else if (key == "gain") engine.m_gain = std::stof(value);
-                    else if (key == "dynamic_normalization_enabled") engine.m_dynamic_normalization_enabled = (value == "1" || value == "true");
-                    else if (key == "auto_load_normalization_enabled") engine.m_auto_load_normalization_enabled = (value == "1" || value == "true");
-                    else if (key == "sop_smoothing_factor" || key == "smoothing") {
-                        float val = std::stof(value);
-                        if (IsVersionLessEqual(config_version, "0.7.146")) {
-                            val = 0.0f; // Issue #37: Reset to Raw for migration
-                            m_needs_save = true;
-                        }
-                        engine.m_sop_smoothing_factor = val;
-                    }
-                    else if (key == "sop_scale") engine.m_sop_scale = std::stof(value);
-                    else if (key == "slip_angle_smoothing") engine.m_slip_angle_smoothing = std::stof(value);
-                    else if (key == "texture_load_cap" || key == "max_load_factor") engine.m_texture_load_cap = std::stof(value);
-                    else if (key == "brake_load_cap") engine.m_brake_load_cap = std::stof(value);
-                    else if (key == "understeer") engine.m_understeer_effect = std::stof(value);
-                    else if (key == "torque_source") engine.m_torque_source = std::stoi(value);
-                    else if (key == "torque_passthrough") engine.m_torque_passthrough = (value == "1" || value == "true");
-                    else if (key == "sop") engine.m_sop_effect = std::stof(value);
-                    else if (key == "lateral_load_effect") engine.m_lat_load_effect = std::stof(value);
-                    else if (key == "lat_load_transform") engine.m_lat_load_transform = static_cast<LoadTransform>(std::clamp(std::stoi(value), 0, 3));
-                    else if (key == "min_force") engine.m_min_force = std::stof(value);
-                    else if (key == "oversteer_boost") engine.m_oversteer_boost = std::stof(value);
-                    else if (key == "long_load_effect" || key == "dynamic_weight_gain") engine.m_long_load_effect = std::stof(value);
-                    else if (key == "long_load_smoothing" || key == "dynamic_weight_smoothing") engine.m_long_load_smoothing = std::stof(value);
-                    else if (key == "long_load_transform") engine.m_long_load_transform = static_cast<LoadTransform>(std::clamp(std::stoi(value), 0, 3));
-                    else if (key == "grip_smoothing_steady") engine.m_grip_smoothing_steady = std::stof(value);
-                    else if (key == "grip_smoothing_fast") engine.m_grip_smoothing_fast = std::stof(value);
-                    else if (key == "grip_smoothing_sensitivity") engine.m_grip_smoothing_sensitivity = std::stof(value);
-                    // v0.4.50: SAFETY CLAMPING for Generator Effects (Gain Compensation Migration)
-                    // Legacy configs may have high gains (e.g., 5.0) to compensate for lack of auto-scaling.
-                    // With new decoupling, these would cause 25x force explosions. Clamp to safe maximums.
-                    else if (key == "lockup_enabled") engine.m_lockup_enabled = std::stoi(value);
-                    else if (key == "lockup_gain") engine.m_lockup_gain = std::stof(value);
-                    else if (key == "lockup_start_pct") engine.m_lockup_start_pct = std::stof(value);
-                    else if (key == "lockup_full_pct") engine.m_lockup_full_pct = std::stof(value);
-                    else if (key == "lockup_rear_boost") engine.m_lockup_rear_boost = std::stof(value);
-                    else if (key == "lockup_gamma") engine.m_lockup_gamma = std::stof(value);
-                    else if (key == "lockup_prediction_sens") engine.m_lockup_prediction_sens = std::stof(value);
-                    else if (key == "lockup_bump_reject") engine.m_lockup_bump_reject = std::stof(value);
-                    else if (key == "abs_pulse_enabled") engine.m_abs_pulse_enabled = std::stoi(value);
-                    else if (key == "abs_gain") engine.m_abs_gain = std::stof(value);
-                    else if (key == "spin_enabled") engine.m_spin_enabled = std::stoi(value);
-                    else if (key == "spin_gain") engine.m_spin_gain = std::stof(value);
-                    else if (key == "slide_enabled") engine.m_slide_texture_enabled = std::stoi(value);
-                    else if (key == "slide_gain") engine.m_slide_texture_gain = std::stof(value);
-                    else if (key == "slide_freq") engine.m_slide_freq_scale = std::stof(value);
-                    else if (key == "road_enabled") engine.m_road_texture_enabled = std::stoi(value);
-                    else if (key == "road_gain") engine.m_road_texture_gain = std::stof(value);
-                    else if (key == "vibration_gain" || key == "tactile_gain") engine.m_vibration_gain = std::stof(value);
-                    else if (key == "soft_lock_enabled") engine.m_soft_lock_enabled = std::stoi(value);
-                    else if (key == "soft_lock_stiffness") engine.m_soft_lock_stiffness = std::stof(value);
-                    else if (key == "soft_lock_damping") engine.m_soft_lock_damping = std::stof(value);
-                    else if (key == "wheelbase_max_nm") engine.m_wheelbase_max_nm = std::stof(value);
-                    else if (key == "target_rim_nm") engine.m_target_rim_nm = std::stof(value);
-                    else if (key == "max_torque_ref") {
-                        // MIGRATION LOGIC (Issue #153)
-                        float old_val = std::stof(value);
-                        if (old_val > 40.0f) {
-                            engine.m_wheelbase_max_nm = 15.0f;
-                            engine.m_target_rim_nm = 10.0f;
-                            legacy_torque_hack = true;
-                            legacy_torque_val = old_val;
-                        } else {
-                            engine.m_wheelbase_max_nm = old_val;
-                            engine.m_target_rim_nm = old_val;
-                        }
-                    }
-                    else if (key == "abs_freq") engine.m_abs_freq_hz = std::stof(value);
-                    else if (key == "lockup_freq_scale") engine.m_lockup_freq_scale = std::stof(value);
-                    else if (key == "spin_freq_scale") engine.m_spin_freq_scale = std::stof(value);
-                    else if (key == "bottoming_method") engine.m_bottoming_method = std::stoi(value);
-                    else if (key == "scrub_drag_gain") engine.m_scrub_drag_gain = (std::min)(1.0f, std::stof(value));
-                    else if (key == "rear_align_effect") engine.m_rear_align_effect = std::stof(value);
-                    else if (key == "sop_yaw_gain") engine.m_sop_yaw_gain = std::stof(value);
-                    else if (key == "steering_shaft_gain") engine.m_steering_shaft_gain = std::stof(value);
-                    else if (key == "ingame_ffb_gain") engine.m_ingame_ffb_gain = std::stof(value);
-                    else if (key == "gyro_gain") engine.m_gyro_gain = (std::min)(1.0f, std::stof(value));
-                    else if (key == "flatspot_suppression") engine.m_flatspot_suppression = std::stoi(value);
-                    else if (key == "notch_q") engine.m_notch_q = std::stof(value);
-                    else if (key == "flatspot_strength") engine.m_flatspot_strength = std::stof(value);
-                    else if (key == "static_notch_enabled") engine.m_static_notch_enabled = std::stoi(value);
-                    else if (key == "static_notch_freq") engine.m_static_notch_freq = std::stof(value);
-                    else if (key == "static_notch_width") engine.m_static_notch_width = std::stof(value);
-                    else if (key == "yaw_kick_threshold") engine.m_yaw_kick_threshold = std::stof(value);
-                    else if (key == "unloaded_yaw_gain") engine.m_unloaded_yaw_gain = std::stof(value);
-                    else if (key == "unloaded_yaw_threshold") engine.m_unloaded_yaw_threshold = std::stof(value);
-                    else if (key == "unloaded_yaw_sens") engine.m_unloaded_yaw_sens = std::stof(value);
-                    else if (key == "unloaded_yaw_gamma") engine.m_unloaded_yaw_gamma = std::stof(value);
-                    else if (key == "unloaded_yaw_punch") engine.m_unloaded_yaw_punch = std::stof(value);
-                    else if (key == "power_yaw_gain") engine.m_power_yaw_gain = std::stof(value);
-                    else if (key == "power_yaw_threshold") engine.m_power_yaw_threshold = std::stof(value);
-                    else if (key == "power_slip_threshold") engine.m_power_slip_threshold = std::stof(value);
-                    else if (key == "power_yaw_gamma") engine.m_power_yaw_gamma = std::stof(value);
-                    else if (key == "power_yaw_punch") engine.m_power_yaw_punch = std::stof(value);
-                    else if (key == "optimal_slip_angle") engine.m_optimal_slip_angle = std::stof(value);
-                    else if (key == "optimal_slip_ratio") engine.m_optimal_slip_ratio = std::stof(value);
-                    else if (key == "slope_detection_enabled") engine.m_slope_detection_enabled = (value == "1");
-                    else if (key == "slope_sg_window") engine.m_slope_sg_window = std::stoi(value);
-                    else if (key == "slope_sensitivity") engine.m_slope_sensitivity = std::stof(value);
-                    else if (key == "slope_negative_threshold" || key == "slope_min_threshold") engine.m_slope_min_threshold = std::stof(value);
-                    else if (key == "slope_smoothing_tau") engine.m_slope_smoothing_tau = std::stof(value);
-                    else if (key == "slope_max_threshold") engine.m_slope_max_threshold = std::stof(value);
-                    else if (key == "slope_alpha_threshold") engine.m_slope_alpha_threshold = std::stof(value);
-                    else if (key == "slope_decay_rate") engine.m_slope_decay_rate = std::stof(value);
-                    else if (key == "slope_confidence_enabled") engine.m_slope_confidence_enabled = (value == "1");
-                    else if (key == "steering_shaft_smoothing") engine.m_steering_shaft_smoothing = std::stof(value);
-                    else if (key == "gyro_smoothing_factor") engine.m_gyro_smoothing = std::stof(value);
-                    else if (key == "yaw_accel_smoothing") engine.m_yaw_accel_smoothing = std::stof(value);
-                    else if (key == "chassis_inertia_smoothing") engine.m_chassis_inertia_smoothing = std::stof(value);
-                    else if (key == "speed_gate_lower") engine.m_speed_gate_lower = std::stof(value); // NEW v0.6.25
-                    else if (key == "speed_gate_upper") engine.m_speed_gate_upper = std::stof(value); // NEW v0.6.25
-                    else if (key == "road_fallback_scale") engine.m_road_fallback_scale = std::stof(value); // NEW v0.6.25
-                    else if (key == "understeer_affects_sop") engine.m_understeer_affects_sop = std::stoi(value); // NEW v0.6.25
-                    else if (key == "slope_g_slew_limit") engine.m_slope_g_slew_limit = std::stof(value); // NEW v0.7.40
-                    else if (key == "slope_use_torque") engine.m_slope_use_torque = (value == "1"); // NEW v0.7.40
-                    else if (key == "slope_torque_sensitivity") engine.m_slope_torque_sensitivity = std::stof(value); // NEW v0.7.40
-                    else if (key == "slope_confidence_max_rate") engine.m_slope_confidence_max_rate = std::stof(value); // NEW v0.7.42
-                    else if (key == "rest_api_fallback_enabled") engine.m_rest_api_enabled = (value == "1" || value == "true");
-                    else if (key == "rest_api_port") engine.m_rest_api_port = std::stoi(value);
-                    else if (key == "safety_window_duration") engine.m_safety_window_duration = std::stof(value);
-                    else if (key == "safety_gain_reduction") engine.m_safety_gain_reduction = std::stof(value);
-                    else if (key == "safety_smoothing_tau") engine.m_safety_smoothing_tau = std::stof(value);
-                    else if (key == "spike_detection_threshold") engine.m_spike_detection_threshold = std::stof(value);
-                    else if (key == "immediate_spike_threshold") engine.m_immediate_spike_threshold = std::stof(value);
-                    else if (key == "safety_slew_full_scale_time_s") engine.m_safety_slew_full_scale_time_s = std::stof(value);
-                    else if (key == "stutter_safety_enabled") engine.m_stutter_safety_enabled = (value == "1" || value == "true");
-                    else if (key == "stutter_threshold") engine.m_stutter_threshold = std::stof(value);
+                    bool ns = m_needs_save.load();
+                    if (SyncSystemLine(key, value, engine, config_version, legacy_torque_hack, legacy_torque_val, ns)) { m_needs_save.store(ns); continue; }
+                    else if (SyncPhysicsLine(key, value, engine, config_version, ns)) { m_needs_save.store(ns); continue; }
+                    else if (SyncBrakingLine(key, value, engine)) continue;
+                    else if (SyncVibrationLine(key, value, engine)) continue;
+                    else if (SyncSafetyLine(key, value, engine)) continue;
                 } catch (...) {
                     Logger::Get().Log("[Config] Error parsing line: %s", line.c_str());
                 }
@@ -1610,6 +1650,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     engine.m_speed_gate_upper = (std::max)(0.1f, engine.m_speed_gate_upper);
 
     engine.m_torque_source = (std::max)(0, (std::min)(1, engine.m_torque_source));
+    engine.m_gyro_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_gyro_gain));
+    engine.m_scrub_drag_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_scrub_drag_gain));
 
     if (engine.m_optimal_slip_angle < 0.01f) {
         Logger::Get().Log("[Config] Invalid optimal_slip_angle (%.2f), resetting to default 0.10", engine.m_optimal_slip_angle);

@@ -903,6 +903,18 @@ public:
 private:
     // Helper for parsing preset lines (v0.7.12)
     static void ParsePresetLine(const std::string& line, Preset& p, std::string& version, bool& needs_save, bool& legacy_torque_hack, float& legacy_torque_val);
+    static bool ParseSystemLine(const std::string& key, const std::string& value, Preset& p, std::string& version, bool& needs_save, bool& legacy_torque_hack, float& legacy_torque_val);
+    static bool ParsePhysicsLine(const std::string& key, const std::string& value, Preset& p);
+    static bool ParseBrakingLine(const std::string& key, const std::string& value, Preset& p);
+    static bool ParseVibrationLine(const std::string& key, const std::string& value, Preset& p);
+    static bool ParseSafetyLine(const std::string& key, const std::string& value, Preset& p);
+
+    static bool SyncSystemLine(const std::string& key, const std::string& value, FFBEngine& engine, std::string& version, bool& legacy_torque_hack, float& legacy_torque_val, bool& needs_save);
+    static bool SyncPhysicsLine(const std::string& key, const std::string& value, FFBEngine& engine, std::string& version, bool& needs_save);
+    static bool SyncBrakingLine(const std::string& key, const std::string& value, FFBEngine& engine);
+    static bool SyncVibrationLine(const std::string& key, const std::string& value, FFBEngine& engine);
+    static bool SyncSafetyLine(const std::string& key, const std::string& value, FFBEngine& engine);
+
     // Helper for writing preset fields (v0.7.12)
     static void WritePresetFields(std::ofstream& file, const Preset& p);
 };

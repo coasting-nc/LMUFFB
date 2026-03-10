@@ -14,9 +14,12 @@ All notable changes to this project will be documented in this file.
     - **Slew Restriction**: Maximum rate of force change during safety mode.
     - **Spike Detection Threshold**: Sensitivity for sustained high-slew triggers.
     - **Immediate Spike Threshold**: Sensitivity for instantaneous massive triggers.
+    - **Safety on Stuttering**: Toggle to enable/disable FFB reduction during game hitches.
+    - **Stutter Threshold**: Configurable sensitivity to frame time deviations.
   - **Multi-Preset Support**: Fully integrated safety parameters into the `Preset` system and `config.ini` for per-car or per-hardware persistence.
   - **Thread Safety**: Ensured GUI-driven updates to safety parameters are protected by `g_engine_mutex`.
   - **Robust Validation**: Implemented strict clamping and sanitization for all safety settings to prevent division by zero or unstable haptics.
+  - **Compiler Compatibility Fix**: Refactored the configuration parsing logic to resolve MSVC C1061 (excessively deep blocks) by modularizing the key-value mapping.
 - **Improved GUI Tooltips**: Added detailed documentation for each safety parameter explaining recommended values and physical impact.
 
 ## [0.7.164] - 2026-03-10

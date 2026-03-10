@@ -120,3 +120,14 @@ These tests ensure that the bridge between the GUI, the config file, and the phy
 - **Status**: Greenlight
 - **Feedback**: All issues resolved.
 - **Action**: Finalized documentation.
+
+## Final Implementation Notes
+- **Encountered Issues**:
+    - Hit MSVC compiler limit **C1061** (blocks nested too deeply) in `Config.cpp` due to the large `if-else if` chain in the parsing logic. Resolved by refactoring the parser into modular "Sync" and "Parse" helper functions.
+    - Encountered logic regressions during refactoring where boolean values in the INI file (e.g., "true", "false") were not correctly handled by `std::stoi`. Fixed by implementing robust boolean string comparison in helper functions.
+    - `std::atomic<bool>` cannot be passed by reference to functions expecting `bool&`. Resolved by using local `bool` variables for synchronization and updating the atomics via `.load()` and `.store()`.
+- **Deviations**:
+    - Extended the scope of validation in `Config::Load` to include `m_gyro_gain` and `m_scrub_drag_gain` to ensure consistent physics stability across all configurable effects.
+- **Suggestions for the future**:
+    - Consider moving towards a structured configuration format (like JSON or YAML) if the number of parameters continues to grow, to avoid manually maintaining large parsing chains and stay within compiler limits more easily.
+    - Implement a "Migration Validator" utility to automatically check and update config files when significant architectural changes occur (like the SoP smoothing inversion).
