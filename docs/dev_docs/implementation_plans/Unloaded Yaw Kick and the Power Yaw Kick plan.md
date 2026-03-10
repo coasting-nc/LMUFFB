@@ -7,11 +7,18 @@ This plan introduces two new context-aware, hyper-sensitive yaw kicks that only 
 2. **Power Yaw Kick**: Triggered by throttle application and rear wheel spin (traction loss / power oversteer).
 
 ## Design Rationale
-*   **Leading vs. Lagging Indicators**: Yaw acceleration and longitudinal slip ratio are leading indicators of a spin. Yaw acceleration and longitudinal slip ratio are leading indicators. By gating the FFB on leading indicators, we achieve zero-latency warnings.
+*   **Leading vs. Lagging Indicators**: Yaw acceleration and longitudinal slip ratio are leading indicators of a spin. By gating the FFB on leading indicators, we achieve zero-latency warnings.
 *   **Transient Shaping (Jerk)**: Belt-driven wheelbases act as mechanical low-pass filters due to belt stretch and stiction. Injecting `yaw_jerk` (the derivative of yaw acceleration) provides an instantaneous "punch" to overcome this inertia. For Direct Drive users, this translates to a sharp, tactile "snap" that alerts the hands before the slide fully develops.
 *   **Gamma Curve**: A slide's yaw acceleration grows exponentially. A linear FFB response means the early milliseconds of a slide are too weak to feel. A gamma curve (< 1.0) amplifies these early, small signals, making the onset of the slide instantly perceptible.
 *   **Traction Control Analogy**: Exposing `m_power_slip_threshold` allows users to tune the Power Yaw Kick like a real-world Traction Control system, deciding exactly how much slip is allowed before the FFB intervenes.
 *   **Context-Aware Gating**: strictly gating these effects prevents them from adding noise during normal driving or over curbs.
+
+### Yaw Kick Improvements (v0.7.166) - Design Rationale
+*   **Noise Amplification Mitigation**: Calculating `yaw_jerk` (second derivative of yaw) at 400Hz amplifies sensor noise by 160,000x. This caused "inverted" punches and vibrations.
+    *   **Fast Smoothing (15ms)**: A very short 15ms smoothing is applied to the acceleration *before* calculating jerk and feeding the Gamma curve. This removes 400Hz stepping noise while preserving the 10Hz "snap" of a slide.
+    *   **Attack Phase Gate**: The "punch" (jerk) is gated by `(yaw_jerk * smoothed_accel) > 0`. This ensures the punch *only* fires when the slide is actively worsening, preventing noise-induced inverted kicks.
+*   **Zero-Latency Vulnerability**:
+    *   **Asymmetric Smoothing**: Instead of a flat smoothing, vulnerability gates use a **2ms attack** (instant, < 1 frame) and a **50ms decay**. This provides zero-latency activation while preventing chatter from road bumps or slip ratio noise.
 
 ## Reference Documents
 *   Unloaded Yaw Kick: `docs/dev_docs/investigations/Unloaded Yaw Kick (braking).md`
@@ -58,15 +65,18 @@ float m_power_slip_threshold = 0.10f;
 float m_power_yaw_gamma = 0.5f;
 float m_power_yaw_punch = 0.05f;
 
-// State variables
+// State variables (v0.7.166 Updates)
 double m_static_rear_load = 0.0;
-double m_prev_derived_yaw_accel = 0.0;
+double m_fast_yaw_accel_smoothed = 0.0;
+double m_prev_fast_yaw_accel = 0.0;
 bool m_yaw_accel_seeded = false;
+double m_unloaded_vulnerability_smoothed = 0.0;
+double m_power_vulnerability_smoothed = 0.0;
 
 // Update signature
 void update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt);
 ```
-**Design Rationale**: Adding these to `FFBEngine` provides the necessary state for cross-frame derivative calculations (jerk) and car-specific load learning. Using `float` for parameters and `double` for physics state maintains precision where it matters.
+**Design Rationale**: Adding these to `FFBEngine` provides the necessary state for cross-frame derivative calculations (jerk), asymmetric vulnerability smoothing, and car-specific load learning. Using `float` for parameters and `double` for physics state maintains precision where it matters.
 
 ### Step 2: Update `src/GripLoadEstimation.cpp`
 Implement rear load learning in `update_static_load_reference`:
@@ -76,16 +86,18 @@ Implement rear load learning in `update_static_load_reference`:
 *   Handle `m_static_rear_load` initialization in `InitializeLoadReference`.
 **Design Rationale**: Expanding the static load learning to the rear axle allows for a "Rear Unload Factor" that automatically accounts for aero and weight transfer without needing manual car-by-car tuning.
 
-### Step 3: Update `src/FFBEngine.cpp`
-*   **In `calculate_force`**: Move the calculation of `ctx.avg_rear_load` (including kinematic fallbacks) to follow `ctx.avg_front_load`. Pass both to `update_static_load_reference`.
+### Step 3: Update `src/FFBEngine.cpp` (v0.7.166 Improvements)
+*   **In `calculate_force`**:
+    *   Move the calculation of `ctx.avg_rear_load` (including kinematic fallbacks) to follow `ctx.avg_front_load`. Pass both to `update_static_load_reference`.
+    *   Reset `m_fast_yaw_accel_smoothed`, `m_prev_fast_yaw_accel`, `m_unloaded_vulnerability_smoothed`, and `m_power_vulnerability_smoothed` when FFB is muted/unmuted.
 *   **In `calculate_sop_lateral`**:
-    *   Calculate `yaw_jerk = (derived_yaw_accel - m_prev_derived_yaw_accel) / ctx.dt`.
-    *   Calculate `general_yaw_force` (existing logic).
-    *   Calculate `unloaded_yaw_force` gated by `rear_load_drop` and `m_unloaded_yaw_sens`.
-    *   Calculate `power_yaw_force` gated by `throttle` and `max_rear_spin` relative to `m_power_slip_threshold`.
-    *   Implement Gamma curve and Punch (Jerk) for both new kicks.
-    *   Blend kicks: `ctx.yaw_force = max_abs_sign(general, unloaded, power)`.
-**Design Rationale**: Moving rear load calculation earlier ensures that all effects have access to consistent, fallback-safe load data. Blending kicks using `max_abs` ensures that the most critical warning always reaches the driver without additive stacking that could exceed safety limits.
+    *   **Base Acceleration Smoothing**: Apply 15ms tau smoothing to `derived_yaw_accel` -> `m_fast_yaw_accel_smoothed`.
+    *   **Jerk Calculation**: `yaw_jerk = (m_fast_yaw_accel_smoothed - m_prev_fast_yaw_accel) / ctx.dt`. Clamp to +/- 100.
+    *   **Asymmetric Vulnerability**: Implement 2ms attack / 50ms decay for `m_unloaded_vulnerability_smoothed` and `m_power_vulnerability_smoothed`.
+    *   **Attack Phase Gate**: `if ((yaw_jerk * m_fast_yaw_accel_smoothed) > 0.0) { punch_addition = clamp(yaw_jerk * punch, -10, 10); }`
+    *   **Gamma Application**: Use `m_fast_yaw_accel_smoothed + punch_addition` as input to the Gamma curve.
+    *   **Blending Logic**: Maintain sign-preserving max absolute value selection.
+**Design Rationale**: Moving rear load calculation earlier ensures that all effects have access to consistent, fallback-safe load data. The v0.7.166 improvements directly address the noise-amplification issues reported after the initial implementation, ensuring a smooth yet responsive oversteer warning system.
 
 ### Step 4: Update Configuration Handling (`src/Config.h` & `src/Config.cpp`)
 Synchronize the 10 new parameters:
@@ -159,6 +171,7 @@ Synchronize the 10 new parameters:
 ### Unforeseen Issues
 *   **Test Environment Sensitivity**: Learning static load in tests required careful sequencing. `calculate_force` calls `InitializeLoadReference` which can reset learned state if called out of order. Tests were updated to manually seed and latch static loads to ensure deterministic gating.
 *   **Speed Gate Interaction**: The global speed gate was muting effects at low speeds in unit tests. Tests now explicitly disable the speed gate to verify the core physics logic.
+*   **Smoothing Settling Time**: The introduction of 15ms fast smoothing meant that unit tests could no longer expect instant force changes in a single frame. Test sequences were updated to allow the filters to settle over multiple frames (50 frames at 100Hz) to verify the steady-state and transient responses accurately.
 
 ### Plan Deviations
 *   **Sign-Preserving Blending**: Instead of a simple `max_abs`, I implemented a sign-preserving blending where the kick with the highest magnitude is selected while maintaining its physical direction.

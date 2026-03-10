@@ -321,6 +321,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_yaw_accel_smoothed = 0.0;
         m_prev_yaw_rate = 0.0;
         m_yaw_rate_seeded = false;
+        m_fast_yaw_accel_smoothed = 0.0;
+        m_prev_fast_yaw_accel = 0.0;
+        m_yaw_accel_seeded = false;
+        m_unloaded_vulnerability_smoothed = 0.0;
+        m_power_vulnerability_smoothed = 0.0;
         m_prev_local_vel = {};
         m_local_vel_seeded = false;
     }
@@ -1231,13 +1236,21 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double derived_yaw_accel = (ctx.dt > 1e-6) ? (current_yaw_rate - m_prev_yaw_rate) / ctx.dt : 0.0;
     m_prev_yaw_rate = current_yaw_rate;
 
+    // NEW: Fast smoothing for the base signal (15ms tau) to remove 400Hz noise before Gamma amplification
+    double tau_fast = 0.015;
+    double alpha_fast = ctx.dt / (tau_fast + ctx.dt);
+    m_fast_yaw_accel_smoothed += alpha_fast * (derived_yaw_accel - m_fast_yaw_accel_smoothed);
+
     // Calculate Yaw Jerk (Rate of change of Yaw Acceleration) for transient shaping
     if (!m_yaw_accel_seeded) {
-        m_prev_derived_yaw_accel = derived_yaw_accel;
+        m_prev_fast_yaw_accel = m_fast_yaw_accel_smoothed;
         m_yaw_accel_seeded = true;
     }
-    double yaw_jerk = (ctx.dt > 1e-6) ? (derived_yaw_accel - m_prev_derived_yaw_accel) / ctx.dt : 0.0;
-    m_prev_derived_yaw_accel = derived_yaw_accel;
+    double yaw_jerk = (ctx.dt > 1e-6) ? (m_fast_yaw_accel_smoothed - m_prev_fast_yaw_accel) / ctx.dt : 0.0;
+    m_prev_fast_yaw_accel = m_fast_yaw_accel_smoothed;
+
+    // Clamp raw jerk to prevent insane spikes from collisions/telemetry glitches
+    yaw_jerk = std::clamp(yaw_jerk, -100.0, 100.0);
 
     // --- A. General Yaw Kick (Baseline Rotation Feel) ---
     double tau_yaw = (double)m_yaw_accel_smoothing;
@@ -1258,16 +1271,28 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     if (ctx.car_speed >= MIN_YAW_KICK_SPEED_MS && m_unloaded_yaw_gain > 0.001f) {
         double load_ratio = (m_static_rear_load > 1.0) ? ctx.avg_rear_load / m_static_rear_load : 1.0;
         double rear_load_drop = (std::max)(0.0, 1.0 - load_ratio);
-        double unloaded_vulnerability = (std::min)(1.0, rear_load_drop * (double)m_unloaded_yaw_sens);
+        double raw_unloaded_vuln = (std::min)(1.0, rear_load_drop * (double)m_unloaded_yaw_sens);
 
-        if (unloaded_vulnerability > 0.01) {
-            double punchy_yaw = derived_yaw_accel + (yaw_jerk * (double)m_unloaded_yaw_punch);
+        // ASYMMETRIC SMOOTHING: 2ms attack (instant), 50ms decay (prevents chatter)
+        double tau_unloaded = (raw_unloaded_vuln > m_unloaded_vulnerability_smoothed) ? 0.002 : 0.050;
+        m_unloaded_vulnerability_smoothed += (ctx.dt / (tau_unloaded + ctx.dt)) * (raw_unloaded_vuln - m_unloaded_vulnerability_smoothed);
+
+        if (m_unloaded_vulnerability_smoothed > 0.01) {
+            // Attack Phase Gate: Only apply punch if jerk is amplifying the current acceleration
+            double punch_addition = 0.0;
+            if ((yaw_jerk * m_fast_yaw_accel_smoothed) > 0.0) {
+                punch_addition = std::clamp(yaw_jerk * (double)m_unloaded_yaw_punch, -10.0, 10.0);
+            }
+
+            // CRITICAL FIX: Use the 15ms smoothed yaw, NOT the raw derived yaw
+            double punchy_yaw = m_fast_yaw_accel_smoothed + punch_addition;
+
             if (std::abs(punchy_yaw) > (double)m_unloaded_yaw_threshold) {
                 double processed_yaw = punchy_yaw - std::copysign((double)m_unloaded_yaw_threshold, punchy_yaw);
                 double sign = (processed_yaw >= 0.0) ? 1.0 : -1.0;
                 double yaw_norm = (std::min)(1.0, std::abs(processed_yaw) / 10.0);
                 double shaped_yaw = std::pow(yaw_norm, (double)m_unloaded_yaw_gamma) * 10.0 * sign;
-                unloaded_yaw_force = -1.0 * shaped_yaw * (double)m_unloaded_yaw_gain * (double)BASE_NM_YAW_KICK * unloaded_vulnerability;
+                unloaded_yaw_force = -1.0 * shaped_yaw * (double)m_unloaded_yaw_gain * (double)BASE_NM_YAW_KICK * m_unloaded_vulnerability_smoothed;
             }
         }
     }
@@ -1282,16 +1307,28 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
         double slip_start = (double)m_power_slip_threshold * 0.5;
         double slip_vulnerability = inverse_lerp(slip_start, (double)m_power_slip_threshold, max_rear_spin);
         double throttle = (std::max)(0.0, (double)data->mUnfilteredThrottle);
-        double power_vulnerability = slip_vulnerability * throttle;
+        double raw_power_vuln = slip_vulnerability * throttle;
 
-        if (power_vulnerability > 0.01) {
-            double punchy_yaw = derived_yaw_accel + (yaw_jerk * (double)m_power_yaw_punch);
+        // ASYMMETRIC SMOOTHING: 2ms attack (instant), 50ms decay (prevents chatter)
+        double tau_power = (raw_power_vuln > m_power_vulnerability_smoothed) ? 0.002 : 0.050;
+        m_power_vulnerability_smoothed += (ctx.dt / (tau_power + ctx.dt)) * (raw_power_vuln - m_power_vulnerability_smoothed);
+
+        if (m_power_vulnerability_smoothed > 0.01) {
+            // Attack Phase Gate: Only apply punch if jerk is amplifying the current acceleration
+            double punch_addition = 0.0;
+            if ((yaw_jerk * m_fast_yaw_accel_smoothed) > 0.0) {
+                punch_addition = std::clamp(yaw_jerk * (double)m_power_yaw_punch, -10.0, 10.0);
+            }
+
+            // CRITICAL FIX: Use the 15ms smoothed yaw, NOT the raw derived yaw
+            double punchy_yaw = m_fast_yaw_accel_smoothed + punch_addition;
+
             if (std::abs(punchy_yaw) > (double)m_power_yaw_threshold) {
                 double processed_yaw = punchy_yaw - std::copysign((double)m_power_yaw_threshold, punchy_yaw);
                 double sign = (processed_yaw >= 0.0) ? 1.0 : -1.0;
                 double yaw_norm = (std::min)(1.0, std::abs(processed_yaw) / 10.0);
                 double shaped_yaw = std::pow(yaw_norm, (double)m_power_yaw_gamma) * 10.0 * sign;
-                power_yaw_force = -1.0 * shaped_yaw * (double)m_power_yaw_gain * (double)BASE_NM_YAW_KICK * power_vulnerability;
+                power_yaw_force = -1.0 * shaped_yaw * (double)m_power_yaw_gain * (double)BASE_NM_YAW_KICK * m_power_vulnerability_smoothed;
             }
         }
     }
