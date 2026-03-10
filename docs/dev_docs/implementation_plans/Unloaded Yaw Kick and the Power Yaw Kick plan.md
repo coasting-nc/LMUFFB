@@ -13,8 +13,8 @@ This plan introduces two new context-aware, hyper-sensitive yaw kicks that only 
 *   **Traction Control Analogy**: Exposing `m_power_slip_threshold` allows users to tune the Power Yaw Kick like a real-world Traction Control system, deciding exactly how much slip is allowed before the FFB intervenes.
 
 ## Reference Documents
-*   `Unloaded Yaw Kick (braking spin).md`
-*   `Power Yaw Kick (acceleration spin).md`
+*   Unloaded Yaw Kick: `docs\dev_docs\investigations\Unloaded Yaw Kick (braking).md`
+*   Power Yaw Kick : `docs\dev_docs\investigations\Power Yaw Kick (or Traction-Loss Yaw Kick).md`
 
 ## Codebase Analysis Summary
 *   **`FFBEngine.h`**: Needs new state variables (`m_static_rear_load`, `m_prev_raw_yaw_accel`, `m_yaw_accel_seeded`) and 10 new configuration parameters for the two new effects.
