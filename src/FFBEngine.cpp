@@ -1306,7 +1306,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
 
         double slip_start = (double)m_power_slip_threshold * 0.5;
         double slip_vulnerability = inverse_lerp(slip_start, (double)m_power_slip_threshold, max_rear_spin);
-        double throttle = (std::max)(0.0, (double)data->mUnfilteredThrottle);
+        double throttle = std::clamp((double)data->mUnfilteredThrottle, 0.0, 1.0);
         double raw_power_vuln = slip_vulnerability * throttle;
 
         // ASYMMETRIC SMOOTHING: 2ms attack (instant), 50ms decay (prevents chatter)
