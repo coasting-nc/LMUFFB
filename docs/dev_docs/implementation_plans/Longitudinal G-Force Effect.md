@@ -1,10 +1,13 @@
-# Implementation Plan: Longitudinal G-Force Effect
+# Implementation Plan: #325 Replace longitudinal load effect with longitudinal G-force
 
 ## 1. Context & Problem Statement
 **Goal:** Replace the current tire-load-based Longitudinal Load effect with a kinematics-based Longitudinal G-Force effect, while keeping the UI intuitive for the user.
 
 **Problem:** 
 The current implementation calculates longitudinal weight transfer by comparing the real-time front tire load against the static front tire load. In high-downforce vehicles (like Hypercars or GT3s), aerodynamic downforce pushes the car into the track at high speeds, effectively doubling the front tire load. The current math misinterprets this aero-load as massive braking weight transfer, causing the steering wheel to become artificially heavy and stiff while accelerating down straightaways. Furthermore, raw tire load data is highly susceptible to high-frequency noise from track bumps and curb strikes.
+
+> **Design Rationale:**
+> Shifting from a load-based to a G-force-based calculation is necessary to decouple weight transfer sensations from aerodynamic downforce. Longitudinal G-force is a direct proxy for weight transfer that remains consistent regardless of the car's speed or aero package, providing a more predictable and physically accurate FFB response.
 
 ## 2. Recap of Architectural Discussions & Design Rationale
 During the analysis phase, several alternative approaches were evaluated and discarded in favor of the G-Force method:
@@ -23,15 +26,21 @@ During the analysis phase, several alternative approaches were evaluated and dis
 *   **Why use Derived Acceleration instead of Raw Acceleration?**
     *   Raw accelerometers (`mLocalAccel.z`) capture every engine vibration and suspension impact. By using the derivative of the car's macroscopic velocity (`mLocalVel.z`), we obtain a mathematically pure, buttery-smooth signal (`m_accel_z_smoothed`) that only registers true chassis acceleration/deceleration.
 
+> **Design Rationale:**
+> The multiplier approach is preserved because it correctly models how tire load influences the steering's self-aligning torque. Direct additive forces would be non-physical for a steering rack. Derived acceleration is chosen to eliminate high-frequency sensor noise that would otherwise jitter the FFB.
+
 ## 3. Reference Documents
 *   `docs/dev_docs/reports/FFBEngine_refactoring_analysis.md` (Previous refactoring context)
 *   Log Analyzer Diagnostic Reports (March 10, 2026)
 
 ## 4. Codebase Analysis Summary
 *   **`src/FFBEngine.cpp` (`calculate_force`)**: This is the core impact zone. The logic currently calculates `long_load_norm` using `ctx.avg_front_load / m_static_front_load`. This must be swapped to use `m_accel_z_smoothed / GRAVITY_MS2`. The call to `update_static_load_reference` must be preserved outside the effect block, as it is required by the Bottoming effect and Dynamic Normalization.
-*   **`src/GuiLayer_Common.cpp`**: The UI currently labels this effect "Longitudinal Load". To maintain user familiarity while being technically accurate, we will rename the label to "Longitudinal G-Force" but keep it within the "Load Forces" ImGui tree node.
+*   **`src/GuiLayer_Common.cpp`**: The UI currently labels this effect "Longitudinal Load". To maintain user familiarity while being technically accurate, we will rename the label to "Longitudinal G-Force" but keep it within the "Load Forces" ImGui tree node. Labels like "Long. Smoothing" and "Long. Transform" will also be updated to "G-Force Smoothing" and "G-Force Transform".
 *   **`src/Tooltips.h`**: The tooltip for `DYNAMIC_WEIGHT` needs to be updated to explain that it uses G-forces and ignores aerodynamics.
 *   **`src/Config.h` / `src/Config.cpp`**: We will **retain** the internal variable names (`m_long_load_effect`, `long_load_effect` in INI) to ensure backward compatibility with existing user presets. No migration logic is required.
+
+> **Design Rationale:**
+> Minimal changes to internal variable names and Config structure ensures that existing user settings are not lost, while the UI update ensures the user understands the new underlying physics. Preserving `update_static_load_reference` ensures zero regression for dependent effects.
 
 ## 5. FFB Effect Impact Analysis
 | Effect | Technical Change | User Perspective (Feel & UI) |
@@ -39,10 +48,13 @@ During the analysis phase, several alternative approaches were evaluated and dis
 | **Longitudinal G-Force** (formerly Long. Load) | Input signal changed from `avg_front_load` to `m_accel_z_smoothed`. | **Massive Improvement:** The wheel will no longer get heavy on straights. Braking feel will be consistent regardless of speed (ignoring aero). Acceleration will correctly make the wheel feel light. Bumps will not cause multiplier spikes. |
 | **Suspension Bottoming** | None directly, but relies on `m_static_front_load`. | No change. We ensure `update_static_load_reference` is still called unconditionally. |
 
+> **Design Rationale:**
+> The primary impact is improved linearity and stability of the steering weight during high-speed driving. By removing aero-induced load from the equation, the driver can rely on consistent muscle memory for braking effort.
+
 ## 6. Proposed Changes
 
 ### 6.1. `src/FFBEngine.cpp`
-*   **Target:** `FFBEngine::calculate_force` (around line 380).
+*   **Target:** `FFBEngine::calculate_force` (around line 647).
 *   **Action:** Replace the `long_load_norm` calculation.
 *   **Logic:**
     ```cpp
@@ -56,12 +68,16 @@ During the analysis phase, several alternative approaches were evaluated and dis
         // LMU Coordinate System: +Z is rearward (deceleration/braking). -Z is forward (acceleration).
         // Normalize: 1G braking = +1.0, 1G acceleration = -1.0
         double long_g = m_accel_z_smoothed / GRAVITY_MS2;
+        double long_load_norm = long_g;
         
-        // CLAMPING We clamp the normalized G-force between -5.0G and +5.0G. 
-        // Why? Because if you crash into a wall at 200 km/h, the game might output 50.0G. 
-        // If we didn't clamp it, the multiplier would become 50x, and the steering wheel 
-        // would snap your wrists. We clamp it to 5.0G to capture Hypercar dynamics
-        double long_load_norm = std::clamp(long_g, -5.0, 5.0);
+        // TRANSFORM CLAMPING: Transformations (Cubic, etc.) are designed for [-1.0, 1.0].
+        // We clamp to this range before transforming to avoid non-monotonic behavior (Review fix).
+        if (m_long_load_transform != LoadTransform::LINEAR) {
+            long_load_norm = std::clamp(long_load_norm, -1.0, 1.0);
+        } else {
+            // Linear allows capturing high-G dynamics (e.g. wall hits) up to 5G.
+            long_load_norm = std::clamp(long_load_norm, -5.0, 5.0);
+        }
 
         // Apply Transformation
         switch (m_long_load_transform) {
@@ -75,23 +91,36 @@ During the analysis phase, several alternative approaches were evaluated and dis
         long_load_factor = std::clamp(long_load_factor, LONG_LOAD_MIN, LONG_LOAD_MAX);
     }
     ```
-*   **Design Rationale:** Using `m_accel_z_smoothed` completely decouples the effect from aerodynamic downforce and high-frequency suspension noise.
+
+> **Design Rationale:**
+> Using `m_accel_z_smoothed` completely decouples the effect from aerodynamic downforce and high-frequency suspension noise. The conditional clamp ensures that non-linear transformations remain stable while preserving the ability to capture extreme dynamics in linear mode.
 
 ### 6.2. `src/GuiLayer_Common.cpp`
 *   **Target:** `DrawTuningWindow` -> "Load Forces" section.
-*   **Action:** Rename the UI label.
-*   **Logic:** Change `FloatSetting("Longitudinal Load", ...)` to `FloatSetting("Longitudinal G-Force", ...)`.
+*   **Action:** Rename the UI labels.
+*   **Logic:**
+    - Change `FloatSetting("Longitudinal Load", ...)` to `FloatSetting("Longitudinal G-Force", ...)`.
+    - Change `FloatSetting("  Long. Smoothing", ...)` to `FloatSetting("  G-Force Smoothing", ...)`.
+    - Change `Combo("  Long. Transform", ...)` to `Combo("  G-Force Transform", ...)`.
+
+> **Design Rationale:**
+> Clearer UI labeling prevents user confusion regarding what the slider actually controls.
 
 ### 6.3. `src/Tooltips.h`
-*   **Target:** `DYNAMIC_WEIGHT`
+*   **Target:** `DYNAMIC_WEIGHT`, `WEIGHT_SMOOTHING`
 *   **Action:** Update text.
-*   **Logic:** `"Scales steering weight based on longitudinal G-forces (acceleration/braking).\nHeavier under braking, lighter under acceleration.\nIgnores aerodynamic downforce for consistent feel."`
+*   **Logic:**
+    - `DYNAMIC_WEIGHT`: `"Scales steering weight based on longitudinal G-forces (acceleration/braking).\nHeavier under braking, lighter under acceleration.\nIgnores aerodynamic downforce for consistent feel."`
+    - `WEIGHT_SMOOTHING`: `"Filters the Longitudinal G-Force signal to simulate suspension damping.\nHigher = Smoother weight transfer feel, but less instant.\nRecommended: 0.100s - 0.200s."`
+
+> **Design Rationale:**
+> Tooltips must match the new physics implementation to ensure users can tune the effect effectively.
 
 ### 6.4. Parameter Synchronization Checklist
 *   *Note: No new parameters are being added. We are reusing `m_long_load_effect` to maintain preset compatibility.*
 
 ### 6.5. Version Increment Rule
-*   Increment the version number in `VERSION` and `src/Version.h` by the smallest possible increment (e.g., `0.7.161` -> `0.7.162`).
+*   Increment the version number in `VERSION` by the smallest possible increment (e.g., `0.7.162` -> `0.7.163`).
 
 ## 7. Test Plan (TDD-Ready)
 
@@ -111,9 +140,9 @@ During the analysis phase, several alternative approaches were evaluated and dis
     *   *Assertion:* `ASSERT_EQ(factor, 1.0)`
 
 ## 8. Deliverables
-- [ ] Update `src/FFBEngine.cpp` with the new G-Force logic.
-- [ ] Update `src/GuiLayer_Common.cpp` UI labels.
-- [ ] Update `src/Tooltips.h` descriptions.
-- [ ] Write and pass the 3 new unit tests in `tests/test_ffb_common.cpp` (or appropriate test file).
+- [x] Update `src/FFBEngine.cpp` with the new G-Force logic.
+- [x] Update `src/GuiLayer_Common.cpp` UI labels.
+- [x] Update `src/Tooltips.h` descriptions.
+- [x] Write and pass the 3 new unit tests in `tests/test_issue_325_longitudinal_g.cpp`.
 - [ ] Increment version numbers.
 - [ ] **Implementation Notes:** Update this plan document with any unforeseen issues or plan deviations encountered during implementation.

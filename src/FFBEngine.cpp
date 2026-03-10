@@ -644,8 +644,20 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // Apply if enabled (works with both raw load telemetry data and fallbacks)
     if (m_long_load_effect > 0.0) {
-        double long_load_norm = (ctx.avg_front_load / m_static_front_load) - 1.0;
-        long_load_norm = std::clamp(long_load_norm, -1.0, 1.0);
+        // Use Derived Longitudinal Acceleration (Z-axis) to isolate weight transfer.
+        // LMU Coordinate System: +Z is rearward (deceleration/braking). -Z is forward (acceleration).
+        // Normalize: 1G braking = +1.0, 1G acceleration = -1.0
+        double long_g = m_accel_z_smoothed / GRAVITY_MS2;
+
+        // TRANSFORM CLAMPING: Transformations (Cubic, etc.) are designed for [-1.0, 1.0].
+        // We clamp to this range before transforming to avoid non-monotonic behavior.
+        double long_load_norm = long_g;
+        if (m_long_load_transform != LoadTransform::LINEAR) {
+            long_load_norm = std::clamp(long_load_norm, -1.0, 1.0);
+        } else {
+            // Linear allows capturing high-G dynamics (e.g. wall hits) up to 5G.
+            long_load_norm = std::clamp(long_load_norm, -5.0, 5.0);
+        }
 
         // Apply Transformation (#301)
         switch (m_long_load_transform) {
