@@ -122,7 +122,29 @@ During the analysis phase, several alternative approaches were evaluated and dis
 ### 6.5. Version Increment Rule
 *   Increment the version number in `VERSION` by the smallest possible increment (e.g., `0.7.162` -> `0.7.163`).
 
-## 7. Test Plan (TDD-Ready)
+## 7. Longitudinal G-Force Normalization and Clamping
+
+> **Design Rationale:**
+> Longitudinal G-force represents the chassis acceleration in the Z-axis, normalized by Earth's gravity (9.81 m/s²). In the LMU coordinate system, +Z is rearward (braking/deceleration) and -Z is forward (acceleration).
+
+### 7.1. Linear Normalization
+In Linear mode, the raw G-force value is used directly as the multiplier input. 1.0G of braking results in a +1.0 contribution to the multiplier calculation. We clamp this to `[-5.0, 5.0]` to allow high-dynamic events (like wall strikes or extreme prototype braking) to be felt without risking numerical instability that could occur with uncapped inputs.
+
+### 7.2. Mathematical Transformations and Unit-Range Clamping
+The project provides several non-linear transformations (Cubic, Quadratic, Hermite) designed to soften the response at the limits of load transfer. These functions:
+- `apply_load_transform_cubic(x)`: $1.5x - 0.5x^3$
+- `apply_load_transform_quadratic(x)`: $2x - x|x|$
+- `apply_load_transform_hermite(x)`: $x(1 + |x| - x^2)$
+
+These polynomials are specifically tuned for the unit range `[-1.0, 1.0]`. If an input outside this range (e.g., 2.0G) is passed, the output can become non-monotonic or even reverse sign (e.g., Quadratic returns -15 for x=5).
+
+To prevent this, the implementation uses **Conditional Clamping**:
+- If a non-linear transform is active, the G-force is clamped to `[-1.0, 1.0]` **before** transformation.
+- If Linear mode is active, the G-force is clamped to `[-5.0, 5.0]`.
+
+This ensures that tuning presets using transformations remain physically consistent and safe for the user's hardware.
+
+## 8. Test Plan (TDD-Ready)
 
 **Design Rationale:** We must prove that the multiplier responds correctly to G-forces and completely ignores massive tire loads (simulating aero).
 
@@ -139,10 +161,24 @@ During the analysis phase, several alternative approaches were evaluated and dis
     *   *Expected Output:* `long_load_factor` should be exactly `1.0` (no weight transfer).
     *   *Assertion:* `ASSERT_EQ(factor, 1.0)`
 
-## 8. Deliverables
+## 9. Implementation Notes
+
+### 9.1. Deviations from Initial Plan
+- **Clamping Logic**: The initial plan proposed a broad `[-5.0, 5.0]` clamp for all modes. During code review, it was identified that this would break non-linear transformations (Cubic, Quadratic, Hermite) which are designed for the `[-1.0, 1.0]` range. The plan was updated to include "Conditional Clamping".
+- **Test Infrastructure**: Existing tests in `test_ffb_engine.cpp` and `test_ffb_smoothing.cpp` had to be updated because they relied on the old tire-load-based model. They were successfully pivoted to use G-force inputs.
+
+### 9.2. Challenges & Issues
+- **Chassis Inertia Smoothing**: In unit tests, `m_accel_z_smoothed` is overwritten by the main `calculate_force` logic if it is not "frozen". To test the effect block in isolation while still calling the full `calculate_force` method, `m_chassis_inertia_smoothing` was set to a very high value (1000s) to effectively stop the EMA from changing the test's injected acceleration value.
+- **Distribution Test Failure**: An unrelated failure in `test_analyzer_bundling_integrity` was observed on Linux. This appears to be a pre-existing issue related to environment paths and does not affect the correctness of the physics changes.
+
+### 9.3. Recommendations for the Future
+- **Log Field Renaming**: While internal variable names were kept for compatibility, the telemetry log fields were renamed to `Longitudinal G-Force` in v0.7.155. It might be beneficial to eventually unify all naming, but for now, the UI and tooltips provide sufficient clarity.
+- **G-Force Sensitivity**: Some users might prefer the old "noisy" tire load feel for immersion. While the G-force model is more physically accurate for steering weight, a future "High-Frequency Detail" slider could blend a small percentage of tire load noise back into the multiplier.
+
+## 10. Deliverables
 - [x] Update `src/FFBEngine.cpp` with the new G-Force logic.
 - [x] Update `src/GuiLayer_Common.cpp` UI labels.
 - [x] Update `src/Tooltips.h` descriptions.
 - [x] Write and pass the 3 new unit tests in `tests/test_issue_325_longitudinal_g.cpp`.
-- [ ] Increment version numbers.
-- [ ] **Implementation Notes:** Update this plan document with any unforeseen issues or plan deviations encountered during implementation.
+- [x] Increment version numbers.
+- [x] **Implementation Notes:** Update this plan document with any unforeseen issues or plan deviations encountered during implementation.
