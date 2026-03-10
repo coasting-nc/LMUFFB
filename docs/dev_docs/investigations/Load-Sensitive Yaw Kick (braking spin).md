@@ -183,9 +183,6 @@ Review the rear_unload_factor clamp at 1.0. Are there driving scenarios or car c
 
 # Answer 2
 
-
-
-
 You have hit on a crucial nuance of vehicle dynamics. Your intuition is spot on: clamping the factor at `1.0` using the raw `1.0 - rear_load_ratio` formula assumes that a car is only at "maximum vulnerability" when the rear tires have **0 Newtons of load** (i.e., they are completely airborne). 
 
 In reality, a tire loses its ability to sustain lateral forces long before it leaves the ground. 
@@ -232,5 +229,3 @@ rear_unload_factor = std::clamp(rear_unload_factor, 0.0, 1.0);
 3. **Aero-Aware:** It still perfectly respects aerodynamic downforce. If aero pushes the `load_drop` negative (adding weight), the clamp catches it at `0.0`, keeping the car feeling stable.
 
 By adding this `Unloaded Yaw Sensitivity` slider alongside the Gain and Threshold sliders, we give the user complete control over exactly *when* the early-warning system kicks in for any specific car. 
-
-Shall we include this Sensitivity parameter in the final design for the "Unloaded Yaw Kick" effect?
