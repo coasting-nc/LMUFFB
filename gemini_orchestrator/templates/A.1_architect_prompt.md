@@ -93,9 +93,5 @@ The plan **MUST** include:
     *   Documentation updates.
     *   **Implementation Notes:** A specific checklist item to update the plan document with "Unforeseen Issues", "Plan Deviations", "Challenges", and "Recommendations".
 
-## Step 5: Final Check
-Do NOT write the actual source code yet (pseudo-code is fine).
-
-# Output Format
-You must end your response with a JSON block strictly following this schema:
-
+ 
+ 
