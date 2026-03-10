@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.163] - 2026-03-10
+- **Replaced Longitudinal Load with Longitudinal G-Force (#325)**:
+  - Switched the primary input for the longitudinal steering weight effect from tire load telemetry (`mTireLoad`) to velocity-derived longitudinal G-force (`m_accel_z_smoothed`).
+  - This decoupling ensures that high-speed aerodynamic downforce no longer causes the steering to become artificially stiff on straightaways.
+  - Implemented **Conditional Clamping**: G-forces are clamped to `[-1.0, 1.0]` when non-linear transformations (Cubic, Quadratic, Hermite) are active to ensure mathematical stability, while allowing up to `5.0G` in Linear mode to capture extreme vehicle dynamics.
+- **GUI & Documentation**:
+  - Renamed "Longitudinal Load" to **"Longitudinal G-Force"** in the Tuning window.
+  - Renamed associated smoothing and transformation labels for clarity.
+  - Updated tooltips in `Tooltips.h` to explain the new physics and aero-independence.
+- **Testing**:
+  - Added `tests/test_issue_325_longitudinal_g.cpp` with 3 functional tests verifying braking boost, acceleration reduction, and aero-independence.
+  - Updated legacy longitudinal load tests in `test_ffb_engine.cpp` and `test_ffb_smoothing.cpp` to align with the new G-force model.
+
 ## [0.7.162] - 2026-03-10
 - **Fixed Longitudinal Load Inactivity**:
   - The `update_static_load_reference` function is now executed unconditionally every frame instead of being gated behind `m_auto_load_normalization_enabled`. This ensures `m_static_front_load` correctly seeds for the vehicle, preventing the longitudinal load multiplier from being permanently clamped at `1.0x` when normalization is disabled.

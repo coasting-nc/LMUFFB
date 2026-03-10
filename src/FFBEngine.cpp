@@ -644,26 +644,32 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // Apply if enabled (works with both raw load telemetry data and fallbacks)
     if (m_long_load_effect > 0.0) {
-        double long_load_norm = (ctx.avg_front_load / m_static_front_load) - 1.0;
-        long_load_norm = std::clamp(long_load_norm, -1.0, 1.0);
+        // Use Derived Longitudinal Acceleration (Z-axis) to isolate weight transfer.
+        // LMU Coordinate System: +Z is rearward (deceleration/braking). -Z is forward (acceleration).
+        // Normalize: 1G braking = +1.0, 1G acceleration = -1.0
+        double long_g = m_accel_z_smoothed / GRAVITY_MS2;
 
-        // Apply Transformation (#301)
-        switch (m_long_load_transform) {
-            case LoadTransform::CUBIC:
-                long_load_norm = apply_load_transform_cubic(long_load_norm);
-                break;
-            case LoadTransform::QUADRATIC:
-                long_load_norm = apply_load_transform_quadratic(long_load_norm);
-                break;
-            case LoadTransform::HERMITE:
-                long_load_norm = apply_load_transform_hermite(long_load_norm);
-                break;
-            case LoadTransform::LINEAR:
-            default:
-                break;
+        // Domain Scaling: We want to capture up to 5G of dynamic range for high-downforce cars.
+        const double MAX_G_RANGE = 5.0;
+        double long_load_norm = std::clamp(long_g, -MAX_G_RANGE, MAX_G_RANGE);
+
+        if (m_long_load_transform != LoadTransform::LINEAR) {
+            // 1. Map the [-5.0, 5.0] range into the [-1.0, 1.0] domain required by the polynomials
+            double x = long_load_norm / MAX_G_RANGE;
+
+            // 2. Apply the mathematical transformation safely
+            switch (m_long_load_transform) {
+                case LoadTransform::CUBIC:     x = apply_load_transform_cubic(x); break;
+                case LoadTransform::QUADRATIC: x = apply_load_transform_quadratic(x); break;
+                case LoadTransform::HERMITE:   x = apply_load_transform_hermite(x); break;
+                default: break;
+            }
+
+            // 3. Map the result back to the [-5.0, 5.0] dynamic range
+            long_load_norm = x * MAX_G_RANGE;
         }
 
-        // Blend: 1.0 + (Ratio - 1.0) * Gain
+        // Blend: 1.0 + (Ratio * Gain)
         long_load_factor = 1.0 + long_load_norm * (double)m_long_load_effect;
         long_load_factor = std::clamp(long_load_factor, LONG_LOAD_MIN, LONG_LOAD_MAX);
     }

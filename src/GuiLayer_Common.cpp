@@ -588,11 +588,11 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
         ImGui::Spacing();
 
-        FloatSetting("Longitudinal Load", &engine.m_long_load_effect, 0.0f, 10.0f, FormatPct(engine.m_long_load_effect), Tooltips::DYNAMIC_WEIGHT);
-        FloatSetting("  Long. Smoothing", &engine.m_long_load_smoothing, 0.000f, 0.500f, "%.3f s", Tooltips::WEIGHT_SMOOTHING);
+        FloatSetting("Longitudinal G-Force", &engine.m_long_load_effect, 0.0f, 10.0f, FormatPct(engine.m_long_load_effect), Tooltips::DYNAMIC_WEIGHT);
+        FloatSetting("  G-Force Smoothing", &engine.m_long_load_smoothing, 0.000f, 0.500f, "%.3f s", Tooltips::WEIGHT_SMOOTHING);
 
         int long_transform = static_cast<int>(engine.m_long_load_transform);
-        if (GuiWidgets::Combo("  Long. Transform", &long_transform, load_transforms, 4, "Mathematical transformation to soften the longitudinal load limits and remove 'notchiness'.").changed) {
+        if (GuiWidgets::Combo("  G-Force Transform", &long_transform, load_transforms, 4, "Mathematical transformation to soften the longitudinal load limits and remove 'notchiness'.").changed) {
             std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
             engine.m_long_load_transform = static_cast<LoadTransform>(long_transform);
             Config::Save(engine);

@@ -35,24 +35,26 @@ TEST_CASE(test_adaptive_smoothing_logic, "Physics") {
 }
 
 TEST_CASE(test_long_load_lpf, "Physics") {
-    std::cout << "\nTest: Dynamic Weight LPF (v0.7.47)" << std::endl;
+    std::cout << "\nTest: Longitudinal G-Force LPF (v0.7.47)" << std::endl;
     FFBEngine engine;
+    InitializeEngine(engine);
     engine.m_long_load_effect = 1.0f;
     engine.m_long_load_smoothing = 1.0f; // Very slow
+    engine.m_chassis_inertia_smoothing = 1000.0f; // Freeze chassis acceleration
     FFBEngineTestAccess::SetLongitudinalLoadSmoothed(engine, 1.0);
-    FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
 
-    // Setup telemetry with higher load
+    // Scenario: 1G braking (+Z)
+    engine.m_accel_z_smoothed = 9.81;
+
+    // Setup telemetry
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0, 0.0);
     data.mDeltaTime = 0.01f;
-    data.mWheel[0].mTireLoad = 8000.0f; // 2x load
-    data.mWheel[1].mTireLoad = 8000.0f;
 
     // Action: Run calculate_force
     engine.calculate_force(&data);
 
-    // Load Ratio = 8000 / 4000 = 2.0
-    // long_load_factor (target) = 1.0 + (2.0 - 1.0) * 1.0 = 2.0
+    // 1G Braking -> long_g = 1.0
+    // long_load_factor (target) = 1.0 + 1.0 * 1.0 = 2.0
     // Alpha = 0.01 / (1.0 + 0.01) approx 0.01
     // smoothed = 1.0 + 0.01 * (2.0 - 1.0) = 1.01
 
