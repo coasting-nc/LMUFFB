@@ -649,33 +649,27 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         // Normalize: 1G braking = +1.0, 1G acceleration = -1.0
         double long_g = m_accel_z_smoothed / GRAVITY_MS2;
 
-        // TRANSFORM CLAMPING: Transformations (Cubic, etc.) are designed for [-1.0, 1.0].
-        // We clamp to this range before transforming to avoid non-monotonic behavior.
-        double long_load_norm = long_g;
+        // Domain Scaling: We want to capture up to 5G of dynamic range for high-downforce cars.
+        const double MAX_G_RANGE = 5.0;
+        double long_load_norm = std::clamp(long_g, -MAX_G_RANGE, MAX_G_RANGE);
+
         if (m_long_load_transform != LoadTransform::LINEAR) {
-            long_load_norm = std::clamp(long_load_norm, -1.0, 1.0);
-        } else {
-            // Linear allows capturing high-G dynamics (e.g. wall hits) up to 5G.
-            long_load_norm = std::clamp(long_load_norm, -5.0, 5.0);
+            // 1. Map the [-5.0, 5.0] range into the [-1.0, 1.0] domain required by the polynomials
+            double x = long_load_norm / MAX_G_RANGE;
+
+            // 2. Apply the mathematical transformation safely
+            switch (m_long_load_transform) {
+                case LoadTransform::CUBIC:     x = apply_load_transform_cubic(x); break;
+                case LoadTransform::QUADRATIC: x = apply_load_transform_quadratic(x); break;
+                case LoadTransform::HERMITE:   x = apply_load_transform_hermite(x); break;
+                default: break;
+            }
+
+            // 3. Map the result back to the [-5.0, 5.0] dynamic range
+            long_load_norm = x * MAX_G_RANGE;
         }
 
-        // Apply Transformation (#301)
-        switch (m_long_load_transform) {
-            case LoadTransform::CUBIC:
-                long_load_norm = apply_load_transform_cubic(long_load_norm);
-                break;
-            case LoadTransform::QUADRATIC:
-                long_load_norm = apply_load_transform_quadratic(long_load_norm);
-                break;
-            case LoadTransform::HERMITE:
-                long_load_norm = apply_load_transform_hermite(long_load_norm);
-                break;
-            case LoadTransform::LINEAR:
-            default:
-                break;
-        }
-
-        // Blend: 1.0 + (Ratio - 1.0) * Gain
+        // Blend: 1.0 + (Ratio * Gain)
         long_load_factor = 1.0 + long_load_norm * (double)m_long_load_effect;
         long_load_factor = std::clamp(long_load_factor, LONG_LOAD_MIN, LONG_LOAD_MAX);
     }

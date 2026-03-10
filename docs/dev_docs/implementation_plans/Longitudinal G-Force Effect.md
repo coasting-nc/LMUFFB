@@ -66,34 +66,36 @@ During the analysis phase, several alternative approaches were evaluated and dis
     if (m_long_load_effect > 0.0) {
         // Use Derived Longitudinal Acceleration (Z-axis) to isolate weight transfer.
         // LMU Coordinate System: +Z is rearward (deceleration/braking). -Z is forward (acceleration).
-        // Normalize: 1G braking = +1.0, 1G acceleration = -1.0
         double long_g = m_accel_z_smoothed / GRAVITY_MS2;
-        double long_load_norm = long_g;
-        
-        // TRANSFORM CLAMPING: Transformations (Cubic, etc.) are designed for [-1.0, 1.0].
-        // We clamp to this range before transforming to avoid non-monotonic behavior (Review fix).
+
+        // Domain Scaling: We want to capture up to 5G of dynamic range for high-downforce cars.
+        const double MAX_G_RANGE = 5.0;
+        double long_load_norm = std::clamp(long_g, -MAX_G_RANGE, MAX_G_RANGE);
+
         if (m_long_load_transform != LoadTransform::LINEAR) {
-            long_load_norm = std::clamp(long_load_norm, -1.0, 1.0);
-        } else {
-            // Linear allows capturing high-G dynamics (e.g. wall hits) up to 5G.
-            long_load_norm = std::clamp(long_load_norm, -5.0, 5.0);
+            // 1. Map the [-5.0, 5.0] range into the [-1.0, 1.0] domain required by the polynomials
+            double x = long_load_norm / MAX_G_RANGE;
+
+            // 2. Apply the mathematical transformation safely
+            switch (m_long_load_transform) {
+                case LoadTransform::CUBIC:     x = apply_load_transform_cubic(x); break;
+                case LoadTransform::QUADRATIC: x = apply_load_transform_quadratic(x); break;
+                case LoadTransform::HERMITE:   x = apply_load_transform_hermite(x); break;
+                default: break;
+            }
+
+            // 3. Map the result back to the [-5.0, 5.0] dynamic range
+            long_load_norm = x * MAX_G_RANGE;
         }
 
-        // Apply Transformation
-        switch (m_long_load_transform) {
-            case LoadTransform::CUBIC: long_load_norm = apply_load_transform_cubic(long_load_norm); break;
-            case LoadTransform::QUADRATIC: long_load_norm = apply_load_transform_quadratic(long_load_norm); break;
-            case LoadTransform::HERMITE: long_load_norm = apply_load_transform_hermite(long_load_norm); break;
-            case LoadTransform::LINEAR: default: break;
-        }
-
+        // Blend: 1.0 + (Ratio * Gain)
         long_load_factor = 1.0 + long_load_norm * (double)m_long_load_effect;
         long_load_factor = std::clamp(long_load_factor, LONG_LOAD_MIN, LONG_LOAD_MAX);
     }
     ```
 
 > **Design Rationale:**
-> Using `m_accel_z_smoothed` completely decouples the effect from aerodynamic downforce and high-frequency suspension noise. The conditional clamp ensures that non-linear transformations remain stable while preserving the ability to capture extreme dynamics in linear mode.
+> Using `m_accel_z_smoothed` completely decouples the effect from aerodynamic downforce and high-frequency suspension noise. The **Domain Scaling** approach is critical for high-downforce cars: it allows transformations to operate within their safe `[-1.0, 1.0]` domain while still providing feedback for forces up to 5G.
 
 ### 6.2. `src/GuiLayer_Common.cpp`
 *   **Target:** `DrawTuningWindow` -> "Load Forces" section.
@@ -122,63 +124,63 @@ During the analysis phase, several alternative approaches were evaluated and dis
 ### 6.5. Version Increment Rule
 *   Increment the version number in `VERSION` by the smallest possible increment (e.g., `0.7.162` -> `0.7.163`).
 
-## 7. Longitudinal G-Force Normalization and Clamping
+## 7. Longitudinal G-Force Normalization, Clamping, and Domain Scaling
 
 > **Design Rationale:**
 > Longitudinal G-force represents the chassis acceleration in the Z-axis, normalized by Earth's gravity (9.81 m/s²). In the LMU coordinate system, +Z is rearward (braking/deceleration) and -Z is forward (acceleration).
 
-### 7.1. Linear Normalization
-In Linear mode, the raw G-force value is used directly as the multiplier input. 1.0G of braking results in a +1.0 contribution to the multiplier calculation. We clamp this to `[-5.0, 5.0]` to allow high-dynamic events (like wall strikes or extreme prototype braking) to be felt without risking numerical instability that could occur with uncapped inputs.
+### 7.1. Dynamic Range (5G)
+Modern high-performance cars, especially Hypercars and LMP prototypes, can pull significantly more than 1G of deceleration. To provide meaningful feedback throughout the entire braking phase, the system captures up to **5.0G** of dynamic range. Clamping at 1.0G would cause the effect to "flatline" early, losing critical threshold braking cues.
 
-### 7.2. Mathematical Transformations and Unit-Range Clamping
+### 7.2. Domain Scaling for Transformations
 The project provides several non-linear transformations (Cubic, Quadratic, Hermite) designed to soften the response at the limits of load transfer. These functions:
 - `apply_load_transform_cubic(x)`: $1.5x - 0.5x^3$
 - `apply_load_transform_quadratic(x)`: $2x - x|x|$
 - `apply_load_transform_hermite(x)`: $x(1 + |x| - x^2)$
 
-These polynomials are specifically tuned for the unit range `[-1.0, 1.0]`. If an input outside this range (e.g., 2.0G) is passed, the output can become non-monotonic or even reverse sign (e.g., Quadratic returns -15 for x=5).
+These polynomials are strictly designed for the unit domain `[-1.0, 1.0]`. If inputs outside this range are passed, the functions become non-monotonic (e.g., Cubic reverses direction after 1.0), which would result in erratic and dangerous FFB behavior.
 
-To prevent this, the implementation uses **Conditional Clamping**:
-- If a non-linear transform is active, the G-force is clamped to `[-1.0, 1.0]` **before** transformation.
-- If Linear mode is active, the G-force is clamped to `[-5.0, 5.0]`.
+**Domain Scaling Workflow:**
+1.  **Normalization**: The input G-force (up to 5G) is divided by the max range (5.0) to map it into the safe `[-1.0, 1.0]` domain.
+2.  **Transformation**: The mathematical S-curve or progressive curve is applied to this normalized value.
+3.  **Restoration**: The result is multiplied back by 5.0 to restore the full dynamic intensity.
 
-This ensures that tuning presets using transformations remain physically consistent and safe for the user's hardware.
+This allows the user to benefit from the smooth feel of non-linear curves without losing the high-G resolution required for elite-tier sim racing.
 
 ## 8. Test Plan (TDD-Ready)
 
-**Design Rationale:** We must prove that the multiplier responds correctly to G-forces and completely ignores massive tire loads (simulating aero).
+**Design Rationale:** We must prove that the multiplier responds correctly to G-forces, supports the full 5G range, and correctly implements Domain Scaling for all transformations.
 
 *   **Test 1: `test_longitudinal_g_braking`**
-    *   *Input:* `m_accel_z_smoothed` = `9.81` (1G braking), `m_long_load_effect` = `1.0` (100%).
+    *   *Input:* `m_accel_z_smoothed` = `9.81` (1G braking), `m_long_load_effect` = `1.0`.
     *   *Expected Output:* `long_load_factor` should be `2.0`.
-    *   *Assertion:* `ASSERT_NEAR(factor, 2.0, 0.01)`
-*   **Test 2: `test_longitudinal_g_acceleration`**
-    *   *Input:* `m_accel_z_smoothed` = `-9.81` (1G acceleration), `m_long_load_effect` = `0.5` (50%).
-    *   *Expected Output:* `long_load_factor` should be `0.5`.
-    *   *Assertion:* `ASSERT_NEAR(factor, 0.5, 0.01)`
-*   **Test 3: `test_longitudinal_g_aero_independence`**
-    *   *Input:* `m_accel_z_smoothed` = `0.0` (Constant speed), `avg_front_load` = `10000.0` (Massive aero), `m_long_load_effect` = `1.0`.
-    *   *Expected Output:* `long_load_factor` should be exactly `1.0` (no weight transfer).
-    *   *Assertion:* `ASSERT_EQ(factor, 1.0)`
+*   **Test 2: `test_longitudinal_g_high_decel`**
+    *   *Input:* `m_accel_z_smoothed` = `29.43` (3G braking), `m_long_load_effect` = `1.0`.
+    *   *Expected Output:* `long_load_factor` should be `4.0`.
+*   **Test 3: `test_longitudinal_g_domain_scaling_cubic`**
+    *   *Input:* `m_accel_z_smoothed` = `4.905` (0.5G braking), `transform` = `CUBIC`.
+    *   *Calculation:* $x = 0.5/5.0 = 0.1$. $f(0.1) = 1.5(0.1) - 0.5(0.1)^3 \approx 0.1495$. Result $= 0.1495 * 5.0 = 0.7475G$ equivalent.
+*   **Test 4: `test_longitudinal_g_aero_independence`**
+    *   *Input:* `m_accel_z_smoothed` = `0.0`, `avg_front_load` = `10000.0`.
+    *   *Expected Output:* `long_load_factor` exactly `1.0`.
 
 ## 9. Implementation Notes
 
 ### 9.1. Deviations from Initial Plan
-- **Clamping Logic**: The initial plan proposed a broad `[-5.0, 5.0]` clamp for all modes. During code review, it was identified that this would break non-linear transformations (Cubic, Quadratic, Hermite) which are designed for the `[-1.0, 1.0]` range. The plan was updated to include "Conditional Clamping".
+- **Clamping Logic**: The initial plan proposed a broad `[-5.0, 5.0]` clamp for all modes. During code review, it was identified that this would break non-linear transformations. The plan was updated to **Domain Scaling**, mapping the 5G range into the unit domain before transformation and restoring it after.
 - **Test Infrastructure**: Existing tests in `test_ffb_engine.cpp` and `test_ffb_smoothing.cpp` had to be updated because they relied on the old tire-load-based model. They were successfully pivoted to use G-force inputs.
 
 ### 9.2. Challenges & Issues
+- **Non-Monotonicity**: Identified that raw polynomial transforms fail outside `[-1, 1]`. Cubic reverses at $\sqrt{1.5/1.5} = 1.0$. Domain scaling solved this by effectively "stretching" the polynomial to the 5G range.
 - **Chassis Inertia Smoothing**: In unit tests, `m_accel_z_smoothed` is overwritten by the main `calculate_force` logic if it is not "frozen". To test the effect block in isolation while still calling the full `calculate_force` method, `m_chassis_inertia_smoothing` was set to a very high value (1000s) to effectively stop the EMA from changing the test's injected acceleration value.
-- **Distribution Test Failure**: An unrelated failure in `test_analyzer_bundling_integrity` was observed on Linux. This appears to be a pre-existing issue related to environment paths and does not affect the correctness of the physics changes.
 
 ### 9.3. Recommendations for the Future
 - **Log Field Renaming**: While internal variable names were kept for compatibility, the telemetry log fields were renamed to `Longitudinal G-Force` in v0.7.155. It might be beneficial to eventually unify all naming, but for now, the UI and tooltips provide sufficient clarity.
-- **G-Force Sensitivity**: Some users might prefer the old "noisy" tire load feel for immersion. While the G-force model is more physically accurate for steering weight, a future "High-Frequency Detail" slider could blend a small percentage of tire load noise back into the multiplier.
 
 ## 10. Deliverables
-- [x] Update `src/FFBEngine.cpp` with the new G-Force logic.
+- [x] Update `src/FFBEngine.cpp` with Domain Scaling logic.
 - [x] Update `src/GuiLayer_Common.cpp` UI labels.
 - [x] Update `src/Tooltips.h` descriptions.
-- [x] Write and pass the 3 new unit tests in `tests/test_issue_325_longitudinal_g.cpp`.
+- [x] Write and pass unit tests in `tests/test_issue_325_longitudinal_g.cpp` covering Domain Scaling.
 - [x] Increment version numbers.
-- [x] **Implementation Notes:** Update this plan document with any unforeseen issues or plan deviations encountered during implementation.
+- [x] **Implementation Notes**: Update this plan document with final notes.

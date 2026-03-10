@@ -144,21 +144,22 @@ TEST_CASE(test_long_load_transformations, "Physics") {
         return snap.long_load_force;
     };
 
-    // Case: g_force = 0.5G (4.905 m/s2). long_g = 0.5
+    // Case: g_force = 0.5G (4.905 m/s2).
+    // Domain Scaling: MAX_G_RANGE = 5.0. x = 0.5 / 5.0 = 0.1
     // base_force = 10.0
-    // long_load_force = 10.0 * transform(0.5)
+    // long_load_force = 10.0 * (transform(0.1) * 5.0)
 
     // Linear: 10 * 0.5 = 5.0
     ASSERT_NEAR(get_long_load_force(LoadTransform::LINEAR, 0.5 * 9.81), 5.0f, 0.1f);
 
-    // Cubic: 10 * 0.6875 = 6.875
-    ASSERT_NEAR(get_long_load_force(LoadTransform::CUBIC, 0.5 * 9.81), 6.875f, 0.1f);
+    // Cubic: 10 * (transform_cubic(0.1) * 5.0) = 10 * (0.1495 * 5.0) = 7.475
+    ASSERT_NEAR(get_long_load_force(LoadTransform::CUBIC, 0.5 * 9.81), 7.475f, 0.1f);
 
-    // Quadratic: 10 * 0.75 = 7.5
-    ASSERT_NEAR(get_long_load_force(LoadTransform::QUADRATIC, 0.5 * 9.81), 7.5f, 0.1f);
+    // Quadratic: 10 * (transform_quadratic(0.1) * 5.0) = 10 * (0.19 * 5.0) = 9.5
+    ASSERT_NEAR(get_long_load_force(LoadTransform::QUADRATIC, 0.5 * 9.81), 9.5f, 0.1f);
 
-    // Hermite: 10 * 0.625 = 6.25
-    ASSERT_NEAR(get_long_load_force(LoadTransform::HERMITE, 0.5 * 9.81), 6.25f, 0.1f);
+    // Hermite: 10 * (transform_hermite(0.1) * 5.0) = 10 * (0.109 * 5.0) = 5.45
+    ASSERT_NEAR(get_long_load_force(LoadTransform::HERMITE, 0.5 * 9.81), 5.45f, 0.1f);
 }
 
 TEST_CASE(test_long_load_multiplier_behavior, "Physics") {

@@ -6,6 +6,7 @@
 using namespace FFBEngineTests;
 
 TEST_CASE(test_longitudinal_g_braking, "Physics") {
+    std::cout << "[RUNNING] test_longitudinal_g_braking" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
 
@@ -14,14 +15,13 @@ TEST_CASE(test_longitudinal_g_braking, "Physics") {
     engine.m_long_load_smoothing = 0.0f; // Instant
     engine.m_steering_shaft_gain = 1.0f;
     engine.m_understeer_effect = 0.0f;
+    engine.m_long_load_transform = LoadTransform::LINEAR;
 
     // Scenario: 1G Braking (+Z is rearward/deceleration)
-    // To make sure calculate_force doesn't overwrite it, we set a high smoothing
     engine.m_chassis_inertia_smoothing = 1000.0f;
     engine.m_accel_z_smoothed = 9.81;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0);
-    // 10Nm base torque
     data.mSteeringShaftTorque = 10.0;
 
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 5000.0);
@@ -34,61 +34,75 @@ TEST_CASE(test_longitudinal_g_braking, "Physics") {
         float long_force = batch.back().long_load_force;
         float base_force = batch.back().base_force;
 
-        // long_g = 9.81 / 9.81 = 1.0.
+        // 1G Linear -> long_load_norm = 1.0.
         // multiplier = 1.0 + 1.0 * 1.0 = 2.0.
-        // long_load_force = base_steer_force * (2.0 - 1.0) = base_steer_force.
+        // long_load_force = 10 * (2.0 - 1.0) = 10.
 
-        std::cout << "[DEBUG] Base Force: " << base_force << " Long Force: " << long_force << std::endl;
-
-        // Use a slightly larger epsilon because of alpha_chassis (even with 1000s tau, it's not 0)
-        ASSERT_NEAR(long_force, base_force, 0.2f);
+        ASSERT_NEAR(long_force, base_force, 0.1f);
     }
 }
 
-TEST_CASE(test_longitudinal_g_acceleration, "Physics") {
+TEST_CASE(test_longitudinal_g_high_decel, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    // Setup: 50% effect gain
-    engine.m_long_load_effect = 0.5f;
-    engine.m_long_load_smoothing = 0.0f; // Instant
+    engine.m_long_load_effect = 1.0f;
+    engine.m_long_load_smoothing = 0.0f;
     engine.m_steering_shaft_gain = 1.0f;
     engine.m_understeer_effect = 0.0f;
+    engine.m_long_load_transform = LoadTransform::LINEAR;
 
-    // Scenario: 1G Acceleration (-Z is forward)
+    // Scenario: 3G Braking
     engine.m_chassis_inertia_smoothing = 1000.0f;
-    engine.m_accel_z_smoothed = -9.81;
+    engine.m_accel_z_smoothed = 3.0 * 9.81;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0);
     data.mSteeringShaftTorque = 10.0;
 
-    FFBEngineTestAccess::SetStaticFrontLoad(engine, 5000.0);
+    engine.calculate_force(&data);
 
-    engine.calculate_force(&data, "GT3", "Ferrari 296", 0.0f, true, 0.0025);
+    auto snap = engine.GetDebugBatch().back();
+    // 3G Linear -> multiplier = 1.0 + 3.0 * 1.0 = 4.0.
+    // long_load_force = 10 * (4.0 - 1.0) = 30.
+    ASSERT_NEAR(snap.long_load_force, 30.0f, 0.1f);
+}
 
-    auto batch = engine.GetDebugBatch();
-    ASSERT_FALSE(batch.empty());
-    if (!batch.empty()) {
-        float long_force = batch.back().long_load_force;
-        float base_force = batch.back().base_force;
+TEST_CASE(test_longitudinal_g_domain_scaling_cubic, "Physics") {
+    FFBEngine engine;
+    InitializeEngine(engine);
 
-        // long_g = -1.0.
-        // multiplier = 1.0 + (-1.0) * 0.5 = 0.5.
-        // long_load_force = base_steer_force * (0.5 - 1.0) = -0.5 * base_steer_force.
+    engine.m_long_load_effect = 1.0f;
+    engine.m_long_load_smoothing = 0.0f;
+    engine.m_steering_shaft_gain = 1.0f;
+    engine.m_understeer_effect = 0.0f;
+    engine.m_long_load_transform = LoadTransform::CUBIC;
 
-        std::cout << "[DEBUG] Base Force: " << base_force << " Long Force: " << long_force << std::endl;
+    // Scenario: 0.5G Braking (4.905 m/s2)
+    // Domain Scaling: MAX_G_RANGE = 5.0
+    // x = 0.5 / 5.0 = 0.1
+    // f(0.1) = 1.5(0.1) - 0.5(0.1)^3 = 0.15 - 0.0005 = 0.1495
+    // norm = 0.1495 * 5.0 = 0.7475
+    // multiplier = 1.0 + 0.7475 * 1.0 = 1.7475
+    // long_force = 10 * 0.7475 = 7.475
 
-        ASSERT_NEAR(long_force, -0.5f * base_force, 0.1f);
-    }
+    engine.m_chassis_inertia_smoothing = 1000.0f;
+    engine.m_accel_z_smoothed = 0.5 * 9.81;
+
+    TelemInfoV01 data = CreateBasicTestTelemetry(30.0);
+    data.mSteeringShaftTorque = 10.0;
+
+    engine.calculate_force(&data);
+
+    auto snap = engine.GetDebugBatch().back();
+    ASSERT_NEAR(snap.long_load_force, 7.475f, 0.01f);
 }
 
 TEST_CASE(test_longitudinal_g_aero_independence, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    // Setup: 100% effect gain
     engine.m_long_load_effect = 1.0f;
-    engine.m_long_load_smoothing = 0.0f; // Instant
+    engine.m_long_load_smoothing = 0.0f;
     engine.m_steering_shaft_gain = 1.0f;
     engine.m_understeer_effect = 0.0f;
 
@@ -96,23 +110,17 @@ TEST_CASE(test_longitudinal_g_aero_independence, "Physics") {
     engine.m_chassis_inertia_smoothing = 1000.0f;
     engine.m_accel_z_smoothed = 0.0;
 
-    TelemInfoV01 data = CreateBasicTestTelemetry(80.0); // High speed
-    data.mWheel[0].mTireLoad = 10000.0; // Massive load (2x static)
+    TelemInfoV01 data = CreateBasicTestTelemetry(80.0);
+    data.mWheel[0].mTireLoad = 10000.0;
     data.mWheel[1].mTireLoad = 10000.0;
     data.mSteeringShaftTorque = 10.0;
 
-    FFBEngineTestAccess::SetStaticFrontLoad(engine, 5000.0);
-
-    engine.calculate_force(&data, "GT3", "Ferrari 296", 0.0f, true, 0.0025);
+    engine.calculate_force(&data);
 
     auto batch = engine.GetDebugBatch();
     ASSERT_FALSE(batch.empty());
     if (!batch.empty()) {
         float long_force = batch.back().long_load_force;
-        // long_g = 0.0.
-        // multiplier = 1.0 + 0.0 * 1.0 = 1.0.
-        // long_load_force = base_steer_force * (1.0 - 1.0) = 0.0.
-
         ASSERT_NEAR(long_force, 0.0f, 0.01f);
     }
 }
