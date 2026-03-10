@@ -453,7 +453,119 @@ void Config::LoadPresets() {
         presets.push_back(p);
     }
     
-    // 3. GT3 DD 15 Nm (Simagic Alpha)
+    // 3. T300 v0.7.164 (Issue #322)
+    {
+        Preset p("T300 v0.7.164", true);
+        p.app_version = "0.7.165";
+        p.gain = 0.559471f;
+        p.wheelbase_max_nm = 25.1f;
+        p.target_rim_nm = 24.5f;
+        p.min_force = 0.02f;
+        p.steering_shaft_gain = 0.955947f;
+        p.ingame_ffb_gain = 1.0f;
+        p.steering_shaft_smoothing = 0.0f;
+        p.understeer = 1.0f;
+        p.torque_source = 0;
+        p.torque_passthrough = false;
+        p.flatspot_suppression = false;
+        p.notch_q = 2.0f;
+        p.flatspot_strength = 1.0f;
+        p.static_notch_enabled = false;
+        p.static_notch_freq = 11.0f;
+        p.static_notch_width = 2.0f;
+        p.oversteer_boost = 0.0f;
+        p.long_load_effect = 2.68722f;
+        p.long_load_smoothing = 0.15f;
+        p.long_load_transform = 0;
+        p.grip_smoothing_steady = 0.05f;
+        p.grip_smoothing_fast = 0.005f;
+        p.grip_smoothing_sensitivity = 0.1f;
+        p.sop = 0.0f;
+        p.lateral_load = 2.81938f;
+        p.lat_load_transform = 2;
+        p.rear_align_effect = 0.828194f;
+        p.sop_yaw_gain = 0.418502f;
+        p.yaw_kick_threshold = 1.01f;
+        p.unloaded_yaw_gain = 1.0f;
+        p.unloaded_yaw_threshold = 0.0f;
+        p.unloaded_yaw_sens = 0.1f;
+        p.unloaded_yaw_gamma = 0.1f;
+        p.unloaded_yaw_punch = 0.0f;
+        p.power_yaw_gain = 1.0f;
+        p.power_yaw_threshold = 0.0f;
+        p.power_slip_threshold = 0.0618062f;
+        p.power_yaw_gamma = 0.2f;
+        p.power_yaw_punch = 0.0f;
+        p.yaw_smoothing = 0.001f;
+        p.gyro_gain = 0.0f;
+        p.gyro_smoothing = 0.0f;
+        p.sop_smoothing = 0.0f;
+        p.sop_scale = 1.0f;
+        p.understeer_affects_sop = false;
+        p.slope_detection_enabled = false;
+        p.slope_sg_window = 15;
+        p.slope_sensitivity = 0.5f;
+        p.slope_smoothing_tau = 0.04f;
+        p.slope_min_threshold = -0.3f;
+        p.slope_max_threshold = -2.0f;
+        p.slope_alpha_threshold = 0.02f;
+        p.slope_decay_rate = 5.0f;
+        p.slope_confidence_enabled = true;
+        p.slope_g_slew_limit = 50.0f;
+        p.slope_use_torque = true;
+        p.slope_torque_sensitivity = 0.5f;
+        p.slope_confidence_max_rate = 0.1f;
+        p.slip_smoothing = 0.002f;
+        p.chassis_smoothing = 0.0f;
+        p.optimal_slip_angle = 0.1f;
+        p.optimal_slip_ratio = 0.12f;
+        p.lockup_enabled = true;
+        p.lockup_gain = 3.0f;
+        p.brake_load_cap = 10.0f;
+        p.lockup_freq_scale = 1.02f;
+        p.lockup_gamma = 0.1f;
+        p.lockup_start_pct = 1.0f;
+        p.lockup_full_pct = 5.0f;
+        p.lockup_prediction_sens = 10.0f;
+        p.lockup_bump_reject = 0.1f;
+        p.lockup_rear_boost = 10.0f;
+        p.abs_pulse_enabled = false;
+        p.abs_gain = 2.0f;
+        p.abs_freq = 25.5f;
+        p.texture_load_cap = 1.5f;
+        p.slide_enabled = false;
+        p.slide_gain = 0.226562f;
+        p.slide_freq = 1.0f;
+        p.road_enabled = false;
+        p.road_gain = 0.0f;
+        p.vibration_gain = 1.0f;
+        p.road_fallback_scale = 0.05f;
+        p.dynamic_normalization_enabled = false;
+        p.auto_load_normalization_enabled = false;
+        p.soft_lock_enabled = false;
+        p.soft_lock_stiffness = 20.0f;
+        p.soft_lock_damping = 0.5f;
+        p.spin_enabled = false;
+        p.spin_gain = 0.5f;
+        p.spin_freq_scale = 1.0f;
+        p.scrub_drag_gain = 0.0f;
+        p.bottoming_method = 0;
+        p.rest_api_enabled = true;
+        p.rest_api_port = 6397;
+        p.safety_window_duration = 2.0f;
+        p.safety_gain_reduction = 0.3f;
+        p.safety_smoothing_tau = 0.2f;
+        p.spike_detection_threshold = 500.0f;
+        p.immediate_spike_threshold = 1500.0f;
+        p.safety_slew_full_scale_time_s = 1.0f;
+        p.stutter_safety_enabled = false;
+        p.stutter_threshold = 1.5f;
+        p.speed_gate_lower = 1.0f;
+        p.speed_gate_upper = 5.0f;
+        presets.push_back(p);
+    }
+
+    // 4. GT3 DD 15 Nm (Simagic Alpha)
     {
         Preset p("GT3 DD 15 Nm (Simagic Alpha)", true);
         p.gain = 1.0f;
@@ -514,7 +626,7 @@ void Config::LoadPresets() {
         presets.push_back(p);
     }
     
-    // 4. LMPx/HY DD 15 Nm (Simagic Alpha)
+    // 5. LMPx/HY DD 15 Nm (Simagic Alpha)
     {
         Preset p("LMPx/HY DD 15 Nm (Simagic Alpha)", true);
         p.gain = 1.0f;
@@ -575,7 +687,7 @@ void Config::LoadPresets() {
         presets.push_back(p);
     }
     
-    // 5. GM DD 21 Nm (Moza R21 Ultra)
+    // 6. GM DD 21 Nm (Moza R21 Ultra)
     {
         Preset p("GM DD 21 Nm (Moza R21 Ultra)", true);
         p.gain = 1.454f;
@@ -636,7 +748,7 @@ void Config::LoadPresets() {
         presets.push_back(p);
     }
     
-    // 6. GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)
+    // 7. GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)
     {
         // Copy GM preset and add yaw kick
         Preset p("GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)", true);
@@ -926,7 +1038,7 @@ void Config::LoadPresets() {
         .SetSlipSmoothing(0.015f)
     );
 
-     // 22. Guide: SoP Yaw (Kick)
+    // 22. Guide: SoP Yaw (Kick)
     presets.push_back(Preset("Guide: SoP Yaw (Kick)", true)
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
