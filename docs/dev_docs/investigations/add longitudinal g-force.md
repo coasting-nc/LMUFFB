@@ -214,3 +214,67 @@ By switching to the **G-Force method**, the wheel only gets heavy when the car i
 
 This creates a direct neurological link between your hands and the car's stopping power, which is exactly what you need to build elite muscle memory for threshold braking!
 
+
+# Question 5
+
+Should the longitudinal G-force we will implement in the FFB (and the longitudinal load before it) be multiplied to the steering rack torque, or be independent of it? If we keep it multiplied, I see the issue that when braking on a straight line, if we don't turn the wheel, we don't actually feel the effect. Instead, I think we would want the wheel to feel heavier under braking even when we are not steering, in order to build the muscle memory for threshold braking.
+
+
+# Answer 5
+
+
+
+
+This is a brilliant question that touches on one of the most fundamental challenges in Force Feedback design: **How do we translate a 3D physical force (the car stopping) into a 1D rotational axis (the steering wheel)?**
+
+The short answer is: **It *must* remain a multiplier (or modulate a resistance effect like damping). It cannot be an independent, additive force.** 
+
+Here is the breakdown of why an additive force would ruin the driving experience, and how the multiplier actually *does* give you the straight-line threshold braking cues you are looking for.
+
+### 1. The "Which Way?" Problem (Why Additive Fails)
+Imagine you are driving 250 km/h down a perfectly flat straightaway. You smash the brakes. 
+If the Longitudinal Load was an independent, additive force (like the Yaw Kick or Road Texture), the FFB engine would say: *"Generate 5 Nm of force!"*
+
+But **which way** should the wheel turn? Left or right?
+* If we add +5 Nm, the wheel violently jerks to the left, spinning you into the wall.
+* If we add -5 Nm, the wheel violently jerks to the right, spinning you into the wall.
+
+Longitudinal weight transfer has no lateral (left/right) direction. It only pushes *forward*. Therefore, it cannot generate a rotational force on the steering column unless the wheels are already turned.
+
+### 2. How Real Cars Feel (Aligning Torque)
+In a real race car, braking in a straight line does not pull the steering wheel out of your hands. Instead, it makes the wheel feel **stiff, tense, and highly resistant to being turned**. 
+
+This happens because of **Aligning Torque**. The front tires are being crushed into the pavement. If you try to turn the wheel even 1 degree, the massive friction of the loaded tires fights you, trying to snap the wheel back to 0 degrees. 
+
+If the wheel is at exactly 0 degrees, the aligning torque is 0. 
+`0 degrees * 2000kg of load = 0 Nm of force.`
+
+### 3. How the Multiplier Builds Muscle Memory
+You mentioned you want the wheel to feel heavier to build muscle memory for threshold braking. **The multiplier actually achieves this, even on a straightaway.**
+
+Here is why: No race track is perfectly flat. Even on the main straight at Silverstone, the road has camber (slope for drainage), tiny bumps, and grooves. The game's physics engine is constantly sending tiny micro-forces to the steering rack as the tires tramline over these imperfections.
+
+When you hit the brakes, the G-Force multiplier takes those tiny, almost imperceptible 0.5 Nm micro-forces and amplifies them to 2.0 Nm or 3.0 Nm. 
+* **The Feel:** The wheel goes from feeling "loose" and light to feeling "locked in", tense, and alive with road texture. 
+* **The Limit:** As you reach the threshold of grip, the tires start to micro-slip. The base aligning torque drops. Because it's a multiplier, the FFB instantly drops with it. You feel the wheel go "hollow" or "light" the exact millisecond before the tires fully lock up.
+
+This tension-to-lightness transition is exactly how real drivers feel threshold braking.
+
+### 4. An Alternative: Dynamic Damping (Synthetic Stiffness)
+If you implement the G-Force multiplier and still feel like the wheel isn't "stiff" enough in a perfectly straight line, there is a secondary way to achieve this without adding a fake directional pull: **Dynamic Damping**.
+
+We already have a `Gyro Damping` effect in your code that resists steering velocity. We could easily add a line of code that increases the damping coefficient based on braking G-force. 
+* `Damping Force = -SteeringVelocity * (BaseDamping + BrakingG)`
+* This acts like thick syrup. It doesn't pull the wheel left or right, but it makes the wheel physically harder to turn away from the center while you are on the brakes.
+
+### Recommendation
+**Keep it as a multiplier.** 
+
+Implement the Z-axis G-force fix we discussed previously:
+```cpp
+double long_g = m_accel_z_smoothed / GRAVITY_MS2;
+double long_load_norm = std::clamp(long_g, -1.0, 1.0);
+double long_load_factor = 1.0 + long_load_norm * m_long_load_effect;
+```
+
+Test this on the track. You will find that because the multiplier amplifies the natural road noise and camber of the track, the wheel *will* feel significantly heavier and more "planted" under heavy braking, giving you the exact threshold cues you need without artificially steering the car for you!
