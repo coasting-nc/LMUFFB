@@ -2,6 +2,20 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 11, 2026[/b][/size]
+[b]Version 0.7.166 - Context-Aware Yaw Kick Signal Improvements[/b]
+
+[b]New release[/b] (0.7.166): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Reduced Yaw Kick Vibrations[/b]: Implemented a 15ms "fast smoothing" filter on yaw acceleration to eliminate the 400Hz telemetry noise that was causing intense vibrations and grainy feedback when using non-linear Gamma curves.
+[*][b]Zero-Latency Activation[/b]: Upgraded the oversteer vulnerability gates to use asymmetric smoothing (2ms attack / 50ms decay). This ensures the context-aware yaw kicks engage instantly the moment traction is lost, while preventing "chatter" over bumps.
+[*][b]Fixed Inverted Punches[/b]: Introduced an "Attack Phase Gate" that prevents jerk-based punches from firing in the wrong direction. The transient punch now only activates when the slide is actively accelerating away from you.
+[*][b]Hardened Safety[/b]: Added strict clamping to artificial jerk forces to ensure hardware safety even during high-frequency transients.
+[/list]
+
+---
+
 [size=5][b]March 10, 2026[/b][/size]
 [b]Version 0.7.162 - Longitudinal Load Fix & New Diagnostics[/b]
 

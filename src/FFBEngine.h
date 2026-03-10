@@ -416,8 +416,15 @@ public:
     double m_prev_yaw_rate = 0.0;     // New v0.7.144 (Solution 2)
     bool m_yaw_rate_seeded = false;   // New v0.7.144 (Solution 2)
     double m_prev_yaw_rate_log = 0.0;
-    double m_prev_derived_yaw_accel = 0.0; // New v0.7.164 (Issue #322)
+
+    // REPLACE m_prev_derived_yaw_accel WITH THESE:
+    double m_fast_yaw_accel_smoothed = 0.0;
+    double m_prev_fast_yaw_accel = 0.0;
     bool m_yaw_accel_seeded = false;       // New v0.7.164 (Issue #322)
+
+    // NEW: Vulnerability gate smoothing
+    double m_unloaded_vulnerability_smoothed = 0.0;
+    double m_power_vulnerability_smoothed = 0.0;
 
     // Derived Acceleration State (Issue #278)
     TelemVect3 m_prev_local_vel = {};

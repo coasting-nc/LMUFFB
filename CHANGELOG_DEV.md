@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.166] - 2026-03-11
+- **Context-Aware Yaw Kick Signal Conditioning (Issue #322)**:
+  - **Noise Amplification Mitigation**:
+    - Implemented a **15ms tau Fast Smoothing** filter on derived yaw acceleration before it enters the Gamma curve or Jerk calculation. This eliminates 400Hz telemetry noise which previously caused intense vibrations and "inverted" feel.
+    - Switched from raw `derived_yaw_accel` to `m_fast_yaw_accel_smoothed` as the base signal for context-aware effects.
+  - **Attack Phase Gate**:
+    - Introduced a directional consistency check: `(yaw_jerk * m_fast_yaw_accel_smoothed) > 0.0`.
+    - This ensures artificial "punches" only trigger when the slide is actively accelerating away from center, preventing noise-induced kicks in the wrong direction during recovery or pendulum catches.
+  - **Asymmetric Vulnerability Gates**:
+    - Upgraded oversteer vulnerability gates (Unloaded and Power) to use asymmetric smoothing: **2ms attack** (near-instant) and **50ms decay**.
+    - This provides zero-latency engagement the moment traction is lost while smoothly holding the gate open to prevent chatter from road bumps or fluctuating wheel slip.
+  - **Hardened Safety & State Management**:
+    - Added strict +/- 100 rad/s³ clamping for `yaw_jerk` to prevent extreme telemetry spikes.
+    - Added strict +/- 10 Nm clamping for the artificial jerk punch contribution.
+    - Fixed state reset logic to unconditionally reset `m_yaw_accel_seeded` in the FFB mute path, preventing single-frame spikes when the simulation resumes.
+- **Testing**:
+  - Updated `tests/test_issue_322_yaw_kicks.cpp` with 2 new functional tests:
+    - `test_yaw_jerk_attack_phase_gate`: Verifies that punches are suppressed when jerk and acceleration have opposite signs.
+    - `test_vulnerability_asymmetric_smoothing`: Verifies near-instant attack and slow decay of the vulnerability gates.
+  - Adjusted existing yaw kick tests to account for 15ms settling time.
+
 ## [0.7.165] - 2026-03-10
 - **User-Adjustable FFB Safety Features (Issue #316)**:
   - Transitioned hardcoded safety constants into configurable member variables in `FFBEngine`.
