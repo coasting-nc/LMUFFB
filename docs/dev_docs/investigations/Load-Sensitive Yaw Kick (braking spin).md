@@ -177,3 +177,60 @@ This design gives you exactly what you asked for: a hyper-sensitive, zero-latenc
 Does this architecture align with your vision? If so, I can write up the formal Implementation Plan for this!
 
 
+# Follow-up Question 2
+
+Review the rear_unload_factor clamp at 1.0. Are there driving scenarios or car classes in we might want to have a different clamp?
+
+# Answer 2
+
+
+
+
+You have hit on a crucial nuance of vehicle dynamics. Your intuition is spot on: clamping the factor at `1.0` using the raw `1.0 - rear_load_ratio` formula assumes that a car is only at "maximum vulnerability" when the rear tires have **0 Newtons of load** (i.e., they are completely airborne). 
+
+In reality, a tire loses its ability to sustain lateral forces long before it leaves the ground. 
+
+Here is why the raw `1.0 - ratio` math is too rigid, the car-specific scenarios where it fails, and how we should fix it.
+
+### The Problem with the Raw Ratio
+If we use `rear_unload_factor = 1.0 - (current_load / static_load)`:
+* A 20% drop in rear load gives a factor of `0.2`.
+* A 50% drop in rear load gives a factor of `0.5`.
+* A 100% drop (airborne) gives a factor of `1.0`.
+
+### Scenario 1: Rear-Engine vs. Front-Engine (GT3)
+* **Porsche 911 GT3 R (Rear Engine):** Because the engine is over the rear axle, the static rear load is massive. Under heavy braking, it might only lose **30%** of its rear load. However, because of the "pendulum effect" of that rear engine, if the car yaws while the rear is 30% unloaded, a violent spin is imminent. With the raw formula, the FFB would only give you a weak `0.3x` warning kick.
+* **Aston Martin Vantage (Front Engine):** The rear is naturally light. Under braking, it might easily lose **70%** of its rear load before it starts to step out. It would get a `0.7x` warning kick.
+
+### Scenario 2: High Downforce (Hypercar / LMP2)
+At 200 km/h, a Hypercar has so much downforce that even under maximum threshold braking, the rear load might only drop to **80%** of its static weight (a 20% drop). But because the cornering forces at 200 km/h are so extreme, that 20% drop is the absolute limit of grip. If it yaws here, you need a massive warning, but the raw formula would only give you a `0.2x` kick.
+
+### The Solution: "Unload Sensitivity"
+To fix this, we should keep the `0.0` to `1.0` clamp (to keep the math normalized and safe from exploding), but we need to introduce an **Unload Sensitivity** parameter that allows the user to define *how quickly* the factor reaches 1.0.
+
+**The Revised Logic:**
+```cpp
+// 1. Calculate the raw drop percentage (0.0 = no drop, 0.5 = half load, 1.0 = airborne)
+double load_drop = 1.0 - (ctx.avg_rear_load / m_static_rear_load);
+
+// 2. Apply Sensitivity Multiplier
+// If Sensitivity is 2.0, a 50% load drop results in a 1.0 (100%) factor.
+// If Sensitivity is 3.3, a 30% load drop results in a 1.0 (100%) factor.
+double rear_unload_factor = load_drop * m_unloaded_yaw_sensitivity;
+
+// 3. Clamp to [0.0, 1.0] envelope
+// This ensures the modulation never goes negative (adding load) 
+// and never exceeds 100% of the user's chosen Gain setting.
+rear_unload_factor = std::clamp(rear_unload_factor, 0.0, 1.0);
+```
+
+### Why this is the perfect architecture:
+1. **Normalized Envelope:** By keeping `rear_unload_factor` strictly between `0.0` and `1.0`, the user's `Unloaded Yaw Gain` slider acts as the absolute maximum Nm force they will ever feel. It makes tuning predictable.
+2. **Car-Specific Tuning:** 
+    * For a Porsche, the user can set Sensitivity to `3.0` (triggers full warning on a small load drop).
+    * For a front-engine car, they can set it to `1.5` (requires a larger load drop to trigger full warning).
+3. **Aero-Aware:** It still perfectly respects aerodynamic downforce. If aero pushes the `load_drop` negative (adding weight), the clamp catches it at `0.0`, keeping the car feeling stable.
+
+By adding this `Unloaded Yaw Sensitivity` slider alongside the Gain and Threshold sliders, we give the user complete control over exactly *when* the early-warning system kicks in for any specific car. 
+
+Shall we include this Sensitivity parameter in the final design for the "Unloaded Yaw Kick" effect?
