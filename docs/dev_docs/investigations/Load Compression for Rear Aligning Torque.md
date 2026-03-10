@@ -158,3 +158,13 @@ You do not need a separate effect for trail braking vs. straight-line braking.
 The **Unloaded Yaw Kick** (gated by rear load drop) covers the *vulnerability* of both scenarios. The **Yaw Jerk** (transient punch) naturally filters out the *intent* (smooth turn-in vs. violent snap). 
 
 By keeping them unified under one "Braking/Lift-off" UI section, we keep the app user-friendly while relying on advanced, high-frequency physics math to do the heavy lifting in the background.
+
+
+# Follow up question 2
+
+Is the yaw kick (acceleration, not yaw jerk) too noisy and aggressive under trail braking and turn in, if left with zero threshold and zero smoothing like it's required during braking?
+
+Set aside the UI concerns for now, let's consider the most effective FFB solution for advanced users.
+
+# Answer 2
+
