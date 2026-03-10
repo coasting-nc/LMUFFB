@@ -53,36 +53,25 @@ TEST_CASE(test_long_load_scaling, "Physics") {
     FFBEngineTestAccess::SetRollingAverageTorque(engine, 100.0);
     FFBEngineTestAccess::SetLastRawTorque(engine, 100.0);
 
-    // Seed static load
-    // Need to call calculate_force multiple times at low speed to learn static load
-    TelemInfoV01 data = CreateBasicTestTelemetry(5.0, 0.0);
-    data.mWheel[0].mTireLoad = 4000.0;
-    data.mWheel[1].mTireLoad = 4000.0;
-    data.mLocalAccel.x = 0.0;
+    // Now heavy braking (G-force based)
+    TelemInfoV01 data = CreateBasicTestTelemetry(30.0, 0.0);
+    data.mLocalAccel.z = 9.81; // 1G Braking
     data.mSteeringShaftTorque = 5.0;
 
-    // Learn for a few frames
-    for(int i=0; i<100; ++i) {
-        engine.calculate_force(&data);
-    }
-
-    // Now heavy braking (load transfer to front)
-    data.mWheel[0].mTireLoad = 8000.0;
-    data.mWheel[1].mTireLoad = 8000.0;
-    data.mLocalAccel.z = 5.0; // Braking
-    data.mLocalAccel.x = 0.0;
-    data.mSteeringShaftTorque = 5.0;
+    // Freeze chassis inertia to use our input directly
+    engine.m_chassis_inertia_smoothing = 1000.0f;
+    engine.m_accel_z_smoothed = 9.81;
 
     double output = engine.calculate_force(&data);
 
-    // Master Gain = 1.0, MaxTorqueRef = 100.0 (from Default)
+    // Master Gain = 1.0, MaxTorqueRef = 100.0
     // base_input = 5.0
-    // Load Ratio = 8000 / 4000 = 2.0
-    // Factor = 1.0 + (2.0 - 1.0) * 1.0 = 2.0
+    // long_g = 1.0
+    // Factor = 1.0 + 1.0 * 1.0 = 2.0
     // Total Nm = 5.0 * 2.0 = 10.0
     // Norm Force = 10.0 / 100.0 = 0.1
 
-    std::cout << "[INFO] Dynamic Weight Output: " << output << " (Expected 0.1)" << std::endl;
+    std::cout << "[INFO] Longitudinal G Output: " << output << " (Expected 0.1)" << std::endl;
 
     ASSERT_NEAR(output, 0.1, 0.01);
 }
@@ -136,6 +125,7 @@ TEST_CASE(test_long_load_transformations, "Physics") {
     engine.m_long_load_effect = 1.0f;
     engine.m_long_load_smoothing = 0.0f;
     engine.m_invert_force = false;
+    engine.m_chassis_inertia_smoothing = 1000.0f;
 
     // Use high scaling to see Nm directly
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
@@ -143,39 +133,33 @@ TEST_CASE(test_long_load_transformations, "Physics") {
     engine.m_wheelbase_max_nm = 100.0f;
     engine.m_target_rim_nm = 100.0f;
 
-    // Seed static load at 4000N
-    FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
-    FFBEngineTestAccess::SetStaticLoadLatched(engine, true);
-
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mSteeringShaftTorque = 10.0;
 
-    auto get_long_load_force = [&](LoadTransform transform, double current_load) {
+    auto get_long_load_force = [&](LoadTransform transform, double g_force) {
         engine.m_long_load_transform = transform;
-        data.mWheel[0].mTireLoad = current_load;
-        data.mWheel[1].mTireLoad = current_load; // Both front wheels
+        engine.m_accel_z_smoothed = g_force;
         engine.calculate_force(&data);
         auto snap = engine.GetDebugBatch().back();
         return snap.long_load_force;
     };
 
-    // Case: current_load = 6000N. x = (6000/4000) - 1 = 0.5
+    // Case: g_force = 0.5G (4.905 m/s2).
+    // Domain Scaling: MAX_G_RANGE = 5.0. x = 0.5 / 5.0 = 0.1
     // base_force = 10.0
-    // long_load_force = base_force * gain_to_apply * (factor - 1.0)
-    // factor - 1.0 = transform(x) * long_load_effect
-    // since gain_to_apply=1.0, long_load_force = 10.0 * transform(0.5)
+    // long_load_force = 10.0 * (transform(0.1) * 5.0)
 
     // Linear: 10 * 0.5 = 5.0
-    ASSERT_NEAR(get_long_load_force(LoadTransform::LINEAR, 6000.0), 5.0f, 0.1f);
+    ASSERT_NEAR(get_long_load_force(LoadTransform::LINEAR, 0.5 * 9.81), 5.0f, 0.1f);
 
-    // Cubic: 10 * (1.5*0.5 - 0.5*0.5^3) = 10 * (0.75 - 0.0625) = 10 * 0.6875 = 6.875
-    ASSERT_NEAR(get_long_load_force(LoadTransform::CUBIC, 6000.0), 6.875f, 0.1f);
+    // Cubic: 10 * (transform_cubic(0.1) * 5.0) = 10 * (0.1495 * 5.0) = 7.475
+    ASSERT_NEAR(get_long_load_force(LoadTransform::CUBIC, 0.5 * 9.81), 7.475f, 0.1f);
 
-    // Quadratic: 10 * (2*0.5 - 0.5*0.5) = 10 * (1.0 - 0.25) = 10 * 0.75 = 7.5
-    ASSERT_NEAR(get_long_load_force(LoadTransform::QUADRATIC, 6000.0), 7.5f, 0.1f);
+    // Quadratic: 10 * (transform_quadratic(0.1) * 5.0) = 10 * (0.19 * 5.0) = 9.5
+    ASSERT_NEAR(get_long_load_force(LoadTransform::QUADRATIC, 0.5 * 9.81), 9.5f, 0.1f);
 
-    // Hermite: 10 * (0.5 * (1 + 0.5 - 0.5^2)) = 10 * (0.5 * 1.25) = 10 * 0.625 = 6.25
-    ASSERT_NEAR(get_long_load_force(LoadTransform::HERMITE, 6000.0), 6.25f, 0.1f);
+    // Hermite: 10 * (transform_hermite(0.1) * 5.0) = 10 * (0.109 * 5.0) = 5.45
+    ASSERT_NEAR(get_long_load_force(LoadTransform::HERMITE, 0.5 * 9.81), 5.45f, 0.1f);
 }
 
 TEST_CASE(test_long_load_multiplier_behavior, "Physics") {
@@ -184,6 +168,7 @@ TEST_CASE(test_long_load_multiplier_behavior, "Physics") {
     engine.m_long_load_effect = 1.0f;
     engine.m_long_load_smoothing = 0.0f;
     engine.m_invert_force = false;
+    engine.m_chassis_inertia_smoothing = 1000.0f;
 
     // Use high scaling to see Nm directly
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
@@ -191,16 +176,11 @@ TEST_CASE(test_long_load_multiplier_behavior, "Physics") {
     engine.m_wheelbase_max_nm = 100.0f;
     engine.m_target_rim_nm = 100.0f;
 
-    // Seed static load at 4000N
-    FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
-    FFBEngineTestAccess::SetStaticLoadLatched(engine, true);
-
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
 
     // Case 1: Straight line (zero steering torque)
     data.mSteeringShaftTorque = 0.0;
-    data.mWheel[0].mTireLoad = 8000.0; // High load transfer
-    data.mWheel[1].mTireLoad = 8000.0;
+    engine.m_accel_z_smoothed = 9.81; // 1G braking
 
     engine.calculate_force(&data);
     auto snap1 = engine.GetDebugBatch().back();
@@ -211,10 +191,11 @@ TEST_CASE(test_long_load_multiplier_behavior, "Physics") {
 
     // Case 2: Cornering (non-zero steering torque)
     data.mSteeringShaftTorque = 10.0;
+    engine.m_accel_z_smoothed = 9.81; // 1G braking
     engine.calculate_force(&data);
     auto snap2 = engine.GetDebugBatch().back();
 
-    // factor = 1.0 + (8000/4000 - 1) * 1.0 = 2.0
+    // factor = 1.0 + 1.0 * 1.0 = 2.0
     // isolated = 10.0 * (2.0 - 1.0) = 10.0 Nm
     // total Nm = 10.0 * 2.0 = 20.0 Nm
     // output = 20 / 100 = 0.2
