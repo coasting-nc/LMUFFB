@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-10 12:39:19</td>
+            <td class="headerValue">2026-03-10 20:19:31</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryMed">75.0&nbsp;%</td>
@@ -49,8 +49,8 @@
             <td></td>
             <td></td>
             <td class="headerItem">Branches:</td>
-            <td class="headerCovTableEntryLo">30.4&nbsp;%</td>
-            <td class="headerCovTableEntry">542</td>
+            <td class="headerCovTableEntryLo">30.3&nbsp;%</td>
+            <td class="headerCovTableEntry">544</td>
             <td class="headerCovTableEntry">165</td>
           </tr>
                   <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
@@ -267,7 +267,8 @@
 <span id="L182"><span class="lineNum">     182</span>                 :             : </span>
 <span id="L183"><span class="lineNum">     183</span>                 :             :                     // --- LOST FRAME DETECTION (Issue #303) ---</span>
 <span id="L184"><span class="lineNum">     184</span>                 :             :                     static double last_telem_et = -1.0;</span>
-<span id="L185"><span class="lineNum">     185</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC">           0 :                     if (last_telem_et &gt; 0.0 &amp;&amp; (g_localData.telemetry.telemInfo[idx].mElapsedTime - last_telem_et) &gt; (g_localData.telemetry.telemInfo[idx].mDeltaTime * 1.5)) {</span></span>
+<span id="L185"><span class="lineNum">     185</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span> :<span class="tlaUNC">           0 :                     if (g_engine.m_stutter_safety_enabled &amp;&amp; last_telem_et &gt; 0.0 &amp;&amp; (g_localData.telemetry.telemInfo[idx].mElapsedTime - last_telem_et) &gt; (g_localData.telemetry.telemInfo[idx].mDeltaTime * g_engine.m_stutter_threshold)) {</span></span>
+<span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not executed"> # </span><span class="tlaUNC" title="Branch 5 was not executed"> # </span>]
 <span id="L186"><span class="lineNum">     186</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                         std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
 <span id="L187"><span class="lineNum">     187</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                         g_engine.TriggerSafetyWindow(&quot;Lost Frames&quot;);</span></span>
 <span id="L188"><span class="lineNum">     188</span>                 :<span class="tlaUNC">           0 :                     }</span></span>
