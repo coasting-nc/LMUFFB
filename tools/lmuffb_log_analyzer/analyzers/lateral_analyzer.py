@@ -80,3 +80,38 @@ def analyze_lateral_dynamics(df: pd.DataFrame, metadata: SessionMetadata) -> Dic
         results['lat_g_vs_load_correlation'] = float(df['LatAccel'].corr(df['LatLoadNorm']))
 
     return results
+
+def analyze_longitudinal_dynamics(df: pd.DataFrame, metadata: SessionMetadata) -> Dict[str, Any]:
+    results = {}
+    if 'LongitudinalLoadFactor' in df.columns:
+        results['long_load_factor_mean'] = float(df['LongitudinalLoadFactor'].mean())
+        results['long_load_factor_max'] = float(df['LongitudinalLoadFactor'].max())
+        results['long_load_factor_min'] = float(df['LongitudinalLoadFactor'].min())
+        
+        # Check if the multiplier is stuck (indicates uncalibrated static load)
+        if results['long_load_factor_max'] - results['long_load_factor_min'] < 0.05:
+            results['long_load_active'] = False
+        else:
+            results['long_load_active'] = True
+            
+    # Check for the "Straight Line Braking" physical limitation
+    if 'Brake' in df.columns and 'Steering' in df.columns and 'FFBTotal' in df.columns:
+        straight_brake_mask = (df['Brake'] > 0.5) & (df['Steering'].abs() < 0.05)
+        if straight_brake_mask.any():
+            mean_ffb = df.loc[straight_brake_mask, 'FFBTotal'].abs().mean()
+            if mean_ffb < 1.0:
+                results['straight_brake_issue'] = True
+
+    # Check for missing/encrypted data using WarnBits
+    # FIX: Require the warning to be active for >50% of the session to avoid false positives from curb strikes/spawns
+    results['missing_data_warnings'] = []
+    if 'WarnBits' in df.columns:
+        warn_load_pct = (df['WarnBits'] & 0x01).astype(bool).mean()
+        warn_grip_pct = (df['WarnBits'] & 0x02).astype(bool).mean()
+        
+        if warn_load_pct > 0.5:
+            results['missing_data_warnings'].append(f"Tire Load (mTireLoad) is missing/encrypted ({warn_load_pct*100:.1f}% of session). Using kinematic fallback.")
+        if warn_grip_pct > 0.5:
+            results['missing_data_warnings'].append(f"Tire Grip (mGripFract) is missing/encrypted ({warn_grip_pct*100:.1f}% of session). Using slip-based fallback.")
+            
+    return results

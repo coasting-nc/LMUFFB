@@ -266,6 +266,15 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
     FFBEngineTestAccess::SetAutoNormalizationEnabled(engine_low, false);
     FFBEngineTestAccess::SetAutoPeakLoad(engine, 4000.0);
     FFBEngineTestAccess::SetAutoPeakLoad(engine_low, 4000.0);
+    
+    // Explicitly lock the static load for engine and engine_low
+    FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
+    FFBEngineTestAccess::SetStaticLoadLatched(engine, true);
+    FFBEngineTestAccess::SetSmoothedVibrationMult(engine, 5.0);
+
+    FFBEngineTestAccess::SetStaticFrontLoad(engine_low, 4000.0);
+    FFBEngineTestAccess::SetStaticLoadLatched(engine_low, true);
+    FFBEngineTestAccess::SetSmoothedVibrationMult(engine_low, 5.0);
 
     engine_low.m_brake_load_cap = 1.0f;
     engine_low.m_lockup_enabled = true;

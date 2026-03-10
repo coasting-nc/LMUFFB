@@ -2,6 +2,18 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 10, 2026[/b][/size]
+[b]Version 0.7.162 - Longitudinal Load Fix & New Diagnostics[/b]
+
+[b]New release[/b] (0.7.162): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Fixed Longitudinal Load Effect[/b]: Resolved a major issue where the Longitudinal Load effect (weight transfer under braking and acceleration) would become completely inactive if you had the "Auto Load Normalization" setting disabled. You should now feel the wheel weight up correctly under heavy braking regardless of your normalization settings!
+[*][b]Enhanced Log Analyzer Tools[/b]: Added new diagnostic panels to the log analyzer script. You can now visualize longitudinal load transfer, detect straight-line braking limitations, and visually verify whether the game is actively sending encrypted (missing) telemetry data for specific DLC cars. Also reduced false-positive warnings for missing data.
+[/list]
+
+---
+
 [size=5][b]March 9, 2026[/b][/size]
 [b]Version 0.7.161 - Log Analyzer Bundling Fix[/b]
 

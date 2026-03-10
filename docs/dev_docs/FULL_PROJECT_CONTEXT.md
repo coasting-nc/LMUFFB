@@ -217,6 +217,7 @@ struct SessionInfo {
     float understeer_effect;
     float sop_effect;
     float lat_load_effect; // v0.7.152
+    float long_load_effect;
     float sop_scale;       // v0.7.152
     float sop_smoothing;   // v0.7.152
     bool slope_enabled;
@@ -436,6 +437,7 @@ private:
         m_file << "# Understeer Effect: " << info.understeer_effect << "\n";
         m_file << "# SoP Effect: " << info.sop_effect << "\n";
         m_file << "# Lateral Load Effect: " << info.lat_load_effect << "\n";
+        m_file << "# Long Load Effect: " << info.long_load_effect << "\n";
         m_file << "# SoP Scale: " << info.sop_scale << "\n";
         m_file << "# SoP Smoothing: " << info.sop_smoothing << "\n";
         m_file << "# Slope Detection: " << (info.slope_enabled ? "Enabled" : "Disabled") << "\n";
@@ -4109,6 +4111,14 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_warned_vert_deflection = true;
     }
     
+    // if (m_auto_load_normalization_enabled) {
+    //     update_static_load_reference(ctx.avg_front_load, ctx.car_speed, ctx.dt);
+    // }
+    // ALWAYS learn static load reference (used by Longitudinal Load, Bottoming, and Normalization).
+    // This ensures m_static_front_load is accurate for the specific car,
+    // preventing the longitudinal load multiplier from being constantly clamped.
+    update_static_load_reference(ctx.avg_front_load, ctx.car_speed, ctx.dt);
+    
     // Peak Hold Logic
     if (m_auto_load_normalization_enabled && !seeded) {
         if (ctx.avg_front_load > m_auto_peak_front_load) {
@@ -4193,13 +4203,13 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double grip_factor_applied = m_torque_passthrough ? 1.0 : ctx.grip_factor;
 
     // v0.7.46: Longitudinal Load logic (#301)
-    if (m_auto_load_normalization_enabled) {
-        update_static_load_reference(ctx.avg_front_load, ctx.car_speed, ctx.dt);
-    }
+    // if (m_auto_load_normalization_enabled) {
+    //     update_static_load_reference(ctx.avg_front_load, ctx.car_speed, ctx.dt);
+    // }
     double long_load_factor = 1.0;
 
-    // Only apply if enabled AND we have real load data (no warnings)
-    if (m_long_load_effect > 0.0 && !ctx.frame_warn_load) {
+    // Apply if enabled (works with both raw load telemetry data and fallbacks)
+    if (m_long_load_effect > 0.0) {
         double long_load_norm = (ctx.avg_front_load / m_static_front_load) - 1.0;
         long_load_norm = std::clamp(long_load_norm, -1.0, 1.0);
 
@@ -9463,6 +9473,7 @@ void FFBThread() {
                             info.understeer_effect = g_engine.m_understeer_effect;
                             info.sop_effect = g_engine.m_sop_effect;
                             info.lat_load_effect = g_engine.m_lat_load_effect;
+                            info.long_load_effect = g_engine.m_long_load_effect;
                             info.sop_scale = g_engine.m_sop_scale;
                             info.sop_smoothing = g_engine.m_sop_smoothing_factor;
                             info.slope_enabled = g_engine.m_slope_detection_enabled;
@@ -13924,5 +13935,2647 @@ struct AutoRegister {
 #define TEST_CASE(test_name, category_name) \
     TEST_CASE_TAGGED(test_name, category_name, {"Functional"})
 
+
+```
+
+# File: tools\lmuffb_log_analyzer\cli.py
+```python
+import click
+from pathlib import Path
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+
+from .loader import load_log
+from .analyzers.slope_analyzer import (
+    analyze_slope_stability,
+    detect_oscillation_events,
+    detect_singularities
+)
+from .analyzers.yaw_analyzer import (
+    analyze_yaw_dynamics,
+    analyze_clipping
+)
+from .analyzers.lateral_analyzer import analyze_lateral_dynamics
+from .plots import (
+    plot_slope_timeseries,
+    plot_slip_vs_latg,
+    plot_dalpha_histogram,
+    plot_slope_correlation,
+    plot_yaw_diagnostic,
+    plot_system_health,
+    plot_threshold_thrashing,
+    plot_suspension_yaw_correlation,
+    plot_bottoming_diagnostic,
+    plot_yaw_fft,
+    plot_clipping_components,
+    plot_pull_detector,
+    plot_unopposed_force,
+    plot_lateral_diagnostic,
+    plot_longitudinal_diagnostic,
+    plot_raw_telemetry_health
+)
+from .reports import generate_text_report
+
+console = Console()
+
+def _show_info(metadata, df):
+    console.print(Panel.fit(
+        f"[bold blue]Session Information[/bold blue]\n\n"
+        f"Driver: {metadata.driver_name}\n"
+        f"Vehicle: {metadata.vehicle_name} ({metadata.car_brand} {metadata.car_class})\n"
+        f"Track: {metadata.track_name}\n"
+        f"Duration: {df['Time'].max():.1f} seconds\n"
+        f"Frames: {len(df)}\n"
+        f"App Version: {metadata.app_version}",
+        title="Log File Info"
+    ))
+
+def _run_analyze(metadata, df, verbose=False):
+    # Run analyses
+    slope_results = analyze_slope_stability(df)
+    oscillations = detect_oscillation_events(df)
+    singularity_count, worst_slope = detect_singularities(df)
+    yaw_results = analyze_yaw_dynamics(df)
+    clipping_results = analyze_clipping(df)
+    lateral_results = analyze_lateral_dynamics(df, metadata)
+    
+    # Display results - Slope
+    table = Table(title="Slope Detection Analysis")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="green")
+    table.add_column("Status", style="yellow")
+    
+    table.add_row(
+        "Slope Std Dev",
+        f"{slope_results['slope_std']:.2f}",
+        "HIGH" if slope_results['slope_std'] > 5.0 else "OK"
+    )
+    table.add_row(
+        "Slope Range",
+        f"{slope_results['slope_min']:.1f} to {slope_results['slope_max']:.1f}",
+        "WIDE" if (slope_results['slope_max'] - slope_results['slope_min']) > 20 else "OK"
+    )
+    
+    if slope_results.get('active_percentage') is not None:
+        table.add_row(
+            "Active %",
+            f"{slope_results['active_percentage']:.1f}%",
+            "LOW" if slope_results['active_percentage'] < 30 else "OK"
+        )
+        
+    if slope_results.get('floor_percentage') is not None:
+        table.add_row(
+            "Floor Hits",
+            f"{slope_results['floor_percentage']:.1f}%",
+            "HIGH" if slope_results['floor_percentage'] > 5 else "OK"
+        )
+        
+    table.add_row(
+        "Oscillation Events",
+        str(len(oscillations)),
+        "MANY" if len(oscillations) > 3 else "OK"
+    )
+    table.add_row(
+        "Singularity Events",
+        str(singularity_count),
+        "CRITICAL" if singularity_count > 0 else "OK"
+    )
+    if singularity_count > 0:
+        table.add_row(
+            "Worst Singularity",
+            f"{worst_slope:.1f}",
+            "SEVERE" if worst_slope > 20.0 else "WARN"
+        )
+    
+    console.print(table)
+    
+    # Display results - Yaw & Clipping
+    table2 = Table(title="Yaw & Clipping Analysis")
+    table2.add_column("Metric", style="cyan")
+    table2.add_column("Value", style="green")
+    table2.add_column("Status", style="yellow")
+
+    if yaw_results.get('threshold_crossing_rate') is not None:
+        table2.add_row(
+            "Threshold Crossing Rate",
+            f"{yaw_results['threshold_crossing_rate']:.2f} Hz",
+            "HIGH" if yaw_results['threshold_crossing_rate'] > 5.0 else "OK"
+        )
+    if yaw_results.get('yaw_kick_contribution_pct') is not None:
+        table2.add_row(
+            "Yaw Kick Contribution",
+            f"{yaw_results['yaw_kick_contribution_pct']:.1f}%",
+            "HIGH" if yaw_results['yaw_kick_contribution_pct'] > 30.0 else "OK"
+        )
+    if clipping_results.get('total_clipping_pct') is not None:
+        table2.add_row(
+            "Total Clipping",
+            f"{clipping_results['total_clipping_pct']:.1f}%",
+            "HIGH" if clipping_results['total_clipping_pct'] > 10.0 else "OK"
+        )
+
+    console.print(table2)
+
+    # Display results - Lateral Load
+    table3 = Table(title="Lateral Load Analysis")
+    table3.add_column("Metric", style="cyan")
+    table3.add_column("Value", style="green")
+    table3.add_column("Status", style="yellow")
+
+    if lateral_results.get('load_transfer_correlation') is not None:
+        table3.add_row(
+            "Load Transfer Corr",
+            f"{lateral_results['load_transfer_correlation']:.3f}",
+            "LOW" if lateral_results['load_transfer_correlation'] < 0.8 else "OK"
+        )
+    if lateral_results.get('load_contribution_pct') is not None:
+        table3.add_row(
+            "Load Contribution",
+            f"{lateral_results['load_contribution_pct']:.1f}%",
+            "INFO"
+        )
+    if lateral_results.get('g_contribution_pct') is not None:
+        table3.add_row(
+            "G-Force Contribution",
+            f"{lateral_results['g_contribution_pct']:.1f}%",
+            "INFO"
+        )
+
+    console.print(table3)
+
+    # Show issues
+    all_issues = slope_results['issues'].copy()
+
+    threshold_crossing_rate = yaw_results.get('threshold_crossing_rate')
+    if threshold_crossing_rate is not None and threshold_crossing_rate > 5.0:
+        all_issues.append(f"HIGH YAW THRASHING ({threshold_crossing_rate:.1f} Hz)")
+
+    total_clipping = clipping_results.get('total_clipping_pct')
+    if total_clipping is not None and total_clipping > 10.0:
+        all_issues.append(f"HIGH CLIPPING ({total_clipping:.1f}%)")
+
+    if all_issues:
+        console.print("\n[bold red]Issues Detected:[/bold red]")
+        for issue in all_issues:
+            console.print(f"  • {issue}")
+    else:
+        console.print("\n[bold green]No significant issues detected.[/bold green]")
+
+from rich.progress import Progress, SpinnerColumn, TextColumn
+
+def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+    
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+        transient=True
+    ) as progress:
+        task = progress.add_task(f"Generating plots for {logfile_stem}...", total=None)
+        
+        def update_status(msg):
+            progress.update(task, description=f" {logfile_stem}: {msg}")
+
+        # Time series plot
+        ts_path = output_path / f"{logfile_stem}_timeseries.png"
+        plot_slope_timeseries(df, str(ts_path), show=False, status_callback=update_status)
+        console.print(f"  [OK] Created: {ts_path}")
+        
+        if plot_all:
+            # Tire curve
+            tc_path = output_path / f"{logfile_stem}_tire_curve.png"
+            plot_slip_vs_latg(df, str(tc_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {tc_path}")
+            
+            # dAlpha histogram
+            hist_path = output_path / f"{logfile_stem}_dalpha_hist.png"
+            plot_dalpha_histogram(df, str(hist_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {hist_path}")
+
+            # Slope correlation
+            corr_path = output_path / f"{logfile_stem}_slope_corr.png"
+            plot_slope_correlation(df, str(corr_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {corr_path}")
+
+            # Yaw Diagnostic
+            yaw_path = output_path / f"{logfile_stem}_yaw_diag.png"
+            plot_yaw_diagnostic(df, output_path=str(yaw_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {yaw_path}")
+
+            # System Health
+            health_path = output_path / f"{logfile_stem}_health.png"
+            plot_system_health(df, str(health_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {health_path}")
+
+            # FFT
+            fft_path = output_path / f"{logfile_stem}_yaw_fft.png"
+            plot_yaw_fft(df, str(fft_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {fft_path}")
+
+            # Thrashing
+            thrash_path = output_path / f"{logfile_stem}_yaw_thrashing.png"
+            plot_threshold_thrashing(df, output_path=str(thrash_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {thrash_path}")
+
+            # Suspension Correlation
+            susp_path = output_path / f"{logfile_stem}_susp_corr.png"
+            plot_suspension_yaw_correlation(df, str(susp_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {susp_path}")
+
+            # Bottoming
+            bottom_path = output_path / f"{logfile_stem}_bottoming.png"
+            plot_bottoming_diagnostic(df, str(bottom_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {bottom_path}")
+
+            # Clipping
+            clip_path = output_path / f"{logfile_stem}_clipping.png"
+            plot_clipping_components(df, str(clip_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {clip_path}")
+
+            # Pull Detector
+            pull_path = output_path / f"{logfile_stem}_pull_detector.png"
+            plot_pull_detector(df, str(pull_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {pull_path}")
+
+            # Unopposed Force
+            unopposed_path = output_path / f"{logfile_stem}_unopposed.png"
+            plot_unopposed_force(df, str(unopposed_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {unopposed_path}")
+
+            # Lateral Diagnostic
+            lat_path = output_path / f"{logfile_stem}_lateral_diag.png"
+            plot_lateral_diagnostic(df, metadata, str(lat_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {lat_path}")
+
+            # Longitudinal Diagnostic
+            long_path = output_path / f"{logfile_stem}_longitudinal_diag.png"
+            plot_longitudinal_diagnostic(df, metadata, str(long_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {long_path}")
+
+            # Raw Telemetry Health
+            health_raw_path = output_path / f"{logfile_stem}_raw_telemetry.png"
+            plot_raw_telemetry_health(df, str(health_raw_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {health_raw_path}")
+
+@click.group()
+@click.version_option(version='1.2.0')
+def cli():
+    """lmuFFB Log Analyzer - Analyze FFB telemetry logs for diagnostics."""
+    pass
+
+@cli.command()
+@click.argument('logfile', type=click.Path(exists=True))
+@click.option('--export-csv', is_flag=True, help='Export data to CSV')
+def info(logfile, export_csv):
+    """Display session info from a log file."""
+    try:
+        metadata, df = load_log(logfile)
+        _show_info(metadata, df)
+        if export_csv:
+            csv_path = Path(logfile).with_suffix('.csv')
+            df.to_csv(csv_path, index=False)
+            console.print(f"[bold green]Exported to:[/bold green] {csv_path}")
+    except Exception as e:
+        console.print(f"[bold red]Error loading log:[/bold red] {e}")
+
+@cli.command()
+@click.argument('logfile', type=click.Path(exists=True))
+@click.option('--verbose', '-v', is_flag=True, help='Show detailed output')
+@click.option('--export-csv', is_flag=True, help='Export data to CSV')
+def analyze(logfile, verbose, export_csv):
+    """Analyze a log file and show summary."""
+    console.print(f"[bold]Analyzing:[/bold] {logfile}")
+    try:
+        metadata, df = load_log(logfile)
+        _run_analyze(metadata, df, verbose)
+        if export_csv:
+            csv_path = Path(logfile).with_suffix('.csv')
+            df.to_csv(csv_path, index=False)
+            console.print(f"[bold green]Exported to:[/bold green] {csv_path}")
+    except Exception as e:
+        console.print(f"[bold red]Error analyzing log:[/bold red] {e}")
+
+@cli.command()
+@click.argument('logfile', type=click.Path(exists=True))
+@click.option('--output', '-o', default='.', help='Output directory for plots')
+@click.option('--all', 'plot_all', is_flag=True, help='Generate all plot types')
+def plots(logfile, output, plot_all):
+    """Generate diagnostic plots from a log file."""
+    console.print(f"[bold]Generating plots for:[/bold] {logfile}")
+    try:
+        metadata, df = load_log(logfile)
+        _run_plots(metadata, df, output, Path(logfile).stem, plot_all)
+        console.print("\n[bold green]Done![/bold green]")
+    except Exception as e:
+        console.print(f"[bold red]Error generating plots:[/bold red] {e}")
+
+@cli.command()
+@click.argument('logfile', type=click.Path(exists=True))
+@click.option('--output', '-o', help='Output file path')
+def report(logfile, output):
+    """Generate a full diagnostic report."""
+    try:
+        metadata, df = load_log(logfile)
+        report_text = generate_text_report(metadata, df)
+        
+        if output:
+            with open(output, 'w') as f:
+                f.write(report_text)
+            console.print(f"[bold green]Report saved to:[/bold green] {output}")
+        else:
+            console.print(report_text)
+    except Exception as e:
+        console.print(f"[bold red]Error generating report:[/bold red] {e}")
+
+@cli.command()
+@click.argument('logdir', type=click.Path(exists=True, file_okay=False, dir_okay=True))
+@click.option('--output', '-o', default='analyzer_results', help='Output directory for batch results')
+def batch(logdir, output):
+    """Run all analysis commands for all log files in a directory."""
+    log_path = Path(logdir)
+    output_path = Path(output)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    log_files = []
+    for ext in ['*.bin', '*.csv']:
+        log_files.extend(list(log_path.glob(ext)))
+
+    if not log_files:
+        # Try finding in subdirectories
+        for ext in ['*.bin', '*.csv']:
+            log_files.extend(list(log_path.rglob(ext)))
+
+    log_files = sorted(log_files)
+
+    if not log_files:
+        console.print(f"[yellow]No .bin or .csv files found in {logdir}[/yellow]")
+        return
+
+    console.print(f"[bold green]Found {len(log_files)} log files. Starting batch processing...[/bold green]")
+
+    for logfile in log_files:
+        console.print(f"\n[bold blue]Processing: {logfile.name}[/bold blue]")
+        try:
+            # Load ONCE for all operations
+            metadata, df = load_log(str(logfile))
+            
+            # 1. Info
+            _show_info(metadata, df)
+            
+            # 2. Analyze
+            _run_analyze(metadata, df)
+            
+            # 3. Plots
+            _run_plots(metadata, df, output_path, logfile.stem, plot_all=True)
+            
+            # 4. Report
+            report_file = output_path / f"{logfile.stem}_report.txt"
+            report_text = generate_text_report(metadata, df)
+            with open(report_file, 'w') as f:
+                f.write(report_text)
+            console.print(f"  [OK] Created: {report_file}")
+
+        except Exception as e:
+            console.print(f"[bold red]Error processing {logfile.name}:[/bold red] {e}")
+
+    console.print(f"\n[bold green]Batch processing complete! Results saved to: {output}[/bold green]")
+@cli.command()
+@click.argument('logfile', type=click.Path(exists=True))
+@click.option('--output', '-o', help='Output directory for results')
+def analyze_full(logfile, output):
+    """Run all analysis steps for a single log file (info, analyze, plots, report)."""
+    log_path = Path(logfile)
+    if not output:
+        output = str(log_path.parent / f"analysis {log_path.stem}")
+    
+    output_path = Path(output)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    console.print(f"[bold blue]Processing: {log_path.name}[/bold blue]")
+    try:
+        # Load ONCE for all operations
+        metadata, df = load_log(str(log_path))
+        
+        # 1. Info
+        _show_info(metadata, df)
+        
+        # 2. Analyze
+        _run_analyze(metadata, df)
+        
+        # 3. Plots
+        _run_plots(metadata, df, output_path, log_path.stem, plot_all=True)
+        
+        # 4. Report
+        report_file = output_path / f"{log_path.stem}_report.txt"
+        report_text = generate_text_report(metadata, df)
+        with open(report_file, 'w') as f:
+            f.write(report_text)
+        console.print(f"  [OK] Created: {report_file}")
+        
+        console.print(f"\n[bold green]Analysis complete! Results saved to: {output}[/bold green]")
+
+    except Exception as e:
+        console.print(f"[bold red]Error processing {log_path.name}:[/bold red] {e}")
+
+if __name__ == '__main__':
+    cli()
+
+```
+
+# File: tools\lmuffb_log_analyzer\loader.py
+```python
+import pandas as pd
+import numpy as np
+import lz4.block
+import struct
+from pathlib import Path
+from typing import Tuple, Optional
+from datetime import datetime
+from .models import SessionMetadata
+
+# Define the LogFrame dtype matching C++ LogFrame struct exactly (v0.7.129)
+# 2 doubles (16) + 123 floats (492) + 3 uint8 (3) = 511 bytes
+LOG_FRAME_DTYPE = np.dtype([
+    ('timestamp', np.float64),
+    ('delta_time', np.float64),
+
+    # --- PROCESSED 400Hz DATA (Smooth) ---
+    ('speed', np.float32),
+    ('lat_accel', np.float32),
+    ('long_accel', np.float32),
+    ('yaw_rate', np.float32),
+
+    ('steering', np.float32),
+    ('throttle', np.float32),
+    ('brake', np.float32),
+
+    # --- RAW 100Hz GAME DATA (Step-function) ---
+    ('raw_steering', np.float32),
+    ('raw_throttle', np.float32),
+    ('raw_brake', np.float32),
+    ('raw_lat_accel', np.float32),
+    ('raw_long_accel', np.float32),
+    ('raw_game_yaw_accel', np.float32),
+    ('raw_game_shaft_torque', np.float32),
+    ('raw_game_gen_torque', np.float32),
+
+    ('raw_load_fl', np.float32),
+    ('raw_load_fr', np.float32),
+    ('raw_load_rl', np.float32),
+    ('raw_load_rr', np.float32),
+
+    ('raw_slip_vel_lat_fl', np.float32),
+    ('raw_slip_vel_lat_fr', np.float32),
+    ('raw_slip_vel_lat_rl', np.float32),
+    ('raw_slip_vel_lat_rr', np.float32),
+
+    ('raw_slip_vel_long_fl', np.float32),
+    ('raw_slip_vel_long_fr', np.float32),
+    ('raw_slip_vel_long_rl', np.float32),
+    ('raw_slip_vel_long_rr', np.float32),
+
+    ('raw_ride_height_fl', np.float32),
+    ('raw_ride_height_fr', np.float32),
+    ('raw_ride_height_rl', np.float32),
+    ('raw_ride_height_rr', np.float32),
+
+    ('raw_susp_deflection_fl', np.float32),
+    ('raw_susp_deflection_fr', np.float32),
+    ('raw_susp_deflection_rl', np.float32),
+    ('raw_susp_deflection_rr', np.float32),
+
+    ('raw_susp_force_fl', np.float32),
+    ('raw_susp_force_fr', np.float32),
+    ('raw_susp_force_rl', np.float32),
+    ('raw_susp_force_rr', np.float32),
+
+    ('raw_brake_pressure_fl', np.float32),
+    ('raw_brake_pressure_fr', np.float32),
+    ('raw_brake_pressure_rl', np.float32),
+    ('raw_brake_pressure_rr', np.float32),
+
+    ('raw_rotation_fl', np.float32),
+    ('raw_rotation_fr', np.float32),
+    ('raw_rotation_rl', np.float32),
+    ('raw_rotation_rr', np.float32),
+
+    # --- ALGORITHM STATE (400Hz) ---
+    ('slip_angle_fl', np.float32),
+    ('slip_angle_fr', np.float32),
+    ('slip_angle_rl', np.float32),
+    ('slip_angle_rr', np.float32),
+
+    ('slip_ratio_fl', np.float32),
+    ('slip_ratio_fr', np.float32),
+    ('slip_ratio_rl', np.float32),
+    ('slip_ratio_rr', np.float32),
+
+    ('grip_fl', np.float32),
+    ('grip_fr', np.float32),
+    ('grip_rl', np.float32),
+    ('grip_rr', np.float32),
+
+    ('load_fl', np.float32),
+    ('load_fr', np.float32),
+    ('load_rl', np.float32),
+    ('load_rr', np.float32),
+
+    ('ride_height_fl', np.float32),
+    ('ride_height_fr', np.float32),
+    ('ride_height_rl', np.float32),
+    ('ride_height_rr', np.float32),
+
+    ('susp_deflection_fl', np.float32),
+    ('susp_deflection_fr', np.float32),
+    ('susp_deflection_rl', np.float32),
+    ('susp_deflection_rr', np.float32),
+
+    ('calc_slip_angle_front', np.float32),
+    ('calc_slip_angle_rear', np.float32),
+    ('calc_grip_front', np.float32),
+    ('calc_grip_rear', np.float32),
+    ('grip_delta', np.float32),
+    ('calc_rear_lat_force', np.float32),
+
+    ('smoothed_yaw_accel', np.float32),
+    ('lat_load_norm', np.float32),
+
+    ('dG_dt', np.float32),
+    ('dAlpha_dt', np.float32),
+    ('slope_current', np.float32),
+    ('slope_raw_unclamped', np.float32),
+    ('slope_numerator', np.float32),
+    ('slope_denominator', np.float32),
+    ('hold_timer', np.float32),
+    ('input_slip_smoothed', np.float32),
+    ('slope_smoothed', np.float32),
+    ('confidence', np.float32),
+
+    ('surface_type_fl', np.float32),
+    ('surface_type_fr', np.float32),
+    ('slope_torque', np.float32),
+    ('slew_limited_g', np.float32),
+
+    ('session_peak_torque', np.float32),
+    ('long_load_factor', np.float32),
+    ('structural_mult', np.float32),
+    ('vibration_mult', np.float32),
+    ('steering_angle_deg', np.float32),
+    ('steering_range_deg', np.float32),
+    ('debug_freq', np.float32),
+    ('tire_radius', np.float32),
+
+    # --- FFB COMPONENTS (400Hz) ---
+    ('ffb_total', np.float32),
+    ('ffb_base', np.float32),
+    ('ffb_understeer_drop', np.float32),
+    ('ffb_oversteer_boost', np.float32),
+    ('ffb_sop', np.float32),
+    ('ffb_rear_torque', np.float32),
+    ('ffb_scrub_drag', np.float32),
+    ('ffb_yaw_kick', np.float32),
+    ('ffb_gyro_damping', np.float32),
+    ('ffb_road_texture', np.float32),
+    ('ffb_slide_texture', np.float32),
+    ('ffb_lockup_vibration', np.float32),
+    ('ffb_spin_vibration', np.float32),
+    ('ffb_bottoming_crunch', np.float32),
+    ('ffb_abs_pulse', np.float32),
+    ('ffb_soft_lock', np.float32),
+
+    ('extrapolated_yaw_accel', np.float32),
+    ('derived_yaw_accel', np.float32),
+
+    ('ffb_shaft_torque', np.float32),
+    ('ffb_gen_torque', np.float32),
+    ('ffb_grip_factor', np.float32),
+    ('speed_gate', np.float32),
+    ('front_load_peak_ref', np.float32),
+
+    # --- SYSTEM (400Hz) ---
+    ('physics_rate', np.float32),
+    ('clipping', np.uint8),
+    ('warn_bits', np.uint8),
+    ('marker', np.uint8)
+])
+
+def load_log(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
+    """
+    Load lmuFFB telemetry log file (Binary or CSV).
+    
+    Returns:
+        Tuple of (SessionMetadata, DataFrame with telemetry data)
+    """
+    path = Path(filepath)
+    if not path.exists():
+        raise FileNotFoundError(f"Log file not found: {filepath}")
+    
+    # Check if binary (via extension)
+    if path.suffix == '.bin':
+        return load_bin(filepath)
+    else:
+        # Fallback to CSV
+        return load_csv(filepath)
+
+def load_csv(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
+    path = Path(filepath)
+    # Parse header comments
+    metadata = _parse_header(path)
+    
+    # Find data start line (first non-comment line)
+    data_start = 0
+    with open(path, 'r') as f:
+        for i, line in enumerate(f):
+            if not line.startswith('#'):
+                data_start = i
+                break
+    
+    # Load CSV data
+    df = pd.read_csv(filepath, skiprows=data_start)
+    
+    # Ensure clipping/marker are int
+    if 'Clipping' in df.columns:
+        df['Clipping'] = df['Clipping'].astype(int)
+    if 'Marker' in df.columns:
+        df['Marker'] = df['Marker'].astype(int)
+
+    return metadata, df
+
+def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
+    """Load binary telemetry log file (supports LZ4 and uncompressed)"""
+    path = Path(filepath)
+    metadata = _parse_header(path)
+
+    with open(path, 'rb') as f:
+        # Robustly find [DATA_START] marker
+        chunk = f.read(8192)
+        marker = b'[DATA_START]'
+        offset = chunk.find(marker)
+
+        if offset == -1:
+            raise ValueError("Binary log file missing [DATA_START] marker in first 8KB")
+
+        # Jump to start of data (skip marker and the following newline)
+        newline_pos = chunk.find(b'\n', offset)
+        if newline_pos == -1:
+            raise ValueError("Binary log file missing newline after [DATA_START] marker")
+
+        data_pos = newline_pos + 1
+        f.seek(data_pos)
+
+        # Check for LZ4 compression (indicated by metadata)
+        is_lz4 = False
+        with open(path, 'r', errors='ignore') as f_meta:
+            for line in f_meta:
+                if "Compression: LZ4" in line:
+                    is_lz4 = True
+                    break
+
+        if is_lz4:
+            all_data = []
+            while True:
+                size_bytes = f.read(8)
+                if not size_bytes or len(size_bytes) < 8:
+                    break
+                compressed_size, uncompressed_size = struct.unpack("<II", size_bytes)
+                compressed_data = f.read(compressed_size)
+                if len(compressed_data) < compressed_size:
+                    break
+                uncompressed_data = lz4.block.decompress(compressed_data, uncompressed_size=uncompressed_size)
+                all_data.append(np.frombuffer(uncompressed_data, dtype=LOG_FRAME_DTYPE))
+            data = np.concatenate(all_data) if all_data else np.array([], dtype=LOG_FRAME_DTYPE)
+        else:
+            # Read the rest of the file into a numpy array
+            data = np.fromfile(f, dtype=LOG_FRAME_DTYPE)
+
+    df = pd.DataFrame(data)
+
+    # Rename columns to match legacy CSV for consistency (CamelCase)
+    mapping = {
+        'timestamp': 'Time',
+        'delta_time': 'DeltaTime',
+        'speed': 'Speed',
+        'lat_accel': 'LatAccel',
+        'long_accel': 'LongAccel',
+        'yaw_rate': 'YawRate',
+        'steering': 'Steering',
+        'throttle': 'Throttle',
+        'brake': 'Brake',
+        'raw_steering': 'RawSteering',
+        'raw_throttle': 'RawThrottle',
+        'raw_brake': 'RawBrake',
+        'raw_lat_accel': 'RawLatAccel',
+        'raw_long_accel': 'RawLongAccel',
+        'raw_game_yaw_accel': 'RawGameYawAccel',
+        'raw_game_shaft_torque': 'RawGameShaftTorque',
+        'raw_game_gen_torque': 'RawGameGenTorque',
+        'raw_load_fl': 'RawLoadFL',
+        'raw_load_fr': 'RawLoadFR',
+        'raw_load_rl': 'RawLoadRL',
+        'raw_load_rr': 'RawLoadRR',
+        'raw_slip_vel_lat_fl': 'RawSlipVelLatFL',
+        'raw_slip_vel_lat_fr': 'RawSlipVelLatFR',
+        'raw_slip_vel_lat_rl': 'RawSlipVelLatRL',
+        'raw_slip_vel_lat_rr': 'RawSlipVelLatRR',
+        'raw_slip_vel_long_fl': 'RawSlipVelLongFL',
+        'raw_slip_vel_long_fr': 'RawSlipVelLongFR',
+        'raw_slip_vel_long_rl': 'RawSlipVelLongRL',
+        'raw_slip_vel_long_rr': 'RawSlipVelLongRR',
+        'raw_ride_height_fl': 'RawRideHeightFL',
+        'raw_ride_height_fr': 'RawRideHeightFR',
+        'raw_ride_height_rl': 'RawRideHeightRL',
+        'raw_ride_height_rr': 'RawRideHeightRR',
+        'raw_susp_deflection_fl': 'RawSuspDeflectionFL',
+        'raw_susp_deflection_fr': 'RawSuspDeflectionFR',
+        'raw_susp_deflection_rl': 'RawSuspDeflectionRL',
+        'raw_susp_deflection_rr': 'RawSuspDeflectionRR',
+        'raw_susp_force_fl': 'RawSuspForceFL',
+        'raw_susp_force_fr': 'RawSuspForceFR',
+        'raw_susp_force_rl': 'RawSuspForceRL',
+        'raw_susp_force_rr': 'RawSuspForceRR',
+        'raw_brake_pressure_fl': 'RawBrakePressureFL',
+        'raw_brake_pressure_fr': 'RawBrakePressureFR',
+        'raw_brake_pressure_rl': 'RawBrakePressureRL',
+        'raw_brake_pressure_rr': 'RawBrakePressureRR',
+        'raw_rotation_fl': 'RawRotationFL',
+        'raw_rotation_fr': 'RawRotationFR',
+        'raw_rotation_rl': 'RawRotationRL',
+        'raw_rotation_rr': 'RawRotationRR',
+        'slip_angle_fl': 'SlipAngleFL',
+        'slip_angle_fr': 'SlipAngleFR',
+        'slip_angle_rl': 'SlipAngleRL',
+        'slip_angle_rr': 'SlipAngleRR',
+        'slip_ratio_fl': 'SlipRatioFL',
+        'slip_ratio_fr': 'SlipRatioFR',
+        'slip_ratio_rl': 'SlipRatioRL',
+        'slip_ratio_rr': 'SlipRatioRR',
+        'grip_fl': 'GripFL',
+        'grip_fr': 'GripFR',
+        'grip_rl': 'GripRL',
+        'grip_rr': 'GripRR',
+        'load_fl': 'LoadFL',
+        'load_fr': 'LoadFR',
+        'load_rl': 'LoadRL',
+        'load_rr': 'LoadRR',
+        'ride_height_fl': 'RideHeightFL',
+        'ride_height_fr': 'RideHeightFR',
+        'ride_height_rl': 'RideHeightRL',
+        'ride_height_rr': 'RideHeightRR',
+        'susp_deflection_fl': 'SuspDeflectionFL',
+        'susp_deflection_fr': 'SuspDeflectionFR',
+        'susp_deflection_rl': 'SuspDeflectionRL',
+        'susp_deflection_rr': 'SuspDeflectionRR',
+        'calc_slip_angle_front': 'CalcSlipAngleFront',
+        'calc_slip_angle_rear': 'CalcSlipAngleRear',
+        'calc_grip_front': 'CalcGripFront',
+        'calc_grip_rear': 'CalcGripRear',
+        'grip_delta': 'GripDelta',
+        'calc_rear_lat_force': 'CalcRearLatForce',
+        'smoothed_yaw_accel': 'SmoothedYawAccel',
+        'lat_load_norm': 'LatLoadNorm',
+        'dG_dt': 'dG_dt',
+        'dAlpha_dt': 'dAlpha_dt',
+        'slope_current': 'SlopeCurrent',
+        'slope_raw_unclamped': 'SlopeRaw',
+        'slope_numerator': 'SlopeNum',
+        'slope_denominator': 'SlopeDenom',
+        'hold_timer': 'HoldTimer',
+        'input_slip_smoothed': 'InputSlipSmooth',
+        'slope_smoothed': 'SlopeSmoothed',
+        'confidence': 'Confidence',
+        'surface_type_fl': 'SurfaceFL',
+        'surface_type_fr': 'SurfaceFR',
+        'slope_torque': 'SlopeTorque',
+        'slew_limited_g': 'SlewLimitedG',
+        'session_peak_torque': 'SessionPeakTorque',
+        'long_load_factor': 'LongitudinalLoadFactor',
+        'structural_mult': 'StructuralMult',
+        'vibration_mult': 'VibrationMult',
+        'steering_angle_deg': 'SteeringAngleDeg',
+        'steering_range_deg': 'SteeringRangeDeg',
+        'debug_freq': 'DebugFreq',
+        'tire_radius': 'TireRadius',
+        'ffb_total': 'FFBTotal',
+        'ffb_base': 'FFBBase',
+        'ffb_understeer_drop': 'FFBUndersteerDrop',
+        'ffb_oversteer_boost': 'FFBOversteerBoost',
+        'ffb_sop': 'FFBSoP',
+        'ffb_rear_torque': 'FFBRearTorque',
+        'ffb_scrub_drag': 'FFBScrubDrag',
+        'ffb_yaw_kick': 'FFBYawKick',
+        'ffb_gyro_damping': 'FFBGyroDamping',
+        'ffb_road_texture': 'FFBRoadTexture',
+        'ffb_slide_texture': 'FFBSlideTexture',
+        'ffb_lockup_vibration': 'FFBLockupVibration',
+        'ffb_spin_vibration': 'FFBSpinVibration',
+        'ffb_bottoming_crunch': 'FFBBottomingCrunch',
+        'ffb_abs_pulse': 'FFBABSPulse',
+        'ffb_soft_lock': 'FFBSoftLock',
+        'extrapolated_yaw_accel': 'ExtrapolatedYawAccel',
+        'derived_yaw_accel': 'DerivedYawAccel',
+        'ffb_shaft_torque': 'FFBShaftTorque',
+        'ffb_gen_torque': 'FFBGenTorque',
+        'ffb_grip_factor': 'GripFactor',
+        'speed_gate': 'SpeedGate',
+        'front_load_peak_ref': 'FrontLoadPeakRef',
+        'physics_rate': 'PhysicsRate',
+        'clipping': 'Clipping',
+        'warn_bits': 'WarnBits',
+        'marker': 'Marker'
+    }
+
+    # Apply mapping
+    df.rename(columns=mapping, inplace=True)
+
+    return metadata, df
+
+def _parse_datetime(date_str: str) -> datetime:
+    """Parse datetime from log header"""
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return datetime.now()
+
+def _safe_float(val: Optional[str]) -> Optional[float]:
+    """Safely convert string to float"""
+    if val is None or val.lower() == 'none' or val == '':
+        return None
+    try:
+        return float(val)
+    except ValueError:
+        return None
+
+def _parse_header(path: Path) -> SessionMetadata:
+    """Extract metadata from header comments"""
+    header_data = {}
+    
+    # Read as bytes to handle potential binary content after header
+    with open(path, 'rb') as f:
+        for line_bytes in f:
+            try:
+                line = line_bytes.decode('utf-8', errors='ignore').strip()
+            except:
+                continue
+
+            if not line.startswith('#'):
+                break
+            
+            line = line.lstrip('# ').strip()
+            if ':' in line:
+                key, value = line.split(':', 1)
+                header_data[key.strip().lower().replace(' ', '_')] = value.strip()
+            elif 'LMUFFB Telemetry Log' in line:
+                parts = line.split(':')
+                if len(parts) > 1:
+                    header_data['log_version'] = parts[1].strip()
+
+    return SessionMetadata(
+        log_version=header_data.get('lmuffb_telemetry_log', 'unknown'),
+        timestamp=_parse_datetime(header_data.get('date', '')),
+        app_version=header_data.get('app_version', 'unknown'),
+        driver_name=header_data.get('driver', 'Unknown'),
+        vehicle_name=header_data.get('vehicle', 'Unknown'),
+        car_class=header_data.get('car_class', 'Unknown'),
+        car_brand=header_data.get('car_brand', 'Unknown'),
+        track_name=header_data.get('track', 'Unknown'),
+        gain=float(header_data.get('gain', 1.0)),
+        understeer_effect=float(header_data.get('understeer_effect', 1.0)),
+        sop_effect=float(header_data.get('sop_effect', 1.0)),
+        lat_load_effect=float(header_data.get('lateral_load_effect', 0.0)),
+        long_load_effect=float(header_data.get('long_load_effect', 0.0)),
+        sop_scale=float(header_data.get('sop_scale', 1.0)),
+        sop_smoothing=float(header_data.get('sop_smoothing', 0.0)),
+        slope_enabled=header_data.get('slope_detection', '').lower() == 'enabled',
+        slope_sensitivity=float(header_data.get('slope_sensitivity', 0.5)),
+        slope_threshold=float(header_data.get('slope_threshold', -0.3)),
+        slope_alpha_threshold=_safe_float(header_data.get('slope_alpha_threshold')),
+        slope_decay_rate=_safe_float(header_data.get('slope_decay_rate')),
+    )
+
+```
+
+# File: tools\lmuffb_log_analyzer\models.py
+```python
+from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime
+
+class SessionMetadata(BaseModel):
+    """Extracted from log file header"""
+    log_version: str
+    timestamp: datetime
+    app_version: str
+    driver_name: str
+    vehicle_name: str
+    car_class: str = "Unknown" # v1.2.1
+    car_brand: str = "Unknown" # v1.2.1
+    track_name: str
+    
+    # Settings snapshot
+    gain: float
+    understeer_effect: float
+    sop_effect: float
+    lat_load_effect: float = 0.0 # v0.7.152
+    long_load_effect: float = 0.0 # v0.7.162
+    sop_scale: float = 1.0       # v0.7.152
+    sop_smoothing: float = 0.0   # v0.7.152
+    slope_enabled: bool
+    slope_sensitivity: float
+    slope_threshold: float
+    slope_alpha_threshold: Optional[float] = None
+    slope_decay_rate: Optional[float] = None
+
+class MarkerEvent(BaseModel):
+    """User-triggered marker"""
+    timestamp: float
+    frame_index: int
+    context: dict
+
+```
+
+# File: tools\lmuffb_log_analyzer\plots.py
+```python
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from pathlib import Path
+from typing import Optional, List
+from .models import SessionMetadata
+from .analyzers.yaw_analyzer import get_fft, calculate_suspension_velocity
+
+def _safe_legend(ax, loc='upper right'):
+    """Only show legend if there are labeled artists."""
+    handles, labels = ax.get_legend_handles_labels()
+    if labels:
+        ax.legend(loc=loc)
+
+MAX_PLOT_POINTS = 20000
+
+def _downsample_df(df: pd.DataFrame, max_points: int = MAX_PLOT_POINTS) -> pd.DataFrame:
+    """Downsample dataframe for plotting if it exceeds max_points."""
+    if len(df) <= max_points:
+        return df
+    
+    # We want to preserve the temporal order, so we use step-based downsampling
+    # instead of random sampling for time-series plots.
+    step = len(df) // max_points
+    return df.iloc[::step].copy()
+
+def plot_slope_timeseries(
+    df: pd.DataFrame, 
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Generate 4-panel time-series plot for slope detection analysis.
+    """
+    if status_callback: status_callback("Initializing plot...")
+    fig, axes = plt.subplots(4, 1, figsize=(14, 12), sharex=True)
+    fig.suptitle('Slope Detection Analysis - Time Series', fontsize=14, fontweight='bold')
+    
+    # Downsample for performance
+    if status_callback: status_callback("Downsampling data...")
+    plot_df = _downsample_df(df)
+    time = plot_df['Time'] if 'Time' in plot_df.columns else np.arange(len(plot_df)) * 0.01
+    
+    # Panel 1: Inputs (Lat G and Slip Angle)
+    if status_callback: status_callback("Rendering Panel 1 (Inputs)...")
+    ax1 = axes[0]
+    ax1.plot(time, plot_df['LatAccel'] / 9.81, label='Lateral G', color='#2196F3', alpha=0.8)
+    ax1.set_ylabel('Lateral G', color='#2196F3')
+    ax1.tick_params(axis='y', labelcolor='#2196F3')
+    _safe_legend(ax1, loc='upper left')
+    ax1.grid(True, alpha=0.3)
+    
+    ax1_twin = ax1.twinx()
+    if 'calc_slip_angle_front' in plot_df.columns:
+        ax1_twin.plot(time, plot_df['calc_slip_angle_front'], label='Slip Angle', 
+                      color='#FF9800', alpha=0.8)
+    ax1_twin.set_ylabel('Slip Angle (rad)', color='#FF9800')
+    ax1_twin.tick_params(axis='y', labelcolor='#FF9800')
+    _safe_legend(ax1_twin, loc='upper right')
+    ax1.set_title('Inputs: Lateral G and Slip Angle')
+    
+    # Panel 2: Derivatives
+    if status_callback: status_callback("Rendering Panel 2 (Derivatives)...")
+    ax2 = axes[1]
+    if 'dG_dt' in plot_df.columns:
+        ax2.plot(time, plot_df['dG_dt'], label='dG/dt', color='#2196F3', alpha=0.8)
+    if 'dAlpha_dt' in plot_df.columns:
+        ax2.plot(time, plot_df['dAlpha_dt'], label='dAlpha/dt', color='#FF9800', alpha=0.8)
+        ax2.axhline(0.02, color='#F44336', linestyle='--', alpha=0.5, label='Threshold (0.02)')
+        ax2.axhline(-0.02, color='#F44336', linestyle='--', alpha=0.5)
+    ax2.set_ylabel('Derivative')
+    _safe_legend(ax2, loc='upper right')
+    ax2.grid(True, alpha=0.3)
+    ax2.set_title('Derivatives: dG/dt and dAlpha/dt')
+    
+    # Panel 3: Slope
+    if status_callback: status_callback("Rendering Panel 3 (Slope)...")
+    ax3 = axes[2]
+    if 'SlopeCurrent' in plot_df.columns:
+        ax3.plot(time, plot_df['SlopeCurrent'], label='Slope (dG/dAlpha)', color='#9C27B0', linewidth=0.8)
+        ax3.axhline(-0.3, color='#F44336', linestyle='--', alpha=0.5, label='Neg Threshold (-0.3)')
+        ax3.axhline(0, color='#4CAF50', linestyle='-', alpha=0.3)
+    ax3.set_ylabel('Slope (G/rad)')
+    ax3.set_ylim(-15, 15)  # Clamp for visibility
+    _safe_legend(ax3, loc='upper right')
+    ax3.grid(True, alpha=0.3)
+    ax3.set_title('Calculated Slope (dG/dAlpha)')
+    
+    # Panel 4: Grip Output
+    if status_callback: status_callback("Rendering Panel 4 (Output)...")
+    ax4 = axes[3]
+    grip_col = 'GripFactor' if 'GripFactor' in plot_df.columns else 'SlopeSmoothed'
+    if grip_col in plot_df.columns:
+        ax4.plot(time, plot_df[grip_col], label='Grip Factor', color='#4CAF50', linewidth=1.0)
+        ax4.axhline(0.2, color='#9E9E9E', linestyle='--', alpha=0.5, label='Floor (0.2)')
+        ax4.axhline(1.0, color='#9E9E9E', linestyle='--', alpha=0.5)
+    ax4.set_ylabel('Grip Factor')
+    ax4.set_xlabel('Time (s)')
+    ax4.set_ylim(0, 1.1)
+    _safe_legend(ax4, loc='upper right')
+    ax4.grid(True, alpha=0.3)
+    ax4.set_title('Output: Grip Factor')
+    
+    # Add markers if present
+    if 'Marker' in plot_df.columns:
+        marker_times = time[plot_df['Marker'] == 1]
+        if len(marker_times) > 0:
+            if status_callback: status_callback(f"Adding {len(marker_times)} markers...")
+            for ax in axes:
+                # Use vlines for performance instead of multiple axvline calls
+                ax.vlines(marker_times, -100, 100, color='#E91E63', linestyle='-', alpha=0.7, linewidth=2, transform=ax.get_xaxis_transform())
+    
+    if status_callback: status_callback("Finalizing layout...")
+    plt.tight_layout()
+    
+    if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    
+    if show:
+        plt.show()
+    
+    return ""
+
+def plot_lateral_diagnostic(
+    df: pd.DataFrame,
+    metadata: SessionMetadata,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Diagnostic plot for Lateral Load effect.
+    Panels: Input (G vs Load), Force Decomposition, G vs Load scatter.
+    """
+    cols = ['LatAccel', 'LatLoadNorm', 'FFBSoP']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Initializing Lateral diagnostic plot...")
+    fig = plt.figure(figsize=(14, 12))
+    gs = fig.add_gridspec(3, 2)
+    fig.suptitle('SoP Lateral & Load Transfer Diagnostic', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    # Panel 1: Inputs (Time Series)
+    if status_callback: status_callback("Rendering Panel 1 (Inputs)...")
+    ax1 = fig.add_subplot(gs[0, :])
+    ax1.plot(time, plot_df['LatAccel'] / 9.81, label='Lateral G', color='#2196F3', alpha=0.6)
+    ax1.set_ylabel('Lateral G', color='#2196F3')
+    ax1.tick_params(axis='y', labelcolor='#2196F3')
+    ax1.grid(True, alpha=0.3)
+
+    ax1_twin = ax1.twinx()
+    ax1_twin.plot(time, plot_df['LatLoadNorm'], label='Smoothed Load Transfer', color='#FF9800', alpha=0.8)
+    if 'RawLoadFL' in df.columns and 'RawLoadFR' in df.columns:
+        total_load = plot_df['RawLoadFL'] + plot_df['RawLoadFR']
+        raw_lt = (plot_df['RawLoadFL'] - plot_df['RawLoadFR']) / (total_load + 1e-6)
+        ax1_twin.plot(time, raw_lt, label='Raw Load Transfer', color='#9E9E9E', alpha=0.3, linewidth=0.5)
+
+    ax1_twin.set_ylabel('Norm. Load Transfer [-1, 1]', color='#FF9800')
+    ax1_twin.tick_params(axis='y', labelcolor='#FF9800')
+    ax1.set_title('Inputs: Lateral Acceleration vs. Tire Load Transfer')
+
+    # Combine legends
+    lines, labels = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax1_twin.get_legend_handles_labels()
+    ax1.legend(lines + lines2, labels + labels2, loc='upper right')
+
+    # Panel 2: Force Decomposition (Time Series)
+    if status_callback: status_callback("Rendering Panel 2 (Decomposition)...")
+    ax2 = fig.add_subplot(gs[1, :], sharex=ax1)
+
+    load_part = plot_df['LatLoadNorm'] * metadata.lat_load_effect * metadata.sop_scale
+    g_part = plot_df['FFBSoP'] - load_part
+
+    ax2.fill_between(time, 0, g_part, color='#2196F3', alpha=0.3, label='G-Force Component')
+    ax2.fill_between(time, g_part, plot_df['FFBSoP'], color='#FF9800', alpha=0.3, label='Lateral Load Component')
+    ax2.plot(time, plot_df['FFBSoP'], color='black', linewidth=1.0, label='Total SoP Force')
+
+    ax2.set_ylabel('Force (Nm)')
+    ax2.set_xlabel('Time (s)')
+    ax2.set_title('SoP Force Decomposition')
+    ax2.grid(True, alpha=0.3)
+    ax2.legend(loc='upper right')
+
+    # Panel 3: Scatter Plot (G vs Load)
+    if status_callback: status_callback("Rendering Panel 3 (Balance)...")
+    ax3 = fig.add_subplot(gs[2, 0])
+    ax3.scatter(plot_df['LatAccel'] / 9.81, plot_df['LatLoadNorm'],
+                c=plot_df['Speed'], cmap='viridis', alpha=0.2, s=5)
+    ax3.set_xlabel('Lateral G')
+    ax3.set_ylabel('Norm. Load Transfer')
+    ax3.set_title('Correlation: Lat G vs Load Transfer')
+    ax3.grid(True, alpha=0.3)
+
+    # Panel 4: Distribution
+    if status_callback: status_callback("Rendering Panel 4 (Distribution)...")
+    ax4 = fig.add_subplot(gs[2, 1])
+    ax4.hist(df['LatLoadNorm'], bins=50, color='#FF9800', alpha=0.7)
+    ax4.set_xlabel('Norm. Load Transfer')
+    ax4.set_ylabel('Frequency')
+    ax4.set_title('Load Transfer Distribution')
+    ax4.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+
+    if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+
+    if show:
+        plt.show()
+
+    return ""
+
+def plot_yaw_diagnostic(
+    df: pd.DataFrame,
+    threshold: float = 1.68,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Comprehensive Yaw Kick diagnostic plot (Issue #253).
+    Panels: Yaw Accel (Raw/Smoothed/Threshold), Yaw Rate vs Accel, Yaw Kick FFB.
+    """
+    cols = ['RawGameYawAccel', 'SmoothedYawAccel', 'FFBYawKick', 'YawRate']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Initializing Yaw diagnostic plot...")
+    fig, axes = plt.subplots(3, 1, figsize=(14, 15), sharex=True)
+    fig.suptitle('Yaw Kick Dynamics Diagnostic', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    # Panel 1: Yaw Acceleration & Threshold
+    ax1 = axes[0]
+    ax1.plot(time, plot_df['RawGameYawAccel'], label='Raw Yaw Accel', color='#9E9E9E', alpha=0.4, linewidth=0.5)
+    if 'ExtrapolatedYawAccel' in plot_df.columns:
+        ax1.plot(time, plot_df['ExtrapolatedYawAccel'], label='Extrapolated Yaw Accel', color='#2196F3', alpha=0.4, linewidth=0.5)
+    if 'DerivedYawAccel' in plot_df.columns:
+        ax1.plot(time, plot_df['DerivedYawAccel'], label='Derived Yaw Accel', color='#9C27B0', alpha=0.4, linewidth=0.5)
+
+    ax1.plot(time, plot_df['SmoothedYawAccel'], label='Smoothed Yaw Accel', color='#F44336', linewidth=1.0)
+    ax1.axhline(threshold, color='black', linestyle='--', alpha=0.6, label=f'Threshold ({threshold})')
+    ax1.axhline(-threshold, color='black', linestyle='--', alpha=0.6)
+    ax1.set_ylabel('Accel (rad/s²)')
+    ax1.set_title('Yaw Acceleration & Binary Threshold')
+    ax1.grid(True, alpha=0.3)
+    _safe_legend(ax1)
+
+    # Panel 2: Yaw Rate vs Accel Overlay
+    ax2 = axes[1]
+    ax2.plot(time, plot_df['YawRate'], label='Yaw Rate', color='#2196F3', linewidth=1.0)
+    ax2.set_ylabel('Rate (rad/s)', color='#2196F3')
+    ax2.tick_params(axis='y', labelcolor='#2196F3')
+
+    ax2_twin = ax2.twinx()
+    ax2_twin.plot(time, plot_df['SmoothedYawAccel'], label='Smoothed Yaw Accel', color='#F44336', alpha=0.5, linewidth=0.8)
+    ax2_twin.set_ylabel('Accel (rad/s²)', color='#F44336')
+    ax2_twin.tick_params(axis='y', labelcolor='#F44336')
+
+    ax2.set_title('Overlay: Yaw Rate vs Smoothed Yaw Accel')
+    ax2.grid(True, alpha=0.3)
+
+    # Combined legend for twin axes
+    lines, labels = ax2.get_legend_handles_labels()
+    lines2, labels2 = ax2_twin.get_legend_handles_labels()
+    ax2.legend(lines + lines2, labels + labels2, loc='upper right')
+
+    # Panel 3: Yaw Kick FFB
+    ax3 = axes[2]
+    ax3.plot(time, plot_df['FFBYawKick'], label='Yaw Kick FFB', color='#4CAF50', linewidth=1.0)
+    ax3.axhline(0, color='black', linestyle='-', alpha=0.3)
+    ax3.set_ylabel('Force (Nm)')
+    ax3.set_xlabel('Time (s)')
+    ax3.set_title('Yaw Kick FFB Contribution')
+    ax3.grid(True, alpha=0.3)
+    _safe_legend(ax3)
+
+    plt.tight_layout()
+
+    if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_system_health(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Plot DeltaTime and Clipping indicators to detect frame drops and saturation.
+    """
+    if 'DeltaTime' not in df.columns:
+        return ""
+
+    if status_callback: status_callback("Initializing System Health plot...")
+    fig, axes = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
+    fig.suptitle('System Health: Timing & Clipping', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    # Panel 1: DeltaTime
+    ax1 = axes[0]
+    ax1.plot(time, plot_df['DeltaTime'], color='#673AB7', linewidth=0.8)
+    ax1.axhline(0.0025, color='#4CAF50', linestyle='--', alpha=0.6, label='Target (400Hz)')
+    ax1.set_ylabel('DeltaTime (s)')
+    ax1.set_title('Time Consistency (Look for spikes/drops)')
+    ax1.grid(True, alpha=0.3)
+    _safe_legend(ax1)
+
+    # Panel 2: Clipping
+    ax2 = axes[1]
+    if 'Clipping' in plot_df.columns:
+        ax2.fill_between(time, 0, plot_df['Clipping'], color='#F44336', alpha=0.3, label='Clipping Active')
+
+    # Overlay total FFB to see context
+    if 'FFBTotal' in plot_df.columns:
+        ax2_twin = ax2.twinx()
+        ax2_twin.plot(time, plot_df['FFBTotal'], color='black', alpha=0.5, linewidth=0.5, label='Total FFB')
+        ax2_twin.set_ylabel('Total FFB (Nm)')
+        _safe_legend(ax2_twin, loc='upper right')
+
+    ax2.set_ylabel('Status (Binary)')
+    ax2.set_ylim(-0.1, 1.1)
+    ax2.set_xlabel('Time (s)')
+    ax2.set_title('FFB Clipping Events')
+    ax2.grid(True, alpha=0.3)
+    _safe_legend(ax2, loc='upper left')
+
+    plt.tight_layout()
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_threshold_thrashing(
+    df: pd.DataFrame,
+    threshold: float = 1.68,
+    window_sec: float = 3.0,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Zoomed-in plot showing Raw Yaw vs Smoothed Yaw vs Threshold (Issue #253).
+    Finds the period with highest threshold crossing rate.
+    """
+    cols = ['RawGameYawAccel', 'SmoothedYawAccel', 'Time']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Detecting thrashing window...")
+
+    # Calculate crossings in rolling window to find "noisiest" part
+    fs = 400.0
+    window_samples = int(window_sec * fs)
+
+    raw_yaw = df['RawGameYawAccel'].values
+    above = (np.abs(raw_yaw) > threshold).astype(int)
+    crossings = np.abs(np.diff(above))
+
+    crossing_counts = pd.Series(crossings).rolling(window=window_samples).sum()
+    max_idx = crossing_counts.idxmax()
+
+    if pd.isna(max_idx):
+        start_idx, end_idx = 0, min(window_samples, len(df)-1)
+    else:
+        start_idx = max(0, max_idx - window_samples)
+        end_idx = min(len(df)-1, max_idx)
+
+    plot_df = df.iloc[start_idx:end_idx]
+    time = plot_df['Time']
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(time, plot_df['RawGameYawAccel'], label='Raw Yaw Accel', color='#9E9E9E', alpha=0.4, linewidth=0.7)
+    ax.plot(time, plot_df['SmoothedYawAccel'], label='Smoothed Yaw Accel', color='#F44336', linewidth=1.5)
+    ax.axhline(threshold, color='black', linestyle='--', alpha=0.8, label=f'Threshold ({threshold})')
+    ax.axhline(-threshold, color='black', linestyle='--')
+
+    ax.set_title(f'Threshold Thrashing Analysis (Zoomed {window_sec}s)')
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('Yaw Accel (rad/s²)')
+    ax.grid(True, alpha=0.3)
+    _safe_legend(ax)
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_suspension_yaw_correlation(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Scatter plot of Suspension Velocity vs Raw Yaw Acceleration.
+    """
+    df_vel = calculate_suspension_velocity(df)
+    vel_cols = [c for c in df_vel.columns if 'Velocity' in c]
+    if not vel_cols or 'RawGameYawAccel' not in df.columns:
+        return ""
+
+    if status_callback: status_callback("Rendering suspension correlation...")
+
+    plot_df = _downsample_df(df_vel, max_points=10000)
+
+    fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+    fig.suptitle('Correlation: Suspension Velocity vs Raw Yaw Acceleration', fontsize=14, fontweight='bold')
+
+    axes = axes.flatten()
+    for i, col in enumerate(vel_cols):
+        ax = axes[i]
+        scatter = ax.scatter(plot_df[col], plot_df['RawGameYawAccel'].abs(),
+                            alpha=0.2, s=5, c=plot_df['Speed'], cmap='plasma')
+        ax.set_title(col.replace('RawSuspVelocity', ''))
+        ax.set_xlabel('Susp Velocity (m/s)')
+        ax.set_ylabel('abs(Raw Yaw Accel)')
+        ax.grid(True, alpha=0.3)
+
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_bottoming_diagnostic(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Overlay plot of Ride Height vs Yaw Kick FFB.
+    """
+    rh_cols = ['RawRideHeightFL', 'RawRideHeightFR', 'RawRideHeightRL', 'RawRideHeightRR']
+    if not any(c in df.columns for c in rh_cols) or 'FFBYawKick' not in df.columns:
+        return ""
+
+    if status_callback: status_callback("Rendering bottoming diagnostic...")
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    fig, ax1 = plt.subplots(figsize=(14, 8))
+    for col in rh_cols:
+        if col in plot_df.columns:
+            ax1.plot(time, plot_df[col], label=col.replace('RawRideHeight', ''), alpha=0.7, linewidth=0.8)
+
+    ax1.set_ylabel('Ride Height (m)')
+    ax1.set_title('Bottoming Out vs Yaw Kick FFB')
+    ax1.grid(True, alpha=0.3)
+    _safe_legend(ax1, loc='upper left')
+
+    ax2 = ax1.twinx()
+    ax2.plot(time, plot_df['FFBYawKick'], color='black', linewidth=1.2, label='Yaw Kick FFB')
+    ax2.set_ylabel('Yaw Kick FFB (Nm)')
+    _safe_legend(ax2, loc='upper right')
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_yaw_fft(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Plot Frequency Spectrum (FFT) of Yaw Acceleration.
+    """
+    if 'RawGameYawAccel' not in df.columns:
+        return ""
+
+    if status_callback: status_callback("Calculating FFT...")
+    signal = df['RawGameYawAccel'].values
+    fft_res = get_fft(signal, fs=400.0)
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.semilogy(fft_res['freqs'], fft_res['magnitude'], color='#E91E63', linewidth=0.8)
+    ax.set_title('Frequency Spectrum of Raw Yaw Acceleration')
+    ax.set_xlabel('Frequency (Hz)')
+    ax.set_ylabel('Magnitude (Log Scale)')
+    ax.grid(True, alpha=0.3, which='both')
+
+    # Highlight regions of interest
+    ax.axvspan(1, 3, color='green', alpha=0.1, label='Driver/Handling (1-3Hz)')
+    ax.axvspan(10, 25, color='orange', alpha=0.1, label='Suspension (10-25Hz)')
+    ax.axvspan(50, 100, color='red', alpha=0.1, label='Aliasing/Noise (50Hz+)')
+
+    _safe_legend(ax)
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_pull_detector(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Generate DC Offset / Pull Detector plot (Issue #271).
+    Calculates a 0.5s rolling average of Smoothed Yaw Accel and Yaw Kick FFB.
+    """
+    cols = ['SmoothedYawAccel', 'FFBYawKick']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Calculating rolling averages for Pull Detector...")
+
+    # 0.5s window at 400Hz = 200 samples
+    window = 200
+
+    # Use full dataframe for rolling average to avoid edge artifacts from downsampling
+    # then downsample the result
+    plot_df = df.copy()
+    plot_df['YawAccel_RA'] = plot_df['SmoothedYawAccel'].rolling(window=window, center=True).mean()
+    plot_df['YawKick_RA'] = plot_df['FFBYawKick'].rolling(window=window, center=True).mean()
+
+    if status_callback: status_callback("Downsampling for plot...")
+    plot_df = _downsample_df(plot_df)
+    time = plot_df['Time']
+
+    fig, ax1 = plt.subplots(figsize=(14, 8))
+    fig.suptitle('DC Offset / Pull Detector (0.5s Rolling Average)', fontsize=14, fontweight='bold')
+
+    ax1.plot(time, plot_df['YawAccel_RA'], label='Smoothed Yaw Accel (Rolling Avg)', color='#F44336', linewidth=1.5)
+    ax1.axhline(0, color='black', linestyle='-', alpha=0.3)
+    ax1.set_ylabel('Yaw Accel (rad/s²)', color='#F44336')
+    ax1.tick_params(axis='y', labelcolor='#F44336')
+    ax1.grid(True, alpha=0.3)
+
+    ax2 = ax1.twinx()
+    ax2.plot(time, plot_df['YawKick_RA'], label='Yaw Kick FFB (Rolling Avg)', color='#4CAF50', linewidth=1.5)
+    ax2.set_ylabel('Force (Nm)', color='#4CAF50')
+    ax2.tick_params(axis='y', labelcolor='#4CAF50')
+
+    ax1.set_xlabel('Time (s)')
+
+    # Combined legend
+    lines, labels = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines + lines2, labels + labels2, loc='upper right')
+
+    plt.tight_layout()
+
+    if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_unopposed_force(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Generate Unopposed Force Overlay plot (Issue #271).
+    Overlays GripFactor and FFBYawKick.
+    """
+    cols = ['GripFactor', 'FFBYawKick']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Rendering Unopposed Force plot...")
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    fig, ax1 = plt.subplots(figsize=(14, 8))
+    fig.suptitle('Unopposed Force Analysis: Grip Factor vs Yaw Kick', fontsize=14, fontweight='bold')
+
+    # Panel 1: Grip Factor (Background fill)
+    ax1.fill_between(time, 0, plot_df['GripFactor'], color='#2196F3', alpha=0.2, label='Grip Factor')
+    ax1.plot(time, plot_df['GripFactor'], color='#2196F3', linewidth=0.8, alpha=0.5)
+    ax1.set_ylabel('Grip Factor (0.0 - 1.0)', color='#2196F3')
+    ax1.set_ylim(0, 1.1)
+    ax1.tick_params(axis='y', labelcolor='#2196F3')
+    ax1.grid(True, alpha=0.3)
+
+    # Panel 2: Yaw Kick (Foreground)
+    ax2 = ax1.twinx()
+    ax2.plot(time, plot_df['FFBYawKick'], label='Yaw Kick FFB', color='#F44336', linewidth=1.0)
+    ax2.set_ylabel('Yaw Kick Force (Nm)', color='#F44336')
+    ax2.tick_params(axis='y', labelcolor='#F44336')
+
+    ax1.set_xlabel('Time (s)')
+
+    # Combined legend
+    lines, labels = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines + lines2, labels + labels2, loc='upper right')
+
+    plt.tight_layout()
+
+    if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_clipping_components(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Bar chart showing which components contribute most during clipping events.
+    """
+    if 'Clipping' not in df.columns or not df['Clipping'].any():
+        return ""
+
+    components = [
+        'FFBBase', 'FFBUndersteerDrop', 'FFBOversteerBoost', 'FFBSoP',
+        'FFBRearTorque', 'FFBScrubDrag', 'FFBYawKick', 'FFBGyroDamping',
+        'FFBRoadTexture', 'FFBSlideTexture', 'FFBLockupVibration',
+        'FFBSpinVibration', 'FFBBottomingCrunch', 'FFBABSPulse', 'FFBSoftLock'
+    ]
+
+    if status_callback: status_callback("Analyzing clipping contribution...")
+
+    clipping_df = df[df['Clipping'] == 1]
+    means = {}
+    for comp in components:
+        if comp in df.columns:
+            means[comp.replace('FFB', '')] = clipping_df[comp].abs().mean()
+
+    # Sort by mean contribution
+    sorted_means = dict(sorted(means.items(), key=lambda x: x[1], reverse=True))
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    bars = ax.bar(sorted_means.keys(), sorted_means.values(), color='#FF5722')
+    ax.set_title('Mean Component Magnitude during Clipping Events')
+    ax.set_ylabel('Mean Absolute Force (Nm)')
+    plt.xticks(rotation=45, ha='right')
+    ax.grid(True, alpha=0.3, axis='y')
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_slip_vs_latg(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Scatter plot of Slip Angle vs Lateral G (tire curve visualization).
+    """
+    if status_callback: status_callback("Initializing tire curve plot...")
+    fig, ax = plt.subplots(figsize=(10, 8))
+    
+    slip_col = 'calc_slip_angle_front' if 'calc_slip_angle_front' in df.columns else None
+    if slip_col is None:
+        return ""
+    
+    # Downsample for performance (crucial for ax.scatter)
+    if status_callback: status_callback("Downsampling data...")
+    plot_df = _downsample_df(df)
+    
+    slip = np.abs(plot_df[slip_col])
+    lat_g = np.abs(plot_df['LatAccel'] / 9.81) if 'LatAccel' in plot_df.columns else None
+    
+    if lat_g is None:
+        return ""
+    
+    # Color by speed
+    speed = plot_df['Speed'] * 3.6 if 'Speed' in plot_df.columns else None
+    
+    if status_callback: status_callback("Rendering scatter plot...")
+    scatter = ax.scatter(slip, lat_g, c=speed, cmap='viridis', alpha=0.3, s=2)
+    
+    ax.set_xlabel('Slip Angle (rad)')
+    ax.set_ylabel('Lateral G')
+    ax.set_title('Tire Curve: Slip Angle vs Lateral G')
+    ax.grid(True, alpha=0.3)
+    
+    if speed is not None:
+        cbar = plt.colorbar(scatter, ax=ax)
+        cbar.set_label('Speed (km/h)')
+    
+    # Mark the theoretical peak region
+    ax.axvline(0.08, color='#F44336', linestyle='--', alpha=0.5, label='Typical Peak (~0.08 rad)')
+    _safe_legend(ax)
+    
+    plt.tight_layout()
+    
+    if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    
+    if show:
+        plt.show()
+    
+    return ""
+
+def plot_dalpha_histogram(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Histogram of dAlpha/dt values (shows when slope calculation is "active").
+    """
+    if 'dAlpha_dt' not in df.columns:
+        return ""
+    
+    if status_callback: status_callback("Rendering dAlpha histogram...")
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    dalpha = df['dAlpha_dt'].values
+    
+    # Create histogram
+    ax.hist(dalpha, bins=100, color='#2196F3', alpha=0.7, edgecolor='white')
+    
+    # Mark the threshold
+    threshold = 0.02
+    ax.axvline(threshold, color='#F44336', linestyle='--', linewidth=2, label=f'Threshold (+{threshold})')
+    ax.axvline(-threshold, color='#F44336', linestyle='--', linewidth=2, label=f'Threshold (-{threshold})')
+    
+    # Calculate percentages
+    above_threshold = (np.abs(dalpha) > threshold).mean() * 100
+    
+    ax.set_xlabel('dAlpha/dt (rad/s)')
+    ax.set_ylabel('Frequency')
+    ax.set_title(f'Distribution of dAlpha/dt\n{above_threshold:.1f}% of frames above threshold (active calculation)')
+    _safe_legend(ax)
+    ax.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    
+    if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    
+    if show:
+        plt.show()
+    
+    return ""
+
+def plot_slope_correlation(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Scatter plot of dAlpha/dt vs SlopeCurrent to detect numerical instability.
+    """
+    if 'dAlpha_dt' not in df.columns or 'SlopeCurrent' not in df.columns:
+        return ""
+
+    if status_callback: status_callback("Rendering slope correlation plot...")
+    # Downsample if too large for performance
+    if len(df) > 20000:
+        plot_df = df.sample(n=20000, random_state=42)
+    else:
+        plot_df = df
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    ax.scatter(plot_df['dAlpha_dt'], plot_df['SlopeCurrent'],
+               alpha=0.1, s=10, color='#9C27B0')
+
+    # Annotate thresholds
+    ax.axvline(0.02, color='#F44336', linestyle='--', alpha=0.5, label='Threshold (0.02)')
+    ax.axvline(-0.02, color='#F44336', linestyle='--', alpha=0.5)
+
+    ax.set_xlabel('dAlpha/dt (rad/s)')
+    ax.set_ylabel('Slope (G/rad)')
+    ax.set_title('Instability Check: dAlpha/dt vs SlopeCurrent')
+    ax.set_ylim(-50, 50)  # Focus on the relevant range, even if outliers exist
+    ax.grid(True, alpha=0.3)
+    _safe_legend(ax)
+
+    plt.tight_layout()
+
+    if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    
+    if show:
+        plt.show()
+    
+    return ""
+
+def plot_longitudinal_diagnostic(
+    df: pd.DataFrame,
+    metadata: SessionMetadata,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Diagnostic plot for Longitudinal Load Transfer.
+    Panels: Inputs (Pedals/Speed), Load & Multiplier, FFB Output Impact.
+    """
+    cols =['LoadFL', 'LoadFR', 'LongitudinalLoadFactor', 'FFBBase', 'FFBTotal', 'Speed', 'Brake', 'Throttle']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Initializing Longitudinal diagnostic plot...")
+    fig, axes = plt.subplots(3, 1, figsize=(14, 12), sharex=True)
+    fig.suptitle('Longitudinal Load Transfer Diagnostic', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    # Panel 1: Inputs (Pedals & Speed)
+    ax1 = axes[0]
+    ax1.plot(time, plot_df['Brake'], label='Brake', color='#F44336', alpha=0.8)
+    ax1.plot(time, plot_df['Throttle'], label='Throttle', color='#4CAF50', alpha=0.8)
+    ax1.set_ylabel('Pedal Input (0-1)')
+    ax1.grid(True, alpha=0.3)
+    _safe_legend(ax1, loc='upper left')
+
+    ax1_twin = ax1.twinx()
+    ax1_twin.plot(time, plot_df['Speed'] * 3.6, label='Speed (km/h)', color='#2196F3', alpha=0.6, linestyle='--')
+    ax1_twin.set_ylabel('Speed (km/h)', color='#2196F3')
+    _safe_legend(ax1_twin, loc='upper right')
+    ax1.set_title('Driver Inputs & Speed')
+
+    # Panel 2: Front Load & Multiplier
+    ax2 = axes[1]
+    front_load = (plot_df['LoadFL'] + plot_df['LoadFR']) / 2.0
+    ax2.plot(time, front_load, label='Avg Front Load (N)', color='#9C27B0', alpha=0.8)
+    ax2.set_ylabel('Load (N)', color='#9C27B0')
+    ax2.grid(True, alpha=0.3)
+    _safe_legend(ax2, loc='upper left')
+
+    ax2_twin = ax2.twinx()
+    ax2_twin.plot(time, plot_df['LongitudinalLoadFactor'], label='Long. Load Multiplier', color='#FF9800', linewidth=1.5)
+    ax2_twin.axhline(1.0, color='black', linestyle='--', alpha=0.5)
+    ax2_twin.set_ylabel('Multiplier (x)', color='#FF9800')
+    _safe_legend(ax2_twin, loc='upper right')
+    ax2.set_title('Tire Load & Calculated Multiplier')
+
+    # Panel 3: FFB Output Impact
+    ax3 = axes[2]
+    ax3.plot(time, plot_df['FFBBase'], label='Base FFB (Nm)', color='#9E9E9E', alpha=0.6)
+    ax3.plot(time, plot_df['FFBTotal'], label='Total FFB Output (Nm)', color='#2196F3', linewidth=1.0)
+
+    if 'Clipping' in plot_df.columns:
+        ax3.fill_between(time, -15, 15, where=plot_df['Clipping']==1, color='#F44336', alpha=0.2, label='Clipping')
+
+    ax3.set_ylabel('Force (Nm)')
+    ax3.set_xlabel('Time (s)')
+    ax3.grid(True, alpha=0.3)
+    _safe_legend(ax3, loc='upper right')
+    ax3.set_title('FFB Output & Clipping')
+
+    plt.tight_layout()
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_raw_telemetry_health(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Diagnostic plot to verify if raw telemetry channels are encrypted/missing.
+    Plots all 4 tire loads and all 4 tire grips.
+    """
+    cols =['RawLoadFL', 'RawLoadFR', 'RawLoadRL', 'RawLoadRR', 
+            'GripFL', 'GripFR', 'GripRL', 'GripRR']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Rendering Raw Telemetry Health plot...")
+    fig, axes = plt.subplots(2, 1, figsize=(14, 10), sharex=True)
+    fig.suptitle('Raw Telemetry Health (Encryption / Missing Data Check)', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    # Panel 1: Tire Loads
+    ax1 = axes[0]
+    ax1.plot(time, plot_df['RawLoadFL'], label='FL Load', color='#F44336', alpha=0.7, linewidth=1)
+    ax1.plot(time, plot_df['RawLoadFR'], label='FR Load', color='#4CAF50', alpha=0.7, linewidth=1)
+    ax1.plot(time, plot_df['RawLoadRL'], label='RL Load', color='#2196F3', alpha=0.7, linewidth=1)
+    ax1.plot(time, plot_df['RawLoadRR'], label='RR Load', color='#FF9800', alpha=0.7, linewidth=1)
+
+    ax1.set_ylabel('Raw Tire Load (N)')
+    ax1.set_title('Raw Tire Load (mTireLoad) - Should fluctuate dynamically if not encrypted')
+    ax1.grid(True, alpha=0.3)
+    _safe_legend(ax1, loc='upper right')
+
+    # Panel 2: Tire Grips
+    ax2 = axes[1]
+    ax2.plot(time, plot_df['GripFL'], label='FL Grip', color='#F44336', alpha=0.7, linewidth=1)
+    ax2.plot(time, plot_df['GripFR'], label='FR Grip', color='#4CAF50', alpha=0.7, linewidth=1)
+    ax2.plot(time, plot_df['GripRL'], label='RL Grip', color='#2196F3', alpha=0.7, linewidth=1)
+    ax2.plot(time, plot_df['GripRR'], label='RR Grip', color='#FF9800', alpha=0.7, linewidth=1)
+
+    ax2.set_ylabel('Raw Grip Fraction (0-1)')
+    ax2.set_xlabel('Time (s)')
+    ax2.set_title('Raw Tire Grip (mGripFract) - Should fluctuate dynamically if not encrypted')
+    ax2.grid(True, alpha=0.3)
+    _safe_legend(ax2, loc='upper right')
+
+    plt.tight_layout()
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+def plot_longitudinal_diagnostic(
+    df: pd.DataFrame,
+    metadata: SessionMetadata,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Diagnostic plot for Longitudinal Load Transfer.
+    Panels: Inputs (Pedals/Speed), Load & Multiplier, FFB Output Impact.
+    """
+    cols =['LoadFL', 'LoadFR', 'LongitudinalLoadFactor', 'FFBBase', 'FFBTotal', 'Speed', 'Brake', 'Throttle']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Initializing Longitudinal diagnostic plot...")
+    fig, axes = plt.subplots(3, 1, figsize=(14, 12), sharex=True)
+    fig.suptitle('Longitudinal Load Transfer Diagnostic', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    # Panel 1: Inputs (Pedals & Speed)
+    ax1 = axes[0]
+    ax1.plot(time, plot_df['Brake'], label='Brake', color='#F44336', alpha=0.8)
+    ax1.plot(time, plot_df['Throttle'], label='Throttle', color='#4CAF50', alpha=0.8)
+    ax1.set_ylabel('Pedal Input (0-1)')
+    ax1.grid(True, alpha=0.3)
+    _safe_legend(ax1, loc='upper left')
+
+    ax1_twin = ax1.twinx()
+    ax1_twin.plot(time, plot_df['Speed'] * 3.6, label='Speed (km/h)', color='#2196F3', alpha=0.6, linestyle='--')
+    ax1_twin.set_ylabel('Speed (km/h)', color='#2196F3')
+    _safe_legend(ax1_twin, loc='upper right')
+    ax1.set_title('Driver Inputs & Speed')
+
+    # Panel 2: Front Load & Multiplier
+    ax2 = axes[1]
+    front_load = (plot_df['LoadFL'] + plot_df['LoadFR']) / 2.0
+    ax2.plot(time, front_load, label='Avg Front Load (N)', color='#9C27B0', alpha=0.8)
+    ax2.set_ylabel('Load (N)', color='#9C27B0')
+    ax2.grid(True, alpha=0.3)
+    _safe_legend(ax2, loc='upper left')
+
+    ax2_twin = ax2.twinx()
+    ax2_twin.plot(time, plot_df['LongitudinalLoadFactor'], label='Long. Load Multiplier', color='#FF9800', linewidth=1.5)
+    ax2_twin.axhline(1.0, color='black', linestyle='--', alpha=0.5)
+    ax2_twin.set_ylabel('Multiplier (x)', color='#FF9800')
+    _safe_legend(ax2_twin, loc='upper right')
+    ax2.set_title('Tire Load & Calculated Multiplier')
+
+    # Panel 3: FFB Output Impact
+    ax3 = axes[2]
+    ax3.plot(time, plot_df['FFBBase'], label='Base FFB (Nm)', color='#9E9E9E', alpha=0.6)
+    ax3.plot(time, plot_df['FFBTotal'], label='Total FFB Output (Nm)', color='#2196F3', linewidth=1.0)
+    
+    if 'Clipping' in plot_df.columns:
+        ax3.fill_between(time, -15, 15, where=plot_df['Clipping']==1, color='#F44336', alpha=0.2, label='Clipping')
+
+    ax3.set_ylabel('Force (Nm)')
+    ax3.set_xlabel('Time (s)')
+    ax3.grid(True, alpha=0.3)
+    _safe_legend(ax3, loc='upper right')
+    ax3.set_title('FFB Output & Clipping')
+
+    plt.tight_layout()
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+```
+
+# File: tools\lmuffb_log_analyzer\reports.py
+```python
+import pandas as pd
+from .models import SessionMetadata
+from .analyzers.slope_analyzer import (
+    analyze_slope_stability,
+    detect_oscillation_events,
+    detect_singularities
+)
+from .analyzers.yaw_analyzer import (
+    analyze_yaw_dynamics,
+    analyze_clipping
+)
+from .analyzers.lateral_analyzer import analyze_lateral_dynamics, analyze_longitudinal_dynamics
+
+def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
+    """
+    Generate a formatted text report for the session.
+    """
+    slope_results = analyze_slope_stability(df)
+    oscillations = detect_oscillation_events(df)
+    singularity_count, worst_slope = detect_singularities(df)
+    yaw_results = analyze_yaw_dynamics(df)
+    clipping_results = analyze_clipping(df)
+    lateral_results = analyze_lateral_dynamics(df, metadata)
+    long_results = analyze_longitudinal_dynamics(df, metadata)
+    
+    report = []
+    report.append("=" * 60)
+    report.append(" " * 15 + "LMUFFB DIAGNOSTIC REPORT")
+    report.append("=" * 60)
+    report.append("")
+    
+    report.append("SESSION INFORMATION")
+    report.append("-" * 20)
+    report.append(f"Driver:       {metadata.driver_name}")
+    report.append(f"Vehicle:      {metadata.vehicle_name}")
+    report.append(f"Car Class:    {metadata.car_class}")
+    report.append(f"Car Brand:    {metadata.car_brand}")
+    report.append(f"Track:        {metadata.track_name}")
+    report.append(f"Date:         {metadata.timestamp}")
+    report.append(f"App Version:  {metadata.app_version}")
+    report.append(f"Duration:     {df['Time'].max():.1f} seconds")
+    report.append("")
+    
+    report.append("SETTINGS")
+    report.append("-" * 20)
+    report.append(f"Gain:               {metadata.gain:.2f}")
+    report.append(f"Understeer Effect:  {metadata.understeer_effect:.2f}")
+    report.append(f"SOP Effect:          {metadata.sop_effect:.2f}")
+    report.append(f"Lateral Load Effect: {metadata.lat_load_effect:.2f}")
+    report.append(f"Long. Load Effect:   {metadata.long_load_effect:.2f}")
+    report.append(f"SOP Scale:           {metadata.sop_scale:.2f}")
+    report.append(f"SOP Smoothing:       {metadata.sop_smoothing:.3f}")
+    report.append(f"Slope Detection:    {'Enabled' if metadata.slope_enabled else 'Disabled'}")
+    report.append(f"Slope Sensitivity:  {metadata.slope_sensitivity:.2f}")
+    report.append(f"Slope Threshold:    {metadata.slope_threshold:.2f}")
+    report.append("")
+    
+    report.append("SLOPE ANALYSIS")
+    report.append("-" * 20)
+    report.append(f"Slope Mean:       {slope_results['slope_mean']:.2f}")
+    report.append(f"Slope Std Dev:    {slope_results['slope_std']:.2f}")
+    report.append(f"Slope Range:      {slope_results['slope_min']:.1f} to {slope_results['slope_max']:.1f}")
+    
+    if slope_results.get('active_percentage') is not None:
+        report.append(f"Active Time:      {slope_results['active_percentage']:.1f}%")
+        
+    if slope_results.get('floor_percentage') is not None:
+        report.append(f"Floor Hits:       {slope_results['floor_percentage']:.1f}%")
+        
+    report.append(f"Oscillations:      {len(oscillations)} events detected")
+    report.append(f"Singularities:     {singularity_count} events detected (Worst: {worst_slope:.1f})")
+    report.append("")
+
+    report.append("LATERAL LOAD ANALYSIS")
+    report.append("-" * 20)
+    if lateral_results.get('load_transfer_correlation') is not None:
+        report.append(f"Load Transfer Corr:  {lateral_results['load_transfer_correlation']:.3f}")
+    if lateral_results.get('lat_g_vs_load_correlation') is not None:
+        report.append(f"LatG vs Load Corr:   {lateral_results['lat_g_vs_load_correlation']:.3f}")
+    if lateral_results.get('load_contribution_pct') is not None:
+        report.append(f"Load Contribution:   {lateral_results['load_contribution_pct']:.1f}%")
+        report.append(f"G-Force Contribution: {lateral_results['g_contribution_pct']:.1f}%")
+    report.append("")
+
+    report.append("LONGITUDINAL LOAD ANALYSIS")
+    report.append("-" * 20)
+    if long_results.get('long_load_factor_mean') is not None:
+        report.append(f"Multiplier Mean:     {long_results['long_load_factor_mean']:.2f}x")
+        report.append(f"Multiplier Range:    {long_results['long_load_factor_min']:.2f}x to {long_results['long_load_factor_max']:.2f}x")
+        if not long_results.get('long_load_active', True):
+            report.append("Status:              INACTIVE (Multiplier is stuck/clamped)")
+        else:
+            report.append("Status:              ACTIVE")
+    report.append("")
+
+    if long_results.get('missing_data_warnings'):
+        report.append("DATA WARNINGS (ENCRYPTED/MISSING TELEMETRY)")
+        report.append("-" * 20)
+        for warn in long_results['missing_data_warnings']:
+            report.append(f"  [!] {warn}")
+        report.append("")
+
+    report.append("SIGNAL QUALITY & STABILITY")
+    report.append("-" * 20)
+    if slope_results.get('zero_crossing_rate') is not None:
+        report.append(f"Zero-Crossing Rate: {slope_results['zero_crossing_rate']:.2f} Hz")
+    if slope_results.get('binary_residence') is not None:
+        report.append(f"Binary Residence:   {slope_results['binary_residence']:.1f}%")
+    if slope_results.get('derivative_energy_ratio') is not None:
+        report.append(f"D-Energy Ratio:     {slope_results['derivative_energy_ratio']:.2f}")
+    report.append("")
+    
+    report.append("YAW KICK & STABILITY")
+    report.append("-" * 20)
+    if yaw_results.get('threshold_crossing_rate') is not None:
+        report.append(f"Threshold Crossing Rate: {yaw_results['threshold_crossing_rate']:.2f} Hz")
+    if yaw_results.get('yaw_kick_contribution_pct') is not None:
+        report.append(f"Yaw Kick Contribution:  {yaw_results['yaw_kick_contribution_pct']:.1f}%")
+    if yaw_results.get('straightaway_yaw_kick_mean') is not None:
+        report.append(f"Straightaway Yaw Mean:   {yaw_results['straightaway_yaw_kick_mean']:.3f} Nm")
+    if yaw_results.get('yaw_accel_nan_count', 0) > 0:
+        report.append(f"NaN Yaw Accel frames:    {yaw_results['yaw_accel_nan_count']}")
+    report.append("")
+
+    report.append("CLIPPING ANALYSIS")
+    report.append("-" * 20)
+    if clipping_results.get('total_clipping_pct') is not None:
+        report.append(f"Total Clipping Time: {clipping_results['total_clipping_pct']:.1f}%")
+        if clipping_results.get('clipping_component_means'):
+            report.append("Top Contributors during clipping:")
+            sorted_comps = sorted(clipping_results['clipping_component_means'].items(),
+                                key=lambda x: x[1], reverse=True)[:3]
+            for comp, val in sorted_comps:
+                report.append(f"  - {comp}: {val:.2f} Nm")
+    report.append("")
+
+    # Overall Issues
+    all_issues = slope_results['issues'].copy()
+
+    threshold_crossing_rate = yaw_results.get('threshold_crossing_rate')
+    if threshold_crossing_rate is not None and threshold_crossing_rate > 5.0:
+        all_issues.append(f"HIGH YAW THRASHING ({threshold_crossing_rate:.1f} Hz) - Threshold may be too low or signal too noisy")
+
+    yaw_kick_contribution = yaw_results.get('yaw_kick_contribution_pct')
+    if yaw_kick_contribution is not None and yaw_kick_contribution > 30.0:
+        all_issues.append(f"EXCESSIVE YAW KICK ({yaw_kick_contribution:.1f}%) - Yaw kick is dominating FFB")
+
+    total_clipping = clipping_results.get('total_clipping_pct')
+    if total_clipping is not None and total_clipping > 10.0:
+        all_issues.append(f"HIGH CLIPPING ({total_clipping:.1f}%) - Reduce Gain or increase Max Torque Ref")
+
+    if long_results.get('straight_brake_issue'):
+        all_issues.append("LONGITUDINAL LOAD: Braking in a straight line produces near-zero FFB because the effect is a multiplier on base steering force (which is zero when driving straight). Turn the wheel slightly to feel the weight transfer.")
+
+    if all_issues:
+        report.append("ISSUES DETECTED")
+        report.append("-" * 20)
+        for issue in all_issues:
+            report.append(f"  [!] {issue}")
+        report.append("")
+    else:
+        report.append("No significant issues detected.")
+        report.append("")
+        
+    report.append("=" * 60)
+    
+    return "\n".join(report)
+
+```
+
+# File: tools\lmuffb_log_analyzer\__init__.py
+```python
+# lmuffb_log_analyzer package
+
+```
+
+# File: tools\lmuffb_log_analyzer\analyzers\lateral_analyzer.py
+```python
+import pandas as pd
+import numpy as np
+from typing import Dict, Any
+from ..models import SessionMetadata
+
+def analyze_lateral_dynamics(df: pd.DataFrame, metadata: SessionMetadata) -> Dict[str, Any]:
+    """
+    Analyze SoP Lateral components and Load Transfer.
+    """
+    results = {}
+
+    # 1. Raw Load Transfer
+    if 'RawLoadFL' in df.columns and 'RawLoadFR' in df.columns:
+        total_load = df['RawLoadFL'] + df['RawLoadFR']
+        # Normalized raw load transfer [-1, 1]
+        raw_lt = np.where(total_load > 1.0, (df['RawLoadFL'] - df['RawLoadFR']) / total_load, 0.0)
+        df['RawLatLoadNorm'] = raw_lt
+
+        results['raw_load_transfer_min'] = float(raw_lt.min())
+        results['raw_load_transfer_max'] = float(raw_lt.max())
+        results['raw_load_transfer_std'] = float(raw_lt.std())
+
+    # 2. Compare Smoothed vs Raw Load Transfer
+    if 'LatLoadNorm' in df.columns and 'RawLatLoadNorm' in df.columns:
+        results['load_transfer_correlation'] = float(df['LatLoadNorm'].corr(df['RawLatLoadNorm']))
+        # Calculate lag? (Maybe too complex for now)
+
+    # 3. Decompose FFBSoP
+    # SoP = (LatAccel_smoothed * sop_effect + LatLoadNorm * lat_load_effect) * sop_scale * gain
+    # Note: We don't have LatAccel_smoothed in logs (except if we derive it from LatAccel and sop_smoothing)
+    # But we have FFBSoP (total SoP force)
+
+    if 'FFBSoP' in df.columns:
+        sop_total = df['FFBSoP'].values
+        results['ffb_sop_mean_abs'] = float(np.abs(sop_total).mean())
+
+        # Estimate components if we have enough metadata
+        if 'LatLoadNorm' in df.columns:
+            # We assume FFBSoP already includes m_gain and m_sop_scale
+            # FFBEngine.cpp:
+            # double sop_base = (m_sop_lat_g_smoothed * m_sop_effect + m_sop_load_smoothed * m_lat_load_effect) * m_sop_scale;
+            # ctx.sop_base_force = sop_base;
+            # ...
+            # double di_structural = norm_structural * (m_target_rim_nm / wheelbase_max_safe);
+            # double norm_force = (di_structural + di_texture) * m_gain;
+
+            # This makes exact decomposition hard because of the global gain and hardware scaling.
+            # However, we can calculate the RATIO of contributions.
+
+            # Normalized components (before gain and scale)
+            # component_g = m_sop_lat_g_smoothed * m_sop_effect
+            # component_load = m_sop_load_smoothed * m_lat_load_effect
+
+            # Since we don't have m_sop_lat_g_smoothed, we can't perfectly subtract.
+            # But we HAVE m_sop_load_smoothed (logged as LatLoadNorm).
+
+            # Contribution from load = LatLoadNorm * lat_load_effect * sop_scale
+            # (Note: AsyncLogger logs FFBSoP BEFORE final normalization and gain, wait...)
+            # FFBEngine.cpp: snap.sop_force = (float)ctx.sop_unboosted_force; // unboosted = (smoothed_G * effect + smoothed_Load * effect) * scale
+            # LogFrame: frame.ffb_sop = (float)ctx.sop_base_force; // sop_base = same as unboosted if no oversteer boost
+
+            load_contribution = df['LatLoadNorm'] * metadata.lat_load_effect * metadata.sop_scale
+            results['load_contribution_mean_abs'] = float(np.abs(load_contribution).mean())
+
+            # If we assume FFBSoP = G_part + Load_part
+            # G_part = FFBSoP - Load_part
+            g_contribution = df['FFBSoP'] - load_contribution
+            results['g_contribution_mean_abs'] = float(np.abs(g_contribution).mean())
+
+            total_sum_abs = results['load_contribution_mean_abs'] + results['g_contribution_mean_abs']
+            if total_sum_abs > 0:
+                results['load_contribution_pct'] = (results['load_contribution_mean_abs'] / total_sum_abs) * 100
+                results['g_contribution_pct'] = (results['g_contribution_mean_abs'] / total_sum_abs) * 100
+            else:
+                results['load_contribution_pct'] = 0.0
+                results['g_contribution_pct'] = 0.0
+
+    # 4. Correlation with Lateral G
+    if 'LatAccel' in df.columns and 'LatLoadNorm' in df.columns:
+        results['lat_g_vs_load_correlation'] = float(df['LatAccel'].corr(df['LatLoadNorm']))
+
+    return results
+
+def analyze_longitudinal_dynamics(df: pd.DataFrame, metadata: SessionMetadata) -> Dict[str, Any]:
+    results = {}
+    if 'LongitudinalLoadFactor' in df.columns:
+        results['long_load_factor_mean'] = float(df['LongitudinalLoadFactor'].mean())
+        results['long_load_factor_max'] = float(df['LongitudinalLoadFactor'].max())
+        results['long_load_factor_min'] = float(df['LongitudinalLoadFactor'].min())
+        
+        # Check if the multiplier is stuck (indicates uncalibrated static load)
+        if results['long_load_factor_max'] - results['long_load_factor_min'] < 0.05:
+            results['long_load_active'] = False
+        else:
+            results['long_load_active'] = True
+            
+    # Check for the "Straight Line Braking" physical limitation
+    if 'Brake' in df.columns and 'Steering' in df.columns and 'FFBTotal' in df.columns:
+        straight_brake_mask = (df['Brake'] > 0.5) & (df['Steering'].abs() < 0.05)
+        if straight_brake_mask.any():
+            mean_ffb = df.loc[straight_brake_mask, 'FFBTotal'].abs().mean()
+            if mean_ffb < 1.0:
+                results['straight_brake_issue'] = True
+
+    # Check for missing/encrypted data using WarnBits
+    # FIX: Require the warning to be active for >50% of the session to avoid false positives from curb strikes/spawns
+    results['missing_data_warnings'] = []
+    if 'WarnBits' in df.columns:
+        warn_load_pct = (df['WarnBits'] & 0x01).astype(bool).mean()
+        warn_grip_pct = (df['WarnBits'] & 0x02).astype(bool).mean()
+        
+        if warn_load_pct > 0.5:
+            results['missing_data_warnings'].append(f"Tire Load (mTireLoad) is missing/encrypted ({warn_load_pct*100:.1f}% of session). Using kinematic fallback.")
+        if warn_grip_pct > 0.5:
+            results['missing_data_warnings'].append(f"Tire Grip (mGripFract) is missing/encrypted ({warn_grip_pct*100:.1f}% of session). Using slip-based fallback.")
+            
+    return results
+
+```
+
+# File: tools\lmuffb_log_analyzer\analyzers\slope_analyzer.py
+```python
+import pandas as pd
+import numpy as np
+from typing import Dict, List, Any
+
+def analyze_slope_stability(df: pd.DataFrame, threshold: float = 0.02) -> Dict[str, Any]:
+    """
+    Analyze the stability of slope detection algorithm.
+    """
+    results = {}
+    
+    # Basic slope statistics
+    slope = df['SlopeCurrent']
+    results['slope_mean'] = float(slope.mean())
+    results['slope_std'] = float(slope.std())
+    results['slope_min'] = float(slope.min())
+    results['slope_max'] = float(slope.max())
+    results['slope_range'] = (float(slope.min()), float(slope.max()))
+    results['slope_variance'] = float(slope.var())
+    
+    # Percentage of time slope is actively calculated
+    if 'dAlpha_dt' in df.columns:
+        active_mask = np.abs(df['dAlpha_dt']) > threshold
+        results['active_percentage'] = float(active_mask.mean() * 100)
+    else:
+        results['active_percentage'] = None
+    
+    # Percentage of time at grip floor (0.2)
+    grip_col = 'GripFactor' if 'GripFactor' in df.columns else 'SlopeSmoothed'
+    if grip_col in df.columns:
+        floor_mask = df[grip_col] <= 0.21
+        results['floor_percentage'] = float(floor_mask.mean() * 100)
+    else:
+        results['floor_percentage'] = None
+    
+    # Grip on straights analysis
+    straight_mask = (
+        (df['Speed'] > 27.8) &  # > 100 km/h
+        (np.abs(df.get('calc_slip_angle_front', 0)) < 0.02)
+    )
+    if straight_mask.any():
+        results['grip_on_straights_mean'] = float(df.loc[straight_mask, grip_col].mean())
+        results['grip_on_straights_std'] = float(df.loc[straight_mask, grip_col].std())
+    else:
+        results['grip_on_straights_mean'] = None
+        results['grip_on_straights_std'] = None
+    
+    # Signal Quality Metrics
+    # 1. Zero-Crossing Rate (Hz)
+    if 'SlopeCurrent' in df.columns:
+        # Count sign changes
+        diffs = np.diff(np.sign(df['SlopeCurrent']))
+        crossings = np.count_nonzero(diffs)
+        duration = df['Time'].iloc[-1] - df['Time'].iloc[0] if 'Time' in df.columns else len(df) * 0.01
+        results['zero_crossing_rate'] = float(crossings / duration) if duration > 0 else 0.0
+    else:
+        results['zero_crossing_rate'] = None
+
+    # 2. Binary State Residence
+    if grip_col in df.columns:
+        binary_mask = (df[grip_col] <= 0.25) | (df[grip_col] >= 0.95)
+        results['binary_residence'] = float(binary_mask.mean() * 100)
+    else:
+        results['binary_residence'] = None
+
+    # 3. Derivative Energy Ratio
+    if 'dG_dt' in df.columns and 'dAlpha_dt' in df.columns:
+        std_alpha = df['dAlpha_dt'].std()
+        results['derivative_energy_ratio'] = float(df['dG_dt'].std() / std_alpha) if std_alpha > 0 else 0.0
+    else:
+        results['derivative_energy_ratio'] = None
+
+    # Issue detection
+    results['issues'] = []
+    
+    if results['slope_std'] > 5.0:
+        results['issues'].append(
+            f"HIGH SLOPE VARIANCE ({results['slope_std']:.2f}) - Algorithm may be unstable"
+        )
+    
+    if results.get('floor_percentage', 0) > 5.0:
+        results['issues'].append(
+            f"FREQUENT FLOOR HITS ({results['floor_percentage']:.1f}%) - Algorithm too aggressive"
+        )
+    
+    if results.get('active_percentage') is not None and results['active_percentage'] < 30.0:
+        results['issues'].append(
+            f"LOW ACTIVE PERCENTAGE ({results['active_percentage']:.1f}%) - Slope rarely calculated"
+        )
+    
+    if results.get('grip_on_straights_mean') is not None and results['grip_on_straights_mean'] < 0.9:
+        results['issues'].append(
+            f"LOW GRIP ON STRAIGHTS ({results['grip_on_straights_mean']:.2f}) - Slope stuck at negative"
+        )
+
+    if results.get('zero_crossing_rate', 0) > 5.0:
+        results['issues'].append(
+            f"HIGH SIGNAL NOISE ({results['zero_crossing_rate']:.1f} Hz) - Slope signal is jittery"
+        )
+
+    return results
+
+def detect_oscillation_events(
+    df: pd.DataFrame, 
+    column: str = 'SlopeCurrent',
+    threshold: float = 5.0,
+    min_duration: float = 0.1
+) -> List[Dict[str, Any]]:
+    """
+    Detect periods where a signal oscillates rapidly between extremes.
+    """
+    events = []
+    
+    if column not in df.columns:
+        return events
+    
+    signal = df[column].values
+    time = df['Time'].values if 'Time' in df.columns else np.arange(len(signal)) * 0.01
+    
+    # Calculate rolling std to detect high-variance periods
+    window = 50  # 0.5 seconds at 100Hz
+    rolling_std = pd.Series(signal).rolling(window, center=True).std().values
+    
+    # Vectorized search for events
+    # Find frames where std exceeds threshold
+    std_above = (rolling_std > threshold).astype(int)
+    # Detect starts and ends (1 = starts, -1 = ends)
+    # prepend/append 0 ensures we catch events leading to/from the edges
+    diff = np.diff(std_above, prepend=0, append=0)
+    starts = np.where(diff == 1)[0]
+    ends = np.where(diff == -1)[0]
+    
+    for s, e in zip(starts, ends):
+        # Index e is the point just after the event, adjust to inclusive range [s, e-1]
+        actual_end = e - 1
+        duration = time[actual_end] - time[s]
+        
+        if duration >= min_duration:
+            events.append({
+                'start_time': float(time[s]),
+                'end_time': float(time[actual_end]),
+                'duration': float(duration),
+                'amplitude': float(np.abs(signal[s:e]).max()),
+                'frame_start': int(s),
+                'frame_end': int(actual_end)
+            })
+    
+    return events
+
+def analyze_grip_correlation(df: pd.DataFrame) -> Dict[str, float]:
+    """
+    Analyze correlation between calculated grip and expected physics.
+    """
+    results = {}
+    
+    grip_col = 'GripFactor' if 'GripFactor' in df.columns else 'SlopeSmoothed'
+    
+    if grip_col in df.columns:
+        # Correlation with absolute slip angle
+        if 'calc_slip_angle_front' in df.columns:
+            slip = np.abs(df['calc_slip_angle_front'])
+            results['grip_vs_slip_correlation'] = float(-df[grip_col].corr(slip))
+        
+        # Correlation with lateral G
+        if 'LatAccel' in df.columns:
+            lat_g = np.abs(df['LatAccel'])
+            results['grip_vs_latg_correlation'] = float(df[grip_col].corr(lat_g))
+    
+    return results
+
+def detect_singularities(
+    df: pd.DataFrame,
+    slope_thresh: float = 10.0,
+    alpha_rate_thresh: float = 0.05
+) -> (int, float):
+    """
+    Detect "Singularity Events" (high slope with low slip rate).
+    """
+    if 'SlopeCurrent' not in df.columns or 'dAlpha_dt' not in df.columns:
+        return 0, 0.0
+
+    mask = (np.abs(df['SlopeCurrent']) > slope_thresh) & (np.abs(df['dAlpha_dt']) < alpha_rate_thresh)
+    count = int(mask.sum())
+    worst = float(df.loc[mask, 'SlopeCurrent'].abs().max()) if count > 0 else 0.0
+
+    return count, worst
+
+```
+
+# File: tools\lmuffb_log_analyzer\analyzers\yaw_analyzer.py
+```python
+import pandas as pd
+import numpy as np
+from typing import Dict, List, Any, Optional
+
+def analyze_yaw_dynamics(df: pd.DataFrame, threshold: float = 1.68) -> Dict[str, Any]:
+    """
+    Analyze Yaw Kick dynamics, threshold crossings, and contributions.
+    """
+    results = {}
+
+    # Use mapped names (CamelCase) as per loader.py
+    yaw_kick_col = 'FFBYawKick'
+    rear_torque_col = 'FFBRearTorque'
+    raw_yaw_col = 'RawGameYawAccel'
+    smoothed_yaw_col = 'SmoothedYawAccel'
+    speed_col = 'Speed'
+    slip_col = 'CalcSlipAngleFront'
+    total_ffb_col = 'FFBTotal'
+    time_col = 'Time'
+
+    # 1. Rolling Mean (window=100) of ffb_yaw_kick and ffb_rear_torque
+    if yaw_kick_col in df.columns:
+        df = df.copy()
+        df['FFBYawKick_rolling'] = df[yaw_kick_col].rolling(window=100, center=True).mean()
+        results['ffb_yaw_kick_rolling_mean'] = float(df['FFBYawKick_rolling'].mean())
+        results['ffb_yaw_kick_rolling_std'] = float(df['FFBYawKick_rolling'].std())
+
+    if rear_torque_col in df.columns:
+        if yaw_kick_col not in df.columns: df = df.copy()
+        df['FFBRearTorque_rolling'] = df[rear_torque_col].rolling(window=100, center=True).mean()
+        results['ffb_rear_torque_rolling_mean'] = float(df['FFBRearTorque_rolling'].mean())
+        results['ffb_rear_torque_rolling_std'] = float(df['FFBRearTorque_rolling'].std())
+
+    # 2. Straightaway Analysis for "Constant Pull"
+    straight_mask = None
+    if speed_col in df.columns and slip_col in df.columns:
+        straight_mask = (df[speed_col] > 27.8) & (df[slip_col].abs() < 0.02)
+
+    if straight_mask is not None and straight_mask.any():
+        if 'FFBYawKick_rolling' in df.columns:
+            results['straightaway_yaw_kick_mean'] = float(df.loc[straight_mask, 'FFBYawKick_rolling'].mean())
+        if 'FFBRearTorque_rolling' in df.columns:
+            results['straightaway_rear_torque_mean'] = float(df.loc[straight_mask, 'FFBRearTorque_rolling'].mean())
+
+    # 3. Threshold Crossing Rate (Hz)
+    if raw_yaw_col in df.columns:
+        raw_yaw = df[raw_yaw_col].values
+        abs_yaw = np.abs(raw_yaw)
+        above = (abs_yaw > threshold).astype(int)
+        # Crossing from < threshold to > threshold
+        crossings = np.count_nonzero(np.diff(above) == 1)
+        duration = df[time_col].iloc[-1] - df[time_col].iloc[0] if len(df) > 1 else 0
+        results['threshold_crossing_rate'] = float(crossings / duration) if duration > 0 else 0.0
+    else:
+        results['threshold_crossing_rate'] = None
+
+    # 4. Yaw Kick Contribution %
+    if yaw_kick_col in df.columns and total_ffb_col in df.columns:
+        sum_yaw = df[yaw_kick_col].abs().sum()
+        sum_total = df[total_ffb_col].abs().sum()
+        results['yaw_kick_contribution_pct'] = float((sum_yaw / sum_total) * 100) if sum_total > 0 else 0.0
+    else:
+        results['yaw_kick_contribution_pct'] = None
+
+    # 5. Stats on SmoothedYawAccel
+    if smoothed_yaw_col in df.columns:
+        yaw = df[smoothed_yaw_col]
+        results['yaw_accel_min'] = float(yaw.min())
+        results['yaw_accel_max'] = float(yaw.max())
+        results['yaw_accel_nan_count'] = int(yaw.isna().sum())
+        results['yaw_accel_inf_count'] = int(np.isinf(yaw).sum())
+
+    return results
+
+def calculate_suspension_velocity(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate suspension velocity: d(susp_deflection) / dt.
+    """
+    df = df.copy()
+    cols = ['RawSuspDeflectionFL', 'RawSuspDeflectionFR', 'RawSuspDeflectionRL', 'RawSuspDeflectionRR']
+    time_col = 'Time'
+
+    if time_col not in df.columns:
+        return df
+
+    for col in cols:
+        if col in df.columns:
+            vel_col = col.replace('Deflection', 'Velocity')
+            # Use Time column for gradient
+            df[vel_col] = np.gradient(df[col], df[time_col])
+
+    return df
+
+def analyze_clipping(df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Analyze clipping events for FFB components.
+    """
+    results = {}
+
+    if 'Clipping' in df.columns:
+        results['total_clipping_pct'] = float(df['Clipping'].mean() * 100)
+
+    components = [
+        'FFBBase', 'FFBUndersteerDrop', 'FFBOversteerBoost', 'FFBSoP',
+        'FFBRearTorque', 'FFBScrubDrag', 'FFBYawKick', 'FFBGyroDamping',
+        'FFBRoadTexture', 'FFBSlideTexture', 'FFBLockupVibration',
+        'FFBSpinVibration', 'FFBBottomingCrunch', 'FFBABSPulse', 'FFBSoftLock'
+    ]
+
+    if 'Clipping' in df.columns and df['Clipping'].any():
+        clipping_df = df[df['Clipping'] == 1]
+        results['clipping_component_means'] = {}
+        for comp in components:
+            if comp in df.columns:
+                results['clipping_component_means'][comp] = float(clipping_df[comp].abs().mean())
+
+    return results
+
+def get_fft(signal: np.ndarray, fs: float = 400.0) -> Dict[str, np.ndarray]:
+    """
+    Calculate FFT of a signal. Returns frequencies and magnitudes.
+    """
+    if len(signal) < 2:
+        return {'freqs': np.array([]), 'magnitude': np.array([])}
+
+    # Detrend to remove DC offset
+    signal_detrended = signal - np.mean(signal)
+
+    n = len(signal_detrended)
+    freqs = np.fft.rfftfreq(n, d=1/fs)
+    magnitude = np.abs(np.fft.rfft(signal_detrended)) / n * 2
+
+    return {
+        'freqs': freqs,
+        'magnitude': magnitude
+    }
+
+```
+
+# File: tools\lmuffb_log_analyzer\analyzers\__init__.py
+```python
+# analyzers subpackage
 
 ```

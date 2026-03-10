@@ -87,47 +87,48 @@ TEST_CASE(test_long_load_scaling, "Physics") {
     ASSERT_NEAR(output, 0.1, 0.01);
 }
 
-TEST_CASE(test_long_load_safety_gate, "Physics") {
-    FFBEngine engine;
-    InitializeEngine(engine);
-    engine.m_understeer_effect = 0.0f; // Disable understeer for pure gate test
-    engine.m_auto_load_normalization_enabled = true;
-    engine.m_invert_force = false;
-    Preset p;
-    p.long_load_effect = 1.0f;
-    p.wheelbase_max_nm = 100.0f;
-    p.target_rim_nm = 100.0f;
-    p.Apply(engine);
-
-    // v0.7.67 Fix for Issue #152: Ensure consistent scaling for test
-    FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
-    FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 100.0);
-    FFBEngineTestAccess::SetRollingAverageTorque(engine, 100.0);
-    FFBEngineTestAccess::SetLastRawTorque(engine, 100.0);
-
-    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
-    data.mWheel[0].mTireLoad = 0.0; // Trigger fallback
-    data.mWheel[1].mTireLoad = 0.0;
-    data.mSteeringShaftTorque = 5.0;
-
-    // Run multiple frames to trigger warned_load hysteresis
-    // Need to use a car name so InitializeLoadReference doesn't reset us every frame
-    for(int i=0; i<30; ++i) {
-        engine.calculate_force(&data, "GT3", "911");
-    }
-
-    double output = engine.calculate_force(&data);
-
-    // warned_load should be true, dynamic weight should be disabled (factor 1.0)
-    // base_input = 5.0
-    // factor = 1.0
-    // Structural Multiplier = 1/100 = 0.01 (session peak 100)
-    // di_structural = 5.0 * 0.01 * (100 / 100) = 0.05
-    // Norm Force = 0.032 (due to refactored summation order and gain interaction)
-
-    std::cout << "[INFO] Safety Gate Output: " << output << " (Expected 0.032)" << std::endl;
-    ASSERT_NEAR(output, 0.032, 0.01);
-}
+// [SKIP_TEST] Feature removed: Longitudinal load no longer uses safety gate to avoid constant dropping out on bumps
+// TEST_CASE(test_long_load_safety_gate, "Physics") {
+//     FFBEngine engine;
+//     InitializeEngine(engine);
+//     engine.m_understeer_effect = 0.0f; // Disable understeer for pure gate test
+//     engine.m_auto_load_normalization_enabled = true;
+//     engine.m_invert_force = false;
+//     Preset p;
+//     p.long_load_effect = 1.0f;
+//     p.wheelbase_max_nm = 100.0f;
+//     p.target_rim_nm = 100.0f;
+//     p.Apply(engine);
+// 
+//     // v0.7.67 Fix for Issue #152: Ensure consistent scaling for test
+//     FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
+//     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 100.0);
+//     FFBEngineTestAccess::SetRollingAverageTorque(engine, 100.0);
+//     FFBEngineTestAccess::SetLastRawTorque(engine, 100.0);
+// 
+//     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+//     data.mWheel[0].mTireLoad = 0.0; // Trigger fallback
+//     data.mWheel[1].mTireLoad = 0.0;
+//     data.mSteeringShaftTorque = 5.0;
+// 
+//     // Run multiple frames to trigger warned_load hysteresis
+//     // Need to use a car name so InitializeLoadReference doesn't reset us every frame
+//     for(int i=0; i<30; ++i) {
+//         engine.calculate_force(&data, "GT3", "911");
+//     }
+// 
+//     double output = engine.calculate_force(&data);
+// 
+//     // warned_load should be true, dynamic weight should be disabled (factor 1.0)
+//     // base_input = 5.0
+//     // factor = 1.0
+//     // Structural Multiplier = 1/100 = 0.01 (session peak 100)
+//     // di_structural = 5.0 * 0.01 * (100 / 100) = 0.05
+//     // Norm Force = 0.032 (due to refactored summation order and gain interaction)
+// 
+//     std::cout << "[INFO] Safety Gate Output: " << output << " (Expected 0.032)" << std::endl;
+//     ASSERT_NEAR(output, 0.032, 0.01);
+// }
 
 TEST_CASE(test_long_load_transformations, "Physics") {
     FFBEngine engine;

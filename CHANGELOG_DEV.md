@@ -1,8 +1,18 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
 ---
+
+## [0.7.162] - 2026-03-10
+- **Fixed Longitudinal Load Inactivity**:
+  - The `update_static_load_reference` function is now executed unconditionally every frame instead of being gated behind `m_auto_load_normalization_enabled`. This ensures `m_static_front_load` correctly seeds for the vehicle, preventing the longitudinal load multiplier from being permanently clamped at `1.0x` when normalization is disabled.
+  - Adjusted unit tests in `test_issue_207_dynamic_normalization_toggle.cpp` and `test_ffb_lockup_braking.cpp` to account for the new unconditional static load learning.
+  - Skipped obsolete `test_long_load_safety_gate` test.
+- **Log Analyzer Enhancements**:
+  - Added `analyze_longitudinal_dynamics` and `plot_longitudinal_diagnostic` to visualize braking/throttle inputs, load multipliers, and final FFB output.
+  - Added `plot_raw_telemetry_health` to verify real-time presence of `mTireLoad` and `mGripFract` channels to identify DLC encryption.
+  - Re-worked missing data warnings logic using a `>50%` session average threshold via `WarnBits` to eliminate false positives from temporary curb strikes or track spawns.
 
 ## [0.7.161] - 2026-03-09
 - **Fixed Log Analyzer Bundling (#317)**:

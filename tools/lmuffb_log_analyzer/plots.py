@@ -837,3 +837,206 @@ def plot_slope_correlation(
         plt.show()
     
     return ""
+
+def plot_longitudinal_diagnostic(
+    df: pd.DataFrame,
+    metadata: SessionMetadata,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Diagnostic plot for Longitudinal Load Transfer.
+    Panels: Inputs (Pedals/Speed), Load & Multiplier, FFB Output Impact.
+    """
+    cols =['LoadFL', 'LoadFR', 'LongitudinalLoadFactor', 'FFBBase', 'FFBTotal', 'Speed', 'Brake', 'Throttle']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Initializing Longitudinal diagnostic plot...")
+    fig, axes = plt.subplots(3, 1, figsize=(14, 12), sharex=True)
+    fig.suptitle('Longitudinal Load Transfer Diagnostic', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    # Panel 1: Inputs (Pedals & Speed)
+    ax1 = axes[0]
+    ax1.plot(time, plot_df['Brake'], label='Brake', color='#F44336', alpha=0.8)
+    ax1.plot(time, plot_df['Throttle'], label='Throttle', color='#4CAF50', alpha=0.8)
+    ax1.set_ylabel('Pedal Input (0-1)')
+    ax1.grid(True, alpha=0.3)
+    _safe_legend(ax1, loc='upper left')
+
+    ax1_twin = ax1.twinx()
+    ax1_twin.plot(time, plot_df['Speed'] * 3.6, label='Speed (km/h)', color='#2196F3', alpha=0.6, linestyle='--')
+    ax1_twin.set_ylabel('Speed (km/h)', color='#2196F3')
+    _safe_legend(ax1_twin, loc='upper right')
+    ax1.set_title('Driver Inputs & Speed')
+
+    # Panel 2: Front Load & Multiplier
+    ax2 = axes[1]
+    front_load = (plot_df['LoadFL'] + plot_df['LoadFR']) / 2.0
+    ax2.plot(time, front_load, label='Avg Front Load (N)', color='#9C27B0', alpha=0.8)
+    ax2.set_ylabel('Load (N)', color='#9C27B0')
+    ax2.grid(True, alpha=0.3)
+    _safe_legend(ax2, loc='upper left')
+
+    ax2_twin = ax2.twinx()
+    ax2_twin.plot(time, plot_df['LongitudinalLoadFactor'], label='Long. Load Multiplier', color='#FF9800', linewidth=1.5)
+    ax2_twin.axhline(1.0, color='black', linestyle='--', alpha=0.5)
+    ax2_twin.set_ylabel('Multiplier (x)', color='#FF9800')
+    _safe_legend(ax2_twin, loc='upper right')
+    ax2.set_title('Tire Load & Calculated Multiplier')
+
+    # Panel 3: FFB Output Impact
+    ax3 = axes[2]
+    ax3.plot(time, plot_df['FFBBase'], label='Base FFB (Nm)', color='#9E9E9E', alpha=0.6)
+    ax3.plot(time, plot_df['FFBTotal'], label='Total FFB Output (Nm)', color='#2196F3', linewidth=1.0)
+
+    if 'Clipping' in plot_df.columns:
+        ax3.fill_between(time, -15, 15, where=plot_df['Clipping']==1, color='#F44336', alpha=0.2, label='Clipping')
+
+    ax3.set_ylabel('Force (Nm)')
+    ax3.set_xlabel('Time (s)')
+    ax3.grid(True, alpha=0.3)
+    _safe_legend(ax3, loc='upper right')
+    ax3.set_title('FFB Output & Clipping')
+
+    plt.tight_layout()
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_raw_telemetry_health(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Diagnostic plot to verify if raw telemetry channels are encrypted/missing.
+    Plots all 4 tire loads and all 4 tire grips.
+    """
+    cols =['RawLoadFL', 'RawLoadFR', 'RawLoadRL', 'RawLoadRR', 
+            'GripFL', 'GripFR', 'GripRL', 'GripRR']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Rendering Raw Telemetry Health plot...")
+    fig, axes = plt.subplots(2, 1, figsize=(14, 10), sharex=True)
+    fig.suptitle('Raw Telemetry Health (Encryption / Missing Data Check)', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    # Panel 1: Tire Loads
+    ax1 = axes[0]
+    ax1.plot(time, plot_df['RawLoadFL'], label='FL Load', color='#F44336', alpha=0.7, linewidth=1)
+    ax1.plot(time, plot_df['RawLoadFR'], label='FR Load', color='#4CAF50', alpha=0.7, linewidth=1)
+    ax1.plot(time, plot_df['RawLoadRL'], label='RL Load', color='#2196F3', alpha=0.7, linewidth=1)
+    ax1.plot(time, plot_df['RawLoadRR'], label='RR Load', color='#FF9800', alpha=0.7, linewidth=1)
+
+    ax1.set_ylabel('Raw Tire Load (N)')
+    ax1.set_title('Raw Tire Load (mTireLoad) - Should fluctuate dynamically if not encrypted')
+    ax1.grid(True, alpha=0.3)
+    _safe_legend(ax1, loc='upper right')
+
+    # Panel 2: Tire Grips
+    ax2 = axes[1]
+    ax2.plot(time, plot_df['GripFL'], label='FL Grip', color='#F44336', alpha=0.7, linewidth=1)
+    ax2.plot(time, plot_df['GripFR'], label='FR Grip', color='#4CAF50', alpha=0.7, linewidth=1)
+    ax2.plot(time, plot_df['GripRL'], label='RL Grip', color='#2196F3', alpha=0.7, linewidth=1)
+    ax2.plot(time, plot_df['GripRR'], label='RR Grip', color='#FF9800', alpha=0.7, linewidth=1)
+
+    ax2.set_ylabel('Raw Grip Fraction (0-1)')
+    ax2.set_xlabel('Time (s)')
+    ax2.set_title('Raw Tire Grip (mGripFract) - Should fluctuate dynamically if not encrypted')
+    ax2.grid(True, alpha=0.3)
+    _safe_legend(ax2, loc='upper right')
+
+    plt.tight_layout()
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+def plot_longitudinal_diagnostic(
+    df: pd.DataFrame,
+    metadata: SessionMetadata,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Diagnostic plot for Longitudinal Load Transfer.
+    Panels: Inputs (Pedals/Speed), Load & Multiplier, FFB Output Impact.
+    """
+    cols =['LoadFL', 'LoadFR', 'LongitudinalLoadFactor', 'FFBBase', 'FFBTotal', 'Speed', 'Brake', 'Throttle']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Initializing Longitudinal diagnostic plot...")
+    fig, axes = plt.subplots(3, 1, figsize=(14, 12), sharex=True)
+    fig.suptitle('Longitudinal Load Transfer Diagnostic', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    # Panel 1: Inputs (Pedals & Speed)
+    ax1 = axes[0]
+    ax1.plot(time, plot_df['Brake'], label='Brake', color='#F44336', alpha=0.8)
+    ax1.plot(time, plot_df['Throttle'], label='Throttle', color='#4CAF50', alpha=0.8)
+    ax1.set_ylabel('Pedal Input (0-1)')
+    ax1.grid(True, alpha=0.3)
+    _safe_legend(ax1, loc='upper left')
+
+    ax1_twin = ax1.twinx()
+    ax1_twin.plot(time, plot_df['Speed'] * 3.6, label='Speed (km/h)', color='#2196F3', alpha=0.6, linestyle='--')
+    ax1_twin.set_ylabel('Speed (km/h)', color='#2196F3')
+    _safe_legend(ax1_twin, loc='upper right')
+    ax1.set_title('Driver Inputs & Speed')
+
+    # Panel 2: Front Load & Multiplier
+    ax2 = axes[1]
+    front_load = (plot_df['LoadFL'] + plot_df['LoadFR']) / 2.0
+    ax2.plot(time, front_load, label='Avg Front Load (N)', color='#9C27B0', alpha=0.8)
+    ax2.set_ylabel('Load (N)', color='#9C27B0')
+    ax2.grid(True, alpha=0.3)
+    _safe_legend(ax2, loc='upper left')
+
+    ax2_twin = ax2.twinx()
+    ax2_twin.plot(time, plot_df['LongitudinalLoadFactor'], label='Long. Load Multiplier', color='#FF9800', linewidth=1.5)
+    ax2_twin.axhline(1.0, color='black', linestyle='--', alpha=0.5)
+    ax2_twin.set_ylabel('Multiplier (x)', color='#FF9800')
+    _safe_legend(ax2_twin, loc='upper right')
+    ax2.set_title('Tire Load & Calculated Multiplier')
+
+    # Panel 3: FFB Output Impact
+    ax3 = axes[2]
+    ax3.plot(time, plot_df['FFBBase'], label='Base FFB (Nm)', color='#9E9E9E', alpha=0.6)
+    ax3.plot(time, plot_df['FFBTotal'], label='Total FFB Output (Nm)', color='#2196F3', linewidth=1.0)
+    
+    if 'Clipping' in plot_df.columns:
+        ax3.fill_between(time, -15, 15, where=plot_df['Clipping']==1, color='#F44336', alpha=0.2, label='Clipping')
+
+    ax3.set_ylabel('Force (Nm)')
+    ax3.set_xlabel('Time (s)')
+    ax3.grid(True, alpha=0.3)
+    _safe_legend(ax3, loc='upper right')
+    ax3.set_title('FFB Output & Clipping')
+
+    plt.tight_layout()
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""

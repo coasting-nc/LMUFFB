@@ -456,6 +456,7 @@ def _parse_header(path: Path) -> SessionMetadata:
         understeer_effect=float(header_data.get('understeer_effect', 1.0)),
         sop_effect=float(header_data.get('sop_effect', 1.0)),
         lat_load_effect=float(header_data.get('lateral_load_effect', 0.0)),
+        long_load_effect=float(header_data.get('long_load_effect', 0.0)),
         sop_scale=float(header_data.get('sop_scale', 1.0)),
         sop_smoothing=float(header_data.get('sop_smoothing', 0.0)),
         slope_enabled=header_data.get('slope_detection', '').lower() == 'enabled',

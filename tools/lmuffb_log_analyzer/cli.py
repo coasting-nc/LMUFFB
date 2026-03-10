@@ -29,7 +29,9 @@ from .plots import (
     plot_clipping_components,
     plot_pull_detector,
     plot_unopposed_force,
-    plot_lateral_diagnostic
+    plot_lateral_diagnostic,
+    plot_longitudinal_diagnostic,
+    plot_raw_telemetry_health
 )
 from .reports import generate_text_report
 
@@ -265,6 +267,16 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
             lat_path = output_path / f"{logfile_stem}_lateral_diag.png"
             plot_lateral_diagnostic(df, metadata, str(lat_path), show=False, status_callback=update_status)
             console.print(f"  [OK] Created: {lat_path}")
+
+            # Longitudinal Diagnostic
+            long_path = output_path / f"{logfile_stem}_longitudinal_diag.png"
+            plot_longitudinal_diagnostic(df, metadata, str(long_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {long_path}")
+
+            # Raw Telemetry Health
+            health_raw_path = output_path / f"{logfile_stem}_raw_telemetry.png"
+            plot_raw_telemetry_health(df, str(health_raw_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {health_raw_path}")
 
 @click.group()
 @click.version_option(version='1.2.0')

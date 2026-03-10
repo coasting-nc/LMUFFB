@@ -9,7 +9,7 @@ from .analyzers.yaw_analyzer import (
     analyze_yaw_dynamics,
     analyze_clipping
 )
-from .analyzers.lateral_analyzer import analyze_lateral_dynamics
+from .analyzers.lateral_analyzer import analyze_lateral_dynamics, analyze_longitudinal_dynamics
 
 def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     """
@@ -21,6 +21,7 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     yaw_results = analyze_yaw_dynamics(df)
     clipping_results = analyze_clipping(df)
     lateral_results = analyze_lateral_dynamics(df, metadata)
+    long_results = analyze_longitudinal_dynamics(df, metadata)
     
     report = []
     report.append("=" * 60)
@@ -46,6 +47,7 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     report.append(f"Understeer Effect:  {metadata.understeer_effect:.2f}")
     report.append(f"SOP Effect:          {metadata.sop_effect:.2f}")
     report.append(f"Lateral Load Effect: {metadata.lat_load_effect:.2f}")
+    report.append(f"Long. Load Effect:   {metadata.long_load_effect:.2f}")
     report.append(f"SOP Scale:           {metadata.sop_scale:.2f}")
     report.append(f"SOP Smoothing:       {metadata.sop_smoothing:.3f}")
     report.append(f"Slope Detection:    {'Enabled' if metadata.slope_enabled else 'Disabled'}")
@@ -79,6 +81,24 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
         report.append(f"Load Contribution:   {lateral_results['load_contribution_pct']:.1f}%")
         report.append(f"G-Force Contribution: {lateral_results['g_contribution_pct']:.1f}%")
     report.append("")
+
+    report.append("LONGITUDINAL LOAD ANALYSIS")
+    report.append("-" * 20)
+    if long_results.get('long_load_factor_mean') is not None:
+        report.append(f"Multiplier Mean:     {long_results['long_load_factor_mean']:.2f}x")
+        report.append(f"Multiplier Range:    {long_results['long_load_factor_min']:.2f}x to {long_results['long_load_factor_max']:.2f}x")
+        if not long_results.get('long_load_active', True):
+            report.append("Status:              INACTIVE (Multiplier is stuck/clamped)")
+        else:
+            report.append("Status:              ACTIVE")
+    report.append("")
+
+    if long_results.get('missing_data_warnings'):
+        report.append("DATA WARNINGS (ENCRYPTED/MISSING TELEMETRY)")
+        report.append("-" * 20)
+        for warn in long_results['missing_data_warnings']:
+            report.append(f"  [!] {warn}")
+        report.append("")
 
     report.append("SIGNAL QUALITY & STABILITY")
     report.append("-" * 20)
@@ -128,6 +148,9 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     total_clipping = clipping_results.get('total_clipping_pct')
     if total_clipping is not None and total_clipping > 10.0:
         all_issues.append(f"HIGH CLIPPING ({total_clipping:.1f}%) - Reduce Gain or increase Max Torque Ref")
+
+    if long_results.get('straight_brake_issue'):
+        all_issues.append("LONGITUDINAL LOAD: Braking in a straight line produces near-zero FFB because the effect is a multiplier on base steering force (which is zero when driving straight). Turn the wheel slightly to feel the weight transfer.")
 
     if all_issues:
         report.append("ISSUES DETECTED")

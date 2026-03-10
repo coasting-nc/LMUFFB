@@ -149,23 +149,30 @@ TEST_CASE(test_load_normalization_disabled_no_learning, "Physics") {
     data.mWheel[1].mTireLoad = 8000.0;
 
     // Seed as GT3 (4800N baseline)
+    // We expect the auto peak to stay at 4800, but static load WILL learn 
+    // immediately because it's required for other effects like Longitudinal Load.
     engine.calculate_force(&data, "GT3");
     double initial_peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
     double initial_static = FFBEngineTestAccess::GetStaticFrontLoad(engine);
 
     ASSERT_NEAR(initial_peak, 4800.0, 1.0);
-    ASSERT_NEAR(initial_static, 2400.0, 1.0);
+    // Static load started at 2400 and immediately learned a bit from the 8000N input
+    ASSERT_GT(initial_static, 2400.0);
 
     // Drive for many frames
     for(int i=0; i<100; i++) engine.calculate_force(&data, "GT3");
 
-    // Neither peak nor static should have changed significantly (static might settle slightly toward 0.5 * peak if fallback path hit, but should not LEARN 8000)
+    // Peak should not have changed because normalization is disabled
     ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 4800.0, 1.0);
+    
+    // Static SHOULD have learned significantly
+    ASSERT_GT(FFBEngineTestAccess::GetStaticFrontLoad(engine), 3000.0);
 
     // Enable it
     engine.m_auto_load_normalization_enabled = true;
     for(int i=0; i<100; i++) engine.calculate_force(&data, "GT3");
 
+    // Now peak should learn
     ASSERT_GT(FFBEngineTestAccess::GetAutoPeakLoad(engine), 5000.0);
     ASSERT_GT(FFBEngineTestAccess::GetStaticFrontLoad(engine), 3000.0);
 

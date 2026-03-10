@@ -545,6 +545,14 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_warned_vert_deflection = true;
     }
     
+    // if (m_auto_load_normalization_enabled) {
+    //     update_static_load_reference(ctx.avg_front_load, ctx.car_speed, ctx.dt);
+    // }
+    // ALWAYS learn static load reference (used by Longitudinal Load, Bottoming, and Normalization).
+    // This ensures m_static_front_load is accurate for the specific car,
+    // preventing the longitudinal load multiplier from being constantly clamped.
+    update_static_load_reference(ctx.avg_front_load, ctx.car_speed, ctx.dt);
+    
     // Peak Hold Logic
     if (m_auto_load_normalization_enabled && !seeded) {
         if (ctx.avg_front_load > m_auto_peak_front_load) {
@@ -629,13 +637,13 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double grip_factor_applied = m_torque_passthrough ? 1.0 : ctx.grip_factor;
 
     // v0.7.46: Longitudinal Load logic (#301)
-    if (m_auto_load_normalization_enabled) {
-        update_static_load_reference(ctx.avg_front_load, ctx.car_speed, ctx.dt);
-    }
+    // if (m_auto_load_normalization_enabled) {
+    //     update_static_load_reference(ctx.avg_front_load, ctx.car_speed, ctx.dt);
+    // }
     double long_load_factor = 1.0;
 
-    // Only apply if enabled AND we have real load data (no warnings)
-    if (m_long_load_effect > 0.0 && !ctx.frame_warn_load) {
+    // Apply if enabled (works with both raw load telemetry data and fallbacks)
+    if (m_long_load_effect > 0.0) {
         double long_load_norm = (ctx.avg_front_load / m_static_front_load) - 1.0;
         long_load_norm = std::clamp(long_load_norm, -1.0, 1.0);
 
