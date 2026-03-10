@@ -110,6 +110,7 @@ set(TEST_SOURCES
     test_issue_303_safety.cpp
     test_issue_314_safety_v2.cpp
     test_issue_325_longitudinal_g.cpp
+    test_issue_322_yaw_kicks.cpp
     test_distribution_bundle.cpp
     ../src/main.cpp
 )

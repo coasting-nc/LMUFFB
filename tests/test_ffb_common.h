@@ -323,7 +323,9 @@ public:
     static double GetFrontGripSmoothedState(const FFBEngine& e) { return e.m_front_grip_smoothed_state; }
     static void SetFrontGripSmoothedState(FFBEngine& e, double val) { e.m_front_grip_smoothed_state = val; }
     static void SetStaticFrontLoad(FFBEngine& e, double val) { e.m_static_front_load = val; }
+    static void SetStaticRearLoad(FFBEngine& e, double val) { e.m_static_rear_load = val; }
     static double GetStaticFrontLoad(const FFBEngine& e) { return e.m_static_front_load; }
+    static double GetStaticRearLoad(const FFBEngine& e) { return e.m_static_rear_load; }
     static bool GetStaticLoadLatched(const FFBEngine& e) { return e.m_static_load_latched; }
     static void SetStaticLoadLatched(FFBEngine& e, bool val) { e.m_static_load_latched = val; }
     static double GetSmoothedVibrationMult(const FFBEngine& e) { return e.m_smoothed_vibration_mult; }
@@ -359,7 +361,7 @@ public:
     
     // Coverage Restoration Accessors
     static void CallUpdateStaticLoadReference(FFBEngine& e, double load, double speed, double dt) {
-        e.update_static_load_reference(load, speed, dt);
+        e.update_static_load_reference(load, load, speed, dt);
     }
     static void CallInitializeLoadReference(FFBEngine& e, const char* vehicleClass, const char* vehicleName) {
         e.InitializeLoadReference(vehicleClass, vehicleName);

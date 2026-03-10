@@ -114,6 +114,20 @@ struct Preset {
     float static_notch_width = 2.0f; // New v0.6.10
     float yaw_kick_threshold = 0.0f; // New v0.6.10
 
+    // Unloaded Yaw Kick (Braking/Lift-off) - v0.7.164 (Issue #322)
+    float unloaded_yaw_gain = 0.0f;
+    float unloaded_yaw_threshold = 0.2f;
+    float unloaded_yaw_sens = 1.0f;
+    float unloaded_yaw_gamma = 0.5f;
+    float unloaded_yaw_punch = 0.05f;
+
+    // Power Yaw Kick (Acceleration) - v0.7.164 (Issue #322)
+    float power_yaw_gain = 0.0f;
+    float power_yaw_threshold = 0.2f;
+    float power_slip_threshold = 0.10f;
+    float power_yaw_gamma = 0.5f;
+    float power_yaw_punch = 0.05f;
+
     // v0.6.23 New Settings with HIGHER DEFAULTS
     float speed_gate_lower = 1.0f; // 3.6 km/h
     float speed_gate_upper = 5.0f; // 18.0 km/h (Fixes idle shake)
@@ -231,6 +245,25 @@ struct Preset {
         return *this;
     }
     Preset& SetYawKickThreshold(float v) { yaw_kick_threshold = v; return *this; }
+
+    Preset& SetUnloadedYawKick(float gain, float threshold, float sens, float gamma, float punch) {
+        unloaded_yaw_gain = gain;
+        unloaded_yaw_threshold = threshold;
+        unloaded_yaw_sens = sens;
+        unloaded_yaw_gamma = gamma;
+        unloaded_yaw_punch = punch;
+        return *this;
+    }
+
+    Preset& SetPowerYawKick(float gain, float threshold, float slip, float gamma, float punch) {
+        power_yaw_gain = gain;
+        power_yaw_threshold = threshold;
+        power_slip_threshold = slip;
+        power_yaw_gamma = gamma;
+        power_yaw_punch = punch;
+        return *this;
+    }
+
     Preset& SetSpeedGate(float lower, float upper) { speed_gate_lower = lower; speed_gate_upper = upper; return *this; }
 
     Preset& SetOptimalSlip(float angle, float ratio) {
@@ -365,6 +398,20 @@ struct Preset {
         engine.m_static_notch_freq = (std::max)(1.0f, static_notch_freq);
         engine.m_static_notch_width = (std::max)(0.1f, static_notch_width);
         engine.m_yaw_kick_threshold = (std::max)(0.0f, yaw_kick_threshold);
+
+        // v0.7.164 (Issue #322)
+        engine.m_unloaded_yaw_gain = (std::max)(0.0f, unloaded_yaw_gain);
+        engine.m_unloaded_yaw_threshold = (std::max)(0.0f, unloaded_yaw_threshold);
+        engine.m_unloaded_yaw_sens = (std::max)(0.1f, unloaded_yaw_sens);
+        engine.m_unloaded_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, unloaded_yaw_gamma));
+        engine.m_unloaded_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, unloaded_yaw_punch));
+
+        engine.m_power_yaw_gain = (std::max)(0.0f, power_yaw_gain);
+        engine.m_power_yaw_threshold = (std::max)(0.0f, power_yaw_threshold);
+        engine.m_power_slip_threshold = (std::max)(0.01f, (std::min)(1.0f, power_slip_threshold));
+        engine.m_power_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, power_yaw_gamma));
+        engine.m_power_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, power_yaw_punch));
+
         engine.m_speed_gate_lower = (std::max)(0.0f, speed_gate_lower);
         engine.m_speed_gate_upper = (std::max)(0.1f, speed_gate_upper);
         
@@ -462,6 +509,19 @@ struct Preset {
         flatspot_strength = (std::max)(0.0f, (std::min)(1.0f, flatspot_strength));
         static_notch_freq = (std::max)(1.0f, static_notch_freq);
         static_notch_width = (std::max)(0.1f, static_notch_width);
+
+        // v0.7.164 (Issue #322)
+        unloaded_yaw_gain = (std::max)(0.0f, unloaded_yaw_gain);
+        unloaded_yaw_threshold = (std::max)(0.0f, unloaded_yaw_threshold);
+        unloaded_yaw_sens = (std::max)(0.1f, unloaded_yaw_sens);
+        unloaded_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, unloaded_yaw_gamma));
+        unloaded_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, unloaded_yaw_punch));
+        power_yaw_gain = (std::max)(0.0f, power_yaw_gain);
+        power_yaw_threshold = (std::max)(0.0f, power_yaw_threshold);
+        power_slip_threshold = (std::max)(0.01f, (std::min)(1.0f, power_slip_threshold));
+        power_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, power_yaw_gamma));
+        power_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, power_yaw_punch));
+
         speed_gate_upper = (std::max)(0.1f, speed_gate_upper);
         optimal_slip_angle = (std::max)(0.01f, optimal_slip_angle);
         optimal_slip_ratio = (std::max)(0.01f, optimal_slip_ratio);
@@ -549,6 +609,19 @@ struct Preset {
         static_notch_freq = engine.m_static_notch_freq;
         static_notch_width = engine.m_static_notch_width;
         yaw_kick_threshold = engine.m_yaw_kick_threshold;
+
+        // v0.7.164 (Issue #322)
+        unloaded_yaw_gain = engine.m_unloaded_yaw_gain;
+        unloaded_yaw_threshold = engine.m_unloaded_yaw_threshold;
+        unloaded_yaw_sens = engine.m_unloaded_yaw_sens;
+        unloaded_yaw_gamma = engine.m_unloaded_yaw_gamma;
+        unloaded_yaw_punch = engine.m_unloaded_yaw_punch;
+        power_yaw_gain = engine.m_power_yaw_gain;
+        power_yaw_threshold = engine.m_power_yaw_threshold;
+        power_slip_threshold = engine.m_power_slip_threshold;
+        power_yaw_gamma = engine.m_power_yaw_gamma;
+        power_yaw_punch = engine.m_power_yaw_punch;
+
         speed_gate_lower = engine.m_speed_gate_lower;
         speed_gate_upper = engine.m_speed_gate_upper;
 
@@ -673,6 +746,18 @@ struct Preset {
         if (!is_near(static_notch_freq, p.static_notch_freq, eps)) return false;
         if (!is_near(static_notch_width, p.static_notch_width, eps)) return false;
         if (!is_near(yaw_kick_threshold, p.yaw_kick_threshold, eps)) return false;
+
+        // v0.7.164 (Issue #322)
+        if (!is_near(unloaded_yaw_gain, p.unloaded_yaw_gain, eps)) return false;
+        if (!is_near(unloaded_yaw_threshold, p.unloaded_yaw_threshold, eps)) return false;
+        if (!is_near(unloaded_yaw_sens, p.unloaded_yaw_sens, eps)) return false;
+        if (!is_near(unloaded_yaw_gamma, p.unloaded_yaw_gamma, eps)) return false;
+        if (!is_near(unloaded_yaw_punch, p.unloaded_yaw_punch, eps)) return false;
+        if (!is_near(power_yaw_gain, p.power_yaw_gain, eps)) return false;
+        if (!is_near(power_yaw_threshold, p.power_yaw_threshold, eps)) return false;
+        if (!is_near(power_slip_threshold, p.power_slip_threshold, eps)) return false;
+        if (!is_near(power_yaw_gamma, p.power_yaw_gamma, eps)) return false;
+        if (!is_near(power_yaw_punch, p.power_yaw_punch, eps)) return false;
 
         if (!is_near(speed_gate_lower, p.speed_gate_lower, eps)) return false;
         if (!is_near(speed_gate_upper, p.speed_gate_upper, eps)) return false;
