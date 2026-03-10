@@ -54,9 +54,14 @@ During the analysis phase, several alternative approaches were evaluated and dis
     if (m_long_load_effect > 0.0) {
         // Use Derived Longitudinal Acceleration (Z-axis) to isolate weight transfer.
         // LMU Coordinate System: +Z is rearward (deceleration/braking). -Z is forward (acceleration).
+        // Normalize: 1G braking = +1.0, 1G acceleration = -1.0
         double long_g = m_accel_z_smoothed / GRAVITY_MS2;
         
-        // Normalize: 1G braking = +1.0, 1G acceleration = -1.0
+        // CLAMPING We clamp the normalized G-force between -1.0G and +1.0G. 
+        // Why? Because if you crash into a wall at 200 km/h, the game might output 50.0G. 
+        // If we didn't clamp it, the multiplier would become 50x, and the steering wheel 
+        // would snap your wrists. We clamp it to 1.0G because that represents the maximum 
+        // realistic threshold braking limit for most cars.
         double long_load_norm = std::clamp(long_g, -1.0, 1.0);
 
         // Apply Transformation
