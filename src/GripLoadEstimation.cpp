@@ -26,18 +26,25 @@ extern std::recursive_mutex g_engine_mutex;
 
 using namespace ffb_math;
 
-// Helper: Learn static front load reference (v0.7.46)
-void FFBEngine::update_static_load_reference(double current_load, double speed, double dt) {
+// Helper: Learn static front and rear load reference (v0.7.46, expanded v0.7.164)
+void FFBEngine::update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
     if (m_static_load_latched) return; // Do not update if latched
 
     if (speed > 2.0 && speed < 15.0) {
+        // Front Load Learning
         if (m_static_front_load < 100.0) {
-             m_static_front_load = current_load;
+             m_static_front_load = current_front_load;
         } else {
-             m_static_front_load += (dt / 5.0) * (current_load - m_static_front_load);
+             m_static_front_load += (dt / 5.0) * (current_front_load - m_static_front_load);
         }
-    } else if (speed >= 15.0 && m_static_front_load > 1000.0) {
+        // Rear Load Learning
+        if (m_static_rear_load < 100.0) {
+             m_static_rear_load = current_rear_load;
+        } else {
+             m_static_rear_load += (dt / 5.0) * (current_rear_load - m_static_rear_load);
+        }
+    } else if (speed >= 15.0 && m_static_front_load > 1000.0 && m_static_rear_load > 1000.0) {
         // Latch the value once we exceed 15 m/s (aero begins to take over)
         m_static_load_latched = true;
 
@@ -45,14 +52,18 @@ void FFBEngine::update_static_load_reference(double current_load, double speed, 
         std::string vName = m_vehicle_name;
         if (vName != "Unknown" && vName != "") {
             Config::SetSavedStaticLoad(vName, m_static_front_load);
+            Config::SetSavedStaticLoad(vName + "_rear", m_static_rear_load);
             Config::m_needs_save = true; // Flag main thread to write to disk
-            Logger::Get().LogFile("[FFB] Latched and saved static load for %s: %.2fN", vName.c_str(), m_static_front_load);
+            Logger::Get().LogFile("[FFB] Latched and saved static loads for %s: F=%.2fN, R=%.2fN", vName.c_str(), m_static_front_load, m_static_rear_load);
         }
     }
 
     // Safety fallback: Ensure we have a sane baseline if learning failed
     if (m_static_front_load < 1000.0) {
         m_static_front_load = m_auto_peak_front_load * 0.5;
+    }
+    if (m_static_rear_load < 1000.0) {
+        m_static_rear_load = m_auto_peak_front_load * 0.5;
     }
 }
 
@@ -75,14 +86,24 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     StringUtils::SafeCopy(m_vehicle_name, sizeof(m_vehicle_name), vName.c_str());
 
     // Check if we already have a saved static load for this specific car (v0.7.70)
-    double saved_load = 0.0;
-    if (Config::GetSavedStaticLoad(vName, saved_load)) {
-        m_static_front_load = saved_load;
+    double saved_front_load = 0.0;
+    double saved_rear_load = 0.0;
+    if (Config::GetSavedStaticLoad(vName, saved_front_load)) {
+        m_static_front_load = saved_front_load;
+
+        if (Config::GetSavedStaticLoad(vName + "_rear", saved_rear_load)) {
+            m_static_rear_load = saved_rear_load;
+        } else {
+            // Migration: If we have front but no rear, estimate rear based on class default
+            m_static_rear_load = m_auto_peak_front_load * 0.5;
+        }
+
         m_static_load_latched = true; // Skip the 2-15 m/s learning phase
-        Logger::Get().LogFile("[FFB] Loaded persistent static load for %s: %.2fN", vName.c_str(), m_static_front_load);
+        Logger::Get().LogFile("[FFB] Loaded persistent static loads for %s: F=%.2fN, R=%.2fN", vName.c_str(), m_static_front_load, m_static_rear_load);
     } else {
         // Reset static load reference for new car class
         m_static_front_load = m_auto_peak_front_load * 0.5;
+        m_static_rear_load = m_auto_peak_front_load * 0.5;
         m_static_load_latched = false;
         Logger::Get().LogFile("[FFB] No saved load for %s. Learning required.", vName.c_str());
     }

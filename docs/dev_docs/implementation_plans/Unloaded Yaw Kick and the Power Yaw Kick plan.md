@@ -1,4 +1,4 @@
-# Implementation Plan: Context-Aware Yaw Kicks (Unloaded & Power)
+# Implementation Plan: Context-Aware Yaw Kicks (Unloaded & Power) - Issue #322
 
 ## Context
 The current "General Yaw Kick" effect is a compromise. If made sensitive enough to catch slides early, it becomes too noisy over curbs and during normal driving. If smoothed and thresholded to reduce noise, it reacts too late to save the car from sudden oversteer. 
@@ -7,14 +7,16 @@ This plan introduces two new context-aware, hyper-sensitive yaw kicks that only 
 2. **Power Yaw Kick**: Triggered by throttle application and rear wheel spin (traction loss / power oversteer).
 
 ## Design Rationale
-*   **Leading vs. Lagging Indicators**: Lateral load and `mGripFract` are lagging indicators of a spin. Yaw acceleration and longitudinal slip ratio are leading indicators. By gating the FFB on leading indicators, we achieve zero-latency warnings.
+*   **Leading vs. Lagging Indicators**: Yaw acceleration and longitudinal slip ratio are leading indicators of a spin. Yaw acceleration and longitudinal slip ratio are leading indicators. By gating the FFB on leading indicators, we achieve zero-latency warnings.
 *   **Transient Shaping (Jerk)**: Belt-driven wheelbases act as mechanical low-pass filters due to belt stretch and stiction. Injecting `yaw_jerk` (the derivative of yaw acceleration) provides an instantaneous "punch" to overcome this inertia. For Direct Drive users, this translates to a sharp, tactile "snap" that alerts the hands before the slide fully develops.
 *   **Gamma Curve**: A slide's yaw acceleration grows exponentially. A linear FFB response means the early milliseconds of a slide are too weak to feel. A gamma curve (< 1.0) amplifies these early, small signals, making the onset of the slide instantly perceptible.
 *   **Traction Control Analogy**: Exposing `m_power_slip_threshold` allows users to tune the Power Yaw Kick like a real-world Traction Control system, deciding exactly how much slip is allowed before the FFB intervenes.
+*   **Context-Aware Gating**: strictly gating these effects prevents them from adding noise during normal driving or over curbs.
 
 ## Reference Documents
-*   Unloaded Yaw Kick: `docs\dev_docs\investigations\Unloaded Yaw Kick (braking).md`
-*   Power Yaw Kick : `docs\dev_docs\investigations\Power Yaw Kick (or Traction-Loss Yaw Kick).md`
+*   Unloaded Yaw Kick: `docs/dev_docs/investigations/Unloaded Yaw Kick (braking).md`
+*   Power Yaw Kick : `docs/dev_docs/investigations/Power Yaw Kick (or Traction-Loss Yaw Kick).md`
+*   Issue #322: Implement Context-Aware Yaw Kicks: "Unloaded Yaw Kick" and "Power Yaw Kick"
 
 ## Codebase Analysis Summary
 *   **`FFBEngine.h`**: Needs new state variables (`m_static_rear_load`, `m_prev_raw_yaw_accel`, `m_yaw_accel_seeded`) and 10 new configuration parameters for the two new effects.
@@ -39,7 +41,7 @@ This plan introduces two new context-aware, hyper-sensitive yaw kicks that only 
 
 ## Proposed Changes
 
-### 1. `src/FFBEngine.h`
+### Step 1: Update `src/FFBEngine.h`
 Add new configuration parameters and state variables:
 ```cpp
 // Unloaded Yaw Kick (Braking/Lift-off)
@@ -58,47 +60,60 @@ float m_power_yaw_punch = 0.05f;
 
 // State variables
 double m_static_rear_load = 0.0;
-double m_prev_raw_yaw_accel = 0.0;
+double m_prev_derived_yaw_accel = 0.0;
 bool m_yaw_accel_seeded = false;
 
 // Update signature
 void update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt);
 ```
+**Design Rationale**: Adding these to `FFBEngine` provides the necessary state for cross-frame derivative calculations (jerk) and car-specific load learning. Using `float` for parameters and `double` for physics state maintains precision where it matters.
 
-### 2. `src/GripLoadEstimation.cpp`
-Update `update_static_load_reference` to track `m_static_rear_load`:
+### Step 2: Update `src/GripLoadEstimation.cpp`
+Implement rear load learning in `update_static_load_reference`:
 *   Apply the same 2-15 m/s learning window to the rear load.
 *   Latch both loads simultaneously.
 *   Save/Load `m_static_rear_load` using `Config::SetSavedStaticLoad(vName + "_rear", m_static_rear_load)`.
+*   Handle `m_static_rear_load` initialization in `InitializeLoadReference`.
+**Design Rationale**: Expanding the static load learning to the rear axle allows for a "Rear Unload Factor" that automatically accounts for aero and weight transfer without needing manual car-by-car tuning.
 
-### 3. `src/FFBEngine.cpp`
-*   **In `calculate_force`**: Move the calculation of `ctx.avg_rear_load` (including kinematic fallbacks) to immediately follow `ctx.avg_front_load`. Pass both to `update_static_load_reference`.
+### Step 3: Update `src/FFBEngine.cpp`
+*   **In `calculate_force`**: Move the calculation of `ctx.avg_rear_load` (including kinematic fallbacks) to follow `ctx.avg_front_load`. Pass both to `update_static_load_reference`.
 *   **In `calculate_sop_lateral`**:
-    *   Calculate `yaw_jerk = (derived_yaw_accel - m_prev_raw_yaw_accel) / ctx.dt`.
+    *   Calculate `yaw_jerk = (derived_yaw_accel - m_prev_derived_yaw_accel) / ctx.dt`.
     *   Calculate `general_yaw_force` (existing logic).
-    *   Calculate `unloaded_yaw_force` gated by `rear_load_drop`.
-    *   Calculate `power_yaw_force` gated by `throttle` and `max_rear_spin`.
-    *   Blend: `ctx.yaw_force = max_abs(general, unloaded, power)`.
+    *   Calculate `unloaded_yaw_force` gated by `rear_load_drop` and `m_unloaded_yaw_sens`.
+    *   Calculate `power_yaw_force` gated by `throttle` and `max_rear_spin` relative to `m_power_slip_threshold`.
+    *   Implement Gamma curve and Punch (Jerk) for both new kicks.
+    *   Blend kicks: `ctx.yaw_force = max_abs_sign(general, unloaded, power)`.
+**Design Rationale**: Moving rear load calculation earlier ensures that all effects have access to consistent, fallback-safe load data. Blending kicks using `max_abs` ensures that the most critical warning always reaches the driver without additive stacking that could exceed safety limits.
 
-### 4. Parameter Synchronization Checklist
-For all 10 new parameters (`unloaded_yaw_gain`, `unloaded_yaw_threshold`, `unloaded_yaw_sens`, `unloaded_yaw_gamma`, `unloaded_yaw_punch`, `power_yaw_gain`, `power_yaw_threshold`, `power_slip_threshold`, `power_yaw_gamma`, `power_yaw_punch`):
-*   [ ] Declaration in `FFBEngine.h` (member variable)
-*   [ ] Declaration in `Preset` struct (`Config.h`)
-*   [ ] Entry in `Preset::Apply()` (with safety clamping)
-*   [ ] Entry in `Preset::UpdateFromEngine()`
-*   [ ] Entry in `Config::Save()`
-*   [ ] Entry in `Config::Load()`
-*   [ ] Validation logic in `Preset::Validate()`
+### Step 4: Update Configuration Handling (`src/Config.h` & `src/Config.cpp`)
+Synchronize the 10 new parameters:
+*   [ ] Declaration in `Preset` struct (`Config.h`) with default values.
+*   [ ] Add fluent setters to `Preset`.
+*   [ ] Entry in `Preset::Apply()` (with safety clamping).
+*   [ ] Entry in `Preset::UpdateFromEngine()`.
+*   [ ] Entry in `Preset::Equals()`.
+*   [ ] Entry in `Config::Save()` and `WritePresetFields()`.
+*   [ ] Entry in `Config::Load()` and `ParsePresetLine()` (with migration/validation logic).
+*   [ ] Update built-in presets (T300, GT3 DD, LMPx, GM).
+**Design Rationale**: Maintaining strict parameter synchronization across the Config layer ensures that user settings are persisted correctly and that built-in presets provide a sane starting point for the new effects.
 
-### 5. `src/GuiLayer_Common.cpp` & `src/Tooltips.h`
-*   Add UI sliders for the new settings under the "Rear Axle (Oversteer)" section, grouped into "Unloaded Yaw Kick (Braking)" and "Power Yaw Kick (Acceleration)".
-*   Add tooltips explaining the TC analogy for `m_power_slip_threshold` and the Transient Shaper (Punch) mechanics.
+### Step 5: Update UI and Tooltips (`src/GuiLayer_Common.cpp` & `src/Tooltips.h`)
+*   Add tooltips for all 10 new settings in `src/Tooltips.h`.
+*   Add UI sliders for the new settings under the "Rear Axle (Oversteer)" section in `src/GuiLayer_Common.cpp`, grouped into "Unloaded Yaw Kick (Braking)" and "Power Yaw Kick (Acceleration)".
+**Design Rationale**: Providing clear tooltips and organized UI groups helps users understand the context-aware nature of the new yaw kicks and how to tune them effectively.
 
-### Initialization Order Analysis
-No circular dependencies are introduced. The new parameters are simple floats and will be initialized in the `Preset` constructor and `FFBEngine` default member initializers.
+### Step 6: Versioning and Build Verification
+*   Increment `VERSION` and `src/Version.h.in` to `0.7.164`.
+*   Run `cmake --build build` to ensure the project still compiles after configuration changes.
+**Design Rationale**: Version increments track feature additions, and build verification ensures that header changes didn't introduce circular dependencies.
 
-### Version Increment Rule
-Increment the version number in `VERSION` and `src/Version.h` by the smallest possible increment (e.g., `0.7.154` -> `0.7.155`).
+### Step 7: Complete pre-commit steps
+*   Complete pre-commit steps to ensure proper testing, verification, review, and reflection are done.
+
+### Step 8: Final Test Execution
+*   Run all relevant tests using `./build/tests/run_combined_tests` to ensure the new yaw kick logic works correctly and no regressions were introduced.
 
 ## Test Plan (TDD-Ready)
 
@@ -134,7 +149,23 @@ Increment the version number in `VERSION` and `src/Version.h` by the smallest po
     *   *Expected Output*: `m_static_rear_load` matches the input load and `m_static_load_latched` becomes true.
 
 ## Deliverables
-*   [ ] Code changes in `FFBEngine.h`, `FFBEngine.cpp`, `GripLoadEstimation.cpp`, `Config.h`, `Config.cpp`, `GuiLayer_Common.cpp`, `Tooltips.h`.
-*   [ ] New unit tests in `tests/test_yaw_dynamics.cpp` (or similar).
-*   [ ] Documentation updates (this plan).
-*   [ ] **Implementation Notes**: Update this plan document with "Unforeseen Issues", "Plan Deviations", "Challenges", and "Recommendations" upon completion.
+*   [x] Code changes in `FFBEngine.h`, `FFBEngine.cpp`, `GripLoadEstimation.cpp`, `Config.h`, `Config.cpp`, `GuiLayer_Common.cpp`, `Tooltips.h`.
+*   [x] New unit tests in `tests/test_issue_322_yaw_kicks.cpp`.
+*   [x] Documentation updates (this plan).
+*   [x] **Implementation Notes**: Update this plan document with "Unforeseen Issues", "Plan Deviations", "Challenges", and "Recommendations" upon completion.
+
+## Implementation Notes
+
+### Unforeseen Issues
+*   **Test Environment Sensitivity**: Learning static load in tests required careful sequencing. `calculate_force` calls `InitializeLoadReference` which can reset learned state if called out of order. Tests were updated to manually seed and latch static loads to ensure deterministic gating.
+*   **Speed Gate Interaction**: The global speed gate was muting effects at low speeds in unit tests. Tests now explicitly disable the speed gate to verify the core physics logic.
+
+### Plan Deviations
+*   **Sign-Preserving Blending**: Instead of a simple `max_abs`, I implemented a sign-preserving blending where the kick with the highest magnitude is selected while maintaining its physical direction.
+*   **Load Learning Migration**: Added a migration path in `InitializeLoadReference` where if a front static load exists but a rear doesn't (from previous versions), the rear is initialized to a sane default rather than zero, preventing instant triggers.
+
+### Challenges
+*   **Coordinate System Consistency**: Verified that LMU's coordinate system (+Z rearward, +X left) is correctly handled for jerk calculation and sign convention in `calculate_sop_lateral`.
+
+### Recommendations
+*   Future investigation could involve gating the "Power Yaw Kick" even more strictly using `abs(mLocalRot.y)` to ensure the kick only triggers in the direction of the spin, though the current `max_abs` blending handles this well.

@@ -280,6 +280,20 @@ public:
     float m_static_notch_width = DEFAULT_STATIC_NOTCH_WIDTH; 
     float m_yaw_kick_threshold = DEFAULT_YAW_KICK_THRESHOLD; 
 
+    // Unloaded Yaw Kick (Braking/Lift-off) - v0.7.164 (Issue #322)
+    float m_unloaded_yaw_gain = 0.0f;
+    float m_unloaded_yaw_threshold = 0.2f;
+    float m_unloaded_yaw_sens = 1.0f;
+    float m_unloaded_yaw_gamma = 0.5f;
+    float m_unloaded_yaw_punch = 0.05f;
+
+    // Power Yaw Kick (Acceleration) - v0.7.164 (Issue #322)
+    float m_power_yaw_gain = 0.0f;
+    float m_power_yaw_threshold = 0.2f;
+    float m_power_slip_threshold = 0.10f;
+    float m_power_yaw_gamma = 0.5f;
+    float m_power_yaw_punch = 0.05f;
+
     // v0.6.23: User-Adjustable Speed Gate
     float m_speed_gate_lower = 1.0f; 
     float m_speed_gate_upper = DEFAULT_SPEED_GATE_UPPER_M_S; 
@@ -391,6 +405,8 @@ public:
     double m_prev_yaw_rate = 0.0;     // New v0.7.144 (Solution 2)
     bool m_yaw_rate_seeded = false;   // New v0.7.144 (Solution 2)
     double m_prev_yaw_rate_log = 0.0;
+    double m_prev_derived_yaw_accel = 0.0; // New v0.7.164 (Issue #322)
+    bool m_yaw_accel_seeded = false;       // New v0.7.164 (Issue #322)
 
     // Derived Acceleration State (Issue #278)
     TelemVect3 m_prev_local_vel = {};
@@ -479,6 +495,7 @@ public:
 
     // Dynamic Weight State (v0.7.46)
     double m_static_front_load = 0.0; 
+    double m_static_rear_load = 0.0; // New v0.7.164 (Issue #322)
     bool m_static_load_latched = false;
     double m_smoothed_vibration_mult = 1.0;
     double m_long_load_smoothed = 1.0; // Renamed from dynamic_weight_smoothed (#301)
@@ -724,7 +741,7 @@ private:
 
     std::string m_last_handled_vehicle_name = ""; // For car change detection (Issue #238)
 
-    void update_static_load_reference(double current_load, double speed, double dt);
+    void update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt);
     void InitializeLoadReference(const char* className, const char* vehicleName);
     
 public:

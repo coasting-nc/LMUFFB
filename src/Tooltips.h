@@ -75,6 +75,21 @@ namespace Tooltips {
     inline constexpr const char* YAW_KICK = "This is the earliest cue for rear stepping out.\nIt's a sharp, momentary impulse that signals the onset of rotation.\nBased on Yaw Acceleration.";
     inline constexpr const char* YAW_KICK_THRESHOLD = "Minimum yaw acceleration required to trigger the kick.\nIncrease to filter out road noise and small vibrations.";
     inline constexpr const char* YAW_KICK_RESPONSE = "Low Pass Filter for the Yaw Kick signal.\nSmoothes out kick noise.\nLower = Sharper/Faster kick.\nHigher = Duller/Softer kick.";
+
+    // Unloaded Yaw Kick
+    inline constexpr const char* UNLOADED_YAW_GAIN = "Strength of the kick when the rear axle is unloaded (braking/lift-off).";
+    inline constexpr const char* UNLOADED_YAW_THRESHOLD = "Minimum rotation speed to trigger the unloaded kick.\nKeep very low for instant response.";
+    inline constexpr const char* UNLOADED_YAW_SENS = "How quickly the effect reaches full strength as rear load drops.\nHigher = Triggers on smaller weight transfers.";
+    inline constexpr const char* UNLOADED_YAW_GAMMA = "Gamma curve for early onset amplification.\n< 1.0 = Boosts small slides.\n1.0 = Linear.";
+    inline constexpr const char* UNLOADED_YAW_PUNCH = "Injects Yaw Jerk to overcome wheelbase inertia/stiction.\nCreates a sharp tactile 'snap' at the start of a slide.";
+
+    // Power Yaw Kick
+    inline constexpr const char* POWER_YAW_GAIN = "Strength of the kick when losing traction under throttle.";
+    inline constexpr const char* POWER_YAW_THRESHOLD = "Minimum rotation speed to trigger the power kick.\nKeep very low for instant response.";
+    inline constexpr const char* POWER_SLIP_THRESHOLD = "Traction Control style slip target.\nLower % = Early warning on slight spin.\nHigher % = Allows more slide before kick.";
+    inline constexpr const char* POWER_YAW_GAMMA = "Gamma curve for early onset amplification.\n< 1.0 = Boosts small slides.\n1.0 = Linear.";
+    inline constexpr const char* POWER_YAW_PUNCH = "Injects Yaw Jerk to overcome wheelbase inertia/stiction.\nCreates a sharp tactile 'snap' at the start of a slide.";
+
     inline constexpr const char* GYRO_DAMPING = "Simulates the gyroscopic solidity of the spinning wheels.\nResists rapid steering movements.\nPrevents oscillation and 'Tank Slappers'.\nActs like a steering damper.";
     inline constexpr const char* GYRO_SMOOTH = "Filters the steering velocity signal used for damping.\nReduces noise in the damping effect.\nLow = Crisper damping, High = Smoother.";
     inline constexpr const char* SOP_SMOOTHING = "Filters the Lateral G signal.\nReduces jerkiness in the SoP effect.";
@@ -149,7 +164,10 @@ namespace Tooltips {
         SOFT_LOCK_ENABLE, SOFT_LOCK_STIFFNESS, SOFT_LOCK_DAMPING,
         INGAME_FFB_GAIN, STEERING_SHAFT_GAIN, STEERING_SHAFT_SMOOTHING, UNDERSTEER_EFFECT, DYNAMIC_WEIGHT, WEIGHT_SMOOTHING, TORQUE_SOURCE, PURE_PASSTHROUGH,
         FLATSPOT_SUPPRESSION, NOTCH_Q, SUPPRESSION_STRENGTH, STATIC_NOISE_FILTER, STATIC_NOTCH_FREQ, STATIC_NOTCH_WIDTH,
-        OVERSTEER_BOOST, LATERAL_G, LATERAL_LOAD, REAR_ALIGN_TORQUE, YAW_KICK, YAW_KICK_THRESHOLD, YAW_KICK_RESPONSE, GYRO_DAMPING, GYRO_SMOOTH, SOP_SMOOTHING, GRIP_SMOOTHING, SOP_SCALE,
+        OVERSTEER_BOOST, LATERAL_G, LATERAL_LOAD, REAR_ALIGN_TORQUE, YAW_KICK, YAW_KICK_THRESHOLD, YAW_KICK_RESPONSE,
+        UNLOADED_YAW_GAIN, UNLOADED_YAW_THRESHOLD, UNLOADED_YAW_SENS, UNLOADED_YAW_GAMMA, UNLOADED_YAW_PUNCH,
+        POWER_YAW_GAIN, POWER_YAW_THRESHOLD, POWER_SLIP_THRESHOLD, POWER_YAW_GAMMA, POWER_YAW_PUNCH,
+        GYRO_DAMPING, GYRO_SMOOTH, SOP_SMOOTHING, GRIP_SMOOTHING, SOP_SCALE,
         SLIP_ANGLE_SMOOTHING, CHASSIS_INERTIA, OPTIMAL_SLIP_ANGLE, OPTIMAL_SLIP_RATIO,
         SLOPE_DETECTION_ENABLE, SLOPE_FILTER_WINDOW, SLOPE_SENSITIVITY, SLOPE_THRESHOLD, SLOPE_OUTPUT_SMOOTHING, SLOPE_ALPHA_THRESHOLD, SLOPE_DECAY_RATE, SLOPE_CONFIDENCE_GATE,
         LOCKUP_VIBRATION, LOCKUP_STRENGTH, BRAKE_LOAD_CAP, VIBRATION_PITCH, LOCKUP_GAMMA, LOCKUP_START_PCT, LOCKUP_FULL_PCT, LOCKUP_PREDICTION_SENS, LOCKUP_BUMP_REJECT, LOCKUP_REAR_BOOST, ABS_PULSE, ABS_PULSE_GAIN, ABS_PULSE_FREQ,

@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.164] - 2026-03-10
+- **Implemented Context-Aware Yaw Kicks (Issue #322)**:
+  - Introduced two new hyper-sensitive FFB oversteer effects designed for zero-latency warnings:
+    - **Unloaded Yaw Kick**: Triggered by rear vertical load drop (braking/lift-off oversteer).
+    - **Power Yaw Kick**: Triggered by throttle application and rear wheel spin (traction loss).
+  - **Transient Shaping (Punch)**: Added a "Punch" setting that injects **Yaw Jerk** (derivative of yaw acceleration) into the FFB signal. This provides a sharp tactile "snap" to overcome mechanical low-pass filtering and stiction in belt-driven wheelbases.
+  - **Gamma Correction**: Implemented configurable **Gamma curves** for both new kicks to amplify small initial slide signals, making the onset of rotation instantly perceptible.
+  - **Automated Multi-Axle Load Learning**:
+    - Expanded the static load learning system in `GripLoadEstimation.cpp` to track both front and rear axles simultaneously.
+    - Implemented a "Rear Unload Factor" that automatically adapts to vehicle mass, aerodynamic downforce, and weight transfer.
+    - Added migration logic to estimate rear static load from legacy single-axle saved data.
+  - **Blending Logic**: Implemented sign-preserving **Maximum Absolute Value** blending for all three yaw kick types (General, Unloaded, Power). This ensures the most physically significant transient is delivered to the wheel without additive signal clipping.
+- **GUI & Configuration**:
+  - Added dedicated tuning sections for "Unloaded Yaw Kick (Braking)" and "Power Yaw Kick (Acceleration)" under the Rear Axle section.
+  - Synchronized 10 new parameters across the `Preset` and `Config` layers with full persistence and safety validation.
+  - Added comprehensive tooltips explaining the TC-style slip targets and "Stiction Puncher" mechanics.
+- **Testing**:
+  - Added `tests/test_issue_322_yaw_kicks.cpp` with comprehensive functional tests for activation gating, jerk-based punch, and multi-kick blending logic.
+  - Updated 471 assertions across the suite to verify total system integrity on Linux.
+
 ## [0.7.163] - 2026-03-10
 - **Replaced Longitudinal Load with Longitudinal G-Force (#325)**:
   - Switched the primary input for the longitudinal steering weight effect from tire load telemetry (`mTireLoad`) to velocity-derived longitudinal G-force (`m_accel_z_smoothed`).

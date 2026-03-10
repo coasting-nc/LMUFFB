@@ -624,6 +624,30 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                 ImGui::TextColored(color, "Latency: %d ms", ms);
             });
 
+        if (ImGui::TreeNodeEx("Unloaded Yaw Kick (Braking)", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::NextColumn(); ImGui::NextColumn();
+            FloatSetting("  Gain", &engine.m_unloaded_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_unloaded_yaw_gain, FFBEngine::BASE_NM_YAW_KICK), Tooltips::UNLOADED_YAW_GAIN);
+            FloatSetting("  Threshold", &engine.m_unloaded_yaw_threshold, 0.0f, 2.0f, "%.2f rad/sÂ²", Tooltips::UNLOADED_YAW_THRESHOLD);
+            FloatSetting("  Unload Sens.", &engine.m_unloaded_yaw_sens, 0.1f, 5.0f, "%.1fx", Tooltips::UNLOADED_YAW_SENS);
+            FloatSetting("  Gamma", &engine.m_unloaded_yaw_gamma, 0.1f, 2.0f, "%.1f", Tooltips::UNLOADED_YAW_GAMMA);
+            FloatSetting("  Punch (Jerk)", &engine.m_unloaded_yaw_punch, 0.0f, 0.2f, "%.2fx", Tooltips::UNLOADED_YAW_PUNCH);
+            ImGui::TreePop();
+        } else {
+            ImGui::NextColumn(); ImGui::NextColumn();
+        }
+
+        if (ImGui::TreeNodeEx("Power Yaw Kick (Acceleration)", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::NextColumn(); ImGui::NextColumn();
+            FloatSetting("  Gain", &engine.m_power_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_power_yaw_gain, FFBEngine::BASE_NM_YAW_KICK), Tooltips::POWER_YAW_GAIN);
+            FloatSetting("  Threshold", &engine.m_power_yaw_threshold, 0.0f, 2.0f, "%.2f rad/sÂ²", Tooltips::POWER_YAW_THRESHOLD);
+            FloatSetting("  TC Slip Target", &engine.m_power_slip_threshold, 0.01f, 0.5f, FormatPct(engine.m_power_slip_threshold), Tooltips::POWER_SLIP_THRESHOLD);
+            FloatSetting("  Gamma", &engine.m_power_yaw_gamma, 0.1f, 2.0f, "%.1f", Tooltips::POWER_YAW_GAMMA);
+            FloatSetting("  Punch (Jerk)", &engine.m_power_yaw_punch, 0.0f, 0.2f, "%.2fx", Tooltips::POWER_YAW_PUNCH);
+            ImGui::TreePop();
+        } else {
+            ImGui::NextColumn(); ImGui::NextColumn();
+        }
+
         FloatSetting("Gyro Damping", &engine.m_gyro_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_gyro_gain, FFBEngine::BASE_NM_GYRO_DAMPING), Tooltips::GYRO_DAMPING);
 
         FloatSetting("  Gyro Smooth", &engine.m_gyro_smoothing, 0.000f, 0.050f, "%.3f s",
