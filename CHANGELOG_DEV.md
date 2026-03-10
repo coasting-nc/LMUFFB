@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.165] - 2026-03-10
+- **User-Adjustable FFB Safety Features (Issue #316)**:
+  - Transitioned hardcoded safety constants into configurable member variables in `FFBEngine`.
+  - Added a new **"FFB Safety Features"** section in the Tuning window to allow real-time adjustment of:
+    - **Safety Duration**: Duration of the mitigation window after a trigger.
+    - **Gain Reduction**: Master gain attenuation during safety mode.
+    - **Safety Smoothing**: Extra EMA filtering applied to the final output.
+    - **Slew Restriction**: Maximum rate of force change during safety mode.
+    - **Spike Detection Threshold**: Sensitivity for sustained high-slew triggers.
+    - **Immediate Spike Threshold**: Sensitivity for instantaneous massive triggers.
+    - **Safety on Stuttering**: Toggle to enable/disable FFB reduction during game hitches.
+    - **Stutter Threshold**: Configurable sensitivity to frame time deviations.
+  - **Multi-Preset Support**: Fully integrated safety parameters into the `Preset` system and `config.ini` for per-car or per-hardware persistence.
+  - **Thread Safety**: Ensured GUI-driven updates to safety parameters are protected by `g_engine_mutex`.
+  - **Robust Validation**: Implemented strict clamping and sanitization for all safety settings to prevent division by zero or unstable haptics.
+  - **Compiler Compatibility Fix**: Refactored the configuration parsing logic to resolve MSVC C1061 (excessively deep blocks) by modularizing the key-value mapping.
+- **Improved GUI Tooltips**: Added detailed documentation for each safety parameter explaining recommended values and physical impact.
+
 ## [0.7.164] - 2026-03-10
 - **Implemented Context-Aware Yaw Kicks (Issue #322)**:
   - Introduced two new hyper-sensitive FFB oversteer effects designed for zero-latency warnings:

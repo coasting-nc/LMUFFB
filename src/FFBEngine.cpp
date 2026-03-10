@@ -34,7 +34,7 @@ void FFBEngine::TriggerSafetyWindow(const char* reason) {
             m_safety.last_reset_log_time = now;
         }
     }
-    m_safety.safety_timer = SAFETY_WINDOW_DURATION;
+    m_safety.safety_timer = (double)m_safety_window_duration;
     m_safety.safety_is_seeded = false;
 }
 
@@ -72,7 +72,7 @@ double FFBEngine::ApplySafetySlew(double target_force, double dt, bool restricte
 
     // Tighten slew limit during safety window (Issue #303)
     if (m_safety.safety_timer > 0.0) {
-        double safety_slew = 1.0 / (double)SAFETY_SLEW_FULL_SCALE_TIME_S;
+        double safety_slew = 1.0 / (double)m_safety_slew_full_scale_time_s;
         max_slew = (std::min)(max_slew, safety_slew);
     }
 
@@ -85,7 +85,7 @@ double FFBEngine::ApplySafetySlew(double target_force, double dt, bool restricte
     double requested_rate = std::abs(delta) / (dt + EPSILON_DIV);
     double now = m_working_info.mElapsedTime;
 
-    if (requested_rate > IMMEDIATE_SPIKE_THRESHOLD) {
+    if (requested_rate > (double)m_immediate_spike_threshold) {
         if (now > (m_safety.last_massive_spike_log_time + 1.0)) {
             Logger::Get().LogFile("[Safety] Massive Spike Detected: Requested Rate=%.1f (Capped at %.1f)",
                 requested_rate, max_slew);
@@ -93,7 +93,7 @@ double FFBEngine::ApplySafetySlew(double target_force, double dt, bool restricte
         }
         m_safety.spike_counter = 0;
         TriggerSafetyWindow("Massive Spike");
-    } else if (requested_rate > SPIKE_DETECTION_THRESHOLD) {
+    } else if (requested_rate > (double)m_spike_detection_threshold) {
         m_safety.spike_counter++;
         if (m_safety.spike_counter >= 5) { // Sustained for 5 frames
             if (now > (m_safety.last_high_spike_log_time + 1.0)) {
@@ -769,7 +769,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // --- SAFETY MITIGATION (Stage 2) ---
     if (m_safety.safety_timer > 0.0) {
         // Apply extra gain reduction
-        norm_force *= (double)SAFETY_GAIN_REDUCTION;
+        norm_force *= (double)m_safety_gain_reduction;
 
         // Apply extra smoothing to the final output to blunt any jitter
         // Using a 200ms EMA (Issue #314)
@@ -778,7 +778,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             m_safety.safety_smoothed_force = norm_force;
             m_safety.safety_is_seeded = true;
         } else {
-            double safety_alpha = ctx.dt / (SAFETY_SMOOTHING_TAU + ctx.dt);
+            double safety_alpha = ctx.dt / ((double)m_safety_smoothing_tau + ctx.dt);
             m_safety.safety_smoothed_force += safety_alpha * (norm_force - m_safety.safety_smoothed_force);
         }
         norm_force = m_safety.safety_smoothed_force;

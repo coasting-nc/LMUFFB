@@ -40,6 +40,17 @@ struct Preset {
     float long_load_effect = 0.0f; // Renamed from dynamic_weight_gain (#301)
     float long_load_smoothing = 0.15f; // Renamed from dynamic_weight_smoothing (#301)
     int long_load_transform = 0; // New #301
+
+    // FFB Safety (Issue #316)
+    float safety_window_duration = FFBEngine::DEFAULT_SAFETY_WINDOW_DURATION;
+    float safety_gain_reduction = FFBEngine::DEFAULT_SAFETY_GAIN_REDUCTION;
+    float safety_smoothing_tau = FFBEngine::DEFAULT_SAFETY_SMOOTHING_TAU;
+    float spike_detection_threshold = FFBEngine::DEFAULT_SPIKE_DETECTION_THRESHOLD;
+    float immediate_spike_threshold = FFBEngine::DEFAULT_IMMEDIATE_SPIKE_THRESHOLD;
+    float safety_slew_full_scale_time_s = FFBEngine::DEFAULT_SAFETY_SLEW_FULL_SCALE_TIME_S;
+    bool stutter_safety_enabled = FFBEngine::DEFAULT_STUTTER_SAFETY_ENABLED;
+    float stutter_threshold = FFBEngine::DEFAULT_STUTTER_THRESHOLD;
+
     float grip_smoothing_steady = 0.05f;    // v0.7.47
     float grip_smoothing_fast = 0.005f;     // v0.7.47
     float grip_smoothing_sensitivity = 0.1f; // v0.7.47
@@ -306,6 +317,18 @@ struct Preset {
         return *this;
     }
 
+    Preset& SetSafety(float duration, float gain, float smoothing, float threshold, float immediate, float slew, bool stutter = true, float stutter_thresh = 1.5f) {
+        safety_window_duration = duration;
+        safety_gain_reduction = gain;
+        safety_smoothing_tau = smoothing;
+        spike_detection_threshold = threshold;
+        immediate_spike_threshold = immediate;
+        safety_slew_full_scale_time_s = slew;
+        stutter_safety_enabled = stutter;
+        stutter_threshold = stutter_thresh;
+        return *this;
+    }
+
     // Advanced Braking (v0.6.0)
     // âš ï¸ IMPORTANT: Default parameters (abs_f, lockup_f) must match Config.h defaults!
     // When changing Config.h defaults, update these values to match.
@@ -349,6 +372,16 @@ struct Preset {
         engine.m_grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);
         engine.m_grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);
         engine.m_grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);
+
+        // FFB Safety (Issue #316)
+        engine.m_safety_window_duration = (std::max)(0.0f, safety_window_duration);
+        engine.m_safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));
+        engine.m_safety_smoothing_tau = (std::max)(0.001f, safety_smoothing_tau);
+        engine.m_spike_detection_threshold = (std::max)(1.0f, spike_detection_threshold);
+        engine.m_immediate_spike_threshold = (std::max)(1.0f, immediate_spike_threshold);
+        engine.m_safety_slew_full_scale_time_s = (std::max)(0.01f, safety_slew_full_scale_time_s);
+        engine.m_stutter_safety_enabled = stutter_safety_enabled;
+        engine.m_stutter_threshold = (std::max)(1.01f, stutter_threshold);
 
         engine.m_lockup_enabled = lockup_enabled;
         engine.m_lockup_gain = (std::max)(0.0f, lockup_gain);
@@ -540,6 +573,15 @@ struct Preset {
         slope_torque_sensitivity = (std::max)(0.01f, slope_torque_sensitivity);
         slope_confidence_max_rate = (std::max)(slope_alpha_threshold + 0.01f, slope_confidence_max_rate);
         rest_api_port = (std::max)(1, rest_api_port);
+
+        // FFB Safety (Issue #316)
+        safety_window_duration = (std::max)(0.0f, safety_window_duration);
+        safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));
+        safety_smoothing_tau = (std::max)(0.001f, safety_smoothing_tau);
+        spike_detection_threshold = (std::max)(1.0f, spike_detection_threshold);
+        immediate_spike_threshold = (std::max)(1.0f, immediate_spike_threshold);
+        safety_slew_full_scale_time_s = (std::max)(0.01f, safety_slew_full_scale_time_s);
+        stutter_threshold = (std::max)(1.01f, stutter_threshold);
     }
 
     // NEW: Capture current engine state into this preset
@@ -562,6 +604,17 @@ struct Preset {
         grip_smoothing_steady = engine.m_grip_smoothing_steady;
         grip_smoothing_fast = engine.m_grip_smoothing_fast;
         grip_smoothing_sensitivity = engine.m_grip_smoothing_sensitivity;
+
+        // FFB Safety (Issue #316)
+        safety_window_duration = engine.m_safety_window_duration;
+        safety_gain_reduction = engine.m_safety_gain_reduction;
+        safety_smoothing_tau = engine.m_safety_smoothing_tau;
+        spike_detection_threshold = engine.m_spike_detection_threshold;
+        immediate_spike_threshold = engine.m_immediate_spike_threshold;
+        safety_slew_full_scale_time_s = engine.m_safety_slew_full_scale_time_s;
+        stutter_safety_enabled = engine.m_stutter_safety_enabled;
+        stutter_threshold = engine.m_stutter_threshold;
+
         lockup_enabled = engine.m_lockup_enabled;
         lockup_gain = engine.m_lockup_gain;
         lockup_start_pct = engine.m_lockup_start_pct;
@@ -683,6 +736,16 @@ struct Preset {
         if (!is_near(grip_smoothing_steady, p.grip_smoothing_steady, eps)) return false;
         if (!is_near(grip_smoothing_fast, p.grip_smoothing_fast, eps)) return false;
         if (!is_near(grip_smoothing_sensitivity, p.grip_smoothing_sensitivity, eps)) return false;
+
+        // FFB Safety (Issue #316)
+        if (!is_near(safety_window_duration, p.safety_window_duration, eps)) return false;
+        if (!is_near(safety_gain_reduction, p.safety_gain_reduction, eps)) return false;
+        if (!is_near(safety_smoothing_tau, p.safety_smoothing_tau, eps)) return false;
+        if (!is_near(spike_detection_threshold, p.spike_detection_threshold, eps)) return false;
+        if (!is_near(immediate_spike_threshold, p.immediate_spike_threshold, eps)) return false;
+        if (!is_near(safety_slew_full_scale_time_s, p.safety_slew_full_scale_time_s, eps)) return false;
+        if (stutter_safety_enabled != p.stutter_safety_enabled) return false;
+        if (!is_near(stutter_threshold, p.stutter_threshold, eps)) return false;
 
         if (lockup_enabled != p.lockup_enabled) return false;
         if (!is_near(lockup_gain, p.lockup_gain, eps)) return false;
@@ -840,6 +903,18 @@ public:
 private:
     // Helper for parsing preset lines (v0.7.12)
     static void ParsePresetLine(const std::string& line, Preset& p, std::string& version, bool& needs_save, bool& legacy_torque_hack, float& legacy_torque_val);
+    static bool ParseSystemLine(const std::string& key, const std::string& value, Preset& p, std::string& version, bool& needs_save, bool& legacy_torque_hack, float& legacy_torque_val);
+    static bool ParsePhysicsLine(const std::string& key, const std::string& value, Preset& p);
+    static bool ParseBrakingLine(const std::string& key, const std::string& value, Preset& p);
+    static bool ParseVibrationLine(const std::string& key, const std::string& value, Preset& p);
+    static bool ParseSafetyLine(const std::string& key, const std::string& value, Preset& p);
+
+    static bool SyncSystemLine(const std::string& key, const std::string& value, FFBEngine& engine, std::string& version, bool& legacy_torque_hack, float& legacy_torque_val, bool& needs_save);
+    static bool SyncPhysicsLine(const std::string& key, const std::string& value, FFBEngine& engine, std::string& version, bool& needs_save);
+    static bool SyncBrakingLine(const std::string& key, const std::string& value, FFBEngine& engine);
+    static bool SyncVibrationLine(const std::string& key, const std::string& value, FFBEngine& engine);
+    static bool SyncSafetyLine(const std::string& key, const std::string& value, FFBEngine& engine);
+
     // Helper for writing preset fields (v0.7.12)
     static void WritePresetFields(std::ofstream& file, const Preset& p);
 };
