@@ -467,3 +467,116 @@ This gives the user an incredibly powerful toolkit, presented in terms that make
 
 ### Why this solves your problem
 By gating this heavily behind Throttle + Wheelspin, we can afford to use extreme Gamma and Jerk values that would normally make the wheel undriveable. Because the gate is closed 99% of the time, the wheel remains perfectly smooth. But the instant you apply too much throttle and the rears light up, the Gamma and Punch bypass the "noise floor" of the base FFB and deliver an unmistakable, instantaneous jolt to your hands.
+
+# Follow up question 5
+
+Should we use some yaw_jerk  also for the Unloaded Yaw Kick effect to be felt under braking?
+
+# Answer 5
+
+Yes, we should absolutely use `yaw_jerk` (the "Punch") for the Unloaded Yaw Kick under braking, and here is the mechanical reason why.
+
+### The Belt-Drive Problem: "Mechanical Low-Pass Filtering"
+
+The context of using a belt-driven wheelbase (instead of a direct drive one) —turns the `yaw_jerk` concept from a "nice-to-have" into an **absolute necessity**. This is the exact reason why developing FFB algorithms requires knowing the hardware. 
+
+Direct Drive (DD) wheels have the motor shaft directly connected to the steering rim. If the software asks for a 1 Nm change in 2 milliseconds, the rim moves instantly. 
+
+Belt-driven wheels (like the T300, TS-PC, or Fanatec CSW) have a motor connected to a small pulley, a rubber belt, and a large pulley connected to the steering shaft. This introduces three physical hurdles:
+1.  **Belt Stretch:** When the motor suddenly spins, the rubber belt stretches slightly before it actually turns the steering shaft.
+2.  **Rotational Inertia:** The pulleys and the internal motor rotor have mass that takes time to accelerate.
+3.  **Stiction (Static Friction):** It takes a burst of extra energy just to break the internal mechanisms out of a resting state.
+
+Because of these three factors, a belt-driven wheelbase acts as a **mechanical low-pass filter**. If a slide starts and the FFB sends a smoothly ramping Yaw Acceleration signal, the first 20–30 milliseconds of that signal are completely swallowed by the belt stretching and overcoming stiction. You feel nothing until the force is large enough to overcome the internal resistance—and by then, you've spun.
+
+### How `yaw_jerk` Solves the Belt-Drive Problem
+
+Jerk ($d(Accel)/dt$) is highest at the very instant the slide *initiates*. 
+
+By injecting `yaw_jerk` into the signal, we are essentially sending a massive, instantaneous voltage spike to the wheelbase motor the millisecond traction breaks. 
+*   This spike instantly pre-tensions the rubber belt.
+*   It shatters the static friction.
+*   It delivers a sharp, tactile "tap" or "knock" to your hands.
+
+It acts as a **"Stiction Puncher."** It doesn't necessarily turn the wheel for you, but it sends a shockwave through the belt to alert your hands that the rear end has snapped, buying you those critical milliseconds to react.
+
+### Applying it to Braking (Unloaded Yaw Kick)
+
+Braking oversteer (especially lift-off oversteer or rear lockup) is often much more violent and sudden than power oversteer. It is a true "snap." 
+
+If you lock the rears under heavy braking, the lateral capacity of the tires drops to zero almost instantly. The resulting yaw acceleration has a massive initial Jerk. Capturing this Jerk and sending it to your belt-driven wheel is the only way to accurately simulate the sudden "snap" of the chassis.
+
+### The Unified "Transient" Architecture
+
+Because both Power Oversteer and Braking Oversteer benefit massively from this, we should calculate the `yaw_jerk` once per frame and make it available to both gated effects. 
+
+Here is how the architecture comes together:
+
+```cpp
+// 1. Calculate the shared leading indicators
+double yaw_jerk = (raw_yaw_accel - m_prev_raw_yaw_accel) / ctx.dt;
+m_prev_raw_yaw_accel = raw_yaw_accel;
+
+// ---------------------------------------------------------
+// EFFECT A: UNLOADED YAW KICK (Braking / Lift-off)
+// ---------------------------------------------------------
+double rear_load_drop = std::clamp(1.0 - (ctx.avg_rear_load / m_static_rear_load), 0.0, 1.0);
+double unloaded_vulnerability = std::clamp(rear_load_drop * m_unloaded_yaw_sens, 0.0, 1.0);
+
+double unloaded_yaw_force = 0.0;
+if (unloaded_vulnerability > 0.01) {
+    // Inject Jerk (Punch) to overcome belt inertia
+    double punchy_yaw = raw_yaw_accel + (yaw_jerk * m_unloaded_yaw_punch);
+    
+    if (std::abs(punchy_yaw) > m_unloaded_yaw_threshold) {
+        punchy_yaw -= std::copysign(m_unloaded_yaw_threshold, punchy_yaw);
+        
+        // Apply Gamma for early perception
+        double sign = (punchy_yaw > 0.0) ? 1.0 : -1.0;
+        double yaw_norm = std::clamp(std::abs(punchy_yaw) / 10.0, 0.0, 1.0);
+        double shaped_yaw = std::pow(yaw_norm, m_unloaded_yaw_gamma) * 10.0 * sign;
+        
+        unloaded_yaw_force = -1.0 * shaped_yaw * m_unloaded_yaw_gain * unloaded_vulnerability;
+    }
+}
+
+// ---------------------------------------------------------
+// EFFECT B: POWER YAW KICK (Acceleration)
+// ---------------------------------------------------------
+double max_rear_spin = std::max({0.0, calculate_wheel_slip_ratio(data->mWheel[2]), calculate_wheel_slip_ratio(data->mWheel[3])});
+double slip_vulnerability = inverse_lerp(m_power_slip_target * 0.5, m_power_slip_target, max_rear_spin);
+double throttle = std::max(0.0, data->mUnfilteredThrottle);
+double power_vulnerability = slip_vulnerability * throttle;
+
+double power_yaw_force = 0.0;
+if (power_vulnerability > 0.01) {
+    // Inject Jerk (Punch) to overcome belt inertia
+    double punchy_yaw = raw_yaw_accel + (yaw_jerk * m_power_yaw_punch);
+    
+    if (std::abs(punchy_yaw) > m_power_yaw_threshold) {
+        punchy_yaw -= std::copysign(m_power_yaw_threshold, punchy_yaw);
+        
+        // Apply Gamma for early perception
+        double sign = (punchy_yaw > 0.0) ? 1.0 : -1.0;
+        double yaw_norm = std::clamp(std::abs(punchy_yaw) / 10.0, 0.0, 1.0);
+        double shaped_yaw = std::pow(yaw_norm, m_power_yaw_gamma) * 10.0 * sign;
+        
+        power_yaw_force = -1.0 * shaped_yaw * m_power_yaw_gain * power_vulnerability;
+    }
+}
+
+// ---------------------------------------------------------
+// FINAL BLENDING
+// ---------------------------------------------------------
+// Take the maximum demanded force among General, Unloaded, and Power kicks
+double final_yaw_force = general_yaw_force;
+if (std::abs(unloaded_yaw_force) > std::abs(final_yaw_force)) final_yaw_force = unloaded_yaw_force;
+if (std::abs(power_yaw_force) > std::abs(final_yaw_force)) final_yaw_force = power_yaw_force;
+
+ctx.yaw_force = final_yaw_force;
+```
+
+### Why Gating Makes This Possible
+If we applied `yaw_jerk` to the *General* Yaw Kick, your belt-driven wheel would rattle itself to pieces every time you hit a curb or made a quick steering correction, because Jerk amplifies high-frequency noise. 
+
+But because we are strictly **gating** these effects behind specific physical vulnerabilities (Rear Load Drop for braking, Throttle + Slip for acceleration), the FFB engine remains completely silent and smooth over curbs. The "Punch" is kept locked in a cage, only released in the exact millisecond the car tries to kill you.
