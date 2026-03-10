@@ -84,3 +84,96 @@ ctx.yaw_force = base_yaw_kick * braking_boost_factor;
 Your instinct to isolate braking behavior is exactly how we take this FFB engine to the next level. However, physics dictates we should apply that isolation to the **Yaw (Rotation)** channel rather than the **Lateral Load (Roll)** channel to get the early-warning system you are looking for. 
 
 Would you like me to draft an implementation plan for a **"Braking Yaw Boost"** feature instead?
+
+
+# Follow-up Question 1
+
+Shouldn't we use actual rear tire load information (instead of longitudinal acceleration) for this? Shouldn't we also take aero into account, because we are less likely to lock up if there is aero push on the rear wheels, even if we have high longitudinal deceleration?
+
+Should we gate this Load-Sensitive Yaw Kick effect to be present only under braking, and with different settings compared to the "general yaw kick" (that we would still use)?
+
+I am considering having a separate threshold of activation for the Load-Sensitive Yaw Kick and the general yaw kick. Possibly other yaw kick modifiers would be different too.
+
+
+# Answer 1
+
+You are 100% correct on both points. Let's break down exactly why your logic is superior, and how we can design this new effect.
+
+### 1. Rear Tire Load vs. Longitudinal G-Force (The Aero Factor)
+Your point about aerodynamics is the exact reason why pure G-force fails to predict rear-end instability at high speeds.
+
+If we used my previous G-force idea:
+* **Braking at 250 km/h:** You pull 2.5G. The math says "High G = High Vulnerability" and boosts the Yaw Kick. But in reality, the massive aero downforce is crushing the rear tires into the track. The car is incredibly stable. Boosting the Yaw Kick here would result in hyper-active, twitchy FFB when the car is actually planted.
+
+If we use your **Actual Rear Tire Load** idea:
+* **Braking at 250 km/h:** Static rear weight (e.g., 5000N) + Aero Downforce (4000N) - Braking Weight Transfer (3000N) = **6000N**. The rear load is *higher* than when the car is sitting still in the pits! The math sees the rear is heavily loaded and applies **zero boost**.
+* **Braking at 80 km/h:** Static rear weight (5000N) + Aero (0N) - Braking Weight Transfer (2500N) = **2500N**. The rear load is half of its normal weight. The math sees the rear is dangerously light and applies **maximum boost**.
+
+By using the actual rear tire load, the FFB engine perfectly understands the difference between high-speed aerodynamic stability and low-speed mechanical vulnerability.
+
+### 2. Separate Settings & Gating (The "Hyper-Sensitive" Kick)
+Your idea to separate this into its own effect with different settings is exactly how we solve the "noise vs. responsiveness" dilemma.
+
+* **General Yaw Kick:** Needs a higher threshold and some smoothing because you don't want the wheel kicking every time you hit a curb or make a normal steering adjustment.
+* **Unloaded/Braking Yaw Kick:** When the rear is light, you are milliseconds away from a spin. You want **zero smoothing** and a **near-zero threshold**. You want to feel the chassis rotate the instant it happens.
+
+#### How to Gate It (Brake Pedal vs. Physics)
+You asked if we should gate it to the brake pedal. 
+I highly recommend gating it to the **Physics (Rear Unload Factor)** rather than the physical brake pedal. 
+
+Why? **Lift-off Oversteer.**
+If you are diving into a fast corner and you suddenly lift completely off the throttle (without touching the brakes), the engine braking and drag cause weight to transfer forward. The rear gets light, and the car snaps sideways. If we gate the effect to the brake pedal, you won't get the hyper-sensitive warning for lift-off oversteer. 
+
+If we gate it to the *Rear Unload Factor*, it automatically covers both trail-braking and lift-off oversteer!
+
+### Proposed Architecture: "Unloaded Yaw Kick"
+
+Here is how we can structure this new effect alongside the existing one:
+
+**1. Learn the Static Rear Load:**
+Just like we learn the front load, we add a tracker for `m_static_rear_load` when the car leaves the pits.
+
+**2. Calculate the "Rear Unload Factor" (0.0 to 1.0):**
+```cpp
+// Ratio of current rear load to static rear load
+double rear_load_ratio = ctx.avg_rear_load / m_static_rear_load;
+
+// If ratio is 1.0 or higher (aero/acceleration), unload factor is 0.0.
+// If ratio drops to 0.5 (rear has lost half its weight), unload factor is 0.5.
+double rear_unload_factor = std::clamp(1.0 - rear_load_ratio, 0.0, 1.0);
+```
+
+**3. Calculate the Unloaded Yaw Kick (Separate Settings):**
+```cpp
+// Uses its own threshold (usually much lower than general yaw kick)
+double unloaded_yaw_accel = 0.0;
+if (std::abs(raw_yaw_accel) > m_unloaded_yaw_threshold) {
+    unloaded_yaw_accel = raw_yaw_accel - std::copysign(m_unloaded_yaw_threshold, raw_yaw_accel);
+}
+
+// Force = Accel * Gain * UnloadFactor
+double unloaded_yaw_force = -1.0 * unloaded_yaw_accel * m_unloaded_yaw_gain * rear_unload_factor;
+```
+
+**4. Blend with General Yaw Kick:**
+To prevent the two effects from stacking and creating a massive spike, we simply take the maximum of the two forces (preserving the sign).
+```cpp
+if (std::abs(unloaded_yaw_force) > std::abs(general_yaw_force)) {
+    ctx.yaw_force = unloaded_yaw_force;
+} else {
+    ctx.yaw_force = general_yaw_force;
+}
+```
+
+### Summary of the New UI Settings
+Under the "Rear Axle (Oversteer)" section, we would add a sub-menu for this:
+
+*   **Unloaded Yaw Kick (Braking/Lift-off)**
+    *   `Unloaded Yaw Gain`: How strong the kick is when the rear is light.
+    *   `Unloaded Yaw Threshold`: Minimum rotation needed. (Set this very low to catch slides instantly).
+
+This design gives you exactly what you asked for: a hyper-sensitive, zero-latency warning system that perfectly respects aerodynamic downforce and only activates when the car is genuinely vulnerable to spinning.
+
+Does this architecture align with your vision? If so, I can write up the formal Implementation Plan for this!
+
+
