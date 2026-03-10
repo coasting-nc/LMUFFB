@@ -647,7 +647,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // }
     double long_load_factor = 1.0;
 
-    // Apply if enabled (works with both raw load telemetry data and fallbacks)
+    // Apply if enabled (Uses chassis G-force, completely immune to aero and missing telemetry)
     if (m_long_load_effect > 0.0) {
         // Use Derived Longitudinal Acceleration (Z-axis) to isolate weight transfer.
         // LMU Coordinate System: +Z is rearward (deceleration/braking). -Z is forward (acceleration).
