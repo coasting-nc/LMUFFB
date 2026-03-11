@@ -23,8 +23,8 @@ public:
 namespace FFBEngineTests {
 
 TEST_CASE(test_logger_expansion, "Diagnostics") {
-    // 1. Init
-    Logger::Get().Init("test_expansion.log");
+    // 1. Init (No timestamp to keep fixed filename for test)
+    Logger::Get().Init("test_expansion.log", "", false);
 
     // 2. Log basic
     Logger::Get().Log("Expansion Test: %d %s", 42, "hello");

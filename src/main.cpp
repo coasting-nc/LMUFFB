@@ -340,7 +340,8 @@ int main(int argc, char* argv[]) noexcept {
     }
 
     // Initialize persistent debug logging for crash analysis
-    Logger::Get().Init("lmuffb_debug.log");
+    // First init in current directory or logs folder to catch startup
+    Logger::Get().Init("lmuffb_debug.log", "logs");
     Logger::Get().Log("Starting lmuFFB (C++ Port)...");
     Logger::Get().LogFile("Application Started. Version: %s", LMUFFB_VERSION);
     if (headless) Logger::Get().LogFile("Mode: HEADLESS");
@@ -348,6 +349,12 @@ int main(int argc, char* argv[]) noexcept {
 
     Preset::ApplyDefaultsToEngine(g_engine);
     Config::Load(g_engine);
+
+    // Re-initialize logger with user-configured path if it changed
+    if (!Config::m_log_path.empty() && Config::m_log_path != "logs") {
+        Logger::Get().Init("lmuffb_debug.log", Config::m_log_path);
+        Logger::Get().LogFile("Logger re-initialized with user path: %s", Config::m_log_path.c_str());
+    }
 
     if (!headless) {
         if (!GuiLayer::Init()) {

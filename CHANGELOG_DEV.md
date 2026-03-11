@@ -5,7 +5,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## Cumulative changes from versions v0.7.114 - 0.7.166
+## Cumulative changes from versions v0.7.114 - 0.7.167
+
+## [0.7.167] - 2026-03-11
+- **Implemented Timestamped Debug Logs (Issue #312)**:
+  - Updated `Logger` to generate unique filenames using `YYYY-MM-DD_HH-MM-SS` timestamps (e.g., `lmuffb_debug_2026-03-11_13-00-00.log`).
+  - Added support for a dedicated log directory, defaulting to `logs/` to group all session data in one place.
+  - Implemented automatic directory creation using `std::filesystem`.
+  - Added an `append` mode for timestamped logs to prevent data loss if the application is re-initialized within the same second.
+  - Refactored `main.cpp` initialization to use the user-configured `m_log_path` from `config.ini` for debug logs.
+- **Testing**:
+  - Added `tests/test_issue_312_logger.cpp` verifying filename uniqueness, directory creation, and extension handling.
+  - Updated existing logger-dependent tests to use the new `use_timestamp=false` flag to maintain predictable filenames for verification.
 
 ## [0.7.166] 
 ### Added

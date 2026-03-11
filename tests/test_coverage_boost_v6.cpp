@@ -203,7 +203,7 @@ TEST_CASE(test_main_thread_branches_v6, "System") {
     std::cout << "\nTest: FFBThread Branches (Coverage Boost V6)" << std::endl;
 
 #ifndef _WIN32
-    Logger::Get().Init("test_main_thread_v6.log");
+    Logger::Get().Init("test_main_thread_v6.log", "", false);
 
     // 1. Setup Mock
     MockSM::GetMaps()["LMU_Data"].resize(sizeof(SharedMemoryLayout));
@@ -585,12 +585,12 @@ TEST_CASE(test_async_logger_branches_v6, "System") {
 
 TEST_CASE(test_logger_v6, "System") {
     std::cout << "\nTest: Logger Branches (Coverage Boost V6)" << std::endl;
-    Logger::Get().Init("test_v6_sync.log");
+    Logger::Get().Init("test_v6_sync.log", "", false);
     Logger::Get().LogStr("Test string");
     Logger::Get().LogWin32Error("TestContext", 1234);
 
     // Test Init failure branch
-    Logger::Get().Init("/invalid/path/to/log.log");
+    Logger::Get().Init("/invalid/path/to/log.log", "", false);
 
     std::cout << "[PASS] Logger helpers exercised" << std::endl;
     g_tests_passed++;
