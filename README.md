@@ -14,8 +14,6 @@ Experimental alpha version.
 
 ## Installation & Configuration (LMU 1.2+)
 
-
-
 ### Step-by-Step Setup
 
 > [!IMPORTANT]
@@ -114,6 +112,8 @@ See also this Reddit thread:
 * https://www.reddit.com/r/LeMansUltimateWEC/comments/1quwx67/lmuffb_telemetry_based_ffb_for_lmu/
 
 ## Documentation
+
+Note: this documentation is not up to date.
 
 *   [FFB Tuning Recommendations](docs/FFB%20Tuning%20Recommendations.md) 
 *   [Driver's Guide to Testing LMUFFB](docs/Driver's%20Guide%20to%20Testing%20LMUFFB.md) - Suggestions for specific driving scenarios and car setups to test each FFB effect 
