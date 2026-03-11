@@ -402,7 +402,7 @@ TEST_CASE_TAGGED(test_gc_garage_return_keeps_session_active,
 TEST_CASE_TAGGED(test_gc_no_duplicate_log_on_same_state,
     "Functional", (std::vector<std::string>{"transitions", "refactoring"}))
 {
-    Logger::Get().Init("test_refactoring_noduplicate.log");
+    Logger::Get().Init("test_refactoring_noduplicate.log", "", false);
     GameConnector& gc = GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
@@ -436,7 +436,7 @@ TEST_CASE_TAGGED(test_gc_sme_event_name_lookup,
     // Validate the extracted SmeEventName() helper.
     // If the helper doesn't exist yet (before refactoring), this test still
     // exercises the behaviour indirectly through transition logging.
-    Logger::Get().Init("test_refactoring_sme_names.log");
+    Logger::Get().Init("test_refactoring_sme_names.log", "", false);
     GameConnector& gc = GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
