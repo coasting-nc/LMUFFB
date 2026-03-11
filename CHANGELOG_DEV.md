@@ -11,8 +11,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - **New FFB Effects**:
     - **Unloaded Yaw Kick**: to feel the rear stepping out under braking or lift-off oversteer.
-    - **Power Yaw Kick**: to feel the rear steeppig out due to throttle application and rear wheel spin (traction loss).
-    - Other effects added: **Lateral Load, Longitudinal G-Force**  (wheel gets heavier under braking)
+    - **Power Yaw Kick**: to feel the rear stepping out due to throttle application and rear wheel spin (traction loss).
+    - Other effects added: **Lateral Load, Longitudinal G-Force** (wheel gets heavier under braking)
     - The new effects are disabled by default. You can try the **new Preset "T300 v0.7.164"** which has them enabled (Note: this profile might be very strong in Direct Drive wheels, reduce Gain for testing).
 - **FFB Up-sampling**: 
   - up-sampling LMU telemetry channels from 100Hz to 400Hz 
@@ -22,10 +22,14 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Reduced FFB spikes when exiting to garage, menus, or transitioning between sessions
-- Added new Safety section in the GUI with settings for reducing FFB spikes in some scenarios.
+- Added new Safety section in the GUI with settings for reducing FFB spikes in some scenarios (exiting to garage, menus, or transitioning between sessions).
 - Fixed strange pulls in the FFB when using a setup with stiff dampers (particularly with the LMP2), that were due to yaw acceleration spikes.
 - Made ABS and Lockup effects independent from the "Vibration Strength" slider 
 - Removed console window
+
+### Known Issues
+- Some users might experience FFB loss when someone leaves or enter a server (this issue was not present up to version 0.7.152). To reduce this, try to lower "FFB Safety Features -> Safety Duration" to less than 2 seconds. Try also adjusting the other safety setting: Slew Reduction, Gain Reduction, Safety Smoothing, Spike Threshold, Immediate Spike.
+- Wheel goes full lock to the right and stays locked. The only way to unlock it is to go back on track or close and re-open the app.
 
 
 ---
