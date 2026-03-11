@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+
+---
+
+## Cumulative changes from versions v0.7.114 - 0.7.165
+
+## [0.7.165] 
+### Added
+- **New FFB Effects**:
+    - **Unloaded Yaw Kick**: to feel the rear stepping out under braking or lift-off oversteer.
+    - **Power Yaw Kick**: to feel the rear steeppig out due to throttle application and rear wheel spin (traction loss).
+    - Other effects: Lateral Load, Longitudinal G-Force
+    - The new effects are disabled by default. You can try the new Preset "T300 v0.7.164" which has them enabled (Note: settings might be too strong in Direct Drive wheels, reduce Gain for testing).
+- **FFB Up-sampling**: 
+  - up-sampling LMU telemetry channels from 100Hz to 400Hz 
+  - up-sampling lmuFFB output to wheelbases from 400Hz to 1000Hz (Thanks to **@DiSHTiX** for the initial implementation!)
+- **Log Analyser**:  
+  - It is now bundled with the app. If you record a log with the app, you can use the menu Log -> Analyse Last Log, to automatically generate a txt report and some plot images.
+
+### Fixed
+- Reduced FFB spikes when exiting to garage, menus, or transitioning between sessions
+- Added new Safety section in the GUI with settings for reducing FFB spikes in some scenarios.
+- Fixed strange pulls in the FFB when using a setup with stiff dampers (particularly with the LMP2), that were due to yaw acceleration spikes.
+- Made ABS and Lockup effects independent of the "Vibration Strength" slider 
+- Removed console window
+
+
 ---
 
 ## [0.7.166] - 2026-03-11
@@ -207,6 +233,9 @@ All notable changes to this project will be documented in this file.
 - **Tools**:
   - Updated the Python Log Analyzer (`loader.py`) and its tests to support the renamed `front_load_peak_ref` binary field.
 
+
+
+
 ## [0.7.150] - 2026-03-08
 - **Decoupled ABS and Lockup from Vibration Strength (Issue #290)**:
   - Separated the tactile effects into "Surface/Environmental" and "Vehicle State" groups.
@@ -357,6 +386,7 @@ All notable changes to this project will be documented in this file.
 
 ### Testing
 - **New Functional Test**: Added `tests/test_issue_265_metadata.cpp` to verify multi-component metadata synchronization and car-change detection logic.
+
 
 ## [0.7.134] - 2026-03-06
 
@@ -511,6 +541,8 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+
+
 ## [0.7.125] - 2026-03-12
 ### Fixed
 - **Robust Soft Lock "Wall" Implementation (Issue #248)**:
@@ -538,6 +570,8 @@ All notable changes to this project will be documented in this file.
 ### Testing
 - **New Regression Test Suite**: Added `tests/test_issue_241_yaw_kick_rectification.cpp` to verify noise rejection, zero-DC offset under asymmetric chatter, and continuous deadzone accuracy.
 - **Suite Update**: Hardened existing yaw/gyro tests to align with the new continuous force model.
+
+
 
 ## [0.7.123] - 2026-03-12
 ### Added
@@ -569,6 +603,7 @@ All notable changes to this project will be documented in this file.
 ### Testing
 - **New Test Suite**: Added `tests/test_transition_logging.cpp` to verify edge detection logic, console silence, and file persistence for all tracked simulation variables.
 
+   
 ## [0.7.121] - 2026-03-12
 ### Added
 - **Physical SoP Normalization (Issue #213)**:
@@ -592,6 +627,7 @@ All notable changes to this project will be documented in this file.
   - Removed periodic telemetry sample rate logging in `src/main.cpp`.
   - Refined "Low Sample Rate detected" warnings: increased interval to 60s and removed redundant `std::cout` print.
 
+
 ## [0.7.119] - 2026-03-10
 ### Fixed
 - **Console Message Spam (Issue #238)**:
@@ -601,6 +637,9 @@ All notable changes to this project will be documented in this file.
 
 ### Testing
 - **New Regression Test**: Added `tests/test_issue_238_spam.cpp` to verify that initialization messages and diagnostic warnings are printed exactly once per car change.
+
+
+---
 
 ## [0.7.118] - 2026-03-09
 ### Fixed
@@ -613,6 +652,9 @@ All notable changes to this project will be documented in this file.
 ### Testing
 - **New Regression Test**: Added `test_issue_235_garage_noise` in `tests/test_issue_185_fix.cpp` to verify noise rejection and filter resets.
 - **Test Infrastructure**: Improved the test runner's `--filter` and `--tag` logic to use OR relationship for better usability.
+
+---
+
 
 ## [0.7.117] - 2026-03-08
 ### Added
