@@ -31,27 +31,27 @@
             <td class="headerValue">coverage_filtered.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntryLo">59.3&nbsp;%</td>
+            <td class="headerCovTableEntryLo">59.2&nbsp;%</td>
             <td class="headerCovTableEntry">835</td>
-            <td class="headerCovTableEntry">495</td>
+            <td class="headerCovTableEntry">494</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-11 00:35:23</td>
+            <td class="headerValue">2026-03-11 00:51:38</td>
             <td></td>
             <td class="headerItem">Functions:</td>
-            <td class="headerCovTableEntryHi">93.3&nbsp;%</td>
+            <td class="headerCovTableEntryHi">90.0&nbsp;%</td>
             <td class="headerCovTableEntry">30</td>
-            <td class="headerCovTableEntry">28</td>
+            <td class="headerCovTableEntry">27</td>
           </tr>
           <tr>
             <td></td>
             <td></td>
             <td></td>
             <td class="headerItem">Branches:</td>
-            <td class="headerCovTableEntryLo">31.3&nbsp;%</td>
+            <td class="headerCovTableEntryLo">31.2&nbsp;%</td>
             <td class="headerCovTableEntry">1774</td>
-            <td class="headerCovTableEntry">556</td>
+            <td class="headerCovTableEntry">554</td>
           </tr>
                   <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
                 </table>
@@ -425,12 +425,12 @@
 <span id="L323"><span class="lineNum">     323</span>                 :<span class="tlaGNC">        3016 :         return (const char*)buf;</span></span>
 <span id="L324"><span class="lineNum">     324</span>                 :             :     };</span>
 <span id="L325"><span class="lineNum">     325</span>                 :             : </span>
-<span id="L326"><span class="lineNum">     326</span>                 :<span class="tlaGNC">       25450 :     auto FloatSetting = [&amp;](const char* label, float* v, float min, float max, const char* fmt = &quot;%.2f&quot;, const char* tooltip = nullptr, std::function&lt;void()&gt; decorator = nullptr) {</span></span>
-<span id="L327"><span class="lineNum">     327</span>   [<span class="tlaGBC" title="Branch 0 was taken 25450 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 25450 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">       25450 :         GuiWidgets::Result res = GuiWidgets::Float(label, v, min, max, fmt, tooltip, decorator);</span></span>
-<span id="L328"><span class="lineNum">     328</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 25450 times"> + </span>]:<span class="tlaGNC">       25450 :         if (res.deactivated) {</span></span>
+<span id="L326"><span class="lineNum">     326</span>                 :<span class="tlaGNC">       25073 :     auto FloatSetting = [&amp;](const char* label, float* v, float min, float max, const char* fmt = &quot;%.2f&quot;, const char* tooltip = nullptr, std::function&lt;void()&gt; decorator = nullptr) {</span></span>
+<span id="L327"><span class="lineNum">     327</span>   [<span class="tlaGBC" title="Branch 0 was taken 25073 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 25073 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">       25073 :         GuiWidgets::Result res = GuiWidgets::Float(label, v, min, max, fmt, tooltip, decorator);</span></span>
+<span id="L328"><span class="lineNum">     328</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 25073 times"> + </span>]:<span class="tlaGNC">       25073 :         if (res.deactivated) {</span></span>
 <span id="L329"><span class="lineNum">     329</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC tlaBgUNC">           0 :             Config::Save(engine);</span></span>
 <span id="L330"><span class="lineNum">     330</span>                 :             :         }</span>
-<span id="L331"><span class="lineNum">     331</span>                 :<span class="tlaGNC tlaBgGNC">       25450 :     };</span></span>
+<span id="L331"><span class="lineNum">     331</span>                 :<span class="tlaGNC tlaBgGNC">       25073 :     };</span></span>
 <span id="L332"><span class="lineNum">     332</span>                 :             : </span>
 <span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaGNC">        4524 :     auto BoolSetting = [&amp;](const char* label, bool* v, const char* tooltip = nullptr) {</span></span>
 <span id="L334"><span class="lineNum">     334</span>         [<span class="tlaGBC" title="Branch 0 was taken 4524 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4524 :         GuiWidgets::Result res = GuiWidgets::Checkbox(label, v, tooltip);</span></span>
@@ -701,11 +701,11 @@
 <span id="L586"><span class="lineNum">     586</span>   [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         377 :         ImGui::NextColumn(); ImGui::NextColumn();</span></span>
 <span id="L587"><span class="lineNum">     587</span>                 :             : </span>
 <span id="L588"><span class="lineNum">     588</span>         [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         377 :         BoolSetting(&quot;Safety on Stuttering&quot;, &amp;engine.m_stutter_safety_enabled, Tooltips::STUTTER_SAFETY_ENABLE);</span></span>
-<span id="L589"><span class="lineNum">     589</span>         [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         377 :         if (engine.m_stutter_safety_enabled) {</span></span>
-<span id="L590"><span class="lineNum">     590</span>   [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         754 :             FloatSetting(&quot;Stutter Threshold&quot;, &amp;engine.m_stutter_threshold, 1.1f, 5.0f, &quot;%.2fx&quot;, Tooltips::STUTTER_THRESHOLD, [&amp;]() { std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex); });</span></span>
+<span id="L589"><span class="lineNum">     589</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 377 times"> + </span>]:<span class="tlaGNC">         377 :         if (engine.m_stutter_safety_enabled) {</span></span>
+<span id="L590"><span class="lineNum">     590</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC tlaBgUNC">           0 :             FloatSetting(&quot;Stutter Threshold&quot;, &amp;engine.m_stutter_threshold, 1.1f, 5.0f, &quot;%.2fx&quot;, Tooltips::STUTTER_THRESHOLD, [&amp;]() { std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex); });</span></span>
 <span id="L591"><span class="lineNum">     591</span>                 :             :         }</span>
 <span id="L592"><span class="lineNum">     592</span>                 :             : </span>
-<span id="L593"><span class="lineNum">     593</span>         [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         377 :         ImGui::Separator();</span></span>
+<span id="L593"><span class="lineNum">     593</span>         [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">         377 :         ImGui::Separator();</span></span>
 <span id="L594"><span class="lineNum">     594</span>         [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         377 :         ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), &quot;Spike Detection&quot;);</span></span>
 <span id="L595"><span class="lineNum">     595</span>   [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         377 :         ImGui::NextColumn(); ImGui::NextColumn();</span></span>
 <span id="L596"><span class="lineNum">     596</span>                 :             : </span>

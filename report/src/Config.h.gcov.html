@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-11 00:35:23</td>
+            <td class="headerValue">2026-03-11 00:51:38</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -388,7 +388,7 @@
 <span id="L317"><span class="lineNum">     317</span>                 :             :         return *this;</span>
 <span id="L318"><span class="lineNum">     318</span>                 :             :     }</span>
 <span id="L319"><span class="lineNum">     319</span>                 :             : </span>
-<span id="L320"><span class="lineNum">     320</span>                 :             :     Preset&amp; SetSafety(float duration, float gain, float smoothing, float threshold, float immediate, float slew, bool stutter = true, float stutter_thresh = 1.5f) {</span>
+<span id="L320"><span class="lineNum">     320</span>                 :             :     Preset&amp; SetSafety(float duration, float gain, float smoothing, float threshold, float immediate, float slew, bool stutter = false, float stutter_thresh = 1.5f) {</span>
 <span id="L321"><span class="lineNum">     321</span>                 :             :         safety_window_duration = duration;</span>
 <span id="L322"><span class="lineNum">     322</span>                 :             :         safety_gain_reduction = gain;</span>
 <span id="L323"><span class="lineNum">     323</span>                 :             :         safety_smoothing_tau = smoothing;</span>
