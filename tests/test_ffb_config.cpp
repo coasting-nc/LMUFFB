@@ -164,10 +164,11 @@ TEST_CASE(test_preset_initialization, "Config") {
     
     // Ã¢Å¡Â Ã¯Â¸  IMPORTANT: This array MUST match the exact order of presets in Config.cpp LoadPresets()!
     // When adding/removing/reordering presets in Config.cpp, update this array AND the loop count below.
-    // Current count: 14 presets (v0.6.35: Added 4 DD presets after T300)
+    // Current count: 15 presets (v0.7.164: Added T300 v0.7.164)
     const char* preset_names[] = {
         "Default",
         "T300",
+        "T300 v0.7.164",
         "GT3 DD 15 Nm (Simagic Alpha)",
         "LMPx/HY DD 15 Nm (Simagic Alpha)",
         "GM DD 21 Nm (Moza R21 Ultra)",
@@ -184,8 +185,8 @@ TEST_CASE(test_preset_initialization, "Config") {
     
     bool all_passed = true;
     
-    // Ã¢Å¡Â Ã¯Â¸  IMPORTANT: Loop count (14) must match preset_names array size above!
-    for (int i = 0; i < 14; i++) {
+    // Ã¢Å¡Â Ã¯Â¸  IMPORTANT: Loop count (15) must match preset_names array size above!
+    for (int i = 0; i < 15; i++) {
         if (i >= Config::presets.size()) {
             FAIL_TEST("Preset " << i << " (" << preset_names[i] << ") not found!");
             all_passed = false;
@@ -209,9 +210,10 @@ TEST_CASE(test_preset_initialization, "Config") {
         // They should NOT be validated against expected_abs_freq, expected_lockup_freq_scale, etc.
         // 
         // Ã¢Å¡Â Ã¯Â¸  IMPORTANT: When adding new specialized presets to Config.cpp, add them to this list!
-        // Current specialized presets: Default, T300, GT3, LMPx/HY, GM, GM + Yaw Kick
+        // Specialized presets: Default, T300, T300 v0.7.164, GT3, LMPx/HY, GM, GM + Yaw Kick
         bool is_specialized = (preset.name == "Default" || 
                               preset.name == "T300" ||
+                              preset.name == "T300 v0.7.164" ||
                               preset.name == "GT3 DD 15 Nm (Simagic Alpha)" ||
                               preset.name == "LMPx/HY DD 15 Nm (Simagic Alpha)" ||
                               preset.name == "GM DD 21 Nm (Moza R21 Ultra)" ||
@@ -287,7 +289,7 @@ TEST_CASE(test_preset_initialization, "Config") {
     }
     
     if (all_passed) {
-        std::cout << "[PASS] All 14 built-in presets have correct field initialization" << std::endl;
+        std::cout << "[PASS] All 15 built-in presets have correct field initialization" << std::endl;
         g_tests_passed++;
     } else {
         FAIL_TEST("Some presets have incorrect specialization or defaults");
