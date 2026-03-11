@@ -317,7 +317,7 @@ struct Preset {
         return *this;
     }
 
-    Preset& SetSafety(float duration, float gain, float smoothing, float threshold, float immediate, float slew, bool stutter = true, float stutter_thresh = 1.5f) {
+    Preset& SetSafety(float duration, float gain, float smoothing, float threshold, float immediate, float slew, bool stutter = false, float stutter_thresh = 1.5f) {
         safety_window_duration = duration;
         safety_gain_reduction = gain;
         safety_smoothing_tau = smoothing;

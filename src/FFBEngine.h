@@ -677,7 +677,7 @@ private:
     static constexpr float  DEFAULT_SPIKE_DETECTION_THRESHOLD = 500.0f;
     static constexpr float  DEFAULT_IMMEDIATE_SPIKE_THRESHOLD = 1500.0f;
 
-    static constexpr bool   DEFAULT_STUTTER_SAFETY_ENABLED = true;
+    static constexpr bool   DEFAULT_STUTTER_SAFETY_ENABLED = false;
     static constexpr float  DEFAULT_STUTTER_THRESHOLD = 1.5f;
 
     static constexpr double DEFAULT_CALC_DT = 0.0025;

@@ -20,7 +20,7 @@ void test_safety_gui_defaults() {
     ASSERT_NEAR(engine.m_spike_detection_threshold, 500.0f, 0.001);
     ASSERT_NEAR(engine.m_immediate_spike_threshold, 1500.0f, 0.001);
     ASSERT_NEAR(engine.m_safety_slew_full_scale_time_s, 1.0f, 0.001);
-    ASSERT_TRUE(engine.m_stutter_safety_enabled);
+    ASSERT_FALSE(engine.m_stutter_safety_enabled);
     ASSERT_NEAR(engine.m_stutter_threshold, 1.5f, 0.001);
 }
 
