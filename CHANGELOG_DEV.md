@@ -5,26 +5,26 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## Cumulative changes from versions v0.7.114 - 0.7.165
+## Cumulative changes from versions v0.7.114 - 0.7.166
 
-## [0.7.165] 
+## [0.7.166] 
 ### Added
 - **New FFB Effects**:
     - **Unloaded Yaw Kick**: to feel the rear stepping out under braking or lift-off oversteer.
     - **Power Yaw Kick**: to feel the rear steeppig out due to throttle application and rear wheel spin (traction loss).
-    - Other effects: Lateral Load, Longitudinal G-Force
-    - The new effects are disabled by default. You can try the new Preset "T300 v0.7.164" which has them enabled (Note: settings might be too strong in Direct Drive wheels, reduce Gain for testing).
+    - Other effects added: Lateral Load, Longitudinal G-Force
+    - The new effects are disabled by default. You can try the new Preset "T300 v0.7.164" which has them enabled (Note: this profile might be very strong in Direct Drive wheels, reduce Gain for testing).
 - **FFB Up-sampling**: 
   - up-sampling LMU telemetry channels from 100Hz to 400Hz 
   - up-sampling lmuFFB output to wheelbases from 400Hz to 1000Hz (Thanks to **@DiSHTiX** for the initial implementation!)
 - **Log Analyser**:  
-  - It is now bundled with the app. If you record a log with the app, you can use the menu Log -> Analyse Last Log, to automatically generate a txt report and some plot images.
+  - Log Analyser is now bundled with the app. If you record a log with the app, you can use the menu "Log -> Analyse Last Log" to automatically generate a txt report and some plot images.
 
 ### Fixed
 - Reduced FFB spikes when exiting to garage, menus, or transitioning between sessions
 - Added new Safety section in the GUI with settings for reducing FFB spikes in some scenarios.
 - Fixed strange pulls in the FFB when using a setup with stiff dampers (particularly with the LMP2), that were due to yaw acceleration spikes.
-- Made ABS and Lockup effects independent of the "Vibration Strength" slider 
+- Made ABS and Lockup effects independent from the "Vibration Strength" slider 
 - Removed console window
 
 
