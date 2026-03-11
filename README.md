@@ -4,7 +4,7 @@ A Telemetry-based Force Feedback app for LMU, somewhat inspired by irFFB and Mar
 
 Experimental alpha version.
 
-![lmuFFB GUI](docs/screenshots/v_0.6.4.png)
+![lmuFFB GUI](docs/screenshots/v0.7.166.png)
 
 ## 📥 Download
 
