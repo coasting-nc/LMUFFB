@@ -12,8 +12,8 @@ All notable changes to this project will be documented in this file.
 - **New FFB Effects**:
     - **Unloaded Yaw Kick**: to feel the rear stepping out under braking or lift-off oversteer.
     - **Power Yaw Kick**: to feel the rear steeppig out due to throttle application and rear wheel spin (traction loss).
-    - Other effects added: Lateral Load, Longitudinal G-Force
-    - The new effects are disabled by default. You can try the new Preset "T300 v0.7.164" which has them enabled (Note: this profile might be very strong in Direct Drive wheels, reduce Gain for testing).
+    - Other effects added: **Lateral Load, Longitudinal G-Force**  (wheel gets heavier under braking)
+    - The new effects are disabled by default. You can try the **new Preset "T300 v0.7.164"** which has them enabled (Note: this profile might be very strong in Direct Drive wheels, reduce Gain for testing).
 - **FFB Up-sampling**: 
   - up-sampling LMU telemetry channels from 100Hz to 400Hz 
   - up-sampling lmuFFB output to wheelbases from 400Hz to 1000Hz (Thanks to **@DiSHTiX** for the initial implementation!)
