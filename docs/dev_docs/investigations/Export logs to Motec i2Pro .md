@@ -16,3 +16,35 @@ Unrelated to rF2 / LMU, but it is opensource and converts to Motec i2Pro format:
 * https://github.com/ludovicb1239/Aim_2_MoTeC
 
 
+* https://forum.motec.com.au/viewtopic.php?f=26&t=4317
+
+
+* https://github.com/patrickmoore/Mu
+
+* https://github.com/stevendaniluk/MotecLogGenerator
+* https://github.com/stevendaniluk/MotecLogGenerator/blob/master/motec_log.py
+
+ldpartser:
+* https://github.com/gotzl/ldparser/tree/f05d2f8e51059a287ac39807552ce57adb9e3e25
+* https://github.com/GeekyDeaks/sim-to-motec
+* https://forum.kw-studios.com/index.php?threads/slipsteer-ldx-motec-telemetry-file-generator.17978/#:~:text=KamilDabkowski%20Member&text=Hello%2C,outside%20of%20motec%20licensed%20tools).&text=Just%20need%20to%20click%20start,or%20%22borderles%20window%22%20mode.
+
+
+
+## Alternatives to Motec
+
+Also investigate alternatives to Motect that have feature parity with it for most typical use in sim racing.
+
+* https://www.simracingtelemetry.com/
+
+"An application to display telemetry data recorded by Assetto Corsa Competizione.
+
+It is build around bokeh and displays various figures that are inspired by the ACC MoTec i2 workspace. See also this article." https://www.overtake.gg/threads/acc-blog-motec-telemetry-and-dedicated-acc-workspace.165714/
+* https://github.com/gotzl/acctelemetry
+
+
+
+
+## Building a new toold
+
+SimTelemetryViewer
