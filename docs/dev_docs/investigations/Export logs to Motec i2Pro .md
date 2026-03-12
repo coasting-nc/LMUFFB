@@ -4,6 +4,8 @@ Determine the correct format read by Motec i2Pro.
 
 See other open source projects that export to Motec i2Pro to see the format, tools and convention for exporting to Motec i2Pro.
 
+ld format: This structure has been meticulously mapped by various open-source reverse engineering efforts, most notably the ldparser written in Python, the Aim_2_MoTeC converter written in C#, and the motec-i2 library written in Rust.
+
 * https://github.com/alelosbrigia/LMU-telemetry
 
 DAMPlugin for rF2 ("This plugin generates Motec i2Pro compatible log files.")
