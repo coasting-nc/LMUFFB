@@ -179,6 +179,14 @@ def main():
     DEFAULT_INCLUDE_REFERENCE_DEV_DOCUMENTATION = False
     DEFAULT_INCLUDE_CUSTOM_DOCS = True
 
+
+    # TODO:
+    # Add more parameters to have more fine grained control on code and docs to include.
+    # DEFAULT_INCLUDE_MAIN_CODE
+    # should be replaced by
+    # DEFAULT_EXCLUDE_ALL_MAIN_CODE 
+    # and then a series of sub-parameters that, when DEFAULT_EXCLUDE_ALL_MAIN_CODE is false, determine which components of the main code must be included. Eg. graphics/GUI, Input/Output (DirectInput), core physics, etc.
+    # 
     
 
     custom_list_of_documents_to_include = [
