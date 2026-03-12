@@ -101,6 +101,35 @@ def is_main_code(relpath_normalized):
     """Check if a file is part of the main application code (src)."""
     return relpath_normalized.startswith('src/')
 
+def get_main_code_component(relpath_normalized):
+    """Categorize a file within the src/ directory."""
+    if not relpath_normalized.startswith('src/'):
+        return None
+    
+    path = relpath_normalized[4:] # strip 'src/'
+    
+    # GUI
+    if any(path.startswith(prefix) for prefix in ['GuiLayer', 'GuiPlatform', 'GuiWidgets', 'Tooltips', 'DXGIUtils', 'resource.h', 'res.rc.in']):
+        return 'gui'
+    
+    # I/O
+    if any(path.startswith(prefix) for prefix in ['DirectInputFFB', 'AsyncLogger', 'Logger.h', 'RestApiProvider', 'GameConnector', 'PerfStats', 'RateMonitor', 'HealthMonitor']):
+        return 'io'
+        
+    # Physics
+    if any(path.startswith(prefix) for prefix in ['FFBEngine', 'GripLoadEstimation', 'MathUtils', 'SteeringUtils', 'UpSampler', 'VehicleUtils', 'aceFFB']):
+        return 'physics'
+        
+    # Interfaces
+    if any(path.startswith(prefix) for prefix in ['lmu_sm_interface', 'rF2']):
+        return 'interfaces'
+        
+    # Common
+    if any(path.startswith(prefix) for prefix in ['Config', 'StringUtils', 'main.cpp', 'Version.h.in']):
+        return 'common'
+        
+    return 'common'
+
 def is_ignored(relpath, root_dir):
     """Check if a file is ignored by git."""
     try:
@@ -128,8 +157,24 @@ def parse_args(args=None):
     
     # Main code options
     main_group = parser.add_mutually_exclusive_group()
-    main_group.add_argument("--include-main-code", action="store_true", dest="include_main_code", help="Include main source code (src/)")
-    main_group.add_argument("--exclude-main-code", action="store_false", dest="include_main_code", help="Exclude main source code")
+    main_group.add_argument("--exclude-all-main-code", action="store_true", dest="exclude_all_main", help="Exclude all main source code (src/)")
+    main_group.add_argument("--include-main-code", action="store_false", dest="exclude_all_main", help="Include main source code components")
+
+    # Main code sub-components
+    parser.add_argument("--include-main-gui", action="store_true", dest="include_main_gui", help="Include GUI components")
+    parser.add_argument("--exclude-main-gui", action="store_false", dest="include_main_gui", help="Exclude GUI components")
+
+    parser.add_argument("--include-main-io", action="store_true", dest="include_main_io", help="Include I/O components")
+    parser.add_argument("--exclude-main-io", action="store_false", dest="include_main_io", help="Exclude I/O components")
+
+    parser.add_argument("--include-main-physics", action="store_true", dest="include_main_physics", help="Include Physics components")
+    parser.add_argument("--exclude-main-physics", action="store_false", dest="include_main_physics", help="Exclude Physics components")
+
+    parser.add_argument("--include-main-interfaces", action="store_true", dest="include_main_interfaces", help="Include Interface components")
+    parser.add_argument("--exclude-main-interfaces", action="store_false", dest="include_main_interfaces", help="Exclude Interface components")
+
+    parser.add_argument("--include-main-common", action="store_true", dest="include_main_common", help="Include Common/Config components")
+    parser.add_argument("--exclude-main-common", action="store_false", dest="include_main_common", help="Exclude Common/Config components")
 
     # Makefile options
     make_group = parser.add_mutually_exclusive_group()
@@ -151,16 +196,20 @@ def parse_args(args=None):
     ref_group.add_argument("--include-reference-docs", action="store_true", dest="include_reference_docs", help="Include reference dev documentation")
     ref_group.add_argument("--exclude-reference-docs", action="store_false", dest="include_reference_docs", help="Exclude reference dev documentation")
 
-    # Set defaults if not specified by the injection logic in main
     parser.set_defaults(
         include_tests=True, 
         include_non_code=True, 
-        include_main_code=True, 
         include_makefiles=True, 
         test_examples_only=False, 
         include_log_analyzer=False, 
         include_custom_docs=True,
-        include_reference_docs=True
+        include_reference_docs=True,
+        exclude_all_main=False,
+        include_main_gui=True,
+        include_main_io=True,
+        include_main_physics=True,
+        include_main_interfaces=True,
+        include_main_common=True
     )
     
     return parser.parse_args(args)
@@ -218,8 +267,24 @@ def main():
     if "--include-non-code" not in cli_args and "--exclude-non-code" not in cli_args:
         cli_args.append("--include-non-code" if DEFAULT_INCLUDE_NON_CODE else "--exclude-non-code")
 
-    if "--include-main-code" not in cli_args and "--exclude-main-code" not in cli_args:
-        cli_args.append("--include-main-code" if DEFAULT_INCLUDE_MAIN_CODE else "--exclude-main-code")
+    # Main code injection
+    if "--exclude-all-main-code" not in cli_args and "--include-main-code" not in cli_args:
+        cli_args.append("--exclude-all-main-code" if DEFAULT_EXCLUDE_ALL_MAIN_CODE else "--include-main-code")
+
+    # Sub-components injection
+    sub_components = [
+        ("gui", DEFAULT_INCLUDE_MAIN_GUI),
+        ("io", DEFAULT_INCLUDE_MAIN_IO),
+        ("physics", DEFAULT_INCLUDE_MAIN_PHYSICS),
+        ("interfaces", DEFAULT_INCLUDE_MAIN_INTERFACES),
+        ("common", DEFAULT_INCLUDE_MAIN_COMMON)
+    ]
+    
+    for comp_name, default_val in sub_components:
+        inc_flag = f"--include-main-{comp_name}"
+        exc_flag = f"--exclude-main-{comp_name}"
+        if inc_flag not in cli_args and exc_flag not in cli_args:
+            cli_args.append(inc_flag if default_val else exc_flag)
 
     if "--include-makefiles" not in cli_args and "--exclude-makefiles" not in cli_args:
         cli_args.append("--include-makefiles" if DEFAULT_INCLUDE_MAKEFILES else "--exclude-makefiles")
@@ -238,7 +303,13 @@ def main():
     print(f"Generating context with:")
     print(f"  include_tests: {args.include_tests} (examples_only: {args.test_examples_only})")
     print(f"  include_non_code: {args.include_non_code}")
-    print(f"  include_main_code: {args.include_main_code}")
+    print(f"  exclude_all_main: {args.exclude_all_main}")
+    if not args.exclude_all_main:
+        print(f"    include_main_gui: {args.include_main_gui}")
+        print(f"    include_main_io: {args.include_main_io}")
+        print(f"    include_main_physics: {args.include_main_physics}")
+        print(f"    include_main_interfaces: {args.include_main_interfaces}")
+        print(f"    include_main_common: {args.include_main_common}")
     print(f"  include_makefiles: {args.include_makefiles}")
     print(f"  include_log_analyzer: {args.include_log_analyzer}")
     print(f"  include_custom_docs: {args.include_custom_docs}")
@@ -304,8 +375,18 @@ def main():
                         elif args.include_tests:
                             should_include = True
                     elif is_main_code(relpath_normalized):
-                        if args.include_main_code:
-                            should_include = True
+                        if not args.exclude_all_main:
+                            component = get_main_code_component(relpath_normalized)
+                            if component == 'gui' and args.include_main_gui:
+                                should_include = True
+                            elif component == 'io' and args.include_main_io:
+                                should_include = True
+                            elif component == 'physics' and args.include_main_physics:
+                                should_include = True
+                            elif component == 'interfaces' and args.include_main_interfaces:
+                                should_include = True
+                            elif component == 'common' and args.include_main_common:
+                                should_include = True
                     else:
                         # Other code files (e.g. root scripts if not excluded)
                         should_include = True
