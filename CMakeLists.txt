@@ -291,6 +291,9 @@ file(GLOB TOOL_ROOT_FILES CONFIGURE_DEPENDS
 file(GLOB ANALYZER_FILES CONFIGURE_DEPENDS 
     "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/analyzers/*.py"
 )
+file(GLOB EXPORTER_FILES CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/tools/lmuffb_log_analyzer/exporters/*.py"
+)
 
 set(TOOL_COPY_COMMANDS "")
 foreach(F ${TOOL_ROOT_FILES})
@@ -298,6 +301,9 @@ foreach(F ${TOOL_ROOT_FILES})
 endforeach()
 foreach(F ${ANALYZER_FILES})
     list(APPEND TOOL_COPY_COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different "${F}" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/analyzers/")
+endforeach()
+foreach(F ${EXPORTER_FILES})
+    list(APPEND TOOL_COPY_COMMANDS COMMAND ${CMAKE_COMMAND} -E copy_if_different "${F}" "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/exporters/")
 endforeach()
 
 # Copy Distribution Files & Tools
@@ -307,6 +313,7 @@ add_custom_command(TARGET LMUFFB POST_BUILD
     # Tools folder - Clear and create subfolders
     COMMAND ${CMAKE_COMMAND} -E remove_directory "$<TARGET_FILE_DIR:LMUFFB>/tools"
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/analyzers"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:LMUFFB>/tools/lmuffb_log_analyzer/exporters"
     # Execute automatic copy commands
     ${TOOL_COPY_COMMANDS}
 )

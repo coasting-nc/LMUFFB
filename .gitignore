@@ -22,7 +22,13 @@ cmake-build-*/
 vendor/
 
 
-python_prototype/LMUFFB/__pycache__/**
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
 tests/build-tests/
 .specstory/.gitignore
 .specstory/.project.json
@@ -32,10 +38,6 @@ tests/build/
 build_test/
 build_pr_*/
 tmp_invalid.ini
-tools/lmuffb_log_analyzer/tests/__pycache__/*
-tools/lmuffb_log_analyzer/__pycache__/* 
-tools/lmuffb_log_analyzer/analyzers/__pycache__/*
-scripts/__pycache__/**
 node_modules/.package-lock.json
 node_modules/**
 package-lock.json

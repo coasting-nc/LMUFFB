@@ -5,6 +5,7 @@ from rich.table import Table
 from rich.panel import Panel
 
 from .loader import load_log
+from .exporters.motec_exporter import MotecExporter
 from .analyzers.slope_analyzer import (
     analyze_slope_stability,
     detect_oscillation_events,
@@ -329,6 +330,24 @@ def plots(logfile, output, plot_all):
         console.print("\n[bold green]Done![/bold green]")
     except Exception as e:
         console.print(f"[bold red]Error generating plots:[/bold red] {e}")
+
+@cli.command()
+@click.argument('logfile', type=click.Path(exists=True))
+@click.option('--output', '-o', help='Output .ld file path')
+@click.option('--freq', '-f', default=100, help='Resampling frequency in Hz (default 100)')
+def export_motec(logfile, output, freq):
+    """Export a log file to MoTeC i2 Pro format (.ld and .ldx)."""
+    try:
+        metadata, df = load_log(logfile)
+        if not output:
+            output = str(Path(logfile).with_suffix('.ld'))
+
+        console.print(f"[bold]Exporting to MoTeC:[/bold] {output}")
+        exporter = MotecExporter()
+        exporter.export(metadata, df, output, target_freq=freq)
+        console.print(f"[bold green]Successfully exported to:[/bold green] {output} and {Path(output).with_suffix('.ldx')}")
+    except Exception as e:
+        console.print(f"[bold red]Error exporting to MoTeC:[/bold red] {e}")
 
 @cli.command()
 @click.argument('logfile', type=click.Path(exists=True))
