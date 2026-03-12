@@ -49,4 +49,20 @@ It is build around bokeh and displays various figures that are inspired by the A
 
 ## Building a new toold
 
+
 SimTelemetryViewer
+
+
+---
+
+### Prompt
+
+Read LMUFFB\docs\dev_docs\investigations\Exporting LMU Telemetry to MoTeC.md.
+
+Then create a new feature for the log analyser to export the data to motec, creating an .ld and .idx file for a log.
+You must first create a specification docment for the .ld and .idx file formats.
+Then you must create a set of pytest tests to test the functionality, ensuring that the file created respect the specification.
+Then you must implement the python module to export the .bin log to  .ld and .idx files.
+If the current .bin log has some limitation that prevent the end to end export to work, you must create a separate .md document detailing this limitation, so that they can be addressed later.
+
+Write an implementation plan to carry out your task. To write the implementation plan, follow these instructions: 
