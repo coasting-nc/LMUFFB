@@ -221,21 +221,19 @@ def main():
     # Configuration of defaults - change these to easily update default behavior
     DEFAULT_INCLUDE_TESTS = False
     DEFAULT_INCLUDE_NON_CODE = False
-    DEFAULT_INCLUDE_MAIN_CODE = True
+    
+    DEFAULT_EXCLUDE_ALL_MAIN_CODE = False
+    DEFAULT_INCLUDE_MAIN_GUI = True
+    DEFAULT_INCLUDE_MAIN_IO = True
+    DEFAULT_INCLUDE_MAIN_PHYSICS = True
+    DEFAULT_INCLUDE_MAIN_INTERFACES = True
+    DEFAULT_INCLUDE_MAIN_COMMON = True
+    
     DEFAULT_INCLUDE_MAKEFILES = False
     DEFAULT_TEST_EXAMPLES_ONLY = True
     DEFAULT_INCLUDE_LOG_ANALYZER = True
     DEFAULT_INCLUDE_REFERENCE_DEV_DOCUMENTATION = False
     DEFAULT_INCLUDE_CUSTOM_DOCS = True
-
-
-    # TODO:
-    # Add more parameters to have more fine grained control on code and docs to include.
-    # DEFAULT_INCLUDE_MAIN_CODE
-    # should be replaced by
-    # DEFAULT_EXCLUDE_ALL_MAIN_CODE 
-    # and then a series of sub-parameters that, when DEFAULT_EXCLUDE_ALL_MAIN_CODE is false, determine which components of the main code must be included. Eg. graphics/GUI, Input/Output (DirectInput), core physics, etc.
-    # 
     
 
     custom_list_of_documents_to_include = [
