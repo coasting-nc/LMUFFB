@@ -146,8 +146,22 @@ def parse_args(args=None):
     custom_group.add_argument("--include-custom-docs", action="store_true", dest="include_custom_docs", help="Include custom list of documents")
     custom_group.add_argument("--exclude-custom-docs", action="store_false", dest="include_custom_docs", help="Exclude custom list of documents")
 
+    # Reference docs options
+    ref_group = parser.add_mutually_exclusive_group()
+    ref_group.add_argument("--include-reference-docs", action="store_true", dest="include_reference_docs", help="Include reference dev documentation")
+    ref_group.add_argument("--exclude-reference-docs", action="store_false", dest="include_reference_docs", help="Exclude reference dev documentation")
+
     # Set defaults if not specified by the injection logic in main
-    parser.set_defaults(include_tests=True, include_non_code=True, include_main_code=True, include_makefiles=True, test_examples_only=False, include_log_analyzer=False, include_custom_docs=True)
+    parser.set_defaults(
+        include_tests=True, 
+        include_non_code=True, 
+        include_main_code=True, 
+        include_makefiles=True, 
+        test_examples_only=False, 
+        include_log_analyzer=False, 
+        include_custom_docs=True,
+        include_reference_docs=True
+    )
     
     return parser.parse_args(args)
 
@@ -162,7 +176,9 @@ def main():
     DEFAULT_INCLUDE_MAKEFILES = False
     DEFAULT_TEST_EXAMPLES_ONLY = True
     DEFAULT_INCLUDE_LOG_ANALYZER = True
+    DEFAULT_INCLUDE_REFERENCE_DEV_DOCUMENTATION = False
     DEFAULT_INCLUDE_CUSTOM_DOCS = True
+
     
 
     custom_list_of_documents_to_include = [
@@ -184,6 +200,9 @@ def main():
 
     if "--include-custom-docs" not in cli_args and "--exclude-custom-docs" not in cli_args:
         cli_args.append("--include-custom-docs" if DEFAULT_INCLUDE_CUSTOM_DOCS else "--exclude-custom-docs")
+
+    if "--include-reference-docs" not in cli_args and "--exclude-reference-docs" not in cli_args:
+        cli_args.append("--include-reference-docs" if DEFAULT_INCLUDE_REFERENCE_DEV_DOCUMENTATION else "--exclude-reference-docs")
 
     if "--include-tests" not in cli_args and "--exclude-tests" not in cli_args:
         cli_args.append("--include-tests" if DEFAULT_INCLUDE_TESTS else "--exclude-tests")
@@ -215,6 +234,7 @@ def main():
     print(f"  include_makefiles: {args.include_makefiles}")
     print(f"  include_log_analyzer: {args.include_log_analyzer}")
     print(f"  include_custom_docs: {args.include_custom_docs}")
+    print(f"  include_reference_docs: {args.include_reference_docs}")
 
     with open(output_path, 'w', encoding='utf-8') as outfile:
         # AUTO-GENERATED WARNING
@@ -284,9 +304,11 @@ def main():
                 elif is_doc:
                     if args.include_non_code:
                         should_include = True
-                    elif args.include_custom_docs:
-                        # Check if it's in the custom list (already normalized)
-                        if relpath_normalized in normalized_custom_list:
+                    else:
+                        if args.include_custom_docs and relpath_normalized in normalized_custom_list:
+                            should_include = True
+                        
+                        if args.include_reference_docs and relpath_normalized.startswith('docs/dev_docs/references/'):
                             should_include = True
                 
                 if not should_include:
