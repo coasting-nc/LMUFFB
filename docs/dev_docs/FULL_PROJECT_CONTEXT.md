@@ -977,7 +977,119 @@ void Config::LoadPresets() {
         presets.push_back(p);
     }
     
-    // 3. GT3 DD 15 Nm (Simagic Alpha)
+    // 3. T300 v0.7.164 (Issue #322)
+    {
+        Preset p("T300 v0.7.164", true);
+        p.app_version = "0.7.165";
+        p.gain = 0.559471f;
+        p.wheelbase_max_nm = 25.1f;
+        p.target_rim_nm = 24.5f;
+        p.min_force = 0.02f;
+        p.steering_shaft_gain = 0.955947f;
+        p.ingame_ffb_gain = 1.0f;
+        p.steering_shaft_smoothing = 0.0f;
+        p.understeer = 1.0f;
+        p.torque_source = 0;
+        p.torque_passthrough = false;
+        p.flatspot_suppression = false;
+        p.notch_q = 2.0f;
+        p.flatspot_strength = 1.0f;
+        p.static_notch_enabled = false;
+        p.static_notch_freq = 11.0f;
+        p.static_notch_width = 2.0f;
+        p.oversteer_boost = 0.0f;
+        p.long_load_effect = 2.68722f;
+        p.long_load_smoothing = 0.15f;
+        p.long_load_transform = 0;
+        p.grip_smoothing_steady = 0.05f;
+        p.grip_smoothing_fast = 0.005f;
+        p.grip_smoothing_sensitivity = 0.1f;
+        p.sop = 0.0f;
+        p.lateral_load = 2.81938f;
+        p.lat_load_transform = 2;
+        p.rear_align_effect = 0.828194f;
+        p.sop_yaw_gain = 0.418502f;
+        p.yaw_kick_threshold = 1.01f;
+        p.unloaded_yaw_gain = 1.0f;
+        p.unloaded_yaw_threshold = 0.0f;
+        p.unloaded_yaw_sens = 0.1f;
+        p.unloaded_yaw_gamma = 0.1f;
+        p.unloaded_yaw_punch = 0.0f;
+        p.power_yaw_gain = 1.0f;
+        p.power_yaw_threshold = 0.0f;
+        p.power_slip_threshold = 0.0618062f;
+        p.power_yaw_gamma = 0.2f;
+        p.power_yaw_punch = 0.0f;
+        p.yaw_smoothing = 0.001f;
+        p.gyro_gain = 0.0f;
+        p.gyro_smoothing = 0.0f;
+        p.sop_smoothing = 0.0f;
+        p.sop_scale = 1.0f;
+        p.understeer_affects_sop = false;
+        p.slope_detection_enabled = false;
+        p.slope_sg_window = 15;
+        p.slope_sensitivity = 0.5f;
+        p.slope_smoothing_tau = 0.04f;
+        p.slope_min_threshold = -0.3f;
+        p.slope_max_threshold = -2.0f;
+        p.slope_alpha_threshold = 0.02f;
+        p.slope_decay_rate = 5.0f;
+        p.slope_confidence_enabled = true;
+        p.slope_g_slew_limit = 50.0f;
+        p.slope_use_torque = true;
+        p.slope_torque_sensitivity = 0.5f;
+        p.slope_confidence_max_rate = 0.1f;
+        p.slip_smoothing = 0.002f;
+        p.chassis_smoothing = 0.0f;
+        p.optimal_slip_angle = 0.1f;
+        p.optimal_slip_ratio = 0.12f;
+        p.lockup_enabled = true;
+        p.lockup_gain = 3.0f;
+        p.brake_load_cap = 10.0f;
+        p.lockup_freq_scale = 1.02f;
+        p.lockup_gamma = 0.1f;
+        p.lockup_start_pct = 1.0f;
+        p.lockup_full_pct = 5.0f;
+        p.lockup_prediction_sens = 10.0f;
+        p.lockup_bump_reject = 0.1f;
+        p.lockup_rear_boost = 10.0f;
+        p.abs_pulse_enabled = false;
+        p.abs_gain = 2.0f;
+        p.abs_freq = 25.5f;
+        p.texture_load_cap = 1.5f;
+        p.slide_enabled = false;
+        p.slide_gain = 0.226562f;
+        p.slide_freq = 1.0f;
+        p.road_enabled = false;
+        p.road_gain = 0.0f;
+        p.vibration_gain = 1.0f;
+        p.road_fallback_scale = 0.05f;
+        p.dynamic_normalization_enabled = false;
+        p.auto_load_normalization_enabled = false;
+        p.soft_lock_enabled = false;
+        p.soft_lock_stiffness = 20.0f;
+        p.soft_lock_damping = 0.5f;
+        p.spin_enabled = false;
+        p.spin_gain = 0.5f;
+        p.spin_freq_scale = 1.0f;
+        p.scrub_drag_gain = 0.0f;
+        p.bottoming_method = 0;
+        p.rest_api_enabled = true;
+        p.rest_api_port = 6397;
+        p.safety_window_duration = 2.0f;
+        p.safety_gain_reduction = 0.3f;
+        p.safety_smoothing_tau = 0.2f;
+        p.spike_detection_threshold = 500.0f;
+        p.immediate_spike_threshold = 1500.0f;
+        p.safety_slew_full_scale_time_s = 1.0f;
+        p.stutter_safety_enabled = false;
+        p.stutter_threshold = 1.5f;
+        p.speed_gate_lower = 1.0f;
+        p.speed_gate_upper = 5.0f;
+        presets.push_back(p);
+    }
+
+    // 4. GT3 DD 15 Nm (Simagic Alpha)
     {
         Preset p("GT3 DD 15 Nm (Simagic Alpha)", true);
         p.gain = 1.0f;
@@ -1038,7 +1150,7 @@ void Config::LoadPresets() {
         presets.push_back(p);
     }
     
-    // 4. LMPx/HY DD 15 Nm (Simagic Alpha)
+    // 5. LMPx/HY DD 15 Nm (Simagic Alpha)
     {
         Preset p("LMPx/HY DD 15 Nm (Simagic Alpha)", true);
         p.gain = 1.0f;
@@ -1099,7 +1211,7 @@ void Config::LoadPresets() {
         presets.push_back(p);
     }
     
-    // 5. GM DD 21 Nm (Moza R21 Ultra)
+    // 6. GM DD 21 Nm (Moza R21 Ultra)
     {
         Preset p("GM DD 21 Nm (Moza R21 Ultra)", true);
         p.gain = 1.454f;
@@ -1160,7 +1272,7 @@ void Config::LoadPresets() {
         presets.push_back(p);
     }
     
-    // 6. GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)
+    // 7. GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)
     {
         // Copy GM preset and add yaw kick
         Preset p("GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)", true);
@@ -1450,7 +1562,7 @@ void Config::LoadPresets() {
         .SetSlipSmoothing(0.015f)
     );
 
-     // 22. Guide: SoP Yaw (Kick)
+    // 22. Guide: SoP Yaw (Kick)
     presets.push_back(Preset("Guide: SoP Yaw (Kick)", true)
         .SetGain(1.0f)
         .SetUndersteer(0.0f)
@@ -2661,7 +2773,7 @@ struct Preset {
         return *this;
     }
 
-    Preset& SetSafety(float duration, float gain, float smoothing, float threshold, float immediate, float slew, bool stutter = true, float stutter_thresh = 1.5f) {
+    Preset& SetSafety(float duration, float gain, float smoothing, float threshold, float immediate, float slew, bool stutter = false, float stutter_thresh = 1.5f) {
         safety_window_duration = duration;
         safety_gain_reduction = gain;
         safety_smoothing_tau = smoothing;
@@ -4172,6 +4284,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_yaw_accel_smoothed = 0.0;
         m_prev_yaw_rate = 0.0;
         m_yaw_rate_seeded = false;
+        m_fast_yaw_accel_smoothed = 0.0;
+        m_prev_fast_yaw_accel = 0.0;
+        m_yaw_accel_seeded = false;
+        m_unloaded_vulnerability_smoothed = 0.0;
+        m_power_vulnerability_smoothed = 0.0;
         m_prev_local_vel = {};
         m_local_vel_seeded = false;
     }
@@ -5082,13 +5199,21 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double derived_yaw_accel = (ctx.dt > 1e-6) ? (current_yaw_rate - m_prev_yaw_rate) / ctx.dt : 0.0;
     m_prev_yaw_rate = current_yaw_rate;
 
+    // NEW: Fast smoothing for the base signal (15ms tau) to remove 400Hz noise before Gamma amplification
+    double tau_fast = 0.015;
+    double alpha_fast = ctx.dt / (tau_fast + ctx.dt);
+    m_fast_yaw_accel_smoothed += alpha_fast * (derived_yaw_accel - m_fast_yaw_accel_smoothed);
+
     // Calculate Yaw Jerk (Rate of change of Yaw Acceleration) for transient shaping
     if (!m_yaw_accel_seeded) {
-        m_prev_derived_yaw_accel = derived_yaw_accel;
+        m_prev_fast_yaw_accel = m_fast_yaw_accel_smoothed;
         m_yaw_accel_seeded = true;
     }
-    double yaw_jerk = (ctx.dt > 1e-6) ? (derived_yaw_accel - m_prev_derived_yaw_accel) / ctx.dt : 0.0;
-    m_prev_derived_yaw_accel = derived_yaw_accel;
+    double yaw_jerk = (ctx.dt > 1e-6) ? (m_fast_yaw_accel_smoothed - m_prev_fast_yaw_accel) / ctx.dt : 0.0;
+    m_prev_fast_yaw_accel = m_fast_yaw_accel_smoothed;
+
+    // Clamp raw jerk to prevent insane spikes from collisions/telemetry glitches
+    yaw_jerk = std::clamp(yaw_jerk, -100.0, 100.0);
 
     // --- A. General Yaw Kick (Baseline Rotation Feel) ---
     double tau_yaw = (double)m_yaw_accel_smoothing;
@@ -5109,16 +5234,28 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     if (ctx.car_speed >= MIN_YAW_KICK_SPEED_MS && m_unloaded_yaw_gain > 0.001f) {
         double load_ratio = (m_static_rear_load > 1.0) ? ctx.avg_rear_load / m_static_rear_load : 1.0;
         double rear_load_drop = (std::max)(0.0, 1.0 - load_ratio);
-        double unloaded_vulnerability = (std::min)(1.0, rear_load_drop * (double)m_unloaded_yaw_sens);
+        double raw_unloaded_vuln = (std::min)(1.0, rear_load_drop * (double)m_unloaded_yaw_sens);
 
-        if (unloaded_vulnerability > 0.01) {
-            double punchy_yaw = derived_yaw_accel + (yaw_jerk * (double)m_unloaded_yaw_punch);
+        // ASYMMETRIC SMOOTHING: 2ms attack (instant), 50ms decay (prevents chatter)
+        double tau_unloaded = (raw_unloaded_vuln > m_unloaded_vulnerability_smoothed) ? 0.002 : 0.050;
+        m_unloaded_vulnerability_smoothed += (ctx.dt / (tau_unloaded + ctx.dt)) * (raw_unloaded_vuln - m_unloaded_vulnerability_smoothed);
+
+        if (m_unloaded_vulnerability_smoothed > 0.01) {
+            // Attack Phase Gate: Only apply punch if jerk is amplifying the current acceleration
+            double punch_addition = 0.0;
+            if ((yaw_jerk * m_fast_yaw_accel_smoothed) > 0.0) {
+                punch_addition = std::clamp(yaw_jerk * (double)m_unloaded_yaw_punch, -10.0, 10.0);
+            }
+
+            // CRITICAL FIX: Use the 15ms smoothed yaw, NOT the raw derived yaw
+            double punchy_yaw = m_fast_yaw_accel_smoothed + punch_addition;
+
             if (std::abs(punchy_yaw) > (double)m_unloaded_yaw_threshold) {
                 double processed_yaw = punchy_yaw - std::copysign((double)m_unloaded_yaw_threshold, punchy_yaw);
                 double sign = (processed_yaw >= 0.0) ? 1.0 : -1.0;
                 double yaw_norm = (std::min)(1.0, std::abs(processed_yaw) / 10.0);
                 double shaped_yaw = std::pow(yaw_norm, (double)m_unloaded_yaw_gamma) * 10.0 * sign;
-                unloaded_yaw_force = -1.0 * shaped_yaw * (double)m_unloaded_yaw_gain * (double)BASE_NM_YAW_KICK * unloaded_vulnerability;
+                unloaded_yaw_force = -1.0 * shaped_yaw * (double)m_unloaded_yaw_gain * (double)BASE_NM_YAW_KICK * m_unloaded_vulnerability_smoothed;
             }
         }
     }
@@ -5132,17 +5269,29 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
 
         double slip_start = (double)m_power_slip_threshold * 0.5;
         double slip_vulnerability = inverse_lerp(slip_start, (double)m_power_slip_threshold, max_rear_spin);
-        double throttle = (std::max)(0.0, (double)data->mUnfilteredThrottle);
-        double power_vulnerability = slip_vulnerability * throttle;
+        double throttle = std::clamp((double)data->mUnfilteredThrottle, 0.0, 1.0);
+        double raw_power_vuln = slip_vulnerability * throttle;
 
-        if (power_vulnerability > 0.01) {
-            double punchy_yaw = derived_yaw_accel + (yaw_jerk * (double)m_power_yaw_punch);
+        // ASYMMETRIC SMOOTHING: 2ms attack (instant), 50ms decay (prevents chatter)
+        double tau_power = (raw_power_vuln > m_power_vulnerability_smoothed) ? 0.002 : 0.050;
+        m_power_vulnerability_smoothed += (ctx.dt / (tau_power + ctx.dt)) * (raw_power_vuln - m_power_vulnerability_smoothed);
+
+        if (m_power_vulnerability_smoothed > 0.01) {
+            // Attack Phase Gate: Only apply punch if jerk is amplifying the current acceleration
+            double punch_addition = 0.0;
+            if ((yaw_jerk * m_fast_yaw_accel_smoothed) > 0.0) {
+                punch_addition = std::clamp(yaw_jerk * (double)m_power_yaw_punch, -10.0, 10.0);
+            }
+
+            // CRITICAL FIX: Use the 15ms smoothed yaw, NOT the raw derived yaw
+            double punchy_yaw = m_fast_yaw_accel_smoothed + punch_addition;
+
             if (std::abs(punchy_yaw) > (double)m_power_yaw_threshold) {
                 double processed_yaw = punchy_yaw - std::copysign((double)m_power_yaw_threshold, punchy_yaw);
                 double sign = (processed_yaw >= 0.0) ? 1.0 : -1.0;
                 double yaw_norm = (std::min)(1.0, std::abs(processed_yaw) / 10.0);
                 double shaped_yaw = std::pow(yaw_norm, (double)m_power_yaw_gamma) * 10.0 * sign;
-                power_yaw_force = -1.0 * shaped_yaw * (double)m_power_yaw_gain * (double)BASE_NM_YAW_KICK * power_vulnerability;
+                power_yaw_force = -1.0 * shaped_yaw * (double)m_power_yaw_gain * (double)BASE_NM_YAW_KICK * m_power_vulnerability_smoothed;
             }
         }
     }
@@ -5965,8 +6114,15 @@ public:
     double m_prev_yaw_rate = 0.0;     // New v0.7.144 (Solution 2)
     bool m_yaw_rate_seeded = false;   // New v0.7.144 (Solution 2)
     double m_prev_yaw_rate_log = 0.0;
-    double m_prev_derived_yaw_accel = 0.0; // New v0.7.164 (Issue #322)
+
+    // REPLACE m_prev_derived_yaw_accel WITH THESE:
+    double m_fast_yaw_accel_smoothed = 0.0;
+    double m_prev_fast_yaw_accel = 0.0;
     bool m_yaw_accel_seeded = false;       // New v0.7.164 (Issue #322)
+
+    // NEW: Vulnerability gate smoothing
+    double m_unloaded_vulnerability_smoothed = 0.0;
+    double m_power_vulnerability_smoothed = 0.0;
 
     // Derived Acceleration State (Issue #278)
     TelemVect3 m_prev_local_vel = {};
@@ -6219,7 +6375,7 @@ private:
     static constexpr float  DEFAULT_SPIKE_DETECTION_THRESHOLD = 500.0f;
     static constexpr float  DEFAULT_IMMEDIATE_SPIKE_THRESHOLD = 1500.0f;
 
-    static constexpr bool   DEFAULT_STUTTER_SAFETY_ENABLED = true;
+    static constexpr bool   DEFAULT_STUTTER_SAFETY_ENABLED = false;
     static constexpr float  DEFAULT_STUTTER_THRESHOLD = 1.5f;
 
     static constexpr double DEFAULT_CALC_DT = 0.0025;
@@ -9614,8 +9770,10 @@ public:
 #include <sstream>
 #include <iomanip>
 #include <chrono>
+#include <ctime>
 #include <cstdarg>
 #include <algorithm> // For std::max, std::min
+#include <filesystem>
 #include "StringUtils.h" // Include StringUtils.h
 
 // Simple synchronous logger that flushes every line for crash debugging
@@ -9626,13 +9784,81 @@ public:
         return instance;
     }
 
-    void Init(const std::string& filename) {
+    /**
+     * Initialize the logger.
+     * @param base_filename The base name of the log file (e.g. "debug.log")
+     * @param log_path Optional directory to store the log file.
+     * @param use_timestamp If true (default), appends a unique timestamp to the filename to avoid overwriting.
+     */
+    void Init(const std::string& base_filename, const std::string& log_path = "", bool use_timestamp = true) {
         std::lock_guard<std::mutex> lock(m_mutex);
+
+        std::string final_filename = base_filename;
+        std::string timestamp_str;
+
+        if (use_timestamp) {
+            // Generate timestamped filename
+            auto now = std::chrono::system_clock::now();
+            auto in_time_t = std::chrono::system_clock::to_time_t(now);
+            std::tm time_info;
+            #ifdef _WIN32
+                localtime_s(&time_info, &in_time_t);
+            #else
+                localtime_r(&in_time_t, &time_info);
+            #endif
+
+            std::stringstream ss;
+            ss << std::put_time(&time_info, "%Y-%m-%d_%H-%M-%S");
+            timestamp_str = ss.str();
+
+            // Extract extension if present
+            std::string name_part = base_filename;
+            std::string ext = ".log";
+            size_t dot_pos = base_filename.find_last_of('.');
+            if (dot_pos != std::string::npos) {
+                name_part = base_filename.substr(0, dot_pos);
+                ext = base_filename.substr(dot_pos);
+            }
+            final_filename = name_part + "_" + timestamp_str + ext;
+        }
+
+        std::filesystem::path path = log_path;
+        std::string new_filename;
+        if (!path.empty()) {
+            try {
+                std::filesystem::create_directories(path);
+            } catch (...) {
+                // Ignore, let file open fail if necessary
+            }
+            new_filename = (path / final_filename).string();
+        } else {
+            new_filename = final_filename;
+        }
+
+        // If we are re-initializing to the SAME file, don't close and reopen (to avoid truncation)
+        // Or if we must reopen, use append mode if use_timestamp is true to avoid losing startup lines
+        // that happened in the same second.
+        if (m_file.is_open() && m_filename == new_filename) {
+            _LogNoLock("Logger re-initialized to same file. Continuing...", true);
+            return;
+        }
+
         if (m_file.is_open()) {
             m_file.close();
         }
-        m_filename = filename;
-        m_file.open(m_filename, std::ios::out | std::ios::trunc);
+
+        m_filename = new_filename;
+
+        // Open mode: if timestamped, use append to be safe against multi-init in same second.
+        // If not timestamped (tests), use trunc to ensure clean file.
+        std::ios_base::openmode mode = std::ios::out;
+        if (use_timestamp) {
+            mode |= std::ios::app;
+        } else {
+            mode |= std::ios::trunc;
+        }
+
+        m_file.open(m_filename, mode);
         if (m_file.is_open()) {
             m_initialized = true;
             _LogNoLock("Logger Initialized. Version: " + std::string(LMUFFB_VERSION), true);
@@ -10102,7 +10328,8 @@ int main(int argc, char* argv[]) noexcept {
     }
 
     // Initialize persistent debug logging for crash analysis
-    Logger::Get().Init("lmuffb_debug.log");
+    // First init in current directory or logs folder to catch startup
+    Logger::Get().Init("lmuffb_debug.log", "logs");
     Logger::Get().Log("Starting lmuFFB (C++ Port)...");
     Logger::Get().LogFile("Application Started. Version: %s", LMUFFB_VERSION);
     if (headless) Logger::Get().LogFile("Mode: HEADLESS");
@@ -10110,6 +10337,12 @@ int main(int argc, char* argv[]) noexcept {
 
     Preset::ApplyDefaultsToEngine(g_engine);
     Config::Load(g_engine);
+
+    // Re-initialize logger with user-configured path if it changed
+    if (!Config::m_log_path.empty() && Config::m_log_path != "logs") {
+        Logger::Get().Init("lmuffb_debug.log", Config::m_log_path);
+        Logger::Get().LogFile("Logger re-initialized with user path: %s", Config::m_log_path.c_str());
+    }
 
     if (!headless) {
         if (!GuiLayer::Init()) {
