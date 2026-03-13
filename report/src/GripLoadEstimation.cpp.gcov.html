@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-13 13:11:34</td>
+            <td class="headerValue">2026-03-13 14:43:19</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -49,8 +49,8 @@
             <td></td>
             <td></td>
             <td class="headerItem">Branches:</td>
-            <td class="headerCovTableEntryMed">80.7&nbsp;%</td>
-            <td class="headerCovTableEntry">176</td>
+            <td class="headerCovTableEntryMed">81.6&nbsp;%</td>
+            <td class="headerCovTableEntry">174</td>
             <td class="headerCovTableEntry">142</td>
           </tr>
                   <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
@@ -285,10 +285,10 @@
 <span id="L209"><span class="lineNum">     209</span>                 :             :     // This allows us to compare our math against unencrypted cars to tune the algorithm.</span>
 <span id="L210"><span class="lineNum">     210</span>                 :             :     // ==================================================================================</span>
 <span id="L211"><span class="lineNum">     211</span>                 :<span class="tlaGNC">       30527 :     double slope_grip_estimate = 1.0;</span></span>
-<span id="L212"><span class="lineNum">     212</span>   [<span class="tlaGBC" title="Branch 0 was taken 4124 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 26403 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 2063 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 2061 times"> + </span> :<span class="tlaGNC">       30527 :     if (m_slope_detection_enabled &amp;&amp; is_front &amp;&amp; data &amp;&amp; car_speed &gt;= 5.0) {</span></span>
-<span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 2063 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaGBC" title="Branch 6 was taken 2063 times"> + </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span>]
-<span id="L213"><span class="lineNum">     213</span>                 :<span class="tlaGNC">        2063 :         slope_grip_estimate = calculate_slope_grip(</span></span>
-<span id="L214"><span class="lineNum">     214</span>                 :<span class="tlaGNC">        2063 :             data-&gt;mLocalAccel.x / 9.81,</span></span>
+<span id="L212"><span class="lineNum">     212</span>   [<span class="tlaGBC" title="Branch 0 was taken 15265 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 15262 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 15264 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span> :<span class="tlaGNC">       30527 :     if (is_front &amp;&amp; data &amp;&amp; car_speed &gt;= 5.0) {</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 14141 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 1123 times"> + </span>]
+<span id="L213"><span class="lineNum">     213</span>                 :<span class="tlaGNC">       14141 :         slope_grip_estimate = calculate_slope_grip(</span></span>
+<span id="L214"><span class="lineNum">     214</span>                 :<span class="tlaGNC">       14141 :             data-&gt;mLocalAccel.x / 9.81,</span></span>
 <span id="L215"><span class="lineNum">     215</span>                 :             :             result.slip_angle,</span>
 <span id="L216"><span class="lineNum">     216</span>                 :             :             dt,</span>
 <span id="L217"><span class="lineNum">     217</span>                 :             :             data</span>
@@ -438,127 +438,127 @@
 <span id="L360"><span class="lineNum">     360</span>                 :             : </span>
 <span id="L361"><span class="lineNum">     361</span>                 :             : // Helper: Calculate Grip Factor from Slope - v0.7.40 REWRITE</span>
 <span id="L362"><span class="lineNum">     362</span>                 :             : // Robust projected slope estimation with hold-and-decay logic and torque-based anticipation.</span>
-<span id="L363"><span class="lineNum">     363</span>                 :<span class="tlaGNC">        2568 : double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, double dt, const TelemInfoV01* data) {</span></span>
+<span id="L363"><span class="lineNum">     363</span>                 :<span class="tlaGNC">       14646 : double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, double dt, const TelemInfoV01* data) {</span></span>
 <span id="L364"><span class="lineNum">     364</span>                 :             :     // 1. Signal Hygiene (Slew Limiter &amp; Pre-Smoothing)</span>
 <span id="L365"><span class="lineNum">     365</span>                 :             : </span>
 <span id="L366"><span class="lineNum">     366</span>                 :             :     // Initialize slew limiter and smoothing state on first sample to avoid ramp-up transients</span>
-<span id="L367"><span class="lineNum">     367</span>         [<span class="tlaGBC" title="Branch 0 was taken 38 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2530 times"> + </span>]:<span class="tlaGNC">        2568 :     if (m_slope_buffer_count == 0) {</span></span>
-<span id="L368"><span class="lineNum">     368</span>                 :<span class="tlaGNC">          38 :         m_slope_lat_g_prev = std::abs(lateral_g);</span></span>
-<span id="L369"><span class="lineNum">     369</span>                 :<span class="tlaGNC">          38 :         m_slope_lat_g_smoothed = std::abs(lateral_g);</span></span>
-<span id="L370"><span class="lineNum">     370</span>                 :<span class="tlaGNC">          38 :         m_slope_slip_smoothed = std::abs(slip_angle);</span></span>
-<span id="L371"><span class="lineNum">     371</span>         [<span class="tlaGBC" title="Branch 0 was taken 27 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 11 times"> + </span>]:<span class="tlaGNC">          38 :         if (data) {</span></span>
-<span id="L372"><span class="lineNum">     372</span>                 :<span class="tlaGNC">          27 :             m_slope_torque_smoothed = std::abs(data-&gt;mSteeringShaftTorque);</span></span>
-<span id="L373"><span class="lineNum">     373</span>                 :<span class="tlaGNC">          27 :             m_slope_steer_smoothed = std::abs(data-&gt;mUnfilteredSteering);</span></span>
+<span id="L367"><span class="lineNum">     367</span>         [<span class="tlaGBC" title="Branch 0 was taken 211 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 14435 times"> + </span>]:<span class="tlaGNC">       14646 :     if (m_slope_buffer_count == 0) {</span></span>
+<span id="L368"><span class="lineNum">     368</span>                 :<span class="tlaGNC">         211 :         m_slope_lat_g_prev = std::abs(lateral_g);</span></span>
+<span id="L369"><span class="lineNum">     369</span>                 :<span class="tlaGNC">         211 :         m_slope_lat_g_smoothed = std::abs(lateral_g);</span></span>
+<span id="L370"><span class="lineNum">     370</span>                 :<span class="tlaGNC">         211 :         m_slope_slip_smoothed = std::abs(slip_angle);</span></span>
+<span id="L371"><span class="lineNum">     371</span>         [<span class="tlaGBC" title="Branch 0 was taken 200 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 11 times"> + </span>]:<span class="tlaGNC">         211 :         if (data) {</span></span>
+<span id="L372"><span class="lineNum">     372</span>                 :<span class="tlaGNC">         200 :             m_slope_torque_smoothed = std::abs(data-&gt;mSteeringShaftTorque);</span></span>
+<span id="L373"><span class="lineNum">     373</span>                 :<span class="tlaGNC">         200 :             m_slope_steer_smoothed = std::abs(data-&gt;mUnfilteredSteering);</span></span>
 <span id="L374"><span class="lineNum">     374</span>                 :             :         }</span>
 <span id="L375"><span class="lineNum">     375</span>                 :             :     }</span>
 <span id="L376"><span class="lineNum">     376</span>                 :             : </span>
-<span id="L377"><span class="lineNum">     377</span>         [<span class="tlaGBC" title="Branch 0 was taken 2568 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        2568 :     double lat_g_slew = apply_slew_limiter(std::abs(lateral_g), m_slope_lat_g_prev, (double)m_slope_g_slew_limit, dt);</span></span>
-<span id="L378"><span class="lineNum">     378</span>                 :<span class="tlaGNC">        2568 :     m_debug_lat_g_slew = lat_g_slew;</span></span>
+<span id="L377"><span class="lineNum">     377</span>         [<span class="tlaGBC" title="Branch 0 was taken 14646 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       14646 :     double lat_g_slew = apply_slew_limiter(std::abs(lateral_g), m_slope_lat_g_prev, (double)m_slope_g_slew_limit, dt);</span></span>
+<span id="L378"><span class="lineNum">     378</span>                 :<span class="tlaGNC">       14646 :     m_debug_lat_g_slew = lat_g_slew;</span></span>
 <span id="L379"><span class="lineNum">     379</span>                 :             : </span>
-<span id="L380"><span class="lineNum">     380</span>                 :<span class="tlaGNC">        2568 :     double alpha_smooth = dt / (0.01 + dt);</span></span>
+<span id="L380"><span class="lineNum">     380</span>                 :<span class="tlaGNC">       14646 :     double alpha_smooth = dt / (0.01 + dt);</span></span>
 <span id="L381"><span class="lineNum">     381</span>                 :             : </span>
-<span id="L382"><span class="lineNum">     382</span>         [<span class="tlaGBC" title="Branch 0 was taken 2530 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 38 times"> + </span>]:<span class="tlaGNC">        2568 :     if (m_slope_buffer_count &gt; 0) {</span></span>
-<span id="L383"><span class="lineNum">     383</span>                 :<span class="tlaGNC">        2530 :         m_slope_lat_g_smoothed += alpha_smooth * (lat_g_slew - m_slope_lat_g_smoothed);</span></span>
-<span id="L384"><span class="lineNum">     384</span>                 :<span class="tlaGNC">        2530 :         m_slope_slip_smoothed += alpha_smooth * (std::abs(slip_angle) - m_slope_slip_smoothed);</span></span>
-<span id="L385"><span class="lineNum">     385</span>         [<span class="tlaGBC" title="Branch 0 was taken 2043 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 487 times"> + </span>]:<span class="tlaGNC">        2530 :         if (data) {</span></span>
-<span id="L386"><span class="lineNum">     386</span>                 :<span class="tlaGNC">        2043 :             m_slope_torque_smoothed += alpha_smooth * (std::abs(data-&gt;mSteeringShaftTorque) - m_slope_torque_smoothed);</span></span>
-<span id="L387"><span class="lineNum">     387</span>                 :<span class="tlaGNC">        2043 :             m_slope_steer_smoothed += alpha_smooth * (std::abs(data-&gt;mUnfilteredSteering) - m_slope_steer_smoothed);</span></span>
+<span id="L382"><span class="lineNum">     382</span>         [<span class="tlaGBC" title="Branch 0 was taken 14435 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 211 times"> + </span>]:<span class="tlaGNC">       14646 :     if (m_slope_buffer_count &gt; 0) {</span></span>
+<span id="L383"><span class="lineNum">     383</span>                 :<span class="tlaGNC">       14435 :         m_slope_lat_g_smoothed += alpha_smooth * (lat_g_slew - m_slope_lat_g_smoothed);</span></span>
+<span id="L384"><span class="lineNum">     384</span>                 :<span class="tlaGNC">       14435 :         m_slope_slip_smoothed += alpha_smooth * (std::abs(slip_angle) - m_slope_slip_smoothed);</span></span>
+<span id="L385"><span class="lineNum">     385</span>         [<span class="tlaGBC" title="Branch 0 was taken 13948 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 487 times"> + </span>]:<span class="tlaGNC">       14435 :         if (data) {</span></span>
+<span id="L386"><span class="lineNum">     386</span>                 :<span class="tlaGNC">       13948 :             m_slope_torque_smoothed += alpha_smooth * (std::abs(data-&gt;mSteeringShaftTorque) - m_slope_torque_smoothed);</span></span>
+<span id="L387"><span class="lineNum">     387</span>                 :<span class="tlaGNC">       13948 :             m_slope_steer_smoothed += alpha_smooth * (std::abs(data-&gt;mUnfilteredSteering) - m_slope_steer_smoothed);</span></span>
 <span id="L388"><span class="lineNum">     388</span>                 :             :         }</span>
 <span id="L389"><span class="lineNum">     389</span>                 :             :     }</span>
 <span id="L390"><span class="lineNum">     390</span>                 :             : </span>
 <span id="L391"><span class="lineNum">     391</span>                 :             :     // 2. Update Buffers with smoothed values</span>
-<span id="L392"><span class="lineNum">     392</span>                 :<span class="tlaGNC">        2568 :     m_slope_lat_g_buffer[m_slope_buffer_index] = m_slope_lat_g_smoothed;</span></span>
-<span id="L393"><span class="lineNum">     393</span>                 :<span class="tlaGNC">        2568 :     m_slope_slip_buffer[m_slope_buffer_index] = m_slope_slip_smoothed;</span></span>
-<span id="L394"><span class="lineNum">     394</span>         [<span class="tlaGBC" title="Branch 0 was taken 2070 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 498 times"> + </span>]:<span class="tlaGNC">        2568 :     if (data) {</span></span>
-<span id="L395"><span class="lineNum">     395</span>                 :<span class="tlaGNC">        2070 :         m_slope_torque_buffer[m_slope_buffer_index] = m_slope_torque_smoothed;</span></span>
-<span id="L396"><span class="lineNum">     396</span>                 :<span class="tlaGNC">        2070 :         m_slope_steer_buffer[m_slope_buffer_index] = m_slope_steer_smoothed;</span></span>
+<span id="L392"><span class="lineNum">     392</span>                 :<span class="tlaGNC">       14646 :     m_slope_lat_g_buffer[m_slope_buffer_index] = m_slope_lat_g_smoothed;</span></span>
+<span id="L393"><span class="lineNum">     393</span>                 :<span class="tlaGNC">       14646 :     m_slope_slip_buffer[m_slope_buffer_index] = m_slope_slip_smoothed;</span></span>
+<span id="L394"><span class="lineNum">     394</span>         [<span class="tlaGBC" title="Branch 0 was taken 14148 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 498 times"> + </span>]:<span class="tlaGNC">       14646 :     if (data) {</span></span>
+<span id="L395"><span class="lineNum">     395</span>                 :<span class="tlaGNC">       14148 :         m_slope_torque_buffer[m_slope_buffer_index] = m_slope_torque_smoothed;</span></span>
+<span id="L396"><span class="lineNum">     396</span>                 :<span class="tlaGNC">       14148 :         m_slope_steer_buffer[m_slope_buffer_index] = m_slope_steer_smoothed;</span></span>
 <span id="L397"><span class="lineNum">     397</span>                 :             :     }</span>
 <span id="L398"><span class="lineNum">     398</span>                 :             : </span>
-<span id="L399"><span class="lineNum">     399</span>                 :<span class="tlaGNC">        2568 :     m_slope_buffer_index = (m_slope_buffer_index + 1) % SLOPE_BUFFER_MAX;</span></span>
-<span id="L400"><span class="lineNum">     400</span>         [<span class="tlaGBC" title="Branch 0 was taken 1083 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1485 times"> + </span>]:<span class="tlaGNC">        2568 :     if (m_slope_buffer_count &lt; SLOPE_BUFFER_MAX) m_slope_buffer_count++;</span></span>
+<span id="L399"><span class="lineNum">     399</span>                 :<span class="tlaGNC">       14646 :     m_slope_buffer_index = (m_slope_buffer_index + 1) % SLOPE_BUFFER_MAX;</span></span>
+<span id="L400"><span class="lineNum">     400</span>         [<span class="tlaGBC" title="Branch 0 was taken 3722 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 10924 times"> + </span>]:<span class="tlaGNC">       14646 :     if (m_slope_buffer_count &lt; SLOPE_BUFFER_MAX) m_slope_buffer_count++;</span></span>
 <span id="L401"><span class="lineNum">     401</span>                 :             : </span>
 <span id="L402"><span class="lineNum">     402</span>                 :             :     // 3. Calculate G-based Derivatives (Savitzky-Golay)</span>
-<span id="L403"><span class="lineNum">     403</span>                 :<span class="tlaGNC">        2568 :     double dG_dt = calculate_sg_derivative(m_slope_lat_g_buffer, m_slope_buffer_count, m_slope_sg_window, dt, m_slope_buffer_index);</span></span>
-<span id="L404"><span class="lineNum">     404</span>                 :<span class="tlaGNC">        2568 :     double dAlpha_dt = calculate_sg_derivative(m_slope_slip_buffer, m_slope_buffer_count, m_slope_sg_window, dt, m_slope_buffer_index);</span></span>
+<span id="L403"><span class="lineNum">     403</span>                 :<span class="tlaGNC">       14646 :     double dG_dt = calculate_sg_derivative(m_slope_lat_g_buffer, m_slope_buffer_count, m_slope_sg_window, dt, m_slope_buffer_index);</span></span>
+<span id="L404"><span class="lineNum">     404</span>                 :<span class="tlaGNC">       14646 :     double dAlpha_dt = calculate_sg_derivative(m_slope_slip_buffer, m_slope_buffer_count, m_slope_sg_window, dt, m_slope_buffer_index);</span></span>
 <span id="L405"><span class="lineNum">     405</span>                 :             : </span>
-<span id="L406"><span class="lineNum">     406</span>                 :<span class="tlaGNC">        2568 :     m_slope_dG_dt = dG_dt;</span></span>
-<span id="L407"><span class="lineNum">     407</span>                 :<span class="tlaGNC">        2568 :     m_slope_dAlpha_dt = dAlpha_dt;</span></span>
+<span id="L406"><span class="lineNum">     406</span>                 :<span class="tlaGNC">       14646 :     m_slope_dG_dt = dG_dt;</span></span>
+<span id="L407"><span class="lineNum">     407</span>                 :<span class="tlaGNC">       14646 :     m_slope_dAlpha_dt = dAlpha_dt;</span></span>
 <span id="L408"><span class="lineNum">     408</span>                 :             : </span>
 <span id="L409"><span class="lineNum">     409</span>                 :             :     // 4. Projected Slope Logic (G-based)</span>
-<span id="L410"><span class="lineNum">     410</span>         [<span class="tlaGBC" title="Branch 0 was taken 558 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2010 times"> + </span>]:<span class="tlaGNC">        2568 :     if (std::abs(dAlpha_dt) &gt; (double)m_slope_alpha_threshold) {</span></span>
-<span id="L411"><span class="lineNum">     411</span>                 :<span class="tlaGNC">         558 :         m_slope_hold_timer = SLOPE_HOLD_TIME;</span></span>
-<span id="L412"><span class="lineNum">     412</span>                 :<span class="tlaGNC">         558 :         m_debug_slope_num = dG_dt * dAlpha_dt;</span></span>
-<span id="L413"><span class="lineNum">     413</span>                 :<span class="tlaGNC">         558 :         m_debug_slope_den = (dAlpha_dt * dAlpha_dt) + 0.000001;</span></span>
-<span id="L414"><span class="lineNum">     414</span>                 :<span class="tlaGNC">         558 :         m_debug_slope_raw = m_debug_slope_num / m_debug_slope_den;</span></span>
-<span id="L415"><span class="lineNum">     415</span>                 :<span class="tlaGNC">         558 :         m_slope_current = std::clamp(m_debug_slope_raw, -20.0, 20.0);</span></span>
+<span id="L410"><span class="lineNum">     410</span>         [<span class="tlaGBC" title="Branch 0 was taken 1607 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 13039 times"> + </span>]:<span class="tlaGNC">       14646 :     if (std::abs(dAlpha_dt) &gt; (double)m_slope_alpha_threshold) {</span></span>
+<span id="L411"><span class="lineNum">     411</span>                 :<span class="tlaGNC">        1607 :         m_slope_hold_timer = SLOPE_HOLD_TIME;</span></span>
+<span id="L412"><span class="lineNum">     412</span>                 :<span class="tlaGNC">        1607 :         m_debug_slope_num = dG_dt * dAlpha_dt;</span></span>
+<span id="L413"><span class="lineNum">     413</span>                 :<span class="tlaGNC">        1607 :         m_debug_slope_den = (dAlpha_dt * dAlpha_dt) + 0.000001;</span></span>
+<span id="L414"><span class="lineNum">     414</span>                 :<span class="tlaGNC">        1607 :         m_debug_slope_raw = m_debug_slope_num / m_debug_slope_den;</span></span>
+<span id="L415"><span class="lineNum">     415</span>                 :<span class="tlaGNC">        1607 :         m_slope_current = std::clamp(m_debug_slope_raw, -20.0, 20.0);</span></span>
 <span id="L416"><span class="lineNum">     416</span>                 :             :     } else {</span>
-<span id="L417"><span class="lineNum">     417</span>                 :<span class="tlaGNC">        2010 :         m_slope_hold_timer -= dt;</span></span>
-<span id="L418"><span class="lineNum">     418</span>         [<span class="tlaGBC" title="Branch 0 was taken 1855 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 155 times"> + </span>]:<span class="tlaGNC">        2010 :         if (m_slope_hold_timer &lt;= 0.0) {</span></span>
-<span id="L419"><span class="lineNum">     419</span>                 :<span class="tlaGNC">        1855 :             m_slope_hold_timer = 0.0;</span></span>
-<span id="L420"><span class="lineNum">     420</span>                 :<span class="tlaGNC">        1855 :             m_slope_current += (double)m_slope_decay_rate * dt * (0.0 - m_slope_current);</span></span>
+<span id="L417"><span class="lineNum">     417</span>                 :<span class="tlaGNC">       13039 :         m_slope_hold_timer -= dt;</span></span>
+<span id="L418"><span class="lineNum">     418</span>         [<span class="tlaGBC" title="Branch 0 was taken 12631 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 408 times"> + </span>]:<span class="tlaGNC">       13039 :         if (m_slope_hold_timer &lt;= 0.0) {</span></span>
+<span id="L419"><span class="lineNum">     419</span>                 :<span class="tlaGNC">       12631 :             m_slope_hold_timer = 0.0;</span></span>
+<span id="L420"><span class="lineNum">     420</span>                 :<span class="tlaGNC">       12631 :             m_slope_current += (double)m_slope_decay_rate * dt * (0.0 - m_slope_current);</span></span>
 <span id="L421"><span class="lineNum">     421</span>                 :             :         }</span>
 <span id="L422"><span class="lineNum">     422</span>                 :             :     }</span>
 <span id="L423"><span class="lineNum">     423</span>                 :             : </span>
 <span id="L424"><span class="lineNum">     424</span>                 :             :     // 5. Calculate Torque-based Slope (Pneumatic Trail Anticipation)</span>
-<span id="L425"><span class="lineNum">     425</span>   [<span class="tlaGBC" title="Branch 0 was taken 2564 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 2067 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 497 times"> + </span>]:<span class="tlaGNC">        2568 :     volatile bool can_calc_torque = (m_slope_use_torque &amp;&amp; data != nullptr);</span></span>
-<span id="L426"><span class="lineNum">     426</span>         [<span class="tlaGBC" title="Branch 0 was taken 2067 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 501 times"> + </span>]:<span class="tlaGNC">        2568 :     if (can_calc_torque) {</span></span>
-<span id="L427"><span class="lineNum">     427</span>                 :<span class="tlaGNC">        2067 :         double dTorque_dt = calculate_sg_derivative(m_slope_torque_buffer, m_slope_buffer_count, m_slope_sg_window, dt, m_slope_buffer_index);</span></span>
-<span id="L428"><span class="lineNum">     428</span>                 :<span class="tlaGNC">        2067 :         double dSteer_dt = calculate_sg_derivative(m_slope_steer_buffer, m_slope_buffer_count, m_slope_sg_window, dt, m_slope_buffer_index);</span></span>
+<span id="L425"><span class="lineNum">     425</span>   [<span class="tlaGBC" title="Branch 0 was taken 14642 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 14145 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 497 times"> + </span>]:<span class="tlaGNC">       14646 :     volatile bool can_calc_torque = (m_slope_use_torque &amp;&amp; data != nullptr);</span></span>
+<span id="L426"><span class="lineNum">     426</span>         [<span class="tlaGBC" title="Branch 0 was taken 14145 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 501 times"> + </span>]:<span class="tlaGNC">       14646 :     if (can_calc_torque) {</span></span>
+<span id="L427"><span class="lineNum">     427</span>                 :<span class="tlaGNC">       14145 :         double dTorque_dt = calculate_sg_derivative(m_slope_torque_buffer, m_slope_buffer_count, m_slope_sg_window, dt, m_slope_buffer_index);</span></span>
+<span id="L428"><span class="lineNum">     428</span>                 :<span class="tlaGNC">       14145 :         double dSteer_dt = calculate_sg_derivative(m_slope_steer_buffer, m_slope_buffer_count, m_slope_sg_window, dt, m_slope_buffer_index);</span></span>
 <span id="L429"><span class="lineNum">     429</span>                 :             : </span>
-<span id="L430"><span class="lineNum">     430</span>         [<span class="tlaGBC" title="Branch 0 was taken 141 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1926 times"> + </span>]:<span class="tlaGNC">        2067 :         if (std::abs(dSteer_dt) &gt; (double)m_slope_alpha_threshold) { // Unified threshold for steering movement</span></span>
-<span id="L431"><span class="lineNum">     431</span>                 :<span class="tlaGNC">         141 :             m_debug_slope_torque_num = dTorque_dt * dSteer_dt;</span></span>
-<span id="L432"><span class="lineNum">     432</span>                 :<span class="tlaGNC">         141 :             m_debug_slope_torque_den = (dSteer_dt * dSteer_dt) + 0.000001;</span></span>
-<span id="L433"><span class="lineNum">     433</span>                 :<span class="tlaGNC">         141 :             m_slope_torque_current = std::clamp(m_debug_slope_torque_num / m_debug_slope_torque_den, -50.0, 50.0);</span></span>
+<span id="L430"><span class="lineNum">     430</span>         [<span class="tlaGBC" title="Branch 0 was taken 146 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 13999 times"> + </span>]:<span class="tlaGNC">       14145 :         if (std::abs(dSteer_dt) &gt; (double)m_slope_alpha_threshold) { // Unified threshold for steering movement</span></span>
+<span id="L431"><span class="lineNum">     431</span>                 :<span class="tlaGNC">         146 :             m_debug_slope_torque_num = dTorque_dt * dSteer_dt;</span></span>
+<span id="L432"><span class="lineNum">     432</span>                 :<span class="tlaGNC">         146 :             m_debug_slope_torque_den = (dSteer_dt * dSteer_dt) + 0.000001;</span></span>
+<span id="L433"><span class="lineNum">     433</span>                 :<span class="tlaGNC">         146 :             m_slope_torque_current = std::clamp(m_debug_slope_torque_num / m_debug_slope_torque_den, -50.0, 50.0);</span></span>
 <span id="L434"><span class="lineNum">     434</span>                 :             :         } else {</span>
-<span id="L435"><span class="lineNum">     435</span>                 :<span class="tlaGNC">        1926 :             m_slope_torque_current += (double)m_slope_decay_rate * dt * (0.0 - m_slope_torque_current);</span></span>
+<span id="L435"><span class="lineNum">     435</span>                 :<span class="tlaGNC">       13999 :             m_slope_torque_current += (double)m_slope_decay_rate * dt * (0.0 - m_slope_torque_current);</span></span>
 <span id="L436"><span class="lineNum">     436</span>                 :             :         }</span>
 <span id="L437"><span class="lineNum">     437</span>                 :             :     } else {</span>
 <span id="L438"><span class="lineNum">     438</span>                 :<span class="tlaGNC">         501 :         m_slope_torque_current = 20.0; // Positive value means no grip loss detected</span></span>
 <span id="L439"><span class="lineNum">     439</span>                 :             :     }</span>
 <span id="L440"><span class="lineNum">     440</span>                 :             : </span>
-<span id="L441"><span class="lineNum">     441</span>                 :<span class="tlaGNC">        2568 :     double current_grip_factor = 1.0;</span></span>
-<span id="L442"><span class="lineNum">     442</span>         [<span class="tlaGBC" title="Branch 0 was taken 2568 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        2568 :     double confidence = calculate_slope_confidence(dAlpha_dt);</span></span>
+<span id="L441"><span class="lineNum">     441</span>                 :<span class="tlaGNC">       14646 :     double current_grip_factor = 1.0;</span></span>
+<span id="L442"><span class="lineNum">     442</span>         [<span class="tlaGBC" title="Branch 0 was taken 14646 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       14646 :     double confidence = calculate_slope_confidence(dAlpha_dt);</span></span>
 <span id="L443"><span class="lineNum">     443</span>                 :             : </span>
 <span id="L444"><span class="lineNum">     444</span>                 :             :     // 1. Calculate Grip Loss from G-Slope (Lateral Saturation)</span>
-<span id="L445"><span class="lineNum">     445</span>         [<span class="tlaGBC" title="Branch 0 was taken 2568 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        2568 :     double loss_percent_g = inverse_lerp((double)m_slope_min_threshold, (double)m_slope_max_threshold, m_slope_current);</span></span>
+<span id="L445"><span class="lineNum">     445</span>         [<span class="tlaGBC" title="Branch 0 was taken 14646 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       14646 :     double loss_percent_g = inverse_lerp((double)m_slope_min_threshold, (double)m_slope_max_threshold, m_slope_current);</span></span>
 <span id="L446"><span class="lineNum">     446</span>                 :             : </span>
 <span id="L447"><span class="lineNum">     447</span>                 :             :     // 2. Calculate Grip Loss from Torque-Slope (Pneumatic Trail Drop)</span>
-<span id="L448"><span class="lineNum">     448</span>                 :<span class="tlaGNC">        2568 :     double loss_percent_torque = 0.0;</span></span>
-<span id="L449"><span class="lineNum">     449</span>   [<span class="tlaGBC" title="Branch 0 was taken 2564 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 2067 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 497 times"> + </span>]:<span class="tlaGNC">        2568 :     volatile bool use_torque_fusion = (m_slope_use_torque &amp;&amp; data != nullptr);</span></span>
-<span id="L450"><span class="lineNum">     450</span>         [<span class="tlaGBC" title="Branch 0 was taken 2067 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 501 times"> + </span>]:<span class="tlaGNC">        2568 :     if (use_torque_fusion) {</span></span>
-<span id="L451"><span class="lineNum">     451</span>         [<span class="tlaGBC" title="Branch 0 was taken 38 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2029 times"> + </span>]:<span class="tlaGNC">        2067 :         if (m_slope_torque_current &lt; 0.0) {</span></span>
-<span id="L452"><span class="lineNum">     452</span>                 :<span class="tlaGNC">          38 :             loss_percent_torque = std::abs(m_slope_torque_current) * (double)m_slope_torque_sensitivity;</span></span>
-<span id="L453"><span class="lineNum">     453</span>                 :<span class="tlaGNC">          38 :             loss_percent_torque = (std::max)(0.0, (std::min)(1.0, loss_percent_torque));</span></span>
+<span id="L448"><span class="lineNum">     448</span>                 :<span class="tlaGNC">       14646 :     double loss_percent_torque = 0.0;</span></span>
+<span id="L449"><span class="lineNum">     449</span>   [<span class="tlaGBC" title="Branch 0 was taken 14642 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 14145 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 497 times"> + </span>]:<span class="tlaGNC">       14646 :     volatile bool use_torque_fusion = (m_slope_use_torque &amp;&amp; data != nullptr);</span></span>
+<span id="L450"><span class="lineNum">     450</span>         [<span class="tlaGBC" title="Branch 0 was taken 14145 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 501 times"> + </span>]:<span class="tlaGNC">       14646 :     if (use_torque_fusion) {</span></span>
+<span id="L451"><span class="lineNum">     451</span>         [<span class="tlaGBC" title="Branch 0 was taken 43 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 14102 times"> + </span>]:<span class="tlaGNC">       14145 :         if (m_slope_torque_current &lt; 0.0) {</span></span>
+<span id="L452"><span class="lineNum">     452</span>                 :<span class="tlaGNC">          43 :             loss_percent_torque = std::abs(m_slope_torque_current) * (double)m_slope_torque_sensitivity;</span></span>
+<span id="L453"><span class="lineNum">     453</span>                 :<span class="tlaGNC">          43 :             loss_percent_torque = (std::max)(0.0, (std::min)(1.0, loss_percent_torque));</span></span>
 <span id="L454"><span class="lineNum">     454</span>                 :             :         }</span>
 <span id="L455"><span class="lineNum">     455</span>                 :             :     }</span>
 <span id="L456"><span class="lineNum">     456</span>                 :             : </span>
 <span id="L457"><span class="lineNum">     457</span>                 :             :     // 3. Fusion Logic (Max of both estimators)</span>
-<span id="L458"><span class="lineNum">     458</span>                 :<span class="tlaGNC">        2568 :     double loss_percent = (std::max)(loss_percent_g, loss_percent_torque);</span></span>
+<span id="L458"><span class="lineNum">     458</span>                 :<span class="tlaGNC">       14646 :     double loss_percent = (std::max)(loss_percent_g, loss_percent_torque);</span></span>
 <span id="L459"><span class="lineNum">     459</span>                 :             :     </span>
 <span id="L460"><span class="lineNum">     460</span>                 :             :     // Scale loss by confidence and apply floor (0.2)</span>
 <span id="L461"><span class="lineNum">     461</span>                 :             :     // 0% loss (loss_percent=0) -&gt; 1.0 factor</span>
 <span id="L462"><span class="lineNum">     462</span>                 :             :     // 100% loss (loss_percent=1) -&gt; 0.2 factor</span>
-<span id="L463"><span class="lineNum">     463</span>                 :<span class="tlaGNC">        2568 :     current_grip_factor = 1.0 - (loss_percent * 0.8 * confidence);</span></span>
+<span id="L463"><span class="lineNum">     463</span>                 :<span class="tlaGNC">       14646 :     current_grip_factor = 1.0 - (loss_percent * 0.8 * confidence);</span></span>
 <span id="L464"><span class="lineNum">     464</span>                 :             : </span>
 <span id="L465"><span class="lineNum">     465</span>                 :             :     // Apply Floor (Safety)</span>
-<span id="L466"><span class="lineNum">     466</span>                 :<span class="tlaGNC">        2568 :     current_grip_factor = (std::max)(0.2, (std::min)(1.0, current_grip_factor));</span></span>
+<span id="L466"><span class="lineNum">     466</span>                 :<span class="tlaGNC">       14646 :     current_grip_factor = (std::max)(0.2, (std::min)(1.0, current_grip_factor));</span></span>
 <span id="L467"><span class="lineNum">     467</span>                 :             : </span>
 <span id="L468"><span class="lineNum">     468</span>                 :             :     // 5. Smoothing (v0.7.0)</span>
-<span id="L469"><span class="lineNum">     469</span>                 :<span class="tlaGNC">        2568 :     double alpha = dt / ((double)m_slope_smoothing_tau + dt);</span></span>
-<span id="L470"><span class="lineNum">     470</span>                 :<span class="tlaGNC">        2568 :     alpha = (std::max)(0.001, (std::min)(1.0, alpha));</span></span>
-<span id="L471"><span class="lineNum">     471</span>                 :<span class="tlaGNC">        2568 :     m_slope_smoothed_output += alpha * (current_grip_factor - m_slope_smoothed_output);</span></span>
+<span id="L469"><span class="lineNum">     469</span>                 :<span class="tlaGNC">       14646 :     double alpha = dt / ((double)m_slope_smoothing_tau + dt);</span></span>
+<span id="L470"><span class="lineNum">     470</span>                 :<span class="tlaGNC">       14646 :     alpha = (std::max)(0.001, (std::min)(1.0, alpha));</span></span>
+<span id="L471"><span class="lineNum">     471</span>                 :<span class="tlaGNC">       14646 :     m_slope_smoothed_output += alpha * (current_grip_factor - m_slope_smoothed_output);</span></span>
 <span id="L472"><span class="lineNum">     472</span>                 :             : </span>
-<span id="L473"><span class="lineNum">     473</span>                 :<span class="tlaGNC">        2568 :     return m_slope_smoothed_output;</span></span>
+<span id="L473"><span class="lineNum">     473</span>                 :<span class="tlaGNC">       14646 :     return m_slope_smoothed_output;</span></span>
 <span id="L474"><span class="lineNum">     474</span>                 :             : }</span>
 <span id="L475"><span class="lineNum">     475</span>                 :             : </span>
 <span id="L476"><span class="lineNum">     476</span>                 :             : // Helper: Calculate confidence factor for slope detection</span>
 <span id="L477"><span class="lineNum">     477</span>                 :             : // Extracted to avoid code duplication between slope detection and logging</span>
-<span id="L478"><span class="lineNum">     478</span>                 :<span class="tlaGNC">        2611 : double FFBEngine::calculate_slope_confidence(double dAlpha_dt) {</span></span>
-<span id="L479"><span class="lineNum">     479</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 2611 times"> + </span>]:<span class="tlaGNC">        2611 :     if (!m_slope_confidence_enabled) return 1.0;</span></span>
+<span id="L478"><span class="lineNum">     478</span>                 :<span class="tlaGNC">       14689 : double FFBEngine::calculate_slope_confidence(double dAlpha_dt) {</span></span>
+<span id="L479"><span class="lineNum">     479</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 14689 times"> + </span>]:<span class="tlaGNC">       14689 :     if (!m_slope_confidence_enabled) return 1.0;</span></span>
 <span id="L480"><span class="lineNum">     480</span>                 :             : </span>
 <span id="L481"><span class="lineNum">     481</span>                 :             :     // v0.7.21 FIX: Use smoothstep confidence ramp [m_slope_alpha_threshold, m_slope_confidence_max_rate] rad/s</span>
 <span id="L482"><span class="lineNum">     482</span>                 :             :     // to reject singularity artifacts near zero.</span>
-<span id="L483"><span class="lineNum">     483</span>                 :<span class="tlaGNC">        2611 :     return smoothstep((double)m_slope_alpha_threshold, (double)m_slope_confidence_max_rate, std::abs(dAlpha_dt));</span></span>
+<span id="L483"><span class="lineNum">     483</span>                 :<span class="tlaGNC">       14689 :     return smoothstep((double)m_slope_alpha_threshold, (double)m_slope_confidence_max_rate, std::abs(dAlpha_dt));</span></span>
 <span id="L484"><span class="lineNum">     484</span>                 :             : }</span>
 <span id="L485"><span class="lineNum">     485</span>                 :             : </span>
 <span id="L486"><span class="lineNum">     486</span>                 :             : // Helper: Calculate Slip Ratio from wheel (v0.6.36 - Extracted from lambdas)</span>
