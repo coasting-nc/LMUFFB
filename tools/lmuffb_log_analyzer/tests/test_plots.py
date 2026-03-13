@@ -45,14 +45,14 @@ def sample_df():
         'dAlpha_dt': np.zeros(len(t)),
         'Marker': np.zeros(len(t)),
         'dG_dt': np.zeros(len(t)),
-        'RawLoadFL': np.full(len(t), 2000.0),
-        'RawLoadFR': np.full(len(t), 2000.0),
-        'RawLoadRL': np.full(len(t), 2000.0),
-        'RawLoadRR': np.full(len(t), 2000.0),
-        'ApproxLoadFL': np.full(len(t), 2100.0),
-        'ApproxLoadFR': np.full(len(t), 2100.0),
-        'ApproxLoadRL': np.full(len(t), 2100.0),
-        'ApproxLoadRR': np.full(len(t), 2100.0)
+        'RawLoadFL': 2000.0 + np.sin(t) * 100,
+        'RawLoadFR': 2000.0 + np.cos(t) * 100,
+        'RawLoadRL': 2000.0 + np.sin(t * 0.5) * 100,
+        'RawLoadRR': 2000.0 + np.cos(t * 0.5) * 100,
+        'ApproxLoadFL': 2100.0 + np.sin(t) * 90,
+        'ApproxLoadFR': 2100.0 + np.cos(t) * 90,
+        'ApproxLoadRL': 2100.0 + np.sin(t * 0.5) * 90,
+        'ApproxLoadRR': 2100.0 + np.cos(t * 0.5) * 90
     }
     return pd.DataFrame(data)
 

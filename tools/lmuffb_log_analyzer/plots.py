@@ -140,6 +140,7 @@ def plot_slope_timeseries(
     
     return ""
 
+
 def plot_lateral_diagnostic(
     df: pd.DataFrame,
     metadata: SessionMetadata,
@@ -236,6 +237,7 @@ def plot_lateral_diagnostic(
 
     return ""
 
+
 def plot_yaw_diagnostic(
     df: pd.DataFrame,
     threshold: float = 1.68,
@@ -313,83 +315,145 @@ def plot_yaw_diagnostic(
     if show: plt.show()
     return ""
 
+
 def plot_load_estimation_diagnostic(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
     show: bool = True,
     status_callback = None
 ) -> str:
-    """
-    Diagnostic plot for Tire Load Estimation (Approximate Load).
-    Panels: Time Series (Front), Time Series (Rear), Error Distribution, Correlation.
-    """
-    cols = ['RawLoadFL', 'RawLoadFR', 'RawLoadRL', 'RawLoadRR',
+    cols =['RawLoadFL', 'RawLoadFR', 'RawLoadRL', 'RawLoadRR',
             'ApproxLoadFL', 'ApproxLoadFR', 'ApproxLoadRL', 'ApproxLoadRR', 'Speed']
     if not all(c in df.columns for c in cols):
         return ""
 
     if status_callback: status_callback("Initializing Load Estimation diagnostic plot...")
-    fig, axes = plt.subplots(3, 1, figsize=(14, 12), sharex=True)
-    fig.suptitle('Tire Load Estimation: Absolute vs Dynamic Ratio', fontsize=14, fontweight='bold')
+
+    # Create a large 4x2 grid
+    fig = plt.figure(figsize=(16, 20))
+    gs = fig.add_gridspec(4, 2)
+    fig.suptitle('Tire Load Estimation: Absolute vs Dynamic Ratio', fontsize=16, fontweight='bold')
 
     plot_df = _downsample_df(df)
     time = plot_df['Time']
 
+    # --- Helper function to plot individual wheels ---
+    def plot_wheel(ax, raw_col, approx_col, title):
+        ax.plot(time, plot_df[raw_col], label='Raw Load', color='#2196F3', alpha=0.8, linewidth=1.5)
+        ax.plot(time, plot_df[approx_col], label='Approx Load', color='#F44336', alpha=0.8, linestyle='--', linewidth=1.5)
+        ax.set_title(title)
+        ax.set_ylabel('Load (N)')
+        ax.grid(True, alpha=0.3)
+        _safe_legend(ax, loc='upper right')
+
+    # Row 1: Front Wheels (Absolute)
+    plot_wheel(fig.add_subplot(gs[0, 0]), 'RawLoadFL', 'ApproxLoadFL', 'Front Left (FL) Absolute Load')
+    plot_wheel(fig.add_subplot(gs[0, 1]), 'RawLoadFR', 'ApproxLoadFR', 'Front Right (FR) Absolute Load')
+
+    # Row 2: Rear Wheels (Absolute)
+    plot_wheel(fig.add_subplot(gs[1, 0]), 'RawLoadRL', 'ApproxLoadRL', 'Rear Left (RL) Absolute Load')
+    plot_wheel(fig.add_subplot(gs[1, 1]), 'RawLoadRR', 'ApproxLoadRR', 'Rear Right (RR) Absolute Load')
+
+    # --- Helper function to plot Dynamic Ratios ---
+    def plot_dynamic_ratio(ax, raw_avg, approx_avg, title):
+        # Mimic C++ static load learning (average load between 2 and 15 m/s)
+        static_mask = (plot_df['Speed'] > 2.0) & (plot_df['Speed'] < 15.0)
+        if static_mask.any():
+            raw_static = raw_avg[static_mask].mean()
+            approx_static = approx_avg[static_mask].mean()
+        else:
+            raw_static = np.percentile(raw_avg, 5)
+            approx_static = np.percentile(approx_avg, 5)
+
+        # Prevent division by zero
+        raw_static = max(raw_static, 1.0)
+        approx_static = max(approx_static, 1.0)
+
+        raw_ratio = raw_avg / raw_static
+        approx_ratio = approx_avg / approx_static
+
+        # Calculate metrics for the text box
+        valid_mask = (raw_avg > 1.0) & (approx_avg > 1.0)
+        if valid_mask.sum() > 100:
+            ratio_error_mean = np.abs(approx_ratio[valid_mask] - raw_ratio[valid_mask]).mean()
+            ratio_corr = np.corrcoef(raw_ratio[valid_mask], approx_ratio[valid_mask])[0, 1]
+            stats_text = f"Dynamic Corr: {ratio_corr:.3f}\nMean Error: {ratio_error_mean:.3f}x"
+        else:
+            stats_text = "Stats: N/A (Insufficient Data)"
+
+        ax.plot(time, raw_ratio, label='Raw Ratio (x)', color='#2196F3', linewidth=1.5)
+        ax.plot(time, approx_ratio, label='Approx Ratio (x)', color='#F44336', linestyle='--', linewidth=1.5)
+        ax.axhline(1.0, color='black', linestyle=':', alpha=0.5, label='Static Weight (1.0x)')
+
+        ax.set_title(title)
+        ax.set_ylabel('Multiplier (x Static)')
+        ax.grid(True, alpha=0.3)
+        _safe_legend(ax, loc='upper right')
+
+        # Add stats text box in the upper left
+        props = dict(boxstyle='round', facecolor='white', alpha=0.8, edgecolor='gray')
+        ax.text(0.02, 0.95, stats_text, transform=ax.transAxes, fontsize=10,
+                verticalalignment='top', bbox=props)
+
+    # Row 3: Dynamic Ratios (The FFB Truth)
     raw_front = (plot_df['RawLoadFL'] + plot_df['RawLoadFR']) / 2.0
     approx_front = (plot_df['ApproxLoadFL'] + plot_df['ApproxLoadFR']) / 2.0
+    plot_dynamic_ratio(fig.add_subplot(gs[2, 0]), raw_front, approx_front, 'Front Axle Dynamic Ratio (What FFB Feels)')
 
-    # Panel 1: Absolute Newtons (Raw)
-    ax1 = axes[0]
-    ax1.plot(time, raw_front, label='Raw Load (N)', color='#2196F3', alpha=0.8)
-    ax1.set_ylabel('Load (N)')
-    ax1.set_title('True Telemetry Load (Absolute Newtons)')
-    ax1.grid(True, alpha=0.3)
-    _safe_legend(ax1, loc='upper right')
+    raw_rear = (plot_df['RawLoadRL'] + plot_df['RawLoadRR']) / 2.0
+    approx_rear = (plot_df['ApproxLoadRL'] + plot_df['ApproxLoadRR']) / 2.0
+    plot_dynamic_ratio(fig.add_subplot(gs[2, 1]), raw_rear, approx_rear, 'Rear Axle Dynamic Ratio (What FFB Feels)')
 
-    # Panel 2: Absolute Newtons (Approx)
-    ax2 = axes[1]
-    ax2.plot(time, approx_front, label='Approx Load (N)', color='#F44336', alpha=0.8)
-    ax2.set_ylabel('Load (N)')
-    ax2.set_title('Approximated Load (Absolute Newtons)')
-    ax2.grid(True, alpha=0.3)
-    _safe_legend(ax2, loc='upper right')
+    # --- Row 4: Restored Statistical Plots ---
+    raw_all = pd.concat([plot_df['RawLoadFL'], plot_df['RawLoadFR'], plot_df['RawLoadRL'], plot_df['RawLoadRR']])
+    approx_all = pd.concat([plot_df['ApproxLoadFL'], plot_df['ApproxLoadFR'], plot_df['ApproxLoadRL'], plot_df['ApproxLoadRR']])
 
-    # Panel 3: DYNAMIC RATIO (The FFB Truth)
-    ax3 = axes[2]
-    mask = (plot_df['RawLoadFL'] > 1.0) & (plot_df['ApproxLoadFL'] > 1.0)
-    static_mask = mask & (plot_df['Speed'] > 2.0) & (plot_df['Speed'] < 15.0)
+    # Filter out zeros (where game might not have provided data yet)
+    mask = (raw_all > 1.0) & (approx_all > 1.0)
+    raw_filt = raw_all[mask]
+    approx_filt = approx_all[mask]
 
-    if static_mask.any():
-        raw_static = raw_front[static_mask].mean()
-        approx_static = approx_front[static_mask].mean()
-    else:
-        raw_static = np.percentile(raw_front[mask], 5) if mask.any() else 1.0
-        approx_static = np.percentile(approx_front[mask], 5) if mask.any() else 1.0
+    # Panel 7: Correlation Scatter
+    ax_corr = fig.add_subplot(gs[3, 0])
+    if len(raw_filt) > 0:
+        correlation = np.corrcoef(raw_filt, approx_filt)[0, 1]
+        ax_corr.scatter(raw_filt, approx_filt, alpha=0.1, s=2, color='#9C27B0')
 
-    if raw_static > 1.0 and approx_static > 1.0:
-        raw_ratio = raw_front / raw_static
-        approx_ratio = approx_front / approx_static
+        # Identity line
+        lims = [
+            np.min([ax_corr.get_xlim()[0], ax_corr.get_ylim()[0]]),
+            np.max([ax_corr.get_xlim()[1], ax_corr.get_ylim()[1]]),
+        ]
+        ax_corr.plot(lims, lims, 'k-', alpha=0.5, zorder=0, label='Identity Line')
+        ax_corr.set_title(f'Absolute Correlation (All Wheels)\nr = {correlation:.3f}')
+    ax_corr.set_xlabel('Raw Load (N)')
+    ax_corr.set_ylabel('Approx Load (N)')
+    ax_corr.grid(True, alpha=0.3)
 
-        ax3.plot(time, raw_ratio, label='Raw Dynamic Ratio (x)', color='#2196F3', linewidth=1.5)
-        ax3.plot(time, approx_ratio, label='Approx Dynamic Ratio (x)', color='#F44336', linestyle='--', linewidth=1.5)
-        ax3.axhline(1.0, color='black', linestyle=':', alpha=0.5, label='Static Weight (1.0x)')
-
-        ax3.set_ylabel('Multiplier (x Static)')
-        ax3.set_xlabel('Time (s)')
-        ax3.set_title('Dynamic Ratio Comparison (What the FFB Engine actually feels)')
-        ax3.grid(True, alpha=0.3)
-        _safe_legend(ax3, loc='upper right')
-    else:
-        ax3.set_title('Dynamic Ratio Comparison (Insufficient Data)')
+    # Panel 8: Error Distribution
+    ax_err = fig.add_subplot(gs[3, 1])
+    if len(raw_filt) > 0:
+        error_filt = approx_filt - raw_filt
+        ax_err.hist(error_filt, bins=50, color='#607D8B', alpha=0.7, edgecolor='white')
+        mean_err = error_filt.mean()
+        std_err = error_filt.std()
+        ax_err.axvline(mean_err, color='red', linestyle='--', label=f'Mean: {mean_err:.1f}N')
+        ax_err.set_title(f'Absolute Error Distribution (Approx - Raw)\nStd Dev: {std_err:.1f}N')
+        ax_err.legend()
+    ax_err.set_xlabel('Error (N)')
+    ax_err.set_ylabel('Frequency')
+    ax_err.grid(True, alpha=0.3)
 
     plt.tight_layout()
 
     if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
         plt.savefig(output_path, dpi=150, bbox_inches='tight')
         plt.close(fig)
         return output_path
     if show: plt.show()
     return ""
+
 
 def plot_grip_estimation_diagnostic(
     df: pd.DataFrame,
@@ -444,6 +508,7 @@ def plot_grip_estimation_diagnostic(
         return output_path
     if show: plt.show()
     return ""
+
 
 def plot_system_health(
     df: pd.DataFrame,
@@ -500,6 +565,7 @@ def plot_system_health(
         return output_path
     if show: plt.show()
     return ""
+
 
 def plot_threshold_thrashing(
     df: pd.DataFrame,
@@ -558,6 +624,7 @@ def plot_threshold_thrashing(
     if show: plt.show()
     return ""
 
+
 def plot_suspension_yaw_correlation(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
@@ -598,6 +665,7 @@ def plot_suspension_yaw_correlation(
     if show: plt.show()
     return ""
 
+
 def plot_bottoming_diagnostic(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
@@ -637,6 +705,7 @@ def plot_bottoming_diagnostic(
     if show: plt.show()
     return ""
 
+
 def plot_yaw_fft(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
@@ -673,6 +742,7 @@ def plot_yaw_fft(
         return output_path
     if show: plt.show()
     return ""
+
 
 def plot_pull_detector(
     df: pd.DataFrame,
@@ -734,6 +804,7 @@ def plot_pull_detector(
     if show: plt.show()
     return ""
 
+
 def plot_unopposed_force(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
@@ -786,6 +857,7 @@ def plot_unopposed_force(
     if show: plt.show()
     return ""
 
+
 def plot_clipping_components(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
@@ -829,6 +901,7 @@ def plot_clipping_components(
         return output_path
     if show: plt.show()
     return ""
+
 
 def plot_slip_vs_latg(
     df: pd.DataFrame,
@@ -888,6 +961,7 @@ def plot_slip_vs_latg(
     
     return ""
 
+
 def plot_dalpha_histogram(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
@@ -934,6 +1008,7 @@ def plot_dalpha_histogram(
         plt.show()
     
     return ""
+
 
 def plot_slope_correlation(
     df: pd.DataFrame,
@@ -983,6 +1058,7 @@ def plot_slope_correlation(
     
     return ""
 
+
 def plot_longitudinal_diagnostic(
     df: pd.DataFrame,
     metadata: SessionMetadata,
@@ -1056,6 +1132,7 @@ def plot_longitudinal_diagnostic(
         return output_path
     if show: plt.show()
     return ""
+
 
 def plot_raw_telemetry_health(
     df: pd.DataFrame,
@@ -1103,79 +1180,6 @@ def plot_raw_telemetry_health(
     ax2.set_title('Raw Tire Grip (mGripFract) - Should fluctuate dynamically if not encrypted')
     ax2.grid(True, alpha=0.3)
     _safe_legend(ax2, loc='upper right')
-
-    plt.tight_layout()
-
-    if output_path:
-        plt.savefig(output_path, dpi=150, bbox_inches='tight')
-        plt.close(fig)
-        return output_path
-    if show: plt.show()
-    return ""
-def plot_longitudinal_diagnostic(
-    df: pd.DataFrame,
-    metadata: SessionMetadata,
-    output_path: Optional[str] = None,
-    show: bool = True,
-    status_callback = None
-) -> str:
-    """
-    Diagnostic plot for Longitudinal Load Transfer.
-    Panels: Inputs (Pedals/Speed), Load & Multiplier, FFB Output Impact.
-    """
-    cols =['LoadFL', 'LoadFR', 'LongitudinalLoadFactor', 'FFBBase', 'FFBTotal', 'Speed', 'Brake', 'Throttle']
-    if not all(c in df.columns for c in cols):
-        return ""
-
-    if status_callback: status_callback("Initializing Longitudinal diagnostic plot...")
-    fig, axes = plt.subplots(3, 1, figsize=(14, 12), sharex=True)
-    fig.suptitle('Longitudinal Load Transfer Diagnostic', fontsize=14, fontweight='bold')
-
-    plot_df = _downsample_df(df)
-    time = plot_df['Time']
-
-    # Panel 1: Inputs (Pedals & Speed)
-    ax1 = axes[0]
-    ax1.plot(time, plot_df['Brake'], label='Brake', color='#F44336', alpha=0.8)
-    ax1.plot(time, plot_df['Throttle'], label='Throttle', color='#4CAF50', alpha=0.8)
-    ax1.set_ylabel('Pedal Input (0-1)')
-    ax1.grid(True, alpha=0.3)
-    _safe_legend(ax1, loc='upper left')
-
-    ax1_twin = ax1.twinx()
-    ax1_twin.plot(time, plot_df['Speed'] * 3.6, label='Speed (km/h)', color='#2196F3', alpha=0.6, linestyle='--')
-    ax1_twin.set_ylabel('Speed (km/h)', color='#2196F3')
-    _safe_legend(ax1_twin, loc='upper right')
-    ax1.set_title('Driver Inputs & Speed')
-
-    # Panel 2: Front Load & Multiplier
-    ax2 = axes[1]
-    front_load = (plot_df['LoadFL'] + plot_df['LoadFR']) / 2.0
-    ax2.plot(time, front_load, label='Avg Front Load (N)', color='#9C27B0', alpha=0.8)
-    ax2.set_ylabel('Load (N)', color='#9C27B0')
-    ax2.grid(True, alpha=0.3)
-    _safe_legend(ax2, loc='upper left')
-
-    ax2_twin = ax2.twinx()
-    ax2_twin.plot(time, plot_df['LongitudinalLoadFactor'], label='Long. Load Multiplier', color='#FF9800', linewidth=1.5)
-    ax2_twin.axhline(1.0, color='black', linestyle='--', alpha=0.5)
-    ax2_twin.set_ylabel('Multiplier (x)', color='#FF9800')
-    _safe_legend(ax2_twin, loc='upper right')
-    ax2.set_title('Tire Load & Calculated Multiplier')
-
-    # Panel 3: FFB Output Impact
-    ax3 = axes[2]
-    ax3.plot(time, plot_df['FFBBase'], label='Base FFB (Nm)', color='#9E9E9E', alpha=0.6)
-    ax3.plot(time, plot_df['FFBTotal'], label='Total FFB Output (Nm)', color='#2196F3', linewidth=1.0)
-    
-    if 'Clipping' in plot_df.columns:
-        ax3.fill_between(time, -15, 15, where=plot_df['Clipping']==1, color='#F44336', alpha=0.2, label='Clipping')
-
-    ax3.set_ylabel('Force (Nm)')
-    ax3.set_xlabel('Time (s)')
-    ax3.grid(True, alpha=0.3)
-    _safe_legend(ax3, loc='upper right')
-    ax3.set_title('FFB Output & Clipping')
 
     plt.tight_layout()
 

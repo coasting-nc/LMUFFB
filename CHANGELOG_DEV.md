@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.174]
+
+- **Upgraded Tire Load Estimation Diagnostics (Issue #352)**:
+  - **Python Log Analyzer**:
+    - **New 8-Panel Grid Layout**: Rewrote `plot_load_estimation_diagnostic` to provide a massive, comprehensive visualization of tire load accuracy.
+    - **Overlaid Time-Series**: Implemented per-wheel plots that overlay raw game telemetry with the suspension-based approximation for all four wheels, making phase shifts and damping issues immediately apparent.
+    - **Axle-Specific Dynamic Ratios**: Added dedicated panels for Front and Rear axle Dynamic Ratios (normalized by learned static load), which represent the actual signal scaling used by the FFB engine.
+    - **In-Plot Statistical Metrics**: Integrated `Dynamic Corr` and `Mean Error` calculations directly into the plot legends via translucent text boxes, enabling at-a-glance performance evaluation.
+    - **Restored Statistical Charts**: Re-implemented the global Correlation Scatter plot (all wheels) and Absolute Error Distribution histogram (Approx - Raw) that were present in earlier diagnostic versions.
+    - **Robustness**: Ensured zero-load masking and speed-gated static load learning to prevent diagnostic artifacts during track spawns or pit stops.
+- **Testing**:
+  - Verified 100% pass rate for Python plotting tests (`test_plots.py`) on Linux.
+  - Verified no regressions in existing C++ or Python test suites.
+
+---
+
 ## [0.7.173]
 
 - **Enhanced Tire Grip Estimation Diagnostics (Issue #348)**:
