@@ -17,9 +17,9 @@ TEST_CASE(test_optimal_slip_buffer_zone, "Understeer") {
     // Run multiple frames to settle filters
     double force = 0.0;
     for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) force = engine.calculate_force(&data);
-    
-    // With continuous falloff 1.0 / (1.0 + x^4), at x = 0.6 it is ~0.8857
-    ASSERT_NEAR(force, 0.8857, 0.001);
+
+    // With continuous falloff 0.05 + 0.95 / (1.0 + x^4), at x = 0.6 it is ~0.8914
+    ASSERT_NEAR(force, 0.8914, 0.001);
 }
 
 TEST_CASE(test_progressive_loss_curve, "Understeer") {
@@ -44,9 +44,9 @@ TEST_CASE(test_progressive_loss_curve, "Understeer") {
     data.mSteeringShaftTorque = 20.0;
     double f14 = 0.0;
     for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) f14 = engine.calculate_force(&data);
-    
-    // At 1.0x optimal, the curve 1.0 / (1.0 + 1^4) yields ~0.5
-    ASSERT_NEAR(f10, 0.5033, 0.001);
+
+    // At 1.0x optimal, the curve 0.05 + 0.95 / (1.0 + 1^4) yields ~0.525
+    ASSERT_NEAR(f10, 0.5281, 0.001);
     ASSERT_TRUE(f10 > f12 && f12 > f14);
 }
 
@@ -63,10 +63,11 @@ TEST_CASE(test_grip_floor_clamp, "Understeer") {
     
     double force = 0.0;
     for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) force = engine.calculate_force(&data);
-    
-    // GRIP_FLOOR_CLAMP REMOVED: The safety floor of 0.2 was removed,
-    // so under extreme slip, the grip value naturally approaches 0.0.
-    ASSERT_NEAR(force, 0.0, 0.001);
+
+    // GRIP_FLOOR_CLAMP REMOVED: The safety floor of 0.2 was removed.
+    // However, the continuous curve now asymptotes to MIN_SLIDING_GRIP = 0.05
+    // so under extreme slip, the grip value naturally approaches 0.05.
+    ASSERT_NEAR(force, 0.05, 0.001);
 }
 
 TEST_CASE(test_understeer_output_clamp, "Understeer") {

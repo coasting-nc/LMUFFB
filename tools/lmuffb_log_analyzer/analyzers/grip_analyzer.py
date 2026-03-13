@@ -20,14 +20,15 @@ def analyze_grip_estimation(df: pd.DataFrame, metadata: SessionMetadata) -> Dict
         results['status'] = "ENCRYPTED"
         return results
 
-    # Simulate NEW C++ Continuous Friction Circle
+    # Simulate NEW C++ Continuous Friction Circle with Sliding Floor
     def calc_wheel_grip(slip_angle, slip_ratio):
         lat_metric = np.abs(slip_angle) / metadata.optimal_slip_angle
         long_metric = np.abs(slip_ratio) / metadata.optimal_slip_ratio
         combined = np.sqrt(lat_metric**2 + long_metric**2)
         
-        # Continuous falloff: 1.0 / (1.0 + x^4)
-        grip = 1.0 / (1.0 + (combined**4))
+        min_sliding_grip = 0.05
+        # Continuous falloff that asymptotes to min_sliding_grip
+        grip = min_sliding_grip + ((1.0 - min_sliding_grip) / (1.0 + (combined**4)))
         return grip
 
     approx_fl = calc_wheel_grip(df['SlipAngleFL'], df['SlipRatioFL'])

@@ -1,0 +1,25 @@
+﻿..................FFF..............                                      [100%]
+================================== FAILURES ===================================
+_____________________ test_analyze_grip_estimation_basic ______________________
+tools\lmuffb_log_analyzer\tests\test_grip_analyzer.py:42: in test_analyze_grip_estimation_basic
+    assert results['status'] == "ENCRYPTED"
+E   KeyError: 'status'
+____________________ test_analyze_grip_estimation_sliding _____________________
+tools\lmuffb_log_analyzer\tests\test_grip_analyzer.py:63: in test_analyze_grip_estimation_sliding
+    assert results['status'] == "VALID"
+E   KeyError: 'status'
+___________________ test_analyze_grip_estimation_encrypted ____________________
+tools\lmuffb_log_analyzer\tests\test_grip_analyzer.py:79: in test_analyze_grip_estimation_encrypted
+    assert results['status'] == "ENCRYPTED"
+E   KeyError: 'status'
+============================== warnings summary ===============================
+tools/lmuffb_log_analyzer/tests/test_issue_345_python.py::test_report_with_load_estimation
+  C:\Users\Mauro\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\lib\_function_base_impl.py:2922: RuntimeWarning: invalid value encountered in divide
+    c /= stddev[:, None]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tools/lmuffb_log_analyzer/tests/test_grip_analyzer.py::test_analyze_grip_estimation_basic
+FAILED tools/lmuffb_log_analyzer/tests/test_grip_analyzer.py::test_analyze_grip_estimation_sliding
+FAILED tools/lmuffb_log_analyzer/tests/test_grip_analyzer.py::test_analyze_grip_estimation_encrypted
+3 failed, 32 passed, 1 warning in 7.34s

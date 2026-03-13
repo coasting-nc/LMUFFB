@@ -235,7 +235,7 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
             } else {
                 // --- REWRITTEN: Continuous Per-Wheel Friction Circle ---
                 
-                auto calc_wheel_grip = [&](const TelemWheelV01& w, double slip_angle) {
+auto calc_wheel_grip = [&](const TelemWheelV01& w, double slip_angle) {
                     // 1. Lateral Component (Alpha)
                     double lat_metric = std::abs(slip_angle) / (double)m_optimal_slip_angle;
 
@@ -246,15 +246,15 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                     // 3. Combined Vector (Friction Circle)
                     double combined_slip = std::sqrt((lat_metric * lat_metric) + (long_metric * long_metric));
 
-                    // 4. Continuous Falloff Curve (1.0 / (1.0 + x^4))
-                    // - At combined_slip = 0.0 -> Grip = 1.00
-                    // - At combined_slip = 0.5 -> Grip = 0.94 (Slight degradation)
-                    // - At combined_slip = 1.0 -> Grip = 0.50 (Optimal slip threshold)
-                    // - At combined_slip = 1.5 -> Grip = 0.16 (Heavy slide)
+                    // 4. Continuous Falloff Curve with Sliding Friction Asymptote
                     double cs2 = combined_slip * combined_slip;
                     double cs4 = cs2 * cs2;
                     
-                    return 1.0 / (1.0 + cs4); 
+                    // Racing slicks retain ~10% grip when fully sliding (dynamic friction)
+                    const double MIN_SLIDING_GRIP = 0.05; 
+                    
+                    // Scale the 1.0 / (1.0 + x^4) curve to operate between MIN_SLIDING_GRIP and 1.0
+                    return MIN_SLIDING_GRIP + ((1.0 - MIN_SLIDING_GRIP) / (1.0 + cs4)); 
                 };
 
                 // Calculate grip for each wheel independently

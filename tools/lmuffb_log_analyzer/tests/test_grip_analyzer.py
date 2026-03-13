@@ -50,8 +50,9 @@ def test_analyze_grip_estimation_sliding(base_metadata):
     # slip_angle goes from 0 to 0.2 (peak at 0.1)
     slip_angle = np.linspace(0, 0.2, len(t))
 
-    # Ground truth: continuous 1.0 / (1.0 + x^4)
-    raw_grip = 1.0 / (1.0 + (slip_angle/0.1)**4)
+    # Ground truth: continuous 0.05 + 0.95 / (1.0 + x^4)
+    min_sliding_grip = 0.05
+    raw_grip = min_sliding_grip + ((1.0 - min_sliding_grip) / (1.0 + (slip_angle/0.1)**4))
 
     df = pd.DataFrame({
         'GripFL': raw_grip,

@@ -1273,10 +1273,13 @@ def plot_true_tire_curve(
 
     # 3. Theoretical Curve (Our C++ Math)
     x_theory = np.linspace(0, 0.25, 100)
-    # 1.0 / (1.0 + (x / optimal)^4)
-    y_theory = 1.0 / (1.0 + (x_theory / metadata.optimal_slip_angle)**4)
+    
+    min_sliding_grip = 0.05
+    combined_slip = x_theory / metadata.optimal_slip_angle
+    y_theory = min_sliding_grip + ((1.0 - min_sliding_grip) / (1.0 + combined_slip**4))
+    
     ax.plot(x_theory, y_theory, color='#00E676', linewidth=3, linestyle='--', 
-            label=f'C++ Math (Optimal = {metadata.optimal_slip_angle} rad)')
+            label=f'C++ Math (Optimal = {metadata.optimal_slip_angle} rad, Min = {min_sliding_grip})')
 
     ax.set_xlabel('Absolute Slip Angle (rad)')
     ax.set_ylabel('Raw Game Grip Fraction (0.0 - 1.0)')

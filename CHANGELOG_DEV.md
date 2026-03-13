@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.178]
+
+- Fixes to Tire Grip estimate
+  - Added a Sliding Friction Asymptote to our math. Instead of the curve dropping to zero, we will make it bottom out at 0.05.  Tires don't lose all friction when they slide. They transition from static friction (peak grip) to dynamic/sliding friction.
+  - Updated the Python Log Analyzer to match this new math so the green line on the scatter plot reflects the new "tail".
+---
+
 ## [0.7.177]
 
 - Fixes to Tire Grip estimate
@@ -18,11 +25,14 @@ All notable changes to this project will be documented in this file.
   - Enhancing the "Tire Grip Estimation" Plot:
     - Added the Mean Error, Correlation, and the Slip Angle overlay to the time-series plot.
 
+---
+
 ## [0.7.176]
 
 - Fixes to Tire Grip estimate: implemented Per-Wheel Friction Circle.
 - Added diagnostic plot to the Log Analyzer for True Tire Curve.
 
+---
 
 ## [0.7.175]
 
