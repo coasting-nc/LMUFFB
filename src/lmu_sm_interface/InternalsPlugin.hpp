@@ -126,7 +126,7 @@ struct TelemWheelV01
 {
   double mSuspensionDeflection;  // meters
   double mRideHeight;            // meters
-  double mSuspForce;             // pushrod load in Newtons
+  double mSuspForce;             // CRITICAL: pushrod/spring load in Newtons (requires Motion Ratio normalization for wheel load)
   double mBrakeTemp;             // Celsius
   double mBrakePressure;         // currently 0.0-1.0, depending on driver input and brake balance; will convert to true brake pressure (kPa) in future
 

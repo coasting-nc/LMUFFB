@@ -351,6 +351,9 @@ public:
     static void CallCalculateABSPulse(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
         e.calculate_abs_pulse(data, ctx);
     }
+    static void CallCalculateLockup_Vibration(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        e.calculate_lockup_vibration(data, ctx);
+    }
     static void SetFlatspotSuppression(FFBEngine& e, bool val) { e.m_flatspot_suppression = val; }
     static void SetFlatspotStrength(FFBEngine& e, float val) { e.m_flatspot_strength = val; }
     static void SetABSPulseEnabled(FFBEngine& e, bool val) { e.m_abs_pulse_enabled = val; }

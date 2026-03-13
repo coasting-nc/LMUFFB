@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.175]
+
+- **Fixed Suspension Force Interpretation (Issue #355)**:
+  - **Physics Correction**: Corrected the interpretation of `mSuspForce` as pushrod/spring load rather than wheel load. Normalized all suspension-based calculations by car-class-specific **Motion Ratios** (MR).
+  - **Lockup Vibration**: Updated the grounding check to use actual or approximated tire load instead of raw pushrod force, ensuring reliable lockup feedback even when airborne or using droop limiters.
+  - **Suspension Bottoming**:
+    - Normalized Method 1 (Impulse) by MR to ensure a 100kN/s wheel impact feels consistent across prototypes (MR ~0.50) and GT cars (MR ~0.65).
+    - Added an approximation fallback to the safety trigger, enabling bottoming "thumps" for cars with encrypted tire load telemetry.
+  - **Architectural Refactoring**: Centralized car-class-specific Motion Ratios and Unsprung Weights in `VehicleUtils` to eliminate magic numbers and ensure consistency across the physics pipeline.
+  - **Documentation**: Added prominent "CRITICAL VEHICLE DYNAMICS" notes to the codebase explaining pushrod vs. wheel loads and clarified the `mGripFract` scale (1.0 = Adhesion).
+- **Testing**:
+  - Added `tests/test_ffb_physics_issue_355.cpp` with 10 assertions verifying MR normalization, load approximation accuracy, and grounding robustness.
+  - Verified 100% pass rate for the new tests and ensured no regressions in the existing suite of 485 C++ test cases.
+
+---
+
 ## [0.7.174]
 
 - **Upgraded Tire Load Estimation Diagnostics (Issue #352)**:

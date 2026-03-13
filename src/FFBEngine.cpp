@@ -833,6 +833,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_prev_rotation[i] = upsampled_data->mWheel[i].mRotation;
         m_prev_brake_pressure[i] = upsampled_data->mWheel[i].mBrakePressure;
     }
+    // FIX (Issue #355): Update m_prev_susp_force at the END of the calculate_force loop
+    // to ensure correct dForce calculation for Method 1 next frame.
     m_prev_susp_force[0] = upsampled_data->mWheel[0].mSuspForce;
     m_prev_susp_force[1] = upsampled_data->mWheel[1].mSuspForce;
     
@@ -1427,7 +1429,11 @@ void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculat
 
         // Pre-conditions
         bool brake_active = (data->mUnfilteredBrake > PREDICTION_BRAKE_THRESHOLD);
-        bool is_grounded = (w.mSuspForce > PREDICTION_LOAD_THRESHOLD);
+
+        // FIX (Issue #355): Use actual tire load (or accurate approximation) for grounding check.
+        // mSuspForce is pushrod load, which can be zero/negative when airborne.
+        double current_load = ctx.frame_warn_load ? approximate_load(w) : w.mTireLoad;
+        bool is_grounded = (current_load > PREDICTION_LOAD_THRESHOLD);
 
         double start_threshold = (double)m_lockup_start_pct / PERCENT_TO_DECIMAL;
         double full_threshold = (double)m_lockup_full_pct / PERCENT_TO_DECIMAL;
@@ -1696,11 +1702,18 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
         }
     } else {
         // Method 1: Suspension Force Impulse (Rate of Change)
-        double dForceL = (data->mWheel[0].mSuspForce - m_prev_susp_force[0]) / ctx.dt;
-        double dForceR = (data->mWheel[1].mSuspForce - m_prev_susp_force[1]) / ctx.dt;
+
+        // CRITICAL: mSuspForce is the pushrod load, not the wheel load.
+        // We must multiply by the Motion Ratio to normalize the impulse back to the wheel.
+        // Otherwise, prototypes (MR ~0.5) will trigger bottoming 2x as often as GTs (MR ~0.65)
+        // for the exact same physical bump.
+        double mr = GetMotionRatioForClass(m_current_vclass);
+
+        double dForceL = ((data->mWheel[0].mSuspForce - m_prev_susp_force[0]) * mr) / ctx.dt;
+        double dForceR = ((data->mWheel[1].mSuspForce - m_prev_susp_force[1]) * mr) / ctx.dt;
         double max_dForce = (std::max)(dForceL, dForceR);
         
-        if (max_dForce > BOTTOMING_IMPULSE_THRESHOLD_N_S) { // 100kN/s impulse
+        if (max_dForce > BOTTOMING_IMPULSE_THRESHOLD_N_S) { // 100kN/s impulse at the WHEEL
             triggered = true;
             intensity = (max_dForce - BOTTOMING_IMPULSE_THRESHOLD_N_S) / BOTTOMING_IMPULSE_RANGE_N_S;
         }
@@ -1708,7 +1721,11 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
 
     // Safety Trigger: Raw Load Peak (Catches Method 0/1 failures)
     if (!triggered) {
-        double max_load = (std::max)(data->mWheel[0].mTireLoad, data->mWheel[1].mTireLoad);
+        // FIX (Issue #355): Support encrypted cars by using the approximation fallback
+        double load_l = ctx.frame_warn_load ? approximate_load(data->mWheel[0]) : data->mWheel[0].mTireLoad;
+        double load_r = ctx.frame_warn_load ? approximate_load(data->mWheel[1]) : data->mWheel[1].mTireLoad;
+        double max_load = (std::max)(load_l, load_r);
+
         double bottoming_threshold = m_static_front_load * BOTTOMING_LOAD_MULT;
         if (max_load > bottoming_threshold) {
             triggered = true;

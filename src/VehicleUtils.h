@@ -26,4 +26,10 @@ const char* VehicleClassToString(ParsedVehicleClass vclass);
 // Helper: Parse vehicle brand from strings (v0.7.132)
 const char* ParseVehicleBrand(const char* className, const char* vehicleName);
 
+// Lookup table: Map ParsedVehicleClass to Motion Ratio (Wheel vs Pushrod)
+double GetMotionRatioForClass(ParsedVehicleClass vclass);
+
+// Lookup table: Map ParsedVehicleClass to Unsprung Weight (Newtons)
+double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear);
+
 #endif // VEHICLE_UTILS_H

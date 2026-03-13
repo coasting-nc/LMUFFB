@@ -171,6 +171,9 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                           const char* vehicleName,
                           const TelemInfoV01* data,
                           bool is_front) {
+    // Note on mGripFract: The LMU InternalsPlugin.hpp comments state this is the
+    // "fraction of the contact patch that is sliding". This is poorly phrased.
+    // In actual telemetry output, 1.0 = Full Adhesion (Gripping) and 0.0 = Fully Sliding.
     GripResult result;
     double total_load = w1.mTireLoad + w2.mTireLoad;
     if (total_load > 1.0) {
@@ -281,57 +284,33 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
     return result;
 }
 
-// Helper: Approximate Load (v0.4.5 / Improved v0.7.171)
+// ========================================================================================
+// CRITICAL VEHICLE DYNAMICS NOTE: mSuspForce vs Wheel Load
+// ========================================================================================
+// The LMU telemetry channel `mSuspForce` represents the load on the internal PUSHROD,
+// NOT the load at the tire contact patch.
+// Because race cars use bellcranks, the pushrod has a mechanical advantage (Motion Ratio).
+// For example, a Hypercar with a Motion Ratio of 0.5 means the pushrod moves half as far
+// as the wheel, and therefore carries TWICE the force of the wheel.
+// To approximate the actual Tire Load, we MUST multiply mSuspForce by the Motion Ratio,
+// and then add the unsprung mass (the weight of the wheel, tire, and brakes).
+// ========================================================================================
+
+// Helper: Approximate Load (v0.4.5 / Improved v0.7.171 / Refactored v0.7.175)
 // Uses class-specific motion ratios to convert pushrod force (mSuspForce) to wheel load,
 // and adds an estimate for front unsprung mass.
 double FFBEngine::approximate_load(const TelemWheelV01& w) {
-    double motion_ratio = 0.55;
-    double unsprung_weight = 450.0; // ~45kg
-
-    switch (m_current_vclass) {
-        case ParsedVehicleClass::HYPERCAR:
-        case ParsedVehicleClass::LMP2_UNRESTRICTED:
-        case ParsedVehicleClass::LMP2_RESTRICTED:
-        case ParsedVehicleClass::LMP2_UNSPECIFIED:
-        case ParsedVehicleClass::LMP3:
-            motion_ratio = 0.50; // Prototypes have high motion ratios (pushrod sees ~2x wheel load)
-            unsprung_weight = 400.0; // Lighter front unsprung mass
-            break;
-        case ParsedVehicleClass::GTE:
-        case ParsedVehicleClass::GT3:
-            motion_ratio = 0.65; // GT cars have lower motion ratios
-            unsprung_weight = 500.0; // Heavier front unsprung mass
-            break;
-        default:
-            break;
-    }
+    double motion_ratio = GetMotionRatioForClass(m_current_vclass);
+    double unsprung_weight = GetUnsprungWeightForClass(m_current_vclass, false /* is_rear */);
 
     return (std::max)(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
 }
 
-// Helper: Approximate Rear Load (v0.4.10 / Improved v0.7.171)
+// Helper: Approximate Rear Load (v0.4.10 / Improved v0.7.171 / Refactored v0.7.175)
 // Similar to approximate_load, but uses rear-specific unsprung mass estimates.
 double FFBEngine::approximate_rear_load(const TelemWheelV01& w) {
-    double motion_ratio = 0.55;
-    double unsprung_weight = 500.0; // ~50kg (Rear usually heavier due to driveshafts/larger wheels)
-
-    switch (m_current_vclass) {
-        case ParsedVehicleClass::HYPERCAR:
-        case ParsedVehicleClass::LMP2_UNRESTRICTED:
-        case ParsedVehicleClass::LMP2_RESTRICTED:
-        case ParsedVehicleClass::LMP2_UNSPECIFIED:
-        case ParsedVehicleClass::LMP3:
-            motion_ratio = 0.50;
-            unsprung_weight = 450.0;
-            break;
-        case ParsedVehicleClass::GTE:
-        case ParsedVehicleClass::GT3:
-            motion_ratio = 0.65;
-            unsprung_weight = 550.0;
-            break;
-        default:
-            break;
-    }
+    double motion_ratio = GetMotionRatioForClass(m_current_vclass);
+    double unsprung_weight = GetUnsprungWeightForClass(m_current_vclass, true /* is_rear */);
 
     return (std::max)(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
 }

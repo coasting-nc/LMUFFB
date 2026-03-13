@@ -149,3 +149,53 @@ const char* ParseVehicleBrand(const char* className, const char* vehicleName) {
 
     return "Unknown";
 }
+
+// Lookup table: Map ParsedVehicleClass to Motion Ratio (Wheel vs Pushrod)
+double GetMotionRatioForClass(ParsedVehicleClass vclass) {
+    switch (vclass) {
+        case ParsedVehicleClass::HYPERCAR:
+        case ParsedVehicleClass::LMP2_UNRESTRICTED:
+        case ParsedVehicleClass::LMP2_RESTRICTED:
+        case ParsedVehicleClass::LMP2_UNSPECIFIED:
+        case ParsedVehicleClass::LMP3:
+            return 0.50; // Prototypes have high motion ratios (pushrod sees ~2x wheel load)
+        case ParsedVehicleClass::GTE:
+        case ParsedVehicleClass::GT3:
+            return 0.65; // GT cars have lower motion ratios
+        default:
+            return 0.55; // Default fallback
+    }
+}
+
+// Lookup table: Map ParsedVehicleClass to Unsprung Weight (Newtons)
+double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {
+    if (is_rear) {
+        switch (vclass) {
+            case ParsedVehicleClass::HYPERCAR:
+            case ParsedVehicleClass::LMP2_UNRESTRICTED:
+            case ParsedVehicleClass::LMP2_RESTRICTED:
+            case ParsedVehicleClass::LMP2_UNSPECIFIED:
+            case ParsedVehicleClass::LMP3:
+                return 450.0;
+            case ParsedVehicleClass::GTE:
+            case ParsedVehicleClass::GT3:
+                return 550.0;
+            default:
+                return 500.0;
+        }
+    } else {
+        switch (vclass) {
+            case ParsedVehicleClass::HYPERCAR:
+            case ParsedVehicleClass::LMP2_UNRESTRICTED:
+            case ParsedVehicleClass::LMP2_RESTRICTED:
+            case ParsedVehicleClass::LMP2_UNSPECIFIED:
+            case ParsedVehicleClass::LMP3:
+                return 400.0;
+            case ParsedVehicleClass::GTE:
+            case ParsedVehicleClass::GT3:
+                return 500.0;
+            default:
+                return 450.0;
+        }
+    }
+}
