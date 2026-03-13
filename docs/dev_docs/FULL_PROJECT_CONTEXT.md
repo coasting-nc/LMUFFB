@@ -195,6 +195,11 @@ struct LogFrame {
     float speed_gate;
     float front_load_peak_ref;
 
+    float approx_load_fl;
+    float approx_load_fr;
+    float approx_load_rl;
+    float approx_load_rr;
+
     // --- SYSTEM (400Hz) ---
     float physics_rate;
     uint8_t clipping;
@@ -419,7 +424,7 @@ private:
     }
 
     void WriteHeader(const SessionInfo& info) {
-        m_file << "# LMUFFB Telemetry Log v1.1\n";
+        m_file << "# LMUFFB Telemetry Log v1.2\n";
         m_file << "# App Version: " << info.app_version << "\n";
         m_file << "# Compression: " << (m_lz4_enabled ? "LZ4" : "None") << "\n";
         m_file << "# ========================\n";
@@ -472,7 +477,9 @@ private:
                << "SessionPeakTorque,LongitudinalLoadFactor,StructuralMult,VibrationMult,SteeringAngleDeg,SteeringRangeDeg,DebugFreq,TireRadius,"
                << "FFBTotal,FFBBase,FFBUndersteerDrop,FFBOversteerBoost,FFBSoP,FFBRearTorque,FFBScrubDrag,FFBYawKick,FFBGyroDamping,FFBRoadTexture,FFBSlideTexture,FFBLockupVibration,FFBSpinVibration,FFBBottomingCrunch,FFBABSPulse,FFBSoftLock,"
                << "ExtrapolatedYawAccel,DerivedYawAccel,"
-               << "FFBShaftTorque,FFBGenTorque,GripFactor,SpeedGate,FrontLoadPeakRef,PhysicsRate,Clipping,WarnBits,Marker\n";
+               << "FFBShaftTorque,FFBGenTorque,GripFactor,SpeedGate,FrontLoadPeakRef,"
+               << "ApproxLoadFL,ApproxLoadFR,ApproxLoadRL,ApproxLoadRR,"
+               << "PhysicsRate,Clipping,WarnBits,Marker\n";
         m_file << "[DATA_START]\n";
     }
 
@@ -4095,7 +4102,7 @@ std::vector<FFBSnapshot> FFBEngine::GetDebugBatch() {
 //   update_static_load_reference, InitializeLoadReference,
 //   calculate_raw_slip_angle_pair, calculate_slip_angle,
 //   calculate_axle_grip, approximate_load, approximate_rear_load,
-//   calculate_kinematic_load, calculate_manual_slip_ratio,
+//   calculate_manual_slip_ratio,
 //   calculate_slope_grip, calculate_slope_confidence,
 //   calculate_wheel_slip_ratio
 // ---------------------------------------------------------------------------
@@ -4434,18 +4441,13 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
 
     if (m_missing_load_frames > MISSING_LOAD_WARN_THRESHOLD) {
-        // Fallback Logic
-        if (fl.mSuspForce > MIN_VALID_SUSP_FORCE) {
-            double calc_load_fl = approximate_load(fl);
-            double calc_load_fr = approximate_load(fr);
-            ctx.avg_front_load = (calc_load_fl + calc_load_fr) / DUAL_DIVISOR;
-        } else {
-            double kin_load_fl = calculate_kinematic_load(data, 0);
-            double kin_load_fr = calculate_kinematic_load(data, 1);
-            ctx.avg_front_load = (kin_load_fl + kin_load_fr) / DUAL_DIVISOR;
-        }
+        // Fallback Logic: Use suspension-based approximation (more accurate than kinematic)
+        double calc_load_fl = approximate_load(fl);
+        double calc_load_fr = approximate_load(fr);
+        ctx.avg_front_load = (calc_load_fl + calc_load_fr) / DUAL_DIVISOR;
+
         if (!m_warned_load) {
-            Logger::Get().LogFile("Warning: Data for mTireLoad from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). Using Kinematic Fallback.", data->mVehicleName);
+            Logger::Get().LogFile("Warning: Data for mTireLoad from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). Using Suspension-based Fallback.", data->mVehicleName);
             m_warned_load = true;
         }
         ctx.frame_warn_load = true;
@@ -4514,11 +4516,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
     
     // Calculate Rear Load early for learning (v0.7.164)
-    double calc_load_rl = approximate_rear_load(data->mWheel[2]);
-    double calc_load_rr = approximate_rear_load(data->mWheel[3]);
+    double calc_load_rl = upsampled_data->mWheel[2].mTireLoad;
+    double calc_load_rr = upsampled_data->mWheel[3].mTireLoad;
     if (ctx.frame_warn_load) {
-        calc_load_rl = calculate_kinematic_load(data, 2);
-        calc_load_rr = calculate_kinematic_load(data, 3);
+        calc_load_rl = approximate_rear_load(upsampled_data->mWheel[2]);
+        calc_load_rr = approximate_rear_load(upsampled_data->mWheel[3]);
     }
     ctx.avg_rear_load = (calc_load_rl + calc_load_rr) / DUAL_DIVISOR;
 
@@ -5079,6 +5081,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         frame.speed_gate = (float)ctx.speed_gate;
         frame.front_load_peak_ref = (float)m_auto_peak_front_load;
 
+        frame.approx_load_fl = (float)approximate_load(fl);
+        frame.approx_load_fr = (float)approximate_load(fr);
+        frame.approx_load_rl = (float)approximate_rear_load(upsampled_data->mWheel[2]);
+        frame.approx_load_rr = (float)approximate_rear_load(upsampled_data->mWheel[3]);
+
         // --- SYSTEM (400Hz) ---
         frame.physics_rate = (float)m_physics_rate;
         frame.clipping = (uint8_t)(std::abs(norm_force) > CLIPPING_THRESHOLD);
@@ -5108,10 +5115,10 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double rr_load = data->mWheel[3].mTireLoad;
 
     if (ctx.frame_warn_load) {
-        fl_load = calculate_kinematic_load(data, 0);
-        fr_load = calculate_kinematic_load(data, 1);
-        rl_load = calculate_kinematic_load(data, 2);
-        rr_load = calculate_kinematic_load(data, 3);
+        fl_load = approximate_load(data->mWheel[0]);
+        fr_load = approximate_load(data->mWheel[1]);
+        rl_load = approximate_rear_load(data->mWheel[2]);
+        rr_load = approximate_rear_load(data->mWheel[3]);
     }
 
     double left_load = fl_load + rl_load;
@@ -6138,11 +6145,6 @@ public:
     double m_accel_x_smoothed = 0.0;
     double m_accel_z_smoothed = 0.0; 
     
-    // Kinematic Physics Parameters (v0.4.39)
-    float m_approx_mass_kg = DEFAULT_APPROX_MASS_KG;
-    float m_approx_aero_coeff = DEFAULT_APPROX_AERO_COEFF;
-    float m_approx_weight_bias = DEFAULT_APPROX_WEIGHT_BIAS;
-    float m_approx_roll_stiffness = DEFAULT_APPROX_ROLL_STIFFNESS;
 
     // Phase Accumulators for Dynamic Oscillators
     double m_lockup_phase = 0.0;
@@ -6404,10 +6406,6 @@ private:
     static constexpr float  DEFAULT_SLOPE_MAX_THRESHOLD = -2.0f;
     static constexpr float  DEFAULT_SLOPE_G_SLEW_LIMIT = 50.0f;
     static constexpr float  DEFAULT_SLOPE_TORQUE_SENSITIVITY = 0.5f;
-    static constexpr float  DEFAULT_APPROX_MASS_KG = 1100.0f;
-    static constexpr float  DEFAULT_APPROX_AERO_COEFF = 2.0f;
-    static constexpr float  DEFAULT_APPROX_WEIGHT_BIAS = 0.55f;
-    static constexpr float  DEFAULT_APPROX_ROLL_STIFFNESS = 0.6f;
     static constexpr float  DEFAULT_ABS_FREQ_HZ = 20.0f;
     static constexpr double DEFAULT_AUTO_PEAK_LOAD = 4500.0;
     static constexpr double DEFAULT_SESSION_PEAK_TORQUE = 25.0;
@@ -6478,7 +6476,6 @@ public:
 
     double approximate_load(const TelemWheelV01& w);
     double approximate_rear_load(const TelemWheelV01& w);
-    double calculate_kinematic_load(const TelemInfoV01* data, int wheel_index);
     double calculate_manual_slip_ratio(const TelemWheelV01& w, double car_speed_ms);
     NOINLINE double calculate_slope_grip(double lateral_g, double slip_angle, double dt, const TelemInfoV01* data = nullptr);
     double calculate_slope_confidence(double dAlpha_dt);
@@ -7400,61 +7397,23 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
 }
 
 // Helper: Approximate Load (v0.4.5)
+// This function provides a fallback tire load estimate when primary telemetry (mTireLoad) is missing.
+// Rationale: Tire load is the sum of sprung mass (captured by mSuspForce) and unsprung mass.
+// The constant 300.0N (~30kg) is a first-order estimate of the unsprung mass (wheel, tire, upright, brakes).
+// Diagnostic logging (v0.7.170) has been added to compare this approximation against real data where available.
 double FFBEngine::approximate_load(const TelemWheelV01& w) {
     // Base: Suspension Force + Est. Unsprung Mass (300N)
-    // Note: mSuspForce captures weight transfer and aero
-    return w.mSuspForce + 300.0;
+    // Note: mSuspForce captures dynamic weight transfer and aerodynamic downforce.
+    return (std::max)(0.0, w.mSuspForce + 300.0);
 }
 
 // Helper: Approximate Rear Load (v0.4.10)
+// Similar to approximate_load, but for the rear axle.
+// Rationale: Rear unsprung mass might differ from front, but currently uses the same 300N estimate.
 double FFBEngine::approximate_rear_load(const TelemWheelV01& w) {
     // Base: Suspension Force + Est. Unsprung Mass (300N)
-    // This captures weight transfer (braking/accel) and aero downforce implicitly via suspension compression
-    return w.mSuspForce + 300.0;
-}
-
-// Helper: Calculate Kinematic Load (v0.4.39)
-// Estimates tire load from chassis physics when telemetry (mSuspForce) is missing.
-// This is critical for encrypted DLC content where suspension sensors are blocked.
-double FFBEngine::calculate_kinematic_load(const TelemInfoV01* data, int wheel_index) {
-    // 1. Static Weight Distribution
-    bool is_rear = (wheel_index >= 2);
-    double bias = is_rear ? m_approx_weight_bias : (1.0 - m_approx_weight_bias);
-    double static_weight = (m_approx_mass_kg * 9.81 * bias) / 2.0;
-
-    // 2. Aerodynamic Load (Velocity Squared)
-    double speed = std::abs(data->mLocalVel.z);
-    double aero_load = m_approx_aero_coeff * (speed * speed);
-    double wheel_aero = aero_load / 4.0; 
-
-    // 3. Longitudinal Weight Transfer (Braking/Acceleration)
-    // COORDINATE SYSTEM VERIFIED (v0.4.39):
-    // - LMU: +Z axis points REARWARD (out the back of the car)
-    // - Braking: Chassis decelerates â†’ Inertial force pushes rearward â†’ +Z acceleration
-    // - Result: Front wheels GAIN load, Rear wheels LOSE load
-    // - Source: docs/dev_docs/references/Reference - coordinate_system_reference.md
-    // 
-    // Formula: (Accel / g) * WEIGHT_TRANSFER_SCALE
-    // We use SMOOTHED acceleration to simulate chassis pitch inertia (~35ms lag)
-    double long_transfer = (m_accel_z_smoothed / 9.81) * WEIGHT_TRANSFER_SCALE; 
-    if (is_rear) long_transfer *= -1.0; // Subtract from Rear during Braking
-
-    // 4. Lateral Weight Transfer (Cornering)
-    // COORDINATE SYSTEM VERIFIED (v0.4.39):
-    // - LMU: +X axis points LEFT (out the left side of the car)
-    // - Right Turn: Centrifugal force pushes LEFT â†’ +X acceleration
-    // - Result: LEFT wheels (outside) GAIN load, RIGHT wheels (inside) LOSE load
-    // - Source: docs/dev_docs/references/Reference - coordinate_system_reference.md
-    // 
-    // Formula: (Accel / g) * WEIGHT_TRANSFER_SCALE * Roll_Stiffness
-    // We use SMOOTHED acceleration to simulate chassis roll inertia (~35ms lag)
-    double lat_transfer = (m_accel_x_smoothed / 9.81) * WEIGHT_TRANSFER_SCALE * m_approx_roll_stiffness;
-    bool is_left = (wheel_index == 0 || wheel_index == 2);
-    if (!is_left) lat_transfer *= -1.0; // Subtract from Right wheels
-
-    // Sum and Clamp
-    double total_load = static_weight + wheel_aero + long_transfer + lat_transfer;
-    return (std::max)(0.0, total_load);
+    // This captures weight transfer (braking/accel) and aero downforce implicitly via suspension compression.
+    return (std::max)(0.0, w.mSuspForce + 300.0);
 }
 
 // Helper: Calculate Manual Slip Ratio (v0.4.6)
@@ -14533,8 +14492,8 @@ public:
     static void SetRestApiPort(FFBEngine& e, int val) { e.m_rest_api_port = val; }
     
     // Coverage Restoration Accessors
-    static void CallUpdateStaticLoadReference(FFBEngine& e, double load, double speed, double dt) {
-        e.update_static_load_reference(load, load, speed, dt);
+    static void CallUpdateStaticLoadReference(FFBEngine& e, double front_load, double rear_load, double speed, double dt) {
+        e.update_static_load_reference(front_load, rear_load, speed, dt);
     }
     static void CallInitializeLoadReference(FFBEngine& e, const char* vehicleClass, const char* vehicleName) {
         e.InitializeLoadReference(vehicleClass, vehicleName);
@@ -14657,6 +14616,7 @@ from rich.table import Table
 from rich.panel import Panel
 
 from .loader import load_log
+from .exporters.motec_exporter import MotecExporter
 from .analyzers.slope_analyzer import (
     analyze_slope_stability,
     detect_oscillation_events,
@@ -14683,7 +14643,8 @@ from .plots import (
     plot_unopposed_force,
     plot_lateral_diagnostic,
     plot_longitudinal_diagnostic,
-    plot_raw_telemetry_health
+    plot_raw_telemetry_health,
+    plot_load_estimation_diagnostic
 )
 from .reports import generate_text_report
 
@@ -14930,6 +14891,11 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
             plot_raw_telemetry_health(df, str(health_raw_path), show=False, status_callback=update_status)
             console.print(f"  [OK] Created: {health_raw_path}")
 
+            # Load Estimation Diagnostic
+            load_diag_path = output_path / f"{logfile_stem}_load_estimation.png"
+            plot_load_estimation_diagnostic(df, str(load_diag_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {load_diag_path}")
+
 @click.group()
 @click.version_option(version='1.2.0')
 def cli():
@@ -14981,6 +14947,24 @@ def plots(logfile, output, plot_all):
         console.print("\n[bold green]Done![/bold green]")
     except Exception as e:
         console.print(f"[bold red]Error generating plots:[/bold red] {e}")
+
+@cli.command()
+@click.argument('logfile', type=click.Path(exists=True))
+@click.option('--output', '-o', help='Output .ld file path')
+@click.option('--freq', '-f', default=100, help='Resampling frequency in Hz (default 100)')
+def export_motec(logfile, output, freq):
+    """Export a log file to MoTeC i2 Pro format (.ld and .ldx)."""
+    try:
+        metadata, df = load_log(logfile)
+        if not output:
+            output = str(Path(logfile).with_suffix('.ld'))
+
+        console.print(f"[bold]Exporting to MoTeC:[/bold] {output}")
+        exporter = MotecExporter()
+        exporter.export(metadata, df, output, target_freq=freq)
+        console.print(f"[bold green]Successfully exported to:[/bold green] {output} and {Path(output).with_suffix('.ldx')}")
+    except Exception as e:
+        console.print(f"[bold red]Error exporting to MoTeC:[/bold red] {e}")
 
 @cli.command()
 @click.argument('logfile', type=click.Path(exists=True))
@@ -15265,6 +15249,11 @@ LOG_FRAME_DTYPE = np.dtype([
     ('speed_gate', np.float32),
     ('front_load_peak_ref', np.float32),
 
+    ('approx_load_fl', np.float32),
+    ('approx_load_fr', np.float32),
+    ('approx_load_rl', np.float32),
+    ('approx_load_rr', np.float32),
+
     # --- SYSTEM (400Hz) ---
     ('physics_rate', np.float32),
     ('clipping', np.uint8),
@@ -15491,6 +15480,10 @@ def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
         'ffb_grip_factor': 'GripFactor',
         'speed_gate': 'SpeedGate',
         'front_load_peak_ref': 'FrontLoadPeakRef',
+        'approx_load_fl': 'ApproxLoadFL',
+        'approx_load_fr': 'ApproxLoadFR',
+        'approx_load_rl': 'ApproxLoadRL',
+        'approx_load_rr': 'ApproxLoadRR',
         'physics_rate': 'PhysicsRate',
         'clipping': 'Clipping',
         'warn_bits': 'WarnBits',
@@ -15908,6 +15901,122 @@ def plot_yaw_diagnostic(
         plt.close(fig)
         return output_path
     if show: plt.show()
+    return ""
+
+def plot_load_estimation_diagnostic(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Diagnostic plot for Tire Load Estimation (Approximate Load).
+    Panels: Time Series (Front), Time Series (Rear), Error Distribution, Correlation.
+    """
+    cols = ['RawLoadFL', 'RawLoadFR', 'RawLoadRL', 'RawLoadRR',
+            'ApproxLoadFL', 'ApproxLoadFR', 'ApproxLoadRL', 'ApproxLoadRR']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Initializing Load Estimation diagnostic plot...")
+    fig = plt.figure(figsize=(14, 12))
+    gs = fig.add_gridspec(3, 2)
+    fig.suptitle('Tire Load Estimation Diagnostic (Approximate Load)', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    # Panel 1: Front Axle Time Series
+    if status_callback: status_callback("Rendering Panel 1 (Front Axle)...")
+    ax1 = fig.add_subplot(gs[0, :])
+    raw_front = (plot_df['RawLoadFL'] + plot_df['RawLoadFR']) / 2.0
+    approx_front = (plot_df['ApproxLoadFL'] + plot_df['ApproxLoadFR']) / 2.0
+
+    ax1.plot(time, raw_front, label='Raw Load Front (Avg)', color='#2196F3', alpha=0.6)
+    ax1.plot(time, approx_front, label='Approx Load Front (Avg)', color='#F44336', alpha=0.8, linestyle='--')
+    ax1.set_ylabel('Load (N)')
+    ax1.set_title('Front Axle: Raw vs. Approximate Load')
+    ax1.grid(True, alpha=0.3)
+    ax1.legend(loc='upper right')
+
+    # Panel 2: Rear Axle Time Series
+    if status_callback: status_callback("Rendering Panel 2 (Rear Axle)...")
+    ax2 = fig.add_subplot(gs[1, :], sharex=ax1)
+    raw_rear = (plot_df['RawLoadRL'] + plot_df['RawLoadRR']) / 2.0
+    approx_rear = (plot_df['ApproxLoadRL'] + plot_df['ApproxLoadRR']) / 2.0
+
+    ax2.plot(time, raw_rear, label='Raw Load Rear (Avg)', color='#4CAF50', alpha=0.6)
+    ax2.plot(time, approx_rear, label='Approx Load Rear (Avg)', color='#FF9800', alpha=0.8, linestyle='--')
+    ax2.set_ylabel('Load (N)')
+    ax2.set_xlabel('Time (s)')
+    ax2.set_title('Rear Axle: Raw vs. Approximate Load')
+    ax2.grid(True, alpha=0.3)
+    ax2.legend(loc='upper right')
+
+    # Panel 3: Correlation Scatter (All wheels)
+    if status_callback: status_callback("Rendering Panel 3 (Correlation)...")
+    ax3 = fig.add_subplot(gs[2, 0])
+
+    # Combine all 4 wheels for global correlation
+    raw_all = pd.concat([plot_df['RawLoadFL'], plot_df['RawLoadFR'], plot_df['RawLoadRL'], plot_df['RawLoadRR']])
+    approx_all = pd.concat([plot_df['ApproxLoadFL'], plot_df['ApproxLoadFR'], plot_df['ApproxLoadRL'], plot_df['ApproxLoadRR']])
+
+    # Filter out zeros (where game might not have provided data yet)
+    mask = (raw_all > 1.0) & (approx_all > 1.0)
+    raw_filt = raw_all[mask]
+    approx_filt = approx_all[mask]
+
+    if len(raw_filt) > 0:
+        correlation = np.corrcoef(raw_filt, approx_filt)[0, 1]
+        ax3.scatter(raw_filt, approx_filt, alpha=0.1, s=2, color='#9C27B0')
+
+        # Identity line
+        lims = [
+            np.min([ax3.get_xlim()[0], ax3.get_ylim()[0]]),
+            np.max([ax3.get_xlim()[1], ax3.get_ylim()[1]]),
+        ]
+        ax3.plot(lims, lims, 'k-', alpha=0.5, zorder=0, label='Identity Line')
+        ax3.set_title(f'Correlation (All Wheels)\nr = {correlation:.3f}')
+    else:
+        ax3.set_title('Correlation (Insufficient Data)')
+
+    ax3.set_xlabel('Raw Load (N)')
+    ax3.set_ylabel('Approx Load (N)')
+    ax3.grid(True, alpha=0.3)
+
+    # Panel 4: Error Distribution
+    if status_callback: status_callback("Rendering Panel 4 (Error Distribution)...")
+    ax4 = fig.add_subplot(gs[2, 1])
+
+    error = approx_all - raw_all
+    # Filter error for valid data points
+    error_filt = error[mask]
+
+    if len(error_filt) > 0:
+        ax4.hist(error_filt, bins=50, color='#607D8B', alpha=0.7, edgecolor='white')
+        mean_err = error_filt.mean()
+        std_err = error_filt.std()
+        ax4.axvline(mean_err, color='red', linestyle='--', label=f'Mean: {mean_err:.1f}N')
+        ax4.set_title(f'Error Distribution (Approx - Raw)\nStd Dev: {std_err:.1f}N')
+        ax4.legend()
+    else:
+        ax4.set_title('Error Distribution (Insufficient Data)')
+
+    ax4.set_xlabel('Error (N)')
+    ax4.set_ylabel('Frequency')
+    ax4.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+
+    if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+
+    if show:
+        plt.show()
+
     return ""
 
 def plot_system_health(
@@ -17287,5 +17396,199 @@ def get_fft(signal: np.ndarray, fs: float = 400.0) -> Dict[str, np.ndarray]:
 # File: tools\lmuffb_log_analyzer\analyzers\__init__.py
 ```python
 # analyzers subpackage
+
+```
+
+# File: tools\lmuffb_log_analyzer\exporters\motec_exporter.py
+```python
+import numpy as np
+import pandas as pd
+import struct
+import os
+import xml.etree.ElementTree as ET
+from datetime import datetime
+from pathlib import Path
+
+class MotecExporter:
+    def __init__(self):
+        # Default channel mapping: (LMU Name, MoTeC Name, Unit, Multiplier, Divisor, Offset, Decimals)
+        # Scaling: displayed = (raw * mult / div / 10^dec) + offset
+        # We target i16 for most channels
+        self.channel_configs = [
+            ('Time', 'Time', 's', 1, 1, 0, 3),
+            ('Speed', 'Speed', 'km/h', 1, 1, 0, 1),
+            ('LatAccel', 'G Force Lat', 'G', 1, 1, 0, 3),
+            ('LongAccel', 'G Force Long', 'G', 1, 1, 0, 3),
+            ('YawRate', 'Yaw Rate', 'deg/s', 1, 1, 0, 3),
+            ('Steering', 'Steering Angle', 'deg', 1, 1, 0, 1),
+            ('Throttle', 'Throttle Pos', '%', 100, 1, 0, 1),
+            ('Brake', 'Brake Pos', '%', 100, 1, 0, 1),
+            ('FFBTotal', 'FFB Total', 'Nm', 1, 1, 0, 3),
+            ('LoadFL', 'Wheel Load FL', 'N', 1, 1, 0, 0),
+            ('LoadFR', 'Wheel Load FR', 'N', 1, 1, 0, 0),
+            ('LoadRL', 'Wheel Load RL', 'N', 1, 1, 0, 0),
+            ('LoadRR', 'Wheel Load RR', 'N', 1, 1, 0, 0),
+            ('SlipAngleFL', 'Slip Angle FL', 'deg', 1, 1, 0, 3),
+            ('SlipAngleFR', 'Slip Angle FR', 'deg', 1, 1, 0, 3),
+            ('SlipAngleRL', 'Slip Angle RL', 'deg', 1, 1, 0, 3),
+            ('SlipAngleRR', 'Slip Angle RR', 'deg', 1, 1, 0, 3),
+            ('GripFL', 'Grip FL', '%', 100, 1, 0, 1),
+            ('GripFR', 'Grip FR', '%', 100, 1, 0, 1),
+            ('GripRL', 'Grip RL', '%', 100, 1, 0, 1),
+            ('GripRR', 'Grip RR', '%', 100, 1, 0, 1),
+        ]
+
+    def export(self, metadata, df, output_path, target_freq=100):
+        """Export session data to .ld and .ldx files"""
+        path = Path(output_path)
+
+        # 1. Resample data
+        resampled_df = self._resample(df, target_freq)
+
+        # 2. Write .ld file
+        self._write_ld(metadata, resampled_df, path, target_freq)
+
+        # 3. Write .ldx file
+        self._write_ldx(metadata, df, path.with_suffix(".ldx"))
+
+    def _resample(self, df, target_freq):
+        """Resample variable-rate data to fixed-rate using linear interpolation"""
+        start_time = df['Time'].iloc[0]
+        end_time = df['Time'].iloc[-1]
+
+        duration = end_time - start_time
+        num_samples = int(duration * target_freq) + 1
+
+        new_times = np.linspace(start_time, start_time + (num_samples - 1) / target_freq, num_samples)
+
+        resampled_data = {'Time': new_times}
+
+        for col, _, _, _, _, _, _ in self.channel_configs:
+            if col == 'Time': continue
+            if col in df.columns:
+                resampled_data[col] = np.interp(new_times, df['Time'], df[col])
+            else:
+                resampled_data[col] = np.zeros(num_samples)
+
+        return pd.DataFrame(resampled_data)
+
+    def _write_ld(self, metadata, df, path, freq):
+        """Binary serialization for MoTeC .ld format"""
+        num_samples = len(df)
+        num_channels = len(self.channel_configs)
+
+        # Prepare data first to know sizes
+        packed_data = []
+        channel_data_pointers = []
+
+        current_data_offset = 0 # Relative to start of data block
+
+        for col, _, _, mult, div, off, dec in self.channel_configs:
+            # displayed = (raw * mult / div / 10^dec) + offset
+            # raw = (displayed - offset) * (10^dec) * div / mult
+            raw_data = (df[col].values - off) * (10**dec) * div / mult
+            raw_data = np.clip(raw_data, -32768, 32767).astype(np.int16)
+
+            packed_data.append(raw_data.tobytes())
+            channel_data_pointers.append(current_data_offset)
+            current_data_offset += len(raw_data) * 2
+
+        # Header structure (0x664 bytes)
+        # We use placeholders for pointers and fill them later
+        header = bytearray(0x664)
+
+        struct.pack_into("<I", header, 0x00, 0x40) # File Marker
+        # 0x08: Channel Metadata Pointer (placeholder)
+        # 0x0C: Channel Data Pointer (placeholder)
+
+        struct.pack_into("<I", header, 0x46, 12345) # Device Serial
+        struct.pack_into("<8s", header, 0x4A, b"ADL\0\0\0\0\0") # Device Type
+        struct.pack_into("<H", header, 0x52, 420) # Device Version
+        struct.pack_into("<I", header, 0x56, num_channels) # Number of Channels
+
+        date_str = metadata.timestamp.strftime("%d/%m/%Y").encode('ascii')
+        time_str = metadata.timestamp.strftime("%H:%M:%S").encode('ascii')
+        struct.pack_into("<16s", header, 0x5E, date_str)
+        struct.pack_into("<16s", header, 0x7E, time_str)
+
+        struct.pack_into("<64s", header, 0x9E, metadata.driver_name.encode('utf-8')[:63])
+        struct.pack_into("<64s", header, 0xDE, metadata.vehicle_name.encode('utf-8')[:63])
+        struct.pack_into("<64s", header, 0x15E, metadata.track_name.encode('utf-8')[:63])
+
+        struct.pack_into("<I", header, 0x5DE, 0xc81a4) # Pro Flag
+
+        # Write to file
+        with open(path, "wb") as f:
+            f.write(header)
+
+            # Channel Metadata Block
+            metadata_start = 0x664
+            data_start = metadata_start + (num_channels * 0x70)
+
+            struct.pack_into("<I", header, 0x08, metadata_start)
+            struct.pack_into("<I", header, 0x0C, data_start)
+
+            f.seek(0)
+            f.write(header)
+
+            f.seek(metadata_start)
+            for i, (col, name, unit, mult, div, off, dec) in enumerate(self.channel_configs):
+                next_ptr = metadata_start + (i + 1) * 0x70 if i < num_channels - 1 else 0
+                chan_data_ptr = data_start + channel_data_pointers[i]
+
+                chan_header = bytearray(0x70)
+                struct.pack_into("<I", chan_header, 0x00, next_ptr)
+                struct.pack_into("<I", chan_header, 0x04, chan_data_ptr)
+                struct.pack_into("<I", chan_header, 0x08, num_samples)
+                struct.pack_into("<H", chan_header, 0x0C, 0x0001)
+                struct.pack_into("<H", chan_header, 0x0E, 0x0003)
+                struct.pack_into("<H", chan_header, 0x10, 2)
+                struct.pack_into("<H", chan_header, 0x12, freq)
+                struct.pack_into("<h", chan_header, 0x14, mult)
+                struct.pack_into("<h", chan_header, 0x16, div)
+                struct.pack_into("<h", chan_header, 0x18, off)
+                struct.pack_into("<h", chan_header, 0x1A, dec)
+                struct.pack_into("<32s", chan_header, 0x1C, name.encode('utf-8')[:31])
+                struct.pack_into("<8s", chan_header, 0x3C, name[:7].encode('utf-8'))
+                struct.pack_into("<12s", chan_header, 0x44, unit.encode('utf-8')[:11])
+                f.write(chan_header)
+
+            f.seek(data_start)
+            for block in packed_data:
+                f.write(block)
+
+    def _write_ldx(self, metadata, df, path):
+        """Generate XML sidecar for MoTeC"""
+        root = ET.Element("LDXFile", ValidationCode="0", Version="1.0")
+
+        layers = ET.SubElement(root, "Layers")
+        layer = ET.SubElement(layers, "Layer")
+        marker_group = ET.SubElement(layer, "MarkerGroup", Name="Beacons", Index="0")
+
+        # Add start marker
+        ET.SubElement(marker_group, "Marker", Version="100", EntityID="1", Time="0.000000")
+
+        # Check for user markers in the dataframe
+        if 'Marker' in df.columns:
+            markers = df[df['Marker'] > 0]
+            for _, row in markers.iterrows():
+                ET.SubElement(marker_group, "Marker", Version="100", EntityID="1", Time=f"{row['Time']:.6f}")
+
+        details = ET.SubElement(root, "Details")
+        detail_map = [
+            ("Driver", metadata.driver_name),
+            ("Vehicle", metadata.vehicle_name),
+            ("Venue", metadata.track_name),
+            ("Event", f"LMUFFB Session {metadata.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"),
+            ("Session", "Practice")
+        ]
+
+        for d_id, d_val in detail_map:
+            ET.SubElement(details, "String", Id=d_id, Value=d_val)
+
+        # XML pretty printing
+        tree = ET.ElementTree(root)
+        ET.indent(tree, space="  ", level=0)
+        tree.write(path, encoding="utf-8", xml_declaration=True)
 
 ```
