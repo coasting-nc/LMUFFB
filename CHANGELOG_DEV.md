@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.171] - 2026-03-13
+- **Fixed Hypercar Class Detection (Issue #346)**:
+  - **Expanded Class Parsing**: Added "HYPER" to the primary vehicle class identification logic to correctly match the raw "Hyper" class name string provided by the game for some vehicles.
+  - **Improved Fallback Identification**: Added "CADILLAC" to the Hypercar vehicle name keyword list, ensuring the Cadillac Hypercar is correctly categorized even if the class name is missing or ambiguous.
+  - **FFB Accuracy**: Correct class detection ensures the engine seeds the appropriate default load (9500N) for Hypercars, providing immediate FFB scaling consistency.
+- **Testing**:
+  - Added `test_issue_346_repro` to `tests/test_vehicle_utils.cpp` verifying the fix for the reported Cadillac Hypercar case and the short "Hyper" class name.
+
+---
+
 ## [0.7.170] - 2026-03-13
 - **Tire Load Estimation Diagnostic Tools (Issue #342)**:
   - **Enhanced Telemetry Logging**: Expanded the binary log format (v1.2) to include `ApproxLoad` fields for all four wheels, enabling direct comparison with raw game telemetry.

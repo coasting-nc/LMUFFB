@@ -13,7 +13,8 @@ ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleN
     std::transform(name.begin(), name.end(), name.begin(), ::toupper);
 
     // 1. Primary Identification via Class Name (Hierarchical)
-    if (cls.find("HYPERCAR") != std::string::npos || cls.find("LMH") != std::string::npos || cls.find("LMDH") != std::string::npos) {
+    if (cls.find("HYPERCAR") != std::string::npos || cls.find("LMH") != std::string::npos ||
+        cls.find("LMDH") != std::string::npos || cls.find("HYPER") != std::string::npos) {
         return ParsedVehicleClass::HYPERCAR;
     }
     
@@ -37,7 +38,8 @@ ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleN
             name.find("GLICKENHAUS") != std::string::npos || name.find("VANWALL") != std::string::npos ||
             name.find("A424") != std::string::npos || name.find("SC63") != std::string::npos ||
             name.find("VALKYRIE") != std::string::npos || name.find("M HYBRID") != std::string::npos ||
-            name.find("TIPO 6") != std::string::npos || name.find("680") != std::string::npos) {
+            name.find("TIPO 6") != std::string::npos || name.find("680") != std::string::npos ||
+            name.find("CADILLAC") != std::string::npos) {
             return ParsedVehicleClass::HYPERCAR;
         }
         
