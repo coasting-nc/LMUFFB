@@ -73,7 +73,7 @@ void FFBEngine::SetGain(float newGain) {
 ### 1. 🔍 TRIAGE & SELECT
 Scan open GitHub issues. Select **ONE** issue based on priority (Physics Math, Logic/State Machine, Config Parsing). MANDATORY: You must select an open GitHub issue that has not been fixed yet, and mention in the documents you produce (the implementation plan) the number and title of the issue you decide to work on.
 
-**CRITICAL REQUIREMENT:** You must also create a `.md` verbatim copy of the selected GitHub issue, and save it under `docs\dev_docs\github_issues`. This is to help verifiability, traceability and transparency, to ensure that the issue has been correctly and fully addressed.
+**CRITICAL REQUIREMENT:** You must also create a `.md` verbatim copy of the selected GitHub issue (complete with all the messages), and save it under `docs\dev_docs\github_issues`. This is to help verifiability, traceability and transparency, to ensure that the issue has been correctly and fully addressed.
 
 ### 2. 📐 ARCHITECT (Plan)
 **Action:** Execute instructions in `gemini_orchestrator\templates\A.1_architect_prompt.md`.
