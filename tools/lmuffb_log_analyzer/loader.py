@@ -468,6 +468,8 @@ def _parse_header(path: Path) -> SessionMetadata:
         long_load_effect=float(header_data.get('long_load_effect', 0.0)),
         sop_scale=float(header_data.get('sop_scale', 1.0)),
         sop_smoothing=float(header_data.get('sop_smoothing', 0.0)),
+        optimal_slip_angle=float(header_data.get('optimal_slip_angle', 0.10)),
+        optimal_slip_ratio=float(header_data.get('optimal_slip_ratio', 0.12)),
         slope_enabled=header_data.get('slope_detection', '').lower() == 'enabled',
         slope_sensitivity=float(header_data.get('slope_sensitivity', 0.5)),
         slope_threshold=float(header_data.get('slope_threshold', -0.3)),

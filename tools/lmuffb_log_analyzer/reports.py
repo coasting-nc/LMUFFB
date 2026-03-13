@@ -1,5 +1,6 @@
 import pandas as pd
 from .models import SessionMetadata
+from .analyzers.grip_analyzer import analyze_grip_estimation
 from .analyzers.slope_analyzer import (
     analyze_slope_stability,
     detect_oscillation_events,
@@ -19,7 +20,8 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     """
     Generate a formatted text report for the session.
     """
-    slope_results = analyze_slope_stability(df)
+    slope_results = analyze_slope_stability(df, metadata)
+    grip_est_results = analyze_grip_estimation(df, metadata)
     oscillations = detect_oscillation_events(df)
     singularity_count, worst_slope = detect_singularities(df)
     yaw_results = analyze_yaw_dynamics(df)
@@ -73,7 +75,11 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
         
     if slope_results.get('floor_percentage') is not None:
         report.append(f"Floor Hits:       {slope_results['floor_percentage']:.1f}%")
-        
+
+    if slope_results.get('slope_grip_correlation') is not None:
+        report.append(f"Grip Correlation: {slope_results['slope_grip_correlation']:.3f}")
+        report.append(f"False Pos. Rate:  {slope_results['false_positive_rate']:.1f}%")
+
     report.append(f"Oscillations:      {len(oscillations)} events detected")
     report.append(f"Singularities:     {singularity_count} events detected (Worst: {worst_slope:.1f})")
     report.append("")
@@ -105,6 +111,27 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
         report.append("-" * 20)
         for warn in long_results['missing_data_warnings']:
             report.append(f"  [!] {warn}")
+        report.append("")
+
+    if grip_est_results:
+        report.append("GRIP ESTIMATION ACCURACY (Friction Circle Fallback)")
+        report.append("-" * 20)
+        status = grip_est_results.get('status')
+        if status == "ENCRYPTED":
+            report.append("Status: Cannot evaluate (Raw telemetry is encrypted/missing).")
+        elif status == "NO_SLIP_EVENTS":
+            report.append("Status: Cannot evaluate (No significant sliding occurred).")
+        else:
+            report.append(f"Correlation (r):       {grip_est_results['correlation']:.3f}")
+            report.append(f"Mean Error (Sliding):  {grip_est_results['mean_error_during_slip']:.3f}")
+            report.append(f"False Positive Rate:   {grip_est_results['false_positive_rate']:.1f}%")
+
+            if grip_est_results['correlation'] > 0.85:
+                report.append("Evaluation:            EXCELLENT (Fallback closely matches game engine)")
+            elif grip_est_results['correlation'] > 0.70:
+                report.append("Evaluation:            GOOD (Fallback is viable)")
+            else:
+                report.append("Evaluation:            POOR (Consider tuning Optimal Slip Angle/Ratio)")
         report.append("")
 
     if load_est_results:

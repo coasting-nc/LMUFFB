@@ -6,6 +6,7 @@ from rich.panel import Panel
 
 from .loader import load_log
 from .exporters.motec_exporter import MotecExporter
+from .analyzers.grip_analyzer import analyze_grip_estimation
 from .analyzers.slope_analyzer import (
     analyze_slope_stability,
     detect_oscillation_events,
@@ -18,6 +19,7 @@ from .analyzers.yaw_analyzer import (
 from .analyzers.lateral_analyzer import analyze_lateral_dynamics
 from .plots import (
     plot_slope_timeseries,
+    plot_grip_estimation_diagnostic,
     plot_slip_vs_latg,
     plot_dalpha_histogram,
     plot_slope_correlation,
@@ -53,7 +55,8 @@ def _show_info(metadata, df):
 
 def _run_analyze(metadata, df, verbose=False):
     # Run analyses
-    slope_results = analyze_slope_stability(df)
+    slope_results = analyze_slope_stability(df, metadata)
+    grip_est_results = analyze_grip_estimation(df, metadata)
     oscillations = detect_oscillation_events(df)
     singularity_count, worst_slope = detect_singularities(df)
     yaw_results = analyze_yaw_dynamics(df)
@@ -109,6 +112,22 @@ def _run_analyze(metadata, df, verbose=False):
         )
     
     console.print(table)
+
+    # Display results - Grip Estimation
+    if grip_est_results.get('status') == "VALID":
+        table5 = Table(title="Grip Estimation Accuracy (Friction Circle Fallback)")
+        table5.add_column("Metric", style="cyan")
+        table5.add_column("Value", style="green")
+        table5.add_column("Status", style="yellow")
+
+        corr = grip_est_results['correlation']
+        table5.add_row("Correlation (r)", f"{corr:.3f}", "LOW" if corr < 0.75 else "OK")
+        table5.add_row("Mean Error (Sliding)", f"{grip_est_results['mean_error_during_slip']:.3f}", "INFO")
+
+        fpr = grip_est_results['false_positive_rate']
+        table5.add_row("False Positive Rate", f"{fpr:.1f}%", "HIGH" if fpr > 5.0 else "OK")
+
+        console.print(table5)
     
     # Display results - Yaw & Clipping
     table2 = Table(title="Yaw & Clipping Analysis")
@@ -201,7 +220,7 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
 
         # Time series plot
         ts_path = output_path / f"{logfile_stem}_timeseries.png"
-        plot_slope_timeseries(df, str(ts_path), show=False, status_callback=update_status)
+        plot_slope_timeseries(df, metadata, str(ts_path), show=False, status_callback=update_status)
         console.print(f"  [OK] Created: {ts_path}")
         
         if plot_all:
@@ -284,6 +303,11 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
             load_diag_path = output_path / f"{logfile_stem}_load_estimation.png"
             plot_load_estimation_diagnostic(df, str(load_diag_path), show=False, status_callback=update_status)
             console.print(f"  [OK] Created: {load_diag_path}")
+
+            # Grip Estimation Diagnostic
+            grip_diag_path = output_path / f"{logfile_stem}_grip_estimation.png"
+            plot_grip_estimation_diagnostic(df, metadata, str(grip_diag_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {grip_diag_path}")
 
 @click.group()
 @click.version_option(version='1.2.0')

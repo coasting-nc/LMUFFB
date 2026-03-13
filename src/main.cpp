@@ -159,6 +159,8 @@ void FFBThread() {
                             info.long_load_effect = g_engine.m_long_load_effect;
                             info.sop_scale = g_engine.m_sop_scale;
                             info.sop_smoothing = g_engine.m_sop_smoothing_factor;
+                            info.optimal_slip_angle = g_engine.m_optimal_slip_angle;
+                            info.optimal_slip_ratio = g_engine.m_optimal_slip_ratio;
                             info.slope_enabled = g_engine.m_slope_detection_enabled;
                             info.slope_sensitivity = g_engine.m_slope_sensitivity;
                             info.slope_threshold = (float)g_engine.m_slope_min_threshold;

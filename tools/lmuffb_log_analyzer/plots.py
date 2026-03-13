@@ -27,82 +27,95 @@ def _downsample_df(df: pd.DataFrame, max_points: int = MAX_PLOT_POINTS) -> pd.Da
     return df.iloc[::step].copy()
 
 def plot_slope_timeseries(
-    df: pd.DataFrame, 
+    df: pd.DataFrame,
+    metadata: SessionMetadata,
     output_path: Optional[str] = None,
     show: bool = True,
     status_callback = None
 ) -> str:
     """
-    Generate 4-panel time-series plot for slope detection analysis.
+    Generate comprehensive time-series plot for slope detection analysis.
     """
     if status_callback: status_callback("Initializing plot...")
-    fig, axes = plt.subplots(4, 1, figsize=(14, 12), sharex=True)
-    fig.suptitle('Slope Detection Analysis - Time Series', fontsize=14, fontweight='bold')
-    
-    # Downsample for performance
-    if status_callback: status_callback("Downsampling data...")
+    fig, axes = plt.subplots(4, 1, figsize=(14, 14), sharex=True)
+    fig.suptitle('Slope Detection Analysis (Dynamic Grip Estimation)', fontsize=14, fontweight='bold')
+
     plot_df = _downsample_df(df)
     time = plot_df['Time'] if 'Time' in plot_df.columns else np.arange(len(plot_df)) * 0.01
-    
+
+    # Watermark if disabled
+    if not metadata.slope_enabled:
+        for ax in axes:
+            ax.text(0.5, 0.5, 'SLOPE DETECTION DISABLED IN THIS SESSION',
+                    transform=ax.transAxes, fontsize=24, color='red',
+                    alpha=0.2, ha='center', va='center', fontweight='bold')
+
     # Panel 1: Inputs (Lat G and Slip Angle)
-    if status_callback: status_callback("Rendering Panel 1 (Inputs)...")
     ax1 = axes[0]
     ax1.plot(time, plot_df['LatAccel'] / 9.81, label='Lateral G', color='#2196F3', alpha=0.8)
     ax1.set_ylabel('Lateral G', color='#2196F3')
     ax1.tick_params(axis='y', labelcolor='#2196F3')
     _safe_legend(ax1, loc='upper left')
     ax1.grid(True, alpha=0.3)
-    
+
     ax1_twin = ax1.twinx()
-    if 'calc_slip_angle_front' in plot_df.columns:
-        ax1_twin.plot(time, plot_df['calc_slip_angle_front'], label='Slip Angle', 
-                      color='#FF9800', alpha=0.8)
+    if 'CalcSlipAngleFront' in plot_df.columns:
+        ax1_twin.plot(time, plot_df['CalcSlipAngleFront'], label='Slip Angle', color='#FF9800', alpha=0.8)
     ax1_twin.set_ylabel('Slip Angle (rad)', color='#FF9800')
     ax1_twin.tick_params(axis='y', labelcolor='#FF9800')
     _safe_legend(ax1_twin, loc='upper right')
-    ax1.set_title('Inputs: Lateral G and Slip Angle')
-    
-    # Panel 2: Derivatives
-    if status_callback: status_callback("Rendering Panel 2 (Derivatives)...")
+    ax1.set_title('Physical Inputs: Lateral G and Slip Angle')
+
+    # Panel 2: The Two Slopes (G-Based vs Torque-Based)
     ax2 = axes[1]
-    if 'dG_dt' in plot_df.columns:
-        ax2.plot(time, plot_df['dG_dt'], label='dG/dt', color='#2196F3', alpha=0.8)
-    if 'dAlpha_dt' in plot_df.columns:
-        ax2.plot(time, plot_df['dAlpha_dt'], label='dAlpha/dt', color='#FF9800', alpha=0.8)
-        ax2.axhline(0.02, color='#F44336', linestyle='--', alpha=0.5, label='Threshold (0.02)')
-        ax2.axhline(-0.02, color='#F44336', linestyle='--', alpha=0.5)
-    ax2.set_ylabel('Derivative')
+    if 'SlopeCurrent' in plot_df.columns:
+        ax2.plot(time, plot_df['SlopeCurrent'], label='G-Based Slope (Lateral Saturation)', color='#9C27B0', linewidth=1.2)
+    if 'SlopeTorque' in plot_df.columns:
+        ax2.plot(time, plot_df['SlopeTorque'], label='Torque-Based Slope (Pneumatic Trail)', color='#00BCD4', linewidth=1.2, alpha=0.8)
+
+    ax2.axhline(metadata.slope_threshold, color='#F44336', linestyle='--', alpha=0.5, label=f'Neg Threshold ({metadata.slope_threshold})')
+    ax2.axhline(0, color='black', linestyle='-', alpha=0.3)
+    ax2.set_ylabel('Slope Value')
+    ax2.set_ylim(-15, 15)  # Clamp for visibility
     _safe_legend(ax2, loc='upper right')
     ax2.grid(True, alpha=0.3)
-    ax2.set_title('Derivatives: dG/dt and dAlpha/dt')
-    
-    # Panel 3: Slope
-    if status_callback: status_callback("Rendering Panel 3 (Slope)...")
+    ax2.set_title('Calculated Slopes (Torque should drop BEFORE G-Slope)')
+
+    # Panel 3: Confidence Gate
     ax3 = axes[2]
-    if 'SlopeCurrent' in plot_df.columns:
-        ax3.plot(time, plot_df['SlopeCurrent'], label='Slope (dG/dAlpha)', color='#9C27B0', linewidth=0.8)
-        ax3.axhline(-0.3, color='#F44336', linestyle='--', alpha=0.5, label='Neg Threshold (-0.3)')
-        ax3.axhline(0, color='#4CAF50', linestyle='-', alpha=0.3)
-    ax3.set_ylabel('Slope (G/rad)')
-    ax3.set_ylim(-15, 15)  # Clamp for visibility
-    _safe_legend(ax3, loc='upper right')
+    if 'Confidence' in plot_df.columns:
+        ax3.fill_between(time, 0, plot_df['Confidence'], color='#4CAF50', alpha=0.3, label='Confidence Multiplier')
+        ax3.plot(time, plot_df['Confidence'], color='#4CAF50', linewidth=1.0)
+    if 'dAlpha_dt' in plot_df.columns:
+        ax3_twin = ax3.twinx()
+        ax3_twin.plot(time, plot_df['dAlpha_dt'].abs(), color='#FF9800', alpha=0.5, linewidth=0.8, label='abs(dAlpha/dt)')
+        ax3_twin.axhline(metadata.slope_alpha_threshold or 0.02, color='red', linestyle=':', alpha=0.5, label='Alpha Threshold')
+        ax3_twin.set_ylabel('Slip Rate (rad/s)', color='#FF9800')
+        _safe_legend(ax3_twin, loc='upper right')
+
+    ax3.set_ylabel('Confidence (0-1)')
+    ax3.set_ylim(0, 1.1)
+    _safe_legend(ax3, loc='upper left')
     ax3.grid(True, alpha=0.3)
-    ax3.set_title('Calculated Slope (dG/dAlpha)')
-    
-    # Panel 4: Grip Output
-    if status_callback: status_callback("Rendering Panel 4 (Output)...")
+    ax3.set_title('Algorithm Confidence (Requires active steering/slip changes)')
+
+    # Panel 4: Output vs Ground Truth
     ax4 = axes[3]
+    if 'GripFL' in plot_df.columns and 'GripFR' in plot_df.columns:
+        raw_front_grip = (plot_df['GripFL'] + plot_df['GripFR']) / 2.0
+        ax4.plot(time, raw_front_grip, label='Raw Game Grip (Truth)', color='#2196F3', linewidth=2.0, alpha=0.6)
+
     grip_col = 'GripFactor' if 'GripFactor' in plot_df.columns else 'SlopeSmoothed'
     if grip_col in plot_df.columns:
-        ax4.plot(time, plot_df[grip_col], label='Grip Factor', color='#4CAF50', linewidth=1.0)
-        ax4.axhline(0.2, color='#9E9E9E', linestyle='--', alpha=0.5, label='Floor (0.2)')
-        ax4.axhline(1.0, color='#9E9E9E', linestyle='--', alpha=0.5)
-    ax4.set_ylabel('Grip Factor')
+        ax4.plot(time, plot_df[grip_col], label='Slope Estimated Grip', color='#F44336', linewidth=1.5, linestyle='--')
+        ax4.axhline(0.2, color='#9E9E9E', linestyle='--', alpha=0.5, label='Safety Floor (0.2)')
+
+    ax4.set_ylabel('Grip Fraction')
     ax4.set_xlabel('Time (s)')
     ax4.set_ylim(0, 1.1)
-    _safe_legend(ax4, loc='upper right')
+    _safe_legend(ax4, loc='lower right')
     ax4.grid(True, alpha=0.3)
-    ax4.set_title('Output: Grip Factor')
+    ax4.set_title('Final Output: Estimated Grip vs Actual Game Grip')
     
     # Add markers if present
     if 'Marker' in plot_df.columns:
@@ -368,6 +381,60 @@ def plot_load_estimation_diagnostic(
         _safe_legend(ax3, loc='upper right')
     else:
         ax3.set_title('Dynamic Ratio Comparison (Insufficient Data)')
+
+    plt.tight_layout()
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_grip_estimation_diagnostic(
+    df: pd.DataFrame,
+    metadata: SessionMetadata,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    if 'SimulatedApproxGrip' not in df.columns or 'GripFL' not in df.columns:
+        return ""
+
+    if status_callback: status_callback("Initializing Grip Estimation plot...")
+    fig, axes = plt.subplots(2, 1, figsize=(14, 10), sharex=True)
+    fig.suptitle('Tire Grip Estimation: Raw Telemetry vs Friction Circle Fallback', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time'] if 'Time' in plot_df.columns else np.arange(len(plot_df)) * 0.01
+    raw_front_grip = (plot_df['GripFL'] + plot_df['GripFR']) / 2.0
+    approx_grip = plot_df['SimulatedApproxGrip']
+
+    # Panel 1: Time Series Overlay
+    ax1 = axes[0]
+    ax1.plot(time, raw_front_grip, label='Raw Game Grip (Truth)', color='#2196F3', linewidth=2.0, alpha=0.8)
+    ax1.plot(time, approx_grip, label='Approximated Grip (Fallback)', color='#F44336', linestyle='--', linewidth=1.5)
+
+    ax1.set_ylabel('Grip Fraction (0.0 - 1.0)')
+    ax1.set_ylim(0.0, 1.1)
+    ax1.set_title('Front Axle Grip Loss Events')
+    ax1.grid(True, alpha=0.3)
+    _safe_legend(ax1, loc='lower right')
+
+    # Panel 2: Error Delta
+    ax2 = axes[1]
+    error = approx_grip - raw_front_grip
+    ax2.fill_between(time, 0, error, where=(error > 0), color='#F44336', alpha=0.3, label='Over-estimating Grip')
+    ax2.fill_between(time, 0, error, where=(error < 0), color='#2196F3', alpha=0.3, label='Under-estimating Grip')
+    ax2.plot(time, error, color='black', linewidth=0.5)
+
+    ax2.axhline(0, color='black', linestyle='-', alpha=0.5)
+    ax2.set_ylabel('Error Delta')
+    ax2.set_xlabel('Time (s)')
+    ax2.set_ylim(-0.5, 0.5)
+    ax2.set_title('Approximation Error (Closer to 0 is better)')
+    ax2.grid(True, alpha=0.3)
+    _safe_legend(ax2, loc='upper right')
 
     plt.tight_layout()
 
