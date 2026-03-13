@@ -5,7 +5,25 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## Cumulative changes from versions v0.7.114 - 0.7.167
+## Cumulative changes from versions v0.7.114 - 0.7.169
+
+## [0.7.169] - 2026-03-13
+- **Standardized Tire Load Fallbacks (Issue #309)**:
+  - **Standardized Fallback Path**: Modified `FFBEngine::calculate_force` and `FFBEngine::calculate_sop_lateral` to exclusively use suspension-based approximations (`approximate_load` and `approximate_rear_load`) when tire load telemetry is missing.
+  - **Removed Obsolete Physics Model**: Deleted the `calculate_kinematic_load` method and its associated member variables (mass, aero coefficient, roll stiffness, etc.) to simplify the codebase and remove an inferior estimation path.
+  - **Consistent Gating**: Standardized on `ctx.frame_warn_load` as the single trigger for all tire load fallbacks across different physics components.
+- **Testing**:
+  - Added `tests/test_issue_309_load_fallback.cpp` to verify fallback accuracy and activation.
+  - Updated extensive parts of the test suite (`test_ffb_slip_grip.cpp`, `test_issue_213_lateral_load.cpp`, `test_issue_306_lateral_load.cpp`, `test_issue_322_yaw_kicks.cpp`, `test_coverage_boost_v6.cpp`) to align with the removal of kinematic estimation and updated function signatures.
+  - Improved test robustness by ensuring enough frames are simulated to trigger fallback states where required.
+
+## [0.7.168] - 2026-03-12
+- **MoTeC Telemetry Exporter and Build Improvements**:
+  - **MoTeC i2 Pro Support**: Implemented `MotecExporter` to convert binary telemetry logs into MoTeC compatible `.ld` and `.ldx` formats, including 16-bit scaling and 'Pro' license injection.
+  - **Bundling**: Updated `CMakeLists.txt` to explicitly include Python exporters and dependencies in the build distribution.
+  - **Project Hygiene**: Updated `.gitignore` to globally exclude Python build artifacts (`__pycache__`, `.pytest_cache`, etc.).
+- **Testing**:
+  - Added Python unit tests for the MoTeC exporter.
 
 ## [0.7.167] - 2026-03-11
 - **Implemented Timestamped Debug Logs (Issue #312)**:
