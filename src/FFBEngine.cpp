@@ -1111,6 +1111,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         frame.speed_gate = (float)ctx.speed_gate;
         frame.front_load_peak_ref = (float)m_auto_peak_front_load;
 
+        frame.approx_load_fl = (float)approximate_load(fl);
+        frame.approx_load_fr = (float)approximate_load(fr);
+        frame.approx_load_rl = (float)approximate_rear_load(upsampled_data->mWheel[2]);
+        frame.approx_load_rr = (float)approximate_rear_load(upsampled_data->mWheel[3]);
+
         // --- SYSTEM (400Hz) ---
         frame.physics_rate = (float)m_physics_rate;
         frame.clipping = (uint8_t)(std::abs(norm_force) > CLIPPING_THRESHOLD);

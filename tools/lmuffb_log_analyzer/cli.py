@@ -32,7 +32,8 @@ from .plots import (
     plot_unopposed_force,
     plot_lateral_diagnostic,
     plot_longitudinal_diagnostic,
-    plot_raw_telemetry_health
+    plot_raw_telemetry_health,
+    plot_load_estimation_diagnostic
 )
 from .reports import generate_text_report
 
@@ -278,6 +279,11 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
             health_raw_path = output_path / f"{logfile_stem}_raw_telemetry.png"
             plot_raw_telemetry_health(df, str(health_raw_path), show=False, status_callback=update_status)
             console.print(f"  [OK] Created: {health_raw_path}")
+
+            # Load Estimation Diagnostic
+            load_diag_path = output_path / f"{logfile_stem}_load_estimation.png"
+            plot_load_estimation_diagnostic(df, str(load_diag_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {load_diag_path}")
 
 @click.group()
 @click.version_option(version='1.2.0')

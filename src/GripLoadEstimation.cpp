@@ -272,17 +272,23 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
 }
 
 // Helper: Approximate Load (v0.4.5)
+// This function provides a fallback tire load estimate when primary telemetry (mTireLoad) is missing.
+// Rationale: Tire load is the sum of sprung mass (captured by mSuspForce) and unsprung mass.
+// The constant 300.0N (~30kg) is a first-order estimate of the unsprung mass (wheel, tire, upright, brakes).
+// Diagnostic logging (v0.7.170) has been added to compare this approximation against real data where available.
 double FFBEngine::approximate_load(const TelemWheelV01& w) {
     // Base: Suspension Force + Est. Unsprung Mass (300N)
-    // Note: mSuspForce captures weight transfer and aero
-    return w.mSuspForce + 300.0;
+    // Note: mSuspForce captures dynamic weight transfer and aerodynamic downforce.
+    return (std::max)(0.0, w.mSuspForce + 300.0);
 }
 
 // Helper: Approximate Rear Load (v0.4.10)
+// Similar to approximate_load, but for the rear axle.
+// Rationale: Rear unsprung mass might differ from front, but currently uses the same 300N estimate.
 double FFBEngine::approximate_rear_load(const TelemWheelV01& w) {
     // Base: Suspension Force + Est. Unsprung Mass (300N)
-    // This captures weight transfer (braking/accel) and aero downforce implicitly via suspension compression
-    return w.mSuspForce + 300.0;
+    // This captures weight transfer (braking/accel) and aero downforce implicitly via suspension compression.
+    return (std::max)(0.0, w.mSuspForce + 300.0);
 }
 
 // Helper: Calculate Manual Slip Ratio (v0.4.6)

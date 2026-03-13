@@ -6,8 +6,8 @@ from pathlib import Path
 from lmuffb_log_analyzer.loader import load_log, load_bin
 from lmuffb_log_analyzer.models import SessionMetadata
 
-# v0.7.138: 125 floats (added extrapolated_yaw_accel, derived_yaw_accel)
-NUM_FLOATS = 125
+# v0.7.170: 129 floats (added approx_load_fl/fr/rl/rr)
+NUM_FLOATS = 129
 
 def create_mock_bin(path: Path):
     """Create a mock binary log file for testing"""
@@ -164,6 +164,7 @@ def test_load_bin_alignment(tmp_path):
         ('extrapolated_yaw_accel', 'f4'), ('derived_yaw_accel', 'f4'),
         ('ffb_shaft_torque', 'f4'), ('ffb_gen_torque', 'f4'), ('ffb_grip_factor', 'f4'), ('speed_gate', 'f4'),
         ('front_load_peak_ref', 'f4'),
+        ('approx_load_fl', 'f4'), ('approx_load_fr', 'f4'), ('approx_load_rl', 'f4'), ('approx_load_rr', 'f4'),
         ('physics_rate', 'f4'),
         ('clipping', 'u1'), ('warn_bits', 'u1'), ('marker', 'u1')
     ]

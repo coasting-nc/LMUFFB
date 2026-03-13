@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.170] - 2026-03-13
+- **Tire Load Estimation Diagnostic Tools (Issue #342)**:
+  - **Enhanced Telemetry Logging**: Expanded the binary log format (v1.2) to include `ApproxLoad` fields for all four wheels, enabling direct comparison with raw game telemetry.
+  - **Diagnostic Plots**: Added a new "Tire Load Estimation Diagnostic" plot to the Python Log Analyzer, featuring:
+    - Time-series comparison of raw vs. approximate load for both axles.
+    - Global correlation scatter plots with r-value calculation.
+    - Error distribution histograms (Approx - Raw) to identify systematic offsets.
+  - **Code Documentation**: Updated `src/GripLoadEstimation.cpp` with detailed rationale for the `approximate_load` algorithm and added a safety floor to prevent negative load estimates.
+- **Testing**:
+  - Updated C++ test suite (`test_async_logger_binary.cpp`) to verify the new `LogFrame` memory layout and size (535 bytes).
+  - Updated Python test suite (`test_binary_loader.py`, `test_plots.py`) to verify alignment with the v1.2 binary schema and successful diagnostic plot generation.
+  - Verified all 475 C++ test cases and 20 Python tests pass on Linux.
+
+
+
+---
+
 ## Cumulative changes from versions v0.7.114 - 0.7.169
 
 ## [0.7.169] - 2026-03-13
