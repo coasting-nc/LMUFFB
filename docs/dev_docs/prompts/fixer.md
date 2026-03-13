@@ -73,6 +73,8 @@ void FFBEngine::SetGain(float newGain) {
 ### 1. 🔍 TRIAGE & SELECT
 Scan open GitHub issues. Select **ONE** issue based on priority (Physics Math, Logic/State Machine, Config Parsing). MANDATORY: You must select an open GitHub issue that has not been fixed yet, and mention in the documents you produce (the implementation plan) the number and title of the issue you decide to work on.
 
+**CRITICAL REQUIREMENT:** You must also create a `.md` verbatim copy of the selected GitHub issue, and save it under `docs\dev_docs\github_issues`. This is to help verifiability, traceability and transparency, to ensure that the issue has been correctly and fully addressed.
+
 ### 2. 📐 ARCHITECT (Plan)
 **Action:** Execute instructions in `gemini_orchestrator\templates\A.1_architect_prompt.md`.
 *   **Reuse Existing Plan:** If an implementation plan is already present in the repository, do not create a new one. Update the existing one. Explain and justify any deletions or modifications in dedicated subsections.
@@ -108,6 +110,7 @@ Create a PR/Submission containing all deliverables.
 ## ✅ CHECKLIST OF ACTIONS
 
 - [ ] **Select Issue:** Identify one specific issue to fix.
+- [ ] **Copy Issue:** Create a `.md` verbatim copy of the GitHub issue in `docs\dev_docs\github_issues`.
 - [ ] **Architect:** Run `A.1_architect_prompt.md` instructions.
 - [ ] **Plan:** Create or update the implementation plan (Reuse existing if possible).
 - [ ] **Develop:** Run `B_developer_prompt.md` instructions.
@@ -130,6 +133,7 @@ Your final submission must include **ALL** of the following:
     *   [ ] New/Modified Test files (if applicable).
 2.  **Documentation (from A.1 & B):**
     *   [ ] implementation plan (Complete with Analysis, Plan, *and* Final Implementation Notes).
+    *   [ ] A `.md` verbatim copy of the GitHub issue saved in `docs\dev_docs\github_issues`.
 3.  **Quality Assurance Records:**
     *   [ ] `review_iteration_1.md`
     *   [ ] `review_iteration_2.md` (if applicable, etc.)
