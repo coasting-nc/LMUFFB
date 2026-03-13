@@ -1,5 +1,5 @@
 
-## Report on how to improve load estimation 
+# Report on how to improve load estimation 
 
 Based on the plots and the codebase, the massive discrepancy (Mean Error: ~5553N) comes from a fundamental misunderstanding of the telemetry channel `mSuspForce`. 
 
@@ -205,3 +205,48 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
 
 ### Why this works:
 By applying the `0.50` motion ratio to the Cadillac (Hypercar), the `Approx Load` will be cut exactly in half. Looking at your plot, this will drop the dashed line perfectly onto the solid line, reducing the mean error from `~5553N` down to near `0N`, leaving only the natural variance of the unsprung mass.
+
+## Furhter improvements?
+
+
+
+
+Here is a breakdown of how accurate these values are, their impact on the Force Feedback (FFB), and whether we should pursue further improvements.
+
+### 1. How accurate are the new values?
+**In absolute terms: They are rough ballpark estimates.**
+*   **Motion Ratio (MR):** Suspension geometry varies wildly even within the same class. A Hypercar might use a pushrod suspension with an MR of 0.45 on the front and 0.60 on the rear. A GT3 car might use double wishbones with an MR of 0.70. Using a blanket `0.50` for all prototypes and `0.65` for all GTs is a generalization.
+*   **Unsprung Mass:** 40kg to 55kg (400N - 550N) per corner is highly realistic for modern race cars (accounting for the wheel, tire, brake rotor, caliper, and upright). However, in reality, this mass experiences vertical G-forces over bumps, meaning its weight dynamically changes. Our formula treats it as a static constant.
+
+### 2. Can we expect an accurate prediction for FFB purposes?
+**Yes, it is highly accurate *for what the FFB engine actually needs*.**
+
+Here is why this approximation is more than good enough for your FFB pipeline:
+1.  **FFB cares about Dynamics, not Absolute Newtons:** The FFB engine uses tire load to scale effects (like Road Texture, Scrub Drag, and Lockup Vibration). What matters is the *shape* of the load curve—how it increases under braking (weight transfer) and high speeds (aero downforce). Because `mSuspForce` perfectly captures both weight transfer and aero downforce, scaling it by a constant Motion Ratio perfectly preserves the dynamic shape of the curve.
+2.  **The Auto-Normalization Savior:** Your codebase includes a brilliant feature: `m_auto_load_normalization_enabled`. The engine dynamically learns the `m_static_front_load` while driving between 2 and 15 m/s. 
+    *   Because the FFB effects are driven by a **ratio** (`current_load / static_load`), the absolute error cancels itself out! 
+    *   If the real motion ratio is 0.6, but we guess 0.5, both the `current_load` and the `static_load` are scaled down by the exact same incorrect factor. When you divide them, the resulting multiplier (e.g., "1.4x load under braking") remains mathematically accurate.
+
+The only reason the previous `+ 300N` logic failed so badly was that it didn't use a motion ratio at all (effectively assuming an MR of 1.0). This caused the dynamic range (the difference between static load and peak aero load) to be massively exaggerated, throwing the normalization out of its operational window.
+
+### 3. Could / Should we do any better?
+We *could* do better, but we probably **should not** over-engineer it. Here are the theoretical improvements and why they might not be worth the effort:
+
+#### A. Account for Vertical G-Forces on Unsprung Mass (Marginal Improvement)
+Currently, the unsprung mass is a static addition (`+ 450.0`). Over a harsh curb, the chassis might experience 3Gs of vertical acceleration. That 45kg of unsprung mass effectively weighs 135kg for a split second.
+*   **How to fix:** We could pass the chassis vertical acceleration (`data->mLocalAccel.y`) into the approximation function:
+    `unsprung_weight * (1.0 + (data->mLocalAccel.y / 9.81))`
+*   **Why skip it:** `mSuspForce` already spikes violently over curbs because the spring compresses rapidly. Adding the unsprung mass G-force spike on top of it is physically correct, but in terms of FFB feel, it's just adding a tiny spike on top of a massive spike. It won't change the feel significantly.
+
+#### B. Per-Car Lookup Tables (Maintenance Nightmare)
+We could create a JSON or INI file that maps specific car names to their exact, real-world motion ratios and unsprung weights.
+*   **Why skip it:** Every time a new DLC drops or a mod is installed, the app would fall back to the class defaults anyway. Maintaining a database of exact suspension geometries for hundreds of sim racing cars is a massive burden for very little tangible improvement in the wheel's feel.
+
+#### C. Kinematic Reconstruction (Too Noisy)
+We could try to calculate the exact load using `mVerticalTireDeflection` and an assumed tire spring rate.
+*   **Why skip it:** Tire spring rates are non-linear and change with tire pressure and temperature. Furthermore, `mVerticalTireDeflection` is notoriously noisy in rFactor 2 / LMU and is often the first channel to be encrypted/hidden by developers to protect tire data.
+
+### Conclusion
+The proposed fix (Class-based Motion Ratios + Axle-based Unsprung Mass) hits the perfect sweet spot. It eliminates the massive 5000N offset error, brings the values close enough to reality that the `Auto-Normalization` can easily handle the rest, and requires zero ongoing maintenance when new cars are added to the game. 
+
+I recommend implementing the C++ and Python changes as suggested previously and relying on the new Python diagnostic plots to monitor if any specific car class behaves weirdly in the future.
