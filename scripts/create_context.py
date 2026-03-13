@@ -231,6 +231,7 @@ def main():
     # TODO: separate main.py from common
     # TODO: separate AsyncLogger and Logger.h from IO
     # TODO: separate RateMonitor, HealthMonitor from IO
+    # TODO: rename "INTERFACES" to "GAME_SHARED_MEMORY"
     
     DEFAULT_INCLUDE_MAKEFILES = False
     DEFAULT_TEST_EXAMPLES_ONLY = True
