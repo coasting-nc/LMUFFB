@@ -112,20 +112,32 @@ def get_main_code_component(relpath_normalized):
     if any(path.startswith(prefix) for prefix in ['GuiLayer', 'GuiPlatform', 'GuiWidgets', 'Tooltips', 'DXGIUtils', 'resource.h', 'res.rc.in']):
         return 'gui'
     
+    # Logger
+    if any(path.startswith(prefix) for prefix in ['AsyncLogger', 'Logger.h']):
+        return 'logger'
+        
+    # Monitor
+    if any(path.startswith(prefix) for prefix in ['RateMonitor', 'HealthMonitor']):
+        return 'monitor'
+
     # I/O
-    if any(path.startswith(prefix) for prefix in ['DirectInputFFB', 'AsyncLogger', 'Logger.h', 'RestApiProvider', 'GameConnector', 'PerfStats', 'RateMonitor', 'HealthMonitor']):
+    if any(path.startswith(prefix) for prefix in ['DirectInputFFB', 'RestApiProvider', 'GameConnector', 'PerfStats']):
         return 'io'
         
     # Physics
     if any(path.startswith(prefix) for prefix in ['FFBEngine', 'GripLoadEstimation', 'MathUtils', 'SteeringUtils', 'UpSampler', 'VehicleUtils', 'aceFFB']):
         return 'physics'
         
-    # Interfaces
+    # Game Shared Memory
     if any(path.startswith(prefix) for prefix in ['lmu_sm_interface', 'rF2']):
-        return 'interfaces'
+        return 'game_shared_memory'
         
+    # Main
+    if any(path.startswith(prefix) for prefix in ['main.cpp']):
+        return 'main'
+
     # Common
-    if any(path.startswith(prefix) for prefix in ['Config', 'StringUtils', 'main.cpp', 'Version.h.in']):
+    if any(path.startswith(prefix) for prefix in ['Config', 'StringUtils', 'Version.h.in']):
         return 'common'
         
     return 'common'
@@ -170,11 +182,20 @@ def parse_args(args=None):
     parser.add_argument("--include-main-physics", action="store_true", dest="include_main_physics", help="Include Physics components")
     parser.add_argument("--exclude-main-physics", action="store_false", dest="include_main_physics", help="Exclude Physics components")
 
-    parser.add_argument("--include-main-interfaces", action="store_true", dest="include_main_interfaces", help="Include Interface components")
-    parser.add_argument("--exclude-main-interfaces", action="store_false", dest="include_main_interfaces", help="Exclude Interface components")
+    parser.add_argument("--include-main-game-shared-memory", action="store_true", dest="include_main_game_shared_memory", help="Include Game Shared Memory components")
+    parser.add_argument("--exclude-main-game-shared-memory", action="store_false", dest="include_main_game_shared_memory", help="Exclude Game Shared Memory components")
 
     parser.add_argument("--include-main-common", action="store_true", dest="include_main_common", help="Include Common/Config components")
     parser.add_argument("--exclude-main-common", action="store_false", dest="include_main_common", help="Exclude Common/Config components")
+
+    parser.add_argument("--include-main-main", action="store_true", dest="include_main_main", help="Include Main entrypoint components")
+    parser.add_argument("--exclude-main-main", action="store_false", dest="include_main_main", help="Exclude Main entrypoint components")
+
+    parser.add_argument("--include-main-logger", action="store_true", dest="include_main_logger", help="Include Logger components")
+    parser.add_argument("--exclude-main-logger", action="store_false", dest="include_main_logger", help="Exclude Logger components")
+
+    parser.add_argument("--include-main-monitor", action="store_true", dest="include_main_monitor", help="Include Monitor components")
+    parser.add_argument("--exclude-main-monitor", action="store_false", dest="include_main_monitor", help="Exclude Monitor components")
 
     # Makefile options
     make_group = parser.add_mutually_exclusive_group()
@@ -208,8 +229,11 @@ def parse_args(args=None):
         include_main_gui=True,
         include_main_io=True,
         include_main_physics=True,
-        include_main_interfaces=True,
-        include_main_common=True
+        include_main_game_shared_memory=True,
+        include_main_common=True,
+        include_main_main=True,
+        include_main_logger=True,
+        include_main_monitor=True
     )
     
     return parser.parse_args(args)
@@ -226,12 +250,11 @@ def main():
     DEFAULT_INCLUDE_MAIN_GUI = True
     DEFAULT_INCLUDE_MAIN_IO = True
     DEFAULT_INCLUDE_MAIN_PHYSICS = True
-    DEFAULT_INCLUDE_MAIN_INTERFACES = True
+    DEFAULT_INCLUDE_MAIN_GAME_SHARED_MEMORY = True
     DEFAULT_INCLUDE_MAIN_COMMON = True
-    # TODO: separate main.py from common
-    # TODO: separate AsyncLogger and Logger.h from IO
-    # TODO: separate RateMonitor, HealthMonitor from IO
-    # TODO: rename "INTERFACES" to "GAME_SHARED_MEMORY"
+    DEFAULT_INCLUDE_MAIN_MAIN = True
+    DEFAULT_INCLUDE_MAIN_LOGGER = True
+    DEFAULT_INCLUDE_MAIN_MONITOR = True
     
     DEFAULT_INCLUDE_MAKEFILES = False
     DEFAULT_TEST_EXAMPLES_ONLY = True
@@ -278,8 +301,11 @@ def main():
         ("gui", DEFAULT_INCLUDE_MAIN_GUI),
         ("io", DEFAULT_INCLUDE_MAIN_IO),
         ("physics", DEFAULT_INCLUDE_MAIN_PHYSICS),
-        ("interfaces", DEFAULT_INCLUDE_MAIN_INTERFACES),
-        ("common", DEFAULT_INCLUDE_MAIN_COMMON)
+        ("game-shared-memory", DEFAULT_INCLUDE_MAIN_GAME_SHARED_MEMORY),
+        ("common", DEFAULT_INCLUDE_MAIN_COMMON),
+        ("main", DEFAULT_INCLUDE_MAIN_MAIN),
+        ("logger", DEFAULT_INCLUDE_MAIN_LOGGER),
+        ("monitor", DEFAULT_INCLUDE_MAIN_MONITOR)
     ]
     
     for comp_name, default_val in sub_components:
@@ -310,8 +336,11 @@ def main():
         print(f"    include_main_gui: {args.include_main_gui}")
         print(f"    include_main_io: {args.include_main_io}")
         print(f"    include_main_physics: {args.include_main_physics}")
-        print(f"    include_main_interfaces: {args.include_main_interfaces}")
+        print(f"    include_main_game_shared_memory: {args.include_main_game_shared_memory}")
         print(f"    include_main_common: {args.include_main_common}")
+        print(f"    include_main_main: {args.include_main_main}")
+        print(f"    include_main_logger: {args.include_main_logger}")
+        print(f"    include_main_monitor: {args.include_main_monitor}")
     print(f"  include_makefiles: {args.include_makefiles}")
     print(f"  include_log_analyzer: {args.include_log_analyzer}")
     print(f"  include_custom_docs: {args.include_custom_docs}")
@@ -385,9 +414,15 @@ def main():
                                 should_include = True
                             elif component == 'physics' and args.include_main_physics:
                                 should_include = True
-                            elif component == 'interfaces' and args.include_main_interfaces:
+                            elif component == 'game_shared_memory' and args.include_main_game_shared_memory:
                                 should_include = True
                             elif component == 'common' and args.include_main_common:
+                                should_include = True
+                            elif component == 'main' and args.include_main_main:
+                                should_include = True
+                            elif component == 'logger' and args.include_main_logger:
+                                should_include = True
+                            elif component == 'monitor' and args.include_main_monitor:
                                 should_include = True
                     else:
                         # Other code files (e.g. root scripts if not excluded)
