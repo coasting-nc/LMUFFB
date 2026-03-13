@@ -204,6 +204,20 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
     double slip2 = calculate_slip_angle(w2, prev_slip2, dt);
     result.slip_angle = (slip1 + slip2) / 2.0;
 
+    // ==================================================================================
+    // SHADOW MODE: Always calculate slope grip if enabled (for diagnostics and logging)
+    // This allows us to compare our math against unencrypted cars to tune the algorithm.
+    // ==================================================================================
+    double slope_grip_estimate = 1.0;
+    if (m_slope_detection_enabled && is_front && data && car_speed >= 5.0) {
+        slope_grip_estimate = calculate_slope_grip(
+            data->mLocalAccel.x / 9.81,
+            result.slip_angle,
+            dt,
+            data
+        );
+    }
+
     // Fallback condition: Grip is essentially zero BUT car has significant load
     if (result.value < 0.0001 && avg_axle_load > 100.0) {
         result.approximated = true;
@@ -214,13 +228,8 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
             result.value = 1.0; 
         } else {
             if (m_slope_detection_enabled && is_front && data) {
-                // Dynamic grip estimation via derivative monitoring
-                result.value = calculate_slope_grip(
-                    data->mLocalAccel.x / 9.81,
-                    result.slip_angle,
-                    dt,
-                    data
-                );
+                // Use the estimate we already calculated above
+                result.value = slope_grip_estimate;
             } else {
                 // v0.4.38: Combined Friction Circle (Advanced Reconstruction)
                 

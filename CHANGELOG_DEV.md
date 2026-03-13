@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.173]
+
+- **Enhanced Tire Grip Estimation Diagnostics (Issue #348)**:
+  - **C++ Physics Engine**:
+    - **Shadow Mode for Slope Detection**: Implemented unconditional background calculation of the slope-based grip estimate. This allows diagnostic tools to compare the algorithm's performance against the game's actual "Ground Truth" grip for all vehicles, even those with unencrypted telemetry.
+    - **Extended Metadata Logging**: Updated the binary log header to include `optimal_slip_angle` and `optimal_slip_ratio` settings, enabling exact offline replication of the Friction Circle fallback math.
+  - **Python Log Analyzer**:
+    - **New Grip Estimation Analyzer**: Implemented a simulation of the Friction Circle algorithm that calculates correlation and mean error against raw telemetry grip.
+    - **Advanced Slope Detection Plot**: Rewrote the slope diagnostic plot to include Torque-Slope (pneumatic trail anticipation), Algorithm Confidence, and a Direct Truth overlay (Raw Game Grip).
+    - **Grip Fallback Diagnostic Plot**: Added a new time-series plot comparing the simulated fallback vs. the game's truth, featuring an error delta panel to identify tuning gaps.
+    - **Enhanced Reporting**: Integrated grip correlation and False Positive Rate (FPR) metrics into the CLI output and automated text reports.
+- **Testing**:
+  - Added `tests/test_issue_348_shadow_mode.cpp` (C++) verifying that slope detection state updates even when primary grip data is valid.
+  - Added `tools/lmuffb_log_analyzer/tests/test_grip_analyzer.py` (Python) verifying the Friction Circle simulation and statistical analysis.
+  - Updated `tools/lmuffb_log_analyzer/tests/test_plots.py` to support new plot signatures.
+  - Verified all 478 C++ test cases and 25 Python tests pass on Linux.
+
+---
+
 ## [0.7.172]
 
 - **Improved Tire Load Approximation (Issue #345)**:

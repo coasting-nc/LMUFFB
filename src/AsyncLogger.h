@@ -209,6 +209,8 @@ struct SessionInfo {
     float long_load_effect;
     float sop_scale;       // v0.7.152
     float sop_smoothing;   // v0.7.152
+    float optimal_slip_angle; // v0.7.173
+    float optimal_slip_ratio; // v0.7.173
     bool slope_enabled;
     float slope_sensitivity;
     float slope_threshold;
@@ -431,6 +433,8 @@ private:
         m_file << "# Long Load Effect: " << info.long_load_effect << "\n";
         m_file << "# SoP Scale: " << info.sop_scale << "\n";
         m_file << "# SoP Smoothing: " << info.sop_smoothing << "\n";
+        m_file << "# Optimal Slip Angle: " << info.optimal_slip_angle << "\n";
+        m_file << "# Optimal Slip Ratio: " << info.optimal_slip_ratio << "\n";
         m_file << "# Slope Detection: " << (info.slope_enabled ? "Enabled" : "Disabled") << "\n";
         m_file << "# Slope Sensitivity: " << info.slope_sensitivity << "\n";
         m_file << "# Slope Threshold: " << info.slope_threshold << "\n";

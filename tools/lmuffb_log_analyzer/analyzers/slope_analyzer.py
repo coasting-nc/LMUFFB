@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Any
 
-def analyze_slope_stability(df: pd.DataFrame, threshold: float = 0.02) -> Dict[str, Any]:
+def analyze_slope_stability(df: pd.DataFrame, metadata=None, threshold: float = 0.02) -> Dict[str, Any]:
     """
     Analyze the stability of slope detection algorithm.
     """
@@ -96,6 +96,27 @@ def analyze_slope_stability(df: pd.DataFrame, threshold: float = 0.02) -> Dict[s
         results['issues'].append(
             f"HIGH SIGNAL NOISE ({results['zero_crossing_rate']:.1f} Hz) - Slope signal is jittery"
         )
+
+    # NEW: Correlation with Ground Truth (Raw Grip)
+    if grip_col in df.columns and 'GripFL' in df.columns and 'GripFR' in df.columns:
+        raw_front_grip = (df['GripFL'] + df['GripFR']) / 2.0
+
+        # Only evaluate correlation when the car is actually sliding
+        slip_mask = (raw_front_grip < 0.98) | (df[grip_col] < 0.98)
+        if slip_mask.sum() > 50:
+            results['slope_grip_correlation'] = float(np.corrcoef(raw_front_grip[slip_mask], df.loc[slip_mask, grip_col])[0, 1])
+
+            # False Positive Rate: Slope says sliding (<0.9), but Raw says gripping (>0.98)
+            false_positives = (df[grip_col] < 0.9) & (raw_front_grip > 0.98)
+            results['false_positive_rate'] = float(false_positives.mean() * 100.0)
+        else:
+            results['slope_grip_correlation'] = None
+            results['false_positive_rate'] = None
+
+    if metadata and not metadata.slope_enabled:
+        results['issues'].append("SLOPE DETECTION WAS DISABLED. Metrics reflect Friction Circle fallback, not Slope math.")
+    elif results.get('slope_grip_correlation') is not None and results['slope_grip_correlation'] < 0.6:
+        results['issues'].append(f"POOR GRIP CORRELATION ({results['slope_grip_correlation']:.2f}) - Slope detection is not matching game physics.")
 
     return results
 
