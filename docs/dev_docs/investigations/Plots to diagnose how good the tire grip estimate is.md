@@ -263,3 +263,172 @@ If the "Approximated Grip" line drops too early compared to the "Raw Game Grip",
 
 ## Plots and Diagnostics for Slope Detection
 
+Looking at the codebase and the *intent* of the Slope Detection algorithm, **our current diagnostics are definitely missing some crucial pieces.**
+
+Here is an evaluation of what is missing and how we should upgrade the log analyzer to properly evaluate the Slope Detection algorithm.
+
+### What is missing from the current Slope Diagnostics?
+
+1. **The "Ground Truth" Comparison:** Just like we did for the Friction Circle, we need to overlay the Slope Detection's output (`Grip Factor`) against the game's actual `Raw Front Grip`. The whole point of Slope Detection is to be *more accurate* than the static Friction Circle. We need a visual and statistical way to prove that it actually matches the game's physics better.
+2. **The Torque-Based Anticipation (Pneumatic Trail):** In v0.7.40, you added a massive feature to the C++ code: `m_slope_torque_current`. It looks at the steering shaft torque vs. steering angle to anticipate grip loss *before* the lateral G-forces drop. **This is completely missing from the current plots.** We need to see if the Torque-Slope actually drops before the G-Slope!
+3. **The Confidence Gate:** The C++ code calculates a `Confidence` multiplier based on how fast the slip angle is changing. If confidence is low, it ignores the slope drop. We need to visualize this to understand why the algorithm might be ignoring a slide.
+4. **"Disabled" Awareness:** The plots should explicitly warn you if you are looking at a log where the feature was turned off, so you don't waste time analyzing flat lines.
+
+---
+
+### The Upgrades
+
+Here is how we rewrite the Python analyzer to make the Slope Detection diagnostics incredibly powerful.
+
+#### 1. Update the Slope Plot (`plots.py`)
+We will rewrite `plot_slope_timeseries` to include the Torque-Slope, the Confidence multiplier, the Raw Grip overlay, and a "DISABLED" watermark.
+
+**File: `tools/lmuffb_log_analyzer/plots.py`**
+Replace the existing `plot_slope_timeseries` function:
+
+```python
+def plot_slope_timeseries(
+    df: pd.DataFrame, 
+    metadata: SessionMetadata, # NEW: Pass metadata to check if enabled
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Generate comprehensive time-series plot for slope detection analysis.
+    """
+    if status_callback: status_callback("Initializing plot...")
+    fig, axes = plt.subplots(4, 1, figsize=(14, 14), sharex=True)
+    fig.suptitle('Slope Detection Analysis (Dynamic Grip Estimation)', fontsize=14, fontweight='bold')
+    
+    plot_df = _downsample_df(df)
+    time = plot_df['Time'] if 'Time' in plot_df.columns else np.arange(len(plot_df)) * 0.01
+    
+    # Watermark if disabled
+    if not metadata.slope_enabled:
+        for ax in axes:
+            ax.text(0.5, 0.5, 'SLOPE DETECTION DISABLED IN THIS SESSION', 
+                    transform=ax.transAxes, fontsize=24, color='red', 
+                    alpha=0.2, ha='center', va='center', fontweight='bold')
+
+    # Panel 1: Inputs (Lat G and Slip Angle)
+    ax1 = axes[0]
+    ax1.plot(time, plot_df['LatAccel'] / 9.81, label='Lateral G', color='#2196F3', alpha=0.8)
+    ax1.set_ylabel('Lateral G', color='#2196F3')
+    ax1.tick_params(axis='y', labelcolor='#2196F3')
+    _safe_legend(ax1, loc='upper left')
+    ax1.grid(True, alpha=0.3)
+    
+    ax1_twin = ax1.twinx()
+    if 'CalcSlipAngleFront' in plot_df.columns:
+        ax1_twin.plot(time, plot_df['CalcSlipAngleFront'], label='Slip Angle', color='#FF9800', alpha=0.8)
+    ax1_twin.set_ylabel('Slip Angle (rad)', color='#FF9800')
+    ax1_twin.tick_params(axis='y', labelcolor='#FF9800')
+    _safe_legend(ax1_twin, loc='upper right')
+    ax1.set_title('Physical Inputs: Lateral G and Slip Angle')
+    
+    # Panel 2: The Two Slopes (G-Based vs Torque-Based)
+    ax2 = axes[1]
+    if 'SlopeCurrent' in plot_df.columns:
+        ax2.plot(time, plot_df['SlopeCurrent'], label='G-Based Slope (Lateral Saturation)', color='#9C27B0', linewidth=1.2)
+    if 'SlopeTorque' in plot_df.columns:
+        ax2.plot(time, plot_df['SlopeTorque'], label='Torque-Based Slope (Pneumatic Trail)', color='#00BCD4', linewidth=1.2, alpha=0.8)
+    
+    ax2.axhline(metadata.slope_threshold, color='#F44336', linestyle='--', alpha=0.5, label=f'Neg Threshold ({metadata.slope_threshold})')
+    ax2.axhline(0, color='black', linestyle='-', alpha=0.3)
+    ax2.set_ylabel('Slope Value')
+    ax2.set_ylim(-15, 15)  # Clamp for visibility
+    _safe_legend(ax2, loc='upper right')
+    ax2.grid(True, alpha=0.3)
+    ax2.set_title('Calculated Slopes (Torque should drop BEFORE G-Slope)')
+
+    # Panel 3: Confidence Gate
+    ax3 = axes[2]
+    if 'Confidence' in plot_df.columns:
+        ax3.fill_between(time, 0, plot_df['Confidence'], color='#4CAF50', alpha=0.3, label='Confidence Multiplier')
+        ax3.plot(time, plot_df['Confidence'], color='#4CAF50', linewidth=1.0)
+    if 'dAlpha_dt' in plot_df.columns:
+        ax3_twin = ax3.twinx()
+        ax3_twin.plot(time, plot_df['dAlpha_dt'].abs(), color='#FF9800', alpha=0.5, linewidth=0.8, label='abs(dAlpha/dt)')
+        ax3_twin.axhline(metadata.slope_alpha_threshold or 0.02, color='red', linestyle=':', alpha=0.5, label='Alpha Threshold')
+        ax3_twin.set_ylabel('Slip Rate (rad/s)', color='#FF9800')
+        _safe_legend(ax3_twin, loc='upper right')
+
+    ax3.set_ylabel('Confidence (0-1)')
+    ax3.set_ylim(0, 1.1)
+    _safe_legend(ax3, loc='upper left')
+    ax3.grid(True, alpha=0.3)
+    ax3.set_title('Algorithm Confidence (Requires active steering/slip changes)')
+
+    # Panel 4: Output vs Ground Truth
+    ax4 = axes[3]
+    if 'GripFL' in plot_df.columns and 'GripFR' in plot_df.columns:
+        raw_front_grip = (plot_df['GripFL'] + plot_df['GripFR']) / 2.0
+        ax4.plot(time, raw_front_grip, label='Raw Game Grip (Truth)', color='#2196F3', linewidth=2.0, alpha=0.6)
+
+    grip_col = 'GripFactor' if 'GripFactor' in plot_df.columns else 'SlopeSmoothed'
+    if grip_col in plot_df.columns:
+        ax4.plot(time, plot_df[grip_col], label='Slope Estimated Grip', color='#F44336', linewidth=1.5, linestyle='--')
+        ax4.axhline(0.2, color='#9E9E9E', linestyle='--', alpha=0.5, label='Safety Floor (0.2)')
+    
+    ax4.set_ylabel('Grip Fraction')
+    ax4.set_xlabel('Time (s)')
+    ax4.set_ylim(0, 1.1)
+    _safe_legend(ax4, loc='lower right')
+    ax4.grid(True, alpha=0.3)
+    ax4.set_title('Final Output: Estimated Grip vs Actual Game Grip')
+    
+    plt.tight_layout()
+    
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+```
+*(Note: You will need to update the call in `cli.py` to pass `metadata` to `plot_slope_timeseries(df, metadata, ...)`).*
+
+#### 2. Update the Statistical Analysis (`slope_analyzer.py`)
+We need to add a correlation check to see if the Slope Detection is actually matching the game's raw grip.
+
+**File: `tools/lmuffb_log_analyzer/analyzers/slope_analyzer.py`**
+```python
+def analyze_slope_stability(df: pd.DataFrame, metadata, threshold: float = 0.02) -> Dict[str, Any]:
+    results = {}
+    
+    # ... existing basic stats ...
+
+    # NEW: Correlation with Ground Truth (Raw Grip)
+    grip_col = 'GripFactor' if 'GripFactor' in df.columns else 'SlopeSmoothed'
+    if grip_col in df.columns and 'GripFL' in df.columns and 'GripFR' in df.columns:
+        raw_front_grip = (df['GripFL'] + df['GripFR']) / 2.0
+        
+        # Only evaluate correlation when the car is actually sliding
+        slip_mask = (raw_front_grip < 0.98) | (df[grip_col] < 0.98)
+        if slip_mask.sum() > 50:
+            results['slope_grip_correlation'] = float(np.corrcoef(raw_front_grip[slip_mask], df.loc[slip_mask, grip_col])[0, 1])
+            
+            # False Positive Rate: Slope says sliding (<0.9), but Raw says gripping (>0.98)
+            false_positives = (df[grip_col] < 0.9) & (raw_front_grip > 0.98)
+            results['false_positive_rate'] = float(false_positives.mean() * 100.0)
+        else:
+            results['slope_grip_correlation'] = None
+            results['false_positive_rate'] = None
+
+    # ... existing issue detection ...
+
+    if not metadata.slope_enabled:
+        results['issues'].append("SLOPE DETECTION WAS DISABLED. Metrics reflect Friction Circle fallback, not Slope math.")
+    elif results.get('slope_grip_correlation') is not None and results['slope_grip_correlation'] < 0.6:
+        results['issues'].append(f"POOR GRIP CORRELATION ({results['slope_grip_correlation']:.2f}) - Slope detection is not matching game physics.")
+
+    return results
+```
+*(Note: Update `cli.py` and `reports.py` to pass `metadata` into `analyze_slope_stability(df, metadata)`).*
+
+### Why these additions are critical:
+
+1. **Proving the "Pneumatic Trail" Theory:** By plotting `SlopeTorque` (Cyan) against `SlopeCurrent` (Purple), you will visually see if the steering torque drops *before* the lateral G-forces drop. If it does, your v0.7.40 fusion logic is a massive success. If they drop at the exact same time, the torque anticipation isn't adding much value.
+2. **Validating the Confidence Gate:** If you feel a slide in-game but the FFB doesn't drop, you can look at Panel 3. If the green `Confidence` area is at `0.0` during the slide, you know your `slope_alpha_threshold` is set too high, preventing the algorithm from trusting the data.
+3. **Objective Superiority:** By comparing the `slope_grip_correlation` of a log using Slope Detection vs. a log using the Friction Circle fallback, you can mathematically prove which algorithm provides a more accurate representation of the game's physics engine.
