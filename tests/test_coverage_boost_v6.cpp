@@ -802,13 +802,6 @@ TEST_CASE(test_grip_load_estimation_v6, "Physics") {
     FFBEngine engine;
     TelemInfoV01 data = {};
 
-    // 1. calculate_kinematic_load branches
-    data.mLocalVel.z = 50.0;
-    engine.calculate_kinematic_load(&data, 0); // Front Left
-    engine.calculate_kinematic_load(&data, 1); // Front Right
-    engine.calculate_kinematic_load(&data, 2); // Rear Left
-    engine.calculate_kinematic_load(&data, 3); // Rear Right
-
     // 2. calculate_manual_slip_ratio branches
     TelemWheelV01 w = {};
     w.mStaticUndeflectedRadius = 0; // Trigger invalid radius fallback
@@ -822,9 +815,9 @@ TEST_CASE(test_grip_load_estimation_v6, "Physics") {
     engine.calculate_wheel_slip_ratio(w);
 
     // 4. update_static_load_reference branches
-    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 5000.0, 5.0, 0.0025); // speed > 2.0 && < 15.0
-    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 5000.0, 1.0, 0.0025); // speed <= 2.0
-    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 5000.0, 20.0, 0.0025); // speed >= 15.0
+    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 5000.0, 5000.0, 5.0, 0.0025); // speed > 2.0 && < 15.0
+    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 5000.0, 5000.0, 1.0, 0.0025); // speed <= 2.0
+    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 5000.0, 5000.0, 20.0, 0.0025); // speed >= 15.0
 
     // 5. InitializeLoadReference with null className
     FFBEngineTestAccess::CallInitializeLoadReference(engine, nullptr, "TestCar");
@@ -841,12 +834,12 @@ TEST_CASE(test_grip_load_estimation_v6, "Physics") {
 
     // 8. update_static_load_reference latched branch
     FFBEngineTestAccess::SetStaticLoadLatched(engine, true);
-    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 5000.0, 5.0, 0.0025);
+    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 5000.0, 5000.0, 5.0, 0.0025);
 
     // 9. update_static_load_reference fallback branch
     FFBEngineTestAccess::SetStaticLoadLatched(engine, false);
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 100.0);
-    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 100.0, 1.0, 0.0025); // speed 1.0, load < 1000
+    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 100.0, 100.0, 1.0, 0.0025); // speed 1.0, load < 1000
 
     std::cout << "[PASS] GripLoadEstimation branches exercised" << std::endl;
     g_tests_passed++;

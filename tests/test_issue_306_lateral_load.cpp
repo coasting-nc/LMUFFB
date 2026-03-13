@@ -135,9 +135,6 @@ TEST_CASE_TAGGED(test_issue_306_wheel_spin_scaling, "CorePhysics", (std::vector<
     data.mWheel[3].mTireLoad = 500.0;
 
     engine.calculate_force(&data);
-    // Need to wait for some phases? Vibration is sine based.
-    // We can check the amplitude by looking at multiple frames or the snapshot if we added amplitude.
-    // Snapshot only has texture_spin (the instantaneous value).
 
     float max_spin_1 = 0.0f;
     for(int i=0; i<20; i++) {
@@ -161,7 +158,7 @@ TEST_CASE_TAGGED(test_issue_306_wheel_spin_scaling, "CorePhysics", (std::vector<
     ASSERT_GT(max_spin_2, max_spin_1);
 }
 
-TEST_CASE_TAGGED(test_issue_306_kinematic_fallback_4_wheel, "CorePhysics", (std::vector<std::string>{"Physics", "Issue306"})) {
+TEST_CASE_TAGGED(test_issue_306_suspension_fallback_4_wheel, "CorePhysics", (std::vector<std::string>{"Physics", "Issue306"})) {
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_sop_effect = 0.0f;
@@ -173,8 +170,11 @@ TEST_CASE_TAGGED(test_issue_306_kinematic_fallback_4_wheel, "CorePhysics", (std:
     // Force missing load warning
     for(int i=0; i<4; i++) data.mWheel[i].mTireLoad = 0.0;
 
-    // Seed speed and accel for kinematic estimation
-    data.mLocalAccel.x = 4.905; // 0.5G Right (centrifugal pushed left) -> Left side gains load
+    // Set asymmetric suspension forces
+    data.mWheel[0].mSuspForce = 5000.0; // FL
+    data.mWheel[1].mSuspForce = 1000.0; // FR
+    data.mWheel[2].mSuspForce = 4000.0; // RL
+    data.mWheel[3].mSuspForce = 2000.0; // RR
 
     // We need to trigger the warning threshold
     for(int i=0; i<60; i++) {
@@ -186,8 +186,6 @@ TEST_CASE_TAGGED(test_issue_306_kinematic_fallback_4_wheel, "CorePhysics", (std:
     ASSERT_TRUE(snap.warn_load);
     ASSERT_GT(std::abs(snap.lat_load_force), 0.01f);
 
-    // With 0.5G Lat accel, we expect load transfer.
-    // Check if it's positive (Left - Right).
-    // centrifugal left -> left gain load -> positive.
+    // centrifugal left -> left gain load -> positive Internal -> Negative output (Right-Left)
     ASSERT_LT(snap.lat_load_force, 0.0f);
 }

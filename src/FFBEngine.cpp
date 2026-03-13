@@ -132,7 +132,7 @@ std::vector<FFBSnapshot> FFBEngine::GetDebugBatch() {
 //   update_static_load_reference, InitializeLoadReference,
 //   calculate_raw_slip_angle_pair, calculate_slip_angle,
 //   calculate_axle_grip, approximate_load, approximate_rear_load,
-//   calculate_kinematic_load, calculate_manual_slip_ratio,
+//   calculate_manual_slip_ratio,
 //   calculate_slope_grip, calculate_slope_confidence,
 //   calculate_wheel_slip_ratio
 // ---------------------------------------------------------------------------
@@ -471,18 +471,13 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
 
     if (m_missing_load_frames > MISSING_LOAD_WARN_THRESHOLD) {
-        // Fallback Logic
-        if (fl.mSuspForce > MIN_VALID_SUSP_FORCE) {
-            double calc_load_fl = approximate_load(fl);
-            double calc_load_fr = approximate_load(fr);
-            ctx.avg_front_load = (calc_load_fl + calc_load_fr) / DUAL_DIVISOR;
-        } else {
-            double kin_load_fl = calculate_kinematic_load(data, 0);
-            double kin_load_fr = calculate_kinematic_load(data, 1);
-            ctx.avg_front_load = (kin_load_fl + kin_load_fr) / DUAL_DIVISOR;
-        }
+        // Fallback Logic: Use suspension-based approximation (more accurate than kinematic)
+        double calc_load_fl = approximate_load(fl);
+        double calc_load_fr = approximate_load(fr);
+        ctx.avg_front_load = (calc_load_fl + calc_load_fr) / DUAL_DIVISOR;
+
         if (!m_warned_load) {
-            Logger::Get().LogFile("Warning: Data for mTireLoad from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). Using Kinematic Fallback.", data->mVehicleName);
+            Logger::Get().LogFile("Warning: Data for mTireLoad from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). Using Suspension-based Fallback.", data->mVehicleName);
             m_warned_load = true;
         }
         ctx.frame_warn_load = true;
@@ -551,11 +546,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
     
     // Calculate Rear Load early for learning (v0.7.164)
-    double calc_load_rl = approximate_rear_load(data->mWheel[2]);
-    double calc_load_rr = approximate_rear_load(data->mWheel[3]);
+    double calc_load_rl = upsampled_data->mWheel[2].mTireLoad;
+    double calc_load_rr = upsampled_data->mWheel[3].mTireLoad;
     if (ctx.frame_warn_load) {
-        calc_load_rl = calculate_kinematic_load(data, 2);
-        calc_load_rr = calculate_kinematic_load(data, 3);
+        calc_load_rl = approximate_rear_load(upsampled_data->mWheel[2]);
+        calc_load_rr = approximate_rear_load(upsampled_data->mWheel[3]);
     }
     ctx.avg_rear_load = (calc_load_rl + calc_load_rr) / DUAL_DIVISOR;
 
@@ -1145,10 +1140,10 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double rr_load = data->mWheel[3].mTireLoad;
 
     if (ctx.frame_warn_load) {
-        fl_load = calculate_kinematic_load(data, 0);
-        fr_load = calculate_kinematic_load(data, 1);
-        rl_load = calculate_kinematic_load(data, 2);
-        rr_load = calculate_kinematic_load(data, 3);
+        fl_load = approximate_load(data->mWheel[0]);
+        fr_load = approximate_load(data->mWheel[1]);
+        rl_load = approximate_rear_load(data->mWheel[2]);
+        rr_load = approximate_rear_load(data->mWheel[3]);
     }
 
     double left_load = fl_load + rl_load;

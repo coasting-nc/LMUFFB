@@ -79,7 +79,7 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_isolation, "CorePhysics", (std::vec
     ASSERT_NEAR(force_load, -0.25f, 0.1f); // Issue #306: (6000-10000)/16000 = -0.25
 }
 
-TEST_CASE_TAGGED(test_issue_213_lateral_load_kinematic, "CorePhysics", (std::vector<std::string>{"Physics", "Issue213"})) {
+TEST_CASE_TAGGED(test_issue_213_lateral_load_suspension_fallback, "CorePhysics", (std::vector<std::string>{"Physics", "Issue213"})) {
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_sop_effect = 0.0f;
@@ -90,24 +90,29 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_kinematic, "CorePhysics", (std::vec
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
 
     // Set direct load to zero to trigger fallback
-    data.mWheel[0].mTireLoad = 0.0;
-    data.mWheel[1].mTireLoad = 0.0;
+    for(int i=0; i<4; i++) data.mWheel[i].mTireLoad = 0.0;
 
-    // Set 1G Left acceleration (Right Turn)
-    data.mLocalAccel.x = 9.81;
+    // Set asymmetric suspension force to simulate load transfer
+    // Right Turn: Centrifugal pushed Left. Left gains load.
+    data.mWheel[0].mSuspForce = 5000.0; // FL
+    data.mWheel[1].mSuspForce = 1000.0; // FR
+    data.mWheel[2].mSuspForce = 4000.0; // RL
+    data.mWheel[3].mSuspForce = 2000.0; // RR
 
     // Run enough frames to trigger MISSING_LOAD_WARN_THRESHOLD (20) and overcome smoothing
     for (int i = 0; i < 60; i++) {
+        data.mElapsedTime += 0.01;
         engine.calculate_force(&data);
     }
 
     auto snapshots = engine.GetDebugBatch();
     ASSERT_FALSE(snapshots.empty());
     if (!snapshots.empty()) {
-        // With 1G Left acceleration, kinematic load should show Left side GAIN load
-        // lat_load_norm = (Left - Right) / total -> should be positive
-        std::cout << "[INFO] Lat Load Force (Kinematic Fallback): " << snapshots.back().lat_load_force << std::endl;
-        ASSERT_LT(snapshots.back().lat_load_force, -0.01f);
+        // Loads: FL=5300, FR=1300, RL=4300, RR=2300.
+        // Left=9600, Right=3600. Total=13200.
+        // norm = (3600 - 9600) / 13200 = -6000 / 13200 approx -0.45
+        std::cout << "[INFO] Lat Load Force (Suspension Fallback): " << snapshots.back().lat_load_force << std::endl;
+        ASSERT_LT(snapshots.back().lat_load_force, -0.1f);
     }
 }
 
