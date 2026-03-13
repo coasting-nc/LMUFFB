@@ -166,6 +166,11 @@ LOG_FRAME_DTYPE = np.dtype([
     ('speed_gate', np.float32),
     ('front_load_peak_ref', np.float32),
 
+    ('approx_load_fl', np.float32),
+    ('approx_load_fr', np.float32),
+    ('approx_load_rl', np.float32),
+    ('approx_load_rr', np.float32),
+
     # --- SYSTEM (400Hz) ---
     ('physics_rate', np.float32),
     ('clipping', np.uint8),
@@ -392,6 +397,10 @@ def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
         'ffb_grip_factor': 'GripFactor',
         'speed_gate': 'SpeedGate',
         'front_load_peak_ref': 'FrontLoadPeakRef',
+        'approx_load_fl': 'ApproxLoadFL',
+        'approx_load_fr': 'ApproxLoadFR',
+        'approx_load_rl': 'ApproxLoadRL',
+        'approx_load_rr': 'ApproxLoadRR',
         'physics_rate': 'PhysicsRate',
         'clipping': 'Clipping',
         'warn_bits': 'WarnBits',

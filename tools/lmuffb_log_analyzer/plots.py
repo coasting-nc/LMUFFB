@@ -300,6 +300,122 @@ def plot_yaw_diagnostic(
     if show: plt.show()
     return ""
 
+def plot_load_estimation_diagnostic(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Diagnostic plot for Tire Load Estimation (Approximate Load).
+    Panels: Time Series (Front), Time Series (Rear), Error Distribution, Correlation.
+    """
+    cols = ['RawLoadFL', 'RawLoadFR', 'RawLoadRL', 'RawLoadRR',
+            'ApproxLoadFL', 'ApproxLoadFR', 'ApproxLoadRL', 'ApproxLoadRR']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Initializing Load Estimation diagnostic plot...")
+    fig = plt.figure(figsize=(14, 12))
+    gs = fig.add_gridspec(3, 2)
+    fig.suptitle('Tire Load Estimation Diagnostic (Approximate Load)', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    # Panel 1: Front Axle Time Series
+    if status_callback: status_callback("Rendering Panel 1 (Front Axle)...")
+    ax1 = fig.add_subplot(gs[0, :])
+    raw_front = (plot_df['RawLoadFL'] + plot_df['RawLoadFR']) / 2.0
+    approx_front = (plot_df['ApproxLoadFL'] + plot_df['ApproxLoadFR']) / 2.0
+
+    ax1.plot(time, raw_front, label='Raw Load Front (Avg)', color='#2196F3', alpha=0.6)
+    ax1.plot(time, approx_front, label='Approx Load Front (Avg)', color='#F44336', alpha=0.8, linestyle='--')
+    ax1.set_ylabel('Load (N)')
+    ax1.set_title('Front Axle: Raw vs. Approximate Load')
+    ax1.grid(True, alpha=0.3)
+    ax1.legend(loc='upper right')
+
+    # Panel 2: Rear Axle Time Series
+    if status_callback: status_callback("Rendering Panel 2 (Rear Axle)...")
+    ax2 = fig.add_subplot(gs[1, :], sharex=ax1)
+    raw_rear = (plot_df['RawLoadRL'] + plot_df['RawLoadRR']) / 2.0
+    approx_rear = (plot_df['ApproxLoadRL'] + plot_df['ApproxLoadRR']) / 2.0
+
+    ax2.plot(time, raw_rear, label='Raw Load Rear (Avg)', color='#4CAF50', alpha=0.6)
+    ax2.plot(time, approx_rear, label='Approx Load Rear (Avg)', color='#FF9800', alpha=0.8, linestyle='--')
+    ax2.set_ylabel('Load (N)')
+    ax2.set_xlabel('Time (s)')
+    ax2.set_title('Rear Axle: Raw vs. Approximate Load')
+    ax2.grid(True, alpha=0.3)
+    ax2.legend(loc='upper right')
+
+    # Panel 3: Correlation Scatter (All wheels)
+    if status_callback: status_callback("Rendering Panel 3 (Correlation)...")
+    ax3 = fig.add_subplot(gs[2, 0])
+
+    # Combine all 4 wheels for global correlation
+    raw_all = pd.concat([plot_df['RawLoadFL'], plot_df['RawLoadFR'], plot_df['RawLoadRL'], plot_df['RawLoadRR']])
+    approx_all = pd.concat([plot_df['ApproxLoadFL'], plot_df['ApproxLoadFR'], plot_df['ApproxLoadRL'], plot_df['ApproxLoadRR']])
+
+    # Filter out zeros (where game might not have provided data yet)
+    mask = (raw_all > 1.0) & (approx_all > 1.0)
+    raw_filt = raw_all[mask]
+    approx_filt = approx_all[mask]
+
+    if len(raw_filt) > 0:
+        correlation = np.corrcoef(raw_filt, approx_filt)[0, 1]
+        ax3.scatter(raw_filt, approx_filt, alpha=0.1, s=2, color='#9C27B0')
+
+        # Identity line
+        lims = [
+            np.min([ax3.get_xlim()[0], ax3.get_ylim()[0]]),
+            np.max([ax3.get_xlim()[1], ax3.get_ylim()[1]]),
+        ]
+        ax3.plot(lims, lims, 'k-', alpha=0.5, zorder=0, label='Identity Line')
+        ax3.set_title(f'Correlation (All Wheels)\nr = {correlation:.3f}')
+    else:
+        ax3.set_title('Correlation (Insufficient Data)')
+
+    ax3.set_xlabel('Raw Load (N)')
+    ax3.set_ylabel('Approx Load (N)')
+    ax3.grid(True, alpha=0.3)
+
+    # Panel 4: Error Distribution
+    if status_callback: status_callback("Rendering Panel 4 (Error Distribution)...")
+    ax4 = fig.add_subplot(gs[2, 1])
+
+    error = approx_all - raw_all
+    # Filter error for valid data points
+    error_filt = error[mask]
+
+    if len(error_filt) > 0:
+        ax4.hist(error_filt, bins=50, color='#607D8B', alpha=0.7, edgecolor='white')
+        mean_err = error_filt.mean()
+        std_err = error_filt.std()
+        ax4.axvline(mean_err, color='red', linestyle='--', label=f'Mean: {mean_err:.1f}N')
+        ax4.set_title(f'Error Distribution (Approx - Raw)\nStd Dev: {std_err:.1f}N')
+        ax4.legend()
+    else:
+        ax4.set_title('Error Distribution (Insufficient Data)')
+
+    ax4.set_xlabel('Error (N)')
+    ax4.set_ylabel('Frequency')
+    ax4.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+
+    if output_path:
+        if status_callback: status_callback(f"Saving to {Path(output_path).name}...")
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+
+    if show:
+        plt.show()
+
+    return ""
+
 def plot_system_health(
     df: pd.DataFrame,
     output_path: Optional[str] = None,

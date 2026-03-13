@@ -179,6 +179,11 @@ struct LogFrame {
     float speed_gate;
     float front_load_peak_ref;
 
+    float approx_load_fl;
+    float approx_load_fr;
+    float approx_load_rl;
+    float approx_load_rr;
+
     // --- SYSTEM (400Hz) ---
     float physics_rate;
     uint8_t clipping;
@@ -403,7 +408,7 @@ private:
     }
 
     void WriteHeader(const SessionInfo& info) {
-        m_file << "# LMUFFB Telemetry Log v1.1\n";
+        m_file << "# LMUFFB Telemetry Log v1.2\n";
         m_file << "# App Version: " << info.app_version << "\n";
         m_file << "# Compression: " << (m_lz4_enabled ? "LZ4" : "None") << "\n";
         m_file << "# ========================\n";
@@ -456,7 +461,9 @@ private:
                << "SessionPeakTorque,LongitudinalLoadFactor,StructuralMult,VibrationMult,SteeringAngleDeg,SteeringRangeDeg,DebugFreq,TireRadius,"
                << "FFBTotal,FFBBase,FFBUndersteerDrop,FFBOversteerBoost,FFBSoP,FFBRearTorque,FFBScrubDrag,FFBYawKick,FFBGyroDamping,FFBRoadTexture,FFBSlideTexture,FFBLockupVibration,FFBSpinVibration,FFBBottomingCrunch,FFBABSPulse,FFBSoftLock,"
                << "ExtrapolatedYawAccel,DerivedYawAccel,"
-               << "FFBShaftTorque,FFBGenTorque,GripFactor,SpeedGate,FrontLoadPeakRef,PhysicsRate,Clipping,WarnBits,Marker\n";
+               << "FFBShaftTorque,FFBGenTorque,GripFactor,SpeedGate,FrontLoadPeakRef,"
+               << "ApproxLoadFL,ApproxLoadFR,ApproxLoadRL,ApproxLoadRR,"
+               << "PhysicsRate,Clipping,WarnBits,Marker\n";
         m_file << "[DATA_START]\n";
     }
 
