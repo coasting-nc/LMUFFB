@@ -9,7 +9,11 @@ from .analyzers.yaw_analyzer import (
     analyze_yaw_dynamics,
     analyze_clipping
 )
-from .analyzers.lateral_analyzer import analyze_lateral_dynamics, analyze_longitudinal_dynamics
+from .analyzers.lateral_analyzer import (
+    analyze_lateral_dynamics,
+    analyze_longitudinal_dynamics,
+    analyze_load_estimation
+)
 
 def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     """
@@ -22,6 +26,7 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     clipping_results = analyze_clipping(df)
     lateral_results = analyze_lateral_dynamics(df, metadata)
     long_results = analyze_longitudinal_dynamics(df, metadata)
+    load_est_results = analyze_load_estimation(df)
     
     report = []
     report.append("=" * 60)
@@ -53,6 +58,8 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     report.append(f"Slope Detection:    {'Enabled' if metadata.slope_enabled else 'Disabled'}")
     report.append(f"Slope Sensitivity:  {metadata.slope_sensitivity:.2f}")
     report.append(f"Slope Threshold:    {metadata.slope_threshold:.2f}")
+    report.append(f"Dynamic Norm (Torque): {'Enabled' if metadata.dynamic_normalization else 'Disabled'}")
+    report.append(f"Auto Load Norm (Vib):  {'Enabled' if metadata.auto_load_normalization else 'Disabled'}")
     report.append("")
     
     report.append("SLOPE ANALYSIS")
@@ -98,6 +105,22 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
         report.append("-" * 20)
         for warn in long_results['missing_data_warnings']:
             report.append(f"  [!] {warn}")
+        report.append("")
+
+    if load_est_results:
+        report.append("LOAD ESTIMATION ACCURACY (Fallback Diagnostics)")
+        report.append("-" * 20)
+        report.append("Note: FFB relies on the 'Dynamic Ratio' (Current / Static), not absolute Newtons.")
+        report.append(f"Absolute Mean Error: {load_est_results.get('load_error_mean', 0):.1f} N")
+        report.append(f"Dynamic Ratio Error: {load_est_results.get('ratio_error_mean', 0):.3f}x")
+        report.append(f"Dynamic Correlation: {load_est_results.get('ratio_correlation', 0):.3f}")
+
+        if load_est_results.get('ratio_correlation', 0) > 0.90:
+            report.append("Status:              EXCELLENT (Approximation perfectly matches real dynamics)")
+        elif load_est_results.get('ratio_correlation', 0) > 0.75:
+            report.append("Status:              GOOD (Approximation is viable for FFB)")
+        else:
+            report.append("Status:              POOR (Approximation dynamics do not match reality)")
         report.append("")
 
     report.append("SIGNAL QUALITY & STABILITY")

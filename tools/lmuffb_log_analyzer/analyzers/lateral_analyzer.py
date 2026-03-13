@@ -81,6 +81,52 @@ def analyze_lateral_dynamics(df: pd.DataFrame, metadata: SessionMetadata) -> Dic
 
     return results
 
+def analyze_load_estimation(df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Analyze the accuracy of the Approximate Load fallback, focusing on Dynamic Ratios.
+    """
+    results = {}
+    cols =['RawLoadFL', 'RawLoadFR', 'RawLoadRL', 'RawLoadRR',
+            'ApproxLoadFL', 'ApproxLoadFR', 'ApproxLoadRL', 'ApproxLoadRR', 'Speed']
+
+    if not all(c in df.columns for c in cols):
+        return results
+
+    # Combine front wheels for analysis
+    raw_front = (df['RawLoadFL'] + df['RawLoadFR']) / 2.0
+    approx_front = (df['ApproxLoadFL'] + df['ApproxLoadFR']) / 2.0
+
+    mask = (raw_front > 1.0) & (approx_front > 1.0)
+
+    if mask.sum() > 100:
+        # 1. Absolute Error (For reference)
+        error = approx_front[mask] - raw_front[mask]
+        results['load_error_mean'] = float(error.mean())
+
+        # 2. DYNAMIC RATIO ANALYSIS (What FFB actually cares about)
+        # Mimic C++ logic: learn static load between 2 and 15 m/s
+        static_mask = mask & (df['Speed'] > 2.0) & (df['Speed'] < 15.0)
+
+        if static_mask.any():
+            raw_static = raw_front[static_mask].mean()
+            approx_static = approx_front[static_mask].mean()
+        else:
+            # Fallback if no slow driving occurred
+            raw_static = np.percentile(raw_front[mask], 5)
+            approx_static = np.percentile(approx_front[mask], 5)
+
+        if raw_static > 1.0 and approx_static > 1.0:
+            # Calculate the dynamic multipliers (e.g., 1.5x static weight)
+            raw_ratio = raw_front[mask] / raw_static
+            approx_ratio = approx_front[mask] / approx_static
+
+            # How closely does the approximation match the real dynamic shape?
+            ratio_error = np.abs(approx_ratio - raw_ratio)
+            results['ratio_error_mean'] = float(ratio_error.mean())
+            results['ratio_correlation'] = float(np.corrcoef(raw_ratio, approx_ratio)[0, 1])
+
+    return results
+
 def analyze_longitudinal_dynamics(df: pd.DataFrame, metadata: SessionMetadata) -> Dict[str, Any]:
     results = {}
     if 'LongitudinalLoadFactor' in df.columns:

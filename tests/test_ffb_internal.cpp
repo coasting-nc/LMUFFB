@@ -45,9 +45,10 @@ TEST_CASE(test_snapshot_data_integrity, "Internal") {
             FAIL_TEST("Raw Front Tire Load incorrect: " << snap_load.raw_front_tire_load);
         }
         
-        // Test 2: Calculated Load should be approx 1300 (SuspForce 1000 + 300 offset)
-        if (std::abs(snap_load.calc_front_load - 1300.0) < 0.001) {
-            std::cout << "[PASS] Calculated Front Load is 1300.0." << std::endl;
+        // Test 2: Calculated Load (v0.7.171 Default: MR 0.55, Offset 450)
+        // (1000 * 0.55) + 450 = 1000.0
+        if (std::abs(snap_load.calc_front_load - 1000.0) < 0.001) {
+            std::cout << "[PASS] Calculated Front Load is 1000.0." << std::endl;
             g_tests_passed++;
         } else {
             FAIL_TEST("Calculated Front Load incorrect: " << snap_load.calc_front_load);

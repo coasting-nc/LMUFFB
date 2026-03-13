@@ -75,7 +75,8 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     // This ensures that session-learned peaks from a previous car don't pollute the new session.
     ResetNormalization();
 
-    ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
+    m_current_vclass = ParseVehicleClass(className, vehicleName);
+    ParsedVehicleClass vclass = m_current_vclass;
 
     // Stage 3 Reset: Ensure peak load starts at class baseline
     m_auto_peak_front_load = GetDefaultLoadForClass(vclass);
@@ -271,24 +272,59 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
     return result;
 }
 
-// Helper: Approximate Load (v0.4.5)
-// This function provides a fallback tire load estimate when primary telemetry (mTireLoad) is missing.
-// Rationale: Tire load is the sum of sprung mass (captured by mSuspForce) and unsprung mass.
-// The constant 300.0N (~30kg) is a first-order estimate of the unsprung mass (wheel, tire, upright, brakes).
-// Diagnostic logging (v0.7.170) has been added to compare this approximation against real data where available.
+// Helper: Approximate Load (v0.4.5 / Improved v0.7.171)
+// Uses class-specific motion ratios to convert pushrod force (mSuspForce) to wheel load,
+// and adds an estimate for front unsprung mass.
 double FFBEngine::approximate_load(const TelemWheelV01& w) {
-    // Base: Suspension Force + Est. Unsprung Mass (300N)
-    // Note: mSuspForce captures dynamic weight transfer and aerodynamic downforce.
-    return (std::max)(0.0, w.mSuspForce + 300.0);
+    double motion_ratio = 0.55;
+    double unsprung_weight = 450.0; // ~45kg
+
+    switch (m_current_vclass) {
+        case ParsedVehicleClass::HYPERCAR:
+        case ParsedVehicleClass::LMP2_UNRESTRICTED:
+        case ParsedVehicleClass::LMP2_RESTRICTED:
+        case ParsedVehicleClass::LMP2_UNSPECIFIED:
+        case ParsedVehicleClass::LMP3:
+            motion_ratio = 0.50; // Prototypes have high motion ratios (pushrod sees ~2x wheel load)
+            unsprung_weight = 400.0; // Lighter front unsprung mass
+            break;
+        case ParsedVehicleClass::GTE:
+        case ParsedVehicleClass::GT3:
+            motion_ratio = 0.65; // GT cars have lower motion ratios
+            unsprung_weight = 500.0; // Heavier front unsprung mass
+            break;
+        default:
+            break;
+    }
+
+    return (std::max)(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
 }
 
-// Helper: Approximate Rear Load (v0.4.10)
-// Similar to approximate_load, but for the rear axle.
-// Rationale: Rear unsprung mass might differ from front, but currently uses the same 300N estimate.
+// Helper: Approximate Rear Load (v0.4.10 / Improved v0.7.171)
+// Similar to approximate_load, but uses rear-specific unsprung mass estimates.
 double FFBEngine::approximate_rear_load(const TelemWheelV01& w) {
-    // Base: Suspension Force + Est. Unsprung Mass (300N)
-    // This captures weight transfer (braking/accel) and aero downforce implicitly via suspension compression.
-    return (std::max)(0.0, w.mSuspForce + 300.0);
+    double motion_ratio = 0.55;
+    double unsprung_weight = 500.0; // ~50kg (Rear usually heavier due to driveshafts/larger wheels)
+
+    switch (m_current_vclass) {
+        case ParsedVehicleClass::HYPERCAR:
+        case ParsedVehicleClass::LMP2_UNRESTRICTED:
+        case ParsedVehicleClass::LMP2_RESTRICTED:
+        case ParsedVehicleClass::LMP2_UNSPECIFIED:
+        case ParsedVehicleClass::LMP3:
+            motion_ratio = 0.50;
+            unsprung_weight = 450.0;
+            break;
+        case ParsedVehicleClass::GTE:
+        case ParsedVehicleClass::GT3:
+            motion_ratio = 0.65;
+            unsprung_weight = 550.0;
+            break;
+        default:
+            break;
+    }
+
+    return (std::max)(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
 }
 
 // Helper: Calculate Manual Slip Ratio (v0.4.6)
