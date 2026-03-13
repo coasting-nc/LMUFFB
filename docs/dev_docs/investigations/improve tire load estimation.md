@@ -250,3 +250,245 @@ We could try to calculate the exact load using `mVerticalTireDeflection` and an 
 The proposed fix (Class-based Motion Ratios + Axle-based Unsprung Mass) hits the perfect sweet spot. It eliminates the massive 5000N offset error, brings the values close enough to reality that the `Auto-Normalization` can easily handle the rest, and requires zero ongoing maintenance when new cars are added to the game. 
 
 I recommend implementing the C++ and Python changes as suggested previously and relying on the new Python diagnostic plots to monitor if any specific car class behaves weirdly in the future.
+
+
+## Follow up questions
+
+
+### 1. Do the current diagnostics capture the "Dynamics"?
+**No, the previous absolute Newtons diagnostics do not capture what actually matters for the FFB.**
+
+You are absolutely right to question this. In `FFBEngine.cpp`, the FFB effects (like Road Texture and Scrub Drag) are scaled using the Giannoulis Soft-Knee Compression, which relies entirely on a **Dynamic Ratio**:
+```cpp
+double x = (std::max)(0.0, ctx.avg_front_load / m_static_front_load);
+```
+Because the engine *always* dynamically learns `m_static_front_load` while you drive between 2 and 15 m/s, a massive absolute error (e.g., 5000N) is completely erased as long as the *ratio* of weight transfer remains accurate. 
+
+If the Raw Load goes from 4000N (static) to 8000N (braking) -> Ratio is **2.0x**.
+If the Approx Load goes from 2000N (static) to 4000N (braking) -> Ratio is **2.0x**.
+**The FFB output will be 100% identical.**
+
+We absolutely must add a **Dynamic Ratio** comparison to the Python analyzer to see if the *shape* of the weight transfer and aero downforce is preserved.
+
+### 2. Is `m_auto_load_normalization_enabled` enabled by default?
+**No, it is disabled by default.** 
+In `Config.h`, `auto_load_normalization_enabled = false;`. 
+
+*However*, there is a crucial distinction in your codebase:
+*   **Static Load Learning** (`update_static_load_reference`) is **ALWAYS ON**, regardless of any settings. This is what calculates the `m_static_front_load` used for the dynamic ratio `x` mentioned above.
+*   **Auto Load Normalization** (`m_auto_load_normalization_enabled`) only controls a legacy "Peak Hold" logic (`m_auto_peak_front_load`) which is mostly used as a safety fallback if the static learning fails.
+
+### 3. Should we add these settings to the log and report?
+Yes. We should log both `Auto Load Normalization` and `Dynamic Normalization (Torque)` to the log file header so the Python analyzer can display them.
+
+---
+
+### Implementation: Upgrading the Diagnostics
+
+Here is how we update the C++ logger to include the missing settings, and upgrade the Python analyzer to evaluate the **Dynamic Ratio** instead of just absolute Newtons.
+
+#### Step 1: C++ Logger Updates
+**File: `src/AsyncLogger.h`**
+Add the normalization settings to the `SessionInfo` struct and the header writer.
+
+```cpp
+// Inside struct SessionInfo (around line 140)
+    float slope_decay_rate;
+    bool torque_passthrough;
+    bool dynamic_normalization;      // NEW
+    bool auto_load_normalization;    // NEW
+};
+
+// Inside AsyncLogger::WriteHeader (around line 280)
+        m_file << "# Slope Decay Rate: " << info.slope_decay_rate << "\n";
+        m_file << "# Torque Passthrough: " << (info.torque_passthrough ? "Enabled" : "Disabled") << "\n";
+        m_file << "# Dynamic Normalization: " << (info.dynamic_normalization ? "Enabled" : "Disabled") << "\n";       // NEW
+        m_file << "# Auto Load Normalization: " << (info.auto_load_normalization ? "Enabled" : "Disabled") << "\n";   // NEW
+        m_file << "# ========================\n";
+```
+
+**File: `src/main.cpp`**
+Pass the settings to the logger when it starts.
+```cpp
+// Inside FFBThread(), where AsyncLogger::Get().Start() is called (around line 100)
+                            info.slope_decay_rate = g_engine.m_slope_decay_rate;
+                            info.torque_passthrough = g_engine.m_torque_passthrough;
+                            info.dynamic_normalization = g_engine.m_dynamic_normalization_enabled;       // NEW
+                            info.auto_load_normalization = g_engine.m_auto_load_normalization_enabled;   // NEW
+                            AsyncLogger::Get().Start(info, Config::m_log_path);
+```
+
+#### Step 2: Python Analyzer Updates
+**File: `tools/lmuffb_log_analyzer/models.py`**
+```python
+    slope_alpha_threshold: Optional[float] = None
+    slope_decay_rate: Optional[float] = None
+    dynamic_normalization: bool = False   # NEW
+    auto_load_normalization: bool = False # NEW
+```
+
+**File: `tools/lmuffb_log_analyzer/loader.py`**
+```python
+# Inside _parse_header (around line 260)
+        slope_alpha_threshold=_safe_float(header_data.get('slope_alpha_threshold')),
+        slope_decay_rate=_safe_float(header_data.get('slope_decay_rate')),
+        dynamic_normalization=header_data.get('dynamic_normalization', '').lower() == 'enabled',     # NEW
+        auto_load_normalization=header_data.get('auto_load_normalization', '').lower() == 'enabled', # NEW
+    )
+```
+
+**File: `tools/lmuffb_log_analyzer/analyzers/lateral_analyzer.py`**
+Update the load estimation analyzer to calculate the Dynamic Ratio by mimicking the C++ static load learning (averaging load between 2 and 15 m/s).
+```python
+def analyze_load_estimation(df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Analyze the accuracy of the Approximate Load fallback, focusing on Dynamic Ratios.
+    """
+    results = {}
+    cols =['RawLoadFL', 'RawLoadFR', 'RawLoadRL', 'RawLoadRR',
+            'ApproxLoadFL', 'ApproxLoadFR', 'ApproxLoadRL', 'ApproxLoadRR', 'Speed']
+    
+    if not all(c in df.columns for c in cols):
+        return results
+
+    # Combine front wheels for analysis
+    raw_front = (df['RawLoadFL'] + df['RawLoadFR']) / 2.0
+    approx_front = (df['ApproxLoadFL'] + df['ApproxLoadFR']) / 2.0
+
+    mask = (raw_front > 1.0) & (approx_front > 1.0)
+    
+    if mask.sum() > 100:
+        # 1. Absolute Error (For reference)
+        error = approx_front[mask] - raw_front[mask]
+        results['load_error_mean'] = float(error.mean())
+        
+        # 2. DYNAMIC RATIO ANALYSIS (What FFB actually cares about)
+        # Mimic C++ logic: learn static load between 2 and 15 m/s
+        static_mask = mask & (df['Speed'] > 2.0) & (df['Speed'] < 15.0)
+        
+        if static_mask.any():
+            raw_static = raw_front[static_mask].mean()
+            approx_static = approx_front[static_mask].mean()
+        else:
+            # Fallback if no slow driving occurred
+            raw_static = np.percentile(raw_front[mask], 5)
+            approx_static = np.percentile(approx_front[mask], 5)
+
+        # Calculate the dynamic multipliers (e.g., 1.5x static weight)
+        raw_ratio = raw_front[mask] / raw_static
+        approx_ratio = approx_front[mask] / approx_static
+
+        # How closely does the approximation match the real dynamic shape?
+        ratio_error = np.abs(approx_ratio - raw_ratio)
+        results['ratio_error_mean'] = float(ratio_error.mean())
+        results['ratio_correlation'] = float(np.corrcoef(raw_ratio, approx_ratio)[0, 1])
+
+    return results
+```
+
+**File: `tools/lmuffb_log_analyzer/plots.py`**
+Update the plot to show the Dynamic Ratio overlay. This is the ultimate visual proof of whether the approximation works for FFB.
+```python
+def plot_load_estimation_diagnostic(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    cols =['RawLoadFL', 'RawLoadFR', 'ApproxLoadFL', 'ApproxLoadFR', 'Speed']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Initializing Load Estimation diagnostic plot...")
+    fig, axes = plt.subplots(3, 1, figsize=(14, 12), sharex=True)
+    fig.suptitle('Tire Load Estimation: Absolute vs Dynamic Ratio', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time']
+
+    raw_front = (plot_df['RawLoadFL'] + plot_df['RawLoadFR']) / 2.0
+    approx_front = (plot_df['ApproxLoadFL'] + plot_df['ApproxLoadFR']) / 2.0
+
+    # Panel 1: Absolute Newtons (Raw)
+    ax1 = axes[0]
+    ax1.plot(time, raw_front, label='Raw Load (N)', color='#2196F3', alpha=0.8)
+    ax1.set_ylabel('Load (N)')
+    ax1.set_title('True Telemetry Load (Absolute Newtons)')
+    ax1.grid(True, alpha=0.3)
+    _safe_legend(ax1, loc='upper right')
+
+    # Panel 2: Absolute Newtons (Approx)
+    ax2 = axes[1]
+    ax2.plot(time, approx_front, label='Approx Load (N)', color='#F44336', alpha=0.8)
+    ax2.set_ylabel('Load (N)')
+    ax2.set_title('Approximated Load (Absolute Newtons)')
+    ax2.grid(True, alpha=0.3)
+    _safe_legend(ax2, loc='upper right')
+
+    # Panel 3: DYNAMIC RATIO (The FFB Truth)
+    ax3 = axes[2]
+    static_mask = (plot_df['Speed'] > 2.0) & (plot_df['Speed'] < 15.0)
+    if static_mask.any():
+        raw_static = raw_front[static_mask].mean()
+        approx_static = approx_front[static_mask].mean()
+    else:
+        raw_static = np.percentile(raw_front, 5)
+        approx_static = np.percentile(approx_front, 5)
+
+    raw_ratio = raw_front / raw_static
+    approx_ratio = approx_front / approx_static
+
+    ax3.plot(time, raw_ratio, label='Raw Dynamic Ratio (x)', color='#2196F3', linewidth=1.5)
+    ax3.plot(time, approx_ratio, label='Approx Dynamic Ratio (x)', color='#F44336', linestyle='--', linewidth=1.5)
+    ax3.axhline(1.0, color='black', linestyle=':', alpha=0.5, label='Static Weight (1.0x)')
+    
+    ax3.set_ylabel('Multiplier (x Static)')
+    ax3.set_xlabel('Time (s)')
+    ax3.set_title('Dynamic Ratio Comparison (What the FFB Engine actually feels)')
+    ax3.grid(True, alpha=0.3)
+    _safe_legend(ax3, loc='upper right')
+
+    plt.tight_layout()
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+```
+
+**File: `tools/lmuffb_log_analyzer/reports.py`**
+Update the text report to include the new settings and the Ratio metrics.
+```python
+    # Inside generate_text_report()
+    report.append("SETTINGS")
+    report.append("-" * 20)
+    report.append(f"Gain:               {metadata.gain:.2f}")
+    # ... existing settings ...
+    report.append(f"Dynamic Norm (Torque): {'Enabled' if metadata.dynamic_normalization else 'Disabled'}")
+    report.append(f"Auto Load Norm (Vib):  {'Enabled' if metadata.auto_load_normalization else 'Disabled'}")
+    report.append("")
+
+    # ... later in the file ...
+    if load_est_results:
+        report.append("LOAD ESTIMATION ACCURACY (Fallback Diagnostics)")
+        report.append("-" * 20)
+        report.append("Note: FFB relies on the 'Dynamic Ratio' (Current / Static), not absolute Newtons.")
+        report.append(f"Absolute Mean Error: {load_est_results.get('load_error_mean', 0):.1f} N")
+        report.append(f"Dynamic Ratio Error: {load_est_results.get('ratio_error_mean', 0):.3f}x")
+        report.append(f"Dynamic Correlation: {load_est_results.get('ratio_correlation', 0):.3f}")
+        
+        if load_est_results.get('ratio_correlation', 0) > 0.90:
+            report.append("Status:              EXCELLENT (Approximation perfectly matches real dynamics)")
+        elif load_est_results.get('ratio_correlation', 0) > 0.75:
+            report.append("Status:              GOOD (Approximation is viable for FFB)")
+        else:
+            report.append("Status:              POOR (Approximation dynamics do not match reality)")
+        report.append("")
+```
+
+### Summary of what this achieves:
+1. **Clarity:** The text report now explicitly states that FFB relies on the ratio, not absolute Newtons.
+2. **Accuracy:** The new plot overlays the `Raw Ratio` and `Approx Ratio`. If the C++ motion ratio fix is correct, these two lines will overlap almost perfectly, proving to the user (and to us) that the fallback is working flawlessly for FFB purposes.
+3. **Completeness:** The normalization toggles are now properly logged and displayed, preventing confusion about the engine's state.
