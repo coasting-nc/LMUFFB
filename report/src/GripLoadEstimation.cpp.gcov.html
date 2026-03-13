@@ -32,12 +32,12 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
-            <td class="headerCovTableEntry">198</td>
-            <td class="headerCovTableEntry">198</td>
+            <td class="headerCovTableEntry">199</td>
+            <td class="headerCovTableEntry">199</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-13 22:36:02</td>
+            <td class="headerValue">2026-03-13 23:57:09</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -313,7 +313,7 @@
 <span id="L235"><span class="lineNum">     235</span>                 :             :             } else {</span>
 <span id="L236"><span class="lineNum">     236</span>                 :             :                 // --- REWRITTEN: Continuous Per-Wheel Friction Circle ---</span>
 <span id="L237"><span class="lineNum">     237</span>                 :             :                 </span>
-<span id="L238"><span class="lineNum">     238</span>                 :<span class="tlaGNC">       47358 :                 auto calc_wheel_grip = [&amp;](const TelemWheelV01&amp; w, double slip_angle) {</span></span>
+<span id="L238"><span class="lineNum">     238</span>                 :<span class="tlaGNC">       47358 : auto calc_wheel_grip = [&amp;](const TelemWheelV01&amp; w, double slip_angle) {</span></span>
 <span id="L239"><span class="lineNum">     239</span>                 :             :                     // 1. Lateral Component (Alpha)</span>
 <span id="L240"><span class="lineNum">     240</span>                 :<span class="tlaGNC">       47358 :                     double lat_metric = std::abs(slip_angle) / (double)m_optimal_slip_angle;</span></span>
 <span id="L241"><span class="lineNum">     241</span>                 :             : </span>
@@ -324,15 +324,15 @@
 <span id="L246"><span class="lineNum">     246</span>                 :             :                     // 3. Combined Vector (Friction Circle)</span>
 <span id="L247"><span class="lineNum">     247</span>                 :<span class="tlaGNC">       47358 :                     double combined_slip = std::sqrt((lat_metric * lat_metric) + (long_metric * long_metric));</span></span>
 <span id="L248"><span class="lineNum">     248</span>                 :             : </span>
-<span id="L249"><span class="lineNum">     249</span>                 :             :                     // 4. Continuous Falloff Curve (1.0 / (1.0 + x^4))</span>
-<span id="L250"><span class="lineNum">     250</span>                 :             :                     // - At combined_slip = 0.0 -&gt; Grip = 1.00</span>
-<span id="L251"><span class="lineNum">     251</span>                 :             :                     // - At combined_slip = 0.5 -&gt; Grip = 0.94 (Slight degradation)</span>
-<span id="L252"><span class="lineNum">     252</span>                 :             :                     // - At combined_slip = 1.0 -&gt; Grip = 0.50 (Optimal slip threshold)</span>
-<span id="L253"><span class="lineNum">     253</span>                 :             :                     // - At combined_slip = 1.5 -&gt; Grip = 0.16 (Heavy slide)</span>
-<span id="L254"><span class="lineNum">     254</span>                 :<span class="tlaGNC">       47358 :                     double cs2 = combined_slip * combined_slip;</span></span>
-<span id="L255"><span class="lineNum">     255</span>                 :<span class="tlaGNC">       47358 :                     double cs4 = cs2 * cs2;</span></span>
-<span id="L256"><span class="lineNum">     256</span>                 :             :                     </span>
-<span id="L257"><span class="lineNum">     257</span>                 :<span class="tlaGNC">       47358 :                     return 1.0 / (1.0 + cs4); </span></span>
+<span id="L249"><span class="lineNum">     249</span>                 :             :                     // 4. Continuous Falloff Curve with Sliding Friction Asymptote</span>
+<span id="L250"><span class="lineNum">     250</span>                 :<span class="tlaGNC">       47358 :                     double cs2 = combined_slip * combined_slip;</span></span>
+<span id="L251"><span class="lineNum">     251</span>                 :<span class="tlaGNC">       47358 :                     double cs4 = cs2 * cs2;</span></span>
+<span id="L252"><span class="lineNum">     252</span>                 :             :                     </span>
+<span id="L253"><span class="lineNum">     253</span>                 :             :                     // Racing slicks retain ~10% grip when fully sliding (dynamic friction)</span>
+<span id="L254"><span class="lineNum">     254</span>                 :<span class="tlaGNC">       47358 :                     const double MIN_SLIDING_GRIP = 0.05; </span></span>
+<span id="L255"><span class="lineNum">     255</span>                 :             :                     </span>
+<span id="L256"><span class="lineNum">     256</span>                 :             :                     // Scale the 1.0 / (1.0 + x^4) curve to operate between MIN_SLIDING_GRIP and 1.0</span>
+<span id="L257"><span class="lineNum">     257</span>                 :<span class="tlaGNC">       47358 :                     return MIN_SLIDING_GRIP + ((1.0 - MIN_SLIDING_GRIP) / (1.0 + cs4)); </span></span>
 <span id="L258"><span class="lineNum">     258</span>                 :<span class="tlaGNC">       23679 :                 };</span></span>
 <span id="L259"><span class="lineNum">     259</span>                 :             : </span>
 <span id="L260"><span class="lineNum">     260</span>                 :             :                 // Calculate grip for each wheel independently</span>

@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-13 22:36:02</td>
+            <td class="headerValue">2026-03-13 23:57:09</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -882,7 +882,7 @@
 <span id="L798"><span class="lineNum">     798</span>                 :<span class="tlaGNC">         130 :                                  (std::abs(ctx.soft_lock_force) &gt; 0.5); // &gt; 0.5 Nm</span></span>
 <span id="L799"><span class="lineNum">     799</span>                 :             : </span>
 <span id="L800"><span class="lineNum">     800</span>   [<span class="tlaGBC" title="Branch 0 was taken 113 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 15151 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 109 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 4 times"> + </span>]:<span class="tlaGNC">       15264 :     if (allowed || significant_soft_lock) {</span></span>
-<span id="L801"><span class="lineNum">     801</span>   [<span class="tlaGBC" title="Branch 0 was taken 7233 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 8027 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 161 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 7072 times"> + </span> :<span class="tlaGNC">       15260 :         if (std::abs(norm_force) &gt; FFB_EPSILON &amp;&amp; std::abs(norm_force) &lt; m_min_force) {</span></span>
+<span id="L801"><span class="lineNum">     801</span>   [<span class="tlaGBC" title="Branch 0 was taken 7615 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 7645 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 161 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 7454 times"> + </span> :<span class="tlaGNC">       15260 :         if (std::abs(norm_force) &gt; FFB_EPSILON &amp;&amp; std::abs(norm_force) &lt; m_min_force) {</span></span>
 <span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 161 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 15099 times"> + </span>]
 <span id="L802"><span class="lineNum">     802</span>         [<span class="tlaGBC" title="Branch 0 was taken 94 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 67 times"> + </span>]:<span class="tlaGNC">         161 :             double sign = (norm_force &gt; 0.0) ? 1.0 : -1.0;</span></span>
 <span id="L803"><span class="lineNum">     803</span>                 :<span class="tlaGNC">         161 :             norm_force = sign * m_min_force;</span></span>
@@ -975,7 +975,7 @@
 <span id="L889"><span class="lineNum">     889</span>                 :<span class="tlaGNC">        6553 :             snap.ffb_abs_pulse = (float)ctx.abs_pulse_force; </span></span>
 <span id="L890"><span class="lineNum">     890</span>                 :<span class="tlaGNC">        6553 :             snap.ffb_soft_lock = (float)ctx.soft_lock_force;</span></span>
 <span id="L891"><span class="lineNum">     891</span>                 :<span class="tlaGNC">        6553 :             snap.session_peak_torque = (float)m_session_peak_torque;</span></span>
-<span id="L892"><span class="lineNum">     892</span>         [<span class="tlaGBC" title="Branch 0 was taken 665 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5888 times"> + </span>]:<span class="tlaGNC">        6553 :             snap.clipping = (std::abs(norm_force) &gt; (double)CLIPPING_THRESHOLD) ? 1.0f : 0.0f;</span></span>
+<span id="L892"><span class="lineNum">     892</span>         [<span class="tlaGBC" title="Branch 0 was taken 673 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5880 times"> + </span>]:<span class="tlaGNC">        6553 :             snap.clipping = (std::abs(norm_force) &gt; (double)CLIPPING_THRESHOLD) ? 1.0f : 0.0f;</span></span>
 <span id="L893"><span class="lineNum">     893</span>                 :             : </span>
 <span id="L894"><span class="lineNum">     894</span>                 :             :             // Physics</span>
 <span id="L895"><span class="lineNum">     895</span>                 :<span class="tlaGNC">        6553 :             snap.calc_front_load = (float)ctx.avg_front_load;</span></span>
@@ -1295,8 +1295,8 @@
 <span id="L1209"><span class="lineNum">    1209</span>                 :             :     </span>
 <span id="L1210"><span class="lineNum">    1210</span>         [<span class="tlaGBC" title="Branch 0 was taken 13204 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2061 times"> + </span>]:<span class="tlaGNC">       15265 :     if (!m_slope_detection_enabled) {</span></span>
 <span id="L1211"><span class="lineNum">    1211</span>                 :<span class="tlaGNC">       13204 :         double grip_delta = ctx.avg_front_grip - ctx.avg_rear_grip;</span></span>
-<span id="L1212"><span class="lineNum">    1212</span>         [<span class="tlaGBC" title="Branch 0 was taken 982 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 12222 times"> + </span>]:<span class="tlaGNC">       13204 :         if (grip_delta &gt; 0.0) {</span></span>
-<span id="L1213"><span class="lineNum">    1213</span>                 :<span class="tlaGNC">         982 :             sop_base *= (1.0 + (grip_delta * m_oversteer_boost * OVERSTEER_BOOST_MULT));</span></span>
+<span id="L1212"><span class="lineNum">    1212</span>         [<span class="tlaGBC" title="Branch 0 was taken 999 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 12205 times"> + </span>]:<span class="tlaGNC">       13204 :         if (grip_delta &gt; 0.0) {</span></span>
+<span id="L1213"><span class="lineNum">    1213</span>                 :<span class="tlaGNC">         999 :             sop_base *= (1.0 + (grip_delta * m_oversteer_boost * OVERSTEER_BOOST_MULT));</span></span>
 <span id="L1214"><span class="lineNum">    1214</span>                 :             :         }</span>
 <span id="L1215"><span class="lineNum">    1215</span>                 :             :     }</span>
 <span id="L1216"><span class="lineNum">    1216</span>                 :<span class="tlaGNC">       15265 :     ctx.sop_base_force = sop_base;</span></span>
