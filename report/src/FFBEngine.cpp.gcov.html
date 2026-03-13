@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-13 14:43:19</td>
+            <td class="headerValue">2026-03-13 16:09:43</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -139,27 +139,27 @@
 <span id="L65"><span class="lineNum">      65</span>                 :             : // v0.7.49: Slew rate limiter for safety (#79)</span>
 <span id="L66"><span class="lineNum">      66</span>                 :             : // Clamps the rate of change of the output force to prevent violent jolts.</span>
 <span id="L67"><span class="lineNum">      67</span>                 :             : // If restricted is true (e.g. after finish or lost control), limit is tighter.</span>
-<span id="L68"><span class="lineNum">      68</span>                 :<span class="tlaGNC">        4881 : double FFBEngine::ApplySafetySlew(double target_force, double dt, bool restricted) {</span></span>
-<span id="L69"><span class="lineNum">      69</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4878 times"> + </span>]:<span class="tlaGNC">        4881 :     if (!std::isfinite(target_force)) return 0.0;</span></span>
+<span id="L68"><span class="lineNum">      68</span>                 :<span class="tlaGNC">        4878 : double FFBEngine::ApplySafetySlew(double target_force, double dt, bool restricted) {</span></span>
+<span id="L69"><span class="lineNum">      69</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4875 times"> + </span>]:<span class="tlaGNC">        4878 :     if (!std::isfinite(target_force)) return 0.0;</span></span>
 <span id="L70"><span class="lineNum">      70</span>                 :             : </span>
-<span id="L71"><span class="lineNum">      71</span>         [<span class="tlaGBC" title="Branch 0 was taken 4862 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16 times"> + </span>]:<span class="tlaGNC">        4878 :     double max_slew = restricted ? (double)SAFETY_SLEW_RESTRICTED : (double)SAFETY_SLEW_NORMAL;</span></span>
+<span id="L71"><span class="lineNum">      71</span>         [<span class="tlaGBC" title="Branch 0 was taken 4859 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16 times"> + </span>]:<span class="tlaGNC">        4875 :     double max_slew = restricted ? (double)SAFETY_SLEW_RESTRICTED : (double)SAFETY_SLEW_NORMAL;</span></span>
 <span id="L72"><span class="lineNum">      72</span>                 :             : </span>
 <span id="L73"><span class="lineNum">      73</span>                 :             :     // Tighten slew limit during safety window (Issue #303)</span>
-<span id="L74"><span class="lineNum">      74</span>         [<span class="tlaGBC" title="Branch 0 was taken 11 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4867 times"> + </span>]:<span class="tlaGNC">        4878 :     if (m_safety.safety_timer &gt; 0.0) {</span></span>
+<span id="L74"><span class="lineNum">      74</span>         [<span class="tlaGBC" title="Branch 0 was taken 11 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4864 times"> + </span>]:<span class="tlaGNC">        4875 :     if (m_safety.safety_timer &gt; 0.0) {</span></span>
 <span id="L75"><span class="lineNum">      75</span>                 :<span class="tlaGNC">          11 :         double safety_slew = 1.0 / (double)m_safety_slew_full_scale_time_s;</span></span>
 <span id="L76"><span class="lineNum">      76</span>                 :<span class="tlaGNC">          11 :         max_slew = (std::min)(max_slew, safety_slew);</span></span>
 <span id="L77"><span class="lineNum">      77</span>                 :             :     }</span>
 <span id="L78"><span class="lineNum">      78</span>                 :             : </span>
-<span id="L79"><span class="lineNum">      79</span>                 :<span class="tlaGNC">        4878 :     double max_change = max_slew * dt;</span></span>
-<span id="L80"><span class="lineNum">      80</span>                 :<span class="tlaGNC">        4878 :     double delta = target_force - m_last_output_force;</span></span>
+<span id="L79"><span class="lineNum">      79</span>                 :<span class="tlaGNC">        4875 :     double max_change = max_slew * dt;</span></span>
+<span id="L80"><span class="lineNum">      80</span>                 :<span class="tlaGNC">        4875 :     double delta = target_force - m_last_output_force;</span></span>
 <span id="L81"><span class="lineNum">      81</span>                 :             : </span>
 <span id="L82"><span class="lineNum">      82</span>                 :             :     // SPIKE DETECTION (Issue #303)</span>
 <span id="L83"><span class="lineNum">      83</span>                 :             :     // If the physics engine wants a jump larger than our current limit,</span>
 <span id="L84"><span class="lineNum">      84</span>                 :             :     // monitor for sustained high-slew rates.</span>
-<span id="L85"><span class="lineNum">      85</span>                 :<span class="tlaGNC">        4878 :     double requested_rate = std::abs(delta) / (dt + EPSILON_DIV);</span></span>
-<span id="L86"><span class="lineNum">      86</span>                 :<span class="tlaGNC">        4878 :     double now = m_working_info.mElapsedTime;</span></span>
+<span id="L85"><span class="lineNum">      85</span>                 :<span class="tlaGNC">        4875 :     double requested_rate = std::abs(delta) / (dt + EPSILON_DIV);</span></span>
+<span id="L86"><span class="lineNum">      86</span>                 :<span class="tlaGNC">        4875 :     double now = m_working_info.mElapsedTime;</span></span>
 <span id="L87"><span class="lineNum">      87</span>                 :             : </span>
-<span id="L88"><span class="lineNum">      88</span>         [<span class="tlaGBC" title="Branch 0 was taken 11 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4867 times"> + </span>]:<span class="tlaGNC">        4878 :     if (requested_rate &gt; (double)m_immediate_spike_threshold) {</span></span>
+<span id="L88"><span class="lineNum">      88</span>         [<span class="tlaGBC" title="Branch 0 was taken 11 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4864 times"> + </span>]:<span class="tlaGNC">        4875 :     if (requested_rate &gt; (double)m_immediate_spike_threshold) {</span></span>
 <span id="L89"><span class="lineNum">      89</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 9 times"> + </span>]:<span class="tlaGNC">          11 :         if (now &gt; (m_safety.last_massive_spike_log_time + 1.0)) {</span></span>
 <span id="L90"><span class="lineNum">      90</span>   [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           2 :             Logger::Get().LogFile(&quot;[Safety] Massive Spike Detected: Requested Rate=%.1f (Capped at %.1f)&quot;,</span></span>
 <span id="L91"><span class="lineNum">      91</span>                 :             :                 requested_rate, max_slew);</span>
@@ -167,7 +167,7 @@
 <span id="L93"><span class="lineNum">      93</span>                 :             :         }</span>
 <span id="L94"><span class="lineNum">      94</span>                 :<span class="tlaGNC">          11 :         m_safety.spike_counter = 0;</span></span>
 <span id="L95"><span class="lineNum">      95</span>         [<span class="tlaGBC" title="Branch 0 was taken 11 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          11 :         TriggerSafetyWindow(&quot;Massive Spike&quot;);</span></span>
-<span id="L96"><span class="lineNum">      96</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 4867 times"> + </span>]:<span class="tlaGNC">        4867 :     } else if (requested_rate &gt; (double)m_spike_detection_threshold) {</span></span>
+<span id="L96"><span class="lineNum">      96</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 4864 times"> + </span>]:<span class="tlaGNC">        4864 :     } else if (requested_rate &gt; (double)m_spike_detection_threshold) {</span></span>
 <span id="L97"><span class="lineNum">      97</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         m_safety.spike_counter++;</span></span>
 <span id="L98"><span class="lineNum">      98</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :         if (m_safety.spike_counter &gt;= 5) { // Sustained for 5 frames</span></span>
 <span id="L99"><span class="lineNum">      99</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :             if (now &gt; (m_safety.last_high_spike_log_time + 1.0)) {</span></span>
@@ -179,12 +179,12 @@
 <span id="L105"><span class="lineNum">     105</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :             TriggerSafetyWindow(&quot;High Spike&quot;);</span></span>
 <span id="L106"><span class="lineNum">     106</span>                 :             :         }</span>
 <span id="L107"><span class="lineNum">     107</span>                 :             :     } else {</span>
-<span id="L108"><span class="lineNum">     108</span>                 :<span class="tlaGNC tlaBgGNC">        4867 :         m_safety.spike_counter = (std::max)(0, m_safety.spike_counter - 1);</span></span>
+<span id="L108"><span class="lineNum">     108</span>                 :<span class="tlaGNC tlaBgGNC">        4864 :         m_safety.spike_counter = (std::max)(0, m_safety.spike_counter - 1);</span></span>
 <span id="L109"><span class="lineNum">     109</span>                 :             :     }</span>
 <span id="L110"><span class="lineNum">     110</span>                 :             : </span>
-<span id="L111"><span class="lineNum">     111</span>                 :<span class="tlaGNC">        4878 :     delta = std::clamp(delta, -max_change, max_change);</span></span>
-<span id="L112"><span class="lineNum">     112</span>                 :<span class="tlaGNC">        4878 :     m_last_output_force += delta;</span></span>
-<span id="L113"><span class="lineNum">     113</span>                 :<span class="tlaGNC">        4878 :     return m_last_output_force;</span></span>
+<span id="L111"><span class="lineNum">     111</span>                 :<span class="tlaGNC">        4875 :     delta = std::clamp(delta, -max_change, max_change);</span></span>
+<span id="L112"><span class="lineNum">     112</span>                 :<span class="tlaGNC">        4875 :     m_last_output_force += delta;</span></span>
+<span id="L113"><span class="lineNum">     113</span>                 :<span class="tlaGNC">        4875 :     return m_last_output_force;</span></span>
 <span id="L114"><span class="lineNum">     114</span>                 :             : }</span>
 <span id="L115"><span class="lineNum">     115</span>                 :             : </span>
 <span id="L116"><span class="lineNum">     116</span>                 :             : // Helper to retrieve data (Consumer)</span>
@@ -1693,13 +1693,13 @@
 <span id="L1605"><span class="lineNum">    1605</span>                 :<span class="tlaGNC">        1700 :     ctx.road_noise *= ctx.speed_gate;</span></span>
 <span id="L1606"><span class="lineNum">    1606</span>                 :             : }</span>
 <span id="L1607"><span class="lineNum">    1607</span>                 :             : </span>
-<span id="L1608"><span class="lineNum">    1608</span>                 :<span class="tlaGNC">        4762 : void FFBEngine::UpdateMetadata(const SharedMemoryObjectOut&amp; data) {</span></span>
-<span id="L1609"><span class="lineNum">    1609</span>         [<span class="tlaGBC" title="Branch 0 was taken 4762 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4762 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
-<span id="L1610"><span class="lineNum">    1610</span>                 :<span class="tlaGNC">        4762 :     const char* vClass = nullptr;</span></span>
-<span id="L1611"><span class="lineNum">    1611</span>                 :<span class="tlaGNC">        4762 :     const char* vName = nullptr;</span></span>
-<span id="L1612"><span class="lineNum">    1612</span>                 :<span class="tlaGNC">        4762 :     const char* tName = data.scoring.scoringInfo.mTrackName;</span></span>
+<span id="L1608"><span class="lineNum">    1608</span>                 :<span class="tlaGNC">        4759 : void FFBEngine::UpdateMetadata(const SharedMemoryObjectOut&amp; data) {</span></span>
+<span id="L1609"><span class="lineNum">    1609</span>         [<span class="tlaGBC" title="Branch 0 was taken 4759 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4759 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
+<span id="L1610"><span class="lineNum">    1610</span>                 :<span class="tlaGNC">        4759 :     const char* vClass = nullptr;</span></span>
+<span id="L1611"><span class="lineNum">    1611</span>                 :<span class="tlaGNC">        4759 :     const char* vName = nullptr;</span></span>
+<span id="L1612"><span class="lineNum">    1612</span>                 :<span class="tlaGNC">        4759 :     const char* tName = data.scoring.scoringInfo.mTrackName;</span></span>
 <span id="L1613"><span class="lineNum">    1613</span>                 :             : </span>
-<span id="L1614"><span class="lineNum">    1614</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4760 times"> + </span>]:<span class="tlaGNC">        4762 :     if (data.telemetry.playerHasVehicle) {</span></span>
+<span id="L1614"><span class="lineNum">    1614</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4757 times"> + </span>]:<span class="tlaGNC">        4759 :     if (data.telemetry.playerHasVehicle) {</span></span>
 <span id="L1615"><span class="lineNum">    1615</span>                 :<span class="tlaGNC">           2 :         uint8_t idx = data.telemetry.playerVehicleIdx;</span></span>
 <span id="L1616"><span class="lineNum">    1616</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :         if (idx &lt; 104) {</span></span>
 <span id="L1617"><span class="lineNum">    1617</span>                 :<span class="tlaGNC">           2 :             vClass = data.scoring.vehScoringInfo[idx].mVehicleClass;</span></span>
@@ -1707,18 +1707,18 @@
 <span id="L1619"><span class="lineNum">    1619</span>                 :             :         }</span>
 <span id="L1620"><span class="lineNum">    1620</span>                 :             :     }</span>
 <span id="L1621"><span class="lineNum">    1621</span>                 :             : </span>
-<span id="L1622"><span class="lineNum">    1622</span>         [<span class="tlaGBC" title="Branch 0 was taken 4762 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4762 :     UpdateMetadataInternal(vClass, vName, tName);</span></span>
-<span id="L1623"><span class="lineNum">    1623</span>                 :<span class="tlaGNC">        4762 : }</span></span>
+<span id="L1622"><span class="lineNum">    1622</span>         [<span class="tlaGBC" title="Branch 0 was taken 4759 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4759 :     UpdateMetadataInternal(vClass, vName, tName);</span></span>
+<span id="L1623"><span class="lineNum">    1623</span>                 :<span class="tlaGNC">        4759 : }</span></span>
 <span id="L1624"><span class="lineNum">    1624</span>                 :             : </span>
-<span id="L1625"><span class="lineNum">    1625</span>                 :<span class="tlaGNC">       20023 : bool FFBEngine::UpdateMetadataInternal(const char* vehicleClass, const char* vehicleName, const char* trackName) {</span></span>
-<span id="L1626"><span class="lineNum">    1626</span>         [<span class="tlaGBC" title="Branch 0 was taken 20023 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       20023 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
-<span id="L1627"><span class="lineNum">    1627</span>                 :<span class="tlaGNC">       20023 :     bool seeded = false;</span></span>
+<span id="L1625"><span class="lineNum">    1625</span>                 :<span class="tlaGNC">       20020 : bool FFBEngine::UpdateMetadataInternal(const char* vehicleClass, const char* vehicleName, const char* trackName) {</span></span>
+<span id="L1626"><span class="lineNum">    1626</span>         [<span class="tlaGBC" title="Branch 0 was taken 20020 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       20020 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
+<span id="L1627"><span class="lineNum">    1627</span>                 :<span class="tlaGNC">       20020 :     bool seeded = false;</span></span>
 <span id="L1628"><span class="lineNum">    1628</span>                 :             : </span>
 <span id="L1629"><span class="lineNum">    1629</span>                 :             :     // 1. Handle Vehicle/Class Change</span>
-<span id="L1630"><span class="lineNum">    1630</span>   [<span class="tlaGBC" title="Branch 0 was taken 3477 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16546 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 3477 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       20023 :     if (vehicleClass &amp;&amp; (m_current_class_name != vehicleClass || (vehicleName &amp;&amp; m_last_handled_vehicle_name != vehicleName))) {</span></span>
+<span id="L1630"><span class="lineNum">    1630</span>   [<span class="tlaGBC" title="Branch 0 was taken 3477 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16543 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 3477 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       20020 :     if (vehicleClass &amp;&amp; (m_current_class_name != vehicleClass || (vehicleName &amp;&amp; m_last_handled_vehicle_name != vehicleName))) {</span></span>
 <span class="lineNum">        </span> <span class="tlaGBC" title="Branch 4 was taken 3396 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 81 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 2990 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 406 times"> + </span><span class="tlaGBC" title="Branch 8 was taken 2990 times"> + </span> 
 <span class="lineNum">        </span>    <span class="tlaUNC" title="Branch 9 was not taken"> - </span><span class="tlaGBC" title="Branch 10 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 11 was taken 2989 times"> + </span><span class="tlaGBC" title="Branch 12 was taken 82 times"> + </span> 
-<span class="lineNum">        </span>             <span class="tlaGBC" title="Branch 13 was taken 19941 times"> + </span>]
+<span class="lineNum">        </span>             <span class="tlaGBC" title="Branch 13 was taken 19938 times"> + </span>]
 <span id="L1631"><span class="lineNum">    1631</span>         [<span class="tlaGBC" title="Branch 0 was taken 82 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          82 :         m_current_class_name = vehicleClass;</span></span>
 <span id="L1632"><span class="lineNum">    1632</span>         [<span class="tlaGBC" title="Branch 0 was taken 82 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          82 :         InitializeLoadReference(vehicleClass, vehicleName);</span></span>
 <span id="L1633"><span class="lineNum">    1633</span>                 :<span class="tlaGNC">          82 :         m_warned_invalid_range = false; // Reset warning on car change</span></span>
@@ -1726,16 +1726,16 @@
 <span id="L1635"><span class="lineNum">    1635</span>                 :             :     }</span>
 <span id="L1636"><span class="lineNum">    1636</span>                 :             : </span>
 <span id="L1637"><span class="lineNum">    1637</span>                 :             :     // 2. Update Context strings (for UI/Logging)</span>
-<span id="L1638"><span class="lineNum">    1638</span>   [<span class="tlaGBC" title="Branch 0 was taken 3058 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16965 times"> + </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 3058 times"> + </span>]:<span class="tlaGNC">       20023 :     if (vehicleName &amp;&amp; strcmp(m_vehicle_name, vehicleName) != 0) {</span></span>
+<span id="L1638"><span class="lineNum">    1638</span>   [<span class="tlaGBC" title="Branch 0 was taken 3058 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16962 times"> + </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 3058 times"> + </span>]:<span class="tlaGNC">       20020 :     if (vehicleName &amp;&amp; strcmp(m_vehicle_name, vehicleName) != 0) {</span></span>
 <span id="L1639"><span class="lineNum">    1639</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         StringUtils::SafeCopy(m_vehicle_name, sizeof(m_vehicle_name), vehicleName);</span></span>
 <span id="L1640"><span class="lineNum">    1640</span>                 :             :     }</span>
 <span id="L1641"><span class="lineNum">    1641</span>                 :             : </span>
-<span id="L1642"><span class="lineNum">    1642</span>   [<span class="tlaGBC" title="Branch 0 was taken 20023 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 234 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 19789 times"> + </span>]:<span class="tlaGNC tlaBgGNC">       20023 :     if (trackName &amp;&amp; strcmp(m_track_name, trackName) != 0) {</span></span>
+<span id="L1642"><span class="lineNum">    1642</span>   [<span class="tlaGBC" title="Branch 0 was taken 20020 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 234 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 19786 times"> + </span>]:<span class="tlaGNC tlaBgGNC">       20020 :     if (trackName &amp;&amp; strcmp(m_track_name, trackName) != 0) {</span></span>
 <span id="L1643"><span class="lineNum">    1643</span>                 :<span class="tlaGNC">         234 :         StringUtils::SafeCopy(m_track_name, sizeof(m_track_name), trackName);</span></span>
 <span id="L1644"><span class="lineNum">    1644</span>                 :             :     }</span>
 <span id="L1645"><span class="lineNum">    1645</span>                 :             : </span>
-<span id="L1646"><span class="lineNum">    1646</span>                 :<span class="tlaGNC">       20023 :     return seeded;</span></span>
-<span id="L1647"><span class="lineNum">    1647</span>                 :<span class="tlaGNC">       20023 : }</span></span>
+<span id="L1646"><span class="lineNum">    1646</span>                 :<span class="tlaGNC">       20020 :     return seeded;</span></span>
+<span id="L1647"><span class="lineNum">    1647</span>                 :<span class="tlaGNC">       20020 : }</span></span>
 <span id="L1648"><span class="lineNum">    1648</span>                 :             : </span>
 <span id="L1649"><span class="lineNum">    1649</span>                 :<span class="tlaGNC">          92 : void FFBEngine::ResetNormalization() {</span></span>
 <span id="L1650"><span class="lineNum">    1650</span>         [<span class="tlaGBC" title="Branch 0 was taken 92 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          92 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
