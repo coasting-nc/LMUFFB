@@ -118,6 +118,7 @@ set(TEST_SOURCES
     test_issue_348_shadow_mode.cpp
     test_ffb_physics_issue_355.cpp
     test_distribution_bundle.cpp
+    test_grip_estimation.cpp
     ../src/main.cpp
 )
 

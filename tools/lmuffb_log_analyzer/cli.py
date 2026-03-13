@@ -35,7 +35,8 @@ from .plots import (
     plot_lateral_diagnostic,
     plot_longitudinal_diagnostic,
     plot_raw_telemetry_health,
-    plot_load_estimation_diagnostic
+    plot_load_estimation_diagnostic,
+    plot_true_tire_curve
 )
 from .reports import generate_text_report
 
@@ -308,6 +309,11 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
             grip_diag_path = output_path / f"{logfile_stem}_grip_estimation.png"
             plot_grip_estimation_diagnostic(df, metadata, str(grip_diag_path), show=False, status_callback=update_status)
             console.print(f"  [OK] Created: {grip_diag_path}")
+
+            # plot_true_tire_curve
+            true_tire_path = output_path / f"{logfile_stem}_true_tire_curve.png"
+            plot_true_tire_curve(df, str(true_tire_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {true_tire_path}")
 
 @click.group()
 @click.version_option(version='1.2.0')

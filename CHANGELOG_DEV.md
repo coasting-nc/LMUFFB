@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.176]
+
+- Fixes to Tire Grip estimate: implemented Per-Wheel Friction Circle.
+- Added diagnostic plot to the Log Analyzer for True Tire Curve.
+
+
 ## [0.7.175]
 
 - **Fixed Suspension Force Interpretation (Issue #355)**:

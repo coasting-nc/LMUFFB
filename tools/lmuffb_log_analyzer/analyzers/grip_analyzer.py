@@ -8,7 +8,7 @@ def analyze_grip_estimation(df: pd.DataFrame, metadata: SessionMetadata) -> Dict
     Simulates the C++ Friction Circle fallback and compares it to Raw Telemetry Grip.
     """
     results = {}
-    cols = ['GripFL', 'GripFR', 'CalcSlipAngleFront', 'SlipRatioFL', 'SlipRatioFR']
+    cols =['GripFL', 'GripFR', 'SlipAngleFL', 'SlipAngleFR', 'SlipRatioFL', 'SlipRatioFR']
     if not all(c in df.columns for c in cols):
         return results
 
@@ -20,15 +20,21 @@ def analyze_grip_estimation(df: pd.DataFrame, metadata: SessionMetadata) -> Dict
         results['status'] = "ENCRYPTED"
         return results
 
-    # 2. Simulate C++ Friction Circle Approximation
-    lat_metric = df['CalcSlipAngleFront'].abs() / metadata.optimal_slip_angle
-    avg_ratio = (df['SlipRatioFL'].abs() + df['SlipRatioFR'].abs()) / 2.0
-    long_metric = avg_ratio / metadata.optimal_slip_ratio
+    # Simulate NEW C++ Per-Wheel Friction Circle
+    def calc_wheel_grip(slip_angle, slip_ratio):
+        lat_metric = np.abs(slip_angle) / metadata.optimal_slip_angle
+        long_metric = np.abs(slip_ratio) / metadata.optimal_slip_ratio
+        combined = np.sqrt(lat_metric**2 + long_metric**2)
+        
+        excess = np.maximum(0, combined - 1.0)
+        # Match the new squared falloff curve
+        grip = np.where(combined > 1.0, 1.0 / (1.0 + (excess**2 * 5.0)), 1.0)
+        return grip
 
-    combined_slip = np.sqrt(lat_metric**2 + long_metric**2)
-
-    # C++ Logic: 1.0 / (1.0 + excess * 2.0)
-    approx_grip = np.where(combined_slip > 1.0, 1.0 / (1.0 + (combined_slip - 1.0) * 2.0), 1.0)
+    approx_fl = calc_wheel_grip(df['SlipAngleFL'], df['SlipRatioFL'])
+    approx_fr = calc_wheel_grip(df['SlipAngleFR'], df['SlipRatioFR'])
+    
+    approx_grip = (approx_fl + approx_fr) / 2.0
     approx_grip = np.clip(approx_grip, 0.2, 1.0) # C++ safety floor
 
     df['SimulatedApproxGrip'] = approx_grip

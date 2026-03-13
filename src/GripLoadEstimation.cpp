@@ -221,7 +221,7 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
         );
     }
 
-    // Fallback condition: Grip is essentially zero BUT car has significant load
+// Fallback condition: Grip is essentially zero BUT car has significant load
     if (result.value < 0.0001 && avg_axle_load > 100.0) {
         result.approximated = true;
         
@@ -231,38 +231,38 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
             result.value = 1.0; 
         } else {
             if (m_slope_detection_enabled && is_front && data) {
-                // Use the estimate we already calculated above
-                result.value = slope_grip_estimate;
+                // Use the estimate we already calculated above                result.value = slope_grip_estimate;
             } else {
-                // v0.4.38: Combined Friction Circle (Advanced Reconstruction)
+                // --- REWRITTEN: Per-Wheel Friction Circle ---
                 
-                // 1. Lateral Component (Alpha)
-                // USE CONFIGURABLE THRESHOLD (v0.5.7)
-                double lat_metric = std::abs(result.slip_angle) / (double)m_optimal_slip_angle;
+                auto calc_wheel_grip = [&](const TelemWheelV01& w, double slip_angle) {
+                    // 1. Lateral Component (Alpha)
+                    double lat_metric = std::abs(slip_angle) / (double)m_optimal_slip_angle;
 
-                // 2. Longitudinal Component (Kappa)
-                // Calculate manual slip for both wheels and average the magnitude
-                double ratio1 = calculate_manual_slip_ratio(w1, car_speed);
-                double ratio2 = calculate_manual_slip_ratio(w2, car_speed);
-                double avg_ratio = (std::abs(ratio1) + std::abs(ratio2)) / 2.0;
+                    // 2. Longitudinal Component (Kappa)
+                    double long_ratio = calculate_manual_slip_ratio(w, car_speed);
+                    double long_metric = std::abs(long_ratio) / (double)m_optimal_slip_ratio;
 
-                // USE CONFIGURABLE THRESHOLD (v0.5.7)
-                double long_metric = avg_ratio / (double)m_optimal_slip_ratio;
+                    // 3. Combined Vector
+                    double combined_slip = std::sqrt((lat_metric * lat_metric) + (long_metric * long_metric));
 
-                // 3. Combined Vector (Friction Circle)
-                double combined_slip = std::sqrt((lat_metric * lat_metric) + (long_metric * long_metric));
+                    // 4. Map to Grip Fraction (Steeper Falloff)
+                    if (combined_slip > 1.0) {
+                        double excess = combined_slip - 1.0;
+                        // Using a squared excess creates a "cliff" effect typical of racing slicks
+                        return 1.0 / (1.0 + (excess * excess * 5.0)); 
+                    }
+                    return 1.0;
+                };
 
-                // 4. Map to Grip Fraction
+                // Calculate grip for each wheel independently
+                double grip1 = calc_wheel_grip(w1, slip1);
+                double grip2 = calc_wheel_grip(w2, slip2);
 
-                if (combined_slip > 1.0) {
-                    double excess = combined_slip - 1.0;
-                    result.value = 1.0 / (1.0 + excess * 2.0);
-                } else {
-                    result.value = 1.0;
-                }
+                // Average the resulting grip fractions
+                result.value = (grip1 + grip2) / 2.0;
             }
         }
-        
         
         // Safety Clamp (v0.4.6): Never drop below 0.2 in approximation
         result.value = (std::max)(0.2, result.value);

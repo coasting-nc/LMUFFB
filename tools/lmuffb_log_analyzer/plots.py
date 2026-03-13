@@ -1189,3 +1189,55 @@ def plot_raw_telemetry_health(
         return output_path
     if show: plt.show()
     return ""
+
+
+def plot_true_tire_curve(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Scatter plot of Raw Grip vs Slip Angle to reveal the true tire physics curve.
+    Crucial for tuning 'optimal_slip_angle' and the falloff math.
+    """
+    cols =['GripFL', 'SlipAngleFL', 'SlipRatioFL', 'Speed']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Rendering True Tire Curve plot...")
+    
+    # Filter out low speeds where slip angles go to infinity
+    plot_df = df[df['Speed'] > 5.0].copy()
+    plot_df = _downsample_df(plot_df, max_points=15000)
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    
+    # Scatter Front Left tire: X = Slip Angle, Y = Grip, Color = Longitudinal Slip
+    scatter = ax.scatter(
+        np.abs(plot_df['SlipAngleFL']), 
+        plot_df['GripFL'], 
+        c=np.abs(plot_df['SlipRatioFL']), 
+        cmap='coolwarm', 
+        alpha=0.4, 
+        s=10
+    )
+    
+    ax.set_xlabel('Absolute Slip Angle (rad)')
+    ax.set_ylabel('Raw Game Grip Fraction (0.0 - 1.0)')
+    ax.set_title('True Tire Curve: Grip vs Slip Angle (Colored by Slip Ratio)')
+    ax.set_xlim(0, 0.25) # Focus on the relevant slip range
+    ax.set_ylim(0, 1.05)
+    ax.grid(True, alpha=0.3)
+    
+    cbar = plt.colorbar(scatter, ax=ax)
+    cbar.set_label('Absolute Slip Ratio (Braking/Accel)')
+
+    plt.tight_layout()
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
