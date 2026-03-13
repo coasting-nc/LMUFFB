@@ -18,11 +18,7 @@ All notable changes to this project will be documented in this file.
   - Updated Python test suite (`test_binary_loader.py`, `test_plots.py`) to verify alignment with the v1.2 binary schema and successful diagnostic plot generation.
   - Verified all 475 C++ test cases and 20 Python tests pass on Linux.
 
-
-
 ---
-
-## Cumulative changes from versions v0.7.114 - 0.7.169
 
 ## [0.7.169] - 2026-03-13
 - **Standardized Tire Load Fallbacks (Issue #309)**:
@@ -34,6 +30,8 @@ All notable changes to this project will be documented in this file.
   - Updated extensive parts of the test suite (`test_ffb_slip_grip.cpp`, `test_issue_213_lateral_load.cpp`, `test_issue_306_lateral_load.cpp`, `test_issue_322_yaw_kicks.cpp`, `test_coverage_boost_v6.cpp`) to align with the removal of kinematic estimation and updated function signatures.
   - Improved test robustness by ensuring enough frames are simulated to trigger fallback states where required.
 
+---
+
 ## [0.7.168] - 2026-03-12
 - **MoTeC Telemetry Exporter and Build Improvements**:
   - **MoTeC i2 Pro Support**: Implemented `MotecExporter` to convert binary telemetry logs into MoTeC compatible `.ld` and `.ldx` formats, including 16-bit scaling and 'Pro' license injection.
@@ -41,6 +39,8 @@ All notable changes to this project will be documented in this file.
   - **Project Hygiene**: Updated `.gitignore` to globally exclude Python build artifacts (`__pycache__`, `.pytest_cache`, etc.).
 - **Testing**:
   - Added Python unit tests for the MoTeC exporter.
+
+---
 
 ## [0.7.167] - 2026-03-11
 - **Implemented Timestamped Debug Logs (Issue #312)**:
@@ -53,7 +53,10 @@ All notable changes to this project will be documented in this file.
   - Added `tests/test_issue_312_logger.cpp` verifying filename uniqueness, directory creation, and extension handling.
   - Updated existing logger-dependent tests to use the new `use_timestamp=false` flag to maintain predictable filenames for verification.
 
-## [0.7.166] 
+---
+
+## Cumulative changes from versions v0.7.114 - 0.7.166
+
 ### Added
 - **New FFB Effects**:
     - **Unloaded Yaw Kick**: to feel the rear stepping out under braking or lift-off oversteer.
@@ -80,6 +83,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+
 ## [0.7.166] - 2026-03-11
 - **Context-Aware Yaw Kick Signal Conditioning (Issue #322)**:
   - **Noise Amplification Mitigation**:
@@ -100,6 +104,8 @@ All notable changes to this project will be documented in this file.
     - `test_yaw_jerk_attack_phase_gate`: Verifies that punches are suppressed when jerk and acceleration have opposite signs.
     - `test_vulnerability_asymmetric_smoothing`: Verifies near-instant attack and slow decay of the vulnerability gates.
   - Adjusted existing yaw kick tests to account for 15ms settling time.
+
+---
 
 ## [0.7.165] - 2026-03-10
 - **User-Adjustable FFB Safety Features (Issue #316)**:
