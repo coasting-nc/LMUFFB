@@ -27,8 +27,10 @@ TEST_CASE(test_approximate_load_fallback, "SlipGrip") {
     auto batch = engine.GetDebugBatch();
     float load = batch.back().calc_front_load;
     
-    // Expected: 2000 + 300 = 2300
-    ASSERT_NEAR(load, 2300.0, 1.0);
+    // Improved Fallback v0.7.171
+    // GT3: MR = 0.65, Offset = 500N
+    // Expected: (2000 * 0.65) + 500 = 1800
+    ASSERT_NEAR(load, 1800.0, 1.0);
 }
 
 TEST_CASE(test_combined_grip_loss, "SlipGrip") {

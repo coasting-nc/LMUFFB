@@ -45,27 +45,26 @@ TEST_CASE(test_issue_309_load_fallback_accuracy, "Physics") {
 
     ASSERT_TRUE(last_snap.warn_load);
 
-    // approximate_load is suspForce + 300.
-    double expected_fl = 2000.0 + 300.0; // 2300
-    double expected_fr = 2100.0 + 300.0; // 2400
-    double expected_rl = 1800.0 + 300.0; // 2100
-    double expected_rr = 1900.0 + 300.0; // 2200
+    // v0.7.171: GT3 MR = 0.65, Front Offset = 500, Rear Offset = 550
+    double expected_fl = (2000.0 * 0.65) + 500.0; // 1800
+    double expected_fr = (2100.0 * 0.65) + 500.0; // 1865
+    double expected_rl = (1800.0 * 0.65) + 550.0; // 1720
+    double expected_rr = (1900.0 * 0.65) + 550.0; // 1785
 
-    double expected_front_load = (expected_fl + expected_fr) / 2.0; // 2350.0
-    double expected_rear_load = (expected_rl + expected_rr) / 2.0;  // 2150.0
+    double expected_front_load = (expected_fl + expected_fr) / 2.0; // 1832.5
+    double expected_rear_load = (expected_rl + expected_rr) / 2.0;  // 1752.5
 
     std::cout << "  Front Load Snap: " << last_snap.calc_front_load << " Expected: " << expected_front_load << std::endl;
     std::cout << "  Rear Load Snap: " << last_snap.calc_rear_load << " Expected: " << expected_rear_load << std::endl;
 
     // Verify Lateral Load Force in Snap
     // lat_load_norm = (total_right - total_left) / total_all
-    // left = fl + rl = 2300 + 2100 = 4400
-    // right = fr + rr = 2400 + 2200 = 4600
-    // total = 9000
-    // norm = (4600 - 4400) / 9000 = 200 / 9000 = 0.02222...
-    // lat_load_force = norm * m_lat_load_effect * m_sop_scale = 0.02222 * 1.0 * 1.0 = 0.02222
+    // left = fl + rl = 1800 + 1720 = 3520
+    // right = fr + rr = 1865 + 1785 = 3650
+    // total = 7170
+    // norm = (3650 - 3520) / 7170 = 130 / 7170 = 0.0181311
 
-    double expected_lat_load_force = (4600.0 - 4400.0) / 9000.0;
+    double expected_lat_load_force = (3650.0 - 3520.0) / 7170.0;
     std::cout << "  Lat Load Force Snap: " << last_snap.lat_load_force << " Expected: " << expected_lat_load_force << std::endl;
 
     ASSERT_NEAR(last_snap.calc_front_load, expected_front_load, 1.0);

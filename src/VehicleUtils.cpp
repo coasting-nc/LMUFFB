@@ -37,7 +37,8 @@ ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleN
             name.find("GLICKENHAUS") != std::string::npos || name.find("VANWALL") != std::string::npos ||
             name.find("A424") != std::string::npos || name.find("SC63") != std::string::npos ||
             name.find("VALKYRIE") != std::string::npos || name.find("M HYBRID") != std::string::npos ||
-            name.find("TIPO 6") != std::string::npos || name.find("680") != std::string::npos) {
+            name.find("TIPO 6") != std::string::npos || name.find("680") != std::string::npos ||
+            name.find("CADILLAC") != std::string::npos) {
             return ParsedVehicleClass::HYPERCAR;
         }
         

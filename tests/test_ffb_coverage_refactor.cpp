@@ -280,9 +280,11 @@ TEST_CASE(test_coverage_approximations, "Coverage") {
     memset(&w, 0, sizeof(w));
     w.mSuspForce = 1000.0;
     
-    // approximate_load: SuspForce + 300
-    ASSERT_NEAR(engine.approximate_load(w), 1300.0, 0.1);
+    // approximate_load (Default: MR 0.55, Offset 450)
+    // (1000 * 0.55) + 450 = 1000
+    ASSERT_NEAR(engine.approximate_load(w), 1000.0, 0.1);
     
-    // approximate_rear_load: SuspForce + 300
-    ASSERT_NEAR(engine.approximate_rear_load(w), 1300.0, 0.1);
+    // approximate_rear_load (Default: MR 0.55, Offset 500)
+    // (1000 * 0.55) + 500 = 1050
+    ASSERT_NEAR(engine.approximate_rear_load(w), 1050.0, 0.1);
 }

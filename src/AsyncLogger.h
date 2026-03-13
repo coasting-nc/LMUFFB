@@ -215,6 +215,8 @@ struct SessionInfo {
     float slope_alpha_threshold;
     float slope_decay_rate;
     bool torque_passthrough; // v0.7.63
+    bool dynamic_normalization;
+    bool auto_load_normalization;
 };
 
 class AsyncLogger {
@@ -435,6 +437,8 @@ private:
         m_file << "# Slope Alpha Threshold: " << info.slope_alpha_threshold << "\n";
         m_file << "# Slope Decay Rate: " << info.slope_decay_rate << "\n";
         m_file << "# Torque Passthrough: " << (info.torque_passthrough ? "Enabled" : "Disabled") << "\n";
+        m_file << "# Dynamic Normalization: " << (info.dynamic_normalization ? "Enabled" : "Disabled") << "\n";
+        m_file << "# Auto Load Normalization: " << (info.auto_load_normalization ? "Enabled" : "Disabled") << "\n";
         m_file << "# ========================\n";
         
         // CSV Header for human readability

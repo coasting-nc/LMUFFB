@@ -165,6 +165,8 @@ void FFBThread() {
                             info.slope_alpha_threshold = g_engine.m_slope_alpha_threshold;
                             info.slope_decay_rate = g_engine.m_slope_decay_rate;
                             info.torque_passthrough = g_engine.m_torque_passthrough;
+                            info.dynamic_normalization = g_engine.m_dynamic_normalization_enabled;
+                            info.auto_load_normalization = g_engine.m_auto_load_normalization_enabled;
                             AsyncLogger::Get().Start(info, Config::m_log_path);
                         }
                     }

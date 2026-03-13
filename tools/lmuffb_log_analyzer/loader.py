@@ -473,4 +473,6 @@ def _parse_header(path: Path) -> SessionMetadata:
         slope_threshold=float(header_data.get('slope_threshold', -0.3)),
         slope_alpha_threshold=_safe_float(header_data.get('slope_alpha_threshold')),
         slope_decay_rate=_safe_float(header_data.get('slope_decay_rate')),
+        dynamic_normalization=header_data.get('dynamic_normalization', '').lower() == 'enabled',
+        auto_load_normalization=header_data.get('auto_load_normalization', '').lower() == 'enabled',
     )

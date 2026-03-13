@@ -26,6 +26,8 @@ class SessionMetadata(BaseModel):
     slope_threshold: float
     slope_alpha_threshold: Optional[float] = None
     slope_decay_rate: Optional[float] = None
+    dynamic_normalization: bool = False
+    auto_load_normalization: bool = False
 
 class MarkerEvent(BaseModel):
     """User-triggered marker"""
