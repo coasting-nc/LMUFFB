@@ -21,8 +21,8 @@ class SessionMetadata(BaseModel):
     long_load_effect: float = 0.0 # v0.7.162
     sop_scale: float = 1.0       # v0.7.152
     sop_smoothing: float = 0.0   # v0.7.152
-    optimal_slip_angle: float = 0.10 # v0.7.172
-    optimal_slip_ratio: float = 0.12 # v0.7.172
+    optimal_slip_angle: float = 0.10 # v0.7.173
+    optimal_slip_ratio: float = 0.12 # v0.7.173
     slope_enabled: bool
     slope_sensitivity: float
     slope_threshold: float

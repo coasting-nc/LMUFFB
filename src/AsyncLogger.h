@@ -209,8 +209,8 @@ struct SessionInfo {
     float long_load_effect;
     float sop_scale;       // v0.7.152
     float sop_smoothing;   // v0.7.152
-    float optimal_slip_angle; // v0.7.172
-    float optimal_slip_ratio; // v0.7.172
+    float optimal_slip_angle; // v0.7.173
+    float optimal_slip_ratio; // v0.7.173
     bool slope_enabled;
     float slope_sensitivity;
     float slope_threshold;
