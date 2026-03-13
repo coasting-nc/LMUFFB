@@ -432,3 +432,111 @@ def analyze_slope_stability(df: pd.DataFrame, metadata, threshold: float = 0.02)
 1. **Proving the "Pneumatic Trail" Theory:** By plotting `SlopeTorque` (Cyan) against `SlopeCurrent` (Purple), you will visually see if the steering torque drops *before* the lateral G-forces drop. If it does, your v0.7.40 fusion logic is a massive success. If they drop at the exact same time, the torque anticipation isn't adding much value.
 2. **Validating the Confidence Gate:** If you feel a slide in-game but the FFB doesn't drop, you can look at Panel 3. If the green `Confidence` area is at `0.0` during the slide, you know your `slope_alpha_threshold` is set too high, preventing the algorithm from trusting the data.
 3. **Objective Superiority:** By comparing the `slope_grip_correlation` of a log using Slope Detection vs. a log using the Friction Circle fallback, you can mathematically prove which algorithm provides a more accurate representation of the game's physics engine.
+
+## Follow up questions
+
+Should we also update the code to always calculate slope detection, even for cars that have unencrypted tire grip information, so that we can do the comparisons and diagnostics? Would this add significant computational costs? In any case, bear in mind that enabling this would be temporary just to perform some diagnostics, and we could disable it again later.
+
+
+## Answers
+
+
+
+
+This is a fantastic idea. In software engineering, this is known as running an algorithm in **"Shadow Mode"**. By calculating the slope detection in the background even when we don't strictly need it, we can log its output and compare it directly against the game's unencrypted "Ground Truth" grip. 
+
+This is the *only* way to truly tune and validate the algorithm.
+
+### 1. Would this add significant computational costs?
+**No, the cost is completely negligible.** 
+The `calculate_slope_grip` function runs at 400Hz. Its heaviest operation is the Savitzky-Golay derivative calculation (`calculate_sg_derivative`), which contains a simple `for` loop. 
+* The maximum window size is 41, meaning the loop runs a maximum of 20 times. 
+* It calculates 4 derivatives, so that's 80 loop iterations per frame. 
+* At 400Hz, that is 32,000 simple arithmetic operations per second. 
+
+A modern CPU can execute billions of operations per second. This will take less than a microsecond per frame. You could leave this enabled permanently without any impact on the FFB loop's 1000Hz target.
+
+### 2. How to implement "Shadow Mode"
+
+We need to move the call to `calculate_slope_grip` *outside* of the fallback `if` statement so that it updates the internal state variables (which the logger reads) every single frame, regardless of whether the telemetry is encrypted or not.
+
+**File: `src/GripLoadEstimation.cpp`**
+Locate `FFBEngine::calculate_axle_grip` (around line 110) and update it as follows:
+
+```cpp
+    // ==================================================================================
+    // CRITICAL LOGIC FIX (v0.4.14) - DO NOT MOVE INSIDE CONDITIONAL BLOCK
+    // ==================================================================================
+    double slip1 = calculate_slip_angle(w1, prev_slip1, dt);
+    double slip2 = calculate_slip_angle(w2, prev_slip2, dt);
+    result.slip_angle = (slip1 + slip2) / 2.0;
+
+    // ==================================================================================
+    // SHADOW MODE: Always calculate slope grip if enabled (for diagnostics and logging)
+    // This allows us to compare our math against unencrypted cars to tune the algorithm.
+    // ==================================================================================
+    double slope_grip_estimate = 1.0;
+    if (m_slope_detection_enabled && is_front && data && car_speed >= 5.0) {
+        slope_grip_estimate = calculate_slope_grip(
+            data->mLocalAccel.x / 9.81,
+            result.slip_angle,
+            dt,
+            data
+        );
+    }
+
+    // Fallback condition: Grip is essentially zero BUT car has significant load
+    if (result.value < 0.0001 && avg_axle_load > 100.0) {
+        result.approximated = true;
+        
+        if (car_speed < 5.0) {
+            // Note: We still keep the calculated slip_angle in result.slip_angle
+            // for visualization/rear torque, even if we force grip to 1.0 here.
+            result.value = 1.0; 
+        } else {
+            if (m_slope_detection_enabled && is_front && data) {
+                // Use the estimate we already calculated above
+                result.value = slope_grip_estimate;
+            } else {
+                // v0.4.38: Combined Friction Circle (Advanced Reconstruction)
+                
+                // 1. Lateral Component (Alpha)
+                double lat_metric = std::abs(result.slip_angle) / (double)m_optimal_slip_angle;
+
+                // 2. Longitudinal Component (Kappa)
+                double ratio1 = calculate_manual_slip_ratio(w1, car_speed);
+                double ratio2 = calculate_manual_slip_ratio(w2, car_speed);
+                double avg_ratio = (std::abs(ratio1) + std::abs(ratio2)) / 2.0;
+
+                double long_metric = avg_ratio / (double)m_optimal_slip_ratio;
+
+                // 3. Combined Vector (Friction Circle)
+                double combined_slip = std::sqrt((lat_metric * lat_metric) + (long_metric * long_metric));
+
+                // 4. Map to Grip Fraction
+                if (combined_slip > 1.0) {
+                    double excess = combined_slip - 1.0;
+                    result.value = 1.0 / (1.0 + excess * 2.0);
+                } else {
+                    result.value = 1.0;
+                }
+            }
+        }
+        
+        // Safety Clamp (v0.4.6): Never drop below 0.2 in approximation
+        result.value = (std::max)(0.2, result.value);
+        
+        if (!warned_flag) {
+            Logger::Get().LogFile("Warning: Data for mGripFract from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.", vehicleName);
+            warned_flag = true;
+        }
+    }
+```
+
+### Why this is the perfect approach:
+
+1. **Zero Risk to Gameplay:** If you are driving an unencrypted car (like the Oreca LMP2), `result.value` will still equal the perfect `result.original` from the game. The FFB you feel will be 100% native.
+2. **Perfect Diagnostics:** Even though the FFB is using the native grip, the `slope_grip_estimate` is still being calculated and its internal state (`m_slope_current`, `m_slope_torque_current`, `m_slope_smoothed_output`) is being pushed to the `AsyncLogger`.
+3. **The Ultimate Tuning Tool:** With this change, you can take an unencrypted car out on track, enable Slope Detection in the UI, drive a few laps, and run the Python analyzer. The new `plot_slope_timeseries` (from the previous message) will overlay the `Slope Estimated Grip` (Dashed Red) directly on top of the `Raw Game Grip` (Solid Blue). 
+
+You will instantly see if your `slope_sensitivity` is too high, or if your `slope_alpha_threshold` is too strict, because you have the actual game engine's answer key right there on the graph!
