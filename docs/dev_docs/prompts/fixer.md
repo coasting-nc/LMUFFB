@@ -142,7 +142,7 @@ Your final submission must include **ALL** of the following:
     *   [ ] PR Title & Description (Issue Link, Fix Explanation, Safety Impact, Linux Verification).
 5.  **Version and changelog:**
     *   [ ] Update `VERSION` file (always use the smallest possible increment: +1 to the rightmost number, e.g., 0.7.108 -> 0.7.109).
-    *   [ ] Update the changelog.
+    *   [ ] Update `CHANGELOG_DEV.md`.
 6.  **All deliverables required in instruction documents:**
     *   [ ] Deliverables required in `A.1_architect_prompt.md`
     *   [ ] Deliverables required in `B_developer_prompt.md`
