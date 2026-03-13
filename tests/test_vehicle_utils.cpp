@@ -67,6 +67,18 @@ TEST_CASE(test_vehicle_class_parsing_keywords, "Internal") {
     ASSERT_EQ((int)ParseVehicleClass(nullptr, nullptr), (int)ParsedVehicleClass::UNKNOWN);
 }
 
+TEST_CASE(test_issue_346_repro, "Internal") {
+    // Case reported in Issue #346
+    // [FFB] Vehicle Identification -> Detected Class: Unknown | Seed Load: 4500.00N (Raw -> Class: Hyper, Name: Cadillac WTR 2025 #101:LM)
+    ASSERT_EQ((int)ParseVehicleClass("Hyper", "Cadillac WTR 2025 #101:LM"), (int)ParsedVehicleClass::HYPERCAR);
+
+    // Test "Hyper" short class name
+    ASSERT_EQ((int)ParseVehicleClass("Hyper", ""), (int)ParsedVehicleClass::HYPERCAR);
+
+    // Test "CADILLAC" fallback keyword (requested by user)
+    ASSERT_EQ((int)ParseVehicleClass("", "CADILLAC"), (int)ParsedVehicleClass::HYPERCAR);
+}
+
 TEST_CASE(test_vehicle_class_case_insensitivity, "Internal") {
     ASSERT_EQ((int)ParseVehicleClass("gt3", ""), (int)ParsedVehicleClass::GT3);
     ASSERT_EQ((int)ParseVehicleClass("GT3", ""), (int)ParsedVehicleClass::GT3);
