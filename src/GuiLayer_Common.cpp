@@ -726,7 +726,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                 ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "Simulation: %d ms", ms);
             });
 
-        FloatSetting("Optimal Slip Angle", &engine.m_optimal_slip_angle, 0.05f, 0.20f, "%.2f rad",
+        FloatSetting("Optimal Slip Angle", &engine.m_optimal_slip_angle, 0.040f, 0.200f, "%.3f rad",
             Tooltips::OPTIMAL_SLIP_ANGLE);
         FloatSetting("Optimal Slip Ratio", &engine.m_optimal_slip_ratio, 0.05f, 0.20f, "%.2f",
             Tooltips::OPTIMAL_SLIP_RATIO);

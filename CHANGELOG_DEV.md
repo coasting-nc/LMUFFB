@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.177]
+
+- Fixes to Tire Grip estimate
+  - Replaced "gated" falloff with a continuous curve.
+  - Removed the 0.2 safety floor to the grip estimate.
+- Log Analyzer Improvements
+  - update the plot_true_tire_curve to draw two new lines over the scatter plot:
+    - Binned Mean (The Game's Curve): A line showing the average raw grip for every 0.01 rad of slip.
+    - Theoretical Curve (Our Math): A line showing what our 1.0 / (1.0 + x^4) math outputs for the given optimal_slip_angle.
+    This will let you visually tune the optimal_slip_angle slider in the UI until the Theoretical Curve perfectly overlaps the Binned Mean curve.
+  - Enhancing the "Tire Grip Estimation" Plot:
+    - Added the Mean Error, Correlation, and the Slip Angle overlay to the time-series plot.
+
 ## [0.7.176]
 
 - Fixes to Tire Grip estimate: implemented Per-Wheel Friction Circle.

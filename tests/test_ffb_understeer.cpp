@@ -18,8 +18,8 @@ TEST_CASE(test_optimal_slip_buffer_zone, "Understeer") {
     double force = 0.0;
     for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) force = engine.calculate_force(&data);
     
-    // Since grip should be 1.0 (slip 0.06 <= optimal 0.10)
-    ASSERT_NEAR(force, 1.0, 0.001);
+    // With continuous falloff 1.0 / (1.0 + x^4), at x = 0.6 it is ~0.8857
+    ASSERT_NEAR(force, 0.8857, 0.001);
 }
 
 TEST_CASE(test_progressive_loss_curve, "Understeer") {
@@ -45,7 +45,8 @@ TEST_CASE(test_progressive_loss_curve, "Understeer") {
     double f14 = 0.0;
     for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) f14 = engine.calculate_force(&data);
     
-    ASSERT_NEAR(f10, 1.0, 0.001);
+    // At 1.0x optimal, the curve 1.0 / (1.0 + 1^4) yields ~0.5
+    ASSERT_NEAR(f10, 0.5033, 0.001);
     ASSERT_TRUE(f10 > f12 && f12 > f14);
 }
 
@@ -63,10 +64,9 @@ TEST_CASE(test_grip_floor_clamp, "Understeer") {
     double force = 0.0;
     for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) force = engine.calculate_force(&data);
     
-    // GRIP_FLOOR_CLAMP: The grip estimator in FFBEngine.h (line 622) enforces a minimum
-    // grip value of 0.2 to prevent total force loss even under extreme slip conditions.
-    // This safety floor ensures the wheel never goes completely dead.
-    ASSERT_NEAR(force, 0.2, 0.001);
+    // GRIP_FLOOR_CLAMP REMOVED: The safety floor of 0.2 was removed,
+    // so under extreme slip, the grip value naturally approaches 0.0.
+    ASSERT_NEAR(force, 0.0, 0.001);
 }
 
 TEST_CASE(test_understeer_output_clamp, "Understeer") {

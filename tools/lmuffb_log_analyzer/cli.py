@@ -312,7 +312,7 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
 
             # plot_true_tire_curve
             true_tire_path = output_path / f"{logfile_stem}_true_tire_curve.png"
-            plot_true_tire_curve(df, str(true_tire_path), show=False, status_callback=update_status)
+            plot_true_tire_curve(df, metadata, str(true_tire_path), show=False, status_callback=update_status)
             console.print(f"  [OK] Created: {true_tire_path}")
 
 @click.group()

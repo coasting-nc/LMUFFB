@@ -17,6 +17,9 @@ python scripts/run_all_tests.py
 # python scripts/run_all_tests.py
 
 
+# Run only python tests:
+$env:PYTHONPATH="tools"; python -m pytest tests tools/lmuffb_log_analyzer/tests
+
 ## Run code Coverage (Linux)
 ## See documentation: docs/dev_docs/linux_test_coverage.md
 # cmake -S . -B build -DBUILD_HEADLESS=ON -DENABLE_COVERAGE=ON

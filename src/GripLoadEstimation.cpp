@@ -221,7 +221,7 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
         );
     }
 
-// Fallback condition: Grip is essentially zero BUT car has significant load
+    // Fallback condition: Grip is essentially zero BUT car has significant load
     if (result.value < 0.0001 && avg_axle_load > 100.0) {
         result.approximated = true;
         
@@ -231,9 +231,9 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
             result.value = 1.0; 
         } else {
             if (m_slope_detection_enabled && is_front && data) {
-                // Use the estimate we already calculated above                result.value = slope_grip_estimate;
+                result.value = slope_grip_estimate;
             } else {
-                // --- REWRITTEN: Per-Wheel Friction Circle ---
+                // --- REWRITTEN: Continuous Per-Wheel Friction Circle ---
                 
                 auto calc_wheel_grip = [&](const TelemWheelV01& w, double slip_angle) {
                     // 1. Lateral Component (Alpha)
@@ -243,16 +243,18 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                     double long_ratio = calculate_manual_slip_ratio(w, car_speed);
                     double long_metric = std::abs(long_ratio) / (double)m_optimal_slip_ratio;
 
-                    // 3. Combined Vector
+                    // 3. Combined Vector (Friction Circle)
                     double combined_slip = std::sqrt((lat_metric * lat_metric) + (long_metric * long_metric));
 
-                    // 4. Map to Grip Fraction (Steeper Falloff)
-                    if (combined_slip > 1.0) {
-                        double excess = combined_slip - 1.0;
-                        // Using a squared excess creates a "cliff" effect typical of racing slicks
-                        return 1.0 / (1.0 + (excess * excess * 5.0)); 
-                    }
-                    return 1.0;
+                    // 4. Continuous Falloff Curve (1.0 / (1.0 + x^4))
+                    // - At combined_slip = 0.0 -> Grip = 1.00
+                    // - At combined_slip = 0.5 -> Grip = 0.94 (Slight degradation)
+                    // - At combined_slip = 1.0 -> Grip = 0.50 (Optimal slip threshold)
+                    // - At combined_slip = 1.5 -> Grip = 0.16 (Heavy slide)
+                    double cs2 = combined_slip * combined_slip;
+                    double cs4 = cs2 * cs2;
+                    
+                    return 1.0 / (1.0 + cs4); 
                 };
 
                 // Calculate grip for each wheel independently
@@ -264,8 +266,9 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
             }
         }
         
-        // Safety Clamp (v0.4.6): Never drop below 0.2 in approximation
-        result.value = (std::max)(0.2, result.value);
+        // Removed the 0.2 safety floor to allow full grip loss tracking
+        // Just clamp to standard 0.0 - 1.0 bounds
+        result.value = std::clamp(result.value, 0.0, 1.0);
         
         if (!warned_flag) {
             Logger::Get().LogFile("Warning: Data for mGripFract from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.", vehicleName);

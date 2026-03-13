@@ -32,6 +32,8 @@ def test_analyze_grip_estimation_basic(base_metadata):
         'GripFL': np.full(len(t), 1.0),
         'GripFR': np.full(len(t), 1.0),
         'CalcSlipAngleFront': np.full(len(t), 0.0),
+        'SlipAngleFL': np.full(len(t), 0.0),
+        'SlipAngleFR': np.full(len(t), 0.0),
         'SlipRatioFL': np.full(len(t), 0.0),
         'SlipRatioFR': np.full(len(t), 0.0)
     })
@@ -48,13 +50,15 @@ def test_analyze_grip_estimation_sliding(base_metadata):
     # slip_angle goes from 0 to 0.2 (peak at 0.1)
     slip_angle = np.linspace(0, 0.2, len(t))
 
-    # Ground truth: simple 1 - excess*2
-    raw_grip = np.where(slip_angle/0.1 > 1.0, 1.0 / (1.0 + (slip_angle/0.1 - 1.0) * 2.0), 1.0)
+    # Ground truth: continuous 1.0 / (1.0 + x^4)
+    raw_grip = 1.0 / (1.0 + (slip_angle/0.1)**4)
 
     df = pd.DataFrame({
         'GripFL': raw_grip,
         'GripFR': raw_grip,
         'CalcSlipAngleFront': slip_angle,
+        'SlipAngleFL': slip_angle,
+        'SlipAngleFR': slip_angle,
         'SlipRatioFL': np.zeros(len(t)),
         'SlipRatioFR': np.zeros(len(t))
     })
@@ -71,6 +75,8 @@ def test_analyze_grip_estimation_encrypted(base_metadata):
         'GripFL': np.zeros(len(t)), # Flatlined at 0
         'GripFR': np.zeros(len(t)),
         'CalcSlipAngleFront': np.random.randn(len(t)),
+        'SlipAngleFL': np.zeros(len(t)),
+        'SlipAngleFR': np.zeros(len(t)),
         'SlipRatioFL': np.zeros(len(t)),
         'SlipRatioFR': np.zeros(len(t))
     })

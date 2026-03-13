@@ -474,7 +474,20 @@ def plot_grip_estimation_diagnostic(
     raw_front_grip = (plot_df['GripFL'] + plot_df['GripFR']) / 2.0
     approx_grip = plot_df['SimulatedApproxGrip']
 
-    # Panel 1: Time Series Overlay
+    # --- Calculate Stats for the Text Box ---
+    slip_mask = (raw_front_grip < 0.98) | (approx_grip < 0.98)
+    if slip_mask.sum() > 50:
+        error_array = approx_grip[slip_mask] - raw_front_grip[slip_mask]
+        mean_err = error_array.mean()
+        if raw_front_grip[slip_mask].std() > 0 and approx_grip[slip_mask].std() > 0:
+            corr = np.corrcoef(raw_front_grip[slip_mask], approx_grip[slip_mask])[0, 1]
+        else:
+            corr = 0.0
+        stats_text = f"During Slip Events:\nCorrelation (r): {corr:.3f}\nMean Error: {mean_err:.3f}"
+    else:
+        stats_text = "Not enough slip events\nto calculate stats."
+
+    # --- Panel 1: Time Series Overlay ---
     ax1 = axes[0]
     ax1.plot(time, raw_front_grip, label='Raw Game Grip (Truth)', color='#2196F3', linewidth=2.0, alpha=0.8)
     ax1.plot(time, approx_grip, label='Approximated Grip (Fallback)', color='#F44336', linestyle='--', linewidth=1.5)
@@ -483,9 +496,29 @@ def plot_grip_estimation_diagnostic(
     ax1.set_ylim(0.0, 1.1)
     ax1.set_title('Front Axle Grip Loss Events')
     ax1.grid(True, alpha=0.3)
-    _safe_legend(ax1, loc='lower right')
+    
+    # Add Stats Text Box
+    props = dict(boxstyle='round', facecolor='white', alpha=0.8, edgecolor='gray')
+    ax1.text(0.02, 0.15, stats_text, transform=ax1.transAxes, fontsize=10,
+            verticalalignment='bottom', bbox=props)
 
-    # Panel 2: Error Delta
+    # Add Slip Angle Overlay on Twin Axis
+    if 'CalcSlipAngleFront' in plot_df.columns:
+        ax1_twin = ax1.twinx()
+        ax1_twin.plot(time, np.abs(plot_df['CalcSlipAngleFront']), label='Absolute Slip Angle', color='#FF9800', alpha=0.4, linewidth=1.0)
+        ax1_twin.axhline(metadata.optimal_slip_angle, color='#FF9800', linestyle=':', alpha=0.6, label=f'Optimal Threshold ({metadata.optimal_slip_angle})')
+        ax1_twin.set_ylabel('Slip Angle (rad)', color='#FF9800')
+        ax1_twin.tick_params(axis='y', labelcolor='#FF9800')
+        ax1_twin.set_ylim(0, 0.25) # Keep scale consistent with scatter plot
+        
+        # Combine legends
+        lines, labels = ax1.get_legend_handles_labels()
+        lines2, labels2 = ax1_twin.get_legend_handles_labels()
+        ax1.legend(lines + lines2, labels + labels2, loc='lower right')
+    else:
+        _safe_legend(ax1, loc='lower right')
+
+    # --- Panel 2: Error Delta ---
     ax2 = axes[1]
     error = approx_grip - raw_front_grip
     ax2.fill_between(time, 0, error, where=(error > 0), color='#F44336', alpha=0.3, label='Over-estimating Grip')
@@ -1193,13 +1226,13 @@ def plot_raw_telemetry_health(
 
 def plot_true_tire_curve(
     df: pd.DataFrame,
+    metadata: SessionMetadata,
     output_path: Optional[str] = None,
     show: bool = True,
     status_callback = None
 ) -> str:
     """
-    Scatter plot of Raw Grip vs Slip Angle to reveal the true tire physics curve.
-    Crucial for tuning 'optimal_slip_angle' and the falloff math.
+    Scatter plot of Raw Grip vs Slip Angle with Binned Mean and Theoretical Math Overlay.
     """
     cols =['GripFL', 'SlipAngleFL', 'SlipRatioFL', 'Speed']
     if not all(c in df.columns for c in cols):
@@ -1209,29 +1242,53 @@ def plot_true_tire_curve(
     
     # Filter out low speeds where slip angles go to infinity
     plot_df = df[df['Speed'] > 5.0].copy()
-    plot_df = _downsample_df(plot_df, max_points=15000)
+    
+    # Extract pure lateral points (low longitudinal slip) to see the clean curve
+    pure_lat_mask = np.abs(plot_df['SlipRatioFL']) < 0.02
+    pure_lat_df = plot_df[pure_lat_mask]
 
     fig, ax = plt.subplots(figsize=(12, 8))
     
-    # Scatter Front Left tire: X = Slip Angle, Y = Grip, Color = Longitudinal Slip
+    # 1. Scatter Plot (Background)
+    downsampled_df = _downsample_df(plot_df, max_points=15000)
     scatter = ax.scatter(
-        np.abs(plot_df['SlipAngleFL']), 
-        plot_df['GripFL'], 
-        c=np.abs(plot_df['SlipRatioFL']), 
+        np.abs(downsampled_df['SlipAngleFL']), 
+        downsampled_df['GripFL'], 
+        c=np.abs(downsampled_df['SlipRatioFL']), 
         cmap='coolwarm', 
-        alpha=0.4, 
-        s=10
+        alpha=0.2, 
+        s=10,
+        label='Raw Telemetry Points'
     )
     
+    # 2. Binned Mean (The Game's Actual Curve)
+    if len(pure_lat_df) > 100:
+        # Create bins every 0.005 rad
+        bins = np.arange(0, 0.25, 0.005)
+        pure_lat_df['SlipBin'] = pd.cut(np.abs(pure_lat_df['SlipAngleFL']), bins)
+        binned_mean = pure_lat_df.groupby('SlipBin')['GripFL'].mean()
+        bin_centers = binned_mean.index.categories.mid
+        
+        ax.plot(bin_centers, binned_mean.values, color='black', linewidth=3, label='Binned Mean (Game Physics)')
+
+    # 3. Theoretical Curve (Our C++ Math)
+    x_theory = np.linspace(0, 0.25, 100)
+    # 1.0 / (1.0 + (x / optimal)^4)
+    y_theory = 1.0 / (1.0 + (x_theory / metadata.optimal_slip_angle)**4)
+    ax.plot(x_theory, y_theory, color='#00E676', linewidth=3, linestyle='--', 
+            label=f'C++ Math (Optimal = {metadata.optimal_slip_angle} rad)')
+
     ax.set_xlabel('Absolute Slip Angle (rad)')
     ax.set_ylabel('Raw Game Grip Fraction (0.0 - 1.0)')
-    ax.set_title('True Tire Curve: Grip vs Slip Angle (Colored by Slip Ratio)')
-    ax.set_xlim(0, 0.25) # Focus on the relevant slip range
+    ax.set_title('True Tire Curve: Game Physics vs C++ Approximation')
+    ax.set_xlim(0, 0.25)
     ax.set_ylim(0, 1.05)
     ax.grid(True, alpha=0.3)
     
     cbar = plt.colorbar(scatter, ax=ax)
     cbar.set_label('Absolute Slip Ratio (Braking/Accel)')
+    
+    ax.legend(loc='upper right')
 
     plt.tight_layout()
 
