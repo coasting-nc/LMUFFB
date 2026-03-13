@@ -2,6 +2,20 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 13, 2026[/b][/size]
+[b]Version 0.7.169 - Standardized Tire Load Fallbacks[/b]
+
+[b]New release[/b] (0.7.169): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Standardized Tire Load Fallbacks[/b]: Fixed an issue where the wrong fallback (kinematic estimation) was used in some physics calculations when tire load telemetry was missing.
+[*][b]Removed Obsolete Physics Model[/b]: Deleted the less accurate Kinematic Load model in favor of the more precise Suspension-based approximation, which better captures real-time dynamics.
+[*][b]Consistent SoP Feedback[/b]: Standardized fallback logic across all components, ensuring consistent and physically accurate Seat-of-the-Pants (SoP) feedback for all cars, including DLC content.
+[*][b]Code Cleanup[/b]: Significantly simplified the internal physics engine by removing unnecessary parameters and estimation paths, improving both performance and maintainability.
+[/list]
+
+---
+
 [size=5][b]March 11, 2026[/b][/size]
 [b]Version 0.7.166 - Context-Aware Yaw Kick Signal Improvements[/b]
 

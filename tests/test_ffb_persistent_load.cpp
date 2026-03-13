@@ -57,11 +57,11 @@ TEST_CASE(Engine_SavesNewStaticLoadUponLatching, "PersistentLoad") {
     // Simulate reaching latch speed (15.0 m/s) with valid load
     // First, provide some samples to avoid safety fallback to 0.5 * auto_peak
     for (int i = 0; i < 100; ++i) {
-        FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 3800.0, 10.0, 0.0025);
+        FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 3800.0, 3800.0, 10.0, 0.0025);
     }
 
     // Now latch it
-    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 3800.0, 20.0, 0.0025);
+    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 3800.0, 3800.0, 20.0, 0.0025);
 
     ASSERT_TRUE(FFBEngineTestAccess::GetStaticLoadLatched(engine));
     double saved_val = 0.0;

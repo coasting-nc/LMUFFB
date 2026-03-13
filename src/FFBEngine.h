@@ -440,11 +440,6 @@ public:
     double m_accel_x_smoothed = 0.0;
     double m_accel_z_smoothed = 0.0; 
     
-    // Kinematic Physics Parameters (v0.4.39)
-    float m_approx_mass_kg = DEFAULT_APPROX_MASS_KG;
-    float m_approx_aero_coeff = DEFAULT_APPROX_AERO_COEFF;
-    float m_approx_weight_bias = DEFAULT_APPROX_WEIGHT_BIAS;
-    float m_approx_roll_stiffness = DEFAULT_APPROX_ROLL_STIFFNESS;
 
     // Phase Accumulators for Dynamic Oscillators
     double m_lockup_phase = 0.0;
@@ -706,10 +701,6 @@ private:
     static constexpr float  DEFAULT_SLOPE_MAX_THRESHOLD = -2.0f;
     static constexpr float  DEFAULT_SLOPE_G_SLEW_LIMIT = 50.0f;
     static constexpr float  DEFAULT_SLOPE_TORQUE_SENSITIVITY = 0.5f;
-    static constexpr float  DEFAULT_APPROX_MASS_KG = 1100.0f;
-    static constexpr float  DEFAULT_APPROX_AERO_COEFF = 2.0f;
-    static constexpr float  DEFAULT_APPROX_WEIGHT_BIAS = 0.55f;
-    static constexpr float  DEFAULT_APPROX_ROLL_STIFFNESS = 0.6f;
     static constexpr float  DEFAULT_ABS_FREQ_HZ = 20.0f;
     static constexpr double DEFAULT_AUTO_PEAK_LOAD = 4500.0;
     static constexpr double DEFAULT_SESSION_PEAK_TORQUE = 25.0;
@@ -780,7 +771,6 @@ public:
 
     double approximate_load(const TelemWheelV01& w);
     double approximate_rear_load(const TelemWheelV01& w);
-    double calculate_kinematic_load(const TelemInfoV01* data, int wheel_index);
     double calculate_manual_slip_ratio(const TelemWheelV01& w, double car_speed_ms);
     NOINLINE double calculate_slope_grip(double lateral_g, double slip_angle, double dt, const TelemInfoV01* data = nullptr);
     double calculate_slope_confidence(double dAlpha_dt);

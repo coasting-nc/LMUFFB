@@ -12,7 +12,7 @@ TEST_CASE(test_static_load_latching, "Normalization") {
     FFBEngineTestAccess::SetAutoPeakLoad(engine, 8000.0);
 
     // 1. Valid learning speed (10 m/s)
-    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 4000.0, 10.0, 0.0025);
+    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 4000.0, 4000.0, 10.0, 0.0025);
     ASSERT_GT(FFBEngineTestAccess::GetStaticFrontLoad(engine), 0.0);
     ASSERT_FALSE(FFBEngineTestAccess::GetStaticLoadLatched(engine));
 
@@ -20,13 +20,13 @@ TEST_CASE(test_static_load_latching, "Normalization") {
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
 
     // 2. High speed (> 15 m/s) should latch
-    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 8000.0, 20.0, 0.0025);
+    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 8000.0, 8000.0, 20.0, 0.0025);
     ASSERT_TRUE(FFBEngineTestAccess::GetStaticLoadLatched(engine));
 
     double latched_val = FFBEngineTestAccess::GetStaticFrontLoad(engine);
 
     // 3. Subsequent calls (even at valid speeds) should be ignored
-    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 2000.0, 10.0, 0.0025);
+    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 2000.0, 2000.0, 10.0, 0.0025);
     ASSERT_EQ(FFBEngineTestAccess::GetStaticFrontLoad(engine), latched_val);
 }
 

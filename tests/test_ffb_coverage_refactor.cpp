@@ -13,7 +13,7 @@ TEST_CASE(test_coverage_load_reference, "Coverage") {
     // Case 1: Active update (Speed > 2 && Speed < 15, Load < 100)
     // dt=0.1, should set immediately? 
     // Logic: if (m_static_front_load < 100.0) m_static_front_load = current_load;
-    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 2250.0, 10.0, 0.1);
+    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 2250.0, 2250.0, 10.0, 0.1);
     ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), 2250.0, 1.0);  // Should jump to 2250 (4500 * 0.5)
     
     // Case 2: Inertial update (Speed > 2 && Speed < 15, Load >= 100)
@@ -22,7 +22,7 @@ TEST_CASE(test_coverage_load_reference, "Coverage") {
     FFBEngineTestAccess::SetStaticFrontLoad(engine, initial);
     double target = 5000.0;
     double dt = 0.5; // alpha = 0.1
-    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, target, 10.0, dt);
+    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, target, target, 10.0, dt);
     // Expected: 4000 + 0.1 * (5000 - 4000) = 4100
     ASSERT_GT(FFBEngineTestAccess::GetStaticFrontLoad(engine), initial);
     ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), 4100.0, 10.0);
@@ -30,12 +30,12 @@ TEST_CASE(test_coverage_load_reference, "Coverage") {
     // Case 3: Speed Too Low
     initial = 4000.0;
     FFBEngineTestAccess::SetStaticFrontLoad(engine, initial);
-    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 5000.0, 1.0, 0.1);
+    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 5000.0, 5000.0, 1.0, 0.1);
     ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), initial, 0.1); // No change
 
     // Case 4: Speed Too High
     FFBEngineTestAccess::SetStaticFrontLoad(engine, initial);
-    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 5000.0, 20.0, 0.1);
+    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 5000.0, 5000.0, 20.0, 0.1);
     ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), initial, 0.1); // No change
 
     // Case 5: Safety Clamp
@@ -45,7 +45,7 @@ TEST_CASE(test_coverage_load_reference, "Coverage") {
     // Call with valid speed but no internal update needed (load already low, but update logic sets it)
     // Wait, the function ends with the clamp check.
     // So if we call it, it should clamp.
-    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 500.0, 10.0, 0.1); 
+    FFBEngineTestAccess::CallUpdateStaticLoadReference(engine, 500.0, 500.0, 10.0, 0.1);
     // Logic: if < 100 -> set to current (500). Then at end, if < 1000 -> set to fallback (2250).
     ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), 2250.0, 1.0);
 }

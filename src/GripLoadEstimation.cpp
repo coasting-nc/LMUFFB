@@ -285,50 +285,6 @@ double FFBEngine::approximate_rear_load(const TelemWheelV01& w) {
     return w.mSuspForce + 300.0;
 }
 
-// Helper: Calculate Kinematic Load (v0.4.39)
-// Estimates tire load from chassis physics when telemetry (mSuspForce) is missing.
-// This is critical for encrypted DLC content where suspension sensors are blocked.
-double FFBEngine::calculate_kinematic_load(const TelemInfoV01* data, int wheel_index) {
-    // 1. Static Weight Distribution
-    bool is_rear = (wheel_index >= 2);
-    double bias = is_rear ? m_approx_weight_bias : (1.0 - m_approx_weight_bias);
-    double static_weight = (m_approx_mass_kg * 9.81 * bias) / 2.0;
-
-    // 2. Aerodynamic Load (Velocity Squared)
-    double speed = std::abs(data->mLocalVel.z);
-    double aero_load = m_approx_aero_coeff * (speed * speed);
-    double wheel_aero = aero_load / 4.0; 
-
-    // 3. Longitudinal Weight Transfer (Braking/Acceleration)
-    // COORDINATE SYSTEM VERIFIED (v0.4.39):
-    // - LMU: +Z axis points REARWARD (out the back of the car)
-    // - Braking: Chassis decelerates â†’ Inertial force pushes rearward â†’ +Z acceleration
-    // - Result: Front wheels GAIN load, Rear wheels LOSE load
-    // - Source: docs/dev_docs/references/Reference - coordinate_system_reference.md
-    // 
-    // Formula: (Accel / g) * WEIGHT_TRANSFER_SCALE
-    // We use SMOOTHED acceleration to simulate chassis pitch inertia (~35ms lag)
-    double long_transfer = (m_accel_z_smoothed / 9.81) * WEIGHT_TRANSFER_SCALE; 
-    if (is_rear) long_transfer *= -1.0; // Subtract from Rear during Braking
-
-    // 4. Lateral Weight Transfer (Cornering)
-    // COORDINATE SYSTEM VERIFIED (v0.4.39):
-    // - LMU: +X axis points LEFT (out the left side of the car)
-    // - Right Turn: Centrifugal force pushes LEFT â†’ +X acceleration
-    // - Result: LEFT wheels (outside) GAIN load, RIGHT wheels (inside) LOSE load
-    // - Source: docs/dev_docs/references/Reference - coordinate_system_reference.md
-    // 
-    // Formula: (Accel / g) * WEIGHT_TRANSFER_SCALE * Roll_Stiffness
-    // We use SMOOTHED acceleration to simulate chassis roll inertia (~35ms lag)
-    double lat_transfer = (m_accel_x_smoothed / 9.81) * WEIGHT_TRANSFER_SCALE * m_approx_roll_stiffness;
-    bool is_left = (wheel_index == 0 || wheel_index == 2);
-    if (!is_left) lat_transfer *= -1.0; // Subtract from Right wheels
-
-    // Sum and Clamp
-    double total_load = static_weight + wheel_aero + long_transfer + lat_transfer;
-    return (std::max)(0.0, total_load);
-}
-
 // Helper: Calculate Manual Slip Ratio (v0.4.6)
 double FFBEngine::calculate_manual_slip_ratio(const TelemWheelV01& w, double car_speed_ms) {
     // Safety Trap: Force 0 slip at very low speeds (v0.4.6)

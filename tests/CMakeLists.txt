@@ -113,6 +113,7 @@ set(TEST_SOURCES
     test_issue_322_yaw_kicks.cpp
     test_issue_316_safety_gui.cpp
     test_issue_312_logger.cpp
+    test_issue_309_load_fallback.cpp
     test_distribution_bundle.cpp
     ../src/main.cpp
 )

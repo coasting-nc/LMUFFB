@@ -360,8 +360,8 @@ public:
     static void SetRestApiPort(FFBEngine& e, int val) { e.m_rest_api_port = val; }
     
     // Coverage Restoration Accessors
-    static void CallUpdateStaticLoadReference(FFBEngine& e, double load, double speed, double dt) {
-        e.update_static_load_reference(load, load, speed, dt);
+    static void CallUpdateStaticLoadReference(FFBEngine& e, double front_load, double rear_load, double speed, double dt) {
+        e.update_static_load_reference(front_load, rear_load, speed, dt);
     }
     static void CallInitializeLoadReference(FFBEngine& e, const char* vehicleClass, const char* vehicleName) {
         e.InitializeLoadReference(vehicleClass, vehicleName);
