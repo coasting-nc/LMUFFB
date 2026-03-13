@@ -223,11 +223,14 @@ def main():
     DEFAULT_INCLUDE_NON_CODE = False
     
     DEFAULT_EXCLUDE_ALL_MAIN_CODE = False
-    DEFAULT_INCLUDE_MAIN_GUI = True
+    DEFAULT_INCLUDE_MAIN_GUI = False
     DEFAULT_INCLUDE_MAIN_IO = True
     DEFAULT_INCLUDE_MAIN_PHYSICS = True
     DEFAULT_INCLUDE_MAIN_INTERFACES = True
     DEFAULT_INCLUDE_MAIN_COMMON = True
+    # TODO: separate main.py from common
+    # TODO: separate AsyncLogger and Logger.h from IO
+    # TODO: separate RateMonitor, HealthMonitor from IO
     
     DEFAULT_INCLUDE_MAKEFILES = False
     DEFAULT_TEST_EXAMPLES_ONLY = True
