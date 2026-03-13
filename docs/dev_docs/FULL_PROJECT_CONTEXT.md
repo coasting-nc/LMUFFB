@@ -225,12 +225,16 @@ struct SessionInfo {
     float long_load_effect;
     float sop_scale;       // v0.7.152
     float sop_smoothing;   // v0.7.152
+    float optimal_slip_angle; // v0.7.173
+    float optimal_slip_ratio; // v0.7.173
     bool slope_enabled;
     float slope_sensitivity;
     float slope_threshold;
     float slope_alpha_threshold;
     float slope_decay_rate;
     bool torque_passthrough; // v0.7.63
+    bool dynamic_normalization;
+    bool auto_load_normalization;
 };
 
 class AsyncLogger {
@@ -445,12 +449,16 @@ private:
         m_file << "# Long Load Effect: " << info.long_load_effect << "\n";
         m_file << "# SoP Scale: " << info.sop_scale << "\n";
         m_file << "# SoP Smoothing: " << info.sop_smoothing << "\n";
+        m_file << "# Optimal Slip Angle: " << info.optimal_slip_angle << "\n";
+        m_file << "# Optimal Slip Ratio: " << info.optimal_slip_ratio << "\n";
         m_file << "# Slope Detection: " << (info.slope_enabled ? "Enabled" : "Disabled") << "\n";
         m_file << "# Slope Sensitivity: " << info.slope_sensitivity << "\n";
         m_file << "# Slope Threshold: " << info.slope_threshold << "\n";
         m_file << "# Slope Alpha Threshold: " << info.slope_alpha_threshold << "\n";
         m_file << "# Slope Decay Rate: " << info.slope_decay_rate << "\n";
         m_file << "# Torque Passthrough: " << (info.torque_passthrough ? "Enabled" : "Disabled") << "\n";
+        m_file << "# Dynamic Normalization: " << (info.dynamic_normalization ? "Enabled" : "Disabled") << "\n";
+        m_file << "# Auto Load Normalization: " << (info.auto_load_normalization ? "Enabled" : "Disabled") << "\n";
         m_file << "# ========================\n";
         
         // CSV Header for human readability
@@ -4803,6 +4811,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_prev_rotation[i] = upsampled_data->mWheel[i].mRotation;
         m_prev_brake_pressure[i] = upsampled_data->mWheel[i].mBrakePressure;
     }
+    // FIX (Issue #355): Update m_prev_susp_force at the END of the calculate_force loop
+    // to ensure correct dForce calculation for Method 1 next frame.
     m_prev_susp_force[0] = upsampled_data->mWheel[0].mSuspForce;
     m_prev_susp_force[1] = upsampled_data->mWheel[1].mSuspForce;
     
@@ -5397,7 +5407,11 @@ void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculat
 
         // Pre-conditions
         bool brake_active = (data->mUnfilteredBrake > PREDICTION_BRAKE_THRESHOLD);
-        bool is_grounded = (w.mSuspForce > PREDICTION_LOAD_THRESHOLD);
+
+        // FIX (Issue #355): Use actual tire load (or accurate approximation) for grounding check.
+        // mSuspForce is pushrod load, which can be zero/negative when airborne.
+        double current_load = ctx.frame_warn_load ? approximate_load(w) : w.mTireLoad;
+        bool is_grounded = (current_load > PREDICTION_LOAD_THRESHOLD);
 
         double start_threshold = (double)m_lockup_start_pct / PERCENT_TO_DECIMAL;
         double full_threshold = (double)m_lockup_full_pct / PERCENT_TO_DECIMAL;
@@ -5666,11 +5680,18 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
         }
     } else {
         // Method 1: Suspension Force Impulse (Rate of Change)
-        double dForceL = (data->mWheel[0].mSuspForce - m_prev_susp_force[0]) / ctx.dt;
-        double dForceR = (data->mWheel[1].mSuspForce - m_prev_susp_force[1]) / ctx.dt;
+
+        // CRITICAL: mSuspForce is the pushrod load, not the wheel load.
+        // We must multiply by the Motion Ratio to normalize the impulse back to the wheel.
+        // Otherwise, prototypes (MR ~0.5) will trigger bottoming 2x as often as GTs (MR ~0.65)
+        // for the exact same physical bump.
+        double mr = GetMotionRatioForClass(m_current_vclass);
+
+        double dForceL = ((data->mWheel[0].mSuspForce - m_prev_susp_force[0]) * mr) / ctx.dt;
+        double dForceR = ((data->mWheel[1].mSuspForce - m_prev_susp_force[1]) * mr) / ctx.dt;
         double max_dForce = (std::max)(dForceL, dForceR);
         
-        if (max_dForce > BOTTOMING_IMPULSE_THRESHOLD_N_S) { // 100kN/s impulse
+        if (max_dForce > BOTTOMING_IMPULSE_THRESHOLD_N_S) { // 100kN/s impulse at the WHEEL
             triggered = true;
             intensity = (max_dForce - BOTTOMING_IMPULSE_THRESHOLD_N_S) / BOTTOMING_IMPULSE_RANGE_N_S;
         }
@@ -5678,7 +5699,11 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
 
     // Safety Trigger: Raw Load Peak (Catches Method 0/1 failures)
     if (!triggered) {
-        double max_load = (std::max)(data->mWheel[0].mTireLoad, data->mWheel[1].mTireLoad);
+        // FIX (Issue #355): Support encrypted cars by using the approximation fallback
+        double load_l = ctx.frame_warn_load ? approximate_load(data->mWheel[0]) : data->mWheel[0].mTireLoad;
+        double load_r = ctx.frame_warn_load ? approximate_load(data->mWheel[1]) : data->mWheel[1].mTireLoad;
+        double max_load = (std::max)(load_l, load_r);
+
         double bottoming_threshold = m_static_front_load * BOTTOMING_LOAD_MULT;
         if (max_load > bottoming_threshold) {
             triggered = true;
@@ -6224,6 +6249,7 @@ public:
     char m_vehicle_name[STR_BUF_64] = "Unknown";
     char m_track_name[STR_BUF_64] = "Unknown";
     std::string m_current_class_name = "";
+    ParsedVehicleClass m_current_vclass = ParsedVehicleClass::UNKNOWN;
 
     // Logging intermediate values (exposed for AsyncLogger)
     double m_slope_dG_dt = 0.0;       
@@ -7200,7 +7226,8 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     // This ensures that session-learned peaks from a previous car don't pollute the new session.
     ResetNormalization();
 
-    ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
+    m_current_vclass = ParseVehicleClass(className, vehicleName);
+    ParsedVehicleClass vclass = m_current_vclass;
 
     // Stage 3 Reset: Ensure peak load starts at class baseline
     m_auto_peak_front_load = GetDefaultLoadForClass(vclass);
@@ -7295,6 +7322,9 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                           const char* vehicleName,
                           const TelemInfoV01* data,
                           bool is_front) {
+    // Note on mGripFract: The LMU InternalsPlugin.hpp comments state this is the
+    // "fraction of the contact patch that is sliding". This is poorly phrased.
+    // In actual telemetry output, 1.0 = Full Adhesion (Gripping) and 0.0 = Fully Sliding.
     GripResult result;
     double total_load = w1.mTireLoad + w2.mTireLoad;
     if (total_load > 1.0) {
@@ -7328,6 +7358,20 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
     double slip2 = calculate_slip_angle(w2, prev_slip2, dt);
     result.slip_angle = (slip1 + slip2) / 2.0;
 
+    // ==================================================================================
+    // SHADOW MODE: Always calculate slope grip if enabled (for diagnostics and logging)
+    // This allows us to compare our math against unencrypted cars to tune the algorithm.
+    // ==================================================================================
+    double slope_grip_estimate = 1.0;
+    if (is_front && data && car_speed >= 5.0) {
+        slope_grip_estimate = calculate_slope_grip(
+            data->mLocalAccel.x / 9.81,
+            result.slip_angle,
+            dt,
+            data
+        );
+    }
+
     // Fallback condition: Grip is essentially zero BUT car has significant load
     if (result.value < 0.0001 && avg_axle_load > 100.0) {
         result.approximated = true;
@@ -7338,13 +7382,8 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
             result.value = 1.0; 
         } else {
             if (m_slope_detection_enabled && is_front && data) {
-                // Dynamic grip estimation via derivative monitoring
-                result.value = calculate_slope_grip(
-                    data->mLocalAccel.x / 9.81,
-                    result.slip_angle,
-                    dt,
-                    data
-                );
+                // Use the estimate we already calculated above
+                result.value = slope_grip_estimate;
             } else {
                 // v0.4.38: Combined Friction Circle (Advanced Reconstruction)
                 
@@ -7396,24 +7435,35 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
     return result;
 }
 
-// Helper: Approximate Load (v0.4.5)
-// This function provides a fallback tire load estimate when primary telemetry (mTireLoad) is missing.
-// Rationale: Tire load is the sum of sprung mass (captured by mSuspForce) and unsprung mass.
-// The constant 300.0N (~30kg) is a first-order estimate of the unsprung mass (wheel, tire, upright, brakes).
-// Diagnostic logging (v0.7.170) has been added to compare this approximation against real data where available.
+// ========================================================================================
+// CRITICAL VEHICLE DYNAMICS NOTE: mSuspForce vs Wheel Load
+// ========================================================================================
+// The LMU telemetry channel `mSuspForce` represents the load on the internal PUSHROD,
+// NOT the load at the tire contact patch.
+// Because race cars use bellcranks, the pushrod has a mechanical advantage (Motion Ratio).
+// For example, a Hypercar with a Motion Ratio of 0.5 means the pushrod moves half as far
+// as the wheel, and therefore carries TWICE the force of the wheel.
+// To approximate the actual Tire Load, we MUST multiply mSuspForce by the Motion Ratio,
+// and then add the unsprung mass (the weight of the wheel, tire, and brakes).
+// ========================================================================================
+
+// Helper: Approximate Load (v0.4.5 / Improved v0.7.171 / Refactored v0.7.175)
+// Uses class-specific motion ratios to convert pushrod force (mSuspForce) to wheel load,
+// and adds an estimate for front unsprung mass.
 double FFBEngine::approximate_load(const TelemWheelV01& w) {
-    // Base: Suspension Force + Est. Unsprung Mass (300N)
-    // Note: mSuspForce captures dynamic weight transfer and aerodynamic downforce.
-    return (std::max)(0.0, w.mSuspForce + 300.0);
+    double motion_ratio = GetMotionRatioForClass(m_current_vclass);
+    double unsprung_weight = GetUnsprungWeightForClass(m_current_vclass, false /* is_rear */);
+
+    return (std::max)(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
 }
 
-// Helper: Approximate Rear Load (v0.4.10)
-// Similar to approximate_load, but for the rear axle.
-// Rationale: Rear unsprung mass might differ from front, but currently uses the same 300N estimate.
+// Helper: Approximate Rear Load (v0.4.10 / Improved v0.7.171 / Refactored v0.7.175)
+// Similar to approximate_load, but uses rear-specific unsprung mass estimates.
 double FFBEngine::approximate_rear_load(const TelemWheelV01& w) {
-    // Base: Suspension Force + Est. Unsprung Mass (300N)
-    // This captures weight transfer (braking/accel) and aero downforce implicitly via suspension compression.
-    return (std::max)(0.0, w.mSuspForce + 300.0);
+    double motion_ratio = GetMotionRatioForClass(m_current_vclass);
+    double unsprung_weight = GetUnsprungWeightForClass(m_current_vclass, true /* is_rear */);
+
+    return (std::max)(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
 }
 
 // Helper: Calculate Manual Slip Ratio (v0.4.6)
@@ -10106,12 +10156,16 @@ void FFBThread() {
                             info.long_load_effect = g_engine.m_long_load_effect;
                             info.sop_scale = g_engine.m_sop_scale;
                             info.sop_smoothing = g_engine.m_sop_smoothing_factor;
+                            info.optimal_slip_angle = g_engine.m_optimal_slip_angle;
+                            info.optimal_slip_ratio = g_engine.m_optimal_slip_ratio;
                             info.slope_enabled = g_engine.m_slope_detection_enabled;
                             info.slope_sensitivity = g_engine.m_slope_sensitivity;
                             info.slope_threshold = (float)g_engine.m_slope_min_threshold;
                             info.slope_alpha_threshold = g_engine.m_slope_alpha_threshold;
                             info.slope_decay_rate = g_engine.m_slope_decay_rate;
                             info.torque_passthrough = g_engine.m_torque_passthrough;
+                            info.dynamic_normalization = g_engine.m_dynamic_normalization_enabled;
+                            info.auto_load_normalization = g_engine.m_auto_load_normalization_enabled;
                             AsyncLogger::Get().Start(info, Config::m_log_path);
                         }
                     }
@@ -11429,7 +11483,8 @@ ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleN
     std::transform(name.begin(), name.end(), name.begin(), ::toupper);
 
     // 1. Primary Identification via Class Name (Hierarchical)
-    if (cls.find("HYPERCAR") != std::string::npos || cls.find("LMH") != std::string::npos || cls.find("LMDH") != std::string::npos) {
+    if (cls.find("HYPERCAR") != std::string::npos || cls.find("LMH") != std::string::npos ||
+        cls.find("LMDH") != std::string::npos || cls.find("HYPER") != std::string::npos) {
         return ParsedVehicleClass::HYPERCAR;
     }
     
@@ -11453,7 +11508,8 @@ ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleN
             name.find("GLICKENHAUS") != std::string::npos || name.find("VANWALL") != std::string::npos ||
             name.find("A424") != std::string::npos || name.find("SC63") != std::string::npos ||
             name.find("VALKYRIE") != std::string::npos || name.find("M HYBRID") != std::string::npos ||
-            name.find("TIPO 6") != std::string::npos || name.find("680") != std::string::npos) {
+            name.find("TIPO 6") != std::string::npos || name.find("680") != std::string::npos ||
+            name.find("CADILLAC") != std::string::npos) {
             return ParsedVehicleClass::HYPERCAR;
         }
         
@@ -11564,6 +11620,56 @@ const char* ParseVehicleBrand(const char* className, const char* vehicleName) {
     return "Unknown";
 }
 
+// Lookup table: Map ParsedVehicleClass to Motion Ratio (Wheel vs Pushrod)
+double GetMotionRatioForClass(ParsedVehicleClass vclass) {
+    switch (vclass) {
+        case ParsedVehicleClass::HYPERCAR:
+        case ParsedVehicleClass::LMP2_UNRESTRICTED:
+        case ParsedVehicleClass::LMP2_RESTRICTED:
+        case ParsedVehicleClass::LMP2_UNSPECIFIED:
+        case ParsedVehicleClass::LMP3:
+            return 0.50; // Prototypes have high motion ratios (pushrod sees ~2x wheel load)
+        case ParsedVehicleClass::GTE:
+        case ParsedVehicleClass::GT3:
+            return 0.65; // GT cars have lower motion ratios
+        default:
+            return 0.55; // Default fallback
+    }
+}
+
+// Lookup table: Map ParsedVehicleClass to Unsprung Weight (Newtons)
+double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {
+    if (is_rear) {
+        switch (vclass) {
+            case ParsedVehicleClass::HYPERCAR:
+            case ParsedVehicleClass::LMP2_UNRESTRICTED:
+            case ParsedVehicleClass::LMP2_RESTRICTED:
+            case ParsedVehicleClass::LMP2_UNSPECIFIED:
+            case ParsedVehicleClass::LMP3:
+                return 450.0;
+            case ParsedVehicleClass::GTE:
+            case ParsedVehicleClass::GT3:
+                return 550.0;
+            default:
+                return 500.0;
+        }
+    } else {
+        switch (vclass) {
+            case ParsedVehicleClass::HYPERCAR:
+            case ParsedVehicleClass::LMP2_UNRESTRICTED:
+            case ParsedVehicleClass::LMP2_RESTRICTED:
+            case ParsedVehicleClass::LMP2_UNSPECIFIED:
+            case ParsedVehicleClass::LMP3:
+                return 400.0;
+            case ParsedVehicleClass::GTE:
+            case ParsedVehicleClass::GT3:
+                return 500.0;
+            default:
+                return 450.0;
+        }
+    }
+}
+
 ```
 
 # File: src\VehicleUtils.h
@@ -11595,6 +11701,12 @@ const char* VehicleClassToString(ParsedVehicleClass vclass);
 
 // Helper: Parse vehicle brand from strings (v0.7.132)
 const char* ParseVehicleBrand(const char* className, const char* vehicleName);
+
+// Lookup table: Map ParsedVehicleClass to Motion Ratio (Wheel vs Pushrod)
+double GetMotionRatioForClass(ParsedVehicleClass vclass);
+
+// Lookup table: Map ParsedVehicleClass to Unsprung Weight (Newtons)
+double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear);
 
 #endif // VEHICLE_UTILS_H
 
@@ -11735,7 +11847,7 @@ struct TelemWheelV01
 {
   double mSuspensionDeflection;  // meters
   double mRideHeight;            // meters
-  double mSuspForce;             // pushrod load in Newtons
+  double mSuspForce;             // CRITICAL: pushrod/spring load in Newtons (requires Motion Ratio normalization for wheel load)
   double mBrakeTemp;             // Celsius
   double mBrakePressure;         // currently 0.0-1.0, depending on driver input and brake balance; will convert to true brake pressure (kPa) in future
 
@@ -14483,6 +14595,9 @@ public:
     static void CallCalculateABSPulse(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
         e.calculate_abs_pulse(data, ctx);
     }
+    static void CallCalculateLockup_Vibration(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        e.calculate_lockup_vibration(data, ctx);
+    }
     static void SetFlatspotSuppression(FFBEngine& e, bool val) { e.m_flatspot_suppression = val; }
     static void SetFlatspotStrength(FFBEngine& e, float val) { e.m_flatspot_strength = val; }
     static void SetABSPulseEnabled(FFBEngine& e, bool val) { e.m_abs_pulse_enabled = val; }
@@ -14617,6 +14732,7 @@ from rich.panel import Panel
 
 from .loader import load_log
 from .exporters.motec_exporter import MotecExporter
+from .analyzers.grip_analyzer import analyze_grip_estimation
 from .analyzers.slope_analyzer import (
     analyze_slope_stability,
     detect_oscillation_events,
@@ -14629,6 +14745,7 @@ from .analyzers.yaw_analyzer import (
 from .analyzers.lateral_analyzer import analyze_lateral_dynamics
 from .plots import (
     plot_slope_timeseries,
+    plot_grip_estimation_diagnostic,
     plot_slip_vs_latg,
     plot_dalpha_histogram,
     plot_slope_correlation,
@@ -14664,7 +14781,8 @@ def _show_info(metadata, df):
 
 def _run_analyze(metadata, df, verbose=False):
     # Run analyses
-    slope_results = analyze_slope_stability(df)
+    slope_results = analyze_slope_stability(df, metadata)
+    grip_est_results = analyze_grip_estimation(df, metadata)
     oscillations = detect_oscillation_events(df)
     singularity_count, worst_slope = detect_singularities(df)
     yaw_results = analyze_yaw_dynamics(df)
@@ -14720,6 +14838,22 @@ def _run_analyze(metadata, df, verbose=False):
         )
     
     console.print(table)
+
+    # Display results - Grip Estimation
+    if grip_est_results.get('status') == "VALID":
+        table5 = Table(title="Grip Estimation Accuracy (Friction Circle Fallback)")
+        table5.add_column("Metric", style="cyan")
+        table5.add_column("Value", style="green")
+        table5.add_column("Status", style="yellow")
+
+        corr = grip_est_results['correlation']
+        table5.add_row("Correlation (r)", f"{corr:.3f}", "LOW" if corr < 0.75 else "OK")
+        table5.add_row("Mean Error (Sliding)", f"{grip_est_results['mean_error_during_slip']:.3f}", "INFO")
+
+        fpr = grip_est_results['false_positive_rate']
+        table5.add_row("False Positive Rate", f"{fpr:.1f}%", "HIGH" if fpr > 5.0 else "OK")
+
+        console.print(table5)
     
     # Display results - Yaw & Clipping
     table2 = Table(title="Yaw & Clipping Analysis")
@@ -14812,7 +14946,7 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
 
         # Time series plot
         ts_path = output_path / f"{logfile_stem}_timeseries.png"
-        plot_slope_timeseries(df, str(ts_path), show=False, status_callback=update_status)
+        plot_slope_timeseries(df, metadata, str(ts_path), show=False, status_callback=update_status)
         console.print(f"  [OK] Created: {ts_path}")
         
         if plot_all:
@@ -14895,6 +15029,11 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
             load_diag_path = output_path / f"{logfile_stem}_load_estimation.png"
             plot_load_estimation_diagnostic(df, str(load_diag_path), show=False, status_callback=update_status)
             console.print(f"  [OK] Created: {load_diag_path}")
+
+            # Grip Estimation Diagnostic
+            grip_diag_path = output_path / f"{logfile_stem}_grip_estimation.png"
+            plot_grip_estimation_diagnostic(df, metadata, str(grip_diag_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {grip_diag_path}")
 
 @click.group()
 @click.version_option(version='1.2.0')
@@ -15551,11 +15690,15 @@ def _parse_header(path: Path) -> SessionMetadata:
         long_load_effect=float(header_data.get('long_load_effect', 0.0)),
         sop_scale=float(header_data.get('sop_scale', 1.0)),
         sop_smoothing=float(header_data.get('sop_smoothing', 0.0)),
+        optimal_slip_angle=float(header_data.get('optimal_slip_angle', 0.10)),
+        optimal_slip_ratio=float(header_data.get('optimal_slip_ratio', 0.12)),
         slope_enabled=header_data.get('slope_detection', '').lower() == 'enabled',
         slope_sensitivity=float(header_data.get('slope_sensitivity', 0.5)),
         slope_threshold=float(header_data.get('slope_threshold', -0.3)),
         slope_alpha_threshold=_safe_float(header_data.get('slope_alpha_threshold')),
         slope_decay_rate=_safe_float(header_data.get('slope_decay_rate')),
+        dynamic_normalization=header_data.get('dynamic_normalization', '').lower() == 'enabled',
+        auto_load_normalization=header_data.get('auto_load_normalization', '').lower() == 'enabled',
     )
 
 ```
@@ -15585,11 +15728,15 @@ class SessionMetadata(BaseModel):
     long_load_effect: float = 0.0 # v0.7.162
     sop_scale: float = 1.0       # v0.7.152
     sop_smoothing: float = 0.0   # v0.7.152
+    optimal_slip_angle: float = 0.10 # v0.7.173
+    optimal_slip_ratio: float = 0.12 # v0.7.173
     slope_enabled: bool
     slope_sensitivity: float
     slope_threshold: float
     slope_alpha_threshold: Optional[float] = None
     slope_decay_rate: Optional[float] = None
+    dynamic_normalization: bool = False
+    auto_load_normalization: bool = False
 
 class MarkerEvent(BaseModel):
     """User-triggered marker"""
@@ -15630,82 +15777,95 @@ def _downsample_df(df: pd.DataFrame, max_points: int = MAX_PLOT_POINTS) -> pd.Da
     return df.iloc[::step].copy()
 
 def plot_slope_timeseries(
-    df: pd.DataFrame, 
+    df: pd.DataFrame,
+    metadata: SessionMetadata,
     output_path: Optional[str] = None,
     show: bool = True,
     status_callback = None
 ) -> str:
     """
-    Generate 4-panel time-series plot for slope detection analysis.
+    Generate comprehensive time-series plot for slope detection analysis.
     """
     if status_callback: status_callback("Initializing plot...")
-    fig, axes = plt.subplots(4, 1, figsize=(14, 12), sharex=True)
-    fig.suptitle('Slope Detection Analysis - Time Series', fontsize=14, fontweight='bold')
-    
-    # Downsample for performance
-    if status_callback: status_callback("Downsampling data...")
+    fig, axes = plt.subplots(4, 1, figsize=(14, 14), sharex=True)
+    fig.suptitle('Slope Detection Analysis (Dynamic Grip Estimation)', fontsize=14, fontweight='bold')
+
     plot_df = _downsample_df(df)
     time = plot_df['Time'] if 'Time' in plot_df.columns else np.arange(len(plot_df)) * 0.01
-    
+
+    # Watermark if disabled
+    if not metadata.slope_enabled:
+        for ax in axes:
+            ax.text(0.5, 0.5, 'SLOPE DETECTION DISABLED IN THIS SESSION',
+                    transform=ax.transAxes, fontsize=24, color='red',
+                    alpha=0.2, ha='center', va='center', fontweight='bold')
+
     # Panel 1: Inputs (Lat G and Slip Angle)
-    if status_callback: status_callback("Rendering Panel 1 (Inputs)...")
     ax1 = axes[0]
     ax1.plot(time, plot_df['LatAccel'] / 9.81, label='Lateral G', color='#2196F3', alpha=0.8)
     ax1.set_ylabel('Lateral G', color='#2196F3')
     ax1.tick_params(axis='y', labelcolor='#2196F3')
     _safe_legend(ax1, loc='upper left')
     ax1.grid(True, alpha=0.3)
-    
+
     ax1_twin = ax1.twinx()
-    if 'calc_slip_angle_front' in plot_df.columns:
-        ax1_twin.plot(time, plot_df['calc_slip_angle_front'], label='Slip Angle', 
-                      color='#FF9800', alpha=0.8)
+    if 'CalcSlipAngleFront' in plot_df.columns:
+        ax1_twin.plot(time, plot_df['CalcSlipAngleFront'], label='Slip Angle', color='#FF9800', alpha=0.8)
     ax1_twin.set_ylabel('Slip Angle (rad)', color='#FF9800')
     ax1_twin.tick_params(axis='y', labelcolor='#FF9800')
     _safe_legend(ax1_twin, loc='upper right')
-    ax1.set_title('Inputs: Lateral G and Slip Angle')
-    
-    # Panel 2: Derivatives
-    if status_callback: status_callback("Rendering Panel 2 (Derivatives)...")
+    ax1.set_title('Physical Inputs: Lateral G and Slip Angle')
+
+    # Panel 2: The Two Slopes (G-Based vs Torque-Based)
     ax2 = axes[1]
-    if 'dG_dt' in plot_df.columns:
-        ax2.plot(time, plot_df['dG_dt'], label='dG/dt', color='#2196F3', alpha=0.8)
-    if 'dAlpha_dt' in plot_df.columns:
-        ax2.plot(time, plot_df['dAlpha_dt'], label='dAlpha/dt', color='#FF9800', alpha=0.8)
-        ax2.axhline(0.02, color='#F44336', linestyle='--', alpha=0.5, label='Threshold (0.02)')
-        ax2.axhline(-0.02, color='#F44336', linestyle='--', alpha=0.5)
-    ax2.set_ylabel('Derivative')
+    if 'SlopeCurrent' in plot_df.columns:
+        ax2.plot(time, plot_df['SlopeCurrent'], label='G-Based Slope (Lateral Saturation)', color='#9C27B0', linewidth=1.2)
+    if 'SlopeTorque' in plot_df.columns:
+        ax2.plot(time, plot_df['SlopeTorque'], label='Torque-Based Slope (Pneumatic Trail)', color='#00BCD4', linewidth=1.2, alpha=0.8)
+
+    ax2.axhline(metadata.slope_threshold, color='#F44336', linestyle='--', alpha=0.5, label=f'Neg Threshold ({metadata.slope_threshold})')
+    ax2.axhline(0, color='black', linestyle='-', alpha=0.3)
+    ax2.set_ylabel('Slope Value')
+    ax2.set_ylim(-15, 15)  # Clamp for visibility
     _safe_legend(ax2, loc='upper right')
     ax2.grid(True, alpha=0.3)
-    ax2.set_title('Derivatives: dG/dt and dAlpha/dt')
-    
-    # Panel 3: Slope
-    if status_callback: status_callback("Rendering Panel 3 (Slope)...")
+    ax2.set_title('Calculated Slopes (Torque should drop BEFORE G-Slope)')
+
+    # Panel 3: Confidence Gate
     ax3 = axes[2]
-    if 'SlopeCurrent' in plot_df.columns:
-        ax3.plot(time, plot_df['SlopeCurrent'], label='Slope (dG/dAlpha)', color='#9C27B0', linewidth=0.8)
-        ax3.axhline(-0.3, color='#F44336', linestyle='--', alpha=0.5, label='Neg Threshold (-0.3)')
-        ax3.axhline(0, color='#4CAF50', linestyle='-', alpha=0.3)
-    ax3.set_ylabel('Slope (G/rad)')
-    ax3.set_ylim(-15, 15)  # Clamp for visibility
-    _safe_legend(ax3, loc='upper right')
+    if 'Confidence' in plot_df.columns:
+        ax3.fill_between(time, 0, plot_df['Confidence'], color='#4CAF50', alpha=0.3, label='Confidence Multiplier')
+        ax3.plot(time, plot_df['Confidence'], color='#4CAF50', linewidth=1.0)
+    if 'dAlpha_dt' in plot_df.columns:
+        ax3_twin = ax3.twinx()
+        ax3_twin.plot(time, plot_df['dAlpha_dt'].abs(), color='#FF9800', alpha=0.5, linewidth=0.8, label='abs(dAlpha/dt)')
+        ax3_twin.axhline(metadata.slope_alpha_threshold or 0.02, color='red', linestyle=':', alpha=0.5, label='Alpha Threshold')
+        ax3_twin.set_ylabel('Slip Rate (rad/s)', color='#FF9800')
+        _safe_legend(ax3_twin, loc='upper right')
+
+    ax3.set_ylabel('Confidence (0-1)')
+    ax3.set_ylim(0, 1.1)
+    _safe_legend(ax3, loc='upper left')
     ax3.grid(True, alpha=0.3)
-    ax3.set_title('Calculated Slope (dG/dAlpha)')
-    
-    # Panel 4: Grip Output
-    if status_callback: status_callback("Rendering Panel 4 (Output)...")
+    ax3.set_title('Algorithm Confidence (Requires active steering/slip changes)')
+
+    # Panel 4: Output vs Ground Truth
     ax4 = axes[3]
+    if 'GripFL' in plot_df.columns and 'GripFR' in plot_df.columns:
+        raw_front_grip = (plot_df['GripFL'] + plot_df['GripFR']) / 2.0
+        ax4.plot(time, raw_front_grip, label='Raw Game Grip (Truth)', color='#2196F3', linewidth=2.0, alpha=0.6)
+
     grip_col = 'GripFactor' if 'GripFactor' in plot_df.columns else 'SlopeSmoothed'
     if grip_col in plot_df.columns:
-        ax4.plot(time, plot_df[grip_col], label='Grip Factor', color='#4CAF50', linewidth=1.0)
-        ax4.axhline(0.2, color='#9E9E9E', linestyle='--', alpha=0.5, label='Floor (0.2)')
-        ax4.axhline(1.0, color='#9E9E9E', linestyle='--', alpha=0.5)
-    ax4.set_ylabel('Grip Factor')
+        ax4.plot(time, plot_df[grip_col], label='Slope Estimated Grip', color='#F44336', linewidth=1.5, linestyle='--')
+        ax4.axhline(0.2, color='#9E9E9E', linestyle='--', alpha=0.5, label='Safety Floor (0.2)')
+
+    ax4.set_ylabel('Grip Fraction')
     ax4.set_xlabel('Time (s)')
     ax4.set_ylim(0, 1.1)
-    _safe_legend(ax4, loc='upper right')
+    _safe_legend(ax4, loc='lower right')
     ax4.grid(True, alpha=0.3)
-    ax4.set_title('Output: Grip Factor')
+    ax4.set_title('Final Output: Estimated Grip vs Actual Game Grip')
     
     # Add markers if present
     if 'Marker' in plot_df.columns:
@@ -15729,6 +15889,7 @@ def plot_slope_timeseries(
         plt.show()
     
     return ""
+
 
 def plot_lateral_diagnostic(
     df: pd.DataFrame,
@@ -15826,6 +15987,7 @@ def plot_lateral_diagnostic(
 
     return ""
 
+
 def plot_yaw_diagnostic(
     df: pd.DataFrame,
     threshold: float = 1.68,
@@ -15903,61 +16065,96 @@ def plot_yaw_diagnostic(
     if show: plt.show()
     return ""
 
+
 def plot_load_estimation_diagnostic(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
     show: bool = True,
     status_callback = None
 ) -> str:
-    """
-    Diagnostic plot for Tire Load Estimation (Approximate Load).
-    Panels: Time Series (Front), Time Series (Rear), Error Distribution, Correlation.
-    """
-    cols = ['RawLoadFL', 'RawLoadFR', 'RawLoadRL', 'RawLoadRR',
-            'ApproxLoadFL', 'ApproxLoadFR', 'ApproxLoadRL', 'ApproxLoadRR']
+    cols =['RawLoadFL', 'RawLoadFR', 'RawLoadRL', 'RawLoadRR',
+            'ApproxLoadFL', 'ApproxLoadFR', 'ApproxLoadRL', 'ApproxLoadRR', 'Speed']
     if not all(c in df.columns for c in cols):
         return ""
 
     if status_callback: status_callback("Initializing Load Estimation diagnostic plot...")
-    fig = plt.figure(figsize=(14, 12))
-    gs = fig.add_gridspec(3, 2)
-    fig.suptitle('Tire Load Estimation Diagnostic (Approximate Load)', fontsize=14, fontweight='bold')
+
+    # Create a large 4x2 grid
+    fig = plt.figure(figsize=(16, 20))
+    gs = fig.add_gridspec(4, 2)
+    fig.suptitle('Tire Load Estimation: Absolute vs Dynamic Ratio', fontsize=16, fontweight='bold')
 
     plot_df = _downsample_df(df)
     time = plot_df['Time']
 
-    # Panel 1: Front Axle Time Series
-    if status_callback: status_callback("Rendering Panel 1 (Front Axle)...")
-    ax1 = fig.add_subplot(gs[0, :])
+    # --- Helper function to plot individual wheels ---
+    def plot_wheel(ax, raw_col, approx_col, title):
+        ax.plot(time, plot_df[raw_col], label='Raw Load', color='#2196F3', alpha=0.8, linewidth=1.5)
+        ax.plot(time, plot_df[approx_col], label='Approx Load', color='#F44336', alpha=0.8, linestyle='--', linewidth=1.5)
+        ax.set_title(title)
+        ax.set_ylabel('Load (N)')
+        ax.grid(True, alpha=0.3)
+        _safe_legend(ax, loc='upper right')
+
+    # Row 1: Front Wheels (Absolute)
+    plot_wheel(fig.add_subplot(gs[0, 0]), 'RawLoadFL', 'ApproxLoadFL', 'Front Left (FL) Absolute Load')
+    plot_wheel(fig.add_subplot(gs[0, 1]), 'RawLoadFR', 'ApproxLoadFR', 'Front Right (FR) Absolute Load')
+
+    # Row 2: Rear Wheels (Absolute)
+    plot_wheel(fig.add_subplot(gs[1, 0]), 'RawLoadRL', 'ApproxLoadRL', 'Rear Left (RL) Absolute Load')
+    plot_wheel(fig.add_subplot(gs[1, 1]), 'RawLoadRR', 'ApproxLoadRR', 'Rear Right (RR) Absolute Load')
+
+    # --- Helper function to plot Dynamic Ratios ---
+    def plot_dynamic_ratio(ax, raw_avg, approx_avg, title):
+        # Mimic C++ static load learning (average load between 2 and 15 m/s)
+        static_mask = (plot_df['Speed'] > 2.0) & (plot_df['Speed'] < 15.0)
+        if static_mask.any():
+            raw_static = raw_avg[static_mask].mean()
+            approx_static = approx_avg[static_mask].mean()
+        else:
+            raw_static = np.percentile(raw_avg, 5)
+            approx_static = np.percentile(approx_avg, 5)
+
+        # Prevent division by zero
+        raw_static = max(raw_static, 1.0)
+        approx_static = max(approx_static, 1.0)
+
+        raw_ratio = raw_avg / raw_static
+        approx_ratio = approx_avg / approx_static
+
+        # Calculate metrics for the text box
+        valid_mask = (raw_avg > 1.0) & (approx_avg > 1.0)
+        if valid_mask.sum() > 100:
+            ratio_error_mean = np.abs(approx_ratio[valid_mask] - raw_ratio[valid_mask]).mean()
+            ratio_corr = np.corrcoef(raw_ratio[valid_mask], approx_ratio[valid_mask])[0, 1]
+            stats_text = f"Dynamic Corr: {ratio_corr:.3f}\nMean Error: {ratio_error_mean:.3f}x"
+        else:
+            stats_text = "Stats: N/A (Insufficient Data)"
+
+        ax.plot(time, raw_ratio, label='Raw Ratio (x)', color='#2196F3', linewidth=1.5)
+        ax.plot(time, approx_ratio, label='Approx Ratio (x)', color='#F44336', linestyle='--', linewidth=1.5)
+        ax.axhline(1.0, color='black', linestyle=':', alpha=0.5, label='Static Weight (1.0x)')
+
+        ax.set_title(title)
+        ax.set_ylabel('Multiplier (x Static)')
+        ax.grid(True, alpha=0.3)
+        _safe_legend(ax, loc='upper right')
+
+        # Add stats text box in the upper left
+        props = dict(boxstyle='round', facecolor='white', alpha=0.8, edgecolor='gray')
+        ax.text(0.02, 0.95, stats_text, transform=ax.transAxes, fontsize=10,
+                verticalalignment='top', bbox=props)
+
+    # Row 3: Dynamic Ratios (The FFB Truth)
     raw_front = (plot_df['RawLoadFL'] + plot_df['RawLoadFR']) / 2.0
     approx_front = (plot_df['ApproxLoadFL'] + plot_df['ApproxLoadFR']) / 2.0
+    plot_dynamic_ratio(fig.add_subplot(gs[2, 0]), raw_front, approx_front, 'Front Axle Dynamic Ratio (What FFB Feels)')
 
-    ax1.plot(time, raw_front, label='Raw Load Front (Avg)', color='#2196F3', alpha=0.6)
-    ax1.plot(time, approx_front, label='Approx Load Front (Avg)', color='#F44336', alpha=0.8, linestyle='--')
-    ax1.set_ylabel('Load (N)')
-    ax1.set_title('Front Axle: Raw vs. Approximate Load')
-    ax1.grid(True, alpha=0.3)
-    ax1.legend(loc='upper right')
-
-    # Panel 2: Rear Axle Time Series
-    if status_callback: status_callback("Rendering Panel 2 (Rear Axle)...")
-    ax2 = fig.add_subplot(gs[1, :], sharex=ax1)
     raw_rear = (plot_df['RawLoadRL'] + plot_df['RawLoadRR']) / 2.0
     approx_rear = (plot_df['ApproxLoadRL'] + plot_df['ApproxLoadRR']) / 2.0
+    plot_dynamic_ratio(fig.add_subplot(gs[2, 1]), raw_rear, approx_rear, 'Rear Axle Dynamic Ratio (What FFB Feels)')
 
-    ax2.plot(time, raw_rear, label='Raw Load Rear (Avg)', color='#4CAF50', alpha=0.6)
-    ax2.plot(time, approx_rear, label='Approx Load Rear (Avg)', color='#FF9800', alpha=0.8, linestyle='--')
-    ax2.set_ylabel('Load (N)')
-    ax2.set_xlabel('Time (s)')
-    ax2.set_title('Rear Axle: Raw vs. Approximate Load')
-    ax2.grid(True, alpha=0.3)
-    ax2.legend(loc='upper right')
-
-    # Panel 3: Correlation Scatter (All wheels)
-    if status_callback: status_callback("Rendering Panel 3 (Correlation)...")
-    ax3 = fig.add_subplot(gs[2, 0])
-
-    # Combine all 4 wheels for global correlation
+    # --- Row 4: Restored Statistical Plots ---
     raw_all = pd.concat([plot_df['RawLoadFL'], plot_df['RawLoadFR'], plot_df['RawLoadRL'], plot_df['RawLoadRR']])
     approx_all = pd.concat([plot_df['ApproxLoadFL'], plot_df['ApproxLoadFR'], plot_df['ApproxLoadRL'], plot_df['ApproxLoadRR']])
 
@@ -15966,45 +16163,36 @@ def plot_load_estimation_diagnostic(
     raw_filt = raw_all[mask]
     approx_filt = approx_all[mask]
 
+    # Panel 7: Correlation Scatter
+    ax_corr = fig.add_subplot(gs[3, 0])
     if len(raw_filt) > 0:
         correlation = np.corrcoef(raw_filt, approx_filt)[0, 1]
-        ax3.scatter(raw_filt, approx_filt, alpha=0.1, s=2, color='#9C27B0')
+        ax_corr.scatter(raw_filt, approx_filt, alpha=0.1, s=2, color='#9C27B0')
 
         # Identity line
         lims = [
-            np.min([ax3.get_xlim()[0], ax3.get_ylim()[0]]),
-            np.max([ax3.get_xlim()[1], ax3.get_ylim()[1]]),
+            np.min([ax_corr.get_xlim()[0], ax_corr.get_ylim()[0]]),
+            np.max([ax_corr.get_xlim()[1], ax_corr.get_ylim()[1]]),
         ]
-        ax3.plot(lims, lims, 'k-', alpha=0.5, zorder=0, label='Identity Line')
-        ax3.set_title(f'Correlation (All Wheels)\nr = {correlation:.3f}')
-    else:
-        ax3.set_title('Correlation (Insufficient Data)')
+        ax_corr.plot(lims, lims, 'k-', alpha=0.5, zorder=0, label='Identity Line')
+        ax_corr.set_title(f'Absolute Correlation (All Wheels)\nr = {correlation:.3f}')
+    ax_corr.set_xlabel('Raw Load (N)')
+    ax_corr.set_ylabel('Approx Load (N)')
+    ax_corr.grid(True, alpha=0.3)
 
-    ax3.set_xlabel('Raw Load (N)')
-    ax3.set_ylabel('Approx Load (N)')
-    ax3.grid(True, alpha=0.3)
-
-    # Panel 4: Error Distribution
-    if status_callback: status_callback("Rendering Panel 4 (Error Distribution)...")
-    ax4 = fig.add_subplot(gs[2, 1])
-
-    error = approx_all - raw_all
-    # Filter error for valid data points
-    error_filt = error[mask]
-
-    if len(error_filt) > 0:
-        ax4.hist(error_filt, bins=50, color='#607D8B', alpha=0.7, edgecolor='white')
+    # Panel 8: Error Distribution
+    ax_err = fig.add_subplot(gs[3, 1])
+    if len(raw_filt) > 0:
+        error_filt = approx_filt - raw_filt
+        ax_err.hist(error_filt, bins=50, color='#607D8B', alpha=0.7, edgecolor='white')
         mean_err = error_filt.mean()
         std_err = error_filt.std()
-        ax4.axvline(mean_err, color='red', linestyle='--', label=f'Mean: {mean_err:.1f}N')
-        ax4.set_title(f'Error Distribution (Approx - Raw)\nStd Dev: {std_err:.1f}N')
-        ax4.legend()
-    else:
-        ax4.set_title('Error Distribution (Insufficient Data)')
-
-    ax4.set_xlabel('Error (N)')
-    ax4.set_ylabel('Frequency')
-    ax4.grid(True, alpha=0.3)
+        ax_err.axvline(mean_err, color='red', linestyle='--', label=f'Mean: {mean_err:.1f}N')
+        ax_err.set_title(f'Absolute Error Distribution (Approx - Raw)\nStd Dev: {std_err:.1f}N')
+        ax_err.legend()
+    ax_err.set_xlabel('Error (N)')
+    ax_err.set_ylabel('Frequency')
+    ax_err.grid(True, alpha=0.3)
 
     plt.tight_layout()
 
@@ -16013,11 +16201,64 @@ def plot_load_estimation_diagnostic(
         plt.savefig(output_path, dpi=150, bbox_inches='tight')
         plt.close(fig)
         return output_path
-
-    if show:
-        plt.show()
-
+    if show: plt.show()
     return ""
+
+
+def plot_grip_estimation_diagnostic(
+    df: pd.DataFrame,
+    metadata: SessionMetadata,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    if 'SimulatedApproxGrip' not in df.columns or 'GripFL' not in df.columns:
+        return ""
+
+    if status_callback: status_callback("Initializing Grip Estimation plot...")
+    fig, axes = plt.subplots(2, 1, figsize=(14, 10), sharex=True)
+    fig.suptitle('Tire Grip Estimation: Raw Telemetry vs Friction Circle Fallback', fontsize=14, fontweight='bold')
+
+    plot_df = _downsample_df(df)
+    time = plot_df['Time'] if 'Time' in plot_df.columns else np.arange(len(plot_df)) * 0.01
+    raw_front_grip = (plot_df['GripFL'] + plot_df['GripFR']) / 2.0
+    approx_grip = plot_df['SimulatedApproxGrip']
+
+    # Panel 1: Time Series Overlay
+    ax1 = axes[0]
+    ax1.plot(time, raw_front_grip, label='Raw Game Grip (Truth)', color='#2196F3', linewidth=2.0, alpha=0.8)
+    ax1.plot(time, approx_grip, label='Approximated Grip (Fallback)', color='#F44336', linestyle='--', linewidth=1.5)
+
+    ax1.set_ylabel('Grip Fraction (0.0 - 1.0)')
+    ax1.set_ylim(0.0, 1.1)
+    ax1.set_title('Front Axle Grip Loss Events')
+    ax1.grid(True, alpha=0.3)
+    _safe_legend(ax1, loc='lower right')
+
+    # Panel 2: Error Delta
+    ax2 = axes[1]
+    error = approx_grip - raw_front_grip
+    ax2.fill_between(time, 0, error, where=(error > 0), color='#F44336', alpha=0.3, label='Over-estimating Grip')
+    ax2.fill_between(time, 0, error, where=(error < 0), color='#2196F3', alpha=0.3, label='Under-estimating Grip')
+    ax2.plot(time, error, color='black', linewidth=0.5)
+
+    ax2.axhline(0, color='black', linestyle='-', alpha=0.5)
+    ax2.set_ylabel('Error Delta')
+    ax2.set_xlabel('Time (s)')
+    ax2.set_ylim(-0.5, 0.5)
+    ax2.set_title('Approximation Error (Closer to 0 is better)')
+    ax2.grid(True, alpha=0.3)
+    _safe_legend(ax2, loc='upper right')
+
+    plt.tight_layout()
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
 
 def plot_system_health(
     df: pd.DataFrame,
@@ -16074,6 +16315,7 @@ def plot_system_health(
         return output_path
     if show: plt.show()
     return ""
+
 
 def plot_threshold_thrashing(
     df: pd.DataFrame,
@@ -16132,6 +16374,7 @@ def plot_threshold_thrashing(
     if show: plt.show()
     return ""
 
+
 def plot_suspension_yaw_correlation(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
@@ -16172,6 +16415,7 @@ def plot_suspension_yaw_correlation(
     if show: plt.show()
     return ""
 
+
 def plot_bottoming_diagnostic(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
@@ -16211,6 +16455,7 @@ def plot_bottoming_diagnostic(
     if show: plt.show()
     return ""
 
+
 def plot_yaw_fft(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
@@ -16247,6 +16492,7 @@ def plot_yaw_fft(
         return output_path
     if show: plt.show()
     return ""
+
 
 def plot_pull_detector(
     df: pd.DataFrame,
@@ -16308,6 +16554,7 @@ def plot_pull_detector(
     if show: plt.show()
     return ""
 
+
 def plot_unopposed_force(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
@@ -16360,6 +16607,7 @@ def plot_unopposed_force(
     if show: plt.show()
     return ""
 
+
 def plot_clipping_components(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
@@ -16403,6 +16651,7 @@ def plot_clipping_components(
         return output_path
     if show: plt.show()
     return ""
+
 
 def plot_slip_vs_latg(
     df: pd.DataFrame,
@@ -16462,6 +16711,7 @@ def plot_slip_vs_latg(
     
     return ""
 
+
 def plot_dalpha_histogram(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
@@ -16508,6 +16758,7 @@ def plot_dalpha_histogram(
         plt.show()
     
     return ""
+
 
 def plot_slope_correlation(
     df: pd.DataFrame,
@@ -16556,6 +16807,7 @@ def plot_slope_correlation(
         plt.show()
     
     return ""
+
 
 def plot_longitudinal_diagnostic(
     df: pd.DataFrame,
@@ -16630,6 +16882,7 @@ def plot_longitudinal_diagnostic(
         return output_path
     if show: plt.show()
     return ""
+
 
 def plot_raw_telemetry_health(
     df: pd.DataFrame,
@@ -16686,79 +16939,6 @@ def plot_raw_telemetry_health(
         return output_path
     if show: plt.show()
     return ""
-def plot_longitudinal_diagnostic(
-    df: pd.DataFrame,
-    metadata: SessionMetadata,
-    output_path: Optional[str] = None,
-    show: bool = True,
-    status_callback = None
-) -> str:
-    """
-    Diagnostic plot for Longitudinal Load Transfer.
-    Panels: Inputs (Pedals/Speed), Load & Multiplier, FFB Output Impact.
-    """
-    cols =['LoadFL', 'LoadFR', 'LongitudinalLoadFactor', 'FFBBase', 'FFBTotal', 'Speed', 'Brake', 'Throttle']
-    if not all(c in df.columns for c in cols):
-        return ""
-
-    if status_callback: status_callback("Initializing Longitudinal diagnostic plot...")
-    fig, axes = plt.subplots(3, 1, figsize=(14, 12), sharex=True)
-    fig.suptitle('Longitudinal Load Transfer Diagnostic', fontsize=14, fontweight='bold')
-
-    plot_df = _downsample_df(df)
-    time = plot_df['Time']
-
-    # Panel 1: Inputs (Pedals & Speed)
-    ax1 = axes[0]
-    ax1.plot(time, plot_df['Brake'], label='Brake', color='#F44336', alpha=0.8)
-    ax1.plot(time, plot_df['Throttle'], label='Throttle', color='#4CAF50', alpha=0.8)
-    ax1.set_ylabel('Pedal Input (0-1)')
-    ax1.grid(True, alpha=0.3)
-    _safe_legend(ax1, loc='upper left')
-
-    ax1_twin = ax1.twinx()
-    ax1_twin.plot(time, plot_df['Speed'] * 3.6, label='Speed (km/h)', color='#2196F3', alpha=0.6, linestyle='--')
-    ax1_twin.set_ylabel('Speed (km/h)', color='#2196F3')
-    _safe_legend(ax1_twin, loc='upper right')
-    ax1.set_title('Driver Inputs & Speed')
-
-    # Panel 2: Front Load & Multiplier
-    ax2 = axes[1]
-    front_load = (plot_df['LoadFL'] + plot_df['LoadFR']) / 2.0
-    ax2.plot(time, front_load, label='Avg Front Load (N)', color='#9C27B0', alpha=0.8)
-    ax2.set_ylabel('Load (N)', color='#9C27B0')
-    ax2.grid(True, alpha=0.3)
-    _safe_legend(ax2, loc='upper left')
-
-    ax2_twin = ax2.twinx()
-    ax2_twin.plot(time, plot_df['LongitudinalLoadFactor'], label='Long. Load Multiplier', color='#FF9800', linewidth=1.5)
-    ax2_twin.axhline(1.0, color='black', linestyle='--', alpha=0.5)
-    ax2_twin.set_ylabel('Multiplier (x)', color='#FF9800')
-    _safe_legend(ax2_twin, loc='upper right')
-    ax2.set_title('Tire Load & Calculated Multiplier')
-
-    # Panel 3: FFB Output Impact
-    ax3 = axes[2]
-    ax3.plot(time, plot_df['FFBBase'], label='Base FFB (Nm)', color='#9E9E9E', alpha=0.6)
-    ax3.plot(time, plot_df['FFBTotal'], label='Total FFB Output (Nm)', color='#2196F3', linewidth=1.0)
-    
-    if 'Clipping' in plot_df.columns:
-        ax3.fill_between(time, -15, 15, where=plot_df['Clipping']==1, color='#F44336', alpha=0.2, label='Clipping')
-
-    ax3.set_ylabel('Force (Nm)')
-    ax3.set_xlabel('Time (s)')
-    ax3.grid(True, alpha=0.3)
-    _safe_legend(ax3, loc='upper right')
-    ax3.set_title('FFB Output & Clipping')
-
-    plt.tight_layout()
-
-    if output_path:
-        plt.savefig(output_path, dpi=150, bbox_inches='tight')
-        plt.close(fig)
-        return output_path
-    if show: plt.show()
-    return ""
 
 ```
 
@@ -16766,6 +16946,7 @@ def plot_longitudinal_diagnostic(
 ```python
 import pandas as pd
 from .models import SessionMetadata
+from .analyzers.grip_analyzer import analyze_grip_estimation
 from .analyzers.slope_analyzer import (
     analyze_slope_stability,
     detect_oscillation_events,
@@ -16775,19 +16956,25 @@ from .analyzers.yaw_analyzer import (
     analyze_yaw_dynamics,
     analyze_clipping
 )
-from .analyzers.lateral_analyzer import analyze_lateral_dynamics, analyze_longitudinal_dynamics
+from .analyzers.lateral_analyzer import (
+    analyze_lateral_dynamics,
+    analyze_longitudinal_dynamics,
+    analyze_load_estimation
+)
 
 def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     """
     Generate a formatted text report for the session.
     """
-    slope_results = analyze_slope_stability(df)
+    slope_results = analyze_slope_stability(df, metadata)
+    grip_est_results = analyze_grip_estimation(df, metadata)
     oscillations = detect_oscillation_events(df)
     singularity_count, worst_slope = detect_singularities(df)
     yaw_results = analyze_yaw_dynamics(df)
     clipping_results = analyze_clipping(df)
     lateral_results = analyze_lateral_dynamics(df, metadata)
     long_results = analyze_longitudinal_dynamics(df, metadata)
+    load_est_results = analyze_load_estimation(df)
     
     report = []
     report.append("=" * 60)
@@ -16819,6 +17006,8 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
     report.append(f"Slope Detection:    {'Enabled' if metadata.slope_enabled else 'Disabled'}")
     report.append(f"Slope Sensitivity:  {metadata.slope_sensitivity:.2f}")
     report.append(f"Slope Threshold:    {metadata.slope_threshold:.2f}")
+    report.append(f"Dynamic Norm (Torque): {'Enabled' if metadata.dynamic_normalization else 'Disabled'}")
+    report.append(f"Auto Load Norm (Vib):  {'Enabled' if metadata.auto_load_normalization else 'Disabled'}")
     report.append("")
     
     report.append("SLOPE ANALYSIS")
@@ -16832,7 +17021,11 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
         
     if slope_results.get('floor_percentage') is not None:
         report.append(f"Floor Hits:       {slope_results['floor_percentage']:.1f}%")
-        
+
+    if slope_results.get('slope_grip_correlation') is not None:
+        report.append(f"Grip Correlation: {slope_results['slope_grip_correlation']:.3f}")
+        report.append(f"False Pos. Rate:  {slope_results['false_positive_rate']:.1f}%")
+
     report.append(f"Oscillations:      {len(oscillations)} events detected")
     report.append(f"Singularities:     {singularity_count} events detected (Worst: {worst_slope:.1f})")
     report.append("")
@@ -16864,6 +17057,43 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
         report.append("-" * 20)
         for warn in long_results['missing_data_warnings']:
             report.append(f"  [!] {warn}")
+        report.append("")
+
+    if grip_est_results:
+        report.append("GRIP ESTIMATION ACCURACY (Friction Circle Fallback)")
+        report.append("-" * 20)
+        status = grip_est_results.get('status')
+        if status == "ENCRYPTED":
+            report.append("Status: Cannot evaluate (Raw telemetry is encrypted/missing).")
+        elif status == "NO_SLIP_EVENTS":
+            report.append("Status: Cannot evaluate (No significant sliding occurred).")
+        else:
+            report.append(f"Correlation (r):       {grip_est_results['correlation']:.3f}")
+            report.append(f"Mean Error (Sliding):  {grip_est_results['mean_error_during_slip']:.3f}")
+            report.append(f"False Positive Rate:   {grip_est_results['false_positive_rate']:.1f}%")
+
+            if grip_est_results['correlation'] > 0.85:
+                report.append("Evaluation:            EXCELLENT (Fallback closely matches game engine)")
+            elif grip_est_results['correlation'] > 0.70:
+                report.append("Evaluation:            GOOD (Fallback is viable)")
+            else:
+                report.append("Evaluation:            POOR (Consider tuning Optimal Slip Angle/Ratio)")
+        report.append("")
+
+    if load_est_results:
+        report.append("LOAD ESTIMATION ACCURACY (Fallback Diagnostics)")
+        report.append("-" * 20)
+        report.append("Note: FFB relies on the 'Dynamic Ratio' (Current / Static), not absolute Newtons.")
+        report.append(f"Absolute Mean Error: {load_est_results.get('load_error_mean', 0):.1f} N")
+        report.append(f"Dynamic Ratio Error: {load_est_results.get('ratio_error_mean', 0):.3f}x")
+        report.append(f"Dynamic Correlation: {load_est_results.get('ratio_correlation', 0):.3f}")
+
+        if load_est_results.get('ratio_correlation', 0) > 0.90:
+            report.append("Status:              EXCELLENT (Approximation perfectly matches real dynamics)")
+        elif load_est_results.get('ratio_correlation', 0) > 0.75:
+            report.append("Status:              GOOD (Approximation is viable for FFB)")
+        else:
+            report.append("Status:              POOR (Approximation dynamics do not match reality)")
         report.append("")
 
     report.append("SIGNAL QUALITY & STABILITY")
@@ -16937,6 +17167,69 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
 # File: tools\lmuffb_log_analyzer\__init__.py
 ```python
 # lmuffb_log_analyzer package
+
+```
+
+# File: tools\lmuffb_log_analyzer\analyzers\grip_analyzer.py
+```python
+import pandas as pd
+import numpy as np
+from typing import Dict, Any
+from ..models import SessionMetadata
+
+def analyze_grip_estimation(df: pd.DataFrame, metadata: SessionMetadata) -> Dict[str, Any]:
+    """
+    Simulates the C++ Friction Circle fallback and compares it to Raw Telemetry Grip.
+    """
+    results = {}
+    cols = ['GripFL', 'GripFR', 'CalcSlipAngleFront', 'SlipRatioFL', 'SlipRatioFR']
+    if not all(c in df.columns for c in cols):
+        return results
+
+    # 1. Calculate Raw Front Axle Grip
+    raw_front_grip = (df['GripFL'] + df['GripFR']) / 2.0
+
+    # Check if raw grip is actually valid (not encrypted/flatlined)
+    if raw_front_grip.std() < 0.001:
+        results['status'] = "ENCRYPTED"
+        return results
+
+    # 2. Simulate C++ Friction Circle Approximation
+    lat_metric = df['CalcSlipAngleFront'].abs() / metadata.optimal_slip_angle
+    avg_ratio = (df['SlipRatioFL'].abs() + df['SlipRatioFR'].abs()) / 2.0
+    long_metric = avg_ratio / metadata.optimal_slip_ratio
+
+    combined_slip = np.sqrt(lat_metric**2 + long_metric**2)
+
+    # C++ Logic: 1.0 / (1.0 + excess * 2.0)
+    approx_grip = np.where(combined_slip > 1.0, 1.0 / (1.0 + (combined_slip - 1.0) * 2.0), 1.0)
+    approx_grip = np.clip(approx_grip, 0.2, 1.0) # C++ safety floor
+
+    df['SimulatedApproxGrip'] = approx_grip
+
+    # 3. Statistical Analysis (Only during slip events)
+    # We only care about accuracy when the car is actually sliding (Grip < 0.98)
+    slip_mask = (raw_front_grip < 0.98) | (approx_grip < 0.98)
+
+    if slip_mask.sum() > 50:
+        error = approx_grip[slip_mask] - raw_front_grip[slip_mask]
+        results['status'] = "VALID"
+        results['mean_error_during_slip'] = float(error.mean())
+        results['std_error_during_slip'] = float(error.std())
+
+        # Pearson correlation
+        if raw_front_grip[slip_mask].std() > 0 and approx_grip[slip_mask].std() > 0:
+            results['correlation'] = float(np.corrcoef(raw_front_grip[slip_mask], approx_grip[slip_mask])[0, 1])
+        else:
+            results['correlation'] = 0.0
+
+        # False Positive Rate: Approx says sliding (<0.9), but Raw says gripping (>0.98)
+        false_positives = (approx_grip < 0.9) & (raw_front_grip > 0.98)
+        results['false_positive_rate'] = float(false_positives.mean() * 100.0)
+    else:
+        results['status'] = "NO_SLIP_EVENTS"
+
+    return results
 
 ```
 
@@ -17025,6 +17318,52 @@ def analyze_lateral_dynamics(df: pd.DataFrame, metadata: SessionMetadata) -> Dic
 
     return results
 
+def analyze_load_estimation(df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Analyze the accuracy of the Approximate Load fallback, focusing on Dynamic Ratios.
+    """
+    results = {}
+    cols =['RawLoadFL', 'RawLoadFR', 'RawLoadRL', 'RawLoadRR',
+            'ApproxLoadFL', 'ApproxLoadFR', 'ApproxLoadRL', 'ApproxLoadRR', 'Speed']
+
+    if not all(c in df.columns for c in cols):
+        return results
+
+    # Combine front wheels for analysis
+    raw_front = (df['RawLoadFL'] + df['RawLoadFR']) / 2.0
+    approx_front = (df['ApproxLoadFL'] + df['ApproxLoadFR']) / 2.0
+
+    mask = (raw_front > 1.0) & (approx_front > 1.0)
+
+    if mask.sum() > 100:
+        # 1. Absolute Error (For reference)
+        error = approx_front[mask] - raw_front[mask]
+        results['load_error_mean'] = float(error.mean())
+
+        # 2. DYNAMIC RATIO ANALYSIS (What FFB actually cares about)
+        # Mimic C++ logic: learn static load between 2 and 15 m/s
+        static_mask = mask & (df['Speed'] > 2.0) & (df['Speed'] < 15.0)
+
+        if static_mask.any():
+            raw_static = raw_front[static_mask].mean()
+            approx_static = approx_front[static_mask].mean()
+        else:
+            # Fallback if no slow driving occurred
+            raw_static = np.percentile(raw_front[mask], 5)
+            approx_static = np.percentile(approx_front[mask], 5)
+
+        if raw_static > 1.0 and approx_static > 1.0:
+            # Calculate the dynamic multipliers (e.g., 1.5x static weight)
+            raw_ratio = raw_front[mask] / raw_static
+            approx_ratio = approx_front[mask] / approx_static
+
+            # How closely does the approximation match the real dynamic shape?
+            ratio_error = np.abs(approx_ratio - raw_ratio)
+            results['ratio_error_mean'] = float(ratio_error.mean())
+            results['ratio_correlation'] = float(np.corrcoef(raw_ratio, approx_ratio)[0, 1])
+
+    return results
+
 def analyze_longitudinal_dynamics(df: pd.DataFrame, metadata: SessionMetadata) -> Dict[str, Any]:
     results = {}
     if 'LongitudinalLoadFactor' in df.columns:
@@ -17068,7 +17407,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Any
 
-def analyze_slope_stability(df: pd.DataFrame, threshold: float = 0.02) -> Dict[str, Any]:
+def analyze_slope_stability(df: pd.DataFrame, metadata=None, threshold: float = 0.02) -> Dict[str, Any]:
     """
     Analyze the stability of slope detection algorithm.
     """
@@ -17162,6 +17501,27 @@ def analyze_slope_stability(df: pd.DataFrame, threshold: float = 0.02) -> Dict[s
         results['issues'].append(
             f"HIGH SIGNAL NOISE ({results['zero_crossing_rate']:.1f} Hz) - Slope signal is jittery"
         )
+
+    # NEW: Correlation with Ground Truth (Raw Grip)
+    if grip_col in df.columns and 'GripFL' in df.columns and 'GripFR' in df.columns:
+        raw_front_grip = (df['GripFL'] + df['GripFR']) / 2.0
+
+        # Only evaluate correlation when the car is actually sliding
+        slip_mask = (raw_front_grip < 0.98) | (df[grip_col] < 0.98)
+        if slip_mask.sum() > 50:
+            results['slope_grip_correlation'] = float(np.corrcoef(raw_front_grip[slip_mask], df.loc[slip_mask, grip_col])[0, 1])
+
+            # False Positive Rate: Slope says sliding (<0.9), but Raw says gripping (>0.98)
+            false_positives = (df[grip_col] < 0.9) & (raw_front_grip > 0.98)
+            results['false_positive_rate'] = float(false_positives.mean() * 100.0)
+        else:
+            results['slope_grip_correlation'] = None
+            results['false_positive_rate'] = None
+
+    if metadata and not metadata.slope_enabled:
+        results['issues'].append("SLOPE DETECTION WAS DISABLED. Metrics reflect Friction Circle fallback, not Slope math.")
+    elif results.get('slope_grip_correlation') is not None and results['slope_grip_correlation'] < 0.6:
+        results['issues'].append(f"POOR GRIP CORRELATION ({results['slope_grip_correlation']:.2f}) - Slope detection is not matching game physics.")
 
     return results
 
