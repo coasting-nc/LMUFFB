@@ -209,7 +209,7 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
     // This allows us to compare our math against unencrypted cars to tune the algorithm.
     // ==================================================================================
     double slope_grip_estimate = 1.0;
-    if (m_slope_detection_enabled && is_front && data && car_speed >= 5.0) {
+    if (is_front && data && car_speed >= 5.0) {
         slope_grip_estimate = calculate_slope_grip(
             data->mLocalAccel.x / 9.81,
             result.slip_angle,
