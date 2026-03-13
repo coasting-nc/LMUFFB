@@ -450,7 +450,6 @@ def plot_load_estimation_diagnostic(
         return output_path
     if show: plt.show()
     return ""
-
 def plot_grip_estimation_diagnostic(
     df: pd.DataFrame,
     metadata: SessionMetadata,
