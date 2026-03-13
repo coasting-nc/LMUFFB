@@ -108,4 +108,24 @@ TEST_CASE(test_vehicle_class_to_string, "Internal") {
     ASSERT_EQ_STR(VehicleClassToString(ParsedVehicleClass::UNKNOWN), "Unknown");
 }
 
+TEST_CASE(test_motion_ratio_centralization, "Internal") {
+    ASSERT_EQ(GetMotionRatioForClass(ParsedVehicleClass::HYPERCAR), 0.50);
+    ASSERT_EQ(GetMotionRatioForClass(ParsedVehicleClass::LMP2_RESTRICTED), 0.50);
+    ASSERT_EQ(GetMotionRatioForClass(ParsedVehicleClass::GT3), 0.65);
+    ASSERT_EQ(GetMotionRatioForClass(ParsedVehicleClass::GTE), 0.65);
+    ASSERT_EQ(GetMotionRatioForClass(ParsedVehicleClass::UNKNOWN), 0.55);
+}
+
+TEST_CASE(test_unsprung_weight_centralization, "Internal") {
+    // Front
+    ASSERT_EQ(GetUnsprungWeightForClass(ParsedVehicleClass::HYPERCAR, false), 400.0);
+    ASSERT_EQ(GetUnsprungWeightForClass(ParsedVehicleClass::GT3, false), 500.0);
+    ASSERT_EQ(GetUnsprungWeightForClass(ParsedVehicleClass::UNKNOWN, false), 450.0);
+
+    // Rear
+    ASSERT_EQ(GetUnsprungWeightForClass(ParsedVehicleClass::HYPERCAR, true), 450.0);
+    ASSERT_EQ(GetUnsprungWeightForClass(ParsedVehicleClass::GT3, true), 550.0);
+    ASSERT_EQ(GetUnsprungWeightForClass(ParsedVehicleClass::UNKNOWN, true), 500.0);
+}
+
 } // namespace FFBEngineTests
