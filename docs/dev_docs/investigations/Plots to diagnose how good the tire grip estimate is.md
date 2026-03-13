@@ -1,4 +1,3 @@
-
 ## Plots to diagnose how good the tire grip estimate is
 
 ### 1. Are the current Grip diagnostics enough?
