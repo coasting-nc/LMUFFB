@@ -5,7 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [0.7.171] - 2026-03-13
+## [0.7.172]
+
 - **Improved Tire Load Approximation (Issue #345)**:
   - **Class-Aware Physics**: Implemented class-specific motion ratios and axle-specific unsprung mass estimates in `approximate_load` and `approximate_rear_load`. This correctly accounts for prototype suspension geometry (e.g. 0.50 motion ratio) vs GT cars (0.65).
   - **Enhanced Car Identification**: Updated `ParseVehicleClass` in `src/VehicleUtils.cpp` to include "CADILLAC" in the HYPERCAR keyword list, ensuring prototypes receive correct physics parameters.
@@ -22,6 +23,17 @@ All notable changes to this project will be documented in this file.
   - Updated existing load-related tests (`test_ffb_slip_grip.cpp`, `test_ffb_internal.cpp`, `test_ffb_coverage_refactor.cpp`, `test_issue_309_load_fallback.cpp`) to align with the new improved physics baseline.
   - Verified all 476 C++ test cases and 22 Python tests pass on Linux.
 
+---
+
+## [0.7.171]
+
+- **Fixed Hypercar Class Detection (Issue #346)**:
+  - **Expanded Class Parsing**: Added "HYPER" to the primary vehicle class identification logic to correctly match the raw "Hyper" class name string provided by the game for some vehicles.
+  - **Improved Fallback Identification**: Added "CADILLAC" to the Hypercar vehicle name keyword list, ensuring the Cadillac Hypercar is correctly categorized even if the class name is missing or ambiguous.
+  - **FFB Accuracy**: Correct class detection ensures the engine seeds the appropriate default load (9500N) for Hypercars, providing immediate FFB scaling consistency.
+- **Testing**:
+  - Added `test_issue_346_repro` to `tests/test_vehicle_utils.cpp` verifying the fix for the reported Cadillac Hypercar case and the short "Hyper" class name.
+ 
 ---
 
 ## [0.7.170] - 2026-03-13
