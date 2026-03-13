@@ -1,4 +1,6 @@
 
+## Plots to diagnose how good the tire grip estimate is
+
 ### 1. Are the current Grip diagnostics enough?
 **No.** Currently, the log analyzer only checks if the raw grip channel (`mGripFract`) is flatlined (encrypted/missing). It does **not** evaluate how accurate our fallback approximation is compared to the real physics.
 
@@ -257,3 +259,7 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
 By simulating the C++ math in Python, you can now take a log file from a car with *unencrypted* telemetry, run the analyzer, and **visually see exactly how good your fallback math is**. 
 
 If the "Approximated Grip" line drops too early compared to the "Raw Game Grip", the report will flag a high "False Positive Rate", telling you immediately that the `Optimal Slip Angle` setting needs to be increased for that car class.
+
+
+## Plots and Diagnostics for Slope Detection
+
