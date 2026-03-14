@@ -11,6 +11,8 @@ void test_issue_303_safety_window_activation() {
 
     FFBEngine engine;
     InitializeEngine(engine);
+    // Explicitly set duration for test, as default is now 0.0 (Issue #350)
+    engine.m_safety.m_safety_window_duration = 2.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0, 0.0);
 
@@ -38,6 +40,8 @@ void test_issue_303_safety_mitigation() {
 
     FFBEngine engine;
     InitializeEngine(engine);
+    // Explicitly set duration for test, as default is now 0.0 (Issue #350)
+    engine.m_safety.m_safety_window_duration = 2.0f;
     engine.m_gain = 1.0f;
     engine.m_wheelbase_max_nm = 10.0f;
     engine.m_target_rim_nm = 10.0f;
@@ -75,6 +79,8 @@ void test_issue_303_spike_detection() {
 
     FFBEngine engine;
     InitializeEngine(engine);
+    // Explicitly set duration for test, as default is now 0.0 (Issue #350)
+    engine.m_safety.m_safety_window_duration = 2.0f;
     FFBEngineTestAccess::ResetSafety(engine);
 
     // Large jump: 0 to 10.0 in 2.5ms = 4000 units/s

@@ -13,8 +13,8 @@ void test_safety_gui_defaults() {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    // Verify initial values match expectations from Issue #314
-    ASSERT_NEAR(engine.m_safety.m_safety_window_duration, 2.0f, 0.001);
+    // Verify initial values match expectations from Issue #314 & #350
+    ASSERT_NEAR(engine.m_safety.m_safety_window_duration, 0.0f, 0.001);
     ASSERT_NEAR(engine.m_safety.m_safety_gain_reduction, 0.3f, 0.001);
     ASSERT_NEAR(engine.m_safety.m_safety_smoothing_tau, 0.2f, 0.001);
     ASSERT_NEAR(engine.m_safety.m_spike_detection_threshold, 500.0f, 0.001);
@@ -113,11 +113,30 @@ void test_safety_validation_clamping() {
     ASSERT_GE(engine.m_safety.m_stutter_threshold, 1.01f);
 }
 
+/**
+ * Test for Issue #350: Verify all built-in presets have safety duration disabled (0.0s)
+ */
+void test_built_in_presets_safety_disabled() {
+    std::cout << "\nTest: Issue #350 Built-in Presets Safety Disabled" << std::endl;
+
+    Config::LoadPresets();
+
+    ASSERT_GT(Config::presets.size(), 0);
+
+    for (const auto& preset : Config::presets) {
+        if (preset.is_builtin) {
+            std::cout << "  Checking preset: " << preset.name << " (is_builtin=" << preset.is_builtin << ")" << std::endl;
+            ASSERT_NEAR(preset.safety_window_duration, 0.0f, 0.001);
+        }
+    }
+}
+
 AutoRegister reg_issue_316_safety_gui("Issue #316 Safety GUI", "Issue316", {"Safety", "GUI", "Config"}, []() {
     test_safety_gui_defaults();
     test_safety_preset_application();
     test_safety_config_persistence();
     test_safety_validation_clamping();
+    test_built_in_presets_safety_disabled();
 });
 
 } // namespace FFBEngineTests

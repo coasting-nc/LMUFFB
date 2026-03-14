@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.188]
+- **FFB Safety: Disabled default Safety Duration (Issue #350)**:
+  - Changed the default `Safety Duration` from 2.0s to 0.0s to prevent unnecessary FFB loss during online session transitions (players joining/leaving).
+  - Updated `FFBSafetyMonitor` to ensure the safety timer is strictly zeroed when the duration is set to zero.
+  - Updated all built-in presets (including "T300 v0.7.164") to have `Safety Duration` disabled by default.
+  - Re-baselined existing safety regression tests to explicitly configure non-zero durations where time-based mitigation is being verified.
+  - Added a new test `test_built_in_presets_safety_disabled` to ensure all future built-in presets remain compliant with the new default.
+
 ## [0.7.187]
 - **Infrastructure: Ccache Build Optimization**:
   - Integrated Ccache into the CMake build system to accelerate local and CI compilation.

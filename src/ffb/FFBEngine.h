@@ -563,7 +563,7 @@ private:
 
     // Default Values
     static constexpr float  DEFAULT_SAFETY_SLEW_FULL_SCALE_TIME_S = 1.0f; // matches Issue #316 expectations
-    static constexpr float  DEFAULT_SAFETY_WINDOW_DURATION = 2.0f;
+    static constexpr float  DEFAULT_SAFETY_WINDOW_DURATION = 0.0f;
     static constexpr float  DEFAULT_SAFETY_GAIN_REDUCTION = 0.3f;
     static constexpr float  DEFAULT_SAFETY_SMOOTHING_TAU = 0.2f;
     static constexpr float  DEFAULT_SPIKE_DETECTION_THRESHOLD = 500.0f;

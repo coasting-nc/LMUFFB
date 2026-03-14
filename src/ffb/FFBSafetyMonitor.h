@@ -16,7 +16,7 @@ public:
     FFBSafetyMonitor() = default;
 
     // FFB Safety Settings
-    float m_safety_window_duration = 2.0f;
+    float m_safety_window_duration = 0.0f;
     float m_safety_gain_reduction = 0.3f;
     float m_safety_smoothing_tau = 0.2f;
     float m_spike_detection_threshold = 500.0f;
