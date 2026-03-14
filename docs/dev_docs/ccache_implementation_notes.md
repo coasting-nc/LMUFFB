@@ -39,6 +39,28 @@ The cache size is currently capped at 100MB-500MB to stay within GitHub's total 
 ### Cache Key Strategy
 Using `${{ github.sha }}` in the key ensures a new cache is saved for every commit (if changes occur), while `${{ runner.os }}-ccache-` as a restore key allows fetching the most recent previous cache.
 
+## Expected Performance Gains
+
+### 1. First Build (The "Warm-up" Phase)
+On the very first build after enabling Ccache (or after a cache clear), you will **not** see any speed improvement. In fact, there might be a negligible overhead as Ccache hashes your files and stores the initial object files.
+- **Scenario**: `ccache -s` will show 100% Misses.
+- **Result**: Standard compilation time.
+
+### 2. Repeated Builds (Full Cache Hits)
+If you run a clean build without changing any source code, Ccache will provide nearly instant results.
+- **Scenario**: Re-running `make` or `cmake --build` after a `clean`.
+- **Result**: Compilation time reduced by 90-95%.
+
+### 3. Incremental Development (Partial Cache Hits)
+This is where Ccache provides the most value for developers. If you change a single `.cpp` file, only that file needs to be recompiled. If you then switch branches or undo a change, Ccache will retrieve the previously compiled version of those files.
+- **Scenario**: Switching between `feature` and `main` branches.
+- **Result**: Near-instant "re-compilation" of files that haven't changed relative to their state on the other branch.
+
+### 4. Continuous Integration (CI)
+The integration with GitHub's `actions/cache` allows Ccache to persist between different Pull Request runs.
+- **Scenario**: A developer pushes a small fix to a large PR.
+- **Result**: The CI runner downloads the existing `.ccache` directory, and only the modified file is recompiled. The rest of the 100+ translation units are retrieved from the cache, dramatically reducing the "Configure and Build" step duration in GitHub Actions.
+
 ## Verification
 - Local verification confirmed `ccache` is picked up by CMake when present in the PATH.
 - Build output shows `Ccache found` status message.
