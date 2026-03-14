@@ -29,6 +29,7 @@ struct Preset {
     // Current defaults match: GT3 DD 15 Nm (Simagic Alpha) - v0.6.35
    float gain = 1.0f;
     float understeer = 1.0f;  // New scale: 0.0-2.0, where 1.0 = proportional
+    float understeer_gamma = 1.0f; // NEW: shapes the grip loss curve
     float sop = 1.666f;
     float lateral_load = 0.0f; // New v0.7.121
     int lat_load_transform = 0; // New v0.7.154 (Issue #282)
@@ -179,6 +180,7 @@ struct Preset {
     // 3. Fluent Setters (The "Python Dictionary" feel)
     Preset& SetGain(float v) { gain = v; return *this; }
     Preset& SetUndersteer(float v) { understeer = v; return *this; }
+    Preset& SetUndersteerGamma(float v) { understeer_gamma = v; return *this; }
     Preset& SetSoP(float v) { sop = v; return *this; }
     Preset& SetSoPScale(float v) { sop_scale = v; return *this; }
     Preset& SetSmoothing(float v) { sop_smoothing = v; return *this; }
@@ -358,6 +360,7 @@ struct Preset {
         engine.m_auto_load_normalization_enabled = auto_load_normalization_enabled;
         engine.m_gain = (std::max)(0.0f, gain);
         engine.m_understeer_effect = (std::max)(0.0f, (std::min)(2.0f, understeer));
+        engine.m_understeer_gamma = (std::max)(0.1f, (std::min)(4.0f, understeer_gamma));
         engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, sop));
         engine.m_lat_load_effect = (std::max)(0.0f, (std::min)(2.0f, lateral_load));
         engine.m_lat_load_transform = static_cast<LoadTransform>(std::clamp(lat_load_transform, 0, 3));
@@ -494,6 +497,7 @@ struct Preset {
     void Validate() {
         gain = (std::max)(0.0f, gain);
         understeer = (std::max)(0.0f, (std::min)(2.0f, understeer));
+        understeer_gamma = (std::max)(0.1f, (std::min)(4.0f, understeer_gamma));
         sop = (std::max)(0.0f, (std::min)(2.0f, sop));
         lateral_load = (std::max)(0.0f, (std::min)(2.0f, lateral_load));
         lat_load_transform = std::clamp(lat_load_transform, 0, 3);
@@ -590,6 +594,7 @@ struct Preset {
         auto_load_normalization_enabled = engine.m_auto_load_normalization_enabled;
         gain = engine.m_gain;
         understeer = engine.m_understeer_effect;
+        understeer_gamma = engine.m_understeer_gamma;
         sop = engine.m_sop_effect;
         lateral_load = engine.m_lat_load_effect;
         lat_load_transform = static_cast<int>(engine.m_lat_load_transform);
@@ -722,6 +727,7 @@ struct Preset {
 
         if (!is_near(gain, p.gain, eps)) return false;
         if (!is_near(understeer, p.understeer, eps)) return false;
+        if (!is_near(understeer_gamma, p.understeer_gamma, eps)) return false;
         if (!is_near(sop, p.sop, eps)) return false;
         if (!is_near(lateral_load, p.lateral_load, eps)) return false;
         if (lat_load_transform != p.lat_load_transform) return false;

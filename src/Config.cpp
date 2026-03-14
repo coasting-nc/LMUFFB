@@ -91,6 +91,7 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
         current_preset.understeer = (std::min)(2.0f, (std::max)(0.0f, val));
         return true;
     }
+    if (key == "understeer_gamma") { current_preset.understeer_gamma = std::stof(value); return true; }
     if (key == "steering_shaft_gain") { current_preset.steering_shaft_gain = std::stof(value); return true; }
     if (key == "ingame_ffb_gain") { current_preset.ingame_ffb_gain = std::stof(value); return true; }
     if (key == "steering_shaft_smoothing") { current_preset.steering_shaft_smoothing = std::stof(value); return true; }
@@ -248,6 +249,7 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
         engine.m_understeer_effect = (std::min)(2.0f, (std::max)(0.0f, val));
         return true;
     }
+    if (key == "understeer_gamma") { engine.m_understeer_gamma = std::stof(value); return true; }
     if (key == "steering_shaft_gain") { engine.m_steering_shaft_gain = std::stof(value); return true; }
     if (key == "ingame_ffb_gain") { engine.m_ingame_ffb_gain = std::stof(value); return true; }
     if (key == "steering_shaft_smoothing") { engine.m_steering_shaft_smoothing = std::stof(value); return true; }
@@ -1210,6 +1212,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "ingame_ffb_gain=" << p.ingame_ffb_gain << "\n";
     file << "steering_shaft_smoothing=" << p.steering_shaft_smoothing << "\n";
     file << "understeer=" << p.understeer << "\n";
+    file << "understeer_gamma=" << p.understeer_gamma << "\n";
     file << "torque_source=" << p.torque_source << "\n";
     file << "torque_passthrough=" << p.torque_passthrough << "\n";
     file << "flatspot_suppression=" << p.flatspot_suppression << "\n";
@@ -1554,6 +1557,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "ingame_ffb_gain=" << engine.m_ingame_ffb_gain << "\n";
         file << "steering_shaft_smoothing=" << engine.m_steering_shaft_smoothing << "\n";
         file << "understeer=" << engine.m_understeer_effect << "\n";
+        file << "understeer_gamma=" << engine.m_understeer_gamma << "\n";
         file << "torque_source=" << engine.m_torque_source << "\n";
         file << "torque_passthrough=" << engine.m_torque_passthrough << "\n";
         file << "flatspot_suppression=" << engine.m_flatspot_suppression << "\n";

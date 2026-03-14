@@ -188,6 +188,7 @@ public:
     float m_vibration_gain = 1.0f; // Issue #206: Global vibration scaling
     float m_gain;
     float m_understeer_effect;
+    float m_understeer_gamma = 1.0f; // NEW: Gamma curve for understeer
     float m_sop_effect;
     float m_lat_load_effect = 0.0f; // New v0.7.121 (Issue #213 add, not replace)
     LoadTransform m_lat_load_transform = LoadTransform::LINEAR; // New v0.7.154 (Issue #282)

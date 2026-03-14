@@ -538,6 +538,9 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 2.0f, FormatPct(engine.m_understeer_effect),
             Tooltips::UNDERSTEER_EFFECT);
 
+        FloatSetting("Response Curve (Gamma)", &engine.m_understeer_gamma, 0.1f, 4.0f, "%.1f",
+            Tooltips::UNDERSTEER_GAMMA);
+
         const char* torque_sources[] = { "Shaft Torque (100Hz Legacy)", "In-Game FFB (400Hz LMU 1.2+)" };
         IntSetting("Torque Source", &engine.m_torque_source, torque_sources, sizeof(torque_sources)/sizeof(torque_sources[0]),
             Tooltips::TORQUE_SOURCE);

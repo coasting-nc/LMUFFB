@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.179]
+
+- **Implemented Understeer Gamma**:
+  - Added a "Response Curve (Gamma)" setting to shape the grip loss curve for the understeer effect.
+  - Allows non-linear mapping of the grip loss: `< 1.0` drops force early (more sensitive), `1.0` is a linear drop, and `> 1.0` allows the force to drop later (more buffer zone).
+  - Smooths the transition at the edge of traction according to user preference.
+
+---
+
 ## [0.7.178]
 
 - Fixes to Tire Grip estimate

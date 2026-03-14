@@ -634,8 +634,13 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Base Steering Force (Issue #178)
     double base_input = game_force_proc;
     
-    // Apply Grip Modulation
-    double grip_loss = (1.0 - ctx.avg_front_grip) * m_understeer_effect;
+    // --- REWRITTEN: Gamma-Shaped Grip Modulation ---
+    double raw_loss = std::clamp(1.0 - ctx.avg_front_grip, 0.0, 1.0);
+    
+    // Apply Gamma curve (pow)
+    double shaped_loss = std::pow(raw_loss, (double)m_understeer_gamma); 
+    
+    double grip_loss = shaped_loss * m_understeer_effect;
     ctx.grip_factor = (std::max)(0.0, 1.0 - grip_loss);
 
     // v0.7.63: Passthrough Logic for Direct Torque (TIC mode)
