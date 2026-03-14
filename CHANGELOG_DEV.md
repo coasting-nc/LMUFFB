@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.187]
+- **Infrastructure: Ccache Build Optimization**:
+  - Integrated Ccache into the CMake build system to accelerate local and CI compilation.
+  - Updated GitHub Actions workflows (`windows-release`, `linux-coverage`, `linux-sanitizers`) to install and utilize Ccache with persistent storage via `actions/cache@v4`.
+  - Configured project-specific Ccache environment variables (`CCACHE_DIR`, `CCACHE_MAXSIZE`) for optimal CI performance.
+  - Added `docs/dev_docs/ccache_implementation_notes.md` documenting implementation details and MSVC/Linux compatibility.
+
 ## [0.7.186]
 - **Test Infrastructure: Windows Performance Optimization**:
   - Optimized `test_main_app_logic` to handle Windows scheduler penalties by replacing high-frequency sleeps with `std::this_thread::yield()`.

@@ -2,6 +2,19 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 14, 2026[/b][/size]
+[b]Version 0.7.187 - Ccache Build Optimization[/b]
+
+[b]New release[/b] (0.7.187): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Implemented Ccache Support[/b]: Integrated Ccache into the build system and GitHub Actions CI pipelines. This significantly reduces recompilation times for incremental builds and small PRs by caching and reusing object files.
+[*][b]Persistent CI Cache[/b]: Configured GitHub Actions to persist Ccache data across workflow runs for both Windows and Linux environments, leading to faster feedback loops in the development process.
+[*][b]Automated Detection[/b]: The CMake build system now automatically detects and utilizes Ccache if present on the system, benefiting both local development and automated build environments.
+[/list]
+
+---
+
 [size=5][b]March 13, 2026[/b][/size]
 [b]Version 0.7.169 - Standardized Tire Load Fallbacks[/b]
 
