@@ -1,77 +1,59 @@
-# Proposal: Refactoring `FFBEngine.h`
+# Refactoring Proposal: Moving Non-Physics Functions out of `FFBEngine.cpp`
 
-## Overview
-The current `FFBEngine.h` file is approximately 2,100 lines long and handles a wide range of responsibilities, including telemetry processing, physics modeling, signal conditioning, mathematical utilities, and vehicle-specific logic. 
+## 1. Introduction
 
-To improve maintainability, testability, and build times, I propose splitting this functionality into several logical modules and moving implementation details out of the header file.
+`src/ffb/FFBEngine.cpp` is currently quite long and handles multiple responsibilities. While its core purpose should be the real-time calculation of Force Feedback (FFB) based on telemetry and physics, it has accumulated responsibilities related to metadata management, safety enforcement, and diagnostic data buffering. 
 
-## Current Responsibilities
-1.  **Data Structures**: `FFBSnapshot`, `FFBCalculationContext`, `ChannelStats`.
-2.  **Mathematical Utilities**: Signal filters (Notch), smoothing functions, derivative calculations (Savitzky-Golay).
-3.  **Vehicle Intelligence**: Class parsing, lookup tables for static loads.
-4.  **Physics Modeling**: Slip angle calculations, grip estimation, kinematic load estimation.
-5.  **Effect Synthesis**: Logic for SoP (Sense of Poster), ABS, lockup vibrations, road texture, etc.
-6.  **Core Orchestration**: The `calculate_force` method that ties everything together.
+This document critically evaluates the choice of moving specific functions out of this file and proposes an architectural path forward.
 
----
+## 2. Critical Discussion on Moving the Functions
 
-## Proposed Refactoring Steps
+Moving the following functions out of `FFBEngine.cpp` is highly recommended as it strictly aligns with the **Single Responsibility Principle (SRP)**. By isolating these concerns, `FFBEngine.cpp` can be dedicated solely to high-frequency physics and signal processing.
 
-### 1. Extract Core Types (`FFBTypes.h`)
-Move data-only structures and enums to a dedicated header. This allows other components to reference these types without pulling in the entire engine.
-- `FFBSnapshot`
-- `FFBCalculationContext`
-- `ChannelStats`
-- `GripResult`
-- `ParsedVehicleClass` (Enum)
+### A. Metadata Management
+**Functions:** `UpdateMetadata`, `UpdateMetadataInternal`
+*   **Discussion:** These functions manage the state of the FFB Engine regarding the current vehicle class, vehicle name, and track name. They handle low-frequency state changes (e.g., car swaps) and trigger static load reference initializations. They do not directly compute forces. Keeping them in the main calculation file adds unnecessary state management clutter.
 
-### 2. Signal Processing Library (`SignalUtils.h / .cpp`)
-Move general-purpose signal processing and math functions to a utility module.
-- `class BiquadNotch`
-- `apply_adaptive_smoothing()`
-- `apply_slew_limiter()`
-- `calculate_sg_derivative()`
-- `inverse_lerp()`
-- `smoothstep()`
+### B. Safety and Protection Layer
+**Functions:** `TriggerSafetyWindow`, `IsFFBAllowed`, `ApplySafetySlew`
+*   **Discussion:** These functions constitute a "Safety Layer". They monitor the game phase, telemetry quality, and output force slew rates to prevent hardware damage or user injury (e.g., muting the FFB in the garage, detecting massive torque spikes, limiting slew rates). This is a distinct domain of concern. The physics engine should compute the *ideal* force, and the safety layer should *filter/clamp* it. Mixing the two makes the physics formulas harder to read and test.
 
-### 3. Physics & Telemetry Model (`FFBPhysics.h / .cpp`)
-Encapsulate the "Internal Model" of the car's physics. This module would be responsible for translating raw telemetry into high-level physics states (grip, slip, load).
-- `calculate_slip_angle()`
-- `calculate_grip()`
-- `calculate_kinematic_load()`
-- `calculate_wheel_slip_ratio()`
-- `approximate_load()`
-
-### 4. Vehicle & Content Library (`VehicleLibrary.h / .cpp`)
-Separate the logic that deals with specific game content and vehicle categorization.
-- `ParseVehicleClass()`
-- `GetDefaultLoadForClass()`
-- `VehicleClassToString()`
-- Load reference initialization logic.
-
-### 5. Effect Modules (`FFBEffects.h / .cpp`)
-Break down the individual effect calculations. These could either be static functions in a namespace or separate strategy classes.
-- `calculate_sop_lateral()`
-- `calculate_abs_pulse()`
-- `calculate_lockup_vibration()`
-- `calculate_wheel_spin()`
-- `calculate_suspension_bottoming()`
-- etc.
-
-### 6. Split Header/Implementation (`FFBEngine.h` & `FFBEngine.cpp`)
-Finally, convert `FFBEngine.h` into a standard C++ class declaration and move the remaining orchestration logic to `FFBEngine.cpp`.
+### C. Diagnostics and Debugging
+**Functions:** `GetDebugBatch`
+*   **Discussion:** This function is entirely dedicated to the presentation and diagnostic layer (e.g., passing FFB snapshots to the GUI). Data consumption logic should not reside alongside the producer's complex math logic.
 
 ---
 
-## Benefits
-- **Reduced Build Times**: Changes to a specific effect or physics calculation will only require recompiling one small `.cpp` file instead of everything that includes `FFBEngine.h`.
-- **Improved Testability**: We can write unit tests for `FFBPhysics` or `SignalUtils` in isolation without needing a full `FFBEngine` instance.
-- **Readability**: Navigating a 200-line header is significantly easier than a 2000-line one.
-- **Separation of Concerns**: Clearly distinguishes between *how* we get physics data and *what* we do with it to generate forces.
+## 3. Proposal for Refactoring
 
-## Next Steps
-1.  **Phase A**: Extract `FFBTypes.h` and `SignalUtils.h`.
-2.  **Phase B**: Create `FFBPhysics.h/cpp` and move physics helpers.
-3.  **Phase C**: Create `VehicleLibrary.h/cpp`.
-4.  **Phase D**: Move implementation of `FFBEngine` methods to a new `FFBEngine.cpp`.
-5.  **Phase E**: Decompose `calculate_force` by moving effect logic to `FFBEffects.h/cpp`.
+There are two primary approaches for this refactoring: **Class Extraction** (preferred for architecture) and **Implementation Splitting** (easier for minimal invasiveness).
+
+### Option A: Class Extraction (Highly Recommended)
+Instead of just moving functions to different files, extract these responsibilities into dedicated classes. `FFBEngine` will then hold instances of these classes and delegate work to them.
+
+1.  **`FFBMetadataManager` (or `FFBState`)**
+    *   **File:** `src/ffb/FFBMetadataManager.cpp` / `.h`
+    *   **Role:** Store the current vehicle class, name, and track. Expose methods like `Update(SharedMemoryObjectOut)` and `HasVehicleChanged()`.
+
+2.  **`FFBSafetyMonitor`**
+    *   **File:** `src/ffb/FFBSafetyMonitor.cpp` / `.h`
+    *   **Role:** Encapsulate `m_safety` state.
+    *   **Methods:** `IsAllowed(...)`, `ApplySlew(...)`, `TriggerWindow(...)`.
+    *   **Integration:** `FFBEngine` calls `safetyMonitor.ApplySlew(target_force, dt)` right before outputting the final force.
+
+3.  **`FFBDebugBuffer` (or `FFBSnapshotQueue`)**
+    *   **File:** `src/ffb/FFBDebugBuffer.cpp` / `.h`
+    *   **Role:** Thread-safe circular buffer for snapshots.
+    *   **Methods:** `Push(const FFBSnapshot&)`, `GetBatch()`.
+
+### Option B: Implementation Splitting (Partial Refactor)
+If you wish to keep the functions as members of the `FFBEngine` class (to avoid header rewrites and dependency injection changes), you can simply implement them in separate `.cpp` files.
+*   Move `UpdateMetadata` and `UpdateMetadataInternal` to `src/ffb/FFBEngine_Metadata.cpp`.
+*   Move `TriggerSafetyWindow`, `IsFFBAllowed`, and `ApplySafetySlew` to `src/ffb/FFBEngine_Safety.cpp`.
+*   Move `GetDebugBatch` to `src/ffb/FFBEngine_Diagnostics.cpp`.
+
+*Note: Option B reduces the line count of `FFBEngine.cpp`, but Option A provides a much cleaner, modular, and testable architecture.*
+
+## 4. Conclusion
+
+Moving these functions is a very positive step toward a cleaner codebase. By stripping out the metadata, safety checks, and debug buffer management, `FFBEngine.cpp` will become a highly focused file dedicated strictly to what matters most: FFB effect calculations and signal conditioning. I strongly recommend proceeding with **Option A (Class Extraction)** for long-term maintainability.
