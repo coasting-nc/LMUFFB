@@ -18,7 +18,7 @@ void test_immediate_spike_detection() {
     FFBEngineTestAccess::SetLastOutputForce(engine, 0.0);
 
     // First call should trigger safety immediately
-    engine.ApplySafetySlew(5.0, 0.0025, false);
+    engine.m_safety.ApplySafetySlew(5.0, 0.0025, false);
 
     // Should have triggered safety window immediately
     ASSERT_GT(engine.m_safety.safety_timer, 0.0);
@@ -32,14 +32,14 @@ void test_safety_timer_reset() {
     FFBEngineTestAccess::ResetSafety(engine);
 
     // Initial trigger
-    engine.TriggerSafetyWindow("Reason 1");
+    engine.m_safety.TriggerSafetyWindow("Reason 1");
     ASSERT_GT(engine.m_safety.safety_timer, 1.9);
 
     // Simulate time passing (1s)
     engine.m_safety.safety_timer = 1.0;
 
     // Trigger again
-    engine.TriggerSafetyWindow("Reason 2");
+    engine.m_safety.TriggerSafetyWindow("Reason 2");
 
     // Should be reset to full duration
     ASSERT_GT(engine.m_safety.safety_timer, 1.9);
@@ -53,7 +53,7 @@ void test_safety_exit_state() {
     FFBEngineTestAccess::ResetSafety(engine);
 
     // Trigger safety
-    engine.TriggerSafetyWindow("Test Exit");
+    engine.m_safety.TriggerSafetyWindow("Test Exit");
     ASSERT_GT(engine.m_safety.safety_timer, 0.0);
 
     // Simulate time passing beyond duration (2s)
@@ -83,7 +83,7 @@ void test_safety_restrictiveness() {
     data.mSteeringShaftTorque = 5.0; // 5Nm -> 0.5 normalized force
 
     // Trigger safety window
-    engine.TriggerSafetyWindow("Test Restrictiveness");
+    engine.m_safety.TriggerSafetyWindow("Test Restrictiveness");
 
     // Safety output (reduced gain 0.3x)
     double safety_force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, static_cast<signed char>(ControlMode::PLAYER));
@@ -96,7 +96,7 @@ void test_safety_restrictiveness() {
     // Test Slew Rate Limitation during safety (capped at 1.0)
     FFBEngineTestAccess::SetLastOutputForce(engine, 0.0);
     // Request a large jump (from 0 to 1.0)
-    double slewed = engine.ApplySafetySlew(1.0, 0.0025, false);
+    double slewed = engine.m_safety.ApplySafetySlew(1.0, 0.0025, false);
     // Max slew in safety window is 1.0 unit/s. In 2.5ms, max change is 1.0 * 0.0025 = 0.0025
     ASSERT_NEAR(slewed, 0.0025, 0.001);
 }
@@ -110,24 +110,24 @@ void test_safety_log_throttling() {
 
     // Initial trigger at t=0
     engine.m_working_info.mElapsedTime = 100.0;
-    engine.TriggerSafetyWindow("Test Reason");
+    engine.m_safety.TriggerSafetyWindow("Test Reason");
     ASSERT_EQ(engine.m_safety.last_reset_log_time, 100.0); // Updated on first entry now
     ASSERT_EQ(std::string(engine.m_safety.last_reset_reason), std::string("Test Reason"));
 
     // Reset with SAME reason at t=100.1
     engine.m_working_info.mElapsedTime = 100.1;
-    engine.TriggerSafetyWindow("Test Reason");
+    engine.m_safety.TriggerSafetyWindow("Test Reason");
     ASSERT_EQ(engine.m_safety.last_reset_log_time, 100.0); // Should NOT have logged (throttled)
 
     // Reset with DIFFERENT reason at t=0.2
     engine.m_working_info.mElapsedTime = 100.2;
-    engine.TriggerSafetyWindow("New Reason");
+    engine.m_safety.TriggerSafetyWindow("New Reason");
     ASSERT_EQ(engine.m_safety.last_reset_log_time, 100.2); // Should HAVE logged (reason changed)
     ASSERT_EQ(std::string(engine.m_safety.last_reset_reason), std::string("New Reason"));
 
     // Reset with SAME reason at t=1.3 (>1s later)
     engine.m_working_info.mElapsedTime = 101.3;
-    engine.TriggerSafetyWindow("New Reason");
+    engine.m_safety.TriggerSafetyWindow("New Reason");
     ASSERT_EQ(engine.m_safety.last_reset_log_time, 101.3); // Should HAVE logged (time passed)
 }
 
@@ -146,7 +146,7 @@ void test_safety_reentry_smoothing() {
 
     // 1. First safety event at high force
     data.mSteeringShaftTorque = 10.0; // 1.0 normalized
-    engine.TriggerSafetyWindow("High Force Event");
+    engine.m_safety.TriggerSafetyWindow("High Force Event");
     double force1 = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, 0);
     ASSERT_NEAR(std::abs(force1), 0.3, 0.01); // 1.0 * 0.3 gain
 
@@ -167,7 +167,7 @@ void test_safety_reentry_smoothing() {
     double force_before = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, 0);
     ASSERT_NEAR(force_before, 0.0, 0.001);
 
-    engine.TriggerSafetyWindow("Low Force Event");
+    engine.m_safety.TriggerSafetyWindow("Low Force Event");
     // safety_is_seeded is now false.
 
     double force2 = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, 0);

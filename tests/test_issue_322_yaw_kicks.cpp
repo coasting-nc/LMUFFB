@@ -265,7 +265,7 @@ TEST_CASE(test_static_rear_load_tracking, "YawKicks") {
     FFBEngine engine;
     InitializeEngine(engine);
     // Set vehicle name so it saves
-    StringUtils::SafeCopy(engine.m_vehicle_name, sizeof(engine.m_vehicle_name), "TestTracker");
+    StringUtils::SafeCopy(engine.m_metadata.m_vehicle_name, sizeof(engine.m_metadata.m_vehicle_name), "TestTracker");
 
     // Learning phase: speed between 2.0 and 15.0
     for(int i=0; i<50; ++i) {

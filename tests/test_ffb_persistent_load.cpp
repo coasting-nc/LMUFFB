@@ -52,7 +52,7 @@ TEST_CASE(Engine_SavesNewStaticLoadUponLatching, "PersistentLoad") {
     FFBEngineTestAccess::CallInitializeLoadReference(engine, "LMP2", "Oreca 07");
     ASSERT_FALSE(FFBEngineTestAccess::GetStaticLoadLatched(engine));
 
-    StringUtils::SafeCopy(engine.m_vehicle_name, sizeof(engine.m_vehicle_name), "Oreca 07");
+    StringUtils::SafeCopy(engine.m_metadata.m_vehicle_name, sizeof(engine.m_metadata.m_vehicle_name), "Oreca 07");
 
     // Simulate reaching latch speed (15.0 m/s) with valid load
     // First, provide some samples to avoid safety fallback to 0.5 * auto_peak

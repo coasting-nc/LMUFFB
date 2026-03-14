@@ -28,7 +28,7 @@ TEST_CASE(test_issue_185_fix_repro, "Internal") {
     TelemInfoV01 data = CreateBasicTestTelemetry(speed, 0.0);
     data.mSteeringShaftTorque = 0.1;
 
-    bool allowed = engine.IsFFBAllowed(scoring, 5);
+    bool allowed = engine.m_safety.IsFFBAllowed(scoring, 5);
     ASSERT_FALSE(allowed);
 
     double force = engine.calculate_force(&data, nullptr, nullptr, 0.0f, allowed);
@@ -59,7 +59,7 @@ TEST_CASE(test_issue_185_fix_soft_lock, "Internal") {
 
     double speed = 0.0;
     TelemInfoV01 data = CreateBasicTestTelemetry(speed, 0.0);
-    bool allowed = engine.IsFFBAllowed(scoring, 5);
+    bool allowed = engine.m_safety.IsFFBAllowed(scoring, 5);
 
     // Trigger Soft Lock: 10% excess -> stiffness 20.0 * 0.1 * 50 = 100 Nm.
     data.mUnfilteredSteering = 1.1;
@@ -105,7 +105,7 @@ TEST_CASE(test_issue_235_garage_noise, "Internal") {
     // This should NOT trigger Soft Lock and should stay 0.0.
     data.mUnfilteredSteering = 0.001;
 
-    bool allowed = engine.IsFFBAllowed(scoring, 5);
+    bool allowed = engine.m_safety.IsFFBAllowed(scoring, 5);
     double force = engine.calculate_force(&data, nullptr, nullptr, 0.0f, allowed);
     std::cout << "  Force with 0.1%% steering noise: " << force << std::endl;
     ASSERT_EQ(force, 0.0);

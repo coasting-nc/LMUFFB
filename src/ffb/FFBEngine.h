@@ -42,82 +42,12 @@ enum class LoadTransform {
 };
 
 // 1. Define the Snapshot Struct (Unified FFB + Telemetry)
-struct FFBSnapshot {
-    // --- Header A: FFB Components (Outputs) ---
-    float total_output;
-    float base_force;
-    float sop_force;
-    float lat_load_force;   // New v0.7.154 (Issue #282)
-    float understeer_drop;
-    float oversteer_boost;
-    float ffb_rear_torque;  // New v0.4.7
-    float ffb_scrub_drag;   // New v0.4.7
-    float ffb_yaw_kick;     // New v0.4.16
-    float ffb_gyro_damping; // New v0.4.17
-    float texture_road;
-    float texture_slide;
-    float texture_lockup;
-    float texture_spin;
-    float texture_bottoming;
-    float ffb_abs_pulse;    // New v0.7.53
-    float long_load_force;  // New #301
-    float ffb_soft_lock;    // New v0.7.61 (Issue #117)
-    float session_peak_torque; // New v0.7.67 (Issue #152)
-    float clipping;
+#include "FFBSnapshot.h"
 
-    // --- Header B: Internal Physics (Calculated) ---
-    float calc_front_load;       // New v0.4.7
-    float calc_rear_load;        // New v0.4.10
-    float calc_rear_lat_force;   // New v0.4.10
-    float calc_front_grip;       // New v0.4.7
-    float calc_rear_grip;        // New v0.4.7 (Refined)
-    float calc_front_slip_ratio; // New v0.4.7 (Manual Calc)
-    float calc_front_slip_angle_smoothed; // Renamed from slip_angle
-    float raw_front_slip_angle;  // New v0.4.7 (Raw atan2)
-    float calc_rear_slip_angle_smoothed; // New v0.4.9
-    float raw_rear_slip_angle;   // New v0.4.9 (Raw atan2)
-
-    // --- Header C: Raw Game Telemetry (Inputs) ---
-    float steer_force;
-    float raw_shaft_torque;      // New v0.7.62 (Issue #138)
-    float raw_gen_torque;        // New v0.7.62 (Issue #138)
-    float raw_input_steering;    // New v0.4.7 (Unfiltered -1 to 1)
-    float raw_front_tire_load;   // New v0.4.7
-    float raw_front_grip_fract;  // New v0.4.7
-    float raw_rear_grip;         // New v0.4.7
-    float raw_front_susp_force;  // New v0.4.7
-    float raw_front_ride_height; // New v0.4.7
-    float raw_rear_lat_force;    // New v0.4.7
-    float raw_car_speed;         // New v0.4.7
-    float raw_front_slip_ratio;  // New v0.4.7 (Game API)
-    float raw_input_throttle;    // New v0.4.7
-    float raw_input_brake;       // New v0.4.7
-    float accel_x;
-    float raw_front_lat_patch_vel; // Renamed from patch_vel
-    float raw_front_deflection;    // Renamed from deflection
-    float raw_front_long_patch_vel; // New v0.4.9
-    float raw_rear_lat_patch_vel;   // New v0.4.9
-    float raw_rear_long_patch_vel;  // New v0.4.9
-    float steering_angle_deg;       // New v0.7.112 (Issue #218)
-    float steering_range_deg;       // New v0.7.112 (Issue #218)
-
-    // Telemetry Health Flags
-    bool warn_load;
-    bool warn_grip;
-    bool warn_dt;
-
-    float debug_freq; // New v0.4.41: Frequency for diagnostics
-    float tire_radius; // New v0.4.41: Tire radius in meters for theoretical freq calculation
-    float slope_current; // New v0.7.1: Slope detection derivative value
-
-    // Rate Monitoring (Issue #129)
-    float ffb_rate;
-    float telemetry_rate;
-    float hw_rate;
-    float torque_rate;
-    float gen_torque_rate;
-    float physics_rate; // New v0.7.117 (Issue #217)
-};
+// Refactored Managers
+#include "FFBSafetyMonitor.h"
+#include "FFBMetadataManager.h"
+#include "FFBDebugBuffer.h"
 
 // BiquadNotch moved to MathUtils.h
 
@@ -196,17 +126,6 @@ public:
     LoadTransform m_long_load_transform = LoadTransform::LINEAR; // New #301
     float m_min_force;
 
-    // FFB Safety Settings (Issue #316)
-    float m_safety_window_duration = DEFAULT_SAFETY_WINDOW_DURATION;
-    float m_safety_gain_reduction = DEFAULT_SAFETY_GAIN_REDUCTION;
-    float m_safety_smoothing_tau = DEFAULT_SAFETY_SMOOTHING_TAU;
-    float m_spike_detection_threshold = DEFAULT_SPIKE_DETECTION_THRESHOLD;
-    float m_immediate_spike_threshold = DEFAULT_IMMEDIATE_SPIKE_THRESHOLD;
-    float m_safety_slew_full_scale_time_s = DEFAULT_SAFETY_SLEW_FULL_SCALE_TIME_S;
-
-    bool  m_stutter_safety_enabled = DEFAULT_STUTTER_SAFETY_ENABLED;
-    float m_stutter_threshold = DEFAULT_STUTTER_THRESHOLD;
-    
     // Smoothing Settings (v0.7.47)
     float m_long_load_smoothing; // Renamed from dynamic_weight_smoothing (#301)
     float m_grip_smoothing_steady;
@@ -215,8 +134,8 @@ public:
 
     // Configurable Smoothing & Caps (v0.3.9)
     float m_sop_smoothing_factor;
-    float m_texture_load_cap = DEFAULT_TEXTURE_LOAD_CAP; 
-    float m_brake_load_cap = DEFAULT_BRAKE_LOAD_CAP;   
+    float m_texture_load_cap = 1.5f; 
+    float m_brake_load_cap = 1.5f;   
     float m_sop_scale;
     
     // v0.4.4 Features
@@ -242,11 +161,11 @@ public:
     bool m_lockup_enabled;
     float m_lockup_gain;
     // NEW Lockup Tuning (v0.5.11)
-    float m_lockup_start_pct = DEFAULT_LOCKUP_START_PCT;
-    float m_lockup_full_pct = DEFAULT_LOCKUP_FULL_PCT;
-    float m_lockup_rear_boost = DEFAULT_LOCKUP_REAR_BOOST;
-    float m_lockup_gamma = DEFAULT_LOCKUP_GAMMA;           
-    float m_lockup_prediction_sens = DEFAULT_LOCKUP_PREDICTION_SENS; 
+    float m_lockup_start_pct = 5.0f;
+    float m_lockup_full_pct = 15.0f;
+    float m_lockup_rear_boost = 1.5f;
+    float m_lockup_gamma = 2.0f;           
+    float m_lockup_prediction_sens = 50.0f; 
     float m_lockup_bump_reject = 1.0f;     
     
     bool m_abs_pulse_enabled = true;      
@@ -269,8 +188,8 @@ public:
 
     // Soft Lock (Issue #117)
     bool m_soft_lock_enabled = true;
-    float m_soft_lock_stiffness = DEFAULT_SOFT_LOCK_STIFFNESS;
-    float m_soft_lock_damping = DEFAULT_SOFT_LOCK_DAMPING;
+    float m_soft_lock_stiffness = 20.0f;
+    float m_soft_lock_damping = 0.5f;
 
     float m_slip_angle_smoothing;
     
@@ -283,14 +202,14 @@ public:
     
     // v0.4.41: Signal Filtering Settings
     bool m_flatspot_suppression = false;
-    float m_notch_q = DEFAULT_NOTCH_Q; 
+    float m_notch_q = 2.0f; 
     float m_flatspot_strength = 1.0f; 
     
     // Static Notch Filter (v0.4.43)
     bool m_static_notch_enabled = false;
-    float m_static_notch_freq = DEFAULT_STATIC_NOTCH_FREQ;
-    float m_static_notch_width = DEFAULT_STATIC_NOTCH_WIDTH; 
-    float m_yaw_kick_threshold = DEFAULT_YAW_KICK_THRESHOLD; 
+    float m_static_notch_freq = 11.0f;
+    float m_static_notch_width = 2.0f; 
+    float m_yaw_kick_threshold = 0.2f; 
 
     // Unloaded Yaw Kick (Braking/Lift-off) - v0.7.164 (Issue #322)
     float m_unloaded_yaw_gain = 0.0f;
@@ -308,37 +227,37 @@ public:
 
     // v0.6.23: User-Adjustable Speed Gate
     float m_speed_gate_lower = 1.0f; 
-    float m_speed_gate_upper = DEFAULT_SPEED_GATE_UPPER_M_S; 
+    float m_speed_gate_upper = 5.0f; 
 
     // REST API Fallback (Issue #221)
     bool m_rest_api_enabled = false;
     int m_rest_api_port = 6397;
 
     // v0.6.23: Additional Advanced Physics (Reserved for future use)
-    float m_road_fallback_scale = DEFAULT_ROAD_FALLBACK_SCALE;
+    float m_road_fallback_scale = 0.05f;
     bool m_understeer_affects_sop = false;
     
     // ===== SLOPE DETECTION (v0.7.0 -> v0.7.3 stability fixes) =====
     bool m_slope_detection_enabled = false;
-    int m_slope_sg_window = DEFAULT_SLOPE_SG_WINDOW;
-    float m_slope_sensitivity = DEFAULT_SLOPE_SENSITIVITY;            
+    int m_slope_sg_window = 15;
+    float m_slope_sensitivity = 0.5f;            
 
-    float m_slope_smoothing_tau = DEFAULT_SLOPE_SMOOTHING_TAU;         
+    float m_slope_smoothing_tau = 0.04f;         
 
     // NEW v0.7.3: Stability fixes
-    float m_slope_alpha_threshold = DEFAULT_SLOPE_ALPHA_THRESHOLD;    
-    float m_slope_decay_rate = DEFAULT_SLOPE_DECAY_RATE;          
+    float m_slope_alpha_threshold = 0.02f;    
+    float m_slope_decay_rate = 5.0f;          
     bool m_slope_confidence_enabled = true;   
-    float m_slope_confidence_max_rate = DEFAULT_SLOPE_CONFIDENCE_MAX_RATE; 
+    float m_slope_confidence_max_rate = 0.10f; 
 
     // NEW v0.7.11: Min/Max Threshold System
-    float m_slope_min_threshold = DEFAULT_SLOPE_MIN_THRESHOLD;   
-    float m_slope_max_threshold = DEFAULT_SLOPE_MAX_THRESHOLD;   
+    float m_slope_min_threshold = -0.3f;   
+    float m_slope_max_threshold = -2.0f;   
 
     // NEW v0.7.40: Advanced Features
-    float m_slope_g_slew_limit = DEFAULT_SLOPE_G_SLEW_LIMIT;
+    float m_slope_g_slew_limit = 50.0f;
     bool m_slope_use_torque = true;
-    float m_slope_torque_sensitivity = DEFAULT_SLOPE_TORQUE_SENSITIVITY;
+    float m_slope_torque_sensitivity = 0.5f;
 
     // Signal Diagnostics
     double m_debug_freq = 0.0; 
@@ -362,7 +281,6 @@ public:
     bool m_warned_susp_force = false;
     bool m_warned_susp_deflection = false;
     bool m_warned_vert_deflection = false; 
-    std::atomic<bool> m_warned_invalid_range = { false }; // New v0.7.112 (Issue #218)
     
     // Diagnostics (v0.4.5 Fix)
     struct GripDiagnostics {
@@ -451,7 +369,7 @@ public:
     double m_bottoming_phase = 0.0;
     
     // Phase Accumulators for Dynamic Oscillators (v0.6.20)
-    float m_abs_freq_hz = DEFAULT_ABS_FREQ_HZ;
+    float m_abs_freq_hz = 20.0f;
     float m_lockup_freq_scale = 1.0f;
     float m_spin_freq_scale = 1.0f;
     
@@ -517,11 +435,8 @@ public:
     double m_front_grip_smoothed_state = 1.0; 
     double m_rear_grip_smoothed_state = 1.0;  
 
-    // Context for Logging (v0.7.x)
-    char m_vehicle_name[STR_BUF_64] = "Unknown";
-    char m_track_name[STR_BUF_64] = "Unknown";
-    std::string m_current_class_name = "";
-    ParsedVehicleClass m_current_vclass = ParsedVehicleClass::UNKNOWN;
+    // Metadata Manager (Option A Extracted)
+    FFBMetadataManager m_metadata;
 
     // Logging intermediate values (exposed for AsyncLogger)
     double m_slope_dG_dt = 0.0;       
@@ -529,26 +444,11 @@ public:
 
     // Frequency Estimator State (v0.4.41)
     double m_last_crossing_time = 0.0;
-    double m_last_output_force = 0.0; 
     double m_torque_ac_smoothed = 0.0; 
     double m_prev_ac_torque = 0.0;
 
-    struct SafetyMonitor {
-        signed char last_mControl = -2;  // Track changes in player control (AI vs PLAYER)
-        double safety_timer = 0.0;      // Remaining duration of the safety window (seconds)
-        double safety_smoothed_force = 0.0; // Current state of the extra smoothing EMA
-        bool safety_is_seeded = false;  // Ensures smoothing EMA starts fresh on each safety trigger
-        int spike_counter = 0;          // Frame counter for sustained high-slew spikes
-        double tock_timer = 0.0;        // Timer for detecting 'Full Tock' (pinned wheel)
-        double last_tock_log_time = -999.0; // Throttling for Tock warning logs
-        double last_reset_log_time = -999.0; // Throttling for Safety Reset logs
-        char last_reset_reason[64] = "";     // Last logged reset reason to detect changes
-        double last_massive_spike_log_time = -999.0; // Throttling for Massive Spike logs
-        double last_high_spike_log_time = -999.0;    // Throttling for High Spike logs
-        bool was_soft_locked = false;       // Track Soft Lock engagement state
-        bool soft_lock_significant = false; // Track when Soft Lock provides high resistance
-        bool last_allowed = true;           // Track FFB mute/unmute transitions
-    } m_safety;
+    // Safety Monitor (Option A Extracted)
+    FFBSafetyMonitor m_safety;
 
     // Telemetry Stats
     ChannelStats s_torque;
@@ -558,18 +458,14 @@ public:
     std::chrono::steady_clock::time_point last_log_time;
 
     // Thread-Safe Buffer (Producer-Consumer)
-    std::vector<FFBSnapshot> m_debug_buffer;
-    std::mutex m_debug_mutex;
+    FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP
     
     friend class FFBEngineTests::FFBEngineTestAccess;
     friend struct Preset;
 
     FFBEngine();
 
-    bool IsFFBAllowed(const VehicleScoringInfoV01& scoring, unsigned char gamePhase) const;
-    void TriggerSafetyWindow(const char* reason);
-    double ApplySafetySlew(double target_force, double dt, bool restricted);
-    std::vector<FFBSnapshot> GetDebugBatch();
+    std::vector<FFBSnapshot> GetDebugBatch() { return m_debug_buffer.GetBatch(); }
 
     // UI Reference & Physics Multipliers (v0.4.50)
     static constexpr float BASE_NM_SOP_LATERAL      = 1.0f;
@@ -601,7 +497,7 @@ private:
     static constexpr double PREDICTION_BRAKE_THRESHOLD = 0.02;  
     static constexpr double PREDICTION_LOAD_THRESHOLD = 50.0;
 
-    double m_auto_peak_front_load = DEFAULT_AUTO_PEAK_LOAD;
+    double m_auto_peak_front_load = 4500.0; // DEFAULT_AUTO_PEAK_LOAD
 
     static constexpr double HPF_TIME_CONSTANT_S = 0.1;
     static constexpr double ZERO_CROSSING_EPSILON = 0.05;
@@ -619,8 +515,6 @@ private:
     static constexpr double LAT_G_CLEAN_LIMIT = 8.0;
     static constexpr double TORQUE_SLEW_CLEAN_LIMIT = 1000.0;
     static constexpr double TORQUE_ROLL_AVG_TAU = 1.0;
-    static constexpr float  SAFETY_SLEW_NORMAL = 1000.0f;
-    static constexpr float  SAFETY_SLEW_RESTRICTED = 100.0f;
 
     static constexpr float  PEAK_TORQUE_DECAY = 0.005f;
     static constexpr float  PEAK_TORQUE_FLOOR = 1.0f;
@@ -668,7 +562,7 @@ private:
     static constexpr double SOP_SMOOTHING_MAX_TAU = 0.1;
 
     // Default Values
-    static constexpr float  DEFAULT_SAFETY_SLEW_FULL_SCALE_TIME_S = 1.0f;
+    static constexpr float  DEFAULT_SAFETY_SLEW_FULL_SCALE_TIME_S = 1.0f; // matches Issue #316 expectations
     static constexpr float  DEFAULT_SAFETY_WINDOW_DURATION = 2.0f;
     static constexpr float  DEFAULT_SAFETY_GAIN_REDUCTION = 0.3f;
     static constexpr float  DEFAULT_SAFETY_SMOOTHING_TAU = 0.2f;
@@ -678,35 +572,6 @@ private:
     static constexpr bool   DEFAULT_STUTTER_SAFETY_ENABLED = false;
     static constexpr float  DEFAULT_STUTTER_THRESHOLD = 1.5f;
 
-    static constexpr double DEFAULT_CALC_DT = 0.0025;
-    static constexpr float  DEFAULT_TEXTURE_LOAD_CAP = 1.5f;
-    static constexpr float  DEFAULT_BRAKE_LOAD_CAP = 1.5f;
-    static constexpr float  DEFAULT_LOCKUP_START_PCT = 5.0f;
-    static constexpr float  DEFAULT_LOCKUP_FULL_PCT = 15.0f;
-    static constexpr float  DEFAULT_LOCKUP_REAR_BOOST = 1.5f;
-    static constexpr float  DEFAULT_LOCKUP_GAMMA = 2.0f;
-    static constexpr float  DEFAULT_LOCKUP_PREDICTION_SENS = 50.0f;
-    static constexpr float  DEFAULT_SOFT_LOCK_STIFFNESS = 20.0f;
-    static constexpr float  DEFAULT_SOFT_LOCK_DAMPING = 0.5f;
-    static constexpr float  DEFAULT_NOTCH_Q = 2.0f;
-    static constexpr float  DEFAULT_STATIC_NOTCH_FREQ = 11.0f;
-    static constexpr float  DEFAULT_STATIC_NOTCH_WIDTH = 2.0f;
-    static constexpr float  DEFAULT_YAW_KICK_THRESHOLD = 0.2f;
-    static constexpr float  DEFAULT_SPEED_GATE_UPPER_M_S = 5.0f;
-    static constexpr float  DEFAULT_ROAD_FALLBACK_SCALE = 0.05f;
-    static constexpr int    DEFAULT_SLOPE_SG_WINDOW = 15;
-    static constexpr float  DEFAULT_SLOPE_SENSITIVITY = 0.5f;
-    static constexpr float  DEFAULT_SLOPE_SMOOTHING_TAU = 0.04f;
-    static constexpr float  DEFAULT_SLOPE_ALPHA_THRESHOLD = 0.02f;
-    static constexpr float  DEFAULT_SLOPE_DECAY_RATE = 5.0f;
-    static constexpr float  DEFAULT_SLOPE_CONFIDENCE_MAX_RATE = 0.10f;
-    static constexpr float  DEFAULT_SLOPE_MIN_THRESHOLD = -0.3f;
-    static constexpr float  DEFAULT_SLOPE_MAX_THRESHOLD = -2.0f;
-    static constexpr float  DEFAULT_SLOPE_G_SLEW_LIMIT = 50.0f;
-    static constexpr float  DEFAULT_SLOPE_TORQUE_SENSITIVITY = 0.5f;
-    static constexpr float  DEFAULT_ABS_FREQ_HZ = 20.0f;
-    static constexpr double DEFAULT_AUTO_PEAK_LOAD = 4500.0;
-    static constexpr double DEFAULT_SESSION_PEAK_TORQUE = 25.0;
     static constexpr double MIN_LFM_ALPHA = 0.001;
     static constexpr double G_LIMIT_5G = 5.0;
     static constexpr double SMOOTHNESS_LIMIT_0999 = 0.999;
@@ -736,6 +601,7 @@ private:
     static constexpr double PERCENT_TO_DECIMAL = 100.0;
     static constexpr double SCRUB_VEL_THRESHOLD = 0.001;
     static constexpr double SCRUB_FADE_RANGE = 0.5;
+
     static constexpr double DEFLECTION_DELTA_LIMIT = 0.01;
     static constexpr double DEFLECTION_ACTIVE_THRESHOLD = 1e-6;
     static constexpr double DEFLECTION_NEAR_ZERO_M = 1e-6;       // Near-zero threshold for susp/vert deflection checks (m)
@@ -745,13 +611,11 @@ private:
     static constexpr double ACCEL_ROAD_TEXTURE_SCALE = 0.05;
     static constexpr double DEBUG_FREQ_SMOOTHING = 0.9;
     static constexpr double GAIN_REDUCTION_MAX = 50.0;
-    double m_session_peak_torque = DEFAULT_SESSION_PEAK_TORQUE; // New v0.7.67 (Issue #152)
-    double m_smoothed_structural_mult = 1.0 / DEFAULT_SESSION_PEAK_TORQUE; // New v0.7.67 (Issue #152)
-    double m_rolling_average_torque = 0.0; // New v0.7.67 (Issue #152)
-    double m_last_raw_torque = 0.0; // New v0.7.67 (Issue #152)
+    double m_session_peak_torque = 25.0; // DEFAULT_SESSION_PEAK_TORQUE
+    double m_smoothed_structural_mult = 1.0 / 25.0; 
+    double m_rolling_average_torque = 0.0; 
+    double m_last_raw_torque = 0.0; 
     bool m_was_allowed = true; // Track transition for filter reset
-
-    std::string m_last_handled_vehicle_name = ""; // For car change detection (Issue #238)
 
     void update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt);
     void InitializeLoadReference(const char* className, const char* vehicleName);
@@ -788,7 +652,6 @@ GripResult calculate_axle_grip(const TelemWheelV01& w1,
     void ResetNormalization();
 
 private:
-    bool UpdateMetadataInternal(const char* vehicleClass, const char* vehicleName, const char* trackName);
     void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext& ctx);
     NOINLINE void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext& ctx);
     NOINLINE void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext& ctx);
@@ -801,4 +664,3 @@ private:
 };
 
 #endif // FFBENGINE_H
-

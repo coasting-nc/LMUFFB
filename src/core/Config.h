@@ -377,14 +377,14 @@ struct Preset {
         engine.m_grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);
 
         // FFB Safety (Issue #316)
-        engine.m_safety_window_duration = (std::max)(0.0f, safety_window_duration);
-        engine.m_safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));
-        engine.m_safety_smoothing_tau = (std::max)(0.001f, safety_smoothing_tau);
-        engine.m_spike_detection_threshold = (std::max)(1.0f, spike_detection_threshold);
-        engine.m_immediate_spike_threshold = (std::max)(1.0f, immediate_spike_threshold);
-        engine.m_safety_slew_full_scale_time_s = (std::max)(0.01f, safety_slew_full_scale_time_s);
-        engine.m_stutter_safety_enabled = stutter_safety_enabled;
-        engine.m_stutter_threshold = (std::max)(1.01f, stutter_threshold);
+        engine.m_safety.m_safety_window_duration = (std::max)(0.0f, safety_window_duration);
+        engine.m_safety.m_safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));
+        engine.m_safety.m_safety_smoothing_tau = (std::max)(0.001f, safety_smoothing_tau);
+        engine.m_safety.m_spike_detection_threshold = (std::max)(1.0f, spike_detection_threshold);
+        engine.m_safety.m_immediate_spike_threshold = (std::max)(1.0f, immediate_spike_threshold);
+        engine.m_safety.m_safety_slew_full_scale_time_s = (std::max)(0.01f, safety_slew_full_scale_time_s);
+        engine.m_safety.m_stutter_safety_enabled = stutter_safety_enabled;
+        engine.m_safety.m_stutter_threshold = (std::max)(1.01f, stutter_threshold);
 
         engine.m_lockup_enabled = lockup_enabled;
         engine.m_lockup_gain = (std::max)(0.0f, lockup_gain);
@@ -611,14 +611,14 @@ struct Preset {
         grip_smoothing_sensitivity = engine.m_grip_smoothing_sensitivity;
 
         // FFB Safety (Issue #316)
-        safety_window_duration = engine.m_safety_window_duration;
-        safety_gain_reduction = engine.m_safety_gain_reduction;
-        safety_smoothing_tau = engine.m_safety_smoothing_tau;
-        spike_detection_threshold = engine.m_spike_detection_threshold;
-        immediate_spike_threshold = engine.m_immediate_spike_threshold;
-        safety_slew_full_scale_time_s = engine.m_safety_slew_full_scale_time_s;
-        stutter_safety_enabled = engine.m_stutter_safety_enabled;
-        stutter_threshold = engine.m_stutter_threshold;
+        safety_window_duration = engine.m_safety.m_safety_window_duration;
+        safety_gain_reduction = engine.m_safety.m_safety_gain_reduction;
+        safety_smoothing_tau = engine.m_safety.m_safety_smoothing_tau;
+        spike_detection_threshold = engine.m_safety.m_spike_detection_threshold;
+        immediate_spike_threshold = engine.m_safety.m_immediate_spike_threshold;
+        safety_slew_full_scale_time_s = engine.m_safety.m_safety_slew_full_scale_time_s;
+        stutter_safety_enabled = engine.m_safety.m_stutter_safety_enabled;
+        stutter_threshold = engine.m_safety.m_stutter_threshold;
 
         lockup_enabled = engine.m_lockup_enabled;
         lockup_gain = engine.m_lockup_gain;

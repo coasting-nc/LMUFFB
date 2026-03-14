@@ -583,26 +583,26 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::TreeNodeEx("FFB Safety Features", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        FloatSetting("Safety Duration", &engine.m_safety_window_duration, 0.0f, 10.0f, "%.1f s", Tooltips::SAFETY_WINDOW_DURATION, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
-        FloatSetting("Gain Reduction", &engine.m_safety_gain_reduction, 0.0f, 1.0f, FormatPct(engine.m_safety_gain_reduction), Tooltips::SAFETY_GAIN_REDUCTION, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
-        FloatSetting("Safety Smoothing", &engine.m_safety_smoothing_tau, 0.001f, 1.0f, "%.3f s", Tooltips::SAFETY_SMOOTHING_TAU, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
-        FloatSetting("Slew Restriction", &engine.m_safety_slew_full_scale_time_s, 0.1f, 5.0f, "%.2f s", Tooltips::SAFETY_SLEW_FULL_SCALE_TIME_S, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+        FloatSetting("Safety Duration", &engine.m_safety.m_safety_window_duration, 0.0f, 10.0f, "%.1f s", Tooltips::SAFETY_WINDOW_DURATION, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+        FloatSetting("Gain Reduction", &engine.m_safety.m_safety_gain_reduction, 0.0f, 1.0f, FormatPct(engine.m_safety.m_safety_gain_reduction), Tooltips::SAFETY_GAIN_REDUCTION, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+        FloatSetting("Safety Smoothing", &engine.m_safety.m_safety_smoothing_tau, 0.001f, 1.0f, "%.3f s", Tooltips::SAFETY_SMOOTHING_TAU, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+        FloatSetting("Slew Restriction", &engine.m_safety.m_safety_slew_full_scale_time_s, 0.1f, 5.0f, "%.2f s", Tooltips::SAFETY_SLEW_FULL_SCALE_TIME_S, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
 
         ImGui::Separator();
         ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Stuttering (Lost Frames)");
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        BoolSetting("Safety on Stuttering", &engine.m_stutter_safety_enabled, Tooltips::STUTTER_SAFETY_ENABLE);
-        if (engine.m_stutter_safety_enabled) {
-            FloatSetting("Stutter Threshold", &engine.m_stutter_threshold, 1.1f, 5.0f, "%.2fx", Tooltips::STUTTER_THRESHOLD, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+        BoolSetting("Safety on Stuttering", &engine.m_safety.m_stutter_safety_enabled, Tooltips::STUTTER_SAFETY_ENABLE);
+        if (engine.m_safety.m_stutter_safety_enabled) {
+            FloatSetting("Stutter Threshold", &engine.m_safety.m_stutter_threshold, 1.1f, 5.0f, "%.2fx", Tooltips::STUTTER_THRESHOLD, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
         }
 
         ImGui::Separator();
         ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Spike Detection");
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        FloatSetting("Spike Threshold", &engine.m_spike_detection_threshold, 10.0f, 2000.0f, "%.0f u/s", Tooltips::SPIKE_DETECTION_THRESHOLD, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
-        FloatSetting("Immediate Spike", &engine.m_immediate_spike_threshold, 100.0f, 5000.0f, "%.0f u/s", Tooltips::IMMEDIATE_SPIKE_THRESHOLD, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+        FloatSetting("Spike Threshold", &engine.m_safety.m_spike_detection_threshold, 10.0f, 2000.0f, "%.0f u/s", Tooltips::SPIKE_DETECTION_THRESHOLD, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+        FloatSetting("Immediate Spike", &engine.m_safety.m_immediate_spike_threshold, 100.0f, 5000.0f, "%.0f u/s", Tooltips::IMMEDIATE_SPIKE_THRESHOLD, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
 
         ImGui::TreePop();
     } else {

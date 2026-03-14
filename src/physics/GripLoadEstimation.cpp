@@ -49,7 +49,7 @@ void FFBEngine::update_static_load_reference(double current_front_load, double c
         m_static_load_latched = true;
 
         // Save to config map (v0.7.70)
-        std::string vName = m_vehicle_name;
+        std::string vName = m_metadata.GetVehicleName();
         if (vName != "Unknown" && vName != "") {
             Config::SetSavedStaticLoad(vName, m_static_front_load);
             Config::SetSavedStaticLoad(vName + "_rear", m_static_rear_load);
@@ -75,16 +75,12 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     // This ensures that session-learned peaks from a previous car don't pollute the new session.
     ResetNormalization();
 
-    m_current_vclass = ParseVehicleClass(className, vehicleName);
-    ParsedVehicleClass vclass = m_current_vclass;
+    ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
 
     // Stage 3 Reset: Ensure peak load starts at class baseline
     m_auto_peak_front_load = GetDefaultLoadForClass(vclass);
 
     std::string vName = vehicleName ? vehicleName : "Unknown";
-
-    // v0.7.134: Ensure m_vehicle_name is also updated immediately for consistency
-    StringUtils::SafeCopy(m_vehicle_name, sizeof(m_vehicle_name), vName.c_str());
 
     // Check if we already have a saved static load for this specific car (v0.7.70)
     double saved_front_load = 0.0;
@@ -112,7 +108,10 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     m_smoothed_vibration_mult = 1.0;
 
     // v0.7.119: Update engine's car name immediately to prevent seeding loop (Issue #238)
-    m_last_handled_vehicle_name = vName;
+    m_metadata.m_last_handled_vehicle_name = vName;
+
+    // Sync metadata manager state
+    m_metadata.UpdateInternal(className, vehicleName, nullptr);
 
     Logger::Get().LogFile("[FFB] Vehicle Identification -> Detected Class: %s | Seed Load: %.2fN (Raw -> Class: %s, Name: %s)",
         VehicleClassToString(vclass), m_auto_peak_front_load, (className ? className : "Unknown"), vName.c_str());
@@ -318,8 +317,9 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
 // Uses class-specific motion ratios to convert pushrod force (mSuspForce) to wheel load,
 // and adds an estimate for front unsprung mass.
 double FFBEngine::approximate_load(const TelemWheelV01& w) {
-    double motion_ratio = GetMotionRatioForClass(m_current_vclass);
-    double unsprung_weight = GetUnsprungWeightForClass(m_current_vclass, false /* is_rear */);
+    ParsedVehicleClass vclass = m_metadata.GetCurrentClass();
+    double motion_ratio = GetMotionRatioForClass(vclass);
+    double unsprung_weight = GetUnsprungWeightForClass(vclass, false /* is_rear */);
 
     return (std::max)(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
 }
@@ -327,8 +327,9 @@ double FFBEngine::approximate_load(const TelemWheelV01& w) {
 // Helper: Approximate Rear Load (v0.4.10 / Improved v0.7.171 / Refactored v0.7.175)
 // Similar to approximate_load, but uses rear-specific unsprung mass estimates.
 double FFBEngine::approximate_rear_load(const TelemWheelV01& w) {
-    double motion_ratio = GetMotionRatioForClass(m_current_vclass);
-    double unsprung_weight = GetUnsprungWeightForClass(m_current_vclass, true /* is_rear */);
+    ParsedVehicleClass vclass = m_metadata.GetCurrentClass();
+    double motion_ratio = GetMotionRatioForClass(vclass);
+    double unsprung_weight = GetUnsprungWeightForClass(vclass, true /* is_rear */);
 
     return (std::max)(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
 }

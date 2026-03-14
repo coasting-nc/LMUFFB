@@ -28,7 +28,7 @@ void test_issue_303_safety_window_activation() {
     // Scenario 2: Manual Trigger (e.g. from Lost Frames)
     {
         engine.m_safety.safety_timer = 0.0;
-        engine.TriggerSafetyWindow("Test Lost Frames");
+        engine.m_safety.TriggerSafetyWindow("Test Lost Frames");
         ASSERT_GT(engine.m_safety.safety_timer, 1.9);
     }
 }
@@ -51,7 +51,7 @@ void test_issue_303_safety_mitigation() {
     double normal_force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, static_cast<signed char>(ControlMode::PLAYER));
 
     // Trigger safety window
-    engine.TriggerSafetyWindow("Test");
+    engine.m_safety.TriggerSafetyWindow("Test");
 
     // Safety output (reduced gain)
     double safety_force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, static_cast<signed char>(ControlMode::PLAYER));
@@ -65,7 +65,7 @@ void test_issue_303_safety_mitigation() {
     // Test Slew Rate Limitation during safety
     FFBEngineTestAccess::SetLastOutputForce(engine, 0.0);
     // Request a large jump (from 0 to 1.0)
-    double slewed = engine.ApplySafetySlew(1.0, 0.0025, false);
+    double slewed = engine.m_safety.ApplySafetySlew(1.0, 0.0025, false);
     // Max slew in safety window is 1.0 units/s. In 2.5ms, max change is 1.0 * 0.0025 = 0.0025
     ASSERT_NEAR(slewed, 0.0025, 0.001);
 }
@@ -84,7 +84,7 @@ void test_issue_303_spike_detection() {
         // Must use large enough target to ensure delta/dt > threshold
         // And reset last output force to keep delta large
         FFBEngineTestAccess::SetLastOutputForce(engine, 0.0);
-        engine.ApplySafetySlew(10.0, 0.0025, false);
+        engine.m_safety.ApplySafetySlew(10.0, 0.0025, false);
     }
 
     // Should have triggered safety window

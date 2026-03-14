@@ -426,8 +426,7 @@ public:
     static double GetSteeringVelocitySmoothed(const FFBEngine& e) { return e.m_steering_velocity_smoothed; }
     static void SetSteeringVelocitySmoothed(FFBEngine& e, double val) { e.m_steering_velocity_smoothed = val; }
     static void AddSnapshot(FFBEngine& e, const FFBSnapshot& s) {
-        std::lock_guard<std::mutex> lock(e.m_debug_mutex);
-        e.m_debug_buffer.push_back(s);
+        e.m_debug_buffer.Push(s);
     }
     static void ResetYawDerivedState(FFBEngine& e) {
         e.m_yaw_rate_seeded = false;
@@ -435,13 +434,17 @@ public:
         e.m_yaw_accel_smoothed = 0.0;
     }
     static double GetYawAccelSmoothed(const FFBEngine& e) { return e.m_yaw_accel_smoothed; }
-    static void SetLastOutputForce(FFBEngine& e, double val) { e.m_last_output_force = val; }
+    static void SetLastOutputForce(FFBEngine& e, double val) { 
+        e.m_safety.SetSafetySmoothedForce(val);
+    }
 
     static void ResetSafety(FFBEngine& engine) {
-        engine.m_safety = {};
-        engine.m_safety.last_mControl = -2;
+        engine.m_safety = FFBSafetyMonitor();
+        engine.m_safety.SetLastControl(-2);
+        // Restore connection to time source
+        engine.m_safety.SetTimePtr(&engine.m_working_info.mElapsedTime);
     }
-    static const FFBEngine::SafetyMonitor& GetSafety(const FFBEngine& engine) {
+    static const FFBSafetyMonitor& GetSafety(const FFBEngine& engine) {
         return engine.m_safety;
     }
 };

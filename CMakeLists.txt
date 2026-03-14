@@ -210,6 +210,10 @@ set(CORE_SOURCES
     src/ffb/DirectInputFFB.cpp src/ffb/DirectInputFFB.h
     src/io/GameConnector.cpp src/io/GameConnector.h
     src/ffb/FFBEngine.h src/ffb/FFBEngine.cpp
+    src/ffb/FFBSafetyMonitor.h src/ffb/FFBSafetyMonitor.cpp
+    src/ffb/FFBMetadataManager.h src/ffb/FFBMetadataManager.cpp
+    src/ffb/FFBDebugBuffer.h src/ffb/FFBDebugBuffer.cpp
+    src/ffb/FFBSnapshot.h
     src/physics/GripLoadEstimation.cpp
     src/physics/SteeringUtils.cpp
     src/physics/VehicleUtils.cpp

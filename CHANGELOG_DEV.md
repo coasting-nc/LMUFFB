@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.184]
+- **Refactoring: Non-FFB Components Extracted from FFBEngine**:
+  - Extracted metadata, safety, and diagnostic responsibilities into dedicated managers:
+    - `FFBMetadataManager`: Handles vehicle/track state and class-aware load seeding.
+    - `FFBSafetyMonitor`: Centralizes spike detection, slew rate limiting, and FFB permission logic with time-based log throttling.
+    - `FFBDebugBuffer`: Implements a thread-safe circular buffer for real-time telemetry snapshots.
+  - Nested safety configuration parameters under `m_safety` in `FFBEngine` for better organization.
+  - Updated `Config`, `GuiLayer`, and `FFBEngineTestAccess` to support the new manager-based architecture.
+  - Restored 100% logic parity across 530 regression tests.
+
+
 ## [0.7.183]
 
 - **Source Code Directory Reorganization**:

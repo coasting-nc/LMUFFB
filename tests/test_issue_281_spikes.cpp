@@ -32,10 +32,10 @@ void test_issue_281_transition_smoothing() {
 
     // Simulate main.cpp logic:
     // is_driving = GameConnector::Get().IsPlayerActivelyDriving();
-    // full_allowed = g_engine.IsFFBAllowed(...) && is_driving;
+    // full_allowed = g_engine.m_safety.IsFFBAllowed(...) && is_driving;
     // force = g_engine.calculate_force(..., full_allowed);
     // [FIX] if (scoring.mControl != 0) force = 0.0;
-    // force = g_engine.ApplySafetySlew(force, 0.0025, !full_allowed);
+    // force = g_engine.m_safety.ApplySafetySlew(force, 0.0025, !full_allowed);
 
     // Scenario 1: Stationary in Garage / Paused (is_driving = false, mControl = ControlMode::PLAYER)
     // Soft Lock SHOULD be active.
@@ -49,7 +49,7 @@ void test_issue_281_transition_smoothing() {
         for (int i = 0; i < 50; i++) {
             double force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, full_allowed);
             if (mControl != static_cast<signed char>(ControlMode::PLAYER)) force = 0.0;
-            slewed_force = engine.ApplySafetySlew(force, 0.0025, !full_allowed);
+            slewed_force = engine.m_safety.ApplySafetySlew(force, 0.0025, !full_allowed);
         }
 
         std::cout << "  Garage/Paused (mControl=PLAYER) - Force (expect Soft Lock): " << slewed_force << std::endl;
@@ -71,7 +71,7 @@ void test_issue_281_transition_smoothing() {
             double force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, full_allowed);
             // Fix logic as in main.cpp:
             if (mControl != static_cast<signed char>(ControlMode::PLAYER)) force = 0.0;
-            slewed_force = engine.ApplySafetySlew(force, 0.0025, true);
+            slewed_force = engine.m_safety.ApplySafetySlew(force, 0.0025, true);
         }
 
         std::cout << "  AI Takeover (mControl=AI) - Final Slewed Force: " << slewed_force << std::endl;

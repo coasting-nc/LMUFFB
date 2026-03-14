@@ -102,35 +102,35 @@ TEST_CASE(test_engine_ffb_allowed, "Physics") {
 
     // 1. Not player
     scoring.mIsPlayer = false;
-    ASSERT_FALSE(engine.IsFFBAllowed(scoring, 5));
+    ASSERT_FALSE(engine.m_safety.IsFFBAllowed(scoring, 5));
 
     // 2. AI controlled
     scoring.mIsPlayer = true;
     scoring.mControl = 1; // 1 = AI
-    ASSERT_FALSE(engine.IsFFBAllowed(scoring, 5));
+    ASSERT_FALSE(engine.m_safety.IsFFBAllowed(scoring, 5));
 
     // 3. DQ status
     scoring.mIsPlayer = true;
     scoring.mControl = 0; // Local player
     scoring.mFinishStatus = 3; // 3 = DQ
-    ASSERT_FALSE(engine.IsFFBAllowed(scoring, 5));
+    ASSERT_FALSE(engine.m_safety.IsFFBAllowed(scoring, 5));
 
     // 4. Allowed
     scoring.mFinishStatus = 0; // None
-    ASSERT_TRUE(engine.IsFFBAllowed(scoring, 5));
+    ASSERT_TRUE(engine.m_safety.IsFFBAllowed(scoring, 5));
 }
 
 TEST_CASE(test_engine_safety_slew_edge, "Physics") {
     FFBEngine engine;
 
     // 1. NaN/Inf input
-    ASSERT_NEAR(engine.ApplySafetySlew(std::numeric_limits<double>::quiet_NaN(), 0.0025, false), 0.0, 0.001);
-    ASSERT_NEAR(engine.ApplySafetySlew(std::numeric_limits<double>::infinity(), 0.0025, false), 0.0, 0.001);
+    ASSERT_NEAR(engine.m_safety.ApplySafetySlew(std::numeric_limits<double>::quiet_NaN(), 0.0025, false), 0.0, 0.001);
+    ASSERT_NEAR(engine.m_safety.ApplySafetySlew(std::numeric_limits<double>::infinity(), 0.0025, false), 0.0, 0.001);
 
     // 2. Restricted slew (e.g. after finish)
-    engine.m_last_output_force = 0.0;
+    engine.m_safety.SetSafetySmoothedForce(0.0);
     // target = 1.0, max_slew = 100.0, dt = 0.0025 -> max_change = 0.25
-    double force = engine.ApplySafetySlew(1.0, 0.0025, true);
+    double force = engine.m_safety.ApplySafetySlew(1.0, 0.0025, true);
     ASSERT_NEAR(force, 0.25, 0.001);
 }
 

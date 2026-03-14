@@ -784,14 +784,14 @@ TEST_CASE(test_ffb_engine_branches_v6, "Physics") {
     // Test IsFFBAllowed branches
     VehicleScoringInfoV01 scoring = {};
     scoring.mControl = 0; // AI
-    engine.IsFFBAllowed(scoring, 5);
+    engine.m_safety.IsFFBAllowed(scoring, 5);
 
     scoring.mControl = 1;
     scoring.mFinishStatus = 1; // Finished
-    engine.IsFFBAllowed(scoring, 5);
+    engine.m_safety.IsFFBAllowed(scoring, 5);
 
     scoring.mFinishStatus = 0;
-    engine.IsFFBAllowed(scoring, 4); // Not running
+    engine.m_safety.IsFFBAllowed(scoring, 4); // Not running
 
     std::cout << "[PASS] FFBEngine branches exercised" << std::endl;
     g_tests_passed++;

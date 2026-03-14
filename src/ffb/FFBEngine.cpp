@@ -16,113 +16,7 @@ using namespace ffb_math;
 FFBEngine::FFBEngine() {
     last_log_time = std::chrono::steady_clock::now();
     Preset::ApplyDefaultsToEngine(*this);
-    m_safety = {}; // Ensure all defaults are applied
-}
-
-void FFBEngine::TriggerSafetyWindow(const char* reason) {
-    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-    double now = m_working_info.mElapsedTime;
-    if (m_safety.safety_timer <= 0.0) {
-        Logger::Get().LogFile("[Safety] Entered Safety Mode (Reason: %s)", reason);
-        StringUtils::SafeCopy(m_safety.last_reset_reason, sizeof(m_safety.last_reset_reason), reason);
-        m_safety.last_reset_log_time = now;
-    } else {
-        // Log reset only if reason changed or significant time passed to avoid spam (Issue #314)
-        if (std::strcmp(m_safety.last_reset_reason, reason) != 0 || now > (m_safety.last_reset_log_time + 1.0)) {
-            Logger::Get().LogFile("[Safety] Reset Safety Mode Timer (Reason: %s)", reason);
-            StringUtils::SafeCopy(m_safety.last_reset_reason, sizeof(m_safety.last_reset_reason), reason);
-            m_safety.last_reset_log_time = now;
-        }
-    }
-    m_safety.safety_timer = (double)m_safety_window_duration;
-    m_safety.safety_is_seeded = false;
-}
-
-// v0.7.34: Safety Check for Issue #79
-// Determines if FFB should be active based on vehicle scoring state.
-// v0.7.49: Modified for #126 to allow cool-down laps after finish.
-bool FFBEngine::IsFFBAllowed(const VehicleScoringInfoV01& scoring, unsigned char gamePhase) const {
-    // mControl: 0 = local player, 1 = AI, 2 = Remote, -1 = None
-    // mFinishStatus: 0 = none, 1 = finished, 2 = DNF, 3 = DQ
-
-    // 1. Core control check
-    if (!scoring.mIsPlayer || scoring.mControl != static_cast<signed char>(ControlMode::PLAYER)) return false;
-
-    // 2. DO NOT use gamePhase to determine if IsFFBAllowed (eg. session over would cause no FFB after finish line, or time up)
-    // (gamePhase, Game Phases: 7=Stopped, 8=Session Over)
-
-    // 3. Individual status safety
-    // Allow Finished (1) and DNF (2) as long as player is in control.
-    // Mute for Disqualified (3).
-    if (scoring.mFinishStatus == 3) return false;
-
-    // 4. Garage Safety: Mute FFB when in garage stall
-    if (scoring.mInGarageStall) return false;
-
-    return true;
-}
-
-// v0.7.49: Slew rate limiter for safety (#79)
-// Clamps the rate of change of the output force to prevent violent jolts.
-// If restricted is true (e.g. after finish or lost control), limit is tighter.
-double FFBEngine::ApplySafetySlew(double target_force, double dt, bool restricted) {
-    if (!std::isfinite(target_force)) return 0.0;
-
-    double max_slew = restricted ? (double)SAFETY_SLEW_RESTRICTED : (double)SAFETY_SLEW_NORMAL;
-
-    // Tighten slew limit during safety window (Issue #303)
-    if (m_safety.safety_timer > 0.0) {
-        double safety_slew = 1.0 / (double)m_safety_slew_full_scale_time_s;
-        max_slew = (std::min)(max_slew, safety_slew);
-    }
-
-    double max_change = max_slew * dt;
-    double delta = target_force - m_last_output_force;
-
-    // SPIKE DETECTION (Issue #303)
-    // If the physics engine wants a jump larger than our current limit,
-    // monitor for sustained high-slew rates.
-    double requested_rate = std::abs(delta) / (dt + EPSILON_DIV);
-    double now = m_working_info.mElapsedTime;
-
-    if (requested_rate > (double)m_immediate_spike_threshold) {
-        if (now > (m_safety.last_massive_spike_log_time + 1.0)) {
-            Logger::Get().LogFile("[Safety] Massive Spike Detected: Requested Rate=%.1f (Capped at %.1f)",
-                requested_rate, max_slew);
-            m_safety.last_massive_spike_log_time = now;
-        }
-        m_safety.spike_counter = 0;
-        TriggerSafetyWindow("Massive Spike");
-    } else if (requested_rate > (double)m_spike_detection_threshold) {
-        m_safety.spike_counter++;
-        if (m_safety.spike_counter >= 5) { // Sustained for 5 frames
-            if (now > (m_safety.last_high_spike_log_time + 1.0)) {
-                Logger::Get().LogFile("[Safety] High Spike Detected: Requested Rate=%.1f (Capped at %.1f)",
-                    requested_rate, max_slew);
-                m_safety.last_high_spike_log_time = now;
-            }
-            m_safety.spike_counter = 0;
-            TriggerSafetyWindow("High Spike");
-        }
-    } else {
-        m_safety.spike_counter = (std::max)(0, m_safety.spike_counter - 1);
-    }
-
-    delta = std::clamp(delta, -max_change, max_change);
-    m_last_output_force += delta;
-    return m_last_output_force;
-}
-
-// Helper to retrieve data (Consumer)
-std::vector<FFBSnapshot> FFBEngine::GetDebugBatch() {
-    std::vector<FFBSnapshot> batch;
-    {
-        std::lock_guard<std::mutex> lock(m_debug_mutex);
-        if (!m_debug_buffer.empty()) {
-            batch.swap(m_debug_buffer);
-        }
-    }
-    return batch;
+    m_safety.SetTimePtr(&m_working_info.mElapsedTime);
 }
 
 // ---------------------------------------------------------------------------
@@ -276,20 +170,20 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     const TelemInfoV01* upsampled_data = &m_working_info;
 
     // --- SAFETY & TRANSITION LOGIC ---
-    if (m_safety.last_allowed && !allowed) {
+    if (m_safety.GetLastAllowed() && !allowed) {
         Logger::Get().LogFile("[Safety] FFB Muted (Reason: %s)", upsampled_data->mElapsedTime > 0 ? "Game/State Mute" : "Initialization");
-    } else if (!m_safety.last_allowed && allowed) {
+    } else if (!m_safety.GetLastAllowed() && allowed) {
         Logger::Get().LogFile("[Safety] FFB Unmuted");
-        TriggerSafetyWindow("FFB Unmuted");
+        m_safety.TriggerSafetyWindow("FFB Unmuted", upsampled_data->mElapsedTime);
     }
-    m_safety.last_allowed = allowed;
+    m_safety.SetLastAllowed(allowed);
 
-    if (mControl != m_safety.last_mControl) {
-        if (m_safety.last_mControl != -2) { // Skip first frame
-            Logger::Get().LogFile("[Safety] mControl Transition: %d -> %d", (int)m_safety.last_mControl, (int)mControl);
-            TriggerSafetyWindow("Control Transition");
+    if (mControl != m_safety.GetLastControl()) {
+        if (m_safety.GetLastControl() != -2) { // Skip first frame
+            Logger::Get().LogFile("[Safety] mControl Transition: %d -> %d", (int)m_safety.GetLastControl(), (int)mControl);
+            m_safety.TriggerSafetyWindow("Control Transition", upsampled_data->mElapsedTime);
         }
-        m_safety.last_mControl = mControl;
+        m_safety.SetLastControl(mControl);
     }
 
     // Transition Logic: Reset filters when entering "Muted" state (e.g. Garage/AI)
@@ -339,11 +233,6 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // RELIABILITY FIX: Sanitize input torque
     if (!std::isfinite(raw_torque_input)) return 0.0;
 
-    // Reset safety smoothed force if timer is zero to avoid carry-over
-    if (m_safety.safety_timer <= 0.0) {
-        m_safety.safety_smoothed_force = 0.0;
-    }
-
     // --- 0. DYNAMIC NORMALIZATION (Issue #152) ---
     // 1. Contextual Spike Rejection (Lightweight MAD alternative)
     double current_abs_torque = std::abs(raw_torque_input);
@@ -387,7 +276,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     m_smoothed_structural_mult += alpha_gain * (target_structural_mult - m_smoothed_structural_mult);
 
     // Class Seeding
-    bool seeded = UpdateMetadataInternal(vehicleClass, vehicleName, data->mTrackName);
+    bool seeded = m_metadata.UpdateInternal(vehicleClass, vehicleName, data->mTrackName);
+    if (seeded) {
+        InitializeLoadReference(m_metadata.GetCurrentClassName(), m_metadata.GetVehicleName());
+    }
 
     // Trigger REST API Fallback if enabled and range is invalid (Issue #221)
     if (seeded && m_rest_api_enabled && data->mPhysicalSteeringWheelRange <= 0.0f) {
@@ -412,14 +304,14 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     
     // Steering Range Diagnostic (Issue #218)
     if (upsampled_data->mPhysicalSteeringWheelRange <= 0.0f) {
-        if (!m_warned_invalid_range) {
+        if (!m_metadata.HasWarnedInvalidRange()) {
             float fallback = RestApiProvider::Get().GetFallbackRangeDeg();
             if (m_rest_api_enabled && fallback > 0.0f) {
                 Logger::Get().LogFile("[FFB] Invalid Shared Memory Steering Range. Using REST API fallback: %.1f deg", fallback);
             } else {
                 Logger::Get().LogFile("[WARNING] Invalid PhysicalSteeringWheelRange (<=0) for %s. Soft Lock and Steering UI may be incorrect.", upsampled_data->mVehicleName);
             }
-            m_warned_invalid_range = true;
+            m_metadata.SetWarnedInvalidRange(true);
         }
     }
 
@@ -773,28 +665,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double norm_force = (di_structural + di_texture) * m_gain;
 
     // --- SAFETY MITIGATION (Stage 2) ---
-    if (m_safety.safety_timer > 0.0) {
-        // Apply extra gain reduction
-        norm_force *= (double)m_safety_gain_reduction;
-
-        // Apply extra smoothing to the final output to blunt any jitter
-        // Using a 200ms EMA (Issue #314)
-        // On first frame of safety window, seed the smoothed force
-        if (!m_safety.safety_is_seeded) {
-            m_safety.safety_smoothed_force = norm_force;
-            m_safety.safety_is_seeded = true;
-        } else {
-            double safety_alpha = ctx.dt / ((double)m_safety_smoothing_tau + ctx.dt);
-            m_safety.safety_smoothed_force += safety_alpha * (norm_force - m_safety.safety_smoothed_force);
-        }
-        norm_force = m_safety.safety_smoothed_force;
-
-        m_safety.safety_timer -= ctx.dt;
-        if (m_safety.safety_timer <= 0.0) {
-            m_safety.safety_timer = 0.0;
-            Logger::Get().LogFile("[Safety] Exited Safety Mode");
-        }
-    }
+    norm_force = m_safety.ProcessSafetyMitigation(norm_force, ctx.dt);
 
     // Min Force
     // v0.7.85 FIX: Bypass min_force if NOT allowed (e.g. in garage) unless soft lock is significant.
@@ -815,19 +686,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
 
     // --- FULL TOCK DETECTION (Issue #303) ---
-    if (std::abs(upsampled_data->mUnfilteredSteering) > 0.95 && std::abs(norm_force) > 0.8) {
-        m_safety.tock_timer += ctx.dt;
-        if (m_safety.tock_timer > 1.0) { // Pinned for 1 second
-            if (upsampled_data->mElapsedTime > (m_safety.last_tock_log_time + 5.0)) {
-                Logger::Get().LogFile("[Safety] Full Tock Detected: Force %.2f at %.1f%% lock",
-                    norm_force, upsampled_data->mUnfilteredSteering * 100.0);
-                m_safety.last_tock_log_time = upsampled_data->mElapsedTime;
-            }
-            m_safety.tock_timer = 0.0;
-        }
-    } else {
-        m_safety.tock_timer = (std::max)(0.0, m_safety.tock_timer - ctx.dt);
-    }
+    m_safety.UpdateTockDetection(upsampled_data->mUnfilteredSteering, norm_force, ctx.dt);
 
     // --- 8. STATE UPDATES (POST-CALC) ---
     // CRITICAL: These updates must run UNCONDITIONALLY every frame to prevent
@@ -872,8 +731,6 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // to visualize real-time telemetry graphs, FFB clipping, and effect contributions.
     // It uses a mutex to protect the shared circular buffer.
     {
-        std::lock_guard<std::mutex> lock(m_debug_mutex);
-        if (m_debug_buffer.size() < DEBUG_BUFFER_CAP) {
             FFBSnapshot snap;
             snap.total_output = (float)norm_force;
             snap.base_force = (float)base_input;
@@ -946,10 +803,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.torque_rate = (float)m_torque_rate;
             snap.gen_torque_rate = (float)m_gen_torque_rate;
             snap.physics_rate = (float)m_physics_rate;
-
-            m_debug_buffer.push_back(snap);
+            m_debug_buffer.Push(snap);
         }
-    }
     
     // Telemetry Logging (v0.7.129: Augmented Binary & 400Hz)
     if (AsyncLogger::Get().IsLogging()) {
@@ -1618,51 +1473,10 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
     ctx.road_noise *= ctx.speed_gate;
 }
 
-void FFBEngine::UpdateMetadata(const SharedMemoryObjectOut& data) {
-    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-    const char* vClass = nullptr;
-    const char* vName = nullptr;
-    const char* tName = data.scoring.scoringInfo.mTrackName;
-
-    if (data.telemetry.playerHasVehicle) {
-        uint8_t idx = data.telemetry.playerVehicleIdx;
-        if (idx < 104) {
-            vClass = data.scoring.vehScoringInfo[idx].mVehicleClass;
-            vName = data.scoring.vehScoringInfo[idx].mVehicleName;
-        }
-    }
-
-    UpdateMetadataInternal(vClass, vName, tName);
-}
-
-bool FFBEngine::UpdateMetadataInternal(const char* vehicleClass, const char* vehicleName, const char* trackName) {
-    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-    bool seeded = false;
-
-    // 1. Handle Vehicle/Class Change
-    if (vehicleClass && (m_current_class_name != vehicleClass || (vehicleName && m_last_handled_vehicle_name != vehicleName))) {
-        m_current_class_name = vehicleClass;
-        InitializeLoadReference(vehicleClass, vehicleName);
-        m_warned_invalid_range = false; // Reset warning on car change
-        seeded = true;
-    }
-
-    // 2. Update Context strings (for UI/Logging)
-    if (vehicleName && strcmp(m_vehicle_name, vehicleName) != 0) {
-        StringUtils::SafeCopy(m_vehicle_name, sizeof(m_vehicle_name), vehicleName);
-    }
-
-    if (trackName && strcmp(m_track_name, trackName) != 0) {
-        StringUtils::SafeCopy(m_track_name, sizeof(m_track_name), trackName);
-    }
-
-    return seeded;
-}
-
 void FFBEngine::ResetNormalization() {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
-    m_warned_invalid_range = false; // Issue #218: Reset warning on manual normalization reset
+    m_metadata.ResetWarnings(); // Issue #218: Reset warning on manual normalization reset
 
     // 1. Structural Normalization Reset (Stage 1)
     // If disabled, we return to the user's manual target.
@@ -1673,7 +1487,7 @@ void FFBEngine::ResetNormalization() {
 
     // 2. Vibration Normalization Reset (Stage 3)
     // Always return to the class-default seed load.
-    ParsedVehicleClass vclass = ParseVehicleClass(m_current_class_name.c_str(), m_vehicle_name);
+    ParsedVehicleClass vclass = ParseVehicleClass(m_metadata.GetCurrentClassName(), m_metadata.GetVehicleName());
     m_auto_peak_front_load = GetDefaultLoadForClass(vclass);
 
     // Reset static load reference
@@ -1682,7 +1496,7 @@ void FFBEngine::ResetNormalization() {
 
     // If we have a saved static load, restore it (v0.7.70 logic)
     double saved_load = 0.0;
-    if (Config::GetSavedStaticLoad(m_vehicle_name, saved_load)) {
+    if (Config::GetSavedStaticLoad(m_metadata.GetVehicleName(), saved_load)) {
         m_static_front_load = saved_load;
         m_static_load_latched = true;
     }
@@ -1714,7 +1528,7 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
         // We must multiply by the Motion Ratio to normalize the impulse back to the wheel.
         // Otherwise, prototypes (MR ~0.5) will trigger bottoming 2x as often as GTs (MR ~0.65)
         // for the exact same physical bump.
-        double mr = GetMotionRatioForClass(m_current_vclass);
+        double mr = GetMotionRatioForClass(m_metadata.GetCurrentClass());
 
         double dForceL = ((data->mWheel[0].mSuspForce - m_prev_susp_force[0]) * mr) / ctx.dt;
         double dForceR = ((data->mWheel[1].mSuspForce - m_prev_susp_force[1]) * mr) / ctx.dt;

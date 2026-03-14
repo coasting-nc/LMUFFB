@@ -108,7 +108,7 @@ void FFBThread() {
             bool in_realtime_phys = false;
             if (g_ffb_active && GameConnector::Get().IsConnected()) {
                 GameConnector::Get().CopyTelemetry(g_localData);
-                g_engine.UpdateMetadata(g_localData); // Update names/classes immediately
+                g_engine.m_metadata.UpdateMetadata(g_localData); // Update names/classes immediately
 
                 in_realtime_phys = GameConnector::Get().IsInRealtime();
                 long current_session = GameConnector::Get().GetSessionType();
@@ -186,9 +186,9 @@ void FFBThread() {
 
                     // --- LOST FRAME DETECTION (Issue #303) ---
                     static double last_telem_et = -1.0;
-                    if (g_engine.m_stutter_safety_enabled && last_telem_et > 0.0 && (g_localData.telemetry.telemInfo[idx].mElapsedTime - last_telem_et) > (g_localData.telemetry.telemInfo[idx].mDeltaTime * g_engine.m_stutter_threshold)) {
+                    if (g_engine.m_safety.m_stutter_safety_enabled && last_telem_et > 0.0 && (g_localData.telemetry.telemInfo[idx].mElapsedTime - last_telem_et) > (g_localData.telemetry.telemInfo[idx].mDeltaTime * g_engine.m_safety.m_stutter_threshold)) {
                         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-                        g_engine.TriggerSafetyWindow("Lost Frames");
+                        g_engine.m_safety.TriggerSafetyWindow("Lost Frames");
                     }
                     last_telem_et = g_localData.telemetry.telemInfo[idx].mElapsedTime;
 
@@ -242,7 +242,7 @@ void FFBThread() {
                         mDtMon.Update(pPlayerTelemetry->mDeltaTime);
 
                         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-                        bool full_allowed = g_engine.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase) && is_driving;
+                        bool full_allowed = g_engine.m_safety.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase) && is_driving;
 
                         force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025, scoring.mControl);
 
@@ -254,7 +254,7 @@ void FFBThread() {
                         // Safety Layer (v0.7.49): Slew Rate Limiting (400Hz)
                         // Applied before up-sampling to prevent reconstruction artifacts on spikes.
                         bool restricted = !full_allowed || (scoring.mFinishStatus != 0);
-                        force_physics = g_engine.ApplySafetySlew(force_physics, 0.0025, restricted);
+                        force_physics = g_engine.m_safety.ApplySafetySlew(force_physics, 0.0025, restricted);
 
                         should_output = true;
                     }
@@ -263,7 +263,7 @@ void FFBThread() {
             
             if (!should_output) {
                 std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-                force_physics = g_engine.ApplySafetySlew(0.0, 0.0025, true);
+                force_physics = g_engine.m_safety.ApplySafetySlew(0.0, 0.0025, true);
             }
             current_physics_force = force_physics;
 

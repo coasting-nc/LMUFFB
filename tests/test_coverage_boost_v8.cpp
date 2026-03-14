@@ -8,7 +8,7 @@ TEST_CASE(test_ffb_engine_control_transition_extended, "Safety") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mElapsedTime = 1.0;
 
-    // 1. First frame (m_safety.last_mControl = -2)
+    // 1. First frame (m_safety.m_safety.last_mControl = -2)
     // Should NOT trigger "Control Transition"
     engine.calculate_force(&data, "GT3", "911", 0.0f, true, 0.0, 0 /* PLAYER */);
     ASSERT_EQ(FFBEngineTestAccess::GetSafety(engine).last_mControl, 0);
@@ -30,7 +30,7 @@ TEST_CASE(test_ffb_engine_mute_initialization_branch, "Safety") {
     
     // mElapsedTime = 0 triggers "Initialization" reason in LogFile
     data.mElapsedTime = 0.0;
-    engine.m_safety.last_allowed = true;
+    engine.m_safety.SetLastAllowed(true);
     engine.calculate_force(&data, "GT3", "911", 0.0f, false);
     ASSERT_FALSE(FFBEngineTestAccess::GetSafety(engine).last_allowed);
 }
@@ -228,7 +228,7 @@ TEST_CASE(test_ffb_engine_safety_seeded_branch, "Safety") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     
     // Trigger safety window
-    engine.TriggerSafetyWindow("Test");
+    engine.m_safety.TriggerSafetyWindow("Test");
     ASSERT_TRUE(FFBEngineTestAccess::GetSafety(engine).safety_timer > 0.0);
     ASSERT_FALSE(FFBEngineTestAccess::GetSafety(engine).safety_is_seeded);
     

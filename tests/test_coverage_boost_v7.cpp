@@ -7,10 +7,10 @@ TEST_CASE(test_safety_slew_spikes, "Safety") {
     InitializeEngine(engine);
     
     // Setup for spike detection
-    engine.m_immediate_spike_threshold = 1000.0f;
-    engine.m_spike_detection_threshold = 500.0f;
-    engine.m_safety_window_duration = 1.0f;
-    engine.m_safety_slew_full_scale_time_s = 0.5f;
+    engine.m_safety.m_immediate_spike_threshold = 1000.0f;
+    engine.m_safety.m_spike_detection_threshold = 500.0f;
+    engine.m_safety.m_safety_window_duration = 1.0f;
+    engine.m_safety.m_safety_slew_full_scale_time_s = 0.5f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mElapsedTime = 10.0;
@@ -18,7 +18,7 @@ TEST_CASE(test_safety_slew_spikes, "Safety") {
     // 1. Massive Spike
     // target_force = 1.0, m_last_output_force = 0.0, dt = 0.0001
     // requested_rate = 1.0 / 0.0001 = 10000.0 > 1000.0
-    double output = engine.ApplySafetySlew(1.0, 0.0001, false);
+    double output = engine.m_safety.ApplySafetySlew(1.0, 0.0001, false);
     
     ASSERT_GT(FFBEngineTestAccess::GetSafety(engine).safety_timer, 0.0);
     ASSERT_EQ_STR(FFBEngineTestAccess::GetSafety(engine).last_reset_reason, "Massive Spike");
@@ -30,13 +30,13 @@ TEST_CASE(test_safety_slew_spikes, "Safety") {
     // 3. High Spike (sustained 5 frames)
     // requested_rate = 0.06 / 0.0001 = 600.0 (between 500 and 1000)
     for (int i = 0; i < 4; i++) {
-        engine.ApplySafetySlew(engine.m_last_output_force + 0.06, 0.0001, false);
+        engine.m_safety.ApplySafetySlew(0.06, 0.0, 0.0001, false, 0.0);
         ASSERT_EQ(FFBEngineTestAccess::GetSafety(engine).safety_timer, 0.0);
         ASSERT_EQ(FFBEngineTestAccess::GetSafety(engine).spike_counter, i + 1);
     }
     
     // 5th frame triggers it
-    engine.ApplySafetySlew(engine.m_last_output_force + 0.06, 0.0001, false);
+    engine.m_safety.ApplySafetySlew(0.06, 0.0, 0.0001, false, 0.0);
     ASSERT_GT(FFBEngineTestAccess::GetSafety(engine).safety_timer, 0.0);
     ASSERT_EQ_STR(FFBEngineTestAccess::GetSafety(engine).last_reset_reason, "High Spike");
     ASSERT_EQ(FFBEngineTestAccess::GetSafety(engine).spike_counter, 0);
@@ -46,9 +46,9 @@ TEST_CASE(test_safety_slew_spikes, "Safety") {
     FFBEngineTestAccess::GetTorqueStats(engine).Update(0.0); // Not strictly needed but for safety
     // Manually set counter since we don't have a setter
     // We can't set it easily without adding another accessor, but we can trigger it
-    for(int i=0; i<3; i++) engine.ApplySafetySlew(engine.m_last_output_force + 0.06, 0.0001, false);
+    for(int i=0; i<3; i++) engine.m_safety.ApplySafetySlew(0.06, 0.0, 0.0001, false, 0.0);
     ASSERT_EQ(FFBEngineTestAccess::GetSafety(engine).spike_counter, 3);
-    engine.ApplySafetySlew(engine.m_last_output_force + 0.01, 0.0001, false); // Rate = 100 < 500
+    engine.m_safety.ApplySafetySlew(0.01, 0.0, 0.0001, false, 0.0); // Rate = 100 < 500
     ASSERT_EQ(FFBEngineTestAccess::GetSafety(engine).spike_counter, 2);
 }
 
@@ -62,22 +62,22 @@ TEST_CASE(test_safety_window_trigger_spam, "Safety") {
     engine.calculate_force(&data, "GT3", "911", 0.0f, true);
 
     // Trigger once
-    engine.TriggerSafetyWindow("Test Reason");
+    engine.m_safety.TriggerSafetyWindow("Test Reason");
     double first_timer = FFBEngineTestAccess::GetSafety(engine).safety_timer;
     ASSERT_GT(first_timer, 0.0);
     ASSERT_EQ_STR(FFBEngineTestAccess::GetSafety(engine).last_reset_reason, "Test Reason");
 
     // Trigger again with same reason immediately - should NOT update log time (internal logic hit)
-    engine.TriggerSafetyWindow("Test Reason");
+    engine.m_safety.TriggerSafetyWindow("Test Reason");
     
     // Trigger with different reason - should update reason
-    engine.TriggerSafetyWindow("New Reason");
+    engine.m_safety.TriggerSafetyWindow("New Reason");
     ASSERT_EQ_STR(FFBEngineTestAccess::GetSafety(engine).last_reset_reason, "New Reason");
 
     // Trigger after 1.1 seconds with same reason - should update (spam prevention time passed)
     data.mElapsedTime = 11.2;
     engine.calculate_force(&data, "GT3", "911", 0.0f, true);
-    engine.TriggerSafetyWindow("New Reason");
+    engine.m_safety.TriggerSafetyWindow("New Reason");
 }
 
 TEST_CASE(test_ffb_allowed_dq_and_garage, "Safety") {
@@ -88,30 +88,30 @@ TEST_CASE(test_ffb_allowed_dq_and_garage, "Safety") {
     scoring.mFinishStatus = 0; // NONE
     scoring.mInGarageStall = false;
 
-    ASSERT_TRUE(engine.IsFFBAllowed(scoring, 0));
+    ASSERT_TRUE(engine.m_safety.IsFFBAllowed(scoring, 0));
 
     // DQ status
     scoring.mFinishStatus = 3; // DQ
-    ASSERT_FALSE(engine.IsFFBAllowed(scoring, 0));
+    ASSERT_FALSE(engine.m_safety.IsFFBAllowed(scoring, 0));
 
     // Garage status
     scoring.mFinishStatus = 0;
     scoring.mInGarageStall = true;
-    ASSERT_FALSE(engine.IsFFBAllowed(scoring, 0));
+    ASSERT_FALSE(engine.m_safety.IsFFBAllowed(scoring, 0));
     
     // Non-player control
     scoring.mInGarageStall = false;
     scoring.mControl = 1; // AI
-    ASSERT_FALSE(engine.IsFFBAllowed(scoring, 0));
+    ASSERT_FALSE(engine.m_safety.IsFFBAllowed(scoring, 0));
 }
 
 TEST_CASE(test_apply_safety_slew_non_finite, "Safety") {
     FFBEngine engine;
     // dt = 0.01
-    double out = engine.ApplySafetySlew(std::nan(""), 0.01, false);
+    double out = engine.m_safety.ApplySafetySlew(std::nan(""), 0.01, false);
     ASSERT_EQ(out, 0.0);
     
-    out = engine.ApplySafetySlew(std::numeric_limits<double>::infinity(), 0.01, false);
+    out = engine.m_safety.ApplySafetySlew(std::numeric_limits<double>::infinity(), 0.01, false);
     ASSERT_EQ(out, 0.0);
 }
 
@@ -240,7 +240,7 @@ TEST_CASE(test_calculate_force_transitions, "Safety") {
     data.mElapsedTime = 1.0;
     
     // 1. FFB Unmuted
-    engine.m_safety.last_allowed = false;
+    engine.m_safety.SetLastAllowed(false);
     engine.calculate_force(&data, "GT3", "911", 0.0f, true);
     ASSERT_TRUE(FFBEngineTestAccess::GetSafety(engine).last_allowed);
     ASSERT_GT(FFBEngineTestAccess::GetSafety(engine).safety_timer, 0.0);

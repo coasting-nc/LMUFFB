@@ -361,7 +361,7 @@ TEST_CASE(test_main_loop_logic_coverage, "System") {
     double force = engine.calculate_force(&data, "GT3", "911 GT3 R", 0.5f, true);
     ASSERT_TRUE(std::isfinite(force));
 
-    double safe_force = engine.ApplySafetySlew(force, 0.0025, false);
+    double safe_force = engine.m_safety.ApplySafetySlew(force, 0.0025, false);
     ASSERT_TRUE(std::isfinite(safe_force));
 
     // Simulate Config save request exchange
