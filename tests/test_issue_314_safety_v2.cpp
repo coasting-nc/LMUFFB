@@ -11,6 +11,7 @@ void test_immediate_spike_detection() {
 
     FFBEngine engine;
     InitializeEngine(engine);
+    engine.m_safety.m_safety_window_duration = 2.0f;
     FFBEngineTestAccess::ResetSafety(engine);
 
     // Large jump: 0 to 5.0 in 2.5ms = 2000 units/s
@@ -29,6 +30,7 @@ void test_safety_timer_reset() {
 
     FFBEngine engine;
     InitializeEngine(engine);
+    engine.m_safety.m_safety_window_duration = 2.0f;
     FFBEngineTestAccess::ResetSafety(engine);
 
     // Initial trigger
@@ -50,6 +52,7 @@ void test_safety_exit_state() {
 
     FFBEngine engine;
     InitializeEngine(engine);
+    engine.m_safety.m_safety_window_duration = 2.0f;
     FFBEngineTestAccess::ResetSafety(engine);
 
     // Trigger safety
@@ -73,6 +76,7 @@ void test_safety_restrictiveness() {
 
     FFBEngine engine;
     InitializeEngine(engine);
+    engine.m_safety.m_safety_window_duration = 2.0f;
     engine.m_gain = 1.0f;
     engine.m_wheelbase_max_nm = 10.0f;
     engine.m_target_rim_nm = 10.0f;
@@ -136,6 +140,7 @@ void test_safety_reentry_smoothing() {
 
     FFBEngine engine;
     InitializeEngine(engine);
+    engine.m_safety.m_safety_window_duration = 2.0f;
     engine.m_gain = 1.0f;
     engine.m_wheelbase_max_nm = 10.0f;
     engine.m_target_rim_nm = 10.0f;

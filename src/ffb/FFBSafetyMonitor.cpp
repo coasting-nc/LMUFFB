@@ -43,6 +43,10 @@ void FFBSafetyMonitor::TriggerSafetyWindow(const char* reason, double now) {
     }
 
     safety_timer = (double)m_safety_window_duration;
+    if (m_safety_window_duration <= 0.001f) {
+        safety_timer = 0.0; // Ensure it's exactly 0 if disabled
+    }
+
     safety_is_seeded = false;
     spike_counter = 0; 
 }

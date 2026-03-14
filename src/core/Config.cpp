@@ -554,7 +554,7 @@ void Config::LoadPresets() {
         p.bottoming_method = 0;
         p.rest_api_enabled = true;
         p.rest_api_port = 6397;
-        p.safety_window_duration = 2.0f;
+        p.safety_window_duration = 0.0f;
         p.safety_gain_reduction = 0.3f;
         p.safety_smoothing_tau = 0.2f;
         p.spike_detection_threshold = 500.0f;
