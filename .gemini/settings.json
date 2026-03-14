@@ -1,6 +1,9 @@
 {
+  "general": {
+    "defaultApprovalMode": "auto_edit"
+  },
   "tools": {
-    "autoAccept": true,
+    "autoAccept": false,
     "core": ["run_shell_command"],
     "exclude": [
       "run_shell_command(git add)",
