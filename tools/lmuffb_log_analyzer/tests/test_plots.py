@@ -87,3 +87,13 @@ def test_plot_generation(sample_df, base_metadata, tmp_path):
     grip_path = tmp_path / "grip_diag.png"
     result = plot_grip_estimation_diagnostic(sample_df, base_metadata, output_path=str(grip_path), show=False)
     assert Path(result).exists()
+
+def test_plot_slip_vs_latg_legacy(sample_df, tmp_path):
+    # Do NOT add CalcSlipAngleFront to simulate a legacy CSV where the column is named calc_slip_angle_front
+    if 'CalcSlipAngleFront' in sample_df.columns:
+        sample_df = sample_df.drop(columns=['CalcSlipAngleFront'])
+        
+    tc_path = tmp_path / "tire_curve_legacy.png"
+    result = plot_slip_vs_latg(sample_df, output_path=str(tc_path), show=False)
+    assert Path(result).exists()
+    assert result == str(tc_path)

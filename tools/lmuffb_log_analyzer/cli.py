@@ -218,87 +218,103 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
         
         def update_status(msg):
             progress.update(task, description=f" {logfile_stem}: {msg}")
-
+        # Note: res is the output path string if successful, empty string if skipped
         # Time series plot
         ts_path = output_path / f"{logfile_stem}_timeseries.png"
-        plot_slope_timeseries(df, metadata, str(ts_path), show=False, status_callback=update_status)
-        console.print(f"  [OK] Created: {ts_path}")
+        res = plot_slope_timeseries(df, metadata, str(ts_path), show=False, status_callback=update_status)
+        if res: console.print(f"  [OK] Created: {res}")
+        else: console.print(f"  [SKIP] Slope Timeseries")
         
         if plot_all:
             # Tire curve
             tc_path = output_path / f"{logfile_stem}_tire_curve.png"
-            plot_slip_vs_latg(df, str(tc_path), show=False, status_callback=update_status)
-            console.print(f"  [OK] Created: {tc_path}")
+            res = plot_slip_vs_latg(df, str(tc_path), show=False, status_callback=update_status)
+            if res: console.print(f"  [OK] Created: {res}")
+            else: console.print(f"  [SKIP] Tire Curve")
             
             # dAlpha histogram
             hist_path = output_path / f"{logfile_stem}_dalpha_hist.png"
-            plot_dalpha_histogram(df, str(hist_path), show=False, status_callback=update_status)
-            console.print(f"  [OK] Created: {hist_path}")
+            res = plot_dalpha_histogram(df, str(hist_path), show=False, status_callback=update_status)
+            if res: console.print(f"  [OK] Created: {res}")
+            else: console.print(f"  [SKIP] dAlpha Histogram")
 
             # Slope correlation
             corr_path = output_path / f"{logfile_stem}_slope_corr.png"
-            plot_slope_correlation(df, str(corr_path), show=False, status_callback=update_status)
-            console.print(f"  [OK] Created: {corr_path}")
+            res = plot_slope_correlation(df, str(corr_path), show=False, status_callback=update_status)
+            if res: console.print(f"  [OK] Created: {res}")
+            else: console.print(f"  [SKIP] Slope Correlation")
 
             # Yaw Diagnostic
             yaw_path = output_path / f"{logfile_stem}_yaw_diag.png"
-            plot_yaw_diagnostic(df, output_path=str(yaw_path), show=False, status_callback=update_status)
-            console.print(f"  [OK] Created: {yaw_path}")
+            res = plot_yaw_diagnostic(df, output_path=str(yaw_path), show=False, status_callback=update_status)
+            if res: console.print(f"  [OK] Created: {res}")
+            else: console.print(f"  [SKIP] Yaw Diagnostic")
 
             # System Health
             health_path = output_path / f"{logfile_stem}_health.png"
-            plot_system_health(df, str(health_path), show=False, status_callback=update_status)
-            console.print(f"  [OK] Created: {health_path}")
+            res = plot_system_health(df, str(health_path), show=False, status_callback=update_status)
+            if res: console.print(f"  [OK] Created: {res}")
+            else: console.print(f"  [SKIP] System Health")
 
             # FFT
             fft_path = output_path / f"{logfile_stem}_yaw_fft.png"
-            plot_yaw_fft(df, str(fft_path), show=False, status_callback=update_status)
-            console.print(f"  [OK] Created: {fft_path}")
+            res = plot_yaw_fft(df, str(fft_path), show=False, status_callback=update_status)
+            if res: console.print(f"  [OK] Created: {res}")
+            else: console.print(f"  [SKIP] Yaw FFT")
 
             # Thrashing
             thrash_path = output_path / f"{logfile_stem}_yaw_thrashing.png"
-            plot_threshold_thrashing(df, output_path=str(thrash_path), show=False, status_callback=update_status)
-            console.print(f"  [OK] Created: {thrash_path}")
+            res = plot_threshold_thrashing(df, output_path=str(thrash_path), show=False, status_callback=update_status)
+            if res: console.print(f"  [OK] Created: {res}")
+            else: console.print(f"  [SKIP] Threshold Thrashing")
 
             # Suspension Correlation
             susp_path = output_path / f"{logfile_stem}_susp_corr.png"
-            plot_suspension_yaw_correlation(df, str(susp_path), show=False, status_callback=update_status)
-            console.print(f"  [OK] Created: {susp_path}")
+            res = plot_suspension_yaw_correlation(df, str(susp_path), show=False, status_callback=update_status)
+            if res: console.print(f"  [OK] Created: {res}")
+            else: console.print(f"  [SKIP] Suspension Correlation")
 
             # Bottoming
             bottom_path = output_path / f"{logfile_stem}_bottoming.png"
-            plot_bottoming_diagnostic(df, str(bottom_path), show=False, status_callback=update_status)
-            console.print(f"  [OK] Created: {bottom_path}")
+            res = plot_bottoming_diagnostic(df, str(bottom_path), show=False, status_callback=update_status)
+            if res: console.print(f"  [OK] Created: {res}")
+            else: console.print(f"  [SKIP] Bottoming Diagnostic")
 
             # Clipping
             clip_path = output_path / f"{logfile_stem}_clipping.png"
-            plot_clipping_components(df, str(clip_path), show=False, status_callback=update_status)
-            console.print(f"  [OK] Created: {clip_path}")
+            res = plot_clipping_components(df, str(clip_path), show=False, status_callback=update_status)
+            if res: console.print(f"  [OK] Created: {res}")
+            else: console.print(f"  [SKIP] Clipping Components")
 
             # Pull Detector
             pull_path = output_path / f"{logfile_stem}_pull_detector.png"
-            plot_pull_detector(df, str(pull_path), show=False, status_callback=update_status)
-            console.print(f"  [OK] Created: {pull_path}")
+            res = plot_pull_detector(df, str(pull_path), show=False, status_callback=update_status)
+            if res: console.print(f"  [OK] Created: {res}")
+            else: console.print(f"  [SKIP] Pull Detector")
 
             # Unopposed Force
             unopposed_path = output_path / f"{logfile_stem}_unopposed.png"
-            plot_unopposed_force(df, str(unopposed_path), show=False, status_callback=update_status)
-            console.print(f"  [OK] Created: {unopposed_path}")
+            res = plot_unopposed_force(df, str(unopposed_path), show=False, status_callback=update_status)
+            if res: console.print(f"  [OK] Created: {res}")
+            else: console.print(f"  [SKIP] Unopposed Force")
 
             # Lateral Diagnostic
             lat_path = output_path / f"{logfile_stem}_lateral_diag.png"
-            plot_lateral_diagnostic(df, metadata, str(lat_path), show=False, status_callback=update_status)
-            console.print(f"  [OK] Created: {lat_path}")
+            res = plot_lateral_diagnostic(df, metadata, str(lat_path), show=False, status_callback=update_status)
+            if res: console.print(f"  [OK] Created: {res}")
+            else: console.print(f"  [SKIP] Lateral Diagnostic")
 
             # Longitudinal Diagnostic
             long_path = output_path / f"{logfile_stem}_longitudinal_diag.png"
-            plot_longitudinal_diagnostic(df, metadata, str(long_path), show=False, status_callback=update_status)
-            console.print(f"  [OK] Created: {long_path}")
+            res = plot_longitudinal_diagnostic(df, metadata, str(long_path), show=False, status_callback=update_status)
+            if res: console.print(f"  [OK] Created: {res}")
+            else: console.print(f"  [SKIP] Longitudinal Diagnostic")
 
             # Raw Telemetry Health
             health_raw_path = output_path / f"{logfile_stem}_raw_telemetry.png"
-            plot_raw_telemetry_health(df, str(health_raw_path), show=False, status_callback=update_status)
-            console.print(f"  [OK] Created: {health_raw_path}")
+            res = plot_raw_telemetry_health(df, str(health_raw_path), show=False, status_callback=update_status)
+            if res: console.print(f"  [OK] Created: {res}")
+            else: console.print(f"  [SKIP] Raw Telemetry Health")
 
             # Load Estimation Diagnostic
             load_diag_path = output_path / f"{logfile_stem}_load_estimation.png"

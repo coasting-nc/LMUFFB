@@ -944,41 +944,62 @@ def plot_slip_vs_latg(
 ) -> str:
     """
     Scatter plot of Slip Angle vs Lateral G (tire curve visualization).
+    Uses the 95th percentile envelope to find the true peak on encrypted cars.
     """
     if status_callback: status_callback("Initializing tire curve plot...")
-    fig, ax = plt.subplots(figsize=(10, 8))
     
-    slip_col = 'calc_slip_angle_front' if 'calc_slip_angle_front' in df.columns else None
-    if slip_col is None:
+    slip_col = 'CalcSlipAngleFront' if 'CalcSlipAngleFront' in df.columns else None
+    if slip_col is None or 'LatAccel' not in df.columns:
         return ""
     
-    # Downsample for performance (crucial for ax.scatter)
-    if status_callback: status_callback("Downsampling data...")
-    plot_df = _downsample_df(df)
+    fig, ax = plt.subplots(figsize=(12, 8))
     
-    slip = np.abs(plot_df[slip_col])
-    lat_g = np.abs(plot_df['LatAccel'] / 9.81) if 'LatAccel' in plot_df.columns else None
+    # Filter out low speeds where slip angles go to infinity
+    plot_df = df[df['Speed'] > 5.0].copy()
+    downsampled_df = _downsample_df(plot_df, max_points=15000)
     
-    if lat_g is None:
-        return ""
-    
-    # Color by speed
-    speed = plot_df['Speed'] * 3.6 if 'Speed' in plot_df.columns else None
+    slip = np.abs(downsampled_df[slip_col])
+    lat_g = np.abs(downsampled_df['LatAccel'] / 9.81)
+    speed = downsampled_df['Speed'] * 3.6 if 'Speed' in downsampled_df.columns else None
     
     if status_callback: status_callback("Rendering scatter plot...")
-    scatter = ax.scatter(slip, lat_g, c=speed, cmap='viridis', alpha=0.3, s=2)
+    scatter = ax.scatter(slip, lat_g, c=speed, cmap='viridis', alpha=0.3, s=5, label='Raw Telemetry Points')
     
-    ax.set_xlabel('Slip Angle (rad)')
-    ax.set_ylabel('Lateral G')
-    ax.set_title('Tire Curve: Slip Angle vs Lateral G')
+    # Add Upper Envelope (The Empirical G-Curve)
+    if len(plot_df) > 100:
+        bins = np.arange(0, 0.25, 0.005)
+        plot_df['SlipBin'] = pd.cut(np.abs(plot_df[slip_col]), bins)
+        
+        # Use the 95th percentile to trace the top edge of the scatter cloud
+        # Require at least 10 samples in a bin to prevent outlier spikes
+        binned_envelope = plot_df.groupby('SlipBin')['LatAccel'].apply(
+            lambda x: np.percentile(np.abs(x), 95) if len(x) > 10 else np.nan
+        ) / 9.81
+        
+        bin_centers = binned_envelope.index.categories.mid
+        valid_idx = ~binned_envelope.isna()
+        
+        ax.plot(bin_centers[valid_idx], binned_envelope[valid_idx], color='black', linewidth=3, label='Upper Envelope (95th Pct)')
+        
+        # Find and annotate the peak
+        if valid_idx.any():
+            peak_idx = binned_envelope[valid_idx].argmax()
+            peak_slip = bin_centers[valid_idx][peak_idx]
+            peak_g = binned_envelope[valid_idx].iloc[peak_idx]
+            
+            ax.plot(peak_slip, peak_g, 'r*', markersize=15, label=f'Peak Lat G (~{peak_slip:.3f} rad)')
+            ax.axvline(peak_slip, color='red', linestyle='--', alpha=0.5)
+
+    ax.set_xlabel('Absolute Slip Angle (rad)')
+    ax.set_ylabel('Absolute Lateral G')
+    ax.set_title('Physical Tire Curve: Slip Angle vs Lateral G (Upper Envelope)')
+    ax.set_xlim(0, 0.25)
     ax.grid(True, alpha=0.3)
     
     if speed is not None:
         cbar = plt.colorbar(scatter, ax=ax)
         cbar.set_label('Speed (km/h)')
     
-    # Mark the theoretical peak region
-    ax.axvline(0.08, color='#F44336', linestyle='--', alpha=0.5, label='Typical Peak (~0.08 rad)')
     _safe_legend(ax)
     
     plt.tight_layout()
@@ -994,7 +1015,7 @@ def plot_slip_vs_latg(
     
     return ""
 
-
+    
 def plot_dalpha_histogram(
     df: pd.DataFrame,
     output_path: Optional[str] = None,

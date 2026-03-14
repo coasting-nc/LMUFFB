@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+---
+## [0.7.180]
+
+- Fixes to plot_slip_vs_latg, fixes to plots error messages
 
 ---
 
