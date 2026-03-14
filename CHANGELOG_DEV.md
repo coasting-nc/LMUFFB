@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.186]
+- **Test Infrastructure: Windows Performance Optimization**:
+  - Optimized `test_main_app_logic` to handle Windows scheduler penalties by replacing high-frequency sleeps with `std::this_thread::yield()`.
+  - Added internal profiling (sub-timing) to `test_main_app_logic` to identify phase-specific bottlenecks.
+  - Updated `test_scaling_and_performance.md` with analysis of Windows sleep resolution and profiling strategies.
+  - Added `compilation_speed_analysis.md`: Analysis of CI build times and proposed compiler optimizations (PCH, Unity builds).
+
+## [0.7.185]
+- **Test Infrastructure: Performance Timing and Optimization**:
+  - Implemented high-precision test duration measurement using `std::chrono::high_resolution_clock`.
+  - Added a "Slowest Tests" summary to the C++ test runner, highlighting the top 5 outliers in each run.
+  - **Optimized `test_main_app_logic`**: Reduced runtime from ~14 seconds to ~0.5 seconds (28x speedup) by implementing a mockable clock system (`TimeUtils`).
+  - **New Developer Documentation**:
+    - `test_performance_timing.md`: Details the instrumentation strategy and C++ standards used.
+    - `test_scaling_and_performance.md`: Analyzes parallel execution feasibility and outlines optimization paths for the slowest remaining tests.
+  - Centralized shared test data structures in `tests/test_performance_types.h`.
+
 ## [0.7.184]
 - **Refactoring: Non-FFB Components Extracted from FFBEngine**:
   - Extracted metadata, safety, and diagnostic responsibilities into dedicated managers:

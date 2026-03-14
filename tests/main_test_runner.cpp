@@ -4,7 +4,12 @@
 #include <thread>
 #include <chrono>
 #include <filesystem>
+#include <iomanip>
+#include <algorithm>
+#include <vector>
+#include <string>
 #include "src/core/Config.h"
+#include "test_performance_types.h"
 #include "src/logging/Logger.h"
 #include "src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 
@@ -19,12 +24,17 @@ std::recursive_mutex g_engine_mutex;
 FFBEngine g_engine;
 SharedMemoryObjectOut g_localData;
 
+// Mock time globals
+std::chrono::steady_clock::time_point g_mock_time;
+bool g_use_mock_time = false;
+
 namespace FFBEngineTests { 
     extern int g_tests_passed; 
     extern int g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO; 
     extern int g_test_cases_run;
     extern int g_test_cases_passed;
     extern int g_test_cases_failed;
+    extern std::vector<TestDuration> g_test_durations;
     void Run();
     void ParseTagArguments(int argc, char* argv[]);
 }
@@ -64,6 +74,24 @@ int main(int argc, char* argv[]) noexcept {
     std::cout << "==============================================" << std::endl;
     std::cout << "  TEST CASES   : " << FFBEngineTests::g_test_cases_passed << "/" << FFBEngineTests::g_test_cases_run << std::endl;
     std::cout << "  ASSERTIONS   : " << total_passed << " passed, " << total_failed << " failed" << std::endl;
+
+    if (!FFBEngineTests::g_test_durations.empty()) {
+        std::cout << "----------------------------------------------" << std::endl;
+        std::cout << "           SLOWEST TESTS (TOP 5)              " << std::endl;
+        std::cout << "----------------------------------------------" << std::endl;
+
+        auto slowest = FFBEngineTests::g_test_durations;
+        std::sort(slowest.begin(), slowest.end(), [](const auto& a, const auto& b) {
+            return a.duration_ms > b.duration_ms;
+        });
+
+        int count = 0;
+        for (const auto& test : slowest) {
+            if (count++ >= 5) break;
+            std::cout << "  " << count << ". " << std::left << std::setw(30) << test.name
+                      << " : " << std::fixed << std::setprecision(2) << test.duration_ms << " ms" << std::endl;
+        }
+    }
     std::cout << "==============================================" << std::endl;
 
     // Ensure output is visible on Windows before console closes

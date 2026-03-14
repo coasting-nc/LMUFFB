@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <atomic>
+#include "../utils/TimeUtils.h"
 
 /**
  * @brief Simple utility to monitor event frequency (Hz) over a 1-second sliding window.
@@ -10,14 +11,14 @@
 class RateMonitor {
 public:
     RateMonitor() : m_count(0), m_lastRateScaled(0) {
-        m_startTime = std::chrono::steady_clock::now();
+        m_startTime = TimeUtils::GetTime();
     }
 
     /**
      * @brief Record a single event occurrence.
      */
     void RecordEvent() {
-        RecordEventAt(std::chrono::steady_clock::now());
+        RecordEventAt(TimeUtils::GetTime());
     }
 
     /**
