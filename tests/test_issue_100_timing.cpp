@@ -1,6 +1,6 @@
 #include "test_ffb_common.h"
-#include "src/FFBEngine.h"
-#include "src/GuiLayer.h"
+#include "src/ffb/FFBEngine.h"
+#include "src/gui/GuiLayer.h"
 #include <chrono>
 #include <thread>
 #include <atomic>

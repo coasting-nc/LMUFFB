@@ -1,5 +1,5 @@
 #include "test_ffb_common.h"
-#include "../src/AsyncLogger.h"
+#include "../src/logging/AsyncLogger.h"
 #include <filesystem>
 #include <iostream>
 

@@ -4,11 +4,11 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
-#include "lmu_sm_interface/LinuxMock.h"
+#include "io/lmu_sm_interface/LinuxMock.h"
 #endif
 
-#include "lmu_sm_interface/LmuSharedMemoryWrapper.h"
-#include "lmu_sm_interface/SafeSharedMemoryLock.h"
+#include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
+#include "io/lmu_sm_interface/SafeSharedMemoryLock.h"
 #include <mutex>
 #include <atomic>
 #include <cstring>

@@ -1,17 +1,17 @@
 #include "test_ffb_common.h"
-#include "../src/Logger.h"
-#include "../src/VehicleUtils.h"
-#include "../src/lmu_sm_interface/SafeSharedMemoryLock.h"
-#include "../src/GameConnector.h"
-#include "../src/DirectInputFFB.h"
-#include "../src/GuiLayer.h"
-#include "../src/GuiPlatform.h"
+#include "../src/logging/Logger.h"
+#include "../src/physics/VehicleUtils.h"
+#include "../src/io/lmu_sm_interface/SafeSharedMemoryLock.h"
+#include "../src/io/GameConnector.h"
+#include "../src/ffb/DirectInputFFB.h"
+#include "../src/gui/GuiLayer.h"
+#include "../src/gui/GuiPlatform.h"
 #include "imgui.h"
 #include <thread>
 #include <fstream>
 
 #ifndef _WIN32
-#include "../src/lmu_sm_interface/LinuxMock.h"
+#include "../src/io/lmu_sm_interface/LinuxMock.h"
 #endif
 
 class GuiLayerTestAccess {

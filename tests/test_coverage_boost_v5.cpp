@@ -5,15 +5,15 @@
 #include <cstring>
 #include <string>
 #include <utility>
-#include "../src/lmu_sm_interface/LmuSharedMemoryWrapper.h"
-#include "../src/lmu_sm_interface/SafeSharedMemoryLock.h"
-#include "../src/Logger.h"
-#include "../src/GuiWidgets.h"
-#include "../src/GuiPlatform.h"
-#include "../src/Config.h"
+#include "../src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
+#include "../src/io/lmu_sm_interface/SafeSharedMemoryLock.h"
+#include "../src/logging/Logger.h"
+#include "../src/gui/GuiWidgets.h"
+#include "../src/gui/GuiPlatform.h"
+#include "../src/core/Config.h"
 
 #ifndef _WIN32
-#include "../src/lmu_sm_interface/LinuxMock.h"
+#include "../src/io/lmu_sm_interface/LinuxMock.h"
 #endif
 
 namespace FFBEngineTests {

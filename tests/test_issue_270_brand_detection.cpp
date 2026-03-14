@@ -1,5 +1,5 @@
 #include "test_ffb_common.h"
-#include "../src/VehicleUtils.h"
+#include "../src/physics/VehicleUtils.h"
 #include <iostream>
 
 namespace FFBEngineTests {

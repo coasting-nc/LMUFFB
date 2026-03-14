@@ -3,7 +3,7 @@
 #include "StringUtils.h"
 #include "RestApiProvider.h"
 #include "Logger.h"
-#include "lmu_sm_interface/LmuSharedMemoryWrapper.h"
+#include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include <iostream>
 #include <mutex>
 

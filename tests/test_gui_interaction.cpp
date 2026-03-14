@@ -1,11 +1,11 @@
 #include "test_ffb_common.h"
 #include "GuiWidgets.h"
 #include "imgui.h"
-#include "../src/GuiLayer.h"
-#include "../src/GameConnector.h"
+#include "../src/gui/GuiLayer.h"
+#include "../src/io/GameConnector.h"
 
 #ifndef _WIN32
-#include "../src/lmu_sm_interface/LinuxMock.h"
+#include "../src/io/lmu_sm_interface/LinuxMock.h"
 #endif
 
 static const float CONFIG_PANEL_WIDTH = 500.0f;

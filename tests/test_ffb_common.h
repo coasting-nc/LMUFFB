@@ -12,14 +12,14 @@
 #include <sstream>
 #include <functional>
 
-#include "../src/FFBEngine.h"
-#include "../src/lmu_sm_interface/InternalsPlugin.hpp"
-#include "../src/lmu_sm_interface/LmuSharedMemoryWrapper.h"
-#include "../src/Config.h"
-#include "../src/Logger.h"
-#include "../src/GameConnector.h"
-#include "../src/StringUtils.h"
-#include "../src/RestApiProvider.h"
+#include "../src/ffb/FFBEngine.h"
+#include "../src/io/lmu_sm_interface/InternalsPlugin.hpp"
+#include "../src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
+#include "../src/core/Config.h"
+#include "../src/logging/Logger.h"
+#include "../src/io/GameConnector.h"
+#include "../src/utils/StringUtils.h"
+#include "../src/io/RestApiProvider.h"
 
 class RestApiProviderTestAccess {
 public:

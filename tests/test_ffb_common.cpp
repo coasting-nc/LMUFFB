@@ -1,5 +1,5 @@
 #include "test_ffb_common.h"
-#include "../src/GameConnector.h"
+#include "../src/io/GameConnector.h"
 
 namespace FFBEngineTests {
 

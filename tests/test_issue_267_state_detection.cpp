@@ -1,6 +1,6 @@
 #include "test_ffb_common.h"
-#include "../src/GameConnector.h"
-#include "../src/lmu_sm_interface/LmuSharedMemoryWrapper.h"
+#include "../src/io/GameConnector.h"
+#include "../src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include <cstring>
 #include <chrono>
 #include <thread>

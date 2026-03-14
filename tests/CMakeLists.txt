@@ -7,13 +7,20 @@ set(CMAKE_CXX_STANDARD 17)
 # Include main source dir for headers
 include_directories(..)
 include_directories(../src)
+include_directories(../src/core)
+include_directories(../src/ffb)
+include_directories(../src/physics)
+include_directories(../src/gui)
+include_directories(../src/io)
+include_directories(../src/logging)
+include_directories(../src/utils)
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_BINARY_DIR}/src)
 
 if(NOT WIN32)
     include_directories(linux_mock)
-    include_directories(../src/lmu_sm_interface/linux_mock)
-    include_directories(../src/lmu_sm_interface)
+    include_directories(../src/io/lmu_sm_interface/linux_mock)
+    include_directories(../src/io/lmu_sm_interface)
 endif()
 
 # Combined Test Executable
@@ -123,7 +130,7 @@ set(TEST_SOURCES
     test_coverage_boost_v8.cpp
     test_coverage_boost_v9.cpp
     test_coverage_boost_v10.cpp
-    ../src/main.cpp
+    ../src/core/main.cpp
 )
 
 # ImGui Core is now always available if vendor exists

@@ -1,7 +1,7 @@
 #include "test_ffb_common.h"
 #include <fstream>
 #include <filesystem>
-#include "../src/Config.h"
+#include "../src/core/Config.h"
 #include "../src/Version.h"
 
 namespace FFBEngineTests {

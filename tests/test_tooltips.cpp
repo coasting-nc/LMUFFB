@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
-#include "../src/Tooltips.h"
+#include "../src/gui/Tooltips.h"
 #include "test_ffb_common.h"
 
 namespace FFBEngineTests {

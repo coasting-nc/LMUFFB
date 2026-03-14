@@ -1,6 +1,6 @@
 #include "test_ffb_common.h"
 #include "imgui.h"
-#include "../src/GuiLayer.h"
+#include "../src/gui/GuiLayer.h"
 
 class GuiLayerTestAccess {
 public:

@@ -4,9 +4,9 @@
 #include <thread>
 #include <chrono>
 #include <filesystem>
-#include "src/Config.h"
-#include "src/Logger.h"
-#include "src/lmu_sm_interface/LmuSharedMemoryWrapper.h"
+#include "src/core/Config.h"
+#include "src/logging/Logger.h"
+#include "src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 
 #ifdef _WIN32
 #include <windows.h>

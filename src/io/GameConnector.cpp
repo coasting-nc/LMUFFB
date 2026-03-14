@@ -1,9 +1,9 @@
 #include "GameConnector.h"
 #include "Logger.h"
 #ifndef _WIN32
-#include "lmu_sm_interface/LinuxMock.h"
+#include "io/lmu_sm_interface/LinuxMock.h"
 #endif
-#include "lmu_sm_interface/SafeSharedMemoryLock.h"
+#include "io/lmu_sm_interface/SafeSharedMemoryLock.h"
 #include <iostream>
 #include <cstring>
 #include "StringUtils.h"

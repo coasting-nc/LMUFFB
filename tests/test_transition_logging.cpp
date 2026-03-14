@@ -1,6 +1,6 @@
 #include "test_ffb_common.h"
-#include "../src/GameConnector.h"
-#include "../src/Logger.h"
+#include "../src/io/GameConnector.h"
+#include "../src/logging/Logger.h"
 #include <fstream>
 #include <string>
 #include <vector>

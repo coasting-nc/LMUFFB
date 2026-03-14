@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
-#include "src/FFBEngine.h"
+#include "src/ffb/FFBEngine.h"
 #include "tests/test_ffb_common.h"
 
 using namespace FFBEngineTests;

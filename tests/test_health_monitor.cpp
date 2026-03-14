@@ -1,5 +1,5 @@
 #include "test_ffb_common.h"
-#include "../src/HealthMonitor.h"
+#include "../src/logging/HealthMonitor.h"
 
 using namespace FFBEngineTests;
 

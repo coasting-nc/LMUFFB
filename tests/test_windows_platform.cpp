@@ -13,13 +13,13 @@
 #endif
 
 // Include headers to test
-#include "../src/DirectInputFFB.h"
-#include "../src/Config.h"
-#include "../src/GuiLayer.h"
-#include "../src/GuiPlatform.h"
-#include "../src/lmu_sm_interface/LinuxMock.h"
-#include "../src/GameConnector.h"
-#include "../src/resource.h"
+#include "../src/ffb/DirectInputFFB.h"
+#include "../src/core/Config.h"
+#include "../src/gui/GuiLayer.h"
+#include "../src/gui/GuiPlatform.h"
+#include "../src/io/lmu_sm_interface/LinuxMock.h"
+#include "../src/io/GameConnector.h"
+#include "../src/gui/resource.h"
 #include "imgui.h"
 
 #include "test_ffb_common.h"

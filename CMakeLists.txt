@@ -154,10 +154,17 @@ endif()
 
 
 if(NOT WIN32)
-    include_directories(src/lmu_sm_interface/linux_mock)
-    include_directories(src/lmu_sm_interface)
+    include_directories(src/io/lmu_sm_interface/linux_mock)
+    include_directories(src/io/lmu_sm_interface)
 endif()
 include_directories(src)
+include_directories(src/core)
+include_directories(src/ffb)
+include_directories(src/physics)
+include_directories(src/gui)
+include_directories(src/io)
+include_directories(src/logging)
+include_directories(src/utils)
 include_directories(${LZ4_DIR})
 
 # Copy icon file into build directory (Windows only)
@@ -183,9 +190,9 @@ set(LMUFFB_VERSION_STR "${LMUFFB_VERSION}")
 set(LMUFFB_VERSION_COMMA "${VERSION_MAJOR},${VERSION_MINOR},${VERSION_PATCH},0")
 
 # Auto-generate versioned files in the BUILD directory
-configure_file(src/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/src/Version.h @ONLY)
+configure_file(src/core/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/src/Version.h @ONLY)
 if(WIN32)
-    configure_file(src/res.rc.in ${CMAKE_CURRENT_BINARY_DIR}/src/res.rc @ONLY)
+    configure_file(src/gui/res.rc.in ${CMAKE_CURRENT_BINARY_DIR}/src/res.rc @ONLY)
 endif()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/src)
@@ -195,43 +202,61 @@ add_definitions(-DLMUFFB_VERSION="${LMUFFB_VERSION}")
 # Core Library (Shared between App and Tests)
 set(CORE_SOURCES
     ${LZ4_DIR}/lz4.c
-    src/GuiLayer_Common.cpp
-    src/GuiLayer.h
-    src/DXGIUtils.cpp
-    src/DXGIUtils.h
-    src/Config.cpp src/Config.h
-    src/DirectInputFFB.cpp src/DirectInputFFB.h
-    src/GameConnector.cpp src/GameConnector.h
-    src/FFBEngine.h src/FFBEngine.cpp
-    src/GripLoadEstimation.cpp
-    src/SteeringUtils.cpp
-    src/VehicleUtils.cpp
-    src/RestApiProvider.cpp
-    src/RestApiProvider.h
-    src/UpSampler.cpp
-    src/UpSampler.h
+    src/gui/GuiLayer_Common.cpp
+    src/gui/GuiLayer.h
+    src/gui/DXGIUtils.cpp
+    src/gui/DXGIUtils.h
+    src/core/Config.cpp src/core/Config.h
+    src/ffb/DirectInputFFB.cpp src/ffb/DirectInputFFB.h
+    src/io/GameConnector.cpp src/io/GameConnector.h
+    src/ffb/FFBEngine.h src/ffb/FFBEngine.cpp
+    src/physics/GripLoadEstimation.cpp
+    src/physics/SteeringUtils.cpp
+    src/physics/VehicleUtils.cpp
+    src/io/RestApiProvider.cpp
+    src/io/RestApiProvider.h
+    src/ffb/UpSampler.cpp
+    src/ffb/UpSampler.h
 )
 
 if(WIN32)
     if (NOT BUILD_HEADLESS)
-        list(APPEND CORE_SOURCES src/GuiLayer_Win32.cpp ${CMAKE_CURRENT_BINARY_DIR}/src/res.rc)
+        list(APPEND CORE_SOURCES src/gui/GuiLayer_Win32.cpp ${CMAKE_CURRENT_BINARY_DIR}/src/res.rc)
     else()
-        list(APPEND CORE_SOURCES src/GuiLayer_Win32.cpp)
+        list(APPEND CORE_SOURCES src/gui/GuiLayer_Win32.cpp)
     endif()
 else()
-    list(APPEND CORE_SOURCES src/GuiLayer_Linux.cpp)
+    list(APPEND CORE_SOURCES src/gui/GuiLayer_Linux.cpp)
 endif()
 
 # Optimized Core for the Main Application
 add_library(LMUFFB_Core STATIC ${CORE_SOURCES})
-target_include_directories(LMUFFB_Core PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/src src)
+target_include_directories(LMUFFB_Core PUBLIC 
+    ${CMAKE_CURRENT_BINARY_DIR}/src 
+    src/core
+    src/ffb
+    src/physics
+    src/gui
+    src/io
+    src/logging
+    src/utils
+)
 if(TARGET imgui_vendor)
     target_link_libraries(LMUFFB_Core PUBLIC imgui_vendor)
 endif()
 
 # Fast-Compile Core for Tests (Reduced Optimization)
 add_library(LMUFFB_Core_Fast STATIC ${CORE_SOURCES})
-target_include_directories(LMUFFB_Core_Fast PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/src src)
+target_include_directories(LMUFFB_Core_Fast PUBLIC 
+    ${CMAKE_CURRENT_BINARY_DIR}/src 
+    src/core
+    src/ffb
+    src/physics
+    src/gui
+    src/io
+    src/logging
+    src/utils
+)
 if(TARGET imgui_vendor)
     target_link_libraries(LMUFFB_Core_Fast PUBLIC imgui_vendor)
 endif()
@@ -263,8 +288,9 @@ endif()
 
 # Main Application
 set(APP_SOURCES
-    src/main.cpp
+    src/core/main.cpp
 )
+
 
 if(WIN32 AND NOT BUILD_HEADLESS)
     list(APPEND APP_SOURCES ${CMAKE_BINARY_DIR}/src/res.rc)

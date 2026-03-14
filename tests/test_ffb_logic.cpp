@@ -14,10 +14,10 @@
 #include <filesystem>
 
 // Include headers to test
-#include "../src/DirectInputFFB.h"
-#include "../src/Config.h"
-#include "../src/GuiLayer.h"
-#include "../src/GameConnector.h"
+#include "../src/ffb/DirectInputFFB.h"
+#include "../src/core/Config.h"
+#include "../src/gui/GuiLayer.h"
+#include "../src/io/GameConnector.h"
 #include "imgui.h"
 
 #include "test_ffb_common.h"

@@ -10,7 +10,7 @@
 #include <chrono>
 #include <array>
 #include <cstring>
-#include "lmu_sm_interface/InternalsPluginWrapper.h"
+#include "io/lmu_sm_interface/InternalsPluginWrapper.h"
 #include "AsyncLogger.h"
 #include "MathUtils.h"
 #include "PerfStats.h"

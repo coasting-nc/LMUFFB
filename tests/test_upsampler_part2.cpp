@@ -1,6 +1,6 @@
 #include "test_ffb_common.h"
-#include "../src/UpSampler.h"
-#include "../src/HealthMonitor.h"
+#include "../src/ffb/UpSampler.h"
+#include "../src/logging/HealthMonitor.h"
 #include <vector>
 
 namespace FFBEngineTests {

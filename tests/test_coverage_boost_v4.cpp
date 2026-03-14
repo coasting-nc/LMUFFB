@@ -1,8 +1,8 @@
 #include "test_ffb_common.h"
-#include "../src/FFBEngine.h"
-#include "../src/Config.h"
-#include "../src/AsyncLogger.h"
-#include "../src/GuiLayer.h"
+#include "../src/ffb/FFBEngine.h"
+#include "../src/core/Config.h"
+#include "../src/logging/AsyncLogger.h"
+#include "../src/gui/GuiLayer.h"
 #ifdef ENABLE_IMGUI
 #include "imgui.h"
 #endif

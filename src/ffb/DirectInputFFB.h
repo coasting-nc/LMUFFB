@@ -13,7 +13,7 @@
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 #else
-#include "lmu_sm_interface/LinuxMock.h"
+#include "io/lmu_sm_interface/LinuxMock.h"
 // Mock types for non-Windows build/test
 typedef void* LPDIRECTINPUT8;
 typedef void* LPDIRECTINPUTDEVICE8;

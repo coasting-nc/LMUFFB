@@ -2,10 +2,10 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
-#include "../src/lmu_sm_interface/LmuSharedMemoryWrapper.h"
+#include "../src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 
 #ifndef _WIN32
-#include "../src/lmu_sm_interface/LinuxMock.h"
+#include "../src/io/lmu_sm_interface/LinuxMock.h"
 #include <csignal>
 #endif
 

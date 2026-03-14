@@ -1,5 +1,5 @@
 #include "test_ffb_common.h"
-#include "../src/Logger.h"
+#include "../src/logging/Logger.h"
 #include <filesystem>
 #include <thread>
 #include <chrono>

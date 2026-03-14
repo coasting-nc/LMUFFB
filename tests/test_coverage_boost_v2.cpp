@@ -1,7 +1,7 @@
 #include "test_ffb_common.h"
-#include "../src/Config.h"
-#include "../src/GameConnector.h"
-#include "../src/DirectInputFFB.h"
+#include "../src/core/Config.h"
+#include "../src/io/GameConnector.h"
+#include "../src/ffb/DirectInputFFB.h"
 #include <iostream>
 #include <cmath>
 #include <cstring>
@@ -9,7 +9,7 @@
 #include <limits>
 
 #ifndef _WIN32
-#include "../src/lmu_sm_interface/LinuxMock.h"
+#include "../src/io/lmu_sm_interface/LinuxMock.h"
 #endif
 
 namespace FFBEngineTests {

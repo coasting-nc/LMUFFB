@@ -1,5 +1,5 @@
 #include "test_ffb_common.h"
-#include "../src/RateMonitor.h"
+#include "../src/logging/RateMonitor.h"
 #include <thread>
 #include <chrono>
 

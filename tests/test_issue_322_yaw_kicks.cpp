@@ -1,6 +1,6 @@
 #include "test_ffb_common.h"
-#include "../src/FFBEngine.h"
-#include "../src/Config.h"
+#include "../src/ffb/FFBEngine.h"
+#include "../src/core/Config.h"
 #include <cmath>
 
 using namespace FFBEngineTests;

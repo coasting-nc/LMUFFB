@@ -1,6 +1,6 @@
 #include "test_ffb_common.h"
-#include "../src/RestApiProvider.h"
-#include "../src/StringUtils.h"
+#include "../src/io/RestApiProvider.h"
+#include "../src/utils/StringUtils.h"
 
 namespace FFBEngineTests {
 

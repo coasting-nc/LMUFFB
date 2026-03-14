@@ -1,7 +1,7 @@
 #include "test_ffb_common.h"
 #include <atomic>
 #include <mutex>
-#include "../src/lmu_sm_interface/LmuSharedMemoryWrapper.h"
+#include "../src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 
 namespace FFBEngineTests {
 

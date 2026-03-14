@@ -2,8 +2,8 @@
 #define WINDOWS_H_MOCK
 
 #include <cstdarg>
-#include "../../src/lmu_sm_interface/LinuxMock.h"
-#include "../../src/StringUtils.h"
+#include "../../src/io/lmu_sm_interface/LinuxMock.h"
+#include "../../src/utils/StringUtils.h"
 
 // Extra definitions needed specifically for tests that might not be in the core mock
 #ifndef GWL_EXSTYLE
@@ -82,7 +82,7 @@ inline BOOL GetFileVersionInfoA(const char* lptstrFilename, DWORD dwHandle, DWOR
 }
 
 // Minimal VerQueryValueA mock for test_security_metadata
-#include "../../src/Version.h"
+#include "../../src/core/Version.h"
 inline BOOL VerQueryValueA(const void* pBlock, const char* lpSubBlock, void** lplpBuffer, UINT* puLen) {
     static const uint16_t translate[] = { 0x0409, 0x04b0 }; // English (US), Unicode
     static const char* company = "lmuFFB";

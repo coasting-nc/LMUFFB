@@ -1,5 +1,5 @@
 #include "test_ffb_common.h"
-#include "../src/FFBEngine.h"
+#include "../src/ffb/FFBEngine.h"
 #include <iostream>
 
 namespace FFBEngineTests {

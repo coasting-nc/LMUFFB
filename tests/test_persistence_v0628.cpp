@@ -3,8 +3,8 @@
 #include <string>
 #include <fstream>
 #include <algorithm>
-#include "src/FFBEngine.h"
-#include "src/Config.h"
+#include "src/ffb/FFBEngine.h"
+#include "src/core/Config.h"
 #include "src/Version.h"
 
 namespace FFBEngineTests {

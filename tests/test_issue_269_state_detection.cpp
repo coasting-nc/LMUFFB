@@ -1,7 +1,7 @@
 #include "test_ffb_common.h"
-#include "../src/GameConnector.h"
-#include "../src/FFBEngine.h"
-#include "../src/lmu_sm_interface/LmuSharedMemoryWrapper.h"
+#include "../src/io/GameConnector.h"
+#include "../src/ffb/FFBEngine.h"
+#include "../src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include <cstring>
 
 namespace FFBEngineTests {

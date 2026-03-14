@@ -8,7 +8,7 @@
 #include <vector>
 #include <fstream>
 #include <filesystem>
-#include "../src/StringUtils.h"
+#include "../src/utils/StringUtils.h"
 #include "../src/Version.h"
 #include "test_ffb_common.h"
 

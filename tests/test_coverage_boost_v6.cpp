@@ -5,16 +5,16 @@
 #include <cstring>
 #include <string>
 #include <utility>
-#include "../src/lmu_sm_interface/LmuSharedMemoryWrapper.h"
-#include "../src/lmu_sm_interface/SafeSharedMemoryLock.h"
-#include "../src/lmu_sm_interface/LinuxMock.h"
-#include "../src/GuiLayer.h"
-#include "../src/GameConnector.h"
-#include "../src/DirectInputFFB.h"
-#include "../src/RateMonitor.h"
-#include "../src/AsyncLogger.h"
-#include "../src/GuiWidgets.h"
-#include "../src/Logger.h"
+#include "../src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
+#include "../src/io/lmu_sm_interface/SafeSharedMemoryLock.h"
+#include "../src/io/lmu_sm_interface/LinuxMock.h"
+#include "../src/gui/GuiLayer.h"
+#include "../src/io/GameConnector.h"
+#include "../src/ffb/DirectInputFFB.h"
+#include "../src/logging/RateMonitor.h"
+#include "../src/logging/AsyncLogger.h"
+#include "../src/gui/GuiWidgets.h"
+#include "../src/logging/Logger.h"
 #include "imgui.h"
 
 extern std::atomic<bool> g_running;

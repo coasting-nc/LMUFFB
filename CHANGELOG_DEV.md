@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.183]
+
+- **Source Code Directory Reorganization**:
+  - Reorganized the `src/` directory into functional subdirectories to improve maintainability and navigation:
+    - `core/`: Main entry point, configuration, and versioning.
+    - `ffb/`: FFB engine, upsampling, and hardware-specific output (DirectInput).
+    - `physics/`: Vehicle dynamics, grip/load estimation, and math modeling.
+    - `gui/`: UI layer, platform-specific windowing, and graphics utilities.
+    - `io/`: External interfaces, game connectors, and REST API.
+    - `logging/`: System-wide logging, health monitoring, and performance tracking.
+    - `utils/`: Shared mathematical routines and generic utilities.
+  - Updated the CMake build system to reflect the new structure and header include paths.
+  - Adjusted relative include paths across all source and test files.
+  - Verified with a clean build and successful execution of the full test suite (530 test cases, 2095 assertions).
+
 ## [0.7.182]
 
 - **Increased Test Coverage for FFBEngine**:
