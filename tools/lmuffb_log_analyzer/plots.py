@@ -986,7 +986,7 @@ def plot_slip_vs_latg(
         band_df = plot_df[mask]
         if len(band_df) < 100: continue
         
-        binned_envelope = band_df.groupby('SlipBin')['LatAccel'].apply(
+        binned_envelope = band_df.groupby('SlipBin', observed=False)['LatAccel'].apply(
             lambda x: np.percentile(np.abs(x), 95) if len(x) > 5 else np.nan
         ) / 9.81
         
@@ -1087,7 +1087,7 @@ def plot_slip_ratio_vs_long_g(
         band_df = plot_df[mask]
         if len(band_df) < 50: continue
         
-        binned_envelope = band_df.groupby('RatioBin')['LongAccel'].apply(
+        binned_envelope = band_df.groupby('RatioBin', observed=False)['LongAccel'].apply(
             lambda x: np.percentile(np.abs(x), 95) if len(x) > 3 else np.nan
         ) / 9.81
         
@@ -1404,7 +1404,7 @@ def plot_true_tire_curve(
         # Create bins every 0.005 rad
         bins = np.arange(0, 0.25, 0.005)
         pure_lat_df['SlipBin'] = pd.cut(np.abs(pure_lat_df['SlipAngleFL']), bins)
-        binned_mean = pure_lat_df.groupby('SlipBin')['GripFL'].mean()
+        binned_mean = pure_lat_df.groupby('SlipBin', observed=False)['GripFL'].mean()
         bin_centers = binned_mean.index.categories.mid
         
         ax.plot(bin_centers, binned_mean.values, color='black', linewidth=3, label='Binned Mean (Game Physics)')

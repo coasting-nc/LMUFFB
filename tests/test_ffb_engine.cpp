@@ -18,11 +18,12 @@ TEST_CASE(test_load_weighted_grip, "Physics") {
 
     double prev_slip1 = 0.0;
     double prev_slip2 = 0.0;
+    double prev_load1 = 10000.0, prev_load2 = 500.0;
     bool warned = false;
 
     GripResult result = engine.calculate_axle_grip(
         data.mWheel[0], data.mWheel[1], 5250.0, warned,
-        prev_slip1, prev_slip2, 20.0, 0.0025, "TestCar", &data, true
+        prev_slip1, prev_slip2, prev_load1, prev_load2, 20.0, 0.0025, "TestCar", &data, true
     );
 
     // Simple Average would be (0.8 + 1.0) / 2.0 = 0.9

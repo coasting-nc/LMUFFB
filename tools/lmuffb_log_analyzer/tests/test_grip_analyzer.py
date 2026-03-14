@@ -35,7 +35,10 @@ def test_analyze_grip_estimation_basic(base_metadata):
         'SlipAngleFL': np.full(len(t), 0.0),
         'SlipAngleFR': np.full(len(t), 0.0),
         'SlipRatioFL': np.full(len(t), 0.0),
-        'SlipRatioFR': np.full(len(t), 0.0)
+        'SlipRatioFR': np.full(len(t), 0.0),
+        'Speed': np.full(len(t), 20.0),
+        'ApproxLoadFL': np.full(len(t), 4000.0),
+        'ApproxLoadFR': np.full(len(t), 4000.0)
     })
 
     results = analyze_grip_estimation(df, base_metadata)
@@ -61,7 +64,10 @@ def test_analyze_grip_estimation_sliding(base_metadata):
         'SlipAngleFL': slip_angle,
         'SlipAngleFR': slip_angle,
         'SlipRatioFL': np.zeros(len(t)),
-        'SlipRatioFR': np.zeros(len(t))
+        'SlipRatioFR': np.zeros(len(t)),
+        'Speed': np.full(len(t), 20.0),
+        'ApproxLoadFL': np.full(len(t), 4000.0),
+        'ApproxLoadFR': np.full(len(t), 4000.0)
     })
 
     results = analyze_grip_estimation(df, base_metadata)
@@ -79,7 +85,10 @@ def test_analyze_grip_estimation_encrypted(base_metadata):
         'SlipAngleFL': np.zeros(len(t)),
         'SlipAngleFR': np.zeros(len(t)),
         'SlipRatioFL': np.zeros(len(t)),
-        'SlipRatioFR': np.zeros(len(t))
+        'SlipRatioFR': np.zeros(len(t)),
+        'Speed': np.full(len(t), 20.0),
+        'ApproxLoadFL': np.full(len(t), 4000.0),
+        'ApproxLoadFR': np.full(len(t), 4000.0)
     })
 
     results = analyze_grip_estimation(df, base_metadata)

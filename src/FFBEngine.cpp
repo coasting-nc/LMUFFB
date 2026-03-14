@@ -621,6 +621,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Grip Estimation (v0.4.5 FIX)
     GripResult front_grip_res = calculate_axle_grip(fl, fr, ctx.avg_front_load, m_warned_grip,
                                                 m_prev_slip_angle[0], m_prev_slip_angle[1],
+                                                m_prev_load[0], m_prev_load[1], // NEW
                                                 ctx.car_speed, ctx.dt, data->mVehicleName, data, true /* is_front */);
     ctx.avg_front_grip = front_grip_res.value;
     m_grip_diag.front_original = front_grip_res.original;
@@ -1205,6 +1206,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     // Calculate Rear Grip
     GripResult rear_grip_res = calculate_axle_grip(data->mWheel[2], data->mWheel[3], ctx.avg_front_load, m_warned_rear_grip,
                                                 m_prev_slip_angle[2], m_prev_slip_angle[3],
+                                                m_prev_load[2], m_prev_load[3], // NEW
                                                 ctx.car_speed, ctx.dt, data->mVehicleName, data, false /* is_front */);
     ctx.avg_rear_grip = rear_grip_res.value;
     m_grip_diag.rear_original = rear_grip_res.original;

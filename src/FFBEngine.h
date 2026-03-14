@@ -405,6 +405,7 @@ public:
     double m_prev_vert_deflection[4] = {0.0, 0.0, 0.0, 0.0}; 
     double m_prev_vert_accel = 0.0; 
     double m_prev_slip_angle[4] = {0.0, 0.0, 0.0, 0.0}; 
+    double m_prev_load[4] = {0.0, 0.0, 0.0, 0.0}; // NEW: Smoothed load state
     double m_prev_rotation[4] = {0.0, 0.0, 0.0, 0.0};    
     double m_prev_brake_pressure[4] = {0.0, 0.0, 0.0, 0.0}; 
     
@@ -759,12 +760,14 @@ public:
     double calculate_raw_slip_angle_pair(const TelemWheelV01& w1, const TelemWheelV01& w2);
     double calculate_slip_angle(const TelemWheelV01& w, double& prev_state, double dt);
     
-    GripResult calculate_axle_grip(const TelemWheelV01& w1,
+GripResult calculate_axle_grip(const TelemWheelV01& w1,
                               const TelemWheelV01& w2,
                               double avg_axle_load,
                               bool& warned_flag,
                               double& prev_slip1,
                               double& prev_slip2,
+                              double& prev_load1, // NEW: State for load smoothing
+                              double& prev_load2, // NEW: State for load smoothing
                               double car_speed,
                               double dt,
                               const char* vehicleName,

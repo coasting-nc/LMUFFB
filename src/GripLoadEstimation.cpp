@@ -166,6 +166,8 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                           bool& warned_flag,
                           double& prev_slip1,
                           double& prev_slip2,
+                          double& prev_load1, // NEW: State for load smoothing
+                          double& prev_load2, // NEW: State for load smoothing
                           double car_speed,
                           double dt,
                           const char* vehicleName,
@@ -227,55 +229,68 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
         
         if (car_speed < 5.0) {
             // Note: We still keep the calculated slip_angle in result.slip_angle
-            // for visualization/rear torque, even if we force grip to 1.0 here.
+            // for visualization/rear torque, even if we force grip to 1.0 here.        
             result.value = 1.0; 
         } else {
             if (m_slope_detection_enabled && is_front && data) {
                 result.value = slope_grip_estimate;
             } else {
-                // --- REWRITTEN: Continuous Per-Wheel Friction Circle ---
+                // --- REFINED: Load-Sensitive Continuous Friction Circle ---
                 
-auto calc_wheel_grip = [&](const TelemWheelV01& w, double slip_angle) {
-                    // 1. Lateral Component (Alpha)
-                    double lat_metric = std::abs(slip_angle) / (double)m_optimal_slip_angle;
+                auto calc_wheel_grip = [&](const TelemWheelV01& w, double slip_angle, double& prev_load) {
+                    // 1. Dynamic Load Sensitivity with Slew/Smoothing
+                    double raw_load = warned_flag ? approximate_load(w) : w.mTireLoad;
+                    
+                    // Smooth the load to prevent curb strikes from causing threshold jitter (50ms tau)
+                    double load_alpha = dt / (0.050 + dt);
+                    prev_load += load_alpha * (raw_load - prev_load);
+                    double current_load = prev_load;
+                    
+                    // Calculate how loaded the tire is compared to the car's static weight
+                    double static_ref = is_front ? m_static_front_load : m_static_rear_load;
+                    double load_ratio = current_load / (static_ref + 1.0);
+                    load_ratio = std::clamp(load_ratio, 0.25, 4.0); // Safety bounds
+                    
+                    // Tire physics: Optimal slip angle increases with load (Hertzian cube root)
+                    // Note: Future thermal/pressure multipliers would be applied here
+                    double dynamic_slip_angle = m_optimal_slip_angle * std::pow(load_ratio, 0.333);
 
-                    // 2. Longitudinal Component (Kappa)
+                    // 2. Lateral Component
+                    double lat_metric = std::abs(slip_angle) / dynamic_slip_angle;
+
+                    // 3. Longitudinal Component
                     double long_ratio = calculate_manual_slip_ratio(w, car_speed);
                     double long_metric = std::abs(long_ratio) / (double)m_optimal_slip_ratio;
 
-                    // 3. Combined Vector (Friction Circle)
+                    // 4. Combined Vector (Friction Circle)
                     double combined_slip = std::sqrt((lat_metric * lat_metric) + (long_metric * long_metric));
 
-                    // 4. Continuous Falloff Curve with Sliding Friction Asymptote
+                    // 5. Continuous Falloff Curve with Sliding Friction Asymptote
                     double cs2 = combined_slip * combined_slip;
                     double cs4 = cs2 * cs2;
                     
-                    // Racing slicks retain ~10% grip when fully sliding (dynamic friction)
                     const double MIN_SLIDING_GRIP = 0.05; 
-                    
-                    // Scale the 1.0 / (1.0 + x^4) curve to operate between MIN_SLIDING_GRIP and 1.0
                     return MIN_SLIDING_GRIP + ((1.0 - MIN_SLIDING_GRIP) / (1.0 + cs4)); 
                 };
 
-                // Calculate grip for each wheel independently
-                double grip1 = calc_wheel_grip(w1, slip1);
-                double grip2 = calc_wheel_grip(w2, slip2);
+                // Calculate grip for each wheel independently, passing the state reference
+                double grip1 = calc_wheel_grip(w1, slip1, prev_load1);
+                double grip2 = calc_wheel_grip(w2, slip2, prev_load2);
 
                 // Average the resulting grip fractions
                 result.value = (grip1 + grip2) / 2.0;
             }
         }
         
-        // Removed the 0.2 safety floor to allow full grip loss tracking
-        // Just clamp to standard 0.0 - 1.0 bounds
+        // Clamp to standard 0.0 - 1.0 bounds
         result.value = std::clamp(result.value, 0.0, 1.0);
         
         if (!warned_flag) {
             Logger::Get().LogFile("Warning: Data for mGripFract from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.", vehicleName);
             warned_flag = true;
         }
-    }
-    
+    }    
+
     // Apply Adaptive Smoothing (v0.7.47)
     double& state = is_front ? m_front_grip_smoothed_state : m_rear_grip_smoothed_state;
     result.value = apply_adaptive_smoothing(result.value, state, dt,

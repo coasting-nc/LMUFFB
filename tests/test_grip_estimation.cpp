@@ -31,6 +31,7 @@ TEST_CASE(test_grip_symmetric_falloff, "SlipGrip") {
 
     TelemWheelV01 w1, w2;
     double prev_slip1 = 0.0, prev_slip2 = 0.0;
+    double prev_load1 = 4000.0, prev_load2 = 4000.0;
     bool warned = false;
     double dt = 0.0025;
     double speed = 20.0;
@@ -39,7 +40,7 @@ TEST_CASE(test_grip_symmetric_falloff, "SlipGrip") {
     SetupWheelForSlip(w1, speed, 0.05, 0.0); // 50% of optimal slip
     SetupWheelForSlip(w2, speed, 0.05, 0.0);
     
-    GripResult res1 = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, speed, dt, "TestCar", nullptr, true);
+    GripResult res1 = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, speed, dt, "TestCar", nullptr, true);
     
     // Combined slip is 0.5. Math -> 0.05 + 0.95 / (1.0 + 0.5^4) = 0.05 + 0.95 / 1.0625 = 0.9441
     // With smoothing/low-pass filter the actual value converges near 0.9519
@@ -51,13 +52,13 @@ TEST_CASE(test_grip_symmetric_falloff, "SlipGrip") {
     SetupWheelForSlip(w1, speed, 0.20, 0.0); // 200% of optimal slip
     SetupWheelForSlip(w2, speed, 0.20, 0.0);
     
-    GripResult res2 = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, speed, dt, "TestCar", nullptr, true);
+    GripResult res2 = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, speed, dt, "TestCar", nullptr, true);
     
     // lat_metric = 0.20 / 0.10 = 2.0
     // combined = 2.0
     // grip = 0.05 + 0.95 / (1.0 + 2.0^4) = 0.05 + 0.95 / 17.0 = 0.1058...
-    // Actual computed value is ~0.1155 due to low-pass filters applied to speed/slip
-    ASSERT_NEAR(res2.value, 0.1155, 0.001);
+    // Actual computed value is ~0.1121 due to low-pass filters applied to speed/slip
+    ASSERT_NEAR(res2.value, 0.1121, 0.001);
 }
 
 TEST_CASE(test_grip_asymmetric_split, "SlipGrip") {
@@ -75,6 +76,7 @@ TEST_CASE(test_grip_asymmetric_split, "SlipGrip") {
 
     TelemWheelV01 w1, w2;
     double prev_slip1 = 0.0, prev_slip2 = 0.0;
+    double prev_load1 = 4000.0, prev_load2 = 4000.0;
     bool warned = false;
     double dt = 0.0025;
     double speed = 20.0;
@@ -85,7 +87,7 @@ TEST_CASE(test_grip_asymmetric_split, "SlipGrip") {
     // Wheel 2: Massive lockup (100% longitudinal slip)
     SetupWheelForSlip(w2, speed, 0.0, -1.0);
 
-    GripResult res = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, speed, dt, "TestCar", nullptr, true);
+    GripResult res = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, speed, dt, "TestCar", nullptr, true);
 
     // Wheel 1 Grip: 1.0
     // Wheel 2 Grip: long_metric = 1.0 / 0.10 = 10.0. excess = 9.0. 
@@ -111,6 +113,7 @@ TEST_CASE(test_grip_friction_circle, "SlipGrip") {
 
     TelemWheelV01 w1, w2;
     double prev_slip1 = 0.0, prev_slip2 = 0.0;
+    double prev_load1 = 4000.0, prev_load2 = 4000.0;
     bool warned = false;
     double dt = 0.0025;
     double speed = 20.0;
@@ -119,7 +122,7 @@ TEST_CASE(test_grip_friction_circle, "SlipGrip") {
     SetupWheelForSlip(w1, speed, 0.08, 0.08);
     SetupWheelForSlip(w2, speed, 0.08, 0.08);
 
-    GripResult res = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, speed, dt, "TestCar", nullptr, true);
+    GripResult res = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, speed, dt, "TestCar", nullptr, true);
 
     // lat_metric and long_metric are slightly lower than 0.8 due to atan2 curve and low-pass filtering applied
     // actual computed combined slip ~ 1.108
@@ -142,6 +145,7 @@ TEST_CASE(test_grip_low_speed_bypass, "SlipGrip") {
 
     TelemWheelV01 w1, w2;
     double prev_slip1 = 0.0, prev_slip2 = 0.0;
+    double prev_load1 = 4000.0, prev_load2 = 4000.0;
     bool warned = false;
     double dt = 0.0025;
     
@@ -152,7 +156,7 @@ TEST_CASE(test_grip_low_speed_bypass, "SlipGrip") {
     SetupWheelForSlip(w1, speed, 0.50, 1.0);
     SetupWheelForSlip(w2, speed, 0.50, 1.0);
 
-    GripResult res = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, speed, dt, "TestCar", nullptr, true);
+    GripResult res = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, speed, dt, "TestCar", nullptr, true);
 
     // Because speed < 5.0, it should bypass the math and return 1.0
     ASSERT_NEAR(res.value, 1.0, 0.001);

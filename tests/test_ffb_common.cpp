@@ -111,7 +111,8 @@ TelemInfoV01 CreateBasicTestTelemetry(double speed, double slip_angle) {
         data.mWheel[i].mLongitudinalGroundVel = speed;
         data.mWheel[i].mLateralPatchVel = slip_angle * speed; // Convert to m/s
         data.mWheel[i].mBrakePressure = 1.0; // Default for tests (v0.6.0)
-        data.mWheel[i].mSuspForce = 4000.0; // Grounded (v0.6.0)
+        data.mWheel[i].mSuspForce = 4000.0; // Spring force
+        data.mWheel[i].mTireLoad = 4000.0;  // Direct tire load (v0.7.165 fix)
         data.mWheel[i].mVerticalTireDeflection = 0.001; // Avoid "missing data" warning (v0.6.21)
     }
     
@@ -169,6 +170,8 @@ void InitializeEngine(FFBEngine& engine) {
     // v0.7.109: Ensure toggles are initialized to FALSE to match global defaults
     engine.m_dynamic_normalization_enabled = false;
     engine.m_auto_load_normalization_enabled = false;
+    // v0.7.147: Initialize static load reference to match CreateBasicTestTelemetry default
+    engine.m_static_front_load = 4000.0f;
 }
 
 // --- Friend Access for Testing ---

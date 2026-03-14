@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 
 ---
+
+## [0.7.181]
+
+- **Enhanced Tire Grip Estimation with Dynamic Load Sensitivity**:
+  - The Friction Circle algorithm now dynamically scales the optimal slip angle based on the vertical load of the tire (using a cube-root relationship). This means tires with higher load (due to aero or weight transfer) now require a larger slip angle before losing grip.
+  - Added a fast (50ms) Exponential Moving Average (EMA) to the vertical load signal to filter out high-frequency physical noise (like curb strikes), preventing jittery FFB base force dropouts while preserving accurate reactions to trail-braking and chassis roll.
+  - Implemented proper combined slip logic (trail braking scenarios) where both lateral and longitudinal slip contribute to grip loss.
+  - Updated the Python Log Analyzer to accurately simulate the new dynamic load-sensitive physics when calculating grip errors and plotting slip curves.
+- **Documentation**:
+  - Added a new research paper: `Tire Grip with Load Sensitivity.md`
+  - Added a new developer report: `latency and load sensitivity for tire grip.md`
+- **Testing**:
+  - Added a new test suite: `test_grip_load_estimation.cpp` containing 6 test cases for the new physics model.
+  - Fixed existing C++ tests to expect new output values based on load-sensitive formulas.
+  - Fixed Python data frame tests.
+
+---
 ## [0.7.180]
 
 - Fixes to plot_slip_vs_latg, fixes to plots error messages
