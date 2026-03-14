@@ -184,6 +184,16 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
         fi
 
+    - name: Upload Coverage Summaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-summaries
+        path: |
+          docs/dev_docs/reports/coverage/coverage_summary.txt
+          docs/dev_docs/reports/coverage/coverage_branches_summary.txt
+          docs/dev_docs/reports/coverage/coverage_functions_summary.txt
+        retention-days: 14
+
     - name: Upload Coverage Report Artifact
       uses: actions/upload-artifact@v4
       with:
