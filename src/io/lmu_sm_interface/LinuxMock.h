@@ -11,7 +11,7 @@
 #include <vector>
 #include <string>
 #include <cstdarg>
-#include "../StringUtils.h"
+#include "../../utils/StringUtils.h"
 
 // Dummy typedefs for Linux compatibility
 using DWORD = uint32_t;

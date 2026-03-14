@@ -124,7 +124,11 @@ void GuiLayer::DrawMenuBar(FFBEngine& engine) {
                             }
                         }
                     }
-                } catch (...) {}
+                } catch (const std::exception& e) {
+                    std::cerr << "Log analysis error: " << e.what() << "\n";
+                } catch (...) {
+                    std::cerr << "Log analysis unknown error\n";
+                }
 
                 if (found) {
                     std::string log_file = latest_path.string();
@@ -1141,6 +1145,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
                 case 1: ctrlStr = "AI"; break;
                 case 2: ctrlStr = "Remote"; break;
                 case 3: ctrlStr = "Replay"; break;
+                default: ctrlStr = "Unknown"; break;
             }
             ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Control: %s", ctrlStr);
         }
