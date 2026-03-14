@@ -4,6 +4,8 @@
 #include <thread>
 #include <chrono>
 #include <filesystem>
+#include <iomanip>
+#include <algorithm>
 #include "src/core/Config.h"
 #include "src/logging/Logger.h"
 #include "src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
@@ -25,6 +27,11 @@ namespace FFBEngineTests {
     extern int g_test_cases_run;
     extern int g_test_cases_passed;
     extern int g_test_cases_failed;
+    struct TestDuration {
+        std::string name;
+        double duration_ms;
+    };
+    extern std::vector<TestDuration> g_test_durations;
     void Run();
     void ParseTagArguments(int argc, char* argv[]);
 }
@@ -64,6 +71,24 @@ int main(int argc, char* argv[]) noexcept {
     std::cout << "==============================================" << std::endl;
     std::cout << "  TEST CASES   : " << FFBEngineTests::g_test_cases_passed << "/" << FFBEngineTests::g_test_cases_run << std::endl;
     std::cout << "  ASSERTIONS   : " << total_passed << " passed, " << total_failed << " failed" << std::endl;
+
+    if (!FFBEngineTests::g_test_durations.empty()) {
+        std::cout << "----------------------------------------------" << std::endl;
+        std::cout << "           SLOWEST TESTS (TOP 5)              " << std::endl;
+        std::cout << "----------------------------------------------" << std::endl;
+
+        auto slowest = FFBEngineTests::g_test_durations;
+        std::sort(slowest.begin(), slowest.end(), [](const auto& a, const auto& b) {
+            return a.duration_ms > b.duration_ms;
+        });
+
+        int count = 0;
+        for (const auto& test : slowest) {
+            if (count++ >= 5) break;
+            std::cout << "  " << count << ". " << std::left << std::setw(30) << test.name
+                      << " : " << std::fixed << std::setprecision(2) << test.duration_ms << " ms" << std::endl;
+        }
+    }
     std::cout << "==============================================" << std::endl;
 
     // Ensure output is visible on Windows before console closes

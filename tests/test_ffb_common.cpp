@@ -9,6 +9,7 @@ int g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO = 0;
 int g_test_cases_run = 0;
 int g_test_cases_passed = 0;
 int g_test_cases_failed = 0;
+std::vector<TestDuration> g_test_durations;
 std::vector<std::string> g_failure_log; // New: collect failure messages
 std::string g_current_test_name; // Tracks the currently-running test for assertion messages
 
@@ -334,7 +335,12 @@ void Run() {
             try {
                 int initial_fails = g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO;
                 g_current_test_name = test.name; // Make test name available to ASSERT macros
+
+                auto start = std::chrono::high_resolution_clock::now();
                 test.func();
+                auto end = std::chrono::high_resolution_clock::now();
+                double duration_ms = std::chrono::duration<double, std::milli>(end - start).count();
+                g_test_durations.push_back({test.name, duration_ms});
 
                 g_test_cases_run++;
                 if (g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO > initial_fails) {
