@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-14 09:03:12</td>
+            <td class="headerValue">2026-03-14 11:56:04</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -254,25 +254,25 @@
 <span id="L151"><span class="lineNum">     151</span>                 :<span class="tlaGNC">          11 : }</span></span>
 <span id="L152"><span class="lineNum">     152</span>                 :             : </span>
 <span id="L153"><span class="lineNum">     153</span>                 :             : // Lookup table: Map ParsedVehicleClass to Motion Ratio (Wheel vs Pushrod)</span>
-<span id="L154"><span class="lineNum">     154</span>                 :<span class="tlaGNC">       13519 : double GetMotionRatioForClass(ParsedVehicleClass vclass) {</span></span>
-<span id="L155"><span class="lineNum">     155</span>      [<span class="tlaGBC" title="Branch 0 was taken 12 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4856 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 8651 times"> + </span>]:<span class="tlaGNC">       13519 :     switch (vclass) {</span></span>
-<span id="L156"><span class="lineNum">     156</span>                 :<span class="tlaGNC">          12 :         case ParsedVehicleClass::HYPERCAR:</span></span>
+<span id="L154"><span class="lineNum">     154</span>                 :<span class="tlaGNC">       60227 : double GetMotionRatioForClass(ParsedVehicleClass vclass) {</span></span>
+<span id="L155"><span class="lineNum">     155</span>      [<span class="tlaGBC" title="Branch 0 was taken 42 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16354 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 43831 times"> + </span>]:<span class="tlaGNC">       60227 :     switch (vclass) {</span></span>
+<span id="L156"><span class="lineNum">     156</span>                 :<span class="tlaGNC">          42 :         case ParsedVehicleClass::HYPERCAR:</span></span>
 <span id="L157"><span class="lineNum">     157</span>                 :             :         case ParsedVehicleClass::LMP2_UNRESTRICTED:</span>
 <span id="L158"><span class="lineNum">     158</span>                 :             :         case ParsedVehicleClass::LMP2_RESTRICTED:</span>
 <span id="L159"><span class="lineNum">     159</span>                 :             :         case ParsedVehicleClass::LMP2_UNSPECIFIED:</span>
 <span id="L160"><span class="lineNum">     160</span>                 :             :         case ParsedVehicleClass::LMP3:</span>
-<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">          12 :             return 0.50; // Prototypes have high motion ratios (pushrod sees ~2x wheel load)</span></span>
-<span id="L162"><span class="lineNum">     162</span>                 :<span class="tlaGNC">        4856 :         case ParsedVehicleClass::GTE:</span></span>
+<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">          42 :             return 0.50; // Prototypes have high motion ratios (pushrod sees ~2x wheel load)</span></span>
+<span id="L162"><span class="lineNum">     162</span>                 :<span class="tlaGNC">       16354 :         case ParsedVehicleClass::GTE:</span></span>
 <span id="L163"><span class="lineNum">     163</span>                 :             :         case ParsedVehicleClass::GT3:</span>
-<span id="L164"><span class="lineNum">     164</span>                 :<span class="tlaGNC">        4856 :             return 0.65; // GT cars have lower motion ratios</span></span>
-<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">        8651 :         default:</span></span>
-<span id="L166"><span class="lineNum">     166</span>                 :<span class="tlaGNC">        8651 :             return 0.55; // Default fallback</span></span>
+<span id="L164"><span class="lineNum">     164</span>                 :<span class="tlaGNC">       16354 :             return 0.65; // GT cars have lower motion ratios</span></span>
+<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">       43831 :         default:</span></span>
+<span id="L166"><span class="lineNum">     166</span>                 :<span class="tlaGNC">       43831 :             return 0.55; // Default fallback</span></span>
 <span id="L167"><span class="lineNum">     167</span>                 :             :     }</span>
 <span id="L168"><span class="lineNum">     168</span>                 :             : }</span>
 <span id="L169"><span class="lineNum">     169</span>                 :             : </span>
 <span id="L170"><span class="lineNum">     170</span>                 :             : // Lookup table: Map ParsedVehicleClass to Unsprung Weight (Newtons)</span>
-<span id="L171"><span class="lineNum">     171</span>                 :<span class="tlaGNC">       13505 : double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {</span></span>
-<span id="L172"><span class="lineNum">     172</span>         [<span class="tlaGBC" title="Branch 0 was taken 5681 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 7824 times"> + </span>]:<span class="tlaGNC">       13505 :     if (is_rear) {</span></span>
+<span id="L171"><span class="lineNum">     171</span>                 :<span class="tlaGNC">       60213 : double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {</span></span>
+<span id="L172"><span class="lineNum">     172</span>         [<span class="tlaGBC" title="Branch 0 was taken 5681 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 54532 times"> + </span>]:<span class="tlaGNC">       60213 :     if (is_rear) {</span></span>
 <span id="L173"><span class="lineNum">     173</span>      [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1844 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 3835 times"> + </span>]:<span class="tlaGNC">        5681 :         switch (vclass) {</span></span>
 <span id="L174"><span class="lineNum">     174</span>                 :<span class="tlaGNC">           2 :             case ParsedVehicleClass::HYPERCAR:</span></span>
 <span id="L175"><span class="lineNum">     175</span>                 :             :             case ParsedVehicleClass::LMP2_UNRESTRICTED:</span>
@@ -287,18 +287,18 @@
 <span id="L184"><span class="lineNum">     184</span>                 :<span class="tlaGNC">        3835 :                 return 500.0;</span></span>
 <span id="L185"><span class="lineNum">     185</span>                 :             :         }</span>
 <span id="L186"><span class="lineNum">     186</span>                 :             :     } else {</span>
-<span id="L187"><span class="lineNum">     187</span>      [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3009 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 4811 times"> + </span>]:<span class="tlaGNC">        7824 :         switch (vclass) {</span></span>
-<span id="L188"><span class="lineNum">     188</span>                 :<span class="tlaGNC">           4 :             case ParsedVehicleClass::HYPERCAR:</span></span>
+<span id="L187"><span class="lineNum">     187</span>      [<span class="tlaGBC" title="Branch 0 was taken 34 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 14507 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 39991 times"> + </span>]:<span class="tlaGNC">       54532 :         switch (vclass) {</span></span>
+<span id="L188"><span class="lineNum">     188</span>                 :<span class="tlaGNC">          34 :             case ParsedVehicleClass::HYPERCAR:</span></span>
 <span id="L189"><span class="lineNum">     189</span>                 :             :             case ParsedVehicleClass::LMP2_UNRESTRICTED:</span>
 <span id="L190"><span class="lineNum">     190</span>                 :             :             case ParsedVehicleClass::LMP2_RESTRICTED:</span>
 <span id="L191"><span class="lineNum">     191</span>                 :             :             case ParsedVehicleClass::LMP2_UNSPECIFIED:</span>
 <span id="L192"><span class="lineNum">     192</span>                 :             :             case ParsedVehicleClass::LMP3:</span>
-<span id="L193"><span class="lineNum">     193</span>                 :<span class="tlaGNC">           4 :                 return 400.0;</span></span>
-<span id="L194"><span class="lineNum">     194</span>                 :<span class="tlaGNC">        3009 :             case ParsedVehicleClass::GTE:</span></span>
+<span id="L193"><span class="lineNum">     193</span>                 :<span class="tlaGNC">          34 :                 return 400.0;</span></span>
+<span id="L194"><span class="lineNum">     194</span>                 :<span class="tlaGNC">       14507 :             case ParsedVehicleClass::GTE:</span></span>
 <span id="L195"><span class="lineNum">     195</span>                 :             :             case ParsedVehicleClass::GT3:</span>
-<span id="L196"><span class="lineNum">     196</span>                 :<span class="tlaGNC">        3009 :                 return 500.0;</span></span>
-<span id="L197"><span class="lineNum">     197</span>                 :<span class="tlaGNC">        4811 :             default:</span></span>
-<span id="L198"><span class="lineNum">     198</span>                 :<span class="tlaGNC">        4811 :                 return 450.0;</span></span>
+<span id="L196"><span class="lineNum">     196</span>                 :<span class="tlaGNC">       14507 :                 return 500.0;</span></span>
+<span id="L197"><span class="lineNum">     197</span>                 :<span class="tlaGNC">       39991 :             default:</span></span>
+<span id="L198"><span class="lineNum">     198</span>                 :<span class="tlaGNC">       39991 :                 return 450.0;</span></span>
 <span id="L199"><span class="lineNum">     199</span>                 :             :         }</span>
 <span id="L200"><span class="lineNum">     200</span>                 :             :     }</span>
 <span id="L201"><span class="lineNum">     201</span>                 :             : }</span>

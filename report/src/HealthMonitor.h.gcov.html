@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-14 09:03:12</td>
+            <td class="headerValue">2026-03-14 11:56:04</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -112,46 +112,46 @@
 <span id="L41"><span class="lineNum">      41</span>                 :             :      * @param isRealtime True if in realtime (driving).</span>
 <span id="L42"><span class="lineNum">      42</span>                 :             :      * @param playerControl Current player control state (0=Player, 1=AI, etc).</span>
 <span id="L43"><span class="lineNum">      43</span>                 :             :      */</span>
-<span id="L44"><span class="lineNum">      44</span>                 :<span class="tlaGNC tlaBgGNC">        4832 :     static HealthStatus Check(double loop, double telem, double torque, int torqueSource, double physics = 0.0,</span></span>
+<span id="L44"><span class="lineNum">      44</span>                 :<span class="tlaGNC tlaBgGNC">        4835 :     static HealthStatus Check(double loop, double telem, double torque, int torqueSource, double physics = 0.0,</span></span>
 <span id="L45"><span class="lineNum">      45</span>                 :             :                               bool isConnected = false, bool sessionActive = false, long sessionType = -1, bool isRealtime = false, signed char playerControl = -2) {</span>
-<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">        4832 :         HealthStatus status;</span></span>
-<span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaGNC">        4832 :         status.loop_rate = loop;</span></span>
-<span id="L48"><span class="lineNum">      48</span>                 :<span class="tlaGNC">        4832 :         status.telem_rate = telem;</span></span>
-<span id="L49"><span class="lineNum">      49</span>                 :<span class="tlaGNC">        4832 :         status.torque_rate = torque;</span></span>
-<span id="L50"><span class="lineNum">      50</span>                 :<span class="tlaGNC">        4832 :         status.physics_rate = physics;</span></span>
-<span id="L51"><span class="lineNum">      51</span>         [<span class="tlaGBC" title="Branch 0 was taken 11 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4821 times"> + </span>]:<span class="tlaGNC">        4832 :         status.expected_torque_rate = (torqueSource == 1) ? 400.0 : 100.0;</span></span>
+<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">        4835 :         HealthStatus status;</span></span>
+<span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaGNC">        4835 :         status.loop_rate = loop;</span></span>
+<span id="L48"><span class="lineNum">      48</span>                 :<span class="tlaGNC">        4835 :         status.telem_rate = telem;</span></span>
+<span id="L49"><span class="lineNum">      49</span>                 :<span class="tlaGNC">        4835 :         status.torque_rate = torque;</span></span>
+<span id="L50"><span class="lineNum">      50</span>                 :<span class="tlaGNC">        4835 :         status.physics_rate = physics;</span></span>
+<span id="L51"><span class="lineNum">      51</span>         [<span class="tlaGBC" title="Branch 0 was taken 11 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4824 times"> + </span>]:<span class="tlaGNC">        4835 :         status.expected_torque_rate = (torqueSource == 1) ? 400.0 : 100.0;</span></span>
 <span id="L52"><span class="lineNum">      52</span>                 :             :         </span>
-<span id="L53"><span class="lineNum">      53</span>                 :<span class="tlaGNC">        4832 :         status.is_connected = isConnected;</span></span>
-<span id="L54"><span class="lineNum">      54</span>                 :<span class="tlaGNC">        4832 :         status.session_active = sessionActive;</span></span>
-<span id="L55"><span class="lineNum">      55</span>                 :<span class="tlaGNC">        4832 :         status.session_type = sessionType;</span></span>
-<span id="L56"><span class="lineNum">      56</span>                 :<span class="tlaGNC">        4832 :         status.is_realtime = isRealtime;</span></span>
-<span id="L57"><span class="lineNum">      57</span>                 :<span class="tlaGNC">        4832 :         status.player_control = playerControl;</span></span>
+<span id="L53"><span class="lineNum">      53</span>                 :<span class="tlaGNC">        4835 :         status.is_connected = isConnected;</span></span>
+<span id="L54"><span class="lineNum">      54</span>                 :<span class="tlaGNC">        4835 :         status.session_active = sessionActive;</span></span>
+<span id="L55"><span class="lineNum">      55</span>                 :<span class="tlaGNC">        4835 :         status.session_type = sessionType;</span></span>
+<span id="L56"><span class="lineNum">      56</span>                 :<span class="tlaGNC">        4835 :         status.is_realtime = isRealtime;</span></span>
+<span id="L57"><span class="lineNum">      57</span>                 :<span class="tlaGNC">        4835 :         status.player_control = playerControl;</span></span>
 <span id="L58"><span class="lineNum">      58</span>                 :             : </span>
 <span id="L59"><span class="lineNum">      59</span>                 :             :         // Loop: Target 1000Hz (USB). Warn below 950Hz.</span>
-<span id="L60"><span class="lineNum">      60</span>   [<span class="tlaGBC" title="Branch 0 was taken 3570 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1262 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 62 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 3508 times"> + </span>]:<span class="tlaGNC">        4832 :         if (loop &gt; 1.0 &amp;&amp; loop &lt; 950.0) {</span></span>
+<span id="L60"><span class="lineNum">      60</span>   [<span class="tlaGBC" title="Branch 0 was taken 3573 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1262 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 62 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 3511 times"> + </span>]:<span class="tlaGNC">        4835 :         if (loop &gt; 1.0 &amp;&amp; loop &lt; 950.0) {</span></span>
 <span id="L61"><span class="lineNum">      61</span>                 :<span class="tlaGNC">          62 :             status.loop_low = true;</span></span>
 <span id="L62"><span class="lineNum">      62</span>                 :<span class="tlaGNC">          62 :             status.is_healthy = false;</span></span>
 <span id="L63"><span class="lineNum">      63</span>                 :             :         }</span>
 <span id="L64"><span class="lineNum">      64</span>                 :             : </span>
 <span id="L65"><span class="lineNum">      65</span>                 :             :         // Physics: Target 400Hz. Warn below 380Hz.</span>
-<span id="L66"><span class="lineNum">      66</span>   [<span class="tlaGBC" title="Branch 0 was taken 3510 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1322 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 3 was taken 3509 times"> + </span>]:<span class="tlaGNC">        4832 :         if (physics &gt; 1.0 &amp;&amp; physics &lt; 380.0) {</span></span>
+<span id="L66"><span class="lineNum">      66</span>   [<span class="tlaGBC" title="Branch 0 was taken 3513 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1322 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 3 was taken 3512 times"> + </span>]:<span class="tlaGNC">        4835 :         if (physics &gt; 1.0 &amp;&amp; physics &lt; 380.0) {</span></span>
 <span id="L67"><span class="lineNum">      67</span>                 :<span class="tlaGNC">           1 :             status.physics_low = true;</span></span>
 <span id="L68"><span class="lineNum">      68</span>                 :<span class="tlaGNC">           1 :             status.is_healthy = false;</span></span>
 <span id="L69"><span class="lineNum">      69</span>                 :             :         }</span>
 <span id="L70"><span class="lineNum">      70</span>                 :             : </span>
 <span id="L71"><span class="lineNum">      71</span>                 :             :         // Telemetry (Standard LMU): Target 100Hz. Warn below 90Hz.</span>
-<span id="L72"><span class="lineNum">      72</span>   [<span class="tlaGBC" title="Branch 0 was taken 18 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4814 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 3 was taken 17 times"> + </span>]:<span class="tlaGNC">        4832 :         if (telem &gt; 1.0 &amp;&amp; telem &lt; 90.0) {</span></span>
+<span id="L72"><span class="lineNum">      72</span>   [<span class="tlaGBC" title="Branch 0 was taken 18 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4817 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 3 was taken 17 times"> + </span>]:<span class="tlaGNC">        4835 :         if (telem &gt; 1.0 &amp;&amp; telem &lt; 90.0) {</span></span>
 <span id="L73"><span class="lineNum">      73</span>                 :<span class="tlaGNC">           1 :             status.telem_low = true;</span></span>
 <span id="L74"><span class="lineNum">      74</span>                 :<span class="tlaGNC">           1 :             status.is_healthy = false;</span></span>
 <span id="L75"><span class="lineNum">      75</span>                 :             :         }</span>
 <span id="L76"><span class="lineNum">      76</span>                 :             : </span>
 <span id="L77"><span class="lineNum">      77</span>                 :             :         // Torque: Target depends on source.</span>
-<span id="L78"><span class="lineNum">      78</span>   [<span class="tlaGBC" title="Branch 0 was taken 12 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4820 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 3 was taken 11 times"> + </span>]:<span class="tlaGNC">        4832 :         if (torque &gt; 1.0 &amp;&amp; torque &lt; (status.expected_torque_rate * 0.9)) {</span></span>
+<span id="L78"><span class="lineNum">      78</span>   [<span class="tlaGBC" title="Branch 0 was taken 12 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4823 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 3 was taken 11 times"> + </span>]:<span class="tlaGNC">        4835 :         if (torque &gt; 1.0 &amp;&amp; torque &lt; (status.expected_torque_rate * 0.9)) {</span></span>
 <span id="L79"><span class="lineNum">      79</span>                 :<span class="tlaGNC">           1 :             status.torque_low = true;</span></span>
 <span id="L80"><span class="lineNum">      80</span>                 :<span class="tlaGNC">           1 :             status.is_healthy = false;</span></span>
 <span id="L81"><span class="lineNum">      81</span>                 :             :         }</span>
 <span id="L82"><span class="lineNum">      82</span>                 :             : </span>
-<span id="L83"><span class="lineNum">      83</span>                 :<span class="tlaGNC">        4832 :         return status;</span></span>
+<span id="L83"><span class="lineNum">      83</span>                 :<span class="tlaGNC">        4835 :         return status;</span></span>
 <span id="L84"><span class="lineNum">      84</span>                 :             :     }</span>
 <span id="L85"><span class="lineNum">      85</span>                 :             : };</span>
 <span id="L86"><span class="lineNum">      86</span>                 :             : </span>
