@@ -406,7 +406,9 @@ public:
     static double GetSmoothedStructuralMult(const FFBEngine& e) { return e.m_smoothed_structural_mult; }
     static void SetSmoothedStructuralMult(FFBEngine& e, double val) { e.m_smoothed_structural_mult = val; }
     static void SetRollingAverageTorque(FFBEngine& e, double val) { e.m_rolling_average_torque = val; }
+    static double GetRollingAverageTorque(const FFBEngine& e) { return e.m_rolling_average_torque; }
     static void SetLastRawTorque(FFBEngine& e, double val) { e.m_last_raw_torque = val; }
+    static double GetLastRawTorque(const FFBEngine& e) { return e.m_last_raw_torque; }
     static double GetSteeringVelocitySmoothed(const FFBEngine& e) { return e.m_steering_velocity_smoothed; }
     static void SetSteeringVelocitySmoothed(FFBEngine& e, double val) { e.m_steering_velocity_smoothed = val; }
     static void AddSnapshot(FFBEngine& e, const FFBSnapshot& s) {
@@ -424,6 +426,9 @@ public:
     static void ResetSafety(FFBEngine& engine) {
         engine.m_safety = {};
         engine.m_safety.last_mControl = -2;
+    }
+    static const FFBEngine::SafetyMonitor& GetSafety(const FFBEngine& engine) {
+        return engine.m_safety;
     }
 };
 
