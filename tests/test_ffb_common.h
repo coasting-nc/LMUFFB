@@ -20,6 +20,7 @@
 #include "../src/io/GameConnector.h"
 #include "../src/utils/StringUtils.h"
 #include "../src/io/RestApiProvider.h"
+#include "test_performance_types.h"
 
 class RestApiProviderTestAccess {
 public:
@@ -45,10 +46,6 @@ extern int g_test_cases_failed;
 extern std::vector<std::string> g_failure_log; // New
 extern std::string g_current_test_name; // Set by Run() before each test
 
-struct TestDuration {
-    std::string name;
-    double duration_ms;
-};
 extern std::vector<TestDuration> g_test_durations;
 
 // --- Assert Macros ---

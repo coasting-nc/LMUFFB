@@ -6,7 +6,10 @@
 #include <filesystem>
 #include <iomanip>
 #include <algorithm>
+#include <vector>
+#include <string>
 #include "src/core/Config.h"
+#include "test_performance_types.h"
 #include "src/logging/Logger.h"
 #include "src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 
@@ -27,10 +30,6 @@ namespace FFBEngineTests {
     extern int g_test_cases_run;
     extern int g_test_cases_passed;
     extern int g_test_cases_failed;
-    struct TestDuration {
-        std::string name;
-        double duration_ms;
-    };
     extern std::vector<TestDuration> g_test_durations;
     void Run();
     void ParseTagArguments(int argc, char* argv[]);
