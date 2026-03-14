@@ -3,6 +3,14 @@ project(LMUFFB_CPP)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Enable Ccache if available
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    message(STATUS "Ccache found: ${CCACHE_PROGRAM}")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+endif()
+
 # Security & Debug Flags (MSVC)
 if(MSVC)
     # Compile flags: Buffer Security Check (/GS) is usually default, but good to ensure.
