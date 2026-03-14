@@ -731,7 +731,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
         FloatSetting("Optimal Slip Angle", &engine.m_optimal_slip_angle, 0.040f, 0.200f, "%.3f rad",
             Tooltips::OPTIMAL_SLIP_ANGLE);
-        FloatSetting("Optimal Slip Ratio", &engine.m_optimal_slip_ratio, 0.05f, 0.20f, "%.2f",
+        FloatSetting("Optimal Slip Ratio", &engine.m_optimal_slip_ratio, 0.04f, 0.20f, "%.3f",
             Tooltips::OPTIMAL_SLIP_RATIO);
 
         ImGui::Separator();
