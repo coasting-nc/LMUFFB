@@ -1,79 +1,103 @@
-File: src/AsyncLogger.h
-  Line Coverage: 100%
+File: LMUFFB\src\AsyncLogger.h
+  Line Coverage: 97.5%
+  Missing Lines: 305, 307, 316, 350
 
-File: src/Config.cpp
+File: LMUFFB\src\Config.cpp
   Line Coverage: 96.6%
-  Missing Lines: 46-50, 92-93, 95-96, 99-100, 102, 148, 758-760, 926-932, 934, 936, 988-990, 1006, 1455-1457, 1496-1498, 1506-1508, 1519, 1522, 1525, 1537
+  Missing Lines: 59, 76-77, 386, 1109-1111, 1116-1123, 1125, 1325-1333, 1384-1385, 1405-1407, 1423, 1797-1799, 1839-1841, 1849-1851, 1863-1866, 1870, 1873, 1876, 1888
 
-File: src/Config.h
+File: LMUFFB\src\Config.h
   Line Coverage: 100%
 
-File: src/DXGIUtils.cpp
+File: LMUFFB\src\DXGIUtils.cpp
   Line Coverage: 100%
 
-File: src/DirectInputFFB.cpp
-  Line Coverage: 96.8%
-  Missing Lines: 288, 323
+File: LMUFFB\src\DirectInputFFB.cpp
+  Line Coverage: 28.2%
+  Missing Lines: 85, 90-98, 101-130, 132-133, 139, 142, 149-150, 171-174, 176-180, 187, 194, 200-203, 206-208, 232-235, 239, 242-243, 245-248, 250-251, 253-255, 259-261, 264-266, 268-269, 273-275, 277, 279, 288, 290, 292-293, 295, 298-312, 314-316, 320-321, 325, 331, 334, 337, 341-342, 345, 347, 350-353, 356, 359, 361, 364-365, 368, 372, 376-379, 383, 386, 389-390, 395-398, 402, 404, 407-409, 413-414, 418-419, 427, 432, 435, 439, 442
 
-File: src/DirectInputFFB.h
+File: LMUFFB\src\DirectInputFFB.h
   Line Coverage: 100%
 
-File: src/FFBEngine.cpp
-  Line Coverage: 99.8%
-  Missing Lines: 61
+File: LMUFFB\src\FFBEngine.cpp
+  Line Coverage: 99.5%
+  Missing Lines: 418-419, 861, 1366, 1652
 
-File: src/GameConnector.cpp
-  Line Coverage: 94.6%
-  Missing Lines: 55, 60-63
-
-File: src/GripLoadEstimation.cpp
+File: LMUFFB\src\FFBEngine.h
   Line Coverage: 100%
 
-File: src/GuiLayer_Common.cpp
-  Line Coverage: 68.7%
-  Missing Lines: 98-99, 116-118, 126-133, 135-136, 138, 144-145, 150-151, 156-158, 160-161, 169-170, 177-182, 190, 204, 208, 213-216, 218-219, 221, 223-231, 233-234, 261, 268, 275, 277-278, 307-312, 314-315, 317, 326-331, 334, 340-341, 343, 349-350, 355-360, 370-372, 379-382, 385, 389-393, 395, 413-416, 437, 493, 498, 549, 584-587, 591, 603-604, 607, 621-623, 625-630, 632, 645, 686, 718, 722, 724-729, 731-732, 734-738, 740-741, 743, 746-748, 750, 756, 758-760, 762-763, 765-766, 769, 771, 840-844, 973-996, 1000-1031
+File: LMUFFB\src\GameConnector.cpp
+  Line Coverage: 85.0%
+  Missing Lines: 62-65, 70-72, 77, 111-113, 127, 129-130, 162, 170-171, 173, 201, 208-211, 213-214, 217, 227, 235-237, 244-248, 292, 349-350, 368, 379-380
 
-File: src/GuiLayer_Linux.cpp
+File: LMUFFB\src\GameConnector.h
   Line Coverage: 100%
 
-File: src/GuiPlatform.h
+File: LMUFFB\src\GripLoadEstimation.cpp
   Line Coverage: 100%
 
-File: src/GuiWidgets.h
-  Line Coverage: 85.5%
+File: LMUFFB\src\GuiLayer_Common.cpp
+  Line Coverage: 57.9%
+  Missing Lines: 41, 101, 103-105, 107, 110-121, 124-125, 127, 129-130, 133, 136-137, 142-143, 145-147, 150-154, 180-181, 184, 195-198, 200, 206-213, 215-218, 224-225, 230-231, 236-241, 243, 249-250, 257-262, 270-272, 287, 291, 299-301, 303-305, 329, 336, 343, 345-346, 359, 375-380, 382-385, 394-399, 401-402, 408-411, 417-418, 423-428, 430, 438-440, 447-450, 453, 457-461, 463, 486-489, 495-496, 498, 518, 571, 576, 593, 605, 616-619, 628-631, 635, 668, 680, 711, 746-749, 753, 765-766, 769, 783-785, 787-792, 794-795, 807, 848, 856-857, 859, 889, 893, 895-900, 902-903, 905-909, 911-912, 914, 917-919, 921, 924-926, 928-929, 931-932, 935, 937, 956-959, 1006-1010, 1024-1028, 1030-1078, 1115-1116, 1121-1129, 1131-1132, 1135-1143, 1145, 1149, 1156-1159, 1190-1213, 1217-1248
+
+File: LMUFFB\src\GuiLayer_Win32.cpp
+  Line Coverage: 9.6%
+  Missing Lines: 56-57, 62-64, 70-82, 87-88, 90-100, 102-103, 105-107, 109-119, 121-122, 136-137, 140-156, 158, 161-163, 166-168, 170, 172-178, 180-189, 191-200, 202-204, 210-228, 232-234, 236-239, 241, 243-245, 247-248, 250, 253, 256, 269-271, 275-279, 282-287, 290-296, 301, 303-305, 308-310, 312-314, 317-320, 322-327, 329-332, 334-336
+
+File: LMUFFB\src\GuiPlatform.h
+  Line Coverage: 100%
+
+File: LMUFFB\src\GuiWidgets.h
+  Line Coverage: 84.7%
   Missing Lines: 42, 47, 62-64, 94-95, 118-119
 
-File: src/HealthMonitor.h
+File: LMUFFB\src\Logger.h
+  Line Coverage: 92.2%
+  Missing Lines: 69, 71, 81-82, 171-172, 174, 176
+
+File: LMUFFB\src\MathUtils.h
+  Line Coverage: 98.9%
+  Missing Lines: 284
+
+File: LMUFFB\src\PerfStats.h
   Line Coverage: 100%
 
-File: src/Logger.h
+File: LMUFFB\src\RateMonitor.h
   Line Coverage: 100%
 
-File: src/MathUtils.h
+File: LMUFFB\src\RestApiProvider.cpp
+  Line Coverage: 70.5%
+  Missing Lines: 36-38, 47-49, 63-68, 73, 83-88, 125-127, 130
+
+File: LMUFFB\src\RestApiProvider.h
   Line Coverage: 100%
 
-File: src/PerfStats.h
+File: LMUFFB\src\SteeringUtils.cpp
+  Line Coverage: 96.6%
+  Missing Lines: 52
+
+File: LMUFFB\src\StringUtils.h
+  Line Coverage: 65.0%
+  Missing Lines: 13-17, 20, 25
+
+File: LMUFFB\src\Tooltips.h
   Line Coverage: 100%
 
-File: src/RateMonitor.h
+File: LMUFFB\src\UpSampler.cpp
   Line Coverage: 100%
 
-File: src/SteeringUtils.cpp
-  Line Coverage: 100%
+File: LMUFFB\src\VehicleUtils.cpp
+  Line Coverage: 99.0%
+  Missing Lines: 186
 
-File: src/VehicleUtils.cpp
-  Line Coverage: 100%
+File: LMUFFB\src\lmu_sm_interface\SafeSharedMemoryLock.h
+  Line Coverage: 83.3%
+  Missing Lines: 14
 
-File: src/main.cpp
-  Line Coverage: 50.8%
-  Missing Lines: 60-63, 65, 119, 130-134, 137-139, 143-145, 147-149, 153-179, 181, 184, 186-187, 190-191, 207-212, 214-217, 238, 247-258, 278, 283-284, 287-289, 292, 294-297, 299-300, 302-304, 306, 308-309, 312-313, 316-317, 320-321, 323-324, 327-328, 333, 336-339, 341-345, 347-348, 350-351
+File: LMUFFB\src\lmu_sm_interface\SharedMemoryInterface.hpp
+  Line Coverage: 87.0%
+  Missing Lines: 101, 113-114, 117, 154, 158-159, 166-168
 
-File: src/lmu_sm_interface/LinuxMock.h
-  Line Coverage: 100%
-
-File: src/lmu_sm_interface/SafeSharedMemoryLock.h
-  Line Coverage: 100%
-
-File: src/lmu_sm_interface/SharedMemoryInterface.hpp
-  Line Coverage: 90.7%
-  Missing Lines: 113-114, 158-159, 166-168
+File: LMUFFB\src\main.cpp
+  Line Coverage: 41.0%
+  Missing Lines: 110-111, 113-114, 116, 123, 125-127, 129-132, 135, 137-139, 141-145, 147-178, 181-182, 184-185, 189-193, 195-197, 200-202, 206-208, 210-212, 216-242, 244-245, 247, 252, 256-257, 259-260, 281-287, 289-291, 312, 352, 364-366, 368-369, 376, 391, 401-402, 414-420

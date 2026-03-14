@@ -2,94 +2,102 @@
 
 **Date:** March 14, 2026  
 **Component:** `src/FFBEngine.cpp`  
-**Current Branch Coverage:** ~85-88% (Estimated after V8 Boost)
+**Current Branch Coverage:** 79.5% (596 hits / 750 total branches based on GCOV data)
 
 ## Overview
-Following the implementation of `test_coverage_boost_v8.cpp`, branch coverage for the core physics engine has significantly increased. The latest tests addressed critical logical paths in safety transitions, dynamic normalization, and non-linear load transformations. However, several branches remain uncovered due to their reliance on specific timing, hardware states, or edge-case telemetry.
+Following the implementation of recent coverage boosts, branch coverage for the core physics engine (`FFBEngine.cpp`) has significantly increased. The latest tests addressed critical logical paths in safety transitions, dynamic normalization, and non-linear load transformations. However, several branches remain uncovered due to their reliance on specific timing, hardware states, or edge-case telemetry.
 
 ---
 
 ## Remaining Uncovered Branches
 
-### 1. Snapshot Buffer Overflow
-*   **Location:** `calculate_force` (Snapshot block)
-*   **Logic:** `if (m_debug_buffer.size() < DEBUG_BUFFER_CAP)`
-*   **Status:** Not covered.
-*   **Why:** Requires pushing over 1000 snapshots in a single test iteration without the GUI (or test) draining the buffer. While easy to simulate, it hasn't been prioritized.
-*   **Coverage Potential:** Low (~0.5%). This is a single branch at the end of the snapshot block.
-*   **Difficulty:** Easy. Requires a simple loop of 1001 iterations in a single test case.
+### 1. Critical Logic & Safety
+*   **Location:** Constructor (Line 16), Logger calls for Spikes (Lines 90, 100), Mute transitions (Line 280).
+*   **Logic:** Initialization lists, internal logger state checks during spike logging, and specific state transitions.
+*   **Status:** Partially covered (many `[ + - ]` branches).
+*   **Why:** Testing the internal failure paths of the Logger singleton from within the FFBEngine tests is difficult. Constructor branches often relate to standard library container initializations that are optimized differently.
+*   **Coverage Potential:** Low (~1.0%). Mostly defensive/implicit code.
+*   **Difficulty:** High.
 
-### 2. Mutex Contention
-*   **Location:** Multiple entry points (`calculate_force`, `GetDebugBatch`, `SetTorqueSource`, etc.)
-*   **Logic:** `std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);`
-*   **Status:** Not covered (Logical branch).
-*   **Why:** The compiler generates branches for mutex acquisition success/failure (especially in recursive mode). Triggering these requires high-frequency multi-threaded stress tests, which are currently outside the scope of the unit test runner.
-*   **Coverage Potential:** Medium (~1.5%). These guards are present in almost every public method.
-*   **Difficulty:** High. Requires a dedicated multi-threaded test harness to create actual contention.
+### 2. Telemetry & Data Validation
+*   **Location:** Wheel frequency division (Line 188), Metadata updates (Line 390), REST API requests (Lines 394, 417-418), Load Approximation fallbacks (Lines 475, 552), Wheelbase Safety (Line 608).
+*   **Logic:** `circumference > 0.0`, REST API fallback application, and bounds checking (`wheelbase_max_safe < 1.0`).
+*   **Status:** Partially covered or completely uncovered (e.g., Line 418 `[ # # # # ]`).
+*   **Why:** Requires specifically malformed data (like exactly zero circumference or extremely low wheelbase max Nm) or full simulation of the REST API fallback sequence inside `calculate_force`.
+*   **Coverage Potential:** Medium (~2.0%). There are several redundant fallback/warning branches.
+*   **Difficulty:** Medium. Requires precise setup of edge-case telemetry inputs before each test cycle.
 
-### 3. Steady Clock Latching
-*   **Location:** Telemetry Processing
-*   **Logic:** `if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1)`
+### 3. Effect Calculations & Helpers
+*   **Location:** Effect helper function calls (Lines 625, 711-723), Load Transform switch `default` case (Line 672), Tock Detection logging (Lines 821-823), REST API Range logic (Lines 858-860).
+*   **Logic:** Standard method invocations often generate implicit exception-handling branches in C++ `[ + - ]` that are never taken unless an exception is thrown.
 *   **Status:** Partially covered.
-*   **Why:** Requires the test to run for at least one physical second or for the system clock to be mocked. Since the test runner is optimized for speed, these branches are often skipped unless a `sleep` is explicitly added.
-*   **Coverage Potential:** Low (~0.5%). Resets internal diagnostic counters.
-*   **Difficulty:** Easy-Medium. Requires a `std::this_thread::sleep_for` call, which slows down the test suite.
+*   **Why:** In many cases, these are compiler-generated branches for stack unwinding. Reaching the `default` case in an exhaustive `enum` switch is technically impossible without undefined behavior.
+*   **Coverage Potential:** Low (~1.5%). Mostly implicit or unreachable by design.
+*   **Difficulty:** High (or Impossible for `default` cases in strict enums).
 
-### 4. Specific Car Telemetry Fallbacks (DLC/Encrypted Content)
-*   **Location:** Pre-calculations (Load/Grip Estimation)
-*   **Logic:** `if (!m_warned_load)`, `if (!m_warned_susp_force)`, etc.
-*   **Status:** Most covered in V8, but some rear-wheel specific variants remain.
-*   **Why:** Requires simulating 50+ frames of missing telemetry specifically for RL/RR wheels while maintain speed > 3m/s.
-*   **Coverage Potential:** Medium (~2.0%). There are several redundant warning flags for different telemetry channels.
-*   **Difficulty:** Medium. Requires detailed telemetry simulation over a sustained period (50+ frames).
-
-### 5. Floating Point Edge Cases in Derivative Logic
-*   **Location:** Signal Conditioning / Upsampling
-*   **Logic:** `if (!std::isfinite(steer))`, `if (ffb_dt < 0.0001)`
+### 4. Logging & Diagnostics
+*   **Location:** Snapshot buffer push (Line 950), Async Logging checks (Line 955), Warning Bits (Lines 1131-1133), Final Log call (Line 1136).
+*   **Logic:** `AsyncLogger::Get().IsLogging()` and subsequent frame pushes.
 *   **Status:** Partially covered.
-*   **Why:** Some blocks check for `NaN` or `Inf` on every input channel. Covering every single one requires a combinatorial explosion of tests.
-*   **Coverage Potential:** High (~3-4%). These defensive checks are scattered throughout the physics pipeline.
-*   **Difficulty:** Medium. Implementation is repetitive but requires careful seeding of non-finite values into specific telemetry struct members.
+*   **Why:** Requires running the tests with the `AsyncLogger` fully initialized and actively recording, while simultaneously triggering the specific once-per-session warnings (like `frame_warn_load`).
+*   **Coverage Potential:** Medium (~2.5%). Many branches are tied to the logging pipeline.
+*   **Difficulty:** Medium. Requires integrating the logger state accurately into existing edge-case tests.
+
+### 5. Specific Floating Point Edge Cases
+*   **Location:** DeltaTime checks (Lines 1245, 1258, 1363), Slip Window bounds (Line 1460).
+*   **Logic:** `dt > 1e-6` and `window < MIN_SLIP_WINDOW`.
+*   **Status:** Partially covered.
+*   **Why:** Requires submitting zero or near-zero `dt` values to multiple specific sub-functions.
+*   **Coverage Potential:** Low (~1.0%).
+*   **Difficulty:** Easy. Just requires specific `dt` mocking.
 
 ---
 
 ## Most Challenging to Cover
 
-### Multi-threaded Race Conditions
-Branches related to `g_engine_mutex` and `m_debug_mutex` are the most challenging. They represent "invisible" logic that ensures thread safety. To cover them, we would need to implement a dedicated stress test that concurrently calls `calculate_force` and `GetDebugBatch` at high frequencies, which may introduce instability into the CI pipeline.
-*   **Coverage Potential:** Medium (~1.5%).
-*   **Difficulty:** High.
+### Compiler-Generated Exception Branches
+Many of the `[ + - ]` branches seen on standard function calls (like `calculate_gyro_damping` or `push_back`) are generated by the compiler to handle potential exceptions (stack unwinding). Since the codebase generally does not use exceptions for flow control, these "false" branches will likely never be taken.
+*   **Coverage Potential:** ~3.0%
+*   **Difficulty:** Very High (Requires compiling with `-fno-exceptions` or accepting the coverage gap).
 
-### Real-time Frequency Monitoring
-The `RateMonitor` branches (e.g., `m_ffb_rate`) rely on actual execution timing. In a virtualized or heavily loaded environment (like a CI runner), these timings can be unpredictable, making it difficult to assert that specific frequency-related branches are hit without non-deterministic test results.
-*   **Coverage Potential:** Low (~1.0%).
-*   **Difficulty:** High (Infrastructure dependent).
+### Default Switch Cases
+Branches like the `default` case for `m_long_load_transform` (Line 672) are unreachable when the enum is strictly typed and all valid values are explicitly handled. 
+*   **Coverage Potential:** < 0.5%
+*   **Difficulty:** Impossible (without undefined behavior).
 
 ---
 
 ## Easier to Cover (Recommended Next Steps)
 
-### Combinatorial Filter Toggles
-We can hit more branches in `apply_signal_conditioning` by toggling combinations of:
-*   `m_static_notch_enabled` + `bw < MIN_NOTCH_WIDTH_HZ`
-*   `m_flatspot_suppression` + `m_static_notch_enabled` (Interplay)
-*   `m_steering_shaft_smoothing` variations.
-*   **Coverage Potential:** Medium (~2.0%).
+### 1. REST API Steering Range Fallbacks
+We need to explicitly test the scenario where physical steering range is invalid, REST API is enabled, the API returns a fallback value, and that fallback is applied and logged.
+*   **Targets:** Lines 417, 418, 858-860.
+*   **Coverage Potential:** Medium (~1.5%).
+*   **Difficulty:** Easy. Requires setting `m_rest_api_enabled = true` and mocking a valid return from `RequestSteeringRange`.
+
+### 2. Extreme Edge-Case Telemetry (Zeroes)
+Submit telemetry where `circumference == 0.0` or `m_wheelbase_max_nm < 1.0` to trigger the final remaining defensive checks.
+*   **Targets:** Lines 188, 608.
+*   **Coverage Potential:** Low (~0.5%).
 *   **Difficulty:** Easy.
 
-### Snapshot/Logging Logic
-*   **Buffer Fill:** A simple test case that loops 1001 times to trigger the `DEBUG_BUFFER_CAP` branch.
-*   **Logger Sanitization:** Feeding more complex "illegal" characters into the `AsyncLogger` to exercise all regex/replacement branches in filename generation.
+### 3. DeltaTime & Slip Window Minimums
+Force the `dt` below `1e-6` and the slip calculation window below `MIN_SLIP_WINDOW` in isolated test calls.
+*   **Targets:** Lines 1245, 1258, 1363, 1460.
 *   **Coverage Potential:** Low (~1.0%).
 *   **Difficulty:** Easy.
 
-### Understeer Gamma Edge Cases
-*   **Gamma = 1.0:** Exercises the `std::pow` optimization (if the compiler optimizes `pow(x, 1)`).
-*   **Grip = 0.0:** Exercises the `std::max(0.0, ...)` floor logic in the grip factor calculation.
+### 4. Vehicle Name Change Logic
+Trigger a mid-session vehicle name change to cover the `StringUtils::SafeCopy` block.
+*   **Targets:** Line 1651-1652.
 *   **Coverage Potential:** Low (~0.5%).
-*   **Difficulty:** Very Easy.
+*   **Difficulty:** Easy. Requires passing two different `vehicleName` strings to consecutive `calculate_force` calls.
 
 ---
 
 ## Summary of V8 Progress
-The V8 boost successfully covered the "Logical Core" of the engine. The remaining ~12-15% of uncovered branches are largely **Defensive Programming** (mutexes, finite checks) and **Throttled Diagnostics** (one-second latching, once-per-car warnings). Further coverage should focus on the play-of-effects rather than basic logic.
+The coverage boosts successfully covered the "Logical Core" of the engine, raising branch coverage to nearly 80%. A significant portion of the remaining ~20% consists of compiler-generated exception paths (`[ + - ]` on function calls) and defensive checks against extremely malformed data. By targeting the "Easier to Cover" items listed above (REST API fallbacks, zero-data edge cases), we can likely push the true logical branch coverage well into the high 80s, isolating the remaining gaps to purely structural C++ mechanics.
+
+### Coverage Numbers
+*   **Branch Coverage (`src/FFBEngine.cpp`)**: 79.5% (596 / 750 branches)
+*(Data sourced from recent LCOV GCC build: coverage_filtered.info)*

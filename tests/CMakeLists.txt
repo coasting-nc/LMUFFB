@@ -121,6 +121,7 @@ set(TEST_SOURCES
     test_grip_estimation.cpp
     test_coverage_boost_v7.cpp
     test_coverage_boost_v8.cpp
+    test_coverage_boost_v9.cpp
     ../src/main.cpp
 )
 
