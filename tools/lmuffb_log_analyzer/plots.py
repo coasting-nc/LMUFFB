@@ -935,7 +935,6 @@ def plot_clipping_components(
     if show: plt.show()
     return ""
 
-
 def plot_slip_vs_latg(
     df: pd.DataFrame,
     output_path: Optional[str] = None,
@@ -944,7 +943,7 @@ def plot_slip_vs_latg(
 ) -> str:
     """
     Scatter plot of Slip Angle vs Lateral G.
-    Uses smoothed envelope and gradient analysis to find the true "Knee" (saturation point).
+    Uses speed-banded envelopes to isolate Mechanical Grip from Aerodynamic Grip.
     """
     if status_callback: status_callback("Initializing tire curve plot...")
     
@@ -954,29 +953,41 @@ def plot_slip_vs_latg(
         slip_col = 'calc_slip_angle_front'
     else:
         slip_col = None
-
-    if slip_col is None or 'LatAccel' not in df.columns:
-        return ""
     
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(14, 9))
     
-    # Filter out low speeds where slip angles go to infinity
-    plot_df = df[df['Speed'] > 5.0].copy()
+    # Filter out very low speeds (parking lot maneuvers)
+    plot_df = df[df['Speed'] * 3.6 > 20.0].copy()
     downsampled_df = _downsample_df(plot_df, max_points=15000)
     
     slip = np.abs(downsampled_df[slip_col])
     lat_g = np.abs(downsampled_df['LatAccel'] / 9.81)
-    speed = downsampled_df['Speed'] * 3.6 if 'Speed' in downsampled_df.columns else None
+    speed_kmh = downsampled_df['Speed'] * 3.6
     
-    scatter = ax.scatter(slip, lat_g, c=speed, cmap='viridis', alpha=0.2, s=5, label='Raw Telemetry Points')
+    scatter = ax.scatter(slip, lat_g, c=speed_kmh, cmap='viridis', alpha=0.15, s=5, label='Raw Telemetry')
     
-    if len(plot_df) > 100:
-        bins = np.arange(0, 0.25, 0.005)
-        plot_df['SlipBin'] = pd.cut(np.abs(plot_df[slip_col]), bins)
+    bins = np.arange(0, 0.25, 0.005)
+    plot_df['SlipBin'] = pd.cut(np.abs(plot_df[slip_col]), bins)
+    
+    # Define Speed Bands to isolate Aero vs Mechanical grip
+    speed_series = plot_df['Speed'] * 3.6
+    bands = {
+        'Low Speed (<120 km/h) [Mechanical]': (speed_series >= 20) & (speed_series < 120),
+        'Med Speed (120-180 km/h) [Mixed]': (speed_series >= 120) & (speed_series < 180),
+        'High Speed (>180 km/h) [Aero]': (speed_series >= 180)
+    }
+    colors = {
+        'Low Speed (<120 km/h) [Mechanical]': '#2196F3', # Blue
+        'Med Speed (120-180 km/h) [Mixed]': '#FF9800',   # Orange
+        'High Speed (>180 km/h) [Aero]': '#F44336'       # Red
+    }
+    
+    for name, mask in bands.items():
+        band_df = plot_df[mask]
+        if len(band_df) < 100: continue
         
-        # 1. Calculate 95th Percentile Envelope
-        binned_envelope = plot_df.groupby('SlipBin', observed=False)['LatAccel'].apply(
-            lambda x: np.percentile(np.abs(x), 95) if len(x) > 10 else np.nan
+        binned_envelope = band_df.groupby('SlipBin')['LatAccel'].apply(
+            lambda x: np.percentile(np.abs(x), 95) if len(x) > 5 else np.nan
         ) / 9.81
         
         bin_centers = binned_envelope.index.categories.mid
@@ -986,47 +997,130 @@ def plot_slip_vs_latg(
         y_valid = binned_envelope[valid_idx].astype(float).values
         
         if len(x_valid) > 5:
-            # 2. Smooth the envelope (Rolling Mean, window=5)
             y_smooth = pd.Series(y_valid).rolling(window=5, center=True, min_periods=1).mean().values
+            ax.plot(x_valid, y_smooth, color=colors[name], linewidth=3, label=f'{name} Envelope')
             
-            ax.plot(x_valid, y_valid, color='black', linewidth=1.5, alpha=0.4, label='Raw Envelope (95th Pct)')
-            ax.plot(x_valid, y_smooth, color='#FF9800', linewidth=3, label='Smoothed Envelope')
-            
-            # 3. Gradient Analysis to find the "Knee" (Saturation Point)
+            # Gradient Analysis for Knee
             dy = np.gradient(y_smooth, x_valid)
-            
-            # Find max slope in the early linear phase (< 0.08 rad)
             early_mask = x_valid < 0.08
             if early_mask.any():
                 max_dy = np.max(dy[early_mask])
-                
-                # The knee is where the slope drops to 15% of its maximum steepness
-                # We only look for this drop after 0.03 rad to avoid initial noise
-                knee_candidates = np.where((dy < max_dy * 0.15) & (x_valid > 0.03))[0]
+                # Knee is where slope drops to 20% of max, after 0.03 rad
+                knee_candidates = np.where((dy < max_dy * 0.20) & (x_valid > 0.03))[0]
                 
                 if len(knee_candidates) > 0:
                     knee_idx = knee_candidates[0]
-                    knee_slip = x_valid[knee_idx]
-                    knee_g = y_smooth[knee_idx]
-                    
-                    ax.plot(knee_slip, knee_g, 'g*', markersize=18, markeredgecolor='black', 
-                            label=f'True Optimal Slip (Knee) ~{knee_slip:.3f} rad')
-                    ax.axvline(knee_slip, color='green', linestyle='--', alpha=0.8)
-
-            # Keep the absolute peak for reference
-            peak_idx = np.argmax(y_smooth)
-            ax.plot(x_valid[peak_idx], y_smooth[peak_idx], 'rX', markersize=12, alpha=0.5, 
-                    label=f'Aero Peak G (~{x_valid[peak_idx]:.3f} rad)')
+                    ax.plot(x_valid[knee_idx], y_smooth[knee_idx], marker='*', color=colors[name], 
+                            markersize=16, markeredgecolor='black', 
+                            label=f'{name[:9]} Knee ~{x_valid[knee_idx]:.3f} rad')
 
     ax.set_xlabel('Absolute Slip Angle (rad)')
     ax.set_ylabel('Absolute Lateral G')
-    ax.set_title('Physical Tire Curve: Finding the True Optimal Slip Angle')
+    ax.set_title('Physical Tire Curve by Speed Band (Isolating Aero vs Mechanical Grip)')
     ax.set_xlim(0, 0.25)
     ax.grid(True, alpha=0.3)
     
-    if speed is not None:
-        cbar = plt.colorbar(scatter, ax=ax)
-        cbar.set_label('Speed (km/h)')
+    cbar = plt.colorbar(scatter, ax=ax)
+    cbar.set_label('Speed (km/h)')
+    
+    _safe_legend(ax)
+    plt.tight_layout()
+    
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return output_path
+    if show: plt.show()
+    return ""
+
+def plot_slip_ratio_vs_long_g(
+    df: pd.DataFrame,
+    output_path: Optional[str] = None,
+    show: bool = True,
+    status_callback = None
+) -> str:
+    """
+    Scatter plot of Slip Ratio vs Longitudinal G during braking.
+    Uses speed-banded envelopes to isolate Aero Drag from Mechanical Braking.
+    """
+    cols =['SlipRatioFL', 'SlipRatioFR', 'LongAccel', 'Brake', 'Speed', 'Steering']
+    if not all(c in df.columns for c in cols):
+        return ""
+
+    if status_callback: status_callback("Rendering Longitudinal Tire Curve...")
+    
+    fig, ax = plt.subplots(figsize=(14, 9))
+    
+    # Filter for straight-line braking
+    brake_mask = (df['Brake'] > 0.05) & (df['Speed'] * 3.6 > 20.0) & (np.abs(df['Steering']) < 0.1)
+    plot_df = df[brake_mask].copy()
+    
+    if len(plot_df) < 50:
+        if status_callback: status_callback("Not enough straight-line braking data.")
+        plt.close(fig)
+        return ""
+
+    plot_df['AvgFrontSlipRatio'] = (np.abs(plot_df['SlipRatioFL']) + np.abs(plot_df['SlipRatioFR'])) / 2.0
+    downsampled_df = _downsample_df(plot_df, max_points=15000)
+    
+    slip_ratio = downsampled_df['AvgFrontSlipRatio']
+    long_g = np.abs(downsampled_df['LongAccel'] / 9.81)
+    speed_kmh = downsampled_df['Speed'] * 3.6
+    
+    scatter = ax.scatter(slip_ratio, long_g, c=speed_kmh, cmap='plasma', alpha=0.2, s=5, label='Braking Telemetry')
+    
+    bins = np.arange(0, 0.30, 0.005)
+    plot_df['RatioBin'] = pd.cut(plot_df['AvgFrontSlipRatio'], bins)
+    
+    # Speed Bands for Braking (Aero drag adds massive Long G at high speeds)
+    speed_series = plot_df['Speed'] * 3.6
+    bands = {
+        'Low/Med Speed (<150 km/h) [Mechanical]': (speed_series < 150),
+        'High Speed (>150 km/h) [Aero + Mech]': (speed_series >= 150)
+    }
+    colors = {
+        'Low/Med Speed (<150 km/h) [Mechanical]': '#00BCD4', # Cyan
+        'High Speed (>150 km/h) [Aero + Mech]': '#E91E63'    # Pink
+    }
+    
+    for name, mask in bands.items():
+        band_df = plot_df[mask]
+        if len(band_df) < 50: continue
+        
+        binned_envelope = band_df.groupby('RatioBin')['LongAccel'].apply(
+            lambda x: np.percentile(np.abs(x), 95) if len(x) > 3 else np.nan
+        ) / 9.81
+        
+        bin_centers = binned_envelope.index.categories.mid
+        valid_idx = ~binned_envelope.isna()
+        
+        x_valid = bin_centers[valid_idx].astype(float).values
+        y_valid = binned_envelope[valid_idx].astype(float).values
+        
+        if len(x_valid) > 5:
+            y_smooth = pd.Series(y_valid).rolling(window=5, center=True, min_periods=1).mean().values
+            ax.plot(x_valid, y_smooth, color=colors[name], linewidth=3, label=f'{name} Envelope')
+            
+            dy = np.gradient(y_smooth, x_valid)
+            early_mask = x_valid < 0.10
+            if early_mask.any():
+                max_dy = np.max(dy[early_mask])
+                knee_candidates = np.where((dy < max_dy * 0.20) & (x_valid > 0.03))[0]
+                
+                if len(knee_candidates) > 0:
+                    knee_idx = knee_candidates[0]
+                    ax.plot(x_valid[knee_idx], y_smooth[knee_idx], marker='*', color=colors[name], 
+                            markersize=16, markeredgecolor='black', 
+                            label=f'{name[:13]} Knee ~{x_valid[knee_idx]:.3f}')
+
+    ax.set_xlabel('Absolute Slip Ratio (Front Axle Avg)')
+    ax.set_ylabel('Absolute Longitudinal G (Braking)')
+    ax.set_title('Longitudinal Tire Curve by Speed Band (Isolating Aero Drag)')
+    ax.set_xlim(0, 0.30)
+    ax.grid(True, alpha=0.3)
+    
+    cbar = plt.colorbar(scatter, ax=ax)
+    cbar.set_label('Speed (km/h)')
     
     _safe_legend(ax)
     plt.tight_layout()
@@ -1345,90 +1439,4 @@ def plot_true_tire_curve(
         return output_path
     if show: plt.show()
     return ""
-
-def plot_slip_ratio_vs_long_g(
-    df: pd.DataFrame,
-    output_path: Optional[str] = None,
-    show: bool = True,
-    status_callback = None
-) -> str:
-    """
-    Scatter plot of Slip Ratio vs Longitudinal G during braking.
-    Used to tune 'optimal_slip_ratio'.
-    """
-    cols =['SlipRatioFL', 'SlipRatioFR', 'LongAccel', 'Brake', 'Speed', 'Steering']
-    if not all(c in df.columns for c in cols):
-        return ""
-
-    if status_callback: status_callback("Rendering Longitudinal Tire Curve...")
-    
-    fig, ax = plt.subplots(figsize=(12, 8))
-    
-    # Filter for straight-line braking
-    brake_mask = (df['Brake'] > 0.05) & (df['Speed'] > 5.0) & (np.abs(df['Steering']) < 0.1)
-    plot_df = df[brake_mask].copy()
-    
-    if len(plot_df) < 50:
-        if status_callback: status_callback("Not enough straight-line braking data.")
-        plt.close(fig)
-        return ""
-
-    # Average front slip ratios
-    plot_df['AvgFrontSlipRatio'] = (np.abs(plot_df['SlipRatioFL']) + np.abs(plot_df['SlipRatioFR'])) / 2.0
-    
-    downsampled_df = _downsample_df(plot_df, max_points=15000)
-    
-    slip_ratio = downsampled_df['AvgFrontSlipRatio']
-    long_g = np.abs(downsampled_df['LongAccel'] / 9.81)
-    speed = downsampled_df['Speed'] * 3.6
-    
-    scatter = ax.scatter(slip_ratio, long_g, c=speed, cmap='plasma', alpha=0.3, s=5, label='Braking Telemetry')
-    
-    # Binned Envelope & Smoothing
-    bins = np.arange(0, 0.30, 0.005)
-    plot_df['RatioBin'] = pd.cut(plot_df['AvgFrontSlipRatio'], bins)
-    
-    binned_envelope = plot_df.groupby('RatioBin')['LongAccel'].apply(
-        lambda x: np.percentile(np.abs(x), 95) if len(x) > 5 else np.nan
-    ) / 9.81
-    
-    bin_centers = binned_envelope.index.categories.mid
-    valid_idx = ~binned_envelope.isna()
-    
-    x_valid = bin_centers[valid_idx].astype(float).values
-    y_valid = binned_envelope[valid_idx].astype(float).values
-    
-    if len(x_valid) > 5:
-        y_smooth = pd.Series(y_valid).rolling(window=5, center=True, min_periods=1).mean().values
-        ax.plot(x_valid, y_smooth, color='#00BCD4', linewidth=3, label='Smoothed Braking Envelope')
-        
-        # Gradient Analysis for Braking Knee
-        dy = np.gradient(y_smooth, x_valid)
-        early_mask = x_valid < 0.10
-        if early_mask.any():
-            max_dy = np.max(dy[early_mask])
-            knee_candidates = np.where((dy < max_dy * 0.15) & (x_valid > 0.04))[0]
-            
-            if len(knee_candidates) > 0:
-                knee_idx = knee_candidates[0]
-                ax.plot(x_valid[knee_idx], y_smooth[knee_idx], 'g*', markersize=18, markeredgecolor='black', 
-                        label=f'Optimal Slip Ratio (Knee) ~{x_valid[knee_idx]:.3f}')
-
-    ax.set_xlabel('Absolute Slip Ratio (Front Axle Avg)')
-    ax.set_ylabel('Absolute Longitudinal G (Braking)')
-    ax.set_title('Longitudinal Tire Curve: Finding Optimal Slip Ratio')
-    ax.set_xlim(0, 0.30)
-    ax.grid(True, alpha=0.3)
-    
-    cbar = plt.colorbar(scatter, ax=ax)
-    cbar.set_label('Speed (km/h)')
-    
-    _safe_legend(ax)
-    plt.tight_layout()
-    
-    if output_path:
-        plt.savefig(output_path, dpi=150, bbox_inches='tight')
-        plt.close(fig)
-        return output_path
-    if show: plt.show()
-    return ""
+ 
