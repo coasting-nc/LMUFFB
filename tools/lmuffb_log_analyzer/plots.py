@@ -948,7 +948,13 @@ def plot_slip_vs_latg(
     """
     if status_callback: status_callback("Initializing tire curve plot...")
     
-    slip_col = 'CalcSlipAngleFront' if 'CalcSlipAngleFront' in df.columns else None
+    if 'CalcSlipAngleFront' in df.columns:
+        slip_col = 'CalcSlipAngleFront'
+    elif 'calc_slip_angle_front' in df.columns:
+        slip_col = 'calc_slip_angle_front'
+    else:
+        slip_col = None
+
     if slip_col is None or 'LatAccel' not in df.columns:
         return ""
     
@@ -972,7 +978,7 @@ def plot_slip_vs_latg(
         
         # Use the 95th percentile to trace the top edge of the scatter cloud
         # Require at least 10 samples in a bin to prevent outlier spikes
-        binned_envelope = plot_df.groupby('SlipBin')['LatAccel'].apply(
+        binned_envelope = plot_df.groupby('SlipBin', observed=False)['LatAccel'].apply(
             lambda x: np.percentile(np.abs(x), 95) if len(x) > 10 else np.nan
         ) / 9.81
         
