@@ -215,7 +215,7 @@ double FFBEngine::apply_signal_conditioning(double raw_torque, const TelemInfoV0
 }
 
 // Refactored calculate_force
-double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleClass, const char* vehicleName, float genFFBTorque, bool allowed, double override_dt, signed char mControl) {
+double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleClass, const char* vehicleName, float genFFBTorque, bool allowed, double override_dt, signed char mControl, bool inGarage) {
     if (!data) return 0.0;
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
@@ -280,14 +280,23 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         Logger::Get().LogFile("[Safety] FFB Muted (Reason: %s)", upsampled_data->mElapsedTime > 0 ? "Game/State Mute" : "Initialization");
     } else if (!m_safety.last_allowed && allowed) {
         Logger::Get().LogFile("[Safety] FFB Unmuted");
-        TriggerSafetyWindow("FFB Unmuted");
+        // Refined Logic (Issue #332): Only trigger safety if we didn't just come from ControlMode::NONE.
+        // This prevents gain loss during multiplayer join/leave glitches where mControl flickers to -1.
+        if (m_safety.last_mControl != -1) {
+            TriggerSafetyWindow("FFB Unmuted");
+        }
     }
     m_safety.last_allowed = allowed;
 
     if (mControl != m_safety.last_mControl) {
         if (m_safety.last_mControl != -2) { // Skip first frame
-            Logger::Get().LogFile("[Safety] mControl Transition: %d -> %d", (int)m_safety.last_mControl, (int)mControl);
-            TriggerSafetyWindow("Control Transition");
+            // Refined Logic (Issue #332): Ignore transitions to/from ControlMode::NONE (-1).
+            // In multiplayer, rF2 reorders vehicles causing momentary -1 flickers for the player.
+            // These transient glitches should not trigger a 2-second gain reduction.
+            if (mControl != -1 && m_safety.last_mControl != -1) {
+                Logger::Get().LogFile("[Safety] mControl Transition: %d -> %d", (int)m_safety.last_mControl, (int)mControl);
+                TriggerSafetyWindow("Control Transition");
+            }
         }
         m_safety.last_mControl = mControl;
     }
@@ -737,7 +746,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         ctx.bottoming_crunch = 0.0;
         ctx.abs_pulse_force = 0.0;
         ctx.lockup_rumble = 0.0;
-        // NOTE: ctx.soft_lock_force is PRESERVED.
+        // NOTE: ctx.soft_lock_force is PRESERVED for safety during Pause,
+        // EXCEPT when in a garage stall (Issue #332) to prevent stuck wheels.
+        if (inGarage) {
+            ctx.soft_lock_force = 0.0;
+        }
 
         // Also zero out base_input for snapshot clarity
         base_input = 0.0;

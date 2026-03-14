@@ -2,6 +2,19 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 14, 2026[/b][/size]
+[b]Version 0.7.183 - Regression Fixes: FFB Loss & Wheel Lock[/b]
+
+[b]New release[/b] (0.7.183): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Fixed FFB Loss during Join/Leave[/b]: Refined the safety logic to ignore momentary "glitches" in player control data that happen when users join or leave a multiplayer session. This prevents the annoying 2-second drop in FFB strength during races.
+[*][b]Resolved Wheel Lock in Pits[/b]: The "Soft Lock" (steering limit) is now automatically disabled while your car is in a garage stall. This prevents the wheel from getting stuck at full lock when you return to the pits or teleport.
+[*][b]Maintained Safety[/b]: The steering limits remain active during normal Pause and other driving states to ensure your hardware is always protected.
+[/list]
+
+---
+
 [size=5][b]March 13, 2026[/b][/size]
 [b]Version 0.7.169 - Standardized Tire Load Fallbacks[/b]
 
