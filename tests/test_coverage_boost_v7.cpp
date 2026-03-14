@@ -252,8 +252,10 @@ TEST_CASE(test_calculate_force_transitions, "Safety") {
     
     // 3. Control Transition
     FFBEngineTestAccess::ResetSafety(engine);
-    // engine.m_safety.last_mControl = 0; // Already 0 in ResetSafety if we modify it
-    // Actually ResetSafety sets it to -2
+    // Seed first frame so last_mControl != -2
+    engine.calculate_force(&data, "GT3", "911", 0.0f, true, 0.0, 0 /* PLAYER */);
+    
+    // Now transition 0 -> 1 (AI)
     engine.calculate_force(&data, "GT3", "911", 0.0f, true, 0.0, 1 /* AI */);
     ASSERT_EQ(FFBEngineTestAccess::GetSafety(engine).last_mControl, 1);
     ASSERT_GT(FFBEngineTestAccess::GetSafety(engine).safety_timer, 0.0);
