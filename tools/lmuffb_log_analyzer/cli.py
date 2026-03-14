@@ -36,7 +36,8 @@ from .plots import (
     plot_longitudinal_diagnostic,
     plot_raw_telemetry_health,
     plot_load_estimation_diagnostic,
-    plot_true_tire_curve
+    plot_true_tire_curve,
+    plot_slip_ratio_vs_long_g
 )
 from .reports import generate_text_report
 
@@ -232,6 +233,11 @@ def _run_plots(metadata, df, output_dir, logfile_stem, plot_all=False):
             if res: console.print(f"  [OK] Created: {res}")
             else: console.print(f"  [SKIP] Tire Curve")
             
+            # Tire curve (Longitudinal) - NEW
+            long_tc_path = output_path / f"{logfile_stem}_tire_curve_longitudinal.png"
+            plot_slip_ratio_vs_long_g(df, str(long_tc_path), show=False, status_callback=update_status)
+            console.print(f"  [OK] Created: {long_tc_path}")
+
             # dAlpha histogram
             hist_path = output_path / f"{logfile_stem}_dalpha_hist.png"
             res = plot_dalpha_histogram(df, str(hist_path), show=False, status_callback=update_status)
