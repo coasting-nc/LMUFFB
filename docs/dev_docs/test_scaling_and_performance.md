@@ -40,6 +40,21 @@ While parallelization is a common strategy for large test suites, its necessity 
 
 **Verdict**: Other optimizations (mocking, logic refactors) are far more sufficient and effective than parallelization for the current suite. Parallelization is only recommended if the suite grows to thousands of CPU-intensive mathematical tests.
 
+## Windows Performance Disparity: `test_main_app_logic`
+
+While `test_main_app_logic` executes in ~500ms on Linux, it may still take ~7.5 seconds on Windows.
+
+### The Sleep Penalty
+The primary cause is the high frequency of `std::this_thread::sleep_for(std::chrono::microseconds(100))` calls within the test loop. On Windows, the default scheduler resolution is often 15.6ms. Even if `timeBeginPeriod(1)` is called (as it is in `main.cpp`), sleeping for 100 microseconds frequently results in the thread being de-scheduled for at least 1-2 milliseconds. With 1000+ iterations across the test segments, these "tiny" sleeps aggregate into several seconds of overhead.
+
+### Detailed Profiling Strategy
+To confirm exactly where the time is lost, the test can be instrumented with sub-timers:
+1.  **FFBThread Exercise Phase**: Measures the time spent simulating 550 frames of telemetry.
+2.  **App Entry Point Phase**: Measures the `lmuffb_app_main` execution time.
+3.  **Health Monitor Phase**: Measures the simulated 5.2s duration (which uses 520 small sleeps).
+
+**Optimization**: On Windows, replacing `std::this_thread::sleep_for(100us)` with `std::this_thread::yield()` or only sleeping every 10th iteration significantly improves performance without compromising the multi-threaded simulation.
+
 ---
 
 ## Optimizing the Slowest Tests
