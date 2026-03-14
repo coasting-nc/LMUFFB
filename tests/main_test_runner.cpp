@@ -24,6 +24,10 @@ std::recursive_mutex g_engine_mutex;
 FFBEngine g_engine;
 SharedMemoryObjectOut g_localData;
 
+// Mock time globals
+std::chrono::steady_clock::time_point g_mock_time;
+bool g_use_mock_time = false;
+
 namespace FFBEngineTests { 
     extern int g_tests_passed; 
     extern int g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO; 

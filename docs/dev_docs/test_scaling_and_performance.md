@@ -16,6 +16,30 @@ A more achievable short-term goal is to run "Slow" tests in parallel while keepi
 -   **Execution**: The runner could spawn separate threads for these slow tests at the start, ensuring they run in the background while the fast, serial suite progresses.
 -   **Isolation**: These specific slow tests would need to be audited to ensure they don't touch the global `g_engine` or use conflicting filenames.
 
+## Is Parallelization Necessary?
+
+While parallelization is a common strategy for large test suites, its necessity for LMUFFB is currently **low** for the following reasons:
+
+1.  **Wait-Limited Bottlenecks**: The 5 slowest tests in this project are almost exclusively "wait-limited" (using `std::this_thread::sleep_for`). Parallelizing these would simply mean having multiple threads sleeping simultaneously. The core issue is the use of real-time delays for logic verification.
+2.  **Mocking is More Effective**: For `test_main_app_logic` and `test_issue_312_logger_uniqueness`, the benefit of parallelization is negligible compared to the benefit of **mocking time**. By "teleporting" the internal clock, we can reduce a 14-second test to sub-millisecond execution, which provides a ~14,000x speedup that parallelization could never match.
+3.  **Suite Size**: At ~500 tests, the serial suite (excluding the top 5 outliers) runs in under 2 seconds. Parallelizing this "fast" portion introduces significant complexity (mutexes, isolated environments) for a gain of perhaps 1 second.
+4.  **Targeted Optimization**:
+    -   **Parallelization Benefit**: Useful for CPU-bound tests (e.g., heavy math, complex simulations).
+    -   **Optimization Benefit**: Essential for wait-bound tests.
+    -   **Conclusion**: For LMUFFB, parallelization should only be considered *after* all wait-limited tests have been converted to mock-time or deterministic simulations.
+
+### Summary of Benefits for Top 5 Slowest Tests
+
+| Test Case | Optimization Strategy | Parallelization Benefit | Recommendation |
+|-----------|-----------------------|-------------------------|----------------|
+| `test_main_app_logic` | **Mock Time** | Low (Thread still sleeps) | Refactor to mock clock (Implemented). |
+| `test_issue_312_logger_uniqueness` | **Mock Time** | Low | Inject time points into generator. |
+| `test_rate_monitor_realtime` | **Simulation** | Low | Use `RecordEventAt` for logic tests. |
+| `test_issue_100_timing` | **Sample Size** | Low | Reduce iterations to minimum stable count. |
+| `test_async_logger_binary_integrity` | **Explicit Flush** | Low | Implement `logger.Flush()` mechanism. |
+
+**Verdict**: Other optimizations (mocking, logic refactors) are far more sufficient and effective than parallelization for the current suite. Parallelization is only recommended if the suite grows to thousands of CPU-intensive mathematical tests.
+
 ---
 
 ## Optimizing the Slowest Tests

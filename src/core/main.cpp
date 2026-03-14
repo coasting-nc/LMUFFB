@@ -19,6 +19,7 @@
 #include "RateMonitor.h"
 #include "HealthMonitor.h"
 #include "UpSampler.h"
+#include "TimeUtils.h"
 #include <optional>
 #include <atomic>
 #include <mutex>
@@ -40,6 +41,8 @@ extern std::atomic<bool> g_ffb_active;
 extern SharedMemoryObjectOut g_localData;
 extern FFBEngine g_engine;
 extern std::recursive_mutex g_engine_mutex;
+extern std::chrono::steady_clock::time_point g_mock_time;
+extern bool g_use_mock_time;
 #endif
 
 // --- FFB Loop (High Priority 1000Hz) ---
@@ -85,7 +88,7 @@ void FFBThread() {
 
     // Precise Timing: Target 1000Hz (1000 microseconds)
     const std::chrono::microseconds target_period(1000);
-    auto next_tick = std::chrono::steady_clock::now();
+    auto next_tick = TimeUtils::GetTime();
 
     while (g_running) {
         loopMonitor.RecordEvent();
@@ -268,7 +271,7 @@ void FFBThread() {
             current_physics_force = force_physics;
 
             // Warning for low sample rate (Issue #133)
-            static auto lastWarningTime = std::chrono::steady_clock::now();
+            static auto lastWarningTime = TimeUtils::GetTime();
             HealthStatus health;
             {
                 std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
@@ -278,7 +281,7 @@ void FFBThread() {
             }
 
             if (in_realtime_phys && !health.is_healthy) {
-                 auto now = std::chrono::steady_clock::now();
+                 auto now = TimeUtils::GetTime();
                  if (std::chrono::duration_cast<std::chrono::seconds>(now - lastWarningTime).count() >= 60) {
                      std::string reason = "";
                      if (health.loop_low) reason += "Loop=" + std::to_string((int)health.loop_rate) + "Hz ";
@@ -313,7 +316,16 @@ void FFBThread() {
         }
 
         // Precise Timing: Sleep until next tick
+#ifdef LMUFFB_UNIT_TEST
+        if (g_use_mock_time) {
+            // In unit test mode with mock time, we don't sleep.
+            // We expect the test to advance g_mock_time.
+        } else {
+            std::this_thread::sleep_until(next_tick);
+        }
+#else
         std::this_thread::sleep_until(next_tick);
+#endif
     }
 
     Logger::Get().LogFile("[FFB] Loop Stopped.");

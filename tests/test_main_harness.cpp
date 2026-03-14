@@ -15,6 +15,8 @@ extern std::atomic<bool> g_ffb_active;
 extern std::recursive_mutex g_engine_mutex;
 extern FFBEngine g_engine;
 extern SharedMemoryObjectOut g_localData;
+extern std::chrono::steady_clock::time_point g_mock_time;
+extern bool g_use_mock_time;
 
 extern int lmuffb_app_main(int argc, char* argv[]);
 extern void FFBThread();
@@ -48,17 +50,29 @@ TEST_CASE(test_main_app_logic, "System") {
     // Run FFBThread for a few iterations with changing telemetry
     // We run long enough to trigger the 5-second health warning logic
     g_running = true;
+    g_use_mock_time = true;
+    g_mock_time = std::chrono::steady_clock::now();
+
+    // Start thread
     std::thread t(FFBThread);
+
     for (int i = 0; i < 550; i++) {
         #ifndef _WIN32
         SharedMemoryLayout* layout = (SharedMemoryLayout*)MockSM::GetMaps()["LMU_Data"].data();
         layout->data.telemetry.telemInfo[0].mElapsedTime += 0.01f; // Faster than realtime to simulate time passing
         layout->data.telemetry.telemInfo[0].mSteeringShaftTorque = (float)sin(i * 0.1);
         #endif
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+        // Advance mock time by 10ms each step
+        g_mock_time += std::chrono::milliseconds(10);
+
+        // Give the thread a tiny bit of real-world time to process if needed,
+        // though with mock time it should just loop.
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
     g_running = false;
     if (t.joinable()) t.join();
+    g_use_mock_time = false;
 
     std::cout << "[PASS] FFBThread exercised with telemetry" << std::endl;
     g_tests_passed++;
@@ -106,6 +120,9 @@ TEST_CASE(test_main_app_logic, "System") {
     // Test health monitor warnings (simulated low rate)
     {
         g_running = true;
+        g_use_mock_time = true;
+        g_mock_time = std::chrono::steady_clock::now();
+
         Config::m_auto_start_logging = true;
         #ifndef _WIN32
         SharedMemoryLayout* layout = (SharedMemoryLayout*)MockSM::GetMaps()["LMU_Data"].data();
@@ -114,13 +131,17 @@ TEST_CASE(test_main_app_logic, "System") {
 
         std::thread t(FFBThread);
 
-        // We need to wait for the 5-second interval in main.cpp for the health warning
-        // and the extended logging. This takes time but significantly boosts coverage.
-        std::this_thread::sleep_for(std::chrono::milliseconds(5200));
+        // We need to advance time past the 5-second interval in main.cpp for the health warning
+        // We do this in smaller steps to ensure the loop processes the events.
+        for(int j=0; j<520; ++j) {
+            g_mock_time += std::chrono::milliseconds(10);
+            std::this_thread::sleep_for(std::chrono::microseconds(100));
+        }
 
         g_running = false;
         if (t.joinable()) t.join();
-        std::cout << "[PASS] Health monitor branch exercised" << std::endl;
+        g_use_mock_time = false;
+        std::cout << "[PASS] Health monitor branch exercised (optimized)" << std::endl;
         g_tests_passed++;
     }
 
