@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
   - Optimized `test_main_app_logic` to handle Windows scheduler penalties by replacing high-frequency sleeps with `std::this_thread::yield()`.
   - Added internal profiling (sub-timing) to `test_main_app_logic` to identify phase-specific bottlenecks.
   - Updated `test_scaling_and_performance.md` with analysis of Windows sleep resolution and profiling strategies.
+  - Added `compilation_speed_analysis.md`: Analysis of CI build times and proposed compiler optimizations (PCH, Unity builds).
 
 ## [0.7.185]
 - **Test Infrastructure: Performance Timing and Optimization**:
