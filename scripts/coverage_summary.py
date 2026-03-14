@@ -149,7 +149,12 @@ if __name__ == "__main__":
     
     line_report = parse_cobertura(cobertura_path, "line")
     branch_report = parse_cobertura(cobertura_path, "branch")
+    
+    # Try JSON summary first, then fallback to Cobertura XML for functions
     function_report = parse_json_summary(json_path)
+    if not function_report:
+        print("Function coverage from JSON missing, attempting to parse from Cobertura XML...")
+        function_report = parse_cobertura(cobertura_path, "function")
 
     output_dir = "docs/dev_docs/reports/coverage"
     if not os.path.exists(output_dir):

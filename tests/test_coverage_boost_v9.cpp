@@ -8,14 +8,14 @@ TEST_CASE(test_ffb_engine_snapshot_buffer_overflow, "Diagnostics") {
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     
-    // DEBUG_BUFFER_CAP is 1000. 
+    // DEBUG_BUFFER_CAP is 100. 
     // We need to fill it to hit the branch: if (m_debug_buffer.size() < DEBUG_BUFFER_CAP)
-    for (int i = 0; i < 1005; i++) {
+    for (int i = 0; i < 105; i++) {
         engine.calculate_force(&data);
     }
     
     auto batch = engine.GetDebugBatch();
-    ASSERT_EQ(batch.size(), 1000); // Should be capped at 1000
+    ASSERT_EQ(batch.size(), 100); // Should be capped at 100
     
     // Buffer should be empty now
     auto empty_batch = engine.GetDebugBatch();

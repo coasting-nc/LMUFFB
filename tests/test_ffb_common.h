@@ -19,6 +19,20 @@
 #include "../src/Logger.h"
 #include "../src/GameConnector.h"
 #include "../src/StringUtils.h"
+#include "../src/RestApiProvider.h"
+
+class RestApiProviderTestAccess {
+public:
+    static void SetFallbackRange(float val) {
+        RestApiProvider::Get().m_fallbackRangeDeg = val;
+    }
+    static void ResetRequestState() {
+        RestApiProvider::Get().m_isRequesting = false;
+    }
+    static float ParseSteeringLock(RestApiProvider& p, const std::string& json) {
+        return p.ParseSteeringLock(json);
+    }
+};
 
 namespace FFBEngineTests {
 

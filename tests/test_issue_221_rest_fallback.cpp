@@ -5,14 +5,6 @@
 
 using namespace FFBEngineTests;
 
-// Forward declaration of mock access
-class RestApiProviderTestAccess {
-public:
-    static float ParseSteeringLock(RestApiProvider& p, const std::string& json) {
-        return p.ParseSteeringLock(json);
-    }
-};
-
 TEST_CASE(test_rest_api_parsing, "RestApi") {
     RestApiProvider& provider = RestApiProvider::Get();
 
@@ -48,11 +40,10 @@ TEST_CASE(test_engine_rest_fallback_integration, "RestApi") {
     // Since we are on Linux, RequestSteeringRange doesn't do much,
     // but we can verify it doesn't crash and engine state is sane.
 
-    FFBEngineTestAccess::SetRestApiEnabled(engine, true);
-    FFBEngineTestAccess::SetRestApiPort(engine, 1234);
+    // Using calculate_force to trigger the polling
+    engine.calculate_force(&data, "Hypercar", "9X8");
 
-    // Car change trigger
-    engine.calculate_force(&data, "GT3", "Test Car", 0.0f, true);
+    ASSERT_TRUE(FFBEngineTestAccess::HasWarnings(engine)); // Should warn about fallback
 
     // Verify no crash when requesting on Linux
     RestApiProvider::Get().RequestSteeringRange(1234);
