@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-14 23:00:07</td>
+            <td class="headerValue">2026-03-14 23:51:48</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -245,18 +245,18 @@
 <span id="L174"><span class="lineNum">     174</span>                 :             :     int rest_api_port = 6397;</span>
 <span id="L175"><span class="lineNum">     175</span>                 :             : </span>
 <span id="L176"><span class="lineNum">     176</span>                 :             :     // 2. Constructors</span>
-<span id="L177"><span class="lineNum">     177</span>         [<span class="tlaGBC" title="Branch 0 was taken 658 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">        1974 :     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin), app_version(LMUFFB_VERSION) {}</span></span>
-<span id="L178"><span class="lineNum">     178</span>   [<span class="tlaGBC" title="Branch 0 was taken 1378 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 1378 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        6890 :     Preset() : name(&quot;Unnamed&quot;), is_builtin(false), app_version(LMUFFB_VERSION) {} // Default constructor for file loading</span></span>
+<span id="L177"><span class="lineNum">     177</span>         [<span class="tlaGBC" title="Branch 0 was taken 681 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">        2043 :     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin), app_version(LMUFFB_VERSION) {}</span></span>
+<span id="L178"><span class="lineNum">     178</span>   [<span class="tlaGBC" title="Branch 0 was taken 1379 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 1379 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        6895 :     Preset() : name(&quot;Unnamed&quot;), is_builtin(false), app_version(LMUFFB_VERSION) {} // Default constructor for file loading</span></span>
 <span id="L179"><span class="lineNum">     179</span>                 :             : </span>
 <span id="L180"><span class="lineNum">     180</span>                 :             :     // 3. Fluent Setters (The &quot;Python Dictionary&quot; feel)</span>
-<span id="L181"><span class="lineNum">     181</span>                 :<span class="tlaGNC">         297 :     Preset&amp; SetGain(float v) { gain = v; return *this; }</span></span>
-<span id="L182"><span class="lineNum">     182</span>                 :<span class="tlaGNC">         432 :     Preset&amp; SetUndersteer(float v) { understeer = v; return *this; }</span></span>
+<span id="L181"><span class="lineNum">     181</span>                 :<span class="tlaGNC">         308 :     Preset&amp; SetGain(float v) { gain = v; return *this; }</span></span>
+<span id="L182"><span class="lineNum">     182</span>                 :<span class="tlaGNC">         448 :     Preset&amp; SetUndersteer(float v) { understeer = v; return *this; }</span></span>
 <span id="L183"><span class="lineNum">     183</span>                 :             :     Preset&amp; SetUndersteerGamma(float v) { understeer_gamma = v; return *this; }</span>
-<span id="L184"><span class="lineNum">     184</span>                 :<span class="tlaGNC">         432 :     Preset&amp; SetSoP(float v) { sop = v; return *this; }</span></span>
-<span id="L185"><span class="lineNum">     185</span>                 :<span class="tlaGNC">         162 :     Preset&amp; SetSoPScale(float v) { sop_scale = v; return *this; }</span></span>
-<span id="L186"><span class="lineNum">     186</span>                 :<span class="tlaGNC">         432 :     Preset&amp; SetSmoothing(float v) { sop_smoothing = v; return *this; }</span></span>
+<span id="L184"><span class="lineNum">     184</span>                 :<span class="tlaGNC">         448 :     Preset&amp; SetSoP(float v) { sop = v; return *this; }</span></span>
+<span id="L185"><span class="lineNum">     185</span>                 :<span class="tlaGNC">         168 :     Preset&amp; SetSoPScale(float v) { sop_scale = v; return *this; }</span></span>
+<span id="L186"><span class="lineNum">     186</span>                 :<span class="tlaGNC">         448 :     Preset&amp; SetSmoothing(float v) { sop_smoothing = v; return *this; }</span></span>
 <span id="L187"><span class="lineNum">     187</span>                 :             :     Preset&amp; SetMinForce(float v) { min_force = v; return *this; }</span>
-<span id="L188"><span class="lineNum">     188</span>                 :<span class="tlaGNC">         243 :     Preset&amp; SetOversteer(float v) { oversteer_boost = v; return *this; }</span></span>
+<span id="L188"><span class="lineNum">     188</span>                 :<span class="tlaGNC">         252 :     Preset&amp; SetOversteer(float v) { oversteer_boost = v; return *this; }</span></span>
 <span id="L189"><span class="lineNum">     189</span>                 :             :     Preset&amp; SetLongitudinalLoad(float v) { long_load_effect = v; return *this; }</span>
 <span id="L190"><span class="lineNum">     190</span>                 :             :     Preset&amp; SetLongitudinalLoadSmoothing(float v) { long_load_smoothing = v; return *this; }</span>
 <span id="L191"><span class="lineNum">     191</span>                 :             :     Preset&amp; SetLongitudinalLoadTransform(int v) { long_load_transform = v; return *this; }</span>
@@ -266,30 +266,30 @@
 <span id="L195"><span class="lineNum">     195</span>                 :             :         grip_smoothing_sensitivity = sens;</span>
 <span id="L196"><span class="lineNum">     196</span>                 :             :         return *this;</span>
 <span id="L197"><span class="lineNum">     197</span>                 :             :     }</span>
-<span id="L198"><span class="lineNum">     198</span>                 :<span class="tlaGNC">         432 :     Preset&amp; SetSlipSmoothing(float v) { slip_smoothing = v; return *this; }</span></span>
+<span id="L198"><span class="lineNum">     198</span>                 :<span class="tlaGNC">         448 :     Preset&amp; SetSlipSmoothing(float v) { slip_smoothing = v; return *this; }</span></span>
 <span id="L199"><span class="lineNum">     199</span>                 :             :     </span>
-<span id="L200"><span class="lineNum">     200</span>                 :<span class="tlaGNC">         270 :     Preset&amp; SetLockup(bool enabled, float g, float start = 5.0f, float full = 15.0f, float boost = 1.5f) { </span></span>
-<span id="L201"><span class="lineNum">     201</span>                 :<span class="tlaGNC">         270 :         lockup_enabled = enabled; </span></span>
-<span id="L202"><span class="lineNum">     202</span>                 :<span class="tlaGNC">         270 :         lockup_gain = g; </span></span>
-<span id="L203"><span class="lineNum">     203</span>                 :<span class="tlaGNC">         270 :         lockup_start_pct = start;</span></span>
-<span id="L204"><span class="lineNum">     204</span>                 :<span class="tlaGNC">         270 :         lockup_full_pct = full;</span></span>
-<span id="L205"><span class="lineNum">     205</span>                 :<span class="tlaGNC">         270 :         lockup_rear_boost = boost;</span></span>
-<span id="L206"><span class="lineNum">     206</span>                 :<span class="tlaGNC">         270 :         return *this; </span></span>
+<span id="L200"><span class="lineNum">     200</span>                 :<span class="tlaGNC">         280 :     Preset&amp; SetLockup(bool enabled, float g, float start = 5.0f, float full = 15.0f, float boost = 1.5f) { </span></span>
+<span id="L201"><span class="lineNum">     201</span>                 :<span class="tlaGNC">         280 :         lockup_enabled = enabled; </span></span>
+<span id="L202"><span class="lineNum">     202</span>                 :<span class="tlaGNC">         280 :         lockup_gain = g; </span></span>
+<span id="L203"><span class="lineNum">     203</span>                 :<span class="tlaGNC">         280 :         lockup_start_pct = start;</span></span>
+<span id="L204"><span class="lineNum">     204</span>                 :<span class="tlaGNC">         280 :         lockup_full_pct = full;</span></span>
+<span id="L205"><span class="lineNum">     205</span>                 :<span class="tlaGNC">         280 :         lockup_rear_boost = boost;</span></span>
+<span id="L206"><span class="lineNum">     206</span>                 :<span class="tlaGNC">         280 :         return *this; </span></span>
 <span id="L207"><span class="lineNum">     207</span>                 :             :     }</span>
 <span id="L208"><span class="lineNum">     208</span>                 :             :     Preset&amp; SetBrakeCap(float v) { brake_load_cap = v; return *this; }</span>
-<span id="L209"><span class="lineNum">     209</span>                 :<span class="tlaGNC">         270 :     Preset&amp; SetSpin(bool enabled, float g, float scale = 1.0f) { </span></span>
-<span id="L210"><span class="lineNum">     210</span>                 :<span class="tlaGNC">         270 :         spin_enabled = enabled; </span></span>
-<span id="L211"><span class="lineNum">     211</span>                 :<span class="tlaGNC">         270 :         spin_gain = g; </span></span>
-<span id="L212"><span class="lineNum">     212</span>                 :<span class="tlaGNC">         270 :         spin_freq_scale = scale;</span></span>
-<span id="L213"><span class="lineNum">     213</span>                 :<span class="tlaGNC">         270 :         return *this; </span></span>
+<span id="L209"><span class="lineNum">     209</span>                 :<span class="tlaGNC">         280 :     Preset&amp; SetSpin(bool enabled, float g, float scale = 1.0f) { </span></span>
+<span id="L210"><span class="lineNum">     210</span>                 :<span class="tlaGNC">         280 :         spin_enabled = enabled; </span></span>
+<span id="L211"><span class="lineNum">     211</span>                 :<span class="tlaGNC">         280 :         spin_gain = g; </span></span>
+<span id="L212"><span class="lineNum">     212</span>                 :<span class="tlaGNC">         280 :         spin_freq_scale = scale;</span></span>
+<span id="L213"><span class="lineNum">     213</span>                 :<span class="tlaGNC">         280 :         return *this; </span></span>
 <span id="L214"><span class="lineNum">     214</span>                 :             :     }</span>
-<span id="L215"><span class="lineNum">     215</span>                 :<span class="tlaGNC">         432 :     Preset&amp; SetSlide(bool enabled, float g, float f = 1.0f) { </span></span>
-<span id="L216"><span class="lineNum">     216</span>                 :<span class="tlaGNC">         432 :         slide_enabled = enabled; </span></span>
-<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">         432 :         slide_gain = g; </span></span>
-<span id="L218"><span class="lineNum">     218</span>                 :<span class="tlaGNC">         432 :         slide_freq = f; </span></span>
-<span id="L219"><span class="lineNum">     219</span>                 :<span class="tlaGNC">         432 :         return *this; </span></span>
+<span id="L215"><span class="lineNum">     215</span>                 :<span class="tlaGNC">         448 :     Preset&amp; SetSlide(bool enabled, float g, float f = 1.0f) { </span></span>
+<span id="L216"><span class="lineNum">     216</span>                 :<span class="tlaGNC">         448 :         slide_enabled = enabled; </span></span>
+<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">         448 :         slide_gain = g; </span></span>
+<span id="L218"><span class="lineNum">     218</span>                 :<span class="tlaGNC">         448 :         slide_freq = f; </span></span>
+<span id="L219"><span class="lineNum">     219</span>                 :<span class="tlaGNC">         448 :         return *this; </span></span>
 <span id="L220"><span class="lineNum">     220</span>                 :             :     }</span>
-<span id="L221"><span class="lineNum">     221</span>                 :<span class="tlaGNC">         270 :     Preset&amp; SetRoad(bool enabled, float g) { road_enabled = enabled; road_gain = g; return *this; }</span></span>
+<span id="L221"><span class="lineNum">     221</span>                 :<span class="tlaGNC">         280 :     Preset&amp; SetRoad(bool enabled, float g) { road_enabled = enabled; road_gain = g; return *this; }</span></span>
 <span id="L222"><span class="lineNum">     222</span>                 :             :     Preset&amp; SetVibrationGain(float v) { vibration_gain = v; return *this; }</span>
 <span id="L223"><span class="lineNum">     223</span>                 :             :     Preset&amp; SetDynamicNormalization(bool enabled) { dynamic_normalization_enabled = enabled; return *this; }</span>
 <span id="L224"><span class="lineNum">     224</span>                 :             : </span>
@@ -307,10 +307,10 @@
 <span id="L236"><span class="lineNum">     236</span>                 :             :     }</span>
 <span id="L237"><span class="lineNum">     237</span>                 :             :     </span>
 <span id="L238"><span class="lineNum">     238</span>                 :             :     Preset&amp; SetBottoming(int method) { bottoming_method = method; return *this; }</span>
-<span id="L239"><span class="lineNum">     239</span>                 :<span class="tlaGNC">         243 :     Preset&amp; SetScrub(float v) { scrub_drag_gain = v; return *this; }</span></span>
-<span id="L240"><span class="lineNum">     240</span>                 :<span class="tlaGNC">         432 :     Preset&amp; SetRearAlign(float v) { rear_align_effect = v; return *this; }</span></span>
-<span id="L241"><span class="lineNum">     241</span>                 :<span class="tlaGNC">         249 :     Preset&amp; SetSoPYaw(float v) { sop_yaw_gain = v; return *this; }</span></span>
-<span id="L242"><span class="lineNum">     242</span>                 :<span class="tlaGNC">         162 :     Preset&amp; SetGyro(float v) { gyro_gain = v; return *this; }</span></span>
+<span id="L239"><span class="lineNum">     239</span>                 :<span class="tlaGNC">         252 :     Preset&amp; SetScrub(float v) { scrub_drag_gain = v; return *this; }</span></span>
+<span id="L240"><span class="lineNum">     240</span>                 :<span class="tlaGNC">         448 :     Preset&amp; SetRearAlign(float v) { rear_align_effect = v; return *this; }</span></span>
+<span id="L241"><span class="lineNum">     241</span>                 :<span class="tlaGNC">         258 :     Preset&amp; SetSoPYaw(float v) { sop_yaw_gain = v; return *this; }</span></span>
+<span id="L242"><span class="lineNum">     242</span>                 :<span class="tlaGNC">         168 :     Preset&amp; SetGyro(float v) { gyro_gain = v; return *this; }</span></span>
 <span id="L243"><span class="lineNum">     243</span>                 :             :     </span>
 <span id="L244"><span class="lineNum">     244</span>                 :             :     Preset&amp; SetShaftGain(float v) { steering_shaft_gain = v; return *this; }</span>
 <span id="L245"><span class="lineNum">     245</span>                 :             :     Preset&amp; SetInGameGain(float v) { ingame_ffb_gain = v; return *this; }</span>
@@ -328,7 +328,7 @@
 <span id="L257"><span class="lineNum">     257</span>                 :             :         static_notch_width = width;</span>
 <span id="L258"><span class="lineNum">     258</span>                 :             :         return *this;</span>
 <span id="L259"><span class="lineNum">     259</span>                 :             :     }</span>
-<span id="L260"><span class="lineNum">     260</span>                 :<span class="tlaGNC">          28 :     Preset&amp; SetYawKickThreshold(float v) { yaw_kick_threshold = v; return *this; }</span></span>
+<span id="L260"><span class="lineNum">     260</span>                 :<span class="tlaGNC">          29 :     Preset&amp; SetYawKickThreshold(float v) { yaw_kick_threshold = v; return *this; }</span></span>
 <span id="L261"><span class="lineNum">     261</span>                 :             : </span>
 <span id="L262"><span class="lineNum">     262</span>                 :<span class="tlaGNC">           2 :     Preset&amp; SetUnloadedYawKick(float gain, float threshold, float sens, float gamma, float punch) {</span></span>
 <span id="L263"><span class="lineNum">     263</span>                 :<span class="tlaGNC">           2 :         unloaded_yaw_gain = gain;</span></span>
@@ -348,17 +348,17 @@
 <span id="L277"><span class="lineNum">     277</span>                 :<span class="tlaGNC">           5 :         return *this;</span></span>
 <span id="L278"><span class="lineNum">     278</span>                 :             :     }</span>
 <span id="L279"><span class="lineNum">     279</span>                 :             : </span>
-<span id="L280"><span class="lineNum">     280</span>                 :<span class="tlaGNC">          33 :     Preset&amp; SetSpeedGate(float lower, float upper) { speed_gate_lower = lower; speed_gate_upper = upper; return *this; }</span></span>
+<span id="L280"><span class="lineNum">     280</span>                 :<span class="tlaGNC">          34 :     Preset&amp; SetSpeedGate(float lower, float upper) { speed_gate_lower = lower; speed_gate_upper = upper; return *this; }</span></span>
 <span id="L281"><span class="lineNum">     281</span>                 :             : </span>
-<span id="L282"><span class="lineNum">     282</span>                 :<span class="tlaGNC">          27 :     Preset&amp; SetOptimalSlip(float angle, float ratio) {</span></span>
-<span id="L283"><span class="lineNum">     283</span>                 :<span class="tlaGNC">          27 :         optimal_slip_angle = angle;</span></span>
-<span id="L284"><span class="lineNum">     284</span>                 :<span class="tlaGNC">          27 :         optimal_slip_ratio = ratio;</span></span>
-<span id="L285"><span class="lineNum">     285</span>                 :<span class="tlaGNC">          27 :         return *this;</span></span>
+<span id="L282"><span class="lineNum">     282</span>                 :<span class="tlaGNC">          28 :     Preset&amp; SetOptimalSlip(float angle, float ratio) {</span></span>
+<span id="L283"><span class="lineNum">     283</span>                 :<span class="tlaGNC">          28 :         optimal_slip_angle = angle;</span></span>
+<span id="L284"><span class="lineNum">     284</span>                 :<span class="tlaGNC">          28 :         optimal_slip_ratio = ratio;</span></span>
+<span id="L285"><span class="lineNum">     285</span>                 :<span class="tlaGNC">          28 :         return *this;</span></span>
 <span id="L286"><span class="lineNum">     286</span>                 :             :     }</span>
 <span id="L287"><span class="lineNum">     287</span>                 :             :     Preset&amp; SetShaftSmoothing(float v) { steering_shaft_smoothing = v; return *this; }</span>
 <span id="L288"><span class="lineNum">     288</span>                 :             :     </span>
 <span id="L289"><span class="lineNum">     289</span>                 :             :     Preset&amp; SetGyroSmoothing(float v) { gyro_smoothing = v; return *this; }</span>
-<span id="L290"><span class="lineNum">     290</span>                 :<span class="tlaGNC">          27 :     Preset&amp; SetYawSmoothing(float v) { yaw_smoothing = v; return *this; }</span></span>
+<span id="L290"><span class="lineNum">     290</span>                 :<span class="tlaGNC">          28 :     Preset&amp; SetYawSmoothing(float v) { yaw_smoothing = v; return *this; }</span></span>
 <span id="L291"><span class="lineNum">     291</span>                 :             :     Preset&amp; SetChassisSmoothing(float v) { chassis_smoothing = v; return *this; }</span>
 <span id="L292"><span class="lineNum">     292</span>                 :             :     </span>
 <span id="L293"><span class="lineNum">     293</span>                 :             :     Preset&amp; SetSlopeDetection(bool enabled, int window = 15, float min_thresh = -0.3f, float max_thresh = -2.0f, float tau = 0.04f) {</span>
@@ -406,15 +406,15 @@
 <span id="L335"><span class="lineNum">     335</span>                 :             :     // âš ï¸ IMPORTANT: Default parameters (abs_f, lockup_f) must match Config.h defaults!</span>
 <span id="L336"><span class="lineNum">     336</span>                 :             :     // When changing Config.h defaults, update these values to match.</span>
 <span id="L337"><span class="lineNum">     337</span>                 :             :     // Current: abs_f=25.5, lockup_f=1.02 (GT3 DD 15 Nm defaults - v0.6.35)</span>
-<span id="L338"><span class="lineNum">     338</span>                 :<span class="tlaGNC">          54 :     Preset&amp; SetAdvancedBraking(float gamma, float sens, float bump, bool abs, float abs_g, float abs_f = 25.5f, float lockup_f = 1.02f) {</span></span>
-<span id="L339"><span class="lineNum">     339</span>                 :<span class="tlaGNC">          54 :         lockup_gamma = gamma;</span></span>
-<span id="L340"><span class="lineNum">     340</span>                 :<span class="tlaGNC">          54 :         lockup_prediction_sens = sens;</span></span>
-<span id="L341"><span class="lineNum">     341</span>                 :<span class="tlaGNC">          54 :         lockup_bump_reject = bump;</span></span>
-<span id="L342"><span class="lineNum">     342</span>                 :<span class="tlaGNC">          54 :         abs_pulse_enabled = abs;</span></span>
-<span id="L343"><span class="lineNum">     343</span>                 :<span class="tlaGNC">          54 :         abs_gain = abs_g;</span></span>
-<span id="L344"><span class="lineNum">     344</span>                 :<span class="tlaGNC">          54 :         abs_freq = abs_f;</span></span>
-<span id="L345"><span class="lineNum">     345</span>                 :<span class="tlaGNC">          54 :         lockup_freq_scale = lockup_f;</span></span>
-<span id="L346"><span class="lineNum">     346</span>                 :<span class="tlaGNC">          54 :         return *this;</span></span>
+<span id="L338"><span class="lineNum">     338</span>                 :<span class="tlaGNC">          56 :     Preset&amp; SetAdvancedBraking(float gamma, float sens, float bump, bool abs, float abs_g, float abs_f = 25.5f, float lockup_f = 1.02f) {</span></span>
+<span id="L339"><span class="lineNum">     339</span>                 :<span class="tlaGNC">          56 :         lockup_gamma = gamma;</span></span>
+<span id="L340"><span class="lineNum">     340</span>                 :<span class="tlaGNC">          56 :         lockup_prediction_sens = sens;</span></span>
+<span id="L341"><span class="lineNum">     341</span>                 :<span class="tlaGNC">          56 :         lockup_bump_reject = bump;</span></span>
+<span id="L342"><span class="lineNum">     342</span>                 :<span class="tlaGNC">          56 :         abs_pulse_enabled = abs;</span></span>
+<span id="L343"><span class="lineNum">     343</span>                 :<span class="tlaGNC">          56 :         abs_gain = abs_g;</span></span>
+<span id="L344"><span class="lineNum">     344</span>                 :<span class="tlaGNC">          56 :         abs_freq = abs_f;</span></span>
+<span id="L345"><span class="lineNum">     345</span>                 :<span class="tlaGNC">          56 :         lockup_freq_scale = lockup_f;</span></span>
+<span id="L346"><span class="lineNum">     346</span>                 :<span class="tlaGNC">          56 :         return *this;</span></span>
 <span id="L347"><span class="lineNum">     347</span>                 :             :     }</span>
 <span id="L348"><span class="lineNum">     348</span>                 :             : </span>
 <span id="L349"><span class="lineNum">     349</span>                 :             :     // 4. Static method to apply defaults to FFBEngine (Single Source of Truth)</span>
