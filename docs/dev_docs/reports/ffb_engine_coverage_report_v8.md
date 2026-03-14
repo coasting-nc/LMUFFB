@@ -16,30 +16,40 @@ Following the implementation of `test_coverage_boost_v8.cpp`, branch coverage fo
 *   **Logic:** `if (m_debug_buffer.size() < DEBUG_BUFFER_CAP)`
 *   **Status:** Not covered.
 *   **Why:** Requires pushing over 1000 snapshots in a single test iteration without the GUI (or test) draining the buffer. While easy to simulate, it hasn't been prioritized.
+*   **Coverage Potential:** Low (~0.5%). This is a single branch at the end of the snapshot block.
+*   **Difficulty:** Easy. Requires a simple loop of 1001 iterations in a single test case.
 
 ### 2. Mutex Contention
 *   **Location:** Multiple entry points (`calculate_force`, `GetDebugBatch`, `SetTorqueSource`, etc.)
 *   **Logic:** `std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);`
 *   **Status:** Not covered (Logical branch).
 *   **Why:** The compiler generates branches for mutex acquisition success/failure (especially in recursive mode). Triggering these requires high-frequency multi-threaded stress tests, which are currently outside the scope of the unit test runner.
+*   **Coverage Potential:** Medium (~1.5%). These guards are present in almost every public method.
+*   **Difficulty:** High. Requires a dedicated multi-threaded test harness to create actual contention.
 
 ### 3. Steady Clock Latching
 *   **Location:** Telemetry Processing
 *   **Logic:** `if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1)`
 *   **Status:** Partially covered.
 *   **Why:** Requires the test to run for at least one physical second or for the system clock to be mocked. Since the test runner is optimized for speed, these branches are often skipped unless a `sleep` is explicitly added.
+*   **Coverage Potential:** Low (~0.5%). Resets internal diagnostic counters.
+*   **Difficulty:** Easy-Medium. Requires a `std::this_thread::sleep_for` call, which slows down the test suite.
 
 ### 4. Specific Car Telemetry Fallbacks (DLC/Encrypted Content)
 *   **Location:** Pre-calculations (Load/Grip Estimation)
 *   **Logic:** `if (!m_warned_load)`, `if (!m_warned_susp_force)`, etc.
 *   **Status:** Most covered in V8, but some rear-wheel specific variants remain.
 *   **Why:** Requires simulating 50+ frames of missing telemetry specifically for RL/RR wheels while maintain speed > 3m/s.
+*   **Coverage Potential:** Medium (~2.0%). There are several redundant warning flags for different telemetry channels.
+*   **Difficulty:** Medium. Requires detailed telemetry simulation over a sustained period (50+ frames).
 
 ### 5. Floating Point Edge Cases in Derivative Logic
 *   **Location:** Signal Conditioning / Upsampling
 *   **Logic:** `if (!std::isfinite(steer))`, `if (ffb_dt < 0.0001)`
 *   **Status:** Partially covered.
 *   **Why:** Some blocks check for `NaN` or `Inf` on every input channel. Covering every single one requires a combinatorial explosion of tests.
+*   **Coverage Potential:** High (~3-4%). These defensive checks are scattered throughout the physics pipeline.
+*   **Difficulty:** Medium. Implementation is repetitive but requires careful seeding of non-finite values into specific telemetry struct members.
 
 ---
 
@@ -47,9 +57,13 @@ Following the implementation of `test_coverage_boost_v8.cpp`, branch coverage fo
 
 ### Multi-threaded Race Conditions
 Branches related to `g_engine_mutex` and `m_debug_mutex` are the most challenging. They represent "invisible" logic that ensures thread safety. To cover them, we would need to implement a dedicated stress test that concurrently calls `calculate_force` and `GetDebugBatch` at high frequencies, which may introduce instability into the CI pipeline.
+*   **Coverage Potential:** Medium (~1.5%).
+*   **Difficulty:** High.
 
 ### Real-time Frequency Monitoring
 The `RateMonitor` branches (e.g., `m_ffb_rate`) rely on actual execution timing. In a virtualized or heavily loaded environment (like a CI runner), these timings can be unpredictable, making it difficult to assert that specific frequency-related branches are hit without non-deterministic test results.
+*   **Coverage Potential:** Low (~1.0%).
+*   **Difficulty:** High (Infrastructure dependent).
 
 ---
 
@@ -60,14 +74,20 @@ We can hit more branches in `apply_signal_conditioning` by toggling combinations
 *   `m_static_notch_enabled` + `bw < MIN_NOTCH_WIDTH_HZ`
 *   `m_flatspot_suppression` + `m_static_notch_enabled` (Interplay)
 *   `m_steering_shaft_smoothing` variations.
+*   **Coverage Potential:** Medium (~2.0%).
+*   **Difficulty:** Easy.
 
-### snapshot/Logging Logic
+### Snapshot/Logging Logic
 *   **Buffer Fill:** A simple test case that loops 1001 times to trigger the `DEBUG_BUFFER_CAP` branch.
 *   **Logger Sanitization:** Feeding more complex "illegal" characters into the `AsyncLogger` to exercise all regex/replacement branches in filename generation.
+*   **Coverage Potential:** Low (~1.0%).
+*   **Difficulty:** Easy.
 
 ### Understeer Gamma Edge Cases
 *   **Gamma = 1.0:** Exercises the `std::pow` optimization (if the compiler optimizes `pow(x, 1)`).
 *   **Grip = 0.0:** Exercises the `std::max(0.0, ...)` floor logic in the grip factor calculation.
+*   **Coverage Potential:** Low (~0.5%).
+*   **Difficulty:** Very Easy.
 
 ---
 
