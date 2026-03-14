@@ -244,7 +244,7 @@ void FFBThread() {
                         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
                         bool full_allowed = g_engine.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase) && is_driving;
 
-                        force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025, scoring.mControl);
+                        force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025, scoring.mControl, (scoring.mInGarageStall != 0));
 
                         // v0.7.153: Explicitly target zero force only when player is not in control (Issue #281).
                         // This allows Soft Lock to remain active in the garage and during pause (ControlMode::PLAYER),

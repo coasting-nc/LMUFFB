@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.183]
+
+- **Fixed Regression from 0.7.152 (Issue #332)**:
+  - **FFB Loss in Multiplayer**: Refined the safety window trigger logic to ignore transient `mControl` flickers to/from `ControlMode::NONE (-1)`. This prevents the 2-second gain reduction (30% gain) when players join or leave a session.
+  - **Wheel Lock in Pits**: Added a safety override to mute the "Soft Lock" force specifically when the car is in a garage stall. This prevents the steering wheel from pinning itself to the lock during teleports or initialization in the pits.
+  - **Maintained Pause Safety**: Preserved Soft Lock persistence during normal game Pause and other player-control states to ensure hardware safety as per Issue #281.
+- **Testing**:
+  - Added `tests/test_issue_332.cpp` with functional verification for control glitches and garage-specific soft lock muting.
+  - Verified 100% pass rate for new tests.
+
 ## [0.7.182]
 
 - **Increased Test Coverage for FFBEngine**:
