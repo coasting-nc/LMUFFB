@@ -362,6 +362,12 @@ public:
     static void SetRestApiEnabled(FFBEngine& e, bool val) { e.m_rest_api_enabled = val; }
     static void SetRestApiPort(FFBEngine& e, int val) { e.m_rest_api_port = val; }
     
+    static void SetWasAllowed(FFBEngine& e, bool val) { e.m_was_allowed = val; }
+    static bool GetWasAllowed(const FFBEngine& e) { return e.m_was_allowed; }
+    static void CallCalculateSopLateral(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+        e.calculate_sop_lateral(data, ctx);
+    }
+
     // Coverage Restoration Accessors
     static void CallUpdateStaticLoadReference(FFBEngine& e, double front_load, double rear_load, double speed, double dt) {
         e.update_static_load_reference(front_load, rear_load, speed, dt);

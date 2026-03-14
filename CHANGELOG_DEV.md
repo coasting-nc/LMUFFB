@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.182]
+
+- **Increased Test Coverage for FFBEngine**:
+  - Implemented comprehensive branch coverage for `FFBEngine.cpp`, targeting complex logic paths in safety systems, physics transitions, and specialized effects.
+  - Added new test cases for:
+    - **Safety Spike Detection**: Verified massive and sustained high-rate spike triggers and recovery.
+    - **Physics Transitions**: Validated FFB muting/unmuting, control handovers (AI vs Player), and filter state resets during transitions.
+    - **Dynamic Normalization**: Tested contextual spike rejection, clean state learning, and in-game torque scaling.
+    - **Specialized Physics**: Added tests for Yaw Kick derivatives (unloaded and power scenarios), predictive lockup vibration logic, and suspension bottoming (Impulse and Safety Trigger paths).
+    - **Diagnostics**: Exercised REST API fallbacks and steering range validation warnings.
+- **Infrastructure**:
+  - Added `test_coverage_boost_v7.cpp` to the test suite.
+  - Expanded `FFBEngineTestAccess` with 5 new methods to enable surgical testing of private internal state.
+
 ## [0.7.181]
 
 - **Enhanced Tire Grip Estimation with Dynamic Load Sensitivity**:

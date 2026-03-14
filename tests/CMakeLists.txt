@@ -119,6 +119,7 @@ set(TEST_SOURCES
     test_ffb_physics_issue_355.cpp
     test_distribution_bundle.cpp
     test_grip_estimation.cpp
+    test_coverage_boost_v7.cpp
     ../src/main.cpp
 )
 
