@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-14 15:20:59</td>
+            <td class="headerValue">2026-03-14 19:16:48</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -448,14 +448,14 @@
 <span id="L377"><span class="lineNum">     377</span>                 :<span class="tlaGNC">         823 :         engine.m_grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);</span></span>
 <span id="L378"><span class="lineNum">     378</span>                 :             : </span>
 <span id="L379"><span class="lineNum">     379</span>                 :             :         // FFB Safety (Issue #316)</span>
-<span id="L380"><span class="lineNum">     380</span>                 :<span class="tlaGNC">         823 :         engine.m_safety_window_duration = (std::max)(0.0f, safety_window_duration);</span></span>
-<span id="L381"><span class="lineNum">     381</span>                 :<span class="tlaGNC">         823 :         engine.m_safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));</span></span>
-<span id="L382"><span class="lineNum">     382</span>                 :<span class="tlaGNC">         823 :         engine.m_safety_smoothing_tau = (std::max)(0.001f, safety_smoothing_tau);</span></span>
-<span id="L383"><span class="lineNum">     383</span>                 :<span class="tlaGNC">         823 :         engine.m_spike_detection_threshold = (std::max)(1.0f, spike_detection_threshold);</span></span>
-<span id="L384"><span class="lineNum">     384</span>                 :<span class="tlaGNC">         823 :         engine.m_immediate_spike_threshold = (std::max)(1.0f, immediate_spike_threshold);</span></span>
-<span id="L385"><span class="lineNum">     385</span>                 :<span class="tlaGNC">         823 :         engine.m_safety_slew_full_scale_time_s = (std::max)(0.01f, safety_slew_full_scale_time_s);</span></span>
-<span id="L386"><span class="lineNum">     386</span>                 :<span class="tlaGNC">         823 :         engine.m_stutter_safety_enabled = stutter_safety_enabled;</span></span>
-<span id="L387"><span class="lineNum">     387</span>                 :<span class="tlaGNC">         823 :         engine.m_stutter_threshold = (std::max)(1.01f, stutter_threshold);</span></span>
+<span id="L380"><span class="lineNum">     380</span>                 :<span class="tlaGNC">         823 :         engine.m_safety.m_safety_window_duration = (std::max)(0.0f, safety_window_duration);</span></span>
+<span id="L381"><span class="lineNum">     381</span>                 :<span class="tlaGNC">         823 :         engine.m_safety.m_safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));</span></span>
+<span id="L382"><span class="lineNum">     382</span>                 :<span class="tlaGNC">         823 :         engine.m_safety.m_safety_smoothing_tau = (std::max)(0.001f, safety_smoothing_tau);</span></span>
+<span id="L383"><span class="lineNum">     383</span>                 :<span class="tlaGNC">         823 :         engine.m_safety.m_spike_detection_threshold = (std::max)(1.0f, spike_detection_threshold);</span></span>
+<span id="L384"><span class="lineNum">     384</span>                 :<span class="tlaGNC">         823 :         engine.m_safety.m_immediate_spike_threshold = (std::max)(1.0f, immediate_spike_threshold);</span></span>
+<span id="L385"><span class="lineNum">     385</span>                 :<span class="tlaGNC">         823 :         engine.m_safety.m_safety_slew_full_scale_time_s = (std::max)(0.01f, safety_slew_full_scale_time_s);</span></span>
+<span id="L386"><span class="lineNum">     386</span>                 :<span class="tlaGNC">         823 :         engine.m_safety.m_stutter_safety_enabled = stutter_safety_enabled;</span></span>
+<span id="L387"><span class="lineNum">     387</span>                 :<span class="tlaGNC">         823 :         engine.m_safety.m_stutter_threshold = (std::max)(1.01f, stutter_threshold);</span></span>
 <span id="L388"><span class="lineNum">     388</span>                 :             : </span>
 <span id="L389"><span class="lineNum">     389</span>                 :<span class="tlaGNC">         823 :         engine.m_lockup_enabled = lockup_enabled;</span></span>
 <span id="L390"><span class="lineNum">     390</span>                 :<span class="tlaGNC">         823 :         engine.m_lockup_gain = (std::max)(0.0f, lockup_gain);</span></span>
@@ -682,14 +682,14 @@
 <span id="L611"><span class="lineNum">     611</span>                 :<span class="tlaGNC">         393 :         grip_smoothing_sensitivity = engine.m_grip_smoothing_sensitivity;</span></span>
 <span id="L612"><span class="lineNum">     612</span>                 :             : </span>
 <span id="L613"><span class="lineNum">     613</span>                 :             :         // FFB Safety (Issue #316)</span>
-<span id="L614"><span class="lineNum">     614</span>                 :<span class="tlaGNC">         393 :         safety_window_duration = engine.m_safety_window_duration;</span></span>
-<span id="L615"><span class="lineNum">     615</span>                 :<span class="tlaGNC">         393 :         safety_gain_reduction = engine.m_safety_gain_reduction;</span></span>
-<span id="L616"><span class="lineNum">     616</span>                 :<span class="tlaGNC">         393 :         safety_smoothing_tau = engine.m_safety_smoothing_tau;</span></span>
-<span id="L617"><span class="lineNum">     617</span>                 :<span class="tlaGNC">         393 :         spike_detection_threshold = engine.m_spike_detection_threshold;</span></span>
-<span id="L618"><span class="lineNum">     618</span>                 :<span class="tlaGNC">         393 :         immediate_spike_threshold = engine.m_immediate_spike_threshold;</span></span>
-<span id="L619"><span class="lineNum">     619</span>                 :<span class="tlaGNC">         393 :         safety_slew_full_scale_time_s = engine.m_safety_slew_full_scale_time_s;</span></span>
-<span id="L620"><span class="lineNum">     620</span>                 :<span class="tlaGNC">         393 :         stutter_safety_enabled = engine.m_stutter_safety_enabled;</span></span>
-<span id="L621"><span class="lineNum">     621</span>                 :<span class="tlaGNC">         393 :         stutter_threshold = engine.m_stutter_threshold;</span></span>
+<span id="L614"><span class="lineNum">     614</span>                 :<span class="tlaGNC">         393 :         safety_window_duration = engine.m_safety.m_safety_window_duration;</span></span>
+<span id="L615"><span class="lineNum">     615</span>                 :<span class="tlaGNC">         393 :         safety_gain_reduction = engine.m_safety.m_safety_gain_reduction;</span></span>
+<span id="L616"><span class="lineNum">     616</span>                 :<span class="tlaGNC">         393 :         safety_smoothing_tau = engine.m_safety.m_safety_smoothing_tau;</span></span>
+<span id="L617"><span class="lineNum">     617</span>                 :<span class="tlaGNC">         393 :         spike_detection_threshold = engine.m_safety.m_spike_detection_threshold;</span></span>
+<span id="L618"><span class="lineNum">     618</span>                 :<span class="tlaGNC">         393 :         immediate_spike_threshold = engine.m_safety.m_immediate_spike_threshold;</span></span>
+<span id="L619"><span class="lineNum">     619</span>                 :<span class="tlaGNC">         393 :         safety_slew_full_scale_time_s = engine.m_safety.m_safety_slew_full_scale_time_s;</span></span>
+<span id="L620"><span class="lineNum">     620</span>                 :<span class="tlaGNC">         393 :         stutter_safety_enabled = engine.m_safety.m_stutter_safety_enabled;</span></span>
+<span id="L621"><span class="lineNum">     621</span>                 :<span class="tlaGNC">         393 :         stutter_threshold = engine.m_safety.m_stutter_threshold;</span></span>
 <span id="L622"><span class="lineNum">     622</span>                 :             : </span>
 <span id="L623"><span class="lineNum">     623</span>                 :<span class="tlaGNC">         393 :         lockup_enabled = engine.m_lockup_enabled;</span></span>
 <span id="L624"><span class="lineNum">     624</span>                 :<span class="tlaGNC">         393 :         lockup_gain = engine.m_lockup_gain;</span></span>
