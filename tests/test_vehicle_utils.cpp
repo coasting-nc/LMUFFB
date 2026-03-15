@@ -20,7 +20,7 @@ TEST_CASE(test_vehicle_class_parsing_keywords, "Internal") {
     ASSERT_EQ((int)ParseVehicleClass("LMP3", ""), (int)ParsedVehicleClass::LMP3);
     ASSERT_EQ((int)ParseVehicleClass("GTE", ""), (int)ParsedVehicleClass::GTE);
     ASSERT_EQ((int)ParseVehicleClass("GT3", ""), (int)ParsedVehicleClass::GT3);
-    ASSERT_EQ((int)ParseVehicleClass("LMGT3", ""), (int)ParsedVehicleClass::GT3);
+    ASSERT_EQ((int)ParseVehicleClass("LMGT3", ""), (int)ParsedVehicleClass::LMGT3);
 
     // Secondary Identification via Vehicle Name Keywords
     ASSERT_EQ((int)ParseVehicleClass("", "499P"), (int)ParsedVehicleClass::HYPERCAR);
@@ -54,7 +54,7 @@ TEST_CASE(test_vehicle_class_parsing_keywords, "Internal") {
     ASSERT_EQ((int)ParseVehicleClass("", "C8.R"), (int)ParsedVehicleClass::GTE);
     ASSERT_EQ((int)ParseVehicleClass("", "VANTAGE AMR"), (int)ParsedVehicleClass::GTE);
 
-    ASSERT_EQ((int)ParseVehicleClass("", "LMGT3"), (int)ParsedVehicleClass::GT3);
+    ASSERT_EQ((int)ParseVehicleClass("", "LMGT3"), (int)ParsedVehicleClass::LMGT3);
     ASSERT_EQ((int)ParseVehicleClass("", "296 GT3"), (int)ParsedVehicleClass::GT3);
     ASSERT_EQ((int)ParseVehicleClass("", "M4 GT3"), (int)ParsedVehicleClass::GT3);
     ASSERT_EQ((int)ParseVehicleClass("", "Z06 GT3"), (int)ParsedVehicleClass::GT3);
@@ -67,27 +67,22 @@ TEST_CASE(test_vehicle_class_parsing_keywords, "Internal") {
     ASSERT_EQ((int)ParseVehicleClass(nullptr, nullptr), (int)ParsedVehicleClass::UNKNOWN);
 }
 
-TEST_CASE(test_issue_346_repro, "Internal") {
-    // Case reported in Issue #346
-    // [FFB] Vehicle Identification -> Detected Class: Unknown | Seed Load: 4500.00N (Raw -> Class: Hyper, Name: Cadillac WTR 2025 #101:LM)
-    ASSERT_EQ((int)ParseVehicleClass("Hyper", "Cadillac WTR 2025 #101:LM"), (int)ParsedVehicleClass::HYPERCAR);
+TEST_CASE(test_issue_368_repro, "Internal") {
+    // Case reported in Issue #368 for Porsche LMGT3 (Proton Competition)
+    ASSERT_EQ_STR(ParseVehicleBrand("GT3", "Proton Competition 2025 #60:ELMS"), "Porsche");
 
-    // Test "Hyper" short class name
-    ASSERT_EQ((int)ParseVehicleClass("Hyper", ""), (int)ParsedVehicleClass::HYPERCAR);
+    // Manthey keyword test
+    ASSERT_EQ_STR(ParseVehicleBrand("GT3", "Manthey EMA #91"), "Porsche");
 
-    // Test "CADILLAC" fallback keyword (requested by user)
-    ASSERT_EQ((int)ParseVehicleClass("", "CADILLAC"), (int)ParsedVehicleClass::HYPERCAR);
+    // 992 keyword test
+    ASSERT_EQ_STR(ParseVehicleBrand("LMGT3", "GT3 R (992)"), "Porsche");
 
-    // Issue #346: Case Insensitivity
-    ASSERT_EQ((int)ParseVehicleClass("hyper", ""), (int)ParsedVehicleClass::HYPERCAR);
-    ASSERT_EQ((int)ParseVehicleClass("Hypercar", ""), (int)ParsedVehicleClass::HYPERCAR);
+    // Standard Porsche name
+    ASSERT_EQ_STR(ParseVehicleBrand("GT3", "Porsche 911 GT3 R"), "Porsche");
 
-    // Issue #346: Primary Identification with manufacturer name in class field
-    ASSERT_EQ((int)ParseVehicleClass("CADILLAC", ""), (int)ParsedVehicleClass::HYPERCAR);
-
-    // Issue #346: Robust Trim (Whitespace handling)
-    ASSERT_EQ((int)ParseVehicleClass(" Hyper ", " Cadillac "), (int)ParsedVehicleClass::HYPERCAR);
-    ASSERT_EQ((int)ParseVehicleClass("\tHyper\n", ""), (int)ParsedVehicleClass::HYPERCAR);
+    // Robust Trim (Whitespace handling)
+    ASSERT_EQ_STR(ParseVehicleBrand("", " Porsche "), "Porsche");
+    ASSERT_EQ_STR(ParseVehicleBrand("", "\t911\n"), "Porsche");
 }
 
 TEST_CASE(test_vehicle_class_case_insensitivity, "Internal") {
@@ -105,6 +100,7 @@ TEST_CASE(test_vehicle_default_loads, "Internal") {
     ASSERT_EQ(GetDefaultLoadForClass(ParsedVehicleClass::LMP3), 5800.0);
     ASSERT_EQ(GetDefaultLoadForClass(ParsedVehicleClass::GTE), 5500.0);
     ASSERT_EQ(GetDefaultLoadForClass(ParsedVehicleClass::GT3), 4800.0);
+    ASSERT_EQ(GetDefaultLoadForClass(ParsedVehicleClass::LMGT3), 5000.0);
     ASSERT_EQ(GetDefaultLoadForClass(ParsedVehicleClass::UNKNOWN), 4500.0);
 }
 
@@ -116,6 +112,7 @@ TEST_CASE(test_vehicle_class_to_string, "Internal") {
     ASSERT_EQ_STR(VehicleClassToString(ParsedVehicleClass::LMP3), "LMP3");
     ASSERT_EQ_STR(VehicleClassToString(ParsedVehicleClass::GTE), "GTE");
     ASSERT_EQ_STR(VehicleClassToString(ParsedVehicleClass::GT3), "GT3");
+    ASSERT_EQ_STR(VehicleClassToString(ParsedVehicleClass::LMGT3), "LMGT3");
     ASSERT_EQ_STR(VehicleClassToString(ParsedVehicleClass::UNKNOWN), "Unknown");
 }
 

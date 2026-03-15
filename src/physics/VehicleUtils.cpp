@@ -40,8 +40,10 @@ ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleN
 
     if (cls.find("LMP3") != std::string::npos) return ParsedVehicleClass::LMP3;
     if (cls.find("GTE") != std::string::npos) return ParsedVehicleClass::GTE;
-    // NOTE: LMGT3 check is redundant here as GT3 would match it first.
-    if (cls.find("GT3") != std::string::npos || cls.find("LMGT3") != std::string::npos) return ParsedVehicleClass::GT3;
+
+    // Issue #368: Distinguish LMGT3 from GT3 in LMU
+    if (cls.find("LMGT3") != std::string::npos) return ParsedVehicleClass::LMGT3;
+    if (cls.find("GT3") != std::string::npos) return ParsedVehicleClass::GT3;
 
     // 2. Secondary Identification via Vehicle Name Keywords (Fallback)
     if (!name.empty()) {
@@ -76,11 +78,15 @@ ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleN
             return ParsedVehicleClass::GTE;
         }
 
-        // GT3
-        if (name.find("LMGT3") != std::string::npos || name.find("296 GT3") != std::string::npos ||
-            name.find("M4 GT3") != std::string::npos || name.find("Z06 GT3") != std::string::npos ||
-            name.find("HURACAN") != std::string::npos || name.find("RC F") != std::string::npos ||
-            name.find("720S") != std::string::npos || name.find("MUSTANG") != std::string::npos) {
+        // GT3 / LMGT3
+        if (name.find("LMGT3") != std::string::npos) {
+            return ParsedVehicleClass::LMGT3;
+        }
+
+        if (name.find("296 GT3") != std::string::npos || name.find("M4 GT3") != std::string::npos ||
+            name.find("Z06 GT3") != std::string::npos || name.find("HURACAN") != std::string::npos ||
+            name.find("RC F") != std::string::npos || name.find("720S") != std::string::npos ||
+            name.find("MUSTANG") != std::string::npos) {
             return ParsedVehicleClass::GT3;
         }
     }
@@ -98,6 +104,7 @@ double GetDefaultLoadForClass(ParsedVehicleClass vclass) {
         case ParsedVehicleClass::LMP3:             return 5800.0;
         case ParsedVehicleClass::GTE:              return 5500.0;
         case ParsedVehicleClass::GT3:              return 4800.0;
+        case ParsedVehicleClass::LMGT3:            return 5000.0;
         default:                                   return 4500.0;
     }
 }
@@ -112,6 +119,7 @@ const char* VehicleClassToString(ParsedVehicleClass vclass) {
         case ParsedVehicleClass::LMP3:             return "LMP3";
         case ParsedVehicleClass::GTE:              return "GTE";
         case ParsedVehicleClass::GT3:              return "GT3";
+        case ParsedVehicleClass::LMGT3:            return "LMGT3";
         default:                                   return "Unknown";
     }
 }
@@ -180,6 +188,7 @@ double GetMotionRatioForClass(ParsedVehicleClass vclass) {
             return 0.50; // Prototypes have high motion ratios (pushrod sees ~2x wheel load)
         case ParsedVehicleClass::GTE:
         case ParsedVehicleClass::GT3:
+        case ParsedVehicleClass::LMGT3:
             return 0.65; // GT cars have lower motion ratios
         default:
             return 0.55; // Default fallback
@@ -198,6 +207,7 @@ double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {
                 return 450.0;
             case ParsedVehicleClass::GTE:
             case ParsedVehicleClass::GT3:
+            case ParsedVehicleClass::LMGT3:
                 return 550.0;
             default:
                 return 500.0;
@@ -212,6 +222,7 @@ double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {
                 return 400.0;
             case ParsedVehicleClass::GTE:
             case ParsedVehicleClass::GT3:
+            case ParsedVehicleClass::LMGT3:
                 return 500.0;
             default:
                 return 450.0;

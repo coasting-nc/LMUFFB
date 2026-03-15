@@ -27,9 +27,14 @@ TEST_CASE(test_class_seeding, "Physics") {
     ASSERT_NEAR(peak, 9500.0, 1.0);
 
     // 3. Test GT3 (Case Insensitive)
-    engine.calculate_force(&data, "lmgt3", "Test");
+    engine.calculate_force(&data, "gt3", "Test");
     peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
     ASSERT_NEAR(peak, 4800.0, 1.0);
+
+    // 3b. Test LMGT3
+    engine.calculate_force(&data, "lmgt3", "Test");
+    peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
+    ASSERT_NEAR(peak, 5000.0, 1.0);
 
     // 4. Test LMP2 (WEC) - Partial match (Issue #225: Now 7500N)
     engine.calculate_force(&data, "LMP2 2023", "Oreca 07");
