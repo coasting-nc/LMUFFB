@@ -21,7 +21,7 @@ ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleN
     std::transform(cls.begin(), cls.end(), cls.begin(), ::toupper);
     std::transform(name.begin(), name.end(), name.begin(), ::toupper);
 
-    // Issue #346: Trim hidden whitespace that might cause matching failures in some environments
+    // Issue #368: Trim hidden whitespace that might cause matching failures in some environments
     cls = Trim(cls);
     name = Trim(name);
 
@@ -41,9 +41,8 @@ ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleN
     if (cls.find("LMP3") != std::string::npos) return ParsedVehicleClass::LMP3;
     if (cls.find("GTE") != std::string::npos) return ParsedVehicleClass::GTE;
 
-    // Issue #368: Distinguish LMGT3 from GT3 in LMU
-    if (cls.find("LMGT3") != std::string::npos) return ParsedVehicleClass::LMGT3;
-    if (cls.find("GT3") != std::string::npos) return ParsedVehicleClass::GT3;
+    // Issue #368: In LMU GT3-spec cars are in LMGT3 class
+    if (cls.find("LMGT3") != std::string::npos || cls.find("GT3") != std::string::npos) return ParsedVehicleClass::LMGT3;
 
     // 2. Secondary Identification via Vehicle Name Keywords (Fallback)
     if (!name.empty()) {
@@ -78,16 +77,11 @@ ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleN
             return ParsedVehicleClass::GTE;
         }
 
-        // GT3 / LMGT3
-        if (name.find("LMGT3") != std::string::npos) {
+        // GT3 / LMGT3 (In LMU all GT3-spec cars are in LMGT3 class)
+        if (name.find("LMGT3") != std::string::npos || name.find("GT3") != std::string::npos ||
+            name.find("HURACAN") != std::string::npos || name.find("RC F") != std::string::npos ||
+            name.find("720S") != std::string::npos || name.find("MUSTANG") != std::string::npos) {
             return ParsedVehicleClass::LMGT3;
-        }
-
-        if (name.find("296 GT3") != std::string::npos || name.find("M4 GT3") != std::string::npos ||
-            name.find("Z06 GT3") != std::string::npos || name.find("HURACAN") != std::string::npos ||
-            name.find("RC F") != std::string::npos || name.find("720S") != std::string::npos ||
-            name.find("MUSTANG") != std::string::npos) {
-            return ParsedVehicleClass::GT3;
         }
     }
 
@@ -103,7 +97,6 @@ double GetDefaultLoadForClass(ParsedVehicleClass vclass) {
         case ParsedVehicleClass::LMP2_UNSPECIFIED:  return 8000.0;
         case ParsedVehicleClass::LMP3:             return 5800.0;
         case ParsedVehicleClass::GTE:              return 5500.0;
-        case ParsedVehicleClass::GT3:              return 4800.0;
         case ParsedVehicleClass::LMGT3:            return 5000.0;
         default:                                   return 4500.0;
     }
@@ -118,7 +111,6 @@ const char* VehicleClassToString(ParsedVehicleClass vclass) {
         case ParsedVehicleClass::LMP2_UNSPECIFIED:  return "LMP2 Unspecified";
         case ParsedVehicleClass::LMP3:             return "LMP3";
         case ParsedVehicleClass::GTE:              return "GTE";
-        case ParsedVehicleClass::GT3:              return "GT3";
         case ParsedVehicleClass::LMGT3:            return "LMGT3";
         default:                                   return "Unknown";
     }
@@ -132,7 +124,7 @@ const char* ParseVehicleBrand(const char* className, const char* vehicleName) {
     // Normalize for case-insensitive matching
     std::transform(name.begin(), name.end(), name.begin(), ::toupper);
 
-    // Issue #346 / #368: Trim hidden whitespace
+    // Issue #368: Trim hidden whitespace
     name = Trim(name);
 
     if (name.find("FERRARI") != std::string::npos || name.find("499P") != std::string::npos || name.find("488") != std::string::npos || name.find("296") != std::string::npos) return "Ferrari";
@@ -187,7 +179,6 @@ double GetMotionRatioForClass(ParsedVehicleClass vclass) {
         case ParsedVehicleClass::LMP3:
             return 0.50; // Prototypes have high motion ratios (pushrod sees ~2x wheel load)
         case ParsedVehicleClass::GTE:
-        case ParsedVehicleClass::GT3:
         case ParsedVehicleClass::LMGT3:
             return 0.65; // GT cars have lower motion ratios
         default:
@@ -206,7 +197,6 @@ double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {
             case ParsedVehicleClass::LMP3:
                 return 450.0;
             case ParsedVehicleClass::GTE:
-            case ParsedVehicleClass::GT3:
             case ParsedVehicleClass::LMGT3:
                 return 550.0;
             default:
@@ -221,7 +211,6 @@ double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {
             case ParsedVehicleClass::LMP3:
                 return 400.0;
             case ParsedVehicleClass::GTE:
-            case ParsedVehicleClass::GT3:
             case ParsedVehicleClass::LMGT3:
                 return 500.0;
             default:

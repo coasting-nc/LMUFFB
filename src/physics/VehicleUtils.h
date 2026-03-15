@@ -11,7 +11,6 @@ enum class ParsedVehicleClass {
     LMP2_UNSPECIFIED,  // 8000N (Generic Fallback)
     LMP3,              // 5800N
     GTE,               // 5500N
-    GT3,               // 4800N
     LMGT3              // 5000N (LMU Specific)
 };
 

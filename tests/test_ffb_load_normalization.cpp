@@ -29,7 +29,7 @@ TEST_CASE(test_class_seeding, "Physics") {
     // 3. Test GT3 (Case Insensitive)
     engine.calculate_force(&data, "gt3", "Test");
     peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
-    ASSERT_NEAR(peak, 4800.0, 1.0);
+    ASSERT_NEAR(peak, 5000.0, 1.0);
 
     // 3b. Test LMGT3
     engine.calculate_force(&data, "lmgt3", "Test");
@@ -79,7 +79,7 @@ TEST_CASE(test_fallback_seeding, "Physics") {
     // 4. GT3 name fallback
     engine.calculate_force(&data, "Fallback_GT3", "BMW M4 GT3");
     peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
-    ASSERT_NEAR(peak, 4800.0, 1.0);
+    ASSERT_NEAR(peak, 5000.0, 1.0);
 }
 
 TEST_CASE(test_peak_hold_adaptation, "Physics") {
@@ -97,13 +97,13 @@ TEST_CASE(test_peak_hold_adaptation, "Physics") {
     data.mWheel[1].mGripFract = 1.0;
 
     // Seed as GT3 (4800N)
-    engine.calculate_force(&data, "GT3");
+    engine.calculate_force(&data, "LMGT3");
 
     // Feed 6000N load
     data.mWheel[0].mTireLoad = 6000.0;
     data.mWheel[1].mTireLoad = 6000.0;
 
-    engine.calculate_force(&data, "GT3");
+    engine.calculate_force(&data, "LMGT3");
 
     double peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
     ASSERT_NEAR(peak, 6000.0, 1.0);
@@ -124,17 +124,17 @@ TEST_CASE(test_peak_hold_adaptation_disabled, "Physics") {
     data.mWheel[1].mGripFract = 1.0;
 
     // Seed as GT3 (4800N)
-    engine.calculate_force(&data, "GT3");
+    engine.calculate_force(&data, "LMGT3");
 
     // Feed 6000N load
     data.mWheel[0].mTireLoad = 6000.0;
     data.mWheel[1].mTireLoad = 6000.0;
 
-    engine.calculate_force(&data, "GT3");
+    engine.calculate_force(&data, "LMGT3");
 
     double peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
-    // Should stay at 4800.0
-    ASSERT_NEAR(peak, 4800.0, 1.0);
+    // Should stay at 5000.0
+    ASSERT_NEAR(peak, 5000.0, 1.0);
 }
 
 TEST_CASE(test_peak_hold_decay, "Physics") {
@@ -297,17 +297,17 @@ TEST_CASE(test_load_normalization_disabled_behavior, "Physics") {
     data.mWheel[1].mGripFract = 1.0;
 
     // Seed as GT3 (4800N)
-    engine.calculate_force(&data, "GT3");
-    ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 4800.0, 1.0);
+    engine.calculate_force(&data, "LMGT3");
+    ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 5000.0, 1.0);
 
     // Feed massive load
     data.mWheel[0].mTireLoad = 10000.0;
     data.mWheel[1].mTireLoad = 10000.0;
 
-    engine.calculate_force(&data, "GT3");
+    engine.calculate_force(&data, "LMGT3");
 
     // Should NOT update peak
-    ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 4800.0, 1.0);
+    ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 5000.0, 1.0);
 
     // Switch to Hypercar
     engine.calculate_force(&data, "Hypercar");
@@ -315,9 +315,9 @@ TEST_CASE(test_load_normalization_disabled_behavior, "Physics") {
     ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 9500.0, 1.0);
 
     // Seed as GT3 (4800N)
-    engine.calculate_force(&data, "GT3");
+    engine.calculate_force(&data, "LMGT3");
     double sl = FFBEngineTestAccess::GetStaticFrontLoad(engine);
-    ASSERT_NEAR(sl, 2400.0, 1.0);
+    ASSERT_NEAR(sl, 2500.0, 1.0);
 }
 
 TEST_CASE(test_static_load_fallback_class_aware_disabled, "Physics") {
@@ -340,9 +340,9 @@ TEST_CASE(test_static_load_fallback_class_aware_disabled, "Physics") {
     ASSERT_NEAR(static_load, 4750.0, 1.0);
 
     // Seed as GT3 (4800N)
-    engine.calculate_force(&data, "GT3");
+    engine.calculate_force(&data, "LMGT3");
     static_load = FFBEngineTestAccess::GetStaticFrontLoad(engine);
-    ASSERT_NEAR(static_load, 2400.0, 1.0);
+    ASSERT_NEAR(static_load, 2500.0, 1.0);
 }
 
 } // namespace FFBEngineTests

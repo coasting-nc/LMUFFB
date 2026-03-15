@@ -19,7 +19,7 @@ TEST_CASE(test_vehicle_class_parsing_keywords, "Internal") {
 
     ASSERT_EQ((int)ParseVehicleClass("LMP3", ""), (int)ParsedVehicleClass::LMP3);
     ASSERT_EQ((int)ParseVehicleClass("GTE", ""), (int)ParsedVehicleClass::GTE);
-    ASSERT_EQ((int)ParseVehicleClass("GT3", ""), (int)ParsedVehicleClass::GT3);
+    ASSERT_EQ((int)ParseVehicleClass("LMGT3", ""), (int)ParsedVehicleClass::LMGT3);
     ASSERT_EQ((int)ParseVehicleClass("LMGT3", ""), (int)ParsedVehicleClass::LMGT3);
 
     // Secondary Identification via Vehicle Name Keywords
@@ -55,13 +55,13 @@ TEST_CASE(test_vehicle_class_parsing_keywords, "Internal") {
     ASSERT_EQ((int)ParseVehicleClass("", "VANTAGE AMR"), (int)ParsedVehicleClass::GTE);
 
     ASSERT_EQ((int)ParseVehicleClass("", "LMGT3"), (int)ParsedVehicleClass::LMGT3);
-    ASSERT_EQ((int)ParseVehicleClass("", "296 GT3"), (int)ParsedVehicleClass::GT3);
-    ASSERT_EQ((int)ParseVehicleClass("", "M4 GT3"), (int)ParsedVehicleClass::GT3);
-    ASSERT_EQ((int)ParseVehicleClass("", "Z06 GT3"), (int)ParsedVehicleClass::GT3);
-    ASSERT_EQ((int)ParseVehicleClass("", "HURACAN"), (int)ParsedVehicleClass::GT3);
-    ASSERT_EQ((int)ParseVehicleClass("", "RC F"), (int)ParsedVehicleClass::GT3);
-    ASSERT_EQ((int)ParseVehicleClass("", "720S"), (int)ParsedVehicleClass::GT3);
-    ASSERT_EQ((int)ParseVehicleClass("", "MUSTANG"), (int)ParsedVehicleClass::GT3);
+    ASSERT_EQ((int)ParseVehicleClass("", "296 GT3"), (int)ParsedVehicleClass::LMGT3);
+    ASSERT_EQ((int)ParseVehicleClass("", "M4 GT3"), (int)ParsedVehicleClass::LMGT3);
+    ASSERT_EQ((int)ParseVehicleClass("", "Z06 GT3"), (int)ParsedVehicleClass::LMGT3);
+    ASSERT_EQ((int)ParseVehicleClass("", "HURACAN"), (int)ParsedVehicleClass::LMGT3);
+    ASSERT_EQ((int)ParseVehicleClass("", "RC F"), (int)ParsedVehicleClass::LMGT3);
+    ASSERT_EQ((int)ParseVehicleClass("", "720S"), (int)ParsedVehicleClass::LMGT3);
+    ASSERT_EQ((int)ParseVehicleClass("", "MUSTANG"), (int)ParsedVehicleClass::LMGT3);
 
     ASSERT_EQ((int)ParseVehicleClass("Random Car", ""), (int)ParsedVehicleClass::UNKNOWN);
     ASSERT_EQ((int)ParseVehicleClass(nullptr, nullptr), (int)ParsedVehicleClass::UNKNOWN);
@@ -69,16 +69,16 @@ TEST_CASE(test_vehicle_class_parsing_keywords, "Internal") {
 
 TEST_CASE(test_issue_368_repro, "Internal") {
     // Case reported in Issue #368 for Porsche LMGT3 (Proton Competition)
-    ASSERT_EQ_STR(ParseVehicleBrand("GT3", "Proton Competition 2025 #60:ELMS"), "Porsche");
+    ASSERT_EQ_STR(ParseVehicleBrand("LMGT3", "Proton Competition 2025 #60:ELMS"), "Porsche");
 
     // Manthey keyword test
-    ASSERT_EQ_STR(ParseVehicleBrand("GT3", "Manthey EMA #91"), "Porsche");
+    ASSERT_EQ_STR(ParseVehicleBrand("LMGT3", "Manthey EMA #91"), "Porsche");
 
     // 992 keyword test
     ASSERT_EQ_STR(ParseVehicleBrand("LMGT3", "GT3 R (992)"), "Porsche");
 
     // Standard Porsche name
-    ASSERT_EQ_STR(ParseVehicleBrand("GT3", "Porsche 911 GT3 R"), "Porsche");
+    ASSERT_EQ_STR(ParseVehicleBrand("LMGT3", "Porsche 911 GT3 R"), "Porsche");
 
     // Robust Trim (Whitespace handling)
     ASSERT_EQ_STR(ParseVehicleBrand("", " Porsche "), "Porsche");
@@ -86,9 +86,9 @@ TEST_CASE(test_issue_368_repro, "Internal") {
 }
 
 TEST_CASE(test_vehicle_class_case_insensitivity, "Internal") {
-    ASSERT_EQ((int)ParseVehicleClass("gt3", ""), (int)ParsedVehicleClass::GT3);
-    ASSERT_EQ((int)ParseVehicleClass("GT3", ""), (int)ParsedVehicleClass::GT3);
-    ASSERT_EQ((int)ParseVehicleClass("Gt3", ""), (int)ParsedVehicleClass::GT3);
+    ASSERT_EQ((int)ParseVehicleClass("gt3", ""), (int)ParsedVehicleClass::LMGT3);
+    ASSERT_EQ((int)ParseVehicleClass("LMGT3", ""), (int)ParsedVehicleClass::LMGT3);
+    ASSERT_EQ((int)ParseVehicleClass("Gt3", ""), (int)ParsedVehicleClass::LMGT3);
 }
 
 TEST_CASE(test_vehicle_default_loads, "Internal") {
@@ -99,7 +99,7 @@ TEST_CASE(test_vehicle_default_loads, "Internal") {
     ASSERT_EQ(GetDefaultLoadForClass(ParsedVehicleClass::LMP2_UNSPECIFIED), 8000.0);
     ASSERT_EQ(GetDefaultLoadForClass(ParsedVehicleClass::LMP3), 5800.0);
     ASSERT_EQ(GetDefaultLoadForClass(ParsedVehicleClass::GTE), 5500.0);
-    ASSERT_EQ(GetDefaultLoadForClass(ParsedVehicleClass::GT3), 4800.0);
+    ASSERT_EQ(GetDefaultLoadForClass(ParsedVehicleClass::LMGT3), 5000.0);
     ASSERT_EQ(GetDefaultLoadForClass(ParsedVehicleClass::LMGT3), 5000.0);
     ASSERT_EQ(GetDefaultLoadForClass(ParsedVehicleClass::UNKNOWN), 4500.0);
 }
@@ -111,7 +111,7 @@ TEST_CASE(test_vehicle_class_to_string, "Internal") {
     ASSERT_EQ_STR(VehicleClassToString(ParsedVehicleClass::LMP2_UNSPECIFIED), "LMP2 Unspecified");
     ASSERT_EQ_STR(VehicleClassToString(ParsedVehicleClass::LMP3), "LMP3");
     ASSERT_EQ_STR(VehicleClassToString(ParsedVehicleClass::GTE), "GTE");
-    ASSERT_EQ_STR(VehicleClassToString(ParsedVehicleClass::GT3), "GT3");
+    ASSERT_EQ_STR(VehicleClassToString(ParsedVehicleClass::LMGT3), "LMGT3");
     ASSERT_EQ_STR(VehicleClassToString(ParsedVehicleClass::LMGT3), "LMGT3");
     ASSERT_EQ_STR(VehicleClassToString(ParsedVehicleClass::UNKNOWN), "Unknown");
 }
@@ -119,7 +119,7 @@ TEST_CASE(test_vehicle_class_to_string, "Internal") {
 TEST_CASE(test_motion_ratio_centralization, "Internal") {
     ASSERT_EQ(GetMotionRatioForClass(ParsedVehicleClass::HYPERCAR), 0.50);
     ASSERT_EQ(GetMotionRatioForClass(ParsedVehicleClass::LMP2_RESTRICTED), 0.50);
-    ASSERT_EQ(GetMotionRatioForClass(ParsedVehicleClass::GT3), 0.65);
+    ASSERT_EQ(GetMotionRatioForClass(ParsedVehicleClass::LMGT3), 0.65);
     ASSERT_EQ(GetMotionRatioForClass(ParsedVehicleClass::GTE), 0.65);
     ASSERT_EQ(GetMotionRatioForClass(ParsedVehicleClass::UNKNOWN), 0.55);
 }
@@ -127,12 +127,12 @@ TEST_CASE(test_motion_ratio_centralization, "Internal") {
 TEST_CASE(test_unsprung_weight_centralization, "Internal") {
     // Front
     ASSERT_EQ(GetUnsprungWeightForClass(ParsedVehicleClass::HYPERCAR, false), 400.0);
-    ASSERT_EQ(GetUnsprungWeightForClass(ParsedVehicleClass::GT3, false), 500.0);
+    ASSERT_EQ(GetUnsprungWeightForClass(ParsedVehicleClass::LMGT3, false), 500.0);
     ASSERT_EQ(GetUnsprungWeightForClass(ParsedVehicleClass::UNKNOWN, false), 450.0);
 
     // Rear
     ASSERT_EQ(GetUnsprungWeightForClass(ParsedVehicleClass::HYPERCAR, true), 450.0);
-    ASSERT_EQ(GetUnsprungWeightForClass(ParsedVehicleClass::GT3, true), 550.0);
+    ASSERT_EQ(GetUnsprungWeightForClass(ParsedVehicleClass::LMGT3, true), 550.0);
     ASSERT_EQ(GetUnsprungWeightForClass(ParsedVehicleClass::UNKNOWN, true), 500.0);
 }
 
