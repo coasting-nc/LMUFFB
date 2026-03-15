@@ -140,7 +140,11 @@ void RestApiProvider::PerformManufacturerRequest(int port, std::string vehicleNa
 #endif
 
     if (success && !response.empty()) {
+        // Log the full response for diagnostics
+        Logger::Get().LogFile("RestApiProvider: Full REST API response for car info: %s", response.c_str());
+
         std::string manufacturer = ParseManufacturer(response, vehicleName);
+
         std::lock_guard<std::mutex> lock(m_manufacturerMutex);
         m_manufacturer = manufacturer;
         m_hasManufacturer = true;

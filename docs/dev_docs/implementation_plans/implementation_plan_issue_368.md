@@ -50,6 +50,7 @@
 - **Class Differentiation:** The plan was expanded to explicitly support `LMGT3` as a distinct class after identifying that LMU-specific GT3-like cars have different specs (5000N load) than generic GT3 cars.
 - **Improved Metadata Logging:** Added logging for `mPitGroup` and `mVehFilename` in `FFBMetadataManager` to provide a complete "Identification Snapshot" whenever a vehicle change is detected.
 - **REST API Integration:** Added asynchronous retrieval of car manufacturer from the REST API (`/rest/race/car`) upon vehicle change. This provides a clean "Ground Truth" for brand identification even when Shared Memory strings are cryptic.
+- **REST API Diagnostics:** Added logging of the raw REST API JSON response (first 2048 chars) when manufacturer parsing fails. This is to debug observed cases where "Proton Competition" entries still return "Unknown" despite the improved matching logic.
 
 ## 6. Related Documentation
 - [REST API Car Info Specification](../reports/get%20car%20info%20from%20REST%20API.md)
