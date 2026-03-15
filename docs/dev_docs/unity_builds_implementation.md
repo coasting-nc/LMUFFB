@@ -8,7 +8,7 @@ In a standard build, `static` variables and functions, as well as symbols in ano
 
 ### Techniques for Detection
 *   **Compiler-Led Detection (The "Fail Fast" Method)**: The most straightforward way to find collisions is to attempt a Unity build. The compiler will immediately error out if `static` functions or variables share the same name in the same "chunk."
-*   **Static Analysis (Clang-Tidy)**: Use `clang-tidy` with the `readability-identifier-naming` and `bugprone-suspicious-include` checks. While not explicitly designed for Unity builds, enforcing a strict naming convention (e.g., prefixing internal helpers with the filename) minimizes collisions.
+*   **Static Analysis (Clang-Tidy)**: Use `clang-tidy` with the `readability-identifier-naming` and `bugprone-suspicious-include` checks. To strictly prevent issues, you can configure certain warnings to be treated as errors (see Q&A below).
 *   **Symbol Auditing with `nm` or `dumpbin`**: For Linux (GCC/Clang), a script can run `nm -f posix --defined-only <object_file>` and look for `t` or `b` (local text/data) symbols. If the same local symbol appears in multiple object files destined for the same chunk, a warning can be issued before the build starts.
 *   **Rigorous Namespace Usage**: The project should adopt a policy where **no code exists in the global namespace** except for `main`. Every file should be wrapped in a specific namespace (e.g., `namespace LMUFFB::Physics::Internal::[FileName]`) or use anonymous namespaces for all private data.
 
@@ -81,9 +81,45 @@ In your `.github/workflows/windows-build-and-test.yml` and `linux-build.yml`, ex
   run: cmake -B build -DLMUFFB_USE_UNITY_BUILD=ON ...
 ```
 
+### Local Testing Commands
+To test a Unity build locally without changing the default behavior permanently, use the following commands:
+
+```powershell
+# 1. Configure with Unity Build enabled
+cmake -B build_unity -DLMUFFB_USE_UNITY_BUILD=ON
+
+# 2. Build and check for errors
+cmake --build build_unity
+```
+
 ### Summary of Build Logic
 | Environment | `LMUFFB_USE_UNITY_BUILD` | Benefit |
 | :--- | :--- | :--- |
 | **Local Dev** | `OFF` (Default) | Fast incremental builds (compile exactly what changed). |
+| **Local Test** | `ON` (One-time) | Manually audit for symbol collisions locally. |
 | **GitHub CI** | `ON` (Explicit) | Fast full builds (minimize runner costs and wait times). |
 | **CI Audit** | `OFF` (Explicit) | Detect missing includes and hidden dependencies. |
+
+---
+
+## 5. Frequently Asked Questions (Q&A)
+
+### Q: Can we set some `clang-tidy` warnings to raise errors instead of warnings while keeping others as simple warnings?
+**A:** Yes. You can use the `-warnings-as-errors` flag in the `clang-tidy` command line or the `WarningsAsErrors` field in a `.clang-tidy` configuration file.
+
+*   **Command Line**: Add `--warnings-as-errors='readability-*,bugprone-*'` to your `clang-tidy` call. This will promote all readability and bugprone warnings to errors, while leaving others (e.g., performance) as warnings.
+*   **CMake Integration**:
+    ```cmake
+    # Promotions done selectively in CMake
+    set(CMAKE_CXX_CLANG_TIDY "clang-tidy;--warnings-as-errors=readability-identifier-naming,bugprone-suspicious-include")
+    ```
+
+### Q: Do we need to modify the `CMakeLists.txt` to support different builds?
+**A:** Yes, once. You add the `option(LMUFFB_USE_UNITY_BUILD ...)` block as shown in Section 4. After that, you **do not** need to edit the file again. The same `CMakeLists.txt` handles both Unity and Standard builds based on the argument you pass to `cmake`.
+
+### Q: How do I choose between Unity and Standard build locally?
+**A:** It is controlled entirely by the `-D` flag during the configuration step:
+*   **Standard (Default)**: `cmake -B build`
+*   **Unity**: `cmake -B build -DLMUFFB_USE_UNITY_BUILD=ON`
+
+The build system will remember this choice in the `build` directory until you delete it or re-run `cmake` with a different flag.
