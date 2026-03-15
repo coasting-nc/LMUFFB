@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-15 17:29:53</td>
+            <td class="headerValue">2026-03-15 17:39:50</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -127,9 +127,9 @@
 <span id="L56"><span class="lineNum">      56</span>                 :<span class="tlaGNC">        2808 :         return out;</span></span>
 <span id="L57"><span class="lineNum">      57</span>                 :             :     }</span>
 <span id="L58"><span class="lineNum">      58</span>                 :             :     </span>
-<span id="L59"><span class="lineNum">      59</span>                 :<span class="tlaGNC">       14183 :     void Reset() {</span></span>
-<span id="L60"><span class="lineNum">      60</span>                 :<span class="tlaGNC">       14183 :         x1 = x2 = y1 = y2 = 0.0;</span></span>
-<span id="L61"><span class="lineNum">      61</span>                 :<span class="tlaGNC">       14183 :     }</span></span>
+<span id="L59"><span class="lineNum">      59</span>                 :<span class="tlaGNC">       14184 :     void Reset() {</span></span>
+<span id="L60"><span class="lineNum">      60</span>                 :<span class="tlaGNC">       14184 :         x1 = x2 = y1 = y2 = 0.0;</span></span>
+<span id="L61"><span class="lineNum">      61</span>                 :<span class="tlaGNC">       14184 :     }</span></span>
 <span id="L62"><span class="lineNum">      62</span>                 :             : };</span>
 <span id="L63"><span class="lineNum">      63</span>                 :             : </span>
 <span id="L64"><span class="lineNum">      64</span>                 :             : // Helper: Inverse linear interpolation</span>
@@ -153,13 +153,13 @@
 <span id="L82"><span class="lineNum">      82</span>                 :             : // Returns smooth S-curve interpolation from 0 to 1</span>
 <span id="L83"><span class="lineNum">      83</span>                 :             : // Uses Hermite polynomial: t² × (3 - 2t)</span>
 <span id="L84"><span class="lineNum">      84</span>                 :             : // Zero derivative at both endpoints for seamless transitions</span>
-<span id="L85"><span class="lineNum">      85</span>                 :<span class="tlaGNC">       30764 : inline double smoothstep(double edge0, double edge1, double x) {</span></span>
-<span id="L86"><span class="lineNum">      86</span>                 :<span class="tlaGNC">       30764 :     double range = edge1 - edge0;</span></span>
-<span id="L87"><span class="lineNum">      87</span>         [<span class="tlaGBC" title="Branch 0 was taken 30760 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">       30764 :     if (std::abs(range) &gt;= 0.0001) {</span></span>
+<span id="L85"><span class="lineNum">      85</span>                 :<span class="tlaGNC">       30765 : inline double smoothstep(double edge0, double edge1, double x) {</span></span>
+<span id="L86"><span class="lineNum">      86</span>                 :<span class="tlaGNC">       30765 :     double range = edge1 - edge0;</span></span>
+<span id="L87"><span class="lineNum">      87</span>         [<span class="tlaGBC" title="Branch 0 was taken 30761 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">       30765 :     if (std::abs(range) &gt;= 0.0001) {</span></span>
 <span id="L88"><span class="lineNum">      88</span>                 :             :         // NOTE: The ternary below is redundant but kept for safety.</span>
-<span id="L89"><span class="lineNum">      89</span>         [<span class="tlaGBC" title="Branch 0 was taken 30760 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       30760 :         double t = (x - edge0) / (std::abs(range) &gt;= 0.0001 ? range : 1.0);</span></span>
-<span id="L90"><span class="lineNum">      90</span>                 :<span class="tlaGNC">       30760 :         t = (std::max)(0.0, (std::min)(1.0, t));</span></span>
-<span id="L91"><span class="lineNum">      91</span>                 :<span class="tlaGNC">       30760 :         return t * t * (3.0 - 2.0 * t);</span></span>
+<span id="L89"><span class="lineNum">      89</span>         [<span class="tlaGBC" title="Branch 0 was taken 30761 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       30761 :         double t = (x - edge0) / (std::abs(range) &gt;= 0.0001 ? range : 1.0);</span></span>
+<span id="L90"><span class="lineNum">      90</span>                 :<span class="tlaGNC">       30761 :         t = (std::max)(0.0, (std::min)(1.0, t));</span></span>
+<span id="L91"><span class="lineNum">      91</span>                 :<span class="tlaGNC">       30761 :         return t * t * (3.0 - 2.0 * t);</span></span>
 <span id="L92"><span class="lineNum">      92</span>                 :             :     }</span>
 <span id="L93"><span class="lineNum">      93</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 3 times"> + </span>]:<span class="tlaGNC">           4 :     return (x &lt; edge0) ? 0.0 : 1.0;</span></span>
 <span id="L94"><span class="lineNum">      94</span>                 :             : }</span>
@@ -176,18 +176,18 @@
 <span id="L105"><span class="lineNum">     105</span>                 :             : </span>
 <span id="L106"><span class="lineNum">     106</span>                 :             : // Helper: Adaptive Non-Linear Smoothing</span>
 <span id="L107"><span class="lineNum">     107</span>                 :             : // t=0 (Steady) uses slow_tau, t=1 (Transient) uses fast_tau</span>
-<span id="L108"><span class="lineNum">     108</span>                 :<span class="tlaGNC">       31338 : inline double apply_adaptive_smoothing(double input, double&amp; prev_out, double dt,</span></span>
+<span id="L108"><span class="lineNum">     108</span>                 :<span class="tlaGNC">       31340 : inline double apply_adaptive_smoothing(double input, double&amp; prev_out, double dt,</span></span>
 <span id="L109"><span class="lineNum">     109</span>                 :             :                                 double slow_tau, double fast_tau, double sensitivity) {</span>
-<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">       31338 :     double delta = std::abs(input - prev_out);</span></span>
-<span id="L111"><span class="lineNum">     111</span>                 :<span class="tlaGNC">       31338 :     double t = delta / (sensitivity + 0.000001);</span></span>
-<span id="L112"><span class="lineNum">     112</span>                 :<span class="tlaGNC">       31338 :     t = (std::min)(1.0, t);</span></span>
+<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">       31340 :     double delta = std::abs(input - prev_out);</span></span>
+<span id="L111"><span class="lineNum">     111</span>                 :<span class="tlaGNC">       31340 :     double t = delta / (sensitivity + 0.000001);</span></span>
+<span id="L112"><span class="lineNum">     112</span>                 :<span class="tlaGNC">       31340 :     t = (std::min)(1.0, t);</span></span>
 <span id="L113"><span class="lineNum">     113</span>                 :             : </span>
-<span id="L114"><span class="lineNum">     114</span>                 :<span class="tlaGNC">       31338 :     double tau = slow_tau + t * (fast_tau - slow_tau);</span></span>
-<span id="L115"><span class="lineNum">     115</span>                 :<span class="tlaGNC">       31338 :     double alpha = dt / (tau + dt + 1e-9);</span></span>
-<span id="L116"><span class="lineNum">     116</span>                 :<span class="tlaGNC">       31338 :     alpha = (std::max)(0.0, (std::min)(1.0, alpha));</span></span>
+<span id="L114"><span class="lineNum">     114</span>                 :<span class="tlaGNC">       31340 :     double tau = slow_tau + t * (fast_tau - slow_tau);</span></span>
+<span id="L115"><span class="lineNum">     115</span>                 :<span class="tlaGNC">       31340 :     double alpha = dt / (tau + dt + 1e-9);</span></span>
+<span id="L116"><span class="lineNum">     116</span>                 :<span class="tlaGNC">       31340 :     alpha = (std::max)(0.0, (std::min)(1.0, alpha));</span></span>
 <span id="L117"><span class="lineNum">     117</span>                 :             : </span>
-<span id="L118"><span class="lineNum">     118</span>                 :<span class="tlaGNC">       31338 :     prev_out = prev_out + alpha * (input - prev_out);</span></span>
-<span id="L119"><span class="lineNum">     119</span>                 :<span class="tlaGNC">       31338 :     return prev_out;</span></span>
+<span id="L118"><span class="lineNum">     118</span>                 :<span class="tlaGNC">       31340 :     prev_out = prev_out + alpha * (input - prev_out);</span></span>
+<span id="L119"><span class="lineNum">     119</span>                 :<span class="tlaGNC">       31340 :     return prev_out;</span></span>
 <span id="L120"><span class="lineNum">     120</span>                 :             : }</span>
 <span id="L121"><span class="lineNum">     121</span>                 :             : </span>
 <span id="L122"><span class="lineNum">     122</span>                 :             : /**</span>
@@ -270,22 +270,22 @@
 <span id="L199"><span class="lineNum">     199</span>                 :             :         m_game_tick = (std::max)(0.0001, game_tick);</span>
 <span id="L200"><span class="lineNum">     200</span>                 :             :     }</span>
 <span id="L201"><span class="lineNum">     201</span>                 :             : </span>
-<span id="L202"><span class="lineNum">     202</span>                 :<span class="tlaGNC">      501120 :     double Process(double raw_input, double dt, bool is_new_frame) {</span></span>
-<span id="L203"><span class="lineNum">     203</span>         [<span class="tlaGBC" title="Branch 0 was taken 8544 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 492576 times"> + </span>]:<span class="tlaGNC">      501120 :         if (!m_initialized) {</span></span>
+<span id="L202"><span class="lineNum">     202</span>                 :<span class="tlaGNC">      501152 :     double Process(double raw_input, double dt, bool is_new_frame) {</span></span>
+<span id="L203"><span class="lineNum">     203</span>         [<span class="tlaGBC" title="Branch 0 was taken 8544 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 492608 times"> + </span>]:<span class="tlaGNC">      501152 :         if (!m_initialized) {</span></span>
 <span id="L204"><span class="lineNum">     204</span>                 :<span class="tlaGNC">        8544 :             m_last_input = raw_input;</span></span>
 <span id="L205"><span class="lineNum">     205</span>                 :<span class="tlaGNC">        8544 :             m_current_output = raw_input;</span></span>
 <span id="L206"><span class="lineNum">     206</span>                 :<span class="tlaGNC">        8544 :             m_initialized = true;</span></span>
 <span id="L207"><span class="lineNum">     207</span>                 :<span class="tlaGNC">        8544 :             return raw_input;</span></span>
 <span id="L208"><span class="lineNum">     208</span>                 :             :         }</span>
 <span id="L209"><span class="lineNum">     209</span>                 :             : </span>
-<span id="L210"><span class="lineNum">     210</span>         [<span class="tlaGBC" title="Branch 0 was taken 465152 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 27424 times"> + </span>]:<span class="tlaGNC">      492576 :         if (is_new_frame) {</span></span>
+<span id="L210"><span class="lineNum">     210</span>         [<span class="tlaGBC" title="Branch 0 was taken 465184 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 27424 times"> + </span>]:<span class="tlaGNC">      492608 :         if (is_new_frame) {</span></span>
 <span id="L211"><span class="lineNum">     211</span>                 :             :             // Calculate the rate of change over the last game tick</span>
-<span id="L212"><span class="lineNum">     212</span>                 :<span class="tlaGNC">      465152 :             m_rate = (raw_input - m_last_input) / m_game_tick;</span></span>
+<span id="L212"><span class="lineNum">     212</span>                 :<span class="tlaGNC">      465184 :             m_rate = (raw_input - m_last_input) / m_game_tick;</span></span>
 <span id="L213"><span class="lineNum">     213</span>                 :             : </span>
 <span id="L214"><span class="lineNum">     214</span>                 :             :             // Snap to the new authoritative value to prevent drift</span>
-<span id="L215"><span class="lineNum">     215</span>                 :<span class="tlaGNC">      465152 :             m_current_output = raw_input;</span></span>
-<span id="L216"><span class="lineNum">     216</span>                 :<span class="tlaGNC">      465152 :             m_last_input = raw_input;</span></span>
-<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">      465152 :             m_time_since_update = 0.0;</span></span>
+<span id="L215"><span class="lineNum">     215</span>                 :<span class="tlaGNC">      465184 :             m_current_output = raw_input;</span></span>
+<span id="L216"><span class="lineNum">     216</span>                 :<span class="tlaGNC">      465184 :             m_last_input = raw_input;</span></span>
+<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">      465184 :             m_time_since_update = 0.0;</span></span>
 <span id="L218"><span class="lineNum">     218</span>                 :             :         } else {</span>
 <span id="L219"><span class="lineNum">     219</span>                 :             :             // Inter-frame Interpolation (Dead Reckoning)</span>
 <span id="L220"><span class="lineNum">     220</span>                 :<span class="tlaGNC">       27424 :             m_time_since_update += dt;</span></span>
@@ -295,7 +295,7 @@
 <span id="L224"><span class="lineNum">     224</span>                 :             :             }</span>
 <span id="L225"><span class="lineNum">     225</span>                 :             :         }</span>
 <span id="L226"><span class="lineNum">     226</span>                 :             : </span>
-<span id="L227"><span class="lineNum">     227</span>                 :<span class="tlaGNC">      492576 :         return m_current_output;</span></span>
+<span id="L227"><span class="lineNum">     227</span>                 :<span class="tlaGNC">      492608 :         return m_current_output;</span></span>
 <span id="L228"><span class="lineNum">     228</span>                 :             :     }</span>
 <span id="L229"><span class="lineNum">     229</span>                 :             : </span>
 <span id="L230"><span class="lineNum">     230</span>                 :<span class="tlaGNC">         448 :     void Reset() {</span></span>
@@ -329,8 +329,8 @@
 <span id="L258"><span class="lineNum">     258</span>                 :             :         m_game_tick = (std::max)(0.0001, game_tick);</span>
 <span id="L259"><span class="lineNum">     259</span>                 :             :     }</span>
 <span id="L260"><span class="lineNum">     260</span>                 :             : </span>
-<span id="L261"><span class="lineNum">     261</span>                 :<span class="tlaGNC">       15660 :     double Process(double raw_input, double dt, bool is_new_frame) {</span></span>
-<span id="L262"><span class="lineNum">     262</span>         [<span class="tlaGBC" title="Branch 0 was taken 267 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 15393 times"> + </span>]:<span class="tlaGNC">       15660 :         if (!m_initialized) {</span></span>
+<span id="L261"><span class="lineNum">     261</span>                 :<span class="tlaGNC">       15661 :     double Process(double raw_input, double dt, bool is_new_frame) {</span></span>
+<span id="L262"><span class="lineNum">     262</span>         [<span class="tlaGBC" title="Branch 0 was taken 267 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 15394 times"> + </span>]:<span class="tlaGNC">       15661 :         if (!m_initialized) {</span></span>
 <span id="L263"><span class="lineNum">     263</span>                 :<span class="tlaGNC">         267 :             m_level = raw_input;</span></span>
 <span id="L264"><span class="lineNum">     264</span>                 :<span class="tlaGNC">         267 :             m_trend = 0.0;</span></span>
 <span id="L265"><span class="lineNum">     265</span>                 :<span class="tlaGNC">         267 :             m_time_since_update = 0.0;</span></span>
@@ -338,20 +338,20 @@
 <span id="L267"><span class="lineNum">     267</span>                 :<span class="tlaGNC">         267 :             return raw_input;</span></span>
 <span id="L268"><span class="lineNum">     268</span>                 :             :         }</span>
 <span id="L269"><span class="lineNum">     269</span>                 :             : </span>
-<span id="L270"><span class="lineNum">     270</span>         [<span class="tlaGBC" title="Branch 0 was taken 14536 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 857 times"> + </span>]:<span class="tlaGNC">       15393 :         if (is_new_frame) {</span></span>
-<span id="L271"><span class="lineNum">     271</span>                 :<span class="tlaGNC">       14536 :             double prev_level = m_level;</span></span>
+<span id="L270"><span class="lineNum">     270</span>         [<span class="tlaGBC" title="Branch 0 was taken 14537 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 857 times"> + </span>]:<span class="tlaGNC">       15394 :         if (is_new_frame) {</span></span>
+<span id="L271"><span class="lineNum">     271</span>                 :<span class="tlaGNC">       14537 :             double prev_level = m_level;</span></span>
 <span id="L272"><span class="lineNum">     272</span>                 :             : </span>
 <span id="L273"><span class="lineNum">     273</span>                 :             :             // Update Level: Balance between the raw input and our previous prediction</span>
-<span id="L274"><span class="lineNum">     274</span>                 :<span class="tlaGNC">       14536 :             m_level = m_alpha * raw_input + (1.0 - m_alpha) * (m_level + m_trend * m_game_tick);</span></span>
+<span id="L274"><span class="lineNum">     274</span>                 :<span class="tlaGNC">       14537 :             m_level = m_alpha * raw_input + (1.0 - m_alpha) * (m_level + m_trend * m_game_tick);</span></span>
 <span id="L275"><span class="lineNum">     275</span>                 :             : </span>
 <span id="L276"><span class="lineNum">     276</span>                 :             :             // Update Trend: Balance between the new observed slope and the old trend</span>
-<span id="L277"><span class="lineNum">     277</span>                 :<span class="tlaGNC">       14536 :             m_trend = m_beta * ((m_level - prev_level) / m_game_tick) + (1.0 - m_beta) * m_trend;</span></span>
+<span id="L277"><span class="lineNum">     277</span>                 :<span class="tlaGNC">       14537 :             m_trend = m_beta * ((m_level - prev_level) / m_game_tick) + (1.0 - m_beta) * m_trend;</span></span>
 <span id="L278"><span class="lineNum">     278</span>                 :             : </span>
-<span id="L279"><span class="lineNum">     279</span>                 :<span class="tlaGNC">       14536 :             m_time_since_update = 0.0;</span></span>
+<span id="L279"><span class="lineNum">     279</span>                 :<span class="tlaGNC">       14537 :             m_time_since_update = 0.0;</span></span>
 <span id="L280"><span class="lineNum">     280</span>                 :             : </span>
 <span id="L281"><span class="lineNum">     281</span>                 :             :             // On new frame, we must return the authoritative raw input (or very close to it)</span>
 <span id="L282"><span class="lineNum">     282</span>                 :             :             // to avoid breaking existing tests that expect exact values on frame boundaries.</span>
-<span id="L283"><span class="lineNum">     283</span>                 :<span class="tlaGNC">       14536 :             return raw_input;</span></span>
+<span id="L283"><span class="lineNum">     283</span>                 :<span class="tlaGNC">       14537 :             return raw_input;</span></span>
 <span id="L284"><span class="lineNum">     284</span>                 :             :         } else {</span>
 <span id="L285"><span class="lineNum">     285</span>                 :<span class="tlaGNC">         857 :             m_time_since_update += dt;</span></span>
 <span id="L286"><span class="lineNum">     286</span>                 :             :         }</span>
