@@ -81,17 +81,6 @@ In your `.github/workflows/windows-build-and-test.yml` and `linux-build.yml`, ex
   run: cmake -B build -DLMUFFB_USE_UNITY_BUILD=ON ...
 ```
 
-### Local Testing Commands
-To test a Unity build locally without changing the default behavior permanently, use the following commands:
-
-```powershell
-# 1. Configure with Unity Build enabled
-cmake -B build_unity -DLMUFFB_USE_UNITY_BUILD=ON
-
-# 2. Build and check for errors
-cmake --build build_unity
-```
-
 ### Summary of Build Logic
 | Environment | `LMUFFB_USE_UNITY_BUILD` | Benefit |
 | :--- | :--- | :--- |
@@ -118,49 +107,44 @@ cmake --build build_unity
 **A:** Yes, once. You add the `option(LMUFFB_USE_UNITY_BUILD ...)` block as shown in Section 4. After that, you **do not** need to edit the file again. The same `CMakeLists.txt` handles both Unity and Standard builds based on the argument you pass to `cmake`.
 
 ### Q: How do I choose between Unity and Standard build locally?
-**A:** It is controlled entirely by the `-D` flag during the configuration step:
-*   **Standard (Default)**: `cmake -B build`
-*   **Unity**: `cmake -B build -DLMUFFB_USE_UNITY_BUILD=ON`
-
-The build system will remember this choice in the `build` directory until you delete it or re-run `cmake` with a different flag.
+**A:** It is controlled entirely by the `-D` flag during the configuration step. On Windows, you typically need to run this from a Visual Studio Developer Shell.
 
 ---
 
-## 6. Quick Start: Build Commands
+## 6. Windows Quick Start: Build Commands
 
-Here is a quick reference for the commands used to configure the build with different optimization and analysis features enabled.
+On Windows, the build environment must be initialized using the Visual Studio Developer Shell. Use the following commands for the different build types.
+
+> [!NOTE]
+> These commands assume Visual Studio 2022 Community is installed. Adjust the path to `Launch-VsDevShell.ps1` if your installation is different.
 
 ### Standard Build (Default)
 Fast incremental builds for daily development.
 ```powershell
-cmake -B build
-cmake --build build --config Release
+# Initialize environment and build
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release
 ```
 
 ### Unity (Jumbo) Build
 Fewer translation units, optimized for CI and full rebuilds.
 ```powershell
-cmake -B build -DLMUFFB_USE_UNITY_BUILD=ON
-cmake --build build --config Release
-
-
+# Initialize environment and build with Unity enabled
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build -DLMUFFB_USE_UNITY_BUILD=ON; cmake --build build --config Release
 ```
 
 ### Build with IWYU Analysis
 Analyze include hygiene during compilation (requires IWYU installed).
 ```powershell
-cmake -B build -DENABLE_IWYU=ON
-cmake --build build
+# Initialize environment and build with IWYU enabled
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build -DENABLE_IWYU=ON; cmake --build build
 ```
 
-### Combined (CI Simulation)
-The most aggressive build configuration, used to verify the project in a single wide pass.
+### Run All Tests (C++ and Python)
 ```powershell
-cmake -B build -DLMUFFB_USE_UNITY_BUILD=ON -DENABLE_IWYU=ON
-cmake --build build
+python scripts/run_all_tests.py
 ```
 
-
-
----
+### Run Python Tests Only
+```powershell
+$env:PYTHONPATH="tools"; python -m pytest tests tools/lmuffb_log_analyzer/tests
+```
