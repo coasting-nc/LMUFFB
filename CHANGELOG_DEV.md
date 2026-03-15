@@ -5,13 +5,17 @@ All notable changes to this project will be documented in this file.
 ---
 
 ## [0.7.189]
-- **Fixed Hypercar Class Detection (Issue #346)**:
-  - **Robust String Parsing**: Implemented a `Trim` helper in `VehicleUtils.cpp` to remove leading/trailing whitespace from `className` and `vehicleName` before classification. This resolves "Unknown" classification issues caused by hidden spaces in game telemetry.
-  - **Expanded Keyword Matching**: Added "CADILLAC" to the primary vehicle class identification logic to ensure Cadillac Hypercars are correctly categorized even if the class string is ambiguous.
-  - **Enhanced Debug Logging**: Updated `InitializeLoadReference` to wrap raw class and vehicle names in single quotes in the debug log. This provides immediate visual confirmation of hidden whitespace in future bug reports.
+- **Fixed Porsche LMGT3 Brand Detection (Issue #368)**:
+  - **Robust String Parsing**: Implemented a `Trim` helper in `VehicleUtils.cpp` to remove leading/trailing whitespace from telemetry strings.
+  - **Expanded Porsche Keywords**: Added "992", "PROTON", and "MANTHEY" to the brand detection logic, ensuring Porsche LMGT3 entries (like Proton Competition) are correctly identified.
+  - **LMGT3 Class Support**: Migrated the legacy `GT3` class to `LMGT3` with an LMU-specific 5000N default seed load.
+  - **Enhanced Diagnostics**:
+    - Updated `FFBMetadataManager` to log additional telemetry fields (`mPitGroup`, `mVehFilename`) upon vehicle change to improve "Unknown" brand troubleshooting.
+    - Updated initialization logs to use quoted strings, revealing any hidden whitespace or non-printable characters in telemetry fields.
 - **Testing**:
-  - Added `tests/test_issue_346_repro.cpp` with 5 test cases verifying standard detection, case-insensitivity, manufacturer-specific matching, and whitespace handling.
-  - Re-verified full suite of 535 test cases on Linux.
+  - Re-baselined all regression tests to use the new `LMGT3` class and its 5000N seed load.
+  - Added specific brand identification tests for Proton and Manthey entries in `tests/test_vehicle_utils.cpp`.
+  - Verified 100% pass rate across the full suite of 533 test cases.
 
 ## [0.7.188]
 - **FFB Safety: Disabled default Safety Duration (Issue #350)**:
