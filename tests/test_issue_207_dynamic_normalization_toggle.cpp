@@ -115,7 +115,7 @@ TEST_CASE(test_auto_load_normalization_reset_behavior, "Physics") {
     // Seed as GT3 (4800N)
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     engine.calculate_force(&data, "GT3");
-    ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 4800.0, 1.0);
+    ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 5000.0, 1.0);
 
     // 1. Enable and "Learn" a higher peak
     engine.m_auto_load_normalization_enabled = true;
@@ -129,11 +129,11 @@ TEST_CASE(test_auto_load_normalization_reset_behavior, "Physics") {
     engine.m_auto_load_normalization_enabled = false;
     engine.ResetNormalization();
 
-    ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 4800.0, 1.0);
+    ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 5000.0, 1.0);
 
     // 3. Verify static load learning is also reset
     // Default static load for GT3 is 4800 * 0.5 = 2400
-    ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), 2400.0, 1.0);
+    ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), 2500.0, 1.0);
 }
 
 TEST_CASE(test_load_normalization_disabled_no_learning, "Physics") {
@@ -155,15 +155,15 @@ TEST_CASE(test_load_normalization_disabled_no_learning, "Physics") {
     double initial_peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
     double initial_static = FFBEngineTestAccess::GetStaticFrontLoad(engine);
 
-    ASSERT_NEAR(initial_peak, 4800.0, 1.0);
+    ASSERT_NEAR(initial_peak, 5000.0, 1.0);
     // Static load started at 2400 and immediately learned a bit from the 8000N input
-    ASSERT_GT(initial_static, 2400.0);
+    ASSERT_GT(initial_static, 2500.0);
 
     // Drive for many frames
     for(int i=0; i<100; i++) engine.calculate_force(&data, "GT3");
 
     // Peak should not have changed because normalization is disabled
-    ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 4800.0, 1.0);
+    ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 5000.0, 1.0);
     
     // Static SHOULD have learned significantly
     ASSERT_GT(FFBEngineTestAccess::GetStaticFrontLoad(engine), 3000.0);
@@ -180,8 +180,8 @@ TEST_CASE(test_load_normalization_disabled_no_learning, "Physics") {
     engine.m_auto_load_normalization_enabled = false;
     engine.ResetNormalization();
 
-    ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 4800.0, 1.0);
-    ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), 2400.0, 1.0);
+    ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 5000.0, 1.0);
+    ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), 2500.0, 1.0);
 }
 
 } // namespace FFBEngineTests

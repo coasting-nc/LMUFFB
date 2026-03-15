@@ -67,6 +67,7 @@ set(TEST_SOURCES
     test_math_utils.cpp
     test_perf_stats.cpp
     test_vehicle_utils.cpp
+    test_issue_368_repro.cpp
     test_coverage_boost.cpp
     test_ffb_coverage_target.cpp
     test_ffb_diag_updates.cpp
@@ -97,6 +98,7 @@ set(TEST_SOURCES
     test_config_comprehensive.cpp
     test_issue_211_migration.cpp
     test_upsampler_part2.cpp
+    test_rest_api_manufacturer.cpp
     test_issue_238_spam.cpp
     test_issue_213_lateral_load.cpp
     test_transition_logging.cpp

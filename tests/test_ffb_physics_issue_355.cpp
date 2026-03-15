@@ -14,7 +14,7 @@ TEST_CASE(test_issue_355_motion_ratio_normalization, "Physics") {
 
     // Test Case 2: GT3 (MR 0.65)
     FFBEngineTestAccess::CallInitializeLoadReference(engine, "GT3", "Ferrari 296");
-    double mr_gt3 = GetMotionRatioForClass(ParsedVehicleClass::GT3);
+    double mr_gt3 = GetMotionRatioForClass(ParsedVehicleClass::LMGT3);
     ASSERT_EQ(mr_gt3, 0.65);
 }
 

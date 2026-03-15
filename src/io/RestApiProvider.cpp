@@ -48,6 +48,30 @@ bool RestApiProvider::IsRequesting() const {
     return m_isRequesting.load();
 }
 
+void RestApiProvider::RequestManufacturer(int port, const std::string& vehicleName) {
+    if (m_isRequesting.load()) return;
+
+    std::lock_guard<std::mutex> lock(m_threadMutex);
+    if (m_requestThread.joinable()) {
+        m_requestThread.join();
+    }
+
+    m_isRequesting = true;
+    m_requestThread = std::thread([this, port, vehicleName]() {
+        try {
+            this->PerformManufacturerRequest(port, vehicleName);
+        } catch (...) {
+            Logger::Get().LogFile("RestApiProvider: Unexpected exception in manufacturer request thread");
+        }
+        this->m_isRequesting = false;
+    });
+}
+
+std::string RestApiProvider::GetManufacturer() const {
+    std::lock_guard<std::mutex> lock(m_manufacturerMutex);
+    return m_manufacturer;
+}
+
 void RestApiProvider::PerformRequest(int port) {
     std::string response;
     bool success = false;
@@ -73,10 +97,7 @@ void RestApiProvider::PerformRequest(int port) {
         Logger::Get().LogFile("RestApiProvider: Failed to initialize WinINet");
     }
 #else
-    // Mock for Linux/Testing
-    // In real tests, we might want to inject this mock behavior
     Logger::Get().LogFile("RestApiProvider: Mock request on Linux (Port %d)", port);
-    // For now, do nothing, we will mock ParseSteeringLock in tests
 #endif
 
     if (success && !response.empty()) {
@@ -88,6 +109,92 @@ void RestApiProvider::PerformRequest(int port) {
             Logger::Get().LogFile("RestApiProvider: Could not parse VM_STEER_LOCK from response");
         }
     }
+}
+
+void RestApiProvider::PerformManufacturerRequest(int port, std::string vehicleName) {
+    std::string response;
+    bool success = false;
+
+#ifdef _WIN32
+    HINTERNET hInternet = InternetOpenA("lmuFFB", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    if (hInternet) {
+        std::string url = "http://localhost:" + std::to_string(port) + "/rest/race/car";
+        HINTERNET hConnect = InternetOpenUrlA(hInternet, url.c_str(), NULL, 0, INTERNET_FLAG_RELOAD, 0);
+        if (hConnect) {
+            char buffer[8192];
+            DWORD bytesRead;
+            while (InternetReadFile(hConnect, buffer, sizeof(buffer), &bytesRead) && bytesRead > 0) {
+                response.append(buffer, bytesRead);
+            }
+            InternetCloseHandle(hConnect);
+            success = true;
+        } else {
+            Logger::Get().LogFile("RestApiProvider: Failed to open URL (Port %d)", port);
+        }
+        InternetCloseHandle(hInternet);
+    } else {
+        Logger::Get().LogFile("RestApiProvider: Failed to initialize WinINet");
+    }
+#else
+    Logger::Get().LogFile("RestApiProvider: Mock manufacturer request on Linux (Port %d)", port);
+#endif
+
+    if (success && !response.empty()) {
+        // Log the full response for diagnostics
+        Logger::Get().LogFile("RestApiProvider: Full REST API response for car info: %s", response.c_str());
+
+        std::string manufacturer = ParseManufacturer(response, vehicleName);
+
+        std::lock_guard<std::mutex> lock(m_manufacturerMutex);
+        m_manufacturer = manufacturer;
+        m_hasManufacturer = true;
+        Logger::Get().LogFile("RestApiProvider: Identified manufacturer from REST API: %s", m_manufacturer.c_str());
+    }
+}
+
+std::string RestApiProvider::ParseManufacturer(const std::string& json, const std::string& vehicleName) {
+    // LMU JSON contains "desc" and "manufacturer"
+    // Match "desc": "vehicleName" and extract "manufacturer"
+
+    size_t descPos = json.find("\"desc\":\"" + vehicleName + "\"");
+    if (descPos == std::string::npos) {
+        // Try loose match if exact match fails (shared memory might have extra spaces or truncated)
+        // This is a heuristic.
+        descPos = json.find("\"desc\"");
+        while (descPos != std::string::npos) {
+            size_t startQuote = json.find('\"', descPos + 6);
+            size_t endQuote = json.find('\"', startQuote + 1);
+            if (startQuote != std::string::npos && endQuote != std::string::npos) {
+                std::string desc = json.substr(startQuote + 1, endQuote - startQuote - 1);
+                if (desc.find(vehicleName) != std::string::npos || vehicleName.find(desc) != std::string::npos) {
+                    break;
+                }
+            }
+            descPos = json.find("\"desc\"", descPos + 1);
+        }
+    }
+
+    if (descPos == std::string::npos) return "Unknown";
+
+    // Now find "manufacturer" near this desc
+    // Search within 1024 characters after desc
+    size_t manufacturerPos = json.find("\"manufacturer\"", descPos);
+    if (manufacturerPos == std::string::npos || (manufacturerPos - descPos) > 1024) {
+         // Search backwards just in case
+         manufacturerPos = json.rfind("\"manufacturer\"", descPos);
+    }
+
+    if (manufacturerPos == std::string::npos) return "Unknown";
+
+    size_t colonPos = json.find(':', manufacturerPos);
+    size_t startQuote = json.find('\"', colonPos);
+    size_t endQuote = json.find('\"', startQuote + 1);
+
+    if (startQuote != std::string::npos && endQuote != std::string::npos) {
+        return json.substr(startQuote + 1, endQuote - startQuote - 1);
+    }
+
+    return "Unknown";
 }
 
 float RestApiProvider::ParseSteeringLock(const std::string& json) {

@@ -40,6 +40,7 @@ public:
     ParsedVehicleClass m_current_vclass = ParsedVehicleClass::UNKNOWN;
     std::atomic<bool> m_warned_invalid_range{false};
     std::string m_last_handled_vehicle_name = "";
+    std::string m_last_logged_veh = "";
 
 private:
     std::mutex m_mutex;
