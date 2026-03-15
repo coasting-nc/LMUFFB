@@ -49,8 +49,12 @@
 ### Deviations from Plan
 - **Class Differentiation:** The plan was expanded to explicitly support `LMGT3` as a distinct class after identifying that LMU-specific GT3-like cars have different specs (5000N load) than generic GT3 cars.
 - **Improved Metadata Logging:** Added logging for `mPitGroup` and `mVehFilename` in `FFBMetadataManager` to provide a complete "Identification Snapshot" whenever a vehicle change is detected.
+- **REST API Integration:** Added asynchronous retrieval of car manufacturer from the REST API (`/rest/race/car`) upon vehicle change. This provides a clean "Ground Truth" for brand identification even when Shared Memory strings are cryptic.
 
-## 5. Shared Memory Field Analysis (Brand Information)
+## 6. Related Documentation
+- [REST API Car Info Specification](../reports/get%20car%20info%20from%20REST%20API.md)
+
+## 7. Shared Memory Field Analysis (Brand Information)
 
 | Field Name | Struct | Used? | Raw Printed? | Parsed? | Parsed Version Printed? | Notes |
 |------------|--------|-------|--------------|---------|-------------------------|-------|
@@ -58,6 +62,7 @@
 | `mVehicleClass` | `VehicleScoringInfoV01` | Yes | No | Yes (Trim, Upper) | Yes (Quoted) | Used for class-based brand fallbacks (e.g., LMP2 -> Oreca). |
 | `mPitGroup` | `VehicleScoringInfoV01` | Yes (Logging) | No | No | Yes (Quoted) | Often contains team names which can imply brands (e.g., "Proton Competition"). |
 | `mVehFilename` | `VehicleScoringInfoV01` | Yes (Logging) | No | No | Yes (Quoted) | The `.veh` file path/name often contains brand or team strings. |
+| `manufacturer` | REST API (`/rest/race/car`) | Yes | No | No | Yes (Quoted) | Clean manufacturer name retrieved via async matching of `mVehicleName` against `desc`. |
 | `mTrackName` | `TelemInfoV01`, `ScoringInfoV01` | Yes | No | No | Yes | Context only, unlikely to contain car brand info. |
 | `mFrontTireCompoundName` / `mRearTireCompoundName` | `TelemInfoV01` | No | No | No | No | Unlikely to contain brand info, but sometimes mentions specific manufacturers. |
 | `mResultsStream` | `ScoringInfoV01` | No | No | No | No | XML/Text stream containing session results; may contain brand info but expensive to parse. |
