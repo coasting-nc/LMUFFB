@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-15 14:09:15</td>
+            <td class="headerValue">2026-03-15 15:42:21</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -564,10 +564,10 @@
 <span id="L478"><span class="lineNum">     478</span>         [<span class="tlaGBC" title="Branch 0 was taken 1166 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 14494 times"> + </span>]:<span class="tlaGNC">       15660 :     if (x &gt; upper_bound) {</span></span>
 <span id="L479"><span class="lineNum">     479</span>                 :             :         // Linear compressed region</span>
 <span id="L480"><span class="lineNum">     480</span>                 :<span class="tlaGNC">        1166 :         compressed_load_factor = T + ((x - T) / R);</span></span>
-<span id="L481"><span class="lineNum">     481</span>         [<span class="tlaGBC" title="Branch 0 was taken 2844 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 11650 times"> + </span>]:<span class="tlaGNC">       14494 :     } else if (x &gt; lower_bound) {</span></span>
+<span id="L481"><span class="lineNum">     481</span>         [<span class="tlaGBC" title="Branch 0 was taken 2833 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 11661 times"> + </span>]:<span class="tlaGNC">       14494 :     } else if (x &gt; lower_bound) {</span></span>
 <span id="L482"><span class="lineNum">     482</span>                 :             :         // Quadratic soft-knee transition</span>
-<span id="L483"><span class="lineNum">     483</span>                 :<span class="tlaGNC">        2844 :         double diff = x - lower_bound;</span></span>
-<span id="L484"><span class="lineNum">     484</span>                 :<span class="tlaGNC">        2844 :         compressed_load_factor = x + (((1.0 / R) - 1.0) * (diff * diff)) / (DUAL_DIVISOR * W);</span></span>
+<span id="L483"><span class="lineNum">     483</span>                 :<span class="tlaGNC">        2833 :         double diff = x - lower_bound;</span></span>
+<span id="L484"><span class="lineNum">     484</span>                 :<span class="tlaGNC">        2833 :         compressed_load_factor = x + (((1.0 / R) - 1.0) * (diff * diff)) / (DUAL_DIVISOR * W);</span></span>
 <span id="L485"><span class="lineNum">     485</span>                 :             :     }</span>
 <span id="L486"><span class="lineNum">     486</span>                 :             : </span>
 <span id="L487"><span class="lineNum">     487</span>                 :             :     // 4. EMA Smoothing on the vibration multiplier (100ms time constant)</span>
