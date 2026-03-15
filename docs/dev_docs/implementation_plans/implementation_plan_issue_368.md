@@ -39,6 +39,9 @@
 
 ### Issues and Challenges
 - **Ambiguous Strings:** Some game packs for LMU (like ELMS) use team names like "Proton Competition" without including "Porsche" in the vehicle name field, which caused the legacy keyword-based detection to fail.
+- **Identification Examples:** Enhanced logging revealed the following metadata for the affected Porsche:
+  `[17:01:48] [Metadata] Vehicle Change Detected: 'Proton Competition 2025 #60:ELMS' (Class: 'GT3', PitGroup: 'Group38', Filename: '60_25_PROTA8B000C7')`
+  This confirms that some cars in LMU still report "GT3" in the class field, requiring our parser to map both "LMGT3" and "GT3" to the new internal `LMGT3` class.
 - **Hidden Whitespace:** Sim racing telemetry strings often contain trailing spaces or non-printable characters. The introduction of the `Trim` helper was critical to ensure robust matching.
 - **Class vs. Brand:** There was initial confusion between car class (LMGT3) and brand (Porsche). LMU uses "LMGT3" as a distinct class from "GT3", requiring separate handling for physics constants (seed load).
 - **Sub-string Collision:** Since "LMGT3" contains "GT3", the parser must check for the more specific "LMGT3" string first to avoid incorrectly identifying LMU cars as legacy GT3.
