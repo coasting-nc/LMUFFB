@@ -11,6 +11,28 @@ if(CCACHE_PROGRAM)
     set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
 endif()
 
+# Enable Include-What-You-Use (IWYU) if available
+option(ENABLE_IWYU "Enable Include-What-You-Use analysis" OFF)
+if(ENABLE_IWYU)
+    find_program(IWYU_PATH include-what-you-use)
+    if(IWYU_PATH)
+        message(STATUS "IWYU found: ${IWYU_PATH}")
+        set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE "${IWYU_PATH};--transitive_includes_only;--mapping_file=${CMAKE_SOURCE_DIR}/iwyu.imp")
+    else()
+        message(WARNING "IWYU requested but not found in PATH.")
+    endif()
+endif()
+
+# Unity Build (Jumbo Build) Configuration
+option(LMUFFB_USE_UNITY_BUILD "Enable Unity (Jumbo) builds for faster compilation" OFF)
+if(LMUFFB_USE_UNITY_BUILD)
+    set(CMAKE_UNITY_BUILD ON)
+    set(CMAKE_UNITY_BUILD_BATCH_SIZE 20)
+    message(STATUS "Unity Build Enabled (Batch Size: ${CMAKE_UNITY_BUILD_BATCH_SIZE})")
+else()
+    message(STATUS "Unity Build Disabled (Standard incremental builds)")
+endif()
+
 # Security & Debug Flags (MSVC)
 if(MSVC)
     # Compile flags: Buffer Security Check (/GS) is usually default, but good to ensure.

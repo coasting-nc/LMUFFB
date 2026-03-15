@@ -123,3 +123,44 @@ cmake --build build_unity
 *   **Unity**: `cmake -B build -DLMUFFB_USE_UNITY_BUILD=ON`
 
 The build system will remember this choice in the `build` directory until you delete it or re-run `cmake` with a different flag.
+
+---
+
+## 6. Quick Start: Build Commands
+
+Here is a quick reference for the commands used to configure the build with different optimization and analysis features enabled.
+
+### Standard Build (Default)
+Fast incremental builds for daily development.
+```powershell
+cmake -B build
+cmake --build build --config Release
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release
+```
+
+### Unity (Jumbo) Build
+Fewer translation units, optimized for CI and full rebuilds.
+```powershell
+cmake -B build -DLMUFFB_USE_UNITY_BUILD=ON
+cmake --build build --config Release
+
+
+```
+
+### Build with IWYU Analysis
+Analyze include hygiene during compilation (requires IWYU installed).
+```powershell
+cmake -B build -DENABLE_IWYU=ON
+cmake --build build
+```
+
+### Combined (CI Simulation)
+The most aggressive build configuration, used to verify the project in a single wide pass.
+```powershell
+cmake -B build -DLMUFFB_USE_UNITY_BUILD=ON -DENABLE_IWYU=ON
+cmake --build build
+```
+
+
+
+---

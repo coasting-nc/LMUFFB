@@ -1,0 +1,12 @@
+[
+  # Mapping file for Include-What-You-Use (IWYU)
+  # Documentation: https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUMappings.md
+
+  # Standard Library Mappings (Common redirections)
+  { include: ["<bits/chrono.h>", "private", "<chrono>", "public"] },
+  { include: ["<bits/std_abs.h>", "private", "<cmath>", "public"] },
+  { include: ["<bits/stringfwd.h>", "private", "<string>", "public"] },
+
+  # Add project-specific redirections below
+  # Example: { include: ["\"src/core/InternalHeader.h\"", "private", "\"FFBEngine.h\"", "public"] }
+]

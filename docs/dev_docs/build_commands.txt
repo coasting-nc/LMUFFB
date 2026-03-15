@@ -8,6 +8,8 @@
 ## Complete clean new build, slower, only necessary in some cases, like project restructuring
 & 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1' -Arch amd64 -SkipAutomaticLocation; cmake -S . -B build; cmake --build build --config Release --clean-first
 
+See also: docs\dev_docs\unity_builds_implementation.md
+
 ## Run all tests, c++ and python:
 python scripts/run_all_tests.py
 # explanation:
