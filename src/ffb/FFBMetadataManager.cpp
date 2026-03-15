@@ -11,6 +11,14 @@ bool FFBMetadataManager::UpdateMetadata(const SharedMemoryObjectOut& data) {
         const VehicleScoringInfoV01& veh = data.scoring.vehScoringInfo[idx];
         vehicleClass = veh.mVehicleClass;
         vehicleName = veh.mVehicleName;
+
+        // Issue #368: Log all fields that might contain brand info if a change is detected
+        static std::string last_logged_veh = "";
+        if (vehicleName && last_logged_veh != vehicleName) {
+            Logger::Get().LogFile("[Metadata] Vehicle Change Detected: '%s' (Class: '%s', PitGroup: '%s', Filename: '%s')",
+                vehicleName, vehicleClass, veh.mPitGroup, veh.mVehFilename);
+            last_logged_veh = vehicleName;
+        }
     }
 
     return UpdateInternal(vehicleClass, vehicleName, trackName);

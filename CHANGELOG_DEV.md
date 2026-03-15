@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.189]
+- **Fixed Hypercar Class Detection (Issue #346)**:
+  - **Robust String Parsing**: Implemented a `Trim` helper in `VehicleUtils.cpp` to remove leading/trailing whitespace from `className` and `vehicleName` before classification. This resolves "Unknown" classification issues caused by hidden spaces in game telemetry.
+  - **Expanded Keyword Matching**: Added "CADILLAC" to the primary vehicle class identification logic to ensure Cadillac Hypercars are correctly categorized even if the class string is ambiguous.
+  - **Enhanced Debug Logging**: Updated `InitializeLoadReference` to wrap raw class and vehicle names in single quotes in the debug log. This provides immediate visual confirmation of hidden whitespace in future bug reports.
+- **Testing**:
+  - Added `tests/test_issue_346_repro.cpp` with 5 test cases verifying standard detection, case-insensitivity, manufacturer-specific matching, and whitespace handling.
+  - Re-verified full suite of 535 test cases on Linux.
+
 ## [0.7.188]
 - **FFB Safety: Disabled default Safety Duration (Issue #350)**:
   - Changed the default `Safety Duration` from 2.0s to 0.0s to prevent unnecessary FFB loss during online session transitions (players joining/leaving).

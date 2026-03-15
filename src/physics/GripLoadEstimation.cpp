@@ -113,7 +113,8 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     // Sync metadata manager state
     m_metadata.UpdateInternal(className, vehicleName, nullptr);
 
-    Logger::Get().LogFile("[FFB] Vehicle Identification -> Detected Class: %s | Seed Load: %.2fN (Raw -> Class: %s, Name: %s)",
+    // Issue #346: Log strings with quotes to reveal hidden spaces if detection fails
+    Logger::Get().LogFile("[FFB] Vehicle Identification -> Detected Class: %s | Seed Load: %.2fN (Raw -> Class: '%s', Name: '%s')",
         VehicleClassToString(vclass), m_auto_peak_front_load, (className ? className : "Unknown"), vName.c_str());
 }
 

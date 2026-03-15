@@ -1,6 +1,15 @@
 #include "VehicleUtils.h"
 #include <algorithm>
 #include <string>
+#include <cctype>
+
+// Helper: Trim whitespace from a string
+static std::string Trim(const std::string& s) {
+    auto start = s.find_first_not_of(" \t\n\r");
+    if (start == std::string::npos) return "";
+    auto end = s.find_last_not_of(" \t\n\r");
+    return s.substr(start, end - start + 1);
+}
 
 // Helper: Parse car class from strings (v0.7.44 Refactor)
 // Returns a ParsedVehicleClass enum for internal logic and categorization
@@ -12,9 +21,14 @@ ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleN
     std::transform(cls.begin(), cls.end(), cls.begin(), ::toupper);
     std::transform(name.begin(), name.end(), name.begin(), ::toupper);
 
+    // Issue #346: Trim hidden whitespace that might cause matching failures in some environments
+    cls = Trim(cls);
+    name = Trim(name);
+
     // 1. Primary Identification via Class Name (Hierarchical)
     if (cls.find("HYPERCAR") != std::string::npos || cls.find("LMH") != std::string::npos ||
-        cls.find("LMDH") != std::string::npos || cls.find("HYPER") != std::string::npos) {
+        cls.find("LMDH") != std::string::npos || cls.find("HYPER") != std::string::npos ||
+        cls.find("CADILLAC") != std::string::npos) {
         return ParsedVehicleClass::HYPERCAR;
     }
     
@@ -110,9 +124,14 @@ const char* ParseVehicleBrand(const char* className, const char* vehicleName) {
     // Normalize for case-insensitive matching
     std::transform(name.begin(), name.end(), name.begin(), ::toupper);
 
+    // Issue #346 / #368: Trim hidden whitespace
+    name = Trim(name);
+
     if (name.find("FERRARI") != std::string::npos || name.find("499P") != std::string::npos || name.find("488") != std::string::npos || name.find("296") != std::string::npos) return "Ferrari";
     if (name.find("TOYOTA") != std::string::npos || name.find("GR010") != std::string::npos) return "Toyota";
-    if (name.find("PORSCHE") != std::string::npos || name.find("963") != std::string::npos || name.find("911") != std::string::npos || name.find("RSR") != std::string::npos) return "Porsche";
+    if (name.find("PORSCHE") != std::string::npos || name.find("963") != std::string::npos || name.find("911") != std::string::npos ||
+        name.find("RSR") != std::string::npos || name.find("992") != std::string::npos || name.find("PROTON") != std::string::npos ||
+        name.find("MANTHEY") != std::string::npos) return "Porsche";
     if (name.find("PEUGEOT") != std::string::npos || name.find("9X8") != std::string::npos) return "Peugeot";
     if (name.find("CADILLAC") != std::string::npos || name.find("V-SERIES") != std::string::npos) return "Cadillac";
     if (name.find("LAMBORGHINI") != std::string::npos || name.find("SC63") != std::string::npos || name.find("HURACAN") != std::string::npos) return "Lamborghini";

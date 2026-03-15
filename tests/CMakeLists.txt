@@ -67,6 +67,7 @@ set(TEST_SOURCES
     test_math_utils.cpp
     test_perf_stats.cpp
     test_vehicle_utils.cpp
+    test_issue_368_repro.cpp
     test_coverage_boost.cpp
     test_ffb_coverage_target.cpp
     test_ffb_diag_updates.cpp

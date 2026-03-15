@@ -77,6 +77,17 @@ TEST_CASE(test_issue_346_repro, "Internal") {
 
     // Test "CADILLAC" fallback keyword (requested by user)
     ASSERT_EQ((int)ParseVehicleClass("", "CADILLAC"), (int)ParsedVehicleClass::HYPERCAR);
+
+    // Issue #346: Case Insensitivity
+    ASSERT_EQ((int)ParseVehicleClass("hyper", ""), (int)ParsedVehicleClass::HYPERCAR);
+    ASSERT_EQ((int)ParseVehicleClass("Hypercar", ""), (int)ParsedVehicleClass::HYPERCAR);
+
+    // Issue #346: Primary Identification with manufacturer name in class field
+    ASSERT_EQ((int)ParseVehicleClass("CADILLAC", ""), (int)ParsedVehicleClass::HYPERCAR);
+
+    // Issue #346: Robust Trim (Whitespace handling)
+    ASSERT_EQ((int)ParseVehicleClass(" Hyper ", " Cadillac "), (int)ParsedVehicleClass::HYPERCAR);
+    ASSERT_EQ((int)ParseVehicleClass("\tHyper\n", ""), (int)ParsedVehicleClass::HYPERCAR);
 }
 
 TEST_CASE(test_vehicle_class_case_insensitivity, "Internal") {
