@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-14 23:51:48</td>
+            <td class="headerValue">2026-03-15 17:29:53</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -81,10 +81,10 @@
 <span id="L10"><span class="lineNum">      10</span>                 :             : </span>
 <span id="L11"><span class="lineNum">      11</span>                 :             : #define LEGACY_SHARED_MEMORY_NAME &quot;$rFactor2SMMP_Telemetry$&quot;</span>
 <span id="L12"><span class="lineNum">      12</span>                 :             : </span>
-<span id="L13"><span class="lineNum">      13</span>                 :<span class="tlaGNC tlaBgGNC">       32065 : GameConnector&amp; GameConnector::Get() {</span></span>
-<span id="L14"><span class="lineNum">      14</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 32064 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       32065 :     static GameConnector instance;</span></span>
+<span id="L13"><span class="lineNum">      13</span>                 :<span class="tlaGNC tlaBgGNC">       51254 : GameConnector&amp; GameConnector::Get() {</span></span>
+<span id="L14"><span class="lineNum">      14</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 51253 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       51254 :     static GameConnector instance;</span></span>
 <span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaUNC" title="Branch 6 was not taken"> - </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span>]
-<span id="L15"><span class="lineNum">      15</span>                 :<span class="tlaGNC">       32065 :     return instance;</span></span>
+<span id="L15"><span class="lineNum">      15</span>                 :<span class="tlaGNC">       51254 :     return instance;</span></span>
 <span id="L16"><span class="lineNum">      16</span>                 :             : }</span>
 <span id="L17"><span class="lineNum">      17</span>                 :             : </span>
 <span id="L18"><span class="lineNum">      18</span>                 :<span class="tlaGNC">           1 : GameConnector::GameConnector() {}</span></span>
@@ -93,74 +93,74 @@
 <span id="L21"><span class="lineNum">      21</span>                 :<span class="tlaGNC">           1 :     Disconnect();</span></span>
 <span id="L22"><span class="lineNum">      22</span>                 :<span class="tlaGNC">           1 : }</span></span>
 <span id="L23"><span class="lineNum">      23</span>                 :             : </span>
-<span id="L24"><span class="lineNum">      24</span>                 :<span class="tlaGNC">        6603 : void GameConnector::Disconnect() {</span></span>
-<span id="L25"><span class="lineNum">      25</span>         [<span class="tlaGBC" title="Branch 0 was taken 6603 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        6603 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(m_mutex);</span></span>
-<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">        6603 :     _DisconnectLocked();</span></span>
-<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        6603 : }</span></span>
+<span id="L24"><span class="lineNum">      24</span>                 :<span class="tlaGNC">        6965 : void GameConnector::Disconnect() {</span></span>
+<span id="L25"><span class="lineNum">      25</span>         [<span class="tlaGBC" title="Branch 0 was taken 6965 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        6965 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(m_mutex);</span></span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">        6965 :     _DisconnectLocked();</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        6965 : }</span></span>
 <span id="L28"><span class="lineNum">      28</span>                 :             : </span>
-<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">       13231 : void GameConnector::_DisconnectLocked() {</span></span>
+<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">       13955 : void GameConnector::_DisconnectLocked() {</span></span>
 <span id="L30"><span class="lineNum">      30</span>                 :             : #if defined(_WIN32) || defined(HEADLESS_GUI)</span>
-<span id="L31"><span class="lineNum">      31</span>         [<span class="tlaGBC" title="Branch 0 was taken 6610 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6621 times"> + </span>]:<span class="tlaGNC">       13231 :     if (m_pSharedMemLayout) {</span></span>
-<span id="L32"><span class="lineNum">      32</span>                 :<span class="tlaGNC">        6610 :         UnmapViewOfFile(m_pSharedMemLayout);</span></span>
-<span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC">        6610 :         m_pSharedMemLayout = nullptr;</span></span>
+<span id="L31"><span class="lineNum">      31</span>         [<span class="tlaGBC" title="Branch 0 was taken 6972 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6983 times"> + </span>]:<span class="tlaGNC">       13955 :     if (m_pSharedMemLayout) {</span></span>
+<span id="L32"><span class="lineNum">      32</span>                 :<span class="tlaGNC">        6972 :         UnmapViewOfFile(m_pSharedMemLayout);</span></span>
+<span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC">        6972 :         m_pSharedMemLayout = nullptr;</span></span>
 <span id="L34"><span class="lineNum">      34</span>                 :             :     }</span>
-<span id="L35"><span class="lineNum">      35</span>         [<span class="tlaGBC" title="Branch 0 was taken 6601 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6630 times"> + </span>]:<span class="tlaGNC">       13231 :     if (m_hMapFile) {</span></span>
-<span id="L36"><span class="lineNum">      36</span>                 :<span class="tlaGNC">        6601 :         CloseHandle(m_hMapFile);</span></span>
-<span id="L37"><span class="lineNum">      37</span>                 :<span class="tlaGNC">        6601 :         m_hMapFile = NULL;</span></span>
+<span id="L35"><span class="lineNum">      35</span>         [<span class="tlaGBC" title="Branch 0 was taken 6963 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6992 times"> + </span>]:<span class="tlaGNC">       13955 :     if (m_hMapFile) {</span></span>
+<span id="L36"><span class="lineNum">      36</span>                 :<span class="tlaGNC">        6963 :         CloseHandle(m_hMapFile);</span></span>
+<span id="L37"><span class="lineNum">      37</span>                 :<span class="tlaGNC">        6963 :         m_hMapFile = NULL;</span></span>
 <span id="L38"><span class="lineNum">      38</span>                 :             :     }</span>
-<span id="L39"><span class="lineNum">      39</span>                 :<span class="tlaGNC">       13231 :     m_hwndGame = NULL;</span></span>
+<span id="L39"><span class="lineNum">      39</span>                 :<span class="tlaGNC">       13955 :     m_hwndGame = NULL;</span></span>
 <span id="L40"><span class="lineNum">      40</span>                 :             : #endif</span>
-<span id="L41"><span class="lineNum">      41</span>                 :<span class="tlaGNC">       13231 :     m_smLock.reset();</span></span>
-<span id="L42"><span class="lineNum">      42</span>                 :<span class="tlaGNC">       13231 :     m_connected = false;</span></span>
-<span id="L43"><span class="lineNum">      43</span>                 :<span class="tlaGNC">       13231 :     m_processId = 0;</span></span>
-<span id="L44"><span class="lineNum">      44</span>                 :<span class="tlaGNC">       13231 : }</span></span>
+<span id="L41"><span class="lineNum">      41</span>                 :<span class="tlaGNC">       13955 :     m_smLock.reset();</span></span>
+<span id="L42"><span class="lineNum">      42</span>                 :<span class="tlaGNC">       13955 :     m_connected = false;</span></span>
+<span id="L43"><span class="lineNum">      43</span>                 :<span class="tlaGNC">       13955 :     m_processId = 0;</span></span>
+<span id="L44"><span class="lineNum">      44</span>                 :<span class="tlaGNC">       13955 : }</span></span>
 <span id="L45"><span class="lineNum">      45</span>                 :             : </span>
-<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">        6607 : bool GameConnector::TryConnect() {</span></span>
-<span id="L47"><span class="lineNum">      47</span>         [<span class="tlaGBC" title="Branch 0 was taken 6607 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        6607 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(m_mutex);</span></span>
-<span id="L48"><span class="lineNum">      48</span>         [<span class="tlaGBC" title="Branch 0 was taken 6 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6601 times"> + </span>]:<span class="tlaGNC">        6607 :     if (m_connected) return true;</span></span>
+<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">        6969 : bool GameConnector::TryConnect() {</span></span>
+<span id="L47"><span class="lineNum">      47</span>         [<span class="tlaGBC" title="Branch 0 was taken 6969 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        6969 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(m_mutex);</span></span>
+<span id="L48"><span class="lineNum">      48</span>         [<span class="tlaGBC" title="Branch 0 was taken 6 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6963 times"> + </span>]:<span class="tlaGNC">        6969 :     if (m_connected) return true;</span></span>
 <span id="L49"><span class="lineNum">      49</span>                 :             : </span>
 <span id="L50"><span class="lineNum">      50</span>                 :             :     // Ensure we don't leak handles from a previous partial/failed attempt</span>
-<span id="L51"><span class="lineNum">      51</span>                 :<span class="tlaGNC">        6601 :     _DisconnectLocked();</span></span>
+<span id="L51"><span class="lineNum">      51</span>                 :<span class="tlaGNC">        6963 :     _DisconnectLocked();</span></span>
 <span id="L52"><span class="lineNum">      52</span>                 :             : </span>
 <span id="L53"><span class="lineNum">      53</span>                 :             : #if defined(_WIN32) || defined(HEADLESS_GUI)</span>
-<span id="L54"><span class="lineNum">      54</span>         [<span class="tlaGBC" title="Branch 0 was taken 6601 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        6601 :     m_hMapFile = OpenFileMappingA(FILE_MAP_READ, FALSE, LMU_SHARED_MEMORY_FILE);</span></span>
+<span id="L54"><span class="lineNum">      54</span>         [<span class="tlaGBC" title="Branch 0 was taken 6963 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        6963 :     m_hMapFile = OpenFileMappingA(FILE_MAP_READ, FALSE, LMU_SHARED_MEMORY_FILE);</span></span>
 <span id="L55"><span class="lineNum">      55</span>                 :             :     </span>
-<span id="L56"><span class="lineNum">      56</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 6601 times"> + </span>]:<span class="tlaGNC">        6601 :     if (m_hMapFile == NULL) {</span></span>
+<span id="L56"><span class="lineNum">      56</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 6963 times"> + </span>]:<span class="tlaGNC">        6963 :     if (m_hMapFile == NULL) {</span></span>
 <span id="L57"><span class="lineNum">      57</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         return false;</span></span>
 <span id="L58"><span class="lineNum">      58</span>                 :             :     } </span>
 <span id="L59"><span class="lineNum">      59</span>                 :             : </span>
-<span id="L60"><span class="lineNum">      60</span>         [<span class="tlaGBC" title="Branch 0 was taken 6601 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">        6601 :     m_pSharedMemLayout = (SharedMemoryLayout*)MapViewOfFile(m_hMapFile, FILE_MAP_READ, 0, 0, sizeof(SharedMemoryLayout));</span></span>
-<span id="L61"><span class="lineNum">      61</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 6601 times"> + </span>]:<span class="tlaGNC">        6601 :     if (m_pSharedMemLayout == NULL) {</span></span>
+<span id="L60"><span class="lineNum">      60</span>         [<span class="tlaGBC" title="Branch 0 was taken 6963 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">        6963 :     m_pSharedMemLayout = (SharedMemoryLayout*)MapViewOfFile(m_hMapFile, FILE_MAP_READ, 0, 0, sizeof(SharedMemoryLayout));</span></span>
+<span id="L61"><span class="lineNum">      61</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 6963 times"> + </span>]:<span class="tlaGNC">        6963 :     if (m_pSharedMemLayout == NULL) {</span></span>
 <span id="L62"><span class="lineNum">      62</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC tlaBgUNC">           0 :         Logger::Get().Log(&quot;[GameConnector] Could not map view of file.&quot;);</span></span>
 <span id="L63"><span class="lineNum">      63</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC">           0 :         Logger::Get().LogWin32Error(&quot;MapViewOfFile&quot;, GetLastError());</span></span>
 <span id="L64"><span class="lineNum">      64</span>                 :<span class="tlaUNC">           0 :         _DisconnectLocked();</span></span>
 <span id="L65"><span class="lineNum">      65</span>                 :<span class="tlaUNC">           0 :         return false;</span></span>
 <span id="L66"><span class="lineNum">      66</span>                 :             :     }</span>
 <span id="L67"><span class="lineNum">      67</span>                 :             : </span>
-<span id="L68"><span class="lineNum">      68</span>   [<span class="tlaGBC" title="Branch 0 was taken 6601 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 6601 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">        6601 :     m_smLock = SafeSharedMemoryLock::MakeSafeSharedMemoryLock();</span></span>
-<span id="L69"><span class="lineNum">      69</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 6600 times"> + </span>]:<span class="tlaGNC">        6601 :     if (!m_smLock.has_value()) {</span></span>
+<span id="L68"><span class="lineNum">      68</span>   [<span class="tlaGBC" title="Branch 0 was taken 6963 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 6963 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">        6963 :     m_smLock = SafeSharedMemoryLock::MakeSafeSharedMemoryLock();</span></span>
+<span id="L69"><span class="lineNum">      69</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 6962 times"> + </span>]:<span class="tlaGNC">        6963 :     if (!m_smLock.has_value()) {</span></span>
 <span id="L70"><span class="lineNum">      70</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           1 :         Logger::Get().Log(&quot;[GameConnector] Failed to init LMU Shared Memory Lock&quot;);</span></span>
 <span id="L71"><span class="lineNum">      71</span>                 :<span class="tlaGNC">           1 :         _DisconnectLocked();</span></span>
 <span id="L72"><span class="lineNum">      72</span>                 :<span class="tlaGNC">           1 :         return false;</span></span>
 <span id="L73"><span class="lineNum">      73</span>                 :             :     }</span>
 <span id="L74"><span class="lineNum">      74</span>                 :             : </span>
-<span id="L75"><span class="lineNum">      75</span>                 :<span class="tlaGNC">        6600 :     HWND hwnd = m_pSharedMemLayout-&gt;data.generic.appInfo.mAppWindow;</span></span>
-<span id="L76"><span class="lineNum">      76</span>         [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6596 times"> + </span>]:<span class="tlaGNC">        6600 :     if (hwnd) {</span></span>
+<span id="L75"><span class="lineNum">      75</span>                 :<span class="tlaGNC">        6962 :     HWND hwnd = m_pSharedMemLayout-&gt;data.generic.appInfo.mAppWindow;</span></span>
+<span id="L76"><span class="lineNum">      76</span>         [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6958 times"> + </span>]:<span class="tlaGNC">        6962 :     if (hwnd) {</span></span>
 <span id="L77"><span class="lineNum">      77</span>                 :<span class="tlaGNC">           4 :         m_hwndGame = hwnd; // Store HWND for liveness check (IsWindow)</span></span>
 <span id="L78"><span class="lineNum">      78</span>                 :             :         // Note: multiple threads might access shared memory, but HWND is usually stable during session.</span>
 <span id="L79"><span class="lineNum">      79</span>                 :             :         // We use IsWindow(m_hwndGame) instead of OpenProcess to avoid AV heuristics flagging &quot;Process Access&quot;.</span>
 <span id="L80"><span class="lineNum">      80</span>                 :             :     }</span>
 <span id="L81"><span class="lineNum">      81</span>                 :             : </span>
-<span id="L82"><span class="lineNum">      82</span>                 :<span class="tlaGNC">        6600 :     m_connected = true;</span></span>
+<span id="L82"><span class="lineNum">      82</span>                 :<span class="tlaGNC">        6962 :     m_connected = true;</span></span>
 <span id="L83"><span class="lineNum">      83</span>                 :             : </span>
 <span id="L84"><span class="lineNum">      84</span>                 :             :     // Initialize Robust State Machine (#267)</span>
-<span id="L85"><span class="lineNum">      85</span>         [<span class="tlaGBC" title="Branch 0 was taken 6600 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        6600 :     if (m_pSharedMemLayout) {</span></span>
-<span id="L86"><span class="lineNum">      86</span>                 :<span class="tlaGNC">        6600 :         m_sessionActive = (m_pSharedMemLayout-&gt;data.scoring.scoringInfo.mTrackName[0] != '\0');</span></span>
-<span id="L87"><span class="lineNum">      87</span>                 :<span class="tlaGNC">        6600 :         m_inRealtime = (m_pSharedMemLayout-&gt;data.scoring.scoringInfo.mInRealtime != 0);</span></span>
-<span id="L88"><span class="lineNum">      88</span>                 :<span class="tlaGNC">        6600 :         m_currentSessionType = m_pSharedMemLayout-&gt;data.scoring.scoringInfo.mSession;</span></span>
-<span id="L89"><span class="lineNum">      89</span>                 :<span class="tlaGNC">        6600 :         m_currentGamePhase = m_pSharedMemLayout-&gt;data.scoring.scoringInfo.mGamePhase;</span></span>
+<span id="L85"><span class="lineNum">      85</span>         [<span class="tlaGBC" title="Branch 0 was taken 6962 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        6962 :     if (m_pSharedMemLayout) {</span></span>
+<span id="L86"><span class="lineNum">      86</span>                 :<span class="tlaGNC">        6962 :         m_sessionActive = (m_pSharedMemLayout-&gt;data.scoring.scoringInfo.mTrackName[0] != '\0');</span></span>
+<span id="L87"><span class="lineNum">      87</span>                 :<span class="tlaGNC">        6962 :         m_inRealtime = (m_pSharedMemLayout-&gt;data.scoring.scoringInfo.mInRealtime != 0);</span></span>
+<span id="L88"><span class="lineNum">      88</span>                 :<span class="tlaGNC">        6962 :         m_currentSessionType = m_pSharedMemLayout-&gt;data.scoring.scoringInfo.mSession;</span></span>
+<span id="L89"><span class="lineNum">      89</span>                 :<span class="tlaGNC">        6962 :         m_currentGamePhase = m_pSharedMemLayout-&gt;data.scoring.scoringInfo.mGamePhase;</span></span>
 <span id="L90"><span class="lineNum">      90</span>                 :             : </span>
-<span id="L91"><span class="lineNum">      91</span>         [<span class="tlaGBC" title="Branch 0 was taken 6 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6594 times"> + </span>]:<span class="tlaGNC">        6600 :         if (m_pSharedMemLayout-&gt;data.telemetry.playerHasVehicle) {</span></span>
+<span id="L91"><span class="lineNum">      91</span>         [<span class="tlaGBC" title="Branch 0 was taken 6 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6956 times"> + </span>]:<span class="tlaGNC">        6962 :         if (m_pSharedMemLayout-&gt;data.telemetry.playerHasVehicle) {</span></span>
 <span id="L92"><span class="lineNum">      92</span>                 :<span class="tlaGNC">           6 :             uint8_t idx = m_pSharedMemLayout-&gt;data.telemetry.playerVehicleIdx;</span></span>
 <span id="L93"><span class="lineNum">      93</span>         [<span class="tlaGBC" title="Branch 0 was taken 6 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           6 :             if (idx &lt; 104) {</span></span>
 <span id="L94"><span class="lineNum">      94</span>                 :<span class="tlaGNC">           6 :                 m_playerControl = m_pSharedMemLayout-&gt;data.scoring.vehScoringInfo[idx].mControl;</span></span>
@@ -168,13 +168,13 @@
 <span id="L96"><span class="lineNum">      96</span>                 :             :         }</span>
 <span id="L97"><span class="lineNum">      97</span>                 :             :     }</span>
 <span id="L98"><span class="lineNum">      98</span>                 :             : </span>
-<span id="L99"><span class="lineNum">      99</span>                 :<span class="tlaGNC">        6600 :     m_lastUpdateLocalTime = std::chrono::steady_clock::now();</span></span>
-<span id="L100"><span class="lineNum">     100</span>   [<span class="tlaGBC" title="Branch 0 was taken 6600 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 6600 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        6600 :     Logger::Get().Log(&quot;[GameConnector] Connected to LMU Shared Memory.&quot;);</span></span>
-<span id="L101"><span class="lineNum">     101</span>                 :<span class="tlaGNC">        6600 :     return true;</span></span>
+<span id="L99"><span class="lineNum">      99</span>                 :<span class="tlaGNC">        6962 :     m_lastUpdateLocalTime = std::chrono::steady_clock::now();</span></span>
+<span id="L100"><span class="lineNum">     100</span>   [<span class="tlaGBC" title="Branch 0 was taken 6962 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 6962 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        6962 :     Logger::Get().Log(&quot;[GameConnector] Connected to LMU Shared Memory.&quot;);</span></span>
+<span id="L101"><span class="lineNum">     101</span>                 :<span class="tlaGNC">        6962 :     return true;</span></span>
 <span id="L102"><span class="lineNum">     102</span>                 :             : #else</span>
 <span id="L103"><span class="lineNum">     103</span>                 :             :     return false;</span>
 <span id="L104"><span class="lineNum">     104</span>                 :             : #endif</span>
-<span id="L105"><span class="lineNum">     105</span>                 :<span class="tlaGNC">        6607 : }</span></span>
+<span id="L105"><span class="lineNum">     105</span>                 :<span class="tlaGNC">        6969 : }</span></span>
 <span id="L106"><span class="lineNum">     106</span>                 :             : </span>
 <span id="L107"><span class="lineNum">     107</span>                 :<span class="tlaGNC">           7 : bool GameConnector::CheckLegacyConflict() {</span></span>
 <span id="L108"><span class="lineNum">     108</span>                 :             : #if defined(_WIN32) || defined(HEADLESS_GUI)</span>
@@ -188,15 +188,15 @@
 <span id="L116"><span class="lineNum">     116</span>                 :<span class="tlaGNC">           5 :     return false;</span></span>
 <span id="L117"><span class="lineNum">     117</span>                 :             : }</span>
 <span id="L118"><span class="lineNum">     118</span>                 :             : </span>
-<span id="L119"><span class="lineNum">     119</span>                 :<span class="tlaGNC">        3531 : bool GameConnector::IsConnected() const {</span></span>
-<span id="L120"><span class="lineNum">     120</span>         [<span class="tlaGBC" title="Branch 0 was taken 267 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3264 times"> + </span>]:<span class="tlaGNC">        3531 :   if (!m_connected.load(std::memory_order_acquire)) return false;</span></span>
+<span id="L119"><span class="lineNum">     119</span>                 :<span class="tlaGNC">        6555 : bool GameConnector::IsConnected() const {</span></span>
+<span id="L120"><span class="lineNum">     120</span>         [<span class="tlaGBC" title="Branch 0 was taken 267 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6288 times"> + </span>]:<span class="tlaGNC">        6555 :   if (!m_connected.load(std::memory_order_acquire)) return false;</span></span>
 <span id="L121"><span class="lineNum">     121</span>                 :             : </span>
-<span id="L122"><span class="lineNum">     122</span>         [<span class="tlaGBC" title="Branch 0 was taken 3264 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        3264 :   std::lock_guard&lt;std::recursive_mutex&gt; lock(m_mutex);</span></span>
-<span id="L123"><span class="lineNum">     123</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 3264 times"> + </span>]:<span class="tlaGNC">        3264 :   if (!m_connected.load(std::memory_order_relaxed)) return false;</span></span>
+<span id="L122"><span class="lineNum">     122</span>         [<span class="tlaGBC" title="Branch 0 was taken 6288 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        6288 :   std::lock_guard&lt;std::recursive_mutex&gt; lock(m_mutex);</span></span>
+<span id="L123"><span class="lineNum">     123</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 6288 times"> + </span>]:<span class="tlaGNC">        6288 :   if (!m_connected.load(std::memory_order_relaxed)) return false;</span></span>
 <span id="L124"><span class="lineNum">     124</span>                 :             : </span>
 <span id="L125"><span class="lineNum">     125</span>                 :             : #if defined(_WIN32) || defined(HEADLESS_GUI)</span>
-<span id="L126"><span class="lineNum">     126</span>         [<span class="tlaGBC" title="Branch 0 was taken 3081 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 183 times"> + </span>]:<span class="tlaGNC">        3264 :   if (m_hwndGame) {</span></span>
-<span id="L127"><span class="lineNum">     127</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 3080 times"> + </span>]:<span class="tlaGNC">        3081 :     if (!IsWindow(m_hwndGame)) {</span></span>
+<span id="L126"><span class="lineNum">     126</span>         [<span class="tlaGBC" title="Branch 0 was taken 6105 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 183 times"> + </span>]:<span class="tlaGNC">        6288 :   if (m_hwndGame) {</span></span>
+<span id="L127"><span class="lineNum">     127</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 6104 times"> + </span>]:<span class="tlaGNC">        6105 :     if (!IsWindow(m_hwndGame)) {</span></span>
 <span id="L128"><span class="lineNum">     128</span>                 :             :       // Window is gone, game likely exited</span>
 <span id="L129"><span class="lineNum">     129</span>                 :<span class="tlaGNC">           1 :       const_cast&lt;GameConnector*&gt;(this)-&gt;_DisconnectLocked();</span></span>
 <span id="L130"><span class="lineNum">     130</span>                 :<span class="tlaGNC">           1 :       return false;</span></span>
@@ -204,21 +204,21 @@
 <span id="L132"><span class="lineNum">     132</span>                 :             :   }</span>
 <span id="L133"><span class="lineNum">     133</span>                 :             : #endif</span>
 <span id="L134"><span class="lineNum">     134</span>                 :             : </span>
-<span id="L135"><span class="lineNum">     135</span>   [<span class="tlaGBC" title="Branch 0 was taken 3263 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 3263 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        3263 :   return m_connected.load(std::memory_order_relaxed) &amp;&amp; m_pSharedMemLayout &amp;&amp; m_smLock.has_value();</span></span>
-<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 3263 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
-<span id="L136"><span class="lineNum">     136</span>                 :<span class="tlaGNC">        3264 : }</span></span>
+<span id="L135"><span class="lineNum">     135</span>   [<span class="tlaGBC" title="Branch 0 was taken 6287 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 6287 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        6287 :   return m_connected.load(std::memory_order_relaxed) &amp;&amp; m_pSharedMemLayout &amp;&amp; m_smLock.has_value();</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 6287 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
+<span id="L136"><span class="lineNum">     136</span>                 :<span class="tlaGNC">        6288 : }</span></span>
 <span id="L137"><span class="lineNum">     137</span>                 :             : </span>
-<span id="L138"><span class="lineNum">     138</span>                 :<span class="tlaGNC">        2746 : bool GameConnector::CopyTelemetry(SharedMemoryObjectOut&amp; dest) {</span></span>
-<span id="L139"><span class="lineNum">     139</span>         [<span class="tlaGBC" title="Branch 0 was taken 896 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1850 times"> + </span>]:<span class="tlaGNC">        2746 :     if (!m_connected.load(std::memory_order_acquire)) return false;</span></span>
+<span id="L138"><span class="lineNum">     138</span>                 :<span class="tlaGNC">        6091 : bool GameConnector::CopyTelemetry(SharedMemoryObjectOut&amp; dest) {</span></span>
+<span id="L139"><span class="lineNum">     139</span>         [<span class="tlaGBC" title="Branch 0 was taken 1246 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4845 times"> + </span>]:<span class="tlaGNC">        6091 :     if (!m_connected.load(std::memory_order_acquire)) return false;</span></span>
 <span id="L140"><span class="lineNum">     140</span>                 :             : </span>
-<span id="L141"><span class="lineNum">     141</span>         [<span class="tlaGBC" title="Branch 0 was taken 1850 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        1850 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(m_mutex);</span></span>
-<span id="L142"><span class="lineNum">     142</span>   [<span class="tlaGBC" title="Branch 0 was taken 1833 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 17 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1833 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        1850 :     if (!m_connected.load(std::memory_order_relaxed) || !m_pSharedMemLayout || !m_smLock.has_value()) return false;</span></span>
-<span class="lineNum">        </span>    <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaGBC" title="Branch 5 was taken 1833 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 17 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 1833 times"> + </span>]
+<span id="L141"><span class="lineNum">     141</span>         [<span class="tlaGBC" title="Branch 0 was taken 4845 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4845 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(m_mutex);</span></span>
+<span id="L142"><span class="lineNum">     142</span>   [<span class="tlaGBC" title="Branch 0 was taken 4821 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 24 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 4821 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        4845 :     if (!m_connected.load(std::memory_order_relaxed) || !m_pSharedMemLayout || !m_smLock.has_value()) return false;</span></span>
+<span class="lineNum">        </span>    <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaGBC" title="Branch 5 was taken 4821 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 24 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 4821 times"> + </span>]
 <span id="L143"><span class="lineNum">     143</span>                 :             : </span>
-<span id="L144"><span class="lineNum">     144</span>         [<span class="tlaGBC" title="Branch 0 was taken 1831 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2 times"> + </span>]:<span class="tlaGNC">        1833 :     if (m_smLock-&gt;Lock(50)) {</span></span>
-<span id="L145"><span class="lineNum">     145</span>                 :<span class="tlaGNC">        1831 :         CopySharedMemoryObj(dest, m_pSharedMemLayout-&gt;data);</span></span>
+<span id="L144"><span class="lineNum">     144</span>         [<span class="tlaGBC" title="Branch 0 was taken 4819 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2 times"> + </span>]:<span class="tlaGNC">        4821 :     if (m_smLock-&gt;Lock(50)) {</span></span>
+<span id="L145"><span class="lineNum">     145</span>                 :<span class="tlaGNC">        4819 :         CopySharedMemoryObj(dest, m_pSharedMemLayout-&gt;data);</span></span>
 <span id="L146"><span class="lineNum">     146</span>                 :             :         </span>
-<span id="L147"><span class="lineNum">     147</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1828 times"> + </span>]:<span class="tlaGNC">        1831 :         if (dest.telemetry.playerHasVehicle) {</span></span>
+<span id="L147"><span class="lineNum">     147</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4816 times"> + </span>]:<span class="tlaGNC">        4819 :         if (dest.telemetry.playerHasVehicle) {</span></span>
 <span id="L148"><span class="lineNum">     148</span>                 :<span class="tlaGNC">           3 :             uint8_t idx = dest.telemetry.playerVehicleIdx;</span></span>
 <span id="L149"><span class="lineNum">     149</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 :             if (idx &lt; 104) {</span></span>
 <span id="L150"><span class="lineNum">     150</span>                 :<span class="tlaGNC">           3 :                 double currentET = dest.telemetry.telemInfo[idx].mElapsedTime;</span></span>
@@ -234,25 +234,25 @@
 <span id="L159"><span class="lineNum">     159</span>                 :             :                 }</span>
 <span id="L160"><span class="lineNum">     160</span>                 :             :             }</span>
 <span id="L161"><span class="lineNum">     161</span>                 :             :         } else {</span>
-<span id="L162"><span class="lineNum">     162</span>                 :<span class="tlaGNC">        1828 :             m_lastUpdateLocalTime = std::chrono::steady_clock::now();</span></span>
+<span id="L162"><span class="lineNum">     162</span>                 :<span class="tlaGNC">        4816 :             m_lastUpdateLocalTime = std::chrono::steady_clock::now();</span></span>
 <span id="L163"><span class="lineNum">     163</span>                 :             :         }</span>
 <span id="L164"><span class="lineNum">     164</span>                 :             : </span>
-<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">        1831 :         m_smLock-&gt;Unlock();</span></span>
+<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">        4819 :         m_smLock-&gt;Unlock();</span></span>
 <span id="L166"><span class="lineNum">     166</span>                 :             : </span>
-<span id="L167"><span class="lineNum">     167</span>         [<span class="tlaGBC" title="Branch 0 was taken 1831 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        1831 :         CheckTransitions(dest);</span></span>
+<span id="L167"><span class="lineNum">     167</span>         [<span class="tlaGBC" title="Branch 0 was taken 4819 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4819 :         CheckTransitions(dest);</span></span>
 <span id="L168"><span class="lineNum">     168</span>                 :             : </span>
-<span id="L169"><span class="lineNum">     169</span>                 :<span class="tlaGNC">        1831 :         return m_inRealtime.load(std::memory_order_relaxed);</span></span>
+<span id="L169"><span class="lineNum">     169</span>                 :<span class="tlaGNC">        4819 :         return m_inRealtime.load(std::memory_order_relaxed);</span></span>
 <span id="L170"><span class="lineNum">     170</span>                 :             :     } else {</span>
 <span id="L171"><span class="lineNum">     171</span>                 :<span class="tlaGNC">           2 :         return false;</span></span>
 <span id="L172"><span class="lineNum">     172</span>                 :             :     }</span>
-<span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaGNC">        1850 : }</span></span>
+<span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaGNC">        4845 : }</span></span>
 <span id="L174"><span class="lineNum">     174</span>                 :             : </span>
-<span id="L175"><span class="lineNum">     175</span>                 :<span class="tlaGNC">        1544 : bool GameConnector::IsStale(long timeoutMs) const {</span></span>
-<span id="L176"><span class="lineNum">     176</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 1543 times"> + </span>]:<span class="tlaGNC">        1544 :     if (!m_connected.load(std::memory_order_acquire)) return true;</span></span>
+<span id="L175"><span class="lineNum">     175</span>                 :<span class="tlaGNC">        3056 : bool GameConnector::IsStale(long timeoutMs) const {</span></span>
+<span id="L176"><span class="lineNum">     176</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 3055 times"> + </span>]:<span class="tlaGNC">        3056 :     if (!m_connected.load(std::memory_order_acquire)) return true;</span></span>
 <span id="L177"><span class="lineNum">     177</span>                 :             : </span>
-<span id="L178"><span class="lineNum">     178</span>                 :<span class="tlaGNC">        1543 :     auto now = std::chrono::steady_clock::now();</span></span>
-<span id="L179"><span class="lineNum">     179</span>   [<span class="tlaGBC" title="Branch 0 was taken 1543 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 1543 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        1543 :     auto diff = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(now - m_lastUpdateLocalTime).count();</span></span>
-<span id="L180"><span class="lineNum">     180</span>                 :<span class="tlaGNC">        1543 :     return (diff &gt; timeoutMs);</span></span>
+<span id="L178"><span class="lineNum">     178</span>                 :<span class="tlaGNC">        3055 :     auto now = std::chrono::steady_clock::now();</span></span>
+<span id="L179"><span class="lineNum">     179</span>   [<span class="tlaGBC" title="Branch 0 was taken 3055 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 3055 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        3055 :     auto diff = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(now - m_lastUpdateLocalTime).count();</span></span>
+<span id="L180"><span class="lineNum">     180</span>                 :<span class="tlaGNC">        3055 :     return (diff &gt; timeoutMs);</span></span>
 <span id="L181"><span class="lineNum">     181</span>                 :             : }</span>
 <span id="L182"><span class="lineNum">     182</span>                 :             : </span>
 <span id="L183"><span class="lineNum">     183</span>                 :             : // ---------------------------------------------------------------------------</span>
@@ -339,20 +339,20 @@
 <span id="L258"><span class="lineNum">     258</span>                 :             : // poll tick arrives.</span>
 <span id="L259"><span class="lineNum">     259</span>                 :             : // ---------------------------------------------------------------------------</span>
 <span id="L260"><span class="lineNum">     260</span>                 :             : </span>
-<span id="L261"><span class="lineNum">     261</span>                 :<span class="tlaGNC tlaBgGNC">        1891 : void GameConnector::_UpdateStateFromSnapshot(const SharedMemoryObjectOut&amp; current) {</span></span>
-<span id="L262"><span class="lineNum">     262</span>                 :<span class="tlaGNC">        1891 :     auto&amp; scoring = current.scoring.scoringInfo;</span></span>
-<span id="L263"><span class="lineNum">     263</span>                 :<span class="tlaGNC">        1891 :     auto  now     = std::chrono::steady_clock::now();</span></span>
+<span id="L261"><span class="lineNum">     261</span>                 :<span class="tlaGNC tlaBgGNC">        4879 : void GameConnector::_UpdateStateFromSnapshot(const SharedMemoryObjectOut&amp; current) {</span></span>
+<span id="L262"><span class="lineNum">     262</span>                 :<span class="tlaGNC">        4879 :     auto&amp; scoring = current.scoring.scoringInfo;</span></span>
+<span id="L263"><span class="lineNum">     263</span>                 :<span class="tlaGNC">        4879 :     auto  now     = std::chrono::steady_clock::now();</span></span>
 <span id="L264"><span class="lineNum">     264</span>                 :             : </span>
 <span id="L265"><span class="lineNum">     265</span>                 :             :     // --- Ground truth (polling) ---</span>
 <span id="L266"><span class="lineNum">     266</span>                 :             :     // Save previous inRealtime before overwriting, so we can detect transitions.</span>
-<span id="L267"><span class="lineNum">     267</span>                 :<span class="tlaGNC">        1891 :     bool prevInRealtime = m_inRealtime.load(std::memory_order_relaxed);</span></span>
+<span id="L267"><span class="lineNum">     267</span>                 :<span class="tlaGNC">        4879 :     bool prevInRealtime = m_inRealtime.load(std::memory_order_relaxed);</span></span>
 <span id="L268"><span class="lineNum">     268</span>                 :             : </span>
-<span id="L269"><span class="lineNum">     269</span>                 :<span class="tlaGNC">        1891 :     m_sessionActive      = (scoring.mTrackName[0] != '\0');</span></span>
-<span id="L270"><span class="lineNum">     270</span>                 :<span class="tlaGNC">        1891 :     m_inRealtime         = (scoring.mInRealtime != 0);</span></span>
-<span id="L271"><span class="lineNum">     271</span>                 :<span class="tlaGNC">        1891 :     m_currentGamePhase   = scoring.mGamePhase;</span></span>
-<span id="L272"><span class="lineNum">     272</span>                 :<span class="tlaGNC">        1891 :     m_currentSessionType = scoring.mSession;</span></span>
+<span id="L269"><span class="lineNum">     269</span>                 :<span class="tlaGNC">        4879 :     m_sessionActive      = (scoring.mTrackName[0] != '\0');</span></span>
+<span id="L270"><span class="lineNum">     270</span>                 :<span class="tlaGNC">        4879 :     m_inRealtime         = (scoring.mInRealtime != 0);</span></span>
+<span id="L271"><span class="lineNum">     271</span>                 :<span class="tlaGNC">        4879 :     m_currentGamePhase   = scoring.mGamePhase;</span></span>
+<span id="L272"><span class="lineNum">     272</span>                 :<span class="tlaGNC">        4879 :     m_currentSessionType = scoring.mSession;</span></span>
 <span id="L273"><span class="lineNum">     273</span>                 :             : </span>
-<span id="L274"><span class="lineNum">     274</span>                 :<span class="tlaGNC">        1891 :     bool currentInRealtime = m_inRealtime.load(std::memory_order_relaxed);</span></span>
+<span id="L274"><span class="lineNum">     274</span>                 :<span class="tlaGNC">        4879 :     bool currentInRealtime = m_inRealtime.load(std::memory_order_relaxed);</span></span>
 <span id="L275"><span class="lineNum">     275</span>                 :             : </span>
 <span id="L276"><span class="lineNum">     276</span>                 :             :     // --- Quit-to-menu detection (#7.5) ---</span>
 <span id="L277"><span class="lineNum">     277</span>                 :             :     // When mInRealtime goes true→false while a session is active, arm a</span>
@@ -361,22 +361,22 @@
 <span id="L280"><span class="lineNum">     280</span>                 :             :     // If mInRealtime goes back to true first, the user is driving again —</span>
 <span id="L281"><span class="lineNum">     281</span>                 :             :     // cancel the check. Debug logs confirm SME_ENTER fires within 0-1 seconds</span>
 <span id="L282"><span class="lineNum">     282</span>                 :             :     // on quit-to-menu and does NOT fire on a normal return to the garage monitor.</span>
-<span id="L283"><span class="lineNum">     283</span>   [<span class="tlaGBC" title="Branch 0 was taken 12 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1879 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 10 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 2 times"> + </span> :<span class="tlaGNC">        1901 :     if (prevInRealtime &amp;&amp; !currentInRealtime &amp;&amp;</span></span>
-<span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 7 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 1888 times"> + </span>]
+<span id="L283"><span class="lineNum">     283</span>   [<span class="tlaGBC" title="Branch 0 was taken 12 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4867 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 10 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 2 times"> + </span> :<span class="tlaGNC">        4889 :     if (prevInRealtime &amp;&amp; !currentInRealtime &amp;&amp;</span></span>
+<span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 7 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 4876 times"> + </span>]
 <span id="L284"><span class="lineNum">     284</span>                 :<span class="tlaGNC">          10 :         m_sessionActive.load(std::memory_order_relaxed)) {</span></span>
 <span id="L285"><span class="lineNum">     285</span>                 :<span class="tlaGNC">           3 :         m_pendingMenuCheck  = true;</span></span>
 <span id="L286"><span class="lineNum">     286</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 :         m_menuCheckDeadline = now + std::chrono::seconds(3);</span></span>
 <span id="L287"><span class="lineNum">     287</span>                 :             :     }</span>
-<span id="L288"><span class="lineNum">     288</span>         [<span class="tlaGBC" title="Branch 0 was taken 12 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1879 times"> + </span>]:<span class="tlaGNC">        1891 :     if (currentInRealtime) {</span></span>
+<span id="L288"><span class="lineNum">     288</span>         [<span class="tlaGBC" title="Branch 0 was taken 12 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4867 times"> + </span>]:<span class="tlaGNC">        4879 :     if (currentInRealtime) {</span></span>
 <span id="L289"><span class="lineNum">     289</span>                 :<span class="tlaGNC">          12 :         m_pendingMenuCheck = false; // user clicked Drive — cancel</span></span>
 <span id="L290"><span class="lineNum">     290</span>                 :             :     }</span>
-<span id="L291"><span class="lineNum">     291</span>   [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1888 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        1891 :     if (m_pendingMenuCheck &amp;&amp; now &gt; m_menuCheckDeadline) {</span></span>
-<span class="lineNum">        </span>    <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaGBC" title="Branch 5 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 6 was not taken"> - </span><span class="tlaGBC" title="Branch 7 was taken 1891 times"> + </span>]
+<span id="L291"><span class="lineNum">     291</span>   [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4876 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        4879 :     if (m_pendingMenuCheck &amp;&amp; now &gt; m_menuCheckDeadline) {</span></span>
+<span class="lineNum">        </span>    <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaGBC" title="Branch 5 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 6 was not taken"> - </span><span class="tlaGBC" title="Branch 7 was taken 4879 times"> + </span>]
 <span id="L292"><span class="lineNum">     292</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         m_pendingMenuCheck = false; // deadline expired — no SME_ENTER came, must be garage</span></span>
 <span id="L293"><span class="lineNum">     293</span>                 :             :     }</span>
 <span id="L294"><span class="lineNum">     294</span>                 :             : </span>
 <span id="L295"><span class="lineNum">     295</span>                 :             : </span>
-<span id="L296"><span class="lineNum">     296</span>         [<span class="tlaGBC" title="Branch 0 was taken 23 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1868 times"> + </span>]:<span class="tlaGNC tlaBgGNC">        1891 :     if (current.telemetry.playerHasVehicle) {</span></span>
+<span id="L296"><span class="lineNum">     296</span>         [<span class="tlaGBC" title="Branch 0 was taken 23 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4856 times"> + </span>]:<span class="tlaGNC tlaBgGNC">        4879 :     if (current.telemetry.playerHasVehicle) {</span></span>
 <span id="L297"><span class="lineNum">     297</span>                 :<span class="tlaGNC">          23 :         uint8_t idx = current.telemetry.playerVehicleIdx;</span></span>
 <span id="L298"><span class="lineNum">     298</span>         [<span class="tlaGBC" title="Branch 0 was taken 23 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          23 :         if (idx &lt; 104) {</span></span>
 <span id="L299"><span class="lineNum">     299</span>                 :<span class="tlaGNC">          23 :             m_playerControl = current.scoring.vehScoringInfo[idx].mControl;</span></span>
@@ -385,12 +385,12 @@
 <span id="L302"><span class="lineNum">     302</span>                 :             : </span>
 <span id="L303"><span class="lineNum">     303</span>                 :             :     // --- Fast-path: apply SME event overrides on top of polled truth (#267, #274) ---</span>
 <span id="L304"><span class="lineNum">     304</span>                 :             :     // This provides &quot;instantaneous&quot; updates while polling ensures long-term consistency.</span>
-<span id="L305"><span class="lineNum">     305</span>                 :<span class="tlaGNC">        1891 :     auto&amp; generic = current.generic;</span></span>
-<span id="L306"><span class="lineNum">     306</span>         [<span class="tlaGBC" title="Branch 0 was taken 30256 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1891 times"> + </span>]:<span class="tlaGNC">       32147 :     for (int i = 0; i &lt; SME_MAX; ++i) {</span></span>
-<span id="L307"><span class="lineNum">     307</span>   [<span class="tlaGBC" title="Branch 0 was taken 28365 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1891 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 26474 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1891 times"> + </span> :<span class="tlaGNC">       30256 :         if (i == SME_UPDATE_SCORING || i == SME_UPDATE_TELEMETRY || i == SME_FFB || i == SME_SET_ENVIRONMENT)</span></span>
-<span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 24583 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 1891 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 1891 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 22692 times"> + </span>]
-<span id="L308"><span class="lineNum">     308</span>                 :<span class="tlaGNC">        7564 :             continue;</span></span>
-<span id="L309"><span class="lineNum">     309</span>   [<span class="tlaGBC" title="Branch 0 was taken 30 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 22662 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 19 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 11 times"> + </span>]:<span class="tlaGNC">       22692 :         if (generic.events[i] != m_prevState.eventState[i] &amp;&amp; generic.events[i] != 0) {</span></span>
+<span id="L305"><span class="lineNum">     305</span>                 :<span class="tlaGNC">        4879 :     auto&amp; generic = current.generic;</span></span>
+<span id="L306"><span class="lineNum">     306</span>         [<span class="tlaGBC" title="Branch 0 was taken 78064 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4879 times"> + </span>]:<span class="tlaGNC">       82943 :     for (int i = 0; i &lt; SME_MAX; ++i) {</span></span>
+<span id="L307"><span class="lineNum">     307</span>   [<span class="tlaGBC" title="Branch 0 was taken 73185 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4879 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 68306 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 4879 times"> + </span> :<span class="tlaGNC">       78064 :         if (i == SME_UPDATE_SCORING || i == SME_UPDATE_TELEMETRY || i == SME_FFB || i == SME_SET_ENVIRONMENT)</span></span>
+<span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 63427 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 4879 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 4879 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 58548 times"> + </span>]
+<span id="L308"><span class="lineNum">     308</span>                 :<span class="tlaGNC">       19516 :             continue;</span></span>
+<span id="L309"><span class="lineNum">     309</span>   [<span class="tlaGBC" title="Branch 0 was taken 30 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 58518 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 19 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 11 times"> + </span>]:<span class="tlaGNC">       58548 :         if (generic.events[i] != m_prevState.eventState[i] &amp;&amp; generic.events[i] != 0) {</span></span>
 <span id="L310"><span class="lineNum">     310</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 18 times"> + </span>]:<span class="tlaGNC">          19 :             if (i == SME_START_SESSION)                     m_sessionActive = true;</span></span>
 <span id="L311"><span class="lineNum">     311</span>   [<span class="tlaGBC" title="Branch 0 was taken 16 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 3 was taken 15 times"> + </span>]:<span class="tlaGNC">          19 :             if (i == SME_END_SESSION || i == SME_UNLOAD) { m_sessionActive = false; m_inRealtime = false; }</span></span>
 <span id="L312"><span class="lineNum">     312</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 17 times"> + </span>]:<span class="tlaGNC">          19 :             if (i == SME_ENTER_REALTIME)                    m_inRealtime = true;</span></span>
@@ -405,24 +405,24 @@
 <span id="L321"><span class="lineNum">     321</span>                 :             :             }</span>
 <span id="L322"><span class="lineNum">     322</span>                 :             :         }</span>
 <span id="L323"><span class="lineNum">     323</span>                 :             :     }</span>
-<span id="L324"><span class="lineNum">     324</span>                 :<span class="tlaGNC">        1891 : }</span></span>
+<span id="L324"><span class="lineNum">     324</span>                 :<span class="tlaGNC">        4879 : }</span></span>
 <span id="L325"><span class="lineNum">     325</span>                 :             : </span>
 <span id="L326"><span class="lineNum">     326</span>                 :             : // ---------------------------------------------------------------------------</span>
 <span id="L327"><span class="lineNum">     327</span>                 :             : // Phase 2: Detect changes vs m_prevState and emit log lines.</span>
 <span id="L328"><span class="lineNum">     328</span>                 :             : //   This phase has no side-effects on the state machine atomics.</span>
 <span id="L329"><span class="lineNum">     329</span>                 :             : // ---------------------------------------------------------------------------</span>
 <span id="L330"><span class="lineNum">     330</span>                 :             : </span>
-<span id="L331"><span class="lineNum">     331</span>                 :<span class="tlaGNC">        1891 : void GameConnector::_LogTransitions(const SharedMemoryObjectOut&amp; current) {</span></span>
-<span id="L332"><span class="lineNum">     332</span>                 :<span class="tlaGNC">        1891 :     auto&amp; scoring = current.scoring.scoringInfo;</span></span>
-<span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaGNC">        1891 :     auto&amp; generic = current.generic;</span></span>
+<span id="L331"><span class="lineNum">     331</span>                 :<span class="tlaGNC">        4879 : void GameConnector::_LogTransitions(const SharedMemoryObjectOut&amp; current) {</span></span>
+<span id="L332"><span class="lineNum">     332</span>                 :<span class="tlaGNC">        4879 :     auto&amp; scoring = current.scoring.scoringInfo;</span></span>
+<span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaGNC">        4879 :     auto&amp; generic = current.generic;</span></span>
 <span id="L334"><span class="lineNum">     334</span>                 :             : </span>
 <span id="L335"><span class="lineNum">     335</span>                 :             :     // 0. Shared Memory Events (Issue #244)</span>
-<span id="L336"><span class="lineNum">     336</span>         [<span class="tlaGBC" title="Branch 0 was taken 30256 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1891 times"> + </span>]:<span class="tlaGNC">       32147 :     for (int i = 0; i &lt; SME_MAX; ++i) {</span></span>
-<span id="L337"><span class="lineNum">     337</span>   [<span class="tlaGBC" title="Branch 0 was taken 28365 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1891 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 26474 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1891 times"> + </span> :<span class="tlaGNC">       30256 :         if (i == SME_UPDATE_SCORING || i == SME_UPDATE_TELEMETRY || i == SME_FFB || i == SME_SET_ENVIRONMENT)</span></span>
-<span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 24583 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 1891 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 1891 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 22692 times"> + </span>]
-<span id="L338"><span class="lineNum">     338</span>                 :<span class="tlaGNC">        7564 :             continue;</span></span>
+<span id="L336"><span class="lineNum">     336</span>         [<span class="tlaGBC" title="Branch 0 was taken 78064 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4879 times"> + </span>]:<span class="tlaGNC">       82943 :     for (int i = 0; i &lt; SME_MAX; ++i) {</span></span>
+<span id="L337"><span class="lineNum">     337</span>   [<span class="tlaGBC" title="Branch 0 was taken 73185 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4879 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 68306 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 4879 times"> + </span> :<span class="tlaGNC">       78064 :         if (i == SME_UPDATE_SCORING || i == SME_UPDATE_TELEMETRY || i == SME_FFB || i == SME_SET_ENVIRONMENT)</span></span>
+<span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 63427 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 4879 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 4879 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 58548 times"> + </span>]
+<span id="L338"><span class="lineNum">     338</span>                 :<span class="tlaGNC">       19516 :             continue;</span></span>
 <span id="L339"><span class="lineNum">     339</span>                 :             : </span>
-<span id="L340"><span class="lineNum">     340</span>         [<span class="tlaGBC" title="Branch 0 was taken 30 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 22662 times"> + </span>]:<span class="tlaGNC">       22692 :         if (generic.events[i] != m_prevState.eventState[i]) {</span></span>
+<span id="L340"><span class="lineNum">     340</span>         [<span class="tlaGBC" title="Branch 0 was taken 30 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 58518 times"> + </span>]:<span class="tlaGNC">       58548 :         if (generic.events[i] != m_prevState.eventState[i]) {</span></span>
 <span id="L341"><span class="lineNum">     341</span>         [<span class="tlaGBC" title="Branch 0 was taken 19 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 11 times"> + </span>]:<span class="tlaGNC">          30 :             if (generic.events[i] != 0) {</span></span>
 <span id="L342"><span class="lineNum">     342</span>                 :<span class="tlaGNC">          19 :                 bool shouldLog = true;</span></span>
 <span id="L343"><span class="lineNum">     343</span>                 :             : </span>
@@ -446,7 +446,7 @@
 <span id="L361"><span class="lineNum">     361</span>                 :             :     }</span>
 <span id="L362"><span class="lineNum">     362</span>                 :             : </span>
 <span id="L363"><span class="lineNum">     363</span>                 :             :     // 1. Options Location (UI Menu)</span>
-<span id="L364"><span class="lineNum">     364</span>         [<span class="tlaGBC" title="Branch 0 was taken 27 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1864 times"> + </span>]:<span class="tlaGNC">        1891 :     if (generic.appInfo.mOptionsLocation != m_prevState.optionsLocation) {</span></span>
+<span id="L364"><span class="lineNum">     364</span>         [<span class="tlaGBC" title="Branch 0 was taken 27 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4852 times"> + </span>]:<span class="tlaGNC">        4879 :     if (generic.appInfo.mOptionsLocation != m_prevState.optionsLocation) {</span></span>
 <span id="L365"><span class="lineNum">     365</span>                 :<span class="tlaGNC">          27 :         const char* locStr = &quot;Unknown&quot;;</span></span>
 <span id="L366"><span class="lineNum">     366</span>   [<span class="tlaGBC" title="Branch 0 was taken 25 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span> :<span class="tlaGNC">          27 :         switch (generic.appInfo.mOptionsLocation) {</span></span>
 <span class="lineNum">        </span>             <span class="tlaUNC" title="Branch 4 was not taken"> - </span>]
@@ -461,14 +461,14 @@
 <span id="L375"><span class="lineNum">     375</span>                 :             :     }</span>
 <span id="L376"><span class="lineNum">     376</span>                 :             : </span>
 <span id="L377"><span class="lineNum">     377</span>                 :             :     // 1.1 Options Page</span>
-<span id="L378"><span class="lineNum">     378</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 1891 times"> + </span>]:<span class="tlaGNC">        1891 :     if (strncmp(generic.appInfo.mOptionsPage, m_prevState.optionsPage, 31) != 0) {</span></span>
+<span id="L378"><span class="lineNum">     378</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 4879 times"> + </span>]:<span class="tlaGNC">        4879 :     if (strncmp(generic.appInfo.mOptionsPage, m_prevState.optionsPage, 31) != 0) {</span></span>
 <span id="L379"><span class="lineNum">     379</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         Logger::Get().LogFile(&quot;[Transition] OptionsPage: '%s' -&gt; '%s'&quot;, m_prevState.optionsPage, generic.appInfo.mOptionsPage);</span></span>
 <span id="L380"><span class="lineNum">     380</span>                 :<span class="tlaUNC">           0 :         StringUtils::SafeCopy(m_prevState.optionsPage, sizeof(m_prevState.optionsPage), generic.appInfo.mOptionsPage);</span></span>
 <span id="L381"><span class="lineNum">     381</span>                 :             :     }</span>
 <span id="L382"><span class="lineNum">     382</span>                 :             : </span>
 <span id="L383"><span class="lineNum">     383</span>                 :             :     // 2. InRealtime (Driving vs Menu)</span>
-<span id="L384"><span class="lineNum">     384</span>                 :<span class="tlaGNC tlaBgGNC">        1891 :     bool currentInRealtime = (scoring.mInRealtime != 0);</span></span>
-<span id="L385"><span class="lineNum">     385</span>         [<span class="tlaGBC" title="Branch 0 was taken 14 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1877 times"> + </span>]:<span class="tlaGNC">        1891 :     if (currentInRealtime != m_prevState.inRealtime) {</span></span>
+<span id="L384"><span class="lineNum">     384</span>                 :<span class="tlaGNC tlaBgGNC">        4879 :     bool currentInRealtime = (scoring.mInRealtime != 0);</span></span>
+<span id="L385"><span class="lineNum">     385</span>         [<span class="tlaGBC" title="Branch 0 was taken 14 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4865 times"> + </span>]:<span class="tlaGNC">        4879 :     if (currentInRealtime != m_prevState.inRealtime) {</span></span>
 <span id="L386"><span class="lineNum">     386</span>         [<span class="tlaGBC" title="Branch 0 was taken 10 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">          28 :         Logger::Get().LogFile(&quot;[Transition] InRealtime: %s -&gt; %s&quot;,</span></span>
 <span id="L387"><span class="lineNum">     387</span>         [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 10 times"> + </span>]:<span class="tlaGNC">          14 :             m_prevState.inRealtime ? &quot;true&quot; : &quot;false&quot;, currentInRealtime ? &quot;true&quot; : &quot;false&quot;);</span></span>
 <span id="L388"><span class="lineNum">     388</span>                 :             : </span>
@@ -489,27 +489,27 @@
 <span id="L403"><span class="lineNum">     403</span>                 :             :     }</span>
 <span id="L404"><span class="lineNum">     404</span>                 :             : </span>
 <span id="L405"><span class="lineNum">     405</span>                 :             :     // 3. Game Phase (Session state / Pause)</span>
-<span id="L406"><span class="lineNum">     406</span>         [<span class="tlaGBC" title="Branch 0 was taken 28 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1863 times"> + </span>]:<span class="tlaGNC">        1891 :     if (scoring.mGamePhase != m_prevState.gamePhase) {</span></span>
+<span id="L406"><span class="lineNum">     406</span>         [<span class="tlaGBC" title="Branch 0 was taken 28 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4851 times"> + </span>]:<span class="tlaGNC">        4879 :     if (scoring.mGamePhase != m_prevState.gamePhase) {</span></span>
 <span id="L407"><span class="lineNum">     407</span>                 :<span class="tlaGNC">          28 :         Logger::Get().LogFile(&quot;[Transition] GamePhase: %d -&gt; %d (%s)&quot;,</span></span>
 <span id="L408"><span class="lineNum">     408</span>                 :<span class="tlaGNC">          28 :             m_prevState.gamePhase, scoring.mGamePhase, GamePhaseName(scoring.mGamePhase));</span></span>
 <span id="L409"><span class="lineNum">     409</span>                 :<span class="tlaGNC">          28 :         m_prevState.gamePhase = scoring.mGamePhase;</span></span>
 <span id="L410"><span class="lineNum">     410</span>                 :             :     }</span>
 <span id="L411"><span class="lineNum">     411</span>                 :             : </span>
 <span id="L412"><span class="lineNum">     412</span>                 :             :     // 4. Session Type</span>
-<span id="L413"><span class="lineNum">     413</span>         [<span class="tlaGBC" title="Branch 0 was taken 26 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1865 times"> + </span>]:<span class="tlaGNC">        1891 :     if (scoring.mSession != m_prevState.session) {</span></span>
+<span id="L413"><span class="lineNum">     413</span>         [<span class="tlaGBC" title="Branch 0 was taken 26 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4853 times"> + </span>]:<span class="tlaGNC">        4879 :     if (scoring.mSession != m_prevState.session) {</span></span>
 <span id="L414"><span class="lineNum">     414</span>                 :<span class="tlaGNC">          26 :         Logger::Get().LogFile(&quot;[Transition] Session: %ld -&gt; %ld (%s)&quot;,</span></span>
 <span id="L415"><span class="lineNum">     415</span>                 :<span class="tlaGNC">          26 :             m_prevState.session, scoring.mSession, SessionTypeName(scoring.mSession));</span></span>
 <span id="L416"><span class="lineNum">     416</span>                 :<span class="tlaGNC">          26 :         m_prevState.session = scoring.mSession;</span></span>
 <span id="L417"><span class="lineNum">     417</span>                 :             :     }</span>
 <span id="L418"><span class="lineNum">     418</span>                 :             : </span>
 <span id="L419"><span class="lineNum">     419</span>                 :             :     // 5. Track Name (Context Change)</span>
-<span id="L420"><span class="lineNum">     420</span>         [<span class="tlaGBC" title="Branch 0 was taken 12 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1879 times"> + </span>]:<span class="tlaGNC">        1891 :     if (strcmp(scoring.mTrackName, m_prevState.trackName) != 0) {</span></span>
+<span id="L420"><span class="lineNum">     420</span>         [<span class="tlaGBC" title="Branch 0 was taken 12 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4867 times"> + </span>]:<span class="tlaGNC">        4879 :     if (strcmp(scoring.mTrackName, m_prevState.trackName) != 0) {</span></span>
 <span id="L421"><span class="lineNum">     421</span>                 :<span class="tlaGNC">          12 :         Logger::Get().LogFile(&quot;[Transition] Track: '%s' -&gt; '%s'&quot;, m_prevState.trackName, scoring.mTrackName);</span></span>
 <span id="L422"><span class="lineNum">     422</span>                 :<span class="tlaGNC">          12 :         StringUtils::SafeCopy(m_prevState.trackName, sizeof(m_prevState.trackName), scoring.mTrackName);</span></span>
 <span id="L423"><span class="lineNum">     423</span>                 :             :     }</span>
 <span id="L424"><span class="lineNum">     424</span>                 :             : </span>
 <span id="L425"><span class="lineNum">     425</span>                 :             :     // 6. Player Control &amp; Pit State</span>
-<span id="L426"><span class="lineNum">     426</span>         [<span class="tlaGBC" title="Branch 0 was taken 23 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1868 times"> + </span>]:<span class="tlaGNC">        1891 :     if (current.telemetry.playerHasVehicle) {</span></span>
+<span id="L426"><span class="lineNum">     426</span>         [<span class="tlaGBC" title="Branch 0 was taken 23 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4856 times"> + </span>]:<span class="tlaGNC">        4879 :     if (current.telemetry.playerHasVehicle) {</span></span>
 <span id="L427"><span class="lineNum">     427</span>                 :<span class="tlaGNC">          23 :         uint8_t idx = current.telemetry.playerVehicleIdx;</span></span>
 <span id="L428"><span class="lineNum">     428</span>         [<span class="tlaGBC" title="Branch 0 was taken 23 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          23 :         if (idx &lt; 104) {</span></span>
 <span id="L429"><span class="lineNum">     429</span>                 :<span class="tlaGNC">          23 :             auto&amp; vehScoring = current.scoring.vehScoringInfo[idx];</span></span>
@@ -541,8 +541,8 @@
 <span id="L455"><span class="lineNum">     455</span>                 :             :     }</span>
 <span id="L456"><span class="lineNum">     456</span>                 :             : </span>
 <span id="L457"><span class="lineNum">     457</span>                 :             :     // 7. PlayerHasVehicle changes — investigation: quit-to-menu detection (#7.4a)</span>
-<span id="L458"><span class="lineNum">     458</span>                 :<span class="tlaGNC">        1891 :     bool currentHasVehicle = current.telemetry.playerHasVehicle;</span></span>
-<span id="L459"><span class="lineNum">     459</span>         [<span class="tlaGBC" title="Branch 0 was taken 10 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1881 times"> + </span>]:<span class="tlaGNC">        1891 :     if (currentHasVehicle != m_prevState.playerHasVehicle) {</span></span>
+<span id="L458"><span class="lineNum">     458</span>                 :<span class="tlaGNC">        4879 :     bool currentHasVehicle = current.telemetry.playerHasVehicle;</span></span>
+<span id="L459"><span class="lineNum">     459</span>         [<span class="tlaGBC" title="Branch 0 was taken 10 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4869 times"> + </span>]:<span class="tlaGNC">        4879 :     if (currentHasVehicle != m_prevState.playerHasVehicle) {</span></span>
 <span id="L460"><span class="lineNum">     460</span>         [<span class="tlaGBC" title="Branch 0 was taken 9 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">          20 :         Logger::Get().LogFile(&quot;[Transition] PlayerHasVehicle: %s -&gt; %s&quot;,</span></span>
 <span id="L461"><span class="lineNum">     461</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 9 times"> + </span>]:<span class="tlaGNC">          10 :             m_prevState.playerHasVehicle ? &quot;true&quot; : &quot;false&quot;,</span></span>
 <span id="L462"><span class="lineNum">     462</span>                 :             :             currentHasVehicle ? &quot;true&quot; : &quot;false&quot;);</span>
@@ -550,23 +550,23 @@
 <span id="L464"><span class="lineNum">     464</span>                 :             :     }</span>
 <span id="L465"><span class="lineNum">     465</span>                 :             : </span>
 <span id="L466"><span class="lineNum">     466</span>                 :             :     // 8. NumVehicles changes — investigation: quit-to-menu detection (#7.4b)</span>
-<span id="L467"><span class="lineNum">     467</span>                 :<span class="tlaGNC">        1891 :     int currentNumVehicles = (int)scoring.mNumVehicles;</span></span>
-<span id="L468"><span class="lineNum">     468</span>         [<span class="tlaGBC" title="Branch 0 was taken 26 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1865 times"> + </span>]:<span class="tlaGNC">        1891 :     if (currentNumVehicles != m_prevState.numVehicles) {</span></span>
+<span id="L467"><span class="lineNum">     467</span>                 :<span class="tlaGNC">        4879 :     int currentNumVehicles = (int)scoring.mNumVehicles;</span></span>
+<span id="L468"><span class="lineNum">     468</span>         [<span class="tlaGBC" title="Branch 0 was taken 26 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4853 times"> + </span>]:<span class="tlaGNC">        4879 :     if (currentNumVehicles != m_prevState.numVehicles) {</span></span>
 <span id="L469"><span class="lineNum">     469</span>                 :<span class="tlaGNC">          26 :         Logger::Get().LogFile(&quot;[Transition] NumVehicles: %d -&gt; %d&quot;,</span></span>
 <span id="L470"><span class="lineNum">     470</span>                 :             :             m_prevState.numVehicles, currentNumVehicles);</span>
 <span id="L471"><span class="lineNum">     471</span>                 :<span class="tlaGNC">          26 :         m_prevState.numVehicles = currentNumVehicles;</span></span>
 <span id="L472"><span class="lineNum">     472</span>                 :             :     }</span>
-<span id="L473"><span class="lineNum">     473</span>                 :<span class="tlaGNC">        1891 : }</span></span>
+<span id="L473"><span class="lineNum">     473</span>                 :<span class="tlaGNC">        4879 : }</span></span>
 <span id="L474"><span class="lineNum">     474</span>                 :             : </span>
 <span id="L475"><span class="lineNum">     475</span>                 :             : // ---------------------------------------------------------------------------</span>
 <span id="L476"><span class="lineNum">     476</span>                 :             : // CheckTransitions: orchestrator (lock, then run both phases in order)</span>
 <span id="L477"><span class="lineNum">     477</span>                 :             : // ---------------------------------------------------------------------------</span>
 <span id="L478"><span class="lineNum">     478</span>                 :             : </span>
-<span id="L479"><span class="lineNum">     479</span>                 :<span class="tlaGNC">        1891 : void GameConnector::CheckTransitions(const SharedMemoryObjectOut&amp; current) {</span></span>
-<span id="L480"><span class="lineNum">     480</span>         [<span class="tlaGBC" title="Branch 0 was taken 1891 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        1891 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(m_mutex);</span></span>
-<span id="L481"><span class="lineNum">     481</span>         [<span class="tlaGBC" title="Branch 0 was taken 1891 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        1891 :     _UpdateStateFromSnapshot(current);  // Phase 1: sync state machine atomics</span></span>
-<span id="L482"><span class="lineNum">     482</span>         [<span class="tlaGBC" title="Branch 0 was taken 1891 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        1891 :     _LogTransitions(current);           // Phase 2: log any changes</span></span>
-<span id="L483"><span class="lineNum">     483</span>                 :<span class="tlaGNC">        1891 : }</span></span>
+<span id="L479"><span class="lineNum">     479</span>                 :<span class="tlaGNC">        4879 : void GameConnector::CheckTransitions(const SharedMemoryObjectOut&amp; current) {</span></span>
+<span id="L480"><span class="lineNum">     480</span>         [<span class="tlaGBC" title="Branch 0 was taken 4879 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4879 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(m_mutex);</span></span>
+<span id="L481"><span class="lineNum">     481</span>         [<span class="tlaGBC" title="Branch 0 was taken 4879 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4879 :     _UpdateStateFromSnapshot(current);  // Phase 1: sync state machine atomics</span></span>
+<span id="L482"><span class="lineNum">     482</span>         [<span class="tlaGBC" title="Branch 0 was taken 4879 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4879 :     _LogTransitions(current);           // Phase 2: log any changes</span></span>
+<span id="L483"><span class="lineNum">     483</span>                 :<span class="tlaGNC">        4879 : }</span></span>
         </pre>
               </td>
             </tr>
