@@ -61,7 +61,7 @@ struct GripResult {
 
 struct Preset;
 
-namespace FFBEngineTests { class FFBEngineTestAccess; }
+namespace FFBEngineTests { class FFBEngineTestAccess; class FFBEngineTestAccess379; }
 
 struct FFBCalculationContext {
     double dt = DEFAULT_CALC_DT;
@@ -376,7 +376,7 @@ public:
     float m_spin_freq_scale = 1.0f;
     
     // Internal state for Bottoming (Method B)
-    double m_prev_susp_force[2] = {0.0, 0.0}; 
+    double m_prev_susp_force[4] = {0.0, 0.0, 0.0, 0.0};
 
     // New Settings (v0.4.5)
     int m_bottoming_method = 0; 
@@ -463,6 +463,7 @@ public:
     FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP
     
     friend class FFBEngineTests::FFBEngineTestAccess;
+    friend class FFBEngineTests::FFBEngineTestAccess379;
     friend struct Preset;
 
     FFBEngine();
@@ -621,6 +622,7 @@ private:
     double m_rolling_average_torque = 0.0; 
     double m_last_raw_torque = 0.0; 
     bool m_was_allowed = true; // Track transition for filter reset
+    bool m_derivatives_seeded = false; // Issue #379: Track if derivatives have been seeded after teleport
 
     void update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt);
     void InitializeLoadReference(const char* className, const char* vehicleName);

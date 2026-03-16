@@ -92,6 +92,16 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     m_warned_susp_force = false;
     m_warned_susp_deflection = false;
     m_warned_vert_deflection = false;
+
+    // --- FIX #379: Clear Slope Detection History ---
+    m_slope_buffer_count = 0;
+    m_slope_buffer_index = 0;
+    m_slope_smoothed_output = 1.0;
+    m_slope_lat_g_smoothed = 0.0;
+    m_slope_slip_smoothed = 0.0;
+    m_slope_torque_smoothed = 0.0;
+    m_slope_steer_smoothed = 0.0;
+    m_slope_torque_current = 20.0;
     // -----------------------------------------------------------------------
 
     ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);

@@ -223,8 +223,30 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_power_vulnerability_smoothed = 0.0;
         m_prev_local_vel = {};
         m_local_vel_seeded = false;
+        m_derivatives_seeded = false; // Issue #379
     }
     m_was_allowed = allowed;
+
+    // --- RE-SEED DERIVATIVES AFTER TELEPORT/GARAGE (Issue #379) ---
+    if (!m_derivatives_seeded && allowed) {
+        for (int i = 0; i < 4; i++) {
+            m_prev_vert_deflection[i] = upsampled_data->mWheel[i].mVerticalTireDeflection;
+            m_prev_rotation[i] = upsampled_data->mWheel[i].mRotation;
+            m_prev_brake_pressure[i] = upsampled_data->mWheel[i].mBrakePressure;
+            m_prev_load[i] = upsampled_data->mWheel[i].mTireLoad;
+            m_prev_slip_angle[i] = 0.0; // Reset LPF state
+        }
+        m_prev_susp_force[0] = upsampled_data->mWheel[0].mSuspForce;
+        m_prev_susp_force[1] = upsampled_data->mWheel[1].mSuspForce;
+        m_prev_susp_force[2] = upsampled_data->mWheel[2].mSuspForce;
+        m_prev_susp_force[3] = upsampled_data->mWheel[3].mSuspForce;
+        m_prev_vert_accel = upsampled_data->mLocalAccel.y;
+
+        float range = upsampled_data->mPhysicalSteeringWheelRange > 0 ? upsampled_data->mPhysicalSteeringWheelRange : (float)DEFAULT_STEERING_RANGE_RAD;
+        m_prev_steering_angle = upsampled_data->mUnfilteredSteering * (range / 2.0);
+
+        m_derivatives_seeded = true;
+    }
 
     // Select Torque Source
     // v0.7.63 Fix: genFFBTorque (Direct Torque 400Hz) is normalized [-1.0, 1.0].
@@ -703,6 +725,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // to ensure correct dForce calculation for Method 1 next frame.
     m_prev_susp_force[0] = upsampled_data->mWheel[0].mSuspForce;
     m_prev_susp_force[1] = upsampled_data->mWheel[1].mSuspForce;
+    m_prev_susp_force[2] = upsampled_data->mWheel[2].mSuspForce;
+    m_prev_susp_force[3] = upsampled_data->mWheel[3].mSuspForce;
     
     // v0.6.36 FIX: Move m_prev_vert_accel to unconditional section
     // Previously only updated inside calculate_road_texture when enabled.
@@ -1528,6 +1552,7 @@ void FFBEngine::ResetNormalization() {
     m_session_peak_torque = (std::max)(1.0, (double)m_target_rim_nm);
     m_smoothed_structural_mult = 1.0 / (m_session_peak_torque + EPSILON_DIV);
     m_rolling_average_torque = m_session_peak_torque;
+    m_last_raw_torque = 0.0; // Issue #379
 
     // 2. Vibration Normalization Reset (Stage 3)
     // Always return to the class-default seed load.
@@ -1536,6 +1561,7 @@ void FFBEngine::ResetNormalization() {
 
     // Reset static load reference
     m_static_front_load = m_auto_peak_front_load * 0.5;
+    m_static_rear_load = m_auto_peak_front_load * 0.5; // Issue #379
     m_static_load_latched = false;
 
     // If we have a saved static load, restore it (v0.7.70 logic)
