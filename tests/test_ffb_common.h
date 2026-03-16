@@ -346,6 +346,8 @@ public:
     static void SetStaticRearLoad(FFBEngine& e, double val) { e.m_static_rear_load = val; }
     static double GetStaticFrontLoad(const FFBEngine& e) { return e.m_static_front_load; }
     static double GetStaticRearLoad(const FFBEngine& e) { return e.m_static_rear_load; }
+    static double GetKerbTimer(const FFBEngine& e) { return e.m_kerb_timer; }
+    static void SetKerbTimer(FFBEngine& e, double val) { e.m_kerb_timer = val; }
     static bool GetStaticLoadLatched(const FFBEngine& e) { return e.m_static_load_latched; }
     static void SetStaticLoadLatched(FFBEngine& e, bool val) { e.m_static_load_latched = val; }
     static double GetSmoothedVibrationMult(const FFBEngine& e) { return e.m_smoothed_vibration_mult; }

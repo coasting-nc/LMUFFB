@@ -648,6 +648,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
         FloatSetting("SoP Self-Aligning Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN),
             Tooltips::REAR_ALIGN_TORQUE);
+        FloatSetting("  Kerb Strike Rejection", &engine.m_kerb_strike_rejection, 0.0f, 1.0f, FormatPct(engine.m_kerb_strike_rejection),
+            Tooltips::KERB_STRIKE_REJECTION);
         FloatSetting("Yaw Kick", &engine.m_sop_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK),
             Tooltips::YAW_KICK);
         FloatSetting("  Activation Threshold", &engine.m_yaw_kick_threshold, 0.0f, 10.0f, "%.2f rad/sÂ²", Tooltips::YAW_KICK_THRESHOLD);

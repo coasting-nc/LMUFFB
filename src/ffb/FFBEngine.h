@@ -152,6 +152,7 @@ public:
     // New Effects (v0.2)
     float m_oversteer_boost;
     float m_rear_align_effect;
+    float m_kerb_strike_rejection = 0.0f; // NEW: Kerb strike rejection slider
     float m_sop_yaw_gain;
     float m_gyro_gain;
     float m_gyro_smoothing;
@@ -362,6 +363,7 @@ public:
     
 
     // Phase Accumulators for Dynamic Oscillators
+    double m_kerb_timer = 0.0; // NEW: Kerb strike attenuation timer
     double m_lockup_phase = 0.0;
     double m_spin_phase = 0.0;
     double m_slide_phase = 0.0;
@@ -485,6 +487,9 @@ private:
     static constexpr double REAR_TIRE_STIFFNESS_COEFFICIENT = 15.0; 
     static constexpr double MAX_REAR_LATERAL_FORCE = 6000.0; // N
     static constexpr double REAR_ALIGN_TORQUE_COEFFICIENT = 0.001; // Nm per N
+    static constexpr double KERB_LOAD_CAP_MULT = 1.5;
+    static constexpr double KERB_DETECTION_THRESHOLD_M_S = 0.8;
+    static constexpr double KERB_HOLD_TIME_S = 0.1;
     static constexpr double DEFAULT_STEERING_RANGE_RAD = 9.4247; 
     static constexpr double GYRO_SPEED_SCALE = 10.0;
     static constexpr double WEIGHT_TRANSFER_SCALE = 2000.0; // N per G
