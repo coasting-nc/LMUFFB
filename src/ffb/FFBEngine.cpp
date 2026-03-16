@@ -189,6 +189,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Transition Logic: Reset filters when entering "Muted" state (e.g. Garage/AI)
     // to clear out high-frequency residuals from the driving session.
     if (m_was_allowed && !allowed) {
+        m_kerb_timer = 0.0;
         m_upsample_shaft_torque.Reset();
         m_upsample_steering.Reset();
         m_upsample_throttle.Reset();
@@ -1082,12 +1083,55 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     
     // Rear lateral force estimation: F = Alpha * k * TireLoad
     double rear_slip_angle = m_grip_diag.rear_slip_angle;
-    ctx.calc_rear_lat_force = rear_slip_angle * ctx.avg_rear_load * REAR_TIRE_STIFFNESS_COEFFICIENT;
-    ctx.calc_rear_lat_force = (std::max)(-MAX_REAR_LATERAL_FORCE, (std::min)(MAX_REAR_LATERAL_FORCE, ctx.calc_rear_lat_force));
     
-    // Torque = Force * Aligning_Lever
+    // --- FIX 1: Physics Saturation (Always On) ---
+    // Cap dynamic load to 1.5x static weight to prevent vertical kerb spikes
+    double max_effective_load = m_static_rear_load * KERB_LOAD_CAP_MULT;
+    double effective_rear_load = std::min(ctx.avg_rear_load, (std::max)(1.0, max_effective_load));
+
+    // Soft-clip slip angle (Simulates Pneumatic Trail falloff)
+    // Critical: Ensure division-by-zero protection if optimal slip angle is not yet latched
+    double optimal_slip_ref = (std::max)(0.01f, m_optimal_slip_angle);
+    double normalized_slip = rear_slip_angle / (optimal_slip_ref + 0.001);
+    double effective_slip = optimal_slip_ref * std::tanh(normalized_slip);
+
+    // --- FIX 2: Hybrid Kerb Strike Rejection (GUI Controlled) ---
+    double kerb_attenuation = 1.0;
+
+    if (m_kerb_strike_rejection > 0.0) {
+        // A. Surface Type Detection (Works on ALL cars)
+        bool on_kerb = (data->mWheel[2].mSurfaceType == 5) || (data->mWheel[3].mSurfaceType == 5);
+
+        // B. Suspension Velocity Detection (Works on unencrypted cars)
+        bool violent_bump = false;
+        if (m_missing_vert_deflection_frames <= MISSING_TELEMETRY_WARN_THRESHOLD) {
+            double susp_vel_rl = std::abs(data->mWheel[2].mVerticalTireDeflection - m_prev_vert_deflection[2]) / ctx.dt;
+            double susp_vel_rr = std::abs(data->mWheel[3].mVerticalTireDeflection - m_prev_vert_deflection[3]) / ctx.dt;
+            violent_bump = std::max(susp_vel_rl, susp_vel_rr) > KERB_DETECTION_THRESHOLD_M_S;
+        }
+
+        // Trigger the timer (Hold the attenuation for 100ms after leaving the kerb)
+        if (on_kerb || violent_bump) {
+            m_kerb_timer = KERB_HOLD_TIME_S;
+        } else {
+            m_kerb_timer = std::max(0.0, m_kerb_timer - ctx.dt);
+        }
+
+        // Apply the attenuation
+        if (m_kerb_timer > 0.0) {
+            // If slider is 1.0, attenuation drops to 0.0 (100% muted)
+            // If slider is 0.5, attenuation drops to 0.5 (50% muted)
+            kerb_attenuation = 1.0 - (double)m_kerb_strike_rejection;
+        }
+    }
+
+    // Calculate final force with the sanitized, zero-latency variables
+    ctx.calc_rear_lat_force = effective_slip * effective_rear_load * REAR_TIRE_STIFFNESS_COEFFICIENT;
+    ctx.calc_rear_lat_force = std::clamp(ctx.calc_rear_lat_force, -MAX_REAR_LATERAL_FORCE, MAX_REAR_LATERAL_FORCE);
+
+    // Torque = Force * Aligning_Lever * Kerb_Attenuation
     // Note negative sign: Oversteer (Rear Slide) pushes wheel TOWARDS slip direction
-    ctx.rear_torque = -ctx.calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect;
+    ctx.rear_torque = -ctx.calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect * kerb_attenuation;
     
     // 4. Yaw Kicks (Context-Aware Oversteer - Issue #322)
 

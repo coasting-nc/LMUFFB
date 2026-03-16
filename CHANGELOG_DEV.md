@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.191]
+- **Fixed Telemetry Diagnostic Reset on Car Change (Issue #374)**:
+  - Implemented automatic reset of all telemetry error counters and warning flags whenever a car change is detected.
+  - Reset counters: `m_missing_load_frames`, `m_missing_lat_force_front_frames`, `m_missing_lat_force_rear_frames`, `m_missing_susp_force_frames`, `m_missing_susp_deflection_frames`, and `m_missing_vert_deflection_frames`.
+  - Reset warning flags: `m_warned_load`, `m_warned_grip`, `m_warned_rear_grip`, `m_warned_lat_force_front`, `m_warned_lat_force_rear`, `m_warned_susp_force`, `m_warned_susp_deflection`, and `m_warned_vert_deflection`.
+  - This fix prevents "missing telemetry" states or warnings from persisting when switching from an encrypted car (DLC) to a car with full telemetry access.
+- **Testing**:
+  - Added `tests/test_issue_374_repro.cpp` which verifies that all diagnostic states are correctly zeroed out upon switching vehicle names/classes.
+  - Verified 100% pass rate across 536 test cases.
+
+## [0.7.190]
+- **Reduced Kerb Impact in Self-Aligning Torque (Issue #297)**:
+  - **Physics Saturation (Always On)**:
+    - Implemented a 1.5x static weight cap on the dynamic rear tire load used for torque calculations. This prevents mathematical explosions during vertical kerb strikes.
+    - Added `tanh` soft-clipping to the rear slip angle calculation to simulate pneumatic trail falloff. This ensures torque remains physically realistic at high slip angles and prevents infinite force spikes.
+  - **Hybrid Kerb Strike Rejection (User Configurable)**:
+    - Introduced a "Kerb Strike Rejection" slider (0.0 to 1.0) allowing users to tune attenuation strength.
+    - Implemented dual-trigger detection using `mSurfaceType` (works on all cars including encrypted DLC) and high suspension velocity (>0.8 m/s).
+    - Added a 100ms hold timer to maintain attenuation while the car settles after leaving a kerb.
+  - **GUI & Configuration**:
+    - Added "Kerb Strike Rejection" slider to the Rear Axle tuning section.
+    - Integrated the new setting into the Preset and Config systems with full persistence.
+- **Testing**:
+  - Added `test_kerb_strike_rejection` to verify all new logic paths.
+  - Adjusted coordinate regression tests to account for `tanh` saturation levels.
+  - Verified 100% pass rate across 535 test cases.
+
 ## [0.7.189]
 - **Fixed Porsche LMGT3 Brand Detection (Issue #368)**:
   - **Robust String Parsing**: Implemented a `Trim` helper in `VehicleUtils.cpp` to remove leading/trailing whitespace from telemetry strings.

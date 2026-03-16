@@ -75,6 +75,25 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     // This ensures that session-learned peaks from a previous car don't pollute the new session.
     ResetNormalization();
 
+    // --- FIX #374: Reset all missing telemetry counters and warning flags ---
+    m_metadata.ResetWarnings();
+    m_missing_load_frames = 0;
+    m_missing_lat_force_front_frames = 0;
+    m_missing_lat_force_rear_frames = 0;
+    m_missing_susp_force_frames = 0;
+    m_missing_susp_deflection_frames = 0;
+    m_missing_vert_deflection_frames = 0;
+
+    m_warned_load = false;
+    m_warned_grip = false;
+    m_warned_rear_grip = false;
+    m_warned_lat_force_front = false;
+    m_warned_lat_force_rear = false;
+    m_warned_susp_force = false;
+    m_warned_susp_deflection = false;
+    m_warned_vert_deflection = false;
+    // -----------------------------------------------------------------------
+
     ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
 
     // Stage 3 Reset: Ensure peak load starts at class baseline
