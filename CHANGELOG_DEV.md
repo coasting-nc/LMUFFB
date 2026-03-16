@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.195]
+- **Implemented Diagnostic Logging for NaN/Inf Detection (Issue #386)**:
+  - **Rate-Limited Logging**: Introduced a 5-second cooldown timer for NaN/Inf diagnostic logs to prevent log spam and disk I/O performance hits in high-frequency loops.
+  - **Categorized Diagnostics**:
+    - **Core Physics**: Logs "[Diag] Core Physics NaN/Inf detected!" when chassis-critical data (steering, accel, torque) is invalid.
+    - **Auxiliary Data**: Logs "[Diag] Auxiliary Wheel NaN/Inf detected" when non-critical wheel channels are sanitized.
+    - **Final Math**: Logs "[Diag] Final output force is NaN/Inf!" if internal math instabilities are detected before hardware output.
+  - **Context-Aware Resets**: Diagnostic timers are reset on session transitions (allowed toggle) to ensure fresh logging for new sessions.
+- **Testing**:
+  - Added `tests/test_issue_386_logging.cpp` verifying rate-limiting logic, categorized logging, and transition-based timer resets.
+  - Verified 100% pass rate for new tests and all 544 existing test cases.
+
 ## [0.7.194]
 - **Fixed State Contamination and NaN Infection during Context Switches (Issue #384)**:
   - **Hardware Sanitization**: Added `std::isfinite` check in `DirectInputFFB::UpdateForce` to intercept NaN/Inf before integer casting, preventing violent full-lock jolts.

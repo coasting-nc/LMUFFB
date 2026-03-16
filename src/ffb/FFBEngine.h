@@ -625,6 +625,11 @@ private:
     double m_last_raw_torque = 0.0; 
     bool m_was_allowed = true; // Track transition for filter reset
 
+    // Diagnostic Log Cooldowns (v0.7.x)
+    double m_last_core_nan_log_time = -999.0;
+    double m_last_aux_nan_log_time = -999.0;
+    double m_last_math_nan_log_time = -999.0;
+
     void update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt);
     void InitializeLoadReference(const char* className, const char* vehicleName);
     
