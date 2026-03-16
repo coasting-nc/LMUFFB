@@ -84,5 +84,10 @@ The proposed solution involves:
 ### Build Issues Encountered
 *   Linux CI environment lacked `glfw3`, causing build failures in graphical mode. Switched to `-DBUILD_HEADLESS=ON` for the verification loop.
 
+### Suggestions for the Future
+1.  **Front Axle Saturation**: If users report similar harshness on the front axle (Understeer effect), consider implementing similar load capping and `tanh` soft-clipping for front slip angles.
+2.  **User Feedback on `tanh` Curve**: Monitor user feedback regarding the change from a linear to a `tanh` torque curve. While physically more realistic, users used to the old "signature" feel might require a way to tune the "curvature" of the falloff.
+3.  **Advanced Surface Detection**: Explore using other surface types (grass, gravel) for specialized haptic behaviors now that the `mSurfaceType` infrastructure is proven to work on all cars.
+
 ## Additional Questions
 None.
