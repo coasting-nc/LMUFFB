@@ -42,6 +42,7 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     // Run for multiple frames to let smoothing settle
     double force = 0.0;
     for (int i = 0; i < 60; i++) {
+        data.mElapsedTime += 0.01;
         force = engine.calculate_force(&data);
     }
     
@@ -61,6 +62,7 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     data.mLocalAccel.x = -9.81; // 1G right (left turn)
     
     for (int i = 0; i < 60; i++) {
+        data.mElapsedTime += 0.01;
         force = engine.calculate_force(&data);
     }
     
@@ -120,6 +122,7 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     // Run multiple frames to let LPF settle
     double force = 0.0;
     for (int i = 0; i < 50; i++) {
+        data.mElapsedTime += 0.01;
         force = engine.calculate_force(&data);
     }
     
@@ -155,6 +158,7 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     
     // Run multiple frames to let LPF settle
     for (int i = 0; i < 50; i++) {
+        data.mElapsedTime += 0.01;
         force = engine.calculate_force(&data);
     }
     

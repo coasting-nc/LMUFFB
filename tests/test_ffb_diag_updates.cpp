@@ -15,6 +15,10 @@ TEST_CASE(TestFFBTorqueSnapshot, "Diagnostics") {
     float genFFBTorque = 12.34f;
 
     // Run physics tick
+    // Note: Initialize car metadata and seed derivatives first
+    FFBEngineTestAccess::CallInitializeLoadReference(engine, "GT3", "Ferrari 296 GT3");
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, true);
+
     engine.calculate_force(&data, "GT3", "Ferrari 296 GT3", genFFBTorque);
 
     // Retrieve snapshots

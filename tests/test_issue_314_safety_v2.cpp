@@ -61,9 +61,15 @@ void test_safety_exit_state() {
 
     // Simulate time passing beyond duration (2s)
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0, 0.0);
+    data.mElapsedTime = 100.0;
+
+    // Warmup
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
+    engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, 0);
 
     // Run for 2.1s (840 frames @ 0.0025s)
     for (int i = 0; i < 840; i++) {
+        data.mElapsedTime += 0.0025;
         engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, 0);
     }
 
@@ -89,7 +95,12 @@ void test_safety_restrictiveness() {
     // Trigger safety window
     engine.m_safety.TriggerSafetyWindow("Test Restrictiveness");
 
+    // Warmup
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
+    engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, static_cast<signed char>(ControlMode::PLAYER));
+
     // Safety output (reduced gain 0.3x)
+    data.mElapsedTime += 0.0025;
     double safety_force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, static_cast<signed char>(ControlMode::PLAYER));
 
     std::cout << "  Safety Force: " << safety_force << std::endl;
@@ -152,6 +163,12 @@ void test_safety_reentry_smoothing() {
     // 1. First safety event at high force
     data.mSteeringShaftTorque = 10.0; // 1.0 normalized
     engine.m_safety.TriggerSafetyWindow("High Force Event");
+
+    // Warmup/Seed
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
+    engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, 0);
+
+    data.mElapsedTime += 0.0025;
     double force1 = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, 0);
     ASSERT_NEAR(std::abs(force1), 0.3, 0.01); // 1.0 * 0.3 gain
 
@@ -175,6 +192,11 @@ void test_safety_reentry_smoothing() {
     engine.m_safety.TriggerSafetyWindow("Low Force Event");
     // safety_is_seeded is now false.
 
+    // Warmup/Seed for this new context
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
+    engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, 0);
+
+    data.mElapsedTime += 0.0025;
     double force2 = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, 0);
 
     // If it didn't reset, it would be smoothed from 0.3 (old force1) towards 0.0

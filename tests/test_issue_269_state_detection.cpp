@@ -53,6 +53,9 @@ TEST_CASE_TAGGED(test_issue_269_soft_lock_preservation, "Functional", (std::vect
     telem.mDeltaTime = 0.0025;
 
     // Test 1: Allowed = true
+    // Note: seeding call capture first-frame state
+    engine.calculate_force(&telem, "GT3", "Ferrari", 0.0f, true);
+    telem.mElapsedTime += 0.01;
     double force_allowed = engine.calculate_force(&telem, "GT3", "Ferrari", 0.0f, true);
     ASSERT_NE(force_allowed, 0.0);
 

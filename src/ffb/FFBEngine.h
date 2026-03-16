@@ -376,7 +376,10 @@ public:
     float m_spin_freq_scale = 1.0f;
     
     // Internal state for Bottoming (Method B)
-    double m_prev_susp_force[2] = {0.0, 0.0}; 
+    double m_prev_susp_force[4] = {0.0, 0.0, 0.0, 0.0};
+
+    // Seeding state (Issue #379)
+    bool m_derivatives_seeded = false;
 
     // New Settings (v0.4.5)
     int m_bottoming_method = 0; 

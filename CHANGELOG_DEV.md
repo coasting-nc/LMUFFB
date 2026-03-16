@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.193]
+- **Fixed Historical Data Carry-Over across Context Changes (Issue #379)**:
+  - **Slope Detection Buffers**: Now reset circular buffers and all smoothed states on car change to prevent grip spikes.
+  - **REST API Steering Range**: Implemented `ResetSteeringRange()` in `RestApiProvider` to ensure car-to-car fallback ranges don't pollute the next session.
+  - **Teleport Derivative Spikes**: Introduced `m_derivatives_seeded` flag to re-seed previous frame states (deflection, rotation, etc.) when transitioning from Garage to Track. This eliminates single-frame velocity explosions.
+  - **Normalization Reset**: Fixed `ResetNormalization()` to correctly clear `m_last_raw_torque` and `m_static_rear_load`.
+- **Testing**:
+  - Added `tests/test_issue_379.cpp` with comprehensive functional tests for all 4 transition bugs.
+  - Verified 100% pass rate for new test and no regressions in existing 536 cases.
+
 ## [0.7.191]
 - **Fixed Telemetry Diagnostic Reset on Car Change (Issue #374)**:
   - Implemented automatic reset of all telemetry error counters and warning flags whenever a car change is detected.

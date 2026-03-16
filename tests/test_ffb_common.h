@@ -450,6 +450,7 @@ public:
     static void SetLastOutputForce(FFBEngine& e, double val) { 
         e.m_safety.SetSafetySmoothedForce(val);
     }
+    static void SetDerivativesSeeded(FFBEngine& e, bool val) { e.m_derivatives_seeded = val; }
 
     static void ResetSafety(FFBEngine& engine) {
         engine.m_safety = FFBSafetyMonitor();

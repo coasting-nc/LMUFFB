@@ -35,6 +35,7 @@ bool FFBMetadataManager::UpdateInternal(const char* vehicleClass, const char* ve
 
         // Issue #368: Request manufacturer info from REST API on car change
         RestApiProvider::Get().ResetManufacturer();
+        RestApiProvider::Get().ResetSteeringRange(); // Issue #379
         RestApiProvider::Get().RequestManufacturer(6397, m_vehicle_name); // TODO: use configured port
     }
 

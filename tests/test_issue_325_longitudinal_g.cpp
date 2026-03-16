@@ -16,30 +16,34 @@ TEST_CASE(test_longitudinal_g_braking, "Physics") {
     engine.m_steering_shaft_gain = 1.0f;
     engine.m_understeer_effect = 0.0f;
     engine.m_long_load_transform = LoadTransform::LINEAR;
+    engine.m_chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
     // Scenario: 1G Braking (+Z is rearward/deceleration)
-    engine.m_chassis_inertia_smoothing = 1000.0f;
-    engine.m_accel_z_smoothed = 9.81;
-
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0);
     data.mSteeringShaftTorque = 10.0;
+    data.mLocalAccel.z = 9.81; // 1G Braking
+    data.mLocalAccel.y = 0.0;
 
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 5000.0);
 
-    engine.calculate_force(&data, "GT3", "Ferrari 296", 0.0f, true, 0.0025);
+    // Step 1: Warmup call to trigger seeding gate
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
+    engine.calculate_force(&data, "GT3", "Ferrari 296");
+
+    // Step 2: Establish baseline (1G braking via velocity change) over several frames
+    for (int i = 0; i < 5; i++) {
+        data.mLocalVel.z += (9.81 * 0.01);
+        data.mElapsedTime += 0.01;
+        engine.calculate_force(&data, "GT3", "Ferrari 296");
+    }
 
     auto batch = engine.GetDebugBatch();
     ASSERT_FALSE(batch.empty());
-    if (!batch.empty()) {
-        float long_force = batch.back().long_load_force;
-        float base_force = batch.back().base_force;
+    auto snap = batch.back();
+    // 1G Linear -> multiplier = 1.0 + 1.0 * 1.0 = 2.0.
+    // long_load_force = 10 * (2.0 - 1.0) = 10.
+    ASSERT_NEAR(snap.long_load_force, 10.0f, 0.2f);
 
-        // 1G Linear -> long_load_norm = 1.0.
-        // multiplier = 1.0 + 1.0 * 1.0 = 2.0.
-        // long_load_force = 10 * (2.0 - 1.0) = 10.
-
-        ASSERT_NEAR(long_force, base_force, 0.1f);
-    }
 }
 
 TEST_CASE(test_longitudinal_g_high_decel, "Physics") {
@@ -51,15 +55,23 @@ TEST_CASE(test_longitudinal_g_high_decel, "Physics") {
     engine.m_steering_shaft_gain = 1.0f;
     engine.m_understeer_effect = 0.0f;
     engine.m_long_load_transform = LoadTransform::LINEAR;
+    engine.m_chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
     // Scenario: 3G Braking
-    engine.m_chassis_inertia_smoothing = 1000.0f;
-    engine.m_accel_z_smoothed = 3.0 * 9.81;
-
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0);
     data.mSteeringShaftTorque = 10.0;
+    data.mLocalAccel.z = 3.0 * 9.81;
 
-    engine.calculate_force(&data);
+    // Seeding logic
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
+    engine.calculate_force(&data, "GT3", "Ferrari 296");
+
+    // Establishing 3G
+    for (int i = 0; i < 5; i++) {
+        data.mLocalVel.z += (3.0 * 9.81 * 0.01);
+        data.mElapsedTime += 0.01;
+        engine.calculate_force(&data, "GT3", "Ferrari 296");
+    }
 
     auto snap = engine.GetDebugBatch().back();
     // 3G Linear -> multiplier = 1.0 + 3.0 * 1.0 = 4.0.
@@ -76,6 +88,7 @@ TEST_CASE(test_longitudinal_g_domain_scaling_cubic, "Physics") {
     engine.m_steering_shaft_gain = 1.0f;
     engine.m_understeer_effect = 0.0f;
     engine.m_long_load_transform = LoadTransform::CUBIC;
+    engine.m_chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
     // Scenario: 0.5G Braking (4.905 m/s2)
     // Domain Scaling: MAX_G_RANGE = 5.0
@@ -85,13 +98,20 @@ TEST_CASE(test_longitudinal_g_domain_scaling_cubic, "Physics") {
     // multiplier = 1.0 + 0.7475 * 1.0 = 1.7475
     // long_force = 10 * 0.7475 = 7.475
 
-    engine.m_chassis_inertia_smoothing = 1000.0f;
-    engine.m_accel_z_smoothed = 0.5 * 9.81;
-
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0);
     data.mSteeringShaftTorque = 10.0;
+    data.mLocalAccel.z = 0.5 * 9.81;
 
-    engine.calculate_force(&data);
+    // Warmup
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
+    engine.calculate_force(&data, "GT3", "Ferrari 296");
+
+    // Establish 0.5G
+    for (int i = 0; i < 5; i++) {
+        data.mLocalVel.z += (0.5 * 9.81 * 0.01);
+        data.mElapsedTime += 0.01;
+        engine.calculate_force(&data, "GT3", "Ferrari 296");
+    }
 
     auto snap = engine.GetDebugBatch().back();
     ASSERT_NEAR(snap.long_load_force, 7.475f, 0.01f);
@@ -124,3 +144,4 @@ TEST_CASE(test_longitudinal_g_aero_independence, "Physics") {
         ASSERT_NEAR(long_force, 0.0f, 0.01f);
     }
 }
+

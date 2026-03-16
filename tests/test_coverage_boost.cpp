@@ -69,10 +69,27 @@ TEST_CASE(test_coverage_stats_latching, "Coverage") {
     FFBEngineTestAccess::SetLastLogTime(engine, two_secs_ago);
     
     // Call calculate_force (which calls the stats latching logic)
-    engine.calculate_force(&data);
+    // Seeding call
+    engine.calculate_force(&data, "GT3", "911");
     
-    // Verify that interval_count was reset to 0 (after latching into l_avg)
-    ASSERT_EQ(FFBEngineTestAccess::GetTorqueStats(engine).interval_count, 0);
+    // Stats latching check - needs multiple calls to trigger is_new_frame if logging is suspected
+    data.mElapsedTime += 0.01;
+    engine.calculate_force(&data, "GT3", "911");
+
+    // In new logic, stats reset at TOP of frame.
+    // Frame 1: Seed. (LastLog=2s ago). Reset happens. then Update(50) happens. interval_count=1.
+    // Frame 2: (LastLog=Now). Reset does NOT happen. Update(50) happens. interval_count=2.
+    // To verify RESET, we need to check stats IMMEDIATELY after a frame where reset is triggered.
+
+    // Set last_log_time to 2 seconds ago again
+    two_secs_ago = std::chrono::steady_clock::now() - std::chrono::seconds(2);
+    FFBEngineTestAccess::SetLastLogTime(engine, two_secs_ago);
+
+    // Frame 3: Reset happens at top. Update happens. interval_count=1.
+    data.mElapsedTime += 0.01;
+    engine.calculate_force(&data, "GT3", "911");
+
+    ASSERT_EQ(FFBEngineTestAccess::GetTorqueStats(engine).interval_count, 1);
     ASSERT_NEAR(FFBEngineTestAccess::GetTorqueStats(engine).l_avg, 50.0, 0.001);
 }
 
@@ -162,6 +179,10 @@ TEST_CASE(test_coverage_integrated, "Coverage") {
 
     // 3. Verify calculate_gyro_damping fallback (Line 1917)
     data.mPhysicalSteeringWheelRange = 0.0f;
+    data.mElapsedTime += 0.01;
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false); // Trigger seeding
+    engine.calculate_force(&data, "GT3", "M4 GT3");
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "GT3", "M4 GT3");
     auto batch = engine.GetDebugBatch();
     ASSERT_FALSE(batch.empty());
@@ -173,9 +194,12 @@ TEST_CASE(test_coverage_integrated, "Coverage") {
     data.mUnfilteredBrake = 0.8f;
     for(int i=0; i<4; i++) data.mWheel[i].mBrakePressure = 1.0f;
     
+    data.mElapsedTime += 0.01;
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false); // Trigger seeding
     engine.calculate_force(&data, "GT3", "M4 GT3"); // Prime prev_brake_pressure
     for(int i=0; i<4; i++) data.mWheel[i].mBrakePressure = 10.0f; // Rapid change
     
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "GT3", "M4 GT3"); 
     batch = engine.GetDebugBatch();
     ASSERT_FALSE(batch.empty());
@@ -191,6 +215,7 @@ TEST_CASE(test_coverage_integrated, "Coverage") {
     data.mWheel[1].mTireLoad = 1000.0f;
     
     for(int i=0; i<45; i++) {
+        data.mElapsedTime += 0.01;
         data.mSteeringShaftTorque = 1.0f - (static_cast<float>(i) * 0.1f); 
         data.mUnfilteredSteering = 0.1f + (static_cast<float>(i) * 0.01f);
         data.mLocalAccel.x = 5.0f + (static_cast<float>(i) * 0.5f); // Create G derivative

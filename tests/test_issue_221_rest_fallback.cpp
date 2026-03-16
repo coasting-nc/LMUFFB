@@ -41,6 +41,7 @@ TEST_CASE(test_engine_rest_fallback_integration, "RestApi") {
     // but we can verify it doesn't crash and engine state is sane.
 
     // Using calculate_force to trigger the polling
+    // First frame of driving after metadata init always checks and warns
     engine.calculate_force(&data, "Hypercar", "9X8");
 
     ASSERT_TRUE(FFBEngineTestAccess::HasWarnings(engine)); // Should warn about fallback

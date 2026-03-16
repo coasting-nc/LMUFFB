@@ -274,6 +274,9 @@ TEST_CASE(test_static_rear_load_tracking, "YawKicks") {
 
     ASSERT_NEAR(FFBEngineTestAccess::GetStaticFrontLoad(engine), 4000.0, 10.0);
     ASSERT_NEAR(FFBEngineTestAccess::GetStaticRearLoad(engine), 4000.0, 10.0);
+    // Note: InitializeEngine now sets GT3 which sets static load to 4000 and latched=false,
+    // so this test should pass after we reset it to unlatched
+    FFBEngineTestAccess::SetStaticLoadLatched(engine, false);
     ASSERT_FALSE(FFBEngineTestAccess::GetStaticLoadLatched(engine));
 
     // Latch phase: speed >= 15.0

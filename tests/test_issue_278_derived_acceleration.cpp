@@ -36,11 +36,18 @@ TEST_CASE(test_issue_278_road_texture_spike_rejection, "DerivedAccel") {
     // Step 1: Steady state
     data.mLocalVel.y = 0.0;
     data.mLocalAccel.y = 0.0;
-    engine.calculate_force(&data); // Seed
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
+    engine.calculate_force(&data); // Seed 1 (Seeding gate)
+
+    data.mElapsedTime += 0.01;
+    engine.calculate_force(&data); // Seed 2 (Establish baseline)
 
     // Step 2: Inject a massive raw acceleration spike but NO velocity change
+    data.mElapsedTime += 0.01;
     data.mLocalAccel.y = 500.0; // 50G spike!
-    double force_with_spike = engine.calculate_force(&data);
+    // Set vehicle class to ensure InitializeLoadReference is not called
+    // and upsampling/derived logic remains focused on our manual inputs.
+    double force_with_spike = engine.calculate_force(&data, "GT3", "911");
 
     // In old code, this would produce a massive jerk delta: (500 - 0) * 0.05 * 50 = 1250 Nm -> massive clip.
     // In new code, derived accel is (0 - 0) / 0.01 = 0.
@@ -65,20 +72,26 @@ TEST_CASE(test_issue_278_road_texture_velocity_response, "DerivedAccel") {
 
     // Step 1: Seed
     data.mLocalVel.y = 0.0;
-    engine.calculate_force(&data);
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
+    engine.calculate_force(&data, "GT3", "911"); // Seed 1 (Seeding gate)
+
+    data.mElapsedTime += 0.01;
+    engine.calculate_force(&data, "GT3", "911"); // Seed 2 (Baseline)
 
     // Step 2: Constant vertical velocity change (constant acceleration)
     // dv = 0.1 m/s over 0.01s -> accel = 10 m/s^2 (~1G)
+    data.mElapsedTime += 0.01;
     data.mLocalVel.y = 0.1;
-    engine.calculate_force(&data); // Derived accel = 10. prev_vert_accel = 10.
+    engine.calculate_force(&data, "GT3", "911"); // Derived accel = 10. prev_vert_accel = 10.
 
     // Step 3: Acceleration changes (Jerk)
     // dv = 0.3 m/s over 0.01s -> accel = 20 m/s^2 (increase from 10 to 20)
     // jerk = 10 m/s^2 / 0.01s ? No, Jerk in code is delta_accel = 20 - 10 = 10.
     // Road noise = 10 * 0.05 * 50 = 25 Nm.
     // 25 Nm / 20 Nm (base) = 1.25 -> Clipped to 1.0.
+    data.mElapsedTime += 0.01;
     data.mLocalVel.y = 0.3;
-    double force = engine.calculate_force(&data);
+    double force = engine.calculate_force(&data, "GT3", "911");
 
     ASSERT_GT(std::abs(force), 0.1);
     std::cout << "[PASS] Road texture responds to velocity-derived acceleration changes (force: " << force << ")" << std::endl;
@@ -102,7 +115,10 @@ TEST_CASE(test_issue_278_lockup_continuity, "DerivedAccel") {
 
     // Step 1: Seed
     data.mLocalVel.z = 20.0;
-    engine.calculate_force(&data);
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
+    engine.calculate_force(&data); // Seed 1 (Seeding gate)
+    data.mElapsedTime += 0.01;
+    engine.calculate_force(&data); // Seed 2 (Baseline)
 
     // Step 2: Decelerate chassis
     // dv_z = -0.5 m/s -> accel = -50 m/s^2

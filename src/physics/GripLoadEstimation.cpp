@@ -75,7 +75,7 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     // This ensures that session-learned peaks from a previous car don't pollute the new session.
     ResetNormalization();
 
-    // --- FIX #374: Reset all missing telemetry counters and warning flags ---
+    // --- FIX #374 & #379: Reset all historical data across car change ---
     m_metadata.ResetWarnings();
     m_missing_load_frames = 0;
     m_missing_lat_force_front_frames = 0;
@@ -92,6 +92,23 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     m_warned_susp_force = false;
     m_warned_susp_deflection = false;
     m_warned_vert_deflection = false;
+
+    // Reset seeding flags to trigger fresh capture on first frame of new car
+    m_yaw_rate_seeded = false;
+    m_yaw_accel_seeded = false;
+    m_local_vel_seeded = false;
+    m_yaw_rate_log_seeded = false;
+    m_derivatives_seeded = false;
+
+    // Clear slope detection buffers
+    m_slope_buffer_count = 0;
+    m_slope_buffer_index = 0;
+    m_slope_lat_g_buffer.fill(0.0);
+    m_slope_slip_buffer.fill(0.0);
+    m_slope_torque_buffer.fill(0.0);
+    m_slope_steer_buffer.fill(0.0);
+    m_slope_current = 0.0;
+    m_slope_smoothed_output = 1.0;
     // -----------------------------------------------------------------------
 
     ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);

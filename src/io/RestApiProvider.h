@@ -37,6 +37,10 @@ public:
         m_hasManufacturer = false;
     }
 
+    void ResetSteeringRange() {
+        m_fallbackRangeDeg.store(0.0f);
+    }
+
 private:
     RestApiProvider() = default;
     ~RestApiProvider();
