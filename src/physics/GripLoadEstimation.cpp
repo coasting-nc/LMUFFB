@@ -71,11 +71,28 @@ void FFBEngine::update_static_load_reference(double current_front_load, double c
 void FFBEngine::InitializeLoadReference(const char* className, const char* vehicleName) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
-    m_metadata.ResetWarnings(); // v0.7.190: Unified warning reset on car change
-
     // v0.7.109: Perform a full normalization reset on car change
     // This ensures that session-learned peaks from a previous car don't pollute the new session.
     ResetNormalization();
+
+    // --- FIX #374: Reset all missing telemetry counters and warning flags ---
+    m_metadata.ResetWarnings();
+    m_missing_load_frames = 0;
+    m_missing_lat_force_front_frames = 0;
+    m_missing_lat_force_rear_frames = 0;
+    m_missing_susp_force_frames = 0;
+    m_missing_susp_deflection_frames = 0;
+    m_missing_vert_deflection_frames = 0;
+
+    m_warned_load = false;
+    m_warned_grip = false;
+    m_warned_rear_grip = false;
+    m_warned_lat_force_front = false;
+    m_warned_lat_force_rear = false;
+    m_warned_susp_force = false;
+    m_warned_susp_deflection = false;
+    m_warned_vert_deflection = false;
+    // -----------------------------------------------------------------------
 
     ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
 
