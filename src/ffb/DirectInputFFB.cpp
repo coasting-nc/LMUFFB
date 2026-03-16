@@ -5,6 +5,7 @@
 // Standard Library Headers
 #include <algorithm> // For std::max, std::min
 #include <mutex>
+#include <cmath>
 
 // Platform-Specific Headers
 #ifdef _WIN32
@@ -326,6 +327,11 @@ bool DirectInputFFB::CreateEffect() {
 
 bool DirectInputFFB::UpdateForce(double normalizedForce) {
     if (!m_active) return false;
+
+    // --- NEW: NaN Protection (Prevents -2147483648 magnitude bug) ---
+    if (!std::isfinite(normalizedForce)) {
+        normalizedForce = 0.0;
+    }
 
     // Sanity Check: If 0.0, stop effect to prevent residual hum
     if (std::abs(normalizedForce) < 0.00001) normalizedForce = 0.0;

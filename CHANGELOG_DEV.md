@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.194]
+- **Fixed State Contamination and NaN Infection during Context Switches (Issue #384)**:
+  - **Hardware Sanitization**: Added `std::isfinite` check in `DirectInputFFB::UpdateForce` to intercept NaN/Inf before integer casting, preventing violent full-lock jolts.
+  - **Core Telemetry Sanitization**: Implemented early rejection of NaN chassis data (steering, acceleration, torque) in `FFBEngine::calculate_force`, protecting internal filters from corruption.
+  - **Auxiliary Data Sanitization**: Implemented per-channel sanitization for wheel and auxiliary telemetry, replacing NaNs with 0.0 to trigger graceful fallbacks (e.g., load approximation) instead of FFB loss.
+  - **Bidirectional Filter Reset**: Updated transition logic to unconditionally reset all upsamplers and smoothing filters when entering OR exiting the driving state (`allowed` change).
+  - **Final Output Safety**: Added a final NaN catch-all before force scaling and hardware delivery.
+- **Testing**:
+  - Added `tests/test_issue_384_nan_infection.cpp` verifying core rejection, auxiliary fallbacks, bidirectional resets, and hardware-level protection.
+  - Verified 100% pass rate for new tests and all 544 existing test cases.
+
 ## [0.7.193]
 - **Fixed Historical Data Carry-Over across Context Changes (Issue #379)**:
   - **Slope Detection Buffers**: Now reset circular buffers and all smoothed states on car change to prevent grip spikes.
