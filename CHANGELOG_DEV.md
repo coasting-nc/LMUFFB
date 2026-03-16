@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.197]
+- **Fixed Signal Continuity and Decoupled Shifting in Up-sampling Pipeline (Issue #393)**:
+  - **Polyphase Resampler Phase Misalignment (The "Stutter" Bug)**: Implemented decoupled shifting logic in `PolyphaseResampler`. New physics samples are now stored in a pending state and only shifted into the active history buffer when the phase accumulator wraps around. This ensures the filter uses the correct historical context for all fractional phases, eliminating periodic micro-stutters.
+  - **Holt-Winters Filter 100Hz Sawtooth (The "Buzz" Bug)**: Fixed a flaw in `HoltWintersFilter` where the raw, noisy input was returned on frame boundaries, bypassing the smoothing logic. The filter now consistently returns the smoothed `m_level`, ensuring a continuous signal and eliminating the 100Hz sawtooth artifact.
+- **Testing**:
+  - Added `tests/test_upsampler_issue_393.cpp` with regression tests for the decoupled shifting logic.
+  - Added `tests/test_math_utils_issue_393.cpp` with regression tests for Holt-Winters continuity.
+  - Updated `tests/test_upsampler_issue_385.cpp` to align with the new shift timing in `PolyphaseResampler`.
+  - Verified 100% pass rate across the full suite of 553 test cases.
+
 ## [0.7.196]
 - **Fixed Cogging and Ringing in 1000Hz UpSampler (Issue #385)**:
   - **Corrected Convolution Order**: Fixed a mathematical error where FIR filter taps were applied in reverse order. The earliest tap now correctly multiplies the newest physics sample, restoring the intended windowed-sinc impulse response.
