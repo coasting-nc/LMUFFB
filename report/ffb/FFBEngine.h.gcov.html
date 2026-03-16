@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-16 17:46:14</td>
+            <td class="headerValue">2026-03-16 18:06:00</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -696,53 +696,58 @@
 <span id="L625"><span class="lineNum">     625</span>                 :             :     double m_last_raw_torque = 0.0; </span>
 <span id="L626"><span class="lineNum">     626</span>                 :             :     bool m_was_allowed = true; // Track transition for filter reset</span>
 <span id="L627"><span class="lineNum">     627</span>                 :             : </span>
-<span id="L628"><span class="lineNum">     628</span>                 :             :     void update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt);</span>
-<span id="L629"><span class="lineNum">     629</span>                 :             :     void InitializeLoadReference(const char* className, const char* vehicleName);</span>
-<span id="L630"><span class="lineNum">     630</span>                 :             :     </span>
-<span id="L631"><span class="lineNum">     631</span>                 :             : public:</span>
-<span id="L632"><span class="lineNum">     632</span>                 :             :     double calculate_raw_slip_angle_pair(const TelemWheelV01&amp; w1, const TelemWheelV01&amp; w2);</span>
-<span id="L633"><span class="lineNum">     633</span>                 :             :     double calculate_slip_angle(const TelemWheelV01&amp; w, double&amp; prev_state, double dt);</span>
-<span id="L634"><span class="lineNum">     634</span>                 :             :     </span>
-<span id="L635"><span class="lineNum">     635</span>                 :             : GripResult calculate_axle_grip(const TelemWheelV01&amp; w1,</span>
-<span id="L636"><span class="lineNum">     636</span>                 :             :                               const TelemWheelV01&amp; w2,</span>
-<span id="L637"><span class="lineNum">     637</span>                 :             :                               double avg_axle_load,</span>
-<span id="L638"><span class="lineNum">     638</span>                 :             :                               bool&amp; warned_flag,</span>
-<span id="L639"><span class="lineNum">     639</span>                 :             :                               double&amp; prev_slip1,</span>
-<span id="L640"><span class="lineNum">     640</span>                 :             :                               double&amp; prev_slip2,</span>
-<span id="L641"><span class="lineNum">     641</span>                 :             :                               double&amp; prev_load1, // NEW: State for load smoothing</span>
-<span id="L642"><span class="lineNum">     642</span>                 :             :                               double&amp; prev_load2, // NEW: State for load smoothing</span>
-<span id="L643"><span class="lineNum">     643</span>                 :             :                               double car_speed,</span>
-<span id="L644"><span class="lineNum">     644</span>                 :             :                               double dt,</span>
-<span id="L645"><span class="lineNum">     645</span>                 :             :                               const char* vehicleName,</span>
-<span id="L646"><span class="lineNum">     646</span>                 :             :                               const TelemInfoV01* data,</span>
-<span id="L647"><span class="lineNum">     647</span>                 :             :                               bool is_front);</span>
-<span id="L648"><span class="lineNum">     648</span>                 :             : </span>
-<span id="L649"><span class="lineNum">     649</span>                 :             :     double approximate_load(const TelemWheelV01&amp; w);</span>
-<span id="L650"><span class="lineNum">     650</span>                 :             :     double approximate_rear_load(const TelemWheelV01&amp; w);</span>
-<span id="L651"><span class="lineNum">     651</span>                 :             :     double calculate_manual_slip_ratio(const TelemWheelV01&amp; w, double car_speed_ms);</span>
-<span id="L652"><span class="lineNum">     652</span>                 :             :     NOINLINE double calculate_slope_grip(double lateral_g, double slip_angle, double dt, const TelemInfoV01* data = nullptr);</span>
-<span id="L653"><span class="lineNum">     653</span>                 :             :     double calculate_slope_confidence(double dAlpha_dt);</span>
-<span id="L654"><span class="lineNum">     654</span>                 :             :     double calculate_wheel_slip_ratio(const TelemWheelV01&amp; w);</span>
-<span id="L655"><span class="lineNum">     655</span>                 :             : </span>
-<span id="L656"><span class="lineNum">     656</span>                 :             :     double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr, float genFFBTorque = 0.0f, bool allowed = true, double override_dt = -1.0, signed char mControl = 0);</span>
-<span id="L657"><span class="lineNum">     657</span>                 :             : </span>
-<span id="L658"><span class="lineNum">     658</span>                 :             :     void UpdateMetadata(const struct SharedMemoryObjectOut&amp; data);</span>
-<span id="L659"><span class="lineNum">     659</span>                 :             :     double apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L660"><span class="lineNum">     660</span>                 :             :     void ResetNormalization();</span>
-<span id="L661"><span class="lineNum">     661</span>                 :             : </span>
-<span id="L662"><span class="lineNum">     662</span>                 :             : private:</span>
-<span id="L663"><span class="lineNum">     663</span>                 :             :     void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L664"><span class="lineNum">     664</span>                 :             :     NOINLINE void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L665"><span class="lineNum">     665</span>                 :             :     NOINLINE void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L666"><span class="lineNum">     666</span>                 :             :     void calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L667"><span class="lineNum">     667</span>                 :             :     void calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L668"><span class="lineNum">     668</span>                 :             :     void calculate_slide_texture(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L669"><span class="lineNum">     669</span>                 :             :     void calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L670"><span class="lineNum">     670</span>                 :             :     void calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L671"><span class="lineNum">     671</span>                 :             :     void calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L672"><span class="lineNum">     672</span>                 :             : };</span>
-<span id="L673"><span class="lineNum">     673</span>                 :             : </span>
-<span id="L674"><span class="lineNum">     674</span>                 :             : #endif // FFBENGINE_H</span>
+<span id="L628"><span class="lineNum">     628</span>                 :             :     // Diagnostic Log Cooldowns (v0.7.x)</span>
+<span id="L629"><span class="lineNum">     629</span>                 :             :     double m_last_core_nan_log_time = -999.0;</span>
+<span id="L630"><span class="lineNum">     630</span>                 :             :     double m_last_aux_nan_log_time = -999.0;</span>
+<span id="L631"><span class="lineNum">     631</span>                 :             :     double m_last_math_nan_log_time = -999.0;</span>
+<span id="L632"><span class="lineNum">     632</span>                 :             : </span>
+<span id="L633"><span class="lineNum">     633</span>                 :             :     void update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt);</span>
+<span id="L634"><span class="lineNum">     634</span>                 :             :     void InitializeLoadReference(const char* className, const char* vehicleName);</span>
+<span id="L635"><span class="lineNum">     635</span>                 :             :     </span>
+<span id="L636"><span class="lineNum">     636</span>                 :             : public:</span>
+<span id="L637"><span class="lineNum">     637</span>                 :             :     double calculate_raw_slip_angle_pair(const TelemWheelV01&amp; w1, const TelemWheelV01&amp; w2);</span>
+<span id="L638"><span class="lineNum">     638</span>                 :             :     double calculate_slip_angle(const TelemWheelV01&amp; w, double&amp; prev_state, double dt);</span>
+<span id="L639"><span class="lineNum">     639</span>                 :             :     </span>
+<span id="L640"><span class="lineNum">     640</span>                 :             : GripResult calculate_axle_grip(const TelemWheelV01&amp; w1,</span>
+<span id="L641"><span class="lineNum">     641</span>                 :             :                               const TelemWheelV01&amp; w2,</span>
+<span id="L642"><span class="lineNum">     642</span>                 :             :                               double avg_axle_load,</span>
+<span id="L643"><span class="lineNum">     643</span>                 :             :                               bool&amp; warned_flag,</span>
+<span id="L644"><span class="lineNum">     644</span>                 :             :                               double&amp; prev_slip1,</span>
+<span id="L645"><span class="lineNum">     645</span>                 :             :                               double&amp; prev_slip2,</span>
+<span id="L646"><span class="lineNum">     646</span>                 :             :                               double&amp; prev_load1, // NEW: State for load smoothing</span>
+<span id="L647"><span class="lineNum">     647</span>                 :             :                               double&amp; prev_load2, // NEW: State for load smoothing</span>
+<span id="L648"><span class="lineNum">     648</span>                 :             :                               double car_speed,</span>
+<span id="L649"><span class="lineNum">     649</span>                 :             :                               double dt,</span>
+<span id="L650"><span class="lineNum">     650</span>                 :             :                               const char* vehicleName,</span>
+<span id="L651"><span class="lineNum">     651</span>                 :             :                               const TelemInfoV01* data,</span>
+<span id="L652"><span class="lineNum">     652</span>                 :             :                               bool is_front);</span>
+<span id="L653"><span class="lineNum">     653</span>                 :             : </span>
+<span id="L654"><span class="lineNum">     654</span>                 :             :     double approximate_load(const TelemWheelV01&amp; w);</span>
+<span id="L655"><span class="lineNum">     655</span>                 :             :     double approximate_rear_load(const TelemWheelV01&amp; w);</span>
+<span id="L656"><span class="lineNum">     656</span>                 :             :     double calculate_manual_slip_ratio(const TelemWheelV01&amp; w, double car_speed_ms);</span>
+<span id="L657"><span class="lineNum">     657</span>                 :             :     NOINLINE double calculate_slope_grip(double lateral_g, double slip_angle, double dt, const TelemInfoV01* data = nullptr);</span>
+<span id="L658"><span class="lineNum">     658</span>                 :             :     double calculate_slope_confidence(double dAlpha_dt);</span>
+<span id="L659"><span class="lineNum">     659</span>                 :             :     double calculate_wheel_slip_ratio(const TelemWheelV01&amp; w);</span>
+<span id="L660"><span class="lineNum">     660</span>                 :             : </span>
+<span id="L661"><span class="lineNum">     661</span>                 :             :     double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr, float genFFBTorque = 0.0f, bool allowed = true, double override_dt = -1.0, signed char mControl = 0);</span>
+<span id="L662"><span class="lineNum">     662</span>                 :             : </span>
+<span id="L663"><span class="lineNum">     663</span>                 :             :     void UpdateMetadata(const struct SharedMemoryObjectOut&amp; data);</span>
+<span id="L664"><span class="lineNum">     664</span>                 :             :     double apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L665"><span class="lineNum">     665</span>                 :             :     void ResetNormalization();</span>
+<span id="L666"><span class="lineNum">     666</span>                 :             : </span>
+<span id="L667"><span class="lineNum">     667</span>                 :             : private:</span>
+<span id="L668"><span class="lineNum">     668</span>                 :             :     void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L669"><span class="lineNum">     669</span>                 :             :     NOINLINE void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L670"><span class="lineNum">     670</span>                 :             :     NOINLINE void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L671"><span class="lineNum">     671</span>                 :             :     void calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L672"><span class="lineNum">     672</span>                 :             :     void calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L673"><span class="lineNum">     673</span>                 :             :     void calculate_slide_texture(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L674"><span class="lineNum">     674</span>                 :             :     void calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L675"><span class="lineNum">     675</span>                 :             :     void calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L676"><span class="lineNum">     676</span>                 :             :     void calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L677"><span class="lineNum">     677</span>                 :             : };</span>
+<span id="L678"><span class="lineNum">     678</span>                 :             : </span>
+<span id="L679"><span class="lineNum">     679</span>                 :             : #endif // FFBENGINE_H</span>
         </pre>
               </td>
             </tr>
