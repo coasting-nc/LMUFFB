@@ -113,6 +113,18 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     if (!data) return 0.0;
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
+    // --- 1. CORE PHYSICS CRASH DETECTION ---
+    // If the chassis or steering itself is NaN, the car is in the void or the session is dead.
+    // We must abort to prevent math explosions.
+    if (!std::isfinite(data->mUnfilteredSteering) ||
+        !std::isfinite(data->mLocalRot.y) ||
+        !std::isfinite(data->mLocalAccel.x) ||
+        !std::isfinite(data->mLocalAccel.z) ||
+        !std::isfinite(data->mSteeringShaftTorque) ||
+        !std::isfinite(genFFBTorque)) {
+        return 0.0;
+    }
+
     // --- 0. METADATA & CLASS SEEDING (Issue #379) ---
     // Moved to top to ensure car changes trigger resets before physics loop
     bool seeded = m_metadata.UpdateInternal(vehicleClass, vehicleName, data->mTrackName);
@@ -134,38 +146,62 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Synchronize persistent working copy
     m_working_info = *data;
 
+    // --- 2. AUXILIARY DATA SANITIZATION ---
+    // Sanitize non-core chassis data
+    if (!std::isfinite(m_working_info.mUnfilteredThrottle)) m_working_info.mUnfilteredThrottle = 0.0;
+    if (!std::isfinite(m_working_info.mUnfilteredBrake)) m_working_info.mUnfilteredBrake = 0.0;
+    if (!std::isfinite(m_working_info.mLocalRotAccel.y)) m_working_info.mLocalRotAccel.y = 0.0;
+    if (!std::isfinite(m_working_info.mLocalVel.x)) m_working_info.mLocalVel.x = 0.0;
+    if (!std::isfinite(m_working_info.mLocalVel.y)) m_working_info.mLocalVel.y = 0.0;
+    if (!std::isfinite(m_working_info.mLocalVel.z)) m_working_info.mLocalVel.z = 0.0;
+
+    // Replace NaN/Infinity in wheel channels with 0.0.
+    // This protects the filters AND seamlessly triggers our existing fallback logic
+    // (e.g., approximate_load) if the data is encrypted or missing.
+    for (int i = 0; i < 4; i++) {
+        if (!std::isfinite(m_working_info.mWheel[i].mTireLoad)) m_working_info.mWheel[i].mTireLoad = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mGripFract)) m_working_info.mWheel[i].mGripFract = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mSuspForce)) m_working_info.mWheel[i].mSuspForce = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mVerticalTireDeflection)) m_working_info.mWheel[i].mVerticalTireDeflection = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mLateralPatchVel)) m_working_info.mWheel[i].mLateralPatchVel = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mLongitudinalPatchVel)) m_working_info.mWheel[i].mLongitudinalPatchVel = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mRotation)) m_working_info.mWheel[i].mRotation = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mBrakePressure)) m_working_info.mWheel[i].mBrakePressure = 0.0;
+    }
+
     // Upsample Steering Shaft Torque (Holt-Winters)
-    double shaft_torque = m_upsample_shaft_torque.Process(data->mSteeringShaftTorque, ffb_dt, is_new_frame);
+    double shaft_torque = m_upsample_shaft_torque.Process(m_working_info.mSteeringShaftTorque, ffb_dt, is_new_frame);
     m_working_info.mSteeringShaftTorque = shaft_torque;
 
     // Update wheels in working_info (Channels used for derivatives)
+    // Use sanitized m_working_info as input for upsamplers
     for (int i = 0; i < 4; i++) {
-        m_working_info.mWheel[i].mLateralPatchVel = m_upsample_lat_patch_vel[i].Process(data->mWheel[i].mLateralPatchVel, ffb_dt, is_new_frame);
-        m_working_info.mWheel[i].mLongitudinalPatchVel = m_upsample_long_patch_vel[i].Process(data->mWheel[i].mLongitudinalPatchVel, ffb_dt, is_new_frame);
-        m_working_info.mWheel[i].mVerticalTireDeflection = m_upsample_vert_deflection[i].Process(data->mWheel[i].mVerticalTireDeflection, ffb_dt, is_new_frame);
-        m_working_info.mWheel[i].mSuspForce = m_upsample_susp_force[i].Process(data->mWheel[i].mSuspForce, ffb_dt, is_new_frame);
-        m_working_info.mWheel[i].mBrakePressure = m_upsample_brake_pressure[i].Process(data->mWheel[i].mBrakePressure, ffb_dt, is_new_frame);
-        m_working_info.mWheel[i].mRotation = m_upsample_rotation[i].Process(data->mWheel[i].mRotation, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mLateralPatchVel = m_upsample_lat_patch_vel[i].Process(m_working_info.mWheel[i].mLateralPatchVel, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mLongitudinalPatchVel = m_upsample_long_patch_vel[i].Process(m_working_info.mWheel[i].mLongitudinalPatchVel, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mVerticalTireDeflection = m_upsample_vert_deflection[i].Process(m_working_info.mWheel[i].mVerticalTireDeflection, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mSuspForce = m_upsample_susp_force[i].Process(m_working_info.mWheel[i].mSuspForce, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mBrakePressure = m_upsample_brake_pressure[i].Process(m_working_info.mWheel[i].mBrakePressure, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mRotation = m_upsample_rotation[i].Process(m_working_info.mWheel[i].mRotation, ffb_dt, is_new_frame);
     }
 
     // Upsample other derivative sources
-    m_working_info.mUnfilteredSteering = m_upsample_steering.Process(data->mUnfilteredSteering, ffb_dt, is_new_frame);
-    m_working_info.mUnfilteredThrottle = m_upsample_throttle.Process(data->mUnfilteredThrottle, ffb_dt, is_new_frame);
-    m_working_info.mUnfilteredBrake = m_upsample_brake.Process(data->mUnfilteredBrake, ffb_dt, is_new_frame);
-    m_working_info.mLocalAccel.x = m_upsample_local_accel_x.Process(data->mLocalAccel.x, ffb_dt, is_new_frame);
+    m_working_info.mUnfilteredSteering = m_upsample_steering.Process(m_working_info.mUnfilteredSteering, ffb_dt, is_new_frame);
+    m_working_info.mUnfilteredThrottle = m_upsample_throttle.Process(m_working_info.mUnfilteredThrottle, ffb_dt, is_new_frame);
+    m_working_info.mUnfilteredBrake = m_upsample_brake.Process(m_working_info.mUnfilteredBrake, ffb_dt, is_new_frame);
+    m_working_info.mLocalAccel.x = m_upsample_local_accel_x.Process(m_working_info.mLocalAccel.x, ffb_dt, is_new_frame);
 
     // --- DERIVED ACCELERATION (Issue #278) ---
     // Recalculate acceleration from velocity at 100Hz ticks to avoid raw sensor spikes.
     if (is_new_frame) {
         if (!m_local_vel_seeded) {
-            m_prev_local_vel = data->mLocalVel;
+            m_prev_local_vel = m_working_info.mLocalVel;
             m_local_vel_seeded = true;
         }
 
         double game_dt = (data->mDeltaTime > 1e-6) ? data->mDeltaTime : 0.01;
-        m_derived_accel_y_100hz = (data->mLocalVel.y - m_prev_local_vel.y) / game_dt;
-        m_derived_accel_z_100hz = (data->mLocalVel.z - m_prev_local_vel.z) / game_dt;
-        m_prev_local_vel = data->mLocalVel;
+        m_derived_accel_y_100hz = (m_working_info.mLocalVel.y - m_prev_local_vel.y) / game_dt;
+        m_derived_accel_z_100hz = (m_working_info.mLocalVel.z - m_prev_local_vel.z) / game_dt;
+        m_prev_local_vel = m_working_info.mLocalVel;
     }
 
     // --- 1.1 DERIVED ACCELERATION APPLICATION ---
@@ -175,8 +211,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     m_working_info.mLocalAccel.y = m_upsample_local_accel_y.Process(m_derived_accel_y_100hz, ffb_dt, is_new_frame);
     m_working_info.mLocalAccel.z = m_upsample_local_accel_z.Process(m_derived_accel_z_100hz, ffb_dt, is_new_frame);
 
-    m_working_info.mLocalRotAccel.y = m_upsample_local_rot_accel_y.Process(data->mLocalRotAccel.y, ffb_dt, is_new_frame);
-    m_working_info.mLocalRot.y = m_upsample_local_rot_y.Process(data->mLocalRot.y, ffb_dt, is_new_frame);
+    m_working_info.mLocalRotAccel.y = m_upsample_local_rot_accel_y.Process(m_working_info.mLocalRotAccel.y, ffb_dt, is_new_frame);
+    m_working_info.mLocalRot.y = m_upsample_local_rot_y.Process(m_working_info.mLocalRot.y, ffb_dt, is_new_frame);
 
     // Use upsampled data pointer for all calculations
     const TelemInfoV01* upsampled_data = &m_working_info;
@@ -212,9 +248,9 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_safety.SetLastControl(mControl);
     }
 
-    // Transition Logic: Reset filters when entering "Muted" state (e.g. Garage/AI)
-    // to clear out high-frequency residuals from the driving session.
-    if (m_was_allowed && !allowed) {
+    // Transition Logic: Reset filters when entering OR exiting "Muted" state (e.g. Garage/AI)
+    // to clear out high-frequency residuals and prevent stale state from infecting new sessions.
+    if (m_was_allowed != allowed) {
         m_kerb_timer = 0.0;
         m_upsample_shaft_torque.Reset();
         m_upsample_steering.Reset();
@@ -1049,6 +1085,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         AsyncLogger::Get().Log(frame);
     }
     
+    // --- NEW: Final NaN catch-all ---
+    if (!std::isfinite(norm_force)) {
+        norm_force = 0.0;
+    }
+
     return (std::max)(-1.0, (std::min)(1.0, norm_force));
 }
 
