@@ -126,6 +126,7 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "grip_smoothing_fast") { current_preset.grip_smoothing_fast = std::stof(value); return true; }
     if (key == "grip_smoothing_sensitivity") { current_preset.grip_smoothing_sensitivity = std::stof(value); return true; }
     if (key == "rear_align_effect") { current_preset.rear_align_effect = std::stof(value); return true; }
+    if (key == "kerb_strike_rejection") { current_preset.kerb_strike_rejection = std::stof(value); return true; }
     if (key == "sop_yaw_gain") { current_preset.sop_yaw_gain = std::stof(value); return true; }
     if (key == "yaw_kick_threshold") { current_preset.yaw_kick_threshold = std::stof(value); return true; }
     if (key == "unloaded_yaw_gain") { current_preset.unloaded_yaw_gain = std::stof(value); return true; }
@@ -292,6 +293,7 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "grip_smoothing_fast") { engine.m_grip_smoothing_fast = std::stof(value); return true; }
     if (key == "grip_smoothing_sensitivity") { engine.m_grip_smoothing_sensitivity = std::stof(value); return true; }
     if (key == "rear_align_effect") { engine.m_rear_align_effect = std::stof(value); return true; }
+    if (key == "kerb_strike_rejection") { engine.m_kerb_strike_rejection = std::stof(value); return true; }
     if (key == "sop_yaw_gain") { engine.m_sop_yaw_gain = std::stof(value); return true; }
     if (key == "yaw_kick_threshold") { engine.m_yaw_kick_threshold = std::stof(value); return true; }
     if (key == "unloaded_yaw_gain") { engine.m_unloaded_yaw_gain = std::stof(value); return true; }
@@ -1249,6 +1251,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "lateral_load_effect=" << p.lateral_load << "\n";
     file << "lat_load_transform=" << p.lat_load_transform << "\n";
     file << "rear_align_effect=" << p.rear_align_effect << "\n";
+    file << "kerb_strike_rejection=" << p.kerb_strike_rejection << "\n";
     file << "sop_yaw_gain=" << p.sop_yaw_gain << "\n";
     file << "yaw_kick_threshold=" << p.yaw_kick_threshold << "\n";
     file << "unloaded_yaw_gain=" << p.unloaded_yaw_gain << "\n";
@@ -1595,6 +1598,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "lateral_load_effect=" << engine.m_lat_load_effect << "\n";
         file << "lat_load_transform=" << static_cast<int>(engine.m_lat_load_transform) << "\n";
         file << "rear_align_effect=" << engine.m_rear_align_effect << "\n";
+        file << "kerb_strike_rejection=" << engine.m_kerb_strike_rejection << "\n";
         file << "sop_yaw_gain=" << engine.m_sop_yaw_gain << "\n";
         file << "yaw_kick_threshold=" << engine.m_yaw_kick_threshold << "\n";
         file << "unloaded_yaw_gain=" << engine.m_unloaded_yaw_gain << "\n";
@@ -1918,6 +1922,9 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     if (engine.m_rear_align_effect < 0.0f || engine.m_rear_align_effect > 2.0f) {
         engine.m_rear_align_effect = (std::max)(0.0f, (std::min)(2.0f, engine.m_rear_align_effect));
     }
+    if (engine.m_kerb_strike_rejection < 0.0f || engine.m_kerb_strike_rejection > 1.0f) {
+        engine.m_kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, engine.m_kerb_strike_rejection));
+    }
     if (engine.m_sop_effect < 0.0f || engine.m_sop_effect > 2.0f) {
         engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, engine.m_sop_effect));
     }
@@ -2050,6 +2057,7 @@ struct Preset {
     float scrub_drag_gain = 0.0f;
     
     float rear_align_effect = 0.666f;
+    float kerb_strike_rejection = 0.0f; // NEW
     float sop_yaw_gain = 0.333f;
     float gyro_gain = 0.0f;
     
@@ -2190,6 +2198,7 @@ struct Preset {
     Preset& SetBottoming(int method) { bottoming_method = method; return *this; }
     Preset& SetScrub(float v) { scrub_drag_gain = v; return *this; }
     Preset& SetRearAlign(float v) { rear_align_effect = v; return *this; }
+    Preset& SetKerbStrikeRejection(float v) { kerb_strike_rejection = v; return *this; }
     Preset& SetSoPYaw(float v) { sop_yaw_gain = v; return *this; }
     Preset& SetGyro(float v) { gyro_gain = v; return *this; }
     
@@ -2373,6 +2382,7 @@ struct Preset {
         engine.m_bottoming_method = bottoming_method;
         engine.m_scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);
         engine.m_rear_align_effect = (std::max)(0.0f, rear_align_effect);
+        engine.m_kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, kerb_strike_rejection));
         engine.m_sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);
         engine.m_gyro_gain = (std::max)(0.0f, gyro_gain);
         engine.m_steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);
@@ -2488,6 +2498,7 @@ struct Preset {
         spin_freq_scale = (std::max)(0.1f, spin_freq_scale);
         scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);
         rear_align_effect = (std::max)(0.0f, rear_align_effect);
+        kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, kerb_strike_rejection));
         sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);
         gyro_gain = (std::max)(0.0f, gyro_gain);
         steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);
@@ -2606,6 +2617,7 @@ struct Preset {
         bottoming_method = engine.m_bottoming_method;
         scrub_drag_gain = engine.m_scrub_drag_gain;
         rear_align_effect = engine.m_rear_align_effect;
+        kerb_strike_rejection = engine.m_kerb_strike_rejection;
         sop_yaw_gain = engine.m_sop_yaw_gain;
         gyro_gain = engine.m_gyro_gain;
         steering_shaft_gain = engine.m_steering_shaft_gain;
@@ -2745,6 +2757,7 @@ struct Preset {
         if (bottoming_method != p.bottoming_method) return false;
         if (!is_near(scrub_drag_gain, p.scrub_drag_gain, eps)) return false;
         if (!is_near(rear_align_effect, p.rear_align_effect, eps)) return false;
+        if (!is_near(kerb_strike_rejection, p.kerb_strike_rejection, eps)) return false;
         if (!is_near(sop_yaw_gain, p.sop_yaw_gain, eps)) return false;
         if (!is_near(gyro_gain, p.gyro_gain, eps)) return false;
         if (!is_near(steering_shaft_gain, p.steering_shaft_gain, eps)) return false;
@@ -3336,6 +3349,7 @@ int main(int argc, char* argv[]) noexcept {
 // Standard Library Headers
 #include <algorithm> // For std::max, std::min
 #include <mutex>
+#include <cmath>
 
 // Platform-Specific Headers
 #ifdef _WIN32
@@ -3657,6 +3671,11 @@ bool DirectInputFFB::CreateEffect() {
 
 bool DirectInputFFB::UpdateForce(double normalizedForce) {
     if (!m_active) return false;
+
+    // --- NEW: NaN Protection (Prevents -2147483648 magnitude bug) ---
+    if (!std::isfinite(normalizedForce)) {
+        normalizedForce = 0.0;
+    }
 
     // Sanity Check: If 0.0, stop effect to prevent residual hum
     if (std::abs(normalizedForce) < 0.00001) normalizedForce = 0.0;
@@ -4032,7 +4051,26 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     if (!data) return 0.0;
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
-    // --- 0. UP-SAMPLING (Issue #216) ---
+    // --- 1. CORE PHYSICS CRASH DETECTION ---
+    // If the chassis or steering itself is NaN, the car is in the void or the session is dead.
+    // We must abort to prevent math explosions.
+    if (!std::isfinite(data->mUnfilteredSteering) ||
+        !std::isfinite(data->mLocalRot.y) ||
+        !std::isfinite(data->mLocalAccel.x) ||
+        !std::isfinite(data->mLocalAccel.z) ||
+        !std::isfinite(data->mSteeringShaftTorque) ||
+        !std::isfinite(genFFBTorque)) {
+        return 0.0;
+    }
+
+    // --- 0. METADATA & CLASS SEEDING (Issue #379) ---
+    // Moved to top to ensure car changes trigger resets before physics loop
+    bool seeded = m_metadata.UpdateInternal(vehicleClass, vehicleName, data->mTrackName);
+    if (seeded) {
+        InitializeLoadReference(m_metadata.GetCurrentClassName(), m_metadata.GetVehicleName());
+    }
+
+    // --- 1. UP-SAMPLING (Issue #216) ---
     // If override_dt is provided (e.g. from main.cpp), we are in 400Hz upsampling mode.
     // Otherwise (override_dt <= 0), we are in legacy/test mode: every call is a new frame.
     bool upsampling_active = (override_dt > 0.0);
@@ -4046,47 +4084,90 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Synchronize persistent working copy
     m_working_info = *data;
 
+    // --- 2. AUXILIARY DATA SANITIZATION ---
+    // Sanitize non-core chassis data
+    if (!std::isfinite(m_working_info.mUnfilteredThrottle)) m_working_info.mUnfilteredThrottle = 0.0;
+    if (!std::isfinite(m_working_info.mUnfilteredBrake)) m_working_info.mUnfilteredBrake = 0.0;
+    if (!std::isfinite(m_working_info.mLocalRotAccel.y)) m_working_info.mLocalRotAccel.y = 0.0;
+    if (!std::isfinite(m_working_info.mLocalVel.x)) m_working_info.mLocalVel.x = 0.0;
+    if (!std::isfinite(m_working_info.mLocalVel.y)) m_working_info.mLocalVel.y = 0.0;
+    if (!std::isfinite(m_working_info.mLocalVel.z)) m_working_info.mLocalVel.z = 0.0;
+
+    // Replace NaN/Infinity in wheel channels with 0.0.
+    // This protects the filters AND seamlessly triggers our existing fallback logic
+    // (e.g., approximate_load) if the data is encrypted or missing.
+    for (int i = 0; i < 4; i++) {
+        if (!std::isfinite(m_working_info.mWheel[i].mTireLoad)) m_working_info.mWheel[i].mTireLoad = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mGripFract)) m_working_info.mWheel[i].mGripFract = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mSuspForce)) m_working_info.mWheel[i].mSuspForce = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mVerticalTireDeflection)) m_working_info.mWheel[i].mVerticalTireDeflection = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mLateralPatchVel)) m_working_info.mWheel[i].mLateralPatchVel = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mLongitudinalPatchVel)) m_working_info.mWheel[i].mLongitudinalPatchVel = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mRotation)) m_working_info.mWheel[i].mRotation = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mBrakePressure)) m_working_info.mWheel[i].mBrakePressure = 0.0;
+    }
+
     // Upsample Steering Shaft Torque (Holt-Winters)
-    double shaft_torque = m_upsample_shaft_torque.Process(data->mSteeringShaftTorque, ffb_dt, is_new_frame);
+    double shaft_torque = m_upsample_shaft_torque.Process(m_working_info.mSteeringShaftTorque, ffb_dt, is_new_frame);
     m_working_info.mSteeringShaftTorque = shaft_torque;
 
     // Update wheels in working_info (Channels used for derivatives)
+    // Use sanitized m_working_info as input for upsamplers
     for (int i = 0; i < 4; i++) {
-        m_working_info.mWheel[i].mLateralPatchVel = m_upsample_lat_patch_vel[i].Process(data->mWheel[i].mLateralPatchVel, ffb_dt, is_new_frame);
-        m_working_info.mWheel[i].mLongitudinalPatchVel = m_upsample_long_patch_vel[i].Process(data->mWheel[i].mLongitudinalPatchVel, ffb_dt, is_new_frame);
-        m_working_info.mWheel[i].mVerticalTireDeflection = m_upsample_vert_deflection[i].Process(data->mWheel[i].mVerticalTireDeflection, ffb_dt, is_new_frame);
-        m_working_info.mWheel[i].mSuspForce = m_upsample_susp_force[i].Process(data->mWheel[i].mSuspForce, ffb_dt, is_new_frame);
-        m_working_info.mWheel[i].mBrakePressure = m_upsample_brake_pressure[i].Process(data->mWheel[i].mBrakePressure, ffb_dt, is_new_frame);
-        m_working_info.mWheel[i].mRotation = m_upsample_rotation[i].Process(data->mWheel[i].mRotation, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mLateralPatchVel = m_upsample_lat_patch_vel[i].Process(m_working_info.mWheel[i].mLateralPatchVel, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mLongitudinalPatchVel = m_upsample_long_patch_vel[i].Process(m_working_info.mWheel[i].mLongitudinalPatchVel, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mVerticalTireDeflection = m_upsample_vert_deflection[i].Process(m_working_info.mWheel[i].mVerticalTireDeflection, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mSuspForce = m_upsample_susp_force[i].Process(m_working_info.mWheel[i].mSuspForce, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mBrakePressure = m_upsample_brake_pressure[i].Process(m_working_info.mWheel[i].mBrakePressure, ffb_dt, is_new_frame);
+        m_working_info.mWheel[i].mRotation = m_upsample_rotation[i].Process(m_working_info.mWheel[i].mRotation, ffb_dt, is_new_frame);
     }
 
     // Upsample other derivative sources
-    m_working_info.mUnfilteredSteering = m_upsample_steering.Process(data->mUnfilteredSteering, ffb_dt, is_new_frame);
-    m_working_info.mUnfilteredThrottle = m_upsample_throttle.Process(data->mUnfilteredThrottle, ffb_dt, is_new_frame);
-    m_working_info.mUnfilteredBrake = m_upsample_brake.Process(data->mUnfilteredBrake, ffb_dt, is_new_frame);
-    m_working_info.mLocalAccel.x = m_upsample_local_accel_x.Process(data->mLocalAccel.x, ffb_dt, is_new_frame);
+    m_working_info.mUnfilteredSteering = m_upsample_steering.Process(m_working_info.mUnfilteredSteering, ffb_dt, is_new_frame);
+    m_working_info.mUnfilteredThrottle = m_upsample_throttle.Process(m_working_info.mUnfilteredThrottle, ffb_dt, is_new_frame);
+    m_working_info.mUnfilteredBrake = m_upsample_brake.Process(m_working_info.mUnfilteredBrake, ffb_dt, is_new_frame);
+    m_working_info.mLocalAccel.x = m_upsample_local_accel_x.Process(m_working_info.mLocalAccel.x, ffb_dt, is_new_frame);
 
     // --- DERIVED ACCELERATION (Issue #278) ---
     // Recalculate acceleration from velocity at 100Hz ticks to avoid raw sensor spikes.
     if (is_new_frame) {
         if (!m_local_vel_seeded) {
-            m_prev_local_vel = data->mLocalVel;
+            m_prev_local_vel = m_working_info.mLocalVel;
             m_local_vel_seeded = true;
         }
 
         double game_dt = (data->mDeltaTime > 1e-6) ? data->mDeltaTime : 0.01;
-        m_derived_accel_y_100hz = (data->mLocalVel.y - m_prev_local_vel.y) / game_dt;
-        m_derived_accel_z_100hz = (data->mLocalVel.z - m_prev_local_vel.z) / game_dt;
-        m_prev_local_vel = data->mLocalVel;
+        m_derived_accel_y_100hz = (m_working_info.mLocalVel.y - m_prev_local_vel.y) / game_dt;
+        m_derived_accel_z_100hz = (m_working_info.mLocalVel.z - m_prev_local_vel.z) / game_dt;
+        m_prev_local_vel = m_working_info.mLocalVel;
     }
 
+    // --- 1.1 DERIVED ACCELERATION APPLICATION ---
+    // Recalculate acceleration from velocity to avoid raw sensor spikes.
+    // We apply this even in legacy mode (non-upsampled) if the user provides
+    // velocity data but no acceleration, or to ensure consistency across modes.
     m_working_info.mLocalAccel.y = m_upsample_local_accel_y.Process(m_derived_accel_y_100hz, ffb_dt, is_new_frame);
     m_working_info.mLocalAccel.z = m_upsample_local_accel_z.Process(m_derived_accel_z_100hz, ffb_dt, is_new_frame);
-    m_working_info.mLocalRotAccel.y = m_upsample_local_rot_accel_y.Process(data->mLocalRotAccel.y, ffb_dt, is_new_frame);
-    m_working_info.mLocalRot.y = m_upsample_local_rot_y.Process(data->mLocalRot.y, ffb_dt, is_new_frame);
+
+    m_working_info.mLocalRotAccel.y = m_upsample_local_rot_accel_y.Process(m_working_info.mLocalRotAccel.y, ffb_dt, is_new_frame);
+    m_working_info.mLocalRot.y = m_upsample_local_rot_y.Process(m_working_info.mLocalRot.y, ffb_dt, is_new_frame);
 
     // Use upsampled data pointer for all calculations
     const TelemInfoV01* upsampled_data = &m_working_info;
+
+    // --- Stats Latching (Issue #379) ---
+    // Moved to top of frame to ensure resets happen BEFORE any updates
+    // within the same frame in unit tests.
+    {
+        auto now_stats = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::seconds>(now_stats - last_log_time).count() >= 1) {
+            s_torque.ResetInterval();
+            s_front_load.ResetInterval();
+            s_front_grip.ResetInterval();
+            s_lat_g.ResetInterval();
+            last_log_time = now_stats;
+        }
+    }
 
     // --- SAFETY & TRANSITION LOGIC ---
     if (m_safety.GetLastAllowed() && !allowed) {
@@ -4105,9 +4186,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_safety.SetLastControl(mControl);
     }
 
-    // Transition Logic: Reset filters when entering "Muted" state (e.g. Garage/AI)
-    // to clear out high-frequency residuals from the driving session.
-    if (m_was_allowed && !allowed) {
+    // Transition Logic: Reset filters when entering OR exiting "Muted" state (e.g. Garage/AI)
+    // to clear out high-frequency residuals and prevent stale state from infecting new sessions.
+    if (m_was_allowed != allowed) {
+        m_kerb_timer = 0.0;
         m_upsample_shaft_torque.Reset();
         m_upsample_steering.Reset();
         m_upsample_throttle.Reset();
@@ -4141,8 +4223,53 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_power_vulnerability_smoothed = 0.0;
         m_prev_local_vel = {};
         m_local_vel_seeded = false;
+        m_derivatives_seeded = false;
     }
     m_was_allowed = allowed;
+
+    // SEEDING GATE (Issue #379): Prevent teleport spikes from Garage -> Track
+    if (!m_derivatives_seeded && allowed) {
+        // 1. Update all "prev" states used for derivatives to current values
+        for (int i = 0; i < 4; i++) {
+            m_prev_vert_deflection[i] = data->mWheel[i].mVerticalTireDeflection;
+            m_prev_rotation[i] = data->mWheel[i].mRotation;
+            m_prev_brake_pressure[i] = data->mWheel[i].mBrakePressure;
+            m_prev_susp_force[i] = data->mWheel[i].mSuspForce;
+        }
+        m_prev_steering_angle = upsampled_data->mUnfilteredSteering;
+        m_prev_yaw_rate = upsampled_data->mLocalRot.y;
+        m_prev_vert_accel = upsampled_data->mLocalAccel.y;
+
+        // 2. Warm up LPFs to current values to prevent ramp-up transients
+        m_accel_x_smoothed = upsampled_data->mLocalAccel.x;
+        m_accel_z_smoothed = upsampled_data->mLocalAccel.z;
+        m_sop_lat_g_smoothed = upsampled_data->mLocalAccel.x / GRAVITY_MS2;
+
+        // Use approximate loads for SoP seeding if necessary
+        double fl_l = upsampled_data->mWheel[0].mTireLoad;
+        double fr_l = upsampled_data->mWheel[1].mTireLoad;
+        double rl_l = upsampled_data->mWheel[2].mTireLoad;
+        double rr_l = upsampled_data->mWheel[3].mTireLoad;
+        if (fl_l < 1.0) {
+            fl_l = approximate_load(upsampled_data->mWheel[0]);
+            fr_l = approximate_load(upsampled_data->mWheel[1]);
+            rl_l = approximate_rear_load(upsampled_data->mWheel[2]);
+            rr_l = approximate_rear_load(upsampled_data->mWheel[3]);
+        }
+        double t_load = fl_l + fr_l + rl_l + rr_l;
+        m_sop_load_smoothed = (t_load > 1.0) ? (fr_l + rr_l - fl_l - rl_l) / t_load : 0.0;
+
+        m_steering_velocity_smoothed = 0.0;
+        m_steering_shaft_torque_smoothed = (m_torque_source == 1) ? (double)genFFBTorque * (double)m_wheelbase_max_nm : shaft_torque;
+        m_last_raw_torque = m_steering_shaft_torque_smoothed;
+        m_rolling_average_torque = std::abs(m_steering_shaft_torque_smoothed);
+
+        m_derivatives_seeded = true;
+        // NOTE: We do NOT return early. By seeding 'prev' to 'current',
+        // the deltas calculated later in this same frame will be zero,
+        // naturally muting derivative effects while allowing the rest of
+        // the pipeline (and snapshots) to proceed normally.
+    }
 
     // Select Torque Source
     // v0.7.63 Fix: genFFBTorque (Direct Torque 400Hz) is normalized [-1.0, 1.0].
@@ -4194,12 +4321,6 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double alpha_gain = ffb_dt / ((double)STRUCT_MULT_SMOOTHING_TAU + ffb_dt); // 250ms smoothing
     m_smoothed_structural_mult += alpha_gain * (target_structural_mult - m_smoothed_structural_mult);
 
-    // Class Seeding
-    bool seeded = m_metadata.UpdateInternal(vehicleClass, vehicleName, data->mTrackName);
-    if (seeded) {
-        InitializeLoadReference(m_metadata.GetCurrentClassName(), m_metadata.GetVehicleName());
-    }
-
     // Trigger REST API Fallback if enabled and range is invalid (Issue #221)
     if (seeded && m_rest_api_enabled && data->mPhysicalSteeringWheelRange <= 0.0f) {
         RestApiProvider::Get().RequestSteeringRange(m_rest_api_port);
@@ -4240,8 +4361,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double chassis_tau = (double)m_chassis_inertia_smoothing;
     if (chassis_tau < MIN_TAU_S) chassis_tau = MIN_TAU_S;
     double alpha_chassis = ctx.dt / (chassis_tau + ctx.dt);
-    m_accel_x_smoothed += alpha_chassis * (upsampled_data->mLocalAccel.x - m_accel_x_smoothed);
-    m_accel_z_smoothed += alpha_chassis * (upsampled_data->mLocalAccel.z - m_accel_z_smoothed);
+    if (m_derivatives_seeded && m_was_allowed && allowed) {
+        m_accel_x_smoothed += alpha_chassis * (upsampled_data->mLocalAccel.x - m_accel_x_smoothed);
+        m_accel_z_smoothed += alpha_chassis * (upsampled_data->mLocalAccel.z - m_accel_z_smoothed);
+    }
 
     // --- 3. TELEMETRY PROCESSING ---
     // Front Wheels
@@ -4258,16 +4381,6 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     s_front_load.Update(raw_front_load);
     s_front_grip.Update(raw_front_grip);
     s_lat_g.Update(upsampled_data->mLocalAccel.x);
-    
-    // Stats Latching
-    auto now = std::chrono::steady_clock::now();
-    if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1) {
-        s_torque.ResetInterval(); 
-        s_front_load.ResetInterval();
-        s_front_grip.ResetInterval();
-        s_lat_g.ResetInterval();
-        last_log_time = now;
-    }
 
     // --- 4. PRE-CALCULATIONS ---
 
@@ -4910,6 +5023,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         AsyncLogger::Get().Log(frame);
     }
     
+    // --- NEW: Final NaN catch-all ---
+    if (!std::isfinite(norm_force)) {
+        norm_force = 0.0;
+    }
+
     return (std::max)(-1.0, (std::min)(1.0, norm_force));
 }
 
@@ -5001,12 +5119,55 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     
     // Rear lateral force estimation: F = Alpha * k * TireLoad
     double rear_slip_angle = m_grip_diag.rear_slip_angle;
-    ctx.calc_rear_lat_force = rear_slip_angle * ctx.avg_rear_load * REAR_TIRE_STIFFNESS_COEFFICIENT;
-    ctx.calc_rear_lat_force = (std::max)(-MAX_REAR_LATERAL_FORCE, (std::min)(MAX_REAR_LATERAL_FORCE, ctx.calc_rear_lat_force));
     
-    // Torque = Force * Aligning_Lever
+    // --- FIX 1: Physics Saturation (Always On) ---
+    // Cap dynamic load to 1.5x static weight to prevent vertical kerb spikes
+    double max_effective_load = m_static_rear_load * KERB_LOAD_CAP_MULT;
+    double effective_rear_load = std::min(ctx.avg_rear_load, (std::max)(1.0, max_effective_load));
+
+    // Soft-clip slip angle (Simulates Pneumatic Trail falloff)
+    // Critical: Ensure division-by-zero protection if optimal slip angle is not yet latched
+    double optimal_slip_ref = (std::max)(0.01f, m_optimal_slip_angle);
+    double normalized_slip = rear_slip_angle / (optimal_slip_ref + 0.001);
+    double effective_slip = optimal_slip_ref * std::tanh(normalized_slip);
+
+    // --- FIX 2: Hybrid Kerb Strike Rejection (GUI Controlled) ---
+    double kerb_attenuation = 1.0;
+
+    if (m_kerb_strike_rejection > 0.0) {
+        // A. Surface Type Detection (Works on ALL cars)
+        bool on_kerb = (data->mWheel[2].mSurfaceType == 5) || (data->mWheel[3].mSurfaceType == 5);
+
+        // B. Suspension Velocity Detection (Works on unencrypted cars)
+        bool violent_bump = false;
+        if (m_missing_vert_deflection_frames <= MISSING_TELEMETRY_WARN_THRESHOLD) {
+            double susp_vel_rl = std::abs(data->mWheel[2].mVerticalTireDeflection - m_prev_vert_deflection[2]) / ctx.dt;
+            double susp_vel_rr = std::abs(data->mWheel[3].mVerticalTireDeflection - m_prev_vert_deflection[3]) / ctx.dt;
+            violent_bump = std::max(susp_vel_rl, susp_vel_rr) > KERB_DETECTION_THRESHOLD_M_S;
+        }
+
+        // Trigger the timer (Hold the attenuation for 100ms after leaving the kerb)
+        if (on_kerb || violent_bump) {
+            m_kerb_timer = KERB_HOLD_TIME_S;
+        } else {
+            m_kerb_timer = std::max(0.0, m_kerb_timer - ctx.dt);
+        }
+
+        // Apply the attenuation
+        if (m_kerb_timer > 0.0) {
+            // If slider is 1.0, attenuation drops to 0.0 (100% muted)
+            // If slider is 0.5, attenuation drops to 0.5 (50% muted)
+            kerb_attenuation = 1.0 - (double)m_kerb_strike_rejection;
+        }
+    }
+
+    // Calculate final force with the sanitized, zero-latency variables
+    ctx.calc_rear_lat_force = effective_slip * effective_rear_load * REAR_TIRE_STIFFNESS_COEFFICIENT;
+    ctx.calc_rear_lat_force = std::clamp(ctx.calc_rear_lat_force, -MAX_REAR_LATERAL_FORCE, MAX_REAR_LATERAL_FORCE);
+
+    // Torque = Force * Aligning_Lever * Kerb_Attenuation
     // Note negative sign: Oversteer (Rear Slide) pushes wheel TOWARDS slip direction
-    ctx.rear_torque = -ctx.calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect;
+    ctx.rear_torque = -ctx.calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect * kerb_attenuation;
     
     // 4. Yaw Kicks (Context-Aware Oversteer - Issue #322)
 
@@ -5403,6 +5564,7 @@ void FFBEngine::ResetNormalization() {
     m_session_peak_torque = (std::max)(1.0, (double)m_target_rim_nm);
     m_smoothed_structural_mult = 1.0 / (m_session_peak_torque + EPSILON_DIV);
     m_rolling_average_torque = m_session_peak_torque;
+    m_last_raw_torque = 0.0;
 
     // 2. Vibration Normalization Reset (Stage 3)
     // Always return to the class-default seed load.
@@ -5411,12 +5573,23 @@ void FFBEngine::ResetNormalization() {
 
     // Reset static load reference
     m_static_front_load = m_auto_peak_front_load * 0.5;
+    m_static_rear_load = m_auto_peak_front_load * 0.5;
     m_static_load_latched = false;
 
     // If we have a saved static load, restore it (v0.7.70 logic)
-    double saved_load = 0.0;
-    if (Config::GetSavedStaticLoad(m_metadata.GetVehicleName(), saved_load)) {
-        m_static_front_load = saved_load;
+    double saved_front_load = 0.0;
+    double saved_rear_load = 0.0;
+    std::string vName = m_metadata.GetVehicleName();
+    
+    if (Config::GetSavedStaticLoad(vName, saved_front_load)) {
+        m_static_front_load = saved_front_load;
+        
+        if (Config::GetSavedStaticLoad(vName + "_rear", saved_rear_load)) {
+            m_static_rear_load = saved_rear_load;
+        } else {
+            m_static_rear_load = m_auto_peak_front_load * 0.5;
+        }
+        
         m_static_load_latched = true;
     }
 
@@ -5644,6 +5817,7 @@ public:
     // New Effects (v0.2)
     float m_oversteer_boost;
     float m_rear_align_effect;
+    float m_kerb_strike_rejection = 0.0f; // NEW: Kerb strike rejection slider
     float m_sop_yaw_gain;
     float m_gyro_gain;
     float m_gyro_smoothing;
@@ -5854,6 +6028,7 @@ public:
     
 
     // Phase Accumulators for Dynamic Oscillators
+    double m_kerb_timer = 0.0; // NEW: Kerb strike attenuation timer
     double m_lockup_phase = 0.0;
     double m_spin_phase = 0.0;
     double m_slide_phase = 0.0;
@@ -5866,7 +6041,10 @@ public:
     float m_spin_freq_scale = 1.0f;
     
     // Internal state for Bottoming (Method B)
-    double m_prev_susp_force[2] = {0.0, 0.0}; 
+    double m_prev_susp_force[4] = {0.0, 0.0, 0.0, 0.0};
+
+    // Seeding state (Issue #379)
+    bool m_derivatives_seeded = false;
 
     // New Settings (v0.4.5)
     int m_bottoming_method = 0; 
@@ -5977,6 +6155,9 @@ private:
     static constexpr double REAR_TIRE_STIFFNESS_COEFFICIENT = 15.0; 
     static constexpr double MAX_REAR_LATERAL_FORCE = 6000.0; // N
     static constexpr double REAR_ALIGN_TORQUE_COEFFICIENT = 0.001; // Nm per N
+    static constexpr double KERB_LOAD_CAP_MULT = 1.5;
+    static constexpr double KERB_DETECTION_THRESHOLD_M_S = 0.8;
+    static constexpr double KERB_HOLD_TIME_S = 0.1;
     static constexpr double DEFAULT_STEERING_RANGE_RAD = 9.4247; 
     static constexpr double GYRO_SPEED_SCALE = 10.0;
     static constexpr double WEIGHT_TRANSFER_SCALE = 2000.0; // N per G
@@ -6198,6 +6379,7 @@ bool FFBMetadataManager::UpdateInternal(const char* vehicleClass, const char* ve
 
         // Issue #368: Request manufacturer info from REST API on car change
         RestApiProvider::Get().ResetManufacturer();
+        RestApiProvider::Get().ResetSteeringRange(); // Issue #379
         RestApiProvider::Get().RequestManufacturer(6397, m_vehicle_name); // TODO: use configured port
     }
 
@@ -7438,6 +7620,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
         FloatSetting("SoP Self-Aligning Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN),
             Tooltips::REAR_ALIGN_TORQUE);
+        FloatSetting("  Kerb Strike Rejection", &engine.m_kerb_strike_rejection, 0.0f, 1.0f, FormatPct(engine.m_kerb_strike_rejection),
+            Tooltips::KERB_STRIKE_REJECTION);
         FloatSetting("Yaw Kick", &engine.m_sop_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK),
             Tooltips::YAW_KICK);
         FloatSetting("  Activation Threshold", &engine.m_yaw_kick_threshold, 0.0f, 10.0f, "%.2f rad/sÂ²", Tooltips::YAW_KICK_THRESHOLD);
@@ -8895,6 +9079,7 @@ namespace Tooltips {
     inline constexpr const char* LATERAL_G = "Represents Chassis Roll, simulates the weight of the car leaning in the corner.";
     inline constexpr const char* LATERAL_LOAD = "Represents normalized lateral load transfer,\nproviding a consistent lean feel across car classes.";
     inline constexpr const char* REAR_ALIGN_TORQUE = "Counter-steering force generated by rear tire slip.\nShould build up very quickly after the Yaw Kick, as the slip angle develops.\nThis is the active \"pull.\"\nTuning Goal: Feel the direction of the counter-steer (Rear Align)\nand the effort required to hold it (Lateral G Boost).";
+    inline constexpr const char* KERB_STRIKE_REJECTION = "Mutes the Rear Align Torque when driving over kerbs.\nUses surface detection (all cars) and suspension velocity (unencrypted cars).";
     inline constexpr const char* YAW_KICK = "This is the earliest cue for rear stepping out.\nIt's a sharp, momentary impulse that signals the onset of rotation.\nBased on Yaw Acceleration.";
     inline constexpr const char* YAW_KICK_THRESHOLD = "Minimum yaw acceleration required to trigger the kick.\nIncrease to filter out road noise and small vibrations.";
     inline constexpr const char* YAW_KICK_RESPONSE = "Low Pass Filter for the Yaw Kick signal.\nSmoothes out kick noise.\nLower = Sharper/Faster kick.\nHigher = Duller/Softer kick.";
@@ -8997,7 +9182,7 @@ namespace Tooltips {
         SOFT_LOCK_ENABLE, SOFT_LOCK_STIFFNESS, SOFT_LOCK_DAMPING,
         INGAME_FFB_GAIN, STEERING_SHAFT_GAIN, STEERING_SHAFT_SMOOTHING, UNDERSTEER_EFFECT, UNDERSTEER_GAMMA, DYNAMIC_WEIGHT, WEIGHT_SMOOTHING, TORQUE_SOURCE, PURE_PASSTHROUGH,
         FLATSPOT_SUPPRESSION, NOTCH_Q, SUPPRESSION_STRENGTH, STATIC_NOISE_FILTER, STATIC_NOTCH_FREQ, STATIC_NOTCH_WIDTH,
-        OVERSTEER_BOOST, LATERAL_G, LATERAL_LOAD, REAR_ALIGN_TORQUE, YAW_KICK, YAW_KICK_THRESHOLD, YAW_KICK_RESPONSE,
+        OVERSTEER_BOOST, LATERAL_G, LATERAL_LOAD, REAR_ALIGN_TORQUE, KERB_STRIKE_REJECTION, YAW_KICK, YAW_KICK_THRESHOLD, YAW_KICK_RESPONSE,
         UNLOADED_YAW_GAIN, UNLOADED_YAW_THRESHOLD, UNLOADED_YAW_SENS, UNLOADED_YAW_GAMMA, UNLOADED_YAW_PUNCH,
         POWER_YAW_GAIN, POWER_YAW_THRESHOLD, POWER_SLIP_THRESHOLD, POWER_YAW_GAMMA, POWER_YAW_PUNCH,
         GYRO_DAMPING, GYRO_SMOOTH, SOP_SMOOTHING, GRIP_SMOOTHING, SOP_SCALE,
@@ -9915,6 +10100,10 @@ public:
         std::lock_guard<std::mutex> lock(m_manufacturerMutex);
         m_manufacturer = "Unknown";
         m_hasManufacturer = false;
+    }
+
+    void ResetSteeringRange() {
+        m_fallbackRangeDeg.store(0.0f);
     }
 
 private:
@@ -12952,6 +13141,42 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     // This ensures that session-learned peaks from a previous car don't pollute the new session.
     ResetNormalization();
 
+    // --- FIX #374 & #379: Reset all historical data across car change ---
+    m_metadata.ResetWarnings();
+    m_missing_load_frames = 0;
+    m_missing_lat_force_front_frames = 0;
+    m_missing_lat_force_rear_frames = 0;
+    m_missing_susp_force_frames = 0;
+    m_missing_susp_deflection_frames = 0;
+    m_missing_vert_deflection_frames = 0;
+
+    m_warned_load = false;
+    m_warned_grip = false;
+    m_warned_rear_grip = false;
+    m_warned_lat_force_front = false;
+    m_warned_lat_force_rear = false;
+    m_warned_susp_force = false;
+    m_warned_susp_deflection = false;
+    m_warned_vert_deflection = false;
+
+    // Reset seeding flags to trigger fresh capture on first frame of new car
+    m_yaw_rate_seeded = false;
+    m_yaw_accel_seeded = false;
+    m_local_vel_seeded = false;
+    m_yaw_rate_log_seeded = false;
+    m_derivatives_seeded = false;
+
+    // Clear slope detection buffers
+    m_slope_buffer_count = 0;
+    m_slope_buffer_index = 0;
+    m_slope_lat_g_buffer.fill(0.0);
+    m_slope_slip_buffer.fill(0.0);
+    m_slope_torque_buffer.fill(0.0);
+    m_slope_steer_buffer.fill(0.0);
+    m_slope_current = 0.0;
+    m_slope_smoothed_output = 1.0;
+    // -----------------------------------------------------------------------
+
     ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
 
     // Stage 3 Reset: Ensure peak load starts at class baseline
@@ -14476,6 +14701,9 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_auto_load_normalization_enabled = false;
     // v0.7.147: Initialize static load reference to match CreateBasicTestTelemetry default
     engine.m_static_front_load = 4000.0f;
+
+    // Issue #379: Pre-seed derivatives for legacy tests to avoid first-frame zero force
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, true);
 }
 
 // --- Friend Access for Testing ---
@@ -15024,6 +15252,11 @@ public:
     static bool HasWarnings(const FFBEngine& engine) {
         return engine.m_warned_load || engine.m_warned_grip || engine.m_warned_dt;
     }
+    static int GetMissingLoadFrames(const FFBEngine& e) { return e.m_missing_load_frames; }
+    static bool GetWarnedLoad(const FFBEngine& e) { return e.m_warned_load; }
+    static int GetMissingVertDeflectionFrames(const FFBEngine& e) { return e.m_missing_vert_deflection_frames; }
+    static bool GetWarnedVertDeflection(const FFBEngine& e) { return e.m_warned_vert_deflection; }
+    static bool GetWarnedSuspForce(const FFBEngine& e) { return e.m_warned_susp_force; }
     static void test_unit_sop_lateral();
     static void test_unit_gyro_damping();
     static void test_unit_abs_pulse();
@@ -15043,6 +15276,8 @@ public:
     static void SetStaticRearLoad(FFBEngine& e, double val) { e.m_static_rear_load = val; }
     static double GetStaticFrontLoad(const FFBEngine& e) { return e.m_static_front_load; }
     static double GetStaticRearLoad(const FFBEngine& e) { return e.m_static_rear_load; }
+    static double GetKerbTimer(const FFBEngine& e) { return e.m_kerb_timer; }
+    static void SetKerbTimer(FFBEngine& e, double val) { e.m_kerb_timer = val; }
     static bool GetStaticLoadLatched(const FFBEngine& e) { return e.m_static_load_latched; }
     static void SetStaticLoadLatched(FFBEngine& e, bool val) { e.m_static_load_latched = val; }
     static double GetSmoothedVibrationMult(const FFBEngine& e) { return e.m_smoothed_vibration_mult; }
@@ -15140,6 +15375,7 @@ public:
     static void SetLastOutputForce(FFBEngine& e, double val) { 
         e.m_safety.SetSafetySmoothedForce(val);
     }
+    static void SetDerivativesSeeded(FFBEngine& e, bool val) { e.m_derivatives_seeded = val; }
 
     static void ResetSafety(FFBEngine& engine) {
         engine.m_safety = FFBSafetyMonitor();
