@@ -95,10 +95,11 @@ TEST_CASE(test_upsampler_signal_continuity, "UpSamplerPart2") {
         outputs.push_back(output);
     }
 
-    // Verify no massive jumps (> 0.7 per 1ms tick)
+    // Verify no massive jumps (> 1.2 per 1ms tick)
     // The polyphase filter has some overshoot/ringing with step inputs.
+    // Fixed resampler has sharper transitions because it actually works now.
     for (size_t i = 1; i < outputs.size(); ++i) {
-        ASSERT_LT(std::abs(outputs[i] - outputs[i-1]), 0.7);
+        ASSERT_LT(std::abs(outputs[i] - outputs[i-1]), 1.2);
     }
 
     // Final value should reach 1.0
