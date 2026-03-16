@@ -4,7 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## Incremental changes from version 0.7.166 till 0.7.196
+## [0.7.197]
+- **Fixed Signal Continuity and Decoupled Shifting in Up-sampling Pipeline (Issue #393)**:
+  - **Polyphase Resampler Phase Misalignment (The "Stutter" Bug)**: Implemented decoupled shifting logic in `PolyphaseResampler`. New physics samples are now stored in a pending state and only shifted into the active history buffer when the phase accumulator wraps around. This ensures the filter uses the correct historical context for all fractional phases, eliminating periodic micro-stutters.
+  - **Holt-Winters Filter 100Hz Sawtooth (The "Buzz" Bug)**: Fixed a flaw in `HoltWintersFilter` where the raw, noisy input was returned on frame boundaries, bypassing the smoothing logic. The filter now consistently returns the smoothed `m_level`, ensuring a continuous signal and eliminating the 100Hz sawtooth artifact.
+- **Testing**:
+  - Added `tests/test_upsampler_issue_393.cpp` with regression tests for the decoupled shifting logic.
+  - Added `tests/test_math_utils_issue_393.cpp` with regression tests for Holt-Winters continuity.
+  - Updated `tests/test_upsampler_issue_385.cpp` to align with the new shift timing in `PolyphaseResampler`.
+  - Verified 100% pass rate across the full suite of 553 test cases.
+
+
+---
+
+## Comulative changes from version 0.7.166 till 0.7.196
 
 - **Reduced Kerb Impact in Self-Aligning Torque (Issue #297)**:
   - **Physics Saturation (Always On)**:
@@ -31,7 +44,8 @@ This should affect and improve these FFB effects: Lateral Load, Lockup Vibration
 - Added a "Response Curve (Gamma)" setting to shape the grip loss curve for the understeer effect.
   - Allows non-linear mapping of the grip loss: `< 1.0` drops force early (more sensitive), `1.0` is a linear drop, and `> 1.0` allows the force to drop later (more buffer zone).
 
-  
+---
+ 
 ## [0.7.196]
 - **Fixed Cogging and Ringing in 1000Hz UpSampler (Issue #385)**:
   - **Corrected Convolution Order**: Fixed a mathematical error where FIR filter taps were applied in reverse order. The earliest tap now correctly multiplies the newest physics sample, restoring the intended windowed-sinc impulse response.
@@ -41,6 +55,8 @@ This should affect and improve these FFB effects: Lateral Load, Lockup Vibration
   - Added `tests/test_upsampler_issue_385.cpp` with new regression tests for impulse response timing and phase sequence.
   - Updated `tests/test_upsampler_part2.cpp` to accommodate sharper (correct) transitions in signal continuity verification.
   - Verified 100% pass rate across the full suite of 549 test cases.
+
+---
 
 ## [0.7.195]
 - **Implemented Diagnostic Logging for NaN/Inf Detection (Issue #386)**:
@@ -54,6 +70,9 @@ This should affect and improve these FFB effects: Lateral Load, Lockup Vibration
   - Added `tests/test_issue_386_logging.cpp` verifying rate-limiting logic, categorized logging, and transition-based timer resets.
   - Verified 100% pass rate for new tests and all 544 existing test cases.
 
+---
+
+
 ## [0.7.194]
 - **Fixed State Contamination and NaN Infection during Context Switches (Issue #384)**:
   - **Hardware Sanitization**: Added `std::isfinite` check in `DirectInputFFB::UpdateForce` to intercept NaN/Inf before integer casting, preventing violent full-lock jolts.
@@ -65,6 +84,9 @@ This should affect and improve these FFB effects: Lateral Load, Lockup Vibration
   - Added `tests/test_issue_384_nan_infection.cpp` verifying core rejection, auxiliary fallbacks, bidirectional resets, and hardware-level protection.
   - Verified 100% pass rate for new tests and all 544 existing test cases.
 
+---
+
+
 ## [0.7.193]
 - **Fixed Historical Data Carry-Over across Context Changes (Issue #379)**:
   - **Slope Detection Buffers**: Now reset circular buffers and all smoothed states on car change to prevent grip spikes.
@@ -75,6 +97,9 @@ This should affect and improve these FFB effects: Lateral Load, Lockup Vibration
   - Added `tests/test_issue_379.cpp` with comprehensive functional tests for all 4 transition bugs.
   - Verified 100% pass rate for new test and no regressions in existing 536 cases.
 
+---
+
+
 ## [0.7.191]
 - **Fixed Telemetry Diagnostic Reset on Car Change (Issue #374)**:
   - Implemented automatic reset of all telemetry error counters and warning flags whenever a car change is detected.
@@ -84,6 +109,9 @@ This should affect and improve these FFB effects: Lateral Load, Lockup Vibration
 - **Testing**:
   - Added `tests/test_issue_374_repro.cpp` which verifies that all diagnostic states are correctly zeroed out upon switching vehicle names/classes.
   - Verified 100% pass rate across 536 test cases.
+
+---
+
 
 ## [0.7.190]
 - **Reduced Kerb Impact in Self-Aligning Torque (Issue #297)**:
@@ -102,6 +130,9 @@ This should affect and improve these FFB effects: Lateral Load, Lockup Vibration
   - Adjusted coordinate regression tests to account for `tanh` saturation levels.
   - Verified 100% pass rate across 535 test cases.
 
+---
+
+
 ## [0.7.189]
 - **Fixed Porsche LMGT3 Brand Detection (Issue #368)**:
   - **Robust String Parsing**: Implemented a `Trim` helper in `VehicleUtils.cpp` to remove leading/trailing whitespace from telemetry strings.
@@ -117,6 +148,9 @@ This should affect and improve these FFB effects: Lateral Load, Lockup Vibration
   - Added specific brand identification tests for Proton and Manthey entries in `tests/test_vehicle_utils.cpp`.
   - Verified 100% pass rate across the full suite of 533 test cases.
 
+---
+
+
 ## [0.7.188]
 - **FFB Safety: Disabled default Safety Duration (Issue #350)**:
   - Changed the default `Safety Duration` from 2.0s to 0.0s to prevent unnecessary FFB loss during online session transitions (players joining/leaving).
@@ -125,12 +159,18 @@ This should affect and improve these FFB effects: Lateral Load, Lockup Vibration
   - Re-baselined existing safety regression tests to explicitly configure non-zero durations where time-based mitigation is being verified.
   - Added a new test `test_built_in_presets_safety_disabled` to ensure all future built-in presets remain compliant with the new default.
 
+---
+
+
 ## [0.7.187]
 - **Infrastructure: Ccache Build Optimization**:
   - Integrated Ccache into the CMake build system to accelerate local and CI compilation.
   - Updated GitHub Actions workflows (`windows-release`, `linux-coverage`, `linux-sanitizers`) to install and utilize Ccache with persistent storage via `actions/cache@v4`.
   - Configured project-specific Ccache environment variables (`CCACHE_DIR`, `CCACHE_MAXSIZE`) for optimal CI performance.
   - Added `docs/dev_docs/ccache_implementation_notes.md` documenting implementation details and MSVC/Linux compatibility.
+
+---
+
 
 ## [0.7.186]
 - **Test Infrastructure: Windows Performance Optimization**:
@@ -149,6 +189,9 @@ This should affect and improve these FFB effects: Lateral Load, Lockup Vibration
     - `test_scaling_and_performance.md`: Analyzes parallel execution feasibility and outlines optimization paths for the slowest remaining tests.
   - Centralized shared test data structures in `tests/test_performance_types.h`.
 
+---
+
+
 ## [0.7.184]
 - **Refactoring: Non-FFB Components Extracted from FFBEngine**:
   - Extracted metadata, safety, and diagnostic responsibilities into dedicated managers:
@@ -158,6 +201,9 @@ This should affect and improve these FFB effects: Lateral Load, Lockup Vibration
   - Nested safety configuration parameters under `m_safety` in `FFBEngine` for better organization.
   - Updated `Config`, `GuiLayer`, and `FFBEngineTestAccess` to support the new manager-based architecture.
   - Restored 100% logic parity across 530 regression tests.
+
+
+---
 
 
 ## [0.7.183]
@@ -175,6 +221,9 @@ This should affect and improve these FFB effects: Lateral Load, Lockup Vibration
   - Adjusted relative include paths across all source and test files.
   - Verified with a clean build and successful execution of the full test suite (530 test cases, 2095 assertions).
 
+---
+
+
 ## [0.7.182]
 
 - **Increased Test Coverage for FFBEngine**:
@@ -188,6 +237,9 @@ This should affect and improve these FFB effects: Lateral Load, Lockup Vibration
 - **Infrastructure**:
   - Added `test_coverage_boost_v7.cpp` to the test suite.
   - Expanded `FFBEngineTestAccess` with 5 new methods to enable surgical testing of private internal state.
+
+---
+
 
 ## [0.7.181]
 
