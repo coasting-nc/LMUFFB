@@ -122,6 +122,12 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         !std::isfinite(data->mLocalAccel.z) ||
         !std::isfinite(data->mSteeringShaftTorque) ||
         !std::isfinite(genFFBTorque)) {
+
+        // Rate-limited logging (once every 5 seconds)
+        if (data->mElapsedTime > m_last_core_nan_log_time + 5.0) {
+            Logger::Get().LogFile("[Diag] Core Physics NaN/Inf detected! (Steering, Accel, or Torque). FFB muted for this frame.");
+            m_last_core_nan_log_time = data->mElapsedTime;
+        }
         return 0.0;
     }
 
@@ -158,15 +164,21 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Replace NaN/Infinity in wheel channels with 0.0.
     // This protects the filters AND seamlessly triggers our existing fallback logic
     // (e.g., approximate_load) if the data is encrypted or missing.
+    bool aux_nan_detected = false;
     for (int i = 0; i < 4; i++) {
-        if (!std::isfinite(m_working_info.mWheel[i].mTireLoad)) m_working_info.mWheel[i].mTireLoad = 0.0;
-        if (!std::isfinite(m_working_info.mWheel[i].mGripFract)) m_working_info.mWheel[i].mGripFract = 0.0;
-        if (!std::isfinite(m_working_info.mWheel[i].mSuspForce)) m_working_info.mWheel[i].mSuspForce = 0.0;
-        if (!std::isfinite(m_working_info.mWheel[i].mVerticalTireDeflection)) m_working_info.mWheel[i].mVerticalTireDeflection = 0.0;
-        if (!std::isfinite(m_working_info.mWheel[i].mLateralPatchVel)) m_working_info.mWheel[i].mLateralPatchVel = 0.0;
-        if (!std::isfinite(m_working_info.mWheel[i].mLongitudinalPatchVel)) m_working_info.mWheel[i].mLongitudinalPatchVel = 0.0;
-        if (!std::isfinite(m_working_info.mWheel[i].mRotation)) m_working_info.mWheel[i].mRotation = 0.0;
-        if (!std::isfinite(m_working_info.mWheel[i].mBrakePressure)) m_working_info.mWheel[i].mBrakePressure = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mTireLoad)) { m_working_info.mWheel[i].mTireLoad = 0.0; aux_nan_detected = true; }
+        if (!std::isfinite(m_working_info.mWheel[i].mGripFract)) { m_working_info.mWheel[i].mGripFract = 0.0; aux_nan_detected = true; }
+        if (!std::isfinite(m_working_info.mWheel[i].mSuspForce)) { m_working_info.mWheel[i].mSuspForce = 0.0; aux_nan_detected = true; }
+        if (!std::isfinite(m_working_info.mWheel[i].mVerticalTireDeflection)) { m_working_info.mWheel[i].mVerticalTireDeflection = 0.0; aux_nan_detected = true; }
+        if (!std::isfinite(m_working_info.mWheel[i].mLateralPatchVel)) { m_working_info.mWheel[i].mLateralPatchVel = 0.0; aux_nan_detected = true; }
+        if (!std::isfinite(m_working_info.mWheel[i].mLongitudinalPatchVel)) { m_working_info.mWheel[i].mLongitudinalPatchVel = 0.0; aux_nan_detected = true; }
+        if (!std::isfinite(m_working_info.mWheel[i].mRotation)) { m_working_info.mWheel[i].mRotation = 0.0; aux_nan_detected = true; }
+        if (!std::isfinite(m_working_info.mWheel[i].mBrakePressure)) { m_working_info.mWheel[i].mBrakePressure = 0.0; aux_nan_detected = true; }
+    }
+
+    if (aux_nan_detected && data->mElapsedTime > m_last_aux_nan_log_time + 5.0) {
+        Logger::Get().LogFile("[Diag] Auxiliary Wheel NaN/Inf detected and sanitized to 0.0.");
+        m_last_aux_nan_log_time = data->mElapsedTime;
     }
 
     // Upsample Steering Shaft Torque (Holt-Winters)
@@ -252,6 +264,12 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // to clear out high-frequency residuals and prevent stale state from infecting new sessions.
     if (m_was_allowed != allowed) {
         m_kerb_timer = 0.0;
+
+        // --- NEW: Reset diagnostic timers ---
+        m_last_core_nan_log_time = -999.0;
+        m_last_aux_nan_log_time = -999.0;
+        m_last_math_nan_log_time = -999.0;
+
         m_upsample_shaft_torque.Reset();
         m_upsample_steering.Reset();
         m_upsample_throttle.Reset();
@@ -1087,6 +1105,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     
     // --- NEW: Final NaN catch-all ---
     if (!std::isfinite(norm_force)) {
+        if (data->mElapsedTime > m_last_math_nan_log_time + 5.0) {
+            Logger::Get().LogFile("[Diag] Final output force is NaN/Inf! Internal math instability detected. Muting FFB.");
+            m_last_math_nan_log_time = data->mElapsedTime;
+        }
         norm_force = 0.0;
     }
 
