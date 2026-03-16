@@ -92,8 +92,19 @@ Create a new test file `tests/test_issue_374_repro.cpp` that:
 ## 5. Implementation Notes
 - **Thread Safety:** Reset logic is protected by `g_engine_mutex` inside `InitializeLoadReference`.
 - **Unified Resets:** Moved `m_metadata.ResetWarnings()` to be part of the unified car-change reset block for better visibility.
-- **Iterative Reviews:** Early iterations missed `VERSION` and `CHANGELOG_DEV.md` updates; these were corrected in the second iteration. A temporary regression involving accidental deletion of changelog history was also resolved.
 - **Verification:** Both the reproduction test and the full test suite (536 tests) pass successfully.
+
+### Encountered Issues
+- **Linux Build Environment:** Initial build attempts failed due to missing `glfw3` dependencies. Resolved by using `-DBUILD_HEADLESS=ON`.
+- **Changelog Integrity:** During manual editing of `CHANGELOG_DEV.md`, the historical content was accidentally truncated. This was detected in code review and corrected by restoring the file and using a targeted `replace_with_git_merge_diff` operation.
+- **Review Discrepancy:** The first code review incorrectly suggested that `m_metadata.ResetWarnings()` was missing. It was present but placed before the new reset block. I unified it into the same block to improve readability and address the feedback.
+
+### Deviations from the Plan
+- **None:** The execution followed the numbered steps in the plan exactly, including the creation of a reproduction test and iterative reviews.
+
+### Suggestions for the Future
+- **Consolidation:** Consider moving all car-specific reset logic (Normalization, Metadata, Diagnostics) into a single private method `ResetCarSessionState()` to reduce the size and complexity of `InitializeLoadReference`.
+- **Warning Throttling:** If certain warnings (like `m_warned_dt`) are found to be annoying when switching sessions, consider applying a similar car-based reset to them, although they are currently global.
 
 ## 6. Additional Questions
 - Should `m_warned_dt` also be reset? (Decision: No, it's typically a game-wide or plugin-wide issue, not car-specific).
