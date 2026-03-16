@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-16 08:58:42</td>
+            <td class="headerValue">2026-03-16 09:16:49</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">92.3&nbsp;%</td>
@@ -121,23 +121,23 @@
 <span id="L49"><span class="lineNum">      49</span>                 :             : }</span>
 <span id="L50"><span class="lineNum">      50</span>                 :             : </span>
 <span id="L51"><span class="lineNum">      51</span>                 :<span class="tlaGNC tlaBgGNC">          98 : void RestApiProvider::RequestManufacturer(int port, const std::string&amp; vehicleName) {</span></span>
-<span id="L52"><span class="lineNum">      52</span>         [<span class="tlaGBC" title="Branch 0 was taken 16 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 82 times"> + </span>]:<span class="tlaGNC">          98 :     if (m_isRequesting.load()) return;</span></span>
+<span id="L52"><span class="lineNum">      52</span>         [<span class="tlaGBC" title="Branch 0 was taken 12 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 86 times"> + </span>]:<span class="tlaGNC">          98 :     if (m_isRequesting.load()) return;</span></span>
 <span id="L53"><span class="lineNum">      53</span>                 :             : </span>
-<span id="L54"><span class="lineNum">      54</span>         [<span class="tlaGBC" title="Branch 0 was taken 82 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          82 :     std::lock_guard&lt;std::mutex&gt; lock(m_threadMutex);</span></span>
-<span id="L55"><span class="lineNum">      55</span>         [<span class="tlaGBC" title="Branch 0 was taken 81 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">          82 :     if (m_requestThread.joinable()) {</span></span>
-<span id="L56"><span class="lineNum">      56</span>         [<span class="tlaGBC" title="Branch 0 was taken 81 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          81 :         m_requestThread.join();</span></span>
+<span id="L54"><span class="lineNum">      54</span>         [<span class="tlaGBC" title="Branch 0 was taken 86 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          86 :     std::lock_guard&lt;std::mutex&gt; lock(m_threadMutex);</span></span>
+<span id="L55"><span class="lineNum">      55</span>         [<span class="tlaGBC" title="Branch 0 was taken 85 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">          86 :     if (m_requestThread.joinable()) {</span></span>
+<span id="L56"><span class="lineNum">      56</span>         [<span class="tlaGBC" title="Branch 0 was taken 85 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          85 :         m_requestThread.join();</span></span>
 <span id="L57"><span class="lineNum">      57</span>                 :             :     }</span>
 <span id="L58"><span class="lineNum">      58</span>                 :             : </span>
-<span id="L59"><span class="lineNum">      59</span>                 :<span class="tlaGNC">          82 :     m_isRequesting = true;</span></span>
-<span id="L60"><span class="lineNum">      60</span>   [<span class="tlaGBC" title="Branch 0 was taken 82 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 82 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         164 :     m_requestThread = std::thread([this, port, vehicleName]() {</span></span>
+<span id="L59"><span class="lineNum">      59</span>                 :<span class="tlaGNC">          86 :     m_isRequesting = true;</span></span>
+<span id="L60"><span class="lineNum">      60</span>   [<span class="tlaGBC" title="Branch 0 was taken 86 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 86 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         172 :     m_requestThread = std::thread([this, port, vehicleName]() {</span></span>
 <span id="L61"><span class="lineNum">      61</span>                 :             :         try {</span>
-<span id="L62"><span class="lineNum">      62</span>   [<span class="tlaGBC" title="Branch 0 was taken 82 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 82 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          82 :             this-&gt;PerformManufacturerRequest(port, vehicleName);</span></span>
+<span id="L62"><span class="lineNum">      62</span>   [<span class="tlaGBC" title="Branch 0 was taken 86 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 86 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          86 :             this-&gt;PerformManufacturerRequest(port, vehicleName);</span></span>
 <span id="L63"><span class="lineNum">      63</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         } catch (...) {</span></span>
 <span id="L64"><span class="lineNum">      64</span>   [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaUNC">           0 :             Logger::Get().LogFile(&quot;RestApiProvider: Unexpected exception in manufacturer request thread&quot;);</span></span>
 <span id="L65"><span class="lineNum">      65</span>                 :<span class="tlaUNC">           0 :         }</span></span>
-<span id="L66"><span class="lineNum">      66</span>                 :<span class="tlaGNC tlaBgGNC">          82 :         this-&gt;m_isRequesting = false;</span></span>
-<span id="L67"><span class="lineNum">      67</span>                 :<span class="tlaGNC">         164 :     });</span></span>
-<span id="L68"><span class="lineNum">      68</span>                 :<span class="tlaGNC">          82 : }</span></span>
+<span id="L66"><span class="lineNum">      66</span>                 :<span class="tlaGNC tlaBgGNC">          86 :         this-&gt;m_isRequesting = false;</span></span>
+<span id="L67"><span class="lineNum">      67</span>                 :<span class="tlaGNC">         172 :     });</span></span>
+<span id="L68"><span class="lineNum">      68</span>                 :<span class="tlaGNC">          86 : }</span></span>
 <span id="L69"><span class="lineNum">      69</span>                 :             : </span>
 <span id="L70"><span class="lineNum">      70</span>                 :<span class="tlaGNC">           2 : std::string RestApiProvider::GetManufacturer() const {</span></span>
 <span id="L71"><span class="lineNum">      71</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           2 :     std::lock_guard&lt;std::mutex&gt; lock(m_manufacturerMutex);</span></span>
@@ -184,9 +184,9 @@
 <span id="L111"><span class="lineNum">     111</span>                 :             :     }</span>
 <span id="L112"><span class="lineNum">     112</span>                 :<span class="tlaGNC tlaBgGNC">           3 : }</span></span>
 <span id="L113"><span class="lineNum">     113</span>                 :             : </span>
-<span id="L114"><span class="lineNum">     114</span>                 :<span class="tlaGNC">          82 : void RestApiProvider::PerformManufacturerRequest(int port, std::string vehicleName) {</span></span>
-<span id="L115"><span class="lineNum">     115</span>                 :<span class="tlaGNC">          82 :     std::string response;</span></span>
-<span id="L116"><span class="lineNum">     116</span>                 :<span class="tlaGNC">          82 :     bool success = false;</span></span>
+<span id="L114"><span class="lineNum">     114</span>                 :<span class="tlaGNC">          86 : void RestApiProvider::PerformManufacturerRequest(int port, std::string vehicleName) {</span></span>
+<span id="L115"><span class="lineNum">     115</span>                 :<span class="tlaGNC">          86 :     std::string response;</span></span>
+<span id="L116"><span class="lineNum">     116</span>                 :<span class="tlaGNC">          86 :     bool success = false;</span></span>
 <span id="L117"><span class="lineNum">     117</span>                 :             : </span>
 <span id="L118"><span class="lineNum">     118</span>                 :             : #ifdef _WIN32</span>
 <span id="L119"><span class="lineNum">     119</span>                 :             :     HINTERNET hInternet = InternetOpenA(&quot;lmuFFB&quot;, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);</span>
@@ -209,11 +209,11 @@
 <span id="L136"><span class="lineNum">     136</span>                 :             :         Logger::Get().LogFile(&quot;RestApiProvider: Failed to initialize WinINet&quot;);</span>
 <span id="L137"><span class="lineNum">     137</span>                 :             :     }</span>
 <span id="L138"><span class="lineNum">     138</span>                 :             : #else</span>
-<span id="L139"><span class="lineNum">     139</span>   [<span class="tlaGBC" title="Branch 0 was taken 82 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 82 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          82 :     Logger::Get().LogFile(&quot;RestApiProvider: Mock manufacturer request on Linux (Port %d)&quot;, port);</span></span>
+<span id="L139"><span class="lineNum">     139</span>   [<span class="tlaGBC" title="Branch 0 was taken 86 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 86 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          86 :     Logger::Get().LogFile(&quot;RestApiProvider: Mock manufacturer request on Linux (Port %d)&quot;, port);</span></span>
 <span id="L140"><span class="lineNum">     140</span>                 :             : #endif</span>
 <span id="L141"><span class="lineNum">     141</span>                 :             : </span>
-<span id="L142"><span class="lineNum">     142</span>   [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 82 times"> + </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">          82 :     if (success &amp;&amp; !response.empty()) {</span></span>
-<span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaGBC" title="Branch 5 was taken 82 times"> + </span>]
+<span id="L142"><span class="lineNum">     142</span>   [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 86 times"> + </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">          86 :     if (success &amp;&amp; !response.empty()) {</span></span>
+<span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaGBC" title="Branch 5 was taken 86 times"> + </span>]
 <span id="L143"><span class="lineNum">     143</span>                 :             :         // Log the full response for diagnostics</span>
 <span id="L144"><span class="lineNum">     144</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC tlaBgUNC">           0 :         Logger::Get().LogFile(&quot;RestApiProvider: Full REST API response for car info: %s&quot;, response.c_str());</span></span>
 <span id="L145"><span class="lineNum">     145</span>                 :             : </span>
@@ -224,7 +224,7 @@
 <span id="L150"><span class="lineNum">     150</span>                 :<span class="tlaUNC">           0 :         m_hasManufacturer = true;</span></span>
 <span id="L151"><span class="lineNum">     151</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC">           0 :         Logger::Get().LogFile(&quot;RestApiProvider: Identified manufacturer from REST API: %s&quot;, m_manufacturer.c_str());</span></span>
 <span id="L152"><span class="lineNum">     152</span>                 :<span class="tlaUNC">           0 :     }</span></span>
-<span id="L153"><span class="lineNum">     153</span>                 :<span class="tlaGNC tlaBgGNC">          82 : }</span></span>
+<span id="L153"><span class="lineNum">     153</span>                 :<span class="tlaGNC tlaBgGNC">          86 : }</span></span>
 <span id="L154"><span class="lineNum">     154</span>                 :             : </span>
 <span id="L155"><span class="lineNum">     155</span>                 :<span class="tlaGNC">           4 : std::string RestApiProvider::ParseManufacturer(const std::string&amp; json, const std::string&amp; vehicleName) {</span></span>
 <span id="L156"><span class="lineNum">     156</span>                 :             :     // LMU JSON contains &quot;desc&quot; and &quot;manufacturer&quot;</span>
