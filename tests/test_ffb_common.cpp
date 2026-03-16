@@ -173,6 +173,9 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_auto_load_normalization_enabled = false;
     // v0.7.147: Initialize static load reference to match CreateBasicTestTelemetry default
     engine.m_static_front_load = 4000.0f;
+
+    // Issue #379: Pre-seed derivatives for legacy tests to avoid first-frame zero force
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, true);
 }
 
 // --- Friend Access for Testing ---

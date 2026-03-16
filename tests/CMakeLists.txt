@@ -114,6 +114,7 @@ set(TEST_SOURCES
     test_issue_278_derived_acceleration.cpp
     test_issue_281_spikes.cpp
     test_issue_374_repro.cpp
+    test_issue_379.cpp
     repro_issue_290.cpp
     test_issue_282_lateral_load_fix.cpp
     test_issue_306_lateral_load.cpp
@@ -133,7 +134,6 @@ set(TEST_SOURCES
     test_coverage_boost_v8.cpp
     test_coverage_boost_v9.cpp
     test_coverage_boost_v10.cpp
-    test_issue_379.cpp
     ../src/core/main.cpp
 )
 

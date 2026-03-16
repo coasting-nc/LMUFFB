@@ -206,9 +206,16 @@ TEST_CASE(test_rear_grip_fallback, "SlipGrip") {
     
     data.mWheel[2].mLongitudinalGroundVel = 20.0;
     data.mWheel[3].mLongitudinalGroundVel = 20.0;
+    data.mWheel[2].mLongitudinalGroundVel = 20.0;
+    data.mWheel[3].mLongitudinalGroundVel = 20.0;
     data.mWheel[2].mLateralPatchVel = 0.0;
     data.mWheel[3].mLateralPatchVel = 0.0;
     
+    // Seeding call
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
+    engine.calculate_force(&data, "GT3", "TestCar");
+    // Physics call
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "GT3", "TestCar");
     
     ASSERT_TRUE(engine.m_grip_diag.rear_approximated);
@@ -269,6 +276,10 @@ TEST_CASE(test_missing_telemetry_warnings, "SlipGrip") {
     std::stringstream logBuffer;
     Logger::Get().SetTestStream(&logBuffer);
 
+    // Initial car setup (trigger car change reset)
+    FFBEngineTestAccess::CallInitializeLoadReference(engine, "GT3", "TestCar_GT3");
+
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "GT3", "TestCar_GT3");
     ASSERT_TRUE(logBuffer.str().find("Warning: Data for mGripFract") != std::string::npos);
 

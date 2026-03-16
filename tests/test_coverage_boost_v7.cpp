@@ -199,6 +199,7 @@ TEST_CASE(test_derived_acceleration_logic, "Physics") {
     data.mLocalVel.z = 20.0;
     
     // Frame 1: Seed
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
     engine.calculate_force(&data, "GT3", "911", 0.0f, true, 0.0);
     
     // Frame 2: Derive
@@ -287,6 +288,8 @@ TEST_CASE(test_dynamic_normalization_branches, "Physics") {
     
     // 1. Clean state learning
     data.mLocalAccel.x = 0.5; // Low lat G
+    engine.calculate_force(&data);
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data);
     ASSERT_GT(FFBEngineTestAccess::GetSessionPeakTorque(engine), 20.0);
 

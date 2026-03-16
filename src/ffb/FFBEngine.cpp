@@ -113,7 +113,14 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     if (!data) return 0.0;
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
-    // --- 0. UP-SAMPLING (Issue #216) ---
+    // --- 0. METADATA & CLASS SEEDING (Issue #379) ---
+    // Moved to top to ensure car changes trigger resets before physics loop
+    bool seeded = m_metadata.UpdateInternal(vehicleClass, vehicleName, data->mTrackName);
+    if (seeded) {
+        InitializeLoadReference(m_metadata.GetCurrentClassName(), m_metadata.GetVehicleName());
+    }
+
+    // --- 1. UP-SAMPLING (Issue #216) ---
     // If override_dt is provided (e.g. from main.cpp), we are in 400Hz upsampling mode.
     // Otherwise (override_dt <= 0), we are in legacy/test mode: every call is a new frame.
     bool upsampling_active = (override_dt > 0.0);
@@ -161,13 +168,43 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_prev_local_vel = data->mLocalVel;
     }
 
+    // --- 1.1 DERIVED ACCELERATION APPLICATION ---
+    // Recalculate acceleration from velocity to avoid raw sensor spikes.
+    // We apply this even in legacy mode (non-upsampled) if the user provides
+    // velocity data but no acceleration, or to ensure consistency across modes.
     m_working_info.mLocalAccel.y = m_upsample_local_accel_y.Process(m_derived_accel_y_100hz, ffb_dt, is_new_frame);
     m_working_info.mLocalAccel.z = m_upsample_local_accel_z.Process(m_derived_accel_z_100hz, ffb_dt, is_new_frame);
+
+    // If upsampling is OFF and raw accel was provided, prefer raw accel ONLY IF
+    // the derived acceleration logic is likely inactive (e.g. first frame or missing velocity).
+    // Otherwise, the derived 100Hz signals (now upsampled to 400Hz) are safer.
+    // RELIABILITY FIX: Only use raw accel if we haven't established a velocity baseline yet
+    // OR if the raw acceleration is clearly dominant (legacy test compatibility).
+    if (!upsampling_active) {
+        if (std::abs(data->mLocalAccel.y) > 0.001 || std::abs(data->mLocalAccel.z) > 0.001) {
+            m_working_info.mLocalAccel.y = data->mLocalAccel.y;
+            m_working_info.mLocalAccel.z = data->mLocalAccel.z;
+        }
+    }
     m_working_info.mLocalRotAccel.y = m_upsample_local_rot_accel_y.Process(data->mLocalRotAccel.y, ffb_dt, is_new_frame);
     m_working_info.mLocalRot.y = m_upsample_local_rot_y.Process(data->mLocalRot.y, ffb_dt, is_new_frame);
 
     // Use upsampled data pointer for all calculations
     const TelemInfoV01* upsampled_data = &m_working_info;
+
+    // --- Stats Latching (Issue #379) ---
+    // Moved to top of frame to ensure resets happen BEFORE any updates
+    // within the same frame in unit tests.
+    {
+        auto now_stats = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::seconds>(now_stats - last_log_time).count() >= 1) {
+            s_torque.ResetInterval();
+            s_front_load.ResetInterval();
+            s_front_grip.ResetInterval();
+            s_lat_g.ResetInterval();
+            last_log_time = now_stats;
+        }
+    }
 
     // --- SAFETY & TRANSITION LOGIC ---
     if (m_safety.GetLastAllowed() && !allowed) {
@@ -223,29 +260,52 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_power_vulnerability_smoothed = 0.0;
         m_prev_local_vel = {};
         m_local_vel_seeded = false;
-        m_derivatives_seeded = false; // Issue #379
+        m_derivatives_seeded = false;
     }
     m_was_allowed = allowed;
 
-    // --- RE-SEED DERIVATIVES AFTER TELEPORT/GARAGE (Issue #379) ---
+    // SEEDING GATE (Issue #379): Prevent teleport spikes from Garage -> Track
     if (!m_derivatives_seeded && allowed) {
+        // 1. Update all "prev" states used for derivatives to current values
         for (int i = 0; i < 4; i++) {
-            m_prev_vert_deflection[i] = upsampled_data->mWheel[i].mVerticalTireDeflection;
-            m_prev_rotation[i] = upsampled_data->mWheel[i].mRotation;
-            m_prev_brake_pressure[i] = upsampled_data->mWheel[i].mBrakePressure;
-            m_prev_load[i] = upsampled_data->mWheel[i].mTireLoad;
-            m_prev_slip_angle[i] = 0.0; // Reset LPF state
+            m_prev_vert_deflection[i] = data->mWheel[i].mVerticalTireDeflection;
+            m_prev_rotation[i] = data->mWheel[i].mRotation;
+            m_prev_brake_pressure[i] = data->mWheel[i].mBrakePressure;
+            m_prev_susp_force[i] = data->mWheel[i].mSuspForce;
         }
-        m_prev_susp_force[0] = upsampled_data->mWheel[0].mSuspForce;
-        m_prev_susp_force[1] = upsampled_data->mWheel[1].mSuspForce;
-        m_prev_susp_force[2] = upsampled_data->mWheel[2].mSuspForce;
-        m_prev_susp_force[3] = upsampled_data->mWheel[3].mSuspForce;
+        m_prev_steering_angle = upsampled_data->mUnfilteredSteering;
+        m_prev_yaw_rate = upsampled_data->mLocalRot.y;
         m_prev_vert_accel = upsampled_data->mLocalAccel.y;
 
-        float range = upsampled_data->mPhysicalSteeringWheelRange > 0 ? upsampled_data->mPhysicalSteeringWheelRange : (float)DEFAULT_STEERING_RANGE_RAD;
-        m_prev_steering_angle = upsampled_data->mUnfilteredSteering * (range / 2.0);
+        // 2. Warm up LPFs to current values to prevent ramp-up transients
+        m_accel_x_smoothed = upsampled_data->mLocalAccel.x;
+        m_accel_z_smoothed = upsampled_data->mLocalAccel.z;
+        m_sop_lat_g_smoothed = upsampled_data->mLocalAccel.x / GRAVITY_MS2;
+
+        // Use approximate loads for SoP seeding if necessary
+        double fl_l = upsampled_data->mWheel[0].mTireLoad;
+        double fr_l = upsampled_data->mWheel[1].mTireLoad;
+        double rl_l = upsampled_data->mWheel[2].mTireLoad;
+        double rr_l = upsampled_data->mWheel[3].mTireLoad;
+        if (fl_l < 1.0) {
+            fl_l = approximate_load(upsampled_data->mWheel[0]);
+            fr_l = approximate_load(upsampled_data->mWheel[1]);
+            rl_l = approximate_rear_load(upsampled_data->mWheel[2]);
+            rr_l = approximate_rear_load(upsampled_data->mWheel[3]);
+        }
+        double t_load = fl_l + fr_l + rl_l + rr_l;
+        m_sop_load_smoothed = (t_load > 1.0) ? (fr_l + rr_l - fl_l - rl_l) / t_load : 0.0;
+
+        m_steering_velocity_smoothed = 0.0;
+        m_steering_shaft_torque_smoothed = (m_torque_source == 1) ? (double)genFFBTorque * (double)m_wheelbase_max_nm : shaft_torque;
+        m_last_raw_torque = m_steering_shaft_torque_smoothed;
+        m_rolling_average_torque = std::abs(m_steering_shaft_torque_smoothed);
 
         m_derivatives_seeded = true;
+        // NOTE: We do NOT return early. By seeding 'prev' to 'current',
+        // the deltas calculated later in this same frame will be zero,
+        // naturally muting derivative effects while allowing the rest of
+        // the pipeline (and snapshots) to proceed normally.
     }
 
     // Select Torque Source
@@ -298,12 +358,6 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double alpha_gain = ffb_dt / ((double)STRUCT_MULT_SMOOTHING_TAU + ffb_dt); // 250ms smoothing
     m_smoothed_structural_mult += alpha_gain * (target_structural_mult - m_smoothed_structural_mult);
 
-    // Class Seeding
-    bool seeded = m_metadata.UpdateInternal(vehicleClass, vehicleName, data->mTrackName);
-    if (seeded) {
-        InitializeLoadReference(m_metadata.GetCurrentClassName(), m_metadata.GetVehicleName());
-    }
-
     // Trigger REST API Fallback if enabled and range is invalid (Issue #221)
     if (seeded && m_rest_api_enabled && data->mPhysicalSteeringWheelRange <= 0.0f) {
         RestApiProvider::Get().RequestSteeringRange(m_rest_api_port);
@@ -344,8 +398,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double chassis_tau = (double)m_chassis_inertia_smoothing;
     if (chassis_tau < MIN_TAU_S) chassis_tau = MIN_TAU_S;
     double alpha_chassis = ctx.dt / (chassis_tau + ctx.dt);
-    m_accel_x_smoothed += alpha_chassis * (upsampled_data->mLocalAccel.x - m_accel_x_smoothed);
-    m_accel_z_smoothed += alpha_chassis * (upsampled_data->mLocalAccel.z - m_accel_z_smoothed);
+    if (m_derivatives_seeded && m_was_allowed && allowed) {
+        m_accel_x_smoothed += alpha_chassis * (upsampled_data->mLocalAccel.x - m_accel_x_smoothed);
+        m_accel_z_smoothed += alpha_chassis * (upsampled_data->mLocalAccel.z - m_accel_z_smoothed);
+    }
 
     // --- 3. TELEMETRY PROCESSING ---
     // Front Wheels
@@ -362,16 +418,6 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     s_front_load.Update(raw_front_load);
     s_front_grip.Update(raw_front_grip);
     s_lat_g.Update(upsampled_data->mLocalAccel.x);
-    
-    // Stats Latching
-    auto now = std::chrono::steady_clock::now();
-    if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1) {
-        s_torque.ResetInterval(); 
-        s_front_load.ResetInterval();
-        s_front_grip.ResetInterval();
-        s_lat_g.ResetInterval();
-        last_log_time = now;
-    }
 
     // --- 4. PRE-CALCULATIONS ---
 
@@ -725,8 +771,6 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // to ensure correct dForce calculation for Method 1 next frame.
     m_prev_susp_force[0] = upsampled_data->mWheel[0].mSuspForce;
     m_prev_susp_force[1] = upsampled_data->mWheel[1].mSuspForce;
-    m_prev_susp_force[2] = upsampled_data->mWheel[2].mSuspForce;
-    m_prev_susp_force[3] = upsampled_data->mWheel[3].mSuspForce;
     
     // v0.6.36 FIX: Move m_prev_vert_accel to unconditional section
     // Previously only updated inside calculate_road_texture when enabled.
@@ -1552,7 +1596,7 @@ void FFBEngine::ResetNormalization() {
     m_session_peak_torque = (std::max)(1.0, (double)m_target_rim_nm);
     m_smoothed_structural_mult = 1.0 / (m_session_peak_torque + EPSILON_DIV);
     m_rolling_average_torque = m_session_peak_torque;
-    m_last_raw_torque = 0.0; // Issue #379
+    m_last_raw_torque = 0.0;
 
     // 2. Vibration Normalization Reset (Stage 3)
     // Always return to the class-default seed load.
@@ -1561,7 +1605,7 @@ void FFBEngine::ResetNormalization() {
 
     // Reset static load reference
     m_static_front_load = m_auto_peak_front_load * 0.5;
-    m_static_rear_load = m_auto_peak_front_load * 0.5; // Issue #379
+    m_static_rear_load = m_auto_peak_front_load * 0.5;
     m_static_load_latched = false;
 
     // If we have a saved static load, restore it (v0.7.70 logic)

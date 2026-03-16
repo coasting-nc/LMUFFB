@@ -112,8 +112,10 @@ TEST_CASE(test_auto_load_normalization_reset_behavior, "Physics") {
     // Default should be DISABLED
     ASSERT_FALSE(engine.m_auto_load_normalization_enabled);
 
-    // Seed as GT3 (4800N)
+    // Seed as GT3 (5000N)
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
+    engine.calculate_force(&data, "GT3");
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "GT3");
     ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 5000.0, 1.0);
 
@@ -121,6 +123,7 @@ TEST_CASE(test_auto_load_normalization_reset_behavior, "Physics") {
     engine.m_auto_load_normalization_enabled = true;
     data.mWheel[0].mTireLoad = 6000.0;
     data.mWheel[1].mTireLoad = 6000.0;
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "GT3");
     ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 6000.0, 1.0);
 
@@ -148,9 +151,11 @@ TEST_CASE(test_load_normalization_disabled_no_learning, "Physics") {
     data.mWheel[0].mTireLoad = 8000.0;
     data.mWheel[1].mTireLoad = 8000.0;
 
-    // Seed as GT3 (4800N baseline)
-    // We expect the auto peak to stay at 4800, but static load WILL learn 
+    // Seed as GT3 (5000N baseline)
+    // We expect the auto peak to stay at 5000, but static load WILL learn
     // immediately because it's required for other effects like Longitudinal Load.
+    engine.calculate_force(&data, "GT3");
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "GT3");
     double initial_peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
     double initial_static = FFBEngineTestAccess::GetStaticFrontLoad(engine);

@@ -29,6 +29,7 @@ TEST_CASE(test_snapshot_data_integrity, "Internal") {
     // Need > 20 frames of missing load
     data.mDeltaTime = 0.01;
     for (int i=0; i<30; i++) {
+        data.mElapsedTime += 0.01;
         engine.calculate_force(&data);
     }
 
@@ -92,6 +93,10 @@ TEST_CASE(test_snapshot_data_integrity, "Internal") {
     data.mWheel[0].mVerticalTireDeflection = 0.05;
     data.mWheel[1].mVerticalTireDeflection = 0.05;
 
+    // Seeding call
+    engine.calculate_force(&data);
+    // Physics call
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data);
 
     // Get Snapshot
@@ -447,12 +452,15 @@ TEST_CASE(test_unconditional_vert_accel_update, "Internal") {
     
     // v0.7.145 (Issue #278): We now derive accel from velocity
     data.mLocalVel.y = 0.0;
-    engine.calculate_force(&data); // Seed
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
+    engine.calculate_force(&data); // Seed 1
 
     // Set a known vertical acceleration via velocity change
     data.mLocalVel.y = 5.5 * 0.01;
+    data.mDeltaTime = 0.01;
+    data.mElapsedTime += 0.01;
     
-    // Reset the engine state
+    // Reset the engine state to force a failure if it's not actually updating
     engine.m_prev_vert_accel = 0.0;
     
     // Run calculate_force
@@ -468,6 +476,7 @@ TEST_CASE(test_unconditional_vert_accel_update, "Internal") {
     
     // Verify the value changes on next frame
     data.mLocalVel.y += -3.2 * 0.01;
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data);
     
     if (std::abs(engine.m_prev_vert_accel - (-3.2)) < 0.01) {

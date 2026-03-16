@@ -16,6 +16,10 @@ TEST_CASE(test_issue_218_steering_calculations, "Issue_218") {
     data.mUnfilteredSteering = 0.5f; // 50% to the right
 
     // Process one frame
+    // Seeding call
+    engine.calculate_force(&data, "GT3", "Ferrari 296 GT3");
+    // Physics call
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "GT3", "Ferrari 296 GT3");
 
     auto batch = engine.GetDebugBatch();
@@ -40,6 +44,7 @@ TEST_CASE(test_issue_218_invalid_range_warning, "Issue_218") {
     data.mPhysicalSteeringWheelRange = 0.0f; // Invalid
 
     // Frame 1: Should issue warning
+    // First frame of driving always checks seeded metadata
     engine.calculate_force(&data, "GT3", "Ferrari 296 GT3");
     ASSERT_TRUE(logBuffer.str().find("[WARNING] Invalid PhysicalSteeringWheelRange") != std::string::npos);
 
@@ -48,6 +53,7 @@ TEST_CASE(test_issue_218_invalid_range_warning, "Issue_218") {
     logBuffer.clear();
 
     // Frame 2: Should NOT issue warning again (if it's the same car)
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "GT3", "Ferrari 296 GT3");
     // Check specifically for the warning message, ignoring other logs (like REST API)
     ASSERT_TRUE(logBuffer.str().find("[WARNING] Invalid PhysicalSteeringWheelRange") == std::string::npos);
@@ -55,6 +61,7 @@ TEST_CASE(test_issue_218_invalid_range_warning, "Issue_218") {
     // Reset warning via car change (using different class to trigger seeding)
     // 1st call with new class: detects car change, resets m_warned_invalid_range, then checks range and warns.
     StringUtils::SafeCopy(data.mVehicleName, sizeof(data.mVehicleName), "Porsche 911 RSR GTE");
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "GTE", "Porsche 911 RSR GTE");
     ASSERT_TRUE(logBuffer.str().find("[WARNING] Invalid PhysicalSteeringWheelRange") != std::string::npos);
 

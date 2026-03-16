@@ -220,7 +220,7 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold, "Texture") {
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     // dt=0.005 â†’ 200Hz. Phase = 50Hz * 0.005 * 2Ï€ = Ï€/2 â†’ sin(Ï€/2)=1 â†’ max amplitude
-    data.mDeltaTime = 0.005;
+    data.mDeltaTime = 0.003; // Use dt that doesn't sync with 50Hz period (0.02s)
     data.mLocalVel.z = -20.0;
 
     // Case A: exactly at threshold (0.002) â€” NOT triggered
@@ -238,7 +238,11 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold, "Texture") {
         FFBEngineTestAccess::SetStaticFrontLoad(engine, 2250.0);
         FFBEngineTestAccess::SetStaticLoadLatched(engine, true);
 
-        double force = engine.calculate_force(&data);
+        // First call (Seeds and processes)
+        // Seeding gate capture doesn't block bottoming Method 0
+        FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
+        engine.calculate_force(&data, "GT3", "911");
+
         // Force might not be exactly 0 if other effects are active, but bottoming should be 0.
         auto snaps = engine.GetDebugBatch();
         float bottoming = snaps.empty() ? 0.0f : snaps.back().texture_bottoming;
@@ -259,6 +263,8 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold, "Texture") {
         data.mWheel[0].mRideHeight = 0.001f;
         data.mWheel[1].mRideHeight = 0.001f;
 
+        // Seeding call
+        FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
         double force = engine.calculate_force(&data, "GT3", "911");
         ASSERT_TRUE(std::abs(force) > 0.0001);
         std::cout << "  Below threshold (0.001m): force = " << force << std::endl;
@@ -269,7 +275,7 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold_enabled, "Texture") {
     std::cout << "\nTest: [MagicNumbers] Bottoming RH threshold (0.002m) (Normalization ENABLED - Peak Follower)" << std::endl;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    data.mDeltaTime = 0.005;
+    data.mDeltaTime = 0.003;
     data.mLocalVel.z = -20.0;
 
     FFBEngine engine;
@@ -283,12 +289,13 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold_enabled, "Texture") {
     data.mWheel[0].mTireLoad = 8000.0;
     data.mWheel[1].mTireLoad = 8000.0;
     // Need to use a car name so InitializeLoadReference doesn't reset us every frame
-        // But WAIT: InitializeLoadReference ALWAYS calls ResetNormalization!
-        // So we must set toggles AFTER InitializeLoadReference if we want to test mid-session logic.
-        engine.calculate_force(&data, "GT3", "911");
+    // But WAIT: InitializeLoadReference ALWAYS calls ResetNormalization!
+    // So we must set toggles AFTER InitializeLoadReference if we want to test mid-session logic.
+    engine.calculate_force(&data, "GT3", "911");
 
-        // NOW enable it and learn
-        engine.m_auto_load_normalization_enabled = true;
+    // NOW enable it and learn
+    engine.m_auto_load_normalization_enabled = true;
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "GT3", "911");
 
     double peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
@@ -297,6 +304,9 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold_enabled, "Texture") {
     data.mWheel[0].mRideHeight = 0.001f;
     data.mWheel[1].mRideHeight = 0.001f;
 
+    // Seeding call for new telemetry
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
+    data.mElapsedTime += 0.01;
     double force = engine.calculate_force(&data, "GT3", "911");
     ASSERT_TRUE(std::abs(force) > 0.0001);
     std::cout << "  Below threshold (0.001m): force = " << force << std::endl;

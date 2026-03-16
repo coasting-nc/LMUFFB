@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [0.7.192]
+## [0.7.193]
 - **Fixed Historical Data Carry-Over across Context Changes (Issue #379)**:
   - **Slope Detection Buffers**: Now reset circular buffers and all smoothed states on car change to prevent grip spikes.
   - **REST API Steering Range**: Implemented `ResetSteeringRange()` in `RestApiProvider` to ensure car-to-car fallback ranges don't pollute the next session.

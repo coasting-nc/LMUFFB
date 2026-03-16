@@ -119,7 +119,11 @@ TEST_CASE(test_issue_235_garage_noise, "Internal") {
 
     // Scenario 3: Transition Reset
     // Move from allowed to muted. High frequency filter state should be cleared.
-    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true); // driving
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
+    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true); // driving (seeding gate)
+    data.mElapsedTime += 0.01;
+    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true); // driving (physics)
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, nullptr, nullptr, 0.0f, false); // exit to garage
 
     // Verify velocity is zeroed (filter reset)

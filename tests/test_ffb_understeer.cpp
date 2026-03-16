@@ -15,10 +15,12 @@ TEST_CASE(test_optimal_slip_buffer_zone, "Understeer") {
     data.mSteeringShaftTorque = 20.0;
     
     // Run multiple frames to settle filters
+    // Note: First call in driving state will trigger Seeding Gate baseline capture
     double force = 0.0;
-    for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) force = engine.calculate_force(&data);
-    
-
+    for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) {
+        data.mElapsedTime += 0.0025;
+        force = engine.calculate_force(&data);
+    }
 
     // With continuous falloff 0.05 + 0.95 / (1.0 + x^4), at x ~ 0.68 (due to load ratio fallback) it is ~0.8264
     ASSERT_NEAR(force, 0.8264, 0.001);
@@ -35,17 +37,29 @@ TEST_CASE(test_progressive_loss_curve, "Understeer") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.10); // 1.0x optimal
     data.mSteeringShaftTorque = 20.0;
     double f10 = 0.0;
-    for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) f10 = engine.calculate_force(&data);
+    for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) {
+        data.mElapsedTime += 0.0025;
+        f10 = engine.calculate_force(&data);
+    }
     
+    // Reset engine for next run to ensure same filter state
+    InitializeEngine(engine);
     data = CreateBasicTestTelemetry(20.0, 0.12); // 1.2x optimal -> excess 0.2
     data.mSteeringShaftTorque = 20.0;
     double f12 = 0.0;
-    for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) f12 = engine.calculate_force(&data);
+    for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) {
+        data.mElapsedTime += 0.0025;
+        f12 = engine.calculate_force(&data);
+    }
     
+    InitializeEngine(engine);
     data = CreateBasicTestTelemetry(20.0, 0.14); // 1.4x optimal -> excess 0.4
     data.mSteeringShaftTorque = 20.0;
     double f14 = 0.0;
-    for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) f14 = engine.calculate_force(&data);
+    for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) {
+        data.mElapsedTime += 0.0025;
+        f14 = engine.calculate_force(&data);
+    }
 
     // At 1.0x optimal, the curve with load fallback yields ~0.4006
     ASSERT_NEAR(f10, 0.4006, 0.001);

@@ -19,6 +19,10 @@ TEST_CASE(test_direct_torque_scaling, "Issue142") {
     TelemInfoV01 telem = CreateBasicTestTelemetry(20.0, 0.0);
     float genFFBTorque = 1.0f; // Max normalized FFB
 
+    // Seeding call
+    engine.calculate_force(&telem, "GT3", "Ferrari 488", genFFBTorque);
+    // Physics call
+    telem.mElapsedTime += 0.01;
     double output = engine.calculate_force(&telem, "GT3", "Ferrari 488", genFFBTorque);
 
     // Expected logic:
@@ -50,6 +54,10 @@ TEST_CASE(test_torque_passthrough_enabled, "Issue142") {
 
     float genFFBTorque = 1.0f;
 
+    // Seeding call
+    engine.calculate_force(&telem, "GT3", "Ferrari 488", genFFBTorque);
+    // Physics call
+    telem.mElapsedTime += 0.01;
     double output = engine.calculate_force(&telem, "GT3", "Ferrari 488", genFFBTorque);
 
     // With Passthrough ENABLED, output should still be ~1.0 despite high slip
@@ -78,6 +86,10 @@ TEST_CASE(test_torque_passthrough_disabled, "Issue142") {
 
     float genFFBTorque = 1.0f;
 
+    // Seeding call
+    engine.calculate_force(&telem, "GT3", "Ferrari 488", genFFBTorque);
+    // Physics call
+    telem.mElapsedTime += 0.01;
     double output = engine.calculate_force(&telem, "GT3", "Ferrari 488", genFFBTorque);
 
     // With Passthrough DISABLED, output should be significantly reduced by understeer

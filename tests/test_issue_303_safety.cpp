@@ -18,11 +18,17 @@ void test_issue_303_safety_window_activation() {
 
     // Scenario 1: mControl Transition
     {
-        // First frame: PLAYER
+        data.mElapsedTime = 100.0;
+        // First frame: PLAYER (Seeds)
+        engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, static_cast<signed char>(ControlMode::PLAYER));
+
+        // Second frame: Still PLAYER, now we have force (maybe)
+        data.mElapsedTime += 0.0025;
         engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, static_cast<signed char>(ControlMode::PLAYER));
         ASSERT_EQ(engine.m_safety.safety_timer, 0.0);
 
-        // Second frame: AI takeover
+        // Third frame: AI takeover
+        data.mElapsedTime += 0.0025;
         engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, static_cast<signed char>(ControlMode::AI));
         ASSERT_GT(engine.m_safety.safety_timer, 1.9); // Should be near 2.0
     }
@@ -50,14 +56,21 @@ void test_issue_303_safety_mitigation() {
 
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0, 0.0);
     data.mSteeringShaftTorque = 5.0; // 5Nm
+    data.mElapsedTime = 100.0;
+
+    // Seeding call
+    engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, static_cast<signed char>(ControlMode::PLAYER));
 
     // Normal output (no safety window)
+    data.mElapsedTime += 0.0025;
     double normal_force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, static_cast<signed char>(ControlMode::PLAYER));
+    ASSERT_NE(normal_force, 0.0);
 
     // Trigger safety window
     engine.m_safety.TriggerSafetyWindow("Test");
 
     // Safety output (reduced gain)
+    data.mElapsedTime += 0.0025;
     double safety_force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, static_cast<signed char>(ControlMode::PLAYER));
 
     std::cout << "  Normal Force: " << normal_force << " | Safety Force: " << safety_force << std::endl;
@@ -113,6 +126,9 @@ void test_issue_303_full_tock_timer() {
     data.mSteeringShaftTorque = 10.0; // Max torque
     data.mElapsedTime = 100.0; // Avoid initialization state
 
+    // Seeding call
+    engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, 0);
+
     // Run for 0.5s (200 frames @ 0.0025s)
     for (int i = 0; i < 200; i++) {
         data.mElapsedTime += 0.0025;
@@ -127,7 +143,10 @@ void test_issue_303_full_tock_timer() {
     }
 
     // Timer should have reset after triggering log (which we can't easily check here but we check timer behavior)
-    ASSERT_LT(engine.m_safety.tock_timer, 0.1);
+    // tock_timer is reset to 0.0 after reaching 1.0.
+    // In our loop we did 0.5s + 0.6s = 1.1s.
+    // It should have reset at 1.0s, and then accumulated 0.1s.
+    ASSERT_NEAR(engine.m_safety.tock_timer, 0.1, 0.05);
 }
 
 AutoRegister reg_issue_303_safety("Issue #303 Safety Fixes", "Issue303", {"Safety", "Logging"}, []() {

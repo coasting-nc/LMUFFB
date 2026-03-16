@@ -237,8 +237,10 @@ TEST_CASE(test_hypercar_bottoming_threshold, "Physics") {
 
     // Seed as Hypercar (9500N)
     engine.calculate_force(&data, "Hypercar");
+    // Clear seeding for next call
+    FFBEngineTestAccess::SetDerivativesSeeded(engine, true);
 
-    // 1. Test 10000N load (Should be below threshold 9500 * 1.6 = 15200)
+    // 1. Test 10000N load (Should be below threshold 9500 * 2.5 = 23750)
     data.mWheel[0].mTireLoad = 10000.0;
     data.mWheel[1].mTireLoad = 10000.0;
     data.mDeltaTime = 0.003; // Change dt to avoid phase cancellation
@@ -250,9 +252,9 @@ TEST_CASE(test_hypercar_bottoming_threshold, "Physics") {
         ASSERT_NEAR(snaps.back().texture_bottoming, 0.0, 0.001);
     }
 
-    // 2. Test 16000N load (Should be ABOVE threshold 15200)
-    data.mWheel[0].mTireLoad = 16000.0;
-    data.mWheel[1].mTireLoad = 16000.0;
+    // 2. Test 30000N load (Should be ABOVE threshold 23750)
+    data.mWheel[0].mTireLoad = 30000.0;
+    data.mWheel[1].mTireLoad = 30000.0;
     data.mDeltaTime = 0.003; // Change dt to avoid phase cancellation
 
     engine.calculate_force(&data, "Hypercar");
@@ -276,6 +278,9 @@ TEST_CASE(test_static_load_fallback_class_aware, "Physics") {
 
     // Seed as Hypercar (9500N)
     engine.calculate_force(&data, "Hypercar");
+    // Seeding call for metadata and static load
+    data.mElapsedTime += 0.01;
+    engine.calculate_force(&data, "Hypercar");
 
     // Static load reference should be 9500 * 0.5 = 4750.0
     double static_load = FFBEngineTestAccess::GetStaticFrontLoad(engine);
@@ -296,7 +301,9 @@ TEST_CASE(test_load_normalization_disabled_behavior, "Physics") {
     data.mWheel[0].mGripFract = 1.0;
     data.mWheel[1].mGripFract = 1.0;
 
-    // Seed as GT3 (4800N)
+    // Seed as GT3 (5000N)
+    engine.calculate_force(&data, "LMGT3");
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "LMGT3");
     ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 5000.0, 1.0);
 
@@ -304,17 +311,24 @@ TEST_CASE(test_load_normalization_disabled_behavior, "Physics") {
     data.mWheel[0].mTireLoad = 10000.0;
     data.mWheel[1].mTireLoad = 10000.0;
 
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "LMGT3");
 
     // Should NOT update peak
     ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 5000.0, 1.0);
 
     // Switch to Hypercar
+    data.mElapsedTime += 0.01;
+    engine.calculate_force(&data, "Hypercar");
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "Hypercar");
     // Should update to Hypercar seed (9500N)
     ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 9500.0, 1.0);
 
-    // Seed as GT3 (4800N)
+    // Seed as GT3 (5000N)
+    data.mElapsedTime += 0.01;
+    engine.calculate_force(&data, "LMGT3");
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "LMGT3");
     double sl = FFBEngineTestAccess::GetStaticFrontLoad(engine);
     ASSERT_NEAR(sl, 2500.0, 1.0);
@@ -334,12 +348,17 @@ TEST_CASE(test_static_load_fallback_class_aware_disabled, "Physics") {
 
     // Seed as Hypercar (9500N)
     engine.calculate_force(&data, "Hypercar");
+    data.mElapsedTime += 0.01;
+    engine.calculate_force(&data, "Hypercar");
 
     // Static load reference should be 9500 * 0.5 = 4750.0
     double static_load = FFBEngineTestAccess::GetStaticFrontLoad(engine);
     ASSERT_NEAR(static_load, 4750.0, 1.0);
 
-    // Seed as GT3 (4800N)
+    // Seed as GT3 (5000N)
+    data.mElapsedTime += 0.01;
+    engine.calculate_force(&data, "LMGT3");
+    data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "LMGT3");
     static_load = FFBEngineTestAccess::GetStaticFrontLoad(engine);
     ASSERT_NEAR(static_load, 2500.0, 1.0);
