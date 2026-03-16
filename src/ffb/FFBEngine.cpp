@@ -175,17 +175,6 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     m_working_info.mLocalAccel.y = m_upsample_local_accel_y.Process(m_derived_accel_y_100hz, ffb_dt, is_new_frame);
     m_working_info.mLocalAccel.z = m_upsample_local_accel_z.Process(m_derived_accel_z_100hz, ffb_dt, is_new_frame);
 
-    // If upsampling is OFF and raw accel was provided, prefer raw accel ONLY IF
-    // the derived acceleration logic is likely inactive (e.g. first frame or missing velocity).
-    // Otherwise, the derived 100Hz signals (now upsampled to 400Hz) are safer.
-    // RELIABILITY FIX: Only use raw accel if we haven't established a velocity baseline yet
-    // OR if the raw acceleration is clearly dominant (legacy test compatibility).
-    if (!upsampling_active) {
-        if (std::abs(data->mLocalAccel.y) > 0.001 || std::abs(data->mLocalAccel.z) > 0.001) {
-            m_working_info.mLocalAccel.y = data->mLocalAccel.y;
-            m_working_info.mLocalAccel.z = data->mLocalAccel.z;
-        }
-    }
     m_working_info.mLocalRotAccel.y = m_upsample_local_rot_accel_y.Process(data->mLocalRotAccel.y, ffb_dt, is_new_frame);
     m_working_info.mLocalRot.y = m_upsample_local_rot_y.Process(data->mLocalRot.y, ffb_dt, is_new_frame);
 

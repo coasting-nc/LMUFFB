@@ -16,6 +16,7 @@ TEST_CASE(test_longitudinal_g_braking, "Physics") {
     engine.m_steering_shaft_gain = 1.0f;
     engine.m_understeer_effect = 0.0f;
     engine.m_long_load_transform = LoadTransform::LINEAR;
+    engine.m_chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
     // Scenario: 1G Braking (+Z is rearward/deceleration)
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0);
@@ -25,20 +26,16 @@ TEST_CASE(test_longitudinal_g_braking, "Physics") {
 
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 5000.0);
 
-    // In legacy mode (dt=0.01), derived accel depends on velocity change.
-    // Setting constant velocity results in zero derived acceleration.
-    // We MUST provide a velocity change to get non-zero long_load_force
-    // unless we use upsampling.
-
     // Step 1: Warmup call to trigger seeding gate
     FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
     engine.calculate_force(&data, "GT3", "Ferrari 296");
 
-    // Step 2: Establish baseline (1G braking via velocity change)
-    // dv = 9.81 * 0.01 = 0.0981
-    data.mLocalVel.z = -(30.0 + 0.0981);
-    data.mElapsedTime += 0.01;
-    engine.calculate_force(&data, "GT3", "Ferrari 296");
+    // Step 2: Establish baseline (1G braking via velocity change) over several frames
+    for (int i = 0; i < 5; i++) {
+        data.mLocalVel.z += (9.81 * 0.01);
+        data.mElapsedTime += 0.01;
+        engine.calculate_force(&data, "GT3", "Ferrari 296");
+    }
 
     auto batch = engine.GetDebugBatch();
     ASSERT_FALSE(batch.empty());
@@ -58,6 +55,7 @@ TEST_CASE(test_longitudinal_g_high_decel, "Physics") {
     engine.m_steering_shaft_gain = 1.0f;
     engine.m_understeer_effect = 0.0f;
     engine.m_long_load_transform = LoadTransform::LINEAR;
+    engine.m_chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
     // Scenario: 3G Braking
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0);
@@ -69,13 +67,11 @@ TEST_CASE(test_longitudinal_g_high_decel, "Physics") {
     engine.calculate_force(&data, "GT3", "Ferrari 296");
 
     // Establishing 3G
-    // dv = 3 * 9.81 * 0.01 = 0.2943
-    data.mLocalVel.z = -(30.0 + 0.2943);
-    data.mElapsedTime += 0.01;
-    engine.calculate_force(&data, "GT3", "Ferrari 296");
-
-    // Physics
-    engine.calculate_force(&data, "GT3", "Ferrari 296");
+    for (int i = 0; i < 5; i++) {
+        data.mLocalVel.z += (3.0 * 9.81 * 0.01);
+        data.mElapsedTime += 0.01;
+        engine.calculate_force(&data, "GT3", "Ferrari 296");
+    }
 
     auto snap = engine.GetDebugBatch().back();
     // 3G Linear -> multiplier = 1.0 + 3.0 * 1.0 = 4.0.
@@ -92,6 +88,7 @@ TEST_CASE(test_longitudinal_g_domain_scaling_cubic, "Physics") {
     engine.m_steering_shaft_gain = 1.0f;
     engine.m_understeer_effect = 0.0f;
     engine.m_long_load_transform = LoadTransform::CUBIC;
+    engine.m_chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
     // Scenario: 0.5G Braking (4.905 m/s2)
     // Domain Scaling: MAX_G_RANGE = 5.0
@@ -110,13 +107,11 @@ TEST_CASE(test_longitudinal_g_domain_scaling_cubic, "Physics") {
     engine.calculate_force(&data, "GT3", "Ferrari 296");
 
     // Establish 0.5G
-    // dv = 0.5 * 9.81 * 0.01 = 0.04905
-    data.mLocalVel.z = -(30.0 + 0.04905);
-    data.mElapsedTime += 0.01;
-    engine.calculate_force(&data, "GT3", "Ferrari 296");
-
-    // Physics
-    engine.calculate_force(&data, "GT3", "Ferrari 296");
+    for (int i = 0; i < 5; i++) {
+        data.mLocalVel.z += (0.5 * 9.81 * 0.01);
+        data.mElapsedTime += 0.01;
+        engine.calculate_force(&data, "GT3", "Ferrari 296");
+    }
 
     auto snap = engine.GetDebugBatch().back();
     ASSERT_NEAR(snap.long_load_force, 7.475f, 0.01f);
@@ -149,3 +144,4 @@ TEST_CASE(test_longitudinal_g_aero_independence, "Physics") {
         ASSERT_NEAR(long_force, 0.0f, 0.01f);
     }
 }
+
