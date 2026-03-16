@@ -390,7 +390,8 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
     }
 }
 
-void Config::LoadPresets() {
+void Config::LoadPresets(const std::string& filename) {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
     presets.clear();
     
     // 1. Default - Uses Preset struct defaults from Config.h (Single Source of Truth)
@@ -1078,9 +1079,9 @@ void Config::LoadPresets() {
         .SetSlipSmoothing(0.015f)
     );
 
-    // --- Parse User Presets from config.ini ---
-    // (Keep the existing parsing logic below, it works fine for file I/O)
-    std::ifstream file(m_config_path);
+    // --- Parse User Presets from file ---
+    std::string final_path = filename.empty() ? m_config_path : filename;
+    std::ifstream file(final_path);
     if (!file.is_open()) return;
 
     std::string line;
@@ -1924,6 +1925,9 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     engine.m_safety.m_immediate_spike_threshold = (std::max)(1.0f, engine.m_safety.m_immediate_spike_threshold);
     engine.m_safety.m_safety_slew_full_scale_time_s = (std::max)(0.01f, engine.m_safety.m_safety_slew_full_scale_time_s);
     engine.m_safety.m_stutter_threshold = (std::max)(1.01f, engine.m_safety.m_stutter_threshold);
+
+    // v0.7.192: Fix Issue #371 - Load presets library immediately
+    LoadPresets(final_path);
 
     Logger::Get().LogFile("[Config] Loaded from %s", final_path.c_str());
 }

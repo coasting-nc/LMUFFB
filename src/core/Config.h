@@ -872,7 +872,7 @@ public:
     // Preset Management
     static std::vector<Preset> presets;
     static std::string m_last_preset_name; // NEW (v0.7.14)
-    static void LoadPresets(); // Populates presets vector
+    static void LoadPresets(const std::string& filename = ""); // Populates presets vector
     static void ApplyPreset(int index, FFBEngine& engine);
     
     // NEW: Add a user preset

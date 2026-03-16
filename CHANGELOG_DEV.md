@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.192]
+- **Fixed User Presets Deletion on Auto-Save (Issue #371)**:
+  - Eliminated "lazy loading" of the presets library which previously only occurred when opening the Tuning GUI.
+  - Implemented mandatory preset loading within `Config::Load` to ensure the in-memory library is always synchronized with the configuration file upon application startup.
+  - Added `g_engine_mutex` protection to `Config::LoadPresets` to ensure thread-safety during multi-threaded auto-save operations.
+  - This fix prevents the FFB engine from overwriting the `config.ini` file with an empty preset list during early session events (like static load latching).
+- **Testing**:
+  - Added `tests/test_issue_371_repro.cpp` which simulates a configuration load followed by an immediate save to verify preset persistence.
+  - Verified 100% pass rate across the full test suite.
+
 ## [0.7.191]
 - **Fixed Telemetry Diagnostic Reset on Car Change (Issue #374)**:
   - Implemented automatic reset of all telemetry error counters and warning flags whenever a car change is detected.
