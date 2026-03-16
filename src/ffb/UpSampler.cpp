@@ -22,13 +22,20 @@ double PolyphaseResampler::Process(double latest_physics_sample, bool is_new_phy
 
     // Apply the 3-tap FIR filter for the current phase
     const double* c = COEFFS[m_phase];
-    double output = c[0] * m_history[0] + c[1] * m_history[1] + c[2] * m_history[2];
+
+    // FIX 1: Correct convolution order.
+    // c[0] is the earliest tap, so it must multiply the newest sample (m_history[2]).
+    // y[n] = c[0]*x[n] + c[1]*x[n-1] + c[2]*x[n-2]
+    double output = c[0] * m_history[2] + c[1] * m_history[1] + c[2] * m_history[0];
 
     // Advance phase (1000Hz ticks)
     // The phase accumulator in main.cpp handles the 2/5 relationship,
     // but the resampler itself needs to know which branch of the polyphase filter to use.
     // Each call to Process is one 1000Hz tick.
-    m_phase = (m_phase + 1) % 5;
+
+    // FIX 2: For a 5/2 resampling ratio (400Hz to 1000Hz), the phase must advance by 2
+    // modulo 5 for every output sample.
+    m_phase = (m_phase + 2) % 5;
 
     return output;
 }

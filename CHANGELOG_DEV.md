@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.196]
+- **Fixed Cogging and Ringing in 1000Hz UpSampler (Issue #385)**:
+  - **Corrected Convolution Order**: Fixed a mathematical error where FIR filter taps were applied in reverse order. The earliest tap now correctly multiplies the newest physics sample, restoring the intended windowed-sinc impulse response.
+  - **Corrected Phase Advancement**: Updated the polyphase phase step from 1 to 2 for the 5/2 resampling ratio (400Hz to 1000Hz). This ensures the resampler correctly steps through fractional delays ($0.0 \rightarrow 0.4 \rightarrow 0.8 \rightarrow 0.2 \rightarrow 0.6$), eliminating aliasing and frequency scaling errors.
+  - **Improved Steering Smoothness**: These fixes eliminate high-frequency artificial vibrations ("cogging") and artificial ringing, resulting in a more organic and buttery-smooth steering feel.
+- **Testing**:
+  - Added `tests/test_upsampler_issue_385.cpp` with new regression tests for impulse response timing and phase sequence.
+  - Updated `tests/test_upsampler_part2.cpp` to accommodate sharper (correct) transitions in signal continuity verification.
+  - Verified 100% pass rate across the full suite of 549 test cases.
+
 ## [0.7.195]
 - **Implemented Diagnostic Logging for NaN/Inf Detection (Issue #386)**:
   - **Rate-Limited Logging**: Introduced a 5-second cooldown timer for NaN/Inf diagnostic logs to prevent log spam and disk I/O performance hits in high-frequency loops.
