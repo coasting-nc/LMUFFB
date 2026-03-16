@@ -17,8 +17,10 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## Comulative changes from version 0.7.166 till 0.7.196
+## Comulative changes from version 0.7.166 till 0.7.197
 
+- **FFB Smoothness Fixes**
+  - This should address all graininess, cogwheel-like feeling and irregular vibrations. It seems they were due to some issues in the implementation of the 1000Hz up-sampling of the FFB introduced since version 0.7.117.
 - **Reduced Kerb Impact in Self-Aligning Torque (Issue #297)**:
   - **Physics Saturation (Always On)**:
     - Implemented a 1.5x static weight cap on the dynamic rear tire load used for torque calculations. This prevents mathematical explosions during vertical kerb strikes.
