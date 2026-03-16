@@ -1598,9 +1598,19 @@ void FFBEngine::ResetNormalization() {
     m_static_load_latched = false;
 
     // If we have a saved static load, restore it (v0.7.70 logic)
-    double saved_load = 0.0;
-    if (Config::GetSavedStaticLoad(m_metadata.GetVehicleName(), saved_load)) {
-        m_static_front_load = saved_load;
+    double saved_front_load = 0.0;
+    double saved_rear_load = 0.0;
+    std::string vName = m_metadata.GetVehicleName();
+    
+    if (Config::GetSavedStaticLoad(vName, saved_front_load)) {
+        m_static_front_load = saved_front_load;
+        
+        if (Config::GetSavedStaticLoad(vName + "_rear", saved_rear_load)) {
+            m_static_rear_load = saved_rear_load;
+        } else {
+            m_static_rear_load = m_auto_peak_front_load * 0.5;
+        }
+        
         m_static_load_latched = true;
     }
 
