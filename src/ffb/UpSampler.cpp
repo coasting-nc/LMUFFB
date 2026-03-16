@@ -9,15 +9,22 @@ PolyphaseResampler::PolyphaseResampler() {
 
 void PolyphaseResampler::Reset() {
     m_phase = 0;
+    m_needs_shift = false;
+    m_pending_sample = 0.0;
     m_history.fill(0.0);
 }
 
 double PolyphaseResampler::Process(double latest_physics_sample, bool is_new_physics_tick) {
     if (is_new_physics_tick) {
-        // Shift history and add new sample
+        m_pending_sample = latest_physics_sample;
+    }
+
+    if (m_needs_shift) {
+        // Shift history and add pending sample
         m_history[0] = m_history[1];
         m_history[1] = m_history[2];
-        m_history[2] = latest_physics_sample;
+        m_history[2] = m_pending_sample;
+        m_needs_shift = false;
     }
 
     // Apply the 3-tap FIR filter for the current phase
@@ -35,7 +42,11 @@ double PolyphaseResampler::Process(double latest_physics_sample, bool is_new_phy
 
     // FIX 2: For a 5/2 resampling ratio (400Hz to 1000Hz), the phase must advance by 2
     // modulo 5 for every output sample.
-    m_phase = (m_phase + 2) % 5;
+    m_phase += 2;
+    if (m_phase >= 5) {
+        m_phase -= 5;
+        m_needs_shift = true;
+    }
 
     return output;
 }

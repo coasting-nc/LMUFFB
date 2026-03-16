@@ -193,7 +193,13 @@ TEST_CASE(test_long_load_multiplier_behavior, "Physics") {
     // Case 2: Cornering (non-zero steering torque)
     data.mSteeringShaftTorque = 10.0;
     engine.m_accel_z_smoothed = 9.81; // 1G braking
-    engine.calculate_force(&data);
+
+    // Call multiple times with increasing time to let Holt-Winters filter settle (m_alpha = 0.8)
+    for (int i = 0; i < 10; ++i) {
+        data.mElapsedTime += 0.01;
+        engine.calculate_force(&data);
+    }
+
     auto snap2 = engine.GetDebugBatch().back();
 
     // factor = 1.0 + 1.0 * 1.0 = 2.0

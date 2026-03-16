@@ -278,9 +278,8 @@ public:
 
             m_time_since_update = 0.0;
 
-            // On new frame, we must return the authoritative raw input (or very close to it)
-            // to avoid breaking existing tests that expect exact values on frame boundaries.
-            return raw_input;
+            // FIX: Return the smoothed level to maintain a continuous signal
+            return m_level;
         } else {
             m_time_since_update += dt;
         }

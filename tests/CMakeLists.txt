@@ -137,6 +137,8 @@ set(TEST_SOURCES
     test_coverage_boost_v10.cpp
     test_issue_384_nan_infection.cpp
     test_issue_386_logging.cpp
+    test_upsampler_issue_393.cpp
+    test_math_utils_issue_393.cpp
     ../src/core/main.cpp
 )
 

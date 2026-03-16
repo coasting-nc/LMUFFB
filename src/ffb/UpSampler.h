@@ -28,6 +28,8 @@ public:
 
 private:
     int m_phase; // Current phase (0-4)
+    bool m_needs_shift;
+    double m_pending_sample;
     std::array<double, 3> m_history; // History of physics samples (400Hz)
 
     // Polyphase coefficients (5 phases, 3 taps each)
