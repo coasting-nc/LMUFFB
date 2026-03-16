@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-16 16:32:41</td>
+            <td class="headerValue">2026-03-16 16:38:39</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -96,16 +96,16 @@
 <span id="L25"><span class="lineNum">      25</span>                 :             : }</span>
 <span id="L26"><span class="lineNum">      26</span>                 :             : </span>
 <span id="L27"><span class="lineNum">      27</span>                 :             : // Internal helper for variadic formatting</span>
-<span id="L28"><span class="lineNum">      28</span>                 :<span class="tlaGNC">       19702 : inline int vSafeFormat(char* dest, size_t dest_size, const char* format, va_list args) {</span></span>
-<span id="L29"><span class="lineNum">      29</span>   [<span class="tlaGBC" title="Branch 0 was taken 19702 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 19702 times"> + </span>]:<span class="tlaGNC">       19702 :     if (!dest || dest_size == 0) return -1;</span></span>
+<span id="L28"><span class="lineNum">      28</span>                 :<span class="tlaGNC">       18795 : inline int vSafeFormat(char* dest, size_t dest_size, const char* format, va_list args) {</span></span>
+<span id="L29"><span class="lineNum">      29</span>   [<span class="tlaGBC" title="Branch 0 was taken 18795 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 18795 times"> + </span>]:<span class="tlaGNC">       18795 :     if (!dest || dest_size == 0) return -1;</span></span>
 <span id="L30"><span class="lineNum">      30</span>                 :             : #ifdef _WIN32</span>
 <span id="L31"><span class="lineNum">      31</span>                 :             :     return vsnprintf_s(dest, dest_size, _TRUNCATE, format, args);</span>
 <span id="L32"><span class="lineNum">      32</span>                 :             : #else</span>
-<span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC">       19702 :     int result = vsnprintf(dest, dest_size, format, args);</span></span>
-<span id="L34"><span class="lineNum">      34</span>   [<span class="tlaGBC" title="Branch 0 was taken 19702 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 19702 times"> + </span>]:<span class="tlaGNC">       19702 :     if (result &gt;= (int)dest_size || result &lt; 0) {</span></span>
+<span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC">       18795 :     int result = vsnprintf(dest, dest_size, format, args);</span></span>
+<span id="L34"><span class="lineNum">      34</span>   [<span class="tlaGBC" title="Branch 0 was taken 18795 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 18795 times"> + </span>]:<span class="tlaGNC">       18795 :     if (result &gt;= (int)dest_size || result &lt; 0) {</span></span>
 <span id="L35"><span class="lineNum">      35</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         dest[dest_size - 1] = '\0';</span></span>
 <span id="L36"><span class="lineNum">      36</span>                 :             :     }</span>
-<span id="L37"><span class="lineNum">      37</span>                 :<span class="tlaGNC tlaBgGNC">       19702 :     return result;</span></span>
+<span id="L37"><span class="lineNum">      37</span>                 :<span class="tlaGNC tlaBgGNC">       18795 :     return result;</span></span>
 <span id="L38"><span class="lineNum">      38</span>                 :             : #endif</span>
 <span id="L39"><span class="lineNum">      39</span>                 :             : }</span>
 <span id="L40"><span class="lineNum">      40</span>                 :             : </span>
