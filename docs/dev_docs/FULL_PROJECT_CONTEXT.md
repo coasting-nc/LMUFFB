@@ -4060,6 +4060,12 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         !std::isfinite(data->mLocalAccel.z) ||
         !std::isfinite(data->mSteeringShaftTorque) ||
         !std::isfinite(genFFBTorque)) {
+
+        // Rate-limited logging (once every 5 seconds)
+        if (data->mElapsedTime > m_last_core_nan_log_time + 5.0) {
+            Logger::Get().LogFile("[Diag] Core Physics NaN/Inf detected! (Steering, Accel, or Torque). FFB muted for this frame.");
+            m_last_core_nan_log_time = data->mElapsedTime;
+        }
         return 0.0;
     }
 
@@ -4096,15 +4102,21 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Replace NaN/Infinity in wheel channels with 0.0.
     // This protects the filters AND seamlessly triggers our existing fallback logic
     // (e.g., approximate_load) if the data is encrypted or missing.
+    bool aux_nan_detected = false;
     for (int i = 0; i < 4; i++) {
-        if (!std::isfinite(m_working_info.mWheel[i].mTireLoad)) m_working_info.mWheel[i].mTireLoad = 0.0;
-        if (!std::isfinite(m_working_info.mWheel[i].mGripFract)) m_working_info.mWheel[i].mGripFract = 0.0;
-        if (!std::isfinite(m_working_info.mWheel[i].mSuspForce)) m_working_info.mWheel[i].mSuspForce = 0.0;
-        if (!std::isfinite(m_working_info.mWheel[i].mVerticalTireDeflection)) m_working_info.mWheel[i].mVerticalTireDeflection = 0.0;
-        if (!std::isfinite(m_working_info.mWheel[i].mLateralPatchVel)) m_working_info.mWheel[i].mLateralPatchVel = 0.0;
-        if (!std::isfinite(m_working_info.mWheel[i].mLongitudinalPatchVel)) m_working_info.mWheel[i].mLongitudinalPatchVel = 0.0;
-        if (!std::isfinite(m_working_info.mWheel[i].mRotation)) m_working_info.mWheel[i].mRotation = 0.0;
-        if (!std::isfinite(m_working_info.mWheel[i].mBrakePressure)) m_working_info.mWheel[i].mBrakePressure = 0.0;
+        if (!std::isfinite(m_working_info.mWheel[i].mTireLoad)) { m_working_info.mWheel[i].mTireLoad = 0.0; aux_nan_detected = true; }
+        if (!std::isfinite(m_working_info.mWheel[i].mGripFract)) { m_working_info.mWheel[i].mGripFract = 0.0; aux_nan_detected = true; }
+        if (!std::isfinite(m_working_info.mWheel[i].mSuspForce)) { m_working_info.mWheel[i].mSuspForce = 0.0; aux_nan_detected = true; }
+        if (!std::isfinite(m_working_info.mWheel[i].mVerticalTireDeflection)) { m_working_info.mWheel[i].mVerticalTireDeflection = 0.0; aux_nan_detected = true; }
+        if (!std::isfinite(m_working_info.mWheel[i].mLateralPatchVel)) { m_working_info.mWheel[i].mLateralPatchVel = 0.0; aux_nan_detected = true; }
+        if (!std::isfinite(m_working_info.mWheel[i].mLongitudinalPatchVel)) { m_working_info.mWheel[i].mLongitudinalPatchVel = 0.0; aux_nan_detected = true; }
+        if (!std::isfinite(m_working_info.mWheel[i].mRotation)) { m_working_info.mWheel[i].mRotation = 0.0; aux_nan_detected = true; }
+        if (!std::isfinite(m_working_info.mWheel[i].mBrakePressure)) { m_working_info.mWheel[i].mBrakePressure = 0.0; aux_nan_detected = true; }
+    }
+
+    if (aux_nan_detected && data->mElapsedTime > m_last_aux_nan_log_time + 5.0) {
+        Logger::Get().LogFile("[Diag] Auxiliary Wheel NaN/Inf detected and sanitized to 0.0.");
+        m_last_aux_nan_log_time = data->mElapsedTime;
     }
 
     // Upsample Steering Shaft Torque (Holt-Winters)
@@ -4190,6 +4202,12 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // to clear out high-frequency residuals and prevent stale state from infecting new sessions.
     if (m_was_allowed != allowed) {
         m_kerb_timer = 0.0;
+
+        // --- NEW: Reset diagnostic timers ---
+        m_last_core_nan_log_time = -999.0;
+        m_last_aux_nan_log_time = -999.0;
+        m_last_math_nan_log_time = -999.0;
+
         m_upsample_shaft_torque.Reset();
         m_upsample_steering.Reset();
         m_upsample_throttle.Reset();
@@ -5025,6 +5043,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     
     // --- NEW: Final NaN catch-all ---
     if (!std::isfinite(norm_force)) {
+        if (data->mElapsedTime > m_last_math_nan_log_time + 5.0) {
+            Logger::Get().LogFile("[Diag] Final output force is NaN/Inf! Internal math instability detected. Muting FFB.");
+            m_last_math_nan_log_time = data->mElapsedTime;
+        }
         norm_force = 0.0;
     }
 
@@ -6290,6 +6312,11 @@ private:
     double m_last_raw_torque = 0.0; 
     bool m_was_allowed = true; // Track transition for filter reset
 
+    // Diagnostic Log Cooldowns (v0.7.x)
+    double m_last_core_nan_log_time = -999.0;
+    double m_last_aux_nan_log_time = -999.0;
+    double m_last_math_nan_log_time = -999.0;
+
     void update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt);
     void InitializeLoadReference(const char* className, const char* vehicleName);
     
@@ -6795,26 +6822,44 @@ PolyphaseResampler::PolyphaseResampler() {
 
 void PolyphaseResampler::Reset() {
     m_phase = 0;
+    m_needs_shift = false;
+    m_pending_sample = 0.0;
     m_history.fill(0.0);
 }
 
 double PolyphaseResampler::Process(double latest_physics_sample, bool is_new_physics_tick) {
     if (is_new_physics_tick) {
-        // Shift history and add new sample
+        m_pending_sample = latest_physics_sample;
+    }
+
+    if (m_needs_shift) {
+        // Shift history and add pending sample
         m_history[0] = m_history[1];
         m_history[1] = m_history[2];
-        m_history[2] = latest_physics_sample;
+        m_history[2] = m_pending_sample;
+        m_needs_shift = false;
     }
 
     // Apply the 3-tap FIR filter for the current phase
     const double* c = COEFFS[m_phase];
-    double output = c[0] * m_history[0] + c[1] * m_history[1] + c[2] * m_history[2];
+
+    // FIX 1: Correct convolution order.
+    // c[0] is the earliest tap, so it must multiply the newest sample (m_history[2]).
+    // y[n] = c[0]*x[n] + c[1]*x[n-1] + c[2]*x[n-2]
+    double output = c[0] * m_history[2] + c[1] * m_history[1] + c[2] * m_history[0];
 
     // Advance phase (1000Hz ticks)
     // The phase accumulator in main.cpp handles the 2/5 relationship,
     // but the resampler itself needs to know which branch of the polyphase filter to use.
     // Each call to Process is one 1000Hz tick.
-    m_phase = (m_phase + 1) % 5;
+
+    // FIX 2: For a 5/2 resampling ratio (400Hz to 1000Hz), the phase must advance by 2
+    // modulo 5 for every output sample.
+    m_phase += 2;
+    if (m_phase >= 5) {
+        m_phase -= 5;
+        m_needs_shift = true;
+    }
 
     return output;
 }
@@ -6855,6 +6900,8 @@ public:
 
 private:
     int m_phase; // Current phase (0-4)
+    bool m_needs_shift;
+    double m_pending_sample;
     std::array<double, 3> m_history; // History of physics samples (400Hz)
 
     // Polyphase coefficients (5 phases, 3 taps each)
@@ -14208,9 +14255,8 @@ public:
 
             m_time_since_update = 0.0;
 
-            // On new frame, we must return the authoritative raw input (or very close to it)
-            // to avoid breaking existing tests that expect exact values on frame boundaries.
-            return raw_input;
+            // FIX: Return the smoothed level to maintain a continuous signal
+            return m_level;
         } else {
             m_time_since_update += dt;
         }
