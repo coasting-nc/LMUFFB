@@ -248,6 +248,7 @@ def main():
     
     DEFAULT_EXCLUDE_ALL_MAIN_CODE = False
     DEFAULT_INCLUDE_MAIN_GUI = True
+    # TODO: separate tooltips from GUI 
     DEFAULT_INCLUDE_MAIN_IO = True
     DEFAULT_INCLUDE_MAIN_PHYSICS = True
     DEFAULT_INCLUDE_MAIN_GAME_SHARED_MEMORY = True
@@ -255,11 +256,12 @@ def main():
     DEFAULT_INCLUDE_MAIN_MAIN = True
     DEFAULT_INCLUDE_MAIN_LOGGER = True
     DEFAULT_INCLUDE_MAIN_MONITOR = True
-    
+        
     DEFAULT_INCLUDE_MAKEFILES = False
     DEFAULT_TEST_EXAMPLES_ONLY = True
     DEFAULT_INCLUDE_LOG_ANALYZER = True
     DEFAULT_INCLUDE_REFERENCE_DEV_DOCUMENTATION = False
+    # TODO: update reference docs so that they are up to date and can be included
     DEFAULT_INCLUDE_CUSTOM_DOCS = True
     
 
