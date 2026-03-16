@@ -47,9 +47,10 @@ TEST_CASE(test_issue_218_invalid_range_warning, "Issue_218") {
     logBuffer.str("");
     logBuffer.clear();
 
-    // Frame 2: Should NOT issue warning again
+    // Frame 2: Should NOT issue warning again (if it's the same car)
     engine.calculate_force(&data, "GT3", "Ferrari 296 GT3");
-    ASSERT_TRUE(logBuffer.str().empty());
+    // Check specifically for the warning message, ignoring other logs (like REST API)
+    ASSERT_TRUE(logBuffer.str().find("[WARNING] Invalid PhysicalSteeringWheelRange") == std::string::npos);
 
     // Reset warning via car change (using different class to trigger seeding)
     // 1st call with new class: detects car change, resets m_warned_invalid_range, then checks range and warns.

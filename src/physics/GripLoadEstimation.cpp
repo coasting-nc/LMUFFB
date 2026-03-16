@@ -71,6 +71,8 @@ void FFBEngine::update_static_load_reference(double current_front_load, double c
 void FFBEngine::InitializeLoadReference(const char* className, const char* vehicleName) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
+    m_metadata.ResetWarnings(); // v0.7.190: Unified warning reset on car change
+
     // v0.7.109: Perform a full normalization reset on car change
     // This ensures that session-learned peaks from a previous car don't pollute the new session.
     ResetNormalization();

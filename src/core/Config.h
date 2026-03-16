@@ -98,6 +98,7 @@ struct Preset {
     float scrub_drag_gain = 0.0f;
     
     float rear_align_effect = 0.666f;
+    float kerb_strike_rejection = 0.0f; // NEW
     float sop_yaw_gain = 0.333f;
     float gyro_gain = 0.0f;
     
@@ -238,6 +239,7 @@ struct Preset {
     Preset& SetBottoming(int method) { bottoming_method = method; return *this; }
     Preset& SetScrub(float v) { scrub_drag_gain = v; return *this; }
     Preset& SetRearAlign(float v) { rear_align_effect = v; return *this; }
+    Preset& SetKerbStrikeRejection(float v) { kerb_strike_rejection = v; return *this; }
     Preset& SetSoPYaw(float v) { sop_yaw_gain = v; return *this; }
     Preset& SetGyro(float v) { gyro_gain = v; return *this; }
     
@@ -421,6 +423,7 @@ struct Preset {
         engine.m_bottoming_method = bottoming_method;
         engine.m_scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);
         engine.m_rear_align_effect = (std::max)(0.0f, rear_align_effect);
+        engine.m_kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, kerb_strike_rejection));
         engine.m_sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);
         engine.m_gyro_gain = (std::max)(0.0f, gyro_gain);
         engine.m_steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);
@@ -536,6 +539,7 @@ struct Preset {
         spin_freq_scale = (std::max)(0.1f, spin_freq_scale);
         scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);
         rear_align_effect = (std::max)(0.0f, rear_align_effect);
+        kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, kerb_strike_rejection));
         sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);
         gyro_gain = (std::max)(0.0f, gyro_gain);
         steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);
@@ -654,6 +658,7 @@ struct Preset {
         bottoming_method = engine.m_bottoming_method;
         scrub_drag_gain = engine.m_scrub_drag_gain;
         rear_align_effect = engine.m_rear_align_effect;
+        kerb_strike_rejection = engine.m_kerb_strike_rejection;
         sop_yaw_gain = engine.m_sop_yaw_gain;
         gyro_gain = engine.m_gyro_gain;
         steering_shaft_gain = engine.m_steering_shaft_gain;
@@ -793,6 +798,7 @@ struct Preset {
         if (bottoming_method != p.bottoming_method) return false;
         if (!is_near(scrub_drag_gain, p.scrub_drag_gain, eps)) return false;
         if (!is_near(rear_align_effect, p.rear_align_effect, eps)) return false;
+        if (!is_near(kerb_strike_rejection, p.kerb_strike_rejection, eps)) return false;
         if (!is_near(sop_yaw_gain, p.sop_yaw_gain, eps)) return false;
         if (!is_near(gyro_gain, p.gyro_gain, eps)) return false;
         if (!is_near(steering_shaft_gain, p.steering_shaft_gain, eps)) return false;

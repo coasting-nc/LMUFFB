@@ -206,6 +206,82 @@ TEST_CASE(test_long_load_multiplier_behavior, "Physics") {
     ASSERT_NEAR(snap2.total_output, 0.2f, 0.01f);
 }
 
+TEST_CASE(test_kerb_strike_rejection, "Physics") {
+    FFBEngine engine;
+    InitializeEngine(engine);
+
+    // Configure engine for test
+    engine.m_rear_align_effect = 1.0f;
+    engine.m_kerb_strike_rejection = 1.0f; // 100% rejection
+    engine.m_invert_force = false;
+    engine.m_gain = 1.0f;
+    engine.m_wheelbase_max_nm = 100.0f;
+    engine.m_target_rim_nm = 100.0f;
+    engine.m_optimal_slip_angle = 0.1f;
+
+    // Seed static load
+    FFBEngineTestAccess::SetStaticRearLoad(engine, 5000.0);
+
+    // 1. Normal State (No Kerb)
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+    data.mWheel[2].mTireLoad = 5000.0;
+    data.mWheel[3].mTireLoad = 5000.0;
+    data.mWheel[2].mLateralPatchVel = 2.0; // 0.1 rad slip angle at 20m/s
+    data.mWheel[3].mLateralPatchVel = 2.0;
+    data.mWheel[2].mSurfaceType = 0; // Dry
+    data.mWheel[3].mSurfaceType = 0;
+
+    engine.calculate_force(&data);
+    auto snap1 = engine.GetDebugBatch().back();
+
+    // calc_rear_lat_force = 0.1 * 5000 * 15 = 7500 N (capped at 6000)
+    // Torque = -6000 * 0.001 * 1.0 = -6.0 Nm
+    // With tanh: normalized_slip = 0.1 / 0.101 = 0.99. tanh(0.99) = 0.757.
+    // effective_slip = 0.1 * 0.757 = 0.0757
+    // calc_rear_lat_force = 0.0757 * 5000 * 15 = 5677 N
+    // Torque = -5677 * 0.001 * 1.0 = -5.677 Nm
+
+    ASSERT_LT(snap1.ffb_rear_torque, -1.0f);
+    double normal_torque = snap1.ffb_rear_torque;
+
+    // 2. Kerb Strike via Surface Type
+    data.mWheel[2].mSurfaceType = 5; // Rumblestrip
+    engine.calculate_force(&data);
+    auto snap2 = engine.GetDebugBatch().back();
+
+    ASSERT_NEAR(snap2.ffb_rear_torque, 0.0f, 0.001f);
+    ASSERT_GT(FFBEngineTestAccess::GetKerbTimer(engine), 0.05);
+
+    // 3. Hold timer verification
+    data.mWheel[2].mSurfaceType = 0;
+    engine.calculate_force(&data);
+    auto snap3 = engine.GetDebugBatch().back();
+    ASSERT_NEAR(snap3.ffb_rear_torque, 0.0f, 0.001f);
+
+    // 4. Kerb Strike via Suspension Velocity
+    FFBEngineTestAccess::SetKerbTimer(engine, 0.0);
+    data.mWheel[2].mVerticalTireDeflection = 0.05; // 5cm jump
+    // Need to have called it before to have a prev_deflection
+    engine.calculate_force(&data);
+    data.mWheel[2].mVerticalTireDeflection = 0.10; // +5cm in one frame (0.0025s) = 20 m/s
+    engine.calculate_force(&data);
+    auto snap4 = engine.GetDebugBatch().back();
+    ASSERT_NEAR(snap4.ffb_rear_torque, 0.0f, 0.001f);
+
+    // 5. Physics Saturation Verification (Always On)
+    engine.m_kerb_strike_rejection = 0.0f; // Disable rejection
+    FFBEngineTestAccess::SetKerbTimer(engine, 0.0);
+    data.mWheel[2].mTireLoad = 50000.0; // 10x static load!
+    data.mWheel[3].mTireLoad = 50000.0;
+    engine.calculate_force(&data);
+    auto snap5 = engine.GetDebugBatch().back();
+
+    // max_effective_load = 5000 * 1.5 = 7500 N
+    // Force = 0.0757 * 7500 * 15 = 8516 N (capped at 6000)
+    // Torque = -6000 * 0.001 * 1.0 = -6.0 Nm
+    ASSERT_NEAR(snap5.ffb_rear_torque, -6.0f, 0.1f);
+}
+
 } // namespace FFBEngineTests
 
 

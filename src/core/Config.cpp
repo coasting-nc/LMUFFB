@@ -110,6 +110,7 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "grip_smoothing_fast") { current_preset.grip_smoothing_fast = std::stof(value); return true; }
     if (key == "grip_smoothing_sensitivity") { current_preset.grip_smoothing_sensitivity = std::stof(value); return true; }
     if (key == "rear_align_effect") { current_preset.rear_align_effect = std::stof(value); return true; }
+    if (key == "kerb_strike_rejection") { current_preset.kerb_strike_rejection = std::stof(value); return true; }
     if (key == "sop_yaw_gain") { current_preset.sop_yaw_gain = std::stof(value); return true; }
     if (key == "yaw_kick_threshold") { current_preset.yaw_kick_threshold = std::stof(value); return true; }
     if (key == "unloaded_yaw_gain") { current_preset.unloaded_yaw_gain = std::stof(value); return true; }
@@ -276,6 +277,7 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "grip_smoothing_fast") { engine.m_grip_smoothing_fast = std::stof(value); return true; }
     if (key == "grip_smoothing_sensitivity") { engine.m_grip_smoothing_sensitivity = std::stof(value); return true; }
     if (key == "rear_align_effect") { engine.m_rear_align_effect = std::stof(value); return true; }
+    if (key == "kerb_strike_rejection") { engine.m_kerb_strike_rejection = std::stof(value); return true; }
     if (key == "sop_yaw_gain") { engine.m_sop_yaw_gain = std::stof(value); return true; }
     if (key == "yaw_kick_threshold") { engine.m_yaw_kick_threshold = std::stof(value); return true; }
     if (key == "unloaded_yaw_gain") { engine.m_unloaded_yaw_gain = std::stof(value); return true; }
@@ -1233,6 +1235,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "lateral_load_effect=" << p.lateral_load << "\n";
     file << "lat_load_transform=" << p.lat_load_transform << "\n";
     file << "rear_align_effect=" << p.rear_align_effect << "\n";
+    file << "kerb_strike_rejection=" << p.kerb_strike_rejection << "\n";
     file << "sop_yaw_gain=" << p.sop_yaw_gain << "\n";
     file << "yaw_kick_threshold=" << p.yaw_kick_threshold << "\n";
     file << "unloaded_yaw_gain=" << p.unloaded_yaw_gain << "\n";
@@ -1579,6 +1582,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "lateral_load_effect=" << engine.m_lat_load_effect << "\n";
         file << "lat_load_transform=" << static_cast<int>(engine.m_lat_load_transform) << "\n";
         file << "rear_align_effect=" << engine.m_rear_align_effect << "\n";
+        file << "kerb_strike_rejection=" << engine.m_kerb_strike_rejection << "\n";
         file << "sop_yaw_gain=" << engine.m_sop_yaw_gain << "\n";
         file << "yaw_kick_threshold=" << engine.m_yaw_kick_threshold << "\n";
         file << "unloaded_yaw_gain=" << engine.m_unloaded_yaw_gain << "\n";
@@ -1901,6 +1905,9 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     }
     if (engine.m_rear_align_effect < 0.0f || engine.m_rear_align_effect > 2.0f) {
         engine.m_rear_align_effect = (std::max)(0.0f, (std::min)(2.0f, engine.m_rear_align_effect));
+    }
+    if (engine.m_kerb_strike_rejection < 0.0f || engine.m_kerb_strike_rejection > 1.0f) {
+        engine.m_kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, engine.m_kerb_strike_rejection));
     }
     if (engine.m_sop_effect < 0.0f || engine.m_sop_effect > 2.0f) {
         engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, engine.m_sop_effect));
