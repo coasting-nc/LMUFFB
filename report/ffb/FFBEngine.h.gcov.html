@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-16 09:54:02</td>
+            <td class="headerValue">2026-03-16 16:42:05</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -447,299 +447,302 @@
 <span id="L376"><span class="lineNum">     376</span>                 :             :     float m_spin_freq_scale = 1.0f;</span>
 <span id="L377"><span class="lineNum">     377</span>                 :             :     </span>
 <span id="L378"><span class="lineNum">     378</span>                 :             :     // Internal state for Bottoming (Method B)</span>
-<span id="L379"><span class="lineNum">     379</span>                 :             :     double m_prev_susp_force[2] = {0.0, 0.0}; </span>
+<span id="L379"><span class="lineNum">     379</span>                 :             :     double m_prev_susp_force[4] = {0.0, 0.0, 0.0, 0.0};</span>
 <span id="L380"><span class="lineNum">     380</span>                 :             : </span>
-<span id="L381"><span class="lineNum">     381</span>                 :             :     // New Settings (v0.4.5)</span>
-<span id="L382"><span class="lineNum">     382</span>                 :             :     int m_bottoming_method = 0; </span>
-<span id="L383"><span class="lineNum">     383</span>                 :             :     float m_scrub_drag_gain; </span>
-<span id="L384"><span class="lineNum">     384</span>                 :             : </span>
-<span id="L385"><span class="lineNum">     385</span>                 :             :     // Smoothing State</span>
-<span id="L386"><span class="lineNum">     386</span>                 :             :     double m_sop_lat_g_smoothed = 0.0;</span>
-<span id="L387"><span class="lineNum">     387</span>                 :             :     double m_sop_load_smoothed = 0.0; // New v0.7.121</span>
-<span id="L388"><span class="lineNum">     388</span>                 :             :     </span>
-<span id="L389"><span class="lineNum">     389</span>                 :             :     // Filter Instances (v0.4.41)</span>
-<span id="L390"><span class="lineNum">     390</span>                 :             :     BiquadNotch m_notch_filter;</span>
-<span id="L391"><span class="lineNum">     391</span>                 :             :     BiquadNotch m_static_notch_filter;</span>
-<span id="L392"><span class="lineNum">     392</span>                 :             : </span>
-<span id="L393"><span class="lineNum">     393</span>                 :             :     // Slope Detection Buffers (Circular) - v0.7.0</span>
-<span id="L394"><span class="lineNum">     394</span>                 :             :     static constexpr int SLOPE_BUFFER_MAX = 41;  </span>
-<span id="L395"><span class="lineNum">     395</span>                 :             :     std::array&lt;double, SLOPE_BUFFER_MAX&gt; m_slope_lat_g_buffer = {};</span>
-<span id="L396"><span class="lineNum">     396</span>                 :             :     std::array&lt;double, SLOPE_BUFFER_MAX&gt; m_slope_slip_buffer = {};</span>
-<span id="L397"><span class="lineNum">     397</span>                 :             :     int m_slope_buffer_index = 0;</span>
-<span id="L398"><span class="lineNum">     398</span>                 :             :     int m_slope_buffer_count = 0;</span>
-<span id="L399"><span class="lineNum">     399</span>                 :             : </span>
-<span id="L400"><span class="lineNum">     400</span>                 :             :     // Slope Detection State (Public for diagnostics) - v0.7.0</span>
-<span id="L401"><span class="lineNum">     401</span>                 :             :     double m_slope_current = 0.0;</span>
-<span id="L402"><span class="lineNum">     402</span>                 :             :     double m_slope_grip_factor = 1.0;</span>
-<span id="L403"><span class="lineNum">     403</span>                 :             :     double m_slope_smoothed_output = 1.0;</span>
-<span id="L404"><span class="lineNum">     404</span>                 :             : </span>
-<span id="L405"><span class="lineNum">     405</span>                 :             :     // NEW v0.7.38: Input Smoothing State</span>
-<span id="L406"><span class="lineNum">     406</span>                 :             :     double m_slope_lat_g_smoothed = 0.0;</span>
-<span id="L407"><span class="lineNum">     407</span>                 :             :     double m_slope_slip_smoothed = 0.0;</span>
-<span id="L408"><span class="lineNum">     408</span>                 :             : </span>
-<span id="L409"><span class="lineNum">     409</span>                 :             :     // NEW v0.7.38: Steady State Logic</span>
-<span id="L410"><span class="lineNum">     410</span>                 :             :     double m_slope_hold_timer = 0.0;</span>
-<span id="L411"><span class="lineNum">     411</span>                 :             :     static constexpr double SLOPE_HOLD_TIME = 0.25; </span>
-<span id="L412"><span class="lineNum">     412</span>                 :             : </span>
-<span id="L413"><span class="lineNum">     413</span>                 :             :     // NEW v0.7.38: Debug members for Logger</span>
-<span id="L414"><span class="lineNum">     414</span>                 :             :     double m_debug_slope_raw = 0.0;</span>
-<span id="L415"><span class="lineNum">     415</span>                 :             :     double m_debug_slope_num = 0.0;</span>
-<span id="L416"><span class="lineNum">     416</span>                 :             :     double m_debug_slope_den = 0.0;</span>
-<span id="L417"><span class="lineNum">     417</span>                 :             : </span>
-<span id="L418"><span class="lineNum">     418</span>                 :             :     // NEW v0.7.40: Advanced Slope Detection State</span>
-<span id="L419"><span class="lineNum">     419</span>                 :             :     double m_slope_lat_g_prev = 0.0;</span>
-<span id="L420"><span class="lineNum">     420</span>                 :             :     std::array&lt;double, SLOPE_BUFFER_MAX&gt; m_slope_torque_buffer = {};</span>
-<span id="L421"><span class="lineNum">     421</span>                 :             :     std::array&lt;double, SLOPE_BUFFER_MAX&gt; m_slope_steer_buffer = {};</span>
-<span id="L422"><span class="lineNum">     422</span>                 :             :     double m_slope_torque_smoothed = 0.0;</span>
-<span id="L423"><span class="lineNum">     423</span>                 :             :     double m_slope_steer_smoothed = 0.0;</span>
-<span id="L424"><span class="lineNum">     424</span>                 :             :     double m_slope_torque_current = 0.0;</span>
-<span id="L425"><span class="lineNum">     425</span>                 :             :     </span>
-<span id="L426"><span class="lineNum">     426</span>                 :             :     // NEW v0.7.40: More Debug members</span>
-<span id="L427"><span class="lineNum">     427</span>                 :             :     double m_debug_slope_torque_num = 0.0;</span>
-<span id="L428"><span class="lineNum">     428</span>                 :             :     double m_debug_slope_torque_den = 0.0;</span>
-<span id="L429"><span class="lineNum">     429</span>                 :             :     double m_debug_lat_g_slew = 0.0;</span>
-<span id="L430"><span class="lineNum">     430</span>                 :             : </span>
-<span id="L431"><span class="lineNum">     431</span>                 :             :     // Dynamic Weight State (v0.7.46)</span>
-<span id="L432"><span class="lineNum">     432</span>                 :             :     double m_static_front_load = 0.0; </span>
-<span id="L433"><span class="lineNum">     433</span>                 :             :     double m_static_rear_load = 0.0; // New v0.7.164 (Issue #322)</span>
-<span id="L434"><span class="lineNum">     434</span>                 :             :     bool m_static_load_latched = false;</span>
-<span id="L435"><span class="lineNum">     435</span>                 :             :     double m_smoothed_vibration_mult = 1.0;</span>
-<span id="L436"><span class="lineNum">     436</span>                 :             :     double m_long_load_smoothed = 1.0; // Renamed from dynamic_weight_smoothed (#301)</span>
-<span id="L437"><span class="lineNum">     437</span>                 :             :     double m_front_grip_smoothed_state = 1.0; </span>
-<span id="L438"><span class="lineNum">     438</span>                 :             :     double m_rear_grip_smoothed_state = 1.0;  </span>
-<span id="L439"><span class="lineNum">     439</span>                 :             : </span>
-<span id="L440"><span class="lineNum">     440</span>                 :             :     // Metadata Manager (Option A Extracted)</span>
-<span id="L441"><span class="lineNum">     441</span>                 :             :     FFBMetadataManager m_metadata;</span>
+<span id="L381"><span class="lineNum">     381</span>                 :             :     // Seeding state (Issue #379)</span>
+<span id="L382"><span class="lineNum">     382</span>                 :             :     bool m_derivatives_seeded = false;</span>
+<span id="L383"><span class="lineNum">     383</span>                 :             : </span>
+<span id="L384"><span class="lineNum">     384</span>                 :             :     // New Settings (v0.4.5)</span>
+<span id="L385"><span class="lineNum">     385</span>                 :             :     int m_bottoming_method = 0; </span>
+<span id="L386"><span class="lineNum">     386</span>                 :             :     float m_scrub_drag_gain; </span>
+<span id="L387"><span class="lineNum">     387</span>                 :             : </span>
+<span id="L388"><span class="lineNum">     388</span>                 :             :     // Smoothing State</span>
+<span id="L389"><span class="lineNum">     389</span>                 :             :     double m_sop_lat_g_smoothed = 0.0;</span>
+<span id="L390"><span class="lineNum">     390</span>                 :             :     double m_sop_load_smoothed = 0.0; // New v0.7.121</span>
+<span id="L391"><span class="lineNum">     391</span>                 :             :     </span>
+<span id="L392"><span class="lineNum">     392</span>                 :             :     // Filter Instances (v0.4.41)</span>
+<span id="L393"><span class="lineNum">     393</span>                 :             :     BiquadNotch m_notch_filter;</span>
+<span id="L394"><span class="lineNum">     394</span>                 :             :     BiquadNotch m_static_notch_filter;</span>
+<span id="L395"><span class="lineNum">     395</span>                 :             : </span>
+<span id="L396"><span class="lineNum">     396</span>                 :             :     // Slope Detection Buffers (Circular) - v0.7.0</span>
+<span id="L397"><span class="lineNum">     397</span>                 :             :     static constexpr int SLOPE_BUFFER_MAX = 41;  </span>
+<span id="L398"><span class="lineNum">     398</span>                 :             :     std::array&lt;double, SLOPE_BUFFER_MAX&gt; m_slope_lat_g_buffer = {};</span>
+<span id="L399"><span class="lineNum">     399</span>                 :             :     std::array&lt;double, SLOPE_BUFFER_MAX&gt; m_slope_slip_buffer = {};</span>
+<span id="L400"><span class="lineNum">     400</span>                 :             :     int m_slope_buffer_index = 0;</span>
+<span id="L401"><span class="lineNum">     401</span>                 :             :     int m_slope_buffer_count = 0;</span>
+<span id="L402"><span class="lineNum">     402</span>                 :             : </span>
+<span id="L403"><span class="lineNum">     403</span>                 :             :     // Slope Detection State (Public for diagnostics) - v0.7.0</span>
+<span id="L404"><span class="lineNum">     404</span>                 :             :     double m_slope_current = 0.0;</span>
+<span id="L405"><span class="lineNum">     405</span>                 :             :     double m_slope_grip_factor = 1.0;</span>
+<span id="L406"><span class="lineNum">     406</span>                 :             :     double m_slope_smoothed_output = 1.0;</span>
+<span id="L407"><span class="lineNum">     407</span>                 :             : </span>
+<span id="L408"><span class="lineNum">     408</span>                 :             :     // NEW v0.7.38: Input Smoothing State</span>
+<span id="L409"><span class="lineNum">     409</span>                 :             :     double m_slope_lat_g_smoothed = 0.0;</span>
+<span id="L410"><span class="lineNum">     410</span>                 :             :     double m_slope_slip_smoothed = 0.0;</span>
+<span id="L411"><span class="lineNum">     411</span>                 :             : </span>
+<span id="L412"><span class="lineNum">     412</span>                 :             :     // NEW v0.7.38: Steady State Logic</span>
+<span id="L413"><span class="lineNum">     413</span>                 :             :     double m_slope_hold_timer = 0.0;</span>
+<span id="L414"><span class="lineNum">     414</span>                 :             :     static constexpr double SLOPE_HOLD_TIME = 0.25; </span>
+<span id="L415"><span class="lineNum">     415</span>                 :             : </span>
+<span id="L416"><span class="lineNum">     416</span>                 :             :     // NEW v0.7.38: Debug members for Logger</span>
+<span id="L417"><span class="lineNum">     417</span>                 :             :     double m_debug_slope_raw = 0.0;</span>
+<span id="L418"><span class="lineNum">     418</span>                 :             :     double m_debug_slope_num = 0.0;</span>
+<span id="L419"><span class="lineNum">     419</span>                 :             :     double m_debug_slope_den = 0.0;</span>
+<span id="L420"><span class="lineNum">     420</span>                 :             : </span>
+<span id="L421"><span class="lineNum">     421</span>                 :             :     // NEW v0.7.40: Advanced Slope Detection State</span>
+<span id="L422"><span class="lineNum">     422</span>                 :             :     double m_slope_lat_g_prev = 0.0;</span>
+<span id="L423"><span class="lineNum">     423</span>                 :             :     std::array&lt;double, SLOPE_BUFFER_MAX&gt; m_slope_torque_buffer = {};</span>
+<span id="L424"><span class="lineNum">     424</span>                 :             :     std::array&lt;double, SLOPE_BUFFER_MAX&gt; m_slope_steer_buffer = {};</span>
+<span id="L425"><span class="lineNum">     425</span>                 :             :     double m_slope_torque_smoothed = 0.0;</span>
+<span id="L426"><span class="lineNum">     426</span>                 :             :     double m_slope_steer_smoothed = 0.0;</span>
+<span id="L427"><span class="lineNum">     427</span>                 :             :     double m_slope_torque_current = 0.0;</span>
+<span id="L428"><span class="lineNum">     428</span>                 :             :     </span>
+<span id="L429"><span class="lineNum">     429</span>                 :             :     // NEW v0.7.40: More Debug members</span>
+<span id="L430"><span class="lineNum">     430</span>                 :             :     double m_debug_slope_torque_num = 0.0;</span>
+<span id="L431"><span class="lineNum">     431</span>                 :             :     double m_debug_slope_torque_den = 0.0;</span>
+<span id="L432"><span class="lineNum">     432</span>                 :             :     double m_debug_lat_g_slew = 0.0;</span>
+<span id="L433"><span class="lineNum">     433</span>                 :             : </span>
+<span id="L434"><span class="lineNum">     434</span>                 :             :     // Dynamic Weight State (v0.7.46)</span>
+<span id="L435"><span class="lineNum">     435</span>                 :             :     double m_static_front_load = 0.0; </span>
+<span id="L436"><span class="lineNum">     436</span>                 :             :     double m_static_rear_load = 0.0; // New v0.7.164 (Issue #322)</span>
+<span id="L437"><span class="lineNum">     437</span>                 :             :     bool m_static_load_latched = false;</span>
+<span id="L438"><span class="lineNum">     438</span>                 :             :     double m_smoothed_vibration_mult = 1.0;</span>
+<span id="L439"><span class="lineNum">     439</span>                 :             :     double m_long_load_smoothed = 1.0; // Renamed from dynamic_weight_smoothed (#301)</span>
+<span id="L440"><span class="lineNum">     440</span>                 :             :     double m_front_grip_smoothed_state = 1.0; </span>
+<span id="L441"><span class="lineNum">     441</span>                 :             :     double m_rear_grip_smoothed_state = 1.0;  </span>
 <span id="L442"><span class="lineNum">     442</span>                 :             : </span>
-<span id="L443"><span class="lineNum">     443</span>                 :             :     // Logging intermediate values (exposed for AsyncLogger)</span>
-<span id="L444"><span class="lineNum">     444</span>                 :             :     double m_slope_dG_dt = 0.0;       </span>
-<span id="L445"><span class="lineNum">     445</span>                 :             :     double m_slope_dAlpha_dt = 0.0;   </span>
-<span id="L446"><span class="lineNum">     446</span>                 :             : </span>
-<span id="L447"><span class="lineNum">     447</span>                 :             :     // Frequency Estimator State (v0.4.41)</span>
-<span id="L448"><span class="lineNum">     448</span>                 :             :     double m_last_crossing_time = 0.0;</span>
-<span id="L449"><span class="lineNum">     449</span>                 :             :     double m_torque_ac_smoothed = 0.0; </span>
-<span id="L450"><span class="lineNum">     450</span>                 :             :     double m_prev_ac_torque = 0.0;</span>
-<span id="L451"><span class="lineNum">     451</span>                 :             : </span>
-<span id="L452"><span class="lineNum">     452</span>                 :             :     // Safety Monitor (Option A Extracted)</span>
-<span id="L453"><span class="lineNum">     453</span>                 :             :     FFBSafetyMonitor m_safety;</span>
+<span id="L443"><span class="lineNum">     443</span>                 :             :     // Metadata Manager (Option A Extracted)</span>
+<span id="L444"><span class="lineNum">     444</span>                 :             :     FFBMetadataManager m_metadata;</span>
+<span id="L445"><span class="lineNum">     445</span>                 :             : </span>
+<span id="L446"><span class="lineNum">     446</span>                 :             :     // Logging intermediate values (exposed for AsyncLogger)</span>
+<span id="L447"><span class="lineNum">     447</span>                 :             :     double m_slope_dG_dt = 0.0;       </span>
+<span id="L448"><span class="lineNum">     448</span>                 :             :     double m_slope_dAlpha_dt = 0.0;   </span>
+<span id="L449"><span class="lineNum">     449</span>                 :             : </span>
+<span id="L450"><span class="lineNum">     450</span>                 :             :     // Frequency Estimator State (v0.4.41)</span>
+<span id="L451"><span class="lineNum">     451</span>                 :             :     double m_last_crossing_time = 0.0;</span>
+<span id="L452"><span class="lineNum">     452</span>                 :             :     double m_torque_ac_smoothed = 0.0; </span>
+<span id="L453"><span class="lineNum">     453</span>                 :             :     double m_prev_ac_torque = 0.0;</span>
 <span id="L454"><span class="lineNum">     454</span>                 :             : </span>
-<span id="L455"><span class="lineNum">     455</span>                 :             :     // Telemetry Stats</span>
-<span id="L456"><span class="lineNum">     456</span>                 :             :     ChannelStats s_torque;</span>
-<span id="L457"><span class="lineNum">     457</span>                 :             :     ChannelStats s_front_load;</span>
-<span id="L458"><span class="lineNum">     458</span>                 :             :     ChannelStats s_front_grip;</span>
-<span id="L459"><span class="lineNum">     459</span>                 :             :     ChannelStats s_lat_g;</span>
-<span id="L460"><span class="lineNum">     460</span>                 :             :     std::chrono::steady_clock::time_point last_log_time;</span>
-<span id="L461"><span class="lineNum">     461</span>                 :             : </span>
-<span id="L462"><span class="lineNum">     462</span>                 :             :     // Thread-Safe Buffer (Producer-Consumer)</span>
-<span id="L463"><span class="lineNum">     463</span>                 :             :     FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP</span>
-<span id="L464"><span class="lineNum">     464</span>                 :             :     </span>
-<span id="L465"><span class="lineNum">     465</span>                 :             :     friend class FFBEngineTests::FFBEngineTestAccess;</span>
-<span id="L466"><span class="lineNum">     466</span>                 :             :     friend struct Preset;</span>
-<span id="L467"><span class="lineNum">     467</span>                 :             : </span>
-<span id="L468"><span class="lineNum">     468</span>                 :             :     FFBEngine();</span>
-<span id="L469"><span class="lineNum">     469</span>                 :             : </span>
-<span id="L470"><span class="lineNum">     470</span>                 :<span class="tlaGNC tlaBgGNC">         141 :     std::vector&lt;FFBSnapshot&gt; GetDebugBatch() { return m_debug_buffer.GetBatch(); }</span></span>
-<span id="L471"><span class="lineNum">     471</span>                 :             : </span>
-<span id="L472"><span class="lineNum">     472</span>                 :             :     // UI Reference &amp; Physics Multipliers (v0.4.50)</span>
-<span id="L473"><span class="lineNum">     473</span>                 :             :     static constexpr float BASE_NM_SOP_LATERAL      = 1.0f;</span>
-<span id="L474"><span class="lineNum">     474</span>                 :             :     static constexpr float BASE_NM_REAR_ALIGN       = 3.0f;</span>
-<span id="L475"><span class="lineNum">     475</span>                 :             :     static constexpr float BASE_NM_YAW_KICK         = 5.0f;</span>
-<span id="L476"><span class="lineNum">     476</span>                 :             :     static constexpr float BASE_NM_GYRO_DAMPING     = 1.0f;</span>
-<span id="L477"><span class="lineNum">     477</span>                 :             :     static constexpr float BASE_NM_SLIDE_TEXTURE    = 1.5f;</span>
-<span id="L478"><span class="lineNum">     478</span>                 :             :     static constexpr float BASE_NM_ROAD_TEXTURE     = 2.5f;</span>
-<span id="L479"><span class="lineNum">     479</span>                 :             :     static constexpr float BASE_NM_LOCKUP_VIBRATION = 4.0f;</span>
-<span id="L480"><span class="lineNum">     480</span>                 :             :     static constexpr float BASE_NM_SPIN_VIBRATION   = 2.5f;</span>
-<span id="L481"><span class="lineNum">     481</span>                 :             :     static constexpr float BASE_NM_SCRUB_DRAG       = 5.0f;</span>
-<span id="L482"><span class="lineNum">     482</span>                 :             :     static constexpr float BASE_NM_BOTTOMING        = 1.0f;</span>
-<span id="L483"><span class="lineNum">     483</span>                 :             :     static constexpr float BASE_NM_SOFT_LOCK        = 50.0f;</span>
-<span id="L484"><span class="lineNum">     484</span>                 :             : </span>
-<span id="L485"><span class="lineNum">     485</span>                 :             : private:</span>
-<span id="L486"><span class="lineNum">     486</span>                 :             :     static constexpr double MIN_SLIP_ANGLE_VELOCITY = 0.5; // m/s</span>
-<span id="L487"><span class="lineNum">     487</span>                 :             :     static constexpr double REAR_TIRE_STIFFNESS_COEFFICIENT = 15.0; </span>
-<span id="L488"><span class="lineNum">     488</span>                 :             :     static constexpr double MAX_REAR_LATERAL_FORCE = 6000.0; // N</span>
-<span id="L489"><span class="lineNum">     489</span>                 :             :     static constexpr double REAR_ALIGN_TORQUE_COEFFICIENT = 0.001; // Nm per N</span>
-<span id="L490"><span class="lineNum">     490</span>                 :             :     static constexpr double KERB_LOAD_CAP_MULT = 1.5;</span>
-<span id="L491"><span class="lineNum">     491</span>                 :             :     static constexpr double KERB_DETECTION_THRESHOLD_M_S = 0.8;</span>
-<span id="L492"><span class="lineNum">     492</span>                 :             :     static constexpr double KERB_HOLD_TIME_S = 0.1;</span>
-<span id="L493"><span class="lineNum">     493</span>                 :             :     static constexpr double DEFAULT_STEERING_RANGE_RAD = 9.4247; </span>
-<span id="L494"><span class="lineNum">     494</span>                 :             :     static constexpr double GYRO_SPEED_SCALE = 10.0;</span>
-<span id="L495"><span class="lineNum">     495</span>                 :             :     static constexpr double WEIGHT_TRANSFER_SCALE = 2000.0; // N per G</span>
-<span id="L496"><span class="lineNum">     496</span>                 :             :     static constexpr double MIN_VALID_SUSP_FORCE = 10.0; // N </span>
-<span id="L497"><span class="lineNum">     497</span>                 :             :     static constexpr double LOCKUP_FREQ_MULTIPLIER_REAR = 0.3;  </span>
-<span id="L498"><span class="lineNum">     498</span>                 :             :     static constexpr double LOCKUP_AMPLITUDE_BOOST_REAR = 1.5;  </span>
-<span id="L499"><span class="lineNum">     499</span>                 :             :     static constexpr double AXLE_DIFF_HYSTERESIS = 0.01;  </span>
-<span id="L500"><span class="lineNum">     500</span>                 :             :     static constexpr double ABS_PEDAL_THRESHOLD = 0.5;  </span>
-<span id="L501"><span class="lineNum">     501</span>                 :             :     static constexpr double ABS_PRESSURE_RATE_THRESHOLD = 2.0;  </span>
-<span id="L502"><span class="lineNum">     502</span>                 :             :     static constexpr double PREDICTION_BRAKE_THRESHOLD = 0.02;  </span>
-<span id="L503"><span class="lineNum">     503</span>                 :             :     static constexpr double PREDICTION_LOAD_THRESHOLD = 50.0;</span>
-<span id="L504"><span class="lineNum">     504</span>                 :             : </span>
-<span id="L505"><span class="lineNum">     505</span>                 :             :     double m_auto_peak_front_load = 4500.0; // DEFAULT_AUTO_PEAK_LOAD</span>
-<span id="L506"><span class="lineNum">     506</span>                 :             : </span>
-<span id="L507"><span class="lineNum">     507</span>                 :             :     static constexpr double HPF_TIME_CONSTANT_S = 0.1;</span>
-<span id="L508"><span class="lineNum">     508</span>                 :             :     static constexpr double ZERO_CROSSING_EPSILON = 0.05;</span>
-<span id="L509"><span class="lineNum">     509</span>                 :             :     static constexpr double MIN_FREQ_PERIOD = 0.005;</span>
-<span id="L510"><span class="lineNum">     510</span>                 :             :     static constexpr double MAX_FREQ_PERIOD = 1.0;</span>
-<span id="L511"><span class="lineNum">     511</span>                 :             :     static constexpr double RADIUS_FALLBACK_DEFAULT_M = 0.33;</span>
-<span id="L512"><span class="lineNum">     512</span>                 :             :     static constexpr double RADIUS_FALLBACK_MIN_M = 0.1;</span>
-<span id="L513"><span class="lineNum">     513</span>                 :             :     static constexpr double UNIT_CM_TO_M = 100.0;</span>
-<span id="L514"><span class="lineNum">     514</span>                 :             :     static constexpr double GRAVITY_MS2 = 9.81;</span>
-<span id="L515"><span class="lineNum">     515</span>                 :             :     static constexpr double EPSILON_DIV = 1e-9;</span>
-<span id="L516"><span class="lineNum">     516</span>                 :             :     static constexpr double TORQUE_SPIKE_RATIO = 3.0;</span>
-<span id="L517"><span class="lineNum">     517</span>                 :             :     static constexpr double TORQUE_SPIKE_MIN_NM = 15.0;</span>
-<span id="L518"><span class="lineNum">     518</span>                 :             :     static constexpr int    MISSING_TELEMETRY_WARN_THRESHOLD = 50;</span>
-<span id="L519"><span class="lineNum">     519</span>                 :             :     static constexpr double PHASE_WRAP_LIMIT = 50.0;</span>
-<span id="L520"><span class="lineNum">     520</span>                 :             :     static constexpr double LAT_G_CLEAN_LIMIT = 8.0;</span>
-<span id="L521"><span class="lineNum">     521</span>                 :             :     static constexpr double TORQUE_SLEW_CLEAN_LIMIT = 1000.0;</span>
-<span id="L522"><span class="lineNum">     522</span>                 :             :     static constexpr double TORQUE_ROLL_AVG_TAU = 1.0;</span>
-<span id="L523"><span class="lineNum">     523</span>                 :             : </span>
-<span id="L524"><span class="lineNum">     524</span>                 :             :     static constexpr float  PEAK_TORQUE_DECAY = 0.005f;</span>
-<span id="L525"><span class="lineNum">     525</span>                 :             :     static constexpr float  PEAK_TORQUE_FLOOR = 1.0f;</span>
-<span id="L526"><span class="lineNum">     526</span>                 :             :     static constexpr float  PEAK_TORQUE_CEILING = 100.0f;</span>
-<span id="L527"><span class="lineNum">     527</span>                 :             :     static constexpr float  GAIN_SMOOTHING_TAU = 0.25f;</span>
-<span id="L528"><span class="lineNum">     528</span>                 :             :     static constexpr float  STRUCT_MULT_SMOOTHING_TAU = 0.25f;</span>
-<span id="L529"><span class="lineNum">     529</span>                 :             :     static constexpr float  IDLE_SPEED_MIN_M_S = 3.0f;</span>
-<span id="L530"><span class="lineNum">     530</span>                 :             :     static constexpr float  IDLE_BLEND_FACTOR = 0.1f;</span>
-<span id="L531"><span class="lineNum">     531</span>                 :             :     static constexpr float  SESSION_PEAK_DECAY_RATE = 0.005f;</span>
-<span id="L532"><span class="lineNum">     532</span>                 :             : </span>
-<span id="L533"><span class="lineNum">     533</span>                 :             :     static constexpr double DT_EPSILON = 0.000001;</span>
-<span id="L534"><span class="lineNum">     534</span>                 :             :     static constexpr double DEFAULT_DT = 0.0025;</span>
-<span id="L535"><span class="lineNum">     535</span>                 :             :     static constexpr double SPEED_EPSILON = 1.0;</span>
-<span id="L536"><span class="lineNum">     536</span>                 :             :     static constexpr double ACCEL_EPSILON = 1.0;</span>
-<span id="L537"><span class="lineNum">     537</span>                 :             :     static constexpr double G_FORCE_THRESHOLD = 3.0;</span>
-<span id="L538"><span class="lineNum">     538</span>                 :             :     static constexpr double SPEED_HIGH_THRESHOLD = 10.0;</span>
-<span id="L539"><span class="lineNum">     539</span>                 :             :     static constexpr double LOAD_SAFETY_FLOOR = 3000.0;</span>
-<span id="L540"><span class="lineNum">     540</span>                 :             :     static constexpr double LOAD_DECAY_RATE = 100.0;</span>
-<span id="L541"><span class="lineNum">     541</span>                 :             :     static constexpr double COMPRESSION_KNEE_THRESHOLD = 1.5;</span>
-<span id="L542"><span class="lineNum">     542</span>                 :             :     static constexpr double COMPRESSION_KNEE_WIDTH = 0.5;</span>
-<span id="L543"><span class="lineNum">     543</span>                 :             :     static constexpr double COMPRESSION_RATIO = 4.0;</span>
-<span id="L544"><span class="lineNum">     544</span>                 :             :     static constexpr double VIBRATION_EMA_TAU = 0.1;</span>
-<span id="L545"><span class="lineNum">     545</span>                 :             :     static constexpr double USER_CAP_MAX = 10.0;</span>
-<span id="L546"><span class="lineNum">     546</span>                 :             :     static constexpr double CLIPPING_THRESHOLD = 0.99;</span>
-<span id="L547"><span class="lineNum">     547</span>                 :             :     static constexpr int    STR_MAX_64 = 63;</span>
-<span id="L548"><span class="lineNum">     548</span>                 :             :     static constexpr int    STR_MAX_256 = 255;</span>
-<span id="L549"><span class="lineNum">     549</span>                 :             :     static constexpr int    MISSING_LOAD_WARN_THRESHOLD = 20;</span>
-<span id="L550"><span class="lineNum">     550</span>                 :             :     static constexpr double LONG_LOAD_MIN = 0.0; // Relaxed #301</span>
-<span id="L551"><span class="lineNum">     551</span>                 :             :     static constexpr double LONG_LOAD_MAX = 10.0; // Increased #301</span>
-<span id="L552"><span class="lineNum">     552</span>                 :             :     static constexpr double MIN_TAU_S = 0.0001;</span>
-<span id="L553"><span class="lineNum">     553</span>                 :             :     static constexpr double ALPHA_MIN = 0.001;</span>
-<span id="L554"><span class="lineNum">     554</span>                 :             :     static constexpr double ALPHA_MAX = 1.0;</span>
-<span id="L555"><span class="lineNum">     555</span>                 :             :     static constexpr double DUAL_DIVISOR = 2.0;</span>
-<span id="L556"><span class="lineNum">     556</span>                 :             :     static constexpr double HALF_PERIOD_MULT = 0.5;</span>
-<span id="L557"><span class="lineNum">     557</span>                 :             :     static constexpr double MIN_NOTCH_WIDTH_HZ = 0.1;</span>
-<span id="L558"><span class="lineNum">     558</span>                 :             :     static constexpr int    VEHICLE_NAME_CHECK_IDX = 10;</span>
-<span id="L559"><span class="lineNum">     559</span>                 :             :     static constexpr int    DEBUG_BUFFER_CAP = 100;</span>
-<span id="L560"><span class="lineNum">     560</span>                 :             :     static constexpr double OVERSTEER_BOOST_MULT = 2.0;</span>
-<span id="L561"><span class="lineNum">     561</span>                 :             :     static constexpr double MIN_YAW_KICK_SPEED_MS = 5.0;</span>
-<span id="L562"><span class="lineNum">     562</span>                 :             :     static constexpr double MIN_SLIP_WINDOW = 0.01;</span>
-<span id="L563"><span class="lineNum">     563</span>                 :             :     static constexpr double SAWTOOTH_SCALE = 2.0;</span>
-<span id="L564"><span class="lineNum">     564</span>                 :             :     static constexpr double SAWTOOTH_OFFSET = 1.0;</span>
-<span id="L565"><span class="lineNum">     565</span>                 :             :     static constexpr double FFB_EPSILON = 0.0001;</span>
-<span id="L566"><span class="lineNum">     566</span>                 :             :     static constexpr double SOFT_LOCK_MUTE_THRESHOLD_NM = 0.1;</span>
-<span id="L567"><span class="lineNum">     567</span>                 :             :     static constexpr double SOP_SMOOTHING_MAX_TAU = 0.1;</span>
-<span id="L568"><span class="lineNum">     568</span>                 :             : </span>
-<span id="L569"><span class="lineNum">     569</span>                 :             :     // Default Values</span>
-<span id="L570"><span class="lineNum">     570</span>                 :             :     static constexpr float  DEFAULT_SAFETY_SLEW_FULL_SCALE_TIME_S = 1.0f; // matches Issue #316 expectations</span>
-<span id="L571"><span class="lineNum">     571</span>                 :             :     static constexpr float  DEFAULT_SAFETY_WINDOW_DURATION = 0.0f;</span>
-<span id="L572"><span class="lineNum">     572</span>                 :             :     static constexpr float  DEFAULT_SAFETY_GAIN_REDUCTION = 0.3f;</span>
-<span id="L573"><span class="lineNum">     573</span>                 :             :     static constexpr float  DEFAULT_SAFETY_SMOOTHING_TAU = 0.2f;</span>
-<span id="L574"><span class="lineNum">     574</span>                 :             :     static constexpr float  DEFAULT_SPIKE_DETECTION_THRESHOLD = 500.0f;</span>
-<span id="L575"><span class="lineNum">     575</span>                 :             :     static constexpr float  DEFAULT_IMMEDIATE_SPIKE_THRESHOLD = 1500.0f;</span>
-<span id="L576"><span class="lineNum">     576</span>                 :             : </span>
-<span id="L577"><span class="lineNum">     577</span>                 :             :     static constexpr bool   DEFAULT_STUTTER_SAFETY_ENABLED = false;</span>
-<span id="L578"><span class="lineNum">     578</span>                 :             :     static constexpr float  DEFAULT_STUTTER_THRESHOLD = 1.5f;</span>
+<span id="L455"><span class="lineNum">     455</span>                 :             :     // Safety Monitor (Option A Extracted)</span>
+<span id="L456"><span class="lineNum">     456</span>                 :             :     FFBSafetyMonitor m_safety;</span>
+<span id="L457"><span class="lineNum">     457</span>                 :             : </span>
+<span id="L458"><span class="lineNum">     458</span>                 :             :     // Telemetry Stats</span>
+<span id="L459"><span class="lineNum">     459</span>                 :             :     ChannelStats s_torque;</span>
+<span id="L460"><span class="lineNum">     460</span>                 :             :     ChannelStats s_front_load;</span>
+<span id="L461"><span class="lineNum">     461</span>                 :             :     ChannelStats s_front_grip;</span>
+<span id="L462"><span class="lineNum">     462</span>                 :             :     ChannelStats s_lat_g;</span>
+<span id="L463"><span class="lineNum">     463</span>                 :             :     std::chrono::steady_clock::time_point last_log_time;</span>
+<span id="L464"><span class="lineNum">     464</span>                 :             : </span>
+<span id="L465"><span class="lineNum">     465</span>                 :             :     // Thread-Safe Buffer (Producer-Consumer)</span>
+<span id="L466"><span class="lineNum">     466</span>                 :             :     FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP</span>
+<span id="L467"><span class="lineNum">     467</span>                 :             :     </span>
+<span id="L468"><span class="lineNum">     468</span>                 :             :     friend class FFBEngineTests::FFBEngineTestAccess;</span>
+<span id="L469"><span class="lineNum">     469</span>                 :             :     friend struct Preset;</span>
+<span id="L470"><span class="lineNum">     470</span>                 :             : </span>
+<span id="L471"><span class="lineNum">     471</span>                 :             :     FFBEngine();</span>
+<span id="L472"><span class="lineNum">     472</span>                 :             : </span>
+<span id="L473"><span class="lineNum">     473</span>                 :<span class="tlaGNC tlaBgGNC">         141 :     std::vector&lt;FFBSnapshot&gt; GetDebugBatch() { return m_debug_buffer.GetBatch(); }</span></span>
+<span id="L474"><span class="lineNum">     474</span>                 :             : </span>
+<span id="L475"><span class="lineNum">     475</span>                 :             :     // UI Reference &amp; Physics Multipliers (v0.4.50)</span>
+<span id="L476"><span class="lineNum">     476</span>                 :             :     static constexpr float BASE_NM_SOP_LATERAL      = 1.0f;</span>
+<span id="L477"><span class="lineNum">     477</span>                 :             :     static constexpr float BASE_NM_REAR_ALIGN       = 3.0f;</span>
+<span id="L478"><span class="lineNum">     478</span>                 :             :     static constexpr float BASE_NM_YAW_KICK         = 5.0f;</span>
+<span id="L479"><span class="lineNum">     479</span>                 :             :     static constexpr float BASE_NM_GYRO_DAMPING     = 1.0f;</span>
+<span id="L480"><span class="lineNum">     480</span>                 :             :     static constexpr float BASE_NM_SLIDE_TEXTURE    = 1.5f;</span>
+<span id="L481"><span class="lineNum">     481</span>                 :             :     static constexpr float BASE_NM_ROAD_TEXTURE     = 2.5f;</span>
+<span id="L482"><span class="lineNum">     482</span>                 :             :     static constexpr float BASE_NM_LOCKUP_VIBRATION = 4.0f;</span>
+<span id="L483"><span class="lineNum">     483</span>                 :             :     static constexpr float BASE_NM_SPIN_VIBRATION   = 2.5f;</span>
+<span id="L484"><span class="lineNum">     484</span>                 :             :     static constexpr float BASE_NM_SCRUB_DRAG       = 5.0f;</span>
+<span id="L485"><span class="lineNum">     485</span>                 :             :     static constexpr float BASE_NM_BOTTOMING        = 1.0f;</span>
+<span id="L486"><span class="lineNum">     486</span>                 :             :     static constexpr float BASE_NM_SOFT_LOCK        = 50.0f;</span>
+<span id="L487"><span class="lineNum">     487</span>                 :             : </span>
+<span id="L488"><span class="lineNum">     488</span>                 :             : private:</span>
+<span id="L489"><span class="lineNum">     489</span>                 :             :     static constexpr double MIN_SLIP_ANGLE_VELOCITY = 0.5; // m/s</span>
+<span id="L490"><span class="lineNum">     490</span>                 :             :     static constexpr double REAR_TIRE_STIFFNESS_COEFFICIENT = 15.0; </span>
+<span id="L491"><span class="lineNum">     491</span>                 :             :     static constexpr double MAX_REAR_LATERAL_FORCE = 6000.0; // N</span>
+<span id="L492"><span class="lineNum">     492</span>                 :             :     static constexpr double REAR_ALIGN_TORQUE_COEFFICIENT = 0.001; // Nm per N</span>
+<span id="L493"><span class="lineNum">     493</span>                 :             :     static constexpr double KERB_LOAD_CAP_MULT = 1.5;</span>
+<span id="L494"><span class="lineNum">     494</span>                 :             :     static constexpr double KERB_DETECTION_THRESHOLD_M_S = 0.8;</span>
+<span id="L495"><span class="lineNum">     495</span>                 :             :     static constexpr double KERB_HOLD_TIME_S = 0.1;</span>
+<span id="L496"><span class="lineNum">     496</span>                 :             :     static constexpr double DEFAULT_STEERING_RANGE_RAD = 9.4247; </span>
+<span id="L497"><span class="lineNum">     497</span>                 :             :     static constexpr double GYRO_SPEED_SCALE = 10.0;</span>
+<span id="L498"><span class="lineNum">     498</span>                 :             :     static constexpr double WEIGHT_TRANSFER_SCALE = 2000.0; // N per G</span>
+<span id="L499"><span class="lineNum">     499</span>                 :             :     static constexpr double MIN_VALID_SUSP_FORCE = 10.0; // N </span>
+<span id="L500"><span class="lineNum">     500</span>                 :             :     static constexpr double LOCKUP_FREQ_MULTIPLIER_REAR = 0.3;  </span>
+<span id="L501"><span class="lineNum">     501</span>                 :             :     static constexpr double LOCKUP_AMPLITUDE_BOOST_REAR = 1.5;  </span>
+<span id="L502"><span class="lineNum">     502</span>                 :             :     static constexpr double AXLE_DIFF_HYSTERESIS = 0.01;  </span>
+<span id="L503"><span class="lineNum">     503</span>                 :             :     static constexpr double ABS_PEDAL_THRESHOLD = 0.5;  </span>
+<span id="L504"><span class="lineNum">     504</span>                 :             :     static constexpr double ABS_PRESSURE_RATE_THRESHOLD = 2.0;  </span>
+<span id="L505"><span class="lineNum">     505</span>                 :             :     static constexpr double PREDICTION_BRAKE_THRESHOLD = 0.02;  </span>
+<span id="L506"><span class="lineNum">     506</span>                 :             :     static constexpr double PREDICTION_LOAD_THRESHOLD = 50.0;</span>
+<span id="L507"><span class="lineNum">     507</span>                 :             : </span>
+<span id="L508"><span class="lineNum">     508</span>                 :             :     double m_auto_peak_front_load = 4500.0; // DEFAULT_AUTO_PEAK_LOAD</span>
+<span id="L509"><span class="lineNum">     509</span>                 :             : </span>
+<span id="L510"><span class="lineNum">     510</span>                 :             :     static constexpr double HPF_TIME_CONSTANT_S = 0.1;</span>
+<span id="L511"><span class="lineNum">     511</span>                 :             :     static constexpr double ZERO_CROSSING_EPSILON = 0.05;</span>
+<span id="L512"><span class="lineNum">     512</span>                 :             :     static constexpr double MIN_FREQ_PERIOD = 0.005;</span>
+<span id="L513"><span class="lineNum">     513</span>                 :             :     static constexpr double MAX_FREQ_PERIOD = 1.0;</span>
+<span id="L514"><span class="lineNum">     514</span>                 :             :     static constexpr double RADIUS_FALLBACK_DEFAULT_M = 0.33;</span>
+<span id="L515"><span class="lineNum">     515</span>                 :             :     static constexpr double RADIUS_FALLBACK_MIN_M = 0.1;</span>
+<span id="L516"><span class="lineNum">     516</span>                 :             :     static constexpr double UNIT_CM_TO_M = 100.0;</span>
+<span id="L517"><span class="lineNum">     517</span>                 :             :     static constexpr double GRAVITY_MS2 = 9.81;</span>
+<span id="L518"><span class="lineNum">     518</span>                 :             :     static constexpr double EPSILON_DIV = 1e-9;</span>
+<span id="L519"><span class="lineNum">     519</span>                 :             :     static constexpr double TORQUE_SPIKE_RATIO = 3.0;</span>
+<span id="L520"><span class="lineNum">     520</span>                 :             :     static constexpr double TORQUE_SPIKE_MIN_NM = 15.0;</span>
+<span id="L521"><span class="lineNum">     521</span>                 :             :     static constexpr int    MISSING_TELEMETRY_WARN_THRESHOLD = 50;</span>
+<span id="L522"><span class="lineNum">     522</span>                 :             :     static constexpr double PHASE_WRAP_LIMIT = 50.0;</span>
+<span id="L523"><span class="lineNum">     523</span>                 :             :     static constexpr double LAT_G_CLEAN_LIMIT = 8.0;</span>
+<span id="L524"><span class="lineNum">     524</span>                 :             :     static constexpr double TORQUE_SLEW_CLEAN_LIMIT = 1000.0;</span>
+<span id="L525"><span class="lineNum">     525</span>                 :             :     static constexpr double TORQUE_ROLL_AVG_TAU = 1.0;</span>
+<span id="L526"><span class="lineNum">     526</span>                 :             : </span>
+<span id="L527"><span class="lineNum">     527</span>                 :             :     static constexpr float  PEAK_TORQUE_DECAY = 0.005f;</span>
+<span id="L528"><span class="lineNum">     528</span>                 :             :     static constexpr float  PEAK_TORQUE_FLOOR = 1.0f;</span>
+<span id="L529"><span class="lineNum">     529</span>                 :             :     static constexpr float  PEAK_TORQUE_CEILING = 100.0f;</span>
+<span id="L530"><span class="lineNum">     530</span>                 :             :     static constexpr float  GAIN_SMOOTHING_TAU = 0.25f;</span>
+<span id="L531"><span class="lineNum">     531</span>                 :             :     static constexpr float  STRUCT_MULT_SMOOTHING_TAU = 0.25f;</span>
+<span id="L532"><span class="lineNum">     532</span>                 :             :     static constexpr float  IDLE_SPEED_MIN_M_S = 3.0f;</span>
+<span id="L533"><span class="lineNum">     533</span>                 :             :     static constexpr float  IDLE_BLEND_FACTOR = 0.1f;</span>
+<span id="L534"><span class="lineNum">     534</span>                 :             :     static constexpr float  SESSION_PEAK_DECAY_RATE = 0.005f;</span>
+<span id="L535"><span class="lineNum">     535</span>                 :             : </span>
+<span id="L536"><span class="lineNum">     536</span>                 :             :     static constexpr double DT_EPSILON = 0.000001;</span>
+<span id="L537"><span class="lineNum">     537</span>                 :             :     static constexpr double DEFAULT_DT = 0.0025;</span>
+<span id="L538"><span class="lineNum">     538</span>                 :             :     static constexpr double SPEED_EPSILON = 1.0;</span>
+<span id="L539"><span class="lineNum">     539</span>                 :             :     static constexpr double ACCEL_EPSILON = 1.0;</span>
+<span id="L540"><span class="lineNum">     540</span>                 :             :     static constexpr double G_FORCE_THRESHOLD = 3.0;</span>
+<span id="L541"><span class="lineNum">     541</span>                 :             :     static constexpr double SPEED_HIGH_THRESHOLD = 10.0;</span>
+<span id="L542"><span class="lineNum">     542</span>                 :             :     static constexpr double LOAD_SAFETY_FLOOR = 3000.0;</span>
+<span id="L543"><span class="lineNum">     543</span>                 :             :     static constexpr double LOAD_DECAY_RATE = 100.0;</span>
+<span id="L544"><span class="lineNum">     544</span>                 :             :     static constexpr double COMPRESSION_KNEE_THRESHOLD = 1.5;</span>
+<span id="L545"><span class="lineNum">     545</span>                 :             :     static constexpr double COMPRESSION_KNEE_WIDTH = 0.5;</span>
+<span id="L546"><span class="lineNum">     546</span>                 :             :     static constexpr double COMPRESSION_RATIO = 4.0;</span>
+<span id="L547"><span class="lineNum">     547</span>                 :             :     static constexpr double VIBRATION_EMA_TAU = 0.1;</span>
+<span id="L548"><span class="lineNum">     548</span>                 :             :     static constexpr double USER_CAP_MAX = 10.0;</span>
+<span id="L549"><span class="lineNum">     549</span>                 :             :     static constexpr double CLIPPING_THRESHOLD = 0.99;</span>
+<span id="L550"><span class="lineNum">     550</span>                 :             :     static constexpr int    STR_MAX_64 = 63;</span>
+<span id="L551"><span class="lineNum">     551</span>                 :             :     static constexpr int    STR_MAX_256 = 255;</span>
+<span id="L552"><span class="lineNum">     552</span>                 :             :     static constexpr int    MISSING_LOAD_WARN_THRESHOLD = 20;</span>
+<span id="L553"><span class="lineNum">     553</span>                 :             :     static constexpr double LONG_LOAD_MIN = 0.0; // Relaxed #301</span>
+<span id="L554"><span class="lineNum">     554</span>                 :             :     static constexpr double LONG_LOAD_MAX = 10.0; // Increased #301</span>
+<span id="L555"><span class="lineNum">     555</span>                 :             :     static constexpr double MIN_TAU_S = 0.0001;</span>
+<span id="L556"><span class="lineNum">     556</span>                 :             :     static constexpr double ALPHA_MIN = 0.001;</span>
+<span id="L557"><span class="lineNum">     557</span>                 :             :     static constexpr double ALPHA_MAX = 1.0;</span>
+<span id="L558"><span class="lineNum">     558</span>                 :             :     static constexpr double DUAL_DIVISOR = 2.0;</span>
+<span id="L559"><span class="lineNum">     559</span>                 :             :     static constexpr double HALF_PERIOD_MULT = 0.5;</span>
+<span id="L560"><span class="lineNum">     560</span>                 :             :     static constexpr double MIN_NOTCH_WIDTH_HZ = 0.1;</span>
+<span id="L561"><span class="lineNum">     561</span>                 :             :     static constexpr int    VEHICLE_NAME_CHECK_IDX = 10;</span>
+<span id="L562"><span class="lineNum">     562</span>                 :             :     static constexpr int    DEBUG_BUFFER_CAP = 100;</span>
+<span id="L563"><span class="lineNum">     563</span>                 :             :     static constexpr double OVERSTEER_BOOST_MULT = 2.0;</span>
+<span id="L564"><span class="lineNum">     564</span>                 :             :     static constexpr double MIN_YAW_KICK_SPEED_MS = 5.0;</span>
+<span id="L565"><span class="lineNum">     565</span>                 :             :     static constexpr double MIN_SLIP_WINDOW = 0.01;</span>
+<span id="L566"><span class="lineNum">     566</span>                 :             :     static constexpr double SAWTOOTH_SCALE = 2.0;</span>
+<span id="L567"><span class="lineNum">     567</span>                 :             :     static constexpr double SAWTOOTH_OFFSET = 1.0;</span>
+<span id="L568"><span class="lineNum">     568</span>                 :             :     static constexpr double FFB_EPSILON = 0.0001;</span>
+<span id="L569"><span class="lineNum">     569</span>                 :             :     static constexpr double SOFT_LOCK_MUTE_THRESHOLD_NM = 0.1;</span>
+<span id="L570"><span class="lineNum">     570</span>                 :             :     static constexpr double SOP_SMOOTHING_MAX_TAU = 0.1;</span>
+<span id="L571"><span class="lineNum">     571</span>                 :             : </span>
+<span id="L572"><span class="lineNum">     572</span>                 :             :     // Default Values</span>
+<span id="L573"><span class="lineNum">     573</span>                 :             :     static constexpr float  DEFAULT_SAFETY_SLEW_FULL_SCALE_TIME_S = 1.0f; // matches Issue #316 expectations</span>
+<span id="L574"><span class="lineNum">     574</span>                 :             :     static constexpr float  DEFAULT_SAFETY_WINDOW_DURATION = 0.0f;</span>
+<span id="L575"><span class="lineNum">     575</span>                 :             :     static constexpr float  DEFAULT_SAFETY_GAIN_REDUCTION = 0.3f;</span>
+<span id="L576"><span class="lineNum">     576</span>                 :             :     static constexpr float  DEFAULT_SAFETY_SMOOTHING_TAU = 0.2f;</span>
+<span id="L577"><span class="lineNum">     577</span>                 :             :     static constexpr float  DEFAULT_SPIKE_DETECTION_THRESHOLD = 500.0f;</span>
+<span id="L578"><span class="lineNum">     578</span>                 :             :     static constexpr float  DEFAULT_IMMEDIATE_SPIKE_THRESHOLD = 1500.0f;</span>
 <span id="L579"><span class="lineNum">     579</span>                 :             : </span>
-<span id="L580"><span class="lineNum">     580</span>                 :             :     static constexpr double MIN_LFM_ALPHA = 0.001;</span>
-<span id="L581"><span class="lineNum">     581</span>                 :             :     static constexpr double G_LIMIT_5G = 5.0;</span>
-<span id="L582"><span class="lineNum">     582</span>                 :             :     static constexpr double SMOOTHNESS_LIMIT_0999 = 0.999;</span>
-<span id="L583"><span class="lineNum">     583</span>                 :             :     static constexpr double BOTTOMING_RH_THRESHOLD_M = 0.002;</span>
-<span id="L584"><span class="lineNum">     584</span>                 :             :     static constexpr double BOTTOMING_IMPULSE_THRESHOLD_N_S = 100000.0;</span>
-<span id="L585"><span class="lineNum">     585</span>                 :             :     static constexpr double BOTTOMING_IMPULSE_RANGE_N_S = 200000.0;</span>
-<span id="L586"><span class="lineNum">     586</span>                 :             :     static constexpr double BOTTOMING_LOAD_MULT = 2.5;</span>
-<span id="L587"><span class="lineNum">     587</span>                 :             :     static constexpr double BOTTOMING_INTENSITY_SCALE = 0.05;</span>
-<span id="L588"><span class="lineNum">     588</span>                 :             :     static constexpr double BOTTOMING_FREQ_HZ = 50.0;</span>
-<span id="L589"><span class="lineNum">     589</span>                 :             :     static constexpr double SPIN_THROTTLE_THRESHOLD = 0.05;</span>
-<span id="L590"><span class="lineNum">     590</span>                 :             :     static constexpr double SPIN_SLIP_THRESHOLD = 0.2;</span>
-<span id="L591"><span class="lineNum">     591</span>                 :             :     static constexpr double SPIN_SEVERITY_RANGE = 0.5;</span>
-<span id="L592"><span class="lineNum">     592</span>                 :             :     static constexpr double SPIN_TORQUE_DROP_FACTOR = 0.6;</span>
-<span id="L593"><span class="lineNum">     593</span>                 :             :     static constexpr double SPIN_BASE_FREQ = 10.0;</span>
-<span id="L594"><span class="lineNum">     594</span>                 :             :     static constexpr double SPIN_FREQ_SLIP_MULT = 2.5;</span>
-<span id="L595"><span class="lineNum">     595</span>                 :             :     static constexpr double SPIN_MAX_FREQ = 80.0;</span>
-<span id="L596"><span class="lineNum">     596</span>                 :             :     static constexpr double LOCKUP_BASE_FREQ = 10.0;</span>
-<span id="L597"><span class="lineNum">     597</span>                 :             :     static constexpr double LOCKUP_FREQ_SPEED_MULT = 1.5;</span>
-<span id="L598"><span class="lineNum">     598</span>                 :             :     static constexpr double SLIDE_VEL_THRESHOLD = 1.5;</span>
-<span id="L599"><span class="lineNum">     599</span>                 :             :     static constexpr double SLIDE_BASE_FREQ = 10.0;</span>
-<span id="L600"><span class="lineNum">     600</span>                 :             :     static constexpr double SLIDE_FREQ_VEL_MULT = 5.0;</span>
-<span id="L601"><span class="lineNum">     601</span>                 :             :     static constexpr double SLIDE_MAX_FREQ = 250.0;</span>
-<span id="L602"><span class="lineNum">     602</span>                 :             :     static constexpr double LOCKUP_ACCEL_MARGIN = 2.0;</span>
-<span id="L603"><span class="lineNum">     603</span>                 :             :     static constexpr double LOW_PRESSURE_LOCKUP_THRESHOLD = 0.1;</span>
-<span id="L604"><span class="lineNum">     604</span>                 :             :     static constexpr double LOW_PRESSURE_LOCKUP_FIX = 0.5;</span>
-<span id="L605"><span class="lineNum">     605</span>                 :             :     static constexpr double ABS_PULSE_MAGNITUDE_SCALER = 2.0;</span>
-<span id="L606"><span class="lineNum">     606</span>                 :             :     static constexpr double PERCENT_TO_DECIMAL = 100.0;</span>
-<span id="L607"><span class="lineNum">     607</span>                 :             :     static constexpr double SCRUB_VEL_THRESHOLD = 0.001;</span>
-<span id="L608"><span class="lineNum">     608</span>                 :             :     static constexpr double SCRUB_FADE_RANGE = 0.5;</span>
-<span id="L609"><span class="lineNum">     609</span>                 :             : </span>
-<span id="L610"><span class="lineNum">     610</span>                 :             :     static constexpr double DEFLECTION_DELTA_LIMIT = 0.01;</span>
-<span id="L611"><span class="lineNum">     611</span>                 :             :     static constexpr double DEFLECTION_ACTIVE_THRESHOLD = 1e-6;</span>
-<span id="L612"><span class="lineNum">     612</span>                 :             :     static constexpr double DEFLECTION_NEAR_ZERO_M = 1e-6;       // Near-zero threshold for susp/vert deflection checks (m)</span>
-<span id="L613"><span class="lineNum">     613</span>                 :             :     static constexpr double MIN_VALID_LAT_FORCE_N = 1.0;          // Minimum lateral force to consider data present (N)</span>
-<span id="L614"><span class="lineNum">     614</span>                 :             :     static constexpr double ROAD_TEXTURE_SPEED_THRESHOLD = 5.0;</span>
-<span id="L615"><span class="lineNum">     615</span>                 :             :     static constexpr double DEFLECTION_NM_SCALE = 50.0;</span>
-<span id="L616"><span class="lineNum">     616</span>                 :             :     static constexpr double ACCEL_ROAD_TEXTURE_SCALE = 0.05;</span>
-<span id="L617"><span class="lineNum">     617</span>                 :             :     static constexpr double DEBUG_FREQ_SMOOTHING = 0.9;</span>
-<span id="L618"><span class="lineNum">     618</span>                 :             :     static constexpr double GAIN_REDUCTION_MAX = 50.0;</span>
-<span id="L619"><span class="lineNum">     619</span>                 :             :     double m_session_peak_torque = 25.0; // DEFAULT_SESSION_PEAK_TORQUE</span>
-<span id="L620"><span class="lineNum">     620</span>                 :             :     double m_smoothed_structural_mult = 1.0 / 25.0; </span>
-<span id="L621"><span class="lineNum">     621</span>                 :             :     double m_rolling_average_torque = 0.0; </span>
-<span id="L622"><span class="lineNum">     622</span>                 :             :     double m_last_raw_torque = 0.0; </span>
-<span id="L623"><span class="lineNum">     623</span>                 :             :     bool m_was_allowed = true; // Track transition for filter reset</span>
-<span id="L624"><span class="lineNum">     624</span>                 :             : </span>
-<span id="L625"><span class="lineNum">     625</span>                 :             :     void update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt);</span>
-<span id="L626"><span class="lineNum">     626</span>                 :             :     void InitializeLoadReference(const char* className, const char* vehicleName);</span>
-<span id="L627"><span class="lineNum">     627</span>                 :             :     </span>
-<span id="L628"><span class="lineNum">     628</span>                 :             : public:</span>
-<span id="L629"><span class="lineNum">     629</span>                 :             :     double calculate_raw_slip_angle_pair(const TelemWheelV01&amp; w1, const TelemWheelV01&amp; w2);</span>
-<span id="L630"><span class="lineNum">     630</span>                 :             :     double calculate_slip_angle(const TelemWheelV01&amp; w, double&amp; prev_state, double dt);</span>
-<span id="L631"><span class="lineNum">     631</span>                 :             :     </span>
-<span id="L632"><span class="lineNum">     632</span>                 :             : GripResult calculate_axle_grip(const TelemWheelV01&amp; w1,</span>
-<span id="L633"><span class="lineNum">     633</span>                 :             :                               const TelemWheelV01&amp; w2,</span>
-<span id="L634"><span class="lineNum">     634</span>                 :             :                               double avg_axle_load,</span>
-<span id="L635"><span class="lineNum">     635</span>                 :             :                               bool&amp; warned_flag,</span>
-<span id="L636"><span class="lineNum">     636</span>                 :             :                               double&amp; prev_slip1,</span>
-<span id="L637"><span class="lineNum">     637</span>                 :             :                               double&amp; prev_slip2,</span>
-<span id="L638"><span class="lineNum">     638</span>                 :             :                               double&amp; prev_load1, // NEW: State for load smoothing</span>
-<span id="L639"><span class="lineNum">     639</span>                 :             :                               double&amp; prev_load2, // NEW: State for load smoothing</span>
-<span id="L640"><span class="lineNum">     640</span>                 :             :                               double car_speed,</span>
-<span id="L641"><span class="lineNum">     641</span>                 :             :                               double dt,</span>
-<span id="L642"><span class="lineNum">     642</span>                 :             :                               const char* vehicleName,</span>
-<span id="L643"><span class="lineNum">     643</span>                 :             :                               const TelemInfoV01* data,</span>
-<span id="L644"><span class="lineNum">     644</span>                 :             :                               bool is_front);</span>
-<span id="L645"><span class="lineNum">     645</span>                 :             : </span>
-<span id="L646"><span class="lineNum">     646</span>                 :             :     double approximate_load(const TelemWheelV01&amp; w);</span>
-<span id="L647"><span class="lineNum">     647</span>                 :             :     double approximate_rear_load(const TelemWheelV01&amp; w);</span>
-<span id="L648"><span class="lineNum">     648</span>                 :             :     double calculate_manual_slip_ratio(const TelemWheelV01&amp; w, double car_speed_ms);</span>
-<span id="L649"><span class="lineNum">     649</span>                 :             :     NOINLINE double calculate_slope_grip(double lateral_g, double slip_angle, double dt, const TelemInfoV01* data = nullptr);</span>
-<span id="L650"><span class="lineNum">     650</span>                 :             :     double calculate_slope_confidence(double dAlpha_dt);</span>
-<span id="L651"><span class="lineNum">     651</span>                 :             :     double calculate_wheel_slip_ratio(const TelemWheelV01&amp; w);</span>
-<span id="L652"><span class="lineNum">     652</span>                 :             : </span>
-<span id="L653"><span class="lineNum">     653</span>                 :             :     double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr, float genFFBTorque = 0.0f, bool allowed = true, double override_dt = -1.0, signed char mControl = 0);</span>
-<span id="L654"><span class="lineNum">     654</span>                 :             : </span>
-<span id="L655"><span class="lineNum">     655</span>                 :             :     void UpdateMetadata(const struct SharedMemoryObjectOut&amp; data);</span>
-<span id="L656"><span class="lineNum">     656</span>                 :             :     double apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L657"><span class="lineNum">     657</span>                 :             :     void ResetNormalization();</span>
-<span id="L658"><span class="lineNum">     658</span>                 :             : </span>
-<span id="L659"><span class="lineNum">     659</span>                 :             : private:</span>
-<span id="L660"><span class="lineNum">     660</span>                 :             :     void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L661"><span class="lineNum">     661</span>                 :             :     NOINLINE void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L662"><span class="lineNum">     662</span>                 :             :     NOINLINE void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L663"><span class="lineNum">     663</span>                 :             :     void calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L664"><span class="lineNum">     664</span>                 :             :     void calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L665"><span class="lineNum">     665</span>                 :             :     void calculate_slide_texture(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L666"><span class="lineNum">     666</span>                 :             :     void calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L667"><span class="lineNum">     667</span>                 :             :     void calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L668"><span class="lineNum">     668</span>                 :             :     void calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L669"><span class="lineNum">     669</span>                 :             : };</span>
-<span id="L670"><span class="lineNum">     670</span>                 :             : </span>
-<span id="L671"><span class="lineNum">     671</span>                 :             : #endif // FFBENGINE_H</span>
+<span id="L580"><span class="lineNum">     580</span>                 :             :     static constexpr bool   DEFAULT_STUTTER_SAFETY_ENABLED = false;</span>
+<span id="L581"><span class="lineNum">     581</span>                 :             :     static constexpr float  DEFAULT_STUTTER_THRESHOLD = 1.5f;</span>
+<span id="L582"><span class="lineNum">     582</span>                 :             : </span>
+<span id="L583"><span class="lineNum">     583</span>                 :             :     static constexpr double MIN_LFM_ALPHA = 0.001;</span>
+<span id="L584"><span class="lineNum">     584</span>                 :             :     static constexpr double G_LIMIT_5G = 5.0;</span>
+<span id="L585"><span class="lineNum">     585</span>                 :             :     static constexpr double SMOOTHNESS_LIMIT_0999 = 0.999;</span>
+<span id="L586"><span class="lineNum">     586</span>                 :             :     static constexpr double BOTTOMING_RH_THRESHOLD_M = 0.002;</span>
+<span id="L587"><span class="lineNum">     587</span>                 :             :     static constexpr double BOTTOMING_IMPULSE_THRESHOLD_N_S = 100000.0;</span>
+<span id="L588"><span class="lineNum">     588</span>                 :             :     static constexpr double BOTTOMING_IMPULSE_RANGE_N_S = 200000.0;</span>
+<span id="L589"><span class="lineNum">     589</span>                 :             :     static constexpr double BOTTOMING_LOAD_MULT = 2.5;</span>
+<span id="L590"><span class="lineNum">     590</span>                 :             :     static constexpr double BOTTOMING_INTENSITY_SCALE = 0.05;</span>
+<span id="L591"><span class="lineNum">     591</span>                 :             :     static constexpr double BOTTOMING_FREQ_HZ = 50.0;</span>
+<span id="L592"><span class="lineNum">     592</span>                 :             :     static constexpr double SPIN_THROTTLE_THRESHOLD = 0.05;</span>
+<span id="L593"><span class="lineNum">     593</span>                 :             :     static constexpr double SPIN_SLIP_THRESHOLD = 0.2;</span>
+<span id="L594"><span class="lineNum">     594</span>                 :             :     static constexpr double SPIN_SEVERITY_RANGE = 0.5;</span>
+<span id="L595"><span class="lineNum">     595</span>                 :             :     static constexpr double SPIN_TORQUE_DROP_FACTOR = 0.6;</span>
+<span id="L596"><span class="lineNum">     596</span>                 :             :     static constexpr double SPIN_BASE_FREQ = 10.0;</span>
+<span id="L597"><span class="lineNum">     597</span>                 :             :     static constexpr double SPIN_FREQ_SLIP_MULT = 2.5;</span>
+<span id="L598"><span class="lineNum">     598</span>                 :             :     static constexpr double SPIN_MAX_FREQ = 80.0;</span>
+<span id="L599"><span class="lineNum">     599</span>                 :             :     static constexpr double LOCKUP_BASE_FREQ = 10.0;</span>
+<span id="L600"><span class="lineNum">     600</span>                 :             :     static constexpr double LOCKUP_FREQ_SPEED_MULT = 1.5;</span>
+<span id="L601"><span class="lineNum">     601</span>                 :             :     static constexpr double SLIDE_VEL_THRESHOLD = 1.5;</span>
+<span id="L602"><span class="lineNum">     602</span>                 :             :     static constexpr double SLIDE_BASE_FREQ = 10.0;</span>
+<span id="L603"><span class="lineNum">     603</span>                 :             :     static constexpr double SLIDE_FREQ_VEL_MULT = 5.0;</span>
+<span id="L604"><span class="lineNum">     604</span>                 :             :     static constexpr double SLIDE_MAX_FREQ = 250.0;</span>
+<span id="L605"><span class="lineNum">     605</span>                 :             :     static constexpr double LOCKUP_ACCEL_MARGIN = 2.0;</span>
+<span id="L606"><span class="lineNum">     606</span>                 :             :     static constexpr double LOW_PRESSURE_LOCKUP_THRESHOLD = 0.1;</span>
+<span id="L607"><span class="lineNum">     607</span>                 :             :     static constexpr double LOW_PRESSURE_LOCKUP_FIX = 0.5;</span>
+<span id="L608"><span class="lineNum">     608</span>                 :             :     static constexpr double ABS_PULSE_MAGNITUDE_SCALER = 2.0;</span>
+<span id="L609"><span class="lineNum">     609</span>                 :             :     static constexpr double PERCENT_TO_DECIMAL = 100.0;</span>
+<span id="L610"><span class="lineNum">     610</span>                 :             :     static constexpr double SCRUB_VEL_THRESHOLD = 0.001;</span>
+<span id="L611"><span class="lineNum">     611</span>                 :             :     static constexpr double SCRUB_FADE_RANGE = 0.5;</span>
+<span id="L612"><span class="lineNum">     612</span>                 :             : </span>
+<span id="L613"><span class="lineNum">     613</span>                 :             :     static constexpr double DEFLECTION_DELTA_LIMIT = 0.01;</span>
+<span id="L614"><span class="lineNum">     614</span>                 :             :     static constexpr double DEFLECTION_ACTIVE_THRESHOLD = 1e-6;</span>
+<span id="L615"><span class="lineNum">     615</span>                 :             :     static constexpr double DEFLECTION_NEAR_ZERO_M = 1e-6;       // Near-zero threshold for susp/vert deflection checks (m)</span>
+<span id="L616"><span class="lineNum">     616</span>                 :             :     static constexpr double MIN_VALID_LAT_FORCE_N = 1.0;          // Minimum lateral force to consider data present (N)</span>
+<span id="L617"><span class="lineNum">     617</span>                 :             :     static constexpr double ROAD_TEXTURE_SPEED_THRESHOLD = 5.0;</span>
+<span id="L618"><span class="lineNum">     618</span>                 :             :     static constexpr double DEFLECTION_NM_SCALE = 50.0;</span>
+<span id="L619"><span class="lineNum">     619</span>                 :             :     static constexpr double ACCEL_ROAD_TEXTURE_SCALE = 0.05;</span>
+<span id="L620"><span class="lineNum">     620</span>                 :             :     static constexpr double DEBUG_FREQ_SMOOTHING = 0.9;</span>
+<span id="L621"><span class="lineNum">     621</span>                 :             :     static constexpr double GAIN_REDUCTION_MAX = 50.0;</span>
+<span id="L622"><span class="lineNum">     622</span>                 :             :     double m_session_peak_torque = 25.0; // DEFAULT_SESSION_PEAK_TORQUE</span>
+<span id="L623"><span class="lineNum">     623</span>                 :             :     double m_smoothed_structural_mult = 1.0 / 25.0; </span>
+<span id="L624"><span class="lineNum">     624</span>                 :             :     double m_rolling_average_torque = 0.0; </span>
+<span id="L625"><span class="lineNum">     625</span>                 :             :     double m_last_raw_torque = 0.0; </span>
+<span id="L626"><span class="lineNum">     626</span>                 :             :     bool m_was_allowed = true; // Track transition for filter reset</span>
+<span id="L627"><span class="lineNum">     627</span>                 :             : </span>
+<span id="L628"><span class="lineNum">     628</span>                 :             :     void update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt);</span>
+<span id="L629"><span class="lineNum">     629</span>                 :             :     void InitializeLoadReference(const char* className, const char* vehicleName);</span>
+<span id="L630"><span class="lineNum">     630</span>                 :             :     </span>
+<span id="L631"><span class="lineNum">     631</span>                 :             : public:</span>
+<span id="L632"><span class="lineNum">     632</span>                 :             :     double calculate_raw_slip_angle_pair(const TelemWheelV01&amp; w1, const TelemWheelV01&amp; w2);</span>
+<span id="L633"><span class="lineNum">     633</span>                 :             :     double calculate_slip_angle(const TelemWheelV01&amp; w, double&amp; prev_state, double dt);</span>
+<span id="L634"><span class="lineNum">     634</span>                 :             :     </span>
+<span id="L635"><span class="lineNum">     635</span>                 :             : GripResult calculate_axle_grip(const TelemWheelV01&amp; w1,</span>
+<span id="L636"><span class="lineNum">     636</span>                 :             :                               const TelemWheelV01&amp; w2,</span>
+<span id="L637"><span class="lineNum">     637</span>                 :             :                               double avg_axle_load,</span>
+<span id="L638"><span class="lineNum">     638</span>                 :             :                               bool&amp; warned_flag,</span>
+<span id="L639"><span class="lineNum">     639</span>                 :             :                               double&amp; prev_slip1,</span>
+<span id="L640"><span class="lineNum">     640</span>                 :             :                               double&amp; prev_slip2,</span>
+<span id="L641"><span class="lineNum">     641</span>                 :             :                               double&amp; prev_load1, // NEW: State for load smoothing</span>
+<span id="L642"><span class="lineNum">     642</span>                 :             :                               double&amp; prev_load2, // NEW: State for load smoothing</span>
+<span id="L643"><span class="lineNum">     643</span>                 :             :                               double car_speed,</span>
+<span id="L644"><span class="lineNum">     644</span>                 :             :                               double dt,</span>
+<span id="L645"><span class="lineNum">     645</span>                 :             :                               const char* vehicleName,</span>
+<span id="L646"><span class="lineNum">     646</span>                 :             :                               const TelemInfoV01* data,</span>
+<span id="L647"><span class="lineNum">     647</span>                 :             :                               bool is_front);</span>
+<span id="L648"><span class="lineNum">     648</span>                 :             : </span>
+<span id="L649"><span class="lineNum">     649</span>                 :             :     double approximate_load(const TelemWheelV01&amp; w);</span>
+<span id="L650"><span class="lineNum">     650</span>                 :             :     double approximate_rear_load(const TelemWheelV01&amp; w);</span>
+<span id="L651"><span class="lineNum">     651</span>                 :             :     double calculate_manual_slip_ratio(const TelemWheelV01&amp; w, double car_speed_ms);</span>
+<span id="L652"><span class="lineNum">     652</span>                 :             :     NOINLINE double calculate_slope_grip(double lateral_g, double slip_angle, double dt, const TelemInfoV01* data = nullptr);</span>
+<span id="L653"><span class="lineNum">     653</span>                 :             :     double calculate_slope_confidence(double dAlpha_dt);</span>
+<span id="L654"><span class="lineNum">     654</span>                 :             :     double calculate_wheel_slip_ratio(const TelemWheelV01&amp; w);</span>
+<span id="L655"><span class="lineNum">     655</span>                 :             : </span>
+<span id="L656"><span class="lineNum">     656</span>                 :             :     double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr, float genFFBTorque = 0.0f, bool allowed = true, double override_dt = -1.0, signed char mControl = 0);</span>
+<span id="L657"><span class="lineNum">     657</span>                 :             : </span>
+<span id="L658"><span class="lineNum">     658</span>                 :             :     void UpdateMetadata(const struct SharedMemoryObjectOut&amp; data);</span>
+<span id="L659"><span class="lineNum">     659</span>                 :             :     double apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L660"><span class="lineNum">     660</span>                 :             :     void ResetNormalization();</span>
+<span id="L661"><span class="lineNum">     661</span>                 :             : </span>
+<span id="L662"><span class="lineNum">     662</span>                 :             : private:</span>
+<span id="L663"><span class="lineNum">     663</span>                 :             :     void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L664"><span class="lineNum">     664</span>                 :             :     NOINLINE void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L665"><span class="lineNum">     665</span>                 :             :     NOINLINE void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L666"><span class="lineNum">     666</span>                 :             :     void calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L667"><span class="lineNum">     667</span>                 :             :     void calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L668"><span class="lineNum">     668</span>                 :             :     void calculate_slide_texture(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L669"><span class="lineNum">     669</span>                 :             :     void calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L670"><span class="lineNum">     670</span>                 :             :     void calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L671"><span class="lineNum">     671</span>                 :             :     void calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L672"><span class="lineNum">     672</span>                 :             : };</span>
+<span id="L673"><span class="lineNum">     673</span>                 :             : </span>
+<span id="L674"><span class="lineNum">     674</span>                 :             : #endif // FFBENGINE_H</span>
         </pre>
               </td>
             </tr>
