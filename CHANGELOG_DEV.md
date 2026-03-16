@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.191]
+- **Fixed Telemetry Diagnostic Reset on Car Change (Issue #374)**:
+  - Implemented automatic reset of all telemetry error counters and warning flags whenever a car change is detected.
+  - Reset counters: `m_missing_load_frames`, `m_missing_lat_force_front_frames`, `m_missing_lat_force_rear_frames`, `m_missing_susp_force_frames`, `m_missing_susp_deflection_frames`, and `m_missing_vert_deflection_frames`.
+  - Reset warning flags: `m_warned_load`, `m_warned_grip`, `m_warned_rear_grip`, `m_warned_lat_force_front`, `m_warned_lat_force_rear`, `m_warned_susp_force`, `m_warned_susp_deflection`, and `m_warned_vert_deflection`.
+  - This fix prevents "missing telemetry" states or warnings from persisting when switching from an encrypted car (DLC) to a car with full telemetry access.
+- **Testing**:
+  - Added `tests/test_issue_374_repro.cpp` which verifies that all diagnostic states are correctly zeroed out upon switching vehicle names/classes.
+  - Verified 100% pass rate across 536 test cases.
+
 ## [0.7.190]
 - **Reduced Kerb Impact in Self-Aligning Torque (Issue #297)**:
   - **Physics Saturation (Always On)**:

@@ -327,6 +327,11 @@ public:
     static bool HasWarnings(const FFBEngine& engine) {
         return engine.m_warned_load || engine.m_warned_grip || engine.m_warned_dt;
     }
+    static int GetMissingLoadFrames(const FFBEngine& e) { return e.m_missing_load_frames; }
+    static bool GetWarnedLoad(const FFBEngine& e) { return e.m_warned_load; }
+    static int GetMissingVertDeflectionFrames(const FFBEngine& e) { return e.m_missing_vert_deflection_frames; }
+    static bool GetWarnedVertDeflection(const FFBEngine& e) { return e.m_warned_vert_deflection; }
+    static bool GetWarnedSuspForce(const FFBEngine& e) { return e.m_warned_susp_force; }
     static void test_unit_sop_lateral();
     static void test_unit_gyro_damping();
     static void test_unit_abs_pulse();
