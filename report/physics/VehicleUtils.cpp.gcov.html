@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-16 08:00:48</td>
+            <td class="headerValue">2026-03-16 09:21:56</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -274,8 +274,8 @@
 <span id="L170"><span class="lineNum">     170</span>                 :<span class="tlaGNC">          23 : }</span></span>
 <span id="L171"><span class="lineNum">     171</span>                 :             : </span>
 <span id="L172"><span class="lineNum">     172</span>                 :             : // Lookup table: Map ParsedVehicleClass to Motion Ratio (Wheel vs Pushrod)</span>
-<span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaGNC">       61933 : double GetMotionRatioForClass(ParsedVehicleClass vclass) {</span></span>
-<span id="L174"><span class="lineNum">     174</span>      [<span class="tlaGBC" title="Branch 0 was taken 42 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16654 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 45237 times"> + </span>]:<span class="tlaGNC">       61933 :     switch (vclass) {</span></span>
+<span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaGNC">       61953 : double GetMotionRatioForClass(ParsedVehicleClass vclass) {</span></span>
+<span id="L174"><span class="lineNum">     174</span>      [<span class="tlaGBC" title="Branch 0 was taken 42 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16654 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 45257 times"> + </span>]:<span class="tlaGNC">       61953 :     switch (vclass) {</span></span>
 <span id="L175"><span class="lineNum">     175</span>                 :<span class="tlaGNC">          42 :         case ParsedVehicleClass::HYPERCAR:</span></span>
 <span id="L176"><span class="lineNum">     176</span>                 :             :         case ParsedVehicleClass::LMP2_UNRESTRICTED:</span>
 <span id="L177"><span class="lineNum">     177</span>                 :             :         case ParsedVehicleClass::LMP2_RESTRICTED:</span>
@@ -285,14 +285,14 @@
 <span id="L181"><span class="lineNum">     181</span>                 :<span class="tlaGNC">       16654 :         case ParsedVehicleClass::GTE:</span></span>
 <span id="L182"><span class="lineNum">     182</span>                 :             :         case ParsedVehicleClass::LMGT3:</span>
 <span id="L183"><span class="lineNum">     183</span>                 :<span class="tlaGNC">       16654 :             return 0.65; // GT cars have lower motion ratios</span></span>
-<span id="L184"><span class="lineNum">     184</span>                 :<span class="tlaGNC">       45237 :         default:</span></span>
-<span id="L185"><span class="lineNum">     185</span>                 :<span class="tlaGNC">       45237 :             return 0.55; // Default fallback</span></span>
+<span id="L184"><span class="lineNum">     184</span>                 :<span class="tlaGNC">       45257 :         default:</span></span>
+<span id="L185"><span class="lineNum">     185</span>                 :<span class="tlaGNC">       45257 :             return 0.55; // Default fallback</span></span>
 <span id="L186"><span class="lineNum">     186</span>                 :             :     }</span>
 <span id="L187"><span class="lineNum">     187</span>                 :             : }</span>
 <span id="L188"><span class="lineNum">     188</span>                 :             : </span>
 <span id="L189"><span class="lineNum">     189</span>                 :             : // Lookup table: Map ParsedVehicleClass to Unsprung Weight (Newtons)</span>
-<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">       61917 : double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {</span></span>
-<span id="L191"><span class="lineNum">     191</span>         [<span class="tlaGBC" title="Branch 0 was taken 5841 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 56076 times"> + </span>]:<span class="tlaGNC">       61917 :     if (is_rear) {</span></span>
+<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">       61937 : double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {</span></span>
+<span id="L191"><span class="lineNum">     191</span>         [<span class="tlaGBC" title="Branch 0 was taken 5841 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 56096 times"> + </span>]:<span class="tlaGNC">       61937 :     if (is_rear) {</span></span>
 <span id="L192"><span class="lineNum">     192</span>      [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1844 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 3995 times"> + </span>]:<span class="tlaGNC">        5841 :         switch (vclass) {</span></span>
 <span id="L193"><span class="lineNum">     193</span>                 :<span class="tlaGNC">           2 :             case ParsedVehicleClass::HYPERCAR:</span></span>
 <span id="L194"><span class="lineNum">     194</span>                 :             :             case ParsedVehicleClass::LMP2_UNRESTRICTED:</span>
@@ -307,7 +307,7 @@
 <span id="L203"><span class="lineNum">     203</span>                 :<span class="tlaGNC">        3995 :                 return 500.0;</span></span>
 <span id="L204"><span class="lineNum">     204</span>                 :             :         }</span>
 <span id="L205"><span class="lineNum">     205</span>                 :             :     } else {</span>
-<span id="L206"><span class="lineNum">     206</span>      [<span class="tlaGBC" title="Branch 0 was taken 34 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 14807 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 41235 times"> + </span>]:<span class="tlaGNC">       56076 :         switch (vclass) {</span></span>
+<span id="L206"><span class="lineNum">     206</span>      [<span class="tlaGBC" title="Branch 0 was taken 34 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 14807 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 41255 times"> + </span>]:<span class="tlaGNC">       56096 :         switch (vclass) {</span></span>
 <span id="L207"><span class="lineNum">     207</span>                 :<span class="tlaGNC">          34 :             case ParsedVehicleClass::HYPERCAR:</span></span>
 <span id="L208"><span class="lineNum">     208</span>                 :             :             case ParsedVehicleClass::LMP2_UNRESTRICTED:</span>
 <span id="L209"><span class="lineNum">     209</span>                 :             :             case ParsedVehicleClass::LMP2_RESTRICTED:</span>
@@ -317,8 +317,8 @@
 <span id="L213"><span class="lineNum">     213</span>                 :<span class="tlaGNC">       14807 :             case ParsedVehicleClass::GTE:</span></span>
 <span id="L214"><span class="lineNum">     214</span>                 :             :             case ParsedVehicleClass::LMGT3:</span>
 <span id="L215"><span class="lineNum">     215</span>                 :<span class="tlaGNC">       14807 :                 return 500.0;</span></span>
-<span id="L216"><span class="lineNum">     216</span>                 :<span class="tlaGNC">       41235 :             default:</span></span>
-<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">       41235 :                 return 450.0;</span></span>
+<span id="L216"><span class="lineNum">     216</span>                 :<span class="tlaGNC">       41255 :             default:</span></span>
+<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">       41255 :                 return 450.0;</span></span>
 <span id="L218"><span class="lineNum">     218</span>                 :             :         }</span>
 <span id="L219"><span class="lineNum">     219</span>                 :             :     }</span>
 <span id="L220"><span class="lineNum">     220</span>                 :             : }</span>
