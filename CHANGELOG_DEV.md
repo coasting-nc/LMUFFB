@@ -1,9 +1,37 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project will be documented in this file.
 
 ---
 
+## Incremental changes from version 0.7.166 till 0.7.196
+
+- **Reduced Kerb Impact in Self-Aligning Torque (Issue #297)**:
+  - **Physics Saturation (Always On)**:
+    - Implemented a 1.5x static weight cap on the dynamic rear tire load used for torque calculations. This prevents mathematical explosions during vertical kerb strikes.
+    - Added `tanh` soft-clipping to the rear slip angle calculation to simulate pneumatic trail falloff. This ensures torque remains physically realistic at high slip angles and prevents infinite force spikes.
+  - **Hybrid Kerb Strike Rejection (User Configurable)**:
+    - Introduced a "Kerb Strike Rejection" slider (0.0 to 1.0) allowing users to tune attenuation strength.
+    - Implemented dual-trigger detection using `mSurfaceType` (works on all cars including encrypted DLC) and high suspension velocity (>0.8 m/s).
+    - Added a 100ms hold timer to maintain attenuation while the car settles after leaving a kerb.
+  - **GUI & Configuration**:
+    - Added "Kerb Strike Rejection" slider to the Rear Axle tuning section.
+- Fixes for graininess due to issues in the 1000Hz up-sampling algorithm
+- Fixes potential sources of FFB spikes and jolts: sanitized NaN/Inf values, resetting all upsamplers and smoothing filters when entering OR exiting the driving state
+- Fixed FFB loss when online due to stuttering (people joining/leaving server), that was due to a FFB safety window which disable FFB for 2 seconds in case of stuttering.
+- Fixes to tire load estimation and suspension data use:
+ - use of class-specific motion ratios (suspension geometry) and axle-specific unsprung mass estimates 
+ - Corrected the interpretation of `mSuspForce` as pushrod/spring load rather than wheel load. 
+ - using correct fallback when game data is not present
+This should affect and improve these FFB effects: Lateral Load, Lockup Vibration, Suspension Bottoming, and other effects normalized according to tire load.
+
+- Fixes to Tire Grip estimate: 
+  - implemented Per-Wheel Friction Circle.
+  - Enhanced Tire Grip Estimation with Dynamic Load Sensitivity
+- Added a "Response Curve (Gamma)" setting to shape the grip loss curve for the understeer effect.
+  - Allows non-linear mapping of the grip loss: `< 1.0` drops force early (more sensitive), `1.0` is a linear drop, and `> 1.0` allows the force to drop later (more buffer zone).
+
+  
 ## [0.7.196]
 - **Fixed Cogging and Ringing in 1000Hz UpSampler (Issue #385)**:
   - **Corrected Convolution Order**: Fixed a mathematical error where FIR filter taps were applied in reverse order. The earliest tap now correctly multiplies the newest physics sample, restoring the intended windowed-sinc impulse response.
