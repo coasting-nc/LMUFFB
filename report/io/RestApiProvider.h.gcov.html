@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-16 09:21:56</td>
+            <td class="headerValue">2026-03-16 09:54:02</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -102,11 +102,11 @@
 <span id="L31"><span class="lineNum">      31</span>                 :             :     std::string GetManufacturer() const;</span>
 <span id="L32"><span class="lineNum">      32</span>                 :             : </span>
 <span id="L33"><span class="lineNum">      33</span>                 :             :     // Reset manufacturer when vehicle changes</span>
-<span id="L34"><span class="lineNum">      34</span>                 :<span class="tlaGNC tlaBgGNC">          98 :     void ResetManufacturer() {</span></span>
-<span id="L35"><span class="lineNum">      35</span>         [<span class="tlaGBC" title="Branch 0 was taken 98 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          98 :         std::lock_guard&lt;std::mutex&gt; lock(m_manufacturerMutex);</span></span>
-<span id="L36"><span class="lineNum">      36</span>         [<span class="tlaGBC" title="Branch 0 was taken 98 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          98 :         m_manufacturer = &quot;Unknown&quot;;</span></span>
-<span id="L37"><span class="lineNum">      37</span>                 :<span class="tlaGNC">          98 :         m_hasManufacturer = false;</span></span>
-<span id="L38"><span class="lineNum">      38</span>                 :<span class="tlaGNC">          98 :     }</span></span>
+<span id="L34"><span class="lineNum">      34</span>                 :<span class="tlaGNC tlaBgGNC">         100 :     void ResetManufacturer() {</span></span>
+<span id="L35"><span class="lineNum">      35</span>         [<span class="tlaGBC" title="Branch 0 was taken 100 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         100 :         std::lock_guard&lt;std::mutex&gt; lock(m_manufacturerMutex);</span></span>
+<span id="L36"><span class="lineNum">      36</span>         [<span class="tlaGBC" title="Branch 0 was taken 100 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         100 :         m_manufacturer = &quot;Unknown&quot;;</span></span>
+<span id="L37"><span class="lineNum">      37</span>                 :<span class="tlaGNC">         100 :         m_hasManufacturer = false;</span></span>
+<span id="L38"><span class="lineNum">      38</span>                 :<span class="tlaGNC">         100 :     }</span></span>
 <span id="L39"><span class="lineNum">      39</span>                 :             : </span>
 <span id="L40"><span class="lineNum">      40</span>                 :             : private:</span>
 <span id="L41"><span class="lineNum">      41</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 :     RestApiProvider() = default;</span></span>
