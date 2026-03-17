@@ -45,7 +45,8 @@ TEST_CASE(test_slope_steady_state_hold, "SlopeFix") {
         data.mWheel[0].mLateralPatchVel = slip * 20.0;
         data.mWheel[1].mLateralPatchVel = slip * 20.0;
         data.mLocalAccel.x = g * 9.81;
-        engine.calculate_force(&data);
+
+        for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
     }
 
     double slope_transient = engine.m_slope_current;
@@ -90,7 +91,8 @@ TEST_CASE(test_input_smoothing, "SlopeFix") {
         double slip = (i % 2 == 0) ? 0.05 : 0.06;
         data.mWheel[0].mLateralPatchVel = slip * 20.0;
         data.mWheel[1].mLateralPatchVel = slip * 20.0;
-        engine.calculate_force(&data);
+
+        for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
         last_smoothed = engine.m_slope_slip_smoothed;
     }
 

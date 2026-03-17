@@ -546,8 +546,15 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             Tooltips::UNDERSTEER_GAMMA);
 
         const char* torque_sources[] = { "Shaft Torque (100Hz Legacy)", "In-Game FFB (400Hz LMU 1.2+)" };
-        IntSetting("Torque Source", &engine.m_torque_source, torque_sources, sizeof(torque_sources)/sizeof(torque_sources[0]),
+                IntSetting("Torque Source", &engine.m_torque_source, torque_sources, sizeof(torque_sources)/sizeof(torque_sources[0]),
             Tooltips::TORQUE_SOURCE);
+
+        // NEW: Show reconstruction mode only if using the 100Hz source
+        if (engine.m_torque_source == 0) {
+            const char* recon_modes[] = { "Zero-Latency (Extrapolated)", "Smooth (Interpolated)" };
+            IntSetting("  100Hz Reconstruction", &engine.m_steering_100hz_reconstruction, recon_modes, 2,
+                "Zero-Latency: Best for response but can be grainy. Smooth: 10ms delay but eliminates all 100Hz buzz.");
+        }
 
         BoolSetting("Pure Passthrough", &engine.m_torque_passthrough, Tooltips::PURE_PASSTHROUGH);
 

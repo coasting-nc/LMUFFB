@@ -146,7 +146,8 @@ public:
     // Base Force Debugging (v0.4.13)
     float m_steering_shaft_gain;
     float m_ingame_ffb_gain = 1.0f; // New v0.7.71 (Issue #160)
-    int m_torque_source = 0; 
+    int m_torque_source = 0;
+    int m_steering_100hz_reconstruction = 0; // NEW: 0 = Zero Latency, 1 = Smooth
     bool m_torque_passthrough = false;
 
     // New Effects (v0.2)

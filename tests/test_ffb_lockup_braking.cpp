@@ -123,7 +123,8 @@ TEST_CASE(test_abs_pulse_v060, "LockupBraking") {
     
     // Frame 1: Pressure 1.0
     data.mWheel[0].mBrakePressure = 1.0;
-    engine.calculate_force(&data);
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
     
     // Frame 2: Pressure drops to 0.7 (ABS modulation)
     // Delta = -0.3 / 0.01 = -30.0. |Delta| > 2.0.
@@ -166,7 +167,7 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
     data.mWheel[2].mLongitudinalPatchVel = 0.0;
     data.mWheel[3].mLongitudinalPatchVel = 0.0;
 
-    engine.calculate_force(&data);
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
     double phase_delta_front = engine.m_lockup_phase; // Phase started at 0
 
     // Verify Front triggered
@@ -187,7 +188,7 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
     data.mWheel[2].mLongitudinalPatchVel = -0.5 * 20.0;
     data.mWheel[3].mLongitudinalPatchVel = -0.5 * 20.0;
 
-    engine.calculate_force(&data);
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
     double phase_delta_rear = engine.m_lockup_phase;
 
     // Verify Rear triggered (Fixes the bug)
@@ -320,8 +321,9 @@ TEST_CASE(test_dynamic_thresholds, "LockupBraking") {
     
     // Case A: 4% Slip (Below Start)
     // 0.04 * 20.0 = 0.8
-    data.mWheel[0].mLongitudinalPatchVel = -0.8; 
-    engine.calculate_force(&data);
+    data.mWheel[0].mLongitudinalPatchVel = -0.8;
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
     if (engine.m_lockup_phase == 0.0) {
         std::cout << "[PASS] No trigger below 5% start." << std::endl;
         g_tests_passed++;
@@ -366,7 +368,8 @@ TEST_CASE(test_refactor_abs_pulse, "LockupBraking") {
     // Trigger condition: High Brake + Pressure Delta
     data.mUnfilteredBrake = 1.0;
     data.mWheel[0].mBrakePressure = 1.0;
-    engine.calculate_force(&data); // Frame 1: Set previous pressure
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); } // Frame 1: Set previous pressure
 
     data.mWheel[0].mBrakePressure = 0.5; // Frame 2: Rapid drop (delta)
     double force = engine.calculate_force(&data);

@@ -176,6 +176,29 @@ void InitializeEngine(FFBEngine& engine) {
 
     // Issue #379: Pre-seed derivatives for legacy tests to avoid first-frame zero force
     FFBEngineTestAccess::SetDerivativesSeeded(engine, true);
+
+    // Strategy 4: Seed interpolators to prevent "Missing Telemetry" warnings and ramp-up issues
+    TelemInfoV01 data = CreateBasicTestTelemetry(0.0);
+    FFBEngineTestAccess::SetWasAllowed(engine, false); // Force a state transition
+    engine.calculate_force(&data); // First dummy frame to seed all interpolators
+    FFBEngineTestAccess::SetWasAllowed(engine, true);
+}
+
+// Helper to simulate the passage of time for the FFB Engine's DSP pipeline.
+// Because the new LinearInterpolator delays signals by 10ms to ensure smoothness,
+// tests must "pump" the engine to see the final output of a step-change.
+void PumpEngineTime(FFBEngine& engine, TelemInfoV01& data, double time_to_advance_s) {
+    double dt = 0.0025; // 400Hz FFB loop tick
+    int ticks = static_cast<int>(std::ceil(time_to_advance_s / dt));
+
+    for (int i = 0; i < ticks; i++) {
+        // Only advance the telemetry timestamp every 10ms (100Hz)
+        // to accurately simulate how the game feeds data to the app.
+        if (i % 4 == 0) {
+            data.mElapsedTime += 0.01;
+        }
+        engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, dt);
+    }
 }
 
 // --- Friend Access for Testing ---

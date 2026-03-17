@@ -41,7 +41,8 @@ TEST_CASE(test_issue_241_rectification_fix, "YawGyro") {
     double sum_force = 0.0;
     int frames = 100;
     data.mLocalRot.y = 0.0;
-    engine.calculate_force(&data); // Seed
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); } // Seed
     
     for (int i = 0; i < frames; i++) {
         double accel = (i % 2 == 0) ? 2.0 : -1.5;
@@ -80,7 +81,8 @@ TEST_CASE(test_issue_241_continuous_deadzone, "YawGyro") {
     FFBEngineTestAccess::ResetYawDerivedState(engine);
     engine.calculate_force(&data); // Seed
     data.mLocalRot.y = 1.1 * 0.0025;
-    engine.calculate_force(&data); // smoothing frame 1: smoothed = 0.0 + (1.1 - 0.0) = 1.1
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); } // smoothing frame 1: smoothed = 0.0 + (1.1 - 0.0) = 1.1
     data.mLocalRot.y += 1.1 * 0.0025;
     double force_low = engine.calculate_force(&data); // frame 2: smoothed = 1.1 + (1.1 - 1.1) = 1.1
 
@@ -93,7 +95,8 @@ TEST_CASE(test_issue_241_continuous_deadzone, "YawGyro") {
     FFBEngineTestAccess::ResetYawDerivedState(engine); // reset
     engine.calculate_force(&data); // Seed
     data.mLocalRot.y = -1.1 * 0.0025;
-    engine.calculate_force(&data); // frame 1
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); } // frame 1
     data.mLocalRot.y += -1.1 * 0.0025;
     double force_neg = engine.calculate_force(&data); // frame 2
 

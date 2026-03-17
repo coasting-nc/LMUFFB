@@ -22,6 +22,7 @@ struct FFBSnapshot {
     float texture_spin;
     float texture_bottoming;
     float ffb_abs_pulse;    // New v0.7.53
+    float ffb_shaft_torque; // New Issue #396 (Diagnostic)
     float long_load_force;  // New #301
     float ffb_soft_lock;    // New v0.7.61 (Issue #117)
     float session_peak_torque; // New v0.7.67 (Issue #152)

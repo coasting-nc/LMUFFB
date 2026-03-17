@@ -35,18 +35,20 @@ TEST_CASE(test_sop_yaw_kick, "YawGyro") {
     // Input: 1.0 rad/s^2 Yaw Accel (Derived from rate)
     // Seeding frame
     data.mLocalRot.y = 0.0;
-    engine.calculate_force(&data);
+    data.mElapsedTime = 1.0; // Avoid starting at zero
+    data.mDeltaTime = 0.01;
+
+    // Pump to stabilize seeding
+    PumpEngineTime(engine, data, 0.1);
     
-    // Test frame: rate moves to 1.0 * dt
-    data.mLocalRot.y = 1.0 * 0.0025; 
-    
-    // Ensure no other inputs
-    data.mSteeringShaftTorque = 0.0;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
+    // Establish target (1.0 rad/s^2 acceleration over 10ms -> 0.01 rad/s jump)
+    data.mLocalRot.y += 0.01;
     data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick
     
-    double force = engine.calculate_force(&data);
+    // Pump 10ms to let interpolation deliver the step change
+    PumpEngineTime(engine, data, 0.01);
+
+    double force = engine.GetDebugBatch().back().total_output;
     
     // v0.4.20 UPDATE: With force inversion, first frame should be ~-0.025 (10% of steady-state due to LPF)
     // The negative sign is correct - provides counter-steering cue
@@ -96,10 +98,18 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
     
     // Frame 1: Steering at 0.0
     data.mUnfilteredSteering = 0.0f;
-    engine.calculate_force(&data);
+    data.mElapsedTime = 0.0;
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
     
-    // Frame 2: Steering moves to 0.1 (rapid movement to the right)
+    // Establish target
     data.mUnfilteredSteering = 0.1f;
+    data.mElapsedTime = 0.01;
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
+
+    // Frame 2: Step time to let interpolation deliver value
+    data.mElapsedTime = 0.02;
     double force = engine.calculate_force(&data);
     
     // Get the snapshot to check gyro force
@@ -132,7 +142,12 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
     // Test opposite direction
     // Frame 3: Steering moves back from 0.1 to 0.0 (negative velocity)
     data.mUnfilteredSteering = 0.0f;
-    engine.calculate_force(&data);
+    data.mElapsedTime = 0.03;
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
+    data.mElapsedTime = 0.04;
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
     
     batch = engine.GetDebugBatch();
     if (!batch.empty()) {
@@ -152,10 +167,17 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
     // At low speed, gyro force should be weaker
     data.mLocalVel.z = 5.0; // Slow (5 m/s)
     data.mUnfilteredSteering = 0.0f;
-    engine.calculate_force(&data);
+    data.mElapsedTime = 0.05;
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
     
     data.mUnfilteredSteering = 0.1f;
-    engine.calculate_force(&data);
+    data.mElapsedTime = 0.06;
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
+    data.mElapsedTime = 0.07;
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
     
     batch = engine.GetDebugBatch();
     if (!batch.empty()) {
@@ -206,11 +228,18 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     // Raw input: 10.0 rad/s^2 (large spike)
     // Seeding
     data.mLocalRot.y = 0.0;
-    engine.calculate_force(&data);
+    data.mElapsedTime = 0.0;
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
     
-    // Spike: rate moves to 10.0 * dt
-    data.mLocalRot.y = 10.0 * 0.0025;
-    
+    // Establish target
+    data.mLocalRot.y = 10.0 * 0.01;
+    data.mElapsedTime = 0.01;
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
+
+    // Frame 1: Interpolation delivers value
+    data.mElapsedTime = 0.02;
     double force_frame1 = engine.calculate_force(&data);
     
     // v0.4.20 UPDATE: With force inversion, values are negative
@@ -227,7 +256,11 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     // Smoothed (frame 2): -1.0 + 0.1 * (-10.0 - (-1.0)) = -1.0 + 0.1 * (-9.0) = -1.9
     // Force: -1.9 * 1.0 * 5.0 = -9.5 Nm
     // Normalized: -9.5 / 20.0 = -0.475
-    data.mLocalRot.y += 10.0 * 0.0025;
+    data.mLocalRot.y += 10.0 * 0.01;
+    data.mElapsedTime = 0.03;
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
+    data.mElapsedTime = 0.04;
     double force_frame2 = engine.calculate_force(&data);
     
     if (std::abs(force_frame2 - (-0.475)) < 0.02) {
@@ -319,13 +352,18 @@ TEST_CASE(test_yaw_accel_convergence, "YawGyro") {
     // Constant input: 1.0 rad/s^2
     // Expected steady-state: 1.0 * 1.0 * 5.0 / 20.0 = 0.25
     data.mLocalRot.y = 0.0;
-    engine.calculate_force(&data); // Seed
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); } // Seed
     
     // Run for 50 frames (should converge with alpha=0.1)
     double force = 0.0;
     for (int i = 0; i < 50; i++) {
         data.mLocalRot.y += 1.0 * 0.0025;
         data.mElapsedTime += 0.0025;
+        for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+        engine.calculate_force(&data);
+
         force = engine.calculate_force(&data);
     }
     
@@ -409,7 +447,9 @@ TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
     int frames = 50;
     
     data.mLocalRot.y = 0.0;
-    engine.calculate_force(&data); // Seed
+
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); } // Seed
     
     for (int i = 0; i < frames; i++) {
         // Simulate noise that would come from vibrations
@@ -490,7 +530,8 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     // Test Case 1: Idle Noise - Below Deadzone Threshold (0.2 rad/s^2)
     std::cout << "  Case 1: Idle Noise (YawAccel = 0.1, below threshold)" << std::endl;
     data.mLocalRot.y = 0.0;
-    engine.calculate_force(&data); // Seed
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); } // Seed
     data.mLocalRot.y = 0.1 * 0.0025; // Below 0.2 threshold
     
     // Ensure all effects that could mask are off
@@ -512,7 +553,8 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     std::cout << "  Case 2: Low Speed (YawAccel = 5.0, Speed = 1.0 m/s)" << std::endl;
     FFBEngineTestAccess::ResetYawDerivedState(engine);
     data.mLocalRot.y = 0.0;
-    engine.calculate_force(&data); // Seed
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); } // Seed
     data.mLocalRot.y = 5.0 * 0.0025; // High yaw accel
     data.mLocalVel.z = 1.0; // Below 5 m/s cutoff
     
@@ -538,6 +580,10 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     for (int i = 0; i < 100; i++) {
         data.mLocalRot.y += 5.0 * 0.0025;
         data.mElapsedTime += 0.0025;
+        for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+        engine.calculate_force(&data);
+
         force_valid = engine.calculate_force(&data);
     }
     
@@ -566,9 +612,11 @@ TEST_CASE(test_yaw_kick_threshold, "YawGyro") {
     // Case 1: Yaw Accel below threshold (2.0 < 5.0)
     data.mDeltaTime = 0.0025;
     data.mLocalRot.y = 0.0;
-    engine.calculate_force(&data); // Seed
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); } // Seed
     data.mLocalRot.y = 2.0 * 0.0025;
-    engine.calculate_force(&data); // 1st frame smoothing
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); } // 1st frame smoothing
     data.mLocalRot.y += 2.0 * 0.0025;
     double force_low = engine.calculate_force(&data);
     
@@ -584,6 +632,10 @@ TEST_CASE(test_yaw_kick_threshold, "YawGyro") {
     for (int i = 0; i < 40; i++) {
         data.mLocalRot.y += 6.0 * 0.0025;
         data.mElapsedTime += 0.0025;
+        for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+        engine.calculate_force(&data);
+
         force_high = engine.calculate_force(&data);
     }
     
@@ -614,6 +666,10 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     for (int i = 0; i < 40; i++) {
         data.mLocalRot.y += 1.0 * 0.0025;
         data.mElapsedTime += 0.0025;
+        for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+        engine.calculate_force(&data);
+
         force_tiny = engine.calculate_force(&data);
     }
     
@@ -628,11 +684,16 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     // Large but below threshold (9.0 < 10.0)
     data.mLocalRot.y = 0.0;
     data.mElapsedTime = 0.0;
-    engine.calculate_force(&data); // Seed
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); } // Seed
     double force_below_max = 0.0;
     for (int i = 0; i < 40; i++) {
         data.mLocalRot.y += 9.0 * 0.0025;
         data.mElapsedTime += 0.0025;
+        for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+        engine.calculate_force(&data);
+
         force_below_max = engine.calculate_force(&data);
     }
     
@@ -647,6 +708,10 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     for (int i = 0; i < 40; i++) {
         data.mLocalRot.y += 11.0 * 0.0025;
         data.mElapsedTime += 0.0025;
+        for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+        engine.calculate_force(&data);
+
         force_above_max = engine.calculate_force(&data);
     }
     
@@ -667,6 +732,10 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     for (int i = 0; i < 40; i++) {
         data.mLocalRot.y -= 6.0 * 0.0025;
         data.mElapsedTime += 0.0025;
+        for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+        engine.calculate_force(&data);
+
         force_negative = engine.calculate_force(&data);
     }
     
@@ -678,11 +747,16 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     FFBEngineTestAccess::ResetYawDerivedState(engine); // Reset
     data.mLocalRot.y = 0.0;
     data.mElapsedTime = 0.0;
-    engine.calculate_force(&data); // Seed
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); } // Seed
     double force_negative_below = 0.0;
     for (int i = 0; i < 40; i++) {
         data.mLocalRot.y -= 4.0 * 0.0025;
         data.mElapsedTime += 0.0025;
+        for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+        engine.calculate_force(&data);
+
         force_negative_below = engine.calculate_force(&data);
     }
     
@@ -693,7 +767,8 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     engine.m_yaw_kick_threshold = 0.0f; // Zero threshold (all pass)
     FFBEngineTestAccess::ResetYawDerivedState(engine); // Reset
     data.mLocalRot.y = 0.0;
-    engine.calculate_force(&data); // Seed
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); } // Seed
     data.mLocalRot.y = 10.0 * 0.0025; // Large acceleration
     data.mLocalVel.z = 3.0; // Below 5.0 m/s cutoff
     
@@ -746,10 +821,15 @@ TEST_CASE(test_sop_yaw_kick_direction, "YawGyro") {
     // We want Counter-Steer Left (Negative Torque).
     data.mDeltaTime = 0.0025;
     data.mLocalRot.y = 0.0;
-    engine.calculate_force(&data); // Seed
-    data.mLocalRot.y = 5.0 * 0.0025; 
-    data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick 
-    
+    data.mElapsedTime = 0.0;
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); } // Seed
+    data.mLocalRot.y = 5.0 * 0.01;
+    data.mElapsedTime = 0.01;
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
+    data.mElapsedTime = 0.02;
+    data.mLocalVel.z = 20.0;
     double force = engine.calculate_force(&data);
     
     if (force < -0.05) { // Expect Negative (adjusted threshold for smoothed first-frame value)

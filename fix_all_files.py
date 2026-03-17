@@ -1,4 +1,9 @@
-#ifndef MATH_UTILS_H
+import os
+import re
+
+# 1. MathUtils.h
+with open('src/utils/MathUtils.h', 'w') as f:
+    f.write('''#ifndef MATH_UTILS_H
 #define MATH_UTILS_H
 
 #include <cmath>
@@ -86,7 +91,7 @@ inline double apply_load_transform_hermite(double x) {
 }
 
 template <size_t BufferSize>
-inline double calculate_sg_derivative(const std::array<double, BufferSize>& buffer, 
+inline double calculate_sg_derivative(const std::array<double, BufferSize>& buffer,
                             const int& buffer_count, const int& window, double dt, const int& buffer_index) {
     if (buffer_count < window) return 0.0;
     int M = window / 2;
@@ -181,3 +186,64 @@ public:
 } // namespace ffb_math
 
 #endif // MATH_UTILS_H
+''')
+
+# 2. FFBEngine.h
+with open('src/ffb/FFBEngine.h', 'r') as f:
+    content = f.read()
+if 'm_steering_100hz_reconstruction' not in content:
+    content = content.replace('int m_torque_source = 0;', 'int m_torque_source = 0;\n    int m_steering_100hz_reconstruction = 0; // NEW: 0 = Zero Latency, 1 = Smooth')
+with open('src/ffb/FFBEngine.h', 'w') as f:
+    f.write(content)
+
+# 3. FFBEngine.cpp
+with open('src/ffb/FFBEngine.cpp', 'r') as f:
+    content = f.read()
+if 'm_upsample_shaft_torque.SetZeroLatency' not in content:
+    content = re.sub(r'(double shaft_torque = m_upsample_shaft_torque\.Process\([^)]*\);)',
+                     r'm_upsample_shaft_torque.SetZeroLatency(m_steering_100hz_reconstruction == 0);\n    \1', content)
+with open('src/ffb/FFBEngine.cpp', 'w') as f:
+    f.write(content)
+
+# 4. Config.h
+with open('src/core/Config.h', 'r') as f:
+    content = f.read()
+if 'steering_100hz_reconstruction' not in content:
+    content = content.replace('int torque_source = 0;', 'int torque_source = 0;\n    int steering_100hz_reconstruction = 0;')
+    content = content.replace('engine.m_torque_source = torque_source;', 'engine.m_torque_source = torque_source;\n        engine.m_steering_100hz_reconstruction = steering_100hz_reconstruction;')
+    content = content.replace('torque_source = engine.m_torque_source;', 'torque_source = engine.m_torque_source;\n        steering_100hz_reconstruction = engine.m_steering_100hz_reconstruction;')
+    content = content.replace('if (torque_source != p.torque_source) return false;', 'if (torque_source != p.torque_source) return false;\n        if (steering_100hz_reconstruction != p.steering_100hz_reconstruction) return false;')
+with open('src/core/Config.h', 'w') as f:
+    f.write(content)
+
+# 5. Config.cpp
+with open('src/core/Config.cpp', 'r') as f:
+    content = f.read()
+if 'steering_100hz_reconstruction' not in content:
+    content = content.replace('if (key == "torque_source") { current_preset.torque_source = std::stoi(value); return true; }',
+                              'if (key == "torque_source") { current_preset.torque_source = std::stoi(value); return true; }\n    if (key == "steering_100hz_reconstruction") { current_preset.steering_100hz_reconstruction = std::stoi(value); return true; }')
+    content = content.replace('if (key == "torque_source") { engine.m_torque_source = std::stoi(value); return true; }',
+                              'if (key == "torque_source") { engine.m_torque_source = std::stoi(value); return true; }\n    if (key == "steering_100hz_reconstruction") { engine.m_steering_100hz_reconstruction = std::stoi(value); return true; }')
+    content = content.replace('file << "torque_source=" << p.torque_source << "\\n";',
+                              'file << "torque_source=" << p.torque_source << "\\n";\n    file << "steering_100hz_reconstruction=" << p.steering_100hz_reconstruction << "\\n";')
+    content = content.replace('file << "torque_source=" << engine.m_torque_source << "\\n";',
+                              'file << "torque_source=" << engine.m_torque_source << "\\n";\n        file << "steering_100hz_reconstruction=" << engine.m_steering_100hz_reconstruction << "\\n";')
+with open('src/core/Config.cpp', 'w') as f:
+    f.write(content)
+
+# 6. GuiLayer_Common.cpp
+with open('src/gui/GuiLayer_Common.cpp', 'r') as f:
+    content = f.read()
+insertion = '''        IntSetting("Torque Source", &engine.m_torque_source, torque_sources, sizeof(torque_sources)/sizeof(torque_sources[0]),
+            Tooltips::TORQUE_SOURCE);
+
+        // NEW: Show reconstruction mode only if using the 100Hz source
+        if (engine.m_torque_source == 0) {
+            const char* recon_modes[] = { "Zero-Latency (Extrapolated)", "Smooth (Interpolated)" };
+            IntSetting("  100Hz Reconstruction", &engine.m_steering_100hz_reconstruction, recon_modes, 2,
+                "Zero-Latency: Best for response but can be grainy. Smooth: 10ms delay but eliminates all 100Hz buzz.");
+        }'''
+if '100Hz Reconstruction' not in content:
+    content = re.sub(r'IntSetting\("Torque Source", &engine\.m_torque_source, torque_sources, sizeof\(torque_sources\)/sizeof\(torque_sources\[0\]\),\s+Tooltips::TORQUE_SOURCE\);', insertion, content)
+with open('src/gui/GuiLayer_Common.cpp', 'w') as f:
+    f.write(content)

@@ -65,6 +65,10 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
         data.mWheel[i].mSuspForce = 1000.0f; // Grounded
     }
     data.mElapsedTime += 0.01;
+    for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+    engine.calculate_force(&data);
+
     force = engine.calculate_force(&data);
     batch = engine.GetDebugBatch();
 
@@ -80,6 +84,12 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
     data.mWheel[0].mVerticalTireDeflection += 0.02;
     data.mWheel[1].mVerticalTireDeflection += 0.02;
     data.mElapsedTime += 0.01;
+
+    for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+
+    engine.calculate_force(&data);
+
 
     force = engine.calculate_force(&data);
     batch = engine.GetDebugBatch();

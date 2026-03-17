@@ -182,6 +182,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
 
     // Upsample Steering Shaft Torque (Holt-Winters)
+    m_upsample_shaft_torque.SetZeroLatency(m_steering_100hz_reconstruction == 0);
     double shaft_torque = m_upsample_shaft_torque.Process(m_working_info.mSteeringShaftTorque, ffb_dt, is_new_frame);
     m_working_info.mSteeringShaftTorque = shaft_torque;
 
@@ -862,6 +863,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.texture_spin = (float)ctx.spin_rumble;
             snap.texture_bottoming = (float)ctx.bottoming_crunch;
             snap.ffb_abs_pulse = (float)ctx.abs_pulse_force; 
+            snap.ffb_shaft_torque = (float)upsampled_data->mSteeringShaftTorque;
             snap.ffb_soft_lock = (float)ctx.soft_lock_force;
             snap.session_peak_torque = (float)m_session_peak_torque;
             snap.clipping = (std::abs(norm_force) > (double)CLIPPING_THRESHOLD) ? 1.0f : 0.0f;

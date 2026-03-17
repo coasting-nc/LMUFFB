@@ -43,6 +43,10 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     double force = 0.0;
     for (int i = 0; i < 60; i++) {
         data.mElapsedTime += 0.01;
+        for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+        engine.calculate_force(&data);
+
         force = engine.calculate_force(&data);
     }
     
@@ -63,6 +67,10 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     
     for (int i = 0; i < 60; i++) {
         data.mElapsedTime += 0.01;
+        for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+        engine.calculate_force(&data);
+
         force = engine.calculate_force(&data);
     }
     
@@ -123,6 +131,10 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     double force = 0.0;
     for (int i = 0; i < 50; i++) {
         data.mElapsedTime += 0.01;
+        for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+        engine.calculate_force(&data);
+
         force = engine.calculate_force(&data);
     }
     
@@ -159,6 +171,10 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     // Run multiple frames to let LPF settle
     for (int i = 0; i < 50; i++) {
         data.mElapsedTime += 0.01;
+        for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+        engine.calculate_force(&data);
+
         force = engine.calculate_force(&data);
     }
     
@@ -229,6 +245,12 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
     data.mWheel[0].mLateralPatchVel = -1.0; // Sliding right
     data.mWheel[1].mLateralPatchVel = -1.0;
     
+    for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+
+    engine.calculate_force(&data);
+
+
     force = engine.calculate_force(&data);
     
     // Expected: Positive Force (Right Torque)
@@ -271,8 +293,8 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
     data.mWheel[1].mLongitudinalGroundVel = 20.0;
     data.mWheel[2].mLongitudinalGroundVel = 20.0;
     data.mWheel[3].mLongitudinalGroundVel = 20.0;
-    
-    engine.calculate_force(&data);
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
     
     auto batch = engine.GetDebugBatch();
     if (batch.empty()) {
@@ -374,7 +396,8 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick
     data.mLocalRot.y = 0.0;
     data.mElapsedTime = 0.0;
-    engine.calculate_force(&data); // Seed
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); } // Seed
     
     data.mLocalRot.y = 0.0; // Reset for loop
     // No, seeding frame already set m_prev_yaw_rate to 0.0.
@@ -504,6 +527,10 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     // Run for multiple frames
     double force = 0.0;
     for (int i = 0; i < 60; i++) {
+        for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+        engine.calculate_force(&data);
+
         force = engine.calculate_force(&data);
     }
     

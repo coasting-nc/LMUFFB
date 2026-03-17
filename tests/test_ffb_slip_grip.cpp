@@ -53,14 +53,14 @@ TEST_CASE(test_combined_grip_loss, "SlipGrip") {
     data.mWheel[1].mStaticUndeflectedRadius = 30;
     data.mWheel[1].mRotation = 20.0 / 0.3;
     data.mDeltaTime = 0.01;
-    
-    engine.calculate_force(&data, "GT3", "TestCar");
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data, "GT3", "TestCar"); }
     
     // Case 2: Braking Lockup (Slip Ratio -1.0)
     data.mWheel[0].mRotation = 0.0;
     data.mWheel[1].mRotation = 0.0;
-    
-    engine.calculate_force(&data, "GT3", "TestCar");
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data, "GT3", "TestCar"); }
     auto batch = engine.GetDebugBatch();
     float grip = batch.back().calc_front_grip;
     
@@ -320,7 +320,7 @@ TEST_CASE(test_hysteresis_logic, "SlipGrip") {
     data.mWheel[1].mLateralPatchVel = 5.0;
     data.mDeltaTime = 0.01;
 
-    engine.calculate_force(&data, "GT3", "TestCar");
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data, "GT3", "TestCar"); }
     ASSERT_TRUE(engine.m_missing_load_frames == 0);
 
     data.mWheel[0].mTireLoad = 0.0;

@@ -228,7 +228,8 @@ TEST_CASE(test_unconditional_vert_accel_update, "RoadTexture") {
 
     // v0.7.145 (Issue #278): We now derive accel from velocity
     data.mLocalVel.y = 0.0;
-    engine.calculate_force(&data, "GT3", "911"); // Seed
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data, "GT3", "911"); } // Seed
 
     data.mLocalVel.y = 5.5 * 0.01; // dv for 5.5 m/s^2 at 100Hz
     data.mDeltaTime = 0.01;

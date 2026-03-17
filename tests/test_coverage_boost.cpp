@@ -221,7 +221,8 @@ TEST_CASE(test_coverage_integrated, "Coverage") {
         data.mLocalAccel.x = 5.0f + (static_cast<float>(i) * 0.5f); // Create G derivative
         data.mWheel[0].mLateralPatchVel = 1.0f + (static_cast<float>(i) * 0.1f); // Create Slip derivative
         data.mWheel[1].mLateralPatchVel = 1.0f + (static_cast<float>(i) * 0.1f);
-        engine.calculate_force(&data, "GT3", "M4 GT3"); 
+
+        for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data, "GT3", "M4 GT3"); }
     }
     
     batch = engine.GetDebugBatch();

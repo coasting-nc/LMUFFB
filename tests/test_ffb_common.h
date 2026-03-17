@@ -291,6 +291,7 @@ void ParseTagArguments(int argc, char* argv[]);
 // --- Helper Functions ---
 TelemInfoV01 CreateBasicTestTelemetry(double speed = 20.0, double slip_angle = 0.0);
 void InitializeEngine(FFBEngine& engine);
+void PumpEngineTime(FFBEngine& engine, TelemInfoV01& data, double time_to_advance_s);
 
 // Orientation Matrix Helper (v0.7.121)
 // Verifies that a physical scenario (e.g. Right Turn) produces the correct

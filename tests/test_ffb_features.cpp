@@ -258,7 +258,7 @@ TEST_CASE(test_slide_texture, "Texture") {
         data.mWheel[0].mTireLoad = 4000.0; // Front Load required for effect amplitude scaling
         data.mWheel[1].mTireLoad = 4000.0;
 
-        engine.calculate_force(&data);
+        for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
         double force = engine.calculate_force(&data);
         
         if (std::abs(force) > 0.001) {
@@ -357,6 +357,10 @@ TEST_CASE(test_oversteer_boost, "Texture") {
     // Run for multiple frames to let smoothing settle
     double force = 0.0;
     for (int i=0; i<60; i++) {
+        for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+        engine.calculate_force(&data);
+
         force = engine.calculate_force(&data);
     }
     
@@ -401,6 +405,10 @@ TEST_CASE(test_spin_torque_drop_interaction, "Texture") {
     // Run multiple frames to settle SoP
     double force_no_spin = 0.0;
     for (int i=0; i<60; i++) {
+        for(int _i=0;_i<10;++_i) engine.calculate_force(&data);
+
+        engine.calculate_force(&data);
+
         force_no_spin = engine.calculate_force(&data);
     }
     
@@ -823,8 +831,8 @@ TEST_CASE(test_frequency_estimator, "Texture") {
         // Ensure no other effects trigger
         data.mWheel[0].mRideHeight = 0.1;
         data.mWheel[1].mRideHeight = 0.1;
-        
-        engine.calculate_force(&data);
+
+        for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data); }
     }
 
     double estimated = engine.m_debug_freq;

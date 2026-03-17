@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.198]
+- **Fixed Steering Torque 100Hz Reconstruction (Issue #396)**:
+  - **Smooth Mode (Interpolated)**: Introduced a new 100Hz reconstruction mode that uses linear interpolation with a 1-frame (10ms) delay. This eliminates the high-frequency "sawtooth" vibrations caused by extrapolation noise without compromising signal continuity.
+  - **Zero-Latency Mode (Extrapolated)**: Preserved the original predictive logic for users who prioritize immediate response over total smoothness.
+  - **Unified Upsampling Pipeline**: Reverted temporary bypass logic to ensure that all 100Hz auxiliary telemetry (suspension, patch velocity, etc.) is always smoothly upsampled to 400Hz using interpolation.
+- **GUI & Configuration**:
+  - Added "100Hz Reconstruction" dropdown to the Tuning window (Front Axle section).
+  - Integrated the setting into the `Preset` and `Config` systems with full persistence.
+- **Testing Infrastructure**:
+  - Added `PumpEngineTime` helper to `test_ffb_common.cpp` to correctly simulate DSP pipeline delays in unit tests.
+  - Added `tests/test_issue_396.cpp` with regression tests for interpolation accuracy and mode toggling.
+  - *Note: Approximately 48 legacy test assertions are currently failing due to the newly introduced 10ms interpolation delay; these are being systematically rectified.*
+
+---
+
 ## [0.7.197]
 - **Fixed Signal Continuity and Decoupled Shifting in Up-sampling Pipeline (Issue #393)**:
   - **Polyphase Resampler Phase Misalignment (The "Stutter" Bug)**: Implemented decoupled shifting logic in `PolyphaseResampler`. New physics samples are now stored in a pending state and only shifted into the active history buffer when the phase accumulator wraps around. This ensures the filter uses the correct historical context for all fractional phases, eliminating periodic micro-stutters.

@@ -104,7 +104,8 @@ struct Preset {
     
     float steering_shaft_gain = 1.0f;
     float ingame_ffb_gain = 1.0f; // New v0.7.71 (Issue #160)
-    int torque_source = 0;   // 0=Shaft, 1=Direct
+    int torque_source = 0;
+    int steering_100hz_reconstruction = 0;   // 0=Shaft, 1=Direct
     bool torque_passthrough = false; // v0.7.63
     
     // NEW: Grip & Smoothing (v0.5.7)
@@ -429,6 +430,7 @@ struct Preset {
         engine.m_steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);
         engine.m_ingame_ffb_gain = (std::max)(0.0f, ingame_ffb_gain);
         engine.m_torque_source = torque_source;
+        engine.m_steering_100hz_reconstruction = steering_100hz_reconstruction;
         engine.m_torque_passthrough = torque_passthrough;
         engine.m_flatspot_suppression = flatspot_suppression;
         engine.m_notch_q = (std::max)(0.1f, notch_q); // Critical for biquad division
@@ -664,6 +666,7 @@ struct Preset {
         steering_shaft_gain = engine.m_steering_shaft_gain;
         ingame_ffb_gain = engine.m_ingame_ffb_gain;
         torque_source = engine.m_torque_source;
+        steering_100hz_reconstruction = engine.m_steering_100hz_reconstruction;
         torque_passthrough = engine.m_torque_passthrough;
         flatspot_suppression = engine.m_flatspot_suppression;
         notch_q = engine.m_notch_q;
@@ -804,6 +807,7 @@ struct Preset {
         if (!is_near(steering_shaft_gain, p.steering_shaft_gain, eps)) return false;
         if (!is_near(ingame_ffb_gain, p.ingame_ffb_gain, eps)) return false;
         if (torque_source != p.torque_source) return false;
+        if (steering_100hz_reconstruction != p.steering_100hz_reconstruction) return false;
         if (torque_passthrough != p.torque_passthrough) return false;
 
         if (!is_near(optimal_slip_angle, p.optimal_slip_angle, eps)) return false;

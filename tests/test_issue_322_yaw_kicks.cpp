@@ -39,7 +39,8 @@ TEST_CASE(test_unloaded_yaw_kick_activation, "YawKicks") {
 
     // Frame N: Steady
     data.mLocalRot.y = 0.0;
-    engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01);
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01); }
 
     // Frame N+1: Sudden Yaw Acceleration (1. rad/s^2)
     data.mLocalRot.y = 0.01; // (0.01 - 0.0) / 0.01 = 1.0 rad/s^2
@@ -83,12 +84,14 @@ TEST_CASE(test_power_yaw_kick_activation, "YawKicks") {
     // Frame 1: Steady
     data.mLocalRot.y = 0.0;
     data.mElapsedTime = 1.0;
-    engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01);
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01); }
 
     // Frame 2: Sudden Yaw Acceleration (1.0 rad/s^2)
     data.mLocalRot.y = 0.01;
     data.mElapsedTime = 1.01;
-    engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01);
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01); }
 
     // Frame 10-50: Let it settle
     for (int i=2; i<50; ++i) {
@@ -124,12 +127,14 @@ TEST_CASE(test_yaw_jerk_punch, "YawKicks") {
     // Frame 1: Steady (accel = 0)
     data.mLocalRot.y = 0.0;
     data.mElapsedTime = 1.0;
-    engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01);
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01); }
 
     // Frame 2: Step to 1.0 rad/s^2.
     data.mLocalRot.y = 0.01;
     data.mElapsedTime = 1.01;
-    engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01);
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01); }
 
     auto snapshots = engine.GetDebugBatch();
     float force_with_punch = snapshots.back().ffb_yaw_kick;
@@ -157,7 +162,8 @@ TEST_CASE(test_yaw_jerk_attack_phase_gate, "YawKicks") {
     // Frame 0: Seed yaw rate
     data.mLocalRot.y = 0.0;
     data.mElapsedTime = 1.0;
-    engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01);
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01); }
 
     // Step 1: Initial positive acceleration, let it settle
     for (int i=0; i<50; ++i) {
@@ -201,14 +207,16 @@ TEST_CASE(test_vulnerability_asymmetric_smoothing, "YawKicks") {
     // Frame 1: Activation
     data.mLocalRot.y = 0.01;
     data.mElapsedTime = 1.01;
-    engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01);
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01); }
 
     // Frame 2: Deactivation (slip drops to 0)
     data.mWheel[2].mLongitudinalPatchVel = 0.0;
     data.mWheel[3].mLongitudinalPatchVel = 0.0;
     data.mLocalRot.y = 0.02;
     data.mElapsedTime = 1.02;
-    engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01);
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01); }
 
     auto snapshots = engine.GetDebugBatch();
     float force_after_drop = snapshots.back().ffb_yaw_kick;
@@ -242,11 +250,13 @@ TEST_CASE(test_yaw_kick_blending, "YawKicks") {
 
     data.mLocalRot.y = 0.0;
     data.mElapsedTime = 1.0;
-    engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01);
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01); }
 
     data.mLocalRot.y = 0.011; // 1.1 rad/s^2. processed = 1.0
     data.mElapsedTime = 1.01;
-    engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01);
+
+    for(int _i=0;_i<20;++_i) { data.mElapsedTime += 0.01; engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01); }
 
     // Let it settle
     for (int i=0; i<50; ++i) {
