@@ -435,24 +435,35 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     if (m_slope_buffer_count < SLOPE_BUFFER_MAX) m_slope_buffer_count++;
 
     // 3. Calculate G-based Derivatives (Savitzky-Golay)
-    double dG_dt = calculate_sg_derivative(m_slope_lat_g_buffer, m_slope_buffer_count, m_slope_sg_window, dt, m_slope_buffer_index);
-    double dAlpha_dt = calculate_sg_derivative(m_slope_slip_buffer, m_slope_buffer_count, m_slope_sg_window, dt, m_slope_buffer_index);
+    // Use the engine's internal dt (0.0025s) for the derivative calculation
+    // because that's the rate at which we are filling the buffer.
+    double dG_dt = calculate_sg_derivative(m_slope_lat_g_buffer, m_slope_buffer_count, m_slope_sg_window, DEFAULT_CALC_DT, m_slope_buffer_index);
+    double dAlpha_dt = calculate_sg_derivative(m_slope_slip_buffer, m_slope_buffer_count, m_slope_sg_window, DEFAULT_CALC_DT, m_slope_buffer_index);
 
     m_slope_dG_dt = dG_dt;
     m_slope_dAlpha_dt = dAlpha_dt;
 
     // 4. Projected Slope Logic (G-based)
-    if (std::abs(dAlpha_dt) > (double)m_slope_alpha_threshold) {
-        m_slope_hold_timer = SLOPE_HOLD_TIME;
+    // v0.7.198 (Issue #397): Only trigger the hold timer on INCREASING slip.
+    // This prevents the 10ms upsampler "return-to-zero" ramp from pinning the timer.
+    bool increasing_slip = dAlpha_dt > (double)m_slope_alpha_threshold;
+    bool decreasing_slip = dAlpha_dt < -(double)m_slope_alpha_threshold;
+
+    if (increasing_slip || decreasing_slip) {
+        if (increasing_slip) {
+            m_slope_hold_timer = SLOPE_HOLD_TIME;
+        }
         m_debug_slope_num = dG_dt * dAlpha_dt;
         m_debug_slope_den = (dAlpha_dt * dAlpha_dt) + 0.000001;
         m_debug_slope_raw = m_debug_slope_num / m_debug_slope_den;
         m_slope_current = std::clamp(m_debug_slope_raw, -20.0, 20.0);
     } else {
-        m_slope_hold_timer -= dt;
+        // v0.7.198: Ensure timer actually ticks down
+        double effective_dt = (dt > 0.0) ? dt : DEFAULT_CALC_DT;
+        m_slope_hold_timer -= effective_dt;
         if (m_slope_hold_timer <= 0.0) {
             m_slope_hold_timer = 0.0;
-            m_slope_current += (double)m_slope_decay_rate * dt * (0.0 - m_slope_current);
+            m_slope_current += (double)m_slope_decay_rate * effective_dt * (0.0 - m_slope_current);
         }
     }
 

@@ -28,7 +28,9 @@ TEST_CASE(test_yaw_kick_derived_from_rate, "YawKick") {
     
     // Frame 2: Yaw Rate increases to 1.0 rad/s
     data.mLocalRot.y = 1.0;
-    double force = engine.calculate_force(&data);
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
+    double force = engine.GetDebugBatch().back().total_output;
     
     // If derived from rate: 
     // derived_yaw_accel = (1.0 - 0.0) / 0.0025 = 400.0 rad/s^2

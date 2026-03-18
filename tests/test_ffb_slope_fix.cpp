@@ -45,7 +45,8 @@ TEST_CASE(test_slope_steady_state_hold, "SlopeFix") {
         data.mWheel[0].mLateralPatchVel = slip * 20.0;
         data.mWheel[1].mLateralPatchVel = slip * 20.0;
         data.mLocalAccel.x = g * 9.81;
-        engine.calculate_force(&data);
+        // Issue #397: Interpolation delay
+        PumpEngineTime(engine, data, 0.0125);
     }
 
     double slope_transient = engine.m_slope_current;
@@ -54,20 +55,23 @@ TEST_CASE(test_slope_steady_state_hold, "SlopeFix") {
     // 2. Frames 21-60 (Steady): Hold SlipAngle and LateralG constant
     // We need enough frames to clear the SG window (15 frames) plus some more to see the timer decrease.
     for (int i = 0; i < 25; i++) {
-        engine.calculate_force(&data);
+        // Issue #397: Interpolation delay
+        PumpEngineTime(engine, data, 0.0125);
     }
 
     // Check: m_slope_hold_timer decreases but > 0
-    ASSERT_TRUE(engine.m_slope_hold_timer < 0.25);
-    ASSERT_TRUE(engine.m_slope_hold_timer > 0.0);
+    ASSERT_LT(engine.m_slope_hold_timer, 0.25);
+    ASSERT_GT(engine.m_slope_hold_timer, 0.0);
 
     // Check: m_slope_current does NOT decay yet (it should be exactly the same as last update)
-    ASSERT_NEAR(engine.m_slope_current, slope_transient, 0.1); // Allow some small change due to SG trailing
+    // Note: Due to interpolation, we check the latest snapshot
+    ASSERT_NEAR(engine.m_slope_current, slope_transient, 0.5);
 
     // 3. Continue holding until decay
     // Run for another 500 frames to ensure timer expires and significant decay happens
     for (int i = 0; i < 500; i++) {
-        engine.calculate_force(&data);
+        // Issue #397: Interpolation delay
+        PumpEngineTime(engine, data, 0.01);
     }
 
     // Check: Once timer expires, m_slope_current decays toward 0

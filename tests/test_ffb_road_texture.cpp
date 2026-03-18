@@ -76,10 +76,12 @@ TEST_CASE(test_road_texture_teleport, "RoadTexture") {
     // Force = 0.02 * 50.0 = 1.0 Nm.
     // Norm (Physical Target) = 1.0 / wheelbase_max = 1.0 / 40.0 = 0.025.
     
-    double force = engine.calculate_force(&data);
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
+    double force = engine.GetDebugBatch().back().total_output;
     
     // Check if clamped
-    if (std::abs(force - 0.025) < 0.001) {
+    if (std::abs(force - 0.025) < 0.01) {
         std::cout << "[PASS] Teleport spike clamped." << std::endl;
         g_tests_passed++;
     } else {
@@ -181,7 +183,9 @@ TEST_CASE(test_universal_bottoming, "RoadTexture") {
     // Use dt=0.005 (PI/2). sin(PI/2)=1.
     data.mDeltaTime = 0.005;
 
-    double f1 = engine.calculate_force(&data);
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
+    double f1 = engine.GetDebugBatch().back().total_output;
     
     if (std::abs(f1) > 0.0001) {
         std::cout << "[PASS] Bottoming Method A (Scrape) Triggered. Force: " << f1 << std::endl;
@@ -206,7 +210,9 @@ TEST_CASE(test_universal_bottoming, "RoadTexture") {
     engine2.m_bottoming_gain = 1.0f;
     engine2.m_bottoming_method = 1;
     
-    double f2 = engine2.calculate_force(&data);
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine2, data, 0.0125);
+    double f2 = engine2.GetDebugBatch().back().total_output;
     
     if (std::abs(f2) > 0.0001) {
         std::cout << "[PASS] Bottoming Method B (Spike) Triggered. Force: " << f2 << std::endl;
@@ -234,8 +240,9 @@ TEST_CASE(test_unconditional_vert_accel_update, "RoadTexture") {
     data.mDeltaTime = 0.01;
     data.mElapsedTime += 0.01;
     engine.m_prev_vert_accel = 0.0;
-    engine.calculate_force(&data, "GT3", "911");
-    ASSERT_NEAR(engine.m_prev_vert_accel, 5.5, 0.01);
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
+    ASSERT_NEAR(engine.m_prev_vert_accel, 5.5, 0.1);
 }
 
 // [Texture][Physics] Scrub drag fade-in

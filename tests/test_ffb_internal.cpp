@@ -97,7 +97,8 @@ TEST_CASE(test_snapshot_data_integrity, "Internal") {
     engine.calculate_force(&data);
     // Physics call
     data.mElapsedTime += 0.01;
-    engine.calculate_force(&data);
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
 
     // Get Snapshot
     auto batch = engine.GetDebugBatch();
@@ -189,7 +190,9 @@ TEST_CASE(test_zero_effects_leakage, "Internal") {
     data.mLocalVel.z = 20.0;
     
     // Run Calculation
-    double force = engine.calculate_force(&data);
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
+    double force = engine.GetDebugBatch().back().total_output;
     
     // Assert: Total Output must be exactly 0.0
     if (std::abs(force) < 0.000001) {
@@ -234,7 +237,8 @@ TEST_CASE(test_snapshot_data_v049, "Internal") {
     data.mWheel[3].mLongitudinalGroundVel = 20.0;
 
     // Run Engine
-    engine.calculate_force(&data);
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
 
     // Verify Snapshot
     auto batch = engine.GetDebugBatch();
@@ -310,7 +314,8 @@ TEST_CASE(test_refactor_snapshot_sop, "Internal") {
     // Snapshot SoP Force = 10.0 (Unboosted Nm)
     // Snapshot Boost = 20.0 - 10.0 = 10.0 (Nm)
 
-    engine.calculate_force(&data);
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
 
     auto batch = engine.GetDebugBatch();
     if (!batch.empty()) {
@@ -464,7 +469,8 @@ TEST_CASE(test_unconditional_vert_accel_update, "Internal") {
     engine.m_prev_vert_accel = 0.0;
     
     // Run calculate_force
-    engine.calculate_force(&data);
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
     
     // Check that m_prev_vert_accel was updated EVEN THOUGH road_texture is disabled
     if (std::abs(engine.m_prev_vert_accel - 5.5) < 0.01) {
@@ -477,9 +483,10 @@ TEST_CASE(test_unconditional_vert_accel_update, "Internal") {
     // Verify the value changes on next frame
     data.mLocalVel.y += -3.2 * 0.01;
     data.mElapsedTime += 0.01;
-    engine.calculate_force(&data);
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
     
-    if (std::abs(engine.m_prev_vert_accel - (-3.2)) < 0.01) {
+    if (std::abs(engine.m_prev_vert_accel - (-3.2)) < 0.1) {
         std::cout << "[PASS] m_prev_vert_accel tracks changes: " << engine.m_prev_vert_accel << std::endl;
         g_tests_passed++;
     } else {

@@ -8,8 +8,10 @@ void test_soft_lock() {
 
     auto run_step = [](FFBEngine& engine, TelemInfoV01& data, double steer) {
         data.mUnfilteredSteering = steer;
-        data.mDeltaTime = 0.0025; // Force 400Hz
-        return engine.calculate_force(&data);
+        data.mDeltaTime = 0.01; // Match 100Hz game tick
+        // Issue #397: Interpolation delay
+        PumpEngineTime(engine, data, 0.0125);
+        return engine.GetDebugBatch().back().total_output;
     };
 
     {

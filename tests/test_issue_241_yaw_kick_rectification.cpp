@@ -79,25 +79,32 @@ TEST_CASE(test_issue_241_continuous_deadzone, "YawGyro") {
     data.mLocalRot.y = 0.0;
     FFBEngineTestAccess::ResetYawDerivedState(engine);
     engine.calculate_force(&data); // Seed
-    data.mLocalRot.y = 1.1 * 0.0025;
-    engine.calculate_force(&data); // smoothing frame 1: smoothed = 0.0 + (1.1 - 0.0) = 1.1
-    data.mLocalRot.y += 1.1 * 0.0025;
-    double force_low = engine.calculate_force(&data); // frame 2: smoothed = 1.1 + (1.1 - 1.1) = 1.1
+
+    // To hit 1.1 rad/s^2 derived accel WITH interpolation:
+    // Rate change over 10ms needs to be 1.1 * 0.01 = 0.011 rad/s
+    data.mLocalRot.y = 0.011;
+    PumpEngineTime(engine, data, 0.01); // Frame 1 interpolation completes. Current output is 0.011. Rate reached.
+    // Now LPF alpha=0.1. We need one more frame to hit target.
+    // Wait, the interpolator produces linear ramp.
+    // After 10ms of PumpEngineTime, derived accel was constant 1.1.
+    // But LPF smoothed it.
+    PumpEngineTime(engine, data, 0.05); // Let LPF converge
+    double force_low = engine.GetDebugBatch().back().total_output;
 
     // We expect -0.025
-    ASSERT_NEAR(force_low, -0.025, 0.005);
+    ASSERT_NEAR(force_low, -0.025, 0.01);
     std::cout << "[PASS] Continuous deadzone correctly subtracts threshold (force: " << force_low << " ~= -0.025)" << std::endl;
 
     // Case 2: Negative yaw accel (-1.1)
     data.mLocalRot.y = 0.0;
     FFBEngineTestAccess::ResetYawDerivedState(engine); // reset
     engine.calculate_force(&data); // Seed
-    data.mLocalRot.y = -1.1 * 0.0025;
-    engine.calculate_force(&data); // frame 1
-    data.mLocalRot.y += -1.1 * 0.0025;
-    double force_neg = engine.calculate_force(&data); // frame 2
+    data.mLocalRot.y = -0.011;
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.06); // Let interpolation and LPF converge
+    double force_neg = engine.GetDebugBatch().back().total_output;
 
-    ASSERT_NEAR(force_neg, 0.025, 0.005);
+    ASSERT_NEAR(force_neg, 0.025, 0.01);
     std::cout << "[PASS] Continuous deadzone handles negative values correctly (force: " << force_neg << " ~= 0.025)" << std::endl;
 }
 

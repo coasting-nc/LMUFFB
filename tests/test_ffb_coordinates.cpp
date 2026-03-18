@@ -215,6 +215,10 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
     
     double force = engine.calculate_force(&data);
     
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
+    force = engine.GetDebugBatch().back().total_output;
+
     // Expected: Negative Force (Left Torque)
     if (force < -0.2) {
         std::cout << "[PASS] Scrub drag opposes left slide (Torque Left: " << force << ")" << std::endl;
@@ -229,7 +233,9 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
     data.mWheel[0].mLateralPatchVel = -1.0; // Sliding right
     data.mWheel[1].mLateralPatchVel = -1.0;
     
-    force = engine.calculate_force(&data);
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
+    force = engine.GetDebugBatch().back().total_output;
     
     // Expected: Positive Force (Right Torque)
     if (force > 0.2) {
@@ -272,7 +278,8 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
     data.mWheel[2].mLongitudinalGroundVel = 20.0;
     data.mWheel[3].mLongitudinalGroundVel = 20.0;
     
-    engine.calculate_force(&data);
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
     
     auto batch = engine.GetDebugBatch();
     if (batch.empty()) {
@@ -308,7 +315,8 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
     data.mWheel[2].mLateralPatchVel = -5.0;  // RL sliding right
     data.mWheel[3].mLateralPatchVel = -5.0;  // RR sliding right
     
-    engine.calculate_force(&data);
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
     
     batch = engine.GetDebugBatch();
     if (!batch.empty()) {

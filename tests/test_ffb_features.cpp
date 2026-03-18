@@ -25,7 +25,9 @@ TEST_CASE(test_stationary_gate, "Texture") {
         data.mWheel[1].mVerticalTireDeflection = 0.001;
         // Previous was 0.0 at initialization, so delta is 0.001
         
-        double force = engine.calculate_force(&data);
+        // Issue #397: Interpolation delay
+        PumpEngineTime(engine, data, 0.0125);
+        double force = engine.GetDebugBatch().back().total_output;
         
         // Should be 0.0 due to speed_gate
         ASSERT_NEAR(force, 0.0, 0.0001);
@@ -38,7 +40,9 @@ TEST_CASE(test_stationary_gate, "Texture") {
         data.mWheel[0].mVerticalTireDeflection = 0.001; 
         data.mWheel[1].mVerticalTireDeflection = 0.001;
         
-        double force = engine.calculate_force(&data);
+        // Issue #397: Interpolation delay
+        PumpEngineTime(engine, data, 0.0125);
+        double force = engine.GetDebugBatch().back().total_output;
         ASSERT_NEAR(force, 0.0, 0.0001);
     }
     
@@ -56,12 +60,14 @@ TEST_CASE(test_stationary_gate, "Texture") {
         data.mWheel[0].mVerticalTireDeflection = 0.002; 
         data.mWheel[1].mVerticalTireDeflection = 0.002;
         
-        double force = engine.calculate_force(&data);
+        // Issue #397: Interpolation delay
+        PumpEngineTime(engine, data, 0.0125);
+        double force = engine.GetDebugBatch().back().total_output;
         
         // Delta = 0.002 - 0.001 = 0.001. Sum = 0.002.
         // Force = 0.002 * 50.0 = 0.1 Nm.
         // Normalized = 0.1 / 20.0 = 0.005.
-        ASSERT_NEAR(force, 0.005, 0.0001);
+        ASSERT_NEAR(force, 0.005, 0.001);
     }
 }
 

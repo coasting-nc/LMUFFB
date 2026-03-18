@@ -139,6 +139,7 @@ set(TEST_SOURCES
     test_issue_386_logging.cpp
     test_upsampler_issue_393.cpp
     test_math_utils_issue_393.cpp
+    test_issue_397_interpolator.cpp
     ../src/core/main.cpp
 )
 

@@ -60,7 +60,8 @@ TEST_CASE(test_combined_grip_loss, "SlipGrip") {
     data.mWheel[0].mRotation = 0.0;
     data.mWheel[1].mRotation = 0.0;
     
-    engine.calculate_force(&data, "GT3", "TestCar");
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
     auto batch = engine.GetDebugBatch();
     float grip = batch.back().calc_front_grip;
     

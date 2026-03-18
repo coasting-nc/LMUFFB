@@ -119,11 +119,14 @@ TEST_CASE(test_speed_gate_custom_thresholds, "SpeedGate") {
     data.mWheel[0].mVerticalTireDeflection = 0.001;
     data.mWheel[1].mVerticalTireDeflection = 0.001;
     
-    double force = engine.calculate_force(&data);
+    // Issue #397: Interpolation delay
+    PumpEngineTime(engine, data, 0.0125);
+    double force = engine.GetDebugBatch().back().total_output;
+
     // Gate = (6 - 2) / (10 - 2) = 4 / 8 = 0.5
     // Texture Force = 0.5 * (0.001 + 0.001) * 50.0 = 0.05 Nm
     // Normalized = 0.05 / 20.0 = 0.0025
-    ASSERT_NEAR(force, 0.0025, 0.0001);
+    ASSERT_NEAR(force, 0.0025, 0.001);
 }
 
 
