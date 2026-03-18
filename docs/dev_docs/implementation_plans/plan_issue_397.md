@@ -71,10 +71,10 @@ The new unit test directly proves the fix for the sawtooth (overshoot) and deriv
 ## Implementation Notes & Progress Tracking
 
 ### Progress Summary
-- **Total Tests:** 542
-- **Passing:** 517
-- **Failing:** 25
-- **Next Focus:** Resolve `SlopeDetection` failures and remaining logic tests.
+- **Total Tests:** 549
+- **Passing:** 529
+- **Failing:** 20
+- **Next Focus:** Complete regression test remediation.
 
 ### Encountered Issues
 - **10ms Delay:** The transition from prediction (extrapolation) to 1-frame delayed interpolation correctly solves the sawtooth bug but introduces a 10ms lag in auxiliary signals. This has invalidated tests that expect instantaneous peaks or specific timing.

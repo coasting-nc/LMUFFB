@@ -160,14 +160,24 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
     for(int i=0; i<4; i++) data.mWheel[i].mLongitudinalGroundVel = 20.0;
 
     // --- PASS 1: Front Lockup Only ---
+    TelemInfoV01 data1 = CreateBasicTestTelemetry(20.0);
+    data1.mUnfilteredBrake = 1.0;
     // Front Slip -0.5, Rear Slip 0.0
-    data.mWheel[0].mLongitudinalPatchVel = -0.5 * 20.0; // -10 m/s
-    data.mWheel[1].mLongitudinalPatchVel = -0.5 * 20.0;
-    data.mWheel[2].mLongitudinalPatchVel = 0.0;
-    data.mWheel[3].mLongitudinalPatchVel = 0.0;
+    data1.mWheel[0].mLongitudinalPatchVel = -0.5 * 20.0; // -10 m/s
+    data1.mWheel[1].mLongitudinalPatchVel = -0.5 * 20.0;
+    data1.mWheel[2].mLongitudinalPatchVel = 0.0;
+    data1.mWheel[3].mLongitudinalPatchVel = 0.0;
 
-    PumpEngineTime(engine, data, 0.0125);
-    double phase_delta_front = engine.m_lockup_phase; // Phase started at 0
+    // Seed
+    InitializeEngine(engine);
+    engine.m_lockup_enabled = true;
+    engine.m_lockup_gain = 1.0;
+
+    // Issue #397: Flush and Measure
+    PumpEngineTime(engine, data1, 0.05);
+    double phase_start = engine.m_lockup_phase;
+    PumpEngineTime(engine, data1, 0.1);
+    double phase_delta_front = engine.m_lockup_phase - phase_start;
 
     // Verify Front triggered
     if (phase_delta_front > 0.0) {
@@ -178,17 +188,25 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
     }
 
     // --- PASS 2: Rear Lockup Only ---
-    // Reset Engine State
+    TelemInfoV01 data2 = CreateBasicTestTelemetry(20.0);
+    data2.mUnfilteredBrake = 1.0;
+    // Reset Engine State (interpolators and phases)
+    InitializeEngine(engine); // Proper reset
+    engine.m_lockup_enabled = true;
+    engine.m_lockup_gain = 1.0;
     engine.m_lockup_phase = 0.0;
     
     // Front Slip 0.0, Rear Slip -0.5
-    data.mWheel[0].mLongitudinalPatchVel = 0.0;
-    data.mWheel[1].mLongitudinalPatchVel = 0.0;
-    data.mWheel[2].mLongitudinalPatchVel = -0.5 * 20.0;
-    data.mWheel[3].mLongitudinalPatchVel = -0.5 * 20.0;
+    data2.mWheel[0].mLongitudinalPatchVel = 0.0;
+    data2.mWheel[1].mLongitudinalPatchVel = 0.0;
+    data2.mWheel[2].mLongitudinalPatchVel = -0.5 * 20.0;
+    data2.mWheel[3].mLongitudinalPatchVel = -0.5 * 20.0;
 
-    PumpEngineTime(engine, data, 0.0125);
-    double phase_delta_rear = engine.m_lockup_phase;
+    // Issue #397: Flush and Measure
+    PumpEngineTime(engine, data2, 0.05);
+    phase_start = engine.m_lockup_phase;
+    PumpEngineTime(engine, data2, 0.1);
+    double phase_delta_rear = engine.m_lockup_phase - phase_start;
 
     // Verify Rear triggered (Fixes the bug)
     if (phase_delta_rear > 0.0) {
@@ -201,13 +219,12 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
     // Rear frequency is lower (Ratio 0.3 per FFBEngine.h)
     double ratio = phase_delta_rear / phase_delta_front;
     
-    // Issue #397: Interpolation delay makes the ratio calculation for single frame integration unreliable.
-    // However, the intent is that it IS lower.
-    if (ratio < 0.95) {
-        std::cout << "[PASS] Rear frequency is lower (Ratio: " << ratio << ")." << std::endl;
+    // Issue #397: Now that we use Flush and Measure, the ratio should be more accurate
+    if (std::abs(ratio - 0.3) < 0.1) {
+        std::cout << "[PASS] Rear frequency is lower (Ratio: " << ratio << " vs expected 0.3)." << std::endl;
         g_tests_passed++;
     } else {
-        FAIL_TEST("Frequency differentiation failed. Ratio: " << ratio);
+        FAIL_TEST("Frequency differentiation failed. Ratio: " << ratio << " (Expected ~0.3)");
     }
 }
 
@@ -239,7 +256,14 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
     // Bump 0.01 -> Delta Sum = 0.02. 0.02 * 50.0 = 1.0 Nm.
     // 1.0 Nm * Texture Load Cap (1.0) = 1.0 Nm.
     // Normalized by 20 Nm (Default decoupling baseline) = 0.05.
-    double force_road = PumpEngineTime(engine, data, 0.0125);
+
+    // Issue #397: Flush and Measure
+    PumpEngineTime(engine, data, 0.015);
+    engine.GetDebugBatch();
+    PumpEngineTime(engine, data, 0.05);
+    auto road_batch = engine.GetDebugBatch();
+    double force_road = 0.0;
+    for(const auto& s : road_batch) force_road = std::max(force_road, std::abs((double)s.texture_road));
     
     // Verify road texture is clamped to 1.0x (not using the 3.0x brake cap)
     if (std::abs(force_road - 0.05) < 0.001) {
@@ -284,24 +308,39 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
     engine_low.m_abs_pulse_enabled = false; // Disable ABS (v0.6.0)
     engine_low.m_road_texture_enabled = false; // Disable Road (v0.6.0)
     
-    // Reset phase to ensure both engines start from same state
+    // Reset phase and flush transients
     engine.m_lockup_phase = 0.0;
     engine_low.m_lockup_phase = 0.0;
     
-    double force_low = PumpEngineTime(engine_low, data, 0.0125);
-    double force_high = PumpEngineTime(engine, data, 0.0125);
+    // Issue #397: Flush the 10ms transient ramp
+    PumpEngineTime(engine, data, 0.015);
+    PumpEngineTime(engine_low, data, 0.015);
+
+    // Discard transients
+    engine.GetDebugBatch();
+    engine_low.GetDebugBatch();
     
+    // Measure steady state
+    PumpEngineTime(engine, data, 0.05);
+    PumpEngineTime(engine_low, data, 0.05);
+
+    auto batch_high = engine.GetDebugBatch();
+    auto batch_low = engine_low.GetDebugBatch();
+
+    double max_high = 0.0, max_low = 0.0;
+    for(const auto& s : batch_high) max_high = std::max(max_high, std::abs((double)s.texture_lockup));
+    for(const auto& s : batch_low) max_low = std::max(max_low, std::abs((double)s.texture_lockup));
+
     // Verify the 3x ratio more precisely
-    // Expected: force_high â‰ˆ 3.0 * force_low (within tolerance for phase differences)
+    // Expected: max_high â‰ˆ 3.0 * max_low
     double expected_ratio = 3.0;
-    double actual_ratio = std::abs(force_high) / (std::abs(force_low) + 0.0001); // Add epsilon to avoid div-by-zero
+    double actual_ratio = max_high / (max_low + 0.0001);
     
-    // Use a tolerance of Â±0.5 to account for phase integration differences
-    if (std::abs(actual_ratio - expected_ratio) < 0.5) {
-        std::cout << "[PASS] Brake load cap applies 3x scaling (Ratio: " << actual_ratio << ", High: " << std::abs(force_high) << ", Low: " << std::abs(force_low) << ")" << std::endl;
+    if (std::abs(actual_ratio - expected_ratio) < 0.2) {
+        std::cout << "[PASS] Brake load cap applies 3x scaling (Ratio: " << actual_ratio << ", High: " << max_high << ", Low: " << max_low << ")" << std::endl;
         g_tests_passed++;
     } else {
-        FAIL_TEST("Expected ~3x ratio, got " << actual_ratio << " (High: " << std::abs(force_high) << ", Low: " << std::abs(force_low) << ")");
+        FAIL_TEST("Expected ~3x ratio, got " << actual_ratio << " (High: " << max_high << ", Low: " << max_low << ")");
     }
 }
 
