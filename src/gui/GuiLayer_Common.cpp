@@ -391,21 +391,22 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
         static char new_preset_name[64] = "";
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.4f);
-        ImGui::InputText("##NewPresetName", new_preset_name, 64);
+        ImGui::InputTextWithHint("##NewPresetName", "Enter Name...", new_preset_name, 64);
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::PRESET_NAME);
         ImGui::SameLine();
+        bool name_empty = (strlen(new_preset_name) == 0);
+        if (name_empty) ImGui::BeginDisabled();
         if (ImGui::Button("Save New")) {
-            if (strlen(new_preset_name) > 0) {
-                Config::AddUserPreset(std::string(new_preset_name), engine);
-                for (int i = 0; i < (int)Config::presets.size(); i++) {
-                    if (Config::presets[i].name == std::string(new_preset_name)) {
-                        selected_preset = i;
-                        break;
-                    }
+            Config::AddUserPreset(std::string(new_preset_name), engine);
+            for (int i = 0; i < (int)Config::presets.size(); i++) {
+                if (Config::presets[i].name == std::string(new_preset_name)) {
+                    selected_preset = i;
+                    break;
                 }
-                new_preset_name[0] = '\0';
             }
+            new_preset_name[0] = '\0';
         }
+        if (name_empty) ImGui::EndDisabled();
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::PRESET_SAVE_NEW);
 
         if (ImGui::Button("Save Current Config")) {
@@ -439,12 +440,32 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         bool can_delete = (selected_preset >= 0 && selected_preset < (int)Config::presets.size() && !Config::presets[selected_preset].is_builtin);
         if (!can_delete) ImGui::BeginDisabled();
         if (ImGui::Button("Delete")) {
-            Config::DeletePreset(selected_preset, engine);
-            selected_preset = 0;
-            Config::ApplyPreset(0, engine);
+            ImGui::OpenPopup("Confirm Delete?");
         }
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::PRESET_DELETE);
         if (!can_delete) ImGui::EndDisabled();
+
+        if (ImGui::BeginPopupModal("Confirm Delete?", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::Text("Are you sure you want to delete the preset:\n\"%s\"?", Config::presets[selected_preset].name.c_str());
+            ImGui::Separator();
+
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.1f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.2f, 0.2f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.0f, 0.0f, 1.0f));
+            if (ImGui::Button("Delete", ImVec2(120, 0))) {
+                Config::DeletePreset(selected_preset, engine);
+                selected_preset = 0;
+                Config::ApplyPreset(0, engine);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::PopStyleColor(3);
+            ImGui::SetItemDefaultFocus();
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
 
         ImGui::Separator();
         if (ImGui::Button("Import Preset...")) {

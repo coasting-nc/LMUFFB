@@ -149,6 +149,7 @@ if(IMGUI_CORE_SOURCES)
         test_gui_interaction.cpp
         test_gui_interaction_v2.cpp
         test_gui_menu_bar.cpp
+        test_palette_ux.cpp
     )
 endif()
 
