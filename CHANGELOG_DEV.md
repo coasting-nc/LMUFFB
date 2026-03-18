@@ -17,22 +17,21 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## Comulative changes from version 0.7.166 till 0.7.197
+## Cumulative changes from version 0.7.166 till 0.7.197
 
+### Fixed
 - **FFB Smoothness Fixes**
-  - This should address all graininess, cogwheel-like feeling and irregular vibrations. It seems they were due to some issues in the implementation of the 1000Hz up-sampling of the FFB introduced since version 0.7.117.
-- **Reduced Kerb Impact in Self-Aligning Torque (Issue #297)**:
+  - This should some issues with graininess, cogwheel-like feeling and irregular vibrations. It seems they were due to some issues in the implementation of the 1000Hz up-sampling of the FFB introduced since version 0.7.117.
+- **Reduced Kerb Impact in Self-Aligning Torque**
   - **Physics Saturation (Always On)**:
     - Implemented a 1.5x static weight cap on the dynamic rear tire load used for torque calculations. This prevents mathematical explosions during vertical kerb strikes.
     - Added `tanh` soft-clipping to the rear slip angle calculation to simulate pneumatic trail falloff. This ensures torque remains physically realistic at high slip angles and prevents infinite force spikes.
   - **Hybrid Kerb Strike Rejection (User Configurable)**:
     - Introduced a "Kerb Strike Rejection" slider (0.0 to 1.0) allowing users to tune attenuation strength.
-    - Implemented dual-trigger detection using `mSurfaceType` (works on all cars including encrypted DLC) and high suspension velocity (>0.8 m/s).
+    - Implemented dual-trigger detection using `mSurfaceType`
     - Added a 100ms hold timer to maintain attenuation while the car settles after leaving a kerb.
-  - **GUI & Configuration**:
-    - Added "Kerb Strike Rejection" slider to the Rear Axle tuning section.
-- Fixes for graininess due to issues in the 1000Hz up-sampling algorithm
-- Fixes potential sources of FFB spikes and jolts: sanitized NaN/Inf values, resetting all upsamplers and smoothing filters when entering OR exiting the driving state
+  
+- Fixed potential sources of FFB spikes and jolts: sanitized NaN/Inf values, resetting all upsamplers and smoothing filters when entering OR exiting the driving state
 - Fixed FFB loss when online due to stuttering (people joining/leaving server), that was due to a FFB safety window which disable FFB for 2 seconds in case of stuttering.
 - Fixes to tire load estimation and suspension data use:
  - use of class-specific motion ratios (suspension geometry) and axle-specific unsprung mass estimates 
