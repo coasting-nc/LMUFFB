@@ -443,12 +443,12 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     m_slope_dAlpha_dt = dAlpha_dt;
 
     // 4. Projected Slope Logic (G-based)
-    // v0.7.198: Ignore small positive derivative spikes during ramp-down transients
-    // caused by the 10ms interpolation ramp.
+    // v0.7.198: Ignore derivative spikes that are moving the slope back towards zero.
+    // This handles the 10ms interpolation ramp-down without re-triggering the hold timer.
     bool significant_alpha = std::abs(dAlpha_dt) > (double)m_slope_alpha_threshold;
-    bool is_ramp_down_transient = (dAlpha_dt > 0.0 && dAlpha_dt < 0.05 && m_slope_current < -0.1);
+    bool is_recovering = (m_slope_current < -0.1 && dAlpha_dt > 0.0) || (m_slope_current > 0.1 && dAlpha_dt < 0.0);
 
-    if (significant_alpha && !is_ramp_down_transient) {
+    if (significant_alpha && !is_recovering) {
         m_slope_hold_timer = SLOPE_HOLD_TIME;
         m_debug_slope_num = dG_dt * dAlpha_dt;
         m_debug_slope_den = (dAlpha_dt * dAlpha_dt) + 0.000001;

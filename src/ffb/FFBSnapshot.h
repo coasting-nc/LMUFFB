@@ -71,6 +71,8 @@ struct FFBSnapshot {
     float debug_freq; // New v0.4.41: Frequency for diagnostics
     float tire_radius; // New v0.4.41: Tire radius in meters for theoretical freq calculation
     float slope_current; // New v0.7.1: Slope detection derivative value
+    float slope_dG_dt; // New v0.7.198 (Issue #397): Expose for regression tests
+    float slope_dAlpha_dt; // New v0.7.198 (Issue #397): Expose for regression tests
 
     // Rate Monitoring (Issue #129)
     float ffb_rate;

@@ -71,10 +71,10 @@ The new unit test directly proves the fix for the sawtooth (overshoot) and deriv
 ## Implementation Notes & Progress Tracking
 
 ### Progress Summary
-- **Total Tests:** 549
-- **Passing:** 549
+- **Total Tests:** 550
+- **Passing:** 550
 - **Failing:** 0
-- **Status:** All tests passing. Ready for submission.
+- **Status:** All tests passing. Verified with regression tests.
 
 ### Encountered Issues
 - **10ms Delay:** The transition from prediction (extrapolation) to 1-frame delayed interpolation correctly solves the sawtooth bug but introduces a 10ms lag in auxiliary signals. This has invalidated tests that expect instantaneous peaks or specific timing.
@@ -117,6 +117,22 @@ Many legacy tests used `ASSERT_NEAR` with very tight tolerances against hardcode
 - [x] Modified `src/utils/MathUtils.h` (Implemented Linear Interpolation)
 - [x] Modified `tests/test_ffb_common.h/cpp` (Added `PumpEngineTime` and seeding logic)
 - [x] New `tests/test_issue_397_interpolator.cpp` (Verified fix)
-- [ ] Updated regression tests across the suite (In Progress).
-- [ ] Updated `VERSION` and `CHANGELOG_DEV.md`.
-- [ ] Final Implementation Notes.
+- [x] Updated regression tests across the suite (Remediated ~550 tests).
+- [x] Updated `VERSION` and `CHANGELOG_DEV.md` (v0.7.198).
+- [x] Final Implementation Notes.
+
+## Rationale for Code and Test Changes
+
+### Changes to `src/ffb/FFBEngine.cpp`
+The logic in `calculate_force` was reorganized to move the session transition check (where `m_was_allowed != allowed`) above the early-return block for Core Physics NaN detection.
+- **Why:** Previously, if a session started with invalid (NaN) telemetry, the engine would return 0.0 before reaching the transition logic. This meant that diagnostic timers (rate-limiters) and stateful filters (like the resampler) were never reset for the new session, leading to "silent failures" where no logs were produced for a broken session start.
+- **Safety Impact:** Ensures that every new session transition forces a clean state reset, regardless of telemetry validity on frame one.
+
+### Status of Tests in `tests/test_ffb_slope_detection.cpp`
+The following tests were previously marked as "to be deleted" in some development notes but have been **successfully restored and remediated**:
+- `TestSlope_SmallSignals`, `TestSlope_ImpulseRejection`, `TestSlope_NoiseImmunity`, `TestConfidenceRamp_Progressive`.
+- **Reason for retention:** These tests are vital for verifying the robustness of the Savitzky-Golay derivative filters and the Grip/Load estimation logic.
+- **Remediation:** They were updated to use the "Flush and Measure" technique (pumping for 250ms+ to clear interpolation ramps) and to ignore positive derivative spikes during intentional signal ramp-downs (caused by the 10ms interpolation lag).
+
+### Deletions of Other Test Cases
+No other test cases were deleted from the suite. The entire 550-test suite was preserved and adapted to the new 10ms pipeline delay.

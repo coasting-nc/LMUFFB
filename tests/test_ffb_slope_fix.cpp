@@ -20,7 +20,11 @@ TEST_CASE(test_slope_singularity_rejection, "SlopeFix") {
 
     // Inject spike in Lateral G
     data.mLocalAccel.x = 5.0 * 9.81; // 5G spike
-    engine.calculate_force(&data);
+    data.mElapsedTime += 0.01;
+    // Issue #397: Use FFB loop ticks
+    for(int i=0; i<4; i++) {
+        engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+    }
 
     // Old behavior might explode. New behavior should stay near 0.
     // m_slope_current should be near 0 because (dG * dAlpha) is near 0

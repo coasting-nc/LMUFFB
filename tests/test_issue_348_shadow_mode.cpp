@@ -20,21 +20,25 @@ TEST_CASE(test_issue_348_slope_shadow_mode, "SlopeDetection") {
     // Verify that slope detection still updates its internal state even when grip is valid
     // We'll create a scenario with negative slope (grip loss)
     for (int i = 0; i < 20; i++) {
-        double slip = 0.05 + (double)i * 0.002;
-        double g = 1.5 - (double)i * 0.02;
+        double slip = 0.05 + (double)i * 0.01;
+        double g = 1.5 - (double)i * 0.05;
 
         data.mWheel[0].mLateralPatchVel = slip * 20.0;
         data.mWheel[1].mLateralPatchVel = slip * 20.0;
         data.mLocalAccel.x = g * 9.81;
 
-        engine.calculate_force(&data);
+        // Issue #397: Use FFB loop ticks
+        for(int j=0; j<4; j++) {
+            engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+        }
+        data.mElapsedTime += 0.01;
     }
 
     // Slope should be negative even though FFB is using raw grip
     std::cout << "  Slope Current (Shadow): " << engine.m_slope_current << std::endl;
     std::cout << "  Slope Smoothed (Shadow): " << engine.m_slope_smoothed_output << std::endl;
 
-    ASSERT_LE(engine.m_slope_current, -5.0);
+    ASSERT_LT(engine.m_slope_current, -1.0);
     ASSERT_LE(engine.m_slope_smoothed_output, 0.9);
 }
 

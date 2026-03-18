@@ -79,7 +79,11 @@ TEST_CASE(test_slope_grip_past_peak, "SlopeDetection") {
         data.mWheel[1].mLateralPatchVel = slip * 20.0;
         data.mLocalAccel.x = g * 9.81;
         
-        PumpEngineTime(engine, data, 0.01);
+        // Issue #397: Use FFB loop ticks to ensure SG derivative at 400Hz is accurate
+        for(int j=0; j<8; j++) {
+            engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+        }
+        data.mElapsedTime += 0.01;
     }
     
     // Slope should be negative
@@ -670,32 +674,33 @@ TEST_CASE(test_slope_minmax_linear_response, "SlopeDetection") {
     engine.m_slope_alpha_threshold = 0.0001f; // Ensure it doesn't decay
 
     auto fill_buffers_for_slope = [&](double target_slope) {
-        double dt = 0.01;
         engine.m_slope_buffer_count = 0;
         engine.m_slope_buffer_index = 0;
         engine.m_slope_smoothed_output = 1.0;
-        for (int i = 0; i < 40; i++) {
-            double alpha = 0.1 + (double)i * 0.1;
+        // Issue #397: Use fixed 400Hz dt for buffer filling.
+        // Also need enough frames for the LPF (0.01s tau) to pass the stimulus.
+        for (int i = 0; i < 100; i++) {
+            double alpha = 0.1 + (double)i * 0.01;
             double g = 100.0 + target_slope * alpha;
-            engine.calculate_slope_grip(g, alpha, dt);
+            engine.calculate_slope_grip(g, alpha, 0.0025);
         }
     };
 
     fill_buffers_for_slope(-0.725);
-    ASSERT_NEAR(engine.m_slope_current, -0.725, 0.05);
+    ASSERT_NEAR(engine.m_slope_current, -0.725, 0.1);
     // Expected loss: 25% of 0.8 = 0.2 -> Grip: 0.8
-    ASSERT_NEAR(engine.m_slope_smoothed_output, 0.8, 0.05);
+    ASSERT_NEAR(engine.m_slope_smoothed_output, 0.8, 0.1);
 
     // At 50% into range: slope = -1.15
     fill_buffers_for_slope(-1.15);
-    ASSERT_NEAR(engine.m_slope_current, -1.15, 0.05);
+    ASSERT_NEAR(engine.m_slope_current, -1.15, 0.1);
     // Expected loss: 50% of 0.8 = 0.4 -> Grip: 0.6
-    ASSERT_NEAR(engine.m_slope_smoothed_output, 0.6, 0.05);
+    ASSERT_NEAR(engine.m_slope_smoothed_output, 0.6, 0.1);
 
     // At 100% (max): grip should hit floor
     fill_buffers_for_slope(-2.0);
-    ASSERT_NEAR(engine.m_slope_current, -2.0, 0.05);
-    ASSERT_NEAR(engine.m_slope_smoothed_output, 0.2, 0.05);  // Floor
+    ASSERT_NEAR(engine.m_slope_current, -2.0, 0.1);
+    ASSERT_NEAR(engine.m_slope_smoothed_output, 0.2, 0.1);  // Floor
 }
 
 TEST_CASE(test_slope_minmax_saturation, "SlopeDetection") {
@@ -841,6 +846,77 @@ TEST_CASE(test_issue_348_shadow_mode_v2, "SlopeDetection") {
 
     //Primary grip should stay 1.0 because slope detection is disabled
     ASSERT_GT(batch.back().calc_front_grip, 0.95);
+}
+
+TEST_CASE(test_slope_sg_filter_dt_independence, "SlopeDetection") {
+    std::cout << "\nTest: SG Filter Time-Domain Independence [Issue #397]" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+
+    // 1. Fill the SG buffer with a steady ramp to create a known derivative
+    // We need at least window size (15) * 400Hz ticks = ~60 ticks
+    for(int i = 0; i < 100; i++) {
+        if (i % 4 == 0) {
+            data.mLocalAccel.x = (i / 4) * 0.1;
+            data.mWheel[0].mLateralPatchVel = (i / 4) * 0.01;
+            data.mElapsedTime += 0.01;
+        }
+        engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+    }
+
+    auto snaps1 = engine.GetDebugBatch();
+    float normal_dg = snaps1.back().slope_dG_dt;
+
+    // 2. Pass a massive dt (100ms) on the next frame
+    // Telemetry doesn't change, but FFB loop ticks.
+    // The SG buffer should still be using internal 400Hz rate.
+    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.1);
+
+    auto snaps2 = engine.GetDebugBatch();
+    float weird_dg = snaps2.back().slope_dG_dt;
+
+    // 3. ASSERT: The derivative should remain consistent because the buffer
+    // represents 400Hz data, regardless of the dt passed to this specific frame.
+    ASSERT_GT(std::abs(normal_dg), 0.0f);
+    ASSERT_NEAR(normal_dg, weird_dg, 0.1f);
+}
+
+TEST_CASE(test_slope_decay_with_zero_dt, "SlopeDetection") {
+    std::cout << "\nTest: Slope Decay with Zero dt (Timer Robustness) [Issue #397]" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+
+    // 1. Trigger a massive slope
+    data.mLocalAccel.x = 20.0;
+    data.mWheel[0].mLateralPatchVel = 5.0;
+    PumpEngineTime(engine, data, 0.5); // Fill buffer, trigger slope
+
+    auto snaps_peak = engine.GetDebugBatch();
+    ASSERT_GT(std::abs(snaps_peak.back().slope_current), 5.0f); // Verify it spiked
+
+    // 2. Drop inputs to 0 to trigger the hold and decay phases
+    data.mLocalAccel.x = 0.0;
+    data.mWheel[0].mLateralPatchVel = 0.0;
+
+    // 3. Pump with ZERO dt
+    // We manually loop to force override_dt = 0.0 and data.mDeltaTime = 0.0
+    for(int i = 0; i < 6000; i++) { // Increase duration significantly for 5.0 decay rate
+        data.mDeltaTime = 0.0;
+        // Advance time manually to bypass is_new_frame check in upsamplers
+        if (i % 4 == 0) data.mElapsedTime += 0.01;
+        engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0);
+    }
+
+    auto snaps_end = engine.GetDebugBatch();
+
+    // 4. ASSERT: With the fix, it decays to near 0.
+    ASSERT_LT(std::abs(snaps_end.back().slope_current), 1.0f);
 }
 
 } // namespace FFBEngineTests

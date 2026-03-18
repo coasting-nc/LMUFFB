@@ -910,6 +910,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.debug_freq = (float)m_debug_freq;
             snap.tire_radius = (float)fl.mStaticUndeflectedRadius / 100.0f;
             snap.slope_current = (float)m_slope_current; // v0.7.1: Slope detection diagnostic
+            snap.slope_dG_dt = (float)m_slope_dG_dt; // v0.7.198 (Issue #397)
+            snap.slope_dAlpha_dt = (float)m_slope_dAlpha_dt; // v0.7.198 (Issue #397)
 
             snap.ffb_rate = (float)m_ffb_rate;
             snap.telemetry_rate = (float)m_telemetry_rate;
