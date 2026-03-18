@@ -65,7 +65,8 @@ TEST_CASE(test_logging_aux_nan, "Logging") {
 
     // 2. Rate limiting check
     data.mElapsedTime = 12.0;
-    engine.calculate_force(&data, "GT3", "TestCar");
+    // Issue #397: Use FFB loop ticks to advance time correctly
+    engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.0025);
     ASSERT_TRUE(ss.str().empty());
 
     Logger::Get().SetTestStream(nullptr);

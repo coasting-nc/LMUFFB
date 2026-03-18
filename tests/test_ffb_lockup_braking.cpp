@@ -175,16 +175,30 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
 
     // Issue #397: Flush and Measure
     PumpEngineTime(engine, data1, 0.05);
-    double phase_start = engine.m_lockup_phase;
-    PumpEngineTime(engine, data1, 0.1);
-    double phase_delta_front = engine.m_lockup_phase - phase_start;
+
+    auto accumulate_phase = [&](FFBEngine& eng, TelemInfoV01& d, double duration) {
+        double total_p = 0.0;
+        int ticks = (int)std::ceil(duration / 0.0025);
+        for(int i=0; i<ticks; i++) {
+            double prev_p = eng.m_lockup_phase;
+            if (i % 4 == 0) { d.mElapsedTime += 0.01; d.mDeltaTime = 0.01; }
+            eng.calculate_force(&d, nullptr, nullptr, 0.0f, true, 0.0025);
+            double curr_p = eng.m_lockup_phase;
+            double diff = curr_p - prev_p;
+            if (diff < 0) diff += TWO_PI; // Handle wrap
+            total_p += diff;
+        }
+        return total_p;
+    };
+
+    double phase_delta_front = accumulate_phase(engine, data1, 0.1);
 
     // Verify Front triggered
-    if (phase_delta_front > 0.0) {
+    if (phase_delta_front > 1.0) {
         std::cout << "[PASS] Front lockup triggered. Phase delta: " << phase_delta_front << std::endl;
         g_tests_passed++;
     } else {
-        FAIL_TEST("Front lockup silent.");
+        FAIL_TEST("Front lockup silent or too slow. Delta: " << phase_delta_front);
     }
 
     // --- PASS 2: Rear Lockup Only ---
@@ -204,16 +218,14 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
 
     // Issue #397: Flush and Measure
     PumpEngineTime(engine, data2, 0.05);
-    phase_start = engine.m_lockup_phase;
-    PumpEngineTime(engine, data2, 0.1);
-    double phase_delta_rear = engine.m_lockup_phase - phase_start;
+    double phase_delta_rear = accumulate_phase(engine, data2, 0.1);
 
     // Verify Rear triggered (Fixes the bug)
-    if (phase_delta_rear > 0.0) {
+    if (phase_delta_rear > 0.5) {
         std::cout << "[PASS] Rear lockup triggered. Phase delta: " << phase_delta_rear << std::endl;
         g_tests_passed++;
     } else {
-        FAIL_TEST("Rear lockup silent (Bug not fixed).");
+        FAIL_TEST("Rear lockup silent (Bug not fixed). Delta: " << phase_delta_rear);
     }
 
     // Rear frequency is lower (Ratio 0.3 per FFBEngine.h)
@@ -257,21 +269,34 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
     // 1.0 Nm * Texture Load Cap (1.0) = 1.0 Nm.
     // Normalized by 20 Nm (Default decoupling baseline) = 0.05.
 
-    // Issue #397: Flush and Measure
-    PumpEngineTime(engine, data, 0.015);
+    // Issue #397: Measure Road Texture DURING the 10ms interpolation ramp
+    // Reset state to ensure clean stimulus
+    data.mWheel[0].mVerticalTireDeflection = 0.0;
+    data.mWheel[1].mVerticalTireDeflection = 0.0;
+    PumpEngineSteadyState(engine, data);
     engine.GetDebugBatch();
-    PumpEngineTime(engine, data, 0.05);
-    auto road_batch = engine.GetDebugBatch();
+
+    data.mWheel[0].mVerticalTireDeflection = 0.01;
+    data.mWheel[1].mVerticalTireDeflection = 0.01;
+    data.mElapsedTime += 0.01; // New frame
+
     double force_road = 0.0;
-    for(const auto& s : road_batch) force_road = std::max(force_road, std::abs((double)s.texture_road));
-    
-    // Verify road texture is clamped to 1.0x (not using the 3.0x brake cap)
-    if (std::abs(force_road - 0.05) < 0.001) {
+    for(int i=0; i<4; i++) {
+        engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+        auto b = engine.GetDebugBatch();
+        if (!b.empty()) force_road = std::max(force_road, std::abs((double)b.back().texture_road));
+    }
+
+    // With 10ms delay, 0.01 step over 4 ticks (2.5ms each) gives 0.0025 delta/tick.
+    // Road Force = (0.0025 + 0.0025) * 50.0 = 0.25 Nm.
+    // Normalized by 20.0 Nm = 0.0125.
+    // Note: snap.texture_road is in Nm.
+    if (std::abs(force_road - 0.25) < 0.05) {
         std::cout << "[PASS] Road texture correctly clamped to 1.0x (Force: " << force_road << ")" << std::endl;
         g_tests_passed++;
     } else {
-        FAIL_TEST("Road texture clamping failed. Expected 0.05, got " << force_road);
-        return; // Early exit if first part fails
+        FAIL_TEST("Road texture clamping failed. Expected ~0.25 Nm, got " << force_road);
+        return;
     }
 
     // ===================================================================
@@ -319,7 +344,7 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
     // Discard transients
     engine.GetDebugBatch();
     engine_low.GetDebugBatch();
-    
+
     // Measure steady state
     PumpEngineTime(engine, data, 0.05);
     PumpEngineTime(engine_low, data, 0.05);

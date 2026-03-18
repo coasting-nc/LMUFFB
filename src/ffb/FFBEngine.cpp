@@ -113,6 +113,54 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     if (!data) return 0.0;
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
+    // Transition Logic: Reset filters when entering OR exiting "Muted" state (e.g. Garage/AI)
+    // to clear out high-frequency residuals and prevent stale state from infecting new sessions.
+    // Moved up (Issue #386/397) to ensure diagnostics timers reset even if core physics crashes.
+    if (m_was_allowed != allowed) {
+        m_kerb_timer = 0.0;
+
+        // --- NEW: Reset diagnostic timers ---
+        m_last_core_nan_log_time = -999.0;
+        m_last_aux_nan_log_time = -999.0;
+        m_last_math_nan_log_time = -999.0;
+
+        m_upsample_shaft_torque.Reset();
+        m_upsample_steering.Reset();
+        m_upsample_throttle.Reset();
+        m_upsample_brake.Reset();
+        m_upsample_local_accel_x.Reset();
+        m_upsample_local_accel_y.Reset();
+        m_upsample_local_accel_z.Reset();
+        m_upsample_local_rot_accel_y.Reset();
+        m_upsample_local_rot_y.Reset();
+        for (int i = 0; i < 4; i++) {
+            m_upsample_lat_patch_vel[i].Reset();
+            m_upsample_long_patch_vel[i].Reset();
+            m_upsample_vert_deflection[i].Reset();
+            m_upsample_susp_force[i].Reset();
+            m_upsample_brake_pressure[i].Reset();
+            m_upsample_rotation[i].Reset();
+        }
+        m_steering_velocity_smoothed = 0.0;
+        m_steering_shaft_torque_smoothed = 0.0;
+        m_accel_x_smoothed = 0.0;
+        m_accel_z_smoothed = 0.0;
+        m_sop_lat_g_smoothed = 0.0;
+        m_long_load_smoothed = 1.0;
+        m_yaw_accel_smoothed = 0.0;
+        m_prev_yaw_rate = 0.0;
+        m_yaw_rate_seeded = false;
+        m_fast_yaw_accel_smoothed = 0.0;
+        m_prev_fast_yaw_accel = 0.0;
+        m_yaw_accel_seeded = false;
+        m_unloaded_vulnerability_smoothed = 0.0;
+        m_power_vulnerability_smoothed = 0.0;
+        m_prev_local_vel = {};
+        m_local_vel_seeded = false;
+        m_derivatives_seeded = false;
+    }
+    m_was_allowed = allowed;
+
     // --- 1. CORE PHYSICS CRASH DETECTION ---
     // If the chassis or steering itself is NaN, the car is in the void or the session is dead.
     // We must abort to prevent math explosions.
@@ -260,52 +308,6 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_safety.SetLastControl(mControl);
     }
 
-    // Transition Logic: Reset filters when entering OR exiting "Muted" state (e.g. Garage/AI)
-    // to clear out high-frequency residuals and prevent stale state from infecting new sessions.
-    if (m_was_allowed != allowed) {
-        m_kerb_timer = 0.0;
-
-        // --- NEW: Reset diagnostic timers ---
-        m_last_core_nan_log_time = -999.0;
-        m_last_aux_nan_log_time = -999.0;
-        m_last_math_nan_log_time = -999.0;
-
-        m_upsample_shaft_torque.Reset();
-        m_upsample_steering.Reset();
-        m_upsample_throttle.Reset();
-        m_upsample_brake.Reset();
-        m_upsample_local_accel_x.Reset();
-        m_upsample_local_accel_y.Reset();
-        m_upsample_local_accel_z.Reset();
-        m_upsample_local_rot_accel_y.Reset();
-        m_upsample_local_rot_y.Reset();
-        for (int i = 0; i < 4; i++) {
-            m_upsample_lat_patch_vel[i].Reset();
-            m_upsample_long_patch_vel[i].Reset();
-            m_upsample_vert_deflection[i].Reset();
-            m_upsample_susp_force[i].Reset();
-            m_upsample_brake_pressure[i].Reset();
-            m_upsample_rotation[i].Reset();
-        }
-        m_steering_velocity_smoothed = 0.0;
-        m_steering_shaft_torque_smoothed = 0.0;
-        m_accel_x_smoothed = 0.0;
-        m_accel_z_smoothed = 0.0;
-        m_sop_lat_g_smoothed = 0.0;
-        m_long_load_smoothed = 1.0;
-        m_yaw_accel_smoothed = 0.0;
-        m_prev_yaw_rate = 0.0;
-        m_yaw_rate_seeded = false;
-        m_fast_yaw_accel_smoothed = 0.0;
-        m_prev_fast_yaw_accel = 0.0;
-        m_yaw_accel_seeded = false;
-        m_unloaded_vulnerability_smoothed = 0.0;
-        m_power_vulnerability_smoothed = 0.0;
-        m_prev_local_vel = {};
-        m_local_vel_seeded = false;
-        m_derivatives_seeded = false;
-    }
-    m_was_allowed = allowed;
 
     // SEEDING GATE (Issue #379): Prevent teleport spikes from Garage -> Track
     if (!m_derivatives_seeded && allowed) {

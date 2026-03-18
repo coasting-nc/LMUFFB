@@ -290,7 +290,8 @@ TEST_CASE(test_scrub_drag_fade, "RoadTexture") {
     FFBEngineTestAccess::SetRollingAverageTorque(engine, 40.0);
     FFBEngineTestAccess::SetLastRawTorque(engine, 40.0);
 
-    double force = engine.calculate_force(&data);
+    // Issue #397: Flush the 10ms transient ramp
+    double force = PumpEngineTime(engine, data, 0.015);
     
     // Check absolute magnitude
     // Issue #153: Scrub drag is structural, mapped via target_rim / wheelbase_max.

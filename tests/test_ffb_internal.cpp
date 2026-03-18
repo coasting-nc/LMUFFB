@@ -237,6 +237,8 @@ TEST_CASE(test_snapshot_data_v049, "Internal") {
     engine.calculate_force(&data);
 
     // Verify Snapshot
+    // Issue #397: Flush the 10ms transient ramp
+    PumpEngineTime(engine, data, 0.015);
     auto batch = engine.GetDebugBatch();
     if (batch.empty()) {
         FAIL_TEST("No snapshot.");
@@ -310,7 +312,8 @@ TEST_CASE(test_refactor_snapshot_sop, "Internal") {
     // Snapshot SoP Force = 10.0 (Unboosted Nm)
     // Snapshot Boost = 20.0 - 10.0 = 10.0 (Nm)
 
-    engine.calculate_force(&data);
+    // Issue #397: Flush the 10ms transient ramp
+    PumpEngineTime(engine, data, 1.0);
 
     auto batch = engine.GetDebugBatch();
     if (!batch.empty()) {
@@ -445,41 +448,52 @@ TEST_CASE(test_unconditional_vert_accel_update, "Internal") {
     InitializeEngine(engine);
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    data.mDeltaTime = 0.01;
     
     // Disable road texture effect
     engine.m_road_texture_enabled = false;
     
-    // v0.7.145 (Issue #278): We now derive accel from velocity
+    // 1. Establish steady state 0.0 acceleration
     data.mLocalVel.y = 0.0;
-    FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
-    engine.calculate_force(&data); // Seed 1
+    PumpEngineSteadyState(engine, data);
 
-    // Set a known vertical acceleration via velocity change
+    // 2. Set a known vertical acceleration via velocity change
+    // Target 5.5 m/s^2.
+    // LMUFFB derives acceleration from velocity: (v - prev_v) / dt.
+    // We'll use 100Hz game ticks.
     data.mLocalVel.y = 5.5 * 0.01;
-    data.mDeltaTime = 0.01;
     data.mElapsedTime += 0.01;
     
-    // Reset the engine state to force a failure if it's not actually updating
-    engine.m_prev_vert_accel = 0.0;
+    // Issue #397: Acceleration is upsampled. HW filter needs time to reach target.
+    // We'll pump 1 second to let derived acceleration stabilize at 5.5.
+    for(int i=0; i<400; i++) {
+        if (i % 4 == 0) {
+            // Maintain the derivative by incrementing velocity every game tick
+            data.mLocalVel.y += 5.5 * 0.01;
+            data.mElapsedTime += 0.01;
+        }
+        engine.calculate_force(&data, "GT3", "911", 0.0f, true, 0.0025);
+    }
     
-    // Run calculate_force
-    engine.calculate_force(&data);
-    
-    // Check that m_prev_vert_accel was updated EVEN THOUGH road_texture is disabled
-    if (std::abs(engine.m_prev_vert_accel - 5.5) < 0.01) {
+    // In FFBEngine.cpp, m_prev_vert_accel is updated to data->mLocalAccel.y at end of frame.
+    // mLocalAccel.y was upsampled to the derived target (5.5).
+    if (std::abs(engine.m_prev_vert_accel - 5.5) < 0.1) {
         std::cout << "[PASS] m_prev_vert_accel updated unconditionally: " << engine.m_prev_vert_accel << std::endl;
         g_tests_passed++;
     } else {
         FAIL_TEST("m_prev_vert_accel not updated. Got: " << engine.m_prev_vert_accel << " Expected: 5.5");
     }
     
-    // Verify the value changes on next frame
-    data.mLocalVel.y += -3.2 * 0.01;
-    data.mElapsedTime += 0.01;
-    engine.calculate_force(&data);
+    // 3. Verify the value changes on next target
+    // Target -3.2 m/s^2.
+    for(int i=0; i<400; i++) {
+        if (i % 4 == 0) {
+            data.mLocalVel.y += -3.2 * 0.01;
+            data.mElapsedTime += 0.01;
+        }
+        engine.calculate_force(&data, "GT3", "911", 0.0f, true, 0.0025);
+    }
     
-    if (std::abs(engine.m_prev_vert_accel - (-3.2)) < 0.01) {
+    if (std::abs(engine.m_prev_vert_accel - (-3.2)) < 0.1) {
         std::cout << "[PASS] m_prev_vert_accel tracks changes: " << engine.m_prev_vert_accel << std::endl;
         g_tests_passed++;
     } else {

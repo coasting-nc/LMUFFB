@@ -53,19 +53,39 @@ TEST_CASE(test_speed_gate_uses_smoothstep, "SpeedGate") {
     TelemInfoV01 data_25 = CreateBasicTestTelemetry(2.0);
     data_25.mWheel[0].mVerticalTireDeflection = 0.002;
     data_25.mWheel[1].mVerticalTireDeflection = 0.002;
-    PumpEngineTime(engine, data_25, 0.0125);
+
     TelemInfoV01 data_50 = CreateBasicTestTelemetry(3.0);
     data_50.mWheel[0].mVerticalTireDeflection = 0.002;
     data_50.mWheel[1].mVerticalTireDeflection = 0.002;
-    engine.m_prev_vert_deflection[0] = 0.0;
-    engine.m_prev_vert_deflection[1] = 0.0;
-    // Issue #397: Reset interpolators to ensure fair comparison
-    for(int i=0; i<4; i++) engine.m_upsample_vert_deflection[i].Reset();
-    double force_50 = PumpEngineTime(engine, data_50, 0.0125);
-    engine.m_prev_vert_deflection[0] = 0.0;
-    engine.m_prev_vert_deflection[1] = 0.0;
-    for(int i=0; i<4; i++) engine.m_upsample_vert_deflection[i].Reset();
-    double force_25 = PumpEngineTime(engine, data_25, 0.0125);
+
+    auto get_peak_road_force = [&](TelemInfoV01& d) {
+        // Reset state
+        InitializeEngine(engine);
+        engine.m_speed_gate_lower = 1.0f;
+        engine.m_speed_gate_upper = 5.0f;
+        engine.m_road_texture_enabled = true;
+        engine.m_road_texture_gain = 1.0f;
+
+        // Steady state (deflection 0)
+        d.mWheel[0].mVerticalTireDeflection = 0.0;
+        d.mWheel[1].mVerticalTireDeflection = 0.0;
+        PumpEngineSteadyState(engine, d);
+
+        // Trigger ramp
+        d.mWheel[0].mVerticalTireDeflection = 0.002;
+        d.mWheel[1].mVerticalTireDeflection = 0.002;
+        d.mElapsedTime += 0.01;
+
+        double peak = 0.0;
+        for(int i=0; i<4; i++) {
+            double f = engine.calculate_force(&d, nullptr, nullptr, 0.0f, true, 0.0025);
+            peak = std::max(peak, std::abs(f));
+        }
+        return peak;
+    };
+
+    double force_50 = get_peak_road_force(data_50);
+    double force_25 = get_peak_road_force(data_25);
     if (std::abs(force_50) > 0.0001) {
         double ratio = std::abs(force_25 / force_50);
         ASSERT_TRUE(ratio < 0.4);
@@ -111,22 +131,32 @@ TEST_CASE(test_speed_gate_custom_thresholds, "SpeedGate") {
     TelemInfoV01 data = CreateBasicTestTelemetry(6.0); // Exactly halfway
     engine.m_road_texture_enabled = true;
     engine.m_road_texture_gain = 1.0;
-    engine.m_bottoming_enabled = false; // v0.7.69: Disable bottoming to isolate road texture
+    engine.m_bottoming_enabled = false;
     engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
-
-    // v0.7.69: Ensure vibration multiplier is 1.0 for this test
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
     FFBEngineTestAccess::SetSmoothedVibrationMult(engine, 1.0);
     engine.m_texture_load_cap = 1.0f;
 
+    // Steady state
+    data.mWheel[0].mVerticalTireDeflection = 0.0;
+    data.mWheel[1].mVerticalTireDeflection = 0.0;
+    PumpEngineSteadyState(engine, data);
+
+    // Trigger ramp
     data.mWheel[0].mVerticalTireDeflection = 0.001;
     data.mWheel[1].mVerticalTireDeflection = 0.001;
+    data.mElapsedTime += 0.01;
     
-    double force = PumpEngineTime(engine, data, 0.0125);
+    double force = 0.0;
+    for(int i=0; i<4; i++) {
+        double f = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+        force = std::max(force, std::abs(f));
+    }
     // Gate = (6 - 2) / (10 - 2) = 4 / 8 = 0.5
-    // Texture Force = 0.5 * (0.001 + 0.001) * 50.0 = 0.05 Nm
-    // Normalized = 0.05 / 20.0 = 0.0025
-    ASSERT_NEAR(force, 0.0025, 0.001);
+    // Delta = 0.001 / 4 ticks = 0.00025 per tick
+    // Texture Force = 0.5 * (0.00025 + 0.00025) * 50.0 = 0.0125 Nm
+    // Normalized = 0.0125 / 20.0 = 0.000625
+    ASSERT_NEAR(force, 0.000625, 0.0001);
 }
 
 

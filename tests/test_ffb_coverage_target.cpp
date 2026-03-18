@@ -58,13 +58,17 @@ TEST_CASE(test_abs_pulse_target_coverage, "Coverage") {
     
     // Path 3: Enabled but inactive (no pulse - pressure rate below threshold)
     data.mUnfilteredBrake = 1.0f; 
-    for(int i=0; i<4; i++) data.mWheel[i].mBrakePressure = 0.0f; // No change from prev 0
+    for(int i=0; i<4; i++) {
+        data.mWheel[i].mBrakePressure = 0.0f;
+        engine.m_prev_brake_pressure[i] = 0.0f;
+    }
     FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
     ASSERT_EQ(ctx.abs_pulse_force, 0.0);
     
     // Path 4: Enabled and active
     data.mUnfilteredBrake = 1.0f; 
     for(int i=0; i<4; i++) {
+        engine.m_prev_brake_pressure[i] = 0.0f;
         data.mWheel[i].mBrakePressure = 1.0f; // Create delta of 1.0/0.01 = 100.0 > 2.0
     }
     FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);

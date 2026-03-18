@@ -97,83 +97,60 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
     data.mWheel[0].mGripFract = 1.0;
     data.mWheel[1].mGripFract = 1.0;
     
-    // Frame 1: Steering at 0.0
+    // Issue #397: Use peak-finding loop to capture damping force during the 10ms ramp
+    auto get_peak_gyro = [&](double steer_target, double speed) {
+        data.mLocalVel.z = speed;
+        data.mUnfilteredSteering = (float)steer_target;
+        data.mElapsedTime += 0.01;
+
+        double peak = 0.0;
+        for(int i=0; i<4; i++) {
+            engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+            auto b = engine.GetDebugBatch();
+            if (!b.empty()) {
+                double g = b.back().ffb_gyro_damping;
+                if (std::abs(g) > std::abs(peak)) peak = g;
+            }
+        }
+        return peak;
+    };
+
+    // Frame 1: Steering at 0.0 (Steady)
     data.mUnfilteredSteering = 0.0f;
-    engine.calculate_force(&data);
+    PumpEngineSteadyState(engine, data);
     
-    // Frame 2: Steering moves to 0.1 (rapid movement to the right)
-    data.mUnfilteredSteering = 0.1f;
-    double force = engine.calculate_force(&data);
+    // Frame 2: Steering moves to 0.1
+    double gyro_force = get_peak_gyro(0.1, 50.0);
     
-    // Get the snapshot to check gyro force
-    auto batch = engine.GetDebugBatch();
-    if (batch.empty()) {
-        FAIL_TEST("No snapshot.");
-        return;
-    }
-    FFBSnapshot snap = batch.back();
-    double gyro_force = snap.ffb_gyro_damping;
-    
-    // Assert 1: Force opposes movement (should be negative for positive steering velocity)
-    // Steering moved from 0.0 to 0.1 (positive direction)
-    // Gyro damping should oppose this (negative force)
-    if (gyro_force < 0.0) {
+    if (gyro_force < -0.01) {
         std::cout << "[PASS] Gyro force opposes steering movement (negative: " << gyro_force << ")" << std::endl;
         g_tests_passed++;
     } else {
         FAIL_TEST("Gyro force should be negative. Got: " << gyro_force);
     }
     
-    // Assert 2: Force is non-zero (significant)
-    if (std::abs(gyro_force) > 0.001) {
-        std::cout << "[PASS] Gyro force is non-zero (magnitude: " << std::abs(gyro_force) << ")" << std::endl;
+    // Test opposite direction
+    data.mUnfilteredSteering = 0.1f;
+    PumpEngineSteadyState(engine, data);
+    double gyro_force_reverse = get_peak_gyro(0.0, 50.0);
+    
+    if (gyro_force_reverse > 0.01) {
+        std::cout << "[PASS] Gyro force reverses with steering direction (positive: " << gyro_force_reverse << ")" << std::endl;
         g_tests_passed++;
     } else {
-        FAIL_TEST("Gyro force is too small. Got: " << gyro_force);
-    }
-    
-    // Test opposite direction
-    // Frame 3: Steering moves back from 0.1 to 0.0 (negative velocity)
-    data.mUnfilteredSteering = 0.0f;
-    engine.calculate_force(&data);
-    
-    batch = engine.GetDebugBatch();
-    if (!batch.empty()) {
-        snap = batch.back();
-        double gyro_force_reverse = snap.ffb_gyro_damping;
-        
-        // Should now be positive (opposing negative steering velocity)
-        if (gyro_force_reverse > 0.0) {
-            std::cout << "[PASS] Gyro force reverses with steering direction (positive: " << gyro_force_reverse << ")" << std::endl;
-            g_tests_passed++;
-        } else {
-            FAIL_TEST("Gyro force should be positive for reverse movement. Got: " << gyro_force_reverse);
-        }
+        FAIL_TEST("Gyro force should be positive for reverse movement. Got: " << gyro_force_reverse);
     }
     
     // Test speed scaling
-    // At low speed, gyro force should be weaker
-    data.mLocalVel.z = 5.0; // Slow (5 m/s)
     data.mUnfilteredSteering = 0.0f;
-    engine.calculate_force(&data);
+    PumpEngineSteadyState(engine, data);
+    double gyro_force_slow = get_peak_gyro(0.1, 5.0);
     
-    data.mUnfilteredSteering = 0.1f;
-    engine.calculate_force(&data);
-    
-    batch = engine.GetDebugBatch();
-    if (!batch.empty()) {
-        snap = batch.back();
-        double gyro_force_slow = snap.ffb_gyro_damping;
-        
-        // Should be weaker than at high speed (scales with car_speed / 10.0)
-        // At 50 m/s: scale = 5.0, At 5 m/s: scale = 0.5
-        // So force should be ~10x weaker
-        if (std::abs(gyro_force_slow) < std::abs(gyro_force) * 0.6) {
-            std::cout << "[PASS] Gyro force scales with speed (slow: " << gyro_force_slow << " vs fast: " << gyro_force << ")" << std::endl;
-            g_tests_passed++;
-        } else {
-            FAIL_TEST("Gyro force should be weaker at low speed. Slow: " << gyro_force_slow << " Fast: " << gyro_force);
-        }
+    if (std::abs(gyro_force_slow) < std::abs(gyro_force) * 0.6) {
+        std::cout << "[PASS] Gyro force scales with speed (slow: " << gyro_force_slow << " vs fast: " << gyro_force << ")" << std::endl;
+        g_tests_passed++;
+    } else {
+        FAIL_TEST("Gyro force should be weaker at low speed. Slow: " << gyro_force_slow << " Fast: " << gyro_force);
     }
 }
 
