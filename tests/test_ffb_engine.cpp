@@ -63,9 +63,7 @@ TEST_CASE(test_long_load_scaling, "Physics") {
     engine.m_chassis_inertia_smoothing = 1000.0f;
     engine.m_accel_z_smoothed = 9.81;
 
-    // Issue #397: Interpolation delay
-    PumpEngineTime(engine, data, 0.0125);
-    double output = engine.GetDebugBatch().back().total_output;
+    double output = engine.calculate_force(&data);
 
     // Master Gain = 1.0, MaxTorqueRef = 100.0
     // base_input = 5.0
@@ -142,8 +140,7 @@ TEST_CASE(test_long_load_transformations, "Physics") {
     auto get_long_load_force = [&](LoadTransform transform, double g_force) {
         engine.m_long_load_transform = transform;
         engine.m_accel_z_smoothed = g_force;
-        // Issue #397: Interpolation delay
-        PumpEngineTime(engine, data, 0.0125);
+        engine.calculate_force(&data);
         auto snap = engine.GetDebugBatch().back();
         return snap.long_load_force;
     };
@@ -255,11 +252,10 @@ TEST_CASE(test_kerb_strike_rejection, "Physics") {
 
     // 2. Kerb Strike via Surface Type
     data.mWheel[2].mSurfaceType = 5; // Rumblestrip
-    // Issue #397: Interpolation delay
-    PumpEngineTime(engine, data, 0.0125);
+    engine.calculate_force(&data);
     auto snap2 = engine.GetDebugBatch().back();
 
-    ASSERT_NEAR(snap2.ffb_rear_torque, 0.0f, 0.01f);
+    ASSERT_NEAR(snap2.ffb_rear_torque, 0.0f, 0.001f);
     ASSERT_GT(FFBEngineTestAccess::GetKerbTimer(engine), 0.05);
 
     // 3. Hold timer verification
@@ -274,10 +270,9 @@ TEST_CASE(test_kerb_strike_rejection, "Physics") {
     // Need to have called it before to have a prev_deflection
     engine.calculate_force(&data);
     data.mWheel[2].mVerticalTireDeflection = 0.10; // +5cm in one frame (0.0025s) = 20 m/s
-    // Issue #397: Interpolation delay
-    PumpEngineTime(engine, data, 0.0125);
+    engine.calculate_force(&data);
     auto snap4 = engine.GetDebugBatch().back();
-    ASSERT_NEAR(snap4.ffb_rear_torque, 0.0f, 0.01f);
+    ASSERT_NEAR(snap4.ffb_rear_torque, 0.0f, 0.001f);
 
     // 5. Physics Saturation Verification (Always On)
     engine.m_kerb_strike_rejection = 0.0f; // Disable rejection

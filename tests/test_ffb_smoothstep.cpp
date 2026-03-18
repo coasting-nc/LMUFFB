@@ -53,16 +53,19 @@ TEST_CASE(test_speed_gate_uses_smoothstep, "SpeedGate") {
     TelemInfoV01 data_25 = CreateBasicTestTelemetry(2.0);
     data_25.mWheel[0].mVerticalTireDeflection = 0.002;
     data_25.mWheel[1].mVerticalTireDeflection = 0.002;
-    engine.calculate_force(&data_25);
+    PumpEngineTime(engine, data_25, 0.0125);
     TelemInfoV01 data_50 = CreateBasicTestTelemetry(3.0);
     data_50.mWheel[0].mVerticalTireDeflection = 0.002;
     data_50.mWheel[1].mVerticalTireDeflection = 0.002;
     engine.m_prev_vert_deflection[0] = 0.0;
     engine.m_prev_vert_deflection[1] = 0.0;
-    double force_50 = engine.calculate_force(&data_50);
+    // Issue #397: Reset interpolators to ensure fair comparison
+    for(int i=0; i<4; i++) engine.m_upsample_vert_deflection[i].Reset();
+    double force_50 = PumpEngineTime(engine, data_50, 0.0125);
     engine.m_prev_vert_deflection[0] = 0.0;
     engine.m_prev_vert_deflection[1] = 0.0;
-    double force_25 = engine.calculate_force(&data_25);
+    for(int i=0; i<4; i++) engine.m_upsample_vert_deflection[i].Reset();
+    double force_25 = PumpEngineTime(engine, data_25, 0.0125);
     if (std::abs(force_50) > 0.0001) {
         double ratio = std::abs(force_25 / force_50);
         ASSERT_TRUE(ratio < 0.4);
@@ -119,10 +122,7 @@ TEST_CASE(test_speed_gate_custom_thresholds, "SpeedGate") {
     data.mWheel[0].mVerticalTireDeflection = 0.001;
     data.mWheel[1].mVerticalTireDeflection = 0.001;
     
-    // Issue #397: Interpolation delay
-    PumpEngineTime(engine, data, 0.0125);
-    double force = engine.GetDebugBatch().back().total_output;
-
+    double force = PumpEngineTime(engine, data, 0.0125);
     // Gate = (6 - 2) / (10 - 2) = 4 / 8 = 0.5
     // Texture Force = 0.5 * (0.001 + 0.001) * 50.0 = 0.05 Nm
     // Normalized = 0.05 / 20.0 = 0.0025

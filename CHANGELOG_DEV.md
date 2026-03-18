@@ -4,16 +4,6 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [0.7.198]
-- **Fixed LinearExtrapolator Sawtooth Bug and Derivative Spikes (Issue #397)**:
-  - **Replaced Prediction with Interpolation**: Converted the 100Hz-to-400Hz upsampler from a predictive `LinearExtrapolator` (dead reckoning) to a 1-frame delayed `LinearInterpolator`. This eliminates the "snap-back" artifacts (sawtooth) and unphysical derivative spikes caused by prediction errors.
-  - **Enhanced Slope Detection Robustness**: Updated the `calculate_slope_grip` logic to ignore small positive derivative spikes during "ramp-down" transients. This prevents the 250ms hold-timer from becoming "sticky" due to the new interpolation ramps as signals return to zero.
-  - **System-Wide Regression Remediation**: Updated dozens of tests across the suite (Yaw/Gyro, Soft Lock, Road Texture, ABS/Lockup) to account for the physical 10ms pipeline delay and attenuated derivative characteristics.
-- **Testing**:
-  - Added `tests/test_issue_397_interpolator.cpp` to verify signal continuity, 10ms delay, and derivative stability.
-  - Introduced `PumpEngineTime` helper in the test suite to simulate the passage of time for delayed signal pipelines.
-  - Modernized brittle `ASSERT_NEAR` checks to use behavioral bounds (`ASSERT_GT`/`ASSERT_LT`).
-
 ## [0.7.197]
 - **Fixed Signal Continuity and Decoupled Shifting in Up-sampling Pipeline (Issue #393)**:
   - **Polyphase Resampler Phase Misalignment (The "Stutter" Bug)**: Implemented decoupled shifting logic in `PolyphaseResampler`. New physics samples are now stored in a pending state and only shifted into the active history buffer when the phase accumulator wraps around. This ensures the filter uses the correct historical context for all fractional phases, eliminating periodic micro-stutters.

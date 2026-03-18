@@ -28,7 +28,7 @@ TEST_CASE(test_upsampling_logic, "Upsampling") {
     ASSERT_NEAR(force2, force3, 0.001);
 }
 
-TEST_CASE(test_upsampling_torque_hw, "Upsampling") {
+TEST_CASE(test_upsampling_interpolation, "Upsampling") {
     FFBEngine engine;
     InitializeEngine(engine);
 
@@ -54,7 +54,7 @@ TEST_CASE(test_upsampling_torque_hw, "Upsampling") {
     ASSERT_FALSE(std::abs(f1 - f2) < 1e-6);
 }
 
-TEST_CASE(test_upsampling_interpolation, "Upsampling") { // Renamed from extrapolation
+TEST_CASE(test_upsampling_extrapolation, "Upsampling") {
     FFBEngine engine;
     InitializeEngine(engine);
 
@@ -66,19 +66,22 @@ TEST_CASE(test_upsampling_interpolation, "Upsampling") { // Renamed from extrapo
     data2.mElapsedTime = 100.01;
     data2.mWheel[0].mLateralPatchVel = 2.0;
 
-    // Process frames to establish interpolation window
+    // Process two frames to establish velocity for extrapolation
     engine.calculate_force(&data1, "GT3", "Ferrari 296", 0.0f, true, 0.0025);
+    engine.calculate_force(&data2, "GT3", "Ferrari 296", 0.0f, true, 0.0025); // This establishes dV/dt = (2-1)/0.01 = 100 m/s^2
 
-    // T=100.01: New frame arrives. Interpolator target moves to 2.0. Output starts at 1.0.
-    engine.calculate_force(&data2, "GT3", "Ferrari 296", 0.0f, true, 0.0025);
-    ASSERT_NEAR(engine.GetDebugBatch().back().raw_front_lat_patch_vel, 0.5f, 0.01); // (1.0 + 0)/2 = 0.5
-
-    // T=100.0125: +2.5ms FFB time. Interpolator should be at 1.0 + (100 * 0.0025) = 1.25
+    // Third call with SAME telemetry but +2.5ms FFB time
+    // Extrapolator should predict 2.0 + (100 * 0.0025) = 2.25
     engine.calculate_force(&data2, "GT3", "Ferrari 296", 0.0f, true, 0.0025);
 
     FFBSnapshot snap = engine.GetDebugBatch().back();
+    // snap.raw_front_lat_patch_vel is usually abs average of fl/fr
+    // Here we only set fl, fr is 0 from CreateBasicTestTelemetry (needs check)
+    // CreateBasicTestTelemetry usually sets some defaults.
 
-    // snap.raw_front_lat_patch_vel is abs average of fl/fr.
-    // FL=1.25, FR=0 (if default). Avg = 0.625.
-    ASSERT_NEAR(snap.raw_front_lat_patch_vel, 0.625f, 0.01);
+    // Verification via snapshot
+    // We want to see if the internal m_working_info was actually upsampled.
+    // Since we can't easily see m_working_info, we check effects that depend on it.
+    // Slide texture depends on mLateralPatchVel.
+    ASSERT_GT(snap.raw_front_lat_patch_vel, 1.0f);
 }

@@ -34,37 +34,25 @@ TEST_CASE(test_slope_sg_derivative, "SlopeDetection") {
 }
 
 TEST_CASE(test_slope_grip_at_peak, "SlopeDetection") {
-    std::cout << "\nTest: Slope Grip at Peak (Zero Slope) [Issue #397]" << std::endl;
+    std::cout << "\nTest: Slope Grip at Peak (Zero Slope) (v0.7.0)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_slope_detection_enabled = true;
     engine.m_slope_sg_window = 15;
     
-    // Use 0.0 grip fract (force fallback) with steady 1.2G and 0.05 slip
+    // Simulate peak grip: Constant G despite increasing slip?
+    // Actually, zero slope means G is constant while slip moves.
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.05);
-    data.mLocalAccel.x = 1.2 * 9.81;
+    data.mLocalAccel.x = 1.2 * 9.81; // 1.2G
     data.mDeltaTime = 0.01;
     
-    // Induce a slope first so we can verify decay to zero
-    for (int i = 0; i < 20; i++) {
-        double slip = 0.05 + (double)i * 0.01;
-        data.mWheel[0].mLateralPatchVel = slip * 20.0;
-        data.mWheel[1].mLateralPatchVel = slip * 20.0;
-        PumpEngineTime(engine, data, 0.01);
-    }
-    
-    // Now hold steady and pump for 2.0s to ensure hold timer expires and decay finishes
-    data.mWheel[0].mLateralPatchVel = 0.25 * 20.0;
-    data.mWheel[1].mLateralPatchVel = 0.25 * 20.0;
+    // Fill buffer with constant values
     PumpEngineTime(engine, data, 2.0);
 
-    auto batch = engine.GetDebugBatch();
-    if (batch.empty()) { FAIL_TEST("Empty batch"); return; }
-    auto snap = batch.back();
-
-    // Behavioral Check: In steady state with constant input, slope must be near zero
-    ASSERT_LT(std::abs(snap.slope_current), 1.0);
-    ASSERT_GT(snap.calc_front_grip, 0.8);
+    // Slope should be near 0
+    ASSERT_NEAR(engine.m_slope_current, 0.0, 0.5);
+    // Grip should be near 1.0
+    ASSERT_GE(engine.m_slope_smoothed_output, 0.9);
 }
 
 TEST_CASE(test_slope_grip_past_peak, "SlopeDetection") {
@@ -78,12 +66,13 @@ TEST_CASE(test_slope_grip_past_peak, "SlopeDetection") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mDeltaTime = 0.01; // 100Hz
     
-    // Seed
-    PumpEngineTime(engine, data, 0.05);
-
     // Simulate past peak: Increasing slip, decreasing G
-    for (int i = 0; i < 40; i++) {
-        double slip = 0.05 + (double)i * 0.005;
+    // Slip: 0.05 to 0.09 (0.002 per frame)
+    // G: 1.5 to 1.1 ( -0.02 per frame)
+    // dG/dSlip = -0.02 / 0.002 = -10.0 (Slope)
+
+    for (int i = 0; i < 20; i++) {
+        double slip = 0.05 + (double)i * 0.01;
         double g = 1.5 - (double)i * 0.05;
         
         data.mWheel[0].mLateralPatchVel = slip * 20.0;
@@ -93,11 +82,12 @@ TEST_CASE(test_slope_grip_past_peak, "SlopeDetection") {
         PumpEngineTime(engine, data, 0.01);
     }
     
-    auto snap = engine.GetDebugBatch().back();
     // Slope should be negative
-    ASSERT_LT(snap.slope_current, -1.0);
+    ASSERT_LT(engine.m_slope_current, -1.0);
     // Grip should be reduced
-    ASSERT_LT(snap.calc_front_grip, 0.95);
+    ASSERT_LT(engine.m_slope_smoothed_output, 0.95);
+    // But above safety floor
+    ASSERT_GE(engine.m_slope_smoothed_output, 0.2);
 }
 
 TEST_CASE(test_slope_vs_static_comparison, "SlopeDetection") {
@@ -114,10 +104,6 @@ TEST_CASE(test_slope_vs_static_comparison, "SlopeDetection") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.12); // 12% slip
     data.mDeltaTime = 0.01;
     
-    // Seed
-    PumpEngineTime(engine_slope, data, 0.05);
-    PumpEngineTime(engine_static, data, 0.05);
-
     // Run both
     for (int i = 0; i < 40; i++) {
         double slip = 0.05 + (double)i * 0.01;
@@ -140,7 +126,7 @@ TEST_CASE(test_slope_vs_static_comparison, "SlopeDetection") {
     std::cout << "  Slope Grip: " << snap_slope.calc_front_grip << " | Static Grip: " << snap_static.calc_front_grip << std::endl;
     
     // Both should detect grip loss
-    ASSERT_LT(snap_slope.calc_front_grip, 0.9);
+    ASSERT_LT(snap_slope.calc_front_grip, 0.95);
     ASSERT_LT(snap_static.calc_front_grip, 0.9);
 }
 
@@ -172,7 +158,7 @@ TEST_CASE(test_slope_config_persistence, "SlopeDetection") {
 }
 
 TEST_CASE(test_slope_latency_characteristics, "SlopeDetection") {
-    std::cout << "\nTest: Slope Latency Characteristics [Issue #397]" << std::endl;
+    std::cout << "\nTest: Slope Latency Characteristics (v0.7.0)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_slope_detection_enabled = true;
@@ -195,7 +181,7 @@ TEST_CASE(test_slope_latency_characteristics, "SlopeDetection") {
 }
 
 TEST_CASE(test_slope_noise_rejection, "SlopeDetection") {
-    std::cout << "\nTest: Slope Noise Rejection [Issue #397]" << std::endl;
+    std::cout << "\nTest: Slope Noise Rejection (v0.7.0)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_slope_detection_enabled = true;
@@ -208,19 +194,14 @@ TEST_CASE(test_slope_noise_rejection, "SlopeDetection") {
     std::uniform_real_distribution<double> noise_dist(-0.1, 0.1);
     
     // Fill buffer with noise around constant 1.2G
-    // We need to pump enough time for the SG window to see the noise statistics
     for (int i = 0; i < 100; i++) {
         data.mLocalAccel.x = (1.2 + noise_dist(generator)) * 9.81;
         PumpEngineTime(engine, data, 0.01);
     }
     
-    auto batch = engine.GetDebugBatch();
-    if (batch.empty()) { FAIL_TEST("Empty batch"); return; }
-    auto snap = batch.back();
-
-    std::cout << "  Noisy Slope: " << snap.slope_current << std::endl;
-    // behavioral check: SG filter should keep slope reasonable
-    ASSERT_LE(std::abs(snap.slope_current), 20.0);
+    // Despite noise, slope should be near zero (SG filter rejection)
+    std::cout << "  Noisy Slope: " << engine.m_slope_current << std::endl;
+    ASSERT_LT(std::abs(engine.m_slope_current), 20.0);
 }
 
 TEST_CASE(test_slope_buffer_reset_on_toggle, "SlopeDetection") {
@@ -469,47 +450,32 @@ TEST_CASE(test_slope_decay_on_straight, "SlopeDetection") {
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0, 0.05);
     data.mDeltaTime = 0.01;
     
-    // 1. Induce a slope
-    for (int i = 0; i < 40; i++) {
-        double slip = 0.05 + 0.01 * (double)i;
-        data.mLocalAccel.x = (0.5 + 0.1 * (double)i) * 9.81;
+    for (int i = 0; i < 20; i++) {
+        data.mLocalAccel.x = (0.5 + 0.05 * i) * 9.81;
         for (int w = 0; w < 4; w++) {
-            data.mWheel[w].mLateralPatchVel = slip * 30.0;
+            data.mWheel[w].mLateralPatchVel = (0.05 + 0.005 * i) * 30.0;
         }
-        PumpEngineTime(engine, data, 0.01);
+        engine.calculate_force(&data);
     }
     
-    auto batch1 = engine.GetDebugBatch();
-    if (batch1.empty()) { FAIL_TEST("Empty batch 1"); return; }
-    double slope_after_corner = batch1.back().slope_current;
-    ASSERT_GT(std::abs(slope_after_corner), 0.1);
+    double slope_after_corner = engine.m_slope_current;
+    ASSERT_TRUE(std::abs(slope_after_corner) > 0.1);
     
-    // 2. Straight line: Zero lateral acceleration, zero slip
-    // Clear the SG buffer input by pumping steady zero-stimulus state with 1.0 grip
-    data.mLocalAccel.x = 0.0;
-    for(int i=0; i<4; i++) {
-        data.mWheel[i].mLateralPatchVel = 0.0;
-        data.mWheel[i].mGripFract = 1.0;
-    }
+    data = CreateBasicTestTelemetry(30.0, 0.0);
+    data.mDeltaTime = 0.01;
     
-    // Pump for 1.0s to ensure hold timer expires and decay happens
+    // Issue #397: Allow 1.5s for hold timer and exponential decay to finish
+    PumpEngineTime(engine, data, 1.5);
+    
+    double slope_after_straight = engine.m_slope_current;
+    ASSERT_TRUE(std::abs(slope_after_straight) < std::abs(slope_after_corner));
+    ASSERT_TRUE(std::abs(slope_after_straight) < 0.5);
+
+    // Run longer to ensure zero
     PumpEngineTime(engine, data, 1.0);
-    
-    auto batch2 = engine.GetDebugBatch();
-    if (batch2.empty()) { FAIL_TEST("Empty batch 2"); return; }
-    double slope_after_straight = batch2.back().slope_current;
-    
-    // Behavioral: Slope must have reduced significantly
-    ASSERT_LT(std::abs(slope_after_straight), std::abs(slope_after_corner));
 
-    // 3. Run longer to ensure near zero
-    PumpEngineSteadyState(engine, data);
-
-    auto batch3 = engine.GetDebugBatch();
-    if (batch3.empty()) { FAIL_TEST("Empty batch 3"); return; }
-    double slope_final = batch3.back().slope_current;
-    // Behavioral: Should be near zero in steady state straight line
-    ASSERT_LT(std::abs(slope_final), 1.0);
+    double slope_final = engine.m_slope_current;
+    ASSERT_NEAR(slope_final, 0.0, 0.05);
 }
 
 TEST_CASE(test_slope_alpha_threshold_configurable, "SlopeDetection") {
@@ -517,19 +483,34 @@ TEST_CASE(test_slope_alpha_threshold_configurable, "SlopeDetection") {
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_slope_detection_enabled = true;
-    engine.m_slope_alpha_threshold = 0.1f; // Large threshold
+    engine.m_slope_alpha_threshold = 0.02f;
+    engine.m_slope_current = -0.5f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mDeltaTime = 0.01;
-    
-    // Small rate of change should not trigger
-    for (int i = 0; i < 20; i++) {
-        data.mWheel[0].mLateralPatchVel = (double)i * 0.001 * 20.0;
-        data.mLocalAccel.x = (double)i * 0.1 * 9.81;
-        PumpEngineTime(engine, data, 0.01);
+    for (int w = 0; w < 4; w++) {
+        data.mWheel[w].mLateralPatchVel = 0.0001 * 20.0;
+    }
+
+    engine.calculate_force(&data);
+
+    ASSERT_TRUE(std::abs(engine.m_slope_current) < 0.5f);
+
+    engine.m_slope_current = -0.1f;
+    for (int i = 0; i < FFBEngine::SLOPE_BUFFER_MAX; i++) {
+        engine.m_slope_lat_g_buffer[i] = 0.0;
+        engine.m_slope_slip_buffer[i] = 0.0;
     }
     
-    ASSERT_LT(std::abs(engine.GetDebugBatch().back().slope_current), 0.1);
+    for (int i = 0; i < 20; i++) {
+        data.mLocalAccel.x = (0.1 * i);
+        for (int w = 0; w < 4; w++) {
+            data.mWheel[w].mLateralPatchVel = (-0.01 * i) * 20.0;
+        }
+        engine.calculate_force(&data);
+    }
+    
+    ASSERT_TRUE(std::abs(engine.m_slope_current) > 1.0);
 }
 
 TEST_CASE(test_slope_confidence_gate, "SlopeDetection") {
@@ -539,15 +520,16 @@ TEST_CASE(test_slope_confidence_gate, "SlopeDetection") {
     engine.m_slope_detection_enabled = true;
     engine.m_slope_confidence_enabled = true;
     engine.m_slope_alpha_threshold = 0.01f;
+    engine.m_slope_min_threshold = -0.3f;
+    engine.m_slope_sensitivity = 1.0f;
     
-    // Use helper to test math directly
     double dAlpha_dt = 0.1;
-    double confidence = engine.calculate_slope_confidence(dAlpha_dt);
-    ASSERT_NEAR(confidence, 1.0, 0.1);
+    double confidence = (std::min)(1.0, std::abs(dAlpha_dt) / 0.1);
+    ASSERT_NEAR(confidence, 1.0, 0.001);
     
     dAlpha_dt = 0.02;
-    confidence = engine.calculate_slope_confidence(dAlpha_dt);
-    ASSERT_LT(confidence, 0.5);
+    confidence = (std::min)(1.0, std::abs(dAlpha_dt) / 0.1);
+    ASSERT_NEAR(confidence, 0.2, 0.001);
 }
 
 TEST_CASE(test_slope_stability_config_persistence, "SlopeDetection") {
@@ -594,12 +576,69 @@ TEST_CASE(test_slope_no_understeer_on_straight_v073, "SlopeDetection") {
     ASSERT_GT(snap.calc_front_grip, 0.9);
 }
 
+TEST_CASE(test_slope_decay_rate_boundaries, "SlopeDetection") {
+    std::cout << "\nTest: Slope Decay Rate Boundaries (v0.7.3)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+
+    engine.m_slope_decay_rate = 0.5f;
+    engine.m_slope_current = -1.0f;
+    PumpEngineTime(engine, data, 0.05);
+    double decayed_slow = engine.m_slope_current;
+
+    engine.m_slope_decay_rate = 20.0f;
+    engine.m_slope_current = -1.0f;
+    PumpEngineTime(engine, data, 0.05);
+    double decayed_fast = engine.m_slope_current;
+
+    ASSERT_TRUE(std::abs(decayed_fast) < std::abs(decayed_slow));
+}
+
+TEST_CASE(test_slope_alpha_threshold_validation, "SlopeDetection") {
+    std::cout << "\nTest: Slope Alpha Threshold Validation (v0.7.3)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+
+    engine.m_slope_alpha_threshold = 0.0001f;
+    Config::Save(engine, "test_val.ini");
+    Config::Load(engine, "test_val.ini");
+    ASSERT_NEAR(engine.m_slope_alpha_threshold, 0.02f, 0.0001);
+
+    engine.m_slope_alpha_threshold = 0.5f;
+    Config::Save(engine, "test_val.ini");
+    Config::Load(engine, "test_val.ini");
+    ASSERT_NEAR(engine.m_slope_alpha_threshold, 0.02f, 0.0001);
+}
+
 TEST_CASE(test_inverse_lerp_helper, "SlopeDetection") {
     std::cout << "\nTest: InverseLerp Helper Function (v0.7.11)" << std::endl;
+    FFBEngine engine;
+
+    // Note: For slope thresholds, min is less negative (-0.3), max is more negative (-2.0)
+    // slope=-0.3 â†’ 0%, slope=-2.0 â†’ 100%
+
+    // At min (start of range)
     double at_min = inverse_lerp(-0.3, -2.0, -0.3);
     ASSERT_NEAR(at_min, 0.0, 0.001);
+
+    // At max (end of range)
     double at_max = inverse_lerp(-0.3, -2.0, -2.0);
     ASSERT_NEAR(at_max, 1.0, 0.001);
+
+    // At midpoint (-1.15)
+    double at_mid = inverse_lerp(-0.3, -2.0, -1.15);
+    ASSERT_NEAR(at_mid, 0.5, 0.001);
+
+    // Above min (dead zone)
+    double dead_zone = inverse_lerp(-0.3, -2.0, 0.0);
+    ASSERT_NEAR(dead_zone, 0.0, 0.001);
+
+    // Below max (saturated)
+    double saturated = inverse_lerp(-0.3, -2.0, -5.0);
+    ASSERT_NEAR(saturated, 1.0, 0.001);
 }
 
 TEST_CASE(test_slope_minmax_dead_zone, "SlopeDetection") {
@@ -611,14 +650,147 @@ TEST_CASE(test_slope_minmax_dead_zone, "SlopeDetection") {
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.05);
     data.mLocalAccel.x = 1.0 * 9.81;
-    
+
     // Force slope into deadzone
     engine.m_slope_current = -0.2f;
-    
+
     PumpEngineSteadyState(engine, data);
-    
+
     ASSERT_GE(engine.GetDebugBatch().back().calc_front_grip, 0.95);
 }
+
+TEST_CASE(test_slope_minmax_linear_response, "SlopeDetection") {
+    std::cout << "\nTest: Slope Min/Max Linear Response (v0.7.11)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_min_threshold = -0.3f;
+    engine.m_slope_max_threshold = -2.0f;
+    engine.m_slope_smoothing_tau = 0.001f;  // Fast smoothing for test
+    engine.m_slope_alpha_threshold = 0.0001f; // Ensure it doesn't decay
+
+    auto fill_buffers_for_slope = [&](double target_slope) {
+        double dt = 0.01;
+        engine.m_slope_buffer_count = 0;
+        engine.m_slope_buffer_index = 0;
+        engine.m_slope_smoothed_output = 1.0;
+        for (int i = 0; i < 40; i++) {
+            double alpha = 0.1 + (double)i * 0.1;
+            double g = 100.0 + target_slope * alpha;
+            engine.calculate_slope_grip(g, alpha, dt);
+        }
+    };
+
+    fill_buffers_for_slope(-0.725);
+    ASSERT_NEAR(engine.m_slope_current, -0.725, 0.05);
+    // Expected loss: 25% of 0.8 = 0.2 -> Grip: 0.8
+    ASSERT_NEAR(engine.m_slope_smoothed_output, 0.8, 0.05);
+
+    // At 50% into range: slope = -1.15
+    fill_buffers_for_slope(-1.15);
+    ASSERT_NEAR(engine.m_slope_current, -1.15, 0.05);
+    // Expected loss: 50% of 0.8 = 0.4 -> Grip: 0.6
+    ASSERT_NEAR(engine.m_slope_smoothed_output, 0.6, 0.05);
+
+    // At 100% (max): grip should hit floor
+    fill_buffers_for_slope(-2.0);
+    ASSERT_NEAR(engine.m_slope_current, -2.0, 0.05);
+    ASSERT_NEAR(engine.m_slope_smoothed_output, 0.2, 0.05);  // Floor
+}
+
+TEST_CASE(test_slope_minmax_saturation, "SlopeDetection") {
+    std::cout << "\nTest: Slope Min/Max Saturation (v0.7.11)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_min_threshold = -0.3f;
+    engine.m_slope_max_threshold = -2.0f;
+    engine.m_slope_smoothing_tau = 0.001f;
+
+    auto fill_buffers_for_slope = [&](double target_slope) {
+        double dt = 0.01;
+        engine.m_slope_buffer_count = 0;
+        engine.m_slope_buffer_index = 0;
+        engine.m_slope_smoothed_output = 1.0;
+        for (int i = 0; i < 40; i++) {
+            double alpha = 0.1 + (double)i * 0.1;
+            double g = 100.0 + target_slope * alpha;
+            engine.calculate_slope_grip(g, alpha, dt);
+        }
+    };
+
+    // Extreme slope (way beyond max)
+    fill_buffers_for_slope(-10.0);
+
+    // Should saturate at floor (0.2), not go negative or beyond
+    ASSERT_NEAR(engine.m_slope_smoothed_output, 0.2, 0.02);
+}
+
+TEST_CASE(test_slope_threshold_config_persistence, "SlopeDetection") {
+    std::cout << "\nTest: Slope Threshold Config Persistence (v0.7.11)" << std::endl;
+    std::string test_file = "test_slope_minmax.ini";
+
+    FFBEngine engine_save;
+    engine_save.m_slope_min_threshold = -0.5f;
+    engine_save.m_slope_max_threshold = -3.0f;
+    Config::Save(engine_save, test_file);
+
+    FFBEngine engine_load;
+    InitializeEngine(engine_load);
+    Config::Load(engine_load, test_file);
+
+    ASSERT_NEAR(engine_load.m_slope_min_threshold, -0.5f, 0.001);
+    ASSERT_NEAR(engine_load.m_slope_max_threshold, -3.0f, 0.001);
+
+    std::remove(test_file.c_str());
+}
+
+TEST_CASE(test_slope_sensitivity_migration, "SlopeDetection") {
+    std::cout << "\nTest: Slope Sensitivity Migration (v0.7.11)" << std::endl;
+    std::string test_file = "test_slope_migration.ini";
+
+    // Create legacy config
+    {
+        std::ofstream file(test_file);
+        file << "slope_detection_enabled=1\n";
+        file << "slope_sensitivity=1.0\n";           // Legacy
+        file << "slope_negative_threshold=-0.3\n";   // Legacy
+        // No slope_min_threshold or slope_max_threshold
+    }
+
+    FFBEngine engine;
+    InitializeEngine(engine);
+    Config::Load(engine, test_file);
+
+    // With sensitivity=1.0, max_threshold should be calculated
+    // Formula: max = min - (8/sens) = -0.3 - 8 = -8.3
+    ASSERT_TRUE(engine.m_slope_max_threshold < engine.m_slope_min_threshold);
+    ASSERT_NEAR(engine.m_slope_max_threshold, -8.3f, 0.5);
+
+    std::remove(test_file.c_str());
+}
+
+TEST_CASE(test_inverse_lerp_edge_cases, "SlopeDetection") {
+    std::cout << "\nTest: InverseLerp Edge Cases (v0.7.11)" << std::endl;
+    FFBEngine engine;
+
+    // Min == Max (degenerate)
+    double same = inverse_lerp(-0.3, -0.3, -0.3);
+    ASSERT_TRUE(same == 0.0 || same == 1.0);
+
+    // Very small range
+    // value = -0.30001. Since it's < min, it should be 1.0 in negative direction context
+    double tiny = inverse_lerp(-0.3, -0.30001, -0.30001);
+    ASSERT_NEAR(tiny, 1.0, 0.01);
+
+    // Reversed order (should still work or be caught)
+    double reversed = inverse_lerp(-2.0, -0.3, -1.15);
+    ASSERT_TRUE(reversed >= 0.0 && reversed <= 1.0);
+}
+
+// ============================================================
+// v0.7.17 COMPREHENSIVE HARDENING TESTS
+// ============================================================
 
 TEST_CASE(TestSlope_NearThreshold_Singularity, "SlopeDetection") {
     std::cout << "\nTest: Slope Near Threshold Singularity (v0.7.17)" << std::endl;

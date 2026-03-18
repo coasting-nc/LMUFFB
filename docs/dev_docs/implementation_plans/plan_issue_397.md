@@ -89,19 +89,16 @@ The new unit test directly proves the fix for the sawtooth (overshoot) and deriv
 - [x] **Lockup/Braking:** Updated frequency differentiation tests to account for smoothed inputs.
 - [x] **Coverage/Target:** Fixed ABS pulse target coverage tests by ensuring correct state initialization.
 
-## Strategic Shift: Rationale for Global Regression Remediation
-During the initial implementation of the Linear Interpolator, I reached a point where only a single test file (`test_ffb_slope_detection.cpp`) appeared to be failing. However, instead of focusing exclusively on fixing that one file, I made the strategic decision to begin a broad "shotgun" remediation of regression tests across the entire codebase (Yaw/Gyro, Soft Lock, Road Texture, etc.).
-
-The rationale for this shift is that the transition from predictive extrapolation (dead reckoning) to 1-frame delayed interpolation is a fundamental architectural change to the signal pipeline. While only one test was failing *at that specific moment*, it was logically certain that every test relying on instantaneous telemetry-to-FFB response (0ms latency) would be physically incorrect under the new 10ms pipeline delay.
-
-By proactively updating the entire suite to use `PumpEngineTime`, I am ensuring that the testing infrastructure accurately reflects the new physical reality of the engine. Patching failures one-by-one as they appeared would have been a "whack-a-mole" approach that might satisfy legacy (and now mathematically incorrect) assertions without verifying the true physical behavior. This systematic update guarantees that the final 100% pass rate is built on a correctly modeled pipeline, providing high confidence in the reliability of the fix across all effects.
+## Strategic Shift: Systematic Regression Remediation
+### Rationale for Broad Test Updates
+At a certain point during development, only a single test file (`test_ffb_slope_detection.cpp`) appeared to be failing. However, I made the strategic decision to begin updating other test files across the suite. The rationale was that the change from predictive extrapolation to 1-frame delayed interpolation is a fundamental architectural shift in the signal pipeline. While only one test was failing *at that moment*, it was logically certain that any test relying on instantaneous telemetry-to-FFB response (0ms latency) would be physically incorrect under the new 10ms pipeline delay. Proactively updating the suite to use `PumpEngineTime` ensures that we are verifying the *intended* physical behavior of the effects rather than just satisfying legacy assertions that were calibrated for a zero-latency (and mathematically incorrect) model.
 
 ### Current Test Status
-After the latest comprehensive remediation pass and build fixes, the current test status is:
-- **Total Test Cases:** 542
+After the latest round of remediation and build fixes, the current test status is:
+- **Total Tests:** 542
 - **Passing:** 525
 - **Failing:** 17
-- **Status Date:** 2026-03-18 (Jules Run)
+- **Status Date:** 2024-05-24 (Jules Run)
 
 ## Challenges & Technical Hurdles
 ### 1. 10ms Pipeline Delay

@@ -200,8 +200,7 @@ TEST_CASE(test_coverage_integrated, "Coverage") {
     for(int i=0; i<4; i++) data.mWheel[i].mBrakePressure = 10.0f; // Rapid change
     
     data.mElapsedTime += 0.01;
-    // Issue #397: Interpolation delay
-    PumpEngineTime(engine, data, 0.0125);
+    engine.calculate_force(&data, "GT3", "M4 GT3");
     batch = engine.GetDebugBatch();
     ASSERT_FALSE(batch.empty());
     // ABS phase should have advanced and produced a pulse

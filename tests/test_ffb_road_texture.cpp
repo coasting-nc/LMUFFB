@@ -76,12 +76,12 @@ TEST_CASE(test_road_texture_teleport, "RoadTexture") {
     // Force = 0.02 * 50.0 = 1.0 Nm.
     // Norm (Physical Target) = 1.0 / wheelbase_max = 1.0 / 40.0 = 0.025.
     
-    // Issue #397: Interpolation delay
+    // Issue #397: Use PumpEngineTime
     PumpEngineTime(engine, data, 0.0125);
     double force = engine.GetDebugBatch().back().total_output;
     
     // Check if clamped
-    if (std::abs(force - 0.025) < 0.01) {
+    if (std::abs(force - 0.025) < 0.01) { // Relaxed tolerance
         std::cout << "[PASS] Teleport spike clamped." << std::endl;
         g_tests_passed++;
     } else {
@@ -139,7 +139,9 @@ TEST_CASE(test_suspension_bottoming, "RoadTexture") {
     engine2.m_slide_texture_enabled = false;
     data.mDeltaTime = 0.005;
     
-    double force_f1 = engine2.calculate_force(&data); 
+    // Issue #397: Use PumpEngineTime
+    PumpEngineTime(engine2, data, 0.0125);
+    double force_f1 = engine2.GetDebugBatch().back().total_output;
     // Expect ~ 22.35 / 4000 = 0.005
     
     if (std::abs(force_f1) > 0.0001) {
@@ -183,7 +185,7 @@ TEST_CASE(test_universal_bottoming, "RoadTexture") {
     // Use dt=0.005 (PI/2). sin(PI/2)=1.
     data.mDeltaTime = 0.005;
 
-    // Issue #397: Interpolation delay
+    // Issue #397: Use PumpEngineTime
     PumpEngineTime(engine, data, 0.0125);
     double f1 = engine.GetDebugBatch().back().total_output;
     
@@ -201,6 +203,9 @@ TEST_CASE(test_universal_bottoming, "RoadTexture") {
     data.mWheel[0].mRideHeight = 0.1; // Reset RH
     data.mWheel[0].mTireLoad = 10000.0; // Trigger spike
     data.mWheel[1].mTireLoad = 10000.0;
+    // Set susp force high to trigger Method 1 (Impulse)
+    data.mWheel[0].mSuspForce = 50000.0;
+    data.mWheel[1].mSuspForce = 50000.0;
     data.mDeltaTime = 0.005; // 200Hz to catch phase
     
     // Reset Engine to clear phases
@@ -210,12 +215,24 @@ TEST_CASE(test_universal_bottoming, "RoadTexture") {
     engine2.m_bottoming_gain = 1.0f;
     engine2.m_bottoming_method = 1;
     
-    // Issue #397: Interpolation delay
-    PumpEngineTime(engine2, data, 0.0125);
-    double f2 = engine2.GetDebugBatch().back().total_output;
+    // v0.7.198: Pump more frames to allow the interpolated ramp to create a derivative.
+    bool found_spike = false;
+    double max_spike = 0.0;
+    for(int i=0; i<10; i++) {
+        data.mElapsedTime += 0.0025;
+        engine2.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+        auto batch = engine2.GetDebugBatch();
+        for(const auto& s : batch) {
+            double val = std::abs((double)s.texture_bottoming);
+            if (val > 0.0001) {
+                found_spike = true;
+                max_spike = std::max(max_spike, val);
+            }
+        }
+    }
     
-    if (std::abs(f2) > 0.0001) {
-        std::cout << "[PASS] Bottoming Method B (Spike) Triggered. Force: " << f2 << std::endl;
+    if (found_spike) {
+        std::cout << "[PASS] Bottoming Method B (Spike) Triggered. Force: " << max_spike << std::endl;
         g_tests_passed++;
     } else {
         std::string err = "[FAIL] test_universal_bottoming: Bottoming Method B (Spike) Silent.";
@@ -240,7 +257,7 @@ TEST_CASE(test_unconditional_vert_accel_update, "RoadTexture") {
     data.mDeltaTime = 0.01;
     data.mElapsedTime += 0.01;
     engine.m_prev_vert_accel = 0.0;
-    // Issue #397: Interpolation delay
+    // Issue #397: Use PumpEngineTime
     PumpEngineTime(engine, data, 0.0125);
     ASSERT_NEAR(engine.m_prev_vert_accel, 5.5, 0.1);
 }

@@ -41,54 +41,40 @@ TEST_CASE(test_abs_pulse_target_coverage, "Coverage") {
     InitializeEngine(engine);
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
+    FFBCalculationContext ctx;
+    ctx.dt = 0.01;
+    ctx.speed_gate = 1.0;
     
-    auto run_path = [&](FFBCalculationContext& ctx) {
-        FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
-    };
-
     // Path 1: Disabled (early return)
-    FFBCalculationContext ctx1;
-    ctx1.dt = 0.01;
     engine.m_abs_pulse_enabled = false;
-    run_path(ctx1);
-    ASSERT_NEAR(ctx1.abs_pulse_force, 0.0, 0.001);
+    FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
+    ASSERT_EQ(ctx.abs_pulse_force, 0.0);
     
     // Path 2: Enabled but inactive (no pulse - pedal below threshold)
-    FFBCalculationContext ctx2;
-    ctx2.dt = 0.01;
     engine.m_abs_pulse_enabled = true;
     data.mUnfilteredBrake = 0.1f; // Below 0.5 threshold
-    run_path(ctx2);
-    ASSERT_NEAR(ctx2.abs_pulse_force, 0.0, 0.001);
+    FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
+    ASSERT_EQ(ctx.abs_pulse_force, 0.0);
     
     // Path 3: Enabled but inactive (no pulse - pressure rate below threshold)
-    FFBCalculationContext ctx3;
-    ctx3.dt = 0.01;
     data.mUnfilteredBrake = 1.0f; 
-    for(int i=0; i<4; i++) {
-        data.mWheel[i].mBrakePressure = 0.5f;
-        engine.m_prev_brake_pressure[i] = 0.5f;
-    }
-    run_path(ctx3);
-    ASSERT_NEAR(ctx3.abs_pulse_force, 0.0, 0.001);
+    for(int i=0; i<4; i++) data.mWheel[i].mBrakePressure = 0.0f; // No change from prev 0
+    FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
+    ASSERT_EQ(ctx.abs_pulse_force, 0.0);
     
     // Path 4: Enabled and active
-    FFBCalculationContext ctx4;
-    ctx4.dt = 0.01;
-    ctx4.speed_gate = 1.0;
     data.mUnfilteredBrake = 1.0f; 
     for(int i=0; i<4; i++) {
-        engine.m_prev_brake_pressure[i] = 0.0;
-        data.mWheel[i].mBrakePressure = 1.0f; // Delta = 100
+        data.mWheel[i].mBrakePressure = 1.0f; // Create delta of 1.0/0.01 = 100.0 > 2.0
     }
-    run_path(ctx4);
-    ASSERT_GT(std::abs(ctx4.abs_pulse_force), 0.0);
+    FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
+    ASSERT_TRUE(std::abs(ctx.abs_pulse_force) > 0.001);
     
     // Path 5: Phase wrapping (fmod)
     for(int i=0; i<1000; i++) {
-        run_path(ctx4);
+        FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
     }
-    ASSERT_TRUE(std::isfinite(ctx4.abs_pulse_force));
+    ASSERT_TRUE(std::isfinite(ctx.abs_pulse_force));
 }
 
 /**
@@ -116,8 +102,7 @@ TEST_CASE(test_ffb_engine_full_integration_target, "Coverage") {
     engine.calculate_force(&data); // First call to prime m_prev_steering_angle (Hits Line 1922)
     
     data.mUnfilteredSteering = 0.5f; // Large velocity change
-    // Issue #397: Interpolation delay
-    PumpEngineTime(engine, data, 0.0125); // Second call (Hits Line 1921 & 1929)
+    engine.calculate_force(&data); // Second call (Hits Line 1921 & 1929)
     
     // 2. ABS Pulse Integration
     engine.m_abs_pulse_enabled = true;
@@ -126,8 +111,7 @@ TEST_CASE(test_ffb_engine_full_integration_target, "Coverage") {
     engine.calculate_force(&data); // Hits Line 1612 (update m_prev_brake_pressure)
     
     for(int i=0; i<4; i++) data.mWheel[i].mBrakePressure = 10.0f; // High delta
-    // Issue #397: Interpolation delay
-    PumpEngineTime(engine, data, 0.0125); // Hits Line 1938 & 1947
+    engine.calculate_force(&data); // Hits Line 1938 & 1947
     
     // Verify snapshots in batch
     // Snapshots are stored in m_debug_buffer (Line 1625)
