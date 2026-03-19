@@ -1737,6 +1737,12 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
 
 void Config::Load(FFBEngine& engine, const std::string& filename) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+
+    // v0.7.204: Ensure preset library is loaded before processing main config.
+    // This prevents auto-save (m_needs_save) from overwriting user presets
+    // with an empty vector if the GUI hasn't been opened yet.
+    LoadPresets();
+
     std::string final_path = filename.empty() ? m_config_path : filename;
     std::ifstream file(final_path);
     if (!file.is_open()) {
