@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.199] - 2026-03-20
+
+### Fixed
+- **Fixed HoltWintersFilter Snapback issue with mSteeringShaftTorque (Issue #398)**:
+  - **Root Cause**: The `HoltWintersFilter` used for up-sampling the 100Hz `mSteeringShaftTorque` exclusively used extrapolation to maintain zero latency. However, linear extrapolation of rapidly changing or noisy signals causes systematic overshoots (snapbacks), perceived as "graininess" in the steering wheel.
+  - **Fix — User Selectable Reconstruction Mode**: Upgraded `HoltWintersFilter` in `MathUtils.h` to support both **Zero Latency (Extrapolation)** and **Smooth (Interpolation)** modes.
+    - **Zero Latency**: Preserves existing behavior for users who prioritize response time.
+    - **Smooth**: Delays the signal by exactly 1 frame (10ms) to interpolate smoothly between targets, eliminating overshoots and 100Hz buzzing.
+  - **GUI & Configuration**:
+    - Added a new "Reconstruction" dropdown in the Front Axle tuning section (visible when using 100Hz Shaft Torque).
+    - Fully integrated the setting into the `Preset` and `Config` systems with persistence and per-car configurability.
+    - Added detailed tooltip documentation explaining the trade-off between graininess and latency.
+
+### Testing
+- **New**: Added `test_holt_winters_modes` in `tests/test_ffb_core_physics.cpp` to mathematically verify both modes:
+  - Verified that Extrapolation (Mode 0) overshoots the target on step changes.
+  - Verified that Interpolation (Mode 1) remains bounded and smooth.
+- Verified 100% pass rate: **559/559 test cases, 2562 assertions, 0 failures**.
+
+---
+
 ## [0.7.198] - 2026-03-19
 
 ### Fixed

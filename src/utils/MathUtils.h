@@ -247,10 +247,12 @@ public:
  */
 class HoltWintersFilter {
 private:
-    double m_level = 0.0; // Smoothed value
-    double m_trend = 0.0; // Smoothed trend/slope
+    double m_level = 0.0;      // Smoothed value (Target for interpolation)
+    double m_prev_level = 0.0; // Previous smoothed value (Start for interpolation)
+    double m_trend = 0.0;      // Smoothed trend/slope
     double m_time_since_update = 0.0;
     bool m_initialized = false;
+    bool m_zero_latency = true; // Mode toggle
 
     // Tuning Parameters
     double m_alpha = 0.8; // Level weight (Higher = less lag)
@@ -264,9 +266,14 @@ public:
         m_game_tick = (std::max)(0.0001, game_tick);
     }
 
+    void SetZeroLatency(bool zero_latency) {
+        m_zero_latency = zero_latency;
+    }
+
     double Process(double raw_input, double dt, bool is_new_frame) {
         if (!m_initialized) {
             m_level = raw_input;
+            m_prev_level = raw_input;
             m_trend = 0.0;
             m_time_since_update = 0.0;
             m_initialized = true;
@@ -274,28 +281,42 @@ public:
         }
 
         if (is_new_frame) {
-            double prev_level = m_level;
+            double old_level = m_level;
+            m_prev_level = m_level; // Save for interpolation start point
 
             // Update Level: Balance between the raw input and our previous prediction
             m_level = m_alpha * raw_input + (1.0 - m_alpha) * (m_level + m_trend * m_game_tick);
 
             // Update Trend: Balance between the new observed slope and the old trend
-            m_trend = m_beta * ((m_level - prev_level) / m_game_tick) + (1.0 - m_beta) * m_trend;
+            m_trend = m_beta * ((m_level - old_level) / m_game_tick) + (1.0 - m_beta) * m_trend;
 
             m_time_since_update = 0.0;
 
-            // FIX: Return the smoothed level to maintain a continuous signal
-            return m_level;
+            if (m_zero_latency) {
+                return m_level;
+            } else {
+                return m_prev_level; // Start interpolation from previous level
+            }
         } else {
             m_time_since_update += dt;
         }
 
-        // Predict current state based on previous trend (Upsampling step)
-        return m_level + m_trend * m_time_since_update;
+        if (m_zero_latency) {
+            // Predict current state based on previous trend (Extrapolation)
+            return m_level + m_trend * m_time_since_update;
+        } else {
+            // Smoothly blend between prev_level and level (Interpolation)
+            if (m_time_since_update <= m_game_tick) {
+                double t = m_time_since_update / m_game_tick;
+                return m_prev_level + t * (m_level - m_prev_level);
+            } else {
+                return m_level; // Hold target if game stutters
+            }
+        }
     }
 
     void Reset() {
-        m_level = m_trend = m_time_since_update = 0.0;
+        m_level = m_prev_level = m_trend = m_time_since_update = 0.0;
         m_initialized = false;
     }
 };

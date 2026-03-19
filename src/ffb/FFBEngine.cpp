@@ -230,6 +230,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
 
     // Upsample Steering Shaft Torque (Holt-Winters)
+    m_upsample_shaft_torque.SetZeroLatency(m_steering_100hz_reconstruction == 0);
     double shaft_torque = m_upsample_shaft_torque.Process(m_working_info.mSteeringShaftTorque, ffb_dt, is_new_frame);
     m_working_info.mSteeringShaftTorque = shaft_torque;
 

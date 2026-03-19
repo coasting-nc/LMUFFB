@@ -429,6 +429,7 @@ public:
         e.calculate_wheel_spin(data, ctx);
     }
     static void SetTorqueSource(FFBEngine& e, int val) { e.m_torque_source = val; }
+    static void SetSteering100HzReconstruction(FFBEngine& e, int val) { e.m_steering_100hz_reconstruction = val; }
     static void SetInvertForce(FFBEngine& e, bool val) { e.m_invert_force = val; }
     static void SetMinForce(FFBEngine& e, float val) { e.m_min_force = val; }
     static void SetSoftLockEnabled(FFBEngine& e, bool val) { e.m_soft_lock_enabled = val; }
