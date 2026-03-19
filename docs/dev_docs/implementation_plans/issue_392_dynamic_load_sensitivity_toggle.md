@@ -72,10 +72,12 @@ For `load_sensitivity_enabled`:
 ## 5. Implementation Notes
 
 ### Unforeseen Issues
-- Initial build attempt timed out due to standard sandbox environment constraints during full compilation.
+- Initial build attempt timed out due to standard sandbox environment constraints during full compilation. Incremental builds was used instead.
+- The `doctest.h` framework was not available; switched to the project's custom `test_ffb_common.h` framework.
 
 ### Plan Deviations
-- None so far.
+- Added `std::lock_guard` to the GUI checkbox callback specifically to satisfy user feedback regarding `g_engine_mutex` usage and to ensure thread-safe config saving.
 
 ### Recommendations
 - Continue with 400Hz upsampling aware tests as recently introduced in Issue #397.
+- Consider refactoring the `BoolSetting` local lambda in `GuiLayer_Common.cpp` to accept a callback for `g_engine_mutex` locking to avoid manual boiler-plate for new toggles.
