@@ -1,6 +1,7 @@
 #include "FFBMetadataManager.h"
 #include "logging/Logger.h"
 #include "io/RestApiProvider.h"
+#include "physics/VehicleUtils.h"
 
 bool FFBMetadataManager::UpdateMetadata(const SharedMemoryObjectOut& data) {
     const char* trackName = data.scoring.scoringInfo.mTrackName;
@@ -15,9 +16,9 @@ bool FFBMetadataManager::UpdateMetadata(const SharedMemoryObjectOut& data) {
 
         // Issue #368: Log all fields that might contain brand info if a change is detected
         if (vehicleName && m_last_logged_veh != vehicleName) {
-            std::string restBrand = RestApiProvider::Get().GetManufacturer();
-            Logger::Get().LogFile("[Metadata] Vehicle Change Detected: '%s' (Class: '%s', PitGroup: '%s', Filename: '%s', REST Brand: '%s')",
-                vehicleName, vehicleClass, veh.mPitGroup, veh.mVehFilename, restBrand.c_str());
+            const char* brand = ParseVehicleBrand(vehicleClass, vehicleName);
+            Logger::Get().LogFile("[Metadata] Vehicle Change Detected: '%s' (Brand: '%s', Class: '%s', PitGroup: '%s', Filename: '%s')",
+                vehicleName, brand, vehicleClass, veh.mPitGroup, veh.mVehFilename);
             m_last_logged_veh = vehicleName;
         }
     }
@@ -33,10 +34,8 @@ bool FFBMetadataManager::UpdateInternal(const char* vehicleClass, const char* ve
         StringUtils::SafeCopy(m_vehicle_name, STR_BUF_64, vehicleName);
         changed = true;
 
-        // Issue #368: Request manufacturer info from REST API on car change
-        RestApiProvider::Get().ResetManufacturer();
-        RestApiProvider::Get().ResetSteeringRange(); // Issue #379
-        RestApiProvider::Get().RequestManufacturer(6397, m_vehicle_name); // TODO: use configured port
+        // Issue #379: Reset steering range on car change
+        RestApiProvider::Get().ResetSteeringRange();
     }
 
     if (vehicleClass && std::string(vehicleClass) != m_current_class_name) {

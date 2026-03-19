@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.203] - 2026-03-23
+
+### Fixed
+- **Removed unreliable REST API car brand detection (#411)**:
+  - **Problem**: The REST API was found to be unreliable, often returning incorrect car information (e.g., "Aston Martin GT3" for all cars).
+  - **Solution**: Completely removed the REST API manufacturer detection logic from `RestApiProvider`.
+  - **Consolidation**: Switched to using the internal `ParseVehicleBrand` logic which infers the brand from shared memory telemetry (livery and class names).
+  - **Improved Logging**: Updated the "Vehicle Change Detected" log message in `FFBMetadataManager` to use this reliable local detection, providing accurate brand information without external network dependency.
+  - **Preserved Functionality**: Maintained the REST API trigger for steering range fallback, as it remains a useful fallback when shared memory provides invalid range data.
+
+### Testing
+- **Test Suite Update**: Renamed `tests/test_rest_api_manufacturer.cpp` to `tests/test_vehicle_brand.cpp` and refactored it to verify the local `ParseVehicleBrand` heuristics instead of the removed REST API parsing.
+- Verified 100% pass rate: **565/565 test cases, 2646 assertions, 0 failures**.
+
+---
+
 ## [0.7.202] - 2026-03-22
 
 ### Added

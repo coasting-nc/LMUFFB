@@ -33,9 +33,6 @@ public:
     static float ParseSteeringLock(RestApiProvider& p, const std::string& json) {
         return p.ParseSteeringLock(json);
     }
-    static std::string ParseManufacturer(RestApiProvider& p, const std::string& json, const std::string& vehicleName) {
-        return p.ParseManufacturer(json, vehicleName);
-    }
 };
 
 namespace FFBEngineTests {
