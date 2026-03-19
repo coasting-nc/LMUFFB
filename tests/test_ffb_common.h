@@ -485,6 +485,8 @@ public:
     static const FFBSafetyMonitor& GetSafety(const FFBEngine& engine) {
         return engine.m_safety;
     }
+    static double GetLastCoreNanLogTime(const FFBEngine& engine) { return engine.m_last_core_nan_log_time; }
+    static void SetLastCoreNanLogTime(FFBEngine& engine, double time) { engine.m_last_core_nan_log_time = time; }
 };
 
 } // namespace FFBEngineTests

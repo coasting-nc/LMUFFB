@@ -69,4 +69,41 @@ TEST_CASE(test_interpolator_no_overshoot, "Math") {
     ASSERT_NEAR(out_half, 50.0, 0.0001); // Halfway back to 0
 }
 
+TEST_CASE(test_nan_transition_reset, "Transition") {
+    std::cout << "\nTest: NaN Transition Reset (Issue #397 Fix)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+
+    // 1. Simulate the end of a previous session
+    TelemInfoV01 data = CreateBasicTestTelemetry(0.0);
+    data.mElapsedTime = 150.0;
+    engine.calculate_force(&data, "Test", "TestCar", 0.0f, false);
+    
+    // 2. Artificially set the last log time to 150.0, as if a NaN log just happened.
+    // The rate limiter normally requires 5 seconds to pass before logging again.
+    FFBEngineTestAccess::SetLastCoreNanLogTime(engine, 150.0);
+
+    // 3. Simulate the start of a NEW session (allowed = true) 1 second later.
+    // CRITICAL: The very first frame contains NaN data.
+    data.mElapsedTime = 151.0;
+    data.mUnfilteredSteering = std::numeric_limits<double>::quiet_NaN();
+
+    // Call engine with allowed = true. 
+    // Before Issue #397, the NaN check at the top would execute first:
+    //   - It sees NaN, checks rate limiter: 151.0 > 150.0 + 5.0 is FALSE.
+    //   - Logs nothing, returns 0.0. The state transition (m_was_allowed) NEVER happens.
+    // After Issue #397:
+    //   - The transition check executes first. m_last_core_nan_log_time is reset to -999.0.
+    //   - Then the NaN check executes: 151.0 > -999.0 + 5.0 is TRUE.
+    //   - Logs the warning, and sets the timer to 151.0.
+    double output = engine.calculate_force(&data, "Test", "TestCar", 0.0f, true);
+
+    // Force should be 0.0 safely
+    ASSERT_EQ(output, 0.0);
+
+    // If the fix is correct, the timer should now be 151.0 (log was permitted because of the reset)
+    // If the fix was missing, it would still be 150.0 (the log was suppressed).
+    ASSERT_EQ(FFBEngineTestAccess::GetLastCoreNanLogTime(engine), 151.0);
+}
+
 } // namespace FFBEngineTests

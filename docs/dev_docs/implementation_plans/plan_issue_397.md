@@ -127,6 +127,8 @@ Many legacy tests used `ASSERT_NEAR` with very tight tolerances against hardcode
 The logic in `calculate_force` was reorganized to move the session transition check (where `m_was_allowed != allowed`) above the early-return block for Core Physics NaN detection.
 - **Why:** Previously, if a session started with invalid (NaN) telemetry, the engine would return 0.0 before reaching the transition logic. This meant that diagnostic timers (rate-limiters) and stateful filters (like the resampler) were never reset for the new session, leading to "silent failures" where no logs were produced for a broken session start.
 - **Safety Impact:** Ensures that every new session transition forces a clean state reset, regardless of telemetry validity on frame one.
+- Regression test added: test_nan_transition_reset in tests\test_issue_397_interpolator.cpp
+
 
 ### Status of Tests in `tests/test_ffb_slope_detection.cpp`
 The following tests were previously marked as "to be deleted" in some development notes but have been **successfully restored and remediated**:
