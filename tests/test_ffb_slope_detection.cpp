@@ -946,4 +946,154 @@ TEST_CASE(test_slope_decay_with_zero_dt, "SlopeDetection") {
     ASSERT_LT(std::abs(snaps_end.back().slope_current), 1.0f);
 }
 
+TEST_CASE(TestSlope_SmallSignals, "SlopeDetection") {
+    std::cout << "\nTest: Slope Small Signals (Noise Rejection) (v0.7.17)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_alpha_threshold = 0.02f;
+
+    double dt = 0.01;
+    int window = engine.m_slope_sg_window;
+
+    // Tiny oscillation in alpha (below threshold)
+    // dAlpha/dt will be around 0.001 / 0.01 = 0.1? Wait.
+    // If alpha is 0.001, 0.002, 0.001...
+    // Let's use 0.0001 per frame -> dAlpha/dt = 0.01 rad/s (Below 0.02 threshold)
+
+    for (int i = 0; i < window + 5; i++) {
+        double alpha = 0.001 + (i % 2 == 0 ? 0.0001 : 0.0);
+        double g = 1.0 + (i % 2 == 0 ? 0.05 : 0.0);
+        engine.calculate_slope_grip(g, alpha, dt);
+    }
+
+    // Since dAlpha_dt is below threshold, slope should decay or stay 0
+    // dAlpha_dt for [0.0011, 0.0010, 0.0011...] is near 0.
+    ASSERT_NEAR(engine.m_slope_current, 0.0, 0.5);
+    ASSERT_GE(engine.m_slope_smoothed_output, 0.99);
+}
+
+TEST_CASE(TestSlope_ImpulseRejection, "SlopeDetection") {
+    std::cout << "\nTest: Slope Impulse Rejection (v0.7.17)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_smoothing_tau = 0.04f;
+
+    double dt = 0.01;
+    int window = engine.m_slope_sg_window;
+
+    // 1. Settle in a corner
+    for (int i = 0; i < window + 10; i++) {
+        engine.calculate_slope_grip(1.0, 0.05 + (double)i * 0.001, dt);
+    }
+
+    double grip_before = engine.m_slope_smoothed_output;
+
+    // 2. Inject massive G spike (Impulse)
+    engine.calculate_slope_grip(10.0, 0.05 + (window + 10) * 0.001, dt);
+
+    double grip_after = engine.m_slope_smoothed_output;
+    double delta = std::abs(grip_after - grip_before);
+
+    std::cout << "  Grip Before: " << grip_before << " | After Spike: " << grip_after << " | Delta: " << delta << std::endl;
+
+    // Assertion: No single-frame jump > 10% (0.1)
+    ASSERT_LE(delta, 0.1);
+}
+
+TEST_CASE(TestSlope_NoiseImmunity, "SlopeDetection") {
+    std::cout << "\nTest: Slope Noise Immunity (v0.7.17)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_sg_window = 15;
+
+    double dt = 0.01;
+
+    std::default_random_engine generator(42); // Fixed seed for reproducibility
+    std::uniform_real_distribution<double> noise(-0.2, 0.2);
+
+    std::vector<double> slopes;
+
+    // Steady cornering with noise
+    for (int i = 0; i < 100; i++) {
+        double lat_g = 1.0 + noise(generator);
+        double alpha = 0.05 + (double)i * 0.001 + noise(generator) * 0.001;
+        engine.calculate_slope_grip(lat_g, alpha, dt);
+        if (i > 30) slopes.push_back(engine.m_slope_current);
+    }
+
+    // Calculate Std Dev of slope
+    double sum = 0, sum_sq = 0;
+    for (double s : slopes) {
+        sum += s;
+        sum_sq += s * s;
+    }
+    double mean = sum / static_cast<double>(slopes.size());
+    double variance = (sum_sq / static_cast<double>(slopes.size())) - (mean * mean);
+    double std_dev = std::sqrt(std::abs(variance));
+
+    std::cout << "  Noisy Slope Mean: " << mean << " | StdDev: " << std_dev << std::endl;
+
+    // Assertion: StdDev should be reasonable (e.g. < 7.5)
+    // Without SG filter and clamping it might be much higher.
+    ASSERT_LE(std_dev, 7.5);
+}
+
+TEST_CASE(TestConfidenceRamp_Progressive, "SlopeDetection") {
+    std::cout << "\nTest: Confidence Ramp Progressive (v0.7.17)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    engine.m_slope_detection_enabled = true;
+    engine.m_slope_min_threshold = -0.3f;
+    engine.m_slope_max_threshold = -2.0f;
+    engine.m_slope_smoothing_tau = 0.001f; // Fast for testing
+
+    double dt = 0.01;
+    int window = engine.m_slope_sg_window;
+
+    std::vector<double> grips;
+
+    // Ramp dAlpha/dt from 0.0 to 0.15
+    // dG/dt constant at -2.0 G/s
+    // 60 frames -> 0.6 seconds.
+    // dAlpha/dt increases by 0.15 / 60 = 0.0025 per frame?
+    // Wait, dAlpha/dt is calculated from alpha.
+    // If alpha(t) = 0.5 * rate * t^2, then dAlpha/dt = rate * t.
+
+    double rate = 0.25; // dAlpha/dt will reach 0.25 * 0.6 = 0.15
+
+    for (int i = 0; i < 60; i++) {
+        double t = (double)i * dt;
+        double alpha = 0.5 * rate * t * t;
+        double g = 5.0 - 2.0 * t;
+
+        engine.calculate_slope_grip(g, alpha, dt);
+
+        if (i > window) {
+            grips.push_back(engine.m_slope_smoothed_output);
+        }
+    }
+
+    ASSERT_TRUE(grips.size() > 0);
+
+    // Verify progressive decrease
+    double last_grip = grips[0];
+    for (size_t i = 1; i < grips.size(); i++) {
+        // Grip should be decreasing or staying same, NOT increasing
+        // (Since dAlpha is increasing and dG is constant negative)
+        ASSERT_LE(grips[i], last_grip + 0.001);
+
+        // No sudden jumps > 0.1
+        ASSERT_LE(std::abs(grips[i] - last_grip), 0.1);
+
+        last_grip = grips[i];
+    }
+
+    // Final grip should be near floor
+    ASSERT_NEAR(grips.back(), 0.2, 0.1);
+}
+
+
 } // namespace FFBEngineTests
