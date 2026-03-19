@@ -32,26 +32,26 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
-            <td class="headerCovTableEntry">9</td>
-            <td class="headerCovTableEntry">9</td>
+            <td class="headerCovTableEntry">4</td>
+            <td class="headerCovTableEntry">4</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-19 17:01:16</td>
+            <td class="headerValue">2026-03-19 17:49:34</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
-            <td class="headerCovTableEntry">3</td>
-            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntry">2</td>
           </tr>
           <tr>
             <td></td>
             <td></td>
             <td></td>
             <td class="headerItem">Branches:</td>
-            <td class="headerCovTableEntryLo">50.0&nbsp;%</td>
-            <td class="headerCovTableEntry">6</td>
-            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntryHi">-</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
           </tr>
                   <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
                 </table>
@@ -92,49 +92,27 @@
 <span id="L21"><span class="lineNum">      21</span>                 :             :     // Is a request currently in flight?</span>
 <span id="L22"><span class="lineNum">      22</span>                 :             :     bool IsRequesting() const;</span>
 <span id="L23"><span class="lineNum">      23</span>                 :             : </span>
-<span id="L24"><span class="lineNum">      24</span>                 :             :     // Has a manufacturer been successfully retrieved?</span>
-<span id="L25"><span class="lineNum">      25</span>                 :             :     bool HasManufacturer() const { return m_hasManufacturer; }</span>
-<span id="L26"><span class="lineNum">      26</span>                 :             : </span>
-<span id="L27"><span class="lineNum">      27</span>                 :             :     // Trigger an asynchronous request for the car manufacturer</span>
-<span id="L28"><span class="lineNum">      28</span>                 :             :     void RequestManufacturer(int port, const std::string&amp; vehicleName);</span>
-<span id="L29"><span class="lineNum">      29</span>                 :             : </span>
-<span id="L30"><span class="lineNum">      30</span>                 :             :     // Get the latest successfully retrieved manufacturer</span>
-<span id="L31"><span class="lineNum">      31</span>                 :             :     std::string GetManufacturer() const;</span>
-<span id="L32"><span class="lineNum">      32</span>                 :             : </span>
-<span id="L33"><span class="lineNum">      33</span>                 :             :     // Reset manufacturer when vehicle changes</span>
-<span id="L34"><span class="lineNum">      34</span>                 :<span class="tlaGNC tlaBgGNC">         118 :     void ResetManufacturer() {</span></span>
-<span id="L35"><span class="lineNum">      35</span>         [<span class="tlaGBC" title="Branch 0 was taken 118 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         118 :         std::lock_guard&lt;std::mutex&gt; lock(m_manufacturerMutex);</span></span>
-<span id="L36"><span class="lineNum">      36</span>         [<span class="tlaGBC" title="Branch 0 was taken 118 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         118 :         m_manufacturer = &quot;Unknown&quot;;</span></span>
-<span id="L37"><span class="lineNum">      37</span>                 :<span class="tlaGNC">         118 :         m_hasManufacturer = false;</span></span>
-<span id="L38"><span class="lineNum">      38</span>                 :<span class="tlaGNC">         118 :     }</span></span>
+<span id="L24"><span class="lineNum">      24</span>                 :<span class="tlaGNC tlaBgGNC">         118 :     void ResetSteeringRange() {</span></span>
+<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC">         118 :         m_fallbackRangeDeg.store(0.0f);</span></span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">         118 :     }</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :             : </span>
+<span id="L28"><span class="lineNum">      28</span>                 :             : private:</span>
+<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">           1 :     RestApiProvider() = default;</span></span>
+<span id="L30"><span class="lineNum">      30</span>                 :             :     ~RestApiProvider();</span>
+<span id="L31"><span class="lineNum">      31</span>                 :             : </span>
+<span id="L32"><span class="lineNum">      32</span>                 :             :     void PerformRequest(int port);</span>
+<span id="L33"><span class="lineNum">      33</span>                 :             :     float ParseSteeringLock(const std::string&amp; json);</span>
+<span id="L34"><span class="lineNum">      34</span>                 :             : </span>
+<span id="L35"><span class="lineNum">      35</span>                 :             :     friend class RestApiProviderTestAccess;</span>
+<span id="L36"><span class="lineNum">      36</span>                 :             : </span>
+<span id="L37"><span class="lineNum">      37</span>                 :             :     std::atomic&lt;bool&gt; m_isRequesting{false};</span>
+<span id="L38"><span class="lineNum">      38</span>                 :             :     std::atomic&lt;float&gt; m_fallbackRangeDeg{0.0f};</span>
 <span id="L39"><span class="lineNum">      39</span>                 :             : </span>
-<span id="L40"><span class="lineNum">      40</span>                 :<span class="tlaGNC">         118 :     void ResetSteeringRange() {</span></span>
-<span id="L41"><span class="lineNum">      41</span>                 :<span class="tlaGNC">         118 :         m_fallbackRangeDeg.store(0.0f);</span></span>
-<span id="L42"><span class="lineNum">      42</span>                 :<span class="tlaGNC">         118 :     }</span></span>
+<span id="L40"><span class="lineNum">      40</span>                 :             :     mutable std::mutex m_threadMutex;</span>
+<span id="L41"><span class="lineNum">      41</span>                 :             :     std::thread m_requestThread;</span>
+<span id="L42"><span class="lineNum">      42</span>                 :             : };</span>
 <span id="L43"><span class="lineNum">      43</span>                 :             : </span>
-<span id="L44"><span class="lineNum">      44</span>                 :             : private:</span>
-<span id="L45"><span class="lineNum">      45</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 :     RestApiProvider() = default;</span></span>
-<span id="L46"><span class="lineNum">      46</span>                 :             :     ~RestApiProvider();</span>
-<span id="L47"><span class="lineNum">      47</span>                 :             : </span>
-<span id="L48"><span class="lineNum">      48</span>                 :             :     void PerformRequest(int port);</span>
-<span id="L49"><span class="lineNum">      49</span>                 :             :     void PerformManufacturerRequest(int port, std::string vehicleName);</span>
-<span id="L50"><span class="lineNum">      50</span>                 :             :     float ParseSteeringLock(const std::string&amp; json);</span>
-<span id="L51"><span class="lineNum">      51</span>                 :             :     std::string ParseManufacturer(const std::string&amp; json, const std::string&amp; vehicleName);</span>
-<span id="L52"><span class="lineNum">      52</span>                 :             : </span>
-<span id="L53"><span class="lineNum">      53</span>                 :             :     friend class RestApiProviderTestAccess;</span>
-<span id="L54"><span class="lineNum">      54</span>                 :             : </span>
-<span id="L55"><span class="lineNum">      55</span>                 :             :     std::atomic&lt;bool&gt; m_isRequesting{false};</span>
-<span id="L56"><span class="lineNum">      56</span>                 :             :     std::atomic&lt;float&gt; m_fallbackRangeDeg{0.0f};</span>
-<span id="L57"><span class="lineNum">      57</span>                 :             : </span>
-<span id="L58"><span class="lineNum">      58</span>                 :             :     mutable std::mutex m_manufacturerMutex;</span>
-<span id="L59"><span class="lineNum">      59</span>                 :             :     std::string m_manufacturer = &quot;Unknown&quot;;</span>
-<span id="L60"><span class="lineNum">      60</span>                 :             :     bool m_hasManufacturer = false;</span>
-<span id="L61"><span class="lineNum">      61</span>                 :             : </span>
-<span id="L62"><span class="lineNum">      62</span>                 :             :     mutable std::mutex m_threadMutex;</span>
-<span id="L63"><span class="lineNum">      63</span>                 :             :     std::thread m_requestThread;</span>
-<span id="L64"><span class="lineNum">      64</span>                 :             : };</span>
-<span id="L65"><span class="lineNum">      65</span>                 :             : </span>
-<span id="L66"><span class="lineNum">      66</span>                 :             : #endif // RESTAPIPROVIDER_H</span>
+<span id="L44"><span class="lineNum">      44</span>                 :             : #endif // RESTAPIPROVIDER_H</span>
         </pre>
               </td>
             </tr>
