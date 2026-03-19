@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-19 23:04:59</td>
+            <td class="headerValue">2026-03-19 23:20:03</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -74,12 +74,12 @@
 <span id="L3"><span class="lineNum">       3</span>                 :             : #include &quot;io/RestApiProvider.h&quot;</span>
 <span id="L4"><span class="lineNum">       4</span>                 :             : #include &quot;physics/VehicleUtils.h&quot;</span>
 <span id="L5"><span class="lineNum">       5</span>                 :             : </span>
-<span id="L6"><span class="lineNum">       6</span>                 :<span class="tlaGNC tlaBgGNC">        3295 : bool FFBMetadataManager::UpdateMetadata(const SharedMemoryObjectOut&amp; data) {</span></span>
-<span id="L7"><span class="lineNum">       7</span>                 :<span class="tlaGNC">        3295 :     const char* trackName = data.scoring.scoringInfo.mTrackName;</span></span>
-<span id="L8"><span class="lineNum">       8</span>                 :<span class="tlaGNC">        3295 :     const char* vehicleClass = nullptr;</span></span>
-<span id="L9"><span class="lineNum">       9</span>                 :<span class="tlaGNC">        3295 :     const char* vehicleName = nullptr;</span></span>
+<span id="L6"><span class="lineNum">       6</span>                 :<span class="tlaGNC tlaBgGNC">        3172 : bool FFBMetadataManager::UpdateMetadata(const SharedMemoryObjectOut&amp; data) {</span></span>
+<span id="L7"><span class="lineNum">       7</span>                 :<span class="tlaGNC">        3172 :     const char* trackName = data.scoring.scoringInfo.mTrackName;</span></span>
+<span id="L8"><span class="lineNum">       8</span>                 :<span class="tlaGNC">        3172 :     const char* vehicleClass = nullptr;</span></span>
+<span id="L9"><span class="lineNum">       9</span>                 :<span class="tlaGNC">        3172 :     const char* vehicleName = nullptr;</span></span>
 <span id="L10"><span class="lineNum">      10</span>                 :             : </span>
-<span id="L11"><span class="lineNum">      11</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3293 times"> + </span>]:<span class="tlaGNC">        3295 :     if (data.telemetry.playerHasVehicle) {</span></span>
+<span id="L11"><span class="lineNum">      11</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3170 times"> + </span>]:<span class="tlaGNC">        3172 :     if (data.telemetry.playerHasVehicle) {</span></span>
 <span id="L12"><span class="lineNum">      12</span>                 :<span class="tlaGNC">           2 :         int idx = data.telemetry.playerVehicleIdx;</span></span>
 <span id="L13"><span class="lineNum">      13</span>                 :<span class="tlaGNC">           2 :         const VehicleScoringInfoV01&amp; veh = data.scoring.vehScoringInfo[idx];</span></span>
 <span id="L14"><span class="lineNum">      14</span>                 :<span class="tlaGNC">           2 :         vehicleClass = veh.mVehicleClass;</span></span>
@@ -95,14 +95,14 @@
 <span id="L23"><span class="lineNum">      23</span>                 :             :         }</span>
 <span id="L24"><span class="lineNum">      24</span>                 :             :     }</span>
 <span id="L25"><span class="lineNum">      25</span>                 :             : </span>
-<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">        3295 :     return UpdateInternal(vehicleClass, vehicleName, trackName);</span></span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">        3172 :     return UpdateInternal(vehicleClass, vehicleName, trackName);</span></span>
 <span id="L27"><span class="lineNum">      27</span>                 :             : }</span>
 <span id="L28"><span class="lineNum">      28</span>                 :             : </span>
-<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">       61022 : bool FFBMetadataManager::UpdateInternal(const char* vehicleClass, const char* vehicleName, const char* trackName) {</span></span>
-<span id="L30"><span class="lineNum">      30</span>         [<span class="tlaGBC" title="Branch 0 was taken 61022 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       61022 :     std::lock_guard&lt;std::mutex&gt; lock(m_mutex);</span></span>
-<span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">       61022 :     bool changed = false;</span></span>
+<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">       60899 : bool FFBMetadataManager::UpdateInternal(const char* vehicleClass, const char* vehicleName, const char* trackName) {</span></span>
+<span id="L30"><span class="lineNum">      30</span>         [<span class="tlaGBC" title="Branch 0 was taken 60899 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       60899 :     std::lock_guard&lt;std::mutex&gt; lock(m_mutex);</span></span>
+<span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">       60899 :     bool changed = false;</span></span>
 <span id="L32"><span class="lineNum">      32</span>                 :             : </span>
-<span id="L33"><span class="lineNum">      33</span>   [<span class="tlaGBC" title="Branch 0 was taken 4777 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 56245 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 118 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 4659 times"> + </span>]:<span class="tlaGNC">       61022 :     if (vehicleName &amp;&amp; std::strcmp(vehicleName, m_vehicle_name) != 0) {</span></span>
+<span id="L33"><span class="lineNum">      33</span>   [<span class="tlaGBC" title="Branch 0 was taken 4777 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 56122 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 118 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 4659 times"> + </span>]:<span class="tlaGNC">       60899 :     if (vehicleName &amp;&amp; std::strcmp(vehicleName, m_vehicle_name) != 0) {</span></span>
 <span id="L34"><span class="lineNum">      34</span>                 :<span class="tlaGNC">         118 :         StringUtils::SafeCopy(m_vehicle_name, STR_BUF_64, vehicleName);</span></span>
 <span id="L35"><span class="lineNum">      35</span>                 :<span class="tlaGNC">         118 :         changed = true;</span></span>
 <span id="L36"><span class="lineNum">      36</span>                 :             : </span>
@@ -110,24 +110,24 @@
 <span id="L38"><span class="lineNum">      38</span>         [<span class="tlaGBC" title="Branch 0 was taken 118 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         118 :         RestApiProvider::Get().ResetSteeringRange();</span></span>
 <span id="L39"><span class="lineNum">      39</span>                 :             :     }</span>
 <span id="L40"><span class="lineNum">      40</span>                 :             : </span>
-<span id="L41"><span class="lineNum">      41</span>   [<span class="tlaGBC" title="Branch 0 was taken 5203 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 55819 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 5203 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       71428 :     if (vehicleClass &amp;&amp; std::string(vehicleClass) != m_current_class_name) {</span></span>
-<span class="lineNum">        </span> <span class="tlaGBC" title="Branch 4 was taken 130 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 5073 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 5203 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 55819 times"> + </span><span class="tlaGBC" title="Branch 8 was taken 5203 times"> + </span> 
-<span class="lineNum">        </span> <span class="tlaGBC" title="Branch 9 was taken 55819 times"> + </span><span class="tlaGBC" title="Branch 10 was taken 130 times"> + </span><span class="tlaGBC" title="Branch 11 was taken 60892 times"> + </span><span class="tlaUNC" title="Branch 12 was not taken"> - </span><span class="tlaUNC" title="Branch 13 was not taken"> - </span> 
+<span id="L41"><span class="lineNum">      41</span>   [<span class="tlaGBC" title="Branch 0 was taken 5203 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 55696 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 5203 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       71305 :     if (vehicleClass &amp;&amp; std::string(vehicleClass) != m_current_class_name) {</span></span>
+<span class="lineNum">        </span> <span class="tlaGBC" title="Branch 4 was taken 130 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 5073 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 5203 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 55696 times"> + </span><span class="tlaGBC" title="Branch 8 was taken 5203 times"> + </span> 
+<span class="lineNum">        </span> <span class="tlaGBC" title="Branch 9 was taken 55696 times"> + </span><span class="tlaGBC" title="Branch 10 was taken 130 times"> + </span><span class="tlaGBC" title="Branch 11 was taken 60769 times"> + </span><span class="tlaUNC" title="Branch 12 was not taken"> - </span><span class="tlaUNC" title="Branch 13 was not taken"> - </span> 
 <span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 14 was not taken"> - </span><span class="tlaUNC" title="Branch 15 was not taken"> - </span>]
 <span id="L42"><span class="lineNum">      42</span>         [<span class="tlaGBC" title="Branch 0 was taken 130 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         130 :         m_current_class_name = vehicleClass;</span></span>
 <span id="L43"><span class="lineNum">      43</span>                 :<span class="tlaGNC">         130 :         changed = true;</span></span>
 <span id="L44"><span class="lineNum">      44</span>                 :             :     }</span>
 <span id="L45"><span class="lineNum">      45</span>                 :             : </span>
-<span id="L46"><span class="lineNum">      46</span>         [<span class="tlaGBC" title="Branch 0 was taken 134 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 60888 times"> + </span>]:<span class="tlaGNC">       61022 :     if (changed) {</span></span>
+<span id="L46"><span class="lineNum">      46</span>         [<span class="tlaGBC" title="Branch 0 was taken 134 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 60765 times"> + </span>]:<span class="tlaGNC">       60899 :     if (changed) {</span></span>
 <span id="L47"><span class="lineNum">      47</span>         [<span class="tlaGBC" title="Branch 0 was taken 134 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         134 :         m_current_vclass = ParseVehicleClass(m_current_class_name.c_str(), m_vehicle_name);</span></span>
 <span id="L48"><span class="lineNum">      48</span>                 :             :     }</span>
 <span id="L49"><span class="lineNum">      49</span>                 :             : </span>
-<span id="L50"><span class="lineNum">      50</span>   [<span class="tlaGBC" title="Branch 0 was taken 60890 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 132 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 365 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 60525 times"> + </span>]:<span class="tlaGNC">       61022 :     if (trackName &amp;&amp; std::strcmp(trackName, m_track_name) != 0) {</span></span>
+<span id="L50"><span class="lineNum">      50</span>   [<span class="tlaGBC" title="Branch 0 was taken 60767 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 132 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 365 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 60402 times"> + </span>]:<span class="tlaGNC">       60899 :     if (trackName &amp;&amp; std::strcmp(trackName, m_track_name) != 0) {</span></span>
 <span id="L51"><span class="lineNum">      51</span>                 :<span class="tlaGNC">         365 :         StringUtils::SafeCopy(m_track_name, STR_BUF_64, trackName);</span></span>
 <span id="L52"><span class="lineNum">      52</span>                 :             :     }</span>
 <span id="L53"><span class="lineNum">      53</span>                 :             : </span>
-<span id="L54"><span class="lineNum">      54</span>                 :<span class="tlaGNC">       61022 :     return changed;</span></span>
-<span id="L55"><span class="lineNum">      55</span>                 :<span class="tlaGNC">       61022 : }</span></span>
+<span id="L54"><span class="lineNum">      54</span>                 :<span class="tlaGNC">       60899 :     return changed;</span></span>
+<span id="L55"><span class="lineNum">      55</span>                 :<span class="tlaGNC">       60899 : }</span></span>
         </pre>
               </td>
             </tr>
