@@ -1050,25 +1050,26 @@ TEST_CASE(TestConfidenceRamp_Progressive, "SlopeDetection") {
     engine.m_slope_max_threshold = -2.0f;
     engine.m_slope_smoothing_tau = 0.001f; // Fast for testing
 
-    double dt = 0.01;
+    // FIX: The SG filter inside calculate_slope_grip now hardcodes 0.0025s (400Hz)
+    // for its derivative calculations because the buffer is always populated at 400Hz.
+    // We must feed the test data at 400Hz to match, otherwise the derivatives
+    // will be artificially multiplied.
+    double dt = 0.0025; 
     int window = engine.m_slope_sg_window;
 
     std::vector<double> grips;
 
     // Ramp dAlpha/dt from 0.0 to 0.15
     // dG/dt constant at -2.0 G/s
-    // 60 frames -> 0.6 seconds.
-    // dAlpha/dt increases by 0.15 / 60 = 0.0025 per frame?
-    // Wait, dAlpha/dt is calculated from alpha.
-    // If alpha(t) = 0.5 * rate * t^2, then dAlpha/dt = rate * t.
+    // 0.6 seconds at 400Hz = 240 frames.
+    double rate = 0.25; 
 
-    double rate = 0.25; // dAlpha/dt will reach 0.25 * 0.6 = 0.15
-
-    for (int i = 0; i < 60; i++) {
+    for (int i = 0; i < 240; i++) {
         double t = (double)i * dt;
         double alpha = 0.5 * rate * t * t;
         double g = 5.0 - 2.0 * t;
 
+        // Call the internal method directly (simulating the 400Hz physics loop)
         engine.calculate_slope_grip(g, alpha, dt);
 
         if (i > window) {
@@ -1082,10 +1083,9 @@ TEST_CASE(TestConfidenceRamp_Progressive, "SlopeDetection") {
     double last_grip = grips[0];
     for (size_t i = 1; i < grips.size(); i++) {
         // Grip should be decreasing or staying same, NOT increasing
-        // (Since dAlpha is increasing and dG is constant negative)
         ASSERT_LE(grips[i], last_grip + 0.001);
 
-        // No sudden jumps > 0.1
+        // No sudden jumps > 0.1 (With 400Hz, the max jump per frame is < 0.01)
         ASSERT_LE(std::abs(grips[i] - last_grip), 0.1);
 
         last_grip = grips[i];
