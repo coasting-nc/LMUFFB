@@ -455,7 +455,7 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     // steady states while allowing the signal to recover when the slide is caught.
     // v0.7.198: Added a check to only update G-Slope if the primary axle grip is
     // being approximated (encrypted DLC) OR if we are in Shadow Mode (always calc).
-    bool shadow_mode = (m_slope_detection_enabled == false); // If false but we're here, we're in Shadow Mode calc
+    bool shadow_mode = (m_slope_detection_enabled == false); // If false but we're here, we're in Shadow Mode calc // This variable is set but not subsequently used in any conditional in the visible diff. Either remove it (to avoid confusion/compiler warnings) or use it in the intended logic.
     if (std::abs(dAlpha_dt) > (double)m_slope_alpha_threshold) {
         m_slope_hold_timer = SLOPE_HOLD_TIME;
         m_debug_slope_num = dG_dt * dAlpha_dt;
