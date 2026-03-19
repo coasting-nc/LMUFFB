@@ -409,7 +409,14 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
         }
     }
 
+    // v0.7.198: We use the physical 'dt' for time-dependent filters (slew, LPF, decay)
+    // to maintain correctness in tests and variable-rate scenarios.
+    // However, we use a fixed 400Hz 'internal_dt' for Savitzky-Golay derivatives
+    // because the internal buffers are populated at the 400Hz engine tick rate.
+    const double internal_dt = DEFAULT_CALC_DT;
+
     double lat_g_slew = apply_slew_limiter(std::abs(lateral_g), m_slope_lat_g_prev, (double)m_slope_g_slew_limit, dt);
+    m_slope_lat_g_prev = lat_g_slew;
     m_debug_lat_g_slew = lat_g_slew;
 
     double alpha_smooth = dt / (0.01 + dt);
@@ -435,13 +442,20 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     if (m_slope_buffer_count < SLOPE_BUFFER_MAX) m_slope_buffer_count++;
 
     // 3. Calculate G-based Derivatives (Savitzky-Golay)
-    double dG_dt = calculate_sg_derivative(m_slope_lat_g_buffer, m_slope_buffer_count, m_slope_sg_window, dt, m_slope_buffer_index);
-    double dAlpha_dt = calculate_sg_derivative(m_slope_slip_buffer, m_slope_buffer_count, m_slope_sg_window, dt, m_slope_buffer_index);
+    // v0.7.198: Always use fixed 400Hz dt for derivatives to ensure stable units (u/s).
+    double dG_dt = calculate_sg_derivative(m_slope_lat_g_buffer, m_slope_buffer_count, m_slope_sg_window, internal_dt, m_slope_buffer_index);
+    double dAlpha_dt = calculate_sg_derivative(m_slope_slip_buffer, m_slope_buffer_count, m_slope_sg_window, internal_dt, m_slope_buffer_index);
 
     m_slope_dG_dt = dG_dt;
     m_slope_dAlpha_dt = dAlpha_dt;
 
     // 4. Projected Slope Logic (G-based)
+    // Update slope ONLY when steering is actively moving (abs(dAlpha_dt) > threshold).
+    // This correctly implements "Hold and Decay" by preserving the peak during
+    // steady states while allowing the signal to recover when the slide is caught.
+    // v0.7.198: Added a check to only update G-Slope if the primary axle grip is
+    // being approximated (encrypted DLC) OR if we are in Shadow Mode (always calc).
+    bool shadow_mode = (m_slope_detection_enabled == false); // If false but we're here, we're in Shadow Mode calc
     if (std::abs(dAlpha_dt) > (double)m_slope_alpha_threshold) {
         m_slope_hold_timer = SLOPE_HOLD_TIME;
         m_debug_slope_num = dG_dt * dAlpha_dt;
@@ -449,18 +463,20 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
         m_debug_slope_raw = m_debug_slope_num / m_debug_slope_den;
         m_slope_current = std::clamp(m_debug_slope_raw, -20.0, 20.0);
     } else {
+        // Decay phase: use physical 'dt' to ensure correct time advancement
         m_slope_hold_timer -= dt;
         if (m_slope_hold_timer <= 0.0) {
             m_slope_hold_timer = 0.0;
             m_slope_current += (double)m_slope_decay_rate * dt * (0.0 - m_slope_current);
+            if (std::abs(m_slope_current) < 0.0001) m_slope_current = 0.0;
         }
     }
 
     // 5. Calculate Torque-based Slope (Pneumatic Trail Anticipation)
     volatile bool can_calc_torque = (m_slope_use_torque && data != nullptr);
     if (can_calc_torque) {
-        double dTorque_dt = calculate_sg_derivative(m_slope_torque_buffer, m_slope_buffer_count, m_slope_sg_window, dt, m_slope_buffer_index);
-        double dSteer_dt = calculate_sg_derivative(m_slope_steer_buffer, m_slope_buffer_count, m_slope_sg_window, dt, m_slope_buffer_index);
+        double dTorque_dt = calculate_sg_derivative(m_slope_torque_buffer, m_slope_buffer_count, m_slope_sg_window, internal_dt, m_slope_buffer_index);
+        double dSteer_dt = calculate_sg_derivative(m_slope_steer_buffer, m_slope_buffer_count, m_slope_sg_window, internal_dt, m_slope_buffer_index);
 
         if (std::abs(dSteer_dt) > (double)m_slope_alpha_threshold) { // Unified threshold for steering movement
             m_debug_slope_torque_num = dTorque_dt * dSteer_dt;

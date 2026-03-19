@@ -113,7 +113,11 @@ TEST_CASE(test_issue_235_garage_noise, "Internal") {
     // Scenario 2: Significant Soft Lock (Real rack limit)
     // User actually turns wheel to limit.
     data.mUnfilteredSteering = 1.1;
-    force = engine.calculate_force(&data, nullptr, nullptr, 0.0f, allowed);
+    data.mElapsedTime += 0.01;
+    // Issue #397: Flush the 10ms transient ramp
+    for(int i=0; i<8; i++) {
+        force = engine.calculate_force(&data, nullptr, nullptr, 0.0f, allowed, 0.0025);
+    }
     std::cout << "  Force with 10%% excess steering: " << force << std::endl;
     ASSERT_GT(std::abs(force), 0.5);
 

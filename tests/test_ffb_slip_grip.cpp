@@ -59,8 +59,11 @@ TEST_CASE(test_combined_grip_loss, "SlipGrip") {
     // Case 2: Braking Lockup (Slip Ratio -1.0)
     data.mWheel[0].mRotation = 0.0;
     data.mWheel[1].mRotation = 0.0;
+    data.mWheel[0].mLongitudinalPatchVel = -20.0; // Full lock
+    data.mWheel[1].mLongitudinalPatchVel = -20.0;
     
-    engine.calculate_force(&data, "GT3", "TestCar");
+    // Issue #397: Flush and Measure
+    PumpEngineTime(engine, data, 0.015);
     auto batch = engine.GetDebugBatch();
     float grip = batch.back().calc_front_grip;
     

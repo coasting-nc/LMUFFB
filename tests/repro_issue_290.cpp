@@ -43,7 +43,11 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
     engine.m_soft_lock_enabled = false;
     engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
 
-    double force = engine.calculate_force(&data);
+    // Issue #397: Flush the 10ms transient ramp
+    double force = 0.0;
+    for(int i=0; i<4; i++) {
+        force = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+    }
     auto batch = engine.GetDebugBatch();
 
     ASSERT_GT(std::abs(batch.back().ffb_abs_pulse), 0.0f);
@@ -65,7 +69,10 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
         data.mWheel[i].mSuspForce = 1000.0f; // Grounded
     }
     data.mElapsedTime += 0.01;
-    force = engine.calculate_force(&data);
+    // Issue #397: Flush the 10ms transient ramp
+    for(int i=0; i<4; i++) {
+        force = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+    }
     batch = engine.GetDebugBatch();
 
     ASSERT_GT(std::abs(batch.back().texture_lockup), 0.0f);
@@ -81,7 +88,10 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
     data.mWheel[1].mVerticalTireDeflection += 0.02;
     data.mElapsedTime += 0.01;
 
-    force = engine.calculate_force(&data);
+    // Issue #397: Flush the 10ms transient ramp
+    for(int i=0; i<4; i++) {
+        force = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+    }
     batch = engine.GetDebugBatch();
 
     ASSERT_GT(std::abs(batch.back().texture_road), 0.0f);

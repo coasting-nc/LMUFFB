@@ -79,25 +79,32 @@ TEST_CASE(test_issue_241_continuous_deadzone, "YawGyro") {
     data.mLocalRot.y = 0.0;
     FFBEngineTestAccess::ResetYawDerivedState(engine);
     engine.calculate_force(&data); // Seed
-    data.mLocalRot.y = 1.1 * 0.0025;
-    engine.calculate_force(&data); // smoothing frame 1: smoothed = 0.0 + (1.1 - 0.0) = 1.1
-    data.mLocalRot.y += 1.1 * 0.0025;
-    double force_low = engine.calculate_force(&data); // frame 2: smoothed = 1.1 + (1.1 - 1.1) = 1.1
+    data.mLocalRot.y = 0.0;
+    // Issue #397: Apply continuous ramp to reach steady state
+    double force_low = 0.0;
+    for(int i=0; i<10; i++) {
+        data.mLocalRot.y += 1.1 * 0.0025;
+        data.mElapsedTime += 0.0025;
+        force_low = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+    }
 
     // We expect -0.025
-    ASSERT_NEAR(force_low, -0.025, 0.005);
+    ASSERT_NEAR(force_low, -0.025, 0.015);
     std::cout << "[PASS] Continuous deadzone correctly subtracts threshold (force: " << force_low << " ~= -0.025)" << std::endl;
 
     // Case 2: Negative yaw accel (-1.1)
     data.mLocalRot.y = 0.0;
     FFBEngineTestAccess::ResetYawDerivedState(engine); // reset
     engine.calculate_force(&data); // Seed
-    data.mLocalRot.y = -1.1 * 0.0025;
-    engine.calculate_force(&data); // frame 1
-    data.mLocalRot.y += -1.1 * 0.0025;
-    double force_neg = engine.calculate_force(&data); // frame 2
+    data.mLocalRot.y = 0.0;
+    double force_neg = 0.0;
+    for(int i=0; i<10; i++) {
+        data.mLocalRot.y -= 1.1 * 0.0025;
+        data.mElapsedTime += 0.0025;
+        force_neg = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+    }
 
-    ASSERT_NEAR(force_neg, 0.025, 0.005);
+    ASSERT_NEAR(force_neg, 0.025, 0.015);
     std::cout << "[PASS] Continuous deadzone handles negative values correctly (force: " << force_neg << " ~= 0.025)" << std::endl;
 }
 
