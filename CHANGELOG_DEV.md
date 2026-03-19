@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.202] - 2026-03-22
+
+### Added
+- **GUI toggle for Dynamic Load Sensitivity (Issue #392)**:
+  - **New Control**: Added "Enable Dynamic Load Sensitivity" checkbox to the "Grip & Slip Angle Estimation" section.
+  - **Functionality**: Allows users to disable the load-based scaling of the optimal slip angle ($F_z^{0.333}$). When disabled, the engine reverts to a constant optimal slip angle baseline, potentially reducing "graininess" felt on some Direct Drive wheels.
+  - **Full Persistence**: Integrated the setting into the `Preset` and `Config` systems, ensuring it is saved per-car and correctly handled during preset transitions.
+
+### Testing
+- **New Regression Test**: Added `tests/test_issue_392.cpp` verifying:
+  - Default value remains `true` for physics consistency.
+  - Physics toggle correctly enables/disables load-dependent grip scaling.
+  - Preset and Config synchronization/persistence.
+- Verified 100% pass rate: **565/565 test cases, 2641 assertions, 0 failures**.
+
+---
+
 ## [0.7.201] - 2026-03-21
 
 ### Fixed

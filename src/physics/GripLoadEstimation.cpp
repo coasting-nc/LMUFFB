@@ -289,7 +289,10 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                     
                     // Tire physics: Optimal slip angle increases with load (Hertzian cube root)
                     // Note: Future thermal/pressure multipliers would be applied here
-                    double dynamic_slip_angle = m_optimal_slip_angle * std::pow(load_ratio, 0.333);
+                    double dynamic_slip_angle = m_optimal_slip_angle;
+                    if (m_load_sensitivity_enabled) {
+                        dynamic_slip_angle *= std::pow(load_ratio, 0.333);
+                    }
 
                     // 2. Lateral Component
                     double lat_metric = std::abs(slip_angle) / dynamic_slip_angle;

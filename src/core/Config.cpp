@@ -144,6 +144,7 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "slope_confidence_max_rate") { current_preset.slope_confidence_max_rate = std::stof(value); return true; }
     if (key == "slip_angle_smoothing") { current_preset.slip_smoothing = std::stof(value); return true; }
     if (key == "chassis_inertia_smoothing") { current_preset.chassis_smoothing = std::stof(value); return true; }
+    if (key == "load_sensitivity_enabled") { current_preset.load_sensitivity_enabled = (value == "1" || value == "true"); return true; }
     return false;
 }
 
@@ -314,6 +315,7 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "slope_confidence_max_rate") { engine.m_slope_confidence_max_rate = std::stof(value); return true; }
     if (key == "slip_angle_smoothing") { engine.m_slip_angle_smoothing = std::stof(value); return true; }
     if (key == "chassis_inertia_smoothing") { engine.m_chassis_inertia_smoothing = std::stof(value); return true; }
+    if (key == "load_sensitivity_enabled") { engine.m_load_sensitivity_enabled = (value == "1" || value == "true"); return true; }
     if (key == "speed_gate_lower") { engine.m_speed_gate_lower = std::stof(value); return true; }
     if (key == "speed_gate_upper") { engine.m_speed_gate_upper = std::stof(value); return true; }
     if (key == "road_fallback_scale") { engine.m_road_fallback_scale = std::stof(value); return true; }
@@ -1306,6 +1308,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
 
     file << "slip_angle_smoothing=" << p.slip_smoothing << "\n";
     file << "chassis_inertia_smoothing=" << p.chassis_smoothing << "\n";
+    file << "load_sensitivity_enabled=" << (p.load_sensitivity_enabled ? "1" : "0") << "\n";
     file << "optimal_slip_angle=" << p.optimal_slip_angle << "\n";
     file << "optimal_slip_ratio=" << p.optimal_slip_ratio << "\n";
 
@@ -1643,6 +1646,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "\n; --- Physics (Grip & Slip Angle) ---\n";
         file << "slip_angle_smoothing=" << engine.m_slip_angle_smoothing << "\n";
         file << "chassis_inertia_smoothing=" << engine.m_chassis_inertia_smoothing << "\n";
+        file << "load_sensitivity_enabled=" << engine.m_load_sensitivity_enabled << "\n";
         file << "optimal_slip_angle=" << engine.m_optimal_slip_angle << "\n";
         file << "optimal_slip_ratio=" << engine.m_optimal_slip_ratio << "\n";
         file << "slope_detection_enabled=" << engine.m_slope_detection_enabled << "\n";

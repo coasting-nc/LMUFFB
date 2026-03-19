@@ -142,6 +142,7 @@ set(TEST_SOURCES
     test_issue_397_interpolator.cpp
     test_issue_402_repro.cpp
     test_bottoming.cpp
+    test_issue_392.cpp
     ../src/core/main.cpp
 )
 

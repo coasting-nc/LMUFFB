@@ -726,6 +726,11 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::TreeNodeEx("Grip & Slip Angle Estimation", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
+        if (GuiWidgets::Checkbox("Enable Dynamic Load Sensitivity", &engine.m_load_sensitivity_enabled, Tooltips::LOAD_SENSITIVITY_ENABLE).deactivated) {
+            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+            Config::Save(engine);
+        }
+
         FloatSetting("Slip Angle Smoothing", &engine.m_slip_angle_smoothing, 0.000f, 0.100f, "%.3f s",
             Tooltips::SLIP_ANGLE_SMOOTHING,
             [&]() {

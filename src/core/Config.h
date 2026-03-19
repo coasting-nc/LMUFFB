@@ -151,6 +151,7 @@ struct Preset {
     // Reserved for future implementation (v0.6.23+)
     float road_fallback_scale = 0.05f;      // Planned: Road texture fallback scaling
     bool understeer_affects_sop = false;     // Planned: Understeer modulation of SoP
+    bool load_sensitivity_enabled = true;   // Issue #392
 
     // ===== SLOPE DETECTION (v0.7.0 â†’ v0.7.1 defaults) =====
     bool slope_detection_enabled = false;
@@ -475,6 +476,7 @@ struct Preset {
         engine.m_chassis_inertia_smoothing = (std::max)(0.0f, chassis_smoothing);
         engine.m_road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
         engine.m_understeer_affects_sop = understeer_affects_sop;
+        engine.m_load_sensitivity_enabled = load_sensitivity_enabled;
         
         // Slope Detection (v0.7.0)
         engine.m_slope_detection_enabled = slope_detection_enabled;
@@ -714,6 +716,7 @@ struct Preset {
         chassis_smoothing = engine.m_chassis_inertia_smoothing;
         road_fallback_scale = engine.m_road_fallback_scale;
         understeer_affects_sop = engine.m_understeer_affects_sop;
+        load_sensitivity_enabled = engine.m_load_sensitivity_enabled;
 
         // Slope Detection (v0.7.0)
         slope_detection_enabled = engine.m_slope_detection_enabled;
@@ -859,6 +862,7 @@ struct Preset {
 
         if (!is_near(road_fallback_scale, p.road_fallback_scale, eps)) return false;
         if (understeer_affects_sop != p.understeer_affects_sop) return false;
+        if (load_sensitivity_enabled != p.load_sensitivity_enabled) return false;
 
         if (slope_detection_enabled != p.slope_detection_enabled) return false;
         if (slope_sg_window != p.slope_sg_window) return false;
