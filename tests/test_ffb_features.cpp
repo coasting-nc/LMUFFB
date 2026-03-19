@@ -69,11 +69,12 @@ TEST_CASE(test_stationary_gate, "Texture") {
             force = std::max(force, std::abs(f));
         }
         
-        // Delta = 0.001 / 4 ticks = 0.00025 per tick.
-        // Sum = 0.00025 * 2 = 0.0005.
-        // Force = 0.0005 * 50.0 = 0.025 Nm.
-        // Normalized = 0.025 / 20.0 = 0.00125.
-        ASSERT_NEAR(force, 0.00125, 0.0001);
+        // v0.7.200 (Issue #402): Normalized for TDI. 400Hz is now 4x stronger (matches 100Hz tuning)
+        // Vel = 0.001 / 0.01s = 0.1 m/s
+        // Sum = 0.1 * 2 = 0.2.
+        // Force = 0.2 * 50.0 * 0.01 = 0.1 Nm.
+        // Normalized = 0.1 / 20.0 = 0.005.
+        ASSERT_NEAR(force, 0.005, 0.0001);
     }
 }
 

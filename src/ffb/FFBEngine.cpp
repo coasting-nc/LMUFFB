@@ -1615,28 +1615,39 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
 
     if (!m_road_texture_enabled) return;
     
-    // 2. Road Texture (Delta Deflection Method)
-    // Measures the rate of change in tire vertical compression
-    double delta_l = data->mWheel[0].mVerticalTireDeflection - m_prev_vert_deflection[0];
-    double delta_r = data->mWheel[1].mVerticalTireDeflection - m_prev_vert_deflection[1];
+    // 2. Road Texture (Deflection Velocity Method)
+    // Convert position delta to velocity (m/s) to ensure Time-Domain Independence
+    // v0.7.200 (Issue #402): Fixed bug where effect was 4x weaker at 400Hz than 100Hz.
+    double vel_l = (data->mWheel[0].mVerticalTireDeflection - m_prev_vert_deflection[0]) / ctx.dt;
+    double vel_r = (data->mWheel[1].mVerticalTireDeflection - m_prev_vert_deflection[1]) / ctx.dt;
     
-    // Outlier rejection (crashes/jumps)
-    delta_l = (std::max)(-DEFLECTION_DELTA_LIMIT, (std::min)(DEFLECTION_DELTA_LIMIT, delta_l));
-    delta_r = (std::max)(-DEFLECTION_DELTA_LIMIT, (std::min)(DEFLECTION_DELTA_LIMIT, delta_r));
+    // Safety: Sanitize derivatives against NaN/Inf (v0.7.200 Review feedback)
+    if (!std::isfinite(vel_l)) vel_l = 0.0;
+    if (!std::isfinite(vel_r)) vel_r = 0.0;
+
+    // Outlier rejection (crashes/jumps) - scaled for velocity (~1.0 m/s limit)
+    double max_vel = DEFLECTION_DELTA_LIMIT / 0.01;
+    vel_l = std::clamp(vel_l, -max_vel, max_vel);
+    vel_r = std::clamp(vel_r, -max_vel, max_vel);
     
     double road_noise_val = 0.0;
     
     // FALLBACK (v0.6.36): If mVerticalTireDeflection is missing (Encrypted DLC),
     // use Chassis Vertical Acceleration delta as a secondary source.
-    bool deflection_active = (std::abs(delta_l) > DEFLECTION_ACTIVE_THRESHOLD || std::abs(delta_r) > DEFLECTION_ACTIVE_THRESHOLD);
+    bool deflection_active = (std::abs(vel_l) > (DEFLECTION_ACTIVE_THRESHOLD / 0.01) ||
+                              std::abs(vel_r) > (DEFLECTION_ACTIVE_THRESHOLD / 0.01));
     
     if (deflection_active || ctx.car_speed < ROAD_TEXTURE_SPEED_THRESHOLD) {
-        road_noise_val = (delta_l + delta_r) * DEFLECTION_NM_SCALE; // Scale to NM
+        // Multiply by 0.01 to maintain legacy 100Hz tuning strength
+        road_noise_val = (vel_l + vel_r) * DEFLECTION_NM_SCALE * 0.01;
     } else {
-        // Fallback to vertical acceleration rate-of-change (jerk-like scaling)
+        // Fallback to vertical jerk (m/s^3)
         double vert_accel = data->mLocalAccel.y;
-        double delta_accel = vert_accel - m_prev_vert_accel;
-        road_noise_val = delta_accel * ACCEL_ROAD_TEXTURE_SCALE * DEFLECTION_NM_SCALE; // Blend into similar range
+        double jerk = (vert_accel - m_prev_vert_accel) / ctx.dt;
+        if (!std::isfinite(jerk)) jerk = 0.0;
+
+        // Multiply by 0.01 to maintain legacy 100Hz tuning strength
+        road_noise_val = jerk * ACCEL_ROAD_TEXTURE_SCALE * DEFLECTION_NM_SCALE * 0.01;
     }
     
     ctx.road_noise = road_noise_val * m_road_texture_gain * ctx.texture_load_factor;

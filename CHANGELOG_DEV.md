@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.200] - 2026-03-21
+
+### Fixed
+- **Fixed Time-Domain Independence Bug in Road Texture effect (Issue #402)**:
+  - **Root Cause**: The Road Texture effect used per-frame deltas of suspension deflection and vertical acceleration directly as force amplitudes. This made the effect's strength dependent on the physics update frequency, resulting in it being 4x weaker at 400Hz (production) than at 100Hz (original tuning).
+  - **Fix — Derivative Normalization**: Converted per-frame position/acceleration deltas into true time-based derivatives (velocity and jerk) by dividing by the simulation `dt`.
+  - **Feel Preservation**: Applied a 0.01 multiplier (representing the legacy 100Hz `dt`) to maintain the intended subjective strength that users felt at 100Hz.
+  - **Hardened Logic**: Updated outlier rejection and activity thresholds to use physically-meaningful units (m/s) and scaled them to remain consistent across different update rates.
+
+### Testing
+- **New Regression Test**: Added `tests/test_issue_402_repro.cpp` which verifies that the Road Texture effect outputs identical force amplitudes regardless of whether the engine is ticking at 100Hz or 400Hz for the same physical input.
+- Verified 100% pass rate: **560/560 test cases, 2564 assertions, 0 failures**.
+
+---
+
 ## [0.7.199] - 2026-03-20
 
 ### Fixed

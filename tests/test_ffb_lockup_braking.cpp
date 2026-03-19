@@ -287,15 +287,15 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
         if (!b.empty()) force_road = std::max(force_road, std::abs((double)b.back().texture_road));
     }
 
-    // With 10ms delay, 0.01 step over 4 ticks (2.5ms each) gives 0.0025 delta/tick.
-    // Road Force = (0.0025 + 0.0025) * 50.0 = 0.25 Nm.
-    // Normalized by 20.0 Nm = 0.0125.
+    // v0.7.200 (Issue #402): Normalized for TDI. 400Hz is now 4x stronger (matches 100Hz tuning)
+    // With 10ms delay, 0.01 step over 4 ticks (2.5ms each) gives 0.0025 delta/tick (1.0 m/s velocity).
+    // Road Force = (1.0 + 1.0) * 50.0 * 0.01 = 1.0 Nm.
     // Note: snap.texture_road is in Nm.
-    if (std::abs(force_road - 0.25) < 0.05) {
+    if (std::abs(force_road - 1.0) < 0.05) {
         std::cout << "[PASS] Road texture correctly clamped to 1.0x (Force: " << force_road << ")" << std::endl;
         g_tests_passed++;
     } else {
-        FAIL_TEST("Road texture clamping failed. Expected ~0.25 Nm, got " << force_road);
+        FAIL_TEST("Road texture clamping failed. Expected ~1.0 Nm, got " << force_road);
         return;
     }
 
