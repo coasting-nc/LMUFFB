@@ -1621,6 +1621,10 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
     double vel_l = (data->mWheel[0].mVerticalTireDeflection - m_prev_vert_deflection[0]) / ctx.dt;
     double vel_r = (data->mWheel[1].mVerticalTireDeflection - m_prev_vert_deflection[1]) / ctx.dt;
     
+    // Safety: Sanitize derivatives against NaN/Inf (v0.7.200 Review feedback)
+    if (!std::isfinite(vel_l)) vel_l = 0.0;
+    if (!std::isfinite(vel_r)) vel_r = 0.0;
+
     // Outlier rejection (crashes/jumps) - scaled for velocity (~1.0 m/s limit)
     double max_vel = DEFLECTION_DELTA_LIMIT / 0.01;
     vel_l = std::clamp(vel_l, -max_vel, max_vel);
@@ -1640,6 +1644,8 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
         // Fallback to vertical jerk (m/s^3)
         double vert_accel = data->mLocalAccel.y;
         double jerk = (vert_accel - m_prev_vert_accel) / ctx.dt;
+        if (!std::isfinite(jerk)) jerk = 0.0;
+
         // Multiply by 0.01 to maintain legacy 100Hz tuning strength
         road_noise_val = jerk * ACCEL_ROAD_TEXTURE_SCALE * DEFLECTION_NM_SCALE * 0.01;
     }

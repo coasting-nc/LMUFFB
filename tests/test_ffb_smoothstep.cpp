@@ -152,11 +152,12 @@ TEST_CASE(test_speed_gate_custom_thresholds, "SpeedGate") {
         double f = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
         force = std::max(force, std::abs(f));
     }
+    // v0.7.200 (Issue #402): Normalized for TDI. 400Hz is now 4x stronger (matches 100Hz tuning)
     // Gate = (6 - 2) / (10 - 2) = 4 / 8 = 0.5
-    // Delta = 0.001 / 4 ticks = 0.00025 per tick
-    // Texture Force = 0.5 * (0.00025 + 0.00025) * 50.0 = 0.0125 Nm
-    // Normalized = 0.0125 / 20.0 = 0.000625
-    ASSERT_NEAR(force, 0.000625, 0.0001);
+    // Vel = 0.001 / 0.01s = 0.1 m/s
+    // Texture Force = 0.5 * (0.1 + 0.1) * 50.0 * 0.01 = 0.05 Nm
+    // Normalized = 0.05 / 20.0 = 0.0025
+    ASSERT_NEAR(force, 0.0025, 0.0001);
 }
 
 
