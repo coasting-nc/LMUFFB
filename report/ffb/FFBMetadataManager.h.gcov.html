@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-19 15:33:32</td>
+            <td class="headerValue">2026-03-19 17:01:16</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -84,8 +84,8 @@
 <span id="L13"><span class="lineNum">      13</span>                 :             : public:</span>
 <span id="L14"><span class="lineNum">      14</span>                 :             :     static constexpr int STR_BUF_64 = 64;</span>
 <span id="L15"><span class="lineNum">      15</span>                 :             : </span>
-<span id="L16"><span class="lineNum">      16</span>   [<span class="tlaGBC" title="Branch 0 was taken 473 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 473 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC tlaBgGNC">        3311 :     FFBMetadataManager() = default;</span></span>
-<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 473 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
+<span id="L16"><span class="lineNum">      16</span>   [<span class="tlaGBC" title="Branch 0 was taken 476 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 476 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC tlaBgGNC">        3332 :     FFBMetadataManager() = default;</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 476 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
 <span id="L17"><span class="lineNum">      17</span>                 :             : </span>
 <span id="L18"><span class="lineNum">      18</span>                 :             :     // Updates metadata. Returns true if vehicle class/name changed (meaning FFB should seed/initialize)</span>
 <span id="L19"><span class="lineNum">      19</span>                 :             :     bool UpdateMetadata(const SharedMemoryObjectOut&amp; data);</span>
@@ -101,9 +101,9 @@
 <span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">         573 :     const char* GetVehicleName() const { return m_vehicle_name; }</span></span>
 <span id="L30"><span class="lineNum">      30</span>                 :             :     const char* GetTrackName() const { return m_track_name; }</span>
 <span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">         250 :     const char* GetCurrentClassName() const { return m_current_class_name.c_str(); }</span></span>
-<span id="L32"><span class="lineNum">      32</span>                 :<span class="tlaGNC">      217659 :     ParsedVehicleClass GetCurrentClass() const { return m_current_vclass; }</span></span>
-<span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC">       52366 :     bool HasWarnedInvalidRange() const { return m_warned_invalid_range; }</span></span>
-<span id="L34"><span class="lineNum">      34</span>                 :<span class="tlaGNC">         465 :     void SetWarnedInvalidRange(bool val) { m_warned_invalid_range = val; }</span></span>
+<span id="L32"><span class="lineNum">      32</span>                 :<span class="tlaGNC">      224055 :     ParsedVehicleClass GetCurrentClass() const { return m_current_vclass; }</span></span>
+<span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC">       53966 :     bool HasWarnedInvalidRange() const { return m_warned_invalid_range; }</span></span>
+<span id="L34"><span class="lineNum">      34</span>                 :<span class="tlaGNC">         466 :     void SetWarnedInvalidRange(bool val) { m_warned_invalid_range = val; }</span></span>
 <span id="L35"><span class="lineNum">      35</span>                 :             : </span>
 <span id="L36"><span class="lineNum">      36</span>                 :             :     // Internal state (Kept public for legacy test compatibility as per Approach A)</span>
 <span id="L37"><span class="lineNum">      37</span>                 :             :     char m_vehicle_name[STR_BUF_64] = &quot;Unknown&quot;;</span>
