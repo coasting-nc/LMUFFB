@@ -200,7 +200,10 @@ TEST_CASE(test_coverage_integrated, "Coverage") {
     for(int i=0; i<4; i++) data.mWheel[i].mBrakePressure = 10.0f; // Rapid change
     
     data.mElapsedTime += 0.01;
-    engine.calculate_force(&data, "GT3", "M4 GT3"); 
+    // Issue #397: Interpolator ramp-up requires multiple ticks
+    for(int i=0; i<4; i++) {
+        engine.calculate_force(&data, "GT3", "M4 GT3", 0.0f, true, 0.0025);
+    }
     batch = engine.GetDebugBatch();
     ASSERT_FALSE(batch.empty());
     // ABS phase should have advanced and produced a pulse

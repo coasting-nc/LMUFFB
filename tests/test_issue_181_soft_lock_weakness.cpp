@@ -17,7 +17,8 @@ TEST_CASE(test_soft_lock_normalization_consistency, "Regression") {
         // Update smoothed mult accordingly
         FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / peak);
 
-        return engine.calculate_force(&data);
+        // Issue #397: Flush the 10ms transient ramp
+        return PumpEngineTime(engine, data, 0.015);
     };
 
     FFBEngine engine;

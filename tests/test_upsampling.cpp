@@ -15,6 +15,10 @@ TEST_CASE(test_upsampling_logic, "Upsampling") {
     // Initial frame
     engine.calculate_force(&data, "GT3", "Ferrari 296", 0.0f, true, 0.0025);
 
+    // Issue #397: Holt-Winters (Shaft Torque) will ramp to target.
+    // We let it settle first.
+    PumpEngineTime(engine, data, 1.0);
+
     // Simulate FFB loop running at 400Hz while telemetry is still at 100Hz (same timestamp)
     // Frame 2: Same telemetry, but 2.5ms later in FFB time
     double force2 = engine.calculate_force(&data, "GT3", "Ferrari 296", 0.0f, true, 0.0025);
@@ -71,17 +75,15 @@ TEST_CASE(test_upsampling_extrapolation, "Upsampling") {
     engine.calculate_force(&data2, "GT3", "Ferrari 296", 0.0f, true, 0.0025); // This establishes dV/dt = (2-1)/0.01 = 100 m/s^2
 
     // Third call with SAME telemetry but +2.5ms FFB time
-    // Extrapolator should predict 2.0 + (100 * 0.0025) = 2.25
+    // Interpolator should move from 1.0 towards 2.0.
+    // Tick 1 (at data2 arrival): 1.0
+    // Tick 2 (+2.5ms): 1.25
     engine.calculate_force(&data2, "GT3", "Ferrari 296", 0.0f, true, 0.0025);
 
     FFBSnapshot snap = engine.GetDebugBatch().back();
-    // snap.raw_front_lat_patch_vel is usually abs average of fl/fr
-    // Here we only set fl, fr is 0 from CreateBasicTestTelemetry (needs check)
-    // CreateBasicTestTelemetry usually sets some defaults.
 
-    // Verification via snapshot
-    // We want to see if the internal m_working_info was actually upsampled.
-    // Since we can't easily see m_working_info, we check effects that depend on it.
-    // Slide texture depends on mLateralPatchVel.
-    ASSERT_GT(snap.raw_front_lat_patch_vel, 1.0f);
+    // Verify that the interpolated value is increasing
+    // We set data1.mWheel[0] = 1.0 and data2.mWheel[0] = 2.0.
+    // The average (snap) started at 0.5 (1.0/2) and should move towards 1.0 (2.0/2).
+    ASSERT_GT(snap.raw_front_lat_patch_vel, 0.5f);
 }

@@ -48,7 +48,10 @@ TEST_CASE(test_issue_374_reset_on_car_change, "Regression") {
     dataB.mElapsedTime = data.mElapsedTime + 0.1;
 
     // Trigger car change
+    // Issue #397: Use PumpEngineSteadyState to ensure interpolators clear
+    // m_missing_* logic runs on the upsampled working copy.
     engine.calculate_force(&dataB, "ClassB", "VehicleB");
+    PumpEngineTime(engine, dataB, 0.05);
 
     // 3. Verify that counters and flags are reset
     // This is where the test is expected to FAIL before the fix

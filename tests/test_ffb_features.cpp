@@ -53,15 +53,27 @@ TEST_CASE(test_stationary_gate, "Texture") {
         FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
         FFBEngineTestAccess::SetSmoothedVibrationMult(engine, 1.0);
 
-        data.mWheel[0].mVerticalTireDeflection = 0.002; 
-        data.mWheel[1].mVerticalTireDeflection = 0.002;
+        // Steady state
+        data.mWheel[0].mVerticalTireDeflection = 0.0;
+        data.mWheel[1].mVerticalTireDeflection = 0.0;
+        PumpEngineSteadyState(engine, data);
+
+        // Trigger ramp
+        data.mWheel[0].mVerticalTireDeflection = 0.001;
+        data.mWheel[1].mVerticalTireDeflection = 0.001;
+        data.mElapsedTime += 0.01;
         
-        double force = engine.calculate_force(&data);
+        double force = 0.0;
+        for(int i=0; i<4; i++) {
+            double f = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+            force = std::max(force, std::abs(f));
+        }
         
-        // Delta = 0.002 - 0.001 = 0.001. Sum = 0.002.
-        // Force = 0.002 * 50.0 = 0.1 Nm.
-        // Normalized = 0.1 / 20.0 = 0.005.
-        ASSERT_NEAR(force, 0.005, 0.0001);
+        // Delta = 0.001 / 4 ticks = 0.00025 per tick.
+        // Sum = 0.00025 * 2 = 0.0005.
+        // Force = 0.0005 * 50.0 = 0.025 Nm.
+        // Normalized = 0.025 / 20.0 = 0.00125.
+        ASSERT_NEAR(force, 0.00125, 0.0001);
     }
 }
 
@@ -296,13 +308,14 @@ TEST_CASE(test_dynamic_tuning, "Texture") {
     engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Fix Reference for Test (v0.4.4)
     engine.m_invert_force = false;
 
-    double force_initial = engine.calculate_force(&data);
+    // Issue #397: Flush the 10ms transient ramp
+    double force_initial = PumpEngineTime(engine, data, 1.0);
     // Should pass through 10.0 (normalized: 0.5)
     ASSERT_NEAR(force_initial, 0.5, 0.001);
     
     // --- User drags Master Gain Slider to 2.0 ---
     engine.m_gain = 2.0;
-    double force_boosted = engine.calculate_force(&data);
+    double force_boosted = PumpEngineTime(engine, data, 1.0);
     // Should be 0.5 * 2.0 = 1.0
     ASSERT_NEAR(force_boosted, 1.0, 0.001);
     
@@ -313,7 +326,7 @@ TEST_CASE(test_dynamic_tuning, "Texture") {
     data.mWheel[0].mGripFract = 0.5;
     data.mWheel[1].mGripFract = 0.5;
     
-    double force_grip_loss = engine.calculate_force(&data);
+    double force_grip_loss = PumpEngineTime(engine, data, 1.0);
     // 10.0 * 0.5 = 5.0 -> 0.25 normalized
     ASSERT_NEAR(force_grip_loss, 0.25, 0.001);
     
