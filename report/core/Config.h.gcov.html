@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-19 17:49:34</td>
+            <td class="headerValue">2026-03-19 23:12:13</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -250,18 +250,18 @@
 <span id="L179"><span class="lineNum">     179</span>                 :             :     int rest_api_port = 6397;</span>
 <span id="L180"><span class="lineNum">     180</span>                 :             : </span>
 <span id="L181"><span class="lineNum">     181</span>                 :             :     // 2. Constructors</span>
-<span id="L182"><span class="lineNum">     182</span>         [<span class="tlaGBC" title="Branch 0 was taken 682 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">        2046 :     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin), app_version(LMUFFB_VERSION) {}</span></span>
-<span id="L183"><span class="lineNum">     183</span>   [<span class="tlaGBC" title="Branch 0 was taken 1437 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 1437 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        7185 :     Preset() : name(&quot;Unnamed&quot;), is_builtin(false), app_version(LMUFFB_VERSION) {} // Default constructor for file loading</span></span>
+<span id="L182"><span class="lineNum">     182</span>         [<span class="tlaGBC" title="Branch 0 was taken 2311 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">        6933 :     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin), app_version(LMUFFB_VERSION) {}</span></span>
+<span id="L183"><span class="lineNum">     183</span>   [<span class="tlaGBC" title="Branch 0 was taken 1493 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 1493 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        7465 :     Preset() : name(&quot;Unnamed&quot;), is_builtin(false), app_version(LMUFFB_VERSION) {} // Default constructor for file loading</span></span>
 <span id="L184"><span class="lineNum">     184</span>                 :             : </span>
 <span id="L185"><span class="lineNum">     185</span>                 :             :     // 3. Fluent Setters (The &quot;Python Dictionary&quot; feel)</span>
-<span id="L186"><span class="lineNum">     186</span>                 :<span class="tlaGNC">         308 :     Preset&amp; SetGain(float v) { gain = v; return *this; }</span></span>
-<span id="L187"><span class="lineNum">     187</span>                 :<span class="tlaGNC">         448 :     Preset&amp; SetUndersteer(float v) { understeer = v; return *this; }</span></span>
+<span id="L186"><span class="lineNum">     186</span>                 :<span class="tlaGNC">        1056 :     Preset&amp; SetGain(float v) { gain = v; return *this; }</span></span>
+<span id="L187"><span class="lineNum">     187</span>                 :<span class="tlaGNC">        1536 :     Preset&amp; SetUndersteer(float v) { understeer = v; return *this; }</span></span>
 <span id="L188"><span class="lineNum">     188</span>                 :             :     Preset&amp; SetUndersteerGamma(float v) { understeer_gamma = v; return *this; }</span>
-<span id="L189"><span class="lineNum">     189</span>                 :<span class="tlaGNC">         448 :     Preset&amp; SetSoP(float v) { sop = v; return *this; }</span></span>
-<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">         168 :     Preset&amp; SetSoPScale(float v) { sop_scale = v; return *this; }</span></span>
-<span id="L191"><span class="lineNum">     191</span>                 :<span class="tlaGNC">         448 :     Preset&amp; SetSmoothing(float v) { sop_smoothing = v; return *this; }</span></span>
+<span id="L189"><span class="lineNum">     189</span>                 :<span class="tlaGNC">        1536 :     Preset&amp; SetSoP(float v) { sop = v; return *this; }</span></span>
+<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">         576 :     Preset&amp; SetSoPScale(float v) { sop_scale = v; return *this; }</span></span>
+<span id="L191"><span class="lineNum">     191</span>                 :<span class="tlaGNC">        1536 :     Preset&amp; SetSmoothing(float v) { sop_smoothing = v; return *this; }</span></span>
 <span id="L192"><span class="lineNum">     192</span>                 :             :     Preset&amp; SetMinForce(float v) { min_force = v; return *this; }</span>
-<span id="L193"><span class="lineNum">     193</span>                 :<span class="tlaGNC">         252 :     Preset&amp; SetOversteer(float v) { oversteer_boost = v; return *this; }</span></span>
+<span id="L193"><span class="lineNum">     193</span>                 :<span class="tlaGNC">         864 :     Preset&amp; SetOversteer(float v) { oversteer_boost = v; return *this; }</span></span>
 <span id="L194"><span class="lineNum">     194</span>                 :             :     Preset&amp; SetLongitudinalLoad(float v) { long_load_effect = v; return *this; }</span>
 <span id="L195"><span class="lineNum">     195</span>                 :             :     Preset&amp; SetLongitudinalLoadSmoothing(float v) { long_load_smoothing = v; return *this; }</span>
 <span id="L196"><span class="lineNum">     196</span>                 :             :     Preset&amp; SetLongitudinalLoadTransform(int v) { long_load_transform = v; return *this; }</span>
@@ -271,30 +271,30 @@
 <span id="L200"><span class="lineNum">     200</span>                 :             :         grip_smoothing_sensitivity = sens;</span>
 <span id="L201"><span class="lineNum">     201</span>                 :             :         return *this;</span>
 <span id="L202"><span class="lineNum">     202</span>                 :             :     }</span>
-<span id="L203"><span class="lineNum">     203</span>                 :<span class="tlaGNC">         448 :     Preset&amp; SetSlipSmoothing(float v) { slip_smoothing = v; return *this; }</span></span>
+<span id="L203"><span class="lineNum">     203</span>                 :<span class="tlaGNC">        1536 :     Preset&amp; SetSlipSmoothing(float v) { slip_smoothing = v; return *this; }</span></span>
 <span id="L204"><span class="lineNum">     204</span>                 :             :     </span>
-<span id="L205"><span class="lineNum">     205</span>                 :<span class="tlaGNC">         280 :     Preset&amp; SetLockup(bool enabled, float g, float start = 5.0f, float full = 15.0f, float boost = 1.5f) { </span></span>
-<span id="L206"><span class="lineNum">     206</span>                 :<span class="tlaGNC">         280 :         lockup_enabled = enabled; </span></span>
-<span id="L207"><span class="lineNum">     207</span>                 :<span class="tlaGNC">         280 :         lockup_gain = g; </span></span>
-<span id="L208"><span class="lineNum">     208</span>                 :<span class="tlaGNC">         280 :         lockup_start_pct = start;</span></span>
-<span id="L209"><span class="lineNum">     209</span>                 :<span class="tlaGNC">         280 :         lockup_full_pct = full;</span></span>
-<span id="L210"><span class="lineNum">     210</span>                 :<span class="tlaGNC">         280 :         lockup_rear_boost = boost;</span></span>
-<span id="L211"><span class="lineNum">     211</span>                 :<span class="tlaGNC">         280 :         return *this; </span></span>
+<span id="L205"><span class="lineNum">     205</span>                 :<span class="tlaGNC">         960 :     Preset&amp; SetLockup(bool enabled, float g, float start = 5.0f, float full = 15.0f, float boost = 1.5f) { </span></span>
+<span id="L206"><span class="lineNum">     206</span>                 :<span class="tlaGNC">         960 :         lockup_enabled = enabled; </span></span>
+<span id="L207"><span class="lineNum">     207</span>                 :<span class="tlaGNC">         960 :         lockup_gain = g; </span></span>
+<span id="L208"><span class="lineNum">     208</span>                 :<span class="tlaGNC">         960 :         lockup_start_pct = start;</span></span>
+<span id="L209"><span class="lineNum">     209</span>                 :<span class="tlaGNC">         960 :         lockup_full_pct = full;</span></span>
+<span id="L210"><span class="lineNum">     210</span>                 :<span class="tlaGNC">         960 :         lockup_rear_boost = boost;</span></span>
+<span id="L211"><span class="lineNum">     211</span>                 :<span class="tlaGNC">         960 :         return *this; </span></span>
 <span id="L212"><span class="lineNum">     212</span>                 :             :     }</span>
 <span id="L213"><span class="lineNum">     213</span>                 :             :     Preset&amp; SetBrakeCap(float v) { brake_load_cap = v; return *this; }</span>
-<span id="L214"><span class="lineNum">     214</span>                 :<span class="tlaGNC">         280 :     Preset&amp; SetSpin(bool enabled, float g, float scale = 1.0f) { </span></span>
-<span id="L215"><span class="lineNum">     215</span>                 :<span class="tlaGNC">         280 :         spin_enabled = enabled; </span></span>
-<span id="L216"><span class="lineNum">     216</span>                 :<span class="tlaGNC">         280 :         spin_gain = g; </span></span>
-<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">         280 :         spin_freq_scale = scale;</span></span>
-<span id="L218"><span class="lineNum">     218</span>                 :<span class="tlaGNC">         280 :         return *this; </span></span>
+<span id="L214"><span class="lineNum">     214</span>                 :<span class="tlaGNC">         960 :     Preset&amp; SetSpin(bool enabled, float g, float scale = 1.0f) { </span></span>
+<span id="L215"><span class="lineNum">     215</span>                 :<span class="tlaGNC">         960 :         spin_enabled = enabled; </span></span>
+<span id="L216"><span class="lineNum">     216</span>                 :<span class="tlaGNC">         960 :         spin_gain = g; </span></span>
+<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">         960 :         spin_freq_scale = scale;</span></span>
+<span id="L218"><span class="lineNum">     218</span>                 :<span class="tlaGNC">         960 :         return *this; </span></span>
 <span id="L219"><span class="lineNum">     219</span>                 :             :     }</span>
-<span id="L220"><span class="lineNum">     220</span>                 :<span class="tlaGNC">         448 :     Preset&amp; SetSlide(bool enabled, float g, float f = 1.0f) { </span></span>
-<span id="L221"><span class="lineNum">     221</span>                 :<span class="tlaGNC">         448 :         slide_enabled = enabled; </span></span>
-<span id="L222"><span class="lineNum">     222</span>                 :<span class="tlaGNC">         448 :         slide_gain = g; </span></span>
-<span id="L223"><span class="lineNum">     223</span>                 :<span class="tlaGNC">         448 :         slide_freq = f; </span></span>
-<span id="L224"><span class="lineNum">     224</span>                 :<span class="tlaGNC">         448 :         return *this; </span></span>
+<span id="L220"><span class="lineNum">     220</span>                 :<span class="tlaGNC">        1536 :     Preset&amp; SetSlide(bool enabled, float g, float f = 1.0f) { </span></span>
+<span id="L221"><span class="lineNum">     221</span>                 :<span class="tlaGNC">        1536 :         slide_enabled = enabled; </span></span>
+<span id="L222"><span class="lineNum">     222</span>                 :<span class="tlaGNC">        1536 :         slide_gain = g; </span></span>
+<span id="L223"><span class="lineNum">     223</span>                 :<span class="tlaGNC">        1536 :         slide_freq = f; </span></span>
+<span id="L224"><span class="lineNum">     224</span>                 :<span class="tlaGNC">        1536 :         return *this; </span></span>
 <span id="L225"><span class="lineNum">     225</span>                 :             :     }</span>
-<span id="L226"><span class="lineNum">     226</span>                 :<span class="tlaGNC">         280 :     Preset&amp; SetRoad(bool enabled, float g) { road_enabled = enabled; road_gain = g; return *this; }</span></span>
+<span id="L226"><span class="lineNum">     226</span>                 :<span class="tlaGNC">         960 :     Preset&amp; SetRoad(bool enabled, float g) { road_enabled = enabled; road_gain = g; return *this; }</span></span>
 <span id="L227"><span class="lineNum">     227</span>                 :             :     Preset&amp; SetVibrationGain(float v) { vibration_gain = v; return *this; }</span>
 <span id="L228"><span class="lineNum">     228</span>                 :             :     Preset&amp; SetDynamicNormalization(bool enabled) { dynamic_normalization_enabled = enabled; return *this; }</span>
 <span id="L229"><span class="lineNum">     229</span>                 :             : </span>
@@ -311,17 +311,17 @@
 <span id="L240"><span class="lineNum">     240</span>                 :             :         return *this;</span>
 <span id="L241"><span class="lineNum">     241</span>                 :             :     }</span>
 <span id="L242"><span class="lineNum">     242</span>                 :             :     </span>
-<span id="L243"><span class="lineNum">     243</span>                 :<span class="tlaGNC">         448 :     Preset&amp; SetBottoming(bool enabled, float gain, int method) {</span></span>
-<span id="L244"><span class="lineNum">     244</span>                 :<span class="tlaGNC">         448 :         bottoming_enabled = enabled;</span></span>
-<span id="L245"><span class="lineNum">     245</span>                 :<span class="tlaGNC">         448 :         bottoming_gain = gain;</span></span>
-<span id="L246"><span class="lineNum">     246</span>                 :<span class="tlaGNC">         448 :         bottoming_method = method;</span></span>
-<span id="L247"><span class="lineNum">     247</span>                 :<span class="tlaGNC">         448 :         return *this;</span></span>
+<span id="L243"><span class="lineNum">     243</span>                 :<span class="tlaGNC">        1536 :     Preset&amp; SetBottoming(bool enabled, float gain, int method) {</span></span>
+<span id="L244"><span class="lineNum">     244</span>                 :<span class="tlaGNC">        1536 :         bottoming_enabled = enabled;</span></span>
+<span id="L245"><span class="lineNum">     245</span>                 :<span class="tlaGNC">        1536 :         bottoming_gain = gain;</span></span>
+<span id="L246"><span class="lineNum">     246</span>                 :<span class="tlaGNC">        1536 :         bottoming_method = method;</span></span>
+<span id="L247"><span class="lineNum">     247</span>                 :<span class="tlaGNC">        1536 :         return *this;</span></span>
 <span id="L248"><span class="lineNum">     248</span>                 :             :     }</span>
-<span id="L249"><span class="lineNum">     249</span>                 :<span class="tlaGNC">         252 :     Preset&amp; SetScrub(float v) { scrub_drag_gain = v; return *this; }</span></span>
-<span id="L250"><span class="lineNum">     250</span>                 :<span class="tlaGNC">         448 :     Preset&amp; SetRearAlign(float v) { rear_align_effect = v; return *this; }</span></span>
+<span id="L249"><span class="lineNum">     249</span>                 :<span class="tlaGNC">         864 :     Preset&amp; SetScrub(float v) { scrub_drag_gain = v; return *this; }</span></span>
+<span id="L250"><span class="lineNum">     250</span>                 :<span class="tlaGNC">        1536 :     Preset&amp; SetRearAlign(float v) { rear_align_effect = v; return *this; }</span></span>
 <span id="L251"><span class="lineNum">     251</span>                 :             :     Preset&amp; SetKerbStrikeRejection(float v) { kerb_strike_rejection = v; return *this; }</span>
-<span id="L252"><span class="lineNum">     252</span>                 :<span class="tlaGNC">         258 :     Preset&amp; SetSoPYaw(float v) { sop_yaw_gain = v; return *this; }</span></span>
-<span id="L253"><span class="lineNum">     253</span>                 :<span class="tlaGNC">         168 :     Preset&amp; SetGyro(float v) { gyro_gain = v; return *this; }</span></span>
+<span id="L252"><span class="lineNum">     252</span>                 :<span class="tlaGNC">         870 :     Preset&amp; SetSoPYaw(float v) { sop_yaw_gain = v; return *this; }</span></span>
+<span id="L253"><span class="lineNum">     253</span>                 :<span class="tlaGNC">         576 :     Preset&amp; SetGyro(float v) { gyro_gain = v; return *this; }</span></span>
 <span id="L254"><span class="lineNum">     254</span>                 :             :     </span>
 <span id="L255"><span class="lineNum">     255</span>                 :             :     Preset&amp; SetShaftGain(float v) { steering_shaft_gain = v; return *this; }</span>
 <span id="L256"><span class="lineNum">     256</span>                 :             :     Preset&amp; SetInGameGain(float v) { ingame_ffb_gain = v; return *this; }</span>
@@ -340,7 +340,7 @@
 <span id="L269"><span class="lineNum">     269</span>                 :             :         static_notch_width = width;</span>
 <span id="L270"><span class="lineNum">     270</span>                 :             :         return *this;</span>
 <span id="L271"><span class="lineNum">     271</span>                 :             :     }</span>
-<span id="L272"><span class="lineNum">     272</span>                 :<span class="tlaGNC">          29 :     Preset&amp; SetYawKickThreshold(float v) { yaw_kick_threshold = v; return *this; }</span></span>
+<span id="L272"><span class="lineNum">     272</span>                 :<span class="tlaGNC">          97 :     Preset&amp; SetYawKickThreshold(float v) { yaw_kick_threshold = v; return *this; }</span></span>
 <span id="L273"><span class="lineNum">     273</span>                 :             : </span>
 <span id="L274"><span class="lineNum">     274</span>                 :<span class="tlaGNC">           2 :     Preset&amp; SetUnloadedYawKick(float gain, float threshold, float sens, float gamma, float punch) {</span></span>
 <span id="L275"><span class="lineNum">     275</span>                 :<span class="tlaGNC">           2 :         unloaded_yaw_gain = gain;</span></span>
@@ -360,17 +360,17 @@
 <span id="L289"><span class="lineNum">     289</span>                 :<span class="tlaGNC">           5 :         return *this;</span></span>
 <span id="L290"><span class="lineNum">     290</span>                 :             :     }</span>
 <span id="L291"><span class="lineNum">     291</span>                 :             : </span>
-<span id="L292"><span class="lineNum">     292</span>                 :<span class="tlaGNC">          34 :     Preset&amp; SetSpeedGate(float lower, float upper) { speed_gate_lower = lower; speed_gate_upper = upper; return *this; }</span></span>
+<span id="L292"><span class="lineNum">     292</span>                 :<span class="tlaGNC">         102 :     Preset&amp; SetSpeedGate(float lower, float upper) { speed_gate_lower = lower; speed_gate_upper = upper; return *this; }</span></span>
 <span id="L293"><span class="lineNum">     293</span>                 :             : </span>
-<span id="L294"><span class="lineNum">     294</span>                 :<span class="tlaGNC">          28 :     Preset&amp; SetOptimalSlip(float angle, float ratio) {</span></span>
-<span id="L295"><span class="lineNum">     295</span>                 :<span class="tlaGNC">          28 :         optimal_slip_angle = angle;</span></span>
-<span id="L296"><span class="lineNum">     296</span>                 :<span class="tlaGNC">          28 :         optimal_slip_ratio = ratio;</span></span>
-<span id="L297"><span class="lineNum">     297</span>                 :<span class="tlaGNC">          28 :         return *this;</span></span>
+<span id="L294"><span class="lineNum">     294</span>                 :<span class="tlaGNC">          96 :     Preset&amp; SetOptimalSlip(float angle, float ratio) {</span></span>
+<span id="L295"><span class="lineNum">     295</span>                 :<span class="tlaGNC">          96 :         optimal_slip_angle = angle;</span></span>
+<span id="L296"><span class="lineNum">     296</span>                 :<span class="tlaGNC">          96 :         optimal_slip_ratio = ratio;</span></span>
+<span id="L297"><span class="lineNum">     297</span>                 :<span class="tlaGNC">          96 :         return *this;</span></span>
 <span id="L298"><span class="lineNum">     298</span>                 :             :     }</span>
 <span id="L299"><span class="lineNum">     299</span>                 :             :     Preset&amp; SetShaftSmoothing(float v) { steering_shaft_smoothing = v; return *this; }</span>
 <span id="L300"><span class="lineNum">     300</span>                 :             :     </span>
 <span id="L301"><span class="lineNum">     301</span>                 :             :     Preset&amp; SetGyroSmoothing(float v) { gyro_smoothing = v; return *this; }</span>
-<span id="L302"><span class="lineNum">     302</span>                 :<span class="tlaGNC">          28 :     Preset&amp; SetYawSmoothing(float v) { yaw_smoothing = v; return *this; }</span></span>
+<span id="L302"><span class="lineNum">     302</span>                 :<span class="tlaGNC">          96 :     Preset&amp; SetYawSmoothing(float v) { yaw_smoothing = v; return *this; }</span></span>
 <span id="L303"><span class="lineNum">     303</span>                 :             :     Preset&amp; SetChassisSmoothing(float v) { chassis_smoothing = v; return *this; }</span>
 <span id="L304"><span class="lineNum">     304</span>                 :             :     </span>
 <span id="L305"><span class="lineNum">     305</span>                 :             :     Preset&amp; SetSlopeDetection(bool enabled, int window = 15, float min_thresh = -0.3f, float max_thresh = -2.0f, float tau = 0.04f) {</span>
@@ -418,266 +418,266 @@
 <span id="L347"><span class="lineNum">     347</span>                 :             :     // âš ï¸ IMPORTANT: Default parameters (abs_f, lockup_f) must match Config.h defaults!</span>
 <span id="L348"><span class="lineNum">     348</span>                 :             :     // When changing Config.h defaults, update these values to match.</span>
 <span id="L349"><span class="lineNum">     349</span>                 :             :     // Current: abs_f=25.5, lockup_f=1.02 (GT3 DD 15 Nm defaults - v0.6.35)</span>
-<span id="L350"><span class="lineNum">     350</span>                 :<span class="tlaGNC">          56 :     Preset&amp; SetAdvancedBraking(float gamma, float sens, float bump, bool abs, float abs_g, float abs_f = 25.5f, float lockup_f = 1.02f) {</span></span>
-<span id="L351"><span class="lineNum">     351</span>                 :<span class="tlaGNC">          56 :         lockup_gamma = gamma;</span></span>
-<span id="L352"><span class="lineNum">     352</span>                 :<span class="tlaGNC">          56 :         lockup_prediction_sens = sens;</span></span>
-<span id="L353"><span class="lineNum">     353</span>                 :<span class="tlaGNC">          56 :         lockup_bump_reject = bump;</span></span>
-<span id="L354"><span class="lineNum">     354</span>                 :<span class="tlaGNC">          56 :         abs_pulse_enabled = abs;</span></span>
-<span id="L355"><span class="lineNum">     355</span>                 :<span class="tlaGNC">          56 :         abs_gain = abs_g;</span></span>
-<span id="L356"><span class="lineNum">     356</span>                 :<span class="tlaGNC">          56 :         abs_freq = abs_f;</span></span>
-<span id="L357"><span class="lineNum">     357</span>                 :<span class="tlaGNC">          56 :         lockup_freq_scale = lockup_f;</span></span>
-<span id="L358"><span class="lineNum">     358</span>                 :<span class="tlaGNC">          56 :         return *this;</span></span>
+<span id="L350"><span class="lineNum">     350</span>                 :<span class="tlaGNC">         192 :     Preset&amp; SetAdvancedBraking(float gamma, float sens, float bump, bool abs, float abs_g, float abs_f = 25.5f, float lockup_f = 1.02f) {</span></span>
+<span id="L351"><span class="lineNum">     351</span>                 :<span class="tlaGNC">         192 :         lockup_gamma = gamma;</span></span>
+<span id="L352"><span class="lineNum">     352</span>                 :<span class="tlaGNC">         192 :         lockup_prediction_sens = sens;</span></span>
+<span id="L353"><span class="lineNum">     353</span>                 :<span class="tlaGNC">         192 :         lockup_bump_reject = bump;</span></span>
+<span id="L354"><span class="lineNum">     354</span>                 :<span class="tlaGNC">         192 :         abs_pulse_enabled = abs;</span></span>
+<span id="L355"><span class="lineNum">     355</span>                 :<span class="tlaGNC">         192 :         abs_gain = abs_g;</span></span>
+<span id="L356"><span class="lineNum">     356</span>                 :<span class="tlaGNC">         192 :         abs_freq = abs_f;</span></span>
+<span id="L357"><span class="lineNum">     357</span>                 :<span class="tlaGNC">         192 :         lockup_freq_scale = lockup_f;</span></span>
+<span id="L358"><span class="lineNum">     358</span>                 :<span class="tlaGNC">         192 :         return *this;</span></span>
 <span id="L359"><span class="lineNum">     359</span>                 :             :     }</span>
 <span id="L360"><span class="lineNum">     360</span>                 :             : </span>
 <span id="L361"><span class="lineNum">     361</span>                 :             :     // 4. Static method to apply defaults to FFBEngine (Single Source of Truth)</span>
 <span id="L362"><span class="lineNum">     362</span>                 :             :     // This is called by FFBEngine constructor to initialize with T300 defaults</span>
-<span id="L363"><span class="lineNum">     363</span>                 :<span class="tlaGNC">         852 :     static void ApplyDefaultsToEngine(FFBEngine&amp; engine) {</span></span>
-<span id="L364"><span class="lineNum">     364</span>         [<span class="tlaGBC" title="Branch 0 was taken 852 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         852 :         Preset defaults; // Uses default member initializers (T300 values)</span></span>
-<span id="L365"><span class="lineNum">     365</span>         [<span class="tlaGBC" title="Branch 0 was taken 852 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         852 :         defaults.Apply(engine);</span></span>
-<span id="L366"><span class="lineNum">     366</span>                 :<span class="tlaGNC">         852 :     }</span></span>
+<span id="L363"><span class="lineNum">     363</span>                 :<span class="tlaGNC">         854 :     static void ApplyDefaultsToEngine(FFBEngine&amp; engine) {</span></span>
+<span id="L364"><span class="lineNum">     364</span>         [<span class="tlaGBC" title="Branch 0 was taken 854 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         854 :         Preset defaults; // Uses default member initializers (T300 values)</span></span>
+<span id="L365"><span class="lineNum">     365</span>         [<span class="tlaGBC" title="Branch 0 was taken 854 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         854 :         defaults.Apply(engine);</span></span>
+<span id="L366"><span class="lineNum">     366</span>                 :<span class="tlaGNC">         854 :     }</span></span>
 <span id="L367"><span class="lineNum">     367</span>                 :             : </span>
 <span id="L368"><span class="lineNum">     368</span>                 :             :     // Apply this preset to an engine instance</span>
 <span id="L369"><span class="lineNum">     369</span>                 :             :     // v0.7.16: Added comprehensive safety clamping to prevent crashes/NaN from invalid config values</span>
-<span id="L370"><span class="lineNum">     370</span>                 :<span class="tlaGNC">         882 :     void Apply(FFBEngine&amp; engine) const {</span></span>
-<span id="L371"><span class="lineNum">     371</span>                 :<span class="tlaGNC">         882 :         engine.m_dynamic_normalization_enabled = dynamic_normalization_enabled;</span></span>
-<span id="L372"><span class="lineNum">     372</span>                 :<span class="tlaGNC">         882 :         engine.m_auto_load_normalization_enabled = auto_load_normalization_enabled;</span></span>
-<span id="L373"><span class="lineNum">     373</span>                 :<span class="tlaGNC">         882 :         engine.m_gain = (std::max)(0.0f, gain);</span></span>
-<span id="L374"><span class="lineNum">     374</span>                 :<span class="tlaGNC">         882 :         engine.m_understeer_effect = (std::max)(0.0f, (std::min)(2.0f, understeer));</span></span>
-<span id="L375"><span class="lineNum">     375</span>                 :<span class="tlaGNC">         882 :         engine.m_understeer_gamma = (std::max)(0.1f, (std::min)(4.0f, understeer_gamma));</span></span>
-<span id="L376"><span class="lineNum">     376</span>                 :<span class="tlaGNC">         882 :         engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, sop));</span></span>
-<span id="L377"><span class="lineNum">     377</span>                 :<span class="tlaGNC">         882 :         engine.m_lat_load_effect = (std::max)(0.0f, (std::min)(2.0f, lateral_load));</span></span>
-<span id="L378"><span class="lineNum">     378</span>         [<span class="tlaGBC" title="Branch 0 was taken 882 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         882 :         engine.m_lat_load_transform = static_cast&lt;LoadTransform&gt;(std::clamp(lat_load_transform, 0, 3));</span></span>
-<span id="L379"><span class="lineNum">     379</span>                 :<span class="tlaGNC">         882 :         engine.m_sop_scale = (std::max)(0.01f, sop_scale);</span></span>
-<span id="L380"><span class="lineNum">     380</span>                 :<span class="tlaGNC">         882 :         engine.m_sop_smoothing_factor = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing));</span></span>
-<span id="L381"><span class="lineNum">     381</span>                 :<span class="tlaGNC">         882 :         engine.m_slip_angle_smoothing = (std::max)(0.0001f, slip_smoothing);</span></span>
-<span id="L382"><span class="lineNum">     382</span>                 :<span class="tlaGNC">         882 :         engine.m_min_force = (std::max)(0.0f, min_force);</span></span>
-<span id="L383"><span class="lineNum">     383</span>                 :<span class="tlaGNC">         882 :         engine.m_oversteer_boost = (std::max)(0.0f, oversteer_boost);</span></span>
-<span id="L384"><span class="lineNum">     384</span>                 :<span class="tlaGNC">         882 :         engine.m_long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));</span></span>
-<span id="L385"><span class="lineNum">     385</span>                 :<span class="tlaGNC">         882 :         engine.m_long_load_smoothing = (std::max)(0.0f, long_load_smoothing);</span></span>
-<span id="L386"><span class="lineNum">     386</span>         [<span class="tlaGBC" title="Branch 0 was taken 882 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         882 :         engine.m_long_load_transform = static_cast&lt;LoadTransform&gt;(std::clamp(long_load_transform, 0, 3));</span></span>
-<span id="L387"><span class="lineNum">     387</span>                 :<span class="tlaGNC">         882 :         engine.m_grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);</span></span>
-<span id="L388"><span class="lineNum">     388</span>                 :<span class="tlaGNC">         882 :         engine.m_grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);</span></span>
-<span id="L389"><span class="lineNum">     389</span>                 :<span class="tlaGNC">         882 :         engine.m_grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);</span></span>
+<span id="L370"><span class="lineNum">     370</span>                 :<span class="tlaGNC">         884 :     void Apply(FFBEngine&amp; engine) const {</span></span>
+<span id="L371"><span class="lineNum">     371</span>                 :<span class="tlaGNC">         884 :         engine.m_dynamic_normalization_enabled = dynamic_normalization_enabled;</span></span>
+<span id="L372"><span class="lineNum">     372</span>                 :<span class="tlaGNC">         884 :         engine.m_auto_load_normalization_enabled = auto_load_normalization_enabled;</span></span>
+<span id="L373"><span class="lineNum">     373</span>                 :<span class="tlaGNC">         884 :         engine.m_gain = (std::max)(0.0f, gain);</span></span>
+<span id="L374"><span class="lineNum">     374</span>                 :<span class="tlaGNC">         884 :         engine.m_understeer_effect = (std::max)(0.0f, (std::min)(2.0f, understeer));</span></span>
+<span id="L375"><span class="lineNum">     375</span>                 :<span class="tlaGNC">         884 :         engine.m_understeer_gamma = (std::max)(0.1f, (std::min)(4.0f, understeer_gamma));</span></span>
+<span id="L376"><span class="lineNum">     376</span>                 :<span class="tlaGNC">         884 :         engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, sop));</span></span>
+<span id="L377"><span class="lineNum">     377</span>                 :<span class="tlaGNC">         884 :         engine.m_lat_load_effect = (std::max)(0.0f, (std::min)(2.0f, lateral_load));</span></span>
+<span id="L378"><span class="lineNum">     378</span>         [<span class="tlaGBC" title="Branch 0 was taken 884 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         884 :         engine.m_lat_load_transform = static_cast&lt;LoadTransform&gt;(std::clamp(lat_load_transform, 0, 3));</span></span>
+<span id="L379"><span class="lineNum">     379</span>                 :<span class="tlaGNC">         884 :         engine.m_sop_scale = (std::max)(0.01f, sop_scale);</span></span>
+<span id="L380"><span class="lineNum">     380</span>                 :<span class="tlaGNC">         884 :         engine.m_sop_smoothing_factor = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing));</span></span>
+<span id="L381"><span class="lineNum">     381</span>                 :<span class="tlaGNC">         884 :         engine.m_slip_angle_smoothing = (std::max)(0.0001f, slip_smoothing);</span></span>
+<span id="L382"><span class="lineNum">     382</span>                 :<span class="tlaGNC">         884 :         engine.m_min_force = (std::max)(0.0f, min_force);</span></span>
+<span id="L383"><span class="lineNum">     383</span>                 :<span class="tlaGNC">         884 :         engine.m_oversteer_boost = (std::max)(0.0f, oversteer_boost);</span></span>
+<span id="L384"><span class="lineNum">     384</span>                 :<span class="tlaGNC">         884 :         engine.m_long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));</span></span>
+<span id="L385"><span class="lineNum">     385</span>                 :<span class="tlaGNC">         884 :         engine.m_long_load_smoothing = (std::max)(0.0f, long_load_smoothing);</span></span>
+<span id="L386"><span class="lineNum">     386</span>         [<span class="tlaGBC" title="Branch 0 was taken 884 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         884 :         engine.m_long_load_transform = static_cast&lt;LoadTransform&gt;(std::clamp(long_load_transform, 0, 3));</span></span>
+<span id="L387"><span class="lineNum">     387</span>                 :<span class="tlaGNC">         884 :         engine.m_grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);</span></span>
+<span id="L388"><span class="lineNum">     388</span>                 :<span class="tlaGNC">         884 :         engine.m_grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);</span></span>
+<span id="L389"><span class="lineNum">     389</span>                 :<span class="tlaGNC">         884 :         engine.m_grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);</span></span>
 <span id="L390"><span class="lineNum">     390</span>                 :             : </span>
 <span id="L391"><span class="lineNum">     391</span>                 :             :         // FFB Safety (Issue #316)</span>
-<span id="L392"><span class="lineNum">     392</span>                 :<span class="tlaGNC">         882 :         engine.m_safety.m_safety_window_duration = (std::max)(0.0f, safety_window_duration);</span></span>
-<span id="L393"><span class="lineNum">     393</span>                 :<span class="tlaGNC">         882 :         engine.m_safety.m_safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));</span></span>
-<span id="L394"><span class="lineNum">     394</span>                 :<span class="tlaGNC">         882 :         engine.m_safety.m_safety_smoothing_tau = (std::max)(0.001f, safety_smoothing_tau);</span></span>
-<span id="L395"><span class="lineNum">     395</span>                 :<span class="tlaGNC">         882 :         engine.m_safety.m_spike_detection_threshold = (std::max)(1.0f, spike_detection_threshold);</span></span>
-<span id="L396"><span class="lineNum">     396</span>                 :<span class="tlaGNC">         882 :         engine.m_safety.m_immediate_spike_threshold = (std::max)(1.0f, immediate_spike_threshold);</span></span>
-<span id="L397"><span class="lineNum">     397</span>                 :<span class="tlaGNC">         882 :         engine.m_safety.m_safety_slew_full_scale_time_s = (std::max)(0.01f, safety_slew_full_scale_time_s);</span></span>
-<span id="L398"><span class="lineNum">     398</span>                 :<span class="tlaGNC">         882 :         engine.m_safety.m_stutter_safety_enabled = stutter_safety_enabled;</span></span>
-<span id="L399"><span class="lineNum">     399</span>                 :<span class="tlaGNC">         882 :         engine.m_safety.m_stutter_threshold = (std::max)(1.01f, stutter_threshold);</span></span>
+<span id="L392"><span class="lineNum">     392</span>                 :<span class="tlaGNC">         884 :         engine.m_safety.m_safety_window_duration = (std::max)(0.0f, safety_window_duration);</span></span>
+<span id="L393"><span class="lineNum">     393</span>                 :<span class="tlaGNC">         884 :         engine.m_safety.m_safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));</span></span>
+<span id="L394"><span class="lineNum">     394</span>                 :<span class="tlaGNC">         884 :         engine.m_safety.m_safety_smoothing_tau = (std::max)(0.001f, safety_smoothing_tau);</span></span>
+<span id="L395"><span class="lineNum">     395</span>                 :<span class="tlaGNC">         884 :         engine.m_safety.m_spike_detection_threshold = (std::max)(1.0f, spike_detection_threshold);</span></span>
+<span id="L396"><span class="lineNum">     396</span>                 :<span class="tlaGNC">         884 :         engine.m_safety.m_immediate_spike_threshold = (std::max)(1.0f, immediate_spike_threshold);</span></span>
+<span id="L397"><span class="lineNum">     397</span>                 :<span class="tlaGNC">         884 :         engine.m_safety.m_safety_slew_full_scale_time_s = (std::max)(0.01f, safety_slew_full_scale_time_s);</span></span>
+<span id="L398"><span class="lineNum">     398</span>                 :<span class="tlaGNC">         884 :         engine.m_safety.m_stutter_safety_enabled = stutter_safety_enabled;</span></span>
+<span id="L399"><span class="lineNum">     399</span>                 :<span class="tlaGNC">         884 :         engine.m_safety.m_stutter_threshold = (std::max)(1.01f, stutter_threshold);</span></span>
 <span id="L400"><span class="lineNum">     400</span>                 :             : </span>
-<span id="L401"><span class="lineNum">     401</span>                 :<span class="tlaGNC">         882 :         engine.m_lockup_enabled = lockup_enabled;</span></span>
-<span id="L402"><span class="lineNum">     402</span>                 :<span class="tlaGNC">         882 :         engine.m_lockup_gain = (std::max)(0.0f, lockup_gain);</span></span>
-<span id="L403"><span class="lineNum">     403</span>                 :<span class="tlaGNC">         882 :         engine.m_lockup_start_pct = (std::max)(0.1f, lockup_start_pct);</span></span>
-<span id="L404"><span class="lineNum">     404</span>                 :<span class="tlaGNC">         882 :         engine.m_lockup_full_pct = (std::max)(0.2f, lockup_full_pct);</span></span>
-<span id="L405"><span class="lineNum">     405</span>                 :<span class="tlaGNC">         882 :         engine.m_lockup_rear_boost = (std::max)(0.0f, lockup_rear_boost);</span></span>
-<span id="L406"><span class="lineNum">     406</span>                 :<span class="tlaGNC">         882 :         engine.m_lockup_gamma = (std::max)(0.1f, lockup_gamma); // Critical: prevent pow(0, negative) crash</span></span>
-<span id="L407"><span class="lineNum">     407</span>                 :<span class="tlaGNC">         882 :         engine.m_lockup_prediction_sens = (std::max)(1.0f, lockup_prediction_sens);</span></span>
-<span id="L408"><span class="lineNum">     408</span>                 :<span class="tlaGNC">         882 :         engine.m_lockup_bump_reject = (std::max)(0.01f, lockup_bump_reject);</span></span>
-<span id="L409"><span class="lineNum">     409</span>                 :<span class="tlaGNC">         882 :         engine.m_brake_load_cap = (std::max)(1.0f, brake_load_cap);</span></span>
-<span id="L410"><span class="lineNum">     410</span>                 :<span class="tlaGNC">         882 :         engine.m_texture_load_cap = (std::max)(1.0f, texture_load_cap);</span></span>
+<span id="L401"><span class="lineNum">     401</span>                 :<span class="tlaGNC">         884 :         engine.m_lockup_enabled = lockup_enabled;</span></span>
+<span id="L402"><span class="lineNum">     402</span>                 :<span class="tlaGNC">         884 :         engine.m_lockup_gain = (std::max)(0.0f, lockup_gain);</span></span>
+<span id="L403"><span class="lineNum">     403</span>                 :<span class="tlaGNC">         884 :         engine.m_lockup_start_pct = (std::max)(0.1f, lockup_start_pct);</span></span>
+<span id="L404"><span class="lineNum">     404</span>                 :<span class="tlaGNC">         884 :         engine.m_lockup_full_pct = (std::max)(0.2f, lockup_full_pct);</span></span>
+<span id="L405"><span class="lineNum">     405</span>                 :<span class="tlaGNC">         884 :         engine.m_lockup_rear_boost = (std::max)(0.0f, lockup_rear_boost);</span></span>
+<span id="L406"><span class="lineNum">     406</span>                 :<span class="tlaGNC">         884 :         engine.m_lockup_gamma = (std::max)(0.1f, lockup_gamma); // Critical: prevent pow(0, negative) crash</span></span>
+<span id="L407"><span class="lineNum">     407</span>                 :<span class="tlaGNC">         884 :         engine.m_lockup_prediction_sens = (std::max)(1.0f, lockup_prediction_sens);</span></span>
+<span id="L408"><span class="lineNum">     408</span>                 :<span class="tlaGNC">         884 :         engine.m_lockup_bump_reject = (std::max)(0.01f, lockup_bump_reject);</span></span>
+<span id="L409"><span class="lineNum">     409</span>                 :<span class="tlaGNC">         884 :         engine.m_brake_load_cap = (std::max)(1.0f, brake_load_cap);</span></span>
+<span id="L410"><span class="lineNum">     410</span>                 :<span class="tlaGNC">         884 :         engine.m_texture_load_cap = (std::max)(1.0f, texture_load_cap);</span></span>
 <span id="L411"><span class="lineNum">     411</span>                 :             : </span>
-<span id="L412"><span class="lineNum">     412</span>                 :<span class="tlaGNC">         882 :         engine.m_abs_pulse_enabled = abs_pulse_enabled;</span></span>
-<span id="L413"><span class="lineNum">     413</span>                 :<span class="tlaGNC">         882 :         engine.m_abs_gain = (std::max)(0.0f, abs_gain);</span></span>
+<span id="L412"><span class="lineNum">     412</span>                 :<span class="tlaGNC">         884 :         engine.m_abs_pulse_enabled = abs_pulse_enabled;</span></span>
+<span id="L413"><span class="lineNum">     413</span>                 :<span class="tlaGNC">         884 :         engine.m_abs_gain = (std::max)(0.0f, abs_gain);</span></span>
 <span id="L414"><span class="lineNum">     414</span>                 :             : </span>
-<span id="L415"><span class="lineNum">     415</span>                 :<span class="tlaGNC">         882 :         engine.m_spin_enabled = spin_enabled;</span></span>
-<span id="L416"><span class="lineNum">     416</span>                 :<span class="tlaGNC">         882 :         engine.m_spin_gain = (std::max)(0.0f, spin_gain);</span></span>
-<span id="L417"><span class="lineNum">     417</span>                 :<span class="tlaGNC">         882 :         engine.m_slide_texture_enabled = slide_enabled;</span></span>
-<span id="L418"><span class="lineNum">     418</span>                 :<span class="tlaGNC">         882 :         engine.m_slide_texture_gain = (std::max)(0.0f, slide_gain);</span></span>
-<span id="L419"><span class="lineNum">     419</span>                 :<span class="tlaGNC">         882 :         engine.m_slide_freq_scale = (std::max)(0.1f, slide_freq);</span></span>
-<span id="L420"><span class="lineNum">     420</span>                 :<span class="tlaGNC">         882 :         engine.m_road_texture_enabled = road_enabled;</span></span>
-<span id="L421"><span class="lineNum">     421</span>                 :<span class="tlaGNC">         882 :         engine.m_road_texture_gain = (std::max)(0.0f, road_gain);</span></span>
-<span id="L422"><span class="lineNum">     422</span>                 :<span class="tlaGNC">         882 :         engine.m_vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));</span></span>
+<span id="L415"><span class="lineNum">     415</span>                 :<span class="tlaGNC">         884 :         engine.m_spin_enabled = spin_enabled;</span></span>
+<span id="L416"><span class="lineNum">     416</span>                 :<span class="tlaGNC">         884 :         engine.m_spin_gain = (std::max)(0.0f, spin_gain);</span></span>
+<span id="L417"><span class="lineNum">     417</span>                 :<span class="tlaGNC">         884 :         engine.m_slide_texture_enabled = slide_enabled;</span></span>
+<span id="L418"><span class="lineNum">     418</span>                 :<span class="tlaGNC">         884 :         engine.m_slide_texture_gain = (std::max)(0.0f, slide_gain);</span></span>
+<span id="L419"><span class="lineNum">     419</span>                 :<span class="tlaGNC">         884 :         engine.m_slide_freq_scale = (std::max)(0.1f, slide_freq);</span></span>
+<span id="L420"><span class="lineNum">     420</span>                 :<span class="tlaGNC">         884 :         engine.m_road_texture_enabled = road_enabled;</span></span>
+<span id="L421"><span class="lineNum">     421</span>                 :<span class="tlaGNC">         884 :         engine.m_road_texture_gain = (std::max)(0.0f, road_gain);</span></span>
+<span id="L422"><span class="lineNum">     422</span>                 :<span class="tlaGNC">         884 :         engine.m_vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));</span></span>
 <span id="L423"><span class="lineNum">     423</span>                 :             : </span>
-<span id="L424"><span class="lineNum">     424</span>                 :<span class="tlaGNC">         882 :         engine.m_soft_lock_enabled = soft_lock_enabled;</span></span>
-<span id="L425"><span class="lineNum">     425</span>                 :<span class="tlaGNC">         882 :         engine.m_soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);</span></span>
-<span id="L426"><span class="lineNum">     426</span>                 :<span class="tlaGNC">         882 :         engine.m_soft_lock_damping = (std::max)(0.0f, soft_lock_damping);</span></span>
+<span id="L424"><span class="lineNum">     424</span>                 :<span class="tlaGNC">         884 :         engine.m_soft_lock_enabled = soft_lock_enabled;</span></span>
+<span id="L425"><span class="lineNum">     425</span>                 :<span class="tlaGNC">         884 :         engine.m_soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);</span></span>
+<span id="L426"><span class="lineNum">     426</span>                 :<span class="tlaGNC">         884 :         engine.m_soft_lock_damping = (std::max)(0.0f, soft_lock_damping);</span></span>
 <span id="L427"><span class="lineNum">     427</span>                 :             : </span>
-<span id="L428"><span class="lineNum">     428</span>                 :<span class="tlaGNC">         882 :         engine.m_wheelbase_max_nm = (std::max)(1.0f, wheelbase_max_nm);</span></span>
-<span id="L429"><span class="lineNum">     429</span>                 :<span class="tlaGNC">         882 :         engine.m_target_rim_nm = (std::max)(1.0f, target_rim_nm);</span></span>
-<span id="L430"><span class="lineNum">     430</span>                 :<span class="tlaGNC">         882 :         engine.m_abs_freq_hz = (std::max)(1.0f, abs_freq);</span></span>
-<span id="L431"><span class="lineNum">     431</span>                 :<span class="tlaGNC">         882 :         engine.m_lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);</span></span>
-<span id="L432"><span class="lineNum">     432</span>                 :<span class="tlaGNC">         882 :         engine.m_spin_freq_scale = (std::max)(0.1f, spin_freq_scale);</span></span>
-<span id="L433"><span class="lineNum">     433</span>                 :<span class="tlaGNC">         882 :         engine.m_bottoming_enabled = bottoming_enabled;</span></span>
-<span id="L434"><span class="lineNum">     434</span>                 :<span class="tlaGNC">         882 :         engine.m_bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));</span></span>
-<span id="L435"><span class="lineNum">     435</span>                 :<span class="tlaGNC">         882 :         engine.m_bottoming_method = bottoming_method;</span></span>
-<span id="L436"><span class="lineNum">     436</span>                 :<span class="tlaGNC">         882 :         engine.m_scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);</span></span>
-<span id="L437"><span class="lineNum">     437</span>                 :<span class="tlaGNC">         882 :         engine.m_rear_align_effect = (std::max)(0.0f, rear_align_effect);</span></span>
-<span id="L438"><span class="lineNum">     438</span>                 :<span class="tlaGNC">         882 :         engine.m_kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, kerb_strike_rejection));</span></span>
-<span id="L439"><span class="lineNum">     439</span>                 :<span class="tlaGNC">         882 :         engine.m_sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);</span></span>
-<span id="L440"><span class="lineNum">     440</span>                 :<span class="tlaGNC">         882 :         engine.m_gyro_gain = (std::max)(0.0f, gyro_gain);</span></span>
-<span id="L441"><span class="lineNum">     441</span>                 :<span class="tlaGNC">         882 :         engine.m_steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);</span></span>
-<span id="L442"><span class="lineNum">     442</span>                 :<span class="tlaGNC">         882 :         engine.m_ingame_ffb_gain = (std::max)(0.0f, ingame_ffb_gain);</span></span>
-<span id="L443"><span class="lineNum">     443</span>                 :<span class="tlaGNC">         882 :         engine.m_torque_source = torque_source;</span></span>
-<span id="L444"><span class="lineNum">     444</span>                 :<span class="tlaGNC">         882 :         engine.m_steering_100hz_reconstruction = steering_100hz_reconstruction;</span></span>
-<span id="L445"><span class="lineNum">     445</span>                 :<span class="tlaGNC">         882 :         engine.m_torque_passthrough = torque_passthrough;</span></span>
-<span id="L446"><span class="lineNum">     446</span>                 :<span class="tlaGNC">         882 :         engine.m_flatspot_suppression = flatspot_suppression;</span></span>
-<span id="L447"><span class="lineNum">     447</span>                 :<span class="tlaGNC">         882 :         engine.m_notch_q = (std::max)(0.1f, notch_q); // Critical for biquad division</span></span>
-<span id="L448"><span class="lineNum">     448</span>                 :<span class="tlaGNC">         882 :         engine.m_flatspot_strength = (std::max)(0.0f, (std::min)(1.0f, flatspot_strength));</span></span>
-<span id="L449"><span class="lineNum">     449</span>                 :<span class="tlaGNC">         882 :         engine.m_static_notch_enabled = static_notch_enabled;</span></span>
-<span id="L450"><span class="lineNum">     450</span>                 :<span class="tlaGNC">         882 :         engine.m_static_notch_freq = (std::max)(1.0f, static_notch_freq);</span></span>
-<span id="L451"><span class="lineNum">     451</span>                 :<span class="tlaGNC">         882 :         engine.m_static_notch_width = (std::max)(0.1f, static_notch_width);</span></span>
-<span id="L452"><span class="lineNum">     452</span>                 :<span class="tlaGNC">         882 :         engine.m_yaw_kick_threshold = (std::max)(0.0f, yaw_kick_threshold);</span></span>
+<span id="L428"><span class="lineNum">     428</span>                 :<span class="tlaGNC">         884 :         engine.m_wheelbase_max_nm = (std::max)(1.0f, wheelbase_max_nm);</span></span>
+<span id="L429"><span class="lineNum">     429</span>                 :<span class="tlaGNC">         884 :         engine.m_target_rim_nm = (std::max)(1.0f, target_rim_nm);</span></span>
+<span id="L430"><span class="lineNum">     430</span>                 :<span class="tlaGNC">         884 :         engine.m_abs_freq_hz = (std::max)(1.0f, abs_freq);</span></span>
+<span id="L431"><span class="lineNum">     431</span>                 :<span class="tlaGNC">         884 :         engine.m_lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);</span></span>
+<span id="L432"><span class="lineNum">     432</span>                 :<span class="tlaGNC">         884 :         engine.m_spin_freq_scale = (std::max)(0.1f, spin_freq_scale);</span></span>
+<span id="L433"><span class="lineNum">     433</span>                 :<span class="tlaGNC">         884 :         engine.m_bottoming_enabled = bottoming_enabled;</span></span>
+<span id="L434"><span class="lineNum">     434</span>                 :<span class="tlaGNC">         884 :         engine.m_bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));</span></span>
+<span id="L435"><span class="lineNum">     435</span>                 :<span class="tlaGNC">         884 :         engine.m_bottoming_method = bottoming_method;</span></span>
+<span id="L436"><span class="lineNum">     436</span>                 :<span class="tlaGNC">         884 :         engine.m_scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);</span></span>
+<span id="L437"><span class="lineNum">     437</span>                 :<span class="tlaGNC">         884 :         engine.m_rear_align_effect = (std::max)(0.0f, rear_align_effect);</span></span>
+<span id="L438"><span class="lineNum">     438</span>                 :<span class="tlaGNC">         884 :         engine.m_kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, kerb_strike_rejection));</span></span>
+<span id="L439"><span class="lineNum">     439</span>                 :<span class="tlaGNC">         884 :         engine.m_sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);</span></span>
+<span id="L440"><span class="lineNum">     440</span>                 :<span class="tlaGNC">         884 :         engine.m_gyro_gain = (std::max)(0.0f, gyro_gain);</span></span>
+<span id="L441"><span class="lineNum">     441</span>                 :<span class="tlaGNC">         884 :         engine.m_steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);</span></span>
+<span id="L442"><span class="lineNum">     442</span>                 :<span class="tlaGNC">         884 :         engine.m_ingame_ffb_gain = (std::max)(0.0f, ingame_ffb_gain);</span></span>
+<span id="L443"><span class="lineNum">     443</span>                 :<span class="tlaGNC">         884 :         engine.m_torque_source = torque_source;</span></span>
+<span id="L444"><span class="lineNum">     444</span>                 :<span class="tlaGNC">         884 :         engine.m_steering_100hz_reconstruction = steering_100hz_reconstruction;</span></span>
+<span id="L445"><span class="lineNum">     445</span>                 :<span class="tlaGNC">         884 :         engine.m_torque_passthrough = torque_passthrough;</span></span>
+<span id="L446"><span class="lineNum">     446</span>                 :<span class="tlaGNC">         884 :         engine.m_flatspot_suppression = flatspot_suppression;</span></span>
+<span id="L447"><span class="lineNum">     447</span>                 :<span class="tlaGNC">         884 :         engine.m_notch_q = (std::max)(0.1f, notch_q); // Critical for biquad division</span></span>
+<span id="L448"><span class="lineNum">     448</span>                 :<span class="tlaGNC">         884 :         engine.m_flatspot_strength = (std::max)(0.0f, (std::min)(1.0f, flatspot_strength));</span></span>
+<span id="L449"><span class="lineNum">     449</span>                 :<span class="tlaGNC">         884 :         engine.m_static_notch_enabled = static_notch_enabled;</span></span>
+<span id="L450"><span class="lineNum">     450</span>                 :<span class="tlaGNC">         884 :         engine.m_static_notch_freq = (std::max)(1.0f, static_notch_freq);</span></span>
+<span id="L451"><span class="lineNum">     451</span>                 :<span class="tlaGNC">         884 :         engine.m_static_notch_width = (std::max)(0.1f, static_notch_width);</span></span>
+<span id="L452"><span class="lineNum">     452</span>                 :<span class="tlaGNC">         884 :         engine.m_yaw_kick_threshold = (std::max)(0.0f, yaw_kick_threshold);</span></span>
 <span id="L453"><span class="lineNum">     453</span>                 :             : </span>
 <span id="L454"><span class="lineNum">     454</span>                 :             :         // v0.7.164 (Issue #322)</span>
-<span id="L455"><span class="lineNum">     455</span>                 :<span class="tlaGNC">         882 :         engine.m_unloaded_yaw_gain = (std::max)(0.0f, unloaded_yaw_gain);</span></span>
-<span id="L456"><span class="lineNum">     456</span>                 :<span class="tlaGNC">         882 :         engine.m_unloaded_yaw_threshold = (std::max)(0.0f, unloaded_yaw_threshold);</span></span>
-<span id="L457"><span class="lineNum">     457</span>                 :<span class="tlaGNC">         882 :         engine.m_unloaded_yaw_sens = (std::max)(0.1f, unloaded_yaw_sens);</span></span>
-<span id="L458"><span class="lineNum">     458</span>                 :<span class="tlaGNC">         882 :         engine.m_unloaded_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, unloaded_yaw_gamma));</span></span>
-<span id="L459"><span class="lineNum">     459</span>                 :<span class="tlaGNC">         882 :         engine.m_unloaded_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, unloaded_yaw_punch));</span></span>
+<span id="L455"><span class="lineNum">     455</span>                 :<span class="tlaGNC">         884 :         engine.m_unloaded_yaw_gain = (std::max)(0.0f, unloaded_yaw_gain);</span></span>
+<span id="L456"><span class="lineNum">     456</span>                 :<span class="tlaGNC">         884 :         engine.m_unloaded_yaw_threshold = (std::max)(0.0f, unloaded_yaw_threshold);</span></span>
+<span id="L457"><span class="lineNum">     457</span>                 :<span class="tlaGNC">         884 :         engine.m_unloaded_yaw_sens = (std::max)(0.1f, unloaded_yaw_sens);</span></span>
+<span id="L458"><span class="lineNum">     458</span>                 :<span class="tlaGNC">         884 :         engine.m_unloaded_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, unloaded_yaw_gamma));</span></span>
+<span id="L459"><span class="lineNum">     459</span>                 :<span class="tlaGNC">         884 :         engine.m_unloaded_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, unloaded_yaw_punch));</span></span>
 <span id="L460"><span class="lineNum">     460</span>                 :             : </span>
-<span id="L461"><span class="lineNum">     461</span>                 :<span class="tlaGNC">         882 :         engine.m_power_yaw_gain = (std::max)(0.0f, power_yaw_gain);</span></span>
-<span id="L462"><span class="lineNum">     462</span>                 :<span class="tlaGNC">         882 :         engine.m_power_yaw_threshold = (std::max)(0.0f, power_yaw_threshold);</span></span>
-<span id="L463"><span class="lineNum">     463</span>                 :<span class="tlaGNC">         882 :         engine.m_power_slip_threshold = (std::max)(0.01f, (std::min)(1.0f, power_slip_threshold));</span></span>
-<span id="L464"><span class="lineNum">     464</span>                 :<span class="tlaGNC">         882 :         engine.m_power_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, power_yaw_gamma));</span></span>
-<span id="L465"><span class="lineNum">     465</span>                 :<span class="tlaGNC">         882 :         engine.m_power_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, power_yaw_punch));</span></span>
+<span id="L461"><span class="lineNum">     461</span>                 :<span class="tlaGNC">         884 :         engine.m_power_yaw_gain = (std::max)(0.0f, power_yaw_gain);</span></span>
+<span id="L462"><span class="lineNum">     462</span>                 :<span class="tlaGNC">         884 :         engine.m_power_yaw_threshold = (std::max)(0.0f, power_yaw_threshold);</span></span>
+<span id="L463"><span class="lineNum">     463</span>                 :<span class="tlaGNC">         884 :         engine.m_power_slip_threshold = (std::max)(0.01f, (std::min)(1.0f, power_slip_threshold));</span></span>
+<span id="L464"><span class="lineNum">     464</span>                 :<span class="tlaGNC">         884 :         engine.m_power_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, power_yaw_gamma));</span></span>
+<span id="L465"><span class="lineNum">     465</span>                 :<span class="tlaGNC">         884 :         engine.m_power_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, power_yaw_punch));</span></span>
 <span id="L466"><span class="lineNum">     466</span>                 :             : </span>
-<span id="L467"><span class="lineNum">     467</span>                 :<span class="tlaGNC">         882 :         engine.m_speed_gate_lower = (std::max)(0.0f, speed_gate_lower);</span></span>
-<span id="L468"><span class="lineNum">     468</span>                 :<span class="tlaGNC">         882 :         engine.m_speed_gate_upper = (std::max)(0.1f, speed_gate_upper);</span></span>
+<span id="L467"><span class="lineNum">     467</span>                 :<span class="tlaGNC">         884 :         engine.m_speed_gate_lower = (std::max)(0.0f, speed_gate_lower);</span></span>
+<span id="L468"><span class="lineNum">     468</span>                 :<span class="tlaGNC">         884 :         engine.m_speed_gate_upper = (std::max)(0.1f, speed_gate_upper);</span></span>
 <span id="L469"><span class="lineNum">     469</span>                 :             :         </span>
 <span id="L470"><span class="lineNum">     470</span>                 :             :         // NEW: Grip &amp; Smoothing (v0.5.7/v0.5.8)</span>
-<span id="L471"><span class="lineNum">     471</span>                 :<span class="tlaGNC">         882 :         engine.m_optimal_slip_angle = (std::max)(0.01f, optimal_slip_angle); // Critical for grip division</span></span>
-<span id="L472"><span class="lineNum">     472</span>                 :<span class="tlaGNC">         882 :         engine.m_optimal_slip_ratio = (std::max)(0.01f, optimal_slip_ratio); // Critical for grip division</span></span>
-<span id="L473"><span class="lineNum">     473</span>                 :<span class="tlaGNC">         882 :         engine.m_steering_shaft_smoothing = (std::max)(0.0f, steering_shaft_smoothing);</span></span>
-<span id="L474"><span class="lineNum">     474</span>                 :<span class="tlaGNC">         882 :         engine.m_gyro_smoothing = (std::max)(0.0f, gyro_smoothing);</span></span>
-<span id="L475"><span class="lineNum">     475</span>                 :<span class="tlaGNC">         882 :         engine.m_yaw_accel_smoothing = (std::max)(0.0f, yaw_smoothing);</span></span>
-<span id="L476"><span class="lineNum">     476</span>                 :<span class="tlaGNC">         882 :         engine.m_chassis_inertia_smoothing = (std::max)(0.0f, chassis_smoothing);</span></span>
-<span id="L477"><span class="lineNum">     477</span>                 :<span class="tlaGNC">         882 :         engine.m_road_fallback_scale = (std::max)(0.0f, road_fallback_scale);</span></span>
-<span id="L478"><span class="lineNum">     478</span>                 :<span class="tlaGNC">         882 :         engine.m_understeer_affects_sop = understeer_affects_sop;</span></span>
-<span id="L479"><span class="lineNum">     479</span>                 :<span class="tlaGNC">         882 :         engine.m_load_sensitivity_enabled = load_sensitivity_enabled;</span></span>
+<span id="L471"><span class="lineNum">     471</span>                 :<span class="tlaGNC">         884 :         engine.m_optimal_slip_angle = (std::max)(0.01f, optimal_slip_angle); // Critical for grip division</span></span>
+<span id="L472"><span class="lineNum">     472</span>                 :<span class="tlaGNC">         884 :         engine.m_optimal_slip_ratio = (std::max)(0.01f, optimal_slip_ratio); // Critical for grip division</span></span>
+<span id="L473"><span class="lineNum">     473</span>                 :<span class="tlaGNC">         884 :         engine.m_steering_shaft_smoothing = (std::max)(0.0f, steering_shaft_smoothing);</span></span>
+<span id="L474"><span class="lineNum">     474</span>                 :<span class="tlaGNC">         884 :         engine.m_gyro_smoothing = (std::max)(0.0f, gyro_smoothing);</span></span>
+<span id="L475"><span class="lineNum">     475</span>                 :<span class="tlaGNC">         884 :         engine.m_yaw_accel_smoothing = (std::max)(0.0f, yaw_smoothing);</span></span>
+<span id="L476"><span class="lineNum">     476</span>                 :<span class="tlaGNC">         884 :         engine.m_chassis_inertia_smoothing = (std::max)(0.0f, chassis_smoothing);</span></span>
+<span id="L477"><span class="lineNum">     477</span>                 :<span class="tlaGNC">         884 :         engine.m_road_fallback_scale = (std::max)(0.0f, road_fallback_scale);</span></span>
+<span id="L478"><span class="lineNum">     478</span>                 :<span class="tlaGNC">         884 :         engine.m_understeer_affects_sop = understeer_affects_sop;</span></span>
+<span id="L479"><span class="lineNum">     479</span>                 :<span class="tlaGNC">         884 :         engine.m_load_sensitivity_enabled = load_sensitivity_enabled;</span></span>
 <span id="L480"><span class="lineNum">     480</span>                 :             :         </span>
 <span id="L481"><span class="lineNum">     481</span>                 :             :         // Slope Detection (v0.7.0)</span>
-<span id="L482"><span class="lineNum">     482</span>                 :<span class="tlaGNC">         882 :         engine.m_slope_detection_enabled = slope_detection_enabled;</span></span>
-<span id="L483"><span class="lineNum">     483</span>                 :<span class="tlaGNC">         882 :         engine.m_slope_sg_window = (std::max)(5, (std::min)(41, slope_sg_window));</span></span>
-<span id="L484"><span class="lineNum">     484</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 882 times"> + </span>]:<span class="tlaGNC">         882 :         if (engine.m_slope_sg_window % 2 == 0) engine.m_slope_sg_window++; // Must be odd for SG</span></span>
-<span id="L485"><span class="lineNum">     485</span>                 :<span class="tlaGNC">         882 :         engine.m_slope_sensitivity = (std::max)(0.1f, slope_sensitivity);</span></span>
+<span id="L482"><span class="lineNum">     482</span>                 :<span class="tlaGNC">         884 :         engine.m_slope_detection_enabled = slope_detection_enabled;</span></span>
+<span id="L483"><span class="lineNum">     483</span>                 :<span class="tlaGNC">         884 :         engine.m_slope_sg_window = (std::max)(5, (std::min)(41, slope_sg_window));</span></span>
+<span id="L484"><span class="lineNum">     484</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 884 times"> + </span>]:<span class="tlaGNC">         884 :         if (engine.m_slope_sg_window % 2 == 0) engine.m_slope_sg_window++; // Must be odd for SG</span></span>
+<span id="L485"><span class="lineNum">     485</span>                 :<span class="tlaGNC">         884 :         engine.m_slope_sensitivity = (std::max)(0.1f, slope_sensitivity);</span></span>
 <span id="L486"><span class="lineNum">     486</span>                 :             : </span>
-<span id="L487"><span class="lineNum">     487</span>                 :<span class="tlaGNC">         882 :         engine.m_slope_smoothing_tau = (std::max)(0.001f, slope_smoothing_tau);</span></span>
+<span id="L487"><span class="lineNum">     487</span>                 :<span class="tlaGNC">         884 :         engine.m_slope_smoothing_tau = (std::max)(0.001f, slope_smoothing_tau);</span></span>
 <span id="L488"><span class="lineNum">     488</span>                 :             : </span>
 <span id="L489"><span class="lineNum">     489</span>                 :             :         // v0.7.3: Slope stability fixes</span>
-<span id="L490"><span class="lineNum">     490</span>                 :<span class="tlaGNC">         882 :         engine.m_slope_alpha_threshold = (std::max)(0.001f, slope_alpha_threshold); // Critical for slope division</span></span>
-<span id="L491"><span class="lineNum">     491</span>                 :<span class="tlaGNC">         882 :         engine.m_slope_decay_rate = (std::max)(0.1f, slope_decay_rate);</span></span>
-<span id="L492"><span class="lineNum">     492</span>                 :<span class="tlaGNC">         882 :         engine.m_slope_confidence_enabled = slope_confidence_enabled;</span></span>
-<span id="L493"><span class="lineNum">     493</span>                 :<span class="tlaGNC">         882 :         engine.m_slope_confidence_max_rate = (std::max)(engine.m_slope_alpha_threshold + 0.01f, slope_confidence_max_rate);</span></span>
+<span id="L490"><span class="lineNum">     490</span>                 :<span class="tlaGNC">         884 :         engine.m_slope_alpha_threshold = (std::max)(0.001f, slope_alpha_threshold); // Critical for slope division</span></span>
+<span id="L491"><span class="lineNum">     491</span>                 :<span class="tlaGNC">         884 :         engine.m_slope_decay_rate = (std::max)(0.1f, slope_decay_rate);</span></span>
+<span id="L492"><span class="lineNum">     492</span>                 :<span class="tlaGNC">         884 :         engine.m_slope_confidence_enabled = slope_confidence_enabled;</span></span>
+<span id="L493"><span class="lineNum">     493</span>                 :<span class="tlaGNC">         884 :         engine.m_slope_confidence_max_rate = (std::max)(engine.m_slope_alpha_threshold + 0.01f, slope_confidence_max_rate);</span></span>
 <span id="L494"><span class="lineNum">     494</span>                 :             : </span>
 <span id="L495"><span class="lineNum">     495</span>                 :             :         // v0.7.11: Min/Max thresholds</span>
-<span id="L496"><span class="lineNum">     496</span>                 :<span class="tlaGNC">         882 :         engine.m_slope_min_threshold = slope_min_threshold;</span></span>
-<span id="L497"><span class="lineNum">     497</span>                 :<span class="tlaGNC">         882 :         engine.m_slope_max_threshold = slope_max_threshold;</span></span>
+<span id="L496"><span class="lineNum">     496</span>                 :<span class="tlaGNC">         884 :         engine.m_slope_min_threshold = slope_min_threshold;</span></span>
+<span id="L497"><span class="lineNum">     497</span>                 :<span class="tlaGNC">         884 :         engine.m_slope_max_threshold = slope_max_threshold;</span></span>
 <span id="L498"><span class="lineNum">     498</span>                 :             : </span>
 <span id="L499"><span class="lineNum">     499</span>                 :             :         // NEW v0.7.40: Advanced Slope Settings</span>
-<span id="L500"><span class="lineNum">     500</span>                 :<span class="tlaGNC">         882 :         engine.m_slope_g_slew_limit = (std::max)(1.0f, slope_g_slew_limit);</span></span>
-<span id="L501"><span class="lineNum">     501</span>                 :<span class="tlaGNC">         882 :         engine.m_slope_use_torque = slope_use_torque;</span></span>
-<span id="L502"><span class="lineNum">     502</span>                 :<span class="tlaGNC">         882 :         engine.m_slope_torque_sensitivity = (std::max)(0.01f, slope_torque_sensitivity);</span></span>
+<span id="L500"><span class="lineNum">     500</span>                 :<span class="tlaGNC">         884 :         engine.m_slope_g_slew_limit = (std::max)(1.0f, slope_g_slew_limit);</span></span>
+<span id="L501"><span class="lineNum">     501</span>                 :<span class="tlaGNC">         884 :         engine.m_slope_use_torque = slope_use_torque;</span></span>
+<span id="L502"><span class="lineNum">     502</span>                 :<span class="tlaGNC">         884 :         engine.m_slope_torque_sensitivity = (std::max)(0.01f, slope_torque_sensitivity);</span></span>
 <span id="L503"><span class="lineNum">     503</span>                 :             : </span>
-<span id="L504"><span class="lineNum">     504</span>                 :<span class="tlaGNC">         882 :         engine.m_rest_api_enabled = rest_api_enabled;</span></span>
-<span id="L505"><span class="lineNum">     505</span>                 :<span class="tlaGNC">         882 :         engine.m_rest_api_port = (std::max)(1, rest_api_port);</span></span>
+<span id="L504"><span class="lineNum">     504</span>                 :<span class="tlaGNC">         884 :         engine.m_rest_api_enabled = rest_api_enabled;</span></span>
+<span id="L505"><span class="lineNum">     505</span>                 :<span class="tlaGNC">         884 :         engine.m_rest_api_port = (std::max)(1, rest_api_port);</span></span>
 <span id="L506"><span class="lineNum">     506</span>                 :             : </span>
 <span id="L507"><span class="lineNum">     507</span>                 :             :         // Stage 1 &amp; 2 Normalization (Issue #152 &amp; #153)</span>
 <span id="L508"><span class="lineNum">     508</span>                 :             :         // Initialize session peak from target rim torque to provide a sane starting point.</span>
-<span id="L509"><span class="lineNum">     509</span>                 :<span class="tlaGNC">         882 :         engine.m_session_peak_torque = (std::max)(1.0, (double)target_rim_nm);</span></span>
-<span id="L510"><span class="lineNum">     510</span>                 :<span class="tlaGNC">         882 :         engine.m_smoothed_structural_mult = 1.0 / engine.m_session_peak_torque;</span></span>
-<span id="L511"><span class="lineNum">     511</span>                 :<span class="tlaGNC">         882 :     }</span></span>
+<span id="L509"><span class="lineNum">     509</span>                 :<span class="tlaGNC">         884 :         engine.m_session_peak_torque = (std::max)(1.0, (double)target_rim_nm);</span></span>
+<span id="L510"><span class="lineNum">     510</span>                 :<span class="tlaGNC">         884 :         engine.m_smoothed_structural_mult = 1.0 / engine.m_session_peak_torque;</span></span>
+<span id="L511"><span class="lineNum">     511</span>                 :<span class="tlaGNC">         884 :     }</span></span>
 <span id="L512"><span class="lineNum">     512</span>                 :             : </span>
 <span id="L513"><span class="lineNum">     513</span>                 :             :     // NEW: Ensure values are within safe ranges (v0.7.16)</span>
-<span id="L514"><span class="lineNum">     514</span>                 :<span class="tlaGNC">          25 :     void Validate() {</span></span>
-<span id="L515"><span class="lineNum">     515</span>                 :<span class="tlaGNC">          25 :         gain = (std::max)(0.0f, gain);</span></span>
-<span id="L516"><span class="lineNum">     516</span>                 :<span class="tlaGNC">          25 :         understeer = (std::max)(0.0f, (std::min)(2.0f, understeer));</span></span>
-<span id="L517"><span class="lineNum">     517</span>                 :<span class="tlaGNC">          25 :         understeer_gamma = (std::max)(0.1f, (std::min)(4.0f, understeer_gamma));</span></span>
-<span id="L518"><span class="lineNum">     518</span>                 :<span class="tlaGNC">          25 :         sop = (std::max)(0.0f, (std::min)(2.0f, sop));</span></span>
-<span id="L519"><span class="lineNum">     519</span>                 :<span class="tlaGNC">          25 :         lateral_load = (std::max)(0.0f, (std::min)(2.0f, lateral_load));</span></span>
-<span id="L520"><span class="lineNum">     520</span>         [<span class="tlaGBC" title="Branch 0 was taken 25 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          25 :         lat_load_transform = std::clamp(lat_load_transform, 0, 3);</span></span>
-<span id="L521"><span class="lineNum">     521</span>                 :<span class="tlaGNC">          25 :         sop_scale = (std::max)(0.01f, sop_scale);</span></span>
-<span id="L522"><span class="lineNum">     522</span>                 :<span class="tlaGNC">          25 :         sop_smoothing = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing));</span></span>
-<span id="L523"><span class="lineNum">     523</span>                 :<span class="tlaGNC">          25 :         slip_smoothing = (std::max)(0.0001f, slip_smoothing);</span></span>
-<span id="L524"><span class="lineNum">     524</span>                 :<span class="tlaGNC">          25 :         min_force = (std::max)(0.0f, min_force);</span></span>
-<span id="L525"><span class="lineNum">     525</span>                 :<span class="tlaGNC">          25 :         oversteer_boost = (std::max)(0.0f, oversteer_boost);</span></span>
-<span id="L526"><span class="lineNum">     526</span>                 :<span class="tlaGNC">          25 :         long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));</span></span>
-<span id="L527"><span class="lineNum">     527</span>                 :<span class="tlaGNC">          25 :         long_load_smoothing = (std::max)(0.0f, long_load_smoothing);</span></span>
-<span id="L528"><span class="lineNum">     528</span>         [<span class="tlaGBC" title="Branch 0 was taken 25 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          25 :         long_load_transform = std::clamp(long_load_transform, 0, 3);</span></span>
-<span id="L529"><span class="lineNum">     529</span>                 :<span class="tlaGNC">          25 :         grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);</span></span>
-<span id="L530"><span class="lineNum">     530</span>                 :<span class="tlaGNC">          25 :         grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);</span></span>
-<span id="L531"><span class="lineNum">     531</span>                 :<span class="tlaGNC">          25 :         grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);</span></span>
-<span id="L532"><span class="lineNum">     532</span>                 :<span class="tlaGNC">          25 :         lockup_gain = (std::max)(0.0f, lockup_gain);</span></span>
-<span id="L533"><span class="lineNum">     533</span>                 :<span class="tlaGNC">          25 :         lockup_start_pct = (std::max)(0.1f, lockup_start_pct);</span></span>
-<span id="L534"><span class="lineNum">     534</span>                 :<span class="tlaGNC">          25 :         lockup_full_pct = (std::max)(0.2f, lockup_full_pct);</span></span>
-<span id="L535"><span class="lineNum">     535</span>                 :<span class="tlaGNC">          25 :         lockup_rear_boost = (std::max)(0.0f, lockup_rear_boost);</span></span>
-<span id="L536"><span class="lineNum">     536</span>                 :<span class="tlaGNC">          25 :         lockup_gamma = (std::max)(0.1f, lockup_gamma);</span></span>
-<span id="L537"><span class="lineNum">     537</span>                 :<span class="tlaGNC">          25 :         lockup_prediction_sens = (std::max)(1.0f, lockup_prediction_sens);</span></span>
-<span id="L538"><span class="lineNum">     538</span>                 :<span class="tlaGNC">          25 :         lockup_bump_reject = (std::max)(0.01f, lockup_bump_reject);</span></span>
-<span id="L539"><span class="lineNum">     539</span>                 :<span class="tlaGNC">          25 :         brake_load_cap = (std::max)(1.0f, brake_load_cap);</span></span>
-<span id="L540"><span class="lineNum">     540</span>                 :<span class="tlaGNC">          25 :         texture_load_cap = (std::max)(1.0f, texture_load_cap);</span></span>
-<span id="L541"><span class="lineNum">     541</span>                 :<span class="tlaGNC">          25 :         abs_gain = (std::max)(0.0f, abs_gain);</span></span>
-<span id="L542"><span class="lineNum">     542</span>                 :<span class="tlaGNC">          25 :         bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));</span></span>
-<span id="L543"><span class="lineNum">     543</span>                 :<span class="tlaGNC">          25 :         spin_gain = (std::max)(0.0f, spin_gain);</span></span>
-<span id="L544"><span class="lineNum">     544</span>                 :<span class="tlaGNC">          25 :         slide_gain = (std::max)(0.0f, slide_gain);</span></span>
-<span id="L545"><span class="lineNum">     545</span>                 :<span class="tlaGNC">          25 :         slide_freq = (std::max)(0.1f, slide_freq);</span></span>
-<span id="L546"><span class="lineNum">     546</span>                 :<span class="tlaGNC">          25 :         road_gain = (std::max)(0.0f, road_gain);</span></span>
-<span id="L547"><span class="lineNum">     547</span>                 :<span class="tlaGNC">          25 :         vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));</span></span>
-<span id="L548"><span class="lineNum">     548</span>                 :<span class="tlaGNC">          25 :         soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);</span></span>
-<span id="L549"><span class="lineNum">     549</span>                 :<span class="tlaGNC">          25 :         soft_lock_damping = (std::max)(0.0f, soft_lock_damping);</span></span>
-<span id="L550"><span class="lineNum">     550</span>                 :<span class="tlaGNC">          25 :         wheelbase_max_nm = (std::max)(1.0f, wheelbase_max_nm);</span></span>
-<span id="L551"><span class="lineNum">     551</span>                 :<span class="tlaGNC">          25 :         target_rim_nm = (std::max)(1.0f, target_rim_nm);</span></span>
-<span id="L552"><span class="lineNum">     552</span>                 :<span class="tlaGNC">          25 :         abs_freq = (std::max)(1.0f, abs_freq);</span></span>
-<span id="L553"><span class="lineNum">     553</span>                 :<span class="tlaGNC">          25 :         lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);</span></span>
-<span id="L554"><span class="lineNum">     554</span>                 :<span class="tlaGNC">          25 :         spin_freq_scale = (std::max)(0.1f, spin_freq_scale);</span></span>
-<span id="L555"><span class="lineNum">     555</span>                 :<span class="tlaGNC">          25 :         scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);</span></span>
-<span id="L556"><span class="lineNum">     556</span>                 :<span class="tlaGNC">          25 :         rear_align_effect = (std::max)(0.0f, rear_align_effect);</span></span>
-<span id="L557"><span class="lineNum">     557</span>                 :<span class="tlaGNC">          25 :         kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, kerb_strike_rejection));</span></span>
-<span id="L558"><span class="lineNum">     558</span>                 :<span class="tlaGNC">          25 :         sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);</span></span>
-<span id="L559"><span class="lineNum">     559</span>                 :<span class="tlaGNC">          25 :         gyro_gain = (std::max)(0.0f, gyro_gain);</span></span>
-<span id="L560"><span class="lineNum">     560</span>                 :<span class="tlaGNC">          25 :         steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);</span></span>
-<span id="L561"><span class="lineNum">     561</span>                 :<span class="tlaGNC">          25 :         ingame_ffb_gain = (std::max)(0.0f, ingame_ffb_gain);</span></span>
-<span id="L562"><span class="lineNum">     562</span>                 :<span class="tlaGNC">          25 :         torque_source = (std::max)(0, (std::min)(1, torque_source));</span></span>
-<span id="L563"><span class="lineNum">     563</span>                 :<span class="tlaGNC">          25 :         steering_100hz_reconstruction = (std::max)(0, (std::min)(1, steering_100hz_reconstruction));</span></span>
+<span id="L514"><span class="lineNum">     514</span>                 :<span class="tlaGNC">          90 :     void Validate() {</span></span>
+<span id="L515"><span class="lineNum">     515</span>                 :<span class="tlaGNC">          90 :         gain = (std::max)(0.0f, gain);</span></span>
+<span id="L516"><span class="lineNum">     516</span>                 :<span class="tlaGNC">          90 :         understeer = (std::max)(0.0f, (std::min)(2.0f, understeer));</span></span>
+<span id="L517"><span class="lineNum">     517</span>                 :<span class="tlaGNC">          90 :         understeer_gamma = (std::max)(0.1f, (std::min)(4.0f, understeer_gamma));</span></span>
+<span id="L518"><span class="lineNum">     518</span>                 :<span class="tlaGNC">          90 :         sop = (std::max)(0.0f, (std::min)(2.0f, sop));</span></span>
+<span id="L519"><span class="lineNum">     519</span>                 :<span class="tlaGNC">          90 :         lateral_load = (std::max)(0.0f, (std::min)(2.0f, lateral_load));</span></span>
+<span id="L520"><span class="lineNum">     520</span>         [<span class="tlaGBC" title="Branch 0 was taken 90 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          90 :         lat_load_transform = std::clamp(lat_load_transform, 0, 3);</span></span>
+<span id="L521"><span class="lineNum">     521</span>                 :<span class="tlaGNC">          90 :         sop_scale = (std::max)(0.01f, sop_scale);</span></span>
+<span id="L522"><span class="lineNum">     522</span>                 :<span class="tlaGNC">          90 :         sop_smoothing = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing));</span></span>
+<span id="L523"><span class="lineNum">     523</span>                 :<span class="tlaGNC">          90 :         slip_smoothing = (std::max)(0.0001f, slip_smoothing);</span></span>
+<span id="L524"><span class="lineNum">     524</span>                 :<span class="tlaGNC">          90 :         min_force = (std::max)(0.0f, min_force);</span></span>
+<span id="L525"><span class="lineNum">     525</span>                 :<span class="tlaGNC">          90 :         oversteer_boost = (std::max)(0.0f, oversteer_boost);</span></span>
+<span id="L526"><span class="lineNum">     526</span>                 :<span class="tlaGNC">          90 :         long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));</span></span>
+<span id="L527"><span class="lineNum">     527</span>                 :<span class="tlaGNC">          90 :         long_load_smoothing = (std::max)(0.0f, long_load_smoothing);</span></span>
+<span id="L528"><span class="lineNum">     528</span>         [<span class="tlaGBC" title="Branch 0 was taken 90 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          90 :         long_load_transform = std::clamp(long_load_transform, 0, 3);</span></span>
+<span id="L529"><span class="lineNum">     529</span>                 :<span class="tlaGNC">          90 :         grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);</span></span>
+<span id="L530"><span class="lineNum">     530</span>                 :<span class="tlaGNC">          90 :         grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);</span></span>
+<span id="L531"><span class="lineNum">     531</span>                 :<span class="tlaGNC">          90 :         grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);</span></span>
+<span id="L532"><span class="lineNum">     532</span>                 :<span class="tlaGNC">          90 :         lockup_gain = (std::max)(0.0f, lockup_gain);</span></span>
+<span id="L533"><span class="lineNum">     533</span>                 :<span class="tlaGNC">          90 :         lockup_start_pct = (std::max)(0.1f, lockup_start_pct);</span></span>
+<span id="L534"><span class="lineNum">     534</span>                 :<span class="tlaGNC">          90 :         lockup_full_pct = (std::max)(0.2f, lockup_full_pct);</span></span>
+<span id="L535"><span class="lineNum">     535</span>                 :<span class="tlaGNC">          90 :         lockup_rear_boost = (std::max)(0.0f, lockup_rear_boost);</span></span>
+<span id="L536"><span class="lineNum">     536</span>                 :<span class="tlaGNC">          90 :         lockup_gamma = (std::max)(0.1f, lockup_gamma);</span></span>
+<span id="L537"><span class="lineNum">     537</span>                 :<span class="tlaGNC">          90 :         lockup_prediction_sens = (std::max)(1.0f, lockup_prediction_sens);</span></span>
+<span id="L538"><span class="lineNum">     538</span>                 :<span class="tlaGNC">          90 :         lockup_bump_reject = (std::max)(0.01f, lockup_bump_reject);</span></span>
+<span id="L539"><span class="lineNum">     539</span>                 :<span class="tlaGNC">          90 :         brake_load_cap = (std::max)(1.0f, brake_load_cap);</span></span>
+<span id="L540"><span class="lineNum">     540</span>                 :<span class="tlaGNC">          90 :         texture_load_cap = (std::max)(1.0f, texture_load_cap);</span></span>
+<span id="L541"><span class="lineNum">     541</span>                 :<span class="tlaGNC">          90 :         abs_gain = (std::max)(0.0f, abs_gain);</span></span>
+<span id="L542"><span class="lineNum">     542</span>                 :<span class="tlaGNC">          90 :         bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));</span></span>
+<span id="L543"><span class="lineNum">     543</span>                 :<span class="tlaGNC">          90 :         spin_gain = (std::max)(0.0f, spin_gain);</span></span>
+<span id="L544"><span class="lineNum">     544</span>                 :<span class="tlaGNC">          90 :         slide_gain = (std::max)(0.0f, slide_gain);</span></span>
+<span id="L545"><span class="lineNum">     545</span>                 :<span class="tlaGNC">          90 :         slide_freq = (std::max)(0.1f, slide_freq);</span></span>
+<span id="L546"><span class="lineNum">     546</span>                 :<span class="tlaGNC">          90 :         road_gain = (std::max)(0.0f, road_gain);</span></span>
+<span id="L547"><span class="lineNum">     547</span>                 :<span class="tlaGNC">          90 :         vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));</span></span>
+<span id="L548"><span class="lineNum">     548</span>                 :<span class="tlaGNC">          90 :         soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);</span></span>
+<span id="L549"><span class="lineNum">     549</span>                 :<span class="tlaGNC">          90 :         soft_lock_damping = (std::max)(0.0f, soft_lock_damping);</span></span>
+<span id="L550"><span class="lineNum">     550</span>                 :<span class="tlaGNC">          90 :         wheelbase_max_nm = (std::max)(1.0f, wheelbase_max_nm);</span></span>
+<span id="L551"><span class="lineNum">     551</span>                 :<span class="tlaGNC">          90 :         target_rim_nm = (std::max)(1.0f, target_rim_nm);</span></span>
+<span id="L552"><span class="lineNum">     552</span>                 :<span class="tlaGNC">          90 :         abs_freq = (std::max)(1.0f, abs_freq);</span></span>
+<span id="L553"><span class="lineNum">     553</span>                 :<span class="tlaGNC">          90 :         lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);</span></span>
+<span id="L554"><span class="lineNum">     554</span>                 :<span class="tlaGNC">          90 :         spin_freq_scale = (std::max)(0.1f, spin_freq_scale);</span></span>
+<span id="L555"><span class="lineNum">     555</span>                 :<span class="tlaGNC">          90 :         scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);</span></span>
+<span id="L556"><span class="lineNum">     556</span>                 :<span class="tlaGNC">          90 :         rear_align_effect = (std::max)(0.0f, rear_align_effect);</span></span>
+<span id="L557"><span class="lineNum">     557</span>                 :<span class="tlaGNC">          90 :         kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, kerb_strike_rejection));</span></span>
+<span id="L558"><span class="lineNum">     558</span>                 :<span class="tlaGNC">          90 :         sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);</span></span>
+<span id="L559"><span class="lineNum">     559</span>                 :<span class="tlaGNC">          90 :         gyro_gain = (std::max)(0.0f, gyro_gain);</span></span>
+<span id="L560"><span class="lineNum">     560</span>                 :<span class="tlaGNC">          90 :         steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);</span></span>
+<span id="L561"><span class="lineNum">     561</span>                 :<span class="tlaGNC">          90 :         ingame_ffb_gain = (std::max)(0.0f, ingame_ffb_gain);</span></span>
+<span id="L562"><span class="lineNum">     562</span>                 :<span class="tlaGNC">          90 :         torque_source = (std::max)(0, (std::min)(1, torque_source));</span></span>
+<span id="L563"><span class="lineNum">     563</span>                 :<span class="tlaGNC">          90 :         steering_100hz_reconstruction = (std::max)(0, (std::min)(1, steering_100hz_reconstruction));</span></span>
 <span id="L564"><span class="lineNum">     564</span>                 :             :         // torque_passthrough is bool, no clamp needed</span>
-<span id="L565"><span class="lineNum">     565</span>                 :<span class="tlaGNC">          25 :         notch_q = (std::max)(0.1f, notch_q);</span></span>
-<span id="L566"><span class="lineNum">     566</span>                 :<span class="tlaGNC">          25 :         flatspot_strength = (std::max)(0.0f, (std::min)(1.0f, flatspot_strength));</span></span>
-<span id="L567"><span class="lineNum">     567</span>                 :<span class="tlaGNC">          25 :         static_notch_freq = (std::max)(1.0f, static_notch_freq);</span></span>
-<span id="L568"><span class="lineNum">     568</span>                 :<span class="tlaGNC">          25 :         static_notch_width = (std::max)(0.1f, static_notch_width);</span></span>
+<span id="L565"><span class="lineNum">     565</span>                 :<span class="tlaGNC">          90 :         notch_q = (std::max)(0.1f, notch_q);</span></span>
+<span id="L566"><span class="lineNum">     566</span>                 :<span class="tlaGNC">          90 :         flatspot_strength = (std::max)(0.0f, (std::min)(1.0f, flatspot_strength));</span></span>
+<span id="L567"><span class="lineNum">     567</span>                 :<span class="tlaGNC">          90 :         static_notch_freq = (std::max)(1.0f, static_notch_freq);</span></span>
+<span id="L568"><span class="lineNum">     568</span>                 :<span class="tlaGNC">          90 :         static_notch_width = (std::max)(0.1f, static_notch_width);</span></span>
 <span id="L569"><span class="lineNum">     569</span>                 :             : </span>
 <span id="L570"><span class="lineNum">     570</span>                 :             :         // v0.7.164 (Issue #322)</span>
-<span id="L571"><span class="lineNum">     571</span>                 :<span class="tlaGNC">          25 :         unloaded_yaw_gain = (std::max)(0.0f, unloaded_yaw_gain);</span></span>
-<span id="L572"><span class="lineNum">     572</span>                 :<span class="tlaGNC">          25 :         unloaded_yaw_threshold = (std::max)(0.0f, unloaded_yaw_threshold);</span></span>
-<span id="L573"><span class="lineNum">     573</span>                 :<span class="tlaGNC">          25 :         unloaded_yaw_sens = (std::max)(0.1f, unloaded_yaw_sens);</span></span>
-<span id="L574"><span class="lineNum">     574</span>                 :<span class="tlaGNC">          25 :         unloaded_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, unloaded_yaw_gamma));</span></span>
-<span id="L575"><span class="lineNum">     575</span>                 :<span class="tlaGNC">          25 :         unloaded_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, unloaded_yaw_punch));</span></span>
-<span id="L576"><span class="lineNum">     576</span>                 :<span class="tlaGNC">          25 :         power_yaw_gain = (std::max)(0.0f, power_yaw_gain);</span></span>
-<span id="L577"><span class="lineNum">     577</span>                 :<span class="tlaGNC">          25 :         power_yaw_threshold = (std::max)(0.0f, power_yaw_threshold);</span></span>
-<span id="L578"><span class="lineNum">     578</span>                 :<span class="tlaGNC">          25 :         power_slip_threshold = (std::max)(0.01f, (std::min)(1.0f, power_slip_threshold));</span></span>
-<span id="L579"><span class="lineNum">     579</span>                 :<span class="tlaGNC">          25 :         power_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, power_yaw_gamma));</span></span>
-<span id="L580"><span class="lineNum">     580</span>                 :<span class="tlaGNC">          25 :         power_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, power_yaw_punch));</span></span>
+<span id="L571"><span class="lineNum">     571</span>                 :<span class="tlaGNC">          90 :         unloaded_yaw_gain = (std::max)(0.0f, unloaded_yaw_gain);</span></span>
+<span id="L572"><span class="lineNum">     572</span>                 :<span class="tlaGNC">          90 :         unloaded_yaw_threshold = (std::max)(0.0f, unloaded_yaw_threshold);</span></span>
+<span id="L573"><span class="lineNum">     573</span>                 :<span class="tlaGNC">          90 :         unloaded_yaw_sens = (std::max)(0.1f, unloaded_yaw_sens);</span></span>
+<span id="L574"><span class="lineNum">     574</span>                 :<span class="tlaGNC">          90 :         unloaded_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, unloaded_yaw_gamma));</span></span>
+<span id="L575"><span class="lineNum">     575</span>                 :<span class="tlaGNC">          90 :         unloaded_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, unloaded_yaw_punch));</span></span>
+<span id="L576"><span class="lineNum">     576</span>                 :<span class="tlaGNC">          90 :         power_yaw_gain = (std::max)(0.0f, power_yaw_gain);</span></span>
+<span id="L577"><span class="lineNum">     577</span>                 :<span class="tlaGNC">          90 :         power_yaw_threshold = (std::max)(0.0f, power_yaw_threshold);</span></span>
+<span id="L578"><span class="lineNum">     578</span>                 :<span class="tlaGNC">          90 :         power_slip_threshold = (std::max)(0.01f, (std::min)(1.0f, power_slip_threshold));</span></span>
+<span id="L579"><span class="lineNum">     579</span>                 :<span class="tlaGNC">          90 :         power_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, power_yaw_gamma));</span></span>
+<span id="L580"><span class="lineNum">     580</span>                 :<span class="tlaGNC">          90 :         power_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, power_yaw_punch));</span></span>
 <span id="L581"><span class="lineNum">     581</span>                 :             : </span>
-<span id="L582"><span class="lineNum">     582</span>                 :<span class="tlaGNC">          25 :         speed_gate_upper = (std::max)(0.1f, speed_gate_upper);</span></span>
-<span id="L583"><span class="lineNum">     583</span>                 :<span class="tlaGNC">          25 :         optimal_slip_angle = (std::max)(0.01f, optimal_slip_angle);</span></span>
-<span id="L584"><span class="lineNum">     584</span>                 :<span class="tlaGNC">          25 :         optimal_slip_ratio = (std::max)(0.01f, optimal_slip_ratio);</span></span>
-<span id="L585"><span class="lineNum">     585</span>                 :<span class="tlaGNC">          25 :         steering_shaft_smoothing = (std::max)(0.0f, steering_shaft_smoothing);</span></span>
-<span id="L586"><span class="lineNum">     586</span>                 :<span class="tlaGNC">          25 :         gyro_smoothing = (std::max)(0.0f, gyro_smoothing);</span></span>
-<span id="L587"><span class="lineNum">     587</span>                 :<span class="tlaGNC">          25 :         yaw_smoothing = (std::max)(0.0f, yaw_smoothing);</span></span>
-<span id="L588"><span class="lineNum">     588</span>                 :<span class="tlaGNC">          25 :         chassis_smoothing = (std::max)(0.0f, chassis_smoothing);</span></span>
-<span id="L589"><span class="lineNum">     589</span>                 :<span class="tlaGNC">          25 :         road_fallback_scale = (std::max)(0.0f, road_fallback_scale);</span></span>
-<span id="L590"><span class="lineNum">     590</span>                 :<span class="tlaGNC">          25 :         slope_sg_window = (std::max)(5, (std::min)(41, slope_sg_window));</span></span>
-<span id="L591"><span class="lineNum">     591</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 25 times"> + </span>]:<span class="tlaGNC">          25 :         if (slope_sg_window % 2 == 0) slope_sg_window++;</span></span>
-<span id="L592"><span class="lineNum">     592</span>                 :<span class="tlaGNC">          25 :         slope_sensitivity = (std::max)(0.1f, slope_sensitivity);</span></span>
-<span id="L593"><span class="lineNum">     593</span>                 :<span class="tlaGNC">          25 :         slope_smoothing_tau = (std::max)(0.001f, slope_smoothing_tau);</span></span>
-<span id="L594"><span class="lineNum">     594</span>                 :<span class="tlaGNC">          25 :         slope_alpha_threshold = (std::max)(0.001f, slope_alpha_threshold);</span></span>
-<span id="L595"><span class="lineNum">     595</span>                 :<span class="tlaGNC">          25 :         slope_decay_rate = (std::max)(0.1f, slope_decay_rate);</span></span>
-<span id="L596"><span class="lineNum">     596</span>                 :<span class="tlaGNC">          25 :         slope_g_slew_limit = (std::max)(1.0f, slope_g_slew_limit);</span></span>
-<span id="L597"><span class="lineNum">     597</span>                 :<span class="tlaGNC">          25 :         slope_torque_sensitivity = (std::max)(0.01f, slope_torque_sensitivity);</span></span>
-<span id="L598"><span class="lineNum">     598</span>                 :<span class="tlaGNC">          25 :         slope_confidence_max_rate = (std::max)(slope_alpha_threshold + 0.01f, slope_confidence_max_rate);</span></span>
-<span id="L599"><span class="lineNum">     599</span>                 :<span class="tlaGNC">          25 :         rest_api_port = (std::max)(1, rest_api_port);</span></span>
+<span id="L582"><span class="lineNum">     582</span>                 :<span class="tlaGNC">          90 :         speed_gate_upper = (std::max)(0.1f, speed_gate_upper);</span></span>
+<span id="L583"><span class="lineNum">     583</span>                 :<span class="tlaGNC">          90 :         optimal_slip_angle = (std::max)(0.01f, optimal_slip_angle);</span></span>
+<span id="L584"><span class="lineNum">     584</span>                 :<span class="tlaGNC">          90 :         optimal_slip_ratio = (std::max)(0.01f, optimal_slip_ratio);</span></span>
+<span id="L585"><span class="lineNum">     585</span>                 :<span class="tlaGNC">          90 :         steering_shaft_smoothing = (std::max)(0.0f, steering_shaft_smoothing);</span></span>
+<span id="L586"><span class="lineNum">     586</span>                 :<span class="tlaGNC">          90 :         gyro_smoothing = (std::max)(0.0f, gyro_smoothing);</span></span>
+<span id="L587"><span class="lineNum">     587</span>                 :<span class="tlaGNC">          90 :         yaw_smoothing = (std::max)(0.0f, yaw_smoothing);</span></span>
+<span id="L588"><span class="lineNum">     588</span>                 :<span class="tlaGNC">          90 :         chassis_smoothing = (std::max)(0.0f, chassis_smoothing);</span></span>
+<span id="L589"><span class="lineNum">     589</span>                 :<span class="tlaGNC">          90 :         road_fallback_scale = (std::max)(0.0f, road_fallback_scale);</span></span>
+<span id="L590"><span class="lineNum">     590</span>                 :<span class="tlaGNC">          90 :         slope_sg_window = (std::max)(5, (std::min)(41, slope_sg_window));</span></span>
+<span id="L591"><span class="lineNum">     591</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 90 times"> + </span>]:<span class="tlaGNC">          90 :         if (slope_sg_window % 2 == 0) slope_sg_window++;</span></span>
+<span id="L592"><span class="lineNum">     592</span>                 :<span class="tlaGNC">          90 :         slope_sensitivity = (std::max)(0.1f, slope_sensitivity);</span></span>
+<span id="L593"><span class="lineNum">     593</span>                 :<span class="tlaGNC">          90 :         slope_smoothing_tau = (std::max)(0.001f, slope_smoothing_tau);</span></span>
+<span id="L594"><span class="lineNum">     594</span>                 :<span class="tlaGNC">          90 :         slope_alpha_threshold = (std::max)(0.001f, slope_alpha_threshold);</span></span>
+<span id="L595"><span class="lineNum">     595</span>                 :<span class="tlaGNC">          90 :         slope_decay_rate = (std::max)(0.1f, slope_decay_rate);</span></span>
+<span id="L596"><span class="lineNum">     596</span>                 :<span class="tlaGNC">          90 :         slope_g_slew_limit = (std::max)(1.0f, slope_g_slew_limit);</span></span>
+<span id="L597"><span class="lineNum">     597</span>                 :<span class="tlaGNC">          90 :         slope_torque_sensitivity = (std::max)(0.01f, slope_torque_sensitivity);</span></span>
+<span id="L598"><span class="lineNum">     598</span>                 :<span class="tlaGNC">          90 :         slope_confidence_max_rate = (std::max)(slope_alpha_threshold + 0.01f, slope_confidence_max_rate);</span></span>
+<span id="L599"><span class="lineNum">     599</span>                 :<span class="tlaGNC">          90 :         rest_api_port = (std::max)(1, rest_api_port);</span></span>
 <span id="L600"><span class="lineNum">     600</span>                 :             : </span>
 <span id="L601"><span class="lineNum">     601</span>                 :             :         // FFB Safety (Issue #316)</span>
-<span id="L602"><span class="lineNum">     602</span>                 :<span class="tlaGNC">          25 :         safety_window_duration = (std::max)(0.0f, safety_window_duration);</span></span>
-<span id="L603"><span class="lineNum">     603</span>                 :<span class="tlaGNC">          25 :         safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));</span></span>
-<span id="L604"><span class="lineNum">     604</span>                 :<span class="tlaGNC">          25 :         safety_smoothing_tau = (std::max)(0.001f, safety_smoothing_tau);</span></span>
-<span id="L605"><span class="lineNum">     605</span>                 :<span class="tlaGNC">          25 :         spike_detection_threshold = (std::max)(1.0f, spike_detection_threshold);</span></span>
-<span id="L606"><span class="lineNum">     606</span>                 :<span class="tlaGNC">          25 :         immediate_spike_threshold = (std::max)(1.0f, immediate_spike_threshold);</span></span>
-<span id="L607"><span class="lineNum">     607</span>                 :<span class="tlaGNC">          25 :         safety_slew_full_scale_time_s = (std::max)(0.01f, safety_slew_full_scale_time_s);</span></span>
-<span id="L608"><span class="lineNum">     608</span>                 :<span class="tlaGNC">          25 :         stutter_threshold = (std::max)(1.01f, stutter_threshold);</span></span>
-<span id="L609"><span class="lineNum">     609</span>                 :<span class="tlaGNC">          25 :     }</span></span>
+<span id="L602"><span class="lineNum">     602</span>                 :<span class="tlaGNC">          90 :         safety_window_duration = (std::max)(0.0f, safety_window_duration);</span></span>
+<span id="L603"><span class="lineNum">     603</span>                 :<span class="tlaGNC">          90 :         safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));</span></span>
+<span id="L604"><span class="lineNum">     604</span>                 :<span class="tlaGNC">          90 :         safety_smoothing_tau = (std::max)(0.001f, safety_smoothing_tau);</span></span>
+<span id="L605"><span class="lineNum">     605</span>                 :<span class="tlaGNC">          90 :         spike_detection_threshold = (std::max)(1.0f, spike_detection_threshold);</span></span>
+<span id="L606"><span class="lineNum">     606</span>                 :<span class="tlaGNC">          90 :         immediate_spike_threshold = (std::max)(1.0f, immediate_spike_threshold);</span></span>
+<span id="L607"><span class="lineNum">     607</span>                 :<span class="tlaGNC">          90 :         safety_slew_full_scale_time_s = (std::max)(0.01f, safety_slew_full_scale_time_s);</span></span>
+<span id="L608"><span class="lineNum">     608</span>                 :<span class="tlaGNC">          90 :         stutter_threshold = (std::max)(1.01f, stutter_threshold);</span></span>
+<span id="L609"><span class="lineNum">     609</span>                 :<span class="tlaGNC">          90 :     }</span></span>
 <span id="L610"><span class="lineNum">     610</span>                 :             : </span>
 <span id="L611"><span class="lineNum">     611</span>                 :             :     // NEW: Capture current engine state into this preset</span>
 <span id="L612"><span class="lineNum">     612</span>                 :<span class="tlaGNC">         394 :     void UpdateFromEngine(const FFBEngine&amp; engine) {</span></span>
