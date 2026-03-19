@@ -291,6 +291,27 @@ void ParseTagArguments(int argc, char* argv[]);
 // --- Helper Functions ---
 TelemInfoV01 CreateBasicTestTelemetry(double speed = 20.0, double slip_angle = 0.0);
 void InitializeEngine(FFBEngine& engine);
+
+// Time-advancement helpers for the 400Hz FFB pipeline (Issue #397).
+//
+// PREFERRED USAGE GUIDELINES (S-2):
+//
+//   PumpEngineTime(engine, data, N_seconds)
+//     - General-purpose: runs N seconds of 400Hz ticks, advancing mElapsedTime
+//       every 10ms to simulate 100Hz telemetry correctly.
+//     - Use this for most tests: interpolator ramp-up (>= 0.015s), settling a
+//       specific effect, or advancing time to check timer/decay values.
+//     - AVOID the inline pattern: for(int i=0;i<4;i++) calculate_force(dt=0.0025)
+//       unless you specifically need to capture transients *within* a single
+//       100Hz game frame (i.e., the test cares about sub-frame behaviour).
+//
+//   PumpEngineSteadyState(engine, data)
+//     - Runs 3 seconds; ensures all filters and decay paths are fully settled.
+//     - Use when the test needs a clean, filter-settled baseline BEFORE exercising
+//       the actual behaviour under test (e.g. test_gyro_damping Direction and
+//       Speed-Scaling sub-cases, slope no-understeer tests, etc.).
+//     - Prefer PumpEngineTime(engine, data, 0.5) for fast-converging effects
+//       (LPF, shaft-torque HW) to avoid unnecessary CI slowdown.
 double PumpEngineTime(FFBEngine& engine, TelemInfoV01& data, double time_to_advance_s);
 void PumpEngineSteadyState(FFBEngine& engine, TelemInfoV01& data);
 
