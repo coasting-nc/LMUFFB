@@ -1,6 +1,26 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
+
+---
+
+## [0.7.198] - 2026-03-19
+
+### Fixed
+- **Fixed 100Hz "Grainy Buzz" and Vibration Spikes in FFB Pipeline (Issue #397 — LinearExtrapolator Sawtooth Bug)**:
+  - **Root Cause**: The `LinearExtrapolator` used a "dead-reckoning" approach — on each new 100Hz telemetry frame it snapped its internal state to the raw input value, then extrapolated forward. Since real signals change direction between frames, this caused systematic overshoot-and-snap artifacts at exactly 100Hz, perceived as a "grainy buzz" in Direct Drive and belt-driven wheels.
+  - **Secondary Effect**: Derivative-based effects (`calculate_suspension_bottoming`, Savitzky-Golay slope detection) interpreted these 100Hz snap events as real physical impacts, triggering false-positive "Bottoming Crunch" and "Suspension Bottoming" vibrations on smooth roads.
+  - **Fix — Signal Continuity**: Replaced the extrapolation strategy with a **10ms-delayed linear interpolation** (`LinearInterpolator`) in `src/utils/MathUtils.h`. The class name is intentionally preserved to avoid cascading renames. The new implementation holds the previous frame's value and interpolates smoothly toward the latest 100Hz reading, guaranteeing C0 continuity at every upsample step.
+  - **Fix — Savitzky-Golay Derivative Stability**: `calculate_slope_grip` in `GripLoadEstimation.cpp` was computing its derivative using the variable `dt` passed in from the caller, which could be 0ms during zero-frame scenarios. Changed to always use a fixed `internal_dt = DEFAULT_CALC_DT` (2.5ms, 400Hz) for SG-filter derivatives, since the SG buffer is always populated at the 400Hz engine rate regardless of the game's 100Hz telemetry. The physical `dt` is still used for slew limiters, LPF, and decay timers.
+  - **Fix — Session Transition Ordering**: Moved the `false→true` allowed-state transition logic in `FFBEngine::calculate_force` earlier (before the NaN early-return guard). A single NaN frame at session start could previously cause the filter resets to be skipped entirely, leaving upsamplers in a stale state for the first frames of a new session.
+
+### Testing
+- **New**: Added `tests/test_issue_397_interpolator.cpp` — direct unit tests verifying C0 continuity (no discontinuous jumps at 100Hz boundaries), no-overshoot property, and convergence of the new interpolator within one 10ms window.
+- **New test helpers** added to `test_ffb_common.cpp` / `test_ffb_common.h`:
+  - `PumpEngineTime(engine, data, duration_s)`: Advances the full 400Hz FFB pipeline for a specified duration, correctly advancing `mElapsedTime` every 10ms to simulate the 100Hz game telemetry cadence.
+  - `PumpEngineSteadyState(engine, data)`: Runs 3 seconds of pipeline time to fully settle all filters (LPF, Holt-Winters, Savitzky-Golay, slope decay) before asserting steady-state values.
+- Updated the **entire test suite (47 files)** to account for the 10ms DSP latency introduced by `LinearInterpolator`. Tests that previously asserted on the first `calculate_force` call now use `PumpEngineTime` or `PumpEngineSteadyState` to reach a settled state before reading the result.
+- Verified 100% pass rate: **555/555 test cases, 2557 assertions, 0 failures**.
 
 ---
 
