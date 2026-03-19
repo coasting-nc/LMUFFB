@@ -351,8 +351,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     };
 
     if (ImGui::TreeNodeEx("Presets and Configuration", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
-        if (Config::presets.empty()) Config::LoadPresets();
-
         static bool first_run = true;
         if (first_run && !Config::presets.empty()) {
             for (int i = 0; i < (int)Config::presets.size(); i++) {

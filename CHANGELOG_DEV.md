@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.204] - 2026-03-24
+
+### Fixed
+- **Fixed Preset Data Loss on Exit (Issue #371)**:
+  - **Problem**: User presets were only loaded from `config.ini` when the GUI was expanded. If an auto-save occurred before this (e.g., at shutdown or session transition), the `presets` vector was empty, causing all saved presets to be overwritten and lost.
+  - **Solution**: Moved `LoadPresets()` into the main `Config::Load()` sequence. This ensures that the internal preset library is always synchronized with the disk before any write operations can occur.
+  - **Cleaned Code**: Removed redundant lazy-loading checks from the GUI layer to improve maintainability.
+
+### Testing
+- **New Regression Test**: Added `tests/test_issue_371_repro.cpp` verifying that a Load -> Save -> Load cycle preserves user presets without requiring GUI interaction.
+- Verified 100% pass rate for Config and Presets test categories.
+
+---
+
 ## [0.7.203] - 2026-03-23
 
 ### Fixed
