@@ -96,6 +96,7 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "ingame_ffb_gain") { current_preset.ingame_ffb_gain = std::stof(value); return true; }
     if (key == "steering_shaft_smoothing") { current_preset.steering_shaft_smoothing = std::stof(value); return true; }
     if (key == "torque_source") { current_preset.torque_source = std::stoi(value); return true; }
+    if (key == "steering_100hz_reconstruction") { current_preset.steering_100hz_reconstruction = std::stoi(value); return true; }
     if (key == "torque_passthrough") { current_preset.torque_passthrough = (value == "1" || value == "true"); return true; }
     if (key == "sop") { current_preset.sop = std::stof(value); return true; }
     if (key == "lateral_load_effect") { current_preset.lateral_load = std::stof(value); return true; }
@@ -255,6 +256,7 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "ingame_ffb_gain") { engine.m_ingame_ffb_gain = std::stof(value); return true; }
     if (key == "steering_shaft_smoothing") { engine.m_steering_shaft_smoothing = std::stof(value); return true; }
     if (key == "torque_source") { engine.m_torque_source = std::stoi(value); return true; }
+    if (key == "steering_100hz_reconstruction") { engine.m_steering_100hz_reconstruction = std::stoi(value); return true; }
     if (key == "torque_passthrough") { engine.m_torque_passthrough = (value == "1" || value == "true"); return true; }
     if (key == "sop") { engine.m_sop_effect = std::stof(value); return true; }
     if (key == "lateral_load_effect") { engine.m_lat_load_effect = std::stof(value); return true; }
@@ -1216,6 +1218,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "understeer=" << p.understeer << "\n";
     file << "understeer_gamma=" << p.understeer_gamma << "\n";
     file << "torque_source=" << p.torque_source << "\n";
+    file << "steering_100hz_reconstruction=" << p.steering_100hz_reconstruction << "\n";
     file << "torque_passthrough=" << p.torque_passthrough << "\n";
     file << "flatspot_suppression=" << p.flatspot_suppression << "\n";
     file << "notch_q=" << p.notch_q << "\n";
@@ -1562,6 +1565,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "understeer=" << engine.m_understeer_effect << "\n";
         file << "understeer_gamma=" << engine.m_understeer_gamma << "\n";
         file << "torque_source=" << engine.m_torque_source << "\n";
+        file << "steering_100hz_reconstruction=" << engine.m_steering_100hz_reconstruction << "\n";
         file << "torque_passthrough=" << engine.m_torque_passthrough << "\n";
         file << "flatspot_suppression=" << engine.m_flatspot_suppression << "\n";
         file << "notch_q=" << engine.m_notch_q << "\n";

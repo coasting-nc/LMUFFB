@@ -549,6 +549,12 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         IntSetting("Torque Source", &engine.m_torque_source, torque_sources, sizeof(torque_sources)/sizeof(torque_sources[0]),
             Tooltips::TORQUE_SOURCE);
 
+        if (engine.m_torque_source == 0) {
+            const char* recon_modes[] = { "Zero Latency (Extrapolation)", "Smooth (Interpolation)" };
+            IntSetting("  Reconstruction", &engine.m_steering_100hz_reconstruction, recon_modes, sizeof(recon_modes)/sizeof(recon_modes[0]),
+                Tooltips::STEERING_100HZ_RECONSTRUCTION);
+        }
+
         BoolSetting("Pure Passthrough", &engine.m_torque_passthrough, Tooltips::PURE_PASSTHROUGH);
 
         if (ImGui::TreeNodeEx("Signal Filtering", ImGuiTreeNodeFlags_DefaultOpen)) {

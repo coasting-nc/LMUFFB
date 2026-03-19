@@ -680,6 +680,75 @@ TEST_CASE(test_steering_shaft_smoothing, "CorePhysics") {
     }
 }
 
+TEST_CASE(test_holt_winters_modes, "Math") {
+    FFBEngine engine;
+    InitializeEngine(engine);
 
+    // We want to isolate the base steering torque
+    engine.m_torque_source = 0; // 100Hz Legacy source
+    engine.m_steering_shaft_gain = 1.0f;
+    engine.m_invert_force = false;
+    engine.m_gain = 1.0f;
+    engine.m_wheelbase_max_nm = 10.0f;
+    engine.m_target_rim_nm = 10.0f;
+
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+    data.mElapsedTime = 1.0;
+
+    // --- MODE 0: ZERO LATENCY (EXTRAPOLATION) ---
+    FFBEngineTestAccess::SetSteering100HzReconstruction(engine, 0);
+    FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 0.1); // Force 1/10
+
+    // Warmup: Seed the filter at 0.0
+    data.mSteeringShaftTorque = 0.0;
+    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.01);
+
+    // Increment time to trigger is_new_frame on next call
+    data.mElapsedTime += 0.01;
+    data.mSteeringShaftTorque = 10.0;
+    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.01); // 100Hz frame arrives
+
+    // Second 100Hz frame with 10.0 input to build trend
+    data.mElapsedTime += 0.01;
+    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.01);
+
+    // Pump 1 intermediate 400Hz frame (2.5ms later)
+    // Override DT must be > 0 to enable upsampling logic
+    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+
+    float force_extrapolated = engine.GetDebugBatch().back().total_output;
+
+    // Because it predicts the future based on the jump, it should overshoot > 1.0 (10.0 Nm / 10.0 peak)
+    ASSERT_GT(force_extrapolated, 1.0f);
+
+    // --- MODE 1: SMOOTH (INTERPOLATION) ---
+    InitializeEngine(engine); // Reset engine state
+    engine.m_torque_source = 0;
+    engine.m_steering_shaft_gain = 1.0f;
+    engine.m_invert_force = false;
+    engine.m_gain = 1.0f;
+    engine.m_wheelbase_max_nm = 10.0f;
+    engine.m_target_rim_nm = 10.0f;
+    FFBEngineTestAccess::SetSteering100HzReconstruction(engine, 1);
+    FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 0.1);
+
+    data.mElapsedTime = 1.0;
+    data.mSteeringShaftTorque = 0.0;
+    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.01);
+
+    data.mElapsedTime += 0.01;
+    data.mSteeringShaftTorque = 10.0;
+    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.01); // 100Hz frame arrives
+
+    // Pump 1 intermediate 400Hz frame (2.5ms later)
+    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+
+    float force_interpolated = engine.GetDebugBatch().back().total_output;
+
+    // Because it interpolates, it should be smoothly transitioning between 0 and 1.0,
+    // meaning it must be strictly less than 1.0 (no overshoot).
+    ASSERT_LT(force_interpolated, 1.0f);
+    ASSERT_GT(force_interpolated, 0.0f);
+}
 
 } // namespace FFBEngineTests
