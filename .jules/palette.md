@@ -1,0 +1,3 @@
+## 2025-05-15 - [Safety and Clarity in Preset Management]
+**Learning:** Destructive actions like deleting a preset should always be guarded by a confirmation modal to prevent accidental data loss. Visual cues, such as coloring the "Delete" button red within the modal, help reinforce the nature of the action. Providing a clear instruction via `InputTextWithHint` and disabling buttons when prerequisites (like a name) are not met improves user guidance and prevents non-functional interactions.
+**Action:** Always implement confirmation dialogs for destructive actions and use standard UI hints/validation states to guide user input in future GUI enhancements.
