@@ -94,6 +94,8 @@ struct Preset {
     float target_rim_nm = 10.0f;    // Default target
     
     float lockup_freq_scale = 1.02f;      // New v0.6.20
+    bool bottoming_enabled = true;
+    float bottoming_gain = 1.0f;
     int bottoming_method = 0;
     float scrub_drag_gain = 0.0f;
     
@@ -237,7 +239,12 @@ struct Preset {
         return *this;
     }
     
-    Preset& SetBottoming(int method) { bottoming_method = method; return *this; }
+    Preset& SetBottoming(bool enabled, float gain, int method) {
+        bottoming_enabled = enabled;
+        bottoming_gain = gain;
+        bottoming_method = method;
+        return *this;
+    }
     Preset& SetScrub(float v) { scrub_drag_gain = v; return *this; }
     Preset& SetRearAlign(float v) { rear_align_effect = v; return *this; }
     Preset& SetKerbStrikeRejection(float v) { kerb_strike_rejection = v; return *this; }
@@ -422,6 +429,8 @@ struct Preset {
         engine.m_abs_freq_hz = (std::max)(1.0f, abs_freq);
         engine.m_lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);
         engine.m_spin_freq_scale = (std::max)(0.1f, spin_freq_scale);
+        engine.m_bottoming_enabled = bottoming_enabled;
+        engine.m_bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));
         engine.m_bottoming_method = bottoming_method;
         engine.m_scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);
         engine.m_rear_align_effect = (std::max)(0.0f, rear_align_effect);
@@ -528,6 +537,7 @@ struct Preset {
         brake_load_cap = (std::max)(1.0f, brake_load_cap);
         texture_load_cap = (std::max)(1.0f, texture_load_cap);
         abs_gain = (std::max)(0.0f, abs_gain);
+        bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));
         spin_gain = (std::max)(0.0f, spin_gain);
         slide_gain = (std::max)(0.0f, slide_gain);
         slide_freq = (std::max)(0.1f, slide_freq);
@@ -659,6 +669,8 @@ struct Preset {
         abs_freq = engine.m_abs_freq_hz;
         lockup_freq_scale = engine.m_lockup_freq_scale;
         spin_freq_scale = engine.m_spin_freq_scale;
+        bottoming_enabled = engine.m_bottoming_enabled;
+        bottoming_gain = engine.m_bottoming_gain;
         bottoming_method = engine.m_bottoming_method;
         scrub_drag_gain = engine.m_scrub_drag_gain;
         rear_align_effect = engine.m_rear_align_effect;
@@ -800,6 +812,8 @@ struct Preset {
         if (!is_near(wheelbase_max_nm, p.wheelbase_max_nm, eps)) return false;
         if (!is_near(target_rim_nm, p.target_rim_nm, eps)) return false;
         if (!is_near(lockup_freq_scale, p.lockup_freq_scale, eps)) return false;
+        if (bottoming_enabled != p.bottoming_enabled) return false;
+        if (!is_near(bottoming_gain, p.bottoming_gain, eps)) return false;
         if (bottoming_method != p.bottoming_method) return false;
         if (!is_near(scrub_drag_gain, p.scrub_drag_gain, eps)) return false;
         if (!is_near(rear_align_effect, p.rear_align_effect, eps)) return false;
