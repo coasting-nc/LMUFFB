@@ -160,6 +160,7 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "slope_confidence_max_rate") { current_preset.slope_confidence_max_rate = std::stof(value); return true; }
     if (key == "slip_angle_smoothing") { current_preset.slip_smoothing = std::stof(value); return true; }
     if (key == "chassis_inertia_smoothing") { current_preset.chassis_smoothing = std::stof(value); return true; }
+    if (key == "load_sensitivity_enabled") { current_preset.load_sensitivity_enabled = (value == "1" || value == "true"); return true; }
     return false;
 }
 
@@ -192,6 +193,8 @@ bool Config::ParseVibrationLine(const std::string& key, const std::string& value
     if (key == "road_gain") { current_preset.road_gain = std::stof(value); return true; }
     if (key == "vibration_gain" || key == "tactile_gain") { current_preset.vibration_gain = std::stof(value); return true; }
     if (key == "scrub_drag_gain") { current_preset.scrub_drag_gain = std::stof(value); return true; }
+    if (key == "bottoming_enabled") { current_preset.bottoming_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "bottoming_gain") { current_preset.bottoming_gain = std::stof(value); return true; }
     if (key == "bottoming_method") { current_preset.bottoming_method = std::stoi(value); return true; }
     if (key == "dynamic_normalization_enabled") { current_preset.dynamic_normalization_enabled = (value == "1" || value == "true"); return true; }
     if (key == "auto_load_normalization_enabled") { current_preset.auto_load_normalization_enabled = (value == "1" || value == "true"); return true; }
@@ -328,6 +331,7 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "slope_confidence_max_rate") { engine.m_slope_confidence_max_rate = std::stof(value); return true; }
     if (key == "slip_angle_smoothing") { engine.m_slip_angle_smoothing = std::stof(value); return true; }
     if (key == "chassis_inertia_smoothing") { engine.m_chassis_inertia_smoothing = std::stof(value); return true; }
+    if (key == "load_sensitivity_enabled") { engine.m_load_sensitivity_enabled = (value == "1" || value == "true"); return true; }
     if (key == "speed_gate_lower") { engine.m_speed_gate_lower = std::stof(value); return true; }
     if (key == "speed_gate_upper") { engine.m_speed_gate_upper = std::stof(value); return true; }
     if (key == "road_fallback_scale") { engine.m_road_fallback_scale = std::stof(value); return true; }
@@ -363,6 +367,8 @@ bool Config::SyncVibrationLine(const std::string& key, const std::string& value,
     if (key == "road_enabled") { engine.m_road_texture_enabled = (value == "1" || value == "true"); return true; }
     if (key == "road_gain") { engine.m_road_texture_gain = std::stof(value); return true; }
     if (key == "vibration_gain" || key == "tactile_gain") { engine.m_vibration_gain = std::stof(value); return true; }
+    if (key == "bottoming_enabled") { engine.m_bottoming_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "bottoming_gain") { engine.m_bottoming_gain = std::stof(value); return true; }
     if (key == "dynamic_normalization_enabled") { engine.m_dynamic_normalization_enabled = (value == "1" || value == "true"); return true; }
     if (key == "auto_load_normalization_enabled") { engine.m_auto_load_normalization_enabled = (value == "1" || value == "true"); return true; }
     if (key == "soft_lock_enabled") { engine.m_soft_lock_enabled = (value == "1" || value == "true"); return true; }
@@ -469,6 +475,8 @@ void Config::LoadPresets() {
         p.spin_gain = 0.5f;
         p.spin_freq_scale = 1.0f;
         p.scrub_drag_gain = 0.0462185f;
+        p.bottoming_enabled = true;
+        p.bottoming_gain = 1.0f;
         p.bottoming_method = 0;
         p.speed_gate_lower = 0.0f;
         p.speed_gate_upper = 0.277778f;
@@ -571,6 +579,8 @@ void Config::LoadPresets() {
         p.spin_gain = 0.5f;
         p.spin_freq_scale = 1.0f;
         p.scrub_drag_gain = 0.0f;
+        p.bottoming_enabled = true;
+        p.bottoming_gain = 1.0f;
         p.bottoming_method = 0;
         p.rest_api_enabled = true;
         p.rest_api_port = 6397;
@@ -642,6 +652,8 @@ void Config::LoadPresets() {
         p.spin_gain = 0.462185f;
         p.spin_freq_scale = 1.8f;
         p.scrub_drag_gain = 0.333f;
+        p.bottoming_enabled = true;
+        p.bottoming_gain = 1.0f;
         p.bottoming_method = 1;
         p.speed_gate_lower = 1.0f;
         p.speed_gate_upper = 5.0f;
@@ -703,6 +715,8 @@ void Config::LoadPresets() {
         p.spin_gain = 0.462185f;
         p.spin_freq_scale = 1.8f;
         p.scrub_drag_gain = 0.333f;
+        p.bottoming_enabled = true;
+        p.bottoming_gain = 1.0f;
         p.bottoming_method = 1;
         p.speed_gate_lower = 1.0f;
         p.speed_gate_upper = 5.0f;
@@ -764,6 +778,8 @@ void Config::LoadPresets() {
         p.spin_gain = 0.462185f;
         p.spin_freq_scale = 1.8f;
         p.scrub_drag_gain = 0.333f;
+        p.bottoming_enabled = true;
+        p.bottoming_gain = 1.0f;
         p.bottoming_method = 1;
         p.speed_gate_lower = 1.0f;
         p.speed_gate_upper = 5.0f;
@@ -826,6 +842,8 @@ void Config::LoadPresets() {
         p.spin_gain = 0.462185f;
         p.spin_freq_scale = 1.8f;
         p.scrub_drag_gain = 0.333f;
+        p.bottoming_enabled = true;
+        p.bottoming_gain = 1.0f;
         p.bottoming_method = 1;
         p.speed_gate_lower = 1.0f;
         p.speed_gate_upper = 5.0f;
@@ -841,6 +859,7 @@ void Config::LoadPresets() {
         .SetSlipSmoothing(0.015f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
+        .SetBottoming(false, 0.0f, 0)
     );
 
     // 9. Test: SoP Only
@@ -853,6 +872,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
         .SetSoPYaw(0.0f)
+        .SetBottoming(false, 0.0f, 0)
     );
 
     // 10. Test: Understeer Only (Updated v0.6.31 for proper effect isolation)
@@ -875,6 +895,7 @@ void Config::LoadPresets() {
         .SetLockup(false, 0.0f)      // Disable lockup vibration
         .SetAdvancedBraking(0.5f, 20.0f, 0.1f, false, 0.0f)  // Disable ABS pulse
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         
         // SMOOTHING
         .SetSmoothing(0.0f)         // SoP smoothing (doesn't affect test since SoP=0)
@@ -907,6 +928,7 @@ void Config::LoadPresets() {
         .SetLockup(false, 0.0f)
         .SetAdvancedBraking(0.5f, 20.0f, 0.1f, false, 0.0f)
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         
         // SMOOTHING
         .SetSmoothing(0.0f)
@@ -925,6 +947,7 @@ void Config::LoadPresets() {
         .SetSlide(true, 0.39f)
         .SetRoad(true, 1.0f)
         .SetRearAlign(0.0f)
+        .SetBottoming(true, 1.0f, 0)
     );
 
     // 13. Test: Rear Align Torque Only
@@ -937,6 +960,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.90f)
         .SetSoPYaw(0.0f)
+        .SetBottoming(false, 0.0f, 0)
     );
 
     // 14. Test: SoP Base Only
@@ -949,6 +973,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
         .SetSoPYaw(0.0f)
+        .SetBottoming(false, 0.0f, 0)
     );
 
     // 15. Test: Slide Texture Only
@@ -960,6 +985,7 @@ void Config::LoadPresets() {
         .SetSlipSmoothing(0.015f)
         .SetSlide(true, 0.39f, 1.0f)
         .SetRearAlign(0.0f)
+        .SetBottoming(false, 0.0f, 0)
     );
 
     // 16. Test: No Effects
@@ -971,6 +997,7 @@ void Config::LoadPresets() {
         .SetSlipSmoothing(0.015f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
+        .SetBottoming(false, 0.0f, 0)
     );
 
     // --- NEW GUIDE PRESETS (v0.4.24) ---
@@ -989,6 +1016,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
@@ -1008,6 +1036,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
@@ -1024,6 +1053,7 @@ void Config::LoadPresets() {
         .SetLockup(false, 0.0f)
         .SetSpin(false, 0.0f)
         .SetRoad(false, 0.0f)
+        .SetBottoming(false, 0.0f, 0)
         .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
@@ -1040,6 +1070,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
@@ -1056,6 +1087,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
@@ -1074,6 +1106,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
@@ -1092,6 +1125,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
@@ -1290,6 +1324,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
 
     file << "slip_angle_smoothing=" << p.slip_smoothing << "\n";
     file << "chassis_inertia_smoothing=" << p.chassis_smoothing << "\n";
+    file << "load_sensitivity_enabled=" << (p.load_sensitivity_enabled ? "1" : "0") << "\n";
     file << "optimal_slip_angle=" << p.optimal_slip_angle << "\n";
     file << "optimal_slip_ratio=" << p.optimal_slip_ratio << "\n";
 
@@ -1324,6 +1359,8 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "spin_gain=" << p.spin_gain << "\n";
     file << "spin_freq_scale=" << p.spin_freq_scale << "\n";
     file << "scrub_drag_gain=" << p.scrub_drag_gain << "\n";
+    file << "bottoming_enabled=" << (p.bottoming_enabled ? "1" : "0") << "\n";
+    file << "bottoming_gain=" << p.bottoming_gain << "\n";
     file << "bottoming_method=" << p.bottoming_method << "\n";
     file << "rest_api_fallback_enabled=" << (p.rest_api_enabled ? "1" : "0") << "\n";
     file << "rest_api_port=" << p.rest_api_port << "\n";
@@ -1625,6 +1662,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "\n; --- Physics (Grip & Slip Angle) ---\n";
         file << "slip_angle_smoothing=" << engine.m_slip_angle_smoothing << "\n";
         file << "chassis_inertia_smoothing=" << engine.m_chassis_inertia_smoothing << "\n";
+        file << "load_sensitivity_enabled=" << engine.m_load_sensitivity_enabled << "\n";
         file << "optimal_slip_angle=" << engine.m_optimal_slip_angle << "\n";
         file << "optimal_slip_ratio=" << engine.m_optimal_slip_ratio << "\n";
         file << "slope_detection_enabled=" << engine.m_slope_detection_enabled << "\n";
@@ -1670,6 +1708,8 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "spin_gain=" << engine.m_spin_gain << "\n";
         file << "spin_freq_scale=" << engine.m_spin_freq_scale << "\n";
         file << "scrub_drag_gain=" << engine.m_scrub_drag_gain << "\n";
+        file << "bottoming_enabled=" << (engine.m_bottoming_enabled ? "1" : "0") << "\n";
+        file << "bottoming_gain=" << engine.m_bottoming_gain << "\n";
         file << "bottoming_method=" << engine.m_bottoming_method << "\n";
         file << "rest_api_fallback_enabled=" << engine.m_rest_api_enabled << "\n";
         file << "rest_api_port=" << engine.m_rest_api_port << "\n";
@@ -1713,6 +1753,12 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
 
 void Config::Load(FFBEngine& engine, const std::string& filename) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+
+    // v0.7.204: Ensure preset library is loaded before processing main config.
+    // This prevents auto-save (m_needs_save) from overwriting user presets
+    // with an empty vector if the GUI hasn't been opened yet.
+    LoadPresets();
+
     std::string final_path = filename.empty() ? m_config_path : filename;
     std::ifstream file(final_path);
     if (!file.is_open()) {
@@ -2057,6 +2103,8 @@ struct Preset {
     float target_rim_nm = 10.0f;    // Default target
     
     float lockup_freq_scale = 1.02f;      // New v0.6.20
+    bool bottoming_enabled = true;
+    float bottoming_gain = 1.0f;
     int bottoming_method = 0;
     float scrub_drag_gain = 0.0f;
     
@@ -2112,6 +2160,7 @@ struct Preset {
     // Reserved for future implementation (v0.6.23+)
     float road_fallback_scale = 0.05f;      // Planned: Road texture fallback scaling
     bool understeer_affects_sop = false;     // Planned: Understeer modulation of SoP
+    bool load_sensitivity_enabled = true;   // Issue #392
 
     // ===== SLOPE DETECTION (v0.7.0 â†’ v0.7.1 defaults) =====
     bool slope_detection_enabled = false;
@@ -2200,7 +2249,12 @@ struct Preset {
         return *this;
     }
     
-    Preset& SetBottoming(int method) { bottoming_method = method; return *this; }
+    Preset& SetBottoming(bool enabled, float gain, int method) {
+        bottoming_enabled = enabled;
+        bottoming_gain = gain;
+        bottoming_method = method;
+        return *this;
+    }
     Preset& SetScrub(float v) { scrub_drag_gain = v; return *this; }
     Preset& SetRearAlign(float v) { rear_align_effect = v; return *this; }
     Preset& SetKerbStrikeRejection(float v) { kerb_strike_rejection = v; return *this; }
@@ -2385,6 +2439,8 @@ struct Preset {
         engine.m_abs_freq_hz = (std::max)(1.0f, abs_freq);
         engine.m_lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);
         engine.m_spin_freq_scale = (std::max)(0.1f, spin_freq_scale);
+        engine.m_bottoming_enabled = bottoming_enabled;
+        engine.m_bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));
         engine.m_bottoming_method = bottoming_method;
         engine.m_scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);
         engine.m_rear_align_effect = (std::max)(0.0f, rear_align_effect);
@@ -2429,6 +2485,7 @@ struct Preset {
         engine.m_chassis_inertia_smoothing = (std::max)(0.0f, chassis_smoothing);
         engine.m_road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
         engine.m_understeer_affects_sop = understeer_affects_sop;
+        engine.m_load_sensitivity_enabled = load_sensitivity_enabled;
         
         // Slope Detection (v0.7.0)
         engine.m_slope_detection_enabled = slope_detection_enabled;
@@ -2491,6 +2548,7 @@ struct Preset {
         brake_load_cap = (std::max)(1.0f, brake_load_cap);
         texture_load_cap = (std::max)(1.0f, texture_load_cap);
         abs_gain = (std::max)(0.0f, abs_gain);
+        bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));
         spin_gain = (std::max)(0.0f, spin_gain);
         slide_gain = (std::max)(0.0f, slide_gain);
         slide_freq = (std::max)(0.1f, slide_freq);
@@ -2622,6 +2680,8 @@ struct Preset {
         abs_freq = engine.m_abs_freq_hz;
         lockup_freq_scale = engine.m_lockup_freq_scale;
         spin_freq_scale = engine.m_spin_freq_scale;
+        bottoming_enabled = engine.m_bottoming_enabled;
+        bottoming_gain = engine.m_bottoming_gain;
         bottoming_method = engine.m_bottoming_method;
         scrub_drag_gain = engine.m_scrub_drag_gain;
         rear_align_effect = engine.m_rear_align_effect;
@@ -2665,6 +2725,7 @@ struct Preset {
         chassis_smoothing = engine.m_chassis_inertia_smoothing;
         road_fallback_scale = engine.m_road_fallback_scale;
         understeer_affects_sop = engine.m_understeer_affects_sop;
+        load_sensitivity_enabled = engine.m_load_sensitivity_enabled;
 
         // Slope Detection (v0.7.0)
         slope_detection_enabled = engine.m_slope_detection_enabled;
@@ -2763,6 +2824,8 @@ struct Preset {
         if (!is_near(wheelbase_max_nm, p.wheelbase_max_nm, eps)) return false;
         if (!is_near(target_rim_nm, p.target_rim_nm, eps)) return false;
         if (!is_near(lockup_freq_scale, p.lockup_freq_scale, eps)) return false;
+        if (bottoming_enabled != p.bottoming_enabled) return false;
+        if (!is_near(bottoming_gain, p.bottoming_gain, eps)) return false;
         if (bottoming_method != p.bottoming_method) return false;
         if (!is_near(scrub_drag_gain, p.scrub_drag_gain, eps)) return false;
         if (!is_near(rear_align_effect, p.rear_align_effect, eps)) return false;
@@ -2808,6 +2871,7 @@ struct Preset {
 
         if (!is_near(road_fallback_scale, p.road_fallback_scale, eps)) return false;
         if (understeer_affects_sop != p.understeer_affects_sop) return false;
+        if (load_sensitivity_enabled != p.load_sensitivity_enabled) return false;
 
         if (slope_detection_enabled != p.slope_detection_enabled) return false;
         if (slope_sg_window != p.slope_sg_window) return false;
@@ -5563,28 +5627,39 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
 
     if (!m_road_texture_enabled) return;
     
-    // 2. Road Texture (Delta Deflection Method)
-    // Measures the rate of change in tire vertical compression
-    double delta_l = data->mWheel[0].mVerticalTireDeflection - m_prev_vert_deflection[0];
-    double delta_r = data->mWheel[1].mVerticalTireDeflection - m_prev_vert_deflection[1];
+    // 2. Road Texture (Deflection Velocity Method)
+    // Convert position delta to velocity (m/s) to ensure Time-Domain Independence
+    // v0.7.200 (Issue #402): Fixed bug where effect was 4x weaker at 400Hz than 100Hz.
+    double vel_l = (data->mWheel[0].mVerticalTireDeflection - m_prev_vert_deflection[0]) / ctx.dt;
+    double vel_r = (data->mWheel[1].mVerticalTireDeflection - m_prev_vert_deflection[1]) / ctx.dt;
     
-    // Outlier rejection (crashes/jumps)
-    delta_l = (std::max)(-DEFLECTION_DELTA_LIMIT, (std::min)(DEFLECTION_DELTA_LIMIT, delta_l));
-    delta_r = (std::max)(-DEFLECTION_DELTA_LIMIT, (std::min)(DEFLECTION_DELTA_LIMIT, delta_r));
+    // Safety: Sanitize derivatives against NaN/Inf (v0.7.200 Review feedback)
+    if (!std::isfinite(vel_l)) vel_l = 0.0;
+    if (!std::isfinite(vel_r)) vel_r = 0.0;
+
+    // Outlier rejection (crashes/jumps) - scaled for velocity (~1.0 m/s limit)
+    double max_vel = DEFLECTION_DELTA_LIMIT / 0.01;
+    vel_l = std::clamp(vel_l, -max_vel, max_vel);
+    vel_r = std::clamp(vel_r, -max_vel, max_vel);
     
     double road_noise_val = 0.0;
     
     // FALLBACK (v0.6.36): If mVerticalTireDeflection is missing (Encrypted DLC),
     // use Chassis Vertical Acceleration delta as a secondary source.
-    bool deflection_active = (std::abs(delta_l) > DEFLECTION_ACTIVE_THRESHOLD || std::abs(delta_r) > DEFLECTION_ACTIVE_THRESHOLD);
+    bool deflection_active = (std::abs(vel_l) > (DEFLECTION_ACTIVE_THRESHOLD / 0.01) ||
+                              std::abs(vel_r) > (DEFLECTION_ACTIVE_THRESHOLD / 0.01));
     
     if (deflection_active || ctx.car_speed < ROAD_TEXTURE_SPEED_THRESHOLD) {
-        road_noise_val = (delta_l + delta_r) * DEFLECTION_NM_SCALE; // Scale to NM
+        // Multiply by 0.01 to maintain legacy 100Hz tuning strength
+        road_noise_val = (vel_l + vel_r) * DEFLECTION_NM_SCALE * 0.01;
     } else {
-        // Fallback to vertical acceleration rate-of-change (jerk-like scaling)
+        // Fallback to vertical jerk (m/s^3)
         double vert_accel = data->mLocalAccel.y;
-        double delta_accel = vert_accel - m_prev_vert_accel;
-        road_noise_val = delta_accel * ACCEL_ROAD_TEXTURE_SCALE * DEFLECTION_NM_SCALE; // Blend into similar range
+        double jerk = (vert_accel - m_prev_vert_accel) / ctx.dt;
+        if (!std::isfinite(jerk)) jerk = 0.0;
+
+        // Multiply by 0.01 to maintain legacy 100Hz tuning strength
+        road_noise_val = jerk * ACCEL_ROAD_TEXTURE_SCALE * DEFLECTION_NM_SCALE * 0.01;
     }
     
     ctx.road_noise = road_noise_val * m_road_texture_gain * ctx.texture_load_factor;
@@ -5941,6 +6016,7 @@ public:
     // v0.6.23: Additional Advanced Physics (Reserved for future use)
     float m_road_fallback_scale = 0.05f;
     bool m_understeer_affects_sop = false;
+    bool m_load_sensitivity_enabled = true; // Issue #392: Dynamic Load Sensitivity toggle
     
     // ===== SLOPE DETECTION (v0.7.0 -> v0.7.3 stability fixes) =====
     bool m_slope_detection_enabled = false;
@@ -6290,7 +6366,7 @@ private:
     static constexpr double BOTTOMING_RH_THRESHOLD_M = 0.002;
     static constexpr double BOTTOMING_IMPULSE_THRESHOLD_N_S = 100000.0;
     static constexpr double BOTTOMING_IMPULSE_RANGE_N_S = 200000.0;
-    static constexpr double BOTTOMING_LOAD_MULT = 2.5;
+    static constexpr double BOTTOMING_LOAD_MULT = 4.0;
     static constexpr double BOTTOMING_INTENSITY_SCALE = 0.05;
     static constexpr double BOTTOMING_FREQ_HZ = 50.0;
     static constexpr double SPIN_THROTTLE_THRESHOLD = 0.05;
@@ -6389,6 +6465,7 @@ private:
 #include "FFBMetadataManager.h"
 #include "logging/Logger.h"
 #include "io/RestApiProvider.h"
+#include "physics/VehicleUtils.h"
 
 bool FFBMetadataManager::UpdateMetadata(const SharedMemoryObjectOut& data) {
     const char* trackName = data.scoring.scoringInfo.mTrackName;
@@ -6403,9 +6480,9 @@ bool FFBMetadataManager::UpdateMetadata(const SharedMemoryObjectOut& data) {
 
         // Issue #368: Log all fields that might contain brand info if a change is detected
         if (vehicleName && m_last_logged_veh != vehicleName) {
-            std::string restBrand = RestApiProvider::Get().GetManufacturer();
-            Logger::Get().LogFile("[Metadata] Vehicle Change Detected: '%s' (Class: '%s', PitGroup: '%s', Filename: '%s', REST Brand: '%s')",
-                vehicleName, vehicleClass, veh.mPitGroup, veh.mVehFilename, restBrand.c_str());
+            const char* brand = ParseVehicleBrand(vehicleClass, vehicleName);
+            Logger::Get().LogFile("[Metadata] Vehicle Change Detected: '%s' (Brand: '%s', Class: '%s', PitGroup: '%s', Filename: '%s')",
+                vehicleName, brand, vehicleClass, veh.mPitGroup, veh.mVehFilename);
             m_last_logged_veh = vehicleName;
         }
     }
@@ -6421,10 +6498,8 @@ bool FFBMetadataManager::UpdateInternal(const char* vehicleClass, const char* ve
         StringUtils::SafeCopy(m_vehicle_name, STR_BUF_64, vehicleName);
         changed = true;
 
-        // Issue #368: Request manufacturer info from REST API on car change
-        RestApiProvider::Get().ResetManufacturer();
-        RestApiProvider::Get().ResetSteeringRange(); // Issue #379
-        RestApiProvider::Get().RequestManufacturer(6397, m_vehicle_name); // TODO: use configured port
+        // Issue #379: Reset steering range on car change
+        RestApiProvider::Get().ResetSteeringRange();
     }
 
     if (vehicleClass && std::string(vehicleClass) != m_current_class_name) {
@@ -7389,8 +7464,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     };
 
     if (ImGui::TreeNodeEx("Presets and Configuration", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
-        if (Config::presets.empty()) Config::LoadPresets();
-
         static bool first_run = true;
         if (first_run && !Config::presets.empty()) {
             for (int i = 0; i < (int)Config::presets.size(); i++) {
@@ -7764,6 +7837,11 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::TreeNodeEx("Grip & Slip Angle Estimation", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
+        if (GuiWidgets::Checkbox("Enable Dynamic Load Sensitivity", &engine.m_load_sensitivity_enabled, Tooltips::LOAD_SENSITIVITY_ENABLE).deactivated) {
+            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+            Config::Save(engine);
+        }
+
         FloatSetting("Slip Angle Smoothing", &engine.m_slip_angle_smoothing, 0.000f, 0.100f, "%.3f s",
             Tooltips::SLIP_ANGLE_SMOOTHING,
             [&]() {
@@ -7931,8 +8009,12 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
         FloatSetting("Scrub Drag", &engine.m_scrub_drag_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_scrub_drag_gain, FFBEngine::BASE_NM_SCRUB_DRAG), Tooltips::SCRUB_DRAG);
 
-        const char* bottoming_modes[] = { "Method A: Scraping", "Method B: Susp. Spike" };
-        IntSetting("Bottoming Logic", &engine.m_bottoming_method, bottoming_modes, sizeof(bottoming_modes)/sizeof(bottoming_modes[0]), Tooltips::BOTTOMING_LOGIC);
+        BoolSetting("Bottoming Effect", &engine.m_bottoming_enabled, Tooltips::BOTTOMING_EFFECT);
+        if (engine.m_bottoming_enabled) {
+            FloatSetting("  Bottoming Strength", &engine.m_bottoming_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_bottoming_gain, FFBEngine::BASE_NM_BOTTOMING), Tooltips::BOTTOMING_STRENGTH);
+            const char* bottoming_modes[] = { "Method A: Scraping", "Method B: Susp. Spike" };
+            IntSetting("  Bottoming Logic", &engine.m_bottoming_method, bottoming_modes, sizeof(bottoming_modes)/sizeof(bottoming_modes[0]), Tooltips::BOTTOMING_LOGIC);
+        }
 
         ImGui::TreePop();
     } else {
@@ -9178,6 +9260,7 @@ namespace Tooltips {
     inline constexpr const char* SOP_SCALE = "Multiplies the raw G-force signal before limiting.\nAdjusts the dynamic range of the SoP effect.";
 
     // Grip Estimation
+    inline constexpr const char* LOAD_SENSITIVITY_ENABLE = "Enables scaling of the optimal slip angle based on tire load.\nPhysically accurate but may introduce 'graininess' on some Direct Drive wheels.";
     inline constexpr const char* SLIP_ANGLE_SMOOTHING = "Applies a time-based filter (LPF) to the Calculated Slip Angle\nused to estimate tire grip.\nSmooths the high fluctuations from lateral and longitudinal velocity,\nespecially over bumps or curbs.\nAffects: Understeer effect, Rear Aligning Torque.";
     inline constexpr const char* CHASSIS_INERTIA = "Simulation time for weight transfer.\nSimulates how fast the suspension settles.\nAffects calculated tire load magnitude.\n25ms = Stiff Race Car.\n50ms = Soft Road Car.";
     inline constexpr const char* OPTIMAL_SLIP_ANGLE = "The slip angle THRESHOLD above which grip loss begins.\nSet this HIGHER than the car's physical peak slip angle.\nRecommended: 0.10 for LMDh/LMP2, 0.12 for GT3.\n\nLower = More sensitive (force drops earlier).\nHigher = More buffer zone before force drops.\n\nNOTE: If the wheel feels too light at the limit, INCREASE this value.\nAffects: Understeer Effect, Lateral G Boost (Slide), Slide Texture.";
@@ -9220,6 +9303,8 @@ namespace Tooltips {
     inline constexpr const char* SPIN_STRENGTH = "Intensity of the wheel spin vibration.";
     inline constexpr const char* SPIN_PITCH = "Scales the frequency of the wheel spin vibration.";
     inline constexpr const char* SCRUB_DRAG = "Constant resistance force when pushing tires laterally (Understeer drag).\nAdds weight to the wheel when scrubbing.";
+    inline constexpr const char* BOTTOMING_EFFECT = "Simulates the chassis scraping the ground or hitting bump stops.";
+    inline constexpr const char* BOTTOMING_STRENGTH = "Intensity of the bottoming crunch.";
     inline constexpr const char* BOTTOMING_LOGIC = "Algorithm for detecting suspension bottoming.\nScraping = Ride height based.\nSusp Spike = Force rate based.";
 
     // Advanced
@@ -9259,10 +9344,10 @@ namespace Tooltips {
         UNLOADED_YAW_GAIN, UNLOADED_YAW_THRESHOLD, UNLOADED_YAW_SENS, UNLOADED_YAW_GAMMA, UNLOADED_YAW_PUNCH,
         POWER_YAW_GAIN, POWER_YAW_THRESHOLD, POWER_SLIP_THRESHOLD, POWER_YAW_GAMMA, POWER_YAW_PUNCH,
         GYRO_DAMPING, GYRO_SMOOTH, SOP_SMOOTHING, GRIP_SMOOTHING, SOP_SCALE,
-        SLIP_ANGLE_SMOOTHING, CHASSIS_INERTIA, OPTIMAL_SLIP_ANGLE, OPTIMAL_SLIP_RATIO,
+        LOAD_SENSITIVITY_ENABLE, SLIP_ANGLE_SMOOTHING, CHASSIS_INERTIA, OPTIMAL_SLIP_ANGLE, OPTIMAL_SLIP_RATIO,
         SLOPE_DETECTION_ENABLE, SLOPE_FILTER_WINDOW, SLOPE_SENSITIVITY, SLOPE_THRESHOLD, SLOPE_OUTPUT_SMOOTHING, SLOPE_ALPHA_THRESHOLD, SLOPE_DECAY_RATE, SLOPE_CONFIDENCE_GATE,
         LOCKUP_VIBRATION, LOCKUP_STRENGTH, BRAKE_LOAD_CAP, VIBRATION_PITCH, LOCKUP_GAMMA, LOCKUP_START_PCT, LOCKUP_FULL_PCT, LOCKUP_PREDICTION_SENS, LOCKUP_BUMP_REJECT, LOCKUP_REAR_BOOST, ABS_PULSE, ABS_PULSE_GAIN, ABS_PULSE_FREQ,
-        TEXTURE_LOAD_CAP, VIBRATION_GAIN, SLIDE_RUMBLE, SLIDE_GAIN, SLIDE_PITCH, ROAD_DETAILS, ROAD_GAIN, SPIN_VIBRATION, SPIN_STRENGTH, SPIN_PITCH, SCRUB_DRAG, BOTTOMING_LOGIC,
+        TEXTURE_LOAD_CAP, VIBRATION_GAIN, SLIDE_RUMBLE, SLIDE_GAIN, SLIDE_PITCH, ROAD_DETAILS, ROAD_GAIN, SPIN_VIBRATION, SPIN_STRENGTH, SPIN_PITCH, SCRUB_DRAG, BOTTOMING_EFFECT, BOTTOMING_STRENGTH, BOTTOMING_LOGIC,
         MUTE_BELOW, FULL_ABOVE, AUTO_START_LOGGING, LOG_PATH,
         SAFETY_WINDOW_DURATION, SAFETY_GAIN_REDUCTION, SAFETY_SMOOTHING_TAU, SPIKE_DETECTION_THRESHOLD, IMMEDIATE_SPIKE_THRESHOLD, SAFETY_SLEW_FULL_SCALE_TIME_S,
         STUTTER_SAFETY_ENABLE, STUTTER_THRESHOLD,
@@ -9943,30 +10028,6 @@ bool RestApiProvider::IsRequesting() const {
     return m_isRequesting.load();
 }
 
-void RestApiProvider::RequestManufacturer(int port, const std::string& vehicleName) {
-    if (m_isRequesting.load()) return;
-
-    std::lock_guard<std::mutex> lock(m_threadMutex);
-    if (m_requestThread.joinable()) {
-        m_requestThread.join();
-    }
-
-    m_isRequesting = true;
-    m_requestThread = std::thread([this, port, vehicleName]() {
-        try {
-            this->PerformManufacturerRequest(port, vehicleName);
-        } catch (...) {
-            Logger::Get().LogFile("RestApiProvider: Unexpected exception in manufacturer request thread");
-        }
-        this->m_isRequesting = false;
-    });
-}
-
-std::string RestApiProvider::GetManufacturer() const {
-    std::lock_guard<std::mutex> lock(m_manufacturerMutex);
-    return m_manufacturer;
-}
-
 void RestApiProvider::PerformRequest(int port) {
     std::string response;
     bool success = false;
@@ -10004,92 +10065,6 @@ void RestApiProvider::PerformRequest(int port) {
             Logger::Get().LogFile("RestApiProvider: Could not parse VM_STEER_LOCK from response");
         }
     }
-}
-
-void RestApiProvider::PerformManufacturerRequest(int port, std::string vehicleName) {
-    std::string response;
-    bool success = false;
-
-#ifdef _WIN32
-    HINTERNET hInternet = InternetOpenA("lmuFFB", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
-    if (hInternet) {
-        std::string url = "unlinked: localhost:" + std::to_string(port) + "/rest/race/car";
-        HINTERNET hConnect = InternetOpenUrlA(hInternet, url.c_str(), NULL, 0, INTERNET_FLAG_RELOAD, 0);
-        if (hConnect) {
-            char buffer[8192];
-            DWORD bytesRead;
-            while (InternetReadFile(hConnect, buffer, sizeof(buffer), &bytesRead) && bytesRead > 0) {
-                response.append(buffer, bytesRead);
-            }
-            InternetCloseHandle(hConnect);
-            success = true;
-        } else {
-            Logger::Get().LogFile("RestApiProvider: Failed to open URL (Port %d)", port);
-        }
-        InternetCloseHandle(hInternet);
-    } else {
-        Logger::Get().LogFile("RestApiProvider: Failed to initialize WinINet");
-    }
-#else
-    Logger::Get().LogFile("RestApiProvider: Mock manufacturer request on Linux (Port %d)", port);
-#endif
-
-    if (success && !response.empty()) {
-        // Log the full response for diagnostics
-        Logger::Get().LogFile("RestApiProvider: Full REST API response for car info: %s", response.c_str());
-
-        std::string manufacturer = ParseManufacturer(response, vehicleName);
-
-        std::lock_guard<std::mutex> lock(m_manufacturerMutex);
-        m_manufacturer = manufacturer;
-        m_hasManufacturer = true;
-        Logger::Get().LogFile("RestApiProvider: Identified manufacturer from REST API: %s", m_manufacturer.c_str());
-    }
-}
-
-std::string RestApiProvider::ParseManufacturer(const std::string& json, const std::string& vehicleName) {
-    // LMU JSON contains "desc" and "manufacturer"
-    // Match "desc": "vehicleName" and extract "manufacturer"
-
-    size_t descPos = json.find("\"desc\":\"" + vehicleName + "\"");
-    if (descPos == std::string::npos) {
-        // Try loose match if exact match fails (shared memory might have extra spaces or truncated)
-        // This is a heuristic.
-        descPos = json.find("\"desc\"");
-        while (descPos != std::string::npos) {
-            size_t startQuote = json.find('\"', descPos + 6);
-            size_t endQuote = json.find('\"', startQuote + 1);
-            if (startQuote != std::string::npos && endQuote != std::string::npos) {
-                std::string desc = json.substr(startQuote + 1, endQuote - startQuote - 1);
-                if (desc.find(vehicleName) != std::string::npos || vehicleName.find(desc) != std::string::npos) {
-                    break;
-                }
-            }
-            descPos = json.find("\"desc\"", descPos + 1);
-        }
-    }
-
-    if (descPos == std::string::npos) return "Unknown";
-
-    // Now find "manufacturer" near this desc
-    // Search within 1024 characters after desc
-    size_t manufacturerPos = json.find("\"manufacturer\"", descPos);
-    if (manufacturerPos == std::string::npos || (manufacturerPos - descPos) > 1024) {
-         // Search backwards just in case
-         manufacturerPos = json.rfind("\"manufacturer\"", descPos);
-    }
-
-    if (manufacturerPos == std::string::npos) return "Unknown";
-
-    size_t colonPos = json.find(':', manufacturerPos);
-    size_t startQuote = json.find('\"', colonPos);
-    size_t endQuote = json.find('\"', startQuote + 1);
-
-    if (startQuote != std::string::npos && endQuote != std::string::npos) {
-        return json.substr(startQuote + 1, endQuote - startQuote - 1);
-    }
-
-    return "Unknown";
 }
 
 float RestApiProvider::ParseSteeringLock(const std::string& json) {
@@ -10159,22 +10134,6 @@ public:
     // Is a request currently in flight?
     bool IsRequesting() const;
 
-    // Has a manufacturer been successfully retrieved?
-    bool HasManufacturer() const { return m_hasManufacturer; }
-
-    // Trigger an asynchronous request for the car manufacturer
-    void RequestManufacturer(int port, const std::string& vehicleName);
-
-    // Get the latest successfully retrieved manufacturer
-    std::string GetManufacturer() const;
-
-    // Reset manufacturer when vehicle changes
-    void ResetManufacturer() {
-        std::lock_guard<std::mutex> lock(m_manufacturerMutex);
-        m_manufacturer = "Unknown";
-        m_hasManufacturer = false;
-    }
-
     void ResetSteeringRange() {
         m_fallbackRangeDeg.store(0.0f);
     }
@@ -10184,18 +10143,12 @@ private:
     ~RestApiProvider();
 
     void PerformRequest(int port);
-    void PerformManufacturerRequest(int port, std::string vehicleName);
     float ParseSteeringLock(const std::string& json);
-    std::string ParseManufacturer(const std::string& json, const std::string& vehicleName);
 
     friend class RestApiProviderTestAccess;
 
     std::atomic<bool> m_isRequesting{false};
     std::atomic<float> m_fallbackRangeDeg{0.0f};
-
-    mutable std::mutex m_manufacturerMutex;
-    std::string m_manufacturer = "Unknown";
-    bool m_hasManufacturer = false;
 
     mutable std::mutex m_threadMutex;
     std::thread m_requestThread;
@@ -13428,7 +13381,10 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                     
                     // Tire physics: Optimal slip angle increases with load (Hertzian cube root)
                     // Note: Future thermal/pressure multipliers would be applied here
-                    double dynamic_slip_angle = m_optimal_slip_angle * std::pow(load_ratio, 0.333);
+                    double dynamic_slip_angle = m_optimal_slip_angle;
+                    if (m_load_sensitivity_enabled) {
+                        dynamic_slip_angle *= std::pow(load_ratio, 0.333);
+                    }
 
                     // 2. Lateral Component
                     double lat_metric = std::abs(slip_angle) / dynamic_slip_angle;
@@ -15130,9 +15086,6 @@ public:
     }
     static float ParseSteeringLock(RestApiProvider& p, const std::string& json) {
         return p.ParseSteeringLock(json);
-    }
-    static std::string ParseManufacturer(RestApiProvider& p, const std::string& json, const std::string& vehicleName) {
-        return p.ParseManufacturer(json, vehicleName);
     }
 };
 
