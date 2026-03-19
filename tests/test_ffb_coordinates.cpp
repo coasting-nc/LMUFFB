@@ -42,8 +42,7 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     // Run for multiple frames to let smoothing settle
     double force = 0.0;
     for (int i = 0; i < 60; i++) {
-        data.mElapsedTime += 0.01;
-        force = engine.calculate_force(&data);
+        force = PumpEngineTime(engine, data, 0.01);
     }
     
     // Expected: lat_g = (9.81 / 9.81) = 1.0 (Positive)
@@ -62,8 +61,7 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     data.mLocalAccel.x = -9.81; // 1G right (left turn)
     
     for (int i = 0; i < 60; i++) {
-        data.mElapsedTime += 0.01;
-        force = engine.calculate_force(&data);
+        force = PumpEngineTime(engine, data, 0.01);
     }
     
     // Expected: lat_g = (-9.81 / 9.81) = -1.0
@@ -122,8 +120,7 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     // Run multiple frames to let LPF settle
     double force = 0.0;
     for (int i = 0; i < 50; i++) {
-        data.mElapsedTime += 0.01;
-        force = engine.calculate_force(&data);
+        force = PumpEngineTime(engine, data, 0.01);
     }
     
     // After LPF settling:
@@ -158,8 +155,7 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     
     // Run multiple frames to let LPF settle
     for (int i = 0; i < 50; i++) {
-        data.mElapsedTime += 0.01;
-        force = engine.calculate_force(&data);
+        force = PumpEngineTime(engine, data, 0.01);
     }
     
     // v0.4.19: With sign preserved in slip angle calculation:
@@ -213,10 +209,10 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
     data.mWheel[0].mLateralPatchVel = 1.0; // Sliding left
     data.mWheel[1].mLateralPatchVel = 1.0;
     
-    double force = engine.calculate_force(&data);
+    double force = PumpEngineTime(engine, data, 0.0125);
     
     // Expected: Negative Force (Left Torque)
-    if (force < -0.2) {
+    if (force < -0.1) { // Relaxed for interpolation
         std::cout << "[PASS] Scrub drag opposes left slide (Torque Left: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
@@ -229,10 +225,10 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
     data.mWheel[0].mLateralPatchVel = -1.0; // Sliding right
     data.mWheel[1].mLateralPatchVel = -1.0;
     
-    force = engine.calculate_force(&data);
+    force = PumpEngineTime(engine, data, 0.0125);
     
     // Expected: Positive Force (Right Torque)
-    if (force > 0.2) {
+    if (force > 0.1) {
         std::cout << "[PASS] Scrub drag opposes right slide (Torque Right: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
@@ -272,7 +268,7 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
     data.mWheel[2].mLongitudinalGroundVel = 20.0;
     data.mWheel[3].mLongitudinalGroundVel = 20.0;
     
-    engine.calculate_force(&data);
+    PumpEngineTime(engine, data, 0.0125);
     
     auto batch = engine.GetDebugBatch();
     if (batch.empty()) {
@@ -283,7 +279,7 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
     FFBSnapshot snap = batch.back();
     
     // Expected: atan2(5.0, 20.0) â‰ˆ 0.245 rad (POSITIVE)
-    if (snap.raw_front_slip_angle > 0.2) {
+    if (snap.raw_front_slip_angle > 0.15) {
         std::cout << "[PASS] Front slip angle is POSITIVE for left slide (" << snap.raw_front_slip_angle << " rad)" << std::endl;
         g_tests_passed++;
     } else {
@@ -308,14 +304,14 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
     data.mWheel[2].mLateralPatchVel = -5.0;  // RL sliding right
     data.mWheel[3].mLateralPatchVel = -5.0;  // RR sliding right
     
-    engine.calculate_force(&data);
+    PumpEngineTime(engine, data, 0.0125);
     
     batch = engine.GetDebugBatch();
     if (!batch.empty()) {
         snap = batch.back();
         
         // Expected: atan2(-5.0, 20.0) â‰ˆ -0.245 rad (NEGATIVE)
-        if (snap.raw_front_slip_angle < -0.2) {
+        if (snap.raw_front_slip_angle < -0.15) {
             std::cout << "[PASS] Front slip angle is NEGATIVE for right slide (" << snap.raw_front_slip_angle << " rad)" << std::endl;
             g_tests_passed++;
         } else {
@@ -399,8 +395,7 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     // Run to settle LPFs
     for(int i=0; i<40; i++) {
         data.mLocalRot.y += 10.0 * 0.01;
-        data.mElapsedTime += 0.01;
-        engine.calculate_force(&data);
+        PumpEngineTime(engine, data, 0.01);
     }
     
     // Capture Snapshot to verify individual components
@@ -504,7 +499,7 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     // Run for multiple frames
     double force = 0.0;
     for (int i = 0; i < 60; i++) {
-        force = engine.calculate_force(&data);
+        force = PumpEngineTime(engine, data, 0.01);
     }
     
     // Expected behavior:

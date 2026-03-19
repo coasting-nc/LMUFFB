@@ -193,10 +193,12 @@ TEST_CASE(test_engine_extra_branches, "Physics") {
     InitializeEngine(engine);
 
     // 1. GetDebugBatch when NOT empty and buffer size limit
-    auto batch_empty = engine.GetDebugBatch(); // Hit empty branch
+    auto batch_empty = engine.GetDebugBatch(); // Discard initialization snap if any
+    batch_empty = engine.GetDebugBatch();      // Now it should be truly empty
     ASSERT_TRUE(batch_empty.empty());
 
     for (int i = 0; i < 110; i++) {
+        data.mElapsedTime += 0.01;
         engine.calculate_force(&data, "GT3", "911", 0.1f);
     }
     auto batch = engine.GetDebugBatch();

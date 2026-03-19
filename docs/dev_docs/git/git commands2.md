@@ -32,6 +32,33 @@ git reset --soft $(git merge-base main HEAD)
 Commit the single "squashed" result:
 git commit -m "Your combined commit message"
 
+### More notes 
+
+Example:
+I am on branch 'origin/jules-5184710753207842152-4699875d', at the latest commit of this branch, with id 84b09acd5027edff59e828cdb0d82bc7c38890d7.
+
+The first commit of this branch that diverged from main was ec59f34b625bd91ba4a8a318bb6396f651430225
+
+I want to squash all the commits in this branch (from ec59f34b625bd91ba4a8a318bb6396f651430225 to 84b09acd5027edff59e828cdb0d82bc7c38890d7) into a single commit.
+
+I want to use commands like git reset --soft $(git merge-base main HEAD)
+
+#### Correct Commands to Squash the Branch:
+
+To squash all commits in your current branch into one, starting from where it diverged from `main`:
+
+```powershell
+# 1. Soft reset to the merge base with main
+# This leaves all your changes staged and ready to be committed
+git reset --soft $(git merge-base main HEAD)
+
+# 2. Create a new single commit with all those changes
+git commit -m "Your descriptive squashed commit message"
+
+# 3. Force push to the remote branch (because you've rewritten history)
+git push origin <your-branch-name> --force
+```
+
 
 ## Option 2
 alternative:
