@@ -204,9 +204,12 @@ TEST_CASE(test_slope_noise_rejection, "SlopeDetection") {
         PumpEngineTime(engine, data, 0.01);
     }
     
-    // Despite noise, slope should be near zero (SG filter rejection)
+    // Despite noise, slope should be near zero (SG filter rejection).
+    // A bound of < 5.0 is intentional: this test verifies the SG filter actually
+    // *rejects* noise (not just that it doesn't crash). The max clamp is ±20, so
+    // passing at 20.0 would be equivalent to no rejection at all.
     std::cout << "  Noisy Slope: " << engine.m_slope_current << std::endl;
-    ASSERT_LT(std::abs(engine.m_slope_current), 20.0);
+    ASSERT_LT(std::abs(engine.m_slope_current), 5.0);
 }
 
 TEST_CASE(test_slope_buffer_reset_on_toggle, "SlopeDetection") {
@@ -943,6 +946,14 @@ TEST_CASE(test_slope_decay_with_zero_dt, "SlopeDetection") {
     std::cout << "  Final Slope after 2000 zero-dt ticks: " << snaps_end.back().slope_current << std::endl;
 
     // 4. ASSERT: With the fix, it decays to near 0.
+    //
+    // Code review note (m-7): This assertion relies on calculate_force substituting
+    // DEFAULT_CALC_DT internally when override_dt == 0.0 AND is_new_frame == false.
+    // The slope decay formula in calculate_slope_grip() uses the passed `dt` directly:
+    //   m_slope_current += decay_rate * dt * (0.0 - m_slope_current)
+    // so if dt == 0.0 is passed literally, no decay occurs and this test WILL FAIL.
+    // If this test ever fails, verify that FFBEngine::calculate_force() still applies
+    // the DEFAULT_CALC_DT fallback before calling calculate_slope_grip().
     ASSERT_LT(std::abs(snaps_end.back().slope_current), 1.0f);
 }
 

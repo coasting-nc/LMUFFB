@@ -182,6 +182,13 @@ void InitializeEngine(FFBEngine& engine) {
     // Explicitly set 1.0 grip to prevent friction circle from dropping on first frame
     for(int i=0; i<4; ++i) seed_data.mWheel[i].mGripFract = 1.0;
 
+    // Seeding mechanism (m-1 review note):
+    // SetWasAllowed(false) forces the engine to see a false→true transition on the
+    // very next calculate_force call (because InitializeEngine passes allowed=true by
+    // default). That transition triggers an internal Reset() that initialises all
+    // interpolators and diagnostic timers — avoiding stale state from previous tests.
+    // After the seed call we restore m_was_allowed to true so real tests start with
+    // a clean "already allowed" state and don't trigger an unwanted second reset.
     FFBEngineTestAccess::SetWasAllowed(engine, false); // Force a state transition reset
     engine.calculate_force(&seed_data); // First dummy frame seeds interpolators
     FFBEngineTestAccess::SetWasAllowed(engine, true);
@@ -208,8 +215,14 @@ double PumpEngineTime(FFBEngine& engine, TelemInfoV01& data, double time_to_adva
 }
 
 void PumpEngineSteadyState(FFBEngine& engine, TelemInfoV01& data) {
-    // Run for 3 seconds to ensure filters (LPF, HW, SG) settle fully
-    // especially the slope decay which is slow (2.0 rate).
+    // Run for 3 seconds to ensure filters (LPF, HW, SG) settle fully,
+    // especially the slope decay which is slow (rate=2.0, τ ~0.5s).
+    //
+    // TODO (m-2 review note): Consider adding a faster variant (e.g. 0.5s) for tests
+    // that only need the 10ms interpolator ramp or fast LPF to settle, and do NOT
+    // involve the slope detection decay. At 400Hz, 3s = 1200 calculate_force calls
+    // per PumpEngineSteadyState invocation, which can noticeably slow CI when called
+    // multiple times per test (e.g. test_gyro_damping calls it 3 times).
     PumpEngineTime(engine, data, 3.0);
 }
 

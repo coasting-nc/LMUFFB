@@ -338,7 +338,10 @@ TEST_CASE(test_yaw_accel_convergence, "YawGyro") {
     // Smoothed should decay: prev_smoothed + 0.1 * (0.0 - prev_smoothed)
     // If prev_smoothed ~= -0.9948, new = -0.9948 + 0.1 * (0.0 - (-0.9948)) = -0.8953
     // Force: -0.8953 * 1.0 * 5.0 / 20.0 ~= -0.224
-    if (force_after_change > force || std::abs(force_after_change - force) < 0.01) {
+    // Issue #397 remediation: Use >= with a small tolerance to avoid false failures from
+    // floating-point jitter, but the directional check (> force) must remain present
+    // to ensure we don't pass tautologically when decay hasn't started.
+    if (force_after_change > force && force_after_change < -0.01) {
         std::cout << "[PASS] Smoothly decaying after step change (" << force_after_change << ")." << std::endl;
         g_tests_passed++;
     } else {

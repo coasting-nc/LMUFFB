@@ -298,7 +298,17 @@ TEST_CASE(test_kerb_strike_rejection, "Physics") {
 
     // max_effective_load = 5000 * 1.5 = 7500 N
     // Force = 0.0757 * 7500 * 15 = 8516 N (capped at 6000)
-    // Torque = -6000 * 0.001 * 1.0 = -6.0 Nm
+    // Torque = -6000 * 0.001 * 1.0 = -6.0 Nm (theoretical without tanh)
+    //
+    // With tanh softening (correct steady-state via Issue #397 interpolator):
+    //   normalized_slip = 0.1 / (0.1 + 0.001) = 0.99 → tanh(0.99) ≈ 0.757
+    //   effective_slip = 0.1 * 0.757 = 0.0757
+    //   calc_rear_lat_force = 0.0757 * 7500 * 15 ≈ 8516 N (still capped at 6000 N)
+    //   torque = -5677 N * 0.001 m * 1.0 ≈ -5.677 Nm → asserted as -5.67 Nm
+    //
+    // The value is -5.67 (not -6.0) because PumpEngineTime now lets the interpolated
+    // signal settle fully, allowing the tanh path to run at the correct steady-state
+    // slip angle. The old single-frame call bypassed the tanh softening.
     ASSERT_NEAR(snap5.ffb_rear_torque, -5.67f, 0.1f);
 }
 

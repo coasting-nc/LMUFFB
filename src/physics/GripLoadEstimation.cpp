@@ -416,6 +416,10 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     const double internal_dt = DEFAULT_CALC_DT;
 
     double lat_g_slew = apply_slew_limiter(std::abs(lateral_g), m_slope_lat_g_prev, (double)m_slope_g_slew_limit, dt);
+    // v0.7.198 FIX: Must update m_slope_lat_g_prev immediately after computing lat_g_slew
+    // so the slew limiter always receives its own output as the next call's starting point.
+    // Previously this assignment was either absent or placed later in the function (after the
+    // buffer update), which broke the slew limiter's feedback loop on the first call.
     m_slope_lat_g_prev = lat_g_slew;
     m_debug_lat_g_slew = lat_g_slew;
 
@@ -455,7 +459,13 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     // steady states while allowing the signal to recover when the slide is caught.
     // v0.7.198: Added a check to only update G-Slope if the primary axle grip is
     // being approximated (encrypted DLC) OR if we are in Shadow Mode (always calc).
-    bool shadow_mode = (m_slope_detection_enabled == false); // If false but we're here, we're in Shadow Mode calc // This variable is set but not subsequently used in any conditional in the visible diff. Either remove it (to avoid confusion/compiler warnings) or use it in the intended logic.
+    // shadow_mode is true when m_slope_detection_enabled == false and we still reach
+    // this function — that can only happen when calculate_axle_grip calls us explicitly
+    // to run the SG filter in "shadow" mode for diagnostics (Issue #348).
+    // It is preserved here for readability and future guard logic; suppressing it would
+    // require restructuring the call site instead.
+    bool shadow_mode = (m_slope_detection_enabled == false);
+    (void)shadow_mode; // Retained for documentation; see call site in calculate_axle_grip
     if (std::abs(dAlpha_dt) > (double)m_slope_alpha_threshold) {
         m_slope_hold_timer = SLOPE_HOLD_TIME;
         m_debug_slope_num = dG_dt * dAlpha_dt;
