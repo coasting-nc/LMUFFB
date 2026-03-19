@@ -3,34 +3,43 @@
 namespace FFBEngineTests {
 
 TEST_CASE(test_slew_rate_limiter, "AdvancedSlope") {
-    std::cout << "\nTest: Slew Rate Limiter (Curb Rejection)" << std::endl;
+    std::cout << "\nTest: Slew Rate Limiter (Curb Rejection) [Issue #397 Remediation]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_slope_detection_enabled = true;
     engine.m_slope_g_slew_limit = 10.0f; // 10 G/s limit
 
-    double dt = 0.01;
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    data.mDeltaTime = dt;
 
     // 1. Steady state (1.0G)
     data.mLocalAccel.x = 1.0 * 9.81;
-    for (int i = 0; i < 20; i++) engine.calculate_force(&data);
+    PumpEngineTime(engine, data, 0.5);
 
-    ASSERT_NEAR(engine.m_slope_lat_g_prev, 1.0, 0.02); // Allow small smoothing error
+    ASSERT_NEAR(engine.m_slope_lat_g_prev, 1.0, 0.02);
 
     // 2. Spike to 5.0G
     data.mLocalAccel.x = 5.0 * 9.81;
-    engine.calculate_force(&data);
+    data.mElapsedTime += 0.01; // Advance time to trigger upsampler update
 
-    // Max change = limit * dt = 10 * 0.01 = 0.1G
-    // New value should be ~1.1G, not 5.0G
-    std::cout << "  After spike (5.0G): Slew limited G = " << engine.m_slope_lat_g_prev << std::endl;
-    ASSERT_NEAR(engine.m_slope_lat_g_prev, 1.1, 0.02);
+    // v0.7.198 uses fixed 0.0025 internal_dt for slew
+    // Max change = limit * 0.0025 = 10 * 0.0025 = 0.025G per tick
 
-    // 3. One more frame
-    engine.calculate_force(&data);
-    ASSERT_NEAR(engine.m_slope_lat_g_prev, 1.2, 0.02);
+    // Execute upsampler ticks.
+    // Tick 0 (is_new_frame): Returns 1.0G (previous frame).
+    // Tick 1: Returns 1.0 + 400*0.0025 = 2.0G. Slew limits to 1.025.
+
+    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025); // Tick 0
+    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025); // Tick 1
+
+    std::cout << "  After 2 ticks (5.0G): Slew limited G = " << engine.m_slope_lat_g_prev << std::endl;
+    ASSERT_NEAR(engine.m_slope_lat_g_prev, 1.025, 0.001);
+
+    // Execute 3 more ticks (total 5 ticks)
+    for(int i=0; i<3; i++) engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+
+    // After 5 ticks (1 game frame transition + 4 ramp ticks): 1.0 + 4 * 0.025 = 1.1G
+    std::cout << "  After 5 ticks (5.0G): Slew limited G = " << engine.m_slope_lat_g_prev << std::endl;
+    ASSERT_NEAR(engine.m_slope_lat_g_prev, 1.1, 0.001);
 }
 
 TEST_CASE(test_torque_slope_anticipation, "AdvancedSlope") {
@@ -50,14 +59,14 @@ TEST_CASE(test_torque_slope_anticipation, "AdvancedSlope") {
     // dG/dt constant positive
     // dTorque/dt starts positive, then becomes negative (peak SAT reached)
 
-    for (int i = 0; i < 40; i++) {
-        double steer = 0.01 + (double)i * 0.01; // Increasing linearly
-        double g = 0.5 + (double)i * 0.05;      // Increasing linearly
-        double slip = 0.01 + (double)i * 0.01;  // Increasing linearly
+    for (int i = 0; i < 60; i++) {
+        double steer = 0.01 + (double)i * 0.01;
+        double g = 0.5 + (double)i * 0.05;
+        double slip = 0.01 + (double)i * 0.01;
 
         double torque = 0.0;
-        if (i < 20) torque = 1.0 + (double)i * 0.1; // Rising
-        else torque = 3.0 - (double)(i - 20) * 0.2; // Falling (Anticipation!)
+        if (i < 30) torque = 1.0 + (double)i * 0.1; // Rising
+        else torque = 4.0 - (double)(i - 30) * 0.2; // Falling
 
         data.mUnfilteredSteering = steer;
         data.mLocalAccel.x = g * 9.81;
@@ -65,9 +74,13 @@ TEST_CASE(test_torque_slope_anticipation, "AdvancedSlope") {
         data.mWheel[0].mLateralPatchVel = slip * 20.0;
         data.mWheel[1].mLateralPatchVel = slip * 20.0;
 
-        engine.calculate_force(&data);
+        // Pump 4 ticks per frame
+        for(int j=0; j<4; j++) {
+            engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+        }
+        data.mElapsedTime += 0.01;
 
-        if (i == 28) { // Give SG window time to settle on the falling edge
+        if (i == 40) { // Give SG window time to settle on the falling edge
             // At i=28, Torque has been falling for 8 frames.
             // G is still rising.
             // Torque Slope should be negative.

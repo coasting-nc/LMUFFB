@@ -71,10 +71,10 @@ The new unit test directly proves the fix for the sawtooth (overshoot) and deriv
 ## Implementation Notes & Progress Tracking
 
 ### Progress Summary
-- **Total Tests:** 550
-- **Passing:** 550
+- **Total Tests:** 552
+- **Passing:** 552
 - **Failing:** 0
-- **Status:** All tests passing. Verified with regression tests.
+- **Status:** Greenlight. All tests passing after reverting physical hacks and extending test timing.
 
 ### Encountered Issues
 - **10ms Delay:** The transition from prediction (extrapolation) to 1-frame delayed interpolation correctly solves the sawtooth bug but introduces a 10ms lag in auxiliary signals. This has invalidated tests that expect instantaneous peaks or specific timing.
@@ -95,10 +95,10 @@ At a certain point during development, only a single test file (`test_ffb_slope_
 
 ### Current Test Status
 After the latest round of remediation and build fixes, the current test status is:
-- **Total Tests:** 542
-- **Passing:** 525
-- **Failing:** 17
-- **Status Date:** 2024-05-24 (Jules Run)
+- **Total Tests:** 552
+- **Passing:** 552
+- **Failing:** 0
+- **Status Date:** 2024-06-16 (Fixer Post-Reversion Run)
 
 ## Challenges & Technical Hurdles
 ### 1. 10ms Pipeline Delay

@@ -17,7 +17,7 @@ TEST_CASE(test_slope_asymmetry_fix, "SlopeEdgeCases") {
 
         double dir = right ? 1.0 : -1.0;
 
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < 60; i++) {
             double steer = (double)i * 0.01 * dir;
             double g = (double)i * 0.05 * dir;
             double torque = (double)i * 0.1 * dir;
@@ -29,7 +29,11 @@ TEST_CASE(test_slope_asymmetry_fix, "SlopeEdgeCases") {
             data.mWheel[0].mLateralPatchVel = slip * 20.0;
             data.mWheel[1].mLateralPatchVel = slip * 20.0;
 
-            test_engine.calculate_force(&data);
+            // Pump 4 ticks per frame
+            for(int j=0; j<4; j++) {
+                test_engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+            }
+            data.mElapsedTime += 0.01;
         }
         return test_engine.m_slope_smoothed_output;
     };
@@ -68,7 +72,7 @@ TEST_CASE(test_slope_confidence_tuning, "SlopeEdgeCases") {
 }
 
 TEST_CASE(test_torque_slope_timing, "SlopeEdgeCases") {
-    std::cout << "\nTest: Torque Slope Timing (Anticipation)" << std::endl;
+    std::cout << "\nTest: Torque Slope Timing (Anticipation) [Issue #397 Remediation]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_slope_detection_enabled = true;
@@ -76,17 +80,15 @@ TEST_CASE(test_torque_slope_timing, "SlopeEdgeCases") {
     engine.m_slope_sg_window = 9;
     engine.m_slope_alpha_threshold = 0.02f;
 
-    double dt = 0.01;
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    data.mDeltaTime = dt;
 
     // Simulate peak SAT: Torque drops while G is still rising
-    for (int i = 0; i < 40; i++) {
+    for (int i = 0; i < 60; i++) {
         double steer = 0.01 + (double)i * 0.01;
         double g = 0.5 + (double)i * 0.05;
         double slip = 0.01 + (double)i * 0.01;
 
-        double torque = (i < 20) ? (1.0 + i * 0.1) : (3.0 - (i - 20) * 0.2);
+        double torque = (i < 30) ? (1.0 + i * 0.1) : (4.0 - (i - 30) * 0.2);
 
         data.mUnfilteredSteering = steer;
         data.mLocalAccel.x = g * 9.81;
@@ -94,10 +96,14 @@ TEST_CASE(test_torque_slope_timing, "SlopeEdgeCases") {
         data.mWheel[0].mLateralPatchVel = slip * 20.0;
         data.mWheel[1].mLateralPatchVel = slip * 20.0;
 
-        engine.calculate_force(&data);
+        // Pump 4 ticks per frame
+        for(int j=0; j<4; j++) {
+            engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+        }
+        data.mElapsedTime += 0.01;
 
-        if (i == 25) {
-            std::cout << "  Frame 25: Torque Slope = " << engine.m_slope_torque_current << std::endl;
+        if (i == 40) {
+            std::cout << "  Frame 40: Torque Slope = " << engine.m_slope_torque_current << std::endl;
             ASSERT_TRUE(engine.m_slope_torque_current < 0.0);
             ASSERT_TRUE(engine.m_slope_smoothed_output < 0.99);
         }

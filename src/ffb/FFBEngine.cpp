@@ -625,10 +625,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // A. Understeer (Base Torque + Grip Loss)
 
     // Grip Estimation (v0.4.5 FIX)
+    // Issue #397: Pass upsampled data pointer to ensure slope detection uses smoothed G-force
     GripResult front_grip_res = calculate_axle_grip(fl, fr, ctx.avg_front_load, m_warned_grip,
                                                 m_prev_slip_angle[0], m_prev_slip_angle[1],
                                                 m_prev_load[0], m_prev_load[1], // NEW
-                                                ctx.car_speed, ctx.dt, data->mVehicleName, data, true /* is_front */);
+                                                ctx.car_speed, ctx.dt, data->mVehicleName, upsampled_data, true /* is_front */);
     ctx.avg_front_grip = front_grip_res.value;
     m_grip_diag.front_original = front_grip_res.original;
     m_grip_diag.front_approximated = front_grip_res.approximated;
