@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -17,6 +17,20 @@ All notable changes to this project will be documented in this file.
 ### Testing
 - **Test Suite Update**: Renamed `tests/test_rest_api_manufacturer.cpp` to `tests/test_vehicle_brand.cpp` and refactored it to verify the local `ParseVehicleBrand` heuristics instead of the removed REST API parsing.
 - Verified 100% pass rate: **565/565 test cases, 2646 assertions, 0 failures**.
+
+
+---
+
+
+## Cumulative changes from version 0.7.197 till 0.7.203
+
+### Fixed
+- More fixed for FFB Smoothness, to remove possible sources of graininess and wrong vibrations.
+- Fixed bugs that were triggering the bottoming effect during high-speed cornering.
+- Removed unreliable REST API car brand detection.
+
+### Added
+- GUI toggle for Dynamic Load Sensitivity of optimal slip angle.
 
 ---
 
