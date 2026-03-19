@@ -893,8 +893,12 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
         FloatSetting("Scrub Drag", &engine.m_scrub_drag_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_scrub_drag_gain, FFBEngine::BASE_NM_SCRUB_DRAG), Tooltips::SCRUB_DRAG);
 
-        const char* bottoming_modes[] = { "Method A: Scraping", "Method B: Susp. Spike" };
-        IntSetting("Bottoming Logic", &engine.m_bottoming_method, bottoming_modes, sizeof(bottoming_modes)/sizeof(bottoming_modes[0]), Tooltips::BOTTOMING_LOGIC);
+        BoolSetting("Bottoming Effect", &engine.m_bottoming_enabled, Tooltips::BOTTOMING_EFFECT);
+        if (engine.m_bottoming_enabled) {
+            FloatSetting("  Bottoming Strength", &engine.m_bottoming_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_bottoming_gain, FFBEngine::BASE_NM_BOTTOMING), Tooltips::BOTTOMING_STRENGTH);
+            const char* bottoming_modes[] = { "Method A: Scraping", "Method B: Susp. Spike" };
+            IntSetting("  Bottoming Logic", &engine.m_bottoming_method, bottoming_modes, sizeof(bottoming_modes)/sizeof(bottoming_modes[0]), Tooltips::BOTTOMING_LOGIC);
+        }
 
         ImGui::TreePop();
     } else {

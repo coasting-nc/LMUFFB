@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.201] - 2026-03-21
+
+### Fixed
+- **Fixed false bottoming triggers during high-speed cornering (Issue #414)**:
+  - **Root Cause**: The "Safety Trigger" for the bottoming effect used a fixed 2.5x static load threshold. For high-downforce cars, aero load + cornering load transfer easily exceeded this, causing false vibrations.
+  - **Fix — Increased Threshold**: Raised `BOTTOMING_LOAD_MULT` from 2.5 to 4.0 to provide headroom for aero and lateral load transfer while still catching genuine bottoming impacts.
+  - **Exposed UI Controls**: Added "Bottoming Effect" toggle and "Bottoming Strength" slider to the "Vibration Effects" section in the GUI.
+  - **Full Persistence**: Integrated bottoming settings into the `Preset` and `Config` systems, ensuring they are saved/loaded per car and correctly handled in all built-in presets.
+
+### Testing
+- **New Regression Test**: Added `tests/test_bottoming.cpp` verifying:
+  - High speed/aero rejection (3.5x static load).
+  - Genuine impact detection (Ride height trigger).
+  - User controls (Enabled toggle and Gain scaling).
+- Verified 100% pass rate: **562/562 test cases, 2641 assertions, 0 failures**.
+
+---
+
 ## [0.7.200] - 2026-03-21
 
 ### Fixed

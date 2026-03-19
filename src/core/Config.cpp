@@ -176,6 +176,8 @@ bool Config::ParseVibrationLine(const std::string& key, const std::string& value
     if (key == "road_gain") { current_preset.road_gain = std::stof(value); return true; }
     if (key == "vibration_gain" || key == "tactile_gain") { current_preset.vibration_gain = std::stof(value); return true; }
     if (key == "scrub_drag_gain") { current_preset.scrub_drag_gain = std::stof(value); return true; }
+    if (key == "bottoming_enabled") { current_preset.bottoming_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "bottoming_gain") { current_preset.bottoming_gain = std::stof(value); return true; }
     if (key == "bottoming_method") { current_preset.bottoming_method = std::stoi(value); return true; }
     if (key == "dynamic_normalization_enabled") { current_preset.dynamic_normalization_enabled = (value == "1" || value == "true"); return true; }
     if (key == "auto_load_normalization_enabled") { current_preset.auto_load_normalization_enabled = (value == "1" || value == "true"); return true; }
@@ -347,6 +349,8 @@ bool Config::SyncVibrationLine(const std::string& key, const std::string& value,
     if (key == "road_enabled") { engine.m_road_texture_enabled = (value == "1" || value == "true"); return true; }
     if (key == "road_gain") { engine.m_road_texture_gain = std::stof(value); return true; }
     if (key == "vibration_gain" || key == "tactile_gain") { engine.m_vibration_gain = std::stof(value); return true; }
+    if (key == "bottoming_enabled") { engine.m_bottoming_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "bottoming_gain") { engine.m_bottoming_gain = std::stof(value); return true; }
     if (key == "dynamic_normalization_enabled") { engine.m_dynamic_normalization_enabled = (value == "1" || value == "true"); return true; }
     if (key == "auto_load_normalization_enabled") { engine.m_auto_load_normalization_enabled = (value == "1" || value == "true"); return true; }
     if (key == "soft_lock_enabled") { engine.m_soft_lock_enabled = (value == "1" || value == "true"); return true; }
@@ -453,6 +457,8 @@ void Config::LoadPresets() {
         p.spin_gain = 0.5f;
         p.spin_freq_scale = 1.0f;
         p.scrub_drag_gain = 0.0462185f;
+        p.bottoming_enabled = true;
+        p.bottoming_gain = 1.0f;
         p.bottoming_method = 0;
         p.speed_gate_lower = 0.0f;
         p.speed_gate_upper = 0.277778f;
@@ -555,6 +561,8 @@ void Config::LoadPresets() {
         p.spin_gain = 0.5f;
         p.spin_freq_scale = 1.0f;
         p.scrub_drag_gain = 0.0f;
+        p.bottoming_enabled = true;
+        p.bottoming_gain = 1.0f;
         p.bottoming_method = 0;
         p.rest_api_enabled = true;
         p.rest_api_port = 6397;
@@ -626,6 +634,8 @@ void Config::LoadPresets() {
         p.spin_gain = 0.462185f;
         p.spin_freq_scale = 1.8f;
         p.scrub_drag_gain = 0.333f;
+        p.bottoming_enabled = true;
+        p.bottoming_gain = 1.0f;
         p.bottoming_method = 1;
         p.speed_gate_lower = 1.0f;
         p.speed_gate_upper = 5.0f;
@@ -687,6 +697,8 @@ void Config::LoadPresets() {
         p.spin_gain = 0.462185f;
         p.spin_freq_scale = 1.8f;
         p.scrub_drag_gain = 0.333f;
+        p.bottoming_enabled = true;
+        p.bottoming_gain = 1.0f;
         p.bottoming_method = 1;
         p.speed_gate_lower = 1.0f;
         p.speed_gate_upper = 5.0f;
@@ -748,6 +760,8 @@ void Config::LoadPresets() {
         p.spin_gain = 0.462185f;
         p.spin_freq_scale = 1.8f;
         p.scrub_drag_gain = 0.333f;
+        p.bottoming_enabled = true;
+        p.bottoming_gain = 1.0f;
         p.bottoming_method = 1;
         p.speed_gate_lower = 1.0f;
         p.speed_gate_upper = 5.0f;
@@ -810,6 +824,8 @@ void Config::LoadPresets() {
         p.spin_gain = 0.462185f;
         p.spin_freq_scale = 1.8f;
         p.scrub_drag_gain = 0.333f;
+        p.bottoming_enabled = true;
+        p.bottoming_gain = 1.0f;
         p.bottoming_method = 1;
         p.speed_gate_lower = 1.0f;
         p.speed_gate_upper = 5.0f;
@@ -825,6 +841,7 @@ void Config::LoadPresets() {
         .SetSlipSmoothing(0.015f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
+        .SetBottoming(false, 0.0f, 0)
     );
 
     // 9. Test: SoP Only
@@ -837,6 +854,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
         .SetSoPYaw(0.0f)
+        .SetBottoming(false, 0.0f, 0)
     );
 
     // 10. Test: Understeer Only (Updated v0.6.31 for proper effect isolation)
@@ -859,6 +877,7 @@ void Config::LoadPresets() {
         .SetLockup(false, 0.0f)      // Disable lockup vibration
         .SetAdvancedBraking(0.5f, 20.0f, 0.1f, false, 0.0f)  // Disable ABS pulse
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         
         // SMOOTHING
         .SetSmoothing(0.0f)         // SoP smoothing (doesn't affect test since SoP=0)
@@ -891,6 +910,7 @@ void Config::LoadPresets() {
         .SetLockup(false, 0.0f)
         .SetAdvancedBraking(0.5f, 20.0f, 0.1f, false, 0.0f)
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         
         // SMOOTHING
         .SetSmoothing(0.0f)
@@ -909,6 +929,7 @@ void Config::LoadPresets() {
         .SetSlide(true, 0.39f)
         .SetRoad(true, 1.0f)
         .SetRearAlign(0.0f)
+        .SetBottoming(true, 1.0f, 0)
     );
 
     // 13. Test: Rear Align Torque Only
@@ -921,6 +942,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.90f)
         .SetSoPYaw(0.0f)
+        .SetBottoming(false, 0.0f, 0)
     );
 
     // 14. Test: SoP Base Only
@@ -933,6 +955,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
         .SetSoPYaw(0.0f)
+        .SetBottoming(false, 0.0f, 0)
     );
 
     // 15. Test: Slide Texture Only
@@ -944,6 +967,7 @@ void Config::LoadPresets() {
         .SetSlipSmoothing(0.015f)
         .SetSlide(true, 0.39f, 1.0f)
         .SetRearAlign(0.0f)
+        .SetBottoming(false, 0.0f, 0)
     );
 
     // 16. Test: No Effects
@@ -955,6 +979,7 @@ void Config::LoadPresets() {
         .SetSlipSmoothing(0.015f)
         .SetSlide(false, 0.0f)
         .SetRearAlign(0.0f)
+        .SetBottoming(false, 0.0f, 0)
     );
 
     // --- NEW GUIDE PRESETS (v0.4.24) ---
@@ -973,6 +998,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
@@ -992,6 +1018,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
@@ -1008,6 +1035,7 @@ void Config::LoadPresets() {
         .SetLockup(false, 0.0f)
         .SetSpin(false, 0.0f)
         .SetRoad(false, 0.0f)
+        .SetBottoming(false, 0.0f, 0)
         .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
@@ -1024,6 +1052,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
@@ -1040,6 +1069,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
@@ -1058,6 +1088,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
@@ -1076,6 +1107,7 @@ void Config::LoadPresets() {
         .SetSlide(false, 0.0f)
         .SetRoad(false, 0.0f)
         .SetScrub(0.0f)
+        .SetBottoming(false, 0.0f, 0)
         .SetSmoothing(0.0f)
         .SetSlipSmoothing(0.015f)
     );
@@ -1308,6 +1340,8 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "spin_gain=" << p.spin_gain << "\n";
     file << "spin_freq_scale=" << p.spin_freq_scale << "\n";
     file << "scrub_drag_gain=" << p.scrub_drag_gain << "\n";
+    file << "bottoming_enabled=" << (p.bottoming_enabled ? "1" : "0") << "\n";
+    file << "bottoming_gain=" << p.bottoming_gain << "\n";
     file << "bottoming_method=" << p.bottoming_method << "\n";
     file << "rest_api_fallback_enabled=" << (p.rest_api_enabled ? "1" : "0") << "\n";
     file << "rest_api_port=" << p.rest_api_port << "\n";
@@ -1654,6 +1688,8 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "spin_gain=" << engine.m_spin_gain << "\n";
         file << "spin_freq_scale=" << engine.m_spin_freq_scale << "\n";
         file << "scrub_drag_gain=" << engine.m_scrub_drag_gain << "\n";
+        file << "bottoming_enabled=" << (engine.m_bottoming_enabled ? "1" : "0") << "\n";
+        file << "bottoming_gain=" << engine.m_bottoming_gain << "\n";
         file << "bottoming_method=" << engine.m_bottoming_method << "\n";
         file << "rest_api_fallback_enabled=" << engine.m_rest_api_enabled << "\n";
         file << "rest_api_port=" << engine.m_rest_api_port << "\n";

@@ -587,7 +587,7 @@ private:
     static constexpr double BOTTOMING_RH_THRESHOLD_M = 0.002;
     static constexpr double BOTTOMING_IMPULSE_THRESHOLD_N_S = 100000.0;
     static constexpr double BOTTOMING_IMPULSE_RANGE_N_S = 200000.0;
-    static constexpr double BOTTOMING_LOAD_MULT = 2.5;
+    static constexpr double BOTTOMING_LOAD_MULT = 4.0;
     static constexpr double BOTTOMING_INTENSITY_SCALE = 0.05;
     static constexpr double BOTTOMING_FREQ_HZ = 50.0;
     static constexpr double SPIN_THROTTLE_THRESHOLD = 0.05;

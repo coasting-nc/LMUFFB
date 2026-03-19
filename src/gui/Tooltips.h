@@ -142,6 +142,8 @@ namespace Tooltips {
     inline constexpr const char* SPIN_STRENGTH = "Intensity of the wheel spin vibration.";
     inline constexpr const char* SPIN_PITCH = "Scales the frequency of the wheel spin vibration.";
     inline constexpr const char* SCRUB_DRAG = "Constant resistance force when pushing tires laterally (Understeer drag).\nAdds weight to the wheel when scrubbing.";
+    inline constexpr const char* BOTTOMING_EFFECT = "Simulates the chassis scraping the ground or hitting bump stops.";
+    inline constexpr const char* BOTTOMING_STRENGTH = "Intensity of the bottoming crunch.";
     inline constexpr const char* BOTTOMING_LOGIC = "Algorithm for detecting suspension bottoming.\nScraping = Ride height based.\nSusp Spike = Force rate based.";
 
     // Advanced
@@ -184,7 +186,7 @@ namespace Tooltips {
         SLIP_ANGLE_SMOOTHING, CHASSIS_INERTIA, OPTIMAL_SLIP_ANGLE, OPTIMAL_SLIP_RATIO,
         SLOPE_DETECTION_ENABLE, SLOPE_FILTER_WINDOW, SLOPE_SENSITIVITY, SLOPE_THRESHOLD, SLOPE_OUTPUT_SMOOTHING, SLOPE_ALPHA_THRESHOLD, SLOPE_DECAY_RATE, SLOPE_CONFIDENCE_GATE,
         LOCKUP_VIBRATION, LOCKUP_STRENGTH, BRAKE_LOAD_CAP, VIBRATION_PITCH, LOCKUP_GAMMA, LOCKUP_START_PCT, LOCKUP_FULL_PCT, LOCKUP_PREDICTION_SENS, LOCKUP_BUMP_REJECT, LOCKUP_REAR_BOOST, ABS_PULSE, ABS_PULSE_GAIN, ABS_PULSE_FREQ,
-        TEXTURE_LOAD_CAP, VIBRATION_GAIN, SLIDE_RUMBLE, SLIDE_GAIN, SLIDE_PITCH, ROAD_DETAILS, ROAD_GAIN, SPIN_VIBRATION, SPIN_STRENGTH, SPIN_PITCH, SCRUB_DRAG, BOTTOMING_LOGIC,
+        TEXTURE_LOAD_CAP, VIBRATION_GAIN, SLIDE_RUMBLE, SLIDE_GAIN, SLIDE_PITCH, ROAD_DETAILS, ROAD_GAIN, SPIN_VIBRATION, SPIN_STRENGTH, SPIN_PITCH, SCRUB_DRAG, BOTTOMING_EFFECT, BOTTOMING_STRENGTH, BOTTOMING_LOGIC,
         MUTE_BELOW, FULL_ABOVE, AUTO_START_LOGGING, LOG_PATH,
         SAFETY_WINDOW_DURATION, SAFETY_GAIN_REDUCTION, SAFETY_SMOOTHING_TAU, SPIKE_DETECTION_THRESHOLD, IMMEDIATE_SPIKE_THRESHOLD, SAFETY_SLEW_FULL_SCALE_TIME_S,
         STUTTER_SAFETY_ENABLE, STUTTER_THRESHOLD,
