@@ -288,9 +288,21 @@ TEST_CASE(test_dynamic_normalization_branches, "Physics") {
     
     // 1. Clean state learning
     data.mLocalAccel.x = 0.5; // Low lat G
-    engine.calculate_force(&data);
-    data.mElapsedTime += 0.01;
-    engine.calculate_force(&data);
+    // Issue #397: Flush the 10ms transient ramp.
+    // Holt-Winters (Shaft Torque) also needs time to reach the 30.0 target.
+    // Also, we need to bypass is_clean_state check which needs lat_g_abs < 8.0,
+    // torque_slew < 1000, and !is_contextual_spike.
+    // Initialization: peak = target_rim = 20.0.
+    // Target torque = 30.0.
+    // First frames with 30.0 will be seen as spike if > 3x rolling avg.
+    // Rolling avg starts at 20.0. 30.0 < 60.0. So not a spike.
+    for(int i=0; i<400; i++) {
+        if (i % 4 == 0) {
+            data.mElapsedTime += 0.01;
+            data.mDeltaTime = 0.01;
+        }
+        engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+    }
     ASSERT_GT(FFBEngineTestAccess::GetSessionPeakTorque(engine), 20.0);
 
     // 2. Contextual Spike (should NOT update peak)

@@ -65,7 +65,8 @@ TEST_CASE(test_logging_aux_nan, "Logging") {
 
     // 2. Rate limiting check
     data.mElapsedTime = 12.0;
-    engine.calculate_force(&data, "GT3", "TestCar");
+    // Issue #397: Use FFB loop ticks to advance time correctly
+    engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.0025);
     ASSERT_TRUE(ss.str().empty());
 
     Logger::Get().SetTestStream(nullptr);
@@ -144,6 +145,40 @@ TEST_CASE(test_logging_reset_on_transition, "Logging") {
     data.mElapsedTime = 10.2;
     engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true); // Unmute + NaN
 
+    ASSERT_TRUE(ss.str().find("[Diag] Core Physics NaN/Inf detected!") != std::string::npos);
+
+    Logger::Get().SetTestStream(nullptr);
+}
+
+TEST_CASE(test_logging_reset_even_on_nan_session_start, "Logging") {
+    std::cout << "\nTest: Diagnostic Timer Reset on NaN Session Start (Issue #397 Reorganization)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+    data.mUnfilteredSteering = std::numeric_limits<double>::quiet_NaN();
+
+    std::stringstream ss;
+    Logger::Get().SetTestStream(&ss);
+
+    // 1. Initial NaN log
+    data.mElapsedTime = 10.0;
+    engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true);
+    ASSERT_TRUE(ss.str().find("[Diag] Core Physics NaN/Inf detected!") != std::string::npos);
+
+    ss.str("");
+    ss.clear();
+
+    // 2. Mute
+    data.mElapsedTime = 10.1;
+    engine.calculate_force(&data, "GT3", "TestCar", 0.0f, false);
+
+    // 3. Unmute with NaN still present
+    // With the fix, the transition logic (which resets timers) runs BEFORE the NaN return early.
+    data.mElapsedTime = 10.2;
+    engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true);
+
+    // If reorganized correctly, this should log again despite being only 0.2s later
     ASSERT_TRUE(ss.str().find("[Diag] Core Physics NaN/Inf detected!") != std::string::npos);
 
     Logger::Get().SetTestStream(nullptr);

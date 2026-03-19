@@ -78,7 +78,8 @@ TEST_CASE_TAGGED(test_issue_306_sign_convention, "CorePhysics", (std::vector<std
     data.mWheel[2].mTireLoad = 3000.0; // RL
     data.mWheel[3].mTireLoad = 1000.0; // RR
 
-    engine.calculate_force(&data);
+    // Issue #397: Flush the 10ms transient ramp
+    PumpEngineTime(engine, data, 0.015);
     auto snap = engine.GetDebugBatch().back();
 
     // Lat G accel = 1.0 -> sop_force (G-based) = 1.0

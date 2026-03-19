@@ -180,14 +180,15 @@ inline double calculate_sg_derivative(const std::array<double, BufferSize>& buff
 }
 
 /**
- * @brief Linear Extrapolator (Inter-Frame Reconstruction)
+ * @brief Linear Interpolator (Inter-Frame Reconstruction)
  *
- * Upsamples a 100Hz signal to 400Hz+ by projecting forward
- * based on the rate of change of the last game tick.
+ * Upsamples a 100Hz signal to 400Hz+ by delaying the signal by 1 frame (10ms)
+ * and smoothly interpolating. Eliminates sawtooth artifacts and derivative spikes.
  */
-class LinearExtrapolator {
+class LinearExtrapolator { // Kept name to avoid breaking other files
 private:
-    double m_last_input = 0.0;
+    double m_prev_sample = 0.0;
+    double m_target_sample = 0.0;
     double m_current_output = 0.0;
     double m_rate = 0.0;
     double m_time_since_update = 0.0;
@@ -201,26 +202,31 @@ public:
 
     double Process(double raw_input, double dt, bool is_new_frame) {
         if (!m_initialized) {
-            m_last_input = raw_input;
+            m_prev_sample = raw_input;
+            m_target_sample = raw_input;
             m_current_output = raw_input;
             m_initialized = true;
             return raw_input;
         }
 
         if (is_new_frame) {
-            // Calculate the rate of change over the last game tick
-            m_rate = (raw_input - m_last_input) / m_game_tick;
+            // Shift the window: old target becomes the new start point
+            m_prev_sample = m_target_sample;
+            m_target_sample = raw_input;
 
-            // Snap to the new authoritative value to prevent drift
-            m_current_output = raw_input;
-            m_last_input = raw_input;
+            // Calculate rate to reach the new target over the next game tick
+            m_rate = (m_target_sample - m_prev_sample) / m_game_tick;
             m_time_since_update = 0.0;
+
+            // Output starts exactly at the previous sample (no snapping)
+            m_current_output = m_prev_sample;
         } else {
-            // Inter-frame Interpolation (Dead Reckoning)
             m_time_since_update += dt;
-            // Clamp prediction time to avoid runaway if game pauses (1.5x interval)
-            if (m_time_since_update < m_game_tick * 1.5) {
-                m_current_output += m_rate * dt;
+            if (m_time_since_update <= m_game_tick) {
+                m_current_output = m_prev_sample + m_rate * m_time_since_update;
+            } else {
+                // If the game stutters/drops a frame, hold the target value safely
+                m_current_output = m_target_sample;
             }
         }
 
@@ -228,7 +234,7 @@ public:
     }
 
     void Reset() {
-        m_last_input = m_current_output = m_rate = m_time_since_update = 0.0;
+        m_prev_sample = m_target_sample = m_current_output = m_rate = m_time_since_update = 0.0;
         m_initialized = false;
     }
 };

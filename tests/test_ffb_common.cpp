@@ -176,6 +176,41 @@ void InitializeEngine(FFBEngine& engine) {
 
     // Issue #379: Pre-seed derivatives for legacy tests to avoid first-frame zero force
     FFBEngineTestAccess::SetDerivativesSeeded(engine, true);
+
+    // Issue #397: Seed the DSP filters to prevent false "Missing Telemetry" warnings
+    TelemInfoV01 seed_data = CreateBasicTestTelemetry(20.0, 0.0);
+    // Explicitly set 1.0 grip to prevent friction circle from dropping on first frame
+    for(int i=0; i<4; ++i) seed_data.mWheel[i].mGripFract = 1.0;
+
+    FFBEngineTestAccess::SetWasAllowed(engine, false); // Force a state transition reset
+    engine.calculate_force(&seed_data); // First dummy frame seeds interpolators
+    FFBEngineTestAccess::SetWasAllowed(engine, true);
+}
+
+// Helper to simulate the passage of time for the FFB Engine's DSP pipeline.
+double PumpEngineTime(FFBEngine& engine, TelemInfoV01& data, double time_to_advance_s) {
+    double dt = 0.0025; // 400Hz FFB loop tick
+    int ticks = (int)std::ceil(time_to_advance_s / dt);
+    if (ticks < 1) ticks = 1;
+    double last_force = 0.0;
+
+    for (int i = 0; i < ticks; i++) {
+        // Only advance the telemetry timestamp every 10ms (100Hz)
+        // to accurately simulate how the game feeds data to the app.
+        // Also update data.mDeltaTime to match game tick
+        if (i % 4 == 0) {
+            data.mElapsedTime += 0.01;
+            data.mDeltaTime = 0.01;
+        }
+        last_force = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, dt);
+    }
+    return last_force;
+}
+
+void PumpEngineSteadyState(FFBEngine& engine, TelemInfoV01& data) {
+    // Run for 3 seconds to ensure filters (LPF, HW, SG) settle fully
+    // especially the slope decay which is slow (2.0 rate).
+    PumpEngineTime(engine, data, 3.0);
 }
 
 // --- Friend Access for Testing ---

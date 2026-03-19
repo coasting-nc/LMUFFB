@@ -28,15 +28,15 @@ TEST_CASE(test_yaw_kick_derived_from_rate, "YawKick") {
     
     // Frame 2: Yaw Rate increases to 1.0 rad/s
     data.mLocalRot.y = 1.0;
-    double force = engine.calculate_force(&data);
+    data.mElapsedTime += 0.01;
     
-    // If derived from rate: 
-    // derived_yaw_accel = (1.0 - 0.0) / 0.0025 = 400.0 rad/s^2
-    // alpha = 0.0025 / (0.050 + 0.0025) = 0.0476
-    // smoothed = 0.0 + 0.0476 * (400.0 - 0.0) = 19.04
-    // force = -1.0 * 19.04 * 1.0 * 5.0 / 20.0 = -4.76 (clamped to -1.0)
+    // Issue #397: Force propagates through 10ms interpolator
+    double force = 0.0;
+    for(int i=0; i<4; i++) {
+        force = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+    }
     
-    if (std::abs(force) > 0.1) {
+    if (std::abs(force) > 0.05) {
         std::cout << "[PASS] Yaw Kick active from derived acceleration (Force: " << force << ")" << std::endl;
         g_tests_passed++;
     } else {
