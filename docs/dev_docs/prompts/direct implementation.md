@@ -4,6 +4,7 @@ Then follow the plan defined in "## Adopt the "Strangler Fig" pattern in refacto
 Note that the refactoring for these logical categories has already been performed: 
 * GeneralConfig
 * FrontAxleConfig
+* RearAxleConfig 
 
 Only work on the next logical category, make sure all tests pass, and then stop. 
 
@@ -16,7 +17,6 @@ In the implementation notes also discuss any issues raised by the code reviews a
 See also the implementation notes that were created in previous iterations of this feature: 
 * docs\dev_docs\implementation_plans\redesign_preset_system_phase1_general.md
 * docs/dev_docs/implementation_plans/redesign_preset_system_phase1_front_axle.md
-
 
 
 **⚠️ CRITICAL WORKFLOW CONSTRAINTS:**
