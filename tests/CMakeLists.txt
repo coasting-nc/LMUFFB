@@ -147,6 +147,7 @@ set(TEST_SOURCES
     test_issue_371_repro.cpp
     test_issue_418_stationary_damping.cpp
     ../src/core/main.cpp
+    test_refactor_general_config.cpp
 )
 
 # ImGui Core is now always available if vendor exists
