@@ -12,3 +12,6 @@ Note any specific issues encountered during the Build/Test loop.
 In the implementation notes also discuss any issues raised by the code reviews and how you addressed them; also discuss there any discrepancies between you and the code reviews (eg. the code review said the patch would not build, but it does).
 
 See also the implementation notes that were created in a previous iteration of this feature: docs\dev_docs\implementation_plans\redesign_preset_system_phase1_general.md
+
+**⚠️ CRITICAL WORKFLOW CONSTRAINTS:**
+1.  **Autonomous Execution:** **Do not stop** to ask the user for confirmation or permission to proceed. You must loop through the implementation and review process autonomously until the task is complete and the code is perfect.
