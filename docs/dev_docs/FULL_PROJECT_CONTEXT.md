@@ -142,6 +142,7 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "power_yaw_punch") { current_preset.power_yaw_punch = std::stof(value); return true; }
     if (key == "yaw_accel_smoothing") { current_preset.yaw_smoothing = std::stof(value); return true; }
     if (key == "gyro_gain") { current_preset.gyro_gain = (std::min)(1.0f, std::stof(value)); return true; }
+    if (key == "stationary_damping") { current_preset.stationary_damping = (std::min)(1.0f, std::stof(value)); return true; }
     if (key == "gyro_smoothing_factor") { current_preset.gyro_smoothing = std::stof(value); return true; }
     if (key == "optimal_slip_angle") { current_preset.optimal_slip_angle = std::stof(value); return true; }
     if (key == "optimal_slip_ratio") { current_preset.optimal_slip_ratio = std::stof(value); return true; }
@@ -313,6 +314,7 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "power_yaw_punch") { engine.m_power_yaw_punch = std::stof(value); return true; }
     if (key == "yaw_accel_smoothing") { engine.m_yaw_accel_smoothing = std::stof(value); return true; }
     if (key == "gyro_gain") { engine.m_gyro_gain = (std::min)(1.0f, std::stof(value)); return true; }
+    if (key == "stationary_damping") { engine.m_stationary_damping = (std::min)(1.0f, std::stof(value)); return true; }
     if (key == "gyro_smoothing_factor") { engine.m_gyro_smoothing = std::stof(value); return true; }
     if (key == "optimal_slip_angle") { engine.m_optimal_slip_angle = std::stof(value); return true; }
     if (key == "optimal_slip_ratio") { engine.m_optimal_slip_ratio = std::stof(value); return true; }
@@ -1303,6 +1305,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "power_yaw_punch=" << p.power_yaw_punch << "\n";
     file << "yaw_accel_smoothing=" << p.yaw_smoothing << "\n";
     file << "gyro_gain=" << p.gyro_gain << "\n";
+    file << "stationary_damping=" << p.stationary_damping << "\n";
     file << "gyro_smoothing_factor=" << p.gyro_smoothing << "\n";
     file << "sop_smoothing_factor=" << p.sop_smoothing << "\n";
     file << "sop_scale=" << p.sop_scale << "\n";
@@ -1654,6 +1657,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "power_yaw_punch=" << engine.m_power_yaw_punch << "\n";
         file << "yaw_accel_smoothing=" << engine.m_yaw_accel_smoothing << "\n";
         file << "gyro_gain=" << engine.m_gyro_gain << "\n";
+    file << "stationary_damping=" << engine.m_stationary_damping << "\n";
         file << "gyro_smoothing_factor=" << engine.m_gyro_smoothing << "\n";
         file << "sop_smoothing_factor=" << engine.m_sop_smoothing_factor << "\n";
         file << "sop_scale=" << engine.m_sop_scale << "\n";
@@ -1837,6 +1841,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
 
     engine.m_torque_source = (std::max)(0, (std::min)(1, engine.m_torque_source));
     engine.m_gyro_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_gyro_gain));
+    engine.m_stationary_damping = (std::max)(0.0f, (std::min)(1.0f, engine.m_stationary_damping));
     engine.m_scrub_drag_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_scrub_drag_gain));
 
     if (engine.m_optimal_slip_angle < 0.01f) {
@@ -2112,6 +2117,7 @@ struct Preset {
     float kerb_strike_rejection = 0.0f; // NEW
     float sop_yaw_gain = 0.333f;
     float gyro_gain = 0.0f;
+    float stationary_damping = 0.0f; // New v0.7.206 (Issue #418)
     
     float steering_shaft_gain = 1.0f;
     float ingame_ffb_gain = 1.0f; // New v0.7.71 (Issue #160)
@@ -2260,6 +2266,7 @@ struct Preset {
     Preset& SetKerbStrikeRejection(float v) { kerb_strike_rejection = v; return *this; }
     Preset& SetSoPYaw(float v) { sop_yaw_gain = v; return *this; }
     Preset& SetGyro(float v) { gyro_gain = v; return *this; }
+    Preset& SetStationaryDamping(float v) { stationary_damping = v; return *this; }
     
     Preset& SetShaftGain(float v) { steering_shaft_gain = v; return *this; }
     Preset& SetInGameGain(float v) { ingame_ffb_gain = v; return *this; }
@@ -2447,6 +2454,7 @@ struct Preset {
         engine.m_kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, kerb_strike_rejection));
         engine.m_sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);
         engine.m_gyro_gain = (std::max)(0.0f, gyro_gain);
+        engine.m_stationary_damping = (std::max)(0.0f, (std::min)(1.0f, stationary_damping));
         engine.m_steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);
         engine.m_ingame_ffb_gain = (std::max)(0.0f, ingame_ffb_gain);
         engine.m_torque_source = torque_source;
@@ -2688,6 +2696,7 @@ struct Preset {
         kerb_strike_rejection = engine.m_kerb_strike_rejection;
         sop_yaw_gain = engine.m_sop_yaw_gain;
         gyro_gain = engine.m_gyro_gain;
+        stationary_damping = engine.m_stationary_damping;
         steering_shaft_gain = engine.m_steering_shaft_gain;
         ingame_ffb_gain = engine.m_ingame_ffb_gain;
         torque_source = engine.m_torque_source;
@@ -2832,6 +2841,7 @@ struct Preset {
         if (!is_near(kerb_strike_rejection, p.kerb_strike_rejection, eps)) return false;
         if (!is_near(sop_yaw_gain, p.sop_yaw_gain, eps)) return false;
         if (!is_near(gyro_gain, p.gyro_gain, eps)) return false;
+        if (!is_near(stationary_damping, p.stationary_damping, eps)) return false;
         if (!is_near(steering_shaft_gain, p.steering_shaft_gain, eps)) return false;
         if (!is_near(ingame_ffb_gain, p.ingame_ffb_gain, eps)) return false;
         if (torque_source != p.torque_source) return false;
@@ -4757,7 +4767,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         ctx.bottoming_crunch = 0.0;
         ctx.abs_pulse_force = 0.0;
         ctx.lockup_rumble = 0.0;
-        // NOTE: ctx.soft_lock_force is PRESERVED.
+        // NOTE: ctx.soft_lock_force and ctx.stationary_damping_force are PRESERVED.
 
         // Also zero out base_input for snapshot clarity
         base_input = 0.0;
@@ -4768,7 +4778,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // v0.7.77 FIX: Soft Lock moved to Texture group to maintain absolute Nm scaling (Issue #181)
     // Note: long_load_force is ALREADY included in output_force as a multiplier.
     double structural_sum = output_force + ctx.sop_base_force + ctx.lat_load_force + ctx.rear_torque + ctx.yaw_force + ctx.gyro_force +
-                            ctx.scrub_drag_force;
+                            ctx.stationary_damping_force + ctx.scrub_drag_force;
 
     // Apply Torque Drop (from Spin/Traction Loss) only to structural physics
     structural_sum *= ctx.gain_reduction_factor;
@@ -4872,6 +4882,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.ffb_scrub_drag = (float)ctx.scrub_drag_force;
             snap.ffb_yaw_kick = (float)ctx.yaw_force;
             snap.ffb_gyro_damping = (float)ctx.gyro_force;
+            snap.ffb_stationary_damping = (float)ctx.stationary_damping_force;
             snap.texture_road = (float)ctx.road_noise;
             snap.texture_slide = (float)ctx.slide_noise;
             snap.texture_lockup = (float)ctx.lockup_rumble;
@@ -5078,6 +5089,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         frame.ffb_scrub_drag = (float)ctx.scrub_drag_force;
         frame.ffb_yaw_kick = (float)ctx.yaw_force;
         frame.ffb_gyro_damping = (float)ctx.gyro_force;
+        frame.ffb_stationary_damping = (float)ctx.stationary_damping_force;
         frame.ffb_road_texture = (float)ctx.road_noise;
         frame.ffb_slide_texture = (float)ctx.slide_noise;
         frame.ffb_lockup_vibration = (float)ctx.lockup_rumble;
@@ -5415,9 +5427,14 @@ void FFBEngine::calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationC
     double alpha_gyro = ctx.dt / (tau_gyro + ctx.dt);
     m_steering_velocity_smoothed += alpha_gyro * (steer_vel - m_steering_velocity_smoothed);
     
-    // 3. Force = -Vel * Gain * Speed_Scaling
-    // Speed scaling: Gyro effect increases with wheel RPM (car speed)
-    ctx.gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE);
+    // 3. DRIVING GYRO (Scales UP with speed. If m_gyro_gain is 0, this is 0.0)
+    double driving_gyro = m_gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE);
+    ctx.gyro_force = -1.0 * m_steering_velocity_smoothed * driving_gyro;
+
+    // 4. STATIONARY DAMPING (Scales DOWN with speed. If m_stationary_damping is 0, this is 0.0)
+    // ctx.speed_gate is 0.0 at 0km/h, and 1.0 at the upper threshold (e.g., 18km/h)
+    double stationary_blend = 1.0 - ctx.speed_gate;
+    ctx.stationary_damping_force = -1.0 * m_steering_velocity_smoothed * m_stationary_damping * stationary_blend;
 }
 
 // Helper: Calculate ABS Pulse (v0.7.53)
@@ -5866,6 +5883,7 @@ struct FFBCalculationContext {
     double yaw_force = 0.0;
     double scrub_drag_force = 0.0;
     double gyro_force = 0.0;
+    double stationary_damping_force = 0.0; // New v0.7.206 (Issue #418)
     double avg_rear_grip = 0.0;
     double calc_rear_lat_force = 0.0;
     double avg_rear_load = 0.0;
@@ -5935,6 +5953,7 @@ public:
     float m_sop_yaw_gain;
     float m_gyro_gain;
     float m_gyro_smoothing;
+    float m_stationary_damping = 0.0f; // New v0.7.206 (Issue #418)
     float m_yaw_accel_smoothing;
     float m_chassis_inertia_smoothing;
     
@@ -6750,7 +6769,7 @@ double FFBSafetyMonitor::ApplySafetySlew(double target_force, double dt, bool re
 class FFBSafetyMonitor {
 public:
     static constexpr float SAFETY_SLEW_NORMAL = 1000.0f;
-    static constexpr float SAFETY_SLEW_RESTRICTED = 100.0f;
+    static constexpr float SAFETY_SLEW_RESTRICTED = 2.0f;
 
     FFBSafetyMonitor() = default;
 
@@ -6832,6 +6851,7 @@ struct FFBSnapshot {
     float ffb_scrub_drag;   // New v0.4.7
     float ffb_yaw_kick;     // New v0.4.16
     float ffb_gyro_damping; // New v0.4.17
+    float ffb_stationary_damping; // New v0.7.206 (Issue #418)
     float texture_road;
     float texture_slide;
     float texture_lockup;
@@ -7804,6 +7824,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
 
         FloatSetting("Gyro Damping", &engine.m_gyro_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_gyro_gain, FFBEngine::BASE_NM_GYRO_DAMPING), Tooltips::GYRO_DAMPING);
+        FloatSetting("Stationary Damping", &engine.m_stationary_damping, 0.0f, 1.0f, FormatDecoupled(engine.m_stationary_damping, FFBEngine::BASE_NM_GYRO_DAMPING),
+            "Applies friction ONLY when the car is stopped to prevent oscillations in the pits.\nFades out completely to 0% as you start driving.\nWorks independently of Gyro Damping.");
 
         FloatSetting("  Gyro Smooth", &engine.m_gyro_smoothing, 0.000f, 0.050f, "%.3f s",
             Tooltips::GYRO_SMOOTH,
@@ -8147,7 +8169,7 @@ inline void PlotWithStats(const char* label, const RollingBuffer& buffer,
 }
 
 // Global Buffers
-static RollingBuffer plot_total, plot_base, plot_sop, plot_yaw_kick, plot_rear_torque, plot_gyro_damping, plot_scrub_drag, plot_soft_lock, plot_oversteer, plot_understeer, plot_clipping, plot_road, plot_slide, plot_lockup, plot_spin, plot_bottoming;
+static RollingBuffer plot_total, plot_base, plot_sop, plot_yaw_kick, plot_rear_torque, plot_gyro_damping, plot_stationary_damping, plot_scrub_drag, plot_soft_lock, plot_oversteer, plot_understeer, plot_clipping, plot_road, plot_slide, plot_lockup, plot_spin, plot_bottoming;
 static RollingBuffer plot_calc_front_load, plot_calc_rear_load, plot_calc_front_grip, plot_calc_rear_grip, plot_calc_slip_ratio, plot_calc_slip_angle_smoothed, plot_calc_rear_slip_angle_smoothed, plot_slope_current, plot_calc_rear_lat_force;
 static RollingBuffer plot_raw_steer, plot_raw_shaft_torque, plot_raw_gen_torque, plot_raw_input_steering, plot_raw_throttle, plot_raw_brake, plot_input_accel, plot_raw_car_speed, plot_raw_load, plot_raw_grip, plot_raw_rear_grip, plot_raw_front_slip_ratio, plot_raw_susp_force, plot_raw_ride_height, plot_raw_front_lat_patch_vel, plot_raw_front_long_patch_vel, plot_raw_rear_lat_patch_vel, plot_raw_rear_long_patch_vel, plot_raw_slip_angle, plot_raw_rear_slip_angle, plot_raw_front_deflection;
 
@@ -8165,6 +8187,7 @@ void GuiLayer::UpdateTelemetry(FFBEngine& engine) {
         plot_yaw_kick.Add(snap.ffb_yaw_kick);
         plot_rear_torque.Add(snap.ffb_rear_torque);
         plot_gyro_damping.Add(snap.ffb_gyro_damping);
+        plot_stationary_damping.Add(snap.ffb_stationary_damping);
         plot_scrub_drag.Add(snap.ffb_scrub_drag);
         plot_soft_lock.Add(snap.ffb_soft_lock);
         plot_oversteer.Add(snap.oversteer_boost);
@@ -8302,6 +8325,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         PlotWithStats("Yaw Kick", plot_yaw_kick, -20.0f, 20.0f);
         PlotWithStats("Rear Align", plot_rear_torque, -20.0f, 20.0f);
         PlotWithStats("Gyro Damping", plot_gyro_damping, -20.0f, 20.0f);
+        PlotWithStats("Stationary Damping", plot_stationary_damping, -20.0f, 20.0f);
         PlotWithStats("Scrub Drag", plot_scrub_drag, -20.0f, 20.0f);
         PlotWithStats("Soft Lock", plot_soft_lock, -50.0f, 50.0f);
         ImGui::NextColumn();
@@ -12295,6 +12319,7 @@ struct LogFrame {
     float ffb_scrub_drag;
     float ffb_yaw_kick;
     float ffb_gyro_damping;
+    float ffb_stationary_damping; // New v0.7.206 (Issue #418)
     float ffb_road_texture;
     float ffb_slide_texture;
     float ffb_lockup_vibration;
@@ -12600,7 +12625,7 @@ private:
                << "dG_dt,dAlpha_dt,SlopeCurrent,SlopeRaw,SlopeNum,SlopeDenom,HoldTimer,InputSlipSmooth,SlopeSmoothed,Confidence,"
                << "SurfaceFL,SurfaceFR,SlopeTorque,SlewLimitedG,"
                << "SessionPeakTorque,LongitudinalLoadFactor,StructuralMult,VibrationMult,SteeringAngleDeg,SteeringRangeDeg,DebugFreq,TireRadius,"
-               << "FFBTotal,FFBBase,FFBUndersteerDrop,FFBOversteerBoost,FFBSoP,FFBRearTorque,FFBScrubDrag,FFBYawKick,FFBGyroDamping,FFBRoadTexture,FFBSlideTexture,FFBLockupVibration,FFBSpinVibration,FFBBottomingCrunch,FFBABSPulse,FFBSoftLock,"
+               << "FFBTotal,FFBBase,FFBUndersteerDrop,FFBOversteerBoost,FFBSoP,FFBRearTorque,FFBScrubDrag,FFBYawKick,FFBGyroDamping,FFBStationaryDamping,FFBRoadTexture,FFBSlideTexture,FFBLockupVibration,FFBSpinVibration,FFBBottomingCrunch,FFBABSPulse,FFBSoftLock,"
                << "ExtrapolatedYawAccel,DerivedYawAccel,"
                << "FFBShaftTorque,FFBGenTorque,GripFactor,SpeedGate,FrontLoadPeakRef,"
                << "ApproxLoadFL,ApproxLoadFR,ApproxLoadRL,ApproxLoadRR,"
