@@ -46,7 +46,8 @@ void test_issue_281_transition_smoothing() {
 
         double slewed_force = 0.0;
         // Run for frames to let the slew rate limiter reach the target
-        for (int i = 0; i < 50; i++) {
+        // Reaching -1.0 at 2.0 u/s takes 200 frames.
+        for (int i = 0; i < 210; i++) {
             double force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, full_allowed);
             if (mControl != static_cast<signed char>(ControlMode::PLAYER)) force = 0.0;
             slewed_force = engine.m_safety.ApplySafetySlew(force, 0.0025, !full_allowed);
@@ -67,7 +68,8 @@ void test_issue_281_transition_smoothing() {
         double slewed_force = -1.0; // Start with high force from previous state
         FFBEngineTestAccess::SetLastOutputForce(engine, -1.0);
 
-        for (int i = 0; i < 50; i++) {
+        // Reaching 0.0 from -1.0 at 2.0 u/s takes 0.5s = 200 frames at 400Hz
+        for (int i = 0; i < 210; i++) {
             double force = engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, full_allowed);
             // Fix logic as in main.cpp:
             if (mControl != static_cast<signed char>(ControlMode::PLAYER)) force = 0.0;

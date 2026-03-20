@@ -129,9 +129,9 @@ TEST_CASE(test_engine_safety_slew_edge, "Physics") {
 
     // 2. Restricted slew (e.g. after finish)
     engine.m_safety.SetSafetySmoothedForce(0.0);
-    // target = 1.0, max_slew = 100.0, dt = 0.0025 -> max_change = 0.25
+    // target = 1.0, max_slew = 2.0, dt = 0.0025 -> max_change = 0.005
     double force = engine.m_safety.ApplySafetySlew(1.0, 0.0025, true);
-    ASSERT_NEAR(force, 0.25, 0.001);
+    ASSERT_NEAR(force, 0.005, 0.001);
 }
 
 TEST_CASE(test_engine_calculate_force_fallbacks, "Physics") {
