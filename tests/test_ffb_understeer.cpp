@@ -8,7 +8,7 @@ TEST_CASE(test_optimal_slip_buffer_zone, "Understeer") {
     InitializeEngine(engine);
     
     engine.m_optimal_slip_angle = 0.10f;
-    engine.m_understeer_effect = 1.0f; // New scale
+    engine.m_front_axle.understeer_effect = 1.0f; // New scale
     
     // Simulate telemetry with slip_angle = 0.06 rad (60% of 0.10)
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.06);
@@ -32,7 +32,7 @@ TEST_CASE(test_progressive_loss_curve, "Understeer") {
     InitializeEngine(engine);
     
     engine.m_optimal_slip_angle = 0.10f;
-    engine.m_understeer_effect = 1.0f;  // Proportional
+    engine.m_front_axle.understeer_effect = 1.0f;  // Proportional
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.10); // 1.0x optimal
     data.mSteeringShaftTorque = 20.0;
@@ -72,7 +72,7 @@ TEST_CASE(test_grip_floor_clamp, "Understeer") {
     InitializeEngine(engine);
     
     engine.m_optimal_slip_angle = 0.05f; 
-    engine.m_understeer_effect = 1.0f; 
+    engine.m_front_axle.understeer_effect = 1.0f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 10.0); // Infinite slip
     data.mSteeringShaftTorque = 20.0;
@@ -92,7 +92,7 @@ TEST_CASE(test_understeer_output_clamp, "Understeer") {
     InitializeEngine(engine);
     
     engine.m_optimal_slip_angle = 0.10f;
-    engine.m_understeer_effect = 2.0f; // Max effective
+    engine.m_front_axle.understeer_effect = 2.0f; // Max effective
     
     // Slip = 0.20 -> excess = 1.0 (approx). 
     // factor = 1.0 - (loss * effect) -> should easily clamp to 0.0.
@@ -110,9 +110,9 @@ TEST_CASE(test_understeer_range_validation, "Understeer") {
     FFBEngine engine;
     InitializeEngine(engine);
     
-    engine.m_understeer_effect = 1.5f;
-    ASSERT_GE(engine.m_understeer_effect, 0.0f);
-    ASSERT_LE(engine.m_understeer_effect, 2.0f);
+    engine.m_front_axle.understeer_effect = 1.5f;
+    ASSERT_GE(engine.m_front_axle.understeer_effect, 0.0f);
+    ASSERT_LE(engine.m_front_axle.understeer_effect, 2.0f);
 }
 
 TEST_CASE(test_understeer_effect_scaling, "Understeer") {
@@ -124,15 +124,15 @@ TEST_CASE(test_understeer_effect_scaling, "Understeer") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.12); // ~30% loss
     data.mSteeringShaftTorque = 20.0;
     
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     double f0 = 0.0;
     for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) f0 = engine.calculate_force(&data);
     
-    engine.m_understeer_effect = 1.0f;
+    engine.m_front_axle.understeer_effect = 1.0f;
     double f1 = 0.0;
     for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) f1 = engine.calculate_force(&data);
     
-    engine.m_understeer_effect = 2.0f;
+    engine.m_front_axle.understeer_effect = 2.0f;
     double f2 = 0.0;
     for (int i = 0; i < FILTER_SETTLING_FRAMES; i++) f2 = engine.calculate_force(&data);
     
@@ -177,7 +177,7 @@ TEST_CASE(test_preset_understeer_only_isolation, "Understeer") {
     const Preset& p = Config::presets[preset_idx];
     
     // VERIFY: Primary effect is enabled
-    ASSERT_TRUE(p.understeer > 0.0f && p.understeer <= 2.0f);
+    ASSERT_TRUE(p.front_axle.understeer_effect > 0.0f && p.front_axle.understeer_effect <= 2.0f);
     
     // VERIFY: All other effects are DISABLED
     ASSERT_NEAR(p.sop, 0.0f, 0.001f);                    // SoP disabled

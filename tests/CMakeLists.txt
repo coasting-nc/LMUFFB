@@ -147,6 +147,7 @@ set(TEST_SOURCES
     test_issue_371_repro.cpp
     test_issue_418_stationary_damping.cpp
     test_refactor_general.cpp
+    test_refactor_front_axle.cpp
     ../src/core/main.cpp
 )
 

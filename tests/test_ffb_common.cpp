@@ -130,7 +130,7 @@ void InitializeEngine(FFBEngine& engine) {
     
     // v0.6.31: Zero out all auxiliary effects for clean physics testing by default.
     // Individual tests can re-enable what they need.
-    engine.m_steering_shaft_smoothing = 0.0f; 
+    engine.m_front_axle.steering_shaft_smoothing = 0.0f;
     engine.m_slip_angle_smoothing = 0.0f;
     engine.m_sop_smoothing_factor = 0.0f; // 0.0 = Instant/No smoothing (v0.7.147)
     engine.m_yaw_accel_smoothing = 0.0f;

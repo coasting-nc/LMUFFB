@@ -483,10 +483,10 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         BoolSetting("Steerlock from REST API", &engine.m_rest_api_enabled, Tooltips::REST_API_ENABLE);
 
         ImGui::Spacing();
-        bool use_in_game_ffb = (engine.m_torque_source == 1);
+        bool use_in_game_ffb = (engine.m_front_axle.torque_source == 1);
         if (GuiWidgets::Checkbox("Use In-Game FFB (400Hz Native)", &use_in_game_ffb, Tooltips::USE_INGAME_FFB).changed) {
             std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-            engine.m_torque_source = use_in_game_ffb ? 1 : 0;
+            engine.m_front_axle.torque_source = use_in_game_ffb ? 1 : 0;
             Config::Save(engine);
         }
 
@@ -531,55 +531,55 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::TreeNodeEx("Front Axle (Understeer)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        if (engine.m_torque_source == 1) {
-            FloatSetting("In-Game FFB Gain", &engine.m_ingame_ffb_gain, 0.0f, 2.0f, FormatPct(engine.m_ingame_ffb_gain), Tooltips::INGAME_FFB_GAIN);
+        if (engine.m_front_axle.torque_source == 1) {
+            FloatSetting("In-Game FFB Gain", &engine.m_front_axle.ingame_ffb_gain, 0.0f, 2.0f, FormatPct(engine.m_front_axle.ingame_ffb_gain), Tooltips::INGAME_FFB_GAIN);
         } else {
-            FloatSetting("Steering Shaft Gain", &engine.m_steering_shaft_gain, 0.0f, 2.0f, FormatPct(engine.m_steering_shaft_gain), Tooltips::STEERING_SHAFT_GAIN);
+            FloatSetting("Steering Shaft Gain", &engine.m_front_axle.steering_shaft_gain, 0.0f, 2.0f, FormatPct(engine.m_front_axle.steering_shaft_gain), Tooltips::STEERING_SHAFT_GAIN);
         }
 
-        FloatSetting("Steering Shaft Smoothing", &engine.m_steering_shaft_smoothing, 0.000f, 0.100f, "%.3f s",
+        FloatSetting("Steering Shaft Smoothing", &engine.m_front_axle.steering_shaft_smoothing, 0.000f, 0.100f, "%.3f s",
             Tooltips::STEERING_SHAFT_SMOOTHING,
             [&]() {
-                int ms = (int)std::lround(engine.m_steering_shaft_smoothing * 1000.0f);
+                int ms = (int)std::lround(engine.m_front_axle.steering_shaft_smoothing * 1000.0f);
                 ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
                 ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
             });
 
-        FloatSetting("Understeer Effect", &engine.m_understeer_effect, 0.0f, 2.0f, FormatPct(engine.m_understeer_effect),
+        FloatSetting("Understeer Effect", &engine.m_front_axle.understeer_effect, 0.0f, 2.0f, FormatPct(engine.m_front_axle.understeer_effect),
             Tooltips::UNDERSTEER_EFFECT);
 
-        FloatSetting("Response Curve (Gamma)", &engine.m_understeer_gamma, 0.1f, 4.0f, "%.1f",
+        FloatSetting("Response Curve (Gamma)", &engine.m_front_axle.understeer_gamma, 0.1f, 4.0f, "%.1f",
             Tooltips::UNDERSTEER_GAMMA);
 
         const char* torque_sources[] = { "Shaft Torque (100Hz Legacy)", "In-Game FFB (400Hz LMU 1.2+)" };
-        IntSetting("Torque Source", &engine.m_torque_source, torque_sources, sizeof(torque_sources)/sizeof(torque_sources[0]),
+        IntSetting("Torque Source", &engine.m_front_axle.torque_source, torque_sources, sizeof(torque_sources)/sizeof(torque_sources[0]),
             Tooltips::TORQUE_SOURCE);
 
-        if (engine.m_torque_source == 0) {
+        if (engine.m_front_axle.torque_source == 0) {
             const char* recon_modes[] = { "Zero Latency (Extrapolation)", "Smooth (Interpolation)" };
-            IntSetting("  Reconstruction", &engine.m_steering_100hz_reconstruction, recon_modes, sizeof(recon_modes)/sizeof(recon_modes[0]),
+            IntSetting("  Reconstruction", &engine.m_front_axle.steering_100hz_reconstruction, recon_modes, sizeof(recon_modes)/sizeof(recon_modes[0]),
                 Tooltips::STEERING_100HZ_RECONSTRUCTION);
         }
 
-        BoolSetting("Pure Passthrough", &engine.m_torque_passthrough, Tooltips::PURE_PASSTHROUGH);
+        BoolSetting("Pure Passthrough", &engine.m_front_axle.torque_passthrough, Tooltips::PURE_PASSTHROUGH);
 
         if (ImGui::TreeNodeEx("Signal Filtering", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::NextColumn(); ImGui::NextColumn();
 
-            BoolSetting("  Flatspot Suppression", &engine.m_flatspot_suppression, Tooltips::FLATSPOT_SUPPRESSION);
-            if (engine.m_flatspot_suppression) {
-                FloatSetting("    Filter Width (Q)", &engine.m_notch_q, 0.5f, 10.0f, "Q: %.2f", Tooltips::NOTCH_Q);
-                FloatSetting("    Suppression Strength", &engine.m_flatspot_strength, 0.0f, 1.0f, "%.2f", Tooltips::SUPPRESSION_STRENGTH);
+            BoolSetting("  Flatspot Suppression", &engine.m_front_axle.flatspot_suppression, Tooltips::FLATSPOT_SUPPRESSION);
+            if (engine.m_front_axle.flatspot_suppression) {
+                FloatSetting("    Filter Width (Q)", &engine.m_front_axle.notch_q, 0.5f, 10.0f, "Q: %.2f", Tooltips::NOTCH_Q);
+                FloatSetting("    Suppression Strength", &engine.m_front_axle.flatspot_strength, 0.0f, 1.0f, "%.2f", Tooltips::SUPPRESSION_STRENGTH);
                 ImGui::Text("    Est. / Theory Freq");
                 ImGui::NextColumn();
                 ImGui::TextDisabled("%.1f Hz / %.1f Hz", engine.m_debug_freq, engine.m_theoretical_freq);
                 ImGui::NextColumn();
             }
 
-            BoolSetting("  Static Noise Filter", &engine.m_static_notch_enabled, Tooltips::STATIC_NOISE_FILTER);
-            if (engine.m_static_notch_enabled) {
-                FloatSetting("    Target Frequency", &engine.m_static_notch_freq, 10.0f, 100.0f, "%.1f Hz", Tooltips::STATIC_NOTCH_FREQ);
-                FloatSetting("    Filter Width", &engine.m_static_notch_width, 0.1f, 10.0f, "%.1f Hz", Tooltips::STATIC_NOTCH_WIDTH);
+            BoolSetting("  Static Noise Filter", &engine.m_front_axle.static_notch_enabled, Tooltips::STATIC_NOISE_FILTER);
+            if (engine.m_front_axle.static_notch_enabled) {
+                FloatSetting("    Target Frequency", &engine.m_front_axle.static_notch_freq, 10.0f, 100.0f, "%.1f Hz", Tooltips::STATIC_NOTCH_FREQ);
+                FloatSetting("    Filter Width", &engine.m_front_axle.static_notch_width, 0.1f, 10.0f, "%.1f Hz", Tooltips::STATIC_NOTCH_WIDTH);
             }
 
             ImGui::TreePop();
@@ -1117,7 +1117,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
 
     // System Health Diagnostics (Moved from Tuning window - Issue #149)
     if (ImGui::CollapsingHeader("System Health", ImGuiTreeNodeFlags_DefaultOpen)) {
-        HealthStatus hs = HealthMonitor::Check(engine.m_ffb_rate, engine.m_telemetry_rate, engine.m_gen_torque_rate, engine.m_torque_source, engine.m_physics_rate,
+        HealthStatus hs = HealthMonitor::Check(engine.m_ffb_rate, engine.m_telemetry_rate, engine.m_gen_torque_rate, engine.m_front_axle.torque_source, engine.m_physics_rate,
                                               GameConnector::Get().IsConnected(), GameConnector::Get().IsSessionActive(), GameConnector::Get().GetSessionType(), GameConnector::Get().IsInRealtime(), GameConnector::Get().GetPlayerControl());
 
         ImGui::Columns(6, "RateCols", false);

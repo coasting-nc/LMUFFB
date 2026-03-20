@@ -41,8 +41,8 @@ TEST_CASE(test_long_load_scaling, "Physics") {
     Preset p;
     p.long_load_effect = 1.0f; // Enable
     p.long_load_smoothing = 0.0f; // Disable smoothing for instant test
-    p.steering_shaft_gain = 1.0f;
-    p.understeer = 0.0f; // Disable understeer drop for pure gain test
+    p.front_axle.steering_shaft_gain = 1.0f;
+    p.front_axle.understeer_effect = 0.0f; // Disable understeer drop for pure gain test
     engine.m_invert_force = false; // Easier to test
     p.general.wheelbase_max_nm = 100.0f;
     p.general.target_rim_nm = 100.0f;
@@ -82,7 +82,7 @@ TEST_CASE(test_long_load_scaling, "Physics") {
 // TEST_CASE(test_long_load_safety_gate, "Physics") {
 //     FFBEngine engine;
 //     InitializeEngine(engine);
-//     engine.m_understeer_effect = 0.0f; // Disable understeer for pure gate test
+//     engine.m_front_axle.understeer_effect = 0.0f; // Disable understeer for pure gate test
 //     engine.m_general.auto_load_normalization_enabled = true;
 //     engine.m_invert_force = false;
 //     Preset p;

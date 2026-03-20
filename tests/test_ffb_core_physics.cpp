@@ -14,7 +14,7 @@ TEST_CASE(test_base_force_passthrough, "CorePhysics") {
     
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;
-    engine.m_steering_shaft_gain = 0.5f; 
+    engine.m_front_axle.steering_shaft_gain = 0.5f;
     engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 10.0; 
@@ -57,7 +57,7 @@ TEST_CASE(test_grip_modulation, "CorePhysics") {
     data.mWheel[0].mGripFract = 1.0;
     data.mWheel[1].mGripFract = 1.0;
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
-    engine.m_understeer_effect = 1.0;
+    engine.m_front_axle.understeer_effect = 1.0;
     
     // Issue #397: Pump for longer to settle HW filters
     double force_full = PumpEngineTime(engine, data, 1.0);
@@ -127,7 +127,7 @@ TEST_CASE(test_grip_low_speed, "CorePhysics") {
     data.mWheel[0].mTireLoad = 4000.0; 
     data.mWheel[1].mTireLoad = 4000.0;
     engine.m_general.gain = 1.0;
-    engine.m_understeer_effect = 1.0;
+    engine.m_front_axle.understeer_effect = 1.0;
     data.mSteeringShaftTorque = 40.0; 
     engine.m_general.wheelbase_max_nm = 40.0f; engine.m_general.target_rim_nm = 40.0f;
     
@@ -167,14 +167,14 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     data.mWheel[1].mTireLoad = 4000.0;
     engine.m_general.gain = 1.0;
     engine.m_invert_force = false;
-    engine.m_understeer_effect = 0.0; 
+    engine.m_front_axle.understeer_effect = 0.0;
     engine.m_oversteer_boost = 0.0;
 
     double ra1, ra2;
     {
         FFBEngine e1;
         InitializeEngine(e1);
-        e1.m_general.gain = 1.0; e1.m_invert_force = false; e1.m_understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
+        e1.m_general.gain = 1.0; e1.m_invert_force = false; e1.m_front_axle.understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
         e1.m_rear_align_effect = 1.0;
         e1.m_general.wheelbase_max_nm = 20.0f; e1.m_general.target_rim_nm = 20.0f;
         ra1 = e1.calculate_force(&data);
@@ -182,7 +182,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     {
         FFBEngine e2;
         InitializeEngine(e2);
-        e2.m_general.gain = 1.0; e2.m_invert_force = false; e2.m_understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
+        e2.m_general.gain = 1.0; e2.m_invert_force = false; e2.m_front_axle.understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
         e2.m_rear_align_effect = 1.0;
         e2.m_general.wheelbase_max_nm = 60.0f; e2.m_general.target_rim_nm = 60.0f;
         ra2 = e2.calculate_force(&data);
@@ -199,7 +199,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     {
         FFBEngine e1;
         InitializeEngine(e1);
-        e1.m_general.gain = 1.0; e1.m_invert_force = false; e1.m_understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
+        e1.m_general.gain = 1.0; e1.m_invert_force = false; e1.m_front_axle.understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
         e1.m_slide_texture_enabled = true;
         e1.m_slide_texture_gain = 1.0;
         e1.m_general.wheelbase_max_nm = 20.0f; e1.m_general.target_rim_nm = 20.0f;
@@ -209,7 +209,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     {
         FFBEngine e2;
         InitializeEngine(e2);
-        e2.m_general.gain = 1.0; e2.m_invert_force = false; e2.m_understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
+        e2.m_general.gain = 1.0; e2.m_invert_force = false; e2.m_front_axle.understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
         e2.m_slide_texture_enabled = true;
         e2.m_slide_texture_gain = 1.0;
         e2.m_general.wheelbase_max_nm = 100.0f; e2.m_general.target_rim_nm = 100.0f;
@@ -225,7 +225,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     }
 
     engine.m_slide_texture_enabled = false;
-    engine.m_understeer_effect = 0.5; 
+    engine.m_front_axle.understeer_effect = 0.5;
     data.mSteeringShaftTorque = 10.0;
     data.mWheel[0].mGripFract = 0.6; 
     data.mWheel[1].mGripFract = 0.6;
@@ -274,7 +274,7 @@ TEST_CASE(test_gain_compensation_disabled, "CorePhysics") {
     data.mWheel[1].mTireLoad = 4000.0;
     engine.m_general.gain = 1.0;
     engine.m_invert_force = false;
-    engine.m_understeer_effect = 0.0;
+    engine.m_front_axle.understeer_effect = 0.0;
     engine.m_oversteer_boost = 0.0;
 
     // With normalization disabled, structural forces scale to target_rim_nm.
@@ -321,7 +321,7 @@ TEST_CASE(test_gain_compensation_disabled, "CorePhysics") {
 
     // Now test Understeer drop when disabled
     engine.m_general.dynamic_normalization_enabled = false;
-    engine.m_understeer_effect = 0.5;
+    engine.m_front_axle.understeer_effect = 0.5;
     data.mSteeringShaftTorque = 10.0;
     data.mWheel[0].mGripFract = 0.6;
     data.mWheel[1].mGripFract = 0.6;
@@ -362,7 +362,7 @@ TEST_CASE(test_high_gain_stability, "CorePhysics") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.15); 
     
     engine.m_general.gain = 2.0f;
-    engine.m_understeer_effect = 200.0f;
+    engine.m_front_axle.understeer_effect = 200.0f;
     engine.m_abs_gain = 10.0f;
     engine.m_lockup_gain = 3.0f;
     engine.m_brake_load_cap = 10.0f;
@@ -641,7 +641,7 @@ TEST_CASE(test_steering_shaft_smoothing, "CorePhysics") {
     data.mDeltaTime = 0.01; // 100Hz for this test math
     data.mLocalVel.z = -20.0;
 
-    engine.m_steering_shaft_smoothing = 0.050f; // 50ms tau
+    engine.m_front_axle.steering_shaft_smoothing = 0.050f; // 50ms tau
     engine.m_general.gain = 1.0;
     engine.m_general.wheelbase_max_nm = 1.0; engine.m_general.target_rim_nm = 1.0;
     // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
@@ -650,7 +650,7 @@ TEST_CASE(test_steering_shaft_smoothing, "CorePhysics") {
     FFBEngineTestAccess::SetRollingAverageTorque(engine, 1.0);
     FFBEngineTestAccess::SetLastRawTorque(engine, 1.0);
 
-    engine.m_understeer_effect = 0.0; // Neutralize modifiers
+    engine.m_front_axle.understeer_effect = 0.0; // Neutralize modifiers
     engine.m_sop_effect = 0.0f;      // Disable SoP
     engine.m_invert_force = false;   // Disable inversion
     data.mDeltaTime = 0.01; // 100Hz
@@ -685,8 +685,8 @@ TEST_CASE(test_holt_winters_modes, "Math") {
     InitializeEngine(engine);
 
     // We want to isolate the base steering torque
-    engine.m_torque_source = 0; // 100Hz Legacy source
-    engine.m_steering_shaft_gain = 1.0f;
+    engine.m_front_axle.torque_source = 0; // 100Hz Legacy source
+    engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_invert_force = false;
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 10.0f;
@@ -723,8 +723,8 @@ TEST_CASE(test_holt_winters_modes, "Math") {
 
     // --- MODE 1: SMOOTH (INTERPOLATION) ---
     InitializeEngine(engine); // Reset engine state
-    engine.m_torque_source = 0;
-    engine.m_steering_shaft_gain = 1.0f;
+    engine.m_front_axle.torque_source = 0;
+    engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_invert_force = false;
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 10.0f;

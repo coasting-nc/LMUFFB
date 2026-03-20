@@ -205,7 +205,7 @@ struct SessionInfo {
     
     // Key settings snapshot
     GeneralConfig general;
-    float understeer_effect;
+    FrontAxleConfig front_axle;
     float sop_effect;
     float lat_load_effect; // v0.7.152
     float long_load_effect;
@@ -218,7 +218,6 @@ struct SessionInfo {
     float slope_threshold;
     float slope_alpha_threshold;
     float slope_decay_rate;
-    bool torque_passthrough; // v0.7.63
 };
 
 class AsyncLogger {
@@ -427,7 +426,7 @@ private:
         m_file << "# FFB Settings\n";
         m_file << "# ========================\n";
         m_file << "# Gain: " << info.general.gain << "\n";
-        m_file << "# Understeer Effect: " << info.understeer_effect << "\n";
+        m_file << "# Understeer Effect: " << info.front_axle.understeer_effect << "\n";
         m_file << "# SoP Effect: " << info.sop_effect << "\n";
         m_file << "# Lateral Load Effect: " << info.lat_load_effect << "\n";
         m_file << "# Long Load Effect: " << info.long_load_effect << "\n";
@@ -440,7 +439,7 @@ private:
         m_file << "# Slope Threshold: " << info.slope_threshold << "\n";
         m_file << "# Slope Alpha Threshold: " << info.slope_alpha_threshold << "\n";
         m_file << "# Slope Decay Rate: " << info.slope_decay_rate << "\n";
-        m_file << "# Torque Passthrough: " << (info.torque_passthrough ? "Enabled" : "Disabled") << "\n";
+        m_file << "# Torque Passthrough: " << (info.front_axle.torque_passthrough ? "Enabled" : "Disabled") << "\n";
         m_file << "# Dynamic Normalization: " << (info.general.dynamic_normalization_enabled ? "Enabled" : "Disabled") << "\n";
         m_file << "# Auto Load Normalization: " << (info.general.auto_load_normalization_enabled ? "Enabled" : "Disabled") << "\n";
         m_file << "# ========================\n";

@@ -10,7 +10,7 @@ TEST_CASE(test_negative_parameter_safety, "Stability") {
 
     // Set some dangerous negative or zero values
     p.lockup_gamma = -1.0f;
-    p.notch_q = -5.0f;
+    p.front_axle.notch_q = -5.0f;
     p.general.wheelbase_max_nm = -100.0f;
     p.optimal_slip_angle = -0.1f;
     p.optimal_slip_ratio = 0.0f;
@@ -24,7 +24,7 @@ TEST_CASE(test_negative_parameter_safety, "Stability") {
 
     // Verify clamping in engine
     ASSERT_GE(engine.m_lockup_gamma, 0.1f);
-    ASSERT_GE(engine.m_notch_q, 0.1f);
+    ASSERT_GE(engine.m_front_axle.notch_q, 0.1f);
     ASSERT_GE(engine.m_general.wheelbase_max_nm, 1.0f);
     ASSERT_GE(engine.m_optimal_slip_angle, 0.01f);
     ASSERT_GE(engine.m_optimal_slip_ratio, 0.01f);

@@ -13,8 +13,8 @@ TEST_CASE(test_longitudinal_g_braking, "Physics") {
     // Setup: 100% effect gain
     engine.m_long_load_effect = 1.0f;
     engine.m_long_load_smoothing = 0.0f; // Instant
-    engine.m_steering_shaft_gain = 1.0f;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.steering_shaft_gain = 1.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_long_load_transform = LoadTransform::LINEAR;
     engine.m_chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
@@ -56,8 +56,8 @@ TEST_CASE(test_longitudinal_g_high_decel, "Physics") {
 
     engine.m_long_load_effect = 1.0f;
     engine.m_long_load_smoothing = 0.0f;
-    engine.m_steering_shaft_gain = 1.0f;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.steering_shaft_gain = 1.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_long_load_transform = LoadTransform::LINEAR;
     engine.m_chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
@@ -93,8 +93,8 @@ TEST_CASE(test_longitudinal_g_domain_scaling_cubic, "Physics") {
 
     engine.m_long_load_effect = 1.0f;
     engine.m_long_load_smoothing = 0.0f;
-    engine.m_steering_shaft_gain = 1.0f;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.steering_shaft_gain = 1.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_long_load_transform = LoadTransform::CUBIC;
     engine.m_chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
@@ -135,8 +135,8 @@ TEST_CASE(test_longitudinal_g_aero_independence, "Physics") {
 
     engine.m_long_load_effect = 1.0f;
     engine.m_long_load_smoothing = 0.0f;
-    engine.m_steering_shaft_gain = 1.0f;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.steering_shaft_gain = 1.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
 
     // Scenario: 0G Acceleration (Constant Speed) but MASSIVE front load (Aero)
     engine.m_chassis_inertia_smoothing = 1000.0f;

@@ -104,7 +104,7 @@ TEST_CASE(test_preset_management_system, "Logic") {
 
     FFBEngine engine;
     engine.m_general.gain = 0.88f;
-    engine.m_understeer_effect = 12.3f;
+    engine.m_front_axle.understeer_effect = 12.3f;
 
     Config::AddUserPreset("TestPreset_Logic", engine);
 
@@ -115,7 +115,7 @@ TEST_CASE(test_preset_management_system, "Logic") {
         if (p.name == "TestPreset_Logic") {
             found = true;
             ASSERT_TRUE(p.general.gain == engine.m_general.gain);
-            ASSERT_TRUE(p.understeer == engine.m_understeer_effect);
+            ASSERT_TRUE(p.front_axle.understeer_effect == engine.m_front_axle.understeer_effect);
             ASSERT_TRUE(p.is_builtin == false);
             break;
         }
@@ -445,7 +445,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         FFBEngine engine;
         Preset::ApplyDefaultsToEngine(engine);
 
-        ASSERT_TRUE(engine.m_understeer_effect == reference_defaults.understeer);
+        ASSERT_TRUE(engine.m_front_axle.understeer_effect == reference_defaults.front_axle.understeer_effect);
         ASSERT_TRUE(engine.m_sop_effect == reference_defaults.sop);
         ASSERT_TRUE(engine.m_oversteer_boost == reference_defaults.oversteer_boost);
         ASSERT_TRUE(engine.m_lockup_enabled == reference_defaults.lockup_enabled);
@@ -463,7 +463,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(engine.m_yaw_accel_smoothing == reference_defaults.yaw_smoothing);
         ASSERT_TRUE(engine.m_chassis_inertia_smoothing == reference_defaults.chassis_smoothing);
         ASSERT_TRUE(engine.m_gyro_smoothing == reference_defaults.gyro_smoothing);
-        ASSERT_TRUE(engine.m_steering_shaft_smoothing == reference_defaults.steering_shaft_smoothing);
+        ASSERT_TRUE(engine.m_front_axle.steering_shaft_smoothing == reference_defaults.front_axle.steering_shaft_smoothing);
         ASSERT_TRUE(engine.m_long_load_smoothing == reference_defaults.long_load_smoothing);
         ASSERT_TRUE(engine.m_grip_smoothing_steady == reference_defaults.grip_smoothing_steady);
         ASSERT_TRUE(engine.m_grip_smoothing_fast == reference_defaults.grip_smoothing_fast);
@@ -478,7 +478,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(Config::presets[0].is_builtin == true);
 
         const Preset& default_preset = Config::presets[0];
-        ASSERT_TRUE(default_preset.understeer == reference_defaults.understeer);
+        ASSERT_TRUE(default_preset.front_axle.understeer_effect == reference_defaults.front_axle.understeer_effect);
         ASSERT_TRUE(default_preset.sop == reference_defaults.sop);
         ASSERT_TRUE(default_preset.oversteer_boost == reference_defaults.oversteer_boost);
         ASSERT_TRUE(default_preset.lockup_enabled == reference_defaults.lockup_enabled);
@@ -496,7 +496,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(default_preset.yaw_smoothing == reference_defaults.yaw_smoothing);
         ASSERT_TRUE(default_preset.chassis_smoothing == reference_defaults.chassis_smoothing);
         ASSERT_TRUE(default_preset.gyro_smoothing == reference_defaults.gyro_smoothing);
-        ASSERT_TRUE(default_preset.steering_shaft_smoothing == reference_defaults.steering_shaft_smoothing);
+        ASSERT_TRUE(default_preset.front_axle.steering_shaft_smoothing == reference_defaults.front_axle.steering_shaft_smoothing);
         ASSERT_TRUE(default_preset.long_load_smoothing == reference_defaults.long_load_smoothing);
         ASSERT_TRUE(default_preset.grip_smoothing_steady == reference_defaults.grip_smoothing_steady);
         ASSERT_TRUE(default_preset.grip_smoothing_fast == reference_defaults.grip_smoothing_fast);
@@ -511,12 +511,12 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         const Preset& default_preset = Config::presets[0];
         const Preset& t300_preset = Config::presets[1];
 
-        ASSERT_TRUE(t300_preset.understeer == 0.5f);
+        ASSERT_TRUE(t300_preset.front_axle.understeer_effect == 0.5f);
         ASSERT_TRUE(abs(t300_preset.sop - 0.425003f) < 0.0001f);
         ASSERT_TRUE(t300_preset.lockup_freq_scale == 1.02f);
         ASSERT_TRUE(t300_preset.scrub_drag_gain == 0.0462185f);
 
-        ASSERT_TRUE(default_preset.understeer != t300_preset.understeer);
+        ASSERT_TRUE(default_preset.front_axle.understeer_effect != t300_preset.front_axle.understeer_effect);
         ASSERT_TRUE(default_preset.sop != t300_preset.sop);
     }
 
@@ -526,7 +526,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         Preset::ApplyDefaultsToEngine(engine1);
         Config::ApplyPreset(0, engine2); // Apply "Default"
 
-        ASSERT_TRUE(engine1.m_understeer_effect == engine2.m_understeer_effect);
+        ASSERT_TRUE(engine1.m_front_axle.understeer_effect == engine2.m_front_axle.understeer_effect);
         ASSERT_TRUE(engine1.m_sop_effect == engine2.m_sop_effect);
         ASSERT_TRUE(engine1.m_oversteer_boost == engine2.m_oversteer_boost);
         ASSERT_TRUE(engine1.m_lockup_gain == engine2.m_lockup_gain);
@@ -541,7 +541,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(engine1.m_yaw_accel_smoothing == engine2.m_yaw_accel_smoothing);
         ASSERT_TRUE(engine1.m_chassis_inertia_smoothing == engine2.m_chassis_inertia_smoothing);
         ASSERT_TRUE(engine1.m_gyro_smoothing == engine2.m_gyro_smoothing);
-        ASSERT_TRUE(engine1.m_steering_shaft_smoothing == engine2.m_steering_shaft_smoothing);
+        ASSERT_TRUE(engine1.m_front_axle.steering_shaft_smoothing == engine2.m_front_axle.steering_shaft_smoothing);
         ASSERT_TRUE(engine1.m_long_load_smoothing == engine2.m_long_load_smoothing);
         ASSERT_TRUE(engine1.m_grip_smoothing_steady == engine2.m_grip_smoothing_steady);
         ASSERT_TRUE(engine1.m_grip_smoothing_fast == engine2.m_grip_smoothing_fast);
@@ -554,7 +554,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         FFBEngine engine;
         Preset::ApplyDefaultsToEngine(engine);
         Config::Load(engine, nonexistent_file);
-        ASSERT_TRUE(engine.m_understeer_effect == reference_defaults.understeer);
+        ASSERT_TRUE(engine.m_front_axle.understeer_effect == reference_defaults.front_axle.understeer_effect);
         ASSERT_TRUE(engine.m_sop_effect == reference_defaults.sop);
         ASSERT_TRUE(engine.m_lockup_gain == reference_defaults.lockup_gain);
     }

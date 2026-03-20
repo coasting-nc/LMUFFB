@@ -401,8 +401,8 @@ public:
     static void CallCalculateLockup_Vibration(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
         e.calculate_lockup_vibration(data, ctx);
     }
-    static void SetFlatspotSuppression(FFBEngine& e, bool val) { e.m_flatspot_suppression = val; }
-    static void SetFlatspotStrength(FFBEngine& e, float val) { e.m_flatspot_strength = val; }
+    static void SetFlatspotSuppression(FFBEngine& e, bool val) { e.m_front_axle.flatspot_suppression = val; }
+    static void SetFlatspotStrength(FFBEngine& e, float val) { e.m_front_axle.flatspot_strength = val; }
     static void SetABSPulseEnabled(FFBEngine& e, bool val) { e.m_abs_pulse_enabled = val; }
     static void SetLastLogTime(FFBEngine& e, std::chrono::steady_clock::time_point t) { e.last_log_time = t; }
     static ChannelStats& GetTorqueStats(FFBEngine& e) { return e.s_torque; }
@@ -425,8 +425,8 @@ public:
     static void CallCalculateWheelSpin(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
         e.calculate_wheel_spin(data, ctx);
     }
-    static void SetTorqueSource(FFBEngine& e, int val) { e.m_torque_source = val; }
-    static void SetSteering100HzReconstruction(FFBEngine& e, int val) { e.m_steering_100hz_reconstruction = val; }
+    static void SetTorqueSource(FFBEngine& e, int val) { e.m_front_axle.torque_source = val; }
+    static void SetSteering100HzReconstruction(FFBEngine& e, int val) { e.m_front_axle.steering_100hz_reconstruction = val; }
     static void SetInvertForce(FFBEngine& e, bool val) { e.m_invert_force = val; }
     static void SetMinForce(FFBEngine& e, float val) { e.m_general.min_force = val; }
     static void SetSoftLockEnabled(FFBEngine& e, bool val) { e.m_soft_lock_enabled = val; }

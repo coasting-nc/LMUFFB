@@ -156,7 +156,7 @@ void FFBThread() {
                             info.track_name = tName;
                             info.driver_name = "Auto";
                             info.general = g_engine.m_general;
-                            info.understeer_effect = g_engine.m_understeer_effect;
+                            info.front_axle = g_engine.m_front_axle;
                             info.sop_effect = g_engine.m_sop_effect;
                             info.lat_load_effect = g_engine.m_lat_load_effect;
                             info.long_load_effect = g_engine.m_long_load_effect;
@@ -169,7 +169,6 @@ void FFBThread() {
                             info.slope_threshold = (float)g_engine.m_slope_min_threshold;
                             info.slope_alpha_threshold = g_engine.m_slope_alpha_threshold;
                             info.slope_decay_rate = g_engine.m_slope_decay_rate;
-                            info.torque_passthrough = g_engine.m_torque_passthrough;
                             AsyncLogger::Get().Start(info, Config::m_log_path);
                         }
                     }
@@ -273,8 +272,8 @@ void FFBThread() {
             HealthStatus health;
             {
                 std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-                double t_rate = (g_engine.m_torque_source == 1) ? genTorqueMonitor.GetRate() : torqueMonitor.GetRate();
-                health = HealthMonitor::Check(loopMonitor.GetRate(), telemMonitor.GetRate(), t_rate, g_engine.m_torque_source, physicsMonitor.GetRate(),
+                double t_rate = (g_engine.m_front_axle.torque_source == 1) ? genTorqueMonitor.GetRate() : torqueMonitor.GetRate();
+                health = HealthMonitor::Check(loopMonitor.GetRate(), telemMonitor.GetRate(), t_rate, g_engine.m_front_axle.torque_source, physicsMonitor.GetRate(),
                                               GameConnector::Get().IsConnected(), GameConnector::Get().IsSessionActive(), GameConnector::Get().GetSessionType(), GameConnector::Get().IsInRealtime(), GameConnector::Get().GetPlayerControl());
             }
 

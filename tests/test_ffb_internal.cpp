@@ -146,7 +146,7 @@ TEST_CASE(test_zero_effects_leakage, "Internal") {
     // (Gain 1.0, everything else 0.0)
     engine.m_general.gain = 1.0f;
     engine.m_general.min_force = 0.0f;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_sop_effect = 0.0f;
     engine.m_oversteer_boost = 0.0f;
     engine.m_rear_align_effect = 0.0f;

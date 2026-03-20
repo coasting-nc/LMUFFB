@@ -297,7 +297,7 @@ TEST_CASE(test_preset_equals_branches, "System") {
         if (!p1.Equals(p2)) { g_tests_passed++; }
 
     TEST_FIELD_NE(general.gain, 0.5f);
-    TEST_FIELD_NE(understeer, 0.5f);
+    TEST_FIELD_NE(front_axle.understeer_effect, 0.5f);
     TEST_FIELD_NE(sop, 0.5f);
     TEST_FIELD_NE(sop_scale, 0.5f);
     TEST_FIELD_NE(sop_smoothing, 0.5f);
@@ -341,22 +341,22 @@ TEST_CASE(test_preset_equals_branches, "System") {
     TEST_FIELD_NE(rear_align_effect, 0.5f);
     TEST_FIELD_NE(sop_yaw_gain, 0.5f);
     TEST_FIELD_NE(gyro_gain, 0.5f);
-    TEST_FIELD_NE(steering_shaft_gain, 0.5f);
-    TEST_FIELD_NE(ingame_ffb_gain, 0.5f);
-    TEST_FIELD_NE(torque_source, 1);
-    TEST_FIELD_NE(torque_passthrough, !p2.torque_passthrough);
+    TEST_FIELD_NE(front_axle.steering_shaft_gain, 0.5f);
+    TEST_FIELD_NE(front_axle.ingame_ffb_gain, 0.5f);
+    TEST_FIELD_NE(front_axle.torque_source, 1);
+    TEST_FIELD_NE(front_axle.torque_passthrough, !p2.front_axle.torque_passthrough);
     TEST_FIELD_NE(optimal_slip_angle, 0.5f);
     TEST_FIELD_NE(optimal_slip_ratio, 0.5f);
-    TEST_FIELD_NE(steering_shaft_smoothing, 0.5f);
+    TEST_FIELD_NE(front_axle.steering_shaft_smoothing, 0.5f);
     TEST_FIELD_NE(gyro_smoothing, 0.5f);
     TEST_FIELD_NE(yaw_smoothing, 0.5f);
     TEST_FIELD_NE(chassis_smoothing, 0.5f);
-    TEST_FIELD_NE(flatspot_suppression, !p2.flatspot_suppression);
-    TEST_FIELD_NE(notch_q, 0.5f);
-    TEST_FIELD_NE(flatspot_strength, 0.5f);
-    TEST_FIELD_NE(static_notch_enabled, !p2.static_notch_enabled);
-    TEST_FIELD_NE(static_notch_freq, 0.5f);
-    TEST_FIELD_NE(static_notch_width, 0.5f);
+    TEST_FIELD_NE(front_axle.flatspot_suppression, !p2.front_axle.flatspot_suppression);
+    TEST_FIELD_NE(front_axle.notch_q, 0.5f);
+    TEST_FIELD_NE(front_axle.flatspot_strength, 0.5f);
+    TEST_FIELD_NE(front_axle.static_notch_enabled, !p2.front_axle.static_notch_enabled);
+    TEST_FIELD_NE(front_axle.static_notch_freq, 0.5f);
+    TEST_FIELD_NE(front_axle.static_notch_width, 0.5f);
     TEST_FIELD_NE(yaw_kick_threshold, 0.5f);
     TEST_FIELD_NE(speed_gate_lower, 0.5f);
     TEST_FIELD_NE(speed_gate_upper, 0.5f);

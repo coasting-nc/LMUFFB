@@ -17,7 +17,7 @@ TEST_CASE(test_issue_241_rectification_fix, "YawGyro") {
     engine.m_invert_force = false;
 
     // Disable other effects
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_sop_effect = 0.0f;
     engine.m_lat_load_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;

@@ -11,7 +11,7 @@ TEST_CASE(test_issue_185_fix_repro, "Internal") {
 
     engine.m_general.gain = 1.0f;
     engine.m_general.min_force = 0.05f;
-    engine.m_steering_shaft_gain = 1.0f;
+    engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 10.0f;
     engine.m_general.target_rim_nm = 10.0f;
 
@@ -82,7 +82,7 @@ TEST_CASE(test_issue_235_garage_noise, "Internal") {
 
     engine.m_general.gain = 1.0f;
     engine.m_general.min_force = 0.05f;
-    engine.m_steering_shaft_gain = 1.0f;
+    engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 10.0f;
     engine.m_general.target_rim_nm = 10.0f;
     engine.m_soft_lock_enabled = true;

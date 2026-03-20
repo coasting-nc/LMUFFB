@@ -262,20 +262,20 @@ TEST_CASE(test_preset_initialization, "Config") {
         
         // v0.6.30 Specialization Verification
         if (is_specialized_t300) {
-            if (std::abs(preset.understeer - t300_understeer) > 0.001f) {
-                std::cout << "[FAIL] T300: Optimized understeer (" << preset.understeer << ") != " << t300_understeer << std::endl;
+            if (std::abs(preset.front_axle.understeer_effect - t300_understeer) > 0.001f) {
+                std::cout << "[FAIL] T300: Optimized understeer (" << preset.front_axle.understeer_effect << ") != " << t300_understeer << std::endl;
                 fields_ok = false;
             }
             if (std::abs(preset.sop - t300_sop) > 0.001f) {
                 std::cout << "[FAIL] T300: Optimized SoP (" << preset.sop << ") != " << t300_sop << std::endl;
                 fields_ok = false;
             }
-            if (preset.steering_shaft_smoothing != t300_shaft_smooth) {
-                std::cout << "[FAIL] T300: Optimized shaft smoothing (" << preset.steering_shaft_smoothing << ") != " << t300_shaft_smooth << std::endl;
+            if (preset.front_axle.steering_shaft_smoothing != t300_shaft_smooth) {
+                std::cout << "[FAIL] T300: Optimized shaft smoothing (" << preset.front_axle.steering_shaft_smoothing << ") != " << t300_shaft_smooth << std::endl;
                 fields_ok = false;
             }
-            if (preset.notch_q != t300_notch_q) {
-                std::cout << "[FAIL] T300: Optimized notch_q (" << preset.notch_q << ") != " << t300_notch_q << std::endl;
+            if (preset.front_axle.notch_q != t300_notch_q) {
+                std::cout << "[FAIL] T300: Optimized notch_q (" << preset.front_axle.notch_q << ") != " << t300_notch_q << std::endl;
                 fields_ok = false;
             }
         }
@@ -470,7 +470,7 @@ TEST_CASE(test_config_migration_logic, "Config") {
         file.close();
     }
     Config::Load(engine, test_file_under);
-    ASSERT_NEAR(engine.m_understeer_effect, 0.5f, 0.01);
+    ASSERT_NEAR(engine.m_front_axle.understeer_effect, 0.5f, 0.01);
     std::remove(test_file_under);
 }
 

@@ -18,7 +18,7 @@ TEST_CASE(test_dynamic_normalization_toggle_behavior, "Physics") {
     // Ensure m_general.target_rim_nm is something known
     engine.m_general.target_rim_nm = 10.0f;
     engine.m_general.wheelbase_max_nm = 15.0f;
-    engine.m_torque_source = 0; // Shaft Torque
+    engine.m_front_axle.torque_source = 0; // Shaft Torque
 
     // Initial peak from Preset::Apply (via constructor) would be default 25.0,
     // but InitializeEngine(engine) overrides it to 20.0 for legacy reasons.

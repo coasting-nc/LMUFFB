@@ -12,8 +12,7 @@ struct GeneralConfig {
     bool dynamic_normalization_enabled = false;
     bool auto_load_normalization_enabled = false;
 
-    bool Equals(const GeneralConfig& o) const {
-        const float eps = 0.0001f;
+    bool Equals(const GeneralConfig& o, float eps = 0.0001f) const {
         auto is_near = [eps](float a, float b) { return std::abs(a - b) < eps; };
         return is_near(gain, o.gain) &&
                is_near(min_force, o.min_force) &&
@@ -28,6 +27,57 @@ struct GeneralConfig {
         wheelbase_max_nm = (std::max)(1.0f, wheelbase_max_nm);
         target_rim_nm = (std::max)(1.0f, target_rim_nm);
         min_force = (std::max)(0.0f, min_force);
+    }
+};
+
+struct FrontAxleConfig {
+    float steering_shaft_gain = 1.0f;
+    float ingame_ffb_gain = 1.0f;
+    float steering_shaft_smoothing = 0.0f;
+    float understeer_effect = 1.0f;
+    float understeer_gamma = 1.0f;
+    int torque_source = 0;
+    int steering_100hz_reconstruction = 0;
+    bool torque_passthrough = false;
+
+    // Signal Filtering
+    bool flatspot_suppression = false;
+    float notch_q = 2.0f;
+    float flatspot_strength = 1.0f;
+    bool static_notch_enabled = false;
+    float static_notch_freq = 11.0f;
+    float static_notch_width = 2.0f;
+
+    bool Equals(const FrontAxleConfig& o, float eps = 0.0001f) const {
+        auto is_near = [eps](float a, float b) { return std::abs(a - b) < eps; };
+        return is_near(steering_shaft_gain, o.steering_shaft_gain) &&
+               is_near(ingame_ffb_gain, o.ingame_ffb_gain) &&
+               is_near(steering_shaft_smoothing, o.steering_shaft_smoothing) &&
+               is_near(understeer_effect, o.understeer_effect) &&
+               is_near(understeer_gamma, o.understeer_gamma) &&
+               torque_source == o.torque_source &&
+               steering_100hz_reconstruction == o.steering_100hz_reconstruction &&
+               torque_passthrough == o.torque_passthrough &&
+               flatspot_suppression == o.flatspot_suppression &&
+               is_near(notch_q, o.notch_q) &&
+               is_near(flatspot_strength, o.flatspot_strength) &&
+               static_notch_enabled == o.static_notch_enabled &&
+               is_near(static_notch_freq, o.static_notch_freq) &&
+               is_near(static_notch_width, o.static_notch_width);
+    }
+
+    void Validate() {
+        steering_shaft_gain = (std::max)(0.0f, (std::min)(2.0f, steering_shaft_gain));
+        ingame_ffb_gain = (std::max)(0.0f, (std::min)(2.0f, ingame_ffb_gain));
+        steering_shaft_smoothing = (std::max)(0.0f, steering_shaft_smoothing);
+        understeer_effect = (std::max)(0.0f, (std::min)(2.0f, understeer_effect));
+        understeer_gamma = (std::max)(0.1f, (std::min)(4.0f, understeer_gamma));
+        torque_source = (std::max)(0, (std::min)(1, torque_source));
+        steering_100hz_reconstruction = (std::max)(0, (std::min)(1, steering_100hz_reconstruction));
+        notch_q = (std::max)(0.1f, notch_q);
+        flatspot_strength = (std::max)(0.0f, (std::min)(1.0f, flatspot_strength));
+        static_notch_freq = (std::max)(1.0f, static_notch_freq);
+        static_notch_width = (std::max)(0.1f, static_notch_width);
     }
 };
 

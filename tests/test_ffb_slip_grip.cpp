@@ -239,7 +239,7 @@ TEST_CASE(test_load_factor_edge_cases, "SlipGrip") {
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
     engine.m_slide_texture_enabled = true;
     engine.m_slide_texture_gain = 1.0;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_sop_effect = 0.0f;
     engine.m_bottoming_enabled = false;
     

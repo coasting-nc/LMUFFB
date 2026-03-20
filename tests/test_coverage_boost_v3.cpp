@@ -27,7 +27,7 @@ TEST_CASE(test_engine_signal_conditioning_thresholds, "Physics") {
     engine.apply_signal_conditioning(1.0, &data, ctx);
 
     // Trigger wheel_freq <= 1.0 branch
-    engine.m_flatspot_suppression = true;
+    engine.m_front_axle.flatspot_suppression = true;
     data.mWheel[0].mStaticUndeflectedRadius = 250; // Larger radius -> Lower frequency, avoid overflow
     engine.apply_signal_conditioning(1.0, &data, ctx);
 }
@@ -100,7 +100,7 @@ TEST_CASE(test_config_migration_logic, "Config") {
         ofs.close();
 
         Config::Load(engine, "legacy_config.ini");
-        ASSERT_NEAR(engine.m_understeer_effect, 1.5, 0.001);
+        ASSERT_NEAR(engine.m_front_axle.understeer_effect, 1.5, 0.001);
         ASSERT_NEAR(engine.m_general.wheelbase_max_nm, 15.0, 0.001);
         ASSERT_NEAR(engine.m_general.target_rim_nm, 10.0, 0.001);
 

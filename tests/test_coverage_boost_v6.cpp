@@ -384,19 +384,19 @@ TEST_CASE(test_gui_layer_common_branches_v6, "GUI") {
     // Diverse UI states for more branches
     {
         ImGui::NewFrame();
-        engine.m_torque_source = 0; // Shaft
+        engine.m_front_axle.torque_source = 0; // Shaft
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
-        engine.m_torque_source = 1; // In-Game
+        engine.m_front_axle.torque_source = 1; // In-Game
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
         engine.m_soft_lock_enabled = true;
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
-        engine.m_flatspot_suppression = true;
+        engine.m_front_axle.flatspot_suppression = true;
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
-        engine.m_static_notch_enabled = true;
+        engine.m_front_axle.static_notch_enabled = true;
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
         engine.m_slope_detection_enabled = true;

@@ -22,14 +22,14 @@ TEST_CASE(test_async_logger_binary_integrity, "Logging") {
     info.track_name = "Test Track";
     info.app_version = "0.7.126";
     info.general.gain = 1.0f;
-    info.understeer_effect = 0.5f;
+    info.front_axle.understeer_effect = 0.5f;
     info.sop_effect = 0.5f;
     info.slope_enabled = true;
     info.slope_sensitivity = 0.5f;
     info.slope_threshold = -0.3f;
     info.slope_alpha_threshold = 0.01f;
     info.slope_decay_rate = 0.1f;
-    info.torque_passthrough = false;
+    info.front_axle.torque_passthrough = false;
 
     logger.EnableCompression(false);
     logger.Start(info, test_dir);

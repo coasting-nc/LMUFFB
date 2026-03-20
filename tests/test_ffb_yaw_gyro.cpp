@@ -16,7 +16,7 @@ TEST_CASE(test_sop_yaw_kick, "YawGyro") {
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Reference torque for normalization
     engine.m_general.gain = 1.0f;
     // Disable other effects
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_slide_texture_enabled = false;
@@ -75,7 +75,7 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
     engine.m_general.gain = 1.0f;
     
     // Disable other effects to isolate gyro damping
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_sop_effect = 0.0f;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
@@ -167,7 +167,7 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     engine.m_sop_effect = 0.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_slide_texture_enabled = false;
@@ -231,7 +231,7 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     engine2.m_sop_effect = 0.0f;
     engine2.m_general.wheelbase_max_nm = 20.0f; engine2.m_general.target_rim_nm = 20.0f;
     engine2.m_general.gain = 1.0f;
-    engine2.m_understeer_effect = 0.0f;
+    engine2.m_front_axle.understeer_effect = 0.0f;
     engine2.m_lockup_enabled = false;
     engine2.m_spin_enabled = false;
     engine2.m_slide_texture_enabled = false;
@@ -285,7 +285,7 @@ TEST_CASE(test_yaw_accel_convergence, "YawGyro") {
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;
     engine.m_invert_force = false;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_slide_texture_enabled = false;
@@ -364,7 +364,7 @@ TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
     engine.m_sop_effect = 0.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_bottoming_enabled = false;
@@ -462,7 +462,7 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     engine.m_sop_effect = 0.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_slide_texture_enabled = false;
@@ -482,7 +482,7 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     
     // Ensure all effects that could mask are off
     engine.m_sop_effect = 0.0f;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_general.min_force = 0.0f;
     
     double force_idle = engine.calculate_force(&data);

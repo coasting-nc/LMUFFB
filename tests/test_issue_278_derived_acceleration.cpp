@@ -16,7 +16,7 @@ TEST_CASE(test_issue_278_road_texture_spike_rejection, "DerivedAccel") {
     engine.m_general.target_rim_nm = 20.0f;
 
     // Disable other effects
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_sop_effect = 0.0f;
     engine.m_lat_load_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;

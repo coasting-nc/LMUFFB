@@ -88,16 +88,16 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "understeer") {
         float val = std::stof(value);
         if (val > 2.0f) val /= 100.0f;
-        current_preset.understeer = (std::min)(2.0f, (std::max)(0.0f, val));
+        current_preset.front_axle.understeer_effect = (std::min)(2.0f, (std::max)(0.0f, val));
         return true;
     }
-    if (key == "understeer_gamma") { current_preset.understeer_gamma = std::stof(value); return true; }
-    if (key == "steering_shaft_gain") { current_preset.steering_shaft_gain = std::stof(value); return true; }
-    if (key == "ingame_ffb_gain") { current_preset.ingame_ffb_gain = std::stof(value); return true; }
-    if (key == "steering_shaft_smoothing") { current_preset.steering_shaft_smoothing = std::stof(value); return true; }
-    if (key == "torque_source") { current_preset.torque_source = std::stoi(value); return true; }
-    if (key == "steering_100hz_reconstruction") { current_preset.steering_100hz_reconstruction = std::stoi(value); return true; }
-    if (key == "torque_passthrough") { current_preset.torque_passthrough = (value == "1" || value == "true"); return true; }
+    if (key == "understeer_gamma") { current_preset.front_axle.understeer_gamma = std::stof(value); return true; }
+    if (key == "steering_shaft_gain") { current_preset.front_axle.steering_shaft_gain = std::stof(value); return true; }
+    if (key == "ingame_ffb_gain") { current_preset.front_axle.ingame_ffb_gain = std::stof(value); return true; }
+    if (key == "steering_shaft_smoothing") { current_preset.front_axle.steering_shaft_smoothing = std::stof(value); return true; }
+    if (key == "torque_source") { current_preset.front_axle.torque_source = std::stoi(value); return true; }
+    if (key == "steering_100hz_reconstruction") { current_preset.front_axle.steering_100hz_reconstruction = std::stoi(value); return true; }
+    if (key == "torque_passthrough") { current_preset.front_axle.torque_passthrough = (value == "1" || value == "true"); return true; }
     if (key == "sop") { current_preset.sop = std::stof(value); return true; }
     if (key == "lateral_load_effect") { current_preset.lateral_load = std::stof(value); return true; }
     if (key == "lat_load_transform") { current_preset.lat_load_transform = std::clamp(std::stoi(value), 0, 3); return true; }
@@ -167,6 +167,12 @@ bool Config::ParseBrakingLine(const std::string& key, const std::string& value, 
 }
 
 bool Config::ParseVibrationLine(const std::string& key, const std::string& value, Preset& current_preset) {
+    if (key == "flatspot_suppression") { current_preset.front_axle.flatspot_suppression = (value == "1" || value == "true"); return true; }
+    if (key == "notch_q") { current_preset.front_axle.notch_q = std::stof(value); return true; }
+    if (key == "flatspot_strength") { current_preset.front_axle.flatspot_strength = std::stof(value); return true; }
+    if (key == "static_notch_enabled") { current_preset.front_axle.static_notch_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "static_notch_freq") { current_preset.front_axle.static_notch_freq = std::stof(value); return true; }
+    if (key == "static_notch_width") { current_preset.front_axle.static_notch_width = std::stof(value); return true; }
     if (key == "texture_load_cap" || key == "max_load_factor") { current_preset.texture_load_cap = std::stof(value); return true; }
     if (key == "spin_enabled") { current_preset.spin_enabled = (value == "1" || value == "true"); return true; }
     if (key == "spin_gain") { current_preset.spin_gain = std::stof(value); return true; }
@@ -186,12 +192,6 @@ bool Config::ParseVibrationLine(const std::string& key, const std::string& value
     if (key == "soft_lock_enabled") { current_preset.soft_lock_enabled = (value == "1" || value == "true"); return true; }
     if (key == "soft_lock_stiffness") { current_preset.soft_lock_stiffness = std::stof(value); return true; }
     if (key == "soft_lock_damping") { current_preset.soft_lock_damping = std::stof(value); return true; }
-    if (key == "flatspot_suppression") { current_preset.flatspot_suppression = (value == "1" || value == "true"); return true; }
-    if (key == "notch_q") { current_preset.notch_q = std::stof(value); return true; }
-    if (key == "flatspot_strength") { current_preset.flatspot_strength = std::stof(value); return true; }
-    if (key == "static_notch_enabled") { current_preset.static_notch_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "static_notch_freq") { current_preset.static_notch_freq = std::stof(value); return true; }
-    if (key == "static_notch_width") { current_preset.static_notch_width = std::stof(value); return true; }
     if (key == "speed_gate_lower") { current_preset.speed_gate_lower = std::stof(value); return true; }
     if (key == "speed_gate_upper") { current_preset.speed_gate_upper = std::stof(value); return true; }
     if (key == "road_fallback_scale") { current_preset.road_fallback_scale = std::stof(value); return true; }
@@ -252,16 +252,16 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "understeer") {
         float val = std::stof(value);
         if (val > 2.0f) val /= 100.0f;
-        engine.m_understeer_effect = (std::min)(2.0f, (std::max)(0.0f, val));
+        engine.m_front_axle.understeer_effect = (std::min)(2.0f, (std::max)(0.0f, val));
         return true;
     }
-    if (key == "understeer_gamma") { engine.m_understeer_gamma = std::stof(value); return true; }
-    if (key == "steering_shaft_gain") { engine.m_steering_shaft_gain = std::stof(value); return true; }
-    if (key == "ingame_ffb_gain") { engine.m_ingame_ffb_gain = std::stof(value); return true; }
-    if (key == "steering_shaft_smoothing") { engine.m_steering_shaft_smoothing = std::stof(value); return true; }
-    if (key == "torque_source") { engine.m_torque_source = std::stoi(value); return true; }
-    if (key == "steering_100hz_reconstruction") { engine.m_steering_100hz_reconstruction = std::stoi(value); return true; }
-    if (key == "torque_passthrough") { engine.m_torque_passthrough = (value == "1" || value == "true"); return true; }
+    if (key == "understeer_gamma") { engine.m_front_axle.understeer_gamma = std::stof(value); return true; }
+    if (key == "steering_shaft_gain") { engine.m_front_axle.steering_shaft_gain = std::stof(value); return true; }
+    if (key == "ingame_ffb_gain") { engine.m_front_axle.ingame_ffb_gain = std::stof(value); return true; }
+    if (key == "steering_shaft_smoothing") { engine.m_front_axle.steering_shaft_smoothing = std::stof(value); return true; }
+    if (key == "torque_source") { engine.m_front_axle.torque_source = std::stoi(value); return true; }
+    if (key == "steering_100hz_reconstruction") { engine.m_front_axle.steering_100hz_reconstruction = std::stoi(value); return true; }
+    if (key == "torque_passthrough") { engine.m_front_axle.torque_passthrough = (value == "1" || value == "true"); return true; }
     if (key == "sop") { engine.m_sop_effect = std::stof(value); return true; }
     if (key == "lateral_load_effect") { engine.m_lat_load_effect = std::stof(value); return true; }
     if (key == "lat_load_transform") { engine.m_lat_load_transform = static_cast<LoadTransform>(std::clamp(std::stoi(value), 0, 3)); return true; }
@@ -343,6 +343,12 @@ bool Config::SyncBrakingLine(const std::string& key, const std::string& value, F
 }
 
 bool Config::SyncVibrationLine(const std::string& key, const std::string& value, FFBEngine& engine) {
+    if (key == "flatspot_suppression") { engine.m_front_axle.flatspot_suppression = (value == "1" || value == "true"); return true; }
+    if (key == "notch_q") { engine.m_front_axle.notch_q = std::stof(value); return true; }
+    if (key == "flatspot_strength") { engine.m_front_axle.flatspot_strength = std::stof(value); return true; }
+    if (key == "static_notch_enabled") { engine.m_front_axle.static_notch_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "static_notch_freq") { engine.m_front_axle.static_notch_freq = std::stof(value); return true; }
+    if (key == "static_notch_width") { engine.m_front_axle.static_notch_width = std::stof(value); return true; }
     if (key == "texture_load_cap" || key == "max_load_factor") { engine.m_texture_load_cap = std::stof(value); return true; }
     if (key == "spin_enabled") { engine.m_spin_enabled = (value == "1" || value == "true"); return true; }
     if (key == "spin_gain") { engine.m_spin_gain = std::stof(value); return true; }
@@ -360,12 +366,6 @@ bool Config::SyncVibrationLine(const std::string& key, const std::string& value,
     if (key == "soft_lock_enabled") { engine.m_soft_lock_enabled = (value == "1" || value == "true"); return true; }
     if (key == "soft_lock_stiffness") { engine.m_soft_lock_stiffness = std::stof(value); return true; }
     if (key == "soft_lock_damping") { engine.m_soft_lock_damping = std::stof(value); return true; }
-    if (key == "flatspot_suppression") { engine.m_flatspot_suppression = (value == "1" || value == "true"); return true; }
-    if (key == "notch_q") { engine.m_notch_q = std::stof(value); return true; }
-    if (key == "flatspot_strength") { engine.m_flatspot_strength = std::stof(value); return true; }
-    if (key == "static_notch_enabled") { engine.m_static_notch_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "static_notch_freq") { engine.m_static_notch_freq = std::stof(value); return true; }
-    if (key == "static_notch_width") { engine.m_static_notch_width = std::stof(value); return true; }
     if (key == "scrub_drag_gain") { engine.m_scrub_drag_gain = std::stof(value); return true; }
     if (key == "bottoming_method") { engine.m_bottoming_method = std::stoi(value); return true; }
     return false;
@@ -413,15 +413,15 @@ void Config::LoadPresets() {
         p.general.wheelbase_max_nm = 4.0f;
         p.general.target_rim_nm = 4.0f;
         p.general.min_force = 0.01f;
-        p.steering_shaft_gain = 1.0f;
-        p.steering_shaft_smoothing = 0.0f;
-        p.understeer = 0.5f;
-        p.flatspot_suppression = false;
-        p.notch_q = 2.0f;
-        p.flatspot_strength = 1.0f;
-        p.static_notch_enabled = false;
-        p.static_notch_freq = 11.0f;
-        p.static_notch_width = 2.0f;
+        p.front_axle.steering_shaft_gain = 1.0f;
+        p.front_axle.steering_shaft_smoothing = 0.0f;
+        p.front_axle.understeer_effect = 0.5f;
+        p.front_axle.flatspot_suppression = false;
+        p.front_axle.notch_q = 2.0f;
+        p.front_axle.flatspot_strength = 1.0f;
+        p.front_axle.static_notch_enabled = false;
+        p.front_axle.static_notch_freq = 11.0f;
+        p.front_axle.static_notch_width = 2.0f;
         p.oversteer_boost = 2.40336f;
         p.sop = 0.425003f;
         p.rear_align_effect = 0.966383f;
@@ -477,18 +477,18 @@ void Config::LoadPresets() {
         p.general.wheelbase_max_nm = 25.1f;
         p.general.target_rim_nm = 24.5f;
         p.general.min_force = 0.02f;
-        p.steering_shaft_gain = 0.955947f;
-        p.ingame_ffb_gain = 1.0f;
-        p.steering_shaft_smoothing = 0.0f;
-        p.understeer = 1.0f;
-        p.torque_source = 0;
-        p.torque_passthrough = false;
-        p.flatspot_suppression = false;
-        p.notch_q = 2.0f;
-        p.flatspot_strength = 1.0f;
-        p.static_notch_enabled = false;
-        p.static_notch_freq = 11.0f;
-        p.static_notch_width = 2.0f;
+        p.front_axle.steering_shaft_gain = 0.955947f;
+        p.front_axle.ingame_ffb_gain = 1.0f;
+        p.front_axle.steering_shaft_smoothing = 0.0f;
+        p.front_axle.understeer_effect = 1.0f;
+        p.front_axle.torque_source = 0;
+        p.front_axle.torque_passthrough = false;
+        p.front_axle.flatspot_suppression = false;
+        p.front_axle.notch_q = 2.0f;
+        p.front_axle.flatspot_strength = 1.0f;
+        p.front_axle.static_notch_enabled = false;
+        p.front_axle.static_notch_freq = 11.0f;
+        p.front_axle.static_notch_width = 2.0f;
         p.oversteer_boost = 0.0f;
         p.long_load_effect = 2.68722f;
         p.long_load_smoothing = 0.15f;
@@ -590,15 +590,15 @@ void Config::LoadPresets() {
         p.general.wheelbase_max_nm = 15.0f;
         p.general.target_rim_nm = 10.0f;
         p.general.min_force = 0.0f;
-        p.steering_shaft_gain = 1.0f;
-        p.steering_shaft_smoothing = 0.0f;
-        p.understeer = 1.0f;
-        p.flatspot_suppression = false;
-        p.notch_q = 2.0f;
-        p.flatspot_strength = 1.0f;
-        p.static_notch_enabled = false;
-        p.static_notch_freq = 11.0f;
-        p.static_notch_width = 2.0f;
+        p.front_axle.steering_shaft_gain = 1.0f;
+        p.front_axle.steering_shaft_smoothing = 0.0f;
+        p.front_axle.understeer_effect = 1.0f;
+        p.front_axle.flatspot_suppression = false;
+        p.front_axle.notch_q = 2.0f;
+        p.front_axle.flatspot_strength = 1.0f;
+        p.front_axle.static_notch_enabled = false;
+        p.front_axle.static_notch_freq = 11.0f;
+        p.front_axle.static_notch_width = 2.0f;
         p.oversteer_boost = 2.52101f;
         p.sop = 1.666f;
         p.rear_align_effect = 0.666f;
@@ -653,15 +653,15 @@ void Config::LoadPresets() {
         p.general.wheelbase_max_nm = 15.0f;
         p.general.target_rim_nm = 10.0f;
         p.general.min_force = 0.0f;
-        p.steering_shaft_gain = 1.0f;
-        p.steering_shaft_smoothing = 0.0f;
-        p.understeer = 1.0f;
-        p.flatspot_suppression = false;
-        p.notch_q = 2.0f;
-        p.flatspot_strength = 1.0f;
-        p.static_notch_enabled = false;
-        p.static_notch_freq = 11.0f;
-        p.static_notch_width = 2.0f;
+        p.front_axle.steering_shaft_gain = 1.0f;
+        p.front_axle.steering_shaft_smoothing = 0.0f;
+        p.front_axle.understeer_effect = 1.0f;
+        p.front_axle.flatspot_suppression = false;
+        p.front_axle.notch_q = 2.0f;
+        p.front_axle.flatspot_strength = 1.0f;
+        p.front_axle.static_notch_enabled = false;
+        p.front_axle.static_notch_freq = 11.0f;
+        p.front_axle.static_notch_width = 2.0f;
         p.oversteer_boost = 2.52101f;
         p.sop = 1.666f;
         p.rear_align_effect = 0.666f;
@@ -716,15 +716,15 @@ void Config::LoadPresets() {
         p.general.wheelbase_max_nm = 21.0f;
         p.general.target_rim_nm = 12.0f;
         p.general.min_force = 0.0f;
-        p.steering_shaft_gain = 1.989f;
-        p.steering_shaft_smoothing = 0.0f;
-        p.understeer = 0.638f;
-        p.flatspot_suppression = true;
-        p.notch_q = 0.57f;
-        p.flatspot_strength = 1.0f;
-        p.static_notch_enabled = false;
-        p.static_notch_freq = 11.0f;
-        p.static_notch_width = 2.0f;
+        p.front_axle.steering_shaft_gain = 1.989f;
+        p.front_axle.steering_shaft_smoothing = 0.0f;
+        p.front_axle.understeer_effect = 0.638f;
+        p.front_axle.flatspot_suppression = true;
+        p.front_axle.notch_q = 0.57f;
+        p.front_axle.flatspot_strength = 1.0f;
+        p.front_axle.static_notch_enabled = false;
+        p.front_axle.static_notch_freq = 11.0f;
+        p.front_axle.static_notch_width = 2.0f;
         p.oversteer_boost = 0.0f;
         p.sop = 0.0f;
         p.rear_align_effect = 0.29f;
@@ -780,15 +780,15 @@ void Config::LoadPresets() {
         p.general.wheelbase_max_nm = 21.0f;
         p.general.target_rim_nm = 12.0f;
         p.general.min_force = 0.0f;
-        p.steering_shaft_gain = 1.989f;
-        p.steering_shaft_smoothing = 0.0f;
-        p.understeer = 0.638f;
-        p.flatspot_suppression = true;
-        p.notch_q = 0.57f;
-        p.flatspot_strength = 1.0f;
-        p.static_notch_enabled = false;
-        p.static_notch_freq = 11.0f;
-        p.static_notch_width = 2.0f;
+        p.front_axle.steering_shaft_gain = 1.989f;
+        p.front_axle.steering_shaft_smoothing = 0.0f;
+        p.front_axle.understeer_effect = 0.638f;
+        p.front_axle.flatspot_suppression = true;
+        p.front_axle.notch_q = 0.57f;
+        p.front_axle.flatspot_strength = 1.0f;
+        p.front_axle.static_notch_enabled = false;
+        p.front_axle.static_notch_freq = 11.0f;
+        p.front_axle.static_notch_width = 2.0f;
         p.oversteer_boost = 0.0f;
         p.sop = 0.0f;
         p.rear_align_effect = 0.29f;
@@ -1248,20 +1248,20 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "target_rim_nm=" << p.general.target_rim_nm << "\n";
     file << "min_force=" << p.general.min_force << "\n";
 
-    file << "steering_shaft_gain=" << p.steering_shaft_gain << "\n";
-    file << "ingame_ffb_gain=" << p.ingame_ffb_gain << "\n";
-    file << "steering_shaft_smoothing=" << p.steering_shaft_smoothing << "\n";
-    file << "understeer=" << p.understeer << "\n";
-    file << "understeer_gamma=" << p.understeer_gamma << "\n";
-    file << "torque_source=" << p.torque_source << "\n";
-    file << "steering_100hz_reconstruction=" << p.steering_100hz_reconstruction << "\n";
-    file << "torque_passthrough=" << p.torque_passthrough << "\n";
-    file << "flatspot_suppression=" << p.flatspot_suppression << "\n";
-    file << "notch_q=" << p.notch_q << "\n";
-    file << "flatspot_strength=" << p.flatspot_strength << "\n";
-    file << "static_notch_enabled=" << p.static_notch_enabled << "\n";
-    file << "static_notch_freq=" << p.static_notch_freq << "\n";
-    file << "static_notch_width=" << p.static_notch_width << "\n";
+    file << "steering_shaft_gain=" << p.front_axle.steering_shaft_gain << "\n";
+    file << "ingame_ffb_gain=" << p.front_axle.ingame_ffb_gain << "\n";
+    file << "steering_shaft_smoothing=" << p.front_axle.steering_shaft_smoothing << "\n";
+    file << "understeer=" << p.front_axle.understeer_effect << "\n";
+    file << "understeer_gamma=" << p.front_axle.understeer_gamma << "\n";
+    file << "torque_source=" << p.front_axle.torque_source << "\n";
+    file << "steering_100hz_reconstruction=" << p.front_axle.steering_100hz_reconstruction << "\n";
+    file << "torque_passthrough=" << p.front_axle.torque_passthrough << "\n";
+    file << "flatspot_suppression=" << p.front_axle.flatspot_suppression << "\n";
+    file << "notch_q=" << p.front_axle.notch_q << "\n";
+    file << "flatspot_strength=" << p.front_axle.flatspot_strength << "\n";
+    file << "static_notch_enabled=" << p.front_axle.static_notch_enabled << "\n";
+    file << "static_notch_freq=" << p.front_axle.static_notch_freq << "\n";
+    file << "static_notch_width=" << p.front_axle.static_notch_width << "\n";
 
     file << "oversteer_boost=" << p.oversteer_boost << "\n";
     file << "long_load_effect=" << p.long_load_effect << "\n";
@@ -1599,20 +1599,20 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "min_force=" << engine.m_general.min_force << "\n";
 
         file << "\n; --- Front Axle (Understeer) ---\n";
-        file << "steering_shaft_gain=" << engine.m_steering_shaft_gain << "\n";
-        file << "ingame_ffb_gain=" << engine.m_ingame_ffb_gain << "\n";
-        file << "steering_shaft_smoothing=" << engine.m_steering_shaft_smoothing << "\n";
-        file << "understeer=" << engine.m_understeer_effect << "\n";
-        file << "understeer_gamma=" << engine.m_understeer_gamma << "\n";
-        file << "torque_source=" << engine.m_torque_source << "\n";
-        file << "steering_100hz_reconstruction=" << engine.m_steering_100hz_reconstruction << "\n";
-        file << "torque_passthrough=" << engine.m_torque_passthrough << "\n";
-        file << "flatspot_suppression=" << engine.m_flatspot_suppression << "\n";
-        file << "notch_q=" << engine.m_notch_q << "\n";
-        file << "flatspot_strength=" << engine.m_flatspot_strength << "\n";
-        file << "static_notch_enabled=" << engine.m_static_notch_enabled << "\n";
-        file << "static_notch_freq=" << engine.m_static_notch_freq << "\n";
-        file << "static_notch_width=" << engine.m_static_notch_width << "\n";
+        file << "steering_shaft_gain=" << engine.m_front_axle.steering_shaft_gain << "\n";
+        file << "ingame_ffb_gain=" << engine.m_front_axle.ingame_ffb_gain << "\n";
+        file << "steering_shaft_smoothing=" << engine.m_front_axle.steering_shaft_smoothing << "\n";
+        file << "understeer=" << engine.m_front_axle.understeer_effect << "\n";
+        file << "understeer_gamma=" << engine.m_front_axle.understeer_gamma << "\n";
+        file << "torque_source=" << engine.m_front_axle.torque_source << "\n";
+        file << "steering_100hz_reconstruction=" << engine.m_front_axle.steering_100hz_reconstruction << "\n";
+        file << "torque_passthrough=" << engine.m_front_axle.torque_passthrough << "\n";
+        file << "flatspot_suppression=" << engine.m_front_axle.flatspot_suppression << "\n";
+        file << "notch_q=" << engine.m_front_axle.notch_q << "\n";
+        file << "flatspot_strength=" << engine.m_front_axle.flatspot_strength << "\n";
+        file << "static_notch_enabled=" << engine.m_front_axle.static_notch_enabled << "\n";
+        file << "static_notch_freq=" << engine.m_front_axle.static_notch_freq << "\n";
+        file << "static_notch_width=" << engine.m_front_axle.static_notch_width << "\n";
 
         file << "\n; --- Rear Axle (Oversteer) ---\n";
         file << "oversteer_boost=" << engine.m_oversteer_boost << "\n";
@@ -1814,13 +1814,11 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     // the engine remains stable and doesn't crash or produce NaN.
 
     engine.m_general.Validate();
+    engine.m_front_axle.Validate();
     engine.m_sop_scale = (std::max)(0.01f, engine.m_sop_scale);
     engine.m_slip_angle_smoothing = (std::max)(0.0001f, engine.m_slip_angle_smoothing);
-    engine.m_notch_q = (std::max)(0.1f, engine.m_notch_q);
-    engine.m_static_notch_width = (std::max)(0.1f, engine.m_static_notch_width);
     engine.m_speed_gate_upper = (std::max)(0.1f, engine.m_speed_gate_upper);
 
-    engine.m_torque_source = (std::max)(0, (std::min)(1, engine.m_torque_source));
     engine.m_gyro_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_gyro_gain));
     engine.m_stationary_damping = (std::max)(0.0f, (std::min)(1.0f, engine.m_stationary_damping));
     engine.m_scrub_drag_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_scrub_drag_gain));
@@ -1915,21 +1913,10 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     }
 
     // Legacy Migration: Convert 0-200 range to 0-2.0 range
-    if (engine.m_understeer_effect > 2.0f) {
-        float old_val = engine.m_understeer_effect;
-        engine.m_understeer_effect = engine.m_understeer_effect / 100.0f;
-        Logger::Get().Log("[Config] Migrated legacy understeer_effect: %.2f -> %.2f", old_val, engine.m_understeer_effect);
-        Logger::Get().Log("[Config] Migrated legacy understeer_effect: %.2f -> %.2f", old_val, engine.m_understeer_effect);
-    }
-    // Clamp to new valid range [0.0, 2.0]
-    if (engine.m_understeer_effect < 0.0f || engine.m_understeer_effect > 2.0f) {
-        engine.m_understeer_effect = (std::max)(0.0f, (std::min)(2.0f, engine.m_understeer_effect));
-    }
-    if (engine.m_steering_shaft_gain < 0.0f || engine.m_steering_shaft_gain > 2.0f) {
-        engine.m_steering_shaft_gain = (std::max)(0.0f, (std::min)(2.0f, engine.m_steering_shaft_gain));
-    }
-    if (engine.m_ingame_ffb_gain < 0.0f || engine.m_ingame_ffb_gain > 2.0f) {
-        engine.m_ingame_ffb_gain = (std::max)(0.0f, (std::min)(2.0f, engine.m_ingame_ffb_gain));
+    if (engine.m_front_axle.understeer_effect > 2.0f) {
+        float old_val = engine.m_front_axle.understeer_effect;
+        engine.m_front_axle.understeer_effect = engine.m_front_axle.understeer_effect / 100.0f;
+        Logger::Get().Log("[Config] Migrated legacy understeer_effect: %.2f -> %.2f", old_val, engine.m_front_axle.understeer_effect);
     }
     if (engine.m_lockup_gain < 0.0f || engine.m_lockup_gain > 3.0f) {
         engine.m_lockup_gain = (std::max)(0.0f, (std::min)(3.0f, engine.m_lockup_gain));

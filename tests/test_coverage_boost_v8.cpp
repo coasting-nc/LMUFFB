@@ -71,7 +71,7 @@ TEST_CASE(test_ffb_engine_contextual_spike_rejection, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_general.dynamic_normalization_enabled = true;
-    engine.m_torque_source = 0; // Shaft
+    engine.m_front_axle.torque_source = 0; // Shaft
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     
@@ -218,7 +218,7 @@ TEST_CASE(test_ffb_engine_long_load_transform_branches, "Physics") {
 TEST_CASE(test_ffb_engine_torque_passthrough_branch, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_torque_passthrough = true;
+    engine.m_front_axle.torque_passthrough = true;
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     engine.calculate_force(&data);
     // Should hit branches at L656 and L694
