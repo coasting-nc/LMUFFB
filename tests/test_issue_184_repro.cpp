@@ -19,7 +19,7 @@ void test_soft_lock_stationary_not_allowed() {
     engine.m_general.wheelbase_max_nm = 100.0f;
     engine.m_general.target_rim_nm = 100.0f;
     engine.m_general.gain = 1.0f;
-    engine.m_steering_shaft_gain = 1.0f;
+    engine.m_front_axle.steering_shaft_gain = 1.0f;
 
     // Set speed to 0
     double speed = 0.0;

@@ -34,7 +34,7 @@ TEST_CASE(test_engine_branch_boost, "Physics") {
     data.mDeltaTime = 0.0025f;
     engine.calculate_force(&data, "GT3", "911", 0.0f);
 
-    // 4. In-Game FFB source (m_torque_source = 1)
+    // 4. In-Game FFB source (m_front_axle.torque_source = 1)
     FFBEngineTestAccess::SetTorqueSource(engine, 1);
     engine.m_general.wheelbase_max_nm = 10.0f;
     engine.calculate_force(&data, "GT3", "911", 0.5f);
@@ -52,7 +52,7 @@ TEST_CASE(test_engine_branch_boost, "Physics") {
     // 7. Min Force clamping
     FFBEngineTestAccess::SetMinForce(engine, 0.1f);
     engine.m_general.gain = 1.0f;
-    engine.m_steering_shaft_gain = 1.0f;
+    engine.m_front_axle.steering_shaft_gain = 1.0f;
     data.mSteeringShaftTorque = 0.001f;
     data.mDeltaTime = 0.0025f;
     FFBEngineTestAccess::ResetSafety(engine);

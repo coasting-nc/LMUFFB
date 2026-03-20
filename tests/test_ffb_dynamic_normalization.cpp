@@ -189,12 +189,12 @@ TEST_CASE(test_structural_vs_texture_separation, "StructuralNormalization") {
     data.mDeltaTime = 0.0025f;
     data.mSteeringShaftTorque = 10.0f; // Base steering
     data.mLocalVel.z = -20.0f; // Ensure speed gate is 1.0
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_sop_effect = 0.0f;
     engine.m_road_texture_gain = 1.0f;
-    engine.m_steering_shaft_gain = 1.0f;
+    engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_long_load_effect = 0.0f;
-    engine.m_steering_shaft_smoothing = 0.0f;
+    engine.m_front_axle.steering_shaft_smoothing = 0.0f;
     engine.m_speed_gate_lower = 1.0f;
     engine.m_speed_gate_upper = 5.0f;
     engine.m_road_texture_enabled = true;

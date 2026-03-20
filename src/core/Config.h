@@ -29,8 +29,7 @@ struct Preset {
     //
     // Current defaults match: GT3 DD 15 Nm (Simagic Alpha) - v0.6.35
     GeneralConfig general;
-    float understeer = 1.0f;  // New scale: 0.0-2.0, where 1.0 = proportional
-    float understeer_gamma = 1.0f; // NEW: shapes the grip loss curve
+    FrontAxleConfig front_axle;
     float sop = 1.666f;
     float lateral_load = 0.0f; // New v0.7.121
     int lat_load_transform = 0; // New v0.7.154 (Issue #282)
@@ -99,16 +98,9 @@ struct Preset {
     float gyro_gain = 0.0f;
     float stationary_damping = 1.0f; // New v0.7.206 (Issue #418)
     
-    float steering_shaft_gain = 1.0f;
-    float ingame_ffb_gain = 1.0f; // New v0.7.71 (Issue #160)
-    int torque_source = 0;   // 0=Shaft, 1=Direct
-    int steering_100hz_reconstruction = 0; // NEW: 0 = Zero Latency, 1 = Smooth
-    bool torque_passthrough = false; // v0.7.63
-    
     // NEW: Grip & Smoothing (v0.5.7)
     float optimal_slip_angle = 0.1f;
     float optimal_slip_ratio = 0.12f;
-    float steering_shaft_smoothing = 0.0f;
     
     // NEW: Advanced Smoothing (v0.5.8)
     float gyro_smoothing = 0.0f;
@@ -116,13 +108,6 @@ struct Preset {
     float chassis_smoothing = 0.0f;
 
     // v0.4.41: Signal Filtering
-    bool flatspot_suppression = false;
-    float notch_q = 2.0f;
-    float flatspot_strength = 1.0f;
-    
-    bool static_notch_enabled = false;
-    float static_notch_freq = 11.0f;
-    float static_notch_width = 2.0f; // New v0.6.10
     float yaw_kick_threshold = 0.0f; // New v0.6.10
 
     // Unloaded Yaw Kick (Braking/Lift-off) - v0.7.164 (Issue #322)
@@ -179,8 +164,8 @@ struct Preset {
 
     // 3. Fluent Setters (The "Python Dictionary" feel)
     Preset& SetGain(float v) { general.gain = v; return *this; }
-    Preset& SetUndersteer(float v) { understeer = v; return *this; }
-    Preset& SetUndersteerGamma(float v) { understeer_gamma = v; return *this; }
+    Preset& SetUndersteer(float v) { front_axle.understeer_effect = v; return *this; }
+    Preset& SetUndersteerGamma(float v) { front_axle.understeer_gamma = v; return *this; }
     Preset& SetSoP(float v) { sop = v; return *this; }
     Preset& SetSoPScale(float v) { sop_scale = v; return *this; }
     Preset& SetSmoothing(float v) { sop_smoothing = v; return *this; }
@@ -248,21 +233,21 @@ struct Preset {
     Preset& SetGyro(float v) { gyro_gain = v; return *this; }
     Preset& SetStationaryDamping(float v) { stationary_damping = v; return *this; }
     
-    Preset& SetShaftGain(float v) { steering_shaft_gain = v; return *this; }
-    Preset& SetInGameGain(float v) { ingame_ffb_gain = v; return *this; }
-    Preset& SetTorqueSource(int v, bool passthrough = false) { torque_source = v; torque_passthrough = passthrough; return *this; }
-    Preset& SetSteering100HzReconstruction(int v) { steering_100hz_reconstruction = v; return *this; }
+    Preset& SetShaftGain(float v) { front_axle.steering_shaft_gain = v; return *this; }
+    Preset& SetInGameGain(float v) { front_axle.ingame_ffb_gain = v; return *this; }
+    Preset& SetTorqueSource(int v, bool passthrough = false) { front_axle.torque_source = v; front_axle.torque_passthrough = passthrough; return *this; }
+    Preset& SetSteering100HzReconstruction(int v) { front_axle.steering_100hz_reconstruction = v; return *this; }
     Preset& SetFlatspot(bool enabled, float strength = 1.0f, float q = 2.0f) { 
-        flatspot_suppression = enabled; 
-        flatspot_strength = strength;
-        notch_q = q; 
+        front_axle.flatspot_suppression = enabled;
+        front_axle.flatspot_strength = strength;
+        front_axle.notch_q = q;
         return *this; 
     }
     
     Preset& SetStaticNotch(bool enabled, float freq, float width = 2.0f) {
-        static_notch_enabled = enabled;
-        static_notch_freq = freq;
-        static_notch_width = width;
+        front_axle.static_notch_enabled = enabled;
+        front_axle.static_notch_freq = freq;
+        front_axle.static_notch_width = width;
         return *this;
     }
     Preset& SetYawKickThreshold(float v) { yaw_kick_threshold = v; return *this; }
@@ -292,7 +277,7 @@ struct Preset {
         optimal_slip_ratio = ratio;
         return *this;
     }
-    Preset& SetShaftSmoothing(float v) { steering_shaft_smoothing = v; return *this; }
+    Preset& SetShaftSmoothing(float v) { front_axle.steering_shaft_smoothing = v; return *this; }
     
     Preset& SetGyroSmoothing(float v) { gyro_smoothing = v; return *this; }
     Preset& SetYawSmoothing(float v) { yaw_smoothing = v; return *this; }
@@ -367,8 +352,9 @@ struct Preset {
         engine.m_general = this->general;
         engine.m_general.Validate();
 
-        engine.m_understeer_effect = (std::max)(0.0f, (std::min)(2.0f, understeer));
-        engine.m_understeer_gamma = (std::max)(0.1f, (std::min)(4.0f, understeer_gamma));
+        engine.m_front_axle = this->front_axle;
+        engine.m_front_axle.Validate();
+
         engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, sop));
         engine.m_lat_load_effect = (std::max)(0.0f, (std::min)(2.0f, lateral_load));
         engine.m_lat_load_transform = static_cast<LoadTransform>(std::clamp(lat_load_transform, 0, 3));
@@ -432,17 +418,6 @@ struct Preset {
         engine.m_sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);
         engine.m_gyro_gain = (std::max)(0.0f, gyro_gain);
         engine.m_stationary_damping = (std::max)(0.0f, (std::min)(1.0f, stationary_damping));
-        engine.m_steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);
-        engine.m_ingame_ffb_gain = (std::max)(0.0f, ingame_ffb_gain);
-        engine.m_torque_source = torque_source;
-        engine.m_steering_100hz_reconstruction = steering_100hz_reconstruction;
-        engine.m_torque_passthrough = torque_passthrough;
-        engine.m_flatspot_suppression = flatspot_suppression;
-        engine.m_notch_q = (std::max)(0.1f, notch_q); // Critical for biquad division
-        engine.m_flatspot_strength = (std::max)(0.0f, (std::min)(1.0f, flatspot_strength));
-        engine.m_static_notch_enabled = static_notch_enabled;
-        engine.m_static_notch_freq = (std::max)(1.0f, static_notch_freq);
-        engine.m_static_notch_width = (std::max)(0.1f, static_notch_width);
         engine.m_yaw_kick_threshold = (std::max)(0.0f, yaw_kick_threshold);
 
         // v0.7.164 (Issue #322)
@@ -464,7 +439,6 @@ struct Preset {
         // NEW: Grip & Smoothing (v0.5.7/v0.5.8)
         engine.m_optimal_slip_angle = (std::max)(0.01f, optimal_slip_angle); // Critical for grip division
         engine.m_optimal_slip_ratio = (std::max)(0.01f, optimal_slip_ratio); // Critical for grip division
-        engine.m_steering_shaft_smoothing = (std::max)(0.0f, steering_shaft_smoothing);
         engine.m_gyro_smoothing = (std::max)(0.0f, gyro_smoothing);
         engine.m_yaw_accel_smoothing = (std::max)(0.0f, yaw_smoothing);
         engine.m_chassis_inertia_smoothing = (std::max)(0.0f, chassis_smoothing);
@@ -507,8 +481,7 @@ struct Preset {
     // NEW: Ensure values are within safe ranges (v0.7.16)
     void Validate() {
         general.Validate();
-        understeer = (std::max)(0.0f, (std::min)(2.0f, understeer));
-        understeer_gamma = (std::max)(0.1f, (std::min)(4.0f, understeer_gamma));
+        front_axle.Validate();
         sop = (std::max)(0.0f, (std::min)(2.0f, sop));
         lateral_load = (std::max)(0.0f, (std::min)(2.0f, lateral_load));
         lat_load_transform = std::clamp(lat_load_transform, 0, 3);
@@ -548,15 +521,6 @@ struct Preset {
         kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, kerb_strike_rejection));
         sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);
         gyro_gain = (std::max)(0.0f, gyro_gain);
-        steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);
-        ingame_ffb_gain = (std::max)(0.0f, ingame_ffb_gain);
-        torque_source = (std::max)(0, (std::min)(1, torque_source));
-        steering_100hz_reconstruction = (std::max)(0, (std::min)(1, steering_100hz_reconstruction));
-        // torque_passthrough is bool, no clamp needed
-        notch_q = (std::max)(0.1f, notch_q);
-        flatspot_strength = (std::max)(0.0f, (std::min)(1.0f, flatspot_strength));
-        static_notch_freq = (std::max)(1.0f, static_notch_freq);
-        static_notch_width = (std::max)(0.1f, static_notch_width);
 
         // v0.7.164 (Issue #322)
         unloaded_yaw_gain = (std::max)(0.0f, unloaded_yaw_gain);
@@ -573,7 +537,6 @@ struct Preset {
         speed_gate_upper = (std::max)(0.1f, speed_gate_upper);
         optimal_slip_angle = (std::max)(0.01f, optimal_slip_angle);
         optimal_slip_ratio = (std::max)(0.01f, optimal_slip_ratio);
-        steering_shaft_smoothing = (std::max)(0.0f, steering_shaft_smoothing);
         gyro_smoothing = (std::max)(0.0f, gyro_smoothing);
         yaw_smoothing = (std::max)(0.0f, yaw_smoothing);
         chassis_smoothing = (std::max)(0.0f, chassis_smoothing);
@@ -602,8 +565,7 @@ struct Preset {
     // NEW: Capture current engine state into this preset
     void UpdateFromEngine(const FFBEngine& engine) {
         general = engine.m_general;
-        understeer = engine.m_understeer_effect;
-        understeer_gamma = engine.m_understeer_gamma;
+        front_axle = engine.m_front_axle;
         sop = engine.m_sop_effect;
         lateral_load = engine.m_lat_load_effect;
         lat_load_transform = static_cast<int>(engine.m_lat_load_transform);
@@ -666,17 +628,6 @@ struct Preset {
         sop_yaw_gain = engine.m_sop_yaw_gain;
         gyro_gain = engine.m_gyro_gain;
         stationary_damping = engine.m_stationary_damping;
-        steering_shaft_gain = engine.m_steering_shaft_gain;
-        ingame_ffb_gain = engine.m_ingame_ffb_gain;
-        torque_source = engine.m_torque_source;
-        steering_100hz_reconstruction = engine.m_steering_100hz_reconstruction;
-        torque_passthrough = engine.m_torque_passthrough;
-        flatspot_suppression = engine.m_flatspot_suppression;
-        notch_q = engine.m_notch_q;
-        flatspot_strength = engine.m_flatspot_strength;
-        static_notch_enabled = engine.m_static_notch_enabled;
-        static_notch_freq = engine.m_static_notch_freq;
-        static_notch_width = engine.m_static_notch_width;
         yaw_kick_threshold = engine.m_yaw_kick_threshold;
 
         // v0.7.164 (Issue #322)
@@ -697,7 +648,6 @@ struct Preset {
         // NEW: Grip & Smoothing (v0.5.7/v0.5.8)
         optimal_slip_angle = engine.m_optimal_slip_angle;
         optimal_slip_ratio = engine.m_optimal_slip_ratio;
-        steering_shaft_smoothing = engine.m_steering_shaft_smoothing;
         gyro_smoothing = engine.m_gyro_smoothing;
         yaw_smoothing = engine.m_yaw_accel_smoothing;
         chassis_smoothing = engine.m_chassis_inertia_smoothing;
@@ -737,9 +687,8 @@ struct Preset {
         const float eps = 0.0001f;
         auto is_near = [](float a, float b, float epsilon) { return std::abs(a - b) < epsilon; };
 
-        if (!general.Equals(p.general)) return false;
-        if (!is_near(understeer, p.understeer, eps)) return false;
-        if (!is_near(understeer_gamma, p.understeer_gamma, eps)) return false;
+        if (!general.Equals(p.general, eps)) return false;
+        if (!front_axle.Equals(p.front_axle, eps)) return false;
         if (!is_near(sop, p.sop, eps)) return false;
         if (!is_near(lateral_load, p.lateral_load, eps)) return false;
         if (lat_load_transform != p.lat_load_transform) return false;
@@ -805,26 +754,13 @@ struct Preset {
         if (!is_near(sop_yaw_gain, p.sop_yaw_gain, eps)) return false;
         if (!is_near(gyro_gain, p.gyro_gain, eps)) return false;
         if (!is_near(stationary_damping, p.stationary_damping, eps)) return false;
-        if (!is_near(steering_shaft_gain, p.steering_shaft_gain, eps)) return false;
-        if (!is_near(ingame_ffb_gain, p.ingame_ffb_gain, eps)) return false;
-        if (torque_source != p.torque_source) return false;
-        if (steering_100hz_reconstruction != p.steering_100hz_reconstruction) return false;
-        if (torque_passthrough != p.torque_passthrough) return false;
 
         if (!is_near(optimal_slip_angle, p.optimal_slip_angle, eps)) return false;
         if (!is_near(optimal_slip_ratio, p.optimal_slip_ratio, eps)) return false;
-        if (!is_near(steering_shaft_smoothing, p.steering_shaft_smoothing, eps)) return false;
         if (!is_near(gyro_smoothing, p.gyro_smoothing, eps)) return false;
         if (!is_near(yaw_smoothing, p.yaw_smoothing, eps)) return false;
         if (!is_near(chassis_smoothing, p.chassis_smoothing, eps)) return false;
 
-        if (flatspot_suppression != p.flatspot_suppression) return false;
-        if (!is_near(notch_q, p.notch_q, eps)) return false;
-        if (!is_near(flatspot_strength, p.flatspot_strength, eps)) return false;
-
-        if (static_notch_enabled != p.static_notch_enabled) return false;
-        if (!is_near(static_notch_freq, p.static_notch_freq, eps)) return false;
-        if (!is_near(static_notch_width, p.static_notch_width, eps)) return false;
         if (!is_near(yaw_kick_threshold, p.yaw_kick_threshold, eps)) return false;
 
         // v0.7.164 (Issue #322)

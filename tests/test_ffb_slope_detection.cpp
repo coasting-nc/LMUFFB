@@ -567,7 +567,7 @@ TEST_CASE(test_slope_no_understeer_on_straight_v073, "SlopeDetection") {
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_slope_detection_enabled = true;
-    engine.m_understeer_effect = 1.0f;
+    engine.m_front_axle.understeer_effect = 1.0f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0, 0.0);
     for(int i=0; i<4; ++i) data.mWheel[i].mGripFract = 1.0;

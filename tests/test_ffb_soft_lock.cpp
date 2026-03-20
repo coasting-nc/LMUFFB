@@ -23,7 +23,7 @@ void test_soft_lock() {
         engine.m_general.wheelbase_max_nm = 100.0f; engine.m_general.target_rim_nm = 100.0f;
         engine.m_general.gain = 1.0f;
         engine.m_invert_force = false;
-        engine.m_steering_shaft_gain = 0.0f;
+        engine.m_front_axle.steering_shaft_gain = 0.0f;
 
         // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
         FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
@@ -61,7 +61,7 @@ void test_soft_lock() {
         engine.m_general.wheelbase_max_nm = 15.0f; engine.m_general.target_rim_nm = 10.0f;
         engine.m_general.gain = 1.0f;
         engine.m_invert_force = false;
-        engine.m_steering_shaft_gain = 0.0f;
+        engine.m_front_axle.steering_shaft_gain = 0.0f;
 
         // Force zero velocity
         FFBEngineTestAccess::SetSteeringVelocitySmoothed(engine, 0.0);
@@ -77,7 +77,7 @@ void test_soft_lock() {
         TelemInfoV01 data = CreateBasicTestTelemetry();
         engine.m_soft_lock_enabled = false;
         engine.m_soft_lock_stiffness = 20.0f;
-        engine.m_steering_shaft_gain = 0.0f;
+        engine.m_front_axle.steering_shaft_gain = 0.0f;
         ASSERT_NEAR(run_step(engine, data, 1.1), 0.0, 0.001);
     }
 
@@ -91,7 +91,7 @@ void test_soft_lock() {
         engine.m_general.wheelbase_max_nm = 100.0f; engine.m_general.target_rim_nm = 100.0f;
         engine.m_general.gain = 1.0f;
         engine.m_invert_force = false;
-        engine.m_steering_shaft_gain = 0.0f;
+        engine.m_front_axle.steering_shaft_gain = 0.0f;
 
         // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
         FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);

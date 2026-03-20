@@ -262,10 +262,10 @@ TEST_CASE(test_gui_layer_comprehensive, "GUI") {
 
     // Test various button/checkbox branches by manipulating Config/Engine
     Config::m_always_on_top = true;
-    engine.m_torque_source = 1; // In-Game FFB
+    engine.m_front_axle.torque_source = 1; // In-Game FFB
     engine.m_soft_lock_enabled = true;
-    engine.m_flatspot_suppression = true;
-    engine.m_static_notch_enabled = true;
+    engine.m_front_axle.flatspot_suppression = true;
+    engine.m_front_axle.static_notch_enabled = true;
     engine.m_slope_detection_enabled = true;
     engine.m_lockup_enabled = true;
     engine.m_abs_pulse_enabled = true;
@@ -337,7 +337,7 @@ TEST_CASE(test_gui_layer_comprehensive, "GUI") {
         ImGui::EndFrame();
 
         // Trigger logic branches inside Drawing functions
-        engine.m_flatspot_suppression = true;
+        engine.m_front_axle.flatspot_suppression = true;
         engine.m_soft_lock_enabled = true;
         engine.m_lockup_enabled = true;
         engine.m_abs_pulse_enabled = true;

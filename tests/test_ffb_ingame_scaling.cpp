@@ -9,7 +9,7 @@ TEST_CASE(test_ingame_ffb_scaling_fix, "InGameFFB") {
 
     // Setup a clean state
     engine.m_general.gain = 1.0f;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_sop_effect = 0.0f;
     engine.m_oversteer_boost = 0.0f;
     engine.m_rear_align_effect = 0.0f;
@@ -26,16 +26,16 @@ TEST_CASE(test_ingame_ffb_scaling_fix, "InGameFFB") {
     engine.m_general.min_force = 0.0f;
     engine.m_invert_force = false;
 
-    // 1. In-Game FFB Source (m_torque_source = 1)
+    // 1. In-Game FFB Source (m_front_axle.torque_source = 1)
     // 2. Wheelbase Max = 20.0 Nm
     // 3. Target Rim = 10.0 Nm
     // 4. In-Game Gain = 1.0
     // 5. Game Input = 1.0 (Full strength)
-    engine.m_torque_source = 1;
+    engine.m_front_axle.torque_source = 1;
     engine.m_general.wheelbase_max_nm = 20.0f;
     engine.m_general.target_rim_nm = 10.0f;
-    engine.m_ingame_ffb_gain = 1.0f;
-    engine.m_torque_passthrough = true;
+    engine.m_front_axle.ingame_ffb_gain = 1.0f;
+    engine.m_front_axle.torque_passthrough = true;
 
     float genFFBTorque = 1.0f;
 
@@ -66,7 +66,7 @@ TEST_CASE(test_ingame_ffb_scaling_fix, "InGameFFB") {
     ASSERT_NEAR(output, 0.5, 0.001);
 
     // Test adjustment via In-Game Gain
-    engine.m_ingame_ffb_gain = 0.5f;
+    engine.m_front_axle.ingame_ffb_gain = 0.5f;
     output = engine.calculate_force(&data, "GT3", "911 GT3 R", genFFBTorque);
 
     // Expected:

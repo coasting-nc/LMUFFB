@@ -15,7 +15,7 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     engine.m_sop_smoothing_factor = 0.0f; // Disable smoothing for instant response (v0.7.147)
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_rear_align_effect = 0.0f;
     engine.m_scrub_drag_gain = 0.0f;
     engine.m_slide_texture_enabled = false;
@@ -87,7 +87,7 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_sop_effect = 0.0f;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_scrub_drag_gain = 0.0f;
     engine.m_slide_texture_enabled = false;
     engine.m_bottoming_enabled = false;
@@ -185,7 +185,7 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_sop_effect = 0.0f;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_rear_align_effect = 0.0f;
     engine.m_slide_texture_enabled = false;
     engine.m_bottoming_enabled = false;
@@ -347,7 +347,7 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     engine.m_invert_force = false;
     
     // Disable others to isolate lateral logic
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_slide_texture_enabled = false;
@@ -460,7 +460,7 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     engine.m_road_texture_enabled = true;
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
-    engine.m_understeer_effect = 0.0f;
+    engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_slide_texture_enabled = false;
     engine.m_bottoming_enabled = false;
     engine.m_lockup_enabled = false;

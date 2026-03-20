@@ -103,7 +103,7 @@ TEST_CASE(test_issue_206_vibration_scaling, "Functional") {
 
     // Let's verify via total output while holding structural constant.
     // We can zero out structural to make it easier.
-    engine.m_steering_shaft_gain = 0.0f;
+    engine.m_front_axle.steering_shaft_gain = 0.0f;
     engine.m_sop_effect = 0.0f;
     engine.m_oversteer_boost = 0.0f;
     engine.m_rear_align_effect = 0.0f;

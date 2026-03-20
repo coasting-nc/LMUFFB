@@ -165,7 +165,7 @@ TEST_CASE(test_notch_filter_transitions, "Physics") {
     FFBEngineTestAccess::CallApplySignalConditioning(engine, 1.0, &data, ctx);
     
     // Static Notch Disabled triggers reset
-    engine.m_static_notch_enabled = false;
+    engine.m_front_axle.static_notch_enabled = false;
     FFBEngineTestAccess::CallApplySignalConditioning(engine, 1.0, &data, ctx);
 }
 
@@ -280,7 +280,7 @@ TEST_CASE(test_dynamic_normalization_branches, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_general.dynamic_normalization_enabled = true;
-    engine.m_torque_source = 0; // Shaft
+    engine.m_front_axle.torque_source = 0; // Shaft
     engine.m_general.target_rim_nm = 20.0f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);

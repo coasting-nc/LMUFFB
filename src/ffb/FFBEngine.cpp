@@ -38,7 +38,7 @@ double FFBEngine::apply_signal_conditioning(double raw_torque, const TelemInfoV0
     double game_force_proc = raw_torque;
 
     // Idle Smoothing
-    double effective_shaft_smoothing = (double)m_steering_shaft_smoothing;
+    double effective_shaft_smoothing = (double)m_front_axle.steering_shaft_smoothing;
     double idle_speed_threshold = (double)m_speed_gate_upper;
     if (idle_speed_threshold < (double)IDLE_SPEED_MIN_M_S) idle_speed_threshold = (double)IDLE_SPEED_MIN_M_S;
     if (ctx.car_speed < idle_speed_threshold) {
@@ -83,23 +83,23 @@ double FFBEngine::apply_signal_conditioning(double raw_torque, const TelemInfoV0
     m_theoretical_freq = wheel_freq;
     
     // Dynamic Notch Filter
-    if (m_flatspot_suppression) {
+    if (m_front_axle.flatspot_suppression) {
         if (wheel_freq > 1.0) {
-            m_notch_filter.Update(wheel_freq, 1.0/ctx.dt, (double)m_notch_q);
+            m_notch_filter.Update(wheel_freq, 1.0/ctx.dt, (double)m_front_axle.notch_q);
             double input_force = game_force_proc;
             double filtered_force = m_notch_filter.Process(input_force);
-            game_force_proc = input_force * (1.0f - m_flatspot_strength) + filtered_force * m_flatspot_strength;
+            game_force_proc = input_force * (1.0f - m_front_axle.flatspot_strength) + filtered_force * m_front_axle.flatspot_strength;
         } else {
             m_notch_filter.Reset();
         }
     }
     
     // Static Notch Filter
-    if (m_static_notch_enabled) {
-         double bw = (double)m_static_notch_width;
+    if (m_front_axle.static_notch_enabled) {
+         double bw = (double)m_front_axle.static_notch_width;
          if (bw < MIN_NOTCH_WIDTH_HZ) bw = MIN_NOTCH_WIDTH_HZ;
-         double q = (double)m_static_notch_freq / bw;
-         m_static_notch_filter.Update((double)m_static_notch_freq, 1.0/ctx.dt, q);
+         double q = (double)m_front_axle.static_notch_freq / bw;
+         m_static_notch_filter.Update((double)m_front_axle.static_notch_freq, 1.0/ctx.dt, q);
          game_force_proc = m_static_notch_filter.Process(game_force_proc);
     } else {
          m_static_notch_filter.Reset();
@@ -230,7 +230,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
 
     // Upsample Steering Shaft Torque (Holt-Winters)
-    m_upsample_shaft_torque.SetZeroLatency(m_steering_100hz_reconstruction == 0);
+    m_upsample_shaft_torque.SetZeroLatency(m_front_axle.steering_100hz_reconstruction == 0);
     double shaft_torque = m_upsample_shaft_torque.Process(m_working_info.mSteeringShaftTorque, ffb_dt, is_new_frame);
     m_working_info.mSteeringShaftTorque = shaft_torque;
 
@@ -343,7 +343,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_sop_load_smoothed = (t_load > 1.0) ? (fr_l + rr_l - fl_l - rl_l) / t_load : 0.0;
 
         m_steering_velocity_smoothed = 0.0;
-        m_steering_shaft_torque_smoothed = (m_torque_source == 1) ? (double)genFFBTorque * (double)m_general.wheelbase_max_nm : shaft_torque;
+        m_steering_shaft_torque_smoothed = (m_front_axle.torque_source == 1) ? (double)genFFBTorque * (double)m_general.wheelbase_max_nm : shaft_torque;
         m_last_raw_torque = m_steering_shaft_torque_smoothed;
         m_rolling_average_torque = std::abs(m_steering_shaft_torque_smoothed);
 
@@ -357,7 +357,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Select Torque Source
     // v0.7.63 Fix: genFFBTorque (Direct Torque 400Hz) is normalized [-1.0, 1.0].
     // It must be scaled by m_wheelbase_max_nm to match the engine's internal Nm-based pipeline.
-    double raw_torque_input = (m_torque_source == 1) ? (double)genFFBTorque * (double)m_general.wheelbase_max_nm : shaft_torque;
+    double raw_torque_input = (m_front_axle.torque_source == 1) ? (double)genFFBTorque * (double)m_general.wheelbase_max_nm : shaft_torque;
 
     // RELIABILITY FIX: Sanitize input torque
     if (!std::isfinite(raw_torque_input)) return 0.0;
@@ -379,7 +379,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     bool is_clean_state = (lat_g_abs < LAT_G_CLEAN_LIMIT) && (torque_slew < TORQUE_SLEW_CLEAN_LIMIT) && !is_contextual_spike;
 
     // 2. Leaky Integrator (Exponential Decay + Floor)
-    if (is_clean_state && m_torque_source == 0 && m_general.dynamic_normalization_enabled) {
+    if (is_clean_state && m_front_axle.torque_source == 0 && m_general.dynamic_normalization_enabled) {
         if (current_abs_torque > m_session_peak_torque) {
             m_session_peak_torque = current_abs_torque; // Fast attack
         } else {
@@ -394,7 +394,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // 3. EMA Filtering on the Gain Multiplier (Zero-latency physics)
     // v0.7.71: For In-Game FFB (1), we normalize against the wheelbase max since the signal is already normalized [-1, 1].
     double target_structural_mult;
-    if (m_torque_source == 1) {
+    if (m_front_axle.torque_source == 1) {
         target_structural_mult = 1.0 / ((double)m_general.wheelbase_max_nm + (double)EPSILON_DIV);
     } else if (m_general.dynamic_normalization_enabled) {
         target_structural_mult = 1.0 / (m_session_peak_torque + (double)EPSILON_DIV);
@@ -647,13 +647,13 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double raw_loss = std::clamp(1.0 - ctx.avg_front_grip, 0.0, 1.0);
     
     // Apply Gamma curve (pow)
-    double shaped_loss = std::pow(raw_loss, (double)m_understeer_gamma); 
+    double shaped_loss = std::pow(raw_loss, (double)m_front_axle.understeer_gamma);
     
-    double grip_loss = shaped_loss * m_understeer_effect;
+    double grip_loss = shaped_loss * m_front_axle.understeer_effect;
     ctx.grip_factor = (std::max)(0.0, 1.0 - grip_loss);
 
     // v0.7.63: Passthrough Logic for Direct Torque (TIC mode)
-    double grip_factor_applied = m_torque_passthrough ? 1.0 : ctx.grip_factor;
+    double grip_factor_applied = m_front_axle.torque_passthrough ? 1.0 : ctx.grip_factor;
 
     // v0.7.46: Longitudinal Load logic (#301)
     // if (m_auto_load_normalization_enabled) {
@@ -700,9 +700,9 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     long_load_factor = m_long_load_smoothed;
 
     // v0.7.63: Final factor application
-    double dw_factor_applied = m_torque_passthrough ? 1.0 : long_load_factor;
+    double dw_factor_applied = m_front_axle.torque_passthrough ? 1.0 : long_load_factor;
     
-    double gain_to_apply = (m_torque_source == 1) ? (double)m_ingame_ffb_gain : (double)m_steering_shaft_gain;
+    double gain_to_apply = (m_front_axle.torque_source == 1) ? (double)m_front_axle.ingame_ffb_gain : (double)m_front_axle.steering_shaft_gain;
 
     // Formula Refactor (#301): Longitudinal Load MUST remain a multiplier to maintain
     // physical aligning torque correctness (zero torque in straight line despite weight shift).
@@ -838,7 +838,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
 
     float steering_angle_deg = (float)data->mUnfilteredSteering * (range_deg / 2.0f);
-    float understeer_drop = (float)((base_input * m_steering_shaft_gain) * (1.0 - grip_factor_applied));
+    float understeer_drop = (float)((base_input * m_front_axle.steering_shaft_gain) * (1.0 - grip_factor_applied));
     float oversteer_boost = (float)(ctx.sop_base_force - ctx.sop_unboosted_force); // Exact boost amount
 
     // --- 10. SNAPSHOT ---

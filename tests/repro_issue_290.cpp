@@ -34,7 +34,7 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
 
     // Set other gains to 0 to isolate textures
     engine.m_general.gain = 1.0f;
-    engine.m_steering_shaft_gain = 0.0f;
+    engine.m_front_axle.steering_shaft_gain = 0.0f;
     engine.m_sop_effect = 0.0f;
     engine.m_sop_yaw_gain = 0.0f;
     engine.m_rear_align_effect = 0.0f;

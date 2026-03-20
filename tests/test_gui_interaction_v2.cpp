@@ -70,8 +70,8 @@ TEST_CASE(test_gui_interaction_v2, "GUI") {
         engine.m_spin_enabled = true;
         engine.m_slide_texture_enabled = true;
         engine.m_road_texture_enabled = true;
-        engine.m_flatspot_suppression = true;
-        engine.m_static_notch_enabled = true;
+        engine.m_front_axle.flatspot_suppression = true;
+        engine.m_front_axle.static_notch_enabled = true;
         engine.m_slope_detection_enabled = true;
 
         ImGui::NewFrame();

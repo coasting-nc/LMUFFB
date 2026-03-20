@@ -113,7 +113,7 @@ TEST_CASE(test_coverage_flatspot, "Coverage") {
     out = FFBEngineTestAccess::CallApplySignalConditioning(engine, 1.0, &data, ctx);
     ASSERT_TRUE(std::isfinite(out));
 
-    // Coverage for m_flatspot_suppression = false
+    // Coverage for m_front_axle.flatspot_suppression = false
     FFBEngineTestAccess::SetFlatspotSuppression(engine, false);
     out = FFBEngineTestAccess::CallApplySignalConditioning(engine, 1.0, &data, ctx);
     ASSERT_TRUE(std::isfinite(out));

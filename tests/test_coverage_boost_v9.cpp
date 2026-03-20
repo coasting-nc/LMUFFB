@@ -32,8 +32,8 @@ TEST_CASE(test_ffb_engine_signal_conditioning_combinatorial, "Physics") {
     ctx.car_speed = 20.0;
 
     // 1. Static Notch Enabled + Width < MIN (1.0)
-    engine.m_static_notch_enabled = true;
-    engine.m_static_notch_width = 0.5f; // < 1.0
+    engine.m_front_axle.static_notch_enabled = true;
+    engine.m_front_axle.static_notch_width = 0.5f; // < 1.0
     FFBEngineTestAccess::CallApplySignalConditioning(engine, 1.0, &data, ctx);
     
     // 2. Interplay: Flatspot + Static Notch
@@ -41,7 +41,7 @@ TEST_CASE(test_ffb_engine_signal_conditioning_combinatorial, "Physics") {
     FFBEngineTestAccess::CallApplySignalConditioning(engine, 1.0, &data, ctx);
     
     // 3. Static Notch Disabled (reset path)
-    engine.m_static_notch_enabled = false;
+    engine.m_front_axle.static_notch_enabled = false;
     FFBEngineTestAccess::CallApplySignalConditioning(engine, 1.0, &data, ctx);
 }
 
@@ -51,7 +51,7 @@ TEST_CASE(test_ffb_engine_shaft_smoothing_branches, "Physics") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     
     // Trigger shaft smoothing branches in calculate_force
-    engine.m_steering_shaft_smoothing = 0.1f;
+    engine.m_front_axle.steering_shaft_smoothing = 0.1f;
     engine.calculate_force(&data); // Frame 1: Seed
     engine.calculate_force(&data); // Frame 2: Apply
 }
@@ -62,8 +62,8 @@ TEST_CASE(test_ffb_engine_understeer_edge_cases, "Physics") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     
     // 1. Gamma = 1.0 (Linear loss)
-    engine.m_understeer_gamma = 1.0f;
-    engine.m_understeer_effect = 1.0f;
+    engine.m_front_axle.understeer_gamma = 1.0f;
+    engine.m_front_axle.understeer_effect = 1.0f;
     
     // Force low grip
     data.mWheel[0].mGripFract = 0.0;
@@ -73,7 +73,7 @@ TEST_CASE(test_ffb_engine_understeer_edge_cases, "Physics") {
     // 2. Grip = 0.0 exactly (Floor logic)
     // calculate_axle_grip might return slightly above 0 due to epsilon, 
     // but we want to hit std::max(0.0, 1.0 - grip_loss)
-    engine.m_understeer_effect = 2.0f; // Loss = 1.0 * 2.0 = 2.0. Factor = 1.0 - 2.0 = -1.0 -> 0.0
+    engine.m_front_axle.understeer_effect = 2.0f; // Loss = 1.0 * 2.0 = 2.0. Factor = 1.0 - 2.0 = -1.0 -> 0.0
     engine.calculate_force(&data);
 }
 

@@ -6,12 +6,12 @@ TEST_CASE(test_direct_torque_scaling, "Issue142") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    // Setup for Direct Torque (m_torque_source = 1)
-    engine.m_torque_source = 1;
+    // Setup for Direct Torque (m_front_axle.torque_source = 1)
+    engine.m_front_axle.torque_source = 1;
     engine.m_general.wheelbase_max_nm = 50.0f; engine.m_general.target_rim_nm = 50.0f; // Nm
     engine.m_general.gain = 1.0f;
-    engine.m_steering_shaft_gain = 1.0f;
-    engine.m_understeer_effect = 0.0f; // Disable modulation for scaling test
+    engine.m_front_axle.steering_shaft_gain = 1.0f;
+    engine.m_front_axle.understeer_effect = 0.0f; // Disable modulation for scaling test
     engine.m_long_load_effect = 0.0f;
     engine.m_sop_effect = 0.0f; // Disable other effects
     engine.m_road_texture_enabled = false;
@@ -38,13 +38,13 @@ TEST_CASE(test_torque_passthrough_enabled, "Issue142") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    engine.m_torque_source = 1;
-    engine.m_torque_passthrough = true;
+    engine.m_front_axle.torque_source = 1;
+    engine.m_front_axle.torque_passthrough = true;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;
 
     // Enable strong understeer effect
-    engine.m_understeer_effect = 1.0f;
+    engine.m_front_axle.understeer_effect = 1.0f;
 
     // Create telemetry with high slip angle (0.5 rad) to trigger grip loss
     TelemInfoV01 telem = CreateBasicTestTelemetry(20.0, 0.5);
@@ -74,12 +74,12 @@ TEST_CASE(test_torque_passthrough_disabled, "Issue142") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    engine.m_torque_source = 1;
-    engine.m_torque_passthrough = false;
+    engine.m_front_axle.torque_source = 1;
+    engine.m_front_axle.torque_passthrough = false;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;
 
-    engine.m_understeer_effect = 1.0f;
+    engine.m_front_axle.understeer_effect = 1.0f;
 
     // Create telemetry with high slip angle to trigger grip loss
     TelemInfoV01 telem = CreateBasicTestTelemetry(20.0, 0.5);
@@ -106,8 +106,8 @@ TEST_CASE(test_long_load_passthrough, "Issue142") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    engine.m_torque_source = 1;
-    engine.m_torque_passthrough = true;
+    engine.m_front_axle.torque_source = 1;
+    engine.m_front_axle.torque_passthrough = true;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;
 

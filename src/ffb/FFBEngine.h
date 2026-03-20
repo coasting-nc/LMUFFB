@@ -116,9 +116,8 @@ public:
 
     // Settings (GUI Sliders)
     GeneralConfig m_general;
+    FrontAxleConfig m_front_axle;
     float m_vibration_gain = 1.0f; // Issue #206: Global vibration scaling
-    float m_understeer_effect;
-    float m_understeer_gamma = 1.0f; // NEW: Gamma curve for understeer
     float m_sop_effect;
     float m_lat_load_effect = 0.0f; // New v0.7.121 (Issue #213 add, not replace)
     LoadTransform m_lat_load_transform = LoadTransform::LINEAR; // New v0.7.154 (Issue #282)
@@ -141,11 +140,6 @@ public:
     // v0.4.4 Features
     
     // Base Force Debugging (v0.4.13)
-    float m_steering_shaft_gain;
-    float m_ingame_ffb_gain = 1.0f; // New v0.7.71 (Issue #160)
-    int m_torque_source = 0; 
-    int m_steering_100hz_reconstruction = 0; // NEW: 0 = Zero Latency, 1 = Smooth
-    bool m_torque_passthrough = false;
 
     // New Effects (v0.2)
     float m_oversteer_boost;
@@ -197,18 +191,9 @@ public:
     float m_optimal_slip_angle;
     float m_optimal_slip_ratio;
     
-    // NEW: Steering Shaft Smoothing (v0.5.7)
-    float m_steering_shaft_smoothing;
-    
     // v0.4.41: Signal Filtering Settings
-    bool m_flatspot_suppression = false;
-    float m_notch_q = 2.0f; 
-    float m_flatspot_strength = 1.0f; 
     
     // Static Notch Filter (v0.4.43)
-    bool m_static_notch_enabled = false;
-    float m_static_notch_freq = 11.0f;
-    float m_static_notch_width = 2.0f; 
     float m_yaw_kick_threshold = 0.2f; 
 
     // Unloaded Yaw Kick (Braking/Lift-off) - v0.7.164 (Issue #322)

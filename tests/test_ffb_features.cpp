@@ -85,7 +85,7 @@ TEST_CASE(test_idle_smoothing, "Texture") {
     TelemInfoV01 data = CreateBasicTestTelemetry(0.0); // Stopped
     
     // Setup: User wants RAW FFB (0 smoothing)
-    engine.m_steering_shaft_smoothing = 0.0f;
+    engine.m_front_axle.steering_shaft_smoothing = 0.0f;
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 10.0f; engine.m_general.target_rim_nm = 10.0f; // Allow up to 10 Nm without clipping
     
@@ -299,7 +299,7 @@ TEST_CASE(test_dynamic_tuning, "Texture") {
     data.mSteeringShaftTorque = 10.0; // 10 Nm (0.5 normalized)
     data.mWheel[0].mGripFract = 1.0;
     data.mWheel[1].mGripFract = 1.0;
-    engine.m_understeer_effect = 0.0; // Disabled effect initially
+    engine.m_front_axle.understeer_effect = 0.0; // Disabled effect initially
     engine.m_sop_effect = 0.0;
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = false;
@@ -323,7 +323,7 @@ TEST_CASE(test_dynamic_tuning, "Texture") {
     // --- User enables Understeer Effect ---
     // And grip drops
     engine.m_general.gain = 1.0; // Reset gain
-    engine.m_understeer_effect = 1.0;
+    engine.m_front_axle.understeer_effect = 1.0;
     data.mWheel[0].mGripFract = 0.5;
     data.mWheel[1].mGripFract = 0.5;
     
@@ -460,9 +460,9 @@ TEST_CASE(test_static_notch_integration, "Texture") {
     std::memset(&data, 0, sizeof(data));
 
     // Setup
-    engine.m_static_notch_enabled = true;
-    engine.m_static_notch_freq = 11.0;
-    engine.m_static_notch_width = 10.0; // Q = 11/10 = 1.1 (Wide notch for testing)
+    engine.m_front_axle.static_notch_enabled = true;
+    engine.m_front_axle.static_notch_freq = 11.0;
+    engine.m_front_axle.static_notch_width = 10.0; // Q = 11/10 = 1.1 (Wide notch for testing)
     engine.m_general.gain = 1.0;
     engine.m_general.wheelbase_max_nm = 1.0; engine.m_general.target_rim_nm = 1.0;
     // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
@@ -473,7 +473,7 @@ TEST_CASE(test_static_notch_integration, "Texture") {
 
     engine.m_bottoming_enabled = false; // Disable to avoid interference
     engine.m_invert_force = false;      // Disable inversion for clarity
-    engine.m_understeer_effect = 0.0;   // Disable grip logic clamping
+    engine.m_front_axle.understeer_effect = 0.0;   // Disable grip logic clamping
 
     data.mDeltaTime = 0.0025; // 400Hz
     data.mWheel[0].mRideHeight = 0.1; // Valid RH
@@ -505,9 +505,9 @@ TEST_CASE(test_static_notch_integration, "Texture") {
     }
 
     // 2. Off-Target Frequency (20Hz) - Should pass
-    engine.m_static_notch_enabled = false;
+    engine.m_front_axle.static_notch_enabled = false;
     engine.calculate_force(&data); // Reset by disabling
-    engine.m_static_notch_enabled = true;
+    engine.m_front_axle.static_notch_enabled = true;
 
     double max_amp_pass = 0.0;
     for (int i = 0; i < 400; i++) {
@@ -535,9 +535,9 @@ TEST_CASE(test_notch_filter_bandwidth, "Texture") {
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
-    engine.m_static_notch_enabled = true;
-    engine.m_static_notch_freq = 50.0f;
-    engine.m_static_notch_width = 10.0f; // 45Hz to 55Hz
+    engine.m_front_axle.static_notch_enabled = true;
+    engine.m_front_axle.static_notch_freq = 50.0f;
+    engine.m_front_axle.static_notch_width = 10.0f; // 45Hz to 55Hz
     
     // Case 1: Signal at center frequency (50Hz)
     // 50Hz signal: 10/dt = 1/dt. Samples per period = (1/dt)/50.
@@ -586,13 +586,13 @@ TEST_CASE(test_notch_filter_edge_cases, "Texture") {
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
-    engine.m_static_notch_enabled = true;
-    engine.m_static_notch_freq = 11.0f; // Use new default
+    engine.m_front_axle.static_notch_enabled = true;
+    engine.m_front_axle.static_notch_freq = 11.0f; // Use new default
     data.mDeltaTime = 0.0025; // 400Hz
     
     // Edge Case 1: Minimum Width (0.1 Hz) - Very narrow notch
     // Q = 11 / 0.1 = 110 (extremely surgical)
-    engine.m_static_notch_width = 0.1f;
+    engine.m_front_axle.static_notch_width = 0.1f;
     
     double amplitude = 10.0;
     double max_output_narrow = 0.0;
@@ -617,7 +617,7 @@ TEST_CASE(test_notch_filter_edge_cases, "Texture") {
     
     // Edge Case 2: Maximum Width (10.0 Hz) - Very wide notch
     // Q = 11 / 10 = 1.1 (wide suppression)
-    engine.m_static_notch_width = 10.0f;
+    engine.m_front_axle.static_notch_width = 10.0f;
     
     double max_output_wide = 0.0;
     
@@ -632,7 +632,7 @@ TEST_CASE(test_notch_filter_edge_cases, "Texture") {
     
     // Edge Case 3: Below minimum safety clamp (should clamp to 0.1)
     // This tests the safety clamp in FFBEngine.h line 811
-    engine.m_static_notch_width = 0.05f; // Below 0.1 minimum
+    engine.m_front_axle.static_notch_width = 0.05f; // Below 0.1 minimum
     
     // The code should clamp this to 0.1, giving Q = 11 / 0.1 = 110
     max_output_narrow = 0.0;

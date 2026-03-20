@@ -31,7 +31,7 @@ TEST_CASE(test_config_legacy_migrations, "Config") {
         ofs << "understeer=150.0\n";
         ofs.close();
         Config::Load(engine, f);
-        ASSERT_NEAR(engine.m_understeer_effect, 1.5, 0.001);
+        ASSERT_NEAR(engine.m_front_axle.understeer_effect, 1.5, 0.001);
         std::remove(f);
     }
 
@@ -304,10 +304,10 @@ TEST_CASE(test_gui_diverse_engine_states, "GUI") {
     // Exercise UI with varied engine states
     ImGui::NewFrame();
 
-    engine.m_torque_source = 1; // In-Game FFB
+    engine.m_front_axle.torque_source = 1; // In-Game FFB
     GuiLayerTestAccess::DrawTuningWindow(engine);
 
-    engine.m_torque_source = 0; // Shaft Torque
+    engine.m_front_axle.torque_source = 0; // Shaft Torque
     GuiLayerTestAccess::DrawTuningWindow(engine);
 
     // Logging active
