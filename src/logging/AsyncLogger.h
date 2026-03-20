@@ -162,6 +162,7 @@ struct LogFrame {
     float ffb_scrub_drag;
     float ffb_yaw_kick;
     float ffb_gyro_damping;
+    float ffb_stationary_damping; // New v0.7.206 (Issue #418)
     float ffb_road_texture;
     float ffb_slide_texture;
     float ffb_lockup_vibration;
@@ -467,7 +468,7 @@ private:
                << "dG_dt,dAlpha_dt,SlopeCurrent,SlopeRaw,SlopeNum,SlopeDenom,HoldTimer,InputSlipSmooth,SlopeSmoothed,Confidence,"
                << "SurfaceFL,SurfaceFR,SlopeTorque,SlewLimitedG,"
                << "SessionPeakTorque,LongitudinalLoadFactor,StructuralMult,VibrationMult,SteeringAngleDeg,SteeringRangeDeg,DebugFreq,TireRadius,"
-               << "FFBTotal,FFBBase,FFBUndersteerDrop,FFBOversteerBoost,FFBSoP,FFBRearTorque,FFBScrubDrag,FFBYawKick,FFBGyroDamping,FFBRoadTexture,FFBSlideTexture,FFBLockupVibration,FFBSpinVibration,FFBBottomingCrunch,FFBABSPulse,FFBSoftLock,"
+               << "FFBTotal,FFBBase,FFBUndersteerDrop,FFBOversteerBoost,FFBSoP,FFBRearTorque,FFBScrubDrag,FFBYawKick,FFBGyroDamping,FFBStationaryDamping,FFBRoadTexture,FFBSlideTexture,FFBLockupVibration,FFBSpinVibration,FFBBottomingCrunch,FFBABSPulse,FFBSoftLock,"
                << "ExtrapolatedYawAccel,DerivedYawAccel,"
                << "FFBShaftTorque,FFBGenTorque,GripFactor,SpeedGate,FrontLoadPeakRef,"
                << "ApproxLoadFL,ApproxLoadFR,ApproxLoadRL,ApproxLoadRR,"

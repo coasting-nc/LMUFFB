@@ -103,6 +103,7 @@ struct Preset {
     float kerb_strike_rejection = 0.0f; // NEW
     float sop_yaw_gain = 0.333f;
     float gyro_gain = 0.0f;
+    float stationary_damping = 0.0f; // New v0.7.206 (Issue #418)
     
     float steering_shaft_gain = 1.0f;
     float ingame_ffb_gain = 1.0f; // New v0.7.71 (Issue #160)
@@ -251,6 +252,7 @@ struct Preset {
     Preset& SetKerbStrikeRejection(float v) { kerb_strike_rejection = v; return *this; }
     Preset& SetSoPYaw(float v) { sop_yaw_gain = v; return *this; }
     Preset& SetGyro(float v) { gyro_gain = v; return *this; }
+    Preset& SetStationaryDamping(float v) { stationary_damping = v; return *this; }
     
     Preset& SetShaftGain(float v) { steering_shaft_gain = v; return *this; }
     Preset& SetInGameGain(float v) { ingame_ffb_gain = v; return *this; }
@@ -438,6 +440,7 @@ struct Preset {
         engine.m_kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, kerb_strike_rejection));
         engine.m_sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);
         engine.m_gyro_gain = (std::max)(0.0f, gyro_gain);
+        engine.m_stationary_damping = (std::max)(0.0f, (std::min)(1.0f, stationary_damping));
         engine.m_steering_shaft_gain = (std::max)(0.0f, steering_shaft_gain);
         engine.m_ingame_ffb_gain = (std::max)(0.0f, ingame_ffb_gain);
         engine.m_torque_source = torque_source;
@@ -679,6 +682,7 @@ struct Preset {
         kerb_strike_rejection = engine.m_kerb_strike_rejection;
         sop_yaw_gain = engine.m_sop_yaw_gain;
         gyro_gain = engine.m_gyro_gain;
+        stationary_damping = engine.m_stationary_damping;
         steering_shaft_gain = engine.m_steering_shaft_gain;
         ingame_ffb_gain = engine.m_ingame_ffb_gain;
         torque_source = engine.m_torque_source;
@@ -823,6 +827,7 @@ struct Preset {
         if (!is_near(kerb_strike_rejection, p.kerb_strike_rejection, eps)) return false;
         if (!is_near(sop_yaw_gain, p.sop_yaw_gain, eps)) return false;
         if (!is_near(gyro_gain, p.gyro_gain, eps)) return false;
+        if (!is_near(stationary_damping, p.stationary_damping, eps)) return false;
         if (!is_near(steering_shaft_gain, p.steering_shaft_gain, eps)) return false;
         if (!is_near(ingame_ffb_gain, p.ingame_ffb_gain, eps)) return false;
         if (torque_source != p.torque_source) return false;
