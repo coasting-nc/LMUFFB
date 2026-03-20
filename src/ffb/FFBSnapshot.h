@@ -16,6 +16,7 @@ struct FFBSnapshot {
     float ffb_scrub_drag;   // New v0.4.7
     float ffb_yaw_kick;     // New v0.4.16
     float ffb_gyro_damping; // New v0.4.17
+    float ffb_stationary_damping; // New v0.7.206 (Issue #418)
     float texture_road;
     float texture_slide;
     float texture_lockup;

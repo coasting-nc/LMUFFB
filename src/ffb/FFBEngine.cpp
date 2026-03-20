@@ -745,7 +745,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         ctx.bottoming_crunch = 0.0;
         ctx.abs_pulse_force = 0.0;
         ctx.lockup_rumble = 0.0;
-        // NOTE: ctx.soft_lock_force is PRESERVED.
+        // NOTE: ctx.soft_lock_force and ctx.stationary_damping_force are PRESERVED.
 
         // Also zero out base_input for snapshot clarity
         base_input = 0.0;
@@ -756,7 +756,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // v0.7.77 FIX: Soft Lock moved to Texture group to maintain absolute Nm scaling (Issue #181)
     // Note: long_load_force is ALREADY included in output_force as a multiplier.
     double structural_sum = output_force + ctx.sop_base_force + ctx.lat_load_force + ctx.rear_torque + ctx.yaw_force + ctx.gyro_force +
-                            ctx.scrub_drag_force;
+                            ctx.stationary_damping_force + ctx.scrub_drag_force;
 
     // Apply Torque Drop (from Spin/Traction Loss) only to structural physics
     structural_sum *= ctx.gain_reduction_factor;
@@ -860,6 +860,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.ffb_scrub_drag = (float)ctx.scrub_drag_force;
             snap.ffb_yaw_kick = (float)ctx.yaw_force;
             snap.ffb_gyro_damping = (float)ctx.gyro_force;
+            snap.ffb_stationary_damping = (float)ctx.stationary_damping_force;
             snap.texture_road = (float)ctx.road_noise;
             snap.texture_slide = (float)ctx.slide_noise;
             snap.texture_lockup = (float)ctx.lockup_rumble;
@@ -1066,6 +1067,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         frame.ffb_scrub_drag = (float)ctx.scrub_drag_force;
         frame.ffb_yaw_kick = (float)ctx.yaw_force;
         frame.ffb_gyro_damping = (float)ctx.gyro_force;
+        frame.ffb_stationary_damping = (float)ctx.stationary_damping_force;
         frame.ffb_road_texture = (float)ctx.road_noise;
         frame.ffb_slide_texture = (float)ctx.slide_noise;
         frame.ffb_lockup_vibration = (float)ctx.lockup_rumble;
@@ -1403,9 +1405,14 @@ void FFBEngine::calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationC
     double alpha_gyro = ctx.dt / (tau_gyro + ctx.dt);
     m_steering_velocity_smoothed += alpha_gyro * (steer_vel - m_steering_velocity_smoothed);
     
-    // 3. Force = -Vel * Gain * Speed_Scaling
-    // Speed scaling: Gyro effect increases with wheel RPM (car speed)
-    ctx.gyro_force = -1.0 * m_steering_velocity_smoothed * m_gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE);
+    // 3. DRIVING GYRO (Scales UP with speed. If m_gyro_gain is 0, this is 0.0)
+    double driving_gyro = m_gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE);
+    ctx.gyro_force = -1.0 * m_steering_velocity_smoothed * driving_gyro;
+
+    // 4. STATIONARY DAMPING (Scales DOWN with speed. If m_stationary_damping is 0, this is 0.0)
+    // ctx.speed_gate is 0.0 at 0km/h, and 1.0 at the upper threshold (e.g., 18km/h)
+    double stationary_blend = 1.0 - ctx.speed_gate;
+    ctx.stationary_damping_force = -1.0 * m_steering_velocity_smoothed * m_stationary_damping * stationary_blend;
 }
 
 // Helper: Calculate ABS Pulse (v0.7.53)

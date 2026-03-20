@@ -88,6 +88,7 @@ struct FFBCalculationContext {
     double yaw_force = 0.0;
     double scrub_drag_force = 0.0;
     double gyro_force = 0.0;
+    double stationary_damping_force = 0.0; // New v0.7.206 (Issue #418)
     double avg_rear_grip = 0.0;
     double calc_rear_lat_force = 0.0;
     double avg_rear_load = 0.0;
@@ -157,6 +158,7 @@ public:
     float m_sop_yaw_gain;
     float m_gyro_gain;
     float m_gyro_smoothing;
+    float m_stationary_damping = 0.0f; // New v0.7.206 (Issue #418)
     float m_yaw_accel_smoothing;
     float m_chassis_inertia_smoothing;
     

@@ -691,6 +691,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
 
         FloatSetting("Gyro Damping", &engine.m_gyro_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_gyro_gain, FFBEngine::BASE_NM_GYRO_DAMPING), Tooltips::GYRO_DAMPING);
+        FloatSetting("Stationary Damping", &engine.m_stationary_damping, 0.0f, 1.0f, FormatDecoupled(engine.m_stationary_damping, FFBEngine::BASE_NM_GYRO_DAMPING),
+            "Applies friction ONLY when the car is stopped to prevent oscillations in the pits.\nFades out completely to 0% as you start driving.\nWorks independently of Gyro Damping.");
 
         FloatSetting("  Gyro Smooth", &engine.m_gyro_smoothing, 0.000f, 0.050f, "%.3f s",
             Tooltips::GYRO_SMOOTH,
@@ -1034,7 +1036,7 @@ inline void PlotWithStats(const char* label, const RollingBuffer& buffer,
 }
 
 // Global Buffers
-static RollingBuffer plot_total, plot_base, plot_sop, plot_yaw_kick, plot_rear_torque, plot_gyro_damping, plot_scrub_drag, plot_soft_lock, plot_oversteer, plot_understeer, plot_clipping, plot_road, plot_slide, plot_lockup, plot_spin, plot_bottoming;
+static RollingBuffer plot_total, plot_base, plot_sop, plot_yaw_kick, plot_rear_torque, plot_gyro_damping, plot_stationary_damping, plot_scrub_drag, plot_soft_lock, plot_oversteer, plot_understeer, plot_clipping, plot_road, plot_slide, plot_lockup, plot_spin, plot_bottoming;
 static RollingBuffer plot_calc_front_load, plot_calc_rear_load, plot_calc_front_grip, plot_calc_rear_grip, plot_calc_slip_ratio, plot_calc_slip_angle_smoothed, plot_calc_rear_slip_angle_smoothed, plot_slope_current, plot_calc_rear_lat_force;
 static RollingBuffer plot_raw_steer, plot_raw_shaft_torque, plot_raw_gen_torque, plot_raw_input_steering, plot_raw_throttle, plot_raw_brake, plot_input_accel, plot_raw_car_speed, plot_raw_load, plot_raw_grip, plot_raw_rear_grip, plot_raw_front_slip_ratio, plot_raw_susp_force, plot_raw_ride_height, plot_raw_front_lat_patch_vel, plot_raw_front_long_patch_vel, plot_raw_rear_lat_patch_vel, plot_raw_rear_long_patch_vel, plot_raw_slip_angle, plot_raw_rear_slip_angle, plot_raw_front_deflection;
 
@@ -1052,6 +1054,7 @@ void GuiLayer::UpdateTelemetry(FFBEngine& engine) {
         plot_yaw_kick.Add(snap.ffb_yaw_kick);
         plot_rear_torque.Add(snap.ffb_rear_torque);
         plot_gyro_damping.Add(snap.ffb_gyro_damping);
+        plot_stationary_damping.Add(snap.ffb_stationary_damping);
         plot_scrub_drag.Add(snap.ffb_scrub_drag);
         plot_soft_lock.Add(snap.ffb_soft_lock);
         plot_oversteer.Add(snap.oversteer_boost);
@@ -1189,6 +1192,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         PlotWithStats("Yaw Kick", plot_yaw_kick, -20.0f, 20.0f);
         PlotWithStats("Rear Align", plot_rear_torque, -20.0f, 20.0f);
         PlotWithStats("Gyro Damping", plot_gyro_damping, -20.0f, 20.0f);
+        PlotWithStats("Stationary Damping", plot_stationary_damping, -20.0f, 20.0f);
         PlotWithStats("Scrub Drag", plot_scrub_drag, -20.0f, 20.0f);
         PlotWithStats("Soft Lock", plot_soft_lock, -50.0f, 50.0f);
         ImGui::NextColumn();

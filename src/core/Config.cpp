@@ -126,6 +126,7 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "power_yaw_punch") { current_preset.power_yaw_punch = std::stof(value); return true; }
     if (key == "yaw_accel_smoothing") { current_preset.yaw_smoothing = std::stof(value); return true; }
     if (key == "gyro_gain") { current_preset.gyro_gain = (std::min)(1.0f, std::stof(value)); return true; }
+    if (key == "stationary_damping") { current_preset.stationary_damping = (std::min)(1.0f, std::stof(value)); return true; }
     if (key == "gyro_smoothing_factor") { current_preset.gyro_smoothing = std::stof(value); return true; }
     if (key == "optimal_slip_angle") { current_preset.optimal_slip_angle = std::stof(value); return true; }
     if (key == "optimal_slip_ratio") { current_preset.optimal_slip_ratio = std::stof(value); return true; }
@@ -297,6 +298,7 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "power_yaw_punch") { engine.m_power_yaw_punch = std::stof(value); return true; }
     if (key == "yaw_accel_smoothing") { engine.m_yaw_accel_smoothing = std::stof(value); return true; }
     if (key == "gyro_gain") { engine.m_gyro_gain = (std::min)(1.0f, std::stof(value)); return true; }
+    if (key == "stationary_damping") { engine.m_stationary_damping = (std::min)(1.0f, std::stof(value)); return true; }
     if (key == "gyro_smoothing_factor") { engine.m_gyro_smoothing = std::stof(value); return true; }
     if (key == "optimal_slip_angle") { engine.m_optimal_slip_angle = std::stof(value); return true; }
     if (key == "optimal_slip_ratio") { engine.m_optimal_slip_ratio = std::stof(value); return true; }
@@ -1287,6 +1289,7 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "power_yaw_punch=" << p.power_yaw_punch << "\n";
     file << "yaw_accel_smoothing=" << p.yaw_smoothing << "\n";
     file << "gyro_gain=" << p.gyro_gain << "\n";
+    file << "stationary_damping=" << p.stationary_damping << "\n";
     file << "gyro_smoothing_factor=" << p.gyro_smoothing << "\n";
     file << "sop_smoothing_factor=" << p.sop_smoothing << "\n";
     file << "sop_scale=" << p.sop_scale << "\n";
@@ -1638,6 +1641,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "power_yaw_punch=" << engine.m_power_yaw_punch << "\n";
         file << "yaw_accel_smoothing=" << engine.m_yaw_accel_smoothing << "\n";
         file << "gyro_gain=" << engine.m_gyro_gain << "\n";
+    file << "stationary_damping=" << engine.m_stationary_damping << "\n";
         file << "gyro_smoothing_factor=" << engine.m_gyro_smoothing << "\n";
         file << "sop_smoothing_factor=" << engine.m_sop_smoothing_factor << "\n";
         file << "sop_scale=" << engine.m_sop_scale << "\n";
@@ -1821,6 +1825,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
 
     engine.m_torque_source = (std::max)(0, (std::min)(1, engine.m_torque_source));
     engine.m_gyro_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_gyro_gain));
+    engine.m_stationary_damping = (std::max)(0.0f, (std::min)(1.0f, engine.m_stationary_damping));
     engine.m_scrub_drag_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_scrub_drag_gain));
 
     if (engine.m_optimal_slip_angle < 0.01f) {

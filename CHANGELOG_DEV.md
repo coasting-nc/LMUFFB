@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.206] - 2026-03-26
+
+### Added
+- **Speed-Gated Stationary Damping (Issue #418)**:
+  - **Problem**: Users reported strong steering wheel oscillations when the car is stationary in the pits or garage, caused by the game's centering spring force reacting with the steering wheel's physical mass.
+  - **Solution**: Implemented a new "Stationary Damping" effect that simulates high static friction when the car is stopped.
+  - **FFB Purity**: The effect is inverse-speed-gated, meaning it is at 100% strength at 0 km/h and smoothly fades to exactly 0% by the time the car reaches the upper speed gate (default 18 km/h). This eliminates oscillations without masking any FFB detail while driving.
+  - **Menu Support**: Specifically preserved the stationary damping force when the user is in menus or the garage (where other FFB forces are muted), providing stability during session setup.
+  - **GUI Control**: Added a "Stationary Damping" slider to the "Rear Axle (Oversteer)" section for easy adjustment.
+  - **Full Persistence**: Integrated the setting into the `Preset` and `Config` systems.
+
+### Testing
+- **New Regression Test**: Added `tests/test_issue_418_stationary_damping.cpp` verifying:
+  - Maximum damping at zero speed.
+  - Correct phase-out (zero force) at driving speeds.
+  - Persistence and correct summation in muted states (menus).
+- **Log Integrity**: Updated `test_log_frame_packing` to account for the new telemetry field.
+- Verified 100% pass rate across the full suite of 573 test cases.
+
+---
+
 ## [0.7.205] - 2026-03-25
 
 ### Fixed

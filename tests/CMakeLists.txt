@@ -145,6 +145,7 @@ set(TEST_SOURCES
     test_issue_392.cpp
     test_issue_426_spikes.cpp
     test_issue_371_repro.cpp
+    test_issue_418_stationary_damping.cpp
     ../src/core/main.cpp
 )
 
