@@ -2600,6 +2600,22 @@ test_ffb_persistent_load.cpp, switched to strncpy_s on Windows.
 
 For versions 0.6.x and older, see [CHANGELOG_ARCHIVE_v0.6.x_and_older.md](CHANGELOG_ARCHIVE_v0.6.x_and_older.md).
 
+## [0.7.209] - 2026-03-27
+
+### Fixed
+- **Fixed Preset Data Loss in Import and Load (Issue #429)**:
+  - **Problem**: Users reported that only one configuration preset could be saved or imported, with others disappearing upon restart. This was caused by flaws in the parsing state machine where pending presets were not "pushed" to the internal list when a new section header was encountered or at the end of the file.
+  - **Solution**: Refactored the preset "finalization" logic into a unified helper function (`FinalizePreset`). Updated both `LoadPresets` and `ImportPreset` to correctly trigger this helper at section transitions and EOF, ensuring zero data loss.
+  - **Improved Consistency**: The unified finalization logic ensures that migration, validation, and name-collision handling are applied identically regardless of whether a preset is loaded from the main config or imported from an external file.
+
+### Testing
+- **New Regression Test**: Added `tests/test_issue_429_repro.cpp` which verifies:
+  - Successful loading of multiple custom presets from `config.ini`.
+  - Successful importing of multiple presets from a single external `.ini` file.
+- Verified 100% pass rate across the full suite of 576 test cases.
+
+---
+
 ## [0.7.208] - 2026-03-26
 
 ### Refactored

@@ -59,6 +59,54 @@ static bool IsVersionLessEqual(const std::string& v1, const std::string& v2) {
     return true;
 }
 
+static void FinalizePreset(std::vector<Preset>& presets, Preset& p, const std::string& name, const std::string& version, bool legacy_torque_hack, float legacy_torque_val, bool& needs_save, bool handle_collisions) {
+    if (name.empty()) return;
+
+    p.name = name;
+    p.is_builtin = false;
+
+    // Issue #211: Legacy 100Nm hack scaling
+    if (legacy_torque_hack && IsVersionLessEqual(version, "0.7.66")) {
+        p.general.gain *= (15.0f / legacy_torque_val);
+        Logger::Get().LogFile("[Config] Migrated legacy 100Nm hack for preset '%s'. Scaling gain.", name.c_str());
+        needs_save = true;
+    }
+
+    // MIGRATION: If version is missing or old, update it
+    if (version.empty() || IsVersionLessEqual(version, "0.7.146")) {
+        p.sop_smoothing = 0.0f; // Issue #37: Reset to Raw for migration
+        needs_save = true;
+        if (version.empty()) {
+            p.app_version = LMUFFB_VERSION;
+            Logger::Get().LogFile("[Config] Migrated legacy preset '%s' to version %s", name.c_str(), LMUFFB_VERSION);
+        } else {
+            Logger::Get().LogFile("[Config] Reset SoP Smoothing for migrated preset '%s' (v%s)", name.c_str(), version.c_str());
+            p.app_version = LMUFFB_VERSION;
+        }
+    } else {
+        p.app_version = version;
+    }
+
+    if (handle_collisions) {
+        std::string base_name = p.name;
+        int counter = 1;
+        bool exists = true;
+        while (exists) {
+            exists = false;
+            for (const auto& existing : presets) {
+                if (existing.name == p.name) {
+                    p.name = base_name + " (" + std::to_string(counter++) + ")";
+                    exists = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    p.Validate();
+    presets.push_back(p);
+}
+
 bool Config::ParseSystemLine(const std::string& key, const std::string& value, Preset& current_preset, std::string& current_preset_version, bool& needs_save, bool& legacy_torque_hack, float& legacy_torque_val) {
     if (key == "app_version") { current_preset_version = value; return true; }
     if (key == "gain") { current_preset.general.gain = std::stof(value); return true; }
@@ -1140,34 +1188,8 @@ void Config::LoadPresets() {
         if (line.empty() || line[0] == ';') continue;
 
         if (line[0] == '[') {
-            if (preset_pending && !current_preset_name.empty()) {
-                current_preset.name = current_preset_name;
-                current_preset.is_builtin = false; // User preset
-                
-                // Issue #211: Legacy 100Nm hack scaling
-                if (legacy_torque_hack && IsVersionLessEqual(current_preset_version, "0.7.66")) {
-                    current_preset.general.gain *= (15.0f / legacy_torque_val);
-                    Logger::Get().LogFile("[Config] Migrated legacy 100Nm hack for preset '%s'. Scaling gain.", current_preset_name.c_str());
-                    needs_save = true;
-                }
-
-                // MIGRATION: If version is missing or old, update it
-                if (current_preset_version.empty() || IsVersionLessEqual(current_preset_version, "0.7.146")) {
-                    current_preset.sop_smoothing = 0.0f; // Issue #37: Reset to Raw for migration
-                    needs_save = true;
-                    if (current_preset_version.empty()) {
-                        current_preset.app_version = LMUFFB_VERSION;
-                        Logger::Get().LogFile("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
-                    } else {
-                        Logger::Get().LogFile("[Config] Reset SoP Smoothing for migrated preset '%s' (v%s)", current_preset_name.c_str(), current_preset_version.c_str());
-                        current_preset.app_version = LMUFFB_VERSION;
-                    }
-                } else {
-                    current_preset.app_version = current_preset_version;
-                }
-                
-                current_preset.Validate(); // v0.7.15: Validate before adding
-                presets.push_back(current_preset);
+            if (preset_pending) {
+                FinalizePreset(presets, current_preset, current_preset_name, current_preset_version, legacy_torque_hack, legacy_torque_val, needs_save, false);
                 preset_pending = false;
             }
             
@@ -1195,34 +1217,8 @@ void Config::LoadPresets() {
         }
     }
     
-    if (preset_pending && !current_preset_name.empty()) {
-        current_preset.name = current_preset_name;
-        current_preset.is_builtin = false;
-        
-        // Issue #211: Legacy 100Nm hack scaling
-        if (legacy_torque_hack && IsVersionLessEqual(current_preset_version, "0.7.66")) {
-            current_preset.general.gain *= (15.0f / legacy_torque_val);
-            Logger::Get().LogFile("[Config] Migrated legacy 100Nm hack for preset '%s'. Scaling gain.", current_preset_name.c_str());
-            needs_save = true;
-        }
-
-        // MIGRATION: If version is missing or old, update it
-        if (current_preset_version.empty() || IsVersionLessEqual(current_preset_version, "0.7.146")) {
-            current_preset.sop_smoothing = 0.0f; // Issue #37: Reset to Raw for migration
-            needs_save = true;
-            if (current_preset_version.empty()) {
-                current_preset.app_version = LMUFFB_VERSION;
-                Logger::Get().LogFile("[Config] Migrated legacy preset '%s' to version %s", current_preset_name.c_str(), LMUFFB_VERSION);
-            } else {
-                Logger::Get().LogFile("[Config] Reset SoP Smoothing for migrated preset '%s' (v%s)", current_preset_name.c_str(), current_preset_version.c_str());
-                current_preset.app_version = LMUFFB_VERSION;
-            }
-        } else {
-            current_preset.app_version = current_preset_version;
-        }
-        
-        current_preset.Validate(); // v0.7.15: Validate before adding
-        presets.push_back(current_preset);
+    if (preset_pending) {
+        FinalizePreset(presets, current_preset, current_preset_name, current_preset_version, legacy_torque_hack, legacy_torque_val, needs_save, false);
     }
 
     // Auto-save if migration occurred
@@ -1401,6 +1397,13 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
         if (line.empty() || line[0] == ';') continue;
 
         if (line[0] == '[') {
+            if (preset_pending) {
+                bool dummy_ns = false;
+                FinalizePreset(presets, current_preset, current_preset_name, current_preset_version, legacy_torque_hack, legacy_torque_val, dummy_ns, true);
+                imported = true;
+                preset_pending = false;
+            }
+
             if (line.rfind("[Preset:", 0) == 0) {
                 size_t end_pos = line.find(']');
                 if (end_pos != std::string::npos) {
@@ -1421,42 +1424,9 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
         }
     }
 
-    if (preset_pending && !current_preset_name.empty()) {
-        current_preset.name = current_preset_name;
-        current_preset.is_builtin = false;
-
-        // Issue #211: Legacy 100Nm hack scaling
-        if (legacy_torque_hack && IsVersionLessEqual(current_preset_version, "0.7.66")) {
-            current_preset.general.gain *= (15.0f / legacy_torque_val);
-            Logger::Get().LogFile("[Config] Migrated legacy 100Nm hack for imported preset '%s'. Scaling gain.", current_preset_name.c_str());
-        }
-
-        current_preset.app_version = current_preset_version.empty() ? LMUFFB_VERSION : current_preset_version;
-
-        // Migration for imported preset (Issue #37)
-        if (current_preset_version.empty() || IsVersionLessEqual(current_preset_version, "0.7.146")) {
-            current_preset.sop_smoothing = 0.0f;
-            current_preset.app_version = LMUFFB_VERSION;
-            Logger::Get().LogFile("[Config] Reset SoP Smoothing for imported legacy preset '%s'", current_preset.name.c_str());
-        }
-
-        // Handle name collision
-        std::string base_name = current_preset.name;
-        int counter = 1;
-        bool exists = true;
-        while (exists) {
-            exists = false;
-            for (const auto& p : presets) {
-                if (p.name == current_preset.name) {
-                    current_preset.name = base_name + " (" + std::to_string(counter++) + ")";
-                    exists = true;
-                    break;
-                }
-            }
-        }
-
-        current_preset.Validate(); // v0.7.15: Validate before adding
-        presets.push_back(current_preset);
+    if (preset_pending) {
+        bool dummy_ns = false;
+        FinalizePreset(presets, current_preset, current_preset_name, current_preset_version, legacy_torque_hack, legacy_torque_val, dummy_ns, true);
         imported = true;
     }
 
