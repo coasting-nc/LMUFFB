@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.205] - 2026-03-25
+
+### Fixed
+- **Fixed Pause/Menu Spikes when the wheel is off-center (Issue #426)**:
+  - **Problem**: When pausing or entering menus, the FFB force was muted almost instantaneously (10ms). For high-torque Direct Drive wheels, this sudden release of motor tension caused a loud mechanical "clack" or spike if the wheel was not centered.
+  - **Solution**: Reduced the restricted slew rate (`SAFETY_SLEW_RESTRICTED`) from 100.0 to 2.0 units/sec. This transforms the abrupt mute into a smooth 0.5-second fade-out, eliminating the physical shock while maintaining safety.
+  - **Impact**: Improved hardware longevity and user comfort during session transitions.
+
+### Testing
+- **New Regression Test**: Added `tests/test_issue_426_spikes.cpp` which verifies:
+  - Normal slew rate remains fast (reaches 0.0 in 1 frame).
+  - Restricted slew rate now correctly implements a 0.5s fade-out (200 frames at 400Hz).
+- Verified 100% pass rate across the full test suite.
+
+---
+
 ## [0.7.204] - 2026-03-24
 
 ### Fixed

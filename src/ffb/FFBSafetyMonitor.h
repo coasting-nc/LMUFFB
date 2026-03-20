@@ -11,7 +11,7 @@
 class FFBSafetyMonitor {
 public:
     static constexpr float SAFETY_SLEW_NORMAL = 1000.0f;
-    static constexpr float SAFETY_SLEW_RESTRICTED = 100.0f;
+    static constexpr float SAFETY_SLEW_RESTRICTED = 2.0f;
 
     FFBSafetyMonitor() = default;
 

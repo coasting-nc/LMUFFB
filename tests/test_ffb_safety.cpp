@@ -71,14 +71,14 @@ TEST_CASE(test_ffb_safety_slew_limiter, "Safety") {
     // Reset
     engine.m_safety.ApplySafetySlew(0.0, 1.0, false); // Instant reset via large dt
 
-    // Restricted Mode: 100 units/s
-    // Max change per frame: 100 * 0.0025 = 0.25
+    // Restricted Mode: 2.0 units/s (Issue #426)
+    // Max change per frame: 2.0 * 0.0025 = 0.005
     double force2 = engine.m_safety.ApplySafetySlew(1.0, dt, true);
-    ASSERT_NEAR(force2, 0.25, 0.001);
-    std::cout << "  [PASS] Restricted mode clamps change to 100 u/s (0.25 per frame @ 400Hz)." << std::endl;
+    ASSERT_NEAR(force2, 0.005, 0.001);
+    std::cout << "  [PASS] Restricted mode clamps change to 2 u/s (0.005 per frame @ 400Hz)." << std::endl;
 
     double force3 = engine.m_safety.ApplySafetySlew(1.0, dt, true);
-    ASSERT_NEAR(force3, 0.50, 0.001);
+    ASSERT_NEAR(force3, 0.01, 0.001);
     std::cout << "  [PASS] Second frame continues slew toward target." << std::endl;
 
     // NaN Safety
