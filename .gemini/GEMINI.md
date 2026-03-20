@@ -9,6 +9,7 @@
     *   `git commit`
     *   `git reset`
     *   `git push`
+    *   `git checkout`
     *   `git restore --staged`
 
 *   **NO EXCEPTIONS**: Do not stage files even if you created them or if you think it helps.
