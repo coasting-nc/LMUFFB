@@ -435,3 +435,168 @@ Now you repeat the exact same process for the next logical block. For example, *
 7. Commit.
 
 By doing this incrementally, if you make a typo (e.g., mapping the UI slider for `notch_q` to `flatspot_strength` by accident), the compiler or the unit tests will catch it immediately, and you will only have to look at the ~15 variables you changed in that specific commit, rather than hunting through 100+ variables.
+
+
+## Logical Categories Plan
+
+Here is the complete blueprint for **Phase 1**. 
+
+By breaking the 100+ loose variables into these **10 logical categories**, you will perfectly mirror the UI structure, make the code highly readable, and set yourself up for a trivial migration to TOML in Phase 2.
+
+You should tackle these one at a time. Write the tests, create the struct, update `Preset` and `FFBEngine`, fix the compiler errors, run the tests, and commit.
+
+---
+
+### The Master Struct (Target Architecture)
+Eventually, your `Preset` and `FFBEngine` will just hold this one object:
+```cpp
+struct FFBConfig {
+    GeneralConfig general;
+    FrontAxleConfig front_axle;
+    RearAxleConfig rear_axle;
+    LoadForcesConfig load_forces;
+    GripEstimationConfig grip_estimation;
+    SlopeDetectionConfig slope_detection;
+    BrakingConfig braking;
+    VibrationConfig vibration;
+    AdvancedConfig advanced;
+    SafetyConfig safety;
+
+    bool Equals(const FFBConfig& other) const;
+    void Validate();
+};
+```
+
+---
+
+### 1. `GeneralConfig`
+**Focus:** Master scaling, hardware limits, and global normalization toggles.
+```cpp
+struct GeneralConfig {
+    float gain = 1.0f;
+    bool invert_force = true;
+    float min_force = 0.0f;
+    float wheelbase_max_nm = 15.0f;
+    float target_rim_nm = 10.0f;
+    bool dynamic_normalization_enabled = false;
+    bool auto_load_normalization_enabled = false;
+};
+```
+
+### 2. `FrontAxleConfig`
+**Focus:** Base steering torque, understeer, and signal filtering (flatspot/notch).
+```cpp
+struct FrontAxleConfig {
+    float steering_shaft_gain = 1.0f;
+    float ingame_ffb_gain = 1.0f;
+    float steering_shaft_smoothing = 0.0f;
+    float understeer_effect = 1.0f;
+    float understeer_gamma = 1.0f;
+    int torque_source = 0;
+    int steering_100hz_reconstruction = 0;
+    bool torque_passthrough = false;
+    
+    // Signal Filtering
+    bool flatspot_suppression = false;
+    float notch_q = 2.0f;
+    float flatspot_strength = 1.0f;
+    bool static_notch_enabled = false;
+    float static_notch_freq = 11.0f;
+    float static_notch_width = 2.0f;
+};
+```
+
+### 3. `RearAxleConfig`
+**Focus:** Oversteer, Seat-of-Pants (SoP) lateral G, Rear Aligning Torque, and all Yaw Kicks.
+```cpp
+struct RearAxleConfig {
+    float oversteer_boost = 2.52101f;
+    float sop_effect = 1.666f;
+    float sop_scale = 1.0f;
+    float sop_smoothing_factor = 0.0f;
+    float rear_align_effect = 0.666f;
+    float kerb_strike_rejection = 0.0f;
+    
+    // General Yaw Kick
+    float sop_yaw_gain = 0.333f;
+    float yaw_kick_threshold = 0.0f;
+    float yaw_accel_smoothing = 0.001f;
+
+    // Unloaded Yaw Kick (Braking/Lift-off)
+    float unloaded_yaw_gain = 0.0f;
+    float unloaded_yaw_threshold = 0.2f;
+    float unloaded_yaw_sens = 1.0f;
+    float unloaded_yaw_gamma = 0.5f;
+    float unloaded_yaw_punch = 0.05f;
+
+    // Power Yaw Kick (Acceleration)
+    float power_yaw_gain = 0.0f;
+    float power_yaw_threshold = 0.2f;
+    float power_slip_threshold = 0.10f;
+    float power_yaw_gamma = 0.5f;
+    float power_yaw_punch = 0.05f;
+};
+```
+
+### 4. `LoadForcesConfig`
+**Focus:** Weight transfer and chassis roll effects.
+```cpp
+struct LoadForcesConfig {
+    float lat_load_effect = 0.0f;
+    int lat_load_transform = 0; // Cast to LoadTransform enum in engine
+    float long_load_effect = 0.0f;
+    float long_load_smoothing = 0.15f;
+    int long_load_transform = 0; // Cast to LoadTransform enum in engine
+};
+```
+
+### 5. `GripEstimationConfig`
+**Focus:** The core physics parameters used to calculate tire slip and grip.
+```cpp
+struct GripEstimationConfig {
+    float optimal_slip_angle = 0.1f;
+    float optimal_slip_ratio = 0.12f;
+    float slip_angle_smoothing = 0.002f;
+    float chassis_inertia_smoothing = 0.0f;
+    bool load_sensitivity_enabled = true;
+    
+    float grip_smoothing_steady = 0.05f;
+    float grip_smoothing_fast = 0.005f;
+    float grip_smoothing_sensitivity = 0.1f;
+};
+```
+
+### 6. `SlopeDetectionConfig`
+**Focus:** The experimental dynamic grip detection system.
+```cpp
+struct SlopeDetectionConfig {
+    bool enabled = false;
+    int sg_window = 15;
+    float sensitivity = 0.5f;
+    float smoothing_tau = 0.04f;
+    float alpha_threshold = 0.02f;
+    float decay_rate = 5.0f;
+    bool confidence_enabled = true;
+    float confidence_max_rate = 0.10f;
+    float min_threshold = -0.3f;
+    float max_threshold = -2.0f;
+    float g_slew_limit = 50.0f;
+    bool use_torque = true;
+    float torque_sensitivity = 0.5f;
+};
+```
+
+### 7. `BrakingConfig`
+**Focus:** Lockup vibrations and ABS pulses.
+```cpp
+struct BrakingConfig {
+    bool lockup_enabled = true;
+    float lockup_gain = 0.37479f;
+    float lockup_start_pct = 1.0f;
+    float lockup_full_pct = 5.0f;
+    float lockup_rear_boost = 10.0f;
+    float lockup_gamma = 0.1f;
+    float lockup_prediction_sens = 10.0f;
+    float lockup_bump_reject = 0.1f;
+    float brake_load_cap = 2.0f;
+    float lockup
