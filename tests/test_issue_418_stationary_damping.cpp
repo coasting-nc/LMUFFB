@@ -2,6 +2,14 @@
 
 using namespace FFBEngineTests;
 
+TEST_CASE(test_stationary_damping_default, "Physics") {
+    FFBEngine engine;
+    ASSERT_NEAR(engine.m_stationary_damping, 1.0f, 0.0001f);
+
+    Preset p;
+    ASSERT_NEAR(p.stationary_damping, 1.0f, 0.0001f);
+}
+
 TEST_CASE(test_stationary_damping_at_zero_speed, "Physics") {
     FFBEngine engine;
     TelemInfoV01 data = CreateBasicTestTelemetry(0.0); // 0 km/h

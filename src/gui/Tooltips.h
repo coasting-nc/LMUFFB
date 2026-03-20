@@ -41,6 +41,12 @@ namespace Tooltips {
     inline constexpr const char* WHEELBASE_MAX_TORQUE = "The absolute maximum physical torque your wheelbase can produce\n(e.g., 15.0 for Simagic Alpha, 4.0 for T300).";
     inline constexpr const char* TARGET_RIM_TORQUE = "The maximum force you want to feel in your hands during heavy cornering.";
     inline constexpr const char* MIN_FORCE = "Boosts small forces to overcome mechanical friction/deadzone.";
+    inline constexpr const char* STATIONARY_DAMPING =
+        "Intensity of the friction/damping applied ONLY when the car is stationary.\n"
+        "Resists fast wheel movements to prevent violent pit-box oscillations.\n"
+        "Fades out completely to 0% as you accelerate to prevent masking FFB details.\n\n"
+        "Note: This is a velocity multiplier. 100% = 1.0 Nm of resistance\n"
+        "per rad/s of wheel speed.";
     inline constexpr const char* REST_API_ENABLE = "Enables fallback to the game's REST API for steering range.\nUseful if Shared Memory returns 0 (Soft Lock/UI fix).";
     inline constexpr const char* REST_API_PORT = "Port for the game's REST API.\nDefault: 6397 (LMU), 5397 (rF2).";
 
@@ -175,7 +181,7 @@ namespace Tooltips {
         DEVICE_SELECT, DEVICE_RESCAN, DEVICE_UNBIND, MODE_EXCLUSIVE, MODE_SHARED, NO_DEVICE, ALWAYS_ON_TOP, SHOW_GRAPHS,
         LOG_STOP, LOG_REC, LOG_MARKER, LOG_START,
         PRESET_NAME, PRESET_SAVE_NEW, PRESET_SAVE_CURRENT, PRESET_RESET, PRESET_DUPLICATE, PRESET_DELETE, PRESET_IMPORT, PRESET_EXPORT,
-        USE_INGAME_FFB, INVERT_FFB, DYNAMIC_NORMALIZATION_ENABLE, DYNAMIC_LOAD_NORMALIZATION_ENABLE, MASTER_GAIN, WHEELBASE_MAX_TORQUE, TARGET_RIM_TORQUE, MIN_FORCE,
+        USE_INGAME_FFB, INVERT_FFB, DYNAMIC_NORMALIZATION_ENABLE, DYNAMIC_LOAD_NORMALIZATION_ENABLE, MASTER_GAIN, WHEELBASE_MAX_TORQUE, TARGET_RIM_TORQUE, MIN_FORCE, STATIONARY_DAMPING,
         REST_API_ENABLE, REST_API_PORT,
         SOFT_LOCK_ENABLE, SOFT_LOCK_STIFFNESS, SOFT_LOCK_DAMPING,
         INGAME_FFB_GAIN, STEERING_SHAFT_GAIN, STEERING_SHAFT_SMOOTHING, UNDERSTEER_EFFECT, UNDERSTEER_GAMMA, DYNAMIC_WEIGHT, WEIGHT_SMOOTHING, TORQUE_SOURCE, STEERING_100HZ_RECONSTRUCTION, PURE_PASSTHROUGH,

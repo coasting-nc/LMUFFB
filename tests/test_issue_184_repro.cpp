@@ -9,6 +9,9 @@ void test_soft_lock_stationary_not_allowed() {
     FFBEngine engine;
     InitializeEngine(engine);
 
+    // Disable stationary damping for this test to avoid interference with defaults
+    engine.m_stationary_damping = 0.0f;
+
     // Enable soft lock
     engine.m_soft_lock_enabled = true;
     engine.m_soft_lock_stiffness = 20.0f;
